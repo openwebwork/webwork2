@@ -82,7 +82,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive sortByName jitar_id_to_seq seq_to_jitar_id x);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive jitar_id_to_seq seq_to_jitar_id x);
 
 use constant HIDE_SETS_THRESHOLD => 500;
 use constant DEFAULT_VISIBILITY_STATE => 1;
@@ -134,14 +134,6 @@ use constant FIELD_PERMS => {
 };
 
 use constant STATE_PARAMS => [qw(user effectiveUser key visible_sets no_visible_sets prev_visible_sets no_prev_visible_set editMode exportMode primarySortField secondarySortField)];
-
-use constant SORT_SUBS => {
-	set_id      => \&bySetID,
-	open_date   => \&byOpenDate,
-	due_date    => \&byDueDate,
-	answer_date => \&byAnswerDate,
-	visible     => \&byVisible,
-};
 
 # note that field_properties for some fields, in particular, gateway
 # parameters, are not currently shown in the edit or display tables
@@ -261,15 +253,17 @@ sub pre_header_initialize {
 	my ($self) = @_;
 	my $r      = $self->r;
 	my $db     = $r->db;
-	my $ce     = $r->ce;
 	my $authz  = $r->authz;
 	my $urlpath = $r->urlpath;
 	my $user   = $r->param('user');
 	my $courseName = $urlpath->arg("courseID");
 
-
 	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
+
+	# Get the list of global sets and the number of users and cache them for later use.
+	$self->{allSetIDs} = [ $db->listGlobalSets() ];
+	$self->{totalUsers} = $db->countUsers;
 
 	if (defined $r->param("action") and $r->param("action") eq "score" and $authz->hasPermissions($user, "score_sets")) {
 		my $scope = $r->param("action.score.scope");
@@ -278,7 +272,7 @@ sub pre_header_initialize {
 		if ($scope eq "none") {
 			return $r->maketext("No sets selected for scoring");
 		} elsif ($scope eq "all") {
-			@setsToScore = $db->listGlobalSets;
+			@setsToScore = @{ $self->{allSetIDs} };
 		} elsif ($scope eq "visible") {
 			@setsToScore = @{ $r->param("visibleSetIDs") };
 		} elsif ($scope eq "selected") {
@@ -295,7 +289,6 @@ sub pre_header_initialize {
 
 		$self->reply_with_redirect($uri);
 	}
-
 }
 
 sub initialize {
@@ -310,21 +303,20 @@ sub initialize {
 	my $setID        = $urlpath->arg("setID");
 	my $user         = $r->param('user');
 
+	# Determine if the user has permisson to do anything here.
+	return unless $authz->hasPermissions($user, 'access_instructor_tools');
+
+	# Determine if edit mode or export mode is request, and check permissions for these modes.
+	$self->{editMode} = $r->param("editMode") || 0;
+	return if $self->{editMode} and not $authz->hasPermissions($user, 'modify_problem_sets');
+
+	$self->{exportMode} = $r->param("exportMode") || 0;
+	return if $self->{exportMode} and not $authz->hasPermissions($user, 'modify_set_def_files');
 
 	my $root = $ce->{webworkURLs}->{root};
 
-	# templates for getting field names
+	# Templates for getting field names
 	my $setTemplate = $self->{setTemplate} = $db->newGlobalSet;
-
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		$r->maketext('You are not authorized to access the instructor tools.'))
-		unless $authz->hasPermissions($user, 'access_instructor_tools');
-
-	########## set initial values for state fields
-
-	my @allSets = $db->getGlobalSetsWhere();
-	$self->{allSetIDs} = [ map { $_->set_id } @allSets ];
-	$self->{totalUsers} = $db->countUsers;
 
 	if (defined $r->param("visible_sets")) {
 		$self->{visibleSetIDs} = [ $r->param("visible_sets") ];
@@ -346,37 +338,8 @@ sub initialize {
 		$self->{selectedSetIDs} = [];
 	}
 
-	$self->{editMode} = $r->param("editMode") || 0;
-
-
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		CGI::p($r->maketext('You are not authorized to modify homework sets.')))
-		if $self->{editMode} and not $authz->hasPermissions($user, 'modify_problem_sets');
-
-
-	$self->{exportMode} = $r->param("exportMode") || 0;
-
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		CGI::p($r->maketext('You are not authorized to modify set definition files.')))
-		if $self->{exportMode} and not $authz->hasPermissions($user, 'modify_set_def_files');
-
 	$self->{primarySortField} = $r->param("primarySortField") || "due_date";
 	$self->{secondarySortField} = $r->param("secondarySortField") || "open_date";
-
-
-	#########################################
-	# collect date information from sets
-	#########################################
-
-	my (%open_dates, %due_dates, %answer_dates);
-	foreach my $Set (@allSets) {
-		push @{$open_dates{defined $Set->open_date ? $Set->open_date : ""}}, $Set->set_id;
-		push @{$due_dates{defined $Set->due_date ? $Set->due_date : ""}}, $Set->set_id;
-		push @{$answer_dates{defined $Set->answer_date ? $Set->answer_date : ""}}, $Set->set_id;
-	}
-	$self->{open_dates} = \%open_dates;
-	$self->{due_dates} = \%due_dates;
-	$self->{answer_dates} = \%answer_dates;
 
 	#########################################
 	#  call action handler
@@ -421,9 +384,6 @@ sub body {
 
 	my $root = $ce->{webworkURLs}->{root};
 
-	# templates for getting field names
-	my $setTemplate = $self->{setTemplate} = $db->newGlobalSet;
-
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
 		$r->maketext("You are not authorized to access the instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
@@ -435,6 +395,9 @@ sub body {
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
 		CGI::p($r->maketext("You are not authorized to modify set definition files.")))
 		if $self->{exportMode} and not $authz->hasPermissions($user, "modify_set_def_files");
+
+	# templates for getting field names
+	my $setTemplate = $self->{setTemplate} = $db->newGlobalSet;
 
 	# This table can be consulted when display-ready forms of field names are needed.
 	my %prettyFieldNames = map { $_ => $_ }
@@ -474,26 +437,11 @@ sub body {
 	my $primarySortField = $self->{primarySortField};
 	my $secondarySortField = $self->{secondarySortField};
 
-	# Get requested sets
-	my @Sets = @{ $self->{visibleSetIDs} } ? $db->getGlobalSets(@{ $self->{visibleSetIDs} }) : ();
-
-	# presort sets
-	my %sortSubs = %{ SORT_SUBS() };
-	my $primarySortSub = $sortSubs{$primarySortField};
-	my $secondarySortSub = $sortSubs{$secondarySortField};
-
-	# don't forget to sort in opposite order of importance
-	if ($secondarySortField eq "set_id") {
-		@Sets = sortByName("set_id", @Sets);
-	} else {
-		@Sets = sort $secondarySortSub @Sets;
-	}
-
-	if ($primarySortField eq "set_id") {
-		@Sets = sortByName("set_id", @Sets);
-	} else {
-		@Sets = sort $primarySortSub @Sets;
-	}
+	# Get requested sets in the requested order.
+	my @Sets =
+		@{ $self->{visibleSetIDs} }
+		? $db->getGlobalSetsWhere({ set_id => $self->{visibleSetIDs} }, [ $primarySortField, $secondarySortField ])
+		: ();
 
 	########## print site identifying information
 
@@ -760,15 +708,6 @@ sub filter_handler {
 	} elsif ($scope eq "match_ids") {
 		$result = $r->maketext("showing matching sets");
 		$self->{visibleSetIDs} = [ split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}[0] ];
-	} elsif ($scope eq "match_open_date") {
-		$result = $r->maketext("showing matching sets");
-		$self->{visibleSetIDs} = $self->{open_dates}{ $actionParams->{"action.filter.open_date"}[0] };
-	} elsif ($scope eq "match_due_date") {
-		$result = $r->maketext("showing matching sets");
-		$self->{visibleSetIDs} = $self->{due_date}{ $actionParams->{"action.filter.due_date"}[0] };
-	} elsif ($scope eq "match_answer_date") {
-		$result = $r->maketext("showing matching sets");
-		$self->{visibleSetIDs} = $self->{answer_dates}{ $actionParams->{"action.filter.answer_date"}[0] };
 	} elsif ($scope eq "visible") {
 		$result = $r->maketext("showing visible sets");
 		$self->{visibleSetIDs} = [ $db->listGlobalSetsWhere({ visible => 1 }) ];
@@ -1678,45 +1617,6 @@ sub saveEdit_handler {
 }
 
 ################################################################################
-# sorts
-################################################################################
-
-sub bySetID         { $a->set_id         cmp $b->set_id         }
-
-#FIXME: Eventually we may be able to remove these checks, if we can trust
-# that the dates are always defined.
-# Dates which are the empty string '' or undefined are treated as 0.
-sub byOpenDate {
-	my $result = eval { ($a->open_date || 0) <=> ($b->open_date || 0) };
-	return $result unless $@;
-	warn "Open date not correctly defined.";
-	return 0;
-}
-
-sub byDueDate {
-	my $result = eval { ($a->due_date || 0) <=> ($b->due_date || 0) };
-	return $result unless $@;
-	warn "Close date not correctly defined.";
-	return 0;
-}
-
-sub byAnswerDate {
-	my $result = eval { ($a->answer_date || 0) <=> ($b->answer_date || 0) };
-	return $result unless $@;
-	warn "Answer date not correctly defined.";
-	return 0;
-}
-
-sub byVisible {
-	my $result = eval { $a->visible cmp $b->visible };
-	return $result unless $@;
-	warn "Visibility status not correctly defined.";
-	return 0;
-}
-
-sub byOpenDue { &byOpenDate || &byDueDate }
-
-################################################################################
 # utilities
 ################################################################################
 
@@ -1755,7 +1655,7 @@ sub importSetsFromDef {
 
 	# Get a list of set ids of existing sets in the course.  This is used to
 	# ensure that an imported set does not already exist.
-	my %allSets = map { $_ => 1 } $db->listGlobalSets();
+	my %allSets = map { $_ => 1 } @{ $self->{allSetIDs} };
 
 	my (@added, @skipped);
 
@@ -2750,9 +2650,6 @@ sub printTableHTML {
 	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
 		@realFieldNames = grep {!/enable_reduced_scoring|reduced_scoring_date/} @realFieldNames;
 	}
-
-
-	my %sortSubs = %{ SORT_SUBS() };
 
 	# FIXME: should this always presume to use the templates directory?
 	# (no, but that can wait until we have an abstract ProblemLibrary API -- sam)
