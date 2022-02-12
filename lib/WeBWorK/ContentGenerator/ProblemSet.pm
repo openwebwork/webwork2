@@ -35,55 +35,38 @@ use WeBWorK::Utils qw(path_is_subdir is_restricted is_jitar_problem_closed is_ji
 use WeBWorK::Localize;
 
 sub initialize {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $db      = $r->db;
+	my $ce      = $r->ce;
 	my $urlpath = $r->urlpath;
-	my $authz = $r->authz;
+	my $authz   = $r->authz;
 
-	my $setName = $urlpath->arg("setID");
-	my $userName = $r->param("user");
+	# $self->{invalidSet} is set in checkSet by ContentGenerator.pm
+	return if $self->{invalidSet};
+
+	# This will all be valid if checkSet succeeded and we get here.
+	my $setName           = $urlpath->arg("setID");
+	my $userName          = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
 
-	my $user            = $db->getUser($userName); # checked
-	my $effectiveUser   = $db->getUser($effectiveUserName); # checked
-	my $set             = $db->getMergedSet($effectiveUserName, $setName); # checked
+	my $user          = $db->getUser($userName);
+	my $effectiveUser = $db->getUser($effectiveUserName);
+	$self->{set} = $db->getMergedSet($effectiveUserName, $setName);
 
-	die "user $user (real user) not found."  unless $user;
-	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
+	$self->{displayMode} = $user->displayMode ? $user->displayMode : $r->ce->{pg}->{options}->{displayMode};
 
-	$self->{displayMode}  = $user->displayMode ? $user->displayMode :  $r->ce->{pg}->{options}->{displayMode};
-
-	# FIXME: some day it would be nice to take out this code and consolidate the two checks
-
-	# get result and send to message
+	# Display status messages.
 	my $status_message = $r->param("status_message");
-	$self->addmessage(CGI::p("$status_message")) if $status_message;
+	$self->addmessage(CGI::p($status_message)) if $status_message;
 
-	# $self->{invalidSet} is set by ContentGenerator.pm
-	return if $self->{invalidSet};
-	return unless defined($set);
-
-	my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
-	my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
-	$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::span({class=>$visiblityStateClass}, $visiblityStateText))))
-	if $authz->hasPermissions($userName, "view_hidden_sets");
-
-
-	$self->{userName}        = $userName;
-	$self->{user}            = $user;
-	$self->{effectiveUser}   = $effectiveUser;
-	$self->{set}             = $set;
-
-	##### permissions #####
-
-	$self->{isOpen} = ((time >= $set->open_date && !(
-				$ce->{options}{enableConditionalRelease} &&
-				is_restricted($db, $set, $effectiveUserName)))
-		|| $authz->hasPermissions($userName, "view_unopened_sets"));
-
-	die("You do not have permission to view unopened sets") unless $self->{isOpen};
+	if ($authz->hasPermissions($userName, "view_hidden_sets")) {
+		if ($self->{set}->visible) {
+			$self->addmessage(CGI::span({ class => 'font-visible' }, $r->maketext('This set is visible to students.')));
+		} else {
+			$self->addmessage(CGI::span({ class => 'font-hidden' }, $r->maketext('This set is hidden from students.')));
+		}
+	}
 }
 
 sub nav {
