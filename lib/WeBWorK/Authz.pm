@@ -399,6 +399,11 @@ sub checkSet {
 			return $r->maketext("Requested set '[_1]' could not be found in the database for user [_2].",
 				$setName, $effectiveUserName);
 		}
+		# Don't allow versioned sets to be viewed from the problem-list page.
+		if ($node_name eq 'problem_list') {
+			return $r->maketext("Requested version ([_1]) of set '[_2]' can not be directly accessed.", $verNum,
+				$setName);
+		}
 	} else {
 		if ($set && $set->set_id eq $setName && $set->user_id eq $effectiveUserName) {
 			# If we have all of this, then we can just use this set and skip the rest.
@@ -423,7 +428,17 @@ sub checkSet {
 
 	# Now we know that the set is assigned to the appropriate user.
 	# Check to see if the user is trying to access a set that is not open.
-	if (before($set->open_date) && !$self->hasPermissions($userName, "view_unopened_sets")) {
+	if (
+		before($set->open_date)
+		&& !$self->hasPermissions($userName, "view_unopened_sets")
+		&& !(
+			defined $set->assignment_type
+			&& $set->assignment_type =~ /gateway/
+			&& $node_name eq 'problem_list'
+			&& $db->countSetVersions($effectiveUserName, $set->set_id)
+		)
+		)
+	{
 		return $r->maketext("Requested set '[_1]' is not yet open.", $setName);
 	}
 

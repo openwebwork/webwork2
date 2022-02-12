@@ -52,7 +52,7 @@ sub initialize {
 
 	my $user          = $db->getUser($userName);
 	my $effectiveUser = $db->getUser($effectiveUserName);
-	$self->{set} = $db->getMergedSet($effectiveUserName, $setName);
+	$self->{set} = $authz->{merged_set};
 
 	$self->{displayMode} = $user->displayMode ? $user->displayMode : $r->ce->{pg}->{options}->{displayMode};
 
@@ -203,8 +203,8 @@ sub info {
 	my $userID = $r->param("user");
 	my $eUserID = $r->param("effectiveUser");
 
-	my $effectiveUser = $db->getUser($eUserID); # checked
-	my $set  = $db->getMergedSet($eUserID, $setID); # checked
+	my $effectiveUser = $db->getUser($eUserID);
+	my $set  = $self->{set};
 
 	die "effective user $eUserID not found. One 'acts as' the effective user." unless $effectiveUser;
 	# FIXME: this was already caught in initialize()
@@ -299,7 +299,7 @@ sub body {
 	my $effectiveUser = $r->param('effectiveUser');
 	my $user = $r->param('user');
 
-	my $set = $db->getMergedSet($effectiveUser, $setName);  # checked
+	my $set = $self->{set};
 
 	if ($self->{invalidSet}) {
 		return CGI::div(
@@ -778,7 +778,7 @@ sub body {
 
 		if (@problemNumbers) {
 			# This table contains a summary, a caption, and scope variables for the columns.
-			print CGI::div({ class => 'table-responsive' });
+			print CGI::start_div({ class => 'table-responsive' });
 			print CGI::start_table({
 					class => "problem_set_table table caption-top font-sm",
 					summary => $r->maketext("This table shows the problems that are in this problem set.  " .
