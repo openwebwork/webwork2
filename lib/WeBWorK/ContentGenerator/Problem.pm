@@ -2213,22 +2213,24 @@ sub output_achievement_message{
 # output_tag_info
 # Puts the tags in the page
 
-sub output_tag_info{
-	my $self = shift;
-	my $r = $self->r;
-	my $authz = $r->authz;
-	my $user = $r->param('user');
-	if ($authz->hasPermissions($user, "modify_tags")) {
-		print CGI::p(CGI::div({id=>'tagger'}, ''));
-                print $self->hidden_authen_fields;
-                my $courseID = $self->r->urlpath->arg("courseID");
-                print CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID });
-		my $templatedir = $r->ce->{courseDirs}->{templates};
-		my $sourceFilePath = $templatedir .'/'. $self->{problem}->{source_file};
-		$sourceFilePath =~ s/'/\\'/g;
-		print CGI::start_script({type=>"text/javascript"}), "mytw = new tag_widget('tagger','$sourceFilePath')",CGI::end_script();
+sub output_tag_info {
+	my $self     = shift;
+	my $r        = $self->r;
+
+	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
+		print CGI::div(
+			{
+				id                    => 'tagger',
+				class                 => 'tag-widget',
+				data_source_file_path => $r->ce->{courseDirs}{templates} . '/' . $self->{problem}{source_file}
+			},
+			''
+		);
+		print CGI::hidden(
+			{ id => 'hidden_courseID', name => 'courseID', default => $self->r->urlpath->arg("courseID") });
 	}
-	return "";
+
+	return '';
 }
 
 # output_custom_edit_message
@@ -2352,24 +2354,23 @@ sub output_hidden_info {
 
 # output_JS subroutine
 # Outputs all of the JavaScript needed for this page.
-sub output_JS{
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
+sub output_JS {
+	my $self     = shift;
+	my $r        = $self->r;
+	my $ce       = $r->ce;
 	my $site_url = $ce->{webworkURLs}{htdocs};
 
 	# This is for tagging menus (if allowed)
-	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
-		if (open(TAXONOMY, "<:encoding(utf8)", $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
-			my $taxo = '[]';
-			$taxo = join("", <TAXONOMY>);
-			close TAXONOMY;
-			print qq!\n<script>var taxo = $taxo ;</script>!;
-		} else {
-			print qq!\n<script>var taxo = [] ;</script>!;
-			print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
-		}
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
+	if ($r->authz->hasPermissions($r->param('user'), 'modify_tags')) {
+		print CGI::script(
+			{
+				id        => 'tag-widget-script',
+				src       => "$site_url/js/apps/TagWidget/tagwidget.js",
+				defer     => undef,
+				data_taxo => "$site_url/DATA/tagging-taxonomy.json"
+			},
+			''
+		);
 	}
 
 	# This is for the problem grader
@@ -2381,23 +2382,23 @@ sub output_JS{
 	print CGI::script({ src => "$site_url/js/apps/Problem/problem.js", defer => undef }, '');
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
-	if (ref($self->{pg}{flags}{extra_js_files}) eq "ARRAY") {
+	if (ref($self->{pg}{flags}{extra_js_files}) eq 'ARRAY') {
 		my %jsFiles;
 		for (@{ $self->{pg}{flags}{extra_js_files} }) {
 			next if $jsFiles{ $_->{file} };
 			$jsFiles{ $_->{file} } = 1;
-			my %attributes = ref($_->{attributes}) eq "HASH" ? %{ $_->{attributes} } : ();
+			my %attributes = ref($_->{attributes}) eq 'HASH' ? %{ $_->{attributes} } : ();
 			if ($_->{external}) {
-				print CGI::script({ src => $_->{file}, %attributes }, "");
+				print CGI::script({ src => $_->{file}, %attributes }, '');
 			} elsif (
 				!$_->{external}
 				&& (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}"
 					|| -f "$WeBWorK::Constants::PG_DIRECTORY/htdocs/$_->{file}")
 				)
 			{
-				print CGI::script({ src => "$site_url/$_->{file}", %attributes }, "");
+				print CGI::script({ src => "$site_url/$_->{file}", %attributes }, '');
 			} else {
-				print "<!-- $_ is not available in htdocs/ on this server -->\n";
+				print "<!-- $_ is not available in htdocs/ on this server -->";
 			}
 		}
 	}
