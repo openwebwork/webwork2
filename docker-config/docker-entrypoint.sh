@@ -277,11 +277,6 @@ if [ "$1" = 'apache2' ]; then
     #find courses -type d -exec chown www-data:www-data {} \;
 
     echo "end fixing ownership and permissions"
-
-    # "touch" and "chown" some file to prevent some warnings
-    cd /opt/webwork/webwork2/htdocs/themes/math4
-    /usr/bin/touch math4-overrides.css math4-overrides.js math4-coloring.css
-    chown www-data:www-data math4-overrides.css math4-overrides.js math4-coloring.css
 fi
 
 # The code below allows to use

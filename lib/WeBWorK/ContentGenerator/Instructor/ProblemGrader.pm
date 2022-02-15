@@ -17,7 +17,7 @@
 
 package WeBWorK::ContentGenerator::Instructor::ProblemGrader;
 use base qw(WeBWorK::ContentGenerator);
-use WeBWorK::Utils qw(sortByName );
+use WeBWorK::Utils qw(sortByName getAssetURL);
 use WeBWorK::PG;
 use HTML::Entities;
 
@@ -414,11 +414,11 @@ sub body {
 }
 
 sub output_CSS {
-	my $self     = shift;
-	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
+	my $self = shift;
+	my $ce   = $self->r->ce;
 
 	# PG styles
-	print CGI::Link({ rel => 'stylesheet', href => "$site_url/js/apps/Problem/problem.css" });
+	print CGI::Link({ rel => 'stylesheet', href => getAssetURL($ce, 'js/apps/Problem/problem.css') });
 
 	return '';
 }

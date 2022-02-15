@@ -32,7 +32,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
-	ref2string makeTempDirectory path_is_subdir before after
+	ref2string makeTempDirectory path_is_subdir before after getAssetURL
 	between wwRound is_restricted);  # use the ContentGenerator formatDateTime, not the version in Utils
 use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
@@ -2416,21 +2416,20 @@ sub getProblemHTML {
 	return    $pg;
 }
 
-sub output_JS{
-	my $self     = shift;
-	my $ce       = $self->r->ce;
-	my $site_url = $ce->{webworkURLs}{htdocs};
+sub output_JS {
+	my $self = shift;
+	my $ce   = $self->r->ce;
 
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
 	# which can be set in course.conf (the value should be an anonomous array).
 	my @cssFiles;
-	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq "ARRAY") {
+	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq 'ARRAY') {
 		push(@cssFiles, { file => $_, external => 0 }) for @{ $ce->{pg}{specialPGEnvironmentVars}{extra_css_files} };
 	}
 	for my $pg (@{ $self->{ra_pg_results} }) {
 		next unless ref($pg);
-		if (ref($pg->{flags}{extra_css_files}) eq "ARRAY") {
+		if (ref($pg->{flags}{extra_css_files}) eq 'ARRAY') {
 			push @cssFiles, @{ $pg->{flags}{extra_css_files} };
 		}
 	}
@@ -2440,47 +2439,39 @@ sub output_JS{
 		$cssFilesAdded{ $_->{file} } = 1;
 		if ($_->{external}) {
 			print CGI::Link({ rel => 'stylesheet', href => $_->{file} });
-		} elsif (
-			!$_->{external}
-			&& (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}"
-				|| -f "$WeBWorK::Constants::PG_DIRECTORY/htdocs/$_->{file}")
-			)
-		{
-			print CGI::Link({ rel => 'stylesheet', href => "$site_url/$_->{file}" });
 		} else {
-			print "<!-- $_->{file} is not available in htdocs/ on this server -->\n";
+			print CGI::Link({ rel => 'stylesheet', href => getAssetURL($ce, $_->{file}) });
 		}
 	}
 
 	# This is for the problem grader
 	if ($self->{will}{showProblemGrader}) {
-		print CGI::script({ src => "$site_url/js/apps/ProblemGrader/problemgrader.js", defer => undef }, '');
+		print CGI::script(
+			{
+				src   => getAssetURL($ce, 'js/apps/ProblemGrader/problemgrader.js'),
+				defer => undef
+			},
+			''
+		);
 	}
 
 	#This is for page specfific js
-	print CGI::script({ src => "$site_url/js/apps/GatewayQuiz/gateway.js", defer => undef }, '');
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/GatewayQuiz/gateway.js'), defer => undef }, '');
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	my %jsFiles;
 	for my $pg (@{ $self->{ra_pg_results} }) {
 		next unless ref($pg);
-		if (ref($pg->{flags}{extra_js_files}) eq "ARRAY") {
+		if (ref($pg->{flags}{extra_js_files}) eq 'ARRAY') {
 			for (@{ $pg->{flags}{extra_js_files} }) {
 				next if $jsFiles{ $_->{file} };
 				$jsFiles{ $_->{file} } = 1;
 
-				my %attributes = ref($_->{attributes}) eq "HASH" ? %{ $_->{attributes} } : ();
+				my %attributes = ref($_->{attributes}) eq 'HASH' ? %{ $_->{attributes} } : ();
 				if ($_->{external}) {
-					print CGI::script({ src => $_->{file}, %attributes }, "");
-				} elsif (
-					!$_->{external}
-					&& (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}"
-						|| -f "$WeBWorK::Constants::PG_DIRECTORY/htdocs/$_->{file}")
-					)
-				{
-					print CGI::script({ src => "$site_url/$_->{file}", %attributes }, "");
+					print CGI::script({ src => $_->{file}, %attributes }, '');
 				} else {
-					print "<!-- $_ is not available in htdocs/ on this server -->\n";
+					print CGI::script({ src => getAssetURL($ce, $_->{file}), %attributes }, '');
 				}
 			}
 		}

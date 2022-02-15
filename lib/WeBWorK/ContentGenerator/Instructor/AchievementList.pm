@@ -50,7 +50,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive sortAchievements x);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive sortAchievements x getAssetURL);
 use DateTime;
 use Text::CSV;
 use Encode;
@@ -1492,17 +1492,15 @@ sub getAxpList {
 	return $self->read_dir($dir, qr/.*\.axp/);
 }
 
-sub output_JS{
+sub output_JS {
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $ce   = $self->r->ce;
 
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::script({ src => "$site_url/js/apps/ShowHide/show_hide.js",    defer => undef }, '');
-	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => undef }, '');
-	print CGI::script({ src => "$site_url/js/apps/SelectAll/selectall.js", defer => undef }, '');
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/ShowHide/show_hide.js'),    defer => undef }, '');
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'), defer => undef }, '');
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/SelectAll/selectall.js'),   defer => undef }, '');
 
-	return "";
+	return '';
 }
 
 1;

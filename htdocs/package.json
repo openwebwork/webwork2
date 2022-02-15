@@ -3,10 +3,8 @@
     "description": "Third party javascript for WeBWorK",
     "license": "GPL-2.0+",
     "scripts": {
-        "generate-css": "sass --style compressed --no-source-map themes",
-        "css-prefix": "npx postcss themes/*/bootstrap.css --use autoprefixer --replace --no-map",
-        "sass-watch": "sass --watch themes",
-        "prepare": "npm run generate-css && npm run css-prefix"
+        "generate-assets": "node generate-assets",
+        "prepare": "npm run generate-assets"
     },
     "repository": {
         "type": "git",
@@ -15,19 +13,30 @@
     "dependencies": {
         "@fortawesome/fontawesome-free": "5.15.2",
         "bootstrap": "^5.1.3",
-        "codemirror": "^5.14.3",
+        "codemirror": "^5.65.1",
         "flatpickr": "^4.6.9",
         "iframe-resizer": "^4.3.1",
         "jquery": "3.5.1",
         "jquery-ui-dist": "1.12.1",
-        "jquery-ui-themes": "1.12.0",
-        "mathjax": "^3.1.2",
+        "mathjax": "^3.2.0",
         "sortablejs": "^1.14.0"
     },
     "devDependencies": {
         "autoprefixer": "^10.4.1",
         "postcss": "^8.4.5",
-        "postcss-cli": "^8.3.1",
-        "sass": "^1.45.2"
-    }
+        "sass": "^1.45.2",
+        "terser": "^5.10.0",
+        "yargs": "^17.3.1"
+    },
+    "browserslist": [
+        "last 10 Chrome versions",
+        "last 10 Firefox versions",
+        "last 4 Edge versions",
+        "last 7 Safari versions",
+        "last 8 Android versions",
+        "last 8 ChromeAndroid versions",
+        "last 8 FirefoxAndroid versions",
+        "last 10 iOS versions",
+        "last 5 Opera versions"
+    ]
 }

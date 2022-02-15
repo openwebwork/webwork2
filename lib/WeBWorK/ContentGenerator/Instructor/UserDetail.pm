@@ -26,7 +26,7 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(sortByName x);
+use WeBWorK::Utils qw(sortByName x getAssetURL);
 use WeBWorK::Debug;
 
 # We use the x function to mark strings for localizaton
@@ -510,29 +510,30 @@ sub DBFieldTable {
 	return CGI::table({ class => 'UserDetail-date-table' }, @table);
 }
 
-#Tells template to output stylesheet and js for Jquery-UI
-sub output_jquery_ui{
-	return "";
-}
-
 sub output_JS {
 	my $self = shift;
-	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
+	my $ce   = $self->r->ce;
 
 	# Print javascript and style for the flatpickr date/time picker.
-	print CGI::Link({ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/flatpickr.min.css" });
-	print CGI::Link(
-		{ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css" });
-	print CGI::script({ src => "$site_url/node_modules/flatpickr/dist/flatpickr.min.js", defer => undef }, '');
+	print CGI::Link({ rel => 'stylesheet', href => getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') });
+	print CGI::Link({
+		rel  => 'stylesheet',
+		href => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css')
+	});
+	print CGI::script({ src => getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.js'), defer => undef }, '');
 	print CGI::script(
-		{ src => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js", defer => undef }, '');
-	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef }, '');
+		{
+			src   => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
+			defer => undef
+		},
+		''
+	);
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/DatePicker/datepicker.js'), defer => undef }, '');
 
 	# Add javascript specifically for this module.
-	print CGI::script({ src => "$site_url/js/apps/UserDetail/userdetail.js", defer => undef }, '');
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/UserDetail/userdetail.js'), defer => undef }, '');
 
 	return '';
-
 }
 
 1;

@@ -27,7 +27,7 @@ use warnings;
 #use CGI;
 use WeBWorK::CGI;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
-use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id);
+use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id getAssetURL);
 use PGcore;
 use Text::CSV;
 
@@ -610,15 +610,12 @@ sub prob_id_sort {
 }
 
 sub output_JS {
-    my $self = shift;
-    my $r = $self->r;
-    my $ce = $r->ce;
+	my $self = shift;
+	my $ce   = $self->r->ce;
 
-    my $site_url = $ce->{webworkURLs}->{htdocs};
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/ShowHide/show_hide.js'), defer => undef }, '');
 
-	print CGI::script({ src => "$site_url/js/apps/ShowHide/show_hide.js", defer => undef }, '');
-
-    return "";
+	return '';
 }
 
 1;
