@@ -367,9 +367,14 @@ sub getFeedbackRecipients {
 
 	my @recipients;
 
-	# send to all users with permission to receive_feedback and an email address
+	# send to all users that meet the following criteria:
+	#     * has an email address
+	#     * has permission to receive_feedback
+	#     * does not have permission to ignore_feedback
+	#     * (if sending feedback by section) is in the same section as the sender
 	foreach my $rcptName ($db->listUsers()) {
-		if ($authz->hasPermissions($rcptName, "receive_feedback")) {
+		if ($authz->hasPermissions($rcptName, "receive_feedback")
+			&& !($authz->hasPermissions($rcptName, "ignore_feedback"))) {
 			my $rcpt = $db->getUser($rcptName); # checked
 			next if $ce->{feedback_by_section} and defined $user
 				and defined $rcpt->section and defined $user->section

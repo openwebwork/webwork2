@@ -437,6 +437,11 @@ my $ConfigStrings = [
 		  doc2 => x('Users with this permssion level or greater will automatically be sent feedback from students (generated when they use the "Contact instructor" button on any problem page).  In addition the feedback message will be sent to addresses listed below.  To send ONLY to addresses listed below set permission level to "nobody".'),
 		  type => 'permission'
 		},
+		{ var => 'permissionLevels{ignore_feedback}',
+		  doc => x('Ignore feedback if this permission level and higher:'),
+		  doc2 => x('Users with this permission level or greater will be excluded from receiving feedback from students (generated when they use the "Contact instructor" button on any problem page).'),
+		  type => 'permission'
+		},
 		{ var => 'mail{feedbackRecipients}',
 		  doc => x('Additional addresses for receiving feedback e-mail.'),
 		  doc2 => x('By default, feeback is sent to all users above who have permission to receive feedback. Feedback is also sent to any addresses specified in this blank. Separate email address entries by commas.'),
