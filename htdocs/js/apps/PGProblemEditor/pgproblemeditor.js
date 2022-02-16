@@ -9,9 +9,8 @@
 				lineWrapping: true,
 				extraKeys:
 				{Tab: function(cm) {cm.execCommand('insertSoftTab')}},
-				highlightSelectionMatches: true,
+				highlightSelectionMatches: {annotateScrollbar: true},
 				matchBrackets: true,
-
 			});
 		cm.setSize("100%", 400);
 	}
