@@ -14,6 +14,12 @@
 
 /* Additional CSS for codemirror addons and overrides */
 
+/* CodeMirror overrides */
+.CodeMirror-code {
+	outline: none;
+	direction: ltr !important;
+}
+
 /* Match Highligher CSS */
 .CodeMirror-focused .cm-matchhighlight {
 	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVQI12NgYGBgkKzc8x9CMDAwAAAmhwSbidEoSQAAAABJRU5ErkJggg==);
