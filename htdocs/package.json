@@ -23,6 +23,7 @@
     },
     "devDependencies": {
         "autoprefixer": "^10.4.1",
+        "chokidar": "^3.5.3",
         "postcss": "^8.4.5",
         "sass": "^1.45.2",
         "terser": "^5.10.0",
