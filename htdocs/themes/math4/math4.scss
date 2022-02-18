@@ -33,7 +33,7 @@ table caption {
 }
 
 .required-field {
-	color: red;
+	color: #dc3545;
 }
 
 /* Screen Reader */
@@ -186,7 +186,7 @@ table caption {
 		color: black;
 		font-weight: bold;
 		font-size: 0.9rem;
-		opacity: 0.5;
+		opacity: 0.6;
 	}
 
 	.info-box {
@@ -213,7 +213,7 @@ table caption {
 		}
 	}
 
-	#site-links > ul {
+	#site-links {
 		border: 1px solid #e6e6e6;
 	}
 
@@ -372,6 +372,7 @@ h2.page-title {
 .Warnings {
 	code {
 		white-space: normal;
+		color: inherit;
 	}
 }
 

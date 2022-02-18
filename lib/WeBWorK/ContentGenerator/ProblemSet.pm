@@ -813,22 +813,37 @@ sub body {
 						"link on the name of the problem to take you to the problem page.")
 				});
 			print CGI::caption($r->maketext("Problems"));
-			my $AdjustedStatusPopover = "&nbsp;" . CGI::a({
-					class => 'help-popup',
-					data_bs_content => $r->maketext('The adjusted status of a problem is the larger of the problem\'s ' .
-						'status and the weighted average of the status of those problems which count towards the ' .
-						'parent grade.'),
-					data_bs_placement => 'top',
-					data_bs_toggle => 'popover'
-				}, CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "Help Icon" }, ""));
 
 			my $thRow = [ CGI::th($r->maketext("Name")),
 				CGI::th($r->maketext("Attempts")),
 				CGI::th($r->maketext("Remaining")),
 				CGI::th($r->maketext("Worth")),
 				CGI::th($r->maketext("Status")) ];
+
 			if ($isJitarSet) {
-				push @$thRow, CGI::th($r->maketext("Adjusted Status") . $AdjustedStatusPopover);
+				push @$thRow,
+					CGI::th(
+					$r->maketext("Adjusted Status")
+						. "&nbsp;"
+						. CGI::a(
+						{
+							class             => 'help-popup',
+							data_bs_placement => 'top',
+							data_bs_toggle    => 'popover',
+							tabindex          => 0,
+							role              => 'button',
+							data_bs_content   => $r->maketext(
+								'The adjusted status of a problem is the larger of the problem\'s status and'
+									. 'the weighted average of the status of those problems which count towards '
+									. 'the parent grade.'
+							)
+						},
+						CGI::i(
+							{ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "Help Icon" },
+							""
+						)
+						)
+					);
 				push @$thRow, CGI::th($r->maketext("Counts for Parent"));
 			}
 

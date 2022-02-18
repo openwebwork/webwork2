@@ -773,8 +773,8 @@ sub links {
 	my %systemlink_args;
 	$systemlink_args{params} = \%params if %params;
 
-	print CGI::start_ul({ class => 'nav flex-column bg-light' });
-	print CGI::a({ class => "navbar-brand" }, $r->maketext("Main Menu"));
+	print CGI::h2({ class => 'navbar-brand mb-0' }, $r->maketext('Main Menu'));
+	print CGI::start_ul({ class => 'nav flex-column' });
 	print CGI::start_li({ class => 'nav-item' }); # Courses
 	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});
 	print CGI::end_li(); # end Courses
@@ -1002,11 +1002,17 @@ sub links {
 				print CGI::end_li(); # end Instructor Tools
 			} # /* access_instructor_tools */
 
-			if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
-				and $authz->hasPermissions($userID, "report_bugs")) {
-				print CGI::li({class=>'divider', 'aria-hidden'=>'true'},"");
-				print CGI::li({ class => 'nav-item' },
-					CGI::a({ href => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' }, $r->maketext("Report bugs")));
+			if (exists $ce->{webworkURLs}{bugReporter}
+				&& $ce->{webworkURLs}{bugReporter} ne ''
+				&& $authz->hasPermissions($userID, 'report_bugs'))
+			{
+				print CGI::li(
+					{ class => 'nav-item' },
+					CGI::a(
+						{ href => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' },
+						$r->maketext("Report bugs")
+					)
+				);
 			}
 
 		} # /* authentication was_verified */

@@ -19,7 +19,6 @@
 
 // Enable shadows and gradients.  These are disabled by default.
 $enable-shadows: true;
-$enable-gradients: true;
 
 // Use a smaller grid gutter width.  The default is 1.5rem.
 $grid-gutter-width: 1rem;
@@ -31,6 +30,10 @@ $headings-font-weight: 600;
 // Links
 $link-decoration: none;
 $link-hover-decoration: underline;
+
+// Make breadcrumb dividers and active items a bit darker.
+$breadcrumb-divider-color: #495057;
+$breadcrumb-active-color: #495057;
 
 @import "./theme-colors";
 
