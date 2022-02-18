@@ -544,7 +544,7 @@ sub body {
 					class            => 'tab-pane fade mb-2' . ($active ? " show$active" : ''),
 					id               => $actionID,
 					role             => 'tabpanel',
-					aria_labelled_by => "$actionID-tab"
+					aria_labelledby => "$actionID-tab"
 				},
 				$self->$actionForm($self->getActionParams($actionID))
 			)
@@ -671,7 +671,6 @@ sub filter_form {
 					id            => 'filter_text',
 					name          => 'action.filter.set_ids',
 					value         => $actionParams{'action.filter.set_ids'}[0] // '',
-					width         => '50',
 					aria_required => 'true',
 					class         => 'form-control form-control-sm'
 				})
@@ -1091,7 +1090,6 @@ sub create_form {
 					id            => 'create_text',
 					name          => 'action.create.name',
 					value         => $actionParams{'action.create.name'}->[0] || '',
-					width         => '50',
 					maxlength     => '100',
 					aria_required => 'true',
 					class         => 'form-control form-control-sm'
@@ -1266,6 +1264,7 @@ sub import_form {
 				{ class => 'col-auto' },
 				CGI::popup_menu({
 					name    => 'action.import.source',
+					id      => 'import_source_select',
 					values  => [ '', $self->getDefList() ],
 					labels  => { '' => $r->maketext('Enter filenames below') },
 					default => defined($actionParams{'action.import.source'})
@@ -1290,7 +1289,6 @@ sub import_form {
 					id    => 'import_text',
 					name  => 'action.import.name',
 					value => $actionParams{'action.import.name'}[0] || '',
-					width => '50',
 					class => 'form-control form-control-sm'
 				})
 			)
@@ -2449,16 +2447,16 @@ sub fieldEditHTML {
 	}
 
 	if ($type eq "checked") {
-		# FIXME: kludge (R)
-		# if the checkbox is checked it returns a 1, if it is unchecked it returns nothing
-		# in which case the hidden field overrides the parameter with a 0
-		return CGI::checkbox({
-			id      => $fieldName . "_id",
+		# If the checkbox is checked it returns a 1, if it is unchecked it returns nothing
+		# in which case the hidden field overrides the parameter with a 0.
+		# This is actually the accepted way to do this.
+		return CGI::input({
+			type    => 'checkbox',
+			id      => "${fieldName}_id",
 			name    => $fieldName,
-			label   => "",
 			value   => 1,
 			class   => 'form-check-input',
-			checked => $value ? 1 : 0
+			$value ? (checked => undef) : ()
 		})
 		. CGI::hidden({
 			name  => $fieldName,
@@ -2506,16 +2504,16 @@ sub recordEditHTML {
 	my %fakeRecord;
 	my $set_id = $Set->set_id;
 
-	$fakeRecord{select} = CGI::checkbox(
-		name            => "selected_sets",
-		value           => $set_id,
-		checked         => $setSelected,
-		label           => "",
-		class           => 'form-check-input'
-	);
+	$fakeRecord{select} = CGI::input({
+		type  => 'checkbox',
+		name  => 'selected_sets',
+		value => $set_id,
+		class => 'form-check-input',
+		$setSelected ? (checked => undef) : (),
+	});
 	$fakeRecord{set_id} = $editMode
 		? CGI::a({href=>$problemListURL}, "$set_id")
-		: CGI::font({class=>$visibleClass}, $set_id) . " " . $imageLink;
+		: CGI::span({class=>$visibleClass}, $set_id) . " " . $imageLink;
 	$fakeRecord{problems} = (FIELD_PERMS()->{problems} and not $authz->hasPermissions($user, FIELD_PERMS()->{problems}))
 		? "$problems"
 		: CGI::a({href=>$problemListURL}, "$problems");
@@ -2528,34 +2526,34 @@ sub recordEditHTML {
 	my $label="";
 	my $label_text="";
 	if ($editMode) {
-		# column not there
-		$label_text = CGI::a({href=>$problemListURL}, $prettySetID);
+		# No checkbox column in this case.
+		$label_text = CGI::a({ href => $problemListURL }, $prettySetID);
 	} else {
-		# selection checkbox
 		# Set ID
 		my $label = "";
 		if ($editMode) {
-			$label = CGI::a({href=>$problemListURL}, $prettySetID);
+			$label = CGI::a({ href => $problemListURL }, $prettySetID);
 		} else {
-			$label = CGI::a({
-					class => "set-label $visibleClass set-id-tooltip",
-					data_bs_toggle => "tooltip",
-					data_bs_placement => "right",
+			$label = CGI::span({
+					class => "set-label set-id-tooltip $visibleClass",
+					data_bs_toggle => 'tooltip',
+					data_bs_placement => 'right',
 					data_bs_title => $Set->description()
-				}, $prettySetID) . " " . $imageLink;
+				}, $prettySetID) . ' ' . $imageLink;
 		}
 
-		push @tableCells, CGI::checkbox({
-			type            => "checkbox",
-			id              => $set_id . "_id",
-			name            => "selected_sets",
-			value           => $set_id,
-			class           => "form-check-input",
-			label           => '',
-			$setSelected ? (checked => 'checked') : (),
-		});
+		# Selection checkbox
+		push @tableCells,
+			CGI::input({
+				type  => 'checkbox',
+				id    => "${set_id}_id",
+				name  => 'selected_sets',
+				value => $set_id,
+				class => 'form-check-input',
+				$setSelected ? (checked => 'checked') : (),
+			});
 
-		push @tableCells, CGI::div({class=>'label-with-edit-icon'}, $label);
+		push @tableCells, CGI::div({ class => 'label-with-edit-icon' }, CGI::label({ for => "${set_id}_id" }, $label));
 	}
 
 	# Problems link
@@ -2608,10 +2606,10 @@ sub recordEditHTML {
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /hide_hint/ and not $editMode;
-		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+		push @tableCells, CGI::span({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 
-	return CGI::Tr({}, CGI::td({}, \@tableCells));
+	return CGI::Tr(CGI::td(\@tableCells));
 }
 
 sub printTableHTML {
@@ -2671,10 +2669,10 @@ sub printTableHTML {
 
 	my @tableHeadings = map { $fieldNames{$_} } @realFieldNames;
 
-	my $selectBox = CGI::checkbox({
+	my $selectBox = CGI::input({
+		type              => 'checkbox',
 		id                => 'select-all',
 		data_select_group => 'selected_sets',
-		label             => '',
 		class             => 'form-check-input'
 	});
 

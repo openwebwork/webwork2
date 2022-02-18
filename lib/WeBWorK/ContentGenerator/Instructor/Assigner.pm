@@ -121,10 +121,14 @@ sub body {
 			{ class => 'row gx-3' },
 			CGI::div(
 				{ class => 'col-xl-5 col-md-6 mb-2' },
-				CGI::div({ class => 'fw-bold text-center' }, $r->maketext('Users')),
+				CGI::div(
+					{ class => 'fw-bold text-center' },
+					CGI::label({ for => 'selected_users' }, $r->maketext('Users'))
+				),
 				scrollingRecordList(
 					{
 						name            => 'selected_users',
+						id              => 'selected_users',
 						request         => $r,
 						default_sort    => 'lnfn',
 						default_format  => 'lnfn_uid',
@@ -137,10 +141,14 @@ sub body {
 			),
 			CGI::div(
 				{ class => 'col-xl-5 col-md-6 mb-2' },
-				CGI::div({ class => 'fw-bold text-center' }, $r->maketext('Sets')),
+				CGI::div(
+					{ class => 'fw-bold text-center' },
+					CGI::label({ for => 'selected_sets' }, $r->maketext('Sets'))
+				),
 				scrollingRecordList(
 					{
 						name            => 'selected_sets',
+						id              => 'selected_sets',
 						request         => $r,
 						default_sort    => 'set_id',
 						default_format  => 'set_id',

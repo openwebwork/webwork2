@@ -708,7 +708,7 @@ input.changed[type=text] { /* orange */
 /* Text colors for Auditing, Current, and Dropped students */
 .Audit { font-style: normal; color: purple; background-color: inherit; }
 .Enrolled { font-weight: normal; color: black; background-color: inherit; }
-.Drop { font-style: italic; color: gray; background-color: inherit; }
+.Drop { font-style: italic; color: #555; background-color: inherit; }
 
 /* Styles for the PGProblemEditor Page */
 
@@ -877,7 +877,7 @@ span {
 
 /* Course Configuration */
 .config-tabs {
-	a {
+	a, span {
 		&.nav-link {
 			font-weight: bold;
 			color: inherit;

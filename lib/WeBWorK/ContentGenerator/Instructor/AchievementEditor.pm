@@ -272,7 +272,7 @@ sub body {
 					class => 'tab-pane pg_editor_action_div fade mb-2' . ($active ? " show$active" : ""),
 					id => $actionID,
 					role => 'tabpanel',
-					aria_labelled_by => "$actionID-tab"
+					aria_labelledby => "$actionID-tab"
 				}, $line_contents));
 		}
 	}

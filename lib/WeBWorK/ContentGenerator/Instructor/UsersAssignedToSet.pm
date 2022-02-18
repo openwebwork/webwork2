@@ -155,7 +155,7 @@ sub body {
 		CGI::th([
 			$r->maketext('Login Name'), $r->maketext('Student Name'),
 			$r->maketext('Section'),    $r->maketext('Close Date'),
-			''
+			$r->maketext('Edit Data')
 		])
 	));
 
@@ -177,18 +177,17 @@ sub body {
 		print CGI::Tr(
 			CGI::td(
 				{ class => 'text-center' },
-				CGI::checkbox({
+				CGI::input({
 					type            => 'checkbox',
 					name            => 'selected',
-					checked         => defined($userSetRecord),
+					id              => "selected_$user",
 					value           => $user,
-					label           => '',
 					class           => 'form-check-input',
-					labelattributes => { class => 'form-check-label' }
+					defined($userSetRecord) ? (checked => undef) : ()
 				})
 			),
 			CGI::td([
-				CGI::div({ class => $statusClass }, $user),
+				CGI::div({ class => $statusClass }, CGI::label({ for => "selected_$user" }, $user)),
 				$prettyName,
 				$userRecord->section,
 				(
@@ -222,6 +221,8 @@ sub body {
 		value => $r->maketext('Save'),
 		class => 'btn btn-primary'
 	});
+
+	print CGI::end_form();
 
 	print CGI::hr()
 		. CGI::div(

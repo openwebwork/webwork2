@@ -2163,7 +2163,7 @@ sub body {
 		my $vermsg = $editingSetVersion ? ",v$editingSetVersion" : '';
 
 		print CGI::div(
-			{ class => 'border border-dark mb-2' },
+			{ class => 'border border-dark mb-2 rounded' },
 			CGI::div(
 				{ class => 'row p-2 align-items-center' },
 				CGI::div(
@@ -2186,7 +2186,7 @@ sub body {
 		);
 	} else {
 		print CGI::div(
-			{ class => 'border border-dark mb-2' },
+			{ class => 'border border-dark mb-2 rounded' },
 			CGI::div(
 				{ class => 'row p-2 align-items-center' },
 				CGI::div(
@@ -2208,7 +2208,7 @@ sub body {
 		);
 	}
 
-	print CGI::a({ name => 'problems' }, '');
+	print CGI::a({ id => 'problems' }, '');
 
 	my %properties = %{ FIELD_PROPERTIES() };
 
@@ -2261,17 +2261,9 @@ sub body {
 		})
 	);
 
-	# spacing
-	print CGI::p();
-
 	#####################################################################
 	# Display general set information
 	#####################################################################
-
-	print CGI::start_table({border=>1, cellpadding=>4});
-	print CGI::Tr({}, CGI::th({}, [
-		$r->maketext("General Information"),
-	]));
 
 	# this is kind of a hack -- we need to get a user record here, so we can
 	# pass it to FieldTable, so FieldTable can pass it to FieldHTML, so
@@ -2285,37 +2277,43 @@ sub body {
 		$userSetRecord = $db->getSetVersion( $userToShow, $setID, $editingSetVersion );
 	}
 
-	print CGI::Tr({}, CGI::td({}, [
-		$self->FieldTable($userToShow, $setID, undef, $setRecord, $userSetRecord),
-	]));
-
-	print CGI::end_table();
-
-	# spacing
-	print CGI::start_p();
+	print CGI::div(
+		{ class => 'card mb-2 border border-dark', style => 'width:fit-content' },
+		CGI::div(
+			{ class => 'card-body p-2' },
+			CGI::div({ class => 'card-title fw-bold' }, $r->maketext('General Information')),
+			CGI::div(
+				{ class => 'card-text' },
+				$self->FieldTable($userToShow, $setID, undef, $setRecord, $userSetRecord)
+			)
+		)
+	);
 
 	####################################################################
 	# Display Field for putting in a set description
 	####################################################################
-	print CGI::h4($r->maketext("Set Description"));
-	if ($forOneUser) {
-	    print CGI::hidden({type=>'text',
-			      name=>"set.$setID.description",
-			      id=>"set.$setID.description",
-			      value=>$setRecord->description(),
-			     });
-	    print $setRecord->description ? $setRecord->description : $r->maketext("No Description");
-	} else {
-		print CGI::textarea({
-			name => "set.$setID.description",
-			id => "set.$setID.description",
+	print CGI::div(
+		{ class => 'mb-2' },
+		CGI::h4($r->maketext("Set Description")),
+		$forOneUser
+		? (
+			CGI::hidden({
+				type  => 'text',
+				name  => "set.$setID.description",
+				id    => "set.$setID.description",
+				value => $setRecord->description(),
+			}),
+			$setRecord->description ? $setRecord->description : $r->maketext("No Description")
+			)
+		: CGI::textarea({
+			name  => "set.$setID.description",
+			id    => "set.$setID.description",
 			value => $setRecord->description(),
-			rows => 5,
-			cols => 62,
+			rows  => 5,
+			cols  => 62,
 			class => 'form-control'
-		});
-	}
-	print CGI::end_p();
+		})
+	);
 
 	#####################################################################
 	# Display header information
@@ -2326,13 +2324,15 @@ sub body {
 	my @headerFiles = map { $setRecord->{$_} } @headers;
 	if (scalar @headers and not $forUsers) {
 
-		print CGI::start_table({ border => 1, cellpadding => 4 });
-		print CGI::Tr(CGI::th([$r->maketext("Headers"), '']));
+		print CGI::start_div({ class => 'card mb-2 border border-dark', style => 'width:fit-content' });
+		print CGI::start_div({ class => 'card-body p-2' });
+
+		print CGI::div({ class => 'card-title fw-bold' }, $r->maketext("Headers"));
 
 		my %error;
-		my $this_set = $db->getMergedSet($userToShow, $setID);
+		my $this_set       = $db->getMergedSet($userToShow, $setID);
 		my $guaranteed_set = $this_set;
-		if ( ! $guaranteed_set ) {
+		if (!$guaranteed_set) {
 			# in the header loop we need to have a set that
 			#    we know exists, so if the getMergedSet failed
 			#    (that is, the set isn't assigned to the
@@ -2341,62 +2341,86 @@ sub body {
 			$guaranteed_set = $setRecord;
 		}
 
-		foreach my $headerType (@headers) {
+		for my $headerType (@headers) {
 			my $headerFile = $r->param("set.$setID.$headerType") || $setRecord->{$headerType};
-			$headerFile = 'defaultHeader' unless $headerFile =~/\S/; # (some non-white space character required)
-			$error{$headerType} = $self->checkFile($headerFile,$headerType);
+			$headerFile = 'defaultHeader' unless $headerFile =~ /\S/;    # (some non-white space character required)
+			$error{$headerType} = $self->checkFile($headerFile, $headerType);
 		}
 
-		foreach my $headerType (@headers) {
+		for my $headerType (@headers) {
 
-			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => 0 });
-			my $editHeaderLink = $self->systemLink($editHeaderPage, params => { file_type => $headerType, make_local_copy => 1 });
+			my $editHeaderPage = $urlpath->new(
+				type => 'instructor_problem_editor_withset_withproblem',
+				args => { courseID => $courseID, setID => $setID, problemID => 0 }
+			);
+			my $editHeaderLink =
+				$self->systemLink($editHeaderPage, params => { file_type => $headerType, make_local_copy => 1 });
 
-			my $viewHeaderPage = $urlpath->new(type => $headerModules{$headerType}, args => { courseID => $courseID, setID => $setID });
+			my $viewHeaderPage =
+				$urlpath->new(type => $headerModules{$headerType}, args => { courseID => $courseID, setID => $setID });
 			my $viewHeaderLink = $self->systemLink($viewHeaderPage);
 
-			print CGI::Tr(CGI::td({}, [
-				CGI::start_table({border => 0, cellpadding => 0}) .
-				CGI::Tr(CGI::td($r->maketext($properties{$headerType}->{name}))) .
-				CGI::Tr(
-					CGI::td(
-						CGI::a({
-							class => "psd_edit btn btn-secondary btn-sm",
-							href => $editHeaderLink,
-							target => "WW_Editor",
-							data_bs_toggle => "tooltip",
-							data_bs_title => $r->maketext("Edit Header"),
-							data_bs_placement => "top"
-						}, CGI::i({ class => "icon fas fa-pencil-alt", data_alt => $r->maketext("Edit") }, ""))
-						. CGI::a({
-							class => "psd_view btn btn-secondary btn-sm",
-							href => $viewHeaderLink,
-							target => "WW_View",
-							data_bs_toggle => "tooltip",
-							data_bs_placement => "top",
-							data_bs_title => $r->maketext("Open in New Window")
-						}, CGI::i({ class => "icon far fa-eye", data_alt => $r->maketext("View") }, ""))
+			print CGI::div(
+				{ class => 'card-text p-1' },
+				CGI::div(
+					{ class => 'row align-items-center' },
+					CGI::div(
+						{ class => 'col-4' },
+						CGI::table(
+							CGI::Tr(CGI::td($r->maketext($properties{$headerType}->{name}))),
+							CGI::Tr(CGI::td(
+								CGI::a(
+									{
+										class             => 'psd_edit btn btn-secondary btn-sm',
+										href              => $editHeaderLink,
+										target            => 'WW_Editor',
+										data_bs_toggle    => 'tooltip',
+										data_bs_title     => $r->maketext('Edit Header'),
+										data_bs_placement => 'top'
+									},
+									CGI::i(
+										{ class => 'icon fas fa-pencil-alt', data_alt => $r->maketext('Edit') }, ''
+									)
+									)
+									. CGI::a(
+										{
+											class             => 'psd_view btn btn-secondary btn-sm',
+											href              => $viewHeaderLink,
+											target            => 'WW_View',
+											data_bs_toggle    => 'tooltip',
+											data_bs_placement => 'top',
+											data_bs_title     => $r->maketext('Open in New Window')
+										},
+										CGI::i({ class => 'icon far fa-eye', data_alt => $r->maketext('View') }, '')
+									)
+							))
+						)
+					),
+					CGI::div(
+						{ class => 'col-8' },
+						comboBox({
+							name    => "set.$setID.$headerType",
+							default => $r->param("set.$setID.$headerType")
+								|| $setRecord->{$headerType}
+								|| 'defaultHeader',
+							multiple => 0,
+							values   => [ 'defaultHeader', @headerFileList ],
+							labels   => { 'defaultHeader' => $r->maketext('Use Default Header File') },
+						})
 					)
-				) .
-				CGI::end_table(),
-				comboBox({
-					name => "set.$setID.$headerType",
-					default => $r->param("set.$setID.$headerType") || $setRecord->{$headerType}  || "defaultHeader",
-					multiple => 0,
-					values => ["defaultHeader", @headerFileList],
-					labels => { "defaultHeader" => $r->maketext("Use Default Header File") },
-				})
-			]));
+				)
+			);
 		}
 
-		print CGI::end_table();
+		print CGI::end_div(), CGI::end_div();
 	} else {
-		print CGI::p(CGI::b($r->maketext("Screen and Hardcopy set header information can not be overridden for individual students.")));
+		print CGI::p(
+			CGI::b(
+				$r->maketext(
+					"Screen and Hardcopy set header information can not be overridden for individual students.")
+			)
+		);
 	}
-
-	# spacing
-	print CGI::p();
-
 
 	#####################################################################
 	# Display problem information
@@ -2811,6 +2835,8 @@ sub body {
 				} 0 .. $#problemIDList
 			);
 		}
+
+		print CGI::end_div();
 
 		print CGI::div(
 			{ class => 'input-group mb-2' },

@@ -33,6 +33,8 @@ package configobject;
 use strict;
 use warnings;
 
+use URI::Escape;
+
 sub new {
 	my $class = shift;
 	my $self = shift;
@@ -85,6 +87,7 @@ sub entry_widget {
 	my $width = $self->{width} || 15;
 	return CGI::textfield({
 		name  => $name,
+		id    => $name,
 		value => $default,
 		size  => $width,
 		class => 'form-control form-control-sm'
@@ -94,11 +97,16 @@ sub entry_widget {
 # This produces the documentation string and image link to more
 # documentation.  It is the same for all config types.
 sub what_string {
-	my $self = shift;
-	my $r    = $self->{Module}->r;
+	my ($self, $id) = @_;
+	my $r = $self->{Module}->r;
+
 	return (CGI::td(CGI::div(
 		{ class => 'd-flex justify-content-between align-items-center' },
-		CGI::div($r->maketext($self->{doc})),
+		CGI::div(
+			ref $self eq 'configcheckboxlist'
+			? $r->maketext($self->{doc})
+			: CGI::label({ for => $id }, $r->maketext($self->{doc}))
+		),
 		CGI::a(
 			{
 				href => $self->{Module}->systemLink(
@@ -106,7 +114,7 @@ sub what_string {
 						type => 'instructor_config',
 						args => { courseID => $r->urlpath->arg("courseID") }
 					),
-					params => { show_long_doc => 1, var_name => "$self->{var}" }
+					params => { show_long_doc => 1, var_name => uri_escape($self->{var}) }
 				),
 				target => "_blank"
 			},
@@ -219,11 +227,12 @@ sub entry_widget {
 	my ($self, $name, $default) = @_;
 	my $r = $self->{Module}->r;
 	return CGI::popup_menu({
-		name => $name,
+		name    => $name,
+		id      => $name,
 		default => $default,
-		values => [1, 0],
-		labels => { 1 => $r->maketext('True'), 0 => $r->maketext('False') },
-		class  => 'form-select form-select-sm'
+		values  => [ 1, 0 ],
+		labels  => { 1 => $r->maketext('True'), 0 => $r->maketext('False') },
+		class   => 'form-select form-select-sm'
 	});
 }
 
@@ -275,6 +284,7 @@ sub entry_widget {
 	my %labels = map {$_ => $r->maketext($_)} @values;
 	return CGI::popup_menu({
 		name    => $name,
+		id      => $name,
 		values  => \@values,
 		default => $default,
 		labels  => \%labels,
@@ -331,6 +341,7 @@ sub entry_widget {
 	$str = '' if $str !~ /\S/;
 	return CGI::textarea({
 		name    => $name,
+		id      => $name,
 		rows    => 4,
 		value   => $str,
 		class   => 'form-control form-control-sm'
@@ -446,6 +457,7 @@ sub entry_widget {
 
 	return CGI::popup_menu({
 		name    => $name,
+		id      => $name,
 		values  => $self->{values},
 		default => $default,
 		labels  => \%labels,
@@ -524,7 +536,7 @@ sub print_navigation_tabs {
 	my $str = '';
 	for my $tab (0 .. (scalar(@tab_names) - 1)) {
 		if ($current_tab eq "tab$tab") {
-			$tab_names[$tab] = CGI::a({ class => 'nav-link active' }, $r->maketext($tab_names[$tab]));
+			$tab_names[$tab] = CGI::span({ class => 'nav-link active' }, $r->maketext($tab_names[$tab]));
 		} else {
 			$tab_names[$tab] = CGI::a(
 				{
@@ -715,8 +727,8 @@ sub body {
 		. CGI::th({ class => 'text-center' }, $r->maketext('Current'));
 	for my $con (@configSectionArray) {
 		my $conobject = $self->objectify($con);
-		print "<tr>";
-		print $conobject->what_string;
+		print '<tr>';
+		print $conobject->what_string("widget$widget_count");
 		print CGI::td({ class => 'text-center' },
 			$conobject->display_value(eval('$default_ce->' . inline_var($con->{var}))));
 		print CGI::td($conobject->entry_widget("widget$widget_count", eval('$ce4->' . inline_var($con->{var}))));
