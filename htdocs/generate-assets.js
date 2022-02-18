@@ -185,7 +185,7 @@ chokidar.watch(['js/apps', 'themes'], {
 	usePolling: true, // Needed to get changes to symlinks.
 	interval: 500,
 	awaitWriteFinish: { stabilityThreshold: 500 },
-	persistent: argv.watchFiles ?? false
+	persistent: argv.watchFiles ? true : false
 })
 	.on('add', processFile).on('change', processFile).on('ready', processFile)
 	.on('unlink', (file) => {
