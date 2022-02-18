@@ -44,9 +44,7 @@ use URI::Escape;
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
-use Email::Simple;
-use Email::Sender::Simple qw(sendmail);
-use Email::Sender::Transport::SMTP qw();
+use Email::Stuffer;
 use Try::Tiny;
 
 use Caliper::Sensor;
@@ -581,7 +579,6 @@ sub jitar_send_warning_email {
 
     $problemID = join('.',jitar_id_to_seq($problemID));
 
-
     my %subject_map = (
 	'c' => $courseID,
 	'u' => $userID,
@@ -595,40 +592,6 @@ sub jitar_send_warning_email {
     my $subject = $ce->{mail}{feedbackSubjectFormat}
     || "WeBWorK question from %c: %u set %s/prob %p"; # default if not entered
     $subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ""/eg;
-
-    # If in the future any fields in the subject can contain non-ASCII characters
-    # then we will also need:
-    # $subject = Encode::encode("MIME-Header", $subject);
-    # at present, this does not seem to be necessary.
-
-
-	my $transport = $self->createEmailSenderTransportSMTP();
-	my $return_path_for_errors = $ce->{mail}->{set_return_path};
-	# createEmailSenderTransportSMTP is defined in ContentGenerator
-	# return_path_for_errors is the address used to report returned email. It is an argument
-	# used in sendmail() (aka Email::Simple::sendmail).
-	# For arcane historical reasons sendmail  actually sets the field "MAIL FROM" and the smtp server then
-	# uses that to set "Return-Path".
-	# references:
-	#  stackoverflow:
-	#     https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
-	#  Email::Simple: https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
-
-	my $email = Email::Simple->create(header => [
-			"To" => join(",", @recipients),
-			"From" => $sender,
-			"Subject" => $subject,
-			"Content-Type" => "text/plain; charset=UTF-8"
-		]);
-	## extra headers
-	$email->header_set("X-WeBWorK-Course: ",$courseID) if defined $courseID;
-	if ($user) {
-		$email->header_set("X-WeBWorK-User: ",$user->user_id);
-		$email->header_set("X-WeBWorK-Section: ",$user->section);
-		$email->header_set("X-WeBWorK-Recitation: ",$user->recitation);
-	}
-	$email->header_set("X-WeBWorK-Set: ",$setID) if defined $setID;
-	$email->header_set("X-WeBWorK-Problem: ",$problemID) if defined $problemID;
 
     my $full_name = $user->full_name;
     my $email_address = $user->email_address;
@@ -654,25 +617,38 @@ Recitation: $recitation
 Comment:    $comment
 /;
 
-	# Encode the body in UTF-8 when adding it.
-	$email->body_set(Encode::encode("UTF-8",$msg));
+	my $email = Email::Stuffer->to(join(",", @recipients))->from($sender)->subject($subject)
+		->text_body(Encode::encode('UTF-8', $msg));
 
-		## try to send the email
+	# Extra headers
+	$email->header('X-WeBWorK-Course: ', $courseID) if defined $courseID;
+	if ($user) {
+		$email->header('X-WeBWorK-User: ',       $user->user_id);
+		$email->header('X-WeBWorK-Section: ',    $user->section);
+		$email->header('X-WeBWorK-Recitation: ', $user->recitation);
+	}
+	$email->header('X-WeBWorK-Set: ',     $setID)     if defined $setID;
+	$email->header('X-WeBWorK-Problem: ', $problemID) if defined $problemID;
 
-		try {
-			if ($return_path_for_errors) {
-				sendmail($email,{transport => $transport, from=>$return_path_for_errors});
-			}
-			else {
-				sendmail($email,{transport => $transport});
-			}
-			debug("Successfully sent JITAR alert message");
-		} catch {
-      $r->log_error("Failed to send JITAR alert message: $_");
-		};
+	# $ce->{mail}{set_return_path} is the address used to report returned email if defined and non empty.
+	# It is an argument used in sendmail() (aka Email::Stuffer::send_or_die).
+	# For arcane historical reasons sendmail actually sets the field "MAIL FROM" and the smtp server then
+	# uses that to set "Return-Path".
+	# references:
+	#  https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
+	#  https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
+	try {
+		$email->send_or_die({
+				# createEmailSenderTransportSMTP is defined in ContentGenerator
+				transport => $self->createEmailSenderTransportSMTP(),
+				$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
+			});
+		debug('Successfully sent JITAR alert message');
+	} catch {
+		$r->log_error("Failed to send JITAR alert message: $_");
+	};
 
-
-    return "";
+    return '';
 }
 
 1;
