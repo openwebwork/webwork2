@@ -1392,7 +1392,9 @@ sub make_data_row {
 			},
 			CGI::img({
 				src => $r->ce->{webworkURLs}{htdocs} . '/images/pi.svg',
-				alt => $r->maketext('Uses Math Objects')
+				alt => $r->maketext('Uses Math Objects'),
+                                width => '10',
+                                height => '10'
 			})
 		)
 		: ''
