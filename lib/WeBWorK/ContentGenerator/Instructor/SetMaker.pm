@@ -1370,9 +1370,10 @@ sub make_data_row {
 			'UsesMathObjects',
 			{
 				label => CGI::img({
-					src => '/webwork2_files/images/pi.svg',
-					alt => $r->maketext('Uses Math Objects')
-				}),
+                                        src => '/webwork2_files/images/pi.svg',
+					alt => $r->maketext('Uses Math Objects'),
+                                        width => '10',
+                                        height => '10' }),
 				class             => 'btn btn-sm btn-secondary',
 				data_bs_title     => $r->maketext('Uses Math Objects'),
 				data_bs_toggle    => 'tooltip',
