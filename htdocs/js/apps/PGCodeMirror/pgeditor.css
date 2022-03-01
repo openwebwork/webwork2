@@ -12,6 +12,13 @@
  * Artistic License for more details.
  */
 
+.CodeMirror {
+	min-height: 400px;
+	width: 100%;
+	max-width: 1000px;
+	resize: vertical !important;
+}
+
 /* Additional CSS for codemirror addons and overrides */
 
 /* CodeMirror overrides */
@@ -43,4 +50,3 @@
 	min-height: 200px;
 	min-width: 400px;
 }
-
