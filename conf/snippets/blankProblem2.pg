@@ -45,7 +45,7 @@ $pi = Real("pi");
 #
 
 BEGIN_PGML
-Enter a value for [`\pi`]
+Enter a value for [`\pi`].
 
 [_____]{$pi}
 END_PGML
