@@ -1043,28 +1043,28 @@ sub siblings {
 
 sub nav {
 	my ($self, $args) = @_;
-	my $r = $self->r;
+	my $r   = $self->r;
 	my %can = %{ $self->{can} };
 
-	my $db = $r->db;
-	my $ce = $r->ce;
-	my $authz = $r->authz;
+	my $db      = $r->db;
+	my $ce      = $r->ce;
+	my $authz   = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	my $courseID = $urlpath->arg("courseID");
-	my $setID = $self->{set}->set_id;
+	my $courseID  = $urlpath->arg('courseID');
+	my $setID     = $self->{set}->set_id;
 	my $problemID = $self->{problem}->problem_id if !($self->{invalidProblem});
-	my $userID = $r->param('user');
-	my $eUserID = $r->param("effectiveUser");
+	my $userID    = $r->param('user');
+	my $eUserID   = $r->param('effectiveUser');
 
 	my $mergedSet = $db->getMergedSet($eUserID, $setID);
 	return '' if $self->{invalidSet} || !$mergedSet;
 
 	# Set up a student navigation for those that have permission to act as a student.
-	my $userNav = "";
-	if ($authz->hasPermissions($userID, "become_student") && $eUserID ne $userID) {
+	my $userNav = '';
+	if ($authz->hasPermissions($userID, 'become_student') && $eUserID ne $userID) {
 		# Find all users for this set (except the current user) sorted by last_name, then first_name, then user_id.
-		my @userRecords = $db->getUsersWhere(
+		my @allUserRecords = $db->getUsersWhere(
 			{
 				user_id => [
 					map { $_->[0] } $db->listUserSetsWhere({ set_id => $setID, user_id => { not_like => $userID } })
@@ -1073,28 +1073,55 @@ sub nav {
 			[qw/last_name first_name user_id/]
 		);
 
+		my $filter = $r->param('studentNavFilter');
+
 		# Find the previous, current, and next users, and format the student names for display.
+		# Also create a hash of sections and recitations if there are any for the course.
+		my @userRecords;
 		my $currentUserIndex = 0;
-		for (0 .. $#userRecords) {
-			$currentUserIndex = $_ if $userRecords[$_]->user_id eq $eUserID;
+		my %filters;
+		for (@allUserRecords) {
+			# Add to the sections and recitations if defined.  Also store the first user found in that section or
+			# recitation.  This user will be switched to when the filter is selected.
+			my $section = $_->section;
+			$filters{"section:$section"} = [ $r->maketext('Filter by section [_1]', $section), $_->user_id ]
+				if $section && !$filters{"section:$section"};
+			my $recitation = $_->recitation;
+			$filters{"recitation:$recitation"} = [ $r->maketext('Filter by recitation [_1]', $recitation), $_->user_id ]
+				if $recitation && !$filters{"recitation:$recitation"};
+
+			# Only keep this user if it satisfies the selected filter if a filter was selected.
+			next
+				unless !$filter
+				|| ($filter =~ /^section:(.*)$/    && $_->section eq $1)
+				|| ($filter =~ /^recitation:(.*)$/ && $_->recitation eq $1);
+
+			my $addRecord = $_;
+			$currentUserIndex = @userRecords if $addRecord->user_id eq $eUserID;
+			push @userRecords, $addRecord;
+
 			# Construct a display name.
-			$userRecords[$_]{displayName} = ($userRecords[$_]->last_name || $userRecords[$_]->first_name
-				? $userRecords[$_]->last_name . ", " . $userRecords[$_]->first_name
-				: $userRecords[$_]->user_id);
+			$addRecord->{displayName} =
+				($addRecord->last_name || $addRecord->first_name
+					? $addRecord->last_name . ', ' . $addRecord->first_name
+					: $addRecord->user_id);
 		}
-		my $prevUser = $currentUserIndex > 0 ? $userRecords[$currentUserIndex - 1] : 0;
-		my $nextUser = $currentUserIndex < $#userRecords ? $userRecords[$currentUserIndex + 1] : 0;
+		my $prevUser = $currentUserIndex > 0             ? $userRecords[ $currentUserIndex - 1 ] : 0;
+		my $nextUser = $currentUserIndex < $#userRecords ? $userRecords[ $currentUserIndex + 1 ] : 0;
 
 		# Mark the current user.
 		$userRecords[$currentUserIndex]{currentUser} = 1;
 
 		my $problemPage = $urlpath->newFromModule(__PACKAGE__, $r,
-			courseID => $courseID, setID => $setID, problemID => $problemID);
+			courseID  => $courseID,
+			setID     => $setID,
+			problemID => $problemID
+		);
 
 		# Cap the number of students shown to at most 200.
-		my $numAfter = $#userRecords - $currentUserIndex;
-		my $numBefore = 200 - ($numAfter < 100 ? $numAfter : 100);
-		my $minStudentIndex = $currentUserIndex < $numBefore ? 0 : $currentUserIndex - $numBefore;
+		my $numAfter        = $#userRecords - $currentUserIndex;
+		my $numBefore       = 200 - ($numAfter < 100 ? $numAfter : 100);
+		my $minStudentIndex = $currentUserIndex < $numBefore         ? 0 : $currentUserIndex - $numBefore;
 		my $maxStudentIndex = $minStudentIndex + 200 < $#userRecords ? $minStudentIndex + 200 : $#userRecords;
 
 		# Set up the student nav.
@@ -1107,7 +1134,8 @@ sub nav {
 						$problemPage,
 						params => {
 							effectiveUser     => $prevUser->user_id,
-							showProblemGrader => $self->{will}{showProblemGrader}
+							showProblemGrader => $self->{will}{showProblemGrader},
+							$filter ? (studentNavFilter => $filter) : ()
 						}
 					),
 					data_bs_toggle    => 'tooltip',
@@ -1116,32 +1144,35 @@ sub nav {
 					class             => 'btn btn-primary student-nav-button'
 				},
 				$r->maketext('Previous Student')
-			)
+				)
 			: CGI::span({ class => 'btn btn-primary disabled' }, $r->maketext('Previous Student')),
 			$args->{separator},
-			CGI::start_span({ class => 'btn-group student-nav-selector' }),
+			CGI::start_div({ class => 'btn-group student-nav-selector' }),
 			CGI::a(
 				{
+					href           => '#',
+					id             => 'studentSelector',
 					class          => 'btn btn-primary dropdown-toggle',
 					role           => 'button',
 					data_bs_toggle => 'dropdown',
-					aria_expanded  => 'false'
+					aria_expanded  => 'false',
+					scalar keys %filters ? (style => 'border-top-right-radius:0;border-bottom-right-radius:0') : (),
 				},
-				$userRecords[$currentUserIndex]{displayName} . ' ' . CGI::span({ class => 'caret' }, '')
+				$userRecords[$currentUserIndex]{displayName}
 			),
 			CGI::start_ul({ class => 'dropdown-menu', role => 'menu', aria_labelledby => 'studentSelector' }),
 			(
 				map {
 					CGI::li(CGI::a(
 						{
-							tabindex => '-1',
-							style    => $_->{currentUser} ? 'background-color: #8F8' : '',
-							class    => 'dropdown-item',
-							href     => $self->systemLink(
+							style => $_->{currentUser} ? 'background-color: #8F8' : '',
+							class => 'dropdown-item',
+							href  => $self->systemLink(
 								$problemPage,
 								params => {
 									effectiveUser     => $_->user_id,
-									showProblemGrader => $self->{will}{showProblemGrader}
+									showProblemGrader => $self->{will}{showProblemGrader},
+									$filter ? (studentNavFilter => $filter) : ()
 								}
 							)
 						},
@@ -1150,7 +1181,68 @@ sub nav {
 				} @userRecords[ $minStudentIndex .. $maxStudentIndex ]
 			),
 			CGI::end_ul(),
-			CGI::end_span(),
+			(
+				# Create a section/recitation filter by dropdown if there are sections or recitaitons.
+				scalar keys %filters
+				? (
+					CGI::a(
+						{
+							href           => '#',
+							id             => 'studentSelectorFilter',
+							class          => 'btn btn-primary dropdown-toggle dropdown-toggle-split',
+							role           => 'button',
+							data_bs_toggle => 'dropdown',
+							aria_expanded  => 'false',
+						},
+						CGI::span(
+							{ class => 'visually-hidden' },
+							$r->maketext('Filter students by section or recitation')
+						)
+					),
+					CGI::start_ul(
+						{ class => 'dropdown-menu', role => 'menu', aria_labelledby => 'studentSelectorFilter' }
+					),
+					(
+						# If a filter is currently in use, then add an item that will remove that filter.
+						$filter
+						? CGI::li(CGI::a(
+							{
+								class => 'dropdown-item',
+								href  => $self->systemLink(
+									$problemPage,
+									params => {
+										effectiveUser     => $eUserID,
+										showProblemGrader => $self->{will}{showProblemGrader}
+									}
+								)
+							},
+							$r->maketext('Remove current filter')
+						))
+						: ''
+					),
+					(
+						map {
+							CGI::li(CGI::a(
+								{
+									class => 'dropdown-item',
+									href  => $self->systemLink(
+										$problemPage,
+										params => {
+											effectiveUser     => $filters{$_}[1],
+											showProblemGrader => $self->{will}{showProblemGrader},
+											studentNavFilter  => $_
+										}
+									)
+								},
+								$filters{$_}[0]
+							))
+						} sort keys %filters
+					),
+					CGI::end_ul(),
+					)
+				: ''
+			),
+			CGI::end_div(),
 			$args->{separator},
 			$nextUser
 			? CGI::a(
@@ -1159,7 +1251,8 @@ sub nav {
 						$problemPage,
 						params => {
 							effectiveUser     => $nextUser->user_id,
-							showProblemGrader => $self->{will}{showProblemGrader}
+							showProblemGrader => $self->{will}{showProblemGrader},
+							$filter ? (studentNavFilter => $filter) : ()
 						}
 					),
 					data_bs_toggle    => 'tooltip',
@@ -1168,7 +1261,7 @@ sub nav {
 					class             => 'btn btn-primary student-nav-button'
 				},
 				$r->maketext('Next Student')
-			)
+				)
 			: CGI::span({ class => 'btn btn-primary disabled' }, $r->maketext('Next Student')),
 		);
 	}
@@ -1184,60 +1277,68 @@ sub nav {
 			map { $_->[2] } $db->listUserProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
 
 		if ($isJitarSet) {
-		    my @processedProblemIDs;
-		    foreach my $id (@problemIDs) {
-			push @processedProblemIDs, $id unless
-			    !$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_hidden($db,$eUserID,$setID,$id);
-		    }
-		    @problemIDs = @processedProblemIDs;
+			my @processedProblemIDs;
+			foreach my $id (@problemIDs) {
+				push @processedProblemIDs, $id
+					unless !$authz->hasPermissions($eUserID, 'view_unopened_sets')
+					&& is_jitar_problem_hidden($db, $eUserID, $setID, $id);
+			}
+			@problemIDs = @processedProblemIDs;
 		}
 
 		my $curr_index = 0;
 
-		for (my $i=0; $i<=$#problemIDs; $i++) {
-		    $curr_index = $i if $problemIDs[$i] == $problemID;
+		for (my $i = 0; $i <= $#problemIDs; $i++) {
+			$curr_index = $i if $problemIDs[$i] == $problemID;
 		}
 
-		$prevID = $problemIDs[$curr_index-1] if $curr_index-1 >=0;
-		$nextID = $problemIDs[$curr_index+1] if $curr_index+1 <= $#problemIDs;
-		$nextID = '' if ($isJitarSet && $nextID
-				 && !$authz->hasPermissions($eUserID, "view_unopened_sets")
-				 && is_jitar_problem_closed($db,$ce, $eUserID,$setID,$nextID));
+		$prevID = $problemIDs[ $curr_index - 1 ] if $curr_index - 1 >= 0;
+		$nextID = $problemIDs[ $curr_index + 1 ] if $curr_index + 1 <= $#problemIDs;
+		$nextID = ''
+			if ($isJitarSet
+				&& $nextID
+				&& !$authz->hasPermissions($eUserID, 'view_unopened_sets')
+				&& is_jitar_problem_closed($db, $ce, $eUserID, $setID, $nextID));
 	}
 
 	my @links;
 
 	if ($prevID) {
 		my $prevPage = $urlpath->newFromModule(__PACKAGE__, $r,
-			courseID => $courseID, setID => $setID, problemID => $prevID);
-		push @links, $r->maketext("Previous Problem"), $r->location . $prevPage->path, $r->maketext("Previous Problem");
+			courseID  => $courseID,
+			setID     => $setID,
+			problemID => $prevID
+		);
+		push @links, $r->maketext('Previous Problem'), $r->location . $prevPage->path, $r->maketext('Previous Problem');
 	} else {
-		push @links, $r->maketext("Previous Problem"), "", $r->maketext("Previous Problem");
+		push @links, $r->maketext('Previous Problem'), '', $r->maketext('Previous Problem');
 	}
 
 	if (defined($setID) && $setID ne 'Undefined_Set') {
-		push @links, $r->maketext("Problem List"), $r->location . $urlpath->parent->path, $r->maketext("Problem List");
+		push @links, $r->maketext('Problem List'), $r->location . $urlpath->parent->path, $r->maketext('Problem List');
 	} else {
-		push @links, $r->maketext("Problem List"), "", $r->maketext("Problem List");
+		push @links, $r->maketext('Problem List'), '', $r->maketext('Problem List');
 	}
 
 	if ($nextID) {
 		my $nextPage = $urlpath->newFromModule(__PACKAGE__, $r,
-			courseID => $courseID, setID => $setID, problemID => $nextID);
-		push @links, $r->maketext("Next Problem"), $r->location . $nextPage->path, $r->maketext("Next Problem");
+			courseID  => $courseID,
+			setID     => $setID,
+			problemID => $nextID
+		);
+		push @links, $r->maketext('Next Problem'), $r->location . $nextPage->path, $r->maketext('Next Problem');
 	} else {
-		push @links, $r->maketext("Next Problem"), "", $r->maketext("Next Problem");
+		push @links, $r->maketext('Next Problem'), '', $r->maketext('Next Problem');
 	}
 
-	my $tail = "";
-	$tail .= "&displayMode=".$self->{displayMode} if defined $self->{displayMode};
-	$tail .= "&showOldAnswers=".$self->{will}->{showOldAnswers}
-		if defined $self->{will}->{showOldAnswers};
-	$tail .= "&showProblemGrader=" . $self->{will}{showProblemGrader}
-		if defined $self->{will}{showProblemGrader};
+	my $tail = '';
+	$tail .= "&displayMode=$self->{displayMode}"                   if defined $self->{displayMode};
+	$tail .= "&showOldAnswers=$self->{will}{showOldAnswers}"       if defined $self->{will}{showOldAnswers};
+	$tail .= "&showProblemGrader=$self->{will}{showProblemGrader}" if defined $self->{will}{showProblemGrader};
+	$tail .= '&studentNavFilter=' . $r->param('studentNavFilter')  if $r->param('studentNavFilter');
 
 	return CGI::div({ class => 'row sticky-nav', role => 'navigation', aria_label => 'problem navigation' },
-		$userNav, CGI::div({ class => 'd-flex submit-buttons-container' }, $self->navMacro($args, $tail, @links)));
+		CGI::div({ class => 'd-flex submit-buttons-container' }, $self->navMacro($args, $tail, @links)), $userNav);
 }
 
 sub path {
@@ -1972,60 +2073,34 @@ sub output_score_summary{
 
 # prints out other necessary elements
 
-sub output_misc{
-
+sub output_misc {
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $pg = $self->{pg};
-	my %will = %{ $self->{will} };
-	my $user = $r->param('user');
+	my $r    = $self->r;
 
-# 	print CGI::start_div();
-#
-# 	my $pgdebug = join(CGI::br(), @{$pg->{pgcore}->{DEBUG_messages}} );
-# 	my $pgwarning = join(CGI::br(), @{$pg->{pgcore}->{WARNING_messages}} );
-# 	my $pginternalerrors = join(CGI::br(),  @{$pg->{pgcore}->get_internal_debug_messages}   );
-# 	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
-#
-# 	print CGI::p({style=>"color:red;"}, $r->maketext("Checking additional error messages")) if $pgerrordiv  ;
-#  	print CGI::p($r->maketext("pg debug"),CGI::br(), $pgdebug                 )   if $pgdebug ;
-# 	print CGI::p($r->maketext("pg warning"),CGI::br(),$pgwarning                ) if $pgwarning ;
-# 	print CGI::p($r->maketext("pg internal errors"),CGI::br(), $pginternalerrors) if $pginternalerrors;
-# 	print CGI::end_div()                                                          if $pgerrordiv ;
+	# Save state for viewOptions
+	print CGI::hidden(-name => 'showOldAnswers', -value => $self->{will}{showOldAnswers});
+	print CGI::hidden(-name => 'displayMode',    -value => $self->{displayMode});
 
-	# save state for viewOptions
-	print  CGI::hidden(
-			   -name  => "showOldAnswers",
-			   -value => $will{showOldAnswers}
-		   ),
+	print(CGI::hidden(-name => 'editMode', -value => $self->{editMode},))
+		if defined($self->{editMode})
+		and $self->{editMode} eq 'temporaryFile';
 
-		   CGI::hidden(
-			   -name  => "displayMode",
-			   -value => $self->{displayMode}
-		   );
-	print( CGI::hidden(
-			   -name    => 'editMode',
-			   -value   => $self->{editMode},
-		   )
-	) if defined($self->{editMode}) and $self->{editMode} eq 'temporaryFile';
+	# This is a security risk -- students can use this to find the source code for the problem
+	my $permissionLevel          = $r->db->getPermissionLevel($r->param('user'))->permission;
+	my $professorPermissionLevel = $r->ce->{userRoles}{professor};
+	print(CGI::hidden(-name => 'sourceFilePath', -value => $self->{problem}{source_file}))
+		if defined($self->{problem}{source_file})
+		and $permissionLevel >= $professorPermissionLevel;    # Only allow this for professors
 
-	# this is a security risk -- students can use this to find the source code for the problem
+	print(CGI::hidden(-name => 'problemSeed', -value => $r->param('problemSeed')))
+		if defined($r->param('problemSeed'))
+		and $permissionLevel >= $professorPermissionLevel;    # Only allow this for professors
 
-	my $permissionLevel = $db->getPermissionLevel($user)->permission;
-	my $professorPermissionLevel = $ce->{userRoles}->{professor};
-	print( CGI::hidden(
-		   		-name   => 'sourceFilePath',
-		   		-value  =>  $self->{problem}->{source_file}
-	))  if defined($self->{problem}->{source_file}) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
+	# Make sure the student nav filter setting is preserved when the problem form is submitted.
+	my $filter = $r->param('studentNavFilter');
+	print CGI::hidden({ name => 'studentNavFilter', value => $filter }) if $filter;
 
-	print( CGI::hidden(
-		   		-name   => 'problemSeed',
-		   		-value  =>  $r->param("problemSeed")
-	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
-
-	return "";
+	return '';
 }
 
 # output_comments subroutine
