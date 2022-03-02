@@ -12,9 +12,13 @@
  * Artistic License for more details.
  */
 
-.CodeMirror {
+.codeMirrorEditor {
 	min-height: 400px;
 	width: 100%;
+	max-width: 1000px;
+}
+
+.CodeMirror {
 	max-width: 1000px;
 	resize: vertical !important;
 }

@@ -542,7 +542,7 @@ sub body {
 					title             => $link->{tooltip},
 					class             => 'reference-link btn btn-sm btn-info',
 					data_bs_toggle    => 'tooltip',
-					data_bs_placement => 'bottom'
+					data_bs_placement => 'top'
 				},
 				$link->{label}
 			)

@@ -66,8 +66,9 @@ use constant CODEMIRROR_ADDONS_JS => [
 
 sub output_codemirror_html {
 	my ($r, $name, $contents) = @_;
+	my $ce = $r->ce;
 
-	if ($r->ce->{options}{PGCodeMirror}) {
+	if ($ce->{options}{PGCodeMirror}) {
 		# Output the textarea that will be used by CodeMirror.
 		print CGI::div(
 			{ class => 'mb-2' },
@@ -79,6 +80,22 @@ sub output_codemirror_html {
 				override => 1,
 			}),
 		);
+
+		# Construct the labels and values for the theme menu.
+		my ($themeLabels, $themeValues) = ({ default => 'default' }, ['default']);
+		for (@{ CODEMIRROR_THEMES() }) {
+			my $value = getAssetURL($ce, "node_modules/codemirror/theme/$_.css");
+			push @$themeValues, $value;
+			$themeLabels->{$value} = $_;
+		}
+
+		# Construct the labels and values for the keymap menu.
+		my ($keymapLabels, $keymapValues) = ({ default => 'default' }, ['default']);
+		for (@{ CODEMIRROR_KEYMAPS() }) {
+			my $value = getAssetURL($ce, "node_modules/codemirror/keymap/$_.js");
+			push @$keymapValues, $value;
+			$keymapLabels->{$value} = $_;
+		}
 
 		# Output the html elements for setting the CodeMirror options.
 		print CGI::div(
@@ -96,7 +113,8 @@ sub output_codemirror_html {
 						CGI::popup_menu({
 							name    => 'selectTheme',
 							id      => 'selectTheme',
-							values  => [ 'default', @{ CODEMIRROR_THEMES() } ],
+							values  => $themeValues,
+							labels  => $themeLabels,
 							default => 'default',
 							class   => 'form-select form-select-sm d-inline w-auto'
 						})
@@ -116,7 +134,8 @@ sub output_codemirror_html {
 						CGI::popup_menu({
 							name    => 'selectKeymap',
 							id      => 'selectKeymap',
-							values  => [ 'default', @{ CODEMIRROR_KEYMAPS() } ],
+							values  => $keymapValues,
+							labels  => $keymapLabels,
 							default => 'default',
 							class   => 'form-select form-select-sm d-inline w-auto'
 						})
@@ -152,20 +171,9 @@ sub output_codemirror_static_files {
 		for my $addon (@{ CODEMIRROR_ADDONS_CSS() }) {
 			print CGI::Link({ href => getAssetURL($ce, "node_modules/codemirror/addon/$addon"), rel => 'stylesheet' });
 		}
-		for my $theme (@{ CODEMIRROR_THEMES() }) {
-			print CGI::Link({
-				href => getAssetURL($ce, "node_modules/codemirror/theme/$theme.css"),
-				rel  => 'stylesheet'
-			});
-		}
 		print CGI::Link({ href => getAssetURL($ce, 'js/apps/PGCodeMirror/pgeditor.css'), rel => 'stylesheet' });
 
 		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/lib/codemirror.js'), defer => undef }, '');
-
-		for my $keymap (@{ CODEMIRROR_KEYMAPS() }) {
-			print CGI::script({ src => getAssetURL($ce, "node_modules/codemirror/keymap/$keymap.js"), defer => undef },
-				'');
-		}
 
 		for my $addon (@{ CODEMIRROR_ADDONS_JS() }) {
 			print CGI::script({ src => getAssetURL($ce, "node_modules/codemirror/addon/$addon"), defer => undef }, '');
