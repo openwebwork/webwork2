@@ -47,7 +47,7 @@ const cleanDir = (dir) => {
 		} else {
 			if (/.[a-z0-9]{8}.min.(css|js)$/.test(file.name)) {
 				const fullPath = path.resolve(dir, file.name);
-				console.log(`Removing ${fullPath} from previous build.`);
+				console.log(`\x1b[34mRemoving ${fullPath} from previous build.\x1b[0m`);
 				fs.unlinkSync(fullPath);
 			}
 		}
@@ -63,12 +63,21 @@ const processFile = async (file, _details) => {
 
 		if (/(?<!\.min)\.js$/.test(baseName)) {
 			// Process javascript
-			if (!ready) console.log(`Proccessing ${file}`);
+			if (!ready) console.log(`\x1b[32mProccessing ${file}\x1b[0m`);
 
 			const filePath = path.resolve(__dirname, file);
 
 			const contents = fs.readFileSync(filePath, 'utf8');
-			const result = await minify({ [baseName]: contents }, { sourceMap: argv.enableSourcemaps });
+
+			let result;
+			try {
+				result = await minify({ [baseName]: contents }, { sourceMap: argv.enableSourcemaps });
+			} catch (error) {
+				const { name, message, line, col, pos } = error;
+				console.log(`\x1b[31m${name} in ${file}:`);
+				console.log(`${message} at line ${line} column ${col} position ${pos}.\x1b[0m`);
+				return;
+			}
 
 			const minJS = result.code + (
 				argv.enableSourcemaps && result.map
@@ -85,27 +94,35 @@ const processFile = async (file, _details) => {
 
 			// Remove a previous version if the content hash is different.
 			if (assets[file] && assets[file] !== newVersion) {
-				console.log(`Updated ${file}.`);
+				console.log(`\x1b[32mUpdated ${file}.\x1b[0m`);
 				const oldFileFullPath = path.resolve(__dirname, assets[file]);
 				if (fs.existsSync(oldFileFullPath)) fs.unlinkSync(oldFileFullPath);
-			} else if (ready && !assets[file]) {
-				console.log(`Processed ${file}.`);
+			} else if (ready) {
+				console.log(`\x1b[32mProcessed ${file}.\x1b[0m`);
 			}
 
 			assets[file] = newVersion;
 		} else if (/^(?!_).*(?<!\.min)\.s?css$/.test(baseName)) {
 			// Process scss or css.
-			if (!ready) console.log(`Proccessing ${file}`);
+			if (!ready) console.log(`\x1b[32mProccessing ${file}\x1b[0m`);
 
 			const filePath = path.resolve(__dirname, file);
 
 			// This works for both sass/scss files and css files.  For css files it just compresses.
-			const result = sass.compile(filePath, { style: 'compressed', sourceMap: argv.enableSourcemaps });
+			let result;
+			try {
+				result = sass.compile(filePath, { style: 'compressed', sourceMap: argv.enableSourcemaps });
+			} catch (e) {
+				console.log(`\x1b[31mIn ${file}:`);
+				console.log(`${e.message}\x1b[0m`);
+				return;
+			}
+
 			if (result.sourceMap) result.sourceMap.sources = [ baseName ];
 
 			// Pass the compiled css through the autoprefixer.
 			// This is really only needed for the bootstrap.css files, but doesn't hurt for the rest.
-			const prefixedResult = await postcss([autoprefixer]).process(result.css, { from: baseName });
+			let prefixedResult = await postcss([autoprefixer]).process(result.css, { from: baseName });
 
 			const minCSS = prefixedResult.css + (
 				argv.enableSourcemaps && result.sourceMap
@@ -124,11 +141,11 @@ const processFile = async (file, _details) => {
 
 			// Remove a previous version if the content hash is different.
 			if (assets[assetName] && assets[assetName] !== newVersion) {
-				console.log(`Updated ${file}.`);
+				console.log(`\x1b[32mUpdated ${file}.\x1b[0m`);
 				const oldFileFullPath = path.resolve(__dirname, assets[assetName]);
 				if (fs.existsSync(oldFileFullPath)) fs.unlinkSync(oldFileFullPath);
-			} else if (ready && !assets[file]) {
-				console.log(`Processed ${file}.`);
+			} else if (ready) {
+				console.log(`\x1b[32mProcessed ${file}.\x1b[0m`);
 			}
 
 			assets[assetName] = newVersion;
@@ -137,8 +154,8 @@ const processFile = async (file, _details) => {
 		}
 	} else {
 		if (argv.watchFiles)
-			console.log('Watches established, and initial build complete.\n'
-				+ 'Press Control-C to stop.');
+			console.log('\x1b[33mWatches established, and initial build complete.\n'
+				+ 'Press Control-C to stop.\x1b[0m');
 		ready = true;
 	}
 
@@ -167,18 +184,18 @@ for (const file of fs.readdirSync(themesDir, { withFileTypes: true })) {
 // Add third party assets to the assets list.
 if (argv.useCDN) {
 	// If using a cdn, the values are the cdn location for the file.
-	console.log('Adding third party assets from CDN.');
+	console.log('\x1b[32mAdding third party assets from CDN.\x1b[0m');
 	Object.assign(assets, thirdPartyAssets);
 } else {
 	// If not using a cdn, the values are the same as the request file.
-	console.log('Adding third party assets served locally from htdocs/node_modules.');
+	console.log('\x1b[32mAdding third party assets served locally from htdocs/node_modules.\x1b[0m');
 	Object.assign(assets,
 		Object.entries(thirdPartyAssets).reduce(
 			(accumulator, [file]) => { accumulator[file] = file; return accumulator; }, {}));
 }
 
 // Set up the watcher.
-if (argv.watchFiles) console.log('Establishing watches and performing initial build.');
+if (argv.watchFiles) console.log('\x1b[32mEstablishing watches and performing initial build.\x1b[0m');
 chokidar.watch(['js/apps', 'themes'], {
 	ignored: /\.min\.(js|css)$/,
 	cwd: __dirname, // Make sure all paths are given relative to the htdocs directory.
@@ -191,9 +208,9 @@ chokidar.watch(['js/apps', 'themes'], {
 	.on('unlink', (file) => {
 		// If a file is deleted, then also delete the corresponding generated file.
 		if (assets[file]) {
-			console.log(`Deleting minified file for ${file}.`);
+			console.log(`\x1b[34mDeleting minified file for ${file}.\x1b[0m`);
 			fs.unlinkSync(path.resolve(__dirname, assets[file]));
 			delete assets[file];
 		}
 	})
-	.on('error', (error) => console.log(error));
+	.on('error', (error) => console.log(`\x1b[32m${error}\x1b[0m`));
