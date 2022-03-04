@@ -1212,16 +1212,16 @@ sub has_aux_files ($) { #  determine whether a question has auxiliary files
 }
 
 sub is_restricted {
-    my ($db, $set, $studentName) = @_;
+	my ($db, $set, $studentName) = @_;
 
 	# all sets open after the due date
 	return () if after($set->due_date());
 
-    my $setID = $set->set_id();
+	my $setID = $set->set_id();
 	my @needed;
 
 	if ($set->restricted_release ) {
-	    my @proposed_sets  = split(/\s*,\s*/,$set->restricted_release);
+		my @proposed_sets  = split(/\s*,\s*/,$set->restricted_release);
 		my $required_score = sprintf("%.2f", $set->restricted_status || 0);
 
 		my @good_sets;
