@@ -14,11 +14,11 @@
 	}
 
 	function goodmsg(msg) {
-		$(".Message").html('<div class="ResultsWithoutError">'+msg+"</div>");
+		$(".Message").html('<div class="alert alert-success p-1 mb-2">'+msg+"</div>");
 	}
 
 	function badmsg(msg) {
-		$(".Message").html('<div class="ResultsWithError">'+msg+"</div>");
+		$(".Message").html('<div class="alert alert-danger p-1 mb-2">'+msg+"</div>");
 	}
 
 	function init_webservice(command) {
@@ -34,7 +34,7 @@
 		} else {
 			alert("missing hidden credentials: user "
 				+ myUser + " session_key " + mySessionKey+ " courseID "
-				+ myCourseID, "alert-error");
+				+ myCourseID, "alert-danger");
 			return null;
 		}
 		mydefaultRequestObject.xml_command = command;
@@ -80,10 +80,10 @@
 				timeout: 10000, //milliseconds
 				success: function (data) {
 					if (data.match(/WeBWorK error/)) {
-						reportWWerror(data);		   
+						reportWWerror(data);
 					}
 
-					var response = $.parseJSON(data);
+					var response = JSON.parse(data);
 					// console.log(response);
 					var arr = response.result_data;
 					arr = arr[0];
@@ -119,7 +119,7 @@
 					reportWWerror(data);
 				}
 
-				var response = $.parseJSON(data);
+				var response = JSON.parse(data);
 				// console.log(response);
 				var arr = response.result_data;
 				arr.splice(0,0,all);
@@ -136,7 +136,7 @@
 	function setselect(selname, newarray) {
 		var sel = $('[name="'+selname+'"]');
 		sel.empty();
-		$.each(newarray, function(i,val) {
+		$.each(newarray, function (_i, val) {
 			sel.append($("<option></option>").val(val).html(val));
 		});
 	}
@@ -180,13 +180,10 @@
 					reportWWerror(data);
 				}
 
-				var phrase = count+" problem";
-				if(count!=1) { phrase += "s";}
-				// alert("Added "+phrase+" to "+ro.set);
 				markinset();
 
 				var prbs = "problems";
-				if(ro.total == 1) { 
+				if(ro.total == 1) {
 					prbs = "problem";
 				}
 				goodmsg("Added "+ro.total+" "+prbs+" to set "+ro.set_id);
@@ -197,7 +194,7 @@
 		// Need to clone the object so the recursion works
 		var ro2 = jQuery.extend(true, {}, ro);
 		ro2.problemPath=probarray.shift();
-		return function (data) {
+		return function () {
 			return $.ajax({type:'post',
 				url: wsURL,
 				data: ro2,
@@ -215,13 +212,14 @@
 	function markinset() {
 		var ro = init_webservice('listSetProblems');
 		var target = $('[name="local_sets"] option:selected').val();
-		if(target == 'Select a Set from this Course') {
+		if (target == 'Select a Set from this Course') {
 			target = null;
 		}
 		var shownprobs = $('[name^="filetrial"]'); // shownprobs.value
 		ro.set_id = target;
 		ro.command = 'true';
-		return $.ajax({type:'post',
+		return $.ajax({
+			type: 'post',
 			url: basicWebserviceURL,
 			data: ro,
 			timeout: 10000, //milliseconds
@@ -230,53 +228,52 @@
 					reportWWerror(data);
 				}
 
-				var response = $.parseJSON(data);
-				// console.log(response);
+				var response = JSON.parse(data);
 				var arr = response.result_data;
 				var pathhash = {};
-				for(var i=0; i<arr.length; i++) {
+				for (var i = 0; i < arr.length; i++) {
 					arr[i] = arr[i].path;
-					arr[i] = arr[i].replace(/^\//,'');
+					arr[i] = arr[i].replace(/^\//, '');
 					pathhash[arr[i]] = 1;
 				}
-				for(var i=0; i< shownprobs.length; i++) {
-					var num= shownprobs[i].name;
-					num = num.replace("filetrial","");
-					if(pathhash[shownprobs[i].value] ==1) {
-						$('#inset'+num).html('<i><b>(in target set)</b></i>');
+				for (var i = 0; i < shownprobs.length; i++) {
+					var num = shownprobs[i].name;
+					num = num.replace("filetrial", "");
+					const inset = document.getElementById(`inset${num}`);
+					if (pathhash[shownprobs[i].value] == 1) {
+						inset.innerHTML = '<i><b>(in target set)</b></i>';
 					} else {
-						$('#inset'+num).html('<i><b></b></i>');
+						inset.innerHTML = '';
 					}
 				}
 			},
 			error: function (data) {
-				alert('305 setmaker.js: '+ basicWebserviceURL+': '+data.statusText);
+				alert('305 setmaker.js: ' + basicWebserviceURL + ': ' + data.statusText);
 			},
 		});
 	}
 
-	function delrow(num) { 
+	function delrow(num) {
 		nomsg();
 		var path = $('[name="filetrial'+ num +'"]').val();
 		var APLindex = findAPLindex(path);
 		var mymlt = $('[name="all_past_mlt'+ APLindex +'"]').val();
 		var cnt = 1;
-		var loop = 1;
 		var mymltM = $('#mlt'+num);
 		var mymltMtext = 'L'; // so extra stuff is not deleted
 		if(mymltM) {
 			mymltMtext = mymltM.text();
 		}
-		$('#pgrow'+num).remove(); 
-		delFromPGList(num, path);
+		$('#pgrow'+num).remove();
+		delFromPGList(path);
 		if((mymlt > 0) && mymltMtext=='M') { // delete hidden problems
 			var table_num = num;
 			while((newmlt = $('[name="all_past_mlt'+ APLindex +'"]')) && newmlt.val() == mymlt) {
 				cnt += 1;
 				num++;
 				path = $('[name="filetrial'+ num +'"]').val();
-				$('#pgrow'+num).remove(); 
-				delFromPGList(num, path);
+				$('#pgrow'+num).remove();
+				delFromPGList(path);
 			}
 			$('#mlt-table'+table_num).remove();
 		} else if ((mymlt > 0) && $('.MLT'+mymlt).length == 0) {
@@ -306,7 +303,6 @@
 		if(ls < $('[name="first_shown"]').val()) {
 			$('#what_shown').text('None');
 		}
-		//  showpglist();
 		return(true);
 	}
 
@@ -319,7 +315,7 @@
 		return j;
 	}
 
-	function delFromPGList(num, path) {
+	function delFromPGList(path) {
 		var j = findAPLindex(path);
 		j++;
 		while ($('[name="all_past_list'+ j +'"]').length>0) {
@@ -338,7 +334,7 @@
 	var basicRendererURL = "/webwork2/html2xml";
 
 	async function render(id) {
-		return new Promise(function(resolve, reject) {
+		return new Promise(function(resolve) {
 			var renderArea = $('#psr_render_area_' + id);
 
 			var iframe = renderArea.find('#psr_render_iframe_' + id);
@@ -353,7 +349,7 @@
 			};
 
 			if (!(ro.userID && ro.courseID && ro.session_key)) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mb-0' })
 					.text("Missing hidden credentials: user, session_key, courseID"));
 				resolve();
 				return;
@@ -369,27 +365,37 @@
 			ro.processAnswers = 0;
 			ro.showFooter = 0;
 			ro.displayMode = $('select[name=mydisplayMode]').val();
+
+			// Abort if the display mode is not set to None
+			if (ro.displayMode === "None") {
+				renderArea.html($('<div/>'));
+				resolve();
+				return;
+			}
+
 			ro.send_pg_flags = 1;
-			ro.extra_header_text = "<style>html{overflow-y:hidden;}body{padding:0;background:#f5f5f5;.container-fluid{padding:0px;}</style>";
+			ro.extra_header_text = '<style>' +
+				'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
+				'</style>';
 			if (window.location.port) ro.forcePortNumber = window.location.port;
 
 			$.ajax({type:'post',
 				url: basicRendererURL,
 				data: ro,
-				dataType: "json",
+				dataType: 'json',
 				timeout: 10000, //milliseconds
 			}).done(function (data) {
 				// Give nicer session timeout error
 				if (!data.html || /Can\'t authenticate -- session may have timed out/i.test(data.html) ||
 					/Webservice.pm: Error when trying to authenticate./i.test(data.html)) {
-					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mb-0' })
 						.text("Can't authenticate -- session may have timed out."));
 					resolve();
 					return;
 				}
 				// Give nicer file not found error
 				if (/this problem file was empty/i.test(data.html)) {
-					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mb-0' })
 						.text('No Such File or Directory!'));
 					resolve();
 					return;
@@ -398,7 +404,7 @@
 				if ((data.pg_flags && data.pg_flags.error_flag) ||
 					/error caught by translator while processing problem/i.test(data.html) ||
 					/error message for command: renderproblem/i.test(data.html)) {
-					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mb-0' })
 						.text('There was an error rendering this problem!'));
 					resolve();
 					return;
@@ -409,12 +415,13 @@
 					iframe[0].style.border = 'none';
 					renderArea.html(iframe);
 					if (data.pg_flags && data.pg_flags.comment) iframe.after($(data.pg_flags.comment));
+					if (data.warnings) iframe.after($(data.warnings));
 					iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe[0]);
 					iframe[0].addEventListener('load', function() { resolve(); });
 				}
 				iframe[0].srcdoc = data.html;
 			}).fail(function (data) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mb-0' })
 					.text(basicRendererURL + ': ' + data.statusText));
 				resolve();
 			});
@@ -428,7 +435,8 @@
 		var n1 = $('#lastshown').text();
 		var n2 = $('#totalshown').text();
 
-		if($('#mlt' + cnt).text() == 'M') {
+		const mltIcon = document.getElementById(`mlt${cnt}`);
+		if(mltIcon.textContent == 'M') {
 			unshownAreas.show();
 			// Render any problems that were hidden that have not yet been rendered.
 			for (let area of unshownAreas) {
@@ -436,28 +444,21 @@
 				if (iframe[0] && iframe[0].iFrameResizer) iframe[0].iFrameResizer.resize();
 				else await render(area.id.match(/^pgrow(\d+)/)[1]);
 			}
-			$('#mlt' + cnt).text("L");
-			$('#mlt' + cnt).attr("title", "Show less like this");
+			mltIcon.textContent = 'L';
+			mltIcon.dataset.bsTitle = mltIcon.dataset.lessText;
+			bootstrap.Tooltip.getInstance(mltIcon)?.dispose();
+			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] })
 			count = -count;
 		} else {
 			unshownAreas.hide();
-			$('#mlt' + cnt).text("M");
-			$('#mlt' + cnt).attr("title", "Show " + unshownAreas.length + " more like this");
+			mltIcon.textContent = 'M';
+			mltIcon.dataset.bsTitle = mltIcon.dataset.moreText;
+			bootstrap.Tooltip.getInstance(mltIcon)?.dispose();
+			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] })
 		}
 		$('#lastshown').text(n1 - count);
 		$('#totalshown').text(n2 - count);
 		$('[name="last_shown"]').val($('[name="last_shown"]').val() - count);
-	}
-
-	function showpglist() {
-		var j=0;
-		var s='';
-		while ($('[name="all_past_list'+ j +'"]').length>0) {
-			s = s+ $('[name="all_past_list'+ j +'"]').val()+", "+ $('[name="all_past_mlt'+ j +'"]').val()+"\n";
-			j++;
-		}
-		alert(s);
-		return true;
 	}
 
 	function reportWWerror(data) {
@@ -467,17 +468,11 @@
 			.dialog({width:'70%'});
 	}
 
-	// Set up the problem rerandomization buttons.
-	$(".rerandomize_problem_button").click(function() {
-		var targetProblem = $(this).data('target-problem');
-		render(targetProblem);
-	});
-
 	// Find all render areas
-	var renderAreas = $('.psr_render_area');
+	const renderAreas = $('.psr_render_area');
 
 	// Add the loading message to all render areas.
-	for (var renderArea of renderAreas) {
+	for (let renderArea of renderAreas) {
 		$(renderArea).html('Loading Please Wait...');
 	}
 
@@ -493,9 +488,37 @@
 	$("select[name=library_subjects]").on("change", function() { lib_update('chapters', 'get'); });
 	$("select[name=library_sections]").on("change", function() { lib_update('count', 'clear'); });
 	$("input[name=level]").on("change", function() { lib_update('count', 'clear'); });
-	$("input[name=select_all]").click(function() { addme('', 'all'); });
-	$("input[name=add_me]").click(function() { addme($(this).data('source-file'), 'one'); });
+	$("input[name=select_all]").on('click', function() { addme('', 'all'); });
+	$("input[name=add_me]").on('click', function() { addme($(this).data('source-file'), 'one'); });
 	$("select[name=local_sets]").on("change", markinset);
-	$("span[name=dont_show]").click(function() { delrow($(this).data('row-cnt')); });
-	$(".lb-mlt-parent").click(function() { togglemlt($(this).data('mlt-cnt'), $(this).data('mlt-noshow-class')); });
+
+	// This is a convenience method for attaching both a click and keydown handler to spans that are inert by default.
+	const attachEventListeners = (button, handler) => {
+		button.addEventListener('click', handler);
+		button.addEventListener('keydown', (e) => {
+			if (e.key === ' ' || e.key === 'Enter') {
+				e.preventDefault();
+				handler();
+			}
+		});
+	};
+
+	// Set up the problem rerandomization buttons.
+	document.querySelectorAll('.rerandomize_problem_button').forEach((button) =>
+		attachEventListeners(button, () => render(button.dataset.targetProblem)));
+
+	document.querySelectorAll('.dont-show').forEach((button) =>
+		attachEventListeners(button, () => {
+			bootstrap.Tooltip.getInstance(button)?.hide();
+			delrow(button.dataset.rowCnt);
+		})
+	);
+
+	document.querySelectorAll('.lb-mlt-parent').forEach((button) =>
+		attachEventListeners(button, () => togglemlt(button.dataset.mltCnt, button.dataset.mltNoshowClass)));
+
+	document.querySelectorAll('.info-button').forEach((popover) => new bootstrap.Popover(popover));
+
+	document.querySelectorAll('.lb-problem-add [data-bs-toggle], .lb-problem-icons [data-bs-toggle=tooltip]')
+		.forEach((el) => new bootstrap.Tooltip(el, { fallbackPlacements: [] }));
 })();

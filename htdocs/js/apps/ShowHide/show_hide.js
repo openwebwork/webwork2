@@ -1,13 +1,10 @@
-/*This Javascript attaches the proper event handler to the "Show/Hide Description" button*/
+/* This Javascript attaches the proper event handler to the "Show/Hide Description" button */
 
-function show_hide(){
-	var description = document.getElementById("site_description");
-	if(description.style.display == "none"){
-		description.style.display = "block";
-	}
-	else{
-		description.style.display = "none";
-	}
-}
-
-$(function() { document.getElementById("show_hide").onclick = show_hide; });
+(() => {
+	const showHide = document.getElementById('show_hide');
+	showHide?.addEventListener('click', () => {
+		const description = document.getElementById("site_description");
+		if (description.style.display === "none") description.style.display = "block";
+		else description.style.display = "none";
+	});
+})();

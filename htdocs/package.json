@@ -2,18 +2,32 @@
     "name": "webwork.javascript_package_manager",
     "description": "Third party javascript for WeBWorK",
     "license": "GPL-2.0+",
+    "scripts": {
+        "generate-css": "sass --style compressed --no-source-map themes",
+        "css-prefix": "npx postcss themes/*/bootstrap.css --use autoprefixer --replace --no-map",
+        "sass-watch": "sass --watch themes",
+        "prepare": "npm run generate-css && npm run css-prefix"
+    },
     "repository": {
         "type": "git",
         "url": "https://github.com/openwebwork/webwork2"
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "5.15.2",
+        "bootstrap": "^5.1.3",
         "codemirror": "^5.14.3",
+        "flatpickr": "^4.6.9",
         "iframe-resizer": "^4.3.1",
         "jquery": "3.5.1",
         "jquery-ui-dist": "1.12.1",
         "jquery-ui-themes": "1.12.0",
         "mathjax": "^3.1.2",
-        "nestedSortable": "^1.3.4"
+        "sortablejs": "^1.14.0"
+    },
+    "devDependencies": {
+        "autoprefixer": "^10.4.1",
+        "postcss": "^8.4.5",
+        "postcss-cli": "^8.3.1",
+        "sass": "^1.45.2"
     }
 }

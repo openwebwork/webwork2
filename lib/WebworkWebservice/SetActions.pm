@@ -1,6 +1,6 @@
-#!/usr/local/bin/perl -w 
+#!/usr/local/bin/perl -w
 
-# Copyright (C) 2002 Michael Gage 
+# Copyright (C) 2002 Michael Gage
 
 ###############################################################################
 # Web service which fetches, adds, removes and moves WeBWorK problems when working with a Set.
@@ -12,7 +12,7 @@
 
 package WebworkWebservice::SetActions;
 use WebworkWebservice;
-use base qw(WebworkWebservice); 
+use base qw(WebworkWebservice);
 use WeBWorK::Utils qw(readDirectory max sortByName formatDateTime jitar_id_to_seq seq_to_jitar_id);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 
@@ -32,7 +32,7 @@ use Benchmark;
 
 ##############################################
 #   Some of this may have to be moved, to allow for flexability
-#   Obtain basic information about directories, course name and host 
+#   Obtain basic information about directories, course name and host
 ##############################################
 our $WW_DIRECTORY = $WebworkWebservice::WW_DIRECTORY;
 our $PG_DIRECTORY = $WebworkWebservice::PG_DIRECTORY;
@@ -92,7 +92,7 @@ sub listLocalSetProblems{
 		push @problems, $problem;
 
 	}
-	
+
   	my $out = {};
   	$out->{ra_out} = \@problems;
   	$out->{text} = encode_utf8_base64("Loaded Problems for set: " . $setName);
@@ -105,10 +105,10 @@ sub getSets{
   my ($self,$params) = @_;
   my $db = $self->db;
   my @found_sets = $db->listGlobalSets;
-  
+
   my @all_sets = $db->getGlobalSets(@found_sets);
-  
-  # fix the timeDate  
+
+  # fix the timeDate
  foreach my $set (@all_sets){
 	#$set->{due_date} = formatDateTime($set->{due_date},'local');
 	#$set->{open_date} = formatDateTime($set->{open_date},'local');
@@ -117,7 +117,7 @@ sub getSets{
 	my @users = $db->listSetUsers($set->{set_id});
 	$set->{assigned_users} = \@users;
   }
-  
+
   my $out = {};
   $out->{ra_out} = \@all_sets;
   $out->{text} = encode_utf8_base64("Sets for course: ".$self->{courseName});
@@ -131,20 +131,20 @@ sub getSets{
 sub getUserSets{
   my ($self,$params) = @_;
   my $db = $self->db;
-  
+
   my @userSetNames = $db->listUserSets($params->{user});
   debug(@userSetNames);
   my @userSets = $db->getGlobalSets(@userSetNames);
-  
-  # fix the timeDate  
+
+  # fix the timeDate
  # foreach my $set (@userSets){
 	# $set->{due_date} = formatDateTime($set->{due_date},'local');
 	# $set->{open_date} = formatDateTime($set->{open_date},'local');
 	# $set->{answer_date} = formatDateTime($set->{answer_date},'local');
  #  }
-  
-  
-  
+
+
+
   my $out = {};
   $out->{ra_out} = \@userSets;
   $out->{text} = encode_utf8_base64("Sets for course: ".$self->{courseName});
@@ -160,13 +160,13 @@ sub getSet {
   my $db = $self->db;
   my $setName = $params->{set_id};
   my $set = $db->getGlobalSet($setName);
-  
-  # change the date/times to user readable strings.  
-  
+
+  # change the date/times to user readable strings.
+
   $set->{due_date} = formatDateTime($set->{due_date},'local');
   $set->{open_date} = formatDateTime($set->{open_date},'local');
   $set->{answer_date} = formatDateTime($set->{answer_date},'local');
-  
+
   my $out = {};
   $out->{ra_out} = $set;
   $out->{text} = encode_utf8_base64("Sets for course: ".$self->{courseName});
@@ -206,7 +206,7 @@ sub updateSetProperties {
 
 	# Next update the assigned_users list
 
-	# first, get the current list of users. 
+	# first, get the current list of users.
 
 	my @usersForTheSetBefore = $db->listSetUsers($params->{set_id});
 
@@ -218,9 +218,9 @@ sub updateSetProperties {
 
 
 	# The following seems to work if there are only additions or subtractions from the assigned_users field.
-	# Perhaps a better way to do this is to check users that are new or missing and add or delete them. 
+	# Perhaps a better way to do this is to check users that are new or missing and add or delete them.
 
-	# if the number of users have grown, then add them.  
+	# if the number of users have grown, then add them.
 
 	debug(to_json(\@usersForTheSetNow));
 
@@ -235,14 +235,14 @@ sub updateSetProperties {
 		}
 	}
 
-	# delete users that are in the set before but not now. 
+	# delete users that are in the set before but not now.
 
 	foreach my $user (@usersForTheSetBefore){
 		if (! grep(/^$user$/,@usersForTheSetNow)){
 			$db->deleteUserSet($user, $params->{set_id});
 		}
 	}
- 
+
 
 	my $out = {};
 	$out->{ra_out} = $set;
@@ -253,7 +253,7 @@ sub updateSetProperties {
 sub listSetUsers {
 	my ($self,$params) = @_;
 	my $db = $self->db;
-    
+
     my $out = {};
     my @users = $db->listSetUsers($params->{set_id});
     $out->{ra_out} = \@users;
@@ -284,9 +284,6 @@ sub createNewSet{
             $out->{out}=encode_utf8_base64("Failed to create set, you may need to try another name."),
             $out->{ra_out} = {'success' => 'false'};
 		} else {			# Do it!
-			# DBFIXME use $db->newGlobalSet
-			# $newSetRecord = $db->{set}->{record}->new();
-
 			$newSetRecord = $db->newGlobalSet;
 			$newSetRecord->set_id($newSetName);
 			$newSetRecord->set_header("defaultHeader");
@@ -318,7 +315,7 @@ sub createNewSet{
 			$newSetRecord->hide_hint($params->{hide_hint});
 			$newSetRecord->restrict_prob_progression($params->{restrict_prob_progression});
 			$newSetRecord->email_instructor($params->{email_instructor});
-			
+
 			$db->addGlobalSet($newSetRecord);
 			if ($@) {
 				$out->{text} = encode_utf8_base64("Failed to create set, you may need to try another name.");
@@ -342,7 +339,7 @@ sub createNewSet{
 sub assignSetToUsers {
 	my ($self,$params) = @_;
 	my $db = $self->db;
-    
+
     my $setID = $params->{set_id};
     my $GlobalSet = $db->getGlobalSet($params->{set_id});
 
@@ -350,16 +347,16 @@ sub assignSetToUsers {
     my @users = split(',',$params->{users});
     #my @users = decode_json($params->{users});
 
-    my @results; 
+    my @results;
     foreach my $userID (@users) {
 		my $UserSet = $db->newUserSet;
 		$UserSet->user_id($userID);
 		$UserSet->set_id($setID);
-		
-		
-		
+
+
+
 		my $set_assigned = 0;
-		
+
 		eval { $db->addUserSet($UserSet) };
 		if ($@) {
 			if ($@ =~ m/user set exists/) {
@@ -369,12 +366,12 @@ sub assignSetToUsers {
 				die $@;
 			}
 		}
-		
+
 		my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
 		foreach my $GlobalProblem (@GlobalProblems) {
 			my @result = assignProblemToUser($self,$userID, $GlobalProblem);
 			push @results, @result if @result and not $set_assigned;
-		}   		
+		}
     }
 
 	my $out = {};
@@ -387,13 +384,13 @@ sub assignSetToUsers {
 sub assignProblemToUser {
 	my ($self,$userID,$GlobalProblem,$seed) = @_;
 	my $db = $self->db;
-	
+
 	my $UserProblem = $db->newUserProblem;
 	$UserProblem->user_id($userID);
 	$UserProblem->set_id($GlobalProblem->set_id);
 	$UserProblem->problem_id($GlobalProblem->problem_id);
 	initializeUserProblem($UserProblem, $seed);
-	
+
 	eval { $db->addUserProblem($UserProblem) };
 	if ($@) {
 		if ($@ =~ m/user problem exists/) {
@@ -404,7 +401,7 @@ sub assignProblemToUser {
 			die $@;
 		}
 	}
-	
+
 	return ();
 }
 
@@ -415,7 +412,7 @@ sub deleteProblemSet {
 	my $setID = $params->{set_id};
 	my $result = $db->deleteGlobalSet($setID);
 
-		# check the result 
+		# check the result
 	debug("in deleteProblemSet");
 	debug("deleted set:  $setID");
 	debug($result);
@@ -424,13 +421,13 @@ sub deleteProblemSet {
 
 
 
-	return $out; 
+	return $out;
 
 }
 
 
 sub reorderProblems {
-	my ($self,$params) =  @_; 
+	my ($self,$params) =  @_;
 
 	my $db = $self->db;
 	my $setID = $params->{set_id};
@@ -443,8 +440,8 @@ sub reorderProblems {
 
 	my @probOrder = ();
 
-	foreach my $problem (@allProblems) {		
-		my $recordFound = 0; 
+	foreach my $problem (@allProblems) {
+		my $recordFound = 0;
 
 		for (my $i = 0; $i < scalar(@problemList); $i++){
 			$problemList[$i] =~ s|^$topdir/*||;
@@ -452,7 +449,7 @@ sub reorderProblems {
 			if($problem->{source_file} eq $problemList[$i]){
 				push(@probOrder,$i+1);
 			   	if ($db->existsGlobalProblem($setID,$i+1)){
-			   		$problem->problem_id($i+1);		   			
+			   		$problem->problem_id($i+1);
 			   		$db->putGlobalProblem($problem);
 			   		debug("updating problem " . $problemList[$i] . " and setting the index to " . ($i+1));
 
@@ -465,10 +462,10 @@ sub reorderProblems {
 			   		debug("adding new problem " . $problemList[$i]. " and setting the index to " . ($i+1));
 		   		}
 		 	}
-		 	$recordFound = 1; 
+		 	$recordFound = 1;
 		}
 		die "global " . $problem->{source_file} ." for set $setID not found." unless $recordFound;
-		
+
 
 	}
 
@@ -495,12 +492,12 @@ sub updateProblem{
 		}
 	}
 
-		
+
 	my $out->{text} = encode_utf8_base64("Updated Problem Set " . $setID);
 
 
 
-	return $out; 
+	return $out;
 
 }
 
@@ -516,7 +513,7 @@ sub updateUserSet {
   	debug($params->{open_date});
   	debug($params->{due_date});
   	debug($params->{answer_date});
-  	
+
   	foreach my $userID (@users) {
 		my $set = $db->getUserSet($userID,$params->{set_id});
 		if ($set){
@@ -531,12 +528,12 @@ sub updateUserSet {
 		    $newSet->open_date($params->{open_date});
 		    $newSet->due_date($params->{due_date});
 		    $newSet->answer_date($params->{answer_date});
-					
+
 			$newSet = $db->addUserSet($newSet);
-		} 
+		}
 	}
 
-  
+
   my $out = {};
   #$out->{ra_out} = $set;
   $out->{text} = encode_utf8_base64("Successfully updated set " . $params->{set_id} . " for users " . $params->{users});
@@ -602,7 +599,7 @@ sub unassignSetFromUsers {
   	my ($self, $params) = @_;
   	my $db = $self->db;
   	my @users = split(',',$params->{users});
-    # should we check if the user is assigned before trying to unassign? 
+    # should we check if the user is assigned before trying to unassign?
   	foreach my $user (@users) {
 		my $result = $db->deleteUserSet($user, $params->{set_id});
 	}
@@ -622,30 +619,13 @@ returned.
 sub assignAllSetsToUser {
 	my ($self, $userID) = @_;
 	my $db = $self->db;
-	
-	# assign only sets that are not already assigned
-	#my %userSetIDs = map { $_ => 1 } $db->listUserSets($userID);
-	#my @globalSetIDs = grep { not exists $userSetIDs{$_} } $db->listGlobalSets;
-	#my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
-	# FIXME: i don't think we need to do the above, since asignSetToUser fails
-	# silently if a UserSet already exists. instead we do this:
-	# DBFIXME shouldn't need to get list of set IDs
-	my @globalSetIDs = $db->listGlobalSets;
-	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
-	
+
 	my @results;
-	
-	my $i = 0;
-	foreach my $GlobalSet (@GlobalSets) {
-		if (not defined $GlobalSet) {
-			warn "record not found for global set $globalSetIDs[$i]";
-		} else {
-			my @result = $self->assignSetToUser($userID, $GlobalSet);
-			push @results, @result if @result;
-		}
-		$i++;
+	for my $GlobalSet (@{ [ $db->getGlobalSetsWhere() ] }) {
+		my @result = $self->assignSetToUser($userID, $GlobalSet);
+		push @results, @result if @result;
 	}
-	
+
 	return @results;
 }
 
@@ -658,8 +638,7 @@ sub addProblem {
 	my $file = $params->{path};
 	my $topdir = $self->ce->{courseDirs}{templates};
 	$file =~ s|^$topdir/*||;
-	
-	# DBFIXME count would work just as well
+
 	my $freeProblemID;
 	my $set = $db->getGlobalSet($setName);
 	warn "record not found for global set $setName" unless $set;
@@ -671,22 +650,22 @@ sub addProblem {
 	  if ($#problemIDs != -1) {
 	    @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
 	  }
-	    
+
 	  $freeProblemID = seq_to_jitar_id($seq[0]+1);
 	} else {
 	    $freeProblemID = max($db->listGlobalProblems($setName)) + 1;
 	}
 
 	my $value_default = $self->ce->{problemDefaults}->{value};
-	my $max_attempts_default = $self->ce->{problemDefaults}->{max_attempts};	
-	my $showMeAnother_default = $self->ce->{problemDefaults}->{showMeAnother};	
-	my $att_to_open_children_default = $self->ce->{problemDefaults}->{att_to_open_children};	
-	my $counts_parent_grade_default = $self->ce->{problemDefaults}->{counts_parent_grade};	
+	my $max_attempts_default = $self->ce->{problemDefaults}->{max_attempts};
+	my $showMeAnother_default = $self->ce->{problemDefaults}->{showMeAnother};
+	my $att_to_open_children_default = $self->ce->{problemDefaults}->{att_to_open_children};
+	my $counts_parent_grade_default = $self->ce->{problemDefaults}->{counts_parent_grade};
     # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
-	my $showMeAnotherCount = 0;	
-	
+	my $showMeAnotherCount = 0;
+
 	my $prPeriod_default = $self->ce->{problemDefaults}->{prPeriod};
-	
+
 	my $value = $value_default;
 	if (defined($params->{value}) and length($params->{value})){$value = $params->{value};}  # 0 is a valid value for $params{value} but we don't want emptystring
 
@@ -719,13 +698,13 @@ sub addProblem {
 	$problemRecord->prCount(0);
 	$db->addGlobalProblem($problemRecord);
 
-	my @results; 
+	my @results;
 	my @userIDs = $db->listSetUsers($setName);
 	foreach my $userID (@userIDs) {
 		my @result = assignProblemToUser($self, $userID, $problemRecord);
 		push @results, @result if @result;
 	}
-	
+
 
 	#assignProblemToAllSetUsers($self, $problemRecord);
 	my $out->{text} = encode_utf8_base64("Problem added to ".$setName);
@@ -734,19 +713,17 @@ sub addProblem {
 
 sub deleteProblem {
 	my ($self,$params) = @_;
-	
+
 	my $db = $self->db;
 	my $setName = $params->{set_id};
-	
+
 	my $file = $params->{path};
 	my $topdir = $self->ce->{courseDirs}{templates};
 	$file =~ s|^$topdir/*||;
-	# DBFIXME count would work just as well
-	foreach my $problem ($db->listGlobalProblems($setName)) {
-		my $problemRecord = $db->getGlobalProblem($setName, $problem);
-		
+
+	my @setGlobalProblems = $db->getGlobalProblemsWhere({ set_id => $setName });
+	for my $problemRecord (@setGlobalProblems) {
 		if($problemRecord->source_file eq $file){
-			#print "found it";
 			$db->deleteGlobalProblem($setName, $problemRecord->problem_id);
 		}
 	}

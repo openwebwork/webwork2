@@ -2,15 +2,15 @@
 	if (CodeMirror) {
 		cm = CodeMirror.fromTextArea(
 			$("#achievementContents")[0],
-			{mode: "PG",
+			{
+				mode: "PG",
 				indentUnit: 4,
 				tabMode: "spaces",
 				lineNumbers: true,
 				extraKeys:
 				{Tab: function(cm) {cm.execCommand('insertSoftTab')}},
-				highlightSelectionMatches: true,
+				highlightSelectionMatches: {annotateScrollbar: true},
 				matchBrackets: true,
-
 			});
 		cm.setSize("100%", 400);
 	}

@@ -99,7 +99,7 @@ my @modulesList = qw(
 	Email::Address::XS
 	Email::Sender::Simple
 	Email::Sender::Transport::SMTP
-	Email::Simple
+	Email::Stuffer
 	Errno
 	Exception::Class
 	File::Copy
@@ -157,7 +157,7 @@ my @modulesList = qw(
 	XML::Simple
 	XML::Writer
 	XMLRPC::Lite
-	YAML
+	YAML::XS
 );
 
 my %moduleVersion = (

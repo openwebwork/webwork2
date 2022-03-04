@@ -150,34 +150,49 @@ sub formatRenderedProblem {
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
 	# which can be set in course.conf (the value should be an anonomous array).
-	my %cssFiles;
+	my @cssFiles;
 	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq "ARRAY") {
-		$cssFiles{$_} = 0 for @{$ce->{pg}{specialPGEnvironmentVars}{extra_css_files}};
+		push(@cssFiles, { file => $_, external => 0 }) for @{ $ce->{pg}{specialPGEnvironmentVars}{extra_css_files} };
 	}
 	if (ref($rh_result->{flags}{extra_css_files}) eq "ARRAY") {
-		$cssFiles{$_->{file}} = $_->{external} for @{$rh_result->{flags}{extra_css_files}};
+		push @cssFiles, @{ $rh_result->{flags}{extra_css_files} };
 	}
-	for (keys(%cssFiles)) {
-		if ($cssFiles{$_}) {
-			$problemHeadText .= qq{<link rel="stylesheet" type="text/css" href="$_"/>};
-		} elsif (!$cssFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
-			$problemHeadText .= qq{<link rel="stylesheet" type="text/css" href="$ce->{webworkURLs}{htdocs}/$_"/>};
+	my %cssFilesAdded;    # Used to avoid duplicates
+	for (@cssFiles) {
+		next if $cssFilesAdded{ $_->{file} };
+		$cssFilesAdded{ $_->{file} } = 1;
+		if ($_->{external}) {
+			$problemHeadText .= qq{<link rel="stylesheet" href="$_->{file}"/>};
+		} elsif (
+			!$_->{external}
+			&& (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}"
+				|| -f "$WeBWorK::Constants::PG_DIRECTORY/htdocs/$_->{file}")
+			)
+		{
+			$problemHeadText .= qq{<link rel="stylesheet" href="$ce->{webworkURLs}{htdocs}/$_->{file}"/>};
 		} else {
-			$problemHeadText .= qq{<!-- $_ is not available in htdocs/ on this server -->};
+			$problemHeadText .= qq{<!-- $_->{file} is not available in htdocs/ on this server -->};
 		}
 	}
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	if (ref($rh_result->{flags}{extra_js_files}) eq "ARRAY") {
 		my %jsFiles;
-		for my $jsFile (@{$rh_result->{flags}{extra_js_files}}) {
-			next if $jsFiles{$jsFile->{file}};
-			$jsFiles{$jsFile->{file}} = 1;
-			my $attributes = ref($jsFile->{attributes}) eq "HASH"
-				? join(" ", map { qq!$_="$jsFile->{attributes}{$_}"! } keys %{$jsFile->{attributes}}) : ();
+		for my $jsFile (@{ $rh_result->{flags}{extra_js_files} }) {
+			next if $jsFiles{ $jsFile->{file} };
+			$jsFiles{ $jsFile->{file} } = 1;
+			my $attributes =
+				ref($jsFile->{attributes}) eq "HASH"
+				? join(" ", map {qq!$_="$jsFile->{attributes}{$_}"!} keys %{ $jsFile->{attributes} })
+				: ();
 			if ($jsFile->{external}) {
-				$problemHeadText .= qq{<script src="$jsFile->{file}" $attributes></script>}
-			} elsif (!$jsFile->{external} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$jsFile->{file}") {
+				$problemHeadText .= qq{<script src="$jsFile->{file}" $attributes></script>};
+			} elsif (
+				!$jsFile->{external}
+				&& (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$jsFile->{file}"
+					|| -f "$WeBWorK::Constants::PG_DIRECTORY/htdocs/$jsFile->{file}")
+				)
+			{
 				$problemHeadText .= qq{<script src="$ce->{webworkURLs}{htdocs}/$jsFile->{file}" $attributes></script>};
 			} else {
 				$problemHeadText .= qq{<!-- $jsFile->{file} is not available in htdocs/ on this server -->};
@@ -189,13 +204,6 @@ sub formatRenderedProblem {
 	$problemHeadText .= $rh_result->{post_header_text} // '';
 	$extra_header_text = $self->{inputs_ref}{extra_header_text} // '';
 	$problemHeadText .= $extra_header_text;
-
-	if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
-		$problemHeadText .= qq{<link href="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mathquill.css" rel="stylesheet" />} .
-			qq{<link href="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mqeditor.css" rel="stylesheet" />} .
-			qq{<script src="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mathquill.min.js" defer></script>} .
-			qq{<script src="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mqeditor.js" defer></script>};
-	}
 
 	# Set up the problem language and direction
 	# PG files can request their language and text direction be set.  If we do
@@ -242,7 +250,6 @@ sub formatRenderedProblem {
 			summary             => $problemResult->{summary} // '', # can be set by problem grader
 		);
 		$answerTemplate = $tbl->answerTemplate;
-		$color_input_blanks_script = (!$previewMode && ($checkMode || $submitMode)) ? $tbl->color_answer_blanks : "";
 		$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 	}
 	# Score summary
@@ -276,13 +283,16 @@ sub formatRenderedProblem {
 	# Submit buttons (all are shown by default)
 	my $showPreviewButton = $self->{inputs_ref}{showPreviewButton} // "";
 	my $previewButton = $showPreviewButton eq "0" ? '' :
-		'<input type="submit" name="preview" id="previewAnswers_id" value="' . $mt->maketext("Preview My Answers") . '">';
+		'<input type="submit" name="preview" id="previewAnswers_id" class="btn btn-primary mb-1" value="'
+	   	. $mt->maketext("Preview My Answers") . '">';
 	my $showCheckAnswersButton = $self->{inputs_ref}{showCheckAnswersButton} // "";
 	my $checkAnswersButton = $showCheckAnswersButton eq "0" ? '' :
-		'<input type="submit" name="WWsubmit" value="' . $mt->maketext("Check Answers") . '">';
+		'<input type="submit" name="WWsubmit" class="btn btn-primary mb-1" value="'
+	   	. $mt->maketext("Check Answers") . '">';
 	my $showCorrectAnswersButton = $self->{inputs_ref}{showCorrectAnswersButton} // "";
 	my $correctAnswersButton = $showCorrectAnswersButton eq "0" ? '' :
-		'<input type="submit" name="WWcorrectAns" value="' . $mt->maketext("Show Correct Answers") . '">';
+		'<input type="submit" name="WWcorrectAns" class="btn btn-primary mb-1" value="'
+	   	. $mt->maketext("Show Correct Answers") . '">';
 
 	my $showSolutions = $self->{inputs_ref}{showSolutions} // "";
 	my $showHints = $self->{inputs_ref}{showHints} // "";
@@ -290,12 +300,12 @@ sub formatRenderedProblem {
 	# Regular Perl warning messages generated with warn.
 	my $warnings = '';
 	if ($rh_result->{pg_warnings}) {
-		$warnings .= qq{<div style="background-color:pink">PG WARNINGS<br>} .
-			decode_utf8_base64($rh_result->{pg_warnings}) . "</div>";
+		$warnings .= qq{<div class="alert alert-danger mb-2 p-1"><h3>Warning Messages</h3>} .
+			join('<br>', split("\n", decode_utf8_base64($rh_result->{pg_warnings}))) . "</div>";
 	}
 	if ($rh_result->{translator_warnings}) {
-		$warnings .= qq{<div style="background-color:pink"><p>TRANSLATOR WARNINGS</p><p>} .
-			decode_utf8_base64($rh_result->{translator_warnings}) . "</p></div>";
+		$warnings .= qq{<div class="alert alert-danger mb-2 p-1"><h3>Translator Warnings</h3>} .
+			join('<br>', split("\n", decode_utf8_base64($rh_result->{translator_warnings}))) . "</p></div>";
 	}
 
 	# PG debug messages generated with DEBUG_message();
@@ -391,7 +401,7 @@ sub formatRenderedProblem {
 	$template =~ s/(\$\w+)/$1/gee;
 
 	return $template unless $self->{inputs_ref}{send_pg_flags};
-	return JSON->new->utf8(0)->encode({ html => $template, pg_flags => $rh_result->{flags} });
+	return JSON->new->utf8(0)->encode({ html => $template, pg_flags => $rh_result->{flags}, warnings => $warnings });
 }
 
 sub saveGradeToLTI {

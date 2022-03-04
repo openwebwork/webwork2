@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.64 2007/08/13 22:59:55 sh002i Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,14 +24,11 @@ WeBWorK::ContentGenerator::Instructor::SendMail - Entry point for User-specific 
 
 use strict;
 use warnings;
-#use CGI qw(-nosticky );
+
 use WeBWorK::CGI;
 use Email::Address::XS;
 use HTML::Entities;
-#use Mail::Sender;
-use Email::Simple;
-use Email::Sender::Simple qw(sendmail);
-use Email::Sender::Transport::SMTP qw();
+use Email::Stuffer;
 use Try::Tiny;
 use Data::Dump qw/dump/;
 use WeBWorK::Debug;
@@ -114,7 +110,7 @@ sub initialize {
 	}
 
 	#  get user record
-	my $ur = $self->{db}->getUser($user);
+	my $ur = $db->getUser($user);
 
 	# store data
 	# rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding.
@@ -127,110 +123,89 @@ sub initialize {
 	$self->{default_msg_file}	    =   $default_msg_file;
 	$self->{old_default_msg_file}   =   $old_default_msg_file;
 	$self->{merge_file}             =   $mergefile;
-	#$self->{preview_user}           =   (defined($r->param('preview_user')))    ? $r->param('preview_user') : $user;
 	# an expermiment -- share the scrolling list for preivew and sendTo actions.
 	my @classList                   =   (defined($r->param('classList')))    ? $r->param('classList') : ($user);
 	$self->{preview_user}           =   $classList[0] || $user;
 
 	#############################################################################################
-	#	gather database data
+	# Gather database data
 	#############################################################################################
-	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
-	# DBFIXME shouldn't need ID list
-	# DBFIXME do filtering in database
-	my @users =  $db->listUsers;
-	my @Users = $db->getUsers(@users);
-	# filter out users who don't get included in email (fixes bug #938)
+	# Get all users except set level proctors and practice users.  If the current user has restrictions on viewable
+	# sections or recitations, those are filtered out as well.  The users are sorted by user_id.
+	my @Users = $db->getUsersWhere(
+		{
+			user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
+			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+			? (
+				-or => [
+					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
+					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+				]
+				)
+			: ()
+		},
+		'user_id'
+	);
+
+	# Filter out users who don't get included in email
 	@Users = grep { $ce->status_abbrev_has_behavior($_->status, "include_in_email") } @Users;
-	my @user_records = ();
 
-	## Mark's code to prefilter userlist
-	# DBFIXME more filtering that we can do in the database
-
-
-	my (@viewable_sections,@viewable_recitations);
-
-	if (defined $ce->{viewable_sections}->{$user})
-		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
-	if (defined $ce->{viewable_recitations}->{$user})
-		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
-
-	if (@viewable_sections or @viewable_recitations){
-		foreach my $student (@Users){
-			my $keep = 0;
-			foreach my $sec (@viewable_sections){
-				if ($student->section() eq $sec){$keep = 1;}
-			}
-			foreach my $rec (@viewable_recitations){
-				if ($student->recitation() eq $rec){$keep = 1;}
-			}
-			if ($keep) {push @user_records, $student;}
-		}
-	}
-	else {@user_records = @Users;}
-
-	## End Mark's code
-
-
-	# replace the user names by a sorted version.
-	@users                         =  map {$_->user_id} @user_records;
-	# store data
-	$self->{ra_users}              =   \@users;
-	$self->{ra_user_records}       =   \@user_records;
+	# Cache the user records for later use.
+	$self->{ra_user_records} = \@Users;
 
 	#############################################################################################
-	#	gather list of recipients
+	# Gather list of recipients
 	#############################################################################################
-	my @send_to                    =   ();
-	#FIXME  this (radio) is a lousy name
-	my $recipients                 = $r->param('radio');
-	if (defined($recipients) and $recipients eq 'all_students') {  #only active students #FIXME status check??
-
-		## Add code so that only people who pass the current filters are added to our list of recipients.
-		#	@user_records = filterRecords({filter=\@selected_filters},@user_records);
-		#  I wasn't able to make this work
-		#  I edited the selection button to make that clear.
-		#
-
-		foreach my $ur (@user_records) {
-			push(@send_to,$ur->user_id)
-				if $ce->status_abbrev_has_behavior($ur->status, "include_in_email")
-					and not $ur->user_id =~ /practice/;
-		}
-	} elsif (defined($recipients) and $recipients eq 'studentID' ) {
-		@send_to                   = $r->param('classList');
-	} else {
-		# no recipients have been defined -- probably the first time on the page
+	my @send_to;
+	my $recipients = $r->param('send_to') // '';
+	if ($recipients eq 'all_students') {
+		@send_to = map { $_->user_id } @Users;
+	} elsif ($recipients eq 'studentID') {
+		@send_to = $r->param('classList');
 	}
-	$self->{ra_send_to}               = \@send_to;
+
+	$self->{ra_send_to} = \@send_to;
+
 	#################################################################
 	# Check the validity of the input file name
 	#################################################################
+
 	my $input_file = '';
-	#make sure an input message file was submitted and exists
-	#else use the default message
-	if ( defined($openfilename) ) {
-		if ( -e "${emailDirectory}/$openfilename") {
-			if ( -R "${emailDirectory}/$openfilename") {
+	# Make sure an input message file was submitted and exists.
+	# Otherwise use the default message.
+	if (defined($openfilename)) {
+		if (-e "${emailDirectory}/$openfilename") {
+			if (-R "${emailDirectory}/$openfilename") {
 				$input_file = $openfilename;
 			} else {
-				$self->addbadmessage(CGI::p(join("",
-								 $r->maketext("The file [_1]/[_2] is not readable by the webserver.",$emailDirectory,$openfilename) ,CGI::br(),
-								 $r->maketext("Check that it's permissions are set correctly."),
+				$self->addbadmessage(CGI::p(join(
+					"",
+					$r->maketext(
+						"The file [_1]/[_2] is not readable by the webserver.",
+						$emailDirectory, $openfilename
+					),
+					CGI::br(),
+					$r->maketext("Check that it's permissions are set correctly."),
 				)));
 			}
 		} else {
 			$input_file = $default_msg_file;
-			$self->addbadmessage(CGI::p(join("",
-				  $r->maketext("The file [_1]/[_2] cannot be found.",$emailDirectory, $openfilename ) ,CGI::br(),
-							 $r->maketext("Check whether it exists and whether the directory [_1] can be read by the webserver.", $emailDirectory),CGI::br(),
-							 $r->maketext("Using contents of the default message [_1] instead.", $default_msg_file),
+			$self->addbadmessage(CGI::p(join(
+				"",
+				$r->maketext("The file [_1]/[_2] cannot be found.", $emailDirectory, $openfilename),
+				CGI::br(),
+				$r->maketext(
+					"Check whether it exists and whether the directory [_1] can be read by the webserver.",
+					$emailDirectory
+				),
+				CGI::br(),
+				$r->maketext("Using contents of the default message [_1] instead.", $default_msg_file),
 			)));
 		}
 	} else {
-		$input_file     = $default_msg_file;
+		$input_file = $default_msg_file;
 	}
-	$self->{input_file} =$input_file;
+	$self->{input_file} = $input_file;
 
 	#################################################################
 	# Determine the file name to save message into
@@ -331,8 +306,6 @@ sub initialize {
 	$self->{remote_host}            =    $remote_host;
 	$self->{r_text}                 =    $r_text;
 
-
-
 	###################################################################################
 	#Determine the appropriate script action from the buttons
 	###################################################################################
@@ -355,7 +328,6 @@ sub initialize {
 	#		'selected studentIDs'
 	#     error actions (various)
 
-
 	#############################################################################################
 	# if no form is submitted, gather data needed to produce the mail form and return
 	#############################################################################################
@@ -368,10 +340,6 @@ sub initialize {
 
 		return '';
 	}
-
-
-
-
 
 	#############################################################################################
 	# If form is submitted deal with filled out forms
@@ -444,10 +412,10 @@ sub initialize {
 			}
 		}
 
-	    # check that recipients have been selected.
-		my @recipients            = @{$self->{ra_send_to}};
-		unless (@recipients) {
-			$self->addbadmessage(CGI::p($r->maketext("No recipients selected. Please select one or more recipients from the list below.")));
+	    # Check that recipients have been selected.
+		unless (@{ $self->{ra_send_to} }) {
+			$self->addbadmessage(
+				$r->maketext('No recipients selected. Please select one or more recipients from the list below.'));
 			return;
 		}
 
@@ -501,10 +469,6 @@ sub initialize {
 
 }  #end initialize
 
-
-
-
-
 sub body {
 	my ($self)          = @_;
 	my $r               = $self->r;
@@ -515,17 +479,22 @@ sub body {
 	my $user            = $r->param('user');
 
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to access instructor tools"))
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		CGI::p("You are not authorized to access instructor tools"))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to send mail to students"))
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		CGI::p("You are not authorized to send mail to students"))
 		unless $authz->hasPermissions($user, "send_mail");
 
 	if ($response eq 'preview') {
 		$self->print_preview($setID);
 	} elsif ($response eq 'send_email' and $self->{ra_send_to} and @{$self->{ra_send_to}}){
-		my $message = CGI::i($r->maketext("Email is being sent to [quant,_1,recipient]. You will be notified by email when the task is completed.  This may take several minutes if the class is large.",scalar(@{$self->{ra_send_to}}))
-		);
+		my $message = CGI::i($r->maketext(
+			"Email is being sent to [quant,_1,recipient]. You will be notified by email
+				when the task is completed.  This may take several minutes if the class is
+				large.", scalar(@{ $self->{ra_send_to} })
+		));
 		$self->addgoodmessage($message);
 		$self->{message} .= $message;
 
@@ -553,7 +522,7 @@ sub print_preview {
 
 	my ($msg, $preview_header) = $self->process_message($ur,$rh_merge_data,1); # 1 == for preview
 
-	my $recipients  = join(" ",@{$self->{ra_send_to} });
+	my $recipients = join(" ", @{ $self->{ra_send_to} });
 	my $errorMessage =  defined($self->{submit_message}) ?  CGI::i($self->{submit_message} ) : '' ;
 
 	# Format message keeping the preview_header lined up
@@ -582,214 +551,335 @@ sub print_preview {
 
 	$msg = join("",$errorMessage,$preview_header,$msg);
 
-	return join("", '<div dir="ltr"><pre>',$msg,"\n","\n",
-				   '</pre></div>',
-				   CGI::p($r->maketext('Use browser back button to return from preview mode')),
-				   CGI::h3($r->maketext('Emails to be sent to the following:')),
-				   $recipients, "\n",
-
-	);
-
+	return
+		CGI::div({ class => 'mb-3', dir => 'ltr' }, CGI::pre($msg))
+		. CGI::p($r->maketext('Use browser back button to return from preview mode.'))
+		. CGI::h3($r->maketext('Emails to be sent to the following:'))
+		. $recipients;
 }
+
 sub print_form {
-	my ($self)          = @_;
-	my $r               = $self->r;
-	my $urlpath         = $r->urlpath;
-	my $authz           = $r->authz;
-	my $db              = $r->db;
-	my $ce              = $r->ce;
-	my $courseName      = $urlpath->arg("courseID");
-	my $setID           = $urlpath->arg("setID");
-	my $user            = $r->param('user');
+	my ($self)     = @_;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $authz      = $r->authz;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $courseName = $urlpath->arg("courseID");
+	my $setID      = $urlpath->arg("setID");
+	my $user       = $r->param('user');
 
-	my $root            = $ce->{webworkURLs}->{root};
-	my $sendMailPage    = $urlpath->newFromModule($urlpath->module, $r, courseID=>$courseName);
-	my $sendMailURL     = $self->systemLink($sendMailPage, authen => 0);
+	my $root         = $ce->{webworkURLs}->{root};
+	my $sendMailPage = $urlpath->newFromModule($urlpath->module, $r, courseID => $courseName);
+	my $sendMailURL  = $self->systemLink($sendMailPage, authen => 0);
 
-        return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+	return CGI::em("You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	my $userTemplate = $db->newUser;
+	my $userTemplate            = $db->newUser;
 	my $permissionLevelTemplate = $db->newPermissionLevel;
 
-	# This code will require changing if the permission and user tables ever have different keys.
-	my @users                 = sort @{ $self->{ra_users} };
-	my $ra_user_records       = $self->{ra_user_records};
-	my %classlistLabels       = ();#  %$hr_classlistLabels;
-	foreach my $ur (@{ $ra_user_records }) {
-		$classlistLabels{$ur->user_id} = $ur->user_id.': '.$ur->last_name. ', '. $ur->first_name.' -- '.$ur->section." / ".$ur->recitation;
-	}
-
-	## Mark edit define scrolling list
-	my $scrolling_user_list = scrollingRecordList({
-		name => "classList", 			## changed from classList to action
-		request => $r,
-		default_sort => "lnfn",
-		default_format => "lnfn_uid",
-		default_filters => ["all"],
-		size => 5,
-		multiple => 1,
-		refresh_button_name =>$r->maketext('Update settings and refresh page'),
-	}, @{$ra_user_records});
-
 	##############################################################################################################
 
-
-	my $from            = $self->{from};
-	my $subject         = $self->{subject};
-	my $replyTo         = $self->{replyTo};
-	my $columns         = $self->{columns};
-	my $rows            = $self->{rows};
-	my $text            = defined($self->{r_text}) ? ${ $self->{r_text} }: 'FIXME no text was produced by initialization!!';
-	my $input_file      = $self->{input_file};
-	my $output_file     = $self->{output_file};
-	my @sorted_messages = $self->get_message_file_names;
+	my $from       = $self->{from};
+	my $subject    = $self->{subject};
+	my $replyTo    = $self->{replyTo};
+	my $rows       = $self->{rows};
+	my $text       = defined($self->{r_text}) ? ${ $self->{r_text} } : 'FIXME no text was produced by initialization!!';
+	my $input_file = $self->{input_file};
+	my $output_file        = $self->{output_file};
+	my @sorted_messages    = $self->get_message_file_names;
 	my @sorted_merge_files = $self->get_merge_file_names;
-	my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
-	my $delimiter       = ',';
-	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
-	my @merge_keys      = keys %$rh_merge_data;
-	my $preview_user    = $self->{preview_user};
-	my $preview_record   = $db->getUser($preview_user); # checked
-	die "record for preview user ".$self->{preview_user}. " not found." unless $preview_record;
+	my $merge_file         = (defined($self->{merge_file})) ? $self->{merge_file} : 'None';
+	my $delimiter          = ',';
+	my $rh_merge_data      = $self->read_scoring_file("$merge_file", "$delimiter");
+	my @merge_keys         = keys %$rh_merge_data;
+	my $preview_user       = $self->{preview_user};
+	my $preview_record     = $db->getUser($preview_user);                                     # checked
+	die "record for preview user " . $self->{preview_user} . " not found." unless $preview_record;
 
-
-	#############################################################################################
-
-	print CGI::start_form({id=>"send-mail-form", name=>"send-mail-form", method=>"post", action=>$sendMailURL});
+	print CGI::start_form(
+		{ id => "send-mail-form", name => "send-mail-form", method => "post", action => $sendMailURL });
 	print $self->hidden_authen_fields();
-	#############################################################################################
-	#	begin upper table
-	#############################################################################################
 
-    print CGI::start_table({-border=>'2', -cellpadding=>'4'});
-	print CGI::Tr({-align=>'left',-valign=>'top'},
-	#############################################################################################
-	#	first column
-	#############################################################################################
-
-			 CGI::td({},
-			     CGI::strong($r->maketext("Message file:").' '), $input_file,"\n",CGI::br(),
-				 CGI::submit(-name=>'openMessage', -value=>$r->maketext('Open')), '&nbsp;&nbsp;&nbsp;&nbsp;',"\n",
-				 CGI::popup_menu(-name=>'openfilename',
-				                 -values=>\@sorted_messages,
-				                 -default=>$input_file
-				 ),
-				 "\n",CGI::br(),
-				 CGI::strong($r->maketext("Save file to:").' '), $output_file,
-				 "\n",CGI::br(),
-				 CGI::strong($r->maketext('Merge file:').' '), $merge_file,
-				 CGI::br(),
-				 CGI::popup_menu(-name=>'merge_file',
-				                 -values=>\@sorted_merge_files,
-				                 -default=>$merge_file,
-				 ), "\n",
-				 "\n",
-				 #CGI::hr(),
-				 CGI::div(
-					 "\n", $r->maketext('From:'),'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
-						CGI::textfield(-name=>"from", -size=>30,
-							-maxlength=>120,
-							-value=>$from, -override=>1),
-					 "\n", CGI::br(),$r->maketext('Reply-To:'),' ',
-						CGI::textfield(-name=>"replyTo", -size=>30,
-							-maxlength=>120,
-							-value=>$replyTo, -override=>1),
-					 "\n", CGI::br(),$r->maketext('Subject: ').' ', CGI::br(),
-						CGI::textarea(-name=>'subject',
-							-default=>$subject, -override=>1,
-							-rows=>3, -cols=>30 ),
-				),
-				#CGI::hr(),
-				$r->maketext("Editor rows:").' ', CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
-				' '.$r->maketext("columns:").' ', CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
-				CGI::br(),
-				CGI::submit(-name=>'updateSettings', -value=>$r->maketext("Update settings and refresh page")),
-
-			),
-	#############################################################################################
-	#	second column
-	#############################################################################################
-
-	## Edit by Mark to insert scrolling list
-					CGI::td({-style=>"width:33%"},
-					     CGI::strong($r->maketext("Send to:")),
-		                  CGI::radio_group(-name=>'radio',
-		                                   -values=>['all_students','studentID'],
-		                                   -labels=>{all_students=>$r->maketext('All students in course'),studentID => $r->maketext('Selected students')},
-		                                   -default=>'studentID', -linebreak=>0),
-							CGI::br(),$scrolling_user_list,
-							CGI::i($r->maketext("Preview set to:").' '), $preview_record->last_name,'(', $preview_record->user_id,')',
-							CGI::submit(-name=>'previewMessage', -value=>$r->maketext('Preview Message'),-label=>$r->maketext('Preview message')),'&nbsp;&nbsp;',
+	# Email settings
+	print CGI::div(
+		{ class => 'card mb-3' },
+		CGI::div(
+			{ class => 'card-body p-2' },
+			CGI::div(
+				{ class => 'row' },
+				CGI::div(
+					{ class => 'col-md-6 mb-2' },
+					CGI::div(
+						{ class => 'input-group input-group-sm mb-2' },
+						CGI::span({ class => 'input-group-text' }, CGI::strong($r->maketext("Message file:"))),
+						CGI::span({ class => 'input-group-text' }, $input_file)
 					),
-	); # end Tr
-
-	# second row, for reference popup menu
-	print CGI::Tr(
-			CGI::td({align=>'center',colspan=>2},
-
-
-				#CGI::i('Press any action button to update display'),CGI::br(),
-			#show available macros
-			CGI::span({dir=>"ltr"}, # Put the popup in a LTR span
-				CGI::popup_menu(
-						-name=>'dummyName',
-						-values=>['', '$SID', '$FN', '$LN', '$SECTION', '$RECITATION','$STATUS', '$EMAIL', '$LOGIN', '$COL[n]', '$COL[-1]'],
-						-labels=>{''=>$r->maketext('list of insertable macros'),
-							'$SID'=>'$SID - '.$r->maketext('Student ID'),
-							'$FN'=>'$FN - '.$r->maketext('First name'),
-							'$LN'=>'$LN - '.$r->maketext('Last name'),
-							'$SECTION'=>'$SECTION - '.$r->maketext('Section'),
-							'$RECITATION'=>'$RECITATION - '.$r->maketext('Recitation'),
-							'$STATUS'=>'$STATUS - '.$r->maketext('Enrolled, Drop, etc.'),
-							'$EMAIL'=>'$EMAIL - '.$r->maketext('Email address'),
-							'$LOGIN'=>'$LOGIN - '.$r->maketext('Login'),
-							'$COL[n]'=>'$COL[n] - '.$r->maketext('nth colum of merge file'),
-							'$COL[-1]'=>'$COL[-1] - '.$r->maketext('Last column of merge file')
-							}
-				), "\n",
-			)),
-	);
-
-	print CGI::end_table();
-	#############################################################################################
-	#	end upper table
-	#############################################################################################
-
-	#############################################################################################
-	#	merge file fragment and message text area field
-	#############################################################################################
-	my @tmp2;
-	eval{  @tmp2= @{$rh_merge_data->{ $db->getUser($preview_user)->student_id  }  };}; # checked
-	if ($@ and $merge_file ne 'None') {
-		print "No merge data for $preview_user in merge file: &lt;$merge_file&gt;",CGI::br();
-	} else {
-		print CGI::pre("",data_format(1..($#tmp2+1)),"<br>", data_format2(@tmp2));
-	}
-	#create a textbox with the subject and a textarea with the message
-	#print actual body of message
-
-	print  "\n", CGI::p( $self->{message}) if defined($self->{message});
-	print "\n", CGI::label({'for'=>"email-body"},$r->maketext("Email Body:")),CGI::span({class=>"required-field"},'*');
-	print  "\n", CGI::p( CGI::textarea(-id=>"email-body", -name=>'body', -default=>$text, -rows=>$rows, -cols=>$columns, -override=>1));
-
-	#############################################################################################
-	#	action button table
-	#############################################################################################
-	print    CGI::table( { -border=>2,-cellpadding=>4},
-				 CGI::Tr( {},
-					 CGI::td({}, CGI::submit(-name=>'sendEmail', -id=>"sendEmail_id", -value=>$r->maketext('Send Email')) ), "\n",
-					 CGI::td({}, CGI::submit(-name=>'saveMessage', -value=>$r->maketext('Save')),' ',$r->maketext('to'),' ',$output_file), " \n",
-					 CGI::td({}, CGI::submit(-name=>'saveAs', -value=>$r->maketext('Save as').":"),
-					         CGI::textfield(-name=>'savefilename', -size => 20, -value=> "$output_file", -override=>1)
-					 ), "\n",
-					 CGI::td(CGI::submit(-name=>'saveDefault', -value=>$r->maketext('Save as Default'))),
+					CGI::div(
+						{ class => 'input-group input-group-sm mb-2' },
+						CGI::submit({
+							name  => 'openMessage',
+							value => $r->maketext('Open'),
+							class => 'btn btn-secondary'
+						}),
+						CGI::popup_menu({
+							name    => 'openfilename',
+							values  => \@sorted_messages,
+							default => $input_file,
+							class   => 'form-select form-select-sm'
+						})
+					),
+					CGI::div(
+						{ class => 'input-group input-group-sm mb-2' },
+						CGI::span({ class => 'input-group-text' }, CGI::strong($r->maketext("Save file to:"))),
+						CGI::span({ class => 'input-group-text' }, $output_file)
+					),
+					CGI::div(
+						{ class => 'input-group input-group-sm mb-2' },
+						CGI::span({ class => 'input-group-text' }, CGI::strong($r->maketext('Merge file:'))),
+						CGI::span({ class => 'input-group-text' }, $merge_file)
+					),
+					CGI::popup_menu({
+						name    => 'merge_file',
+						values  => \@sorted_merge_files,
+						default => $merge_file,
+						class   => 'form-select form-select-sm mb-2'
+					}),
+					CGI::div(
+						{ class => 'row mb-1' },
+						CGI::label(
+							{ for => 'from', class => 'col-sm-3 col-form-label col-form-label-sm' },
+							$r->maketext('From:')
+						),
+						CGI::div(
+							{ class => 'col-sm-9' },
+							CGI::textfield({
+								name      => "from",
+								id        => "from",
+								value     => $from,
+								class     => 'form-control form-control-sm'
+							})
+						)
+					),
+					CGI::div(
+						{ class => 'row mb-1' },
+						CGI::label(
+							{ for => 'replyTo', class => 'col-sm-3 col-form-label col-form-label-sm' },
+							$r->maketext('Reply-To:')
+						),
+						CGI::div(
+							{ class => 'col-sm-9' },
+							CGI::textfield({
+								name      => "replyTo",
+								id        => "replyTo",
+								value     => $replyTo,
+								class     => 'form-control form-control-sm'
+							})
+						)
+					),
+					CGI::div(
+						{ class => 'row mb-2' },
+						CGI::label(
+							{ for => 'subject', class => 'col-sm-3 col-form-label col-form-label-sm' },
+							$r->maketext('Subject: ')
+						),
+						CGI::div(
+							{ class => 'col-sm-9' },
+							CGI::textfield({
+								name  => 'subject',
+								id    => 'subject',
+								value => $subject,
+								class => 'form-control form-control-sm'
+							})
+						),
+					),
+					CGI::div(
+						{ class => 'row mb-2' },
+						CGI::label(
+							{ for => 'subject', class => 'col-3 col-form-label col-form-label-sm' },
+							$r->maketext('Editor rows:')
+						),
+						CGI::div(
+							{ class => 'col-9' },
+							CGI::textfield({
+								name  => 'rows',
+								size  => 3,
+								value => $rows,
+								class => 'form-control form-control-sm d-inline w-auto'
+							})
+						),
+					),
+					CGI::submit({
+						name  => 'updateSettings',
+						value => $r->maketext("Update settings and refresh page"),
+						class => 'btn btn-secondary btn-sm'
+					}),
+				),
+				CGI::div(
+					{ class => 'col-md-6 mb-2' },
+					CGI::div(
+						{ class => 'input-group input-group-sm mb-2' },
+						CGI::span({ class => 'input-group-text' }, CGI::strong($r->maketext("Send to:"))),
+						CGI::div(
+							{ class => 'input-group-text' },
+							CGI::radio_group({
+								name   => 'send_to',
+								values => [ 'all_students', 'studentID' ],
+								labels => {
+									all_students => $r->maketext('all'),
+									studentID    => $r->maketext('selected')
+								},
+								default         => $r->param('send_to') // 'studentID',
+								linebreak       => 0,
+								class           => 'form-check-input me-1',
+								labelattributes => { class => 'form-check-label mx-1' }
+							})
+						),
+						CGI::span({ class => 'input-group-text' }, $r->maketext('students')),
+					),
+					CGI::div(
+						{ class => 'mb-2' },
+						scrollingRecordList(
+							{
+								name                => "classList",
+								request             => $r,
+								default_sort        => "lnfn",
+								default_format      => "lnfn_uid",
+								default_filters     => ["all"],
+								size                => 5,
+								multiple            => 1,
+								refresh_button_name => $r->maketext('Update settings and refresh page'),
+							},
+							@{ $self->{ra_user_records} }
+						)
+					),
+					CGI::div(
+						{ class => 'input-group input-group-sm mb-2' },
+						CGI::submit({
+							name  => 'previewMessage',
+							value => $r->maketext('Preview Message'),
+							class => 'btn btn-secondary btn-sm'
+						}),
+						CGI::span(
+							{ class => 'input-group-text', style => 'white-space:pre;' },
+							CGI::strong($r->maketext("for")) . ' '
+								. $preview_record->last_name . ', '
+								. $preview_record->first_name . ' ('
+								. $preview_record->user_id . ')'
+						)
+					)
 				)
+			),
+			# Insert a popup menu containing a list of available macros.
+			CGI::div(
+				{ class => 'd-flex justify-content-center' },
+				CGI::span(
+					{ dir => "ltr" },    # Put the popup in a LTR span
+					CGI::popup_menu({
+						name   => 'dummyName',
+						values => [
+							'', '$SID', '$FN', '$LN', '$SECTION', '$RECITATION',
+							'$STATUS', '$EMAIL', '$LOGIN', '$COL[n]', '$COL[-1]'
+						],
+						labels => {
+							''            => $r->maketext('List of insertable macros'),
+							'$SID'        => '$SID - ' . $r->maketext('Student ID'),
+							'$FN'         => '$FN - ' . $r->maketext('First name'),
+							'$LN'         => '$LN - ' . $r->maketext('Last name'),
+							'$SECTION'    => '$SECTION - ' . $r->maketext('Section'),
+							'$RECITATION' => '$RECITATION - ' . $r->maketext('Recitation'),
+							'$STATUS'     => '$STATUS - ' . $r->maketext('Enrolled, Drop, etc.'),
+							'$EMAIL'      => '$EMAIL - ' . $r->maketext('Email address'),
+							'$LOGIN'      => '$LOGIN - ' . $r->maketext('Login'),
+							'$COL[n]'     => '$COL[n] - ' . $r->maketext('nth colum of merge file'),
+							'$COL[-1]'    => '$COL[-1] - ' . $r->maketext('Last column of merge file')
+						},
+						class => 'form-select form-select-sm d-inline w-auto'
+					})
+				)
+			)
+		)
 	);
 
-	##############################################################################################################
+	# Merge file fragment and message text area field
+	my @merge_data;
+	eval { @merge_data = @{ $rh_merge_data->{ $db->getUser($preview_user)->student_id } }; };    # checked
+	if ($@ and $merge_file ne 'None') {
+		print CGI::div({ class => 'mb-3' }, "No merge data for $preview_user in merge file: &lt;$merge_file&gt;");
+	} elsif (@merge_data) {
+		print CGI::pre("", data_format(1 .. ($#merge_data + 1)), "<br>", data_format2(@merge_data));
+	}
+
+	# Create a textbox with the subject and a textarea with the message.
+	# Print the actual body of message.
+	print CGI::div({ class => 'alert alert-info p-1 my-2' }, $self->{message}) if defined($self->{message});
+	print CGI::div(
+		{ class => 'mb-2' },
+		CGI::label(
+			{ 'for' => "email-body", class => 'form-label' },
+			$r->maketext("Email Body:") . CGI::span({ class => "required-field" }, '*')
+		),
+		CGI::textarea({
+			id       => "email-body",
+			name     => 'body',
+			default  => $text,
+			rows     => $rows,
+			override => 1,
+			class    => 'form-control'
+		})
+	);
+
+	# Action buttons
+	print CGI::div(
+		{ class => 'card' },
+		CGI::div(
+			{ class => 'card-body p-1 d-md-flex flex-wrap justify-content-evenly' },
+			CGI::div(
+				{ class => 'input-group input-group-sm w-auto m-1' },
+				CGI::submit({
+					name  => 'sendEmail',
+					id    => "sendEmail_id",
+					value => $r->maketext('Send Email'),
+					class => 'btn btn-secondary btn-sm d-inline w-auto'
+				})
+			),
+			CGI::div(
+				{ class => 'input-group input-group-sm w-auto m-1' },
+				CGI::submit({
+					name  => 'saveMessage',
+					value => $r->maketext('Save'),
+					class => 'btn btn-secondary btn-sm'
+				}),
+				CGI::span({ class => 'input-group-text' }, $r->maketext('to') . ' ' . $output_file)
+			),
+			CGI::div(
+				{ class => 'input-group input-group-sm w-auto m-1' },
+				CGI::submit({
+					name  => 'saveAs',
+					value => $r->maketext('Save as') . ":",
+					class => 'btn btn-secondary btn-sm'
+				}),
+				CGI::textfield({
+					name  => 'savefilename',
+					size  => 20,
+					value => "$output_file",
+					class => 'form-control form-control-sm'
+				})
+			),
+			CGI::div(
+				{ class => 'input-group input-group-sm w-auto m-1' },
+				CGI::submit({
+					name  => 'saveDefault',
+					value => $r->maketext('Save as Default'),
+					class => 'btn btn-secondary btn-sm'
+				})
+			)
+		)
+	);
 
 	print CGI::end_form();
-	return "";
+	return '';
 }
 
 ##############################################################################
@@ -819,8 +909,8 @@ sub read_input_file {
 	local(*FILE);
 	if (-e "$filePath" and -r "$filePath") {
 		open FILE, "<:encoding(UTF-8)", $filePath || do { $self->addbadmessage(CGI::p($r->maketext("Can't open [_1]",$filePath))); return};
-		while ($header !~ s/Message:\s*$//m and not eof(FILE)) { 
-			$header .= <FILE>; 
+		while ($header !~ s/Message:\s*$//m and not eof(FILE)) {
+			$header .= <FILE>;
 		}
 		$text = join( '', <FILE>);
 		$text =~ s/^\s*//; # remove initial white space if any.
@@ -842,7 +932,6 @@ sub read_input_file {
 	return ($from, $replyTo, $subject, \$text);
 }
 
-
 sub get_message_file_names {
 	my $self         = shift;
 	return $self->read_dir($self->{ce}->{courseDirs}->{email}, '\\.msg$');
@@ -853,122 +942,98 @@ sub get_merge_file_names   {
 }
 
 sub mail_message_to_recipients {
-	my $self                  = shift;
-	my $r                     = $self->r;
-	my $ce                    = $r->ce;
-	my $subject               = $self->{subject};
-	my $from                  = $self->{from};
-	my @recipients            = @{$self->{ra_send_to}};
-	my $rh_merge_data         = $self->{rh_merge_data};
-	my $merge_file            = $self->{merge_file};
-	my $result_message        = '';
-	my $failed_messages        = 0;
-	my $error_messages         = '';
-	foreach my $recipient (@recipients) {
-			$error_messages = '';
+	my $self            = shift;
+	my $r               = $self->r;
+	my $ce              = $r->ce;
+	my $subject         = $self->{subject};
+	my $from            = $self->{from};
+	my @recipients      = @{ $self->{ra_send_to} };
+	my $rh_merge_data   = $self->{rh_merge_data};
+	my $merge_file      = $self->{merge_file};
+	my $result_message  = '';
+	my $failed_messages = 0;
+	my $error_messages  = '';
 
-			my $ur      = $self->{db}->getUser($recipient); #checked
-			unless ($ur) {
-				$error_messages .= "Record for user $recipient not found\n";
-				next;
-			}
-			unless ($ur->email_address=~/\S/) { #unless address contains a non-blank charachter
-				$error_messages .="User $recipient does not have an email address -- skipping\n";
-				next;
-			}
-           	#warn "\nDEBUG: sending email to $recipient with email address ",$ur->email_address,"\n";
+	for my $recipient (@recipients) {
+		$error_messages = '';
 
-			my $msg = eval { $self->process_message($ur,$rh_merge_data) };
-			$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
-			#warn "message is ok";
-# 			my $transport = Email::Sender::Transport::SMTP->new({
-# 				host => $ce->{mail}->{smtpServer},
-# 				ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
-# 				timeout => $ce->{mail}->{smtpTimeout}
-# 			});
-# 
-
-#           createEmailSenderTransportSMTP is defined in ContentGenerator
-			my $transport = $self->createEmailSenderTransportSMTP();
-			my $email = Email::Simple->create(
-				header => [
-					To => $ur->email_address,
-					From => $from,
-					Subject => $subject,
-					"Content-Type" => "text/plain; charset=UTF-8" ],
-				body => Encode::encode("UTF-8",$msg)
-			);
-			$email->header_set("X-Remote-Host: ",$self->{remote_host});
-
-
-			try {
-				sendmail($email,{transport => $transport});
-				debug "email sent successfully to " . $ur->email_address;
-			} catch {
-				  debug "error sending email: $_";
-				  debug dump $@;
-					$error_messages .= "Error sending email: $_";
-					next;
-			};
-
-		  $result_message .= $r->maketext("Msg sent to [_1] at [_2].", $recipient, $ur->email_address)."\n" unless $error_messages;
-		} continue { #update failed messages before continuing loop
-			if ($error_messages) {
-				$failed_messages++;
-		    	$result_message .= $error_messages;
-		    }
+		my $ur = $self->{db}->getUser($recipient);    #checked
+		unless ($ur) {
+			$error_messages .= "Record for user $recipient not found\n";
+			next;
 		}
-		my $courseName = $self->r->urlpath->arg("courseID");
-		my $number_of_recipients = scalar(@recipients) - $failed_messages;
-	        $result_message = $r->maketext("A message with the subject line \"[_1]\" has been sent to [quant,_2,recipient] in the class [_3].  There were [_4] message(s) that could not be sent.", $subject, $number_of_recipients, $courseName, $failed_messages)."\n\n".$result_message;
+		unless ($ur->email_address =~ /\S/) {         #unless address contains a non-blank charachter
+			$error_messages .= "User $recipient does not have an email address -- skipping\n";
+			next;
+		}
+
+		my $msg = eval { $self->process_message($ur, $rh_merge_data) };
+		$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
+
+		my $email = Email::Stuffer->to($ur->email_address)->from($from)->subject($subject)
+			->text_body(Encode::encode('UTF-8', $msg))->header('X-Remote-Host' => $self->{remote_host});
+
+		# $ce->{mail}{set_return_path} is the address used to report returned email if defined and non empty.
+		# It is an argument used in sendmail() (aka Email::Stuffer::send_or_die).
+		# For arcane historical reasons sendmail actually sets the field "MAIL FROM" and the smtp server then
+		# uses that to set "Return-Path".
+		# references:
+		#  https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
+		#  https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
+		try {
+			$email->send_or_die({
+				# createEmailSenderTransportSMTP is defined in ContentGenerator
+				transport => $self->createEmailSenderTransportSMTP(),
+				$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
+			});
+			debug 'email sent successfully to ' . $ur->email_address;
+		} catch {
+			debug "Error sending email: $_";
+			debug dump $@;
+			$error_messages .= "Error sending email: $_";
+			next;
+		};
+
+		$result_message .= $r->maketext("Message sent to [_1] at [_2].", $recipient, $ur->email_address) . "\n"
+			unless $error_messages;
+	} continue {    #update failed messages before continuing loop
+		if ($error_messages) {
+			$failed_messages++;
+			$result_message .= $error_messages;
+		}
+	}
+	my $courseName           = $self->r->urlpath->arg("courseID");
+	my $number_of_recipients = scalar(@recipients) - $failed_messages;
+	$result_message = $r->maketext(
+		"A message with the subject line \"[_1]\" has been sent to [quant,_2,recipient] in the class [_3].  "
+			. "There were [_4] message(s) that could not be sent.",
+		$subject, $number_of_recipients, $courseName, $failed_messages)
+		. "\n\n"
+		. $result_message;
 
 }
+
 sub email_notification {
-	my $self = shift;
-	my $r  = $self->r;
-	my $ce = $r->ce;
+	my $self           = shift;
 	my $result_message = shift;
-	# find info on mailer and sender
-	# use the defaultFrom address.
+	my $ce             = $self->r->ce;
 
-	# find info on instructor recipient and message
-	my $subject="WeBWorK email sent";
-
-	my $mailing_errors = "";
-
-# 	my $transport = Email::Sender::Transport::SMTP->new({
-# 		host => $ce->{mail}->{smtpServer},
-# 		ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
-# 		timeout => $ce->{mail}->{smtpTimeout}
-# 	});
-# 
-# 	$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort}; 
-#           createEmailSenderTransportSMTP is defined in ContentGenerator
-	my $transport = $self->createEmailSenderTransportSMTP();
-
-	my $email = Email::Simple->create(
-		header => [
-			To => $self->{defaultFrom},
-			From => $self->{defaultFrom},
-			Subject => $subject,
-			"Content-Type" => "text/plain; charset=UTF-8"
-		],
-		body => Encode::encode("UTF-8",$result_message),
-	);
-	$email->header_set("X-Remote-Host: ",$self->{remote_host});
+	my $email = Email::Stuffer->to($self->{defaultFrom})->from($self->{defaultFrom})->subject('WeBWorK email sent')
+		->text_body(Encode::encode('UTF-8', $result_message))->header('X-Remote-Host' => $self->{remote_host});
 
 	try {
-		sendmail($email,{transport => $transport});
+		$email->send_or_die({
+			# createEmailSenderTransportSMTP is defined in ContentGenerator
+			transport => $self->createEmailSenderTransportSMTP(),
+			$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
+		});
 	} catch {
-			warn "Error sending email: $_";
-			next;
+		warn "Error sending email: $_";
 	};
 
-
-    warn "\nWW::Instructor::SendMail:: instructor message ". $self->{subject}
-					." sent from ", $self->{defaultFrom},"\n";
-
+	warn "\nWW::Instructor::SendMail:: instructor message sent from $self->{defaultFrom}\n";
 }
+
 sub getRecord {
 	my $self    = shift;
 	my $line    = shift;
@@ -1022,16 +1087,16 @@ sub process_message {
 	my $endCol = @COL;
 	# for safety, only evaluate special variables
  	my $msg = $text;
- 	$msg =~ s/\$SID/$SID/ge;
- 	$msg =~ s/\$LN/$LN/ge;
- 	$msg =~ s/\$FN/$FN/ge;
- 	$msg =~ s/\$STATUS/$STATUS/ge;
- 	$msg =~ s/\$SECTION/$SECTION/ge;
- 	$msg =~ s/\$RECITATION/$RECITATION/ge;
- 	$msg =~ s/\$EMAIL/$EMAIL/ge;
- 	$msg =~ s/\$LOGIN/$LOGIN/ge;
+	$msg =~ s/\$SID/$SID/g;
+ 	$msg =~ s/\$LN/$LN/g;
+ 	$msg =~ s/\$FN/$FN/g;
+ 	$msg =~ s/\$STATUS/$STATUS/g;
+ 	$msg =~ s/\$SECTION/$SECTION/g;
+ 	$msg =~ s/\$RECITATION/$RECITATION/g;
+ 	$msg =~ s/\$EMAIL/$EMAIL/g;
+ 	$msg =~ s/\$LOGIN/$LOGIN/g;
 	if (defined($COL[1])) {		# prevents extraneous error messages.
-		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/ge
+		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/g
 	}
 	else {						# prevents extraneous $COL's in email message
 		$msg =~ s/\$COL\[(\-?\d+)\]//g
@@ -1050,14 +1115,12 @@ sub process_message {
 	}
 }
 
+sub data_format {
+	map { "COL[$_]" . '&nbsp;' x (3 - length($_)); } @_;    # problems if $_ has length bigger than 4
+}
 
-# Ý sub data_format {
-#
-# Ý Ý Ý Ý Ýmap {$_ =~s/\s/\./g;$_} Ý Ý map {sprintf('%-8.8s',$_);} Ý@_;
- sub data_format {
- 	    map {"COL[$_]".'&nbsp;'x(3-length($_));}  @_;  # problems if $_ has length bigger than 4
- }
-  sub data_format2 {
-    map {$_ =~s/\s/&nbsp;/g;$_}  map {sprintf('%-8.8s',$_);} @_;
- }
+sub data_format2 {
+	map { $_ =~ s/\s/&nbsp;/g; $_ } map { sprintf('%-8.8s', $_); } @_;
+}
+
 1;
