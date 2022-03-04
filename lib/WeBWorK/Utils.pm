@@ -1234,10 +1234,11 @@ sub is_restricted {
 			my $restrictor_set = $db->getGlobalSet($restrictor);
 
 			if ($restrictor_set->assignment_type =~ /gateway/) {
-				my @versions = $db->listSetVersions($studentName, $restrictor);
+				my @versions =
+					$db->getSetVersionsWhere({ user_id => $studentName, set_id => { like => $restrictor . ',v%' } });
 				foreach (@versions) {
-					my $restrictor_set_version = $db->getSetVersion($studentName, $restrictor, $_);
-					my $v_score = grade_set($db, $restrictor_set_version, $restrictor, $studentName,1);
+					my $v_score = grade_set($db, $_, $restrictor, $studentName, 1);
+
 					$r_score = $v_score if ($v_score > $r_score);
 				}
 			} else {
