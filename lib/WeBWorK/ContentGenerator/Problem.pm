@@ -1127,81 +1127,106 @@ sub nav {
 		# Set up the student nav.
 		$userNav = CGI::div(
 			{ class => 'user-nav d-flex submit-buttons-container' },
-			$prevUser
-			? CGI::a(
-				{
-					href => $self->systemLink(
-						$problemPage,
-						params => {
-							effectiveUser     => $prevUser->user_id,
-							showProblemGrader => $self->{will}{showProblemGrader},
-							$filter ? (studentNavFilter => $filter) : ()
-						}
-					),
-					data_bs_toggle    => 'tooltip',
-					data_bs_placement => 'top',
-					title             => $prevUser->{displayName},
-					class             => 'btn btn-primary student-nav-button'
-				},
-				$r->maketext('Previous Student')
-				)
-			: CGI::span({ class => 'btn btn-primary disabled' }, $r->maketext('Previous Student')),
-			$args->{separator},
-			CGI::start_div({ class => 'btn-group student-nav-selector' }),
-			CGI::a(
-				{
-					href           => '#',
-					id             => 'studentSelector',
-					class          => 'btn btn-primary dropdown-toggle',
-					role           => 'button',
-					data_bs_toggle => 'dropdown',
-					aria_expanded  => 'false',
-					scalar keys %filters ? (style => 'border-top-right-radius:0;border-bottom-right-radius:0') : (),
-				},
-				$userRecords[$currentUserIndex]{displayName}
-			),
-			CGI::start_ul({ class => 'dropdown-menu', role => 'menu', aria_labelledby => 'studentSelector' }),
-			(
-				map {
-					CGI::li(CGI::a(
-						{
-							style => $_->{currentUser} ? 'background-color: #8F8' : '',
-							class => 'dropdown-item',
-							href  => $self->systemLink(
-								$problemPage,
-								params => {
-									effectiveUser     => $_->user_id,
-									showProblemGrader => $self->{will}{showProblemGrader},
-									$filter ? (studentNavFilter => $filter) : ()
-								}
-							)
-						},
-						$_->{displayName}
-					))
-				} @userRecords[ $minStudentIndex .. $maxStudentIndex ]
-			),
-			CGI::end_ul(),
-			(
-				# Create a section/recitation filter by dropdown if there are sections or recitaitons.
-				scalar keys %filters
-				? (
+			CGI::div(
+				{ class => 'btn-group', role => 'group', aria_label => 'student selector' },
+				$prevUser
+				? CGI::a(
+					{
+						href => $self->systemLink(
+							$problemPage,
+							params => {
+								effectiveUser     => $prevUser->user_id,
+								showProblemGrader => $self->{will}{showProblemGrader},
+								$filter ? (studentNavFilter => $filter) : ()
+							}
+						),
+						data_bs_toggle    => 'tooltip',
+						data_bs_placement => 'top',
+						title             => $prevUser->{displayName},
+						class             => 'btn btn-primary student-nav-button'
+					},
+					CGI::i({ class => 'fas fa-chevron-left' }, '')
+					)
+				: CGI::span({ class => 'btn btn-primary disabled' },
+					CGI::i({ class => 'fas fa-chevron-left' }, '')),
+				CGI::div(
+					{ class => 'btn-group student-nav-selector' },
 					CGI::a(
 						{
 							href           => '#',
-							id             => 'studentSelectorFilter',
-							class          => 'btn btn-primary dropdown-toggle dropdown-toggle-split',
+							id             => 'studentSelector',
+							class          => 'btn btn-primary dropdown-toggle',
 							role           => 'button',
 							data_bs_toggle => 'dropdown',
-							aria_expanded  => 'false',
+							aria_expanded  => 'false'
 						},
-						CGI::span(
-							{ class => 'visually-hidden' },
-							$r->maketext('Filter students by section or recitation')
-						)
+						$userRecords[$currentUserIndex]{displayName}
 					),
-					CGI::start_ul(
-						{ class => 'dropdown-menu', role => 'menu', aria_labelledby => 'studentSelectorFilter' }
-					),
+					CGI::ul(
+						{ class => 'dropdown-menu', role => 'menu', aria_labelledby => 'studentSelector' },
+						map {
+							CGI::li(CGI::a(
+								{
+									style => $_->{currentUser} ? 'background-color: #8F8' : '',
+									class => 'dropdown-item',
+									href  => $self->systemLink(
+										$problemPage,
+										params => {
+											effectiveUser     => $_->user_id,
+											showProblemGrader => $self->{will}{showProblemGrader},
+											$filter ? (studentNavFilter => $filter) : ()
+										}
+									)
+								},
+								$_->{displayName}
+							))
+						} @userRecords[ $minStudentIndex .. $maxStudentIndex ]
+					)
+				),
+				$nextUser
+				? CGI::a(
+					{
+						href => $self->systemLink(
+							$problemPage,
+							params => {
+								effectiveUser     => $nextUser->user_id,
+								showProblemGrader => $self->{will}{showProblemGrader},
+								$filter ? (studentNavFilter => $filter) : ()
+							}
+						),
+						data_bs_toggle    => 'tooltip',
+						data_bs_placement => 'top',
+						title             => $nextUser->{displayName},
+						class             => 'btn btn-primary student-nav-button'
+					},
+					CGI::i({ class => 'fas fa-chevron-right' }, '')
+					)
+				: CGI::span(
+					{ class => 'btn btn-primary disabled' },
+					CGI::i({ class => 'fas fa-chevron-right' }, '')
+				),
+			),
+			# Create a section/recitation "filter by" dropdown if there are sections or recitations.
+			scalar keys %filters
+			? CGI::div(
+				{ class => 'btn-group student-nav-filter-selector' },
+				CGI::a(
+					{
+						href           => '#',
+						id             => 'studentSelectorFilter',
+						class          => 'btn btn-primary dropdown-toggle',
+						role           => 'button',
+						data_bs_toggle => 'dropdown',
+						aria_expanded  => 'false',
+					},
+					$filter ? $filters{$filter}[0] : $r->maketext('Showing all students')
+				),
+				CGI::ul(
+					{
+						class           => 'dropdown-menu',
+						role            => 'menu',
+						aria_labelledby => 'studentSelectorFilter'
+					},
 					(
 						# If a filter is currently in use, then add an item that will remove that filter.
 						$filter
@@ -1216,7 +1241,7 @@ sub nav {
 									}
 								)
 							},
-							$r->maketext('Remove current filter')
+							$r->maketext('Show all students')
 						))
 						: ''
 					),
@@ -1225,6 +1250,7 @@ sub nav {
 							CGI::li(CGI::a(
 								{
 									class => 'dropdown-item',
+									style => ($filter || '') eq $_ ? 'background-color: #8F8' : '',
 									href  => $self->systemLink(
 										$problemPage,
 										params => {
@@ -1237,32 +1263,10 @@ sub nav {
 								$filters{$_}[0]
 							))
 						} sort keys %filters
-					),
-					CGI::end_ul(),
 					)
-				: ''
-			),
-			CGI::end_div(),
-			$args->{separator},
-			$nextUser
-			? CGI::a(
-				{
-					href => $self->systemLink(
-						$problemPage,
-						params => {
-							effectiveUser     => $nextUser->user_id,
-							showProblemGrader => $self->{will}{showProblemGrader},
-							$filter ? (studentNavFilter => $filter) : ()
-						}
-					),
-					data_bs_toggle    => 'tooltip',
-					data_bs_placement => 'top',
-					title             => $nextUser->{displayName},
-					class             => 'btn btn-primary student-nav-button'
-				},
-				$r->maketext('Next Student')
 				)
-			: CGI::span({ class => 'btn btn-primary disabled' }, $r->maketext('Next Student')),
+				)
+			: ''
 		);
 	}
 
