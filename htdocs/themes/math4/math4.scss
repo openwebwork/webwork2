@@ -333,6 +333,15 @@ div {
 	}
 }
 
+/* Show me another */
+div.showMeAnotherBox {
+	background-color: #EDE275;
+	border-radius: 5px;
+	border: 2px solid #FDD017;
+	padding: 3px;
+	margin-bottom: 0.5rem;
+}
+
 /* Breadcrumb */
 #breadcrumb-navigation {
 	.breadcrumb {
