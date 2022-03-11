@@ -1212,30 +1212,44 @@ sub has_aux_files ($) { #  determine whether a question has auxiliary files
 }
 
 sub is_restricted {
-        my ($db, $set, $studentName) = @_;
+	my ($db, $set, $studentName) = @_;
 
 	# all sets open after the due date
 	return () if after($set->due_date());
 
-        my $setID = $set->set_id();
+	my $setID = $set->set_id();
 	my @needed;
+
 	if ($set->restricted_release ) {
-	        my @proposed_sets = split(/\s*,\s*/,$set->restricted_release);
-		my $restriction = $set->restricted_status  ||  0;
-		# round to evade machine rounding error
-		$restriction = sprintf("%.2f", $restriction);
+		my @proposed_sets  = split(/\s*,\s*/,$set->restricted_release);
+		my $required_score = sprintf("%.2f", $set->restricted_status || 0);
+
 		my @good_sets;
 		foreach(@proposed_sets) {
-		  push @good_sets,$_ if $db->existsGlobalSet($_);
+			push @good_sets,$_ if $db->existsGlobalSet($_);
 		}
-		foreach(@good_sets) {
-	  	  my $restrictor =  $db->getGlobalSet($_);
-		  my $r_score = grade_set($db,$restrictor,$_, $studentName,0);
-		  # round to evade machine rounding error
-		  $r_score = sprintf("%.2f", $r_score);
-		  if($r_score < $restriction) {
-	  	    push @needed,$_;
-		  }
+
+		foreach my $restrictor (@good_sets) {
+			my $r_score = 0;
+			my $restrictor_set = $db->getGlobalSet($restrictor);
+
+			if ($restrictor_set->assignment_type =~ /gateway/) {
+				my @versions =
+					$db->getSetVersionsWhere({ user_id => $studentName, set_id => { like => $restrictor . ',v%' } });
+				foreach (@versions) {
+					my $v_score = grade_set($db, $_, $restrictor, $studentName, 1);
+
+					$r_score = $v_score if ($v_score > $r_score);
+				}
+			} else {
+				$r_score = grade_set($db, $restrictor_set, $restrictor, $studentName, 0);
+			}
+
+			# round to evade machine rounding error
+			$r_score = sprintf("%.2f", $r_score);
+			if($r_score < $required_score) {
+				push @needed, $restrictor;
+			}
 		}
 	}
 	return unless @needed;
