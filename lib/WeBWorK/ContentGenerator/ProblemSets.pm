@@ -288,7 +288,6 @@ sub body {
 sub setListRow {
 	my ($self, $set, $multiSet, $preOpenSets, $db) = @_;
 	my $r = $self->r;
-	my $db = $r->db;
 	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $user = $r->param("user");
