@@ -31,7 +31,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Form;
-use WeBWorK::Utils qw(readDirectory max sortByName wwRound x);
+use WeBWorK::Utils qw(readDirectory max sortByName wwRound x getAssetURL);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
 use WeBWorK::Utils::LibraryStats;
@@ -2138,7 +2138,6 @@ sub body {
 	}
 
 	##########	Top part
-	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	print CGI::start_form({ method => "POST", action => $r->uri, name => 'library_browser_form' }),
 		$self->hidden_authen_fields,
 		CGI::hidden({ id => 'hidden_courseID', name => 'courseID', default => $courseID });
@@ -2220,12 +2219,11 @@ sub body {
 }
 
 sub output_JS {
-	my $self               = shift;
-	my $ce                 = $self->r->ce;
-	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
+	my $self = shift;
+	my $ce   = $self->r->ce;
 
-	print CGI::script({ src => "$webwork_htdocs_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, '');
-	print CGI::script({ src => "$webwork_htdocs_url/js/apps/SetMaker/setmaker.js", defer => undef },        '');
+	print CGI::script({ src => getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') }, '');
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/SetMaker/setmaker.js'), defer => undef },        '');
 
 	if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), 'modify_tags')) {
 		print CGI::script(

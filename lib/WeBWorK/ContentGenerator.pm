@@ -58,7 +58,7 @@ use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VE
 use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
-use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients generateURLs);
+use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients generateURLs getAssetURL);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use Encode;
 use Email::Sender::Transport::SMTP;
@@ -1316,30 +1316,37 @@ Defined in this package.
 Returns the specified URL from either %webworkURLs or %courseURLs in the course
 environment. $args is a reference to a hash containing the following fields:
 
- type => type of URL: webwork|course
- name => name of URL (key in URL hash)
+ type => type of URL: webwork|course (defaults to webwork)
+ name => name of URL type (must be 'theme' or undefined)
+ file => the local file name
 
 =cut
 
 sub url {
 	my ($self, $args) = @_;
-	my $ce = $self->r->ce;
-	my $type = $args->{type};
-	my $name = $args->{name};
+	my $ce   = $self->r->ce;
+	my $type = $args->{type} // 'webwork';
+	my $name = $args->{name} // '';
+	my $file = $args->{file};
 
 	if ($type eq "webwork") {
-	    # we have to build this here (and not in say defaults.conf) because
-	    # defaultTheme will chage as late as simple.conf
-	    if ($name eq "theme") {
-		return $ce->{webworkURLs}->{htdocs}.'/themes/'.$ce->{defaultTheme};
-	    } else {
+		# We have to build this here (and not in say defaults.conf) because
+		# defaultTheme will change as late as simple.conf.
 
-		return $ce->{webworkURLs}->{$name};
-	    }
+		# If $file is defined, then try to look it up in the assets list.
+		return getAssetURL($ce, $file, $name eq 'theme') if defined $file;
+
+		# Fallback to the old method if $file was not defined.
+		# This assumes the rest of the file path is appended after this.
+		if ($name eq "theme") {
+			return "$ce->{webworkURLs}{themes}/$ce->{defaultTheme}";
+		} else {
+			return $ce->{webworkURLs}{$name};
+		}
 	} elsif ($type eq "course") {
-		return $ce->{courseURLs}->{$name};
+		return $ce->{courseURLs}{$name};
 	} else {
-		warn __PACKAGE__."::url: unrecognized type '$type'.\n";
+		warn __PACKAGE__ . "::url: unrecognized type '$type'.\n";
 	}
 }
 

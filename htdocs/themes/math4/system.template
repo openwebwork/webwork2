@@ -26,43 +26,33 @@
 ################################################################################
 -->
 
-<link rel="icon" type="x-image/icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
+<link rel="icon" type="x-image/icon" href="<!--#url type="webwork" name="htdocs" file="images/favicon.ico"-->"/>
 
 <!-- CSS Loads -->
-<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/bootstrap.css"/>
-<link rel="stylesheet" href="<!--#url type="webwork" name="htdocs"-->/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
-<!--#if can="output_jquery_ui"-->
-	<link rel="stylesheet" href="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
-<!--#endif-->
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme" file="bootstrap.css"-->"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="htdocs" file="node_modules/@fortawesome/fontawesome-free/css/all.min.css"-->"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme" file="math4.css"-->"/>
 <!--#if can="output_achievement_CSS"-->
-<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme" file="achievements.css"-->"/>
 <!--#endif-->
 <!--#if can="output_CSS"-->
 	<!--#output_CSS-->
 <!--#endif-->
-<!--#if exists="math4-coloring.css"-->
-<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/math4-coloring.css"/>
-<!--#endif-->
 <!--#if exists="math4-overrides.css"-->
-<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/math4-overrides.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme" file="math4-overrides.css"-->"/>
 <!--#endif-->
 
 <!-- JS Loads -->
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
-<script src="<!--#url type="webwork" name="htdocs"-->/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
-<script src="<!--#url type="webwork" name="MathJax"-->" id="MathJax-script" defer></script>
-<script src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery/dist/jquery.min.js"></script>
-<!--#if can="output_jquery_ui"-->
-	<script src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
-<!--#endif-->
-<script src="<!--#url type="webwork" name="htdocs"-->/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="<!--#url type="webwork" name="htdocs" file="js/apps/MathJaxConfig/mathjax-config.js"-->" defer></script>
+<script src="<!--#url type="webwork" name="htdocs" file="node_modules/mathjax/es5/tex-chtml.js"-->" id="MathJax-script" defer></script>
+<script src="<!--#url type="webwork" name="htdocs" file="node_modules/jquery/dist/jquery.min.js"-->"></script>
+<script src="<!--#url type="webwork" name="htdocs" file="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"-->" defer></script>
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
-<script src="<!--#url type="webwork" name="theme"-->/math4.js" defer></script>
+<script src="<!--#url type="webwork" name="theme" file="math4.js"-->" defer></script>
 <!--#if exists="math4-overrides.js"-->
-<script src="<!--#url type="webwork" name="theme"-->/math4-overrides.js" defer></script>
+<script src="<!--#url type="webwork" name="theme" file="math4-overrides.js"-->" defer></script>
 <!--#endif-->
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>

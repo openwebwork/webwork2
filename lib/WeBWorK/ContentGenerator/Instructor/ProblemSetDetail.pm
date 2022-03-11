@@ -27,7 +27,8 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
-use WeBWorK::Utils qw(after readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id x);
+use WeBWorK::Utils qw(after readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq
+	seq_to_jitar_id x getAssetURL);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
@@ -2895,21 +2896,29 @@ sub body {
 
 sub output_JS {
 	my $self = shift;
-	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
+	my $ce   = $self->r->ce;
 
 	# Print javascript and style for the flatpickr date/time picker.
-	print CGI::Link({ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/flatpickr.min.css" });
-	print CGI::Link(
-		{ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css" });
-	print CGI::script({ src => "$site_url/node_modules/flatpickr/dist/flatpickr.min.js", defer => undef }, '');
+	print CGI::Link({ rel => 'stylesheet', href => getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') });
+	print CGI::Link({
+		rel  => 'stylesheet',
+		href => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css')
+	});
+	print CGI::script({ src => getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.js'), defer => undef }, '');
 	print CGI::script(
-		{ src => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js", defer => undef }, '');
-	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef }, '');
+		{
+			src   => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
+			defer => undef
+		},
+		''
+	);
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/DatePicker/datepicker.js'), defer => undef }, '');
 
-	print CGI::script({ src => "$site_url/node_modules/sortablejs/Sortable.min.js", defer => undef }, '');
-	print CGI::script({ src => "$site_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, '');
+	print CGI::script({ src => getAssetURL($ce, 'node_modules/sortablejs/Sortable.min.js'), defer => undef }, '');
 
-	print CGI::script({ src=>"$site_url/js/apps/ProblemSetDetail/problemsetdetail.js", defer => undef }, '');
+	print CGI::script({ src => getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') }, '');
+
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/ProblemSetDetail/problemsetdetail.js'), defer => undef }, '');
 
 	return '';
 }

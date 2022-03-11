@@ -37,7 +37,7 @@ use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted ref2string
 	makeTempDirectory path_is_subdir before after between wwRound is_jitar_problem_closed is_jitar_problem_hidden
-	jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_problem_finished);
+	jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_problem_finished getAssetURL);
 use WeBWorK::DB::Utils qw(global2user user2global);
 require WeBWorK::Utils::ListingDB;
 use URI::Escape;
@@ -2434,19 +2434,21 @@ sub output_hidden_info {
 # output_JS subroutine
 # Outputs all of the JavaScript needed for this page.
 sub output_JS {
-	my $self     = shift;
-	my $r        = $self->r;
-	my $ce       = $r->ce;
-	my $site_url = $ce->{webworkURLs}{htdocs};
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	# Output javascript for jquery-ui for problems to use.
+	print CGI::script({ src => getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.js') }, '');
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), 'modify_tags')) {
 		print CGI::script(
 			{
 				id        => 'tag-widget-script',
-				src       => "$site_url/js/apps/TagWidget/tagwidget.js",
+				src       => getAssetURL($ce, 'js/apps/TagWidget/tagwidget.js'),
 				defer     => undef,
-				data_taxo => "$site_url/DATA/tagging-taxonomy.json"
+				data_taxo => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json"
 			},
 			''
 		);
@@ -2454,11 +2456,17 @@ sub output_JS {
 
 	# This is for the problem grader
 	if ($self->{will}{showProblemGrader}) {
-		print CGI::script({ src => "$site_url/js/apps/ProblemGrader/problemgrader.js", defer => undef }, '');
+		print CGI::script(
+			{
+				src   => getAssetURL($ce, 'js/apps/ProblemGrader/problemgrader.js'),
+				defer => undef
+			},
+			''
+		);
 	}
 
 	# This is for any page specific js.  Right now its just used for achievement popups
-	print CGI::script({ src => "$site_url/js/apps/Problem/problem.js", defer => undef }, '');
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/Problem/problem.js'), defer => undef }, '');
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	if (ref($self->{pg}{flags}{extra_js_files}) eq 'ARRAY') {
@@ -2469,15 +2477,8 @@ sub output_JS {
 			my %attributes = ref($_->{attributes}) eq 'HASH' ? %{ $_->{attributes} } : ();
 			if ($_->{external}) {
 				print CGI::script({ src => $_->{file}, %attributes }, '');
-			} elsif (
-				!$_->{external}
-				&& (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}"
-					|| -f "$WeBWorK::Constants::PG_DIRECTORY/htdocs/$_->{file}")
-				)
-			{
-				print CGI::script({ src => "$site_url/$_->{file}", %attributes }, '');
 			} else {
-				print "<!-- $_ is not available in htdocs/ on this server -->";
+				print CGI::script({ src => getAssetURL($ce, $_->{file}), %attributes }, '');
 			}
 		}
 	}
@@ -2488,16 +2489,18 @@ sub output_JS {
 sub output_CSS {
 	my $self     = shift;
 	my $ce       = $self->r->ce;
-	my $site_url = $ce->{webworkURLs}{htdocs};
+
+	# Output css for jquery-ui for problems to use.
+	print CGI::Link({ href => getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.css'), rel => 'stylesheet' });
 
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
 	# which can be set in course.conf (the value should be an anonomous array).
 	my @cssFiles;
-	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq "ARRAY") {
+	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq 'ARRAY') {
 		push(@cssFiles, { file => $_, external => 0 }) for @{ $ce->{pg}{specialPGEnvironmentVars}{extra_css_files} };
 	}
-	if (ref($self->{pg}{flags}{extra_css_files}) eq "ARRAY") {
+	if (ref($self->{pg}{flags}{extra_css_files}) eq 'ARRAY') {
 		push @cssFiles, @{ $self->{pg}{flags}{extra_css_files} };
 	}
 	my %cssFilesAdded;    # Used to avoid duplicates
@@ -2506,15 +2509,8 @@ sub output_CSS {
 		$cssFilesAdded{ $_->{file} } = 1;
 		if ($_->{external}) {
 			print CGI::Link({ rel => 'stylesheet', href => $_->{file} });
-		} elsif (
-			!$_->{external}
-			&& (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}"
-				|| -f "$WeBWorK::Constants::PG_DIRECTORY/htdocs/$_->{file}")
-			)
-		{
-			print CGI::Link({ rel => 'stylesheet', href => "$site_url/$_->{file}" });
 		} else {
-			print "<!-- $_->{file} is not available in htdocs/ on this server -->\n";
+			print CGI::Link({ rel => 'stylesheet', href => getAssetURL($ce, $_->{file}) });
 		}
 	}
 
@@ -2523,11 +2519,6 @@ sub output_CSS {
 
 sub output_achievement_CSS {
     return "";
-}
-
-#Tells template to output stylesheet and js for Jquery-UI
-sub output_jquery_ui{
-	return "";
 }
 
 # Simply here to indicate to the template that this page has body part methods which can be called

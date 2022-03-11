@@ -5,29 +5,8 @@ $sticky_format = <<'ENDPROBLEMTEMPLATE';
 <head>
 <meta charset='utf-8'>
 <base href="$SITE_URL">
-<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
+$favicon
 
-<!-- CSS Loads -->
-<link rel="stylesheet" href="$themeDir/bootstrap.css"/>
-<link rel="stylesheet" href="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
-<link rel="stylesheet" href="/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link rel="stylesheet" href="$themeDir/math4.css"/>
-<link rel="stylesheet" href="$themeDir/math4-coloring.css"/>
-<link rel="stylesheet" href="$themeDir/math4-overrides.css"/>
-
-<!-- JS Loads -->
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
-<script src="/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
-<script src="/webwork2_files/mathjax/es5/tex-chtml.js" id="MathJax-script" defer></script>
-<script src="/webwork2_files/node_modules/jquery/dist/jquery.min.js"></script>
-<script src="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
-<script src="/webwork2_files/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
-<script src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script src="/webwork2_files/js/apps/LocalStorage/localstorage.js" defer></script>
-<script src="/webwork2_files/js/apps/Problem/problem.js" defer></script>
-<script src="/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
-<script src="$themeDir/math4.js" defer></script>
-<script src="$themeDir/math4-overrides.js" defer></script>
 $problemHeadText
 
 <title>WeBWorK using host: $SITE_URL, format: sticky seed: $problemSeed</title>

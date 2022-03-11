@@ -71,7 +71,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::File::Classlist;
 use WeBWorK::DB qw(check_user_id);
-use WeBWorK::Utils qw(readFile readDirectory cryptPassword x);
+use WeBWorK::Utils qw(readFile readDirectory cryptPassword x getAssetURL);
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant PASSWORD_FORMS => [qw(savePassword cancelPassword)];
@@ -2020,20 +2020,14 @@ sub printTableHTML {
 
 sub output_JS {
 	my $self = shift;
-	my $r    = $self->r;
-	my $ce   = $r->ce;
+	my $ce   = $self->r->ce;
 
-	my $site_url = $ce->{webworkURLs}{htdocs};
-	print CGI::script({ src => "$site_url/js/apps/ShowHide/show_hide.js", defer => undef }, '');
-	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => undef }, "");
-	print CGI::script({ src => "$site_url/js/apps/UserList/userlist.js", defer => undef }, '');
-	print CGI::script({ src => "$site_url/js/apps/SelectAll/selectall.js", defer => undef }, '');
-	return "";
-}
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/ShowHide/show_hide.js'),    defer => undef }, '');
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'), defer => undef }, "");
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/UserList/userlist.js'),     defer => undef }, '');
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/SelectAll/selectall.js'),   defer => undef }, '');
 
-#Tells template to output stylesheet for Jquery-UI
-sub output_jquery_ui_CSS{
-	return "";
+	return '';
 }
 
 1;
