@@ -333,6 +333,15 @@ div {
 	}
 }
 
+/* Show me another */
+div.showMeAnotherBox {
+	background-color: #EDE275;
+	border-radius: 5px;
+	border: 2px solid #FDD017;
+	padding: 3px;
+	margin-bottom: 0.5rem;
+}
+
 /* Breadcrumb */
 #breadcrumb-navigation {
 	.breadcrumb {
@@ -380,6 +389,7 @@ h2.page-title {
 .sticky-nav {
 	display: flex;
 	flex-wrap: wrap;
+	gap: 0.5rem;
 	align-content: space-between;
 	justify-content: space-between;
 	z-index: 1;

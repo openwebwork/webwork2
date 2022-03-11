@@ -1343,17 +1343,16 @@ sub make_data_row {
 	my $noshow = $sourceFileData->{noshow} ? 'display:none' : '';
 
 	# Include tagwidget?
-	my $tagwidget = '';
-	my $user      = scalar($r->param('user'));
-	if ($r->authz->hasPermissions($user, "modify_tags")) {
-		my $tagid = 'tagger' . $cnt;
-		$tagwidget = CGI::div({ id => $tagid }, '');
-		my $templatedir    = $r->ce->{courseDirs}->{templates};
-		my $sourceFilePath = $templatedir . '/' . $sourceFileName;
-		$sourceFilePath =~ s/'/\\'/g;
-		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-		$tagwidget .= CGI::script("mytw$cnt = new tag_widget('$tagid','$sourceFilePath')");
-	}
+	my $tagwidget = $r->authz->hasPermissions($r->param('user'), "modify_tags")
+		? CGI::div(
+			{
+				id                    => "tagger$cnt",
+				class                 => 'tag-widget',
+				data_source_file_path => "$ce->{courseDirs}{templates}/$sourceFileName"
+			},
+			''
+		)
+		: '';
 
 	my $level = 0;
 
@@ -2226,16 +2225,16 @@ sub output_JS {
 	print CGI::script({ src => getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') }, '');
 	print CGI::script({ src => getAssetURL($ce, 'js/apps/SetMaker/setmaker.js'), defer => undef },        '');
 
-	if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {
-		print CGI::script({ src => "$ce->{webworkURLs}{htdocs}/js/apps/TagWidget/tagwidget.js" }, '');
-		if (open(TAXONOMY, $ce->{webworkDirs}{root} . '/htdocs/DATA/tagging-taxonomy.json')) {
-			my $taxo = join("", <TAXONOMY>);
-			close TAXONOMY;
-			print CGI::script("var taxo = $taxo;");
-		} else {
-			print CGI::script("var taxo = [];");
-			print CGI::script("alert('Could not load the OPL taxonomy from the server.');");
-		}
+	if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), 'modify_tags')) {
+		print CGI::script(
+			{
+				id        => 'tag-widget-script',
+				src       => "$ce->{webworkURLs}{htdocs}/js/apps/TagWidget/tagwidget.js",
+				defer     => undef,
+				data_taxo => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json"
+			},
+			''
+		);
 	}
 
 	return '';
