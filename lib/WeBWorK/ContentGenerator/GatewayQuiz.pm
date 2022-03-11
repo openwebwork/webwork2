@@ -1149,16 +1149,16 @@ sub path {
 
 sub nav {
 	my ($self, $args) = @_;
-	my $r = $self->{r};
-	my $db = $r->db;
-	my $user = $r->param("user");
+	my $r             = $self->{r};
+	my $db            = $r->db;
+	my $user          = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
 
 	# Set up and display a student navigation for those that have permission to act as a student.
-	if ($r->authz->hasPermissions($user, "become_student") && $effectiveUser ne $user) {
+	if ($r->authz->hasPermissions($user, 'become_student') && $effectiveUser ne $user) {
 		my $setName = $self->{set}->set_id;
 
-		return "" if $setName eq "Undefined_Set" || $self->{invalidSet};
+		return '' if $setName eq 'Undefined_Set' || $self->{invalidSet};
 
 		my $setVersion = $self->{set}->version_id;
 		my $courseName = $self->{ce}{courseName};
@@ -1166,108 +1166,250 @@ sub nav {
 		# Find all versions of this set that have been taken (excluding those taken by the current user).
 		my @users =
 			$db->listSetVersionsWhere({ user_id => { not_like => $user }, set_id => { like => "$setName,v\%" } });
-		my @userRecords = $db->getUsers(map { $_->[0] } @users);
+		my @allUserRecords = $db->getUsers(map { $_->[0] } @users);
+
+		my $filter = $r->param('studentNavFilter');
 
 		# Format the student names for display, and associate the users with the test versions.
-		for (0 .. $#userRecords) {
-			$userRecords[$_]{displayName} = ($userRecords[$_]->last_name || $userRecords[$_]->first_name
-				? $userRecords[$_]->last_name . ", " . $userRecords[$_]->first_name
-				: $userRecords[$_]->user_id);
-			$userRecords[$_]{setVersion} = $users[$_][2];
+		my %filters;
+		my @userRecords;
+		for (0 .. $#allUserRecords) {
+			# Add to the sections and recitations if defined.  Also store the first user found in that section or
+			# recitation.  This user will be switched to when the filter is selected.
+			my $section = $allUserRecords[$_]->section;
+			$filters{"section:$section"} =
+				[ $r->maketext('Filter by section [_1]', $section), $allUserRecords[$_]->user_id, $users[$_][2] ]
+				if $section && !$filters{"section:$section"};
+			my $recitation = $allUserRecords[$_]->recitation;
+			$filters{"recitation:$recitation"} =
+				[ $r->maketext('Filter by recitation [_1]', $recitation), $allUserRecords[$_]->user_id, $users[$_][2] ]
+				if $recitation && !$filters{"recitation:$recitation"};
+
+			# Only keep this user if it satisfies the selected filter if a filter was selected.
+			next
+				unless !$filter
+				|| ($filter =~ /^section:(.*)$/    && $allUserRecords[$_]->section eq $1)
+				|| ($filter =~ /^recitation:(.*)$/ && $allUserRecords[$_]->recitation eq $1);
+
+			my $addRecord = $allUserRecords[$_];
+			push @userRecords, $addRecord;
+
+			$addRecord->{displayName} =
+				($addRecord->last_name || $addRecord->first_name
+					? $addRecord->last_name . ', ' . $addRecord->first_name
+					: $addRecord->user_id);
+			$addRecord->{setVersion} = $users[$_][2];
 		}
 
 		# Sort by last name, then first name, then user_id, then set version.
 		@userRecords = sort {
-			lc($a->last_name) cmp lc($b->last_name) ||
-			lc($a->first_name) cmp lc($b->first_name) ||
-			lc($a->user_id) cmp lc($b->user_id) ||
-			lc($a->{setVersion}) <=> lc($b->{setVersion})
+			lc($a->last_name) cmp lc($b->last_name)
+				|| lc($a->first_name) cmp lc($b->first_name)
+				|| lc($a->user_id) cmp lc($b->user_id)
+				|| lc($a->{setVersion}) <=> lc($b->{setVersion})
 		} @userRecords;
 
 		# Find the previous, current, and next test.
 		my $currentTestIndex = 0;
 		for (0 .. $#userRecords) {
 			$currentTestIndex = $_, last
-			if $userRecords[$_]->user_id eq $effectiveUser && $userRecords[$_]->{setVersion} == $setVersion;
+				if $userRecords[$_]->user_id eq $effectiveUser && $userRecords[$_]->{setVersion} == $setVersion;
 		}
-		my $prevTest = $currentTestIndex > 0 ? $userRecords[$currentTestIndex - 1] : 0;
-		my $nextTest = $currentTestIndex < $#userRecords ? $userRecords[$currentTestIndex + 1] : 0;
+		my $prevTest = $currentTestIndex > 0             ? $userRecords[ $currentTestIndex - 1 ] : 0;
+		my $nextTest = $currentTestIndex < $#userRecords ? $userRecords[ $currentTestIndex + 1 ] : 0;
 
 		# Mark the current test.
 		$userRecords[$currentTestIndex]{currentTest} = 1;
 
 		my $setPage = $r->urlpath->newFromModule(__PACKAGE__, $r,
-			courseID => $courseName, setID => "$setName,v%s");
+			courseID => $courseName,
+			setID    => "$setName,v%s"
+		);
 
 		# Cap the number of tests shown to at most 200.
-		my $numAfter = $#userRecords - $currentTestIndex;
-		my $numBefore = 200 - ($numAfter < 100 ? $numAfter : 100);
-		my $minTestIndex = $currentTestIndex < $numBefore ? 0 : $currentTestIndex - $numBefore;
+		my $numAfter     = $#userRecords - $currentTestIndex;
+		my $numBefore    = 200 - ($numAfter < 100 ? $numAfter : 100);
+		my $minTestIndex = $currentTestIndex < $numBefore      ? 0                   : $currentTestIndex - $numBefore;
 		my $maxTestIndex = $minTestIndex + 200 < $#userRecords ? $minTestIndex + 200 : $#userRecords;
 
 		# Set up the student nav.
-		print join("",
-			CGI::start_div({ class => "row sticky-nav", role => "navigation", aria_label => "user navigation"}),
-			CGI::start_div({ class => 'user-nav' }),
-			$prevTest
-			? CGI::a({
-					href => sprintf($self->systemLink($setPage, params => { effectiveUser => $prevTest->user_id,
-								currentPage => $self->{pageNumber},
-								showProblemGrader => $self->{will}{showProblemGrader} }), $prevTest->{setVersion}),
-					data_bs_toggle => "tooltip",
-				   	data_bs_placement => "top",
-					title => "$prevTest->{displayName} (version $prevTest->{setVersion})",
-					class => "btn btn-primary student-nav-button"
-				}, $r->maketext("Previous Test"))
-			: CGI::span({ class => "btn btn-primary disabled" }, $r->maketext("Previous Test")),
-			" ",
-			CGI::start_span({ class => "btn-group student-nav-selector" }),
-			CGI::a({
-				   	class => "btn btn-primary dropdown-toggle",
-				   	role => "button",
-				   	data_bs_toggle => "dropdown",
-					aria_expanded => "false"
-			   	},
-				$userRecords[$currentTestIndex]{displayName} .
-				" (version $userRecords[$currentTestIndex]{setVersion}) " .
-				CGI::span({ class => "caret" }, "")),
-			CGI::start_ul({ class => "dropdown-menu", role => "menu", aria_labelledby => "studentSelector" }),
-			(
-				map {
-					CGI::li(
-					CGI::a({
-					   	tabindex => "-1",
-					   	style => $_->{currentTest} ? "background-color: #8F8" : "",
-						class => 'dropdown-item',
-						href => sprintf($self->systemLink($setPage, params => { effectiveUser => $_->user_id,
-									currentPage => $self->{pageNumber},
-									showProblemGrader => $self->{will}{showProblemGrader} }), $_->{setVersion})
-				   	},
-					"$_->{displayName} (version $_->{setVersion})" )
+		print CGI::div(
+			{ class => 'row sticky-nav', role => 'navigation', aria_label => 'user navigation' },
+			CGI::div(
+				{ class => 'user-nav' },
+				CGI::div(
+					{ class => 'btn-group', role => 'group', aria_label => 'student selector' },
+					$prevTest
+					? CGI::a(
+						{
+							href => sprintf(
+								$self->systemLink(
+									$setPage,
+									params => {
+										effectiveUser     => $prevTest->user_id,
+										currentPage       => $self->{pageNumber},
+										showProblemGrader => $self->{will}{showProblemGrader},
+										$filter ? (studentNavFilter => $filter) : ()
+									}
+								),
+								$prevTest->{setVersion}
+							),
+							data_bs_toggle    => 'tooltip',
+							data_bs_placement => 'top',
+							title             => "$prevTest->{displayName} (version $prevTest->{setVersion})",
+							class             => 'btn btn-primary student-nav-button'
+						},
+						CGI::i({ class => 'fas fa-chevron-left' }, '')
+						)
+					: CGI::span(
+						{ class => 'btn btn-primary disabled' },
+						CGI::i({ class => 'fas fa-chevron-left' }, '')
+					),
+					' ',
+					CGI::div(
+						{ class => 'btn-group student-nav-selector' },
+						CGI::a(
+							{
+								href           => '#',
+								id             => 'studentSelector',
+								class          => 'btn btn-primary dropdown-toggle',
+								role           => 'button',
+								data_bs_toggle => 'dropdown',
+								aria_expanded  => 'false'
+							},
+							$userRecords[$currentTestIndex]{displayName}
+								. " (version $userRecords[$currentTestIndex]{setVersion})"
+						),
+						CGI::ul(
+							{
+								class           => 'dropdown-menu',
+								role            => 'menu',
+								aria_labelledby => 'studentSelector'
+							},
+							(
+								map {
+									CGI::li(CGI::a(
+										{
+											tabindex => '-1',
+											style    => $_->{currentTest} ? 'background-color: #8F8' : '',
+											class    => 'dropdown-item',
+											href     => sprintf(
+												$self->systemLink(
+													$setPage,
+													params => {
+														effectiveUser     => $_->user_id,
+														currentPage       => $self->{pageNumber},
+														showProblemGrader => $self->{will}{showProblemGrader},
+														$filter ? (studentNavFilter => $filter) : ()
+													}
+												),
+												$_->{setVersion}
+											)
+										},
+										"$_->{displayName} (version $_->{setVersion})"
+									))
+								} @userRecords[ $minTestIndex .. $maxTestIndex ]
+							),
+						),
+					),
+					' ',
+					$nextTest
+					? CGI::a(
+						{
+							href => sprintf(
+								$self->systemLink(
+									$setPage,
+									params => {
+										effectiveUser     => $nextTest->user_id,
+										currentPage       => $self->{pageNumber},
+										showProblemGrader => $self->{will}{showProblemGrader},
+										$filter ? (studentNavFilter => $filter) : ()
+									}
+								),
+								$nextTest->{setVersion}
+							),
+							data_bs_toggle    => 'tooltip',
+							data_bs_placement => 'top',
+							title             => "$nextTest->{displayName} (version $nextTest->{setVersion})",
+							class             => 'btn btn-primary student-nav-button'
+						},
+						CGI::i({ class => 'fas fa-chevron-right' }, '')
+						)
+					: CGI::span(
+						{ class => 'btn btn-primary disabled' },
+						CGI::i({ class => 'fas fa-chevron-right' }, '')
+					),
+				),
+				# Create a section/recitation filter by dropdown if there are sections or recitaitons.
+				scalar keys %filters
+				? CGI::div(
+					{ class => 'btn-group student-nav-filter-selector' },
+					CGI::a(
+						{
+							href           => '#',
+							id             => 'testSelectorFilter',
+							class          => 'btn btn-primary dropdown-toggle dropdown-toggle-split',
+							role           => 'button',
+							data_bs_toggle => 'dropdown',
+							aria_expanded  => 'false',
+						},
+						$filter ? $filters{$filter}[0] : $r->maketext('Showing all tests')
+					),
+					CGI::ul(
+						{
+							class           => 'dropdown-menu',
+							role            => 'menu',
+							aria_labelledby => 'testSelectorFilter'
+						},
+						# If a filter is currently in use, then add an item that will remove that filter.
+						$filter
+						? CGI::li(CGI::a(
+							{
+								class => 'dropdown-item',
+								href  => sprintf(
+									$self->systemLink(
+										$setPage,
+										params => {
+											effectiveUser     => $effectiveUser,
+											currentPage       => $self->{pageNumber},
+											showProblemGrader => $self->{will}{showProblemGrader}
+										}
+									),
+									$setVersion
+								)
+							},
+							$r->maketext('Show all tests')
+						))
+						: '',
+						map {
+							CGI::li(CGI::a(
+								{
+									class => 'dropdown-item',
+									style => ($filter || '') eq $_ ? 'background-color: #8F8' : '',
+									href  => sprintf(
+										$self->systemLink(
+											$setPage,
+											params => {
+												effectiveUser     => $filters{$_}[1],
+												currentPage       => $self->{pageNumber},
+												showProblemGrader => $self->{will}{showProblemGrader},
+												studentNavFilter  => $_
+											}
+										),
+										$filters{$_}[2]
+									)
+								},
+								$filters{$_}[0]
+							))
+						} sort keys %filters
+					),
 					)
-				}
-				@userRecords[$minTestIndex ..  $maxTestIndex]
-			),
-			CGI::end_ul(),
-			CGI::end_span(),
-			" ",
-			$nextTest
-			? CGI::a({
-					href => sprintf($self->systemLink($setPage, params => { effectiveUser => $nextTest->user_id,
-								currentPage => $self->{pageNumber},
-								showProblemGrader => $self->{will}{showProblemGrader} }), $nextTest->{setVersion}),
-					data_bs_toggle => "tooltip",
-				   	data_bs_placement => "top",
-					title => "$nextTest->{displayName} (version $nextTest->{setVersion})",
-					class => "btn btn-primary student-nav-button"
-				}, $r->maketext("Next Test"))
-			: CGI::span({ class => "btn btn-primary disabled" }, $r->maketext("Next Test")),
-			CGI::end_div(),
-			CGI::end_div()
+				: ''
+			)
 		);
 	}
 
-	return "";
+	return '';
 }
 
 sub body {
@@ -2278,6 +2420,10 @@ sub body {
 				-name   => 'problemSeed',
 				-value  =>  $r->param("problemSeed")
 			))  if defined($r->param("problemSeed"));
+
+		# Make sure the student nav filter setting is preserved when the problem form is submitted.
+		my $filter = $r->param('studentNavFilter');
+		print CGI::hidden({ name => 'studentNavFilter', value => $filter }) if $filter;
 
 		print CGI::end_form();
 	}

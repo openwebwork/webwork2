@@ -389,6 +389,7 @@ h2.page-title {
 .sticky-nav {
 	display: flex;
 	flex-wrap: wrap;
+	gap: 0.5rem;
 	align-content: space-between;
 	justify-content: space-between;
 	z-index: 1;
