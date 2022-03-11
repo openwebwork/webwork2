@@ -2893,11 +2893,6 @@ sub body {
 	return '';
 }
 
-#Tells template to output stylesheet and js for Jquery-UI
-sub output_jquery_ui{
-	return "";
-}
-
 sub output_JS {
 	my $self = shift;
 	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
@@ -2911,22 +2906,12 @@ sub output_JS {
 		{ src => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js", defer => undef }, '');
 	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef }, '');
 
-	# Print javascript and style for the imageview dialog.
-	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/ImageView/imageview.css" });
-	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js", defer => undef }, '');
-
-	# The Base64.js file, which handles base64 encoding and decoding
-	print CGI::script({ src => "$site_url/js/apps/Base64/Base64.js" }, "");
-
-	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/Knowls/knowl.css" });
-	print CGI::script({ src => "$site_url/js/apps/Knowls/knowl.js", defer => undef }, '');
-
 	print CGI::script({ src => "$site_url/node_modules/sortablejs/Sortable.min.js", defer => undef }, '');
-	print CGI::script({ src => "$site_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, "");
+	print CGI::script({ src => "$site_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, '');
 
-	print CGI::script({ src=>"$site_url/js/apps/ProblemSetDetail/problemsetdetail.js", defer => undef }, "");
+	print CGI::script({ src=>"$site_url/js/apps/ProblemSetDetail/problemsetdetail.js", defer => undef }, '');
 
-	return "";
+	return '';
 }
 
 1;

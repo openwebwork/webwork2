@@ -1343,17 +1343,16 @@ sub make_data_row {
 	my $noshow = $sourceFileData->{noshow} ? 'display:none' : '';
 
 	# Include tagwidget?
-	my $tagwidget = '';
-	my $user      = scalar($r->param('user'));
-	if ($r->authz->hasPermissions($user, "modify_tags")) {
-		my $tagid = 'tagger' . $cnt;
-		$tagwidget = CGI::div({ id => $tagid }, '');
-		my $templatedir    = $r->ce->{courseDirs}->{templates};
-		my $sourceFilePath = $templatedir . '/' . $sourceFileName;
-		$sourceFilePath =~ s/'/\\'/g;
-		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-		$tagwidget .= CGI::script("mytw$cnt = new tag_widget('$tagid','$sourceFilePath')");
-	}
+	my $tagwidget = $r->authz->hasPermissions($r->param('user'), "modify_tags")
+		? CGI::div(
+			{
+				id                    => "tagger$cnt",
+				class                 => 'tag-widget',
+				data_source_file_path => "$ce->{courseDirs}{templates}/$sourceFileName"
+			},
+			''
+		)
+		: '';
 
 	my $level = 0;
 
@@ -2221,55 +2220,27 @@ sub body {
 }
 
 sub output_JS {
-	my ($self)             = @_;
+	my $self               = shift;
 	my $ce                 = $self->r->ce;
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
-	print CGI::script({ src => "$webwork_htdocs_url/js/apps/Base64/Base64.js" },                            '');
-	print CGI::script({ src => "$webwork_htdocs_url/js/apps/Knowls/knowl.js", defer => undef },             '');
-	print CGI::script({ src => "$webwork_htdocs_url/js/apps/ImageView/imageview.js", defer => undef },      '');
 	print CGI::script({ src => "$webwork_htdocs_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, '');
 	print CGI::script({ src => "$webwork_htdocs_url/js/apps/SetMaker/setmaker.js", defer => undef },        '');
 
-	if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {
-		print CGI::script({ src => "$ce->{webworkURLs}{htdocs}/js/apps/TagWidget/tagwidget.js" }, '');
-		if (open(TAXONOMY, $ce->{webworkDirs}{root} . '/htdocs/DATA/tagging-taxonomy.json')) {
-			my $taxo = join("", <TAXONOMY>);
-			close TAXONOMY;
-			print CGI::script("var taxo = $taxo;");
-		} else {
-			print CGI::script("var taxo = [];");
-			print CGI::script("alert('Could not load the OPL taxonomy from the server.');");
-		}
+	if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), 'modify_tags')) {
+		print CGI::script(
+			{
+				id        => 'tag-widget-script',
+				src       => "$ce->{webworkURLs}{htdocs}/js/apps/TagWidget/tagwidget.js",
+				defer     => undef,
+				data_taxo => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json"
+			},
+			''
+		);
 	}
 
 	return '';
 }
-
-
-
-sub output_CSS {
-	my ($self) = @_;
-	my $ce = $self->r->ce;
-	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-
-	print qq!<link href="$webwork_htdocs_url/node_modules/jquery-ui-themes/themes/ui-lightness/jquery-ui.min.css" rel="stylesheet" type="text/css"/>!;
-
-	print CGI::Link({ rel => "stylesheet", href => "$webwork_htdocs_url/js/apps/ImageView/imageview.css" });
-
-	print CGI::Link({ rel => "stylesheet", href => "$webwork_htdocs_url/js/apps/Knowls/knowl.css" });
-
-	return '';
-
-}
-
-sub output_jquery_ui {
-
-    return '';
-
-}
-
-
 
 =head1 AUTHOR
 
