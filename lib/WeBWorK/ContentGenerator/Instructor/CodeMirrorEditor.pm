@@ -14,6 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor;
+use parent qw(Exporter);
 
 =head1 NAME
 
@@ -23,11 +24,13 @@ AchievementEditor.pm and PGProblemEditor.pm modules.
 
 =cut
 
+use strict;
+use warnings;
+
 use CGI;
 use WeBWorK::Utils qw(getAssetURL);
 
-use strict;
-use warnings;
+our @EXPORT_OK = qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
 
 # Available CodeMirror themes
 use constant CODEMIRROR_THEMES => [
@@ -64,115 +67,109 @@ use constant CODEMIRROR_ADDONS_JS => [
 	'scroll/annotatescrollbar.js', 'edit/matchbrackets.js'
 ];
 
-sub output_codemirror_html {
+sub generate_codemirror_html {
 	my ($r, $name, $contents) = @_;
+
+	# Output the textarea that will be used by CodeMirror.
+	# If CodeMirror is disabled, then this is directly the editing area.
+	return CGI::textarea({
+		id       => $name,
+		name     => $name,
+		default  => $contents,
+		class    => 'codeMirrorEditor',
+		override => 1,
+	});
+}
+
+sub generate_codemirror_controls_html {
+	my $r  = shift;
 	my $ce = $r->ce;
 
-	if ($ce->{options}{PGCodeMirror}) {
-		# Output the textarea that will be used by CodeMirror.
-		print CGI::div(
-			{ class => 'mb-2' },
-			CGI::textarea({
-				id       => $name,
-				name     => $name,
-				default  => $contents,
-				class    => 'codeMirrorEditor',
-				override => 1,
-			}),
-		);
+	return '' unless $ce->{options}{PGCodeMirror};
 
-		# Construct the labels and values for the theme menu.
-		my ($themeLabels, $themeValues) = ({ default => 'default' }, ['default']);
-		for (@{ CODEMIRROR_THEMES() }) {
-			my $value = getAssetURL($ce, "node_modules/codemirror/theme/$_.css");
-			push @$themeValues, $value;
-			$themeLabels->{$value} = $_;
-		}
+	# Construct the labels and values for the theme menu.
+	my ($themeLabels, $themeValues) = ({ default => 'default' }, ['default']);
+	for (@{ CODEMIRROR_THEMES() }) {
+		my $value = getAssetURL($ce, "node_modules/codemirror/theme/$_.css");
+		push @$themeValues, $value;
+		$themeLabels->{$value} = $_;
+	}
 
-		# Construct the labels and values for the keymap menu.
-		my ($keymapLabels, $keymapValues) = ({ default => 'default' }, ['default']);
-		for (@{ CODEMIRROR_KEYMAPS() }) {
-			my $value = getAssetURL($ce, "node_modules/codemirror/keymap/$_.js");
-			push @$keymapValues, $value;
-			$keymapLabels->{$value} = $_;
-		}
+	# Construct the labels and values for the keymap menu.
+	my ($keymapLabels, $keymapValues) = ({ default => 'default' }, ['default']);
+	for (@{ CODEMIRROR_KEYMAPS() }) {
+		my $value = getAssetURL($ce, "node_modules/codemirror/keymap/$_.js");
+		push @$keymapValues, $value;
+		$keymapLabels->{$value} = $_;
+	}
 
-		# Output the html elements for setting the CodeMirror options.
-		print CGI::div(
-			{ class => 'row align-items-center' },
+	# Output the html elements for setting the CodeMirror options.
+	return CGI::div(
+		{ class => 'row align-items-center' },
+		CGI::div(
+			{ class => 'col-sm-auto mb-2' },
 			CGI::div(
-				{ class => 'col-sm-auto mb-2' },
+				{ class => 'row align-items-center' },
+				CGI::label({ for => 'selectTheme', class => 'col-form-label col-auto' }, $r->maketext('Theme:')),
 				CGI::div(
-					{ class => 'row align-items-center' },
-					CGI::label(
-						{ for => 'selectTheme', class => 'col-form-label col-auto' }, $r->maketext('Theme:')
-					),
-					CGI::div(
-						{ class => 'col-auto' },
-						CGI::popup_menu({
-							name    => 'selectTheme',
-							id      => 'selectTheme',
-							values  => $themeValues,
-							labels  => $themeLabels,
-							default => 'default',
-							class   => 'form-select form-select-sm d-inline w-auto'
-						})
-					)
-				)
-			),
-			CGI::div(
-				{ class => 'col-sm-auto mb-2' },
-				CGI::div(
-					{ class => 'row align-items-center' },
-					CGI::label(
-						{ for => 'selectKeymap', class => 'col-form-label col-auto' },
-						$r->maketext('Key Map:')
-					),
-					CGI::div(
-						{ class => 'col-auto' },
-						CGI::popup_menu({
-							name    => 'selectKeymap',
-							id      => 'selectKeymap',
-							values  => $keymapValues,
-							labels  => $keymapLabels,
-							default => 'default',
-							class   => 'form-select form-select-sm d-inline w-auto'
-						})
-					)
-				)
-			),
-			CGI::div(
-				{ class => 'col-sm-auto mb-2' },
-				CGI::div(
-					{ class => 'form-check mb-0' },
-					CGI::input({
-						type  => 'checkbox',
-						id    => 'enableSpell',
-						class => 'form-check-input'
-					}),
-					CGI::label(
-						{ for => 'enableSpell', class => 'form-check-label' },
-						$r->maketext('Enable Spell Checking')
-					)
-				)
-			),
-			CGI::div(
-				{ class => 'col-sm-auto mb-2' },
-				CGI::div(
-					{ class => 'form-check mb-0' },
-					CGI::input({
-						type  => 'checkbox',
-						id    => 'forceRTL',
-						class => 'form-check-input'
-					}),
-					CGI::label(
-						{ for => 'forceRTL', class => 'form-check-label' },
-						'Force editor to RTL'    # FIXME should have $r->maketext()
-					)
+					{ class => 'col-auto' },
+					CGI::popup_menu({
+						name    => 'selectTheme',
+						id      => 'selectTheme',
+						values  => $themeValues,
+						labels  => $themeLabels,
+						default => 'default',
+						class   => 'form-select form-select-sm d-inline w-auto'
+					})
 				)
 			)
-		);
-	}
+		),
+		CGI::div(
+			{ class => 'col-sm-auto mb-2' },
+			CGI::div(
+				{ class => 'row align-items-center' },
+				CGI::label({ for => 'selectKeymap', class => 'col-form-label col-auto' }, $r->maketext('Key Map:')),
+				CGI::div(
+					{ class => 'col-auto' },
+					CGI::popup_menu({
+						name    => 'selectKeymap',
+						id      => 'selectKeymap',
+						values  => $keymapValues,
+						labels  => $keymapLabels,
+						default => 'default',
+						class   => 'form-select form-select-sm d-inline w-auto'
+					})
+				)
+			)
+		),
+		CGI::div(
+			{ class => 'col-sm-auto mb-2' },
+			CGI::div(
+				{ class => 'form-check mb-0' },
+				CGI::input({
+					type  => 'checkbox',
+					id    => 'enableSpell',
+					class => 'form-check-input'
+				}),
+				CGI::label(
+					{ for => 'enableSpell', class => 'form-check-label' },
+					$r->maketext('Enable Spell Checking')
+				)
+			)
+		),
+		CGI::div(
+			{ class => 'col-sm-auto mb-2' },
+			CGI::div(
+				{ class => 'form-check mb-0' },
+				CGI::input({
+					type  => 'checkbox',
+					id    => 'forceRTL',
+					class => 'form-check-input'
+				}),
+				CGI::label({ for => 'forceRTL', class => 'form-check-label' }, $r->maketext('Force editor to RTL'))
+			)
+		)
+	);
 }
 
 sub output_codemirror_static_files {
@@ -195,7 +192,12 @@ sub output_codemirror_static_files {
 
 		print CGI::script({ src => getAssetURL($ce, 'js/apps/PGCodeMirror/PG.js'),       defer => undef }, '');
 		print CGI::script({ src => getAssetURL($ce, 'js/apps/PGCodeMirror/pgeditor.js'), defer => undef }, '');
+	} else {
+		# The textarea styles in this file are still needed if CodeMirror is disabled.
+		print CGI::Link({ href => getAssetURL($ce, 'js/apps/PGCodeMirror/pgeditor.css'), rel => 'stylesheet' });
 	}
+
+	return;
 }
 
 1;

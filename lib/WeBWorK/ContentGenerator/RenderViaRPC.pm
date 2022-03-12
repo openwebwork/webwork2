@@ -54,6 +54,8 @@ async sub pre_header_initialize {
 		return;
 	}
 
+	$r->param('displayMode', 'tex') if ($r->param('outputformat') eq 'pdf' || $r->param('outputformat') eq 'tex');
+
 	# Call the WebworkWebservice to render the problem and store the result in $self->return_object.
 	my $rpc_service = WebworkWebservice->new($r);
 	await $rpc_service->rpc_execute('renderProblem');
@@ -70,8 +72,19 @@ async sub pre_header_initialize {
 	return;
 }
 
+# Override the default ContentGenerator header method.  It always returns 0 and sets the content type to text/html.
+# When hardcopy generation occurs, the result may have already been rendered.  Return the response code in that case.
+sub header {
+	my $self = shift;
+	return $self->r->res->code || 0;
+}
+
 async sub content {
 	my $self = shift;
+
+	# Hardcopy generation may have already rendered a response.  Stop here in that case.
+	return if $self->r->res->code;
+
 	$self->r->res->headers->content_type(($self->{wantsjson} ? 'application/json;' : 'text/html;') . ' charset=utf-8');
 	print $self->{output};
 	return 0;

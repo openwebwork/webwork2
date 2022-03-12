@@ -384,8 +384,6 @@
 
 			if (data.pg_flags && data.pg_flags.comment)
 				iframe.insertAdjacentHTML('afterend', data.pg_flags.comment);
-			if (data.warnings)
-				iframe.insertAdjacentHTML('afterend', data.warnings);
 
 			iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe);
 			iframe.addEventListener('load', () => resolve());

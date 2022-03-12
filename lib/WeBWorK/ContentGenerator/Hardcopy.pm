@@ -968,51 +968,40 @@ sub generate_hardcopy_tex {
 		}
 	}
 
-	# Attempt to copy image files used into the bundle directory
-	# For security reasons only files in the $ce->{courseDirs}{html_temp}/images are included.
-	# The file names of the images are only allowed to contain alphanumeric characters, underscores, dashes, and
-	# periods.  No spaces or slashes, etc.  This will usually be all of the included images.
-	if (open(my $in_fh, "<", "$bundle_path/$src_name")) {
-		local $/;
-		my $data = <$in_fh>;
-		close($in_fh);
+	# Attempt to copy image files used into the working directory.
+	my $resource_list = $self->{resource_list};
+	if (ref $resource_list eq 'ARRAY' && @$resource_list) {
+		if (open(my $in_fh, "<", "$bundle_path/$src_name")) {
+			local $/;
+			my $data = <$in_fh>;
+			close($in_fh);
 
-		# Extract the included image file names and strip the absolute path in the tex file.
-		my @image_files;
-		my $image_tmp_dir = $ce->{courseDirs}{html_temp} . "/images/";
-		$data =~ s{\\includegraphics\[([^]]*)\]\{$image_tmp_dir([^\}]*)\}}
-			{push @image_files, $2; "\\includegraphics[$1]{$2}"}ge;
+			for my $resource (@$resource_list) {
+				my $basename = $resource =~ s/.*\///r;
+				$data =~ s{$resource}{$basename}g;
 
-		# Rewrite the tex file with the image paths stripped.
-		open(my $out_fh, ">", "$bundle_path/$src_name")
-			or warn "Can't open $bundle_path/$src_name for writing.";
-		print $out_fh $data;
-		close $out_fh;
-
-		for (@image_files) {
-			# This is a little protection in case a student enters an answer like
-			# \includegraphics[]{$ce->{courseDirs}{html_temp}/images/malicious code or absolute system file name}
-			$self->add_errors("Unable to safely copy image '"
-					. CGI::code(CGI::escapeHTML("$image_tmp_dir$_"))
-					. "' into directory '"
-					. CGI::code(CGI::escapeHTML($bundle_path))
-					. "'."), warn "Invalid image file name '$_' detected.  Possible malicious activity?", next
-				unless $_ =~ /^[\w._-]*$/ && -f "$image_tmp_dir$_";
-
-			# Copy the image file into the bundle directory.
-			my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$image_tmp_dir$_", $bundle_path);
-			my $cp_out = readpipe $cp_cmd;
-			if ($?) {
-				$self->add_errors("Failed to copy image '"
-						. CGI::code(CGI::escapeHTML("$image_tmp_dir$_"))
-						. "' into directory '"
-						. CGI::code(CGI::escapeHTML($bundle_path)) . "':"
-						. CGI::br()
-						. CGI::pre(CGI::escapeHTML($cp_out)));
+				# Copy the image file into the bundle directory.
+				my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote($resource, $bundle_path);
+				my $cp_out = readpipe $cp_cmd;
+				if ($?) {
+					$self->add_errors("Failed to copy image '"
+							. CGI::code(CGI::escapeHTML($resource))
+							. "' into directory '"
+							. CGI::code(CGI::escapeHTML($bundle_path)) . "':"
+							. CGI::br()
+							. CGI::pre(CGI::escapeHTML($cp_out)));
+				}
 			}
+
+			# Rewrite the tex file with the image paths stripped.
+			open(my $out_fh, ">", "$bundle_path/$src_name")
+				or warn "Can't open $bundle_path/$src_name for writing.";
+			print $out_fh $data;
+			close $out_fh;
+		} else {
+			$self->add_errors(
+				"Failed to open '" . CGI::code(CGI::escapeHTML("$bundle_path/$src_name")) . "' for reading.");
 		}
-	} else {
-		$self->add_errors("Failed to open '" . CGI::code(CGI::escapeHTML("$bundle_path/$src_name")) . "' for reading.");
 	}
 
 	# Create a zip archive of the bundle directory
@@ -1388,6 +1377,9 @@ async sub write_problem_tex {
 			: ()
 		}
 	);
+
+	push(@{ $self->{resource_list} }, map { $pg->{resource_list}{$_} } keys %{ $pg->{resource_list} })
+		if ref $pg->{resource_list} eq 'HASH';
 
 	# only bother to generate this info if there were warnings or errors
 	my $edit_url;

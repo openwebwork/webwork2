@@ -14,8 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::ProblemSets;
-use base qw(WeBWorK);
-use base qw(WeBWorK::ContentGenerator);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -25,14 +24,16 @@ WeBWorK::ContentGenerator::ProblemSets - Display a list of built problem sets.
 
 use strict;
 use warnings;
-#use CGI qw(-nosticky );
+
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(after readFile sortByName path_is_subdir is_restricted wwRound format_set_name_display);
+use WeBWorK::Utils qw(after readFile sortByName path_is_subdir is_restricted format_set_name_display);
 use WeBWorK::Localize;
-# what do we consider a "recent" problem set?
+
+# What do we consider a "recent" problem set?
 use constant RECENT => 2 * 7 * 24 * 60 * 60;    # Two-Weeks in seconds
-# the "default" data in the course_info.txt file
+
+# The "default" data in the course_info.txt file
 use constant DEFAULT_COURSE_INFO_TXT =>
 	"Put information about your course here.  Click the edit button above to add your own message.\n";
 
@@ -42,22 +43,18 @@ sub if_can {
 	if ($arg ne 'info') {
 		return $self->can($arg) ? 1 : 0;
 	} else {
-		my $r       = $self->r;
-		my $ce      = $r->ce;
-		my $urlpath = $r->urlpath;
-		my $authz   = $r->authz;
-		my $user    = $r->param("user");
+		my $r  = $self->r;
+		my $ce = $r->ce;
 
-		# we only print the info box if the viewer has permission
-		# to edit it or if its not the standard template box.
+		# Only print the info box if the viewer has permission
+		# to edit it or if it is not the standard template box.
 
-		my $course_info_path = $ce->{courseDirs}->{templates} . "/" . $ce->{courseFiles}->{course_info};
-		my $text             = DEFAULT_COURSE_INFO_TXT;
+		my $course_info_path = "$ce->{courseDirs}{templates}/$ce->{courseFiles}{course_info}";
 
-		if (-f $course_info_path) {    #check that it's a plain  file
-			$text = eval { readFile($course_info_path) };
-		}
-		return $authz->hasPermissions($user, "access_instructor_tools")
+		my $text = DEFAULT_COURSE_INFO_TXT;
+		$text = eval { readFile($course_info_path) } if (-f $course_info_path);
+
+		return $r->authz->hasPermissions($r->param('user'), 'access_instructor_tools')
 			|| $text ne DEFAULT_COURSE_INFO_TXT;
 
 	}
@@ -67,63 +64,67 @@ sub info {
 	my ($self)  = @_;
 	my $r       = $self->r;
 	my $ce      = $r->ce;
-	my $db      = $r->db;
 	my $urlpath = $r->urlpath;
 	my $authz   = $r->authz;
 
-	my $courseID = $urlpath->arg("courseID");
-	my $user     = $r->param("user");
+	my $courseID = $urlpath->arg('courseID');
+	my $user     = $r->param('user');
 
-	my $course_info = $ce->{courseFiles}->{course_info};
+	my $course_info = $ce->{courseFiles}{course_info};
 
-	if (defined $course_info and $course_info) {
-		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
+	return '' unless $course_info;
 
-		# deal with instructor crap
-		my $editorURL;
-		if ($authz->hasPermissions($user, "access_instructor_tools")) {
-			if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
-				$course_info_path = $r->param("sourceFilePath");
-				$course_info_path = $ce->{courseDirs}{templates} . '/' . $course_info_path
-					unless $course_info_path =~ m!^/!;
-				die "sourceFilePath is unsafe!"
-					unless path_is_subdir($course_info_path, $ce->{courseDirs}->{templates});
-				$self->addmessage(CGI::div(
-					{ class => 'temporaryFile' },
-					$r->maketext("Viewing temporary file:") . ' ',
-					$course_info_path
-				));
+	my $course_info_path = "$ce->{courseDirs}{templates}/$course_info";
+
+	if ($authz->hasPermissions($user, 'access_instructor_tools')) {
+		if (defined $r->param('editMode') && $r->param('editMode') eq 'temporaryFile') {
+			$course_info_path = $r->param('sourceFilePath');
+			$course_info_path = "$ce->{courseDirs}{templates}/$course_info_path" unless $course_info_path =~ m!^/!;
+
+			unless (path_is_subdir($course_info_path, $ce->{courseDirs}{templates})) {
+				$self->addbadmessage('sourceFilePath is unsafe!');
+				return '';
 			}
 
-			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
-				$r, courseID => $courseID);
-			$editorURL = $self->systemLink($editorPage, params => { file_type => "course_info" });
+			$self->addmessage(CGI::div(
+				{ class => 'temporaryFile' },
+				$r->maketext('Viewing temporary file:') . ' ',
+				$course_info_path
+			));
 		}
 
-		if ($editorURL) {
-			print CGI::h2(
-				{ class => 'd-flex align-items-center justify-content-center' },
-				$r->maketext("Course Info"),
-				CGI::a(
-					{ href => $editorURL, target => "WW_Editor", class => 'btn btn-sm btn-info m-1' },
-					$r->maketext("Edit")
-				)
-			);
-		} else {
-			print CGI::h2($r->maketext("Course Info"));
-		}
-		die "course info path is unsafe!" unless path_is_subdir($course_info_path, $ce->{courseDirs}->{templates}, 1);
-		if (-f $course_info_path) {    #check that it's a plain  file
-			my $text = eval { readFile($course_info_path) };
-			if ($@) {
-				print CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $@);
-			} else {
-				print $text;
-			}
-		}
-
-		return "";
+		print CGI::h2(
+			{ class => 'd-flex align-items-center justify-content-center' },
+			$r->maketext('Course Info'),
+			CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->newFromModule(
+							'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
+							$r, courseID => $courseID
+						),
+						params => { file_type => 'course_info' }
+					),
+					target => 'WW_Editor',
+					class  => 'btn btn-sm btn-info m-1'
+				},
+				$r->maketext('Edit')
+			)
+		);
+	} else {
+		print CGI::h2($r->maketext('Course Info'));
 	}
+
+	if (-f $course_info_path) {
+		my $text = eval { readFile($course_info_path) };
+		if ($@) {
+			print CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $@);
+		} else {
+			print $text;
+		}
+	}
+
+	return '';
 }
 
 sub templateName {

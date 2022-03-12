@@ -30,10 +30,11 @@ use WeBWorK::CGI;
 use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir x getAssetURL);
 use HTML::Entities;
 use URI::Escape;
-use WeBWorK::Utils qw(has_aux_files not_blank);
+use WeBWorK::Utils qw(not_blank);
 use File::Copy;
 use WeBWorK::Utils::Tasks qw(fake_user fake_set);
-use WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor;
+use WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor
+	qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
 use Fcntl;
 
 use constant ACTION_FORMS => [qw(save save_as)];
@@ -218,8 +219,8 @@ sub body {
 		? CGI::hidden({ name => 'sourceFilePath', value => $self->{sourceFilePath} })
 		: '';
 
-	WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor::output_codemirror_html($r, 'achievementContents',
-		$achievementContents);
+	print CGI::div({ class => 'mb-2' }, generate_codemirror_html($r, 'achievementContents', $achievementContents));
+	print generate_codemirror_controls_html($r);
 
 	######### print action forms
 	my @formsToShow      = @{ ACTION_FORMS() };
@@ -720,7 +721,7 @@ sub output_JS {
 	my $self = shift;
 	my $ce   = $self->r->ce;
 
-	WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor::output_codemirror_static_files($ce);
+	output_codemirror_static_files($ce);
 
 	print CGI::script({ src => getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'), defer => undef }, '');
 

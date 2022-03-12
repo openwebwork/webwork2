@@ -68,7 +68,7 @@
 		return configName;
 	};
 
-	cm = CodeMirror.fromTextArea(document.querySelector('.codeMirrorEditor'), {
+	const cm = webworkConfig.pgCodeMirror = CodeMirror.fromTextArea(document.querySelector('.codeMirrorEditor'), {
 		mode: 'PG',
 		indentUnit: 4,
 		tabMode: 'spaces',
@@ -80,7 +80,7 @@
 		inputStyle: 'contenteditable',
 		spellcheck: localStorage.getItem('WW_PGEditor_spellcheck') === 'true',
 	});
-	cm.setSize('100%', 400);
+	cm.setSize('100%', '550px');
 
 	const currentThemeFile = localStorage.getItem('WW_PGEditor_selected_theme') ?? 'default';
 	const currentThemeName = await loadConfig(currentThemeFile);

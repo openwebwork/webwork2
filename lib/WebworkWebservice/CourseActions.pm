@@ -25,7 +25,7 @@ use Data::Structure::Util qw(unbless);
 
 use WeBWorK::DB;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
-use WeBWorK::Utils qw(cryptPassword);
+use WeBWorK::Utils qw(cryptPassword path_is_subdir surePathToFile);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
 
@@ -510,6 +510,47 @@ sub updateSetting {
 	close $OUTPUTFILE;
 
 	return { text => 'Successfully updated course setting' };
+}
+
+# This saves a file to the course's templates directory.
+sub saveFile {
+	my ($invocant, $self, $params) = @_;
+
+	my $r  = $self->r;
+	my $ce = $self->ce;
+
+	my $outputFilePath = $params->{outputFilePath};
+
+	my $writeFileErrors;
+	if ($outputFilePath && $outputFilePath =~ /\S/) {
+		return {
+			ra_out => 0,
+			text   => $r->maketext(
+				'File not saved. The file "[_1]" is not contained in the templates directory!',
+				$outputFilePath
+			)
+			}
+			unless path_is_subdir($outputFilePath, $ce->{courseDirs}{templates}, 1);
+
+		$outputFilePath = "$ce->{courseDirs}{templates}/$outputFilePath" unless $outputFilePath =~ m|^/|;
+
+		# Make sure any missing directories are created.
+		surePathToFile($ce->{courseDirs}{templates}, $outputFilePath);
+
+		# Save the file.
+		open(my $outfile, '>:encoding(UTF-8)', $outputFilePath)
+			or return {
+				ra_out => 0,
+				text   => $r->maketext('File not saved. Failed to open "[_1]" for writing.', $outputFilePath)
+			};
+		print $outfile $params->{fileContents};
+		close $outfile;
+	}
+
+	return {
+		ra_out => 1,
+		text   => $r->maketext('Saved to file "[_1]"', $outputFilePath =~ s/$ce->{courseDirs}{templates}/[TMPL]/r)
+	};
 }
 
 1;

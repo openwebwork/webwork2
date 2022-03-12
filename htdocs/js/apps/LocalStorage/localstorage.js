@@ -56,6 +56,6 @@
 
 		const overallScore = document.getElementById('problem-overall-score');
 		if (overallScore)
-			overallScore.textContent = problemData['score'] ? `${Math.round(problemData['score'] * 100)}%` : '0%;';
+			overallScore.textContent = problemData['score'] ? `${Math.round(problemData['score'] * 100)}%` : '0%';
 	}
 })();

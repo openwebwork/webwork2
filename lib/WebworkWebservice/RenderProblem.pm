@@ -20,6 +20,7 @@ use warnings;
 
 use Future::AsyncAwait;
 use Benchmark;
+use Mojo::Util qw(url_unescape);
 
 use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
@@ -37,7 +38,10 @@ async sub renderProblem {
 	my ($invocant, $ws) = @_;
 
 	my $rh = $ws->{inputs_ref};
-	debug(pretty_print_rh($rh));
+
+	# $WeBWorK::Debug::Enabled needs to be checked, otherwise pretty_print_rh($rh) is called regardless of if debgging
+	# is enabled.  That is an expensive method to always call here.
+	debug(pretty_print_rh($rh)) if $WeBWorK::Debug::Enabled;
 
 	my $problemSeed = $rh->{problemSeed} // '1234';
 
@@ -137,7 +141,7 @@ async sub renderProblem {
 		$setRecord->open_date(time - 60 * 60 * 24 * 7);          #  one week ago
 		$setRecord->due_date(time + 60 * 60 * 24 * 7 * 2);       # in two weeks
 		$setRecord->answer_date(time + 60 * 60 * 24 * 7 * 3);    # in three weeks
-		$setRecord->psvn($rh->{psvn} || 0);
+		$setRecord->psvn($rh->{psvn} // 1234);
 	}
 
 	# obtain the merged problem for $effectiveUser
@@ -183,23 +187,24 @@ async sub renderProblem {
 			if defined($rh->{problemSource}) && $rh->{problemSource};
 	}
 
-	# initialize problem source
+	# Initialize problem source
 	my $r_problem_source;
 	if ($rh->{problemSource}) {
-		my $problem_source = decode_utf8_base64($rh->{problemSource}) =~ tr/\r/\n/r;
-		$r_problem_source = \$problem_source;
-		if (defined $rh->{fileName}) {
-			$problemRecord->source_file($rh->{fileName});
-		} else {
-			$problemRecord->source_file($rh->{sourceFilePath});
-		}
+		$r_problem_source = \(decode_utf8_base64($rh->{problemSource}) =~ tr/\r/\n/r);
+		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
+	} elsif ($rh->{rawProblemSource}) {
+		$r_problem_source = \$rh->{rawProblemSource};
+		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
+	} elsif ($rh->{uriEncodedProblemSource}) {
+		$r_problem_source = \(url_unescape($rh->{uriEncodedProblemSource}));
+		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
 	} elsif (defined $rh->{sourceFilePath} && $rh->{sourceFilePath} =~ /\S/) {
 		$problemRecord->source_file($rh->{sourceFilePath});
-		warn 'reading source from ', $rh->{sourceFilePath} if $UNIT_TESTS_ON;
 		$r_problem_source =
 			\(WeBWorK::PG::IO::read_whole_file($ce->{courseDirs}{templates} . '/' . $rh->{sourceFilePath}));
 		$problemRecord->source_file('RenderProblemFooBar') unless defined($problemRecord->source_file);
 	}
+
 	if ($UNIT_TESTS_ON) {
 		print STDERR 'template directory path ',          $ce->{courseDirs}{templates}, "\n";
 		print STDERR 'RenderProblem.pm: source file is ', $problemRecord->source_file,  "\n";
@@ -224,7 +229,13 @@ async sub renderProblem {
 		useWiris                 => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS',
 		isInstructor             => $rh->{isInstructor}       // 0,
 		forceScaffoldsOpen       => $rh->{forceScaffoldsOpen} // 0,
-		debuggingOptions         => $rh->{debuggingOptions}   // {}
+		debuggingOptions         => {
+			show_resource_info          => $rh->{show_resource_info}          // 0,
+			view_problem_debugging_info => $rh->{view_problem_debugging_info} // 0,
+			show_pg_info                => $rh->{show_pg_info}                // 0,
+			show_answer_hash_info       => $rh->{show_answer_hash_info}       // 0,
+			show_answer_group_info      => $rh->{show_answer_group_info}      // 0
+		}
 	};
 
 	$ce->{pg}{specialPGEnvironmentVars}{problemPreamble}  = { TeX => '', HTML => '' } if $rh->{noprepostambles};
@@ -247,6 +258,7 @@ async sub renderProblem {
 		flags                   => $pg->{flags},
 		psvn                    => $psvn,
 		problem_seed            => $problemSeed,
+		resource_list           => $pg->{resource_list},
 		warning_messages        => ref $pg->{warning_messages} eq 'ARRAY' ? $pg->{warning_messages} : [],
 		debug_messages          => ref $pg->{debug_messages} eq 'ARRAY'   ? $pg->{debug_messages}   : [],
 		internal_debug_messages => ref $pg->{internal_debug_messages} eq 'ARRAY'
@@ -276,7 +288,7 @@ sub pretty_print_rh {
 	} elsif (not defined($rh)) {
 		$out .= ' type = scalar; ';
 	}
-	if (ref($rh) =~ /HASH/ || "$rh" =~ /HASH/) {
+	if (ref $rh eq 'HASH' || eval { %$rh && 1 }) {
 		$out .= "{\n";
 		$indent++;
 		foreach my $key (sort keys %{$rh}) {
