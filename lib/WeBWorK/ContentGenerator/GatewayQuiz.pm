@@ -2171,20 +2171,13 @@ sub body {
 			$self->hidden_authen_fields,
 			$self->hidden_proctor_authen_fields;
 
-		# hacks to use a javascript link to trigger previews and jump to
-		# subsequent pages of a multipage test
-		print CGI::hidden({-name=>'pageChangeHack', -value=>''});
-		print CGI::hidden({-name=>'startTime', -value=>$startTime});
+		# Hacks to use a javascript link to trigger previews and jump to subsequent pages of a multipage test.
+		print CGI::hidden({ name => 'pageChangeHack', value => '' });
+		print CGI::hidden({ name => 'startTime', value => $startTime });
 		if ($numProbPerPage && $numPages > 1) {
-			print CGI::hidden({-name=>'newPage', -value=>''});
-			print CGI::hidden({-name=>'currentPage', -value=>$pageNumber});
+			print CGI::hidden({ name => 'newPage',     value => '' });
+			print CGI::hidden({ name => 'currentPage', value => $pageNumber });
 		}
-
-		# the link for a preview; for a multipage test, this also needs to
-		# keep track of what page we're on
-		my $jsprevlink = 'javascript:';
-		$jsprevlink .= "document.gwquiz.newPage.value=\"$pageNumber\";" if ($numProbPerPage && $numPages > 1);
-		$jsprevlink .= 'document.gwquiz.previewAnswers.click();';
 
 		# set up links between problems and, for multi-page tests, pages
 		my $jumpLinks = '';
@@ -2207,10 +2200,14 @@ sub body {
 			push (@cols, (CGI::colgroup({class => 'page'},CGI::col({class => 'problem'}) x $numProbPerPage) x $numPages));
 			my @pages;
 			for my $i (1 .. $numPages) {
-				my $pn = ($i == $pageNumber) ? $i :
-					CGI::a({-href=>'javascript:document.gwquiz.pageChangeHack.value=1;' .
-							"document.gwquiz.newPage.value=\"$i\";" .
-							'document.gwquiz.previewAnswers.click();'}, $i);
+				my $pn = $i == $pageNumber ? $i : CGI::a(
+					{
+						href             => '#',
+						class            => 'page-change-link',
+						data_page_number => $i
+					},
+					$i
+				);
 				my $class = ($i == $pageNumber) ? 'page active' : 'page';
 				push(@pages, CGI::td({-colspan => $numProbPerPage, -class => $class}, $pn));
 			}
@@ -2312,8 +2309,17 @@ sub body {
 				print CGI::div({ class => 'problem-content col-lg-10' }, $pg->{body_text});
 				print CGI::div({ class => 'mb-2' }, CGI::b($r->maketext("Note")) . ': ', CGI::i($pg->{result}{msg}))
 					if $pg->{result}{msg};
-				print CGI::div({ class => 'text-end mb-2' },
-					CGI::a({ href => $jsprevlink, class => 'btn btn-secondary' }, $r->maketext('preview answers')));
+				print CGI::div(
+					{ class => 'text-end mb-2' },
+					CGI::a(
+						{
+							href  => '#',
+							class => 'gateway-preview-btn btn btn-secondary',
+							($numProbPerPage && $numPages > 1) ? (data_page_number => $pageNumber) : ()
+						},
+						$r->maketext('preview answers')
+					)
+				);
 
 				print $resultsTable if $resultsTable;
 

@@ -110,6 +110,15 @@
 		}
 	};
 
+	// Set up the preview buttons.
+	document.querySelectorAll('.gateway-preview-btn').forEach((btn) => {
+		btn.addEventListener('click', (evt) => {
+			// Prevent the link from being followed.
+			evt.preventDefault();
+			if (btn.dataset.currentPage) document.gwquiz.newPage.value = btn.dataset.currentPage;
+			document.gwquiz.previewAnswers.click();
+		});
+	});
 
 	// Scroll to a problem when the problem number link is clicked.
 	document.querySelectorAll('.problem-jump-link').forEach((jumpLink) => {
@@ -122,6 +131,17 @@
 				problem.focus();
 				problem.scrollIntoView({ behavior: 'smooth' });
 			}
+		});
+	});
+
+	// Change pages when a page change link is clicked.
+	document.querySelectorAll('.page-change-link').forEach((pageChangeLink) => {
+		pageChangeLink.addEventListener('click', (evt) => {
+			// Prevent the link from being followed.
+			evt.preventDefault();
+			document.gwquiz.pageChangeHack.value = 1;
+			document.gwquiz.newPage.value = pageChangeLink.dataset.pageNumber;
+			document.gwquiz.previewAnswers.click();
 		});
 	});
 
