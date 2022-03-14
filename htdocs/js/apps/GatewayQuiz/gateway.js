@@ -8,6 +8,8 @@
 (() => {
 	// Gateway timer
 	const timerDiv = document.getElementById('gwTimer'); // The timer div element
+	let actuallySubmit = false; // This needs to be set to true to allow an actual submission.
+	const submitAnswers = document.gwquiz.elements.submitAnswers; // The 'Grade Test' submit button.
 	let timeDelta; // The difference between the browser time and the server time
 	let serverDueTime; // The time the test is due
 	let gracePeriod; // The grace period
@@ -60,7 +62,8 @@
 
 			if (remainingTime <= 10 - gracePeriod) {
 				sessionStorage.removeItem('gatewayAlertStatus');
-				document.gwquiz.submitAnswers.click();
+				actuallySubmit = true;
+				submitAnswers.click();
 			} else if (remainingTime > 10 - gracePeriod && remainingTime <= 0) {
 				if (alertStatus !== '1') {
 					alertToast(timerDiv.dataset.alertOne ??
@@ -97,10 +100,11 @@
 		const remainingTime = serverDueTime - browserTime + timeDelta;
 
 		if (!timerDiv.dataset.acting) {
-			if (remainingTime <= 10 - gracePeriod)
+			if (remainingTime <= 10 - gracePeriod) {
 				// Submit the test if time is expired and near the end of grace period.
-				document.gwquiz.submitAnswers.click();
-			else {
+				actuallySubmit = true;
+				submitAnswers.click();
+			} else {
 				// Set the timer text and check alerts at page load.
 				updateTimer();
 
@@ -109,6 +113,82 @@
 			}
 		}
 	};
+
+	// Show a confirmation dialog when a student clicks 'Grade Test'.
+	if (typeof submitAnswers?.dataset.confirmDialogMessage !== 'undefined') {
+		submitAnswers.addEventListener('click', (evt) => {
+			// Don't show the dialog if the test is timed and in the last 90 seconds.
+			// The alerts above are now being shown telling the student to submit the test.
+			if (typeof serverDueTime !== 'undefined' &&
+				serverDueTime - Math.round(new Date().getTime() / 1000) + timeDelta < 90)
+				return;
+
+			if (actuallySubmit) return;
+
+			// Prevent the gwquiz form from being submitted until after confirmation.
+			evt.preventDefault();
+
+			const modal = document.createElement('div');
+			modal.classList.add('modal');
+			modal.tabIndex = -1;
+			modal.setAttribute('aria-labelledby', 'gwquiz-confirm-submit-dialog');
+			modal.setAttribute('aria-hidden', 'true');
+
+			const modalDialog = document.createElement('div');
+			modalDialog.classList.add('modal-dialog', 'modal-dialog-centered');
+			const modalContent = document.createElement('div');
+			modalContent.classList.add('modal-content');
+
+			const modalHeader = document.createElement('div');
+			modalHeader.classList.add('modal-header');
+
+			const title = document.createElement('h5');
+			title.id = 'gwquiz-confirm-submit-dialog';
+			title.textContent = submitAnswers.dataset.confirmDialogTitle ?? 'Do you want to grade this test?';
+
+			const closeButton = document.createElement('button');
+			closeButton.type = 'button';
+			closeButton.classList.add('btn-close');
+			closeButton.dataset.bsDismiss = 'modal';
+			closeButton.setAttribute('aria-label', 'close');
+
+			modalHeader.append(title, closeButton);
+
+			const modalBody = document.createElement('div');
+			modalBody.classList.add('modal-body');
+			const modalBodyContent = document.createElement('div');
+
+			modalBodyContent.textContent = submitAnswers.dataset.confirmDialogMessage;
+			modalBody.append(modalBodyContent);
+
+			const modalFooter = document.createElement('div');
+			modalFooter.classList.add('modal-footer');
+
+			const yesButton = document.createElement('button');
+			yesButton.classList.add('btn', 'btn-primary');
+			yesButton.textContent = submitAnswers.dataset.confirmBtnText ?? 'Yes';
+			yesButton.addEventListener('click', () => {
+				// The student has clicked yes, so now submit the gwquiz form.
+				actuallySubmit = true;
+				submitAnswers.click();
+				bsModal.hide();
+			});
+
+			const noButton = document.createElement('button');
+			noButton.classList.add('btn', 'btn-primary');
+			noButton.dataset.bsDismiss = 'modal';
+			noButton.textContent = submitAnswers.dataset.cancelBtnText ?? 'No';
+
+			modalFooter.append(yesButton, noButton);
+			modalContent.append(modalHeader, modalBody, modalFooter);
+			modalDialog.append(modalContent);
+			modal.append(modalDialog);
+
+			const bsModal = new bootstrap.Modal(modal);
+			bsModal.show();
+			modal.addEventListener('hidden.bs.modal', () => { bsModal.dispose(); modal.remove(); });
+		});
+	}
 
 	// Set up the preview buttons.
 	document.querySelectorAll('.gateway-preview-btn').forEach((btn) => {
