@@ -1,7 +1,5 @@
 (() => {
 	document.querySelectorAll('.datepicker-group').forEach((open_rule) => {
-		if (open_rule.dataset.enableDatepicker !== '1') return;
-
 		const name = open_rule.name.replace('.open_date', '');
 
 		const groupRules = [
@@ -30,19 +28,56 @@
 				allowInput: true,
 				enableTime: true,
 				minuteIncrement: 1,
-				dateFormat: 'm/d/Y at h:iK',
+				altInput: true,
+				dateFormat: 'U',
+				defaultDate: orig_value,
+				defaultHour: 0,
+				locale: rule.dataset.locale ? rule.dataset.locale.substring(0, 2) : 'en',
 				clickOpens: false,
 				disableMobile: true,
 				wrap: true,
 				plugins: [ new confirmDatePlugin({ confirmText: rule.dataset.doneText ?? 'Done', showAlways: true }) ],
-				onChange() {
-					if (rule.value.toLowerCase() !== orig_value) rule.classList.add('changed');
-					else rule.classList.remove('changed');
-				},
-				onClose: update
-			});
+				onChange(selectedDates) {
+					// If the altInput field has been emptied, then the formatDate method still sets the hidden input.
+					// So set that back to empty again.
+					if (!selectedDates.length) this.input.value = '';
 
-			rule.addEventListener('blur', update);
+					if (this.input.value === orig_value) this.altInput.classList.remove('changed');
+					else this.altInput.classList.add('changed');
+				},
+				onClose: update,
+				onReady(selectedDates) {
+					// Flatpickr hides the original input and adds the alternate input after it.  That messes up the
+					// bootstrap input group styling.  So move the now hidden original input after the created alternate
+					// input to fix that.
+					this.altInput.after(this.input);
+
+					this.altInput.addEventListener('blur', update);
+
+					// If the inital value is empty, then the formatDate method still sets the hidden input.
+					// So set that back to empty again.
+					if (!selectedDates.length) this.input.value = '';
+				},
+				parseDate(datestr, format) {
+					// Deal with the case of a unix timestamp on initial load.
+					if (format === 'U') return new Date(parseInt(datestr) * 1000);
+					// Next attempt to parse the datestr with the current format.
+					const date = new Date(Date.parse(datestr, format));
+					if (!isNaN(date.getTime())) return date;
+					// Finally, fall back to the previous value in the original input if that failed.
+					return new Date(parseInt(rule.value) * 1000);
+				},
+				formatDate(date) {
+					// Flatpickr sets the value of the original input to the parsed time.
+					// So set that back to the unix timestamp.
+					rule.value = date.getTime() / 1000;
+
+					// Return the localized time string.
+					return Intl.DateTimeFormat(rule.dataset.locale?.replaceAll(/_/g, '-') ?? 'en',
+						{ dateStyle: 'short', timeStyle: 'short', timeZone: rule.dataset.timezone ?? 'UTC' })
+						.format(date);
+				}
+			});
 		}
 	});
 })();

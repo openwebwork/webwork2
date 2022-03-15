@@ -55,7 +55,7 @@ sub getLangHandle {
 sub plural {
 	my ($handle, $num, @forms) = @_;
 
-	return ""        if @forms == 0;
+	return ''        if @forms == 0;
 	return $forms[2] if @forms > 2 and $num == 0;
 
 	# Normal case:

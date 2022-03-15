@@ -11,7 +11,7 @@ use WebworkWebservice;
 use base qw(WebworkWebservice);
 use WeBWorK::DB;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
-use WeBWorK::Utils qw(runtime_use cryptPassword formatDateTime parseDateTime  encode_utf8_base64 decode_utf8_base64);
+use WeBWorK::Utils qw(runtime_use cryptPassword encode_utf8_base64 decode_utf8_base64);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor::SendMail;

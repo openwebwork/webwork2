@@ -162,9 +162,9 @@ sub body {
 
 		my $prettyDate;
 		if ($currentlyAssigned and $UserSet->due_date) {
-			$prettyDate = $self->formatDateTime($UserSet->due_date);
+			$prettyDate = $self->formatDateTime($UserSet->due_date, '', 'datetime_format_short', $ce->{language});
 		} else {
-			$prettyDate = $self->formatDateTime($Set->due_date);
+			$prettyDate = $self->formatDateTime($Set->due_date, '', 'datetime_format_short', $ce->{language});
 		}
 
 		# URL to edit user-specific set data
@@ -179,20 +179,18 @@ sub body {
 		print CGI::Tr(
 			CGI::td(
 				{ class => 'text-center' },
-				(
-					CGI::checkbox({
-						type    => 'checkbox',
-						name    => 'selected',
-						checked => $currentlyAssigned,
-						value   => $setID,
-						label   => '',
-						class   => 'form-check-input'
-					})
-				)
+				CGI::checkbox({
+					type    => 'checkbox',
+					name    => 'selected',
+					checked => $currentlyAssigned,
+					value   => $setID,
+					label   => '',
+					class   => 'form-check-input'
+				})
 			),
-			CGI::td([
-				$setID, $prettyDate, $currentlyAssigned ? CGI::a({ href => $url }, 'Edit user-specific set data') : '',
-			])
+			CGI::td($setID),
+			CGI::td({ class => 'text-center' }, $prettyDate),
+			CGI::td($currentlyAssigned ? CGI::a({ href => $url }, 'Edit user-specific set data') : '')
 		);
 	}
 	print CGI::end_table(), CGI::end_div();

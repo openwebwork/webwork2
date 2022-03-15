@@ -354,37 +354,27 @@ sub outputSetRow {
 }
 
 sub checkDates {
-	my $self         = shift;
-	my $setRecord    = shift;
-	my $setID        = shift;
-	my $r            = $self->r;
-	my $ce           = $r->ce;
-	my %dates = ();
-	my $error_undefined_override = 0;
-	my $numerical_date=0;
-	my $error        = 0;
-	foreach my $field (@{DATE_FIELDS_ORDER()}) {  # check that override dates can be parsed and are not blank
-		$dates{$field} = $setRecord->$field;
-		if (defined  $r->param("set.$setID.$field.override") &&
-		    $r->param("set.$setID.$field") ne ''){
-			eval{ $numerical_date = $self->parseDateTime($r->param("set.$setID.$field"))};
-			unless( $@  ) {
-					$dates{$field}=$numerical_date;
-			} else {
-					$self->addbadmessage("&nbsp;&nbsp;* Badly defined time for set $setID $field. No date changes made:<br/>$@");
-					$error = 1;
-			}
-		}
+	my $self      = shift;
+	my $setRecord = shift;
+	my $setID     = shift;
+	my $r         = $self->r;
+	my $error     = 0;
 
-
+	# For each of the dates, use the override date if set.  Otherwise use the value from the global set.
+	my %dates;
+	for my $field (@{ DATE_FIELDS_ORDER() }) {
+		$dates{$field} =
+			(defined $r->param("set.$setID.$field.override") && $r->param("set.$setID.$field") ne '')
+			? $r->param("set.$setID.$field")
+			: $setRecord->$field;
 	}
-	return {%dates,error=>1} if $error;    # no point in going on if the dates can't be parsed.
 
-	my ($open_date, $reduced_scoring_date, $due_date, $answer_date) = map { $dates{$_} } @{DATE_FIELDS_ORDER()};
+	my ($open_date, $reduced_scoring_date, $due_date, $answer_date) = map { $dates{$_} } @{ DATE_FIELDS_ORDER() };
 
-    unless ($answer_date && $due_date && $open_date) {
-    	$self->addbadmessage("set $setID has errors in its dates: answer_date |$answer_date|,
-    	 due date |$due_date|, open_date |$open_date|");
+	unless ($answer_date && $due_date && $open_date) {
+		$self->addbadmessage("set $setID has errors in its dates: answer_date |$answer_date|, "
+				. "due date |$due_date|, open_date |$open_date|");
+		$error = 1;
 	}
 
 	if ($answer_date < $due_date || $answer_date < $open_date) {
@@ -397,18 +387,17 @@ sub checkDates {
 		$error = 1;
 	}
 
-	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
-	    $setRecord->enable_reduced_scoring &&
-	    ($reduced_scoring_date < $open_date || $reduced_scoring_date > $due_date)) {
-    		$self->addbadmessage("The reduced scoring date should be between the open date and the due date in set $setID!");
+	if ($r->ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+		&& $setRecord->enable_reduced_scoring
+		&& ($reduced_scoring_date < $open_date || $reduced_scoring_date > $due_date))
+	{
+		$self->addbadmessage(
+			"The reduced scoring date should be between the open date and the due date in set $setID!");
 		$error = 1;
-}
+	}
 
-
-	# make sure the dates are not more than 10 years in the future
-	my $curr_time = time;
-	my $seconds_per_year = 31_556_926;
-	my $cutoff = $curr_time + $seconds_per_year*10;
+	# Make sure the dates are not more than 10 years in the future.
+	my $cutoff = time + 31_556_926 * 10;
 	if ($open_date > $cutoff) {
 		$self->addbadmessage("Error: open date cannot be more than 10 years from now in set $setID");
 		$error = 1;
@@ -422,11 +411,9 @@ sub checkDates {
 		$error = 1;
 	}
 
+	$self->addbadmessage('No date changes were saved!') if ($error);
 
-	if ($error) {
-		$self->addbadmessage("No date changes were saved!");
-	}
-	return {%dates,error=>$error};
+	return { %dates, error => $error };
 }
 
 sub DBFieldTable {
@@ -479,16 +466,17 @@ sub DBFieldTable {
 				? CGI::div(
 					{ class => 'input-group input-group-sm flex-nowrap flatpickr' },
 					CGI::input({
-						name          => "$recordType.$recordID.$field",
-						id            => "$recordType.$recordID.${field}_id",
-						type          => 'text',
-						value         => $userValue ? $self->formatDateTime($userValue, '', '%m/%d/%Y at %I:%M%P') : '',
-						data_override => "$recordType.$recordID.$field.override_id",
-						placeholder   => x('None Specified'),
-						class         => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
-						data_enable_datepicker => $ce->{options}{useDateTimePicker},
-						data_input             => undef,
-						data_done_text         => $self->r->maketext('Done')
+						name           => "$recordType.$recordID.$field",
+						id             => "$recordType.$recordID.${field}_id",
+						type           => 'text',
+						value          => $userValue,
+						data_override  => "$recordType.$recordID.$field.override_id",
+						placeholder    => x('None Specified'),
+						class          => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+						data_input     => undef,
+						data_done_text => $self->r->maketext('Done'),
+						data_locale    => $ce->{language},
+						data_timezone  => $ce->{siteDefaults}{timezone}
 					}),
 					CGI::a(
 						{ class => 'btn btn-secondary btn-sm', data_toggle => undef },
@@ -496,7 +484,7 @@ sub DBFieldTable {
 					)
 				)
 				: '',
-				$self->formatDateTime($globalValue, '', '%m/%d/%Y at %I:%M%P'),
+				$self->formatDateTime($globalValue, '', 'datetime_format_short', $ce->{language}),
 			];
 	}
 
@@ -519,6 +507,17 @@ sub output_JS {
 		href => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css')
 	});
 	print CGI::script({ src => getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.js'), defer => undef }, '');
+	if ($ce->{language} !~ /^en/) {
+		print CGI::script(
+			{
+				src => getAssetURL(
+					$ce, 'node_modules/flatpickr/dist/l10n/' . ($ce->{language} =~ s/^(..).*/$1/gr) . '.js'
+				),
+				defer => undef
+			},
+			''
+		);
+	}
 	print CGI::script(
 		{
 			src   => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),

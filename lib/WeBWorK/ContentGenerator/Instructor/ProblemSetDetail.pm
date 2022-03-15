@@ -610,8 +610,6 @@ sub FieldHTML {
 	my $choose = ($properties{type} eq 'choose') && ($properties{override} ne 'none');
 
 	# FIXME: allow one selector to set multiple fields
-	#	my $globalValue = $globalRecord->{$field};
-	# 	my $userValue = $userRecord->{$field};
 	my ($globalValue, $userValue) = ('', '');
 	my $blankfield = '';
 	if ($field =~ /:/) {
@@ -649,12 +647,8 @@ sub FieldHTML {
 		: $blankfield;    # this allows for a label if value is 0
 
 	if ($field =~ /_date/) {
-		$globalValue = $self->formatDateTime($globalValue, '', '%m/%d/%Y at %I:%M%P')
-			if defined $globalValue && $globalValue ne '';
-		# this is still fragile, but the check for blank (as opposed to 0) $userValue seems to prevent errors when
-		# no user has been assigned.
-		$userValue = $self->formatDateTime($userValue, '', '%m/%d/%Y at %I:%M%P')
-			if defined $userValue && $userValue =~ /\S/ && $userValue ne '';
+		$globalValue = $self->formatDateTime($globalValue, '', 'datetime_format_short', $r->ce->{language})
+			if $forUsers && defined $globalValue && $globalValue ne '';
 	}
 
 	if (defined($properties{convertby}) && $properties{convertby}) {
@@ -686,16 +680,17 @@ sub FieldHTML {
 			$inputType = CGI::div(
 				{ class => 'input-group input-group-sm flatpickr' },
 				CGI::textfield({
-					name  => "$recordType.$recordID.$field",
-					id    => "$recordType.$recordID.${field}_id",
-					value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
-					data_override => "$recordType.$recordID.$field.override_id",
-					class => 'form-control form-control-sm' . ($field eq 'open_date' ? ' datepicker-group' : ''),
-					data_enable_datepicker => $r->ce->{options}{useDateTimePicker},
-					placeholder            => x('None Specified'),
-					data_input             => undef,
-					data_done_text         => $r->maketext('Done'),
-					$forUsers && $check ? (aria_labelledby => "$recordType.$recordID.$field.label") : (),
+					name        => "$recordType.$recordID.$field",
+					id          => "$recordType.$recordID.${field}_id",
+					value       => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
+					class       => 'form-control form-control-sm' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+					placeholder => $r->maketext('None Specified'),
+					data_input  => undef,
+					data_done_text => $self->r->maketext('Done'),
+					data_locale    => $r->ce->{language},
+					data_timezone  => $r->ce->{siteDefaults}{timezone},
+					data_override  => "$recordType.$recordID.$field.override_id" $forUsers
+						&& $check ? (aria_labelledby => "$recordType.$recordID.$field.label") : (),
 				}),
 				CGI::a(
 					{
@@ -775,19 +770,20 @@ sub FieldHTML {
 			: ''
 		) if $forUsers;
 
-	push @return, CGI::label(
-		$forUsers && $check
-		? {
-			for   => "$recordType.$recordID.$field.override_id",
-			id    => "$recordType.$recordID.$field.label",
-			class => 'form-check-label'
+	push @return,
+		CGI::label(
+			$forUsers && $check
+			? {
+				for   => "$recordType.$recordID.$field.override_id",
+				id    => "$recordType.$recordID.$field.label",
+				class => 'form-check-label'
 			}
-		: {
-			for   => "$recordType.$recordID.${field}_id",
-			class => 'form-label'
-		},
-		$r->maketext($properties{name})
-	);
+			: {
+				for   => "$recordType.$recordID.${field}_id",
+				class => 'form-label'
+			},
+			$r->maketext($properties{name})
+		);
 
 	push @return,
 		$properties{help_text}
@@ -1195,20 +1191,10 @@ sub initialize {
 		my @names = ("open_date", "due_date", "answer_date", "reduced_scoring_date");
 
 		my %dates;
-		for (@names)
-		{
+		for (@names) {
 			$dates{$_} = $r->param("set.$setID.$_") || '';
-			if (defined($undoLabels{$_}{$dates{$_}}) || !$dates{$_})
-			{
+			if (defined $undoLabels{$_}{ $dates{$_} } || !$dates{$_}) {
 				$dates{$_} = $setRecord->$_;
-			}
-			else
-			{
-				eval{ $dates{$_} = $self->parseDateTime($dates{$_}) };
-				if ($@) {
-					$self->addbadmessage("Badly defined time. No date changes made:<br>$@");
-					$error = $r->param('submit_changes');
-				}
 			}
 		}
 
@@ -1307,10 +1293,6 @@ sub initialize {
 
 					    my $unlabel = $undoLabels{$field}->{$param};
 						$param = $unlabel if defined $unlabel;
-#						$param = $undoLabels{$field}->{$param} || $param;
-						if ($field =~ /_date/ ) {
-							$param = $self->parseDateTime($param) unless defined $unlabel;
-						}
 						if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby}) {
 							$param = $param*$properties{$field}->{convertby};
 						}
@@ -1414,9 +1396,6 @@ sub initialize {
 				$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : "" unless defined $param && $param ne "";
 				my $unlabel = $undoLabels{$field}->{$param};
 				$param = $unlabel if defined $unlabel;
-				if ($field =~ /_date/ ) {
-				    $param = $self->parseDateTime($param) unless (defined $unlabel || !$param);
-				}
 				if ($field =~ /restricted_release/ && $param) {
 					$param = format_set_name_internal($param =~ s/\s*,\s*/,/gr);
 					$self->check_sets($db, $param);
@@ -3009,6 +2988,17 @@ sub output_JS {
 		href => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css')
 	});
 	print CGI::script({ src => getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.js'), defer => undef }, '');
+	if ($ce->{language} !~ /^en/) {
+		print CGI::script(
+			{
+				src => getAssetURL(
+					$ce, 'node_modules/flatpickr/dist/l10n/' . ($ce->{language} =~ s/^(..).*/$1/gr) . '.js'
+				),
+				defer => undef
+			},
+			''
+		);
+	}
 	print CGI::script(
 		{
 			src   => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),

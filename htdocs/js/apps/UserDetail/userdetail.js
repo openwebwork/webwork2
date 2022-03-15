@@ -24,13 +24,15 @@
 
 	// Make the date override checkboxes checked or unchecked appropriately
 	// as determined by the value of the date input when that value changes.
-	document.querySelectorAll('input[type="text"][data-override]').forEach((input) => {
+	document.querySelectorAll('input[data-override]').forEach((input) => {
 		const overrideCheck = document.getElementById(input.dataset.override);
 		if (!overrideCheck) return;
 		const changeHandler = () => overrideCheck.checked = input.value != '';
 		input.addEventListener('change', changeHandler);
-		input.addEventListener('keyup', changeHandler);
-		input.addEventListener('blur', () => { if (input.value == '') overrideCheck.checked = false; });
+		// Attach the keyup and blur handlers to the flatpickr alternate input.
+		input.previousElementSibling?.addEventListener('keyup', changeHandler);
+		input.previousElementSibling?.addEventListener('blur',
+			() => { if (input.previousElementSibling.value == '') overrideCheck.checked = false; });
 	});
 
 	// If the "Assign All Sets to Current User" button is clicked, then check all assignments.

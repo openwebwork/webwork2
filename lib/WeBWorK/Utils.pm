@@ -48,7 +48,7 @@ use open IO => ':encoding(UTF-8)';
 use constant MKDIR_ATTEMPTS => 10;
 
 # "standard" WeBWorK date/time format (for set definition files):
-#     %m/%d/%y at %I:%M%P
+#     %m/%d/%y at %I:%M%P %Z
 # where:
 #     %m = month number, starting with 01
 #     %d = numeric day of the month, with leading zeros (eg 01..31)
@@ -56,6 +56,7 @@ use constant MKDIR_ATTEMPTS => 10;
 #     %I = hour, 12 hour clock, leading 0's)
 #     %M = minute, leading 0's
 #     %P = am or pm (Yes %p and %P are backwards :)
+#     %Z = timezone name
 use constant DATE_FORMAT => "%m/%d/%Y at %I:%M%P %Z";
 
 use constant JITAR_MASK => [hex 'FF000000', hex '00FC0000',
@@ -656,8 +657,11 @@ Formats the UNIX datetime $dateTime in the custom format provided by $format_str
 If $format_string is not provided, the standard WeBWorK datetime format is used.
 $dateTime is assumed to be in the server's time zone. If $display_tz is given,
 the datetime is converted from the server's timezone to the timezone specified.
-The available patterns for $format_string can be found in the documentation for
-the perl DateTime package under the heading of strftime Patterns.
+If $format_string is a method of the $dt->locale instance, then format_cldr
+is used, and otherwise strftime is used.  The available patterns for
+$format_string can be found in the documentation for the perl DateTime package
+under the heading of strftime Patterns.  The available methods for the $dt->locale
+instance are documented at L<https://metacpan.org/pod/DateTime::Locale::FromData>.
 $dateTime is assumed to be in the server's time zone. If $display_tz is given,
 the datetime is converted from the server's timezone to the timezone specified.
 If $locale is provided, the string returned will be in the format of that locale,
@@ -666,24 +670,27 @@ month names.  If $locale is not provided, perl defaults to en_US.
 
 =cut
 
-sub formatDateTime($;$;$;$) {
+sub formatDateTime {
 	my ($dateTime, $display_tz, $format_string, $locale) = @_;
-	warn "Utils::formatDateTime is not a method. ", join(" ",caller(2)) if ref($dateTime); # catch bad calls to Utils::formatDateTime
-	warn "not defined formatDateTime('$dateTime', '$display_tz') ",join(" ",caller(2)) unless  $display_tz;
-	$dateTime = $dateTime ||0;  # do our best to provide default values
-	$display_tz ||= "local";    # do our best to provide default vaules
-	$display_tz = verify_timezone($display_tz);
 
-	$format_string ||= DATE_FORMAT; # If a format is not provided, use the default WeBWorK date format
-	my $dt;
-	if($locale) {
-	    $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz, locale=>$locale);
+	warn "Utils::formatDateTime is not a method. ", join(" ", caller(2))
+		if ref($dateTime);    # catch bad calls to Utils::formatDateTime
+	warn "not defined formatDateTime('$dateTime', '$display_tz') ", join(" ", caller(2)) unless $display_tz;
+
+	$dateTime = $dateTime || 0;    # do our best to provide default values
+	$display_tz ||= "local";       # do our best to provide default vaules
+	$display_tz = verify_timezone($display_tz);
+	$format_string ||= DATE_FORMAT;    # If a format is not provided, use the default WeBWorK date format
+
+	my $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz, $locale ? (locale => $locale) : ());
+
+	# If $format_string is a method of $dt->locale then use call format_cldr on its return value.
+	# Otherwise assume it is a locale string meant for strftime.
+	if ($dt->locale->can($format_string)) {
+		return $dt->format_cldr($dt->locale->$format_string);
+	} else {
+		return $dt->strftime($format_string);
 	}
-	else {
-	    $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz);
-	}
-	#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
-	return $dt->strftime($format_string);
 }
 
 
