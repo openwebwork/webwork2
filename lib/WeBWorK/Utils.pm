@@ -1861,23 +1861,38 @@ sub getAssetURL {
 		}
 	}
 
+	# If a right-to-left language is enabled (Hebrew or Arabic) and this is a css file that is not a third party asset,
+	# then determine the rtl varaint file name.  This will be looked for first in the asset lists.
+	my $rtlfile = $file =~ s/\.css$/.rtl.css/r
+		if ($ce->{language} =~ /^(he|ar)/ && $file !~ /node_modules/ && $file =~ /\.css$/);
+
 	if ($isThemeFile) {
 		# If the theme directory is the default location, then the file is in the static assets list.
 		# Otherwise just use the given file name.
 		if ($ce->{webworkDirs}{themes} =~ /^$ce->{webworkDirs}{htdocs}\/themes$/) {
+			$rtlfile = "themes/$ce->{defaultTheme}/$rtlfile" if defined $rtlfile;
 			$file = "themes/$ce->{defaultTheme}/$file";
 		} else {
 			return "$ce->{webworkURLs}{themes}/$ce->{defaultTheme}/$file";
 		}
 	}
 
-	# First check to see if this is a file in the webwork htdocs location.
+	# First check to see if this is a file in the webwork htdocs location with a rtl variant.
+	# These can only be local files.
+	return "$ce->{webworkURLs}{htdocs}/$staticWWAssets->{$rtlfile}"
+		if defined $rtlfile && defined $staticWWAssets->{$rtlfile};
+
+	# Next check to see if this is a file in the webwork htdocs location.
 	if (defined $staticWWAssets->{$file}) {
 		# File served by cdn.
 		return $staticWWAssets->{$file} if $staticWWAssets->{$file} =~ /^https?:\/\//;
 		# File served locally.
 		return "$ce->{webworkURLs}{htdocs}/$staticWWAssets->{$file}";
 	}
+
+	# Now check to see if this is a file in the pg htdocs location with a rtl variant.
+	# These also can only be local files.
+	return "/pg_files/$staticPGAssets->{$rtlfile}" if defined $rtlfile && defined $staticPGAssets->{$rtlfile};
 
 	# Next check to see if this is a file in the pg htdocs location.
 	if (defined $staticPGAssets->{$file}) {
