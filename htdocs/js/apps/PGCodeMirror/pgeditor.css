@@ -17,10 +17,6 @@
 	width: 100%;
 }
 
-.CodeMirror {
-	resize: vertical !important;
-}
-
 /* Additional CSS for codemirror addons and overrides */
 
 /* CodeMirror overrides */
@@ -51,4 +47,5 @@
 	resize: both;
 	min-height: 200px;
 	min-width: 400px;
+	resize: vertical !important;
 }
