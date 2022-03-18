@@ -240,7 +240,7 @@ sub displayStudentStats {
 	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
 			"&effectiveUser=$effectiveUser&key=".$r->param("key");
 
-	print CGI::h3($fullName);
+	print CGI::h2($fullName);
 
 	###############################################################
 	#  Print table
