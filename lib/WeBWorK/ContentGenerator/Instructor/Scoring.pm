@@ -110,7 +110,7 @@ sub initialize {
 		$self->writeCSV("$scoringDir/$scoringFileName", @totals);
 
 	} else {
-		if (!@selected) {  # nothing selected for scoring
+		if ($r->param('score-sets') && !@selected) {  # nothing selected for scoring
 			$self->addbadmessage($r->maketext("You must select one or more sets for scoring!"));
 		}
 		if (!$scoringFileNameOK) { # fileName is not properly formed
@@ -166,7 +166,7 @@ sub body {
 						name            => 'includeIndex',
 						value           => 1,
 						label           => $r->maketext('Include Success Index'),
-						checked         => 0,
+						checked         => $r->param('includeIndex') // 0,
 						class           => 'form-check-input',
 						labelattributes => { class => 'form-check-label' }
 					})
@@ -177,7 +177,7 @@ sub body {
 						name            => 'recordSingleSetScores',
 						value           => 1,
 						label           => $r->maketext('Record Scores for Single Sets'),
-						checked         => 0,
+						checked         => $r->param('recordSingleSetScores') // 0,
 						class           => 'form-check-input',
 						labelattributes => { class => 'form-check-label' }
 					})
@@ -188,7 +188,7 @@ sub body {
 						name            => 'padFields',
 						value           => 1,
 						label           => $r->maketext('Pad Fields'),
-						checked         => 1,
+						checked         => $r->param('padFields') // 1,
 						class           => 'form-check-input',
 						labelattributes => { class => 'form-check-label' }
 					})
@@ -199,7 +199,7 @@ sub body {
 						name            => 'includePercentEachSet',
 						value           => 1,
 						label           => $r->maketext('Include percentage grades columns for all sets'),
-						checked         => 1,
+						checked         => $r->param('includePercentEachSet') // 1,
 						class           => 'form-check-input',
 						labelattributes => { class => 'form-check-label' }
 					})
@@ -888,6 +888,7 @@ sub popup_set_form {
 	return CGI::scrolling_list({
 		name     => 'selectedSet',
 		values   => $self->{ra_set_ids},
+		defaults => [ $self->r->param('selectedSet') ],
 		size     => 10,
 		multiple => 1,
 		class    => 'form-select'

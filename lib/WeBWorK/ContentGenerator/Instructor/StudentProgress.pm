@@ -68,22 +68,25 @@ sub initialize {
 
 sub title {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $authz = $r->authz;
-	my $user = $r->param('user');
+	my $r      = $self->r;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
 
 	# Check permissions
-	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
+	return '' unless $authz->hasPermissions($user, 'access_instructor_tools');
 
-	my $type                = $self->{type};
-	my $string = '';
+	my $type   = $self->{type};
 	if ($type eq 'student') {
-	  $string = $r->maketext("Student Progress for [_1] student [_2]", $self->{ce}->{courseName}, $self->{studentName});
-	} elsif ($type eq 'set' ) {
-	  $string = $r->maketext("Student Progress for [_1] set [_2]. Closes [_3]", $self->{ce}->{courseName}, $self->{setName}, $self->formatDateTime($self->{set_due_date}));
+		return $r->maketext('Student Progress for [_1] student [_2]', $self->{ce}->{courseName}, $self->{studentName});
+	} elsif ($type eq 'set') {
+		return $r->maketext(
+			'Student Progress for [_1] set [_2]. Closes [_3]',
+			$self->{ce}->{courseName},
+			$self->{setName}, $self->formatDateTime($self->{set_due_date})
+		);
 	}
 
-	return $string;
+	return $r->maketext('Student Progress');
 }
 
 sub siblings {
@@ -239,12 +242,12 @@ sub index {
 		{ class => 'row g-0' },
 		CGI::div(
 			{ class => 'col-lg-5 col-sm-6 border border-dark' },
-			CGI::h3({ align => 'center' }, $r->maketext('View student progress by set')),
+			CGI::h3({ class => 'text-center' }, $r->maketext('View student progress by set')),
 			CGI::ul(CGI::li([@setLinks]))
 		),
 		CGI::div(
 			{ class => 'col-lg-5 col-sm-6 border border-dark' },
-			CGI::h3({ align => 'center' }, $r->maketext('View student progress by student')),
+			CGI::h3({ class => 'text-center' }, $r->maketext('View student progress by student')),
 			CGI::ul(CGI::li([@studentLinks]))
 		)
 	);

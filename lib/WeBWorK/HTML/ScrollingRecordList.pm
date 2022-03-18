@@ -69,7 +69,7 @@ sub scrollingRecordList {
 
 	if (@Records) {
 		my $class = ref $Records[0];
-        $class = $1 if $class =~ /(.*)Version$/;
+		$class = $1 if $class =~ /(.*)Version$/;
 
 		($filters, $filter_labels) = getFiltersForClass(@Records);
 		if (defined $r->param("$name!filter")) {
@@ -111,13 +111,14 @@ sub scrollingRecordList {
 		CGI::div(
 			{ class => 'row mb-2' },
 			CGI::label(
-				{ class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' },
+				{ for => "$name!sort", class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' },
 				$r->maketext('Sort:')
 			),
 			CGI::div(
 				{ class => 'col-10' },
 				CGI::popup_menu({
 					name    => "$name!sort",
+					id      => "$name!sort",
 					values  => $sorts,
 					default => $selected_sort,
 					labels  => $sort_labels,
@@ -128,13 +129,14 @@ sub scrollingRecordList {
 		CGI::div(
 			{ class => 'row mb-2' },
 			CGI::label(
-				{ class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' },
+				{ for => "$name!format", class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' },
 				$r->maketext('Format:')
 			),
 			CGI::div(
 				{ class => 'col-10' },
 				CGI::popup_menu({
 					name    => "$name!format",
+					id      => "$name!format",
 					values  => $formats,
 					default => $selected_format,
 					labels  => $format_labels,
@@ -145,13 +147,14 @@ sub scrollingRecordList {
 		CGI::div(
 			{ class => 'row mb-2' },
 			CGI::label(
-				{ class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' },
+				{ for => "$name!filter", class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' },
 				$r->maketext("Filter:")
 			),
 			CGI::div(
 				{ class => 'col-10' },
 				CGI::scrolling_list({
 					name     => "$name!filter",
+					id       => "$name!filter",
 					values   => $filters,
 					default  => \@selected_filters,
 					labels   => $filter_labels,
@@ -165,7 +168,8 @@ sub scrollingRecordList {
 			{ name => "$name!refresh", label => $refresh_button_name, class => 'btn btn-secondary btn-sm mb-2' }
 		)),
 		CGI::scrolling_list({
-			name    => "$name",
+			name    => $name,
+			id      => $name,
 			values  => \@ids,
 			default => \@selected_records,
 			labels  => \%labels,

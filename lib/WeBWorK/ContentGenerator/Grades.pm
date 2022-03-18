@@ -240,7 +240,7 @@ sub displayStudentStats {
 	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
 			"&effectiveUser=$effectiveUser&key=".$r->param("key");
 
-	print CGI::h3($fullName);
+	print CGI::h2($fullName);
 
 	###############################################################
 	#  Print table
@@ -276,7 +276,7 @@ sub displayStudentStats {
 	my $numGatewayVersions = 0;
 	my $bestGatewayScore = 0;
 
-	foreach my $setName (@allSetIDs)   {
+	foreach my $setName (@allSetIDs) {
 		my $act_as_student_set_url = "$root/$courseName/$setName/?user=".$r->param("user").
 			"&effectiveUser=$effectiveUser&key=".$r->param("key");
 		my $set = $setsByID{ $setName };
@@ -292,20 +292,33 @@ sub displayStudentStats {
 				CGI::Tr(
 					CGI::td(WeBWorK::ContentGenerator::underscore2sp($setID)),
 					CGI::td(
-						{ colspan => ($max_problems + 2) },
-						CGI::em($r->maketext("No versions of this assignment have been taken."))
+						{ colspan => ($max_problems + 3) },
+						CGI::em($r->maketext('No versions of this assignment have been taken.'))
 					)
 				);
 			next;
 		}
 		# if the set has hide_score set, then we need to skip printing
 		#    the score as well
-		if ( defined( $set->hide_score ) &&
-		     ( ! $authz->hasPermissions($r->param("user"), "view_hidden_work") &&
-		       ( $set->hide_score eq 'Y' ||
-			 ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date) ) ) ) {
-			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp("${setID}_(version_" . $set->version_id . ")")),
-					     CGI::td({colspan=>($max_problems+2)}, CGI::em($r->maketext("Display of scores for this set is not allowed.")))) );
+		if (
+			defined($set->hide_score)
+			&& (
+				!$authz->hasPermissions($r->param('user'), 'view_hidden_work')
+				&& ($set->hide_score eq 'Y' || ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date))
+			)
+			)
+		{
+			push(
+				@rows,
+				CGI::Tr(
+					CGI::td(WeBWorK::ContentGenerator::underscore2sp(
+						"${setID}_(version_" . $set->version_id . ')')),
+					CGI::td(
+						{ colspan => ($max_problems + 3) },
+						CGI::em($r->maketext('Display of scores for this set is not allowed.'))
+					)
+				)
+			);
 			next;
 		}
 

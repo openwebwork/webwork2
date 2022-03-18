@@ -190,7 +190,7 @@ sub siblings {
 		print CGI::li({ class => 'nav-item' },
 			CGI::a({
 					href => $self->systemLink($setPage),
-					id => $pretty_set_id,
+					id => $setID,
 					class => 'nav-link'
 				}, $pretty_set_id)
 		) ;

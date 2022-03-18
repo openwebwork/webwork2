@@ -256,7 +256,7 @@ sub body {
 		})
 	);
 
-	print CGI::div({ class => 'table-responsive' });
+	print CGI::start_div({ class => 'table-responsive' });
 	print CGI::start_table({ class => 'table table-bordered table-sm font-sm align-middle' });
 	print CGI::Tr(CGI::th({ class => 'text-center', colspan => 3 }, "Sets assigned to $userName ($editForUserID)"));
 	print CGI::Tr(CGI::th({ class => 'text-center' }, [ 'Assigned', "Edit set for $editForUserID", 'Dates', ]));
@@ -316,10 +316,9 @@ sub outputSetRow {
 	my $dateFieldLabels = DATE_FIELDS();
 
 	print CGI::Tr(CGI::td(
-		{ align => 'center' },
+		{ class => 'text-center' },
 		[
 			CGI::checkbox({
-				type            => 'checkbox',
 				name            => $version ? "set.$setID,v$version.assignment" : "set.$setID.assignment",
 				label           => '',
 				value           => 'assigned',
@@ -465,7 +464,6 @@ sub DBFieldTable {
 				$r->maketext($rh_fieldLabels->{$field}) . ' ',
 				defined $UserRecord
 				? CGI::checkbox({
-					type    => 'checkbox',
 					name    => "$recordType.$recordID.$field.override",
 					id      => "$recordType.$recordID.$field.override_id",
 					label   => '',

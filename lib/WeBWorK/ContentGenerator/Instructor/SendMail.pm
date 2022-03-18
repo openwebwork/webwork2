@@ -613,7 +613,10 @@ sub print_form {
 					{ class => 'col-md-6 mb-2' },
 					CGI::div(
 						{ class => 'input-group input-group-sm mb-2' },
-						CGI::span({ class => 'input-group-text' }, CGI::strong($r->maketext("Message file:"))),
+						CGI::label(
+							{ for => 'openfilename', class => 'input-group-text' },
+							CGI::strong($r->maketext('Message file:'))
+						),
 						CGI::span({ class => 'input-group-text' }, $input_file)
 					),
 					CGI::div(
@@ -625,6 +628,7 @@ sub print_form {
 						}),
 						CGI::popup_menu({
 							name    => 'openfilename',
+							id      => 'openfilename',
 							values  => \@sorted_messages,
 							default => $input_file,
 							class   => 'form-select form-select-sm'
@@ -632,16 +636,20 @@ sub print_form {
 					),
 					CGI::div(
 						{ class => 'input-group input-group-sm mb-2' },
-						CGI::span({ class => 'input-group-text' }, CGI::strong($r->maketext("Save file to:"))),
+						CGI::span({ class => 'input-group-text' }, CGI::strong($r->maketext('Save file to:'))),
 						CGI::span({ class => 'input-group-text' }, $output_file)
 					),
 					CGI::div(
 						{ class => 'input-group input-group-sm mb-2' },
-						CGI::span({ class => 'input-group-text' }, CGI::strong($r->maketext('Merge file:'))),
+						CGI::label(
+							{ for => 'merge_file', class => 'input-group-text' },
+							CGI::strong($r->maketext('Merge file:'))
+						),
 						CGI::span({ class => 'input-group-text' }, $merge_file)
 					),
 					CGI::popup_menu({
 						name    => 'merge_file',
+						id      => 'merge_file',
 						values  => \@sorted_merge_files,
 						default => $merge_file,
 						class   => 'form-select form-select-sm mb-2'
@@ -655,8 +663,8 @@ sub print_form {
 						CGI::div(
 							{ class => 'col-sm-9' },
 							CGI::textfield({
-								name      => "from",
-								id        => "from",
+								name      => 'from',
+								id        => 'from',
 								value     => $from,
 								class     => 'form-control form-control-sm'
 							})
@@ -671,8 +679,8 @@ sub print_form {
 						CGI::div(
 							{ class => 'col-sm-9' },
 							CGI::textfield({
-								name      => "replyTo",
-								id        => "replyTo",
+								name      => 'replyTo',
+								id        => 'replyTo',
 								value     => $replyTo,
 								class     => 'form-control form-control-sm'
 							})
@@ -697,13 +705,14 @@ sub print_form {
 					CGI::div(
 						{ class => 'row mb-2' },
 						CGI::label(
-							{ for => 'subject', class => 'col-3 col-form-label col-form-label-sm' },
+							{ for => 'rows', class => 'col-3 col-form-label col-form-label-sm' },
 							$r->maketext('Editor rows:')
 						),
 						CGI::div(
 							{ class => 'col-9' },
 							CGI::textfield({
 								name  => 'rows',
+								id    => 'rows',
 								size  => 3,
 								value => $rows,
 								class => 'form-control form-control-sm d-inline w-auto'
@@ -712,7 +721,7 @@ sub print_form {
 					),
 					CGI::submit({
 						name  => 'updateSettings',
-						value => $r->maketext("Update settings and refresh page"),
+						value => $r->maketext('Update settings and refresh page'),
 						class => 'btn btn-secondary btn-sm'
 					}),
 				),
@@ -720,7 +729,7 @@ sub print_form {
 					{ class => 'col-md-6 mb-2' },
 					CGI::div(
 						{ class => 'input-group input-group-sm mb-2' },
-						CGI::span({ class => 'input-group-text' }, CGI::strong($r->maketext("Send to:"))),
+						CGI::span({ class => 'input-group-text' }, CGI::strong($r->maketext('Send to:'))),
 						CGI::div(
 							{ class => 'input-group-text' },
 							CGI::radio_group({
@@ -736,17 +745,17 @@ sub print_form {
 								labelattributes => { class => 'form-check-label mx-1' }
 							})
 						),
-						CGI::span({ class => 'input-group-text' }, $r->maketext('students')),
+						CGI::label({ for => 'classList', class => 'input-group-text' }, $r->maketext('students')),
 					),
 					CGI::div(
 						{ class => 'mb-2' },
 						scrollingRecordList(
 							{
-								name                => "classList",
+								name                => 'classList',
 								request             => $r,
-								default_sort        => "lnfn",
-								default_format      => "lnfn_uid",
-								default_filters     => ["all"],
+								default_sort        => 'lnfn',
+								default_format      => 'lnfn_uid',
+								default_filters     => ['all'],
 								size                => 5,
 								multiple            => 1,
 								refresh_button_name => $r->maketext('Update settings and refresh page'),
@@ -763,7 +772,7 @@ sub print_form {
 						}),
 						CGI::span(
 							{ class => 'input-group-text', style => 'white-space:pre;' },
-							CGI::strong($r->maketext("for")) . ' '
+							CGI::strong($r->maketext('for')) . ' '
 								. $preview_record->last_name . ', '
 								. $preview_record->first_name . ' ('
 								. $preview_record->user_id . ')'
@@ -775,7 +784,7 @@ sub print_form {
 			CGI::div(
 				{ class => 'd-flex justify-content-center' },
 				CGI::span(
-					{ dir => "ltr" },    # Put the popup in a LTR span
+					{ dir => 'ltr' },    # Put the popup in a LTR span
 					CGI::popup_menu({
 						name   => 'dummyName',
 						values => [

@@ -622,12 +622,17 @@ sub add_course_form {
 
 	print CGI::div(
 		{ class => 'row mb-3' },
-		CGI::label({ class => 'col-auto col-form-label fw-bold' }, $r->maketext('Copy templates from:')),
+		CGI::label(
+			{ for => 'add_templates_course', class => 'col-auto col-form-label fw-bold' },
+			$r->maketext('Copy templates from:')
+		),
 		CGI::div(
 			{ class => 'col-auto' },
 			CGI::popup_menu({
 				name    => 'add_templates_course',
+				id      => 'add_templates_course',
 				values  => [ '', @existingCourses ],
+				labels  => { '' => $r->maketext('No Course'), map { $_ => $_ } @existingCourses },
 				default => trim_spaces($r->param('add_templates_course')) || '',
 				class   => 'form-select'
 			})
@@ -842,7 +847,7 @@ sub do_add_course {
 		print CGI::div(
 			{ class => 'alert alert-danger p-1 mb-2' },
 			CGI::p("An error occured while creating the course $add_courseID:"),
-			CGI::tt(CGI::escapeHTML($error)),
+			CGI::div({ class => 'font-monospace' }, CGI::escapeHTML($error)),
 		);
 		# get rid of any partially built courses
 		# FIXME  -- this is too fragile
@@ -946,11 +951,15 @@ sub rename_course_form {
 		{ class => 'col-lg-7 col-md-8' },
 		CGI::div(
 			{ class => 'row mb-2' },
-			CGI::label({ class => 'col-sm-6 col-form-label fw-bold' }, $r->maketext('Course ID:')),
+			CGI::label(
+				{ for => 'rename_oldCourseID', class => 'col-sm-6 col-form-label fw-bold' },
+				$r->maketext('Course ID:')
+				),
 			CGI::div(
 				{ class => 'col-sm-6' },
 				CGI::scrolling_list({
 					name     => 'rename_oldCourseID',
+					id       => 'rename_oldCourseID',
 					values   => \@courseIDs,
 					default  => $r->param('rename_oldCourseID') || '',
 					size     => 10,
@@ -1036,8 +1045,6 @@ sub rename_course_form {
 			)
 		)
 	);
-
-	print CGI::end_table();
 
 	print CGI::submit({ name => 'rename_course', label => $r->maketext('Rename Course'), class => 'btn btn-primary' });
 
@@ -1391,7 +1398,7 @@ sub do_retitle_course {
 		print CGI::div(
 			{ class => 'alert alert-danger p-1 mb-2' },
 			CGI::p($r->maketext("An error occured while changing the title of the course [_1].", $rename_oldCourseID)),
-			CGI::tt(CGI::escapeHTML($error)),
+			CGI::div({ class => 'font-monospace' }, CGI::escapeHTML($error)),
 		);
 	} else {
 		print CGI::div(
@@ -1475,7 +1482,7 @@ sub do_rename_course {
 		print CGI::div(
 			{ class => 'alert alert-danger p-1 mb-2' },
 			CGI::p( $r->maketext("An error occured while renaming the course [_1] to [_2]:", $rename_oldCourseID, $rename_newCourseID)),
-			CGI::tt(CGI::escapeHTML($error)),
+			CGI::div({ class => 'font-monospace' }, CGI::escapeHTML($error)),
 		);
 	} else {
 		print CGI::div(
@@ -1615,11 +1622,15 @@ sub delete_course_form {
 	print CGI::div({ class => 'mb-2' }, $r->maketext('Select a course to delete.'));
 	print CGI::div(
 		{ class => 'row mb-2' },
-		CGI::label({ class => 'col-auto col-form-label fw-bold' }, $r->maketext('Course Name:')),
+		CGI::label(
+			{ for => 'delete_courseID', class => 'col-auto col-form-label fw-bold' },
+			$r->maketext('Course Name:')
+		),
 		CGI::div(
 			{ class => 'col-auto' },
 			CGI::scrolling_list({
 				name     => 'delete_courseID',
+				id       => 'delete_courseID',
 				values   => \@courseIDs,
 				default  => $r->param('delete_courseID') || '',
 				size     => 15,
@@ -1745,7 +1756,7 @@ sub do_delete_course {
 		print CGI::div(
 			{ class => 'alert alert-danger p-1 mb-2' },
 			CGI::p($r->maketext("An error occured while deleting the course [_1]:", $delete_courseID)),
-			CGI::tt(CGI::escapeHTML($error)),
+			CGI::div({ class => 'font-monospace' }, CGI::escapeHTML($error)),
 		);
 	} else {
 	    # mark the contact person in the admin course as dropped.
@@ -1908,11 +1919,15 @@ sub archive_course_form {
 	print CGI::div({ class => 'mb-2' }, $r->maketext('Select course(s) to archive.'));
 	print CGI::div(
 		{ class => 'row mb-2' },
-		CGI::label({ class => 'col-auto col-form-label fw-bold' }, $r->maketext('Course Name:')),
+		CGI::label(
+			{ for => 'archive_courseIDs', class => 'col-auto col-form-label fw-bold' },
+			$r->maketext('Course Name:')
+		),
 		CGI::div(
 			{ class => 'col-auto' },
 			CGI::scrolling_list({
 				name     => 'archive_courseIDs',
+				id       => 'archive_courseIDs',
 				values   => \@courseIDs,
 				default  => $r->param('archive_courseID') || '',
 				size     => 15,
@@ -2254,7 +2269,7 @@ sub do_archive_course {
 		print CGI::div(
 			{ class => 'alert alert-danger p-1 mb-2' },
 			CGI::p($r->maketext("An error occured while archiving the course [_1]:", $archive_courseID)),
-			CGI::tt(CGI::escapeHTML($error)),
+			CGI::div({ class => 'font-monospace' }, CGI::escapeHTML($error)),
 		);
 	} else {
 		print CGI::div(
@@ -2282,7 +2297,7 @@ sub do_archive_course {
 				print CGI::div(
 					{ class => 'alert alert-danger p-1 mb-2' },
 					CGI::p($r->maketext("An error occured while deleting the course [_1]:", $archive_courseID)),
-					CGI::tt(CGI::escapeHTML($error)),
+					CGI::div({ class => 'font-monospace' }, CGI::escapeHTML($error)),
 				);
 			} else {
 				# mark the contact person in the admin course as dropped.
@@ -2384,11 +2399,15 @@ sub unarchive_course_form {
 		{ class => 'col-lg-7 col-md-8' },
 		CGI::div(
 			{ class => 'row mb-2' },
-			CGI::label({ class => 'col-sm-4 col-form-label' }, $r->maketext('Course Name:')),
+			CGI::label(
+				{ for => 'unarchive_courseID', class => 'col-sm-4 col-form-label' },
+				$r->maketext('Course Name:')
+			),
 			CGI::div(
 				{ class => 'col-sm-8' },
 				CGI::scrolling_list({
 					name     => 'unarchive_courseID',
+					id       => 'unarchive_courseID',
 					values   => \@courseIDs,
 					default  => $r->param('unarchive_courseID') || '',
 					size     => 10,
@@ -2397,7 +2416,7 @@ sub unarchive_course_form {
 					class    => 'form-select'
 				})
 			)
-		),
+			),
 		CGI::div(
 			{ class => 'row mb-2 align-items-center' },
 			CGI::div(
@@ -2406,7 +2425,6 @@ sub unarchive_course_form {
 					{ class => 'form-check' },
 					CGI::checkbox({
 						name            => 'create_newCourseID',
-						default         => '',
 						value           => 1,
 						label           => $r->maketext('New Name:'),
 						class           => 'form-check-input',
@@ -2547,7 +2565,7 @@ sub do_unarchive_course {
 		print CGI::div(
 			{ class => 'alert alert-danger p-1 mb-2' },
 			CGI::p($r->maketext("An error occured while archiving the course [_1]:", $unarchive_courseID)),
-			CGI::tt(CGI::escapeHTML($error)),
+			CGI::div({ class => 'font-monospace' }, CGI::escapeHTML($error)),
 		);
 	} else {
 		print CGI::div(
@@ -2979,11 +2997,15 @@ sub manage_location_form {
 
 	print CGI::div(
 		{ class => 'row ms-sm-3 mb-2' },
-		CGI::label({ class => 'col-sm-4 col-form-label' }, $r->maketext('Location name:')),
+		CGI::label(
+			{ for => 'new_location_name', class => 'col-sm-4 col-form-label' },
+			$r->maketext('Location name:')
+		),
 		CGI::div(
 			{ class => 'col-sm-8' },
 			CGI::textfield({
 				name  => 'new_location_name',
+				id    => 'new_location_name',
 				value => $r->param('new_location_name') // '',
 				class => 'form-control'
 			})
@@ -2992,11 +3014,15 @@ sub manage_location_form {
 
 	print CGI::div(
 		{ class => 'row ms-sm-3 mb-2' },
-		CGI::label({ class => 'col-sm-4 col-form-label' }, $r->maketext('Location description:')),
+		CGI::label(
+			{ for => 'new_location_description', class => 'col-sm-4 col-form-label' },
+			$r->maketext('Location description:')
+		),
 		CGI::div(
 			{ class => 'col-sm-8' },
 			CGI::textfield({
 				name  => 'new_location_description',
+				id    => 'new_location_description',
 				value => $r->param('new_location_description') // '',
 				class => 'form-control'
 			})
@@ -3007,9 +3033,12 @@ sub manage_location_form {
 		{ class => 'row ms-sm-3 mb-2' },
 		CGI::div(
 			{ class => 'col' },
-			$r->maketext(
-				'Addresses for new location.  Enter one per line, as single IP addresses (e.g., 192.168.1.101), '
-					. 'address masks (e.g., 192.168.1.0/24), or IP ranges (e.g., 192.168.1.101-192.168.1.150):'
+			CGI::label(
+				{ for => 'new_location_addresses' },
+				$r->maketext(
+					'Addresses for new location.  Enter one per line, as single IP addresses (e.g., 192.168.1.101), '
+						. 'address masks (e.g., 192.168.1.0/24), or IP ranges (e.g., 192.168.1.101-192.168.1.150):'
+				)
 			)
 		)
 	);
@@ -3020,6 +3049,7 @@ sub manage_location_form {
 			{ class => 'col-auto' },
 			CGI::textarea({
 				name    => 'new_location_addresses',
+				id      => 'new_location_addresses',
 				columns => 28,
 				value   => $r->param('new_location_addresses') ? $r->param('new_location_addresses') : '',
 				class   => 'form-control'
@@ -3108,11 +3138,12 @@ sub manage_location_form {
 		print CGI::Tr(CGI::td([
 			CGI::checkbox({
 				name  => 'delete_selected',
+				id    => $loc->location_id . '_id',
 				value => $loc->location_id,
 				label => '',
 				class => 'form-check-input'
 			}),
-			CGI::a({ href => $editAddr }, $loc->location_id),
+			CGI::label({ for => $loc->location_id . '_id' }, CGI::a({ href => $editAddr }, $loc->location_id)),
 			$loc->description,
 			join(', ', @{ $locAddr{ $loc->location_id } })
 		]));
@@ -3286,11 +3317,15 @@ sub edit_location_form {
 
 		print CGI::div(
 			{ class => 'row mb-2' },
-			CGI::label({ class => 'col-auto col-form-label' }, $r->maketext('Location description:')),
+			CGI::label(
+				{ for => 'location_description', class => 'col-auto col-form-label' },
+				$r->maketext('Location description:')
+			),
 			CGI::div(
 				{ class => 'col-auto' },
 				CGI::textfield({
 					name    => 'location_description',
+					id      => 'location_description',
 					size    => '50',
 					default => $location->description,
 					class   => 'form-control'
@@ -3304,16 +3339,20 @@ sub edit_location_form {
 				{ class => 'col-md-6' },
 				CGI::div(
 					{ class => 'mb-2' },
-					$r->maketext(
-						'Addresses to add to the location.  Enter one per line, as single IP addresses '
-							. '(e.g., 192.168.1.101), address masks (e.g., 192.168.1.0/24), or IP ranges '
-							. '(e.g., 192.168.1.101-192.168.1.150):'
+					CGI::label(
+						{ for => 'new_location_addresses' },
+						$r->maketext(
+							'Addresses to add to the location.  Enter one per line, as single IP addresses '
+								. '(e.g., 192.168.1.101), address masks (e.g., 192.168.1.0/24), or IP ranges '
+								. '(e.g., 192.168.1.101-192.168.1.150):'
+						)
 					)
 				),
 				CGI::div(
 					{ class => 'mb-2' },
 					CGI::textarea({
 						name    => 'new_location_addresses',
+						id      => 'new_location_addresses',
 						rows    => 5,
 						columns => 28,
 						class   => 'form-control'
@@ -3324,15 +3363,19 @@ sub edit_location_form {
 				{ class => 'col-md-6' },
 				CGI::div(
 					{ class => 'mb-2' },
-					$r->maketext(
-						'Existing addresses for the location are given in the scrolling list below.  '
-							. 'Select addresses from the list to delete them:'
+					CGI::label(
+						{ for => 'delete_location_addresses' },
+						$r->maketext(
+							'Existing addresses for the location are given in the scrolling list below.  '
+								. 'Select addresses from the list to delete them:'
+						)
 					)
 				),
 				CGI::div(
 					{ class => 'mb-2' },
 					CGI::scrolling_list({
 						name     => 'delete_location_addresses',
+						id       => 'delete_location_addresses',
 						values   => [@locAddresses],
 						size     => 8,
 						multiple => 'multiple',
@@ -3360,6 +3403,8 @@ sub edit_location_form {
 			value => $r->maketext('Take Action!'),
 			class => 'btn btn-primary'
 		}));
+
+		print CGI::end_form();
 	} else {
 		print CGI::div(
 			{ class => 'alert alert-danger p-1 mb-2' },
@@ -3599,11 +3644,15 @@ sub hide_inactive_course_form {
 	print CGI::div({ class => 'mb-2' }, $r->maketext('Select course(s) to hide or unhide.'));
 	print CGI::div(
 		{ class => 'row mb-2' },
-		CGI::label({ class => 'col-auto col-form-label fw-bold' }, $r->maketext('Course Name:')),
+		CGI::label(
+			{ for => 'hide_courseIDs', class => 'col-auto col-form-label fw-bold' },
+			$r->maketext('Course Name:')
+		),
 		CGI::div(
 			{ class => 'col-auto' },
 			CGI::scrolling_list({
 				name     => 'hide_courseIDs',
+				id       => 'hide_courseIDs',
 				values   => \@hideCourseIDs,
 				size     => 15,
 				multiple => 1,

@@ -328,39 +328,45 @@ sub body {
 	print $self->hidden_authen_fields();
 
 	print CGI::div(
-			{ class => 'row gx-3' },
+		{ class => 'row gx-3' },
+		CGI::div(
+			{ class => 'col-xl-5 col-md-6 mb-2' },
 			CGI::div(
-				{ class => 'col-xl-5 col-md-6 mb-2' },
-				CGI::div({ class => 'fw-bold text-center' }, $r->maketext("Users")),
-				scrollingRecordList(
-					{
-						name            => "selected_users",
-						request         => $r,
-						default_sort    => "lnfn",
-						default_format  => "lnfn_uid",
-						default_filters => ["all"],
-						size            => 10,
-						multiple        => 1,
-					},
-					@Users
-				)
+				{ class => 'fw-bold text-center' },
+				CGI::label({ for => 'selected_users' }, $r->maketext('Users'))
 			),
-			CGI::div(
-				{ class => 'col-xl-5 col-md-6 mb-2' },
-				CGI::div({ class => 'fw-bold text-center' }, $r->maketext("Sets")),
-				scrollingRecordList(
-					{
-						name            => "selected_sets",
-						request         => $r,
-						default_sort    => "set_id",
-						default_format  => "sid",
-						default_filters => ["all"],
-						size            => 10,
-						multiple        => 1,
-					},
-					@GlobalSets
-				)
+			scrollingRecordList(
+				{
+					name            => 'selected_users',
+					request         => $r,
+					default_sort    => 'lnfn',
+					default_format  => 'lnfn_uid',
+					default_filters => ['all'],
+					size            => 10,
+					multiple        => 1,
+				},
+				@Users
 			)
+		),
+		CGI::div(
+			{ class => 'col-xl-5 col-md-6 mb-2' },
+			CGI::div(
+				{ class => 'fw-bold text-center' },
+				CGI::label({ for => 'selected_sets' }, $r->maketext('Sets'))
+			),
+			scrollingRecordList(
+				{
+					name            => 'selected_sets',
+					request         => $r,
+					default_sort    => 'set_id',
+					default_format  => 'sid',
+					default_filters => ['all'],
+					size            => 10,
+					multiple        => 1,
+				},
+				@GlobalSets
+			)
+		)
 		),
 		CGI::div(
 			{ class => 'row gx-3' },
@@ -433,7 +439,7 @@ sub body {
 					)
 				),
 			),
-		   	CGI::div(
+			CGI::div(
 				{ class => 'col-xl-5 col-md-6 mb-2 font-sm' },
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
@@ -506,9 +512,10 @@ sub body {
 						label => $r->maketext("Create"),
 						class => 'btn btn-sm btn-secondary'
 					}),
-					CGI::span({ class => 'input-group-text' }, $r->maketext("new set:")),
+					CGI::label({ for => 'new_set_name', class => 'input-group-text' }, $r->maketext('new set:')),
 					CGI::textfield({
-						name        => "new_set_name",
+						name        => 'new_set_name',
+						id          => 'new_set_name',
 						placeholder => $r->maketext("Name for new set here"),
 						size        => 20,
 						class       => 'form-control form-control-sm'

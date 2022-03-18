@@ -1045,10 +1045,10 @@ sub make_top_row {
 	my $library_selected = $self->{current_library_set};
 	my $set_selected = $r->param('local_sets');
 	my (@dis1, @dis2, @dis3, @dis4) = ();
-	@dis1 =	 (-disabled=>1) if($browse_which eq 'browse_npl_library');
-	@dis2 =	 (-disabled=>1) if($browse_which eq 'browse_local');
-	@dis3 =	 (-disabled=>1) if($browse_which eq 'browse_mysets');
-	@dis4 =	 (-disabled=>1) if($browse_which eq 'browse_setdefs');
+	@dis1 = (disabled => undef) if ($browse_which eq 'browse_npl_library');
+	@dis2 = (disabled => undef) if ($browse_which eq 'browse_local');
+	@dis3 = (disabled => undef) if ($browse_which eq 'browse_mysets');
+	@dis4 = (disabled => undef) if ($browse_which eq 'browse_setdefs');
 
 	my $these_widths = "width:9.3rem";
 
@@ -1096,11 +1096,11 @@ sub make_top_row {
 			class   => 'btn btn-primary btn-sm mb-2 mx-2'
 		}),
 		CGI::textfield({
-			name     => "new_set_name",
-			example  => $r->maketext("Name for new set here"),
-			override => 1,
-			size     => 30,
-			class    => 'form-control form-control-sm d-inline w-auto mb-2'
+			name        => "new_set_name",
+			placeholder => $r->maketext("New set name"),
+			override    => 1,
+			size        => 30,
+			class       => 'form-control form-control-sm d-inline w-auto mb-2'
 		})
 	);
 

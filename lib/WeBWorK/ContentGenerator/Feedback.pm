@@ -374,13 +374,14 @@ sub feedbackForm {
 
 	print CGI::div(
 		{ class => 'row mb-3' },
-		CGI::label({ class => 'col-form-label col-auto' }, CGI::b($r->maketext('From:'))),
+		CGI::label({ for => 'from', class => 'col-form-label col-auto' }, CGI::b($r->maketext('From:'))),
 		CGI::div(
 			{ class => 'col-auto' },
 			CGI::textfield({
 				class => 'form-control',
 				size  => 40,
 				name  => 'from',
+				id    => 'from',
 				$user && $user->email_address
 				? (disabled => undef, readonly => undef, value => $user->email_address)
 				: (required => undef, value => $r->param('from') // '')

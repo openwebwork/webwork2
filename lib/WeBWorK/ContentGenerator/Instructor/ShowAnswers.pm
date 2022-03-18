@@ -377,15 +377,17 @@ sub body {
 		########## print site identifying information
 
 		print CGI::input({
-			type  => "button",
-			id    => "show_hide",
-			value => $r->maketext("Show/Hide Site Description"),
-			class => "btn btn-info mb-2"
+			type  => 'button',
+			id    => 'show_hide',
+			value => $r->maketext('Show/Hide Site Description'),
+			class => 'btn btn-info mb-2'
 		});
-		print CGI::p({ -id => "site_description", -style => "display:none" },
-			CGI::em($r->maketext("_ANSWER_LOG_DESCRIPTION")));
+		print CGI::p(
+			{ id => 'site_description', style => 'display:none' },
+			CGI::em($r->maketext('_ANSWER_LOG_DESCRIPTION'))
+		);
 
-		print CGI::p(), CGI::hr();
+		print CGI::hr();
 
 		print CGI::start_form({ -target => 'WW_Info', -id => 'past-answer-form' }, "POST", $showAnswersURL);
 		print $self->hidden_authen_fields();
@@ -394,10 +396,14 @@ sub body {
 			{ class => 'row gx-3' },
 			CGI::div(
 				{ class => 'col-sm-5 mb-2' },
-				CGI::div({ class => 'fw-bold text-center' }, $r->maketext('Users')),
+				CGI::div(
+					{ class => 'fw-bold text-center' },
+					CGI::label({ for => 'selected_users' }, $r->maketext('Users'))
+				),
 				scrollingRecordList(
 					{
 						name            => 'selected_users',
+						id              => 'selected_users',
 						request         => $r,
 						default_sort    => 'lnfn',
 						default_format  => 'lnfn_uid',
@@ -410,9 +416,13 @@ sub body {
 			),
 			CGI::div(
 				{ class => 'col-sm-4 mb-2' },
-				CGI::div({ class => 'fw-bold text-center' }, $r->maketext("Sets")),
+				CGI::div(
+					{ class => 'fw-bold text-center' },
+					CGI::label({ for => 'selected_sets' }, $r->maketext('Sets'))
+				),
 				CGI::scrolling_list({
-					name     => "selected_sets",
+					name     => 'selected_sets',
+					id       => 'selected_sets',
 					values   => \@expandedGlobalSetIDs,
 					default  => $selectedSets,
 					size     => 23,
@@ -422,9 +432,13 @@ sub body {
 			),
 			CGI::div(
 				{ class => 'col-sm-2 mb-2' },
-				CGI::div({ class => 'fw-bold text-center' }, $r->maketext("Problems")),
+				CGI::div(
+					{ class => 'fw-bold text-center' },
+					CGI::label({ for => 'selected_problems' }, $r->maketext('Problems'))
+				),
 				CGI::scrolling_list({
-					name     => "selected_problems",
+					name     => 'selected_problems',
+					id       => 'selected_problems',
 					values   => \@globalProblemIDs,
 					default  => $selectedProblems,
 					size     => 23,
@@ -517,18 +531,19 @@ sub body {
 						$rowOptions->{'class'} = '';
 					}
 
-					@row = (CGI::td({ width => 10 }), CGI::td({ style => "color:#808080" }, CGI::small($time)));
+					@row = (CGI::td({ width => 10 }), CGI::td(CGI::small($time)));
 
 					for (my $i = 0; $i <= $upper_limit; $i++) {
-						my $td;
+						my $tdParams;
 						my $answer     = $answers[$i] // '';
 						my $answerType = defined($answerTypes[$i]) ? $answerTypes[$i] : '';
 						my $score      = shift(@scores);
-						#Only color answer if its an instructor
-						if ($instructor) {
-							$td->{style} = $score ? "color:#006600" : "color:#660000";
+
+						# Only color the answer if the user is an instructor and there is an answer, score, and its not
+						# an essay question.
+						if ($instructor && $answer ne '' && defined $score && $answerType ne 'essay') {
+							$tdParams->{style} = $score ? "color:#006600" : "color:#660000";
 						}
-						delete($td->{style}) unless $answer ne "" && defined($score) && $answerType ne 'essay';
 
 						my $answerstring;
 						if ($answer eq '') {
@@ -537,12 +552,12 @@ sub body {
 							$answerstring = PGcore::encode_pg_and_html($answer);
 						} elsif ($answerType eq 'essay') {
 							$answerstring = PGcore::encode_pg_and_html($answer);
-							$td->{class} = 'essay';
+							$tdParams->{class} = 'essay';
 						} else {
 							$answerstring = PGcore::encode_pg_and_html($answer);
 						}
 
-						push(@row, CGI::td({ width => 20 }), CGI::td($td, $answerstring));
+						push(@row, CGI::td({ width => 20 }), CGI::td($tdParams, $answerstring));
 					}
 
 					if ($record{comment}) {

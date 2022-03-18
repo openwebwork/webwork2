@@ -627,7 +627,7 @@ sub body {
 		$self->hidden_authen_fields,
 		$force_field,
 		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
-		CGI::div({}, @PG_Editor_References),
+		CGI::div({ class => 'mb-2' }, @PG_Editor_References),
 		CGI::p(
 			CGI::textarea( -id => "problemContents",
 				-name => 'problemContents', -default => $problemContents, -class => 'latexentryfield',
@@ -678,7 +678,7 @@ sub body {
 						class            => "tab-pane pg_editor_action_div fade" . ($active ? " show$active" : ''),
 						id               => $actionID,
 						role             => 'tabpanel',
-						aria_labelled_by => "$actionID-tab"
+						aria_labelledby => "$actionID-tab"
 					},
 					$line_contents
 				)
@@ -711,7 +711,6 @@ sub body {
 	print CGI::end_div();
 	print CGI::start_div({ class => 'modal-footer' });
 	print CGI::button({
-		type            => 'button',
 		value           => $r->maketext('Close'),
 		data_bs_dismiss => 'modal',
 		class           => 'btn btn-primary'
@@ -938,9 +937,9 @@ sub getFilePaths {
 		($file_type eq 'set_header' or $file_type eq 'hardcopy_header') and do {
 			# first try getting the merged set for the effective user
 			# FIXME merged set is overwritten immediately with global value... WTF? --sam
-			my $set_record = $db->getMergedSet($effectiveUserName, $setName); # checked
+			my $set_record = $db->getMergedSet($effectiveUserName, $setName);
 			# if that doesn't work (the set is not yet assigned), get the global record
-			$set_record = $db->getGlobalSet($setName); # checked
+			$set_record = $db->getGlobalSet($setName);
 			# bail if no set is found
 			die "Cannot find a set record for set $setName" unless defined($set_record);
 
@@ -965,13 +964,13 @@ sub getFilePaths {
 			# first try getting the merged problem for the effective user
 			my $problem_record;
 			if ( $editSetVersion ) {
-				$problem_record = $db->getMergedProblemVersion($effectiveUserName, $setName, $editSetVersion, $problemNumber); # checked
+				$problem_record = $db->getMergedProblemVersion($effectiveUserName, $setName, $editSetVersion, $problemNumber);
 			} else {
-				$problem_record = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
+				$problem_record = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
 			}
 
 			# if that doesn't work (the problem is not yet assigned), get the global record
-			$problem_record = $db->getGlobalProblem($setName, $problemNumber) unless defined($problem_record); # checked
+			$problem_record = $db->getGlobalProblem($setName, $problemNumber) unless defined($problem_record);
 			# bail if no source path for the problem is found ;
 			die "Cannot find a problem record for set $setName / problem $problemNumber" unless defined($problem_record);
 			$editFilePath .= '/' . $problem_record->source_file;
@@ -1797,7 +1796,7 @@ sub save_as_form {
 					id      => 'action_save_as_saveMode_rename_id',
 					name    => 'action.save_as.saveMode',
 					value   => 'rename',
-					checked => 1,
+					checked => undef,
 					class   => 'form-check-input',
 				}),
 				CGI::label(
@@ -1830,7 +1829,7 @@ sub save_as_form {
 				name  => 'action.save_as.saveMode',
 				value => 'new_independent_problem',
 				class => 'form-check-input',
-				$can_add_problem_to_set ? () : (checked => 1)
+				$can_add_problem_to_set ? () : (checked => undef)
 			}),
 			CGI::label(
 				{ for => 'action_save_as_saveMode_independent_problem_id', class => 'form-check-label' },

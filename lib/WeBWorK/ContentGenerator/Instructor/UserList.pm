@@ -568,7 +568,7 @@ sub body {
 					class            => 'tab-pane fade mb-2' . ($active ? " show$active" : ''),
 					id               => $actionID,
 					role             => 'tabpanel',
-					aria_labelled_by => "$actionID-tab"
+					aria_labelledby => "$actionID-tab"
 				},
 				$self->$actionForm($self->getActionParams($actionID))
 			)
@@ -721,7 +721,6 @@ sub filter_form {
 						id            => 'filter_text',
 						name          => 'action.filter.user_ids',
 						value         => $actionParams{'action.filter.user_ids'}[0] || '',
-						width         => '50',
 						aria_required => 'true',
 						class         => 'form-control form-control-sm'
 					})
@@ -1086,7 +1085,7 @@ sub add_form {
 	return CGI::div(
 		{ class => 'row mb-2' },
 		CGI::label(
-			{ for => 'edit_select', class => 'col-form-label col-form-label-sm col-auto' },
+			{ for => 'add_entry', class => 'col-form-label col-form-label-sm col-auto' },
 			$r->maketext('Add how many users?') . CGI::span({ class => 'required-field' }, '*')
 		),
 		CGI::div(
@@ -1124,6 +1123,7 @@ sub import_form {
 				{ class => 'col-auto' },
 				CGI::popup_menu({
 					name    => 'action.import.source',
+					id      => 'import_select_source',
 					values  => [ $self->getCSVList() ],
 					default => $actionParams{'action.import.source'}[0] || '',
 					class   => 'form-select form-select-sm',
@@ -1274,11 +1274,10 @@ sub export_form {
 						id            => 'export_filename',
 						name          => 'action.export.new',
 						value         => $actionParams{'action.export.new'}[0] || '',
-						width         => '50',
 						aria_required => 'true',
 						class         => 'form-control form-control-sm'
 					}),
-					CGI::span({ class => 'input-group-text' }, CGI::tt('.lst'))
+					CGI::span({ class => 'input-group-text font-monospace' }, '.lst')
 				)
 			)
 		)
@@ -1772,23 +1771,25 @@ sub recordEditHTML {
 	} else {
 		# selection checkbox
 		push @tableCells,
-			CGI::checkbox({
-				id      => $User->user_id . "_checkbox",
-				label   => '',
+			CGI::input({
+				type    => 'checkbox',
+				id      => $User->user_id . '_checkbox',
 				name    => "selected_users",
 				value   => $User->user_id,
 				class   => "form-check-input",
-				checked => $userSelected,
+				$userSelected ? (checked => undef) : (),
 			});
 
-		my $label = "";
+		my $label = '';
 		if (FIELD_PERMS()->{act_as} and not $authz->hasPermissions($user, FIELD_PERMS()->{act_as})) {
-			$label = $User->user_id . " " . $imageLink;
+			$label = $User->user_id . ' ' . $imageLink;
 		} else {
-			$label = CGI::a({ href => $changeEUserURL }, $User->user_id) . " " . $imageLink;
+			$label = CGI::a({ href => $changeEUserURL }, $User->user_id) . ' ' . $imageLink;
 		}
 
-		push @tableCells, CGI::div({ class => 'label-with-edit-icon' }, $label);
+		# Make the user id the label for the select user checkbox.
+		push @tableCells,
+			CGI::div({ class => 'label-with-edit-icon' }, CGI::label({ for => $User->user_id . '_checkbox' }, $label));
 	}
 
 	# Login Status
@@ -1944,11 +1945,11 @@ sub printTableHTML {
 			);
 		}
 
-		my $selectBox = CGI::checkbox({
+		my $selectBox = CGI::input({
+			type              => 'checkbox',
 			id                => 'select-all',
 			data_select_group => 'selected_users',
-			label             => '',
-			class             => 'form-check-input'
+			class             => 'form-check-input',
 		});
 		@tableHeadings = (
 			$editMode or $passwordMode ? '' : $selectBox,
