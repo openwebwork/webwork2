@@ -241,13 +241,13 @@ sub body {
 			$setProblemCount[$i] = WeBWorK::Utils::max($db->listUserProblems($userID,$sets[$i]->set_id));
 		}
 
-		print CGI::h2($r->maketext("Items"));
+		print CGI::h2($r->maketext('Items'));
 
 		if (@items) {
 			my $itemnumber = 0;
 			foreach my $item (@items) {
 				# Print each item's name, count, and description
-				print CGI::start_div({class=>"achievement-item"});
+				print CGI::start_div({ class => 'achievement-item' });
 				if ($itemCounts{$item->id()} > 1) {
 					print CGI::h3($r->maketext($item->name())
 						. ' (' . $r->maketext('[_1] remaining', $itemCounts{$item->id()}) . ')')
@@ -260,34 +260,34 @@ sub body {
 				# Print a modal popup for each item which contains the form necessary to get the data to use the item.
 				# Print the form in the modal body.
 				print CGI::a({
-						href => "#modal_" . $item->id(),
-						role => "button",
-						data_bs_toggle => "modal",
-						class => "btn btn-secondary",
-						id => "popup_".$item->id()
-					}, $r->maketext("Use Item"));
-				print CGI::start_div({ id => "modal_" . $item->id(), class => "modal hide fade", tabindex => '-1' });
+						href           => '#modal_' . $item->id(),
+						role           => 'button',
+						data_bs_toggle => 'modal',
+						class          => 'btn btn-secondary',
+						id             => 'popup_' . $item->id()
+					}, $r->maketext('Use Item'));
+				print CGI::start_div({ id => 'modal_' . $item->id(), class => 'modal hide fade', tabindex => '-1' });
 				print CGI::start_div({ class => 'modal-dialog modal-dialog-centered' });
 				print CGI::start_div({ class => 'modal-content' });
 				print CGI::start_div({ class => 'modal-header' });
 				print CGI::h5({ class => 'modal-title' }, $r->maketext($item->name()));
 				print qq{<button type="button" class="btn-close" data-bs-dismiss="modal"
-					aria-label="@{[$r->maketext("close")]}"></button>};
+					aria-label="@{[$r->maketext('close')]}"></button>};
 				print CGI::end_div();
 				print CGI::start_form({
-						method=>"post",
-						action=>$self->systemLink($urlpath, authen => 0),
-						name => "itemform_$itemnumber",
-						class => "achievementitemform"
+						method => 'post',
+						action => $self->systemLink($urlpath, authen => 0),
+						name   => "itemform_$itemnumber",
+						class  => 'achievementitemform'
 					});
-				print CGI::start_div({ class => "modal-body" });
+				print CGI::start_div({ class => 'modal-body' });
 				# Note: we provide the item with some information about the current sets to help set up the form fields.
 				print $item->print_form(\@sets, \@setProblemCount, $r);
-				print CGI::hidden({ name => "useditem", value => $itemnumber });
+				print CGI::hidden({ name => 'useditem', value => $itemnumber });
 				print $self->hidden_authen_fields =~ s/id=\"hidden_/id=\"achievement_hidden_/gr;
 				print CGI::end_div();
-				print CGI::start_div({ class => "modal-footer" });
-				print CGI::submit({ value => $r->maketext("Submit"), class => 'btn btn-primary' });
+				print CGI::start_div({ class => 'modal-footer' });
+				print CGI::submit({ value => $r->maketext('Submit'), class => 'btn btn-primary' });
 				print CGI::end_div();
 				print CGI::end_form();
 				print CGI::end_div();
@@ -298,10 +298,9 @@ sub body {
 				$itemnumber++;
 			}
 		} else {
-			print CGI::p($r->maketext("You don't have any items!"));
+			print CGI::p($r->maketext('You don\'t have any items!'));
 		}
 		print CGI::br();
-		print CGI::h2($r->maketext("Achievements"));
 	}
 
 	#Get all the achievements
@@ -316,7 +315,9 @@ sub body {
 		my $chainName = $achievements[0]->achievement_id =~ s/^([^_]*_).*$/$1/r;
 		my $chainCount = 0;
 		my $chainStart = 0;
-	
+
+		print CGI::h2($r->maketext('Achievements'));
+
 		#Loop through achievements and
 		foreach my $achievement (@achievements) {
 			#skip the level achievements and only show achievements assigned to user
