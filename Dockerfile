@@ -97,9 +97,6 @@ ENV WEBWORK_ROOT=$APP_ROOT/webwork2 \
 
 # Phase 3 - Ubuntu 20.04 base image + required packages
 
-# Packages changes/added for ubuntu 20.04:
-#       libcgi-pm-perl (for CGI::Cookie), libdbd-mariadb-perl, libemail-stuffer-perl
-
 # Do NOT include "apt-get -y upgrade"
 # see: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
 
