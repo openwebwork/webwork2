@@ -100,7 +100,7 @@ if [ "$1" = 'apache2' ]; then
 
     echo "check admin course and admin tables"
     wait_for_db
-    ADMIN_TABLE_EXISTS=`mysql -u $WEBWORK_DB_USER  -p$WEBWORK_DB_PASSWORD -B -N -h $WEBWORK_DB_HOST -e "select count(*) from information_schema.tables where table_schema='webwork' and table_name = 'admin_user';" 
+    ADMIN_TABLE_EXISTS=`mysql -u $WEBWORK_DB_USER  -p$WEBWORK_DB_PASSWORD -B -N -h $WEBWORK_DB_HOST -e "select count(*) from information_schema.tables where table_schema='webwork' and table_name = 'admin_user';"`
     if [ ! -d "$APP_ROOT/courses/admin" ]; then
         newgrp www-data
         umask 2
