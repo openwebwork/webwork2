@@ -236,6 +236,7 @@
 	    'else'				:[1,1],
 	    'while'				:[1,1],
 	    unless				:[1,1],
+		until				:[1,1],
 	    'for'				:[1,1],
 	    foreach				:[1,1],
 	    //	PERL functions
