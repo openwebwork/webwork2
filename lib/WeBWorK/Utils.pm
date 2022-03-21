@@ -100,6 +100,8 @@ our @EXPORT_OK = qw(
 	textDateTime
 	timeToSec
 	trim_spaces
+	format_set_name_internal
+	format_set_name_display
 	thaw_base64
 	undefstr
 	writeCourseLog
@@ -850,6 +852,18 @@ sub trim_spaces {
 	$in =~ s/^\s*|\s*$//g;
 	return($in);
 }
+
+# This is for formatting set names input via text inputs in the user interface for internal use.  Set names are allowed
+# to be input with spaces, but internally spaces are not allowed and are converted to underscores.
+sub format_set_name_internal {
+	return $_[0] =~ s/ /_/gr;
+}
+
+# This formats set names for display, converting underscores back into spaces.
+sub format_set_name_display {
+	return $_[0] =~ s/_/ /gr;
+}
+
 sub list2hash(@) {
 	map {$_ => "0"} @_;
 }

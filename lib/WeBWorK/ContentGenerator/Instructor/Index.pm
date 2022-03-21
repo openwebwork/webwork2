@@ -28,7 +28,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
-#use WeBWorK::Utils::FilterRecords qw/getFiltersForClass/;
+use WeBWorK::Utils qw/format_set_name_internal/;
 
 use constant E_NO_USERS     => "Please do not select any users.";
 use constant E_NO_SETS      => "Please do not select any sets.";
@@ -237,14 +237,13 @@ sub pre_header_initialize {
 	};
 
 	defined param $r "create_set" and do {
-		my $setname = $r->param("new_set_name");
-		if ($setname && $setname ne 'Name for new set here') {
-			if ($setname =~ /^[\w .-]*$/) {
-				$setname = WeBWorK::ContentGenerator::Instructor::format_set_name($setname);
-				$module = "${ipfx}::SetMaker";
+		my $setname = format_set_name_internal($r->param("new_set_name") // '');
+		if ($setname) {
+			if ($setname =~ /^[\w.-]*$/) {
+				$module                = "${ipfx}::SetMaker";
 				$params{new_local_set} = "Create a New Set in this Course";
-				$params{new_set_name} = $setname;
-				$params{selfassign} = 1;
+				$params{new_set_name}  = $setname;
+				$params{selfassign}    = 1;
 			} else {
 				push @error, E_BAD_NAME;
 			}

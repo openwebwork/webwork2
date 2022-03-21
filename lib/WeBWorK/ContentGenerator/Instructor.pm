@@ -640,12 +640,6 @@ sub read_dir {  # read a directory
 	return sort @files;
 }
 
-sub format_set_name {
-	my $string = shift;
-	$string =~ s/ /_/g;
-	return $string;
-}
-
 =back
 
 =cut

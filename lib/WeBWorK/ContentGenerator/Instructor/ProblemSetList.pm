@@ -82,7 +82,8 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive jitar_id_to_seq seq_to_jitar_id x getAssetURL);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive jitar_id_to_seq seq_to_jitar_id x getAssetURL
+	format_set_name_internal format_set_name_display);
 
 use constant HIDE_SETS_THRESHOLD => 500;
 use constant DEFAULT_VISIBILITY_STATE => 1;
@@ -683,8 +684,8 @@ sub filter_form {
 	);
 }
 
-# this action handler modifies the "visibleUserIDs" field based on the contents
-# of the "action.filter.scope" parameter and the "selected_users"
+# this action handler modifies the "visibleSetIDs" field based on the contents
+# of the "action.filter.scope" parameter and the "selected_sets"
 sub filter_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 
@@ -706,9 +707,10 @@ sub filter_handler {
 		$self->{visibleSetIDs} = $genericParams->{selected_sets};
 	} elsif ($scope eq "match_ids") {
 		$result = $r->maketext("showing matching sets");
-		my @searchTerms = map{WeBWorK::ContentGenerator::Instructor::format_set_name($_)} (split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}->[0]);
+		my @searchTerms = map { format_set_name_internal($_) } split /\s*,\s*/,
+			$actionParams->{'action.filter.set_ids'}[0];
 		my $regexTerms = join('|', @searchTerms);
-		my @setIDs = grep { /$regexTerms/i } (@{$self->{allSetIDs}});
+		my @setIDs     = grep {/$regexTerms/i} @{ $self->{allSetIDs} };
 		$self->{visibleSetIDs} = \@setIDs;
 	} elsif ($scope eq "visible") {
 		$result = $r->maketext("showing visible sets");
@@ -1130,7 +1132,7 @@ sub create_handler {
 	my $db     = $r->db;
 	my $ce     = $r->ce;
 
-	my $newSetID = WeBWorK::ContentGenerator::Instructor::format_set_name($actionParams->{"action.create.name"}->[0]);
+	my $newSetID = format_set_name_internal($actionParams->{'action.create.name'}[0] // '');
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
 		$r->maketext("Failed to create new set: set name cannot exceed 100 characters."))
 		if (length($newSetID) > 100);
@@ -1352,8 +1354,9 @@ sub import_handler {
 	my $r = $self->r;
 
 	my @fileNames = @{ $actionParams->{"action.import.source"} };
-	my $newSetName = WeBWorK::ContentGenerator::Instructor::format_set_name($actionParams->{"action.import.name"}->[0]);
-	$newSetName = "" if $actionParams->{"action.import.number"}->[0] > 1; # cannot assign set names to multiple imports
+	my $newSetName = $actionParams->{'action.import.number'}[0] > 1
+		? ''    # Cannot assign set names to multiple imports.
+		: format_set_name_internal($actionParams->{'action.import.name'}[0] // '');
 	my $assign = $actionParams->{"action.import.assign"}->[0];
 	my $startdate = 0;
 	if ($actionParams->{"action.import.start.date"}->[0]) {
@@ -2492,8 +2495,7 @@ sub recordEditHTML {
 	my $problems = $db->countGlobalProblems($Set->set_id);
 
 	my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));
-	my $prettySetID = $Set->set_id;
-	$prettySetID =~ s/_/ /g;
+	my $prettySetID = format_set_name_display($Set->set_id);
 	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
 	my $imageLink = '';

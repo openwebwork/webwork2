@@ -28,7 +28,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
 use WeBWorK::Utils qw(after readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq
-	seq_to_jitar_id x getAssetURL);
+	seq_to_jitar_id x getAssetURL format_set_name_internal format_set_name_display);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
@@ -1377,11 +1377,9 @@ sub initialize {
 				if ($field =~ /_date/ ) {
 				    $param = $self->parseDateTime($param) unless (defined $unlabel || !$param);
 				}
-				if ($field =~ /restricted_release/) {
-					if ($param) {
-						$param = WeBWorK::ContentGenerator::Instructor::format_set_name($param);
-						$self->check_sets($db,$param) if $param;
-					}
+				if ($field =~ /restricted_release/ && $param) {
+					$param = format_set_name_internal($param =~ s/\s*,\s*/,/gr);
+					$self->check_sets($db, $param);
 				}
 				if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby} && $param) {
 					$param = $param*$properties{$field}->{convertby};
@@ -1995,7 +1993,7 @@ sub checkFile ($) {
 	return $r->maketext("This source file is not a plain file!");
 }
 
-#Make sure restrictor sets exist
+# Make sure restrictor sets exist
 sub check_sets {
 	my ($self,$db,$sets_string) = @_;
 	my @proposed_sets = split(/\s*,\s*/,$sets_string);
@@ -2156,13 +2154,6 @@ sub body {
 		}
 		@userLinks = sort @userLinks;
 
-		# handy messages when editing gateway sets
-		my $gwmsg =
-			$isGatewaySet && !$editingSetVersion
-			? CGI::br()
-			. CGI::em(
-			$r->maketext('To edit a specific student version of this set, edit (all of) her/his assigned sets.'))
-			: '';
 		my $vermsg = $editingSetVersion ? ",v$editingSetVersion" : '';
 
 		print CGI::div(
@@ -2173,7 +2164,7 @@ sub body {
 					{ class => 'col-md-6' },
 					$r->maketext(
 						'Editing problem set [_1] data for these individual students: [_2]',
-						CGI::strong("$setID$vermsg"),
+						CGI::strong(format_set_name_display("$setID$vermsg")),
 						CGI::br() . CGI::strong(join CGI::br(), @userLinks)
 					)
 				),
@@ -2181,9 +2172,19 @@ sub body {
 					{ class => 'col-md-6 mt-md-0 mt-2' },
 					CGI::a(
 						{ href => $self->systemLink($setDetailPage) },
-						$r->maketext('Edit set [_1] data for ALL students assigned to this set.', CGI::strong($setID))
+						$r->maketext(
+							'Edit set [_1] data for ALL students assigned to this set.',
+							CGI::strong(format_set_name_display($setID))
 						)
-						. $gwmsg
+					),
+					# Handy messages when editing gateway sets.
+					$isGatewaySet && !$editingSetVersion
+					? CGI::br()
+						. CGI::em(
+							$r->maketext(
+								'To edit a specific student version of this set, edit (all of) her/his assigned sets.')
+						)
+					: ''
 				)
 			)
 		);
@@ -2196,7 +2197,7 @@ sub body {
 					{ class => 'col-md-6' },
 					$r->maketext(
 						'This set [_1] is assigned to [_2].',
-						CGI::strong($setID),
+						CGI::strong(format_set_name_display($setID)),
 						$self->userCountMessage($setUserCount, $userCount)
 					)
 				),
@@ -2204,7 +2205,8 @@ sub body {
 					{ class => 'col-md-6 mt-md-0 mt-2' },
 					$r->maketext(
 						'Edit [_1] of set [_2].',
-						CGI::a({ href => $editUsersAssignedToSetURL }, $r->maketext('individual versions')), $setID
+						CGI::a({ href => $editUsersAssignedToSetURL }, $r->maketext('individual versions')),
+						format_set_name_display($setID)
 					)
 				)
 			)

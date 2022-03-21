@@ -28,7 +28,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(after readFile sortByName path_is_subdir is_restricted wwRound);
+use WeBWorK::Utils qw(after readFile sortByName path_is_subdir is_restricted wwRound format_set_name_display);
 use WeBWorK::Localize;
 # what do we consider a "recent" problem set?
 use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
@@ -312,8 +312,7 @@ sub setListRow {
 
 	my $interactiveURL = $self->systemLink($problemSetPage);
 
-	my $display_name = $set->set_id;
-	$display_name =~ s/_/ /g;
+	my $display_name = format_set_name_display($set->set_id);
 	# add clock icon if timed gateway
 	if ($gwtype && $set->{version_time_limit} > 0 && time < $set->due_date()) {
 		$display_name = CGI::i(
@@ -409,8 +408,8 @@ sub setListRow {
 					{
 						class       => 'icon far fa-arrow-alt-circle-down fa-lg',
 						aria_hidden => 'true',
-						title       => $r->maketext('Download [_1]', $set->set_id =~ s/_/ /gr),
-						data_alt    => $r->maketext('Download [_1]', $set->set_id =~ s/_/ /gr)
+						title       => $r->maketext('Download [_1]', format_set_name_display($set->set_id)),
+						data_alt    => $r->maketext('Download [_1]', format_set_name_display($set->set_id))
 					},
 					''
 				)

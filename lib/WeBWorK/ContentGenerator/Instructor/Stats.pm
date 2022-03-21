@@ -29,7 +29,8 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
-use WeBWorK::Utils qw(readDirectory list2hash max sortByName jitar_id_to_seq jitar_problem_adjusted_status);
+use WeBWorK::Utils qw(readDirectory list2hash max sortByName jitar_id_to_seq jitar_problem_adjusted_status
+	format_set_name_display);
 
 # The table format has been borrowed from the Grades.pm module
 sub initialize {
@@ -77,7 +78,7 @@ sub title {
 		return $r->maketext(
 			"Statistics for [_1] set [_2]. Closes [_3]",
 			$self->{ce}->{courseName},
-			$self->{setName}, $self->formatDateTime($self->{set_due_date})
+			format_set_name_display($self->{setName}), $self->formatDateTime($self->{set_due_date})
 		);
 	}
 
@@ -116,7 +117,7 @@ sub siblings {
 			{ class => 'nav-item' },
 			CGI::a(
 				{ href => $self->systemLink($problemPage), class => 'nav-link' },
-				WeBWorK::ContentGenerator::underscore2sp($setID)
+				format_set_name_display($setID)
 			)
 		);
 	}
@@ -196,7 +197,7 @@ sub index {
 			setID    => $set
 		);
 		push @setLinks,
-			CGI::a({ href => $self->systemLink($setStatisticsPage) }, WeBWorK::ContentGenerator::underscore2sp($set));
+			CGI::a({ href => $self->systemLink($setStatisticsPage) }, format_set_name_display($set));
 	}
 
 	# Get a list of students sorted by user_id.
