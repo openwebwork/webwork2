@@ -307,14 +307,14 @@ sub displaySets {
 
 	};
 	my %display_sort_method_name = (
-		last_name => 'last name',
-		first_name => 'first name',
-		email_address => 'email address',
-		score => 'score',
-		index => 'success indicator',
-		section => 'section',
-		recitation => 'recitation',
-		user_id => 'login name',
+		last_name     => $r->maketext('last name'),
+		first_name    => $r->maketext('first name'),
+		email_address => $r->maketext('email address'),
+		score         => $r->maketext('score'),
+		index         => $r->maketext('success indicator'),
+		section       => $r->maketext('section'),
+		recitation    => $r->maketext('recitation'),
+		user_id       => $r->maketext('login name'),
 	);
 
 	# get versioning information
@@ -480,7 +480,7 @@ sub displaySets {
 		                                  index          => $successIndicator,
 		                                  section        => $studentRecord->section,
 		                                  recitation     => $studentRecord->recitation,
-		                                  problemString  => "<span dir=\"ltr\"><pre dir=\"ltr\">$longtwo</pre></span>", # RTL mode does not handle the pre well
+		                                  problemString  => "<span dir=\"ltr\"><pre class=\"mb-0\" dir=\"ltr\">$longtwo</pre></span>", # RTL mode does not handle the pre well
 		                                  act_as_student => $act_as_student_url,
 		                                  email_address  => $studentRecord->email_address,
 		                                  problemData    => {%h_problemData},
@@ -596,7 +596,7 @@ sub displaySets {
 	}
 
 
-	$problem_header = '<span dir=\"ltr\"><pre dir=\"ltr\">'.join("", map {&fourSpaceFill($_)}  @list_problems  ).'</pre></span>'; # RTL mode does not handle the pre well
+	$problem_header = '<span dir="ltr"><pre class="mb-0" dir="ltr">'.join("", map {&fourSpaceFill($_)}  @list_problems  ).'</pre></span>'; # RTL mode does not handle the pre well
 
 	# Changes for gateways/versioned sets here.  In this case we allow instructors
 	# to modify the appearance of output, which we do with a form.  So paste in the
@@ -701,20 +701,34 @@ sub displaySets {
 	}
 
 	#####################################################################################
-	print CGI::p($r->maketext(
-		'A period (.) indicates a problem has not been attempted, and a number from 0 to 100 '
+	# Table description. Only show the problem description if the problems column is shown.
+	print CGI::start_div();
+	if (! $setIsVersioned || $showColumns{'problems'}) {
+		print CGI::p($r->maketext(
+			'A period (.) indicates a problem has not been attempted, and a number from 0 to 100 '
 			. 'indicates the grade earned. The number on the second line gives the number of incorrect attempts.'
-	));
-	print CGI::p($r->maketext(
-		"Click on a student's name to see the student's version of the homework set. "
-			. "Click a heading to sort the table."
-	));
-	print CGI::p(
-		(defined $primary_sort_method_name ? " Entries are sorted by $display_sort_method_name{$primary_sort_method_name}" : '') .
-		(defined $secondary_sort_method_name ? ", then by $display_sort_method_name{$secondary_sort_method_name}" : '') .
-		(defined $ternary_sort_method_name   ? ", then by $display_sort_method_name{$ternary_sort_method_name}"   : '') .
-		(defined $primary_sort_method_name   ? '.'                                                                : '')
-	);
+		));
+	}
+	if ($setIsVersioned) {
+		print CGI::p($r->maketext(
+			'Click a student\'s name to see the student\'s test summary page. '
+			. 'Click a test\'s version number to see the corresponding test version. '
+			. 'Click a heading to sort the table.'
+		));
+	} else {
+		print CGI::p($r->maketext(
+			'Click a student\'s name to see the student\'s homework set. '
+			. 'Click a heading to sort the table.'
+		));
+	}
+	if (defined $primary_sort_method_name) {
+		print CGI::p($r->maketext('Entries are sorted by [_1]', $display_sort_method_name{$primary_sort_method_name})
+			. (defined $secondary_sort_method_name ? $r->maketext(', then by [_1]', $display_sort_method_name{$secondary_sort_method_name}) : '')
+			. (defined $ternary_sort_method_name   ? $r->maketext(', then by [_1]', $display_sort_method_name{$ternary_sort_method_name})   : '')
+			. '.'
+		);
+	}
+	print CGI::end_div();
 
 	# calculate secondary and ternary sort methods parameters if appropriate
 	my %past_sort_methods = ();
@@ -726,21 +740,73 @@ sub displaySets {
 		CGI::start_table({ class => 'progress-table table table-bordered table-sm font-xs' });
 
 	if ( ! $setIsVersioned ) {
-		print
-		CGI::Tr(CGI::td(  {-align=>'left'},
-			[$r->maketext('Name').CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %past_sort_methods})},$r->maketext('First')).
-			   '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %past_sort_methods })},$r->maketext('Last')).CGI::br().
-			   CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'email_address', %past_sort_methods })},'Email'),
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %past_sort_methods})},$r->maketext("Score")),
-			$r->maketext("Out Of"),
-			$r->maketext("Problems").CGI::br().$problem_header,
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %past_sort_methods})},$r->maketext('Section')),
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %past_sort_methods})},$r->maketext('Recitation')),
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %past_sort_methods})},'Login Name'),
-			])
-
-		),
-		;
+		print CGI::thead(CGI::Tr(CGI::th(
+			{ align => 'left' },
+			[
+				$r->maketext('Name')
+					. CGI::br()
+					. CGI::a(
+						{
+							href => $self->systemLink(
+								$setStatsPage, params => { primary_sort => 'first_name', %past_sort_methods }
+							)
+						},
+						$r->maketext('First')
+					)
+					. '&nbsp;&nbsp;&nbsp;'
+					. CGI::a(
+						{
+							href => $self->systemLink(
+								$setStatsPage, params => { primary_sort => 'last_name', %past_sort_methods }
+							)
+						},
+						$r->maketext('Last')
+					)
+					. CGI::br()
+					. CGI::a(
+						{
+							href => $self->systemLink(
+								$setStatsPage, params => { primary_sort => 'email_address', %past_sort_methods }
+							)
+						},
+						$r->maketext('Email')
+					),
+				CGI::a(
+					{
+						href => $self->systemLink(
+							$setStatsPage, params => { primary_sort => 'score', %past_sort_methods }
+						)
+					},
+					$r->maketext('Score')
+				),
+				$r->maketext('Out Of'),
+				$r->maketext('Problems') . CGI::br() . $problem_header,
+				CGI::a(
+					{
+						href => $self->systemLink(
+							$setStatsPage, params => { primary_sort => 'section', %past_sort_methods }
+						)
+					},
+					$r->maketext('Section')
+				),
+				CGI::a(
+					{
+						href => $self->systemLink(
+							$setStatsPage, params => { primary_sort => 'recitation', %past_sort_methods }
+						)
+					},
+					$r->maketext('Recitation')
+				),
+				CGI::a(
+					{
+						href => $self->systemLink(
+							$setStatsPage, params => { primary_sort => 'user_id', %past_sort_methods }
+						)
+					},
+					$r->maketext('Login Name')
+				),
+			]
+		))), CGI::start_tbody();
 	} else {
 		# we need to preserve display options when the sort headers are clicked
 		my %display_options = (
@@ -754,9 +820,37 @@ sub displaySets {
 			show_login      => $showColumns{login},
 		);
 		my %params = (%past_sort_methods, %display_options);
-	    my @columnHdrs = ();
-	    push( @columnHdrs, $r->maketext('Name').CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %params})},$r->maketext('First')).
-		  '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %params })},$r->maketext('Last')) );
+		my @columnHdrs = ();
+		push(@columnHdrs,
+			$r->maketext('Name')
+				. CGI::br()
+				. CGI::a(
+					{
+						href => $self->systemLink(
+							$setStatsPage, params => { primary_sort => 'first_name', %params }
+						)
+					},
+					$r->maketext('First')
+				)
+				. '&nbsp;&nbsp;&nbsp;'
+				. CGI::a(
+					{
+						href => $self->systemLink(
+							$setStatsPage, params => { primary_sort => 'last_name', %params }
+						)
+					},
+					$r->maketext('Last')
+				)
+				. CGI::br()
+				. CGI::a(
+					{
+						href => $self->systemLink(
+							$setStatsPage, params => { primary_sort => 'email_address', %past_sort_methods }
+						)
+					},
+					$r->maketext('Email')
+				)
+		);
 	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %params})},$r->maketext('Score')) );
 	    push( @columnHdrs, $r->maketext('Out Of') );
 	    push( @columnHdrs, $r->maketext('Date') ) if ( $showColumns{ 'date' } );
@@ -772,7 +866,7 @@ sub displaySets {
 	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %params})},$r->maketext('Login Name')) )
 		if ( $showColumns{ 'login' } );
 
-		print CGI::Tr(CGI::td({ align => 'left' }, [@columnHdrs]));
+		print CGI::thead(CGI::Tr(CGI::th({ align => 'left' }, [@columnHdrs]))), CGI::start_tbody();
 	}
 
     # variables to keep track of versioned sets
@@ -792,32 +886,42 @@ sub displaySets {
 		my $email    = $rec->{email_address};
 		my $twoString  = $rec->{twoString};
 		if ( ! $setIsVersioned ) {
-		    print CGI::Tr({},
-			CGI::td({},CGI::a({-href=>$rec->{act_as_student}},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
-			CGI::td(wwRound(2,$rec->{score}) ), # score
-			CGI::td($rec->{total}), # out of
-#			CGI::td(sprintf("%0.0f",100*($rec->{index}) )),   # indicator
-			CGI::td($rec->{problemString}), # problems
-			CGI::td($self->nbsp($rec->{section})),
-			CGI::td($self->nbsp($rec->{recitation})),
-			CGI::td($rec->{user_id}),
-		    );
+			my $problemSetPage = $urlpath->newFromModule('WeBWorK::ContentGenerator::ProblemSet', $r,
+				courseID => $courseName, setID => $setName);
+			my $interactiveURL = $self->systemLink($problemSetPage, params => { effectiveUser => $rec->{user_id} });
+			print CGI::Tr({},
+				CGI::td({}, CGI::a({ href => $interactiveURL }, $fullName), CGI::br(), CGI::a({ href => "mailto:$email" }, $email)),
+				CGI::td(wwRound(2,$rec->{score}) ), # score
+				CGI::td($rec->{total}), # out of
+#				CGI::td(sprintf("%0.0f",100*($rec->{index}) )),   # indicator
+				CGI::td($rec->{problemString}), # problems
+				CGI::td($self->nbsp($rec->{section})),
+				CGI::td($self->nbsp($rec->{recitation})),
+				CGI::td($rec->{user_id}),
+			);
 		} else {
             # we separate versioned sets so that we can restrict what columns
             # we show
+			my $problemSetPage = $urlpath->newFromModule('WeBWorK::ContentGenerator::ProblemSet', $r,
+				courseID => $courseName, setID => $setName);
+			my $interactiveURL = $self->systemLink($problemSetPage, params => { effectiveUser => $rec->{user_id} });
 		    # if total is 'n/a', then it's a user who hasn't taken
 		    #    any tests, which we treat separately
 			if ( $rec->{total} ne 'n/a' ) {
+				$vNum++ if ($fullName eq $prevFullName);
 				my @cols = ();
-				# make make versioned sets' name format nicer
+				# make make versioned sets' name format nicer and link to appropriate test version
 				my $nameEntry = '';
+				my $versionPage = $urlpath->newFromModule('WeBWorK::ContentGenerator::GatewayQuiz', $r,
+					courseID => $courseName, setID => $setName . ',v' . $vNum);
+				my $versionLink = CGI::a({ href => $self->systemLink($versionPage, params => { effectiveUser => $rec->{user_id} })}, "version $vNum");
 				if ( $fullName eq $prevFullName ) {
-					$vNum++;
-					$nameEntry = "(v$vNum)";
+					$nameEntry = CGI::div({ class => 'ms-4' }, "($versionLink)");
 				} else {
-					$nameEntry = CGI::a({-href=>$rec->{act_as_student}},$fullName) .
-						($setIsVersioned && ! $showBestOnly ? ' (v1)':' ') .
-						CGI::br() . CGI::a({-href=>"mailto:$email"},$email);
+					$nameEntry = CGI::a({ href => $interactiveURL }, $fullName)
+						. ($setIsVersioned && ! $showBestOnly ? " ($versionLink)" : ' ')
+						. CGI::br()
+						. CGI::a({ href => "mailto:$email" }, $email);
 					$vNum = 1;
 					$prevFullName = $fullName;
 				}
@@ -841,10 +945,17 @@ sub displaySets {
 				push(@cols, $rec->{user_id}) if ($showColumns{'login'});
 				print CGI::Tr( CGI::td( [ @cols ] ) );
 			} else {
-				my @cols = ( CGI::td( $fullName ),
-					     CGI::td( $rec->{score} ),
-					     CGI::td({colspan=>$numCol},
-						     CGI::em($self->nbsp($r->maketext("No tests taken.")))) );
+				my @cols = (
+					CGI::td(
+						CGI::a({ href => $interactiveURL }, $fullName)
+						. CGI::br()
+						. CGI::a({ href => "mailto:$email" }, $email)
+					),
+					CGI::td($rec->{score}),
+					CGI::td({colspan => $numCol},
+						CGI::em($self->nbsp($r->maketext('No tests taken.')))
+					)
+				);
 				push(@cols,
 				     CGI::td($self->nbsp($rec->{section})))
 					if ( $showColumns{'section'} );
@@ -859,7 +970,7 @@ sub displaySets {
 		}
 	}
 
-	print CGI::end_table(), CGI::end_div();
+	print CGI::end_tbody(), CGI::end_table(), CGI::end_div();
 
 	return '';
 }
