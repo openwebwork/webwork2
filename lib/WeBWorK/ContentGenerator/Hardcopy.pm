@@ -60,21 +60,29 @@ our $PreserveTempFiles = 0 unless defined $PreserveTempFiles;
 
 our $HC_DEFAULT_FORMAT = "pdf"; # problems if this is not an allowed format for the user...
 our %HC_FORMATS = (
-	tex => { name => x("TeX Source"), subr => "generate_hardcopy_tex" },
-	pdf => { name => x("Adobe PDF"),  subr => "generate_hardcopy_pdf" },
+	tex => { name => x("TeX Source"), subr => "generate_hardcopy_tex", file_type => 'application/zip' },
+	pdf => { name => x("Adobe PDF"),  subr => "generate_hardcopy_pdf", file_type => 'applicaotin/pdf' },
 );
 our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 
 # custom fields used in $self hash
 # FOR HEAVEN'S SAKE, PLEASE KEEP THIS UP-TO-DATE!
 #
-# final_file_url
-#   contains the URL of the final hardcopy file generated
-#   set by generate_hardcopy(), used by pre_header_initialize() and body()
+# file_path
+#   Contains the path of the final hardcopy file generated relative to the temporary directory parent.
+#   This is set by generate_hardcopy(), and used by pre_header_initialize() and body().
+#
+# file_name
+#   Contains the name of the final hardcopy file generated  without path.
+#   This is set by generate_hardcopy(), and used by pre_header_initialize() only on successful hardcopy generation.
+#
+# file_type
+#   Contains the type of the final hardcopy file (either pdf or zip).
+#   This is set by generate_hardcopy(), and used by pre_header_initialize() only on successful hardcopy generation.
 #
 # temp_file_map
-#   reference to a hash mapping temporary file names to URL
-#   set by pre_header_initialize(), used by body()
+#   Reference to a hash mapping temporary file names to URL.
+#   Set by generate_hardcopy(), and used by pre_header_initialize(), used by body()
 #
 # hardcopy_errors
 #   reference to array containing HTML strings describing generation errors (and warnings)
@@ -112,160 +120,160 @@ our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 ################################################################################
 
 sub pre_header_initialize {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $self  = shift;
+	my $r     = $self->r;
+	my $ce    = $r->ce;
+	my $db    = $r->db;
 	my $authz = $r->authz;
 
-	my $userID = $r->param("user");
-	my $eUserID = $r->param("effectiveUser");
-	my @setIDs = $r->param("selected_sets");
-	my @userIDs = $r->param("selected_users");
-	my $hardcopy_format = $r->param("hardcopy_format");
-	my $generate_hardcopy = $r->param("generate_hardcopy");
-	my $send_existing_hardcopy = $r->param("send_existing_hardcopy");
-	my $final_file_url = $r->param("final_file_url");
+	my $userID            = $r->param('user');
+	my $eUserID           = $r->param('effectiveUser');
+	my @setIDs            = $r->param('selected_sets');
+	my @userIDs           = $r->param('selected_users');
+	my $hardcopy_format   = $r->param('hardcopy_format');
+	my $generate_hardcopy = $r->param('generate_hardcopy');
 
-	# if there's an existing hardcopy file that can be sent, get set up to do that
-	if ($send_existing_hardcopy) {
-		$self->reply_with_redirect($final_file_url);
-		$self->{final_file_url} = $final_file_url;
-		$self->{send_hardcopy} = 1;
-		return;
-	}
-
-	# this should never happen, but apparently it did once (see bug #714), so we check for it
-	die "Parameter 'user' not defined -- this should never happen" unless defined $userID;
+	# This should never happen, but apparently it did once (see bug #714), so we check for it.
+	die 'Parameter "user" not defined -- this should never happen' unless defined $userID;
 
 	# Check to see if the user is authorized to view source file paths.
-	$self->{can_show_source_file} = ($db->getPermissionLevel($userID)->permission >=
-		$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
-		|| grep($_ eq $userID, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}}));
+	$self->{can_show_source_file} =
+		($db->getPermissionLevel($userID)->permission >=
+			$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL})
+		|| grep($_ eq $userID, @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} });
 
 	if ($generate_hardcopy) {
 		my $validation_failed = 0;
 
-		# set default format
+		# Set the default format.
 		$hardcopy_format = $HC_DEFAULT_FORMAT unless defined $hardcopy_format;
 
-		# make sure format is valid
+		# Make sure the format is valid.
 		unless (grep { $_ eq $hardcopy_format } keys %HC_FORMATS) {
 			$self->addbadmessage("'$hardcopy_format' is not a valid hardcopy format.");
 			$validation_failed = 1;
 		}
 
-		# make sure we are allowed to generate hardcopy in this format
+		# Make sure we are allowed to generate hardcopy in this format.
 		unless ($authz->hasPermissions($userID, "download_hardcopy_format_$hardcopy_format")) {
-			$self->addbadmessage($r->maketext("You do not have permission to generate hardcopy in [_1] format.", $hardcopy_format));
+			$self->addbadmessage(
+				$r->maketext('You do not have permission to generate hardcopy in [_1] format.', $hardcopy_format));
 			$validation_failed = 1;
 		}
 
-		# make sure we are allowed to use this hardcopy theme
-		unless ($authz->hasPermissions($userID, "download_hardcopy_change_theme") ||
-			!defined($r->param('hardcopy_theme'))) {
-		        $self->addbadmessage($r->maketext("You do not have permission to change the hardcopy theme."));
+		# Make sure we are allowed to use this hardcopy theme.
+		unless ($authz->hasPermissions($userID, 'download_hardcopy_change_theme')
+			|| !defined($r->param('hardcopy_theme')))
+		{
+			$self->addbadmessage($r->maketext('You do not have permission to change the hardcopy theme.'));
 			$validation_failed = 1;
 		}
 
-
-		# is there at least one user and set selected?
+		# Is there at least one user selected?
 		unless (@userIDs) {
-			$self->addbadmessage($r->maketext("Please select at least one user and try again."));
+			$self->addbadmessage($r->maketext('Please select at least one user and try again.'));
 			$validation_failed = 1;
 		}
 
-# when students don't select any sets the size of @setIDs is 1 with a null character in $setIDs[0].
-# when professors don't select any sets the size of @setIDs is 0.
-# the following test "unless ((@setIDs) and ($setIDs[0] =~ /\S+/))" catches both cases and prevents
-# warning messages in the case of a professor's empty array.
-		unless ((@setIDs) and ($setIDs[0] =~ /\S+/)) {
-			$self->addbadmessage($r->maketext("Please select at least one set and try again."));
+		# Is there at least one set selected?
+		# When students don't select any sets the size of @setIDs is 1 with a null character in $setIDs[0].
+		# When professors don't select any sets the size of @setIDs is 0.
+		# The following test catches both cases and prevents warning messages in the case of a professor's empty array.
+		unless (@setIDs && $setIDs[0] =~ /\S+/) {
+			$self->addbadmessage($r->maketext('Please select at least one set and try again.'));
 			$validation_failed = 1;
 		}
 
-		# is the user allowed to request multiple sets/users at a time?
-		my $perm_multiset = $authz->hasPermissions($userID, "download_hardcopy_multiset");
-		my $perm_multiuser = $authz->hasPermissions($userID, "download_hardcopy_multiuser");
+		# Is the user allowed to request multiple sets/users at a time?
+		my $perm_multiset  = $authz->hasPermissions($userID, 'download_hardcopy_multiset');
+		my $perm_multiuser = $authz->hasPermissions($userID, 'download_hardcopy_multiuser');
 
-		my $perm_viewhidden = $authz->hasPermissions($userID, "view_hidden_work");
-		my $perm_viewfromip = $authz->hasPermissions($userID, "view_ip_restricted_sets");
+		my $perm_viewhidden = $authz->hasPermissions($userID, 'view_hidden_work');
+		my $perm_viewfromip = $authz->hasPermissions($userID, 'view_ip_restricted_sets');
 
-		my $perm_viewunopened =  $authz->hasPermissions($userID, "view_unopened_sets");
+		my $perm_viewunopened = $authz->hasPermissions($userID, 'view_unopened_sets');
 
 		if (@setIDs > 1 and not $perm_multiset) {
-			$self->addbadmessage("You are not permitted to generate hardcopy for multiple sets. Please select a single set and try again.");
+			$self->addbadmessage('You are not permitted to generate hardcopy for multiple sets. '
+					. 'Please select a single set and try again.');
 			$validation_failed = 1;
 		}
 		if (@userIDs > 1 and not $perm_multiuser) {
-			$self->addbadmessage("You are not permitted to generate hardcopy for multiple users. Please select a single user and try again.");
+			$self->addbadmessage('You are not permitted to generate hardcopy for multiple users. '
+					. 'Please select a single user and try again.');
 			$validation_failed = 1;
 		}
 		if (@userIDs and $userIDs[0] ne $eUserID and not $perm_multiuser) {
-			$self->addbadmessage("You are not permitted to generate hardcopy for other users.");
+			$self->addbadmessage('You are not permitted to generate hardcopy for other users.');
 			$validation_failed = 1;
-			# FIXME -- download_hardcopy_multiuser controls both whether a user can generate hardcopy
-			# that contains sets for multiple users AND whether she can generate hardcopy that contains
-			# sets for users other than herself. should these be separate permission levels?
+			# FIXME: Download_hardcopy_multiuser controls both whether a user can generate hardcopy
+			# that contains sets for multiple users AND whether the user can generate hardcopy that contains
+			# sets for users other than herself. Should these be separate permission levels?
 		}
 
-		# to check if the set has a "hide_work" flag, or if we aren't
-		#    allowed to view the set from the user's IP address, we
-		#    need the userset objects; if we've not failed validation
-		#    yet, get those to check on this
+		# To check if the set has a "hide_work" flag, or if we aren't allowed to view the set from the user's IP
+		# address, we need the userset objects. If we've not failed validation yet, get those to check on this.
 		my %canShowScore = ();
-		my %mergedSets = ();
-		unless ($validation_failed ) {
-			foreach my $sid ( @setIDs ) {
-				my($s,undef,$v) = ($sid =~ /([^,]+)(,v(\d+))?$/);
-				foreach my $uid ( @userIDs ) {
-					if ( $perm_viewhidden && $perm_viewfromip ) {
+		my %mergedSets   = ();
+		unless ($validation_failed) {
+			foreach my $sid (@setIDs) {
+				my ($s, undef, $v) = ($sid =~ /([^,]+)(,v(\d+))?$/);
+				foreach my $uid (@userIDs) {
+					if ($perm_viewhidden && $perm_viewfromip) {
 						$canShowScore{"$uid!$sid"} = 1;
 					} else {
 						my $userSet;
-						if ( defined($v) ) {
-							$userSet = $db->getMergedSetVersion($uid,$s,$v);
+						if (defined($v)) {
+							$userSet = $db->getMergedSetVersion($uid, $s, $v);
 						} else {
-							$userSet = $db->getMergedSet($uid,$s);
+							$userSet = $db->getMergedSet($uid, $s);
 						}
 						$mergedSets{"$uid!$sid"} = $userSet;
 
-						if ( ! $perm_viewunopened &&
-						     ! (time >= $userSet->open_date && !(
-										      $ce->{options}{enableConditionalRelease} &&
-											is_restricted($db, $userSet, $userID)))) {
-						    $validation_failed = 1;
-						    $self->addbadmessage($r->maketext("You are not permitted to generate a hardcopy for an unopened set."));
-						    last;
-
-						}
-
-
-						if ( ! $perm_viewhidden &&
-						     defined( $userSet->hide_work ) &&
-						     ( $userSet->hide_work eq 'Y' ||
-						       ( $userSet->hide_work eq 'BeforeAnswerDate' &&
-							 time < $userSet->answer_date ) ) ) {
-							$validation_failed = 1;
-							$self->addbadmessage($r->maketext("You are not permitted to generate a hardcopy for a set with hidden work."));
-							last;
-						}
-
-						if ( $authz->invalidIPAddress($userSet) ) {
+						if (
+							!$perm_viewunopened
+							&& !(
+								time >= $userSet->open_date && !(
+									$ce->{options}{enableConditionalRelease}
+									&& is_restricted($db, $userSet, $userID)
+								)
+							)
+							)
+						{
 							$validation_failed = 1;
 							$self->addbadmessage(
-									     $r->maketext("You are not allowed to generate a hardcopy for [_1] from your IP address, [_2].", $userSet->set_id, $r->connection->remote_ip));
+								$r->maketext('You are not permitted to generate a hardcopy for an unopened set.'));
+							last;
+
+						}
+
+						if (
+							!$perm_viewhidden
+							&& defined($userSet->hide_work)
+							&& ($userSet->hide_work eq 'Y'
+								|| ($userSet->hide_work eq 'BeforeAnswerDate' && time < $userSet->answer_date))
+							)
+						{
+							$validation_failed = 1;
+							$self->addbadmessage(
+								$r->maketext(
+									'You are not permitted to generate a hardcopy for a set with hidden work.')
+							);
 							last;
 						}
 
-						$canShowScore{"$uid!$sid"} =
-						    ( ! defined( $userSet->hide_score ) ||
-						      $userSet->hide_score eq '' ) ||
-							( $userSet ->hide_score eq 'N' ||
-							  ( $userSet->hide_score eq 'BeforeAnswerDate' &&
-							    time >= $userSet->answer_date ) );
-# 	die("hide_score = ", $userSet->hide_score, "; canshow{$uid!$sid} = ", (($canShowScore{"$uid!$sid"})?"True":"False"), "\n");
+						if ($authz->invalidIPAddress($userSet)) {
+							$validation_failed = 1;
+							$self->addbadmessage($r->maketext(
+								'You are not allowed to generate a hardcopy for [_1] from your IP address, [_2].',
+								$userSet->set_id, $r->connection->remote_ip
+							));
+							last;
+						}
 
+						$canShowScore{"$uid!$sid"} = (!defined($userSet->hide_score) || $userSet->hide_score eq '')
+							|| ($userSet->hide_score eq 'N'
+								|| ($userSet->hide_score eq 'BeforeAnswerDate' && time >= $userSet->answer_date));
 					}
 					last if $validation_failed;
 				}
@@ -274,58 +282,114 @@ sub pre_header_initialize {
 
 		unless ($validation_failed) {
 			$self->{canShowScore} = \%canShowScore;
-			$self->{mergedSets} = \%mergedSets;
-			my ($final_file_url, %temp_file_map) = $self->generate_hardcopy($hardcopy_format, \@userIDs, \@setIDs);
+			$self->{mergedSets}   = \%mergedSets;
+			my $result = $self->generate_hardcopy($hardcopy_format, \@userIDs, \@setIDs);
 			if ($self->get_errors) {
-				# store the URLs in self hash so that body() can make a link to it
-				$self->{final_file_url} = $final_file_url;
-				$self->{temp_file_map} = \%temp_file_map;
+				# Store the result data in self hash so that body() can make a link to it.
+				$self->{file_path}     = $result->{file_path};
+				$self->{temp_file_map} = $result->{temp_file_map};
 			} else {
-				# send the file only
-				$self->reply_with_redirect($final_file_url);
+				# Send the file only (it is deleted from the server after it is sent).
+				$self->reply_with_file($result->{file_type}, $result->{file_path}, $result->{file_name}, 1);
 			}
 		}
+
+		return;
 	}
+
+	my $tempFile = $r->param('tempFilePath');
+	if ($tempFile) {
+		my $courseID = $r->urlpath->arg('courseID');
+		my $baseName = $tempFile =~ s/.*\/([^\/]*)$/$1/r;
+		my $fullFilePath = "$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID/$tempFile";
+
+		unless (-e $fullFilePath) {
+			$self->addbadmessage($r->maketext('The requested file "[_1]" does not exist on the server.', $tempFile));
+			return;
+		}
+
+		unless ($baseName =~ /\.$userID\./ || $authz->hasPermissions($userID, 'download_hardcopy_multiuser')) {
+			$self->addbadmessage($r->maketext('You do not have permission to access the requested file "[_1]".'),
+				$tempFile);
+			return;
+		}
+
+		# All of the files that could be served here are text files except for the pdf or zip file
+		# (and the zip file won't actually be served in this way either technically -- but just in case).
+		my $type = 'text/plain';
+		$type = 'application/pdf' if $baseName =~ m/\.pdf/;
+		$type = 'application/zip' if $baseName =~ m/\.zip/;
+
+		$self->reply_with_file($type, $fullFilePath, $baseName);
+	}
+
+	return;
 }
 
 sub body {
-        my ($self) = @_;
-	my $r = $self->r;
-	my $userID = $self->r->param("user");
-	my $perm_view_errors = $self->r->authz->hasPermissions($userID, "download_hardcopy_view_errors");
-	$perm_view_errors = (defined($perm_view_errors) ) ? $perm_view_errors : 0;
+	my ($self)           = @_;
+	my $r                = $self->r;
+	my $userID           = $self->r->param('user');
+	my $perm_view_errors = $self->r->authz->hasPermissions($userID, 'download_hardcopy_view_errors');
+	$perm_view_errors = defined $perm_view_errors ? $perm_view_errors : 0;
+
 	if (my $num = $self->get_errors) {
-		my $final_file_url = $self->{final_file_url};
-		my %temp_file_map = %{$self->{temp_file_map}};
-		if($perm_view_errors) {
-		  print CGI::p($r->maketext("[quant,_1,error] occured while generating hardcopy:",$num));
+		my $file_path = $self->{file_path};
+		my %temp_file_map  = %{ $self->{temp_file_map} // {} };
+		if ($perm_view_errors) {
+			print CGI::p($r->maketext('[quant,_1,error] occured while generating hardcopy:', $num));
 
 			print CGI::ul(CGI::li($self->get_errors_ref));
 		}
 
-		if ($final_file_url) {
-		  print CGI::p($r->maketext("A hardcopy file was generated, but it may not be complete or correct. Please check that no problems are missing and that they are all legible. If not, please inform your instructor."),
-			       "<br />",
-				CGI::a({href=>$final_file_url}, $r->maketext("Download Hardcopy")),
+		if ($file_path) {
+			print CGI::p(
+				$r->maketext(
+					'A hardcopy file was generated, but it may not be complete or correct. Please check that no '
+						. 'problems are missing and that they are all legible. If not, please inform your instructor.'
+				),
+				'<br>',
+				CGI::a(
+					{
+						href => $self->systemLink(
+							$r->urlpath->newFromModule(
+								$r->urlpath->module, $r, courseID => $r->urlpath->arg('courseID')
+							),
+							params => { tempFilePath => $file_path }
+						)
+					},
+					$r->maketext('Download Hardcopy')
+				),
 			);
 		} else {
 			print CGI::p(
-				     $r->maketext("WeBWorK was unable to generate a paper copy of this homework set.  Please inform your instructor. ")
+				$r->maketext(
+					'WeBWorK was unable to generate a paper copy of this homework set.  Please inform your instructor.')
 			);
-
 		}
-		if($perm_view_errors) {
+
+		if ($perm_view_errors) {
 			if (%temp_file_map) {
 				print CGI::start_p();
-				print $r->maketext("You can also examine the following temporary files: ");
+				print $r->maketext('You can also examine the following temporary files: ');
 				my $first = 1;
 				while (my ($temp_file_name, $temp_file_url) = each %temp_file_map) {
 					if ($first) {
 						$first = 0;
 					} else {
-						print ", ";
+						print ', ';
 					}
-					print CGI::a({href=>$temp_file_url}, " $temp_file_name");
+					print CGI::a(
+						{
+							href => $self->systemLink(
+								$r->urlpath->newFromModule(
+									$r->urlpath->module, $r, courseID => $r->urlpath->arg('courseID')
+								),
+								params => { tempFilePath => $temp_file_url }
+							)
+						},
+						$temp_file_name
+					);
 				}
 				print CGI::end_p();
 			}
@@ -338,7 +402,7 @@ sub body {
 	unless ($self->get_errors and not $perm_view_errors) {
 		$self->display_form();
 	}
-	''; # return a blank
+	'';    # return a blank
 }
 
 sub display_form {
@@ -690,168 +754,156 @@ sub display_form {
 
 sub generate_hardcopy {
 	my ($self, $format, $userIDsRef, $setIDsRef) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $r     = $self->r;
+	my $ce    = $r->ce;
+	my $db    = $r->db;
 	my $authz = $r->authz;
 
-	my $courseID = $r->urlpath->arg("courseID");
-	my $userID = $r->param("user");
-	my $eUserID = $r->param("effectiveUser");
+	my $courseID = $r->urlpath->arg('courseID');
+	my $userID = $r->param('user');
 
-	# we want to make the temp directory web-accessible, for error reporting
-	# use mkpath to ensure it exists (mkpath is pretty much ``mkdir -p'')
-	my $temp_dir_parent_path = $ce->{courseDirs}{html_temp} . "/hardcopy";
+	# Create the temporary directory.  Use mkpath to ensure it exists (mkpath is pretty much `mkdir -p`).
+	my $temp_dir_parent_path = "$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID";
 	eval { mkpath($temp_dir_parent_path) };
 	if ($@) {
-		die "Couldn't create hardcopy directory $temp_dir_parent_path: $@";
-	}
-
-	# create a randomly-named working directory in the hardcopy directory
-	my $temp_dir_path = eval { tempdir("work.XXXXXXXX", DIR => $temp_dir_parent_path) };
-	if ($@) {
-		$self->add_errors("Couldn't create temporary working directory: ".CGI::code(CGI::escapeHTML($@)));
+		$self->add_errors(
+			"Couldn't create hardcopy directory $temp_dir_parent_path: " . CGI::code(CGI::escapeHTML($@)));
 		return;
 	}
-	# make sure the directory can be read by other daemons e.g. lighttpd
-	chmod 0755, $temp_dir_path;
 
+	# Create a randomly named working directory in the hardcopy directory.
+	my $temp_dir_path = eval { tempdir('work.XXXXXXXX', DIR => $temp_dir_parent_path) };
+	if ($@) {
+		$self->add_errors("Couldn't create temporary working directory: " . CGI::code(CGI::escapeHTML($@)));
+		return;
+	}
 
-	# do some error checking
+	# Do some error checking.
 	unless (-e $temp_dir_path) {
-		$self->add_errors("Temporary directory '".CGI::code(CGI::escapeHTML($temp_dir_path))
-			."' does not exist, but creation didn't fail. This shouldn't happen.");
+		$self->add_errors("Temporary directory '"
+				. CGI::code(CGI::escapeHTML($temp_dir_path))
+				. "' does not exist, but creation didn't fail. This shouldn't happen.");
 		return;
 	}
 	unless (-w $temp_dir_path) {
-		$self->add_errors("Temporary directory '".CGI::code(CGI::escapeHTML($temp_dir_path))
-			."' is not writeable.");
+		$self->add_errors("Temporary directory '" . CGI::code(CGI::escapeHTML($temp_dir_path)) . "' is not writeable.");
 		$self->delete_temp_dir($temp_dir_path);
 		return;
 	}
 
-	my $tex_file_name = "hardcopy.tex";
+	my $tex_file_name = 'hardcopy.tex';
 	my $tex_file_path = "$temp_dir_path/$tex_file_name";
 
-	#######################################
-	# create TeX file  (callback  write_multiuser_tex,  or ??)
-	#######################################
+	# Create TeX file.
 
-	my $open_result = open my $FH, ">:encoding(UTF-8)", $tex_file_path;
+	my $open_result = open my $FH, '>:encoding(UTF-8)', $tex_file_path;
 	unless ($open_result) {
-		$self->add_errors("Failed to open file '".CGI::code(CGI::escapeHTML($tex_file_path))
-			."' for writing: ".CGI::code(CGI::escapeHTML($!)));
+		$self->add_errors("Failed to open file '"
+				. CGI::code(CGI::escapeHTML($tex_file_path))
+				. "' for writing: "
+				. CGI::code(CGI::escapeHTML($!)));
 		$self->delete_temp_dir($temp_dir_path);
 		return;
 	}
 	$self->write_multiuser_tex($FH, $userIDsRef, $setIDsRef);
 	close $FH;
 
-	# if no problems got rendered successfully, we can't continue
+	# If no problems were successfully rendered, we can't continue.
 	unless ($self->{at_least_one_problem_rendered_without_error}) {
 		$self->add_errors("No problems rendered. Can't continue.");
 		$self->delete_temp_dir($temp_dir_path);
 		return;
 	}
 
-	# if no hardcopy.tex file was generated, fail now
+	# If the hardcopy.tex file was not generated, fail now.
 	unless (-e "$temp_dir_path/hardcopy.tex") {
-		$self->add_errors("'".CGI::code("hardcopy.tex")."' not written to temporary directory '"
-			.CGI::code(CGI::escapeHTML($temp_dir_path))."'. Can't continue.");
+		$self->add_errors("'"
+				. CGI::code("hardcopy.tex")
+				. "' not written to temporary directory '"
+				. CGI::code(CGI::escapeHTML($temp_dir_path))
+				. "'. Can't continue.");
 		$self->delete_temp_dir($temp_dir_path);
 		return;
 	}
 
-	##############################################
-	# end creation of TeX file
-	##############################################
+	# End creation of TeX file.
 
-	# determine base name of final file
-	my $final_file_user = @$userIDsRef > 1 ? "multiuser" : $userIDsRef->[0];
-	my $final_file_set = @$setIDsRef > 1 ? "multiset" : $setIDsRef->[0];
+	# Determine base name of final file.
+	my $final_file_user     = @$userIDsRef > 1 ? 'multiuser' : $userIDsRef->[0];
+	my $final_file_set      = @$setIDsRef > 1  ? 'multiset'  : $setIDsRef->[0];
 	my $final_file_basename = "$courseID.$final_file_user.$final_file_set";
 
-	###############################################
-	# call format subroutine  (call back)
-	###############################################
-	# $final_file_name is the name of final hardcopy file
-	# @temp_files is a list of temporary files of interest used by the subroutine
+	# Call the format subroutine.
+	# $final_file_name is the name of final hardcopy file that is generated.
+	# @temp_files is a list of temporary files of interest used by the subroutine.
 	# (all are relative to $temp_dir_path)
 	my $format_subr = $HC_FORMATS{$format}{subr};
 	my ($final_file_name, @temp_files) = $self->$format_subr($temp_dir_path, $final_file_basename);
 	my $final_file_path = "$temp_dir_path/$final_file_name";
 
-	#warn "final_file_name=$final_file_name\n";
-	#warn "temp_files=@temp_files\n";
+	# Calculate paths for each temp file of interest.  These paths are relative to the $temp_dir_parent_path.
+	# makeTempDirectory's interface forces us to reverse-engineer the relative temp dir path from the absolute path.
+	my $temp_dir_rel_path = $temp_dir_path =~ s/^$temp_dir_parent_path\///r;
+	my %temp_file_map = map { $_ => "$temp_dir_rel_path/$_" } @temp_files;
 
-	################################################
-	# calculate URLs for each temp file of interest
-	#################################################
-	# makeTempDirectory's interface forces us to reverse-engineer the name of the temp dir from the path
-	my $temp_dir_parent_url = $ce->{courseURLs}{html_temp} . "/hardcopy";
-	(my $temp_dir_url = $temp_dir_path) =~ s/^$temp_dir_parent_path/$temp_dir_parent_url/;
-	my %temp_file_map;
-	foreach my $temp_file_name (@temp_files) {
-		$temp_file_map{$temp_file_name} = "$temp_dir_url/$temp_file_name";
-	}
-
-	my $final_file_url;
-
-	##################################################
-	# make sure final file exists
-	##################################################
-    # returns undefined unless $final_file_path points to a file
+	# Make sure the final file exists.
 	unless (-e $final_file_path) {
-		$self->add_errors("Final hardcopy file '".CGI::code(CGI::escapeHTML($final_file_path))
-			."' not found after calling '".CGI::code(CGI::escapeHTML($format_subr))."': "
-			.CGI::code(CGI::escapeHTML($!)));
-		return $final_file_url, %temp_file_map;
+		$self->add_errors("Final hardcopy file '"
+				. CGI::code(CGI::escapeHTML($final_file_path))
+				. "' not found after calling '"
+				. CGI::code(CGI::escapeHTML($format_subr)) . "': "
+				. CGI::code(CGI::escapeHTML($!)));
+		return { temp_file_map => \%temp_file_map };
 	}
 
-	##################################################
-	# try to move the hardcopy file out of the temp directory
-	##################################################
-
-	# set $final_file_url accordingly
+	# Try to move the hardcopy file out of the temp directory.
 	my $final_file_final_path = "$temp_dir_parent_path/$final_file_name";
-	my $mv_cmd = "2>&1 " . $ce->{externalPrograms}{mv} . " " . shell_quote($final_file_path, $final_file_final_path);
+	my $mv_cmd = '2>&1 ' . $ce->{externalPrograms}{mv} . ' ' . shell_quote($final_file_path, $final_file_final_path);
 	my $mv_out = readpipe $mv_cmd;
 	if ($?) {
-		$self->add_errors("Failed to move hardcopy file '".CGI::code(CGI::escapeHTML($final_file_name))
-			."' from '".CGI::code(CGI::escapeHTML($temp_dir_path))."' to '"
-			.CGI::code(CGI::escapeHTML($temp_dir_parent_path))."':".CGI::br()
-			.CGI::pre(CGI::escapeHTML($mv_out)));
-		$final_file_url = "$temp_dir_url/$final_file_name";
-	} else {
-		$final_file_url = "$temp_dir_parent_url/$final_file_name";
+		$self->add_errors("Failed to move hardcopy file '"
+				. CGI::code(CGI::escapeHTML($final_file_name))
+				. "' from '"
+				. CGI::code(CGI::escapeHTML($temp_dir_path))
+				. "' to '"
+				. CGI::code(CGI::escapeHTML($temp_dir_parent_path)) . "':"
+				. CGI::br()
+				. CGI::pre(CGI::escapeHTML($mv_out)));
+		$final_file_final_path = "$temp_dir_rel_path/$final_file_name";
 	}
 
-	##################################################
+	# If there were any errors, then the final file will not be served directly, but will be served via reply_with_file
+	# and the full file path will be built at that time.  So the path needs to be relative to the temporary directory
+	# parent path.
+	$final_file_final_path =~ s/^$temp_dir_parent_path\/// if ($self->get_errors);
+
 	# remove the temp directory if there are no errors
-	##################################################
-
-	unless ($self->get_errors or $PreserveTempFiles) {
-		$self->delete_temp_dir($temp_dir_path);
-	}
+	$self->delete_temp_dir($temp_dir_path) unless ($self->get_errors || $PreserveTempFiles);
 
 	warn "Preserved temporary files in directory '$temp_dir_path'.\n" if $PreserveTempFiles;
 
-	return $final_file_url, %temp_file_map;
+	return {
+		file_name     => $final_file_name,
+		file_path     => $final_file_final_path,
+		file_type     => $HC_FORMATS{$format}{file_type} // 'application/pdf',
+		temp_file_map => \%temp_file_map
+	};
 }
 
 # helper function to remove temp dirs
 sub delete_temp_dir {
 	my ($self, $temp_dir_path) = @_;
 
-	my $rm_cmd = "2>&1 " . $self->r->ce->{externalPrograms}{rm} . " -rf " . shell_quote($temp_dir_path);
+	my $rm_cmd = '2>&1 ' . $self->r->ce->{externalPrograms}{rm} . ' -rf ' . shell_quote($temp_dir_path);
 	my $rm_out = readpipe $rm_cmd;
 	if ($?) {
-		$self->add_errors("Failed to remove temporary directory '".CGI::code(CGI::escapeHTML($temp_dir_path))."':"
-			.CGI::br().CGI::pre($rm_out));
-		return 0;
-	} else {
-		return 1;
+		$self->add_errors("Failed to remove temporary directory '"
+				. CGI::code(CGI::escapeHTML($temp_dir_path)) . "':"
+				. CGI::br()
+				. CGI::pre($rm_out));
 	}
+
+	return;
 }
 
 # Hardcopy generation subroutines
