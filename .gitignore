@@ -31,4 +31,5 @@ htdocs/themes/*
 !htdocs/themes/math4-green
 !htdocs/themes/math4-yellow
 DATA/*
+.transifexrc
 *.swp
