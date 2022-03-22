@@ -342,7 +342,8 @@
 		ro.noprepostambles = 1;
 		ro.processAnswers = 0;
 		ro.showFooter = 0;
-		ro.displayMode = $('#problem_displaymode').val();
+		ro.displayMode = document.getElementById('problem_displaymode')?.value ?? 'MathJax';
+		ro.language = document.querySelector('input[name="hidden_language"]')?.value ?? 'en';
 		ro.send_pg_flags = 1;
 		ro.extra_header_text = '<style>' +
 			'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +

@@ -1059,17 +1059,19 @@ sub make_top_row {
 	print CGI::div(
 		{ class => 'd-flex flex-wrap justify-content-center' },
 		CGI::submit({
-			name    => "new_local_set",
-			value   => $r->maketext("Create a New Set in This Course:"),
-			onclick => "document.library_browser_form.selfassign.value=1",
+			name    => 'new_local_set',
+			id      => 'new_local_set',
+			value   => $r->maketext('Create a New Set in This Course:'),
+			onclick => 'document.library_browser_form.selfassign.value=1',
 			class   => 'btn btn-primary btn-sm mb-2 mx-2'
 		}),
 		CGI::textfield({
-			name        => "new_set_name",
-			placeholder => $r->maketext("New set name"),
-			override    => 1,
-			size        => 30,
-			class       => 'form-control form-control-sm d-inline w-auto mb-2'
+			name            => 'new_set_name',
+			aria_labelledby => 'new_local_set',
+			placeholder     => $r->maketext('New set name'),
+			override        => 1,
+			size            => 30,
+			class           => 'form-control form-control-sm d-inline w-auto mb-2'
 		})
 	);
 
@@ -2101,6 +2103,10 @@ sub body {
 	print CGI::start_form({ method => "POST", action => $r->uri, name => 'library_browser_form' }),
 		$self->hidden_authen_fields,
 		CGI::hidden({ id => 'hidden_courseID', name => 'courseID', default => $courseID });
+
+	# Add the course language in a hidden input so that the javascript can get this information.
+	print CGI::hidden({ name => 'hidden_language', value => $ce->{language} });
+
 	print CGI::hidden(-name=>'browse_which', -value=>$browse_which,-override=>1),
 		CGI::hidden(-name=>'problem_seed', -value=>$problem_seed, -override=>1);
 	for ($j = 0 ; $j < scalar(@pg_files) ; $j++) {

@@ -2271,6 +2271,9 @@ sub body {
 	print CGI::input({type=>"hidden", id=>"hidden_set_id", name=>"setID", value=>$setID});
 	print CGI::input({type=>"hidden", id=>"hidden_version_id", name=>"versionID", value=>$editingSetVersion}) if $editingSetVersion;
 
+	# Add the course language in a hidden input so that the javascript can get this information.
+	print CGI::hidden({ name => 'hidden_language', value => $ce->{language} });
+
 	print CGI::div({ class => 'my-3 submit-buttons-container' },
 		CGI::submit({
 			name => "submit_changes",

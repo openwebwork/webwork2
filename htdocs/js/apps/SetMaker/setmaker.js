@@ -455,7 +455,8 @@
 		ro.noprepostambles = 1;
 		ro.processAnswers = 0;
 		ro.showFooter = 0;
-		ro.displayMode = document.querySelector('select[name="mydisplayMode"]').value;
+		ro.displayMode = document.querySelector('select[name="mydisplayMode"]').value ?? 'MathJax';
+		ro.language = document.querySelector('input[name="hidden_language"]')?.value ?? 'en';
 
 		// Abort if the display mode is not set to None
 		if (ro.displayMode === 'None') {
