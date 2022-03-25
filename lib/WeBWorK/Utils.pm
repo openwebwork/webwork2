@@ -856,7 +856,7 @@ sub trim_spaces {
 # This is for formatting set names input via text inputs in the user interface for internal use.  Set names are allowed
 # to be input with spaces, but internally spaces are not allowed and are converted to underscores.
 sub format_set_name_internal {
-	return $_[0] =~ s/ /_/gr;
+	return ($_[0] =~ s/^\s*|\s*$//gr) =~ s/ /_/gr;
 }
 
 # This formats set names for display, converting underscores back into spaces.
