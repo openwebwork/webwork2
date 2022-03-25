@@ -35,7 +35,7 @@
 
 
 ################################################################################
-# Additional mail settings in defaults.conf can be overridden here
+# Additional mail settings in defaults.config can be overridden here
 ################################################################################
 
 # This setting is only used if you need to send email from within a PG problem
@@ -48,6 +48,13 @@ $mail{feedbackRecipients}    = [
 	#'prof1@yourserver.yourdomain.edu',
 	#'prof2@yourserver.yourdomain.edu',
 ];
+
+# Should the studentID be included in the feedback email when feedbackVerbosity > 0:
+# The default is yes. Uncomment the line below to block it from being included.
+# Blocking it from being included is recommended if the studentID is "personal"
+# informations whose privacy should be maintained (ex. a government issued ID number).
+# The setting can also be made in the course.conf file for specific courses.
+#$blockStudentIDinFeedback = 1;
 
 ### additional mail overrides
 # Use this to customize the text of the feedback button.

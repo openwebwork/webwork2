@@ -462,7 +462,9 @@ sub format_user {
 	my $result = "User ID:    " . $User->user_id . "\n";
 	$result .= "Name:       " . $User->full_name . "\n";
 	$result .= "Email:      " . $User->email_address . "\n";
-	$result .= "Student ID: " . $User->student_id . "\n";
+	unless( $ce->{blockStudentIDinFeedback} ) {
+		$result .= "Student ID: " . $User->student_id . "\n";
+	}
 
 	my $status_name = $ce->status_abbrev_to_name($User->status);
 	my $status_string = defined $status_name

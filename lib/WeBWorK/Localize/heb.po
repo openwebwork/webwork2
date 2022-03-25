@@ -1173,7 +1173,7 @@ msgstr "עיין מתוך:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:447
 msgid ""
-"By default, feeback is always sent to all users specified to recieve "
+"By default, feedback is always sent to all users specified to recieve "
 "feedback.  This variable sets the system to only email feedback to users who "
 "have the same section as the user initiating the feedback.  I.E.  Feedback "
 "will only be sent to section leaders."
@@ -1184,7 +1184,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:442
 msgid ""
-"By default, feeback is sent to all users above who have permission to "
+"By default, feedback is sent to all users above who have permission to "
 "receive feedback. Feedback is also sent to any addresses specified in this "
 "blank. Separate email address entries by commas."
 msgstr ""
