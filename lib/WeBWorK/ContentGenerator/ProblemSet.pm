@@ -155,22 +155,14 @@ sub siblings {
 	my @setIDs =
 		map { $_->[1] } $db->listUserSetsWhere({ user_id => $eUserID, set_id => { not_like => '%,v%' } }, 'set_id');
 
-	# do not show hidden siblings unless user is allowed to view hidden sets, and
-	# exclude gateway tests in all cases
-	if ($authz->hasPermissions($user, "view_hidden_sets")) {
-		@setIDs = grep {
-			my $gs = $db->getGlobalSet($_);
-			$gs->assignment_type() !~ /gateway/
-		} @setIDs;
-
-	} else {
+	# do not show hidden siblings unless user is allowed to view hidden sets.
+	unless ($authz->hasPermissions($user, "view_hidden_sets")) {
 		@setIDs = grep {
 			my $set = $db->getMergedSet($eUserID, $_);
 			my @restricted = $ce->{options}{enableConditionalRelease} ? is_restricted($db, $set, $eUserID) : ();
 			my $LTIRestricted = defined($ce->{LTIGradeMode}) && $ce->{LTIGradeMode} eq 'homework' && !$set->lis_source_did;
 
 			after($set->open_date) &&
-			$set->assignment_type() !~ /gateway/ &&
 			(defined($set->visible()) ? $set->visible() : 1)
 			&& !@restricted
 			&& !$LTIRestricted;
