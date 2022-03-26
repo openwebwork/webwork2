@@ -29,7 +29,7 @@ use Carp;
 use WeBWorK::Debug;
 use DBI;
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(formatDateTime grade_set grade_gateway grade_all_sets);
+use WeBWorK::Utils qw(formatDateTime);
 use WeBWorK::Localize;
 use WeBWorK::ContentGenerator::Instructor;
 use URI::Escape;
