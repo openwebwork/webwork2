@@ -2117,11 +2117,11 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:413
 msgid "E-Mail"
-msgstr "E-Mail versenden"
+msgstr "EMail versenden"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:344
 msgid "E-mail Instructor"
-msgstr "E-Mail an Dozenten schicken."
+msgstr "Email an Dozenten"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:431
 msgid "E-mail addresses which can receive e-mail from a pg problem"
@@ -2139,7 +2139,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:364
 msgid "E-mail:"
-msgstr ""
+msgstr "Email"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:158
 msgid "Earned"
@@ -2267,7 +2267,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1522
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:535
 msgid "Email"
-msgstr "E-mail"
+msgstr "Email"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:559
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
@@ -3375,7 +3375,7 @@ msgstr "Erneut anmelden"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1004
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1007
 msgid "Log Out"
-msgstr "Abgemeldet"
+msgstr "Abmelden"
 
 #. ($add_courseID)
 #. ($rename_oldCourseID)
@@ -3489,7 +3489,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:319
 msgid "Message"
-msgstr ""
+msgstr "Fehlermeldung"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:671
 msgid "Message file:"
@@ -4279,7 +4279,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm:490
 msgid "Problem Techniques"
-msgstr "Lösungsstrategien"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm:668
 msgid "Problem Viewer"
@@ -4817,7 +4817,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:226
 msgid "Score selected set(s) and save to:"
-msgstr "Calificar las tareas selccionadas y guardar en:"
+msgstr "Ausgewählte Aufgabenblätter bewerten und speichern unter"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1892
 msgid "Score summary for last submit:"
@@ -4988,11 +4988,11 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:367
 msgid "Send E-mail"
-msgstr ""
+msgstr "Senden"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:780
 msgid "Send Email"
-msgstr "Email senden"
+msgstr "Senden"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:715
 msgid "Send to:"
@@ -6563,8 +6563,8 @@ msgid ""
 "To edit this text you must first make a copy of this file using the "
 "'NewVersion' action below."
 msgstr ""
-"Para editar este texto, primero debes hacer una copia de este archivo usando "
-"la acción \"Nueva versión\" abajo."
+"Um diese Aufgabe zu bearbeiten müssen Sie eine Kopie dieser Datei "
+"über  \"Neue Version\" anlegen."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm:380
 msgid ""
