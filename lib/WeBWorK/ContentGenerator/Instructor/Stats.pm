@@ -25,59 +25,51 @@ homework set (including sv graphs).
 
 use strict;
 use warnings;
-#use CGI qw(-nosticky );
+
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
-use WeBWorK::Utils qw(readDirectory list2hash max sortByName jitar_id_to_seq jitar_problem_adjusted_status
-	format_set_name_display);
+use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status format_set_name_display);
 
 # The table format has been borrowed from the Grades.pm module
 sub initialize {
-	my $self     = shift;
-	my $r          = $self->{r};
-	my $urlpath    = $r->urlpath;
-	my $type       = $urlpath->arg("statType") || '';
-	my $db         = $self->{db};
-	my $ce         = $self->{ce};
-	my $authz      = $self->{authz};
-	my $courseName = $urlpath->arg('courseID');
- 	my $user       = $r->param('user');
+	my $self    = shift;
+	my $r       = $self->r;
+	my $urlpath = $r->urlpath;
+	my $db      = $r->db;
+	my $user    = $r->param('user');
 
 	# Check permissions
-	return unless $authz->hasPermissions($user, "access_instructor_tools");
+	return unless $r->authz->hasPermissions($user, 'access_instructor_tools');
 
- 	$self->{type}  = $type;
- 	if ($type eq 'student') {
- 		my $studentName = $r->urlpath->arg("userID") || $user;
- 		$self->{studentName } = $studentName;
+	$self->{type} = $urlpath->arg('statType') || '';
+	if ($self->{type} eq 'student') {
+		my $studentName = $urlpath->arg('userID') || $user;
+		$self->{studentName} = $studentName;
 
- 	} elsif ($type eq 'set') {
- 		my $setName = $r->urlpath->arg("setID") || 0;
- 		$self->{setName}     = $setName;
- 		my $setRecord  = $db->getGlobalSet($setName); # checked
-		die "global set $setName  not found." unless $setRecord;
+	} elsif ($self->{type} eq 'set') {
+		my $setName = $urlpath->arg('setID') || 0;
+		$self->{setName} = $setName;
+		my $setRecord = $db->getGlobalSet($setName);
+		return unless $setRecord;
 		$self->{set_due_date} = $setRecord->due_date;
-		$self->{setRecord}   = $setRecord;
- 	}
+		$self->{setRecord}    = $setRecord;
+	}
 }
 
-
 sub title {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
+	my $self = shift;
+	my $r    = $self->r;
 
-	return '' unless $authz->hasPermissions($user, 'access_instructor_tools');
+	return '' unless $r->authz->hasPermissions($r->param('user'), 'access_instructor_tools');
 
-	my $type   = $self->{type};
+	my $type = $self->{type};
 	if ($type eq 'student') {
-		return $r->maketext("Statistics for [_1] student [_2]", $self->{ce}->{courseName}, $self->{studentName});
+		return $r->maketext('Statistics for [_1] student [_2]', $self->{ce}{courseName}, $self->{studentName});
 	} elsif ($type eq 'set') {
 		return $r->maketext(
-			"Statistics for [_1] set [_2]. Closes [_3]",
-			$self->{ce}->{courseName},
+			'Statistics for [_1] set [_2]. Closes [_3]',
+			$self->{ce}{courseName},
 			format_set_name_display($self->{setName}), $self->formatDateTime($self->{set_due_date})
 		);
 	}
@@ -86,29 +78,27 @@ sub title {
 }
 
 sub siblings {
-	my ($self)  = @_;
+	my $self    = shift;
 	my $r       = $self->r;
 	my $db      = $r->db;
-	my $authz   = $r->authz;
-	my $user    = $r->param('user');
 	my $urlpath = $r->urlpath;
 
 	# Check permissions
-	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
+	return '' unless $r->authz->hasPermissions($r->param('user'), 'access_instructor_tools');
 
-	my $courseID = $urlpath->arg("courseID");
-	my $eUserID  = $r->param("effectiveUser");
+	my $courseID = $urlpath->arg('courseID');
+	my $eUserID  = $r->param('effectiveUser');
 	my @setIDs   = sort $db->listGlobalSets;
 
-	my $stats = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Stats", $r, courseID => $courseID);
+	my $stats = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::Stats', $r, courseID => $courseID);
 
-	print CGI::start_div({ class => "info-box", id => "fisheye" });
-	print CGI::h2($r->maketext("Statistics"));
-	print CGI::start_ul({ class => "nav flex-column problem-list" });
+	print CGI::start_div({ class => 'info-box', id => 'fisheye' });
+	print CGI::h2($r->maketext('Statistics'));
+	print CGI::start_ul({ class => 'nav flex-column problem-list' });
 
-	foreach my $setID (@setIDs) {
+	for my $setID (@setIDs) {
 		my $problemPage = $urlpath->newFromModule(
-			"WeBWorK::ContentGenerator::Instructor::Stats", $r,
+			'WeBWorK::ContentGenerator::Instructor::Stats', $r,
 			courseID => $courseID,
 			setID    => $setID,
 			statType => 'set',
@@ -125,52 +115,51 @@ sub siblings {
 	print CGI::end_ul();
 	print CGI::end_div();
 
-	return "";
+	return '';
 }
 
 sub body {
-	my $self       = shift;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $db         = $r->db;
-	my $ce         = $r->ce;
-	my $authz      = $r->authz;
-	my $courseName = $urlpath->arg("courseID");
-	my $user       = $r->param('user');
-	my $type       = $self->{type};
+	my $self    = shift;
+	my $r       = $self->r;
+	my $urlpath = $r->urlpath;
+	my $authz   = $r->authz;
+	my $user    = $r->param('user');
 
 	# Check permissions
-	return CGI::div({ class => 'alert alert-danger p-1' },
-		"You are not authorized to access instructor tools")
-		unless $authz->hasPermissions($user, "access_instructor_tools");
+	return CGI::div({ class => 'alert alert-danger p-1' }, 'You are not authorized to access instructor tools')
+		unless $authz->hasPermissions($user, 'access_instructor_tools');
 
-	if ($type eq 'student') {
-		my $studentName = $self->{studentName};
-		my $studentRecord = $db->getUser($studentName) # checked
-			or die "record for user $studentName not found";
-		my $fullName = $studentRecord->full_name;
-        my $courseHomePage = $urlpath->new(type  => 'set_list',
-        	args => {courseID=>$courseName});
-		my $email = $studentRecord->email_address;
-
-		print CGI::a({-href=>"mailto:$email"}, $email), CGI::br(),
-			$r->maketext("Section").": ", $studentRecord->section, CGI::br(),
-			$r->maketext("Recitation").": ", $studentRecord->recitation, CGI::br();
-
-		if ($authz->hasPermissions($user, "become_student")) {
-			my $act_as_student_url = $self->systemLink($courseHomePage,
-				params => {effectiveUser=>$studentName});
-
-			print $r->maketext('Act as:')." ", CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);
+	if ($self->{type} eq 'student') {
+		my $studentRecord = $r->db->getUser($self->{studentName});
+		unless ($studentRecord) {
+			return CGI::div({ class => 'alert alert-danger p-1' },
+				$r->maketext('Record for user [_1] not found.', $self->{studentName}));
 		}
 
-		print WeBWorK::ContentGenerator::Grades::displayStudentStats($self,$studentName);
-	} elsif( $type eq 'set') {
-		$self->displaySets($self->{setName});
-	} elsif ($type eq '') {
+		my $courseHomePage = $urlpath->new(
+			type => 'set_list',
+			args => { courseID => $urlpath->arg('courseID') }
+		);
+
+		my $email = $studentRecord->email_address;
+		print CGI::a({ href => "mailto:$email" }, $email), CGI::br(),
+			$r->maketext('Section') . ': ',    $studentRecord->section,    CGI::br(),
+			$r->maketext('Recitation') . ': ', $studentRecord->recitation, CGI::br();
+
+		if ($authz->hasPermissions($user, 'become_student')) {
+			my $act_as_student_url =
+				$self->systemLink($courseHomePage, params => { effectiveUser => $self->{studentName} });
+
+			print $r->maketext('Act as:') . ' ', CGI::a({ href => $act_as_student_url }, $studentRecord->user_id);
+		}
+
+		print WeBWorK::ContentGenerator::Grades::displayStudentStats($self, $self->{studentName});
+	} elsif ($self->{type} eq 'set') {
+		$self->displaySet($self->{setName});
+	} elsif ($self->{type} eq '') {
 		$self->index;
 	} else {
-		warn "Don't recognize statistics display type: |$type|";
+		warn "Don't recognize statistics display type: |$self->{type}|";
 	}
 
 	return '';
@@ -183,7 +172,7 @@ sub index {
 	my $ce         = $r->ce;
 	my $db         = $r->db;
 	my $user       = $r->param('user');
-	my $courseName = $urlpath->arg("courseID");
+	my $courseName = $urlpath->arg('courseID');
 
 	my @setList = map { $_->[0] } $db->listGlobalSetsWhere({}, 'set_id');
 
@@ -230,7 +219,7 @@ sub index {
 			userID   => $student->user_id
 		);
 		push @studentLinks,
-			CGI::a({ href => $self->systemLink($userStatisticsPage) }, "$last_name, $first_name  ($user_id)");
+			CGI::a({ href => $self->systemLink($userStatisticsPage) }, "$last_name, $first_name ($user_id)");
 	}
 
 	print CGI::div(
@@ -248,33 +237,27 @@ sub index {
 	);
 }
 
-###################################################
-# Determines the percentage of students whose score is greater than a given value
-# The percentages are fixed at 75, 50, 25 and 5%
+# Determines the percentage of students whose score is greater than a given value.
 sub determine_percentiles {
-	my $percent_brackets  = shift;
-	my @list_of_scores    = @_;
-	@list_of_scores       = sort {$a<=>$b} @list_of_scores;
-	my %percentiles          = ();
-	my $num_students      = $#list_of_scores;
-	foreach my $percentage (@{$percent_brackets}) {
-		$percentiles{$percentage} = @list_of_scores[int( (100-$percentage)*$num_students/100)];
-		$percentiles{$percentage} =0 unless defined($percentiles{$percentage});  #in case no students have tried this question
-	}
-	# for example
-	# $percentiles{75}  = @list_of_scores[int( 25*$num_students/100)];
-	# means that 75% of the students received this score ($percentiles{75}) or higher
-	%percentiles;
+	my $percent_brackets = shift;
+	my @list_of_scores   = sort { $a <=> $b } @_;
+	my $num_students     = $#list_of_scores;
+	my %percentiles = map { $_ => @list_of_scores[ int((100 - $_) * $num_students / 100) ] // 0 } @$percent_brackets;
+	# For example, $percentiles{75} = @list_of_scores[int(25 * $num_students / 100)]
+	# means that 75% of the students received this score $percentiles{75} or higher.
+	return %percentiles;
 }
-sub prevent_repeats {    # replace a string such as 0 0 0 86 86 100 100 100 by    0 - - 86 - 100 - -
-	my @inarray   = @_;
-	my @outarray = ();
+
+# Replace an array such as "[0, 0, 0, 86, 86, 100, 100, 100]" by "[0, '-', '-', 86, '-', 100, '-', '-']"
+sub prevent_repeats {
+	my @inarray = @_;
+	my @outarray;
 	my $saved_item = shift @inarray;
 	push @outarray, $saved_item;
-	while (@inarray )   {
+	while (@inarray) {
 		my $current_item = shift @inarray;
-		if ( $current_item == $saved_item ) {
-			push @outarray, '&nbsp;-';
+		if ($current_item == $saved_item) {
+			push @outarray, '-';
 		} else {
 			push @outarray, $current_item;
 			$saved_item = $current_item;
@@ -283,544 +266,498 @@ sub prevent_repeats {    # replace a string such as 0 0 0 86 86 100 100 100 by  
 	@outarray;
 }
 
-sub displaySets {
-	my $self             = shift;
-	my $r                = $self->r;
-	my $urlpath          = $r->urlpath;
-	my $db               = $r->db;
-	my $ce               = $r->ce;
-	my $authz            = $r->authz;
-	my $courseName       = $urlpath->arg("courseID");
-	my $setName          = $urlpath->arg("setID");
-	my $user             = $r->param('user');
-	my $setRecord        = $self->{setRecord};
-	my $root             = $ce->{webworkURLs}->{root};
+sub displaySet {
+	my $self       = shift;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $courseName = $urlpath->arg('courseID');
+	my $setName    = $urlpath->arg('setID');
+	my $setRecord  = $self->{setRecord};
 
-	my $setStatsPage     = $urlpath->newFromModule($urlpath->module, $r, courseID=>$courseName,statType=>'sets',setID=>$setName);
-
-	# set up some jitar stuff, specifically which problems
-	# are top level problems and how many are there.
-	my $set = $db->getGlobalSet($setName);
-	my $isJitarSet = $set && $set->assignment_type eq 'jitar';
-	my %topLevelProblems;
-	my $num_top_level_problems = 0;
-	if ($isJitarSet) {
-	    my @problemIDs = $db->listGlobalProblems($setName);
-	    foreach my $id (@problemIDs) {
-		my @seq = jitar_id_to_seq($id);
-		if ($#seq == 0) {
-		    $topLevelProblems{$id} = 1;
-		    $num_top_level_problems++;
-		}
-	    }
+	unless ($setRecord) {
+		print CGI::div({ class => 'alert alert-danger p-1' }, $r->maketext('Global set [_1] not found.', $setName));
+		return;
 	}
 
-	my $sort_method_name = $r->param('sort');
+	# Get a list of the global problem records for this set.
+	my @problems = $db->getGlobalProblemsWhere({ set_id => $setName }, 'problem_id');
 
-   	my @index_list                           = ();  # list of all student index
-	my @score_list                           = ();  # list of all student total percentage scores
-    my %attempts_list_for_problem            = ();  # a list of the number of attempts for each problem
-    my %number_of_attempts_for_problem       = ();  # the total number of attempst for this problem (sum of above list)
-    my %number_of_students_attempting_problem = ();  # the number of students attempting this problem.
-    my %correct_answers_for_problem          = ();  # the number of students correctly answering this problem (partial correctness allowed)
-    my %correct_adjusted_answers_for_problem = ();  # the number of students with an adjusted status  of 1 for the problem (only for jitar sets)
-	my $sort_method = sub {
-		my ($a,$b) = @_;
-		return 0 unless defined($sort_method_name);
-		return $b->{score} <=> $a->{score} if $sort_method_name eq 'score';
-		return $b->{index} <=> $a->{index} if $sort_method_name eq 'index';
-		return $a->{section} cmp $b->{section} if $sort_method_name eq 'section';
-		if ($sort_method_name =~/p(\d+)/) {
-		    my $left  =  $b->{problemData}->{$1} ||0;
-		    my $right =  $a->{problemData}->{$1} ||0;
-			return $left <=> $right;  # sort by number of attempts.
+	# The number of problems in the set.  Note that for jitar sets, this is the number of top level problems.
+	my $num_problems = 0;
+
+	# Formatted problem name.  For jitar sets this is the sequence separated by periods.  Otherwise it is just the
+	# problem id.
+	my %prettyProblemIDs;
+
+	# For jitar sets we need to know which problems are top level problems.
+	my $isJitarSet = $setRecord->assignment_type eq 'jitar';
+	my %topLevelProblems;
+
+	# Show a grading link for any essay problems in the set (if any).
+	my @GradeableRows;
+	my $showGradeRow = 0;
+
+	# Compile the following data for all students.
+	my @index_list;                              # List of all student indices
+	my @score_list;                              # List of all student total percentage scores
+	my %attempts_list_for_problem;               # A list of the number of attempts for each problem
+	my %num_attempts_for_problem;                # The total number of attempst for this problem (sum of above list)
+	my %num_students_attempting_problem;         # The number of students attempting this problem.
+	my %correct_answers_for_problem;             # The number of students correctly answering this problem
+												 # (partial correctness allowed).
+	my %correct_adjusted_answers_for_problem;    # The number of students with an adjusted status
+												 # of 1 for the problem (only for jitar sets).
+
+	for my $problem (@problems) {
+		$prettyProblemIDs{ $problem->problem_id } =
+			$isJitarSet ? join('.', jitar_id_to_seq($problem->problem_id)) : $problem->problem_id;
+
+		if ($problem->flags =~ /essay/) {
+			$showGradeRow = 1;
+			push(
+				@GradeableRows,
+				CGI::a(
+					{
+						href => $self->systemLink($urlpath->new(
+							type => 'instructor_problem_grader',
+							args =>
+								{ courseID => $courseName, setID => $setName, problemID => $problem->problem_id }
+						))
+					},
+					$r->maketext('Grade Problem')
+				)
+			);
+		} else {
+			push(@GradeableRows, '');
 		}
 
-	};
+		if ($isJitarSet) {
+			my @seq = jitar_id_to_seq($problem->problem_id);
+			if ($#seq == 0) {
+				$topLevelProblems{ $problem->problem_id } = 1;
+				++$num_problems;
+			}
+		} else {
+			++$num_problems;
+		}
 
-###############################################################
-#  Print tables
-###############################################################
+		# Initialize the number of correct answers and correct adjusted answers.
+		$correct_answers_for_problem{ $problem->problem_id }          = 0;
+		$correct_adjusted_answers_for_problem{ $problem->problem_id } = 0 if $isJitarSet;
+	}
 
-	my $max_num_problems  = 0;
-
-	# get user records
-	debug("Begin obtaining problem records for  set $setName");
+	# Get user records
+	debug("Begin obtaining problem records for set $setName");
 	my @userRecords = $db->getUsersWhere({
 		user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ]
 	});
 	debug("End obtaining user records for set $setName");
 
-    debug("begin main loop");
- 	my @augmentedUserRecords    = ();
- 	my $number_of_active_students;
+	debug('begin main loop');
+	for my $studentRecord (@userRecords) {
+		next unless $ce->status_abbrev_has_behavior($studentRecord->status, 'include_in_stats');
 
-    ########################################
-    # Notes for factoring this calculation
-    #
-    # Inputs include:
-    # $user
-    # $setName
-    # @userRecords
-    # @problemRecords  these are fetched for each student in @userRecords
-    #
-    ###################################
-
-	foreach my $studentRecord (@userRecords)   {
-		next unless ref($studentRecord);
 		my $student = $studentRecord->user_id;
-		next unless $ce->status_abbrev_has_behavior($studentRecord->status, "include_in_stats");
-		$number_of_active_students++;
-	    my $string          = '';
-	    my $twoString       = '';
-	    my $totalRight      = 0;
-	    my $total           = 0;
-		my $total_num_of_attempts_for_set = 0;
-		my %h_problemData   = ();
-		my $probNum         = 0;
+
+		my $totalRight                 = 0;
+		my $total                      = 0;
+		my $total_num_attempts_for_set = 0;
+		my $probNum                    = 0;
 
 		debug("Begin obtaining problem records for user $student set $setName");
-
 		my @problemRecords;
-		if ( $setRecord->assignment_type =~ /gateway/ ) {
-			my @setVersions = $db->listSetVersions($student, $setName);
-			foreach my $ver ( @setVersions ) {
-				push( @problemRecords,
-				      $db->getAllProblemVersions($student,
-								 $setName, $ver) );
-			}
-		} elsif ( $setRecord->assignment_type eq 'jitar') {
-		    my @problems = $db->getAllUserProblems($student,$setName);
-		    @problems = sort {$a->problem_id <=> $b->problem_id} @problems;
-		    push @problemRecords, @problems;
-
+		if ($setRecord->assignment_type =~ /gateway/) {
+			@problemRecords =
+				$db->getProblemVersionsWhere({ user_id => $student, set_id => { like => "$setName,v\%" } });
 		} else {
-			@problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllUserProblems( $student, $setName );
+			@problemRecords = $db->getUserProblemsWhere({ user_id => $student, set_id => $setName });
 		}
 		debug("End obtaining problem records for user $student set $setName");
 
-		my $num_of_problems = @problemRecords;
-		$max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
+		for my $problemRecord (@problemRecords) {
+			my $probID = $problemRecord->problem_id;
 
-		if ($isJitarSet) {
-		    $num_of_problems = $num_top_level_problems;
-		}
-	   ########################################
-		# Notes for factoring the calculation in this loop.
-		#
-		# Inputs include:
-		#
-		#
-		# @problemRecords
-		# returns
-		#       $num_of_attempts
-		#       $status
-		# updates
-		#     	$number_of_students_attempting_problem{$probID}++;
-		# 		@{ $attempts_list_for_problem{$probID} }
-		# 		$number_of_attempts_for_problem{$probID}
-		# 		$total_num_of_attempts_for_set
-		# 		$correct_answers_for_problem{$probID}
-		#
-		#       $string (formatting output)
-		#       $twoString (more formatted output)
-		#       $total
-		#       $totalRight
-		###################################
+			# It is possible that $problemRecord->num_correct or $problemRecord->num_correct is an empty or blank string
+			# instead of 0.  The || clause fixes this and prevents warning messages in the usage below.
+			my $num_attempts = ($problemRecord->num_correct || 0) + ($problemRecord->num_incorrect || 0);
 
-		foreach my $problemRecord (@problemRecords) {
-			next unless ref($problemRecord);
+			my $probValue = $problemRecord->value;
+			$probValue = 1 unless defined($probValue) && $probValue ne '';    # FIXME:  Set defaults here?
 
-				# warn "Can't find record for problem $prob in set $setName for $student";
-				# FIXME check the legitimate reasons why a student record might not be defined
-			####################################################################
-			# Grab data from the database
-			####################################################################
-			# It's possible that $problemRecord->num_correct or $problemRecord->num_correct
-			# or $problemRecord->status is an empty
-			# or blank string instead of 0.  The || clause fixes this and prevents
-			# warning messages in the comparisons below.
+			# It is also possible that $problemRecord->status is an empty or blank string instead of 0.
+			my $status = $problemRecord->status || 0;
 
-			my $probID             = $problemRecord->problem_id;
-			my $attempted          = $problemRecord->attempted;
-			my $num_correct        = $problemRecord->num_correct     || 0;
-			my $num_incorrect      = $problemRecord->num_incorrect   || 0;
-			my $num_of_attempts    = $num_correct + $num_incorrect;
+			# Clamp the status value between 0 and 1.
+			$status = 0 if $status < 0;
+			$status = 1 if $status > 1;
 
-		    # initialize the number of correct answers for this problem
-		    # if the value has not been defined.
-	        $correct_answers_for_problem{$probID}  = 0 unless defined($correct_answers_for_problem{$probID});
+			# Get the adjusted jitar grade for top level problems if this is a jitar set.
+			my $adjusted_status = $isJitarSet ? jitar_problem_adjusted_status($problemRecord, $db) : '';
 
+			# Clamp the adjusted status value between 0 and 1.
+			$adjusted_status = 0 if $adjusted_status ne '' && $adjusted_status < 0;
+			$adjusted_status = 1 if $adjusted_status ne '' && $adjusted_status > 1;
 
-			my $probValue          = $problemRecord->value;
-			# set default problem value here
-			$probValue             = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
-
-			my $status             = $problemRecord->status          || 0;
-			# sanity check that the status (score) is between 0 and 1
-			my $valid_status       = ($status >= 0 and $status <=1 ) ? 1 : 0;
-			# adjusted status only makes sense for jitar sets
-			my $adjusted_status = $isJitarSet ? jitar_problem_adjusted_status($problemRecord,$db) : '';
-
-	        ###################################################################
-	        # Determine the string $longStatus which will display the student's current score
-	        ###################################################################
-	        my $longStatus = '';
-			if (!$attempted){
-				$longStatus     = '.';
-			} elsif   ($valid_status) {
-				$longStatus     = int(100*$status+.5);
-				$longStatus     = ($longStatus == 100) ? 'C' : $longStatus;
-			} else	{
-				$longStatus 	= 'X';
-			}
-
-			$string          .=  threeSpaceFill($longStatus);
-			$twoString       .= threeSpaceFill($num_incorrect);
-
-			#if its a jitar set we should compute total and totalRight using adjusted status and top level problems
+			# If it is a jitar set, then compute total and totalRight using adjusted status and top level problems.
 			if ($isJitarSet) {
-			    my @seq = jitar_id_to_seq($probID);
-			    if ($#seq == 0) {
-				$total += $probValue;
-				$totalRight += round_score($adjusted_status*$probValue) if $valid_status;
-			    }
-			} else {
-			    $total           += $probValue;
-			    $totalRight      += round_score($status*$probValue) if $valid_status;
-			}
-
-			 # add on the scores for this problem
-			if (defined($attempted) and $attempted) {
-				$number_of_students_attempting_problem{$probID}++;
-				push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
-				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
-				$h_problemData{$probID}                               = $num_incorrect;
-				$total_num_of_attempts_for_set                       += $num_of_attempts;
-				$correct_answers_for_problem{$probID}                += $status;
-				if ($isJitarSet) {
-				    $correct_adjusted_answers_for_problem{$probID} += $adjusted_status;
+				my @seq = jitar_id_to_seq($probID);
+				if ($#seq == 0) {
+					$total      += $probValue;
+					$totalRight += $adjusted_status * $probValue;
 				}
-
+			} else {
+				$total      += $probValue;
+				$totalRight += $status * $probValue;
 			}
 
+			# Add on the scores for this problem.
+			if ($problemRecord->attempted) {
+				$num_students_attempting_problem{$probID}++;
+				push(@{ $attempts_list_for_problem{$probID} }, $num_attempts);
+				$num_attempts_for_problem{$probID}             += $num_attempts;
+				$total_num_attempts_for_set                    += $num_attempts;
+				$correct_answers_for_problem{$probID}          += $status;
+				$correct_adjusted_answers_for_problem{$probID} += $adjusted_status if ($isJitarSet);
+			}
 		}
 
+		my $act_as_student_url =
+			$self->systemLink($urlpath->new(type => 'set_list', args => { courseID => $courseName }),
+				params => { effectiveUser => $studentRecord->user_id });
+		my $email = $studentRecord->email_address;
 
-		my $act_as_student_url = $self->systemLink($urlpath->new(type=>'set_list',args=>{courseID=>$courseName}),
-		                                           params=>{effectiveUser => $studentRecord->user_id}
-		);
-		my $email              = $studentRecord->email_address;
-		# FIXME  this needs formatting
+		my $avg_num_attempts = $num_problems     ? $total_num_attempts_for_set / $num_problems   : 0;
+		my $successIndicator = $avg_num_attempts ? ($totalRight / $total)**2 / $avg_num_attempts : 0;
 
-		my $avg_num_attempts = ($num_of_problems) ? $total_num_of_attempts_for_set/$num_of_problems : 0;
-		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
-
-
-		my $temp_hash         = {         user_id        => $studentRecord->user_id,
-		                                  last_name      => $studentRecord->last_name,
-		                                  first_name     => $studentRecord->first_name,
-		                                  score          => $totalRight,
-		                                  total          => $total,
-		                                  index          => $successIndicator,
-		                                  section        => $studentRecord->section,
-		                                  recitation     => $studentRecord->recitation,
-		                                  problemString  => "<pre>$string\n$twoString</pre>",
-		                                  act_as_student => $act_as_student_url,
-		                                  email_address  => $studentRecord->email_address,
-		                                  problemData    => {%h_problemData},
-		};
-		# add this data to the list of total scores (out of 100)
-		# add this data to the list of success indices.
-		push( @index_list, $temp_hash->{index});
-		push( @score_list, ($temp_hash->{total}) ?$temp_hash->{score}/$temp_hash->{total} : 0 ) ;
-		push( @augmentedUserRecords, $temp_hash );
-
+		# Add the success indicator to the list of success indices.
+		push(@index_list, $successIndicator);
+		# Add the score to the list of total scores (out of 100).
+		push(@score_list, $total ? $totalRight / $total : 0);
 	}
-	debug("end mainloop");
+	debug('end mainloop');
 
-	@augmentedUserRecords = sort {           &$sort_method($a,$b)
-												||
-							lc($a->{last_name}) cmp lc($b->{last_name} ) } @augmentedUserRecords;
+	# Determine index quartiles.
+	# Percentage of students having scores or indices above this cutoff value.
+	my @brackets1         = (90, 80, 70, 60, 50, 40, 30, 20, 10);
+	my %index_percentiles = determine_percentiles(\@brackets1, @index_list);
+	my %score_percentiles = determine_percentiles(\@brackets1, @score_list);
+	my %attempts_percentiles_for_problem;
+	my %problemPage;
 
-	# sort the problem IDs
-	my @problemIDs  = sort {$a<=>$b} keys %correct_answers_for_problem;
-	my %prettyProblemIDs;
+	my @brackets2 = (95, 75, 50, 25, 5, 1);
+	for my $problem (@problems) {
+		my $probID = $problem->problem_id;
 
-	if ($isJitarSet) {
-	    %prettyProblemIDs = map {$_=> join('.',jitar_id_to_seq($_))}
-	         @problemIDs;
-	} else {
-	    %prettyProblemIDs = map {$_ => $_} @problemIDs;
-	}
+		# Percentage of students having this many attempts or more.
+		$attempts_percentiles_for_problem{$probID} =
+			{ determine_percentiles([@brackets2], @{ $attempts_list_for_problem{$probID} }) };
 
-	# determine index quartiles
-    my @brackets1          = (90,80,70,60,50,40,30,20,10);  #% students having scores or indices above this cutoff value
-    my @brackets2          = (95, 75,50,25,5,1);       # % students having this many incorrect attempts or more
-    my %index_percentiles = determine_percentiles(\@brackets1, @index_list);
-    my %score_percentiles = determine_percentiles(\@brackets1, @score_list);
-    my %attempts_percentiles_for_problem = ();
-    my %problemPage                      = (); # link to the problem page
-    foreach my $probID (@problemIDs) {
-
-    	$attempts_percentiles_for_problem{$probID} =   {
-    		determine_percentiles([@brackets2], @{$attempts_list_for_problem{$probID}})
-
-    	};
-
-    	$problemPage{$probID} = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
-			courseID => $courseName, setID => $setName, problemID => $probID);
-
-    }
-
-###################################################################################################
-#  Begin SVG bar graph showing the percentage of students with correct answers for each problem
-
-my $numberofproblems = scalar(@problemIDs);
-my ($barwidth,$barsep) = (22, 4); # = total width (in pixels) used for each bar is $barwidth+2*$barsep
-my $totalbarwidth = $barwidth + 2*$barsep;
-my ($topmargin,$rightmargin,$bottommargin,$leftmargin) = (30, 20, 35, 40); # pixels
-my ($plotwindowwidth,$plotwindowheight) = ($numberofproblems*($barwidth+2*$barsep), 200); # pixels
-# since $plotwindowheight = 200, the height of each bar is 2*(percentagescore)
-if ( $plotwindowwidth < 450 ) { $plotwindowwidth = 450; }
-my $ylabelsep = 4; # pixels
-my ($imagewidth,$imageheight) = ($leftmargin+$plotwindowwidth+$rightmargin, $topmargin+$plotwindowheight+$bottommargin); # pixels
-$imagewidth+=200 if $isJitarSet;
-my ($titlexpixel,$titleypixel) = ($leftmargin + sprintf("%d",$plotwindowwidth/2), $topmargin-10); # pixels
-my ($xaxislabelxpixel,$xaxislabelypixel) = ($titlexpixel,$imageheight-5); # pixels
-my $yaxislabelxpixel = $leftmargin-4; # pixel
-
-
-####################################
-# Create a string for the svg image
-
-my $svg = '';
-$svg = $svg . "<svg id=\"bargraph\" xmlns=\"http://www.w3.org/2000/svg\" xlink=\"http://www.w3.org/1999/xlink\" width=\"" . $imagewidth . "\" height=\"" . $imageheight ."\">\n";
-
-$svg = $svg . "<rect id=\"bargraphwindow\" x=\"0\" y=\"0\" width=\"". $imagewidth ."\" height=\"". $imageheight ."\" rx=\"20\" ry=\"20\" style=\"fill:white;stroke:888888;stroke-width:2;fill-opacity:0;stroke-opacity:1\" />\n";
-
-$svg = $svg . "<text id=\"bargraphtitle\" x=\"". $titlexpixel ."\" y=\"". $titleypixel ."\" font-family=\"sans-serif\" font-size=\"14\" fill=\"black\" text-anchor=\"middle\" font-weight=\"bold\">".$r->maketext("Percentage of Active Students with Correct Answers")."</text>\n";
-
-$svg = $svg . "<text id=\"bargraphxaxislabel\" x=\"". $xaxislabelxpixel ."\" y=\"". $xaxislabelypixel ."\" font-family=\"sans-serif\" font-size=\"14\" fill=\"black\" text-anchor=\"middle\" font-weight=\"normal\">".$r->maketext("Problem Number")."</text>\n";
-
-$svg = $svg . "<rect id=\"bargraphplotwindow\" x=\"". $leftmargin ."\" y=\"". $topmargin ."\" width=\"". $plotwindowwidth ."\" height=\"". $plotwindowheight ."\" style=\"fill:white;stroke:bbbbbb;stroke-width:1;fill-opacity:0;stroke-opacity:1\" />\n";
-
-my $yaxislabelypixel = 0;
-my $yaxislabel = "";
-foreach my $i (0..5) {
-    $yaxislabelypixel = $topmargin + 5 + ($i * sprintf("%d",$plotwindowheight/5));
-    $yaxislabel = 20*(5 - $i);
-    $svg = $svg . "<text id=\"bargraphylabel". $yaxislabel ."\" x=\"". $yaxislabelxpixel ."\" y=\"". $yaxislabelypixel ."\"  font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"end\" font-weight=\"normal\">". $yaxislabel ."%</text>\n";
-}
-
-my $yaxisruleypixel = 0;
-my $yaxisrulerightxpixel = $leftmargin + $plotwindowwidth - $rightmargin;
-foreach my $i (1..9) {
-    $yaxisruleypixel = $topmargin + ($i * sprintf("%d",$plotwindowheight/10));
-    $svg = $svg . "<line id=\"yline90\"  x1=\"". $leftmargin ."\" y1=\"". $yaxisruleypixel ."\"  x2=\"". $yaxisrulerightxpixel ."\" y2=\"". $yaxisruleypixel ."\"  style=\"stroke:#bbbbbb;stroke-width:1;stroke-opacity:1\" />\n";
-}
-
-my $linkstring = "";
-my $percentcorrect = 0;
-my $problemnumber = 1;
-my $barheight = 0;
-my $barxpixel = 0;
-my $barypixel = 0;
-my $problabelxpixel = 0;
-#my $problabelypixel = 0;
-my $problabelypixel = $topmargin + $plotwindowheight - $barheight + 15;
-
-for (my $i=0; $i<=$#problemIDs; $i++) {
-    my  $probID = $problemIDs[$i];
-    if ($isJitarSet && $topLevelProblems{$probID}) {
-	$percentcorrect = ($number_of_students_attempting_problem{$probID})?
-    	sprintf("%0.0f",100*$correct_adjusted_answers_for_problem{$probID}/$number_of_students_attempting_problem{$probID})
-    	: 0;  #avoid division by zero
-	$barheight = sprintf("%d", $percentcorrect * $plotwindowheight / 100 );
-	$barxpixel = $leftmargin + $i * ($barwidth + 2*$barsep) + $barsep +3;
-	$barypixel = $topmargin + $plotwindowheight - $barheight;
-	$svg = $svg . "<rect id=\"adjbar". $probID ."\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"". $barwidth ."\" height=\"". $barheight ."\" fill=\"rgb(0,51,136)\" /></a>\n";
-    }
-    $linkstring = $self->systemLink($problemPage{$probID});
-    $percentcorrect = ($number_of_students_attempting_problem{$probID})?
-    	sprintf("%0.0f",100*$correct_answers_for_problem{$probID}/$number_of_students_attempting_problem{$probID})
-    	: 0;  #avoid division by zero
-    $barheight = sprintf("%d", $percentcorrect * $plotwindowheight / 100 );
-    $barxpixel = $leftmargin + $i * ($barwidth + 2*$barsep) + $barsep;
-    $barypixel = $topmargin + $plotwindowheight - $barheight;
-
-    $problabelxpixel = $leftmargin + $i * $totalbarwidth + $barsep + sprintf("%d",$totalbarwidth/2);
-    # $problabelypixel = $topmargin + $plotwindowheight - $barheight;
-    my $prettyID = $prettyProblemIDs{$probID};
-
-    if (length($prettyID) > 4) {
-	$prettyID = '##';
-    }
-
-    $svg = $svg . "<a xlink:href=\"". $linkstring ."\" target=\"_blank\"><rect id=\"bar". $probID ."\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"". $barwidth ."\" height=\"". $barheight ."\" fill=\"rgb(0,153,198)\" /><text id=\"problem". $probID ."\" x=\"". $problabelxpixel ."\" y=\"". $problabelypixel ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"middle\">". $prettyID ."</text></a>\n";
-}
-
-	# print a legend if its a jitar set
-	if ($isJitarSet) {
-	    $barxpixel = $leftmargin+$plotwindowwidth;
-	    $barypixel = 55;
-	    $svg = $svg . "<rect id=\"legend1\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"10\" height=\"10\" fill=\"rgb(0,153,198)\" />\n";
-	    $svg = $svg . "<text id=\"legend1lab\" x=\"". ($barxpixel+15) ."\" y=\"". ($barypixel+10) ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"start\">".$r->maketext("Correct Status")."</text>";
-
-	    $barypixel = $barypixel - 15;
-	    $svg = $svg . "<rect id=\"legend2\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"10\" height=\"10\" fill=\"rgb(0,51,136)\" />\n";
-	    $svg = $svg . "<text id=\"legend2lab\" x=\"". ($barxpixel+15) ."\" y=\"". ($barypixel+10) ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"start\">".$r->maketext("Correct Adjusted Status")."</text>";
-	}
-
-$svg = $svg . "</svg>";
-
-print CGI::p("$svg"); # insert SVG graph inside an html paragraph
-
-# End SVG bar graph showing the percentage of students with correct answers for each problem
-###################################################################################################
-
-
-#####################################################################################
-# Table showing the percentage of students with correct answers for each problems
-#####################################################################################
-
-print  CGI::p($r->maketext('The percentage of active students with correct answers for each problem')),
-		CGI::start_table({ class => 'stats-table table table-bordered' }),
-		CGI::Tr(CGI::td(
-			[ $r->maketext('Problem #'),
-			   map {CGI::a({ href=>$self->systemLink($problemPage{$_}) },$prettyProblemIDs{$_})} @problemIDs
-			]
-		)),
-		CGI::Tr(CGI::td(
-			[ $r->maketext('% correct'),map {($number_of_students_attempting_problem{$_})
-			                      ? sprintf("%0.0f",100*$correct_answers_for_problem{$_}/$number_of_students_attempting_problem{$_})
-			                      : '-'}
-			                       @problemIDs
-			]
-		)), ($isJitarSet ?
-	      CGI::TR(CGI::td(
-			  [ $r->maketext('% correct with review'), map {($number_of_students_attempting_problem{$_}) && $topLevelProblems{$_} ? sprintf("%0.0f",100*$correct_adjusted_answers_for_problem{$_}/$number_of_students_attempting_problem{$_}) : '-'} @problemIDs])) : ''),
-		CGI::Tr(CGI::td(
-			[ $r->maketext('avg attempts'),map {($number_of_students_attempting_problem{$_})
-			                      ? sprintf("%0.1f",$number_of_attempts_for_problem{$_}/$number_of_students_attempting_problem{$_})
-			                      : '-'}
-			                       @problemIDs
-			]
-			)),
-		CGI::Tr(CGI::td(
-			[ $r->maketext('# of active students'), map {($number_of_students_attempting_problem{$_})
-			                      ? $number_of_students_attempting_problem{$_}
-			                      : '-'}
-			                       @problemIDs
-			]
+		if ($setRecord->assignment_type =~ /gateway/) {
+			# If this is a gateway quiz, there is not a valid link to the problem, so use the Problem.pm editMode with
+			# an undefined set instead.
+			$problemPage{$probID} = $self->systemLink(
+				$urlpath->newFromModule(
+					'WeBWorK::ContentGenerator::Problem', $r,
+					courseID  => $courseName,
+					setID     => 'Undefined_Set',
+					problemID => 1
+				),
+				params => {
+					editMode       => 'savedFile',
+					sourceFilePath => $problem->source_file
+				}
+			);
+		} else {
+			$problemPage{$probID} = $self->systemLink($urlpath->newFromModule(
+				'WeBWorK::ContentGenerator::Problem', $r,
+				courseID  => $courseName,
+				setID     => $setName,
+				problemID => $probID
 			));
-
-	#show a grading link if necc
-	my $gradingLink = "";
-	my @GradeableRows;
-	my $showGradeRow = 0;
-	unshift (@GradeableRows, CGI::td({}, $r->maketext("Manual Grader")));
-	foreach my $problemID (@problemIDs) {
-	    my $globalProblem = $db->getGlobalProblem($setName,$problemID);
-	    if ($globalProblem->flags =~ /essay/) {
-		$showGradeRow = 1;
-		my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseName, setID => $setName, problemID => $problemID });
-		push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $r->maketext("Grade Problem"))));
-
-	    }  else {
-		push (@GradeableRows, CGI::td());
-	    }
+		}
 	}
 
-	if ($showGradeRow) {
-	    print CGI::Tr(@GradeableRows);
+	# SVG bar graph showing the percentage of students with correct answers for each problem.
+
+	my ($barwidth, $barsep) = (22, 4);
+	my $totalbarwidth = $barwidth + 2 * $barsep;
+	my ($topmargin, $rightmargin, $bottommargin, $leftmargin) = (30, 20, 35, 40);
+	my ($plotwindowwidth, $plotwindowheight) = (@problems * ($barwidth + 2 * $barsep), 200);
+	# Since $plotwindowheight = 200, the height of each bar is 2 * percentagescore.
+	if ($plotwindowwidth < 450) { $plotwindowwidth = 450; }
+	my ($imagewidth, $imageheight) =
+		($leftmargin + $plotwindowwidth + $rightmargin, $topmargin + $plotwindowheight + $bottommargin);
+	$imagewidth += 200 if $isJitarSet;
+	my ($titlexpixel, $titleypixel) = ($leftmargin + sprintf('%d', $plotwindowwidth / 2), $topmargin - 10);
+	my ($xaxislabelxpixel, $xaxislabelypixel) = ($titlexpixel, $imageheight - 5);
+	my $yaxislabelxpixel = $leftmargin - 4;
+
+	# Create a string for the svg image.
+	my $svg =
+		'<svg id="bargraph" xmlns="http://www.w3.org/2000/svg" '
+		. qq!width="100%" height="100%" viewbox="0 0 $imagewidth $imageheight" !
+		. 'aria-labelledby="bargraphtitle">'
+
+		. qq!<rect id="bargraphwindow" x="0" y="0" width="$imagewidth" height="$imageheight" !
+		. ' rx="20" ry="20" stroke="#888" stroke-width="2" stroke-opacity="1" fill="white" fill-opacity="0" />'
+
+		. qq!<text id="bargraphtitle" x="$titlexpixel" y="$titleypixel" !
+		. 'font-family="sans-serif" font-size="14" fill="black" text-anchor="middle" font-weight="bold">'
+		. $r->maketext('Percentage of Active Students with Correct Answers')
+		. '</text>'
+
+		. qq!<text id="bargraphxaxislabel" x="$xaxislabelxpixel" y="$xaxislabelypixel" !
+		. 'font-family="sans-serif" font-size="14" fill="black" text-anchor="middle" font-weight="normal">'
+		. $r->maketext('Problem Number')
+		. '</text>'
+
+		. qq!<rect id="bargraphplotwindow" x="$leftmargin" y="$topmargin" !
+		. qq!width="$plotwindowwidth" height="$plotwindowheight" !
+		. 'fill="white" stroke="#bbb" stroke-width="1" fill-opacity="0" stroke-opacity="1" />';
+
+	my $yaxislabelypixel = 0;
+	my $yaxislabel       = '';
+	for my $i (0 .. 5) {
+		$yaxislabelypixel = $topmargin + 5 + ($i * sprintf('%d', $plotwindowheight / 5));
+		$yaxislabel       = 20 * (5 - $i);
+		$svg .=
+			qq!<text id="bargraphylabel$yaxislabel" x="$yaxislabelxpixel" y="$yaxislabelypixel" !
+			. 'font-family="sans-serif" font-size="12" fill="black" text-anchor="end" font-weight="normal">'
+			. $yaxislabel
+			. '%</text>';
 	}
 
+	my $yaxisruleypixel      = 0;
+	my $yaxisrulerightxpixel = $leftmargin + $plotwindowwidth;
+	for my $i (1 .. 9) {
+		$yaxisruleypixel = $topmargin + ($i * sprintf('%d', $plotwindowheight / 10));
+		$svg .=
+			qq!<line x1="$leftmargin" y1="$yaxisruleypixel" !
+			. qq!x2="$yaxisrulerightxpixel" y2="$yaxisruleypixel" !
+			. 'stroke="#bbb" stroke-width="1" stroke-opacity="1" />';
+	}
 
-	print CGI::end_table();
+	my $problabelypixel = $topmargin + $plotwindowheight + 15;
 
-#####################################################################################
-# table showing percentile statistics for scores and success indices
-#####################################################################################
-	print
+	for (my $i = 0; $i <= $#problems; $i++) {
+		my $probID = $problems[$i]->problem_id;
 
-	    	CGI::p(CGI::i($r->maketext('The percentage of students receiving at least these scores. The median score is in the 50% column.'))),
-			CGI::start_table({ class => 'stats-table table table-bordered' }),
-				CGI::Tr(
-					CGI::td( [$r->maketext('% students'),
-					          (map {  "&nbsp;".$_   } @brackets1) ,
-					          $r->maketext('top score'),
+		my $percentcorrect = 0;
+		my $barheight      = 0;
+		my $barxpixel      = 0;
+		my $barypixel      = 0;
 
-					         ]
-					)
-				),
-				CGI::Tr(
-					CGI::td( [
-						$r->maketext('Score'),
-						(prevent_repeats map { sprintf("%0.0f",100*$score_percentiles{$_})   } @brackets1),
-						sprintf("%0.0f",100),
-						]
-					)
-				),
-				CGI::Tr(
-					CGI::td( [
-						$r->maketext('Success Index'),
-						(prevent_repeats  map { sprintf("%0.0f",100*$index_percentiles{$_})   } @brackets1),
-						sprintf("%0.0f",100),
-						]
-					)
+		if ($isJitarSet && $topLevelProblems{$probID}) {
+			$percentcorrect = $num_students_attempting_problem{$probID}
+				? sprintf('%0.0f',
+					100 * $correct_adjusted_answers_for_problem{$probID} / $num_students_attempting_problem{$probID})
+				: 0;    # Avoid division by zero
+			$barheight = sprintf('%d', $percentcorrect * $plotwindowheight / 100);
+			$barxpixel = $leftmargin + $i * ($barwidth + 2 * $barsep) + $barsep + 3;
+			$barypixel = $topmargin + $plotwindowheight - $barheight;
+			$svg .=
+				qq!<rect id="adjbar$probID" x="$barxpixel" y="$barypixel" width="$barwidth" height="$barheight" !
+				. 'fill="rgb(0,51,136)" />';
+		}
+		$percentcorrect =
+			$num_students_attempting_problem{$probID}
+			? sprintf('%0.0f', 100 * $correct_answers_for_problem{$probID} / $num_students_attempting_problem{$probID})
+			: 0;    # Avoid division by zero
+		$barheight = sprintf('%d', $percentcorrect * $plotwindowheight / 100);
+		$barxpixel = $leftmargin + $i * $totalbarwidth + $barsep;
+		$barypixel = $topmargin + $plotwindowheight - $barheight;
+
+		my $problabelxpixel = $leftmargin + $i * $totalbarwidth + sprintf('%d', $totalbarwidth / 2);
+
+		my $prettyID = $prettyProblemIDs{$probID};
+		$prettyID = '##' if (length($prettyID) > 4);
+		$svg .=
+			'<a '
+			. ($problemPage{$probID} ? qq!href="$problemPage{$probID}"! : '')
+			. ' target="_blank">'
+			. qq!<rect id="bar$probID" x="$barxpixel" y="$barypixel" !
+			. qq!width="$barwidth" height="$barheight" fill="rgb(0,153,198)" />!
+			. qq!<text id="problem$probID" x="$problabelxpixel" y="$problabelypixel" !
+			. qq!font-family="sans-serif" font-size="12" fill="black" text-anchor="middle">$prettyID</text></a>!;
+	}
+
+	# Print a legend if its a jitar set
+	if ($isJitarSet) {
+		my $barxpixel = $leftmargin + $plotwindowwidth + 10;
+		my $barypixel = 55;
+		$svg .= qq!<rect id="legend1" x="$barxpixel" y="$barypixel" width="10" height="10" fill="rgb(0,153,198)" />!;
+		$svg .=
+			qq!<text id="legend1lab" x="${\($barxpixel + 15)}" y="${\($barypixel + 10)}" !
+			. 'font-family="sans-serif" font-size="12" fill="black" text-anchor="start">'
+			. $r->maketext('Correct Status')
+			. '</text>';
+
+		$barypixel = $barypixel - 15;
+		$svg .= qq!<rect id="legend2" x="$barxpixel" y="$barypixel" width="10" height="10" fill="rgb(0,51,136)" />!;
+		$svg .=
+			qq!<text id="legend2lab" x="${\($barxpixel + 15)}" y="${\($barypixel + 10)}" !
+			. 'font-family="sans-serif" font-size="12" fill="black" text-anchor="start">'
+			. $r->maketext('Correct Adjusted Status')
+			. '</text>';
+	}
+
+	$svg .= '</svg>';
+
+	print CGI::div({ class => 'img-fluid mb-3', style => "max-width:${imagewidth}px" }, $svg);
+
+	# Print tables
+
+	# Table showing the percentage of students with correct answers for each problems
+	print CGI::p($r->maketext('The percentage of active students with correct answers for each problem')),
+		CGI::start_div({ class => 'table-responsive' }),
+		CGI::start_table({ class => 'stats-table table table-bordered' }), CGI::Tr(
+			CGI::td($r->maketext('Problem #')),
+			CGI::td(
+				{ class => 'text-center' },
+				[
+					map {
+						my $probID = $_->problem_id;
+						$problemPage{$probID}
+						? CGI::a({ href => $problemPage{$probID} }, $prettyProblemIDs{$probID})
+						: $prettyProblemIDs{$probID}
+					} @problems
+				]
+			)
+		),
+		CGI::Tr(
+			CGI::td($r->maketext('% correct')),
+			CGI::td(
+				{ class => 'text-center' },
+				[
+					map {
+						my $probID = $_->problem_id;
+						($num_students_attempting_problem{$probID})
+						? sprintf('%0.0f',
+							100 * $correct_answers_for_problem{$probID} / $num_students_attempting_problem{$probID})
+						: '-'
+					} @problems
+				]
+			)
+		),
+		(
+			$isJitarSet
+			? CGI::TR(
+				CGI::td($r->maketext('% correct with review')),
+				CGI::td(
+					{ class => 'text-center' },
+					[
+						map {
+							my $probID = $_->problem_id;
+							$num_students_attempting_problem{$probID} && $topLevelProblems{$probID}
+							? sprintf('%0.0f',
+								100 * $correct_adjusted_answers_for_problem{$probID} /
+								$num_students_attempting_problem{$probID})
+							: '-'
+						} @problems
+					]
 				)
-			;
+			)
+			: ''
+		),
+		CGI::Tr(
+			CGI::td($r->maketext('avg attempts')),
+			CGI::td(
+				{ class => 'text-center' },
+				[
+					map {
+						my $probID = $_->problem_id;
+						($num_students_attempting_problem{$probID})
+						? sprintf('%0.1f',
+							$num_attempts_for_problem{$probID} / $num_students_attempting_problem{$probID})
+						: '-'
+					} @problems
+				]
+			)
+		),
+		CGI::Tr(
+			CGI::td($r->maketext('# of active students')),
+			CGI::td(
+				{ class => 'text-center' },
+				[
+					map {
+						($num_students_attempting_problem{ $_->problem_id })
+						? $num_students_attempting_problem{ $_->problem_id }
+						: '-'
+					} @problems
+				]
+			)
+		);
 
-	print     CGI::end_table(),
+	print CGI::Tr(CGI::td($r->maketext('Manual Grader')), CGI::td(\@GradeableRows)) if ($showGradeRow);
 
-		;
+	print CGI::end_table(), CGI::end_div();
 
-#####################################################################################
-# table showing percentile statistics for scores and success indices
-#####################################################################################
-	print
+	# Table showing percentile statistics for scores and success indices.
+	print CGI::p(CGI::i(
+		$r->maketext(
+			'The percentage of students receiving at least these scores. The median score is in the 50% column.')
+	));
+	print CGI::div(
+		{ class => 'table-responsive' },
+		CGI::table(
+			{ class => 'stats-table table table-bordered' },
+			CGI::Tr(
+				CGI::td($r->maketext('% students')),
+				CGI::td({ class => 'text-center' }, \@brackets1),
+				CGI::td({ class => 'text-center' }, $r->maketext('top score'))
+			),
+			CGI::Tr(
+				CGI::td($r->maketext('Score')),
+				CGI::td(
+					{ class => 'text-center' },
+					[ prevent_repeats map { sprintf('%0.0f', 100 * $score_percentiles{$_}) } @brackets1 ]
+				),
+				CGI::td({ class => 'text-center' }, sprintf('%0.0f', 100))
+			),
+			CGI::Tr(
+				CGI::td($r->maketext('Success Index')),
+				CGI::td(
+					{ class => 'text-center' },
+					[ prevent_repeats map { sprintf('%0.0f', 100 * $index_percentiles{$_}) } @brackets1 ]
+				),
+				CGI::td({ class => 'text-center' }, sprintf('%0.0f', 100))
+			)
+		)
+	);
 
-	    	CGI::p(CGI::i($r->maketext('Percentile cutoffs for number of attempts. The 50% column shows the median number of attempts.'))),
-			CGI::start_table({ class => 'stats-table table table-bordered' }),
-				CGI::Tr(
-					CGI::td( [$r->maketext('% students'),
-					          (map {  "&nbsp;".($_)  } @brackets2) ,
+	# Table showing percentile statistics for scores and success indices.
+	print CGI::p(CGI::i(
+		$r->maketext(
+			'Percentile cutoffs for number of attempts. The 50% column shows the median number of attempts.')
+		)),
+		CGI::start_div({ class => 'table-responsive' }),
+		CGI::start_table({ class => 'stats-table table table-bordered' }),
+		CGI::Tr(CGI::td($r->maketext('% students')), CGI::td({ class => 'text-center' }, \@brackets2));
 
-					         ]
-					)
-				);
-
-
-	foreach my $probID (@problemIDs) {
-		print	CGI::Tr(
-					CGI::td( [
-						CGI::a({ href=>$self->systemLink($problemPage{$probID}) },$r->maketext("Problem [_1]",$prettyProblemIDs{$probID})),
-						( prevent_repeats reverse map { sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets2),
-
-						]
-					)
-				);
-
+	for my $problem (@problems) {
+		my $probID = $problem->problem_id;
+		print CGI::Tr(
+			CGI::td(
+				$problemPage{$probID}
+				? CGI::a({ href => $problemPage{$probID} },
+					$r->maketext('Problem [_1]', $prettyProblemIDs{$probID}))
+				: $prettyProblemIDs{$probID}
+			),
+			CGI::td(
+				{ class => 'text-center' },
+				[
+					prevent_repeats reverse
+						map { sprintf('%0.0f', $attempts_percentiles_for_problem{$probID}{$_}) } @brackets2
+				]
+			)
+		);
 	}
-	print CGI::end_table();
 
-	return "";
-}
+	print CGI::end_table(), CGI::end_div();
 
-
-#################################
-# Utility function NOT a method
-#################################
-sub threeSpaceFill {
-	my $num = shift @_ || 0;
-
-	if (length($num)<=1) {return "$num".'&nbsp;&nbsp;';}
-	elsif (length($num)==2) {return "$num".'&nbsp;';}
-	else {return "## ";}
-}
-sub round_score{
-	return shift;
+	return '';
 }
 
 1;
