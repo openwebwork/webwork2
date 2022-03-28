@@ -893,7 +893,7 @@ msgstr "Antwort:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:224
 msgid "Answers"
-msgstr ""
+msgstr "Antworten"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:123
 msgid "Answers Available"
@@ -1565,7 +1565,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:3098
 msgid "Confirm"
-msgstr ""
+msgstr "Bestätigen"
 
 #. ($e_user_name)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:118
@@ -1575,7 +1575,7 @@ msgstr "Neues Passwort von %1 bestätigen"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:579
 msgid "Confirm Password"
-msgstr ""
+msgstr "Password bestätigen"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1456
 msgid "Confirm which sets to export."
@@ -1636,7 +1636,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1653
 msgid "Correct Answers"
-msgstr ""
+msgstr "Richtige Antworten"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1449
 msgid "Correct Answers:"
@@ -3126,7 +3126,7 @@ msgstr "Studierenden keine Hinweise anzeigen"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1596
 msgid "Hide this problem"
-msgstr ""
+msgstr "Aufgabe verbergen"
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:1560
 msgid "Hint:"
@@ -3434,7 +3434,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:795
 msgid "List of insertable macros"
-msgstr ""
+msgstr "Liste verfügbarer Makros"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:279
 msgid "List of options for Show Me Another button"
@@ -5740,7 +5740,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:322
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:323
 msgid "Test/quiz with time limit."
-msgstr ""
+msgstr "Test/Quiz mit Zeitbeschränkung"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:412
 msgid "Text"
@@ -6652,7 +6652,7 @@ msgstr ""
 #. (CGI::strong($setID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2196
 msgid "This set %1 is assigned to %2."
-msgstr "Aufgabenblatt (%1) ist %2 zugewiesen."
+msgstr "Aufgabenblatt (%1) wurde %2 zugewiesen."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2877
 msgid "This set doesn't contain any problems yet."
@@ -6884,7 +6884,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:114
 msgid "Two Columns"
-msgstr ""
+msgstr "Zwei Spalten"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1461
 msgid "Type"
@@ -7095,6 +7095,10 @@ msgid ""
 "Along with your message, additional information about the state of the "
 "system will be included."
 msgstr ""
+"Nutzen Sie dieses Formular um Ihrem Dozenten eine Frage zu stellen, "
+"eine Problem mit dem WeBWorK System oder einen Fehler in der Aufgabe, die "
+"Sie gerade bearbeiten mitzuteilen. Es werden automatisch "
+"Informationen zum Systemstatus mitgesendet."
 
 #. ($userID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:781
@@ -7208,11 +7212,11 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm:1231
 msgid "Using what display mode?"
-msgstr ""
+msgstr "Darstellungsmodus:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm:1215
 msgid "Using what seed?"
-msgstr ""
+msgstr "Zufalls Seed:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:239
 msgid "Value of work done in Reduced Scoring Period"
@@ -9060,85 +9064,3 @@ msgstr ""
 msgid "your students"
 msgstr "an Studierende"
 
-#~ msgid "Checking additional error messages"
-#~ msgstr "tr: Checking additional error messages"
-
-#~ msgid "Confirm Password:"
-#~ msgstr "Passwort bestätigen:"
-
-#~ msgid "CorrectAnswers"
-#~ msgstr "Richtige Antworten"
-
-#~ msgid "Delete how many?"
-#~ msgstr "Wie viele nutzer Löschen?"
-
-#~ msgid "Duplicate this set and name it"
-#~ msgstr "Dieses Aufgabenblatt duplizieren und benennen"
-
-#~ msgid "Failed to duplicate set: no set name specified!"
-#~ msgstr "tr: Failed to duplicate set: no set name specified!"
-
-#~ msgid "Hide Inactive Courses"
-#~ msgstr "Inaktive Kurse verbergen"
-
-# Msg is short for message
-#~ msgid "Msg sent to %1 at %2."
-#~ msgstr "Nachricht gesendet an %1 (%2)."
-
-#~ msgid "Next Student"
-#~ msgstr "Nächster Studierender"
-
-#~ msgid "Next Test"
-#~ msgstr "Nächster Test"
-
-#~ msgid "Password:"
-#~ msgstr "Passwort:"
-
-#~ msgid "Preview message"
-#~ msgstr "Vorschau"
-
-#~ msgid "Previous Student"
-#~ msgstr "Vorheriger Studierender"
-
-#~ msgid "Previous Test"
-#~ msgstr "Vorheriger Test"
-
-#~ msgid "Quiz with time limit"
-#~ msgstr "Quiz mit Zeitbeschränkung"
-
-#~ msgid "Quiz with time limit."
-#~ msgstr "Quiz ohne Zeitbeschränkung"
-
-#~ msgid "Show Hints"
-#~ msgstr "Hinweise anzeigen"
-
-#~ msgid "Success"
-#~ msgstr "tr: Success"
-
-#~ msgid "The set %1 is assigned to %2."
-#~ msgstr "Aufgabenblatt %1 wurde %2 zugewiesen."
-
-#~ msgid ""
-#~ "Use this form to report to your professor a problem with the WeBWorK "
-#~ "system or an error in a problem you are attempting. Along with your "
-#~ "message, additional information about the state of the system will be "
-#~ "included."
-#~ msgstr ""
-#~ "Nutzen Sie dieses Formular um Ihrem Dozenten eine Fehlermeldung oder ein "
-#~ "Problem bei der Aufgabenbearbeiten mitzuteilen. Es werden automatisch "
-#~ "Informationenzum Systemstatus mitgesende."
-
-#~ msgid "Using what display mode?: "
-#~ msgstr "Darstellungsmodus:"
-
-#~ msgid "Using what seed?: "
-#~ msgstr "Random Seed:"
-
-#~ msgid "columns:"
-#~ msgstr "Spalten:"
-
-#~ msgid "deleted %1 users"
-#~ msgstr "%1 Nutzer wurden gelöscht"
-
-#~ msgid "list of insertable macros"
-#~ msgstr "Liste verfügbarer Makros"
