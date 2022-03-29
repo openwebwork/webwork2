@@ -576,7 +576,7 @@ sub displaySet {
 		$svg .=
 			'<a '
 			. ($problemPage{$probID} ? qq!href="$problemPage{$probID}"! : '')
-			. ' target="_blank">'
+			. ' target="ww_stats_problem">'
 			. qq!<rect id="bar$probID" x="$barxpixel" y="$barypixel" !
 			. qq!width="$barwidth" height="$barheight" fill="rgb(0,153,198)" />!
 			. qq!<text id="problem$probID" x="$problabelxpixel" y="$problabelypixel" !
@@ -613,21 +613,22 @@ sub displaySet {
 	print CGI::p($r->maketext('The percentage of active students with correct answers for each problem')),
 		CGI::start_div({ class => 'table-responsive' }),
 		CGI::start_table({ class => 'stats-table table table-bordered' }), CGI::Tr(
-			CGI::td($r->maketext('Problem #')),
+			CGI::th($r->maketext('Problem #')),
 			CGI::td(
 				{ class => 'text-center' },
 				[
 					map {
 						my $probID = $_->problem_id;
 						$problemPage{$probID}
-						? CGI::a({ href => $problemPage{$probID} }, $prettyProblemIDs{$probID})
-						: $prettyProblemIDs{$probID}
+							? CGI::a({ href => $problemPage{$probID}, target => 'ww_stats_problem' },
+								$prettyProblemIDs{$probID})
+							: $prettyProblemIDs{$probID}
 					} @problems
 				]
 			)
 		),
 		CGI::Tr(
-			CGI::td($r->maketext('% correct')),
+			CGI::th($r->maketext('% correct')),
 			CGI::td(
 				{ class => 'text-center' },
 				[
@@ -644,7 +645,7 @@ sub displaySet {
 		(
 			$isJitarSet
 			? CGI::TR(
-				CGI::td($r->maketext('% correct with review')),
+				CGI::th($r->maketext('% correct with review')),
 				CGI::td(
 					{ class => 'text-center' },
 					[
@@ -662,7 +663,7 @@ sub displaySet {
 			: ''
 		),
 		CGI::Tr(
-			CGI::td($r->maketext('avg attempts')),
+			CGI::th($r->maketext('avg attempts')),
 			CGI::td(
 				{ class => 'text-center' },
 				[
@@ -677,7 +678,7 @@ sub displaySet {
 			)
 		),
 		CGI::Tr(
-			CGI::td($r->maketext('# of active students')),
+			CGI::th($r->maketext('# of active students')),
 			CGI::td(
 				{ class => 'text-center' },
 				[
@@ -690,7 +691,7 @@ sub displaySet {
 			)
 		);
 
-	print CGI::Tr(CGI::td($r->maketext('Manual Grader')), CGI::td(\@GradeableRows)) if ($showGradeRow);
+	print CGI::Tr(CGI::th($r->maketext('Manual Grader')), CGI::td(\@GradeableRows)) if ($showGradeRow);
 
 	print CGI::end_table(), CGI::end_div();
 
@@ -704,12 +705,12 @@ sub displaySet {
 		CGI::table(
 			{ class => 'stats-table table table-bordered' },
 			CGI::Tr(
-				CGI::td($r->maketext('% students')),
+				CGI::th($r->maketext('% students')),
 				CGI::td({ class => 'text-center' }, \@brackets1),
 				CGI::td({ class => 'text-center' }, $r->maketext('top score'))
 			),
 			CGI::Tr(
-				CGI::td($r->maketext('Score')),
+				CGI::th($r->maketext('Score')),
 				CGI::td(
 					{ class => 'text-center' },
 					[ prevent_repeats map { sprintf('%0.0f', 100 * $score_percentiles{$_}) } @brackets1 ]
@@ -717,7 +718,7 @@ sub displaySet {
 				CGI::td({ class => 'text-center' }, sprintf('%0.0f', 100))
 			),
 			CGI::Tr(
-				CGI::td($r->maketext('Success Index')),
+				CGI::th($r->maketext('Success Index')),
 				CGI::td(
 					{ class => 'text-center' },
 					[ prevent_repeats map { sprintf('%0.0f', 100 * $index_percentiles{$_}) } @brackets1 ]
@@ -734,14 +735,14 @@ sub displaySet {
 		)),
 		CGI::start_div({ class => 'table-responsive' }),
 		CGI::start_table({ class => 'stats-table table table-bordered' }),
-		CGI::Tr(CGI::td($r->maketext('% students')), CGI::td({ class => 'text-center' }, \@brackets2));
+		CGI::Tr(CGI::th($r->maketext('% students')), CGI::td({ class => 'text-center' }, \@brackets2));
 
 	for my $problem (@problems) {
 		my $probID = $problem->problem_id;
 		print CGI::Tr(
-			CGI::td(
+			CGI::th(
 				$problemPage{$probID}
-				? CGI::a({ href => $problemPage{$probID} },
+				? CGI::a({ href => $problemPage{$probID}, target => 'ww_stats_problem' },
 					$r->maketext('Problem [_1]', $prettyProblemIDs{$probID}))
 				: $prettyProblemIDs{$probID}
 			),
