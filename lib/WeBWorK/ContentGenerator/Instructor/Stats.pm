@@ -462,7 +462,7 @@ sub displaySet {
 					'WeBWorK::ContentGenerator::Problem', $r,
 					courseID  => $courseName,
 					setID     => 'Undefined_Set',
-					problemID => 1
+					problemID => $problem->problem_id
 				),
 				params => {
 					editMode       => 'savedFile',
