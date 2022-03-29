@@ -2166,7 +2166,12 @@ sub errorOutput($$$) {
 	}
 	return
 		CGI::h2($r->maketext("WeBWorK Error")),
-		CGI::p($r->maketext("_REQUEST_ERROR")),
+		CGI::p($r->maketext(
+			'WeBWorK has encountered a software error while attempting to process this problem. It is likely that '
+				. 'there is an error in the problem itself. If you are a student, report this error message to your '
+				. 'professor to have it corrected. If you are a professor, please consult the error output below for '
+				. 'more information.'
+		)),
 
 		CGI::h3($r->maketext("Error messages")),
 

@@ -184,12 +184,23 @@ sub body {
 			print CGI::p($r->maketext('The course [_1] uses an external authentication system ([_2]). ' .
 					'Please return to that system to access this course.', CGI::strong($course), $LMS));
 		} else {
-			print CGI::p($r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($course), $LMS));
+			print CGI::p($r->maketext(
+				'The course [_1] uses an external authentication system ([_2]). You\'ve authenticated through that '
+					. 'system, but aren\'t allowed to log in to this course.',
+				CGI::strong($course),
+				$LMS
+			));
 		}
 	} else {
 		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($course)));
-		if ($ce -> {session_management_via} ne "session_cookie") {
-			print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
+		if ($ce->{session_management_via} ne "session_cookie") {
+			print CGI::p($r->maketext(
+				'If you check [_1] your login information will be remembered by the browser you are using, allowing '
+					. 'you to visit WeBWorK pages without typing your user name and password (until your session '
+					. 'expires). This feature is not safe for public workstations, untrusted machines, and machines '
+					. 'over which you do not have direct control.',
+				CGI::b($r->maketext("Remember Me"))
+			));
 		}
 
 		print CGI::start_form({ method => "POST", action => $r->uri, id => "login_form" });
@@ -260,7 +271,12 @@ sub body {
 			# preserve the form data posted to the requested URI
 			my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
 			print CGI::start_div({ class => 'my-3' });
-			print CGI::p($r->maketext("_GUEST_LOGIN_MESSAGE", CGI::b($r->maketext("Guest Login"))));
+			print CGI::p(
+				$r->maketext(
+					'This course supports guest logins. Click [_1] to log into this course as a guest.',
+					CGI::b($r->maketext("Guest Login"))
+				)
+			);
 			print CGI::input({
 				type  => "submit",
 				name  => "login_practice_user",

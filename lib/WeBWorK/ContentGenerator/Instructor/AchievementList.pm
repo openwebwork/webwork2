@@ -282,10 +282,17 @@ sub body {
 		value => $r->maketext("Show/Hide Site Description"),
 		class => "btn btn-info mb-2"
 	});
-	print CGI::p({
-			id => "site_description",
+	print CGI::p(
+		{
+			id    => "site_description",
 			style => "display:none"
-		}, CGI::em($r->maketext("_ACHIEVEMENTS_EDITOR_DESCRIPTION"))
+		},
+		CGI::em($r->maketext(
+			'This is the Achievement Editor.  It is used to edit the achievements available to students.  Please keep '
+				. 'in mind the following facts: Achievments are displayed, and evaluated, in the order they are '
+				. 'listed. The "secret" category creates achievements which are not visible to students until they are '
+				. 'earned.  The "level" category is used for the achievements associated to a users level.'
+		))
 	);
 
 	########## print beginning of form
@@ -757,7 +764,6 @@ sub create_form {
 		CGI::textfield({
 			name  => 'action.create.id',
 			value => $actionParams{'action.create.name'}[0] || '',
-			width => '60',
 			class => 'form-control form-control-sm d-inline w-auto'
 		}),
 		$r->maketext('as'),
@@ -1387,7 +1393,7 @@ sub recordEditHTML {
 							. "&editMode=1&selected_achievements="
 							. $achievement_id
 						},
-						CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" })
+						CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, '')
 					);
 				$fieldValue = CGI::div({ class => 'label-with-edit-icon' },
 					CGI::label({ for => "${achievement_id}_id" }, $fieldValue));
@@ -1424,14 +1430,6 @@ sub printTableHTML {
 	    return;
 	}
 
-
-	my $selectBox = CGI::input({
-		type              => 'checkbox',
-		id                => 'select-all',
-		data_select_group => 'selected_achievements',
-		class             => 'form-check-input'
-	});
-
 	my @tableHeadings;
 
 	# Hardcoded headings.  Making this more modular would be good.
@@ -1462,8 +1460,14 @@ sub printTableHTML {
 		);
 	} else {
 		@tableHeadings = (
-			$selectBox,
-			$r->maketext("Achievement ID"),
+			CGI::input({
+				type              => 'checkbox',
+				id                => 'select-all',
+				aria_label        => $r->maketext('Select all achievements'),
+				data_select_group => 'selected_achievements',
+				class             => 'form-check-input'
+			}),
+			CGI::label({ for => 'select-all' }, $r->maketext("Achievement ID")),
 			$r->maketext("Enabled"),
 			$r->maketext("Name"),
 			$r->maketext("Number"),

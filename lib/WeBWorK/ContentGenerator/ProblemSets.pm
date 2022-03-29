@@ -198,16 +198,7 @@ sub body {
 	# This table now contains a summary and a caption, scope attributes for the column headers, and no longer prints a
 	# column for 'Sel.' (due to it having been merged with the second column for accessibility purposes).
 	print CGI::start_div({ class => 'table-responsive' });
-	print CGI::start_table({
-		class    => 'problem_set_table table table-sm caption-top font-sm',
-		-summary => $r->maketext(
-			'This table lists the available homework sets for this class, along with their current status. Click on '
-				. 'the name of the homework set to view the problems in that homework set.  You can also select '
-				. 'sets to download in PDF or TeX format by checking the checkboxes next to the problem set '
-				. 'names, and then click on the "Generate Hardcopy for Selected Sets" button at the end of the '
-				. 'table.  There is also a clear button and an Email Instructor button at the end of the table.'
-		)
-	});
+	print CGI::start_table({ class    => 'problem_set_table table table-sm caption-top font-sm' });
 	print CGI::caption($r->maketext('Homework Sets'));
 
 	# Setlist table headers

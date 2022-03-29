@@ -401,10 +401,9 @@ sub body {
 	my $setTemplate = $self->{setTemplate} = $db->newGlobalSet;
 
 	# This table can be consulted when display-ready forms of field names are needed.
-	my %prettyFieldNames = map { $_ => $_ }
-		$setTemplate->FIELDS();
+	my %fieldHeaders;
 
-	@prettyFieldNames{qw(
+	@fieldHeaders{qw(
 		problems
 		users
 		filename
@@ -417,17 +416,17 @@ sub body {
 		enable_reduced_scoring
 		hide_hint
 	)} = (
-		$r->maketext("Edit Problems"),
-		$r->maketext("Edit Assigned Users"),
-		$r->maketext("Set Definition Filename"),
-		$r->maketext("Edit Set Data"),
-		$r->maketext("Open Date"),
-		$r->maketext("Reduced Scoring Date"),
-		$r->maketext("Close Date"),
-		$r->maketext("Answer Date"),
-		$r->maketext("Visible"),
-		$r->maketext("Reduced Scoring"),
-		$r->maketext("Hide Hints")
+		CGI::th({ id => 'problems_header' }, $r->maketext("Edit Problems")),
+		CGI::th({ id => 'users_header' }, $r->maketext("Edit Assigned Users")),
+		CGI::th({ id => 'filename_header' }, $r->maketext("Set Definition Filename")),
+		CGI::th(CGI::label({ for => 'select-all' }, $r->maketext("Edit Set Data"))),
+		CGI::th({ id => 'open_date_header' }, $r->maketext("Open Date")),
+		CGI::th({ id => 'reduced_scoring_date_header' }, $r->maketext("Reduced Scoring Date")),
+		CGI::th({ id => 'due_date_header' }, $r->maketext("Close Date")),
+		CGI::th({ id => 'answer_date_header' }, $r->maketext("Answer Date")),
+		CGI::th({ id => 'visible_header' }, $r->maketext("Visible")),
+		CGI::th($r->maketext("Reduced Scoring")),
+		CGI::th({ id => 'hide_hint_header' }, $r->maketext("Hide Hints"))
 	);
 
 	my $actionID = $self->{actionID};
@@ -447,12 +446,27 @@ sub body {
 	########## print site identifying information
 
 	print CGI::input({
-		type  => "button",
-		id    => "show_hide",
-		value => $r->maketext("Show/Hide Site Description"),
-		class => "btn btn-info mb-2"
+		type  => 'button',
+		id    => 'show_hide',
+		value => $r->maketext('Show/Hide Site Description'),
+		class => 'btn btn-info mb-2'
 	});
-	print CGI::p({-id=>"site_description", -style=>"display:none"}, CGI::em($r->maketext("_HMWKSETS_EDITOR_DESCRIPTION")));
+	print CGI::p(
+		{ id => 'site_description', style => 'display:none' },
+		CGI::em($r->maketext(
+			'This is the homework sets editor page where you can view and edit the homework sets that exist in this '
+				. 'course and the problems that they contain. The top of the page contains forms which allow you to '
+				. 'filter which sets to display in the table, sort the sets in a chosen order, edit homework sets, '
+				. 'publish homework sets, import/export sets from/to an external file, score sets, or create/delete '
+				. 'sets.  To use, please select the action you would like to perform, enter in the relevant '
+				. 'information in the fields below, and hit the "Take Action!" button at the bottom of the form.  The '
+				. 'bottom of the page contains a table displaying the sets and several pieces of relevant information. '
+				. 'The Edit Set Data field in the table contains checkboxes for selection and a link to the set data '
+				. 'editing page.  The cells in the Edit Problems fields contain links which take you to a page where '
+				. 'you can edit the containing problems, and the cells in the edit assigned users field contains links '
+				. 'which take you to a page where you can edit what students the set is assigned to.'
+		))
+	);
 
 	########## print beginning of form
 
@@ -567,8 +581,10 @@ sub body {
 	########## print table
 
 	########## first adjust heading if in editMode
-	$prettyFieldNames{set_id} = $r->maketext("Edit Set") if $editMode;
-	$prettyFieldNames{enable_reduced_scoring} = $r->maketext('Enable Reduced Scoring') if $editMode;
+	$fieldHeaders{set_id} = CGI::th($r->maketext("Edit Set")) if $editMode;
+	$fieldHeaders{enable_reduced_scoring} =
+		CGI::th({ id => 'enable_reduced_scoring_header' }, $r->maketext('Enable Reduced Scoring'))
+		if $editMode;
 
 
 	print CGI::p(
@@ -580,7 +596,7 @@ sub body {
 	);
 
 	$self->printTableHTML(
-		\@Sets, \%prettyFieldNames,
+		\@Sets, \%fieldHeaders,
 		editMode       => $editMode,
 		exportMode     => $exportMode,
 		selectedSetIDs => $self->{selectedSetIDs},
@@ -2422,12 +2438,13 @@ sub fieldEditHTML {
 		return CGI::div(
 			{ class => 'input-group input-group-sm flex-nowrap' },
 			CGI::input({
-				type  => 'text',
-				name  => $fieldName,
-				id    => "${fieldName}_id",
-				value => $value,
-				size  => $size,
-				class => 'form-control w-auto'
+				type            => 'text',
+				name            => $fieldName,
+				id              => "${fieldName}_id",
+				aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+				value           => $value,
+				size            => $size,
+				class           => 'form-control w-auto'
 			})
 		);
 	}
@@ -2436,18 +2453,19 @@ sub fieldEditHTML {
 		return CGI::div(
 			{ class => 'input-group input-group-sm flex-nowrap flatpickr' },
 			CGI::textfield({
-				name        => $fieldName,
-				id          => "${fieldName}_id",
-				value       => $value,
-				size        => $size,
-				class       => 'form-control w-auto ' . ($fieldName =~ /\.open_date/ ? ' datepicker-group' : ''),
-				placeholder => $self->r->maketext("None Specified"),
+				name            => $fieldName,
+				id              => "${fieldName}_id",
+				aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+				value           => $value,
+				size            => $size,
+				class           => 'form-control w-auto ' . ($fieldName =~ /\.open_date/ ? ' datepicker-group' : ''),
+				placeholder     => $self->r->maketext("None Specified"),
 				data_enable_datepicker => $self->r->ce->{options}{useDateTimePicker},
 				data_input             => undef,
 				data_done_text         => $self->r->maketext('Done')
 			}),
 			CGI::a(
-				{ class => 'btn btn-secondary btn-sm', data_toggle => undef },
+				{ class => 'btn btn-secondary btn-sm', data_toggle => undef, aria_hidden => 'true' },
 				CGI::i({ class => 'fas fa-calendar-alt' }, '')
 			)
 		);
@@ -2458,11 +2476,12 @@ sub fieldEditHTML {
 		# in which case the hidden field overrides the parameter with a 0.
 		# This is actually the accepted way to do this.
 		return CGI::input({
-			type    => 'checkbox',
-			id      => "${fieldName}_id",
-			name    => $fieldName,
-			value   => 1,
-			class   => 'form-check-input',
+			type            => 'checkbox',
+			id              => "${fieldName}_id",
+			name            => $fieldName,
+			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+			value           => 1,
+			class           => 'form-check-input',
 			$value ? (checked => undef) : ()
 		})
 		. CGI::hidden({
@@ -2619,14 +2638,14 @@ sub recordEditHTML {
 }
 
 sub printTableHTML {
-	my ($self, $SetsRef, $fieldNamesRef, %options) = @_;
+	my ($self, $SetsRef, $fieldHeadersRef, %options) = @_;
 	my $r                       = $self->r;
 	my $ce = $r->ce;
 	my $authz                   = $r->authz;
 	my $user                    = $r->param('user');
 	my $setTemplate	            = $self->{setTemplate};
 	my @Sets                    = @$SetsRef;
-	my %fieldNames              = %$fieldNamesRef;
+	my %fieldHeaders            = %$fieldHeadersRef;
 
 	my $editMode                = $options{editMode};
 	my $exportMode              = $options{exportMode};
@@ -2673,38 +2692,29 @@ sub printTableHTML {
 	$self->{headerFiles} = \%headers;	# store these header files so we don't have to look for them later.
 
 
-	my @tableHeadings = map { $fieldNames{$_} } @realFieldNames;
+	my @tableHeadings = map { $fieldHeaders{$_} } @realFieldNames;
 
-	my $selectBox = CGI::input({
-		type              => 'checkbox',
-		id                => 'select-all',
-		data_select_group => 'selected_sets',
-		class             => 'form-check-input'
-	});
-
-	if (!($editMode or $exportMode)) {
-		unshift @tableHeadings, $selectBox;
+	if (!($editMode || $exportMode)) {
+		unshift @tableHeadings,
+			CGI::th(CGI::input({
+				type              => 'checkbox',
+				id                => 'select-all',
+				aria_label        => $r->maketext('Select all sets'),
+				data_select_group => 'selected_sets',
+				class             => 'form-check-input'
+			}));
 	}
 
-	# print the table
-	# _PROBLEM_SET_SUMMARY is as follows:
-	# This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set
-	# Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Scoring Enabled, Date it was opened,
-	# Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for
-	# selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take
-	# you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains
-	# links which take you to a page where you can edit what students the set is assigned to.
+	# Print the table
 	print CGI::start_div({ class => 'table-responsive' });
 	print CGI::start_table({
 		id    => "set_table_id",
-		class => "set_table table table-sm table-bordered caption-top font-sm"
-			. ($editMode ? ' align-middle' : ''),
-		summary => $r->maketext("_PROBLEM_SET_SUMMARY") . " This is a subset of all homework sets"
+		class => "set_table table table-sm table-bordered caption-top font-sm" . ($editMode ? ' align-middle' : '')
 	});
 
 	print CGI::caption($r->maketext("Set List"));
 
-	print CGI::thead(CGI::Tr(CGI::th(\@tableHeadings)));
+	print CGI::thead(CGI::Tr(@tableHeadings));
 
 	print CGI::start_tbody();
 	for (my $i = 0; $i < @Sets; $i++) {
