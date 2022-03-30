@@ -1016,6 +1016,10 @@ sub pretty_print_rh($) {
 	}
 }
 
+# If you modify the code of cryptPassword, please also make the change
+# in bin/crypt_passwords_in_classlist.pl, which has a copy of this
+# routine so it can easily be used without needed access to a WW webwork2
+# directory.
 sub cryptPassword($) {
 	my ($clearPassword) = @_;
 	#Use an SHA512 salt with 16 digits
