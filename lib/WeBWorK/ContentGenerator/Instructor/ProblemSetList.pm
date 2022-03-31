@@ -556,9 +556,9 @@ sub body {
 			@contentArr,
 			CGI::div(
 				{
-					class            => 'tab-pane fade mb-2' . ($active ? " show$active" : ''),
-					id               => $actionID,
-					role             => 'tabpanel',
+					class           => 'tab-pane fade mb-2' . ($active ? " show$active" : ''),
+					id              => $actionID,
+					role            => 'tabpanel',
 					aria_labelledby => "$actionID-tab"
 				},
 				$self->$actionForm($self->getActionParams($actionID))
@@ -1035,7 +1035,7 @@ sub delete_form {
 	return CGI::div(
 		CGI::div(
 			{ class => 'd-inline-block alert alert-danger p-1 mb-2' },
-			CGI::em($r->maketext('Warning: Deletion destroys all user-related data and is not undoable!'))
+			CGI::em($r->maketext('Warning: Deletion destroys all set-related data and is not undoable!'))
 		),
 		CGI::div(
 			{ class => 'row mb-2' },
@@ -1452,7 +1452,7 @@ sub export_handler {
 sub cancelExport_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span($r->maketext("Abandon export"));
+	return CGI::span($r->maketext('Abandon export'));
 }
 
 sub cancelExport_handler {
@@ -1476,7 +1476,7 @@ sub cancelExport_handler {
 sub saveExport_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span($r->maketext("Confirm which sets to export."));
+	return CGI::span($r->maketext('Confirm which sets to export.'));
 }
 
 sub saveExport_handler {
@@ -1517,7 +1517,7 @@ sub saveExport_handler {
 sub cancelEdit_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span($r->maketext("Abandon changes"));
+	return CGI::span($r->maketext('Abandon changes'));
 }
 
 sub cancelEdit_handler {
@@ -1541,7 +1541,7 @@ sub cancelEdit_handler {
 sub saveEdit_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span($r->maketext("Save changes"));
+	return CGI::span($r->maketext('Save changes'));
 }
 
 sub saveEdit_handler {
@@ -2760,8 +2760,8 @@ sub output_JS {
 	);
 	print CGI::script({ src => getAssetURL($ce, 'js/apps/DatePicker/datepicker.js'), defer => undef }, '');
 
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'),         defer => undef }, "");
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/ProblemSetList/problemsetlist.js'), defer => undef }, "");
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'),         defer => undef }, '');
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/ProblemSetList/problemsetlist.js'), defer => undef }, '');
 	print CGI::script({ src => getAssetURL($ce, 'js/apps/ShowHide/show_hide.js'),            defer => undef }, '');
 	print CGI::script({ src => getAssetURL($ce, 'js/apps/SelectAll/selectall.js'),           defer => undef }, '');
 
