@@ -11,6 +11,8 @@ const crypto = require('crypto');
 const sass = require('sass');
 const autoprefixer = require('autoprefixer');
 const postcss = require('postcss');
+const rtlcss = require('rtlcss');
+const cssMinify = require('cssnano');
 const thirdPartyAssets = require('./third-party-assets.json');
 
 const argv = yargs
@@ -108,10 +110,10 @@ const processFile = async (file, _details) => {
 
 			const filePath = path.resolve(__dirname, file);
 
-			// This works for both sass/scss files and css files.  For css files it just compresses.
+			// This works for both sass/scss files and css files.
 			let result;
 			try {
-				result = sass.compile(filePath, { style: 'compressed', sourceMap: argv.enableSourcemaps });
+				result = sass.compile(filePath, { sourceMap: argv.enableSourcemaps });
 			} catch (e) {
 				console.log(`\x1b[31mIn ${file}:`);
 				console.log(`${e.message}\x1b[0m`);
@@ -122,7 +124,7 @@ const processFile = async (file, _details) => {
 
 			// Pass the compiled css through the autoprefixer.
 			// This is really only needed for the bootstrap.css files, but doesn't hurt for the rest.
-			let prefixedResult = await postcss([autoprefixer]).process(result.css, { from: baseName });
+			let prefixedResult = await postcss([autoprefixer, cssMinify]).process(result.css, { from: baseName });
 
 			const minCSS = prefixedResult.css + (
 				argv.enableSourcemaps && result.sourceMap
@@ -149,6 +151,36 @@ const processFile = async (file, _details) => {
 			}
 
 			assets[assetName] = newVersion;
+
+			// Pass the compiled css through rtlcss and autoprefixer to generate css for right-to-left languages.
+			let rtlResult = await postcss([rtlcss, autoprefixer, cssMinify]).process(result.css, { from: baseName });
+
+			const rtlCSS = rtlResult.css + (
+				argv.enableSourcemaps && result.sourceMap
+				? `/*# sourceMappingURL=data:application/json;charset=utf-8;base64,${
+							Buffer.from(JSON.stringify(result.sourceMap)).toString('base64')}*/`
+				: ''
+			);
+
+			const rtlContentHash = crypto.createHash('sha256');
+			rtlContentHash.update(rtlCSS);
+
+			const newRTLVersion = file.replace(/\.s?css$/,
+				`.rtl.${rtlContentHash.digest('hex').substring(0, 8)}.min.css`);
+			fs.writeFileSync(path.resolve(__dirname, newRTLVersion), rtlCSS);
+
+			const rtlAssetName = file.replace(/\.s?css$/, '.rtl.css');
+
+			// Remove a previous version if the content hash is different.
+			if (assets[rtlAssetName] && assets[rtlAssetName] !== newRTLVersion) {
+				console.log(`\x1b[32mUpdated RTL css for ${file}.\x1b[0m`);
+				const oldFileFullPath = path.resolve(__dirname, assets[rtlAssetName]);
+				if (fs.existsSync(oldFileFullPath)) fs.unlinkSync(oldFileFullPath);
+			} else if (ready) {
+				console.log(`\x1b[32mProcessed RTL css for ${file}.\x1b[0m`);
+			}
+
+			assets[rtlAssetName] = newRTLVersion;
 		} else {
 			return;
 		}

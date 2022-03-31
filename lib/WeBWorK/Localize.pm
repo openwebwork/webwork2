@@ -439,12 +439,12 @@ my $ConfigStrings = [
 		},
 		{ var => 'mail{feedbackRecipients}',
 		  doc => x('Additional addresses for receiving feedback e-mail.'),
-		  doc2 => x('By default, feeback is sent to all users above who have permission to receive feedback. Feedback is also sent to any addresses specified in this blank. Separate email address entries by commas.'),
+		  doc2 => x('By default, feedback is sent to all users above who have permission to receive feedback. Feedback is also sent to any addresses specified in this blank. Separate email address entries by commas.'),
 		  type => 'list'
 		},
 		{ var => 'feedback_by_section',
 		  doc => x('Feedback by Section.'),
-		  doc2 => x('By default, feeback is always sent to all users specified to recieve feedback.  This variable sets the system to only email feedback to users who have the same section as the user initiating the feedback.  I.E.  Feedback will only be sent to section leaders.'),
+		  doc2 => x('By default, feedback is always sent to all users specified to recieve feedback.  This variable sets the system to only email feedback to users who have the same section as the user initiating the feedback.  I.E.  Feedback will only be sent to section leaders.'),
 		  type => 'boolean'
 		},
 
