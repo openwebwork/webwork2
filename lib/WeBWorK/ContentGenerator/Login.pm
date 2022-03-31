@@ -165,7 +165,7 @@ sub body {
 	my $user = $r->param("user") || "";
 	my $key = $r->param("key");
 	my $passwd = $r->param("passwd") || "";
-	my $course = $urlpath->arg("courseID");
+	my $course = $urlpath->arg("courseID") =~ s/_/ /gr;
 	my $practiceUserPrefix = $ce->{practiceUserPrefix};
 
 	# don't fill in the user ID for practice users

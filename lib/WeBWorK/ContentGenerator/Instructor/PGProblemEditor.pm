@@ -29,7 +29,8 @@ WeBWorK::ContentGenerator::Instructor::PGProblemEditor - Edit a pg file
 use strict;
 use warnings;
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir jitar_id_to_seq seq_to_jitar_id x getAssetURL);
+use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir jitar_id_to_seq seq_to_jitar_id x getAssetURL
+	format_set_name_display);
 use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils qw(has_aux_files not_blank);
@@ -586,19 +587,26 @@ sub body {
 	$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber))
 		if ($set && $set->assignment_type eq 'jitar');
 
-	my $file_type = $self->{file_type};
 	my %titles = (
-		problem         => CGI::b("set $fullSetName/problem $prettyProblemNumber"),
-		blank_problem   => "blank problem",
-		set_header      => "header file",
-		hardcopy_header => "hardcopy header file",
-		course_info     => "course information",
-		options_info    => "options information",
-		''              => 'Unknown file type',
-		source_path_for_problem_file => " unassigned problem file:  ".CGI::b("set $setName/problem $prettyProblemNumber"),
+		blank_problem                => x('Editing <strong>blank problem</strong> in file "[_1]"'),
+		set_header                   => x('Editing <strong>set header</strong> file "[_1]"'),
+		hardcopy_header              => x('Editing <strong>hardcopy header</strong> file "[_1]"'),
+		course_info                  => x('Editing <strong>course information</strong> file "[_1]"'),
+		options_info                 => x('Editing <strong>options information</strong> file "[_1]"'),
+		''                           => x('Editing <strong>unknown file type</strong> in file "[_1]"'),
+		source_path_for_problem_file => x('Editing <strong>unassigned problem</strong> file "[_1]"')
 	);
-	my $header = CGI::i($r->maketext("Editing [_1] in file '[_2]'",$titles{$file_type}, $self->shortPath($inputFilePath)));
-	$header = ($self->isTempEditFilePath($inputFilePath)  ) ? CGI::div({class=>'temporaryFile'},$header) : $header;  # use colors if temporary file
+	my $header = CGI::i(
+		$self->{file_type} eq 'problem'
+		? $r->maketext(
+			'Editing <strong>problem [_1] of set [_2]</strong> in file "[_3]"', $prettyProblemNumber,
+			format_set_name_display($fullSetName),                              $self->shortPath($inputFilePath)
+			)
+		: $r->maketext($titles{ $self->{file_type} }, $self->shortPath($inputFilePath))
+	);
+	$header = $self->isTempEditFilePath($inputFilePath)
+		? CGI::div({ class => 'temporaryFile' }, $header)    # use colors if temporary file
+		: $header;
 
 	#########################################################################
 	# Format the page

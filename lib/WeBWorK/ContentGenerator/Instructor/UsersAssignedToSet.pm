@@ -27,6 +27,7 @@ use strict;
 use warnings;
 use CGI qw(-nosticky );
 use WeBWorK::Debug;
+use WeBWorK::Utils qw(format_set_name_display);
 
 sub initialize {
 	my ($self)  = @_;
@@ -144,7 +145,7 @@ sub body {
 			"When you unassign by unchecking a student's name, you destroy all of the data for homework set [_1] "
 				. 'for this student. You will then need to reassign the set to these students and they will receive '
 				. 'new versions of the problems. Make sure this is what you want to do before unchecking students.',
-			CGI::b($setID)
+			CGI::b(format_set_name_display($setID))
 		)
 	);
 
@@ -231,7 +232,7 @@ sub body {
 				$r->maketext(
 					'There is NO undo for this function.  Do not use it unless you know what you are doing!  '
 					. 'When you unassign a student using this button, or by unchecking their name, you destroy all '
-					. "of the data for homework set $setID for this student.",
+					. "of the data for homework set [_1] for this student.", format_set_name_display($setID)
 				)
 			),
 			CGI::div(

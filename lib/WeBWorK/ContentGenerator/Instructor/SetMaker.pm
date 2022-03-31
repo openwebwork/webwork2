@@ -31,7 +31,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Form;
-use WeBWorK::Utils qw(readDirectory max sortByName wwRound x getAssetURL);
+use WeBWorK::Utils qw(readDirectory max sortByName wwRound x getAssetURL format_set_name_internal);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
 use WeBWorK::Utils::LibraryStats;
@@ -1920,21 +1920,23 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('new_local_set')) {
 		if ($r->param('new_set_name') !~ /^[\w .-]*$/) {
-			$self->addbadmessage($r->maketext("The name '[_1]' is not a valid set name.  Use only letters, digits, -, _, and .",$r->param('new_set_name')));
+			$self->addbadmessage($r->maketext(
+				'The name "[_1]" is not a valid set name.  '
+					. 'Use only letters, digits, dashes, underscores, periods, and spaces.',
+				$r->param('new_set_name')
+			));
 		} else {
-			my $newSetName = $r->param('new_set_name');
-			# if we want to munge the input set name, do it here
-			$newSetName =~ s/\s/_/g;
+			# If we want to munge the input set name, do it here.
+			my $newSetName = format_set_name_internal($r->param('new_set_name'));
 			debug("local_sets was ", $r->param('local_sets'));
 			$r->param('local_sets',$newSetName);  ## use of two parameter param
 			debug("new value of local_sets is ", $r->param('local_sets'));
-			my $newSetRecord	 = $db->getGlobalSet($newSetName);
 			if (! $newSetName) {
 			    $self->addbadmessage($r->maketext("You did not specify a new set name."));
-			} elsif (defined($newSetRecord)) {
+			} elsif (defined $db->getGlobalSet($newSetName)) {
 			    $self->addbadmessage($r->maketext("The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",$newSetName));
 			} else {			# Do it!
-				$newSetRecord = $db->newGlobalSet();
+				my $newSetRecord = $db->newGlobalSet();
 				$newSetRecord->set_id($newSetName);
 				$newSetRecord->set_header("defaultHeader");
 				$newSetRecord->hardcopy_header("defaultHeader");

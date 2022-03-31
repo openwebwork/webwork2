@@ -27,7 +27,8 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readFile seq_to_jitar_id jitar_id_to_seq jitar_problem_adjusted_status wwRound x);
+use WeBWorK::Utils qw(readFile seq_to_jitar_id jitar_id_to_seq jitar_problem_adjusted_status wwRound x
+	format_set_name_display);
 use WeBWorK::ContentGenerator::Instructor::FileManager;
 
 our @userInfoColumnHeadings = (x("STUDENT ID"), x("login ID"), x("LAST NAME"), x("FIRST NAME"), x("SECTION"), x("RECITATION"));
@@ -888,6 +889,7 @@ sub popup_set_form {
 	return CGI::scrolling_list({
 		name     => 'selectedSet',
 		values   => $self->{ra_set_ids},
+		labels   => { map { $_ => format_set_name_display($_) } @{ $self->{ra_set_ids} } },
 		defaults => [ $self->r->param('selectedSet') ],
 		size     => 10,
 		multiple => 1,

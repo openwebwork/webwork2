@@ -27,7 +27,7 @@ use warnings;
 #use CGI;
 use WeBWorK::CGI;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
-use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id getAssetURL);
+use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id getAssetURL format_set_name_display);
 use PGcore;
 use Text::CSV;
 
@@ -424,6 +424,7 @@ sub body {
 					name     => 'selected_sets',
 					id       => 'selected_sets',
 					values   => \@expandedGlobalSetIDs,
+					labels   => { map { $_ => format_set_name_display($_) } @expandedGlobalSetIDs },
 					default  => $selectedSets,
 					size     => 23,
 					multiple => 1,
@@ -487,7 +488,7 @@ sub body {
 				my $prettyProblemNumber = $prettyProblemNumbers->{$setName}{$problemNumber};
 				print CGI::h3($r->maketext(
 					"Past Answers for [_1], set [_2], problem [_3]",
-					$studentUser, $setName, $prettyProblemNumber
+					$studentUser, format_set_name_display($setName), $prettyProblemNumber
 				));
 
 				my @row;

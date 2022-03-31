@@ -28,7 +28,8 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readDirectory list2hash max jitar_id_to_seq jitar_problem_adjusted_status wwRound after);
+use WeBWorK::Utils qw(readDirectory list2hash max jitar_id_to_seq jitar_problem_adjusted_status wwRound after
+format_set_name_display);
 use WeBWorK::Localize;
 sub initialize {
 	my ($self) = @_;
@@ -290,7 +291,7 @@ sub displayStudentStats {
 			next if $setVersionsCount{$setName};
 			push @rows,
 				CGI::Tr(
-					CGI::td(WeBWorK::ContentGenerator::underscore2sp($setID)),
+					CGI::td(format_set_name_display($setID)),
 					CGI::td(
 						{ colspan => ($max_problems + 3) },
 						CGI::em($r->maketext('No versions of this assignment have been taken.'))
@@ -311,7 +312,7 @@ sub displayStudentStats {
 			push(
 				@rows,
 				CGI::Tr(
-					CGI::td(WeBWorK::ContentGenerator::underscore2sp(
+					CGI::td(format_set_name_display(
 						"${setID}_(version_" . $set->version_id . ')')),
 					CGI::td(
 						{ colspan => ($max_problems + 3) },
@@ -444,7 +445,7 @@ sub displayStudentStats {
 		}
 
 		push @rows, CGI::Tr({},
-			CGI::th({scope=>"row"},CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2sp($setName))),
+			CGI::th({scope=>"row"},CGI::a({-href=>$act_as_student_set_url}, format_set_name_display($setName))),
 			CGI::td(CGI::span({-class=>$class},$totalRightPercent.'%')),
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of

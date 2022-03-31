@@ -30,7 +30,8 @@ use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden
-	jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound before between after grade_set);
+	jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound before between after grade_set
+	format_set_name_display);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -177,14 +178,12 @@ sub siblings {
 	foreach my $setID (@setIDs) {
 		my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r,
 			courseID => $courseID, setID => $setID);
-		my $pretty_set_id = $setID;
-		$pretty_set_id =~ s/_/ /g;
 		print CGI::li({ class => 'nav-item' },
 			CGI::a({
 					href => $self->systemLink($setPage),
 					id => $setID,
 					class => 'nav-link'
-				}, $pretty_set_id)
+				}, format_set_name_display($setID))
 		) ;
 	}
 	debug("End printing sets from listUserSets()");

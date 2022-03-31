@@ -26,7 +26,7 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(sortByName x getAssetURL);
+use WeBWorK::Utils qw(sortByName x getAssetURL format_set_name_display);
 use WeBWorK::Debug;
 
 # We use the x function to mark strings for localizaton
@@ -326,7 +326,7 @@ sub outputSetRow {
 				class           => 'form-check-input',
 				labelattributes => { class => 'form-check-label' }
 			}),
-			defined($mergedSet)
+			defined $mergedSet
 			? CGI::b(CGI::a(
 				{
 					href => $self->systemLink(
@@ -343,10 +343,10 @@ sub outputSetRow {
 						}
 					)
 				},
-				$version ? "$setID (version $version)" : $setID
+				format_set_name_display($version ? "$setID (version $version)" : $setID)
 			))
 				. ($version ? CGI::hidden({ name => "set.$setID,v$version.assignment", value => 'delete' }) : '')
-			: CGI::b($setID),
+			: CGI::b(format_set_name_display($setID)),
 			join '',
 			$self->DBFieldTable($set, $userSet, $mergedSet, 'set', $setID, $dateFields, $dateFieldLabels),
 		]

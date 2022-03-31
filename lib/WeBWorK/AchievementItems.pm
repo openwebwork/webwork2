@@ -85,30 +85,31 @@ sub UserItems {
 # The id, label_text, and values are required parameters.
 sub form_popup_menu_row {
 	my %params = (
-		id => "",
-	   	label_text => "",
-	   	label_attr => {},
-		values => [],
-		menu_attr => {},
+		id                  => '',
+		label_text          => '',
+		label_attr          => {},
+		values              => [],
+		labels              => {},
+		menu_attr           => {},
 		menu_container_attr => {},
-		add_container => 1,
-	   	@_
+		add_container       => 1,
+		@_
 	);
 
-	$params{label_attr}{for} = $params{id};
-	$params{label_attr}{class} = 'col-4 col-form-label' unless defined $params{label_attr}{class};
-	$params{menu_attr}{values} = $params{values};
-	$params{menu_attr}{id} = $params{id};
-	$params{menu_attr}{name} = $params{id};
-	$params{menu_attr}{class} = 'form-select' unless defined $params{menu_attr}{class};
-	$params{menu_container_attr}{class} = 'col-8' unless defined $params{menu_container_attr}{class};
+	$params{label_attr}{for}            = $params{id};
+	$params{label_attr}{class}          = 'col-4 col-form-label' unless defined $params{label_attr}{class};
+	$params{menu_attr}{values}          = $params{values};
+	$params{menu_attr}{labels}          = $params{labels};
+	$params{menu_attr}{id}              = $params{id};
+	$params{menu_attr}{name}            = $params{id};
+	$params{menu_attr}{class}           = 'form-select' unless defined $params{menu_attr}{class};
+	$params{menu_container_attr}{class} = 'col-8'       unless defined $params{menu_container_attr}{class};
 
 	return join('',
 		$params{add_container} ? CGI::start_div({ class => 'row mb-3' }) : '',
 		CGI::label($params{label_attr}, $params{label_text}),
 		CGI::div($params{menu_container_attr}, CGI::popup_menu($params{menu_attr})),
-		$params{add_container} ? CGI::end_div() : ''
-	);
+		$params{add_container} ? CGI::end_div() : '');
 }
 
 #Item to resurrect a homework for 24 hours
@@ -116,7 +117,7 @@ sub form_popup_menu_row {
 package WeBWorK::AchievementItems::ResurrectHW;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -156,10 +157,14 @@ sub print_form {
 	}
     }
 
-	return join("",
-		CGI::p($r->maketext("Choose the set which you would like to resurrect.")),
+	return join(
+		'',
+		CGI::p($r->maketext('Choose the set which you would like to resurrect.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'res_set_id', label_text => $r->maketext("Set Name "), values => \@openSets
+			id         => 'res_set_id',
+			label_text => $r->maketext('Set Name'),
+			values     => \@openSets,
+			labels     => { map { $_ => format_set_name_display($_) } @openSets }
 		)
 	);
 }
@@ -215,7 +220,7 @@ sub use_item {
 package WeBWorK::AchievementItems::ExtendDueDate;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -249,10 +254,14 @@ sub print_form {
 	}
     }
 
-	return join("",
-		CGI::p($r->maketext("Choose the set whose close date you would like to extend.")),
+	return join(
+		'',
+		CGI::p($r->maketext('Choose the set whose close date you would like to extend.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'ext_set_id', label_text => $r->maketext("Set Name "), values => \@openSets
+			id         => 'ext_set_id',
+			label_text => $r->maketext('Set Name'),
+			values     => \@openSets,
+			labels     => { map { $_ => format_set_name_display($_) } @openSets }
 		)
 	);
 }
@@ -301,7 +310,7 @@ sub use_item {
 package WeBWorK::AchievementItems::SuperExtendDueDate;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -335,10 +344,14 @@ sub print_form {
 	}
     }
 
-    return join("",
-	CGI::p($r->maketext("Choose the set whose close date you would like to extend.")),
+	return join(
+		'',
+		CGI::p($r->maketext('Choose the set whose close date you would like to extend.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'ext_set_id', label_text => $r->maketext("Set Name "), values => \@openSets
+			id         => 'ext_set_id',
+			label_text => $r->maketext('Set Name'),
+			values     => \@openSets,
+			labels     => { map { $_ => format_set_name_display($_) } @openSets }
 		)
 	);
 }
@@ -387,7 +400,7 @@ sub use_item {
 package WeBWorK::AchievementItems::ReducedCred;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -425,10 +438,14 @@ sub print_form {
 	}
     }
 
-    return join("",
-	CGI::p($r->maketext("Choose the set which you would like to enable partial credit for.")),
+	return join(
+		'',
+		CGI::p($r->maketext('Choose the set which you would like to enable partial credit for.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'red_set_id', label_text => $r->maketext("Set Name "), values => \@openSets
+			id         => 'red_set_id',
+			label_text => $r->maketext('Set Name'),
+			values     => \@openSets,
+			labels     => { map { $_ => format_set_name_display($_) } @openSets }
 		)
 	);
 }
@@ -484,7 +501,7 @@ sub use_item {
 package WeBWorK::AchievementItems::DoubleSet;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -518,10 +535,14 @@ sub print_form {
 	}
     }
 
-    return join("",
-	CGI::p($r->maketext("Choose the set which you would like to be worth twice as much.")),
+	return join(
+		'',
+		CGI::p($r->maketext('Choose the set which you would like to be worth twice as much.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'dub_set_id', label_text => $r->maketext("Set Name "), values => \@openSets
+			id         => 'dub_set_id',
+			label_text => $r->maketext('Set Name'),
+			values     => \@openSets,
+			labels     => { map { $_ => format_set_name_display($_) } @openSets }
 		)
 	);
 }
@@ -573,7 +594,7 @@ sub use_item {
 package WeBWorK::AchievementItems::ResetIncorrectAttempts;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -630,16 +651,25 @@ sub print_form {
     $problem_id_script .= "\$('\#ria_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#ria_problem_id option').slice(0,max).show();";
 
-    return join("",
-		CGI::p($r->maketext("Please choose the set name and problem number of the question which should have its incorrect attempt count reset.")),
+	return join(
+		'',
+		CGI::p($r->maketext(
+			'Please choose the set name and problem number of the question which '
+				. 'should have its incorrect attempt count reset.'
+		)),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'ria_set_id', label_text => $r->maketext("Set Name "), values => \@openSets,
-			menu_attr => { onchange => $problem_id_script }
+			id         => 'ria_set_id',
+			label_text => $r->maketext('Set Name'),
+			values     => \@openSets,
+			labels     => { map { $_ => format_set_name_display($_) } @openSets },
+			menu_attr  => { onchange => $problem_id_script }
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'ria_problem_id', label_text => $r->maketext("Problem Number "), values => \@problemIDs,
-			menu_attr => { attributes => \%attributes },
-			menu_container_attr => { class => 'col-3' }
+			id                  => 'ria_problem_id',
+			label_text          => $r->maketext('Problem Number'),
+			values              => \@problemIDs,
+			menu_attr           => { attributes => \%attributes },
+			menu_container_attr => { class      => 'col-3' }
 		)
 	);
 }
@@ -688,7 +718,7 @@ sub use_item {
 package WeBWorK::AchievementItems::DoubleProb;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -745,16 +775,25 @@ sub print_form {
     $problem_id_script .= "\$('\#dbp_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#dbp_problem_id option').slice(0,max).show();";
 
-    return join("",
-		CGI::p($r->maketext("Please choose the set name and problem number of the question which should have its weight doubled.")),
-		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'dbp_set_id', label_text => $r->maketext("Set Name "), values => \@openSets,
-			menu_attr => { onchange => $problem_id_script }
+	return join(
+		'',
+		CGI::p(
+			$r->maketext(
+				'Please choose the set name and problem number of the question which should have its weight doubled.')
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'dbp_problem_id', label_text => $r->maketext("Problem Number "), values => \@problemIDs,
-			menu_attr => { attributes => \%attributes },
-			menu_container_attr => { class => 'col-3' }
+			id         => 'dbp_set_id',
+			label_text => $r->maketext('Set Name'),
+			values     => \@openSets,
+			labels     => { map { $_ => format_set_name_display($_) } @openSets },
+			menu_attr  => { onchange => $problem_id_script }
+		),
+		WeBWorK::AchievementItems::form_popup_menu_row(
+			id                  => 'dbp_problem_id',
+			label_text          => $r->maketext('Problem Number'),
+			values              => \@problemIDs,
+			menu_attr           => { attributes => \%attributes },
+			menu_container_attr => { class      => 'col-3' }
 		)
 	);
 }
@@ -805,7 +844,7 @@ sub use_item {
 package WeBWorK::AchievementItems::HalfCreditProb;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -862,20 +901,27 @@ sub print_form {
     $problem_id_script .= "\$('\#hcp_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#hcp_problem_id option').slice(0,max).show();";
 
-	return join("",
-		CGI::p($r->maketext(
-				"Please choose the set name and problem number of the question which should be given half credit.")),
-		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'hcp_set_id', values => \@openSets, label_text => $r->maketext("Set Name "),
-			menu_attr => { onchange => $problem_id_script }
+	return join(
+		'',
+		CGI::p(
+			$r->maketext(
+				'Please choose the set name and problem number of the question which should be given half credit.')
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'hcp_problem_id', values => \@problemIDs, label_text => $r->maketext("Problem Number "),
-			menu_attr => { attributes => \%attributes },
-			menu_container_attr => { class => 'col-3' }
+			id         => 'hcp_set_id',
+			values     => \@openSets,
+			labels     => { map { $_ => format_set_name_display($_) } @openSets },
+			label_text => $r->maketext('Set Name'),
+			menu_attr  => { onchange => $problem_id_script }
+		),
+		WeBWorK::AchievementItems::form_popup_menu_row(
+			id                  => 'hcp_problem_id',
+			values              => \@problemIDs,
+			label_text          => $r->maketext('Problem Number'),
+			menu_attr           => { attributes => \%attributes },
+			menu_container_attr => { class      => 'col-3' }
 		)
 	);
-
 }
 
 sub use_item {
@@ -927,7 +973,7 @@ sub use_item {
 package WeBWorK::AchievementItems::HalfCreditSet;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -959,11 +1005,15 @@ sub print_form {
     }
 
 
-    #print form with sets
-    return join("",
-		CGI::p($r->maketext("Choose the set which you would like to resurrect.")),
+	# print form with sets
+	return join(
+		'',
+		CGI::p($r->maketext('Choose the set which you would like to resurrect.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'hcs_set_id', label_text => $r->maketext("Set Name "), values => \@openSets
+			id         => 'hcs_set_id',
+			label_text => $r->maketext('Set Name'),
+			values     => \@openSets,
+			labels     => { map { $_ => format_set_name_display($_) } @openSets }
 		)
 	);
 }
@@ -1019,7 +1069,7 @@ sub use_item {
 package WeBWorK::AchievementItems::FullCreditProb;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -1075,16 +1125,25 @@ sub print_form {
     $problem_id_script .= "\$('\#fcp_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#fcp_problem_id option').slice(0,max).show();";
 
-    return join("",
-	CGI::p($r->maketext("Please choose the set name and problem number of the question which should be given full credit.")),
-		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'fcp_set_id', label_text => $r->maketext("Set Name "), values => \@openSets,
-			menu_attr => { onchange => $problem_id_script }
+	return join(
+		'',
+		CGI::p(
+			$r->maketext(
+				'Please choose the set name and problem number of the question which should be given full credit.')
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'fcp_problem_id', values => \@problemIDs, label_text => $r->maketext("Problem Number "),
-			menu_attr => { attributes => \%attributes },
-			menu_container_attr => { class => 'col-3' }
+			id         => 'fcp_set_id',
+			label_text => $r->maketext('Set Name'),
+			values     => \@openSets,
+			labels     => { map { $_ => format_set_name_display($_) } @openSets },
+			menu_attr  => { onchange => $problem_id_script }
+		),
+		WeBWorK::AchievementItems::form_popup_menu_row(
+			id                  => 'fcp_problem_id',
+			values              => \@problemIDs,
+			label_text          => $r->maketext('Problem Number'),
+			menu_attr           => { attributes => \%attributes },
+			menu_container_attr => { class      => 'col-3' }
 		)
 	);
 }
@@ -1134,7 +1193,7 @@ sub use_item {
 package WeBWorK::AchievementItems::FullCreditSet;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -1166,11 +1225,15 @@ sub print_form {
     }
 
 
-    #print form with sets
-    return join("",
-		CGI::p($r->maketext("Choose the set which you would like to resurrect.")),
+	# print form with sets
+	return join(
+		'',
+		CGI::p($r->maketext('Choose the set which you would like to resurrect.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'fcs_set_id', label_text => $r->maketext("Set Name "), values => \@openSets
+			id         => 'fcs_set_id',
+			label_text => $r->maketext('Set Name'),
+			values     => \@openSets,
+			labels     => { map { $_ => format_set_name_display($_) } @openSets }
 		)
 	);
 }
@@ -1221,7 +1284,7 @@ sub use_item {
 package WeBWorK::AchievementItems::DuplicateProb;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -1279,24 +1342,36 @@ sub print_form {
     $problem_id_script .= "\$('\#tran_problem_id2 option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#tran_problem_id2 option').slice(0,max).show();";
 
-	return join("",
-		CGI::p($r->maketext("Please choose the set, the problem you would like to copy, and the problem you would like to copy it to.")),
+	return join(
+		'',
+		CGI::p($r->maketext(
+			'Please choose the set, the problem you would like to copy, '
+				. 'and the problem you would like to copy it to.'
+		)),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'tran_set_id', label_text => $r->maketext("Set Name "), values => \@openSets,
-			menu_attr => { onchange => $problem_id_script }
+			id         => 'tran_set_id',
+			label_text => $r->maketext('Set Name'),
+			values     => \@openSets,
+			labels     => { map { $_ => format_set_name_display($_) } @openSets },
+			menu_attr  => { onchange => $problem_id_script }
 		),
-		CGI::div({ class => 'row mb-3' },
+		CGI::div(
+			{ class => 'row mb-3' },
 			WeBWorK::AchievementItems::form_popup_menu_row(
-				id => 'tran_problem_id', values => \@problemIDs, label_text => $r->maketext("Copy this Problem"),
-				menu_attr => { attributes => \%attributes },
-				menu_container_attr => { class => 'col-2 ps-0' },
-				add_container => 0
+				id                  => 'tran_problem_id',
+				values              => \@problemIDs,
+				label_text          => $r->maketext('Copy this Problem'),
+				menu_attr           => { attributes => \%attributes },
+				menu_container_attr => { class      => 'col-2 ps-0' },
+				add_container       => 0
 			),
 			WeBWorK::AchievementItems::form_popup_menu_row(
-				id => 'tran_problem_id2', values => \@problemIDs, label_text => $r->maketext("To this Problem"),
-				menu_attr => { attributes => \%attributes },
-				menu_container_attr => { class => 'col-2 ps-0' },
-				add_container => 0
+				id                  => 'tran_problem_id2',
+				values              => \@problemIDs,
+				label_text          => $r->maketext('To this Problem'),
+				menu_attr           => { attributes => \%attributes },
+				menu_container_attr => { class      => 'col-2 ps-0' },
+				add_container       => 0
 			)
 		)
 	);
@@ -1406,7 +1481,7 @@ sub use_item {
 package WeBWorK::AchievementItems::AddNewTestGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -1457,10 +1532,14 @@ sub print_form {
 
     #print open gateways in a drop down.
 
-    return join("",
-		CGI::p($r->maketext("Add a new test for which Gateway?")),
+	return join(
+		'',
+		CGI::p($r->maketext('Add a new test for which Gateway?')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'adtgw_gw_id', label_text => $r->maketext("Gateway Name "), values => \@openGateways
+			id         => 'adtgw_gw_id',
+			label_text => $r->maketext('Gateway Name'),
+			values     => \@openGateways,
+			labels     => { map { $_ => format_set_name_display($_) } @openGateways }
 		)
 	);
 }
@@ -1509,7 +1588,7 @@ sub use_item {
 package WeBWorK::AchievementItems::ExtendDueDateGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -1558,12 +1637,15 @@ sub print_form {
 	}
     }
 
-    #print open gateways in a drop down.
-
-    return join("",
-		CGI::p($r->maketext("Extend the close date for which Gateway?")),
+    # Print open gateways in a drop down.
+	return join(
+		'',
+		CGI::p($r->maketext('Extend the close date for which Gateway?')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'eddgw_gw_id', label_text => $r->maketext("Gateway Name "), values => \@openGateways
+			id         => 'eddgw_gw_id',
+			label_text => $r->maketext('Gateway Name'),
+			values     => \@openGateways,
+			labels     => { map { $_ => format_set_name_display($_) } @openGateways }
 		)
 	);
 }
@@ -1624,7 +1706,7 @@ sub use_item {
 package WeBWorK::AchievementItems::ResurrectGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 
-use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(sortByName before after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new {
     my $class = shift;
@@ -1663,12 +1745,15 @@ sub print_form {
 	}
     }
 
-    #print gateways in a drop down.
-
-    return join("",
-		CGI::p($r->maketext("Resurrect which Gateway?")),
+    # Print gateways in a drop down.
+	return join(
+		'',
+		CGI::p($r->maketext('Resurrect which Gateway?')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			id => 'resgw_gw_id', label_text => $r->maketext("Gateway Name "), values => \@sets
+			id         => 'resgw_gw_id',
+			label_text => $r->maketext('Gateway Name'),
+			values     => \@sets,
+			labels     => { map { $_ => format_set_name_display($_) } @sets }
 		)
 	);
 }

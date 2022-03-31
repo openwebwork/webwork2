@@ -97,7 +97,7 @@ sub body {
 		next if $courseID eq "admin"; # done already above
 		next if -f "$coursesDir/$courseID/hide_directory";
 		my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);
-		print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID));
+		print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID =~ s/_/ /gr));
 	}###place to use underscore sub
 
 	print CGI::end_ul();

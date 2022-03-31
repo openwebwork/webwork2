@@ -28,8 +28,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
-use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status wwRound grade_set);
-#use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
+use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status wwRound grade_set format_set_name_display);
 use WeBWorK::Utils::Grades qw/list_set_versions/;
 use WeBWorK::DB::Record::UserSet;  #FIXME -- this is only used in one spot.
 
@@ -82,7 +81,8 @@ sub title {
 		return $r->maketext(
 			'Student Progress for [_1] set [_2]. Closes [_3]',
 			$self->{ce}->{courseName},
-			$self->{setName}, $self->formatDateTime($self->{set_due_date})
+			format_set_name_display($self->{setName}),
+			$self->formatDateTime($self->{set_due_date})
 		);
 	}
 
@@ -117,9 +117,10 @@ sub siblings {
 			setID    => $setID,
 			statType => 'set',
 		);
-		my $prettySetID = $setID;
-		$prettySetID =~ s/_/ /g;
-		print CGI::li({}, CGI::a({ href => $self->systemLink($problemPage), class => 'nav-link' }, $prettySetID));
+		print CGI::li(CGI::a(
+			{ href => $self->systemLink($problemPage), class => 'nav-link' },
+			format_set_name_display($setID)
+		));
 	}
 
 	print CGI::end_ul();
@@ -218,9 +219,7 @@ sub index {
 			statType => 'set',
 			setID    => $set
 		);
-		my $prettySetID = $set;
-		$prettySetID =~ s/_/ /g;
-		push @setLinks, CGI::a({ -href => $self->systemLink($setStatisticsPage) }, $prettySetID);
+		push @setLinks, CGI::a({ href => $self->systemLink($setStatisticsPage) }, format_set_name_display($set));
 	}
 
 	for my $studentRecord (@studentRecords) {
