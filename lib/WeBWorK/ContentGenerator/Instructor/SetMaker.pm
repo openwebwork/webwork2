@@ -31,7 +31,8 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Form;
-use WeBWorK::Utils qw(readDirectory max sortByName wwRound x getAssetURL format_set_name_internal);
+use WeBWorK::Utils qw(readDirectory max sortByName wwRound x getAssetURL format_set_name_internal
+	format_set_name_display);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
 use WeBWorK::Utils::LibraryStats;
@@ -486,7 +487,7 @@ sub browse_mysets_panel {
 	my $r = $self->r;
 	my $library_selected = shift // '';
 	my $list_of_local_sets = shift;
-	my $labels_for_local_sets = { map { $_ => $_ =~ s/_/ /gr } @$list_of_local_sets };
+	my $labels_for_local_sets = { map { $_ => format_set_name_display($_) } @$list_of_local_sets };
 
 	if (@$list_of_local_sets == 0) {
 		$list_of_local_sets = [''];
@@ -507,7 +508,8 @@ sub browse_mysets_panel {
 				values  => $list_of_local_sets,
 				labels  => $labels_for_local_sets,
 				default => $library_selected,
-				class   => 'form-select form-select-sm d-inline w-auto'
+				class   => 'form-select form-select-sm d-inline w-auto',
+				dir     => 'ltr'
 			})
 		),
 		view_problems_line('view_mysets_set', $r->maketext('View Problems'), $self->r)
@@ -1002,7 +1004,7 @@ sub make_top_row {
 	my %data = @_;
 
 	my $list_of_local_sets = $data{all_db_sets};
-	my $labels_for_local_sets = { map { $_ => $_ =~ s/_/ /gr } @$list_of_local_sets };
+	my $labels_for_local_sets = { map { $_ => format_set_name_display($_) } @$list_of_local_sets };
 	my $browse_which = $data{browse_which};
 	my $library_selected = $self->{current_library_set};
 	my $set_selected = $r->param('local_sets') // '';
@@ -1041,6 +1043,7 @@ sub make_top_row {
 				default  => $set_selected,
 				override => 1,
 				class    => 'form-select form-select-sm d-inline w-auto mx-2',
+				dir      => 'ltr',
 				data_no_set_selected => $r->maketext('No Target Set Selected'),
 				data_pick_target_set => $r->maketext('Pick a target set above to add this problem to.'),
 				data_problems_added => $r->maketext('Problems Added'),
@@ -1071,7 +1074,8 @@ sub make_top_row {
 			placeholder     => $r->maketext('New set name'),
 			override        => 1,
 			size            => 30,
-			class           => 'form-control form-control-sm d-inline w-auto mb-2'
+			class           => 'form-control form-control-sm d-inline w-auto mb-2',
+			dir             => 'ltr'
 		})
 	);
 
