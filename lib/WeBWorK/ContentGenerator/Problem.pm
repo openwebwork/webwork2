@@ -878,7 +878,7 @@ sub siblings {
 	my @problemRecords = $db->getMergedProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
 	my @problemIDs     = map { $_->problem_id } @problemRecords;
 
-	my $isJitarSet = $setID && $self->{set}->assignment_type eq 'jitar' ? 1 : 0;
+	my $isJitarSet = $setID ne 'Undefined_Set' && $self->{set}->assignment_type eq 'jitar' ? 1 : 0;
 
 	# variables for the progress bar
 	my $num_of_problems  = 0;
