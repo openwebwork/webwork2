@@ -36,7 +36,7 @@ use WeBWorK::Utils qw(has_aux_files not_blank);
 use File::Copy;
 use File::Basename qw(dirname);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set renderProblems);
-use Data::Dumper;
+use WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor;
 use Fcntl;
 
 ###########################################################
@@ -542,7 +542,7 @@ sub body {
 					title             => $link->{tooltip},
 					class             => 'reference-link btn btn-sm btn-info',
 					data_bs_toggle    => 'tooltip',
-					data_bs_placement => 'bottom'
+					data_bs_placement => 'top'
 				},
 				$link->{label}
 			)
@@ -604,36 +604,24 @@ sub body {
 	# Format the page
 	#########################################################################
 
-	# Define parameters for textarea
-	# FIXME
-	# Should the seed be set from some particular user instance??
-	my $rows            = 20;
-	my $columns         = 80;
-	my $mode_list       = $ce->{pg}->{displayModes};
-	my $displayMode     = $self->{displayMode};
-	my $problemSeed     = $self->{problemSeed};
-	my $uri             = $r->uri;
-	my $edit_level      = $r->param('edit_level') || 0;
-
-	my $force_field = (not_blank( $self->{sourceFilePath})) ?
-		CGI::hidden(-name=>'sourceFilePath', -default=>$self->{sourceFilePath}) : '';
-
 	print CGI::div({ class => 'mb-2' }, $header),
 		CGI::start_form({
-			method => 'POST', id => 'editor', name => 'editor',
-			action => $uri, enctype => 'application/x-www-form-urlencoded',
-			class => 'col-md-9'
+			method  => 'POST',
+			id      => 'editor',
+			name    => 'editor',
+			action  => $r->uri,
+			enctype => 'application/x-www-form-urlencoded',
+			class   => 'col-12'
 		}),
 		$self->hidden_authen_fields,
-		$force_field,
-		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
-		CGI::div({ class => 'mb-2' }, @PG_Editor_References),
-		CGI::p(
-			CGI::textarea( -id => "problemContents",
-				-name => 'problemContents', -default => $problemContents, -class => 'latexentryfield',
-				-rows => $rows, -cols => $columns, -override => 1,
-			),
-		);
+		not_blank($self->{sourceFilePath})
+		? CGI::hidden({ name => 'sourceFilePath', value => $self->{sourceFilePath} })
+		: '',
+		CGI::hidden({ name => 'file_type', value => $self->{file_type} }),
+		CGI::div(@PG_Editor_References);
+
+	WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor::output_codemirror_html($r, 'problemContents',
+		$problemContents);
 
 	######### print action forms
 
@@ -2058,29 +2046,7 @@ sub output_JS {
 	my $self = shift;
 	my $ce   = $self->r->ce;
 
-	if ($ce->{options}->{PGCodeMirror}) {
-		print CGI::Link(
-			{ href => getAssetURL($ce, 'node_modules/codemirror/lib/codemirror.css'), rel => 'stylesheet' });
-		print CGI::Link({
-			href => getAssetURL($ce, 'node_modules/codemirror/addon/dialog/dialog.css'),
-			rel  => 'stylesheet'
-		});
-		print CGI::Link({
-			href => getAssetURL($ce, 'node_modules/codemirror/addon/search/matchesonscrollbar.css'),
-			rel  => 'stylesheet'
-		});
-		print CGI::Link({ href => getAssetURL($ce, 'js/apps/PGCodeMirror/codemirror.css'), rel => 'stylesheet' });
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/lib/codemirror.js') },            '');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/dialog/dialog.js') },       '');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/search/search.js') },       '');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/search/searchcursor.js') }, '');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/search/matchesonscrollbar.js') },
-			'');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/search/match-highlighter.js') }, '');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/scroll/annotatescrollbar.js') }, '');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/edit/matchbrackets.js') },       '');
-		print CGI::script({ src => getAssetURL($ce, 'js/apps/PGCodeMirror/PG.js') },                                '');
-	}
+	WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor::output_codemirror_static_files($ce);
 
 	print CGI::script({ src => getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'),           defer => undef }, '');
 	print CGI::script({ src => getAssetURL($ce, 'js/apps/PGProblemEditor/pgproblemeditor.js'), defer => undef }, '');

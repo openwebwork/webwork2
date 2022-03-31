@@ -1,20 +1,4 @@
 (function () {
-	if (CodeMirror) {
-		cm = CodeMirror.fromTextArea(
-			document.getElementById("problemContents"), {
-				mode: "PG",
-				indentUnit: 4,
-				tabMode: "spaces",
-				lineNumbers: true,
-				lineWrapping: true,
-				extraKeys:
-				{Tab: function(cm) {cm.execCommand('insertSoftTab')}},
-				highlightSelectionMatches: {annotateScrollbar: true},
-				matchBrackets: true,
-			});
-		cm.setSize("100%", 400);
-	}
-
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'Escape') bsModal.hide();
 	});

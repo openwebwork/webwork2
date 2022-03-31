@@ -34,7 +34,7 @@ use URI::Escape;
 use WeBWorK::Utils qw(has_aux_files not_blank);
 use File::Copy;
 use WeBWorK::Utils::Tasks qw(fake_user fake_set);
-use Data::Dumper;
+use WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor;
 use Fcntl;
 
 
@@ -44,9 +44,7 @@ save        => x("Save"),
 save_as     => x("Save As"),
 };
 
-
 use constant DEFAULT_ICON => "defaulticon.png";
-
 
 sub pre_header_initialize {
 	my ($self)         = @_;
@@ -214,30 +212,21 @@ sub body {
 	# Format the page
 	#########################################################################
 
-	# Define parameters for textarea
-	my $rows            = 20;
-	my $columns         = 90;
-	my $mode_list       = $ce->{pg}->{displayModes};
-	my $uri             = $r->uri;
-
-	my $force_field = (not_blank( $self->{sourceFilePath}) ) ? # path is  a non-blank string
-		CGI::hidden(-name=>'sourceFilePath',
-		            -default=>$self->{sourceFilePath}) : '';
-
-	print CGI::p($header),
-
-		CGI::start_form({method=>"POST", id=>"editor", name=>"editor", action=>"$uri", enctype=>"application/x-www-form-urlencoded"}),
-
+	print CGI::div({ class => 'mb-2' }, $header),
+		CGI::start_form({
+			method  => 'POST',
+			id      => 'editor',
+			name    => 'editor',
+			action  => $r->uri,
+			enctype => 'application/x-www-form-urlencoded'
+		}),
 		$self->hidden_authen_fields,
-		$force_field,
+		(not_blank($self->{sourceFilePath}))
+		? CGI::hidden({ name => 'sourceFilePath', value => $self->{sourceFilePath} })
+		: '';
 
-		CGI::p(
-		       CGI::textarea(
-				 -id => 'achievementContents',
-				-name => 'achievementContents', -default => $achievementContents,
-				-rows => $rows, -cols => $columns, -override => 1,
-			),
-		);
+	WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor::output_codemirror_html($r, 'achievementContents',
+		$achievementContents);
 
 	######### print action forms
 	my @formsToShow = @{ ACTION_FORMS() };
@@ -286,7 +275,7 @@ sub body {
 	print CGI::div($r->maketext("Select above then:"),
 		CGI::submit({ name => 'submit', value => $r->maketext("Take Action!"), class => 'btn btn-primary' }));
 
-	print  CGI::end_form();
+	print CGI::end_form();
 
 	return "";
 }
@@ -692,33 +681,9 @@ sub output_JS {
 	my $self = shift;
 	my $ce   = $self->r->ce;
 
-	if ($ce->{options}->{PGCodeMirror}) {
-		print CGI::Link(
-			{ href => getAssetURL($ce, 'node_modules/codemirror/lib/codemirror.css'), rel => 'stylesheet' });
-		print CGI::Link({
-			href => getAssetURL($ce, 'node_modules/codemirror/addon/dialog/dialog.css'),
-			rel  => 'stylesheet'
-		});
-		print CGI::Link({
-			href => getAssetURL($ce, 'node_modules/codemirror/addon/search/matchesonscrollbar.css'),
-			rel  => 'stylesheet'
-		});
-		print CGI::Link({ href => getAssetURL($ce, 'js/apps/PGCodeMirror/codemirror.css'), rel => 'stylesheet' });
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/lib/codemirror.js') },            '');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/dialog/dialog.js') },       '');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/search/search.js') },       '');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/search/searchcursor.js') }, '');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/search/matchesonscrollbar.js') },
-			'');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/search/match-highlighter.js') }, '');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/scroll/annotatescrollbar.js') }, '');
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/codemirror/addon/edit/matchbrackets.js') },       '');
-		print CGI::script({ src => getAssetURL($ce, 'js/apps/PGCodeMirror/PG.js') },                                '');
-	}
+	WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor::output_codemirror_static_files($ce);
 
 	print CGI::script({ src => getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'), defer => undef }, '');
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/AchievementEditor/achievementeditor.js'), defer => undef },
-		'');
 
 	return '';
 }
