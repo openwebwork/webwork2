@@ -81,7 +81,7 @@ sub initialize {
 		} else {
                     if ($itemsWithCounts->[$usedItem]->[1] != 1)    {$itemsWithCounts->[$usedItem]->[1]--}
                     else {splice(@$itemsWithCounts, $usedItem, 1)};
-		    $self->addgoodmessage($r->maketext("Item Used Successfully!"));
+		    $self->addgoodmessage($r->maketext('Reward used successfully!'));
 		}
 	    }
 	}
@@ -241,7 +241,7 @@ sub body {
 			$setProblemCount[$i] = WeBWorK::Utils::max($db->listUserProblems($userID,$sets[$i]->set_id));
 		}
 
-		print CGI::h2($r->maketext('Items'));
+		print CGI::h2($r->maketext('Rewards'));
 
 		if (@items) {
 			my $itemnumber = 0;
@@ -265,7 +265,7 @@ sub body {
 						data_bs_toggle => 'modal',
 						class          => 'btn btn-secondary',
 						id             => 'popup_' . $item->id()
-					}, $r->maketext('Use Item'));
+					}, $r->maketext('Use Reward'));
 				print CGI::start_div({ id => 'modal_' . $item->id(), class => 'modal hide fade', tabindex => '-1' });
 				print CGI::start_div({ class => 'modal-dialog modal-dialog-centered' });
 				print CGI::start_div({ class => 'modal-content' });
@@ -298,7 +298,7 @@ sub body {
 				$itemnumber++;
 			}
 		} else {
-			print CGI::p($r->maketext('You don\'t have any items!'));
+			print CGI::p($r->maketext('You don\'t have any rewards!'));
 		}
 		print CGI::br();
 	}
@@ -316,7 +316,7 @@ sub body {
 		my $chainCount = 0;
 		my $chainStart = 0;
 
-		print CGI::h2($r->maketext('Achievements'));
+		print CGI::h2($r->maketext('Badges'));
 
 		#Loop through achievements and
 		foreach my $achievement (@achievements) {
@@ -395,7 +395,7 @@ sub body {
 
 			}
 		} else { # no achievements
-		print CGI::p($r->maketext("No achievements have been assigned yet"));
+		print CGI::p($r->maketext('No achievement badges have been assigned yet.'));
 		}
 
 	return "";
