@@ -183,12 +183,12 @@ sub body {
 	print CGI::start_div({ class => 'table-responsive' }),
 		CGI::start_table({ class => 'table table-sm table-bordered font-sm align-middle w-auto' });
 	print CGI::Tr(
-		CGI::th({ class => 'text-center' }, $r->maketext("Assigned")),
-		CGI::th([
-			$r->maketext("Login Name"), $r->maketext("Student Name"),
-			$r->maketext("Section"),    $r->maketext("Earned"),
-			$r->maketext("Counter")
-		])
+		CGI::th({ class => 'text-center' }, $r->maketext('Assigned')),
+		CGI::th($r->maketext('Login Name')),
+		CGI::th($r->maketext('Student Name')),
+		CGI::th({ class => 'text-center' }, $r->maketext('Section')),
+		CGI::th({ class => 'text-center', id => 'earned_header' }, $r->maketext('Earned')),
+		CGI::th({ class => 'text-center', id => 'counter_header' }, $r->maketext('Counter'))
 	);
 
 	# get user records
@@ -202,60 +202,62 @@ sub body {
 	                     ( lc($a->last_name) cmp lc($b->last_name )) } @userRecords;
 
 	#print row for user
-	foreach my $userRecord (@userRecords) {
+	for my $userRecord (@userRecords) {
 
-		my $statusClass = $ce->status_abbrev_to_name($userRecord->status) || "";
+		my $statusClass = $ce->status_abbrev_to_name($userRecord->status) || '';
 
-		my $user = $userRecord->user_id;
+		my $user            = $userRecord->user_id;
 		my $userAchievement = $db->getUserAchievement($user, $achievementID);
-		my $prettyName = $userRecord->last_name
-			. ", "
-			. $userRecord->first_name;
-		my $earned  = $userAchievement->earned if ref($userAchievement);
-		my $counter = $userAchievement->counter if ref($userAchievement);
+		my $prettyName      = $userRecord->last_name . ', ' . $userRecord->first_name;
+		my $earned          = $userAchievement->earned  if ref $userAchievement;
+		my $counter         = $userAchievement->counter if ref $userAchievement;
 
 		print CGI::Tr(
 			CGI::td(
-				{ class => "text-center" },
-				CGI::checkbox({
-					type => "checkbox",
-					name => "selected",
-					checked => defined($userAchievement),
-					value => $user,
-					label => "",
-					class => 'form-check-input'
+				{ class => 'text-center' },
+				CGI::input({
+					type    => 'checkbox',
+					name    => 'selected',
+					id      => "$user.assigned",
+					checked => defined $userAchievement,
+					value   => $user,
+					class   => 'form-check-input'
 				})
 			),
-			CGI::td(
-				[
-					CGI::div($user),
-					$prettyName,
-					$userRecord->section,
-					(
-						defined $userAchievement
-						? (
-							CGI::checkbox({
-								type    => "checkbox",
-								name    => "$user.earned",
-								value   => "1",
-								checked => $earned ? 1 : 0,
-								label   => "",
-								class => 'form-check-input'
-							}),
-							CGI::input({
-								type  => "text",
-								name  => "$user.counter",
-								value => $counter,
-								size  => 6,
-								class => 'form-control form-control-sm'
-							})
-						)
-						: ('', '')
+			CGI::td(CGI::label({ for => "$user.assigned" }, $user)),
+			CGI::td($prettyName),
+			CGI::td({ class => 'text-center' }, $userRecord->section),
+			(
+				defined $userAchievement
+				? (
+					CGI::td(
+						{ class => 'text-center' },
+						CGI::input({
+							type            => 'checkbox',
+							name            => "$user.earned",
+							aria_labelledby => 'earned_header',
+							value           => '1',
+							checked         => $earned ? 1 : 0,
+							class           => 'form-check-input'
+						})
 					),
-				]
+					CGI::td(
+						{ class => 'text-center' },
+						CGI::input({
+							type            => 'text',
+							name            => "$user.counter",
+							aria_labelledby => 'counter_header',
+							value           => $counter,
+							size            => 6,
+							class           => 'form-control form-control-sm'
+						})
+					),
+					)
+				: (CGI::td(), CGI::td())
 			)
 		);
 	}
+
 	print CGI::end_table(), CGI::end_div();
 	print $self->hidden_authen_fields;
 	print CGI::submit({ name => "assignToSelected", value => $r->maketext("Save"), class => 'btn btn-primary' });
