@@ -1230,30 +1230,28 @@ sub fieldEditHTML {
 	my $synonyms = $properties->{synonyms};
 	my $headerFiles = $self->{headerFiles};
 
-	if ($access eq "readonly") {
-		return $value;
-	}
+	return $value if ($access eq 'readonly');
 
-	if ($type eq "number" || $type eq "text") {
-		return CGI::input(
-			{
-				type  => "text",
-				name  => $fieldName,
-				value => $value,
-				size  => $size,
-				class => 'form-control form-control-sm d-inline w-auto'
-			}
-		);
+	if ($type eq 'number' || $type eq 'text') {
+		return CGI::input({
+			type            => 'text',
+			name            => $fieldName,
+			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+			value           => $value,
+			size            => $size,
+			class           => 'form-control form-control-sm'
+		});
 	}
 
 	if ($type eq 'checked') {
 		# If the checkbox is checked it returns a 1, if it is unchecked it returns nothing
 		# in which case the hidden field overrides the parameter with a 0.
 		return CGI::input({
-			type  => 'checkbox',
-			name  => $fieldName,
-			value => 1,
-			class => 'form-check-input',
+			type            => 'checkbox',
+			name            => $fieldName,
+			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+			value           => 1,
+			class           => 'form-check-input',
 			$value ? (checked => undef) : (),
 		})
 			. CGI::hidden({
@@ -1262,15 +1260,16 @@ sub fieldEditHTML {
 			});
 	}
 
-	if ($type eq "assignment_type") {
-	    my @allowedTypes = split(',',$value);
+	if ($type eq 'assignment_type') {
+		my @allowedTypes = split(',', $value);
 
 		return CGI::checkbox_group({
-			name       => $fieldName,
-			values     => ASSIGNMENT_TYPES,
-			labels     => ASSIGNMENT_NAMES,
-			default    => \@allowedTypes,
-			class      => 'form-check-input me-1',
+			name            => $fieldName,
+			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+			values          => ASSIGNMENT_TYPES,
+			labels          => ASSIGNMENT_NAMES,
+			default         => \@allowedTypes,
+			class           => 'form-check-input me-1',
 			labelattributes => { class => 'form-check-label me-1' }
 		});
 	}
@@ -1304,10 +1303,10 @@ sub recordEditHTML {
 	my $userEditorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::AchievementUserEditor", $r, courseID=>$courseName, achievementID =>$achievement_id);
 	my $userEditorURL = $self->systemLink($userEditorPage, params => {});
 
-	# the formats are "hard coded" below.  Making them more modular would be good
-	#format for export row
+	# The formats are "hard coded" below.  Making them more modular would be good.
 	if ($exportMode) {
-		# selection checkbox
+		# Format for export row
+		# Select all checkbox
 		push @tableCells,
 			CGI::input({
 				type  => 'checkbox',
@@ -1332,115 +1331,41 @@ sub recordEditHTML {
 				: $self->fieldEditHTML($fieldName, $fieldValue, \%properties);
 		}
 	} elsif ($editMode) {
-		# format for edit mode
+		# Format for edit mode
+		return unless $achievementSelected;
 
-	    return unless $achievementSelected;
-
-	    my $tableCell;
-
-		if ($Achievement->{icon}) {
-			$tableCell = CGI::img({
-				src    => "$ce->{courseURLs}{achievements}/$Achievement->{icon}",
+		push @tableCells,
+			CGI::hidden({ name => 'selected_achievements', value => $achievement_id })
+			. CGI::img({
+				src    => "$ce->{courseURLs}{achievements}/" . ($Achievement->{icon} // 'defaulticon.png'),
 				alt    => 'Achievement Icon',
 				height => 60,
 				class  => 'm-1'
 			});
-		} else {
-			$tableCell = CGI::img({
-				src    => "$ce->{webworkURLs}{htdocs}/images/defaulticon.png",
-				alt    => 'Achievement Icon',
-				height => 60,
-				class  => 'm-1'
-			});
+
+		for (
+			[ 'achievement_id', 'name',    'category' ],
+			[ 'number',         'enabled', 'points', 'max_counter' ],
+			[ 'description',    'test',    'icon',   'assignment_type' ]
+			)
+		{
+			my $tableCell = '';
+
+			for my $field (@$_) {
+				$tableCell .= CGI::span(
+					{ class => 'text-nowrap', style => 'height:28px' },
+					$self->fieldEditHTML(
+						"achievement.$achievement_id.$field", $Achievement->$field,
+						\%{ FIELD_PROPERTIES()->{$field} }
+					)
+				);
+			}
+
+			push @tableCells, CGI::div({ class => 'd-flex flex-column gap-1' }, $tableCell);
 		}
-
-	    push @tableCells, $tableCell;
-
-	    my $fieldName;
-	    my $fieldValue;
-	    my %properties;
-	    my $field;
-
-	    $tableCell = CGI::hidden(
-		-name => "selected_achievements",
-		-value => $achievement_id,
-		);
-
-	    $field = "achievement_id";
-	    $fieldName = "achievement.".$achievement_id.".".$field;
-	    $fieldValue = $Achievement->$field;
-	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$tableCell = $tableCell . CGI::span($self->fieldEditHTML($fieldName, $fieldValue, \%properties)) . CGI::br();
-
-	    $field = "name";
-	    $fieldName = "achievement.".$achievement_id.".".$field;
-	    $fieldValue = $Achievement->$field;
-	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$tableCell = $tableCell . CGI::span($self->fieldEditHTML($fieldName, $fieldValue, \%properties)) . CGI::br();
-
-	    $field = "category";
-	    $fieldName = "achievement.".$achievement_id.".".$field;
-	    $fieldValue = $Achievement->$field;
-	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$tableCell = $tableCell . CGI::span($self->fieldEditHTML($fieldName, $fieldValue, \%properties));
-
-	    push @tableCells, $tableCell;
-
-	    $field = "number";
-	    $fieldName = "achievement.".$achievement_id.".".$field;
-	    $fieldValue = $Achievement->$field;
-	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$tableCell = CGI::span($self->fieldEditHTML($fieldName, $fieldValue, \%properties)) . CGI::br();
-
-	    $field = "enabled";
-	    $fieldName = "achievement.".$achievement_id.".".$field;
-	    $fieldValue = $Achievement->$field;
-	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$tableCell = $tableCell . CGI::span($self->fieldEditHTML($fieldName, $fieldValue, \%properties)) . CGI::br();
-
-	    $field = "points";
-	    $fieldName = "achievement.".$achievement_id.".".$field;
-	    $fieldValue = $Achievement->$field;
-	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$tableCell = $tableCell . CGI::span($self->fieldEditHTML($fieldName, $fieldValue, \%properties)) . CGI::br();
-
-	    $field = "max_counter";
-	    $fieldName = "achievement.".$achievement_id.".".$field;
-	    $fieldValue = $Achievement->$field;
-	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$tableCell = $tableCell . CGI::span($self->fieldEditHTML($fieldName, $fieldValue, \%properties));
-
-	    push @tableCells, $tableCell;
-
-	    $field = "description";
-	    $fieldName = "achievement.".$achievement_id.".".$field;
-	    $fieldValue = $Achievement->$field;
-	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$tableCell = CGI::span($self->fieldEditHTML($fieldName, $fieldValue, \%properties)) . CGI::br();
-
-	    $field = "test";
-	    $fieldName = "achievement.".$achievement_id.".".$field;
-	    $fieldValue = $Achievement->$field;
-	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$tableCell = $tableCell . CGI::span($self->fieldEditHTML($fieldName, $fieldValue, \%properties)) . CGI::br();
-
-	    $field = "icon";
-	    $fieldName = "achievement.".$achievement_id.".".$field;
-	    $fieldValue = $Achievement->$field;
-	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$tableCell = $tableCell . CGI::span($self->fieldEditHTML($fieldName, $fieldValue, \%properties)) . CGI::br();
-
-	    $field = "assignment_type";
-	    $fieldName = "achievement.".$achievement_id.".".$field;
-	    $fieldValue = $Achievement->$field;
-	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$tableCell = $tableCell . CGI::span($self->fieldEditHTML($fieldName, $fieldValue, \%properties));
-
-	    push @tableCells, $tableCell;
-
 	} else {
-		# format for regular viewing mode
-		# selection checkbox
+		# Format for regular viewing mode
+		# Select all checkbox
 		push @tableCells,
 			CGI::input({
 				type  => 'checkbox',
@@ -1482,7 +1407,7 @@ sub recordEditHTML {
 		push @tableCells, CGI::a({ href => $editorURL }, $r->maketext("Edit Evaluator"));
 	}
 
-	return CGI::Tr({}, CGI::td({}, \@tableCells));
+	return CGI::Tr(CGI::td(\@tableCells));
 }
 
 #this prints out the whole table
@@ -1523,26 +1448,27 @@ sub printTableHTML {
 		);
 	} elsif ($editMode) {
 		@tableHeadings = (
-			$r->maketext("Icon"),
-			$r->maketext("Achievement ID")
-				. CGI::br()
-				. $r->maketext("Name")
-				. CGI::br()
-				. $r->maketext("Category"),
-			$r->maketext("Number")
-				. CGI::br()
-				. $r->maketext("Enabled")
-				. CGI::br()
-				. $r->maketext("Points")
-				. CGI::br()
-				. $r->maketext("Counter"),
-			$r->maketext("Description")
-				. CGI::br()
-				. $r->maketext("Evaluator File")
-				. CGI::br()
-				. $r->maketext("Icon File")
-				. CGI::br()
-				. $r->maketext("Type")
+			$r->maketext('Icon'),
+			CGI::div(
+				{ class => 'd-flex flex-column' },
+				$r->maketext('Achievement ID'),
+				CGI::span({ id => 'name_header' },     $r->maketext('Name')),
+				CGI::span({ id => 'category_header' }, $r->maketext('Category'))
+			),
+			CGI::div(
+				{ class => 'd-flex flex-column' },
+				CGI::span({ id => 'number_header' },      $r->maketext('Number')),
+				CGI::span({ id => 'enabled_header' },     $r->maketext('Enabled')),
+				CGI::span({ id => 'points_header' },      $r->maketext('Points')),
+				CGI::span({ id => 'max_counter_header' }, $r->maketext('Counter'))
+			),
+			CGI::div(
+				{ class => 'd-flex flex-column' },
+				CGI::span({ id => 'description_header' }, $r->maketext('Description')),
+				CGI::span({ id => 'test_header' },        $r->maketext('Evaluator File')),
+				CGI::span({ id => 'icon_header' },        $r->maketext('Icon File')),
+				$r->maketext('Type')
+			)
 		);
 	} else {
 		@tableHeadings = (
@@ -1570,7 +1496,7 @@ sub printTableHTML {
 		id    => "achievement-table"
 	});
 
-	print CGI::thead(CGI::Tr(CGI::th(\@tableHeadings)));
+	print CGI::thead(CGI::Tr(CGI::th({ class => 'align-top' }, \@tableHeadings)));
 
 	print CGI::start_tbody();
 	for (my $i = 0; $i < @Achievements; $i++) {

@@ -272,7 +272,7 @@ sub body {
 		CGI::div({ class => 'tab-content' }, @contentArr)
 	);
 
-	print CGI::div($r->maketext("Select above then:"),
+	print CGI::div(
 		CGI::submit({ name => 'submit', value => $r->maketext("Take Action!"), class => 'btn btn-primary' }));
 
 	print CGI::end_form();
@@ -475,28 +475,35 @@ sub save_as_form {
 	# You can replace the current achievement, use it in a new achievement, or not use it at all.
 	return CGI::div(
 		CGI::div(
-			{ class => 'mb-2' },
-			$r->maketext('Save as'),
-			CGI::textfield({
-				name  => 'action.save_as.target_file',
-				size  => 40,
-				value => "$sourceFileName",
-				class => 'form-control form-control-sm d-inline w-auto'
-			}),
+			{ class => 'row align-items-center mb-2' },
+			CGI::label(
+				{ for => 'action.save_as.target_file_id', class => 'col-form-label col-auto' },
+				$r->maketext('Save as:')
+			),
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::textfield({
+					name  => 'action.save_as.target_file',
+					id    => 'action.save_as.target_file_id',
+					size  => 40,
+					value => $sourceFileName,
+					class => 'form-control form-control-sm'
+				})
+			),
 			CGI::hidden(-name => 'action.save_as.source_file', -value => $sourceFilePath)
 		),
 		CGI::div(
 			{ class => 'form-check mb-2' },
 			CGI::input({
 				type  => 'radio',
-				id    => "action.save_as.saveMode.use_in_current",
-				name  => "action.save_as.saveMode",
-				value => "use_in_current",
+				id    => 'action.save_as.saveMode.use_in_current',
+				name  => 'action.save_as.saveMode',
+				value => 'use_in_current',
 				class => 'form-check-input'
 			}),
 			CGI::label(
 				{ for => 'action.save_as.saveMode.use_in_current', class => 'form-check-label' },
-				$r->maketext("Use in achievement [_1]", CGI::b("$achievementID"))
+				$r->maketext('Use in achievement [_1]', CGI::b($achievementID))
 			)
 		),
 		CGI::div(
@@ -505,29 +512,34 @@ sub save_as_form {
 				{ class => 'form-check d-inline-block' },
 				CGI::input({
 					type  => 'radio',
-					id    => "action.save_as.saveMode.use_in_new",
-					name  => "action.save_as.saveMode",
+					id    => 'action.save_as.saveMode.use_in_new',
+					name  => 'action.save_as.saveMode',
 					value => 'use_in_new',
 					class => 'form-check-input'
 				}),
 				CGI::label(
-					{ for => 'action.save_as.saveMode.use_in_new', class => 'form-check-label me-1' },
-					$r->maketext("Use in new achievement:"),
+					{
+						for   => 'action.save_as.saveMode.use_in_new',
+						class => 'form-check-label me-1',
+						id    => 'action.save_as.saveMode.use_in_new.label'
+					},
+					$r->maketext('Use in new achievement:'),
 				)
 			),
 			CGI::textfield({
-				name  => "action.save_as.id",
-				value => "",
-				class => 'form-control form-control-sm d-inline w-auto'
+				name            => 'action.save_as.id',
+				aria_labelledby => 'action.save_as.saveMode.use_in_new.label',
+				value           => '',
+				class           => 'form-control form-control-sm d-inline w-auto'
 			})
 		),
 		CGI::div(
 			{ class => 'form-check' },
 			CGI::input({
 				type  => 'radio',
-				id  => "action.save_as.saveMode.dont_use",
-				name  => "action.save_as.saveMode",
-				value => "dont_use",
+				id    => 'action.save_as.saveMode.dont_use',
+				name  => 'action.save_as.saveMode',
+				value => 'dont_use',
 				class => 'form-check-input'
 			}),
 			CGI::label(
