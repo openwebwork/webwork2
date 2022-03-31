@@ -1307,28 +1307,30 @@ sub recordEditHTML {
 	# the formats are "hard coded" below.  Making them more modular would be good
 	#format for export row
 	if ($exportMode) {
-	    # selection checkbox
+		# selection checkbox
 		push @tableCells,
 			CGI::input({
 				type  => 'checkbox',
-				name  => "selected_export",
+				name  => 'selected_export',
 				value => $achievement_id,
+				id    => "${achievement_id}_id",
 				class => 'form-check-input',
 				$achievementSelected ? (checked => undef) : (),
 			});
 
-	    my @fields = ("achievement_id", "name");
+		my @fields = ('achievement_id', 'name');
 
-	    foreach my $field (@fields) {
-
-		my $fieldName = "achievement.".$achievement_id .".". $field;
-		my $fieldValue = $Achievement->$field;
-		my %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$properties{access} = "readonly";
-		$fieldValue =~ s/ /&nbsp;/g;
-		push @tableCells, $self->fieldEditHTML($fieldName, $fieldValue, \%properties);
-	    }
-
+		for my $field (@fields) {
+			my $fieldName  = 'achievement.' . $achievement_id . '.' . $field;
+			my $fieldValue = $Achievement->$field;
+			my %properties = %{ FIELD_PROPERTIES()->{$field} };
+			$properties{access} = 'readonly';
+			push @tableCells,
+				$field eq 'achievement_id'
+				? CGI::label({ for => "${achievement_id}_id" },
+					$self->fieldEditHTML($fieldName, $fieldValue, \%properties))
+				: $self->fieldEditHTML($fieldName, $fieldValue, \%properties);
+		}
 	} elsif ($editMode) {
 		# format for edit mode
 
@@ -1508,7 +1510,17 @@ sub printTableHTML {
 
 	# Hardcoded headings.  Making this more modular would be good.
 	if ($exportMode) {
-		@tableHeadings = ('', $r->maketext("Achievement ID"), $r->maketext("Name"));
+		@tableHeadings = (
+			CGI::input({
+				type              => 'checkbox',
+				id                => 'select-all',
+				aria_label        => $r->maketext('Select all achievements'),
+				data_select_group => 'selected_export',
+				class             => 'form-check-input'
+			}),
+			CGI::label({ for => 'select-all' }, $r->maketext('Achievement ID')),
+			$r->maketext('Name')
+		);
 	} elsif ($editMode) {
 		@tableHeadings = (
 			$r->maketext("Icon"),
@@ -1541,13 +1553,13 @@ sub printTableHTML {
 				data_select_group => 'selected_achievements',
 				class             => 'form-check-input'
 			}),
-			CGI::label({ for => 'select-all' }, $r->maketext("Achievement ID")),
-			$r->maketext("Enabled"),
-			$r->maketext("Name"),
-			$r->maketext("Number"),
-			$r->maketext("Category"),
-			$r->maketext("Edit") . CGI::br() . $r->maketext("Users"),
-			$r->maketext("Edit") . CGI::br() . $r->maketext("Evaluator")
+			CGI::label({ for => 'select-all' }, $r->maketext('Achievement ID')),
+			$r->maketext('Enabled'),
+			$r->maketext('Name'),
+			$r->maketext('Number'),
+			$r->maketext('Category'),
+			$r->maketext('Edit Users'),
+			$r->maketext('Edit Evaluator')
 		);
 	}
 
@@ -1564,11 +1576,11 @@ sub printTableHTML {
 	for (my $i = 0; $i < @Achievements; $i++) {
 		my $Achievement = $Achievements[$i];
 
-		print $self->recordEditHTML($Achievement,
-			editMode => $editMode,
-			exportMode => $exportMode,
-			achievementSelected => exists $selectedAchievementIDs{
-			    $Achievement->achievement_id}
+		print $self->recordEditHTML(
+			$Achievement,
+			editMode            => $editMode,
+			exportMode          => $exportMode,
+			achievementSelected => exists $selectedAchievementIDs{ $Achievement->achievement_id }
 		);
 	}
 	print CGI::end_tbody();
