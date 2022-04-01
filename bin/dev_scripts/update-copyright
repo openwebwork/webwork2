@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 
 YEAR=$(date +%Y)
 
@@ -35,7 +35,7 @@ shopt -s extglob globstar nullglob
 
 for FILE in ./**/*
 do
-	if [[ ! -L $FILE && -f $FILE ]]
+	if [[ ! -L $FILE && -f $FILE && -w $FILE ]]
 	then
 		replace_license $FILE
 	fi
