@@ -1213,10 +1213,11 @@ sub create_handler {
 			}
 		}
 	}
-    #  Assign set to current active user
-     my $userName = $r->param('user'); # FIXME possible security risk
-     $self->assignSetToUser($userName, $newSetRecord); # cures weird date error when no-one assigned to set
-	 $self->addgoodmessage("Set $newSetID was assigned to $userName."); # not currently used
+    # Assign set to current active user.
+	my $userName = $r->param('user');
+	$self->assignSetToUser($userName, $newSetRecord);    # Cures weird date error when no-one assigned to set.
+	$self->addgoodmessage(
+		$r->maketext('Set [_1] was assigned to [_2].', format_set_name_display($newSetID), $userName));
 
 	push @{ $self->{visibleSetIDs} }, $newSetID;
 	push @{ $self->{allSetIds} }, $newSetID;
@@ -1225,7 +1226,7 @@ sub create_handler {
 		if $@;
 
 	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
-		$r->maketext('Successfully created new set [_1]', $newSetID));
+		$r->maketext('Successfully created new set [_1]', format_set_name_display($newSetID)));
 
 }
 
