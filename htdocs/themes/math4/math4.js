@@ -124,6 +124,11 @@
 	// PG Problem Editor
 	document.querySelectorAll('.reference-link').forEach((el) => new bootstrap.Tooltip(el));
 
+	// SendMail insertable macro toast
+	document.getElementById('insertable-macros-btn')?.addEventListener('click', () => {
+		new bootstrap.Toast(document.getElementById('insertable-macros'), { autohide: false }).show();
+	});
+
 	// For accessibility we need to change single answer aria labels to "answer" and not "answer 1"
 	// FIXME: The correct aria-label should be inserted by PG to begin with.  This hack will not work if there is more
 	// than one problem on the page.

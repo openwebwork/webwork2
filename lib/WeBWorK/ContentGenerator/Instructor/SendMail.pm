@@ -624,10 +624,10 @@ sub print_form {
 						CGI::div(
 							{ class => 'col-sm-9' },
 							CGI::textfield({
-								name      => 'from',
-								id        => 'from',
-								value     => $from,
-								class     => 'form-control form-control-sm'
+								name  => 'from',
+								id    => 'from',
+								value => $from,
+								class => 'form-control form-control-sm'
 							})
 						)
 					),
@@ -640,10 +640,10 @@ sub print_form {
 						CGI::div(
 							{ class => 'col-sm-9' },
 							CGI::textfield({
-								name      => 'replyTo',
-								id        => 'replyTo',
-								value     => $replyTo,
-								class     => 'form-control form-control-sm'
+								name  => 'replyTo',
+								id    => 'replyTo',
+								value => $replyTo,
+								class => 'form-control form-control-sm'
 							})
 						)
 					),
@@ -741,32 +741,47 @@ sub print_form {
 					)
 				)
 			),
-			# Insert a popup menu containing a list of available macros.
+			# Insert a toast containing a list of available macros.
 			CGI::div(
 				{ class => 'd-flex justify-content-center' },
-				CGI::span(
-					{ dir => 'ltr' },    # Put the popup in a LTR span
-					CGI::popup_menu({
-						name   => 'dummyName',
-						values => [
-							'', '$SID', '$FN', '$LN', '$SECTION', '$RECITATION',
-							'$STATUS', '$EMAIL', '$LOGIN', '$COL[n]', '$COL[-1]'
-						],
-						labels => {
-							''            => $r->maketext('List of insertable macros'),
-							'$SID'        => '$SID - ' . $r->maketext('Student ID'),
-							'$FN'         => '$FN - ' . $r->maketext('First name'),
-							'$LN'         => '$LN - ' . $r->maketext('Last name'),
-							'$SECTION'    => '$SECTION - ' . $r->maketext('Section'),
-							'$RECITATION' => '$RECITATION - ' . $r->maketext('Recitation'),
-							'$STATUS'     => '$STATUS - ' . $r->maketext('Enrolled, Drop, etc.'),
-							'$EMAIL'      => '$EMAIL - ' . $r->maketext('Email address'),
-							'$LOGIN'      => '$LOGIN - ' . $r->maketext('Login'),
-							'$COL[n]'     => '$COL[n] - ' . $r->maketext('nth colum of merge file'),
-							'$COL[-1]'    => '$COL[-1] - ' . $r->maketext('Last column of merge file')
-						},
-						class => 'form-select form-select-sm d-inline w-auto'
-					})
+				'<button id="insertable-macros-btn" class="btn btn-secondary btn-sm" type="button">'
+					. $r->maketext('List of insertable macros')
+					. '</button>'
+			),
+			CGI::div(
+				{ class => 'position-fixed top-0 end-0 p-3', style => 'z-index: 11' },
+				CGI::div(
+					{
+						id          => 'insertable-macros',
+						class       => 'toast bg-white',
+						role        => 'alert',
+						aria_live   => 'polite',
+						aria_atomic => 'true'
+					},
+					CGI::div(
+						{ class => 'toast-header' },
+						CGI::strong({ class => 'me-auto' }, $r->maketext('List of insertable macros')),
+						'<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>'
+					),
+					CGI::div(
+						{ class => 'toast-body' },
+						CGI::table(
+							{ class => 'table table-bordered table-sm align-middle w-auto mb-0 mx-auto' },
+							CGI::thead(CGI::Tr(CGI::th([ $r->maketext('Macro'), $r->maketext('Value') ]))),
+							CGI::tbody(
+								CGI::Tr(CGI::td([ '$SID',        $r->maketext('Student ID') ])),
+								CGI::Tr(CGI::td([ '$FN',         $r->maketext('First name') ])),
+								CGI::Tr(CGI::td([ '$LN',         $r->maketext('Last name') ])),
+								CGI::Tr(CGI::td([ '$SECTION',    $r->maketext('Section') ])),
+								CGI::Tr(CGI::td([ '$RECITATION', $r->maketext('Recitation') ])),
+								CGI::Tr(CGI::td([ '$STATUS',     $r->maketext('Enrolled, Drop, etc.') ])),
+								CGI::Tr(CGI::td([ '$EMAIL',      $r->maketext('Email address') ])),
+								CGI::Tr(CGI::td([ '$LOGIN',      $r->maketext('Login') ])),
+								CGI::Tr(CGI::td([ '$COL[n]',     $r->maketext('nth colum of merge file') ])),
+								CGI::Tr(CGI::td([ '$COL[-1]',    $r->maketext('Last column of merge file') ]))
+							)
+						)
+					)
 				)
 			)
 		)
@@ -827,14 +842,16 @@ sub print_form {
 				{ class => 'input-group input-group-sm w-auto m-1' },
 				CGI::submit({
 					name  => 'saveAs',
+					id    => 'saveAs',
 					value => $r->maketext('Save as') . ":",
 					class => 'btn btn-secondary btn-sm'
 				}),
 				CGI::textfield({
-					name  => 'savefilename',
-					size  => 20,
-					value => "$output_file",
-					class => 'form-control form-control-sm'
+					name            => 'savefilename',
+					size            => 20,
+					value           => "$output_file",
+					class           => 'form-control form-control-sm',
+					aria_labelledby => 'saveAs'
 				})
 			),
 			CGI::div(
