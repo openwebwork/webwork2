@@ -1,6 +1,6 @@
- ###############################################################################
+###############################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,190 +25,128 @@ pages
 
 use strict;
 use warnings;
-#use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
-use WeBWorK::Utils qw/format_set_name_internal/;
+use WeBWorK::Utils qw/x getAssetURL format_set_name_internal/;
 
-use constant E_NO_USERS     => "Please do not select any users.";
-use constant E_NO_SETS      => "Please do not select any sets.";
-use constant E_MAX_ONE_USER => "Please select at most one user.";
-use constant E_MAX_ONE_SET  => "Please select at most one set.";
-use constant E_ONE_USER     => "Please select exactly one user.";
-use constant E_ONE_SET      => "Please select exactly one set.";
-use constant E_MIN_ONE_USER => "Please select at least one user.";
-use constant E_MIN_ONE_SET  => "Please select at least one set.";
-use constant E_SET_NAME     => "Please specify a homework set name.";
-use constant E_BAD_NAME     => "Please use only letter, digits, -, _ and . in your set name.";
+use constant E_MAX_ONE_SET  => x('Please select at most one set.');
+use constant E_ONE_USER     => x('Please select exactly one user.');
+use constant E_ONE_SET      => x('Please select exactly one set.');
+use constant E_MIN_ONE_USER => x('Please select at least one user.');
+use constant E_MIN_ONE_SET  => x('Please select at least one set.');
+use constant E_SET_NAME     => x('Please specify a homework set name.');
+use constant E_BAD_NAME     => x('Please use only letters, digits, dashes, underscores, and periods in your set name.');
 
 sub pre_header_initialize {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $authz = $r->authz;
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $db      = $r->db;
+	my $authz   = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	my $courseID = $urlpath->arg("courseID");
-	my $userID = $r->param("user");
-	my $eUserID = $r->param("effectiveUser");
+	my $courseID = $urlpath->arg('courseID');
+	my $userID   = $r->param('user');
+	my $eUserID  = $r->param('effectiveUser');
 	$self->{courseName} = $courseID;
 	# Check permissions
-	return unless ($authz->hasPermissions($userID, "access_instructor_tools"));
+	return unless ($authz->hasPermissions($userID, 'access_instructor_tools'));
 
-	my @selectedUserIDs = $r->param("selected_users");
-	my @selectedSetIDs = $r->param("selected_sets");
+	my @selectedUserIDs = $r->param('selected_users');
+	my @selectedSetIDs  = $r->param('selected_sets');
 
 	my $nusers = @selectedUserIDs;
-	my $nsets = @selectedSetIDs;
+	my $nsets  = @selectedSetIDs;
 
-	my $firstUserID = $nusers ? $selectedUserIDs[0] : "";
-	my $firstSetID = $nsets ? $selectedSetIDs[0] : "";
+	my $firstUserID = $nusers ? $selectedUserIDs[0] : '';
+	my $firstSetID  = $nsets  ? $selectedSetIDs[0]  : '';
 
-	# these will be used to construct a new URL
+	# These will be used to construct a new URL.
 	my $module;
-	my %args = ( courseID => $courseID );
+	my %args = (courseID => $courseID);
 	my %params;
 
-	my $pfx = "WeBWorK::ContentGenerator";
-	my $ipfx = "WeBWorK::ContentGenerator::Instructor";
+	my $pfx  = 'WeBWorK::ContentGenerator';
+	my $ipfx = 'WeBWorK::ContentGenerator::Instructor';
 
 	my @error;
 
-	# depending on which button was pushed, fill values in for URL construction
-
-	defined param $r "sets_assigned_to_user" and do {
+	# Depending on which button was pushed, fill in values for URL construction.
+	if (defined $r->param('sets_assigned_to_user')) {
 		if ($nusers == 1) {
 			$module = "${ipfx}::UserDetail";
 			$args{userID} = $firstUserID;
-			$params{fromTools} = 1;
 		} else {
 			push @error, E_ONE_USER;
 		}
-	};
-
-	defined param $r "users_assigned_to_set" and do {
+	} elsif (defined $r->param('users_assigned_to_set')) {
 		if ($nsets == 1) {
 			$module = "${ipfx}::UsersAssignedToSet";
 			$args{setID} = $firstSetID;
-			$params{fromTools} = 1;
 		} else {
 			push @error, E_ONE_SET;
 		}
-	};
-
-	defined param $r "edit_users" and do {
-		if ($nusers >= 1) {
-			$module = "${ipfx}::UserList";
-			$params{visible_users} = \@selectedUserIDs;
-			$params{editMode} = 1;
-		} else {
-			push @error, E_MIN_ONE_USER;
-		}
-	};
-
-	defined param $r "edit_sets" and do {
+	} elsif (defined $r->param('edit_sets')) {
 		if ($nsets == 1) {
 			$module = "${ipfx}::ProblemSetDetail";
 			$args{setID} = $firstSetID;
 		} else {
 			push @error, E_ONE_SET;
-
 		}
-	};
-
-	defined param $r "prob_lib" and do {
+	} elsif (defined $r->param('prob_lib')) {
 		if ($nsets == 1) {
-					$module = "${ipfx}::SetMaker";
+			$module = "${ipfx}::SetMaker";
 			$params{local_sets} = $firstSetID;
 		} elsif ($nsets == 0) {
-				$module = "${ipfx}::SetMaker";
+			$module = "${ipfx}::SetMaker";
 		} else {
 			push @error, E_ONE_SET;
-
 		}
-	};
-
-	defined param $r "user_stats" and do {
+	} elsif (defined $r->param('user_stats')) {
 		if ($nusers == 1) {
-			$module = "${ipfx}::Stats";
-			$args{statType} = "student"; # FIXME: fix URLPath -- i shouldn't have to type this!
-			$args{userID} = $firstUserID;
+			$module         = "${ipfx}::Stats";
+			$args{statType} = 'student';
+			$args{userID}   = $firstUserID;
 		} else {
 			push @error, E_ONE_USER;
 		}
-	};
-
-	defined param $r "set_stats" and do {
+	} elsif (defined $r->param('set_stats')) {
 		if ($nsets == 1) {
-			$module = "${ipfx}::Stats";
-			$args{statType} = "set"; # FIXME: fix URLPath -- i shouldn't have to type this!
-			$args{setID} = $firstSetID;
+			$module         = "${ipfx}::Stats";
+			$args{statType} = 'set';
+			$args{setID}    = $firstSetID;
 		} else {
 			push @error, E_ONE_SET;
 		}
-	};
-
-	defined param $r "user_progress" and do {
+	} elsif (defined $r->param('user_progress')) {
 		if ($nusers == 1) {
-			$module = "${ipfx}::StudentProgress";
-			$args{statType} = "student"; # FIXME: fix URLPath -- i shouldn't have to type this!
-			$args{userID} = $firstUserID;
+			$module         = "${ipfx}::StudentProgress";
+			$args{statType} = 'student';
+			$args{userID}   = $firstUserID;
 		} else {
 			push @error, E_ONE_USER;
 		}
-	};
-
-	defined param $r "set_progress" and do {
+	} elsif (defined $r->param('set_progress')) {
 		if ($nsets == 1) {
-			$module = "${ipfx}::StudentProgress";
-			$args{statType} = "set"; # FIXME: fix URLPath -- i shouldn't have to type this!
-			$args{setID} = $firstSetID;
+			$module         = "${ipfx}::StudentProgress";
+			$args{statType} = 'set';
+			$args{setID}    = $firstSetID;
 		} else {
 			push @error, E_ONE_SET;
 		}
-	};
-
-	defined param $r "user_options" and do {
+	} elsif (defined $r->param('user_options')) {
 		if ($nusers == 1) {
 			$module = "${pfx}::Options";
 			$params{effectiveUser} = $firstUserID;
 		} else {
 			push @error, E_ONE_USER;
 		}
-	};
-
-	defined param $r "score_sets" and do {
-		if ($nsets >= 1) {
-			$module = "${ipfx}::Scoring";
-			$params{selectedSet} = \@selectedSetIDs;
-			$params{scoreSelected} = 1;
-		} else {
-			push @error, E_MIN_ONE_SET;
-		}
-	};
-
-	defined param $r "assign_users" and do {
-		if ($nusers >= 1 and $nsets >= 1) {
-			$module = "${ipfx}::Assigner";
-			$params{selected_users} = \@selectedUserIDs;
-			$params{selected_sets} = \@selectedSetIDs;
-			$params{assign} = "Assign selected sets to selected users";
-		} else {
-			push @error, E_MIN_ONE_USER unless $nusers >= 1;
-			push @error, E_MIN_ONE_SET unless $nsets >= 1;
-		}
-	};
-
-	defined param $r "act_as_user" and do {
+	} elsif (defined $r->param('act_as_user')) {
 		if ($nusers == 1 and $nsets <= 1) {
 			if ($nsets) {
-				# unfortunately, we need to know what
-				#    type of set it is to figure out
-				#    the correct module
-				my $set = $db->getGlobalSet( $firstSetID );
-				if ( defined( $set ) &&
-				     $set->assignment_type =~ /gateway/ ) {
+				# Unfortunately, we need to know what type of set it is to figure out the correct module.
+				my $set = $db->getGlobalSet($firstSetID);
+				if (defined($set) && $set->assignment_type =~ /gateway/) {
 					$module = "${pfx}::GatewayQuiz";
 				} else {
 					$module = "${pfx}::ProblemSet";
@@ -219,29 +157,25 @@ sub pre_header_initialize {
 			}
 			$params{effectiveUser} = $firstUserID;
 		} else {
-			push @error, E_ONE_USER unless $nusers == 1;
+			push @error, E_ONE_USER    unless $nusers == 1;
 			push @error, E_MAX_ONE_SET unless $nsets <= 1;
 		}
-	};
-
-	defined param $r "edit_set_for_users" and do {
+	} elsif (defined $r->param('edit_set_for_users')) {
 		if ($nusers >= 1 and $nsets == 1) {
-			$module = "${ipfx}::ProblemSetDetail";
-			$args{setID} = $firstSetID;
+			$module              = "${ipfx}::ProblemSetDetail";
+			$args{setID}         = $firstSetID;
 			$params{editForUser} = \@selectedUserIDs;
 		} else {
 			push @error, E_MIN_ONE_USER unless $nusers >= 1;
-			push @error, E_ONE_SET unless $nsets == 1;
+			push @error, E_ONE_SET      unless $nsets == 1;
 
 		}
-	};
-
-	defined param $r "create_set" and do {
+	} elsif (defined $r->param('create_set')) {
 		my $setname = format_set_name_internal($r->param("new_set_name") // '');
 		if ($setname) {
 			if ($setname =~ /^[\w.-]*$/) {
 				$module                = "${ipfx}::SetMaker";
-				$params{new_local_set} = "Create a New Set in this Course";
+				$params{new_local_set} = 'Create a New Set in this Course';
 				$params{new_set_name}  = $setname;
 				$params{selfassign}    = 1;
 			} else {
@@ -250,57 +184,59 @@ sub pre_header_initialize {
 		} else {
 			push @error, E_SET_NAME;
 		}
-	};
-
-	defined param $r "add_users" and do {
+	} elsif (defined $r->param('add_users')) {
 		$module = "${ipfx}::AddUsers";
-	};
-
-	defined param $r "email_users" and do {
+	} elsif (defined $r->param('email_users')) {
 		$module = "${ipfx}::SendMail";
-	};
-
-	defined param $r "transfer_files" and do {
+	} elsif (defined $r->param('transfer_files')) {
 		$module = "${ipfx}::FileManager";
-	};
+	}
 
-	push @error, "You are not allowed to act as a student."
-		if (defined param $r "act_as_user" and not $authz->hasPermissions($userID, "become_student"));
-	push @error, "You are not allowed to modify homework sets."
-		if ((defined param $r "edit_sets" or defined param $r "edit_set_for_users") and not $authz->hasPermissions($userID, "modify_problem_sets"));
-	push @error, "You are not allowed to assign homework sets."
-		if ((defined param $r "sets_assigned_to_user" or defined param $r "users_assigned_to_set") and not $authz->hasPermissions($userID, "assign_problem_sets"));
-	push @error, "You are not allowed to modify student data."
-		if ((defined param $r "edit_users" or defined param $r "user_options" or defined param $r "user_options") and not $authz->hasPermissions($userID, "modify_student_data"));
-	push @error, "You are not allowed to score sets."
-		if (defined param $r "score_sets" and not $authz->hasPermissions($userID, "score_sets"));
+	push @error, 'You are not allowed to act as a student.'
+		if (defined $r->param('act_as_user') && !$authz->hasPermissions($userID, 'become_student'));
+	push @error, 'You are not allowed to modify homework sets.'
+		if ((defined $r->param('edit_sets') || defined $r->param('edit_set_for_users'))
+			&& !$authz->hasPermissions($userID, 'modify_problem_sets'));
+	push @error, 'You are not allowed to assign homework sets.'
+		if ((defined $r->param('sets_assigned_to_user') || defined $r->param('users_assigned_to_set'))
+			&& !$authz->hasPermissions($userID, 'assign_problem_sets'));
+	push @error, 'You are not allowed to modify student data.'
+		if ((defined $r->param('user_options') || defined $r->param('user_options'))
+			&& !$authz->hasPermissions($userID, 'modify_student_data'));
 
-	# handle errors, redirect to target page
 	if (@error) {
-		$self->addbadmessage(CGI::p(join(CGI::br(),@error)));
-
+		# Handle errors
+		$self->addbadmessage(
+			CGI::div({ class => 'd-flex flex-column gap-1' }, map { CGI::div($r->maketext($_)) } @error));
 	} elsif ($module) {
+		# Redirect to target page
 		my $page = $urlpath->newFromModule($module, $r, %args);
-		my $url = $self->systemLink($page, params => \%params);
+		my $url  = $self->systemLink($page, params => \%params);
 		$self->reply_with_redirect($url);
 	}
 }
 
 sub body {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
-	my $authz = $r->authz;
+	my ($self)     = @_;
+	my $r          = $self->r;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
 	my $courseName = $self->{courseName};
-	my $user = $r->param("user");
+	my $user       = $r->param('user');
 
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		"You are not authorized to access the Instructor tools.")
-	unless $authz->hasPermissions($user, "access_instructor_tools");
+		'You are not authorized to access the Instructor tools.')
+		unless $authz->hasPermissions($user, 'access_instructor_tools');
 
-	print CGI::p({},$r->maketext("Use the interface below to quickly access commonly-used instructor tools, or select a tool from the list to the left."), CGI::br(),
-		$r->maketext("Select user(s) and/or set(s) below and click the action button of your choice."));
+	print CGI::p(
+		$r->maketext(
+			'Use the interface below to quickly access commonly-used instructor tools, '
+				. 'or select a tool from the list to the left.'
+		),
+		CGI::br(),
+		$r->maketext('Select user(s) and/or set(s) below and click the action button of your choice.')
+	);
 
 	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
 	# user if such restrictions are defined.  This list is sorted by last_name, then first_name, then user_id.
@@ -321,10 +257,10 @@ sub body {
 
 	my @GlobalSets = $db->getGlobalSetsWhere();
 
-	my @selected_users = $r->param("selected_users");
-	my @selected_sets = $r->param("selected_sets");
+	my @selected_users = $r->param('selected_users');
+	my @selected_sets  = $r->param('selected_sets');
 
-	print CGI::start_form({ method => "get", id => "instructor-tools-form", action => $r->uri() });
+	print CGI::start_form({ method => 'post', id => 'instructor-tools-form', action => $r->uri() });
 	print $self->hidden_authen_fields();
 
 	print CGI::div(
@@ -375,67 +311,81 @@ sub body {
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "sets_assigned_to_user",
-						label => $r->maketext("View/Edit"),
-						class => 'btn btn-sm btn-secondary'
+						name              => 'sets_assigned_to_user',
+						label             => $r->maketext('View/Edit'),
+						class             => 'btn btn-sm btn-secondary',
+						data_users_needed => 'exactly one',
+						data_error_users  => $r->maketext(E_ONE_USER)
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("all set dates for one <b>user</b>")
+						$r->maketext('all set dates for one <b>user</b>')
 					)
 				),
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "edit_users",
-						label => $r->maketext("Edit"),
-						class => 'btn btn-sm btn-secondary'
+						name       => 'edit_users',
+						label      => $r->maketext('Edit'),
+						class      => 'btn btn-sm btn-secondary',
+						formaction => $self->systemLink($r->urlpath->newFromModule(
+							'WeBWorK::ContentGenerator::Instructor::UserList',
+							$r, courseID => $self->{courseName}
+						)),
+						data_users_needed => 'at least one',
+						data_error_users  => $r->maketext(E_MIN_ONE_USER)
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("class list data for selected <b>users</b>")
+						$r->maketext('class list data for selected <b>users</b>')
 					)
 				),
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "user_stats",
-						label => $r->maketext("Statistics"),
-						class => 'btn btn-sm btn-secondary'
+						name              => 'user_stats',
+						label             => $r->maketext('Statistics'),
+						class             => 'btn btn-sm btn-secondary',
+						data_users_needed => 'exactly one',
+						data_error_users  => $r->maketext(E_ONE_USER)
 					}),
-					CGI::span({ class => 'input-group-text' }, $r->maketext("or")),
+					CGI::span({ class => 'input-group-text' }, $r->maketext('or')),
 					CGI::submit({
-						name  => "user_progress",
-						label => $r->maketext("progress"),
-						class => 'btn btn-sm btn-secondary'
+						name              => 'user_progress',
+						label             => $r->maketext('progress'),
+						class             => 'btn btn-sm btn-secondary',
+						data_users_needed => 'exactly one',
+						data_error_users  => $r->maketext(E_ONE_USER)
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("for one <b>user</b>")
+						$r->maketext('for one <b>user</b>')
 					)
 				),
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "user_options",
-						label => $r->maketext("Change Password"),
-						class => 'btn btn-sm btn-secondary'
+						name              => 'user_options',
+						label             => $r->maketext('Change Password'),
+						class             => 'btn btn-sm btn-secondary',
+						data_users_needed => 'exactly one',
+						data_error_users  => $r->maketext(E_ONE_USER)
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("for one <b>user</b>")
+						$r->maketext('for one <b>user</b>')
 					)
 				),
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "add_users",
-						label => $r->maketext("Add"),
+						name  => 'add_users',
+						label => $r->maketext('Add'),
 						class => 'btn btn-sm btn-secondary'
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("new users")
+						$r->maketext('new users')
 					)
 				),
 			),
@@ -444,73 +394,92 @@ sub body {
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "users_assigned_to_set",
-						label => $r->maketext("View/Edit"),
-						class => 'btn btn-sm btn-secondary'
+						name             => 'users_assigned_to_set',
+						label            => $r->maketext('View/Edit'),
+						class            => 'btn btn-sm btn-secondary',
+						data_sets_needed => 'exactly one',
+						data_error_sets  => $r->maketext(E_ONE_SET)
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("all users for one <b>set</b>")
+						$r->maketext('all users for one <b>set</b>')
 					)
 				),
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "edit_sets",
-						label => $r->maketext("Edit"),
-						class => 'btn btn-sm btn-secondary'
+						name             => 'edit_sets',
+						label            => $r->maketext('Edit'),
+						class            => 'btn btn-sm btn-secondary',
+						data_sets_needed => 'exactly one',
+						data_error_sets  => $r->maketext(E_ONE_SET)
 					}),
 					CGI::span(
 						{ class => 'input-group-text', style => 'white-space:pre;' },
-						$r->maketext("one <b>set</b>")
+						$r->maketext('one <b>set</b>')
 					),
-					CGI::span({ class => 'input-group-text' }, $r->maketext("or")),
+					CGI::span({ class => 'input-group-text' }, $r->maketext('or')),
 					CGI::submit({
-						name  => "prob_lib",
-						label => $r->maketext("add problems"),
-						class => 'btn btn-sm btn-secondary'
+						name             => 'prob_lib',
+						label            => $r->maketext('add problems'),
+						class            => 'btn btn-sm btn-secondary',
+						data_sets_needed => 'exactly one',
+						data_error_sets  => $r->maketext(E_ONE_SET)
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("to one <b>set</b>")
+						$r->maketext('to one <b>set</b>')
 					)
 				),
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "set_stats",
-						label => $r->maketext("Statistics"),
-						class => 'btn btn-sm btn-secondary'
+						name             => 'set_stats',
+						label            => $r->maketext('Statistics'),
+						class            => 'btn btn-sm btn-secondary',
+						data_sets_needed => 'exactly one',
+						data_error_sets  => $r->maketext(E_ONE_SET)
 					}),
-					CGI::span({ class => 'input-group-text' }, $r->maketext("or")),
+					CGI::span({ class => 'input-group-text' }, $r->maketext('or')),
 					CGI::submit({
-						name  => "set_progress",
-						label => $r->maketext("progress"),
-						class => 'btn btn-sm btn-secondary'
+						name             => 'set_progress',
+						label            => $r->maketext('progress'),
+						class            => 'btn btn-sm btn-secondary',
+						data_sets_needed => 'exactly one',
+						data_error_sets  => $r->maketext(E_ONE_SET)
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("for one <b>set</b>")
+						$r->maketext('for one <b>set</b>')
 					)
 				),
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "score_sets",
-						label => $r->maketext("Score"),
-						class => 'btn btn-sm btn-secondary'
+						name       => 'score_sets',
+						label      => $r->maketext('Score'),
+						class      => 'btn btn-sm btn-secondary',
+						formaction => $self->systemLink($r->urlpath->newFromModule(
+							'WeBWorK::ContentGenerator::Instructor::Scoring',
+							$r, courseID => $self->{courseName}
+						)),
+						data_sets_needed => 'at least one',
+						data_error_sets  => $r->maketext(E_MIN_ONE_SET)
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("selected <b>sets</b>")
+						$r->maketext('selected <b>sets</b>')
 					)
 				),
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "create_set",
-						label => $r->maketext("Create"),
-						class => 'btn btn-sm btn-secondary'
+						name                        => 'create_set',
+						label                       => $r->maketext('Create'),
+						class                       => 'btn btn-sm btn-secondary',
+						data_set_name_needed        => 'true',
+						data_error_set_name         => $r->maketext(E_SET_NAME),
+						data_error_invalid_set_name => $r->maketext(E_BAD_NAME)
 					}),
 					CGI::label({ for => 'new_set_name', class => 'input-group-text' }, $r->maketext('new set:')),
 					CGI::textfield({
@@ -530,63 +499,81 @@ sub body {
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "assign_users",
-						label => $r->maketext("Assign"),
-						class => 'btn btn-sm btn-secondary'
+						# This name is the same as the name of the submit button in Assigner.pm and the form is
+						# directly submitted to that module without modification.
+						name       => 'assign',
+						label      => $r->maketext('Assign'),
+						class      => 'btn btn-sm btn-secondary',
+						formaction => $self->systemLink($r->urlpath->newFromModule(
+							'WeBWorK::ContentGenerator::Instructor::Assigner',
+							$r, courseID => $self->{courseName}
+						)),
+						data_users_needed => 'at least one',
+						data_error_users  => $r->maketext(E_MIN_ONE_USER),
+						data_sets_needed  => 'at least one',
+						data_error_sets   => $r->maketext(E_MIN_ONE_SET)
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("selected <b>users</b> to selected <b>sets</b>")
+						$r->maketext('selected <b>users</b> to selected <b>sets</b>')
 					)
 				),
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "act_as_user",
-						label => $r->maketext("Act as"),
-						class => 'btn btn-sm btn-secondary'
+						name              => 'act_as_user',
+						label             => $r->maketext('Act as'),
+						class             => 'btn btn-sm btn-secondary',
+						data_users_needed => 'exactly one',
+						data_error_users  => $r->maketext(E_ONE_USER),
+						data_sets_needed  => 'at most one',
+						data_error_sets   => $r->maketext(E_MAX_ONE_SET)
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("one <b>user</b> (on one <b>set</b>)")
+						$r->maketext('one <b>user</b> (on one <b>set</b>)')
 					)
 				),
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "edit_set_for_users",
-						label => $r->maketext("Edit"),
-						class => 'btn btn-sm btn-secondary'
+						name              => 'edit_set_for_users',
+						label             => $r->maketext('Edit'),
+						class             => 'btn btn-sm btn-secondary',
+						data_users_needed => 'at least one',
+						data_error_users  => $r->maketext(E_MIN_ONE_USER),
+						data_sets_needed  => 'exactly one',
+						data_error_sets   => $r->maketext(E_ONE_SET)
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("one <b>set</b> for  <b>users</b>")
+						$r->maketext('one <b>set</b> for  <b>users</b>')
 					)
 				),
 				CGI::div(
 					{ class => 'input-group input-group-sm mb-2' },
 					CGI::submit({
-						name  => "email_users",
-						label => $r->maketext("Email"),
+						name  => 'email_users',
+						label => $r->maketext('Email'),
 						class => 'btn btn-sm btn-secondary'
 					}),
 					CGI::span(
 						{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-						$r->maketext("your students")
+						$r->maketext('your students')
 					)
 				),
 				(
-					$authz->hasPermissions($user, "manage_course_files")
+					$authz->hasPermissions($user, 'manage_course_files')
 					? CGI::div(
 						{ class => 'input-group input-group-sm mb-2' },
 						CGI::submit({
-							name  => "transfer_files",
-							label => $r->maketext("Transfer"),
+							name  => 'transfer_files',
+							label => $r->maketext('Transfer'),
 							class => 'btn btn-sm btn-secondary'
 						}),
 						CGI::span(
 							{ class => 'input-group-text flex-grow-1', style => 'white-space:pre;' },
-							$r->maketext("course files")
+							$r->maketext('course files')
 						)
 					)
 					: ()
@@ -599,12 +586,13 @@ sub body {
 	return '';
 }
 
+sub output_JS {
+	my $self = shift;
+	my $ce   = $self->r->ce;
+
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/InstructorTools/instructortools.js'), defer => undef }, '');
+
+	return '';
+}
+
 1;
-
-__END__
-
-=head1 AUTHOR
-
-Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu.
-
-=cut
