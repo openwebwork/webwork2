@@ -795,7 +795,10 @@ sub links {
 
 
 			print CGI::li({ class => 'nav-item' },
-				&$makelink("${pfx}Options", urlpath_args => { %args }, systemlink_args => \%systemlink_args));
+				&$makelink("${pfx}Options", urlpath_args => {%args}, systemlink_args => \%systemlink_args))
+				if ($authz->hasPermissions($userID, 'change_password')
+					|| $authz->hasPermissions($userID, 'change_email_address')
+					|| $authz->hasPermissions($userID, 'change_pg_display_settings'));
 
 			print CGI::li({ class => 'nav-item' },
 				&$makelink("${pfx}Grades", urlpath_args => { %args }, systemlink_args => \%systemlink_args));
