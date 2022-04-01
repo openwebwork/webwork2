@@ -848,10 +848,17 @@ input.changed[type=text] { /* orange */
 }
 
 /* Grades */
-.grades-course-total,
-.grades-course-total th {
-	font-weight: bold;
-	font-size: 105%;
+.grade-table {
+	.grades-course-total,
+	.grades-course-total th {
+		font-weight: bold;
+		font-size: 105%;
+	}
+
+	.problem-data {
+		min-width: 2.5em;
+		text-align: center;
+	}
 }
 
 span {

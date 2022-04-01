@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,19 +24,16 @@ WeBWorK::ContentGenerator::Instructor::StudentProgress - Display Student Progres
 
 use strict;
 use warnings;
-#use CGI qw(-nosticky );
+
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
-use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status wwRound grade_set format_set_name_display);
+use WeBWorK::Utils qw(jitar_id_to_seq wwRound grade_set format_set_name_display);
 use WeBWorK::Utils::Grades qw/list_set_versions/;
-use WeBWorK::DB::Record::UserSet;  #FIXME -- this is only used in one spot.
 
 # The table format has been borrowed from the Grades.pm module
 sub initialize {
 	my $self     = shift;
-	# FIXME  are there args here?
-	my @components = @_;
 	my $r          = $self->{r};
 	my $urlpath    = $r->urlpath;
 	my $type       = $urlpath->arg("statType") || '';
@@ -364,61 +361,63 @@ sub displaySets {
 
 		foreach my $setName (@allSetVersionNames) {
 			my $set;
-			my $userSet;
+			my $vNum = 0;
+
+			# For versioned tests we might be displaying the test date and test time.
+			my $dateOfTest = '';
+			my $testTime   = '';
+
 			if ($setIsVersioned) {
-				my ($setN, $vNum) = ($setName =~ /(.+),v(\d+)$/);
+				($setName, $vNum) = ($setName =~ /(.+),v(\d+)$/);
 				# we'll also need information from the set
 				# as we set up the display below, so get
 				# the merged userset as well
-				$set     = $db->getMergedSetVersion($studentRecord->user_id, $setN, $vNum);
-				$userSet = $set;
-				$setName = $setN;
+				$set        = $db->getMergedSetVersion($studentRecord->user_id, $setName, $vNum);
+				$dateOfTest = localtime($set->version_creation_time());
+				if (defined $set->version_last_attempt_time() && $set->version_last_attempt_time()) {
+					$testTime = ($set->version_last_attempt_time() - $set->open_date()) / 60;
+					my $timeLimit = $set->version_time_limit() / 60;
+					$testTime = $timeLimit if ($testTime > $timeLimit);
+					$testTime = sprintf("%3.1f min", $testTime);
+				} elsif (time() - $set->open_date() < $set->version_time_limit()) {
+					$testTime = $r->maketext('still open');
+				} else {
+					$testTime = $r->maketext('time limit exceeded');
+				}
 			} else {
 				$set = $db->getMergedSet($studentName, $setName);
 			}
-			#FIXME -- this seems like over kill -- perhaps we only need to pass in the set_id.
-			# that is the only aspect of $set that is used in grade set.
-			# the problem_random order sequence is used in the corresponding routine in Grades.pm
 
-			unless (ref($set)) {
-				$set = new WeBWorK::DB::Record::UserSet;
-				$set->set_id($setName);
-			}
-
-			my $problemsRow = generate_problems_row($db, $set, $setName, $studentName, $setIsVersioned);
-
-			# for versioned tests we might be displaying the
-			# test date and test time
-			my $dateOfTest = '';
-			my $testTime   = '';
-			if ($setIsVersioned) {
-				# if this isn't defined, something's wrong
-				if (defined($userSet)) {
-					$dateOfTest = localtime($userSet->version_creation_time());
-					if (defined($userSet->version_last_attempt_time()) && $userSet->version_last_attempt_time()) {
-						$testTime = ($userSet->version_last_attempt_time() - $userSet->open_date()) / 60;
-						my $timeLimit = $userSet->version_time_limit() / 60;
-						$testTime = $timeLimit if ($testTime > $timeLimit);
-						$testTime = sprintf("%3.1f min", $testTime);
-					} elsif (time() - $userSet->open_date() < $userSet->version_time_limit()) {
-						$testTime = $r->maketext('still open');
-					} else {
-						$testTime = $r->maketext('time limit exceeded');
-					}
-				} else {
-					$dateOfTest = '???';
-					$testTime   = '???';
-				}
-			}
+			$set = $db->newUserSet(set_id => $setName) unless ref $set;
 
 			my $email = $studentRecord->email_address;
-			my ($score, $total) = grade_set($db, $set, $setName, $studentRecord->user_id, $setIsVersioned);
+			my ($score, $total, $problem_scores, $problem_incorrect_attempts) =
+				grade_set($db, $set, $studentName, $setIsVersioned, 1);
 			$score = wwRound(2, $score);
+
+			# Construct problems row
+			my $problemsRow = [
+				map {
+					CGI::span(
+						{
+							class => $problem_scores->[$_] eq '100' ? 'correct'
+							: $problem_scores->[$_] eq '&nbsp;.&nbsp;' ? 'unattempted'
+							:                                            ''
+						},
+						$problem_scores->[$_]
+						)
+						. CGI::br()
+						. ($problem_incorrect_attempts->[$_] // '&nbsp;')
+				} 0 .. $#$problem_scores
+			];
+
+			$problemsRow = ['&nbsp;'] if !@$problemsRow;
 
 			my $temp_hash = {
 				user_id       => $studentRecord->user_id,
 				last_name     => $studentRecord->last_name,
 				first_name    => $studentRecord->first_name,
+				version       => $vNum,
 				score         => $score,
 				total         => $total,
 				section       => $studentRecord->section,
@@ -447,8 +446,8 @@ sub displaySets {
 
 		# if we're showing only the best score, add the best score now
 		if ($showBestOnly) {
-			# if there's no %$max_hash, then we had no results
-			# this occurs for proctors, for example
+			# If there's no %$max_hash, then we had no results.
+			# This occurs for proctors, for example.
 			if ($notAssignedSet) {
 				next;
 			} elsif (!%$max_hash) {
@@ -762,7 +761,7 @@ sub displaySets {
 
 	# Start table output
 	print CGI::start_div({ class => 'table-responsive' }),
-		CGI::start_table({ class => 'progress-table table table-bordered table-sm font-xs' });
+		CGI::start_table({ class => 'grade-table table table-bordered table-sm font-xs' });
 
 	if (!@columnHeaders2 && $showColumns{'problems'}) {
 		print CGI::thead(
@@ -770,7 +769,7 @@ sub displaySets {
 				CGI::th({ rowspan => 2 },           [@columnHeaders1]),
 				CGI::th({ colspan => $maxProblem }, $r->maketext('Problems'))
 			),
-			CGI::Tr(CGI::th([@list_problems]))
+			CGI::Tr(CGI::th({ class => 'problem-data' }, [@list_problems]))
 		);
 	} elsif ($showColumns{'problems'}) {
 		print CGI::thead(
@@ -779,7 +778,7 @@ sub displaySets {
 				CGI::th({ colspan => $maxProblem }, $r->maketext('Problems')),
 				CGI::th({ rowspan => 2 },           [@columnHeaders2])
 			),
-			CGI::Tr(CGI::th([@list_problems]))
+			CGI::Tr(CGI::th({ class => 'problem-data' }, [@list_problems]))
 		);
 	} else {
 		print CGI::thead(CGI::Tr(CGI::th([ @columnHeaders1, @columnHeaders2 ])));
@@ -788,7 +787,6 @@ sub displaySets {
 
 	# variables to keep track of versioned sets
 	my $prevFullName = '';
-	my $vNum         = 1;
 
 	# and to make formatting nice for students who haven't taken any tests
 	# (the total number of columns is two more than this; we want the
@@ -810,17 +808,18 @@ sub displaySets {
 				setID    => $setName
 			);
 			my $interactiveURL = $self->systemLink($problemSetPage, params => { effectiveUser => $rec->{user_id} });
-			print CGI::Tr(CGI::td([
-				CGI::a({ href => $interactiveURL }, $fullName)
-					. CGI::br()
-					. CGI::a({ href => "mailto:$email" }, $email),
-				$rec->{score},
-				$rec->{total},
-				@{ $rec->{problemsRow} },
-				$self->nbsp($rec->{section}),
-				$self->nbsp($rec->{recitation}),
-				$rec->{user_id}
-			]));
+			print CGI::Tr(
+				CGI::td(
+					CGI::div(CGI::a({ href => $interactiveURL }, $fullName)),
+					$email ? CGI::div(CGI::a({ href => "mailto:$email" }, $email)) : ''
+				),
+				CGI::td($rec->{score}),
+				CGI::td($rec->{total}),
+				CGI::td({ class => 'problem-data' }, $rec->{problemsRow}),
+				CGI::td($self->nbsp($rec->{section})),
+				CGI::td($self->nbsp($rec->{recitation})),
+				CGI::td($rec->{user_id})
+			);
 		} else {
 			my $problemSetPage = $urlpath->newFromModule(
 				'WeBWorK::ContentGenerator::ProblemSet', $r,
@@ -832,14 +831,12 @@ sub displaySets {
 			# if total is 'n/a', then it's a user who hasn't taken
 			# any tests, which we treat separately
 			if ($rec->{total} ne 'n/a') {
-				$vNum++ if ($fullName eq $prevFullName);
-				my @cols = ();
 				# make make versioned sets' name format nicer and link to appropriate test version
 				my $nameEntry   = '';
 				my $versionPage = $urlpath->newFromModule(
 					'WeBWorK::ContentGenerator::GatewayQuiz', $r,
 					courseID => $courseName,
-					setID    => $setName . ',v' . $vNum
+					setID    => $setName . ',v' . $rec->{version}
 				);
 				my $versionLink = CGI::a(
 					{
@@ -847,7 +844,7 @@ sub displaySets {
 							$versionPage, params => { effectiveUser => $rec->{user_id} }
 						)
 					},
-					"version $vNum"
+					"version $rec->{version}"
 				);
 				if ($fullName eq $prevFullName) {
 					$nameEntry = CGI::div({ class => 'ms-4' }, "($versionLink)");
@@ -857,19 +854,20 @@ sub displaySets {
 						. ($setIsVersioned && !$showBestOnly ? " ($versionLink)" : ' ')
 						. CGI::br()
 						. CGI::a({ href => "mailto:$email" }, $email);
-					$vNum         = 1;
 					$prevFullName = $fullName;
 				}
 
 				# build columns to show
-				push(@cols, $nameEntry, $rec->{score}, $rec->{total});
-				push(@cols, $self->nbsp($rec->{date}))       if ($showColumns{'date'});
-				push(@cols, $self->nbsp($rec->{testtime}))   if ($showColumns{'testtime'});
-				push(@cols, @{ $rec->{problemsRow} })        if ($showColumns{'problems'});
-				push(@cols, $self->nbsp($rec->{section}))    if ($showColumns{'section'});
-				push(@cols, $self->nbsp($rec->{recitation})) if ($showColumns{'recit'});
-				push(@cols, $rec->{user_id})                 if ($showColumns{'login'});
-				print CGI::Tr(CGI::td([@cols]));
+				my @cols;
+				push(@cols, CGI::td($nameEntry), CGI::td($rec->{score}), CGI::td($rec->{total}));
+				push(@cols, CGI::td($self->nbsp($rec->{date})))     if ($showColumns{'date'});
+				push(@cols, CGI::td($self->nbsp($rec->{testtime}))) if ($showColumns{'testtime'});
+				push(@cols, CGI::td({ class => 'problem-data' }, $rec->{problemsRow}))
+					if ($showColumns{'problems'});
+				push(@cols, CGI::td($self->nbsp($rec->{section})))    if ($showColumns{'section'});
+				push(@cols, CGI::td($self->nbsp($rec->{recitation}))) if ($showColumns{'recit'});
+				push(@cols, CGI::td($rec->{user_id}))                 if ($showColumns{'login'});
+				print CGI::Tr(@cols);
 			} else {
 				my @cols = (
 					CGI::td(
@@ -891,99 +889,6 @@ sub displaySets {
 	print CGI::end_tbody(), CGI::end_table(), CGI::end_div();
 
 	return '';
-}
-
-# Creates the problem table row which shows the status and number
-# of incorrect attempts for each problem in the set.
-sub generate_problems_row {
-	my ($db, $set, $setName, $studentName, $setIsVersioned) = @_;
-	my $setID = $set->set_id();    # FIXME setName and setID should be the same
-
-	debug("Begin collecting problems for set $setName");
-	# DBFIXME: to collect the problem records, we have to know
-	# which merge routines to call.  Should this really be an
-	# issue here?  That is, shouldn't the database deal with
-	# it invisibly by detecting what the problem types are?
-	# oh well.
-	my @problemRecords = $db->getAllMergedUserProblems($studentName, $setID);
-	if ($setIsVersioned) {
-		@problemRecords = $db->getAllMergedProblemVersions($studentName, $setID, $set->version_id);
-	}
-
-	# for jitar sets we only use the top level problems
-	if ($set->assignment_type && $set->assignment_type eq 'jitar') {
-		my @topLevelProblems;
-		foreach my $problem (@problemRecords) {
-			my @seq = jitar_id_to_seq($problem->problem_id);
-			push @topLevelProblems, $problem if ($#seq == 0);
-		}
-		@problemRecords = @topLevelProblems;
-	}
-	my $num_of_problems = @problemRecords || 0;
-
-	# If there are no problems, don't create table.
-	return ['&nbsp;'] unless ($num_of_problems > 0);
-
-	my $colWidth = 100 / $num_of_problems;
-	debug("End collecting problems for set $setName");
-
-	# Resort records
-	@problemRecords = sort { $a->problem_id <=> $b->problem_id } @problemRecords;
-
-	# Construct problems row
-	my @problemsRow = ();
-	foreach my $problemRecord (@problemRecords) {
-		my $prob = $problemRecord->problem_id;
-
-		# warn "Can't find record for problem $prob in set $setName for $student";
-		# FIXME check the legitimate reasons why a student record might not be defined
-		next unless (defined($problemRecord));
-
-		my $status = $problemRecord->status || 0;
-		if ($set->assignment_type eq 'jitar') {
-			$status = jitar_problem_adjusted_status($problemRecord, $db);
-		}
-
-		my $attempted       = $problemRecord->attempted;
-		my $num_correct     = $problemRecord->num_correct   || 0;
-		my $num_incorrect   = $problemRecord->num_incorrect || 0;
-		my $num_of_attempts = $num_correct + $num_incorrect;
-
-		#######################################################
-		# This is a fail safe mechanism that makes sure that
-		# the problem is marked as attempted if the status has
-		# been set or if the problem has been attempted
-		# DBFIXME this should happen in the database layer, not here!
-		if (!$attempted && ($status || $num_of_attempts)) {
-			$attempted = 1;
-			$problemRecord->attempted('1');
-			# DBFIXME: this is another case where it
-			# seems we shouldn't have to check for
-			# which routine to use here...
-			if ($setIsVersioned) {
-				$db->putProblemVersion($problemRecord);
-			} else {
-				$db->putUserProblem($problemRecord);
-			}
-		}
-		######################################################
-
-		# sanity check that the status (score) is between 0 and 1
-		$status = ($status >= 0 && $status <= 1) ? $status : 0;
-
-		$status = 100 * wwRound(2, $status);
-		my $output = '';
-		if ($status == 100) {
-			$output = CGI::span({ class => 'correct' }, $status);
-		} elsif (!$attempted) {
-			$output = CGI::span({ class => 'unattempted px-1' }, '.');
-		} else {
-			$output = CGI::span($status);
-		}
-		push(@problemsRow, $output . CGI::br() . $num_incorrect);
-	}
-
-	return \@problemsRow;
 }
 
 1;

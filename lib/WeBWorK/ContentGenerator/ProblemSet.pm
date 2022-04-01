@@ -470,7 +470,7 @@ sub body {
 				($verSet->hide_score eq 'N' && $verSubmits >= 1) ||
 				($verSet->hide_score eq 'BeforeAnswerDate' && $timeNow > $set->answer_date))
 			{
-				my ($total, $possible) = grade_set($db, $verSet, $verSet->set_id, $effectiveUser, 1);
+				my ($total, $possible) = grade_set($db, $verSet, $effectiveUser, 1);
 				$total = wwRound(2, $total);
 				$data->{score} = "$total/$possible";
 			}

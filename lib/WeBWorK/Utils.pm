@@ -1256,12 +1256,12 @@ sub is_restricted {
 				my @versions =
 					$db->getSetVersionsWhere({ user_id => $studentName, set_id => { like => $restrictor . ',v%' } });
 				foreach (@versions) {
-					my $v_score = grade_set($db, $_, $restrictor, $studentName, 1);
+					my $v_score = grade_set($db, $_, $studentName, 1);
 
 					$r_score = $v_score if ($v_score > $r_score);
 				}
 			} else {
-				$r_score = grade_set($db, $restrictor_set, $restrictor, $studentName, 0);
+				$r_score = grade_set($db, $restrictor_set, $studentName, 0);
 			}
 
 			# round to evade machine rounding error
@@ -1275,76 +1275,85 @@ sub is_restricted {
 	return @needed;
 }
 
-# Takes in $db, $set, $setName, $studentName, $setIsVersioned
-# and returns ($totalCorrect,$total) or the percentage correct
-
+# Takes in $db, $set, $studentName, $setIsVersioned and returns ($totalCorrect, $total) or the percentage correct.
 sub grade_set {
+	my ($db, $set, $studentName, $setIsVersioned, $wantProblemDetails) = @_;
 
-  my ($db, $set, $setName, $studentName, $setIsVersioned) = @_;
+	my $totalRight = 0;
+	my $total      = 0;
 
-  my $setID = $set->set_id();  #FIXME   setName and setID should be the same
+	# This information is also accumulated if $wantProblemDetails is true.
+	my $problem_scores             = [];
+	my $problem_incorrect_attempts = [];
 
-  my $status = 0;
-  my $totalRight = 0;
-  my $total      = 0;
+	# DBFIXME: To collect the problem records, we have to know which merge routines to call.  Should this really be an
+	# issue here?  That is, shouldn't the database deal with it invisibly by detecting what the problem types are?
+	my @problemRecords =
+		$setIsVersioned
+		? $db->getAllMergedProblemVersions($studentName, $set->set_id, $set->version_id)
+		: $db->getAllMergedUserProblems($studentName, $set->set_id);
 
+	# For jitar sets we only use the top level problems.
+	if ($set->assignment_type && $set->assignment_type eq 'jitar') {
+		my @topLevelProblems;
+		for my $problem (@problemRecords) {
+			my @seq = jitar_id_to_seq($problem->problem_id);
+			push @topLevelProblems, $problem if $#seq == 0;
+		}
 
-  # DBFIXME: to collect the problem records, we have to know
-  #    which merge routines to call.  Should this really be an
-  #    issue here?  That is, shouldn't the database deal with
-  #    it invisibly by detecting what the problem types are?
-  #    oh well.
+		@problemRecords = @topLevelProblems;
+	}
 
-  my @problemRecords =
-    $setIsVersioned
-    ? $db->getAllMergedProblemVersions($studentName, $setID, $set->version_id)
-    : $db->getAllMergedUserProblems($studentName, $setID);
+	if ($wantProblemDetails) {
+		# Sort records.  For gateway/quiz assignments we have to be careful about the order in which the problems are
+		# displayed, because they may be in a random order.
+		if ($set->problem_randorder) {
+			my @newOrder;
+			my @probOrder = (0 .. $#problemRecords);
+			# Reorder using the set psvn for the seed in the same way that the GatewayQuiz module does.
+			my $pgrand = PGrandom->new();
+			$pgrand->srand($set->psvn);
+			while (@probOrder) {
+				my $i = int($pgrand->rand(scalar(@probOrder)));
+				push(@newOrder, splice(@probOrder, $i, 1));
+			}
+		  # Now $newOrder[i] = pNum - 1, where pNum is the problem number to display in the ith position on the test for
+		  # sorting. Invert this mapping.
+			my %pSort = map { $problemRecords[ $newOrder[$_] ]->problem_id => $_ } (0 .. $#newOrder);
 
-  # for jitar sets we only use the top level problems
-  if ($set->assignment_type eq 'jitar') {
-    my @topLevelProblems;
-    foreach my $problem (@problemRecords) {
-      my @seq = jitar_id_to_seq($problem->problem_id);
-      push @topLevelProblems, $problem if ($#seq == 0);
-    }
+			@problemRecords = sort { $pSort{ $a->problem_id } <=> $pSort{ $b->problem_id } } @problemRecords;
+		} else {
+			# Sort records
+			@problemRecords = sort { $a->problem_id <=> $b->problem_id } @problemRecords;
+		}
+	}
 
-    @problemRecords = @topLevelProblems;
-  }
+	for my $problemRecord (@problemRecords) {
+		my $status = $problemRecord->status || 0;
 
-  foreach my $problemRecord (@problemRecords) {
-    my $prob = $problemRecord->problem_id;
+		# Get the adjusted jitar grade for top level problems if this is a jitar set.
+		$status = jitar_problem_adjusted_status($problemRecord, $db) if $set->assignment_type eq 'jitar';
 
-    unless (defined($problemRecord) ){
-      # warn "Can't find record for problem $prob in set $setName for $student";
-      next;
-    }
+		# Clamp the status value between 0 and 1.
+		$status = 0 if $status < 0;
+		$status = 1 if $status > 1;
 
-    $status           = $problemRecord->status || 0;
+		if ($wantProblemDetails) {
+			push(@$problem_scores, $problemRecord->attempted ? 100 * wwRound(2, $status) : '&nbsp;.&nbsp;');
+			push(@$problem_incorrect_attempts, $problemRecord->num_incorrect || 0);
+		}
 
-    # we need to get the adjusted jitar grade for our
-    # top level problems.
-    if ($set->assignment_type eq 'jitar') {
-      $status = jitar_problem_adjusted_status($problemRecord,$db);
-    }
+		my $probValue = $problemRecord->value;
+		$probValue = 1 unless defined $probValue && $probValue ne '';    # FIXME: Set defaults here?
+		$total      += $probValue;
+		$totalRight += $status * $probValue;
+	}
 
-    # sanity check that the status (score) is
-    # between 0 and 1
-    my $valid_status = ($status>=0 && $status<=1)?1:0;
-
-    my $probValue     = $problemRecord->value;
-    $probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
-    $total           += $probValue;
-    $totalRight      += $status*$probValue if $valid_status;
-
-  }  # end of problem record loop
-
-  if (wantarray) {
-    return ($totalRight,$total);
-  } else {
-
-    return 0 unless $total;
-    return $totalRight/$total;
-  }
+	if (wantarray) {
+		return ($totalRight, $total, $problem_scores, $problem_incorrect_attempts);
+	} else {
+		return $total ? $totalRight / $total : 0;
+	}
 }
 
 # Takes in $db, $set, $setName, $studentName,
@@ -1363,7 +1372,7 @@ sub grade_gateway {
     for my $i ( @versionNums ) {
       my $versionedSet = $db->getSetVersion($studentName,$setName,$i);
 
-      my ($totalRight,$total) = grade_set($db,$versionedSet,$versionedSet->set_id, $studentName,1);
+      my ($totalRight, $total) = grade_set($db, $versionedSet, $studentName, 1);
       if ($totalRight > $bestTotalRight) {
 	$bestTotalRight = $totalRight;
 	$bestTotal = $total;
@@ -1401,7 +1410,7 @@ sub grade_all_sets {
       $courseTotalRight += $totalRight;
       $courseTotal += $total;
     } else {
-      my ($totalRight,$total) = grade_set($db,$userSet,$userSet->set_id,$studentName,0);
+      my ($totalRight, $total) = grade_set($db, $userSet, $studentName, 0);
 
       $courseTotalRight += $totalRight;
       $courseTotal += $total;

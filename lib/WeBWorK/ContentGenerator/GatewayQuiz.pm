@@ -1035,8 +1035,7 @@ sub pre_header_initialize {
 		$pgrand->srand($set->psvn);
 		while (@probOrder) {
 			my $i = int($pgrand->rand(scalar(@probOrder)));
-			push(@newOrder, $probOrder[$i]);
-			splice(@probOrder, $i, 1);
+			push(@newOrder, splice(@probOrder, $i, 1));
 		}
 		@probOrder = @newOrder;
 	}
