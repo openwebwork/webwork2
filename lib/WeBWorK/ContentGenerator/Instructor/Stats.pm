@@ -454,7 +454,7 @@ sub displaySet {
 		$attempts_percentiles_for_problem{$probID} =
 			{ determine_percentiles([@brackets2], @{ $attempts_list_for_problem{$probID} }) };
 
-		if ($setRecord->assignment_type =~ /gateway/) {
+		if ($setRecord->assignment_type =~ /gateway/ || !$db->existsUserSet($r->param('user') , $setName)) {
 			# If this is a gateway quiz, there is not a valid link to the problem, so use the Problem.pm editMode with
 			# an undefined set instead.
 			$problemPage{$probID} = $self->systemLink(
