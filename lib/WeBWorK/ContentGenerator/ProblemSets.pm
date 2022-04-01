@@ -242,9 +242,7 @@ sub body {
 
 	# Regular sets and gateway template sets are merged, but sorted either by name or urgency.
 	# Versions are not shown here. Instead they are on the ProblemSet page for the gateway quiz.
-	foreach my $set (@sets) {
-		die "set $set not defined" unless $set;
-
+	for my $set (@sets) {
 		if ($set->visible || $authz->hasPermissions($user, "view_hidden_sets")) {
 			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"),
 				$authz->hasPermissions($user, "view_unopened_sets"), $db);
@@ -351,7 +349,8 @@ sub setListRow {
 			$status .= restricted_progression_msg($r,1,$restriction,@restricted);
 		}
 		$control = "" unless $preOpenSets;
-		$interactive = $display_name unless $preOpenSets;
+		$interactive = $display_name
+			unless $preOpenSets || ($gwtype && $db->countSetVersions($effectiveUser, $set->set_id));
 
 	} elsif (time < $set->due_date) {
 		$status = $self->set_due_msg($set,0);

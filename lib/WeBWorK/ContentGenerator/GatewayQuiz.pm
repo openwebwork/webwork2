@@ -534,13 +534,6 @@ sub pre_header_initialize {
 		#    if this fails/failed in authz->checkSet, then $self->{invalidSet} is set
 		$tmplSet = $db->getMergedSet($effectiveUserName, $setName);
 
-		$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets") || (time >= $tmplSet->open_date && !(
-				$ce->{options}{enableConditionalRelease} &&
-				is_restricted($db, $tmplSet, $effectiveUserName)));
-
-		die("You do not have permission to view unopened sets") unless $self->{isOpen};
-
-
 		# now we know that we're in a gateway test, save the assignment test
 		#    for the processing of proctor keys for graded proctored tests;
 		#    if we failed to get the set from the database, we store a fake
@@ -598,13 +591,18 @@ sub pre_header_initialize {
 	# assemble gateway parameters
 	#################################
 
-	# we get the open/close dates for the gateway from the template set.
-	#    note $isOpen/Closed give the open/close dates for the gateway
-	#    as a whole (that is, the merged user|global set).  because the
-	#    set could be bad (if $self->{invalidSet}), we check ->open_date
-	#    before actually testing the date
-	my $isOpen = $tmplSet && $tmplSet->open_date && (after($tmplSet->open_date()) ||
-		$authz->hasPermissions($userName, "view_unopened_sets"));
+	# We get the open and close dates for the gateway from the template set, or from the merged set version if a set has
+	# been requested.  Note $isOpen and $isClosed give the open and close dates for the gateway as a whole (that is, the
+	# merged user|global set).  The set could be an invalid set, so check for an open_date before actually testing the
+	# date.  If a specific version has not been requested and conditional release is enabled, then this also checks to
+	# see if the conditions have been met for a conditional release.
+	my $isOpen = (
+		$requestedVersion ? ($set && $set->open_date && after($set->open_date)) : ($tmplSet
+				&& $tmplSet->open_date
+				&& after($tmplSet->open_date)
+				&& !($ce->{options}{enableConditionalRelease} && is_restricted($db, $tmplSet, $effectiveUserName)))
+		)
+		|| $authz->hasPermissions($userName, "view_unopened_sets");
 
 	# FIXME for $isClosed, "record_answers_after_due_date" isn't quite
 	#    the right description, but it seems reasonable
