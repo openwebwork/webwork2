@@ -221,8 +221,6 @@ sub body {
 		class => 'btn btn-primary'
 	});
 
-	print CGI::end_form();
-
 	print CGI::hr()
 		. CGI::div(
 			CGI::div(
@@ -250,6 +248,8 @@ sub body {
 				}),
 			)
 		) . CGI::hr();
+
+	print CGI::end_form();
 
 	return '';
 }
