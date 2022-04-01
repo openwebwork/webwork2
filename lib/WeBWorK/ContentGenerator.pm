@@ -42,8 +42,10 @@ miscellaneous utilities are provided.
 
 use strict;
 use warnings;
+
 use Carp;
-#use CGI qw(-nosticky *ul *li escapeHTML);
+
+use Apache2::Const;
 use WeBWorK::CGI;
 use WeBWorK::File::Scoring qw/parse_scoring_file/;
 use Date::Format;
@@ -54,7 +56,6 @@ use MIME::Base64;
 use WeBWorK::Template qw(template);
 use WeBWorK::Localize;
 
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
@@ -64,17 +65,6 @@ use Encode;
 use Email::Sender::Transport::SMTP;
 
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
-
-
-BEGIN {
-	if (MP2) {
-		require Apache2::Const;
-		Apache2::Const->import(-compile => qw/OK NOT_FOUND FORBIDDEN SERVER_ERROR REDIRECT/);
-	} else {
-		require Apache::Constants;
-		Apache::Constants->import(qw/OK NOT_FOUND FORBIDDEN SERVER_ERROR REDIRECT/);
-	}
-}
 
 ###############################################################################
 
@@ -187,12 +177,7 @@ sub go {
 	      $r->log->error("An error occurred while trying to update grades via LTI: $@\n");
 	    }
 	  };
-	  if (MP2) {
-	    $r->connection->pool->cleanup_register($post_connection_action, $grader);
-	  } else {
-	    $r->post_connection($post_connection_action, $grader);
-	  }
-
+	  $r->connection->pool->cleanup_register($post_connection_action, $grader);
 	}
 
 	# check to verify if there are set-level problems with running
@@ -201,7 +186,7 @@ sub go {
 	my $authz = $r->authz;
 	$self->{invalidSet} = $authz->checkSet();
 
-	my $returnValue = MP2 ? Apache2::Const::OK : Apache::Constants::OK;
+	my $returnValue = Apache2::Const::OK;
 
 	# We only write to the activity log if it has been defined and if
 	# we are in a specific course.  The latter check is to prevent attempts
@@ -264,31 +249,17 @@ sub do_reply_with_file {
 	my $delete_after = $fileHash->{delete_after};
 
 	# if there was a problem, we return here and let go() worry about sending the reply
-	return MP2 ? Apache2::Const::NOT_FOUND : Apache::Constants::NOT_FOUND unless -e $source;
-	return MP2 ? Apache2::Const::FORBIDDEN : Apache::Constants::FORBIDDEN unless -r $source;
+	return Apache2::Const::NOT_FOUND unless -e $source;
+	return Apache2::Const::FORBIDDEN unless -r $source;
 
 	my $fh;
-	if (!MP2) {
-		# open the file now, so we can send the proper error status is we fail
-		open $fh, "<", $source or return Apache::Constants::SERVER_ERROR;
-	}
 
 	# send our custom HTTP header
 	$r->content_type($type);
 	$r->headers_out->{"Content-Disposition"} = "attachment; filename=\"$name\"";
-	$r->send_http_header unless MP2;
 
 	# send the file
-	if (MP2) {
-		$r->sendfile($source);
-	} else {
-		$r->send_fd($fh);
-	}
-
-	if (!MP2) {
-		# close the file and go home
-		close $fh;
-	}
+	$r->sendfile($source);
 
 	if ($delete_after) {
 		unlink $source or warn "failed to unlink $source after sending: $!";
@@ -307,9 +278,8 @@ sub do_reply_with_redirect {
 	my ($self, $url) = @_;
 	my $r = $self->r;
 
-	$r->status(MP2 ? Apache2::Const::REDIRECT : Apache::Constants::REDIRECT);
+	$r->status(Apache2::Const::REDIRECT);
 	$r->headers_out->{"Location"} = $url;
-	$r->send_http_header unless MP2;
 
 	return; # we need to explicitly return noting here, otherwise we return $url under Apache2.
 	        # the return value from the mod_perl handler is used to set the HTTP status code,
@@ -498,8 +468,7 @@ sub header {
 	my $r = $self->r;
 
 	$r->content_type("text/html; charset=utf-8");
-	$r->send_http_header unless MP2;
-	return MP2 ? Apache2::Const::OK : Apache::Constants::OK;
+	return Apache2::Const::OK;
 }
 
 =item initialize()
@@ -1281,7 +1250,7 @@ sub warnings {
 	my $r = $self->r;
 	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
-	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
+	my $warnings = $r->notes->get("warnings");
 	$warnings = Encode::decode("UTF-8",$warnings);
 	print $self->warningOutput($warnings) if $warnings;
 	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
@@ -1469,9 +1438,7 @@ sub if_warnings {
 	my ($self, $arg) = @_;
 	my $r = $self->r;
 
-	if ( (MP2 ? $r->notes->get("warnings") : $r->notes("warnings"))
-	     or ($self->{pgerrors}) )
-	{
+	if ($r->notes->get("warnings") || ($self->{pgerrors})) {
 		return $arg;
 	} else {
 		!$arg;

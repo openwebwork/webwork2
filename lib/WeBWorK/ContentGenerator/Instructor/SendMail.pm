@@ -39,10 +39,6 @@ use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::Utils qw/readFile readDirectory/;
 use WeBWorK::Utils::FilterRecords qw/filterRecords/;
 
-
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
-
-
 sub initialize {
 	my ($self) = @_;
 	my $r      = $self->r;
@@ -269,35 +265,7 @@ sub initialize {
 
 	}
 
-	my $remote_host;
-	my $APACHE24 = 0;
-	# If its apache 2.4 then it has to also mod perl 2.0 or better
-	if (MP2) {
-	    my $version;
-
-	    # check to see if the version is manually defined
-	    if (defined($ce->{server_apache_version}) &&
-		$ce->{server_apache_version}) {
-		$version = $ce->{server_apache_version};
-		# otherwise try and get it from the banner
-	    } elsif (Apache2::ServerUtil::get_server_banner() =~
-		   m:^Apache/(\d\.\d+):) {
-		$version = $1;
-	    }
-
-	    if ($version) {
-		$APACHE24 = version->parse($version) >= version->parse('2.4.0');
-	    }
-	}
-	# If its apache 2.4 then the API has changed
-	if ($APACHE24) {
-	    $remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
-	} elsif (MP2) {
-	    $remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
-	} else {
-		(undef, $remote_host) = unpack_sockaddr_in($r->connection->remote_addr);
-		$remote_host = defined $remote_host ? inet_ntoa($remote_host) : "UNKNOWN";
-	}
+	my $remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
 
 	# store data
 	$self->{from}                   =    $from;
@@ -456,17 +424,10 @@ sub initialize {
 				$r->log->error("An error occured while trying to send the email notification: $@\n");
 			}
 		};
-		if (MP2) {
-			$r->connection->pool->cleanup_register($post_connection_action, $r);
-		} else {
-			$r->post_connection($post_connection_action, $r);
-		}
+		$r->connection->pool->cleanup_register($post_connection_action, $r);
 	} else {
 		$self->addbadmessage(CGI::p($r->maketext("Didn't recognize action")));
 	}
-
-
-
 }  #end initialize
 
 sub body {

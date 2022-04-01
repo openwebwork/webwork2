@@ -278,7 +278,7 @@ BEGIN {
 	use File::Basename;
 	$main::dirname = dirname(__FILE__);
 }
-$ENV{MOD_PERL_API_VERSION} = 2;
+
 use lib "$main::dirname";
 print "home directory ".$main::dirname."\n";
 #use lib "."; # is this needed?

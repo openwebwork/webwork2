@@ -55,20 +55,8 @@ use WeBWorK::URLPath;
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 
-
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
-
-# Apache2 needs upload class
-BEGIN {
-	if (MP2) {
-		require Apache2::Upload;
-		Apache2::Upload->import();
-		require Apache2::RequestUtil;
-		Apache2::RequestUtil->import();
-	} else {
-		require "mod_perl.pm"; # should we still support apache mod_perl1?
-	}
-}
+use Apache2::Upload;
+use Apache2::RequestUtil;
 
 use constant LOGIN_MODULE => "WeBWorK::ContentGenerator::Login";
 use constant PROCTOR_LOGIN_MODULE => "WeBWorK::ContentGenerator::LoginProctor";
@@ -248,12 +236,10 @@ sub dispatch($) {
 	$r->language_handle( WeBWorK::Localize::getLoc($language) );
 
 	my @uploads;
-	if (MP2) {
-		my $upload_table = $r->upload;
-		@uploads = values %$upload_table if defined $upload_table;
-	} else {
-		@uploads = $r->upload;
-	}
+
+	my $upload_table = $r->upload;
+	@uploads = values %$upload_table if defined $upload_table;
+
 	foreach my $u (@uploads) {
 		# make sure it's a "real" upload
 		next unless $u->filename;

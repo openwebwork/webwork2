@@ -30,6 +30,8 @@ details.
 
 use strict;
 use warnings;
+
+use Apache2::Log;
 use Apache2::Const qw(:common);
 use HTML::Entities;
 use HTML::Scrubber;
@@ -40,24 +42,12 @@ use utf8;
 use JSON::MaybeXS;
 use UUID::Tiny  ':std';
 
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
-
 # Should the minimal (more secure) HTML error output be used?
 use constant MIN_HTML_ERRORS => ( exists $ENV{"MIN_HTML_ERRORS"} and $ENV{"MIN_HTML_ERRORS"} );
 
 # Should Apache logs get JSON formatted record?
 use constant JSON_ERROR_LOG => ( exists $ENV{"JSON_ERROR_LOG"} and $ENV{"JSON_ERROR_LOG"} );
 
-# load correct modules
-BEGIN {
-	if (MP2) {
-		require Apache2::Log;
-		Apache2::Log->import;
-	} else {
-		require Apache::Log;
-		Apache::Log->import;
-	}
-}
 
 ################################################################################
 
@@ -81,41 +71,20 @@ sub handler($) {
 	# the warning handler accumulates warnings in $r->notes("warnings") for
 	# later cumulative reporting
 	my $warning_handler;
-	if (MP2) {
-		$warning_handler = sub {
-			my ($warning) = @_;
-			chomp $warning;
-			my $warnings = $r->notes->get("warnings");
-			$warnings = Encode::decode("UTF-8",$warnings);
-			$warnings .= "$warning\n";
-			#my $backtrace = join("\n",backtrace());
-			#$warnings .= "$backtrace\n\n";
-			$warnings = Encode::encode("UTF-8",$warnings);
-			$r->notes->set(warnings => $warnings);
 
-			$log->warn("[$uri] $warning");
-		};
-	} else {
-		$warning_handler = sub {
-			my ($warning) = @_;
-			chomp $warning;
+	$warning_handler = sub {
+		my ($warning) = @_;
+		chomp $warning;
+		my $warnings = $r->notes->get("warnings");
+		$warnings = Encode::decode("UTF-8",$warnings);
+		$warnings .= "$warning\n";
+		#my $backtrace = join("\n",backtrace());
+		#$warnings .= "$backtrace\n\n";
+		$warnings = Encode::encode("UTF-8",$warnings);
+		$r->notes->set(warnings => $warnings);
 
-			my $warnings = $r->notes("warnings");
-			$warnings .= "$warning\n";
-			#my $backtrace = join("\n",backtrace());
-			#$warnings .= "$backtrace\n\n";
-			$r->notes("warnings" => $warnings);
-
-			$log->warn("[$uri] $warning");
-		};
-
-		# the exception handler generates a backtrace when catching an exception
-		my @backtrace;
-		my $exception_handler = sub {
-			@backtrace = backtrace();
-			die @_;
-		};
-	}
+		$log->warn("[$uri] $warning");
+	};
 
 	# the exception handler generates a backtrace when catching an exception
 	my @backtrace;
@@ -134,7 +103,7 @@ sub handler($) {
 	if ($@) {
 		my $exception = $@;
 
-		my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
+		my $warnings = $r->notes->get("warnings");
 		my $htmlMessage;
 		my $uuid = create_uuid_as_string(UUID_SHA1, UUID_NS_URL, $r->uri )
 		  . "::" . create_uuid_as_string(UUID_TIME);
@@ -147,7 +116,6 @@ sub handler($) {
 		}
 		unless ($r->bytes_sent) {
 			$r->content_type("text/html");
-			$r->send_http_header unless MP2; # not needed for Apache2
 			$htmlMessage = "<html lang=\"en-US\"><head><title>WeBWorK error</title></head><body>$htmlMessage</body></html>";
 		}
 
@@ -250,7 +218,7 @@ sub htmlMessage($$$@) {
 	my $method = htmlEscape( $r->method  );
 	my $uri = htmlEscape(  $r->uri );
 	my $headers = do {
-		my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
+		my %headers = %{$r->headers_in};
 		if (defined($headers{"sec-ch-ua"})) {
 			# Was getting warnings about the value of "sec-ch-ua" in my testing...
 			$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
@@ -381,7 +349,7 @@ sub textMessage($$$@) {
 
 	my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
 
-	my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
+	my %headers = %{$r->headers_in};
 	# Was getting JSON errors for the value of "sec-ch-ua" in my testing, so remove it
 	if ( defined( $headers{"sec-ch-ua"} ) ) {
 		$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
@@ -413,7 +381,7 @@ sub jsonMessage($$$@) {
 	chomp $exception;
 	my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
 
-	my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
+	my %headers = %{$r->headers_in};
 	# Was getting JSON errors for the value of "sec-ch-ua" in my testing, so remove it
 	if ( defined( $headers{"sec-ch-ua"} ) ) {
 		$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});

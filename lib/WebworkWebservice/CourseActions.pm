@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w 
+#!/usr/local/bin/perl -w
 use strict;
 use warnings;
 
@@ -8,7 +8,7 @@ package WebworkWebservice::CourseActions;
 
 use WebworkWebservice;
 
-use base qw(WebworkWebservice); 
+use base qw(WebworkWebservice);
 use WeBWorK::DB;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Utils qw(runtime_use cryptPassword formatDateTime parseDateTime  encode_utf8_base64 decode_utf8_base64);
@@ -19,8 +19,6 @@ use JSON;
 
 use Time::HiRes qw/gettimeofday/; # for log timestamp
 use Date::Format; # for log timestamp
-
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 sub create {
 	my ($self, $params) = @_;
@@ -51,7 +49,7 @@ sub create {
 		return $out
 	}
 	# prof check is actually done when initiating session, this is just in case
-	if (!$self->{authz}->hasPermissions($params->{'userID'}, 
+	if (!$self->{authz}->hasPermissions($params->{'userID'},
 			'create_and_delete_courses')) {
 		debug("Course creation attempt with insufficient permission level.");
 		$out->{status} = "failure";
@@ -64,7 +62,7 @@ sub create {
 		$out->{message} = "Course ID cannot exceed " . $ce->{maxCourseIdLength} . " characters.";
 		return $out
 	}
-	
+
 	# declare params
 	my @professors = ();
 	my $dbLayout = $ce->{dbLayoutName};
@@ -83,8 +81,8 @@ sub create {
 		my $User            = $db->getUser($userID);
 		my $Password        = $db->getPassword($userID);
 		my $PermissionLevel = $db->getPermissionLevel($userID);
-		push @users, [ $User, $Password, $PermissionLevel ] 
-			if $authz->hasPermissions($userID,"create_and_delete_courses");  
+		push @users, [ $User, $Password, $PermissionLevel ]
+			if $authz->hasPermissions($userID,"create_and_delete_courses");
 	}
 
 	# all data prepped, try to actually add the course
@@ -103,7 +101,7 @@ sub create {
 		$out->{status} = "failure";
 		$out->{message} = $@;
 	};
-	
+
 	return $out;
 }
 
@@ -112,7 +110,7 @@ sub listUsers {
     my $out = {};
     my $db = $self->db;
     my $ce = $self->ce;
-    
+
 
     # make sure course actions are enabled
     #if (!$ce->{webservices}{enableCourseActions}) {
@@ -124,7 +122,7 @@ sub listUsers {
     my @tempArray = $db->listUsers;
     my @userInfo = $db->getUsers(@tempArray);
     my $numGlobalSets = $db->countGlobalSets;
-    
+
     #%permissionsHash = reverse %permissionsHash;
     #for(@userInfo){
     #    @userInfo[i]->{'permission'} = $db->getPermissionLevel(@userInfo[i]->{'user_id'});
@@ -138,12 +136,12 @@ sub listUsers {
 
 
 		my $studid= $u->{'student_id'};
-		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
+		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string.
         $u->{'num_user_sets'} = $db->listUserSets($studid) . "/" . $numGlobalSets;
-	
+
 		my $Key = $db->getKey($u->{'user_id'});
 		$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
-		
+
     }
 
 
@@ -173,12 +171,12 @@ sub addUser {
 	my $olduser = $db->getUser($params->{id});
 	my $id = $params->{'id'};
 	my $permission; # stores user's permission level
-	if ($olduser) { 
+	if ($olduser) {
 		# a dropped user decided to re-enrol
 		my $enrolled = $self->ce->{statuses}->{Enrolled}->{abbrevs}->[0];
 		$olduser->status($enrolled);
 		$db->putUser($olduser);
-		addLog($ce, "User ". $id . " re-enrolled in " . 
+		addLog($ce, "User ". $id . " re-enrolled in " .
 			$ce->{courseName});
 		$out->{status} = 'success';
 		$permission = $db->getPermissionLevel($id);
@@ -186,7 +184,7 @@ sub addUser {
 	else {
 		# a new user showed up
 		my $ce = $self->ce;
-		
+
 		# student record
 		my $enrolled = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
 		my $new_student = $db->{user}->{record}->new();
@@ -199,7 +197,7 @@ sub addUser {
 		$new_student->recitation($params->{'recitation'});
 		$new_student->section($params->{'section'});
 		$new_student->comment($params->{'comment'});
-		
+
 		# password record
 		my $cryptedpassword = "";
 		if ($params->{'password'}) {
@@ -210,16 +208,16 @@ sub addUser {
 		}
 		my $password = $db->newPassword(user_id => $id);
 		$password->password($cryptedpassword);
-		
+
 		# permission record
 		$permission = $params->{'permission'};
 		if (defined($ce->{userRoles}{$permission})) {
 			$permission = $db->newPermissionLevel(
-				user_id => $id, 
+				user_id => $id,
 				permission => $ce->{userRoles}{$permission});
 		}
 		else {
-			$permission = $db->newPermissionLevel(user_id => $id, 
+			$permission = $db->newPermissionLevel(user_id => $id,
 				permission => $ce->{userRoles}{student});
 		}
 
@@ -241,7 +239,7 @@ sub addUser {
 			$out->{message} = "Add permission for $id failed!\n";
 		}
 
-		addLog($ce, "User ". $id . " newly added in " . 
+		addLog($ce, "User ". $id . " newly added in " .
 			$ce->{courseName});
 	}
 
@@ -279,7 +277,7 @@ sub dropUser {
 	if ($person) {
 		$person->status($drop);
 		$db->putUser($person);
-		addLog($ce, "User ". $person->user_id() . " dropped from " . 
+		addLog($ce, "User ". $person->user_id() . " dropped from " .
 			$ce->{courseName});
 		$out->{status} = 'success';
 	}
@@ -297,36 +295,36 @@ sub deleteUser {
 	my $db = $self->db;
 	my $ce = $self->ce;
 	$out->{text} = encode_utf8_base64("");
-	
+
 	my $user = $params->{'id'};
-	
-	
+
+
 	debug("Webservices delete user request.");
         debug("Attempting to delete user: " . $user );
-	
-	
+
+
 	my $User = $db->getUser($params->{'id'}); # checked
 	die ("record for visible user [_1] not found" . $params->{'id'}) unless $User;
 
-	
-	# Why is the following commented out? 
-	
+
+	# Why is the following commented out?
+
 	# make sure course actions are enabled
-	
+
 	#if (!$ce->{webservices}{enableCourseActions}) {
 	#	$out->{status} = "failure";
 	#	$out->{message} = "Course actions disabled by configuration.";
 	#	$out->{text} = encode_base64("Course actions disabled by configuration");
 	#	return $out
 	#}
-	
+
 	if ($params->{'id'} eq $params->{'user'} )
 	{
 		$out->{status} = "failure";
 		$out->{message} = "You can't delete yourself from the course.";
 	} else {
 		my $del = $db->deleteUser($user);
-		
+
 		if($del)
 		{
 			my $result;
@@ -334,16 +332,16 @@ sub deleteUser {
 			$out->{text} .=encode_utf8_base64("User " . $user . " successfully deleted");
 			$out->{ra_out} .= "delete: success";
 		}
-		else 
+		else
 		{
 			$out->{text}=encode_utf8_base64("User " . $user . " could not be deleted");
 			$out->{ra_out} .= "delete : failed";
 		}
 
 	}
-	
+
 	return $out;
-	
+
 }
 
 
@@ -390,14 +388,14 @@ sub editUser {
     $PermissionLevel = $db->getPermissionLevel($User->{'user_id'});
     $User->{'permission'} = $PermissionLevel->{'permission'};
     #$User->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
-    
-    
+
+
     # If the new_password param is set and not equal to the empty string, change the password.
-    
+
     if((defined $params->{new_password}) and ($params->{new_password} ne "" ) ) {
 	return changeUserPassword($self,$params);
     }
-    
+
 
     $out->{ra_out} = $User;
     $out->{text} .= encode_utf8_base64("Changes saved");
@@ -406,7 +404,7 @@ sub editUser {
 }
 
 #  id :  is the user_id of the user to be changed.
-#  new_password : the 
+#  new_password : the
 
 
 sub changeUserPassword {
@@ -416,20 +414,20 @@ sub changeUserPassword {
 	my $db = $self->db;
 	my $ce = $self->ce;
 	$out->{text} = encode_utf8_base64("");
-	
+
 	my $userid = $params->{'id'};
-	
-	# check to see if you have sufficient privileges. 
+
+	# check to see if you have sufficient privileges.
 	# Note: this is not implemented.  It seems like we should verify that the user has appropriate privileges to change
-	# a password or that the user sending the request is the same as the person whose password is being changed.  
+	# a password or that the user sending the request is the same as the person whose password is being changed.
 	#  my $PermissionLevel = $db->getPermissionLevel($params->{'user'}); # checked
-    
-	
+
+
 	debug("Webservices change user password request.");
         debug("Attempting to change the password of user: " . $userid );
 	debug("The new password:" . $params->{new_password});
-	
-	
+
+
 	my $User = $db->getUser($userid); # checked
 	die ("record for visible user [_1] not found" . $params->{'id'}) unless $User;
 
@@ -446,8 +444,8 @@ sub changeUserPassword {
 	$out->{text}=encode_utf8_base64("No record found for user: ". $params->{'id'});
 	return $out;
     }
-    
-    # In the next few lines I (pls) changed $params->{$param}->[0] to $params->{$param} to fix a bug.  Not sure why ->[0] was there. 
+
+    # In the next few lines I (pls) changed $params->{$param}->[0] to $params->{$param} to fix a bug.  Not sure why ->[0] was there.
 	my $param = "new_password";
 	if ((defined $params->{$param}) and ($params->{$param})) {
 		my $newP = $params->{$param};
@@ -496,7 +494,7 @@ sub assignVisibleSets {
 		if (not defined $GlobalSet) {
 			debug("Record not found for global set $globalSetIDs[$i]");
 			next;
-		} 
+		}
 		if (!$GlobalSet->visible) {
 			next;
 		}
@@ -508,7 +506,7 @@ sub assignVisibleSets {
 		$UserSet->set_id($setID);
 		my @results;
 		my $set_assigned = 0;
-		eval { $db->addUserSet($UserSet) }; 
+		eval { $db->addUserSet($UserSet) };
 		if ( $@ && !($@ =~ m/user set exists/)) {
 			return "Failed to assign set to user $userID";
 		}
@@ -553,7 +551,7 @@ sub getConfigValues {
 	my $themeDir = $ce->{webworkDirs}{themes};
 	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
 	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
-	
+
 	# insert the anonymous array of theme folder names into ConfigValues
 	my $modifyThemes = sub { my $item=shift; if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) { $item->{values} =$themes } };
 
@@ -562,7 +560,7 @@ sub getConfigValues {
 			&$modifyThemes($hash);
 		}
 	}
-	
+
 	$ConfigValues;
 }
 
@@ -572,7 +570,7 @@ sub getCourseSettings {
 	my $db = $self->db;		# database
 	my $ConfigValues = getConfigValues($ce);
 
-	my $tz = DateTime::TimeZone->new( name => $ce->{siteDefaults}->{timezone}); 
+	my $tz = DateTime::TimeZone->new( name => $ce->{siteDefaults}->{timezone});
 	my $dt = DateTime->now();
 
 	my @tzabbr = ("tz_abbr", $tz->short_name_for_datetime( $dt ));
@@ -581,7 +579,7 @@ sub getCourseSettings {
 	#debug($tz->short_name_for_datetime($dt));
 
 	push(@$ConfigValues, \@tzabbr);
-  	
+
 	my $out = {};
 	$out->{ra_out} = $ConfigValues;
 	$out->{text} = encode_utf8_base64("Successfully found the course settings");
@@ -597,7 +595,7 @@ sub updateSetting {
 	my $setVar = $params->{var};
 	my $setValue = $params->{value};
 
-	# this shouldn't be needed, but it seems like it's not get parsed correctly. 
+	# this shouldn't be needed, but it seems like it's not get parsed correctly.
 	#if($params->{sendViaJSON}){
 	#	$setValue = decode_json($setValue);
 	#}
@@ -615,7 +613,7 @@ sub updateSetting {
 # changes are saved.\n\n";
 
 
-	# read in the file 
+	# read in the file
 
 	open(DAT, $filename) || die("Could not open file!");
 	my @raw_data=<DAT>;
@@ -627,7 +625,7 @@ sub updateSetting {
 	my $var;
 	my $line;
 	my $value;
-	my $varFound = 0; 
+	my $varFound = 0;
 
 	foreach $line (@raw_data)
 	{
@@ -635,9 +633,9 @@ sub updateSetting {
 	 	if ($line =~ /^\$/) {
 	 		my @tmp = split(/\$/,$line);
 	 		($var,$value) = split(/\s+=\s+/,$tmp[1]);
-	 		if ($var eq $setVar){ 
+	 		if ($var eq $setVar){
 	 			$fileoutput .= "\$" . $var . " = " . $setValue . "\n";
-	 			$varFound = 1; 
+	 			$varFound = 1;
 	 		} else {
 	 			$fileoutput .= "\$" . $var . " = " . $value . "\n";
 	 		}
@@ -652,7 +650,7 @@ sub updateSetting {
 
 
 	my $writeFileErrors;
-	eval {                                                          
+	eval {
 		local *OUTPUTFILE;
 		if( open OUTPUTFILE, ">", $filename) {
 			print OUTPUTFILE $fileoutput;
@@ -677,14 +675,14 @@ sub updateSetting {
 
 ##  pstaabp: This is currently not working.  We need to look into a nice robust way to send email.  It looks like the current
 ## way that WW sends mail is a bit archaic.  The MIME::Lite looks fairly straightforward, but we may need to look into smtp settings a
-## bit more.  
+## bit more.
 
 
 sub sendEmail {
 	my ($self, $params) = @_;
 	my $ce = $self->ce;
 
-# Should we build in the merge_file?  
+# Should we build in the merge_file?
 #  get merge file
 #		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
 #		my $delimiter       = ',';
@@ -695,15 +693,15 @@ sub sendEmail {
 #			return;
 #		} ;
 #		$self->{rh_merge_data} = $rh_merge_data;
-		
+
 		# we don't set the response until we're sure that email can be sent
 #		$self->{response}         = 'send_email';
-		
+
 	my $smtpServer = $ce->{mail}->{smtpServer};
-		
+
 	debug("smtpServer: " . $smtpServer);
-	
-	
+
+
 	my $mailer = Email::Sender->new({
 				tls_allowed => $ce->{tls_allowed}//1, # the default for this for  Mail::Sender is 1
 				from      => $smtpServer,
