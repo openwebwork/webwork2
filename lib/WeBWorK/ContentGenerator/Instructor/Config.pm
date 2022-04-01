@@ -720,6 +720,7 @@ sub body {
 	my $configTitle = shift @configSectionArray;
 	print CGI::h2(CGI::b($r->maketext($configTitle)));
 
+	print CGI::start_div({ class => 'table-responsive' });
 	print CGI::start_table({ class => 'table table-bordered align-middle' });
 	print '<tr>'
 		. CGI::th($r->maketext('Setting'))
@@ -736,6 +737,8 @@ sub body {
 		$widget_count++;
 	}
 	print CGI::end_table();
+	print CGI::end_div();
+
 	print CGI::p(CGI::submit({
 		name  => 'make_changes',
 		value => $r->maketext('Save Changes'),
