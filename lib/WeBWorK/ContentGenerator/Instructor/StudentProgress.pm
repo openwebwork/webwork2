@@ -786,7 +786,7 @@ sub displaySets {
 	print CGI::start_tbody();
 
 	# variables to keep track of versioned sets
-	my $prevFullName = '';
+	my $prevUserID = '';
 
 	# and to make formatting nice for students who haven't taken any tests
 	# (the total number of columns is two more than this; we want the
@@ -846,7 +846,7 @@ sub displaySets {
 					},
 					"version $rec->{version}"
 				);
-				if ($fullName eq $prevFullName) {
+				if ($rec->{user_id} eq $prevUserID) {
 					$nameEntry = CGI::div({ class => 'ms-4' }, "($versionLink)");
 				} else {
 					$nameEntry =
@@ -854,7 +854,7 @@ sub displaySets {
 						. ($setIsVersioned && !$showBestOnly ? " ($versionLink)" : ' ')
 						. CGI::br()
 						. CGI::a({ href => "mailto:$email" }, $email);
-					$prevFullName = $fullName;
+					$prevUserID = $rec->{user_id};
 				}
 
 				# build columns to show
