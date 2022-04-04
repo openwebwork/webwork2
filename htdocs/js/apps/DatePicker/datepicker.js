@@ -56,7 +56,7 @@
 					{ timeZone: rule.dataset.timezone ?? 'America/New_York', timeZoneName: 'shortOffset' })
 					.format(new Date).split(' ')[1].slice(3) || '0') * 3600000;
 
-			flatpickr(rule.parentNode, {
+			const fp = flatpickr(rule.parentNode, {
 				allowInput: true,
 				enableTime: true,
 				minuteIncrement: 1,
@@ -109,6 +109,13 @@
 
 					return luxon.DateTime.fromMillis(date.getTime())
 						.toFormat(datetimeFormats[luxon.Settings.defaultLocale]);
+				}
+			});
+
+			rule.nextElementSibling.addEventListener('keydown', (e) => {
+				if (e.key === ' ' || e.key === 'Enter') {
+					e.preventDefault();
+					fp.open();
 				}
 			});
 		}

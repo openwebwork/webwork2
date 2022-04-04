@@ -689,8 +689,8 @@ sub FieldHTML {
 					data_done_text => $self->r->maketext('Done'),
 					data_locale    => $r->ce->{language},
 					data_timezone  => $r->ce->{siteDefaults}{timezone},
-					data_override  => "$recordType.$recordID.$field.override_id" $forUsers
-						&& $check ? (aria_labelledby => "$recordType.$recordID.$field.label") : (),
+					data_override  => "$recordType.$recordID.$field.override_id",
+					$forUsers && $check ? (aria_labelledby => "$recordType.$recordID.$field.label") : (),
 				}),
 				CGI::a(
 					{

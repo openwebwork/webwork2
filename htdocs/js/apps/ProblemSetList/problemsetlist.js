@@ -77,7 +77,7 @@
 				{ timeZone: importDateShift.dataset.timezone ?? 'UTC', timeZoneName: 'shortOffset' })
 				.format(new Date).split(' ')[1].slice(3) || '0') * 3600000
 
-		flatpickr(importDateShift.parentNode, {
+		const fp = flatpickr(importDateShift.parentNode, {
 			allowInput: true,
 			enableTime: true,
 			minuteIncrement: 1,
@@ -122,6 +122,13 @@
 
 				return luxon.DateTime.fromMillis(date.getTime())
 					.toFormat(datetimeFormats[luxon.Settings.defaultLocale]);
+			}
+		});
+
+		importDateShift.nextElementSibling.addEventListener('keydown', (e) => {
+			if (e.key === ' ' || e.key === 'Enter') {
+				e.preventDefault();
+				fp.open();
 			}
 		});
 	}

@@ -2453,7 +2453,9 @@ sub fieldEditHTML {
 				data_input      => undef,
 				data_done_text  => $self->r->maketext('Done'),
 				data_locale     => $self->r->ce->{language},
-				data_timezone   => $self->r->ce->{siteDefaults}{timezone}
+				data_timezone   => $self->r->ce->{siteDefaults}{timezone},
+				role            => 'button',
+				tabindex        => 0
 			}),
 			CGI::a(
 				{
