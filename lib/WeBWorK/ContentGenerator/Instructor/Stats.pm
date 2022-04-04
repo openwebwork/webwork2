@@ -88,28 +88,70 @@ sub siblings {
 
 	my $courseID = $urlpath->arg('courseID');
 	my $eUserID  = $r->param('effectiveUser');
-	my @setIDs   = sort $db->listGlobalSets;
-
-	my $stats = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::Stats', $r, courseID => $courseID);
 
 	print CGI::start_div({ class => 'info-box', id => 'fisheye' });
 	print CGI::h2($r->maketext('Statistics'));
 	print CGI::start_ul({ class => 'nav flex-column problem-list' });
 
-	for my $setID (@setIDs) {
-		my $problemPage = $urlpath->newFromModule(
-			'WeBWorK::ContentGenerator::Instructor::Stats', $r,
-			courseID => $courseID,
-			setID    => $setID,
-			statType => 'set',
+	# List links depending on if viewing set progress or student progress
+	if ($self->{type} eq 'student') {
+		my $ce = $r->ce;
+		my $user = $r->param('user');
+		# Get all users except the set level proctors, and restrict to the
+		# sections or recitations that are allowed for the user if such
+		# restrictions are defined.  This list is sorted by last_name,
+		# then first_name, then user_id.
+		my @studentRecords = $db->getUsersWhere(
+			{
+				user_id => { not_like => 'set_id:%' },
+				$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+				? (
+					-or => [
+						$ce->{viewable_sections}{$user}
+						? (section => { in => $ce->{viewable_sections}{$user} })
+						: (),
+						$ce->{viewable_recitations}{$user}
+						? (recitation => { in => $ce->{viewable_recitations}{$user} })
+						: ()
+					]
+					)
+				: ()
+			},
+			[qw/last_name first_name user_id/]
 		);
-		print CGI::li(
-			{ class => 'nav-item' },
-			CGI::a(
-				{ href => $self->systemLink($problemPage), class => 'nav-link' },
-				format_set_name_display($setID)
-			)
-		);
+
+		for my $studentRecord (@studentRecords) {
+			my $first_name         = $studentRecord->first_name;
+			my $last_name          = $studentRecord->last_name;
+			my $user_id            = $studentRecord->user_id;
+			my $userStatisticsPage = $urlpath->newFromModule(
+				$urlpath->module, $r,
+				courseID => $courseID,
+				statType => 'student',
+				userID   => $user_id
+			);
+			print CGI::li(CGI::a(
+				{ href => $self->systemLink($userStatisticsPage), class => 'nav-link' },
+				"$last_name, $first_name  ($user_id)"
+			));
+		}
+	} else {
+		my @setIDs   = sort $db->listGlobalSets;
+		for my $setID (@setIDs) {
+			my $problemPage = $urlpath->newFromModule(
+				$urlpath->module, $r,
+				courseID => $courseID,
+				setID    => $setID,
+				statType => 'set',
+			);
+			print CGI::li(
+				{ class => 'nav-item' },
+				CGI::a(
+					{ href => $self->systemLink($problemPage), class => 'nav-link' },
+					format_set_name_display($setID)
+				)
+			);
+		}
 	}
 
 	print CGI::end_ul();
