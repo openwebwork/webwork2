@@ -98,6 +98,7 @@
 	"node_modules/jquery-ui-dist/jquery-ui.min.css": "https://cdn.jsdelivr.net/npm/jquery-ui-dist@1.13.1/jquery-ui.min.css",
 	"node_modules/jquery-ui-dist/jquery-ui.min.js": "https://cdn.jsdelivr.net/npm/jquery-ui-dist@1.13.1/jquery-ui.min.js",
 	"node_modules/jquery/dist/jquery.min.js": "https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js",
+	"node_modules/luxon/build/global/luxon.min.js": "https://cdn.jsdelivr.net/npm/luxon@2.3.1/build/global/luxon.min.js",
 	"node_modules/mathjax/es5/tex-chtml.js": "https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-chtml.js",
 	"node_modules/sortablejs/Sortable.min.js": "https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"
 }

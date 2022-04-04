@@ -506,6 +506,7 @@ sub output_JS {
 		rel  => 'stylesheet',
 		href => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css')
 	});
+	print CGI::script({ src => getAssetURL($ce, 'node_modules/luxon/build/global/luxon.min.js'), defer => undef }, '');
 	print CGI::script({ src => getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.js'), defer => undef }, '');
 	if ($ce->{language} !~ /^en/) {
 		print CGI::script(

@@ -1,4 +1,24 @@
 (() => {
+	// Date/time formats for the languages supported by webwork.
+	// Note that these formats are chosen to match the perl DateTime::Locale formats.
+	// Make sure that anytime a new language is added, its format is added here.
+	const datetimeFormats = {
+		en: 'L/d/yy, h:mm a',
+		'en-US': 'L/d/yy, h:mm a',
+		'cs-CZ': 'dd.LL.yy H:mm',
+		de: 'dd.LL.yy, HH:mm',
+		es: 'd/L/yy H:mm',
+		'fr-CA': "yyyy-LL-dd HH 'h' mm",
+		fr: 'dd/LL/yyyy HH:mm',
+		'he-IL': 'd.L.yyyy, H:mm',
+		hu: 'yyyy. LL. dd. H:mm',
+		ko: 'yy. L. d. a h:mm',
+		'ru-RU': 'dd.LL.yyyy, HH:mm',
+		tr: 'd.LL.yyyy HH:mm',
+		'zh-CN': 'yyyy/L/d ah:mm',
+		'zh-HK': 'yyyy/L/d ah:mm'
+	};
+
 	document.querySelectorAll('.datepicker-group').forEach((open_rule) => {
 		const name = open_rule.name.replace('.open_date', '');
 
@@ -24,6 +44,8 @@
 		for (const rule of groupRules) {
 			const orig_value = rule.value;
 
+			luxon.Settings.defaultLocale = rule.dataset.locale?.replaceAll(/_/g, '-') ?? 'en';
+
 			// Compute the time difference between the current browser timezone and the the course timezone.
 			// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
 			// Note that this is converted to seconds.
@@ -40,6 +62,8 @@
 				minuteIncrement: 1,
 				altInput: true,
 				dateFormat: 'U',
+				altFormat: datetimeFormats[luxon.Settings.defaultLocale],
+				ariaDateFormat: datetimeFormats[luxon.Settings.defaultLocale],
 				defaultDate: orig_value,
 				defaultHour: 0,
 				locale: rule.dataset.locale ? rule.dataset.locale.substring(0, 2) : 'en',
@@ -48,10 +72,6 @@
 				wrap: true,
 				plugins: [ new confirmDatePlugin({ confirmText: rule.dataset.doneText ?? 'Done', showAlways: true }) ],
 				onChange(selectedDates) {
-					// If the altInput field has been emptied, then the formatDate method still sets the hidden input.
-					// So set that back to empty again.
-					if (!selectedDates.length) this.input.value = '';
-
 					if (this.input.value === orig_value) this.altInput.classList.remove('changed');
 					else this.altInput.classList.add('changed');
 				},
@@ -63,34 +83,32 @@
 					this.altInput.after(this.input);
 
 					this.altInput.addEventListener('blur', update);
-
-					// If the inital value is empty, then the formatDate method still sets the hidden input.
-					// So set that back to empty again.
-					if (!selectedDates.length) this.input.value = '';
 				},
 				parseDate(datestr, format) {
-					// Deal with the case of a unix timestamp on initial load.  At this time the timezone needs to be
-					// adjusted backward as flatpickr is going to use the browser's time zone.
+					// Deal with the case of a unix timestamp.  The timezone needs to be adjusted back as this is for
+					// the unix timestamp stored in the hidden input whose value will be sent to the server.
 					if (format === 'U') return new Date(parseInt(datestr) * 1000 - timezoneAdjustment);
-					// Next attempt to parse the datestr with the current format.  This should not be adjusted.
-					const date = new Date(Date.parse(datestr, format));
-					if (!isNaN(date.getTime())) return date;
-					// Finally, fall back to the previous value in the original input if that failed.  This also needs
-					// to be adjusted back since the adjusted timestamp is saved in the input.
-					return new Date(parseInt(rule.value) * 1000 - timezoneAdjustment);
+
+					// Next attempt to parse the datestr with the current format.  This should not be adjusted.  It is
+					// for display only.
+					const date = luxon.DateTime.fromFormat(datestr, format);
+					if (date.isValid) return date.toJSDate();
+
+					// Finally, fall back to the previous value in the original input if that failed.  This is the case
+					// that the user typed a time that isn't in the valid format. So fallback to the last valid time
+					// that was displayed. This also should not be adjusted.
+					return new Date(this.lastFormattedDate.getTime());
 				},
-				formatDate(date) {
-					// flatpickr gives the date in the browser's time zone.  So it needs to be adjusted to the timezone
-					// of the course.
+				formatDate(date, format) {
+					// Save this date for the fallback in parseDate.
+					this.lastFormattedDate = date;
 
-					// Flatpickr sets the value of the original input to the parsed time.
-					// So set that back to the unix timestamp.
-					rule.value = date.getTime() / 1000 + timezoneAdjustment / 1000;
+					// In this case the date provided is in the browser's time zone.  So it needs to be adjusted to the
+					// timezone of the course.
+					if (format === 'U') return (date.getTime() + timezoneAdjustment) / 1000;
 
-					// Return the localized time string.
-					return Intl.DateTimeFormat(rule.dataset.locale?.replaceAll(/_/g, '-') ?? 'en',
-						{ dateStyle: 'short', timeStyle: 'short', timeZone: rule.dataset.timezone ?? 'UTC' })
-						.format(new Date(date.getTime() + timezoneAdjustment));
+					return luxon.DateTime.fromMillis(date.getTime())
+						.toFormat(datetimeFormats[luxon.Settings.defaultLocale]);
 				}
 			});
 		}
