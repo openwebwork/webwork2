@@ -138,12 +138,21 @@
 
 			elt.collapseButton.setAttribute('aria-controls', elt.subList.id);
 
+			elt.collapseButton.addEventListener('keydown', (e) => {
+				if (e.key === ' ' || e.key === 'Enter') {
+					e.preventDefault();
+					bootstrap.Collapse.getInstance(document.getElementById(elt.subList.id))?.toggle();
+				}
+			});
+
 			elt.subList.addEventListener('hide.bs.collapse', () => {
+				elt.collapseButton.setAttribute('aria-label', elt.collapseButton.dataset.expandText);
 				elt.collapseButton.tooltip.dispose();
 				elt.collapseButton.tooltip = new bootstrap.Tooltip(elt.collapseButton.firstElementChild,
 					{ title: elt.collapseButton.dataset.expandText, container: elt.collapseButton });
 			});
 			elt.subList.addEventListener('show.bs.collapse', () => {
+				elt.collapseButton.setAttribute('aria-label', elt.collapseButton.dataset.collapseText);
 				elt.collapseButton.tooltip.dispose();
 				elt.collapseButton.tooltip = new bootstrap.Tooltip(elt.collapseButton.firstElementChild,
 					{ title: elt.collapseButton.dataset.collapseText, container: elt.collapseButton });
@@ -204,12 +213,14 @@
 		let tooltip = new bootstrap.Tooltip(button, options);
 		const detailCollapse = document.getElementById(button.dataset.bsTarget.replace('#', ''));
 		detailCollapse?.addEventListener('hide.bs.collapse', () => {
+			button.setAttribute('aria-label', button.dataset.expandText);
 			tooltip.dispose();
 			options.title = button.dataset.expandText;
 			tooltip = new bootstrap.Tooltip(button, options);
 		})
 		detailCollapse?.addEventListener('show.bs.collapse', () => {
 			tooltip.dispose();
+			button.setAttribute('aria-label', button.dataset.collapseText);
 			options.title = button.dataset.collapseText;
 			tooltip = new bootstrap.Tooltip(button, options);
 		})
@@ -444,4 +455,23 @@
 
 	// Render all problems on page load if requested.
 	if (document.getElementById('auto_render')?.checked) renderAll();
+
+	// Make the override checkboxes for text type inputs checked or unchecked appropriately
+	// as determined by the value of the input when that value changes.
+	document.querySelectorAll('input[type="text"][data-override]').forEach((input) => {
+		const overrideCheck = document.getElementById(input.dataset.override);
+		if (!overrideCheck) return;
+		const changeHandler = () => overrideCheck.checked = input.value != '';
+		input.addEventListener('change', changeHandler);
+		input.addEventListener('keyup', changeHandler);
+		input.addEventListener('blur', () => { if (input.value == '') overrideCheck.checked = false; });
+	});
+
+	// Make the override checkboxes for selects checked or unchecked appropriately
+	// as determined by the value of the select when that value changes.
+	document.querySelectorAll('select[data-override]').forEach((select) => {
+		const overrideCheck = document.getElementById(select.dataset.override);
+		if (!overrideCheck) return;
+		select.addEventListener('change', () => overrideCheck.checked = select.value != '');
+	});
 })();

@@ -1336,7 +1336,13 @@ sub import_form {
 						data_done_text         => $r->maketext('Done')
 					}),
 					CGI::a(
-						{ class => 'btn btn-secondary btn-sm', data_toggle => undef },
+						{
+							class       => 'btn btn-secondary btn-sm',
+							data_toggle => undef,
+							role        => 'button',
+							tabindex    => 0,
+							aria_label  => $r->maketext('Pick date and time')
+						},
 						CGI::i({ class => 'fas fa-calendar-alt' }, '')
 					)
 				)
@@ -2465,7 +2471,13 @@ sub fieldEditHTML {
 				data_done_text         => $self->r->maketext('Done')
 			}),
 			CGI::a(
-				{ class => 'btn btn-secondary btn-sm', data_toggle => undef, aria_hidden => 'true' },
+				{
+					class       => 'btn btn-secondary btn-sm',
+					data_toggle => undef,
+					role        => 'button',
+					tabindex    => 0,
+					aria_label  => $self->r->maketext('Pick date and time')
+				},
 				CGI::i({ class => 'fas fa-calendar-alt' }, '')
 			)
 		);
