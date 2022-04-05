@@ -43,7 +43,7 @@ Sort sets by:
 	- visibility to students
 
 Switch from view mode to edit mode:
-	- showing visible sets
+	- showing listed sets
 	- showing selected sets
 Switch from edit mode to view and save changes
 Switch from edit mode to view and abandon changes
@@ -652,8 +652,8 @@ sub filter_form {
 						all       => $r->maketext('all sets'),
 						none      => $r->maketext('no sets'),
 						selected  => $r->maketext('selected sets'),
-						visible   => $r->maketext('visible sets'),
-						unvisible => $r->maketext('hidden sets'),
+						visible   => $r->maketext('sets visible to students'),
+						unvisible => $r->maketext('sets hidden from students'),
 						match_ids => $r->maketext('enter matching set IDs below'),
 					}
 				})
@@ -713,10 +713,10 @@ sub filter_handler {
 		my @setIDs     = grep {/$regexTerms/i} @{ $self->{allSetIDs} };
 		$self->{visibleSetIDs} = \@setIDs;
 	} elsif ($scope eq "visible") {
-		$result = $r->maketext("showing visible sets");
+		$result = $r->maketext("showing sets that are visible to students");
 		$self->{visibleSetIDs} = [ $db->listGlobalSetsWhere({ visible => 1 }) ];
 	} elsif ($scope eq "unvisible") {
-		$result = $r->maketext("showing hidden sets");
+		$result = $r->maketext("showing sets that are hidden from students");
 		$self->{visibleSetIDs} = [ $db->listGlobalSetsWhere({ visible => 0 }) ];
 	}
 
@@ -822,7 +822,7 @@ sub edit_form {
 				class   => 'form-select form-select-sm',
 				labels  => {
 					all      => $r->maketext('all sets'),
-					visible  => $r->maketext('visible sets'),
+					visible  => $r->maketext('listed sets'),
 					selected => $r->maketext('selected sets'),
 				}
 			})
@@ -841,7 +841,7 @@ sub edit_handler {
 		$result = $r->maketext("editing all sets");
 		$self->{visibleSetIDs} = $self->{allSetIDs};
 	} elsif ($scope eq "visible") {
-		$result = $r->maketext("editing visible sets");
+		$result = $r->maketext("editing listed sets");
 		# leave visibleUserIDs alone
 	} elsif ($scope eq "selected") {
 		$result = $r->maketext("editing selected sets");
@@ -927,13 +927,6 @@ sub publish_handler {
 			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
 				$r->maketext("All sets made visible for all students"))
 			: CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext("All sets hidden from all students"));
-	} elsif ($scope eq "visible") {
-		@setIDs = @{ $self->{visibleSetIDs} };
-		$result = $value
-			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
-				$r->maketext("All visible sets made visible for all students"))
-			: CGI::div({ class => 'alert alert-success p-1 mb-0' },
-				$r->maketext("All visible hidden from all students"));
 	} elsif ($scope eq "selected") {
 		@setIDs = @{ $genericParams->{selected_sets} };
 		$result = $value
@@ -1402,7 +1395,7 @@ sub export_form {
 				class   => 'form-select form-select-sm',
 				labels  => {
 					all      => $r->maketext('all sets'),
-					visible  => $r->maketext('visible sets'),
+					visible  => $r->maketext('listed sets'),
 					selected => $r->maketext('selected sets'),
 				}
 			})
