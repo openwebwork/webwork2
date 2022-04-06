@@ -688,7 +688,8 @@ sub filter_form {
 					name          => 'action.filter.set_ids',
 					value         => $actionParams{'action.filter.set_ids'}[0] // '',
 					aria_required => 'true',
-					class         => 'form-control form-control-sm'
+					class         => 'form-control form-control-sm',
+					dir           => 'ltr'
 				})
 			)
 		),
@@ -1110,10 +1111,11 @@ sub create_form {
 				CGI::textfield({
 					id            => 'create_text',
 					name          => 'action.create.name',
-					value         => $actionParams{'action.create.name'}->[0] || '',
+					value         => $actionParams{'action.create.name'}[0] || '',
 					maxlength     => '100',
 					aria_required => 'true',
-					class         => 'form-control form-control-sm'
+					class         => 'form-control form-control-sm',
+					dir           => 'ltr'
 				})
 			)
 		),
@@ -1232,8 +1234,10 @@ sub create_handler {
     # Assign set to current active user.
 	my $userName = $r->param('user');
 	$self->assignSetToUser($userName, $newSetRecord);    # Cures weird date error when no-one assigned to set.
-	$self->addgoodmessage(
-		$r->maketext('Set [_1] was assigned to [_2].', format_set_name_display($newSetID), $userName));
+	$self->addgoodmessage($r->maketext(
+		'Set [_1] was assigned to [_2].',
+		CGI::span({ dir => 'ltr' }, format_set_name_display($newSetID)), $userName
+	));
 
 	push @{ $self->{visibleSetIDs} }, $newSetID;
 	push @{ $self->{allSetIds} }, $newSetID;
@@ -1241,9 +1245,13 @@ sub create_handler {
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext('Failed to create new set: [_1]', $@))
 		if $@;
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
-		$r->maketext('Successfully created new set [_1]', format_set_name_display($newSetID)));
-
+	return CGI::div(
+		{ class => 'alert alert-success p-1 mb-0' },
+		$r->maketext(
+			'Successfully created new set [_1]',
+			CGI::span({ dir => 'ltr' }, format_set_name_display($newSetID))
+		)
+	);
 }
 
 sub import_form {
@@ -1311,7 +1319,8 @@ sub import_form {
 					id    => 'import_text',
 					name  => 'action.import.name',
 					value => $actionParams{'action.import.name'}[0] || '',
-					class => 'form-control form-control-sm'
+					class => 'form-control form-control-sm',
+					dir   => 'ltr'
 				})
 			)
 		),
@@ -2561,54 +2570,51 @@ sub recordEditHTML {
 	$fakeRecord{filename} = CGI::input({ -name => "set.$set_id", -value => "set$set_id.def", -size => 60 });
 
 	# Select
-	my $label      = '';
-	my $label_text = '';
 	if ($editMode) {
 		# No checkbox column in this case.
-		$label_text = CGI::a({ href => $problemListURL }, $prettySetID);
+		push(@tableCells, CGI::td({ dir => 'ltr' }, CGI::a({ href => $problemListURL }, $prettySetID)));
 	} else {
 		# Set ID
-		my $label = '';
-		if ($editMode) {
-			$label = CGI::a({ href => $problemListURL }, $prettySetID);
-		} else {
-			$label = CGI::span({
-					class             => "set-label set-id-tooltip $visibleClass",
-					data_bs_toggle    => 'tooltip',
-					data_bs_placement => 'right',
-					data_bs_title     => $Set->description()
-				}, $prettySetID) . ' ' . $imageLink;
-		}
+		my $label = CGI::span(
+			{
+				class             => "set-label set-id-tooltip $visibleClass",
+				data_bs_toggle    => 'tooltip',
+				data_bs_placement => 'right',
+				data_bs_title     => $Set->description()
+			},
+			$prettySetID
+			)
+			. ' '
+			. $imageLink;
 
 		# Selection checkbox
 		push @tableCells,
-			CGI::input({
+			CGI::td(CGI::input({
 				type  => 'checkbox',
 				id    => "${set_id}_id",
 				name  => 'selected_sets',
 				value => $set_id,
 				class => 'form-check-input',
 				$setSelected ? (checked => 'checked') : (),
-			});
+			}));
 
-		push @tableCells, CGI::div({ class => 'label-with-edit-icon' }, CGI::label({ for => "${set_id}_id" }, $label));
+		push @tableCells,
+			CGI::td(CGI::div(
+				{ class => 'label-with-edit-icon', dir => 'ltr' },
+				CGI::label({ for => "${set_id}_id" }, $label)
+			));
 	}
 
 	# Problems link
-	if ($editMode) {
-		# column not there
-		push @tableCells, $label_text;
-	} else {
+	if (!$editMode) {
 		# "problem list" link
-		push @tableCells, CGI::a({ href => $problemListURL }, $problems);
+		push @tableCells, CGI::td(CGI::a({ href => $problemListURL }, $problems));
 	}
 
 	# Users link
-	if ($editMode) {
-		# column not there
-	} else {
+	if (!$editMode) {
 		# "edit users assigned to set" link
-		push @tableCells, CGI::a({ href => $usersAssignedToSetURL }, "$users/$totalUsers");
+		push @tableCells, CGI::td(CGI::a({ href => $usersAssignedToSetURL }, "$users/$totalUsers"));
 	}
 
 	# determine which non-key fields to show
@@ -2650,11 +2656,13 @@ sub recordEditHTML {
 			if $field =~ /hide_hint/ and not $editMode;
 
 		push @tableCells,
-			CGI::span({ class => "d-inline-block w-100 text-center $visibleClass" },
-				$self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+			CGI::td(CGI::span(
+				{ class => "d-inline-block w-100 text-center $visibleClass" },
+				$self->fieldEditHTML($fieldName, $fieldValue, \%properties)
+			));
 	}
 
-	return CGI::Tr(CGI::td(\@tableCells));
+	return CGI::Tr(@tableCells);
 }
 
 sub printTableHTML {

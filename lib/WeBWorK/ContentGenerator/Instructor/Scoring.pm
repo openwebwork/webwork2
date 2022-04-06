@@ -169,7 +169,8 @@ sub body {
 					defaults => [ $self->r->param('selectedSet') ],
 					size     => 10,
 					multiple => 1,
-					class    => 'form-select'
+					class    => 'form-select',
+					dir      => 'ltr'
 				})
 			),
 			CGI::div(

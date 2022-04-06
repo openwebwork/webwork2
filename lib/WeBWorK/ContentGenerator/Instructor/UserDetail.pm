@@ -327,7 +327,7 @@ sub outputSetRow {
 				labelattributes => { class => 'form-check-label' }
 			}),
 			defined $mergedSet
-			? CGI::b(CGI::a(
+			? CGI::b({ dir => 'ltr' }, CGI::a(
 				{
 					href => $self->systemLink(
 						$urlpath->new(
@@ -346,7 +346,7 @@ sub outputSetRow {
 				format_set_name_display($version ? "$setID (version $version)" : $setID)
 			))
 				. ($version ? CGI::hidden({ name => "set.$setID,v$version.assignment", value => 'delete' }) : '')
-			: CGI::b(format_set_name_display($setID)),
+			: CGI::b({ dir => 'ltr' }, format_set_name_display($setID)),
 			join '',
 			$self->DBFieldTable($set, $userSet, $mergedSet, 'set', $setID, $dateFields, $dateFieldLabels),
 		]

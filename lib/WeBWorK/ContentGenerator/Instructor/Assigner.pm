@@ -133,8 +133,10 @@ sub body {
 						default_sort    => 'lnfn',
 						default_format  => 'lnfn_uid',
 						default_filters => ['all'],
-						size            => 20,
-						multiple        => 1,
+						attrs           => {
+							size     => 20,
+							multiple => 1
+						}
 					},
 					@Users
 				)
@@ -153,8 +155,11 @@ sub body {
 						default_sort    => 'set_id',
 						default_format  => 'set_id',
 						default_filters => ['all'],
-						size            => 20,
-						multiple        => 1,
+						attrs           => {
+							size     => 20,
+							multiple => 1,
+							dir      => 'ltr'
+						}
 					},
 					@GlobalSets
 				)

@@ -278,8 +278,10 @@ sub body {
 					default_sort    => 'lnfn',
 					default_format  => 'lnfn_uid',
 					default_filters => ['all'],
-					size            => 10,
-					multiple        => 1,
+					attrs           => {
+						size     => 10,
+						multiple => 1
+					}
 				},
 				@Users
 			)
@@ -297,8 +299,11 @@ sub body {
 					default_sort    => 'set_id',
 					default_format  => 'sid',
 					default_filters => ['all'],
-					size            => 10,
-					multiple        => 1,
+					attrs           => {
+						size     => 10,
+						multiple => 1,
+						dir      => 'ltr'
+					}
 				},
 				@GlobalSets
 			)
@@ -487,7 +492,8 @@ sub body {
 						id          => 'new_set_name',
 						placeholder => $r->maketext("Name for new set here"),
 						size        => 20,
-						class       => 'form-control form-control-sm'
+						class       => 'form-control form-control-sm',
+						dir         => 'ltr'
 					})
 				)
 			)

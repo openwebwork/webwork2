@@ -27,7 +27,7 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(readFile dequote jitar_id_to_seq);
+use WeBWorK::Utils qw(readFile dequote jitar_id_to_seq format_set_name_display);
 use Encode;
 
 # This content generator is NOT logged in.
@@ -39,24 +39,26 @@ sub if_loggedin {
 }
 
 sub title {
-    my ($self) = @_;
-    my $r = $self->r;
-    # using the url arguments won't break if the set/problem are invalid
-    my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
-    my $problemID = $self->r->urlpath->arg("problemID");
+	my ($self) = @_;
+	my $r = $self->r;
+	# using the url arguments won't break if the set/problem are invalid
+	my $setID     = $self->r->urlpath->arg('setID');
+	my $problemID = $self->r->urlpath->arg('problemID');
 
-    # if its a problem page for a jitar set we print the pretty version of the id
-    if ($problemID) {
-	my $set = $r->db->getGlobalSet($setID);
-	if ($set && $set->assignment_type eq 'jitar') {
-	    $problemID = join('.',jitar_id_to_seq($problemID));
+	# If the url is for a problem page, then the title is the set and problem id.
+	if ($problemID) {
+		# Print the pretty version of the problem id for a jitar set.
+		my $set = $r->db->getGlobalSet($setID);
+		if ($set && $set->assignment_type eq 'jitar') {
+			$problemID = join('.', jitar_id_to_seq($problemID));
+		}
+
+		return $r->maketext('[_1]: Problem [_2]', CGI::span({ dir => 'ltr' }, format_set_name_display($setID)),
+			$problemID);
 	}
 
-	return $r->maketext("[_1]: Problem [_2]",$setID, $problemID);
-    }
-
-    my $ref = $self->SUPER::title();
-    return $ref;
+	my $ref = $self->SUPER::title();
+	return $ref;
 }
 
 sub info {

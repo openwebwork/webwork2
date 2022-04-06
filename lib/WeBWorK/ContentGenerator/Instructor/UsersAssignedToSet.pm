@@ -145,7 +145,7 @@ sub body {
 			"When you unassign by unchecking a student's name, you destroy all of the data for homework set [_1] "
 				. 'for this student. You will then need to reassign the set to these students and they will receive '
 				. 'new versions of the problems. Make sure this is what you want to do before unchecking students.',
-			CGI::b(format_set_name_display($setID))
+			CGI::b({ dir => 'ltr' }, format_set_name_display($setID))
 		)
 	);
 
@@ -227,8 +227,9 @@ sub body {
 				{ class => 'alert alert-danger p-1 mb-3' },
 				$r->maketext(
 					'There is NO undo for this function.  Do not use it unless you know what you are doing!  '
-					. 'When you unassign a student using this button, or by unchecking their name, you destroy all '
-					. "of the data for homework set [_1] for this student.", format_set_name_display($setID)
+						. 'When you unassign a student using this button, or by unchecking their name, you destroy all '
+						. "of the data for homework set [_1] for this student.",
+					CGI::span({ dir => 'ltr' }, format_set_name_display($setID))
 				)
 			),
 			CGI::div(

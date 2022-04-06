@@ -599,8 +599,10 @@ sub body {
 	my $header = CGI::i(
 		$self->{file_type} eq 'problem'
 		? $r->maketext(
-			'Editing <strong>problem [_1] of set [_2]</strong> in file "[_3]"', $prettyProblemNumber,
-			format_set_name_display($fullSetName),                              $self->shortPath($inputFilePath)
+			'Editing <strong>problem [_1] of set [_2]</strong> in file "[_3]"',
+			$prettyProblemNumber,
+			CGI::span({ dir => 'ltr' }, format_set_name_display($fullSetName)),
+			CGI::span({ dir => 'ltr' }, $self->shortPath($inputFilePath))
 			)
 		: $r->maketext($titles{ $self->{file_type} }, $self->shortPath($inputFilePath))
 	);
@@ -1415,7 +1417,9 @@ sub add_problem_form {
 					id      => 'action_add_problem_target_set_id',
 					name    => 'action.add_problem.target_set',
 					values  => \@allSetNames,
+					labels  => { map { $_ => format_set_name_display($_) } @allSetNames },
 					class   => 'form-select form-select-sm d-inline w-auto',
+					dir     => 'ltr',
 					default => $setName
 				})
 			)
@@ -1586,7 +1590,10 @@ sub save_form {
 		return CGI::div(
 			CGI::div(
 				{ class => 'mb-2' },
-				$r->maketext('Save to [_1] and View', CGI::b($self->shortPath($self->{editFilePath})))
+				$r->maketext(
+					'Save to [_1] and View',
+					CGI::b({ dir => 'ltr' }, $self->shortPath($self->{editFilePath}))
+				)
 			),
 			CGI::div(
 				{ class => 'form-check mb-2' },
@@ -1595,7 +1602,10 @@ sub save_form {
 					id    => 'newWindowSave',
 					class => 'form-check-input'
 				}),
-				CGI::label({ for => 'newWindowSave', class => 'form-check-label' }, $r->maketext('Open in new window'))
+				CGI::label(
+					{ for => 'newWindowSave', class => 'form-check-label' },
+					$r->maketext('Open in new window')
+				)
 			)
 		);
 	} else {
@@ -1774,16 +1784,16 @@ sub save_as_form {
 				$r->maketext('Save file to:')
 			),
 			CGI::div(
-				{ class => 'col-auto d-inline-flex' },
+				{ class => 'col-auto d-inline-flex', dir => 'ltr' },
 				CGI::div(
-					{ class => 'input-group input-group-sm' },
+					{ class => 'editor-save-path input-group input-group-sm' },
 					CGI::label({ for => 'action_save_as_target_file_id', class => 'input-group-text' }, '[TMPL]/'),
 					CGI::textfield({
 						id    => 'action_save_as_target_file_id',
 						name  => 'action.save_as.target_file',
 						size  => 60,
 						value => $shortFilePath,
-						class => 'form-control form-control-sm'
+						class => 'form-control form-control-sm', dir => 'ltr'
 					})
 				)
 			),
@@ -1803,7 +1813,12 @@ sub save_as_form {
 				}),
 				CGI::label(
 					{ for => 'action_save_as_saveMode_rename_id', class => 'form-check-label' },
-					$r->maketext('Replace current problem: [_1]', CGI::strong("$fullSetID/$prettyProbNum"))
+					$r->maketext(
+						'Replace current problem: [_1]',
+						CGI::strong(
+							CGI::span({ dir => 'ltr' }, format_set_name_display($fullSetID)) . "/$prettyProbNum"
+						)
+					)
 				)
 			) : ''
 		),
@@ -1819,7 +1834,10 @@ sub save_as_form {
 				}),
 				CGI::label(
 					{ for => 'action_save_as_saveMode_new_problem_id', class => 'form-check-label' },
-					$r->maketext('Append to end of [_1] set', CGI::strong($fullSetID))
+					$r->maketext(
+						'Append to end of [_1] set',
+						CGI::strong({ dir => 'ltr' }, format_set_name_display($fullSetID))
+					)
 				)
 			) : ''
 		),
@@ -2036,7 +2054,7 @@ sub revert_form {
 	my $editFilePath    = $self->{editFilePath};
 	return $r->maketext("Error: The original file [_1] cannot be read.", $editFilePath) unless -r $editFilePath;
 	return "" unless defined($self->{tempFilePath}) and -e $self->{tempFilePath} ;
-	return $r->maketext("Revert to [_1]",$self->shortPath($editFilePath)) ;
+	return $r->maketext("Revert to [_1]", CGI::span({ dir => 'ltr' }, $self->shortPath($editFilePath)));
 }
 
 sub revert_handler {

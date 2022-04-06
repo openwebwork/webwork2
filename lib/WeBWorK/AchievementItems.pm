@@ -164,7 +164,8 @@ sub print_form {
 			id         => 'res_set_id',
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
-			labels     => { map { $_ => format_set_name_display($_) } @openSets }
+			labels     => { map { $_ => format_set_name_display($_) } @openSets },
+			menu_attr  => { dir => 'ltr' }
 		)
 	);
 }
@@ -261,7 +262,8 @@ sub print_form {
 			id         => 'ext_set_id',
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
-			labels     => { map { $_ => format_set_name_display($_) } @openSets }
+			labels     => { map { $_ => format_set_name_display($_) } @openSets },
+			menu_attr  => { dir => 'ltr' }
 		)
 	);
 }
@@ -351,7 +353,8 @@ sub print_form {
 			id         => 'ext_set_id',
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
-			labels     => { map { $_ => format_set_name_display($_) } @openSets }
+			labels     => { map { $_ => format_set_name_display($_) } @openSets },
+			menu_attr  => { dir => 'ltr' }
 		)
 	);
 }
@@ -445,7 +448,8 @@ sub print_form {
 			id         => 'red_set_id',
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
-			labels     => { map { $_ => format_set_name_display($_) } @openSets }
+			labels     => { map { $_ => format_set_name_display($_) } @openSets },
+			menu_attr  => { dir => 'ltr' }
 		)
 	);
 }
@@ -542,7 +546,8 @@ sub print_form {
 			id         => 'dub_set_id',
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
-			labels     => { map { $_ => format_set_name_display($_) } @openSets }
+			labels     => { map { $_ => format_set_name_display($_) } @openSets },
+			menu_attr  => { dir => 'ltr' }
 		)
 	);
 }
@@ -662,7 +667,7 @@ sub print_form {
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
 			labels     => { map { $_ => format_set_name_display($_) } @openSets },
-			menu_attr  => { onchange => $problem_id_script }
+			menu_attr  => { onchange => $problem_id_script, dir => 'ltr' }
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			id                  => 'ria_problem_id',
@@ -786,7 +791,7 @@ sub print_form {
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
 			labels     => { map { $_ => format_set_name_display($_) } @openSets },
-			menu_attr  => { onchange => $problem_id_script }
+			menu_attr  => { onchange => $problem_id_script, dir => 'ltr' }
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			id                  => 'dbp_problem_id',
@@ -912,7 +917,7 @@ sub print_form {
 			values     => \@openSets,
 			labels     => { map { $_ => format_set_name_display($_) } @openSets },
 			label_text => $r->maketext('Set Name'),
-			menu_attr  => { onchange => $problem_id_script }
+			menu_attr  => { onchange => $problem_id_script, dir => 'ltr' }
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			id                  => 'hcp_problem_id',
@@ -1013,7 +1018,8 @@ sub print_form {
 			id         => 'hcs_set_id',
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
-			labels     => { map { $_ => format_set_name_display($_) } @openSets }
+			labels     => { map { $_ => format_set_name_display($_) } @openSets },
+			menu_attr  => { dir => 'ltr' }
 		)
 	);
 }
@@ -1136,7 +1142,7 @@ sub print_form {
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
 			labels     => { map { $_ => format_set_name_display($_) } @openSets },
-			menu_attr  => { onchange => $problem_id_script }
+			menu_attr  => { onchange => $problem_id_script, dir => 'ltr' }
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			id                  => 'fcp_problem_id',
@@ -1233,7 +1239,8 @@ sub print_form {
 			id         => 'fcs_set_id',
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
-			labels     => { map { $_ => format_set_name_display($_) } @openSets }
+			labels     => { map { $_ => format_set_name_display($_) } @openSets },
+			menu_attr  => { dir => 'ltr' }
 		)
 	);
 }
@@ -1353,7 +1360,7 @@ sub print_form {
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
 			labels     => { map { $_ => format_set_name_display($_) } @openSets },
-			menu_attr  => { onchange => $problem_id_script }
+			menu_attr  => { onchange => $problem_id_script, dir => 'ltr' }
 		),
 		CGI::div(
 			{ class => 'row mb-3' },
@@ -1539,7 +1546,8 @@ sub print_form {
 			id         => 'adtgw_gw_id',
 			label_text => $r->maketext('Gateway Name'),
 			values     => \@openGateways,
-			labels     => { map { $_ => format_set_name_display($_) } @openGateways }
+			labels     => { map { $_ => format_set_name_display($_) } @openGateways },
+			menu_attr  => { dir => 'ltr' }
 		)
 	);
 }
@@ -1645,7 +1653,8 @@ sub print_form {
 			id         => 'eddgw_gw_id',
 			label_text => $r->maketext('Gateway Name'),
 			values     => \@openGateways,
-			labels     => { map { $_ => format_set_name_display($_) } @openGateways }
+			labels     => { map { $_ => format_set_name_display($_) } @openGateways },
+			menu_attr  => { dir => 'ltr' }
 		)
 	);
 }
@@ -1753,7 +1762,8 @@ sub print_form {
 			id         => 'resgw_gw_id',
 			label_text => $r->maketext('Gateway Name'),
 			values     => \@sets,
-			labels     => { map { $_ => format_set_name_display($_) } @sets }
+			labels     => { map { $_ => format_set_name_display($_) } @sets },
+			menu_attr  => { dir => 'ltr' }
 		)
 	);
 }

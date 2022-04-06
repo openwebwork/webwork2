@@ -174,8 +174,7 @@ sub scrollingRecordList {
 			default => \@selected_records,
 			labels  => \%labels,
 			class   => 'form-select form-select-sm',
-			$options{size}     ? (size     => $options{size})     : (),
-			$options{multiple} ? (multiple => $options{multiple}) : ()
+			$options{attrs} ? %{ $options{attrs} } : ()
 		}),
 	);
 }

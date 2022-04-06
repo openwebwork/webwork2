@@ -72,41 +72,41 @@ sub initialize {
 sub nav {
 	my ($self, $args) = @_;
 	my $r = $self->r;
-	my $urlpath = $r->urlpath;
 
-	my $courseID = $urlpath->arg("courseID");
-	#my $problemSetsPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",  $r, courseID => $courseID);
-	my $problemSetsPage = $urlpath->parent;
-
-	my @links = ($r->maketext("Homework Sets"), $r->location . $problemSetsPage->path, $r->maketext("Homework Sets"));
+	my @links = ($r->maketext('Homework Sets'), $r->location . $r->urlpath->parent, $r->maketext('Homework Sets'));
 	return CGI::div({ class => 'row sticky-nav', role => 'navigation', aria_label => 'problem navigation' },
 		CGI::div($self->navMacro($args, '', @links)));
 }
 
 sub title {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $eUserID = $r->param("effectiveUser");
-	# using the url arguments won't break if the set/problem are invalid
-	my $prettySetID = WeBWorK::ContentGenerator::underscore2nbsp($r->urlpath->arg("setID"));
-	my $setID = $r->urlpath->arg("setID");
+	my $self = shift;
+	my $r    = $self->r;
+	my $ce   = $r->ce;
 
-	my $title = $prettySetID;
-	#put either due date or reduced scoring date in the title.
-	my $set = $r->db->getMergedSet($eUserID, $setID);
+	# Using the url arguments won't break if the set/problem are invalid.
+	my $setID       = $r->urlpath->arg('setID');
+
+	my $title = CGI::span({ dir => 'ltr' }, format_set_name_display($setID));
+
+	# Put either due date or reduced scoring date in the title.
+	my $set = $r->db->getMergedSet($r->param('effectiveUser'), $setID);
 	if (defined($set) && between($set->open_date, $set->due_date)) {
-		my $enable_reduced_scoring =  $r->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
-		if ($enable_reduced_scoring &&
-			before($set->reduced_scoring_date)) {
-			$title .= ' - '.$r->maketext("Due [_1], after which reduced scoring is available until [_2]",
-				$self->formatDateTime($set->reduced_scoring_date, undef,
-					$r->ce->{studentDateDisplayFormat}),
-				$self->formatDateTime($set->due_date, undef,
-					$r->ce->{studentDateDisplayFormat}));
+		if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+			&& $set->enable_reduced_scoring
+			&& $set->reduced_scoring_date
+			&& $set->reduced_scoring_date != $set->due_date
+			&& before($set->reduced_scoring_date))
+		{
+			$title .= ' - '
+				. $r->maketext(
+					'Due [_1], after which reduced scoring is available until [_2]',
+					$self->formatDateTime($set->reduced_scoring_date, undef, $ce->{studentDateDisplayFormat}),
+					$self->formatDateTime($set->due_date,             undef, $ce->{studentDateDisplayFormat})
+				);
 		} elsif ($set->due_date) {
-			$title .= ' - '.$r->maketext("Closes [_1]",
-				$self->formatDateTime($set->due_date, undef,
-					$r->ce->{studentDateDisplayFormat}));
+			$title .= ' - '
+				. $r->maketext('Closes [_1]',
+					$self->formatDateTime($set->due_date, undef, $ce->{studentDateDisplayFormat}));
 		}
 	}
 
@@ -155,7 +155,7 @@ sub siblings {
 
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
 	print CGI::h2($r->maketext("Sets"));
-	print CGI::start_ul({ class => 'nav flex-column bg-light' });
+	print CGI::start_ul({ class => 'nav flex-column bg-light', dir => 'ltr' });
 
 	debug("Begin printing sets from listUserSets()");
 	for my $setID (@setIDs) {

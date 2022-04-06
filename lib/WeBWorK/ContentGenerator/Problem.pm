@@ -37,7 +37,8 @@ use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted ref2string
 	makeTempDirectory path_is_subdir before after between wwRound is_jitar_problem_closed is_jitar_problem_hidden
-	jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_problem_finished getAssetURL);
+	jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_problem_finished getAssetURL
+	format_set_name_display);
 use WeBWorK::DB::Utils qw(global2user user2global);
 require WeBWorK::Utils::ListingDB;
 use URI::Escape;
@@ -1392,11 +1393,11 @@ sub title {
 	my $problemID = $self->r->urlpath->arg("problemID");
 
 	my $set = $db->getGlobalSet($setID);
-	$setID = WeBWorK::ContentGenerator::underscore2nbsp($setID);
+	$setID = CGI::span({ dir => 'ltr' }, format_set_name_display($setID));
 	if ($set && $set->assignment_type eq 'jitar') {
 	    $problemID = join('.',jitar_id_to_seq($problemID));
 	}
-	my $out = $r->maketext("[_1]: Problem [_2]",$setID, $problemID);
+	my $out = $r->maketext('[_1]: Problem [_2]', $setID, $problemID);
 
 	# Return here if we don't have the requisite information.
 	return $out if ($self->{invalidSet} || $self->{invalidProblem});
