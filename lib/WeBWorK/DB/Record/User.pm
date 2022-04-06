@@ -24,7 +24,6 @@ WeBWorK::DB::Record::User - represent a record from the user table.
 
 use strict;
 use warnings;
-use Encode qw(encode);
 
 BEGIN {
 	__PACKAGE__->_fields(
@@ -63,39 +62,8 @@ sub full_name {
 	}
 }
 
-# phrase      =  1*word                       ; Sequence of words
-# word        =  atom / quoted-string
-# atom        =  1*<any CHAR except specials, SPACE and CTLs>
-# specials    =  "(" / ")" / "<" / ">" / "@"  ; Must be in quoted-
-#             /  "," / ";" / ":" / "\" / <">  ;  string, to use
-#             /  "." / "[" / "]"              ;  within a word.
-# SPACE       =  <ASCII SP, space>            ; (     40,      32.)
-# CTL         =  <any ASCII control           ; (  0- 37,  0.- 31.)
-#                 character and DEL>          ; (    177,     127.)
-# quoted-string = <"> *(qtext/quoted-pair) <">; Regular qtext or
-#                                             ;   quoted chars.
-# qtext       =  <any CHAR excepting <">,     ; => may be folded
-#                "\" & CR, and including
-#                linear-white-space>
-# CR          =  <ASCII CR, carriage return>  ; (     15,      13.)
-# quoted-pair =  "\" CHAR                     ; may quote any char
-
-# 2019 rfc822_mailbox was modified for UTF-8 support:
-#   If the full_name is set it will use the RFC 2047 "MIME-Header" encoding
-#   for the full_name, so that UTF-8 characters can be "sent" via the
-#   permitted ASCII encoding.
-# When "international emails" (RFC 6532 and RFC 6531) which allow Unicode in
-#   the address become widely accepted, and are well supported by the public
-#   SMTP mail infrastructure - a different approach will be needed, and
-#   WW will need to validate email addresses when they are set/saved to the
-#   DB based on the new standards.
-# References:
-#	https://tools.ietf.org/html/rfc822
-#	https://tools.ietf.org/html/rfc2047
-#	https://tools.ietf.org/html/rfc6531
-#	https://tools.ietf.org/html/rfc6532
-#	https://en.wikipedia.org/wiki/International_email#UTF-8_headers
-
+# Do not base64 encode the names in the address.
+# Email::Stuffer will do that if needed for a name when it sends the email.
 sub rfc822_mailbox {
 	my ($self) = @_;
 
@@ -104,9 +72,7 @@ sub rfc822_mailbox {
 
 	if (defined $address and $address ne "") {
 		if (defined $full_name and $full_name ne "") {
-			# Encode the user name using "MIME-Header" encoding,
-			# which allows UTF-8 encoded names.
-			return encode("MIME-Header", $full_name) . " <$address>";
+			return "$full_name <$address>";
 		} else {
 			return $address;
 		}
