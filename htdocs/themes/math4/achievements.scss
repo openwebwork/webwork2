@@ -38,21 +38,11 @@
 	width: 50px;
 }
 
-.unlocked {
-	color: black;
-}
-
 .locked {
-	color: #666666;
-	opacity: 0.5;
+	opacity: 0.65;
 
 	img {
 		opacity: 0.4;
-		filter: alpha(opacity=40);
-	}
-
-	h2 {
-		color: #666666;
 	}
 }
 
