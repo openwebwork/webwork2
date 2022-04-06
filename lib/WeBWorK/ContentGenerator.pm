@@ -1029,8 +1029,7 @@ sub loginstatus {
 		my $signOutIcon = CGI::i({ class=> "icon fas fa-sign-out-alt", aria_hidden => "true", data_alt => "signout" }, "");
 
 		my $user = $r->db->getUser($userID);
-		my $prettyUserName =
-			($user->first_name || $user->last_name) ? join(' ', $user->first_name, $user->last_name) : $user->user_id;
+		my $prettyUserName = $user->full_name || $user->user_id;
 
 		if ($eUserID eq $userID) {
 			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($prettyUserName))
@@ -1039,9 +1038,7 @@ sub loginstatus {
 		} else {
 			my $eUser = $r->db->getUser($eUserID);
 			my $prettyEUserName =
-				($eUser->first_name || $eUser->last_name)
-				? join(' ', $eUser->first_name, $eUser->last_name, '(' . $eUser->user_id . ')')
-				: $eUser->user_id;
+				$eUser->full_name ? join(' ', $eUser->full_name, '(' . $eUser->user_id . ')') : $eUser->user_id;
 
 			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($prettyUserName))
 				. CGI::a({ href => $logoutURL, class => "btn btn-light btn-sm ms-2" },
