@@ -709,10 +709,13 @@ sub FieldHTML {
 				)
 			);
 		} else {
+			my $value = $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue);
+			$value = format_set_name_display($value =~ s/\s*,\s*/,/gr) if $field eq 'restricted_release';
+
 			$inputType = CGI::textfield({
 				name          => "$recordType.$recordID.$field",
 				id            => "$recordType.$recordID.${field}_id",
-				value         => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
+				value         => $value,
 				data_override => "$recordType.$recordID.$field.override_id",
 				class         => 'form-control form-control-sm',
 				$forUsers && $check ? (aria_labelledby => "$recordType.$recordID.$field.label") : (),
@@ -753,6 +756,7 @@ sub FieldHTML {
 		&& defined($properties{labels}->{$globalValue})
 		? $r->maketext($properties{labels}->{$globalValue})
 		: $globalValue;
+	$gDisplVal = format_set_name_display($gDisplVal) if $field eq 'restricted_release';
 
 	my @return;
 
