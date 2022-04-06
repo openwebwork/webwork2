@@ -713,10 +713,10 @@ sub filter_handler {
 		$self->{visibleSetIDs} = \@setIDs;
 	} elsif ($scope eq "visible") {
 		$result = $r->maketext("showing sets that are visible to students");
-		$self->{visibleSetIDs} = [ $db->listGlobalSetsWhere({ visible => 1 }) ];
+		$self->{visibleSetIDs} = [ map { $_->[0] } $db->listGlobalSetsWhere({ visible => 1 }) ];
 	} elsif ($scope eq "unvisible") {
 		$result = $r->maketext("showing sets that are hidden from students");
-		$self->{visibleSetIDs} = [ $db->listGlobalSetsWhere({ visible => 0 }) ];
+		$self->{visibleSetIDs} = [ map { $_->[0] } $db->listGlobalSetsWhere({ visible => 0 }) ];
 	}
 
 	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
