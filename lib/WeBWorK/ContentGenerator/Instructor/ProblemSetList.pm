@@ -2421,6 +2421,7 @@ sub fieldEditHTML {
 	my $headerFiles = $self->{headerFiles};
 
 	if ($access eq "readonly") {
+		return CGI::span({ dir => 'ltr' }, $value) if ($type eq 'date');
 		return $value;
 	}
 

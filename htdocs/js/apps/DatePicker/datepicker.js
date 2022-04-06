@@ -44,7 +44,7 @@
 		for (const rule of groupRules) {
 			const orig_value = rule.value;
 
-			luxon.Settings.defaultLocale = rule.dataset.locale?.replaceAll(/_/g, '-') ?? 'en';
+			luxon.Settings.defaultLocale = rule.dataset.locale ?? 'en';
 
 			// Compute the time difference between the current browser timezone and the the course timezone.
 			// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.

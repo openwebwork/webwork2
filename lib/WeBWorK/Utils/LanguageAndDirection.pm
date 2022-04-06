@@ -63,8 +63,7 @@ Arabic ("ar") trigger the RTL direction setting.
 =cut
 
 sub get_lang_and_dir {
-	# en_us, fr_CA, etc., are not valid html language codes.  They should be en-us, fr-CA, etc.
-	my $lang = shift =~ s/_/-/gr;
+	my $lang = shift;
 	my $master_lang_setting = "lang=\"en-US\""; # default setting
 	my $master_dir_setting  = "";               # default is NOT set
 
@@ -113,8 +112,7 @@ In some cases, the return result is empty.
 sub get_problem_lang_and_dir {
 	my $pg_flags = shift;
 	my $requested_mode = shift;
-	# en_us, fr_CA, etc., are not valid html language codes.  They sould be en-us, fr-CA, etc.
-	my $lang = shift =~ s/_/-/gr;
+	my $lang = shift;
 
 	my %result;
 
