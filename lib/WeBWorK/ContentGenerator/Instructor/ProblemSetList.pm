@@ -868,12 +868,13 @@ sub publish_form {
 				CGI::popup_menu({
 					id      => 'publish_filter_select',
 					name    => 'action.publish.scope',
-					values  => [qw(none all selected)],
+					values  => [qw(none all visible selected)],
 					default => $actionParams{'action.publish.scope'}[0] || 'selected',
 					class   => 'form-select form-select-sm',
 					labels  => {
 						none     => $r->maketext('no sets'),
 						all      => $r->maketext('all sets'),
+						visible  => $r->maketext('listed sets'),
 						selected => $r->maketext('selected sets'),
 					}
 				})
@@ -927,6 +928,13 @@ sub publish_handler {
 			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
 				$r->maketext("All sets made visible for all students"))
 			: CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext("All sets hidden from all students"));
+	} elsif ($scope eq "visible") {
+		@setIDs = @{ $self->{visibleSetIDs} };
+		$result = $value
+			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
+				$r->maketext("All listed sets were made visible for all the students"))
+			: CGI::div({ class => 'alert alert-success p-1 mb-0' },
+				$r->maketext("All listed sets were hidden from all the students"));
 	} elsif ($scope eq "selected") {
 		@setIDs = @{ $genericParams->{selected_sets} };
 		$result = $value
