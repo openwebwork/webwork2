@@ -686,7 +686,7 @@ sub FieldHTML {
 					class       => 'form-control form-control-sm' . ($field eq 'open_date' ? ' datepicker-group' : ''),
 					placeholder => $r->maketext('None Specified'),
 					data_input  => undef,
-					data_done_text => $self->r->maketext('Done'),
+					data_done_text => $r->maketext('Done'),
 					data_locale    => $r->ce->{language},
 					data_timezone  => $r->ce->{siteDefaults}{timezone},
 					data_override  => "$recordType.$recordID.$field.override_id",
@@ -818,7 +818,8 @@ sub FieldHTML {
 				value           => $gDisplVal,
 				size            => $properties{size} || 5,
 				class           => 'form-control form-control-sm',
-				aria_labelledby => "$recordType.$recordID.$field.label"
+				aria_labelledby => "$recordType.$recordID.$field.label",
+				$field =~ /date/ ? (dir => 'ltr') : ()
 			})
 			: ''
 		) if $forUsers;

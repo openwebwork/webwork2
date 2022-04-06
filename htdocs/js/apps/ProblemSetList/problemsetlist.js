@@ -96,6 +96,9 @@
 				// bootstrap input group styling.  So move the now hidden original input after the created alternate
 				// input to fix that.
 				this.altInput.after(this.input);
+
+				// Make the alternate input left-to-right even for right-to-left languages.
+				this.altInput.dir = 'ltr';
 			},
 			parseDate(datestr, format) {
 				// Deal with the case of a unix timestamp.  The timezone needs to be adjusted back as this is for

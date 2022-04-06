@@ -82,6 +82,9 @@
 					// input to fix that.
 					this.altInput.after(this.input);
 
+					// Make the alternate input left-to-right even for right-to-left languages.
+					this.altInput.dir = 'ltr';
+
 					this.altInput.addEventListener('blur', update);
 				},
 				parseDate(datestr, format) {

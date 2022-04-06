@@ -471,10 +471,10 @@ sub DBFieldTable {
 						type           => 'text',
 						value          => $userValue,
 						data_override  => "$recordType.$recordID.$field.override_id",
-						placeholder    => x('None Specified'),
+						placeholder    => $r->maketext('None Specified'),
 						class          => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
 						data_input     => undef,
-						data_done_text => $self->r->maketext('Done'),
+						data_done_text => $r->maketext('Done'),
 						data_locale    => $ce->{language},
 						data_timezone  => $ce->{siteDefaults}{timezone}
 					}),
@@ -484,7 +484,10 @@ sub DBFieldTable {
 					)
 				)
 				: '',
-				$self->formatDateTime($globalValue, '', 'datetime_format_short', $ce->{language}),
+				CGI::span(
+					{ dir => 'ltr' },
+					$self->formatDateTime($globalValue, '', 'datetime_format_short', $ce->{language})
+				)
 			];
 	}
 
