@@ -842,7 +842,7 @@ sub edit_handler {
 		$self->{visibleSetIDs} = $self->{allSetIDs};
 	} elsif ($scope eq "visible") {
 		$result = $r->maketext("editing listed sets");
-		# leave visibleUserIDs alone
+		# leave visibleSetIDs alone
 	} elsif ($scope eq "selected") {
 		$result = $r->maketext("editing selected sets");
 		$self->{visibleSetIDs} = $genericParams->{selected_sets}; # an arrayref
