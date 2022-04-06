@@ -1040,7 +1040,7 @@ sub loginstatus {
 			my $eUser = $r->db->getUser($eUserID);
 			my $prettyEUserName =
 				($eUser->first_name || $eUser->last_name)
-				? join(' ', $eUser->first_name, $eUser->last_name)
+				? join(' ', $eUser->first_name, $eUser->last_name, '(' . $eUser->user_id . ')')
 				: $eUser->user_id;
 
 			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($prettyUserName))
