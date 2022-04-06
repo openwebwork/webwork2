@@ -1028,16 +1028,26 @@ sub loginstatus {
 
 		my $signOutIcon = CGI::i({ class=> "icon fas fa-sign-out-alt", aria_hidden => "true", data_alt => "signout" }, "");
 
+		my $user = $r->db->getUser($userID);
+		my $prettyUserName =
+			($user->first_name || $user->last_name) ? join(' ', $user->first_name, $user->last_name) : $user->user_id;
+
 		if ($eUserID eq $userID) {
-			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID))
+			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($prettyUserName))
 				. CGI::a({ href => $logoutURL, class => "btn btn-light btn-sm ms-2" },
 				$r->maketext("Log Out") . " " . $signOutIcon);
 		} else {
-			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID))
+			my $eUser = $r->db->getUser($eUserID);
+			my $prettyEUserName =
+				($eUser->first_name || $eUser->last_name)
+				? join(' ', $eUser->first_name, $eUser->last_name)
+				: $eUser->user_id;
+
+			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($prettyUserName))
 				. CGI::a({ href => $logoutURL, class => "btn btn-light btn-sm ms-2" },
 				$r->maketext("Log Out") . " " . $signOutIcon);
 			print CGI::br();
-			print $r->maketext("Acting as [_1].", HTML::Entities::encode_entities($eUserID))
+			print $r->maketext("Acting as [_1].", HTML::Entities::encode_entities($prettyEUserName))
 				. CGI::a({ href => $stopActingURL, class => "btn btn-light btn-sm ms-2" },
 				$r->maketext("Stop Acting") . " " . $signOutIcon);
 		}
