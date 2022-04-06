@@ -271,7 +271,7 @@ sub body {
 				print CGI::start_div({ class => 'modal-dialog modal-dialog-centered' });
 				print CGI::start_div({ class => 'modal-content' });
 				print CGI::start_div({ class => 'modal-header' });
-				print CGI::h5({ class => 'modal-title' }, $r->maketext($item->name()));
+				print CGI::h4({ class => 'modal-title' }, $r->maketext($item->name()));
 				print qq{<button type="button" class="btn-close" data-bs-dismiss="modal"
 					aria-label="@{[$r->maketext('close')]}"></button>};
 				print CGI::end_div();
