@@ -43,34 +43,33 @@ Sort sets by:
 	- visibility to students
 
 Switch from view mode to edit mode:
+    - showing all sets
 	- showing listed sets
 	- showing selected sets
 Switch from edit mode to view and save changes
 Switch from edit mode to view and abandon changes
 
-Make sets visible to or hidden from students:
-	- all, selected
+Make sets visible to students (publish) or hidden from students (unpublish):
+	- none, all, listed, selected
 
 Import sets:
-	- replace:
-		- any users
-		- visible users
-		- selected users
-		- no users
-	- add:
-		- any users
-		- no users
+	- single or multiple
+    - with set name (only for single)
+	- assign to:
+        - only the current user
+		- all users
+
+Export sets:
+    - all, listed, selected
 
 Score sets:
-	- all
-	- visible
-	- selected
+	- none, all, selected
 
 Create a set with a given name
+    - as new empty set or as duplicate of first selected
 
 Delete sets:
-	- visible
-	- selected
+	- none, selected
 
 =cut
 
