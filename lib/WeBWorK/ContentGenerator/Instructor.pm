@@ -662,40 +662,56 @@ sub getCSVList {
 	return grep { not m/^\./ and m/\.lst$/ and -f "$dir/$_" } WeBWorK::Utils::readDirectory($dir);
 }
 
+sub loadSetDefListFile {
+	my $file = shift;
+
+	if (-r $file) {
+		my $data = do {
+			open(my $fh, "<:encoding(UTF-8)", $file)
+				or die "FATAL: Unable to open '$file'!";
+			local $/;
+			<$fh>;
+		};
+
+		return @{ JSON->new->decode($data) };
+	}
+}
+
 sub getDefList {
-    my ($self) = @_;
-    my $ce = $self->{ce};
-    my $topdir = $ce->{courseDirs}->{templates};
-    my @b = $topdir =~ /\//g; #count slashes to gauge depth
-    my $base_depth = @b;
-    my $max_depth = $ce->{options}->{setDefSearchDepth}+$base_depth;
-    my $searchOPL = $ce->{options}->{useOPLdefFiles};
-    my @found_set_defs;
-    # get_set_defs_wanted is a closure over @found_set_defs
-    my $get_set_defs_wanted = sub {
-        return if ($File::Find::dir =~ /$topdir\/Library/) and not $searchOPL;
-        my @d = $File::Find::dir =~ /\//g; #count slashes to gauge depth
-        my $depth = @d;
-        $depth-- if $_ eq $topdir;
-        $File::Find::prune = 1 if $depth >= $max_depth;
-        push @found_set_defs, $_ if m|/set[^/]*\.def$|;
-    };
-    find({ wanted => $get_set_defs_wanted, follow_fast=>1, no_chdir=>1}, $topdir);
-    map { $_ =~ s|^$topdir/?|| } @found_set_defs;
-    my @slashes = ();
-    my @caps = ();
-    for (@found_set_defs) {
-        my @s = $_ =~ /\//g;
-        my $slashcount = @s;
-        push @slashes, ( $slashcount );
-        push @caps, uc($_);
-    }
-    return @found_set_defs[ sort {
-        $slashes[$a] <=> $slashes[$b]
-        ||
-        $caps[$a] cmp $caps[$b]
-    } 0..$#found_set_defs
-    ];
+	my $self   = shift;
+	my $ce     = $self->{ce};
+	my $topdir = $ce->{courseDirs}{templates};
+
+	# Search to a depth of the setDefSearchDepth value plus the depth of the templates directory.
+	my $max_depth = $ce->{options}{setDefSearchDepth} + @{ [ $topdir =~ /\//g ] };
+
+	my @found_set_defs;
+
+	# get_set_defs_wanted is a closure over @found_set_defs
+	my $get_set_defs_wanted = sub {
+		$File::Find::prune = 1, return
+			if $File::Find::dir =~ /^$topdir\/Library/ || $File::Find::dir =~ /^$topdir\/Contrib/;
+		$File::Find::prune = 1, return if @{ [ $File::Find::dir =~ /\//g ] } > $max_depth;
+		push @found_set_defs, $_ =~ s|^$topdir/?||r if m|/set[^/]*\.def$|;
+	};
+
+	find({ wanted => $get_set_defs_wanted, follow_fast => 1, no_chdir => 1 }, $topdir);
+
+	# Load the OPL set definition files from the list file.
+	push(@found_set_defs, loadSetDefListFile("$ce->{webworkDirs}{htdocs}/DATA/library-set-defs.json"))
+		if ($ce->{options}{useOPLdefFiles});
+
+	# Load the Contrib set definition files from the list file.
+	push(@found_set_defs, loadSetDefListFile("$ce->{webworkDirs}{htdocs}/DATA/contrib-set-defs.json"))
+		if ($ce->{options}{useContribDefFiles});
+
+	my @depths;
+	my @caps;
+	for (@found_set_defs) {
+		push @depths, scalar(@{ [ $_ =~ /\//g ] });
+		push @caps,   uc($_);
+	}
+	return @found_set_defs[ sort { $depths[$a] <=> $depths[$b] || $caps[$a] cmp $caps[$b] } 0 .. $#found_set_defs ];
 }
 
 sub getScoringFileList {
