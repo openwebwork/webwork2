@@ -1,7 +1,7 @@
 [main]
 host = https://www.transifex.com
 
-[o:webwork:p:webwork2:r:webwork2pot]
+[o:webwork:p:webwork2:r:lib-webwork-localize-webwork2-pot--develop]
 file_filter  = lib/WeBWorK/Localize/<lang>.po
 source_file  = lib/WeBWorK/Localize/webwork2.pot
 source_lang  = en
