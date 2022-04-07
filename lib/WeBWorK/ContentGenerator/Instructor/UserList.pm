@@ -470,12 +470,29 @@ sub body {
 	########## print site identifying information
 
 	print CGI::input({
-		type  => "button",
-		id    => "show_hide",
-		value => $r->maketext("Show/Hide Site Description"),
-		class => "btn btn-info mb-2"
+		type  => 'button',
+		id    => 'show_hide',
+		value => $r->maketext('Show/Hide Site Description'),
+		class => 'btn btn-info mb-2'
 	});
-	print CGI::p({-id=>"site_description", -style=>"display:none"}, CGI::em($r->maketext("_CLASSLIST_EDITOR_DESCRIPTION")));
+	print CGI::p(
+		{ id => 'site_description', style => 'display:none' },
+		CGI::em($r->maketext(
+			'This is the classlist editor page, where you can view and edit the records of all the students currently '
+				. 'enrolled in this course.  The top of the page contains forms which allow you to filter which '
+				. 'students to view, sort your students in a chosen order, edit student records, give new passwords to '
+				. 'students, import/export student records from/to external files, or add/delete students.  To use, '
+				. 'please select the action you would like to perform, enter in the relevant information in the fields '
+				. 'below, and hit the "Take Action!" button at the bottom of the form.  The bottom of the page '
+				. 'contains a table containing the student usernames and their information. Clicking on the links in '
+				. 'the column headers of the table will sort the table by the field it corresponds to. The Login Name '
+				. 'fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow '
+				. 'you to act as the selected user.  There is also an edit link following the name which will take you '
+				. 'to a page where you can edit the selected user\'s information.  Clicking the emails will allow you '
+				. 'to email the corresponding user.  Clicking the links in the entries in the assigned sets columns '
+				. 'will take you to a page where you can view and reassign the sets for the selected user. '
+		))
+	);
 
 	########## print beginning of form
 
@@ -1642,7 +1659,6 @@ sub fieldEditHTML {
 	my $size                 = $properties->{size};
 	my $type                 = $properties->{type};
 	my $access               = $properties->{access};
-	my $items                = $properties->{items};
 
 	if ($type eq "email") {
 		if ($value eq '&nbsp;') {
@@ -1665,12 +1681,13 @@ sub fieldEditHTML {
 
 	if ($type eq "number" or $type eq "text") {
 		return CGI::input({
-			type  => "text",
-			id    => $fieldName . "_id",
-			name  => $fieldName,
-			value => $value,
-			size  => $size,
-			class => 'form-control form-control-sm d-inline w-auto'
+			type            => "text",
+			id              => $fieldName . "_id",
+			name            => $fieldName,
+			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+			value           => $value,
+			size            => $size,
+			class           => 'form-control form-control-sm d-inline w-auto'
 		});
 	}
 
@@ -1692,12 +1709,13 @@ sub fieldEditHTML {
 		}
 
 		return CGI::popup_menu({
-			id      => $fieldName . "_id",
-			name    => $fieldName,
-			values  => \@values,
-			default => $value,
-			labels  => \%labels,
-			class   => 'form-select form-select-sm w-auto flex-grow-0'
+			id              => $fieldName . "_id",
+			name            => $fieldName,
+			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+			values          => \@values,
+			default         => $value,
+			labels          => \%labels,
+			class           => 'form-select form-select-sm w-auto flex-grow-0'
 		});
 	}
 
@@ -1713,12 +1731,13 @@ sub fieldEditHTML {
 		}
 
 		return CGI::popup_menu({
-			id      => $fieldName . "_id",
-			name    => $fieldName,
-			values  => \@values,
-			default => $default // 0,
-			labels  => \%labels,
-			class   => 'form-select form-select-sm w-auto flex-grow-0'
+			id              => $fieldName . "_id",
+			name            => $fieldName,
+			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+			values          => \@values,
+			default         => $default // 0,
+			labels          => \%labels,
+			class           => 'form-select form-select-sm w-auto flex-grow-0'
 		});
 	}
 }
@@ -1815,10 +1834,11 @@ sub recordEditHTML {
 			my $fieldName = 'user.' . $User->user_id . '.' . 'new_password';
 			push @tableCells,
 				CGI::textfield({
-					id    => "password_edit",
-					name  => $fieldName,
-					size  => 14,
-					class => 'form-control form-control-sm d-inline w-auto'
+					id              => "${fieldName}_id",
+					name            => $fieldName,
+					aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+					size            => 14,
+					class           => 'form-control form-control-sm d-inline w-auto'
 				});
 		}
 	}
@@ -1907,16 +1927,9 @@ sub printTableHTML {
 	);
 
 	my @tableHeadings;
-	foreach my $field (@realFieldNames) {
-		my %properties = %{ FIELD_PROPERTIES()->{$field} };
-		next if $properties{access} eq 'hidden';
-		my $result = $fieldNames{$field};
-		push @tableHeadings, $result;
-	};
 
-	# prepend selection checkbox? only if we're NOT editing!
-	unless($editMode or $passwordMode) {
-		my %current_state = ();
+	unless ($editMode || $passwordMode) {
+		my %current_state;
 		if (@visableUserIDs) {
 			# This is a hack to get around: Maximum URL Length Is 2,083 Characters in Internet Explorer.
 			# Without passing visable users the URL is about 250 characters. If the total URL is under the limit
@@ -1945,53 +1958,124 @@ sub printTableHTML {
 			);
 		}
 
-		my $selectBox = CGI::input({
-			type              => 'checkbox',
-			id                => 'select-all',
-			data_select_group => 'selected_users',
-			class             => 'form-check-input',
-		});
-		@tableHeadings = (
-			$editMode or $passwordMode ? '' : $selectBox,
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'user_id', %current_state})}, $r->maketext('Login Name')),
-			$r->maketext("Login Status"),
-			$r->maketext("Assigned Sets"),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'first_name', %current_state})}, $r->maketext('First Name')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'last_name', %current_state})}, $r->maketext('Last Name')),
-			$r->maketext('Email Link'),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'student_id', %current_state})}, $r->maketext('Student ID')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'status', %current_state})}, $r->maketext('Status')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'section', %current_state})}, $r->maketext('Section')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'recitation', %current_state})}, $r->maketext('Recitation')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'comment', %current_state})}, $r->maketext('Comment')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'permission', %current_state})}, $r->maketext('Permission Level')),
-		)
-	}
-	if ($passwordMode) {
-		unshift @tableHeadings, $r->maketext("New Password");
+		push(
+			@tableHeadings,
+			CGI::th(CGI::input({
+				type              => 'checkbox',
+				id                => 'select-all',
+				aria_label        => $r->maketext('Select all users'),
+				data_select_group => 'selected_users',
+				class             => 'form-check-input',
+			})),
+			CGI::th(CGI::label(
+				{ for => 'select-all' },
+				CGI::a(
+					{
+						href => $self->systemLink(
+							$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+							params => { labelSortMethod => 'user_id', %current_state }
+						)
+					},
+					$r->maketext('Login Name')
+				)
+			)),
+			CGI::th($r->maketext("Login Status")),
+			CGI::th($r->maketext("Assigned Sets")),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'first_name', %current_state }
+					)
+				},
+				$r->maketext('First Name')
+			)),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'last_name', %current_state }
+					)
+				},
+				$r->maketext('Last Name')
+			)),
+			CGI::th($r->maketext('Email Link')),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'student_id', %current_state }
+					)
+				},
+				$r->maketext('Student ID')
+			)),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'status', %current_state }
+					)
+				},
+				$r->maketext('Status')
+			)),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'section', %current_state }
+					)
+				},
+				$r->maketext('Section')
+			)),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'recitation', %current_state }
+					)
+				},
+				$r->maketext('Recitation')
+			)),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'comment', %current_state }
+					)
+				},
+				$r->maketext('Comment')
+			)),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'permission', %current_state }
+					)
+				},
+				$r->maketext('Permission Level')
+			)),
+		);
+	} else {
+		for my $field (@realFieldNames) {
+			my %properties = %{ FIELD_PROPERTIES()->{$field} };
+			next if $properties{access} eq 'hidden';
+			push @tableHeadings, CGI::th({ id => "${field}_header"}, $fieldNames{$field});
+		}
 	}
 
-	# print the table
-	# _USER_TABLE_SUMMARY is as follows:
-	# A table showing all the current users along with several fields of user information. The fields from left to right
-	# are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status,
-	# Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the
-	# table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking
-	# the link of the name itself will allow you to act as the selected user.  There will also be an image link
-	# following the name which will take you to a page where you can edit the selected user's information.  Clicking the
-	# emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets
-	# columns will take you to a page where you can view and reassign the sets for the selected user.
+	unshift(@tableHeadings, CGI::th({ id => "new_password_header"}, $r->maketext("New Password"))) if ($passwordMode);
+
+	# Print the table.
 	print CGI::start_div({ class => 'table-responsive' });
 	print CGI::start_table({
 		id    => "classlist-table",
 		class => "table table-sm table-bordered caption-top font-sm"
-			. ($editMode || $passwordMode ? ' align-middle' : ''),
-		summary => $r->maketext("_USER_TABLE_SUMMARY")
+			. ($editMode || $passwordMode ? ' align-middle' : '')
 	});
 
 	print CGI::caption($r->maketext("Users List"));
 
-	print CGI::thead(CGI::Tr({}, CGI::th({}, \@tableHeadings)));
+	print CGI::thead(CGI::Tr(@tableHeadings));
 
 	print CGI::start_tbody();
 

@@ -978,6 +978,7 @@ sub siblings {
 		my $progress_bar = CGI::start_div({
 			class      => 'progress set-id-tooltip',
 			aria_label => 'progress bar for current problem set',
+			role       => 'figure'
 		});
 		if ($total_correct > 0) {
 			$progress_bar .= CGI::div(
@@ -985,6 +986,7 @@ sub siblings {
 					class             => 'progress-bar correct-progress set-id-tooltip',
 					style             => "width:$progress_bar_correct_width%",
 					aria_label        => 'correct progress bar for current problem set',
+					role              => 'figure',
 					data_bs_toggle    => 'tooltip',
 					data_bs_placement => 'bottom',
 					data_bs_title     => $r->maketext('Correct: [_1]/[_2]', $total_correct, $num_of_problems)
@@ -999,6 +1001,7 @@ sub siblings {
 					class             => 'progress-bar inprogress-progress set-id-tooltip',
 					style             => "width:$progress_bar_inprogress_width%",
 					aria_label        => 'in progress bar for current problem set',
+					role              => 'figure',
 					data_bs_toggle    => 'tooltip',
 					data_bs_placement => 'bottom',
 					data_bs_title     => $r->maketext('In progress: [_1]/[_2]', $total_inprogress, $num_of_problems)
@@ -1012,6 +1015,7 @@ sub siblings {
 					class             => 'progress-bar incorrect-progress set-id-tooltip',
 					style             => "width:$progress_bar_incorrect_width%",
 					aria_label        => 'incorrect progress bar for current problem set',
+					role              => 'figure',
 					data_bs_toggle    => 'tooltip',
 					data_bs_placement => 'bottom',
 					data_bs_title     => $r->maketext('Incorrect: [_1]/[_2]', $total_incorrect, $num_of_problems)
@@ -1025,6 +1029,7 @@ sub siblings {
 					class             => 'progress-bar unattempted-progress set-id-tooltip',
 					style             => "width:$progress_bar_unattempted_width%",
 					aria_label        => 'unattempted progress bar for current problem set',
+					role              => 'figure',
 					data_bs_toggle    => 'tooltip',
 					data_bs_placement => 'bottom',
 					data_bs_title     => $r->maketext('Unattempted: [_1]/[_2]', $unattempted, $num_of_problems)

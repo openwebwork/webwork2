@@ -238,12 +238,12 @@ sub index {
 		{ class => 'row g-0' },
 		CGI::div(
 			{ class => 'col-lg-5 col-sm-6 border border-dark' },
-			CGI::h3({ class => 'text-center' }, $r->maketext('View student progress by set')),
+			CGI::h2({ class => 'text-center fs-3' }, $r->maketext('View student progress by set')),
 			CGI::ul(CGI::li([@setLinks]))
 		),
 		CGI::div(
 			{ class => 'col-lg-5 col-sm-6 border border-dark' },
-			CGI::h3({ class => 'text-center' }, $r->maketext('View student progress by student')),
+			CGI::h2({ class => 'text-center fs-3' }, $r->maketext('View student progress by student')),
 			CGI::ul(CGI::li([@studentLinks]))
 		)
 	);

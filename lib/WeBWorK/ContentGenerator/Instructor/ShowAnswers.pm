@@ -384,7 +384,11 @@ sub body {
 		});
 		print CGI::p(
 			{ id => 'site_description', style => 'display:none' },
-			CGI::em($r->maketext('_ANSWER_LOG_DESCRIPTION'))
+			CGI::em($r->maketext(
+				'This is the past answer viewer.  Students can only see their answers, and they will not be able to '
+				. 'see which parts are correct.  Instructors can view any users answers using the form below and the '
+				. 'answers will be colored according to correctness.'
+			))
 		);
 
 		print CGI::hr();

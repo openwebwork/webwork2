@@ -779,13 +779,7 @@ sub body {
 		if (@problemNumbers) {
 			# This table contains a summary, a caption, and scope variables for the columns.
 			print CGI::start_div({ class => 'table-responsive' });
-			print CGI::start_table({
-					class => "problem_set_table table caption-top font-sm",
-					summary => $r->maketext("This table shows the problems that are in this problem set.  " .
-						"The columns from left to right are: name of the problem, current number of attempts made, " .
-						"number of attempts remaining, the point worth, and the completion status.  Click on the " .
-						"link on the name of the problem to take you to the problem page.")
-				});
+			print CGI::start_table({ class => "problem_set_table table caption-top font-sm" });
 			print CGI::caption($r->maketext("Problems"));
 
 			my $thRow = [ CGI::th($r->maketext("Name")),

@@ -26,7 +26,6 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::HTML::ComboBox qw/comboBox/;
 use WeBWorK::Utils qw(after readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq
 	seq_to_jitar_id x getAssetURL format_set_name_internal format_set_name_display);
 use WeBWorK::Utils::Tasks qw(renderProblems);
@@ -485,10 +484,11 @@ sub FieldTable {
 
 	my $output = CGI::start_table({ class => 'table table-sm table-borderless align-middle font-sm w-auto mb-0' });
 	if ($forUsers) {
+		my $id_prefix = defined $problemID ? "problem.$problemID" : "set.$setID";
 		$output .= CGI::Tr(
-			CGI::th({ colspan => '3' }, ''),
-			CGI::th($r->maketext('User Values')),
-			CGI::th($r->maketext('Class values')),
+			CGI::td({ colspan => '3' }, ''),
+			CGI::th($r->maketext('User Value')),
+			CGI::th($r->maketext('Class value')),
 		);
 	}
 	for my $field (@fieldOrder) {
@@ -546,8 +546,8 @@ sub FieldTable {
 		next if ($field eq 'prPeriod' && !$ce->{pg}{options}{enablePeriodicRandomization});
 
 		unless ($properties{type} eq 'hidden') {
-			$output .=
-				CGI::Tr(CGI::td([ $self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field) ]));
+			my @row = $self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field);
+			$output .= CGI::Tr(CGI::td([ @row ])) if @row > 1;
 		}
 
 		# Finally, put in extra fields that are exceptions to the usual display mechanism.
@@ -556,20 +556,22 @@ sub FieldTable {
 		$output .= "$procFields\n$extraFields\n" if ($field eq 'assignment_type');
 	}
 
-	if (defined $problemID) {
-		my $problemRecord = $userRecord;    # We get this from the caller, hopefully
+	if (defined $problemID && $forOneUser) {
+		my $problemRecord = $userRecord;
 		$output .= CGI::Tr(CGI::td([
 			'',
-			$r->maketext('Attempts'),
+			CGI::label({ for => "problem.$problemID.attempts.id" }, $r->maketext('Attempts')),
 			'',
 			CGI::textfield({
 				readonly => undef,
+				name     => "problem.$problemID.attempts",
+				id       => "problem.$problemID.attempts.id",
 				value    => ($problemRecord->num_correct || 0) + ($problemRecord->num_incorrect || 0),
 				size     => 5,
 				class    => 'form-control form-control-sm'
-			})
-		]))
-			if $forOneUser;
+			}),
+			''    # This empty last column is required for valid html
+		]));
 	}
 	$output .= CGI::end_table();
 
@@ -679,52 +681,44 @@ sub FieldHTML {
 	# $inputType contains either an input box or a popup_menu for changing a given db field
 	my $inputType = '';
 
-	my $onChange   = '';
-	my $onKeyUp    = '';
-	my $uncheckBox = '';
-
-	# if we are creating override feilds we should add the js to automatically check the
-	# override box.
-	if ($forUsers && $check) {
-		$onChange   = qq{\$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked', this.value != '')};
-		$onKeyUp    = qq{\$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked', this.value != '')};
-		$uncheckBox = 'if (this.value == "")'
-			. qq{\$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked',false);};
-	}
-
 	if ($edit) {
 		if ($field =~ /_date/) {
 			$inputType = CGI::div(
 				{ class => 'input-group input-group-sm flatpickr' },
 				CGI::textfield({
-					name     => "$recordType.$recordID.$field",
-					id       => "$recordType.$recordID.${field}_id",
-					value    => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
-					size     => $properties{size}                         || 5,
-					onChange => $onChange,
-					onkeyup  => $onKeyUp,
-					onblur   => $uncheckBox,
-					class    => 'form-control form-control-sm' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+					name  => "$recordType.$recordID.$field",
+					id    => "$recordType.$recordID.${field}_id",
+					value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
+					data_override => "$recordType.$recordID.$field.override_id",
+					class => 'form-control form-control-sm' . ($field eq 'open_date' ? ' datepicker-group' : ''),
 					data_enable_datepicker => $r->ce->{options}{useDateTimePicker},
 					placeholder            => x('None Specified'),
 					data_input             => undef,
-					data_done_text         => $self->r->maketext('Done')
+					data_done_text         => $r->maketext('Done'),
+					$forUsers && $check ? (aria_labelledby => "$recordType.$recordID.$field.label") : (),
 				}),
 				CGI::a(
-					{ class => 'btn btn-secondary btn-sm', data_toggle => undef },
-					CGI::i({ class => 'fas fa-calendar-alt' }, '')
+					{
+						class       => 'btn btn-secondary btn-sm',
+						data_toggle => undef,
+						role        => 'button',
+						tabindex    => 0,
+						aria_label  => $r->maketext('Pick date and time')
+					},
+					CGI::i({ class => 'fas fa-calendar-alt', aria_hidden => 'true' }, '')
 				)
 			);
 		} else {
+			my $value = $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue);
+			$value = format_set_name_display($value =~ s/\s*,\s*/,/gr) if $field eq 'restricted_release';
+
 			$inputType = CGI::textfield({
-				name     => "$recordType.$recordID.$field",
-				id       => "$recordType.$recordID.${field}_id",
-				value    => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
-				size     => $properties{size}                         || 5,
-				onChange => $onChange,
-				onkeyup  => $onKeyUp,
-				onblur   => $uncheckBox,
-				class    => 'form-control form-control-sm'
+				name          => "$recordType.$recordID.$field",
+				id            => "$recordType.$recordID.${field}_id",
+				value         => $value,
+				data_override => "$recordType.$recordID.$field.override_id",
+				class         => 'form-control form-control-sm',
+				$forUsers && $check ? (aria_labelledby => "$recordType.$recordID.$field.label") : (),
 			});
 		}
 	} elsif ($choose) {
@@ -747,13 +741,14 @@ sub FieldHTML {
 		}
 
 		$inputType = CGI::popup_menu({
-			name     => "$recordType.$recordID.$field",
-			id       => "$recordType.$recordID.${field}_id",
-			values   => $properties{choices},
-			labels   => \%labels,
-			default  => $value,
-			onChange => $onChange,
-			class    => 'form-select form-select-sm'
+			name          => "$recordType.$recordID.$field",
+			id            => "$recordType.$recordID.${field}_id",
+			values        => $properties{choices},
+			labels        => \%labels,
+			default       => $value,
+			data_override => "$recordType.$recordID.$field.override_id",
+			class         => 'form-select form-select-sm',
+			$forUsers && $check ? (aria_labelledby => "$recordType.$recordID.$field.label") : (),
 		});
 	}
 
@@ -761,28 +756,38 @@ sub FieldHTML {
 		&& defined($properties{labels}->{$globalValue})
 		? $r->maketext($properties{labels}->{$globalValue})
 		: $globalValue;
+	$gDisplVal = format_set_name_display($gDisplVal) if $field eq 'restricted_release';
 
 	my @return;
 
 	push @return,
-		$check
-		? CGI::input({
-			type  => 'checkbox',
-			name  => "$recordType.$recordID.$field.override",
-			id    => "$recordType.$recordID.$field.override_id",
-			value => $field,
-			$r->param("$recordType.$recordID.$field.override")
-				|| ($userValue ne ($labels{''} // '') || $blankfield) ? (checked => 1) : (),
-			class => 'form-check-input'
-		})
-		: ''
-		if $forUsers;
+		(
+			$check
+			? CGI::input({
+				type  => 'checkbox',
+				name  => "$recordType.$recordID.$field.override",
+				id    => "$recordType.$recordID.$field.override_id",
+				value => $field,
+				$r->param("$recordType.$recordID.$field.override")
+				|| ($userValue ne ($labels{''} // '') || $blankfield) ? (checked => undef) : (),
+				class => 'form-check-input'
+			})
+			: ''
+		) if $forUsers;
 
-	push @return,
+	push @return, CGI::label(
 		$forUsers && $check
-		? CGI::label({ for => "$recordType.$recordID.$field.override_id", class => 'form-check-label' },
-		$r->maketext($properties{name}))
-		: $r->maketext($properties{name});
+		? {
+			for   => "$recordType.$recordID.$field.override_id",
+			id    => "$recordType.$recordID.$field.label",
+			class => 'form-check-label'
+			}
+		: {
+			for   => "$recordType.$recordID.${field}_id",
+			class => 'form-label'
+		},
+		$r->maketext($properties{name})
+	);
 
 	push @return,
 		$properties{help_text}
@@ -791,9 +796,18 @@ sub FieldHTML {
 				class             => 'help-popup',
 				data_bs_content   => $r->maketext($properties{help_text}),
 				data_bs_placement => 'top',
-				data_bs_toggle    => 'popover'
+				data_bs_toggle    => 'popover',
+				role              => 'button',
+				tabindex          => 0
 			},
-			CGI::i({ class => 'icon fas fa-question-circle', data_alt => 'Help Icon' }, '')
+			CGI::i(
+				{
+					class       => 'icon fas fa-question-circle',
+					data_alt    => $r->maketext('Help Icon'),
+					aria_hidden => 'true'
+				},
+				''
+			)
 		)
 		: '';
 
@@ -803,10 +817,12 @@ sub FieldHTML {
 		(
 			$gDisplVal ne ''
 			? CGI::textfield({
-				readonly => undef,
-				value    => $gDisplVal,
-				size     => $properties{size} || 5,
-				class    => 'form-control form-control-sm'
+				name            => "$recordType.$recordID.$field.class_value",
+				readonly        => undef,
+				value           => $gDisplVal,
+				size            => $properties{size} || 5,
+				class           => 'form-control form-control-sm',
+				aria_labelledby => "$recordType.$recordID.$field.label"
 			})
 			: ''
 		) if $forUsers;
@@ -890,15 +906,29 @@ sub extraSetFields {
 			}
 
 			my @tds = (
-				$r->maketext('Restrict Locations'),
+				CGI::label(
+					$forUsers
+					? {
+						for   => "set.$setID.selected_ip_locations.override_id",
+						id    => "set.$setID.selected_ip_locations.label",
+						class => 'form-check-label'
+						}
+					: {
+						for   => "set.$setID.selected_ip_locations_id",
+						class => 'form-label'
+					},
+					$r->maketext('Restrict Locations')
+				),
 				'',
 				CGI::scrolling_list({
 					name     => "set.$setID.selected_ip_locations",
+					id       => "set.$setID.selected_ip_locations_id",
 					values   => [@locations],
 					default  => [@defaultLocations],
 					size     => 5,
 					multiple => 'true',
-					class    => 'form-select form-select-sm'
+					class    => 'form-select form-select-sm',
+					$forUsers ? (aria_labelledby => "set.$setID.selected_ip_locations.label") : ()
 				})
 			);
 			if ($forUsers) {
@@ -906,27 +936,28 @@ sub extraSetFields {
 					@tds,
 					CGI::div(
 						{ class => 'form-check' },
-						CGI::checkbox({
-							type            => "checkbox",
-							name            => "set.$setID.selected_ip_locations.override",
-							label           => "",
-							checked         => $ipOverride,
-							class           => 'form-check-input',
-							labelattributes => { class => 'form-check-label' }
+						CGI::input({
+							type  => 'checkbox',
+							name  => "set.$setID.selected_ip_locations.override",
+							id    => "set.$setID.selected_ip_locations.override_id",
+							class => 'form-check-input',
+							$ipOverride ? (checked => undef) : ()
 						})
 					)
 				);
 				push(
 					@tds,
 					CGI::textarea({
-						readonly => undef,
-						value    => join("\n", @globalLocations),
-						rows     => 4,
-						class    => 'form-control form-control-sm'
+						name            => "set.$setID.selected_ip_locations.class_value",
+						readonly        => undef,
+						value           => join("\n", @globalLocations),
+						rows            => 4,
+						class           => 'form-control form-control-sm',
+						aria_labelledby => "set.$setID.selected_ip_locations.label"
 					})
 				);
 			}
-			$ipFields .= CGI::Tr({ valign => 'top' }, CGI::td([@tds]));
+			$ipFields .= CGI::Tr({ class => 'align-top' }, CGI::td([@tds]));
 		}
 	}
 	return ($extraFields, $ipFields, $numLocations, $procFields);
@@ -959,9 +990,18 @@ sub proctoredFieldHTML {
 						. "Provide a password to have a single password for all students to start a proctored test."
 				),
 				data_bs_placement => 'top',
-				data_bs_toggle    => 'popover'
+				data_bs_toggle    => 'popover',
+				role              => 'button',
+				tabindex          => 0
 			},
-			CGI::i({ class => 'icon fas fa-question-circle', aria_hidden => 'true', data_alt => 'Help Icon' }, '')
+			CGI::i(
+				{
+					class       => 'icon fas fa-question-circle',
+					aria_hidden => 'true',
+					data_alt    => $r->maketext('Help Icon')
+				},
+				''
+			)
 		),
 		CGI::input({
 			name  => "set.$setID.restricted_login_proctor_password",
@@ -2213,8 +2253,6 @@ sub body {
 		);
 	}
 
-	print CGI::a({ id => 'problems' }, '');
-
 	my %properties = %{ FIELD_PROPERTIES() };
 
 	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
@@ -2294,35 +2332,36 @@ sub body {
 		)
 	);
 
-	####################################################################
 	# Display Field for putting in a set description
-	####################################################################
 	print CGI::div(
 		{ class => 'mb-2' },
-		CGI::h4($r->maketext("Set Description")),
 		$forOneUser
 		? (
+			CGI::h2({ class => 'fw-bold fs-4' }, $r->maketext('Set Description')),
 			CGI::hidden({
-				type  => 'text',
 				name  => "set.$setID.description",
 				id    => "set.$setID.description",
 				value => $setRecord->description(),
 			}),
-			$setRecord->description ? $setRecord->description : $r->maketext("No Description")
+			$setRecord->description ? $setRecord->description : $r->maketext('No Description')
 			)
-		: CGI::textarea({
-			name  => "set.$setID.description",
-			id    => "set.$setID.description",
-			value => $setRecord->description(),
-			rows  => 5,
-			cols  => 62,
-			class => 'form-control'
-		})
+		: (
+			CGI::label(
+				{ for => "set.$setID.description", class => 'form-label fw-bold fs-4' },
+				$r->maketext('Set Description')
+			),
+			CGI::textarea({
+				name  => "set.$setID.description",
+				id    => "set.$setID.description",
+				value => $setRecord->description(),
+				rows  => 5,
+				cols  => 62,
+				class => 'form-control'
+			})
+		)
 	);
 
-	#####################################################################
 	# Display header information
-	#####################################################################
 	my @headers = @{ HEADER_ORDER() };
 	my %headerModules = (set_header => 'problem_list', hardcopy_header => 'hardcopy_preselect_set');
 	my %headerDefaults = (set_header => $ce->{webworkFiles}->{screenSnippets}->{setHeader}, hardcopy_header => $ce->{webworkFiles}->{hardcopySnippets}->{setHeader});
@@ -2372,7 +2411,10 @@ sub body {
 					CGI::div(
 						{ class => 'col-4' },
 						CGI::table(
-							CGI::Tr(CGI::td($r->maketext($properties{$headerType}->{name}))),
+							CGI::Tr(CGI::td(CGI::label(
+								{ for => "set.$setID.$headerType", class => 'form-label' },
+								$r->maketext($properties{$headerType}->{name})
+							))),
 							CGI::Tr(CGI::td(
 								CGI::a(
 									{
@@ -2403,15 +2445,30 @@ sub body {
 					),
 					CGI::div(
 						{ class => 'col-8' },
-						comboBox({
-							name    => "set.$setID.$headerType",
-							default => $r->param("set.$setID.$headerType")
-								|| $setRecord->{$headerType}
-								|| 'defaultHeader',
-							multiple => 0,
-							values   => [ 'defaultHeader', @headerFileList ],
-							labels   => { 'defaultHeader' => $r->maketext('Use Default Header File') },
-						})
+						CGI::div(
+							{ class => "combo-box" },
+							CGI::div(
+								CGI::textfield({
+									name  => "set.$setID.$headerType",
+									id    => "set.$setID.$headerType",
+									value => $r->param("set.$setID.$headerType")
+										|| $setRecord->{$headerType}
+										|| 'defaultHeader',
+									#size  => $width,
+									class => 'combo-box-text form-control mb-1'
+								}),
+								CGI::popup_menu({
+									name    => "set.$setID.$headerType",
+									values  => [ 'defaultHeader', @headerFileList ],
+									labels  => { 'defaultHeader' => $r->maketext('Use Default Header File') },
+									default => $r->param("set.$setID.$headerType")
+										|| $setRecord->{$headerType}
+										|| 'defaultHeader',
+									class           => 'combo-box-select form-select',
+									aria_labelledby => "set.$setID.$headerType"
+								})
+							)
+						)
 					)
 				)
 			);
@@ -2462,40 +2519,44 @@ sub body {
 			CGI::div(
 				{ class => 'btn-group w-auto me-3 py-1' },
 				$forOneUser ? '' : CGI::a(
-					{ id => 'psd_renumber', class => 'btn btn-secondary' },
+					{ id => 'psd_renumber', class => 'btn btn-secondary', role => 'button', tabindex => 0 },
 					$r->maketext('Renumber Problems')
 				),
 				CGI::a(
-					{ id => 'psd_render_all', class => 'btn btn-secondary' },
+					{ id => 'psd_render_all', class => 'btn btn-secondary', role => 'button', tabindex => 0 },
 					$r->maketext('Render All')
 				),
-				CGI::a({ id => 'psd_hide_all', class => 'btn btn-secondary' }, $r->maketext('Hide All'))
+				CGI::a({ id => 'psd_hide_all', class => 'btn btn-secondary', role => 'button', tabindex => 0 },
+					$r->maketext('Hide All'))
 			),
 			$forUsers ? '' : CGI::div(
 				{ class => 'btn-group w-auto me-3 py-1' },
 				CGI::a(
-					{ id => 'psd_expand_details', class => 'btn btn-secondary' },
+					{ id => 'psd_expand_details', class => 'btn btn-secondary', role => 'button', tabindex => 0 },
 					$r->maketext('Expand All Details')
 				),
 				CGI::a(
-					{ id => 'psd_collapse_details', class => 'btn btn-secondary' },
+					{ id => 'psd_collapse_details', class => 'btn btn-secondary', role => 'button', tabindex => 0 },
 					$r->maketext('Collapse All Details')
 				)
 			),
 			$isJitarSet ? CGI::div(
 				{ class => 'btn-group w-auto me-3 py-1' },
 				CGI::a(
-					{ id => 'psd_expand_all', class => 'btn btn-secondary' },
+					{ id => 'psd_expand_all', class => 'btn btn-secondary', role => 'button', tabindex => 0 },
 					$r->maketext('Expand All Nesting')
 				),
 				CGI::a(
-					{ id => 'psd_collapse_all', class => 'btn btn-secondary' },
+					{ id => 'psd_collapse_all', class => 'btn btn-secondary', role => 'button', tabindex => 0 },
 					$r->maketext('Collapse All Nesting')
 				)
 			) : '',
 			CGI::div(
 				{ class => 'input-group d-inline-flex flex-nowrap w-auto py-1' },
-				CGI::span({ class => 'input-group-text' }, $r->maketext('Display Mode:')),
+				CGI::label(
+					{ for => 'problem_displaymode', class => 'input-group-text' },
+					$r->maketext('Display Mode:')
+				),
 				CGI::popup_menu({
 					name    => 'problem.displaymode',
 					id      => 'problem_displaymode',
@@ -2629,7 +2690,8 @@ sub body {
 						data_collapse_text => $r->maketext('Collapse Nested Problems'),
 						data_bs_toggle     => 'collapse',
 						aria_expanded      => 'false',
-						role               => 'button'
+						role               => 'button',
+						tabindex           => 0
 					},
 					CGI::i({ class => 'fas fa-chevron-right', data_bs_toggle => 'tooltip' }, '')
 				);
@@ -2677,9 +2739,18 @@ sub body {
 									id                => "pdr_render_$problemID",
 									data_bs_toggle    => 'tooltip',
 									data_bs_placement => 'top',
-									data_bs_title     => $r->maketext('Render Problem')
+									data_bs_title     => $r->maketext('Render Problem'),
+									role              => 'button',
+									tabindex          => 0
 								},
-								CGI::i({ class => 'icon far fa-image', data_alt => $r->maketext('Render') }, '')
+								CGI::i(
+									{
+										class       => 'icon far fa-image',
+										data_alt    => $r->maketext('Render'),
+										aria_hidden => 'true'
+									},
+									''
+								)
 							),
 							(
 								$showLinks ? CGI::a(
@@ -2717,7 +2788,7 @@ sub body {
 								},
 								$source_file_parts[0],
 								$source_file_parts[1]
-							) : CGI::label(
+							) : CGI::div(
 								{ class => 'col-auto col-form-label col-form-label-sm text-nowrap' },
 								$source_file_parts[0]
 							)
@@ -2739,6 +2810,7 @@ sub body {
 							qq{<button class="accordion-button pdr_detail_collapse ps-0 w-auto" type="button"
 									data-bs-toggle="collapse" data-bs-target="#pdr_details_$problemID"
 									aria-expanded="true" aria-controls="pdr_details_$problemID"
+									aria-label="${\($r->maketext('Collapse Problem Details'))}"
 									data-expand-text="${\($r->maketext('Expand Problem Details'))}"
 									data-collapse-text="${\($r->maketext('Collapse Problem Details'))}"
 									></button>}
@@ -2897,11 +2969,12 @@ sub body {
 			CGI::label({ for => 'add_blank_problem', class => 'input-group-text' }, $r->maketext('Add')),
 			CGI::input({
 				name => 'add_n_problems',
+				id   => 'add_n_problems',
 				type => 'text',
 				value => 1,
 				class => 'form-control flex-grow-0'
 			}),
-			CGI::label({ for => 'add_blank_problem', class => 'input-group-text' },
+			CGI::label({ for => 'add_n_problems', class => 'input-group-text' },
 				$r->maketext('blank problem template(s) to end of homework set'))
 		)
 	}

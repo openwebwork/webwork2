@@ -153,11 +153,9 @@ sub body {
 		CGI::start_table({ class => 'table table-bordered table-sm font-sm text-nowrap w-auto' });
 	print CGI::thead(CGI::Tr(
 		CGI::th({ class => 'text-center' }, $r->maketext('Assigned')),
-		CGI::th([
-			$r->maketext('Login Name'), $r->maketext('Student Name'),
-			$r->maketext('Section'),    $r->maketext('Close Date'),
-			$r->maketext('Edit Data')
-		])
+		CGI::th([ $r->maketext('Login Name'), $r->maketext('Student Name') ]),
+		CGI::th({ class => 'text-center' }, $r->maketext('Section')),
+		CGI::th([ $r->maketext('Close Date'), $r->maketext('Edit Data') ])
 	));
 
 	# there are two set detail pages.  If we were sent here from the second one
@@ -179,18 +177,18 @@ sub body {
 			CGI::td(
 				{ class => 'text-center' },
 				CGI::input({
-					type            => 'checkbox',
-					name            => 'selected',
-					id              => "selected_$user",
-					value           => $user,
-					class           => 'form-check-input',
+					type  => 'checkbox',
+					name  => 'selected',
+					id    => "selected_$user",
+					value => $user,
+					class => 'form-check-input',
 					defined($userSetRecord) ? (checked => undef) : ()
 				})
 			),
 			CGI::td([
-				CGI::div({ class => $statusClass }, CGI::label({ for => "selected_$user" }, $user)),
-				$prettyName,
-				$userRecord->section,
+				CGI::div({ class => $statusClass }, CGI::label({ for => "selected_$user" }, $user)), $prettyName ]),
+			CGI::td({ class => 'text-center' }, $userRecord->section),
+			CGI::td([
 				(
 					defined $userSetRecord
 					? (
@@ -223,8 +221,6 @@ sub body {
 		class => 'btn btn-primary'
 	});
 
-	print CGI::end_form();
-
 	print CGI::hr()
 		. CGI::div(
 			CGI::div(
@@ -252,6 +248,8 @@ sub body {
 				}),
 			)
 		) . CGI::hr();
+
+	print CGI::end_form();
 
 	return '';
 }

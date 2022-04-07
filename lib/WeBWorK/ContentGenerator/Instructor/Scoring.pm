@@ -158,7 +158,20 @@ sub body {
 		CGI::hidden({ name => 'scoreSelected', value => 1 }),
 		CGI::div(
 			{ class => 'row' },
-			CGI::div({ class => 'col-sm-5 mb-2' }, $self->popup_set_form),
+			CGI::div(
+				{ class => 'col-sm-5 mb-2' },
+				CGI::label({ for => 'selectedSet', class => 'form-label' }, $r->maketext('Selected sets:')),
+				CGI::scrolling_list({
+					name     => 'selectedSet',
+					id       => 'selectedSet',
+					values   => $self->{ra_set_ids},
+					labels   => { map { $_ => format_set_name_display($_) } @{ $self->{ra_set_ids} } },
+					defaults => [ $self->r->param('selectedSet') ],
+					size     => 10,
+					multiple => 1,
+					class    => 'form-select'
+				})
+			),
 			CGI::div(
 				{ class => 'col-sm-7 my-sm-auto mb-2' },
 				CGI::div(
@@ -206,20 +219,22 @@ sub body {
 					})
 				)
 			)
-		),
+			),
 		CGI::div(
 			{ class => 'd-flex flex-sm-nowrap flex-wrap' },
 			CGI::input({
 				type  => 'submit',
 				value => $r->maketext('Score selected set(s) and save to:'),
 				name  => 'score-sets',
+				id    => 'score-sets',
 				class => 'btn btn-primary btn-sm me-2 mb-sm-0 mb-2'
 			}),
 			CGI::textfield({
-				name  => 'scoringFileName',
-				size  => '40',
-				value => "$scoringFileName",
-				class => 'form-control form-control-sm'
+				name            => 'scoringFileName',
+				size            => '40',
+				value           => $scoringFileName,
+				class           => 'form-control form-control-sm',
+				aria_labelledby => 'score-sets'
 			})
 		),
 		CGI::end_form()
@@ -881,20 +896,6 @@ sub maxLength {
 		$max = length $cell unless length $cell < $max;
 	}
 	return $max;
-}
-
-sub popup_set_form {
-	my $self = shift;
-
-	return CGI::scrolling_list({
-		name     => 'selectedSet',
-		values   => $self->{ra_set_ids},
-		labels   => { map { $_ => format_set_name_display($_) } @{ $self->{ra_set_ids} } },
-		defaults => [ $self->r->param('selectedSet') ],
-		size     => 10,
-		multiple => 1,
-		class    => 'form-select'
-	});
 }
 
 1;
