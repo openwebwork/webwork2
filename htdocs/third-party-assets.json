@@ -82,6 +82,15 @@
 	"node_modules/codemirror/lib/codemirror.js": "https://cdn.jsdelivr.net/npm/codemirror@5.65.2/lib/codemirror.min.js",
 	"node_modules/flatpickr/dist/flatpickr.min.css": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/flatpickr.min.css",
 	"node_modules/flatpickr/dist/flatpickr.min.js": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/flatpickr.min.js",
+	"node_modules/flatpickr/dist/l10n/cs.js": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/l10n/cs.min.js",
+	"node_modules/flatpickr/dist/l10n/es.js": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/l10n/es.min.js",
+	"node_modules/flatpickr/dist/l10n/fr.js": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/l10n/fr.min.js",
+	"node_modules/flatpickr/dist/l10n/he.js": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/l10n/he.min.js",
+	"node_modules/flatpickr/dist/l10n/hu.js": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/l10n/hu.min.js",
+	"node_modules/flatpickr/dist/l10n/ko.js": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/l10n/ko.min.js",
+	"node_modules/flatpickr/dist/l10n/ru.js": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/l10n/ru.min.js",
+	"node_modules/flatpickr/dist/l10n/tr.js": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/l10n/tr.min.js",
+	"node_modules/flatpickr/dist/l10n/zh.js": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/l10n/zh.min.js",
 	"node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/plugins/confirmDate/confirmDate.min.css",
 	"node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/plugins/confirmDate/confirmDate.min.js",
 	"node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js": "https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.2/js/iframeResizer.contentWindow.min.js",
@@ -89,6 +98,7 @@
 	"node_modules/jquery-ui-dist/jquery-ui.min.css": "https://cdn.jsdelivr.net/npm/jquery-ui-dist@1.13.1/jquery-ui.min.css",
 	"node_modules/jquery-ui-dist/jquery-ui.min.js": "https://cdn.jsdelivr.net/npm/jquery-ui-dist@1.13.1/jquery-ui.min.js",
 	"node_modules/jquery/dist/jquery.min.js": "https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js",
+	"node_modules/luxon/build/global/luxon.min.js": "https://cdn.jsdelivr.net/npm/luxon@2.3.1/build/global/luxon.min.js",
 	"node_modules/mathjax/es5/tex-chtml.js": "https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-chtml.js",
 	"node_modules/sortablejs/Sortable.min.js": "https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"
 }

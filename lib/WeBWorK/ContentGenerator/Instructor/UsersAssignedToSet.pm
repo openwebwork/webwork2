@@ -172,7 +172,7 @@ sub body {
 		my $userSetRecord = $db->getUserSet($user, $setID);
 		my $prettyName    = $userRecord->last_name . ', ' . $userRecord->first_name;
 		my $dueDate       = $userSetRecord->due_date if ref($userSetRecord);
-		my $prettyDate    = $dueDate ? $self->formatDateTime($dueDate) : '';
+		my $prettyDate = $dueDate ? $self->formatDateTime($dueDate, '', 'datetime_format_short', $ce->{language}) : '';
 		print CGI::Tr(
 			CGI::td(
 				{ class => 'text-center' },

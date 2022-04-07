@@ -463,8 +463,15 @@
 		if (!overrideCheck) return;
 		const changeHandler = () => overrideCheck.checked = input.value != '';
 		input.addEventListener('change', changeHandler);
-		input.addEventListener('keyup', changeHandler);
-		input.addEventListener('blur', () => { if (input.value == '') overrideCheck.checked = false; });
+		if (input.parentElement.classList.contains('flatpickr')) {
+			// Attach the keyup and blur handlers to the flatpickr alternate input.
+			input.previousElementSibling?.addEventListener('keyup', changeHandler);
+			input.previousElementSibling?.addEventListener('blur',
+				() => { if (input.previousElementSibling.value == '') overrideCheck.checked = false; });
+		} else {
+			input.addEventListener('keyup', changeHandler);
+			input.addEventListener('blur', () => { if (input.value == '') overrideCheck.checked = false; });
+		}
 	});
 
 	// Make the override checkboxes for selects checked or unchecked appropriately

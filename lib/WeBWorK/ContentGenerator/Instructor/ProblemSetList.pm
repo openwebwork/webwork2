@@ -1326,14 +1326,15 @@ sub import_form {
 				CGI::div(
 					{ class => 'input-group input-group-sm flatpickr' },
 					CGI::textfield({
-						id                     => 'import_date_shift',
-						name                   => 'action.import.start.date',
-						size                   => '27',
-						value                  => $actionParams{'action.import.start.date'}[0] || '',
-						class                  => 'form-control',
-						data_enable_datepicker => $ce->{options}{useDateTimePicker},
-						data_input             => undef,
-						data_done_text         => $r->maketext('Done')
+						id             => 'import_date_shift',
+						name           => 'action.import.start.date',
+						size           => '27',
+						value          => $actionParams{'action.import.start.date'}[0] || '',
+						class          => 'form-control',
+						data_input     => undef,
+						data_done_text => $r->maketext('Done'),
+						data_locale    => $ce->{language},
+						data_timezone  => $ce->{siteDefaults}{timezone}
 					}),
 					CGI::a(
 						{
@@ -1376,30 +1377,27 @@ sub import_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r = $self->r;
 
-	my @fileNames = @{ $actionParams->{"action.import.source"} };
-	my $newSetName = $actionParams->{'action.import.number'}[0] > 1
+	my ($added, $skipped) = $self->importSetsFromDef(
+		$actionParams->{"action.import.number"}[0] > 1
 		? ''    # Cannot assign set names to multiple imports.
-		: format_set_name_internal($actionParams->{'action.import.name'}[0] // '');
-	my $assign = $actionParams->{"action.import.assign"}->[0];
-	my $startdate = 0;
-	if ($actionParams->{"action.import.start.date"}->[0]) {
-	    $startdate = $self->parseDateTime($actionParams->{"action.import.start.date"}->[0]);
-	}
+		: format_set_name_internal($actionParams->{'action.import.name'}[0]),
+		$actionParams->{'action.import.assign'}[0],
+		$actionParams->{'action.import.start.date'}[0] // 0,
+		@{ $actionParams->{'action.import.source'} }
+	);
 
-	my ($added, $skipped) = $self->importSetsFromDef($newSetName, $assign, $startdate, @fileNames);
-
-	# make new sets visible... do we really want to do this? probably.
+	# Make new sets visible.
 	push @{ $self->{visibleSetIDs} }, @$added;
-	push @{ $self->{allSetIDs} }, @$added;
+	push @{ $self->{allSetIDs} },     @$added;
 
-	my $numAdded = @$added;
+	my $numAdded   = @$added;
 	my $numSkipped = @$skipped;
 
 	return CGI::div(
 		{ class => 'alert alert-success p-1 mb-0' },
 		$r->maketext(
-			"[_1] sets added, [_2] sets skipped. Skipped sets: ([_3])",
-		   	$numAdded, $numSkipped, join(", ", @$skipped)
+			'[_1] sets added, [_2] sets skipped. Skipped sets: ([_3])',
+			$numAdded, $numSkipped, join(', ', @$skipped)
 		)
 	);
 }
@@ -1565,20 +1563,20 @@ sub saveEdit_handler {
 
 		foreach my $field ($Set->NONKEYFIELDS()) {
 			my $param = "set.${setID}.${field}";
-			if (defined $tableParams->{$param}->[0]) {
+			if (defined $tableParams->{$param}[0]) {
 				if ($field =~ /_date/) {
-					$Set->$field($self->parseDateTime($tableParams->{$param}->[0]));
+					$Set->$field($tableParams->{$param}[0]);
 				} elsif ($field eq 'enable_reduced_scoring') {
-				    #If we are enableing reduced scoring, make sure the reduced scoring date is set and in a proper interval
-				    my $value = $tableParams->{$param}->[0];
-				    $Set->enable_reduced_scoring($value);
-				    if (!$Set->reduced_scoring_date) {
-					$Set->reduced_scoring_date($Set->due_date -
-								  60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
-				    }
-
+					# If we are enableing reduced scoring, make sure the reduced scoring date
+					# is set and in a proper interval.
+					my $value = $tableParams->{$param}[0];
+					$Set->enable_reduced_scoring($value);
+					if (!$Set->reduced_scoring_date) {
+						$Set->reduced_scoring_date(
+							$Set->due_date - 60 * $ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
+					}
 				} else {
-				    $Set->$field($tableParams->{$param}->[0]);
+					$Set->$field($tableParams->{$param}->[0]);
 				}
 			}
 		}
@@ -1646,20 +1644,6 @@ sub saveEdit_handler {
 ################################################################################
 # utilities
 ################################################################################
-
-# generate labels for open_date/due_date/answer_date popup menus
-sub menuLabels {
-	my ($self, $hashRef) = @_;
-	my %hash = %$hashRef;
-
-	my %result;
-	foreach my $key (keys %hash) {
-		my $count = @{ $hash{$key} };
-		my $displayKey = $self->formatDateTime($key) || "<none>";
-		$result{$key} = "$displayKey ($count sets)";
-	}
-	return %result;
-}
 
 sub importSetsFromDef {
 	my ($self, $newSetName, $assign, $startdate, @setDefFiles) = @_;
@@ -2437,6 +2421,7 @@ sub fieldEditHTML {
 	my $headerFiles = $self->{headerFiles};
 
 	if ($access eq "readonly") {
+		return CGI::span({ dir => 'ltr' }, $value) if ($type eq 'date');
 		return $value;
 	}
 
@@ -2466,9 +2451,12 @@ sub fieldEditHTML {
 				size            => $size,
 				class           => 'form-control w-auto ' . ($fieldName =~ /\.open_date/ ? ' datepicker-group' : ''),
 				placeholder     => $self->r->maketext("None Specified"),
-				data_enable_datepicker => $self->r->ce->{options}{useDateTimePicker},
-				data_input             => undef,
-				data_done_text         => $self->r->maketext('Done')
+				data_input      => undef,
+				data_done_text  => $self->r->maketext('Done'),
+				data_locale     => $self->r->ce->{language},
+				data_timezone   => $self->r->ce->{siteDefaults}{timezone},
+				role            => 'button',
+				tabindex        => 0
 			}),
 			CGI::a(
 				{
@@ -2505,36 +2493,46 @@ sub fieldEditHTML {
 
 sub recordEditHTML {
 	my ($self, $Set, %options) = @_;
-	my $r           = $self->r;
-	my $urlpath     = $r->urlpath;
-	my $ce          = $r->ce;
-	my $db		= $r->db;
-	my $authz	= $r->authz;
-	my $user	= $r->param('user');
-	my $root        = $ce->{webworkURLs}->{root};
-	my $courseName  = $urlpath->arg("courseID");
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $ce         = $r->ce;
+	my $db         = $r->db;
+	my $authz      = $r->authz;
+	my $user       = $r->param('user');
+	my $root       = $ce->{webworkURLs}{root};
+	my $courseName = $urlpath->arg('courseID');
 
-	my $editMode = $options{editMode};
-	my $exportMode = $options{exportMode};
+	my $editMode    = $options{editMode};
+	my $exportMode  = $options{exportMode};
 	my $setSelected = $options{setSelected};
 
-	my $visibleClass = $Set->visible ? "font-visible" : "font-hidden";
-	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? $r->maketext('Reduced Scoring Enabled') : $r->maketext('Reduced Scoring Disabled');
+	my $visibleClass = $Set->visible ? 'font-visible' : 'font-hidden';
+	my $enable_reduced_scoringClass =
+		$Set->enable_reduced_scoring
+		? $r->maketext('Reduced Scoring Enabled')
+		: $r->maketext('Reduced Scoring Disabled');
 
-	my $users = $db->countSetUsers($Set->set_id);
+	my $users      = $db->countSetUsers($Set->set_id);
 	my $totalUsers = $self->{totalUsers};
 
 	my $problems = $db->countGlobalProblems($Set->set_id);
 
-	my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));
-	my $prettySetID = format_set_name_display($Set->set_id);
-	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail', args=>{courseID => $courseName, setID => $Set->set_id} ));
-	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
+	my $usersAssignedToSetURL = $self->systemLink($urlpath->new(
+		type => 'instructor_users_assigned_to_set',
+		args => { courseID => $courseName, setID => $Set->set_id }
+	));
+	my $prettySetID    = format_set_name_display($Set->set_id);
+	my $problemListURL = $self->systemLink(
+		$urlpath->new(type => 'instructor_set_detail', args => { courseID => $courseName, setID => $Set->set_id }));
+	my $problemSetListURL = $self->systemLink(
+		$urlpath->new(type => 'instructor_set_list', args => { courseID => $courseName, setID => $Set->set_id }))
+		. '&editMode=1&visible_sets='
+		. $Set->set_id;
 	my $imageLink = '';
 
-	if ($authz->hasPermissions($user, "modify_problem_sets")) {
-		$imageLink = CGI::a({href => $problemSetListURL},
-			CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, ""));
+	if ($authz->hasPermissions($user, 'modify_problem_sets')) {
+		$imageLink = CGI::a({ href => $problemSetListURL },
+			CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => 'true' }, ''));
 	}
 
 	my @tableCells;
@@ -2548,34 +2546,37 @@ sub recordEditHTML {
 		class => 'form-check-input',
 		$setSelected ? (checked => undef) : (),
 	});
-	$fakeRecord{set_id} = $editMode
-		? CGI::a({href=>$problemListURL}, "$set_id")
-		: CGI::span({class=>$visibleClass}, $set_id) . " " . $imageLink;
-	$fakeRecord{problems} = (FIELD_PERMS()->{problems} and not $authz->hasPermissions($user, FIELD_PERMS()->{problems}))
-		? "$problems"
-		: CGI::a({href=>$problemListURL}, "$problems");
-	$fakeRecord{users} = (FIELD_PERMS()->{users} and not $authz->hasPermissions($user, FIELD_PERMS()->{users}))
+	$fakeRecord{set_id} =
+		$editMode
+		? CGI::a({ href => $problemListURL }, $set_id)
+		: CGI::span({ class => $visibleClass }, $set_id) . ' ' . $imageLink;
+	$fakeRecord{problems} =
+		(FIELD_PERMS()->{problems} and not $authz->hasPermissions($user, FIELD_PERMS()->{problems}))
+		? $problems
+		: CGI::a({ href => $problemListURL }, "$problems");
+	$fakeRecord{users} =
+		(FIELD_PERMS()->{users} and not $authz->hasPermissions($user, FIELD_PERMS()->{users}))
 		? "$users/$totalUsers"
-		: CGI::a({href=>$usersAssignedToSetURL}, "$users/$totalUsers");
-	$fakeRecord{filename} = CGI::input({-name => "set.$set_id", -value=>"set$set_id.def", -size=>60});
+		: CGI::a({ href => $usersAssignedToSetURL }, "$users/$totalUsers");
+	$fakeRecord{filename} = CGI::input({ -name => "set.$set_id", -value => "set$set_id.def", -size => 60 });
 
 	# Select
-	my $label="";
-	my $label_text="";
+	my $label      = '';
+	my $label_text = '';
 	if ($editMode) {
 		# No checkbox column in this case.
 		$label_text = CGI::a({ href => $problemListURL }, $prettySetID);
 	} else {
 		# Set ID
-		my $label = "";
+		my $label = '';
 		if ($editMode) {
 			$label = CGI::a({ href => $problemListURL }, $prettySetID);
 		} else {
 			$label = CGI::span({
-					class => "set-label set-id-tooltip $visibleClass",
-					data_bs_toggle => 'tooltip',
+					class             => "set-label set-id-tooltip $visibleClass",
+					data_bs_toggle    => 'tooltip',
 					data_bs_placement => 'right',
-					data_bs_title => $Set->description()
+					data_bs_title     => $Set->description()
 				}, $prettySetID) . ' ' . $imageLink;
 		}
 
@@ -2599,7 +2600,7 @@ sub recordEditHTML {
 		push @tableCells, $label_text;
 	} else {
 		# "problem list" link
-		push @tableCells, CGI::a({href=>$problemListURL}, "$problems");
+		push @tableCells, CGI::a({ href => $problemListURL }, $problems);
 	}
 
 	# Users link
@@ -2607,7 +2608,7 @@ sub recordEditHTML {
 		# column not there
 	} else {
 		# "edit users assigned to set" link
-		push @tableCells, CGI::a({href=>$usersAssignedToSetURL}, "$users/$totalUsers");
+		push @tableCells, CGI::a({ href => $usersAssignedToSetURL }, "$users/$totalUsers");
 	}
 
 	# determine which non-key fields to show
@@ -2622,28 +2623,35 @@ sub recordEditHTML {
 
 	# Remove the enable reduced scoring box if that feature isnt enabled
 	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-	    @fieldsToShow = grep {!/enable_reduced_scoring|reduced_scoring_date/} @fieldsToShow;
+		@fieldsToShow = grep { !/enable_reduced_scoring|reduced_scoring_date/ } @fieldsToShow;
 	}
 
 	# make a hash out of this so we can test membership easily
-	my %nonkeyfields; @nonkeyfields{$Set->NONKEYFIELDS} = ();
+	my %nonkeyfields;
+	@nonkeyfields{ $Set->NONKEYFIELDS } = ();
 
 	# Set Fields
-	foreach my $field (@fieldsToShow) {
+	for my $field (@fieldsToShow) {
 		next unless exists $nonkeyfields{$field};
-		my $fieldName = "set." . $set_id . "." . $field,
-		my $fieldValue = $Set->$field;
-		#print $field;
-		my %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$properties{access} = "readonly" unless $editMode;
+		my $fieldName = 'set.' . $set_id . '.' . $field, my $fieldValue = $Set->$field;
 
-		$fieldValue = $self->formatDateTime($fieldValue,'','%m/%d/%Y at %I:%M%P') if $field =~ /_date/;
+		my %properties = %{ FIELD_PROPERTIES()->{$field} };
+		$properties{access} = 'readonly' unless $editMode;
+
+		$fieldValue = $self->formatDateTime($fieldValue, '', 'datetime_format_short', $ce->{language})
+			if !$editMode && $field =~ /_date/;
 
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
-		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
-		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
-		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /hide_hint/ and not $editMode;
-		push @tableCells, CGI::span({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+		$fieldValue = $fieldValue ? $r->maketext('Yes') : $r->maketext('No')
+			if $field =~ /visible/ and not $editMode;
+		$fieldValue = $fieldValue ? $r->maketext('Yes') : $r->maketext('No')
+			if $field =~ /enable_reduced_scoring/ and not $editMode;
+		$fieldValue = $fieldValue ? $r->maketext('Yes') : $r->maketext('No')
+			if $field =~ /hide_hint/ and not $editMode;
+
+		push @tableCells,
+			CGI::span({ class => "d-inline-block w-100 text-center $visibleClass" },
+				$self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 
 	return CGI::Tr(CGI::td(\@tableCells));
@@ -2762,7 +2770,19 @@ sub output_JS {
 		rel  => 'stylesheet',
 		href => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css')
 	});
+	print CGI::script({ src => getAssetURL($ce, 'node_modules/luxon/build/global/luxon.min.js'), defer => undef }, '');
 	print CGI::script({ src => getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.js'), defer => undef }, '');
+	if ($ce->{language} !~ /^en/) {
+		print CGI::script(
+			{
+				src => getAssetURL(
+					$ce, 'node_modules/flatpickr/dist/l10n/' . ($ce->{language} =~ s/^(..).*/$1/gr) . '.js'
+				),
+				defer => undef
+			},
+			''
+		);
+	}
 	print CGI::script(
 		{
 			src   => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
