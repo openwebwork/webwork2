@@ -550,7 +550,7 @@ if($canopenfile) {
 use JSON;
 
 #### Save the official taxonomy in json format
-my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
+my $webwork_htdocs = $ce->{webworkDirs}{htdocs};
 my $file = "$webwork_htdocs/DATA/tagging-taxonomy.json";
 
 writeJSONtoFile($tagtaxo,$file);

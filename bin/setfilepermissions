@@ -78,11 +78,11 @@ system("chmod -R g+w ".$ce->{webwork_courses_dir});
 system("chmod g+s ".$ce->{webwork_courses_dir});
 
 # Other special directories under webwork2
-for my $dir ( "DATA", "htdocs/tmp", "logs", "tmp" ) {
-  system("chown -R $me $wwroot/$dir");
-	system("chgrp -R $servergroup $wwroot/$dir");
-	system("chmod -R g+w $wwroot/$dir");
-	system("chmod g+s $wwroot/$dir");
+for my $dir ( 'DATA', 'htdocs_tmp', 'logs', 'tmp' ) {
+  system("chown -R $me $ce->{webworkDirs}{$dir}");
+	system("chgrp -R $servergroup $ce->{webworkDirs}{$dir}");
+	system("chmod -R g+w $ce->{webworkDirs}{$dir}");
+	system("chmod g+s $ce->{webworkDirs}{$dir}");
 }
 
 # A special directory under pg (so the server can compile the chromatic program)
@@ -99,6 +99,6 @@ system("chmod -R 755 $libroot");
 # OPL-update needs to be able to write to these directories
 # Let's hope the same user does it
 # This will need adjusting if the admin course starts running this script
-for my $dir ( "htdocs/DATA", "htdocs/applets" ) {
-	system("chown -R $me $wwroot/$dir");
+for my $dir ( "$ce->{webworkDirs}{htdocs}/DATA" ) {
+	system("chown -R $me $dir");
 }
