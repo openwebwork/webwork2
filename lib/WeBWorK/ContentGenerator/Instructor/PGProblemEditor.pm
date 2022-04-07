@@ -1294,15 +1294,21 @@ sub view_handler {
 	# redirect to Problem.pm or GatewayQuiz.pm
 	if ($file_type eq 'problem' or $file_type eq 'source_path_for_problem_file') {
 		# we need to know if the set is a gateway set to determine the redirect
-		my $globalSet = $self->r->db->getGlobalSet( $setName );
+		my $globalSet = $r->db->getGlobalSet($setName);
 
 		my $problemPage;
-		if ( defined($globalSet) && $globalSet->assignment_type =~ /gateway/ ) {
-			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",$r,
-			courseID => $courseName, setID => "Undefined_Set");
-		}  else {
-			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
-				courseID => $courseName, setID => $setName, problemID => $problemNumber
+		if (defined $globalSet && $globalSet->assignment_type =~ /gateway/) {
+			$problemPage = $r->urlpath->newFromModule(
+				'WeBWorK::ContentGenerator::GatewayQuiz', $r,
+				courseID => $courseName,
+				setID    => 'Undefined_Set'
+			);
+		} else {
+			$problemPage = $r->urlpath->newFromModule(
+				'WeBWorK::ContentGenerator::Problem', $r,
+				courseID  => $courseName,
+				setID     => $r->db->existsUserSet($r->param('user'), $setName) ? $setName : 'Undefined_Set',
+				problemID => $problemNumber
 			);
 		}
 
