@@ -96,12 +96,8 @@ depth_then_iname_sort(\@opl_set_defs);
 depth_then_iname_sort(\@contrib_set_defs);
 
 # Write the lists to the files in htdocs/DATA.
-if ($ce->{options}{useOPLdefFiles}) {
-	writeJSONtoFile(\@opl_set_defs, "$ce->{webworkDirs}{htdocs}/DATA/library-set-defs.json");
-	print "Saved OPL set definition list to $ce->{webworkDirs}{htdocs}/DATA/library-set-defs.json.\n";
-}
+writeJSONtoFile(\@opl_set_defs, "$ce->{webworkDirs}{htdocs}/DATA/library-set-defs.json");
+print "Saved OPL set definition list to $ce->{webworkDirs}{htdocs}/DATA/library-set-defs.json.\n";
 
-if ($ce->{options}{useContribDefFiles}) {
-	writeJSONtoFile(\@contrib_set_defs, "$ce->{webworkDirs}{htdocs}/DATA/contrib-set-defs.json");
-	print "Saved Contrib set definition list to $ce->{webworkDirs}{htdocs}/DATA/contrib-set-defs.json.\n";
-}
+writeJSONtoFile(\@contrib_set_defs, "$ce->{webworkDirs}{htdocs}/DATA/contrib-set-defs.json");
+print "Saved Contrib set definition list to $ce->{webworkDirs}{htdocs}/DATA/contrib-set-defs.json.\n";
