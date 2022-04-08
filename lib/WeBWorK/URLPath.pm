@@ -507,7 +507,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
 	instructor_set_statistics => {
-		name    => x('Statistics'),
+		name    => '[_2]',
 		parent  => 'instructor_statistics',
 		kids    => [ qw// ],
 		match   => qr|^(set)/([^/]+)/|,
@@ -516,7 +516,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
 	instructor_user_statistics => {
-		name    => x('Statistics'),
+		name    => '[_1]',
 		parent  => 'instructor_statistics',
 		kids    => [ qw// ],
 		match   => qr|^(student)/([^/]+)/|,
@@ -570,7 +570,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
 	},
 	instructor_set_progress => {
-		name    => x('Student Progress'),
+		name    => '[_2]',
 		parent  => 'instructor_progress',
 		kids    => [ qw// ],
 		match   => qr|^(set)/([^/]+)/|,
@@ -579,7 +579,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
 	},
 	instructor_user_progress => {
-		name    => x('Student Progress'),
+		name    => '[_1]',
 		parent  => 'instructor_progress',
 		kids    => [ qw// ],
 		match   => qr|^(student)/([^/]+)/|,
