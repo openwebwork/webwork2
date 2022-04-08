@@ -154,25 +154,6 @@ sub list_pg_files {
 	return sortByName(undef,@pgs);
 }
 
-## Search for set definition files
-
-sub get_set_defs {
-	my $topdir = shift;
-	my @found_set_defs;
-	# get_set_defs_wanted is a closure over @found_set_defs
-	my $get_set_defs_wanted = sub {
-		#my $fn = $_;
-		#my $fdir = $File::Find::dir;
-		#return() if($fn !~ /^set.*\.def$/);
-		##return() if(not -T $fn);
-		#push @found_set_defs, "$fdir/$fn";
-		push @found_set_defs, $_ if m|/set[^/]*\.def$|;
-	};
-	find({ wanted => $get_set_defs_wanted, follow_fast=>1, no_chdir=>1}, $topdir);
-	map { $_ =~ s|^$topdir/?|| } @found_set_defs;
-	return @found_set_defs;
-}
-
 ## Try to make reading of set defs more flexible.  Additional strategies
 ## for fixing a path can be added here.
 
@@ -957,11 +938,7 @@ sub browse_setdef_panel {
 	my $ce               = $r->ce;
 	my $library_selected = shift // '';
 
-	# In the following line, the parens after sort are important. If they are
-	# omitted, sort will interpret get_set_defs as the name of the comparison
-	# function, and ($ce->{courseDirs}{templates}) as a single element list to
-	# be sorted.
-	my @list_of_set_defs = sort(get_set_defs($ce->{courseDirs}{templates}));
+	my @list_of_set_defs = $self->getDefList;
 	my $labels_for_set_defs = { map { $_ => $_ } @list_of_set_defs };
 
 	if (scalar(@list_of_set_defs) == 0) {
