@@ -345,7 +345,7 @@ EOF
 			fixSpaces(CGI::scrolling_list({
 				name       => "files",
 				id         => "files",
-				class      => "form-select font-monospace",
+				class      => 'form-select font-monospace h-100',
 				size       => 17,
 				multiple   => 1,
 				values     => $files,

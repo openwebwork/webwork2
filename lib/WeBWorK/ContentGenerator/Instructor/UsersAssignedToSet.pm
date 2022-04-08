@@ -48,7 +48,7 @@ sub initialize {
 
 	if (defined $r->param('assignToAll')) {
 		debug("assignSetToAllUsers($setID)");
-		$self->addbadmessage($r->maketext("Problems have been assigned to all current users."));
+		$self->addgoodmessage($r->maketext("Problems have been assigned to all current users."));
 		$self->assignSetToAllUsers($setID);
 		debug("done assignSetToAllUsers($setID)");
 	} elsif (defined $r->param('unassignFromAll')
