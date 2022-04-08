@@ -78,7 +78,7 @@ system("chmod -R g+w ".$ce->{webwork_courses_dir});
 system("chmod g+s ".$ce->{webwork_courses_dir});
 
 # Other special directories under webwork2
-for my $dir ( 'DATA', 'htdocs_tmp', 'logs', 'tmp' ) {
+for my $dir ( 'DATA', 'htdocs_temp', 'logs', 'tmp' ) {
   system("chown -R $me $ce->{webworkDirs}{$dir}");
 	system("chgrp -R $servergroup $ce->{webworkDirs}{$dir}");
 	system("chmod -R g+w $ce->{webworkDirs}{$dir}");
@@ -96,9 +96,7 @@ my $libroot = $ce->{problemLibrary}->{root};
 system("chown -R $me $libroot");
 system("chmod -R 755 $libroot");
 
-# OPL-update needs to be able to write to these directories
+# OPL-update needs to be able to write to this directories
 # Let's hope the same user does it
 # This will need adjusting if the admin course starts running this script
-for my $dir ( "$ce->{webworkDirs}{htdocs}/DATA" ) {
-	system("chown -R $me $dir");
-}
+system("chown -R $me $ce->{webworkDirs}{htdocs}/DATA");
