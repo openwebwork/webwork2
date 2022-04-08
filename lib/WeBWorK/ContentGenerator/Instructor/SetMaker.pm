@@ -31,7 +31,8 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Form;
-use WeBWorK::Utils qw(readDirectory max sortByName wwRound x getAssetURL format_set_name_internal);
+use WeBWorK::Utils qw(readDirectory max sortByName wwRound x getAssetURL format_set_name_internal
+	format_set_name_display);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
 use WeBWorK::Utils::LibraryStats;
@@ -47,24 +48,18 @@ use constant SHOW_HINTS_DEFAULT => 0;
 use constant SHOW_SOLUTIONS_DEFAULT => 0;
 use constant MAX_SHOW_DEFAULT => 20;
 use constant NO_LOCAL_SET_STRING => x('No sets in this course yet');
-use constant SELECT_SET_STRING => x('Select a Set from this Course');
-use constant SELECT_LOCAL_STRING => x('Select a Problem Collection');
 use constant MY_PROBLEMS => x('My Problems');
 use constant MAIN_PROBLEMS => x('Unclassified Problems');
-use constant ALL_CHAPTERS => 'All Chapters';
-use constant ALL_SUBJECTS => 'All Subjects';
-use constant ALL_SECTIONS => 'All Sections';
-use constant ALL_TEXTBOOKS => 'All Textbooks';
 
 use constant LIB2_DATA => {
-  'dbchapter' => {name => 'library_chapters', all => 'All Chapters'},
-  'dbsection' =>  {name => 'library_sections', all =>'All Sections' },
-  'dbsubject' =>  {name => 'library_subjects', all => 'All Subjects' },
-  'textbook' =>  {name => 'library_textbook', all =>  'All Textbooks'},
-  'textchapter' => {name => 'library_textchapter', all => 'All Chapters'},
-  'textsection' => {name => 'library_textsection', all => 'All Sections'},
-  'keywords' =>  {name => 'library_keywords', all => '' },
-  };
+	'dbchapter'   => { name => 'library_chapters',    all => x('All Chapters') },
+	'dbsection'   => { name => 'library_sections',    all => x('All Sections') },
+	'dbsubject'   => { name => 'library_subjects',    all => x('All Subjects') },
+	'textbook'    => { name => 'library_textbook',    all => x('All Textbooks') },
+	'textchapter' => { name => 'library_textchapter', all => x('All Chapters') },
+	'textsection' => { name => 'library_textsection', all => x('All Sections') },
+	'keywords'    => { name => 'library_keywords',    all => '' },
+};
 
 ## Flags for operations on files
 
@@ -442,44 +437,45 @@ sub view_problems_line {
 # The browsing panel has three versions.
 # Version 1 is local problems
 sub browse_local_panel {
-	my $self = shift;
-	my $r = $self->r;
-	my $library_selected = shift;
-	my $lib = shift || ''; $lib =~ s/^browse_//;
-	my $name = ($lib eq '')? $r->maketext('Local') : Encode::decode("UTF-8",$problib{$lib});
+	my $self             = shift;
+	my $r                = $self->r;
+	my $library_selected = shift // '';
+	my $lib              = (shift || '') =~ s/^browse_//r;
 
-	my $list_of_prob_dirs= get_problem_directories($r,$lib);
-	if(scalar(@$list_of_prob_dirs) == 0) {
-		$library_selected = $r->maketext("Found no directories containing problems");
-		unshift @{$list_of_prob_dirs}, $library_selected;
-	} else {
-		my $default_value = $r->maketext(SELECT_LOCAL_STRING);
-		if (!defined $library_selected or $library_selected eq $default_value) {
-			unshift @{$list_of_prob_dirs},	$default_value;
-			$library_selected = $default_value;
-		}
+	my $list_of_prob_dirs    = get_problem_directories($r, $lib);
+	my $labels_for_prob_dirs = $lib
+		# Make labels without the $lib prefix.  This reduces the width of the popup menu.
+		? { map { $_ => $_ =~ s/^$lib\/(.*)$/$1/r } @$list_of_prob_dirs }
+		: { map { $_ => $_ } @$list_of_prob_dirs };
+
+	if (@$list_of_prob_dirs == 0) {
+		unshift @$list_of_prob_dirs, '';
+		$labels_for_prob_dirs->{''} = $r->maketext("Found no directories containing problems");
+	} elsif ($library_selected eq '') {
+		unshift @$list_of_prob_dirs, '';
+		$labels_for_prob_dirs->{''} = $r->maketext('Select a Problem Collection');
 	}
 	debug("library is $lib and sets are $library_selected");
-
-	my $popup_menu_args = {
-		name    => 'library_sets',
-		id      => 'library_sets',
-		values  => $list_of_prob_dirs,
-		default => $library_selected,
-		class   => 'form-select form-select-sm d-inline w-auto'
-	};
-
-	# Make labels without the $lib prefix.  This reduces the width of the popup menu.
-	if (length($lib)) {
-		$popup_menu_args->{labels} = { map { my ($l) = $_ =~ /^$lib\/(.*)$/; $_ => $l } @$list_of_prob_dirs };
-	}
 
 	print CGI::div(
 		{ class => "InfoPanel" },
 		CGI::div(
 			{ class => 'mb-2' },
-			CGI::label({ for => 'library_sets', class => 'col-form-label-sm' }, $r->maketext("[_1] Problems:", $name)),
-			CGI::popup_menu($popup_menu_args)
+			CGI::label(
+				{ for => 'library_sets', class => 'col-form-label-sm' },
+				$r->maketext(
+					"[_1] Problems:",
+					$lib eq '' ? $r->maketext('Local') : Encode::decode("UTF-8", $problib{$lib})
+				)
+			),
+			CGI::popup_menu({
+				name    => 'library_sets',
+				id      => 'library_sets',
+				values  => $list_of_prob_dirs,
+				labels  => $labels_for_prob_dirs,
+				default => $library_selected,
+				class   => 'form-select form-select-sm d-inline w-auto'
+			})
 		),
 		view_problems_line('view_local_set', $r->maketext('View Problems'), $self->r),
 	);
@@ -489,15 +485,16 @@ sub browse_local_panel {
 sub browse_mysets_panel {
 	my $self = shift;
 	my $r = $self->r;
-	my $library_selected = shift;
+	my $library_selected = shift // '';
 	my $list_of_local_sets = shift;
-	my $default_value = $r->maketext("Select a Homework Set");
+	my $labels_for_local_sets = { map { $_ => format_set_name_display($_) } @$list_of_local_sets };
 
-	if(scalar(@$list_of_local_sets) == 0) {
-		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
-	} elsif (!defined $library_selected or $library_selected eq $default_value) {
-		unshift @{$list_of_local_sets},	 $default_value;
-		$library_selected = $default_value;
+	if (@$list_of_local_sets == 0) {
+		$list_of_local_sets = [''];
+		$labels_for_local_sets->{''} = $r->maketext(NO_LOCAL_SET_STRING);
+	} elsif ($library_selected eq '') {
+		unshift @$list_of_local_sets, '';
+		$labels_for_local_sets->{''} = $r->maketext('Select a Homework Set');
 	}
 
 	print CGI::div(
@@ -509,8 +506,10 @@ sub browse_mysets_panel {
 				name    => 'library_sets',
 				id      => 'library_sets',
 				values  => $list_of_local_sets,
+				labels  => $labels_for_local_sets,
 				default => $library_selected,
-				class   => 'form-select form-select-sm d-inline w-auto'
+				class   => 'form-select form-select-sm d-inline w-auto',
+				dir     => 'ltr'
 			})
 		),
 		view_problems_line('view_mysets_set', $r->maketext('View Problems'), $self->r)
@@ -553,7 +552,6 @@ HERE
 	# Now check what version we are supposed to use
 	my $libraryVersion = $r->{ce}{problemLibrary}{version} || 2;
 	if ($libraryVersion == 1) {
-		#return $self->browse_library_panel1;
 		print CGI::div(
 			{ class => 'alert alert-danger p-1 mb-2', align => "center" },
 			"Problem library version 1 is no longer supported."
@@ -571,66 +569,24 @@ HERE
 	}
 }
 
-# FIXME:  This needs to be deleted.  The methods called here are commented out in WeBWorK::Utils::ListingDB.
-sub browse_library_panel1 {
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my @chaps = WeBWorK::Utils::ListingDB::getAllChapters($r->{ce});
-	unshift @chaps, LIB2_DATA->{dbchapter}{all};
-	my $chapter_selected = $r->param('library_chapters') || LIB2_DATA->{dbchapter}->{all};
-
-	my @sects=();
-	if ($chapter_selected ne LIB2_DATA->{dbchapter}{all}) {
-		@sects = WeBWorK::Utils::ListingDB::getAllSections($r->{ce}, $chapter_selected);
-	}
-
-	unshift @sects, ALL_SECTIONS;
-	my $section_selected =	$r->param('library_sections') || LIB2_DATA->{dbsection}{all};
-
-	my $view_problem_line = view_problems_line('lib_view', $r->maketext('View Problems'), $self->r);
-
-	print CGI::Tr(CGI::td({-class=>"InfoPanel"},
-		CGI::start_table(),
-			CGI::Tr({},
-				CGI::td([$r->maketext("Chapter:"),
-					CGI::popup_menu(-name=> 'library_chapters',
-					                -values=>\@chaps,
-					                -default=> $chapter_selected
-					),
-					CGI::submit({
-						name => "lib_select_chapter",
-						value => "Update Section List",
-						class => 'btn btn-secondary btn-sm'
-					})
-				])),
-			CGI::Tr({},
-				CGI::td($r->maketext("Section:")),
-				CGI::td({-colspan=>2},
-					CGI::popup_menu(-name=> 'library_sections',
-					                -values=>\@sects,
-					                -default=> $section_selected
-			))),
-
-			CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
-			CGI::end_table(),
-		));
-}
-
 sub browse_library_panel2 {
 	my $self = shift;
 	my $r    = $self->r;
 
-	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
+	my @subjs       = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
+	my $subj_labels = { map { $_ => $_ } @subjs };
 	unshift @subjs, LIB2_DATA->{dbsubject}{all};
+	$subj_labels->{ LIB2_DATA->{dbsubject}{all} } = $r->maketext(LIB2_DATA->{dbsubject}{all});
 
-	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
+	my @chaps       = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
+	my $chap_labels = { map { $_ => $_ } @chaps };
 	unshift @chaps, LIB2_DATA->{dbchapter}{all};
+	$chap_labels->{ LIB2_DATA->{dbchapter}{all} } = $r->maketext(LIB2_DATA->{dbchapter}{all});
 
-	my @sects = ();
-	@sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
+	my @sects       = WeBWorK::Utils::ListingDB::getAllDBsections($r);
+	my $sect_labels = { map { $_ => $_ } @sects };
 	unshift @sects, LIB2_DATA->{dbsection}{all};
+	$sect_labels->{ LIB2_DATA->{dbsection}{all} } = $r->maketext(LIB2_DATA->{dbsection}{all});
 
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	if ($count_line == 0) {
@@ -658,6 +614,7 @@ sub browse_library_panel2 {
 							name    => 'library_subjects',
 							id      => 'library_subjects',
 							values  => \@subjs,
+							labels  => $subj_labels,
 							default => $r->param('library_subjects') || LIB2_DATA->{dbsubject}{all},
 							class   => 'form-select form-select-sm'
 						})
@@ -675,6 +632,7 @@ sub browse_library_panel2 {
 							name    => 'library_chapters',
 							id      => 'library_chapters',
 							values  => \@chaps,
+							labels  => $chap_labels,
 							default => $r->param('library_chapters') || LIB2_DATA->{dbchapter}{all},
 							class   => 'form-select form-select-sm'
 						})
@@ -692,6 +650,7 @@ sub browse_library_panel2 {
 							name    => 'library_sections',
 							id      => 'library_sections',
 							values  => \@sects,
+							labels  => $sect_labels,
 							default => $r->param('library_sections') || LIB2_DATA->{dbsection}{all},
 							class   => 'form-select form-select-sm'
 						})
@@ -699,7 +658,8 @@ sub browse_library_panel2 {
 				)
 			),
 			CGI::div(
-				{ class =>
+				{
+					class =>
 						'col-md-3 col-sm-4 mb-1 d-flex flex-sm-column justify-content-sm-start justify-content-center'
 				},
 				CGI::submit({
@@ -725,100 +685,66 @@ sub browse_library_panel2adv {
 	my $right_button_style = 'max-width:9rem';
 
 	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
-	if (!grep { $_ eq $r->param('library_subjects') } @subjs) {
-		$r->param('library_subjects', '');
-	}
+	$r->param('library_subjects', '') if (!grep { $_ eq $r->param('library_subjects') } @subjs);
+	my $subj_labels = { map { $_ => $_ } @subjs };
 	unshift @subjs, LIB2_DATA->{dbsubject}{all};
+	$subj_labels->{ LIB2_DATA->{dbsubject}{all} } = $r->maketext(LIB2_DATA->{dbsubject}{all});
 
 	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
-	if (!grep { $_ eq $r->param('library_chapters') } @chaps) {
-		$r->param('library_chapters', '');
-	}
+	$r->param('library_chapters', '') if (!grep { $_ eq $r->param('library_chapters') } @chaps);
+	my $chap_labels = { map { $_ => $_ } @chaps };
 	unshift @chaps, LIB2_DATA->{dbchapter}{all};
+	$chap_labels->{ LIB2_DATA->{dbchapter}{all} } = $r->maketext(LIB2_DATA->{dbchapter}{all});
 
 	my @sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
-	if (!grep { $_ eq $r->param('library_sections') } @sects) {
-		$r->param('library_sections', '');
-	}
+	$r->param('library_sections', '') if (!grep { $_ eq $r->param('library_sections') } @sects);
+	my $sect_labels = { map { $_ => $_ } @sects };
 	unshift @sects, LIB2_DATA->{dbsection}{all};
+	$sect_labels->{ LIB2_DATA->{dbsection}{all} } = $r->maketext(LIB2_DATA->{dbsection}{all});
 
 	my $texts      = WeBWorK::Utils::ListingDB::getDBTextbooks($r);
 	my @textarray  = map { $_->[0] } @{$texts};
-	my %textlabels = ();
-	for my $ta (@{$texts}) {
-		$textlabels{ $ta->[0] } = $ta->[1] . " by " . $ta->[2] . " (edition " . $ta->[3] . ")";
-	}
-	if (!grep { $_ eq $r->param('library_textbook') } @textarray) {
-		$r->param('library_textbook', '');
-	}
+	my $textlabels = { map { $_->[0] => $_->[1] . " by " . $_->[2] . " (edition " . $_->[3] . ")" } @$texts };
+	$r->param('library_textbook', '') if (!grep { $_ eq $r->param('library_textbook') } @textarray);
 	unshift @textarray, LIB2_DATA->{textbook}{all};
-	my $atb = LIB2_DATA->{textbook}{all};
-	$textlabels{$atb} = LIB2_DATA->{textbook}{all};
+	$textlabels->{ LIB2_DATA->{textbook}{all} } = $r->maketext(LIB2_DATA->{textbook}{all});
 
-	my $textchap_ref = WeBWorK::Utils::ListingDB::getDBTextbooks($r, 'textchapter');
-	my @textchaps    = map { $_->[0] } @{$textchap_ref};
-	if (!grep { $_ eq $r->param('library_textchapter') } @textchaps) {
-		$r->param('library_textchapter', '');
-	}
+	my $textchap_ref    = WeBWorK::Utils::ListingDB::getDBTextbooks($r, 'textchapter');
+	my @textchaps       = map { $_->[0] } @{$textchap_ref};
+	my $textchap_labels = { map { $_ => $_ } @textchaps };
+	$r->param('library_textchapter', '') if (!grep { $_ eq $r->param('library_textchapter') } @textchaps);
 	unshift @textchaps, LIB2_DATA->{textchapter}{all};
+	$textchap_labels->{ LIB2_DATA->{textchapter}{all} } = $r->maketext(LIB2_DATA->{textchapter}{all});
 
-	my $textsec_ref = WeBWorK::Utils::ListingDB::getDBTextbooks($r, 'textsection');
-	my @textsecs    = map { $_->[0] } @{$textsec_ref};
-	if (!grep { $_ eq $r->param('library_textsection') } @textsecs) {
-		$r->param('library_textsection', '');
-	}
+	my $textsec_ref    = WeBWorK::Utils::ListingDB::getDBTextbooks($r, 'textsection');
+	my @textsecs       = map { $_->[0] } @{$textsec_ref};
+	my $textsec_labels = { map { $_ => $_ } @textsecs };
+	$r->param('library_textsection', '') if (!grep { $_ eq $r->param('library_textsection') } @textsecs);
 	unshift @textsecs, LIB2_DATA->{textsection}{all};
+	$textsec_labels->{ LIB2_DATA->{textsection}{all} } = $r->maketext(LIB2_DATA->{textsection}{all});
 
 	my %selected = ();
 	for my $j (qw( dbsection dbchapter dbsubject textbook textchapter textsection )) {
 		$selected{$j} = $r->param(LIB2_DATA->{$j}{name}) || LIB2_DATA->{$j}{all};
 	}
 
-	my $text_popup = CGI::popup_menu({
-		name     => 'library_textbook',
-		id       => 'library_textbook',
-		values   => \@textarray,
-		labels   => \%textlabels,
-		default  => $selected{textbook},
-		onchange => "submit();return true",
-		class    => 'form-select form-select-sm'
-	});
-
-	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
-	if ($count_line == 0) {
-		$count_line = "There are no matching WeBWorK problems";
-	} else {
-		$count_line = "There are $count_line matching WeBWorK problems";
-	}
+	my $listingsCount = WeBWorK::Utils::ListingDB::countDBListings($r);
+	my $count_line =
+		$listingsCount == 0
+		? 'There are no matching WeBWorK problems'
+		: "There are $listingsCount matching WeBWorK problems";
 
 	# Formatting level checkboxes by hand
 	my %selected_levels = map { $_ => 1 } $r->param('level');
-
-	my $mylevelline = CGI::div(
-		{ class => 'd-flex justify-content-between align-items-center' },
-		(
-			map {
-				CGI::div(
-					{ class => 'form-check form-check-inline' },
-					CGI::checkbox({
-						name            => 'level',
-						value           => $_,
-						label           => $_,
-						class           => 'form-check-input',
-						checked         => defined($selected_levels{$_}),
-						labelattributes => { class => 'form-check-label col-form-label-sm' }
-					})
-				)
-			} 1 .. 6
-		),
-		$self->helpMacro("Levels")
-	);
 
 	print CGI::div(
 		CGI::hidden({ name => "library_is_basic", default => 2, override => 1 }),
 		CGI::div(
 			{ class => 'text-center' },
-			CGI::label({ class => 'col-form-label-sm pt-0' }, $r->maketext('All Selected Constraints Joined by "And"'))
+			CGI::label(
+				{ class => 'col-form-label-sm pt-0' },
+				$r->maketext('All Selected Constraints Joined by "And"')
+			)
 		),
 		CGI::div(
 			{ class => 'row mb-1' },
@@ -837,6 +763,7 @@ sub browse_library_panel2adv {
 							name    => 'library_subjects',
 							id      => 'library_subjects',
 							values  => \@subjs,
+							labels  => $subj_labels,
 							default => $selected{dbsubject},
 							class   => 'form-select form-select-sm',
 						})
@@ -854,6 +781,7 @@ sub browse_library_panel2adv {
 							name    => 'library_chapters',
 							id      => 'library_chapters',
 							values  => \@chaps,
+							labels  => $chap_labels,
 							default => $selected{dbchapter},
 							class   => 'form-select form-select-sm',
 						})
@@ -871,6 +799,7 @@ sub browse_library_panel2adv {
 							name    => 'library_sections',
 							id      => 'library_sections',
 							values  => \@sects,
+							labels  => $sect_labels,
 							default => $selected{dbsection},
 							class   => 'form-select form-select-sm',
 						})
@@ -888,7 +817,7 @@ sub browse_library_panel2adv {
 							name     => 'library_textbook',
 							id       => 'library_textbook',
 							values   => \@textarray,
-							labels   => \%textlabels,
+							labels   => $textlabels,
 							default  => $selected{textbook},
 							onchange => "submit();return true",
 							class    => 'form-select form-select-sm'
@@ -898,17 +827,20 @@ sub browse_library_panel2adv {
 				CGI::div(
 					{ class => 'row mb-1' },
 					CGI::label(
-						{ for => 'library_textchapter', class => 'col-3 col-form-label col-form-label-sm text-nowrap' },
+						{
+							for   => 'library_textchapter',
+							class => 'col-3 col-form-label col-form-label-sm text-nowrap'
+						},
 						$r->maketext('Text chapter:')
 					),
 					CGI::div(
 						{ class => 'col-9' },
 						CGI::popup_menu({
-							name     => 'library_textbook',
-							id       => 'library_textbook',
-							values   => \@textarray,
-							labels   => \%textlabels,
-							default  => $selected{textbook},
+							name     => 'library_textchapter',
+							id       => 'library_textchapter',
+							values   => \@textchaps,
+							labels   => $textchap_labels,
+							default  => $selected{textchapter},
 							onchange => "submit();return true",
 							class    => 'form-select form-select-sm'
 						})
@@ -917,7 +849,10 @@ sub browse_library_panel2adv {
 				CGI::div(
 					{ class => 'row mb-1' },
 					CGI::label(
-						{ for => 'library_textsection', class => 'col-3 col-form-label col-form-label-sm text-nowrap' },
+						{
+							for   => 'library_textsection',
+							class => 'col-3 col-form-label col-form-label-sm text-nowrap'
+						},
 						$r->maketext('Text section:')
 					),
 					CGI::div(
@@ -926,6 +861,7 @@ sub browse_library_panel2adv {
 							name     => 'library_textsection',
 							id       => 'library_textsection',
 							values   => \@textsecs,
+							labels   => $textsec_labels,
 							default  => $selected{textsection},
 							onchange => "submit();return true",
 							class    => 'form-select form-select-sm',
@@ -935,7 +871,28 @@ sub browse_library_panel2adv {
 				CGI::div(
 					{ class => 'row mb-1' },
 					CGI::label({ class => 'col-3 col-form-label col-form-label-sm' }, $r->maketext("Level:")),
-					CGI::div({ class => 'col-9' }, $mylevelline),
+					CGI::div(
+						{ class => 'col-9' },
+						CGI::div(
+							{ class => 'd-flex justify-content-between align-items-center' },
+							(
+								map {
+									CGI::div(
+										{ class => 'form-check form-check-inline' },
+										CGI::checkbox({
+											name            => 'level',
+											value           => $_,
+											label           => $_,
+											class           => 'form-check-input',
+											checked         => defined($selected_levels{$_}),
+											labelattributes => { class => 'form-check-label col-form-label-sm' }
+										})
+									)
+								} 1 .. 6
+							),
+							$self->helpMacro("Levels")
+						)
+					),
 				),
 				CGI::div(
 					{ class => 'row mb-1' },
@@ -956,7 +913,8 @@ sub browse_library_panel2adv {
 				)
 			),
 			CGI::div(
-				{ class =>
+				{
+					class =>
 						'col-md-3 col-sm-4 mb-1 d-flex flex-sm-column justify-content-sm-start justify-content-center'
 				},
 				CGI::submit({
@@ -982,7 +940,12 @@ sub browse_library_panel2adv {
 		view_problems_line('lib_view', $r->maketext('View Problems'), $self->r),
 		CGI::div(
 			{ class => 'text-center', id => 'library_count_line' },
-			CGI::label({ class => 'col-form-label-sm' }, $count_line)
+			CGI::label(
+				{ class => 'col-form-label-sm' },
+				$listingsCount == 0
+				? 'There are no matching WeBWorK problems'
+				: "There are $listingsCount matching WeBWorK problems"
+			)
 		)
 	);
 }
@@ -992,14 +955,14 @@ sub browse_setdef_panel {
 	my $self             = shift;
 	my $r                = $self->r;
 	my $ce               = $r->ce;
-	my $library_selected = shift;
-	my $default_value    = 'Select a Set Definition File';
+	my $library_selected = shift // '';
 
 	# In the following line, the parens after sort are important. If they are
 	# omitted, sort will interpret get_set_defs as the name of the comparison
 	# function, and ($ce->{courseDirs}{templates}) as a single element list to
 	# be sorted.
 	my @list_of_set_defs = sort(get_set_defs($ce->{courseDirs}{templates}));
+	my $labels_for_set_defs = { map { $_ => $_ } @list_of_set_defs };
 
 	if (scalar(@list_of_set_defs) == 0) {
 		print CGI::div(
@@ -1012,9 +975,9 @@ sub browse_setdef_panel {
 		return;
 	}
 
-	if (!defined $library_selected || $library_selected eq $default_value) {
-		unshift @list_of_set_defs, $default_value;
-		$library_selected = $default_value;
+	if ($library_selected eq '') {
+		$labels_for_set_defs->{''} = $r->maketext('Select a Set Definition File');
+		unshift @list_of_set_defs, '';
 	}
 
 	print CGI::div(
@@ -1025,6 +988,7 @@ sub browse_setdef_panel {
 			CGI::popup_menu({
 				name    => 'library_sets',
 				values  => \@list_of_set_defs,
+				labels  => $labels_for_set_defs,
 				default => $library_selected,
 				class => 'form-select form-select-sm d-inline w-auto'
 			})
@@ -1040,10 +1004,10 @@ sub make_top_row {
 	my %data = @_;
 
 	my $list_of_local_sets = $data{all_db_sets};
-	my $have_local_sets = scalar(@$list_of_local_sets);
+	my $labels_for_local_sets = { map { $_ => format_set_name_display($_) } @$list_of_local_sets };
 	my $browse_which = $data{browse_which};
 	my $library_selected = $self->{current_library_set};
-	my $set_selected = $r->param('local_sets');
+	my $set_selected = $r->param('local_sets') // '';
 	my (@dis1, @dis2, @dis3, @dis4) = ();
 	@dis1 = (disabled => undef) if ($browse_which eq 'browse_npl_library');
 	@dis2 = (disabled => undef) if ($browse_which eq 'browse_local');
@@ -1052,11 +1016,12 @@ sub make_top_row {
 
 	my $these_widths = "width:9.3rem";
 
-	if ($have_local_sets == 0) {
-		$list_of_local_sets = [ $r->maketext(NO_LOCAL_SET_STRING) ];
-	} elsif (!defined $set_selected || $set_selected eq $r->maketext(SELECT_SET_STRING)) {
-		unshift @{$list_of_local_sets}, $r->maketext(SELECT_SET_STRING);
-		$set_selected = $r->maketext(SELECT_SET_STRING);
+	if (@$list_of_local_sets == 0) {
+		$list_of_local_sets = [''];
+		$labels_for_local_sets->{''} = $r->maketext(NO_LOCAL_SET_STRING);
+	} elsif ($set_selected eq '') {
+		unshift @{$list_of_local_sets}, '';
+		$labels_for_local_sets->{''} = $r->maketext('Select a Set from this Course');
 	}
 	my $courseID = $self->r->urlpath->arg("courseID");
 
@@ -1074,9 +1039,16 @@ sub make_top_row {
 				name     => 'local_sets',
 				id       => 'local_sets',
 				values   => $list_of_local_sets,
+				labels   => $labels_for_local_sets,
 				default  => $set_selected,
 				override => 1,
 				class    => 'form-select form-select-sm d-inline w-auto mx-2',
+				dir      => 'ltr',
+				data_no_set_selected => $r->maketext('No Target Set Selected'),
+				data_pick_target_set => $r->maketext('Pick a target set above to add this problem to.'),
+				data_problems_added => $r->maketext('Problems Added'),
+				data_added_to_single => $r->maketext('Added one problem to set [_1].', '{set}'),
+				data_added_to_plural => $r->maketext('Added [_1] problems to set [_2].', '{number}', '{set}'),
 			})
 		),
 		CGI::submit({
@@ -1090,26 +1062,27 @@ sub make_top_row {
 	print CGI::div(
 		{ class => 'd-flex flex-wrap justify-content-center' },
 		CGI::submit({
-			name    => "new_local_set",
-			value   => $r->maketext("Create a New Set in This Course:"),
-			onclick => "document.library_browser_form.selfassign.value=1",
+			name    => 'new_local_set',
+			id      => 'new_local_set',
+			value   => $r->maketext('Create a New Set in This Course:'),
+			onclick => 'document.library_browser_form.selfassign.value=1',
 			class   => 'btn btn-primary btn-sm mb-2 mx-2'
 		}),
 		CGI::textfield({
-			name        => "new_set_name",
-			placeholder => $r->maketext("New set name"),
-			override    => 1,
-			size        => 30,
-			class       => 'form-control form-control-sm d-inline w-auto mb-2'
+			name            => 'new_set_name',
+			aria_labelledby => 'new_local_set',
+			placeholder     => $r->maketext('New set name'),
+			override        => 1,
+			size            => 30,
+			class           => 'form-control form-control-sm d-inline w-auto mb-2',
+			dir             => 'ltr'
 		})
 	);
 
 	print CGI::hr({ class => 'mt-0 mb-2' });
 
 	# Tidy this list up since it is used in two different places
-	if ($list_of_local_sets->[0] eq $r->maketext(SELECT_SET_STRING)) {
-		shift @{$list_of_local_sets};
-	}
+	shift @$list_of_local_sets if ($list_of_local_sets->[0] eq '');
 
 	print CGI::div(
 		{ class => 'd-flex justify-content-center' },
@@ -1246,17 +1219,10 @@ sub make_data_row {
 	my $urlpath = $self->r->urlpath;
 	my $db      = $self->r->db;
 
-	## to set up edit and try links elegantly we want to know if
-	##    any target set is a gateway assignment or not
-	my $localSet = $self->r->param('local_sets');
-	my $setRecord;
-	if (defined($localSet)
-		&& $localSet ne $r->maketext(SELECT_SET_STRING)
-		&& $localSet ne $r->maketext(NO_LOCAL_SET_STRING))
-	{
-		$setRecord = $db->getGlobalSet($localSet);
-	}
-	my $isGatewaySet = (defined($setRecord) && $setRecord->assignment_type =~ /gateway/);
+	# To set up edit and try links we need to know if the target set is a gateway assignment or not.
+	my $localSet     = $self->r->param('local_sets');
+	my $setRecord    = defined $localSet  && $localSet ne '' ? $db->getGlobalSet($localSet) : undef;
+	my $isGatewaySet = defined $setRecord && $setRecord->assignment_type =~ /gateway/;
 
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a(
@@ -1587,7 +1553,7 @@ sub make_data_row {
 					$problem_stats),
 				CGI::div(
 					{ class => 'lb-problem-icons mb-1 d-flex align-items-center' },
-					$MOtag, $mlt, $rerand,
+					$mlt, $MOtag, $rerand,
 					$edit_link,
 					$try_link,
 					CGI::span(
@@ -1609,8 +1575,11 @@ sub make_data_row {
 				{ class => 'lb-problem-sub-header d-flex' },
 				CGI::div({ class => 'lb-problem-path font-sm flex-grow-1 flex-shrink-1' }, $sourceFileName),
 				CGI::div(
-					{ class => 'lb-inset text-nowrap', id => "inset$cnt" },
-					$self->{isInSet}{$sourceFileName} ? CGI::i(CGI::b('(in target set)')) : ''
+					{
+						class => 'lb-inset text-nowrap' . ($self->{isInSet}{$sourceFileName} ? '' : ' d-none'),
+						id    => "inset$cnt"
+					},
+					CGI::i(CGI::b($r->maketext('(in target set)')))
 				)
 			),
 			CGI::hidden({ name => "filetrial$cnt", default => $sourceFileName, override => 1 }),
@@ -1857,15 +1826,14 @@ sub pre_header_initialize {
 	} elsif ($r->param('view_local_set')) {
 
 		my $set_to_display = $self->{current_library_set};
-		if (not defined($set_to_display) or $set_to_display eq $r->maketext(SELECT_LOCAL_STRING) or $set_to_display eq "Found no directories containing problems") {
+		if (!defined $set_to_display || $set_to_display eq '') {
 			$self->addbadmessage($r->maketext('You need to select a set to view.'));
 		} else {
-			$set_to_display = '.' if $set_to_display eq $r->maketext(MY_PROBLEMS);
-			$set_to_display = substr($browse_which,7) if $set_to_display eq $r->maketext(MAIN_PROBLEMS);
-			@pg_files = list_pg_files($ce->{courseDirs}->{templates},
-				"$set_to_display");
-			@pg_files = map {{'filepath'=> $_, 'morelt'=>0}} @pg_files;
-			$use_previous_problems=0;
+			$set_to_display        = '.'                      if $set_to_display eq $r->maketext(MY_PROBLEMS);
+			$set_to_display        = substr($browse_which, 7) if $set_to_display eq $r->maketext(MAIN_PROBLEMS);
+			@pg_files              = list_pg_files($ce->{courseDirs}{templates}, "$set_to_display");
+			@pg_files              = map { { 'filepath' => $_, 'morelt' => 0 } } @pg_files;
+			$use_previous_problems = 0;
 		}
 
 		##### View problems selected from the a set in this course
@@ -1874,9 +1842,7 @@ sub pre_header_initialize {
 
 		my $set_to_display = $self->{current_library_set};
 		debug("set_to_display is $set_to_display");
-		if (not defined($set_to_display)
-				or $set_to_display eq "Select a Homework Set"
-				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
+		if (!defined $set_to_display || $set_to_display eq '') {
 			$self->addbadmessage($r->maketext("You need to select a set from this course to view."));
 		} else {
 			@pg_files = map { { 'filepath' => $_->source_file, 'morelt' => 0 } }
@@ -1899,15 +1865,13 @@ sub pre_header_initialize {
 
 		my $set_to_display = $self->{current_library_set};
 		debug("set_to_display is $set_to_display");
-		if (not defined($set_to_display)
-				or $set_to_display eq "Select a Set Definition File"
-				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
+		if (!defined $set_to_display || $set_to_display eq '') {
 			$self->addbadmessage($r->maketext("You need to select a set definition file to view."));
 		} else {
-			@pg_files= $self->read_set_def($set_to_display);
-			@pg_files = map {{'filepath'=> $_, 'morelt'=>0}} @pg_files;
+			@pg_files = $self->read_set_def($set_to_display);
+			@pg_files = map { { 'filepath' => $_, 'morelt' => 0 } } @pg_files;
 		}
-		$use_previous_problems=0;
+		$use_previous_problems = 0;
 
 		##### Edit the current local homework set
 
@@ -2143,6 +2107,10 @@ sub body {
 	print CGI::start_form({ method => "POST", action => $r->uri, name => 'library_browser_form' }),
 		$self->hidden_authen_fields,
 		CGI::hidden({ id => 'hidden_courseID', name => 'courseID', default => $courseID });
+
+	# Add the course language in a hidden input so that the javascript can get this information.
+	print CGI::hidden({ name => 'hidden_language', value => $ce->{language} });
+
 	print CGI::hidden(-name=>'browse_which', -value=>$browse_which,-override=>1),
 		CGI::hidden(-name=>'problem_seed', -value=>$problem_seed, -override=>1);
 	for ($j = 0 ; $j < scalar(@pg_files) ; $j++) {
