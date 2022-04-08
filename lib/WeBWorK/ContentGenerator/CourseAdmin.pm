@@ -4027,28 +4027,6 @@ sub upgrade_notification {
 	}
     }
 
-    # Check to see if the OPL_update script has been run more recently
-    # than the last pull of the library.
-    # this json file is (re)-created every time OPL-update is run.
-    my $jsonfile = $ce->{webworkDirs}{htdocs}.'/DATA/'.$ce->{problemLibrary}{tree};
-    # If no json file then the OPL script needs to be run
-    unless (-e $jsonfile) {
-	$upgradesAvailable = 1;
-	$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is no library tree file for the library, you will need to run OPL-update.')));
-    # otherwise we need to check to see if the date on the tree file
-    # is after the date on the last commit in the library
-    } else {
-	my $opldate = stat($jsonfile)->[9];
-	# skip this if the system doesnt support mtime
-	if ($opldate) {
-	    my $lastcommit = `git log -1 --pretty=format:%at`;
-	    if ($lastcommit > $opldate) {
-		$upgradesAvailable = 1;
-		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('The library index is older than the library, you need to run OPL-update.')));
-	    }
-	}
-    }
-
     chdir($ce->{webwork_dir});
 
 	if ($upgradesAvailable) {
