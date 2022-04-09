@@ -398,7 +398,7 @@ sub body {
 			} elsif ($timeNow < $verSet->due_date) {
 				$data->{end} = $r->maketext('Test not yet submitted.') . " $closeText";
 			} else {
-				$data->{end} = $r->maketext("No submissions. Over time.");
+				$data->{end} = $r->maketext('No submissions. Over time.');
 			}
 
 			# Status Logic: Assuming it is always after the open date for test versions.
@@ -647,11 +647,11 @@ sub body {
 			});
 			print CGI::caption($r->maketext('Test Versions'));
 			print CGI::thead(CGI::Tr(
-				CGI::th({ scope => 'col' }, 'Versions'),
-				CGI::th({ scope => 'col' }, 'Status'),
-				CGI::th({ scope => 'col' }, 'Score'),
-				CGI::th({ scope => 'col' }, 'Start'),
-				CGI::th({ scope => 'col' }, 'End'),
+				CGI::th({ scope => 'col' }, $r->maketext('Versions')),
+				CGI::th({ scope => 'col' }, $r->maketext('Status')),
+				CGI::th({ scope => 'col' }, $r->maketext('Score')),
+				CGI::th({ scope => 'col' }, $r->maketext('Start')),
+				CGI::th({ scope => 'col' }, $r->maketext('End')),
 				CGI::th(
 					{ scope => 'col', class => 'hardcopy' },
 					CGI::i(
