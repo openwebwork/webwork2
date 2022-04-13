@@ -29,7 +29,7 @@ use strict;
 use warnings;
 
 use CGI;
-use WeBWorK::Utils qw( sortAchievements thaw_base64 );
+use WeBWorK::Utils qw(sortAchievements thaw_base64 getAssetURL);
 
 sub head {
 	my ($self) = @_;
@@ -337,6 +337,15 @@ sub body {
 
 	return "";
 
+}
+
+sub output_JS {
+	my $self = shift;
+	my $ce = $self->r->ce;
+
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/AchievementItems/achievementitems.js'), defer => undef }, '');
+
+	return '';
 }
 
 1;

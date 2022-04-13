@@ -146,16 +146,15 @@ sub print_form {
 
     #Find all of the closed sets or sets that are past their reduced scoring date and put them in form
 
-    for (my $i=0; $i<=$#$sets; $i++) {
-	if (after($$sets[$i]->due_date()) & $$sets[$i]->assignment_type eq "default") {
-	    push(@openSets,$$sets[$i]->set_id);
-	}
-	elsif (defined($$sets[$i]->reduced_scoring_date())) {
-		if (after($$sets[$i]->reduced_scoring_date()) & $$sets[$i]->assignment_type eq "default") {
-			push(@openSets,$$sets[$i]->set_id);
+	for (my $i = 0; $i <= $#$sets; $i++) {
+		if (after($$sets[$i]->due_date) && $$sets[$i]->assignment_type eq 'default') {
+			push(@openSets, $$sets[$i]->set_id);
+		} elsif (defined $$sets[$i]->reduced_scoring_date && $$sets[$i]->reduced_scoring_date ne '') {
+			if (after($$sets[$i]->reduced_scoring_date) && $$sets[$i]->assignment_type eq 'default') {
+				push(@openSets, $$sets[$i]->set_id);
+			}
 		}
 	}
-    }
 
 	return join(
 		'',
@@ -617,44 +616,37 @@ sub new {
 }
 
 sub print_form {
-    my $self = shift;
-    my $sets = shift;
-    my $setProblemCount = shift;
-    my $r = shift;
+	my $self            = shift;
+	my $sets            = shift;
+	my $setProblemCount = shift;
+	my $r               = shift;
 
-    my @openSets;
-    my @openSetCount;
-    my $maxProblems=0;
+	my @openSets;
+	my $set_attribs;
+	my @openSetCount;
+	my $maxProblems = 0;
 
-    #print open sets in a drop down and some javascript which will cause the
-    #second drop down to have the correct number of problems for each set
+	#print open sets in a drop down and some javascript which will cause the
+	#second drop down to have the correct number of problems for each set
 
-    for (my $i=0; $i<=$#$sets; $i++) {
-	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
-	    push(@openSets,$$sets[$i]->set_id);
-	    push(@openSetCount,$$setProblemCount[$i]);
-	    $maxProblems = $$setProblemCount[$i] if ($$setProblemCount[$i]>$maxProblems);
+	for (my $i = 0; $i <= $#$sets; $i++) {
+		if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
+			push(@openSets, $$sets[$i]->set_id);
+			$set_attribs->{ $$sets[$i]->set_id }{'data-max'} = $$setProblemCount[$i];
+			push(@openSetCount, $$setProblemCount[$i]);
+			$maxProblems = $$setProblemCount[$i] if ($$setProblemCount[$i] > $maxProblems);
+		}
 	}
-    }
 
-    my @problemIDs;
-    my %attributes;
+	my @problemIDs;
+	my $problem_attribs;
 
-    for (my $i=1; $i<=$maxProblems; $i++) {
-	push(@problemIDs,$i);
-	if ($i > $openSetCount[0]) {
-	    $attributes{$i}{style} = 'display:none;';
+	for (my $i = 1; $i <= $maxProblems; $i++) {
+		push(@problemIDs, $i);
+		if ($i > $openSetCount[0]) {
+			$problem_attribs->{$i}{style} = 'display:none;';
+		}
 	}
-    }
-
-    my $problem_id_script = "var setid = \$('\#ria_set_id').val(); var max = null; switch(setid) {";
-    foreach (my $i=0; $i<=$#openSets; $i++) {
-	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
-    }
-    $problem_id_script .= "default: max = $openSetCount[0];} "
-	if $#openSetCount >= 0;
-    $problem_id_script .= "\$('\#ria_problem_id option').slice(max,$maxProblems).hide(); ";
-    $problem_id_script .= "\$('\#ria_problem_id option').slice(0,max).show();";
 
 	return join(
 		'',
@@ -667,13 +659,13 @@ sub print_form {
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
 			labels     => { map { $_ => format_set_name_display($_) } @openSets },
-			menu_attr  => { onchange => $problem_id_script, dir => 'ltr' }
+			menu_attr  => { attributes => $set_attribs, dir => 'ltr', data_problems => 'ria_problem_id' }
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			id                  => 'ria_problem_id',
 			label_text          => $r->maketext('Problem Number'),
 			values              => \@problemIDs,
-			menu_attr           => { attributes => \%attributes },
+			menu_attr           => { attributes => $problem_attribs },
 			menu_container_attr => { class      => 'col-3' }
 		)
 	);
@@ -741,44 +733,37 @@ sub new {
 }
 
 sub print_form {
-    my $self = shift;
-    my $sets = shift;
-    my $setProblemCount = shift;
-    my $r = shift;
+	my $self            = shift;
+	my $sets            = shift;
+	my $setProblemCount = shift;
+	my $r               = shift;
 
-    my @openSets;
-    my @openSetCount;
-    my $maxProblems=0;
+	my @openSets;
+	my $set_attribs;
+	my @openSetCount;
+	my $maxProblems = 0;
 
-    #print open sets and javascript to mach second dropdown to number of
-    #problems in each set
+	#print open sets and javascript to mach second dropdown to number of
+	#problems in each set
 
-    for (my $i=0; $i<=$#$sets; $i++) {
-	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
-	    push(@openSets,$$sets[$i]->set_id);
-	    push(@openSetCount,$$setProblemCount[$i]);
-	    $maxProblems = $$setProblemCount[$i] if ($$setProblemCount[$i]>$maxProblems);
+	for (my $i = 0; $i <= $#$sets; $i++) {
+		if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
+			push(@openSets, $$sets[$i]->set_id);
+			$set_attribs->{ $$sets[$i]->set_id }{'data-max'} = $$setProblemCount[$i];
+			push(@openSetCount, $$setProblemCount[$i]);
+			$maxProblems = $$setProblemCount[$i] if ($$setProblemCount[$i] > $maxProblems);
+		}
 	}
-    }
 
-    my @problemIDs;
-    my %attributes;
+	my @problemIDs;
+	my $problem_attribs;
 
-    for (my $i=1; $i<=$maxProblems; $i++) {
-	push(@problemIDs,$i);
-	if ($i > $openSetCount[0]) {
-	    $attributes{$i}{style} = 'display:none;';
+	for (my $i = 1; $i <= $maxProblems; $i++) {
+		push(@problemIDs, $i);
+		if ($i > $openSetCount[0]) {
+			$problem_attribs->{$i}{style} = 'display:none;';
+		}
 	}
-    }
-
-    my $problem_id_script = "var setid = \$('\#dbp_set_id').val(); var max = null; switch(setid) {";
-    foreach (my $i=0; $i<=$#openSets; $i++) {
-	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
-    }
-    $problem_id_script .= "default: max = $openSetCount[0];} "
-	if $#openSetCount >= 0;
-    $problem_id_script .= "\$('\#dbp_problem_id option').slice(max,$maxProblems).hide(); ";
-    $problem_id_script .= "\$('\#dbp_problem_id option').slice(0,max).show();";
 
 	return join(
 		'',
@@ -791,13 +776,13 @@ sub print_form {
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
 			labels     => { map { $_ => format_set_name_display($_) } @openSets },
-			menu_attr  => { onchange => $problem_id_script, dir => 'ltr' }
+			menu_attr  => { attributes => $set_attribs, dir => 'ltr', data_problems => 'dbp_problem_id' }
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			id                  => 'dbp_problem_id',
 			label_text          => $r->maketext('Problem Number'),
 			values              => \@problemIDs,
-			menu_attr           => { attributes => \%attributes },
+			menu_attr           => { attributes => $problem_attribs },
 			menu_container_attr => { class      => 'col-3' }
 		)
 	);
@@ -867,44 +852,35 @@ sub new {
 }
 
 sub print_form {
-    my $self = shift;
-    my $sets = shift;
-    my $setProblemCount = shift;
-    my $r = shift;
+	my $self            = shift;
+	my $sets            = shift;
+	my $setProblemCount = shift;
+	my $r               = shift;
 
-    my @openSets;
-    my @openSetCount;
-    my $maxProblems=0;
+	my @openSets;
+	my $set_attribs;
+	my @openSetCount;
+	my $maxProblems = 0;
 
-    #print form with open sets and javasscript to have appropriate number
-    # of items in second drop down
+	#print form with open sets and javasscript to have appropriate number
+	# of items in second drop down
 
-    for (my $i=0; $i<=$#$sets; $i++) {
-	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
-	    push(@openSets,$$sets[$i]->set_id);
-	    push(@openSetCount,$$setProblemCount[$i]);
-	    $maxProblems = $$setProblemCount[$i] if ($$setProblemCount[$i]>$maxProblems);
+	for (my $i = 0; $i <= $#$sets; $i++) {
+		if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
+			push(@openSets, $$sets[$i]->set_id);
+			$set_attribs->{ $$sets[$i]->set_id }{'data-max'} = $$setProblemCount[$i];
+			push(@openSetCount, $$setProblemCount[$i]);
+			$maxProblems = $$setProblemCount[$i] if ($$setProblemCount[$i] > $maxProblems);
+		}
 	}
-    }
 
-    my @problemIDs;
-    my %attributes;
+	my @problemIDs;
+	my $problem_attribs;
 
-    for (my $i=1; $i<=$maxProblems; $i++) {
-	push(@problemIDs,$i);
-	if ($i > $openSetCount[0]) {
-	    $attributes{$i}{style} = 'display:none;';
+	for (my $i = 1; $i <= $maxProblems; $i++) {
+		push(@problemIDs, $i);
+		$problem_attribs->{$i}{style} = 'display:none;' if ($i > $openSetCount[0]);
 	}
-    }
-
-    my $problem_id_script = "var setid = \$('\#hcp_set_id').val(); var max = null; switch(setid) {";
-    foreach (my $i=0; $i<=$#openSets; $i++) {
-	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
-    }
-    $problem_id_script .= "default: max = $openSetCount[0];} "
-	if $#openSetCount >= 0;
-    $problem_id_script .= "\$('\#hcp_problem_id option').slice(max,$maxProblems).hide(); ";
-    $problem_id_script .= "\$('\#hcp_problem_id option').slice(0,max).show();";
 
 	return join(
 		'',
@@ -917,13 +893,13 @@ sub print_form {
 			values     => \@openSets,
 			labels     => { map { $_ => format_set_name_display($_) } @openSets },
 			label_text => $r->maketext('Set Name'),
-			menu_attr  => { onchange => $problem_id_script, dir => 'ltr' }
+			menu_attr  => { attributes => $set_attribs, dir => 'ltr', data_problems => 'hcp_problem_id' }
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			id                  => 'hcp_problem_id',
 			values              => \@problemIDs,
 			label_text          => $r->maketext('Problem Number'),
-			menu_attr           => { attributes => \%attributes },
+			menu_attr           => { attributes => $problem_attribs },
 			menu_container_attr => { class      => 'col-3' }
 		)
 	);
@@ -1093,43 +1069,36 @@ sub new {
 }
 
 sub print_form {
-    my $self = shift;
-    my $sets = shift;
-    my $setProblemCount = shift;
-    my $r = shift;
+	my $self            = shift;
+	my $sets            = shift;
+	my $setProblemCount = shift;
+	my $r               = shift;
 
-    my @openSets;
-    my @openSetCount;
-    my $maxProblems=0;
+	my @openSets;
+	my $set_attribs;
+	my @openSetCount;
+	my $maxProblems = 0;
 
-    #print form getting set and problem number
+	#print form getting set and problem number
 
-    for (my $i=0; $i<=$#$sets; $i++) {
-	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
-	    push(@openSets,$$sets[$i]->set_id);
-	    push(@openSetCount,$$setProblemCount[$i]);
-	    $maxProblems = $$setProblemCount[$i] if ($$setProblemCount[$i]>$maxProblems);
+	for (my $i = 0; $i <= $#$sets; $i++) {
+		if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
+			push(@openSets, $$sets[$i]->set_id);
+			$set_attribs->{ $$sets[$i]->set_id }{'data-max'} = $$setProblemCount[$i];
+			push(@openSetCount, $$setProblemCount[$i]);
+			$maxProblems = $$setProblemCount[$i] if ($$setProblemCount[$i] > $maxProblems);
+		}
 	}
-    }
 
-    my @problemIDs;
-    my %attributes;
+	my @problemIDs;
+	my $problem_attribs;
 
-    for (my $i=1; $i<=$maxProblems; $i++) {
-	push(@problemIDs,$i);
-	if ($i > $openSetCount[0]) {
-	    $attributes{$i}{style} = 'display:none;';
+	for (my $i = 1; $i <= $maxProblems; $i++) {
+		push(@problemIDs, $i);
+		if ($i > $openSetCount[0]) {
+			$problem_attribs->{$i}{style} = 'display:none;' if ($i > $openSetCount[0]);
+		}
 	}
-    }
-
-    my $problem_id_script = "var setid = \$('\#fcp_set_id').val(); var max = null; switch(setid) {";
-    foreach (my $i=0; $i<=$#openSets; $i++) {
-	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
-    }
-    $problem_id_script .= "default: max = $openSetCount[0];} "
-	if $#openSetCount >= 0;
-    $problem_id_script .= "\$('\#fcp_problem_id option').slice(max,$maxProblems).hide(); ";
-    $problem_id_script .= "\$('\#fcp_problem_id option').slice(0,max).show();";
 
 	return join(
 		'',
@@ -1142,13 +1111,13 @@ sub print_form {
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
 			labels     => { map { $_ => format_set_name_display($_) } @openSets },
-			menu_attr  => { onchange => $problem_id_script, dir => 'ltr' }
+			menu_attr  => { attributes => $set_attribs, dir => 'ltr', data_problems => 'fcp_problem_id' }
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			id                  => 'fcp_problem_id',
 			values              => \@problemIDs,
 			label_text          => $r->maketext('Problem Number'),
-			menu_attr           => { attributes => \%attributes },
+			menu_attr           => { attributes => $problem_attribs },
 			menu_container_attr => { class      => 'col-3' }
 		)
 	);
@@ -1309,45 +1278,36 @@ sub new {
 }
 
 sub print_form {
-    my $self = shift;
-    my $sets = shift;
-    my $setProblemCount = shift;
-    my $r = shift;
+	my $self            = shift;
+	my $sets            = shift;
+	my $setProblemCount = shift;
+	my $r               = shift;
 
-    my @openSets;
-    my @openSetCount;
-    my $maxProblems=0;
+	my @openSets;
+	my $set_attribs;
+	my @openSetCount;
+	my $maxProblems = 0;
 
-    # print open sets and allow for a choice of two problems from the set
+	# print open sets and allow for a choice of two problems from the set
 
-    for (my $i=0; $i<=$#$sets; $i++) {
-	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
-	    push(@openSets,$$sets[$i]->set_id);
-	    push(@openSetCount,$$setProblemCount[$i]);
-	    $maxProblems = $$setProblemCount[$i] if ($$setProblemCount[$i]>$maxProblems);
+	for (my $i = 0; $i <= $#$sets; $i++) {
+		if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
+			push(@openSets, $$sets[$i]->set_id);
+			$set_attribs->{ $$sets[$i]->set_id }{'data-max'} = $$setProblemCount[$i];
+			push(@openSetCount, $$setProblemCount[$i]);
+			$maxProblems = $$setProblemCount[$i] if ($$setProblemCount[$i] > $maxProblems);
+		}
 	}
-    }
 
-    my @problemIDs;
-    my %attributes;
+	my @problemIDs;
+	my %attributes;
 
-    for (my $i=1; $i<=$maxProblems; $i++) {
-	push(@problemIDs,$i);
-	if ($i > $openSetCount[0]) {
-	    $attributes{$i}{style} = 'display:none;';
+	for (my $i = 1; $i <= $maxProblems; $i++) {
+		push(@problemIDs, $i);
+		if ($i > $openSetCount[0]) {
+			$attributes{$i}{style} = 'display:none;';
+		}
 	}
-    }
-
-    my $problem_id_script = "var setid = \$('\#tran_set_id').val(); var max = null; switch(setid) {";
-    foreach (my $i=0; $i<=$#openSets; $i++) {
-	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
-    }
-    $problem_id_script .= "default: max = $openSetCount[0];} "
-	if $#openSetCount >= 0;
-    $problem_id_script .= "\$('\#tran_problem_id option').slice(max,$maxProblems).hide(); ";
-    $problem_id_script .= "\$('\#tran_problem_id option').slice(0,max).show();";
-    $problem_id_script .= "\$('\#tran_problem_id2 option').slice(max,$maxProblems).hide(); ";
-    $problem_id_script .= "\$('\#tran_problem_id2 option').slice(0,max).show();";
 
 	return join(
 		'',
@@ -1360,7 +1320,12 @@ sub print_form {
 			label_text => $r->maketext('Set Name'),
 			values     => \@openSets,
 			labels     => { map { $_ => format_set_name_display($_) } @openSets },
-			menu_attr  => { onchange => $problem_id_script, dir => 'ltr' }
+			menu_attr  => {
+				attributes     => $set_attribs,
+				dir            => 'ltr',
+				data_problems  => 'tran_problem_id',
+				data_problems2 => 'tran_problem_id2'
+			}
 		),
 		CGI::div(
 			{ class => 'row mb-3' },
