@@ -671,7 +671,7 @@ sub body {
 				@contentArr,
 				CGI::div(
 					{
-						class            => "tab-pane pg_editor_action_div fade" . ($active ? " show$active" : ''),
+						class            => "tab-pane fade" . ($active ? " show$active" : ''),
 						id               => $actionID,
 						role             => 'tabpanel',
 						aria_labelledby => "$actionID-tab"
