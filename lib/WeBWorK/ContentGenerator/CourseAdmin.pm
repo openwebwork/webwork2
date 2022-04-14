@@ -981,16 +981,17 @@ sub rename_course_form {
 						checked         => $r->param('rename_newCourseID_checkbox') || '',
 						value           => 'on',
 						class           => 'form-check-input',
-						labelattributes => { class => 'form-check-label' }
+						labelattributes => { class => 'form-check-label', id => 'rename_newCourseID_label' }
 					})
 				)
 			),
 			CGI::div(
 				{ class => 'col-sm-6' },
 				CGI::textfield({
-					name  => 'rename_newCourseID',
-					value => $r->param('rename_newCourseID') || '',
-					class => 'form-control'
+					name            => 'rename_newCourseID',
+					value           => $r->param('rename_newCourseID') || '',
+					class           => 'form-control',
+					aria_labelledby => 'rename_newCourseID_label'
 				}),
 			)
 		),
@@ -1006,16 +1007,17 @@ sub rename_course_form {
 						selected        => $r->param('rename_newCourseTitle_checkbox') || '',
 						value           => 'on',
 						class           => 'form-check-input',
-						labelattributes => { class => 'form-check-label' }
+						labelattributes => { class => 'form-check-label', id => 'rename_newCourseTitle_label' }
 					})
 				)
 			),
 			CGI::div(
 				{ class => 'col-sm-6' },
 				CGI::textfield({
-					name  => 'rename_newCourseTitle',
-					value => $r->param('rename_newCourseTitle') || '',
-					class => 'form-control'
+					name            => 'rename_newCourseTitle',
+					value           => $r->param('rename_newCourseTitle') || '',
+					class           => 'form-control',
+					aria_labelledby => 'rename_newCourseTitle_label'
 				})
 			),
 		),
@@ -1031,16 +1033,17 @@ sub rename_course_form {
 						checked         => $r->param('rename_newCourseInstitution_checkbox') || '',
 						value           => 'on',
 						class           => 'form-check-input',
-						labelattributes => { class => 'form-check-label' }
+						labelattributes => { class => 'form-check-label', id => 'rename_newCourseInstitution_label' }
 					})
 				)
 			),
 			CGI::div(
 				{ class => 'col-sm-6' },
 				CGI::textfield({
-					name  => 'rename_newCourseInstitution',
-					value => $r->param('rename_newCourseInstitution') || '',
-					class => 'form-control'
+					name            => 'rename_newCourseInstitution',
+					value           => $r->param('rename_newCourseInstitution') || '',
+					class           => 'form-control',
+					aria_labelledby => 'rename_newCourseInstitution_label'
 				})
 			)
 		)
@@ -2504,18 +2507,19 @@ sub unarchive_course_form {
 						value           => 1,
 						label           => $r->maketext('New Name:'),
 						class           => 'form-check-input',
-						labelattributes => { class => 'form-check-label' }
+						labelattributes => { class => 'form-check-label', id => 'create_newCourseID_label' }
 					})
 				)
 			),
 			CGI::div(
 				{ class => 'col-sm-8' },
 				CGI::textfield({
-					name      => 'new_courseID',
-					value     => '',
-					size      => 25,
-					maxlength => $ce->{maxCourseIdLength},
-					class     => 'form-control'
+					name            => 'new_courseID',
+					value           => '',
+					size            => 25,
+					maxlength       => $ce->{maxCourseIdLength},
+					class           => 'form-control',
+					aria_labelledby => 'create_newCourseID_label'
 				})
 			)
 		)
