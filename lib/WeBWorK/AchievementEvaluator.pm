@@ -292,28 +292,6 @@ sub checkForAchievements {
 			}
 			$cheevoMessage .= CGI::end_div();
 
-			# This feature doesn't really work anymore because of a change in facebook's api.
-			# If facebook integration is enabled, then create a facebook popup.
-			if ($ce->{allowFacebooking} && $globalUserAchievement->facebooker) {
-				$cheevoMessage .= CGI::div({ id => 'fb-root' }, '');
-				$cheevoMessage .= CGI::script({ src => 'http://connect.facebook.net/en_US/all.js' }, '');
-				$cheevoMessage .= CGI::start_script();
-
-				$cheevoMessage .=
-					"FB.init({appId:'" . $ce->{facebookAppId} . "', cookie:true,status:true, xfbml:true });\n";
-
-				my $facebookmessage;
-				if ($achievement->category eq 'level') {
-					$facebookmessage = sprintf("I leveled up and am now a %s", $achievement->{name});
-				} else {
-					$facebookmessage = sprintf("%s: %s", $achievement->{name}, $achievement->{description});
-				}
-
-				$cheevoMessage .=
-					"FB.ui({ method: 'feed', display: 'popup', picture: '$imgSrc', description: '$facebookmessage'});\n";
-				$cheevoMessage .= CGI::end_script();
-			}
-
 			$cheevoMessage .= q{<button type="button" class="btn-close me-2 m-auto"
 								data-bs-dismiss="toast" aria-label="Close"></button>};
 			$cheevoMessage .= CGI::end_div() . CGI::end_div();

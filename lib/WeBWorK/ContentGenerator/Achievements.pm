@@ -45,101 +45,36 @@ sub output_achievement_CSS {
 
 sub initialize {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
-	my $authz = $r->authz;
+	my $r      = $self->r;
+	my $db     = $r->db;
+	my $ce     = $r->ce;
 
 	# Get user Data
- 	my $userName = $r->param('user');
- 	my $effectiveUserName = defined($r->param('effectiveUser') ) ? $r->param('effectiveUser') : $userName;
-	$self->{userName} = $userName;
-	$self->{studentName} = $effectiveUserName;
+	$self->{userName}    = $r->param('user');
+	$self->{studentName} = $r->param('effectiveUser') // $self->{userName};
+	$self->{globalData}  = $db->getGlobalUserAchievement($self->{studentName});
 
-	my $globalUserAchievement = $db->getGlobalUserAchievement($effectiveUserName);
+	# Check to see if user items are enabled and if the user has achievement data.
+	if ($ce->{achievementItemsEnabled} && defined $self->{globalData}) {
 
-	$self->{globalData} = $globalUserAchievement;
+		my $itemsWithCounts = WeBWorK::AchievementItems::UserItems($self->{studentName}, $db, $ce);
+		$self->{achievementItems} = $itemsWithCounts;
 
-	#Checks to see if user items are enabled and if the user has
-	# achievement data
+		my $usedItem = $r->param('useditem');
 
-	if ($ce->{achievementItemsEnabled} && defined $globalUserAchievement) {
-
-	    my $itemsWithCounts = WeBWorK::AchievementItems::UserItems($effectiveUserName, $db, $ce);
-            $self->{achievementItems} = $itemsWithCounts;
-
-	    my $usedItem = $r->param('useditem');
-
-	    # if the useditem parameter is defined then the student wanted to
-	    # use an item so lets do that by calling the appropriate item's
-	    # use method and printing results
-
-	    if (defined $usedItem) {
-		my $error = $itemsWithCounts->[$usedItem]->[0]->use_item($effectiveUserName, $r);
-		if ($error) {
-		    $self->addbadmessage($error);
-		} else {
-                    if ($itemsWithCounts->[$usedItem]->[1] != 1)    {$itemsWithCounts->[$usedItem]->[1]--}
-                    else {splice(@$itemsWithCounts, $usedItem, 1)};
-		    $self->addgoodmessage($r->maketext('Reward used successfully!'));
+		# If the useditem parameter is defined then the student wanted to use an item, so lets do that by calling the
+		# appropriate item's use method and printing results.
+		if (defined $usedItem) {
+			my $error = $itemsWithCounts->[$usedItem][0]->use_item($self->{studentName}, $r);
+			if ($error) {
+				$self->addbadmessage($error);
+			} else {
+				if   ($itemsWithCounts->[$usedItem]->[1] != 1) { --$itemsWithCounts->[$usedItem][1]; }
+				else                                           { splice(@$itemsWithCounts, $usedItem, 1); }
+				$self->addgoodmessage($r->maketext('Reward used successfully!'));
+			}
 		}
-	    }
 	}
-
-}
-
- sub if_can {
-	my ($self, $arg) = @_;
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
-	my $authz = $r->authz;
-	my $globalUserAchievement = $self->{globalData};
-
-	if ($arg eq 'options' && (not $ce->{allowFacebooking} || not defined($globalUserAchievement))) {
-	    return 0;
- 	} else {
-	    return $self->SUPER::if_can($arg);
- 	}
- }
-
-sub options {
-    	my ($self) = @_;
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
-	my $authz = $r->authz;
-	my $globalUserAchievement = $self->{globalData};
-
-	return "" unless defined $globalUserAchievement;
-
-	my $changeFacebooking = $r->param('changeFacebooking');
-
-	if ($changeFacebooking) {
-	    $globalUserAchievement->facebooker(!$globalUserAchievement->facebooker);
-	    $db->putGlobalUserAchievement($globalUserAchievement);
-	}
-
-	print CGI::start_div({class=>'facebookbox'});
-	print CGI::start_form(-method=>'POST', -action=>$r->uri);
-	print $self->hidden_authen_fields;
-	print CGI::submit({ class => 'btn btn-sm btn-secondary' }, 'changeFacebooking', $globalUserAchievement->facebooker
-			  ? "Disable Facebook \n  Integration" : "Enable Facebook \n Integration");
-	print CGI::end_form();
-	print CGI::end_div();
-
-	if ($globalUserAchievement->facebooker) {
-	    #Print Facebook stuff (uses WCU specific appID)
-	    print CGI::start_div({class=>'facebookbox'});
-	    print CGI::div({id=>'fb-root'},'');
-	    print CGI::script({src=>'http://connect.facebook.net/en_US/all.js'},"");
-	    print CGI::script("FB.init({appId:'".$ce->{facebookAppId}."', cookie:true, status:true, xfbml:true });");
-	    print "<fb:login-button perms=\"publish_stream\">";
-	    print "Login to FB";
-	    print "</fb:login-button>";
-	    print CGI::end_div();
-	}
-	return "";
 }
 
 sub body {

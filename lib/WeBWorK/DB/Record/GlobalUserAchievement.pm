@@ -35,7 +35,6 @@ BEGIN {
 		# later, but it makes freezing and thawing safer to have
 		# more available characters
 		frozen_hash => { type => "VARCHAR(1024)" },
-		facebooker  => { type => "INT" },
 	);
 }
 
