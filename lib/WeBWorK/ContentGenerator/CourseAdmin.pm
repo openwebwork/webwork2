@@ -2832,7 +2832,7 @@ sub upgrade_course_confirm {
 			print CGI::p(
 				{ class => 'text-danger fw-bold' },
 				$r->maketext('There are extra database tables which are not defined in the schema. ')
-					. 'Check the checkbox below the table to delete it when upgrading the course. '
+					. 'Check the checkbox by the table to delete it when upgrading the course. '
 					. 'Warning: Deletion destroys all data contained in the table and is not undoable!'
 			);
 		}
@@ -2843,7 +2843,7 @@ sub upgrade_course_confirm {
 				{ class => 'text-danger fw-bold' },
 				$r->maketext(
 					'There are extra database fields which are not defined in the schema for at least one table. '
-						. 'Check the checkbox below the field to delete it when upgrading the course. '
+						. 'Check the checkbox by the field to delete it when upgrading the course. '
 						. 'Warning: Deletion destroys all data contained in the field and is not undoable!'
 				)
 			);
@@ -4221,7 +4221,7 @@ sub formatReportOnDatabaseTables {
 		WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A =>
 			CGI::span({ class => 'text-danger' }, $r->maketext('Table defined in schema but missing in database')),
 		WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B =>
-			CGI::span({ class => 'text-danger' }, $r->maketext('Table defined in database but missing in schema')),
+			CGI::span({ class => 'text-danger me-2' }, $r->maketext('Table defined in database but missing in schema')),
 		WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B =>
 			CGI::span({ class => 'text-success' }, $r->maketext('Table is ok')),
 		WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B =>
@@ -4231,7 +4231,7 @@ sub formatReportOnDatabaseTables {
 		WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A =>
 			CGI::span({ class => 'text-danger' }, $r->maketext('Field missing in database')),
 		WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B =>
-			CGI::span({ class => 'text-danger' }, $r->maketext('Field missing in schema')),
+			CGI::span({ class => 'text-danger me-2' }, $r->maketext('Field missing in schema')),
 		WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B =>
 			CGI::span({ class => 'text-success' }, $r->maketext('Field is ok')),
 		WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B =>
@@ -4252,7 +4252,7 @@ sub formatReportOnDatabaseTables {
 		} elsif ($table_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B) {
 			$extra_database_tables = 1;
 			$str .= CGI::span(
-				{ class => 'form-check' },
+				{ class => 'form-check d-inline-block' },
 				CGI::checkbox({
 					name            => "$courseID.delete_tableIDs",
 					value           => $table,
@@ -4273,7 +4273,7 @@ sub formatReportOnDatabaseTables {
 				if ($field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B) {
 					$extra_database_fields = 1;
 					$str .= CGI::span(
-						{ class => 'form-check' },
+						{ class => 'form-check d-inline-block' },
 						CGI::checkbox({
 							name            => "$courseID.$table.delete_fieldIDs",
 							value           => $key,
