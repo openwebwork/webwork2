@@ -1965,7 +1965,7 @@ sub printTableHTML {
 				id                => 'select-all',
 				aria_label        => $r->maketext('Select all users'),
 				data_select_group => 'selected_users',
-				class             => 'form-check-input',
+				class             => 'select-all form-check-input',
 			})),
 			CGI::th(CGI::label(
 				{ for => 'select-all' },

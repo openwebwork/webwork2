@@ -32,7 +32,7 @@ use WeBWorK::CourseEnvironment;
 use IO::File;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive trim_spaces);
+use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive trim_spaces getAssetURL);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse retitleCourse deleteCourse listCourses archiveCourse
                                         listArchivedCourses unarchiveCourse initNonNativeTables);
 use WeBWorK::Utils::CourseIntegrityCheck;
@@ -2699,26 +2699,16 @@ sub upgrade_course_form {
 	print CGI::div(
 		{ class => 'mb-2' },
 		CGI::input({
-			type    => 'button',
-			name    => 'check_all',
-			value   => $r->maketext('Select all eligible courses'),
-			class   => 'btn btn-sm btn-secondary',
-			onclick => 'for (i in document.courselist.elements)  {
-							if (document.courselist.elements[i].name == "upgrade_courseIDs") {
-								document.courselist.elements[i].checked = true
-							}
-						}'
+			type              => 'button',
+			value             => $r->maketext('Select all eligible courses'),
+			class             => 'select-all btn btn-sm btn-secondary',
+			data_select_group => 'upgrade_courseIDs'
 		}),
 		CGI::input({
-			type    => 'button',
-			name    => 'check_none',
-			value   => $r->maketext('Unselect all courses'),
-			class   => 'btn btn-sm btn-secondary',
-			onclick => 'for (i in document.courselist.elements)  {
-							if (document.courselist.elements[i].name == "upgrade_courseIDs") {
-								document.courselist.elements[i].checked = false
-							}
-						}'
+			type              => 'button',
+			value             => $r->maketext('Unselect all courses'),
+			class             => 'select-none btn btn-sm btn-secondary',
+			data_select_group => 'upgrade_courseIDs'
 		})
 	);
 
@@ -2799,7 +2789,7 @@ sub upgrade_course_confirm {
 
 	my @upgrade_courseIDs = ($r->param("upgrade_courseIDs"));
 
-	my %update_error_msg;
+	my ($extra_database_tables_exist, $extra_database_fields_exist) = (0, 0);
 
 	print CGI::start_form({ method => 'POST', action => $r->uri });
 	for my $upgrade_courseID (@upgrade_courseIDs) {
@@ -2838,6 +2828,7 @@ sub upgrade_course_confirm {
 		print CGI::p($str);
 
 		if ($extra_database_tables) {
+			$extra_database_tables_exist = 1;
 			print CGI::p(
 				{ class => 'text-danger fw-bold' },
 				$r->maketext('There are extra database tables which are not defined in the schema. ')
@@ -2847,6 +2838,7 @@ sub upgrade_course_confirm {
 		}
 
 		if ($extra_database_fields) {
+			$extra_database_fields_exist = 1;
 			print CGI::p(
 				{ class => 'text-danger fw-bold' },
 				$r->maketext(
@@ -2873,11 +2865,41 @@ sub upgrade_course_confirm {
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields('subDisplay');
 
+	if ($extra_database_tables_exist) {
+		print CGI::div(
+			{ class => 'mb-3' },
+			CGI::div(
+				{ class => 'form-check' },
+				CGI::checkbox({
+					label             => $r->maketext('Select/unselect all tables missing in schema for deletion.'),
+					class             => 'select-all form-check-input',
+					labelattributes   => { class => 'form-check-label' },
+					data_select_group => 'delete_tableIDs'
+				})
+			)
+		);
+	}
+
+	if ($extra_database_fields_exist) {
+		print CGI::div(
+			{ class => 'mb-3' },
+			CGI::div(
+				{ class => 'form-check' },
+				CGI::checkbox({
+					label             => $r->maketext('Select/unselect all fields missing in schema for deletion.'),
+					class             => 'select-all form-check-input',
+					labelattributes   => { class => 'form-check-label' },
+					data_select_group => 'delete_fieldIDs'
+				})
+			)
+		);
+	}
+
 	# Submit buttons
 	# After presenting a detailed summary of status of selected courses the choice is made to upgrade the selected
 	# courses (confirm_upgrade_course is set or return to the beginning (decline_upgrade_course is set)
-	print CGI::p(
-		{ class => 'text-center' },
+	print CGI::div(
+		{ class => 'submit-buttons-container' },
 		CGI::submit({
 			name  => 'decline_upgrade_course',
 			value => $r->maketext("Don't Upgrade"),
@@ -4274,6 +4296,15 @@ sub formatReportOnDatabaseTables {
 	$str .= $all_tables_ok ? CGI::p({ class => 'text-success' }, $r->maketext('Database tables are ok')) : '';
 
 	return ($all_tables_ok, $extra_database_tables, $extra_database_fields, $str);
+}
+
+sub output_JS {
+	my $self = shift;
+	my $ce   = $self->r->ce;
+
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/SelectAll/selectall.js'), defer => undef }, '');
+
+	return '';
 }
 
 1;

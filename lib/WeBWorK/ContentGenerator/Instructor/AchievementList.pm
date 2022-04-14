@@ -1441,7 +1441,7 @@ sub printTableHTML {
 				id                => 'select-all',
 				aria_label        => $r->maketext('Select all achievements'),
 				data_select_group => 'selected_export',
-				class             => 'form-check-input'
+				class             => 'select-all form-check-input'
 			}),
 			CGI::label({ for => 'select-all' }, $r->maketext('Achievement ID')),
 			$r->maketext('Name')
@@ -1477,7 +1477,7 @@ sub printTableHTML {
 				id                => 'select-all',
 				aria_label        => $r->maketext('Select all achievements'),
 				data_select_group => 'selected_achievements',
-				class             => 'form-check-input'
+				class             => 'select-all form-check-input'
 			}),
 			CGI::label({ for => 'select-all' }, $r->maketext('Achievement ID')),
 			$r->maketext('Enabled'),

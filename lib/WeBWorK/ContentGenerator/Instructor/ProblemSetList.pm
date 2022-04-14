@@ -2721,7 +2721,7 @@ sub printTableHTML {
 				id                => 'select-all',
 				aria_label        => $r->maketext('Select all sets'),
 				data_select_group => 'selected_sets',
-				class             => 'form-check-input'
+				class             => 'select-all form-check-input'
 			}));
 	}
 
