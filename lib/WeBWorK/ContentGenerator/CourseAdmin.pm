@@ -2949,10 +2949,10 @@ sub do_upgrade_course {
 		my @tables_to_alter =
 			grep { $dbStatus->{$_}[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B } @schema_table_names;
 		$update_error_msg{$upgrade_courseID} = $CIchecker->updateCourseTables($upgrade_courseID, [@tables_to_create],
-			[ $r->param("$upgrade_courseID.delete_tableIDs") // () ]);
+			[ ($r->param("$upgrade_courseID.delete_tableIDs")) ]);
 		for my $table_name (@tables_to_alter) {
 			$update_error_msg{$upgrade_courseID} .= $CIchecker->updateTableFields($upgrade_courseID, $table_name,
-				[ $r->param("$upgrade_courseID.$table_name.delete_fieldIDs") // () ]);
+				[ ($r->param("$upgrade_courseID.$table_name.delete_fieldIDs")) ]);
 		}
 
 		# Add missing directories when it can be done safely
