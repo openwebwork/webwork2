@@ -28,7 +28,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::PG;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(wwRound before after jitar_id_to_seq);
+use WeBWorK::Utils qw(wwRound before after jitar_id_to_seq format_set_name_display);
 
 ################################################################################
 # output utilities
@@ -367,11 +367,11 @@ sub title {
 	my $problemID = $self->r->urlpath->arg("problemID");
 
 	my $set = $db->getGlobalSet($setID);
-	$setID = WeBWorK::ContentGenerator::underscore2nbsp($setID);
 	if ($set && $set->assignment_type eq 'jitar') {
 		$problemID = join('.', jitar_id_to_seq($problemID));
 	}
-	my $out = $r->maketext("[_1]: Problem [_2] Show Me Another", $setID, $problemID);
+	my $out = $r->maketext('[_1]: Problem [_2] Show Me Another',
+		CGI::span({ dir => 'ltr' }, format_set_name_display($setID)), $problemID);
 
 	# Return here if we don't have the requisite information.
 	return $out if ($self->{invalidSet} || $self->{invalidProblem});

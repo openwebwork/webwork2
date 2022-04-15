@@ -59,7 +59,7 @@ use WeBWorK::Localize;
 use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
-use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients generateURLs getAssetURL);
+use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients generateURLs getAssetURL format_set_name_display);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use Encode;
 use Email::Sender::Transport::SMTP;
@@ -657,9 +657,8 @@ sub links {
 	my $problemID = $urlpath->arg("problemID");
 	my $achievementID = $urlpath->arg("achievementID");
 
-	my $prettySetID = $setID;
+	my $prettySetID = format_set_name_display($setID // '');
 	my $prettyAchievementID = $achievementID;
-	$prettySetID =~ s/_/ /g if defined $prettySetID;
 	$prettyAchievementID =~ s/_/ /g if defined $prettyAchievementID;
 
 	my $prettyProblemID = $problemID;
@@ -688,7 +687,7 @@ sub links {
 		my $new_urlpath = $self->r->urlpath->newFromModule($module, $r, %$urlpath_args);
 		my $new_systemlink = $self->systemLink($new_urlpath, %$systemlink_args);
 
-		defined $text or $text = $new_urlpath->name;  #too clever
+		defined $text or $text = $new_urlpath->name;
 
 
 		# try to set $active automatically by comparing
@@ -710,15 +709,15 @@ sub links {
 			}
 		}
 
-		my $new_anchor;
 		if ($active) {
 			# add active class for current location
-			$new_anchor = CGI::a({ href => $new_systemlink, class => 'nav-link active', %target }, $text);
+			return CGI::a(
+				{ href => $new_systemlink, class => 'nav-link active', %target, %{ $options{link_attrs} // {} } },
+				$text);
 		} else {
-			$new_anchor = CGI::a({ href => $new_systemlink, class => 'nav-link', %target }, "$text");
+			return CGI::a({ href => $new_systemlink, class => 'nav-link', %target, %{ $options{link_attrs} // {} } },
+				$text);
 		}
-
-		return $new_anchor;
 	};
 
 	# to make things more concise
@@ -766,17 +765,32 @@ sub links {
 				my ($globalSetID) = ( $setID =~ /(.+?)(,v\d+)?$/ );
 				my $setRecord = $db->getGlobalSet( $globalSetID );
 			    if ($setRecord->assignment_type eq 'jitar'  && defined $problemID) {
-				$prettyProblemID = join('.',jitar_id_to_seq($problemID));
+				$prettyProblemID = join('.', jitar_id_to_seq($problemID));
 			    }
 				if ($setRecord->assignment_type =~ /proctor/ && $setID =~ /,v(\d)+$/) {
-					print &$makelink("${pfx}ProctoredGatewayQuiz", text=>"$prettySetID",
-						urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink(
+						"${pfx}ProctoredGatewayQuiz",
+						text            => $prettySetID,
+						urlpath_args    => { %args, setID => $setID },
+						systemlink_args => \%systemlink_args,
+						link_attrs      => { dir => 'ltr' }
+					);
 				} elsif ($setRecord->assignment_type =~ /gateway/ && $setID =~ /,v(\d)+$/) {
-					print &$makelink("${pfx}GatewayQuiz", text=>"$prettySetID",
-						urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink(
+						"${pfx}GatewayQuiz",
+						text            => $prettySetID,
+						urlpath_args    => { %args, setID => $setID },
+						systemlink_args => \%systemlink_args,
+						link_attrs      => { dir => 'ltr' }
+					);
 				} else {
-					print &$makelink("${pfx}ProblemSet", text=>"$prettySetID",
-						urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink(
+						"${pfx}ProblemSet",
+						text            => $prettySetID,
+						urlpath_args    => { %args, setID => $setID },
+						systemlink_args => \%systemlink_args,
+						link_attrs      => { dir => 'ltr' }
+					);
 				}
 			    print CGI::end_li();
 
@@ -784,7 +798,12 @@ sub links {
 				    print CGI::start_li({ class => 'nav-item' });
 					print CGI::start_ul({ class => 'nav flex-column' });
 					print CGI::start_li({ class => 'nav-item' }); # $problemID
-					print &$makelink("${pfx}Problem", text=>$r->maketext("Problem [_1]", $prettyProblemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);
+					print &$makelink(
+						"${pfx}Problem",
+						text            => $r->maketext("Problem [_1]", $prettyProblemID),
+						urlpath_args    => { %args, setID => $setID, problemID => $problemID },
+						systemlink_args => \%systemlink_args
+					);
 					print CGI::end_li(); # end $problemID
 					print CGI::end_ul();
 				    print CGI::end_li();
@@ -829,10 +848,13 @@ sub links {
 				    print CGI::start_ul({ class => 'nav flex-column' });
 
 					print CGI::start_li({ class => 'nav-item' });
-					print &$makelink("${pfx}ProblemSetDetail",
-					   	text => "$prettySetID",
-					   	urlpath_args => { %args, setID => $setID },
-					   	systemlink_args => \%systemlink_args);
+					print &$makelink(
+						"${pfx}ProblemSetDetail",
+						text            => $prettySetID,
+						urlpath_args    => { %args, setID => $setID },
+						systemlink_args => \%systemlink_args,
+						link_attrs      => { dir => 'ltr' }
+					);
 					print CGI::end_li();
 
 					if (defined $problemID) {
@@ -840,7 +862,7 @@ sub links {
 					    print CGI::start_ul({ class => 'nav flex-column' });
 						print CGI::li({ class => 'nav-item' },
 							&$makelink("${pfx}PGProblemEditor",
-								text => "$prettyProblemID",
+								text => $prettyProblemID,
 								urlpath_args => { %args, setID => $setID, problemID => $problemID },
 								systemlink_args => \%systemlink_args,
 								target => "WW_Editor")
@@ -875,11 +897,15 @@ sub links {
 						#    set id in to the stats link
 						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
 						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
-						print CGI::li({ class => 'nav-item' },
-						   	&$makelink("${pfx}Stats",
-							   	text => "$nvPretty",
-							   	urlpath_args => { %args,statType => "set", setID => $nvSetID },
-							   	systemlink_args => \%systemlink_args));
+						print CGI::li(
+							{ class => 'nav-item', dir => 'ltr' },
+							&$makelink(
+								"${pfx}Stats",
+								text            => "$nvPretty",
+								urlpath_args    => { %args, statType => "set", setID => $nvSetID },
+								systemlink_args => \%systemlink_args
+							)
+						);
 					}
 					print CGI::end_ul();
 				}
@@ -901,11 +927,15 @@ sub links {
 						#    set id in to the stats link
 						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
 						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
-						print CGI::li({ class => 'nav-item' },
-						   	&$makelink("${pfx}StudentProgress",
-							   	text => "$nvPretty",
-							   	urlpath_args => { %args, statType => "set", setID => $nvSetID },
-							   	systemlink_args => \%systemlink_args));
+						print CGI::li(
+							{ class => 'nav-item', dir => 'ltr' },
+							&$makelink(
+								"${pfx}StudentProgress",
+								text            => "$nvPretty",
+								urlpath_args    => { %args, statType => "set", setID => $nvSetID },
+								systemlink_args => \%systemlink_args
+							)
+						);
 					}
 					print CGI::end_ul();
 				}
@@ -1105,33 +1135,31 @@ associated with the current request.
 
 sub path {
 	my ($self, $args) = @_;
-	my $r = $self->r;
+	my $r       = $self->r;
+	my $urlpath = $r->urlpath;
 
 	my @path;
 
-	my $urlpath = $r->urlpath;
 	do {
-	    my $name = $urlpath->name;
-	    # If its a problemid for a jitar set (something which requires
-	    # a fair bit of checking, we need to print out the pretty id
-	    if (defined($urlpath->module) && $urlpath->module eq 'WeBWorK::ContentGenerator::Problem') {
- 		if ($urlpath->parent->name) {
- 		    my $set = $r->db->getGlobalSet($urlpath->parent->name);
- 		    if ($set && $set->assignment_type eq 'jitar') {
- 			$name = join('.',jitar_id_to_seq($name));
- 		    }
- 		}
-	    }
-	    unshift @path, $name, $r->location . $urlpath->path;
+		my $name = $urlpath->name;
+		# If it is a problemID for a jitar set (something which requires
+		# a fair bit of checking), then display the pretty id.
+		if (defined $urlpath->module && $urlpath->module eq 'WeBWorK::ContentGenerator::Problem') {
+			if ($urlpath->parent->name) {
+				my $set = $r->db->getGlobalSet($urlpath->parent->name);
+				if ($set && $set->assignment_type eq 'jitar') {
+					$name = join('.', jitar_id_to_seq($r->param('problemID')));
+				}
+			}
+		}
+		unshift @path, $name, $r->location . $urlpath->path;
 	} while ($urlpath = $urlpath->parent);
 
-	$path[$#path] = ""; # we don't want the last path element to be a link
+	$path[$#path] = '';    # We don't want the last path element to be a link.
 
-	#print "\n<!-- BEGIN " . __PACKAGE__ . "::path -->\n";
 	print $self->pathMacro($args, @path);
-	#print "<!-- END " . __PACKAGE__ . "::path -->\n";
 
-	return "";
+	return '';
 }
 
 =item siblings()
@@ -1230,15 +1258,12 @@ sub title {
 	my $db      = $r->db;
 	my $urlpath = $r->urlpath;
 
-	# If the urlpath name is the courseID and the course has a course title then display that instead.
-	if (defined($urlpath->arg('courseID'))
-		&& $urlpath->name eq $urlpath->arg('courseID')
-		&& $db->settingExists('courseTitle'))
-	{
+	# If the urlpath type is 'set_list' and the course has a course title then display that.
+	if (($urlpath->type // '') eq 'set_list' && $db->settingExists('courseTitle')) {
 		print $db->getSettingValue('courseTitle');
 	} else {
 		# Display the urlpath name
-		print $urlpath->name =~ s/_/ /gr;
+		print $urlpath->name;
 	}
 
 	return '';
@@ -2098,47 +2123,6 @@ Otherwise $string is returned.
 sub nbsp {
 	my ($self, $str) = @_;
 	return (defined $str && $str =~/\S/) ? $str : "&nbsp;";
-}
-
-=item sp2nbsp($string)
-
-A copy of $string is returned with each space character replaced by the
-C<&nbsp;> entity.
-
-=cut
-
-sub sp2nbsp {
-	my ($str) = @_;
-	return unless defined $str;
-	$str =~ s/\s/&nbsp;/g;
-	return $str;
-}
-
-=item underscore2nbsp($string)
-
-A copy of $string is returned with each underscore character replaced by the
-C<&nbsp;> entity.
-
-=cut
-
-sub underscore2nbsp {
-	my ($str) = @_;
-	return unless defined $str;
-	$str =~ s/_/&nbsp;/g;
-	return $str;
-}
-
-=item underscore2sp($string)
-
-A copy of $string is returned with each underscore character replaced by a space entity.
-
-=cut
-
-sub underscore2sp {
-	my ($str) = @_;
-	return unless defined $str;
-	$str =~ s/_/ /g;
-	return $str;
 }
 
 =item errorOutput($error, $details)

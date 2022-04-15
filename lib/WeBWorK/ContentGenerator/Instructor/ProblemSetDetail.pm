@@ -714,6 +714,7 @@ sub FieldHTML {
 				data_override => "$recordType.$recordID.$field.override_id",
 				class         => 'form-control form-control-sm',
 				$forUsers && $check ? (aria_labelledby => "$recordType.$recordID.$field.label") : (),
+				$field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr')      : ()
 			});
 		}
 	} elsif ($choose) {
@@ -776,11 +777,11 @@ sub FieldHTML {
 			? {
 				for   => "$recordType.$recordID.$field.override_id",
 				id    => "$recordType.$recordID.$field.label",
-				class => 'form-check-label'
+				class => 'form-check-label mb-0'
 			}
 			: {
 				for   => "$recordType.$recordID.${field}_id",
-				class => 'form-label'
+				class => 'form-label mb-0'
 			},
 			$r->maketext($properties{name})
 		);
@@ -819,7 +820,7 @@ sub FieldHTML {
 				size            => $properties{size} || 5,
 				class           => 'form-control form-control-sm',
 				aria_labelledby => "$recordType.$recordID.$field.label",
-				$field =~ /date/ ? (dir => 'ltr') : ()
+				$field =~ /date/ || $field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr') : ()
 			})
 			: ''
 		) if $forUsers;
@@ -2184,7 +2185,7 @@ sub body {
 					{ class => 'col-md-6' },
 					$r->maketext(
 						'Editing problem set [_1] data for these individual students: [_2]',
-						CGI::strong(format_set_name_display("$setID$vermsg")),
+						CGI::strong({ dir => 'ltr' }, format_set_name_display("$setID$vermsg")),
 						CGI::br() . CGI::strong(join CGI::br(), @userLinks)
 					)
 				),
@@ -2194,7 +2195,7 @@ sub body {
 						{ href => $self->systemLink($setDetailPage) },
 						$r->maketext(
 							'Edit set [_1] data for ALL students assigned to this set.',
-							CGI::strong(format_set_name_display($setID))
+							CGI::strong({ dir => 'ltr' }, format_set_name_display($setID))
 						)
 					),
 					# Handy messages when editing gateway sets.
@@ -2217,7 +2218,7 @@ sub body {
 					{ class => 'col-md-6' },
 					$r->maketext(
 						'This set [_1] is assigned to [_2].',
-						CGI::strong(format_set_name_display($setID)),
+						CGI::strong({ dir => 'ltr' }, format_set_name_display($setID)),
 						$self->userCountMessage($setUserCount, $userCount)
 					)
 				),
@@ -2226,7 +2227,7 @@ sub body {
 					$r->maketext(
 						'Edit [_1] of set [_2].',
 						CGI::a({ href => $editUsersAssignedToSetURL }, $r->maketext('individual versions')),
-						format_set_name_display($setID)
+						CGI::span({ dir => 'ltr' }, format_set_name_display($setID))
 					)
 				)
 			)
@@ -2688,7 +2689,7 @@ sub body {
 				CGI::div(
 					{ class => 'problem_detail_row card d-flex flex-column p-2 mb-3 g-0' },
 					CGI::div(
-						{ class => 'pdr_block_1 row' },
+						{ class => 'pdr_block_1 row align-items-center' },
 						CGI::div(
 							{ class => 'col-md-4 col-10 order-1 d-flex align-items-center' },
 							CGI::div(

@@ -412,8 +412,10 @@ sub body {
 						default_sort    => 'lnfn',
 						default_format  => 'lnfn_uid',
 						default_filters => ['all'],
-						size            => 10,
-						multiple        => 1,
+						attrs           => {
+							size     => 10,
+							multiple => 1
+						}
 					},
 					@Users
 				)
@@ -432,7 +434,8 @@ sub body {
 					default  => $selectedSets,
 					size     => 23,
 					multiple => 1,
-					class    => 'form-select form-select-sm'
+					class    => 'form-select form-select-sm',
+					dir      => 'ltr'
 				})
 			),
 			CGI::div(
@@ -492,7 +495,7 @@ sub body {
 				my $prettyProblemNumber = $prettyProblemNumbers->{$setName}{$problemNumber};
 				print CGI::h3($r->maketext(
 					"Past Answers for [_1], set [_2], problem [_3]",
-					$studentUser, format_set_name_display($setName), $prettyProblemNumber
+					$studentUser, CGI::span({ dir => 'ltr' }, format_set_name_display($setName)), $prettyProblemNumber
 				));
 
 				my @row;

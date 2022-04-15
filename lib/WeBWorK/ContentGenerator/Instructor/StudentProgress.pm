@@ -78,7 +78,7 @@ sub title {
 		return $r->maketext(
 			'Student Progress for [_1] set [_2]. Closes [_3]',
 			$self->{ce}->{courseName},
-			format_set_name_display($self->{setName}),
+			CGI::span({ dir => 'ltr' }, format_set_name_display($self->{setName})),
 			$self->formatDateTime($self->{set_due_date})
 		);
 	}
@@ -87,7 +87,7 @@ sub title {
 }
 
 sub siblings {
-	my ($self)  = @_;
+	my $self    = shift;
 	my $r       = $self->r;
 	my $db      = $r->db;
 	my $urlpath = $r->urlpath;
@@ -100,7 +100,6 @@ sub siblings {
 
 	print CGI::start_div({ class => 'info-box', id => 'fisheye' });
 	print CGI::h2($r->maketext('Student Progress'));
-	print CGI::start_ul({ class => 'nav flex-column problem-list' });
 
 	# List links depending on if viewing set progress or student progress
 	if ($self->{type} eq 'student') {
@@ -129,6 +128,7 @@ sub siblings {
 			[qw/last_name first_name user_id/]
 		);
 
+		print CGI::start_ul({ class => 'nav flex-column problem-list' });
 		for my $studentRecord (@studentRecords) {
 			my $first_name         = $studentRecord->first_name;
 			my $last_name          = $studentRecord->last_name;
@@ -139,28 +139,37 @@ sub siblings {
 				statType => 'student',
 				userID   => $user_id
 			);
-			print CGI::li(CGI::a(
-				{ href => $self->systemLink($userStatisticsPage), class => 'nav-link' },
-				"$last_name, $first_name  ($user_id)"
-			));
+			print CGI::li(
+				{ class => 'nav-item' },
+				CGI::a(
+					{ href => $self->systemLink($userStatisticsPage), class => 'nav-link' },
+					"$last_name, $first_name  ($user_id)"
+				)
+			);
 		}
+		print CGI::end_ul();
 	} else {
 		my @setIDs = sort $db->listGlobalSets;
-		foreach my $setID (@setIDs) {
+
+		print CGI::start_ul({ class => 'nav flex-column problem-list', dir => 'ltr' });
+		for my $setID (@setIDs) {
 			my $problemPage = $urlpath->newFromModule(
 				$urlpath->module, $r,
 				courseID => $courseID,
 				setID    => $setID,
 				statType => 'set',
 			);
-			print CGI::li(CGI::a(
-				{ href => $self->systemLink($problemPage), class => 'nav-link' },
-				format_set_name_display($setID)
-			));
+			print CGI::li(
+				{ class => 'nav-item' },
+				CGI::a(
+					{ href => $self->systemLink($problemPage), class => 'nav-link' },
+					format_set_name_display($setID)
+				)
+			);
 		}
+		print CGI::end_ul();
 	}
 
-	print CGI::end_ul();
 	print CGI::end_div();
 
 	return '';
@@ -279,7 +288,7 @@ sub index {
 		CGI::div(
 			{ class => 'col-lg-5 col-sm-6 border border-dark' },
 			CGI::h2({ class => 'text-center fs-3' }, $r->maketext('View student progress by set')),
-			CGI::ul(CGI::li([@setLinks]))
+			CGI::ul({ dir => 'ltr' }, CGI::li([@setLinks]))
 		),
 		CGI::div(
 			{ class => 'col-lg-5 col-sm-6 border border-dark' },

@@ -69,8 +69,9 @@ sub title {
 	} elsif ($type eq 'set') {
 		return $r->maketext(
 			'Statistics for [_1] set [_2]. Closes [_3]',
-			$self->{ce}{courseName},
-			format_set_name_display($self->{setName}), $self->formatDateTime($self->{set_due_date})
+			$self->{ce}{courseName} =~ s/_/ /gr,
+			CGI::span({ dir => 'ltr' }, format_set_name_display($self->{setName})),
+			$self->formatDateTime($self->{set_due_date})
 		);
 	}
 
@@ -91,7 +92,7 @@ sub siblings {
 
 	print CGI::start_div({ class => 'info-box', id => 'fisheye' });
 	print CGI::h2($r->maketext('Statistics'));
-	print CGI::start_ul({ class => 'nav flex-column problem-list' });
+	print CGI::start_ul({ class => 'nav flex-column problem-list', dir => 'ltr' });
 
 	# List links depending on if viewing set progress or student progress
 	if ($self->{type} eq 'student') {
@@ -269,7 +270,7 @@ sub index {
 		CGI::div(
 			{ class => 'col-lg-5 col-sm-6 border border-dark' },
 			CGI::h2({ class => 'text-center fs-3' }, $r->maketext('View statistics by set')),
-			CGI::ul(CGI::li([@setLinks])),
+			CGI::ul({ dir => 'ltr' }, CGI::li([@setLinks])),
 		),
 		CGI::div(
 			{ class => 'col-lg-5 col-sm-6 border border-dark' },

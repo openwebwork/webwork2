@@ -396,10 +396,18 @@ sub setListRow {
 				{ class => 'hardcopy-link', href => $link },
 				CGI::i(
 					{
-						class       => 'icon far fa-arrow-alt-circle-down fa-lg',
+						class       => 'hardcopy-tooltip icon far fa-arrow-alt-circle-down fa-lg',
 						aria_hidden => 'true',
-						title       => $r->maketext('Download [_1]', format_set_name_display($set->set_id)),
-						data_alt    => $r->maketext('Download [_1]', format_set_name_display($set->set_id))
+						title       => $r->maketext(
+							'Download [_1]',
+							CGI::span({ dir => 'ltr' }, format_set_name_display($set->set_id))
+						),
+						data_alt => $r->maketext(
+							'Download [_1]',
+							CGI::span({ dir => 'ltr' }, format_set_name_display($set->set_id))
+						),
+						data_bs_toggle    => 'tooltip',
+						data_bs_placement => 'left',
 					},
 					''
 				)
@@ -412,7 +420,8 @@ sub setListRow {
 	my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
 	$status = CGI::span({class=>$visiblityStateClass}, $status) if $preOpenSets;
 
-	return CGI::Tr(CGI::td([$interactive, $status]),CGI::td({class => "hardcopy"}, $control));
+	return CGI::Tr(CGI::td({ dir => 'ltr' }, $interactive), CGI::td($status),
+		CGI::td({ class => "hardcopy" }, $control));
 }
 
 sub byname { $a->set_id cmp $b->set_id; }

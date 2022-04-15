@@ -121,6 +121,11 @@
 		(el) => {if (el.dataset.bsTitle) new bootstrap.Tooltip(el, {trigger: 'hover', fallbackPlacements: []});}
 	);
 
+	// Hardcopy tooltips shown on the Problem Sets page.
+	document.querySelectorAll('.hardcopy-tooltip').forEach(
+		(el) => new bootstrap.Tooltip(el, { trigger: 'hover', fallbackPlacements: [], html: true })
+	);
+
 	// PG Problem Editor
 	document.querySelectorAll('.reference-link').forEach((el) => new bootstrap.Tooltip(el));
 

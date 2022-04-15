@@ -39,7 +39,7 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after x/;
+use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after x format_set_name_display/;
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -506,8 +506,10 @@ sub display_form {
 						default_sort    => 'lnfn',
 						default_format  => 'lnfn_uid',
 						default_filters => ['all'],
-						size            => 20,
-						multiple        => $perm_multiuser,
+						attrs => {
+							size     => 20,
+							multiple => $perm_multiuser
+						}
 					},
 					@Users
 				)
@@ -526,8 +528,11 @@ sub display_form {
 						default_sort    => 'set_id',
 						default_format  => 'sid',
 						default_filters => ['all'],
-						size            => 20,
-						multiple        => $perm_multiset,
+						attrs => {
+							size     => 20,
+							multiple => $perm_multiset,
+							dir      => 'ltr'
+						}
 					},
 					@WantedGlobalSets,
 					@SetVersions
@@ -587,7 +592,7 @@ sub display_form {
 
 		print CGI::p($r->maketext(
 			"Download hardcopy of set [_1] for [_2]?",
-			$selected_set_id,
+			CGI::span({ dir => 'ltr' }, format_set_name_display($selected_set_id)),
 			$user->first_name . " " . $user->last_name
 		));
 

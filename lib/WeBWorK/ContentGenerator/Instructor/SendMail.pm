@@ -717,9 +717,11 @@ sub print_form {
 								default_sort        => 'lnfn',
 								default_format      => 'lnfn_uid',
 								default_filters     => ['all'],
-								size                => 5,
-								multiple            => 1,
 								refresh_button_name => $r->maketext('Update settings and refresh page'),
+								attrs               => {
+									size     => 5,
+									multiple => 1
+								}
 							},
 							@{ $self->{ra_user_records} }
 						)

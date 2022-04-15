@@ -218,6 +218,8 @@ table caption {
 	}
 
 	ul.nav {
+		padding-right: 0;
+
 		li a:hover {
 			background: #e1e1e1;
 		}
@@ -741,6 +743,25 @@ input.changed[type=text] { /* orange */
 	width: 100%;
 	height: 100%;
 }
+
+// Fix the style of the save file path input group.
+// It is forced to be ltr, but the bootstrap rtl style makes that look wrong.
+/* rtl:raw:
+.editor-save-path.input-group > :first-child:not(.dropdown-toggle):not(.dropdown-menu) {
+	border-bottom-left-radius: 0.2rem;
+	border-top-left-radius: 0.2rem;
+	border-bottom-right-radius: 0;
+	border-top-right-radius: 0;
+}
+
+.editor-save-path.input-group >
+:last-child:not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) {
+	border-bottom-left-radius: 0;
+	border-top-left-radius: 0;
+	border-bottom-right-radius: 0.2rem;
+	border-top-right-radius: 0.2rem;
+}
+*/
 
 /* Page loading busy indicator */
 /* Currently only used on the problem editor page. */

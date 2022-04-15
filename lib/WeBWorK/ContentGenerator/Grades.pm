@@ -269,7 +269,7 @@ sub displayStudentStats {
 			next if $setVersionsCount{$setID};
 			push @rows,
 				CGI::Tr(
-					CGI::td(format_set_name_display($setID)),
+					CGI::td({ dir => 'ltr' }, format_set_name_display($setID)),
 					CGI::td(
 						{ colspan => $max_problems + 3 },
 						CGI::em($r->maketext('No versions of this assignment have been taken.'))
@@ -290,7 +290,7 @@ sub displayStudentStats {
 			push(
 				@rows,
 				CGI::Tr(
-					CGI::td(format_set_name_display($setID) . ' (version ' . $set->version_id . ')'),
+					CGI::td({ dir => 'ltr' }, format_set_name_display($setID) . ' (version ' . $set->version_id . ')'),
 					CGI::td(
 						{ colspan => $max_problems + 3 },
 						CGI::em($r->maketext('Display of scores for this set is not allowed.'))
@@ -385,7 +385,7 @@ sub displayStudentStats {
 
 		push @rows, CGI::Tr(
 			CGI::th(
-				{ scope => 'row' },
+				{ scope => 'row', dir => 'ltr' },
 				CGI::a({ href => $act_as_student_set_url }, format_set_name_display($setID))
 			),
 			CGI::td(CGI::span({ class => $class }, $totalRightPercent . '%')),
