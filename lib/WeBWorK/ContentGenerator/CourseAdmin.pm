@@ -2956,7 +2956,7 @@ sub do_upgrade_course {
 		}
 
 		# Add missing directories when it can be done safely
-		$CIchecker->updateCourseDirectories();       # Needs more error messages
+		$CIchecker->updateCourseDirectories();    # Needs more error messages
 
 		# Analyze database status and prepare status report
 		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
@@ -2965,14 +2965,12 @@ sub do_upgrade_course {
 			$self->formatReportOnDatabaseTables($tables_ok, $dbStatus);
 
 		# Prepend course name
-		$str = CGI::p($r->maketext('Database:')) . $str;
+		$str = CGI::div({ class => 'mb-2' }, $r->maketext('Database:')) . $str;
 
 		# Report on databases and report summary
 		if ($extra_database_tables) {
-			$str .= CGI::p(
-				{ class => 'text-danger fw-bold' },
-				$r->maketext('There are extra database tables which are not defined in the schema.')
-			);
+			$str .= CGI::p({ class => 'text-danger fw-bold' },
+				$r->maketext('There are extra database tables which are not defined in the schema.'));
 		}
 		if ($extra_database_fields) {
 			$str .= CGI::p(
@@ -2986,25 +2984,26 @@ sub do_upgrade_course {
 		my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories();
 		my $dir_msg = join(
 			'',
-			$r->maketext('Directory structure'),
-			CGI::br(),
-			CGI::p($str2),
+			CGI::div({ class => 'mb-2' }, $r->maketext('Directory structure:')),
+			$str2,
 			$directories_ok
-			? CGI::p({ class => 'text-success' }, $r->maketext('Directory structure is ok'))
+			? CGI::p({ class => 'text-success mb-0' }, $r->maketext('Directory structure is ok'))
 			: CGI::p(
-				{ class => 'text-danger' },
+				{ class => 'text-danger mb-0' },
 				$r->maketext(
 					'Directory structure is missing directories or the webserver lacks sufficient privileges.')
 			)
 		);
 
 		# Print status
+		print CGI::start_div({ class => 'border border-dark rounded p-2 mb-2' });
 		print CGI::h2($r->maketext('Report for course [_1]:', $upgrade_courseID));
 		print CGI::p({ class => 'text-success fw-bold' }, $update_error_msg{$upgrade_courseID})
 			if $update_error_msg{$upgrade_courseID};
 
-		print $str;                # Print message about tables
-		print CGI::p($dir_msg);    # Print message about directories
+		print $str;        # Print message about tables
+		print $dir_msg;    # Print message about directories
+		print CGI::end_div();
 	}
 
 	# Submit buttons -- return to beginning
