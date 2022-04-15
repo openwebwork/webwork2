@@ -46,4 +46,8 @@
 			document.body.appendChild(busyIndicator);
 		}
 	});
+
+	document.getElementById('randomize_view_seed_id')?.addEventListener('click', () => {
+		document.getElementById('action_view_seed_id').value = Math.ceil(Math.random()*9999);
+	});
 })();

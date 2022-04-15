@@ -671,7 +671,7 @@ sub body {
 				@contentArr,
 				CGI::div(
 					{
-						class            => "tab-pane pg_editor_action_div fade" . ($active ? " show$active" : ''),
+						class            => "tab-pane fade" . ($active ? " show$active" : ''),
 						id               => $actionID,
 						role             => 'tabpanel',
 						aria_labelledby => "$actionID-tab"
@@ -1205,18 +1205,27 @@ sub view_form {
 	unless ($file_type eq 'course_info' || $file_type eq 'options_info') {
 		return CGI::div(
 			CGI::div(
-				{ class => 'row align-items-center mb-2' },
+				{ class => 'row align-items-center' },
 				CGI::label(
-					{ for => 'action_view_seed_id', class => 'col-form-label col-auto' },
+					{ for => 'action_view_seed_id', class => 'col-form-label col-auto mb-2' },
 					$r->maketext('Using what seed?')
 				),
 				CGI::div(
-					{ class => 'col-auto' },
+					{ class => 'col-auto mb-2' },
 					CGI::textfield({
 						id    => 'action_view_seed_id',
 						name  => 'action.view.seed',
 						value => $self->{problemSeed},
 						class => 'form-control form-control-sm'
+					})
+				),
+				CGI::div(
+					{ class => 'col-auto mb-2' },
+					CGI::button({
+						id    => 'randomize_view_seed_id',
+						name  => 'action.randomize.view.seed',
+						value => $r->maketext('Randomize Seed'),
+						class => 'btn btn-info btn-sm'
 					})
 				)
 			),
