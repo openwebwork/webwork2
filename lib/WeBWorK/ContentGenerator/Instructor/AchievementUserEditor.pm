@@ -219,9 +219,9 @@ sub body {
 					type    => 'checkbox',
 					name    => 'selected',
 					id      => "$user.assigned",
-					checked => defined $userAchievement,
 					value   => $user,
-					class   => 'form-check-input'
+					class   => 'form-check-input',
+					defined $userAchievement ? (checked => undef) : (),
 				})
 			),
 			CGI::td(CGI::label({ for => "$user.assigned" }, $user)),
@@ -237,8 +237,8 @@ sub body {
 							name            => "$user.earned",
 							aria_labelledby => 'earned_header',
 							value           => '1',
-							checked         => $earned ? 1 : 0,
-							class           => 'form-check-input'
+							class           => 'form-check-input',
+							$earned ? (checked => undef) : (),
 						})
 					),
 					CGI::td(
