@@ -2792,6 +2792,8 @@ sub upgrade_course_confirm {
 	my ($extra_database_tables_exist, $extra_database_fields_exist) = (0, 0);
 
 	print CGI::start_form({ method => 'POST', action => $r->uri });
+
+	my $output = '';
 	for my $upgrade_courseID (@upgrade_courseIDs) {
 		next unless $upgrade_courseID =~ /\S/;    # skip empty values
 
@@ -2806,30 +2808,27 @@ sub upgrade_course_confirm {
 		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $str) =
 			$self->formatReportOnDatabaseTables($tables_ok, $dbStatus, $upgrade_courseID);
 
-		# Prepend course name
-		$str = CGI::div(
-			CGI::div(
-				{ class => 'form-check mb-2' },
-				CGI::checkbox({
-					name            => 'upgrade_courseIDs',
-					label           => $r->maketext('Upgrade [_1]', $upgrade_courseID),
-					selected        => 1,
-					value           => $upgrade_courseID,
-					class           => 'form-check-input',
-					labelattributes => { class => 'form-check-label' }
-				})
-			),
-			CGI::h2($r->maketext('Report for course [_1]:', $upgrade_courseID)),
-			CGI::div({ class => 'mb-2' }, $r->maketext('Database:')),
-			$str
-		);
+		$output .= CGI::start_div({ class => 'border border-dark rounded p-2 mb-2' });
 
-		# Report on databases
-		print CGI::p($str);
+		# Add the report on databases to the output.
+		$output .= CGI::div(
+			{ class => 'form-check mb-2' },
+			CGI::checkbox({
+				name            => 'upgrade_courseIDs',
+				label           => $r->maketext('Upgrade [_1]', $upgrade_courseID),
+				selected        => 1,
+				value           => $upgrade_courseID,
+				class           => 'form-check-input',
+				labelattributes => { class => 'form-check-label' }
+			})
+		);
+		$output .= CGI::h2($r->maketext('Report for course [_1]:', $upgrade_courseID));
+		$output .= CGI::div({ class => 'mb-2' }, $r->maketext('Database:'));
+		$output .= $str;
 
 		if ($extra_database_tables) {
 			$extra_database_tables_exist = 1;
-			print CGI::p(
+			$output .= CGI::p(
 				{ class => 'text-danger fw-bold' },
 				$r->maketext('There are extra database tables which are not defined in the schema. ')
 					. 'Check the checkbox by the table to delete it when upgrading the course. '
@@ -2839,7 +2838,7 @@ sub upgrade_course_confirm {
 
 		if ($extra_database_fields) {
 			$extra_database_fields_exist = 1;
-			print CGI::p(
+			$output .= CGI::p(
 				{ class => 'text-danger fw-bold' },
 				$r->maketext(
 					'There are extra database fields which are not defined in the schema for at least one table. '
@@ -2851,13 +2850,49 @@ sub upgrade_course_confirm {
 
 		# Report on directory status
 		my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories();
-		print $r->maketext('Directory structure'), CGI::br(), CGI::p($str2),
-			$directories_ok ? CGI::p({ class => 'text-success' }, $r->maketext('Directory structure is ok')) : CGI::p(
-				{ class => 'text-danger' },
+		$output .= CGI::div({ class => 'mb-2' }, $r->maketext('Directory structure:'));
+		$output .= $str2;
+		$output .=
+			$directories_ok
+			? CGI::p({ class => 'text-success mb-0' }, $r->maketext('Directory structure is ok'))
+			: CGI::p(
+				{ class => 'text-danger mb-0' },
 				$r->maketext(
 					'Directory structure is missing directories or the webserver lacks sufficient privileges.')
 			);
+
+		$output .= CGI::end_div();
 	}
+
+	my $checkAlls = '';
+
+	if ($extra_database_tables_exist) {
+		$checkAlls .= CGI::div(
+			{ class => 'form-check' },
+			CGI::checkbox({
+				label             => $r->maketext('Select/unselect all tables missing in schema for deletion.'),
+				class             => 'select-all form-check-input',
+				labelattributes   => { class => 'form-check-label' },
+				data_select_group => 'delete_tableIDs',
+			})
+		);
+	}
+
+	if ($extra_database_fields_exist) {
+		$checkAlls .= CGI::div(
+			{ class => 'form-check' },
+			CGI::checkbox({
+				label             => $r->maketext('Select/unselect all fields missing in schema for deletion.'),
+				class             => 'select-all form-check-input',
+				labelattributes   => { class => 'form-check-label' },
+				data_select_group => 'delete_fieldIDs'
+			})
+		);
+	}
+
+	print CGI::div({ class => 'mb-3' }, $checkAlls);
+
+	print $output;
 
 	# Print form for choosing next action.
 	print CGI::h3($r->maketext('No course id defined')) unless @upgrade_courseIDs;
@@ -2865,35 +2900,7 @@ sub upgrade_course_confirm {
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields('subDisplay');
 
-	if ($extra_database_tables_exist) {
-		print CGI::div(
-			{ class => 'mb-3' },
-			CGI::div(
-				{ class => 'form-check' },
-				CGI::checkbox({
-					label             => $r->maketext('Select/unselect all tables missing in schema for deletion.'),
-					class             => 'select-all form-check-input',
-					labelattributes   => { class => 'form-check-label' },
-					data_select_group => 'delete_tableIDs'
-				})
-			)
-		);
-	}
-
-	if ($extra_database_fields_exist) {
-		print CGI::div(
-			{ class => 'mb-3' },
-			CGI::div(
-				{ class => 'form-check' },
-				CGI::checkbox({
-					label             => $r->maketext('Select/unselect all fields missing in schema for deletion.'),
-					class             => 'select-all form-check-input',
-					labelattributes   => { class => 'form-check-label' },
-					data_select_group => 'delete_fieldIDs'
-				})
-			)
-		);
-	}
+	print CGI::div({ class => 'mb-3' }, $checkAlls);
 
 	# Submit buttons
 	# After presenting a detailed summary of status of selected courses the choice is made to upgrade the selected

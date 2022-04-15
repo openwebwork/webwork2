@@ -6,9 +6,19 @@
 		const checks = document.querySelectorAll(`input[name$=${selectAll.dataset.selectGroup}]`);
 
 		if (selectAll.type.toLowerCase() === 'checkbox') {
-			selectAll.addEventListener('click', () => checks.forEach(check => check.checked = selectAll.checked));
+			// Find additional select alls in the same group if any.
+			const pairedSelectAlls =
+				document.querySelectorAll(`.select-all[data-select-group="${selectAll.dataset.selectGroup}"]`);
+
+			selectAll.addEventListener('click', () => {
+				checks.forEach(check => check.checked = selectAll.checked);
+
+				// Also check/uncheck any select alls in the same group.
+				pairedSelectAlls.forEach((check) => check.checked = selectAll.checked);
+			});
+
 			checks.forEach(check => check.addEventListener('click',
-				() => { if (!check.checked) selectAll.checked = false }));
+				() => { if (!check.checked) selectAll.checked = false; }));
 
 			// If all checks in the group are checked when the page loads, then also check the select all check.
 			// This can happen in AchievementList.pm.
