@@ -179,9 +179,7 @@ if [ "$1" = 'apache2' ]; then
         make latest_release.tag
         OPL_TAG=`cat $WEBWORK_ROOT/bin/OPL_releases/latest_release.tag`
         cd $APP_ROOT/libraries/webwork-open-problem-library/
-        git remote rm heiderich || true
-        git remote add heiderich https://github.com/heiderich/webwork-open-problem-library.git
-        git fetch --tags heiderich
+        git fetch --tags origin
         echo "Checking out tag $OPL_TAG"
         git checkout $OPL_TAG
       fi
