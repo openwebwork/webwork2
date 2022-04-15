@@ -1357,29 +1357,39 @@ sub nav {
 
 sub path {
 	my ($self, $args) = @_;
-	my $r = $self->r;
-	my $urlpath       = $r->urlpath;
-	my $courseName    = $urlpath->arg("courseID");
-	my $setName       = $urlpath->arg("setID") || '';
-	my $problemNumber = $urlpath->arg("problemID") || '';
+	my $r                   = $self->r;
+	my $urlpath             = $r->urlpath;
+	my $courseName          = $urlpath->arg('courseID');
+	my $setName             = $urlpath->arg('setID')     || '';
+	my $problemNumber       = $urlpath->arg('problemID') || '';
 	my $prettyProblemNumber = $problemNumber;
 
 	if ($setName) {
-	    my $set = $r->db->getGlobalSet($setName);
-	    if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
-		$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
-	    }
+		my $set = $r->db->getGlobalSet($setName);
+		if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
+			$prettyProblemNumber = join('.', jitar_id_to_seq($problemNumber));
+		}
 	}
 
-	my @path = ( 'WeBWorK', $r->location,
-	          "$courseName", $r->location."/$courseName",
-	          "$setName",    $r->location."/$courseName/$setName",
-	          "$prettyProblemNumber", $r->location."/$courseName/$setName/$problemNumber",
+	my @path = (
+		WeBWorK     => $r->location,
+		$courseName => $r->location . "/$courseName",
+		$setName    => $r->location . "/$courseName/$setName",
 	);
+
+	if ($urlpath->module =~ /ShowMeAnother$/) {
+		push(
+			@path,
+			$prettyProblemNumber => $r->location . "/$courseName/$setName/$problemNumber",
+			'Show Me Another'    => ''
+		);
+	} else {
+		push(@path, $prettyProblemNumber => '');
+	}
 
 	print $self->pathMacro($args, @path);
 
-	return "";
+	return '';
 }
 
 sub title {
