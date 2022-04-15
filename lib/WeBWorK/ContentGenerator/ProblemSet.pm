@@ -73,7 +73,8 @@ sub nav {
 	my ($self, $args) = @_;
 	my $r = $self->r;
 
-	my @links = ($r->maketext('Homework Sets'), $r->location . $r->urlpath->parent, $r->maketext('Homework Sets'));
+	my @links =
+		($r->maketext('Homework Sets'), $r->location . $r->urlpath->parent->path, $r->maketext('Homework Sets'));
 	return CGI::div({ class => 'row sticky-nav', role => 'navigation', aria_label => 'problem navigation' },
 		CGI::div($self->navMacro($args, '', @links)));
 }
