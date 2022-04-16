@@ -628,30 +628,24 @@ sub FieldHTML {
 			push(@bVals, '');
 		}
 		# I don't like this, but combining multiple values is a bit messy
-		$globalValue = (grep { defined($_) } @gVals) ? join(':', (map { defined($_) ? $_ : '' } @gVals)) : undef;
-		$userValue   = (grep { defined($_) } @uVals) ? join(':', (map { defined($_) ? $_ : '' } @uVals)) : undef;
+		$globalValue = (grep { defined $_ } @gVals) ? join(':', (map { defined $_ ? $_ : '' } @gVals)) : undef;
+		$userValue   = (grep { defined $_ } @uVals) ? join(':', (map { defined $_ ? $_ : '' } @uVals)) : undef;
 		$blankfield  = join(':', @bVals);
 	} else {
 		$globalValue = $globalRecord->{$field};
 		$userValue   = $userRecord->{$field};
 	}
 
-	# use defined instead of value in order to allow 0 to printed, e.g. for the 'value' field
-	$globalValue =
-		defined($globalValue)
-		? ($labels{ $globalValue // '' } || $globalValue)
-		: '';    # this allows for a label if value is 0
-	$userValue =
-		defined($userValue)
-		? ($labels{ $userValue // '' } || $userValue)
-		: $blankfield;    # this allows for a label if value is 0
+	# Use defined instead of value in order to allow 0 to printed, e.g. for the 'value' field.
+	$globalValue = defined $globalValue ? ($labels{$globalValue} || $globalValue) : '';
+	$userValue = defined $userValue ? ($labels{$userValue} || $userValue) : $blankfield;
 
 	if ($field =~ /_date/) {
 		$globalValue = $self->formatDateTime($globalValue, '', 'datetime_format_short', $r->ce->{language})
 			if $forUsers && defined $globalValue && $globalValue ne '';
 	}
 
-	if (defined($properties{convertby}) && $properties{convertby}) {
+	if (defined $properties{convertby} && $properties{convertby}) {
 		$globalValue = $globalValue / $properties{convertby} if $globalValue;
 		$userValue   = $userValue / $properties{convertby}   if $userValue;
 	}
@@ -748,9 +742,9 @@ sub FieldHTML {
 		});
 	}
 
-	my $gDisplVal = defined($properties{labels})
-		&& defined($properties{labels}->{$globalValue})
-		? $r->maketext($properties{labels}->{$globalValue})
+	my $gDisplVal =
+		(defined $properties{labels} && defined $properties{labels}{$globalValue})
+		? $r->maketext($properties{labels}{$globalValue})
 		: $globalValue;
 	$gDisplVal = format_set_name_display($gDisplVal) if $field eq 'restricted_release';
 
@@ -765,7 +759,7 @@ sub FieldHTML {
 				id    => "$recordType.$recordID.$field.override_id",
 				value => $field,
 				$r->param("$recordType.$recordID.$field.override")
-				|| ($userValue ne ($labels{''} // '') || $blankfield) ? (checked => undef) : (),
+				|| ($userValue ne (($labels{''} // '') || $blankfield)) ? (checked => undef) : (),
 				class => 'form-check-input'
 			})
 			: ''

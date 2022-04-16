@@ -2595,7 +2595,7 @@ sub recordEditHTML {
 				name  => 'selected_sets',
 				value => $set_id,
 				class => 'form-check-input',
-				$setSelected ? (checked => 'checked') : (),
+				$setSelected ? (checked => undef) : (),
 			}));
 
 		push @tableCells,
