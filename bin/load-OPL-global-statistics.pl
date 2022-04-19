@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
-##############################################################################
+################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2019 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -11,9 +11,9 @@
 #
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE. See either the GNU General Public License or the
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
 # Artistic License for more details.
-##############################################################################
+################################################################################
 
 # This script loads the OPL global statistics, which is often done by bin/update-OPL-statistics but may need to be done outside of that setting.
 use strict;

@@ -1,6 +1,19 @@
-#!/usr/local/bin/perl -w 
+#!/usr/local/bin/perl -w
 
-# Copyright (C) 2002 Michael Gage 
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
 
 ###############################################################################
 # Web service which fetches WeBWorK problems from a library.
@@ -14,7 +27,7 @@ package WebworkWebservice::LibraryActions;
 
 use WebworkWebservice;
 use WeBWorK::Utils::ListingDB;
-use base qw(WebworkWebservice); 
+use base qw(WebworkWebservice);
 use WeBWorK::Debug;
 use JSON;
 
@@ -30,7 +43,7 @@ use WeBWorK::PG::IO;
 use Benchmark;
 
 ##############################################
-#   Obtain basic information about directories, course name and host 
+#   Obtain basic information about directories, course name and host
 ##############################################
 our $WW_DIRECTORY = $WebworkWebservice::WW_DIRECTORY;
 our $PG_DIRECTORY = $WebworkWebservice::PG_DIRECTORY;
@@ -63,7 +76,7 @@ my %ignoredir = (
 
  #warn pretty_print_rh(\%prob_libs);
  # replace library names with full paths
- 
+
 # my $templateDir    = $ce->{courseDirs}->{templates};
 # warn "template Directory is $templateDir";
 # foreach my $key (keys %prob_libs) {
@@ -76,13 +89,13 @@ sub listLibraries {  # list the problem libraries that are available.
 	my $rh = shift;
 	#my $my_ce = $self->ce;
 	my %libraries = %{$self->ce->{courseFiles}->{problibs}};
- 
+
 	my $templateDirectory = $self->ce->{courseDirs}{templates};
 
 	foreach my $key (keys %libraries) {
  		$libraries{$key} = "$templateDirectory/$key";
  	}
-	
+
 	my @outListLib = sort keys %libraries;
 	my $out = {};
 	$out->{ra_out} = \@outListLib;
@@ -99,15 +112,15 @@ sub readFile {
 	my $filePath = $rh->{filePath};
 
 	my %libraries = %{$self->ce->{courseFiles}->{problibs}};
- 
+
 	my $templateDirectory = $self->ce->{courseDirs}{templates};
 
 	foreach my $key (keys %libraries) {
  		$libraries{$key} = "$templateDirectory/$key";
  	}
-	
 
-	
+
+
 	if (  defined($libraries{$rh->{library_name}} )   ) {
 		$filePath = $libraries{$rh->{library_name}} .'/'. $filePath;
 	} else {
@@ -133,7 +146,7 @@ sub readFile {
 	return($out);
 }
 
-use File::Find;	
+use File::Find;
 #idea from http://www.perlmonks.org/index.pl?node=How%20to%20map%20a%20directory%20tree%20to%20a%20perl%20hash%20tree
 sub build_tree {
     warn "entering build_tree with ",join(" ", @_);
@@ -159,12 +172,12 @@ sub listLib {
 		warn "double slash in library_name ", $rh->{library_name};
 		$rh->{library_name} =~ s|^/||;
 	}
-	my $dirPath = $self->ce->{courseDirs}{templates}."/".$rh->{library_name};	
+	my $dirPath = $self->ce->{courseDirs}{templates}."/".$rh->{library_name};
 	my $maxdepth= $rh->{maxdepth};
 	my $dirPath2 = $dirPath . ( ($rh->{dirPath}) ?  '/'.$rh->{dirPath}  : '' ) ;
 
 
-	my @tare = $dirPath2=~m|/|g; 
+	my @tare = $dirPath2=~m|/|g;
 	my $tare = @tare;     # counts number of "/" in dirPath prefix
 	my @outListLib;
 	my %libDirectoryList;
@@ -180,28 +193,28 @@ sub listLib {
 			if ($name =~/\S/ ) {
 				#$name =~ s|^$dirPath2/*||;  # cut the first directory
 				push(@outListLib, "$name") if $name =~/\.pg/;
-	
+
 			}
 		}
 	};
-	
+
 	my $wanted_directory = sub {
 	    $File::Find::prune =1 if &$depthfinder($File::Find::dir) > $maxdepth;
 		unless ($File::Find::dir =~/.svn/ ) {
 			my $dir = $File::Find::dir;
 			if ($dir =~/\S/ ) {
 				$dir =~ s|^$dirPath2/*||;  # cut the first directory
-	
+
 				$libDirectoryList{$dir} = {};
 			}
 		}
 	};
-	 
+
 	my $command = $rh->{command};
 
 	#warn "the command being executed is ' $command '";
 	$command = 'all' unless defined($command);
-	
+
 		$command eq 'all' &&    do {
 									$out->{command}="all -- list all pg files in $dirPath";
 									find({wanted=>$wanted,follow_fast=>1 }, $dirPath);
@@ -213,7 +226,7 @@ sub listLib {
 		$command eq 'dirOnly' &&   do {
 									if ( -e $dirPath2 and $dirPath2 !~ m|//|) {
 									    # it turns out that when // occur in path -e will work
-									    # but find will not :-( 
+									    # but find will not :-(
 									    warn "begin find for $dirPath2";
 										find({wanted=>$wanted_directory,follow_fast=>1 }, $dirPath2);
 										#@outListLib = grep {/\S/} sort keys %libDirectoryList; #omit blanks
@@ -238,7 +251,7 @@ sub listLib {
 # 				my @subdirs = File::Find::Rule->directory->in( ($dirPath) );
 # 				$out->{ra_out} = \@subdirs;
 # 				$out->{text} = encode_utf8_base64("Loaded libraries".$dirPath);
-# 				return($out);			
+# 				return($out);
 # 			};
 		$command eq 'buildtree' &&   do {
 									#find({wanted=>$wanted_directory,follow_fast=>1 }, $dirPath);
@@ -250,7 +263,7 @@ sub listLib {
 									$out->{text} = encode_utf8_base64("Loaded libraries");
 									return($out);
 		};
-		
+
 		$command eq 'files' && do {  @outListLib=();
 									 #my $separator = ($dirPath =~m|/$|) ?'' : '/';
 									 #my $dirPath2 = $dirPath . $separator . $rh->{dirPath};
@@ -267,7 +280,7 @@ sub listLib {
 									   $out->{error} = "Can't open directory  $dirPath2";
 									 }
 									 return($out);
-		
+
 		};
 		# else
 	$out->{error}="Unrecognized command $command";
@@ -290,13 +303,13 @@ sub searchLib {    #API for searching the NPL database
 		$self->{library_textchapter} = $rh->{library_textchapter};
 		my @textbooks = WeBWorK::Utils::ListingDB::getDBTextbooks($self);
 		$out->{ra_out} = \@textbooks;
-		return($out);		
+		return($out);
 	};
 	'getAllDBsubjects' eq $subcommand && do {
 		my @subjects = WeBWorK::Utils::ListingDB::getAllDBsubjects($self);
 		$out->{ra_out} = \@subjects;
 		$out->{text} = encode_utf8_base64("Subjects loaded.");
-		return($out);		
+		return($out);
 	};
 	'getAllDBchapters' eq $subcommand && do {
 		$self->{library_subjects} = $rh->{library_subjects};
@@ -304,7 +317,7 @@ sub searchLib {    #API for searching the NPL database
 		$out->{ra_out} = \@chaps;
         $out->{text} = encode_utf8_base64("Chapters loaded.");
 
-		return($out);		
+		return($out);
 	};
 	'getDBListings' eq $subcommand && do {
 
@@ -348,7 +361,7 @@ sub searchLib {    #API for searching the NPL database
 		$out->{ra_out} = [$count];
 		return($out);
 	};
-	
+
 	#else (no match )
 	$out->{error}="Unrecognized command $subcommand";
 	return( $out );
@@ -412,10 +425,10 @@ sub getProblemDirectories {
 }
 
 ##
-#  This subroutines outputs the entire library based on Subjects, chapters and sections. 
+#  This subroutines outputs the entire library based on Subjects, chapters and sections.
 #
 #  The output is an array in the form "Subject/Chapter/Section"
-##  
+##
 
 sub buildBrowseTree {
 	my $self = shift;
@@ -429,7 +442,7 @@ sub buildBrowseTree {
 		push(@tree,"Subjects/" . $sub);
 		my @chapters = WeBWorK::Utils::ListingDB::getAllDBchapters($self);
 		foreach my $chap (@chapters){
-			$self->{library_chapters} = $chap; 
+			$self->{library_chapters} = $chap;
 			push(@tree, "Subjects/" .$sub . "/" . $chap);
 			my @sections = WeBWorK::Utils::ListingDB::getAllDBsections($self);
 			foreach my $sect (@sections){
@@ -451,7 +464,7 @@ sub getProblemTags {
 	my $tags = WeBWorK::Utils::ListingDB::getProblemTags($path);
 	$out->{ra_out} = $tags;
 	$out->{text} = encode_utf8_base64("Tags loaded.");
-	
+
 	return($out);
 }
 

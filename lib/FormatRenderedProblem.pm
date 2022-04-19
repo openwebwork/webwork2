@@ -2,7 +2,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -361,7 +361,7 @@ sub formatRenderedProblem {
 	my $showFooter = $self->{inputs_ref}{showFooter} // "";
 	my $footer = $showFooter eq "0" ? '' : CGI::div(
 		{ id => 'footer' },
-		"WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | "
+		"WeBWorK &copy; 2000-2022 | host: $SITE_URL | course: $courseID | "
 			. "format: $self->{inputs_ref}{outputformat} | theme: $theme"
 	);
 
