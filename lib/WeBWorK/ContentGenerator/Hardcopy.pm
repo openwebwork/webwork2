@@ -61,7 +61,7 @@ our $PreserveTempFiles = 0 unless defined $PreserveTempFiles;
 our $HC_DEFAULT_FORMAT = "pdf"; # problems if this is not an allowed format for the user...
 our %HC_FORMATS = (
 	tex => { name => x("TeX Source"), subr => "generate_hardcopy_tex", file_type => 'application/zip' },
-	pdf => { name => x("Adobe PDF"),  subr => "generate_hardcopy_pdf", file_type => 'applicaotin/pdf' },
+	pdf => { name => x("Adobe PDF"),  subr => "generate_hardcopy_pdf", file_type => 'application/pdf' },
 );
 our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 
