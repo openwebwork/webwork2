@@ -109,7 +109,6 @@ sub initialize {
 	my $ur = $db->getUser($user);
 
 	# store data
-	# rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding.
 	$self->{defaultFrom}            =   $ur->rfc822_mailbox;
 	$self->{defaultReply}           =   $ur->rfc822_mailbox;
 	$self->{defaultSubject}         =   $self->r->urlpath->arg("courseID") . " notice";

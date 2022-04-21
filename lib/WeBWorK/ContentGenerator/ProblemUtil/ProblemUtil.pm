@@ -567,18 +567,13 @@ sub jitar_send_warning_email {
         # send to all users with permission to score_sets and an email address
 
     my $sender;
-    if ($user->email_address) {
-	# rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding
-	# when the full_name is set.
-	$sender = $user->rfc822_mailbox;
-    } elsif ($user->full_name) {
-	# Encode the user name using "MIME-Header" encoding, (RFC 2047) which
-	# allows UTF-8 encoded names to be encoded inside the mail header using
-	# a special format.
-	$sender = Encode::encode("MIME-Header", $user->full_name);
-    } else {
-	$sender = $userID;
-    }
+	if ($user->email_address) {
+		$sender = $user->rfc822_mailbox;
+	} elsif ($user->full_name) {
+		$sender = $user->full_name;
+	} else {
+		$sender = $userID;
+	}
 
     $problemID = join('.',jitar_id_to_seq($problemID));
 

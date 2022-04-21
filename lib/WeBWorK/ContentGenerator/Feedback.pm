@@ -127,15 +127,10 @@ sub body {
 		my $sender;
 		if ($user) {
 			if ($user->email_address) {
-				# rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding
-				# when the full_name is set.
 				$sender = $user->rfc822_mailbox;
 			} else {
 				if ($user->full_name) {
-					# Encode the user name using "MIME-Header" encoding,
-					# (RFC 2047) which allows UTF-8 encoded names to be
-					# encoded inside the mail header using a special format.
-					$sender = Encode::encode("MIME-Header", $user->full_name) . " <$from>";
+					$sender = $user->full_name . " <$from>";
 				} else {
 					$sender = $from;
 				}
@@ -409,8 +404,6 @@ sub getFeedbackRecipients {
 				and defined $rcpt->section and defined $user->section
 				and $rcpt->section ne $user->section;
 			if ($rcpt and $rcpt->email_address) {
-				# rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding
-				# when the full_name is set.
 				push @recipients, $rcpt->rfc822_mailbox;
 			}
 		}
