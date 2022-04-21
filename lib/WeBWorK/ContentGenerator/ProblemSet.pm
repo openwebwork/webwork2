@@ -73,6 +73,9 @@ sub nav {
 	my ($self, $args) = @_;
 	my $r = $self->r;
 
+	# Don't show the nav if the user does not have unrestricted navigation permissions.
+	return '' unless $r->authz->hasPermissions($r->param('user'), 'navigation_allowed');
+
 	my @links =
 		($r->maketext('Homework Sets'), $r->location . $r->urlpath->parent->path, $r->maketext('Homework Sets'));
 	return CGI::div({ class => 'row sticky-nav', role => 'navigation', aria_label => 'problem navigation' },
@@ -130,10 +133,12 @@ sub siblings {
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 
-
 	my $courseID = $urlpath->arg("courseID");
 	my $user = $r->param('user');
 	my $eUserID = $r->param("effectiveUser");
+
+	# restrict navigation to other problem sets if not allowed
+	return '' unless $authz->hasPermissions($user, 'navigation_allowed');
 
 	# Note that listUserSets does not list versioned sets, but listUserSetsWhere does.  On the other hand, listUserSets
 	# can not sort in the database, while listUserSetsWhere can.

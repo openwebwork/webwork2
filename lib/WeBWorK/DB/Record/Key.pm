@@ -30,6 +30,7 @@ BEGIN {
 		user_id   => { type => "TINYBLOB NOT NULL", key => 1 },
 		key       => { type => "TEXT" },
 		timestamp => { type => "BIGINT" },
+		set_id    => { type => "TINYBLOB" },
 	);
 }
 

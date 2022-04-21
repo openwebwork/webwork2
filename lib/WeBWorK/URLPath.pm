@@ -145,6 +145,7 @@ our %pathTypes = (
 	},
 
 	################################################################################
+
 	html2xml => {
 		name    => 'html2xml',
 		parent  => 'root', #    'set_list',
@@ -177,7 +178,7 @@ our %pathTypes = (
 		parent  => 'root',
 		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz answer_log grades hardcopy achievements
 			logout options instructor_tools problem_list
-		/ ],
+			/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/courseID/ ],
 		produce => '$courseID/',
@@ -203,6 +204,7 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'feedback/',
 		display => 'WeBWorK::ContentGenerator::Feedback',
+		unrestricted => 1
 	},
 	gateway_quiz => {
 		name    => x('Gateway Quiz [_2]'),
@@ -212,9 +214,10 @@ our %pathTypes = (
 		capture => [ qw/setID/ ],
 		produce => 'quiz_mode/$setID/',
 		display => 'WeBWorK::ContentGenerator::GatewayQuiz',
+		unrestricted => 1
 	},
 
-    	answer_log => {
+	answer_log => {
 		name    => x('Answer Log'),
 		parent  => 'set_list',
 		kids    => [ qw// ],
@@ -232,6 +235,7 @@ our %pathTypes = (
 		capture => [ qw/setID/ ],
 		produce => 'proctored_quiz_mode/$setID/',
 		display => 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz',
+		unrestricted => 1
 	},
 	proctored_gateway_proctor_login => {
 		name    => x('Proctored Gateway Quiz [_2] Proctor Login'),
@@ -241,6 +245,7 @@ our %pathTypes = (
 		capture => [ qw/setID/ ],
 		produce => 'proctored_quiz_mode/$setID/proctor_login',
 		display => 'WeBWorK::ContentGenerator::LoginProctor',
+		unrestricted => 1
 	},
 	grades => {
 		name    => x('Grades'),
@@ -251,15 +256,16 @@ our %pathTypes = (
 		produce => 'grades/',
 		display => 'WeBWorK::ContentGenerator::Grades',
 	},
-        achievements  => {
-	        name    => x('Achievements'),
-                parent  => 'set_list',
-                kids    => [ qw// ],
-                match   => qr|^achievements/|,
-                capture => [ qw// ],
-                produce => 'achievements/',
-                display => 'WeBWorK::ContentGenerator::Achievements',
-        },
+	achievements  => {
+		name    => x('Achievements'),
+		parent  => 'set_list',
+		kids    => [ qw// ],
+		match   => qr|^achievements/|,
+		capture => [ qw// ],
+		produce => 'achievements/',
+		display => 'WeBWorK::ContentGenerator::Achievements',
+		unrestricted => 1
+	},
 	hardcopy => {
 		name    => x('Hardcopy Generator'),
 		parent  => 'set_list',
@@ -277,6 +283,7 @@ our %pathTypes = (
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
 		display => 'WeBWorK::ContentGenerator::Hardcopy',
+		unrestricted => 1
 	},
 	logout => {
 		name    => x('Logout'),
@@ -295,6 +302,7 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'options/',
 		display => 'WeBWorK::ContentGenerator::Options',
+		unrestricted => 1
 	},
 
 	################################################################################
@@ -382,7 +390,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet',
 	},
 
-        instructor_problem_grader => {
+	instructor_problem_grader => {
 		name    => x('Manual Grader'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
@@ -391,7 +399,6 @@ our %pathTypes = (
 		produce => 'grader/$setID/$problemID',
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemGrader',
 	},
-
 
 	################################################################################
 
@@ -527,36 +534,35 @@ our %pathTypes = (
 
 	################################################################################
 
-        instructor_achievement_list => {
-                name    =>  x('Achievement Editor'),
-                parent  =>  'instructor_tools',
-                kids    =>  [ qw/instructor_achievement_editor instructor_achievement_user_editor/ ],
-                match   =>  qr|^achievement_list/|,
-                capture =>  [ qw// ],
-                produce =>  'achievement_list/',
-                display =>  'WeBWorK::ContentGenerator::Instructor::AchievementList',
-        },
+	instructor_achievement_list => {
+		name    =>  x('Achievement Editor'),
+		parent  =>  'instructor_tools',
+		kids    =>  [ qw/instructor_achievement_editor instructor_achievement_user_editor/ ],
+		match   =>  qr|^achievement_list/|,
+		capture =>  [ qw// ],
+		produce =>  'achievement_list/',
+		display =>  'WeBWorK::ContentGenerator::Instructor::AchievementList',
+	},
 
-        instructor_achievement_editor => {
-	        name    => x('Achievement Evaluator Editor'),
-                parent  => 'instructor_achievement_list',
-                kids => [ qw// ],
-                match => qr|^([^/]+)/editor/|,
+	instructor_achievement_editor => {
+		name    => x('Achievement Evaluator Editor'),
+		parent  => 'instructor_achievement_list',
+		kids => [ qw// ],
+		match => qr|^([^/]+)/editor/|,
 		capture => [ qw/achievementID/ ],
-                produce => '$achievementID/editor/',
+		produce => '$achievementID/editor/',
 		display => 'WeBWorK::ContentGenerator::Instructor::AchievementEditor',
 	},
 
-        instructor_achievement_user_editor => {
-	        name    => x('Achievement User Editor'),
-                parent  => 'instructor_achievement_list',
-                kids => [ qw// ],
+	instructor_achievement_user_editor => {
+		name    => x('Achievement User Editor'),
+		parent  => 'instructor_achievement_list',
+		kids => [ qw// ],
 		match   => qr|^([^/]+)/users/|,
 		capture => [ qw/achievementID/ ],
 		produce => '$achievementID/users/',
 		display => 'WeBWorK::ContentGenerator::Instructor::AchievementUserEditor',
 	},
-
 
 	################################################################################
 
@@ -598,6 +604,7 @@ our %pathTypes = (
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
 		display => 'WeBWorK::ContentGenerator::ProblemSet',
+		unrestricted => 1
 	},
 	problem_detail => {
 		name    => '[_3]',
@@ -607,8 +614,9 @@ our %pathTypes = (
 		capture => [ qw/problemID/ ],
 		produce => '$problemID/',
 		display => 'WeBWorK::ContentGenerator::Problem',
-        },
-        show_me_another => {
+		unrestricted => 1
+	},
+	show_me_another => {
 		name    => x('Show Me Another'),
 		parent  => 'problem_detail',
 		kids    => [ qw// ],
@@ -616,9 +624,8 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'show_me_another/',
 		display => 'WeBWorK::ContentGenerator::ShowMeAnother',
+		unrestricted => 1
 	},
-
-
 );
 
 =for comment
@@ -809,6 +816,19 @@ sub module {
 	my $type = $self->{type};
 
 	return $pathTypes{$type}->{display};
+}
+
+=item navigation_restricted()
+
+Returns 1 if the path is restricted from being viewed by a user that does not
+have the navigation_allowed permission, and 0 otherwise.  The allowed paths for
+restricted users are marked with the unrestricted flag.
+
+=cut
+
+sub navigation_restricted {
+	my $self = shift;
+	return defined $pathTypes{$self->{type}}{unrestricted} ? 0 : 1;
 }
 
 =back

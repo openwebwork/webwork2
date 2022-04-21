@@ -1372,9 +1372,11 @@ sub path {
 		}
 	}
 
+	my $navigation_allowed = $r->authz->hasPermissions($r->param('user'), 'navigation_allowed');
+
 	my @path = (
-		WeBWorK     => $r->location,
-		$courseName => $r->location . "/$courseName",
+		WeBWorK     => $navigation_allowed ? $r->location                  : '',
+		$courseName => $navigation_allowed ? $r->location . "/$courseName" : '',
 		$setName    => $r->location . "/$courseName/$setName",
 	);
 
