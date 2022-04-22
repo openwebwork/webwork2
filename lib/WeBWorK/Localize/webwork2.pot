@@ -276,11 +276,7 @@ msgstr ""
 msgid "A directory already exists with the name %1. You must first delete this existing course before you can unarchive."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:119
-msgid "A file name cannot begin with a dot, it cannot be empty, it cannot contain a directory path component and only the characters -_.a-zA-Z0-9 and space  are allowed."
-msgstr ""
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ScoringDownload.pm:44
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:119 /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ScoringDownload.pm:44
 msgid "A file name cannot begin with a dot, it cannot be empty, it cannot contain a directory path component and only the characters -_.a-zA-Z0-9 and space are allowed."
 msgstr ""
 
