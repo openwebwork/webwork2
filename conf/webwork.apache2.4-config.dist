@@ -172,18 +172,11 @@ $Location{$webwork_url} = {
 push @Alias, [ $webwork_htdocs_url => $webwork_htdocs_dir ];
 push @Alias, [ "/pg_files" => "$pg_dir/htdocs" ];
 
-# The order of the directives is important for the rewrite to work, so a hash can not be used,
-# and we must construct the directory section by hand.
-push @PerlConfig, 
-	"<Directory $webwork_htdocs_dir>",
-	'	Require       all granted',
-	'	Options       FollowSymLinks',
-	'	AllowOverride none',
-	'	RewriteEngine on',
-	"	RewriteBase   $webwork_htdocs_url",
-	'	RewriteCond   %{REQUEST_FILENAME} !-f',
-	'	RewriteRule   ^(.*)$ /pg_files/$1 [L]',
-	'</Directory>';
+$Directory{$webwork_htdocs_dir} = {
+	Require       => "all granted",
+	Options       => "FollowSymLinks",
+	AllowOverride => "none"
+};
 
 $Directory{"$pg_dir/htdocs"} = {
 	Require       => "all granted",
