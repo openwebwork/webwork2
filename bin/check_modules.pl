@@ -18,22 +18,22 @@
 
 =head1 NAME
 
-check_modules.pl - check to ensure that all applications and perl modules are installed. 
+check_modules.pl - check to ensure that all applications and perl modules are installed.
 
 =head1 SYNOPSIS
- 
+
 check_modules.pl [options]
- 
+
  Options:
-   -a|--apache-version	 Which apache version to use.  Defaults to 2. 
-   -m|--modules          Lists the perl modules needed to be installed. 
-   -p|--programs       	 Lists the programs/applications that are needed. 
-   -A|--all         		 checks both programs and modules (Default if -m or -p is not selected)	
+   -a|--apache-version	 Which apache version to use.  Defaults to 2.
+   -m|--modules          Lists the perl modules needed to be installed.
+   -p|--programs       	 Lists the programs/applications that are needed.
+   -A|--all         		 checks both programs and modules (Default if -m or -p is not selected)
 
 =head1 DESCRIPTION
- 
+
 Lists all needed applications for webwork as well as a perl modules.
- 
+
 =cut
 use strict;
 use warnings;
@@ -150,6 +150,7 @@ my @modulesList = qw(
 	Tie::IxHash
 	Time::HiRes
 	Time::Zone
+	Types::Serialiser
 	URI::Escape
 	UUID::Tiny
 	XML::Parser
@@ -167,7 +168,7 @@ my %moduleVersion = (
 );
 
 my ($test_programs,$test_modules,$show_help);
-my $test_all = 1; 
+my $test_all = 1;
 my $apache_version = "2";
 
 GetOptions(
@@ -177,7 +178,7 @@ GetOptions(
 	'A|all'   			 => \$test_all,
 	'h|help'					=> \$show_help,
 );
-pod2usage(2) if $show_help; 
+pod2usage(2) if $show_help;
 
 if ($apache_version eq "1") {
 	push @modulesList, @apache1ModulesList;
@@ -247,7 +248,7 @@ sub check_modules {
 			print "   $module found and loaded\n";
 		}
 	}
-	checkSQLabstract(); 
+	checkSQLabstract();
 }
 
 ## this is specialized code to check for either SQL::Abstract or SQL::Abstract::Classic
@@ -255,8 +256,8 @@ sub check_modules {
 sub checkSQLabstract {
 	print "\n checking for SQL::Abstract\n\n";
 	eval "use SQL::Abstract";
-	my $sql_abstract = not($@); 
-	my $sql_abstract_version = $SQL::Abstract::VERSION if $sql_abstract; 
+	my $sql_abstract = not($@);
+	my $sql_abstract_version = $SQL::Abstract::VERSION if $sql_abstract;
 
 	eval "use SQL::Abstract::Classic";
 	my $sql_abstract_classic = not($@);
