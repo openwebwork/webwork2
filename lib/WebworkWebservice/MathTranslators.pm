@@ -1,6 +1,19 @@
-#!/usr/local/bin/perl -w 
+#!/usr/local/bin/perl -w
 
-# Copyright (C) 2002 Michael Gage 
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
 
 ###############################################################################
 # Web service which translates TeX to pdf or to HTML
@@ -11,7 +24,7 @@
 
 package WebworkWebservice::MathTranslators;
 use WebworkWebservice;
-use base qw(WebworkWebservice); 
+use base qw(WebworkWebservice);
 
 use strict;
 use sigtrap;
@@ -36,7 +49,7 @@ our $ce           =$WebworkWebservice::SeedCE;
 
 
 
-my $debugOn 	=	1; 
+my $debugOn 	=	1;
 my $PASSWORD 	= 	$WebworkWebservice::PASSWORD;
 
 
@@ -49,10 +62,10 @@ my $externalpdflatexPath 		= 	$ce->{externalPrograms}->{pdflatex};;
 
 
 # variables formerly set in Global
-	$Global::tmp_directory_permission = 0775; 
+	$Global::tmp_directory_permission = 0775;
 	$Global::numericalGroupID='100';  # group ID for wwdev
 
-my $tmp_directory_permission 	= 	$Global::tmp_directory_permission; 
+my $tmp_directory_permission 	= 	$Global::tmp_directory_permission;
 my $numericalGroupID			=	$Global::numericalGroupID;  # group ID for webadmin
 
 sub tex2pdf {
@@ -67,36 +80,36 @@ sub tex2pdf {
 	#obtain the path to the file
 	my $filePath 		= 	$rh->{fileName};
 	my @pathElements 	= 	split("/", $filePath);
-	
+
 	# grab the last element as the fileName
 	#remove the extension from the file name
-	my $fileName 	= 	pop @pathElements;    
+	my $fileName 	= 	pop @pathElements;
  	$fileName 		=~ 	s/\.pg$//;
- 	
+
  	#Create the full url and the full directory path -- If pathElements is empty this can give an extra //? Should I worry? maybe
 	my $url 			 = 	$TEMP_BASE_URL. join("/",@pathElements);
 	$url				.= 	'/' unless $url =~ m|/$|;   # only add / if it is needed.
 	$url				.= 	"$fileName.pdf";
-	my $texFileBasePath  = 	$TEMPDIRECTORY.join("/",@pathElements); 
+	my $texFileBasePath  = 	$TEMPDIRECTORY.join("/",@pathElements);
 	$texFileBasePath 	.=	'/' unless $texFileBasePath =~ m|/$|;
 	$texFileBasePath 	.= "$fileName";
-	
+
 	# create the intermediate directories if they don't exists
 	# create a dummy .pdf file
 	surePathToTmpFile2($texFileBasePath.'.pdf');
 #	my $filePermission = '0775';
-#	chmod("$filePermission","$texFileBasePath.pdf") 
+#	chmod("$filePermission","$texFileBasePath.pdf")
 #	     or die "Can't change file permissions on $texFileBasePath.pdf to $filePermission";
-	
+
 	# Decode and cleanup the tex string
 	my $texString = decode_base64(  $rh->{'texString'});
 	#Make sure the line endings are correct
 	$texString=~s/\r\n/\n/g;
 	$texString=~s/\r/\n/g;
-	
+
 	# Make sure that TeX is run in batchmode so that the tex program doesn't hang on errors
 	$texString = "\\batchmode\n".$texString;  # force errors to log.
-	
+
 	# Remove any old files
 	unlink("$texFileBasePath.tex","$texFileBasePath.dvi","$texFileBasePath.log","$texFileBasePath.aux",
 	       "$texFileBasePath.ps","$texFileBasePath.pdf");
@@ -105,9 +118,9 @@ sub tex2pdf {
 	open(TEX,"> $texFileBasePath.tex") or die "Can't open $texFileBasePath.tex to store tex code";
 	local($/)=undef;
 	print TEX $texString;
-	close(TEX);	
-	
-	
+	close(TEX);
+
+
 	# my $dviCommandLine = "$externalLatexPath $texFileBasePath.tex";# >/dev/null 2>/dev/null";
 	# my $psCommandLine = "$externalDvipsPath -o $texFileBasePath.ps $texFileBasePath.dvi >/dev/null";# 2>/dev/null";
 	# my $pdfCommandLine = "$externalGsPath -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$texFileBasePath.pdf -c save pop -f $texFileBasePath.ps";
@@ -119,7 +132,7 @@ sub tex2pdf {
 	# Change to the working directory and create the pdf files.
 	my $wd = $TEMPDIRECTORY.join("/",@pathElements); # working directory
 	# print "---cd $wd &&  $externalpdflatexPath $fileName.tex\n";
-	
+
 	system "cd $wd &&  $externalpdflatexPath $fileName.tex >>$fileName.log";
 	chmod 0777, "$texFileBasePath.pdf";
 	unless ($debugOn) {
@@ -149,7 +162,7 @@ sub surePathToTmpFile2 {  # constructs intermediate directories if needed beginn
         $path   = convertPath("$tmpDirectory");
 		print  "Creating path: $path\n ";
         while (@nodes>1 ) {
-            
+
             $path = convertPath($path . shift (@nodes) ."/");
             print  "Creating path: $path\n ";
             unless (-e $path) {
