@@ -177,8 +177,10 @@ print "Zipping files\n";
 `tar -czf $tar_file $output_file $desc_file`;
 
 print "Uploading file\n";
+`echo "put $tar_file" | sshpass -p 'wwdata_upload' sftp -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null wwdata_upload\@146.111.135.122:wwdata/`;
 
-`echo "put $tar_file" | sftp -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oPort=57281 wwdata\@52.88.32.79`;
+print "Cleaning up\n";
+`rm $desc_file $tar_file $output_file`;
 
-
+print "Done\n";
 1;
