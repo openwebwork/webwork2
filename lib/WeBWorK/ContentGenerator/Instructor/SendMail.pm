@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -264,7 +264,7 @@ sub initialize {
 
 	}
 
-	my $remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
+	my $remote_host = $r->useragent_addr->ip_get || "UNKNOWN";
 
 	# store data
 	$self->{from}                   =    $from;

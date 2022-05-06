@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2020 The WeBWorK Project, https://openwebworkorg.wordpress.com/
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -982,7 +982,7 @@ sub write_log_entry {
 		$remote_port = "UNKNOWN" unless defined $remote_port;
 		$user_agent  = "UNKNOWN";
 	} else {
-		$remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
+		$remote_host = $r->useragent_addr->ip_get || "UNKNOWN";
 		$remote_port = $r->connection->client_addr->port   || "UNKNOWN";
 
 		$user_agent = $r->headers_in->{"User-Agent"};
