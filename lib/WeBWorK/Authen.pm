@@ -982,7 +982,7 @@ sub write_log_entry {
 		$remote_port = "UNKNOWN" unless defined $remote_port;
 		$user_agent  = "UNKNOWN";
 	} else {
-		$remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
+		$remote_host = $r->useragent_addr->ip_get || "UNKNOWN";
 		$remote_port = $r->connection->client_addr->port   || "UNKNOWN";
 
 		$user_agent = $r->headers_in->{"User-Agent"};

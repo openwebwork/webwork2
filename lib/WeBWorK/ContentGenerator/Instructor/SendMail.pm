@@ -264,7 +264,7 @@ sub initialize {
 
 	}
 
-	my $remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
+	my $remote_host = $r->useragent_addr->ip_get || "UNKNOWN";
 
 	# store data
 	$self->{from}                   =    $from;
