@@ -674,6 +674,8 @@ sub loadSetDefListFile {
 
 		return @{ JSON->new->decode($data) };
 	}
+
+	return;
 }
 
 sub getDefList {

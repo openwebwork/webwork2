@@ -306,7 +306,7 @@ sub answerTemplate {
     	push @tableRows, CGI::Tr($self->formatAnswerRow($rh_answers->{$ans_id}, $ans_id, $answerNumber++));
     }
 	my $answerTemplate = "";
-	$answerTemplate .= CGI::h3({ class => 'attemptResultsHeader' }, $self->maketext("Results for this submission"))
+	$answerTemplate .= CGI::h2({ class => 'attemptResultsHeader' }, $self->maketext("Results for this submission"))
 		if $self->showHeadline;
 	$answerTemplate .= CGI::table({ class => 'attemptResults table table-sm table-bordered' }, @tableRows);
     ### "results for this submission" is better than "attempt results" for a headline

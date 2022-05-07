@@ -81,7 +81,7 @@ $mail{feedbackRecipients}    = [
 #$gitPGRemoteName = "origin";
 #$gitPGBranchName = "main";
 #$gitLibraryRemoteName = "origin";
-#$gitLibraryBranchName = "master";
+#$gitLibraryBranchName = "main";
 
 ################################################################################
 # Theme
