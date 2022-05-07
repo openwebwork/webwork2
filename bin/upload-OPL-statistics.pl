@@ -1,9 +1,8 @@
 #!/usr/bin/perl
 
-##############################################################################
+################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwdb,v 1.13 2006/01/25 23:13:45 sh002i Exp $
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -12,9 +11,9 @@
 #
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE. See either the GNU General Public License or the
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
 # Artistic License for more details.
-##############################################################################
+################################################################################
 
 # This script dumps the local OPL statistics table and uploads it.
 
@@ -177,8 +176,10 @@ print "Zipping files\n";
 `tar -czf $tar_file $output_file $desc_file`;
 
 print "Uploading file\n";
+`echo "put $tar_file" | sftp -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null wwdata_upload\@146.111.135.122:wwdata/`;
 
-`echo "put $tar_file" | sftp -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oPort=57281 wwdata\@52.88.32.79`;
+print "Cleaning up\n";
+`rm $desc_file $tar_file $output_file`;
 
-
+print "Done\n";
 1;

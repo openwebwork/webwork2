@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-##############################################################################
+################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -10,9 +10,9 @@
 #
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE. See either the GNU General Public License or the
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
 # Artistic License for more details.
-##############################################################################
+################################################################################
 
 =head1 NAME
 
@@ -20,9 +20,9 @@ upgrade-database-to-utf8mb4.pl -- Upgrade webwork course database tables from
 latin1 to utf8mb4.
 
 =head1 SYNOPSIS
- 
+
   upgrade-database-to-utf8mb4.pl [options]
- 
+
   Options:
     -c|--course-id [course]   Course id to upgrade the database for.
                               (This option may be given multiple times.)
@@ -42,7 +42,7 @@ latin1 to utf8mb4.
     -h|--help                 Show full help for this script.
 
 =head1 DESCRIPTION
- 
+
 Upgrade webwork course database tables from latin1 to utf8mb4.
 
 This script assumes that you have already properly configured the database to
@@ -217,7 +217,7 @@ sub checkAndUpdateTableColumnTypes {
 	my $table = shift;
 	my $table_type = shift;
 	my $pass = shift // 1;
-	
+
 	print "\tChecking '$table' (pass $pass)\n" if $verbose;
 	my $schema_field_data = $db->{$table_type}{record}->FIELD_DATA;
 	for my $field (keys %$schema_field_data) {
