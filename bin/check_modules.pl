@@ -180,8 +180,6 @@ if ($test_all or $test_modules) {
 	check_modules(@modulesList);
 }
 
-use Data::Dumper;
-
 sub check_apps {
 	my @applicationsList = @_;
 	print "\nChecking your \$PATH for executables required by WeBWorK...\n";
