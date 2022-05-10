@@ -315,9 +315,8 @@
 		const problemSeed = document.getElementById(`problem.${id}.problem_seed_id`);
 		ro.problemSeed = problemSeed ? problemSeed.value : 1;
 
-		const sourceFile = document.getElementById(`problem.${id}.source_file_id`);
-		ro.sourceFilePath =
-			sourceFile ? sourceFile.value : document.getElementById(`problem_${id}_default_source_file`)?.value;
+		ro.sourceFilePath = document.getElementById(`problem.${id}.source_file_id`)?.value ||
+			document.getElementById(`problem_${id}_default_source_file`)?.value;
 
 		if (ro.sourceFilePath.startsWith('group')) {
 			renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0" style="font-weight:bold">'
