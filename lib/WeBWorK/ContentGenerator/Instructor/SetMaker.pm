@@ -1600,7 +1600,7 @@ sub process_search {
 	my $mltind;
 	for my $indx (0..$#dbsearch) {
 		$dbsearch[$indx]->{filepath} = 
-			$dbsearch[$indx]->{libraryroot} || "Library" . "/" .
+			$dbsearch[$indx]->{libraryroot} . "/" .
 			$dbsearch[$indx]->{path} . "/" .
 			$dbsearch[$indx]->{filename};
 		# For debugging
