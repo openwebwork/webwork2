@@ -1588,9 +1588,12 @@ sub process_search {
 	my %mlt = ();
 	my $mltind;
 	for my $indx (0..$#dbsearch) {
-		$dbsearch[$indx]->{filepath} = "Library/".$dbsearch[$indx]->{path}."/".$dbsearch[$indx]->{filename};
-# For debugging
-$dbsearch[$indx]->{oindex} = $indx;
+		$dbsearch[$indx]->{filepath} = 
+			$dbsearch[$indx]->{libraryroot} || "Library" . "/" .
+			$dbsearch[$indx]->{path} . "/" .
+			$dbsearch[$indx]->{filename};
+		# For debugging
+		$dbsearch[$indx]->{oindex} = $indx;
 		if($mltind = $dbsearch[$indx]->{morelt}) {
 			if(defined($mlt{$mltind})) {
 				push @{$mlt{$mltind}}, $indx;

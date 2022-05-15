@@ -129,9 +129,12 @@ $dbh->prepare("SET NAMES '$character_set'")->execute();
 
 print "using character set $character_set to build OPL database\n";
 
-my $libraryRoot = $ce->{problemLibrary}->{root};
+my $libraryRoot = $ce->{problemLibrary}{root};
+my $contribRoot = $ce->{problemLibrary}{root};
 $libraryRoot =~ s|/+$||;
+$contribRoot =~ s|/+$||;
 print "using libraryRoot $libraryRoot\n";
+print "using contribRoot $contribRoot\n";
 print "WEBWORK_ROOT $ENV{WEBWORK_ROOT}\n";
 my $libraryVersion = $ce->{problemLibrary}->{version};
 my $db_storage_engine = $ce->{problemLibrary_db}->{storage_engine};
@@ -210,6 +213,7 @@ if($libraryVersion eq '2.5') {
 	DBsection_id int(15) NOT NULL,
 	author_id int(15),
 	institution tinyblob,
+	libraryroot varchar(255) NOT NULL,
 	path_id int(15) NOT NULL,
 	filename varchar(255) NOT NULL,
 	morelt_id int(127) DEFAULT 0 NOT NULL,
@@ -376,8 +380,6 @@ sub isvalid {
 	}
 	return 1;
 }
-
-my ($name,$pgfile,$pgpath);
 
 #### First read in textbook information
 
@@ -572,7 +574,8 @@ print "Number of files processed:\n";
 #### Now search for tagged problems
 #recursive search for all pg files
 
-File::Find::find({ wanted => \&pgfiles, follow_fast=> 1}, $libraryRoot);
+File::Find::find( { wanted => \&pgfiles, follow_fast => 1 }, $libraryRoot );
+File::Find::find( { wanted => \&pgfiles, follow_fast => 1 }, $contribRoot );
 
 sub trim {
 	my $str = shift;
@@ -617,13 +620,16 @@ sub pgfiles {
 #print "\n$name";
 
 	if ($name =~ /\.pg$/) {
-		$pgfile = basename($name);
-		$pgpath = dirname($name);
 		$cnt2++;
 		printf("%6d", $cnt2) if(($cnt2 % 100) == 0);
 		print "\n" if(($cnt2 % 1000) == 0);
 
-		$pgpath =~ s|^$libraryRoot/||;
+		my $pgfile = basename($name);
+		dirname($name) =~ m|^([^/]*)/(.*)|;
+		my ($pglib, $pgpath) = ($1, $2);
+		$pglib =~ s|^$libraryRoot|Library|;
+		$pglib =~ s|^$contribRoot|Contrib|;
+
 		my $tags = WeBWorK::Utils::Tags->new($name);
 
 		if ($tags->istagged()) {
@@ -717,12 +723,11 @@ sub pgfiles {
 
 			for my $DBsection_id (@DBsection_ids) {
 				my $pgfile_id = safe_get_id($tables{pgfile}, 'pgfile_id',
-					qq(WHERE filename = ? AND path_id = ? AND DBsection_id = ? ), [$pgfile, $path_id, $DBsection_id], 1, "", $DBsection_id, $author_id, $tags->{Institution}, $path_id, $pgfile, 0, $level, $lang, $static, $mathobj);
+					qq(WHERE filename = ? AND path_id = ? AND DBsection_id = ? AND libraryroot = ?), 
+					[$pgfile, $path_id, $DBsection_id, $pglib], 1, "", $DBsection_id, $author_id,
+					$tags->{Institution}, $pglib, $path_id, $pgfile, 0, $level, $lang, $static, $mathobj);
 				push @pgfile_ids, $pgfile_id;
 			}
-#if (scalar(@pgfile_ids)>1) {
- # print "\npg ".join(', ', @pgfile_ids)."\n";
-#}
 
 			# morelt table
 
