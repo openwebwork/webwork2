@@ -44,6 +44,7 @@ use Encode;
 require WeBWorK::Utils::ListingDB;
 
 # we use x to mark strings for maketext
+use constant INCLUDE_CONTRIB_DEFAULT => 0;
 use constant SHOW_HINTS_DEFAULT => 0;
 use constant SHOW_SOLUTIONS_DEFAULT => 0;
 use constant MAX_SHOW_DEFAULT => 20;
@@ -388,6 +389,16 @@ sub view_problems_line {
 	# Option of whether to show hints and solutions
 	$result .= CGI::div(
 		{ class => 'd-inline-block ms-2 mb-2' },
+		CGI::div(
+			{ class => 'form-check form-check-inline ms-2' },
+			CGI::checkbox({
+				name            => "includeContrib",
+				checked         => $r->param('includeContrib') || INCLUDE_CONTRIB_DEFAULT,
+				label           => $r->maketext("Include Contrib"),
+				class           => 'form-check-input me-1',
+				labelattributes => { class => 'form-check-label col-form-label-sm' }
+			})
+		),
 		CGI::div(
 			{ class => 'form-check form-check-inline ms-2' },
 			CGI::checkbox({
@@ -1835,6 +1846,7 @@ sub pre_header_initialize {
 	} elsif ($r->param('lib_view')) {
 
 		@pg_files=();
+		# TODO: deprecate OPLv1 -- replace getSectionListings with getDBListings($r,0)
 		my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r);
 		@pg_files = process_search($r, @dbsearch);
 		$use_previous_problems=0;
@@ -2057,8 +2069,8 @@ sub body {
 		));
 	}
 
-	my $showHints = $r->param('showHints');
-	my $showSolutions = $r->param('showSolutions');
+	# my $showHints = $r->param('showHints');
+	# my $showSolutions = $r->param('showSolutions');
 
 	##########	Extract information computed in pre_header_initialize
 
