@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2020 The WeBWorK Project, https://openwebworkorg.wordpress.com/
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -752,8 +752,7 @@ sub create_session {
 	}
 
 	my $setID =
-		$r->param('user')
-		&& !$r->authz->hasPermissions($r->param('user'), 'navigation_allowed') ? $r->urlpath->arg("setID") : '';
+		!$r->authz->hasPermissions($userID, 'navigation_allowed') ? $r->urlpath->arg("setID") : '';
 
 	my $Key = $db->newKey(user_id => $userID, key => $newKey, timestamp => $timestamp, set_id => $setID);
 
@@ -881,8 +880,7 @@ sub sendCookie {
 	# This sets the setID in the cookie on initial login.
 	$setID = $r->urlpath->arg("setID")
 		if !$setID
-		&& $r->param('user')
-		&& $r->authen->was_verified && !$r->authz->hasPermissions($r->param('user'), 'navigation_allowed');
+		&& $r->authen->was_verified && !$r->authz->hasPermissions($userID, 'navigation_allowed');
 
  	my $timestamp = time();
 
