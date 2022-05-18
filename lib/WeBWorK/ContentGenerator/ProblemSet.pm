@@ -380,6 +380,7 @@ sub body {
 			$data->{version} = $verSet->version_id;
 			$data->{start} =
 				$self->formatDateTime($verSet->version_creation_time, undef, $ce->{studentDateDisplayFormat});
+			$data->{proctored} = $verSet->assignment_type =~ /proctored/;
 
 			# Display close date if this is not a timed test.
 			my $closeText = '';
@@ -677,7 +678,10 @@ sub body {
 				my $interactive = $r->maketext('Version [_1]', $ver->{version});
 				if ($authz->hasPermissions($user, 'view_hidden_work') || $ver->{show_link}) {
 					my $interactiveURL = $self->systemLink($urlpath->newFromModule(
-						$urlModule, $r,
+						$ver->{proctored}
+						? 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz'
+						: 'WeBWorK::ContentGenerator::GatewayQuiz',
+						$r,
 						courseID => $courseID,
 						setID    => $ver->{id}
 					));
