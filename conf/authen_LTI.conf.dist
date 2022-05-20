@@ -154,6 +154,11 @@ $strip_address_from_email = 0;
 #$preferred_source_of_username = "lis_person_sourcedid";
 #$fallback_source_of_username = "lis_person_contact_email_primary";
 
+# Depending on the username source, capitalization may vary between students,
+# such as when using an email address to get the username. Turning this option
+# on will make all usernames lowercase. Default is 0 (off).
+#$lti_lowercase_username = 1;
+
 ################################################################################
 # LTI Preferred source of Student Id
 ################################################################################
