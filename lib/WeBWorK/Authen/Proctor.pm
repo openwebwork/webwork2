@@ -156,7 +156,7 @@ sub create_session {
 	return $self->SUPER::create_session($self->proctor_key_id($userID), $newKey, $userID);
 }
 
-# rewrite the userID to include bith the proctor's and the student's user ID
+# rewrite the userID to include both the proctor's and the student's user ID
 # and then call the default check_session method.
 sub check_session {
 	my ($self, $userID, $possibleKey, $updateTimestamp) = @_;
