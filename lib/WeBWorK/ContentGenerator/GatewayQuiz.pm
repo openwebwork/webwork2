@@ -1817,40 +1817,55 @@ sub body {
 	debug("end answer processing");
 	# end problem loop
 
-	# additional set-level database manipulation: we want to save the time
-	#    that a set was submitted, and for proctored tests we want to reset
-	#    the assignment type after a set is submitted for the last time so
-	#    that it's possible to look at it later without getting proctor
-	#    authorization
-	if (($submitAnswers &&
-			($will{recordAnswers} ||
-				(! $set->version_last_attempt_time() &&
-					$timeNow > $set->due_date + $grace))) ||
-		(! $can{recordAnswersNextTime} &&
-			$set->assignment_type() eq 'proctored_gateway')) {
+	# Additional set-level database manipulation: We want to save the time that a set was submitted, and for proctored
+	# tests we want to reset the assignment type after a set is submitted for the last time so that it's possible to
+	# look at it later without getting proctor authorization.
+	if (
+		(
+			$submitAnswers
+			&& ($will{recordAnswers} || (!$set->version_last_attempt_time && $timeNow > $set->due_date + $grace))
+		)
+		|| (
+			$set->assignment_type eq 'proctored_gateway'
+			&& (
+				($user eq $effectiveUser && !$can{recordAnswersNextTime})
+				|| (
+					$user ne $effectiveUser
+					&& $authz->hasPermissions($user, "record_answers_when_acting_as_student")
+					&& $set->attempts_per_version > 0
+					&& ($Problem->num_correct + $Problem->num_incorrect + ($submitAnswers ? 1 : 0) >=
+						$set->attempts_per_version)
+				)
+			)
+		)
+		)
+	{
+		# Save the submission time if we're recording the answer, or if the first submission occurs after the due_date.
+		$set->version_last_attempt_time($timeNow)
+			if ($submitAnswers
+				&& ($will{recordAnswers} || (!$set->version_last_attempt_time && $timeNow > $set->due_date + $grace)));
 
-		my $setName = $set->set_id();
+		$set->assignment_type('gateway')
+			if (
+				$set->assignment_type eq 'proctored_gateway'
+				&& (
+					($user eq $effectiveUser && !$can{recordAnswersNextTime})
+					|| (
+						$user ne $effectiveUser
+						&& $authz->hasPermissions($user, "record_answers_when_acting_as_student")
+						&& $set->attempts_per_version > 0
+						&& ($Problem->num_correct + $Problem->num_incorrect + ($submitAnswers ? 1 : 0) >=
+							$set->attempts_per_version)
+					)
+				)
+			);
 
-		# save the submission time if we're recording the answer, or if the
-		#     first submission occurs after the due_date
-		if ($submitAnswers &&
-			($will{recordAnswers} ||
-				(!$set->version_last_attempt_time() &&
-					$timeNow > $set->due_date + $grace))) {
-			$set->version_last_attempt_time($timeNow);
-		}
-		if (!$can{recordAnswersNextTime} &&
-			$set->assignment_type() eq 'proctored_gateway') {
-			$set->assignment_type('gateway');
-		}
-		# again, we save only parameters that are determine access to the
-		#    set version
-		my $cleanSet = $db->getSetVersion($effectiveUser, $setName, $versionNumber);
+		# Save only parameters that determine access to the set version.
+		my $cleanSet = $db->getSetVersion($effectiveUser, $set->set_id, $versionNumber);
 		$cleanSet->assignment_type($set->assignment_type);
 		$cleanSet->version_last_attempt_time($set->version_last_attempt_time);
 		$db->putSetVersion($cleanSet);
 	}
-
 
 	####################################
 	# output
