@@ -781,25 +781,27 @@ sub arg {
 =item name()
 
 Returns the human-readable name of this WeBWorK::URLPath.
-This display set ids and course ids with spaces instead of underscores, and
-places the set id into an ltr span so that it is displayed ltr even for rtl
-languages.  Note that the return value of this method should never be used to
-determine what type of path this is or for any sort of further processing.  It
-is a translated string.
+This displays set ids and course ids with spaces instead of underscores, and if
+C<$displayHTML> is true, it places the set id into an ltr span so that it is
+displayed ltr even for rtl languages.  Note that the return value of this method
+should never be used to determine what type of path this is or for any sort of
+further processing.  It is a translated string.
 
 =cut
 
 sub name {
-	my ($self) = @_;
+	my ($self, $displayHTML) = @_;
 	my %args = $self->args;
 
 	# Translate the display name.
 	my $name = $self->{r}->maketext(
 		$pathTypes{ $self->{type} }{name},
 		$args{userID} // '',
-		CGI::span({ dir => 'ltr' }, format_set_name_display($args{setID} // '')),
+		$displayHTML
+		? CGI::span({ dir => 'ltr' }, format_set_name_display($args{setID} // ''))
+		: format_set_name_display($args{setID} // ''),
 		$args{problemID} // '',
-		($args{courseID}  // '') =~ s/_/ /gr
+		($args{courseID} // '') =~ s/_/ /gr
 	);
 
 	return $name;

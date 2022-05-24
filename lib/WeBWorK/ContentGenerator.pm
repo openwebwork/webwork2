@@ -704,7 +704,7 @@ sub links {
 		my $new_urlpath = $self->r->urlpath->newFromModule($module, $r, %$urlpath_args);
 		my $new_systemlink = $self->systemLink($new_urlpath, %$systemlink_args);
 
-		defined $text or $text = $new_urlpath->name;
+		defined $text or $text = $new_urlpath->name(1);
 
 
 		# try to set $active automatically by comparing
@@ -1300,7 +1300,7 @@ sub title {
 		print $db->getSettingValue('courseTitle');
 	} else {
 		# Display the urlpath name
-		print $urlpath->name;
+		print $urlpath->name(1);
 	}
 
 	return '';
