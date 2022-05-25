@@ -131,10 +131,17 @@ sub siblings {
 				statType => 'student',
 				userID   => $user_id
 			);
-			print CGI::li(CGI::a(
-				{ href => $self->systemLink($userStatisticsPage), class => 'nav-link' },
-				"$last_name, $first_name  ($user_id)"
-			));
+			print CGI::li(
+				{ class => 'nav-item' },
+				CGI::a(
+					{
+						$user_id eq $self->{studentName}
+						? (class => 'nav-link active')
+						: (href => $self->systemLink($userStatisticsPage), class => 'nav-link')
+					},
+					"$last_name, $first_name ($user_id)"
+				)
+			);
 		}
 	} else {
 		my @setIDs   = sort $db->listGlobalSets;
@@ -148,7 +155,11 @@ sub siblings {
 			print CGI::li(
 				{ class => 'nav-item' },
 				CGI::a(
-					{ href => $self->systemLink($problemPage), class => 'nav-link' },
+					{
+						defined $self->{setName} && $setID eq $self->{setName}
+						? (class => 'nav-link active')
+						: (href => $self->systemLink($problemPage), class => 'nav-link')
+					},
 					format_set_name_display($setID)
 				)
 			);

@@ -660,12 +660,13 @@ sub links {
 	#return "" unless $authen->was_verified;
 
 	# grab some interesting data from the request
-	my $courseID = $urlpath->arg("courseID");
-	my $userID = $r->param('user');
-	my $eUserID   = $r->param("effectiveUser");
-	my $setID     = $urlpath->arg("setID");
-	my $problemID = $urlpath->arg("problemID");
-	my $achievementID = $urlpath->arg("achievementID");
+	my $courseID      = $urlpath->arg('courseID');
+	my $userID        = $r->param('user');
+	my $urlUserID     = $urlpath->arg('userID');
+	my $eUserID       = $r->param('effectiveUser');
+	my $setID         = $urlpath->arg('setID');
+	my $problemID     = $urlpath->arg('problemID');
+	my $achievementID = $urlpath->arg('achievementID');
 
 	# Determine if navigation is restricted for this user.
 	my $restricted_navigation = $authen->was_verified && !$authz->hasPermissions($userID, 'navigation_allowed');
@@ -914,14 +915,26 @@ sub links {
 
 				print CGI::start_li({ class => 'nav-item' }); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-				if ($userID ne $eUserID or defined $setID) {
+				if ($userID ne $eUserID or defined $setID or defined $urlUserID) {
 					print CGI::start_ul({ class => 'nav flex-column' });
-					if ($userID ne $eUserID) {
+					if (defined $urlUserID) {
 						print CGI::li({ class => 'nav-item' },
 							&$makelink("${pfx}Stats",
-							   	text => "$eUserID",
-							   	urlpath_args => { %args,statType => "student", userID => $eUserID },
-							   	systemlink_args => \%systemlink_args));
+								text => $urlUserID,
+								urlpath_args => { %args, statType => "student", userID => $urlUserID },
+								systemlink_args => \%systemlink_args
+							)
+						);
+					}
+					if ($userID ne $eUserID && (!defined $urlUserID || $urlUserID ne $eUserID)) {
+						print CGI::li({ class => 'nav-item' },
+							&$makelink("${pfx}Stats",
+								text => $eUserID,
+								urlpath_args => { %args, statType => "student", userID => $eUserID },
+								systemlink_args => \%systemlink_args,
+								active => $urlpath->type eq 'instructor_user_statistics' && !defined $urlUserID
+							)
+						);
 					}
 					if (defined $setID) {
 						# make sure we don't try to send a versioned
@@ -944,14 +957,26 @@ sub links {
 
 				print CGI::start_li({ class => 'nav-item' }); # Student Progress
 				print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-				if ($userID ne $eUserID or defined $setID) {
+				if ($userID ne $eUserID or defined $setID or defined $urlUserID) {
 					print CGI::start_ul({ class => 'nav flex-column' });
-					if ($userID ne $eUserID) {
+					if (defined $urlUserID) {
 						print CGI::li({ class => 'nav-item' },
 							&$makelink("${pfx}StudentProgress",
-							   	text => "$eUserID",
-							   	urlpath_args => { %args, statType => "student", userID => $eUserID },
-							   	systemlink_args => \%systemlink_args));
+								text => $urlUserID,
+								urlpath_args => { %args, statType => "student", userID => $urlUserID },
+								systemlink_args => \%systemlink_args
+							)
+						);
+					}
+					if ($userID ne $eUserID && (!defined $urlUserID || $urlUserID ne $eUserID)) {
+						print CGI::li({ class => 'nav-item' },
+							&$makelink("${pfx}StudentProgress",
+								text => $eUserID,
+								urlpath_args => { %args, statType => "student", userID => $eUserID },
+								systemlink_args => \%systemlink_args,
+								active => $urlpath->type eq 'instructor_user_progress' && !defined $urlUserID
+							)
+						);
 					}
 					if (defined $setID) {
 						# make sure we don't try to send a versioned
@@ -1030,7 +1055,8 @@ sub links {
 						&$makelink("${pfx}FileManager",
 							text => $r->maketext("Archive this Course"),
 							urlpath_args => { %args },
-						   	systemlink_args => \%augmentedSystemLinks));
+							systemlink_args => \%augmentedSystemLinks,
+							active => 0));
 				}
 				print CGI::end_ul();
 				print CGI::end_li(); # end Instructor Tools

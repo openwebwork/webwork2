@@ -142,8 +142,12 @@ sub siblings {
 			print CGI::li(
 				{ class => 'nav-item' },
 				CGI::a(
-					{ href => $self->systemLink($userStatisticsPage), class => 'nav-link' },
-					"$last_name, $first_name  ($user_id)"
+					{
+						$user_id eq $self->{studentName}
+						? (class => 'nav-link active')
+						: (href => $self->systemLink($userStatisticsPage), class => 'nav-link')
+					},
+					"$last_name, $first_name ($user_id)"
 				)
 			);
 		}
@@ -162,7 +166,11 @@ sub siblings {
 			print CGI::li(
 				{ class => 'nav-item' },
 				CGI::a(
-					{ href => $self->systemLink($problemPage), class => 'nav-link' },
+					{
+						defined $self->{setName} && $setID eq $self->{setName}
+						? (class => 'nav-link active')
+						: (href => $self->systemLink($problemPage), class => 'nav-link')
+					},
 					format_set_name_display($setID)
 				)
 			);
