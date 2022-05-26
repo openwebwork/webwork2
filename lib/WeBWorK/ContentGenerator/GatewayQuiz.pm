@@ -1130,7 +1130,7 @@ sub path {
 
 	return $self->pathMacro(
 		$args,
-		'Home'      => $navigation_allowed ? $root : '',
+		'WeBWorK'   => $navigation_allowed ? $root : '',
 		$courseName => $navigation_allowed ? "$root/$courseName" : '',
 		$setName eq "Undefined_Set" || $self->{invalidSet}
 		? ($setName => '')
