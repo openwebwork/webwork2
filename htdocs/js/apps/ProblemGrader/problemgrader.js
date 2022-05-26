@@ -77,6 +77,16 @@
 				return;
 			}
 
+			// Update the hidden problem status fields and score table for gateway quizzes
+			if (saveData.versionId !== '0') {
+				var scoreCells = document.querySelectorAll('table td.score');
+				const numberProblems = scoreCells.length / 2;
+				scoreCells[parseInt(saveData.problemId) - 1].textContent =
+					scoreCells[numberProblems + parseInt(saveData.problemId) - 1].textContent =
+					scoreInput.value == '100' ? '\u{1F4AF}' : scoreInput.value;
+				document.gwquiz.elements['probstatus' + saveData.problemId].value = parseInt(scoreInput.value) / 100;
+			}
+
 			// FIXME: /webwork2/ should not be hard coded here.
 			// Save the score.
 			const basicWebserviceURL = '/webwork2/instructorXMLHandler';
