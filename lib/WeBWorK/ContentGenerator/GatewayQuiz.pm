@@ -2463,8 +2463,6 @@ sub body {
 			: ''
 		);
 
-		print CGI::end_div();
-
 		print CGI::p(CGI::em($r->maketext('Note: grading the test grades all problems, not just those on this page.')))
 			if $numProbPerPage && $numPages > 1 && $can{recordAnswersNextTime};
 
