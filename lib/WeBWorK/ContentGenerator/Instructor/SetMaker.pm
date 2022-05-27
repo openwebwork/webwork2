@@ -396,7 +396,7 @@ sub view_problems_line {
 			class           => 'form-check-input me-1',
 			labelattributes => { class => 'form-check-label col-form-label-sm' }
 		})
-	) : {};
+	) : ();
 
 	my $maybe_contrib_box = ($contrib_exist) ? CGI::div(
 		{ class => 'form-check form-check-inline ms-2' },
@@ -407,7 +407,7 @@ sub view_problems_line {
 			class           => 'form-check-input me-1',
 			labelattributes => { class => 'form-check-label col-form-label-sm' }
 		})
-	) : {};
+	) : ();
 
 	# Option of whether to show hints and solutions
 	$result .= CGI::div(
@@ -433,7 +433,8 @@ sub view_problems_line {
 				class           => 'form-check-input me-1',
 				labelattributes => { class => 'form-check-label col-form-label-sm' }
 			})
-		)
+		),
+		CGI::hidden({name => 'includeOPL', default => 0});
 	);
 
 	$result .= CGI::end_div();
