@@ -155,7 +155,7 @@ SELECT
   `${courseID}_problem`.set_id,
   `${courseID}_set`.due_date,
   `${courseID}_problem`.problem_id,
-  REPLACE(`${courseID}_problem`.source_file,'local/Library/','Library/'),
+  REPLACE(`${courseID}_problem`.source_file,'local/',''),
   `${courseID}_problem_user`.status,
   `${courseID}_problem_user`.attempted,
   `${courseID}_problem_user`.num_correct,
@@ -168,6 +168,8 @@ FROM `${courseID}_problem_user`
   ON `${courseID}_problem_user`.set_id = `${courseID}_set`.set_id
 WHERE (`${courseID}_problem`.source_file LIKE 'Library/%'
   OR `${courseID}_problem`.source_file LIKE 'local/Library/%')
+  OR `${courseID}_problem`.source_file LIKE 'Contrib/%')
+  OR `${courseID}_problem`.source_file LIKE 'local/Contrib/%')
   AND `${courseID}_set`.due_date < $time;
 EOS
 
