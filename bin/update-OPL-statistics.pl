@@ -37,8 +37,7 @@ BEGIN { $main::VERSION = "2.4"; }
 
 BEGIN{
     my $ce = new WeBWorK::CourseEnvironment({
-	webwork_dir => $ENV{WEBWORK_ROOT},
-					 });
+		webwork_dir => $ENV{WEBWORK_ROOT}});
 
     my $pg_dir = $ce->{pg_dir};
     eval "use lib '$pg_dir/lib'";
@@ -54,7 +53,7 @@ my $time = time();
 # get course environment and open up database
 my $ce = new WeBWorK::CourseEnvironment({
     webwork_dir => $ENV{WEBWORK_ROOT},
-					});
+	});
 
 # decide whether the mysql installation can handle
 # utf8mb4 and that should be used for the OPL
@@ -63,14 +62,14 @@ my $ENABLE_UTF8MB4 = $ce->{ENABLE_UTF8MB4}?1:0;
 
 
 my $dbh = DBI->connect(
-        $ce->{problemLibrary_db}->{dbsource},
-        $ce->{problemLibrary_db}->{user},
-        $ce->{problemLibrary_db}->{passwd},
-        {
+	$ce->{problemLibrary_db}->{dbsource},
+	$ce->{problemLibrary_db}->{user},
+	$ce->{problemLibrary_db}->{passwd},
+	{
 		AutoCommit => 0,
-                PrintError => 0,
-                RaiseError => 1,
-        },
+		PrintError => 0,
+		RaiseError => 1,
+	},
 );
 
 # get course list
@@ -167,8 +166,8 @@ FROM `${courseID}_problem_user`
   JOIN `${courseID}_set`
   ON `${courseID}_problem_user`.set_id = `${courseID}_set`.set_id
 WHERE (`${courseID}_problem`.source_file LIKE 'Library/%'
-  OR `${courseID}_problem`.source_file LIKE 'local/Library/%')
-  OR `${courseID}_problem`.source_file LIKE 'Contrib/%')
+  OR `${courseID}_problem`.source_file LIKE 'local/Library/%'
+  OR `${courseID}_problem`.source_file LIKE 'Contrib/%'
   OR `${courseID}_problem`.source_file LIKE 'local/Contrib/%')
   AND `${courseID}_set`.due_date < $time;
 EOS
