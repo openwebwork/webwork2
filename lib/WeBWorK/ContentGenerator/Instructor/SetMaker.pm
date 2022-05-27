@@ -387,7 +387,7 @@ sub view_problems_line {
 		})
 	);
 
-	my $maybe_OPL_box = ($contrib_exist) ? CGI::div(
+	my $maybe_OPL_box = $contrib_exist ? CGI::div(
 		{ class => 'form-check form-check-inline ms-2' },
 		CGI::checkbox({
 			name            => 'includeOPL',
@@ -398,7 +398,7 @@ sub view_problems_line {
 		})
 	) : ();
 
-	my $maybe_contrib_box = ($contrib_exist) ? CGI::div(
+	my $maybe_contrib_box = $contrib_exist ? CGI::div(
 		{ class => 'form-check form-check-inline ms-2' },
 		CGI::checkbox({
 			name            => 'includeContrib',
@@ -434,7 +434,7 @@ sub view_problems_line {
 				labelattributes => { class => 'form-check-label col-form-label-sm' }
 			})
 		),
-		CGI::hidden({name => 'includeOPL', default => 0})
+		CGI::hidden({name => 'includeOPL', default => $contrib_exist ? 0 : 1})
 	);
 
 	$result .= CGI::end_div();

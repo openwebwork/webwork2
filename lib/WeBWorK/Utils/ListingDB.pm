@@ -473,8 +473,8 @@ sub getDBListings {
 		$extrawhere .= " AND pgf.level IN ( ? ) ";
 		push @select_parameters, join(',', @levels);
 	}
-	$extrawhere .= " AND pgf.libraryroot = 'Library' " unless ($include_contrib);
-	$extrawhere .= " AND pgf.libraryroot = 'Contrib' " unless ($include_opl);
+	$extrawhere .= " AND pgf.libraryroot = 'Library' " unless $include_contrib;
+	$extrawhere .= " AND pgf.libraryroot = 'Contrib' " unless $include_opl;
 	my $textextrawhere = '';
     my $haveTextInfo=0;
     my @textInfo_parameters=();
