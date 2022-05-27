@@ -49,7 +49,7 @@ sub get_credentials {
 
 	my $urlpath = $r->urlpath;
 	my ($set_id, $version_id) = grok_vsetID( $urlpath->arg('setID') );
-	
+
 	# at least the user ID is available in request parameters
 	if (defined $r->param("proctor_user")) {
 		my $student_user_id = $r->param("effectiveUser");
@@ -59,15 +59,15 @@ sub get_credentials {
 		}
 		$self->{session_key} = $r->param("proctor_key");
 		$self->{password} = $r->param("proctor_passwd");
-		$self->{login_type} = $r->param("submitAnswers") 
-			? "proctor_grading:$student_user_id" 
+		$self->{login_type} = $r->param("submitAnswers")
+			? "proctor_grading:$student_user_id"
 			: "proctor_login:$student_user_id";
 		$self->{credential_source} = "params";
 		return 1;
 	}
 }
 
-# duplicates method in superclass, adding additional check for permission 
+# duplicates method in superclass, adding additional check for permission
 #    to proctor quizzes
 sub check_user {
 	my $self = shift;
@@ -89,19 +89,19 @@ sub check_user {
 		$self->{error} = "You must specify a user ID.";
 		return 0;
 	}
-	
+
 	my $User = $db->getUser($user_id);
-	
+
 	unless ($User) {
 		$self->{log_error} = "user unknown";
 		$self->{error} = GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
-	
+
 	# proctors may be tas, instructors, or proctors; if the last, they
-	#    do not have the behavior course_access, so we don't bother to 
-	#    check that here.  they must, however, be able to login, which 
-	#    it seems to me is an overlap between course permissions and 
+	#    do not have the behavior course_access, so we don't bother to
+	#    check that here.  they must, however, be able to login, which
+	#    it seems to me is an overlap between course permissions and
 	#    course status behaviors.
 
 	unless ($authz->hasPermissions($user_id, "login")) {
@@ -112,7 +112,7 @@ sub check_user {
 
 	if ( $submitAnswers ) {
 		unless ($authz->hasPermissions($user_id,"proctor_quiz_grade")) {
-			# only set the error if this proctor is different 
+			# only set the error if this proctor is different
 			#    than the past proctor, implying that we have
 			#    tried to grade with a new proctor id
 			if ( $past_proctor_id ne $user_id ) {
@@ -122,7 +122,7 @@ sub check_user {
 				    "authorized to proctor test grade " .
 				    "submissions in this course.";
 			}
-				
+
 			return 0;
 		}
 	} else {
@@ -134,7 +134,7 @@ sub check_user {
 				"course.";
 			return 0;
 		}
-	} 
+	}
 }
 
 # this is similar to the method in the base class, excpet that the parameters
@@ -142,7 +142,7 @@ sub check_user {
 sub set_params {
 	my $self = shift;
 	my $r = $self->{r};
-	
+
 	$r->param("proctor_user", $self->{user_id});
 	$r->param("proctor_key", $self->{session_key});
 	$r->param("proctor_passwd", "");
@@ -152,15 +152,15 @@ sub set_params {
 # and then call the default create_session method.
 sub create_session {
 	my ($self, $userID, $newKey) = @_;
-	
-	return $self->SUPER::create_session($self->proctor_key_id($userID), $newKey);
+
+	return $self->SUPER::create_session($self->proctor_key_id($userID), $newKey, $userID);
 }
 
-# rewrite the userID to include bith the proctor's and the student's user ID
+# rewrite the userID to include both the proctor's and the student's user ID
 # and then call the default check_session method.
 sub check_session {
 	my ($self, $userID, $possibleKey, $updateTimestamp) = @_;
-	
+
 	return $self->SUPER::check_session($self->proctor_key_id($userID), $possibleKey, $updateTimestamp);
 }
 
@@ -168,10 +168,10 @@ sub check_session {
 sub proctor_key_id {
 	my ($self, $userID, $newKey) = @_;
 	my $r = $self->{r};
-	
+
 	my $proctor_key_id = $r->param("effectiveUser") . "," . $userID;
 	$proctor_key_id .= ",g" if $self->{login_type} =~ /^proctor_grading/;
-	
+
 	return $proctor_key_id;
 }
 
