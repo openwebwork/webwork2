@@ -851,34 +851,36 @@ sub pgfiles {
 				}
 
 				@textproblems = @{$texthashref->{problems}};
-				for my $tp (@textproblems) {
-					$query = "SELECT problem_id FROM `$tables{problem}` WHERE section_id = \"$section_id\" AND number = \"$tp\"";
-					my $problem_id = $dbh->selectrow_array($query);
-					if (!defined($problem_id)) {
-						$dbh->do("INSERT INTO `$tables{problem}`
-					VALUES(
-						NULL,
-						\"$section_id\",
-						\"$tp\",
-						NULL
-					)"
-								);
-						dbug "INSERT INTO problem VALUES( \"\", \"$section_id\", \"$tp\", \"\" )\n";
-						$problem_id = $dbh->selectrow_array($query);
-					}
-
-					# pgfile_problem table associates pgfiles with textbook problems
-					for my $pgfile_id (@pgfile_ids) {
-						$query = "SELECT problem_id FROM `$tables{pgfile_problem}` WHERE problem_id = \"$problem_id\" AND pgfile_id = \"$pgfile_id\"";
-						my $pg_problem_id = $dbh->selectrow_array($query);
-						if (!defined($pg_problem_id)) {
-							$dbh->do("INSERT INTO `$tables{pgfile_problem}`
+				if ($section_id) {
+					for my $tp (@textproblems) {
+						$query = "SELECT problem_id FROM `$tables{problem}` WHERE section_id = \"$section_id\" AND number = \"$tp\"";
+						my $problem_id = $dbh->selectrow_array($query);
+						if (!defined($problem_id)) {
+							$dbh->do("INSERT INTO `$tables{problem}`
 						VALUES(
-							\"$pgfile_id\",
-							\"$problem_id\"
+							NULL,
+							\"$section_id\",
+							\"$tp\",
+							NULL
 						)"
 									);
-							dbug "INSERT INTO pgfile_problem VALUES( \"$pgfile_id\", \"$problem_id\" )\n";
+							dbug "INSERT INTO problem VALUES( \"\", \"$section_id\", \"$tp\", \"\" )\n";
+							$problem_id = $dbh->selectrow_array($query);
+						}
+
+						# pgfile_problem table associates pgfiles with textbook problems
+						for my $pgfile_id (@pgfile_ids) {
+							$query = "SELECT problem_id FROM `$tables{pgfile_problem}` WHERE problem_id = \"$problem_id\" AND pgfile_id = \"$pgfile_id\"";
+							my $pg_problem_id = $dbh->selectrow_array($query);
+							if (!defined($pg_problem_id)) {
+								$dbh->do("INSERT INTO `$tables{pgfile_problem}`
+							VALUES(
+								\"$pgfile_id\",
+								\"$problem_id\"
+							)"
+										);
+								dbug "INSERT INTO pgfile_problem VALUES( \"$pgfile_id\", \"$problem_id\" )\n";
+							}
 						}
 					}
 				}
