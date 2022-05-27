@@ -710,21 +710,17 @@ sub pgfiles {
 
 			# pgfile table -- set 4 defaults first
 
-			## TODO this is where we have to deal with crosslists, and pgfileid
-			##      will be an array of id's
-			##      Make an array of DBsection-id's above
-
-			my $level = $tags->{Level} || 0;
-			# Default language is English
-			my $lang = $tags->{Language} || "en";
-			my $mathobj = $tags->{MO} || 0;
-			my $static = $tags->{Static} || 0;
-
+			# pgfile table -- set 4 defaults first
+			my $level   = ($tags->{Level} =~ /\d/) ? $tags->{Level} : 0;
+			my $lang    = $tags->{Language} || 'en';
+			my $mathobj = $tags->{MO}       || 0;
+			my $static  = $tags->{Static}   || 0;
+	
 			my @pgfile_ids = ();
 
 			for my $DBsection_id (@DBsection_ids) {
 				my $pgfile_id = safe_get_id($tables{pgfile}, 'pgfile_id',
-					qq(WHERE filename = ? AND path_id = ? AND DBsection_id = ? AND libraryroot = ?), 
+					qq(WHERE filename = ? AND path_id = ? AND DBsection_id = ? AND libraryroot = ?),
 					[$pgfile, $path_id, $DBsection_id, $pglib], 1, "", $DBsection_id, $author_id,
 					$tags->{Institution}, $pglib, $path_id, $pgfile, 0, $level, $lang, $static, $mathobj);
 				push @pgfile_ids, $pgfile_id;
