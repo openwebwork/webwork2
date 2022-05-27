@@ -2180,7 +2180,7 @@ sub body {
 		# Set up links between problems and, for multi-page tests, pages.
 		my $jumpLinks = '';
 		my $probRow   = [];
-		my $scoreRow  = [];
+		my @scoreRow;
 		for my $i (0 .. $#pg_results) {
 			my $pn = $i + 1;
 			if ($i >= $startProb && $i <= $endProb) {
@@ -2190,7 +2190,8 @@ sub body {
 			}
 			my $score = $probStatus[ $probOrder[$i] ];
 			$score = $score == 1 ? "\x{1F4AF}" : wwRound(0, 100 * $score);
-			push(@$scoreRow, $score);
+			push(@scoreRow,
+				CGI::td({ class => 'score', data_problem_id => $problems[ $probOrder[$i] ]->problem_id }, $score));
 		}
 		my @tableRows;
 		my @cols = (CGI::colgroup(CGI::col({ class => 'header' })));
@@ -2230,7 +2231,7 @@ sub body {
 				)
 			);
 		}
-		push(@tableRows, CGI::Tr(CGI::th($r->maketext('% Score:')), CGI::td({ class => 'score' }, $scoreRow)))
+		push(@tableRows, CGI::Tr(CGI::th($r->maketext('% Score:')), @scoreRow))
 			if ($canShowProblemScores && $set->version_last_attempt_time);
 		$jumpLinks = CGI::div(
 			{ class => 'table-responsive' },
