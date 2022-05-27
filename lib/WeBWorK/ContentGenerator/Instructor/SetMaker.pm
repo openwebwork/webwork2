@@ -390,9 +390,9 @@ sub view_problems_line {
 	my $maybe_OPL_box = ($contrib_exist) ? CGI::div(
 		{ class => 'form-check form-check-inline ms-2' },
 		CGI::checkbox({
-			name            => "includeOPL",
-			checked         => $r->param('includeOPL') || 1,
-			label           => $r->maketext("Include OPL"),
+			name            => 'includeOPL',
+			checked         => $r->param('includeOPL') // 1,
+			label           => $r->maketext('Include OPL'),
 			class           => 'form-check-input me-1',
 			labelattributes => { class => 'form-check-label col-form-label-sm' }
 		})
@@ -401,9 +401,9 @@ sub view_problems_line {
 	my $maybe_contrib_box = ($contrib_exist) ? CGI::div(
 		{ class => 'form-check form-check-inline ms-2' },
 		CGI::checkbox({
-			name            => "includeContrib",
-			checked         => $r->param('includeContrib') || INCLUDE_CONTRIB_DEFAULT,
-			label           => $r->maketext("Include Contrib"),
+			name            => 'includeContrib',
+			checked         => $r->param('includeContrib') // INCLUDE_CONTRIB_DEFAULT,
+			label           => $r->maketext('Include Contrib'),
 			class           => 'form-check-input me-1',
 			labelattributes => { class => 'form-check-label col-form-label-sm' }
 		})
