@@ -434,7 +434,7 @@ sub view_problems_line {
 				labelattributes => { class => 'form-check-label col-form-label-sm' }
 			})
 		),
-		CGI::hidden({name => 'includeOPL', default => 0});
+		CGI::hidden({name => 'includeOPL', default => 0})
 	);
 
 	$result .= CGI::end_div();
