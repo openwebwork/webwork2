@@ -826,12 +826,14 @@ sub links {
 					print CGI::start_li({ class => 'nav-item' });
 					print CGI::start_ul({ class => 'nav flex-column' });
 					print CGI::start_li({ class => 'nav-item' });          # $problemID
-					print &$makelink(
-						"${pfx}Problem",
-						text            => $r->maketext("Problem [_1]", $prettyProblemID),
-						urlpath_args    => { %args, setID => $setID, problemID => $problemID },
-						systemlink_args => \%systemlink_args
-					);
+					print $setRecord->assignment_type =~ /gateway/
+						? CGI::a({ class => 'nav-link' }, $r->maketext('Problem [_1]', $prettyProblemID))
+						: &$makelink(
+							"${pfx}Problem",
+							text            => $r->maketext("Problem [_1]", $prettyProblemID),
+							urlpath_args    => { %args, setID => $setID, problemID => $problemID },
+							systemlink_args => \%systemlink_args
+						);
 					print CGI::end_li();                                   # end $problemID
 					print CGI::end_ul();
 					print CGI::end_li();                                   # end $setID
@@ -891,7 +893,7 @@ sub links {
 					    print CGI::start_ul({ class => 'nav flex-column' });
 						print CGI::li({ class => 'nav-item' },
 							&$makelink("${pfx}PGProblemEditor",
-								text => $prettyProblemID,
+								text => $r->maketext('Problem [_1]', $prettyProblemID),
 								urlpath_args => { %args, setID => $setID, problemID => $problemID },
 								systemlink_args => \%systemlink_args,
 								target => "WW_Editor")
