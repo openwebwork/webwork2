@@ -428,6 +428,7 @@ sub getDBListings {
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
+	my $include_opl = $r->param('includeOPL') // 1;
 	my $include_contrib = $r->param('includeContrib') // 0;
 
 	# Make sure these strings are internally encoded in UTF-8
@@ -473,6 +474,7 @@ sub getDBListings {
 		push @select_parameters, join(',', @levels);
 	}
 	$extrawhere .= " AND pgf.libraryroot = 'Library' " unless ($include_contrib);
+	$extrawhere .= " AND pgf.libraryroot = 'Contrib' " unless ($include_opl);
 	my $textextrawhere = '';
     my $haveTextInfo=0;
     my @textInfo_parameters=();

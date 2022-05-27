@@ -345,6 +345,7 @@ sub view_problems_line {
 	my $internal_name = shift;
 	my $label         = shift;
 	my $r             = shift;    # so we can get parameter values
+	my $contrib_exist = (-r $r->ce->{courseDirs}{templates}.'/Contrib') ? 1 : 0;
 
 	my $result = CGI::start_div({ class => 'd-flex flex-wrap justify-content-center' });
 
@@ -386,19 +387,33 @@ sub view_problems_line {
 		})
 	);
 
+	my $maybe_OPL_box = ($contrib_exist) ? CGI::div(
+		{ class => 'form-check form-check-inline ms-2' },
+		CGI::checkbox({
+			name            => "includeOPL",
+			checked         => $r->param('includeOPL') || 1,
+			label           => $r->maketext("Include OPL"),
+			class           => 'form-check-input me-1',
+			labelattributes => { class => 'form-check-label col-form-label-sm' }
+		})
+	) : {};
+
+	my $maybe_contrib_box = ($contrib_exist) ? CGI::div(
+		{ class => 'form-check form-check-inline ms-2' },
+		CGI::checkbox({
+			name            => "includeContrib",
+			checked         => $r->param('includeContrib') || INCLUDE_CONTRIB_DEFAULT,
+			label           => $r->maketext("Include Contrib"),
+			class           => 'form-check-input me-1',
+			labelattributes => { class => 'form-check-label col-form-label-sm' }
+		})
+	) : {};
+
 	# Option of whether to show hints and solutions
 	$result .= CGI::div(
 		{ class => 'd-inline-block ms-2 mb-2' },
-		CGI::div(
-			{ class => 'form-check form-check-inline ms-2' },
-			CGI::checkbox({
-				name            => "includeContrib",
-				checked         => $r->param('includeContrib') || INCLUDE_CONTRIB_DEFAULT,
-				label           => $r->maketext("Include Contrib"),
-				class           => 'form-check-input me-1',
-				labelattributes => { class => 'form-check-label col-form-label-sm' }
-			})
-		),
+		$maybe_OPL_box,
+		$maybe_contrib_box,
 		CGI::div(
 			{ class => 'form-check form-check-inline ms-2' },
 			CGI::checkbox({

@@ -30,20 +30,6 @@ use lib "$pg_dir/lib";
 use WeBWorK::CourseEnvironment;
 use String::ShellQuote;
 
-# hack to set version so that the script runs without warnings in
-# earlier versions of WeBWorK, e.g. WW 2.7
-
-BEGIN { $main::VERSION = "2.4"; }
-
-BEGIN{
-    my $ce = new WeBWorK::CourseEnvironment({
-		webwork_dir => $ENV{WEBWORK_ROOT}});
-
-    my $pg_dir = $ce->{pg_dir};
-    eval "use lib '$pg_dir/lib'";
-    die $@ if $@;
-}
-
 use DBI;
 use WeBWorK::Utils::CourseIntegrityCheck;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
