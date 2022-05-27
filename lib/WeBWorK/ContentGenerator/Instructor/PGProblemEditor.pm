@@ -384,34 +384,35 @@ sub initialize  {
 
 sub path {
 	my ($self, $args) = @_;
-	my $r = $self->r;
-	my $urlpath       = $r->urlpath;
-	my $courseName    = $urlpath->arg("courseID");
-	my $setName       = $urlpath->arg("setID") || '';
-	my $problemNumber = $urlpath->arg("problemID") || '';
+	my $r                   = $self->r;
+	my $urlpath             = $r->urlpath;
+	my $courseName          = $urlpath->arg("courseID");
+	my $setName             = $urlpath->arg("setID")     || '';
+	my $problemNumber       = $urlpath->arg("problemID") || '';
 	my $prettyProblemNumber = $problemNumber;
+	my $isGateway           = 0;
 
 	if ($setName) {
 		my $set = $r->db->getGlobalSet($setName);
-		if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
-			$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
-		}
+		$prettyProblemNumber = join('.', jitar_id_to_seq($problemNumber))
+			if ($set && $set->assignment_type eq 'jitar' && $problemNumber);
+		$isGateway = 1 if $set && $set->assignment_type =~ /gateway/;
 	}
 
-	# we need to build a path to the problem being edited by hand, since it is not the same as the urlpath
-	# For this page the bread crum path leads back to the problem being edited, not to the Instructor tool.
-	my @path = ('WeBWorK', $r->location,
-		"$courseName", $r->location."/$courseName",
-		"$setName",    $r->location."/$courseName/$setName",
-		"$prettyProblemNumber", $r->location."/$courseName/$setName/$problemNumber",
-		$r->maketext("Editor"), ""
+	# We need to build a path to the problem being edited by hand, since it is not the same as the urlpath.
+	# The breadcrumb path for the problem number leads back to the problem being edited for a regular set,
+	# and is not a link for a problem in a gateway quiz.
+	my @path = (
+		'WeBWorK'              => $r->location,
+		$courseName            => $r->location . "/$courseName",
+		$setName               => $r->location . "/$courseName/$setName",
+		$prettyProblemNumber   => $isGateway ? '' : $r->location . "/$courseName/$setName/$problemNumber",
+		$r->maketext("Editor") => ''
 	);
 
-	#print "\n<!-- BEGIN " . __PACKAGE__ . "::path -->\n";
 	print $self->pathMacro($args, @path);
-	#print "<!-- END " . __PACKAGE__ . "::path -->\n";
 
-	return "";
+	return '';
 }
 
 sub title {
