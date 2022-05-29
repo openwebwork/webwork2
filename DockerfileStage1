@@ -4,16 +4,14 @@
 FROM ubuntu:20.04
 
 # ==================================================================
-
 # Phase 1 - set base OS image install stage ENV variables
 #
 # We only need install time ENV variables, not those needed by the WeBWorK system
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    DEBCONF_NONINTERACTIVE_SEEN=true
+	DEBCONF_NONINTERACTIVE_SEEN=true
 
 # ==================================================================
-
 # Phase 2 - Ubuntu 20.04 base image + required packages
 
 # Do NOT include "apt-get -y upgrade"
@@ -127,7 +125,8 @@ RUN apt-get update \
 	iputils-ping \
 	imagemagick \
 	jq \
-	npm \
+	&& curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
 	&& apt-get clean \
 	&& rm -fr /var/lib/apt/lists/* /tmp/*
 
@@ -135,11 +134,9 @@ RUN apt-get update \
 # such as: telnet vim mc file
 
 # ==================================================================
-
 # Phase 3 - install additional Perl modules from CPAN (not packaged for Ubuntu or outdated in Ubuntu)
 
 RUN cpanm install Statistics::R::IO \
-    && rm -fr ./cpanm /root/.cpanm /tmp/*
+	&& rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # ==================================================================
-
