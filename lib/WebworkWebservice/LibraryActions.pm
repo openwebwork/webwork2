@@ -331,8 +331,7 @@ sub searchLib {    #API for searching the NPL database
 		$self->{library_textsection} = $rh->{library_textsection};
 		debug(to_json($rh));
 		my @listings = WeBWorK::Utils::ListingDB::getDBListings($self);
-		my @output = map {$templateDir."/Library/".$_->{path}."/".$_->{filename}} @listings;
-		#change the hard coding!!!....just saying
+		my @output = map {"$templateDir/".$_->{libraryroot}."/".$_->{path}."/".$_->{filename}} @listings;
 		$out->{ra_out} = \@output;
 		return($out);
 	};

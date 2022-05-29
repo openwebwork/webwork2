@@ -23,12 +23,21 @@ use File::Basename;
 use WeBWorK::Debug;
 
 use constant LIBRARY_STRUCTURE => {
-	textbook => { select => 'tbk.textbook_id,tbk.title,tbk.author,tbk.edition',
-	name => 'library_textbook', where => 'tbk.textbook_id'},
-	textchapter => { select => 'tc.number,tc.name', name=>'library_textchapter',
-	where => 'tc.name'},
-	textsection => { select => 'ts.number,ts.name', name=>'library_textsection',
-	where => 'ts.name'},
+	textbook => { 
+		select => 'tbk.textbook_id,tbk.title,tbk.author,tbk.edition',
+		name => 'library_textbook', 
+		where => 'tbk.textbook_id'
+	},
+	textchapter => { 
+		select => 'tc.number,tc.name', 
+		name=>'library_textchapter',
+		where => 'tc.name'
+	},
+	textsection => { 
+		select => 'ts.number,ts.name', 
+		name=>'library_textsection',
+		where => 'ts.name'
+	},
 	problem => { select => 'prob.name' },
 	};
 
@@ -193,7 +202,7 @@ $r is a Apache request object so we can get the right table names
 
 $path is the path to the file
 
-Out put is an array reference: [MO, static]
+Output is an array reference: [MO, static]
 
 =cut
 
@@ -364,21 +373,14 @@ sub getAllDBchapters {
 	my $subject = $r->param('library_subjects');
 	return () unless($subject);
 	my $dbh = getDB($r->ce);
-# 	my $query = "SELECT DISTINCT c.name, c.DBchapter_id
-#                                 FROM `$tables{dbchapter}` c,
-# 				`$tables{dbsubject}` t
-#                  WHERE c.DBsubject_id = t.DBsubject_id AND
-#                  t.name = \"$subject\" ORDER BY c.DBchapter_id";
-# 	my $all_chaps_ref = $dbh->selectall_arrayref($query);
-	my $query = "SELECT DISTINCT c.name, c.DBchapter_id
-                                FROM `$tables{dbchapter}` c,
+
+	my $query = "SELECT DISTINCT c.name, c.DBchapter_id       
+				FROM `$tables{dbchapter}` c,
 				`$tables{dbsubject}` t
                  WHERE c.DBsubject_id = t.DBsubject_id AND
                  t.name = ? ORDER BY c.DBchapter_id";
-	my $all_chaps_ref = $dbh->selectall_arrayref($query, {},$subject);
-
+	my $all_chaps_ref = $dbh->selectall_arrayref($query, {}, $subject);
  	my @results = map { $_->[0] } @{$all_chaps_ref};
-	#@results = sortByName(undef, @results);
 	return @results;
 }
 
@@ -397,23 +399,15 @@ sub getAllDBsections {
 	my $chapter = $r->param('library_chapters');
 	return () unless($chapter);
 	my $dbh = getDB($r->ce);
-# 	my $query = "SELECT DISTINCT s.name, s.DBsection_id
-#                  FROM `$tables{dbsection}` s,
-#                  `$tables{dbchapter}` c, `$tables{dbsubject}` t
-#                  WHERE s.DBchapter_id = c.DBchapter_id AND
-#                  c.DBsubject_id = t.DBsubject_id AND
-#                  t.name = \"$subject\" AND c.name = \"$chapter\" ORDER BY s.DBsection_id";
-# 	my $all_sections_ref = $dbh->selectall_arrayref($query);
+
 	my $query = "SELECT DISTINCT s.name, s.DBsection_id
                  FROM `$tables{dbsection}` s,
                  `$tables{dbchapter}` c, `$tables{dbsubject}` t
                  WHERE s.DBchapter_id = c.DBchapter_id AND
                  c.DBsubject_id = t.DBsubject_id AND
                  t.name = ? AND c.name = ? ORDER BY s.DBsection_id";
-	my $all_sections_ref = $dbh->selectall_arrayref($query, {},$subject, $chapter);
-
+	my $all_sections_ref = $dbh->selectall_arrayref($query, {}, $subject, $chapter);
 	my @results = map { $_->[0] } @{$all_sections_ref};
-	#@results = sortByName(undef, @results);
 	return @results;
 }
 
@@ -434,6 +428,8 @@ sub getDBListings {
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
+	my $include_opl = $r->param('includeOPL') // 1;
+	my $include_contrib = $r->param('includeContrib') // 0;
 
 	# Make sure these strings are internally encoded in UTF-8
 	utf8::upgrade($subj);
@@ -455,36 +451,30 @@ sub getDBListings {
 		$kw1 = ", `$tables{keyword}` kw, `$tables{pgfile_keyword}` pgkey";
 		$kw2 = " AND kw.keyword_id=pgkey.keyword_id AND
 			 pgkey.pgfile_id=pgf.pgfile_id $keywordstring";
-#			makeKeywordWhere($keywords) ;
 	}
 
 	my $dbh = getDB($ce);
 
 	my $extrawhere = '';
 	my @select_parameters=();
-	if($subj) {
-#		$subj =~ s/'/\\'/g;
-#		$extrawhere .= " AND dbsj.name=\"$subj\" ";
+	if ($subj) {
 		$extrawhere .= " AND dbsj.name= ? ";
 		push @select_parameters, $subj;
 	}
-	if($chap) {
-#		$chap =~ s/'/\\'/g;
-#		$extrawhere .= " AND dbc.name=\"$chap\" ";
+	if ($chap) {
 		$extrawhere .= " AND dbc.name= ? ";
 		push @select_parameters, $chap;
 	}
-	if($sec) {
-#		$sec =~ s/'/\\'/g;
-#		$extrawhere .= " AND dbsc.name=\"$sec\" ";
+	if ($sec) {
 		$extrawhere .= " AND dbsc.name= ? ";
 		push @select_parameters, $sec;
 	}
-	if(scalar(@levels)) {
-#		$extrawhere .= " AND pgf.level IN (".join(',', @levels).") ";
+	if (scalar(@levels)) {
 		$extrawhere .= " AND pgf.level IN ( ? ) ";
 		push @select_parameters, join(',', @levels);
 	}
+	$extrawhere .= " AND pgf.libraryroot = 'Library' " unless $include_contrib;
+	$extrawhere .= " AND pgf.libraryroot = 'Contrib' " unless $include_opl;
 	my $textextrawhere = '';
     my $haveTextInfo=0;
     my @textInfo_parameters=();
@@ -500,15 +490,7 @@ sub getDBListings {
 	}
 
 	my $selectwhat = 'DISTINCT pgf.pgfile_id';
-	$selectwhat = 'COUNT(' . $selectwhat . ')' if ($amcounter);
-
-# 	my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf,
-#          `$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj $kw1
-#         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
-#               dbc.DBchapter_id = dbsc.DBchapter_id AND
-#               dbsc.DBsection_id = pgf.DBsection_id
-#               \n $extrawhere
-#               $kw2";
+	$selectwhat = "COUNT($selectwhat)" if ($amcounter);
 
 	my $pg_id_ref;
 
@@ -525,47 +507,39 @@ sub getDBListings {
 				  pgp.problem_id = prob.problem_id AND
 				  tc.textbook_id = tbk.textbook_id AND
 				  ts.chapter_id = tc.chapter_id AND
-				  prob.section_id = ts.section_id \n $extrawhere \n $textextrawhere
-				  $kw2";
+				  prob.section_id = ts.section_id
+				  $extrawhere $textextrawhere $kw2";
 
-		#$query =~ s/\n/ /g;
-		#warn "text info: ", $query;
-		#warn "params: ", join(" | ",@select_parameters, @textInfo_parameters,@keyword_params);
-
-		$pg_id_ref = $dbh->selectall_arrayref($query, {},@select_parameters, @textInfo_parameters, @keyword_params);
-
+		$pg_id_ref = $dbh->selectall_arrayref($query, {}, @select_parameters, @textInfo_parameters, @keyword_params);
      } else {
 		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf,
 			 `$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj $kw1
 			WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
 				  dbc.DBchapter_id = dbsc.DBchapter_id AND
 				  dbsc.DBsection_id = pgf.DBsection_id
-				  \n $extrawhere
-				  $kw2";
+				  $extrawhere $kw2";
 
-		#$query =~ s/\n/ /g;
-		#warn "no text info: ", $query;
-		#warn "params: ", join(" | ",@select_parameters,@keyword_params);
-
-     	$pg_id_ref = $dbh->selectall_arrayref($query,{},@select_parameters,@keyword_params);
-     	#$query =~ s/\n/ /g;
-
+     	$pg_id_ref = $dbh->selectall_arrayref($query, {}, @select_parameters, @keyword_params);
      }
 
 	my @pg_ids = map { $_->[0] } @{$pg_id_ref};
-	if($amcounter) {
-		return(@pg_ids[0]);
-	}
-	my @results=();
-	for my $pgid (@pg_ids) {
-# 		$query = "SELECT path, filename, morelt_id, pgfile_id, static, MO FROM `$tables{pgfile}` pgf, `$tables{path}` p
-#           WHERE p.path_id = pgf.path_id AND pgf.pgfile_id=\"$pgid\"";
-# 		my $row = $dbh->selectrow_arrayref($query);
-		my $query = "SELECT path, filename, morelt_id, pgfile_id, static, MO FROM `$tables{pgfile}` pgf, `$tables{path}` p
-          WHERE p.path_id = pgf.path_id AND pgf.pgfile_id= ? ";
-		my $row = $dbh->selectrow_arrayref($query,{},$pgid);
+	return(@pg_ids[0]) if ($amcounter);
 
-		push @results, {'path' => $row->[0], 'filename' => $row->[1], 'morelt' => $row->[2], 'pgid'=> $row->[3], 'static' => $row->[4], 'MO' => $row->[5] };
+	my @results = ();
+	for my $pgid (@pg_ids) {
+		my $query = "SELECT libraryroot, path, filename, morelt_id, pgfile_id, static, MO FROM `$tables{pgfile}` pgf, `$tables{path}` p
+          WHERE p.path_id = pgf.path_id AND pgf.pgfile_id= ? ";
+		my $row = $dbh->selectrow_arrayref($query, {}, $pgid);
+
+		push @results, {
+			'libraryroot' => $row->[0],
+			'path'        => $row->[1],
+			'filename'    => $row->[2],
+			'morelt'      => $row->[3],
+			'pgid'        => $row->[4],
+			'static'      => $row->[5],
+			'MO'          => $row->[6],
+		};
 
 	}
 	return @results;
@@ -591,7 +565,7 @@ sub getMLTleader {
 # returns an array of hash references.
 # if section is omitted, get all from the chapter
 sub getSectionListings	{
-	#print STDERR "ListingDB::getSectionListings(chapter,section)\n";
+	# TODO: eliminate this subroutine after deprecating OPLv1
 	my $r = shift;
 	my $ce = $r->ce;
 	my $version = $ce->{problemLibrary}->{version} || 1;
@@ -612,14 +586,6 @@ sub getSectionListings	{
 	}
 
 	my @results; #returned
-# 	my $query = "SELECT c.*, p.path
-# 	FROM classify c, pgfiles p
-# 	WHERE $chapstring $secstring c.pgfiles_id = p.pgfiles_id";
-# 	my $dbh = getDB($ce);
-# 	my %tables = getTables($ce);
-# 	my $sth = $dbh->prepare($query);
-#
-# 	$sth->execute();
     my $query = "SELECT c.*, p.path
 	FROM classify c, pgfiles p
 	WHERE ? ? c.pgfiles_id = p.pgfiles_id";
@@ -629,18 +595,8 @@ sub getSectionListings	{
 
 	$sth->execute($chapstring,$secstring);
 
-	while (1)
-	{
-		my $row = $sth->fetchrow_hashref();
-		if (!defined($row))
-		{
-			last;
-		}
-		else
-		{
-			push @results, $row;
-			#print STDERR "ListingDB::getSectionListings $row\n";
-		}
+	while (my $row = $sth->fetchrow_hashref) {
+		push @results, $row;
 	}
 	return @results;
 }
