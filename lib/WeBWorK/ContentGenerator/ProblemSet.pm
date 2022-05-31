@@ -127,15 +127,16 @@ sub templateName {
 
 sub siblings {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
-	my $authz = $r->authz;
-	my $urlpath = $r->urlpath;
+	my $r         = $self->r;
+	my $db        = $r->db;
+	my $ce        = $r->ce;
+	my $authz     = $r->authz;
+	my $urlpath   = $r->urlpath;
 
-	my $courseID = $urlpath->arg("courseID");
-	my $user = $r->param('user');
-	my $eUserID = $r->param("effectiveUser");
+	my $courseID  = $urlpath->arg("courseID");
+	my $user      = $r->param('user');
+	my $eUserID   = $r->param("effectiveUser");
+	my $thisSetID = $urlpath->arg('setID');
 
 	# restrict navigation to other problem sets if not allowed
 	return '' unless $authz->hasPermissions($user, 'navigation_allowed');
@@ -169,11 +170,11 @@ sub siblings {
 			courseID => $courseID, setID => $setID);
 		print CGI::li({ class => 'nav-item' },
 			CGI::a({
-					href => $self->systemLink($setPage),
-					id => $setID,
-					class => 'nav-link'
+					$setID eq $thisSetID
+					? (id => $setID, class => 'nav-link active')
+					: (id => $setID, class => 'nav-link', href => $self->systemLink($setPage))
 				}, format_set_name_display($setID))
-		) ;
+		);
 	}
 	debug("End printing sets from listUserSets()");
 

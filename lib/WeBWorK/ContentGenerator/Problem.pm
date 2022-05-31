@@ -937,12 +937,13 @@ sub siblings {
 			}
 		}
 
-		my $class = 'nav-link' . ($progressBarEnabled && $currentProblemID eq $problemID ? ' active' : '');
+		my $active = ($progressBarEnabled && $currentProblemID eq $problemID);
 
 		if ($isJitarSet) {
 			# If it is a jitar set, we need to hide and disable links to hidden or restricted problems.
 			my @seq = jitar_id_to_seq($problemID);
 			my $level = $#seq;
+			my $class = 'nav-link' . ($active ? ' active' : '');
 			if ($level != 0) {
 				$class .= ' nested-problem-' . $level;
 			}
@@ -955,12 +956,22 @@ sub siblings {
 					$r->maketext("Problem [_1]", join('.', @seq))
 				);
 			} else {
-				$link = CGI::a({ href => $self->systemLink($problemPage), class => $class },
-					$r->maketext("Problem [_1]", join('.', @seq)) . ($progressBarEnabled ? $status_symbol : ""));
+				$link = CGI::a(
+					{
+						$active ? (class => $class)
+						: (href => $self->systemLink($problemPage), class => $class)
+					},
+					$r->maketext('Problem [_1]', join('.', @seq)) . ($progressBarEnabled ? $status_symbol : '')
+				);
 			}
 		} else {
-			$link = CGI::a({ href => $self->systemLink($problemPage), class => $class },
-				$r->maketext("Problem [_1]", $problemID) . ($progressBarEnabled ? $status_symbol : ""));
+			$link = CGI::a(
+				{
+					$active ? (class => 'nav-link active')
+					: (href => $self->systemLink($problemPage), class => 'nav-link')
+				},
+				$r->maketext('Problem [_1]', $problemID) . ($progressBarEnabled ? $status_symbol : '')
+			);
 		}
 
 		push @items, CGI::li({ class => 'nav-item' }, $link);

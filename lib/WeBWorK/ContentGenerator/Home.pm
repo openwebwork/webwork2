@@ -64,6 +64,12 @@ sub info {
 	}
 }
 
+# Override the if_can method to disable links for the home page.
+sub if_can {
+	my ($self, $arg) = @_;
+	return $arg eq 'links' ? 0 : $self->SUPER::if_can($arg);
+}
+
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
