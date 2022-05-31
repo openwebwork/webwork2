@@ -205,7 +205,7 @@ sub pre_header_initialize {
 	# Save file to permanent or temporary file, then redirect for viewing
 	#############################################################################
 	#
-	#  Any file "saved as" should be assigned to "Undefined_Set" and redirectoed to be viewed again in the editor
+	#  Any file "saved as" should be assigned to "Undefined_Set" and redirected to be viewed again in the editor
 	#
 	#  Problems "saved" or 'refreshed' are to be redirected to the Problem.pm module
 	#  Set headers which are "saved" are to be redirected to the ProblemSet.pm page
@@ -2029,9 +2029,13 @@ sub save_as_handler {
 		);
 		$new_file_type = $file_type;
 	} elsif ($saveMode eq 'add_to_set_as_new_problem') {
-		my $targetProblemNumber   =  WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
-		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",$r,
-			courseID => $courseName, setID => $setName, problemID => $targetProblemNumber
+		$problemPage = $self->r->urlpath->newFromModule(
+			'WeBWorK::ContentGenerator::Instructor::PGProblemEditor', $r,
+			courseID  => $courseName,
+			setID     => $setName,
+			problemID => $do_not_save
+			? $problemNumber
+			: WeBWorK::Utils::max($self->r->db->listGlobalProblems($setName))
 		);
 		$new_file_type = $file_type;
 	} else {
@@ -2039,8 +2043,6 @@ sub save_as_handler {
 		# can't continue since paths have not been properly defined.
 		return "";
 	}
-
-	#warn "save mode is $saveMode";
 
 	my $relativeOutputFilePath = $self->getRelativeSourceFilePath($outputFilePath);
 
