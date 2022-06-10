@@ -49,8 +49,12 @@ if ($ce->{problemLibrary}{showLibraryLocalStats} ||
   print "\nLoading global statistics (if possible).\n";
   do $ENV{WEBWORK_ROOT}.'/bin/load-OPL-global-statistics.pl';
 
-  print "\nSharing aggregated statistics\n";
-  do $ENV{WEBWORK_ROOT}.'/bin/upload-OPL-statistics.pl';
+  if ( $ENV{SKIP_UPLOAD_OPL_statistics} ) {
+    print "\nSkipping upload-OPL-statistics as requested\n";
+  } else {
+    print "\nSharing aggregated statistics\n";
+    do $ENV{WEBWORK_ROOT}.'/bin/upload-OPL-statistics.pl';
+  }
 }
 
 print "\nDone.\n";
