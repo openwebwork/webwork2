@@ -8,6 +8,8 @@ FROM ubuntu:20.04
 #
 # We only need install time ENV variables, not those needed by the WeBWorK system
 
+ARG ADDITIONAL_BASE_IMAGE_PACKAGES
+
 ENV DEBIAN_FRONTEND=noninteractive \
 	DEBCONF_NONINTERACTIVE_SEEN=true
 
@@ -124,7 +126,7 @@ RUN apt-get update \
 	zip \
 	iputils-ping \
 	imagemagick \
-	jq \
+	jq $ADDITIONAL_BASE_IMAGE_PACKAGES \
 	&& curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
 	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
 	&& apt-get clean \
