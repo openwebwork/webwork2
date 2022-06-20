@@ -428,6 +428,10 @@ sub formatRenderedProblem {
 		$output->{lang} = $PROBLEM_LANG_AND_DIR{lang};
 		$output->{dir} = $PROBLEM_LANG_AND_DIR{dir};
 
+		# Say what version of WeBWorK this is
+		$output->{ww_version} = $ce->{WW_VERSION};
+		$output->{pg_version} = $ce->{PG_VERSION};
+
 		# Convert to JSON
 		return JSON->new->utf8(0)->encode($output);
 	}
