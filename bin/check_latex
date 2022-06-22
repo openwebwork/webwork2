@@ -4,17 +4,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
 
 TEMP_DIR=$(mktemp -d -t check_latex_XXXXXXXX)
 
+cd $TEMP_DIR
+
 TEXINPUTS=$SCRIPT_DIR:$SCRIPT_DIR/../conf/snippets/hardcopyThemes/common: \
-	pdflatex -interaction nonstopmode check_latex.tex > $TEMP_DIR/check_latex.nfo 2>&1
+	pdflatex -interaction nonstopmode check_latex.tex > check_latex.nfo 2>&1
 
 if [ $? == 0 ]
 then
 	echo "Compilation Success!"
+	rm -r $TEMP_DIR
 else
-	cat $TEMP_DIR/check_latex.nfo
+	cat check_latex.nfo
 	echo
 	echo "Compilation Failure: Examine the latex output above to see what went wrong."
 	echo "You may also examine $PWD/check_latex.log and $PWD/check_latex.aux."
 fi
-
-rm -r $TEMP_DIR
