@@ -26,6 +26,46 @@ use WeBWorK::Debug;
 #$WeBWorK::Debug::Logfile = "/opt/webwork/webwork2/logs/cas-debug.log";
 #$WeBWorK::Debug::AllowSubroutineOutput = "get_credentials";
 
+sub checkSetUser {
+	my ($self, $user_id, $new_id) = @_;
+	my $ce = $self->{r}->ce;
+
+	unless (defined $ce->{authen}{cas_options}{sudoers}) {
+		$self->{error} = "Set-user capability is not enabled.";
+		$self->write_log_entry("User $user_id tried to use setUser, which is turned off");
+		return 0;
+	}
+
+	my $allowed_targets = $ce->{authen}{cas_options}{sudoers}{$user_id};
+	unless (defined $allowed_targets) {
+		$self->{error} = "User is $user_id is not authorized for setUser.";
+		$self->write_log_entry("User $user_id tried to use setUser, which is not authorized for that user");
+		return 0;
+	}
+
+	if (ref $allowed_targets eq 'ARRAY') {
+		foreach my $x (@{$allowed_targets}) {
+			return 1 if $x =~ m/(.*)\*$/
+				? $new_id =~ m/^$1/
+				: $new_id eq $x;
+		}
+	}
+	elsif (not ref $allowed_targets) {
+		return 1 if $allowed_targets =~ m/(.*)\*$/
+			? $new_id =~ m/^$1/
+			: $new_id eq $allowed_targets;
+	}
+	else {
+		$self->{error} = "Malformed sudoers data structure.";
+		$self->write_log_entry("Malformed sudoers data structure.");
+		return 0;
+	}
+
+	$self->{error} = "User $user_id is not allowed to set user to $new_id.";
+	$self->write_log_entry("User $user_id made invalid attempt to set user to $new_id");
+	return 0;
+}
+
 sub get_credentials {
 	my $self = shift;
 	my $r = $self->{r};
@@ -109,11 +149,12 @@ sub get_credentials {
 			return 0;
 		} else {
 			debug("ticket is good, user is $user_id");
-			if (defined $ce->{authen}{cas_options}{su_from}
-			  && $user_id eq $ce->{authen}{cas_options}{su_from}
-			  && defined $ce->{authen}{cas_options}{su_to}) {
-				$user_id = $ce->{authen}{cas_options}{su_to};
-				debug("hackily changing user to $user_id");
+			my $new_id = $r->param('setUser');
+			if (defined $new_id) {
+				return 0
+				  unless checkSetUser($self, $user_id, $new_id);
+				$self->write_log_entry("setUser: user $user_id logged in as $new_id");
+				$user_id = $new_id;
 			}
 			$self->{'user_id'} = $user_id;
 			$self->{r}->param('user', $user_id);
