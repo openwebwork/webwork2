@@ -1,12 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, http://openwebwork.sf.net/
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -71,7 +71,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::File::Classlist;
 use WeBWorK::DB qw(check_user_id);
-use WeBWorK::Utils qw(readFile readDirectory cryptPassword x);
+use WeBWorK::Utils qw(readFile readDirectory cryptPassword x getAssetURL);
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant PASSWORD_FORMS => [qw(savePassword cancelPassword)];
@@ -216,11 +216,11 @@ sub pre_header_initialize {
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
-	
+
 	defined($r->param('action')) && $r->param('action') eq 'add' && do {
 		# fix url and redirect
 		my $root              = $ce->{webworkURLs}->{root};
-		
+
 		my $numberOfStudents  = $r->param('number_of_students');
 		warn $r->maketext("number of students not defined") unless defined $numberOfStudents;
 
@@ -247,10 +247,8 @@ sub initialize {
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
-	
+
 }
-
-
 
 sub body {
 	my ($self)       = @_;
@@ -258,91 +256,93 @@ sub body {
 	my $urlpath      = $r->urlpath;
 	my $db           = $r->db;
 	my $ce           = $r->ce;
-	my $authz        = $r->authz;	
+	my $authz        = $r->authz;
 	my $courseName   = $urlpath->arg("courseID");
-	my $setID        = $urlpath->arg("setID");       
+	my $setID        = $urlpath->arg("setID");
 	my $user         = $r->param('user');
-	
+
 	my $root = $ce->{webworkURLs}->{root};
 
 	# templates for getting field names
 	my $userTemplate            = $self->{userTemplate}            = $db->newUser;
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate} = $db->newPermissionLevel;
-	
-	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to access the instructor tools.")))
+
+	return CGI::div({ class => 'alert alert-danger p-1' },
+		$r->maketext("You are not authorized to access the instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
-	
+
 	# This table can be consulted when display-ready forms of field names are needed.
-	my %prettyFieldNames = map { $_ => $_ } 
+	my %prettyFieldNames = map { $_ => $_ }
 		$userTemplate->FIELDS(),
 		$permissionLevelTemplate->FIELDS();
-	
+
 	@prettyFieldNames{qw(
-		user_id 
-		first_name 
-		last_name 
-		email_address 
-		student_id 
-		status 
-		section 
-		recitation 
-		comment 
+		user_id
+		first_name
+		last_name
+		email_address
+		student_id
+		status
+		section
+		recitation
+		comment
 		permission
 	)} = (
-		$r->maketext("Login Name"), 
-		$r->maketext("First Name"), 
-		$r->maketext("Last Name"), 
-		$r->maketext("Email Address"), 
-		$r->maketext("Student ID"), 
-		$r->maketext("Status"), 
-		$r->maketext("Section"), 
-		$r->maketext("Recitation"), 
-		$r->maketext("Comment"), 
+		$r->maketext("Login Name"),
+		$r->maketext("First Name"),
+		$r->maketext("Last Name"),
+		$r->maketext("Email Address"),
+		$r->maketext("Student ID"),
+		$r->maketext("Status"),
+		$r->maketext("Section"),
+		$r->maketext("Recitation"),
+		$r->maketext("Comment"),
 		$r->maketext("Permission Level")
 	);
-	
+
 	$self->{prettyFieldNames} = \%prettyFieldNames;
 	########## set initial values for state fields
-	
-	# exclude set-level proctors
-	my @allUserIDs = grep {$_ !~ /^set_id:/} $db->listUsers;
-	# DBFIXME count would work
-	$self->{totalSets} = $db->listGlobalSets; # save for use in "assigned sets" links
-	$self->{allUserIDs} = \@allUserIDs;
-	
-	# DBFIXME filter in the database
+
+	# Get a list of all users except set-level proctors from the database.
+	my @allUsers = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
+	$self->{allUserIDs} = [ map { $_->user_id } @allUsers ];
+
+	# Get the number of sets in the course for use in the "assigned sets" links.
+	$self->{totalSets} = $db->countGlobalSets;
+
 	if (defined $r->param("visable_user_string")) {
-		my @visableUserIDs = split /:/, $r->param("visable_user_string");
-		$self->{visibleUserIDs} = [ @visableUserIDs ];
+		$self->{visibleUserIDs} = [ split /:/, $r->param("visable_user_string") ];
 	} elsif (defined $r->param("visible_users")) {
 		$self->{visibleUserIDs} = [ $r->param("visible_users") ];
 	} elsif (defined $r->param("no_visible_users")) {
 		$self->{visibleUserIDs} = [];
 	} else {
-		if ((@allUserIDs > HIDE_USERS_THRESHHOLD) and (not defined $r->param("show_all_users") )) {
+		if ((@{ $self->{allUserIDs} } > HIDE_USERS_THRESHHOLD) and (not defined $r->param("show_all_users"))) {
 			$self->{visibleUserIDs} = [];
 		} else {
-			$self->{visibleUserIDs} = [ @allUserIDs ];
+			$self->{visibleUserIDs} = [ @{ $self->{allUserIDs} } ];
 		}
 	}
-	
+
 	$self->{prevVisibleUserIDs} = $self->{visibleUserIDs};
-	
+
 	if (defined $r->param("selected_users")) {
 		$self->{selectedUserIDs} = [ $r->param("selected_users") ];
 	} else {
 		$self->{selectedUserIDs} = [];
 	}
-	
+
 	$self->{editMode} = $r->param("editMode") || 0;
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify student data")))
+	return CGI::div({ class => 'alert alert-danger p-1' },
+		$r->maketext("You are not authorized to modify student data"))
 		if $self->{editMode} and not $authz->hasPermissions($user, "modify_student_data");
 
 
 	$self->{passwordMode} = $r->param("passwordMode") || 0;
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify student data")))
+	return CGI::div({ class => 'alert alert-danger p-1' },
+		$r->maketext("You are not authorized to modify student data"))
 		if $self->{passwordMode} and not $authz->hasPermissions($user, "modify_student_data");
 
 	if (defined $r->param("labelSortMethod")) {
@@ -350,24 +350,22 @@ sub body {
 		$self->{secondarySortField} = $r->param("primarySortField");
 		$self->{ternarySortField} = $r->param("secondarySortField");
 	}
-	else {			
+	else {
 		$self->{primarySortField} = $r->param("primarySortField") || "last_name";
 		$self->{secondarySortField} = $r->param("secondarySortField") || "first_name";
 		$self->{ternarySortField} = $r->param("ternarySortField") || "student_id";
 	}
-	
-	# DBFIXME use an iterator
-	my @allUsers = $db->getUsers(@allUserIDs);
+
 	my (%sections, %recitations);
-	foreach my $User (@allUsers) {
-		push @{$sections{defined $User->section ? $User->section : ""}}, $User->user_id;
-		push @{$recitations{defined $User->recitation ? $User->recitation : ""}}, $User->user_id;
+	for my $User (@allUsers) {
+		push @{ $sections{ defined $User->section       ? $User->section    : '' } }, $User->user_id;
+		push @{ $recitations{ defined $User->recitation ? $User->recitation : '' } }, $User->user_id;
 	}
-	$self->{sections} = \%sections;
+	$self->{sections}    = \%sections;
 	$self->{recitations} = \%recitations;
-	
+
 	########## call action handler
-	
+
 	my $actionID = $r->param("action");
 	if ($actionID) {
 		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }, @{ PASSWORD_FORMS() } ) {
@@ -383,49 +381,37 @@ sub body {
 			my %actionParams = $self->getActionParams($actionID);
 			my %tableParams = $self->getTableParams();
 			print CGI::p(
-			    CGI::div({class=>"ResultsWithoutError"}, $r->maketext("Result of last action performed: [_1]", CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)))),
+				CGI::div(
+					{ class => 'alert alert-success p-1' },
+					$r->maketext(
+						"Result of last action performed: [_1]",
+						CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams))
+					)
+				),
 				CGI::hr()
 			);
 		} else {
-			return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to perform this action.")));
+			return CGI::div({ class => 'alert alert-danger p-1' },
+				$r->maketext("You are not authorized to perform this action."));
 		}
 	}
-		
-	########## retrieve possibly changed values for member fields
-	
-	#@allUserIDs = @{ $self->{allUserIDs} }; # do we need this one?
-	# DBFIXME instead of re-listing, why not add added users to $self->{allUserIDs} ?
-	# exclude set-level proctors
-	@allUserIDs = grep {$_ !~ /^set_id:/} $db->listUsers; # recompute value in case some were added
-	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
-	my @prevVisibleUserIDs = @{ $self->{prevVisibleUserIDs} };
-	my @selectedUserIDs = @{ $self->{selectedUserIDs} };
+
+	# Retrieve values for member fields
 	my $editMode = $self->{editMode};
-	my $passwordMode = $self->{passwordMode};	
+	my $passwordMode = $self->{passwordMode};
 	my $primarySortField = $self->{primarySortField};
 	my $secondarySortField = $self->{secondarySortField};
 	my $ternarySortField = $self->{ternarySortField};
-	
-	#warn "visibleUserIDs=@visibleUserIDs\n";
-	#warn "prevVisibleUserIDs=@prevVisibleUserIDs\n";
-	#warn "selectedUserIDs=@selectedUserIDs\n";
-	#warn "editMode=$editMode\n";
-	#warn "passwordMode=$passwordMode\n";
-	#warn "primarySortField=$primarySortField\n";
-	#warn "secondarySortField=$secondarySortField\n";
-	#warn "ternarySortField=$ternarySortField\n";
 
-	########## get required users
-		
-	my @Users = grep { defined $_ } @visibleUserIDs ? $db->getUsers(@visibleUserIDs) : ();
+	# Get requested users
+	my @Users = @{ $self->{visibleUserIDs} } ? $db->getUsers(@{ $self->{visibleUserIDs} }) : ();
 
 	my %sortSubs = %{ SORT_SUBS() };
 	my $primarySortSub = $sortSubs{$primarySortField};
 	my $secondarySortSub = $sortSubs{$secondarySortField};
 	my $ternarySortSub = $sortSubs{$ternarySortField};
-	
+
 	# add permission level to user record hash so we can sort it if necessary
-	# DBFIXME this calls for a join... (i'd like the User record to contain permission level info)
 	if ($primarySortField eq 'permission' or $secondarySortField eq 'permission' or $ternarySortField eq 'permission') {
 		foreach my $User (@Users) {
 			next unless $User;
@@ -433,18 +419,18 @@ sub body {
         	                $User->{permission} = $permissionLevel->permission;
 		}
 	}
-		
-	
-#	# don't forget to sort in opposite order of importance
-#	@Users = sort $secondarySortSub @Users;
-#	@Users = sort $primarySortSub @Users;
-#	#@Users = sort byLnFnUid @Users;
 
-#   Always have a definite sort order even if first three sorts don't determine things
+
+	#	# don't forget to sort in opposite order of importance
+	#	@Users = sort $secondarySortSub @Users;
+	#	@Users = sort $primarySortSub @Users;
+	#	#@Users = sort byLnFnUid @Users;
+
+	#   Always have a definite sort order even if first three sorts don't determine things
 	@Users = sort {
 		&$primarySortSub
 			||
-		&$secondarySortSub 
+		&$secondarySortSub
 			||
 		&$ternarySortSub
 			||
@@ -453,138 +439,192 @@ sub body {
 		byFirstName
 			||
 		byUserID
-		} 
+		}
 		@Users;
-		
+
 	my @PermissionLevels;
-	
+
 	for (my $i = 0; $i < @Users; $i++) {
 		my $User = $Users[$i];
-# FIXME  utf8, utf8mb4 debugging codes
-#		warn "UserList: user  name, ".$User->first_name." ".$User->last_name."\n";
-		# DBFIX we maybe already have the permission level from above (for use in sorting)
+		# FIXME  utf8, utf8mb4 debugging codes
+		#		warn "UserList: user  name, ".$User->first_name." ".$User->last_name."\n";
 		my $PermissionLevel = $db->getPermissionLevel($User->user_id); # checked
-		
+
 		# DBFIXME this should go in the DB layer
 		unless ($PermissionLevel) {
 			# uh oh! no permission level record found!
 			warn $r->maketext("added missing permission level for user"), $User->user_id, "\n";
-			
+
 			# create a new permission level record
 			$PermissionLevel = $db->newPermissionLevel;
 			$PermissionLevel->user_id($User->user_id);
 			$PermissionLevel->permission(0);
-			
+
 			# add it to the database
 			$db->addPermissionLevel($PermissionLevel);
 		}
-		
+
 		$PermissionLevels[$i] = $PermissionLevel;
 	}
-	
+
 	########## print site identifying information
-	
-	print WeBWorK::CGI_labeled_input(-type=>"button", -id=>"show_hide", -input_attr=>{-value=>$r->maketext("Show/Hide Site Description"), -class=>"button_input"});
-	print CGI::p({-id=>"site_description", -style=>"display:none"}, CGI::em($r->maketext("_CLASSLIST_EDITOR_DESCRIPTION")));
-	
+
+	print CGI::input({
+		type  => 'button',
+		id    => 'show_hide',
+		value => $r->maketext('Show/Hide Site Description'),
+		class => 'btn btn-info mb-2'
+	});
+	print CGI::p(
+		{ id => 'site_description', style => 'display:none' },
+		CGI::em($r->maketext(
+			'This is the classlist editor page, where you can view and edit the records of all the students currently '
+				. 'enrolled in this course.  The top of the page contains forms which allow you to filter which '
+				. 'students to view, sort your students in a chosen order, edit student records, give new passwords to '
+				. 'students, import/export student records from/to external files, or add/delete students.  To use, '
+				. 'please select the action you would like to perform, enter in the relevant information in the fields '
+				. 'below, and hit the "Take Action!" button at the bottom of the form.  The bottom of the page '
+				. 'contains a table containing the student usernames and their information. Clicking on the links in '
+				. 'the column headers of the table will sort the table by the field it corresponds to. The Login Name '
+				. 'fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow '
+				. 'you to act as the selected user.  There is also an edit link following the name which will take you '
+				. 'to a page where you can edit the selected user\'s information.  Clicking the emails will allow you '
+				. 'to email the corresponding user.  Clicking the links in the entries in the assigned sets columns '
+				. 'will take you to a page where you can view and reassign the sets for the selected user. '
+		))
+	);
+
 	########## print beginning of form
-	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"userlist", id=>"classlist-form", class=>"edit_form"});
+
+	print CGI::start_form({
+		method => 'post',
+		action => $self->systemLink($urlpath, authen => 0),
+		name   => 'userlist',
+		id     => 'user-list-form',
+		class  => 'font-sm'
+	});
 	print $self->hidden_authen_fields();
-	
+
 	########## print state data
-	
+
 	print "\n<!-- state data here -->\n";
-	
-	if (@visibleUserIDs) {
-		print CGI::hidden(-name=>"visible_users", -value=>\@visibleUserIDs);
+
+	if (@{ $self->{visibleUserIDs} }) {
+		print CGI::hidden(-name => "visible_users", -value => $self->{visibleUserIDs});
 	} else {
-		print CGI::hidden(-name=>"no_visible_users", -value=>"1");
+		print CGI::hidden(-name => "no_visible_users", -value => "1");
 	}
-	
-	if (@prevVisibleUserIDs) {
-		print CGI::hidden(-name=>"prev_visible_users", -value=>\@prevVisibleUserIDs);
+
+	if (@{ $self->{prevVisibleUserIDs} }) {
+		print CGI::hidden(-name => "prev_visible_users", -value => $self->{prevVisibleUserIDs});
 	} else {
-		print CGI::hidden(-name=>"no_prev_visible_users", -value=>"1");
+		print CGI::hidden(-name => "no_prev_visible_users", -value => "1");
 	}
-	
+
 	print CGI::hidden(-name=>"editMode", -value=>$editMode);
-	
+
 	print CGI::hidden(-name=>"passwordMode", -value=>$passwordMode);
-	
+
 	print CGI::hidden(-name=>"primarySortField", -value=>$primarySortField);
 	print CGI::hidden(-name=>"secondarySortField", -value=>$secondarySortField);
 	print CGI::hidden(-name=>"ternarySortField", -value=>$ternarySortField);
-	
+
 	print "\n<!-- state data here -->\n";
-	
+
 	########## print action forms
-	
+
 	print CGI::p($r->maketext("Select an action to perform").":");
-	
+
 	my @formsToShow;
 	if ($editMode) {
 		@formsToShow = @{ EDIT_FORMS() };
 	}elsif ($passwordMode) {
-		@formsToShow = @{ PASSWORD_FORMS() };	
+		@formsToShow = @{ PASSWORD_FORMS() };
 	} else {
 		@formsToShow = @{ VIEW_FORMS() };
 	}
 	my %formTitles = %{ FORM_TITLES() };
-	
+
 	my @tabArr;
 	my @contentArr;
 	my $default_choice;
 
 	for my $actionID (@formsToShow) {
-	    # Check permissions
-	    next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
+		# Check permissions
+		next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
 
-	    my $actionForm = "${actionID}_form";
-		my $id = "${actionID}_id";
+		my $actionForm = "${actionID}_form";
 
-		my $active = "";
-		$active = "active", $default_choice = $actionID unless $default_choice;
+		my $active = '';
+		$active = ' active', $default_choice = $actionID unless $default_choice;
 
-		push(@tabArr, CGI::li({ class => $active },
-				CGI::a({ href => "#$id", data_toggle => "tab", class => "action-link", data_action => $actionID },
-					$r->maketext($formTitles{$actionID}))));
-		push(@contentArr, CGI::div({ class => "tab-pane $active", id => $id },
-				$self->$actionForm($self->getActionParams($actionID))));
+		push(
+			@tabArr,
+			CGI::li(
+				{ class => 'nav-item', role => 'presentation' },
+				CGI::a(
+					{
+						href           => "#$actionID",
+						class          => "nav-link action-link$active",
+						id             => "$actionID-tab",
+						data_action    => $actionID,
+						data_bs_toggle => 'tab',
+						data_bs_target => "#$actionID",
+						role           => 'tab',
+						aria_controls  => $actionID,
+						aria_selected  => $active ? 'true' : 'false'
+					},
+					$r->maketext($formTitles{$actionID})
+				)
+			)
+		);
+		push(
+			@contentArr,
+			CGI::div(
+				{
+					class            => 'tab-pane fade mb-2' . ($active ? " show$active" : ''),
+					id               => $actionID,
+					role             => 'tabpanel',
+					aria_labelledby => "$actionID-tab"
+				},
+				$self->$actionForm($self->getActionParams($actionID))
+			)
+		);
 	}
 
 	print CGI::hidden(-name => 'action', -id => 'current_action', -value => $default_choice);
-	print CGI::div({ class => "tabbable" },
-		CGI::ul({ class => "nav nav-tabs" }, @tabArr),
-		CGI::div({ class => "tab-content" }, @contentArr)
+	print CGI::div(CGI::ul({ class => 'nav nav-tabs mb-2', role => 'tablist' }, @tabArr),
+		CGI::div({ class => 'tab-content' }, @contentArr));
+
+	print CGI::div(
+		{ class => 'mb-3' },
+		CGI::submit({
+			id    => "take_action",
+			value => $r->maketext("Take Action!"),
+			class => "btn btn-primary"
+		})
 	);
 
-	print CGI::start_div();
-	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
-	print CGI::end_div();
-	
 	########## print table
-	
-	print CGI::p({},$r->maketext("Showing [_1] out of [_2] users", scalar @Users, scalar @allUserIDs));
-	
+
+	print CGI::p($r->maketext("Showing [_1] out of [_2] users", scalar @Users, scalar @{ $self->{allUserIDs} }));
+
 	print CGI::p($r->maketext("If a password field is left blank, the student's current password will be maintained.")) if $passwordMode;
 	if ($editMode) {
-	   
-
 		print CGI::p($r->maketext('Click on the login name to edit individual problem set data, (e.g. due dates) for these students.'));
 	}
+
 	$self->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
 		editMode => $editMode,
 		passwordMode => $passwordMode,
-		selectedUserIDs => \@selectedUserIDs,
+		selectedUserIDs => $self->{selectedUserIDs},
 		primarySortField => $primarySortField,
 		secondarySortField => $secondarySortField,
-		visableUserIDs => \@visibleUserIDs,
+		visableUserIDs => $self->{visibleUserIDs},
 	);
-	
-	
+
 	########## print end of form
-	
+
  	print CGI::end_form();
 
 	return "";
@@ -597,7 +637,7 @@ sub body {
 sub getActionParams {
 	my ($self, $actionID) = @_;
 	my $r = $self->{r};
-	
+
 	my %actionParams;
 	foreach my $param ($r->param) {
 		next unless $param =~ m/^action\.$actionID\./;
@@ -609,7 +649,7 @@ sub getActionParams {
 sub getTableParams {
 	my ($self) = @_;
 	my $r = $self->{r};
-	
+
 	my %tableParams;
 	foreach my $param ($r->param) {
 		next unless $param =~ m/^(?:user|permission)\./;
@@ -628,82 +668,96 @@ sub getTableParams {
 
 sub filter_form {
 	my ($self, %actionParams) = @_;
-	#return CGI::table({}, CGI::Tr({-valign=>"top"},
-	#	CGI::td({}, 
 	my $r = $self->r;
-	
+
 	my %prettyFieldNames = %{ $self->{prettyFieldNames} };
-	my %fieldProperties = %{ FIELD_PROPERTIES() };
-	
+	my %fieldProperties  = %{ FIELD_PROPERTIES() };
+
 	my @fields;
-	
+
 	foreach my $field (keys %fieldProperties) {
-	    push @fields, $field unless
-		$fieldProperties{$field}{access} eq 'hidden';
+		push @fields, $field
+			unless $fieldProperties{$field}{access} eq 'hidden';
 	}
 
-	@fields = sort {$prettyFieldNames{$a} cmp $prettyFieldNames{$b}} @fields;
+	@fields = sort { $prettyFieldNames{$a} cmp $prettyFieldNames{$b} } @fields;
 
-	return join("",
-			WeBWorK::CGI_labeled_input(
-				-type=>"select",
-				-id=>"filter_select",
-				-label_text=>$r->maketext("Show which users?"),
-				-input_attr=>{
-					-name => "action.filter.scope",
-					-values => [qw(all none selected match_regex)],
-					-default => $actionParams{"action.filter.scope"}->[0] || "match_regex",
-					-labels => {
-						all => $r->maketext("all users"),
-						none => $r->maketext("no users"),
-						selected => $r->maketext("selected users"),
-						match_regex => $r->maketext("users who match on selected field"),
-					},
-				}
+	return CGI::div(
+		CGI::div(
+			{ class => 'row mb-2' },
+			CGI::label(
+				{ for => 'filter_select', class => 'col-form-label col-form-label-sm col-sm-auto' },
+				$r->maketext('Show which users?')
 			),
-			CGI::br(),
-			" ",
-			CGI::div({-id=>"filter_elements"},
-			WeBWorK::CGI_labeled_input(
-				-type=>"select",
-				-id=>"filter_type_select",
-				-label_text=>$r->maketext("What field should filtered users match on?"),
-				-input_attr=>{
-					-name => "action.filter.field",
-					-value => \@fields,
-					-default => $actionParams{"action.filter.field"}->[0] || "user_id",
-					-labels => \%prettyFieldNames,
-				}
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::popup_menu({
+					id      => 'filter_select',
+					name    => 'action.filter.scope',
+					values  => [qw(all none selected match_regex)],
+					default => $actionParams{'action.filter.scope'}[0] || 'match_regex',
+					class   => 'form-select form-select-sm',
+					labels  => {
+						all         => $r->maketext('all users'),
+						none        => $r->maketext('no users'),
+						selected    => $r->maketext('selected users'),
+						match_regex => $r->maketext('users who match on selected field'),
+					}
+				})
+			)
+		),
+		CGI::div(
+			{ id => 'filter_elements' },
+			CGI::div(
+				{ class => 'row mb-2' },
+				CGI::label(
+					{ for => 'filter_type_select', class => 'col-form-label col-form-label-sm col-sm-auto' },
+					$r->maketext('What field should filtered users match on?')
+				),
+				CGI::div(
+					{ class => 'col-auto' },
+					CGI::popup_menu({
+						id      => 'filter_type_select',
+						name    => 'action.filter.field',
+						value   => \@fields,
+						default => $actionParams{'action.filter.field'}[0] || 'user_id',
+						class   => 'form-select form-select-sm',
+						labels  => \%prettyFieldNames,
+					})
+				)
 			),
-			CGI::br(),
-			WeBWorK::CGI_labeled_input(
-				-type=>"text",
-				-id=>"filter_text",
-				-label_text=>$r->maketext("Filter by what text?").CGI::span({class=>"required-field"},'*'),
-				-input_attr=>{
-					-name => "action.filter.user_ids",
-					-value => $actionParams{"action.filter.user_ids"}->[0] || "",,
-					-width => "50",
-					-'aria-required' => 'true', 
-				}
-			),
-			CGI::br(),
-			),
+			CGI::div(
+				{ class => 'row mb-2' },
+				CGI::label(
+					{ for => 'filter_text', class => 'col-form-label col-form-label-sm col-sm-auto' },
+					$r->maketext('Filter by what text?') . CGI::span({ class => 'required-field' }, '*')
+				),
+				CGI::div(
+					{ class => 'col-auto' },
+					CGI::textfield({
+						id            => 'filter_text',
+						name          => 'action.filter.user_ids',
+						value         => $actionParams{'action.filter.user_ids'}[0] || '',
+						aria_required => 'true',
+						class         => 'form-control form-control-sm'
+					})
+				)
+			)
+		)
 	);
 }
 
 # this action handler modifies the "visibleUserIDs" field based on the contents
-# of the "action.filter.scope" parameter and the "selected_users" 
-# DBFIXME filtering should happen in the database!
+# of the "action.filter.scope" parameter and the "selected_users"
 sub filter_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	
+
 	my $r = $self->r;
 	my $db = $r->db;
 	my $ce = $r->ce;
 
 	my $result;
-	
+
 	my $scope = $actionParams->{"action.filter.scope"}->[0];
 	if ($scope eq "all") {
 		$result = $r->maketext("showing all users");
@@ -718,20 +772,18 @@ sub filter_handler {
 		$result = $r->maketext("showing matching users");
 		my $regex = $actionParams->{"action.filter.user_ids"}->[0];
 		my $field = $actionParams->{"action.filter.field"}->[0];
-		my @userRecords = $db->getUsers(@{$self->{allUserIDs}});
+		my @userRecords = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
 		my @userIDs;
 		my %permissionLabels = reverse %{$ce->{userRoles}};
-		foreach my $record (@userRecords) {
-			next unless $record;
-
+		for my $record (@userRecords) {
 			# add permission level to user record hash so we can match it if necessary
 			# also change permission level and status to their text
 			# labels
 			if ($field eq "permission") {
 				my $permissionLevel = $db->getPermissionLevel($record->user_id);
-        	                $record->{permission} = $permissionLabels{$permissionLevel->permission};
+				$record->{permission} = $permissionLabels{$permissionLevel->permission};
 			} elsif ($field eq 'status') {
-			    $record->{status} = $ce->status_abbrev_to_name($record->{status});
+				$record->{status} = $ce->status_abbrev_to_name($record->{status});
 			}
 			push @userIDs, $record->user_id if $record->{$field} =~ /^$regex/i;
 		}
@@ -746,91 +798,113 @@ sub filter_handler {
 		my $recitation = $actionParams->{"action.filter.recitation"}->[0];
 		$self->{visibleUserIDs} = $self->{recitations}->{$recitation}; # an arrayref
 	}
-	
+
 	return $result;
 }
 
 sub sort_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
-	
-	return join ("",
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"sort_select_1",
-			-label_text=>$r->maketext("Sort by").":",
-			-input_attr=>{
-				-name => "action.sort.primary",
-				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
-				-default => $actionParams{"action.sort.primary"}->[0] || "last_name",
-				-labels => {
-					user_id		=> $r->maketext("Login Name"),
-					first_name	=> $r->maketext("First Name"),
-					last_name	=> $r->maketext("Last Name"),
-					student_id	=> $r->maketext("Student ID"),
-					status		=> $r->maketext("Enrollment Status"),
-					section		=> $r->maketext("Section"),
-					recitation	=> $r->maketext("Recitation"),
-					comment		=> $r->maketext("Comment"),
-					permission	=> $r->maketext("Permission Level")
-				},
-			},
+
+	return CGI::div(
+		CGI::div(
+			{ class => 'row mb-2' },
+			CGI::label(
+				{ for => 'sort_select_1', class => 'col-form-label col-form-label-sm', style => 'width:4.5rem' },
+				$r->maketext('Sort by') . ':'
+			),
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::popup_menu({
+					id     => 'sort_select_1',
+					name   => 'action.sort.primary',
+					values =>
+						[qw(user_id first_name last_name student_id status section recitation comment permission)],
+					default => $actionParams{'action.sort.primary'}->[0] || 'last_name',
+					class   => 'form-select form-select-sm',
+					labels  => {
+						user_id    => $r->maketext('Login Name'),
+						first_name => $r->maketext('First Name'),
+						last_name  => $r->maketext('Last Name'),
+						student_id => $r->maketext('Student ID'),
+						status     => $r->maketext('Enrollment Status'),
+						section    => $r->maketext('Section'),
+						recitation => $r->maketext('Recitation'),
+						comment    => $r->maketext('Comment'),
+						permission => $r->maketext('Permission Level')
+					}
+				})
+			)
 		),
-		CGI::br(),
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"sort_select_2",
-			-label_text=>$r->maketext("Then by").":",
-			-input_attr=>{
-				-name => "action.sort.secondary",
-				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
-				-default => $actionParams{"action.sort.secondary"}->[0] || "first_name",
-				-labels => {
-					user_id		=> $r->maketext("Login Name"),
-					first_name	=> $r->maketext("First Name"),
-					last_name	=> $r->maketext("Last Name"),
-					student_id	=> $r->maketext("Student ID"),
-					status		=> $r->maketext("Enrollment Status"),
-					section		=> $r->maketext("Section"),
-					recitation	=> $r->maketext("Recitation"),
-					comment		=> $r->maketext("Comment"),
-					permission	=> $r->maketext("Permission Level")
-				},
-			},
+		CGI::div(
+			{ class => 'row mb-2' },
+			CGI::label(
+				{ for => 'sort_select_2', class => 'col-form-label col-form-label-sm', style => 'width:4.5rem' },
+				$r->maketext('Then by') . ':'
+			),
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::popup_menu({
+					id     => 'sort_select_2',
+					name   => 'action.sort.secondary',
+					values =>
+						[qw(user_id first_name last_name student_id status section recitation comment permission)],
+					default => $actionParams{'action.sort.secondary'}->[0] || 'first_name',
+					class   => 'form-select form-select-sm',
+					labels  => {
+						user_id    => $r->maketext('Login Name'),
+						first_name => $r->maketext('First Name'),
+						last_name  => $r->maketext('Last Name'),
+						student_id => $r->maketext('Student ID'),
+						status     => $r->maketext('Enrollment Status'),
+						section    => $r->maketext('Section'),
+						recitation => $r->maketext('Recitation'),
+						comment    => $r->maketext('Comment'),
+						permission => $r->maketext('Permission Level')
+					}
+				})
+			)
 		),
-		CGI::br(),
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"sort_select_3",
-			-label_text=>$r->maketext("Then by").":",
-			-input_attr=>{
-				-name => "action.sort.ternary",
-				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
-				-default => $actionParams{"action.sort.ternary"}->[0] || "user_id",
-				-labels => {
-					user_id		=> $r->maketext("Login Name"),
-					first_name	=> $r->maketext("First Name"),
-					last_name	=> $r->maketext("Last Name"),
-					student_id	=> $r->maketext("Student ID"),
-					status		=> $r->maketext("Enrollment Status"),
-					section		=> $r->maketext("Section"),
-					recitation	=> $r->maketext("Recitation"),
-					comment		=> $r->maketext("Comment"),
-					permission	=> $r->maketext("Permission Level")
-				},
-			},
-		),
+		CGI::div(
+			{ class => 'row mb-2' },
+			CGI::label(
+				{ for => 'sort_select_3', class => 'col-form-label col-form-label-sm', style => 'width:4.5rem' },
+				$r->maketext('Then by') . ':'
+			),
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::popup_menu({
+					id     => 'sort_select_3',
+					name   => 'action.sort.ternary',
+					values =>
+						[qw(user_id first_name last_name student_id status section recitation comment permission)],
+					default => $actionParams{'action.sort.ternary'}->[0] || 'user_id',
+					class   => 'form-select form-select-sm',
+					labels  => {
+						user_id    => $r->maketext('Login Name'),
+						first_name => $r->maketext('First Name'),
+						last_name  => $r->maketext('Last Name'),
+						student_id => $r->maketext('Student ID'),
+						status     => $r->maketext('Enrollment Status'),
+						section    => $r->maketext('Section'),
+						recitation => $r->maketext('Recitation'),
+						comment    => $r->maketext('Comment'),
+						permission => $r->maketext('Permission Level')
+					}
+				})
+			)
+		)
 	);
 }
 
 sub sort_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r = $self->r;
-	
+
 	my $primary = $actionParams->{"action.sort.primary"}->[0];
 	my $secondary = $actionParams->{"action.sort.secondary"}->[0];
 	my $ternary = $actionParams->{"action.sort.ternary"}->[0];
-	
+
 	$self->{primarySortField} = $primary;
 	$self->{secondarySortField} = $secondary;
 	$self->{ternarySortField} = $ternary;
@@ -846,7 +920,7 @@ sub sort_handler {
 				comment		=> $r->maketext("Comment"),
 				permission	=> $r->maketext("Permission Level")
 	);
-	
+
 	return $r->maketext("Users sorted by [_1], then by [_2], then by [_3]", $names{$primary}, $names{$secondary}, $names{$ternary});
 }
 
@@ -854,22 +928,27 @@ sub edit_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
-	return join("",
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"edit_select",
-			-label_text=>$r->maketext("Edit which users?"),
-			-input_attr=>{
-				-name => "action.edit.scope",
-				-values => [qw(all visible selected)],
-				-default => $actionParams{"action.edit.scope"}->[0] || "selected",
-				-labels => {
-					all => $r->maketext("all users"),
-					visible => $r->maketext("visible users"),
-					selected => $r->maketext("selected users")
-				},
-			}
+	return CGI::div(
+		{ class => 'row mb-2' },
+		CGI::label(
+			{ for => 'edit_select', class => 'col-form-label col-form-label-sm col-auto' },
+			$r->maketext('Edit which users?')
 		),
+		CGI::div(
+			{ class => 'col-auto' },
+			CGI::popup_menu({
+				id      => 'edit_select',
+				name    => 'action.edit.scope',
+				values  => [qw(all visible selected)],
+				default => $actionParams{'action.edit.scope'}[0] || 'selected',
+				class   => 'form-select form-select-sm',
+				labels  => {
+					all      => $r->maketext('all users'),
+					visible  => $r->maketext('visible users'),
+					selected => $r->maketext('selected users')
+				}
+			})
+		)
 	);
 }
 
@@ -878,7 +957,7 @@ sub edit_handler {
 	my $r = $self->r;
 
 	my $result;
-	
+
 	my $scope = $actionParams->{"action.edit.scope"}->[0];
 	if ($scope eq "all") {
 		$result = $r->maketext("editing all users");
@@ -891,7 +970,7 @@ sub edit_handler {
 		$self->{visibleUserIDs} = $genericParams->{selected_users}; # an arrayref
 	}
 	$self->{editMode} = 1;
-	
+
 	return $result;
 }
 
@@ -900,22 +979,27 @@ sub password_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
-	return join("",
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"password_select",
-			-label_text=>$r->maketext("Give new password to which users?"),
-			-input_attr=>{
-				-name => "action.password.scope",
-				-values => [qw(all visible selected)],
-				-default => $actionParams{"action.password.scope"}->[0] || "selected",
-				-labels => {
-					all => $r->maketext("all users"),
-					visible => $r->maketext("visible users"),
-					selected => $r->maketext("selected users")
-				},
-			},
+	return CGI::div(
+		{ class => 'row mb-2' },
+		CGI::label(
+			{ for => 'password_select', class => 'col-form-label col-form-label-sm col-auto' },
+			$r->maketext('Give new password to which users?')
 		),
+		CGI::div(
+			{ class => 'col-auto' },
+			CGI::popup_menu({
+				id     => 'password_select',
+				name    => 'action.password.scope',
+				values  => [qw(all visible selected)],
+				default => $actionParams{'action.password.scope'}[0] || 'selected',
+				class   => 'form-select form-select-sm',
+				labels  => {
+					all      => $r->maketext('all users'),
+					visible  => $r->maketext('visible users'),
+					selected => $r->maketext('selected users')
+				}
+			})
+		)
 	);
 }
 
@@ -924,7 +1008,7 @@ sub password_handler {
 	my $r = $self->r;
 
 	my $result;
-	
+
 	my $scope = $actionParams->{"action.password.scope"}->[0];
 	if ($scope eq "all") {
 		$result = $r->maketext("giving new passwords to all users");
@@ -937,7 +1021,7 @@ sub password_handler {
 		$self->{visibleUserIDs} = $genericParams->{selected_users}; # an arrayref
 	}
 	$self->{passwordMode} = 1;
-	
+
 	return $result;
 }
 
@@ -945,23 +1029,32 @@ sub delete_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
-	return join("",
-		CGI::span({-class=>"ResultsWithError"}, CGI::em($r->maketext("Warning: Deletion destroys all user-related data and is not undoable!"))),CGI::br(),
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"delete_select",
-			-label_text=>$r->maketext("Delete which users?"),
-			-input_attr=>{
-				-name => "action.delete.scope",
-				-values => [qw(none selected)],
-				-default => $actionParams{"action.delete.scope"}->[0] || "none",
-				-labels => {
-					none     => $r->maketext("no users"),
-					# visible  => "visible users",
-					selected => $r->maketext("selected users")
-				},
-			},
+	return CGI::div(
+		CGI::div(
+			{ class => 'd-inline-block alert alert-danger p-1 mb-2' },
+			CGI::em($r->maketext('Warning: Deletion destroys all user-related data and is not undoable!'))
 		),
+		CGI::div(
+			{ class => 'row mb-2' },
+			CGI::label(
+				{ for => 'delete_select', class => 'col-form-label col-form-label-sm col-auto' },
+				$r->maketext('Delete which users?')
+			),
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::popup_menu({
+					id      => 'delete_select',
+					name    => 'action.delete.scope',
+					values  => [qw(none selected)],
+					default => $actionParams{'action.delete.scope'}[0] || 'none',
+					class   => 'form-select form-select-sm',
+					labels  => {
+						none     => $r->maketext('no users'),
+						selected => $r->maketext('selected users')
+					}
+				})
+			)
+		)
 	);
 }
 
@@ -971,19 +1064,16 @@ sub delete_handler {
 	my $db        = $r->db;
 	my $user      = $r->param('user');
 	my $scope = $actionParams->{"action.delete.scope"}->[0];
-	
+
 	my @userIDsToDelete = ();
-	#if ($scope eq "visible") {
-	#	@userIDsToDelete = @{ $self->{visibleUserIDs} };
-	#} elsif ($scope eq "selected") {
 	if ($scope eq "selected") {
 		@userIDsToDelete = @{ $self->{selectedUserIDs} };
 	}
-	
+
 	my %allUserIDs = map { $_ => 1 } @{ $self->{allUserIDs} };
 	my %visibleUserIDs = map { $_ => 1 } @{ $self->{visibleUserIDs} };
 	my %selectedUserIDs = map { $_ => 1 } @{ $self->{selectedUserIDs} };
-	
+
 	my $error = "";
 	my $num = 0;
 	foreach my $userID (@userIDsToDelete) {
@@ -997,18 +1087,36 @@ sub delete_handler {
 		$db->deleteUser($userID);
 		$num++;
 	}
-	
+
 	$self->{allUserIDs} = [ keys %allUserIDs ];
 	$self->{visibleUserIDs} = [ keys %visibleUserIDs ];
 	$self->{selectedUserIDs} = [ keys %selectedUserIDs ];
-	
-	return $error ? $error : $r->maketext("deleted [_1] users", $num);
+
+	return $r->maketext("Deleted [_1] users.", $num) . ($error ? " $error" : '');
 }
+
 sub add_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
-	return WeBWorK::CGI_labeled_input(-type=>"text", -id=>"add_entry", -label_text=>$r->maketext("Add how many users?").CGI::span({class=>"required-field"},'*'), -input_attr=>{name=>'number_of_students', value=>1,size => 3,'aria-required'=>'true'});
+	return CGI::div(
+		{ class => 'row mb-2' },
+		CGI::label(
+			{ for => 'add_entry', class => 'col-form-label col-form-label-sm col-auto' },
+			$r->maketext('Add how many users?') . CGI::span({ class => 'required-field' }, '*')
+		),
+		CGI::div(
+			{ class => 'col-auto' },
+			CGI::textfield({
+				id            => 'add_entry',
+				name          => 'number_of_students',
+				value         => 1,
+				size          => 3,
+				aria_required => 'true',
+				class         => 'form-control form-control-sm'
+			})
+		)
+	);
 }
 
 sub add_handler {
@@ -1020,61 +1128,80 @@ sub add_handler {
 sub import_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
-	
-	return join(" ",
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"import_select_source",
-			-label_text=>$r->maketext("Import users from what file?"),
-			-input_attr=>{
-				-name => "action.import.source",
-				-values => [ $self->getCSVList() ],
-				-default => $actionParams{"action.import.source"}->[0] || "",
-			}
+
+	return CGI::div(
+		CGI::div(
+			{ class => 'row mb-2' },
+			CGI::label(
+				{ for => 'import_select_source', class => 'col-form-label col-form-label-sm col-sm-auto' },
+				$r->maketext('Import users from what file?')
+			),
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::popup_menu({
+					name    => 'action.import.source',
+					id      => 'import_select_source',
+					values  => [ $self->getCSVList() ],
+					default => $actionParams{'action.import.source'}[0] || '',
+					class   => 'form-select form-select-sm',
+				})
+			)
 		),
-		CGI::br(),
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"import_select_replace",
-			-label_text=>$r->maketext("Replace which users?"),
-			-input_attr=>{
-				-name => "action.import.replace",
-				-values => [qw(any visible selected none)],
-				-default => $actionParams{"action.import.replace"}->[0] || "none",
-				-labels => {
-					any => $r->maketext("any users"),
-					visible => $r->maketext("visible users"),
-					selected => $r->maketext("selected users"),
-					none => $r->maketext("no users"),
-				},
-			}
+		CGI::div(
+			{ class => 'row mb-2' },
+			CGI::label(
+				{ for => 'import_select_replace', class => 'col-form-label col-form-label-sm col-sm-auto' },
+				$r->maketext('Replace which users?')
+			),
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::popup_menu({
+					id      => 'import_select_replace',
+					name    => 'action.import.replace',
+					values  => [qw(any visible selected none)],
+					default => $actionParams{'action.import.replace'}[0] || 'none',
+					class   => 'form-select form-select-sm',
+					labels  => {
+						any      => $r->maketext('any users'),
+						visible  => $r->maketext('visible users'),
+						selected => $r->maketext('selected users'),
+						none     => $r->maketext('no users'),
+					}
+				})
+			)
 		),
-		CGI::br(),
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"import_select_add",
-			-label_text=>$r->maketext("Add which new users?"),
-			-input_attr=>{
-				-name => "action.import.add",
-				-values => [qw(any none)],
-				-default => $actionParams{"action.import.add"}->[0] || "any",
-				-labels => {
-					any => $r->maketext("any users"),
-					none => $r->maketext("no users"),
-				},
-			}
-		),
+		CGI::div(
+			{ class => 'row mb-2' },
+			CGI::label(
+				{ for => 'import_select_add', class => 'col-form-label col-form-label-sm col-sm-auto' },
+				$r->maketext('Add which new users?')
+			),
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::popup_menu({
+					id      => 'import_select_add',
+					name    => 'action.import.add',
+					values  => [qw(any none)],
+					default => $actionParams{'action.import.add'}[0] || 'any',
+					class   => 'form-select form-select-sm',
+					labels  => {
+						any  => $r->maketext('any users'),
+						none => $r->maketext('no users'),
+					}
+				})
+			)
+		)
 	);
 }
 
 sub import_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r = $self->r;
-	
+
 	my $source = $actionParams->{"action.import.source"}->[0];
 	my $add = $actionParams->{"action.import.add"}->[0];
 	my $replace = $actionParams->{"action.import.replace"}->[0];
-	
+
 	my $fileName = $source;
 	my $createNew = $add eq "any";
 	my $replaceExisting;
@@ -1090,67 +1217,87 @@ sub import_handler {
 		$replaceExisting = "listed";
 		@replaceList = @{ $self->{selectedUserIDs} };
 	}
-	
+
 	my ($replaced, $added, $skipped)
 		= $self->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
-	
+
 	# make new users visible... do we really want to do this? probably.
 	push @{ $self->{visibleUserIDs} }, @$added;
-	
+	push @{ $self->{allUserIDs} }, @$added;
+
 	my $numReplaced = @$replaced;
 	my $numAdded = @$added;
 	my $numSkipped = @$skipped;
-	
+
 	return $r->maketext("[_1] users replaced, [_2] users added, [_3] users skipped. Skipped users: ([_4])", $numReplaced, $numAdded, $numSkipped, join (", ", @$skipped));
 }
 
 sub export_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
-	
-	return join("",
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"export_select_scope",
-			-label_text=>$r->maketext("Export which users?"),
-			-input_attr=>{
-				-name => "action.export.scope",
-				-values => [qw(all visible selected)],
-				-default => $actionParams{"action.export.scope"}->[0] || "visible",
-				-labels => {
-					all => $r->maketext("all users"),
-					visible => $r->maketext("visible users"),
-					selected => $r->maketext("selected users")
-				},
-			}
+
+	return CGI::div(
+		CGI::div(
+			{ class => 'row mb-2' },
+			CGI::label(
+				{ for => 'export_select_scope', class => 'col-form-label col-form-label-sm col-sm-auto' },
+				$r->maketext('Export which users?')
+			),
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::popup_menu({
+					id      => 'export_select_scope',
+					name    => 'action.export.scope',
+					values  => [qw(all visible selected)],
+					default => $actionParams{'action.export.scope'}[0] || 'visible',
+					class   => 'form-select form-select-sm',
+					labels  => {
+						all      => $r->maketext('all users'),
+						visible  => $r->maketext('visible users'),
+						selected => $r->maketext('selected users')
+					}
+				})
+			)
 		),
-		CGI::br(),
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"export_select_target",
-			-label_text=>$r->maketext("Export to what kind of file?"),
-			-input_attr=>{
-				-name=>"action.export.target",
-				-values => [ "new", $self->getCSVList() ],
-				-labels => { new => $r->maketext("Enter filename below") },
-				-default => $actionParams{"action.export.target"}->[0] || "",
-			}
+		CGI::div(
+			{ class => 'row mb-2' },
+			CGI::label(
+				{ for => 'export_select_target', class => 'col-form-label col-form-label-sm col-sm-auto' },
+				$r->maketext('Export to what kind of file?')
+			),
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::popup_menu({
+					id      => 'export_select_target',
+					name    => 'action.export.target',
+					values  => [ 'new', $self->getCSVList() ],
+					labels  => { new => $r->maketext('Enter filename below') },
+					default => $actionParams{'action.export.target'}[0] || '',
+					class   => 'form-select form-select-sm'
+				})
+			)
 		),
-		CGI::br(),
-		CGI::div({-id=>"export_elements"},
-		WeBWorK::CGI_labeled_input(
-			-type=>"text",
-			-id=>"export_filename",
-			-label_text=>$r->maketext("Filename").CGI::span({class=>"required-field"},'*').":",
-			-input_attr=>{
-				-name => "action.export.new",
-				-value => $actionParams{"action.export.new"}->[0] || "",,
-				-width => "50",
-				-'aria-required' => 'true',
-			}
-		),
-		CGI::tt(".lst"),
-		),
+		CGI::div(
+			{ id => 'export_elements', class => 'row mb-2' },
+			CGI::label(
+				{ for => 'export_filename', class => 'col-form-label col-form-label-sm col-sm-auto' },
+				$r->maketext('Filename') . CGI::span({ class => 'required-field' }, '*') . ':'
+			),
+			CGI::div(
+				{ class => 'col-auto d-inline-flex' },
+				CGI::div(
+					{ class => 'input-group input-group-sm' },
+					CGI::textfield({
+						id            => 'export_filename',
+						name          => 'action.export.new',
+						value         => $actionParams{'action.export.new'}[0] || '',
+						aria_required => 'true',
+						class         => 'form-control form-control-sm'
+					}),
+					CGI::span({ class => 'input-group-text font-monospace' }, '.lst')
+				)
+			)
+		)
 	);
 }
 
@@ -1159,23 +1306,23 @@ sub export_handler {
 	my $r       = $self->r;
 	my $ce      = $r->ce;
 	my $dir     = $ce->{courseDirs}->{templates};
-	
+
 	my $scope = $actionParams->{"action.export.scope"}->[0];
 	my $target = $actionParams->{"action.export.target"}->[0];
 	my $new = $actionParams->{"action.export.new"}->[0];
-	
+
 	#get name of templates directory as it appears in file manager
 	$dir =~ s|.*/||;
-	
+
 	my $fileName;
 	if ($target eq "new") {
 		$fileName = $new;
 	} else {
 		$fileName = $target;
 	}
-	
+
 	$fileName .= ".lst" unless $fileName =~ m/\.lst$/;
-	
+
 	my @userIDsToExport;
 	if ($scope eq "all") {
 		@userIDsToExport = @{ $self->{allUserIDs} };
@@ -1184,9 +1331,9 @@ sub export_handler {
 	} elsif ($scope eq "selected") {
 		@userIDsToExport = @{ $self->{selectedUserIDs} };
 	}
-	
+
 	$self->exportUsersToCSV($fileName, @userIDsToExport);
-	
+
 	return $r->maketext("[_1] users exported to file [_2]/[_3]", scalar @userIDsToExport, $dir, $fileName);
 }
 
@@ -1199,7 +1346,7 @@ sub cancelEdit_form {
 sub cancelEdit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r      = $self->r;
-	
+
 	#$self->{selectedUserIDs} = $self->{visibleUserIDs};
 		# only do the above if we arrived here via "edit selected users"
 	if (defined $r->param("prev_visible_users")) {
@@ -1210,7 +1357,7 @@ sub cancelEdit_handler {
 		# leave it alone
 	}
 	$self->{editMode} = 0;
-	
+
 	return $r->maketext("Changes abandoned");
 }
 
@@ -1225,7 +1372,7 @@ sub saveEdit_handler {
 	my $r           = $self->r;
 	my $db          = $r->db;
 	my $editorUser = $r->param('user');
-	my $editorUserPermission = $db->getPermissionLevel($editorUser)->permission;	
+	my $editorUserPermission = $db->getPermissionLevel($editorUser)->permission;
 
 	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
@@ -1239,7 +1386,7 @@ sub saveEdit_handler {
 				$User->$field($tableParams->{$param}->[0]);
 			}
 		}
-		
+
 		foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
 			my $param = "permission.${userID}.${field}";
 			if (defined $tableParams->{$param}->[0] &&
@@ -1247,11 +1394,11 @@ sub saveEdit_handler {
 				$PermissionLevel->$field($tableParams->{$param}->[0]);
 			}
 		}
-		
+
 		$db->putUser($User);
 		$db->putPermissionLevel($PermissionLevel);
 	}
-	
+
 	if (defined $r->param("prev_visible_users")) {
 		$self->{visibleUserIDs} = [ $r->param("prev_visible_users") ];
 	} elsif (defined $r->param("no_prev_visible_users")) {
@@ -1259,9 +1406,9 @@ sub saveEdit_handler {
 	} else {
 		# leave it alone
 	}
-	
+
 	$self->{editMode} = 0;
-	
+
 	return $r->maketext("Changes saved");
 }
 
@@ -1274,7 +1421,7 @@ sub cancelPassword_form {
 sub cancelPassword_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r      = $self->r;
-	
+
 	#$self->{selectedUserIDs} = $self->{visibleUserIDs};
 		# only do the above if we arrived here via "edit selected users"
 	if (defined $r->param("prev_visible_users")) {
@@ -1285,7 +1432,7 @@ sub cancelPassword_handler {
 		# leave it alone
 	}
 	$self->{passwordMode} = 0;
-	
+
 	return $r->maketext("Changes abandoned");
 }
 
@@ -1299,7 +1446,7 @@ sub savePassword_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r           = $self->r;
 	my $db          = $r->db;
-	
+
 	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
 		my $User = $db->getUser($userID); # checked
@@ -1320,7 +1467,7 @@ sub savePassword_handler {
 			}
 		}
 	}
-	
+
 	if (defined $r->param("prev_visible_users")) {
 		$self->{visibleUserIDs} = [ $r->param("prev_visible_users") ];
 	} elsif (defined $r->param("no_prev_visible_users")) {
@@ -1328,9 +1475,9 @@ sub savePassword_handler {
 	} else {
 		# leave it alone
 	}
-	
+
 	$self->{passwordMode} = 0;
-	
+
 	return $r->maketext("New passwords saved");
 }
 
@@ -1360,7 +1507,7 @@ sub byPermission   { $a->{permission}    <=>  $b->{permission}     }  ## permiss
 sub menuLabels {
 	my ($self, $hashRef) = @_;
 	my %hash = %$hashRef;
-	
+
 	my %result;
 	foreach my $key (keys %hash) {
 		my $count = @{ $hash{$key} };
@@ -1379,11 +1526,11 @@ sub importUsersFromCSV {
 	my $db    = $r->db;
 	my $dir   = $ce->{courseDirs}->{templates};
 	my $user  = $r->param('user');
-	
+
 	die $r->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
 	die $r->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
 		unless -r "$dir/$fileName";
-	
+
 	my %allUserIDs = map { $_ => 1 } @{ $self->{allUserIDs} };
 	my %replaceOK;
 	if ($replaceExisting eq "none") {
@@ -1393,21 +1540,21 @@ sub importUsersFromCSV {
 	} elsif ($replaceExisting eq "any") {
 		%replaceOK = %allUserIDs;
 	}
-	
+
 	my $default_permission_level = $ce->{default_permission_level};
-	
+
 	my (@replaced, @added, @skipped);
-	
+
 	# get list of hashrefs representing lines in classlist file
 	my @classlist = parse_classlist("$dir/$fileName");
-	
+
 	# Default status is enrolled -- fetch abbreviation for enrolled
 	my $default_status_abbrev = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
-	
+
 	foreach my $record (@classlist) {
 		my %record = %$record;
 		my $user_id = $record{user_id};
-		
+
 		unless (WeBWorK::DB::check_user_id($user_id) ) {  # try to catch lines with bad characters
 			push @skipped, $user_id;
 			next;
@@ -1416,21 +1563,21 @@ sub importUsersFromCSV {
 			push @skipped, $user_id;
 			next;
 		}
-		
+
 		if (exists $allUserIDs{$user_id} and not exists $replaceOK{$user_id}) {
 			push @skipped, $user_id;
 			next;
 		}
-		
+
 		if (not exists $allUserIDs{$user_id} and not $createNew) {
 			push @skipped, $user_id;
 			next;
 		}
-		
+
 		# set default status is status field is "empty"
 		$record{status} = $default_status_abbrev
 			unless defined $record{status} and $record{status} ne "";
-		
+
 		# set password from student ID if password field is "empty"
 		if (not defined $record{password} or $record{password} eq "") {
 			if (defined $record{student_id} and $record{student_id} ne "") {
@@ -1441,15 +1588,15 @@ sub importUsersFromCSV {
 				$record{password} = "";
 			}
 		}
-		
+
 		# set default permission level if permission level is "empty"
 		$record{permission} = $default_permission_level
 			unless defined $record{permission} and $record{permission} ne "";
-		
+
 		my $User = $db->newUser(%record);
 		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => $record{permission});
 		my $Password = $db->newPassword(user_id => $user_id, password => $record{password});
-		
+
 		# DBFIXME use REPLACE
 		if (exists $allUserIDs{$user_id}) {
 			$db->putUser($User);
@@ -1457,13 +1604,14 @@ sub importUsersFromCSV {
 			$db->putPassword($Password);
 			push @replaced, $user_id;
 		} else {
+			$allUserIDs{$user_id} = 1;
 			$db->addUser($User);
 			$db->addPermissionLevel($PermissionLevel);
 			$db->addPassword($Password);
 			push @added, $user_id;
 		}
 	}
-	
+
 	return \@replaced, \@added, \@skipped;
 }
 
@@ -1473,12 +1621,11 @@ sub exportUsersToCSV {
 	my $ce      = $r->ce;
 	my $db      = $r->db;
 	my $dir     = $ce->{courseDirs}->{templates};
-		
+
 	die $r->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
-	
+
 	my @records;
-	
-	# DBFIXME use an iterator here
+
 	my @Users = $db->getUsers(@userIDsToExport);
 	my @Passwords = $db->getPasswords(@userIDsToExport);
 	my @PermissionLevels = $db->getPermissionLevels(@userIDsToExport);
@@ -1494,7 +1641,7 @@ sub exportUsersToCSV {
 		);
 		push @records, \%record;
 	}
-	
+
 	write_classlist("$dir/$fileName", @records);
 }
 
@@ -1504,25 +1651,23 @@ sub exportUsersToCSV {
 
 sub fieldEditHTML {
 	my ($self, $fieldName, $value, $properties) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $editorUser = $r->param('user');
+	my $r                    = $self->r;
+	my $ce                   = $r->ce;
+	my $db                   = $r->db;
+	my $editorUser           = $r->param('user');
 	my $editorUserPermission = $db->getPermissionLevel($editorUser)->permission;
-	my $size = $properties->{size};
-	my $type = $properties->{type};
-	my $access = $properties->{access};
-	my $items = $properties->{items};
-	my $synonyms = $properties->{synonyms};
-	
+	my $size                 = $properties->{size};
+	my $type                 = $properties->{type};
+	my $access               = $properties->{access};
+
 	if ($type eq "email") {
 		if ($value eq '&nbsp;') {
-			return $value;}
-		else {
-			return CGI::a({-href=>"mailto:$value"},$r->maketext('Email'));
+			return $value;
+		} else {
+			return CGI::a({ -href => "mailto:$value" }, $r->maketext('Email'));
 		}
 	}
-	
+
 	if ($access eq "readonly") {
 		# hack for status
 		if ($type eq "status") {
@@ -1533,39 +1678,19 @@ sub fieldEditHTML {
 		}
 		return $value;
 	}
-	
-	if ($type eq "number" or $type eq "text") {
-		return CGI::input({-type=>"text", -id=>$fieldName."_id", name=>$fieldName, value=>$value, size=>$size});
-	}
-		
-	if ($type eq "enumerable") {
-		my $matched = undef; # Whether a synonym match has occurred
 
-		# Process synonyms for enumerable objects
-		foreach my $synonym (keys %$synonyms) {
-			if ($synonym ne "*" and $value =~ m/$synonym/) {
-				$value = $synonyms->{$synonym};
-				$matched = 1;
-			}
-		}
-		
-		if (!$matched and exists $synonyms->{"*"}) {
-			$value = $synonyms->{"*"};
-		}
-		
-		return WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>$fieldName."_id",
-			-label_text=>$r->maketext(ucfirst($fieldName)),
-			-input_attr=>{
-				name => $fieldName, 
-				values => [keys %$items],
-				default => $value,
-				labels => $items,
-			}
-		),
+	if ($type eq "number" or $type eq "text") {
+		return CGI::input({
+			type            => "text",
+			id              => $fieldName . "_id",
+			name            => $fieldName,
+			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+			value           => $value,
+			size            => $size,
+			class           => 'form-control form-control-sm d-inline w-auto'
+		});
 	}
-	
+
 	if ($type eq "status") {
 		# we used to surreptitously map synonyms to a canonical value...
 		# so should we continue to do that?
@@ -1573,48 +1698,47 @@ sub fieldEditHTML {
 		if (defined $status_name) {
 			$value = ($ce->status_name_to_abbrevs($status_name))[0];
 		}
-		
+
 		my (@values, %labels);
-		while (my ($k, $v) = each %{$ce->{statuses}}) {
-			my @abbrevs = @{$v->{abbrevs}};
+		while (my ($k, $v) = each %{ $ce->{statuses} }) {
+			my @abbrevs = @{ $v->{abbrevs} };
 			push @values, $abbrevs[0];
 			foreach my $abbrev (@abbrevs) {
 				$labels{$abbrev} = $r->maketext($k);
 			}
 		}
-		
+
 		return CGI::popup_menu({
-		    -id=>$fieldName."_id",
-		    -name => $fieldName, 
-		    -values => \@values,
-		    -default => $value,
-		    -labels => \%labels,
-				  }
-		    ),
+			id              => $fieldName . "_id",
+			name            => $fieldName,
+			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+			values          => \@values,
+			default         => $value,
+			labels          => \%labels,
+			class           => 'form-select form-select-sm w-auto flex-grow-0'
+		});
 	}
 
 	if ($type eq "permission") {
 		my ($default, @values, %labels);
-		my %roles = %{$ce->{userRoles}};
-		foreach my $role (sort {$roles{$a}<=>$roles{$b}} keys(%roles) ) {
+		my %roles = %{ $ce->{userRoles} };
+		foreach my $role (sort { $roles{$a} <=> $roles{$b} } keys(%roles)) {
 			my $val = $roles{$role};
 			next unless $val <= $editorUserPermission;
 			push(@values, $val);
 			$labels{$val} = $r->maketext($role);
-			$default = $val if ( $value eq $role );
+			$default = $val if ($value eq $role);
 		}
-		
+
 		return CGI::popup_menu({
-		    -id=>$fieldName."_id",
-		    -name => $fieldName,
-		    -values => \@values,
-		    -default => [$default], # force default of 0 to be a selector value (instead of 
-		    # being considered as a null -- now works with CGI 3.42
-		    #-default => $default,   # works with CGI 3.49 (but the above does not, go figure
-		    -labels => \%labels,
-		    -override => 1,    # force default value to be selected. (corrects bug on newer CGI
-		    }
-		),
+			id              => $fieldName . "_id",
+			name            => $fieldName,
+			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+			values          => \@values,
+			default         => $default // 0,
+			labels          => \%labels,
+			class           => 'form-select form-select-sm w-auto flex-grow-0'
+		});
 	}
 }
 
@@ -1628,7 +1752,7 @@ sub recordEditHTML {
 	my $user	= $r->param('user');
 	my $root        = $ce->{webworkURLs}->{root};
 	my $courseName  = $urlpath->arg("courseID");
-	
+
 	my $editMode = $options{editMode};
 	my $passwordMode = $options{passwordMode};
 	my $userSelected = $options{userSelected};
@@ -1637,13 +1761,13 @@ sub recordEditHTML {
 
 	my $sets = $db->countUserSets($User->user_id);
 	my $totalSets = $self->{totalSets};
-	
+
 	my $changeEUserURL = $self->systemLink($urlpath->new(type=>'set_list',args=>{courseID=>$courseName}),
 										   params => {effectiveUser => $User->user_id}
 	);
-	
+
 	my $setsAssignedToUserURL = $self->systemLink($urlpath->new(type=>'instructor_user_detail',
-	                                                            args=>{courseID => $courseName, 
+	                                                            args=>{courseID => $courseName,
 	                                                                   userID   => $User->user_id
 	                                                                   }),
 										   params => {effectiveUser => $User->user_id}
@@ -1657,74 +1781,67 @@ sub recordEditHTML {
 	  $imageLink = CGI::a({href => $userListURL}, CGI::i({ class => 'icon fas fa-pencil-alt',
 				  data_alt => "Link to Edit Page for " . $User->user_id, aria_hidden => "true" }, ""));
 	}
-	
+
 	my @tableCells;
-	
+
 	# Select
 	if ($editMode or $passwordMode) {
 		# column not there
 	} else {
 		# selection checkbox
-		# push @tableCells, CGI::checkbox(
-			# -name => "selected_users",
-			# -value => $User->user_id,
-			# -checked => $userSelected,
-			# -label => "",
-		my $label = "";
-		if ( FIELD_PERMS()->{act_as} and not $authz->hasPermissions($user, FIELD_PERMS()->{act_as}) ){
-			$label = $User->user_id . " " . $imageLink;
-		} else {
-			$label = CGI::a({href=>$changeEUserURL}, $User->user_id) . " " . $imageLink;
-		}
-		
-		push @tableCells, CGI::input({
-		    -type=>"checkbox",
-		    -id=>$User->user_id."_checkbox",
-		    -label_text=>$label,
-		    -name => "selected_users",
-		    -value => $User->user_id,
-		    $userSelected ? ('checked', "checked") : (),
-		    -class=>"table_checkbox",
-					     }
-		    );
+		push @tableCells,
+			CGI::input({
+				type    => 'checkbox',
+				id      => $User->user_id . '_checkbox',
+				name    => "selected_users",
+				value   => $User->user_id,
+				class   => "form-check-input",
+				$userSelected ? (checked => undef) : (),
+			});
 
-		push @tableCells, CGI::div({class=>'label-with-edit-icon'}, $label);
-		
+		my $label = '';
+		if (FIELD_PERMS()->{act_as} and not $authz->hasPermissions($user, FIELD_PERMS()->{act_as})) {
+			$label = $User->user_id . ' ' . $imageLink;
+		} else {
+			$label = CGI::a({ href => $changeEUserURL }, $User->user_id) . ' ' . $imageLink;
+		}
+
+		# Make the user id the label for the select user checkbox.
+		push @tableCells,
+			CGI::div({ class => 'label-with-edit-icon' }, CGI::label({ for => $User->user_id . '_checkbox' }, $label));
 	}
-	
-	# Act As
-	# if ($editMode or $passwordMode) {
-		# # column not there
-	# } else {
-		# # selection checkbox
-		# if ( FIELD_PERMS()->{act_as} and not $authz->hasPermissions($user, FIELD_PERMS()->{act_as}) ){
-			# push @tableCells, $User->user_id . $imageLink;
-		# } else {
-			# push @tableCells, CGI::a({href=>$changeEUserURL}, $User->user_id) . $imageLink;
-		# }
-	# }
-	
+
 	# Login Status
-	if ($editMode or $passwordMode) {
-		# column not there
-	} else {
+	if (!$editMode && !$passwordMode) {
 		# check to see if a user is currently logged in
-		# DBFIXME use a WHERE clause
-		my $Key = $db->getKey($User->user_id);
-		my $is_active = ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
+		my $is_active = $db->existsKeyWhere(
+			{ user_id => $User->user_id, timestamp => { '>=' => time - $ce->{sessionKeyTimeout} } });
 		push @tableCells, $is_active ? CGI::b($r->maketext("Active")) : CGI::em($r->maketext("Inactive"));
 	}
-	
+
 	# change password (only in password mode)
 	if ($passwordMode) {
 		if ($User->user_id eq $user) {
-			push @tableCells, CGI::div({-class=>"ResultsWithError"},$r->maketext("You may not change your own password here!"))   # don't allow a professor to change their own password from this form
-		}
-		else {
+			# Don't allow a professor to change their own password from this form.
+			push(
+				@tableCells,
+				CGI::div(
+					{ class => 'alert alert-danger px-1 py-0 m-0' },
+					$r->maketext("You may not change your own password here!")
+				)
+			);
+		} else {
 			my $fieldName = 'user.' . $User->user_id . '.' . 'new_password';
-			push @tableCells, WeBWorK::CGI_labeled_input(-type=>"text", -id=>"password_edit", -label_text=>$r->maketext("New Password").": ", -input_attr=>{name=>$fieldName, size=>14});
-		}	
-	}	
+			push @tableCells,
+				CGI::textfield({
+					id              => "${fieldName}_id",
+					name            => $fieldName,
+					aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+					size            => 14,
+					class           => 'form-control form-control-sm d-inline w-auto'
+				});
+		}
+	}
 	# User ID (edit mode) or Assigned Sets (otherwise)
 	if ( $passwordMode) {
 		# straight user ID
@@ -1739,7 +1856,7 @@ sub recordEditHTML {
 	    );
 	    my $userDetailUrl = $self->systemLink($userDetailPage,params =>{});
 		push @tableCells, CGI::a({href=>$userDetailUrl}, $User->user_id);
-	
+
 	} else {
 		# "edit sets assigned to user" link
 		#push @tableCells, CGI::a({href=>$setsAssignedToUserURL}, "Edit sets");
@@ -1765,12 +1882,12 @@ sub recordEditHTML {
 		$fieldValue = $self->nbsp($fieldValue) unless $editMode;
 		push @tableCells, CGI::div({class=>$statusClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
-	
+
 	# PermissionLevel Fields
 	foreach my $field ($PermissionLevel->NONKEYFIELDS) {
 		my $fieldName = 'permission.' . $PermissionLevel->user_id . '.' . $field,
 		my $fieldValue = $PermissionLevel->$field;
-		# get name out of permission level 
+		# get name out of permission level
 		if ( $field eq 'permission' ) {
 		  ($fieldValue) = grep { $ce->{userRoles}->{$_} eq $fieldValue } ( keys ( %{$ce->{userRoles}} ) );
 		  $fieldValue = $r->maketext($fieldValue)
@@ -1780,8 +1897,8 @@ sub recordEditHTML {
 		$fieldValue = $self->nbsp($fieldValue) unless $editMode;
 		push @tableCells, CGI::div({class=>$statusClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
-	
-	return CGI::Tr({}, CGI::td(\@tableCells));
+
+	return CGI::Tr(CGI::td(\@tableCells));
 }
 
 sub printTableHTML {
@@ -1794,38 +1911,25 @@ sub printTableHTML {
 	my @Users                   = @$UsersRef;
 	my @PermissionLevels        = @$PermissionLevelsRef;
 	my %fieldNames              = %$fieldNamesRef;
-	
+
 	my $editMode                = $options{editMode};
 	my $passwordMode            = $options{passwordMode};
 	my %selectedUserIDs         = map { $_ => 1 } @{ $options{selectedUserIDs} };
-#	my $currentSort             = $options{currentSort};
 	my $primarySortField        = $options{primarySortField};
-	my $secondarySortField      = $options{secondarySortField};	
-	my @visableUserIDs          = @{ $options{visableUserIDs} };	
-		
+	my $secondarySortField      = $options{secondarySortField};
+	my @visableUserIDs          = @{ $options{visableUserIDs} };
+
 	# names of headings:
 	my @realFieldNames = (
-			$userTemplate->KEYFIELDS,
-			$userTemplate->NONKEYFIELDS,
-			$permissionLevelTemplate->NONKEYFIELDS,
+		$userTemplate->KEYFIELDS,
+		$userTemplate->NONKEYFIELDS,
+		$permissionLevelTemplate->NONKEYFIELDS,
 	);
-	
-#	my %sortSubs = %{ SORT_SUBS() };
-	#my @stateParams = @{ STATE_PARAMS() };
-	#my $hrefPrefix = $r->uri . "?" . $self->url_args(@stateParams); # $self->url_authen_args
-	my @tableHeadings;
-	foreach my $field (@realFieldNames) {
-	    my %properties = %{ FIELD_PROPERTIES()->{$field} };
-	    next if $properties{access} eq 'hidden';
-	    my $result = $fieldNames{$field};
-	    push @tableHeadings, $result;
-	};
-	
-	# prepend selection checkbox? only if we're NOT editing!
-	unless($editMode or $passwordMode) {
 
-		#warn "line 1582 visibleUserIDs=@visableUserIDs \n";
-		my %current_state =();
+	my @tableHeadings;
+
+	unless ($editMode || $passwordMode) {
+		my %current_state;
 		if (@visableUserIDs) {
 			# This is a hack to get around: Maximum URL Length Is 2,083 Characters in Internet Explorer.
 			# Without passing visable users the URL is about 250 characters. If the total URL is under the limit
@@ -1835,81 +1939,163 @@ sub printTableHTML {
 			my $visableUserIDsString = join ':', @visableUserIDs;
 			if (length($visableUserIDsString) < 1830) {
 				%current_state = (
-					primarySortField => "$primarySortField", 
+					primarySortField => "$primarySortField",
 					secondarySortField => "$secondarySortField",
 					visable_user_string => "$visableUserIDsString"
 				);
 			} else {
 				%current_state = (
-				primarySortField => "$primarySortField", 
-				secondarySortField => "$secondarySortField",
-				show_all_users => "1"
+					primarySortField => "$primarySortField",
+					secondarySortField => "$secondarySortField",
+					show_all_users => "1"
 				);
-			}	
+			}
 		} else {
 			%current_state = (
-			primarySortField => "$primarySortField", 
-			secondarySortField => "$secondarySortField",
-			no_visible_users => "1"
+				primarySortField => "$primarySortField",
+				secondarySortField => "$secondarySortField",
+				no_visible_users => "1"
 			);
-		}	
+		}
 
-		my $selectBox = CGI::input({
-		    type=>'checkbox',
-		    id=>'classlist-select-all',
-		    onClick => "\$('input[name=\"selected_users\"]').attr('checked',\$('#classlist-select-all').is(':checked'));"
-					   });
-		@tableHeadings = (
-                        $editMode or $passwordMode ? '' : $selectBox,
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'user_id', %current_state})}, $r->maketext('Login Name')),
-			$r->maketext("Login Status"), 
-			$r->maketext("Assigned Sets"),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'first_name', %current_state})}, $r->maketext('First Name')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'last_name', %current_state})}, $r->maketext('Last Name')),
-		        $r->maketext('Email Link'),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'student_id', %current_state})}, $r->maketext('Student ID')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'status', %current_state})}, $r->maketext('Status')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'section', %current_state})}, $r->maketext('Section')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'recitation', %current_state})}, $r->maketext('Recitation')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'comment', %current_state})}, $r->maketext('Comment')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'permission', %current_state})}, $r->maketext('Permission Level')),
-		)	
-	}
- 	if($passwordMode) {	
-		unshift @tableHeadings, $r->maketext("New Password");
-        }       
-        
-	# print the table
-	if ($editMode or $passwordMode) {
-		print CGI::start_table({id=>"classlist-table", -class=>"classlist-table set_table", -summary=>$r->maketext("_USER_TABLE_SUMMARY") });# "A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user."});
+		push(
+			@tableHeadings,
+			CGI::th(CGI::input({
+				type              => 'checkbox',
+				id                => 'select-all',
+				aria_label        => $r->maketext('Select all users'),
+				data_select_group => 'selected_users',
+				class             => 'select-all form-check-input',
+			})),
+			CGI::th(CGI::label(
+				{ for => 'select-all' },
+				CGI::a(
+					{
+						href => $self->systemLink(
+							$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+							params => { labelSortMethod => 'user_id', %current_state }
+						)
+					},
+					$r->maketext('Login Name')
+				)
+			)),
+			CGI::th($r->maketext("Login Status")),
+			CGI::th($r->maketext("Assigned Sets")),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'first_name', %current_state }
+					)
+				},
+				$r->maketext('First Name')
+			)),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'last_name', %current_state }
+					)
+				},
+				$r->maketext('Last Name')
+			)),
+			CGI::th($r->maketext('Email Link')),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'student_id', %current_state }
+					)
+				},
+				$r->maketext('Student ID')
+			)),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'status', %current_state }
+					)
+				},
+				$r->maketext('Status')
+			)),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'section', %current_state }
+					)
+				},
+				$r->maketext('Section')
+			)),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'recitation', %current_state }
+					)
+				},
+				$r->maketext('Recitation')
+			)),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'comment', %current_state }
+					)
+				},
+				$r->maketext('Comment')
+			)),
+			CGI::th(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName, }),
+						params => { labelSortMethod => 'permission', %current_state }
+					)
+				},
+				$r->maketext('Permission Level')
+			)),
+		);
 	} else {
-		print CGI::start_table({-border=>1, -id=>"classlist-table", -class=>"classlist-table set_table", -summary=>$r->maketext("_USER_TABLE_SUMMARY") });#"A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user."});
+		for my $field (@realFieldNames) {
+			my %properties = %{ FIELD_PROPERTIES()->{$field} };
+			next if $properties{access} eq 'hidden';
+			push @tableHeadings, CGI::th({ id => "${field}_header"}, $fieldNames{$field});
+		}
 	}
-	
+
+	unshift(@tableHeadings, CGI::th({ id => "new_password_header"}, $r->maketext("New Password"))) if ($passwordMode);
+
+	# Print the table.
+	print CGI::start_div({ class => 'table-responsive' });
+	print CGI::start_table({
+		id    => "classlist-table",
+		class => "table table-sm table-bordered caption-top font-sm"
+			. ($editMode || $passwordMode ? ' align-middle' : '')
+	});
+
 	print CGI::caption($r->maketext("Users List"));
-	
-	print CGI::Tr({}, CGI::th({}, \@tableHeadings));
-	
+
+	print CGI::thead(CGI::Tr(@tableHeadings));
+
+	print CGI::start_tbody();
 
 	for (my $i = 0; $i < @Users; $i++) {
 		my $User = $Users[$i];
 		my $PermissionLevel = $PermissionLevels[$i];
-		
+
 		print $self->recordEditHTML($User, $PermissionLevel,
 			editMode => $editMode,
 			passwordMode => $passwordMode,
 			userSelected => exists $selectedUserIDs{$User->user_id}
 		);
 	}
-	
-	print CGI::end_table();
-    #########################################
+	print CGI::end_tbody();
+
+	print CGI::end_table(), CGI::end_div();
+
 	# if there are no users shown print message
-	# 
-	##########################################
-	
 	print CGI::p(
-	              CGI::i($r->maketext("No students shown.  Choose one of the options above to list the students in the course."))
+		CGI::i($r->maketext("No students shown.  Choose one of the options above to list the students in the course."))
 	) unless @Users;
 }
 
@@ -1917,21 +2103,16 @@ sub printTableHTML {
 
 # prints out the necessary JS for this page
 
-sub output_JS{
+sub output_JS {
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $ce   = $self->r->ce;
 
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ShowHide/show_hide.js"}), CGI::end_script();
-	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => "" }, "");
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/classlist_handlers.js"}), CGI::end_script();
-	return "";
-}
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/ShowHide/show_hide.js'),    defer => undef }, '');
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'), defer => undef }, "");
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/UserList/userlist.js'),     defer => undef }, '');
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/SelectAll/selectall.js'),   defer => undef }, '');
 
-#Tells template to output stylesheet for Jquery-UI
-sub output_jquery_ui_CSS{
-	return "";
+	return '';
 }
 
 1;

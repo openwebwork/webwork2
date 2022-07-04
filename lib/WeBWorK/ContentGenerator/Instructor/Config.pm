@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm,v 1.10 2007/07/26 18:53:06 sh002i Exp $
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.	 See either the GNU General Public License or the
@@ -33,6 +32,8 @@ package configobject;
 
 use strict;
 use warnings;
+
+use URI::Escape;
 
 sub new {
 	my $class = shift;
@@ -84,28 +85,42 @@ sub save_string {
 sub entry_widget {
 	my ($self, $name, $default) = @_;
 	my $width = $self->{width} || 15;
-	return CGI::textfield(
-		-name => $name,
-		-value => $default,
-		-size => $width,
-	);
+	return CGI::textfield({
+		name  => $name,
+		id    => $name,
+		value => $default,
+		size  => $width,
+		class => 'form-control form-control-sm'
+	});
 }
 
 # This produces the documentation string and image link to more
 # documentation.  It is the same for all config types.
 sub what_string {
-	my $self = shift;
+	my ($self, $id) = @_;
 	my $r = $self->{Module}->r;
-	return(CGI::td(
-			CGI::a({href=>$self->{Module}->systemLink(
-						$r->urlpath->new(type=>'instructor_config',
-							args=>{courseID => $r->urlpath->arg("courseID")}),
-						params=>{show_long_doc=>1, var_name=>"$self->{var}"}),
-					target=>"_blank"},
-				CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "help" }, '')
-			) .
-			$r->maketext($self->{doc}) 
-		));
+
+	return (CGI::td(CGI::div(
+		{ class => 'd-flex justify-content-between align-items-center' },
+		CGI::div(
+			ref $self eq 'configcheckboxlist'
+			? $r->maketext($self->{doc})
+			: CGI::label({ for => $id }, $r->maketext($self->{doc}))
+		),
+		CGI::a(
+			{
+				href => $self->{Module}->systemLink(
+					$r->urlpath->new(
+						type => 'instructor_config',
+						args => { courseID => $r->urlpath->arg("courseID") }
+					),
+					params => { show_long_doc => 1, var_name => uri_escape($self->{var}) }
+				),
+				target => "_blank"
+			},
+			CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "help" }, '')
+		)
+	)));
 }
 
 ########################### configtext
@@ -211,12 +226,14 @@ sub save_string {
 sub entry_widget {
 	my ($self, $name, $default) = @_;
 	my $r = $self->{Module}->r;
-	return CGI::popup_menu(
-		-name => $name,
-		-default => $default,
-		-values => [1, 0],
-		-labels => { 1 => $r->maketext('True'), 0 => $r->maketext('False') }
-	);
+	return CGI::popup_menu({
+		name    => $name,
+		id      => $name,
+		default => $default,
+		values  => [ 1, 0 ],
+		labels  => { 1 => $r->maketext('True'), 0 => $r->maketext('False') },
+		class   => 'form-select form-select-sm'
+	});
 }
 
 
@@ -265,8 +282,14 @@ sub entry_widget {
 	my @values = sort { $userRoles{$a} <=> $userRoles{$b} } keys %userRoles;
 
 	my %labels = map {$_ => $r->maketext($_)} @values;
-	return CGI::popup_menu(-name=>$name, -values => \@values,
-		-default=>$default, -labels => \%labels);
+	return CGI::popup_menu({
+		name    => $name,
+		id      => $name,
+		values  => \@values,
+		default => $default,
+		labels  => \%labels,
+		class   => 'form-select form-select-sm'
+	});
 }
 
 ########################### configlist
@@ -316,12 +339,13 @@ sub entry_widget {
 	$default = [] if not defined($default);
 	my $str = join(', ', @{$default});
 	$str = '' if $str !~ /\S/;
-	return CGI::textarea(
-		-name => $name,
-		-rows => 4,
-		-value => $str,
-		-columns => 25,
-	);
+	return CGI::textarea({
+		name    => $name,
+		id      => $name,
+		rows    => 4,
+		value   => $str,
+		class   => 'form-control form-control-sm'
+	});
 }
 
 ########################### configcheckboxlist
@@ -382,11 +406,22 @@ sub comparison_value {
 
 sub entry_widget {
 	my ($self, $name, $default) = @_;
-	return CGI::checkbox_group(
-		-name => $name,
-		-value => $self->{values},
-		-default => $default,
-		-columns=>1
+	my %checked = map { $_ => 1 } @$default;
+	return join(
+		"",
+		map {
+			CGI::div(
+				{ class => 'form-check' },
+				CGI::checkbox({
+					name            => $name,
+					value           => $_,
+					label           => $_,
+					checked         => $checked{$_},
+					class           => 'form-check-input',
+					labelattributes => { class => 'form-check-label' }
+				})
+			)
+		} @{ $self->{values} }
 	);
 }
 
@@ -419,13 +454,15 @@ sub entry_widget {
 	my ($self, $name, $default) = @_;
 	my $r = $self->{Module}->r;
 	my %labels = map {$_ => $r->maketext($self->{labels}->{$_} // $_)} @{$self->{values}};
-	
-	return CGI::popup_menu(
-		-name => $name,
-		-values => $self->{values},
-		-default => $default,
-		-labels => \%labels,
-	);
+
+	return CGI::popup_menu({
+		name    => $name,
+		id      => $name,
+		values  => $self->{values},
+		default => $default,
+		labels  => \%labels,
+		class   => 'form-select form-select-sm'
+	});
 }
 
 ########### Main Config Package starts here
@@ -445,15 +482,15 @@ use warnings;
 use CGI qw(-nosticky );
 use WeBWorK::CourseEnvironment;
 
-# Load the configuration parts defined in Constants.pm 
+# Load the configuration parts defined in Constants.pm
 
 #our $ConfigValues = [] unless defined $ConfigValues;
 
 # Configuation data
-# It is organized by section.  The allowable types are 
+# It is organized by section.  The allowable types are
 #  'text' for a text string,
 #  'list' for a list of text strings,
-#  'permission' for a permission value, 
+#  'permission' for a permission value,
 #  'boolean' for variables which really hold 0/1 values as flags.
 
 # write contents to outputFilePath and return error messages if any
@@ -461,7 +498,7 @@ sub writeFile {
 	my $outputFilePath = shift;
 	my $contents = shift;
 	my $writeFileErrors;
-	eval {                                                          
+	eval {
 		local *OUTPUTFILE;
 		if( open OUTPUTFILE, ">utf8:", $outputFilePath) {
 			print OUTPUTFILE $contents;
@@ -495,53 +532,55 @@ sub inline_var {
 
 sub print_navigation_tabs {
 	my ($self, $current_tab, @tab_names) = @_;
-	my $r = $self->r;
+	my $r   = $self->r;
 	my $str = '';
-	for my $tab (0..(scalar(@tab_names)-1)) {
-		if($current_tab eq "tab$tab") {
-			$tab_names[$tab] = CGI::span({class => 'current'}, $r->maketext($tab_names[$tab]));
+	for my $tab (0 .. (scalar(@tab_names) - 1)) {
+		if ($current_tab eq "tab$tab") {
+			$tab_names[$tab] = CGI::span({ class => 'nav-link active' }, $r->maketext($tab_names[$tab]));
 		} else {
-			$tab_names[$tab] = CGI::span({class => 'other'},
-				CGI::a({href => $self->systemLink($r->urlpath, params=>{section_tab=>"tab$tab"})}, $r->maketext($tab_names[$tab]))
+			$tab_names[$tab] = CGI::a(
+				{
+					href  => $self->systemLink($r->urlpath, params => { section_tab => "tab$tab" }),
+					class => 'nav-link'
+				},
+				$r->maketext($tab_names[$tab])
 			);
 		}
 	}
-	print CGI::p() .
-		CGI::div({class=>'config-tabs'}, join('', @tab_names)) .
-		CGI::p();
+	print qq{<nav class="config-tabs nav nav-pills justify-content-center my-4">@{[join('', @tab_names)]}</nav>};
 }
 
 sub getConfigValues {
 	my $ce = shift;
 	my $ConfigValues = $ce->{ConfigValues};
-	
+
 	# get the list of theme folders in the theme directory and remove . and ..
 	my $themeDir = $ce->{webworkDirs}{themes};
 	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
 	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
-	
+
 	# get list of localization dictionaries
 	my $localizeDir = $ce->{webworkDirs}{localize};
 	opendir(my $dh2, $localizeDir) || die "can't opendir $localizeDir: $!";
 	my %seen=();  # find the languages in the localize direction
 	my $languages =[ grep {!$seen{$_} ++}        # remove duplicate items
-			     map {$_=~s/\...$//; $_}        # get rid of suffix 
+			     map {$_=~s/\...$//; $_}        # get rid of suffix
                  grep {/\.mo$|\.po$/; } sort readdir($dh2) #look at only .mo and .po files
 
-                ]; 
+                ];
 
 	# insert the anonymous array of theme folder names into ConfigValues
 	# FIXME?  Is there a reason this is an array? Couldn't we replace this
 	# with a hash and conceptually simplify this routine? MEG
-	my $modifyThemes = sub { my $item=shift; 
+	my $modifyThemes = sub { my $item=shift;
 	                         if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) {
-	                            $item->{values} =$themes 
-	                         } 
+	                            $item->{values} =$themes
+	                         }
 	                        };
-    my $modifyLanguages = sub { my $item=shift; 
+    my $modifyLanguages = sub { my $item=shift;
 	                         if (ref($item)=~/HASH/ and $item->{var} eq 'language' ) {
-	                            $item->{values} =$languages 
-	                         } 
+	                            $item->{values} =$languages
+	                         }
 	                        };
 	foreach my $oneConfig (@$ConfigValues) {
 		foreach my $hash (@$oneConfig) {
@@ -549,10 +588,10 @@ sub getConfigValues {
 			&$modifyLanguages($hash);
 		}
 	}
-	
+
 	$ConfigValues;
 }
-	
+
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -629,8 +668,10 @@ sub body {
 		print "User $userName returned " .
 			$authz->hasPermissions($user, "modify_problem_sets") .
 			" for permission";
-		return(CGI::div({class=>'ResultsWithError'},
-		  CGI::em($r->maketext("You are not authorized to access the Instructor tools."))));
+		return (CGI::div(
+			{ class => 'alert alert-danger p-1 mb-0' },
+			CGI::em($r->maketext("You are not authorized to access the Instructor tools."))
+		));
 	}
 
 	if ($r->param('show_long_doc')) {
@@ -679,23 +720,34 @@ sub body {
 	my $configTitle = shift @configSectionArray;
 	print CGI::h2(CGI::b($r->maketext($configTitle)));
 
-	print CGI::start_table({-border=>"1"});
-	print '<tr>'.CGI::th($r->maketext('Setting')). CGI::th($r->maketext('Default')) .CGI::th($r->maketext('Current'));
+	print CGI::start_div({ class => 'table-responsive' });
+	print CGI::start_table({ class => 'table table-bordered align-middle' });
+	print '<tr>'
+		. CGI::th($r->maketext('Setting'))
+		. CGI::th({ class => 'text-center' }, $r->maketext('Default'))
+		. CGI::th({ class => 'text-center' }, $r->maketext('Current'));
 	for my $con (@configSectionArray) {
 		my $conobject = $self->objectify($con);
-		print "\n<tr>";
-		print $conobject->what_string;
-		print CGI::td({-align=>"center"}, $conobject->display_value(eval('$default_ce->'.inline_var($con->{var}))));
-		print CGI::td($conobject->entry_widget("widget$widget_count", eval('$ce4->'.inline_var($con->{var}))));
+		print '<tr>';
+		print $conobject->what_string("widget$widget_count");
+		print CGI::td({ class => 'text-center' },
+			$conobject->display_value(eval('$default_ce->' . inline_var($con->{var}))));
+		print CGI::td($conobject->entry_widget("widget$widget_count", eval('$ce4->' . inline_var($con->{var}))));
 		print '</tr>';
 		$widget_count++;
 	}
 	print CGI::end_table();
-	print CGI::p(CGI::submit(-name=>'make_changes', -value=>$r->maketext('Save Changes')));
+	print CGI::end_div();
+
+	print CGI::p(CGI::submit({
+		name  => 'make_changes',
+		value => $r->maketext('Save Changes'),
+		class => 'btn btn-primary'
+	}));
 	print CGI::end_form();
 
 
-	return "";	
+	return "";
 }
 
 

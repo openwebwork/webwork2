@@ -1,13 +1,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % WeBWorK Online Homework Delivery System
-% Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-% $CVSHeader: webwork2/bin/check_latex.tex,v 1.2 2004/10/06 21:09:33 gage Exp $
-% 
+% Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+%
 % This program is free software; you can redistribute it and/or modify it under
 % the terms of either: (a) the GNU General Public License as published by the
 % Free Software Foundation; either version 2, or (at your option) any later
 % version, or (b) the "Artistic License" which comes with this package.
-% 
+%
 % This program is distributed in the hope that it will be useful, but WITHOUT
 % ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 % FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -15,16 +14,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[10pt]{amsart}
-\usepackage{amsmath,amsfonts,amssymb,multicol}
-\usepackage{booktabs,tabularx,colortbl,caption,xcolor}
-\usepackage{path}
-  \discretionaries |~!@$%^&*()_+`-=#{"}[]:;'<>,.?\/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789|
-\usepackage[pdftex]{graphicx}
+
+\input{packages.tex}
+
 \usepackage[active,textmath,displaymath]{preview}  % needed for dvipng
-\usepackage{epstopdf} % needed for eps graphics in CAPA
-\usepackage{epsf}   
-\usepackage{epsfig}   % needed for eps graphics in CAPA
-\usepackage{pslatex}
+\usepackage{geometry} % needed for ``two column'' hardcopy format
 \usepackage{fullpage} % needed for ``single column'' hardcopy format
 
 \pagestyle{plain}
@@ -34,29 +28,8 @@
 \textwidth= 7.28in
 \columnsep = .25in
 \columnseprule = .4pt
-\def\endline{\bigskip\hrule width \hsize height 0.8pt }
-\newcommand{\lt}{<}
-\newcommand{\gt}{>}
-\newcommand{\less}{<}
-\newcommand{\grt}{>}
 
-% BEGIN capa tex macros
-
-\newcommand{\capa}{{\sl C\kern-.10em\raise-.00ex\hbox{\rm A}\kern-.22em%
-{\sl P}\kern-.14em\kern-.01em{\rm A}}}
-  
-\newenvironment{choicelist}
-{\begin{list}{}
-	{\setlength{\rightmargin}{0in}\setlength{\leftmargin}{0.13in}
-	\setlength{\topsep}{0.05in}\setlength{\itemsep}{0.022in}
-	\setlength{\parsep}{0in}\setlength{\belowdisplayskip}{0.04in}
-	\setlength{\abovedisplayskip}{0.05in}
-	\setlength{\abovedisplayshortskip}{-0.04in}
-	\setlength{\belowdisplayshortskip}{0.04in}}
-	}
-{\end{list}}
-
-% END capa tex macros 
+\input{CAPA.tex}
 
 \begin{document}
 \voffset=-0.8in
@@ -65,12 +38,10 @@
 \begin{multicols}{2}
 \columnwidth=\linewidth
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Testing the LaTeX set up for WeBWorK.
 %{\includegraphics[width = 3.5 in]{prob03av8.pdf}}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

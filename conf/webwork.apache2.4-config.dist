@@ -1,12 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -16,21 +16,17 @@
 # This file configures Apache to handle requests for WeBWorK. To install WeBWorK
 # support in your Apache configuration, add the following line to the end of
 # your Apache configuration file (usually apache.conf or httpd.conf):
-# 
+#
 #     Include /path/to/webwork.apache2-config
-# 
+#
 # Customize the variable $webwork_dir below to match the location of your
 # WeBWorK installation.
-# 
-# ATTENTION APACHE 2.2 USERS: There is a bug in mod_perl 2.0.2 that prevents the
-#                             FollowSymlinksOption from working when specified
-#                             in a <Perl> section. See below for workaround.
-
+#
 
 # Uncomment the ScriptAliasMatch to allow access to show-source.cgi
 # This allows the "show source" button to work for demonstration "courses"
 # See for example Davide Cervone's Knoxville lectures on math objects
-# It requires that a show-source.cgi script be customized and placed in 
+# It requires that a show-source.cgi script be customized and placed in
 # the myCourse/html  directory of the course
 # The "show source" button is most useful for webwork "courses" used to train new authors
 # It is not desirable to expose the code of regular homework questions to students
@@ -59,12 +55,19 @@ $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
 
 #################################################################
-# The following code reads defauls.config and extracts the remaining configuration
+# The following code reads defaults.config and extracts the remaining configuration
 # variables. There is no need to modify it.
 #################################################################
 
 # link to WeBWorK code libraries
 eval "use lib '$webwork_dir/lib'"; die $@ if $@;
+
+# link to PG code libraries
+my $pg_dir ="/opt/webwork/pg";
+eval "use lib '$pg_dir/lib'"; die $@ if $@;
+$WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
+$ENV{PG_ROOT} = $pg_dir;
+
 eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
 
 # grab course environment (by reading webwork2/conf/defaults.config)
@@ -75,7 +78,6 @@ die "webwork.apach2-config: Can't establish initial Course environment" unless r
 #  set important configuration variables (from defaults.config)
 
 my $webwork_url = $ce->{webwork_url};                    # e.g.  /webwork2
-my $pg_dir = $ce->{pg_dir};                              # e.g.  /opt/webwork/pg         
 my $webwork_htdocs_url = $ce->{webwork_htdocs_url};      # e.g.  /webwork2_files
 my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};      # e.g.  /opt/webwork/webwork2/htdocs
 my $webwork_courses_url = $ce->{webwork_courses_url};    # e.g.  /webwork2_course_files
@@ -89,11 +91,6 @@ if ($webwork_server_admin_email) {
 }
 $ENV{WEBWORK_SERVER_ADMIN} = $webwork_server_admin_email;
 
-# link to PG code libraries
-eval "use lib '$pg_dir/lib'"; die $@ if $@;
-$WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
-$ENV{PG_ROOT} = $pg_dir;
-
 #################################################################
 # Modify the manner in which errors are reported.
 # Uncommenting $ENV{MIN_HTML_ERRORS} = 1; will minimize the data provided
@@ -102,7 +99,7 @@ $ENV{PG_ROOT} = $pg_dir;
 #    the code and version of the code being used on the server.
 #    The useful information will be in the Apache error.log file, with a UID
 #    displayed also in the HTML error page to help match up records.
-# Warning: The Apache error.log is available to system adminstrators but not to
+# Warning: The Apache error.log is available to system administrators but not to
 #    users with staff level accounts in the courses, so using the more secure
 #    settings requires more cooperation from the system administrators when
 #    debugging data is needed.
@@ -132,12 +129,12 @@ print "webwork.apache2-config:     The webwork smtp server protocol is ", ($ce->
 # check compatibility of sendmail protocols and ports
 if (exists(($ce->{mail}->{smtpPort})) )  { # port not chosen automatically
    # check port and protocol for compatibility
-	unless ( 
+	unless (
 			(($ce->{mail}->{smtpPort} == 25)  # 'not ssl mode'
-			  and ($ce->{mail}->{tls_allow} == 0)) 
-			or 
+			  and ($ce->{mail}->{tls_allow} == 0))
+			or
 			(($ce->{mail}->{smtpPort} == 465) # 'ssl mode'
-			  and ($ce->{mail}->{tls_allow} == 1) ) 
+			  and ($ce->{mail}->{tls_allow} == 1) )
 			) {
 		warn "WARNING:: The smtp port and the smtp protocol do not appear to be compatible";
 	}
@@ -150,36 +147,52 @@ require Apache::WeBWorK; # force compilation of pretty much everything
 
 # At this point, the following configuration variables should be present for use
 # in wiring WeBWorK into Apache:
-# 
+#
 #     $webwork_url            The base URL handled by Apache::WeBWorK.
 #     $webwork_dir            The path to the base webwork2 directory.
 #     $pg_dir                 The path to the base pg directory.
-#     
+#
 #     $webwork_htdocs_url     The base URL of the WeBWorK htdocs directory.
 #     $webwork_htdocs_dir     The path to the WeBWorK htdocs directory.
-#     
+#
 #     $webwork_courses_url    The base URL of the WeBWorK courses directory.
 #     $webwork_courses_dir    The path to the WeBWorK courses directory.
 
 # Define the location that is handled by the Apache::WeBWorK module, and tell
 # Perl where to find the libraries Apache::WeBWorK needs to run.
-# 
+#
 $Location{$webwork_url} = {
 	SetHandler => "perl-script",
 	PerlHandler => "Apache::WeBWorK",
 };
 
-# Provide access to system-wide resources.
-# 
+# Provide access to webwork2 and pg resources.
+# A resource from $webwork_htdocs_dir is used if present,
+# then $pg_dir/htdocs is checked if the file is not found there.
 push @Alias, [ $webwork_htdocs_url => $webwork_htdocs_dir ];
-$Directory{$webwork_htdocs_dir} = {
-        Require => "all granted",
-	Options => "FollowSymLinks",
-	AllowOverride => "none",
+push @Alias, [ "/pg_files" => "$pg_dir/htdocs" ];
+
+# The order of the directives is important for the rewrite to work, so a hash can not be used,
+# and we must construct the directory section by hand.
+push @PerlConfig, 
+	"<Directory $webwork_htdocs_dir>",
+	'	Require       all granted',
+	'	Options       FollowSymLinks',
+	'	AllowOverride none',
+	'	RewriteEngine on',
+	"	RewriteBase   $webwork_htdocs_url",
+	'	RewriteCond   %{REQUEST_FILENAME} !-f',
+	'	RewriteRule   ^(.*)$ /pg_files/$1 [L]',
+	'</Directory>';
+
+$Directory{"$pg_dir/htdocs"} = {
+	Require       => "all granted",
+	Options       => "FollowSymLinks",
+	AllowOverride => "none"
 };
 
 # Provide access to course-specific resources.
-# 
+#
 push @AliasMatch, [ "$webwork_courses_url/([^/]*)/(.*)", "$webwork_courses_dir/\$1/html/\$2" ];
 $Directory{"$webwork_courses_dir/*/html"} = {
         Require => "all granted",
@@ -189,11 +202,16 @@ $Directory{"$webwork_courses_dir/*/html"} = {
 
 # If WeBWorK is on the root, exempt the static directories from being handled
 # by Apache::WeBWorK.
-# 
+#
 if ($webwork_url eq "") {
 	$Location{$webwork_courses_url} = { SetHandler => "none" };
 	$Location{$webwork_htdocs_url} = { SetHandler => "none" };
 }
+
+# Uncomment the line below, and the WebworkSOAP and WSDL handlers sections below
+# that to use the WebworkSOAP handlers.  Make sure that you change the value to
+# something more secure.
+#$WeBWorK::SeedCE{soap_authen_key} = "123456789123456789";
 
 </Perl>
 
@@ -250,12 +268,15 @@ PerlModule WebworkWebservice
 # Resource Sharing (CORS).
 # You will also need to enable headers via something like:
 # sudo a2enmod headers
-# to use this. 
+# to use this.
 # This is not actually needed to use the client formats unless
-# they are accessed from a *remote* server. 
+# they are accessed from a *remote* server.
 
 #<IfModule mod_headers.c>
 #    <Location /webwork2/html2xml>
+#        Header set Access-Control-Allow-Origin "*"
+#    </Location>
+#    <Location /webwork2_files>
 #        Header set Access-Control-Allow-Origin "*"
 #    </Location>
 #</IfModule>
@@ -268,7 +289,7 @@ PerlModule WebworkWebservice
 #<Location /mod_soap>
 #	SetHandler perl-script
 #	PerlHandler Apache::SOAP
-#	PerlSetVar dispatch_to "WebworkXMLRPC" 
+#	PerlSetVar dispatch_to "WebworkXMLRPC"
 #	PerlSetVar options "compress_threshold => 10000"
 #       Require all granted
 #</Location>
@@ -284,10 +305,10 @@ PerlModule WebworkWebservice
 ####################################################################
 
 #  This will enable expirey information for the webserver which will
-#  cut down on the number of requests made. This is a good option if you 
-#  are having bandwidth problems.  
+#  cut down on the number of requests made. This is a good option if you
+#  are having bandwidth problems.
 
-#  enable the expires apache module (by using a2enmod expires or 
+#  enable the expires apache module (by using a2enmod expires or
 #  by commenting out the following line and including the right path
 
 #LoadModule expires_module /path/to/mod_expires.so
@@ -299,7 +320,7 @@ PerlModule WebworkWebservice
     ExpiresByType image/gif "access plus 1 year"
     ExpiresByType image/png "access plus 1 year"
     ExpiresByType text/css "access plus 1 month"
-    ExpiresByType application/javascript "access plus 1 month"    
+    ExpiresByType application/javascript "access plus 1 month"
     ExpiresByType application/x-javascript "access plus 1 month"
     ExpiresByType text/javascript "access plus 1 month"
     ExpiresByType image/x-icon "access plus 1 year"

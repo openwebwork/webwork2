@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2020 The WeBWorK Project, https://openwebworkorg.wordpress.com/
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -23,19 +23,19 @@ WeBWorK::Authen - Check user identity, manage session keys.
 
  # get the name of the appropriate Authen class, based on the %authen hash in $ce
  my $class_name = WeBWorK::Authen::class($ce, "user_module");
- 
+
  # load that class
  require $class_name;
- 
+
  # create an authen object
  my $authen = $class_name->new($r);
- 
+
  # verify credentials
  $authen->verify or die "Authentication failed";
- 
+
  # verification status is stored for quick retrieval later
  my $auth_ok = $authen->was_verified;
- 
+
  # for some reason, you might want to clear that cache
  $authen->forget_verification;
 
@@ -60,8 +60,9 @@ use URI::Escape;
 use Carp;
 use Scalar::Util qw(weaken);
 
-
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+use APR::SockAddr;
+use Apache2::Connection;
+use APR::Request::Error;
 
 use Caliper::Sensor;
 use Caliper::Entity;
@@ -73,22 +74,10 @@ use Caliper::Entity;
 #use vars qw($GENERIC_ERROR_MESSAGE);
 our $GENERIC_ERROR_MESSAGE = "";  # define in new
 
-## WeBWorK-tr end modification 
+## WeBWorK-tr end modification
 #####################
 
 #use constant GENERIC_ERROR_MESSAGE => "Invalid user ID or password.";
-
-
-BEGIN {
-	if (MP2) {
-		require APR::SockAddr;
-		APR::SockAddr->import();
-		require Apache2::Connection;
-		Apache2::Connection->import();
-		require APR::Request::Error;
-		APR::Request::Error->import;
-	}
-}
 
 ################################################################################
 # Public API
@@ -109,7 +98,7 @@ the %authen hash, an exception is thrown.
 
 sub class {
 	my ($ce, $type) = @_;
-	
+
 	if (exists $ce->{authen}{$type}) {
 		if (ref $ce->{authen}{$type} eq "ARRAY") {
 			my $authen_type = shift @{$ce ->{authen}{$type}};
@@ -147,7 +136,7 @@ sub call_next_authen_method {
 	my $ce = $r -> {ce};
 
 	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
-	#debug("user_authen_module = |$user_authen_module|");	
+	#debug("user_authen_module = |$user_authen_module|");
 	if (!defined($user_authen_module) or ($user_authen_module eq "")) {
 		$self->{error} = $r->maketext("No authentication method found for your request.  If this recurs, please speak with your instructor.");
 		$self->{log_error} .= "None of the specified authentication modules could handle the request.";
@@ -217,13 +206,13 @@ sub verify {
 	my $result = $self->do_verify;
 	my $error = $self->{error};
 	my $log_error = $self->{log_error};
-	
+
 	$self->{was_verified} = $result ? 1 : 0;
-	
+
 	if ($self->can("site_fixup")) {
 		$self->site_fixup;
 	}
-	
+
 	if ($result) {
 		$self->write_log_entry("LOGIN OK") if $self->{initial_login};
 		$self->maybe_send_cookie;
@@ -232,7 +221,7 @@ sub verify {
 		if (defined $log_error) {
 			$self->write_log_entry("LOGIN FAILED $log_error");
 		}
-		if (defined($error) and $error=~/\S/) { # if error message has a least one non-space character. 
+		if (defined($error) and $error=~/\S/) { # if error message has a least one non-space character.
 			if ( defined( $log_error ) and $log_error eq "inactivity timeout" ) {
 				# We don't want to override the localized inactivity timeout message.
 				# so do not check next "if" in this case.
@@ -243,12 +232,13 @@ sub verify {
 		}
         #warn "LOGIN FAILED: log_error: $log_error; user error: $error";
 		$self->maybe_kill_cookie;
-		if (defined($error) and $error=~/\S/ and $r->can('notes') ) { # if error message has a least one non-space character. 
-			MP2? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
-		      # FIXME this is a hack to accomodate the webworkservice remixes
+		# if error message has a least one non-space character.
+		if (defined($error) and $error =~ /\S/ and $r->can('notes')) {
+			$r->notes->set(authen_error => $error);
+			# FIXME this is a hack to accomodate the webworkservice remixes
 		}
 	}
-	
+
 	my $caliper_sensor = Caliper::Sensor->new($self->{r}->ce);
 	if ($caliper_sensor->caliperEnabled() && $result && $self->{initial_login}) {
 		my $login_event = {
@@ -273,7 +263,7 @@ Returns true if verify() returned true the last time it was called.
 
 sub was_verified {
 	my ($self) = @_;
-	
+
 	return 1 if exists $self->{was_verified} and $self->{was_verified};
 	return 0;
 }
@@ -288,9 +278,9 @@ sub forget_verification {
 	my ($self) = @_;
 	my $r = $self -> {r};
 	my $ce = $r -> {ce};
-	
+
 	$self->{was_verified} = 0;
-	
+
 }
 
 =back
@@ -306,14 +296,13 @@ sub do_verify {
 	my $r = $self->{r};
 	my $ce = $r->ce;
 	my $db = $r->db;
-	
+
 	return 0 unless $db;
 	debug("db ok");
 	return 0 unless $self->get_credentials;
 	debug("credentials ok");
 	return 0 unless $self->check_user;
 	debug ("check user ok");
-	my $practiceUserPrefix = $ce->{practiceUserPrefix};
 	if (defined($self->{login_type}) && $self->{login_type} eq "guest"){
 		return $self->verify_practice_user;
 	} else {
@@ -343,18 +332,16 @@ sub get_credentials {
 	# allow guest login: if the "Guest Login" button was clicked, we find an unused
 	# practice user and create a session for it.
 	if ($r->param("login_practice_user")) {
-		my $practiceUserPrefix = $ce->{practiceUserPrefix};
-		# DBFIX search should happen in database
-		my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
-		my @GuestUsers = $db->getUsers(@guestUserIDs);
-		my @allowedGuestUsers = grep { $ce->status_abbrev_has_behavior($_->status, "allow_course_access") } @GuestUsers;
-		my @allowedGuestUserIDs = map { $_->user_id } @allowedGuestUsers;
+		my @allowedGuestUserIDs =
+			map  { $_->user_id }
+			grep { $ce->status_abbrev_has_behavior($_->status, "allow_course_access") }
+			$db->getUsersWhere({ user_id => { like => "$ce->{practiceUserPrefix}\%" } });
 
-		foreach my $userID (List::Util::shuffle(@allowedGuestUserIDs)) {
+		for my $userID (List::Util::shuffle(@allowedGuestUserIDs)) {
 			if (not $self->unexpired_session_exists($userID)) {
 				my $newKey = $self->create_session($userID);
 				$self->{initial_login} = 1;
-				
+
 				$self->{user_id} = $userID;
 				$self->{session_key} = $newKey;
 				$self->{login_type} = "guest";
@@ -363,12 +350,12 @@ sub get_credentials {
 				return 1;
 			}
 		}
-		
+
 		$self->{log_error} = "no guest logins are available";
 		$self->{error} = $r->maketext("No guest logins are available. Please try again in a few minutes.");
 		return 0;
 	}
-	
+
 	my ($cookieUser, $cookieKey, $cookieTimeStamp) = $self->fetchCookie;
 
 	if (defined $cookieUser and defined $r->param("user") ) {
@@ -416,7 +403,7 @@ sub get_credentials {
 				"' cookie_timestamp '", $self->{cookieTimeStamp}, "' "
 			);
 			return 1;
-		}	
+		}
 	}
 	# at least the user ID is available in request parameters
 	if (defined $r->param("user")) {
@@ -431,7 +418,7 @@ sub get_credentials {
 		debug("params password '", $self->{password}, "' key '", $self->{session_key}, "'");
 		return 1;
 	}
-	
+
 	if (defined $cookieUser) {
 		$self->{user_id} = $cookieUser;
 		$self->{session_key} = $cookieKey;
@@ -453,37 +440,37 @@ sub check_user {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $authz = $r->authz;
-	
+
 	my $user_id = $self->{user_id};
-	
+
 	if (defined $user_id and $user_id eq "") {
 		$self->{log_error} = "no user id specified";
 		$self->{error} .= $r->maketext("You must specify a user ID.");
 		return 0;
 	}
-	
+
 	my $User = $db->getUser($user_id);
-	
+
 	unless ($User) {
 		$self->{log_error} = "user unknown";
 		$self->{error} = $GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
-	
+
 	# FIXME "fix invalid status values" used to be here, but it needs to move to $db->getUser
-	
+
 	unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
 		$self->{log_error} = "user not allowed course access";
 		$self->{error} = $GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
-	
+
 	unless ($authz->hasPermissions($user_id, "login")) {
 		$self->{log_error} = "user not permitted to login";
 		$self->{error} = $GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
-	
+
 	return 1;
 }
 
@@ -491,13 +478,13 @@ sub verify_practice_user {
 	my $self = shift;
 	my $r = $self->{r};
 	my $ce = $r->ce;
-	
+
 	my $user_id = $self->{user_id};
 	my $session_key = $self->{session_key};
-	
+
 	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 1);
 	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
-	
+
 	if ($sessionExists) {
 		if ($keyMatches) {
 			if ($timestampValid) {
@@ -535,18 +522,18 @@ sub verify_practice_user {
 sub verify_normal_user {
 	my $self = shift;
 	my $r = $self->{r};
-	
+
 	my $user_id = $self->{user_id};
 	my $session_key = $self->{session_key};
-	
+
 	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 1);
 	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
-	
+
 	if ($sessionExists and $keyMatches and $timestampValid) {
 		return 1;
 	} else {
 		my $auth_result = $self->authenticate;
-		
+
 		if ($auth_result > 0) {
 			$self->{session_key} = $self->create_session($user_id);
 			$self->{initial_login} = 1;
@@ -571,10 +558,10 @@ sub verify_normal_user {
 sub authenticate {
 	my $self = shift;
 	my $r = $self->{r};
-	
+
 	my $user_id = $self->{user_id};
 	my $password = $self->{password};
-	
+
 	if (defined $password) {
 		return $self->checkPassword($user_id, $password);
 	} else {
@@ -586,35 +573,35 @@ sub maybe_send_cookie {
 	my $self = shift;
 	my $r = $self->{r};
 	my $ce = $r -> {ce};
-	
-	my ($cookie_user, $cookie_key, $cookie_timestamp) = $self->fetchCookie;
-	
+
+	my ($cookie_user, $cookie_key, $cookie_timestamp, $setID) = $self->fetchCookie;
+
 	# we send a cookie if any of these conditions are met:
-	
+
 	# (a) a cookie was used for authentication
 	my $used_cookie = ($self->{credential_source} eq "cookie");
-	
+
 	# (b) a cookie was sent but not used for authentication, and the
 	#     credentials used for authentication were the same as those in
 	#     the cookie
 	my $unused_valid_cookie = ($self->{credential_source} ne "cookie"
 		and defined $cookie_user and $self->{user_id} eq $cookie_user
 		and defined $cookie_key and $self->{session_key} eq $cookie_key);
-	
+
 	# (c) the user asked to have a cookie sent and is not a guest user.
 	my $user_requests_cookie = ($self->{login_type} ne "guest"
 		and ( $r->param("send_cookie")//0 )); # prevent warning if "send_cookie" param is not defined.
 
 	# (d) session management is done via cookies.
-	my $session_management_via_cookies = 
+	my $session_management_via_cookies =
 		$ce -> {session_management_via} eq "session_cookie";
-	
-	debug("used_cookie='", $used_cookie, "' unused_valid_cookie='", $unused_valid_cookie, "' user_requests_cookie='", $user_requests_cookie, 
+
+	debug("used_cookie='", $used_cookie, "' unused_valid_cookie='", $unused_valid_cookie, "' user_requests_cookie='", $user_requests_cookie,
 			"' session_management_via_cookies ='", $session_management_via_cookies, "'");
-	
+
 	if ($used_cookie or $unused_valid_cookie or $user_requests_cookie or $session_management_via_cookies) {
 		#debug("Authen::maybe_send_cookie is sending a cookie");
-		$self->sendCookie($self->{user_id}, $self->{session_key});
+		$self->sendCookie($self->{user_id}, $self->{session_key}, $setID);
 	} else {
 		$self->killCookie;
 	}
@@ -628,12 +615,12 @@ sub maybe_kill_cookie {
 sub set_params {
 	my $self = shift;
 	my $r = $self->{r};
-	
+
 	# A2 - params are not non-modifiable, with no explanation or workaround given in docs. WTF!
 	$r->param("user", $self->{user_id});
 	$r->param("key", $self->{session_key});
 	$r->param("passwd", "");
-	
+
 	debug("params user='", $r->param("user"), "' key='", $r->param("key"), "'");
 }
 
@@ -644,16 +631,16 @@ sub set_params {
 sub checkPassword {
 	my ($self, $userID, $possibleClearPassword) = @_;
 	my $db = $self->{r}->db;
-	
+
 	my $Password = $db->getPassword($userID); # checked
 	if (defined $Password) {
 		# check against WW password database
 		my $possibleCryptPassword = crypt $possibleClearPassword, $Password->password;
 		my $dbPassword = $Password->password;
-		# This next line explicitly insures that 
-		# blank or null passwords from the database can never 
+		# This next line explicitly insures that
+		# blank or null passwords from the database can never
 		# succeed in matching an entered password
-		# Use case: Moodle wwassignment stores null passwords and forces the creation 
+		# Use case: Moodle wwassignment stores null passwords and forces the creation
 		# of a key -- Moodle wwassignment does not use  passwords for authentication, only keys.
 		# The following line was modified to also reject cases when the database has a crypted password
 		# which matches a submitted all white-space or null password by requiring that the
@@ -683,12 +670,12 @@ sub checkPassword {
 }
 
 # Site-specific password checking
-# 
+#
 # The site_checkPassword routine can be used to provide a hook to your institution's
 # authentication system. If authentication against the  course's password database, the
 # method $self->site_checkPassword($userID, $clearTextPassword) is called. If this
 # method returns a true value, authentication succeeds.
-# 
+#
 # Here is an example site_checkPassword which checks the password against the Ohio State
 # popmail server:
 # 	sub site_checkPassword {
@@ -700,7 +687,7 @@ sub checkPassword {
 # 		}
 # 		return 0;
 # 	}
-# 
+#
 # Since you have access to the WeBWorK::Authen object, the possibilities are limitless!
 # This example checks the password against the system password database and updates the
 # user's password in the course database if it succeeds:
@@ -730,7 +717,7 @@ sub unexpired_session_exists {
 	my ($self, $userID) = @_;
 	my $ce = $self->{r}->ce;
 	my $db = $self->{r}->db;
-	
+
 	my $Key = $db->getKey($userID); # checked
 	return 0 unless defined $Key;
 	if (time <= $Key->timestamp()+$ce->{sessionKeyTimeout}) {
@@ -749,30 +736,37 @@ sub unexpired_session_exists {
 # clobbers any existing session for this $userID
 # if $newKey is not specified, a random key is generated
 # the key is returned
+# When this is called in Proctor.pm, the actual user id is passed in via $trueUserID.
+# The $userID is modified in that case and will not work in the hasPermissions call.
 sub create_session {
-	my ($self, $userID, $newKey) = @_;
-	my $ce = $self->{r}->ce;
-	my $db = $self->{r}->db;
-	
+	my ($self, $userID, $newKey, $trueUserID) = @_;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	my $db = $r->db;
+
 	my $timestamp = time;
 	unless ($newKey) {
 		my @chars = @{ $ce->{sessionKeyChars} };
 		my $length = $ce->{sessionKeyLength};
-		
+
 		srand;
 		$newKey = join ("", @chars[map rand(@chars), 1 .. $length]);
 	}
-	
-	my $Key = $db->newKey(user_id=>$userID, key=>$newKey, timestamp=>$timestamp);
+
+	my $setID =
+		!$r->authz->hasPermissions($trueUserID // $userID, 'navigation_allowed') ? $r->urlpath->arg("setID") : '';
+
+	my $Key = $db->newKey(user_id => $userID, key => $newKey, timestamp => $timestamp, set_id => $setID);
+
 	# DBFIXME this should be a REPLACE
 	eval { $db->deleteKey($userID) };
-	eval {$db->addKey($Key)};
-	my $fail_to_addKey=1 if $@;
+	eval { $db->addKey($Key) };
+	my $fail_to_addKey = 1 if $@;
 	if ($fail_to_addKey) {
 		warn "Difficulty adding key for userID $userID: $@ ";
 	}
 	if ($fail_to_addKey) {
-		eval {$db->putKey($Key) };
+		eval { $db->putKey($Key) };
 		warn "Couldn't put key for userid $userID either: $@" if $@;
 	}
 
@@ -854,9 +848,9 @@ sub fetchCookie {
 	my $r = $self->{r};
 	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
-	
+
 	my $courseID = $urlpath->arg("courseID");
-	
+
 	my $cookie = undef;
 	my %cookies = WeBWorK::Cookie->fetch();
 	$cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
@@ -864,10 +858,10 @@ sub fetchCookie {
 	if ($cookie) {
 		#debug("found a cookie for this course: '", $cookie->as_string, "'");
 	        debug("cookie has this value: '", $cookie->value, "'");
-		my ($userID, $key, $timestamp) = split "\t", $cookie->value;
+		my ($userID, $key, $timestamp, $setID) = split "\t", $cookie->value;
 		if (defined $userID and defined $key and $userID ne "" and $key ne "") {
 			debug("looks good, returning userID='$userID' key='$key'");
-			return( $userID, $key, $timestamp );
+			return ($userID, $key, $timestamp, $setID);
 		} else {
 			debug("malformed cookie. returning nothing.");
 			return;
@@ -879,17 +873,22 @@ sub fetchCookie {
 }
 
 sub sendCookie {
-	my ($self, $userID, $key) = @_;
+	my ($self, $userID, $key, $setID) = @_;
 	my $r = $self->{r};
 	my $ce = $r->ce;
 
 	my $courseID = $r->urlpath->arg("courseID");
 
+	# This sets the setID in the cookie on initial login.
+	$setID = $r->urlpath->arg("setID")
+		if !$setID
+		&& $r->authen->was_verified && !$r->authz->hasPermissions($userID, 'navigation_allowed');
+
  	my $timestamp = time();
 
 	my $cookie = WeBWorK::Cookie->new(
 		-name     => "WeBWorKCourseAuthen.$courseID",
-		-value    => "$userID\t$key\t$timestamp",
+		-value    => "$userID\t$key\t$timestamp" . ($setID ? "\t$setID" : ''),
 		-path     => $ce->{webworkURLRoot},
 		-samesite => $ce->{CookieSameSite},
 		-secure   => $ce->{CookieSecure}    # Warning: use 1 only if using https
@@ -943,6 +942,22 @@ sub killCookie {
  	if ($@) {croak $@; }
 }
 
+# This method is only used for a user that does not have the navigation_allowed permission,
+# and is used to restrict that user to a specific set that the user is authenticated with.
+sub get_session_set_id {
+	my $self = shift;
+	my $setID;
+
+	if ($self->{r}{ce}{session_management_via} eq 'key') {
+		my $Key = $self->{r}{db}->getKey($self->{r}->param('user'));
+		return $Key->set_id;
+	} else {
+		my $setID;
+		(undef, undef, undef, $setID) = $self->fetchCookie;
+		return $setID;
+	}
+}
+
 ################################################################################
 # Utilities
 ################################################################################
@@ -951,52 +966,24 @@ sub write_log_entry {
 	my ($self, $message) = @_;
 	my $r = $self->{r};
 	my $ce = $r->ce;
-	
+
 	my $user_id = defined $self->{user_id} ? $self->{user_id} : "";
 	my $login_type = defined $self->{login_type} ? $self->{login_type} : "";
 	my $credential_source = defined $self->{credential_source} ? $self->{credential_source} : "";
-	
+
 	my ($remote_host, $remote_port);
 
-	my $APACHE24 = 0;
-	# If its apache 2.4 then it has to also mod perl 2.0 or better
-	if (MP2) {
-	    my $version;
-
-	    # check to see if the version is manually defined
-	    if (defined($ce->{server_apache_version}) &&
-		$ce->{server_apache_version}) {
-		$version = $ce->{server_apache_version};
-	    # otherwise try and get it from the banner
-	    } elsif (Apache2::ServerUtil::get_server_banner() =~ 
-	  m:^Apache/(\d\.\d+):) {
-		$version = $1;
-	    }
-
-	    if ($version) {
-		$APACHE24 = version->parse($version) >= version->parse('2.4.0');
-	    }
-	}
-	# If its apache 2.4 then the API has changed
 	my $connection;
 	my $user_agent;
 	eval {$connection = $r->connection};
-	if ($@) { # no connection available
+	if ($@) {
+		# no connection available
 		$remote_host = "UNKNOWN" unless defined $remote_host;
 		$remote_port = "UNKNOWN" unless defined $remote_port;
-		$user_agent = "UNKNOWN";
-	} else { 
-		if ($APACHE24) {
-			$remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
-			$remote_port = $r->connection->client_addr->port   || "UNKNOWN";
-		} elsif (MP2) {
-			$remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
-			$remote_port = $r->connection->remote_addr->port   || "UNKNOWN";
-		} else {
-			($remote_port, $remote_host) = unpack_sockaddr_in($r->connection->remote_addr);
-			$remote_host = defined $remote_host ? inet_ntoa($remote_host) : "UNKNOWN";
-			$remote_port = "UNKNOWN" unless defined $remote_port;
-		}
+		$user_agent  = "UNKNOWN";
+	} else {
+		$remote_host = $r->useragent_addr->ip_get || "UNKNOWN";
+		$remote_port = $r->connection->client_addr->port   || "UNKNOWN";
 
 		$user_agent = $r->headers_in->{"User-Agent"};
 	}

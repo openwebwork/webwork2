@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema.pm,v 1.13 2009/01/25 15:30:35 gage Exp $
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -85,23 +84,23 @@ dependent. C<$db> is provided so that schemas can query other schemas.
 sub new {
 	my ($proto, $db, $driver, $table, $record, $params, $engine, $character_set) = @_;
 	my $class = ref($proto) || $proto;
-	
+
 	my @supportedTables = $proto->TABLES();
 	die "unsupported table (schema supports: @supportedTables)"
 		unless grep { $_ eq "*" or $_ eq $table } @supportedTables;
-	
+
 	my ($driverStyle, $schemaStyle) = ($driver->STYLE(), $proto->STYLE());
 	die "schema/driver style mismatch (driver provides $driverStyle, schema requires $schemaStyle)"
 		unless $driverStyle eq $schemaStyle;
-	
+
 	my $self = {
-		db     => $db,
-		driver => $driver,
-		table  => $table,
-		record => $record,
-		params => $params,
-    	engine => $engine,
-    	character_set => $character_set,
+		db            => $db,
+		driver        => $driver,
+		table         => $table,
+		record        => $record,
+		params        => $params,
+		engine        => $engine,
+		character_set => $character_set,
 	};
 	bless $self, $class;
 	return $self;

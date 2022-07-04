@@ -11,7 +11,7 @@ use base qw(Exporter);
 #		3. $webwork_htdocs/DATA/textbook-tree.json  (the subject/chapter/section struture of the library)
 
 # the above JSON files can be used to load and more quickly lookup OPL information
-# 
+#
 
 use strict;
 use warnings;
@@ -68,19 +68,19 @@ my %NPLtables = (
 sub build_library_directory_tree {
 	my ($ce,$verbose) = @_;
 
-	print "Creating the Directory Tree\n" if $verbose; 
+	print "Creating the Directory Tree\n" if $verbose;
 	my $libraryRoot = $ce->{problemLibrary}->{root};
 	$libraryRoot =~ s|/+$||;
 
 	my @dirArray = ();
 	push(@dirArray,buildTree($libraryRoot));
 
-	my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
+	my $webwork_htdocs = $ce->{webworkDirs}{htdocs};
 	my $file = "$webwork_htdocs/DATA/library-directory-tree.json";
 
 	writeJSONtoFile(\@dirArray,$file);
 
-	print "Wrote Library Directory Tree to $file\n" if $verbose; 
+	print "Wrote Library Directory Tree to $file\n" if $verbose;
 }
 
 sub buildTree {
@@ -137,7 +137,7 @@ sub build_library_subject_tree {
 
 	my $tree;  # the library subject tree will be stored as arrays of objects.
 
-	print "Building the subject-tree.  There are " . scalar(@subject_names) . " subjects\n" if $verbose; 
+	print "Building the subject-tree.  There are " . scalar(@subject_names) . " subjects\n" if $verbose;
 
 	my @subject_tree;  # array to store the individual library tree for each subject
 
@@ -146,16 +146,16 @@ sub build_library_subject_tree {
 	for my $subj_name (@subject_names){
 
 		my $subj = $subj_name;
-		$subj =~ s/'/\'/g; # escape any single quotes; 
+		$subj =~ s/'/\'/g; # escape any single quotes;
 
-    print "subject: $subj_name is being processed.\n" if $verbose; 
+    print "subject: $subj_name is being processed.\n" if $verbose;
 
 	  my $cmd = qq/SELECT ch.name from $tables{dbchapter} AS ch
 			JOIN $tables{dbsubject} AS subj ON ch.DBsubject_id=subj.DBsubject_id
 			WHERE subj.name='$subj';/;
 
 		my @chapter_names = map { $_->[0] } $dbh->selectall_array($cmd);
-	
+
 		my @chapter_tree; # array to store the individual library tree for each chapter
 
 		for my  $ch_name (@chapter_names){
@@ -180,13 +180,13 @@ sub build_library_subject_tree {
 				my $sect = $sect_name;
 				$sect =~ s/'/\\'/g; # escape any single quotes
 
-				my $cmd = qq/SELECT COUNT(*) from $tables{dbsection} AS sect 
+				my $cmd = qq/SELECT COUNT(*) from $tables{dbsection} AS sect
 					JOIN $tables{dbchapter} AS ch ON sect.DBchapter_id = ch.DBchapter_id
 					JOIN $tables{dbsubject} AS subj ON subj.DBsubject_id = ch.DBsubject_id
-					JOIN $tables{pgfile} AS pg ON sect.DBsection_id = pg.DBsection_id 
+					JOIN $tables{pgfile} AS pg ON sect.DBsection_id = pg.DBsection_id
 					where subj.name = '$subj' AND ch.name='$ch' AND sect.name='$sect';/;
 
-				$section_tree->{num_files} = $dbh->selectrow_array($cmd); 
+				$section_tree->{num_files} = $dbh->selectrow_array($cmd);
 				my $clone = { %{ $section_tree } };  # need to clone it before pushing into the @subfield array.
 
 				push(@subfields,$clone);
@@ -196,11 +196,11 @@ sub build_library_subject_tree {
 
 			## determine the number of files in each chapter
 
-			my $cmd = qq/select COUNT(*) from $tables{dbsection} AS sect 
+			my $cmd = qq/select COUNT(*) from $tables{dbsection} AS sect
 				JOIN $tables{dbchapter} AS ch ON sect.DBchapter_id = ch.DBchapter_id
 				JOIN $tables{dbsubject} AS subj ON subj.DBsubject_id = ch.DBsubject_id
-				JOIN $tables{pgfile} AS pg ON sect.DBsection_id = pg.DBsection_id 
-				JOIN $tables{path} AS path ON pg.path_id = path.path_id 
+				JOIN $tables{pgfile} AS pg ON sect.DBsection_id = pg.DBsection_id
+				JOIN $tables{path} AS path ON pg.path_id = path.path_id
 				where ch.name = '$ch' AND subj.name = '$subj_name';/;
 
 			$chapter_tree->{num_files} = $dbh->selectrow_array($cmd);
@@ -213,11 +213,11 @@ sub build_library_subject_tree {
 
 		## find the number of files on the subject level
 
-		$cmd = qq/select COUNT(*) from $tables{dbsection} AS sect 
+		$cmd = qq/select COUNT(*) from $tables{dbsection} AS sect
 			JOIN $tables{dbchapter} AS ch ON sect.DBchapter_id = ch.DBchapter_id
 			JOIN $tables{dbsubject} AS subj ON subj.DBsubject_id = ch.DBsubject_id
-			JOIN $tables{pgfile} AS pg ON sect.DBsection_id = pg.DBsection_id 
-			JOIN $tables{path} AS path ON pg.path_id = path.path_id 
+			JOIN $tables{pgfile} AS pg ON sect.DBsection_id = pg.DBsection_id
+			JOIN $tables{path} AS path ON pg.path_id = path.path_id
 			where subj.name = '$subj_name';/;
 
 		$subject_tree->{num_files} = $dbh->selectrow_array($cmd);
@@ -225,7 +225,7 @@ sub build_library_subject_tree {
 		my $clone = { % {$subject_tree}};
 		push (@subject_tree, $clone);
 	}
-	my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
+	my $webwork_htdocs = $ce->{webworkDirs}{htdocs};
 	my $file = "$webwork_htdocs/DATA/library-subject-tree.json";
 
 	writeJSONtoFile(\@subject_tree,$file);
@@ -266,7 +266,7 @@ sub build_library_textbook_tree {
 	for my $textbook (@textbooks){
 		$i++;
 		printf("%4d",$i) if $verbose;
-		print("\n") if ($i % 10==0 && $verbose); 
+		print("\n") if ($i % 10==0 && $verbose);
 
 		my $results = $dbh->selectall_arrayref("select ch.chapter_id,ch.name,ch.number "
 			. " from `$tables{chapter}` AS ch JOIN `$tables{textbook}` AS text ON ch.textbook_id=text.textbook_id "
@@ -339,12 +339,12 @@ sub build_library_textbook_tree {
 
 	print "\n";
 
-	my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
+	my $webwork_htdocs = $ce->{webworkDirs}{htdocs};
 	my $file = "$webwork_htdocs/DATA/textbook-tree.json";
 
 	writeJSONtoFile(\@output,$file);
 
-	print "\n\nWrote Library Textbook Tree to $file\n" if $verbose; 
+	print "\n\nWrote Library Textbook Tree to $file\n" if $verbose;
 
 }
 
@@ -352,9 +352,9 @@ sub build_library_textbook_tree {
 sub writeJSONtoFile {
 	my ($data,$filename) = @_;
 
-	my $json = JSON->new->utf8->encode($data);	
+	my $json = JSON->new->utf8->encode($data);
 	open my $fh, ">", $filename or die "Cannot open $filename";
-	print $fh $json; 
+	print $fh $json;
 	close $fh;
 }
 

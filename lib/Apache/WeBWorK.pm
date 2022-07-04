@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,6 +29,8 @@ details.
 
 use strict;
 use warnings;
+
+use Apache2::Log;
 use Apache2::Const qw(:common);
 use HTML::Entities;
 use HTML::Scrubber;
@@ -40,24 +41,12 @@ use utf8;
 use JSON::MaybeXS;
 use UUID::Tiny  ':std';
 
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
-
 # Should the minimal (more secure) HTML error output be used?
 use constant MIN_HTML_ERRORS => ( exists $ENV{"MIN_HTML_ERRORS"} and $ENV{"MIN_HTML_ERRORS"} );
 
 # Should Apache logs get JSON formatted record?
 use constant JSON_ERROR_LOG => ( exists $ENV{"JSON_ERROR_LOG"} and $ENV{"JSON_ERROR_LOG"} );
 
-# load correct modules
-BEGIN {
-	if (MP2) {
-		require Apache2::Log;
-		Apache2::Log->import;
-	} else {
-		require Apache::Log;
-		Apache::Log->import;
-	}
-}
 
 ################################################################################
 
@@ -81,41 +70,20 @@ sub handler($) {
 	# the warning handler accumulates warnings in $r->notes("warnings") for
 	# later cumulative reporting
 	my $warning_handler;
-	if (MP2) {
-		$warning_handler = sub {
-			my ($warning) = @_;
-			chomp $warning;
-			my $warnings = $r->notes->get("warnings");
-			$warnings = Encode::decode("UTF-8",$warnings);
-			$warnings .= "$warning\n";
-			#my $backtrace = join("\n",backtrace());
-			#$warnings .= "$backtrace\n\n";
-			$warnings = Encode::encode("UTF-8",$warnings);
-			$r->notes->set(warnings => $warnings);
 
-			$log->warn("[$uri] $warning");
-		};
-	} else {
-		$warning_handler = sub {
-			my ($warning) = @_;
-			chomp $warning;
+	$warning_handler = sub {
+		my ($warning) = @_;
+		chomp $warning;
+		my $warnings = $r->notes->get("warnings");
+		$warnings = Encode::decode("UTF-8",$warnings);
+		$warnings .= "$warning\n";
+		#my $backtrace = join("\n",backtrace());
+		#$warnings .= "$backtrace\n\n";
+		$warnings = Encode::encode("UTF-8",$warnings);
+		$r->notes->set(warnings => $warnings);
 
-			my $warnings = $r->notes("warnings");
-			$warnings .= "$warning\n";
-			#my $backtrace = join("\n",backtrace());
-			#$warnings .= "$backtrace\n\n";
-			$r->notes("warnings" => $warnings);
-
-			$log->warn("[$uri] $warning");
-		};
-
-		# the exception handler generates a backtrace when catching an exception
-		my @backtrace;
-		my $exception_handler = sub {
-			@backtrace = backtrace();
-			die @_;
-		};
-	}
+		$log->warn("[$uri] $warning");
+	};
 
 	# the exception handler generates a backtrace when catching an exception
 	my @backtrace;
@@ -134,7 +102,7 @@ sub handler($) {
 	if ($@) {
 		my $exception = $@;
 
-		my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
+		my $warnings = $r->notes->get("warnings");
 		my $htmlMessage;
 		my $uuid = create_uuid_as_string(UUID_SHA1, UUID_NS_URL, $r->uri )
 		  . "::" . create_uuid_as_string(UUID_TIME);
@@ -147,7 +115,6 @@ sub handler($) {
 		}
 		unless ($r->bytes_sent) {
 			$r->content_type("text/html");
-			$r->send_http_header unless MP2; # not needed for Apache2
 			$htmlMessage = "<html lang=\"en-US\"><head><title>WeBWorK error</title></head><body>$htmlMessage</body></html>";
 		}
 
@@ -250,7 +217,7 @@ sub htmlMessage($$$@) {
 	my $method = htmlEscape( $r->method  );
 	my $uri = htmlEscape(  $r->uri );
 	my $headers = do {
-		my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
+		my %headers = %{$r->headers_in};
 		if (defined($headers{"sec-ch-ua"})) {
 			# Was getting warnings about the value of "sec-ch-ua" in my testing...
 			$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
@@ -272,34 +239,37 @@ sub htmlMessage($$$@) {
 <div style="text-align:left">
  <h1>WeBWorK error</h1>
  <p>An error occured while processing your request.</p>
- <p>For help, please send mail to this site's webmaster $admin, including all of the following information as well as what what you were doing when the error occured.</p>
+ <p>For help, please send mail to this site's webmaster $admin, including all of the following information as well as
+    what what you were doing when the error occured.</p>
  <h2>Error record identifier</h2>
- <p style="margin-left: 5em; color: #dc2a2a"><code>$uuid</code></p>
+ <p style="margin-left: 2em; color: #dc2a2a"><code>$uuid</code></p>
  <h2>Warning messages</h2>
  <ul>$warnings</ul>
  <h2>Error messages</h2>
- <p style="margin-left: 5em; color: #dc2a2a"><code>$exception</code></p>
+ <p style="margin-left: 2em; color: #dc2a2a"><code>$exception</code></p>
  <h2>Call stack</h2>
    <p>The following information can help locate the source of the problem.</p>
    <ul>$backtrace</ul>
  <h2>Request information</h2>
- <div style="margin-left: 5em;">
+ <div>
  <p>The HTTP request information is included in the following table.</p>
- <table border="1" aria-labelledby="req_info_summary1">
+ <div class="table-responsive">
+ <table class="table table-bordered caption-top" border="1" aria-labelledby="req_info_summary1">
   <caption id="req_info_summary1">HTTP request information</caption>
   <tr><th id="outer_item">Item</th><th id="outer_data">Data</th></tr>
   <tr><td headers="outer_item">Method</td><td headers="outer_data">$method</td></tr>
-  <tr><td headers="outer_item">URI</td headers="outer_data"><td headers="outer_data">$uri</td></tr>
-  <tr><td headers="outer_item"">HTTP Headers</td><td headers="outer_data">
-   <table width="90%" aria-labelledby="req_header_summary">
+  <tr><td headers="outer_item">URI</td><td headers="outer_data">$uri</td></tr>
+  <tr><td headers="outer_item">HTTP Headers</td><td headers="outer_data">
+   <table class="table table-bordered caption-top" aria-labelledby="req_header_summary">
     <caption id="req_header_summary">HTTP request headers</caption>
     $headers
    </table>
   </td></tr>
  </table>
  </div>
+ </div>
  <h2>Time generated:</h2>
- <p style="margin-left: 5em;">$time</p>
+ <p style="margin-left: 2em;">$time</p>
 </div>
 </main>
 EOF
@@ -381,7 +351,7 @@ sub textMessage($$$@) {
 
 	my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
 
-	my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
+	my %headers = %{$r->headers_in};
 	# Was getting JSON errors for the value of "sec-ch-ua" in my testing, so remove it
 	if ( defined( $headers{"sec-ch-ua"} ) ) {
 		$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
@@ -413,7 +383,7 @@ sub jsonMessage($$$@) {
 	chomp $exception;
 	my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
 
-	my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
+	my %headers = %{$r->headers_in};
 	# Was getting JSON errors for the value of "sec-ch-ua" in my testing, so remove it
 	if ( defined( $headers{"sec-ch-ua"} ) ) {
 		$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});

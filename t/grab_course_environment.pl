@@ -2,13 +2,13 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -20,12 +20,12 @@
 
 
 =head1 SYNOPSIS
-	
- 
+
+
 
 =head1 DESCRIPTION
 
-Include this in other programs that need to know the location of the WeBWorK root directory 
+Include this in other programs that need to know the location of the WeBWorK root directory
 and basic WeBWorK environment variables.
 
 =cut
@@ -39,18 +39,16 @@ $Carp::Verbose = 1;
 # Find the webwork2 root directory
 #######################################################
 BEGIN {
-        die "WEBWORK_ROOT not found in environment. \n
+	die "WEBWORK_ROOT not found in environment. \n
              WEBWORK_ROOT can be defined in your .cshrc or .bashrc file\n
              It should be set to the webwork2 directory (e.g. /opt/webwork/webwork2)"
-                unless exists $ENV{WEBWORK_ROOT};
+		unless exists $ENV{WEBWORK_ROOT};
+
 	# Unused variable, but define it twice to avoid an error message.
 	$WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT};
-	
-	# Define MP2 -- this would normally be done in webwork.apache2.4-config
-	$ENV{MOD_PERL_API_VERSION}=2;
+
 	print "Webwork root directory is $WeBWorK::Constants::WEBWORK_DIRECTORY\n\n";
 }
-
 
 BEGIN {
 	my $hostname = 'http://localhost';
@@ -67,8 +65,8 @@ BEGIN {
 	my $files_url = '/opaqueserver_files';
 	my $wsdl_url = '/opaqueserver_wsdl';
 
-	
-	# Find the library directories for 
+
+	# Find the library directories for
 	# ww_opaque_server, pg and webwork2
 	# and place them in the search path for modules
 
@@ -77,7 +75,7 @@ BEGIN {
 	eval "use lib '$root_webwork2_dir/lib'"; die $@ if $@;
 
 	############################################
-	# Define base urls and the paths to base directories, 
+	# Define base urls and the paths to base directories,
 	############################################
 	$WebworkBase::TopDir = $topDir;   #/opt/webwork/
 	$WebworkBase::Host = $hostname;
@@ -91,7 +89,7 @@ BEGIN {
 	$WebworkBase::courseName = $courseName;
 
 	# suppress warning messages
-	my $foo = $WebworkBase::TopDir; 
+	my $foo = $WebworkBase::TopDir;
 	$foo = $WebworkBase::RootDir;
 	$foo = $WebworkBase::Host;
 	$foo = $WebworkBase::WSDLURL;
@@ -110,7 +108,7 @@ use WeBWorK::DB;
 # Create the course environment $ce and the database object $db
 ##############################
 $WebworkBase::ce = create_course_environment();
-my $dbLayout = $WebworkBase::ce->{dbLayout};	
+my $dbLayout = $WebworkBase::ce->{dbLayout};
 $WebworkBase::db = WeBWorK::DB->new($dbLayout);
 my $foo = $WebworkBase::db;
 $foo = '';
@@ -124,8 +122,8 @@ $foo = '';
 
 
 sub create_course_environment {
-	my $ce = WeBWorK::CourseEnvironment->new( 
-				{webwork_dir		=>		$WebworkBase::RootWebwork2Dir, 
+	my $ce = WeBWorK::CourseEnvironment->new(
+				{webwork_dir		=>		$WebworkBase::RootWebwork2Dir,
 				 courseName         =>      $WebworkBase::courseName,
 				 webworkURL         =>      $WebworkBase::RPCURL,
 				 pg_dir             =>      $WebworkBase::RootPGDir,

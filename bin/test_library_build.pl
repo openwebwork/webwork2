@@ -1,11 +1,12 @@
 #!/usr/bin/env perl
 
 
-
-
+my $pg_dir;
 BEGIN {
-        die "WEBWORK_ROOT not found in environment.\n"
-                unless exists $ENV{WEBWORK_ROOT};
+	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
+	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+
 	# Unused variable, but define it to avoid an error message.
 	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
 }
@@ -13,6 +14,7 @@ BEGIN {
 # Get database connection
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$pg_dir/lib";
 use WeBWorK::CourseEnvironment;
 use OPLUtils qw/build_library_directory_tree build_library_subject_tree build_library_textbook_tree/;
 use DBI;

@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2019 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/CourseEnvironment.pm,v 1.37 2007/08/10 16:37:10 sh002i Exp $
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -34,7 +33,7 @@ and course.conf files.
  	webwork_courses_dir => "/opt/webwork2/courses",
  	courseName          => "name_of_course",
  });
- 
+
  my $timeout = $courseEnv->{sessionKeyTimeout};
  my $mode    = $courseEnv->{pg}->{options}->{displayMode};
  # etc...
@@ -81,14 +80,14 @@ explicitly: C<webwork_dir>, C<webwork_url>, C<pg_dir>, and C<courseName>.
 =cut
 
 # NEW SYNTAX
-# 
+#
 # new($invocant, $seedVarsRef)
 #   $invocant       implicitly set by caller
 #   $seedVarsRef    reference to hash containing scalar variables with which to
 #                   seed the course environment
-# 
+#
 # OLD SYNTAX
-# 
+#
 # new($invocant, $webworkRoot, $webworkURLRoot, $pgRoot, $courseName)
 #   $invocant          implicitly set by caller
 #   $webworkRoot       directory that contains the WeBWorK distribution
@@ -98,10 +97,10 @@ explicitly: C<webwork_dir>, C<webwork_url>, C<pg_dir>, and C<courseName>.
 sub new {
 	my ($invocant, @rest) = @_;
 	my $class = ref($invocant) || $invocant;
-	
+
 	# contains scalar symbols/values with which to seed course environment
 	my %seedVars;
-	
+
 	# where do we get the seed variables?
 	if (ref $rest[0] eq "HASH") {
 		%seedVars = %{$rest[0]};
@@ -143,13 +142,13 @@ sub new {
 			}
 		}
 	} ];
-	
+
 	my $maskBackup = $safe->mask;
 	$safe->mask(empty_opset);
 	$safe->reval($include);
 	$@ and die "Failed to reval include subroutine: $@";
 	$safe->mask($maskBackup);
-	
+
 	# determine location of globalEnvironmentFile
 	my $globalEnvironmentFile;
 	if (-r "$seedVars{webwork_dir}/conf/defaults.config") {
@@ -165,14 +164,14 @@ sub new {
 	$safe->share_from('main', [qw(%ENV)]);
 	$safe->reval($globalFileContents);
 	# warn "end the evaluation\n";
-	
 
-	
-	
+
+
+
 	# if that evaluation failed, we can't really go on...
 	# we need a global environment!
 	$@ and croak "Could not evaluate global environment file $globalEnvironmentFile: $@";
-	
+
 	# determine location of courseEnvironmentFile and simple configuration file
 	# pull it out of $safe's symbol table ad hoc
 	# (we don't want to do the hash conversion yet)
@@ -181,7 +180,7 @@ sub new {
 	my $courseWebConfigFile = $seedVars{web_config_filename} ||
 		${*{${$safe->root."::"}{courseFiles}}}{simpleConfig};
 	use strict 'refs';
-	
+
 	# make sure the course environment file actually exists (it might not if we don't have a real course)
 	# before we try to read it
 	if(-r $courseEnvironmentFile){
@@ -192,12 +191,12 @@ sub new {
 		my $courseWebConfigContents = eval { readFile($courseWebConfigFile) }; # catch exceptions
 		$@ or $safe->reval($courseWebConfigContents);
 	}
-	
+
 	# get the safe compartment's namespace as a hash
 	no strict 'refs';
 	my %symbolHash = %{$safe->root."::"};
 	use strict 'refs';
-	
+
 	# convert the symbol hash into a hash of regular variables.
 	my $self = {};
 	foreach my $name (keys %symbolHash) {
@@ -230,7 +229,7 @@ sub new {
 		my $PG_version_file_contents = readFile($PG_version_file)//'';
 		$safe->reval($PG_version_file_contents);
 			#print STDERR ("\n contents: $PG_version_file_contents");
-		
+
 		no strict 'refs';
 		my %symbolHash2 = %{$safe->root."::"};
 		#print STDERR "symbolHash".join(' ', keys %symbolHash2);
@@ -241,20 +240,26 @@ sub new {
 		#croak "Cannot read PG version file $PG_version_file";
 		warn "Cannot read PG version file $PG_version_file";
 	}
- 
-	
+
+
 	bless $self, $class;
-	
+
 	# here is where we can do evil things to the course environment *sigh*
 	# anything changed has to be done here. after this, CE is considered read-only
 	# anything added must be prefixed with an underscore.
-	
+
 	# create reverse-lookup hash mapping status abbreviations to real names
 	$self->{_status_abbrev_to_name} = {
 		map { my $name = $_; map { $_ => $name } @{$self->{statuses}{$name}{abbrevs}} }
 			keys %{$self->{statuses}}
 	};
-	
+
+	# Fixup for courses that still have an underscore, 'heb', 'zh_hk', or 'en_us' saved in their settings files.
+	$self->{language} =~ s/_/-/g;
+	$self->{language} = 'he-IL' if $self->{language} eq 'heb';
+	$self->{language} = 'zh-HK' if $self->{language} eq 'zh-hk';
+	$self->{language} = 'en' if $self->{language} eq 'en-us';
+
 	# now that we're done, we can go ahead and return...
 	return $self;
 }
@@ -297,7 +302,7 @@ sub status_abbrev_to_name {
 		carp "status_abbrev_to_name: status_abbrev (first argument) must be defined and non-empty";
 		return;
 	}
-	
+
 	return $ce->{_status_abbrev_to_name}{$status_abbrev};
 }
 
@@ -314,7 +319,7 @@ sub status_name_to_abbrevs {
 		carp "status_name_to_abbrevs: status_name (first argument) must be defined and non-empty";
 		return;
 	}
-	
+
 	return unless exists $ce->{statuses}{$status_name};
 	return @{$ce->{statuses}{$status_name}{abbrevs}};
 }
@@ -335,7 +340,7 @@ sub status_has_behavior {
 		carp "status_has_behavior: behavior (second argument) must be defined and non-empty";
 		return;
 	}
-	
+
 	if (exists $ce->{statuses}{$status_name}) {
 		if (exists $ce->{statuses}{$status_name}{behaviors}) {
 			my $num_matches = grep { $_ eq $behavior } @{$ce->{statuses}{$status_name}{behaviors}};
@@ -365,7 +370,7 @@ sub status_abbrev_has_behavior {
 		carp "status_abbrev_has_behavior: behavior (second argument) must be defined and non-empty";
 		return;
 	}
-	
+
 	my $status_name = $ce->status_abbrev_to_name($status_abbrev);
 	if (defined $status_name) {
 		return $ce->status_has_behavior($status_name, $behavior);

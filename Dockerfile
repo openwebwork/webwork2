@@ -1,4 +1,3 @@
-
 # Optional things to change/configure below:
 #
 # 1. Which branch of webwork2/ and pg/ to install.
@@ -30,10 +29,9 @@
 #          Make sure to use a valid setting.
 #          "/usr/bin/timedatectl list-timezones" on Ubuntu will find valid values
 #        ADD_APT_PACKAGES="package1 package2 package3"
-#	   will have these additional Ubuntu packages installed at startup.
-#
-# ==================================================================
+#          will have these additional Ubuntu packages installed at startup.
 
+# ==================================================================
 # Phase 1 - download some Git repos for later use:
 # as suggested by Nelson Moller in https://gist.github.com/nmoller/81bd8e149e6aa2a7cf051e0bf248b2e2
 
@@ -48,21 +46,20 @@ ARG PG_BRANCH
 WORKDIR /opt/base
 
 RUN echo Cloning branch $WEBWORK2_BRANCH from $WEBWORK2_GIT_URL \
-  && echo git clone --single-branch --branch ${WEBWORK2_BRANCH} --depth 1 $WEBWORK2_GIT_URL \
-  && git clone --single-branch --branch ${WEBWORK2_BRANCH} --depth 1 $WEBWORK2_GIT_URL \
-  && rm -rf webwork2/.git webwork2/{*ignore,Dockerfile,docker-compose.yml,docker-config}
+	&& echo git clone --single-branch --branch ${WEBWORK2_BRANCH} --depth 1 $WEBWORK2_GIT_URL \
+	&& git clone --single-branch --branch ${WEBWORK2_BRANCH} --depth 1 $WEBWORK2_GIT_URL \
+	&& rm -rf webwork2/.git webwork2/{*ignore,Dockerfile,docker-compose.yml,docker-config}
 
 RUN echo Cloning branch $PG_BRANCH branch from $PG_GIT_URL \
-  && echo git clone --single-branch --branch ${PG_BRANCH} --depth 1 $PG_GIT_URL \
-  && git clone --single-branch --branch ${PG_BRANCH} --depth 1 $PG_GIT_URL \
-  && rm -rf  pg/.git
+	&& echo git clone --single-branch --branch ${PG_BRANCH} --depth 1 $PG_GIT_URL \
+	&& git clone --single-branch --branch ${PG_BRANCH} --depth 1 $PG_GIT_URL \
+	&& rm -rf  pg/.git
 
 # Optional - include OPL (also need to uncomment further below when an included OPL is desired):
-#RUN git clone --single-branch --branch master --depth 1 https://github.com/openwebwork/webwork-open-problem-library.git \
+#RUN git clone --single-branch --branch main --depth 1 https://github.com/openwebwork/webwork-open-problem-library.git \
 #  && rm -rf  webwork-open-problem-library/.git
 
 # ==================================================================
-
 # Phase 2 - set ENV variables
 
 # we need to change FROM before setting the ENV variables
@@ -70,41 +67,37 @@ RUN echo Cloning branch $PG_BRANCH branch from $PG_GIT_URL \
 FROM ubuntu:20.04
 
 ENV WEBWORK_URL=/webwork2 \
-    WEBWORK_ROOT_URL=http://localhost \
-    WEBWORK_SMTP_SERVER=localhost \
-    WEBWORK_SMTP_SENDER=webwork@example.com \
-    WEBWORK_TIMEZONE=America/New_York \
-    APACHE_RUN_USER=www-data \
-    APACHE_RUN_GROUP=www-data \
-    # temporary state file location. This might be changed to /run in Wheezy+1 \
-    APACHE_PID_FILE=/var/run/apache2/apache2.pid \
-    APACHE_RUN_DIR=/var/run/apache2 \
-    APACHE_LOCK_DIR=/var/lock/apache2 \
-    # Only /var/log/apache2 is handled by /etc/logrotate.d/apache2.
-    APACHE_LOG_DIR=/var/log/apache2 \
-    APP_ROOT=/opt/webwork \
-    DEBIAN_FRONTEND=noninteractive \
-    DEBCONF_NONINTERACTIVE_SEEN=true \
-    DEV=0
+	WEBWORK_ROOT_URL=http://localhost \
+	WEBWORK_SMTP_SERVER=localhost \
+	WEBWORK_SMTP_SENDER=webwork@example.com \
+	WEBWORK_TIMEZONE=America/New_York \
+	APACHE_RUN_USER=www-data \
+	APACHE_RUN_GROUP=www-data \
+	# temporary state file location. This might be changed to /run in Wheezy+1 \
+	APACHE_PID_FILE=/var/run/apache2/apache2.pid \
+	APACHE_RUN_DIR=/var/run/apache2 \
+	APACHE_LOCK_DIR=/var/lock/apache2 \
+	# Only /var/log/apache2 is handled by /etc/logrotate.d/apache2.
+	APACHE_LOG_DIR=/var/log/apache2 \
+	APP_ROOT=/opt/webwork \
+	DEBIAN_FRONTEND=noninteractive \
+	DEBCONF_NONINTERACTIVE_SEEN=true \
+	DEV=0
 
 # Environment variables which depend on a prior environment variable must be set
 # in an ENV call after the dependencies were defined.
 ENV WEBWORK_ROOT=$APP_ROOT/webwork2 \
-    PG_ROOT=$APP_ROOT/pg \
-    PATH=$PATH:$APP_ROOT/webwork2/bin
+	PG_ROOT=$APP_ROOT/pg \
+	PATH=$PATH:$APP_ROOT/webwork2/bin
 
 # ==================================================================
-
 # Phase 3 - Ubuntu 20.04 base image + required packages
-
-# Packages changes/added for ubuntu 20.04:
-#       libcgi-pm-perl (for CGI::Cookie), libdbd-mariadb-perl
 
 # Do NOT include "apt-get -y upgrade"
 # see: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends --no-install-suggests \
+	&& apt-get install -y --no-install-recommends --no-install-suggests \
 	apache2 \
 	curl \
 	dvipng \
@@ -181,6 +174,8 @@ RUN apt-get update \
 	libjson-xs-perl \
 	libjson-maybexs-perl \
 	libcpanel-json-xs-perl \
+	libyaml-libyaml-perl \
+	libemail-stuffer-perl \
 	make \
 	netpbm \
 	patch \
@@ -209,15 +204,15 @@ RUN apt-get update \
 	iputils-ping \
 	imagemagick \
 	jq \
-	npm \
-    && apt-get clean \
-    && rm -fr /var/lib/apt/lists/* /tmp/*
+	&& curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
+	&& apt-get clean \
+	&& rm -fr /var/lib/apt/lists/* /tmp/*
 
 # Developers may want to add additional packages inside the image
 # such as: telnet vim mc file
 
 # ==================================================================
-
 # Phase 4 - Install webwork2 and pg which were downloaded to /opt/base/ in phase 1
 #   Option: Install the OPL in the image also (about 850 MB)
 
@@ -242,18 +237,20 @@ COPY --from=base /opt/base/pg $APP_ROOT/pg
 # 6. Install third party javascript files.
 
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
-    && cd $APP_ROOT/pg/lib/chromatic && gcc color.c -o color  \
-    && cd $APP_ROOT/webwork2/ \
-      && chown www-data DATA ../courses  htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic \
-      && chmod -R u+w DATA ../courses  htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic   \
-    && echo "en_US ISO-8859-1\nen_US.UTF-8 UTF-8" > /etc/locale.gen \
-      && /usr/sbin/locale-gen \
-      && echo "locales locales/default_environment_locale select en_US.UTF-8\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt \
-      && debconf-set-selections /tmp/preseed.txt \
-    && rm /etc/localtime /etc/timezone && echo "Etc/UTC" > /etc/timezone \
-      &&   dpkg-reconfigure -f noninteractive tzdata \
-    && cd $WEBWORK_ROOT/htdocs \
-      && npm install
+	&& cd $APP_ROOT/pg/lib/chromatic && gcc color.c -o color  \
+	&& cd $APP_ROOT/webwork2/ \
+		&& chown www-data DATA ../courses logs tmp $APP_ROOT/pg/lib/chromatic \
+		&& chmod -R u+w DATA ../courses logs tmp $APP_ROOT/pg/lib/chromatic   \
+	&& echo "en_US ISO-8859-1\nen_US.UTF-8 UTF-8" > /etc/locale.gen \
+		&& /usr/sbin/locale-gen \
+		&& echo "locales locales/default_environment_locale select en_US.UTF-8\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt \
+		&& debconf-set-selections /tmp/preseed.txt \
+	&& rm /etc/localtime /etc/timezone && echo "Etc/UTC" > /etc/timezone \
+		&&   dpkg-reconfigure -f noninteractive tzdata \
+	&& cd $WEBWORK_ROOT/htdocs \
+		&& npm install \
+	&& cd $PG_ROOT/htdocs \
+		&& npm install
 
 # These lines were moved into docker-entrypoint.sh so the bind mount of courses will be available
 #RUN cd $APP_ROOT/webwork2/courses.dist \
@@ -261,14 +258,12 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 #    && cp -R modelCourse $APP_ROOT/courses/
 
 # ==================================================================
-
 # Phase 6 - install additional Perl modules from CPAN (not packaged for Ubuntu or outdated in Ubuntu)
 
 RUN cpanm install Statistics::R::IO \
-    && rm -fr ./cpanm /root/.cpanm /tmp/*
+	&& rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # ==================================================================
-
 # Phase 7 - setup apache
 
 # Note we always create the /etc/ssl/local directory in case it will be needed, as
@@ -284,19 +279,18 @@ COPY docker-config/imagemagick-allow-pdf-read.patch /tmp
 # However SSL will only be enabled at container startup via docker-entrypoint.sh.
 
 RUN cd $APP_ROOT/webwork2/conf \
-    && cp webwork.apache2.4-config.dist webwork.apache2.4-config \
-    && cp $APP_ROOT/webwork2/conf/webwork.apache2.4-config /etc/apache2/conf-enabled/webwork.conf \
-    && a2dismod mpm_event \
-    && a2enmod mpm_prefork \
-    && sed -i -e 's/Timeout 300/Timeout 1200/' /etc/apache2/apache2.conf \
-    && sed -i -e 's/MaxRequestWorkers     150/MaxRequestWorkers     20/' \
-	  -e 's/MaxConnectionsPerChild   0/MaxConnectionsPerChild   100/' \
-	  /etc/apache2/mods-available/mpm_prefork.conf \
-    && cp $APP_ROOT/webwork2/htdocs/favicon.ico /var/www/html \
-    && mkdir -p $APACHE_RUN_DIR $APACHE_LOCK_DIR $APACHE_LOG_DIR \
-    && mkdir /etc/ssl/local  \
-    && a2enmod rewrite \
-    && sed -i -e 's/^<Perl>$/\
+	&& cp webwork.apache2.4-config.dist webwork.apache2.4-config \
+	&& cp $APP_ROOT/webwork2/conf/webwork.apache2.4-config /etc/apache2/conf-enabled/webwork.conf \
+	&& a2dismod mpm_event \
+	&& a2enmod mpm_prefork rewrite \
+	&& sed -i -e 's/Timeout 300/Timeout 1200/' /etc/apache2/apache2.conf \
+	&& sed -i -e 's/MaxRequestWorkers     150/MaxRequestWorkers     20/' \
+		-e 's/MaxConnectionsPerChild   0/MaxConnectionsPerChild   100/' \
+		/etc/apache2/mods-available/mpm_prefork.conf \
+	&& cp $APP_ROOT/webwork2/htdocs/favicon.ico /var/www/html \
+	&& mkdir -p $APACHE_RUN_DIR $APACHE_LOCK_DIR $APACHE_LOG_DIR \
+	&& mkdir /etc/ssl/local  \
+	&& sed -i -e 's/^<Perl>$/\
 	PerlPassEnv WEBWORK_URL\n\
 	PerlPassEnv WEBWORK_ROOT_URL\n\
 	PerlPassEnv WEBWORK_DB_DRIVER\n\
@@ -324,7 +318,6 @@ WORKDIR $APP_ROOT
 #EXPOSE 443
 
 # ==================================================================
-
 # Phase 8 - prepare docker-entrypoint.sh
 # Done near the end, so that an update to docker-entrypoint.sh can be
 # done without rebuilding the earlier layers of the Docker image.
@@ -334,14 +327,13 @@ COPY docker-config/docker-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 # ==================================================================
-
 # Add enviroment variables to control some things during container startup
 
 ENV SSL=0 \
-    PAPERSIZE=letter \
-    SYSTEM_TIMEZONE=UTC \
-    ADD_LOCALES=0 \
-    ADD_APT_PACKAGES=0
+	PAPERSIZE=letter \
+	SYSTEM_TIMEZONE=UTC \
+	ADD_LOCALES=0 \
+	ADD_APT_PACKAGES=0
 
 # ================================================
 

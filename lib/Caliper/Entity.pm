@@ -371,7 +371,7 @@ sub problem_set_attempt
 		}
 	}
 
-	my $score = grade_set($db, $problem_set_user, $problem_set_user->set_id, $user_id, ($version_id ? 1 : 0));
+	my $score = grade_set($db, $problem_set_user, $user_id, $version_id ? 1 : 0);
 	my $extensions = {
 		'attempt_score' => $score,
 	};

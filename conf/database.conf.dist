@@ -1,13 +1,13 @@
 #!perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, http://github.com/openwebwork
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -44,8 +44,8 @@ line like the one below to the F<localOverrides.conf> or F<course.conf> file.
 
 =head2 THE SQL_SINGLE DATABASE LAYOUT
 
-The C<sql_single> layout is similar to the C<sql> layout, excpet that it uses a
-single database for all courses. This is accomplised by prefixing each table
+The C<sql_single> layout is similar to the C<sql> layout, except that it uses a
+single database for all courses. This is accomplished by prefixing each table
 name with the name of the course. The names and passwords of these accounts are
 given as parameters to each table in the layout.
 
@@ -63,12 +63,12 @@ database server.
 
 Other parameters that can be given are as follows:
 
- tableOverride  an alternate name to use when referrring to the table (used
-                when a table name is a resereved word)
+ tableOverride  an alternate name to use when referring to the table (used
+                when a table name is a reserved word)
  fieldOverride  a hash mapping WeBWorK field names to alternate names to use
                 when referring to those fields (used when one or more field
 				names are reserved words)
- debug          if true, SQL statments are printed before being executed
+ debug          if true, SQL statements are printed before being executed
 
 =cut
 
@@ -401,7 +401,7 @@ Hash mapping database layout names to textual descriptions.
 
 %dbLayout_descr = (
 	sql_single => "Uses a single SQL database to record WeBWorK data for all courses using this layout. This is the recommended layout for new courses.",
-#	sql_moodle => "Simiar to sql_single, but uses a Moodle database for user, password, and permission information. This layout should be used for courses used with wwmoodle.",
+#	sql_moodle => "Similar to sql_single, but uses a Moodle database for user, password, and permission information. This layout should be used for courses used with wwmoodle.",
 );
 
 =back

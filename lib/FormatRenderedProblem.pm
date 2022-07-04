@@ -2,7 +2,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,7 +24,8 @@ FormatRenderedProblem.pm
 package FormatRenderedProblem;
 
 use WeBWorK::Utils::AttemptsTable;
-use WeBWorK::Utils qw(wwRound decode_utf8_base64);
+use WeBWorK::Utils qw(wwRound decode_utf8_base64 getAssetURL);
+use WeBWorK::CGI;
 use XML::Simple qw(XMLout);
 use WeBWorK::Utils::LanguageAndDirection;
 use JSON;
@@ -140,47 +141,79 @@ sub formatRenderedProblem {
 	my $fileName = $self->{input}{envir}{fileName} // "";
 	my $encoded_source = $self->encoded_source // "";
 
-	# Select the theme and theme directory
+	# Select the theme.
 	my $theme = $self->{inputs_ref}{theme} || $ce->{defaultTheme};
-	my $themeDir = "$ce->{webworkURLs}{htdocs}/themes/$theme";
+
+	# Add the favicon.
+	my $favicon = CGI::Link({ href => "$ce->{webworkURLs}{htdocs}/images/favicon.ico", rel => 'shortcut icon' });
 
 	# Set up the header text
 	my $problemHeadText = '';
 
+	# CSS Loads
+	# The second element of each array in the following is whether or not the file is a theme file.
+	my @CSSLoads = map { getAssetURL($ce, $_->[0], $_->[1]) } (
+		['bootstrap.css', 1],
+		['node_modules/jquery-ui-dist/jquery-ui.min.css', 0],
+		['node_modules/@fortawesome/fontawesome-free/css/all.min.css', 0],
+		['math4.css', 1],
+		['math4-overrides.css', 1],
+	);
+	$problemHeadText .= CGI::Link({ href => $_, rel => 'stylesheet' }) for (@CSSLoads);
+
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
 	# which can be set in course.conf (the value should be an anonomous array).
-	my %cssFiles;
-	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq "ARRAY") {
-		$cssFiles{$_} = 0 for @{$ce->{pg}{specialPGEnvironmentVars}{extra_css_files}};
+	my @cssFiles;
+	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq 'ARRAY') {
+		push(@cssFiles, { file => $_, external => 0 }) for @{ $ce->{pg}{specialPGEnvironmentVars}{extra_css_files} };
 	}
-	if (ref($rh_result->{flags}{extra_css_files}) eq "ARRAY") {
-		$cssFiles{$_->{file}} = $_->{external} for @{$rh_result->{flags}{extra_css_files}};
+	if (ref($rh_result->{flags}{extra_css_files}) eq 'ARRAY') {
+		push @cssFiles, @{ $rh_result->{flags}{extra_css_files} };
 	}
-	for (keys(%cssFiles)) {
-		if ($cssFiles{$_}) {
-			$problemHeadText .= qq{<link rel="stylesheet" type="text/css" href="$_"/>};
-		} elsif (!$cssFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
-			$problemHeadText .= qq{<link rel="stylesheet" type="text/css" href="$ce->{webworkURLs}{htdocs}/$_"/>};
+	my %cssFilesAdded;    # Used to avoid duplicates
+	for (@cssFiles) {
+		next if $cssFilesAdded{ $_->{file} };
+		$cssFilesAdded{ $_->{file} } = 1;
+		if ($_->{external}) {
+			$problemHeadText .= CGI::Link({ href => $_->{file}, rel => 'stylesheet' });
 		} else {
-			$problemHeadText .= qq{<!-- $_ is not available in htdocs/ on this server -->};
+			$problemHeadText .= CGI::Link({ href => getAssetURL($ce, $_->{file}), rel => 'stylesheet' });
 		}
 	}
 
+	# JS Loads
+	# The second element of each array in the following is whether or not the file is a theme file.
+	# The third element is a hash containing the necessary attributes for the script tag.
+	my @JSLoads = map { [ getAssetURL($ce, $_->[0], $_->[1]), $_->[2] ] } (
+		[ 'node_modules/jquery/dist/jquery.min.js',                            0, {} ],
+		[ 'node_modules/jquery-ui-dist/jquery-ui.min.js',                      0, {} ],
+		[ 'node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js', 0, {} ],
+		[ 'js/apps/MathJaxConfig/mathjax-config.js',                0, { defer => undef } ],
+		[ 'node_modules/mathjax/es5/tex-chtml.js',                  0, { defer => undef, id => 'MathJax-script' } ],
+		[ 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js', 0, { defer => undef } ],
+		[ 'js/apps/Problem/problem.js',                             0, { defer => undef } ],
+		[ 'math4.js',                                               1, { defer => undef } ],
+		[ 'math4-overrides.js',                                     1, { defer => undef } ]
+	);
+	$problemHeadText .= CGI::script({ src => $_->[0], %{$_->[1] // {}} }, '') for (@JSLoads);
+
+	# Add the local storage javascript for the sticky format.
+	$problemHeadText .=
+		CGI::script({ src => getAssetURL($ce, 'js/apps/LocalStorage/localstorage.js'), defer => undef }, '')
+		if ($self->{inputs_ref}{outputformat} // '') eq 'sticky';
+
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
-	if (ref($rh_result->{flags}{extra_js_files}) eq "ARRAY") {
+	if (ref($rh_result->{flags}{extra_js_files}) eq 'ARRAY') {
 		my %jsFiles;
-		for my $jsFile (@{$rh_result->{flags}{extra_js_files}}) {
-			next if $jsFiles{$jsFile->{file}};
-			$jsFiles{$jsFile->{file}} = 1;
-			my $attributes = ref($jsFile->{attributes}) eq "HASH"
-				? join(" ", map { qq!$_="$jsFile->{attributes}{$_}"! } keys %{$jsFile->{attributes}}) : ();
-			if ($jsFile->{external}) {
-				$problemHeadText .= qq{<script src="$jsFile->{file}" $attributes></script>}
-			} elsif (!$jsFile->{external} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$jsFile->{file}") {
-				$problemHeadText .= qq{<script src="$ce->{webworkURLs}{htdocs}/$jsFile->{file}" $attributes></script>};
+		for (@{ $rh_result->{flags}{extra_js_files} }) {
+			next if $jsFiles{ $_->{file} };
+			$jsFiles{ $_->{file} } = 1;
+			my %attributes = ref($_->{attributes}) eq 'HASH' ? %{ $_->{attributes} } : ();
+			if ($_->{external}) {
+				$problemHeadText .= CGI::script({ src => $_->{file}, %attributes }, '');
 			} else {
-				$problemHeadText .= qq{<!-- $jsFile->{file} is not available in htdocs/ on this server -->};
+				$problemHeadText .= CGI::script({ src => getAssetURL($ce, $_->{file}), %attributes }, '');
 			}
 		}
 	}
@@ -189,13 +222,6 @@ sub formatRenderedProblem {
 	$problemHeadText .= $rh_result->{post_header_text} // '';
 	$extra_header_text = $self->{inputs_ref}{extra_header_text} // '';
 	$problemHeadText .= $extra_header_text;
-
-	if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
-		$problemHeadText .= qq{<link href="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mathquill.css" rel="stylesheet" />} .
-			qq{<link href="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mqeditor.css" rel="stylesheet" />} .
-			qq{<script src="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mathquill.min.js" defer></script>} .
-			qq{<script src="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mqeditor.js" defer></script>};
-	}
 
 	# Set up the problem language and direction
 	# PG files can request their language and text direction be set.  If we do
@@ -242,7 +268,6 @@ sub formatRenderedProblem {
 			summary             => $problemResult->{summary} // '', # can be set by problem grader
 		);
 		$answerTemplate = $tbl->answerTemplate;
-		$color_input_blanks_script = (!$previewMode && ($checkMode || $submitMode)) ? $tbl->color_answer_blanks : "";
 		$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 	}
 	# Score summary
@@ -269,20 +294,29 @@ sub formatRenderedProblem {
 	if $self->{inputs_ref}{outputformat} // "" eq "ptx";
 
 	# Sticky format local storage messages
-	my $localStorageMessages = CGI::start_div({ id => 'local-storage-messages' });
-	$localStorageMessages .= CGI::p('Your overall score for this problem is&nbsp;' . CGI::span({ id => 'problem-overall-score' }, ''));
-	$localStorageMessages .= CGI::end_div();
+	my $localStorageMessages = CGI::div({ id => 'local-storage-messages' },
+		CGI::p('Your overall score for this problem is&nbsp;' . CGI::span({ id => 'problem-overall-score' }, '')));
 
 	# Submit buttons (all are shown by default)
-	my $showPreviewButton = $self->{inputs_ref}{showPreviewButton} // "";
-	my $previewButton = $showPreviewButton eq "0" ? '' :
-		'<input type="submit" name="preview" id="previewAnswers_id" value="' . $mt->maketext("Preview My Answers") . '">';
-	my $showCheckAnswersButton = $self->{inputs_ref}{showCheckAnswersButton} // "";
-	my $checkAnswersButton = $showCheckAnswersButton eq "0" ? '' :
-		'<input type="submit" name="WWsubmit" value="' . $mt->maketext("Check Answers") . '">';
-	my $showCorrectAnswersButton = $self->{inputs_ref}{showCorrectAnswersButton} // "";
-	my $correctAnswersButton = $showCorrectAnswersButton eq "0" ? '' :
-		'<input type="submit" name="WWcorrectAns" value="' . $mt->maketext("Show Correct Answers") . '">';
+	my $showPreviewButton = $self->{inputs_ref}{showPreviewButton} // '';
+	my $previewButton     = $showPreviewButton eq '0' ? '' : CGI::submit({
+		name  => 'preview',
+		id    => 'previewAnswers_id',
+		class => 'btn btn-primary mb-1',
+		value => $mt->maketext('Preview My Answers')
+	});
+	my $showCheckAnswersButton = $self->{inputs_ref}{showCheckAnswersButton} // '';
+	my $checkAnswersButton =
+		$showCheckAnswersButton eq '0'
+		? ''
+		: CGI::submit({ name => 'WWsubmit', class => 'btn btn-primary mb-1', value => $mt->maketext('Check Answers') });
+	my $showCorrectAnswersButton = $self->{inputs_ref}{showCorrectAnswersButton} // '';
+	my $correctAnswersButton =
+		$showCorrectAnswersButton eq '0'
+		? ''
+		: CGI::submit(
+			{ name => 'WWcorrectAns', class => 'btn btn-primary mb-1', value => $mt->maketext('Show Correct Answers') }
+		);
 
 	my $showSolutions = $self->{inputs_ref}{showSolutions} // "";
 	my $showHints = $self->{inputs_ref}{showHints} // "";
@@ -290,12 +324,17 @@ sub formatRenderedProblem {
 	# Regular Perl warning messages generated with warn.
 	my $warnings = '';
 	if ($rh_result->{pg_warnings}) {
-		$warnings .= qq{<div style="background-color:pink">PG WARNINGS<br>} .
-			decode_utf8_base64($rh_result->{pg_warnings}) . "</div>";
+		$warnings .= CGI::div(
+			{ class => 'alert alert-danger mb-2 p-1' },
+			CGI::h3('Warning Messages') . join('<br>', split("\n", decode_utf8_base64($rh_result->{pg_warnings})))
+		);
 	}
 	if ($rh_result->{translator_warnings}) {
-		$warnings .= qq{<div style="background-color:pink"><p>TRANSLATOR WARNINGS</p><p>} .
-			decode_utf8_base64($rh_result->{translator_warnings}) . "</p></div>";
+		$warnings .= CGI::div(
+			{ class => 'alert alert-danger mb-2 p-1' },
+			CGI::h3('Translator Warnings')
+				. join('<br>', split("\n", decode_utf8_base64($rh_result->{translator_warnings})))
+		);
 	}
 
 	# PG debug messages generated with DEBUG_message();
@@ -316,12 +355,15 @@ sub formatRenderedProblem {
 
 	# For debugging purposes (only used in the debug format)
 	my $clientDebug = $self->{inputs_ref}{clientDebug} // "";
-	my $client_debug_data = $clientDebug ? "<h3>Webwork client data</h3>" . WebworkClient::pretty_print($self) : '';
+	my $client_debug_data = $clientDebug ? CGI::h3('Webwork client data') . WebworkClient::pretty_print($self) : '';
 
 	# Show the footer unless it is explicity disabled.
 	my $showFooter = $self->{inputs_ref}{showFooter} // "";
-	my $footer = $showFooter eq "0" ? ''
-		: "<div id='footer'>WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: $self->{inputs_ref}{outputformat} | theme: $theme</div>";
+	my $footer = $showFooter eq "0" ? '' : CGI::div(
+		{ id => 'footer' },
+		"WeBWorK &copy; 2000-2022 | host: $SITE_URL | course: $courseID | "
+			. "format: $self->{inputs_ref}{outputformat} | theme: $theme"
+	);
 
 	# Execute and return the interpolated problem template
 	my $format_name = $self->{inputs_ref}{outputformat} // 'simple';
@@ -352,6 +394,13 @@ sub formatRenderedProblem {
 				}
 			}
 		}
+
+		# CSS Loads
+		$json_output->{head_part100} = \@CSSLoads;
+
+		# JS Loads
+		$json_output->{head_part200} = \@JSLoads;
+
 		# Add the current score to the %json_output
 		my $json_score = 0;
 		if ($submitMode && $problemResult) {
@@ -379,6 +428,10 @@ sub formatRenderedProblem {
 		$output->{lang} = $PROBLEM_LANG_AND_DIR{lang};
 		$output->{dir} = $PROBLEM_LANG_AND_DIR{dir};
 
+		# Say what version of WeBWorK this is
+		$output->{ww_version} = $ce->{WW_VERSION};
+		$output->{pg_version} = $ce->{PG_VERSION};
+
 		# Convert to JSON
 		return JSON->new->utf8(0)->encode($output);
 	}
@@ -391,7 +444,7 @@ sub formatRenderedProblem {
 	$template =~ s/(\$\w+)/$1/gee;
 
 	return $template unless $self->{inputs_ref}{send_pg_flags};
-	return JSON->new->utf8(0)->encode({ html => $template, pg_flags => $rh_result->{flags} });
+	return JSON->new->utf8(0)->encode({ html => $template, pg_flags => $rh_result->{flags}, warnings => $warnings });
 }
 
 sub saveGradeToLTI {

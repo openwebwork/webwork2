@@ -1,13 +1,6 @@
-(function(mod) {
-    if (typeof exports == "object" && typeof module == "object") // CommonJS
-	mod(require("../../lib/codemirror"));
-    else if (typeof define == "function" && define.amd) // AMD
-	define(["../../lib/codemirror"], mod);
-    else // Plain browser env
-	mod(CodeMirror);
-})(function(CodeMirror) {
-    "use strict";
+'use strict';
 
+(() => {
     CodeMirror.defineMode("PG",function(){
 	// http://perldoc.perl.org
 	var PERL={					//   null - magic touch
@@ -243,6 +236,7 @@
 	    'else'				:[1,1],
 	    'while'				:[1,1],
 	    unless				:[1,1],
+		until				:[1,1],
 	    'for'				:[1,1],
 	    foreach				:[1,1],
 	    //	PERL functions
@@ -499,7 +493,7 @@
 		    e=!e&&c=="\\";}
 		return style;};
 	    return state.tokenize(stream,state);}
-	
+
 	function tokenSOMETHING(stream,state,string){
 	    state.tokenize=function(stream,state){
 		if(stream.string==string)
@@ -514,7 +508,7 @@
 		var thisEV3 = function(stream,state) {
 		    return tokenEV3(stream,state,string);
 		}
-		
+
 		if(stream.eatSpace())
 		    return null;
 
@@ -532,7 +526,7 @@
 		if (stream.match(/^\\\[/)) {
 		    return tokenChain(stream,state,["\\","]"],"comment",null,thisEV3);
 		}
-		
+
 		if (stream.match(/^\\{/)) {
 		    return tokenChain(stream,state,["\\","}"],"variable-2",null,thisEV3);
 		}
@@ -588,7 +582,7 @@
 		}
 
 		var newPrevState = {};
-		
+
 		if (prevState) {
 		    var strValue = JSON.stringify(prevState)
 		    newPrevState.prevState = JSON.parse(strValue);
@@ -656,17 +650,17 @@
 		} else if (stream.match(/^[\[\] :\|@%`]/)) {
 		    return style;
 		}
-		
+
 		stream.eatWhile(/[^\[\] :\|@%`]/);
 
 		return style;
 	    };
-	    
+
 	    return state.tokenize(stream,state);
 
 	}
 
-	
+
 	function tokenPerl(stream,state){
 	    if(stream.eatSpace())
 		return null;
@@ -680,7 +674,7 @@
 		return tokenSOMETHING(stream,state,stream.current().substr(2));}
 	    if(stream.sol()&&stream.match(/^\=item(?!\w)/)){// NOTE: \n=item...\n=cut\n
 		return tokenSOMETHING(stream,state,'=cut');}
-	    
+
 	    if(stream.match(/^BEGIN_TEXT/)) {
 		stream.eatWhile(/\w/);
 		return tokenEV3(stream,state,"END_TEXT");
@@ -707,8 +701,8 @@
 		return tokenPGML(stream,state,"END_PGML_HINT",
 				"block-quote");
 	    }
-	    
-	    
+
+
 	    var ch=stream.next();
 	    if(ch=='"'||ch=="'"){				// NOTE: ' or " or <<'SOMETHING'\n...\nSOMETHING\n or <<"SOMETHING"\n...\nSOMETHING\n
 		if(prefix(stream, 3)=="<<"+ch){
@@ -1022,4 +1016,4 @@
 	    stream.pos=x;
     }
 
-});
+})();

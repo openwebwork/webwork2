@@ -5,46 +5,16 @@ $sticky_format = <<'ENDPROBLEMTEMPLATE';
 <head>
 <meta charset='utf-8'>
 <base href="$SITE_URL">
-<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
+$favicon
 
-<!-- CSS Loads -->
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/knowlstyle.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/apps/ImageView/imageview.css"/>
-<link rel="stylesheet" href="$themeDir/math4.css"/>
-<link rel="stylesheet" href="$themeDir/math4-coloring.css"/>
-<link rel="stylesheet" href="$themeDir/math4-overrides.css"/>
-
-<!-- JS Loads -->
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
-<script type="text/javascript" src="/webwork2_files/mathjax/es5/tex-chtml.js" id="MathJax-script" defer></script>
-<script type="text/javascript" src="/webwork2_files/node_modules/jquery/dist/jquery.min.js"></script>
-<script type="text/javascript" src="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/InputColor/color.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/Base64/Base64.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/modules/jquery.json.min.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/modules/jstorage.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/LocalStorage/localstorage.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/ImageView/imageview.js"></script>
-<script type="text/javascript" src="/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
-<script src="$themeDir/math4.js" defer></script>
-<script src="$themeDir/math4-overrides.js" defer></script>
 $problemHeadText
 
 <title>WeBWorK using host: $SITE_URL, format: sticky seed: $problemSeed</title>
 </head>
 <body>
 <div class="container-fluid">
-<div class="row-fluid">
-<div class="span12 problem">
+<div class="row g-0">
+<div class="col-12 problem">
 <hr/>
 $answerTemplate
 $color_input_blanks_script
@@ -89,18 +59,13 @@ $LTIGradeMessage
 <input type="hidden" name="showFooter" value="$showFooter">
 <input type="hidden" name="forcePortNumber" value="$forcePortNumber">
 
-<p>
-$previewButton
-$checkAnswersButton
-$correctAnswersButton
-</p>
+<div class="submit-buttons-container col-12 mb-2"><!--
+-->$previewButton<!-- -->$checkAnswersButton<!-- -->$correctAnswersButton</div>
 </form>
 </div>
 </div>
 </div>
 $footer
-<!-- Activate local storage js -->
-<script type="text/javascript">WWLocalStorage();</script>
 </body>
 </html>
 

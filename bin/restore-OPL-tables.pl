@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
-##############################################################################
+################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2019 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -11,18 +11,24 @@
 #
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE. See either the GNU General Public License or the
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
 # Artistic License for more details.
-##############################################################################
+################################################################################
 
 # This script restores the OPL library tables from a dump file.
 use strict;
 
-# Get the necessary packages, including adding webwork to our path.  
+# Get the necessary packages, including adding webwork to our path.
 
-BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
-	   unless($ENV{WEBWORK_ROOT});}
+my $pg_dir;
+BEGIN {
+	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
+	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+}
+
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$pg_dir/lib";
 
 use WeBWorK::CourseEnvironment;
 
