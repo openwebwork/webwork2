@@ -377,9 +377,7 @@ sub body {
 		$methodMessage,
 		
 	);
-	
 	print( CGI::p({style=>"text-align: center"}, $self->display_registration_form() ) ) if $self->display_registration_form();
-
 	my @errors = @{$self->{errors}};
 	
 	
@@ -3484,11 +3482,9 @@ sub display_registration_form {
 	my $registeredQ = (-e ($ce->{courseDirs}->{root})."/$registered_file_name")?1:0;
 	my $registration_subDisplay = ( defined($self->r->param('subDisplay') ) and $self->r->param('subDisplay') eq "registration") ?  1: 0;
 	my $register_site = ($self->r->param("register_site"))?1:0;
-	return 0  if $registeredQ or $register_site or $registration_subDisplay;     #otherwise return registration form
-	return  q! 
-	<center>
-	<div class="admin-messagebox">
-	!,
+	return "REGISTERED for $ww_version: registeredQ: $registeredQ".$ce->{courseDirs}->{root}  if $registeredQ or $register_site or $registration_subDisplay;     #otherwise return registration form
+	return(  
+	q! <center> <div class="admin-messagebox">!,
 	CGI::p(join(" ",
 		"<strong>Please consider registering for the WW-security-announce Google group / mailing list</strong> using the ",
 		"join group link on the ",
@@ -3500,32 +3496,45 @@ sub display_registration_form {
 			'%0AWeBWorK%20version%3A%20' , uri_escape($ce->{WW_VERSION}),
 			'%0AInstitution%20name%3A%20%0A' ) }, ,"this mailto link."),
 		"<br>This list will help us keep you updated about security issues and patches, and important related announcements.",
-		"<hr>")),
+		"<hr>"
+	)),
 	CGI::p(join("",
-		"We are often asked how many institutions are using WeBWorK and how many students are using ",
-		"WeBWorK.  Since WeBWorK is open source and can be freely downloaded from ",
+	   "Please consider contributing to WeBWorK development either with a one time contribution or monthly support. ",
+	   "The WeBWorK Project is a registered 501(c)(3) organization and contributions are tax deductible in the United States."
+	)),
+    CGI::p(join("",	   
+    	q!<iframe src="https://github.com/sponsors/openwebwork/button" title="Sponsor openwebwork" height="35" width="116" style="border: 0;"></iframe>!,
+    )),
+	CGI::hr(),
+ 	CGI::p(join("",
+ 	    "This site is not registered for this version of WeBWorK software: $ww_version",
+ 		"We are often asked how many institutions are using WeBWorK and how many students are using WeBWorK.",
+ 		"Since WeBWorK is open source and can be freely downloaded from ",
 		CGI::a({href=>$ce->{webworkURLs}{GitHub}, target=>"_blank"}, $ce->{webworkURLs}{GitHub}),
-		", it is frequently difficult for us to give a reasonable answer to this question.")),
+ 		", it is frequently difficult for us to give a reasonable answer to this question."
+ 	)),
 	CGI::p(join("",
 		"You can help by ",
-		CGI::a({href=>$ce->{webworkURLs}{serverRegForm}, target=>"_blank"}, "registering your current version of WeBWorK"),
+		CGI::a({href=>$ce->{webworkURLs}{serverRegForm}, target=>"_blank"}, 
+		"registering your current version of WeBWorK"),
 		". Please complete the Google form as best you can and submit your answers ",
-		"to the WeBWorK Project team. It takes just 2-3 minutes.  Thank you!. -- The WeBWorK Project")),
+		"to the WeBWorK Project team. It takes just 2-3 minutes.  Thank you!. -- The WeBWorK Project"
+    )),
 	CGI::p(join("",
 		"Eventually your site will be listed along with all of the others on the ",
 		CGI::a({href=>$ce->{webworkURLs}{SiteMap}, target=>"_blank"}, "site map"),
 		" on the main ",
-		CGI::a({href=>$ce->{webworkURLs}{WikiMain}, target=>"_blank"}, "WeBWorK Wiki"),".<hr>")),
+		CGI::a({href=>$ce->{webworkURLs}{WikiMain}, target=>"_blank"}, "WeBWorK Wiki"),".<hr>"
+	)),
 	CGI::p('You can hide this "registration" banner for the future by clicking the button below.'),
 	CGI::start_form(-method=>"POST", id=>"return_to_main_page", -action=>$self->r->uri),
 	$self->hidden_authen_fields,
 	CGI::hidden(-name=>'subDisplay', -value=>"registration"),
 	CGI::p({style=>"text-align: center"}, CGI::submit(-id => "register_site", -name=>"register_site", -label=>"Hide the banner.")),
 	CGI::end_form(),
-	q!
-	</div>
-	</center>
-	!;
+	" </div></center>",
+
+   );
 }
 
 sub registration_form {
