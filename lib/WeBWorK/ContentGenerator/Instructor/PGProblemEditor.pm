@@ -1168,7 +1168,7 @@ sub view_form {
 				-input_attr=>{-name=>'action.view.displayMode', -values=>$self->r->ce->{pg}->{displayModes}, -default=>$self->{displayMode}}),
 			CGI::br(),
 			CGI::div({ class => "pg_editor_new_window_div" },
-				WeBWorK::CGI_labeled_input(-type => "checkbox", -id => "newWindow", -label_text => $r->maketext("Open in new window")))
+				WeBWorK::CGI_labeled_input(-type => "checkbox", -id => "newWindowView", -label_text => $r->maketext("Open in new window")))
 		);
 	}
 
@@ -1465,7 +1465,7 @@ sub save_form {
 
 		return $r->maketext("Save to [_1] and View", CGI::b($self->shortPath($self->{editFilePath}))) .
 			CGI::div({ class => "pg_editor_new_window_div" },
-				WeBWorK::CGI_labeled_input(-type => "checkbox", -id => "newWindow", -label_text => $r->maketext("Open in new window")));
+				WeBWorK::CGI_labeled_input(-type => "checkbox", -id => "newWindowSave", -label_text => $r->maketext("Open in new window")));
 
 	} else {
 		return ""; #"Can't save -- No write permission";
@@ -1895,8 +1895,8 @@ sub output_JS{
 
 
 	if ($ce->{options}->{PGMathQuill}) {
-		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mathquill.css\"/>";
-		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mqeditor.css\"/>";
+		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/apps/mathquill/mathquill.css\"/>";
+		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/apps/mathquill/mqeditor.css\"/>";
 		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mathquill.min.js", defer => "" }, "");
 		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => ""}, "");
 	}

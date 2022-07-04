@@ -57,7 +57,7 @@ fi
 if [ ! -d "$APP_ROOT/libraries/webwork-open-problem-library/OpenProblemLibrary" ]; then
   echo "Cloning the OPL - This takes time - please be patient."
   cd $APP_ROOT/libraries/
-  /usr/bin/git clone -v --progress --single-branch --branch master https://github.com/openwebwork/webwork-open-problem-library.git
+  /usr/bin/git clone -v --progress --single-branch --branch main https://github.com/openwebwork/webwork-open-problem-library.git
 
   # The next line forces the system to run OPL-update or load saved OPL tables below, as we just installed it
   touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"

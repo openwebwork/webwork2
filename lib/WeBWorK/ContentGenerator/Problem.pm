@@ -2257,6 +2257,7 @@ sub output_past_answer_button{
 sub output_email_instructor{
 	my $self = shift;
 	my $r = $self->r;
+	my $courseName = $r->urlpath->arg("courseID");
 	my $problem = $self->{problem};
 	my %will = %{ $self->{will} };
 	my $pg = $self->{pg};
@@ -2265,6 +2266,7 @@ sub output_email_instructor{
 
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
+		courseId           => $courseName,
 		set                => $self->{set}->set_id,
 		problem            => $problem->problem_id,
 		problemPath        => $problem->source_file,

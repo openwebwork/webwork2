@@ -101,9 +101,9 @@
 	// This uses recursion to set the #prob_num_id fields to the
 	// new position in the tree whenever the tree is updated or
 	// the renumber button is clicked
-	var recurse_on_heirarchy = function (heirarchy,array) {
-		for (var i=0; i < heirarchy.length; i++) {
-			var id = heirarchy[i].id;
+	var recurse_on_hierarchy = function (hierarchy,array) {
+		for (var i=0; i < hierarchy.length; i++) {
+			var id = hierarchy[i].id;
 
 			$('#prob_num_'+id).val(i+1);
 
@@ -112,13 +112,13 @@
 			});
 
 			for (var j=0; j < array.length; j++) {
-				if (array[j].item_id == id) {
+				if (array[j].id == id) {
 					$('#prob_parent_id_'+id).val(array[j].parent_id);
 				}
 			}
 
-			if (typeof heirarchy[i].children != 'undefined') {
-				recurse_on_heirarchy(heirarchy[i].children,array);
+			if (typeof hierarchy[i].children != 'undefined') {
+				recurse_on_hierarchy(hierarchy[i].children,array);
 			}
 		}
 	};
@@ -127,10 +127,10 @@
 	// to WeBWorK as a parameter
 	var set_prob_num_fields = function () {
 		var array = $('#psd_list').nestedSortable("toArray");
-		var heirarchy = $('#psd_list').nestedSortable("toHierarchy");
+		var hierarchy = $('#psd_list').nestedSortable("toHierarchy");
 
 		$('.pdr_handle > span').html('');
-		recurse_on_heirarchy(heirarchy,array);
+		recurse_on_hierarchy(hierarchy,array);
 
 		$('.pdr_handle > span').each(function() {
 			$(this).html($(this).html().slice(0, -1));
@@ -152,7 +152,7 @@
 				if (!has_children && array[i].parent_id == id) {
 					$('#problem\\.'+id+'\\.att_to_open_children_id').parents('tr:first').removeClass('hidden');
 					has_children = true;
-				} else if (array[i].item_id == id) {
+				} else if (array[i].id == id) {
 					// If its a top level problem counts_for_parent is disabled
 					if (!array[i].parent_id) {
 						$('#problem\\.'+id+'\\.counts_parent_grade_id').parents('tr:first').addClass('hidden');
