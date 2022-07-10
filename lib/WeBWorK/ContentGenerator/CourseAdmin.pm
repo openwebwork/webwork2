@@ -384,11 +384,11 @@ sub body {
 			[ 'hide_inactive_course', $r->maketext('Hide Courses') ],
 		)
 	);
+
 	print CGI::hr({ class => 'mt-0' });
 	print $methodMessage;
 
-	print(CGI::p({ style => "text-align: center" }, $self->display_registration_form()))
-		if $self->display_registration_form();
+	print $self->display_registration_form;
 
 	my @errors = @{$self->{errors}};
 
@@ -4136,61 +4136,111 @@ sub upgrade_notification {
 our $registered_file_name = "registered_???";
 
 sub display_registration_form {
-	my $self = shift;
-	my $ce   = $self->r->ce;
+	my $self       = shift;
+	my $ce         = $self->r->ce;
 	my $ww_version = $ce->{WW_VERSION};
 	$registered_file_name = "registered_$ww_version";
-	my $registeredQ = (-e ($ce->{courseDirs}->{root})."/$registered_file_name")?1:0;
-	my $registration_subDisplay = ( defined($self->r->param('subDisplay') ) and $self->r->param('subDisplay') eq "registration") ?  1: 0;
-	my $register_site = ($self->r->param("register_site"))?1:0;
-	return 0  if $registeredQ or $register_site or $registration_subDisplay;     #otherwise return registration form
-	return  q!
-	<center>
-	<div class="admin-messagebox">
-	!,
-	CGI::p(join(" ",
-		"<strong>Please consider registering for the WW-security-announce Google group / mailing list</strong> using the ",
-		"join group link on the ",
-		CGI::a({href=>$ce->{webworkURLs}{wwSecurityAnnounce}, target=>"_blank"},"group page"),
-		" which appears when you are logged in to a Google account <strong>or</strong> by sending an email using ",
-		CGI::a({href=> join("",
-			'mailto:', $ce->{webworkSecListManagers} , '?subject=Joining%20ww-security-announce&',
-			'body=Server%20URL%3A%20' , uri_escape($ce->{apache_root_url}),
-			'%0AWeBWorK%20version%3A%20' , uri_escape($ce->{WW_VERSION}),
-			'%0AInstitution%20name%3A%20%0A' ) }, ,"this mailto link."),
-		"<br>This list will help us keep you updated about security issues and patches, and important related announcements.",
-		"<hr>")),
-	CGI::p(join("",
-		"We are often asked how many institutions are using WeBWorK and how many students are using ",
-		"WeBWorK.  Since WeBWorK is open source and can be freely downloaded from ",
-		CGI::a({href=>$ce->{webworkURLs}{GitHub}, target=>"_blank"}, $ce->{webworkURLs}{GitHub}),
-		", it is frequently difficult for us to give a reasonable answer to this question.")),
-	CGI::p(join("",
-		"You can help by ",
-		CGI::a({href=>$ce->{webworkURLs}{serverRegForm}, target=>"_blank"}, "registering your current version of WeBWorK"),
-		". Please complete the Google form as best you can and submit your answers ",
-		"to the WeBWorK Project team. It takes just 2-3 minutes.  Thank you!. -- The WeBWorK Project")),
-	CGI::p(join("",
-		"Eventually your site will be listed along with all of the others on the ",
-		CGI::a({href=>$ce->{webworkURLs}{SiteMap}, target=>"_blank"}, "site map"),
-		" on the main ",
-		CGI::a({href=>$ce->{webworkURLs}{WikiMain}, target=>"_blank"}, "WeBWorK Wiki"),".<hr>")),
-	CGI::p('You can hide this "registration" banner for the future by clicking the button below.'),
-	CGI::start_form(-method=>"POST", id=>"return_to_main_page", -action=>$self->r->uri),
-	$self->hidden_authen_fields,
-	CGI::hidden(-name=>'subDisplay', -value=>"registration"),
-	CGI::p({ style => "text-align: center" },
-	   	CGI::submit({
-				id => "register_site",
-			   	name => "register_site",
-			   	label => "Hide the banner.",
-				class => 'btn btn-primary'
-			})),
-	CGI::end_form(),
-	q!
-	</div>
-	</center>
-	!;
+	my $registeredQ = (-e "$ce->{courseDirs}{root}/$registered_file_name") ? 1 : 0;
+	my $registration_subDisplay =
+		(defined($self->r->param('subDisplay')) && $self->r->param('subDisplay') eq 'registration') ? 1 : 0;
+	my $register_site = ($self->r->param('register_site')) ? 1 : 0;
+
+	return CGI::div({ class => 'd-flex justify-content-center' }, "REGISTERED for WeBWorK $ww_version")
+		if $registeredQ || $register_site || $registration_subDisplay;
+
+	# Otherwise return registration form.
+	return CGI::div(
+		{ class => 'd-flex justify-content-center' },
+		CGI::div(
+			{ class => 'admin-messagebox' },
+
+			CGI::p(
+				CGI::strong('Please consider registering for the WW-security-announce Google group / mailing list'),
+				' using the join group link on the ',
+				CGI::a({ href => $ce->{webworkURLs}{wwSecurityAnnounce}, target => '_blank' }, 'group page'),
+				' which appears when you are logged in to a Google account ',
+				CGI::strong('or'),
+				' by sending an email using ',
+				CGI::a(
+					{
+						href => join('',
+							"mailto:$ce->{webworkSecListManagers}?subject=",
+							uri_escape('Joining ww-security-announce'),
+							'&body=',
+							uri_escape("Server URL: $ce->{apache_root_url}\n"),
+							uri_escape("WeBWorK version: $ce->{WW_VERSION}\n"),
+							uri_escape("Institution name: \n"))
+					},
+					,
+					'this mailto link'
+				),
+				'. This list will help us keep you updated about security issues and patches, '
+					. 'and important related announcements.'
+			),
+
+			CGI::hr(),
+
+			CGI::p(
+				'Please consider contributing to WeBWorK development either with a one time contribution or monthly ',
+				'support. The WeBWorK Project is a registered 501(c)(3) organization and contributions are tax ',
+				'deductible in the United States.'
+			),
+			CGI::div(
+				{ class => 'text-center' },
+				CGI::a(
+					{
+						class  => 'btn btn-secondary',
+						href   => 'https://github.com/sponsors/openwebwork',
+						target => '_blank'
+					},
+					CGI::i({ class => 'fa-regular fa-heart' }, '') . ' Sponsor',
+				)
+			),
+
+			CGI::hr(),
+
+			CGI::p("This site is not registered for WeBWorK version $ww_version."),
+			CGI::p(
+				'We are often asked how many institutions are using WeBWorK and how many students are using WeBWorK. ',
+				'Since WeBWorK is open source and can be freely downloaded from ',
+				CGI::a({ href => $ce->{webworkURLs}{GitHub}, target => '_blank' }, $ce->{webworkURLs}{GitHub}),
+				', it is frequently difficult for us to give a reasonable answer to this question.'
+			),
+			CGI::p(
+				'You can help by ',
+				CGI::a(
+					{ href => $ce->{webworkURLs}{serverRegForm}, target => '_blank' },
+					'registering your current version of WeBWorK'
+				),
+				'. Please complete the Google form as best you can and submit your answers ',
+				'to the WeBWorK Project team. It takes just 2-3 minutes.  Thank you! -- The WeBWorK Project'
+			),
+			CGI::p(
+				'Eventually your site will be listed along with all of the others on the ',
+				CGI::a({ href => $ce->{webworkURLs}{SiteMap}, target => '_blank' }, 'site map'),
+				' on the main ',
+				CGI::a({ href => $ce->{webworkURLs}{WikiMain}, target => '_blank' }, 'WeBWorK Wiki'),
+				'.',
+			),
+
+			CGI::hr(),
+
+			CGI::p('You can hide this "registration" banner for the future by clicking the button below.'),
+			CGI::start_form({ method => 'POST', id => 'return_to_main_page', action => $self->r->uri }),
+			$self->hidden_authen_fields,
+			CGI::hidden({ name => 'subDisplay', value => 'registration' }),
+			CGI::div(
+				{ class => 'text-center' },
+				CGI::submit({
+					id    => 'register_site',
+					name  => 'register_site',
+					label => 'Hide the banner.',
+					class => 'btn btn-primary'
+				})
+			),
+			CGI::end_form()
+		)
+	);
 }
 
 sub registration_form {
