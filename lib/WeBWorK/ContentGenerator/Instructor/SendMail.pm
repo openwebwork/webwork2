@@ -696,8 +696,8 @@ sub print_form {
 								name   => 'send_to',
 								values => [ 'all_students', 'studentID' ],
 								labels => {
-									all_students => $r->maketext('all'),
-									studentID    => $r->maketext('selected')
+									all_students => $r->maketext('all students'),
+									studentID    => $r->maketext('selected students')
 								},
 								default         => $r->param('send_to') // 'studentID',
 								linebreak       => 0,
