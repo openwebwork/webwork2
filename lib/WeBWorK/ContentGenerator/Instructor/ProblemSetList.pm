@@ -1301,6 +1301,7 @@ sub import_form {
 					? $actionParams{'action.import.source'}
 					: '',
 					class => 'form-select form-select-sm',
+					dir   => 'ltr',
 					size  => $actionParams{'action.import.number'}[0] || '1',
 					defined($actionParams{'action.import.number'}[0])
 						&& $actionParams{'action.import.number'}[0] ne '1' ? (multiple => undef) : ()

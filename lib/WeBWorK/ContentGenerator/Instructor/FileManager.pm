@@ -314,6 +314,7 @@ EOF
 					values   => $dirs,
 					labels   => $dirlabels,
 					class    => 'form-select',
+					dir      => 'ltr',
 					onChange => "doForm('Go')"
 				})
 			)
@@ -346,6 +347,7 @@ EOF
 				name       => "files",
 				id         => "files",
 				class      => 'form-select font-monospace h-100',
+				dir        => 'ltr',
 				size       => 17,
 				multiple   => 1,
 				values     => $files,

@@ -1144,6 +1144,7 @@ sub import_form {
 					values  => [ $self->getCSVList() ],
 					default => $actionParams{'action.import.source'}[0] || '',
 					class   => 'form-select form-select-sm',
+					dir     => 'ltr',
 				})
 			)
 		),
