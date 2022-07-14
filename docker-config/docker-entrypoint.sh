@@ -172,8 +172,6 @@ if [ "$1" = 'apache2' ]; then
         fi
         wait_for_db
         $WEBWORK_ROOT/bin/OPL-update
-        cd $APP_ROOT/libraries/webwork-open-problem-library
-        git checkout $OPL_TAG
       else
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
         wait_for_db
