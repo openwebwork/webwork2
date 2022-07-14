@@ -84,6 +84,8 @@ ENV WEBWORK_URL=/webwork2 \
 	DEBCONF_NONINTERACTIVE_SEEN=true \
 	DEV=0
 
+ARG ADDITIONAL_BASE_IMAGE_PACKAGES
+
 # Environment variables which depend on a prior environment variable must be set
 # in an ENV call after the dependencies were defined.
 ENV WEBWORK_ROOT=$APP_ROOT/webwork2 \
@@ -203,7 +205,7 @@ RUN apt-get update \
 	zip \
 	iputils-ping \
 	imagemagick \
-	jq \
+	jq $ADDITIONAL_BASE_IMAGE_PACKAGES \
 	&& curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
 	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
 	&& apt-get clean \

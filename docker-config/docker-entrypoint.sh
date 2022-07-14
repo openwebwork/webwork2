@@ -59,7 +59,7 @@ if [ ! -d "$APP_ROOT/libraries/webwork-open-problem-library/OpenProblemLibrary" 
   cd $APP_ROOT/libraries/
   /usr/bin/git clone -v --progress --single-branch --branch main https://github.com/openwebwork/webwork-open-problem-library.git
 
-  # The next line forces the system to run OPL-update or load saved OPL tables below, as we just installed it
+  # The next line forces the system to download and install the OPL metadata later
   touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"
 fi
 
@@ -159,32 +159,20 @@ if [ "$1" = 'apache2' ]; then
     if [ ! -f "$WEBWORK_ROOT/htdocs/DATA/tagging-taxonomy.json"  ]; then
       # The next line forces the system to run OPL-update below, as the
       # tagging-taxonomy.json file was found to be missing.
-      if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
-        echo "The tagging-taxonomy.json file is missing in webwork2/htdocs/DATA/."
-        echo "But the libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql files was seen"
-        echo "so the OPL tables and the JSON files will (hopefully) be restored from save versions"
-      else
-        echo "We will run OPL-update as the tagging-taxonomy.json file is missing in webwork2/htdocs/DATA/."
-        echo "Check if you should be mounting webwork2/htdocs/DATA/ from outside the Docker image!"
-      fi
+      echo "We will run OPL-update as the tagging-taxonomy.json file is missing in webwork2/htdocs/DATA/."
+      echo "Check if you should be mounting webwork2/htdocs/DATA/ from outside the Docker image!"
       touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"
     fi
     if [ -f "$APP_ROOT/libraries/Restore_or_build_OPL_tables" ]; then
       if [ ! -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
-        # Download a saved version of the OPL sql table data to be loaded and extract
-        cd $WEBWORK_ROOT/bin/OPL_releases/
-        make extract
-        cp -r webwork-open-problem-library $APP_ROOT/libraries/
-        # check out commit corresponding to the release
-        make latest_release.tag
-        OPL_TAG=`cat $WEBWORK_ROOT/bin/OPL_releases/latest_release.tag`
-        cd $APP_ROOT/libraries/webwork-open-problem-library/
-        git fetch --tags origin
-        echo "Checking out tag $OPL_TAG"
-        git checkout $OPL_TAG
-      fi
-
-      if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
+        # Download the metadata and install it
+        export SKIP_UPLOAD_OPL_statistics=1
+        if [ ! -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
+          mkdir $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
+        fi
+        wait_for_db
+        $WEBWORK_ROOT/bin/OPL-update
+      else
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
         wait_for_db
         $WEBWORK_ROOT/bin/restore-OPL-tables.pl
@@ -199,15 +187,6 @@ if [ "$1" = 'apache2' ]; then
           echo "You are missing some of the JSON files including tagging-taxonomy.json"
           echo "Some of the library functions will not work properly"
         fi
-      else
-        echo "About to start OPL-update. This takes a long time - please be patient."
-        wait_for_db
-        $WEBWORK_ROOT/bin/OPL-update
-        # Dump the OPL tables, to allow a quick restore in the future
-        $WEBWORK_ROOT/bin/dump-OPL-tables.pl
-        # Save a copy of the generated JSON files
-        mkdir -p $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
-        cp -a $WEBWORK_ROOT/htdocs/DATA/*.json $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
       fi
       rm $APP_ROOT/libraries/Restore_or_build_OPL_tables
     fi
