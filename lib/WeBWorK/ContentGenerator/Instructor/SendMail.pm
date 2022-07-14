@@ -714,7 +714,7 @@ sub print_form {
 						}),
 						CGI::label(
 							{ for => 'send_to_selected', class => 'form-check-label' },
-							$r->maketext('Send to selected students')
+							$r->maketext('Send to the students selected below')
 						)
 					),
 					CGI::div(
