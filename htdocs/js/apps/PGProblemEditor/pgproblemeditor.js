@@ -1,18 +1,18 @@
 (function () {
-	document.addEventListener('keydown', (e) => {
-		if (e.key === 'Escape') bsModal.hide();
-	});
-
 	const bsModal = new bootstrap.Modal(document.getElementById('render-modal'), { keyboard: true, show: false });
 
 	let busyIndicator = null;
 
-	const frame = document.getElementById('pg_editor_frame_id');
-	frame?.addEventListener('load', () => {
+	const removeBusyIndicator = () => {
 		if (busyIndicator) {
 			busyIndicator.remove();
 			busyIndicator = null;
 		}
+	};
+
+	const frame = document.getElementById('pg_editor_frame_id');
+	frame?.addEventListener('load', () => {
+		removeBusyIndicator();
 		if (frame.contentDocument.URL == 'about:blank') return;
 		const style = frame.contentDocument.createElement('style');
 		style.type = 'text/css';
@@ -42,8 +42,19 @@
 			busyIndicator = document.createElement('div');
 			busyIndicator.classList.add('page-loading-busy-indicator');
 			busyIndicator.innerHTML = '<div class="busy-text"><h2>Loading...</h2></div>' +
-				'<div><i class="fas fa-circle-notch fa-spin fa-3x"></i></div>';
+				'<div><i class="fas fa-circle-notch fa-spin fa-3x"></i></div>' +
+				'<div class="busy-text">Press escape to cancel</div>';
+			busyIndicator.tabIndex = -1;
 			document.body.appendChild(busyIndicator);
+			busyIndicator.focus();
+
+			// Allow the user to cancel loading of the iframe by pressing escape.
+			busyIndicator.addEventListener('keydown', (e) => {
+				if (e.key === 'Escape') {
+					removeBusyIndicator();
+					window.stop();
+				}
+			});
 		}
 	});
 
