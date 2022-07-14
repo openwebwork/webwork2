@@ -438,6 +438,12 @@ sub formatRenderedProblem {
 		$output->{extra_css_files} = \@extra_css_files;
 		$output->{extra_js_files} = \@extra_js_files;
 
+		# Include third party css and javascript files.  Only jquery, jquery-ui, mathjax, and bootstrap are needed for
+		# PG.  See the comments before the subroutine definitions for load_css and load_js in pg/macros/PG.pl.
+		# The other files included are only needed to make themes work in the webwork2 formats.
+		$output->{third_party_css} = \@CSSLoads;
+		$output->{third_party_js} = \@JSLoads;
+
 		# Say what version of WeBWorK this is
 		$output->{ww_version} = $ce->{WW_VERSION};
 		$output->{pg_version} = $ce->{PG_VERSION};
