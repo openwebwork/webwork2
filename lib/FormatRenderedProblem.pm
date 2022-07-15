@@ -172,13 +172,17 @@ sub formatRenderedProblem {
 		push @cssFiles, @{ $rh_result->{flags}{extra_css_files} };
 	}
 	my %cssFilesAdded;    # Used to avoid duplicates
+	my @extra_css_files;
 	for (@cssFiles) {
 		next if $cssFilesAdded{ $_->{file} };
 		$cssFilesAdded{ $_->{file} } = 1;
 		if ($_->{external}) {
+			push(@extra_css_files, $_);
 			$problemHeadText .= CGI::Link({ href => $_->{file}, rel => 'stylesheet' });
 		} else {
-			$problemHeadText .= CGI::Link({ href => getAssetURL($ce, $_->{file}), rel => 'stylesheet' });
+			my $url = getAssetURL($ce, $_->{file});
+			push(@extra_css_files, { file => $url, external => 0 });
+			$problemHeadText .= CGI::Link({ href => $url, rel => 'stylesheet' });
 		}
 	}
 
@@ -204,6 +208,7 @@ sub formatRenderedProblem {
 		if ($self->{inputs_ref}{outputformat} // '') eq 'sticky';
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
+	my @extra_js_files;
 	if (ref($rh_result->{flags}{extra_js_files}) eq 'ARRAY') {
 		my %jsFiles;
 		for (@{ $rh_result->{flags}{extra_js_files} }) {
@@ -211,9 +216,12 @@ sub formatRenderedProblem {
 			$jsFiles{ $_->{file} } = 1;
 			my %attributes = ref($_->{attributes}) eq 'HASH' ? %{ $_->{attributes} } : ();
 			if ($_->{external}) {
+				push(@extra_js_files, $_);
 				$problemHeadText .= CGI::script({ src => $_->{file}, %attributes }, '');
 			} else {
-				$problemHeadText .= CGI::script({ src => getAssetURL($ce, $_->{file}), %attributes }, '');
+				my $url = getAssetURL($ce, $_->{file});
+				push(@extra_js_files, { file => $url, external => 0, attributes => $_->{attributes} });
+				$problemHeadText .= CGI::script({ src => $url, %attributes }, '');
 			}
 		}
 	}
@@ -427,6 +435,14 @@ sub formatRenderedProblem {
 		$output->{answerTemplate} = $answerTemplate if ($answerTemplate);
 		$output->{lang} = $PROBLEM_LANG_AND_DIR{lang};
 		$output->{dir} = $PROBLEM_LANG_AND_DIR{dir};
+		$output->{extra_css_files} = \@extra_css_files;
+		$output->{extra_js_files} = \@extra_js_files;
+
+		# Include third party css and javascript files.  Only jquery, jquery-ui, mathjax, and bootstrap are needed for
+		# PG.  See the comments before the subroutine definitions for load_css and load_js in pg/macros/PG.pl.
+		# The other files included are only needed to make themes work in the webwork2 formats.
+		$output->{third_party_css} = \@CSSLoads;
+		$output->{third_party_js} = \@JSLoads;
 
 		# Say what version of WeBWorK this is
 		$output->{ww_version} = $ce->{WW_VERSION};
