@@ -688,24 +688,34 @@ sub print_form {
 				CGI::div(
 					{ class => 'col-md-6 mb-2' },
 					CGI::div(
-						{ class => 'input-group input-group-sm mb-2' },
-						CGI::span({ class => 'input-group-text' }, CGI::strong($r->maketext('Send to:'))),
-						CGI::div(
-							{ class => 'input-group-text' },
-							CGI::radio_group({
-								name   => 'send_to',
-								values => [ 'all_students', 'studentID' ],
-								labels => {
-									all_students => $r->maketext('all'),
-									studentID    => $r->maketext('selected')
-								},
-								default         => $r->param('send_to') // 'studentID',
-								linebreak       => 0,
-								class           => 'form-check-input me-1',
-								labelattributes => { class => 'form-check-label mx-1' }
-							})
-						),
-						CGI::label({ for => 'classList', class => 'input-group-text' }, $r->maketext('students')),
+						{ class => 'form-check' },
+						CGI::input({
+							name  => 'send_to',
+							id    => 'send_to_all',
+							value => 'all_students',
+							type  => 'radio',
+							class => 'form-check-input',
+							(($r->param('send_to') // '') eq 'all_students') ? (checked => undef) : ()
+						}),
+						CGI::label(
+							{ for => 'send_to_all', class => 'form-check-label' },
+							$r->maketext('Send to all students')
+						)
+					),
+					CGI::div(
+						{ class => 'form-check' },
+						CGI::input({
+							name  => 'send_to',
+							id    => 'send_to_selected',
+							value => 'studentID',
+							type  => 'radio',
+							class => 'form-check-input',
+							(!$r->param('send_to') || $r->param('send_to') eq 'studentID') ? (checked => undef) : ()
+						}),
+						CGI::label(
+							{ for => 'send_to_selected', class => 'form-check-label' },
+							$r->maketext('Send to the students selected below')
+						)
 					),
 					CGI::div(
 						{ class => 'mb-2' },
