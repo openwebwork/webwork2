@@ -1,4 +1,5 @@
 .env
+docker-compose.yml
 tmp
 *~
 !tmp/README
