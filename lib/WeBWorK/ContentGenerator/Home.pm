@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -62,6 +62,12 @@ sub info {
 	} else {
 		return "";
 	}
+}
+
+# Override the if_can method to disable links for the home page.
+sub if_can {
+	my ($self, $arg) = @_;
+	return $arg eq 'links' ? 0 : $self->SUPER::if_can($arg);
 }
 
 sub body {

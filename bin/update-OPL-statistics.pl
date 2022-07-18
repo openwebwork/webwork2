@@ -1,9 +1,8 @@
 #!/usr/bin/perl
 
-##############################################################################
+################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwdb,v 1.13 2006/01/25 23:13:45 sh002i Exp $
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -12,9 +11,9 @@
 #
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE. See either the GNU General Public License or the
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
 # Artistic License for more details.
-##############################################################################
+################################################################################
 
 use strict;
 
@@ -31,21 +30,6 @@ use lib "$pg_dir/lib";
 use WeBWorK::CourseEnvironment;
 use String::ShellQuote;
 
-# hack to set version so that the script runs without warnings in
-# earlier versions of WeBWorK, e.g. WW 2.7
-
-BEGIN { $main::VERSION = "2.4"; }
-
-BEGIN{
-    my $ce = new WeBWorK::CourseEnvironment({
-	webwork_dir => $ENV{WEBWORK_ROOT},
-					 });
-
-    my $pg_dir = $ce->{pg_dir};
-    eval "use lib '$pg_dir/lib'";
-    die $@ if $@;
-}
-
 use DBI;
 use WeBWorK::Utils::CourseIntegrityCheck;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
@@ -55,7 +39,7 @@ my $time = time();
 # get course environment and open up database
 my $ce = new WeBWorK::CourseEnvironment({
     webwork_dir => $ENV{WEBWORK_ROOT},
-					});
+	});
 
 # decide whether the mysql installation can handle
 # utf8mb4 and that should be used for the OPL
@@ -64,14 +48,14 @@ my $ENABLE_UTF8MB4 = $ce->{ENABLE_UTF8MB4}?1:0;
 
 
 my $dbh = DBI->connect(
-        $ce->{problemLibrary_db}->{dbsource},
-        $ce->{problemLibrary_db}->{user},
-        $ce->{problemLibrary_db}->{passwd},
-        {
+	$ce->{problemLibrary_db}->{dbsource},
+	$ce->{problemLibrary_db}->{user},
+	$ce->{problemLibrary_db}->{passwd},
+	{
 		AutoCommit => 0,
-                PrintError => 0,
-                RaiseError => 1,
-        },
+		PrintError => 0,
+		RaiseError => 1,
+	},
 );
 
 # get course list
@@ -156,7 +140,7 @@ SELECT
   `${courseID}_problem`.set_id,
   `${courseID}_set`.due_date,
   `${courseID}_problem`.problem_id,
-  REPLACE(`${courseID}_problem`.source_file,'local/Library/','Library/'),
+  REPLACE(`${courseID}_problem`.source_file,'local/',''),
   `${courseID}_problem_user`.status,
   `${courseID}_problem_user`.attempted,
   `${courseID}_problem_user`.num_correct,
@@ -168,7 +152,9 @@ FROM `${courseID}_problem_user`
   JOIN `${courseID}_set`
   ON `${courseID}_problem_user`.set_id = `${courseID}_set`.set_id
 WHERE (`${courseID}_problem`.source_file LIKE 'Library/%'
-  OR `${courseID}_problem`.source_file LIKE 'local/Library/%')
+  OR `${courseID}_problem`.source_file LIKE 'local/Library/%'
+  OR `${courseID}_problem`.source_file LIKE 'Contrib/%'
+  OR `${courseID}_problem`.source_file LIKE 'local/Contrib/%')
   AND `${courseID}_set`.due_date < $time;
 EOS
 

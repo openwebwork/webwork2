@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -141,7 +141,8 @@ sub body {
 							name => 'currPassword',
 							id   => 'currPassword',
 							(defined $Password) ? () : (disabled => 1),
-							class => 'form-control'
+							class => 'form-control',
+							dir => 'ltr'
 						})
 					),
 				),
@@ -153,7 +154,7 @@ sub body {
 					),
 					CGI::div(
 						{ class => 'col-sm-6' },
-						CGI::password_field({ name => 'newPassword', id => 'newPassword', class => 'form-control' })
+						CGI::password_field({ name => 'newPassword', id => 'newPassword', class => 'form-control', dir => 'ltr' })
 					)
 				),
 				CGI::div(
@@ -167,7 +168,8 @@ sub body {
 						CGI::password_field({
 							name  => 'confirmPassword',
 							id    => 'confirmPassword',
-							class => 'form-control'
+							class => 'form-control',
+							dir   => 'ltr'
 						})
 					)
 				)
@@ -211,7 +213,8 @@ sub body {
 							id       => 'currAddress',
 							name     => 'currAddress',
 							value    => $EUser->email_address,
-							class    => 'form-control'
+							class    => 'form-control',
+							dir      => 'ltr'
 						})
 					)
 				),
@@ -223,7 +226,7 @@ sub body {
 					),
 					CGI::div(
 						{ class => 'col-sm-6' },
-						CGI::textfield({ name => 'newAddress', id => 'newAddress', class => 'form-control' })
+						CGI::textfield({ name => 'newAddress', id => 'newAddress', class => 'form-control', dir => 'ltr' })
 					)
 				)
 			)

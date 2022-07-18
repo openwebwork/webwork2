@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1130,7 +1130,7 @@ sub path {
 
 	return $self->pathMacro(
 		$args,
-		'Home'      => $navigation_allowed ? $root : '',
+		'WeBWorK'   => $navigation_allowed ? $root : '',
 		$courseName => $navigation_allowed ? "$root/$courseName" : '',
 		$setName eq "Undefined_Set" || $self->{invalidSet}
 		? ($setName => '')
@@ -1817,40 +1817,55 @@ sub body {
 	debug("end answer processing");
 	# end problem loop
 
-	# additional set-level database manipulation: we want to save the time
-	#    that a set was submitted, and for proctored tests we want to reset
-	#    the assignment type after a set is submitted for the last time so
-	#    that it's possible to look at it later without getting proctor
-	#    authorization
-	if (($submitAnswers &&
-			($will{recordAnswers} ||
-				(! $set->version_last_attempt_time() &&
-					$timeNow > $set->due_date + $grace))) ||
-		(! $can{recordAnswersNextTime} &&
-			$set->assignment_type() eq 'proctored_gateway')) {
+	# Additional set-level database manipulation: We want to save the time that a set was submitted, and for proctored
+	# tests we want to reset the assignment type after a set is submitted for the last time so that it's possible to
+	# look at it later without getting proctor authorization.
+	if (
+		(
+			$submitAnswers
+			&& ($will{recordAnswers} || (!$set->version_last_attempt_time && $timeNow > $set->due_date + $grace))
+		)
+		|| (
+			$set->assignment_type eq 'proctored_gateway'
+			&& (
+				($user eq $effectiveUser && !$can{recordAnswersNextTime})
+				|| (
+					$user ne $effectiveUser
+					&& $authz->hasPermissions($user, "record_answers_when_acting_as_student")
+					&& $set->attempts_per_version > 0
+					&& ($Problem->num_correct + $Problem->num_incorrect + ($submitAnswers ? 1 : 0) >=
+						$set->attempts_per_version)
+				)
+			)
+		)
+		)
+	{
+		# Save the submission time if we're recording the answer, or if the first submission occurs after the due_date.
+		$set->version_last_attempt_time($timeNow)
+			if ($submitAnswers
+				&& ($will{recordAnswers} || (!$set->version_last_attempt_time && $timeNow > $set->due_date + $grace)));
 
-		my $setName = $set->set_id();
+		$set->assignment_type('gateway')
+			if (
+				$set->assignment_type eq 'proctored_gateway'
+				&& (
+					($user eq $effectiveUser && !$can{recordAnswersNextTime})
+					|| (
+						$user ne $effectiveUser
+						&& $authz->hasPermissions($user, "record_answers_when_acting_as_student")
+						&& $set->attempts_per_version > 0
+						&& ($Problem->num_correct + $Problem->num_incorrect + ($submitAnswers ? 1 : 0) >=
+							$set->attempts_per_version)
+					)
+				)
+			);
 
-		# save the submission time if we're recording the answer, or if the
-		#     first submission occurs after the due_date
-		if ($submitAnswers &&
-			($will{recordAnswers} ||
-				(!$set->version_last_attempt_time() &&
-					$timeNow > $set->due_date + $grace))) {
-			$set->version_last_attempt_time($timeNow);
-		}
-		if (!$can{recordAnswersNextTime} &&
-			$set->assignment_type() eq 'proctored_gateway') {
-			$set->assignment_type('gateway');
-		}
-		# again, we save only parameters that are determine access to the
-		#    set version
-		my $cleanSet = $db->getSetVersion($effectiveUser, $setName, $versionNumber);
+		# Save only parameters that determine access to the set version.
+		my $cleanSet = $db->getSetVersion($effectiveUser, $set->set_id, $versionNumber);
 		$cleanSet->assignment_type($set->assignment_type);
 		$cleanSet->version_last_attempt_time($set->version_last_attempt_time);
 		$db->putSetVersion($cleanSet);
 	}
-
 
 	####################################
 	# output
@@ -2180,7 +2195,7 @@ sub body {
 		# Set up links between problems and, for multi-page tests, pages.
 		my $jumpLinks = '';
 		my $probRow   = [];
-		my $scoreRow  = [];
+		my @scoreRow;
 		for my $i (0 .. $#pg_results) {
 			my $pn = $i + 1;
 			if ($i >= $startProb && $i <= $endProb) {
@@ -2190,7 +2205,8 @@ sub body {
 			}
 			my $score = $probStatus[ $probOrder[$i] ];
 			$score = $score == 1 ? "\x{1F4AF}" : wwRound(0, 100 * $score);
-			push(@$scoreRow, $score);
+			push(@scoreRow,
+				CGI::td({ class => 'score', data_problem_id => $problems[ $probOrder[$i] ]->problem_id }, $score));
 		}
 		my @tableRows;
 		my @cols = (CGI::colgroup(CGI::col({ class => 'header' })));
@@ -2230,7 +2246,7 @@ sub body {
 				)
 			);
 		}
-		push(@tableRows, CGI::Tr(CGI::th($r->maketext('% Score:')), CGI::td({ class => 'score' }, $scoreRow)))
+		push(@tableRows, CGI::Tr(CGI::th($r->maketext('% Score:')), @scoreRow))
 			if ($canShowProblemScores && $set->version_last_attempt_time);
 		$jumpLinks = CGI::div(
 			{ class => 'table-responsive' },
@@ -2462,8 +2478,6 @@ sub body {
 			})
 			: ''
 		);
-
-		print CGI::end_div();
 
 		print CGI::p(CGI::em($r->maketext('Note: grading the test grades all problems, not just those on this page.')))
 			if $numProbPerPage && $numPages > 1 && $can{recordAnswersNextTime};

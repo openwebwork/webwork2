@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2020 The WeBWorK Project, https://openwebworkorg.wordpress.com/
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -736,8 +736,10 @@ sub unexpired_session_exists {
 # clobbers any existing session for this $userID
 # if $newKey is not specified, a random key is generated
 # the key is returned
+# When this is called in Proctor.pm, the actual user id is passed in via $trueUserID.
+# The $userID is modified in that case and will not work in the hasPermissions call.
 sub create_session {
-	my ($self, $userID, $newKey) = @_;
+	my ($self, $userID, $newKey, $trueUserID) = @_;
 	my $r = $self->{r};
 	my $ce = $r->ce;
 	my $db = $r->db;
@@ -752,8 +754,7 @@ sub create_session {
 	}
 
 	my $setID =
-		$r->param('user')
-		&& !$r->authz->hasPermissions($r->param('user'), 'navigation_allowed') ? $r->urlpath->arg("setID") : '';
+		!$r->authz->hasPermissions($trueUserID // $userID, 'navigation_allowed') ? $r->urlpath->arg("setID") : '';
 
 	my $Key = $db->newKey(user_id => $userID, key => $newKey, timestamp => $timestamp, set_id => $setID);
 
@@ -881,8 +882,7 @@ sub sendCookie {
 	# This sets the setID in the cookie on initial login.
 	$setID = $r->urlpath->arg("setID")
 		if !$setID
-		&& $r->param('user')
-		&& $r->authen->was_verified && !$r->authz->hasPermissions($r->param('user'), 'navigation_allowed');
+		&& $r->authen->was_verified && !$r->authz->hasPermissions($userID, 'navigation_allowed');
 
  	my $timestamp = time();
 
@@ -982,7 +982,7 @@ sub write_log_entry {
 		$remote_port = "UNKNOWN" unless defined $remote_port;
 		$user_agent  = "UNKNOWN";
 	} else {
-		$remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
+		$remote_host = $r->useragent_addr->ip_get || "UNKNOWN";
 		$remote_port = $r->connection->client_addr->port   || "UNKNOWN";
 
 		$user_agent = $r->headers_in->{"User-Agent"};

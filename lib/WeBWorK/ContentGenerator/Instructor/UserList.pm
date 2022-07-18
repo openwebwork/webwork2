@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1144,6 +1144,7 @@ sub import_form {
 					values  => [ $self->getCSVList() ],
 					default => $actionParams{'action.import.source'}[0] || '',
 					class   => 'form-select form-select-sm',
+					dir     => 'ltr',
 				})
 			)
 		),

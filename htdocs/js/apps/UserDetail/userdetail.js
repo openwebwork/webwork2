@@ -24,7 +24,9 @@
 
 	// Make the date override checkboxes checked or unchecked appropriately
 	// as determined by the value of the date input when that value changes.
-	document.querySelectorAll('input[type="text"][data-override]').forEach((input) => {
+	document.querySelectorAll('input[type="text"][data-override],input[type="hidden"][data-override]')
+		.forEach((input) =>
+	{
 		const overrideCheck = document.getElementById(input.dataset.override);
 		if (!overrideCheck) return;
 		const changeHandler = () => overrideCheck.checked = input.value != '';

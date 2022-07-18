@@ -16,3 +16,7 @@
 		color-contrast($info) // disabled foreground color
 	);
 }
+
+.text-primary {
+	color: $link-color !important;
+}

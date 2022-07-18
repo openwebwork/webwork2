@@ -3,7 +3,7 @@ use 5.010;
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -306,7 +306,7 @@ sub answerTemplate {
     	push @tableRows, CGI::Tr($self->formatAnswerRow($rh_answers->{$ans_id}, $ans_id, $answerNumber++));
     }
 	my $answerTemplate = "";
-	$answerTemplate .= CGI::h3({ class => 'attemptResultsHeader' }, $self->maketext("Results for this submission"))
+	$answerTemplate .= CGI::h2({ class => 'attemptResultsHeader' }, $self->maketext("Results for this submission"))
 		if $self->showHeadline;
 	$answerTemplate .= CGI::table({ class => 'attemptResults table table-sm table-bordered' }, @tableRows);
     ### "results for this submission" is better than "attempt results" for a headline

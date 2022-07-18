@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -660,12 +660,13 @@ sub links {
 	#return "" unless $authen->was_verified;
 
 	# grab some interesting data from the request
-	my $courseID = $urlpath->arg("courseID");
-	my $userID = $r->param('user');
-	my $eUserID   = $r->param("effectiveUser");
-	my $setID     = $urlpath->arg("setID");
-	my $problemID = $urlpath->arg("problemID");
-	my $achievementID = $urlpath->arg("achievementID");
+	my $courseID      = $urlpath->arg('courseID');
+	my $userID        = $r->param('user');
+	my $urlUserID     = $urlpath->arg('userID');
+	my $eUserID       = $r->param('effectiveUser');
+	my $setID         = $urlpath->arg('setID');
+	my $problemID     = $urlpath->arg('problemID');
+	my $achievementID = $urlpath->arg('achievementID');
 
 	# Determine if navigation is restricted for this user.
 	my $restricted_navigation = $authen->was_verified && !$authz->hasPermissions($userID, 'navigation_allowed');
@@ -704,7 +705,7 @@ sub links {
 		my $new_urlpath = $self->r->urlpath->newFromModule($module, $r, %$urlpath_args);
 		my $new_systemlink = $self->systemLink($new_urlpath, %$systemlink_args);
 
-		defined $text or $text = $new_urlpath->name;
+		defined $text or $text = $new_urlpath->name(1);
 
 
 		# try to set $active automatically by comparing
@@ -826,12 +827,14 @@ sub links {
 					print CGI::start_li({ class => 'nav-item' });
 					print CGI::start_ul({ class => 'nav flex-column' });
 					print CGI::start_li({ class => 'nav-item' });          # $problemID
-					print &$makelink(
-						"${pfx}Problem",
-						text            => $r->maketext("Problem [_1]", $prettyProblemID),
-						urlpath_args    => { %args, setID => $setID, problemID => $problemID },
-						systemlink_args => \%systemlink_args
-					);
+					print $setRecord->assignment_type =~ /gateway/
+						? CGI::a({ class => 'nav-link' }, $r->maketext('Problem [_1]', $prettyProblemID))
+						: &$makelink(
+							"${pfx}Problem",
+							text            => $r->maketext("Problem [_1]", $prettyProblemID),
+							urlpath_args    => { %args, setID => $setID, problemID => $problemID },
+							systemlink_args => \%systemlink_args
+						);
 					print CGI::end_li();                                   # end $problemID
 					print CGI::end_ul();
 					print CGI::end_li();                                   # end $setID
@@ -891,7 +894,7 @@ sub links {
 					    print CGI::start_ul({ class => 'nav flex-column' });
 						print CGI::li({ class => 'nav-item' },
 							&$makelink("${pfx}PGProblemEditor",
-								text => $prettyProblemID,
+								text => $r->maketext('Problem [_1]', $prettyProblemID),
 								urlpath_args => { %args, setID => $setID, problemID => $problemID },
 								systemlink_args => \%systemlink_args,
 								target => "WW_Editor")
@@ -912,14 +915,26 @@ sub links {
 
 				print CGI::start_li({ class => 'nav-item' }); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-				if ($userID ne $eUserID or defined $setID) {
+				if ($userID ne $eUserID or defined $setID or defined $urlUserID) {
 					print CGI::start_ul({ class => 'nav flex-column' });
-					if ($userID ne $eUserID) {
+					if (defined $urlUserID) {
 						print CGI::li({ class => 'nav-item' },
 							&$makelink("${pfx}Stats",
-							   	text => "$eUserID",
-							   	urlpath_args => { %args,statType => "student", userID => $eUserID },
-							   	systemlink_args => \%systemlink_args));
+								text => $urlUserID,
+								urlpath_args => { %args, statType => "student", userID => $urlUserID },
+								systemlink_args => \%systemlink_args
+							)
+						);
+					}
+					if ($userID ne $eUserID && (!defined $urlUserID || $urlUserID ne $eUserID)) {
+						print CGI::li({ class => 'nav-item' },
+							&$makelink("${pfx}Stats",
+								text => $eUserID,
+								urlpath_args => { %args, statType => "student", userID => $eUserID },
+								systemlink_args => \%systemlink_args,
+								active => $urlpath->type eq 'instructor_user_statistics' && !defined $urlUserID
+							)
+						);
 					}
 					if (defined $setID) {
 						# make sure we don't try to send a versioned
@@ -942,14 +957,26 @@ sub links {
 
 				print CGI::start_li({ class => 'nav-item' }); # Student Progress
 				print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-				if ($userID ne $eUserID or defined $setID) {
+				if ($userID ne $eUserID or defined $setID or defined $urlUserID) {
 					print CGI::start_ul({ class => 'nav flex-column' });
-					if ($userID ne $eUserID) {
+					if (defined $urlUserID) {
 						print CGI::li({ class => 'nav-item' },
 							&$makelink("${pfx}StudentProgress",
-							   	text => "$eUserID",
-							   	urlpath_args => { %args, statType => "student", userID => $eUserID },
-							   	systemlink_args => \%systemlink_args));
+								text => $urlUserID,
+								urlpath_args => { %args, statType => "student", userID => $urlUserID },
+								systemlink_args => \%systemlink_args
+							)
+						);
+					}
+					if ($userID ne $eUserID && (!defined $urlUserID || $urlUserID ne $eUserID)) {
+						print CGI::li({ class => 'nav-item' },
+							&$makelink("${pfx}StudentProgress",
+								text => $eUserID,
+								urlpath_args => { %args, statType => "student", userID => $eUserID },
+								systemlink_args => \%systemlink_args,
+								active => $urlpath->type eq 'instructor_user_progress' && !defined $urlUserID
+							)
+						);
 					}
 					if (defined $setID) {
 						# make sure we don't try to send a versioned
@@ -1028,7 +1055,8 @@ sub links {
 						&$makelink("${pfx}FileManager",
 							text => $r->maketext("Archive this Course"),
 							urlpath_args => { %args },
-						   	systemlink_args => \%augmentedSystemLinks));
+							systemlink_args => \%augmentedSystemLinks,
+							active => 0));
 				}
 				print CGI::end_ul();
 				print CGI::end_li(); # end Instructor Tools
@@ -1216,21 +1244,25 @@ Print links to siblings of the current object.
 	combines timestamp() and other elements of the footer, including the copyright, into one output subroutine,
 =cut
 
-sub footer(){
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $ww_version = $ce->{WW_VERSION}||"unknown -- set ww version VERSION";
-	my $pg_version = $ce->{PG_VERSION}||"unknown -- set pg version PG_VERSION link to ../pg/VERSION";
-	my $theme = $ce->{defaultTheme}||"unknown -- set defaultTheme in localOverides.conf";
-	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2019";
-	print CGI::div({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
-	print CGI::div({-id=>"copyright"}, $r->maketext("WeBWorK &copy; [_1]| theme: [_2] | ww_version: [_3] | pg_version [_4]|",
-	                $copyright_years,$theme, $ww_version, $pg_version),
-	                CGI::a({-href=>"http://webwork.maa.org/"},
-	                $r->maketext("The WeBWorK Project"), ));
+sub footer {
+	my $self            = shift;
+	my $r               = $self->r;
+	my $ce              = $r->ce;
+	my $ww_version      = $ce->{WW_VERSION}         || 'unknown -- set WW_VERSION in VERSION';
+	my $pg_version      = $ce->{PG_VERSION}         || 'unknown -- set PG_VERSION in ../pg/VERSION';
+	my $theme           = $ce->{defaultTheme}       || 'unknown -- set defaultTheme in localOverides.conf';
+	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS} || '1996-2022';
+	print CGI::div({ id => 'last-modified' }, $r->maketext('Page generated at [_1]', timestamp($self)));
+	print CGI::div(
+		{ id => 'copyright' },
+		$r->maketext(
+			'WeBWorK &copy; [_1] | theme: [_2] | ww_version: [_3] | pg_version [_4] |',
+			$copyright_years, $theme, $ww_version, $pg_version
+		),
+		CGI::a({ href => 'https://webwork.maa.org/' }, $r->maketext('The WeBWorK Project'))
+	);
 
-	return ""
+	return '';
 }
 
 
@@ -1300,7 +1332,7 @@ sub title {
 		print $db->getSettingValue('courseTitle');
 	} else {
 		# Display the urlpath name
-		print $urlpath->name;
+		print $urlpath->name(1);
 	}
 
 	return '';

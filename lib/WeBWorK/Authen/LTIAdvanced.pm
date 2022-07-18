@@ -1,6 +1,6 @@
 ###############################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2016 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -234,6 +234,9 @@ sub get_credentials {
 
   # if we were able to set a user_id
   if ( defined($self->{user_id}) && $self->{user_id} ne "" ) {
+	# Make user_id lowercase for consistency in naming if configured.
+	$self->{user_id} = lc($self->{user_id}) if ($ce->{lti_lowercase_username});
+
       map {$self->{$_->[0]} = $r->param($_->[1]);}
 	(
 	 ['role', 'roles'],

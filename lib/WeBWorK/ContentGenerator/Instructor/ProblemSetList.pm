@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1301,6 +1301,7 @@ sub import_form {
 					? $actionParams{'action.import.source'}
 					: '',
 					class => 'form-select form-select-sm',
+					dir   => 'ltr',
 					size  => $actionParams{'action.import.number'}[0] || '1',
 					defined($actionParams{'action.import.number'}[0])
 						&& $actionParams{'action.import.number'}[0] ne '1' ? (multiple => undef) : ()

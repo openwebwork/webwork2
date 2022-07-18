@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -127,15 +127,16 @@ sub templateName {
 
 sub siblings {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
-	my $authz = $r->authz;
-	my $urlpath = $r->urlpath;
+	my $r         = $self->r;
+	my $db        = $r->db;
+	my $ce        = $r->ce;
+	my $authz     = $r->authz;
+	my $urlpath   = $r->urlpath;
 
-	my $courseID = $urlpath->arg("courseID");
-	my $user = $r->param('user');
-	my $eUserID = $r->param("effectiveUser");
+	my $courseID  = $urlpath->arg("courseID");
+	my $user      = $r->param('user');
+	my $eUserID   = $r->param("effectiveUser");
+	my $thisSetID = $urlpath->arg('setID');
 
 	# restrict navigation to other problem sets if not allowed
 	return '' unless $authz->hasPermissions($user, 'navigation_allowed');
@@ -169,11 +170,11 @@ sub siblings {
 			courseID => $courseID, setID => $setID);
 		print CGI::li({ class => 'nav-item' },
 			CGI::a({
-					href => $self->systemLink($setPage),
-					id => $setID,
-					class => 'nav-link'
+					$setID eq $thisSetID
+					? (id => $setID, class => 'nav-link active')
+					: (id => $setID, class => 'nav-link', href => $self->systemLink($setPage))
 				}, format_set_name_display($setID))
-		) ;
+		);
 	}
 	debug("End printing sets from listUserSets()");
 
@@ -380,6 +381,7 @@ sub body {
 			$data->{version} = $verSet->version_id;
 			$data->{start} =
 				$self->formatDateTime($verSet->version_creation_time, undef, $ce->{studentDateDisplayFormat});
+			$data->{proctored} = $verSet->assignment_type =~ /proctored/;
 
 			# Display close date if this is not a timed test.
 			my $closeText = '';
@@ -677,7 +679,10 @@ sub body {
 				my $interactive = $r->maketext('Version [_1]', $ver->{version});
 				if ($authz->hasPermissions($user, 'view_hidden_work') || $ver->{show_link}) {
 					my $interactiveURL = $self->systemLink($urlpath->newFromModule(
-						$urlModule, $r,
+						$ver->{proctored}
+						? 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz'
+						: 'WeBWorK::ContentGenerator::GatewayQuiz',
+						$r,
 						courseID => $courseID,
 						setID    => $ver->{id}
 					));

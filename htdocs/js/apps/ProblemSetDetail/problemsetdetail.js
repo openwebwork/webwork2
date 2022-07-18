@@ -315,9 +315,8 @@
 		const problemSeed = document.getElementById(`problem.${id}.problem_seed_id`);
 		ro.problemSeed = problemSeed ? problemSeed.value : 1;
 
-		const sourceFile = document.getElementById(`problem.${id}.source_file_id`);
-		ro.sourceFilePath =
-			sourceFile ? sourceFile.value : document.getElementById(`problem_${id}_default_source_file`)?.value;
+		ro.sourceFilePath = document.getElementById(`problem.${id}.source_file_id`)?.value ||
+			document.getElementById(`problem_${id}_default_source_file`)?.value;
 
 		if (ro.sourceFilePath.startsWith('group')) {
 			renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0" style="font-weight:bold">'
@@ -454,7 +453,9 @@
 
 	// Make the override checkboxes for text type inputs checked or unchecked appropriately
 	// as determined by the value of the input when that value changes.
-	document.querySelectorAll('input[type="text"][data-override]').forEach((input) => {
+	document.querySelectorAll('input[type="text"][data-override],input[type="hidden"][data-override]')
+		.forEach((input) =>
+	{
 		const overrideCheck = document.getElementById(input.dataset.override);
 		if (!overrideCheck) return;
 		const changeHandler = () => overrideCheck.checked = input.value != '';

@@ -44,6 +44,7 @@ use Encode;
 require WeBWorK::Utils::ListingDB;
 
 # we use x to mark strings for maketext
+use constant INCLUDE_CONTRIB_DEFAULT => 0;
 use constant SHOW_HINTS_DEFAULT => 0;
 use constant SHOW_SOLUTIONS_DEFAULT => 0;
 use constant MAX_SHOW_DEFAULT => 20;
@@ -344,6 +345,7 @@ sub view_problems_line {
 	my $internal_name = shift;
 	my $label         = shift;
 	my $r             = shift;    # so we can get parameter values
+	my $contrib_exist = (-r $r->ce->{courseDirs}{templates}.'/Contrib') ? 1 : 0;
 
 	my $result = CGI::start_div({ class => 'd-flex flex-wrap justify-content-center' });
 
@@ -385,9 +387,33 @@ sub view_problems_line {
 		})
 	);
 
+	my $maybe_OPL_box = $contrib_exist ? CGI::div(
+		{ class => 'form-check form-check-inline ms-2' },
+		CGI::checkbox({
+			name            => 'includeOPL',
+			checked         => $r->param('includeOPL') // 1,
+			label           => $r->maketext('Include OPL'),
+			class           => 'form-check-input me-1',
+			labelattributes => { class => 'form-check-label col-form-label-sm' }
+		})
+	) : ();
+
+	my $maybe_contrib_box = $contrib_exist ? CGI::div(
+		{ class => 'form-check form-check-inline ms-2' },
+		CGI::checkbox({
+			name            => 'includeContrib',
+			checked         => $r->param('includeContrib') // INCLUDE_CONTRIB_DEFAULT,
+			label           => $r->maketext('Include Contrib'),
+			class           => 'form-check-input me-1',
+			labelattributes => { class => 'form-check-label col-form-label-sm' }
+		})
+	) : ();
+
 	# Option of whether to show hints and solutions
 	$result .= CGI::div(
 		{ class => 'd-inline-block ms-2 mb-2' },
+		$maybe_OPL_box,
+		$maybe_contrib_box,
 		CGI::div(
 			{ class => 'form-check form-check-inline ms-2' },
 			CGI::checkbox({
@@ -407,7 +433,8 @@ sub view_problems_line {
 				class           => 'form-check-input me-1',
 				labelattributes => { class => 'form-check-label col-form-label-sm' }
 			})
-		)
+		),
+		CGI::hidden({name => 'includeOPL', default => $contrib_exist ? 0 : 1})
 	);
 
 	$result .= CGI::end_div();
@@ -1588,9 +1615,12 @@ sub process_search {
 	my %mlt = ();
 	my $mltind;
 	for my $indx (0..$#dbsearch) {
-		$dbsearch[$indx]->{filepath} = "Library/".$dbsearch[$indx]->{path}."/".$dbsearch[$indx]->{filename};
-# For debugging
-$dbsearch[$indx]->{oindex} = $indx;
+		$dbsearch[$indx]->{filepath} = 
+			$dbsearch[$indx]->{libraryroot} . "/" .
+			$dbsearch[$indx]->{path} . "/" .
+			$dbsearch[$indx]->{filename};
+		# For debugging
+		$dbsearch[$indx]->{oindex} = $indx;
 		if($mltind = $dbsearch[$indx]->{morelt}) {
 			if(defined($mlt{$mltind})) {
 				push @{$mlt{$mltind}}, $indx;
@@ -1832,6 +1862,7 @@ sub pre_header_initialize {
 	} elsif ($r->param('lib_view')) {
 
 		@pg_files=();
+		# TODO: deprecate OPLv1 -- replace getSectionListings with getDBListings($r,0)
 		my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r);
 		@pg_files = process_search($r, @dbsearch);
 		$use_previous_problems=0;
@@ -2054,8 +2085,8 @@ sub body {
 		));
 	}
 
-	my $showHints = $r->param('showHints');
-	my $showSolutions = $r->param('showSolutions');
+	# my $showHints = $r->param('showHints');
+	# my $showSolutions = $r->param('showSolutions');
 
 	##########	Extract information computed in pre_header_initialize
 

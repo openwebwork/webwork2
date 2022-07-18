@@ -9,7 +9,10 @@
 	// Gateway timer
 	const timerDiv = document.getElementById('gwTimer'); // The timer div element
 	let actuallySubmit = false; // This needs to be set to true to allow an actual submission.
-	const submitAnswers = document.gwquiz.elements.submitAnswers; // The 'Grade Test' submit button.
+	// The 'Grade Test' submit button.
+	const submitAnswers = document.gwquiz.elements.submitAnswers instanceof NodeList
+		? document.gwquiz.elements.submitAnswers[document.gwquiz.elements.submitAnswers.length - 1]
+		: document.gwquiz.elements.submitAnswers;
 	let timeDelta; // The difference between the browser time and the server time
 	let serverDueTime; // The time the test is due
 	let gracePeriod; // The grace period
@@ -115,7 +118,7 @@
 	};
 
 	// Show a confirmation dialog when a student clicks 'Grade Test'.
-	if (typeof submitAnswers?.dataset.confirmDialogMessage !== 'undefined') {
+	if (typeof submitAnswers?.dataset?.confirmDialogMessage !== 'undefined') {
 		submitAnswers.addEventListener('click', (evt) => {
 			// Don't show the dialog if the test is timed and in the last 90 seconds.
 			// The alerts above are now being shown telling the student to submit the test.

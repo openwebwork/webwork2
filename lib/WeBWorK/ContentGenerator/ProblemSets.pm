@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -360,12 +360,15 @@ sub setListRow {
 			$status .= restricted_progression_msg($r,0,$restriction, @restricted);
 			$setIsOpen = 0;
 		} elsif ($LTIRestricted) {
-			$status .= CGI::br().$r->maketext(
-				"You must log into this set via your Learning Management System ([_1]).",
-				$ce->{LMS_name}
-			);
-			$control = "" unless $preOpenSets;
-			$interactive = $display_name unless $preOpenSets;
+			unless ($preOpenSets) {
+				my $LMS = $ce->{LMS_url} ? CGI::a({ href => $ce->{LMS_url} }, $ce->{LMS_name}) : $ce->{LMS_name};
+				$status .= CGI::br().$r->maketext(
+					"You must log into this set via your Learning Management System ([_1]).",
+					$LMS
+				);
+				$control = "";
+				$interactive = $display_name;
+			}
 			$setIsOpen = 0;
 		} else {
 			$setIsOpen = 1;

@@ -95,6 +95,16 @@
 				},
 				timeout: 10000,
 				success: () => {
+					// Update the hidden problem status fields and score table for gateway quizzes
+					if (saveData.versionId !== '0') {
+						for (const scoreCell of document.querySelectorAll(
+							`table.gwNavigation td.score[data-problem-id="${saveData.problemId}"]`)) {
+							scoreCell.textContent = scoreInput.value == '100' ? '\u{1F4AF}' : scoreInput.value;
+						}
+						document.gwquiz.elements['probstatus' + saveData.problemId].value =
+							parseInt(scoreInput.value) / 100;
+					}
+
 					if (saveData.pastAnswerId !== '0') {
 						// Save the comment.
 						const comment = document.getElementById(`comment_problem${saveData.problemId}`)?.value;

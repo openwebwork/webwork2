@@ -142,8 +142,12 @@ sub siblings {
 			print CGI::li(
 				{ class => 'nav-item' },
 				CGI::a(
-					{ href => $self->systemLink($userStatisticsPage), class => 'nav-link' },
-					"$last_name, $first_name  ($user_id)"
+					{
+						$user_id eq $self->{studentName}
+						? (class => 'nav-link active')
+						: (href => $self->systemLink($userStatisticsPage), class => 'nav-link')
+					},
+					"$last_name, $first_name ($user_id)"
 				)
 			);
 		}
@@ -162,7 +166,11 @@ sub siblings {
 			print CGI::li(
 				{ class => 'nav-item' },
 				CGI::a(
-					{ href => $self->systemLink($problemPage), class => 'nav-link' },
+					{
+						defined $self->{setName} && $setID eq $self->{setName}
+						? (class => 'nav-link active')
+						: (href => $self->systemLink($problemPage), class => 'nav-link')
+					},
 					format_set_name_display($setID)
 				)
 			);
@@ -505,13 +513,13 @@ sub displaySets {
 					last_name     => $studentRecord->last_name(),
 					first_name    => $studentRecord->first_name(),
 					score         => 0,
-					total         => $r->maketext('n/a'),
+					total         => 'n/a',
 					section       => $studentRecord->section(),
 					recitation    => $studentRecord->recitation(),
 					problemsRow   => [$r->maketext('no attempt recorded')],
 					email_address => $studentRecord->email_address(),
-					date          => $r->maketext('none'),
-					testtime      => $r->maketext('none'),
+					date          => 'n/a',
+					testtime      => 'n/a',
 				};
 			}
 
@@ -526,13 +534,13 @@ sub displaySets {
 				last_name     => $studentRecord->last_name(),
 				first_name    => $studentRecord->first_name(),
 				score         => 0,
-				total         => $r->maketext('n/a'),
+				total         => 'n/a',
 				section       => $studentRecord->section(),
 				recitation    => $studentRecord->recitation(),
 				problemsRow   => ['&nbsp;'],
 				email_address => $studentRecord->email_address(),
-				date          => $r->maketext('none'),
-				testtime      => $r->maketext('none'),
+				date          => 'n/a',
+				testtime      => 'n/a',
 			};
 			push(@score_list,           0);
 			push(@augmentedUserRecords, $dataH);

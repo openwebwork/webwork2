@@ -314,6 +314,7 @@ EOF
 					values   => $dirs,
 					labels   => $dirlabels,
 					class    => 'form-select',
+					dir      => 'ltr',
 					onChange => "doForm('Go')"
 				})
 			)
@@ -345,7 +346,8 @@ EOF
 			fixSpaces(CGI::scrolling_list({
 				name       => "files",
 				id         => "files",
-				class      => "form-select font-monospace",
+				class      => 'form-select font-monospace h-100',
+				dir        => 'ltr',
 				size       => 17,
 				multiple   => 1,
 				values     => $files,
