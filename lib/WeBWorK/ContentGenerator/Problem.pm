@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,8 +35,10 @@ use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
-use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted
-	ref2string makeTempDirectory path_is_subdir sortByName before after between wwRound is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_problem_finished);
+use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted ref2string
+	makeTempDirectory path_is_subdir before after between wwRound is_jitar_problem_closed is_jitar_problem_hidden
+	jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_problem_finished getAssetURL
+	format_set_name_display);
 use WeBWorK::DB::Utils qw(global2user user2global);
 require WeBWorK::Utils::ListingDB;
 use URI::Escape;
@@ -249,7 +251,7 @@ sub can_useWirisEditor {
 
     return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'WIRIS';
 }
-    
+
 sub can_useMathQuill {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce= $self->r->ce;
@@ -357,12 +359,9 @@ sub attemptResults {
 	# render equation images
 	my $answerTemplate = $tbl->answerTemplate;
 	   # answerTemplate collects all the formulas to be displayed in the attempts table
-	   # answerTemplate also collects the correct_ids and incorrect_ids
 	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 	    # after all of the formulas have been collected the render command creates png's for them
 	    # refresh=>1 insures that we never reuse old images -- since the answers change frequently
-	$self->{correct_ids}   = $tbl->correct_ids;
-	$self->{incorrect_ids} = $tbl->incorrect_ids;
 	return $answerTemplate;
 
 }
@@ -440,26 +439,13 @@ sub pre_header_initialize {
 
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};
 
-	# Database fix (in case of undefined visiblity state values)
-	# this is only necessary because some people keep holding to ww1.9 which did not have a visible field
-	# make sure visible is set to 0 or 1
-	if ( $set and $set->visible ne "0" and $set->visible ne "1") {
-		my $globalSet = $db->getGlobalSet($set->set_id);
-		$globalSet->visible("1");	# defaults to visible
-		$db->putGlobalSet($globalSet);
-		$set = $db->getMergedSet($effectiveUserName, $setName);
-	} else {
-		# don't do anything just yet, maybe we're a professor and we're
-		# fabricating a set or haven't assigned it to ourselves just yet
-	}
-		# When a set is created enable_reduced_scoring is null, so we have to set it
+	# When a set is created enable_reduced_scoring is null, so we have to set it
 	if ( $set and $set->enable_reduced_scoring ne "0" and $set->enable_reduced_scoring ne "1") {
 		my $globalSet = $db->getGlobalSet($set->set_id);
 		$globalSet->enable_reduced_scoring("0");	# defaults to disabled
 		$db->putGlobalSet($globalSet);
 		$set = $db->getMergedSet($effectiveUserName, $setName);
 	}
-
 
 	# obtain the merged problem for $effectiveUser
 	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
@@ -709,9 +695,14 @@ sub pre_header_initialize {
 			$problem->{problem_seed} = ($problem->{problem_seed} + $problem->num_correct + $problem->num_incorrect) % 10000;
 			$problem->{prCount} = 0;
 		}
-		$db->putUserProblem($problem) if $problem->{prCount} > -1;
+		if ($problem->{prCount} > -1) {
+			my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id);
+			$pureProblem->problem_seed($problem->{problem_seed});
+			$pureProblem->prCount($problem->{prCount});
+			$db->putUserProblem($pureProblem);
+		}
 	}
-	
+
 	# final values for options
 	my %will;
 	foreach (keys %must) {
@@ -743,15 +734,18 @@ sub pre_header_initialize {
 		$problem,
 		$set->psvn,
 		$formFields,
-		{ # translation options
-			displayMode     => $displayMode,
-			showHints       => $will{showHints},
-			showResourceInfo => $will{showResourceInfo},
-			showSolutions   => $will{showSolutions},
-			refreshMath2img => $will{showHints} || $will{showSolutions},
-			processAnswers  => 1,
-			permissionLevel => $db->getPermissionLevel($userName)->permission,
+		{    # translation options
+			displayMode              => $displayMode,
+			showHints                => $will{showHints},
+			showResourceInfo         => $will{showResourceInfo},
+			showSolutions            => $will{showSolutions},
+			refreshMath2img          => $will{showHints} || $will{showSolutions},
+			processAnswers           => 1,
+			permissionLevel          => $db->getPermissionLevel($userName)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+			useMathQuill             => $will{useMathQuill},
+			useMathView              => $will{useMathView},
+			useWirisEditor           => $will{useWirisEditor},
 		},
 	);
 
@@ -777,7 +771,7 @@ sub pre_header_initialize {
 			$will{recordAnswers} = 0;
 		}
 	}
-	
+
 	##### update and fix hint/solution options after PG processing #####
 
 	$can{showHints}     &&= $pg->{flags}->{hintExists}
@@ -805,9 +799,6 @@ sub pre_header_initialize {
 	$self->{can}  = \%can;
 	$self->{will} = \%will;
 	$self->{pg} = $pg;
-
-	WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
-	if ($self->{will}->{useMathQuill});
 
 	#### process and log answers ####
 	$self->{scoreRecordedMessage} = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
@@ -884,19 +875,11 @@ sub siblings {
 	my $courseID = $urlpath->arg("courseID");
 	my $setID = $self->{set}->set_id;
 	my $eUserID = $r->param("effectiveUser");
-	my @problemIDs = sort { $a <=> $b } $db->listUserProblems($eUserID, $setID);
 
-	my $isJitarSet = 0;
+	my @problemRecords = $db->getMergedProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
+	my @problemIDs     = map { $_->problem_id } @problemRecords;
 
-	if ($setID) {
-	    my $set = $r->db->getGlobalSet($setID);
-	    if ($set && $set->assignment_type eq 'jitar') {
-		$isJitarSet = 1;
-	    }
-	}
-
-	my @where = map {[$eUserID, $setID, $_]} @problemIDs;
-	my @problemRecords = $db->getMergedProblems(@where);
+	my $isJitarSet = $setID ne 'Undefined_Set' && $self->{set}->assignment_type eq 'jitar' ? 1 : 0;
 
 	# variables for the progress bar
 	my $num_of_problems  = 0;
@@ -909,239 +892,405 @@ sub siblings {
 	my $progressBarEnabled = $r->ce->{pg}->{options}->{enableProgressBar};
 
 
-	print CGI::start_div({class=>"info-box", id=>"fisheye"});
-	print CGI::h2($r->maketext("Problems"));
-	print CGI::start_ul({class=>"problem-list"});
+	print CGI::start_div({ class => 'info-box', id => 'fisheye' });
+	print CGI::h2($r->maketext('Problems'));
 
 	my @items;
 
 	foreach my $problemID (@problemIDs) {
-	  if ($isJitarSet && !$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_hidden($db,$eUserID, $setID, $problemID)) {
-		shift(@problemRecords) if $progressBarEnabled;
-		next;
-	      }
+		if ($isJitarSet && !$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_hidden($db,$eUserID, $setID, $problemID)) {
+			shift(@problemRecords) if $progressBarEnabled;
+			next;
+		}
 
-	  my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, courseID => $courseID, setID => $setID, problemID => $problemID);
-	  my $link;
+		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, courseID => $courseID, setID => $setID, problemID => $problemID);
+		my $link;
 
-	  my $status_symbol = '';
-	  if($progressBarEnabled){
-	    my $problemRecord = shift(@problemRecords);
-	    $num_of_problems++;
-	    my $total_attempts = $problemRecord->num_correct+$problemRecord->num_incorrect;
+		my $status_symbol = '';
+		if($progressBarEnabled){
+			my $problemRecord = shift(@problemRecords);
+			$num_of_problems++;
+			my $total_attempts = $problemRecord->num_correct+$problemRecord->num_incorrect;
 
-	    my $status = $problemRecord->status;
-	    if ($isJitarSet) {
-	      $status = jitar_problem_adjusted_status($problemRecord,$db);
-	    }
-
-	    # variables for the widths of the bars in the Progress Bar
-	    if( $status ==1 ){
-	      # correct
-	      $total_correct++;
-	      $status_symbol = " &#x2713;"; # checkmark
-	    } else {
-	      # incorrect
-	      if($total_attempts >= $problemRecord->max_attempts and $problemRecord->max_attempts!=-1){
-			$total_incorrect++;
-			$status_symbol = " &#x2717;"; # cross
-	      } else {
-			# in progress
-			if($problemRecord->attempted>0){
-			  $total_inprogress++;
-			  $status_symbol = " &hellip;"; # horizontal ellipsis
+			my $status = $problemRecord->status;
+			if ($isJitarSet) {
+				$status = jitar_problem_adjusted_status($problemRecord,$db);
 			}
-	      }
-	    }
-	  }
 
-	  # if its a jitar set we need to hide and disable links to hidden or restricted
-	  # problems.
-	  if ($isJitarSet) {
+			# variables for the widths of the bars in the Progress Bar
+			if( $status ==1 ){
+				# correct
+				$total_correct++;
+				$status_symbol = " &#x2713;"; # checkmark
+			} else {
+				# incorrect
+				if($total_attempts >= $problemRecord->max_attempts and $problemRecord->max_attempts!=-1){
+					$total_incorrect++;
+					$status_symbol = " &#x2717;"; # cross
+				} else {
+					# in progress
+					if($problemRecord->attempted>0){
+						$total_inprogress++;
+						$status_symbol = " &hellip;"; # horizontal ellipsis
+					}
+				}
+			}
+		}
 
-	    my @seq = jitar_id_to_seq($problemID);
-	    my $level = $#seq;
-	    my $class = '';
-	    if ($level != 0) {
-	      $class='nested-problem-'.$level;
-	    }
+		my $active = ($progressBarEnabled && $currentProblemID eq $problemID);
 
-	    if (!$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_closed($db, $ce, $eUserID, $setID, $problemID)) {
-	      $link = CGI::a( {href=>'#', class=>$class.' disabled-problem'},  $r->maketext("Problem [_1]", join('.',@seq)));
-	    } else {
-	      $link = CGI::a( {class=>$class,href=>$self->systemLink($problemPage)},  $r->maketext("Problem [_1]", join('.',@seq)).($progressBarEnabled?$status_symbol:""));
+		if ($isJitarSet) {
+			# If it is a jitar set, we need to hide and disable links to hidden or restricted problems.
+			my @seq = jitar_id_to_seq($problemID);
+			my $level = $#seq;
+			my $class = 'nav-link' . ($active ? ' active' : '');
+			if ($level != 0) {
+				$class .= ' nested-problem-' . $level;
+			}
 
-	    }
-	  } else {
-	    $link = CGI::a( {href=>$self->systemLink($problemPage)},  $r->maketext("Problem [_1]", $problemID).($progressBarEnabled?$status_symbol:""));
-	  }
+			if (!$authz->hasPermissions($eUserID, "view_unopened_sets")
+				&& is_jitar_problem_closed($db, $ce, $eUserID, $setID, $problemID))
+			{
+				$link = CGI::a(
+					{ href => '#', class => $class . ' disabled-problem' },
+					$r->maketext("Problem [_1]", join('.', @seq))
+				);
+			} else {
+				$link = CGI::a(
+					{
+						$active ? (class => $class)
+						: (href => $self->systemLink($problemPage), class => $class)
+					},
+					$r->maketext('Problem [_1]', join('.', @seq)) . ($progressBarEnabled ? $status_symbol : '')
+				);
+			}
+		} else {
+			$link = CGI::a(
+				{
+					$active ? (class => 'nav-link active')
+					: (href => $self->systemLink($problemPage), class => 'nav-link')
+				},
+				$r->maketext('Problem [_1]', $problemID) . ($progressBarEnabled ? $status_symbol : '')
+			);
+		}
 
-	  push @items, CGI::li({($progressBarEnabled && $currentProblemID eq $problemID ? ('class','currentProblem'):())},$link);
+		push @items, CGI::li({ class => 'nav-item' }, $link);
 	}
 
 	# output the progress bar
-	if($num_of_problems>0 and $r->ce->{pg}->{options}->{enableProgressBar}){
-	    my $unattempted = $num_of_problems - $total_correct - $total_incorrect - $total_inprogress;
-	    my $progress_bar_correct_width = $total_correct*100/$num_of_problems;
-	    my $progress_bar_incorrect_width = $total_incorrect*100/$num_of_problems;
-	    my $progress_bar_inprogress_width = $total_inprogress*100/$num_of_problems;
-	    my $progress_bar_unattempted_width = $unattempted*100/$num_of_problems;
+	if ($num_of_problems > 0 && $r->ce->{pg}->{options}->{enableProgressBar}) {
+		my $unattempted                    = $num_of_problems - $total_correct - $total_incorrect - $total_inprogress;
+		my $progress_bar_correct_width     = $total_correct * 100 / $num_of_problems;
+		my $progress_bar_incorrect_width   = $total_incorrect * 100 / $num_of_problems;
+		my $progress_bar_inprogress_width  = $total_inprogress * 100 / $num_of_problems;
+		my $progress_bar_unattempted_width = $unattempted * 100 / $num_of_problems;
 
-	    # construct the progress bar
-	    #       CORRECT | IN PROGRESS | INCORRECT | UNATTEMPTED
-	    my $progress_bar = CGI::start_div({-class=>"progress-bar set-id-tooltip",
-					       "aria-label"=>"progress bar for current problem set",
-					      });
-	    if($total_correct>0){
-		$progress_bar .= CGI::div({-class=>"correct-progress set-id-tooltip",-style=>"width:$progress_bar_correct_width%",
-					   "aria-label"=>"correct progress bar for current problem set",
-					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"",
-					   "data-original-title"=>$r->maketext("Correct: [_1]/[_2]",$total_correct,$num_of_problems)
-					  });
-		# perfect scores deserve some stars (&#9733;)
-		$progress_bar .= ($total_correct == $num_of_problems)?"&#9733;Perfect&#9733;":"";
+		# Construct the progress bar.
+		# CORRECT | IN PROGRESS | INCORRECT | UNATTEMPTED
+		my $progress_bar = CGI::start_div({
+			class      => 'progress set-id-tooltip',
+			aria_label => 'progress bar for current problem set',
+			role       => 'figure'
+		});
+		if ($total_correct > 0) {
+			$progress_bar .= CGI::div(
+				{
+					class             => 'progress-bar correct-progress set-id-tooltip',
+					style             => "width:$progress_bar_correct_width%",
+					aria_label        => 'correct progress bar for current problem set',
+					role              => 'figure',
+					data_bs_toggle    => 'tooltip',
+					data_bs_placement => 'bottom',
+					data_bs_title     => $r->maketext('Correct: [_1]/[_2]', $total_correct, $num_of_problems)
+				},
+				# perfect scores deserve some stars (&#9733;)
+				$total_correct == $num_of_problems ? '&#9733;Perfect&#9733;' : ''
+			);
+		}
+		if ($total_inprogress > 0) {
+			$progress_bar .= CGI::div(
+				{
+					class             => 'progress-bar inprogress-progress set-id-tooltip',
+					style             => "width:$progress_bar_inprogress_width%",
+					aria_label        => 'in progress bar for current problem set',
+					role              => 'figure',
+					data_bs_toggle    => 'tooltip',
+					data_bs_placement => 'bottom',
+					data_bs_title     => $r->maketext('In progress: [_1]/[_2]', $total_inprogress, $num_of_problems)
+				},
+				''
+			);
+		}
+		if ($total_incorrect > 0) {
+			$progress_bar .= CGI::div(
+				{
+					class             => 'progress-bar incorrect-progress set-id-tooltip',
+					style             => "width:$progress_bar_incorrect_width%",
+					aria_label        => 'incorrect progress bar for current problem set',
+					role              => 'figure',
+					data_bs_toggle    => 'tooltip',
+					data_bs_placement => 'bottom',
+					data_bs_title     => $r->maketext('Incorrect: [_1]/[_2]', $total_incorrect, $num_of_problems)
+				},
+				''
+			);
+		}
+		if ($unattempted > 0) {
+			$progress_bar .= CGI::div(
+				{
+					class             => 'progress-bar unattempted-progress set-id-tooltip',
+					style             => "width:$progress_bar_unattempted_width%",
+					aria_label        => 'unattempted progress bar for current problem set',
+					role              => 'figure',
+					data_bs_toggle    => 'tooltip',
+					data_bs_placement => 'bottom',
+					data_bs_title     => $r->maketext('Unattempted: [_1]/[_2]', $unattempted, $num_of_problems)
+				},
+				''
+			);
+		}
+		# close the progress bar div
 		$progress_bar .= CGI::end_div();
-	    }
-	    if($total_inprogress>0){
-		$progress_bar .= CGI::div({-class=>"inprogress-progress set-id-tooltip",-style=>"width:$progress_bar_inprogress_width%",
-					   "aria-label"=>"in progress bar for current problem set",
-					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"",
-					   "data-original-title"=>$r->maketext("In progress: [_1]/[_2]",$total_inprogress, $num_of_problems)
-					  });
-		$progress_bar .= CGI::end_div();
-	    }
-	    if($total_incorrect>0){
-		$progress_bar .= CGI::div({-class=>"incorrect-progress set-id-tooltip",-style=>"width:$progress_bar_incorrect_width%",
-					   "aria-label"=>"incorrect progress bar for current problem set",
-					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"",
-					   "data-original-title"=>$r->maketext("Incorrect: [_1]/[_2]",$total_incorrect,$num_of_problems)
-					  });
-		$progress_bar .= CGI::end_div();
-	    }
-	    if($unattempted>0){
-		$progress_bar .= CGI::div({-class=>"unattempted-progress set-id-tooltip",-style=>"width:$progress_bar_unattempted_width%",
-					   "aria-label"=>"unattempted progress bar for current problem set",
-					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"",
-					   "data-original-title"=>$r->maketext("Unattempted: [_1]/[_2]",$unattempted,$num_of_problems)
-					  });
-		$progress_bar .= CGI::end_div();
-	    }
-	    # close the progress bar div
-	    $progress_bar .= CGI::end_div();
 
-	    # output to the screen
-	    print $progress_bar;
+		# output to the screen
+		print $progress_bar;
 	}
 
-	print @items;
+	print CGI::ul({ class => 'nav flex-column problem-list' }, @items);
 
-	print CGI::end_ul();
 	print CGI::end_div();
 
-	return "";
+	return '';
 }
 
 sub nav {
 	my ($self, $args) = @_;
-	my $r = $self->r;
+	my $r   = $self->r;
 	my %can = %{ $self->{can} };
 
-	my $db = $r->db;
-	my $ce = $r->ce;
-	my $authz = $r->authz;
+	my $db      = $r->db;
+	my $ce      = $r->ce;
+	my $authz   = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	return "" if ( $self->{invalidSet} );
-
-	my $courseID = $urlpath->arg("courseID");
-	my $setID = $self->{set}->set_id;
+	my $courseID  = $urlpath->arg('courseID');
+	my $setID     = $self->{set}->set_id;
 	my $problemID = $self->{problem}->problem_id if !($self->{invalidProblem});
-	my $userID = $r->param('user');
-	my $eUserID = $r->param("effectiveUser");
+	my $userID    = $r->param('user');
+	my $eUserID   = $r->param('effectiveUser');
+
+	my $mergedSet = $db->getMergedSet($eUserID, $setID);
+	return '' if $self->{invalidSet} || !$mergedSet;
 
 	# Set up a student navigation for those that have permission to act as a student.
-	my $userNav = "";
-	if ($authz->hasPermissions($userID, "become_student") && $eUserID ne $userID) {
-		# Find all users for this set (except the current user).
-		my @userRecords = $db->getUsers(grep { $_ ne $userID } $db->listSetUsers($setID));
+	my $userNav = '';
+	if ($authz->hasPermissions($userID, 'become_student') && $eUserID ne $userID) {
+		# Find all users for this set (except the current user) sorted by last_name, then first_name, then user_id.
+		my @allUserRecords = $db->getUsersWhere(
+			{
+				user_id => [
+					map { $_->[0] } $db->listUserSetsWhere({ set_id => $setID, user_id => { not_like => $userID } })
+				]
+			},
+			[qw/last_name first_name user_id/]
+		);
 
-		# Sort by last name, then first name, then user_id.
-		@userRecords = sort {
-			lc($a->last_name) cmp lc($b->last_name) ||
-			lc($a->first_name) cmp lc($b->first_name) ||
-			lc($a->user_id) cmp lc($b->user_id)
-		} @userRecords;
+		my $filter = $r->param('studentNavFilter');
 
 		# Find the previous, current, and next users, and format the student names for display.
+		# Also create a hash of sections and recitations if there are any for the course.
+		my @userRecords;
 		my $currentUserIndex = 0;
-		for (0 .. $#userRecords) {
-			$currentUserIndex = $_ if $userRecords[$_]->user_id eq $eUserID;
+		my %filters;
+		for (@allUserRecords) {
+			# Add to the sections and recitations if defined.  Also store the first user found in that section or
+			# recitation.  This user will be switched to when the filter is selected.
+			my $section = $_->section;
+			$filters{"section:$section"} = [ $r->maketext('Filter by section [_1]', $section), $_->user_id ]
+				if $section && !$filters{"section:$section"};
+			my $recitation = $_->recitation;
+			$filters{"recitation:$recitation"} = [ $r->maketext('Filter by recitation [_1]', $recitation), $_->user_id ]
+				if $recitation && !$filters{"recitation:$recitation"};
+
+			# Only keep this user if it satisfies the selected filter if a filter was selected.
+			next
+				unless !$filter
+				|| ($filter =~ /^section:(.*)$/    && $_->section eq $1)
+				|| ($filter =~ /^recitation:(.*)$/ && $_->recitation eq $1);
+
+			my $addRecord = $_;
+			$currentUserIndex = @userRecords if $addRecord->user_id eq $eUserID;
+			push @userRecords, $addRecord;
+
 			# Construct a display name.
-			$userRecords[$_]{displayName} = ($userRecords[$_]->last_name || $userRecords[$_]->first_name
-				? $userRecords[$_]->last_name . ", " . $userRecords[$_]->first_name
-				: $userRecords[$_]->user_id);
+			$addRecord->{displayName} =
+				($addRecord->last_name || $addRecord->first_name
+					? $addRecord->last_name . ', ' . $addRecord->first_name
+					: $addRecord->user_id);
 		}
-		my $prevUser = $currentUserIndex > 0 ? $userRecords[$currentUserIndex - 1] : 0;
-		my $nextUser = $currentUserIndex < $#userRecords ? $userRecords[$currentUserIndex + 1] : 0;
+		my $prevUser = $currentUserIndex > 0             ? $userRecords[ $currentUserIndex - 1 ] : 0;
+		my $nextUser = $currentUserIndex < $#userRecords ? $userRecords[ $currentUserIndex + 1 ] : 0;
 
 		# Mark the current user.
 		$userRecords[$currentUserIndex]{currentUser} = 1;
 
 		my $problemPage = $urlpath->newFromModule(__PACKAGE__, $r,
-			courseID => $courseID, setID => $setID, problemID => $problemID);
+			courseID  => $courseID,
+			setID     => $setID,
+			problemID => $problemID
+		);
 
 		# Cap the number of students shown to at most 200.
-		my $numAfter = $#userRecords - $currentUserIndex;
-		my $numBefore = 200 - ($numAfter < 100 ? $numAfter : 100);
-		my $minStudentIndex = $currentUserIndex < $numBefore ? 0 : $currentUserIndex - $numBefore;
+		my $numAfter        = $#userRecords - $currentUserIndex;
+		my $numBefore       = 200 - ($numAfter < 100 ? $numAfter : 100);
+		my $minStudentIndex = $currentUserIndex < $numBefore         ? 0 : $currentUserIndex - $numBefore;
 		my $maxStudentIndex = $minStudentIndex + 200 < $#userRecords ? $minStudentIndex + 200 : $#userRecords;
 
 		# Set up the student nav.
-		$userNav = join("",
-			CGI::start_div({ class => 'user-nav' }),
-			$prevUser
-			? CGI::a({
-					href => $self->systemLink($problemPage, params => { effectiveUser => $prevUser->user_id,
-							showProblemGrader => $self->{will}{showProblemGrader} }),
-					data_toggle => "tooltip", data_placement => "top",
-					title => $prevUser->{displayName},
-					class => "nav_button student-nav-button"
-				}, $r->maketext("Previous Student"))
-			: CGI::span({ class => "gray_button" }, $r->maketext("Previous Student")),
-			$args->{separator},
-			CGI::start_span({ class => "btn-group student-nav-selector" }),
-			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown" },
-				$userRecords[$currentUserIndex]{displayName} . " " . CGI::span({ class => "caret" }, "")),
-			CGI::start_ul({ class => "dropdown-menu", role => "menu", aria_labelledby => "studentSelector" }),
-			(
-				map {
-					CGI::li(
-						CGI::a({ tabindex => "-1", style => $_->{currentUser} ? "background-color: #8F8" : "",
-							href => $self->systemLink($problemPage, params => { effectiveUser => $_->user_id,
-									showProblemGrader => $self->{will}{showProblemGrader} }) },
-						$_->{displayName})
+		$userNav = CGI::div(
+			{ class => 'user-nav d-flex submit-buttons-container' },
+			CGI::div(
+				{ class => 'btn-group', role => 'group', aria_label => 'student selector' },
+				$prevUser
+				? CGI::a(
+					{
+						href => $self->systemLink(
+							$problemPage,
+							params => {
+								effectiveUser     => $prevUser->user_id,
+								showProblemGrader => $self->{will}{showProblemGrader},
+								$filter ? (studentNavFilter => $filter) : ()
+							}
+						),
+						data_bs_toggle    => 'tooltip',
+						data_bs_placement => 'top',
+						title             => $prevUser->{displayName},
+						class             => 'btn btn-primary student-nav-button'
+					},
+					CGI::i({ class => 'fas fa-chevron-left' }, '')
 					)
-				}
-				@userRecords[$minStudentIndex .. $maxStudentIndex]
+				: CGI::span({ class => 'btn btn-primary disabled' },
+					CGI::i({ class => 'fas fa-chevron-left' }, '')),
+				CGI::div(
+					{ class => 'btn-group student-nav-selector' },
+					CGI::a(
+						{
+							href           => '#',
+							id             => 'studentSelector',
+							class          => 'btn btn-primary dropdown-toggle',
+							role           => 'button',
+							data_bs_toggle => 'dropdown',
+							aria_expanded  => 'false'
+						},
+						$userRecords[$currentUserIndex]{displayName}
+					),
+					CGI::ul(
+						{ class => 'dropdown-menu', role => 'menu', aria_labelledby => 'studentSelector' },
+						map {
+							CGI::li(CGI::a(
+								{
+									style => $_->{currentUser} ? 'background-color: #8F8' : '',
+									class => 'dropdown-item',
+									href  => $self->systemLink(
+										$problemPage,
+										params => {
+											effectiveUser     => $_->user_id,
+											showProblemGrader => $self->{will}{showProblemGrader},
+											$filter ? (studentNavFilter => $filter) : ()
+										}
+									)
+								},
+								$_->{displayName}
+							))
+						} @userRecords[ $minStudentIndex .. $maxStudentIndex ]
+					)
+				),
+				$nextUser
+				? CGI::a(
+					{
+						href => $self->systemLink(
+							$problemPage,
+							params => {
+								effectiveUser     => $nextUser->user_id,
+								showProblemGrader => $self->{will}{showProblemGrader},
+								$filter ? (studentNavFilter => $filter) : ()
+							}
+						),
+						data_bs_toggle    => 'tooltip',
+						data_bs_placement => 'top',
+						title             => $nextUser->{displayName},
+						class             => 'btn btn-primary student-nav-button'
+					},
+					CGI::i({ class => 'fas fa-chevron-right' }, '')
+					)
+				: CGI::span(
+					{ class => 'btn btn-primary disabled' },
+					CGI::i({ class => 'fas fa-chevron-right' }, '')
+				),
 			),
-			CGI::end_ul(),
-			CGI::end_span(),
-			$args->{separator},
-			$nextUser
-			? CGI::a({
-					href => $self->systemLink($problemPage, params => { effectiveUser => $nextUser->user_id,
-							showProblemGrader => $self->{will}{showProblemGrader} }),
-					data_toggle => "tooltip", data_placement => "top",
-					title => $nextUser->{displayName},
-					class => "nav_button student-nav-button"
-				}, $r->maketext("Next Student"))
-			: CGI::span({ class => "gray_button" }, $r->maketext("Next Student")),
-			CGI::end_div()
+			# Create a section/recitation "filter by" dropdown if there are sections or recitations.
+			scalar keys %filters
+			? CGI::div(
+				{ class => 'btn-group student-nav-filter-selector' },
+				CGI::a(
+					{
+						href           => '#',
+						id             => 'studentSelectorFilter',
+						class          => 'btn btn-primary dropdown-toggle',
+						role           => 'button',
+						data_bs_toggle => 'dropdown',
+						aria_expanded  => 'false',
+					},
+					$filter ? $filters{$filter}[0] : $r->maketext('Showing all students')
+				),
+				CGI::ul(
+					{
+						class           => 'dropdown-menu',
+						role            => 'menu',
+						aria_labelledby => 'studentSelectorFilter'
+					},
+					(
+						# If a filter is currently in use, then add an item that will remove that filter.
+						$filter
+						? CGI::li(CGI::a(
+							{
+								class => 'dropdown-item',
+								href  => $self->systemLink(
+									$problemPage,
+									params => {
+										effectiveUser     => $eUserID,
+										showProblemGrader => $self->{will}{showProblemGrader}
+									}
+								)
+							},
+							$r->maketext('Show all students')
+						))
+						: ''
+					),
+					(
+						map {
+							CGI::li(CGI::a(
+								{
+									class => 'dropdown-item',
+									style => ($filter || '') eq $_ ? 'background-color: #8F8' : '',
+									href  => $self->systemLink(
+										$problemPage,
+										params => {
+											effectiveUser     => $filters{$_}[1],
+											showProblemGrader => $self->{will}{showProblemGrader},
+											studentNavFilter  => $_
+										}
+									)
+								},
+								$filters{$_}[0]
+							))
+						} sort keys %filters
+					)
+				)
+				)
+			: ''
 		);
 	}
-
-	my $mergedSet = $db->getMergedSet($eUserID,$setID);
-	return "" unless $mergedSet;
 
 	my $isJitarSet = ($mergedSet->assignment_type eq 'jitar');
 
@@ -1150,92 +1299,111 @@ sub nav {
 	# for jitar sets finding the next or previous problem, and seeing if it
 	# is actually open is a bit more of a process.
 	if (!$self->{invalidProblem}) {
-		my @problemIDs = $db->listUserProblems($eUserID, $setID);
-
-		@problemIDs = sort { $a <=> $b } @problemIDs;
-
+		my @problemIDs =
+			map { $_->[2] } $db->listUserProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
 
 		if ($isJitarSet) {
-		    my @processedProblemIDs;
-		    foreach my $id (@problemIDs) {
-			push @processedProblemIDs, $id unless
-			    !$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_hidden($db,$eUserID,$setID,$id);
-		    }
-		    @problemIDs = @processedProblemIDs;
+			my @processedProblemIDs;
+			foreach my $id (@problemIDs) {
+				push @processedProblemIDs, $id
+					unless !$authz->hasPermissions($eUserID, 'view_unopened_sets')
+					&& is_jitar_problem_hidden($db, $eUserID, $setID, $id);
+			}
+			@problemIDs = @processedProblemIDs;
 		}
 
 		my $curr_index = 0;
 
-		for (my $i=0; $i<=$#problemIDs; $i++) {
-		    $curr_index = $i if $problemIDs[$i] == $problemID;
+		for (my $i = 0; $i <= $#problemIDs; $i++) {
+			$curr_index = $i if $problemIDs[$i] == $problemID;
 		}
 
-		$prevID = $problemIDs[$curr_index-1] if $curr_index-1 >=0;
-		$nextID = $problemIDs[$curr_index+1] if $curr_index+1 <= $#problemIDs;
-		$nextID = '' if ($isJitarSet && $nextID
-				 && !$authz->hasPermissions($eUserID, "view_unopened_sets")
-				 && is_jitar_problem_closed($db,$ce, $eUserID,$setID,$nextID));
+		$prevID = $problemIDs[ $curr_index - 1 ] if $curr_index - 1 >= 0;
+		$nextID = $problemIDs[ $curr_index + 1 ] if $curr_index + 1 <= $#problemIDs;
+		$nextID = ''
+			if ($isJitarSet
+				&& $nextID
+				&& !$authz->hasPermissions($eUserID, 'view_unopened_sets')
+				&& is_jitar_problem_closed($db, $ce, $eUserID, $setID, $nextID));
 	}
 
 	my @links;
 
 	if ($prevID) {
 		my $prevPage = $urlpath->newFromModule(__PACKAGE__, $r,
-			courseID => $courseID, setID => $setID, problemID => $prevID);
-		push @links, $r->maketext("Previous Problem"), $r->location . $prevPage->path, $r->maketext("Previous Problem");
+			courseID  => $courseID,
+			setID     => $setID,
+			problemID => $prevID
+		);
+		push @links, $r->maketext('Previous Problem'), $r->location . $prevPage->path, $r->maketext('Previous Problem');
 	} else {
-		push @links, $r->maketext("Previous Problem"), "", $r->maketext("Previous Problem");
+		push @links, $r->maketext('Previous Problem'), '', $r->maketext('Previous Problem');
 	}
 
 	if (defined($setID) && $setID ne 'Undefined_Set') {
-		push @links, $r->maketext("Problem List"), $r->location . $urlpath->parent->path, $r->maketext("Problem List");
+		push @links, $r->maketext('Problem List'), $r->location . $urlpath->parent->path, $r->maketext('Problem List');
 	} else {
-		push @links, $r->maketext("Problem List"), "", $r->maketext("Problem List");
+		push @links, $r->maketext('Problem List'), '', $r->maketext('Problem List');
 	}
 
 	if ($nextID) {
 		my $nextPage = $urlpath->newFromModule(__PACKAGE__, $r,
-			courseID => $courseID, setID => $setID, problemID => $nextID);
-		push @links, $r->maketext("Next Problem"), $r->location . $nextPage->path, $r->maketext("Next Problem");
+			courseID  => $courseID,
+			setID     => $setID,
+			problemID => $nextID
+		);
+		push @links, $r->maketext('Next Problem'), $r->location . $nextPage->path, $r->maketext('Next Problem');
 	} else {
-		push @links, $r->maketext("Next Problem"), "", $r->maketext("Next Problem");
+		push @links, $r->maketext('Next Problem'), '', $r->maketext('Next Problem');
 	}
 
-	my $tail = "";
+	my $tail = '';
+	$tail .= "&displayMode=$self->{displayMode}"                   if defined $self->{displayMode};
+	$tail .= "&showOldAnswers=$self->{will}{showOldAnswers}"       if defined $self->{will}{showOldAnswers};
+	$tail .= "&showProblemGrader=$self->{will}{showProblemGrader}" if defined $self->{will}{showProblemGrader};
+	$tail .= '&studentNavFilter=' . $r->param('studentNavFilter')  if $r->param('studentNavFilter');
 
-	$tail .= "&displayMode=".$self->{displayMode} if defined $self->{displayMode};
-	$tail .= "&showOldAnswers=".$self->{will}->{showOldAnswers}
-		if defined $self->{will}->{showOldAnswers};
-	$tail .= "&showProblemGrader=" . $self->{will}{showProblemGrader}
-		if defined $self->{will}{showProblemGrader};
-	return $userNav . CGI::div($self->navMacro($args, $tail, @links));
+	return CGI::div({ class => 'row sticky-nav', role => 'navigation', aria_label => 'problem navigation' },
+		CGI::div({ class => 'd-flex submit-buttons-container' }, $self->navMacro($args, $tail, @links)), $userNav);
 }
 
 sub path {
 	my ($self, $args) = @_;
-	my $r = $self->r;
-	my $urlpath       = $r->urlpath;
-	my $courseName    = $urlpath->arg("courseID");
-	my $setName       = $urlpath->arg("setID") || '';
-	my $problemNumber = $urlpath->arg("problemID") || '';
+	my $r                   = $self->r;
+	my $urlpath             = $r->urlpath;
+	my $courseName          = $urlpath->arg('courseID');
+	my $setName             = $urlpath->arg('setID')     || '';
+	my $problemNumber       = $urlpath->arg('problemID') || '';
 	my $prettyProblemNumber = $problemNumber;
 
 	if ($setName) {
-	    my $set = $r->db->getGlobalSet($setName);
-	    if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
-		$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
-	    }
+		my $set = $r->db->getGlobalSet($setName);
+		if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
+			$prettyProblemNumber = join('.', jitar_id_to_seq($problemNumber));
+		}
 	}
 
-	my @path = ( 'WeBWorK', $r->location,
-	          "$courseName", $r->location."/$courseName",
-	          "$setName",    $r->location."/$courseName/$setName",
-	          "$prettyProblemNumber", $r->location."/$courseName/$setName/$problemNumber",
+	my $navigation_allowed = $r->authz->hasPermissions($r->param('user'), 'navigation_allowed');
+
+	my @path = (
+		WeBWorK     => $navigation_allowed ? $r->location                  : '',
+		$courseName => $navigation_allowed ? $r->location . "/$courseName" : '',
+		$setName    => $r->location . "/$courseName/$setName",
 	);
+
+	if ($urlpath->module =~ /ShowMeAnother$/) {
+		push(
+			@path,
+			$prettyProblemNumber => $r->location . "/$courseName/$setName/$problemNumber",
+			'Show Me Another'    => ''
+		);
+	} else {
+		push(@path, $prettyProblemNumber => '');
+	}
 
 	print $self->pathMacro($args, @path);
 
-	return "";
+	return '';
 }
 
 sub title {
@@ -1248,11 +1416,11 @@ sub title {
 	my $problemID = $self->r->urlpath->arg("problemID");
 
 	my $set = $db->getGlobalSet($setID);
-	$setID = WeBWorK::ContentGenerator::underscore2nbsp($setID);
+	$setID = CGI::span({ dir => 'ltr' }, format_set_name_display($setID));
 	if ($set && $set->assignment_type eq 'jitar') {
 	    $problemID = join('.',jitar_id_to_seq($problemID));
 	}
-	my $out = $r->maketext("[_1]: Problem [_2]",$setID, $problemID);
+	my $out = $r->maketext('[_1]: Problem [_2]', $setID, $problemID);
 
 	# Return here if we don't have the requisite information.
 	return $out if ($self->{invalidSet} || $self->{invalidProblem});
@@ -1260,7 +1428,7 @@ sub title {
 	my $ce = $r->ce;
 	my $problem = $self->{problem};
 
-	$out .= CGI::start_div({ class => "problem-sub-header" });
+	$out .= CGI::start_span({ class => "problem-sub-header d-block" });
 
 	my $problemValue = $problem->value;
 	if (defined($problemValue) && $problemValue ne "") {
@@ -1276,7 +1444,7 @@ sub title {
 		$out .= " " . $problem->source_file;
 	}
 
-	$out .= CGI::end_div();
+	$out .= CGI::end_span();
 
 	return $out;
 }
@@ -1350,7 +1518,13 @@ sub output_form_start{
 	my $r = $self->r;
 	my $startTime = $r->param('startTime') || time();
 
-	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm");
+	print CGI::start_form({
+		method => 'POST',
+		action => $r->uri,
+		id     => 'problemMainForm',
+		name   => 'problemMainForm',
+		class  => 'problem-main-form'
+	});
 	print $self->hidden_authen_fields;
 	print CGI::hidden({-name=>'startTime', -value=>$startTime});
 	return "";
@@ -1433,18 +1607,26 @@ sub output_editorLink{
 	my $courseName = $urlpath->arg("courseID");
 
 	# FIXME: move editor link to top, next to problem number.
-	# format as "[edit]" like we're doing with course info file, etc.
-	# add edit link for set as well.
-	my $editorLink = "";
-	# if we are here without a real homework set, carry that through
-	my $forced_field = [];
-	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
-		($set->set_id eq 'Undefined_Set');
-	if ($authz->hasPermissions($user, "modify_problem_sets")) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
-			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
-		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor'}, $r->maketext("Edit")));
+	my $editorLink = '';
+	if ($authz->hasPermissions($user, 'modify_problem_sets')) {
+		# If we are here without a real homework set, carry that through.
+		my $forced_field = $set->set_id eq 'Undefined_Set' ? [ 'sourceFilePath' => $r->param('sourceFilePath') ] : [];
+		$editorLink = CGI::span(CGI::a(
+			{
+				href => $self->systemLink(
+					$urlpath->newFromModule(
+						'WeBWorK::ContentGenerator::Instructor::PGProblemEditor', $r,
+						courseID  => $courseName,
+						setID     => $set->set_id,
+						problemID => $problem->problem_id
+					),
+					params => $forced_field
+				),
+				target => 'WW_Editor',
+				class  => 'btn btn-sm btn-secondary'
+			},
+			$r->maketext('Edit')
+		));
 	}
 	##### translation errors? #####
 
@@ -1465,198 +1647,169 @@ sub output_editorLink{
 }
 
 # output_checkboxes subroutine
-
 # prints out the checkbox input elements that are available for the current problem
+sub output_checkboxes {
+	my $self                  = shift;
+	my $r                     = $self->r;
+	my %can                   = %{ $self->{can} };
+	my %will                  = %{ $self->{will} };
+	my $ce                    = $r->ce;
+	my $showHintCheckbox      = $ce->{pg}{options}{show_hint_checkbox};
+	my $showSolutionCheckbox  = $ce->{pg}{options}{show_solution_checkbox};
+	my $useKnowlsForHints     = $ce->{pg}{options}{use_knowls_for_hints};
+	my $useKnowlsForSolutions = $ce->{pg}{options}{use_knowls_for_solutions};
 
-sub output_checkboxes{
-	my $self = shift;
-	my $r = $self->r;
-	my %can = %{ $self->{can} };
-	my %will = %{ $self->{will} };
-	my $ce = $r->ce;
-    my $showHintCheckbox      = $ce->{pg}->{options}->{show_hint_checkbox};
-    my $showSolutionCheckbox  = $ce->{pg}->{options}->{show_solution_checkbox};
-    my $useKnowlsForHints     = $ce->{pg}->{options}->{use_knowls_for_hints};
-	my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
-	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or
-	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo} ) {
-		print $r->maketext("Show:")."&nbsp;&nbsp;";
+	if ($can{showCorrectAnswers}
+		|| $can{showProblemGrader}
+		|| $can{showAnsGroupInfo}
+		|| ($can{showHints}     && ($showHintCheckbox     || !$useKnowlsForHints))
+		|| ($can{showSolutions} && ($showSolutionCheckbox || !$useKnowlsForSolutions))
+		|| $can{showAnsHashInfo}
+		|| $can{showPGInfo}
+		|| $can{showResourceInfo})
+	{
+		print CGI::span({ class => 'me-2' }, $r->maketext('Show:'));
 	}
+
 	if ($can{showCorrectAnswers}) {
-		print WeBWorK::CGI_labeled_input(
-			-type	 => "checkbox",
-			-id		 => "showCorrectAnswers_id",
-			-label_text => $r->maketext("CorrectAnswers"),
-			-input_attr => $will{showCorrectAnswers} ?
-			{
-				-name    => "showCorrectAnswers",
-				-checked => "checked",
-				-value   => 1,
-			}
-			:
-			{
-				-name    => "showCorrectAnswers",
-				-value   => 1,
-			}
-		),"&nbsp;";
+		print CGI::div(
+			{ class => 'form-check form-check-inline' },
+			CGI::checkbox({
+				id              => 'showCorrectAnswers_id',
+				name            => 'showCorrectAnswers',
+				value           => 1,
+				checked         => $will{showCorrectAnswers},
+				label           => $r->maketext('Correct Answers'),
+				class           => 'form-check-input',
+				labelattributes => { class => 'form-check-label' }
+			})
+		);
 	}
+
 	if ($can{showProblemGrader}) {
-		print WeBWorK::CGI_labeled_input(
-			-type        => "checkbox",
-			-id          => "showProblemGrader_id",
-			-label_text  => $r->maketext("ProblemGrader"),
-			-input_attr  => $will{showProblemGrader} ?
-			{
-				-name    => "showProblemGrader",
-				-checked => "checked",
-				-value   => 1,
-			}
-			:
-			{
-				-name    => "showProblemGrader",
-				-value   => 1,
-			}
-		),"&nbsp;";
+		print CGI::div(
+			{ class => 'form-check form-check-inline' },
+			CGI::checkbox({
+				id              => 'showProblemGrader_id',
+				name            => 'showProblemGrader',
+				value           => 1,
+				checked         => $will{showProblemGrader},
+				label           => $r->maketext('Problem Grader'),
+				class           => 'form-check-input',
+				labelattributes => { class => 'form-check-label' }
+			})
+		);
 	}
+
 	if ($can{showAnsGroupInfo}) {
-		print WeBWorK::CGI_labeled_input(
-			-type	 => "checkbox",
-			-id		 => "showAnsGroupInfo_id",
-			-label_text => $r->maketext("AnswerGroupInfo"),
-			-input_attr => $will{showAnsGroupInfo} ?
-			{
-				-name    => "showAnsGroupInfo",
-				-checked => "checked",
-				-value   => 1,
-			}
-			:
-			{
-				-name    => "showAnsGroupInfo",
-				-value   => 1,
-			}
-		),"&nbsp;";
+		print CGI::div(
+			{ class => 'form-check form-check-inline' },
+			CGI::checkbox({
+				id              => 'showAnsGroupInfo_id',
+				name            => 'showAnsGroupInfo',
+				value           => 1,
+				checked         => $will{showAnsGroupInfo},
+				label           => $r->maketext('Answer Group Info'),
+				class           => 'form-check-input',
+				labelattributes => { class => 'form-check-label' }
+			})
+		);
 	}
+
 	if ($can{showResourceInfo}) {
-		print WeBWorK::CGI_labeled_input(
-			-type	 => "checkbox",
-			-id		 => "showResourceInfo_id",
-			-label_text => $r->maketext("Show Auxiliary Resources"),
-			-input_attr => $will{showResourceInfo} ?
-			{
-				-name    => "showResourceInfo",
-				-checked => "checked",
-				-value   => 1,
-			}
-			:
-			{
-				-name    => "showResourceInfo",
-				-value   => 1,
-			}
-		),"&nbsp;";
+		print CGI::div(
+			{ class => 'form-check form-check-inline' },
+			CGI::checkbox({
+				id              => 'showResourceInfo_id',
+				name            => 'showResourceInfo',
+				value           => 1,
+				checked         => $will{showResourceInfo},
+				label           => $r->maketext('Auxiliary Resources'),
+				class           => 'form-check-input',
+				labelattributes => { class => 'form-check-label' }
+			})
+		);
 	}
 
 	if ($can{showAnsHashInfo}) {
-		print WeBWorK::CGI_labeled_input(
-			-type	 => "checkbox",
-			-id		 => "showAnsHashInfo_id",
-			-label_text => $r->maketext("AnswerHashInfo"),
-			-input_attr => $will{showAnsHashInfo} ?
-			{
-				-name    => "showAnsHashInfo",
-				-checked => "checked",
-				-value   => 1,
-			}
-			:
-			{
-				-name    => "showAnsHashInfo",
-				-value   => 1,
-			}
-		),"&nbsp;";
+		print CGI::div(
+			{ class => 'form-check form-check-inline' },
+			CGI::checkbox({
+				id              => 'showAnsHashInfo_id',
+				name            => 'showAnsHashInfo',
+				value           => 1,
+				checked         => $will{showAnsHashInfo},
+				label           => $r->maketext('Answer Hash Info'),
+				class           => 'form-check-input',
+				labelattributes => { class => 'form-check-label' }
+			})
+		);
 	}
 
 	if ($can{showPGInfo}) {
-		print WeBWorK::CGI_labeled_input(
-			-type	 => "checkbox",
-			-id		 => "showPGInfo_id",
-			-label_text => $r->maketext("PGInfo"),
-			-input_attr => $will{showPGInfo} ?
-			{
-				-name    => "showPGInfo",
-				-checked => "checked",
-				-value   => 1,
-			}
-			:
-			{
-				-name    => "showPGInfo",
-				-value   => 1,
-			}
-		),"&nbsp;";
+		print CGI::div(
+			{ class => 'form-check form-check-inline' },
+			CGI::checkbox({
+				id              => 'showPGInfo_id',
+				label           => $r->maketext('PG Info'),
+				name            => 'showPGInfo',
+				checked         => $will{showPGInfo},
+				value           => 1,
+				class           => 'form-check-input',
+				labelattributes => { class => 'form-check-label' }
+			})
+		);
 	}
 
-	#  warn "can showHints $can{showHints} can show solutions $can{showSolutions}";
-	if ($can{showHints} ) {
-	  # warn "can showHints is ", $can{showHints};
-		if ($showHintCheckbox or not $useKnowlsForHints) { # always allow checkbox to display if knowls are not used.
-			print WeBWorK::CGI_labeled_input(
-				-type	 => "checkbox",
-				-id		 => "showHints_id",
-				-label_text => $r->maketext("Show Hints"),
-				-input_attr => $will{showHints} ?
-				{
-					-name    => "showHints",
-					-checked => "checked",
-					-value   => 1,
-				}
-				:
-				{
-					-name    => "showHints",
-					-value   => 1,
-				}
-			),"&nbsp;";
+	if ($can{showHints}) {
+		if ($showHintCheckbox || !$useKnowlsForHints) {
+			# Always allow checkbox to display if knowls are not used.
+			print CGI::div(
+				{ class => 'form-check form-check-inline' },
+				CGI::checkbox({
+					id              => 'showHints_id',
+					label           => $r->maketext('Hints'),
+					name            => 'showHints',
+					checked         => $will{showHints},
+					value           => 1,
+					class           => 'form-check-input',
+					labelattributes => { class => 'form-check-label' }
+				})
+			);
 		} else {
-			print CGI::hidden({name => "showHints", id=>"showHints_id", value => 1})
-
+			print CGI::hidden({ name => 'showHints', id => 'showHints_id', value => 1 });
 		}
 	}
 
-	if ($can{showSolutions} ) {
-	  if (  $showSolutionCheckbox or not $useKnowlsForSolutions ) { # always allow checkbox to display if knowls are not used.
-		print WeBWorK::CGI_labeled_input(
-			-type	 => "checkbox",
-			-id		 => "showSolutions_id",
-			-label_text => $r->maketext("Show Solutions"),
-			-input_attr => $will{showSolutions} ?
-			{
-				-name    => "showSolutions",
-				-checked => "checked",
-				-value   => 1,
-			}
-			:
-			{
-				-name    => "showSolutions",
-				-value   => 1,
-			}
-		),"&nbsp;";
-	  } else {
-	    print CGI::hidden({id=>"showSolutions_id", name => "showSolutions", value=>1})
-	  }
+	if ($can{showSolutions}) {
+		if ($showSolutionCheckbox || !$useKnowlsForSolutions) {
+			# Always allow checkbox to display if knowls are not used.
+			print CGI::div(
+				{ class => 'form-check form-check-inline' },
+				CGI::checkbox({
+					id              => 'showSolutions_id',
+					label           => $r->maketext('Solutions'),
+					name            => 'showSolutions',
+					checked         => $will{showSolutions},
+					value           => 1,
+					class           => 'form-check-input',
+					labelattributes => { class => 'form-check-label' }
+
+				})
+			);
+		} else {
+			print CGI::hidden({ id => 'showSolutions_id', name => 'showSolutions', value => 1 });
+		}
 	}
 
-	# needed to put buttons on newline
-	if ($can{showCorrectAnswers} or $can{showProblemGrader} or $can{showAnsGroupInfo} or
-		$can{showHints} or $can{showSolutions} or $can{showAnsHashInfo} or
-		$can{showPGInfo} or $can{showResourceInfo}) {
-		print CGI::br();
-	}
-
-	return "";
+	return '';
 }
 
 # output_submit_buttons
 
 # prints out the submit button input elements that are available for the current problem
 
-sub output_submit_buttons{
+sub output_submit_buttons {
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $self->r->ce;
@@ -1670,63 +1823,108 @@ sub output_submit_buttons{
 	my %showMeAnother = %{ $self->{showMeAnother} };
 
 	if ($will{requestNewSeed}){
-		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"requestNewSeed", -value=>$r->maketext("Request New Version"), -onclick=>"this.form.target='_self'"});
+		print CGI::submit({
+			id         => 'submitAnswers_id',
+			name       => 'requestNewSeed',
+			value      => $r->maketext('Request New Version'),
+			formtarget => '_self',
+			class      => 'btn btn-primary'
+		});
 		return "";
 	}
 
-        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview My Answers")});
-        if ($can{checkAnswers}) {
-        	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
-        }
-        if ($can{getSubmitButton}) {
-        	if ($user ne $effectiveUser) {
-        		# if acting as a student, make it clear that answer submissions will
-        		# apply to the student's records, not the professor's.
-        		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
-        	} else {
-        		#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
-        		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers"), -onclick=>"this.form.target='_self'"});
-        		# FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
-        		# WTF???
-        	}
-        }
+	print CGI::submit({
+		id         => 'previewAnswers_id',
+		formtarget => '_self',
+		name       => 'previewAnswers',
+		value      => $r->maketext('Preview My Answers'),
+		class      => 'btn btn-primary mb-1'
+	});
+
+	if ($can{checkAnswers}) {
+		print CGI::submit({
+			id         => 'checkAnswers_id',
+			formtarget => '_self',
+			name       => 'checkAnswers',
+			value      => $r->maketext('Check Answers'),
+			class      => 'btn btn-primary mb-1'
+		});
+	}
+
+	if ($can{getSubmitButton}) {
+		if ($user ne $effectiveUser) {
+			# if acting as a student, make it clear that answer submissions will
+			# apply to the student's records, not the professor's.
+			print CGI::submit({
+				id    => 'submitAnswers_id',
+				name  => 'submitAnswers',
+				value => $r->maketext('Submit Answers for [_1]', $effectiveUser),
+				class => 'btn btn-primary'
+			});
+		} else {
+			print CGI::submit({
+				id         => 'submitAnswers_id',
+				name       => 'submitAnswers',
+				value      => $r->maketext('Submit Answers'),
+				formtarget => '_self',
+				class      => 'btn btn-primary mb-1'
+			});
+		}
+	}
+
 	if ($can{showMeAnother}) {
 		# only output showMeAnother button if we're not on the showMeAnother page
 		my $SMAURL = $self->systemLink($urlpath->newFromModule(
 			"WeBWorK::ContentGenerator::ShowMeAnother",
-			$r,courseID => $courseID,
-			setID => $problem->set_id,
-			problemID =>$problem->problem_id
+			$r,
+			courseID  => $courseID,
+			setID     => $problem->set_id,
+			problemID => $problem->problem_id
 		));
 		print CGI::a(
 			{
-				href=>$SMAURL,
-				class=>"set-id-tooltip",
-				"data-toggle"=>"tooltip",
-				"data-placement"=>"right",
-				id=>"SMA_button",
-				title=>"",
-				target=>"_wwsma",
-				"data-original-title"=>$r->maketext("You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem",($showMeAnother{MaxReps}>=$showMeAnother{Count})?($showMeAnother{MaxReps}-$showMeAnother{Count}):"")
+				href              => $SMAURL,
+				class             => 'set-id-tooltip btn btn-primary mb-1',
+				data_bs_toggle    => 'tooltip',
+				data_bs_placement => 'right',
+				id                => 'SMA_button',
+				target            => 'WW_Show_Me_Another',
+				data_bs_title     => $r->maketext(
+					'You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem',
+					$showMeAnother{MaxReps} >= $showMeAnother{Count}
+						? ($showMeAnother{MaxReps} - $showMeAnother{Count})
+						: ''
+				)
 			},
-			$r->maketext("Show me another")
+			$r->maketext('Show me another')
 		);
 	} else {
 		# if showMeAnother is available for the course, and for the current problem (but not yet
 		# because the student hasn't tried enough times) then gray it out; otherwise display nothing
 		# if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
-		$showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
-		if($ce->{pg}->{options}->{enableShowMeAnother} and $showMeAnother{TriesNeeded} >-1 ){
-			my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
+		$showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault}
+			if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
+		if ($ce->{pg}->{options}->{enableShowMeAnother} and $showMeAnother{TriesNeeded} > -1) {
+			my $exhausted =
+				($showMeAnother{Count} >= $showMeAnother{MaxReps} and $showMeAnother{MaxReps} > -1) ? 'exhausted' : '';
 			print CGI::span(
 				{
-					class=>"gray_button set-id-tooltip",
-					"data-toggle"=>"tooltip",
-					"data-placement"=>"right",
-					title=>"",
-					"data-original-title"=>(before($r->db->getGlobalSet($self->{set}->set_id)->open_date)) ? $r->maketext("The problem set is not yet open") : ($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",$showMeAnother{TriesNeeded}),
+					class             => 'set-id-tooltip d-inline-block',
+					tabindex          => '0',
+					data_bs_toggle    => 'tooltip',
+					data_bs_placement => 'right',
+					data_bs_title     => before($r->db->getGlobalSet($self->{set}->set_id)->open_date)
+						? $r->maketext('The problem set is not yet open')
+						: $exhausted eq 'exhausted'
+							? $r->maketext('Feature exhausted for this problem')
+							: $r->maketext(
+								'You must attempt this problem [quant,_1,time,times] before this feature is available',
+								$showMeAnother{TriesNeeded}
+							)
 				},
-				$r->maketext("Show me another [_1]",$exhausted)
+				qq{<button class='btn btn-primary mb-1' type='button' disabled>}
+					. $r->maketext('Show me another [_1]', $exhausted)
+					. '</button>'
 			);
 		}
 	}
@@ -1775,7 +1973,7 @@ sub output_score_summary{
 		if ($attempts_before_rr == 0);
 	}
 	$prMessage = "" if (after($set->due_date) or before($set->open_date));
-	
+
 	my $problem_status    = $problem->status || 0;
 	my $lastScore = wwRound(0, $problem_status * 100).'%'; # Round to whole number
 	my $attemptsLeft = $problem->max_attempts - $attempts;
@@ -1820,8 +2018,8 @@ sub output_score_summary{
 	#print jitar specific informaton for students. (and notify instructor
 	# if necessary
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
-	  my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
-	  @problemIDs = sort { $a <=> $b } @problemIDs;
+	  my @problemIDs =
+	    map { $_->[2] } $db->listUserProblemsWhere({ user_id => $effectiveUser, set_id => $set->set_id }, 'problem_id');
 
 	  # get some data
 	  my @problemSeqs;
@@ -1913,60 +2111,34 @@ sub output_score_summary{
 
 # prints out other necessary elements
 
-sub output_misc{
-
+sub output_misc {
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $pg = $self->{pg};
-	my %will = %{ $self->{will} };
-	my $user = $r->param('user');
+	my $r    = $self->r;
 
-# 	print CGI::start_div();
-#
-# 	my $pgdebug = join(CGI::br(), @{$pg->{pgcore}->{DEBUG_messages}} );
-# 	my $pgwarning = join(CGI::br(), @{$pg->{pgcore}->{WARNING_messages}} );
-# 	my $pginternalerrors = join(CGI::br(),  @{$pg->{pgcore}->get_internal_debug_messages}   );
-# 	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
-#
-# 	print CGI::p({style=>"color:red;"}, $r->maketext("Checking additional error messages")) if $pgerrordiv  ;
-#  	print CGI::p($r->maketext("pg debug"),CGI::br(), $pgdebug                 )   if $pgdebug ;
-# 	print CGI::p($r->maketext("pg warning"),CGI::br(),$pgwarning                ) if $pgwarning ;
-# 	print CGI::p($r->maketext("pg internal errors"),CGI::br(), $pginternalerrors) if $pginternalerrors;
-# 	print CGI::end_div()                                                          if $pgerrordiv ;
+	# Save state for viewOptions
+	print CGI::hidden(-name => 'showOldAnswers', -value => $self->{will}{showOldAnswers});
+	print CGI::hidden(-name => 'displayMode',    -value => $self->{displayMode});
 
-	# save state for viewOptions
-	print  CGI::hidden(
-			   -name  => "showOldAnswers",
-			   -value => $will{showOldAnswers}
-		   ),
+	print(CGI::hidden(-name => 'editMode', -value => $self->{editMode},))
+		if defined($self->{editMode})
+		and $self->{editMode} eq 'temporaryFile';
 
-		   CGI::hidden(
-			   -name  => "displayMode",
-			   -value => $self->{displayMode}
-		   );
-	print( CGI::hidden(
-			   -name    => 'editMode',
-			   -value   => $self->{editMode},
-		   )
-	) if defined($self->{editMode}) and $self->{editMode} eq 'temporaryFile';
+	# This is a security risk -- students can use this to find the source code for the problem
+	my $permissionLevel          = $r->db->getPermissionLevel($r->param('user'))->permission;
+	my $professorPermissionLevel = $r->ce->{userRoles}{professor};
+	print(CGI::hidden(-name => 'sourceFilePath', -value => $self->{problem}{source_file}))
+		if defined($self->{problem}{source_file})
+		and $permissionLevel >= $professorPermissionLevel;    # Only allow this for professors
 
-	# this is a security risk -- students can use this to find the source code for the problem
+	print(CGI::hidden(-name => 'problemSeed', -value => $r->param('problemSeed')))
+		if defined($r->param('problemSeed'))
+		and $permissionLevel >= $professorPermissionLevel;    # Only allow this for professors
 
-	my $permissionLevel = $db->getPermissionLevel($user)->permission;
-	my $professorPermissionLevel = $ce->{userRoles}->{professor};
-	print( CGI::hidden(
-		   		-name   => 'sourceFilePath',
-		   		-value  =>  $self->{problem}->{source_file}
-	))  if defined($self->{problem}->{source_file}) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
+	# Make sure the student nav filter setting is preserved when the problem form is submitted.
+	my $filter = $r->param('studentNavFilter');
+	print CGI::hidden({ name => 'studentNavFilter', value => $filter }) if $filter;
 
-	print( CGI::hidden(
-		   		-name   => 'problemSeed',
-		   		-value  =>  $r->param("problemSeed")
-	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
-
-	return "";
+	return '';
 }
 
 # output_comments subroutine
@@ -2000,8 +2172,8 @@ sub output_comments{
 			my $comment = $userPastAnswer->comment_string;
 			$comment = CGI::escapeHTML($comment);
 			my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-			print CGI::start_div({id=>"answerComment", class=>"answerComments"});
-			print CGI::b("Instructor Comment:"),  CGI::br();
+			print CGI::start_div({ id => 'answerComment', class => 'answerComments mt-2' });
+			print CGI::b('Instructor Comment:'),  CGI::br();
 			print $comment;
 		}
 	}
@@ -2055,7 +2227,10 @@ sub output_summary{
 
 	} elsif ($will{checkAnswers} || $self->{will}{showProblemGrader}) {
 	    # print this if user checked answers
-	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
+		print CGI::div(
+			{ class => 'ResultsWithError d-inline-block mb-3' },
+			$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")
+		);
 	    print $self->attemptResults($pg,
 	    	1, # showAttemptAnswers
 	    	$will{showCorrectAnswers}, # showCorrectAnswers
@@ -2069,21 +2244,26 @@ sub output_summary{
 	    # show attempt previews
 	} elsif ($previewAnswers) {
 	  # print this if user previewed answers
-	    print CGI::div({class=>'ResultsWithError'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
+		print CGI::div(
+				{ class => 'ResultsWithError d-inline-block mb-3' },
+				$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")
+			),
+			$self->attemptResults($pg, 1, 0, 0, 0, 1);
 	    # show attempt answers
 	    # don't show correct answers
 	    # don't show attempt results (correctness)
 	    # show attempt previews
-	  }
+	}
 
-	  print CGI::div({class=>'ResultsWithError'},
-		  $r->maketext("ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if neccessary).")),
-	  CGI::br() if ($self->{resubmitDetected});
+	print CGI::div({ class => 'ResultsWithError d-inline-block mb-3' },
+		$r->maketext("ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if neccessary)."))
+		if ($self->{resubmitDetected});
 
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 	my $hasChildren = 0;
-	my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
-	@problemIDs = sort { $a <=> $b } @problemIDs;
+
+	my @problemIDs =
+		map { $_->[2] } $db->listUserProblemsWhere({ user_id => $effectiveUser, set_id => $set->set_id }, 'problem_id');
 
 	# get some data
 	my @problemSeqs;
@@ -2114,16 +2294,6 @@ sub output_summary{
 	}
     }
 
-
-	if (!$previewAnswers && ($checkAnswers || $showPartialCorrectAnswers)) {
-		# Only color answers if not previewing and when partialCorrectAnswers is set or when
-		# checkAnswers is submitted.
-		print CGI::start_script({type=>"text/javascript"}),
-			"\$(function () {color_inputs([",
-			join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],[",
-			join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}), "])});",
-			CGI::end_script();
-	}
 	return "";
 }
 
@@ -2141,10 +2311,6 @@ sub output_achievement_message{
 
 	my $r = $self->r;
 	my $ce = $r->ce;
-	my $db = $r->db;
-
-	my $authz = $r->authz;
-	my $user = $r->param('user');
 
 	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them
 	if ($ce->{achievementsEnabled} && $will{recordAnswers}
@@ -2160,22 +2326,24 @@ sub output_achievement_message{
 # output_tag_info
 # Puts the tags in the page
 
-sub output_tag_info{
-	my $self = shift;
-	my $r = $self->r;
-	my $authz = $r->authz;
-	my $user = $r->param('user');
-	if ($authz->hasPermissions($user, "modify_tags")) {
-		print CGI::p(CGI::div({id=>'tagger'}, ''));
-                print $self->hidden_authen_fields;
-                my $courseID = $self->r->urlpath->arg("courseID");
-                print CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID });
-		my $templatedir = $r->ce->{courseDirs}->{templates};
-		my $sourceFilePath = $templatedir .'/'. $self->{problem}->{source_file};
-		$sourceFilePath =~ s/'/\\'/g;
-		print CGI::start_script({type=>"text/javascript"}), "mytw = new tag_widget('tagger','$sourceFilePath')",CGI::end_script();
+sub output_tag_info {
+	my $self     = shift;
+	my $r        = $self->r;
+
+	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
+		print CGI::div(
+			{
+				id                    => 'tagger',
+				class                 => 'tag-widget',
+				data_source_file_path => $r->ce->{courseDirs}{templates} . '/' . $self->{problem}{source_file}
+			},
+			''
+		);
+		print CGI::hidden(
+			{ id => 'hidden_courseID', name => 'courseID', default => $self->r->urlpath->arg("courseID") });
 	}
-	return "";
+
+	return '';
 }
 
 # output_custom_edit_message
@@ -2231,19 +2399,18 @@ sub output_past_answer_button{
 	}
 
 	# print answer inspection button
-	if ($authz->hasPermissions($user, "view_answers")) {
-	        my $hiddenFields = $self->hidden_authen_fields;
+	if ($authz->hasPermissions($user, 'view_answers')) {
+		my $hiddenFields = $self->hidden_authen_fields;
 		$hiddenFields =~ s/\"hidden_/\"pastans-hidden_/g;
-		print "\n",
-			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
-			$hiddenFields,"\n",
-			CGI::hidden(-name => 'courseID',  -value=>$courseName), "\n",
-			CGI::hidden(-name => 'selected_problems', -value=>$problemNumber), "\n",
-			CGI::hidden(-name => 'selected_sets',  -value=>$problem->set_id), "\n",
-               		CGI::hidden(-name => 'selected_users',  -value=>$problem->user_id), "\n",
-			CGI::p(
-				CGI::submit(-name => 'action',  -value=>$r->maketext("Show Past Answers"))
-			), "\n",
+		print CGI::start_form({ method => 'POST', action => $showPastAnswersURL, target => 'WW_Info' }),
+			$hiddenFields,
+			CGI::hidden({ name => 'courseID',          value => $courseName }),
+			CGI::hidden({ name => 'selected_problems', value => $problemNumber }),
+			CGI::hidden({ name => 'selected_sets',     value => $problem->set_id }),
+			CGI::hidden({ name => 'selected_users',    value => $problem->user_id }),
+			CGI::p(CGI::submit(
+				{ name => 'action', value => $r->maketext('Show Past Answers'), class => 'btn btn-primary' }
+			)),
 			CGI::end_form();
 	}
 
@@ -2299,160 +2466,93 @@ sub output_hidden_info {
 }
 
 # output_JS subroutine
-
-# outputs all of the Javascript needed for this page.
-# The main javascript needed here is color.js, which colors input fields based on whether or not
-# they are correct when answers are submitted.  When a problem attempts results, it prints out hidden fields containing identification
-# information for the fields that were correct and the fields that were incorrect.  color.js collects of the correct and incorrect fields into
-# two arrays using the information gathered from the hidden fields, and then loops through and changes the styles so
-# that the colors will show up correctly.
-
-sub output_JS{
+# Outputs all of the JavaScript needed for this page.
+sub output_JS {
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
 
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
-
-	# The Base64.js file, which handles base64 encoding and decoding
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
-
-	# This is for MathView.
-	if ($self->{will}->{useMathView}) {
-	    if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
-		print CGI::start_script({type=>"text/javascript"});
-		print "mathView_basepath = \"$site_url/images/mathview/\";";
-		print CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
-	    } else {
-		warn ("MathJax must be installed and enabled as a display mode for the math viewer to work");
-	    }
-	}
-
-	# WirisEditor
-	if ($self->{will}->{useWirisEditor}) {
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
-	}
-
-	# MathQuill live rendering 
-	if ($self->{will}->{useMathQuill}) {
-		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mathquill.min.js", defer => "" }, "");
-		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => "" }, "");
-	}
-	
-	# This is for knowls
-        # Javascript and style for knowls
-        print qq{
-           <script type="text/javascript" src="$site_url/js/vendor/underscore/underscore.js"></script>
-           <script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
+	# Output javascript for jquery-ui for problems to use.
+	print CGI::script({ src => getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.js') }, '');
 
 	# This is for tagging menus (if allowed)
-	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
-		if (open(TAXONOMY, "<:encoding(utf8)", $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
-			my $taxo = '[]';
-			$taxo = join("", <TAXONOMY>);
-			close TAXONOMY;
-			print qq!\n<script>var taxo = $taxo ;</script>!;
-		} else {
-			print qq!\n<script>var taxo = [] ;</script>!;
-			print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
-		}
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
+	if ($r->authz->hasPermissions($r->param('user'), 'modify_tags')) {
+		print CGI::script(
+			{
+				id        => 'tag-widget-script',
+				src       => getAssetURL($ce, 'js/apps/TagWidget/tagwidget.js'),
+				defer     => undef,
+				data_taxo => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json"
+			},
+			''
+		);
 	}
 
 	# This is for the problem grader
 	if ($self->{will}{showProblemGrader}) {
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}),
-			CGI::end_script();
+		print CGI::script(
+			{
+				src   => getAssetURL($ce, 'js/apps/ProblemGrader/problemgrader.js'),
+				defer => undef
+			},
+			''
+		);
 	}
 
 	# This is for any page specific js.  Right now its just used for achievement popups
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Problem/problem.js"}), CGI::end_script();
-
-	# This is for the image dialog
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/Problem/problem.js'), defer => undef }, '');
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
-	if (ref($self->{pg}{flags}{extra_js_files}) eq "ARRAY") {
+	if (ref($self->{pg}{flags}{extra_js_files}) eq 'ARRAY') {
 		my %jsFiles;
-		for (@{$self->{pg}{flags}{extra_js_files}}) {
-			next if $jsFiles{$_->{file}};
-			$jsFiles{$_->{file}} = 1;
-			my %attributes = ref($_->{attributes}) eq "HASH" ? %{$_->{attributes}} : ();
+		for (@{ $self->{pg}{flags}{extra_js_files} }) {
+			next if $jsFiles{ $_->{file} };
+			$jsFiles{ $_->{file} } = 1;
+			my %attributes = ref($_->{attributes}) eq 'HASH' ? %{ $_->{attributes} } : ();
 			if ($_->{external}) {
-				print CGI::script({ src => $_->{file} , %attributes }, "");
-			} elsif (!$_->{external} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}") {
-				print CGI::script({ src => "$site_url/$_->{file}", %attributes }, "");
+				print CGI::script({ src => $_->{file}, %attributes }, '');
 			} else {
-				print "<!-- $_ is not available in htdocs/ on this server -->\n";
+				print CGI::script({ src => getAssetURL($ce, $_->{file}), %attributes }, '');
 			}
 		}
 	}
 
-	return "";
+	return '';
 }
 
 sub output_CSS {
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $self     = shift;
+	my $ce       = $self->r->ce;
 
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-        # Javascript and style for knowls
-        print "<link href=\"$site_url/css/knowlstyle.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
-
-	#style for mathview
-	if ($self->{will}->{useMathView}) {
-	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />\n";
-	}
-	
-	#style for mathquill
-	if ($self->{will}->{useMathQuill}) {
-		print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />\n";
-		print "<link href=\"$site_url/js/apps/MathQuill/mqeditor.css\" rel=\"stylesheet\" />\n";
-	}
-
-	# Style for the image dialog
-	print "<link href=\"$site_url/js/apps/ImageView/imageview.css\" rel=\"stylesheet\" />\n";
+	# Output css for jquery-ui for problems to use.
+	print CGI::Link({ href => getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.css'), rel => 'stylesheet' });
 
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
 	# which can be set in course.conf (the value should be an anonomous array).
-	my %cssFiles;
-	# Avoid duplicates
-	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq "ARRAY") {
-		$cssFiles{$_} = 0 for @{$ce->{pg}{specialPGEnvironmentVars}{extra_css_files}};
+	my @cssFiles;
+	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq 'ARRAY') {
+		push(@cssFiles, { file => $_, external => 0 }) for @{ $ce->{pg}{specialPGEnvironmentVars}{extra_css_files} };
 	}
-	if (ref($self->{pg}{flags}{extra_css_files}) eq "ARRAY") {
-		$cssFiles{$_->{file}} = $_->{external} for @{$self->{pg}{flags}{extra_css_files}};
+	if (ref($self->{pg}{flags}{extra_css_files}) eq 'ARRAY') {
+		push @cssFiles, @{ $self->{pg}{flags}{extra_css_files} };
 	}
-	for (keys(%cssFiles)) {
-		if ($cssFiles{$_}) {
-			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$_\" />\n";
-		} elsif (!$cssFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
-			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"${site_url}/$_\" />\n";
+	my %cssFilesAdded;    # Used to avoid duplicates
+	for (@cssFiles) {
+		next if $cssFilesAdded{ $_->{file} };
+		$cssFilesAdded{ $_->{file} } = 1;
+		if ($_->{external}) {
+			print CGI::Link({ rel => 'stylesheet', href => $_->{file} });
 		} else {
-			print "<!-- $_ is not available in htdocs/ on this server -->\n";
+			print CGI::Link({ rel => 'stylesheet', href => getAssetURL($ce, $_->{file}) });
 		}
 	}
 
-	return "";
+	return '';
 }
 
 sub output_achievement_CSS {
     return "";
-}
-
-#Tells template to output stylesheet and js for Jquery-UI
-sub output_jquery_ui{
-	return "";
 }
 
 # Simply here to indicate to the template that this page has body part methods which can be called

@@ -21,7 +21,7 @@ on_fire,"You're on Fire!",210,one_timer,"default,jitar","Complete 10 problems in
 complete_one_set,"One Set Wonder",401,complete_sets,default,"Get 100% on one homework set.",10,,complete_one_set.at,complete_one_set.png
 complete_five_sets,"High Five",402,complete_sets,default,"Get 100% on five homework sets.",10,5,complete_five_sets.at,complete_five_sets.png
 complete_ten_sets,"One For Each Finger",403,complete_sets,default,"Get 100% on ten homework sets.",10,10,complete_ten_sets.at,complete_ten_sets.png
-complete_twenty_sets,"Mathbox Twenty",403,complete_sets,default,"Get 100% on twenty homework sets.",20,20,complete_twenty_sets.at,complete_twenty_sets.png
+complete_twenty_sets,"Mathbox Twenty",404,complete_sets,default,"Get 100% on twenty homework sets.",20,20,complete_twenty_sets.at,complete_twenty_sets.png
 complete_thirty_sets,"The Long Road",405,complete_sets,default,"Get 100% on thirty homework sets.",20,30,complete_thirty_sets.at,complete_thirty_sets.png
 complete_all_sets,Perfection,406,complete_sets,default,"Get 100% on all homework sets.",30,35,complete_all_sets.at,complete_all_sets.png
 complete_one_problem,"The First Step",501,complete_problems,"default,jitar","Earn 100% on a homework problem.",10,,complete_one_problem.at,complete_one_problem.png
@@ -41,6 +41,11 @@ challenge_eight,"Challenge Eight Complete",608,challenge,default,"Finish the eig
 challenge_nine,"Challenge Nine Complete",609,challenge,default,"Finish the ninth challenge problem.",10,,challenge_nine.at,challenge_nine.png
 challenge_ten,"Challenge Ten Complete",610,challenge,default,"Finish the tenth challenge problem.",10,,challenge_ten.at,challenge_ten.png
 challenger,Challenger,611,challenge,default,"Finish all of the challenge problems.",10,20,challenger.at,challenger.png
+earn_10_achievements,"Huzzah!!",9501,achievements,"default,gateway,jitar","Earn ten achievements.",10,10,earn_n_achievements.at,earn_10_achievements.png
+earn_20_achievements,"Achiever",9502,achievements,"default,gateway,jitar","Earn twenty achievements.",10,20,earn_n_achievements.at,earn_20_achievements.png
+earn_30_achievements,"The Collector",9503,achievements,"default,gateway,jitar","Earn thirty achievements.",10,30,earn_n_achievements.at,earn_30_achievements.png
+earn_40_achievements,"Over Achiever",9504,achievements,"default,gateway,jitar","Earn forty achievements.",20,40,earn_n_achievements.at,earn_40_achievements.png
+earn_50_achievements,"The Completionist",9505,achievements,"default,gateway,jitar","Earn fifty achievements.",20,50,earn_n_achievements.at,earn_50_achievements.png
 level_one,"Level 1 Initiate",9901,level,"default,gateway,jitar","You have been awarded a Lesser Rod of Revelation",,,level_one.at,level_one.png
 level_two,"Level 2 Novice",9902,level,"default,gateway,jitar","You have been awarded a Potion of Forgetfulness",,,level_two.at,level_two.png
 level_three,"Level 3 Apprentice",9903,level,"default,gateway,jitar","You have been awarded a Tunic of Extension",,,level_three.at,level_three.png

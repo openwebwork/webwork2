@@ -1,8 +1,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.83 2009/07/12 23:48:00 gage Exp $
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -48,7 +47,7 @@ use open IO => ':encoding(UTF-8)';
 use constant MKDIR_ATTEMPTS => 10;
 
 # "standard" WeBWorK date/time format (for set definition files):
-#     %m/%d/%y at %I:%M%P
+#     %m/%d/%y at %I:%M%P %Z
 # where:
 #     %m = month number, starting with 01
 #     %d = numeric day of the month, with leading zeros (eg 01..31)
@@ -56,6 +55,7 @@ use constant MKDIR_ATTEMPTS => 10;
 #     %I = hour, 12 hour clock, leading 0's)
 #     %M = minute, leading 0's
 #     %P = am or pm (Yes %p and %P are backwards :)
+#     %Z = timezone name
 use constant DATE_FORMAT => "%m/%d/%Y at %I:%M%P %Z";
 
 use constant JITAR_MASK => [hex 'FF000000', hex '00FC0000',
@@ -72,10 +72,10 @@ our @EXPORT_OK = qw(
 	constituency_hash
 	cryptPassword
 	decodeAnswers
-        decode_utf8_base64
+	decode_utf8_base64
 	dequote
 	encodeAnswers
-        encode_utf8_base64
+	encode_utf8_base64
 	fisher_yates_shuffle
 	formatDateTime
 	has_aux_files
@@ -84,7 +84,7 @@ our @EXPORT_OK = qw(
 	listFilesRecursive
 	makeTempDirectory
 	max
-        nfreeze_base64
+	nfreeze_base64
 	not_blank
 	parseDateTime
 	path_is_subdir
@@ -100,24 +100,27 @@ our @EXPORT_OK = qw(
 	textDateTime
 	timeToSec
 	trim_spaces
-        thaw_base64
+	format_set_name_internal
+	format_set_name_display
+	thaw_base64
 	undefstr
 	writeCourseLog
 	writeLog
 	writeTimingLogEntry
 	wwRound
-        is_restricted
-        grade_set
+	is_restricted
+	grade_set
 	grade_gateway
 	grade_all_sets
-        jitar_id_to_seq
-        seq_to_jitar_id
-        is_jitar_problem_hidden
-        is_jitar_problem_closed
-        jitar_problem_adjusted_status
-        jitar_problem_finished
+	jitar_id_to_seq
+	seq_to_jitar_id
+	is_jitar_problem_hidden
+	is_jitar_problem_closed
+	jitar_problem_adjusted_status
+	jitar_problem_finished
 	fetchEmailRecipients
 	generateURLs
+	getAssetURL
 	x
 );
 
@@ -653,8 +656,11 @@ Formats the UNIX datetime $dateTime in the custom format provided by $format_str
 If $format_string is not provided, the standard WeBWorK datetime format is used.
 $dateTime is assumed to be in the server's time zone. If $display_tz is given,
 the datetime is converted from the server's timezone to the timezone specified.
-The available patterns for $format_string can be found in the documentation for
-the perl DateTime package under the heading of strftime Patterns.
+If $format_string is a method of the $dt->locale instance, then format_cldr
+is used, and otherwise strftime is used.  The available patterns for
+$format_string can be found in the documentation for the perl DateTime package
+under the heading of strftime Patterns.  The available methods for the $dt->locale
+instance are documented at L<https://metacpan.org/pod/DateTime::Locale::FromData>.
 $dateTime is assumed to be in the server's time zone. If $display_tz is given,
 the datetime is converted from the server's timezone to the timezone specified.
 If $locale is provided, the string returned will be in the format of that locale,
@@ -663,24 +669,27 @@ month names.  If $locale is not provided, perl defaults to en_US.
 
 =cut
 
-sub formatDateTime($;$;$;$) {
+sub formatDateTime {
 	my ($dateTime, $display_tz, $format_string, $locale) = @_;
-	warn "Utils::formatDateTime is not a method. ", join(" ",caller(2)) if ref($dateTime); # catch bad calls to Utils::formatDateTime
-	warn "not defined formatDateTime('$dateTime', '$display_tz') ",join(" ",caller(2)) unless  $display_tz;
-	$dateTime = $dateTime ||0;  # do our best to provide default values
-	$display_tz ||= "local";    # do our best to provide default vaules
-	$display_tz = verify_timezone($display_tz);
 
-	$format_string ||= DATE_FORMAT; # If a format is not provided, use the default WeBWorK date format
-	my $dt;
-	if($locale) {
-	    $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz, locale=>$locale);
+	warn "Utils::formatDateTime is not a method. ", join(" ", caller(2))
+		if ref($dateTime);    # catch bad calls to Utils::formatDateTime
+	warn "not defined formatDateTime('$dateTime', '$display_tz') ", join(" ", caller(2)) unless $display_tz;
+
+	$dateTime = $dateTime || 0;    # do our best to provide default values
+	$display_tz ||= "local";       # do our best to provide default vaules
+	$display_tz = verify_timezone($display_tz);
+	$format_string ||= DATE_FORMAT;    # If a format is not provided, use the default WeBWorK date format
+
+	my $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz, $locale ? (locale => $locale) : ());
+
+	# If $format_string is a method of $dt->locale then use call format_cldr on its return value.
+	# Otherwise assume it is a locale string meant for strftime.
+	if ($dt->locale->can($format_string)) {
+		return $dt->format_cldr($dt->locale->$format_string);
+	} else {
+		return $dt->strftime($format_string);
 	}
-	else {
-	    $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz);
-	}
-	#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
-	return $dt->strftime($format_string);
 }
 
 
@@ -849,6 +858,18 @@ sub trim_spaces {
 	$in =~ s/^\s*|\s*$//g;
 	return($in);
 }
+
+# This is for formatting set names input via text inputs in the user interface for internal use.  Set names are allowed
+# to be input with spaces, but internally spaces are not allowed and are converted to underscores.
+sub format_set_name_internal {
+	return ($_[0] =~ s/^\s*|\s*$//gr) =~ s/ /_/gr;
+}
+
+# This formats set names for display, converting underscores back into spaces.
+sub format_set_name_display {
+	return $_[0] =~ s/_/ /gr;
+}
+
 sub list2hash(@) {
 	map {$_ => "0"} @_;
 }
@@ -1015,6 +1036,10 @@ sub pretty_print_rh($) {
 	}
 }
 
+# If you modify the code of cryptPassword, please also make the change
+# in bin/crypt_passwords_in_classlist.pl, which has a copy of this
+# routine so it can easily be used without needed access to a WW webwork2
+# directory.
 sub cryptPassword($) {
 	my ($clearPassword) = @_;
 	#Use an SHA512 salt with 16 digits
@@ -1212,105 +1237,129 @@ sub has_aux_files ($) { #  determine whether a question has auxiliary files
 }
 
 sub is_restricted {
-        my ($db, $set, $studentName) = @_;
+	my ($db, $set, $studentName) = @_;
 
 	# all sets open after the due date
 	return () if after($set->due_date());
 
-        my $setID = $set->set_id();
+	my $setID = $set->set_id();
 	my @needed;
+
 	if ($set->restricted_release ) {
-	        my @proposed_sets = split(/\s*,\s*/,$set->restricted_release);
-		my $restriction =  $set->restricted_status  ||  0;
+		my @proposed_sets  = split(/\s*,\s*/,$set->restricted_release);
+		my $required_score = sprintf("%.2f", $set->restricted_status || 0);
+
 		my @good_sets;
 		foreach(@proposed_sets) {
-		  push @good_sets,$_ if $db->existsGlobalSet($_);
+			push @good_sets,$_ if $db->existsGlobalSet($_);
 		}
-		foreach(@good_sets) {
-	  	  my $restrictor =  $db->getGlobalSet($_);
-		  my $r_score = grade_set($db,$restrictor,$_, $studentName,0);
-		  if($r_score < $restriction) {
-	  	    push @needed,$_;
-		  }
+
+		foreach my $restrictor (@good_sets) {
+			my $r_score = 0;
+			my $restrictor_set = $db->getGlobalSet($restrictor);
+
+			if ($restrictor_set->assignment_type =~ /gateway/) {
+				my @versions =
+					$db->getSetVersionsWhere({ user_id => $studentName, set_id => { like => $restrictor . ',v%' } });
+				foreach (@versions) {
+					my $v_score = grade_set($db, $_, $studentName, 1);
+
+					$r_score = $v_score if ($v_score > $r_score);
+				}
+			} else {
+				$r_score = grade_set($db, $restrictor_set, $studentName, 0);
+			}
+
+			# round to evade machine rounding error
+			$r_score = sprintf("%.2f", $r_score);
+			if($r_score < $required_score) {
+				push @needed, $restrictor;
+			}
 		}
 	}
 	return unless @needed;
 	return @needed;
 }
 
-# Takes in $db, $set, $setName, $studentName, $setIsVersioned
-# and returns ($totalCorrect,$total) or the percentage correct
-
+# Takes in $db, $set, $studentName, $setIsVersioned and returns ($totalCorrect, $total) or the percentage correct.
 sub grade_set {
+	my ($db, $set, $studentName, $setIsVersioned, $wantProblemDetails) = @_;
 
-  my ($db, $set, $setName, $studentName, $setIsVersioned) = @_;
+	my $totalRight = 0;
+	my $total      = 0;
 
-  my $setID = $set->set_id();  #FIXME   setName and setID should be the same
+	# This information is also accumulated if $wantProblemDetails is true.
+	my $problem_scores             = [];
+	my $problem_incorrect_attempts = [];
 
-  my $status = 0;
-  my $totalRight = 0;
-  my $total      = 0;
+	# DBFIXME: To collect the problem records, we have to know which merge routines to call.  Should this really be an
+	# issue here?  That is, shouldn't the database deal with it invisibly by detecting what the problem types are?
+	my @problemRecords =
+		$setIsVersioned
+		? $db->getAllMergedProblemVersions($studentName, $set->set_id, $set->version_id)
+		: $db->getAllMergedUserProblems($studentName, $set->set_id);
 
+	# For jitar sets we only use the top level problems.
+	if ($set->assignment_type && $set->assignment_type eq 'jitar') {
+		my @topLevelProblems;
+		for my $problem (@problemRecords) {
+			my @seq = jitar_id_to_seq($problem->problem_id);
+			push @topLevelProblems, $problem if $#seq == 0;
+		}
 
-  # DBFIXME: to collect the problem records, we have to know
-  #    which merge routines to call.  Should this really be an
-  #    issue here?  That is, shouldn't the database deal with
-  #    it invisibly by detecting what the problem types are?
-  #    oh well.
+		@problemRecords = @topLevelProblems;
+	}
 
-  my @problemRecords = $db->getAllMergedUserProblems( $studentName, $setID );
-  my $num_of_problems  = @problemRecords || 0;
-  my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0;
+	if ($wantProblemDetails) {
+		# Sort records.  For gateway/quiz assignments we have to be careful about the order in which the problems are
+		# displayed, because they may be in a random order.
+		if ($set->problem_randorder) {
+			my @newOrder;
+			my @probOrder = (0 .. $#problemRecords);
+			# Reorder using the set psvn for the seed in the same way that the GatewayQuiz module does.
+			my $pgrand = PGrandom->new();
+			$pgrand->srand($set->psvn);
+			while (@probOrder) {
+				my $i = int($pgrand->rand(scalar(@probOrder)));
+				push(@newOrder, splice(@probOrder, $i, 1));
+			}
+		  # Now $newOrder[i] = pNum - 1, where pNum is the problem number to display in the ith position on the test for
+		  # sorting. Invert this mapping.
+			my %pSort = map { $problemRecords[ $newOrder[$_] ]->problem_id => $_ } (0 .. $#newOrder);
 
-  if ( $setIsVersioned ) {
-    @problemRecords = $db->getAllMergedProblemVersions( $studentName, $setID, $set->version_id );
-  }   # use versioned problems instead (assume that each version has the same number of problems.
+			@problemRecords = sort { $pSort{ $a->problem_id } <=> $pSort{ $b->problem_id } } @problemRecords;
+		} else {
+			# Sort records
+			@problemRecords = sort { $a->problem_id <=> $b->problem_id } @problemRecords;
+		}
+	}
 
-  # for jitar sets we only use the top level problems
-  if ($set->assignment_type eq 'jitar') {
-    my @topLevelProblems;
-    foreach my $problem (@problemRecords) {
-      my @seq = jitar_id_to_seq($problem->problem_id);
-      push @topLevelProblems, $problem if ($#seq == 0);
-    }
+	for my $problemRecord (@problemRecords) {
+		my $status = $problemRecord->status || 0;
 
-    @problemRecords = @topLevelProblems;
-  }
+		# Get the adjusted jitar grade for top level problems if this is a jitar set.
+		$status = jitar_problem_adjusted_status($problemRecord, $db) if $set->assignment_type eq 'jitar';
 
-  foreach my $problemRecord (@problemRecords) {
-    my $prob = $problemRecord->problem_id;
+		# Clamp the status value between 0 and 1.
+		$status = 0 if $status < 0;
+		$status = 1 if $status > 1;
 
-    unless (defined($problemRecord) ){
-      # warn "Can't find record for problem $prob in set $setName for $student";
-      next;
-    }
+		if ($wantProblemDetails) {
+			push(@$problem_scores, $problemRecord->attempted ? 100 * wwRound(2, $status) : '&nbsp;.&nbsp;');
+			push(@$problem_incorrect_attempts, $problemRecord->num_incorrect || 0);
+		}
 
-    $status           = $problemRecord->status || 0;
+		my $probValue = $problemRecord->value;
+		$probValue = 1 unless defined $probValue && $probValue ne '';    # FIXME: Set defaults here?
+		$total      += $probValue;
+		$totalRight += $status * $probValue;
+	}
 
-    # we need to get the adjusted jitar grade for our
-    # top level problems.
-    if ($set->assignment_type eq 'jitar') {
-      $status = jitar_problem_adjusted_status($problemRecord,$db);
-    }
-
-    # sanity check that the status (score) is
-    # between 0 and 1
-    my $valid_status = ($status>=0 && $status<=1)?1:0;
-
-    my $probValue     = $problemRecord->value;
-    $probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
-    $total           += $probValue;
-    $totalRight      += $status*$probValue if $valid_status;
-
-  }  # end of problem record loop
-
-  if (wantarray) {
-    return ($totalRight,$total);
-  } else {
-
-    return 0 unless $total;
-    return $totalRight/$total;
-  }
+	if (wantarray) {
+		return ($totalRight, $total, $problem_scores, $problem_incorrect_attempts);
+	} else {
+		return $total ? $totalRight / $total : 0;
+	}
 }
 
 # Takes in $db, $set, $setName, $studentName,
@@ -1329,7 +1378,7 @@ sub grade_gateway {
     for my $i ( @versionNums ) {
       my $versionedSet = $db->getSetVersion($studentName,$setName,$i);
 
-      my ($totalRight,$total) = grade_set($db,$versionedSet,$versionedSet->set_id, $studentName,1);
+      my ($totalRight, $total) = grade_set($db, $versionedSet, $studentName, 1);
       if ($totalRight > $bestTotalRight) {
 	$bestTotalRight = $totalRight;
 	$bestTotal = $total;
@@ -1367,7 +1416,7 @@ sub grade_all_sets {
       $courseTotalRight += $totalRight;
       $courseTotal += $total;
     } else {
-      my ($totalRight,$total) = grade_set($db,$userSet,$userSet->set_id,$studentName,0);
+      my ($totalRight, $total) = grade_set($db, $userSet, $studentName, 0);
 
       $courseTotalRight += $totalRight;
       $courseTotal += $total;
@@ -1716,30 +1765,23 @@ sub jitar_problem_finished {
 
 # requires a CG object, and a permission type
 # a user may also be submitted, in case we need to filter by section
-# could require the db, course environment and authz separately... why tho?
 
 sub fetchEmailRecipients {
-	my ($self, $permissionType, $sender) = @_; # sender argument is optional
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
+	my ($self, $permissionType, $sender) = @_;    # sender argument is optional
+	my $r     = $self->r;
+	my $db    = $r->db;
+	my $ce    = $r->ce;
 	my $authz = $r->authz;
-	my @recipients;
 
-  return unless $permissionType;
+	return unless $permissionType;
 
-	foreach my $potentialRecipient ($db->listUsers()) {
-		if ($authz->hasPermissions($potentialRecipient, $permissionType)) {
-			my $validRecipient = $db->getUser($potentialRecipient);
-			next if $ce->{feedback_by_section} and defined $sender
-					and defined $validRecipient->section and defined $sender->section
-					and $validRecipient->section ne $sender->section;
-			if ($validRecipient and $validRecipient->email_address) {
-					push @recipients, $validRecipient->rfc822_mailbox;
-			}
-		}
-	}
-	return @recipients;
+	return
+		map { $_->rfc822_mailbox } grep { $authz->hasPermissions($_->user_id, $permissionType) } $db->getUsersWhere({
+			email_address => { '!=', undef },
+			$ce->{feedback_by_section}
+			&& defined $sender
+			&& defined $sender->section ? (section => $sender->section) : (),
+		});
 }
 
 # Requires a CG object.
@@ -1808,6 +1850,94 @@ sub generateURLs {
 		return ($emailableURL, $returnURL);
 	}
 	return;
+}
+
+my $staticWWAssets;
+my $staticPGAssets;
+
+# Get the url for static assets.
+sub getAssetURL {
+	my ($ce, $file, $isThemeFile) = @_;
+
+	# Load the static files list generated by `npm install` the first time this method is called.
+	if (!$staticWWAssets) {
+		my $staticAssetsList = "$ce->{webworkDirs}{htdocs}/static-assets.json";
+		if (-r $staticAssetsList) {
+			my $data = do {
+				open(my $fh, "<:encoding(UTF-8)", $staticAssetsList)
+					or die "FATAL: Unable to open '$staticAssetsList'!";
+				local $/;
+				<$fh>;
+			};
+
+			$staticWWAssets = JSON->new->decode($data);
+		} else {
+			warn "ERROR: '$staticAssetsList' not found!\n"
+				. "You may need to run 'npm install' from '$ce->{webworkDirs}{htdocs}'.";
+		}
+	}
+
+	if (!$staticPGAssets) {
+		my $staticAssetsList = "$WeBWorK::Constants::PG_DIRECTORY/htdocs/static-assets.json";
+		if (-r $staticAssetsList) {
+			my $data = do {
+				open(my $fh, "<:encoding(UTF-8)", $staticAssetsList)
+					or die "FATAL: Unable to open '$staticAssetsList'!";
+				local $/;
+				<$fh>;
+			};
+
+			$staticPGAssets = JSON->new->decode($data);
+		} else {
+			warn "ERROR: '$staticAssetsList' not found!\n"
+				. "You may need to run 'npm install' from '$WeBWorK::Constants::PG_DIRECTORY/htdocs'.";
+		}
+	}
+
+	# If a right-to-left language is enabled (Hebrew or Arabic) and this is a css file that is not a third party asset,
+	# then determine the rtl varaint file name.  This will be looked for first in the asset lists.
+	my $rtlfile = $file =~ s/\.css$/.rtl.css/r
+		if ($ce->{language} =~ /^(he|ar)/ && $file !~ /node_modules/ && $file =~ /\.css$/);
+
+	if ($isThemeFile) {
+		# If the theme directory is the default location, then the file is in the static assets list.
+		# Otherwise just use the given file name.
+		if ($ce->{webworkDirs}{themes} =~ /^$ce->{webworkDirs}{htdocs}\/themes$/) {
+			$rtlfile = "themes/$ce->{defaultTheme}/$rtlfile" if defined $rtlfile;
+			$file = "themes/$ce->{defaultTheme}/$file";
+		} else {
+			return "$ce->{webworkURLs}{themes}/$ce->{defaultTheme}/$file";
+		}
+	}
+
+	# First check to see if this is a file in the webwork htdocs location with a rtl variant.
+	# These can only be local files.
+	return "$ce->{webworkURLs}{htdocs}/$staticWWAssets->{$rtlfile}"
+		if defined $rtlfile && defined $staticWWAssets->{$rtlfile};
+
+	# Next check to see if this is a file in the webwork htdocs location.
+	if (defined $staticWWAssets->{$file}) {
+		# File served by cdn.
+		return $staticWWAssets->{$file} if $staticWWAssets->{$file} =~ /^https?:\/\//;
+		# File served locally.
+		return "$ce->{webworkURLs}{htdocs}/$staticWWAssets->{$file}";
+	}
+
+	# Now check to see if this is a file in the pg htdocs location with a rtl variant.
+	# These also can only be local files.
+	return "/pg_files/$staticPGAssets->{$rtlfile}" if defined $rtlfile && defined $staticPGAssets->{$rtlfile};
+
+	# Next check to see if this is a file in the pg htdocs location.
+	if (defined $staticPGAssets->{$file}) {
+		# File served by cdn.
+		return $staticPGAssets->{$file} if $staticPGAssets->{$file} =~ /^https?:\/\//;
+		# File served locally.
+		return "/pg_files/$staticPGAssets->{$file}";
+	}
+
+	# If the file was not found in the lists, then assume it is in the webwork htdocs location, and use the given file
+	# name.  If it is actually in the pg htdocs location, then the apache rewrite will send it there.
+	return "$ce->{webworkURLs}{htdocs}/$file";
 }
 
 # This is a dummy function used to mark strings for localization

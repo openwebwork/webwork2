@@ -1,14 +1,14 @@
-#!/usr/local/bin/perl -w 
+#!/usr/local/bin/perl -w
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -17,7 +17,7 @@
 
 package WebworkWebservice::RenderProblem;
 use WebworkWebservice;
-use base qw(WebworkWebservice); 
+use base qw(WebworkWebservice);
 
 my $debugXmlCode=0;  # turns on the filter for debugging XMLRPC and SOAP code
 local(*DEBUGCODE);
@@ -37,7 +37,6 @@ use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::PG::IO;
 use WeBWorK::PG::ImageGenerator;
-use WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil qw(insert_mathquill_responses);
 use Encode qw(encode);
 use Benchmark;
 
@@ -50,36 +49,36 @@ our $COURSENAME   = $WebworkWebservice::COURSENAME;
 our $PROTOCOL     = $WebworkWebservice::PROTOCOL;
 our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
 our $PORT         = $WebworkWebservice::HOST_PORT;
-our $HOSTURL      = "$PROTOCOL://$HOST_NAME:$PORT"; 
+our $HOSTURL      = "$PROTOCOL://$HOST_NAME:$PORT";
 
 
 our $UNIT_TESTS_ON =0;
-# 
+#
 # #our $ce           = $WebworkWebservice::SeedCE;
 # # create a local course environment for some course
 # our $ce           = WeBWorK::CourseEnvironment->new(
-#                 {webwork_dir=> $WW_DIRECTORY,  courseName=>$COURSENAME} 
+#                 {webwork_dir=> $WW_DIRECTORY,  courseName=>$COURSENAME}
 #     );
 #     $ce->{apache_root_url} = $HOSTURL;
 # #print "\$ce = \n", WeBWorK::Utils::pretty_print_rh($ce);
-# 
-# 
+#
+#
 # #other services
 # # File variables
 # #our $WARNINGS='';
-# 
-# 
+#
+#
 # # imported constants
-# 
+#
 # my $COURSE_TEMP_DIRECTORY 	= 	$ce->{courseDirs}->{html_tmp};
 # my $COURSE_TEMP_URL 		= 	$HOSTURL.$ce->{courseURLs}->{html_tmp};
-# 
-# my $pgMacrosDirectory 		= 	$ce->{pg_dir}.'/macros/';      
-# my $macroDirectory			=	$ce->{courseDirs}->{macros}.'/'; 
-# my $templateDirectory		= 	$ce->{courseDirs}->{templates}; 
-# 
+#
+# my $pgMacrosDirectory 		= 	$ce->{pg_dir}.'/macros/';
+# my $macroDirectory			=	$ce->{courseDirs}->{macros}.'/';
+# my $templateDirectory		= 	$ce->{courseDirs}->{templates};
+#
 # my %PG_environment          =   $ce->{pg}->{specialPGEnvironmentVars};
-# 
+#
 
 use constant DISPLAY_MODES => {
 	# display name   # mode name
@@ -338,19 +337,21 @@ sub renderProblem {
 
 	# Other initializations
 	my $translationOptions = {
-		displayMode     => $rh->{envir}->{displayMode}//"display mode not defined at RenderProblem.pm 388",
-		showHints	    => $rh->{envir}->{showHints},
-		showSolutions   => $rh->{envir}->{showSolutions},
-		refreshMath2img => $rh->{envir}->{showHints} || $rh->{envir}->{showSolutions},
+		displayMode     => $rh->{envir}{displayMode} // "display mode not defined at RenderProblem.pm 388",
+		showHints       => $rh->{envir}{showHints},
+		showSolutions   => $rh->{envir}{showSolutions},
+		refreshMath2img => $rh->{envir}{showHints} || $rh->{envir}{showSolutions},
 		processAnswers  => defined($rh->{processAnswers}) ? $rh->{processAnswers} : 1,
 		catchWarnings   => 1,
 		# methods for supplying the source,
-		r_source        => $r_problem_source, # reference to a source file string.
-		# if reference is not defined then the path is obtained
-		# from the problem object.
-		permissionLevel => $rh->{envir}->{permissionLevel} || 0,
-		effectivePermissionLevel => $rh->{envir}->{effectivePermissionLevel}
-		|| $rh->{envir}->{permissionLevel} || 0,
+		r_source                 => $r_problem_source,    # reference to a source file string.
+														  # if reference is not defined then the path is obtained
+														  # from the problem object.
+		permissionLevel          => $rh->{envir}{permissionLevel} || 0,
+		effectivePermissionLevel => $rh->{envir}{effectivePermissionLevel} || $rh->{envir}{permissionLevel} || 0,
+		useMathQuill             => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill',
+		useMathView              => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView',
+		useWiris                 => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS',
 	};
 
 	my $formFields = $rh->{envir}->{inputs_ref};
@@ -386,8 +387,6 @@ sub renderProblem {
 	);
 
 	$self->{formFields} = $formFields;
-	WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
-	if $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill';
 
 	my ($internal_debug_messages, $pgwarning_messages, $pgdebug_messages);
 	if (ref($pg->{pgcore}) eq 'PGcore') {
@@ -461,7 +460,7 @@ sub xml_filter {
 		return "";
 	}
 	my $type = ref($input);
-	
+
 	# Hack to filter out CODE references??
 	if (!defined($type) or !$type ) {
 		print DEBUGCODE $space x $level." : scalar -- not converted\n" if $debugXmlCode;
@@ -539,7 +538,7 @@ sub xml_filter {
 		$input = "$type reference";
 	}
 	$input;
-	
+
 }
 
 sub logTimingInfo{
@@ -555,10 +554,10 @@ sub new {
 	shift; # throw away invocant -- we don't need it
 	my ($ce, $user, $key, $set, $problem, $psvn, $formFields,
 		$translationOptions) = @_;
-	
+
 	#my $renderer = 'WeBWorK::PG::Local';
 	my $renderer = $ce->{pg}->{renderer};
-	
+
 	runtime_use $renderer;
 	# the idea is to have Local call back to the defineProblemEnvir below.
 	#return WeBWorK::PG::Local::new($renderer,@_);

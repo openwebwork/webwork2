@@ -1,5 +1,5 @@
 RELEASE_FILENAME=webwork-open-problem-library-METADATA.tar.gz
-GITHUB_USERNAME=heiderich
+GITHUB_USERNAME=openwebwork
 GITHUB_REPO=webwork-open-problem-library
 JSON_FILENAME=latest_release.json
 RELEASE_TAG=latest_release.tag

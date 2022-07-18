@@ -1,0 +1,10 @@
+[main]
+host = https://www.transifex.com
+
+[o:webwork:p:webwork2:r:lib-webwork-localize-webwork2-pot--develop]
+file_filter  = lib/WeBWorK/Localize/<lang>.po
+source_file  = lib/WeBWorK/Localize/webwork2.pot
+source_lang  = en
+type         = PO
+lang_map     = cs_CZ: cs-CZ, fr_CA: fr-CA, he_IL: he-IL, ru_RU: ru-RU, zh_CN: zh-CN, zh_HK: zh-HK, tr_TR: tr-TR
+minimum_perc = 0

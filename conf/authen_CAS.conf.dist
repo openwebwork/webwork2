@@ -24,12 +24,52 @@ $authen{cas_options} = {
 		# Path of certificate file for CAS server.
 		CAFile => '', #e.g. '/etc/pki/tls/certs/ca-bundle.crt',
 	},
-	# There are no options specific to CAS at this time.  If there were,
-	# though, they would go here.
 
-	# For debugging:
-	#su_from => '8315',
-	su_to => '999999',
+	# Options specific to CAS authentication in WeBWorK
+
+	# On most college campuses, the CAS system is a campus-wide system,
+	# and individual departments may not be able to create their own CAS
+	# userids.  Instead, therefore, we support a "setUser" facility, with
+	# controls over which users can use it and (optionally) which users
+	# they can switch to.
+
+	# This is controlled by a hash, in which the keys are the users allowed
+	# to use the setUser function, and the values are either a string
+	# (optionally ending in '*', signifying pattern matching) or an array
+	# of such strings.
+	#
+	# Examples:
+	#
+	#   sudoers => undef,		# turns off this feature completely
+	#
+	#   sudoers => {admin => '*',
+	#   		alice => ['demo*', 'yxzzy'],
+	#   		bob => ['test1', 'test2'],
+	#   		},
+	#
+	# This option can also be set in a course.conf file (after this file
+	# authen_CAS.conf has been read in).
+	#
+	# Although it is true that users who can use this feature must be
+	# mentioned explicitly in the sudoers hash, they do not have to have
+	# accounts in the course in which it is being used.  Therefore, except
+	# for people who administer the webwork site as a whole, it is best
+	# to put such settings in the relevant course.conf files.
+	#
+	# Examples in course.conf file:
+	#
+	#   $authen{cas_options}{sudoers} = {
+	#     'profgauss' => ['teststudent', 'testta'],
+	#     };
+	#
+	#   # Add to existing hash
+	#   $authen{cas_options}{sudoers}{profwiles} = 'test*';
+	#
+	# Sample usage:  To log in as user "bob" in course Calc101, access
+	# webwork using a url such as:
+	#	https://webwork.ouruniversity.edu/webwork2/Calc101/?setUser=bob
+
+	sudoers => undef,
 };
 
 

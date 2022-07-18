@@ -1,13 +1,12 @@
 ################################################################################
-# WeBWorK Online Homework Delivery System>
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.112 2012/06/08 22:40:00 wheeler Exp $
-# 
+# WeBWorK Online Homework Delivery System
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -23,20 +22,20 @@ WeBWorK::DB - interface with the WeBWorK databases.
 =head1 SYNOPSIS
 
  my $db = WeBWorK::DB->new($dbLayout);
- 
+
  my @userIDs = $db->listUsers();
  my $Sam = $db->{user}->{record}->new();
- 
+
  $Sam->user_id("sammy");
  $Sam->first_name("Sam");
  $Sam->last_name("Hathaway");
  # etc.
- 
+
  $db->addUser($User);
  my $Dennis = $db->getUser("dennis");
  $Dennis->status("C");
  $db->putUser->($Dennis);
- 
+
  $db->deleteUser("sammy");
 
 =head1 DESCRIPTION
@@ -222,18 +221,18 @@ sub new {
 	my $class = ref($invocant) || $invocant;
 	my $self = {};
 	bless $self, $class; # bless this here so we can pass it to the schema
-	
+
 	# load the modules required to handle each table, and create driver
 	foreach my $table (keys %$dbLayout) {
 		$self->init_table($dbLayout, $table);
 	}
-	
+
 	return $self;
 }
 
 sub init_table {
 	my ($self, $dbLayout, $table) = @_;
-	
+
 	if (exists $self->{$table}) {
 		if (defined $self->{$table}) {
 			return;
@@ -241,7 +240,7 @@ sub init_table {
 			die "loop in dbLayout table dependencies involving table '$table'\n";
 		}
 	}
-	
+
 	my $layout = $dbLayout->{$table};
 	my $record = $layout->{record};
 	my $schema = $layout->{schema};
@@ -251,30 +250,30 @@ sub init_table {
 	my $params = $layout->{params};
   	my $engine = $layout->{engine};
   	my $character_set = $layout->{character_set};
-	
+
 	# add a key for this table to the self hash, but don't define it yet
 	# this for loop detection
 	$self->{$table} = undef;
-	
+
 	if ($depend) {
 		foreach my $dep (@$depend) {
 			$self->init_table($dbLayout, $dep);
 		}
 	}
-	
+
 	runtime_use($record);
-	
+
 	runtime_use($driver);
 	my $driverObject = eval { $driver->new($source, $params) };
 	croak "error instantiating DB driver $driver for table $table: $@"
 		if $@;
-	
+
 	runtime_use($schema);
 	my $schemaObject = eval { $schema->new(
 		$self, $driverObject, $table, $record, $params, $engine, $character_set) };
 	croak "error instantiating DB schema $schema for table $table: $@"
 		if $@;
-	
+
 	$self->{$table} = $schemaObject;
 }
 
@@ -370,7 +369,7 @@ sub gen_delete_where {
 
 sub create_tables {
 	my ($self) = @_;
-	
+
 	foreach my $table (keys %$self) {
 		next if $table =~ /^_/; # skip non-table self fields (none yet)
 		next if $self->{$table}{params}{non_native}; # skip non-native tables
@@ -381,13 +380,13 @@ sub create_tables {
 			warn "skipping creation of '$table' table: no create_table method\n";
 		}
 	}
-	
+
 	return 1;
 }
 
 sub rename_tables {
 	my ($self, $new_dblayout) = @_;
-	
+
 	foreach my $table (keys %$self) {
 		next if $table =~ /^_/; # skip non-table self fields (none yet)
 		next if $self->{$table}{params}{non_native}; # skip non-native tables
@@ -406,13 +405,13 @@ sub rename_tables {
 			warn "skipping renaming of '$table' table: table doesn't exist in new dbLayout\n";
 		}
 	}
-	
+
 	return 1;
 }
 
 sub delete_tables {
 	my ($self) = @_;
-	
+
 	foreach my $table (keys %$self) {
 		next if $table =~ /^_/; # skip non-table self fields (none yet)
 		next if $self->{$table}{params}{non_native}; # skip non-native tables
@@ -423,13 +422,13 @@ sub delete_tables {
 			warn "skipping deletion of '$table' table: no delete_table method\n";
 		}
 	}
-	
+
 	return 1;
 }
 
 sub dump_tables {
 	my ($self, $dump_dir) = @_;
-	
+
 	foreach my $table (keys %$self) {
 		next if $table =~ /^_/; # skip non-table self fields (none yet)
 		next if $self->{$table}{params}{non_native}; # skip non-native tables
@@ -441,13 +440,13 @@ sub dump_tables {
 			warn "skipping dump of '$table' table: no dump_table method\n";
 		}
 	}
-	
+
 	return 1;
 }
 
 sub restore_tables {
 	my ($self, $dump_dir) = @_;
-	
+
 	foreach my $table (keys %$self) {
 		next if $table =~ /^_/; # skip non-table self fields (none yet)
 		next if $self->{$table}{params}{non_native}; # skip non-native tables
@@ -459,7 +458,7 @@ sub restore_tables {
 			warn "skipping restore of '$table' table: no restore_table method\n";
 		}
 	}
-	
+
 	return 1;
 }
 
@@ -478,12 +477,13 @@ BEGIN {
 
 sub countUsers { return scalar shift->listUsers(@_) }
 
+# Note: This returns a list of user_ids for all users except set level proctors.
 sub listUsers {
 	my ($self) = shift->checkArgs(\@_);
 	if (wantarray) {
-		return map { @$_ } $self->{user}->get_fields_where(["user_id"]);
+		return map {@$_} $self->{user}->get_fields_where(['user_id'], { user_id => { not_like => 'set_id:%' } });
 	} else {
-		return $self->{user}->count_where;
+		return $self->{user}->count_where({ user_id => { not_like => 'set_id:%' } });
 	}
 }
 
@@ -517,7 +517,7 @@ sub addUser {
 	# through to the calling code. however, right now we have code that checks
 	# for the string "... exists" in the error message, so we need to convert
 	# here.
-	# 
+	#
 	# WeBWorK::DB::Ex::RecordExists
 	# WeBWorK::DB::Ex::DependencyNotFound - i.e. inserting a password for a nonexistent user
 	# ?
@@ -581,9 +581,9 @@ sub getPassword {
 
 sub getPasswords {
 	my ($self, @userIDs) = shift->checkArgs(\@_, qw/user_id*/);
-	
+
 	my @Passwords = $self->{password}->gets(map { [$_] } @userIDs);
-	
+
 	# AUTO-CREATE missing password records
 	# (this code is duplicated in getPermissionLevels, below)
 	for (my $i = 0; $i < @Passwords; $i++) {
@@ -600,16 +600,16 @@ sub getPasswords {
 			}
 		}
 	}
-	
+
 	return @Passwords;
 }
 
 sub addPassword {
 	my ($self, $Password) = shift->checkArgs(\@_, qw/REC:password/);
-	
+
 	croak "addPassword: user ", $Password->user_id, " not found"
 		unless $self->{user}->exists($Password->user_id);
-	
+
 	eval {
 		return $self->{password}->add($Password);
 	};
@@ -674,9 +674,9 @@ sub getPermissionLevel {
 
 sub getPermissionLevels {
 	my ($self, @userIDs) = shift->checkArgs(\@_, qw/user_id*/);
-	
+
 	my @PermissionLevels = $self->{permission}->gets(map { [$_] } @userIDs);
-	
+
 	# AUTO-CREATE missing permission level records
 	# (this code is duplicated in getPasswords, above)
 	for (my $i = 0; $i < @PermissionLevels; $i++) {
@@ -693,16 +693,16 @@ sub getPermissionLevels {
 			}
 		}
 	}
-	
+
 	return @PermissionLevels;
 }
 
 sub addPermissionLevel {
 	my ($self, $PermissionLevel) = shift->checkArgs(\@_, qw/REC:permission/);
-	
+
 	croak "addPermissionLevel: user ", $PermissionLevel->user_id, " not found"
 		unless $self->{user}->exists($PermissionLevel->user_id);
-	
+
 	eval {
 		return $self->{permission}->add($PermissionLevel);
 	};
@@ -771,12 +771,12 @@ sub getKeys {
 sub addKey {
 	# PROCTORING - allow comma in keyfields
 	my ($self, $Key) = shift->checkArgs(\@_, qw/VREC:key/);
-	
+
 	# PROCTORING -  check for both user and proctor
-	# we allow for two entries for proctor keys, one of the form 
-	#    userid,proctorid (which authorizes login), and the other 
+	# we allow for two entries for proctor keys, one of the form
+	#    userid,proctorid (which authorizes login), and the other
 	#    of the form userid,proctorid,g (which authorizes grading)
-	# (having two of these means that a proctored test will require 
+	# (having two of these means that a proctored test will require
 	#    authorization for both login and grading).
 	if ($Key->user_id =~ /([^,]+)(?:,([^,]*))?(,g)?/) {
 		my ($userID, $proctorID) = ($1, $2);
@@ -791,7 +791,7 @@ sub addKey {
 #			unless $self->{user}->exists($Key->user_id);
 			unless $Key -> key eq "nonce" or $self->{user}->exists($Key->user_id);
 	}
-	
+
 	eval {
 		return $self->{key}->add($Key);
 	};
@@ -879,11 +879,11 @@ sub deleteSetting {
 # locations functions
 ################################################################################
 # this database table is for ip restrictions by assignment
-# the locations table defines names of locations consisting of 
+# the locations table defines names of locations consisting of
 #    lists of ip masks (found in the location_addresses table)
 #    to which assignments can be restricted to or denied from.
 
-BEGIN { 
+BEGIN {
 	*Location = gen_schema_accessor("locations");
 	*newLocation = gen_new("locations");
 	*countLocationsWhere = gen_count_where("locations");
@@ -903,12 +903,12 @@ sub listLocations {
 	}
 }
 
-sub existsLocation { 
+sub existsLocation {
 	my ( $self, $locationID ) = shift->checkArgs(\@_, qw/location_id/);
 	return $self->{locations}->exists($locationID);
 }
 
-sub getLocation { 
+sub getLocation {
 	my ( $self, $locationID ) = shift->checkArgs(\@_, qw/location_id/);
 	return ( $self->getLocations($locationID) )[0];
 }
@@ -918,12 +918,12 @@ sub getLocations {
 	return $self->{locations}->gets(map {[$_]} @locationIDs);
 }
 
-sub getAllLocations { 
+sub getAllLocations {
 	my ( $self ) = shift->checkArgs(\@_);
 	return $self->{locations}->get_records_where();
 }
 
-sub addLocation { 
+sub addLocation {
 	my ( $self, $Location ) = shift->checkArgs(\@_, qw/REC:locations/);
 
 	eval {
@@ -936,7 +936,7 @@ sub addLocation {
 	}
 }
 
-sub putLocation { 
+sub putLocation {
 	my ($self, $Location) = shift->checkArgs(\@_, qw/REC:locations/);
 	my $rows = $self->{locations}->put($Location);
 	if ( $rows == 0 ) {
@@ -955,10 +955,10 @@ sub deleteLocation {
 	$self->deleteGlobalSetLocation(undef, $locationID);
 	$self->deleteUserSetLocation(undef, undef, $locationID);
 
-	# NOTE: the one piece of this that we don't address is if this 
+	# NOTE: the one piece of this that we don't address is if this
 	#    results in all of the locations in a set's restriction being
-	#    cleared; in this case, we should probably also reset the 
-	#    set->restrict_ip setting as well.  but that requires going 
+	#    cleared; in this case, we should probably also reset the
+	#    set->restrict_ip setting as well.  but that requires going
 	#    out and doing a bunch of manipulations that well exceed what
 	#    we want to do in this routine, so we'll assume that the user
 	#    is smart enough to deal with that on her own.
@@ -973,10 +973,10 @@ sub deleteLocation {
 # location_addresses functions
 ################################################################################
 # this database table is for ip restrictions by assignment
-# the location_addresses table defines the ipmasks associate 
+# the location_addresses table defines the ipmasks associate
 #    with the locations that are used for restrictions.
 
-BEGIN { 
+BEGIN {
 	*LocationAddress = gen_schema_accessor("location_addresses");
 	*newLocationAddress = gen_new("location_addresses");
 	*countLocationAddressesWhere = gen_count_where("location_addresses");
@@ -987,7 +987,7 @@ BEGIN {
 
 sub countAddressLocations { return scalar shift->listAddressLocations(@_) }
 
-sub listAddressLocations { 
+sub listAddressLocations {
 	my ($self, $ipmask) = shift->checkArgs(\@_, qw/ip_mask/);
 	my $where = [ip_mask_eq => $ipmask];
 	if ( wantarray ) {
@@ -1002,14 +1002,14 @@ sub countLocationAddresses { return scalar shift->listLocationAddresses(@_) }
 sub listLocationAddresses {
 	my ($self, $locationID) = shift->checkArgs(\@_, qw/location_id/);
 	my $where = [location_id_eq => $locationID];
-	if ( wantarray ) { 
+	if ( wantarray ) {
 		return map {@$_} $self->{location_addresses}->get_fields_where(["ip_mask"],$where);
 	} else {
 		return $self->{location_addresses}->count_where($where);
 	}
 }
 
-sub existsLocationAddress { 
+sub existsLocationAddress {
 	my ($self, $locationID, $ipmask) = shift->checkArgs(\@_, qw/location_id ip_mask/);
 	return $self->{location_addresses}->exists($locationID, $ipmask);
 }
@@ -1017,15 +1017,15 @@ sub existsLocationAddress {
 # we wouldn't ever getLocationAddress or getLocationAddresses; to use those
 #   we would have to know all of the information that we're getting
 
-sub getAllLocationAddresses { 
+sub getAllLocationAddresses {
 	my ($self, $locationID) = shift->checkArgs(\@_, qw/location_id/);
 	my $where = [location_id_eq => $locationID];
 	return $self->{location_addresses}->get_records_where($where);
 }
 
-sub addLocationAddress { 
+sub addLocationAddress {
 	my ($self, $LocationAddress) = shift->checkArgs(\@_, qw/REC:location_addresses/);
-	croak "addLocationAddress: location ", $LocationAddress->location_id, " not found" 
+	croak "addLocationAddress: location ", $LocationAddress->location_id, " not found"
 		unless $self->{locations}->exists($LocationAddress->location_id);
 	eval {
 		return $self->{location_addresses}->add($LocationAddress);
@@ -1037,7 +1037,7 @@ sub addLocationAddress {
 	}
 }
 
-sub putLocationAddress { 
+sub putLocationAddress {
 	my ($self, $LocationAddress) = shift->checkArgs(\@_, qw/REC:location_addresses/);
 	my $rows = $self->{location_addresses}->put($LocationAddress);
 	if ( $rows == 0 ) {
@@ -1047,7 +1047,7 @@ sub putLocationAddress {
 	}
 }
 
-sub deleteLocationAddress { 
+sub deleteLocationAddress {
 	# allow for undef values
 	my $U = caller eq __PACKAGE__ ? "!" : "";
 	my ($self, $locationID, $ipmask) = shift->checkArgs(\@_, "location_id$U", "ip_mask$U");
@@ -1075,7 +1075,7 @@ sub listProblemPastAnswers {
 	$self = shift;
 	$self->checkArgs(\@_, qw/course_id? user_id set_id problem_id/);
 
-	#if a courseID is not provided then just do the search without a course 
+	#if a courseID is not provided then just do the search without a course
 	#id.  This is ok becaus the table is course specific.
 	my $where;
 	if ($#_ == 3) {
@@ -1102,7 +1102,7 @@ sub latestProblemPastAnswer {
 	$self = shift;
 	$self->checkArgs(\@_, qw/course_id? user_id set_id problem_id/);
 
-	#if a courseID is not provided then just do the search without a course 
+	#if a courseID is not provided then just do the search without a course
 	#id.  This is ok becaus the table is course specific.
 	my @answerIDs;
 	if ($#_ == 3) {
@@ -1142,9 +1142,9 @@ sub addPastAnswer {
 #	croak "addPastAnswert: course ", $pastAnswer->course_id, " not found"
 #		unless $self->{course}->exists($pastAnswer->course_id);
 
-	croak "addPastAnswert: user problem ", $pastAnswer->user_id, " ", 
+	croak "addPastAnswert: user problem ", $pastAnswer->user_id, " ",
               $pastAnswer->set_id, " ", $pastAnswer->problem_id, " not found"
-		unless 	$self->{problem_user}->exists($pastAnswer->user_id, 
+		unless 	$self->{problem_user}->exists($pastAnswer->user_id,
 						      $pastAnswer->set_id,
 						      $pastAnswer->problem_id);
 
@@ -1217,7 +1217,7 @@ sub getGlobalSets {
 
 sub addGlobalSet {
 	my ($self, $GlobalSet) = shift->checkArgs(\@_, qw/REC:set/);
-	
+
 	eval {
 
 		return $self->{set}->add($GlobalSet);
@@ -1290,7 +1290,7 @@ sub getAchievements {
 
 sub addAchievement {
 	my ($self, $Achievement) = shift->checkArgs(\@_, qw/REC:achievement/);
-	
+
 	eval {
 
 		return $self->{achievement}->add($Achievement);
@@ -1361,7 +1361,7 @@ sub getGlobalUserAchievements {
 
 sub addGlobalUserAchievement {
 	my ($self, $globalUserAchievement) = shift->checkArgs(\@_, qw/REC:global_user_achievement/);
-	
+
 	eval {
 
 	    return $self->{global_user_achievement}->add($globalUserAchievement);
@@ -1387,12 +1387,12 @@ sub deleteGlobalUserAchievement {
 	# userAchievementID can be undefined if being called from this package
 	my $U = caller eq __PACKAGE__ ? "!" : "";
 	my ($self, $userID) = shift->checkArgs(\@_, "user_id$U");
-	
+
 	my @achievements = $self->listUserAchievements($userID);
 	foreach my $achievement (@achievements) {
 	    $self->deleteUserAchievement($userID,$achievement);
 	}
-	
+
 	if ($self->{global_user_achievement}){
 		return $self->{global_user_achievement}->delete($userID);
 	} else {
@@ -1455,12 +1455,12 @@ sub getUserAchievements {
 
 sub addUserAchievement {
 	my ($self, $UserAchievement) = shift->checkArgs(\@_, qw/REC:achievement_user/);
-	
+
 	croak "addUserAchievement: user ", $UserAchievement->user_id, " not found"
 		unless $self->{user}->exists($UserAchievement->user_id);
 	croak "addUserAchievement: achievement ", $UserAchievement->achievement_id, " not found"
 		unless $self->{achievement}->exists($UserAchievement->achievement_id);
-	
+
 	eval {
 		return $self->{achievement_user}->add($UserAchievement);
 	};
@@ -1540,11 +1540,11 @@ sub getUserSets {
 	return $self->{set_user}->gets(@userSetIDs);
 }
 
-# the code from addUserSet() is duplicated in large part following in 
+# the code from addUserSet() is duplicated in large part following in
 # addVersionedUserSet; changes here should accordingly be propagated down there
 sub addUserSet {
 	my ($self, $UserSet) = shift->checkArgs(\@_, qw/REC:set_user/);
-	
+
 	croak "addUserSet: user ", $UserSet->user_id, " not found"
 		unless $self->{user}->exists($UserSet->user_id);
 	croak "addUserSet: set ", $UserSet->set_id, " not found"
@@ -1657,10 +1657,10 @@ sub getSetVersions {
 # versioned analog of addUserSet
 sub addSetVersion {
 	my ($self, $SetVersion) = shift->checkArgs(\@_, qw/REC:set_version/);
-	
+
 	croak "addSetVersion: set ", $SetVersion->set_id, " not found for user ", $SetVersion->user_id
 		unless $self->{set_user}->exists($SetVersion->user_id, $SetVersion->set_id);
-	
+
 	eval {
 		return $self->{set_version}->add($SetVersion);
 	};
@@ -1723,8 +1723,8 @@ sub getMergedSetVersions {
 # set_locations functions
 ################################################################################
 # this database table is for ip restrictions by assignment
-# the set_locations table defines the association between a 
-#    global set and the locations to which the set may be 
+# the set_locations table defines the association between a
+#    global set and the locations to which the set may be
 #    restricted or denied.
 
 BEGIN {
@@ -1749,12 +1749,12 @@ sub listGlobalSetLocations {
 	}
 }
 
-sub existsGlobalSetLocation { 
+sub existsGlobalSetLocation {
 	my ( $self, $setID, $locationID ) = shift->checkArgs(\@_, qw/set_id location_id/);
 	return $self->{set_locations}->exists( $setID, $locationID );
 }
 
-sub getGlobalSetLocation { 
+sub getGlobalSetLocation {
 	my ( $self, $setID, $locationID ) = shift->checkArgs(\@_, qw/set_id location_id/);
 	return ( $self->getGlobalSetLocations([$setID, $locationID]) )[0];
 }
@@ -1770,11 +1770,11 @@ sub getAllGlobalSetLocations {
 	return $self->{set_locations}->get_records_where( $where );
 }
 
-sub addGlobalSetLocation { 
+sub addGlobalSetLocation {
 	my ( $self, $GlobalSetLocation ) = shift->checkArgs(\@_, qw/REC:set_locations/);
 	croak "addGlobalSetLocation: set ", $GlobalSetLocation->set_id, " not found"
 		unless $self->{set}->exists($GlobalSetLocation->set_id);
-	
+
 	eval {
 		return $self->{set_locations}->add($GlobalSetLocation);
 	};
@@ -1808,7 +1808,7 @@ sub deleteGlobalSetLocation {
 ################################################################################
 # this database table is for ip restrictions by assignment
 # the set_locations_user table defines the set_user level
-#    modifications to the set_locations defined for the 
+#    modifications to the set_locations defined for the
 #    global set
 
 BEGIN {
@@ -1870,10 +1870,10 @@ sub getAllUserSetLocations {
 sub addUserSetLocation {
 	# VERSIONING - accept versioned ID fields
 	my ($self, $UserSetLocation) = shift->checkArgs(\@_, qw/VREC:set_locations_user/);
-	
+
 	croak "addUserSetLocation: user set ", $UserSetLocation->set_id, " for user ", $UserSetLocation->user_id, " not found"
 		unless $self->{set_user}->exists($UserSetLocation->user_id, $UserSetLocation->set_id);
-	
+
 	eval {
 		return $self->{set_locations_user}->add($UserSetLocation);
 	};
@@ -1889,7 +1889,7 @@ sub addUserSetLocation {
 sub putUserSetLocation {
 	my $V = $_[2] ? "V" : "";
 	my ($self, $UserSetLocation, undef) = shift->checkArgs(\@_, "${V}REC:set_locations_user", "versioned_ok!?");
-	
+
 	my $rows = $self->{set_locations_user}->put($UserSetLocation); # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putUserSetLocation: user set location not found (perhaps you meant to use addUserSetLocation?)";
@@ -1910,8 +1910,8 @@ sub deleteUserSetLocation {
 ################################################################################
 # this is different from other set_merged functions, because
 #    in this case the only data that we have are the set_id,
-#    location_id, and user_id, and we want to replace all 
-#    locations from GlobalSetLocations with those from 
+#    location_id, and user_id, and we want to replace all
+#    locations from GlobalSetLocations with those from
 #    UserSetLocations if the latter exist.
 
 sub getAllMergedSetLocations {
@@ -1972,10 +1972,10 @@ sub getAllGlobalProblems {
 }
 
 sub addGlobalProblem {	my ($self, $GlobalProblem) = shift->checkArgs(\@_, qw/REC:problem/);
-	
+
 	croak "addGlobalProblem: set ", $GlobalProblem->set_id, " not found"
 		unless $self->{set}->exists($GlobalProblem->set_id);
-	
+
 	eval {
 		return $self->{problem}->add($GlobalProblem);
 	};
@@ -2065,7 +2065,7 @@ sub getAllUserProblems {
 sub addUserProblem {
 	# VERSIONING - accept versioned ID fields
 	my ($self, $UserProblem) = shift->checkArgs(\@_, qw/VREC:problem_user/);
-	
+
 	croak "addUserProblem: user set ", $UserProblem->set_id, " for user ", $UserProblem->user_id, " not found"
 		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id);
 
@@ -2073,7 +2073,7 @@ sub addUserProblem {
 
 	croak "addUserProblem: problem ", $UserProblem->problem_id, " in set $nv_set_id not found"
 		unless $self->{problem}->exists($nv_set_id, $UserProblem->problem_id);
-	
+
 	eval {
 		return $self->{problem_user}->add($UserProblem);
 	};
@@ -2088,7 +2088,7 @@ sub addUserProblem {
 sub putUserProblem {
 	my $V = $_[2] ? "V" : "";
 	my ($self, $UserProblem, undef) = shift->checkArgs(\@_, "${V}REC:problem_user", "versioned_ok!?");
-	
+
 	my $rows = $self->{problem_user}->put($UserProblem); # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putUserProblem: user problem not found (perhaps you meant to use addUserProblem?)";
@@ -2155,7 +2155,7 @@ BEGIN {
 sub countProblemVersions { return scalar shift->listProblemVersions(@_) }
 
 # versioned analog of listUserProblems
-sub listProblemVersions { 
+sub listProblemVersions {
 	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
 	my $where = [user_id_eq_set_id_eq_version_id_eq => $userID,$setID,$versionID];
 	if (wantarray) {
@@ -2166,7 +2166,7 @@ sub listProblemVersions {
 }
 
 # this code returns a list of all problem versions with the given userID,
-# setID, and problemID, but that is (darn well ought to be) the same as 
+# setID, and problemID, but that is (darn well ought to be) the same as
 # listSetVersions, so it's not so useful as all that; c.f. above.
 # sub listProblemVersions {
 # 	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
@@ -2208,12 +2208,12 @@ sub getAllProblemVersions {
 # versioned analog of addUserProblem
 sub addProblemVersion {
 	my ($self, $ProblemVersion) = shift->checkArgs(\@_, qw/REC:problem_version/);
-	
+
 	croak "addProblemVersion: set version ", $ProblemVersion->version_id, " of set ", $ProblemVersion->set_id, " not found for user ", $ProblemVersion->user_id
 		unless $self->{set_version}->exists($ProblemVersion->user_id, $ProblemVersion->set_id, $ProblemVersion->version_id);
 	croak "addProblemVersion: problem ", $ProblemVersion->problem_id, " of set ", $ProblemVersion->set_id, " not found for user ", $ProblemVersion->user_id
 		unless $self->{problem_user}->exists($ProblemVersion->user_id, $ProblemVersion->set_id, $ProblemVersion->problem_id);
-	
+
 	eval {
 		return $self->{problem_version}->add($ProblemVersion);
 	};
@@ -2282,7 +2282,7 @@ sub getAllMergedProblemVersions {
 # utilities
 ################################################################################
 
-sub check_user_id { #  (valid characters are [-a-zA-Z0-9_.,@]) 
+sub check_user_id { #  (valid characters are [-a-zA-Z0-9_.,@])
 	my $value = shift;
 	if ($value =~ m/^[-a-zA-Z0-9_.@]*,?(set_id:)?[-a-zA-Z0-9_.@]*(,g)?$/ ) {
 		return 1;
@@ -2293,7 +2293,7 @@ sub check_user_id { #  (valid characters are [-a-zA-Z0-9_.,@])
 }
 # the (optional) second argument to checkKeyfields is to support versioned
 # (gateway) sets, which may include commas in certain fields (in particular,
-# set names (e.g., setDerivativeGateway,v1) and user names (e.g., 
+# set names (e.g., setDerivativeGateway,v1) and user names (e.g.,
 # username,proctorname)
 
 sub checkKeyfields($;$) {
@@ -2309,7 +2309,7 @@ sub checkKeyfields($;$) {
 			unless $value ne "";
 
 		validateKeyfieldValue($keyfield,$value,$versioned);
-		
+
 	}
 }
 
@@ -2324,22 +2324,22 @@ sub validateKeyfieldValue {
     } elsif ($versioned and $keyfield eq "set_id" || $keyfield eq 'setID') {
 	croak "invalid characters in '".encode_entities($keyfield)."' field: '".encode_entities($value)."' (valid characters are [-a-zA-Z0-9_.,])"
 	    unless $value =~ m/^[-a-zA-Z0-9_.,]*$/;
-	# } elsif ($versioned and $keyfield eq "user_id") { 
-    } elsif ($keyfield eq "user_id" || $keyfield eq 'userID') { 
+	# } elsif ($versioned and $keyfield eq "user_id") {
+    } elsif ($keyfield eq "user_id" || $keyfield eq 'userID') {
 	check_user_id($value); #  (valid characters are [-a-zA-Z0-9_.,]) see above.
     } elsif ($keyfield eq "ip_mask") {
 	croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.,])"
 	    unless $value =~ m/^[-a-fA-F0-9_.:\/]*$/;
-	
+
     } else {
 	croak "invalid characters in '".encode_entities($keyfield)."' field: '".encode_entities($value)."' (valid characters are [-a-zA-Z0-9_.])"
 	    unless $value =~ m/^[-a-zA-Z0-9_.]*$/;
     }
-    
+
 }
 
 # checkArgs spec syntax:
-# 
+#
 # spec = list_item | item*
 # list_item = item is_list
 # is_list = "*"
@@ -2351,12 +2351,12 @@ sub validateKeyfieldValue {
 # bare_item = \w+
 # undef_ok = "!"
 # optional = "?"
-# 
+#
 # [[V]REC:]foo[!][?][*]
 
 sub checkArgs {
 	my ($self, $args, @spec) = @_;
-	
+
 	my $is_list = @spec == 1 && $spec[0] =~ s/\*$//;
 	my ($min_args, $max_args);
 	if ($is_list) {
@@ -2372,7 +2372,7 @@ sub checkArgs {
 		$min_args = @spec unless defined $min_args;
 		$max_args = @spec;
 	}
-	
+
 	if (@$args < $min_args or defined $max_args and @$args > $max_args) {
 		if ($min_args == $max_args) {
 			my $s = $min_args == 1 ? "" : "s";
@@ -2384,22 +2384,22 @@ sub checkArgs {
 			croak "requires at least $min_args argument$s";
 		}
 	}
-	
+
 	my ($name, $versioned, $table);
 	if ($is_list) {
 		$name = $spec[0];
 		($versioned, $table) = $name =~ /^(V?)REC:(.*)/;
 	}
-	
+
 	foreach my $i (0..@$args-1) {
 		my $arg = $args->[$i];
 		my $pos = $i+1;
-		
+
 		unless ($is_list) {
 			$name = $spec[$i];
 			($versioned, $table) = $name =~ /^(V?)REC:(.*)/;
 		}
-		
+
 		if (defined $table) {
 			my $class = $self->{$table}{record};
 			#print "arg=$arg class=$class\n";
@@ -2414,7 +2414,7 @@ sub checkArgs {
 			}
 		}
 	}
-	
+
 	return $self, @$args;
 }
 
@@ -2428,7 +2428,7 @@ sub checkArgsRefList {
 		eval { $self->checkArgs($item, @spec) };
 		croak "item $pos $@" if $@;
 	}
-	
+
 	return $self, @$items;
 }
 

@@ -20,14 +20,14 @@ BEGIN_TEXT
 $BBOLD WeBWorK  assignment number  $setNumber  is due :  $formattedDueDate. $EBOLD
 
 $PAR
-The 
+The
 (* home page *)
-\{ 
+\{
 #htmlLink(qq!http://www.math.rochester.edu/courses/161/home/!,"home
-page") 
-\} 
+page")
+\}
 for the course contains the syllabus, grading policy and other
-information.  
+information.
 $PAR
 END_TEXT
 
@@ -37,7 +37,7 @@ END_TEXT
 BEGIN_TEXT
 $HR
 $PAR
-This file is /conf/snippets/hardcopySetHeader.pg   you can use it as 
+This file is /conf/snippets/hardcopySetHeader.pg   you can use it as
 a model for creating files which introduce each problem set.
 $PAR
 $HR
@@ -57,12 +57,12 @@ For most problems when entering numerical answers, you can if you wish
 enter elementary expressions such as \( 2\wedge3 \) instead of 8, \( sin(3*pi/2) \)instead
 of -1, \( e\wedge (ln(2)) \) instead of 2,
 \( (2+tan(3))*(4-sin(5))\wedge6-7/8 \) instead of 27620.3413, etc.
- Here's the 
+ Here's the
 \{ htmlLink(qq!http://webwork.math.rochester.edu/docs/docs/pglanguage/availableFunctions.html!,"list of the functions") \}
  which WeBWorK understands.
 $PAR
 You can use the Feedback button on each problem
-page to send e-mail to the professors. 
+page to send e-mail to the professors.
 
 
 $END_ONE_COLUMN

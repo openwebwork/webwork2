@@ -59,7 +59,7 @@ if [ ! -d "$APP_ROOT/libraries/webwork-open-problem-library/OpenProblemLibrary" 
   cd $APP_ROOT/libraries/
   /usr/bin/git clone -v --progress --single-branch --branch main https://github.com/openwebwork/webwork-open-problem-library.git
 
-  # The next line forces the system to run OPL-update or load saved OPL tables below, as we just installed it
+  # The next line forces the system to download and install the OPL metadata later
   touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"
 fi
 
@@ -82,7 +82,7 @@ if [ "$1" = 'apache2' ]; then
                     -e 's/siteDefaults{timezone} = "America\/New_York"/siteDefaults{timezone} = $ENV{"WEBWORK_TIMEZONE"}/' \
                     -e 's/^# $server_userID     = '\''www-data/$server_userID     = '\''www-data/'  \
                     -e 's/^# $server_groupID    = '\''www-data/$server_groupID    = '\''www-data/' $WEBWORK_ROOT/conf/site.conf
-                
+
                 echo "$WEBWORK_ROOT/conf/$i has been modified."
             fi
 
@@ -92,16 +92,15 @@ if [ "$1" = 'apache2' ]; then
                 echo "$WEBWORK_ROOT/conf/$i has been modified."
             fi
         fi
-        
+
     done
     # create admin course if not existing
-    # check first if the admin courses directory exists then check that at 
+    # check first if the admin courses directory exists then check that at
     # least one of the tables associated with the course (the admin_user table) exists
-    
+
     echo "check admin course and admin tables"
     wait_for_db
-    ADMIN_TABLE_EXISTS=`mysql -u $WEBWORK_DB_USER  -p$WEBWORK_DB_PASSWORD -B -N -h db -e "select count(*) from information_schema.tables where table_schema='webwork' and table_name = 'admin_user';"  2>/dev/null`
- 
+    ADMIN_TABLE_EXISTS=`mysql -u $WEBWORK_DB_USER  -p$WEBWORK_DB_PASSWORD -B -N -h $WEBWORK_DB_HOST -e "select count(*) from information_schema.tables where table_schema='webwork' and table_name = 'admin_user';"`
     if [ ! -d "$APP_ROOT/courses/admin" ]; then
         newgrp www-data
         umask 2
@@ -116,19 +115,19 @@ if [ "$1" = 'apache2' ]; then
         $WEBWORK_ROOT/bin/upgrade_admin_db.pl
         $WEBWORK_ROOT/bin/wwsh admin $WEBWORK_ROOT/bin/addadmin
         echo "admin course tables created with one user: admin   whose password is admin"
-    else 
+    else
         echo "using pre-existing admin course and admin tables"
     fi
-    
+
     # use case for the extra check for the admin:
-    # In rebuilding a docker box one might clear out the docker containers, 
-    # images and volumes including mariaDB, BUT leave the 
-    # contents of ww-docker-data directory in place.  It now holds the shell of the courses 
-    # including the admin course directory. This means that once you rebuild the box 
-    # you can't access the admin course (because the admin_user table is missing) 
-    # and you need to run bin/upgrade_admin_db.pl from inside the container. 
-    # This check insures that if the admin_user table is missing the whole admin course is rebuilt 
-    # even if the admin directory is in place. 
+    # In rebuilding a docker box one might clear out the docker containers,
+    # images and volumes including mariaDB, BUT leave the
+    # contents of ww-docker-data directory in place.  It now holds the shell of the courses
+    # including the admin course directory. This means that once you rebuild the box
+    # you can't access the admin course (because the admin_user table is missing)
+    # and you need to run bin/upgrade_admin_db.pl from inside the container.
+    # This check insures that if the admin_user table is missing the whole admin course is rebuilt
+    # even if the admin directory is in place.
 
     # modelCourses link if not existing
     if [ ! -d "$APP_ROOT/courses/modelCourse" ]; then
@@ -160,34 +159,20 @@ if [ "$1" = 'apache2' ]; then
     if [ ! -f "$WEBWORK_ROOT/htdocs/DATA/tagging-taxonomy.json"  ]; then
       # The next line forces the system to run OPL-update below, as the
       # tagging-taxonomy.json file was found to be missing.
-      if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
-        echo "The tagging-taxonomy.json file is missing in webwork2/htdocs/DATA/."
-        echo "But the libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql files was seen"
-        echo "so the OPL tables and the JSON files will (hopefully) be restored from save versions"
-      else
-        echo "We will run OPL-update as the tagging-taxonomy.json file is missing in webwork2/htdocs/DATA/."
-        echo "Check if you should be mounting webwork2/htdocs/DATA/ from outside the Docker image!"
-      fi
+      echo "We will run OPL-update as the tagging-taxonomy.json file is missing in webwork2/htdocs/DATA/."
+      echo "Check if you should be mounting webwork2/htdocs/DATA/ from outside the Docker image!"
       touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"
     fi
     if [ -f "$APP_ROOT/libraries/Restore_or_build_OPL_tables" ]; then
       if [ ! -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
-        # Download a saved version of the OPL sql table data to be loaded and extract
-        cd $WEBWORK_ROOT/bin/OPL_releases/
-        make extract
-        cp -r webwork-open-problem-library $APP_ROOT/libraries/
-        # check out commit corresponding to the release
-        make latest_release.tag
-        OPL_TAG=`cat $WEBWORK_ROOT/bin/OPL_releases/latest_release.tag`
-        cd $APP_ROOT/libraries/webwork-open-problem-library/
-        git remote rm heiderich || true
-        git remote add heiderich https://github.com/heiderich/webwork-open-problem-library.git
-        git fetch --tags heiderich
-        echo "Checking out tag $OPL_TAG"
-        git checkout $OPL_TAG
-      fi
-
-      if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
+        # Download the metadata and install it
+        export SKIP_UPLOAD_OPL_statistics=1
+        if [ ! -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
+          mkdir $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
+        fi
+        wait_for_db
+        $WEBWORK_ROOT/bin/OPL-update
+      else
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
         wait_for_db
         $WEBWORK_ROOT/bin/restore-OPL-tables.pl
@@ -202,18 +187,21 @@ if [ "$1" = 'apache2' ]; then
           echo "You are missing some of the JSON files including tagging-taxonomy.json"
           echo "Some of the library functions will not work properly"
         fi
-      else
-        echo "About to start OPL-update. This takes a long time - please be patient."
-        wait_for_db
-        $WEBWORK_ROOT/bin/OPL-update
-        # Dump the OPL tables, to allow a quick restore in the future
-        $WEBWORK_ROOT/bin/dump-OPL-tables.pl
-        # Save a copy of the generated JSON files
-        mkdir -p $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
-        cp -a $WEBWORK_ROOT/htdocs/DATA/*.json $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
       fi
       rm $APP_ROOT/libraries/Restore_or_build_OPL_tables
     fi
+
+    # Run generate-OPL-set-def-lists.pl if necessary.
+	# Note that these files will be restored above if they exist from a previous run.
+	if [ ! -f "$APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED/library-set-defs.json" ] ||
+		[ ! -f "$APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED/contrib-set-defs.json" ]
+    then
+        echo "The library-set-defs.json or contrib-set-defs.json file is missing."
+        echo "These files will be generated by executing bin/generate-OPL-set-def-lists.pl."
+        $WEBWORK_ROOT/bin/generate-OPL-set-def-lists.pl
+		cp -a $WEBWORK_ROOT/htdocs/DATA/*.json $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
+    fi
+
     # Compile chromatic/color.c if necessary - may be needed for PG directory mounted from outside image
     if [ ! -f "$APP_ROOT/pg/lib/chromatic/color"  ]; then
       cd $APP_ROOT/pg/lib/chromatic
@@ -241,14 +229,14 @@ if [ "$1" = 'apache2' ]; then
     # This change significantly speeds up Docker startup time on production
     # servers with many files/courses (on Linux).
 
-    chown -R www-data:www-data logs tmp DATA 
-    chmod -R ug+w logs tmp DATA 
+    chown -R www-data:www-data logs tmp DATA
+    chmod -R ug+w logs tmp DATA
     chown  www-data:www-data htdocs/tmp
     chmod ug+w htdocs/tmp
-    
+
     # even if the admin and courses directories already existed their permissions might not have been correct
     # chown www-data:www-data  $APP_ROOT/courses
-    chown www-data:www-data  $APP_ROOT/courses/admin/*    
+    chown www-data:www-data  $APP_ROOT/courses/admin/*
 
     # Symbolic links which have no target outside the Docker container
     # cause problems duringt the rebuild process on some systems.
@@ -277,11 +265,6 @@ if [ "$1" = 'apache2' ]; then
     #find courses -type d -exec chown www-data:www-data {} \;
 
     echo "end fixing ownership and permissions"
-
-    # "touch" and "chown" some file to prevent some warnings
-    cd /opt/webwork/webwork2/htdocs/themes/math4
-    /usr/bin/touch math4-overrides.css math4-overrides.js math4-coloring.css
-    chown www-data:www-data math4-overrides.css math4-overrides.js math4-coloring.css
 fi
 
 # The code below allows to use

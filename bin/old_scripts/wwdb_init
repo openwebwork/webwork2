@@ -1,14 +1,13 @@
 #!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright ? 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -21,12 +20,14 @@ use Getopt::Std;
 use DBI;
 use Data::Dumper;
 
+my $pg_dir;
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n"
-		unless exists $ENV{WEBWORK_ROOT};
+	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
+	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
 }
-
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$pg_dir/lib";
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Utils qw/runtime_use/;
 
@@ -149,7 +150,7 @@ END {
 sub get_sql_tables {
 	my $sql_tables_ref = $dbh->selectcol_arrayref("SHOW TABLES");
 	my %sql_tables; @sql_tables{@$sql_tables_ref} = ();
-	
+
 	return %sql_tables;
 }
 
@@ -161,11 +162,11 @@ sub set_db_version {
 sub upgrade_to_version {
 	my $vers = shift;
 	my %info = %{$DB_VERSIONS[$vers]};
-	
+
 	print "\nUpgrading database from version " . ($vers-1) . " to $vers...\n";
 	my $desc = $info{desc} || "has no description.";
 	print "(Version $vers $desc)\n";
-	
+
 	if (exists $info{global_code}) {
 		eval { $info{global_code}->() };
 		if ($@) {
@@ -182,10 +183,10 @@ sub upgrade_to_version {
 
 sub ask_permission {
 	my ($prompt, $default) = @_;
-	
+
 	$default = 1 if not defined $default;
 	my $options = $default ? "[Y/n]" : "[y/N]";
-	
+
 	while (1) {
 		print "$prompt $options ";
 		my $resp = <STDIN>;

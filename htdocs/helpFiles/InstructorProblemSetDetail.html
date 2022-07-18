@@ -1,18 +1,17 @@
 <!DOCTYPE html
 	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-	
+
 <!--
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/htdocs/helpFiles/InstructorProblemSetDetail.html,v 1.4 2006/07/18 16:33:12 gage Exp $
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -40,23 +39,13 @@
 -->
 <h3> "Modes" </h3>
 
-<p>The <strong>Set Detail</strong> page can be viewed in one of three distinct modes:
+<p>The <strong>Set Detail</strong> page can be viewed in one of two distinct modes:
 	<ul>
 		<li> All students </li>
 		<li> One specific student </li>
-		<li> Many students </li>
 	</ul>
 
-This should be quite clear at the top of the page.  If one or more of the students selected has not
-had this set assigned to them, then those students will be ignored (they are listed).  This can be fixed
-if needed by clicking on the link <a href="#">x users</a> or the navigation link <a href="#">Set Assigner</a>
-
-<p><small>Note: There is a subtle difference between editing a set for an entire class and editting it
-for <i>every</i> student in the set at once.  If you select all the students and edit the set for all
-of them, any new students added after those changes will get the old, unchanged information.  Unless you
-have good reason, it is best to edit the set in general.</small>
-
-</p>
+This should be quite clear at the top of the page.
 
 <h3> Contents </h3>
 
@@ -74,8 +63,8 @@ have good reason, it is best to edit the set in general.</small>
 <dl>
 	<dt> Save Changes </dt>
 		<dd>Occurs twice on the page, at the top and the bottom.  <br>Any and all changes made to any
-		part of the set will be saved with one important exception: When editting the set for one
-		or more students, you can choose to override the default value (defined for the set in 
+		part of the set will be saved with one important exception: When editing the set for one
+		or more students, you can choose to override the default value (defined for the set in
 		general) by clicking on the checkbox and providing a value (or possibly leaving a blank).
 		If you do <strong>NOT</strong> check the checkbox, the override value will be discarded.
 		<p><small>Example:</small>
@@ -86,45 +75,35 @@ have good reason, it is best to edit the set in general.</small>
 	<dt> Reset Form </dt>
 		<dd>Discards any and all changes, reloading the page by re-reading the database information
 		for this set.  Also, resets the display modes.<p></dd>
-	<dt> Refresh Display </dt>
-		<dd>You can maintain a different display mode for the headers and for the problems if you want.
-		<br>"Refresh Display" does not commit any of the changes currently in the form, but it also
-		does not reset the form so you can safely change the display mode without making any permanent
-		changes to the set and without losing any work up to that point.
-		<p><small>Example:</small>
-		<br><strong>Display&nbsp;Mode:&nbsp;</strong>
-		<select>
-		<option>plainText</option>
-		<option>formattedText</option>
-
-		<option selected>images</option>
-		<option>jsMath</option>
-		<option>asciimath</option>
-		<option>None</option>
-		</select>&nbsp;
-		<input type="submit" value="Refresh Display">
-		<br><small>Change display mode to "images"</small>
-		</dd>
-	<dt> Reorder problems only </dt>
-		<dd>Sometimes it could be necessary to want to change the order of the problems in a set 
-		without actually make any changes to the information about that problem.  This can even
-		be done individually for one or more students.  If all you want to is reorder the problems,
-		this is <strong>much</strong> faster than "Save Changes".  However, any changes made in the form and not yet
-		saved <strong>will be lost</strong>.
-		
-		</dd>
+	<dt> Display Mode </dt>
+		<dd>You can maintain a different display mode for the problems if you want.
 	<dt>Add blank problem template</dt>
-		<dd> Adds a new problem essentially blank problem to the homework set when the homework set is saved.  
-		You can modify this to create your own problem, by clicking on the "Edit it" link and 
+		<dd> Adds a new, essentially blank, problem to the homework set when the homework set is saved.
+		You can modify this to create your own problem, by clicking on the "Edit it" link and
 		saving the "blankProblem.pg" to some new file, e.g. "myNewProblem.pg".
 </dl>
 
 <h4> <a name="general">General Information</a> </h4>
+<dl>
+<dt>Reordering Problems</dt>
+<dd>
+You can reorder problems by clicking on the arrow icon and dragging the problem.  You will see a box showing you where the problem will be placed.  When problems are reordered any holes in the numbering will be filled in. </dd>
 
+<dt>Deleting Problems</dt>
+<dd> You can delete problems by clicking the "Delete it?" check box and saving.  If the set is already active it is recommended that you instead use the "Mark Correct?" problem to mark a particular problem correct for all students.</dd>
 
+<dt>Viewing Problems</dt>
+<dd>
+You can view a problem by clicking the render icon underneath the problem number.  The Display Mode used to render the problem is chosen using the drop down menu.  You can render all problems using the Render All button. Hide All will hide all of the problems.
+</dd>
+
+<dt>Problem Paths</dt>
+<dd>
 All of the paths for problem files are relative to the templates directory
 of the current course.  You can access this directory "directly" using the File Manager
 page.
+</dd>
 
+</dl>
 </body>
 </html>

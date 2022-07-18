@@ -49,6 +49,16 @@
        DBchapter and DBsection Note:  These values are not super stable and are likely to change
        from problem to problem and year to year
 
+  - $userAchievements: this hash stores all assigned achievements for
+      the current user. The keys are the achievement_id and the values
+      are 0 or 1 for if the achievement has been earned. Changes to this
+      variable will be accessible by achievements down the line in the
+      current evaluation loop, but will not be saved across evaluations.
+      Note: This variable is updated if an achievement is earned,
+      but only achievements further down the evaluation chain will
+      see the update. So when depending on other achievements place
+      make sure they are run first.
+
   - $localData : this is a hash which stores data for this user and 
       achievement (changes to this variable *will* be saved!)
       This hash will persist from evaluation to evaluation.  You can 
@@ -62,12 +72,14 @@
        This hash will persist from evaluation to evaluation and, like
        $localData, you can store whatever you like in here.  This data 
        will be accessable from *every* achievement and is unique to the 
-       user.  There are two variables stored in this hash that are 
+       user.  There are three variables stored in this hash that are
        maintained by the system. 
        - $globalData->completeSets : This is the number of sets which 
          the student has earned 100% on
        - $globalData->complete Problems : This is the number of problems 
          which the student has earned 100% on
+       - $globalData->prev_level_points : This is the number of points
+         to reach current level which is used with level progress bar.
        Warning: The achievements are always evaluated in the order they 
        are listed the Instructors achievement editor page.  To make matters
        more complicated, achievements which have already been earned are 

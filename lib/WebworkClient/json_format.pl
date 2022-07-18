@@ -12,48 +12,21 @@
 
 $json_output = { head_part001_VI => '<!DOCTYPE html><html $COURSE_LANG_AND_DIR>' };
 
-$json_output->{head_part010} = <<'ENDPROBLEMTEMPLATE';
+$json_output->{head_part010_VI} = <<'ENDPROBLEMTEMPLATE';
 <head>
 <meta charset='utf-8'>
 <base href="TO_SET_LATER_SITE_URL">
-<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
+$favicon
 ENDPROBLEMTEMPLATE
 
 # CSS loads - as an array of href values
-$json_output->{head_part100_AVI} = [
-	"/webwork2_files/js/vendor/bootstrap/css/bootstrap.css",
-	"/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css",
-	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css",
-	"/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css",
-	"/webwork2_files/css/knowlstyle.css",
-	"/webwork2_files/js/apps/ImageView/imageview.css",
-	'$themeDir/math4.css',
-	'$themeDir/math4-coloring.css',
-	'$themeDir/math4-overrides.css',
-];
+# This is added in formatRenderedProblem
+# $json_output->{head_part100}
 
-# JS loads - as an array of href values - the ones which need defer are in head_part201_AVI
-$json_output->{head_part200_AVI} = [
-	"/webwork2_files/node_modules/jquery/dist/jquery.min.js",
-	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js",
-	"/webwork2_files/js/vendor/bootstrap/js/bootstrap.js",
-	"/webwork2_files/js/apps/InputColor/color.js",
-	"/webwork2_files/js/apps/Base64/Base64.js",
-	"/webwork2_files/js/vendor/underscore/underscore.js",
-	"/webwork2_files/js/legacy/vendor/knowl.js",
-	"/webwork2_files/js/apps/Problem/problem.js",
-	"/webwork2_files/js/apps/ImageView/imageview.js",
-	"/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js",
-];
-
-# JS loads - as an array of href values - the ones which need defer are in head_part201_AVI
-#     mathjax/es5/tex-chtml.js also needs id="MathJax-script" in the <script> tag
-$json_output->{head_part201_AVI} = [
-	"https://polyfill.io/v3/polyfill.min.js?features=es6",
-	"/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js",
-	"/webwork2_files/mathjax/es5/tex-chtml.js",
-	'$themeDir/math4/math4.js',
-];
+# JS loads - as an array of arrays.  The first element of each subarray is the href value, and the second (if present)
+# is a hash containing any needed attributes for the script tag.
+# This is added in formatRenderedProblem
+# $json_output->{head_part200}
 
 $json_output->{head_part300_VI} = '$problemHeadText';
 
@@ -64,8 +37,8 @@ $json_output->{body_part001} = "<body>";
 
 $json_output->{body_part100} = <<'ENDPROBLEMTEMPLATE';
 <div class="container-fluid">
-<div class="row-fluid">
-<div class="span12 problem">
+<div class="row">
+<div class="col-12 problem">
 ENDPROBLEMTEMPLATE
 
 $json_output->{body_part300_VI} = '$answerTemplate';

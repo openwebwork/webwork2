@@ -4,26 +4,23 @@
 FROM ubuntu:20.04
 
 # ==================================================================
-
 # Phase 1 - set base OS image install stage ENV variables
 #
 # We only need install time ENV variables, not those needed by the WeBWorK system
 
+ARG ADDITIONAL_BASE_IMAGE_PACKAGES
+
 ENV DEBIAN_FRONTEND=noninteractive \
-    DEBCONF_NONINTERACTIVE_SEEN=true
+	DEBCONF_NONINTERACTIVE_SEEN=true
 
 # ==================================================================
-
 # Phase 2 - Ubuntu 20.04 base image + required packages
-
-# Packages changes/added for ubuntu 20.04:
-#       libcgi-pm-perl (for CGI::Cookie), libdbd-mariadb-perl
 
 # Do NOT include "apt-get -y upgrade"
 # see: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends --no-install-suggests \
+	&& apt-get install -y --no-install-recommends --no-install-suggests \
 	apache2 \
 	curl \
 	dvipng \
@@ -100,6 +97,8 @@ RUN apt-get update \
 	libjson-xs-perl \
 	libjson-maybexs-perl \
 	libcpanel-json-xs-perl \
+	libyaml-libyaml-perl \
+	libemail-stuffer-perl \
 	make \
 	netpbm \
 	patch \
@@ -127,20 +126,19 @@ RUN apt-get update \
 	zip \
 	iputils-ping \
 	imagemagick \
-	jq \
-	npm \
-    && apt-get clean \
-    && rm -fr /var/lib/apt/lists/* /tmp/*
+	jq $ADDITIONAL_BASE_IMAGE_PACKAGES \
+	&& curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
+	&& apt-get clean \
+	&& rm -fr /var/lib/apt/lists/* /tmp/*
 
 # Developers may want to add additional packages inside the image
 # such as: telnet vim mc file
 
 # ==================================================================
-
 # Phase 3 - install additional Perl modules from CPAN (not packaged for Ubuntu or outdated in Ubuntu)
 
 RUN cpanm install Statistics::R::IO \
-    && rm -fr ./cpanm /root/.cpanm /tmp/*
+	&& rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # ==================================================================
-

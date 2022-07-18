@@ -1,0 +1,18 @@
+git:
+  filters:
+    - filter_type: file
+      file_format: PO
+      source_language: en
+      source_file: lib/WeBWorK/Localize/webwork2.pot
+      translation_files_expression: 'lib/WeBWorK/Localize/<lang>.po'
+  
+  settings:
+    pr_branch_name: tx_translations_update_<br_unique_id>
+    language_mapping:
+      cs_CZ: cs-CZ
+      fr_CA: fr-CA
+      he_IL: he-IL
+      ru_RU: ru-RU
+      tr_TR: tr-TR
+      zh_CN: zh-CN
+      zh_HK: zh-HK

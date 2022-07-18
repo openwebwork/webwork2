@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.20 2006/10/10 10:58:54 dpvc Exp $
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -28,7 +27,7 @@ use warnings;
 #use CGI;
 use WeBWorK::CGI;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
-use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id); 
+use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id getAssetURL format_set_name_display);
 use PGcore;
 use Text::CSV;
 
@@ -48,12 +47,12 @@ sub initialize {
 
 	my $selectedSets = [$r->param('selected_sets')] // [];
 	my $selectedProblems = [$r->param('selected_problems')] // [];
-	
+
 	unless ($authz->hasPermissions($user, "view_answers")) {
 		$self->addbadmessage("You aren't authorized to view past answers");
 		return;
 	}
-	
+
 	# The stop acting button doesn't perform a submit action and so
 	# these extra parameters are passed so that if an instructor stops
 	# acting the current studentID, setID and problemID will be maintained
@@ -73,33 +72,35 @@ sub initialize {
 	  $selectedUsers = [$user];
 	}
 
-	return CGI::span({class=>'ResultsWithError'}, $r->maketext('You must provide a student ID, a set ID, and a problem number.')) unless $selectedUsers  && $selectedSets && $selectedProblems;
-	
+	return CGI::div({ class => 'alert alert-danger' },
+		$r->maketext('You must provide a student ID, a set ID, and a problem number.'))
+		unless $selectedUsers && $selectedSets && $selectedProblems;
+
 	my %records;
 	my %prettyProblemNumbers;
 	my %answerTypes;
-	
+
   	foreach my $studentUser (@$selectedUsers) {
 	    my @sets;
 
-	    # search for selected sets assigned to students
-	    my @allSets = $db->listUserSets($studentUser);
-	    foreach my $setName (@allSets) {
-	      my $set = $db->getMergedSet($studentUser,$setName);
-	      if (defined($set->assignment_type) && $set->assignment_type =~ /gateway/) {
-		my @versions = $db->listSetVersions($studentUser, $setName);
-		foreach my $version(@versions) {
-		  if (grep/^$setName,v$version$/,@$selectedSets) {
-		    $set = $db->getUserSet($studentUser,"$setName,v$version");
-		    push(@sets, $set);
-		  }
+		# search for selected sets assigned to students
+		my @allSets = $db->listUserSets($studentUser);
+		foreach my $setName (@allSets) {
+			my $set = $db->getMergedSet($studentUser, $setName);
+			if (defined($set->assignment_type) && $set->assignment_type =~ /gateway/) {
+				my @versions = $db->listSetVersions($studentUser, $setName);
+				foreach my $version (@versions) {
+					if (grep /^$setName,v$version$/, @$selectedSets) {
+						$set = $db->getUserSet($studentUser, "$setName,v$version");
+						push(@sets, $set);
+					}
+				}
+			} elsif (grep(/^$setName$/, @$selectedSets)) {
+				push(@sets, $set);
+			}
+
 		}
-	      } elsif (grep(/^$setName$/,@$selectedSets)) {
-		push (@sets, $set);
-	      }
-	      
-	    }
-	    
+
 	    next unless @sets;
 
 	    foreach my $setRecord (@sets) {
@@ -121,7 +122,7 @@ sub initialize {
 		    push (@problemNumbers, $problemNumber);
 		  }
 		}
-				
+
 		next unless @problemNumbers;
 
 		foreach my $problemNumber (@problemNumbers) {
@@ -133,13 +134,13 @@ sub initialize {
 		    my $unversionedSetName = $setName;
 		    $unversionedSetName =~ s/,v[0-9]*$//;
 		    my $displayMode   = $self->{displayMode};
-		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars }; 
+		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 		    my $set = $db->getMergedSet($studentUser, $unversionedSetName);
 		    my $problem = $db->getMergedProblem($studentUser, $unversionedSetName, $problemNumber);
 		    my $userobj = $db->getUser($studentUser);
 		    #if these things dont exist then the problem doesnt exist and past answers dont make sense
-		    next unless defined($set) && defined($problem) && defined($userobj); 
-		    
+		    next unless defined($set) && defined($problem) && defined($userobj);
+
 		    my $pg = WeBWorK::PG->new(
 					      $ce,
 					      $userobj,
@@ -158,18 +159,18 @@ sub initialize {
 					       effectivePermissionLevel => $db->getPermissionLevel($studentUser)->permission,
 					      },
 					     );
-		  
+
 		    # check to see what type the answers are.  right now it only checks for essay but could do more
 		    my %answerHash = %{ $pg->{answers} };
 		    my @answerTypes;
-		  
+
 		    foreach (sortByName(undef, keys %answerHash)) {
 		      push(@answerTypes,defined($answerHash{$_}->{type})?$answerHash{$_}->{type}:'undefined');
 		    }
 
 		    $answerTypes{$setName}{$problemNumber} = [@answerTypes];
 		  }
-		  
+
 		  my @pastAnswers = $db->getPastAnswers(\@pastAnswerIDs);
 
 		  foreach my $pastAnswer (@pastAnswers) {
@@ -179,23 +180,23 @@ sub initialize {
 		    my $time = $pastAnswer->timestamp;
 		    my @scores = split(//, $scores);
 		    my @answers = split(/\t/,$answers);
-		    
-		    
+
+
 		    $records{$studentUser}{$setName}{$problemNumber}{$answerID} =  { time => $time,
 										     answers => [@answers],
 										     answerTypes => $answerTypes{$setName}{$problemNumber},
 										     scores => [@scores],
 										     comment => $pastAnswer->comment_string // '' };
-		    
+
 		  }
-		  
+
 		}
 	      }
 	  }
-	
+
 	$self->{records} = \%records;
 	$self->{prettyProblemNumbers} = \%prettyProblemNumbers;
-	
+
 	# Prepare a csv if we are an instructor
 	if ($instructor && $r->param('createCSV')) {
 	    my $filename = PAST_ANSWERS_FILENAME;
@@ -222,8 +223,8 @@ sub initialize {
 	    $columns[4] = $r->maketext('Scores');
 	    $columns[5] = $r->maketext('Answers');
 	    $columns[6] = $r->maketext('Comment');
-	    
-	    $csv->print($fh, \@columns); 
+
+	    $csv->print($fh, \@columns);
 
 	    foreach my $studentID (sort keys %records) {
 		$columns[0] = $studentID;
@@ -233,12 +234,12 @@ sub initialize {
 		      $columns[2] = $prettyProblemNumbers{$setID}{$probNum};
 		      foreach my $answerID (sort {$a <=> $b} keys %{$records{$studentID}{$setID}{$probNum}}) {
 			my %record = %{$records{$studentID}{$setID}{$probNum}{$answerID}};
-		      
+
 			$columns[3] = $self->formatDateTime($record{time});
 			$columns[4] = join(',' ,@{$record{scores}});
 			$columns[5] = join("\t" ,@{$record{answers}});
 			$columns[6] = $record{comment};
-			
+
 			$csv->print($fh,\@columns);
 		      }
 		    }
@@ -246,297 +247,348 @@ sub initialize {
 	    }
 
 	    close($fh) or warn "Couldn't Close $fullFilename";
-	    
+
 	    }
 
 }
 
 
 sub body {
-	my $self          = shift;
-	my $r             = $self->r;
-	my $urlpath       = $r->urlpath;
-	my $db            = $r->db;
-	my $ce            = $r->ce;
-	my $authz         = $r->authz;
-	my $root          = $ce->{webworkURLs}->{root};
-	my $courseName    = $urlpath->arg('courseID');  
-	my $user          = $r->param('user');
-	my $key           = $r->param('key');
+	my $self       = shift;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
+	my $root       = $ce->{webworkURLs}->{root};
+	my $courseName = $urlpath->arg('courseID');
+	my $user       = $r->param('user');
+	my $key        = $r->param('key');
 
 	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
 
-	my $selectedSets = [$r->param('selected_sets')] // [];
-	my $selectedProblems = [$r->param('selected_problems')] // [];
-	
+	my $selectedSets     = [ $r->param('selected_sets') ]     // [];
+	my $selectedProblems = [ $r->param('selected_problems') ] // [];
+
 	return CGI::em("You are not authorized to view past answers") unless $authz->hasPermissions($user, "view_answers");
 
-	
-	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module,  $r, courseID => $courseName);
-	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
+	my $showAnswersPage = $urlpath->newFromModule($urlpath->module, $r, courseID => $courseName);
+	my $showAnswersURL  = $self->systemLink($showAnswersPage, authen => 0);
 
 	# Figure out if MathJax is available
-	my $renderAnswers = scalar(grep(/MathJax/, @{$ce->{pg}->{displayModes}}));
+	my $renderAnswers = scalar(grep(/MathJax/, @{ $ce->{pg}->{displayModes} }));
 
 	my $prettyProblemNumbers = $self->{prettyProblemNumbers};
 
-	
 	#####################################################################
 	# print form
 	#####################################################################
 
 	#only instructors should be able to veiw other people's answers.
-	
+
 	if ($instructor) {
+		# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for
+		# the user if such restrictions are defined.
+		my @Users = $db->getUsersWhere({
+			user_id => { not_like => 'set_id:%' },
+			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+			? (
+				-or => [
+					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
+					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+				]
+				)
+			: ()
+		});
 
-	  my @userIDs = grep {$_ !~ /^set_id:/} $db->listUsers;
-	  my @Users = $db->getUsers(@userIDs);
-	  
-	  ## Mark's Edits for filtering
-	  my @myUsers;
-	  
-	  my (@viewable_sections,@viewable_recitations);
-	  
-	  if (defined $ce->{viewable_sections}->{$user})
-	    {@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
-	  if (defined $ce->{viewable_recitations}->{$user})
-	    {@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
-	  
-	  if (@viewable_sections or @viewable_recitations){
-	    foreach my $student (@Users){
-	      my $keep = 0;
-	      foreach my $sec (@viewable_sections){
-		if ($student->section() eq $sec){$keep = 1;}
-	      }
-	      foreach my $rec (@viewable_recitations){
-		if ($student->recitation() eq $rec){$keep = 1;}
-	      }
-	      if ($keep) {push @myUsers, $student;}
-	    }
-	    @Users = @myUsers;
-	  }
-	  ## End Mark's Edits
-	  
-	  # DBFIXME shouldn't need to use list of IDs, use iterator for results
-	  my @globalSetIDs = $db->listGlobalSets;
-	  my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
+		my @GlobalSets = $db->getGlobalSetsWhere({}, 'set_id');
 
-	  my @expandedGlobalSetIDs;
+		my @expandedGlobalSetIDs;
 
-	  # We need to go through the global sets and if its a gateway
-	  # we need to actually find the max number of versions
-	  # hopefully this isn't too slow.  
-	  foreach my $globalSet (@GlobalSets) {
-	    my $setName = $globalSet->set_id;
-	    if ($globalSet->assignment_type() &&
-		$globalSet->assignment_type() =~ /gateway/) {
+		# We need to go through the global sets and if its a gateway
+		# we need to actually find the max number of versions
+		# hopefully this isn't too slow.
+		foreach my $globalSet (@GlobalSets) {
+			my $setName = $globalSet->set_id;
+			if ($globalSet->assignment_type()
+				&& $globalSet->assignment_type() =~ /gateway/)
+			{
 
-	      my $maxVersions = 0;
-	      foreach my $user (@Users) {
-		my $versions = $db->countSetVersions($user->user_id, $setName);
-		if ($versions > $maxVersions) {
-		  $maxVersions = $versions;
+				my $maxVersions = 0;
+				foreach my $user (@Users) {
+					my $versions = $db->countSetVersions($user->user_id, $setName);
+					if ($versions > $maxVersions) {
+						$maxVersions = $versions;
+					}
+				}
+				if ($maxVersions) {
+					for (my $i = 1; $i <= $maxVersions; $i++) {
+						push @expandedGlobalSetIDs, "$setName,v$i";
+					}
+				}
+			} else {
+				push @expandedGlobalSetIDs, $setName;
+			}
 		}
-	      }
-	      if ($maxVersions) {
-		for (my $i = 1; $i <= $maxVersions; $i++) {
-		  push @expandedGlobalSetIDs, "$setName,v$i";
+
+		my %all_problems;
+		#Figure out what problems we need to show.
+		foreach my $globalSet (@GlobalSets) {
+			my @problems = $db->listGlobalProblems($globalSet->set_id);
+			if ($globalSet->assignment_type()
+				&& $globalSet->assignment_type() eq 'jitar')
+			{
+				@problems = map { join('.', jitar_id_to_seq($_)) } @problems;
+			}
+
+			foreach my $problem (@problems) {
+				$all_problems{$problem} = 1;
+			}
 		}
-	      }
-	    } else {
-	      push @expandedGlobalSetIDs, $setName;
-	    }
-	  }
-	  
-	  
-	  my %all_problems;
-	  #Figure out what problems we need to show.
-	  foreach my $globalSet (@GlobalSets) {
-	    my @problems = $db->listGlobalProblems($globalSet->set_id);
-	    if ($globalSet->assignment_type() &&
-		$globalSet->assignment_type() eq 'jitar') {
-	      @problems = map {join('.',jitar_id_to_seq($_))} @problems;
-	    }
-	    
-	    foreach my $problem (@problems) {
-	      $all_problems{$problem} = 1;
-	    }
-	  }
 
-	  @expandedGlobalSetIDs = sort @expandedGlobalSetIDs;
-	  my @globalProblemIDs = sort prob_id_sort keys %all_problems;
-	  
-	  my $scrolling_user_list = scrollingRecordList({
-							 name => "selected_users",
-							 request => $r,
-							 default_sort => "lnfn",
-							 default_format => "lnfn_uid",
-							 default_filters => ["all"],
-							 size => 10,
-							 multiple => 1,
-							}, @Users);
-	  
-	  my $scrolling_set_list = CGI::scrolling_list({name => "selected_sets",
-							values=>\@expandedGlobalSetIDs,
-							default => $selectedSets,
-							size => 23,
-							multiple => 1,});
-	  
-	  my $scrolling_problem_list = CGI::scrolling_list({name => "selected_problems",
-							    values=>\@globalProblemIDs,
-							    default =>$selectedProblems,
-							    size => 23,
-							    multiple => 1,});
-	  
-	  
-	  ####################################################################
-	  # If necessary print a link to the csv file
-	  ####################################################################
+		@expandedGlobalSetIDs = sort @expandedGlobalSetIDs;
+		my @globalProblemIDs = sort prob_id_sort keys %all_problems;
 
-	  my $filename = PAST_ANSWERS_FILENAME.'.csv';
-	  my $scoringDir = $ce->{courseDirs}->{scoring};
-	  my $scoringDownloadMessage = '';
-	  
-	  if ($r->param('createCSV') &&
-	      -e "${scoringDir}/${filename}") {
-	    
-	    my $scoringDownloadPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ScoringDownload", $r, courseID => $courseName
-							     );
-	    
-	    $scoringDownloadMessage = CGI::span({class=>'past-answer-download'}, $r->maketext('Download:'),
-					      CGI::a({href=>$self->systemLink($scoringDownloadPage,
-									      params=>{getFile => $filename } )}, $filename));
-	    
-	  }
-	  
-	    ########## print site identifying information
-	    
-	    print WeBWorK::CGI_labeled_input(-type=>"button", -id=>"show_hide", -input_attr=>{-value=>$r->maketext("Show/Hide Site Description"), -class=>"button_input"});
-	    print CGI::p({-id=>"site_description", -style=>"display:none"}, CGI::em($r->maketext("_ANSWER_LOG_DESCRIPTION")));
-	    
-	    print CGI::p(),CGI::hr();
+		####################################################################
+		# If necessary print a link to the csv file
+		####################################################################
 
-	    print CGI::start_form({-target=>'WW_Info',-id=>'past-answer-form'},"POST", $showAnswersURL);
-	    print $self->hidden_authen_fields();
-	
-	    print CGI::table({class=>"FormLayout"},
-			     CGI::Tr({},
-				     CGI::th($r->maketext("Users")),
-				     CGI::th($r->maketext("Sets")),
-				     CGI::th($r->maketext("Problems")),
-				    ),
-			     CGI::Tr({},
-				     CGI::td($scrolling_user_list),
-				     CGI::td($scrolling_set_list),
-				     CGI::td($scrolling_problem_list),
-				    ));
-	    
-	    print CGI::submit(-name => 'action', -value=>$r->maketext('Display Past Answers'))," &nbsp; ",
-	      CGI::checkbox(-label=>$r->maketext('Create CSV'), -name => 'createCSV', -id => 'createCSV', -checked => $r->param('createCSV')//0 ),' &nbsp; ',
-		$scoringDownloadMessage;
-	    
-	    print CGI::end_form();
+		my $filename               = PAST_ANSWERS_FILENAME . '.csv';
+		my $scoringDir             = $ce->{courseDirs}->{scoring};
+		my $scoringDownloadMessage = '';
+
+		if ($r->param('createCSV')
+			&& -e "${scoringDir}/${filename}")
+		{
+
+			my $scoringDownloadPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ScoringDownload",
+				$r, courseID => $courseName);
+
+			$scoringDownloadMessage = CGI::span(
+				{ class => 'fw-bold fs-5 mb-2' },
+				$r->maketext('Download:'),
+				CGI::a(
+					{ href => $self->systemLink($scoringDownloadPage, params => { getFile => $filename }) }, $filename
+				)
+			);
+
+		}
+
+		########## print site identifying information
+
+		print CGI::input({
+			type  => 'button',
+			id    => 'show_hide',
+			value => $r->maketext('Show/Hide Site Description'),
+			class => 'btn btn-info mb-2'
+		});
+		print CGI::p(
+			{ id => 'site_description', style => 'display:none' },
+			CGI::em($r->maketext(
+				'This is the past answer viewer.  Students can only see their answers, and they will not be able to '
+				. 'see which parts are correct.  Instructors can view any users answers using the form below and the '
+				. 'answers will be colored according to correctness.'
+			))
+		);
+
+		print CGI::hr();
+
+		print CGI::start_form({ -target => 'WW_Info', -id => 'past-answer-form' }, "POST", $showAnswersURL);
+		print $self->hidden_authen_fields();
+
+		print CGI::div(
+			{ class => 'row gx-3' },
+			CGI::div(
+				{ class => 'col-sm-5 mb-2' },
+				CGI::div(
+					{ class => 'fw-bold text-center' },
+					CGI::label({ for => 'selected_users' }, $r->maketext('Users'))
+				),
+				scrollingRecordList(
+					{
+						name            => 'selected_users',
+						id              => 'selected_users',
+						request         => $r,
+						default_sort    => 'lnfn',
+						default_format  => 'lnfn_uid',
+						default_filters => ['all'],
+						attrs           => {
+							size     => 10,
+							multiple => 1
+						}
+					},
+					@Users
+				)
+			),
+			CGI::div(
+				{ class => 'col-sm-4 mb-2' },
+				CGI::div(
+					{ class => 'fw-bold text-center' },
+					CGI::label({ for => 'selected_sets' }, $r->maketext('Sets'))
+				),
+				CGI::scrolling_list({
+					name     => 'selected_sets',
+					id       => 'selected_sets',
+					values   => \@expandedGlobalSetIDs,
+					labels   => { map { $_ => format_set_name_display($_) } @expandedGlobalSetIDs },
+					default  => $selectedSets,
+					size     => 23,
+					multiple => 1,
+					class    => 'form-select form-select-sm',
+					dir      => 'ltr'
+				})
+			),
+			CGI::div(
+				{ class => 'col-sm-2 mb-2' },
+				CGI::div(
+					{ class => 'fw-bold text-center' },
+					CGI::label({ for => 'selected_problems' }, $r->maketext('Problems'))
+				),
+				CGI::scrolling_list({
+					name     => 'selected_problems',
+					id       => 'selected_problems',
+					values   => \@globalProblemIDs,
+					default  => $selectedProblems,
+					size     => 23,
+					multiple => 1,
+					class    => 'form-select form-select-sm'
+				})
+			)
+		);
+
+		print CGI::div(
+			{ class => 'd-flex flex-wrap justify-content-start align-items-center' },
+			CGI::submit({
+				name  => 'action',
+				value => $r->maketext('Display Past Answers'),
+				class => 'btn btn-primary mb-2'
+			}),
+			CGI::div(
+				{ class => 'form-check form-check-inline ms-2 mb-2' },
+				CGI::checkbox({
+					label           => $r->maketext('Create CSV'),
+					name            => 'createCSV',
+					id              => 'createCSV',
+					checked         => $r->param('createCSV') // 0,
+					class           => 'form-check-input',
+					labelattributes => { class => 'form-check-label' }
+				})
+			),
+			$scoringDownloadMessage
+		);
+
+		print CGI::end_form();
 	}
-
 
 	#####################################################################
 	# print result table of answers
 	#####################################################################
 
 	my $records = $self->{records};
-	
+
 	my $foundMatches = 0;
-	
+
 	foreach my $studentUser (sort keys %{$records}) {
-	  foreach my $setName (sort keys %{$records->{$studentUser}}) {
-	    foreach my $problemNumber (sort {$a <=> $b} keys %{$records->{$studentUser}{$setName}}) {
-	      my @pastAnswerIDs = sort {$a <=> $b} keys %{$records->{$studentUser}{$setName}{$problemNumber}};
-	      my $prettyProblemNumber = $prettyProblemNumbers->{$setName}{$problemNumber};
-	      print CGI::h3($r->maketext("Past Answers for [_1], set [_2], problem [_3]" ,$studentUser, $setName, $prettyProblemNumber));
-	
-	      my @row;
-	      my $rowOptions = {};
+		foreach my $setName (sort keys %{ $records->{$studentUser} }) {
+			foreach my $problemNumber (sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName} }) {
+				my @pastAnswerIDs = sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName}{$problemNumber} };
+				my $prettyProblemNumber = $prettyProblemNumbers->{$setName}{$problemNumber};
+				print CGI::h3($r->maketext(
+					"Past Answers for [_1], set [_2], problem [_3]",
+					$studentUser, CGI::span({ dir => 'ltr' }, format_set_name_display($setName)), $prettyProblemNumber
+				));
 
-	      my $previousTime = -1;
+				my @row;
+				my $rowOptions = {};
 
-	      print CGI::start_table({class=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center", dir=>"ltr"}); # The answers are not well formatted in RTL mode
-	      
-	      foreach my $answerID (@pastAnswerIDs) {
-		$foundMatches = 1 unless $foundMatches;
-		
-		my %record = %{$records->{$studentUser}{$setName}{$problemNumber}{$answerID}};
-		my @answers = @{$record{answers}};
-		my @scores = @{$record{scores}};
-		my @answerTypes = @{$record{answerTypes}};
-		my $time = $self->formatDateTime($record{time});
-		
-		if ($previousTime < 0) {
-		  $previousTime = $record{time};
+				my $previousTime = -1;
+
+				print CGI::start_div({ class => 'table-responsive' }),
+					CGI::start_table({
+						class => 'past-answer-table table table-striped',
+						dir   => "ltr"    # The answers are not well formatted in RTL mode
+					});
+
+				foreach my $answerID (@pastAnswerIDs) {
+					$foundMatches = 1 unless $foundMatches;
+
+					my %record      = %{ $records->{$studentUser}{$setName}{$problemNumber}{$answerID} };
+					my @answers     = @{ $record{answers} };
+					my @scores      = @{ $record{scores} };
+					my @answerTypes = @{ $record{answerTypes} };
+					my $time        = $self->formatDateTime($record{time});
+
+					if ($previousTime < 0) {
+						$previousTime = $record{time};
+					}
+
+					my $num_ans        = $#scores;
+					my $num_ans_blanks = $#answers;
+					my $upper_limit    = ($num_ans > $num_ans_blanks) ? $num_ans : $num_ans_blanks;
+
+					#FIXME -- $num_ans is no longer the value needed -- $num_ans is the number of
+					# answer evaluators (or answer groups) each of which might have several
+					# answer blanks. On the other hand sometimes an answer blank has been left blank
+					# and there is no answer, but the score is zero.
+					# In other words sometimes number of scores is greater than the number of answers
+					# and sometimes it is less.
+
+					if ($record{time} - $previousTime > $ce->{sessionKeyTimeout}) {
+						$rowOptions->{'class'} = 'table-rule';
+					} else {
+						$rowOptions->{'class'} = '';
+					}
+
+					@row = (CGI::td({ width => 10 }), CGI::td(CGI::small($time)));
+
+					for (my $i = 0; $i <= $upper_limit; $i++) {
+						my $tdParams;
+						my $answer     = $answers[$i] // '';
+						my $answerType = defined($answerTypes[$i]) ? $answerTypes[$i] : '';
+						my $score      = shift(@scores);
+
+						# Only color the answer if the user is an instructor and there is an answer, score, and its not
+						# an essay question.
+						if ($instructor && $answer ne '' && defined $score && $answerType ne 'essay') {
+							$tdParams->{style} = $score ? "color:#006600" : "color:#660000";
+						}
+
+						my $answerstring;
+						if ($answer eq '') {
+							$answerstring = CGI::small(CGI::i($r->maketext("empty"))) if ($answer eq "");
+						} elsif (!$renderAnswers) {
+							$answerstring = PGcore::encode_pg_and_html($answer);
+						} elsif ($answerType eq 'essay') {
+							$answerstring = PGcore::encode_pg_and_html($answer);
+							$tdParams->{class} = 'essay';
+						} else {
+							$answerstring = PGcore::encode_pg_and_html($answer);
+						}
+
+						push(@row, CGI::td({ width => 20 }), CGI::td($tdParams, $answerstring));
+					}
+
+					if ($record{comment}) {
+						push(
+							@row,
+							CGI::td({ width => 20 }),
+							CGI::td(
+								{ class => 'comment' },
+								$r->maketext("Comment") . ": " . PGcore::encode_pg_and_html($record{comment})
+							)
+						);
+					}
+
+					print CGI::Tr($rowOptions, @row);
+
+					$previousTime = $record{time};
+
+				}
+				print CGI::end_table(), CGI::end_div();
+			}
 		}
-			
-		my $num_ans = $#scores;
-		my $num_ans_blanks=$#answers;
-		my $upper_limit = ($num_ans > $num_ans_blanks)? $num_ans: $num_ans_blanks;
-		
-		#FIXME -- $num_ans is no longer the value needed -- $num_ans is the number of 
-		# answer evaluators (or answer groups) each of which might have several
-		# answer blanks. On the other hand sometimes an answer blank has been left blank
-		# and there is no answer, but the score is zero. 
-		# In other words sometimes number of scores is greater than the number of answers
-		# and sometimes it is less. 
-		
-		#warn "checking number of answers ", scalar(@answers), " vs number of scores ",scalar(@scores), " and limit is $upper_limit";
-		#warn "answers are ", join(" ", @answers);
-		if ($record{time} - $previousTime > $ce->{sessionKeyTimeout}) {
-		  $rowOptions->{'class'} = 'table-rule';
-		} else {
-		  $rowOptions->{'class'} = '';
-		}
-
-		@row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
-
-		
-		for (my $i = 0; $i <= $upper_limit; $i++) {
-		  my $td;
-		  my $answer = $answers[$i] // '';
-		  my $answerType = defined($answerTypes[$i]) ? $answerTypes[$i] : '';
-		  my $score = shift(@scores); 
-		  #Only color answer if its an instructor
-		  if ($instructor) {
-		    $td->{style} = $score? "color:#006600": "color:#660000";
-		  } 
-		  delete($td->{style}) unless $answer ne "" && defined($score) && $answerType ne 'essay';
-		  
-		  my $answerstring;
-		  if ($answer eq '') {		    
-		    $answerstring  = CGI::small(CGI::i($r->maketext("empty"))) if ($answer eq "");
-		  } elsif (!$renderAnswers) {
-		    $answerstring = PGcore::encode_pg_and_html($answer);
-		  } elsif ($answerType eq 'essay') {
-		    $answerstring = PGcore::encode_pg_and_html($answer);
-		    $td->{class} = 'essay';
-		  } else {
-		    $answerstring = PGcore::encode_pg_and_html($answer);
-		  }
-		  
-		  push(@row,CGI::td({width=>20}),CGI::td($td,$answerstring));
-		}
-		
-		if ($record{comment}) {
-		  push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},$r->maketext("Comment").": ".PGcore::encode_pg_and_html($record{comment})));
-		}
-		
-		print CGI::Tr($rowOptions,@row);
-		
-		$previousTime = $record{time};
-		
-	      }
-	      print CGI::end_table();
-
-	    }
-	  }
 	}
-      	      
+
 	print CGI::h2($r->maketext('No problems matched the given parameters.')) unless $foundMatches;
 
 	return "";
@@ -550,7 +602,7 @@ sub byData {
 }
 
 # sorts problem ID's so that all just-in-time like ids are at the bottom
-# of the list in order and other problems 
+# of the list in order and other problems
 sub prob_id_sort {
 
   my @seqa = split(/\./,$a);
@@ -558,7 +610,7 @@ sub prob_id_sort {
 
   # go through problem number sequence
   for (my $i = 0; $i <= $#seqa; $i++) {
-    # if at some point two numbers are different return the comparison. 
+    # if at some point two numbers are different return the comparison.
     # e.g. 2.1.3 vs 1.2.6
     if ($seqa[$i] != $seqb[$i]) {
       return $seqa[$i] <=> $seqb[$i];
@@ -572,7 +624,7 @@ sub prob_id_sort {
   }
 
   # if all of the values are equal and a and b are the same length then equal
-  # otherwise a was shorter than b so a comes first. 
+  # otherwise a was shorter than b so a comes first.
   if ($#seqa == $#seqb) {
     return 0;
   } else {
@@ -581,15 +633,12 @@ sub prob_id_sort {
 }
 
 sub output_JS {
-    my $self = shift;
-    my $r = $self->r;
-    my $ce = $r->ce;
+	my $self = shift;
+	my $ce   = $self->r->ce;
 
-    my $site_url = $ce->{webworkURLs}->{htdocs};
-    
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ShowHide/show_hide.js"}), CGI::end_script();
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/ShowHide/show_hide.js'), defer => undef }, '');
 
-    return "";
+	return '';
 }
 
 1;

@@ -1,14 +1,13 @@
 #!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2012 The WeBWorK Project, http://webwork.maa.org
-# $CVSHeader: webwork2/bin/ww_purge_old_nonces ,v 1.0 2012/05/10  wheeler Exp $
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -22,7 +21,7 @@ ww_purge_old_nonces   Delete nonce records from Key table for timestamps
 
 =head1 SYNOPSIS
 
- ww_purge_old_nonces  course 
+ ww_purge_old_nonces  course
 
 =head1 DESCRIPTION
 
@@ -45,14 +44,19 @@ Course for which old nonces should be deleted.
 use strict;
 use warnings;
 
+my $pg_dir;
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n"
-		unless exists $ENV{WEBWORK_ROOT};
+	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
+	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$pg_dir/lib";
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
+
+use constant NONCE_LIFETIME => 21600; # 6 hours
 
 sub usage {
 	print STDERR "usage: $0  course \n";
@@ -76,16 +80,18 @@ my @listKeys = $db -> listKeys();
 
 foreach my $user_id (@listKeys) {
 	my $Key;
-	eval { $Key = $db -> getKey($user_id);};
+	eval { $Key = $db->getKey($user_id);};
 	if ($@) { push @errors, "$user_id: ". $@ ;}
 	else {
-		if ($Key -> key eq "nonce" && $Key -> timestamp +10 < time()) {
-			eval {$db -> deleteKey($user_id);};
+		if ($Key->key eq "nonce" &&
+			(time()-$Key->timestamp > NONCE_LIFETIME)
+		) {
+			eval {$db->deleteKey($user_id);};
 			if ($@) { push @errors, "$user_id: ". $@ ;}
 		}
 	}
 }
-	
+
 
 if (@errors) {
 	warn "The following errors occured:\n", map { "* $_\n" } @errors;

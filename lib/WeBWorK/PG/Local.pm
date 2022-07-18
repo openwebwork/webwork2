@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.28 2009/10/17 15:50:33 apizer Exp $
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -44,13 +43,6 @@ use WeBWorK::Utils qw(readFile writeTimingLogEntry);
 #use WeBWorK::Utils::RestrictedMailer;
 use WeBWorK::Utils::DelayedMailer;
 
-BEGIN{
- 	unless (exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2) {
-		require "mod_perl.pm";  # used only for mod_perl1  should we continue to support this?
-	}
-
-	use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
-}
 # Problem processing will time out after this number of seconds.
 use constant TIMEOUT => $WeBWorK::PG::Local::TIMEOUT || 10;
 
@@ -94,21 +86,21 @@ sub new_helper {
 		                     # translator, such as whether to show
 		                     # hints and the display mode to use
 	) = @_;
-	
+
 	# write timing log entry
 # 	writeTimingLogEntry($ce, "WeBWorK::PG::new",
 # 		"user=".$user->user_id.",problem=".$ce->{courseName}."/".$set->set_id."/".$problem->problem_id.",mode=".$translationOptions->{displayMode},
 # 		"begin");
-	
+
 	# install a local warn handler to collect warnings  FIXME -- figure out what I meant to do here.
 	my $warnings = "";
 	#local $SIG{__WARN__} = sub { $warnings .= shift()."<br/>\n"};
 		#if $ce->{pg}->{options}->{catchWarnings};
-	
+
 	# create a Translator
-	#warn "PG: creating a Translator\n"; 
+	#warn "PG: creating a Translator\n";
 	my $translator = WeBWorK::PG::Translator->new;
-	
+
 	# set the directory hash
 	#warn "PG: setting the directory hash\n";
 	# FIXME rh_directories does not appear to be used. ever.
@@ -117,19 +109,16 @@ sub new_helper {
 #		templateDirectory      => $ce->{courseDirs}->{templates},
 #		tempDirectory          => $ce->{courseDirs}->{html_temp},
 #	});
-	
+
 	############################################################################
 	# evaluate modules and "extra packages"
 	############################################################################
-	
+
 	#warn "PG: evaluating modules and \"extra packages\"\n";
 	my @modules = @{ $ce->{pg}->{modules} };
 	# HACK for apache2
-	if (MP2) {
-		push @modules, ["Apache2::Log"], ["APR::Table"];
-	} else {
-		push @modules, ["Apache::Log"];
-	}
+	push @modules, ["Apache2::Log"], ["APR::Table"];
+
 	foreach my $module_packages_ref (@modules) {
 		my ($module, @extra_packages) = @$module_packages_ref;
 		# the first item is the main package
@@ -137,7 +126,7 @@ sub new_helper {
 		# the remaining items are "extra" packages
 		$translator->load_extra_packages(@extra_packages);
 	}
-	
+
 	############################################################################
 	# prepare an imagegenerator object (if we're in "images" mode)
 	############################################################################
@@ -158,7 +147,7 @@ sub new_helper {
 			dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 		);
 	}
-	
+
 	############################################################################
 	# create a "delayed mailer" object that will send emails after the page is finished.
 	############################################################################
@@ -182,12 +171,12 @@ sub new_helper {
 		allowed_recipients => $ce->{mail}{allowedRecipients},
 		on_illegal_rcpt => "carp",
 	);
-	
-	
+
+
 	############################################################################
 	# set the environment (from defineProblemEnvir)
 	############################################################################
-	
+
 	#warn "PG: setting the environment (from defineProblemEnvir)\n";
 	my $envir = $class->defineProblemEnvir(
 		$ce,
@@ -205,30 +194,30 @@ sub new_helper {
 		},
 	);
 	$translator->environment($envir);
-	
+
 	############################################################################
 	# initialize the Translator
 	############################################################################
 	#warn "PG: initializing the Translator\n";
 	$translator->initialize();
-	
-	
+
+
 	############################################################################
 	# preload macros
 	############################################################################
 	# This is in transition.  here are the old instructions
-	
+
 	# Preload the macros files which are used routinely: PG.pl,
 	# dangerousMacros.pl, IO.pl, PGbasicmacros.pl, and PGanswermacros.pl
 	# (Preloading the last two files safes a significant amount of time.)
-	# 
+	#
 	# IO.pl, PG.pl, and dangerousMacros.pl are loaded using
 	# unrestricted_load This is hard wired into the
 	# Translator::pre_load_macro_files subroutine. I'd like to change this
 	# at some point to have the same sort of interface to defaults.config that
 	# the module loading does -- have a list of macros to load
 	# unrestrictedly.
-	# 	
+	#
 	# This has been replaced by the pre_load_macro_files subroutine.  It
 	# loads AND caches the files. While PG.pl and dangerousMacros are not
 	# large, they are referred to by PGbasicmacros and PGanswermacros.
@@ -238,18 +227,18 @@ sub new_helper {
 	# inside the Safe::Root1: cached safe compartment.  (NEW_ANSWER_NAME
 	# and all other subroutine names are also automatically exported into
 	# the current safe compartment Safe::Rootx::
-	# 
+	#
 	# The headers of both PGbasicmacros and PGanswermacros has code that
 	# insures that the constants used are imported into the current safe
 	# compartment.  This involves evaluating references to, say
 	# $main::displayMode, at runtime to insure that main refers to
 	# Safe::Rootx:: and NOT to Safe::Root1::, which is the value of main::
 	# at compile time.
-	# 
+	#
 	# TO ENABLE CACHEING UNCOMMENT THE FOLLOWING:  -- this has not been used in some time
 # 	eval{$translator->pre_load_macro_files(
 # 		$WeBWorK::PG::Local::safeCache,
-# 		$ce->{pg}->{directories}->{macros}, 
+# 		$ce->{pg}->{directories}->{macros},
 # 		#'PG.pl', 'dangerousMacros.pl','IO.pl','PGbasicmacros.pl','PGanswermacros.pl'
 # 	)};
 #   warn "Error while preloading macro files: $@" if $@;
@@ -257,27 +246,27 @@ sub new_helper {
     ############################################################################
     # Here are the new instructions for preloading the macros
     ############################################################################
-    
+
 	# STANDARD LOADING CODE: for cached script files, this merely
 	# initializes the constants.
 	#2010 -- in the new scheme PG.pl is the only file guaranteed
 	# initialization -- it reads in everything that dangerous macros
 	# and IO.pl
 	# did before.  Mostly it just defines access to the PGcore object
-	
+
 	# 2010 the loop is overkill since there is just one file, we'll leave it for now in case there are more.
 	foreach (qw(PG.pl )) {   # dangerousMacros.pl IO.pl
 		my $macroPath = $ce->{pg}->{directories}->{macros} . "/$_";
 		my $err = $translator->unrestricted_load($macroPath);
 		warn "Error while loading $macroPath: $err" if $err;
 	}
-	
+
 	############################################################################
 	# set the opcode mask (using default values)
 	############################################################################
 	#warn "PG: setting the opcode mask (using default values)\n";
 	$translator->set_mask();
-	
+
 	############################################################################
 	# get the problem source
 	# FIXME -- this operation can be moved out of the translator.
@@ -290,37 +279,37 @@ sub new_helper {
 		# the source for the problem is already given to us as a reference to a string
 		$source = ${$translationOptions->{r_source}};
 	} else {
-	    # the source isn't given to us so we need to read it 
+	    # the source isn't given to us so we need to read it
 	    # from a file defined by the problem
-	    
+
 		# we  grab the sourceFilePath from the problem
 		$sourceFilePath = $problem->source_file;
-	    	
-	    # the path to the source file is usually given relative to the 
+
+	    # the path to the source file is usually given relative to the
 	    # the templates directory. Unless the path starts with / assume
 	    # that it is relative to the templates directory
-	    
+
 	    $sourceFilePath = $ce->{courseDirs}->{templates}."/"
 	    	         .$sourceFilePath unless ($sourceFilePath =~ /^\//);
 	    #now grab the source
 		eval {$source = readFile($sourceFilePath) };
 		$readErrors = $@ if $@;
 	 }
-	 
+
 	############################################################################
     # put the source into the translator object
     ############################################################################
-    
+
 	eval { $translator->source_string( $source ) } unless $readErrors;
 	$readErrors .="\n  $@ " if $@;
 	if ($readErrors) {
 		# well, we couldn't get the problem source, for some reason.
 		return bless {
 			translator => $translator,
-			head_text  => "", 
+			head_text  => "",
 			post_header_text => "",
 			body_text  => <<EOF,
-WeBWorK::Utils::readFile($sourceFilePath) says: 
+WeBWorK::Utils::readFile($sourceFilePath) says:
 $@
 EOF
 			answers    => {},
@@ -332,7 +321,7 @@ EOF
 			pgcore     => $translator->{rh_pgcore},
 		}, $class;
 	}
-	
+
 	############################################################################
 	# install a safety filter
 	# FIXME -- I believe that since MathObjects this is no longer operational
@@ -340,40 +329,40 @@ EOF
 	#warn "PG: installing a safety filter\n";
 	#$translator->rf_safety_filter(\&oldSafetyFilter);
 	$translator->rf_safety_filter(\&WeBWorK::PG::nullSafetyFilter);
-	
+
 	############################################################################
 	# write timing log entry -- the translator is now all set up
 	############################################################################
 # 	writeTimingLogEntry($ce, "WeBWorK::PG::new",
 # 		"initialized",
 # 		"intermediate");
-	
+
 	############################################################################
 	# translate the PG source into text
 	############################################################################
-	
+
 	#warn "PG: translating the PG source into text\n";
 	$translator->translate();
-	
+
 	############################################################################
 	# !!!!!!!! IMPORTANT: $envir shouldn't be trusted after problem code runs!
 	############################################################################
-	
+
 	my ($result, $state); # we'll need these on the other side of the if block!
 	if ($translationOptions->{processAnswers}) {
-		
+
 		############################################################################
 		# process student answers
 		############################################################################
-		
+
 		#warn "PG: processing student answers\n";
 		$translator->process_answers($formFields);
 
         ############################################################################
 		# retrieve the problem state and give it to the translator
-		############################################################################		
+		############################################################################
 		#warn "PG: retrieving the problem state and giving it to the translator\n";
-		
+
 		$translator->rh_problem_state({
 			recorded_score =>       $problem->status,
 			sub_recorded_score =>   $problem->sub_status,
@@ -386,7 +375,7 @@ EOF
 		# the PG macro package (PG.pl)
 		############################################################################
 		#warn "PG: determining an entry order\n";
-		
+
 		my @answerOrder =
 			$translator->rh_flags->{ANSWER_ENTRY_ORDER}
 				? @{ $translator->rh_flags->{ANSWER_ENTRY_ORDER} }
@@ -399,7 +388,7 @@ EOF
 		# reference code when it would be difficult.)
 		############################################################################
 		#warn "PG: installing a grader\n";
-		
+
 		my $grader = $translator->rh_flags->{PROBLEM_GRADER_TO_USE}
 			|| $ce->{pg}->{options}->{grader};
 		$grader = $translator->rf_std_problem_grader
@@ -414,20 +403,20 @@ EOF
 		# grade the problem
 		############################################################################
 		#warn "PG: grading the problem\n";
-		
+
 		($result, $state) = $translator->grade_problem(
 			answers_submitted  => $translationOptions->{processAnswers},
 			ANSWER_ENTRY_ORDER => \@answerOrder,
 			%{$formFields},  #FIXME?  this is used by sequentialGrader is there a better way
 		);
-		
+
 	}
-	
+
 	############################################################################
 	# after we're done translating, we may have to clean up after the
 	# translator:
 	############################################################################
-	
+
 	############################################################################
 	# HTML_dpng uses an ImageGenerator. We have to render the queued equations.
 	############################################################################
@@ -435,36 +424,36 @@ EOF
 	if ($image_generator) {
 		my $sourceFile = $ce->{courseDirs}->{templates} . "/" . $problem->source_file;
 		my %mtimeOption = -e $sourceFile ? (mtime => (stat $sourceFile)[9]) : ();
-		
+
 		$image_generator->render(
 			refresh => $translationOptions->{refreshMath2img},
 			%mtimeOption,
 			body_text => $body_text_ref,
 		);
 	}
-	
+
 	############################################################################
 	# send any queued mail messages
 	############################################################################
-	
+
 	if ($mailer) {
 		$mailer->send_messages;
 	}
-	
+
 	############################################################################
 	# end of cleanup phase
 	############################################################################
-	
+
 	############################################################################
 	# write timing log entry
 	############################################################################
 # 	writeTimingLogEntry($ce, "WeBWorK::PG::new", "", "end");
-	
+
 	############################################################################
 	# return an object which contains the translator and the results of
-	# the translation process. 
+	# the translation process.
 	############################################################################
-	
+
 	return bless {
 		translator => $translator,
 		head_text  => ${ $translator->r_header },
