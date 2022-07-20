@@ -23,7 +23,6 @@
 		frame.contentWindow.addEventListener('resize',
 			() => frame.contentDocument.getElementById('content').classList.remove('col-md-10')
 		);
-		bsModal.show();
 	});
 
 	document.getElementById('submit_button_id')?.addEventListener('click', () => {
@@ -39,13 +38,14 @@
 		document.getElementById('editor').target = target;
 
 		if (target == "pg_editor_frame") {
+			bsModal.show();
 			busyIndicator = document.createElement('div');
 			busyIndicator.classList.add('page-loading-busy-indicator');
 			busyIndicator.innerHTML = '<div class="busy-text"><h2>Loading...</h2></div>' +
 				'<div><i class="fas fa-circle-notch fa-spin fa-3x"></i></div>' +
 				'<div class="busy-text">Press escape to cancel</div>';
 			busyIndicator.tabIndex = -1;
-			document.body.appendChild(busyIndicator);
+			bsModal._element.querySelector('.modal-body')?.appendChild(busyIndicator);
 			busyIndicator.focus();
 
 			// Allow the user to cancel loading of the iframe by pressing escape.
