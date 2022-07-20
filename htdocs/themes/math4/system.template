@@ -42,7 +42,7 @@
 
 <!-- JS Loads -->
 <script src="<!--#url type="webwork" name="htdocs" file="js/apps/MathJaxConfig/mathjax-config.js"-->" defer></script>
-<script src="<!--#url type="webwork" name="htdocs" file="node_modules/mathjax/es5/tex-chtml.js"-->" id="MathJax-script" defer></script>
+<script src="<!--#url type="webwork" name="htdocs" file="node_modules/mathjax/es5/tex-svg.js"-->" id="MathJax-script" defer></script>
 <script src="<!--#url type="webwork" name="htdocs" file="node_modules/jquery/dist/jquery.min.js"-->"></script>
 <script src="<!--#url type="webwork" name="htdocs" file="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"-->" defer></script>
 <!--#if can="output_JS"-->
