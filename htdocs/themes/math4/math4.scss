@@ -766,7 +766,7 @@ input.changed[type=text] { /* orange */
 /* Page loading busy indicator */
 /* Currently only used on the problem editor page. */
 .page-loading-busy-indicator {
-	position: fixed;
+	position: absolute;
 	width: 100%;
 	height: 100%;
 	left: 0;
