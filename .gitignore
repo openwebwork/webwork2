@@ -25,7 +25,6 @@ htdocs/themes/*/images/*
 !htdocs/themes/*/images/webwork_logo.svg
 !htdocs/themes/math4/images/webwork_square.svg
 htdocs/themes/*/*.css
-htdocs/package-lock.json
 htdocs/themes/*
 !htdocs/themes/math4
 !htdocs/themes/math4-red
