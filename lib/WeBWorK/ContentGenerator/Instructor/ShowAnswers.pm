@@ -28,6 +28,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id getAssetURL format_set_name_display);
+use WeBWorK::Utils::Rendering qw(constructPGOptions);
 use PGcore;
 use Text::CSV;
 
@@ -141,24 +142,20 @@ sub initialize {
 		    #if these things dont exist then the problem doesnt exist and past answers dont make sense
 		    next unless defined($set) && defined($problem) && defined($userobj);
 
-		    my $pg = WeBWorK::PG->new(
-					      $ce,
-					      $userobj,
-					      $key,
-					      $set,
-					      $problem,
-					      $set->psvn, # FIXME: this field should be removed
-					      $formFields,
-					      { # translation options
-					       displayMode     => 'plainText',
-					       showHints       => 0,
-					       showSolutions   => 0,
-					       refreshMath2img => 0,
-					       processAnswers  => 1,
-					       permissionLevel => $db->getPermissionLevel($studentUser)->permission,
-					       effectivePermissionLevel => $db->getPermissionLevel($studentUser)->permission,
-					      },
-					     );
+			my $pg = WeBWorK::PG->new(constructPGOptions(
+				$ce, $userobj, $set, $problem,
+				$set->psvn,
+				$formFields,
+				{    # translation options
+					displayMode              => 'plainText',
+					showHints                => 0,
+					showSolutions            => 0,
+					refreshMath2img          => 0,
+					processAnswers           => 1,
+					permissionLevel          => $db->getPermissionLevel($studentUser)->permission,
+					effectivePermissionLevel => $db->getPermissionLevel($studentUser)->permission,
+				},
+			));
 
 		    # check to see what type the answers are.  right now it only checks for essay but could do more
 		    my %answerHash = %{ $pg->{answers} };

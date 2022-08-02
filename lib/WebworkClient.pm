@@ -23,7 +23,7 @@ WebworkClient.pm
 =head1 SYNPOSIS
 
 	our $xmlrpc_client = new WebworkClient (
-		url                    => $ce->{server_site_url}, 
+		url                    => $ce->{server_site_url},
 		form_action_url        => $FORM_ACTION_URL,
 		site_password          =>  $XML_PASSWORD//'',
 		courseID               =>  $credentials{courseID},
@@ -39,13 +39,13 @@ Remember to configure the local output file and display command !!!!!!!!
 =head1 DESCRIPTION
 
 This script will take a file and send it to a WeBWorK daemon webservice
-to have it rendered.  
+to have it rendered.
 
 The result returned is split into the basic HTML rendering
 and evaluation of answers and then passed to a browser for printing.
 
-The formatting allows the browser presentation to be interactive with the 
-daemon running the script webwork2/lib/renderViaXMLRPC.pm  
+The formatting allows the browser presentation to be interactive with the
+daemon running the script webwork2/lib/renderViaXMLRPC.pm
 and with instructorXMLRPChandler.
 
 See WebworkWebservice.pm  for related modules which operate on the server side
@@ -66,42 +66,42 @@ use warnings;
 #    points to the Webservice.pm and Webservice/RenderProblem modules
 #    Is used by the client to send the original XML request to the webservice
 #    Note: This is not the same as the webworkClient->url which should NOT have
-#          the mod_xmlrpc segment. 
+#          the mod_xmlrpc segment.
 #
 # 2. $FORM_ACTION_URL      http:http://test.webwork.maa.org/webwork2/html2xml
 #    points to the renderViaXMLRPC.pm module.
 #
 #     This url is placed as form action url when the rendered HTML from the original
 #     request is returned to the client from Webservice/RenderProblem. The client
-#     reorganizes the XML it receives into an HTML page (with a WeBWorK form) and 
+#     reorganizes the XML it receives into an HTML page (with a WeBWorK form) and
 #     pipes it through a local browser.
 #
 #     The browser uses this url to resubmit the problem (with answers) via the standard
-#     HTML webform used by WeBWorK to the renderViaXMLRPC.pm handler.  
+#     HTML webform used by WeBWorK to the renderViaXMLRPC.pm handler.
 #
-#     This renderViaXMLRPC.pm handler acts as an intermediary between the browser 
-#     and the webservice.  It interprets the HTML form sent by the browser, 
-#     rewrites the form data in XML format, submits it to the WebworkWebservice.pm 
+#     This renderViaXMLRPC.pm handler acts as an intermediary between the browser
+#     and the webservice.  It interprets the HTML form sent by the browser,
+#     rewrites the form data in XML format, submits it to the WebworkWebservice.pm
 #     which processes it and sends the the resulting HTML back to renderViaXMLRPC.pm
 #     which in turn passes it back to the browser.
-# 3.  The second time a problem is submitted renderViaXMLRPC.pm receives the WeBWorK form 
-#     submitted directly by the browser.  
+# 3.  The second time a problem is submitted renderViaXMLRPC.pm receives the WeBWorK form
+#     submitted directly by the browser.
 #     The renderViaXMLRPC.pm translates the WeBWorK form, has it processes by the webservice
-#     and returns the result to the browser. 
+#     and returns the result to the browser.
 #     The The client renderProblem.pl script is no longer involved.
 # 4.  Summary: The WebworkWebservice (with command renderProblem) is called directly in the first round trip
-#     of  submitting the problem via the https://mysite.edu/mod_xmlrpc route.  After that the communication is  
+#     of  submitting the problem via the https://mysite.edu/mod_xmlrpc route.  After that the communication is
 #     between the browser and renderViaXMLRPC using HTML forms and the route https://mysite.edu/webwork2/html2xml
 #     and from there renderViaXMLRPC calls the WebworkWebservice using the route https://mysite.edu/mod_xmlrpc with the
 #     renderProblem command.
 
 
-our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
+our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf
 
 
 
 ##################################################
-# XMLRPC client -- 
+# XMLRPC client --
 # this code is identical between renderProblem.pl and renderViaXMLRPC.pm????
 ##################################################
 
@@ -113,10 +113,8 @@ use XMLRPC::Lite;
 use WeBWorK::Utils qw( wwRound encode_utf8_base64 decode_utf8_base64);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::PG::ImageGenerator;
 use HTML::Entities;
 use WeBWorK::Localize;
-use WeBWorK::PG::ImageGenerator;
 use IO::Socket::SSL;
 use Digest::SHA qw(sha1_base64);
 use XML::Simple qw(XMLout);
@@ -133,20 +131,19 @@ our $UNIT_TESTS_ON             = 0;
 # static variables
 
 # create seed_ce
-# then create imgGen
 our $seed_ce;
 
 eval {
-	$seed_ce = WeBWorK::CourseEnvironment->new( 
-				{webwork_dir		=>		$WeBWorK::Constants::WEBWORK_DIRECTORY, 
+	$seed_ce = WeBWorK::CourseEnvironment->new(
+				{webwork_dir		=>		$WeBWorK::Constants::WEBWORK_DIRECTORY,
 				 courseName         =>      '',
 				 webworkURL         =>      '',
 				 pg_dir             =>      $WeBWorK::Constants::PG_DIRECTORY,
 				 });
 };
 	if ($@ or not ref($seed_ce)){
-		warn "Unable to find environment for WebworkClient: 
-			 webwork_dir => $WeBWorK::Constants::WEBWORK_DIRECTORY 
+		warn "Unable to find environment for WebworkClient:
+			 webwork_dir => $WeBWorK::Constants::WEBWORK_DIRECTORY
 			 pg_dir      => $WeBWorK::Constants::PG_DIRECTORY";
 	}
 
@@ -154,18 +151,6 @@ eval {
 
 our %imagesModeOptions = %{$seed_ce->{pg}->{displayModeOptions}->{images}};
 our $site_url = $seed_ce->{server_root_url}//'';
-our $imgGen = WeBWorK::PG::ImageGenerator->new(
-		tempDir         => $seed_ce->{webworkDirs}->{tmp},
-		latex	        => $seed_ce->{externalPrograms}->{latex},
-		dvipng          => $seed_ce->{externalPrograms}->{dvipng},
-		useCache        => 1,
-		cacheDir        => $seed_ce->{webworkDirs}->{equationCache},
-		cacheURL        => $site_url . $seed_ce->{webworkURLs}->{equationCache},
-		cacheDB         => $seed_ce->{webworkFiles}->{equationCacheDB},
-		dvipng_align    => $imagesModeOptions{dvipng_align},
-		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
-);
-
 
 sub new {   #WebworkClient constructor
     my $invocant = shift;
@@ -198,31 +183,31 @@ sub new {   #WebworkClient constructor
 our $result;
 
 ##################################################
-# Utilities -- 
+# Utilities --
 #    this code is identical between renderProblem.pl and renderViaXMLRPC.pm
 ##################################################
 
 =head2 xmlrpcCall
 
 
-	
+
     $xmlrpc_client->encodeSource($source);
     $xmlrpc_client->{sourceFilePath}  = $fileName;
-    
- my $input = { 
+
+ my $input = {
         userID                  => $credentials{userID}//'',
         session_key             => $credentials{session_key}//'',
         courseID                => $credentials{courseID}//'',
         courseName              => $credentials{courseID}//'',
-        course_password         => $credentials{course_password}//'',   
+        course_password         => $credentials{course_password}//'',
         site_password           => $XML_PASSWORD//'',
         envir                   => $xmlrpc_client->environment(
                                        fileName       => $fileName,
                                        sourceFilePath => $fileName
                                     ),
- };                          
-    our($output, $return_string, $result);    
-    
+ };
+    our($output, $return_string, $result);
+
 
     if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
         $output = $xmlrpc_client->formatRenderedProblem;
@@ -263,8 +248,8 @@ sub xmlrpcCall {
 	$requestObject = {%$default_inputs, %$input};  #input values can override default inputs
 
 	$self->request_object($requestObject);   # store the request object for later
-	
-	my $requestResult; 
+
+	my $requestResult;
 	my $transporter = TRANSPORT_METHOD->new;
     #FIXME -- transitional error fix to remove mod_xmlrpc from end of url call
     my $site_url = $self->site_url;
@@ -281,12 +266,12 @@ sub xmlrpcCall {
 		-> proxy(($site_url).'/'.REQUEST_URI);
 	};
 	# END of FIXME section
-	
+
 	print STDERR "WebworkClient: Initiating xmlrpc request to url ",($self->site_url).'/'.REQUEST_URI, " \n Error: $@\n" if $@;
-	# turn off verification of the ssl cert 
+	# turn off verification of the ssl cert
 	$transporter->transport->ssl_opts(verify_hostname=>0,
 	    SSL_verify_mode => IO::Socket::SSL::SSL_VERIFY_NONE);
-			
+
     if ($UNIT_TESTS_ON) {
         print STDERR  "\n\tWebworkClient.pm ".__LINE__." xmlrpcCall sent to site ", $self->site_url,"\n";
         print STDERR  "\tWebworkClient.pm ".__LINE__." full xmlrpcCall path ", ($self->site_url).'/'.REQUEST_URI,"\n";
@@ -294,7 +279,7 @@ sub xmlrpcCall {
     	print STDERR  "\tWebworkClient.pm ".__LINE__." input is: ",join(" ", map {$_//'--'} %{$self->request_object}),"\n";
     	print STDERR  "\tWebworkClient.pm ".__LINE__." xmlrpcCall $command initiated webwork webservice object $requestResult\n";
     }
- 		
+
 	local( $result);
 	# use eval to catch errors
 	#print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
@@ -307,7 +292,7 @@ sub xmlrpcCall {
 		print CGI::h2("WebworkClient Errors");
 		print CGI::p("Errors:",CGI::br(),CGI::blockquote({style=>"color:red"},CGI::code($@)),CGI::br(),"End Errors");
 	}
-	  
+
 	if (not ref($result) ) {
 		my $error_string = "xmlrpcCall to $command returned no result for ".
 			($self->{sourceFilePath}//'')."\n";
@@ -373,12 +358,12 @@ sub jsXmlrpcCall {
 	print "the command was $command";
 
 	my $transporter = TRANSPORT_METHOD->new;
-	
+
 	my $requestResult = $transporter
 	    -> proxy(($self->site_url).'/'.REQUEST_URI);
 	$transporter->transport->ssl_opts(verify_hostname=>0,
 	     SSL_verify_mode => 'SSL_VERIFY_NONE');
-	
+
 	  local( $result);
 	  # use eval to catch errors
 	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command,$input) };
@@ -392,7 +377,7 @@ sub jsXmlrpcCall {
 	  	my $rh_result = $result->result();
 	  	print "\n success \n";
 	    print pretty_print($rh_result->{'ra_out'});
-		$self->return_object( $rh_result ); 
+		$self->return_object( $rh_result );
 		return 1; # success
 
 	  } else {
@@ -485,8 +470,8 @@ sub xml_utf_decode { # Do UTF-8 decoding where xml_filter applied encoding
 	fault
 	site_url  (https://mysite.edu)
 	form_data
-	
-=cut 
+
+=cut
 
 sub encodeSource {
 	my $self = shift;
@@ -512,13 +497,13 @@ sub return_object {   # out
 	$self->{return_object} =$object if defined $object and ref($object); # source is non-empty
 	$self->{return_object};
 }
-sub error_string {   
+sub error_string {
 	my $self = shift;
 	my $string = shift;
 	$self->{error_string} =$string if defined $string and $string =~/\S/; # source is non-empty
 	$self->{error_string};
 }
-sub fault {   
+sub fault {
 	my $self = shift;
 	my $fault_flag = shift;
 	$self->{fault_flag} =$fault_flag if defined $fault_flag and $fault_flag =~/\S/; # source is non-empty
@@ -567,7 +552,7 @@ sub default_inputs {
  	die "Can't create seed course environment for webwork in $webwork_dir" unless ref($seed_ce);
 
 	$self->{seed_ce} = $seed_ce;
-	
+
 	my @modules_to_evaluate;
 	my @extra_packages_to_load;
 	my @modules = @{ $seed_ce->{pg}->{modules} };
@@ -591,12 +576,12 @@ sub default_inputs {
 		modules_to_evaluate     => [@modules_to_evaluate],
 		envir                   => $self->environment(),
 		problem_state           => {
-		
+
 			num_of_correct_ans  => 0,
 			num_of_incorrect_ans => 4,
 			recorded_score       => 1.0,
 		},
-		source                   => $self->encoded_source,  #base64 encoded		
+		source                   => $self->encoded_source,  #base64 encoded
 	};
 
 	$out;
@@ -616,9 +601,6 @@ sub environment {
 		CAPA_GraphicsDirectory =>'/opt/webwork/libraries/webwork-open-problem-library/Contrib/CAPA/',
 		CAPA_MCTools=>'/opt/webwork/libraries/webwork-open-problem-library/Contrib/CAPA/macros/CAPA_MCTools/',
 		CAPA_Tools=>'/opt/webwork/libraries/webwork-open-problem-library/Contrib/CAPA/macros/CAPA_Tools/',
-		cgiDirectory=>'Not defined',
-		cgiURL => 'foobarNot defined',
-		classDirectory=> 'Not defined',
 		courseName=>'Not defined',
 		courseScriptsDirectory=>'not defined',
 		displayMode => $self->{inputs_ref}{displayMode} // "MathJax",
@@ -652,7 +634,7 @@ sub environment {
 		numZeroLevelTolDefault =>0.000001,
 		openDate=> '3014438528',
 		permissionLevel => $self->{inputs_ref}{permissionLevel} // 0,
-		PRINT_FILE_NAMES_FOR => [],
+		isInstructor => $self->{inputs_ref}{isInstructor} // 0,
 		probFileName => 'WebworkClient.pm:: define probFileName in environment',
 		problemSeed  => $self->{inputs_ref}{problemSeed} // 3333,
 		problemUUID  => $self->{inputs_ref}{problemUUID} // 0,
@@ -660,11 +642,9 @@ sub environment {
 		probNum => $self->{inputs_ref}{probNum} // 1,
 		psvn => $self->{inputs_ref}{psvn} // 54321,
 		questionNumber => 1,
-		scriptDirectory => 'Not defined',
 		sectionName => '',
 		sectionNumber => 1,
-		server_root_url =>"foobarfoobar", 
-		sessionKey=> 'Not defined',
+		server_root_url =>"foobarfoobar",
 		setNumber => $self->{inputs_ref}{setNumber} // 'not defined',
 		studentLogin =>'',
 		studentName => '',
@@ -672,8 +652,9 @@ sub environment {
 		templateDirectory=>'not defined',
 		tempURL=>'not defined',
 		webworkDocsURL => 'not defined',
-		showHints => $self->{inputs_ref}{showHints} // 0, # extra options -- usually passed from the input form
+		showHints => $self->{inputs_ref}{showHints} // 0,
 		showSolutions => $self->{inputs_ref}{showSolutions} // 0,
+		forceScaffoldsOpen => $self->{inputs_ref}{forceScaffoldsOpen} // 0,
 		@_,
 	};
 	$envir;
@@ -682,7 +663,7 @@ sub environment {
 =item formatRenderedLibraries
 
 =cut
-	
+
 sub formatRenderedLibraries {
 	my $self 			  = shift;
 	#my @rh_result         = @{$self->return_object};  # wrap problem in formats
@@ -713,7 +694,7 @@ sub formatRenderedProblem {
 
 =head2 Utility functions:
 
-=over 4 
+=over 4
 
 =item writeRenderLogEntry()
 
@@ -726,7 +707,7 @@ sub formatRenderedProblem {
  Information printed in format:
  [formatted date & time ] processID unixTime BeginEnd $function  $details
 
-=cut 
+=cut
 
 sub writeRenderLogEntry($$$) {
 	my ($function, $details, $beginEnd) = @_;
@@ -751,10 +732,10 @@ sub pretty_print {    # provides html output -- NOT a method
     	$out =~ s/</&lt;/g  ;  # protect for HTML output
     } elsif ("$r_input" =~/hash/i) {  # this will pick up objects whose '$self' is hash and so works better than ref($r_iput).
 	    local($^W) = 0;
-	    
+
 		$out .= "$r_input " ."<TABLE border = \"2\" cellpadding = \"3\" BGCOLOR = \"#FFFFFF\">";
-		
-		
+
+
 		foreach my $key ( sort ( keys %$r_input )) {
 			# Safety feature - we do not want to display the contents of "%seed_ce" which
 			# contains the database password and lots of other things, and explicitly hide
@@ -783,7 +764,7 @@ sub pretty_print {    # provides html output -- NOT a method
 		$out = $r_input;
 		$out =~ s/</&lt;/g; # protect for HTML output
 	}
-	
+
 	return $out." ";
 }
 

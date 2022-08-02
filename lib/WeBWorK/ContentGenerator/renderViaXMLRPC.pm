@@ -15,7 +15,7 @@
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::ProblemRenderer - renderViaXMLRPC is an HTML 
+WeBWorK::ContentGenerator::ProblemRenderer - renderViaXMLRPC is an HTML
 front end for calls to the xmlrpc webservice
 
 =cut
@@ -44,39 +44,39 @@ use CGI;
  receives WeBWorK problems presented as HTML forms,
  packages the form variables into an XML_RPC request
  suitable for the Webservice/RenderProblem.pm
- takes the answer returned by the webservice (which has HTML format) and 
+ takes the answer returned by the webservice (which has HTML format) and
  returns it to the browser.
 
 =cut
- 
+
 # To configure the target webwork server two URLs are required
 # 1.  The url  http://test.webwork.maa.org/mod_xmlrpc
 #    points to the Webservice.pm and Webservice/RenderProblem modules
 #    Is used by the client to send the original XML request to the webservice.
-#    It is constructed in WebworkClient::xmlrpcCall() from the value of $webworkClient->site_url which does 
-#    NOT have the mod_xmlrpc segment (it should be   http://test.webwork.maa.org) 
-#    and the constant  REQUEST_URI defined in WebworkClient.pm to be mod_xmlrpc.  
+#    It is constructed in WebworkClient::xmlrpcCall() from the value of $webworkClient->site_url which does
+#    NOT have the mod_xmlrpc segment (it should be   http://test.webwork.maa.org)
+#    and the constant  REQUEST_URI defined in WebworkClient.pm to be mod_xmlrpc.
 #
 # 2. $FORM_ACTION_URL      http:http://test.webwork.maa.org/webwork2/html2xml
 #    points to the renderViaXMLRPC.pm module.
 #
 #     This url is placed as form action url when the rendered HTML from the original
 #     request is returned to the client from Webservice/RenderProblem. The client
-#     reorganizes the XML it receives into an HTML page (with a WeBWorK form) and 
+#     reorganizes the XML it receives into an HTML page (with a WeBWorK form) and
 #     pipes it through a local browser.
 #
 #     The browser uses this url to resubmit the problem (with answers) via the standard
-#     HTML webform used by WeBWorK to the renderViaXMLRPC.pm handler.  
+#     HTML webform used by WeBWorK to the renderViaXMLRPC.pm handler.
 #
-#     This renderViaXMLRPC.pm handler acts as an intermediary between the browser 
-#     and the webservice.  It interprets the HTML form sent by the browser, 
-#     rewrites the form data in XML format, submits it to the WebworkWebservice.pm 
+#     This renderViaXMLRPC.pm handler acts as an intermediary between the browser
+#     and the webservice.  It interprets the HTML form sent by the browser,
+#     rewrites the form data in XML format, submits it to the WebworkWebservice.pm
 #     which processes it and sends the the resulting HTML back to renderViaXMLRPC.pm
 #     which in turn passes it back to the browser.
-# 3.  The second time a problem is submitted renderViaXMLRPC.pm receives the WeBWorK form 
-#     submitted directly by the browser.  
+# 3.  The second time a problem is submitted renderViaXMLRPC.pm receives the WeBWorK form
+#     submitted directly by the browser.
 #     The renderViaXMLRPC.pm translates the WeBWorK form, has it processes by the webservice
-#     and returns the result to the browser. 
+#     and returns the result to the browser.
 #     The The client renderProblem.pl script is no longer involved.
 # 4.  Summary: renderProblem.pl is only involved in the first round trip
 #     of the submitted problem.  After that the communication is  between the browser and
@@ -106,7 +106,7 @@ unless ($server_root_url) {
 
 ############################
 # These variables are set when the child process is started
-# and remain constant through all of the calls handled by the 
+# and remain constant through all of the calls handled by the
 # child
 ############################
 
@@ -117,11 +117,11 @@ our ($SITE_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 
 
 
-	$SITE_URL             =  "$server_root_url"; 
+	$SITE_URL             =  "$server_root_url";
 	$FORM_ACTION_URL     =  "$server_root_url/webwork2/html2xml";
 
 
-our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
+our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf
 
 
 ##################################################
@@ -143,25 +143,25 @@ sub pre_header_initialize {
 	$inputs_ref{course_password} = $inputs_ref{custom_course_password} if $inputs_ref{custom_course_password};
 	$inputs_ref{answersSubmitted} = $inputs_ref{custom_answerssubmitted} if $inputs_ref{custom_answerssubmitted};
 	$inputs_ref{problemSeed} = $inputs_ref{custom_problemseed} if $inputs_ref{custom_problemseed};
-	$inputs_ref{problemUUID} = $inputs_ref{problemUUID}//$inputs_ref{problemIdentifierPrefix}; # earlier version of problemUUID
+	$inputs_ref{problemUUID} = $inputs_ref{problemUUID};
 	$inputs_ref{sourceFilePath} = $inputs_ref{custom_sourcefilepath} if $inputs_ref{custom_sourcefilepath};
 	$inputs_ref{outputformat} = $inputs_ref{custom_outputformat} if $inputs_ref{custom_outputformat};
-	
-	
+
+
 	my $user_id      = $inputs_ref{userID};
 	my $courseName   = $inputs_ref{courseID};
 	my $displayMode  = $inputs_ref{displayMode};
 	my $problemSeed  = $inputs_ref{problemSeed};
-	
+
 	# FIXME -- it might be better to send this error if the input is not all correct
 	# rather than trying to set defaults such as displaymode
 	unless ( $user_id && $courseName && $displayMode && $problemSeed) {
-		print CGI::ul( 
+		print CGI::ul(
 		      CGI::h1("Missing essential data in web dataform:"),
 			  CGI::li(CGI::escapeHTML([
-		      	"userID: |$user_id|", 
-		      	"courseID: |$courseName|",	
-		        "displayMode: |$displayMode|", 
+		      	"userID: |$user_id|",
+		      	"courseID: |$courseName|",
+		        "displayMode: |$displayMode|",
 		        "problemSeed: |$problemSeed|"
 		      ])));
 		return;
@@ -185,7 +185,7 @@ sub pre_header_initialize {
 	# print STDERR WebworkClient::pretty_print($r->{paramcache});
 
 	$self->{wantsjson} = 1 if $inputs_ref{outputformat} eq 'json' || $inputs_ref{send_pg_flags};
-	
+
 	##############################
 	# xmlrpc_client calls webservice to have problem rendered
 	#
@@ -198,7 +198,7 @@ sub pre_header_initialize {
 	} else {
 		$self->{output}= $xmlrpc_client->return_object;  # error report
 	}
-	
+
 	################################
  }
 

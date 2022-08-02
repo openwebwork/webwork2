@@ -2383,7 +2383,7 @@ Wrapper that creates an Email::Sender::Transport::SMTP object
 =cut
 
 # this function abstracts the process of creating a transport layer for SendMail
-# it is used in Feedback.pm, SendMail.pm and ProblemUtil.pm (for JITAR messages)
+# it is used in Feedback.pm, SendMail.pm and Utils/ProblemProcessing.pm (for JITAR messages)
 
 sub createEmailSenderTransportSMTP {
 	my $self = shift;

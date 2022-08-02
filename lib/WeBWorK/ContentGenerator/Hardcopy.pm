@@ -40,6 +40,7 @@ use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
 use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after x format_set_name_display/;
+use WeBWorK::Utils::Rendering qw(constructPGOptions);
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -1315,42 +1316,35 @@ sub write_problem_tex {
 	# FIXME -- there can be a problem if the $siteDefaults{timezone} is not defined?  Why is this?
 	# why does it only occur with hardcopy?
 
-	# we need an additional translation option for versioned sets; also,
-	#   for versioned sets include old answers in the set if we're also
-	#   asking for the answers
-	my $transOpts = {
-		displayMode              => "tex",
-		showHints                => $showHints,
-		showSolutions            => $showSolutions,
-		processAnswers           => $showCorrectAnswers || $printStudentAnswers,
-		permissionLevel          => $db->getPermissionLevel($userID)->permission,
-		effectivePermissionLevel => $db->getPermissionLevel($eUserID)->permission,
-	};
-
-	if ( $versioned && $MergedProblem->problem_id != 0 ) {
-
-		$transOpts->{QUIZ_PREFIX} = 'Q' . sprintf("%04d",$MergedProblem->problem_id()) . '_';
-
+	# Include old answers if answers were requested.
+	my $formFields = {};
+	if ($showCorrectAnswers || $printStudentAnswers) {
+		my %oldAnswers = decodeAnswers($MergedProblem->last_answer);
+		$formFields->{$_} = $oldAnswers{$_} foreach (keys %oldAnswers);
+		print $FH "%% decoded old answers, saved. (keys = " . join(',', keys(%oldAnswers)) . "\n";
 	}
-	my $formFields = { };
-	if ( $showCorrectAnswers ||$printStudentAnswers ) {
-			my %oldAnswers = decodeAnswers($MergedProblem->last_answer);
-			$formFields->{$_} = $oldAnswers{$_} foreach (keys %oldAnswers);
-			print $FH "%% decoded old answers, saved. (keys = " . join(',', keys(%oldAnswers)) . "\n";
-		}
 
-#	warn("problem ", $MergedProblem->problem_id, ": source = ", $MergedProblem->source_file, "\n");
-
-	my $pg = WeBWorK::PG->new(
+	my $pg = WeBWorK::PG->new(constructPGOptions(
 		$ce,
 		$TargetUser,
-		scalar($r->param('key')), # avoid multiple-values problem
 		$MergedSet,
 		$MergedProblem,
 		$MergedSet->psvn,
-		$formFields, # no form fields!
-		$transOpts,
-	);
+		$formFields,
+		{    # translation options
+			displayMode              => 'tex',
+			showHints                => $showHints,
+			showSolutions            => $showSolutions,
+			processAnswers           => $showCorrectAnswers || $printStudentAnswers,
+			permissionLevel          => $db->getPermissionLevel($userID)->permission,
+			effectivePermissionLevel => $db->getPermissionLevel($eUserID)->permission,
+			isInstructor             => $authz->hasPermissions($userID, 'view_answers'),
+			# Add the quiz prefix for versioned sets
+			$versioned && $MergedProblem->problem_id != 0
+			? (QUIZ_PREFIX => 'Q' . sprintf('%04d', $MergedProblem->problem_id()) . '_')
+			: ()
+		}
+	));
 
 	# only bother to generate this info if there were warnings or errors
 	my $edit_url;

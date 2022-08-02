@@ -10,7 +10,6 @@ use WeBWorK::FakeRequest;
 BEGIN {
     $main::VERSION = "2.4.9";
     use Cwd;
-	use WeBWorK::PG::Local;
 
 ###############################################################################
 # Configuration -- set to top webwork directory (webwork2) (set in webwork.apache2-config)

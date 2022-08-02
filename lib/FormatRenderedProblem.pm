@@ -242,10 +242,9 @@ sub formatRenderedProblem {
 	my $checkMode = defined($self->{inputs_ref}{WWcheck}) || 0;
 	my $submitMode = defined($self->{inputs_ref}{WWsubmit}) || 0;
 	my $showCorrectMode = defined($self->{inputs_ref}{WWcorrectAns}) || 0;
-	# problemUUID can be added to the request as a parameter.  It adds a prefix
-	# to the identifier used by the  format so that several different problems
-	# can appear on the same page.
-	my $problemUUID = $self->{inputs_ref}{problemUUID} // 1;
+	# A problemUUID should be added to the request as a parameter.  It is used by PG to create a proper UUID for use in
+	# aliases for resources.  It should be unique for a course, user, set, and problem.
+	my $problemUUID = $self->{inputs_ref}{problemUUID} // '';
 	my $problemResult = $rh_result->{problem_result} // '';
 	my $problemState = $rh_result->{problem_state} // '';
 	my $showSummary = $self->{inputs_ref}{showSummary} // 1;

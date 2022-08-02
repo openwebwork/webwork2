@@ -29,14 +29,14 @@ use WWSafe;
 use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
-use WeBWorK::PG::Local;
+use WeBWorK::PG;
 use WeBWorK::DB;
 use WeBWorK::Constants;
 use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory encode_utf8_base64 decode_utf8_base64);
+use WeBWorK::Utils::Rendering qw(constructPGOptions);
 use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::PG::IO;
-use WeBWorK::PG::ImageGenerator;
 use Encode qw(encode);
 use Benchmark;
 
@@ -347,15 +347,18 @@ sub renderProblem {
 		r_source                 => $r_problem_source,    # reference to a source file string.
 														  # if reference is not defined then the path is obtained
 														  # from the problem object.
+		problemUUID              => $rh->{envir}{inputs_ref}{problemUUID} // 0,
 		permissionLevel          => $rh->{envir}{permissionLevel} || 0,
 		effectivePermissionLevel => $rh->{envir}{effectivePermissionLevel} || $rh->{envir}{permissionLevel} || 0,
 		useMathQuill             => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill',
 		useMathView              => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView',
 		useWiris                 => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS',
+		isInstructor             => $rh->{envir}{isInstructor} // 0,
+		forceScaffoldsOpen       => $rh->{envir}{forceScaffoldsOpen} // 0,
+		debuggingOptions         => $rh->{envir}{debuggingOptions} // {}
 	};
 
 	my $formFields = $rh->{envir}->{inputs_ref};
-	my $key        = $rh->{envir}->{key} || '';
 
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''} if($rh->{noprepostambles});
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''} if($rh->{noprepostambles});
@@ -371,20 +374,9 @@ sub renderProblem {
 	#       num_incorrect
 	#   except that it is passed on to defineProblemEnvironment
 
-	my $pg = WebworkWebservice::RenderProblem->new(
-		$ce,
-		$effectiveUser,
-		$key,
-		$setRecord,
-		$problemRecord,
-		$setRecord->psvn,
-		$formFields,
-		$translationOptions,
-		{ # extras
-			problemUUID => $rh->{envir}->{inputs_ref}->{problemUUID}//0,
-		}
-
-	);
+	my $pg = WeBWorK::PG->new(constructPGOptions(
+		$ce, $effectiveUser, $setRecord, $problemRecord, $setRecord->psvn, $formFields, $translationOptions
+	));
 
 	$self->{formFields} = $formFields;
 
@@ -547,23 +539,5 @@ sub logTimingInfo{
     $out .= Benchmark::timestr( Benchmark::timediff($endTime , $beginTime) );
     $out;
 }
-
-
-######################################################################
-sub new {
-	shift; # throw away invocant -- we don't need it
-	my ($ce, $user, $key, $set, $problem, $psvn, $formFields,
-		$translationOptions) = @_;
-
-	#my $renderer = 'WeBWorK::PG::Local';
-	my $renderer = $ce->{pg}->{renderer};
-
-	runtime_use $renderer;
-	# the idea is to have Local call back to the defineProblemEnvir below.
-	#return WeBWorK::PG::Local::new($renderer,@_);
-	return $renderer->new(@_);
-}
-
-
 
 1;

@@ -29,6 +29,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound before after jitar_id_to_seq format_set_name_display);
+use WeBWorK::Utils::Rendering qw(constructPGOptions getTranslatorDebuggingOptions);
 
 ################################################################################
 # output utilities
@@ -137,10 +138,10 @@ sub pre_header_initialize {
 	$can->{showMeAnother} = $self->can_showMeAnother(@args, $submitAnswers);
 
 	# store text of original problem for later comparison with text from problem with new seed
-	my $showMeAnotherOriginalPG = WeBWorK::PG->new(
+	my $showMeAnotherOriginalPG = WeBWorK::PG->new(constructPGOptions(
 		$ce,
 		$effectiveUser,
-		$key, $set, $problem,
+		$set, $problem,
 		$set->psvn,
 		$formFields,
 		{    # translation options
@@ -155,7 +156,7 @@ sub pre_header_initialize {
 			useMathView              => $self->{will}{useMathView},
 			useWirisEditor           => $self->{will}{useWirisEditor},
 		},
-	);
+	));
 
 	my $orig_body_text = $showMeAnotherOriginalPG->{body_text};
 	for (keys %{ $showMeAnotherOriginalPG->{pgcore}{PG_alias}{resource_list} }) {
@@ -174,10 +175,10 @@ sub pre_header_initialize {
 		for my $i (0 .. $ce->{pg}->{options}->{showMeAnotherGeneratesDifferentProblem}) {
 			do { $newProblemSeed = int(rand(10000)) } until ($newProblemSeed != $oldProblemSeed);
 			$problem->{problem_seed} = $newProblemSeed;
-			my $showMeAnotherNewPG = WeBWorK::PG->new(
+			my $showMeAnotherNewPG = WeBWorK::PG->new(constructPGOptions(
 				$ce,
 				$effectiveUser,
-				$key, $set, $problem,
+				$set, $problem,
 				$set->psvn,
 				$formFields,
 				{    # translation options
@@ -192,7 +193,7 @@ sub pre_header_initialize {
 					useMathView              => $self->{will}{useMathView},
 					useWirisEditor           => $self->{will}{useWirisEditor},
 				},
-			);
+			));
 
 			my $new_body_text = $showMeAnotherNewPG->{body_text};
 			for (keys %{ $showMeAnotherNewPG->{pgcore}{PG_alias}{resource_list} }) {
@@ -234,10 +235,10 @@ sub pre_header_initialize {
 		$problem->problem_seed($problemSeed);
 		#### One last check to see if students  have hard coded in a key
 		#### which matches the original problem
-		my $showMeAnotherNewPG = WeBWorK::PG->new(
+		my $showMeAnotherNewPG = WeBWorK::PG->new(constructPGOptions(
 			$ce,
 			$effectiveUser,
-			$key, $set, $problem,
+			$set, $problem,
 			$set->psvn,
 			$formFields,
 			{    # translation options
@@ -252,7 +253,7 @@ sub pre_header_initialize {
 				useMathView              => $self->{will}{useMathView},
 				useWirisEditor           => $self->{will}{useWirisEditor},
 			},
-		);
+		));
 
 		if ($showMeAnotherNewPG->{body_text} eq $showMeAnotherOriginalPG->{body_text}) {
 			$showMeAnother{IsPossible}   = 0;
@@ -303,10 +304,10 @@ sub pre_header_initialize {
 	### picked a new problem seed.
 
 	debug("begin pg processing");
-	my $pg = WeBWorK::PG->new(
+	my $pg = WeBWorK::PG->new(constructPGOptions(
 		$ce,
 		$effectiveUser,
-		$key, $set, $problem,
+		$set, $problem,
 		$set->psvn,
 		$formFields,
 		{    # translation options
@@ -320,15 +321,16 @@ sub pre_header_initialize {
 			useMathQuill             => $self->{will}{useMathQuill},
 			useMathView              => $self->{will}{useMathView},
 			useWirisEditor           => $self->{will}{useWirisEditor},
+			forceScaffoldsOpen       => 0,
+			isInstructor             => $authz->hasPermissions($userName, 'view_answers'),
+			debuggingOptions         => getTranslatorDebuggingOptions($authz, $userName)
 		},
-	);
+	));
 
 	debug("end pg processing");
 
-	##### update and fix hint/solution options after PG processing #####
-
-	$can->{showHints} &&= $pg->{flags}->{hintExists} &&=
-		$pg->{flags}->{showHintLimit} <= $pg->{state}->{num_of_incorrect_ans};
+	# Update and fix hint/solution options after PG processing
+	$can->{showHints}     &&= $pg->{flags}->{hintExists};
 	$can->{showSolutions} &&= $pg->{flags}->{solutionExists};
 
 	##### record errors #########
@@ -419,6 +421,34 @@ sub output_problem_body {
 		#ignore body if SMA was pushed and no new problem will be shown;
 		if ($will{showMeAnother} and $showMeAnother{IsPossible});
 	return "";
+}
+
+# output_message subroutine
+# Prints messages about the problem
+sub output_message {
+	my $self = shift;
+	my $pg   = $self->{pg};
+	my $r    = $self->r;
+
+	print CGI::p(CGI::b($r->maketext('Note') . ': '), CGI::i($pg->{result}{msg})) if $pg->{result}{msg};
+
+	if ($pg->{flags}{hintExists}
+		&& $r->authz->hasPermissions($self->{userName}, 'always_show_hint')
+		&& !grep { $_ eq 'SMAshowHints' } @{ $r->ce->{pg}{options}{showMeAnother} })
+	{
+		print CGI::p(CGI::b($r->maketext('Note') . ':'),
+			CGI::i($r->maketext('The hint shown is an instructor preview and will not be shown to students.')));
+	}
+
+	if ($pg->{flags}{solutionExists}
+		&& $r->authz->hasPermissions($self->{userName}, 'always_show_solution')
+		&& !grep { $_ eq 'SMAshowSolutions' } @{ $r->ce->{pg}{options}{showMeAnother} })
+	{
+		print CGI::p(CGI::b($r->maketext('Note') . ':'),
+			CGI::i($r->maketext('The solution shown is an instructor preview and will not be shown to students.')));
+	}
+
+	return '';
 }
 
 # output_checkboxes subroutine

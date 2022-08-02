@@ -84,10 +84,6 @@ for my $dir ( 'DATA', 'htdocs_temp', 'logs', 'tmp' ) {
 	system("chmod g+s $ce->{webworkDirs}{$dir}");
 }
 
-# A special directory under pg (so the server can compile the chromatic program)
-system("chgrp $servergroup ".$ce->{pg_dir}."/lib/chromatic");
-system("chmod g+w ".$ce->{pg_dir}."/lib/chromatic");
-
 # The server should not be able to write to the OPL (for most sites)
 
 my $libroot = $ce->{problemLibrary}->{root};

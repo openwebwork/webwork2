@@ -202,11 +202,6 @@ if [ "$1" = 'apache2' ]; then
 		cp -a $WEBWORK_ROOT/htdocs/DATA/*.json $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
     fi
 
-    # Compile chromatic/color.c if necessary - may be needed for PG directory mounted from outside image
-    if [ ! -f "$APP_ROOT/pg/lib/chromatic/color"  ]; then
-      cd $APP_ROOT/pg/lib/chromatic
-      gcc color.c -o color
-    fi
     # generate apache2 reload config if needed
     if [ $DEV -eq 1 ]; then
         echo "PerlModule Apache2::Reload" >> /etc/apache2/conf-enabled/apache2-reload.conf

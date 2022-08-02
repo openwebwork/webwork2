@@ -32,6 +32,7 @@ use WeBWorK::Debug;
 use WeBWorK::Utils qw(path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden
 	jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound before between after grade_set
 	format_set_name_display);
+use WeBWorK::Utils::Rendering qw(constructPGOptions);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -238,10 +239,9 @@ sub info {
 		# the rest of Problem's fields are not needed, i think
 	);
 
-	my $pg = WeBWorK::PG->new(
+	my $pg = WeBWorK::PG->new(constructPGOptions(
 		$ce,
 		$effectiveUser,
-		$r->param('key'),
 		$set,
 		$problem,
 		$psvn,
@@ -252,7 +252,7 @@ sub info {
 			showSolutions   => 0,
 			processAnswers  => 0,
 		},
-	);
+	));
 
 	my $editorURL;
 	if (defined($set) and $authz->hasPermissions($userID, "modify_problem_sets")) {

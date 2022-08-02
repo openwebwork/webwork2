@@ -1785,6 +1785,7 @@ sub importSetsFromDef {
 				value             => $rh_problem->{value},
 				maxAttempts       => $rh_problem->{max_attempts},
 				showMeAnother     => $rh_problem->{showMeAnother},
+				showHintsAfter    => $rh_problem->{showHintsAfter},
 				prPeriod          => $rh_problem->{prPeriod},
 				attToOpenChildren => $rh_problem->{attToOpenChildren},
 				countsParentGrade => $rh_problem->{countsParentGrade}
@@ -1829,6 +1830,7 @@ sub readSetDef {
 	my $counts_parent_grade_default =
 	    $self->{ce}->{problemDefaults}->{counts_parent_grade};
 	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};
+	my $showHintsAfter_default = $self->{ce}{problemDefaults}{showHintsAfter};
 	my $prPeriod_default=$self->{ce}->{problemDefaults}->{prPeriod};
 
 	my $setName = '';
@@ -1861,7 +1863,7 @@ sub readSetDef {
 	     $problemsPerPage, $restrictLoc,
 	     $emailInstructor, $restrictProbProgression,
 	     $countsParentGrade, $attToOpenChildren,
-	     $problemID, $showMeAnother, $prPeriod, $listType
+	     $problemID, $showMeAnother, $showHintsAfter, $prPeriod, $listType
 	     ) =
 		 ('')x16;  # initialize these to ''
 	my ( $timeCap, $restrictIP, $relaxRestrictIP ) = ( 0, 'No', 'No');
@@ -2108,6 +2110,7 @@ sub readSetDef {
 			                    value          =>  $weight,
 			                    max_attempts   => $attemptLimit,
 			                    showMeAnother   => $showMeAnother,
+								showHintsAfter  => $showHintsAfter,
 			                    # use default since it's not going to be in the file
 			                    prPeriod		=> $prPeriod_default,
 			                    continuation   => $continueFlag,
@@ -2144,6 +2147,8 @@ sub readSetDef {
 			    $attemptLimit = ( $value ) ? $value : $max_attempts_default;
 			} elsif ( $item eq 'showMeAnother' ) {
 			    $showMeAnother = ( $value ) ? $value : 0;
+			} elsif ( $item eq 'showHintsAfter' ) {
+			    $showHintsAfter = ( $value ) ? $value : 0;
 			} elsif ( $item eq 'prPeriod' ) {
 			    $prPeriod = ( $value ) ? $value : 0;
 			} elsif ( $item eq 'restrictProbProgression' ) {
@@ -2173,6 +2178,9 @@ sub readSetDef {
 			    unless ($showMeAnother =~ /-?\d+/) {$showMeAnother = $showMeAnother_default;}
 			    $showMeAnother =~ s/[^-?\d-]*//g;
 
+			    unless ($showHintsAfter =~ /-?\d+/) {$showHintsAfter = $showMeAnother_default;}
+			    $showHintsAfter =~ s/[^-?\d-]*//g;
+
 			    unless ($prPeriod =~ /-?\d+/) {$prPeriod = $prPeriod_default;}
 			    $prPeriod =~ s/[^-?\d-]*//g;
 
@@ -2194,6 +2202,7 @@ sub readSetDef {
 						value          =>  $weight,
 						max_attempts   => $attemptLimit,
 						showMeAnother  => $showMeAnother,
+						showHintsAfter => $showHintsAfter,
 						prPeriod		=> $prPeriod,
 						attToOpenChildren => $attToOpenChildren,
 						countsParentGrade => $countsParentGrade,
@@ -2205,6 +2214,7 @@ sub readSetDef {
 			    $weight = '';
 			    $attemptLimit = '';
 			    $showMeAnother = '';
+				$showHintsAfter = '';
 			    $attToOpenChildren = '';
 			    $countsParentGrade = '';
 
@@ -2311,6 +2321,7 @@ SET: foreach my $set (keys %filenames) {
 			my $value             = $problemRecord->value();
 			my $max_attempts      = $problemRecord->max_attempts();
 			my $showMeAnother     = $problemRecord->showMeAnother();
+			my $showHintsAfter    = $problemRecord->showHintsAfter();
 			my $prPeriod          = $problemRecord->prPeriod();
 			my $countsParentGrade = $problemRecord->counts_parent_grade();
 			my $attToOpenChildren = $problemRecord->att_to_open_children();
@@ -2320,6 +2331,7 @@ SET: foreach my $set (keys %filenames) {
 			$value         =~ s/([,\\])/\\$1/g;
 			$max_attempts  =~ s/([,\\])/\\$1/g;
 			$showMeAnother =~ s/([,\\])/\\$1/g;
+			$showHintsAfter =~ s/([,\\])/\\$1/g;
 			$prPeriod      =~ s/([,\\])/\\$1/g;
 
 			# This is the new way of saving problem information
@@ -2331,6 +2343,7 @@ SET: foreach my $set (keys %filenames) {
 			$problemList .= "value = $value\n";
 			$problemList .= "max_attempts = $max_attempts\n";
 			$problemList .= "showMeAnother = $showMeAnother\n";
+			$problemList .= "showHintsAfter = $showHintsAfter\n";
 			$problemList .= "prPeriod = $prPeriod\n";
 			$problemList .= "counts_parent_grade = $countsParentGrade\n";
 			$problemList .= "att_to_open_children = $attToOpenChildren \n";
