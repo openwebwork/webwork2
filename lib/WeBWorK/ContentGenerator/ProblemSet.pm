@@ -783,9 +783,10 @@ sub body {
 			if ($authz->hasPermissions($user, "access_instructor_tools") && $authz->hasPermissions($user, "score_sets"))
 			{
 				my @setUsers = $db->listSetUsers($setName);
+				my @globalProblems = $db->getGlobalProblemsWhere({ set_id => $setName });
 
 				my @gradeableProblems;
-				for my $problem (@problems) {
+				for my $problem (@globalProblems) {
 					if ($problem->flags =~ /essay/) {
 						$canScoreProblems = 1;
 						$gradeableProblems[ $problem->problem_id ] = 1;
