@@ -8350,8 +8350,8 @@ msgstr "Vous devez fournir un nom de fichier afin de pouvoir enregistrer un nouv
 #. ($LMS)
 #: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:501
 msgid ""
-"You must use your Learning Managment System (%1) to access this set.  Try "
-"logging in to the Learning Managment System and visiting the set from there."
+"You must use your Learning Management System (%1) to access this set.  Try "
+"logging in to the Learning Management System and visiting the set from there."
 msgstr "Vous pouvez utiliser votre plateforme de formation (%1) pour accéder à ce devoir. Essayer de vous connecter à votre plateforme de formation et ensuite d'accéder au devoir via celle-ci."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1730

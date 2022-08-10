@@ -8350,8 +8350,8 @@ msgstr "您必须指定文件名已保持一个新文件。"
 #. ($LMS)
 #: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:501
 msgid ""
-"You must use your Learning Managment System (%1) to access this set.  Try "
-"logging in to the Learning Managment System and visiting the set from there."
+"You must use your Learning Management System (%1) to access this set.  Try "
+"logging in to the Learning Management System and visiting the set from there."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1730
