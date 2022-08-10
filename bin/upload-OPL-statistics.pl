@@ -28,7 +28,7 @@ use lib "$pg_dir/lib";
 
 use WeBWorK::CourseEnvironment;
 
-use Net::Domain;
+use Net::Domain qw/domainname/;
 use String::ShellQuote;
 
 my $ce = new WeBWorK::CourseEnvironment({
@@ -43,39 +43,42 @@ my $port   = $ce->{database_port};
 my $dbuser = $ce->{database_username};
 my $dbpass = $ce->{database_password};
 
-my $domainname = Net::Domain::domainname;
+my $domainname = domainname() || 'unknown';
 my $time = time();
 my $output_file = "$domainname-$time-opl.sql";
-
-print "Dumping local OPL statistics\n";
-
-$dbuser = shell_quote($dbuser);
-$db = shell_quote($db);
-
-$ENV{'MYSQL_PWD'}=$dbpass;
-
-my $mysqldump_command = $ce->{externalPrograms}->{mysqldump};
-
-# Conditionally add --column-statistics=0 as MariaDB databases do not support it
-# see: https://serverfault.com/questions/912162/mysqldump-throws-unknown-table-column-statistics-in-information-schema-1109
-#      https://github.com/drush-ops/drush/issues/4410
-
-my $column_statistics_off = "";
-my $test_for_column_statistics = `$mysqldump_command --help | grep 'column-statistics'`;
-if ( $test_for_column_statistics ) {
-  $column_statistics_off = " --column-statistics=0 ";
-}
-
-`$mysqldump_command --host=$host --port=$port --user=$dbuser $column_statistics_off $db OPL_local_statistics > $output_file`;
-
-print "Database File Created\n";
-
+ 
 my $done;
 my $desc;
 my $input;
+my $answered;
+do {
+  print <<'END_REQUEST';
+WeBWorK and the Open Problem Library (OPL) are provided freely under an
+open-source license. We ask that you share your OPL usage statistics for
+the benefit of all who use WeBWorK. The following information will be shared
+with the WeBWorK community if you agree:
+
+* a list of OPL problems that have been used on your server, with
+  the following statistics for each:
+
+  * the total number of users who attempted the problem
+  * the average number of attempts made per user on the problem
+  * the average completion percentage for each user who attempted the problem
+
+Share OPL usage statistics with the WeBWorK community [Y/N]: 
+END_REQUEST
+  $input = <STDIN>;
+  chomp $input;
+
+  if ( $input =~ m/y/i ) {
+    $answered = 1;
+  }
+  elsif ( $input =~ m/n/i ) {
+    exit;
+  }
+} while ( !$answered );
 
 do {
-
   print "\nWe would appreciate it if you could provide \nsome basic information to help us \nkeep track of the data we receive.\n\n";
 
   $desc  = "File:\n$output_file\n";
@@ -132,8 +135,6 @@ do {
 
   print $desc."\n";
 
-  my $answered;
-
   do {
     print "Please choose one of the following:\n";
     print "1. Upload Data\n";
@@ -155,9 +156,7 @@ do {
     } else {
       $answered = 0;
     }
-
   } while (!$answered);
-
 
 } while (!$done);
 
@@ -169,6 +168,30 @@ open(my $fh, ">", $desc_file)
 print $fh $desc;
 
 close($fh);
+
+print "Dumping local OPL statistics\n";
+
+$dbuser = shell_quote($dbuser);
+$db     = shell_quote($db);
+
+$ENV{'MYSQL_PWD'} = $dbpass;
+
+my $mysqldump_command = $ce->{externalPrograms}->{mysqldump};
+
+# Conditionally add --column-statistics=0 as MariaDB databases do not support it
+# see: https://serverfault.com/questions/912162/mysqldump-throws-unknown-table-column-statistics-in-information-schema-1109
+#      https://github.com/drush-ops/drush/issues/4410
+
+my $column_statistics_off = "";
+my $test_for_column_statistics =
+  `$mysqldump_command --help | grep 'column-statistics'`;
+if ($test_for_column_statistics) {
+    $column_statistics_off = " --column-statistics=0 ";
+}
+
+`$mysqldump_command --host=$host --port=$port --user=$dbuser $column_statistics_off $db OPL_local_statistics > $output_file`;
+
+print "Database File Created\n";
 
 my $tar_file = "$domainname-$time-data.tar.gz";
 
