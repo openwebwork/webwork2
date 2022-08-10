@@ -1259,7 +1259,7 @@ sub footer {
 			'WeBWorK &copy; [_1] | theme: [_2] | ww_version: [_3] | pg_version [_4] |',
 			$copyright_years, $theme, $ww_version, $pg_version
 		),
-		CGI::a({ href => 'https://webwork.maa.org/' }, $r->maketext('The WeBWorK Project'))
+		CGI::a({ href => 'https://openwebwork.org/' }, $r->maketext('The WeBWorK Project'))
 	);
 
 	return '';
