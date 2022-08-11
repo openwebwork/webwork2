@@ -166,7 +166,7 @@ if [ "$1" = 'apache2' ]; then
     if [ -f "$APP_ROOT/libraries/Restore_or_build_OPL_tables" ]; then
       if [ ! -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
         # Download the metadata and install it
-        export SKIP_UPLOAD_OPL_statistics=1
+        export SKIP_UPLOAD_OPL_STATISTICS=1
         if [ ! -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           mkdir $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
         fi

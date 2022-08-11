@@ -86,7 +86,7 @@ mkdir "$libraryDirectory/TABLE-DUMP" if !-d "$libraryDirectory/TABLE-DUMP";
 copy("$ce->{webworkDirs}{tmp}/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql", "$libraryDirectory/TABLE-DUMP");
 
 say 'Restoring OPL tables from release database dump.';
-do $ENV{WEBWORK_ROOT} . '/bin/restore-OPL-tables.pl';
+runScript("$ENV{WEBWORK_ROOT}/bin/restore-OPL-tables.pl");
 
 # Remove temporary files.
 say "Removing temporary files.";
@@ -94,5 +94,13 @@ unlink($releaseFile);
 rmtree("$ce->{webworkDirs}{tmp}/webwork-open-problem-library");
 
 say 'Done!';
+
+sub runScript {
+	my $script_path = shift;
+	unless (do $script_path) {
+		warn "Execution of $script_path failed:\n";
+		die $@ if $@;
+	}
+}
 
 1;
