@@ -36,25 +36,35 @@ use WeBWorK::CourseEnvironment;
 my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
 
 print "\nDownloading the latest OPL release.\n";
-do $ENV{WEBWORK_ROOT} . '/bin/download-OPL-metadata-release.pl';
+runScript("$ENV{WEBWORK_ROOT}/bin/download-OPL-metadata-release.pl");
 
 # Generate set definition list files.
-do $ENV{WEBWORK_ROOT} . '/bin/generate-OPL-set-def-lists.pl';
+runScript("$ENV{WEBWORK_ROOT}/bin/generate-OPL-set-def-lists.pl");
 
 if ($ce->{problemLibrary}{showLibraryLocalStats} ||
     $ce->{problemLibrary}{showLibraryGlobalStats}) {
   print "\nUpdating Library Statistics.\n";
-  do $ENV{WEBWORK_ROOT}.'/bin/update-OPL-statistics.pl';
+  runScript("$ENV{WEBWORK_ROOT}/bin/update-OPL-statistics.pl");
 
   print "\nLoading global statistics (if possible).\n";
-  do $ENV{WEBWORK_ROOT}.'/bin/load-OPL-global-statistics.pl';
+  runScript("$ENV{WEBWORK_ROOT}/bin/load-OPL-global-statistics.pl");
 
-  if ( $ENV{SKIP_UPLOAD_OPL_statistics} ) {
+  if ( $ENV{SKIP_UPLOAD_OPL_STATISTICS} ) {
     print "\nSkipping upload-OPL-statistics as requested\n";
   } else {
     print "\nSharing aggregated statistics\n";
-    do $ENV{WEBWORK_ROOT}.'/bin/upload-OPL-statistics.pl';
+    runScript("$ENV{WEBWORK_ROOT}/bin/upload-OPL-statistics.pl");
   }
 }
 
 print "\nDone.\n";
+
+sub runScript {
+    my $script_path = shift;
+    unless ( do $script_path ) {
+        warn "Execution of $script_path failed:\n";
+        die $@ if $@;
+    }
+}
+
+1;
