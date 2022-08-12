@@ -32,6 +32,7 @@ use lib "$ENV{WEBWORK_ROOT}/lib";
 use lib "$ENV{PG_ROOT}/lib";
 use lib "$ENV{WEBWORK_ROOT}/bin";
 use WeBWorK::CourseEnvironment;
+use Helper 'runScript';
 
 my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
 
@@ -58,13 +59,5 @@ if ($ce->{problemLibrary}{showLibraryLocalStats} ||
 }
 
 print "\nDone.\n";
-
-sub runScript {
-    my $script_path = shift;
-    unless ( do $script_path ) {
-        warn "Execution of $script_path failed:\n";
-        die $@ if $@;
-    }
-}
 
 1;

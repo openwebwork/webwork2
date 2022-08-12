@@ -21,9 +21,11 @@ BEGIN {
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$ENV{WEBWORK_ROOT}/bin";
 use lib "$pg_dir/lib";
 
 use WeBWorK::CourseEnvironment;
+use Helper 'runScript';
 
 my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $ENV{WEBWORK_ROOT} });
 
@@ -94,13 +96,5 @@ unlink($releaseFile);
 rmtree("$ce->{webworkDirs}{tmp}/webwork-open-problem-library");
 
 say 'Done!';
-
-sub runScript {
-	my $script_path = shift;
-	unless (do $script_path) {
-		warn "Execution of $script_path failed:\n";
-		die $@ if $@;
-	}
-}
 
 1;
