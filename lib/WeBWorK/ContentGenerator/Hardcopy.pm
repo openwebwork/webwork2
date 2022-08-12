@@ -1318,15 +1318,14 @@ sub write_problem_tex {
 	# we need an additional translation option for versioned sets; also,
 	#   for versioned sets include old answers in the set if we're also
 	#   asking for the answers
-	my $transOpts =
-		{ # translation options
-			displayMode     => "tex",
-			showHints       => $showHints          ? 1 : 0, # insure that this value is numeric
-			showSolutions   => $showSolutions      ? 1 : 0, # (or what? -sam)
-			processAnswers  => ($showCorrectAnswers || $printStudentAnswers) ? 1 : 0,
-			permissionLevel => $db->getPermissionLevel($userID)->permission,
-			effectivePermissionLevel => $db->getPermissionLevel($eUserID)->permission,
-		};
+	my $transOpts = {
+		displayMode              => "tex",
+		showHints                => $showHints,
+		showSolutions            => $showSolutions,
+		processAnswers           => $showCorrectAnswers || $printStudentAnswers,
+		permissionLevel          => $db->getPermissionLevel($userID)->permission,
+		effectivePermissionLevel => $db->getPermissionLevel($eUserID)->permission,
+	};
 
 	if ( $versioned && $MergedProblem->problem_id != 0 ) {
 
