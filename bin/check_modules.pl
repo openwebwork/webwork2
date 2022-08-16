@@ -94,6 +94,7 @@ my @modulesList = qw(
 	Errno
 	Exception::Class
 	File::Copy
+	File::Fetch
 	File::Find
 	File::Find::Rule
 	File::Path
