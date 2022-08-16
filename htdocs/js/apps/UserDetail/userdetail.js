@@ -15,7 +15,7 @@
 			// So if it is unchecked, also uncheck any versions that may exist.
 			checkbox.addEventListener('change', () => {
 				if (!checkbox.checked) {
-					document.querySelectorAll(`input[type="checkbox"][name^="set.${setID}"][name$=".assignment"]`)
+					document.querySelectorAll(`input[type="checkbox"][name^="set.${setID},v"][name$=".assignment"]`)
 						.forEach((versionCheckbox) => versionCheckbox.checked = false);
 				}
 			});
