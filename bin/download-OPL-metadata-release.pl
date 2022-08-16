@@ -21,9 +21,11 @@ BEGIN {
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$ENV{WEBWORK_ROOT}/bin";
 use lib "$pg_dir/lib";
 
 use WeBWorK::CourseEnvironment;
+use Helper 'runScript';
 
 my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $ENV{WEBWORK_ROOT} });
 
@@ -86,7 +88,7 @@ mkdir "$libraryDirectory/TABLE-DUMP" if !-d "$libraryDirectory/TABLE-DUMP";
 copy("$ce->{webworkDirs}{tmp}/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql", "$libraryDirectory/TABLE-DUMP");
 
 say 'Restoring OPL tables from release database dump.';
-do $ENV{WEBWORK_ROOT} . '/bin/restore-OPL-tables.pl';
+runScript("$ENV{WEBWORK_ROOT}/bin/restore-OPL-tables.pl");
 
 # Remove temporary files.
 say "Removing temporary files.";
