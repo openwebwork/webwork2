@@ -2148,7 +2148,7 @@ sub readSetDef {
 			} elsif ( $item eq 'showMeAnother' ) {
 			    $showMeAnother = ( $value ) ? $value : 0;
 			} elsif ( $item eq 'showHintsAfter' ) {
-			    $showHintsAfter = ( $value ) ? $value : 0;
+			    $showHintsAfter = ( $value ) ? $value : -2;
 			} elsif ( $item eq 'prPeriod' ) {
 			    $prPeriod = ( $value ) ? $value : 0;
 			} elsif ( $item eq 'restrictProbProgression' ) {
@@ -2176,13 +2176,13 @@ sub readSetDef {
 			    $countsParentGrade =~ s/[^\d-]*//g;
 
 			    unless ($showMeAnother =~ /-?\d+/) {$showMeAnother = $showMeAnother_default;}
-			    $showMeAnother =~ s/[^-?\d-]*//g;
+			    $showMeAnother =~ s/[^\d-]*//g;
 
-			    unless ($showHintsAfter =~ /-?\d+/) {$showHintsAfter = $showMeAnother_default;}
-			    $showHintsAfter =~ s/[^-?\d-]*//g;
+			    unless ($showHintsAfter =~ /-?\d+/) {$showHintsAfter = $showHintsAfter_default;}
+			    $showHintsAfter =~ s/[^\d-]*//g;
 
 			    unless ($prPeriod =~ /-?\d+/) {$prPeriod = $prPeriod_default;}
-			    $prPeriod =~ s/[^-?\d-]*//g;
+			    $prPeriod =~ s/[^\d-]*//g;
 
 			    unless ($attToOpenChildren =~ /\d+/) {$attToOpenChildren = $att_to_open_children_default;}
 			    $attToOpenChildren =~ s/[^\d-]*//g;

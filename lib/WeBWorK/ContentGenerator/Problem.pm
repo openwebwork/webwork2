@@ -1550,19 +1550,19 @@ sub output_message {
 
 	print CGI::p(CGI::b($r->maketext('Note') . ': '), CGI::i($pg->{result}{msg})) if $pg->{result}{msg};
 
-	print CGI::p(
-		CGI::b($r->maketext('Note') . ': '),
-		CGI::i(
-			$r->maketext(
+	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+		&& $self->{set}->enable_reduced_scoring
+		&& after($self->{set}->reduced_scoring_date)
+		&& before($self->{set}->due_date))
+	{
+		print CGI::p(
+			CGI::b($r->maketext('Note') . ': '),
+			CGI::i($r->maketext(
 				'You are in the Reduced Scoring Period.  All work counts for [_1]% of the original.',
 				$ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100
-			)
-		)
-		)
-		if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
-			&& $self->{set}->enable_reduced_scoring
-			&& after($self->{set}->reduced_scoring_date)
-			&& before($self->{set}->due_date));
+			))
+		);
+	}
 
 	if ($pg->{flags}{hintExists} && $r->authz->hasPermissions($self->{userName}, 'always_show_hint')) {
 		my $showHintsAfter =

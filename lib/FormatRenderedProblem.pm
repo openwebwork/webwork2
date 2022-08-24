@@ -243,7 +243,7 @@ sub formatRenderedProblem {
 	my $submitMode = defined($self->{inputs_ref}{WWsubmit}) || 0;
 	my $showCorrectMode = defined($self->{inputs_ref}{WWcorrectAns}) || 0;
 	# A problemUUID should be added to the request as a parameter.  It is used by PG to create a proper UUID for use in
-	# aliases for resources.  It should be unique for a course, user, set, and problem.
+	# aliases for resources.  It should be unique for a course, user, set, problem, and version.
 	my $problemUUID = $self->{inputs_ref}{problemUUID} // '';
 	my $problemResult = $rh_result->{problem_result} // '';
 	my $problemState = $rh_result->{problem_state} // '';

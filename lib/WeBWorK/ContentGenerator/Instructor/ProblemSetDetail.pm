@@ -358,7 +358,7 @@ use constant FIELD_PROPERTIES => {
 		help_text => x(
 			'This specifies the number of attempts before hints are shown to students. '
 				. 'The value of -2 uses the default from course configuration. The value of -1 disables hints.'
-				. 'Note that this will only have effect if the problem has a hint.'
+				. 'Note that this will only have an effect if the problem has a hint.'
 		),
 	},
 	prPeriod => {

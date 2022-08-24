@@ -46,8 +46,8 @@ our @EXPORT_OK = qw(
 );
 
 # WARNING: The usage of $self throughout this file is incorrect and quite misleading.  In all cases $self needs to at
-# least be a WeBWorK::ContentGenerator object even.  In addition it must be ensured that the $self object has the
-# correct hash values to work with the method.
+# least be a WeBWorK::ContentGenerator object.  In addition it must be ensured that the $self object has the correct
+# hash values to work with the method.
 
 # Performs functions of processing and recording the answer given in the page.
 # Returns the appropriate scoreRecordedMessage.
@@ -107,9 +107,6 @@ sub process_and_log_answer {
 
 	# this stores previous answers to the problem to provide "sticky answers"
 	if ($submitAnswers) {
-		# get a "pure" (unmerged) UserProblem to modify
-		# this will be undefined if the problem has not been assigned to this user
-
 		if (defined $pureProblem) {
 			# store answers in DB for sticky answers
 			my %answersToStore;
@@ -302,18 +299,18 @@ sub compute_reduced_score {
 # create answer string from responses hash
 # ($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) = create_ans_str_from_responses($problem, $pg)
 #
-# input: ref($pg) eq 'WeBWorK::PG::Local'
+# input: ref($pg) eq 'WeBWorK::PG'
 #        ref($problem) eq 'WeBWorK::ContentGenerator::Problem
 # output:  (str, str, str)
-# and other persistant objects need not be included.
+# and other persistent objects need not be included.
 # The extra persistence objects do need to be included in problem->last_answer
-# in order to keep those objects persistant -- as long as RECORD_FORM_ANSWER
+# in order to keep those objects persistent -- as long as RECORD_FORM_ANSWER
 # is used to preserve objects by piggy backing on the persistence mechanism for answers.
 
 sub create_ans_str_from_responses {
 	my $problem = shift;    # ref($problem) eq 'WeBWorK::ContentGenerator::Problem'
 							# must contain $self->{formFields}{$response_id}
-	my $pg      = shift;    # ref($pg) eq 'WeBWorK::PG::Local'
+	my $pg      = shift;    # ref($pg) eq 'WeBWorK::PG'
 
 	my $scores2  = '';
 	my $isEssay2 = 0;
