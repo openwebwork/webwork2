@@ -2723,7 +2723,7 @@ sub printTableHTML {
 
 	my @tableHeadings = map { $fieldHeaders{$_} } @realFieldNames;
 
-	if (!($editMode || $exportMode)) {
+	if (!$editMode) {
 		unshift @tableHeadings,
 			CGI::th(CGI::input({
 				type              => 'checkbox',
