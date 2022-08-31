@@ -118,7 +118,8 @@ sub process_and_log_answer {
 
 			# store state in DB if it makes sense
 			if ($will{recordAnswers}) {
-				$problem->status(compute_reduced_score($ce, $problem, $set, $pg->{state}{recorded_score}));
+				my $score = compute_reduced_score($ce, $problem, $set, $pg->{state}{recorded_score});
+				$problem->status($score) if $score > $problem->status;
 
 				$problem->sub_status($problem->status)
 					if (!$r->{ce}{pg}{ansEvalDefaults}{enableReducedScoring}
