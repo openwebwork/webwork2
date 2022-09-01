@@ -22,7 +22,10 @@
 /* CodeMirror overrides */
 .CodeMirror-code {
 	outline: none;
-	direction: ltr !important;
+}
+
+pre.CodeMirror-line {
+	unicode-bidi: embed;
 }
 
 /* Match Highligher CSS */
