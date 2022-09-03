@@ -120,8 +120,7 @@ sub get_library_sets {
 	my @dirs = grep {!$ignoredir{$_} and -d "$dir/$_"} @lis;
 	if ($top == 1) {@dirs = grep {!$problib{$_}} @dirs}
 	# Never include Library or Contrib at the top level
-	if ($top == 1) {@dirs = grep {$_ ne 'Library'} @dirs}
-        if ($top == 1) {@dirs = grep {$_ ne 'Contrib'} @dirs}
+	if ($top == 1) {@Dirs = grep {$_ ne 'Library' && $_ ne 'Contrib'} @Dirs}
 	foreach my $subdir (@dirs) {
 		my @results = get_library_sets(0, "$dir/$subdir");
 		$pgcount += shift @results; push(@pgdirs,@results);
