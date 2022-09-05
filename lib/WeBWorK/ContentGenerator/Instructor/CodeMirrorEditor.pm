@@ -156,6 +156,21 @@ sub output_codemirror_html {
 						$r->maketext('Enable Spell Checking')
 					)
 				)
+			),
+			CGI::div(
+				{ class => 'col-sm-auto mb-2' },
+				CGI::div(
+					{ class => 'form-check mb-0' },
+					CGI::input({
+						type  => 'checkbox',
+						id    => 'forceRTL',
+						class => 'form-check-input'
+					}),
+					CGI::label(
+						{ for => 'forceRTL', class => 'form-check-label' },
+						'Force editor to RTL' # FIXME should have $r->maketext()
+					)
+				)
 			)
 		);
 	}

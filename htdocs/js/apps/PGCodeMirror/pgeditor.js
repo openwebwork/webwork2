@@ -114,4 +114,9 @@
 		localStorage.setItem('WW_PGEditor_spellcheck', enableSpell.checked);
 		cm.focus();
 	});
+
+	const forceRTL = document.getElementById('forceRTL');
+	forceRTL.addEventListener('change', () => {
+		cm.setOption('direction', forceRTL.checked ? 'rtl' : 'ltr');
+	});
 })();
