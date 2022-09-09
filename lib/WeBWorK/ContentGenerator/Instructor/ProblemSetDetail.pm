@@ -264,7 +264,7 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "3",
 		override  => "any",
-		default   => "0",
+		default   => "1",
 #		labels    => { "" => 0 },
 	},
 	'hide_score:hide_score_by_problem' => {
