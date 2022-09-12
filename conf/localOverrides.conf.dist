@@ -506,6 +506,11 @@ $mail{feedbackRecipients}    = [
 
 #$session_management_via = "key";
 
+## This is the length of time (in seconds) after which a user's session becomes
+## invalid if they have no activity. The default is 30 minutes (60*30 seconds).
+
+#$sessionKeyTimeout = 60*60*2;
+
 ################################################################################
 # Cookie control settings
 ################################################################################
