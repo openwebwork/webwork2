@@ -1218,7 +1218,7 @@ sub make_data_row {
 	my $cnt        = shift;
 	my $mltnumleft = shift;
 
-	$sourceFileName =~ s|^./||;    # clean up top ugliness
+	$sourceFileName =~ s|^\./||;    # clean up top ugliness
 
 	my $urlpath = $self->r->urlpath;
 	my $db      = $self->r->db;
@@ -1615,7 +1615,7 @@ sub process_search {
 	my %mlt = ();
 	my $mltind;
 	for my $indx (0..$#dbsearch) {
-		$dbsearch[$indx]->{filepath} = 
+		$dbsearch[$indx]->{filepath} =
 			$dbsearch[$indx]->{libraryroot} . "/" .
 			$dbsearch[$indx]->{path} . "/" .
 			$dbsearch[$indx]->{filename};
