@@ -141,10 +141,8 @@ $externalPrograms{pnmtopng} = "$netpbm_prefix/pnmtopng";
 $externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
 
 ####################################################
-# url checker
+# curl
 ####################################################
-# set timeout time (-t 40 sec) to be less than timeout for problem (usually 60 seconds)
-$externalPrograms{checkurl}     = "/usr/bin/lwp-request -d -t 40 -mHEAD "; # or "/usr/local/bin/w3c -head "
 $externalPrograms{curl}  = "/usr/bin/curl";
 
 ####################################################
