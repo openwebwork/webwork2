@@ -85,6 +85,7 @@ sub initialize {
 	  $db->setSettingValue("${user}_mergefile",$mergefile);
 	} elsif ($db->settingExists("${user}_mergefile")) {
 	  $mergefile = $db->getSettingValue("${user}_mergefile");
+	  $mergefile = undef unless (-e "$ce->{courseDirs}{scoring}/$mergefile");
 	}
 
 	# Figure out action from submit data
