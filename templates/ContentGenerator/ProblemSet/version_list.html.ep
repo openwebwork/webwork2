@@ -8,7 +8,12 @@
 %
 % my $routeName = $set->assignment_type =~ /proctored/ ? 'proctored_gateway_quiz' : 'gateway_quiz';
 %
-% if ($continueVersion) {
+% if ($c->{invalidSet}) {
+	% # If this is an invalidSet it is because the IP address is not allowed to access the set.
+	% # Display that message here.  Note that the set is valid so the set versions can still be displayed,
+	% # but the "Start New Test" or "Continue Test" buttons should not be.
+	<div class="alert alert-warning"><%= $c->{invalidSet} %></div>
+% } elsif ($continueVersion) {
 	% # Display information about the current test and a continue open test button.
 	% if ($timeLimit > 0) {
 		% if ($timeNow >= $continueVersion->due_date) {
