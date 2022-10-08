@@ -32,6 +32,7 @@ use WeBWorK::CGI;
 
 use File::Path;
 use File::Temp qw/tempdir/;
+use Future::AsyncAwait;
 use String::ShellQuote;
 use Archive::Zip qw(:ERROR_CODES);
 use WeBWorK::DB::Utils qw/user2global/;
@@ -40,7 +41,7 @@ use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
 use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after x format_set_name_display/;
-use WeBWorK::Utils::Rendering qw(constructPGOptions);
+use WeBWorK::Utils::Rendering qw(renderPG);
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -120,7 +121,7 @@ our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 # UI subroutines
 ################################################################################
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my $self  = shift;
 	my $r     = $self->r;
 	my $ce    = $r->ce;
@@ -267,7 +268,7 @@ sub pre_header_initialize {
 							$validation_failed = 1;
 							$self->addbadmessage($r->maketext(
 								'You are not allowed to generate a hardcopy for [_1] from your IP address, [_2].',
-								$userSet->set_id, $r->connection->remote_ip
+								$userSet->set_id, $r->useragent_ip
 							));
 							last;
 						}
@@ -284,7 +285,7 @@ sub pre_header_initialize {
 		unless ($validation_failed) {
 			$self->{canShowScore} = \%canShowScore;
 			$self->{mergedSets}   = \%mergedSets;
-			my $result = $self->generate_hardcopy($hardcopy_format, \@userIDs, \@setIDs);
+			my $result = await $self->generate_hardcopy($hardcopy_format, \@userIDs, \@setIDs);
 			if ($self->get_errors) {
 				# Store the result data in self hash so that body() can make a link to it.
 				$self->{file_path}     = $result->{file_path};
@@ -759,7 +760,7 @@ sub display_form {
 # harddcopy generating subroutines
 ################################################################################
 
-sub generate_hardcopy {
+async sub generate_hardcopy {
 	my ($self, $format, $userIDsRef, $setIDsRef) = @_;
 	my $r     = $self->r;
 	my $ce    = $r->ce;
@@ -812,7 +813,7 @@ sub generate_hardcopy {
 		$self->delete_temp_dir($temp_dir_path);
 		return;
 	}
-	$self->write_multiuser_tex($FH, $userIDsRef, $setIDsRef);
+	await $self->write_multiuser_tex($FH, $userIDsRef, $setIDsRef);
 	close $FH;
 
 	# If no problems were successfully rendered, we can't continue.
@@ -1105,7 +1106,7 @@ sub generate_hardcopy_pdf {
 # TeX aggregating subroutines
 ################################################################################
 
-sub write_multiuser_tex {
+async sub write_multiuser_tex {
 	my ($self, $FH, $userIDsRef, $setIDsRef) = @_;
 	my $r  = $self->r;
 	my $ce = $r->ce;
@@ -1125,7 +1126,7 @@ sub write_multiuser_tex {
 
 	# write section for each user
 	while (defined(my $userID = shift @userIDs)) {
-		$self->write_multiset_tex($FH, $userID, @setIDs);
+		await $self->write_multiset_tex($FH, $userID, @setIDs);
 		$self->write_tex_file($FH, $divider) if @userIDs;    # divide users, but not after the last user
 	}
 
@@ -1133,7 +1134,7 @@ sub write_multiuser_tex {
 	$self->write_tex_file($FH, $postamble);
 }
 
-sub write_multiset_tex {
+async sub write_multiset_tex {
 	my ($self, $FH, $targetUserID, @setIDs) = @_;
 	my $r  = $self->r;
 	my $ce = $r->ce;
@@ -1155,12 +1156,12 @@ sub write_multiset_tex {
 
 	# write each set
 	while (defined(my $setID = shift @setIDs)) {
-		$self->write_set_tex($FH, $TargetUser, $setID);
+		await $self->write_set_tex($FH, $TargetUser, $setID);
 		$self->write_tex_file($FH, $divider) if @setIDs;    # divide sets, but not after the last set
 	}
 }
 
-sub write_set_tex {
+async sub write_set_tex {
 	my ($self, $FH, $TargetUser, $setID) = @_;
 	my $r      = $self->r;
 	my $ce     = $r->ce;
@@ -1255,7 +1256,7 @@ sub write_set_tex {
 	}
 
 	# write set header
-	$self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header);    # 0 => pg file specified directly
+	await $self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header);    # 0 => pg file specified directly
 
 	print $FH "\\medskip\\hrule\\nobreak\\smallskip";
 
@@ -1266,15 +1267,15 @@ sub write_set_tex {
 	while (my $problemID = shift @problemIDs) {
 		$self->write_tex_file($FH, $divider) if $i > 1;
 		$self->{versioned} = $i              if $versioned;
-		$self->write_problem_tex($FH, $TargetUser, $MergedSet, $problemID);
+		await $self->write_problem_tex($FH, $TargetUser, $MergedSet, $problemID);
 		$i++;
 	}
 
 	# write footer
-	$self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $footer);    # 0 => pg file specified directly
+	await $self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $footer);    # 0 => pg file specified directly
 }
 
-sub write_problem_tex {
+async sub write_problem_tex {
 	my ($self, $FH, $TargetUser, $MergedSet, $problemID, $pgFile) = @_;
 	my $r            = $self->r;
 	my $ce           = $r->ce;
@@ -1366,8 +1367,8 @@ sub write_problem_tex {
 		print $FH "%% decoded old answers, saved. (keys = " . join(',', keys(%oldAnswers)) . "\n";
 	}
 
-	my $pg = WeBWorK::PG->new(constructPGOptions(
-		$ce,
+	my $pg = await renderPG(
+		$r,
 		$TargetUser,
 		$MergedSet,
 		$MergedProblem,
@@ -1386,7 +1387,7 @@ sub write_problem_tex {
 			? (QUIZ_PREFIX => 'Q' . sprintf('%04d', $MergedProblem->problem_id()) . '_')
 			: ()
 		}
-	));
+	);
 
 	# only bother to generate this info if there were warnings or errors
 	my $edit_url;

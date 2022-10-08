@@ -272,7 +272,7 @@ sub initialize {
 
 	}
 
-	my $remote_host = $r->useragent_addr->ip_get || "UNKNOWN";
+	my $remote_host = $r->useragent_ip || "UNKNOWN";
 
 	# store data
 	$self->{from}        = $from;
@@ -424,26 +424,26 @@ sub initialize {
 		# access to the course environment and should just grab it directly
 		$self->{smtpServer} = $ce->{mail}->{smtpServer};
 
-		# do actual mailing in the cleanup phase, since it could take a long time
+		# Do actual mailing in the after the response is sent, since it could take a long time
 		# FIXME we need to do a better job providing status notifications for long-running email jobs
-		my $post_connection_action = sub {
-			my $r = shift;
-			# catch exceptions generated during the sending process
-			my $result_message = eval { $self->mail_message_to_recipients() };
-			if ($@) {
-				# add the die message to the result message
-				$result_message .=
-					"An error occurred while trying to send email.\n" . "The error message is:\n\n$@\n\n";
-				# and also write it to the apache log
-				$r->log->error("An error occurred while trying to send email: $@\n");
+		Mojo::IOLoop->timer(
+			1 => sub {
+				# catch exceptions generated during the sending process
+				my $result_message = eval { $self->mail_message_to_recipients() };
+				if ($@) {
+					# add the die message to the result message
+					$result_message .=
+						"An error occurred while trying to send email.\n" . "The error message is:\n\n$@\n\n";
+					# and also write it to the Mojolicious log
+					$r->log->error("An error occurred while trying to send email: $@\n");
+				}
+				# this could fail too...
+				eval { $self->email_notification($result_message) };
+				if ($@) {
+					$r->log->error("An error occured while trying to send the email notification: $@\n");
+				}
 			}
-			# this could fail too...
-			eval { $self->email_notification($result_message) };
-			if ($@) {
-				$r->log->error("An error occured while trying to send the email notification: $@\n");
-			}
-		};
-		$r->connection->pool->cleanup_register($post_connection_action, $r);
+		);
 	} else {
 		$self->addbadmessage(CGI::p($r->maketext("Didn't recognize action")));
 	}

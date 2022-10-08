@@ -37,10 +37,6 @@ use Net::OAuth;
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
-use APR::SockAddr;
-use Apache2::Connection;
-use APR::Request::Error;
-
 =head1 CONSTRUCTOR
 
 =over

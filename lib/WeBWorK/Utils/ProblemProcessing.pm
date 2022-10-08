@@ -319,11 +319,11 @@ sub create_ans_str_from_responses {
 	my @past_answers_order;
 	my @last_answer_order;
 
-	my %pg_answers_hash = %{ $pg->{pgcore}{PG_ANSWERS_HASH} };
+	my %pg_answers_hash = %{ $pg->{PG_ANSWERS_HASH} };
 	foreach my $ans_id (@{ $pg->{flags}{ANSWER_ENTRY_ORDER} // [] }) {
-		$scores2 .= ($pg_answers_hash{$ans_id}{ans_eval}{rh_ans}{score} // 0) >= 1 ? "1" : "0";
-		$isEssay2 = 1 if ($pg_answers_hash{$ans_id}{ans_eval}{rh_ans}{type} // '') eq 'essay';
-		foreach my $response_id ($pg_answers_hash{$ans_id}->response_obj->response_labels) {
+		$scores2 .= ($pg_answers_hash{$ans_id}{rh_ans}{score} // 0) >= 1 ? "1" : "0";
+		$isEssay2 = 1 if ($pg_answers_hash{$ans_id}{rh_ans}{type} // '') eq 'essay';
+		foreach my $response_id (@{ $pg_answers_hash{$ans_id}{response_obj}{response_order} }) {
 			$answers_to_store{$response_id} = $problem->{formFields}{$response_id};
 			push @past_answers_order, $response_id;
 			push @last_answer_order,  $response_id;

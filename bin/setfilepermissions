@@ -49,7 +49,6 @@ my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
 my $me = `logname`;
 chomp($me);
 
-#my $serverid =  $ce->{server_userID};
 my $servergroup =  $ce->{server_groupID};
 
 if ( ! $me ) {

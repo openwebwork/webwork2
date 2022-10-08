@@ -120,7 +120,7 @@ sub if_can {
 	return $arg eq 'links' ? 0 : $self->SUPER::if_can($arg);
 }
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self) = @_;
 	my $authen = $self->r->authen;
 
@@ -175,7 +175,7 @@ sub body {
 	# if invalid authentication is found.  If this is done, it's a signal to
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
-	my $authen_error = $r->notes->get("authen_error");
+	my $authen_error = $r->stash('authen_error') // '';
 	$authen_error = Encode::decode("UTF-8", $authen_error);
 
 	if ($authen_error) {

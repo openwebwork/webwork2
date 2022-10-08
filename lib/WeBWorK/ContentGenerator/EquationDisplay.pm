@@ -99,9 +99,7 @@ sub body {
 	my $typesetStr = (defined $self->{typesetStr}) ? $self->{typesetStr} : '';
 
 	#### add the host name to the string
-	my $hostName = $r->hostname;
-	my $port     = $r->get_server_port;
-	$hostName .= ":$port";
+	my $hostName = $r->req->url->to_abs->host_port;
 	$typesetStr =~ s|src="|src="http://$hostName|;
 
 	my $typeset2Str = $typesetStr;

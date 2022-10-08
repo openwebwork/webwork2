@@ -57,7 +57,7 @@ my %uploadDir = (
 # Check that the user is authorized, and then
 # see if there is a download to perform.
 #
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my $self  = shift;
 	my $r     = $self->r;
 	my $authz = $r->authz;

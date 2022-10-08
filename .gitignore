@@ -11,6 +11,9 @@ logs/*
 !logs/README
 conf/*.conf
 conf/*-config
+conf/*.yml
+conf/*.service
+!conf/*.dist.*
 htdocs/site_info.txt
 htdocs/DATA/*
 node_modules
@@ -18,6 +21,7 @@ node_modules/*
 math4-overrides.css
 math4-overrides.js
 htdocs/static-assets.json
+htdocs/index.html
 htdocs/**/*.min.js
 htdocs/**/*.min.css
 htdocs/themes/*/images/*

@@ -25,14 +25,17 @@ problem set.
 
 use strict;
 use warnings;
+
+use Future::AsyncAwait;
+use URI::Escape;
+
 use WeBWorK::CGI;
 use WeBWorK::PG;
-use URI::Escape;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden
 	jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound before between after grade_set
 	format_set_name_display);
-use WeBWorK::Utils::Rendering qw(constructPGOptions);
+use WeBWorK::Utils::Rendering qw(renderPG);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -193,7 +196,7 @@ sub siblings {
 	return "";
 }
 
-sub info {
+async sub info {
 	my ($self)  = @_;
 	my $r       = $self->r;
 	my $ce      = $r->ce;
@@ -249,8 +252,8 @@ sub info {
 		# the rest of Problem's fields are not needed, i think
 	);
 
-	my $pg = WeBWorK::PG->new(constructPGOptions(
-		$ce,
+	my $pg = await renderPG(
+		$r,
 		$effectiveUser,
 		$set,
 		$problem,
@@ -262,7 +265,7 @@ sub info {
 			showSolutions  => 0,
 			processAnswers => 0,
 		},
-	));
+	);
 
 	my $editorURL;
 	if (defined($set) and $authz->hasPermissions($userID, "modify_problem_sets")) {

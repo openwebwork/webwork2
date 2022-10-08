@@ -597,7 +597,7 @@ sub getConfigValues {
 	$ConfigValues;
 }
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self)       = @_;
 	my $r            = $self->r;
 	my $ce           = $r->ce;

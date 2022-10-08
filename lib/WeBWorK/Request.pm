@@ -14,45 +14,57 @@
 ################################################################################
 
 package WeBWorK::Request;
+use Mojo::Base 'Mojolicious::Controller', -signatures;
 
 =head1 NAME
 
 WeBWorK::Request - a request to the WeBWorK system, a subclass of
-Apache::Request with additional WeBWorK-specific fields.
+Mojolicious::Controller with additional WeBWorK-specific fields.
 
 =cut
 
 use strict;
 use warnings;
 
-use base qw(WeBWorK::Localize Apache2::Request);
-
 use Encode;
 
 use WeBWorK::Localize;
 
-# Apache2::Request's param method doesn't support setting parameters, so we need to provide the
-# behavior in this class when running under mod_perl2.
-*param = *mutable_param;
+=head1 CONSTRUCTOR
 
-sub mutable_param {
-	my $self = shift;
+=over
 
-	if (not defined $self->{paramcache}) {
-		my @names = $self->SUPER::param();
-		foreach my $name (@names) {
-			my @params = $self->SUPER::param($name);
-			@params = map { Encode::decode("UTF-8", $_) } @params;
-			$self->{paramcache}{$name} = [@params];
+=item WeBWorK::Request->new($controller)
+
+Creates a new WeBWorK::Request. A Mojolicious::Controller object must be passed.
+
+=back
+
+=cut
+
+sub new {
+	my ($invocant, $controller) = @_;
+	my $class = ref $invocant || $invocant;
+	# Construct the superclass instance
+	my $self = $controller;
+	return bless $self, $class;
+}
+
+# The Mojolicous::Controller param method does not work quite the same as the previous WeBWorK::Request method did. So
+# this override method emulates the old behavior.
+sub param {
+	my ($self, $name, $val) = @_;
+
+	if (!defined $self->{paramcache}) {
+		for my $name (@{ $self->SUPER::req->params->names }) {
+			$self->{paramcache}{$name} = $self->SUPER::req->every_param($name);
 		}
 	}
 
-	@_ or return keys %{ $self->{paramcache} };
+	return keys %{ $self->{paramcache} } unless $name;
 
-	my $name = shift;
-	if (@_) {
-		my $val = shift;
-		if (ref $val eq "ARRAY") {
+	if (defined $val) {
+		if (ref $val eq 'ARRAY') {
 			$self->{paramcache}{$name} = [@$val];    # make a copy
 		} else {
 			$self->{paramcache}{$name} = [$val];
@@ -62,43 +74,11 @@ sub mutable_param {
 	return wantarray ? @{ $self->{paramcache}{$name} } : $self->{paramcache}{$name}->[0];
 }
 
-=head1 CONSTRUCTOR
-
-=over
-
-=item new(@args)
-
-Creates an new WeBWorK::Request. All arguments are passed to Apache::Request's
-constructor. You must specify at least an Apache request_rec object.
-
-=for comment
-
-From: http://search.cpan.org/~joesuf/libapreq-1.3/Request/Request.pm#SUBCLASSING_Apache::Request
-
-If the instances of your subclass are hash references then you can actually
-inherit from Apache::Request as long as the Apache::Request object is stored in
-an attribute called "r" or "_r". (The Apache::Request class effectively does the
-delegation for you automagically, as long as it knows where to find the
-Apache::Request object to delegate to.)
-
-=cut
-
-sub new {
-	my ($invocant, @args) = @_;
-	my $class = ref $invocant || $invocant;
-	# construct the superclass instance
-	return bless { r => Apache2::Request->new(@args) }, $class;
-}
-
-=back
-
-=cut
-
 =head1 METHODS
 
 =over
 
-=item ce([$new])
+=item $r->ce([$new])
 
 Return the course environment (WeBWorK::CourseEnvironment) associated with this
 request. If $new is specified, set the course environment to $new before
@@ -107,12 +87,12 @@ returning the value.
 =cut
 
 sub ce {
-	my $self = shift;
-	$self->{ce} = shift if @_;
+	my ($self, $new) = @_;
+	$self->{ce} = $new if defined $new;
 	return $self->{ce};
 }
 
-=item db([$new])
+=item $r->db([$new])
 
 Return the database (WeBWorK::DB) associated with this request. If $new is
 specified, set the database to $new before returning the value.
@@ -120,12 +100,12 @@ specified, set the database to $new before returning the value.
 =cut
 
 sub db {
-	my $self = shift;
-	$self->{db} = shift if @_;
+	my ($self, $new) = @_;
+	$self->{db} = $new if defined $new;
 	return $self->{db};
 }
 
-=item authen([$new])
+=item $r->authen([$new])
 
 Return the authenticator (WeBWorK::Authen) associated with this request. If $new
 is specified, set the authenticator to $new before returning the value.
@@ -133,12 +113,12 @@ is specified, set the authenticator to $new before returning the value.
 =cut
 
 sub authen {
-	my $self = shift;
-	$self->{authen} = shift if @_;
+	my ($self, $new) = @_;
+	$self->{authen} = $new if defined $new;
 	return $self->{authen};
 }
 
-=item authz([$new])
+=item $r->authz([$new])
 
 Return the authorizer (WeBWorK::Authz) associated with this request. If $new is
 specified, set the authorizer to $new before returning the value.
@@ -146,8 +126,8 @@ specified, set the authorizer to $new before returning the value.
 =cut
 
 sub authz {
-	my $self = shift;
-	$self->{authz} = shift if @_;
+	my ($self, $new) = @_;
+	$self->{authz} = $new if defined $new;
 	return $self->{authz};
 }
 
@@ -159,40 +139,56 @@ specified, set the URL path to $new before returning the value.
 =cut
 
 sub urlpath {
-	my $self = shift;
-	$self->{urlpath} = shift if @_;
+	my ($self, $new) = @_;
+	$self->{urlpath} = $new if defined $new;
 	return $self->{urlpath};
 }
 
 sub language_handle {
-	my $self = shift;
-	$self->{language_handle} = shift if @_;
+	my ($self, $new) = @_;
+	$self->{language_handle} = $new if defined $new;
 	return $self->{language_handle};
 }
 
 sub maketext {
-	my $self = shift;
-	&{ $self->{language_handle} }(@_);
-	# uncomment to check that your strings are run through maketext
+	my ($self, @args) = @_;
+	return &{ $self->{language_handle} }(@args);
+	# Comment out the above line and uncomment below to check that your strings are run through maketext.
 	# return 'xXx'.&{ $self->{language_handle} }(@_).'xXx';
 }
 
-=item location()
+=item Other methods
 
-Overrides the location() method in Apache::Request (or Apache2::Request) so that
-if the location is "/", the empty string is returned.
+    uri
+    headers_in
+    useragent_ip
+    remote_port
 
-=cut
-
-sub location {
-	my $self     = shift;
-	my $location = $self->SUPER::location;
-	return $location eq "/" ? "" : $location;
-}
+These convenience methods map Mojolicious methods to Apache2::Request methods
+that were used previously.
 
 =back
 
 =cut
 
-1;
+sub uri {
+	my $self = shift;
+	return $self->SUPER::req->url->path->to_string;
+}
 
+sub headers_in {
+	my $self = shift;
+	return $self->SUPER::req->headers->to_hash;
+}
+
+sub useragent_ip {
+	my $self = shift;
+	return $self->SUPER::tx->remote_address;
+}
+
+sub remote_port {
+	my $self = shift;
+	return $self->SUPER::tx->remote_port;
+}
+
+1;

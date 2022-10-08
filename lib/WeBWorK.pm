@@ -21,13 +21,12 @@ WeBWorK - Dispatch requests to the appropriate content generator.
 
 =head1 SYNOPSIS
 
- my $r = Apache->request;
- my $result = eval { WeBWorK::dispatch($r) };
+ my $result = eval { WeBWorK::dispatch($c) };
  die "something bad happened: $@" if $@;
 
 =head1 DESCRIPTION
 
-C<WeBWorK> is the dispatcher for the WeBWorK system. Given an Apache request
+C<WeBWorK> is the dispatcher for the WeBWorK system. Given a Mojolicious::Controller
 object, it performs authentication and determines which subclass of
 C<WeBWorK::ContentGenerator> to call.
 
@@ -35,8 +34,12 @@ C<WeBWorK::ContentGenerator> to call.
 
 use strict;
 use warnings;
+
 use Time::HiRes qw/time/;
 use HTML::Entities qw/encode_entities/;
+
+use Future::AsyncAwait;
+
 use WeBWorK::Localize;
 # load WeBWorK::Constants before anything else
 # this sets package variables in several packages
@@ -52,9 +55,6 @@ use WeBWorK::Upload;
 use WeBWorK::URLPath;
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
-
-use Apache2::Upload;
-use Apache2::RequestUtil;
 
 use constant LOGIN_MODULE         => "WeBWorK::ContentGenerator::Login";
 use constant PROCTOR_LOGIN_MODULE => "WeBWorK::ContentGenerator::LoginProctor";
@@ -75,25 +75,22 @@ BEGIN {
 
 our %SeedCE;
 
-sub dispatch($) {
-	my ($apache) = @_;
-	my $r = WeBWorK::Request->new($apache);
+async sub dispatch {
+	my $controller = shift;
+	my $r          = WeBWorK::Request->new($controller);
 
-	my $method     = $r->method;
-	my $location   = $r->location;
-	my $uri        = $r->uri;
-	my $path_info  = $r->path_info | "";
-	my $args       = $r->args || "";
-	my $dir_config = $r->dir_config;
-	my %conf_vars  = map { $_ => $dir_config->{$_} } grep {/^webwork_/} keys %$dir_config;
-	@SeedCE{ keys %conf_vars } = values %conf_vars;
+	my $method    = $r->req->method;
+	my $location  = $r->location;
+	my $uri       = $r->uri;
+	my $path_info = $r->stash('path-info')     || '';
+	my $args      = $r->req->params->to_string || '';
 
 	debug("\n\n===> Begin " . __PACKAGE__ . "::dispatch() <===\n\n");
 	debug("Hi, I'm the new dispatcher!\n");
 	debug(("-" x 80) . "\n");
 
 	debug("Okay, I got some basic information:\n");
-	debug("The apache location is $location\n");
+	debug("The site location is $location\n");
 	debug("The request method is $method\n");
 	debug("The URI is $uri\n");
 	debug("The path-info is $path_info\n");
@@ -195,34 +192,11 @@ sub dispatch($) {
 
 	debug(("-" x 80) . "\n");
 
-	my $apache_hostname = $r->hostname;
-	my $apache_port     = $r->get_server_port;
-	my $apache_is_ssl   = ($r->subprocess_env('https') ? 1 : "");
-	my $apache_root_url;
-	if ($apache_is_ssl) {
-		$apache_root_url = "https://$apache_hostname";
-		$apache_root_url .= ":$apache_port" if $apache_port != 443;
-	} else {
-		$apache_root_url = "http://$apache_hostname";
-		$apache_root_url .= ":$apache_port" if $apache_port != 80;
-	}
-
 	####################################################################
 	# Create Course Environment    $ce
 	####################################################################
 	debug("We need to get a course environment (with or without a courseID!)\n");
-	my $ce = eval {
-		new WeBWorK::CourseEnvironment({
-			%SeedCE,
-			courseName => $displayArgs{courseID},
-			# this is kind of a hack, but it's really the only sane way to get this
-			# server information into the PG box
-			apache_hostname => $apache_hostname,
-			apache_port     => $apache_port,
-			apache_is_ssl   => $apache_is_ssl,
-			apache_root_url => $apache_root_url,
-		});
-	};
+	my $ce = eval { new WeBWorK::CourseEnvironment({ %SeedCE, courseName => $displayArgs{courseID} }) };
 	$@ and die "Failed to initialize course environment: $@\n";
 	debug("Here's the course environment: $ce\n");
 	$r->ce($ce);
@@ -234,17 +208,14 @@ sub dispatch($) {
 	# $r->language_handle( WeBWorK::Localize->get_handle($language) );
 	$r->language_handle(WeBWorK::Localize::getLoc($language));
 
-	my @uploads;
-
-	my $upload_table = $r->upload;
-	@uploads = values %$upload_table if defined $upload_table;
+	my @uploads = @{ $r->req->uploads };
 
 	foreach my $u (@uploads) {
 		# make sure it's a "real" upload
 		next unless $u->filename;
 
 		# store the upload
-		my $upload = WeBWorK::Upload->store($u, dir => $ce->{webworkDirs}->{uploadCache});
+		my $upload = WeBWorK::Upload->store($u, dir => $ce->{webworkDirs}{uploadCache});
 
 		# store the upload ID and hash in the file upload field
 		my $id   = $upload->id;
@@ -366,7 +337,7 @@ sub dispatch($) {
 	debug("...and call it:\n");
 	debug("-------------------- call to ${displayModule}::go\n");
 
-	my $result = $instance->go();
+	my $result = await $instance->go();
 
 	debug("-------------------- call to ${displayModule}::go\n");
 

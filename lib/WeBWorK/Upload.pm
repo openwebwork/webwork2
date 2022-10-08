@@ -21,7 +21,7 @@ WeBWorK::Upload - store uploads securely across requests.
 
 =head1 SYNOPSIS
 
-Given C<$u>, an Apache::Upload object
+Given C<$u>, an Mojo::Upload object
 
  my $upload = WeBWorK::Upload->store($u,
  	dir => $ce->{webworkDirs}->{DATA}
@@ -36,10 +36,10 @@ Later...
  );
  my $fh = $upload->fileHandle;
  my $path = $upload->filePath;
- 
+
  # get rid of the upload -- $upload is useless after this!
  $upload->dispose;
- 
+
  # ...or move it somewhere before disposal
  $upload->disposeTo($path);
 
@@ -65,9 +65,11 @@ use File::Copy qw(copy move);
 
 =head1 STORING UPLOADS
 
-Uploads represented as Apache::Uploads objects can be stored in an upload cache
+Uploads can be stored in an upload cache
 and later retrieved, given the proper ID and hash. The hash is used to confirm
 the authenticity of the ID.
+
+Uploads are Mojo::Upload objects under.
 
 =head2 CONSTRUCTOR
 
@@ -75,7 +77,7 @@ the authenticity of the ID.
 
 =item store($u, %options)
 
-Stores the Apache::Upload C<$u> securely. The following keys must be defined in
+Stores the Mojo::Upload C<$u> securely. The following keys must be defined in
 %options:
 
  dir => the directory in which to store the uploaded file
@@ -83,9 +85,9 @@ Stores the Apache::Upload C<$u> securely. The following keys must be defined in
 =cut
 
 sub store {
-	my ($invocant, $apacheUpload, %options) = @_;
+	my ($invocant, $upload, %options) = @_;
 
-	croak "no Apache::Upload specified" unless $apacheUpload;
+	croak "no upload specified" unless $upload;
 
 	# generate UUID
 	my $ug   = new Data::UUID;
@@ -97,24 +99,23 @@ sub store {
 	# generate hash from $uuid and $secret
 	my $hash = md5_hex($uuid, $secret);
 
-	# get information about uploaded file
-	my $realFileName = $apacheUpload->filename;
-	my $fh           = $apacheUpload->fh;
-
 	my $infoName = "$uuid.info";
 	my $infoPath = "$options{dir}/$infoName";
 
 	my $fileName = "$uuid.file";
 	my $filePath = "$options{dir}/$fileName";
 
+	# get information about uploaded file
+	my $realFileName = $upload->filename;
+
+	# Copy uploaded file
+	$upload->move_to($filePath);
+
 	# write info file
 	open my $infoFH, ">", $infoPath
 		or die "failed to write upload info file $infoPath: $!";
 	print $infoFH "$realFileName\n$secret\n";
 	close $infoFH;
-
-	# copy uploaded file
-	copy($fh, $filePath);    # the file name is a secret!
 
 	return bless {
 		uuid         => $uuid,
@@ -180,7 +181,7 @@ can then be accessed by name or file handle, moved, and disposed of.
 
 =item retrieve($id, $hash, %options)
 
-Retrieves the Apache::Upload referenced by C<$id> and C<$hash>. The following
+Retrieves the Mojo::Upload referenced by C<$id> and C<$hash>. The following
 keys must be defined in %options:
 
  dir => the directory in which to store the uploaded file

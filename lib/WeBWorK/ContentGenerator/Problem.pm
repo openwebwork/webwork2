@@ -25,6 +25,8 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 =cut
 
+use Future::AsyncAwait;
+
 use WeBWorK::ContentGenerator::Instructor::SingleProblemGrader;
 use WeBWorK::Debug;
 use WeBWorK::Form;
@@ -34,7 +36,7 @@ use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(decodeAnswers is_restricted ref2string path_is_subdir before after between
 	wwRound is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status
 	jitar_id_to_seq seq_to_jitar_id jitar_problem_finished getAssetURL format_set_name_display);
-use WeBWorK::Utils::Rendering qw(constructPGOptions getTranslatorDebuggingOptions);
+use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
 use WeBWorK::Utils::ProblemProcessing qw/process_and_log_answer check_invalid jitar_send_warning_email
 	compute_reduced_score/;
 use WeBWorK::DB::Utils qw(global2user);
@@ -378,15 +380,13 @@ sub templateName {
 	$self->{templateName} = $templateName;
 	$templateName;
 }
-
-sub content {
+async sub content {
 	my $self   = shift;
-	my $result = $self->SUPER::content(@_);
-	$self->{pg}->free if $self->{pg};    # be sure to clean up PG environment when the page is done
+	my $result = await $self->SUPER::content(@_);
 	return $result;
 }
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self)  = @_;
 	my $r       = $self->r;
 	my $ce      = $r->ce;
@@ -746,8 +746,8 @@ sub pre_header_initialize {
 	##### translation #####
 
 	debug("begin pg processing");
-	my $pg = WeBWorK::PG->new(constructPGOptions(
-		$ce,
+	my $pg = await renderPG(
+		$r,
 		$effectiveUser,
 		$set, $problem,
 		$set->psvn,
@@ -768,7 +768,11 @@ sub pre_header_initialize {
 			isInstructor             => $authz->hasPermissions($userName, 'view_answers'),
 			debuggingOptions         => getTranslatorDebuggingOptions($authz, $userName)
 		}
-	));
+	);
+
+	# Warnings in the renderPG subprocess will not be caught by the global warning handler of this process.
+	# So rewarn them and let the global warning handler take care of it.
+	warn $pg->{warnings} if $pg->{warnings};
 
 	debug("end pg processing");
 
@@ -800,20 +804,20 @@ sub pre_header_initialize {
 	$can{showHints}     &&= $pg->{flags}{hintExists};
 	$can{showSolutions} &&= $pg->{flags}{solutionExists};
 
-	##### record errors #########
-	if (ref($pg->{pgcore})) {
-		my @debug_messages   = @{ $pg->{pgcore}->get_debug_messages };
-		my @warning_messages = @{ $pg->{pgcore}->get_warning_messages };
-		my @internal_errors  = @{ $pg->{pgcore}->get_internal_debug_messages };
-		$self->{pgerrors} =
-			@debug_messages || @warning_messages || @internal_errors;    # is 1 if any of these are non-empty
-		$self->{pgdebug}          = \@debug_messages;
-		$self->{pgwarning}        = \@warning_messages;
-		$self->{pginternalerrors} = \@internal_errors;
-	} else {
-		warn "Processing of this PG problem was not completed.  Probably because of a syntax error.
-		      The translator died prematurely and no PG warning messages were transmitted.";
-	}
+	# Record errors
+	$self->{pgdebug}          = $pg->{debug_messages}          if ref $pg->{debug_messages} eq 'ARRAY';
+	$self->{pgwarning}        = $pg->{warning_messages}        if ref $pg->{warning_messages} eq 'ARRAY';
+	$self->{pginternalerrors} = $pg->{internal_debug_messages} if ref $pg->{internal_debug_messages} eq 'ARRAY';
+	# $self->{pgerrors} is defined if any of the above are defined, and is nonzero if any are non-empty.
+	$self->{pgerrors} =
+		@{ $self->{pgdebug} // [] } || @{ $self->{pgwarning} // [] } || @{ $self->{pginternalerrors} // [] }
+		if defined $self->{pgdebug} || defined $self->{pgwarning} || defined $self->{pginternalerrors};
+
+	# If $self->{pgerrors} is not defined, then the PG messages arrays were not defined,
+	# which means $pg->{pgcore} was not defined and the translator died.
+	warn 'Processing of this PG problem was not completed.  Probably because of a syntax error. '
+		. 'The translator died prematurely and no PG warning messages were transmitted.'
+		unless defined $self->{pgerrors};
 
 	##### store fields #####
 
@@ -870,19 +874,17 @@ sub if_errors($$) {
 }
 
 sub head {
-	my ($self)             = @_;
-	my $ce                 = $self->r->ce;
-	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-	return "" if ($self->{invalidSet});
-
+	my ($self) = @_;
+	return ''                       if ($self->{invalidSet});
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
-
+	return '';
 }
 
 sub post_header_text {
 	my ($self) = @_;
-	return ""                              if ($self->{invalidSet});
+	return ''                              if ($self->{invalidSet});
 	return $self->{pg}->{post_header_text} if $self->{pg}->{post_header_text};
+	return '';
 }
 
 sub siblings {

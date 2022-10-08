@@ -38,10 +38,6 @@ $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
 #$WeBWorK::Debug::Enabled = 1;
 
-use APR::SockAddr;
-use Apache2::Connection;
-use APR::Request::Error;
-
 our $GENERIC_ERROR_MESSAGE =
 	"Your authentication failed.  Please return to " . "your Course Management System ([_1]) and login again.";
 our $GENERIC_MISSING_USER_ID_ERROR_MESSAGE =

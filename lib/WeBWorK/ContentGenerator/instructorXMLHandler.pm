@@ -138,7 +138,7 @@ sub templateName {
 # end configuration section
 ##################################################
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
 
@@ -313,7 +313,7 @@ sub pretty_print_json {
 	return $out . "";
 }
 
-sub content {
+async sub content {
 	###########################
 	# Return content of rendered problem to the browser that requested it
 	###########################

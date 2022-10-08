@@ -34,6 +34,8 @@ use warnings;
 use WebworkClient;
 use WeBWorK::Debug;
 use CGI;
+use Future::AsyncAwait;
+use Mojo::IOLoop;
 
 =head1 Description
 
@@ -121,7 +123,7 @@ our @COMMANDS = qw( listLibraries    renderProblem  );    #listLib  readFile tex
 # end configuration section
 ##################################################
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
 	# Note: Vars helps handle things like checkbox 'packed' data;
@@ -185,16 +187,18 @@ sub pre_header_initialize {
 	# from which it will eventually be returned to the browser
 	#
 	##############################
-	if ($xmlrpc_client->xmlrpcCall('renderProblem', $xmlrpc_client->{inputs_ref})) {
-		$self->{output} = $xmlrpc_client->formatRenderedProblem;
-	} else {
-		$self->{output} = $xmlrpc_client->return_object;    # error report
-	}
+	await Mojo::IOLoop->subprocess->run_p(sub {
+		if ($xmlrpc_client->xmlrpcCall('renderProblem', $xmlrpc_client->{inputs_ref})) {
+			$self->{output} = $xmlrpc_client->formatRenderedProblem;
+		} else {
+			$self->{output} = $xmlrpc_client->return_object;    # error report
+		}
+	});
 
 	################################
 }
 
-sub content {
+async sub content {
 	###########################
 	# Return content of rendered problem to the browser that requested it
 	###########################

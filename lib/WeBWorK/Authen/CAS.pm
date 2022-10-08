@@ -120,7 +120,7 @@ sub get_credentials {
 		# (Not sure if the second test is really needed.)
 		$service =~ s/[?&]ticket=[^&]*$//
 			or $service =~ s/([?&])ticket=[^&]*&/$1/;
-		$service = $ce->{apache_root_url} . $service;
+		$service = $ce->{server_root_url} . $service;
 		debug("service = $service");
 		my $ticket = $r->param('ticket');
 		unless (defined $ticket) {

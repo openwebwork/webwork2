@@ -1,0 +1,18 @@
+[Unit]
+Description=webwork2
+After=network.target
+
+[Service]
+Type=forking
+User=www-data
+Group=www-data
+RuntimeDirectory=webwork2
+WorkingDirectory=/opt/webwork/webwork2
+PIDFile=/run/webwork2/webwork2.pid
+Environment="MOJO_REVERSE_PROXY=1"
+ExecStart=hypnotoad /opt/webwork/webwork2/bin/webwork2
+ExecReload=hypnotoad /opt/webwork/webwork2/bin/webwork2
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

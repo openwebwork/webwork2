@@ -57,7 +57,7 @@ our $UNIT_TESTS_ON = 0;
 # our $ce           = WeBWorK::CourseEnvironment->new(
 #                 {webwork_dir=> $WW_DIRECTORY,  courseName=>$COURSENAME}
 #     );
-#     $ce->{apache_root_url} = $HOSTURL;
+#     $ce->{server_root_url} = $HOSTURL;
 # #print "\$ce = \n", WeBWorK::Utils::pretty_print_rh($ce);
 #
 #
@@ -132,7 +132,7 @@ sub renderProblem {
 	#FIXME  put in check to make sure the course exists.
 	eval {
 		$ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $WW_DIRECTORY, courseName => $courseName });
-		$ce->{apache_root_url} = $HOSTURL;
+		$ce->{server_root_url} = $HOSTURL;
 		# Create database object for this course
 		$db = WeBWorK::DB->new($ce->{dbLayout});
 	};
