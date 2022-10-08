@@ -57,6 +57,7 @@ BEGIN {
 		restrict_ip               => { type => "ENUM('No','RestrictTo','DenyFrom')" },
 		relax_restrict_ip         => { type => "ENUM('No','AfterAnswerDate','AfterVersionAnswerDate')" },
 		restricted_login_proctor  => { type => "ENUM('No','Yes')" },
+		use_grade_proctor         => { type => "ENUM('No','Yes')" },
 		hide_hint                 => { type => "INT" },
 		restrict_prob_progression => { type => "INT" },
 		email_instructor          => { type => "INT" },

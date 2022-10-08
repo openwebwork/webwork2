@@ -37,7 +37,7 @@ use WeBWorK::Debug;
 
 # these constants determine which fields belong to what type of record
 use constant SET_FIELDS => [
-	qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description enable_reduced_scoring  restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint restrict_prob_progression email_instructor)
+	qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description enable_reduced_scoring  restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type use_grade_proctor attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint restrict_prob_progression email_instructor)
 ];
 use constant PROBLEM_FIELDS =>
 	[qw(source_file value max_attempts showMeAnother showHintsAfter prPeriod att_to_open_children counts_parent_grade)];
@@ -301,6 +301,18 @@ use constant FIELD_PROPERTIES => {
 		choices  => [qw(N Y BeforeAnswerDate)],
 		override => "any",
 		labels   => { 'N' => "Yes", 'Y' => "No", 'BeforeAnswerDate' => x('Only after set answer date') },
+	},
+	use_grade_proctor => {
+		name      => x('Require Grade Proctor'),
+		type      => 'choose',
+		override  => 'any',
+		choices   => [qw(Yes No)],
+		labels    => { Yes => x('Yes'), No => x('No') },
+		default   => 'Yes',
+		help_text => x(
+			'Proctored tests always require login proctor authorization to start the test. Configure if '
+			. 'proctored tests also require grade proctor authorization to grade the test at the end.'
+		),
 	},
 
 	restrict_prob_progression => {
@@ -918,9 +930,13 @@ sub extraSetFields {
 	}
 
 	# if we have a proctored test, then also generate a proctored set password input
-	if ($globalRecord->assignment_type eq 'proctored_gateway' && !$forUsers) {
+	if ($globalRecord->assignment_type eq 'proctored_gateway') {
+		# Dropdown menu to configure using a grade proctor.
+		$procFields = CGI::Tr(
+			CGI::td([ $self->FieldHTML($userID, $setID, undef, $globalRecord, $userRecord, 'use_grade_proctor') ]));
 		# We use a routine other than FieldHTML because of getting the default value here.
-		$procFields = CGI::Tr(CGI::td([ $self->proctoredFieldHTML($userID, $setID, $globalRecord) ]));
+		$procFields .= CGI::Tr(CGI::td([ $self->proctoredFieldHTML($userID, $setID, $globalRecord) ]))
+			unless ($forUsers);
 	}
 
 	# finally, figure out what ip selector fields we want to include
@@ -1026,9 +1042,7 @@ sub proctoredFieldHTML {
 			{
 				class           => 'help-popup',
 				data_bs_content => $r->maketext(
-					"Proctored tests require proctor authorization to start and to grade.  "
-						. "Provide a password to have a single password for all students to start a proctored test."
-				),
+					'Provide a password to have a single password for all students to start a proctored test.'),
 				data_bs_placement => 'top',
 				data_bs_toggle    => 'popover',
 				role              => 'button',
