@@ -672,6 +672,7 @@ sub addProblem {
 	my $value_default = $self->ce->{problemDefaults}->{value};
 	my $max_attempts_default = $self->ce->{problemDefaults}->{max_attempts};
 	my $showMeAnother_default = $self->ce->{problemDefaults}->{showMeAnother};
+	my $showHintsAfter_default = $self->ce->{problemDefaults}{showHintsAfter};
 	my $att_to_open_children_default = $self->ce->{problemDefaults}->{att_to_open_children};
 	my $counts_parent_grade_default = $self->ce->{problemDefaults}->{counts_parent_grade};
     # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
@@ -684,6 +685,7 @@ sub addProblem {
 
 	my $maxAttempts = $params->{maxAttempts} || $max_attempts_default;
 	my $showMeAnother = $params->{showMeAnother} || $showMeAnother_default;
+	my $showHintsAfter = $params->{showHintsAfter} || $showHintsAfter_default;
 	my $problemID = $params->{problemID};
 	my $countsParentGrade = $params->{counts_parent_grade} || $counts_parent_grade_default;
 	my $attToOpenChildren = $params->{att_to_open_children} || $att_to_open_children_default;
@@ -704,6 +706,7 @@ sub addProblem {
 	$problemRecord->value($value);
 	$problemRecord->max_attempts($maxAttempts);
 	$problemRecord->showMeAnother($showMeAnother);
+	$problemRecord->showHintsAfter($showHintsAfter);
 	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
 	$problemRecord->{att_to_open_children} = $attToOpenChildren;
 	$problemRecord->{counts_parent_grade} = $countsParentGrade;

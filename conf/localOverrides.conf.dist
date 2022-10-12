@@ -280,22 +280,6 @@ $mail{feedbackRecipients}    = [
 # precedence over all other locations.
 
 ################################################################################
-# Adding to the applet search path.
-################################################################################
-
-# If a full URL is given, it is used unmodified. If an
-# absolute path is given, the URL of the local server is prepended to it.
-#
-# For example, if an item is "/math/applets",
-# and the local server is  "https://math.yourschool.edu",
-# then the URL "https://math.yourschool.edu/math/applets" will be used.
-#
-# If your new applets location is a subdirectory of the webwork htdocs directory, you may
-# use notation such as "$webworkURLs{htdocs}/newsubdir"
-
-#$pg{directories}{appletPath} = [ @{$pg{directories}{appletPath}} , "new/url" ];
-
-################################################################################
 # Problem creation defaults
 ################################################################################
 
@@ -325,6 +309,12 @@ $mail{feedbackRecipients}    = [
 # Setting this to a positive value will override the course-wide setting
 #$problemDefaults{prPeriod} = -1;
 
+# The default number of attempts after which to show hints for newly created problems.
+# It is suggested to use the value of -2, which means that the course-wide setting would be used
+# Setting this to -2 defaults to the use of course-wide settings (suggested)
+# Setting this to -1 disables hints in problems.
+# Setting this to 0 or more will show hints after that number of attempts.
+#$problemDefaults{showHintsAfter} = 2;
 
 ################################################################################
 # Periodic re-randomization
@@ -560,9 +550,9 @@ $mail{feedbackRecipients}    = [
 ################################################################################
 
 #$permissionLevels{show_resource_info}               = "admin";
-#$permissionLevels{show_pg_info_checkbox}            = "admin";
-#$permissionLevels{show_answer_hash_info_checkbox}   = "admin";
-#$permissionLevels{show_answer_group_info_checkbox}  = "admin";
+#$permissionLevels{show_pg_info}                     = "admin";
+#$permissionLevels{show_answer_hash_info}            = "admin";
+#$permissionLevels{show_answer_group_info}           = "admin";
 #$permissionLevels{modify_tags}                      = "admin";
 
 ################################################################################

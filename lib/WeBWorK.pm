@@ -70,7 +70,7 @@ BEGIN {
 	# other candidates for preloading:
 	# - DB Record, Schema, and Driver classes (esp. Driver::SQL as it loads DBI)
 	# - CourseManagement subclasses (ditto. sql_single.pm)
-	# - WeBWorK::PG::Local, which loads WeBWorK::PG::Translator
+	# - WeBWorK::PG, which loads WeBWorK::PG::Translator
 	# - Authen subclasses
 }
 

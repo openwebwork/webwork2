@@ -505,6 +505,7 @@ sub addProblemToSet {
 	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};
 	my $att_to_open_children_default = $self->{ce}->{problemDefaults}->{att_to_open_children};
 	my $counts_parent_grade_default = $self->{ce}->{problemDefaults}->{counts_parent_grade};
+	my $showHintsAfter_default = $self->{ce}{problemDefaults}{showHintsAfter};
 	my $prPeriod_default = $self->{ce}->{problemDefaults}->{prPeriod};
     # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
 	my $showMeAnotherCount = 0;
@@ -516,20 +517,14 @@ sub addProblemToSet {
 	my $sourceFile = $args{sourceFile} or
 		die "addProblemToSet called without specifying the sourceFile.";
 
-	# The rest of the arguments are optional
-
-#	my $value = $args{value} || $value_default;
-	my $value = $value_default;
-	if (defined($args{value})){$value = $args{value};}  # 0 is a valid value for $args{value}
-
-	my $maxAttempts = $args{maxAttempts} || $max_attempts_default;
-	my $showMeAnother = $args{showMeAnother} // $showMeAnother_default;
-	my $prPeriod = $prPeriod_default;
-	if (defined($args{prPeriod})){
-		$prPeriod = $args{prPeriod};
-	}
-
 	my $problemID = $args{problemID};
+
+	# The rest of the arguments are optional
+	my $value             = $args{value} // $value_default;
+	my $maxAttempts       = $args{maxAttempts} || $max_attempts_default;
+	my $showMeAnother     = $args{showMeAnother}     // $showMeAnother_default;
+	my $showHintsAfter    = $args{showHintsAfter}    // $showHintsAfter_default;
+	my $prPeriod          = $args{prPeriod}          // $prPeriod_default;
 	my $countsParentGrade = $args{countsParentGrade} // $counts_parent_grade_default;
 	my $attToOpenChildren = $args{attToOpenChildren} // $att_to_open_children_default;
 
@@ -561,6 +556,7 @@ sub addProblemToSet {
 	$problemRecord->counts_parent_grade($countsParentGrade);
 	$problemRecord->showMeAnother($showMeAnother);
 	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
+	$problemRecord->showHintsAfter($showHintsAfter);
 	$problemRecord->prPeriod($prPeriod);
 	$problemRecord->prCount(0);
 	$db->addGlobalProblem($problemRecord);

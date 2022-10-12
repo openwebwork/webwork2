@@ -37,6 +37,7 @@ BEGIN {
 		max_attempts       => { type => "INT" },
 		showMeAnother      => { type => "INT" },
 		showMeAnotherCount => { type => "INT" },
+		showHintsAfter     => { type => "INT" },
 		# periodic re-randomization period
 		prPeriod => { type => "INT" },
 		# periodic re-randomization number of attempts for the current seed

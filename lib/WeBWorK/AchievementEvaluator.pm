@@ -79,19 +79,9 @@ sub checkForAchievements {
 		$db->addGlobalUserAchievement($globalUserAchievement);
 	}
 
-	#update the problem with stuff from the pg.
-	# this is kind of a hack.  The achievement checking happens *before* the system has
-	# updated $problem with the new results from $pg.  So we cheat and update the
-	# important bits here.  The only thing that gets left behind is last_answer, which is
-	# still the previous last answer.
-
-	# $pg->{result} reflects the current submission, $pg->{state} holds the best result
-	# close the unlimited achievement points loophole by only using the current result!
-	$problem->status($pg->{result}->{score});
-	$problem->sub_status($pg->{state}->{sub_recorded_score});
-	$problem->attempted(1);
-	$problem->num_correct($pg->{state}->{num_of_correct_ans});
-	$problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
+	# Do not update the problem with stuff from the pg.  The achievement checking happens
+	# *after* the system has already updated $problem with the new results from $pg.
+	# The code here has no right to modify the problem in any case.
 
 	#These need to be "our" so that they can share to the safe container
 	our $counter;

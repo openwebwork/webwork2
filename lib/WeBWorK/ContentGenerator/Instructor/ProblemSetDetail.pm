@@ -37,16 +37,16 @@ use WeBWorK::Debug;
 
 # these constants determine which fields belong to what type of record
 use constant SET_FIELDS => [qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description enable_reduced_scoring  restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint restrict_prob_progression email_instructor)];
-use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother prPeriod att_to_open_children counts_parent_grade)];
+use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother showHintsAfter prPeriod att_to_open_children counts_parent_grade)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
 # these constants determine what order those fields should be displayed in
 use constant HEADER_ORDER => [qw(set_header hardcopy_header)];
-use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother prPeriod attempted last_answer num_correct num_incorrect)];
+use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother showHintsAfter prPeriod attempted last_answer num_correct num_incorrect)];
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
-use constant JITAR_PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother prPeriod att_to_open_children counts_parent_grade attempted last_answer num_correct num_incorrect)];
+use constant JITAR_PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother showHintsAfter prPeriod att_to_open_children counts_parent_grade attempted last_answer num_correct num_incorrect)];
 
 
 # we exclude the gateway set fields from the set field order, because they
@@ -345,6 +345,22 @@ use constant FIELD_PROPERTIES => {
                  },
                  help_text => x("When a student has more attempts than is specified here they will be able to view another version of this problem.  If set to -1 the feature is disabled and if set to -2 the course default is used.")
         },
+	showHintsAfter => {
+		name     => x('Show hints after'),
+		type     => 'edit',
+		size     => '6',
+		override => 'any',
+		default  => '-2',
+		labels   => {
+			'-2' => x('Default'),
+			'-1' => x('Never'),
+		},
+		help_text => x(
+			'This specifies the number of attempts before hints are shown to students. '
+				. 'The value of -2 uses the default from course configuration. The value of -1 disables hints.'
+				. 'Note that this will only have an effect if the problem has a hint.'
+		),
+	},
 	prPeriod => {
 		name => x("Rerandomize after"),
 		type => "edit",

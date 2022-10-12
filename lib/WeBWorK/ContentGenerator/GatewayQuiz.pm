@@ -25,16 +25,17 @@ deal with versioning sets
 
 use strict;
 use warnings;
-use WeBWorK::CGI;
-use File::Path qw(rmtree);
+
 use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
+# Use the ContentGenerator formatDateTime, not the version in Utils.
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
-	ref2string makeTempDirectory path_is_subdir before after getAssetURL
-	between wwRound is_restricted);  # use the ContentGenerator formatDateTime, not the version in Utils
-use WeBWorK::DB::Utils qw(global2user user2global);
+	path_is_subdir before after getAssetURL between wwRound is_restricted);
+use WeBWorK::Utils::Rendering qw(constructPGOptions getTranslatorDebuggingOptions);
+use WeBWorK::Utils::ProblemProcessing qw/create_ans_str_from_responses compute_reduced_score/;
+use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
@@ -133,6 +134,8 @@ sub can_showSolutions {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem,
 		$tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
+
+	return 1 if $authz->hasPermissions($User->user_id, 'always_show_solution');
 
 	# this is the same as can_showCorrectAnswers
 	# gateway change here to allow correct answers to be viewed after all attempts
@@ -358,6 +361,7 @@ sub attemptResults {
 		cacheDir        => $ce->{webworkDirs}{equationCache},
 		cacheURL        => $ce->{webworkURLs}{equationCache},
 		cacheDB         => $ce->{webworkFiles}{equationCacheDB},
+		useMarkers      => 1,
 		dvipng_align    => $imagesModeOptions{dvipng_align},
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
@@ -384,7 +388,7 @@ sub attemptResults {
 	);
 
 	my $answerTemplate = $tbl->answerTemplate;
-	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+	$tbl->imgGen->render(body_text => $answerTemplate) if $tbl->displayMode eq 'images';
 	return $answerTemplate;
 }
 
@@ -912,25 +916,22 @@ sub pre_header_initialize {
 
 	# what does the user want to do?
 	my %want = (
-		showOldAnswers     => $User->showOldAnswers ne '' ?
-			$User->showOldAnswers : $ce->{pg}->{options}->{showOldAnswers},
+		showOldAnswers => $User->showOldAnswers ne '' ? $User->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
 		# showProblemGrader implies showCorrectAnswers.  This is a convenience for grading.
-		showCorrectAnswers => $r->param('showProblemGrader') ||
-			(($r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers})
-				&& ($submitAnswers || $checkAnswers)),
-		showProblemGrader  => $r->param('showProblemGrader') || 0,
-		showHints          => $r->param("showHints") || $ce->{pg}->{options}->{showHints},
+		showCorrectAnswers => ($r->param('showProblemGrader') || 0)
+			|| ($r->param("showCorrectAnswers") && ($submitAnswers || $checkAnswers)),
+		showProblemGrader => $r->param('showProblemGrader') || 0,
+		# Hints are not yet implemented in gateway quzzes.
+		showHints => 0,
 		# showProblemGrader implies showSolutions.  Another convenience for grading.
-		showSolutions      => $r->param('showProblemGrader') ||
-			(($r->param("showSolutions") || $ce->{pg}->{options}->{showSolutions})
-				&& ($submitAnswers || $checkAnswers)),
-		recordAnswers      => $submitAnswers && !$authz->hasPermissions($userName, "avoid_recording_answers"),
-		# we also want to check answers if we were checking answers and are
-		#    switching between pages
-		checkAnswers       => $checkAnswers,
-		useMathView        => $User->useMathView ne '' ? $User->useMathView : $ce->{pg}->{options}->{useMathView},
-		useWirisEditor     => $User->useWirisEditor ne '' ? $User->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor},
-		useMathQuill       => $User->useMathQuill ne '' ? $User->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
+		showSolutions => $r->param('showProblemGrader')
+			|| ($r->param("showSolutions") && ($submitAnswers || $checkAnswers)),
+		recordAnswers => $submitAnswers && !$authz->hasPermissions($userName, "avoid_recording_answers"),
+		# we also want to check answers if we were checking answers and are switching between pages
+		checkAnswers   => $checkAnswers,
+		useMathView    => $User->useMathView ne ''    ? $User->useMathView    : $ce->{pg}{options}{useMathView},
+		useWirisEditor => $User->useWirisEditor ne '' ? $User->useWirisEditor : $ce->{pg}{options}{useWirisEditor},
+		useMathQuill   => $User->useMathQuill ne ''   ? $User->useMathQuill   : $ce->{pg}{options}{useMathQuill},
 	);
 
 	# are certain options enforced?
@@ -973,12 +974,11 @@ sub pre_header_initialize {
 	}
 	##### store fields #####
 
-	## FIXME: the following is present in Problem.pm, but missing here.  how do we
-	##   deal with it in the context of multiple problems with possible hints?
-	## ##### fix hint/solution options #####
-	## $can{showHints}     &&= $pg->{flags}->{hintExists}
-	##                     &&= $pg->{flags}->{showHintLimit}<=$pg->{state}->{num_of_incorrect_ans};
-	##    $can{showSolutions} &&= $pg->{flags}->{solutionExists};
+	# FIXME: the following is present in Problem.pm, but missing here.  how do we
+	# deal with it in the context of multiple problems with possible hints?
+	# Update and fix hint/solution options after PG processing
+	# $can{showHints} &&= $pg->{flags}{hintExists};
+	# $can{showSolutions} &&= $pg->{flags}{solutionExists};
 
 	$self->{want} = \%want;
 	$self->{must} = \%must;
@@ -1590,7 +1590,7 @@ sub body {
 			if (ref($pg_results[$i])) {
 				my ($past_answers_string, $scores, $isEssay); #not used here
 				($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) =
-				WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses($self, $pg_results[$i]);
+					create_ans_str_from_responses($self, $pg_results[$i]);
 			} else {
 				my $prefix = sprintf('Q%04d_', $problemNumbers[$i]);
 				my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
@@ -1602,16 +1602,25 @@ sub body {
 			$problems[$i]->last_answer($encoded_last_answer_string);
 			$pureProblem->last_answer($encoded_last_answer_string);
 
-			# next, store the state in the database if that makes sense
+			# Next, store the state in the database if answers are being recorded.
 			if ($submitAnswers && $will{recordAnswers}) {
-				$problems[$i]->status(wwRound(2,$pg_results[$i]->{state}->{recorded_score}));
+				my $score = compute_reduced_score($ce, $problems[$i], $set, $pg_results[$i]{state}{recorded_score});
+				$problems[$i]->status($score) if $score > $problems[$i]->status;
+
+				$problems[$i]->sub_status($problems[$i]->status)
+					if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+						|| !$set->enable_reduced_scoring
+						|| before($set->reduced_scoring_date));
+
 				$problems[$i]->attempted(1);
-				$problems[$i]->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
-				$problems[$i]->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
-				$pureProblem->status(wwRound(2,$pg_results[$i]->{state}->{recorded_score}));
+				$problems[$i]->num_correct($pg_results[$i]{state}{num_of_correct_ans});
+				$problems[$i]->num_incorrect($pg_results[$i]{state}{num_of_incorrect_ans});
+
+				$pureProblem->status($problems[$i]->status);
+				$pureProblem->sub_status($problems[$i]->sub_status);
 				$pureProblem->attempted(1);
-				$pureProblem->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
-				$pureProblem->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
+				$pureProblem->num_correct($pg_results[$i]{state}{num_of_correct_ans});
+				$pureProblem->num_incorrect($pg_results[$i]{state}{num_of_incorrect_ans});
 
 				if ($db->putProblemVersion($pureProblem)) {
 					$scoreRecordedMessage[$i] = $r->maketext("Your score on this problem was recorded.");
@@ -1694,9 +1703,7 @@ sub body {
 				next unless ref($pg_results[$probOrder[$i]]);
 
 				my ($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) =
-					WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
-						$self, $pg_results[$probOrder[$i]]
-					);
+					create_ans_str_from_responses($self, $pg_results[ $probOrder[$i] ]);
 				$past_answers_string =~ s/\t+$/\t/;
 
 				if (!$past_answers_string || $past_answers_string =~ /^\t$/) {
@@ -1879,48 +1886,38 @@ sub body {
 	my $canShowWork = $authz->hasPermissions($user, "view_hidden_work") ||
 		($set->hide_work eq 'N' || ($set->hide_work eq 'BeforeAnswerDate' && $timeNow>$tmplSet->answer_date));
 
-	# for nicer answer checking on multi-page tests, we want to keep
-	#    track of any changes that someone made to a different page,
-	#    and what their score was.  we use @probStatus to do this.  we
-	#    initialize this to any known scores, and then update this when
-	#    calculating the score for checked or submitted tests
-	my @probStatus = ();
-	# we also figure out recorded score for the set, if any, and score
-	#    on this attempt
+	# For answer checking on multi-page tests, track changes that made on other pages, and scores for problems on those
+	# pages.  @probStatus is used for this.  Initialize this to the saved score either from a hidden input or the
+	# database, and then update this when calculating the score for checked or submitted tests.
+ 	my @probStatus;
+
+	# Figure out the recorded score for the set, and the score on this attempt.
 	my $recordedScore = 0;
 	my $totPossible = 0;
-	foreach (@problems) {
-		my $pv = ($_->value()) ? $_->value() : 1;
-		$totPossible += $pv;
-		$recordedScore += $_->status*$pv if (defined($_->status));
-		push(@probStatus, ($r->param("probstatus" . $_->problem_id) || $_->status || 0));
+	for (@problems) {
+		my $pv = $_->value // 1;
+		$totPossible   += $pv;
+		$recordedScore += $_->status * $pv if defined $_->status;
+		push(@probStatus, ($r->param('probstatus' . $_->problem_id) || $_->status || 0));
 	}
 
-	# to get the attempt score, we have to figure out what the score on
-	#    each part of each problem is, and multiply the total for the
-	#    problem by the weight (value) of the problem.  to make things
-	#    even more interesting, we are avoiding translating all of the
-	#    problems when checking answers
+	# To get the attempt score, determine the score for each problem, and multiply the total for the problem by the
+	# weight (value) of the problem.  Avoid translating all of the problems when checking answers.
 	my $attemptScore = 0;
 	if ($will{recordAnswers} || $will{checkAnswers}) {
-		my $i=0;
-		foreach my $pg (@pg_results) {
+		my $i = 0;
+		for my $pg (@pg_results) {
 			my $pValue = $problems[$i]->value() ? $problems[$i]->value() : 1;
 			my $pScore = 0;
-			my $numParts = 0;
-			if (ref($pg)) {  # then we have a pg object
-				###
-				$pScore = $pg->{state}->{recorded_score};
-				$probStatus[$i] = $pScore;
-				$numParts = 1;
-				###
-
+			if (ref $pg) {
+				# If a pg object is available, then use the pg recorded score and save it in the @probStatus array.
+				$pScore = compute_reduced_score($ce, $problems[$i], $set, $pg->{state}{recorded_score});
+				$probStatus[$i] = $pScore if $pScore > $probStatus[$i];
 			} else {
-				# if we don't have a pg object, use any known
-				#    problem status (this defaults to zero)
+				# If a pg object is not available, then use the saved problem status.
 				$pScore = $probStatus[$i];
 			}
-			$attemptScore += $pScore*$pValue/($numParts > 0 ? $numParts : 1);
+			$attemptScore += $pScore * $pValue;
 			$i++;
 		}
 	}
@@ -2021,6 +2018,25 @@ sub body {
 			print $r->maketext("The recorded score for this version is [_1]/[_2].",$recScore, $totPossible);
 			print CGI::end_div();
 		}
+	}
+
+	# Display the reduced scoring message if reduced scoring is enabled and the set is in the reduced scoring period.
+	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+		&& $set->enable_reduced_scoring
+		&& after($set->reduced_scoring_date)
+		&& before($set->due_date)
+		&& ($can{recordAnswersNextTime} || $submitAnswers))
+	{
+		print CGI::div(
+			{ class => 'gwMessage' },
+			CGI::b($r->maketext(
+				'Note: [_1]',
+				CGI::i($r->maketext(
+					'You are in the Reduced Scoring Period.  All work counts for [_1]% of the original.',
+					$ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100
+				))
+			))
+		);
 	}
 
 	# Remaining output of test headers:
@@ -2347,8 +2363,10 @@ sub body {
 				}
 
 				print CGI::div({ class => 'problem-content col-lg-10' }, $pg->{body_text});
+
 				print CGI::div({ class => 'mb-2' }, CGI::b($r->maketext('Note: [_1]', CGI::i($pg->{result}{msg}))))
 					if $pg->{result}{msg};
+
 				print CGI::div(
 					{ class => 'text-end mb-2' },
 					CGI::a(
@@ -2580,26 +2598,28 @@ sub getProblemHTML {
 	# FIXME  I'm not sure that problem_id is what we want here  FIXME
 	my $problemNumber = $mergedProblem->problem_id;
 
-	my $pg = WeBWorK::PG->new(
+	my $pg = WeBWorK::PG->new(constructPGOptions(
 		$ce,
 		$EffectiveUser,
-		$key,
 		$set,
 		$mergedProblem,
 		$psvn,
 		$formFields,
 		{    # translation options
-			displayMode     => $self->{displayMode},
-			showHints       => $showHints,
-			showSolutions   => $showSolutions,
-			refreshMath2img => $showHints || $showSolutions,
-			processAnswers  => 1,
-			QUIZ_PREFIX     => 'Q' . sprintf("%04d", $problemNumber) . '_',
-			useMathQuill    => $self->{will}{useMathQuill},
-			useMathView     => $self->{will}{useMathView},
-			useWirisEditor  => $self->{will}{useWirisEditor},
+			displayMode        => $self->{displayMode},
+			showHints          => $showHints,
+			showSolutions      => $showSolutions,
+			refreshMath2img    => $showHints || $showSolutions,
+			processAnswers     => 1,
+			QUIZ_PREFIX        => 'Q' . sprintf("%04d", $problemNumber) . '_',
+			useMathQuill       => $self->{will}{useMathQuill},
+			useMathView        => $self->{will}{useMathView},
+			useWirisEditor     => $self->{will}{useWirisEditor},
+			forceScaffoldsOpen => 1,
+			isInstructor       => $r->authz->hasPermissions($self->{userName}, 'view_answers'),
+			debuggingOptions   => getTranslatorDebuggingOptions($r->authz, $self->{userName})
 		},
-	);
+	));
 
 
 	# FIXME  is problem_id the correct thing in the following two stanzas?

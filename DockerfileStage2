@@ -119,10 +119,9 @@ COPY --from=base /opt/base/pg $APP_ROOT/pg
 # 6. Install third party javascript files.
 
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
-	&& cd $APP_ROOT/pg/lib/chromatic && gcc color.c -o color  \
 	&& cd $APP_ROOT/webwork2/ \
-		&& chown www-data DATA ../courses logs tmp $APP_ROOT/pg/lib/chromatic \
-		&& chmod -R u+w DATA ../courses logs tmp $APP_ROOT/pg/lib/chromatic   \
+		&& chown www-data DATA ../courses logs tmp \
+		&& chmod -R u+w DATA ../courses logs tmp   \
 	&& echo "en_US ISO-8859-1\nen_US.UTF-8 UTF-8" > /etc/locale.gen \
 		&& /usr/sbin/locale-gen \
 		&& echo "locales locales/default_environment_locale select en_US.UTF-8\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt \

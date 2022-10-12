@@ -452,6 +452,8 @@
 		ro.problemSeed = Math.floor((Math.random()*10000));
 		ro.showHints = document.querySelector('input[name="showHints"]')?.checked ? 1 : 0;
 		ro.showSolutions = document.querySelector('input[name="showSolutions"]')?.checked ? 1 : 0;
+		ro.isInstructor = 1;
+		ro.forceScaffoldsOpen = 1;
 		ro.noprepostambles = 1;
 		ro.processAnswers = 0;
 		ro.showFooter = 0;

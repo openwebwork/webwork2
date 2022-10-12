@@ -338,6 +338,7 @@
 		ro.showHints = 1;
 		ro.showSolutions = 1;
 		ro.permissionLevel = 10;
+		ro.isInstructor = 1;
 		ro.noprepostambles = 1;
 		ro.processAnswers = 0;
 		ro.showFooter = 0;
