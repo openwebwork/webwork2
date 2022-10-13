@@ -18,52 +18,48 @@ use parent WeBWorK::Request;
 
 =head1 NAME
 
-	WeBWorK::FakeRequest 
+WeBWorK::FakeRequest
 
 =head1 SYNPOSIS
 
- 	$fake_r = WeBWorK::FakeRequest->new ($input_hash, 'xmlrpc_module')
- 
+ 	$fake_r = WeBWorK::FakeRequest->new ($input_hash, 'rpc_module')
+
 =head1 DESCRIPTION
 
-- Imitate WeBWorK::Request behavior without benefit of Apache::Request
+Imitate WeBWorK::Request behavior without an actual Mojolicious::Controller object.
 
-This module is used in the WebworkWebservice suite, specifically by the WebworkXMLRPC, to facilitate
-authorization and authentication when the input hash is not an WeBWorK::Request object but does
-contain the authorization and authentication data. 
+This module is used in the WebworkWebservice suite, specifically by the WebworkRPC, to facilitate
+authorization and authentication when the input hash is not a WeBWorK::Request object but does
+contain the authorization and authentication data.
 
 It might be applicable for use elsewhere.
+
+Instead of being called with a Mojolicious::Controller object, this request
+object gets its data from an HTML data form.  It fakes the essential properties
+of the WeBWorK::Request object needed for authentication.
 
 =cut
 
 use strict;
 use warnings;
-use WeBWorK::Debug;
+
 use WeBWorK::Utils qw(runtime_use);
-
-# Instead of being called with an apache request object $r
-# this RequestObject  gets its data
-# from an HTML data form.  It creates a WeBWorK::FakeRequest object
-# which fakes the essential properties of the WeBWorK::Request object needed for authentication
-
-=head1 METHODS overriding those of WeBWorK::Request
-
 
 =over
 
 =item new (input, authen_module_name)
 
-Typically authen_module_name would be xmlrpc_module
+Typically authen_module_name would be the rpc_module.
 
-The  items userID session_key courseID course_password are taken from input
+The items userID, session_key, courseID, course_password, are taken from input
 and added to the FakeRequest instance variables as user, key, courseName and passwd.
-	
+
 =cut
 
 sub new {
-	my $class = shift;
-	my ($rh_input, $authen_module_name) = @_;    #rh_input is required; ce is optional
-	my $self = {
+	my ($class, $rh_input, $authen_module_name) = @_;
+
+	my $self = bless {
 		user       => $rh_input->{userID},
 		key        => $rh_input->{session_key},
 		courseName => $rh_input->{courseID},
@@ -78,47 +74,61 @@ sub new {
 		urlpath => '',
 		xmlrpc  => 1,
 		%$rh_input,
-	};
-	#warn "FakeRequest $class, authen_module_name $authen_module_name";
-	$self = bless $self, $class;
-	debug("self has type ", ref($self),);
+	}, $class;
 
-	# now we need to finish initializing $fake_r;
-	# create CourseEnvironment
-	my $ce = $self->ce($self->create_course_environment());
+	# Create CourseEnvironment
+	my $ce = $self->ce(WeBWorK::CourseEnvironment->new({
+		webwork_dir => $WeBWorK::Constants::WEBWORK_DIRECTORY,
+		courseName  => $self->{courseName}
+	}));
+	warn "Unable to find environment for course: |$self->{courseName}|" unless ref $ce;
 
-	# create database object
+	# Create database object
 	$self->db(WeBWorK::DB->new($ce->{dbLayout}));
 
-	# store Localization subroutine
-	my $language = $ce->{language} || "en";
-	$self->language_handle(WeBWorK::Localize::getLoc($language));
+	# Store Localization subroutine
+	$self->language_handle(WeBWorK::Localize::getLoc($ce->{language} || 'en'));
 
-	# create, initialize and store authen object
-	my $user_authen_module = WeBWorK::Authen::class($ce, $authen_module_name);    #default: xmlrpc_module
+	# Create, initialize, and store authen object
+	my $user_authen_module = WeBWorK::Authen::class($ce, $authen_module_name);
 	runtime_use $user_authen_module;
-	my $authen = $user_authen_module->new($self);
-	$self->authen($authen);
+	$self->authen($user_authen_module->new($self));
 
-	# create and store authz object
-	my $authz = WeBWorK::Authz->new($self);
-	$self->authz($authz);
+	# Create and store authz object
+	$self->authz(WeBWorK::Authz->new($self));
 	return $self;
 }
 
-=item param
+=item METHODS that emulate WeBWorK::Request methods
 
-Imitate get behavior of the Apache::Request object params method
+    param
+    useragent_ip
+    remote_port
+    headers_in
+
+These methods imitate behavior of the corresponding WeBWorK::Request method, but
+don't do the things that require an actual network request.
+
+=back
 
 =cut
 
-sub param {    # imitate get behavior of the request object params method
-	my $self  = shift;
-	my $param = shift;
-	$self->{$param};
+sub param {
+	my ($self, $param) = @_;
+	return $self->{$param};
 }
 
-=back
+sub useragent_ip {
+	return 'fake ip';
+}
+
+sub remote_port {
+	return;
+}
+
+sub headers_in {
+	return { 'User-Agent' => 'fake user agent' };
+}
 
 =head1 METHODS inherited from WeBWorK::Request
 
@@ -130,28 +140,20 @@ Return the course environment (WeBWorK::CourseEnvironment) associated with this
 request. If $new is specified, set the course environment to $new before
 returning the value.
 
-
-
 =item db([$new])
 
 Return the database (WeBWorK::DB) associated with this request. If $new is
 specified, set the database to $new before returning the value.
-
-
 
 =item authen([$new])
 
 Return the authenticator (WeBWorK::Authen) associated with this request. If $new
 is specified, set the authenticator to $new before returning the value.
 
-
-
 =item authz([$new])
 
 Return the authorizer (WeBWorK::Authz) associated with this request. If $new is
 specified, set the authorizer to $new before returning the value.
-
-
 
 =item urlpath([$new])
 
@@ -159,53 +161,14 @@ Return the URL path (WeBWorK::URLPath) associated with this request. If $new is
 specified, set the URL path to $new before returning the value. (Does this need modification
 from the WeBWorK::Request version???)
 
-=cut
-
-# sub urlpath {
-# 	my $self = shift;
-# 	$self->{urlpath} = shift if @_;
-# 	return $self->{urlpath};
-# }
-
 =item language_handle([$new])
 
 Return the URL path (WeBWorK::URLPath) associated with this request. If $new is
 specified, set the URL path to $new before returning the value.
 
-=cut
-
 =item maketext([$new])
 
 Return the subroutine that translates phrases (defined in WeBWorK::Localization)
-
-=cut
-
-=item location()
-
-Overrides the location() method in Apache::Request (or Apache2::Request) so that
-if the location is "/", the empty string is returned.
-
-=cut
-
-=item create_course_environment()
-
-A method that reads the configuration files and returns the course environment.
-It uses the $self->{courseName}  variable.
-
-=cut 
-
-sub create_course_environment {
-	my $self       = shift;
-	my $courseName = $self->{courseName};
-	my $ce         = WeBWorK::CourseEnvironment->new({
-		webwork_dir => $WeBWorK::Constants::WEBWORK_DIRECTORY,
-		courseName  => $courseName
-	});
-	warn "Unable to find environment for course: |$courseName|" unless ref($ce);
-	return ($ce);
-}
-
-=back
 
 =cut
 

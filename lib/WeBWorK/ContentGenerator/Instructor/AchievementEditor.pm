@@ -16,7 +16,6 @@
 package WeBWorK::ContentGenerator::Instructor::AchievementEditor;
 use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator::Instructor);
-use base qw(WeBWorK::ContentGenerator::renderViaXMLRPC);
 
 =head1 NAME
 

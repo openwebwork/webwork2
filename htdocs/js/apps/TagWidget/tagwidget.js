@@ -1,4 +1,3 @@
-// Setup for ajax
 (async () => {
 	// Load the library taxonomy from the JSON file.
 	const tagWidgetScript = document.getElementById('tag-widget-script');
@@ -12,7 +11,7 @@
 
 	const taxo = await response.json();
 
-	const basicWebserviceURL = '/webwork2/instructorXMLHandler';
+	const basicWebserviceURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/instructor_rpc`;
 
 	function readfromtaxo(who, valarray) {
 		var mytaxo = taxo;
@@ -57,7 +56,7 @@
 		const myCourseID = $('#hidden_courseID').val();
 		const mySessionKey = $('#hidden_key').val();
 		const requestObject = {
-			'xml_command': 'listLib',
+			'rpc_command': 'listLib',
 			'library_name': 'Library',
 			'command': 'searchLib'
 		};
@@ -71,7 +70,7 @@
 				+ myCourseID, "alert-danger");
 			return null;
 		}
-		requestObject.xml_command = command;
+		requestObject.rpc_command = command;
 		return requestObject;
 	}
 
@@ -131,10 +130,7 @@
 		requestObject.command = path;
 		// console.log(requestObject);
 		return $.post(basicWebserviceURL, requestObject, function (data) {
-			var response = JSON.parse(data);
-			var dat = response.result_data;
-			// console.log(dat);
-			tag_widget_update('subjects', 'get', id, dat);
+			tag_widget_update('subjects', 'get', id, data.result_data);
 		});
 	}
 
@@ -161,10 +157,7 @@
 		requestObject.command = path;
 		// console.log(requestObject);
 		return $.post(basicWebserviceURL, requestObject, function (data) {
-			var response = JSON.parse(data);
-			var mesg = response.server_response;
-			// console.log(response);
-			$('#'+id+'result').text(mesg);
+			$('#'+id+'result').text(data.server_response);
 		});
 	}
 

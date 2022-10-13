@@ -48,11 +48,12 @@ sub startup ($app) {
 	my $webwork_htdocs_dir  = $ce->{webwork_htdocs_dir};
 	my $webwork_courses_url = $ce->{webwork_courses_url};
 	my $webwork_courses_dir = $ce->{webwork_courses_dir};
+	my $server_root_url     = $ce->{server_root_url};
 
 	$app->log->info('WeBWorK server is starting');
 	$app->log->info("WeBWorK root directory set to $ENV{WEBWORK_ROOT}");
 	$app->log->info("PG root directory set to $ENV{PG_ROOT}");
-	$app->log->info("The webwork url on this site is $ce->{server_root_url}$webwork_url");
+	$app->log->info("The webwork url on this site is ${server_root_url}$webwork_url");
 
 	$WEBWORK_SERVER_ADMIN = $ce->{webwork_server_admin_email};
 	if ($WEBWORK_SERVER_ADMIN) {
@@ -65,7 +66,8 @@ sub startup ($app) {
 	# the empty string for '/'.
 	$app->helper(location => sub ($) { return $webwork_url eq '/' ? '' : $webwork_url });
 
-	$app->helper(server_root_url => sub ($) { return $ce->{server_root_url}; });
+	$app->helper(server_root_url => sub ($) { return $server_root_url; });
+	$app->helper(webwork_url     => sub ($) { return $webwork_url; });
 
 	# Add a hook to add extra headers if set in the config file.
 	if (ref $config->{extra_headers} eq 'HASH') {
@@ -123,9 +125,6 @@ sub startup ($app) {
 			return $c->render(data => 'File not found', status => 404);
 		}
 	);
-
-	# Set up the WebworkWebservice.
-	$r->any('/mod_xmlrpc' => sub ($c) { return $c->render(data => 'TODO'); });
 
 	# Send all routes under $webwork_url to the handler.
 	# Note that these routes must come last to support the case that $webwork_url is '/'.

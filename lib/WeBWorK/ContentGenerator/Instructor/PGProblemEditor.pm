@@ -16,7 +16,6 @@
 package WeBWorK::ContentGenerator::Instructor::PGProblemEditor;
 use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator::Instructor);
-use base qw(WeBWorK::ContentGenerator::renderViaXMLRPC);
 
 use constant DEFAULT_SEED => 123456;
 

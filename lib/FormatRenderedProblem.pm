@@ -1,5 +1,3 @@
-#!/usr/bin/perl -w
-
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
@@ -23,56 +21,20 @@ FormatRenderedProblem.pm
 
 package FormatRenderedProblem;
 
-use WeBWorK::Utils::AttemptsTable;
-use WeBWorK::Utils qw(wwRound decode_utf8_base64 getAssetURL);
-use WeBWorK::CGI;
+use strict;
+use warnings;
+
 use XML::Simple qw(XMLout);
-use WeBWorK::Utils::LanguageAndDirection;
 use JSON;
 use Digest::SHA qw(sha1_base64);
 
-sub new {
-	my $invocant = shift;
-	my $class    = ref $invocant || $invocant;
-	$self = {
-		return_object   => {},
-		encoded_source  => {},
-		sourceFilePath  => '',
-		site_url        => 'https://demo.webwork.rochester.edu',
-		form_action_url => '',
-		maketext        => sub { return @_ },
-		courseID        => 'daemon_course',                        # optional?
-		userID          => 'daemon',                               # optional?
-		course_password => 'daemon',
-		inputs_ref      => {},
-		@_,
-	};
-	bless $self, $class;
-}
-
-sub return_object {    # out
-	my $self   = shift;
-	my $object = shift;
-	$self->{return_object} = $object if defined $object and ref($object);    # source is non-empty
-	$self->{return_object};
-}
-
-sub encoded_source {
-	my $self   = shift;
-	my $source = shift;
-	$self->{encoded_source} = $source if defined $source and $source =~ /\S/;    # source is non-empty
-	$self->{encoded_source};
-}
-
-sub site_url {
-	my $self    = shift;
-	my $new_url = shift;
-	$self->{site_url} = $new_url if defined($new_url) and $new_url =~ /\S/;
-	$self->{site_url};
-}
+use WeBWorK::Utils::AttemptsTable;
+use WeBWorK::Utils qw(wwRound getAssetURL);
+use WeBWorK::CGI;
+use WeBWorK::Utils::LanguageAndDirection;
 
 sub formatRenderedProblem {
-	my $self        = shift;
+	my $self        = shift;                           # $self is a misnomer here.  This is a WebworkWebservice object.
 	my $problemText = '';
 	my $rh_result   = $self->return_object() || {};    # wrap problem in formats
 	$problemText = "No output from rendered Problem" unless $rh_result;
@@ -130,7 +92,7 @@ sub formatRenderedProblem {
 	my $course_password           = $self->{course_password}   // "";
 	my $problemSeed               = $rh_result->{problem_seed} // $self->{inputs_ref}{problemSeed} // 6666;
 	my $psvn                      = $rh_result->{psvn}         // $self->{inputs_ref}{psvn}        // 54321;
-	my $session_key               = $rh_result->{session_key}  // "";
+	my $session_key               = $rh_result->{session_key}  // $self->{inputs_ref}{session_key} // '';
 	my $displayMode               = $self->{inputs_ref}{displayMode};
 	my $hideWasNotRecordedMessage = $ce->{hideWasNotRecordedMessage} // 0;
 
@@ -230,7 +192,7 @@ sub formatRenderedProblem {
 
 	$problemHeadText .= $rh_result->{header_text}      // '';
 	$problemHeadText .= $rh_result->{post_header_text} // '';
-	$extra_header_text = $self->{inputs_ref}{extra_header_text} // '';
+	my $extra_header_text = $self->{inputs_ref}{extra_header_text} // '';
 	$problemHeadText .= $extra_header_text;
 
 	# Set up the problem language and direction
@@ -248,7 +210,7 @@ sub formatRenderedProblem {
 	# A problemUUID should be added to the request as a parameter.  It is used by PG to create a proper UUID for use in
 	# aliases for resources.  It should be unique for a course, user, set, problem, and version.
 	my $problemUUID       = $self->{inputs_ref}{problemUUID}       // '';
-	my $problemResult     = $rh_result->{problem_result}           // '';
+	my $problemResult     = $rh_result->{problem_result}           // {};
 	my $problemState      = $rh_result->{problem_state}            // '';
 	my $showSummary       = $self->{inputs_ref}{showSummary}       // 1;
 	my $showAnswerNumbers = $self->{inputs_ref}{showAnswerNumbers} // 1;
@@ -303,8 +265,10 @@ sub formatRenderedProblem {
 	}
 
 	# Answer hash in XML format used by the PTX format.
-	my $answerhashXML = XMLout($rh_result->{answers} // {}, RootName => 'answerhashes')
-		if $self->{inputs_ref}{outputformat} // "" eq "ptx";
+	my $answerhashXML =
+		($self->{inputs_ref}{outputformat} // '') eq 'ptx'
+		? XMLout($rh_result->{answers} // {}, RootName => 'answerhashes')
+		: '';
 
 	# Sticky format local storage messages
 	my $localStorageMessages = CGI::div({ id => 'local-storage-messages' },
@@ -334,20 +298,11 @@ sub formatRenderedProblem {
 	my $showSolutions = $self->{inputs_ref}{showSolutions} // "";
 	my $showHints     = $self->{inputs_ref}{showHints}     // "";
 
-	# Regular Perl warning messages generated with warn.
+	# PG warning messages (this includes translator warnings).
 	my $warnings = '';
 	if ($rh_result->{pg_warnings}) {
-		$warnings .= CGI::div(
-			{ class => 'alert alert-danger mb-2 p-1' },
-			CGI::h3('Warning Messages') . join('<br>', split("\n", decode_utf8_base64($rh_result->{pg_warnings})))
-		);
-	}
-	if ($rh_result->{translator_warnings}) {
-		$warnings .= CGI::div(
-			{ class => 'alert alert-danger mb-2 p-1' },
-			CGI::h3('Translator Warnings')
-				. join('<br>', split("\n", decode_utf8_base64($rh_result->{translator_warnings})))
-		);
+		$warnings .= CGI::div({ class => 'alert alert-danger mb-2 p-1' },
+			CGI::h3('Warning Messages') . join('<br>', split("\n", $rh_result->{pg_warnings})));
 	}
 
 	# PG debug messages generated with DEBUG_message();
@@ -395,7 +350,7 @@ sub formatRenderedProblem {
 			{
 				# Interpolate values
 				if ($key =~ /_AVI$/) {
-					map {s/(\$\w+)/$1/gee} @{ $json_output->{$key} };
+					map { $json_output->{$key}{$_} =~ s/(\$\w+)/$1/gee } @{ $json_output->{$key} };
 				} else {
 					$json_output->{$key} =~ s/(\$\w+)/$1/gee;
 				}
@@ -581,7 +536,7 @@ EOS
 sub format_hash_ref {
 	my $hash = shift;
 	warn "Use a hash reference" unless ref($hash) =~ /HASH/;
-	return join(" ", map { $_ = "--" unless defined($_); $_ } %$hash) . "\n";
+	return join(" ", map { $_ // '--' } %$hash) . "\n";
 }
 
 1;

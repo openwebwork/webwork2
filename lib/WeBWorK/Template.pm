@@ -156,7 +156,7 @@ async sub template {
 				if ($cg->can($function)) {
 					my @result = $cg->$function({@args});
 					@result = await $result[0]
-						if @result && ref $result[0] && ($result[0]->isa('Future') || $result[0]->isa('Mojo::Promise'));
+						if @result && ref $result[0] eq 'Future' || ref $result[0] eq 'Mojo::Promise';
 					if (@result && defined($result[0])) {
 						print @result;
 					} else {

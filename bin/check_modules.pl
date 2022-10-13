@@ -146,7 +146,6 @@ my @modulesList = qw(
 	XML::Parser::EasyTree
 	XML::Simple
 	XML::Writer
-	XMLRPC::Lite
 	YAML::XS
 );
 

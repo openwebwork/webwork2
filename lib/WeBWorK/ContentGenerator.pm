@@ -209,7 +209,7 @@ async sub go {
 
 	if ($self->can('initialize')) {
 		my $initialize = $self->initialize;
-		await $initialize if ref $initialize && ($initialize->isa('Future') || $initialize->isa('Mojo::Promise'));
+		await $initialize if ref $initialize eq 'Future' || ref $initialize eq 'Mojo::Promise';
 	}
 
 	await $self->content();
@@ -1370,6 +1370,24 @@ sub title {
 		print $urlpath->name(1);
 	}
 
+	return '';
+}
+
+=item webwork_url
+
+Defined in this package.
+
+Outputs the $webwork_url defined in site.conf, unless $webwork_url is equal to
+"/", in which case this outputs the empty string.
+
+This is used to set a value in a global webworkConfig javascript variable,
+that can be accessed in javascript files.
+
+=cut
+
+sub webwork_url {
+	my $self = shift;
+	print $self->r->location;
 	return '';
 }
 

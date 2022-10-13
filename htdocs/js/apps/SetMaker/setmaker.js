@@ -1,7 +1,8 @@
 (() => {
-	const basicWebserviceURL = '/webwork2/instructorXMLHandler';
+	const webworkURL = webworkConfig?.webwork_url ?? '/webwork2';
+	const basicWebserviceURL = `${webworkURL}/instructor_rpc`;
 
-	// Informational alerts
+	// Informational alerts/errors
 	const alertToast = (title, msg, good = false) => {
 		const toastContainer = document.createElement('div');
 		toastContainer.classList.add(
@@ -21,30 +22,6 @@
 		bsToast.show();
 	};
 
-	// Error display
-	const reportWWerror = (data) => {
-		const modal = document.createElement('div');
-		modal.classList.add('modal', 'modal-dialog-centered', 'gt-modal');
-		modal.tabIndex = -1;
-		modal.setAttribute('aria-labelledby', 'webwork-error-modal');
-		modal.setAttribute('aria-hidden', 'true');
-
-		modal.innerHTML = '<div class="modal-dialog modal-xl"><div class="modal-content">' +
-			'<div class="modal-header">' +
-			`<h5 class="modal-title" id="webwork-error-modal">WeBWorK Error</h5>` +
-			'<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
-			'</div>' +
-			`<div class="modal-body">${data}</div>` +
-			'<div class="modal-footer">' +
-			'<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>' +
-			'</div>' +
-			'</div></div>';
-		document.body.append(modal);
-		const bsModal = new bootstrap.Modal(modal);
-		bsModal.show();
-		modal.addEventListener('hidden.bs.modal', () => { bsModal.dispose(); modal.remove(); });
-	}
-
 	// This is a convenience method for attaching both a click and keydown handler to spans that are inert by default.
 	const attachEventListeners = (button, handler) => {
 		button.addEventListener('click', handler);
@@ -60,7 +37,7 @@
 		const myUser = document.getElementById('hidden_user')?.value;
 		const myCourseID = document.getElementById('hidden_courseID')?.value;
 		const mySessionKey = document.getElementById('hidden_key')?.value;
-		const requestObject = { xml_command: 'listLib', library_name: 'Library', command: 'buildtree' };
+		const requestObject = { rpc_command: 'listLib', library_name: 'Library', command: 'buildtree' };
 		if (myUser && mySessionKey && myCourseID) {
 			requestObject.user = myUser;
 			requestObject.session_key = mySessionKey;
@@ -70,7 +47,7 @@
 				mySessionKey ?? 'unknown'}, courseID: ${myCourseID ?? 'unknown'}`);
 			return null;
 		}
-		requestObject.xml_command = command;
+		requestObject.rpc_command = command;
 		return requestObject;
 	};
 
@@ -120,18 +97,20 @@
 				clearTimeout(timeoutId);
 
 				if (!response.ok) {
-					const data = await response.text();
-					if (/WeBWorK error/.test(data)) reportWWerror(data);
-					else throw 'Unknown server communication error.';
+					throw 'Unknown server communication error.';
 				} else {
 					const data = await response.json();
-					const num = data.result_data[0];
-					document.getElementById('library_count_line').innerHTML = num === '1'
-						? 'There is 1 matching WeBWorK problem'
-						: `There are ${num} matching WeBWorK problems.`;
+					if (data.error) {
+						throw data.error;
+					} else {
+						const num = data.result_data[0];
+						document.getElementById('library_count_line').innerHTML = num === '1'
+							? 'There is 1 matching WeBWorK problem'
+							: `There are ${num} matching WeBWorK problems.`;
+					}
 				}
 			} catch (e) {
-				alertToast(basicWebserviceURL, e.message);
+				alertToast(basicWebserviceURL, e?.message ?? e);
 			}
 			return;
 		}
@@ -161,18 +140,20 @@
 			clearTimeout(timeoutId);
 
 			if (!response.ok) {
-				const data = await response.text();
-				if (/WeBWorK error/.test(data)) reportWWerror(data);
-				else throw 'Unknown server communication error.';
+				throw 'Unknown server communication error.';
 			} else {
 				const data = await response.json();
-				const arr = data.result_data;
-				arr.unshift(all);
-				setselect(`library_${who}`, arr);
-				lib_update(child[who], 'clear');
+				if (data.error) {
+					throw data.error;
+				} else {
+					const arr = data.result_data;
+					arr.unshift(all);
+					setselect(`library_${who}`, arr);
+					lib_update(child[who], 'clear');
+				}
 			}
 		} catch (e) {
-			alertToast(basicWebserviceURL, e.message);
+			alertToast(basicWebserviceURL, e?.message ?? e);
 		}
 	};
 
@@ -234,14 +215,14 @@
 				clearTimeout(timeoutId);
 
 				if (!response.ok) {
-					const data = await response.text();
-					if (/WeBWorK error/.test(data)) reportWWerror(data);
-					else throw 'Unknown server communication error.';
-					return;
+					throw 'Unknown server communication error.';
+				} else {
+					const data = await response.json();
+					if (data.error) throw data.error;
 				}
 			}
 		} catch (e) {
-			alertToast(basicWebserviceURL, e.message);
+			alertToast(basicWebserviceURL, e?.message ?? e);
 			return;
 		}
 
@@ -260,7 +241,7 @@
 
 	// Update the messages about which problems are in the current set.
 	const markinset = async () => {
-		const ro = init_webservice('listSetProblems');
+		const ro = init_webservice('listGlobalSetProblems');
 		ro.set_id = document.getElementById('local_sets')?.value;
 		ro.command = 'true';
 
@@ -279,20 +260,22 @@
 
 			if (response.ok) {
 				const data = await response.json();
-				const paths = data.result_data.map((problem) => problem.path);
-				const shownProbs = document.querySelectorAll('[name^="filetrial"]');
-				for (const shownProb of shownProbs) {
-					const inset = document.getElementById(`inset${shownProb.name.replace('filetrial', '')}`);
-					if (paths.includes(shownProb.value)) inset?.classList.remove('d-none');
-					else inset?.classList.add('d-none');
+				if (data.error) {
+					throw data.error;
+				} else {
+					const paths = data.result_data.map((problem) => problem.path);
+					const shownProbs = document.querySelectorAll('[name^="filetrial"]');
+					for (const shownProb of shownProbs) {
+						const inset = document.getElementById(`inset${shownProb.name.replace('filetrial', '')}`);
+						if (paths.includes(shownProb.value)) inset?.classList.remove('d-none');
+						else inset?.classList.add('d-none');
+					}
 				}
 			} else {
-				const data = await response.text();
-				if (/WeBWorK error/.test(data)) reportWWerror(data);
-				else throw 'Unknown server communication error.';
+				throw 'Unknown server communication error.';
 			}
 		} catch (e) {
-			alertToast(basicWebserviceURL, e.message);
+			alertToast(basicWebserviceURL, e?.message ?? e);
 		}
 	};
 
@@ -424,7 +407,7 @@
 
 	// Problem rendering
 
-	const basicRendererURL = '/webwork2/html2xml';
+	const basicRendererURL = `${webworkURL}/render_rpc`;
 
 	const render = (id) => new Promise((resolve) => {
 		const renderArea = document.getElementById(`psr_render_area_${id}`);
@@ -485,30 +468,16 @@
 			clearTimeout(timeoutId);
 			return response.json();
 		}).then((data) => {
-			// Give nicer session timeout error
-			if (!data.html || /Can\'t authenticate -- session may have timed out/i.test(data.html) ||
-				/Webservice.pm: Error when trying to authenticate./i.test(data.html)) {
-				renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-					+ "Can't authenticate -- session may have timed out.</div>";
-				resolve();
-				return;
-			}
+			// If the error is set, show that.
+			if (data.error) throw data.error;
+			// This shouldn't happen if the error is not set.
+			if (!data.html) throw 'A server error occured.  The response had no content.';
 			// Give nicer file not found error
-			if (/this problem file was empty/i.test(data.html)) {
-				renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-					+ 'No Such File or Directory!</div>';
-				resolve();
-				return;
-			}
+			if (/this problem file was empty/i.test(data.html)) throw 'No Such File or Directory!';
 			// Give nicer problem rendering error
 			if ((data.pg_flags && data.pg_flags.error_flag) ||
-				/error caught by translator while processing problem/i.test(data.html) ||
-				/error message for command: renderproblem/i.test(data.html)) {
-				renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-					+ 'There was an error rendering this problem!</div>';
-				resolve();
-				return;
-			}
+				/error caught by translator while processing problem/i.test(data.html))
+				throw 'There was an error rendering this problem!';
 
 			if (!(iframe && iframe.iFrameResizer)) {
 				iframe = document.createElement('iframe');
@@ -532,8 +501,7 @@
 			}
 			iframe.srcdoc = data.html;
 		}).catch((err) => {
-			renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-				+ `${basicRendererURL}: ${err.message}</div>`;
+			renderArea.innerHTML = `<div class="alert alert-danger p-1 mb-0 fw-bold">${err?.message ?? err}</div>`;
 			resolve();
 		});
 	});

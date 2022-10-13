@@ -36,6 +36,10 @@
 <!--#if exists="math4-overrides.css"-->
 <link rel="stylesheet" href="<!--#url type="webwork" name="theme" file="math4-overrides.css"-->"/>
 <!--#endif-->
+
+<!-- Webwork configuration for javascript -->
+<script>const webworkConfig = { webwork_url: '<!--#webwork_url-->' };</script>
+
 <script src="<!--#url type="webwork" name="htdocs" file="js/apps/MathJaxConfig/mathjax-config.js"-->" defer></script>
 <script src="<!--#url type="webwork" name="htdocs" file="node_modules/mathjax/es5/tex-svg.js"-->" id="MathJax-script" defer></script>
 <script src="<!--#url type="webwork" name="htdocs" file="node_modules/jquery/dist/jquery.min.js"-->"></script>

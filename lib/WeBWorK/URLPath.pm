@@ -50,9 +50,10 @@ Note:  Only database keyfield values can be used as path parameters.
  root                                /
 
  course_admin                        /admin/ -> logout, options, instructor_tools
+ render_rpc                          /render_rpc/
  html2xml                            /html2xml/
  pgtotex                             /pgtotex/
- instructorXMLHandler                /instructorXMLHandler/
+ instructor_rpc                      /instructor_rpc/
  set_list                            /$courseID/
 
  equation_display                    /$courseID/equation/
@@ -128,7 +129,7 @@ our %pathTypes = (
 	root => {
 		name    => 'WeBWorK',
 		parent  => '',
-		kids    => [qw/course_admin  html2xml pgtotex instructorXMLHandler set_list /],
+		kids    => [qw/course_admin render_rpc html2xml pgtotex instructor_rpc set_list /],
 		match   => qr|^/|,
 		capture => [qw//],
 		produce => '/',
@@ -146,14 +147,25 @@ our %pathTypes = (
 
 	################################################################################
 
+	render_rpc => {
+		name    => 'render_rpc',
+		parent  => 'root',
+		kids    => [qw//],
+		match   => qr|^render_rpc/|,
+		capture => [qw//],
+		produce => 'render_rpc/',
+		display => 'WeBWorK::ContentGenerator::RenderViaRPC',
+	},
+	# The html2xml path is an deprecated alias to the render_rpc path above.
+	# It no longer has anything to do with xml, and so the path name does not make sense anymore.
 	html2xml => {
 		name    => 'html2xml',
-		parent  => 'root',                                         #    'set_list',
+		parent  => 'root',                                      #    'set_list',
 		kids    => [qw//],
 		match   => qr|^html2xml/|,
 		capture => [qw//],
 		produce => 'html2xml/',
-		display => 'WeBWorK::ContentGenerator::renderViaXMLRPC',
+		display => 'WeBWorK::ContentGenerator::RenderViaRPC',
 	},
 	pgtotex => {
 		name    => 'PG to Tex translator',
@@ -164,14 +176,14 @@ our %pathTypes = (
 		produce => 'pgtotex/',
 		display => 'WeBWorK::ContentGenerator::PGtoTexRenderer',
 	},
-	instructorXMLHandler => {
-		name    => 'instructorXMLHandler',
+	instructor_rpc => {
+		name    => 'instructor_rpc',
 		parent  => 'root',
 		kids    => [qw//],
-		match   => qr|^instructorXMLHandler/|,
+		match   => qr|^instructor_rpc/|,
 		capture => [qw//],
-		produce => 'instructorXMLHandler/',
-		display => 'WeBWorK::ContentGenerator::instructorXMLHandler',
+		produce => 'instructor_rpc/',
+		display => 'WeBWorK::ContentGenerator::InstructorRPCHandler',
 	},
 	set_list => {
 		name   => '[_4]',

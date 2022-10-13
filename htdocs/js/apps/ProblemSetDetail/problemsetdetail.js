@@ -294,7 +294,7 @@
 	}, { passive: true });
 
 	// Send a request to the webwork webservice and render a problem.
-	const basicWebserviceURL = '/webwork2/html2xml';
+	const basicWebserviceURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/render_rpc`;
 
 	const render = (id) => new Promise((resolve) => {
 		const renderArea = document.getElementById(`psr_render_area_${id}`);
@@ -333,7 +333,7 @@
 
 		ro.outputformat = 'simple';
 		ro.showAnswerNumbers = 0;
-		ro.set_id = $('#hidden_set_id').val();
+		ro.set_id = document.getElementById('hidden_set_id')?.value ?? 'Unknown Set';
 		ro.probNum = id;
 		ro.showHints = 1;
 		ro.showSolutions = 1;
@@ -365,30 +365,16 @@
 			clearTimeout(timeoutId);
 			return response.json();
 		}).then((data) => {
-			// Give nicer session timeout error
-			if (!data.html || /Can\'t authenticate -- session may have timed out/i.test(data.html) ||
-				/Webservice.pm: Error when trying to authenticate./i.test(data.html)) {
-				renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-					+ "Can't authenticate -- session may have timed out.</div>";
-				resolve();
-				return;
-			}
+			// If the error is set, show that.
+			if (data.error) throw data.error;
+			// This generally shouldn't happen.
+			if (!data.html) throw 'A server error occured.  The response had no content';
 			// Give nicer file not found error
-			if (/this problem file was empty/i.test(data.html)) {
-				renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-					+ 'No Such File or Directory!</div>';
-				resolve();
-				return;
-			}
+			if (/this problem file was empty/i.test(data.html)) throw 'No Such File or Directory!';
 			// Give nicer problem rendering error
-			if (data.pg_flags && data.pg_flags.error_flag  ||
-				/error caught by translator while processing problem/i.test(data.html) ||
-				/error message for command: renderproblem/i.test(data.html)) {
-				renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-					+ 'There was an error rendering this problem!</div>';
-				resolve();
-				return;
-			}
+			if ((data.pg_flags && data.pg_flags.error_flag) ||
+				/error caught by translator while processing problem/i.test(data.html))
+				throw 'There was an error rendering this problem!';
 
 			const iframe = document.createElement('iframe');
 			iframe.id = `psr_render_iframe_${id}`;
@@ -405,8 +391,7 @@
 			iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe);
 			iframe.addEventListener('load', () => resolve());
 		}).catch((err) => {
-			renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-				+ `${basicWebserviceURL}: ${err.message}` + '</div>';
+			renderArea.innerHTML = `<div class="alert alert-danger p-1 mb-0 fw-bold">${err?.message ?? err}</div>`;
 			resolve();
 		});
 	});

@@ -95,8 +95,6 @@ async sub dispatch {
 	debug("The URI is $uri\n");
 	debug("The path-info is $path_info\n");
 	debug("The argument string is $args\n");
-	#debug("The WeBWorK root directory is $webwork_root\n");
-	#debug("The PG root directory is $pg_root\n");
 	debug(("-" x 80) . "\n");
 
 	debug("The first thing we need to do is munge the path a little:\n");

@@ -11,13 +11,10 @@ BEGIN {
 ###############################################################################
 
 	our $webwork_directory = $WeBWorK::Constants::WEBWORK_DIRECTORY;    #'/opt/webwork/webwork2';
-	print "WebworkSOAP::WSDL: webwork_directory set to ", $WeBWorK::Constants::WEBWORK_DIRECTORY,
-		" via \$WeBWorK::Constants::WEBWORK_DIRECTORY set in webwork.apache2-config\n";
 	my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_directory });
 	die "Can't create seed course environment for webwork in $webwork_directory" unless ref($seed_ce);
 	my $server_root_url = $seed_ce->{server_root_url};                  #"http://localhost";
 	our $RPC_URL = "$server_root_url/webwork2_rpc";
-	print "WebworkSOAP::WSDL: rpc_url set to $RPC_URL \n";
 
 }
 
