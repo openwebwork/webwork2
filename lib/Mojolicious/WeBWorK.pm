@@ -62,6 +62,7 @@ sub startup ($app) {
 	}
 
 	# Helpers
+
 	# This replaces the previous Apache2::RequestUtil method that was overriden in the WeBWorK::Request module to return
 	# the empty string for '/'.
 	$app->helper(location => sub ($) { return $webwork_url eq '/' ? '' : $webwork_url });
@@ -125,6 +126,22 @@ sub startup ($app) {
 			return $c->render(data => 'File not found', status => 404);
 		}
 	);
+
+	if ($config->{soap_authen_key}) {
+		# Only allow an authen key that consists entirely of digits.  The WebworkSOAP module uses a numeric != for
+		# comparison, and in perl all strings containing alphabetic characters are numerically equal.  So if this is not
+		# numeric all keys that are passed in will succeed in authentication.  Very dangerous!
+		if ($config->{soap_authen_key} =~ /^\d*$/) {
+			$app->log->info("SOAP endpoints enabled");
+			$WeBWorK::SeedCE{soap_authen_key} = $config->{soap_authen_key};
+
+			$r->any('/webwork2_wsdl')->to('SOAP#wsdl');
+			$r->post('/webwork2_rpc')->to('SOAP#dispatch');
+		} else {
+			$app->log->info(qq{Invalid soap_authen_key "$config->{soap_authen_key}". }
+					. 'It must consist entirely of digits.  SOAP endpoints NOT enabled.');
+		}
+	}
 
 	# Send all routes under $webwork_url to the handler.
 	# Note that these routes must come last to support the case that $webwork_url is '/'.

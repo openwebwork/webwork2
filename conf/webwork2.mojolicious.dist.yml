@@ -30,6 +30,11 @@ JSON_ERROR_LOG: 0
 # does not forward the server root location.
 #server_root_url_redirect: https://mysite.edu/mypage.html
 
+# Uncomment the line below to use the WebworkSOAP handlers.  Make sure that you
+# change the value to something more secure.  Note that it must consist entirely
+# of digits.
+#soap_authen_key: 123456789123456789
+
 # If a remote site is using this WW server to process WW problems and embed them
 # into web pages, the web browser might not permit the WW problems to be
 # displayed, as it violates security policy to mix content from different
