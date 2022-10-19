@@ -919,7 +919,7 @@ sub pre_header_initialize {
 		showOldAnswers => $User->showOldAnswers ne '' ? $User->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
 		# showProblemGrader implies showCorrectAnswers.  This is a convenience for grading.
 		showCorrectAnswers => ($r->param('showProblemGrader') || 0)
-			|| ($r->param("showCorrectAnswers") && ($submitAnswers || $checkAnswers)),
+			|| ($r->param("showCorrectAnswers") && ($submitAnswers || $checkAnswers)) || 0,
 		showProblemGrader => $r->param('showProblemGrader') || 0,
 		# Hints are not yet implemented in gateway quzzes.
 		showHints => 0,
