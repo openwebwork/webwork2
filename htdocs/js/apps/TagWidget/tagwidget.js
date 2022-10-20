@@ -62,7 +62,7 @@
 		};
 		if (myUser && mySessionKey && myCourseID) {
 			requestObject.user = myUser;
-			requestObject.session_key = mySessionKey;
+			requestObject.key = mySessionKey;
 			requestObject.courseID = myCourseID;
 		} else {
 			alert("missing hidden credentials: user "

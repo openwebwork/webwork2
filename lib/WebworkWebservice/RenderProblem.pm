@@ -34,51 +34,32 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 our $UNIT_TESTS_ON = 0;
 
 async sub renderProblem {
-	my ($invocant, $self, $rh) = @_;
+	my ($invocant, $ws) = @_;
 
-	# Sanity check
-	my $user        = $self->{user_id};
-	my $courseName  = $self->{courseName};
-	my $displayMode = $rh->{envir}{displayMode};
-	my $problemSeed = $rh->{envir}{problemSeed};
+	my $rh = $ws->{inputs_ref};
 	debug(pretty_print_rh($rh));
 
-	unless ($user && $user =~ /\S/ && $courseName && $displayMode && defined($problemSeed)) {
-		die "Missing essential data entering WebworkWebservice::RenderProblem::renderProblem:\n";
-	}
+	my $problemSeed = $rh->{problemSeed} // '1234';
 
 	my $beginTime = Benchmark->new;
 
-	# Grab the course name, if this request is going to depend on some course other than the default course
-	my $ce;
-	my $db;
-
-	eval {
-		$ce = WeBWorK::CourseEnvironment->new(
-			{ webwork_dir => $WeBWorK::Constants::WEBWORK_DIRECTORY, courseName => $courseName });
-		# Create database object for this course
-		$db = WeBWorK::DB->new($ce->{dbLayout});
-	};
-
-	die "Unable to create course environment for $courseName. Error: $@\n" if $@;
-
-	# Authentication of this request and permission level determination is done by initiate_session in
-	# WebworkWebservice.
+	my $ce = $ws->ce;
+	my $db = $ws->db;
 
 	# Determine an effective user for this interaction or create one if it is not given.
-	# Use effectiveUser if given, and user otherwise.  Note that $user will always work.
+	# Use effectiveUser if given, and $rh->{user} otherwise.
 	my $effectiveUserName;
 	if (defined $rh->{effectiveUser} && $rh->{effectiveUser} =~ /\S/) {
 		$effectiveUserName = $rh->{effectiveUser};
 	} else {
-		$effectiveUserName = $user;
+		$effectiveUserName = $rh->{user};
 	}
 
 	if ($UNIT_TESTS_ON) {
-		print STDERR "RenderProblem.pm:  user = $user\n";
-		print STDERR "RenderProblem.pm:  courseName = $courseName\n";
+		print STDERR "RenderProblem.pm:  user = $rh->{user}\n";
+		print STDERR "RenderProblem.pm:  courseName = $rh->{courseID}\n";
 		print STDERR "RenderProblem.pm:  effectiveUserName = $effectiveUserName\n";
-		print STDERR 'environment fileName', $rh->{envir}{fileName}, "\n";
+		print STDERR 'environment fileName', $rh->{fileName}, "\n";
 	}
 
 	# The effectiveUser is the student this problem version was written for
@@ -96,12 +77,12 @@ async sub renderProblem {
 		$effectiveUserPermissionLevel->user_id($effectiveUserName);
 		$effectiveUserPassword->user_id($effectiveUserName);
 		$effectiveUserPassword->password('');
-		$effectiveUser->last_name($rh->{envir}{studentName} || 'foobar');
+		$effectiveUser->last_name($rh->{studentName} || 'foobar');
 		$effectiveUser->first_name('');
-		$effectiveUser->student_id($rh->{envir}{studentID}  || 'foobar');
-		$effectiveUser->email_address($rh->{envir}{email}   || '');
-		$effectiveUser->section($rh->{envir}{section}       || '');
-		$effectiveUser->recitation($rh->{envir}{recitation} || '');
+		$effectiveUser->student_id($rh->{studentID}  || 'foobar');
+		$effectiveUser->email_address($rh->{email}   || '');
+		$effectiveUser->section($rh->{section}       || '');
+		$effectiveUser->recitation($rh->{recitation} || '');
 		$effectiveUser->comment('');
 		$effectiveUser->status('C');
 		$effectiveUserPermissionLevel->permission(0);
@@ -109,18 +90,14 @@ async sub renderProblem {
 
 	# Insure that set and problem are defined.  Define the set and problem information from data in the environment if
 	# necessary.
-	my $setName = $rh->{set_id} // $rh->{envir}{setNumber} // '';
+	my $setName = $rh->{set_id} // $rh->{setNumber} // '';
 
 	my $setVersionId = $rh->{version_id} || 0;
 
-	my $problemNumber    = $rh->{envir}{probNum} // 1;
-	my $psvn             = $rh->{envir}{psvn}    // 1234;
-	my $problemStatus    = $rh->{problem_state}{recorded_score} || 0;
-	my $problemValue     = $rh->{envir}{problemValue} // 1;
-	my $num_correct      = $rh->{problem_state}{num_correct}   || 0;
-	my $num_incorrect    = $rh->{problem_state}{num_incorrect} || 0;
-	my $problemAttempted = $num_correct                        || $num_incorrect;
-	my $lastAnswer       = '';
+	my $problemNumber = $rh->{probNum}      // 1;
+	my $psvn          = $rh->{psvn}         // 1234;
+	my $problemValue  = $rh->{problemValue} // 1;
+	my $lastAnswer    = '';
 
 	debug('effectiveUserName: ' . $effectiveUserName);
 	debug('setName: ' . $setName);
@@ -128,7 +105,6 @@ async sub renderProblem {
 	debug('problemNumber: ' . $problemNumber);
 	debug('problemSeed:' . $problemSeed);
 	debug('psvn: ' . $psvn);
-	debug('problemStatus:' . $problemStatus);
 	debug('problemValue: ' . $problemValue);
 
 	my $setRecord =
@@ -161,7 +137,7 @@ async sub renderProblem {
 		$setRecord->open_date(time - 60 * 60 * 24 * 7);          #  one week ago
 		$setRecord->due_date(time + 60 * 60 * 24 * 7 * 2);       # in two weeks
 		$setRecord->answer_date(time + 60 * 60 * 24 * 7 * 3);    # in three weeks
-		$setRecord->psvn($rh->{envir}{psvn} || 0);
+		$setRecord->psvn($rh->{psvn} || 0);
 	}
 
 	# obtain the merged problem for $effectiveUser
@@ -190,7 +166,7 @@ async sub renderProblem {
 		$problemRecord->problem_id($problemNumber);
 		$problemRecord->set_id($setName);
 		$problemRecord->problem_seed($problemSeed);
-		$problemRecord->status($problemStatus);
+		$problemRecord->status(0);
 		$problemRecord->value($problemValue);
 		# We are faking it
 		$problemRecord->attempted(2000);
@@ -199,23 +175,21 @@ async sub renderProblem {
 		$problemRecord->last_answer($lastAnswer);
 	}
 
-	# initialize problem source
-	$rh->{sourceFilePath} = $rh->{path} unless defined $rh->{sourceFilePath};
-
 	if ($UNIT_TESTS_ON) {
 		print STDERR 'setRecord is ',                     pretty_print_rh($setRecord);
 		print STDERR 'template directory path ',          $ce->{courseDirs}{templates}, "\n";
 		print STDERR 'RenderProblem.pm: source file is ', $rh->{sourceFilePath},        "\n";
 		print STDERR "RenderProblem.pm: problem source is included in the request \n"
-			if defined($rh->{source}) && $rh->{source};
+			if defined($rh->{problemSource}) && $rh->{problemSource};
 	}
 
+	# initialize problem source
 	my $r_problem_source;
-	if ($rh->{source}) {
-		my $problem_source = decode_utf8_base64($rh->{source}) =~ tr/\r/\n/r;
+	if ($rh->{problemSource}) {
+		my $problem_source = decode_utf8_base64($rh->{problemSource}) =~ tr/\r/\n/r;
 		$r_problem_source = \$problem_source;
-		if (defined $rh->{envir}{fileName}) {
-			$problemRecord->source_file($rh->{envir}{fileName});
+		if (defined $rh->{fileName}) {
+			$problemRecord->source_file($rh->{fileName});
 		} else {
 			$problemRecord->source_file($rh->{sourceFilePath});
 		}
@@ -229,54 +203,38 @@ async sub renderProblem {
 	if ($UNIT_TESTS_ON) {
 		print STDERR 'template directory path ',          $ce->{courseDirs}{templates}, "\n";
 		print STDERR 'RenderProblem.pm: source file is ', $problemRecord->source_file,  "\n";
-		print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source});
+		print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{problemSource});
 	}
 	# now we're sure we have valid UserSet and UserProblem objects
 
 	# Other initializations
 	my $translationOptions = {
-		displayMode              => $rh->{envir}{displayMode} // 'MathJax',
-		showHints                => $rh->{envir}{showHints},
-		showSolutions            => $rh->{envir}{showSolutions},
-		refreshMath2img          => $rh->{envir}{showHints} || $rh->{envir}{showSolutions},
+		displayMode              => $rh->{displayMode} // 'MathJax',
+		showHints                => $rh->{showHints},
+		showSolutions            => $rh->{showSolutions},
+		refreshMath2img          => $rh->{showHints} || $rh->{showSolutions},
 		processAnswers           => $rh->{processAnswers} // 1,
 		catchWarnings            => 1,
 		r_source                 => $r_problem_source,
-		problemUUID              => $rh->{envir}{inputs_ref}{problemUUID} // 0,
-		permissionLevel          => $rh->{envir}{permissionLevel} || 0,
-		effectivePermissionLevel => $rh->{envir}{effectivePermissionLevel} || $rh->{envir}{permissionLevel} || 0,
+		problemUUID              => $rh->{problemUUID} // 0,
+		permissionLevel          => $rh->{permissionLevel} || 0,
+		effectivePermissionLevel => $rh->{effectivePermissionLevel} || $rh->{permissionLevel} || 0,
 		useMathQuill             => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill',
 		useMathView              => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView',
 		useWiris                 => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS',
-		isInstructor             => $rh->{envir}{isInstructor}       // 0,
-		forceScaffoldsOpen       => $rh->{envir}{forceScaffoldsOpen} // 0,
-		debuggingOptions         => $rh->{envir}{debuggingOptions}   // {}
+		isInstructor             => $rh->{isInstructor}       // 0,
+		forceScaffoldsOpen       => $rh->{forceScaffoldsOpen} // 0,
+		debuggingOptions         => $rh->{debuggingOptions}   // {}
 	};
 
-	my $formFields = $rh->{envir}{inputs_ref};
+	$ce->{pg}{specialPGEnvironmentVars}{problemPreamble}  = { TeX => '', HTML => '' } if $rh->{noprepostambles};
+	$ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = { TeX => '', HTML => '' } if $rh->{noprepostambles};
 
-	$ce->{pg}{specialPGEnvironmentVars}{problemPreamble}  = { TeX => '', HTML => '' } if ($rh->{noprepostambles});
-	$ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = { TeX => '', HTML => '' } if ($rh->{noprepostambles});
+	my $pg =
+		await renderPG($ws->r, $effectiveUser, $setRecord, $problemRecord, $setRecord->psvn, $rh, $translationOptions);
 
-	my $pg = await renderPG($ce, $effectiveUser, $setRecord, $problemRecord, $setRecord->psvn, $formFields,
-		$translationOptions);
-
-	$self->{formFields} = $formFields;
-
-	my ($internal_debug_messages, $pgwarning_messages, $pgdebug_messages);
-	if (ref $pg->{debug_messages} eq 'ARRAY'
-		|| ref $pg->{warning_messages} eq 'ARRAY'
-		|| ref $pg->{internal_debug_messages} eq 'ARRAY')
-	{
-		$internal_debug_messages = $pg->{internal_debug_messages} // [];
-		$pgwarning_messages      = $pg->{warning_messages}        // [];
-		$pgdebug_messages        = $pg->{debug_messages}          // [];
-	} else {
-		$internal_debug_messages = ['Error in obtaining debug messages from PGcore'];
-	}
-
-	# new version of output:
-	my $out2 = {
+	# New version of output:
+	return {
 		text                    => $pg->{body_text},
 		header_text             => $pg->{head_text},
 		post_header_text        => $pg->{post_header_text},
@@ -289,14 +247,13 @@ async sub renderProblem {
 		flags                   => $pg->{flags},
 		psvn                    => $psvn,
 		problem_seed            => $problemSeed,
-		warning_messages        => $pgwarning_messages,
-		debug_messages          => $pgdebug_messages,
-		internal_debug_messages => $internal_debug_messages,
+		warning_messages        => ref $pg->{warning_messages} eq 'ARRAY' ? $pg->{warning_messages} : [],
+		debug_messages          => ref $pg->{debug_messages} eq 'ARRAY'   ? $pg->{debug_messages}   : [],
+		internal_debug_messages => ref $pg->{internal_debug_messages} eq 'ARRAY'
+		? $pg->{internal_debug_messages}
+		: [],
+		compute_time => logTimingInfo($beginTime, Benchmark->new),
 	};
-
-	$out2->{compute_time} = logTimingInfo($beginTime, Benchmark->new);
-
-	return $out2;
 }
 
 sub logTimingInfo {
@@ -314,12 +271,12 @@ sub pretty_print_rh {
 	return $out if $indent > 10;
 	my $type = ref($rh);
 
-	if (defined($type) and $type) {
+	if (defined($type) && $type) {
 		$out .= " type = $type; ";
 	} elsif (not defined($rh)) {
 		$out .= ' type = scalar; ';
 	}
-	if (ref($rh) =~ /HASH/ or "$rh" =~ /HASH/) {
+	if (ref($rh) =~ /HASH/ || "$rh" =~ /HASH/) {
 		$out .= "{\n";
 		$indent++;
 		foreach my $key (sort keys %{$rh}) {
@@ -328,7 +285,7 @@ sub pretty_print_rh {
 		$indent--;
 		$out .= "\n" . '  ' x $indent . "}\n";
 
-	} elsif (ref($rh) =~ /ARRAY/ or "$rh" =~ /ARRAY/) {
+	} elsif (ref($rh) =~ /ARRAY/ || "$rh" =~ /ARRAY/) {
 		$out .= ' ( ';
 		foreach my $elem (@{$rh}) {
 			$out .= pretty_print_rh($elem, $indent);

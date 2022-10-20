@@ -47,30 +47,28 @@ async sub pre_header_initialize {
 	my $self = shift;
 	my $r    = $self->r;
 
-	my $input = { map { $_ => $r->param($_) } $r->param };
-	delete $input->{user};
-	$input->{userID} = $r->param('user') || undef;
+	unless ($r->authen->was_verified) {
+		$self->{output} = 'instructor_rpc: authentication failed.';
+		return;
+	}
 
 	my $rpc_command = $r->param('rpc_command');
 
-	if (!$rpc_command) {
+	unless ($rpc_command) {
 		$self->{output} = 'instructor_rpc: rpc_command not provided.';
 		return;
 	}
 
-	# Call the WebworkWebservice to execute the requested command and store the result in $self->{return_object}.
-	# The renderProblem command is not supported by this method.  The render_rpc endpoint should be used for that
-	# instead.
+	# The renderProblem command is not supported by this method.
+	# The render_rpc endpoint should be used for that instead.
 	if ($rpc_command eq 'renderProblem') {
 		$self->{output} =
 			'instructor_rpc: The renderProblem command is not supported by this endpoint. Use render_rpc instead';
 		return;
 	}
 
-	$input->{path} = $r->param('problemPath') if ($rpc_command eq "addProblem" || $rpc_command eq "deleteProblem");
-
-	# Setup the rpc client and execute the requested command.
-	my $rpc_service = WebworkWebservice->new(courseID => $r->param('courseID'), inputs_ref => $input);
+	# Call the WebworkWebservice to execute the requested command.
+	my $rpc_service = WebworkWebservice->new($r);
 	await $rpc_service->rpc_execute($rpc_command);
 	$self->{output} = $rpc_service;
 

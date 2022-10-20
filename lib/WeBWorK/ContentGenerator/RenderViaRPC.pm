@@ -25,8 +25,8 @@ webwork webservice.
 =head1 Description
 
 Receives WeBWorK requests presented as HTML forms, containing the requisite
-information for rendering a problem.  This package does some munging of the
-parameters and calls WebworkWebservice::RenderProblem::renderProblem and then
+information for rendering a problem.  This package checks that authentication
+succeeded, calls WebworkWebservice::RenderProblem::renderProblem, and then
 passes its return value to FormatRenderedProblem::formatRenderedProblem.  The
 result is returned in the JSON or HTML format as determined by the request type.
 
@@ -44,54 +44,20 @@ async sub pre_header_initialize {
 	my $self = shift;
 	my $r    = $self->r;
 
-	# Note: Vars helps handle things like checkbox 'packed' data;
-	my %inputs_ref = WeBWorK::Form->new_from_paramable($r)->Vars;
+	$self->{wantsjson} = ($r->param('outputformat') // '') eq 'json' || ($r->param('send_pg_flags') // 0);
 
-	# When passing parameters via an LMS you get "custom_" put in front of them. So try to clean that up.
-	$inputs_ref{userID}           = $inputs_ref{custom_userid}           if $inputs_ref{custom_userid};
-	$inputs_ref{courseID}         = $inputs_ref{custom_courseid}         if $inputs_ref{custom_courseid};
-	$inputs_ref{displayMode}      = $inputs_ref{custom_displaymode}      if $inputs_ref{custom_displaymode};
-	$inputs_ref{course_password}  = $inputs_ref{custom_course_password}  if $inputs_ref{custom_course_password};
-	$inputs_ref{answersSubmitted} = $inputs_ref{custom_answerssubmitted} if $inputs_ref{custom_answerssubmitted};
-	$inputs_ref{problemSeed}      = $inputs_ref{custom_problemseed}      if $inputs_ref{custom_problemseed};
-	$inputs_ref{sourceFilePath}   = $inputs_ref{custom_sourcefilepath}   if $inputs_ref{custom_sourcefilepath};
-	$inputs_ref{outputformat}     = $inputs_ref{custom_outputformat}     if $inputs_ref{custom_outputformat};
-
-	$self->{wantsjson} = $inputs_ref{outputformat} eq 'json' || ($inputs_ref{send_pg_flags} // 0);
-
-	# A course and user are required.
-	unless ($inputs_ref{userID} && $inputs_ref{courseID}) {
+	unless ($r->authen->was_verified) {
 		$self->{output} =
 			$self->{wantsjson}
-			? JSON->new->utf8->encode({ error => 'Missing essential data in web dataform' })
-			: 'render_rpc: Missing essential data in web dataform';
+			? JSON->new->utf8->encode({ error => 'render_rpc: authentication failed.' })
+			: 'render_rpc: authentication failed.';
 		return;
 	}
 
-	# Set defaults for these if not defined.
-	$inputs_ref{displayMode} //= 'MathJax';
-	$inputs_ref{problemSeed} //= '1234';
-
-	my $site_url = $r->server_root_url;
-
-	# Setup the rpc client
-	my $rpc_service = WebworkWebservice->new(
-		site_url        => $site_url,
-		form_action_url => $site_url . $r->webwork_url . '/render_rpc',
-		inputs_ref      => \%inputs_ref,
-		userID          => $inputs_ref{userID},
-		course_password => $inputs_ref{course_password},
-		session_key     => $inputs_ref{session_key},
-		courseID        => $inputs_ref{courseID},
-		outputformat    => $inputs_ref{outputformat},
-		sourceFilePath  => $inputs_ref{sourceFilePath},
-		encoded_source  => $r->param('problemSource') // undef,
-	);
-
 	# Call the WebworkWebservice to render the problem and store the result in $self->return_object.
+	my $rpc_service = WebworkWebservice->new($r);
 	await $rpc_service->rpc_execute('renderProblem');
 	if ($rpc_service->error_string) {
-		warn $rpc_service->error_string;
 		$self->{output} =
 			$self->{wantsjson}
 			? JSON->new->utf8->encode({ error => $rpc_service->error_string })

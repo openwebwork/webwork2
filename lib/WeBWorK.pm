@@ -142,6 +142,15 @@ async sub dispatch {
 		die "No display module found for path '$path'.";
 	}
 
+	if ($urlPath->type =~ /^render_rpc|instructor_rpc|html2xml$/) {
+		$r->{rpc} = 1;
+
+		$r->adaptLegacyParameters if $urlPath->type eq 'html2xml';
+
+		# Get the courseID from the parameters for a remote procedure call.
+		$displayArgs{courseID} = $r->param('courseID') if $r->param('courseID');
+	}
+
 	debug("The display module for this path is: $displayModule\n");
 	debug("...and here are the arguments we'll pass to it:\n");
 	foreach my $key (keys %displayArgs) {
@@ -227,29 +236,7 @@ async sub dispatch {
 	my $authz = new WeBWorK::Authz($r);
 	$r->authz($authz);
 
-	# figure out which authentication modules to use
-	#my $user_authen_module;
-	#my $proctor_authen_module;
-	#if (ref $ce->{authen}{user_module} eq "HASH") {
-	#	if (exists $ce->{authen}{user_module}{$ce->{dbLayoutName}}) {
-	#		$user_authen_module = $ce->{authen}{user_module}{$ce->{dbLayoutName}};
-	#	} else {
-	#		$user_authen_module = $ce->{authen}{user_module}{"*"};
-	#	}
-	#} else {
-	#	$user_authen_module = $ce->{authen}{user_module};
-	#}
-	#if (ref $ce->{authen}{proctor_module} eq "HASH") {
-	#	if (exists $ce->{authen}{proctor_module}{$ce->{dbLayoutName}}) {
-	#		$proctor_authen_module = $ce->{authen}{proctor_module}{$ce->{dbLayoutName}};
-	#	} else {
-	#		$proctor_authen_module = $ce->{authen}{proctor_module}{"*"};
-	#	}
-	#} else {
-	#	$proctor_authen_module = $ce->{authen}{proctor_module};
-	#}
-
-	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
+	my $user_authen_module = WeBWorK::Authen::class($ce, 'user_module');
 
 	runtime_use $user_authen_module;
 	my $authen = $user_authen_module->new($r);
@@ -315,7 +302,9 @@ async sub dispatch {
 			}
 		} else {
 			debug("Bad news: authentication failed!\n");
-			$displayModule = LOGIN_MODULE;
+			# For a remote procedure call continue on to the original display module.
+			# It will give the authentication failure response.
+			$displayModule = LOGIN_MODULE if !$r->{rpc};
 			debug("set displayModule to $displayModule\n");
 		}
 	}

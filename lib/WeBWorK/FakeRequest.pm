@@ -26,11 +26,13 @@ WeBWorK::FakeRequest
 
 =head1 DESCRIPTION
 
-Imitate WeBWorK::Request behavior without an actual Mojolicious::Controller object.
+Imitate WeBWorK::Request behavior without an actual Mojolicious::Controller
+object.
 
-This module is used in the WebworkWebservice suite, specifically by the WebworkRPC, to facilitate
-authorization and authentication when the input hash is not a WeBWorK::Request object but does
-contain the authorization and authentication data.
+This module is not actually used by webwork2 anymore.  It can be used to
+facilitate authorization and authentication when the input hash is not a
+WeBWorK::Request object but does contain the authorization and authentication
+data.
 
 It might be applicable for use elsewhere.
 
@@ -52,7 +54,8 @@ use WeBWorK::Utils qw(runtime_use);
 Typically authen_module_name would be the rpc_module.
 
 The items userID, session_key, courseID, course_password, are taken from input
-and added to the FakeRequest instance variables as user, key, courseName and passwd.
+and added to the FakeRequest instance variables as user, key, courseName and
+passwd.
 
 =cut
 
@@ -158,8 +161,8 @@ specified, set the authorizer to $new before returning the value.
 =item urlpath([$new])
 
 Return the URL path (WeBWorK::URLPath) associated with this request. If $new is
-specified, set the URL path to $new before returning the value. (Does this need modification
-from the WeBWorK::Request version???)
+specified, set the URL path to $new before returning the value. (Does this need
+modification from the WeBWorK::Request version???)
 
 =item language_handle([$new])
 

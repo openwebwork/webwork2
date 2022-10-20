@@ -35,7 +35,8 @@ sub getUserProblem {
 	return {
 		ra_out => unbless($userProblem),
 		text   => "Loaded problem $params->{problem_id} of set $params->{set_id} for "
-			. "user $params->{user_id} in course $self->{courseName}."
+			. "user $params->{user_id} in course "
+			. $self->ce->{courseName} . '.'
 	};
 }
 
@@ -66,7 +67,8 @@ sub putUserProblem {
 	return {
 		ra_out => unbless($userProblem),
 		text   => "Updated problem $params->{problem_id} of $params->{set_id} for "
-			. "user $params->{user_id} in course $self->{courseName}."
+			. "user $params->{user_id} in course "
+			. $self->ce->{courseName} . '.'
 	};
 }
 
@@ -98,7 +100,8 @@ sub putProblemVersion {
 	return {
 		ra_out => unbless($problemVersion),
 		text   => "Updated problem $params->{problem_id} of $params->{set_id},v$params->{version_id} "
-			. "for user $params->{user_id} in course $self->{courseName}."
+			. "for user $params->{user_id} in course "
+			. $self->ce->{courseName} . '.'
 	};
 }
 
@@ -125,7 +128,8 @@ sub putPastAnswer {
 		ra_out => unbless($pastAnswer),
 		text   =>
 			"Updated answer $params->{answer_id} for problem $pastAnswer->{problem_id} of $pastAnswer->{set_id} "
-			. "for user $pastAnswer->{user_id} in course $self->{courseName}."
+			. "for user $pastAnswer->{user_id} in course "
+			. $self->ce->{courseName} . '.'
 	};
 }
 

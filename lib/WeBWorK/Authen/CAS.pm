@@ -75,8 +75,8 @@ sub get_credentials {
 	# when authenticating javascript web service requests (e.g., the
 	# Library Browser).
 
-	if ($r->{xmlrpc}) {
-		debug("falling back to superclass get_credentials (xmlrpc call)");
+	if ($r->{rpc}) {
+		debug("falling back to superclass get_credentials (rpc call)");
 		return $self->SUPER::get_credentials(@_);
 	}
 

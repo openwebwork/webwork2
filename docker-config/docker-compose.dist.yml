@@ -238,6 +238,7 @@ services:
       # =======================================================
 
       # If you use https below, make sure to set up the certificate and SSL configuration
+      # Note if your server uses a non-standard port, that should also be included.
       #WEBWORK_ROOT_URL: https://myhost.mydomain.edu
 
       #WEBWORK_SMTP_SERVER: smtp.mydomain.edu

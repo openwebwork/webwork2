@@ -580,6 +580,8 @@ sub maybe_send_cookie {
 	my $r    = $self->{r};
 	my $ce   = $r->{ce};
 
+	return if $r->{rpc};
+
 	my ($cookie_user, $cookie_key, $cookie_timestamp, $setID) = $self->fetchCookie;
 
 	# we send a cookie if any of these conditions are met:
@@ -622,6 +624,9 @@ sub maybe_send_cookie {
 
 sub maybe_kill_cookie {
 	my $self = shift;
+
+	return if $self->{r}{rpc};
+
 	$self->killCookie(@_);
 }
 
@@ -862,6 +867,8 @@ sub fetchCookie {
 	my $ce      = $r->ce;
 	my $urlpath = $r->urlpath;
 
+	return if $r->{rpc};
+
 	my $cookie = $r->cookie('WeBWorKCourseAuthen.' . $urlpath->arg('courseID'));
 
 	if ($cookie) {
@@ -885,6 +892,8 @@ sub sendCookie {
 	my ($self, $userID, $key, $setID) = @_;
 	my $r  = $self->{r};
 	my $ce = $r->ce;
+
+	return if $r->{rpc};
 
 	my $courseID = $r->urlpath->arg("courseID");
 

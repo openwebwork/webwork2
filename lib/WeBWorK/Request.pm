@@ -191,4 +191,23 @@ sub remote_port {
 	return $self->SUPER::tx->remote_port;
 }
 
+=head1 adaptLegacyParameters
+
+This provides compatibility for legacy html2xml parameters.
+
+This should be deleted when the html2xml endpoint is removed.
+
+=cut
+
+sub adaptLegacyParameters {
+	my $self = shift;
+
+	for ([ 'userID', 'user' ], [ 'courseName', 'courseID' ], [ 'course_password', 'passwd' ], [ 'session_key', 'key' ])
+	{
+		$self->param($_->[1], $self->param($_->[0])) if defined $self->param($_->[0]) && !defined $self->param($_->[1]);
+	}
+
+	return;
+}
+
 1;

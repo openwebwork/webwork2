@@ -33,7 +33,7 @@ sub listGlobalSets {
 	debug('in listGlobalSets');
 
 	my @found_sets = $self->db->listGlobalSets;
-	return { ra_out => \@found_sets, text => "Loaded sets for course: $self->{courseName}" };
+	return { ra_out => \@found_sets, text => 'Loaded sets for course: ' . $self->ce->{courseName} };
 }
 
 # This returns an array of problems (path,value,problem_id, which is weight)
@@ -82,7 +82,7 @@ sub getSets {
 		$set->{assigned_users} = \@users;
 	}
 
-	return { ra_out => \@all_sets, text => "Sets for course: $self->{courseName}" };
+	return { ra_out => \@all_sets, text => 'Sets for course: ' . $self->ce->{courseName} };
 }
 
 # This returns all problem sets of a course for a given user.
@@ -96,7 +96,10 @@ sub getUserSets {
 	my @userSetNames = $db->listUserSets($params->{user_id});
 	my @userSets     = map { unbless($_) } $db->getGlobalSets(@userSetNames);
 
-	return { ra_out => \@userSets, text => "User sets for user $params->{user_id} in course $self->{courseName}" };
+	return {
+		ra_out => \@userSets,
+		text   => "User sets for user $params->{user_id} in course " . $self->ce->{courseName}
+	};
 }
 
 # This returns a single problem set with name stored in set_id
@@ -111,7 +114,7 @@ sub getSet {
 	$set->{open_date}   = formatDateTime($set->{open_date},   'local');
 	$set->{answer_date} = formatDateTime($set->{answer_date}, 'local');
 
-	return { ra_out => $set, text => "Loaded set $params->{set_id} in $self->{courseName}" };
+	return { ra_out => $set, text => "Loaded set $params->{set_id} in " . $self->ce->{courseName} };
 }
 
 sub updateSetProperties {
@@ -254,12 +257,12 @@ sub createNewSet {
 			debug("selfassign: $selfassign");
 			$selfassign = '' if ($selfassign =~ /false/i);    # deal with javascript false
 			if ($selfassign) {
-				debug("Assigning to user: $params->{userID}");
+				debug("Assigning to user: $params->{user}");
 				my $userSet = $db->newUserSet;
-				$userSet->user_id($params->{userID});
+				$userSet->user_id($params->{user});
 				$userSet->set_id($newSetName);
 				$db->addUserSet($userSet);
-				$out->{text} .= " Set was assigned to $params->{userID}.";
+				$out->{text} .= " Set was assigned to $params->{user}.";
 			}
 		}
 	}
@@ -393,7 +396,7 @@ sub updateProblem {
 	my ($invocant, $self, $params) = @_;
 	my $db     = $self->db;
 	my $setID  = $params->{set_id};
-	my $path   = $params->{path};
+	my $path   = $params->{problemPath};
 	my $topdir = $self->ce->{courseDirs}{templates};
 	$path =~ s|^$topdir/*||;
 
@@ -481,7 +484,7 @@ sub addProblem {
 	my $db      = $self->db;
 	my $setName = $params->{set_id};
 
-	my $file   = $params->{path};
+	my $file   = $params->{problemPath};
 	my $topdir = $self->ce->{courseDirs}{templates};
 	$file =~ s|^$topdir/*||;
 
@@ -566,7 +569,7 @@ sub deleteProblem {
 	my $db      = $self->db;
 	my $setName = $params->{set_id};
 
-	my $file   = $params->{path};
+	my $file   = $params->{problemPath};
 	my $topdir = $self->ce->{courseDirs}{templates};
 	$file =~ s|^$topdir/*||;
 

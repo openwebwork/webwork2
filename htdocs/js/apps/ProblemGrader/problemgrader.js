@@ -89,7 +89,7 @@
 					mode: 'same-origin',
 					body: new URLSearchParams({
 						user: user,
-						session_key: sessionKey,
+						key: sessionKey,
 						rpc_command: saveData.versionId !== '0' ? 'putProblemVersion' : 'putUserProblem',
 						courseID: saveData.courseId,
 						user_id: saveData.studentId,
@@ -132,7 +132,7 @@
 									method: 'post',
 									body: new URLSearchParams({
 										user: user,
-										session_key: sessionKey,
+										key: sessionKey,
 										rpc_command: 'putPastAnswer',
 										courseID: saveData.courseId,
 										answer_id: saveData.pastAnswerId,

@@ -34,29 +34,25 @@ use WeBWorK::CGI;
 use WeBWorK::Utils::LanguageAndDirection;
 
 sub formatRenderedProblem {
-	my $self        = shift;                           # $self is a misnomer here.  This is a WebworkWebservice object.
+	my $ws = shift;     # $ws is a WebworkWebservice object.
+	my $ce = $ws->ce;
+
 	my $problemText = '';
-	my $rh_result   = $self->return_object() || {};    # wrap problem in formats
-	$problemText = "No output from rendered Problem" unless $rh_result;
+	my $rh_result   = $ws->return_object || {};    # wrap problem in formats
+	$problemText = 'No output from rendered Problem' unless $rh_result;
 
-	my $courseID = $self->{courseID} // "";
+	my $courseID = $ws->{inputs_ref}{courseID} // '';
 
-	# Create a course environment
-	my $ce = WeBWorK::CourseEnvironment->new({
-		webwork_dir => $WeBWorK::Constants::WEBWORK_DIRECTORY,
-		courseName  => $courseID,
-		pg_dir      => $WeBWorK::Constants::PG_DIRECTORY,
-	});
+	my $mt = WeBWorK::Localize::getLangHandle($ws->{inputs_ref}{language} // 'en');
 
-	my $mt = WeBWorK::Localize::getLangHandle($self->{inputs_ref}{language} // 'en');
+	my $forbidGradePassback = 1;                   # Default is to forbid, due to the security issue
 
-	my $forbidGradePassback = 1;    # Default is to forbid, due to the security issue
-
-	if (defined($ce->{html2xmlAllowGradePassback})
-		&& $ce->{html2xmlAllowGradePassback} eq
-		"This course intentionally enables the insecure LTI grade pass-back feature of html2xml.")
+	if (defined($ce->{renderRPCAllowGradePassback})
+		&& $ce->{renderRPCAllowGradePassback} eq
+		'This course intentionally enables the insecure LTI grade pass-back feature of render_rpc.')
 	{
-# It is strongly recommended that you clarify the security risks of enabling the current version of this feature before using it.
+		# It is strongly recommended that you clarify the security risks of enabling the current version of this feature
+		# before using it.
 		$forbidGradePassback = 0;
 	}
 
@@ -65,48 +61,34 @@ sub formatRenderedProblem {
 	if (ref($rh_result) && $rh_result->{text}) {
 		$problemText = $rh_result->{text};
 	} else {
-		$problemText .= "Unable to decode problem text:<br>$self->{error_string}<br>" . format_hash_ref($rh_result);
-		$rh_result->{problem_result}->{score} = 0;    # force score to 0 for such errors.
-		$renderErrorOccurred                  = 1;
-		$forbidGradePassback                  = 1;    # due to render error
+		$problemText .= "Unable to decode problem text:<br>$ws->{error_string}<br>" . format_hash_ref($rh_result);
+		$rh_result->{problem_result}{score} = 0;    # force score to 0 for such errors.
+		$renderErrorOccurred                = 1;
+		$forbidGradePassback                = 1;    # due to render error
 	}
 
-	my $SITE_URL        = $self->site_url          // '';
-	my $FORM_ACTION_URL = $self->{form_action_url} // '';
+	my $SITE_URL        = $ws->r->server_root_url;
+	my $FORM_ACTION_URL = $SITE_URL . $ws->r->webwork_url . '/render_rpc';
 
-	# Local docker usage with a port number sometimes misbehaves if the port number
-	# is not forced into $SITE_URL and $FORM_ACTION_URL
-	my $forcePortNumber = ($self->{inputs_ref}{forcePortNumber}) // '';
-	if ($forcePortNumber =~ /^[0-9]+$/) {
-		$forcePortNumber = 0 + $forcePortNumber;
-		if (!($SITE_URL =~ /:${forcePortNumber}/)) {
-			$SITE_URL .= ":${forcePortNumber}";
-		}
-		if (!($FORM_ACTION_URL =~ m+:${forcePortNumber}/webwork2/html2xml+)) {
-			$FORM_ACTION_URL =~ s+/webwork2/html2xml+:${forcePortNumber}/webwork2/html2xml+
-				;    # Ex: "http://localhost:8080/webwork2/html2xml"
-		}
-	}
-
-	my $userID                    = $self->{userID}            // "";
-	my $course_password           = $self->{course_password}   // "";
-	my $problemSeed               = $rh_result->{problem_seed} // $self->{inputs_ref}{problemSeed} // 6666;
-	my $psvn                      = $rh_result->{psvn}         // $self->{inputs_ref}{psvn}        // 54321;
-	my $session_key               = $rh_result->{session_key}  // $self->{inputs_ref}{session_key} // '';
-	my $displayMode               = $self->{inputs_ref}{displayMode};
+	my $user                      = $ws->{inputs_ref}{user}    // '';
+	my $passwd                    = $ws->{inputs_ref}{passwd}  // '';
+	my $problemSeed               = $rh_result->{problem_seed} // $ws->{inputs_ref}{problemSeed} // 6666;
+	my $psvn                      = $rh_result->{psvn}         // $ws->{inputs_ref}{psvn}        // 54321;
+	my $key                       = $ws->authen->{session_key};
+	my $displayMode               = $ws->{inputs_ref}{displayMode}   // 'MathJax';
 	my $hideWasNotRecordedMessage = $ce->{hideWasNotRecordedMessage} // 0;
 
 	# HTML document language settings
-	my $formLanguage        = $self->{inputs_ref}{language} // 'en';
+	my $formLanguage        = $ws->{inputs_ref}{language} // 'en';
 	my $COURSE_LANG_AND_DIR = get_lang_and_dir($formLanguage);
 
 	# Problem source
-	my $sourceFilePath = $self->{sourceFilePath}         // "";
-	my $fileName       = $self->{input}{envir}{fileName} // "";
-	my $encoded_source = $self->encoded_source           // "";
+	my $sourceFilePath = $ws->{inputs_ref}{sourceFilePath} // '';
+	my $fileName       = $ws->{inputs_ref}{fileName}       // '';
+	my $encoded_source = $ws->{inputs_ref}{problemSource}  // '';
 
 	# Select the theme.
-	my $theme = $self->{inputs_ref}{theme} || $ce->{defaultTheme};
+	my $theme = $ws->{inputs_ref}{theme} || $ce->{defaultTheme};
 
 	# Add the favicon.
 	my $favicon = CGI::Link({ href => "$ce->{webworkURLs}{htdocs}/images/favicon.ico", rel => 'shortcut icon' });
@@ -166,10 +148,13 @@ sub formatRenderedProblem {
 	);
 	$problemHeadText .= CGI::script({ src => $_->[0], %{ $_->[1] // {} } }, '') for (@JSLoads);
 
+	# Get the requested format.
+	my $formatName = $ws->{inputs_ref}{outputformat} // 'simple';
+
 	# Add the local storage javascript for the sticky format.
 	$problemHeadText .=
 		CGI::script({ src => getAssetURL($ce, 'js/apps/LocalStorage/localstorage.js'), defer => undef }, '')
-		if ($self->{inputs_ref}{outputformat} // '') eq 'sticky';
+		if $formatName eq 'sticky';
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	my @extra_js_files;
@@ -192,7 +177,7 @@ sub formatRenderedProblem {
 
 	$problemHeadText .= $rh_result->{header_text}      // '';
 	$problemHeadText .= $rh_result->{post_header_text} // '';
-	my $extra_header_text = $self->{inputs_ref}{extra_header_text} // '';
+	my $extra_header_text = $ws->{inputs_ref}{extra_header_text} // '';
 	$problemHeadText .= $extra_header_text;
 
 	# Set up the problem language and direction
@@ -201,24 +186,23 @@ sub formatRenderedProblem {
 	# $formLanguage instead.
 	my %PROBLEM_LANG_AND_DIR =
 		get_problem_lang_and_dir($rh_result->{flags}, $ce->{perProblemLangAndDirSettingMode}, $formLanguage);
-	my $PROBLEM_LANG_AND_DIR = join(" ", map {qq{$_="$PROBLEM_LANG_AND_DIR{$_}"}} keys %PROBLEM_LANG_AND_DIR);
+	my $PROBLEM_LANG_AND_DIR = join(' ', map {qq{$_="$PROBLEM_LANG_AND_DIR{$_}"}} keys %PROBLEM_LANG_AND_DIR);
 
-	my $previewMode     = defined($self->{inputs_ref}{preview})      || 0;
-	my $checkMode       = defined($self->{inputs_ref}{WWcheck})      || 0;
-	my $submitMode      = defined($self->{inputs_ref}{WWsubmit})     || 0;
-	my $showCorrectMode = defined($self->{inputs_ref}{WWcorrectAns}) || 0;
+	my $previewMode     = defined($ws->{inputs_ref}{preview})      || 0;
+	my $checkMode       = defined($ws->{inputs_ref}{WWcheck})      || 0;
+	my $submitMode      = defined($ws->{inputs_ref}{WWsubmit})     || 0;
+	my $showCorrectMode = defined($ws->{inputs_ref}{WWcorrectAns}) || 0;
 	# A problemUUID should be added to the request as a parameter.  It is used by PG to create a proper UUID for use in
 	# aliases for resources.  It should be unique for a course, user, set, problem, and version.
-	my $problemUUID       = $self->{inputs_ref}{problemUUID}       // '';
-	my $problemResult     = $rh_result->{problem_result}           // {};
-	my $problemState      = $rh_result->{problem_state}            // '';
-	my $showSummary       = $self->{inputs_ref}{showSummary}       // 1;
-	my $showAnswerNumbers = $self->{inputs_ref}{showAnswerNumbers} // 1;
+	my $problemUUID       = $ws->{inputs_ref}{problemUUID}       // '';
+	my $problemResult     = $rh_result->{problem_result}         // {};
+	my $showSummary       = $ws->{inputs_ref}{showSummary}       // 1;
+	my $showAnswerNumbers = $ws->{inputs_ref}{showAnswerNumbers} // 1;
 
-	my $color_input_blanks_script = "";
+	my $color_input_blanks_script = '';
 
 	# Attempts table
-	my $answerTemplate = "";
+	my $answerTemplate = '';
 
 	if ($renderErrorOccurred) {
 		# Do not produce an AttemptsTable when we had a rendering error.
@@ -226,7 +210,7 @@ sub formatRenderedProblem {
 	} else {
 		my $tbl = WeBWorK::Utils::AttemptsTable->new(
 			$rh_result->{answers} // {},
-			answersSubmitted    => $self->{inputs_ref}{answersSubmitted}   // 0,
+			answersSubmitted    => $ws->{inputs_ref}{answersSubmitted}     // 0,
 			answerOrder         => $rh_result->{flags}{ANSWER_ENTRY_ORDER} // [],
 			displayMode         => $displayMode,
 			showAnswerNumbers   => $showAnswerNumbers,
@@ -235,7 +219,7 @@ sub formatRenderedProblem {
 			showAttemptResults  => $submitMode  || $showCorrectMode,
 			showCorrectAnswers  => $showCorrectMode,
 			showMessages        => $previewMode || $submitMode || $showCorrectMode,
-			showSummary         => (($showSummary and ($submitMode or $showCorrectMode)) // 0) ? 1 : 0,
+			showSummary         => (($showSummary && ($submitMode || $showCorrectMode)) // 0) ? 1 : 0,
 			maketext            => WeBWorK::Localize::getLoc($formLanguage),
 			summary             => $problemResult->{summary} // '',    # can be set by problem grader
 		);
@@ -250,12 +234,12 @@ sub formatRenderedProblem {
 			$scoreSummary = '<!-- No scoreSummary on errors. -->';
 		} elsif ($problemResult) {
 			$scoreSummary = CGI::p($mt->maketext(
-				"You received a score of [_1] for this attempt.",
+				'You received a score of [_1] for this attempt.',
 				wwRound(0, $problemResult->{score} * 100) . '%'
 			));
 			$scoreSummary .= CGI::p($problemResult->{msg}) if ($problemResult->{msg});
 
-			$scoreSummary .= CGI::p($mt->maketext("Your score was not recorded.")) unless $hideWasNotRecordedMessage;
+			$scoreSummary .= CGI::p($mt->maketext('Your score was not recorded.')) unless $hideWasNotRecordedMessage;
 			$scoreSummary .= CGI::hidden(
 				{ id => 'problem-result-score', name => 'problem-result-score', value => $problemResult->{score} });
 		}
@@ -265,29 +249,26 @@ sub formatRenderedProblem {
 	}
 
 	# Answer hash in XML format used by the PTX format.
-	my $answerhashXML =
-		($self->{inputs_ref}{outputformat} // '') eq 'ptx'
-		? XMLout($rh_result->{answers} // {}, RootName => 'answerhashes')
-		: '';
+	my $answerhashXML = $formatName eq 'ptx' ? XMLout($rh_result->{answers} // {}, RootName => 'answerhashes') : '';
 
 	# Sticky format local storage messages
 	my $localStorageMessages = CGI::div({ id => 'local-storage-messages' },
 		CGI::p('Your overall score for this problem is&nbsp;' . CGI::span({ id => 'problem-overall-score' }, '')));
 
 	# Submit buttons (all are shown by default)
-	my $showPreviewButton = $self->{inputs_ref}{showPreviewButton} // '';
+	my $showPreviewButton = $ws->{inputs_ref}{showPreviewButton} // '';
 	my $previewButton     = $showPreviewButton eq '0' ? '' : CGI::submit({
 		name  => 'preview',
 		id    => 'previewAnswers_id',
 		class => 'btn btn-primary mb-1',
 		value => $mt->maketext('Preview My Answers')
 	});
-	my $showCheckAnswersButton = $self->{inputs_ref}{showCheckAnswersButton} // '';
+	my $showCheckAnswersButton = $ws->{inputs_ref}{showCheckAnswersButton} // '';
 	my $checkAnswersButton =
 		$showCheckAnswersButton eq '0'
 		? ''
 		: CGI::submit({ name => 'WWsubmit', class => 'btn btn-primary mb-1', value => $mt->maketext('Check Answers') });
-	my $showCorrectAnswersButton = $self->{inputs_ref}{showCorrectAnswersButton} // '';
+	my $showCorrectAnswersButton = $ws->{inputs_ref}{showCorrectAnswersButton} // '';
 	my $correctAnswersButton =
 		$showCorrectAnswersButton eq '0'
 		? ''
@@ -295,8 +276,8 @@ sub formatRenderedProblem {
 			{ name => 'WWcorrectAns', class => 'btn btn-primary mb-1', value => $mt->maketext('Show Correct Answers') }
 		);
 
-	my $showSolutions = $self->{inputs_ref}{showSolutions} // "";
-	my $showHints     = $self->{inputs_ref}{showHints}     // "";
+	my $showSolutions = $ws->{inputs_ref}{showSolutions} // '';
+	my $showHints     = $ws->{inputs_ref}{showHints}     // '';
 
 	# PG warning messages (this includes translator warnings).
 	my $warnings = '';
@@ -306,39 +287,35 @@ sub formatRenderedProblem {
 	}
 
 	# PG debug messages generated with DEBUG_message();
-	$rh_result->{debug_messages} = join("<br>", @{ $rh_result->{debug_messages} || [] });
+	$rh_result->{debug_messages} = join('<br>', @{ $rh_result->{debug_messages} || [] });
 
 	# PG warning messages generated with WARN_message();
-	my $PG_warning_messages = join("<br>", @{ $rh_result->{warning_messages} || [] });
+	my $PG_warning_messages = join('<br>', @{ $rh_result->{warning_messages} || [] });
 
 	# Internal debug messages generated within PG_core.
 	# These are sometimes needed if the PG_core warning message system isn't properly set
 	# up before the bug occurs.  In general don't use these unless necessary.
-	my $internal_debug_messages = join("<br>", @{ $rh_result->{internal_debug_messages} || [] });
+	my $internal_debug_messages = join('<br>', @{ $rh_result->{internal_debug_messages} || [] });
 
 	# Try to save the grade to an LTI if one provided us data (depending on $forbidGradePassback)
-	my $LTIGradeMessage = saveGradeToLTI($self, $ce, $rh_result, $forbidGradePassback);
+	my $LTIGradeMessage = saveGradeToLTI($ws, $ce, $rh_result, $forbidGradePassback);
 
 	my $debug_messages = $rh_result->{debug_messages};
 
 	# For debugging purposes (only used in the debug format)
-	my $clientDebug       = $self->{inputs_ref}{clientDebug} // "";
-	my $client_debug_data = $clientDebug ? CGI::h3('Webwork client data') . WebworkClient::pretty_print($self) : '';
+	my $clientDebug       = $ws->{inputs_ref}{clientDebug} // '';
+	my $client_debug_data = $clientDebug ? CGI::h3('Webwork client data') . pretty_print($ws) : '';
 
 	# Show the footer unless it is explicity disabled.
-	my $showFooter = $self->{inputs_ref}{showFooter} // "";
-	my $footer     = $showFooter eq "0" ? '' : CGI::div(
-		{ id => 'footer' },
-		"WeBWorK &copy; 2000-2022 | host: $SITE_URL | course: $courseID | "
-			. "format: $self->{inputs_ref}{outputformat} | theme: $theme"
-	);
+	my $showFooter = $ws->{inputs_ref}{showFooter} // '';
+	my $footer     = $showFooter eq '0' ? '' : CGI::div({ id => 'footer' },
+		"WeBWorK &copy; 2000-2022 | host: $SITE_URL | course: $courseID | format: $formatName | theme: $theme");
 
 	# Execute and return the interpolated problem template
-	my $format_name = $self->{inputs_ref}{outputformat} // 'simple';
 
 	# The json format
-	if ($format_name eq "json") {
-		my $json_output = do("WebworkClient/json_format.pl");
+	if ($formatName eq 'json') {
+		my $json_output = do('WebworkClient/json_format.pl');
 		for my $key (keys %{ $json_output->{hidden_input_field} }) {
 			$json_output->{hidden_input_field}{$key} =~ s/(\$\w+)/$1/gee;
 		}
@@ -382,13 +359,13 @@ sub formatRenderedProblem {
 	# This format returns javascript object notation corresponding to the perl hash
 	# with everything that a client-side application could use to work with the problem.
 	# There is no wrapping HTML "_format" template.
-	if ($format_name eq "raw") {
+	if ($formatName eq 'raw') {
 		my $output = {};
 
 		# Everything that ships out with other formats can be constructed from these
 		$output->{rh_result}  = $rh_result;
-		$output->{inputs_ref} = $self->{inputs_ref};
-		$output->{input}      = $self->{input};
+		$output->{inputs_ref} = $ws->{inputs_ref};
+		$output->{input}      = $ws->{input};
 
 		# The following could be constructed from the above, but this is a convenience
 		$output->{answerTemplate}  = $answerTemplate if ($answerTemplate);
@@ -412,32 +389,32 @@ sub formatRenderedProblem {
 	}
 
 	# Find and execute the appropriate template in the WebworkClient folder.
-	my $template = do("$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WebworkClient/${format_name}_format.pl");
-	return "Unknown format name $format_name<br>" unless $template;
+	my $template = do("$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WebworkClient/${formatName}_format.pl");
+	return "Unknown format name $formatName<br>" unless $template;
 
 	# Interpolate values into the template
 	$template =~ s/(\$\w+)/$1/gee;
 
-	return $template unless $self->{inputs_ref}{send_pg_flags};
+	return $template unless $ws->{inputs_ref}{send_pg_flags};
 	return JSON->new->utf8(0)->encode({ html => $template, pg_flags => $rh_result->{flags}, warnings => $warnings });
 }
 
 sub saveGradeToLTI {
-	my ($self, $ce, $rh_result, $forbidGradePassback) = @_;
+	my ($ws, $ce, $rh_result, $forbidGradePassback) = @_;
 	# When $forbidGradePassback is set, we will block the actual submission,
 	# but we still provide the LTI data in the hidden fields.
 
-	return ""
-		if !(defined($self->{inputs_ref}{lis_outcome_service_url})
-			&& defined($self->{inputs_ref}{'oauth_consumer_key'})
-			&& defined($self->{inputs_ref}{'oauth_signature_method'})
-			&& defined($self->{inputs_ref}{'lis_result_sourcedid'})
-			&& defined($ce->{'LISConsumerKeyHash'}{ $self->{inputs_ref}{'oauth_consumer_key'} }));
+	return ''
+		if !(defined($ws->{inputs_ref}{lis_outcome_service_url})
+			&& defined($ws->{inputs_ref}{'oauth_consumer_key'})
+			&& defined($ws->{inputs_ref}{'oauth_signature_method'})
+			&& defined($ws->{inputs_ref}{'lis_result_sourcedid'})
+			&& defined($ce->{'LISConsumerKeyHash'}{ $ws->{inputs_ref}{'oauth_consumer_key'} }));
 
-	my $request_url      = $self->{inputs_ref}{lis_outcome_service_url};
-	my $consumer_key     = $self->{inputs_ref}{'oauth_consumer_key'};
-	my $signature_method = $self->{inputs_ref}{'oauth_signature_method'};
-	my $sourcedid        = $self->{inputs_ref}{'lis_result_sourcedid'};
+	my $request_url      = $ws->{inputs_ref}{lis_outcome_service_url};
+	my $consumer_key     = $ws->{inputs_ref}{'oauth_consumer_key'};
+	my $signature_method = $ws->{inputs_ref}{'oauth_signature_method'};
+	my $sourcedid        = $ws->{inputs_ref}{'lis_result_sourcedid'};
 	my $consumer_secret  = $ce->{'LISConsumerKeyHash'}{$consumer_key};
 	my $score            = $rh_result->{problem_result} ? $rh_result->{problem_result}{score} : 0;
 
@@ -480,13 +457,13 @@ EOS
 			$bodyhash .= '=';
 		}
 
-		my $requestGen = Net::OAuth->request("consumer");
+		my $requestGen = Net::OAuth->request('consumer');
 
 		$requestGen->add_required_message_params('body_hash');
 
 		my $gradeRequest = $requestGen->new(
 			request_url      => $request_url,
-			request_method   => "POST",
+			request_method   => 'POST',
 			consumer_secret  => $consumer_secret,
 			consumer_key     => $consumer_key,
 			signature_method => $signature_method,
@@ -512,13 +489,13 @@ EOS
 			$response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
 			my $message = $1;
 			if ($message ne 'success') {
-				$LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: " . $message);
+				$LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: $message");
 				$rh_result->{debug_messages} .= CGI::escapeHTML($response->content);
 			} else {
-				$LTIGradeMessage = CGI::p("Grade sucessfully saved.");
+				$LTIGradeMessage = CGI::p('Grade sucessfully saved.');
 			}
 		} else {
-			$LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: " . $response->message);
+			$LTIGradeMessage = CGI::p('Unable to update LMS grade. Error: ' . $response->message);
 			$rh_result->{debug_messages} .= CGI::escapeHTML($response->content);
 		}
 	}
@@ -532,11 +509,58 @@ EOS
 	return $LTIGradeMessage;
 }
 
-# error formatting
+# Error formatting
 sub format_hash_ref {
 	my $hash = shift;
-	warn "Use a hash reference" unless ref($hash) =~ /HASH/;
-	return join(" ", map { $_ // '--' } %$hash) . "\n";
+	warn 'Use a hash reference' unless ref($hash) =~ /HASH/;
+	return join(' ', map { $_ // '--' } %$hash) . "\n";
+}
+
+# Nice output for debugging
+sub pretty_print {
+	my ($r_input, $level) = @_;
+	$level //= 4;
+	$level--;
+	return '' unless $level > 0;    # Only print three levels of hashes (safety feature)
+	my $out = '';
+	if (!ref $r_input) {
+		$out = $r_input if defined $r_input;
+		$out =~ s/</&lt;/g;         # protect for HTML output
+	} elsif ("$r_input" =~ /hash/i) {
+		# "$r_input" =~ /hash/i" will pick up objects whose $self is a hash and so works better than "ref $r_input".
+		local $^W = 0;
+		$out .= qq{$r_input <table border="2" cellpadding="3" bgcolor="#FFFFFF">};
+
+		for my $key (sort keys %$r_input) {
+			# Safety feature - we do not want to display the contents of %seed_ce which
+			# contains the database password and lots of other things, and explicitly hide
+			# certain internals of the CourseEnvironment in case one slips in.
+			next
+				if (($key =~ /database/)
+					|| ($key =~ /dbLayout/)
+					|| ($key eq "ConfigValues")
+					|| ($key eq "ENV")
+					|| ($key eq "externalPrograms")
+					|| ($key eq "permissionLevels")
+					|| ($key eq "seed_ce"));
+			$out .= "<tr><td>$key</td><td>=&gt;</td><td>&nbsp;" . pretty_print($r_input->{$key}) . "</td></tr>";
+		}
+		$out .= '</table>';
+	} elsif (ref $r_input eq 'ARRAY') {
+		my @array = @$r_input;
+		$out .= '( ';
+		while (@array) {
+			$out .= pretty_print(shift @array, $level) . ' , ';
+		}
+		$out .= ' )';
+	} elsif (ref $r_input eq 'CODE') {
+		$out = "$r_input";
+	} else {
+		$out = $r_input;
+		$out =~ s/</&lt;/g;    # Protect for HTML output
+	}
+
+	return $out . ' ';
 }
 
 1;

@@ -89,12 +89,12 @@ sub listUsers {
 		$user->{num_user_sets} = $db->countUserSets($user->{user_id}) . '/' . $numGlobalSets;
 
 		my $Key = $db->getKey($user->{user_id});
-		$user->{login_status} = $Key && time <= $Key->timestamp() + $ce->{sessionKeyTimeout};
+		$user->{login_status} = $Key && time <= $Key->timestamp + $ce->{sessionKeyTimeout} ? 'active' : 'inactive';
 	}
 
 	return {
 		ra_out => \@userInfo,
-		text   => "Users for course: $self->{courseName}"
+		text   => "Users for course: $ce->{courseName}"
 	};
 }
 
@@ -249,7 +249,7 @@ sub editUser {
 	# It has already been checked that the user has permission to modify user data.  Get the permission level here, so
 	# that it can be verified that the permission level of the user being edited is less than or equal to that of the
 	# one doing the editing.
-	my $callerPermission = $db->getPermissionLevel($params->{userID});
+	my $callerPermission = $db->getPermissionLevel($params->{user});
 	my $permissionLevel  = $db->getPermissionLevel($params->{user_id});
 
 	die "You do not have permission to edit $params->{user_id}\n"
@@ -319,7 +319,7 @@ sub changeUserPassword {
 	# It has already been checked that the user has permission to modify user data.  Get the permission level here, so
 	# that it can be verified that the permission level of the user being edited is less than or equal to that of the
 	# one doing the editing.
-	my $callerPermission = $db->getPermissionLevel($params->{userID});
+	my $callerPermission = $db->getPermissionLevel($params->{user});
 	my $permissionLevel  = $db->getPermissionLevel($params->{user_id});
 	die "You do not have permission to change the password for $params->{user_id}\n"
 		unless ($callerPermission

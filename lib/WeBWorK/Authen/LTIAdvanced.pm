@@ -90,8 +90,8 @@ sub request_has_data_for_this_verification_module {
 	my $r    = $self->{r};
 
 	# See comment in get_credentials()
-	if ($r->{xmlrpc}) {
-		debug("LTIAdvanced returning 1 because it is an xmlrpc call");
+	if ($r->{rpc}) {
+		debug("LTIAdvanced returning 1 because it is an rpc call");
 		return 1;
 	}
 
@@ -115,6 +115,19 @@ sub get_credentials {
 	my $ce   = $r->{ce};
 
 	debug("LTIAdvanced::get_credentials has been called\n");
+
+	# This next part is necessary because some parts of webwork (e.g.,
+	# WebworkWebservice.pm) need to replace the get_credentials() routine,
+	# but only replace the one in the parent class (out of caution,
+	# presumably).	Therefore, we end up here even when authenticating
+	# for WebworkWebservice.pm.  This would cause authentication failures
+	# when authenticating javascript web service requests (e.g., the
+	# Library Browser).
+	# Similar changes are needed in check_user() and verify_normal_user().
+	if ($r->{rpc}) {
+		debug("falling back to superclass get_credentials (rpc call)");
+		return $self->SUPER::get_credentials(@_);
+	}
 
 	## Printing parameters to main page can help people set things up
 	## so we dont use the debug channel here
@@ -145,20 +158,6 @@ sub get_credentials {
 
 	#disable password login
 	$self->{external_auth} = 1;
-
-	# This next part is necessary because some parts of webwork (e.g.,
-	# WebworkWebservice.pm) need to replace the get_credentials() routine,
-	# but only replace the one in the parent class (out of caution,
-	# presumably).	Therefore, we end up here even when authenticating
-	# for WebworkWebservice.pm.  This would cause authentication failures
-	# when authenticating javascript web service requests (e.g., the
-	# Library Browser).
-	# Similar changes are needed in check_user() and verify_normal_user().
-
-	if ($r->{xmlrpc}) {
-		debug("falling back to superclass get_credentials (xmlrpc call)");
-		return $self->SUPER::get_credentials(@_);
-	}
 
 	# Determine the WW user_id to use, if possible
 
@@ -300,8 +299,8 @@ sub check_user {
 	debug("LTIAdvanced::check_user has been called for user_id = |$user_id|");
 
 	# See comment in get_credentials()
-	if ($r->{xmlrpc}) {
-		#debug("falling back to superclass check_user (xmlrpc call)");
+	if ($r->{rpc}) {
+		#debug("falling back to superclass check_user (rpc call)");
 		return $self->SUPER::check_user(@_);
 	}
 
@@ -372,8 +371,8 @@ sub verify_normal_user {
 	debug("LTIAdvanced::verify_normal_user called for user |$user_id|");
 
 	# See comment in get_credentials()
-	if ($r->{xmlrpc}) {
-		#debug("falling back to superclass verify_normal_user (xmlrpc call)");
+	if ($r->{rpc}) {
+		#debug("falling back to superclass verify_normal_user (rpc call)");
 		return $self->SUPER::verify_normal_user(@_);
 	}
 
@@ -411,8 +410,8 @@ sub authenticate {
 	my ($r, $user) = map { $self->{$_}; } ('r', 'user_id');
 
 	# See comment in get_credentials()
-	if ($r->{xmlrpc}) {
-		#debug("falling back to superclass authenticate (xmlrpc call)");
+	if ($r->{rpc}) {
+		#debug("falling back to superclass authenticate (rpc call)");
 		return $self->SUPER::authenticate(@_);
 	}
 

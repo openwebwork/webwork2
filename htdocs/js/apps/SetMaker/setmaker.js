@@ -40,7 +40,7 @@
 		const requestObject = { rpc_command: 'listLib', library_name: 'Library', command: 'buildtree' };
 		if (myUser && mySessionKey && myCourseID) {
 			requestObject.user = myUser;
-			requestObject.session_key = mySessionKey;
+			requestObject.key = mySessionKey;
 			requestObject.courseID = myCourseID;
 		} else {
 			alertToast('Missing hidden credentials', `user: ${myUser ?? 'uknown'}, session_key: ${
@@ -417,12 +417,12 @@
 		if (iframe && iframe.iFrameResizer) iframe.contentDocument.location.replace('about:blank');
 
 		const ro = {
-			userID: document.getElementById('hidden_user')?.value,
+			user: document.getElementById('hidden_user')?.value,
 			courseID: document.getElementById('hidden_courseID')?.value,
-			session_key: document.getElementById('hidden_key')?.value
+			key: document.getElementById('hidden_key')?.value
 		};
 
-		if (!(ro.userID && ro.courseID && ro.session_key)) {
+		if (!(ro.user && ro.courseID && ro.key)) {
 			renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
 				+ 'Missing hidden credentials: user, session_key, courseID</div>';
 			resolve();
@@ -454,7 +454,6 @@
 		ro.extra_header_text = '<style>' +
 			'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
 			'</style>';
-		if (window.location.port) ro.forcePortNumber = window.location.port;
 
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 10000);
