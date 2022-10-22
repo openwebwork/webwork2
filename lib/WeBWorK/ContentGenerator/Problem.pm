@@ -888,6 +888,9 @@ sub siblings {
 
 	my @items;
 
+	# Keep manual grader open when linking to problems if it's already open.
+	my %problemGraderLink = $self->{will}{showProblemGrader} ? (params => { showProblemGrader => 1 }) : ();
+
 	foreach my $problemID (@problemIDs) {
 		if ($isJitarSet && !$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_hidden($db,$eUserID, $setID, $problemID)) {
 			shift(@problemRecords) if $progressBarEnabled;
@@ -950,7 +953,7 @@ sub siblings {
 				$link = CGI::a(
 					{
 						$active ? (class => $class)
-						: (href => $self->systemLink($problemPage), class => $class)
+						: (href => $self->systemLink($problemPage, %problemGraderLink), class => $class)
 					},
 					$r->maketext('Problem [_1]', join('.', @seq)) . ($progressBarEnabled ? $status_symbol : '')
 				);
@@ -959,7 +962,7 @@ sub siblings {
 			$link = CGI::a(
 				{
 					$active ? (class => 'nav-link active')
-					: (href => $self->systemLink($problemPage), class => 'nav-link')
+					: (href => $self->systemLink($problemPage, %problemGraderLink), class => 'nav-link')
 				},
 				$r->maketext('Problem [_1]', $problemID) . ($progressBarEnabled ? $status_symbol : '')
 			);
