@@ -69,7 +69,9 @@ JSON_ERROR_LOG: 0
 hypnotoad:
   listen:
     - http://*:8080
-    # Below is an example of how to use ssl certificates.
+    # Below is an example of how to use ssl certificates when serving directly via hypnotoad.
+    #- https://*:443?cert=/etc/ssl/local/fullchain.pem&key=/etc/ssl/local/privkey.pem
+    # Below is an example of how to use ssl certificates when using the docker build.
     #- https://*:8080?cert=/etc/ssl/local/fullchain.pem&key=/etc/ssl/local/privkey.pem
 
   accepts: 400
