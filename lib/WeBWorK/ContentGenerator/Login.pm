@@ -220,24 +220,25 @@ sub body {
 		print CGI::div(
 			{ class => 'form-floating mb-2' },
 			CGI::textfield({
-				id            => 'uname',
-				name          => 'user',
-				value         => $user,
-				aria_required => 'true',
-				class         => 'form-control',
-				placeholder   => ''
+				id             => 'uname',
+				name           => 'user',
+				value          => $user,
+				aria_required  => 'true',
+				class          => 'form-control',
+				placeholder    => '',
+				autocapitalize => 'none'
 			}),
 			CGI::label({ for => 'uname' }, $r->maketext('Username'))
 		);
 		print CGI::div(
 			{ class => 'form-floating mb-2' },
 			CGI::password_field({
-				id            => 'pswd',
-				name          => 'passwd',
-				value         => $passwd,
-				aria_required => 'true',
-				class         => 'form-control',
-				placeholder   => ''
+				id             => 'pswd',
+				name           => 'passwd',
+				value          => $passwd,
+				aria_required  => 'true',
+				class          => 'form-control',
+				placeholder    => ''
 			}),
 			CGI::label({ for => 'pswd' }, $r->maketext('Password'))
 		);
