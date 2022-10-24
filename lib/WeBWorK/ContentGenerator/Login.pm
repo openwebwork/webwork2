@@ -226,7 +226,8 @@ sub body {
 				aria_required  => 'true',
 				class          => 'form-control',
 				placeholder    => '',
-				autocapitalize => 'none'
+				autocapitalize => 'none',
+				spellcheck     => 'false'
 			}),
 			CGI::label({ for => 'uname' }, $r->maketext('Username'))
 		);
