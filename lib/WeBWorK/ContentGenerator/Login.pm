@@ -234,12 +234,12 @@ sub body {
 		print CGI::div(
 			{ class => 'form-floating mb-2' },
 			CGI::password_field({
-				id             => 'pswd',
-				name           => 'passwd',
-				value          => $passwd,
-				aria_required  => 'true',
-				class          => 'form-control',
-				placeholder    => ''
+				id            => 'pswd',
+				name          => 'passwd',
+				value         => $passwd,
+				aria_required => 'true',
+				class         => 'form-control',
+				placeholder   => ''
 			}),
 			CGI::label({ for => 'pswd' }, $r->maketext('Password'))
 		);
