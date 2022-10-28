@@ -736,7 +736,7 @@ sub pre_header_initialize {
 				my $cleanSet = $db->getSetVersion($effectiveUserName, $setName, $setVersionNumber);
 				$set = $db->getMergedSetVersion($effectiveUserName, $setName, $setVersionNumber);
 
-				$Problem = $db->getMergedProblemVersion($effectiveUserName, $setName, $setVersionNumber, 1);
+				$Problem = $db->getMergedProblemVersion($effectiveUserName, $setName, $setVersionNumber, $setPNum[0]);
 
 				# because we're creating this on the fly,
 				#    it should be visible
@@ -1575,22 +1575,24 @@ sub body {
 		foreach my $i (0 .. $#problems) {  # process each problem
 			# this code is essentially that from Problem.pm
 			# begin problem loop for sticky answers
-			my $pureProblem = $pureProblems[$i];
+			my $pureProblem = $pureProblems[ $probOrder[$i] ];
+			my $problem = $problems[ $probOrder[$i] ];
+			my $pg_result = $pg_results[ $probOrder[$i] ];
 
 			# store answers in problem for sticky answers later
 			# my %answersToStore;
 
 			# we have to be a little careful about getting the
 			#    answers that we're saving, because we don't have
-			#    a pg_results object for all problems if we're not
+			#    a pg_result object for all problems if we're not
 			#    submitting
 			my %answerHash = ();
 			my @answer_order = ();
 			my $encoded_last_answer_string;
-			if (ref($pg_results[$i])) {
+			if (ref($pg_result)) {
 				my ($past_answers_string, $scores, $isEssay); #not used here
 				($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) =
-					create_ans_str_from_responses($self, $pg_results[$i]);
+					create_ans_str_from_responses($self, $pg_result);
 			} else {
 				my $prefix = sprintf('Q%04d_', $problemNumbers[$i]);
 				my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
@@ -1599,49 +1601,50 @@ sub body {
 				$encoded_last_answer_string = encodeAnswers(%answersToStore, @answer_order);
 			}
 			# and get the last answer
-			$problems[$i]->last_answer($encoded_last_answer_string);
+			$problem->last_answer($encoded_last_answer_string);
 			$pureProblem->last_answer($encoded_last_answer_string);
 
 			# Next, store the state in the database if answers are being recorded.
 			if ($submitAnswers && $will{recordAnswers}) {
-				my $score = compute_reduced_score($ce, $problems[$i], $set, $pg_results[$i]{state}{recorded_score});
-				$problems[$i]->status($score) if $score > $problems[$i]->status;
+				my $score =
+					compute_reduced_score($ce, $problem, $set, $pg_result->{state}{recorded_score});
+				$problem->status($score) if $score > $problem->status;
 
-				$problems[$i]->sub_status($problems[$i]->status)
+				$problem->sub_status($problem->status)
 					if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 						|| !$set->enable_reduced_scoring
 						|| before($set->reduced_scoring_date));
 
-				$problems[$i]->attempted(1);
-				$problems[$i]->num_correct($pg_results[$i]{state}{num_of_correct_ans});
-				$problems[$i]->num_incorrect($pg_results[$i]{state}{num_of_incorrect_ans});
+				$problem->attempted(1);
+				$problem->num_correct($pg_result->{state}{num_of_correct_ans});
+				$problem->num_incorrect($pg_result->{state}{num_of_incorrect_ans});
 
-				$pureProblem->status($problems[$i]->status);
-				$pureProblem->sub_status($problems[$i]->sub_status);
+				$pureProblem->status($problem->status);
+				$pureProblem->sub_status($problem->sub_status);
 				$pureProblem->attempted(1);
-				$pureProblem->num_correct($pg_results[$i]{state}{num_of_correct_ans});
-				$pureProblem->num_incorrect($pg_results[$i]{state}{num_of_incorrect_ans});
+				$pureProblem->num_correct($pg_result->{state}{num_of_correct_ans});
+				$pureProblem->num_incorrect($pg_result->{state}{num_of_incorrect_ans});
 
 				if ($db->putProblemVersion($pureProblem)) {
-					$scoreRecordedMessage[$i] = $r->maketext("Your score on this problem was recorded.");
+					$scoreRecordedMessage[ $probOrder[$i] ] = $r->maketext('Your score on this problem was recorded.');
 				} else {
-					$scoreRecordedMessage[$i] = $r->maketext("Your score was not recorded because there was a " .
-						"failure in storing the problem record to the database.");
+					$scoreRecordedMessage[ $probOrder[$i] ] = $r->maketext('Your score was not recorded because '
+							. 'there was a failure in storing the problem record to the database.');
 				}
 				# write the transaction log
 				writeLog($self->{ce}, "transaction",
-					$problems[$i]->problem_id . "\t" .
-					$problems[$i]->set_id . "\t" .
-					$problems[$i]->user_id . "\t" .
-					$problems[$i]->source_file . "\t" .
-					$problems[$i]->value . "\t" .
-					$problems[$i]->max_attempts . "\t" .
-					$problems[$i]->problem_seed . "\t" .
-					$problems[$i]->status . "\t" .
-					$problems[$i]->attempted . "\t" .
-					$problems[$i]->last_answer . "\t" .
-					$problems[$i]->num_correct . "\t" .
-					$problems[$i]->num_incorrect
+					$problem->problem_id . "\t" .
+					$problem->set_id . "\t" .
+					$problem->user_id . "\t" .
+					$problem->source_file . "\t" .
+					$problem->value . "\t" .
+					$problem->max_attempts . "\t" .
+					$problem->problem_seed . "\t" .
+					$problem->status . "\t" .
+					$problem->attempted . "\t" .
+					$problem->last_answer . "\t" .
+					$problem->num_correct . "\t" .
+					$problem->num_incorrect
 				);
 			} elsif ($submitAnswers) {
 				# this is the case where we submitted answers
@@ -1649,11 +1652,11 @@ sub body {
 				#    message
 
 				if ($self->{isClosed}) {
-					$scoreRecordedMessage[$i] = $r->maketext("Your score was not recorded because this problem " .
-						"set version is not open.");
-				} elsif ($problems[$i]->num_correct + $problems[$i]->num_incorrect >= $set->attempts_per_version) {
-					$scoreRecordedMessage[$i] = $r->maketext("Your score was not recorded because you have no " .
-						"attempts remaining on this set version.");
+					$scoreRecordedMessage[ $probOrder[$i] ] = $r->maketext(
+						'Your score was not recorded because this problem set version is not open.');
+				} elsif ($problem->num_correct + $problem->num_incorrect >= $set->attempts_per_version) {
+					$scoreRecordedMessage[ $probOrder[$i] ] = $r->maketext(
+						'Your score was not recorded because you have no attempts remaining on this set version.');
 				} elsif (! $self->{versionIsOpen}) {
 					my $endTime = ($set->version_last_attempt_time) ? $set->version_last_attempt_time : $timeNow;
 					if ($endTime > $set->due_date && $endTime < $set->due_date + $grace) {
@@ -1663,11 +1666,11 @@ sub body {
 					# we assume that allowed is an even
 					#    number of minutes
 					my $allowed = ($set->due_date - $set->open_date)/60;
-					$scoreRecordedMessage[$i] = $r->maketext("Your score was not recorded because you have " .
-						"exceeded the time limit for this test. (Time taken: [_1] min; allowed: [_2] min.)",
+					$scoreRecordedMessage[ $probOrder[$i] ] = $r->maketext('Your score was not recorded because ' .
+						' you have exceeded the time limit for this test. (Time taken: [_1] min; allowed: [_2] min.)',
 						$elapsed, $allowed);
 				} else {
-					$scoreRecordedMessage[$i] = $r->maketext("Your score was not recorded.");
+					$scoreRecordedMessage[ $probOrder[$i] ] = $r->maketext('Your score was not recorded.');
 				}
 			} else {
 				# finally, we must be previewing or switching
@@ -1702,6 +1705,8 @@ sub body {
 				# Begin problem loop for passed answers.
 				next unless ref($pg_results[$probOrder[$i]]);
 
+				my $problem = $problems[ $probOrder[$i] ];
+
 				my ($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) =
 					create_ans_str_from_responses($self, $pg_results[ $probOrder[$i] ]);
 				$past_answers_string =~ s/\t+$/\t/;
@@ -1712,19 +1717,19 @@ sub body {
 
 				# Write to courseLog
 				writeCourseLog($self->{ce}, "answer_log",
-					join("", '|', $problems[$i]->user_id, '|', $setVName, '|', ($i+1), '|', $scores,
+					join("", '|', $problem->user_id, '|', $setVName, '|', ($i+1), '|', $scores,
 						"\t$timeNow\t", "$past_answers_string"));
 
 				# Add to PastAnswer db
 				my $pastAnswer = $db->newPastAnswer();
 				$pastAnswer->course_id($courseID);
-				$pastAnswer->user_id($problems[$i]->user_id);
+				$pastAnswer->user_id($problem->user_id);
 				$pastAnswer->set_id($setVName);
-				$pastAnswer->problem_id($problems[$i]->problem_id);
+				$pastAnswer->problem_id($problem->problem_id);
 				$pastAnswer->timestamp($timeNow);
 				$pastAnswer->scores($scores);
 				$pastAnswer->answer_string($past_answers_string);
-				$pastAnswer->source_file($problems[$i]->source_file);
+				$pastAnswer->source_file($problem->source_file);
 				$db->addPastAnswer($pastAnswer);
 			}
 		}
@@ -1737,8 +1742,8 @@ sub body {
 			my $endTime = time();
 			if ($submitAnswers && $will{recordAnswers}) {
 				foreach my $i (0 .. $#problems) {
-					my $problem = $problems[$i];
-					my $pg = $pg_results[$i];
+					my $problem = $problems[ $probOrder[$i] ];
+					my $pg = $pg_results[ $probOrder[$i] ];
 					my $completed_question_event = {
 						'type' => 'AssessmentItemEvent',
 						'action' => 'Completed',
@@ -1903,6 +1908,7 @@ sub body {
 
 	# To get the attempt score, determine the score for each problem, and multiply the total for the problem by the
 	# weight (value) of the problem.  Avoid translating all of the problems when checking answers.
+	# Note that it is okay to ignore problem order here as all arrays used are index the same.
 	my $attemptScore = 0;
 	if ($will{recordAnswers} || $will{checkAnswers}) {
 		my $i = 0;
