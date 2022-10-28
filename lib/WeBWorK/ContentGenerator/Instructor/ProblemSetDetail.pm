@@ -18,7 +18,8 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::ProblemSetDetail - Edit general set and specific user/set information as well as problem information
+WeBWorK::ContentGenerator::Instructor::ProblemSetDetail - Edit general set and specific user/set information as well
+as problem information
 
 =cut
 
@@ -37,7 +38,11 @@ use WeBWorK::Debug;
 
 # these constants determine which fields belong to what type of record
 use constant SET_FIELDS => [
-	qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description enable_reduced_scoring  restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type use_grade_proctor attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint restrict_prob_progression email_instructor)
+	qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description
+		enable_reduced_scoring  restricted_release restricted_status restrict_ip relax_restrict_ip
+		assignment_type use_grade_proctor attempts_per_version version_time_limit time_limit_cap
+		versions_per_interval time_interval problem_randorder problems_per_page
+		hide_score:hide_score_by_problem hide_work hide_hint restrict_prob_progression email_instructor)
 ];
 use constant PROBLEM_FIELDS =>
 	[qw(source_file value max_attempts showMeAnother showHintsAfter prPeriod att_to_open_children counts_parent_grade)];
@@ -46,14 +51,16 @@ use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_inco
 # these constants determine what order those fields should be displayed in
 use constant HEADER_ORDER => [qw(set_header hardcopy_header)];
 use constant PROBLEM_FIELD_ORDER => [
-	qw(problem_seed status value max_attempts showMeAnother showHintsAfter prPeriod attempted last_answer num_correct num_incorrect)
+	qw(problem_seed status value max_attempts showMeAnother showHintsAfter prPeriod attempted last_answer num_correct
+		num_incorrect)
 ];
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER =>
 	[qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
 use constant JITAR_PROBLEM_FIELD_ORDER => [
-	qw(problem_seed status value max_attempts showMeAnother showHintsAfter prPeriod att_to_open_children counts_parent_grade attempted last_answer num_correct num_incorrect)
+	qw(problem_seed status value max_attempts showMeAnother showHintsAfter prPeriod att_to_open_children
+		counts_parent_grade attempted last_answer num_correct num_incorrect)
 ];
 
 # we exclude the gateway set fields from the set field order, because they
@@ -64,11 +71,12 @@ use constant JITAR_PROBLEM_FIELD_ORDER => [
 # FIXME: set for non-gateway assignments.  right now (11/30/06) they are
 # FIXME: only used for gateways
 use constant SET_FIELD_ORDER => [
-	qw(open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip hide_hint assignment_type)
+	qw(open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring restricted_release
+		restricted_status restrict_ip relax_restrict_ip hide_hint assignment_type)
 ];
-# use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant GATEWAY_SET_FIELD_ORDER => [
-	qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)
+	qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder
+		problems_per_page hide_score:hide_score_by_problem hide_work)
 ];
 use constant JITAR_SET_FIELD_ORDER => [qw(restrict_prob_progression email_instructor)];
 
@@ -78,17 +86,17 @@ use constant JITAR_SET_FIELD_ORDER => [qw(restrict_prob_progression email_instru
 #
 #	All but name are optional
 #	some_field => {
-#		name      => "Some Field",
-#		type      => "edit",		# edit, choose, hidden, view - defines how the data is displayed
-#		size      => "50",		# size of the edit box (if any)
-#		override  => "none",		# none, one, any, all - defines for whom this data can/must be overidden
-#		module    => "problem_list",	# WeBWorK module
+#		name      => 'Some Field',
+#		type      => 'edit',		# edit, choose, hidden, view - defines how the data is displayed
+#		size      => '50',		# size of the edit box (if any)
+#		override  => 'none',		# none, one, any, all - defines for whom this data can/must be overidden
+#		module    => 'problem_list',	# WeBWorK module
 #		default   => 0			# if a field cannot default to undefined/empty what should it default to
 #		labels    => {			# special values can be hashed to display labels
-#				1 => "Yes",
-#				0 => "No",
+#			1 => x('Yes'),
+#			0 => x('No'),
 #		},
-#               convertby => 60,                # divide incoming database field values by this, and multiply when saving
+#		convertby => 60,		# divide incoming database field values by this, and multiply when saving
 
 use constant BLANKPROBLEM => 'blankProblem.pg';
 
@@ -96,85 +104,87 @@ use constant BLANKPROBLEM => 'blankProblem.pg';
 use constant FIELD_PROPERTIES => {
 	# Set information
 	set_header => {
-		name     => x("Set Header"),
-		type     => "edit",
-		size     => "50",
-		override => "all",
-		module   => "problem_list",
-		default  => "",
+		name     => x('Set Header'),
+		type     => 'edit',
+		size     => '50',
+		override => 'all',
+		module   => 'problem_list',
+		default  => '',
 	},
 	hardcopy_header => {
-		name     => x("Hardcopy Header"),
-		type     => "edit",
-		size     => "50",
-		override => "all",
-		module   => "hardcopy_preselect_set",
-		default  => "",
+		name     => x('Hardcopy Header'),
+		type     => 'edit',
+		size     => '50',
+		override => 'all',
+		module   => 'hardcopy_preselect_set',
+		default  => '',
 	},
 	description => {
-		name     => x("Description"),
-		type     => "edit",
-		override => "all",
-		default  => "",
+		name     => x('Description'),
+		type     => 'edit',
+		override => 'all',
+		default  => '',
 	},
 	open_date => {
-		name     => x("Opens"),
-		type     => "edit",
-		size     => "25",
-		override => "any",
+		name     => x('Opens'),
+		type     => 'edit',
+		size     => '25',
+		override => 'any',
 	},
 	due_date => {
-		name     => x("Closes"),
-		type     => "edit",
-		size     => "25",
-		override => "any",
+		name     => x('Closes'),
+		type     => 'edit',
+		size     => '25',
+		override => 'any',
 	},
 	answer_date => {
-		name     => x("Answers Available"),
-		type     => "edit",
-		size     => "25",
-		override => "any",
+		name     => x('Answers Available'),
+		type     => 'edit',
+		size     => '25',
+		override => 'any',
 	},
 	visible => {
-		name     => x("Visible to Students"),
-		type     => "choose",
-		override => "all",
-		choices  => [qw( 0 1 )],
+		name     => x('Visible to Students'),
+		type     => 'choose',
+		override => 'all',
+		choices  => [qw(0 1)],
 		labels   => {
-			1 => x("Yes"),
-			0 => x("No"),
+			1 => x('Yes'),
+			0 => x('No'),
 		},
 	},
 	enable_reduced_scoring => {
-		name     => x("Reduced Scoring Enabled"),
-		type     => "choose",
-		override => "any",
-		choices  => [qw( 0 1 )],
+		name     => x('Reduced Scoring Enabled'),
+		type     => 'choose',
+		override => 'any',
+		choices  => [qw(0 1)],
 		labels   => {
-			1 => x("Yes"),
-			0 => x("No"),
+			1 => x('Yes'),
+			0 => x('No'),
 		},
 	},
 	reduced_scoring_date => {
-		name     => x("Reduced Scoring Date"),
-		type     => "edit",
-		size     => "25",
-		override => "any",
+		name     => x('Reduced Scoring Date'),
+		type     => 'edit',
+		size     => '25',
+		override => 'any',
 	},
 	restricted_release => {
-		name      => x("Restrict release by set(s)"),
-		type      => "edit",
-		size      => "30",
-		override  => "any",
+		name      => x('Restrict release by set(s)'),
+		type      => 'edit',
+		size      => '30',
+		override  => 'any',
 		help_text => x(
-			"This set will be unavailable to students until they have earned a certain score on the sets specified in this field.  The sets should be written as a comma separated list.  The minimum score required on the sets is specified in the following field."
+			'This set will be unavailable to students until they have earned a certain score on the sets '
+				. 'specified in this field. The sets should be written as a comma separated list. '
+				. 'The minimum score required on the sets is specified in the following field.'
 		)
 	},
 	restricted_status => {
-		name     => x("Score required for release"),
-		type     => "choose",
-		override => "any",
-		choices  => [qw( 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 )],
+		name     => x('Score required for release'),
+		type     => 'choose',
+		override => 'any',
+		choices  => [qw(1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1)],
 		labels   => {
 			'0.1' => '10%',
 			'0.2' => '20%',
@@ -189,153 +199,167 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	restrict_ip => {
-		name     => x("Restrict Access by IP"),
-		type     => "choose",
-		override => "any",
-		choices  => [qw( No RestrictTo DenyFrom )],
+		name     => x('Restrict Access by IP'),
+		type     => 'choose',
+		override => 'any',
+		choices  => [qw(No RestrictTo DenyFrom)],
 		labels   => {
-			No         => x("No"),
-			RestrictTo => x("Restrict To"),
-			DenyFrom   => x("Deny From"),
+			No         => x('No'),
+			RestrictTo => x('Restrict To'),
+			DenyFrom   => x('Deny From'),
 		},
 		default => 'No',
 	},
 	relax_restrict_ip => {
-		name     => x("Relax IP restrictions when?"),
-		type     => "choose",
-		override => "any",
-		choices  => [qw( No AfterAnswerDate AfterVersionAnswerDate )],
+		name     => x('Relax IP restrictions when?'),
+		type     => 'choose',
+		override => 'any',
+		choices  => [qw(No AfterAnswerDate AfterVersionAnswerDate)],
 		labels   => {
-			No                     => x("Never"),
-			AfterAnswerDate        => x("After set answer date"),
-			AfterVersionAnswerDate => x("(gw/quiz) After version answer date"),
+			No                     => x('Never'),
+			AfterAnswerDate        => x('After set answer date'),
+			AfterVersionAnswerDate => x('(gw/quiz) After version answer date'),
 		},
 		default => 'No',
 	},
 	assignment_type => {
-		name     => x("Assignment type"),
-		type     => "choose",
-		override => "all",
-		choices  => [qw( default gateway proctored_gateway jitar)],
+		name     => x('Assignment type'),
+		type     => 'choose',
+		override => 'all',
+		choices  => [qw(default gateway proctored_gateway jitar)],
 		labels   => {
-			default           => "homework",
-			gateway           => "gateway/quiz",
-			proctored_gateway => "proctored gateway/quiz",
-			jitar             => "just-in-time"
+			default           => 'homework',
+			gateway           => 'gateway/quiz',
+			proctored_gateway => 'proctored gateway/quiz',
+			jitar             => 'just-in-time'
 		},
 	},
 	version_time_limit => {
-		name     => x("Test Time Limit (min; 0=Close Date)"),
-		type     => "edit",
-		size     => "4",
-		override => "any",
-		default  => "0",
-		#		labels    => {	"" => 0 },  # I'm not sure this is quite right
+		name      => x('Test Time Limit (min; 0=Close Date)'),
+		type      => 'edit',
+		size      => '4',
+		override  => 'any',
+		default   => '0',
 		convertby => 60,
 	},
 	time_limit_cap => {
-		name     => x("Cap Test Time at Set Close Date?"),
-		type     => "choose",
-		override => "all",
+		name     => x('Cap Test Time at Set Close Date?'),
+		type     => 'choose',
+		override => 'all',
 		choices  => [qw(0 1)],
-		labels   => { '0' => 'No', '1' => 'Yes' },
+		labels   => {
+			'0' => x('No'),
+			'1' => x('Yes')
+		},
 	},
 	attempts_per_version => {
-		name     => x("Number of Graded Submissions per Test (0=infty)"),
-		type     => "edit",
-		size     => "3",
-		override => "any",
-		default  => "0",
-		#		labels    => {	"" => 1 },
+		name     => x('Number of Graded Submissions per Test (0=infty)'),
+		type     => 'edit',
+		size     => '3',
+		override => 'any',
+		default  => '0',
 	},
 	time_interval => {
-		name     => x("Time Interval for New Test Versions (min; 0=infty)"),
-		type     => "edit",
-		size     => "5",
-		override => "any",
-		default  => "0",
-		#		labels    => {	"" => 0 },
+		name      => x('Time Interval for New Test Versions (min; 0=infty)'),
+		type      => 'edit',
+		size      => '5',
+		override  => 'any',
+		default   => '0',
 		convertby => 60,
 	},
 	versions_per_interval => {
-		name     => x("Number of Tests per Time Interval (0=infty)"),
-		type     => "edit",
-		size     => "3",
-		override => "any",
-		default  => "0",
+		name     => x('Number of Tests per Time Interval (0=infty)'),
+		type     => 'edit',
+		size     => '3',
+		override => 'any',
+		default  => '0',
 		format   => '[0-9]+',                                           # an integer, possibly zero
-																		#		labels    => {	"" => 0 },
-																		#		labels    => {	"" => 1 },
 	},
 	problem_randorder => {
-		name     => x("Order Problems Randomly"),
-		type     => "choose",
-		choices  => [qw( 0 1 )],
-		override => "any",
-		labels   => { 0 => "No", 1 => "Yes" },
+		name     => x('Order Problems Randomly'),
+		type     => 'choose',
+		choices  => [qw(0 1)],
+		override => 'any',
+		labels   => {
+			0 => x('No'),
+			1 => x('Yes')
+		},
 	},
 	problems_per_page => {
-		name     => x("Number of Problems per Page (0=all)"),
-		type     => "edit",
-		size     => "3",
-		override => "any",
-		default  => "1",
-		#		labels    => { "" => 0 },
+		name     => x('Number of Problems per Page (0=all)'),
+		type     => 'edit',
+		size     => '3',
+		override => 'any',
+		default  => '1',
 	},
 	'hide_score:hide_score_by_problem' => {
-		name     => x("Show Scores on Finished Assignments?"),
-		type     => "choose",
-		choices  => [qw( N:N Y:Y BeforeAnswerDate:N N:Y BeforeAnswerDate:Y )],
-		override => "any",
+		name     => x('Show Scores on Finished Assignments?'),
+		type     => 'choose',
+		choices  => [qw(N:N Y:Y BeforeAnswerDate:N N:Y BeforeAnswerDate:Y)],
+		override => 'any',
 		labels   => {
-			'N:N'                => 'Yes',
-			'Y:Y'                => 'No',
+			'N:N'                => x('Yes'),
+			'Y:Y'                => x('No'),
 			'BeforeAnswerDate:N' => x('Only after set answer date'),
 			'N:Y'                => x('Totals only (not problem scores)'),
 			'BeforeAnswerDate:Y' => x('Totals only, only after answer date')
 		},
 	},
 	hide_work => {
-		name     => x("Show Problems on Finished Tests"),
-		type     => "choose",
+		name     => x('Show Problems on Finished Tests'),
+		type     => 'choose',
 		choices  => [qw(N Y BeforeAnswerDate)],
-		override => "any",
-		labels   => { 'N' => "Yes", 'Y' => "No", 'BeforeAnswerDate' => x('Only after set answer date') },
+		override => 'any',
+		labels   => {
+			'N'                => x('Yes'),
+			'Y'                => x('No'),
+			'BeforeAnswerDate' => x('Only after set answer date')
+		},
 	},
 	use_grade_proctor => {
-		name      => x('Require Grade Proctor'),
-		type      => 'choose',
-		override  => 'any',
-		choices   => [qw(Yes No)],
-		labels    => { Yes => x('Yes'), No => x('No') },
+		name     => x('Require Grade Proctor'),
+		type     => 'choose',
+		override => 'any',
+		choices  => [qw(Yes No)],
+		labels   => {
+			Yes => x('Yes'),
+			No  => x('No')
+		},
 		default   => 'Yes',
 		help_text => x(
 			'Proctored tests always require login proctor authorization to start the test. Configure if '
-			. 'proctored tests also require grade proctor authorization to grade the test at the end.'
+				. 'proctored tests also require grade proctor authorization to grade the test at the end.'
 		),
 	},
-
 	restrict_prob_progression => {
-		name      => x("Restrict Problem Progression"),
-		type      => "choose",
-		choices   => [qw(0 1)],
-		override  => "all",
-		default   => "0",
-		labels    => { '1' => "Yes", '0' => "No", },
+		name     => x('Restrict Problem Progression'),
+		type     => 'choose',
+		choices  => [qw(0 1)],
+		override => 'all',
+		default  => '0',
+		labels   => {
+			'1' => x('Yes'),
+			'0' => x('No'),
+		},
 		help_text => x(
-			"If this is enabled then students will be unable to attempt a problem until they have completed all of the previous problems, and their child problems if necessary."
+			'If this is enabled then students will be unable to attempt a problem until they have '
+				. 'completed all of the previous problems, and their child problems if necessary.'
 		),
 	},
-
 	email_instructor => {
-		name      => x("Email Instructor On Failed Attempt"),
-		type      => "choose",
-		choices   => [qw(0 1)],
-		override  => "any",
-		default   => "0",
-		labels    => { '1' => "Yes", '0' => "No" },
+		name     => x('Email Instructor On Failed Attempt'),
+		type     => 'choose',
+		choices  => [qw(0 1)],
+		override => 'any',
+		default  => '0',
+		labels   => {
+			'1' => x('Yes'),
+			'0' => x('No')
+		},
 		help_text => x(
-			"If this is enabled then instructors with the ability to receive feedback emails will be notified whenever a student runs out of attempts on a problem and its children without receiving an adjusted status of 100%."
+			'If this is enabled then instructors with the ability to receive feedback emails will be '
+				. 'notified whenever a student runs out of attempts on a problem and its children '
+				. ' without receiving an adjusted status of 100%.'
 		),
 	},
 
@@ -347,41 +371,43 @@ use constant FIELD_PROPERTIES => {
 	#
 	# Problem information
 	source_file => {
-		name     => x("Source File"),
-		type     => "edit",
+		name     => x('Source File'),
+		type     => 'edit',
 		size     => 50,
-		override => "any",
-		default  => "",
+		override => 'any',
+		default  => '',
 	},
 	value => {
-		name     => x("Weight"),
-		type     => "edit",
+		name     => x('Weight'),
+		type     => 'edit',
 		size     => 6,
-		override => "any",
-		default  => "1",
+		override => 'any',
+		default  => '1',
 	},
 	max_attempts => {
-		name     => x("Max attempts"),
-		type     => "edit",
+		name     => x('Max attempts'),
+		type     => 'edit',
 		size     => 6,
-		override => "any",
-		default  => "-1",
+		override => 'any',
+		default  => '-1',
 		labels   => {
-			"-1" => x("unlimited"),
+			'-1' => x('unlimited'),
 		},
 	},
 	showMeAnother => {
-		name     => x("Show me another"),
-		type     => "edit",
-		size     => "6",
-		override => "any",
-		default  => "-1",
+		name     => x('Show me another'),
+		type     => 'edit',
+		size     => '6',
+		override => 'any',
+		default  => '-1',
 		labels   => {
-			"-1" => x("Never"),
-			"-2" => x("Default"),
+			'-1' => x('Never'),
+			'-2' => x('Default'),
 		},
 		help_text => x(
-			"When a student has more attempts than is specified here they will be able to view another version of this problem.  If set to -1 the feature is disabled and if set to -2 the course default is used."
+			'When a student has more attempts than is specified here they will be able to view another '
+				. 'version of this problem.  If set to -1 the feature is disabled and if set to -2 '
+				. 'the course default is used.'
 		)
 	},
 	showHintsAfter => {
@@ -396,106 +422,117 @@ use constant FIELD_PROPERTIES => {
 		},
 		help_text => x(
 			'This specifies the number of attempts before hints are shown to students. '
-				. 'The value of -2 uses the default from course configuration. The value of -1 disables hints.'
+				. 'The value of -2 uses the default from course configuration. '
+				. 'The value of -1 disables hints. '
 				. 'Note that this will only have an effect if the problem has a hint.'
 		),
 	},
 	prPeriod => {
-		name     => x("Rerandomize after"),
-		type     => "edit",
-		size     => "6",
-		override => "any",
-		default  => "-1",
+		name     => x('Rerandomize after'),
+		type     => 'edit',
+		size     => '6',
+		override => 'any',
+		default  => '-1',
 		labels   => {
-			"-1" => x("Default"),
-			"0"  => x("Never"),
+			'-1' => x('Default'),
+			'0'  => x('Never'),
 		},
 		help_text => x(
-			"This specifies the rerandomization period: the number of attempts before a new version of the problem is generated by changing the Seed value. The value of -1 uses the default from course configuration. The value of 0 disables rerandomization."
+			'This specifies the rerandomization period: the number of attempts before a new version of '
+				. 'the problem is generated by changing the Seed value. The value of -1 uses the '
+				. 'default from course configuration. The value of 0 disables rerandomization.'
 		),
 	},
 	problem_seed => {
-		name     => x("Seed"),
-		type     => "edit",
+		name     => x('Seed'),
+		type     => 'edit',
 		size     => 6,
-		override => "one",
-
+		override => 'one',
 	},
 	status => {
-		name     => x("Status"),
-		type     => "edit",
+		name     => x('Status'),
+		type     => 'edit',
 		size     => 6,
-		override => "one",
-		default  => "0",
+		override => 'one',
+		default  => '0',
 	},
 	attempted => {
-		name     => x("Attempted"),
-		type     => "hidden",
-		override => "none",
-		choices  => [qw( 0 1 )],
+		name     => x('Attempted'),
+		type     => 'hidden',
+		override => 'none',
+		choices  => [qw(0 1)],
 		labels   => {
-			1 => x("Yes"),
-			0 => x("No"),
+			1 => x('Yes'),
+			0 => x('No'),
 		},
-		default => "0",
+		default => '0',
 	},
 	last_answer => {
-		name     => x("Last Answer"),
-		type     => "hidden",
-		override => "none",
+		name     => x('Last Answer'),
+		type     => 'hidden',
+		override => 'none',
 	},
 	num_correct => {
-		name     => x("Correct"),
-		type     => "hidden",
-		override => "none",
-		default  => "0",
+		name     => x('Correct'),
+		type     => 'hidden',
+		override => 'none',
+		default  => '0',
 	},
 	num_incorrect => {
-		name     => x("Incorrect"),
-		type     => "hidden",
-		override => "none",
-		default  => "0",
+		name     => x('Incorrect'),
+		type     => 'hidden',
+		override => 'none',
+		default  => '0',
 	},
 	hide_hint => {
-		name     => x("Hide Hints from Students"),
-		type     => "choose",
-		override => "all",
-		choices  => [qw( 0 1 )],
+		name     => x('Hide Hints from Students'),
+		type     => 'choose',
+		override => 'all',
+		choices  => [qw(0 1)],
 		labels   => {
-			1 => x("Yes"),
-			0 => x("No"),
+			1 => x('Yes'),
+			0 => x('No'),
 		},
 	},
 	att_to_open_children => {
-		name     => x("Att. to Open Children"),
-		type     => "edit",
+		name     => x('Att. to Open Children'),
+		type     => 'edit',
 		size     => 6,
-		override => "any",
-		default  => "0",
+		override => 'any',
+		default  => '0',
 		labels   => {
-			"-1" => x("max"),
+			'-1' => x('max'),
 		},
 		help_text => x(
-			"The child problems for this problem will become visible to the student when they either have more incorrect attempts than is specified here, or when they run out of attempts, whichever comes first.  If \"max\" is specified here then child problems will only be available after a student runs out of attempts."
+			'The child problems for this problem will become visible to the student when they either have '
+				. 'more incorrect attempts than is specified here, or when they run out of attempts, '
+				. 'whichever comes first.  If \'max\' is specified here then child problems will only '
+				. 'be available after a student runs out of attempts.'
 		),
 	},
 	counts_parent_grade => {
-		name      => x("Counts for Parent"),
-		type      => "choose",
-		choices   => [qw(0 1)],
-		override  => "any",
-		default   => "0",
-		labels    => { '1' => "Yes", '0' => "No", },
+		name     => x('Counts for Parent'),
+		type     => 'choose',
+		choices  => [qw(0 1)],
+		override => 'any',
+		default  => '0',
+		labels   => {
+			'1' => x('Yes'),
+			'0' => x('No'),
+		},
 		help_text => x(
-			"If this flag is set then this problem will count towards the grade of its parent problem.  In general the adjusted status on a problem is the larger of the problem's status and the weighted average of the status of its child problems which have this flag enabled."
+			'If this flag is set then this problem will count towards the grade of its parent problem. '
+				. 'In general the adjusted status on a problem is the larger of the problem\'s status '
+				. 'and the weighted average of the status of its child problems which have this flag '
+				. 'enabled.'
 		),
 	},
 };
 
 use constant FIELD_PROPERTIES_GWQUIZ => {
 	max_attempts => {
-		type     => "hidden",
-		override => "any",
+		type     => 'hidden',
+		override => 'any',
 	}
 };
 
