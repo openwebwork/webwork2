@@ -228,11 +228,13 @@ sub body {
 		print CGI::div(
 			{ class => 'col-xl-5 col-lg-6 col-md-7 col-sm-8 form-floating mb-2' },
 			CGI::textfield({
-				name        => 'proctor_user',
-				id          => 'proctor_user',
-				value       => '',
-				class       => 'form-control',
-				placeholder => ''
+				name           => 'proctor_user',
+				id             => 'proctor_user',
+				value          => '',
+				class          => 'form-control',
+				placeholder    => '',
+				autocapitalize => 'none',
+				spellcheck     => 'false'
 			}),
 			CGI::label({ for => 'proctor_user' }, $r->maketext('Proctor Username'))
 		);

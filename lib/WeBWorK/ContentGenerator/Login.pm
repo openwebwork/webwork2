@@ -220,12 +220,14 @@ sub body {
 		print CGI::div(
 			{ class => 'form-floating mb-2' },
 			CGI::textfield({
-				id            => 'uname',
-				name          => 'user',
-				value         => $user,
-				aria_required => 'true',
-				class         => 'form-control',
-				placeholder   => ''
+				id             => 'uname',
+				name           => 'user',
+				value          => $user,
+				aria_required  => 'true',
+				class          => 'form-control',
+				placeholder    => '',
+				autocapitalize => 'none',
+				spellcheck     => 'false'
 			}),
 			CGI::label({ for => 'uname' }, $r->maketext('Username'))
 		);
