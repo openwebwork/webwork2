@@ -215,7 +215,7 @@ $emailableURL
 		}
 
 		my $email = Email::Stuffer->to(join(',', @recipients))->from($sender)->subject($subject)
-			->text_body(Encode::encode('UTF-8', $msg))->header('X-Remote-Host' => $remote_host);
+			->text_body($msg)->header('X-Remote-Host' => $remote_host);
 
 		# Extra headers
 		$email->header('X-WeBWorK-Module', $module)   if defined $module;
