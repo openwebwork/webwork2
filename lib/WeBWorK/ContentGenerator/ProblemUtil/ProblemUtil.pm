@@ -615,8 +615,7 @@ Recitation: $recitation
 Comment:    $comment
 /;
 
-	my $email = Email::Stuffer->to(join(",", @recipients))->from($sender)->subject($subject)
-		->text_body(Encode::encode('UTF-8', $msg));
+	my $email = Email::Stuffer->to(join(",", @recipients))->from($sender)->subject($subject)->text_body($msg);
 
 	# Extra headers
 	$email->header('X-WeBWorK-Course: ', $courseID) if defined $courseID;

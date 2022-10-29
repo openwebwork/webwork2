@@ -969,7 +969,7 @@ sub mail_message_to_recipients {
 		$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
 
 		my $email = Email::Stuffer->to($ur->email_address)->from($from)->subject($subject)
-			->text_body(Encode::encode('UTF-8', $msg))->header('X-Remote-Host' => $self->{remote_host});
+			->text_body($msg)->header('X-Remote-Host' => $self->{remote_host});
 
 		# $ce->{mail}{set_return_path} is the address used to report returned email if defined and non empty.
 		# It is an argument used in sendmail() (aka Email::Stuffer::send_or_die).
@@ -1017,7 +1017,7 @@ sub email_notification {
 	my $ce             = $self->r->ce;
 
 	my $email = Email::Stuffer->to($self->{defaultFrom})->from($self->{defaultFrom})->subject('WeBWorK email sent')
-		->text_body(Encode::encode('UTF-8', $result_message))->header('X-Remote-Host' => $self->{remote_host});
+		->text_body($result_message)->header('X-Remote-Host' => $self->{remote_host});
 
 	try {
 		$email->send_or_die({
