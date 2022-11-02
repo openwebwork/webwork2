@@ -280,7 +280,9 @@ sub displayStudentStats {
 
 		# If the set has hide_score set, then we need to skip printing the score as well.
 		if (
-			defined $set->hide_score
+			defined $set->assignment_type
+			&& $set->assignment_type =~ /gateway/
+			&& defined $set->hide_score
 			&& (
 				!$authz->hasPermissions($r->param('user'), 'view_hidden_work')
 				&& ($set->hide_score eq 'Y' || ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date))
