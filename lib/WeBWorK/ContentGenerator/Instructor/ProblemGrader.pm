@@ -177,13 +177,10 @@ sub body {
 
 	#set up a silly problem to render the problem text
 	my $pg = WeBWorK::PG->new(constructPGOptions(
-		$ce,
-		$user,
-		$set,
-		$problem,
+		$ce, $user, $set, $problem,
 		$set->psvn,
 		$formFields,
-		{              # translation options
+		{    # translation options
 			displayMode              => $displayMode,
 			showHints                => 0,
 			showSolutions            => 0,

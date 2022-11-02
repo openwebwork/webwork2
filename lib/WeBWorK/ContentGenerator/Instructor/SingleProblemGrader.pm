@@ -105,42 +105,43 @@ sub insertGrader {
 					{ class => 'col-fixed col-form-label' },
 					$self->maketext('Answer [_1] Score (%):', $part + 1) . ' '
 						. CGI::a(
-						{
-							class           => 'help-popup',
-							data_bs_content => $self->maketext(
-								'The initial value is the answer sub score for the answer '
+							{
+								class           => 'help-popup',
+								data_bs_content => $self->maketext(
+									'The initial value is the answer sub score for the answer '
 									. 'that is currently shown.  If this is modified, it will be used to compute '
 									. 'the total problem score below.  This score is not saved, and will reset to the '
 									. 'score for the shown answer if the page is reloaded.'
-							),
-							data_bs_placement => 'top',
-							data_bs_toggle    => 'popover'
-						},
-						CGI::i(
-							{
-								class       => 'icon fas fa-question-circle',
-								aria_hidden => 'true',
-								data_alt    => 'Help Icon'
+								),
+								data_bs_placement => 'top',
+								data_bs_toggle    => 'popover'
 							},
-							''
-						)
+							CGI::i(
+								{
+									class       => 'icon fas fa-question-circle',
+									aria_hidden => 'true',
+									data_alt    => 'Help Icon'
+								},
+								''
+							)
 						)
 					)
 					. CGI::div(
-					{ class => 'col-sm' },
-					CGI::input({
-						type         => 'number',
-						min          => 0,
-						max          => 100,
-						autocomplete => 'off',
-						class        => 'answer-part-score form-control form-control-sm w-auto d-inline',
-						id => "score_problem$self->{problem_id}_$self->{pg}{flags}{ANSWER_ENTRY_ORDER}[$part]",
-						data_problem_id    => $self->{problem_id},
-						data_answer_labels => '["' . join('","', @{ $self->{pg}{flags}{ANSWER_ENTRY_ORDER} }) . '"]',
-						data_weight        => $weights[$part],
-						value              => $scores[$part],
-						size               => 5
-					})
+						{ class => 'col-sm' },
+						CGI::input({
+							type         => 'number',
+							min          => 0,
+							max          => 100,
+							autocomplete => 'off',
+							class        => 'answer-part-score form-control form-control-sm w-auto d-inline',
+							id => "score_problem$self->{problem_id}_$self->{pg}{flags}{ANSWER_ENTRY_ORDER}[$part]",
+							data_problem_id    => $self->{problem_id},
+							data_answer_labels => '["'
+							. join('","', @{ $self->{pg}{flags}{ANSWER_ENTRY_ORDER} }) . '"]',
+							data_weight => $weights[$part],
+							value       => $scores[$part],
+							size        => 5
+						})
 						. '&nbsp'
 						. $self->maketext('<b>Weight:</b> [_1]%', wwRound(2, $weights[$part] * 100))
 					)
@@ -155,41 +156,42 @@ sub insertGrader {
 			{ class => 'col-fixed col-form-label' },
 			$self->maketext('Problem Score (%):') . ' '
 				. CGI::a(
-				{
-					class           => 'help-popup',
-					data_bs_content =>
+					{
+						class           => 'help-popup',
+						data_bs_content =>
 						$self->maketext('The initial value is the currently saved score for this student.')
 						. (
-						@{ $self->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1
-						? ' '
+							@{ $self->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1
+							? ' '
 							. $self->maketext(
-							'This is the only part of the score that is actually saved. '
+								'This is the only part of the score that is actually saved. '
 								. 'This is computed from the answer sub scores above using the weights shown if they '
 								. 'are modified.  Alternatively, enter the score you want saved here '
 								. '(the above sub scores will be ignored).'
 							)
-						: ''
+							: ''
 						),
-					data_bs_placement => 'top',
-					data_bs_toggle    => 'popover'
-				},
-				CGI::i({ class => 'icon fas fa-question-circle', aria_hidden => 'true', data_alt => 'Help Icon' }, '')
+						data_bs_placement => 'top',
+						data_bs_toggle    => 'popover'
+					},
+					CGI::i({ class => 'icon fas fa-question-circle', aria_hidden => 'true', data_alt => 'Help Icon' },
+						'')
 					. CGI::span({ class => 'sr-only-glyphicon' }, 'Help Icon')
 				)
 			)
 			. CGI::div(
-			{ class => 'col-sm' },
-			CGI::input({
-				type            => 'number',
-				id              => "score_problem$self->{problem_id}",
-				class           => 'problem-score form-control form-control-sm w-auto d-inline',
-				min             => 0,
-				max             => 100,
-				autocomplete    => 'off',
-				data_problem_id => $self->{problem_id},
-				value           => wwRound(0, $self->{recorded_score} * 100),
-				size            => 5
-			})
+				{ class => 'col-sm' },
+				CGI::input({
+					type            => 'number',
+					id              => "score_problem$self->{problem_id}",
+					class           => 'problem-score form-control form-control-sm w-auto d-inline',
+					min             => 0,
+					max             => 100,
+					autocomplete    => 'off',
+					data_problem_id => $self->{problem_id},
+					value           => wwRound(0, $self->{recorded_score} * 100),
+					size            => 5
+				})
 			)
 	);
 
@@ -199,19 +201,19 @@ sub insertGrader {
 			{ class => 'row' },
 			CGI::label({ class => 'col-fixed col-form-label' }, $self->maketext('Comment:'))
 				. CGI::div(
-				{ class => 'col-sm' },
-				CGI::textarea({
-					id              => "comment_problem$self->{problem_id}",
-					class           => 'grader-problem-comment form-control d-inline',
-					data_problem_id => $self->{problem_id},
-					value           => $self->{comment_string},
-					rows            => 3
-				}),
-				CGI::input({
-					class => 'preview btn btn-secondary mt-1',
-					type  => 'button',
-					value => $self->maketext('Preview Comment')
-				})
+					{ class => 'col-sm' },
+					CGI::textarea({
+						id              => "comment_problem$self->{problem_id}",
+						class           => 'grader-problem-comment form-control d-inline',
+						data_problem_id => $self->{problem_id},
+						value           => $self->{comment_string},
+						rows            => 3
+					}),
+					CGI::input({
+						class => 'preview btn btn-secondary mt-1',
+						type  => 'button',
+						value => $self->maketext('Preview Comment')
+					})
 				)
 		);
 	}

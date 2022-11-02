@@ -1,7 +1,4 @@
-loadMacros(
-  "unionImage.pl",
-  "unionTables.pl",
-);
+loadMacros("unionImage.pl", "unionTables.pl",);
 
 $bHTML = '\begin{rawhtml}';
 $eHTML = '\end{rawhtml}';
@@ -14,28 +11,28 @@ $eHTML = '\end{rawhtml}';
 #  $tex for the second form.
 #
 sub HTML {
-  my ($html,$tex) = @_;
-  return('') unless (defined($html) && $html ne '');
-  $tex = '' unless (defined($tex));
-  MODES(TeX => $tex, Latex2HTML => $bHTML.$html.$eHTML, HTML => $html);
+	my ($html, $tex) = @_;
+	return ('') unless (defined($html) && $html ne '');
+	$tex = ''   unless (defined($tex));
+	MODES(TeX => $tex, Latex2HTML => $bHTML . $html . $eHTML, HTML => $html);
 }
 
 #
 #  Begin and end <TT> mode
 #
-$BTT = HTML('<TT>','\texttt{');
-$ETT = HTML('</TT>','}');
+$BTT = HTML('<TT>',  '\texttt{');
+$ETT = HTML('</TT>', '}');
 
 #
 #  Begin and end <SMALL> mode
 #
-$BSMALL = HTML('<SMALL>','{\small ');
-$ESMALL = HTML('</SMALL>','}');
+$BSMALL = HTML('<SMALL>',  '{\small ');
+$ESMALL = HTML('</SMALL>', '}');
 
 #
 #  Block quotes
 #
-$BBLOCKQUOTE = HTML('<BLOCKQUOTE>','\hskip3em ');
+$BBLOCKQUOTE = HTML('<BLOCKQUOTE>', '\hskip3em ');
 $EBLOCKQUOTE = HTML('</BLOCKQUOTE>');
 
 #
@@ -48,14 +45,14 @@ $RQ = MODES(TeX => "''", Latex2HTML => '"', HTML => '"');
 #  make sure all characters are displayed
 #
 sub protectHTML {
-    my $string = shift;
-    $string =~ s/&/\&amp;/g;
-    $string =~ s/</\&lt;/g;
-    $string =~ s/>/\&gt;/g;
-    $string;
+	my $string = shift;
+	$string =~ s/&/\&amp;/g;
+	$string =~ s/</\&lt;/g;
+	$string =~ s/>/\&gt;/g;
+	$string;
 }
 
-sub _parserUtils_init {}
+sub _parserUtils_init { }
 
 1;
 

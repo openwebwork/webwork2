@@ -30,14 +30,14 @@ use WeBWorK::CGI;
 use WeBWorK::Debug;
 
 sub initialize {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $db         = $r->db;
-	my $authz      = $r->authz;
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $urlpath = $r->urlpath;
+	my $db      = $r->db;
+	my $authz   = $r->authz;
 
-	my $userID     = $urlpath->arg("userID");
-	my $user       = $r->param("user");
+	my $userID = $urlpath->arg("userID");
+	my $user   = $r->param("user");
 
 	# check authorization
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
@@ -62,7 +62,7 @@ sub initialize {
 		my %selectedSets = map { $_ => 1 } $r->param("selected");
 
 		# get current user
-		my $User = $db->getUser($userID); # checked
+		my $User = $db->getUser($userID);    # checked
 		die "record not found for $userID.\n" unless $User;
 
 		$self->addgoodmessage($r->maketext("User's sets have been reassigned."));
@@ -74,20 +74,20 @@ sub initialize {
 			my $setID = $setRecord->set_id;
 			# does the user want it to be assigned to the selected user
 			if (exists $selectedSets{$setID}) {
-				unless ($userSets{$setID}) {	# skip users already in the set
+				unless ($userSets{$setID}) {    # skip users already in the set
 					debug("assignSetToUser($userID, $setID)");
 					$self->assignSetToUser($userID, $setRecord);
 					debug("done assignSetToUser($userID, $setID)");
 				}
 			} else {
 				# user asked to NOT have the set assigned to the selected user
-				next unless $userSets{$setID};	# skip users not in the set
+				next unless $userSets{$setID};    # skip users not in the set
 				$db->deleteUserSet($userID, $setID);
 			}
 		}
 	} elsif (defined $r->param("unassignFromAll")) {
-	   # no action taken
-	   $self->addbadmessage($r->maketext('No action taken'));
+		# no action taken
+		$self->addbadmessage($r->maketext('No action taken'));
 	}
 }
 
@@ -151,8 +151,7 @@ sub body {
 
 	print CGI::start_div({ class => 'table-responsive' }),
 		CGI::start_table({ class => 'table table-bordered table-sm font-sm w-auto' });
-	print CGI::Tr(CGI::th({ class => 'text-center' }, 'Assigned'),
-		CGI::th([ 'Set Name', 'Close Date', '' ]));
+	print CGI::Tr(CGI::th({ class => 'text-center' }, 'Assigned'), CGI::th([ 'Set Name', 'Close Date', '' ]));
 
 	foreach my $Set (@{ $self->{set_records} }) {
 		my $setID = $Set->set_id;
@@ -202,9 +201,9 @@ sub body {
 				{ class => 'alert alert-danger p-1 mb-3' },
 				$r->maketext(
 					'There is NO undo for this function.  '
-						. 'Do not use it unless you know what you are doing!  When you unassign '
-						. 'sets using this button, or by unchecking their set names, you destroy all '
-						. 'of the data for those sets for this student.',
+					. 'Do not use it unless you know what you are doing!  When you unassign '
+					. 'sets using this button, or by unchecking their set names, you destroy all '
+					. 'of the data for those sets for this student.',
 				)
 			),
 			CGI::div(
@@ -231,11 +230,11 @@ sub body {
 }
 
 sub title {
-        my ($self) = @_;
-        my $r = $self->{r};
-        my $userID = $r->urlpath->arg("userID");
+	my ($self) = @_;
+	my $r      = $self->{r};
+	my $userID = $r->urlpath->arg("userID");
 
-        return "Assigned Sets for user $userID";
+	return "Assigned Sets for user $userID";
 }
 
 1;

@@ -124,7 +124,7 @@ use Fcntl;
 
 #hiding add_problem option to see if its needed
 use constant ACTION_FORMS => [qw(view save save_as add_problem revert)];
-use constant ACTION_FORM_TITLES => { # editor tabs
+use constant ACTION_FORM_TITLES => {    # editor tabs
 	view        => x("View"),
 	add_problem => x("Append"),
 	save        => x("Update"),
@@ -134,43 +134,43 @@ use constant ACTION_FORM_TITLES => { # editor tabs
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
-	view => "modify_student_data",
-	add_problem => "modify_student_data",
+	view            => "modify_student_data",
+	add_problem     => "modify_student_data",
 	make_local_copy => "modify_student_data",
-	save => "modify_student_data",
-	save_as => "modify_student_data",
-	revert => "modify_student_data",
+	save            => "modify_student_data",
+	save_as         => "modify_student_data",
+	revert          => "modify_student_data",
 };
 
 our $BLANKPROBLEM = 'blankProblem.pg';
 
 sub pre_header_initialize {
-	my ($self)         = @_;
-	my $r              = $self->r;
-	my $ce             = $r->ce;
-	my $urlpath        = $r->urlpath;
-	my $authz          = $r->authz;
-	my $user           = $r->param('user');
-	$self->{courseID}   = $urlpath->arg("courseID");
-	$self->{setID}      = $r->urlpath->arg("setID") ;  # using $r->urlpath->arg("setID")  ||'' causes trouble with set 0!!!
-	$self->{problemID}  = $r->urlpath->arg("problemID");
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $urlpath = $r->urlpath;
+	my $authz   = $r->authz;
+	my $user    = $r->param('user');
+	$self->{courseID}  = $urlpath->arg("courseID");
+	$self->{setID}     = $r->urlpath->arg("setID"); # using $r->urlpath->arg("setID")  ||'' causes trouble with set 0!!!
+	$self->{problemID} = $r->urlpath->arg("problemID");
 
 	# parse setID, which may come in with version data
 	my $fullSetID = $self->{setID};
-	if (defined($fullSetID) ) {
-		if ( $fullSetID =~ /,v(\d+)$/ ) {
+	if (defined($fullSetID)) {
+		if ($fullSetID =~ /,v(\d+)$/) {
 			$self->{versionID} = $1;
 			$self->{setID} =~ s/,v\d+$//;
 		}
 		$self->{fullSetID} = $fullSetID;
 	}
 
-	my $submit_button   = $r->param('submit');  # obtain submit command from form
-	my $actionID        = $r->param('action');
-	my $file_type       = $r->param("file_type") || '';
-	my $setName         = $self->{setID};
+	my $submit_button    = $r->param('submit');            # obtain submit command from form
+	my $actionID         = $r->param('action');
+	my $file_type        = $r->param("file_type") || '';
+	my $setName          = $self->{setID};
 	my $versionedSetName = $self->{fullSetID};
-	my $problemNumber   = $self->{problemID};
+	my $problemNumber    = $self->{problemID};
 
 	# Check permissions
 	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
@@ -221,9 +221,9 @@ sub pre_header_initialize {
 
 	# If this has not been defined we are  dealing with a set header
 	# or regular problem
-	if ( not_blank($file_type) ) { #file_type is defined and is not blank
-		# file type is already defined -- do nothing
-		#warn "file type already defined as $file_type"  #FIXME debug
+	if (not_blank($file_type)) {    #file_type is defined and is not blank
+									# file type is already defined -- do nothing
+									#warn "file type already defined as $file_type"  #FIXME debug
 	} else {
 		# if "sourceFilePath" is defined in the form, then we are getting the path directly.
 		# if the problem number is defined and is 0
@@ -232,12 +232,14 @@ sub pre_header_initialize {
 		# to the screen.
 		# If the problem number is not zero, we are dealing with a real problem
 		######################################
-		if ( not_blank($r->param('sourceFilePath') )  ) {
-			$file_type ='source_path_for_problem_file';
-			$file_type = 'set_header' if $r->param('sourceFilePath') =~ m!/headers/|Header\.pg$!; #FIXME this need to be cleaned up
-		} elsif ( defined($problemNumber) ) {
-			if ( $problemNumber =~/^\d+$/ and $problemNumber == 0 ) {  # if problem number is numeric and zero
-				$file_type = 'set_header' unless  $file_type eq 'set_header'
+		if (not_blank($r->param('sourceFilePath'))) {
+			$file_type = 'source_path_for_problem_file';
+			$file_type = 'set_header'
+				if $r->param('sourceFilePath') =~ m!/headers/|Header\.pg$!;    #FIXME this need to be cleaned up
+		} elsif (defined($problemNumber)) {
+			if ($problemNumber =~ /^\d+$/ and $problemNumber == 0) {           # if problem number is numeric and zero
+				$file_type = 'set_header'
+					unless $file_type eq 'set_header'
 					or $file_type eq 'hardcopy_header';
 			} else {
 				$file_type = 'problem';
@@ -249,18 +251,18 @@ sub pre_header_initialize {
 	die "The file_type variable |$file_type| has not been defined or is blank." unless not_blank($file_type);
 	# clean up sourceFilePath, just in case
 	# double check that sourceFilePath is relative to the templates file
-	if ($file_type eq 'source_path_for_problem_file' ) {
+	if ($file_type eq 'source_path_for_problem_file') {
 		my $templatesDirectory = $ce->{courseDirs}->{templates};
-		my $sourceFilePath = $r->param('sourceFilePath');
+		my $sourceFilePath     = $r->param('sourceFilePath');
 		$sourceFilePath =~ s/$templatesDirectory//;
-		$sourceFilePath =~ s|^/||;  # remove intial /
+		$sourceFilePath =~ s|^/||;                    # remove intial /
 		$self->{sourceFilePath} = $sourceFilePath;
 	}
 	$self->{file_type} = $file_type;
 	# $self->addgoodmessage("file type is $file_type");  #FIXME debug
 
 	##########################################
-	# File type is one of:     blank_problem course_info options_info problem set_header hardcopy_header source_path_for_problem_file
+# File type is one of:     blank_problem course_info options_info problem set_header hardcopy_header source_path_for_problem_file
 	##########################################
 	#
 	# Determine the path to the file
@@ -274,7 +276,7 @@ sub pre_header_initialize {
 	##########################################
 	# Default problem contents
 	##########################################
-	$self->{r_problemContents}= undef;
+	$self->{r_problemContents} = undef;
 
 	##########################################
 	#
@@ -283,28 +285,28 @@ sub pre_header_initialize {
 	###########################################
 
 	if ($actionID) {
-		unless (grep { $_ eq $actionID } @{ ACTION_FORMS() } ) {
+		unless (grep { $_ eq $actionID } @{ ACTION_FORMS() }) {
 			die "Action $actionID not found";
 		}
 		# Check permissions
 		if (not FORM_PERMS()->{$actionID} or $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
 			my $actionHandler = "${actionID}_handler";
-			my %genericParams =();
-			my %actionParams = $self->getActionParams($actionID);
-			my %tableParams = (); # $self->getTableParams();
-			$self->{action}= $actionID;
+			my %genericParams = ();
+			my %actionParams  = $self->getActionParams($actionID);
+			my %tableParams   = ();                                  # $self->getTableParams();
+			$self->{action} = $actionID;
 			$self->$actionHandler(\%genericParams, \%actionParams, \%tableParams);
 		} else {
-			$self->addbadmessage( "You are not authorized to perform this action.");
+			$self->addbadmessage("You are not authorized to perform this action.");
 		}
 	} else {
-		$self->{action}='fresh_edit';
+		$self->{action} = 'fresh_edit';
 		my $actionHandler = "fresh_edit_handler";
 		my %genericParams;
-		my %actionParams = (); #$self->getActionParams($actionID);
-		my %tableParams = (); # $self->getTableParams();
+		my %actionParams    = ();    #$self->getActionParams($actionID);
+		my %tableParams     = ();    # $self->getTableParams();
 		my $problemContents = '';
-		$self->{r_problemContents}=\$problemContents;
+		$self->{r_problemContents} = \$problemContents;
 		$self->$actionHandler(\%genericParams, \%actionParams, \%tableParams);
 	}
 
@@ -330,7 +332,7 @@ sub pre_header_initialize {
 	# inside saveFileChanges
 	$self->{problemSeed} = $r->param('problemSeed') if (defined $r->param('problemSeed'));
 	# Make sure that the problem seed has some value
-	$self->{problemSeed} = DEFAULT_SEED() unless not_blank( $self->{problemSeed});
+	$self->{problemSeed} = DEFAULT_SEED() unless not_blank($self->{problemSeed});
 
 	##############################################################################
 	# Return
@@ -350,35 +352,42 @@ sub pre_header_initialize {
 
 	# Some cases do not need a redirect: save, refresh, save_as, add_problem_to_set, add_header_to_set,make_local_copy
 	my $action = $self->{action};
-	return ;
+	return;
 }
 
-sub initialize  {
+sub initialize {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $authz = $r->authz;
-	my $user = $r->param('user');
+	my $r      = $self->r;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
 
 	# Check permissions
 	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
 	return unless ($authz->hasPermissions($user, "modify_problem_sets"));
 
-	my $file_type       = $r->param('file_type') || "";
-	my $tempFilePath    = $self->{tempFilePath}; # path to the file currently being worked with (might be a .tmp file)
-	my $inputFilePath   = $self->{inputFilePath};   # path to the file for input, (might be a .tmp file)
+	my $file_type     = $r->param('file_type') || "";
+	my $tempFilePath  = $self->{tempFilePath};     # path to the file currently being worked with (might be a .tmp file)
+	my $inputFilePath = $self->{inputFilePath};    # path to the file for input, (might be a .tmp file)
 
-	$self->addmessage($r->param('status_message') ||'');  # record status messages carried over if this is a redirect
+	$self->addmessage($r->param('status_message') || '');    # record status messages carried over if this is a redirect
 	$self->addbadmessage($r->maketext("Changes in this file have not yet been permanently saved.")) if -r $tempFilePath;
-	if ( not( -e $inputFilePath) ) {
+	if (not(-e $inputFilePath)) {
 		$self->addbadmessage($r->maketext("The file '[_1]' cannot be found.", $self->shortPath($inputFilePath)));
-	} elsif ((not -w $inputFilePath) && $file_type ne 'blank_problem' ) {
-		$self->addbadmessage($r->maketext("The file '[_1]' is protected!", $self->shortPath($inputFilePath)).CGI::br().
-			$r->maketext("To edit this text you must first make a copy of this file using the 'NewVersion' action below."));
+	} elsif ((not -w $inputFilePath) && $file_type ne 'blank_problem') {
+		$self->addbadmessage(
+			$r->maketext("The file '[_1]' is protected!", $self->shortPath($inputFilePath))
+				. CGI::br()
+				. $r->maketext(
+					"To edit this text you must first make a copy of this file using the 'NewVersion' action below.")
+		);
 	}
-	if ($inputFilePath =~/$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
-		$self->addbadmessage($r->maketext("The file '[_1]' is a blank problem!",
-				$self->shortPath($inputFilePath)).CGI::br().
-			$r->maketext("To edit this text you must use the 'NewVersion' action below to save it to another file."));
+	if ($inputFilePath =~ /$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
+		$self->addbadmessage(
+			$r->maketext("The file '[_1]' is a blank problem!", $self->shortPath($inputFilePath))
+				. CGI::br()
+				. $r->maketext(
+					"To edit this text you must use the 'NewVersion' action below to save it to another file.")
+		);
 	}
 }
 
@@ -416,22 +425,22 @@ sub path {
 }
 
 sub title {
-	my $self = shift;
-	my $r = $self->r;
+	my $self          = shift;
+	my $r             = $self->r;
 	my $courseName    = $r->urlpath->arg("courseID");
 	my $setID         = $r->urlpath->arg("setID");
 	my $problemNumber = $r->urlpath->arg("problemID");
-	my $file_type = $self->{'file_type'} || '';
+	my $file_type     = $self->{'file_type'} || '';
 
-	return "Set Header for  set $setID" if ($file_type eq 'set_header');
-	return "Hardcopy Header for set $setID" if ($file_type eq 'hardcopy_header');
+	return "Set Header for  set $setID"                if ($file_type eq 'set_header');
+	return "Hardcopy Header for set $setID"            if ($file_type eq 'hardcopy_header');
 	return "Course Information for course $courseName" if ($file_type eq 'course_info');
-	return "Options Information" if ($file_type eq 'options_info');
+	return "Options Information"                       if ($file_type eq 'options_info');
 
 	if ($setID) {
 		my $set = $r->db->getGlobalSet($setID);
 		if ($set && $set->assignment_type eq 'jitar') {
-			$problemNumber = join('.',jitar_id_to_seq($problemNumber));
+			$problemNumber = join('.', jitar_id_to_seq($problemNumber));
 		}
 	}
 
@@ -439,12 +448,12 @@ sub title {
 }
 
 sub body {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
-	my $authz = $r->authz;
-	my $user = $r->param('user');
+	my ($self)          = @_;
+	my $r               = $self->r;
+	my $db              = $r->db;
+	my $ce              = $r->ce;
+	my $authz           = $r->authz;
+	my $user            = $r->param('user');
 	my $make_local_copy = $r->param('make_local_copy');
 
 	# Check permissions
@@ -456,31 +465,33 @@ sub body {
 		unless $authz->hasPermissions($user, "modify_student_data");
 
 	# Gathering info
-	my $editFilePath    = $self->{editFilePath}; # path to the permanent file to be edited
-	my $tempFilePath    = $self->{tempFilePath}; # path to the file currently being worked with (might be a .tmp file)
-	my $inputFilePath   = $self->{inputFilePath};   # path to the file for input, (might be a .tmp file)
-	my $setName         = $self->{setID} // ''; # Allow the numeric set name 0.
-	my $problemNumber   = $self->{problemID} ;
-	my $fullSetName = defined( $self->{fullSetID} ) ? $self->{fullSetID} : $setName;
-	$problemNumber      = defined($problemNumber) ? $problemNumber : '';
+	my $editFilePath  = $self->{editFilePath};     # path to the permanent file to be edited
+	my $tempFilePath  = $self->{tempFilePath};     # path to the file currently being worked with (might be a .tmp file)
+	my $inputFilePath = $self->{inputFilePath};    # path to the file for input, (might be a .tmp file)
+	my $setName       = $self->{setID} // '';      # Allow the numeric set name 0.
+	my $problemNumber = $self->{problemID};
+	my $fullSetName   = defined($self->{fullSetID}) ? $self->{fullSetID} : $setName;
+	$problemNumber = defined($problemNumber) ? $problemNumber : '';
 
 	#########################################################################
 	# Construct url for reporting bugs:
 	#########################################################################
 
 	my $libraryName = '';
-	if ($editFilePath =~ m|([^/]*)Library|)   {  #find the path to the file
-		# find the library, if any exists in the path name (first library is picked)
+	if ($editFilePath =~ m|([^/]*)Library|) {    #find the path to the file
+		 # find the library, if any exists in the path name (first library is picked)
 		my $tempLibraryName = $1;
 		$libraryName = (not_blank($tempLibraryName)) ? $tempLibraryName : "Library";
 		# things that start /Library/setFoo/probBar  are labeled as component "Library"
 		# which refers to the SQL based problem library. (is nationalLibrary a better name?)
 	} else {
-		$libraryName = 'Library';  # make sure there is some default component defined.
+		$libraryName = 'Library';    # make sure there is some default component defined.
 	}
 
-	my $BUGZILLA = "$ce->{webworkURLs}{bugReporter}?product=Problem%20libraries".
-		"&component=$libraryName&bug_file_loc=${editFilePath}_with_problemSeed=".$self->{problemSeed};
+	my $BUGZILLA =
+		"$ce->{webworkURLs}{bugReporter}?product=Problem%20libraries"
+		. "&component=$libraryName&bug_file_loc=${editFilePath}_with_problemSeed="
+		. $self->{problemSeed};
 	#FIXME  # The construction of this URL is somewhat fragile.  A separate module could be devoted to
 	# intelligent bug reporting.
 
@@ -488,55 +499,64 @@ sub body {
 	# Construct reference row for PGproblemEditor.
 	#########################################################################
 
-	my @PG_Editor_Reference_Links = ({
+	my @PG_Editor_Reference_Links = (
+		{
 			#'http://webwork.maa.org/wiki/Category:Problem_Techniques',
 			label   => $r->maketext('Problem Techniques'),
 			url     => $ce->{webworkURLs}{problemTechniquesHelpURL},
 			target  => 'techniques_window',
 			tooltip => 'Snippets of PG code illustrating specific techniques',
-		}, {
+		},
+		{
 			#'http://webwork.maa.org/wiki/Category:MathObjects',
 			label   => $r->maketext('Math Objects'),
 			url     => $ce->{webworkURLs}{MathObjectsHelpURL},
 			target  => 'math_objects',
 			tooltip => 'Wiki summary page for MathObjects',
-		}, {
+		},
+		{
 			#'http://webwork.maa.org/pod/pg_TRUNK/',
 			label   => $r->maketext('POD'),
 			url     => $ce->{webworkURLs}{PODHelpURL},
 			target  => 'pod_docs',
-			tooltip => 'Documentation from source code for PG modules and macro files. Often the most up-to-date information.',
-		}, {
+			tooltip =>
+				'Documentation from source code for PG modules and macro files. Often the most up-to-date information.',
+		},
+		{
 			#'http://demo.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true',
-		# 	label   => $r->maketext('PGLab'),
-		# 	url     => $ce->{webworkURLs}{PGLabHelpURL},
-		# 	target  => 'PGLab',
-		# 	tooltip => 'Test snippets of PG code in interactive lab.  This is a good way to learn the PG language.',
-		# }, {
+			# 	label   => $r->maketext('PGLab'),
+			# 	url     => $ce->{webworkURLs}{PGLabHelpURL},
+			# 	target  => 'PGLab',
+			# 	tooltip => 'Test snippets of PG code in interactive lab.  This is a good way to learn the PG language.',
+			# }, {
 			#'https://courses1.webwork.maa.org/webwork2/cervone_course/PGML/1/?login_practice_user=true',
 			label   => $r->maketext('PGML'),
 			url     => $ce->{webworkURLs}{PGMLHelpURL},
 			target  => 'PGML',
-			tooltip => 'PG mark down syntax used to format WeBWorK questions. This interactive lab can help you to learn the techniques.',
-		}, {
+			tooltip =>
+				'PG mark down syntax used to format WeBWorK questions. This interactive lab can help you to learn the techniques.',
+		},
+		{
 			#'http://webwork.maa.org/wiki/Category:Authors',
 			label   => $r->maketext('Author Info'),
 			url     => $ce->{webworkURLs}{AuthorHelpURL},
 			target  => 'author_info',
 			tooltip => 'Top level of author information on the wiki.',
-		}, {
+		},
+		{
 			label   => $r->maketext('Report Bugs in this Problem'),
 			url     => $BUGZILLA,
 			target  => 'bug_report',
-			tooltip => 'Report bugs in a WeBWorK question/problem using this link. ' .
-			'The very first time you do this you will need to register with an email address so that ' .
-			'information on the bug fix can be reported back to you.',
+			tooltip => 'Report bugs in a WeBWorK question/problem using this link. '
+				. 'The very first time you do this you will need to register with an email address so that '
+				. 'information on the bug fix can be reported back to you.',
 		},
 	);
 
 	my @PG_Editor_References;
 	foreach my $link (@PG_Editor_Reference_Links) {
-		push(@PG_Editor_References,
+		push(
+			@PG_Editor_References,
 			CGI::a(
 				{
 					href              => $link->{url},
@@ -557,24 +577,27 @@ sub body {
 	# or in the problem contents gathered in the initialization phase.
 	#########################################################################
 
-	my $problemContents = ${$self->{r_problemContents}};
+	my $problemContents = ${ $self->{r_problemContents} };
 
-	unless ($problemContents =~/\S/)   { # non-empty contents
+	unless ($problemContents =~ /\S/) {    # non-empty contents
 		if (-r $tempFilePath and not -d $tempFilePath) {
-			die "tempFilePath is unsafe!" unless path_is_subdir($tempFilePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
+			die "tempFilePath is unsafe!"
+				unless path_is_subdir($tempFilePath, $ce->{courseDirs}->{templates}, 1)
+				;                          # 1==path can be relative to dir
 			eval { $problemContents = WeBWorK::Utils::readFile($tempFilePath) };
 			$problemContents = $@ if $@;
-			$inputFilePath = $tempFilePath;
-		} elsif  (-r $editFilePath and not -d $editFilePath) {
-			die "editFilePath is unsafe!" unless path_is_subdir($editFilePath, $ce->{courseDirs}->{templates}, 1)  # 1==path can be relative to dir
+			$inputFilePath   = $tempFilePath;
+		} elsif (-r $editFilePath and not -d $editFilePath) {
+			die "editFilePath is unsafe!"
+				unless path_is_subdir($editFilePath, $ce->{courseDirs}->{templates}, 1) # 1==path can be relative to dir
 				|| $editFilePath eq $ce->{webworkFiles}{screenSnippets}{setHeader}
 				|| $editFilePath eq $ce->{webworkFiles}{hardcopySnippets}{setHeader}
 				|| $editFilePath eq $ce->{webworkFiles}{screenSnippets}{blankProblem};
 			eval { $problemContents = WeBWorK::Utils::readFile($editFilePath) };
 			$problemContents = $@ if $@;
-			$inputFilePath = $editFilePath;
-		} else { # file not existing is not an error
-			#warn "No file exists";
+			$inputFilePath   = $editFilePath;
+		} else {    # file not existing is not an error
+					#warn "No file exists";
 			$problemContents = '';
 		}
 	} else {
@@ -584,8 +607,8 @@ sub body {
 	my $protected_file = not -w $inputFilePath;
 
 	my $prettyProblemNumber = $problemNumber;
-	my $set = $self->r->db->getGlobalSet($setName);
-	$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber))
+	my $set                 = $self->r->db->getGlobalSet($setName);
+	$prettyProblemNumber = join('.', jitar_id_to_seq($problemNumber))
 		if ($set && $set->assignment_type eq 'jitar');
 
 	my %titles = (
@@ -636,8 +659,8 @@ sub body {
 
 	######### print action forms
 
-	my @formsToShow = @{ ACTION_FORMS() };
-	my %actionFormTitles = %{ACTION_FORM_TITLES()};
+	my @formsToShow      = @{ ACTION_FORMS() };
+	my %actionFormTitles = %{ ACTION_FORM_TITLES() };
 	my $default_choice;
 
 	my @tabArr;
@@ -674,9 +697,9 @@ sub body {
 				@contentArr,
 				CGI::div(
 					{
-						class            => "tab-pane fade" . ($active ? " show$active" : ''),
-						id               => $actionID,
-						role             => 'tabpanel',
+						class           => "tab-pane fade" . ($active ? " show$active" : ''),
+						id              => $actionID,
+						role            => 'tabpanel',
 						aria_labelledby => "$actionID-tab"
 					},
 					$line_contents
@@ -696,7 +719,7 @@ sub body {
 		class => 'btn btn-primary'
 	}));
 
-	print  CGI::end_form();
+	print CGI::end_form();
 
 	print CGI::start_div({ id    => 'render-modal', class => 'modal hide fade', tabindex => '-1' });
 	print CGI::start_div({ class => 'modal-dialog modal-dialog-centered' });
@@ -724,11 +747,14 @@ sub body {
 
 #  Convert long paths to [TMPL], etc.
 sub shortPath {
-	my $self = shift; my $file = shift;
+	my $self = shift;
+	my $file = shift;
 	my $tmpl = $self->r->ce->{courseDirs}{templates};
 	my $root = $self->r->ce->{courseDirs}{root};
-	my $ww = $self->r->ce->{webworkDirs}{root};
-	$file =~ s|^$tmpl|[TMPL]|; $file =~ s|^$root|[COURSE]|; $file =~ s|^$ww|[WW]|;
+	my $ww   = $self->r->ce->{webworkDirs}{root};
+	$file =~ s|^$tmpl|[TMPL]|;
+	$file =~ s|^$root|[COURSE]|;
+	$file =~ s|^$ww|[WW]|;
 	return $file;
 }
 
@@ -740,7 +766,7 @@ sub getRelativeSourceFilePath {
 	my ($self, $sourceFilePath) = @_;
 
 	my $templatesDir = $self->r->ce->{courseDirs}->{templates};
-	$sourceFilePath =~ s|^$templatesDir/*||; # remove templates path and any slashes that follow
+	$sourceFilePath =~ s|^$templatesDir/*||;    # remove templates path and any slashes that follow
 
 	return $sourceFilePath;
 }
@@ -748,22 +774,23 @@ sub getRelativeSourceFilePath {
 # determineLocalFilePath   constructs a local file path parallel to a library file path
 
 sub determineLocalFilePath {
-	my $self= shift;
+	my $self = shift;
 	die "determineLocalFilePath is a method" unless ref($self);
-	my $path = shift;
+	my $path                         = shift;
 	my $default_screen_header_path   = $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
 	my $default_hardcopy_header_path = $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader};
-	my $setID = $self->{setID};
-	$setID = int(rand(1000)) unless $setID =~/\S/;  # setID can be 0
+	my $setID                        = $self->{setID};
+	$setID = int(rand(1000)) unless $setID =~ /\S/;    # setID can be 0
 	if ($path =~ /Library/) {
 		#$path =~ s|^.*?Library/||;  # truncate the url up to a segment such as ...rochesterLibrary/.......
-		$path  =~ s|^.*?Library/|local/|;  # truncate the url up to a segment such as ...rochesterLibrary/....... and prepend local
+		$path =~ s|^.*?Library/|local/|
+			;    # truncate the url up to a segment such as ...rochesterLibrary/....... and prepend local
 	} elsif ($path eq $default_screen_header_path) {
 		$path = "set$setID/setHeader.pg";
 	} elsif ($path eq $default_hardcopy_header_path) {
 		$path = "set$setID/hardcopyHeader.tex";
-	} else { # if its not in a library we'll just save it locally
-		$path = "new_problem_".int(rand(1000)).".pg"; #l hope there aren't any collisions.
+	} else {    # if its not in a library we'll just save it locally
+		$path = "new_problem_" . int(rand(1000)) . ".pg";    #l hope there aren't any collisions.
 	}
 	$path;
 }
@@ -771,12 +798,13 @@ sub determineLocalFilePath {
 # this does not create the directories in the path to the file
 # it  returns an absolute path to the file
 sub determineTempEditFilePath {
-	my $self = shift;  die "determineTempEditFilePath is a method" unless ref($self);
-	my $r = $self->r;
-	my $path =shift;    # this should be an absolute path to the file
+	my $self = shift;
+	die "determineTempEditFilePath is a method" unless ref($self);
+	my $r    = $self->r;
+	my $path = shift;                     # this should be an absolute path to the file
 	my $user = $self->r->param("user");
-	$user    = int(rand(1000)) unless defined $user;
-	my $setID = $self->{setID} || int(rand(1000));
+	$user = int(rand(1000)) unless defined $user;
+	my $setID           = $self->{setID} || int(rand(1000));
 	my $courseDirectory = $self->r->ce->{courseDirs};
 	###############
 	# Calculate the location of the temporary file
@@ -785,21 +813,26 @@ sub determineTempEditFilePath {
 	my $blank_file_path              = $self->r->ce->{webworkFiles}->{screenSnippets}->{blankProblem};
 	my $default_screen_header_path   = $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
 	my $default_hardcopy_header_path = $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader};
-	my $tmpEditFileDirectory = $self->getTempEditFileDirectory();
-	$self->addbadmessage($r->maketext("The path to the original file should be absolute")) unless $path =~m|^/|;  # debug
-	if ($path =~/^$tmpEditFileDirectory/) {
-		$self->addbadmessage("Error: This path is already in the temporary edit directory -- no new temporary file is created. path = $path");
+	my $tmpEditFileDirectory         = $self->getTempEditFileDirectory();
+	$self->addbadmessage($r->maketext("The path to the original file should be absolute"))
+		unless $path =~ m|^/|;    # debug
+	if ($path =~ /^$tmpEditFileDirectory/) {
+		$self->addbadmessage(
+			"Error: This path is already in the temporary edit directory -- no new temporary file is created. path = $path"
+		);
 	} else {
-		if ($path =~ /^$templatesDirectory/ ) {
+		if ($path =~ /^$templatesDirectory/) {
 			$path =~ s|^$templatesDirectory||;
-			$path =~ s|^/||;   # remove the initial slash if any
+			$path =~ s|^/||;                     # remove the initial slash if any
 			$path = "$tmpEditFileDirectory/$path.$user.tmp";
 		} elsif ($path eq $blank_file_path) {
-			$path = "$tmpEditFileDirectory/blank.$setID.$user.tmp";  # handle the case of the blank problem
+			$path = "$tmpEditFileDirectory/blank.$setID.$user.tmp";    # handle the case of the blank problem
 		} elsif ($path eq $default_screen_header_path) {
-			$path = "$tmpEditFileDirectory/screenHeader.$setID.$user.tmp";  # handle the case of the screen header in snippets
+			$path = "$tmpEditFileDirectory/screenHeader.$setID.$user.tmp"
+				;    # handle the case of the screen header in snippets
 		} elsif ($path eq $default_hardcopy_header_path) {
-			$path = "$tmpEditFileDirectory/hardcopyHeader.$setID.$user.tmp";  # handle the case of the hardcopy header in snippets
+			$path = "$tmpEditFileDirectory/hardcopyHeader.$setID.$user.tmp"
+				;    # handle the case of the hardcopy header in snippets
 		} else {
 			die "determineTempEditFilePath should only be used on paths within the templates directory, not on $path";
 		}
@@ -814,23 +847,23 @@ sub determineOriginalEditFilePath {
 	my $path = shift;
 	my $user = $self->r->param("user");
 	$self->addbadmessage("Can't determine user of temporary edit file $path.") unless defined($user);
-	my $templatesDirectory = $self->r->ce->{courseDirs} ->{templates};
+	my $templatesDirectory   = $self->r->ce->{courseDirs}->{templates};
 	my $tmpEditFileDirectory = $self->getTempEditFileDirectory();
 	# unless path is absolute assume that it is relative to the template directory
 	my $newpath = $path;
-	unless ($path =~ m|^/| ) {
+	unless ($path =~ m|^/|) {
 		$newpath = "$templatesDirectory/$path";
 	}
-	if ($self->isTempEditFilePath($newpath) ) {
-		$newpath =~ s|^$tmpEditFileDirectory/||; # delete temp edit directory
-		if ($newpath =~m|blank\.[^/]*$|) { # handle the case of the blank problem
+	if ($self->isTempEditFilePath($newpath)) {
+		$newpath =~ s|^$tmpEditFileDirectory/||;    # delete temp edit directory
+		if ($newpath =~ m|blank\.[^/]*$|) {         # handle the case of the blank problem
 			$newpath = $self->r->ce->{webworkFiles}->{screenSnippets}->{blankProblem};
-		} elsif (($newpath =~m|hardcopyHeader\.[^/]*$|)) { # handle the case of the hardcopy header in snippets
+		} elsif (($newpath =~ m|hardcopyHeader\.[^/]*$|)) {    # handle the case of the hardcopy header in snippets
 			$newpath = $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
-		} elsif (($newpath =~m|screenHeader\.[^/]*$|)) { # handle the case of the screen header in snippets
+		} elsif (($newpath =~ m|screenHeader\.[^/]*$|)) {      # handle the case of the screen header in snippets
 			$newpath = $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader};
 		} else {
-			$newpath =~ s|\.$user\.tmp$||; # delete suffix
+			$newpath =~ s|\.$user\.tmp$||;                     # delete suffix
 		}
 		#$self->addgoodmessage("Original file path is $newpath"); #FIXME debug
 	} else {
@@ -841,48 +874,51 @@ sub determineOriginalEditFilePath {
 }
 
 sub getTempEditFileDirectory {
-	my $self = shift;
-	my $courseDirectory       = $self->r->ce->{courseDirs};
-	my $templatesDirectory    = $courseDirectory->{templates};
-	my $tmpEditFileDirectory  = (defined ($courseDirectory->{tmpEditFileDir}) ) ? $courseDirectory->{tmpEditFileDir} : "$templatesDirectory/tmpEdit";
+	my $self               = shift;
+	my $courseDirectory    = $self->r->ce->{courseDirs};
+	my $templatesDirectory = $courseDirectory->{templates};
+	my $tmpEditFileDirectory =
+		(defined($courseDirectory->{tmpEditFileDir}))
+		? $courseDirectory->{tmpEditFileDir}
+		: "$templatesDirectory/tmpEdit";
 	$tmpEditFileDirectory;
 }
 
-sub isTempEditFilePath  {
-	my $self = shift;
-	my $path = shift;
-	my $templatesDirectory = $self->r->ce->{courseDirs} ->{templates};
+sub isTempEditFilePath {
+	my $self               = shift;
+	my $path               = shift;
+	my $templatesDirectory = $self->r->ce->{courseDirs}->{templates};
 	# unless path is absolute assume that it is relative to the template directory
-	unless ($path =~ m|^/| ) {
+	unless ($path =~ m|^/|) {
 		$path = "$templatesDirectory/$path";
 	}
 	my $tmpEditFileDirectory = $self->getTempEditFileDirectory();
 
-	($path =~/^$tmpEditFileDirectory/) ? 1: 0;
+	($path =~ /^$tmpEditFileDirectory/) ? 1 : 0;
 }
 
 sub getFilePaths {
 	my ($self, $setName, $problemNumber, $file_type) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $urlpath = $r->urlpath;
-	my $courseName = $urlpath->arg("courseID");
-	my $user = $r->param('user');
+	my $r                 = $self->r;
+	my $ce                = $r->ce;
+	my $db                = $r->db;
+	my $urlpath           = $r->urlpath;
+	my $courseName        = $urlpath->arg("courseID");
+	my $user              = $r->param('user');
 	my $effectiveUserName = $r->param('effectiveUser');
 
-	$setName = '' unless defined $setName;
+	$setName       = '' unless defined $setName;
 	$problemNumber = '' unless defined $problemNumber;
 
 	# parse possibly versioned set names
-	my $fullSetName = $setName;
+	my $fullSetName    = $setName;
 	my $editSetVersion = 0;
-	if ( $setName =~ /,v(\d)+$/ ) {
+	if ($setName =~ /,v(\d)+$/) {
 		$editSetVersion = $1;
 		$setName =~ s/,v\d+$//;
 	}
 
-	die 'Internal error to PGProblemEditor -- file type is not defined'  unless defined $file_type;
+	die 'Internal error to PGProblemEditor -- file type is not defined' unless defined $file_type;
 	#$self->addgoodmessage("file type is $file_type");  #FIXME remove
 	##########################################################
 	# Determine path to the input file to be edited.
@@ -911,25 +947,29 @@ sub getFilePaths {
 	# Determine path to regular file, place it in $editFilePath
 	# problemSeed is defined for the file_type = 'problem' and 'source_path_to_problem'
 	##########################################################################
-	CASE:
+CASE:
 	{
 		($file_type eq 'course_info') and do {
 			# we are editing the course_info file
 			# value of courseFiles::course_info is relative to templates directory
-			$editFilePath           .= '/' . $ce->{courseFiles}->{course_info};
+			$editFilePath .= '/' . $ce->{courseFiles}->{course_info};
 			last CASE;
 		};
 
 		($file_type eq 'options_info') and do {
 			# we are editing the options_info file
 			# value of courseFiles::options_info is relative to templates directory
-			$editFilePath           .= '/' . $ce->{courseFiles}->{options_info};
+			$editFilePath .= '/' . $ce->{courseFiles}->{options_info};
 			last CASE;
 		};
 
 		($file_type eq 'blank_problem') and do {
 			$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
-			$self->addbadmessage($r->maketext("This is a blank problem template file and can not be edited directly. Use the 'NewVersion' action below to create a local copy of the file and add it to the current problem set."));
+			$self->addbadmessage(
+				$r->maketext(
+					"This is a blank problem template file and can not be edited directly. Use the 'NewVersion' action below to create a local copy of the file and add it to the current problem set."
+				)
+			);
 			last CASE;
 		};
 
@@ -945,8 +985,8 @@ sub getFilePaths {
 			my $header_file = "";
 			$header_file = $set_record->{$file_type};
 			if ($header_file && $header_file ne "" && $header_file ne "defaultHeader") {
-				if ( $header_file =~ m|^/| ) { # if absolute address
-					$editFilePath  = $header_file;
+				if ($header_file =~ m|^/|) {    # if absolute address
+					$editFilePath = $header_file;
 				} else {
 					$editFilePath .= '/' . $header_file;
 				}
@@ -954,16 +994,18 @@ sub getFilePaths {
 				# if the set record doesn't specify the filename for a header
 				# then the set uses the default from snippets
 				$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{setHeader} if $file_type eq 'set_header';
-				$editFilePath = $ce->{webworkFiles}->{hardcopySnippets}->{setHeader} if $file_type eq 'hardcopy_header';
+				$editFilePath = $ce->{webworkFiles}->{hardcopySnippets}->{setHeader}
+					if $file_type eq 'hardcopy_header';
 			}
 			last CASE;
-		}; #end 'set_header, hardcopy_header' case
+		};    #end 'set_header, hardcopy_header' case
 
 		($file_type eq 'problem') and do {
 			# first try getting the merged problem for the effective user
 			my $problem_record;
-			if ( $editSetVersion ) {
-				$problem_record = $db->getMergedProblemVersion($effectiveUserName, $setName, $editSetVersion, $problemNumber);
+			if ($editSetVersion) {
+				$problem_record =
+					$db->getMergedProblemVersion($effectiveUserName, $setName, $editSetVersion, $problemNumber);
 			} else {
 				$problem_record = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
 			}
@@ -971,28 +1013,32 @@ sub getFilePaths {
 			# if that doesn't work (the problem is not yet assigned), get the global record
 			$problem_record = $db->getGlobalProblem($setName, $problemNumber) unless defined($problem_record);
 			# bail if no source path for the problem is found ;
-			die "Cannot find a problem record for set $setName / problem $problemNumber" unless defined($problem_record);
+			die "Cannot find a problem record for set $setName / problem $problemNumber"
+				unless defined($problem_record);
 			$editFilePath .= '/' . $problem_record->source_file;
 			# define the problem seed for later use
-			$self->{problemSeed}= $problem_record->problem_seed if  defined($problem_record) and  $problem_record->can('problem_seed') ;
+			$self->{problemSeed} = $problem_record->problem_seed
+				if defined($problem_record)
+				and $problem_record->can('problem_seed');
 			last CASE;
-		};  # end 'problem' case
+		};    # end 'problem' case
 
 		($file_type eq 'source_path_for_problem_file') and do {
 			my $forcedSourceFile = $self->{sourceFilePath};
 			# if the source file is in the temporary edit directory find the original source file
 			# the source file is relative to the templates directory.
-			if ($self->isTempEditFilePath($forcedSourceFile) ) {
-				$forcedSourceFile   = $self->determineOriginalEditFilePath($forcedSourceFile);     # original file path
-				$self->addgoodmessage($r->maketext("the original path to the file is [_1]",$forcedSourceFile));  #FIXME debug
+			if ($self->isTempEditFilePath($forcedSourceFile)) {
+				$forcedSourceFile = $self->determineOriginalEditFilePath($forcedSourceFile);    # original file path
+				$self->addgoodmessage($r->maketext("the original path to the file is [_1]", $forcedSourceFile))
+					;                                                                           #FIXME debug
 			}
 			# bail if no source path for the problem is found ;
-			die "Cannot find a file path to save to" unless( not_blank($forcedSourceFile)   );
+			die "Cannot find a file path to save to" unless (not_blank($forcedSourceFile));
 			$self->{problemSeed} = DEFAULT_SEED();
 			$editFilePath .= '/' . $forcedSourceFile;
 			last CASE;
-		}; # end 'source_path_for_problem_file' case
-	}  # end CASE: statement
+		};    # end 'source_path_for_problem_file' case
+	}    # end CASE: statement
 
 	if (-d $editFilePath) {
 		my $msg = $r->maketext("The file '[_1]' is a directory!", $self->shortPath($editFilePath));
@@ -1011,10 +1057,10 @@ sub getFilePaths {
 	# Whew!!!
 	#################################################
 
-	my $tempFilePath = $self->determineTempEditFilePath($editFilePath);  #"$editFilePath.$TEMPFILESUFFIX";
-	$self->{editFilePath}   = $editFilePath;
-	$self->{tempFilePath}   = $tempFilePath;
-	$self->{inputFilePath}  = (-r $tempFilePath) ? $tempFilePath : $editFilePath;
+	my $tempFilePath = $self->determineTempEditFilePath($editFilePath);    #"$editFilePath.$TEMPFILESUFFIX";
+	$self->{editFilePath}  = $editFilePath;
+	$self->{tempFilePath}  = $tempFilePath;
+	$self->{inputFilePath} = (-r $tempFilePath) ? $tempFilePath : $editFilePath;
 	#warn "editfile path is $editFilePath and tempFile is $tempFilePath and inputFilePath is ". $self->{inputFilePath};
 }
 
@@ -1027,19 +1073,19 @@ sub getFilePaths {
 # sometimes less.
 ################################################################################
 sub saveFileChanges {
-	my ($self, $outputFilePath, $problemContents ) = @_;
-	my $r             = $self->r;
-	my $ce            = $r->ce;
+	my ($self, $outputFilePath, $problemContents) = @_;
+	my $r  = $self->r;
+	my $ce = $r->ce;
 
-	my $action          = $self->{action}||'no action';
+	my $action = $self->{action} || 'no action';
 	# my $editFilePath  = $self->{editFilePath}; # not used??
-	my $sourceFilePath  = $self->{sourceFilePath};
-	my $tempFilePath    = $self->{tempFilePath};
+	my $sourceFilePath = $self->{sourceFilePath};
+	my $tempFilePath   = $self->{tempFilePath};
 
-	if (defined($problemContents) and ref($problemContents) ) {
+	if (defined($problemContents) and ref($problemContents)) {
 		$problemContents = ${$problemContents};
-	} elsif( ! not_blank($problemContents)  ) {      # if the problemContents is undefined or empty
-		$problemContents = ${$self->{r_problemContents}};
+	} elsif (!not_blank($problemContents)) {    # if the problemContents is undefined or empty
+		$problemContents = ${ $self->{r_problemContents} };
 	}
 	##############################################################################
 	# read and update the targetFile and targetFile.tmp files in the directory
@@ -1047,12 +1093,12 @@ sub saveFileChanges {
 	# The .tmp files are removed when the file is or when the revert occurs.
 	##############################################################################
 
-	unless (not_blank($outputFilePath) ) {
+	unless (not_blank($outputFilePath)) {
 		$self->addbadmessage($r->maketext("You must specify an file name in order to save a new file."));
 		return "";
 	}
-	my $do_not_save    = 0 ;       # flag to prevent saving of file
-	my $editErrors = '';
+	my $do_not_save = 0;    # flag to prevent saving of file
+	my $editErrors  = '';
 
 	##############################################################################
 	# write changes to the approriate files
@@ -1061,20 +1107,21 @@ sub saveFileChanges {
 	##############################################################################
 
 	my $writeFileErrors;
-	if ( not_blank($outputFilePath)  ) {   # save file
-		# Handle the problem of line endings.
-		# Make sure that all of the line endings are of unix type.
-		# Convert \r\n to \n
-		#$problemContents =~ s/\r\n/\n/g;
-		#$problemContents =~ s/\r/\n/g;
+	if (not_blank($outputFilePath)) {    # save file
+										 # Handle the problem of line endings.
+										 # Make sure that all of the line endings are of unix type.
+										 # Convert \r\n to \n
+										 #$problemContents =~ s/\r\n/\n/g;
+										 #$problemContents =~ s/\r/\n/g;
 
 		# make sure any missing directories are created
 		WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates}, $outputFilePath);
-		die "outputFilePath is unsafe!" unless path_is_subdir($outputFilePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
+		die "outputFilePath is unsafe!"
+			unless path_is_subdir($outputFilePath, $ce->{courseDirs}->{templates}, 1);  # 1==path can be relative to dir
 
 		eval {
 			local *OUTPUTFILE;
-			open OUTPUTFILE,  ">:encoding(UTF-8)", $outputFilePath
+			open OUTPUTFILE, ">:encoding(UTF-8)", $outputFilePath
 				or die "Failed to open $outputFilePath";
 			print OUTPUTFILE $problemContents;
 			close OUTPUTFILE;
@@ -1099,14 +1146,21 @@ sub saveFileChanges {
 
 		my $errorMessage;
 		# check why we failed to give better error messages
-		if ( not -w $ce->{courseDirs}->{templates} ) {
-			$errorMessage = "Write permissions have not been enabled in the templates directory.  No changes can be made.";
-		} elsif ( not -w $currentDirectory ) {
-			$errorMessage = "Write permissions have not been enabled in '".$self->shortPath($currentDirectory)."'.  Changes must be saved to a different directory for viewing.";
-		} elsif ( -e $outputFilePath and not -w $outputFilePath ) {
-			$errorMessage = "Write permissions have not been enabled for '".$self->shortPath($outputFilePath)."'.  Changes must be saved to another file for viewing.";
+		if (not -w $ce->{courseDirs}->{templates}) {
+			$errorMessage =
+				"Write permissions have not been enabled in the templates directory.  No changes can be made.";
+		} elsif (not -w $currentDirectory) {
+			$errorMessage =
+				"Write permissions have not been enabled in '"
+				. $self->shortPath($currentDirectory)
+				. "'.  Changes must be saved to a different directory for viewing.";
+		} elsif (-e $outputFilePath and not -w $outputFilePath) {
+			$errorMessage =
+				"Write permissions have not been enabled for '"
+				. $self->shortPath($outputFilePath)
+				. "'.  Changes must be saved to another file for viewing.";
 		} else {
-			$errorMessage = "Unable to write to '".$self->shortPath($outputFilePath)."': $writeFileErrors";
+			$errorMessage = "Unable to write to '" . $self->shortPath($outputFilePath) . "': $writeFileErrors";
 		}
 
 		$self->{failure} = 1;
@@ -1124,8 +1178,8 @@ sub saveFileChanges {
 	#
 	my $auxiliaryFilesExist = has_aux_files($outputFilePath);
 
-	if ($auxiliaryFilesExist and not $do_not_save ) {
-		my $sourceDirectory = $sourceFilePath || '' ;
+	if ($auxiliaryFilesExist and not $do_not_save) {
+		my $sourceDirectory = $sourceFilePath || '';
 		my $outputDirectory = $outputFilePath || '';
 		$sourceDirectory =~ s|/[^/]+\.pg$||;
 		$outputDirectory =~ s|/[^/]+\.pg$||;
@@ -1135,45 +1189,51 @@ sub saveFileChanges {
 		my @filesToCopy;
 		@filesToCopy = WeBWorK::Utils::readDirectory($sourceDirectory) if -d $sourceDirectory;
 		foreach my $file (@filesToCopy) {
-			next if $file =~ /\.pg$/;   # .pg file should already be transferred
+			next if $file =~ /\.pg$/;    # .pg file should already be transferred
 			my $fromPath = "$sourceDirectory/$file";
 			my $toPath   = "$outputDirectory/$file";
-			if (-f $fromPath and -r $fromPath and not -e $toPath) { # don't copy directories, don't copy files that have already been copied
-				copy($fromPath, $toPath) or $writeFileErrors.= "<br> Error copying $fromPath to $toPath";
+			if (-f $fromPath and -r $fromPath and not -e $toPath)
+			{                            # don't copy directories, don't copy files that have already been copied
+				copy($fromPath, $toPath) or $writeFileErrors .= "<br> Error copying $fromPath to $toPath";
 				# need to use binary transfer for gif files.  File::Copy does this.
 				#warn "copied from $fromPath to $toPath";
 				#warn "files are different ",system("diff $fromPath $toPath");
 			}
 			$self->addbadmessage($writeFileErrors) if not_blank($writeFileErrors);
 		}
-		$self->addgoodmessage($r->maketext("Copied auxiliary files from [_1] to new location at [_2]", $sourceDirectory, $outputDirectory));
+		$self->addgoodmessage($r->maketext(
+			"Copied auxiliary files from [_1] to new location at [_2]",
+			$sourceDirectory, $outputDirectory
+		));
 	}
 
 	###########################################################
 	# clean up temp files on revert, save and save_as
 	###########################################################
-	unless( $writeFileErrors or $do_not_save) {  # everything worked!  unlink and announce success!
-		# unlink the temporary file if there are no errors and the save button has been pushed
-		if (($action eq 'save' or $action eq 'save_as') and (-w $self->{tempFilePath})  ) {
+	unless ($writeFileErrors or $do_not_save) {    # everything worked!  unlink and announce success!
+			# unlink the temporary file if there are no errors and the save button has been pushed
+		if (($action eq 'save' or $action eq 'save_as') and (-w $self->{tempFilePath})) {
 			$self->addgoodmessage($r->maketext("Deleting temp file at [_1]", $self->shortPath($self->{tempFilePath})));
-			die "tempFilePath is unsafe!" unless path_is_subdir($self->{tempFilePath}, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
-			unlink($self->{tempFilePath}) ;
+			die "tempFilePath is unsafe!"
+				unless path_is_subdir($self->{tempFilePath}, $ce->{courseDirs}->{templates}, 1)
+				;    # 1==path can be relative to dir
+			unlink($self->{tempFilePath});
 		}
 
-		if ( defined($outputFilePath) and ! $self->{failure} and not $self->isTempEditFilePath($outputFilePath) ) {
+		if (defined($outputFilePath) and !$self->{failure} and not $self->isTempEditFilePath($outputFilePath)) {
 			# don't announce saving of temporary editing files
 			my $msg = $r->maketext("Saved to file '[_1]'", $self->shortPath($outputFilePath));
 			$self->addgoodmessage($msg);
 			#$self->{inputFilePath} = $outputFilePath; ## DPVC -- avoid file-not-found message
 		}
 	}
-}  # end saveFileChanges
+}    # end saveFileChanges
 
 sub getActionParams {
 	my ($self, $actionID) = @_;
 	my $r = $self->{r};
 
-	my %actionParams=();
+	my %actionParams = ();
 	foreach my $param ($r->param) {
 		next unless $param =~ m/^action\.$actionID\./;
 		$actionParams{$param} = [ $r->param($param) ];
@@ -1272,26 +1332,27 @@ sub view_form {
 
 sub view_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r = $self->r;
-	my $courseName      =  $self->{courseID};
-	my $setName         =  $self->{setID};
-	my $fullSetName     =  $self->{fullSetID};
-	my $problemNumber   =  $self->{problemID};
-	my $problemSeed     = ($actionParams->{'action.view.seed'}) ? $actionParams->{'action.view.seed'}->[0] : DEFAULT_SEED();
-	my $displayMode     = ($actionParams->{'action.view.displayMode'})
+	my $r             = $self->r;
+	my $courseName    = $self->{courseID};
+	my $setName       = $self->{setID};
+	my $fullSetName   = $self->{fullSetID};
+	my $problemNumber = $self->{problemID};
+	my $problemSeed = ($actionParams->{'action.view.seed'}) ? $actionParams->{'action.view.seed'}->[0] : DEFAULT_SEED();
+	my $displayMode =
+		($actionParams->{'action.view.displayMode'})
 		? $actionParams->{'action.view.displayMode'}->[0]
 		: $self->r->ce->{pg}->{options}->{displayMode};
 
-	my $editFilePath        = $self->{editFilePath};
-	my $tempFilePath        = $self->{tempFilePath};
+	my $editFilePath = $self->{editFilePath};
+	my $tempFilePath = $self->{tempFilePath};
 	########################################################
 	# grab the problemContents from the form in order to save it to the tmp file
 	########################################################
-	my $problemContents     = fixProblemContents($self->r->param('problemContents'));
-	$self->{r_problemContents}    = \$problemContents;
+	my $problemContents = fixProblemContents($self->r->param('problemContents'));
+	$self->{r_problemContents} = \$problemContents;
 
 	my $do_not_save = 0;
-	my $file_type = $self->{file_type};
+	my $file_type   = $self->{file_type};
 	$self->saveFileChanges($tempFilePath,);
 
 	########################################################
@@ -1324,70 +1385,80 @@ sub view_handler {
 			);
 		}
 
-		$viewURL = $self->systemLink($problemPage,
+		$viewURL = $self->systemLink(
+			$problemPage,
 			params => {
-				displayMode        => $displayMode,
-				problemSeed        => $problemSeed,
-				editMode           => "temporaryFile",
-				edit_level         => $edit_level,
-				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape_utf8($self->{status_message})
+				displayMode    => $displayMode,
+				problemSeed    => $problemSeed,
+				editMode       => "temporaryFile",
+				edit_level     => $edit_level,
+				sourceFilePath => $relativeTempFilePath,
+				status_message => uri_escape_utf8($self->{status_message})
 			}
 		);
-	} elsif ($file_type eq 'set_header' ) { # redirect to ProblemSet
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",$r,
-			courseID => $courseName, setID => $setName,
+	} elsif ($file_type eq 'set_header') {    # redirect to ProblemSet
+		my $problemPage = $self->r->urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::ProblemSet", $r,
+			courseID => $courseName,
+			setID    => $setName,
 		);
 
-		$viewURL = $self->systemLink($problemPage,
+		$viewURL = $self->systemLink(
+			$problemPage,
 			params => {
-				set_header         => $tempFilePath,
-				displayMode        => $displayMode,
-				problemSeed        => $problemSeed,
-				editMode           => "temporaryFile",
-				edit_level         => $edit_level,
-				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape_utf8($self->{status_message})
+				set_header     => $tempFilePath,
+				displayMode    => $displayMode,
+				problemSeed    => $problemSeed,
+				editMode       => "temporaryFile",
+				edit_level     => $edit_level,
+				sourceFilePath => $relativeTempFilePath,
+				status_message => uri_escape_utf8($self->{status_message})
 			}
 		);
-	} elsif ($file_type eq 'hardcopy_header') { # redirect to ProblemSet?? # it's difficult to view temporary changes for hardcopy headers
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",$r,
-			courseID => $courseName, setID => $setName,
+	} elsif ($file_type eq 'hardcopy_header')
+	{    # redirect to ProblemSet?? # it's difficult to view temporary changes for hardcopy headers
+		my $problemPage = $self->r->urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::ProblemSet", $r,
+			courseID => $courseName,
+			setID    => $setName,
 		);
 
-		$viewURL = $self->systemLink($problemPage,
+		$viewURL = $self->systemLink(
+			$problemPage,
 			params => {
-				set_header         => $tempFilePath,
-				displayMode        => $displayMode,
-				problemSeed        => $problemSeed,
-				editMode           => "temporaryFile",
-				edit_level         => $edit_level,
-				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape_utf8($self->{status_message})
+				set_header     => $tempFilePath,
+				displayMode    => $displayMode,
+				problemSeed    => $problemSeed,
+				editMode       => "temporaryFile",
+				edit_level     => $edit_level,
+				sourceFilePath => $relativeTempFilePath,
+				status_message => uri_escape_utf8($self->{status_message})
 			}
 		);
-	} elsif ($file_type eq 'course_info') {  # redirec to ProblemSets.pm
-		my $problemSetsPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",$r,
-			courseID => $courseName);
-		$viewURL = $self->systemLink($problemSetsPage,
+	} elsif ($file_type eq 'course_info') {    # redirec to ProblemSets.pm
+		my $problemSetsPage =
+			$self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseName);
+		$viewURL = $self->systemLink(
+			$problemSetsPage,
 			params => {
-				course_info        => $tempFilePath,
-				editMode           => "temporaryFile",
-				edit_level         => $edit_level,
-				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape_utf8($self->{status_message})
+				course_info    => $tempFilePath,
+				editMode       => "temporaryFile",
+				edit_level     => $edit_level,
+				sourceFilePath => $relativeTempFilePath,
+				status_message => uri_escape_utf8($self->{status_message})
 			}
 		);
-	} elsif ($file_type eq 'options_info') {  # redirec to Options.pm
-		my $optionsPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Options",$r,
-			courseID => $courseName);
-		$viewURL = $self->systemLink($optionsPage,
+	} elsif ($file_type eq 'options_info') {    # redirec to Options.pm
+		my $optionsPage =
+			$self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Options", $r, courseID => $courseName);
+		$viewURL = $self->systemLink(
+			$optionsPage,
 			params => {
-				options_info       => $tempFilePath,
-				editMode           => "temporaryFile",
-				edit_level         => $edit_level,
-				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape_utf8($self->{status_message})
+				options_info   => $tempFilePath,
+				editMode       => "temporaryFile",
+				edit_level     => $edit_level,
+				sourceFilePath => $relativeTempFilePath,
+				status_message => uri_escape_utf8($self->{status_message})
 			}
 		);
 	} else {
@@ -1463,25 +1534,25 @@ sub add_problem_form {
 
 sub add_problem_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r= $self->r;
+	my $r  = $self->r;
 	my $db = $r->db;
 	#$self->addgoodmessage("add_problem_handler called");
-	my $courseName      =  $self->{courseID};
-	my $setName         =  $self->{setID};
-	my $problemNumber   =  $self->{problemID};
-	my $sourceFilePath  =  $self->{editFilePath};
-	my $displayMode     =  $self->{displayMode};
-	my $problemSeed     =  $self->{problemSeed};
+	my $courseName     = $self->{courseID};
+	my $setName        = $self->{setID};
+	my $problemNumber  = $self->{problemID};
+	my $sourceFilePath = $self->{editFilePath};
+	my $displayMode    = $self->{displayMode};
+	my $problemSeed    = $self->{problemSeed};
 
-	my $targetSetName         =  $actionParams->{'action.add_problem.target_set'}->[0];
-	my $targetFileType        =  $actionParams->{'action.add_problem.file_type'}->[0];
-	my $templatesPath         =  $self->r->ce->{courseDirs}->{templates};
-	$sourceFilePath    =~ s|^$templatesPath/||;
+	my $targetSetName  = $actionParams->{'action.add_problem.target_set'}->[0];
+	my $targetFileType = $actionParams->{'action.add_problem.file_type'}->[0];
+	my $templatesPath  = $self->r->ce->{courseDirs}->{templates};
+	$sourceFilePath =~ s|^$templatesPath/||;
 
 	my $edit_level = $self->r->param("edit_level") || 0;
 	$edit_level++;
 
-	my $viewURL ='';
+	my $viewURL = '';
 	if ($targetFileType eq 'problem') {
 		my $targetProblemNumber;
 
@@ -1493,93 +1564,121 @@ sub add_problem_handler {
 			my @problemIDs = $db->listGlobalProblems($targetSetName);
 			@problemIDs = sort { $a <=> $b } @problemIDs;
 			my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
-			$targetProblemNumber = seq_to_jitar_id($seq[0]+1);
+			$targetProblemNumber = seq_to_jitar_id($seq[0] + 1);
 		} else {
-			$targetProblemNumber = 1+ WeBWorK::Utils::max( $db->listGlobalProblems($targetSetName));
+			$targetProblemNumber = 1 + WeBWorK::Utils::max($db->listGlobalProblems($targetSetName));
 		}
 
 		#################################################
 		# Update problem record
 		#################################################
-		my $problemRecord  = $self->addProblemToSet(
-			setName        => $targetSetName,
-			sourceFile     => $sourceFilePath,
-			problemID      => $targetProblemNumber, #added to end of set
+		my $problemRecord = $self->addProblemToSet(
+			setName    => $targetSetName,
+			sourceFile => $sourceFilePath,
+			problemID  => $targetProblemNumber,    #added to end of set
 		);
 		$self->assignProblemToAllSetUsers($problemRecord);
-		$self->addgoodmessage($r->maketext("Added [_1] to [_2] as problem [_3]", $sourceFilePath, $targetSetName,($set->assignment_type eq 'jitar' ? join('.',jitar_id_to_seq($targetProblemNumber)) : $targetProblemNumber)));
-		$self->{file_type}   = 'problem'; # change file type to problem -- if it's not already that
+		$self->addgoodmessage($r->maketext(
+			"Added [_1] to [_2] as problem [_3]",
+			$sourceFilePath,
+			$targetSetName,
+			(
+				$set->assignment_type eq 'jitar'
+				? join('.', jitar_id_to_seq($targetProblemNumber))
+				: $targetProblemNumber
+			)
+		));
+		$self->{file_type} = 'problem';    # change file type to problem -- if it's not already that
 
 		#################################################
 		# Set up redirect to problem editor page.
 		#################################################
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",$r,
+		my $problemPage = $self->r->urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
 			courseID  => $courseName,
 			setID     => $targetSetName,
 			problemID => $targetProblemNumber,
 		);
 		my $relativeSourceFilePath = $self->getRelativeSourceFilePath($sourceFilePath);
-		$viewURL = $self->systemLink($problemPage,
+		$viewURL = $self->systemLink(
+			$problemPage,
 			params => {
-				displayMode        => $displayMode,
-				problemSeed        => $problemSeed,
-				editMode           => "savedFile",
-				edit_level         => $edit_level,
-				sourceFilePath     => $relativeSourceFilePath,
-				status_message     => uri_escape_utf8($self->{status_message}),
-				file_type          => 'problem',
+				displayMode    => $displayMode,
+				problemSeed    => $problemSeed,
+				editMode       => "savedFile",
+				edit_level     => $edit_level,
+				sourceFilePath => $relativeSourceFilePath,
+				status_message => uri_escape_utf8($self->{status_message}),
+				file_type      => 'problem',
 			}
 		);
-	} elsif ($targetFileType eq 'set_header')  {
+	} elsif ($targetFileType eq 'set_header') {
 		#################################################
 		# Update set record
 		#################################################
-		my $setRecord  = $self->r->db->getGlobalSet($targetSetName);
+		my $setRecord = $self->r->db->getGlobalSet($targetSetName);
 		$setRecord->set_header($sourceFilePath);
-		if(  $self->r->db->putGlobalSet($setRecord) ) {
-			$self->addgoodmessage($r->maketext("Added '[_1]' to [_2] as new set header", $self->shortPath($sourceFilePath), $targetSetName)) ;
+		if ($self->r->db->putGlobalSet($setRecord)) {
+			$self->addgoodmessage($r->maketext(
+				"Added '[_1]' to [_2] as new set header",
+				$self->shortPath($sourceFilePath),
+				$targetSetName
+			));
 		} else {
-			$self->addbadmessage("Unable to make '".$self->shortPath($sourceFilePath)."' the set header for $targetSetName");
+			$self->addbadmessage(
+				"Unable to make '" . $self->shortPath($sourceFilePath) . "' the set header for $targetSetName");
 		}
-		$self->{file_type} = 'set_header'; # change file type to set_header if it not already so
+		$self->{file_type} = 'set_header';    # change file type to set_header if it not already so
 		#################################################
 		# Set up redirect
 		#################################################
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",$r,
-			courseID => $courseName, setID => $targetSetName
+		my $problemPage = $self->r->urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::ProblemSet", $r,
+			courseID => $courseName,
+			setID    => $targetSetName
 		);
-		$viewURL = $self->systemLink($problemPage,
+		$viewURL = $self->systemLink(
+			$problemPage,
 			params => {
-				displayMode        => $displayMode,
-				editMode           => "savedFile",
-				edit_level         => $edit_level,
-				status_message     => uri_escape_utf8($self->{status_message}),
+				displayMode    => $displayMode,
+				editMode       => "savedFile",
+				edit_level     => $edit_level,
+				status_message => uri_escape_utf8($self->{status_message}),
 			}
 		);
-	} elsif ($targetFileType eq 'hardcopy_header')  {
+	} elsif ($targetFileType eq 'hardcopy_header') {
 		#################################################
 		# Update set record
 		#################################################
-		my $setRecord  = $self->r->db->getGlobalSet($targetSetName);
+		my $setRecord = $self->r->db->getGlobalSet($targetSetName);
 		$setRecord->hardcopy_header($sourceFilePath);
-		if(  $self->r->db->putGlobalSet($setRecord) ) {
-			$self->addgoodmessage($r->maketext("Added '[_1]' to [_2] as new hardcopy header", $self->shortPath($sourceFilePath), $targetSetName)) ;
+		if ($self->r->db->putGlobalSet($setRecord)) {
+			$self->addgoodmessage($r->maketext(
+				"Added '[_1]' to [_2] as new hardcopy header",
+				$self->shortPath($sourceFilePath),
+				$targetSetName
+			));
 		} else {
-			$self->addbadmessage("Unable to make '".$self->shortPath($sourceFilePath)."' the hardcopy header for $targetSetName");
+			$self->addbadmessage("Unable to make '"
+					. $self->shortPath($sourceFilePath)
+					. "' the hardcopy header for $targetSetName");
 		}
-		$self->{file_type} = 'hardcopy_header'; # change file type to set_header if it not already so
+		$self->{file_type} = 'hardcopy_header';    # change file type to set_header if it not already so
 		#################################################
 		# Set up redirect
 		#################################################
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy",$r,
-			courseID => $courseName, setID => $targetSetName
+		my $problemPage = $self->r->urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::Hardcopy", $r,
+			courseID => $courseName,
+			setID    => $targetSetName
 		);
-		$viewURL = $self->systemLink($problemPage,
+		$viewURL = $self->systemLink(
+			$problemPage,
 			params => {
-				displayMode        => $displayMode,
-				editMode           => "savedFile",
-				edit_level         => $edit_level,
-				status_message     => uri_escape_utf8($self->{status_message}),
+				displayMode    => $displayMode,
+				editMode       => "savedFile",
+				edit_level     => $edit_level,
+				status_message => uri_escape_utf8($self->{status_message}),
 			}
 		);
 	} else {
@@ -1626,14 +1725,14 @@ sub save_form {
 
 sub save_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r= $self->r;
+	my $r = $self->r;
 	#$self->addgoodmessage("save_handler called");
-	my $courseName      =  $self->{courseID};
-	my $setName         =  $self->{setID};
-	my $fullSetName     =  $self->{fullSetID};
-	my $problemNumber   =  $self->{problemID};
-	my $displayMode     =  $self->{displayMode};
-	my $problemSeed     =  $self->{problemSeed};
+	my $courseName    = $self->{courseID};
+	my $setName       = $self->{setID};
+	my $fullSetName   = $self->{fullSetID};
+	my $problemNumber = $self->{problemID};
+	my $displayMode   = $self->{displayMode};
+	my $problemSeed   = $self->{problemSeed};
 
 	#################################################
 	# grab the problemContents from the form in order to save it to a new permanent file
@@ -1645,11 +1744,11 @@ sub save_handler {
 	#################################################
 	# Construct the output file path
 	#################################################
-	my $editFilePath        = $self->{editFilePath};
-	my $outputFilePath      = $editFilePath;
+	my $editFilePath   = $self->{editFilePath};
+	my $outputFilePath = $editFilePath;
 
 	my $do_not_save = 0;
-	my $file_type = $self->{file_type};
+	my $file_type   = $self->{file_type};
 	$self->saveFileChanges($outputFilePath);
 	#################################################
 	# Set up redirect to Problem.pm
@@ -1658,91 +1757,112 @@ sub save_handler {
 	########################################################
 	# construct redirect URL and redirect
 	########################################################
-	if ($file_type eq 'problem' || $file_type eq 'source_path_for_problem_file') { # redirect to Problem.pm
-		# we need to know if the set is a gateway set to determine the redirect
-		my $globalSet = $self->r->db->getGlobalSet( $setName );
+	if ($file_type eq 'problem' || $file_type eq 'source_path_for_problem_file') {    # redirect to Problem.pm
+			# we need to know if the set is a gateway set to determine the redirect
+		my $globalSet = $self->r->db->getGlobalSet($setName);
 		my $problemPage;
-		if ( defined( $globalSet) && $globalSet->assignment_type =~ /gateway/ ) {
-			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",$r,
-				courseID => $courseName, setID => "Undefined_Set");
+		if (defined($globalSet) && $globalSet->assignment_type =~ /gateway/) {
+			$problemPage = $self->r->urlpath->newFromModule(
+				"WeBWorK::ContentGenerator::GatewayQuiz", $r,
+				courseID => $courseName,
+				setID    => "Undefined_Set"
+			);
 			# courseID => $courseName, setID => $fullSetName);
 		} else {
-			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
-				courseID => $courseName, setID => $setName, problemID => $problemNumber);
+			$problemPage = $self->r->urlpath->newFromModule(
+				"WeBWorK::ContentGenerator::Problem", $r,
+				courseID  => $courseName,
+				setID     => $setName,
+				problemID => $problemNumber
+			);
 		}
 
 		my $relativeEditFilePath = $self->getRelativeSourceFilePath($editFilePath);
 
-		$viewURL = $self->systemLink($problemPage,
+		$viewURL = $self->systemLink(
+			$problemPage,
 			params => {
-				displayMode        => $displayMode,
-				problemSeed        => $problemSeed,
-				editMode           => "savedFile",
-				edit_level         => 0,
-				sourceFilePath     => $relativeEditFilePath,
-				status_message     => uri_escape_utf8($self->{status_message})
+				displayMode    => $displayMode,
+				problemSeed    => $problemSeed,
+				editMode       => "savedFile",
+				edit_level     => 0,
+				sourceFilePath => $relativeEditFilePath,
+				status_message => uri_escape_utf8($self->{status_message})
 			}
 		);
-	} elsif ($file_type eq 'set_header' ) { # redirect to ProblemSet
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",$r,
-			courseID => $courseName, setID => $setName,
+	} elsif ($file_type eq 'set_header') {    # redirect to ProblemSet
+		my $problemPage = $self->r->urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::ProblemSet", $r,
+			courseID => $courseName,
+			setID    => $setName,
 		);
 
-		$viewURL = $self->systemLink($problemPage,
+		$viewURL = $self->systemLink(
+			$problemPage,
 			params => {
-				displayMode        => $displayMode,
-				problemSeed        => $problemSeed,
-				editMode           => "savedFile",
-				edit_level         => 0,
-				status_message     => uri_escape_utf8($self->{status_message})
+				displayMode    => $displayMode,
+				problemSeed    => $problemSeed,
+				editMode       => "savedFile",
+				edit_level     => 0,
+				status_message => uri_escape_utf8($self->{status_message})
 			}
 		);
-	} elsif ( $file_type eq 'hardcopy_header') { # redirect to ProblemSet
-		my $problemPage = $self->r->urlpath->newFromModule('WeBWorK::ContentGenerator::Hardcopy',$r,
-			courseID => $courseName, setID => $setName,
+	} elsif ($file_type eq 'hardcopy_header') {    # redirect to ProblemSet
+		my $problemPage = $self->r->urlpath->newFromModule(
+			'WeBWorK::ContentGenerator::Hardcopy', $r,
+			courseID => $courseName,
+			setID    => $setName,
 		);
 
-		$viewURL = $self->systemLink($problemPage,
+		$viewURL = $self->systemLink(
+			$problemPage,
 			params => {
-				displayMode        => $displayMode,
-				problemSeed        => $problemSeed,
-				editMode           => "savedFile",
-				edit_level         => 0,
-				status_message     => uri_escape_utf8($self->{status_message})
+				displayMode    => $displayMode,
+				problemSeed    => $problemSeed,
+				editMode       => "savedFile",
+				edit_level     => 0,
+				status_message => uri_escape_utf8($self->{status_message})
 			}
 		);
-	} elsif ($file_type eq 'course_info') {  # redirect to ProblemSets.pm
-		my $problemSetsPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",$r,
-			courseID => $courseName);
-		$viewURL = $self->systemLink($problemSetsPage,
+	} elsif ($file_type eq 'course_info') {    # redirect to ProblemSets.pm
+		my $problemSetsPage =
+			$self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseName);
+		$viewURL = $self->systemLink(
+			$problemSetsPage,
 			params => {
-				editMode           => ("savedFile"),
-				edit_level         => 0,
-				status_message     => uri_escape_utf8($self->{status_message})
+				editMode       => ("savedFile"),
+				edit_level     => 0,
+				status_message => uri_escape_utf8($self->{status_message})
 			}
 		);
-	} elsif ($file_type eq 'options_info') {  # redirect to Options.pm
-		my $optionsPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Options",$r,
-			courseID => $courseName);
-		$viewURL = $self->systemLink($optionsPage,
+	} elsif ($file_type eq 'options_info') {    # redirect to Options.pm
+		my $optionsPage =
+			$self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Options", $r, courseID => $courseName);
+		$viewURL = $self->systemLink(
+			$optionsPage,
 			params => {
-				editMode           => ("savedFile"),
-				edit_level         => 0,
-				status_message     => uri_escape_utf8($self->{status_message})
+				editMode       => ("savedFile"),
+				edit_level     => 0,
+				status_message => uri_escape_utf8($self->{status_message})
 			}
 		);
-	} elsif ($file_type eq 'source_path_for_problem_file') {  # redirect to ProblemSets.pm
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",$r,
-			courseID => $courseName, setID => $setName, problemID => $problemNumber);
-		my $viewURL = $self->systemLink($problemPage,
-			params=>{
-				displayMode        => $displayMode,
-				problemSeed        => $problemSeed,
-				editMode           => "savedFile",
-				edit_level         => 0,
-				sourceFilePath     => $outputFilePath, #The path relative to the templates directory is required.
-				file_type          => 'source_path_for_problem_file',
-				status_message     => uri_escape_utf8($self->{status_message})
+	} elsif ($file_type eq 'source_path_for_problem_file') {    # redirect to ProblemSets.pm
+		my $problemPage = $self->r->urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
+			courseID  => $courseName,
+			setID     => $setName,
+			problemID => $problemNumber
+		);
+		my $viewURL = $self->systemLink(
+			$problemPage,
+			params => {
+				displayMode    => $displayMode,
+				problemSeed    => $problemSeed,
+				editMode       => "savedFile",
+				edit_level     => 0,
+				sourceFilePath => $outputFilePath,    #The path relative to the templates directory is required.
+				file_type      => 'source_path_for_problem_file',
+				status_message => uri_escape_utf8($self->{status_message})
 			}
 		);
 	} else {
@@ -1803,7 +1923,8 @@ sub save_as_form {
 						name  => 'action.save_as.target_file',
 						size  => 60,
 						value => $shortFilePath,
-						class => 'form-control form-control-sm', dir => 'ltr'
+						class => 'form-control form-control-sm',
+						dir   => 'ltr'
 					})
 				)
 			),
@@ -1876,25 +1997,26 @@ sub save_as_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r = $self->r;
 	#$self->addgoodmessage("save_as_handler called");
-	$self->{status_message} = ''; ## DPVC -- remove bogus old messages
-	my $courseName      =  $self->{courseID};
-	my $setName         =  $self->{setID};
-	my $fullSetName     =  $self->{fullSetID};
-	my $problemNumber   =  $self->{problemID};
-	my $displayMode     =  $self->{displayMode};
-	my $problemSeed     =  $self->{problemSeed};
+	$self->{status_message} = '';    ## DPVC -- remove bogus old messages
+	my $courseName        = $self->{courseID};
+	my $setName           = $self->{setID};
+	my $fullSetName       = $self->{fullSetID};
+	my $problemNumber     = $self->{problemID};
+	my $displayMode       = $self->{displayMode};
+	my $problemSeed       = $self->{problemSeed};
 	my $effectiveUserName = $self->r->param('effectiveUser');
 
-	my $do_not_save = 0;
-	my $saveMode       = $actionParams->{'action.save_as.saveMode'}->[0] || 'no_save_mode_selected';
+	my $do_not_save    = 0;
+	my $saveMode       = $actionParams->{'action.save_as.saveMode'}->[0]    || 'no_save_mode_selected';
 	my $new_file_name  = $actionParams->{'action.save_as.target_file'}->[0] || '';
 	my $sourceFilePath = $actionParams->{'action.save_as.source_file'}->[0] || '';
-	my $file_type      = $actionParams->{'action.save_as.file_type'}->[0] || '';
-	$self ->{sourceFilePath} = $sourceFilePath;  # store for use in saveFileChanges
-	$new_file_name =~ s/^\s*//;  #remove initial and final white space
+	my $file_type      = $actionParams->{'action.save_as.file_type'}->[0]   || '';
+	$self->{sourceFilePath} = $sourceFilePath;    # store for use in saveFileChanges
+	$new_file_name =~ s/^\s*//;                   #remove initial and final white space
 	$new_file_name =~ s/\s*$//;
-	if ( $new_file_name !~ /\S/) { # need a non-blank file name
-		# setting $self->{failure} stops saving and any redirects
+
+	if ($new_file_name !~ /\S/) {                 # need a non-blank file name
+												  # setting $self->{failure} stops saving and any redirects
 		$do_not_save = 1;
 		$self->addbadmessage(CGI::p($r->maketext("Please specify a file to save to.")));
 	}
@@ -1910,11 +2032,12 @@ sub save_as_handler {
 	# Rescue the user in case they forgot to end the file name with .pg
 	#################################################
 
-	if($file_type eq 'problem'
-			or $file_type eq 'blank_problem'
-			or $file_type eq 'set_header') {
-		$new_file_name =~ s/\.pg$//; # remove it if it is there
-		$new_file_name .= '.pg'; # put it there
+	if ($file_type eq 'problem'
+		or $file_type eq 'blank_problem'
+		or $file_type eq 'set_header')
+	{
+		$new_file_name =~ s/\.pg$//;    # remove it if it is there
+		$new_file_name .= '.pg';        # put it there
 	}
 	#################################################
 	# Construct the output file path
@@ -1923,15 +2046,22 @@ sub save_as_handler {
 	if (defined $outputFilePath and -e $outputFilePath) {
 		# setting $do_not_save stops saving and any redirects
 		$do_not_save = 1;
-		$self->addbadmessage(CGI::p($r->maketext("File '[_1]' exists. File not saved. No changes have been made.  You can change the file path for this problem manually from the 'Hmwk Sets Editor' page", $self->shortPath($outputFilePath))));
-		$self->addgoodmessage(CGI::p($r->maketext("The text box now contains the source of the original problem. You can recover lost edits by using the Back button on your browser.")));
+		$self->addbadmessage(CGI::p($r->maketext(
+			"File '[_1]' exists. File not saved. No changes have been made.  You can change the file path for this problem manually from the 'Hmwk Sets Editor' page",
+			$self->shortPath($outputFilePath)
+		)));
+		$self->addgoodmessage(CGI::p(
+			$r->maketext(
+				"The text box now contains the source of the original problem. You can recover lost edits by using the Back button on your browser."
+			)
+		));
 	} else {
-		$self->{editFilePath} = $outputFilePath;
-		$self->{tempFilePath} = ''; # nothing needs to be unlinked.
+		$self->{editFilePath}  = $outputFilePath;
+		$self->{tempFilePath}  = '';                # nothing needs to be unlinked.
 		$self->{inputFilePath} = '';
 	}
 
-	unless ($do_not_save ) {
+	unless ($do_not_save) {
 		$self->saveFileChanges($outputFilePath);
 		my $targetProblemNumber;
 
@@ -1939,42 +2069,58 @@ sub save_as_handler {
 			#################################################
 			# Modify source file path in problem
 			#################################################
-			if ($file_type eq 'set_header' ) {
+			if ($file_type eq 'set_header') {
 				my $setRecord = $self->r->db->getGlobalSet($setName);
 				$setRecord->set_header($new_file_name);
 				if ($self->r->db->putGlobalSet($setRecord)) {
-					$self->addgoodmessage($r->maketext("The set header for set [_1] has been renamed to '[_2]'.", $setName, $self->shortPath($outputFilePath))) ;
+					$self->addgoodmessage($r->maketext(
+						"The set header for set [_1] has been renamed to '[_2]'.", $setName,
+						$self->shortPath($outputFilePath)
+					));
 				} else {
 					$self->addbadmessage("Unable to change the set header for set $setName. Unknown error.");
 				}
-			} elsif ($file_type eq 'hardcopy_header' ) {
+			} elsif ($file_type eq 'hardcopy_header') {
 				my $setRecord = $self->r->db->getGlobalSet($setName);
 				$setRecord->hardcopy_header($new_file_name);
 				if ($self->r->db->putGlobalSet($setRecord)) {
-					$self->addgoodmessage($r->maketext("The hardcopy header for set [_1] has been renamed to '[_2]'.", $setName, $self->shortPath($outputFilePath))) ;
+					$self->addgoodmessage($r->maketext(
+						"The hardcopy header for set [_1] has been renamed to '[_2]'.", $setName,
+						$self->shortPath($outputFilePath)
+					));
 				} else {
 					$self->addbadmessage("Unable to change the hardcopy header for set $setName. Unknown error.");
 				}
 			} else {
 				my $problemRecord;
-				if ( $fullSetName =~ /,v(\d+)$/ ) {
-					$problemRecord = $self->r->db->getMergedProblemVersion($effectiveUserName, $setName, $1, $problemNumber);
+				if ($fullSetName =~ /,v(\d+)$/) {
+					$problemRecord =
+						$self->r->db->getMergedProblemVersion($effectiveUserName, $setName, $1, $problemNumber);
 				} else {
-					$problemRecord = $self->r->db->getGlobalProblem($setName,$problemNumber);
+					$problemRecord = $self->r->db->getGlobalProblem($setName, $problemNumber);
 				}
 				$problemRecord->source_file($new_file_name);
-				my $result = ( $fullSetName =~ /,v(\d+)$/ )
+				my $result =
+					($fullSetName =~ /,v(\d+)$/)
 					? $self->r->db->putProblemVersion($problemRecord)
 					: $self->r->db->putGlobalProblem($problemRecord);
 				my $prettyProblemNumber = $problemNumber;
-				my $set = $self->r->db->getGlobalSet($setName);
-				$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber)) if ($set && $set->assignment_type eq 'jitar');
+				my $set                 = $self->r->db->getGlobalSet($setName);
+				$prettyProblemNumber = join('.', jitar_id_to_seq($problemNumber))
+					if ($set && $set->assignment_type eq 'jitar');
 
-				if  ($result) {
-					$self->addgoodmessage($r->maketext("The source file for 'set [_1] / problem [_2] has been changed from '[_3]' to '[_4]'",
-							$fullSetName, $prettyProblemNumber, $self->shortPath($sourceFilePath), $self->shortPath($outputFilePath))) ;
+				if ($result) {
+					$self->addgoodmessage($r->maketext(
+						"The source file for 'set [_1] / problem [_2] has been changed from '[_3]' to '[_4]'",
+						$fullSetName,
+						$prettyProblemNumber,
+						$self->shortPath($sourceFilePath),
+						$self->shortPath($outputFilePath)
+					));
 				} else {
-					$self->addbadmessage("Unable to change the source file path for set $fullSetName, problem $prettyProblemNumber. Unknown error.");
+					$self->addbadmessage(
+						"Unable to change the source file path for set $fullSetName, problem $prettyProblemNumber. Unknown error."
+					);
 				}
 			}
 		} elsif ($saveMode eq 'add_to_set_as_new_problem') {
@@ -1987,23 +2133,36 @@ sub save_as_handler {
 				my @problemIDs = $self->r->db->listGlobalProblems($setName);
 				@problemIDs = sort { $a <=> $b } @problemIDs;
 				my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
-				$targetProblemNumber = seq_to_jitar_id($seq[0]+1);
+				$targetProblemNumber = seq_to_jitar_id($seq[0] + 1);
 			} else {
-				$targetProblemNumber = 1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
+				$targetProblemNumber = 1 + WeBWorK::Utils::max($self->r->db->listGlobalProblems($setName));
 			}
 
-			my $problemRecord  = $self->addProblemToSet(
-				setName        => $setName,
-				sourceFile     => $new_file_name,
-				problemID      => $targetProblemNumber, #added to end of set
+			my $problemRecord = $self->addProblemToSet(
+				setName    => $setName,
+				sourceFile => $new_file_name,
+				problemID  => $targetProblemNumber,    #added to end of set
 			);
 			$self->assignProblemToAllSetUsers($problemRecord);
-			$self->addgoodmessage($r->maketext("Added [_1] to [_2] as problem [_3]", $new_file_name, $setName, ($set->assignment_type eq 'jitar' ? join('.',jitar_id_to_seq($targetProblemNumber)) : $targetProblemNumber))) ;
+			$self->addgoodmessage($r->maketext(
+				"Added [_1] to [_2] as problem [_3]",
+				$new_file_name,
+				$setName,
+				(
+					$set->assignment_type eq 'jitar'
+					? join('.', jitar_id_to_seq($targetProblemNumber))
+					: $targetProblemNumber
+				)
+			));
 		} elsif ($saveMode eq 'new_independent_problem') {
 			#################################################
 			# Don't modify source file path in problem -- just report
 			#################################################
-			$self->addgoodmessage($r->maketext("A new file has been created at '[_1]' with the contents below.  No changes have been made to set [_2]", $self->shortPath($outputFilePath), $setName));
+			$self->addgoodmessage($r->maketext(
+				"A new file has been created at '[_1]' with the contents below.  No changes have been made to set [_2]",
+				$self->shortPath($outputFilePath),
+				$setName
+			));
 		} else {
 			$self->addbadmessage("Don't recognize saveMode: |$saveMode|. Unknown error.");
 		}
@@ -2018,14 +2177,20 @@ sub save_as_handler {
 	my $problemPage;
 	my $new_file_type;
 
-	if ($saveMode eq 'new_independent_problem' ) {
-		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",$r,
-			courseID => $courseName, setID => 'Undefined_Set', problemID => 1
+	if ($saveMode eq 'new_independent_problem') {
+		$problemPage = $self->r->urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
+			courseID  => $courseName,
+			setID     => 'Undefined_Set',
+			problemID => 1
 		);
 		$new_file_type = 'source_path_for_problem_file';
 	} elsif ($saveMode eq 'rename') {
-		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",$r,
-			courseID => $courseName, setID => $setName, problemID => $problemNumber
+		$problemPage = $self->r->urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
+			courseID  => $courseName,
+			setID     => $setName,
+			problemID => $problemNumber
 		);
 		$new_file_type = $file_type;
 	} elsif ($saveMode eq 'add_to_set_as_new_problem') {
@@ -2039,33 +2204,36 @@ sub save_as_handler {
 		);
 		$new_file_type = $file_type;
 	} else {
-		$self->addbadmessage(" Please use radio buttons to choose the method for saving this file. Can't recognize saveMode: |$saveMode|.");
+		$self->addbadmessage(
+			" Please use radio buttons to choose the method for saving this file. Can't recognize saveMode: |$saveMode|."
+		);
 		# can't continue since paths have not been properly defined.
 		return "";
 	}
 
 	my $relativeOutputFilePath = $self->getRelativeSourceFilePath($outputFilePath);
 
-	my $viewURL = $self->systemLink($problemPage,
-		params=>{
-			sourceFilePath     => $relativeOutputFilePath, #The path relative to the templates directory is required.
-			problemSeed        => $problemSeed,
-			edit_level         => $edit_level,
-			file_type          => $new_file_type,
-			status_message     => uri_escape_utf8($self->{status_message})
+	my $viewURL = $self->systemLink(
+		$problemPage,
+		params => {
+			sourceFilePath => $relativeOutputFilePath,    #The path relative to the templates directory is required.
+			problemSeed    => $problemSeed,
+			edit_level     => $edit_level,
+			file_type      => $new_file_type,
+			status_message => uri_escape_utf8($self->{status_message})
 		}
 	);
 
 	$self->reply_with_redirect($viewURL);
-	return "";  # no redirect needed
+	return "";    # no redirect needed
 }
 
 sub revert_form {
 	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-	my $editFilePath    = $self->{editFilePath};
+	my $r            = $self->r;
+	my $editFilePath = $self->{editFilePath};
 	return $r->maketext("Error: The original file [_1] cannot be read.", $editFilePath) unless -r $editFilePath;
-	return "" unless defined($self->{tempFilePath}) and -e $self->{tempFilePath} ;
+	return "" unless defined($self->{tempFilePath}) and -e $self->{tempFilePath};
 	return $r->maketext("Revert to [_1]", CGI::span({ dir => 'ltr' }, $self->shortPath($editFilePath)));
 }
 
@@ -2073,16 +2241,18 @@ sub revert_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $ce = $self->r->ce;
 	#$self->addgoodmessage("revert_handler called");
-	my $editFilePath       = $self->{editFilePath};
+	my $editFilePath = $self->{editFilePath};
 	$self->{inputFilePath} = $editFilePath;
 	# unlink the temp files;
-	die "tempFilePath is unsafe!" unless path_is_subdir($self->{tempFilePath}, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
+	die "tempFilePath is unsafe!"
+		unless path_is_subdir($self->{tempFilePath}, $ce->{courseDirs}->{templates}, 1)
+		;    # 1==path can be relative to dir
 	unlink($self->{tempFilePath});
 	$self->addgoodmessage("Deleting temp file at " . $self->shortPath($self->{tempFilePath}));
-	$self->{tempFilePath}  = '';
-	my $problemContents    ='';
+	$self->{tempFilePath} = '';
+	my $problemContents = '';
 	$self->{r_problemContents} = \$problemContents;
-	$self->addgoodmessage("Reverting to original file '".$self->shortPath($editFilePath)."'");
+	$self->addgoodmessage("Reverting to original file '" . $self->shortPath($editFilePath) . "'");
 	# no redirect is needed
 }
 

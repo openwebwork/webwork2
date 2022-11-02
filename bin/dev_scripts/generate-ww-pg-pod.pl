@@ -60,7 +60,7 @@ GetOptions(
 );
 
 $webwork_root = $ENV{WEBWORK_ROOT} if !$webwork_root;
-$pg_root = $ENV{PG_ROOT} if !$pg_root;
+$pg_root      = $ENV{PG_ROOT}      if !$pg_root;
 
 pod2usage(2) unless (($webwork_root || $pg_root) && $output_dir);
 
@@ -89,16 +89,16 @@ sub process_dir {
 
 	my $dest_dir = $source_dir;
 	$dest_dir =~ s/^$webwork_root/$output_dir\/webwork2/ if ($source_dir =~ /\/webwork2$/);
-	$dest_dir =~ s/^$pg_root/$output_dir\/pg/ if ($source_dir =~ /\/pg$/);
+	$dest_dir =~ s/^$pg_root/$output_dir\/pg/            if ($source_dir =~ /\/pg$/);
 
 	remove_tree($dest_dir);
 	make_path($dest_dir);
 
 	my $htmldocs = new PODtoHTML(
 		source_root => $source_dir,
-		dest_root => $dest_dir,
-		dest_url => $base_url,
-		verbose => $verbose
+		dest_root   => $dest_dir,
+		dest_url    => $base_url,
+		verbose     => $verbose
 	);
 	$htmldocs->convert_pods;
 }
@@ -120,7 +120,7 @@ sub write_index {
 <ul>
 EOF
 
-	print $fh q{<li><a href="pg">PG</a></li>} if $pg_root;
+	print $fh q{<li><a href="pg">PG</a></li>}            if $pg_root;
 	print $fh q{<li><a href="webwork2">WeBWorK</a></li>} if $webwork_root;
 
 	print $fh "</ul></div></body></html>";

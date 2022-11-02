@@ -35,12 +35,10 @@ our @EXPORT_OK = qw(
 	dropdownRecordList
 );
 
-
-
 sub dropdownRecordList {
 	my ($options, @Records) = @_;
 
-	my %options = (default_filters=>[],default_sort=>"",default_format=>"",%$options);
+	my %options = (default_filters => [], default_sort => "", default_format => "", %$options);
 	# %options must contain:
 	#  name - name of scrolling list -- use $r->param("$name")
 	#  request - the WeBWorK::Request object for the current request
@@ -52,32 +50,32 @@ sub dropdownRecordList {
 	#  size - number of rows shown in scrolling list
 	#  multiple - are multiple selections allowed?
 
-	croak "name not found in options" unless exists $options{name};
+	croak "name not found in options"    unless exists $options{name};
 	croak "request not found in options" unless exists $options{request};
 	my $name = $options{name};
-	my $r = $options{request};
+	my $r    = $options{request};
 
-	my $default_sort = $options{default_sort} || "";
+	my $default_sort   = $options{default_sort}   || "";
 	my $default_format = $options{default_format} || "";
 
-	my @default_filters = @{$options{default_filters}} ;
+	my @default_filters = @{ $options{default_filters} };
 
-	my $size = $options{size};
+	my $size     = $options{size};
 	my $multiple = $options{multiple};
 
-	my $sorts = [];
-	my $sort_labels = {};
+	my $sorts         = [];
+	my $sort_labels   = {};
 	my $selected_sort = "";
 
-	my $formats = [];
-	my $format_labels = {};
+	my $formats         = [];
+	my $format_labels   = {};
 	my $selected_format = "";
 
-	my $filters = [];
-	my $filter_labels = {};
-	my @selected_filters= ();
+	my $filters          = [];
+	my $filter_labels    = {};
+	my @selected_filters = ();
 
-	my @ids = ();
+	my @ids    = ();
 	my %labels = ();
 
 	my @selected_records = $r->param("$name");
@@ -86,27 +84,28 @@ sub dropdownRecordList {
 		my $class = ref $Records[0];
 
 		($filters, $filter_labels) = getFiltersForClass(@Records);
-		if (defined $r->param("$name!filter")){
+		if (defined $r->param("$name!filter")) {
 			@selected_filters = $r->param("$name!filter");
 			@selected_filters = ("all") unless @selected_filters;
-		}
-		else {
+		} else {
 			@selected_filters = @default_filters;
 		}
 
 		($sorts, $sort_labels) = getSortsForClass($class);
-		$selected_sort = $r->param("$name!sort")
+		$selected_sort =
+			$r->param("$name!sort")
 			|| $default_sort
 			|| (@$sorts ? $sorts->[0] : "");
 
 		($formats, $format_labels) = getFormatsForClass($class);
-		$selected_format = $r->param("$name!format")
+		$selected_format =
+			$r->param("$name!format")
 			|| $default_format
 			|| (@$formats ? $formats->[0] : "");
 
-		@Records = filterRecords({filter=>\@selected_filters},@Records);
+		@Records = filterRecords({ filter => \@selected_filters }, @Records);
 
-		@Records = sortRecords({preset=>$selected_sort}, @Records);
+		@Records = sortRecords({ preset => $selected_sort }, @Records);
 
 		# generate IDs from keyfields
 		my @keyfields = $class->KEYFIELDS;
@@ -116,40 +115,40 @@ sub dropdownRecordList {
 
 		# generate labels hash
 		@labels{@ids} = @Records;
-		%labels = formatRecords({preset=>$selected_format}, %labels);
+		%labels = formatRecords({ preset => $selected_format }, %labels);
 	}
 
 	my %sort_popup_options = (
-		-name => "$name!sort",
-		-values => $sorts,
+		-name    => "$name!sort",
+		-values  => $sorts,
 		-default => $selected_sort,
-		-labels => $sort_labels,
+		-labels  => $sort_labels,
 	);
 
 	my %format_popup_options = (
-		-name => "$name!format",
-		-values => $formats,
+		-name    => "$name!format",
+		-values  => $formats,
 		-default => $selected_format,
-		-labels => $format_labels,
+		-labels  => $format_labels,
 	);
 
 	my %filter_options = (
-		-name => "$name!filter",
-		-values => $filters,
-		-default => \@selected_filters,
-		-labels => $filter_labels,
-		-size => 3,
+		-name     => "$name!filter",
+		-values   => $filters,
+		-default  => \@selected_filters,
+		-labels   => $filter_labels,
+		-size     => 3,
 		-multiple => 1,
 	);
 
 	my %list_options = (
-		-class=>"ScrollingRecordList",
-		-name => "$name",
-		-values => \@ids,
+		-class   => "ScrollingRecordList",
+		-name    => "$name",
+		-values  => \@ids,
 		-default => \@selected_records,
-		-labels => \%labels,
+		-labels  => \%labels,
 	);
-	$list_options{-size} = $size if $size;
+	$list_options{-size}     = $size     if $size;
 	$list_options{-multiple} = $multiple if $multiple;
 
 	my $value = $r->param($name) || "";
@@ -157,25 +156,34 @@ sub dropdownRecordList {
 	map { $size = 4 + length if length > $size } values %{ $options{values} };
 
 	my %textfield_options = (
-			name => $name,
-			value => $value,
-			size => $size,		# we need to calculate this to be the same as the popup_menu
+		name  => $name,
+		value => $value,
+		size  => $size,    # we need to calculate this to be the same as the popup_menu
 	);
 
-	return CGI::div({-class=>"ScrollingRecordList"},
+	return CGI::div(
+		{ -class => "ScrollingRecordList" },
 		CGI::textfield(%textfield_options),
 		CGI::scrolling_list(%list_options)
 	);
 
-	return CGI::div({ class => "ScrollingRecordList" },
-		$r->maketext("Sort:").' ', CGI::popup_menu(%sort_popup_options), CGI::br(),
-		$r->maketext("Format:").' ', CGI::popup_menu(%format_popup_options), CGI::br(),
-		$r->maketext("Filter:").' ', CGI::scrolling_list(%filter_options), CGI::br(),
+	return CGI::div(
+		{ class => "ScrollingRecordList" },
+		$r->maketext("Sort:") . ' ',
+		CGI::popup_menu(%sort_popup_options),
+		CGI::br(),
+		$r->maketext("Format:") . ' ',
+		CGI::popup_menu(%format_popup_options),
+		CGI::br(),
+		$r->maketext("Filter:") . ' ',
+		CGI::scrolling_list(%filter_options),
+		CGI::br(),
 		CGI::submit({
-			name => "$name!refresh",
-			value => $->maketext("Change Display Settings"),
+			name  => "$name!refresh",
+			value => $- > maketext("Change Display Settings"),
 			class => 'btn btn-secondary'
-		}), CGI::br(),
+		}),
+		CGI::br(),
 		CGI::scrolling_list(%list_options)
 	);
 }

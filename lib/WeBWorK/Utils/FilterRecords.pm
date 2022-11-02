@@ -69,7 +69,6 @@ our @EXPORT_OK = qw(
 #	},
 #};
 
-
 =head1 FUNCTIONS
 
 =over
@@ -93,39 +92,39 @@ sub getFiltersForClass {
 	my (@Records) = @_;
 
 	my (%sections, %recitations);
-	my (@names,%labels);
+	my (@names,    %labels);
 	push @names, "all";
 	$labels{all} = "Display all possible records";
-	
-	if (ref $Records[0] eq "WeBWorK::DB::Record::User"){
-		foreach my $user (@Records){
-			$sections{$user->section}++;
-			$recitations{$user->recitation}++;
+
+	if (ref $Records[0] eq "WeBWorK::DB::Record::User") {
+		foreach my $user (@Records) {
+			$sections{ $user->section }++;
+			$recitations{ $user->recitation }++;
 		}
-	
+
 		if (scalar(keys %sections) > 1) {
-		  foreach my $sec (sortByName(undef, keys %sections)){
-			push @names, "section:$sec";
-			if ($sec ne ""){
-				$labels{"section:$sec"} = "Display section $sec";
-			} else {
-				$labels{"section:$sec"} = "Display section <blank>";
+			foreach my $sec (sortByName(undef, keys %sections)) {
+				push @names, "section:$sec";
+				if ($sec ne "") {
+					$labels{"section:$sec"} = "Display section $sec";
+				} else {
+					$labels{"section:$sec"} = "Display section <blank>";
+				}
 			}
-		  }
 		}
 
 		if (scalar(keys %recitations) > 1) {
-		  foreach my $rec (sortByName(undef, keys %recitations)){
-			push @names, "recitation:$rec";
-			if ($rec ne ""){
-				$labels{"recitation:$rec"} = "Display recitation $rec";
-			} else {
-			        $labels{"recitation:$rec"} = "Display recitation <blank>";
+			foreach my $rec (sortByName(undef, keys %recitations)) {
+				push @names, "recitation:$rec";
+				if ($rec ne "") {
+					$labels{"recitation:$rec"} = "Display recitation $rec";
+				} else {
+					$labels{"recitation:$rec"} = "Display recitation <blank>";
+				}
 			}
-		  }
 		}
 	}
-	return ( \@names, \%labels );
+	return (\@names, \%labels);
 }
 
 =item sortRecords(\%options, @Records)
@@ -154,29 +153,31 @@ records are found to have identical first fields, and so on.
 # DBFIXME filtering should happen in the database (WHERE clauses)
 sub filterRecords {
 	my ($options, @Records) = @_;
-	
+
 	# nothing to do
 	return () unless @Records;
-	
-	# get class info (we assume that the records are all of the same type)
-	
-	my %options = %$options;
-	
-	my @filtersToUse = @{$options{filter}};
 
-	if (grep {$_ eq "all"} @filtersToUse) {return @Records;}
-	
-	my @GoodRecords = ();
-	foreach my $record (@Records){
-	foreach my $fil (@filtersToUse){
-		my ($name, $value) = split(/:/, $fil);
-		#warn "filter = $fil";
-		#warn "name = $name";
-		#warn "value = $value";
-		#warn "section = $record->section";
-#		my @data = split(/::/, $record);
-		if ($record->$name eq $value) {push @GoodRecords, $record}
+	# get class info (we assume that the records are all of the same type)
+
+	my %options = %$options;
+
+	my @filtersToUse = @{ $options{filter} };
+
+	if (grep { $_ eq "all" } @filtersToUse) {
+		return @Records;
 	}
+
+	my @GoodRecords = ();
+	foreach my $record (@Records) {
+		foreach my $fil (@filtersToUse) {
+			my ($name, $value) = split(/:/, $fil);
+			#warn "filter = $fil";
+			#warn "name = $name";
+			#warn "value = $value";
+			#warn "section = $record->section";
+			#		my @data = split(/::/, $record);
+			if ($record->$name eq $value) { push @GoodRecords, $record }
+		}
 	}
 	return @GoodRecords;
 }

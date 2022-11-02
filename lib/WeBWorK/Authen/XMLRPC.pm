@@ -26,14 +26,13 @@ use strict;
 use warnings;
 use WeBWorK::Debug;
 
-# Instead of being called with an apache request object $r 
-# this authentication method gets its data  
-# from an HTML data form.  It creates a WeBWorK::Authen::XMLRPC object  
+# Instead of being called with an apache request object $r
+# this authentication method gets its data
+# from an HTML data form.  It creates a WeBWorK::Authen::XMLRPC object
 # which fakes the essential properties of the WeBWorK::Request object needed for authentication
 
-
 # sub new {
-# 	my $class = shift;    
+# 	my $class = shift;
 # 	my $fake_r = shift;
 # 	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
 #     # runtime_use $user_authen_module;
@@ -44,13 +43,11 @@ use WeBWorK::Debug;
 
 # disable cookie functionality for xmlrpc
 sub connection {
-	return 0;  #indicate that there is no connection
+	return 0;    #indicate that there is no connection
 }
-sub maybe_send_cookie {}
-sub fetchCookie {}
-sub sendCookie {}
-sub killCookie {}
-
-
+sub maybe_send_cookie { }
+sub fetchCookie       { }
+sub sendCookie        { }
+sub killCookie        { }
 
 1;

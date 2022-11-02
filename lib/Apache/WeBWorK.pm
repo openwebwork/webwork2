@@ -39,14 +39,13 @@ use WeBWorK;
 use Encode;
 use utf8;
 use JSON::MaybeXS;
-use UUID::Tiny  ':std';
+use UUID::Tiny ':std';
 
 # Should the minimal (more secure) HTML error output be used?
-use constant MIN_HTML_ERRORS => ( exists $ENV{"MIN_HTML_ERRORS"} and $ENV{"MIN_HTML_ERRORS"} );
+use constant MIN_HTML_ERRORS => (exists $ENV{"MIN_HTML_ERRORS"} and $ENV{"MIN_HTML_ERRORS"});
 
 # Should Apache logs get JSON formatted record?
-use constant JSON_ERROR_LOG => ( exists $ENV{"JSON_ERROR_LOG"} and $ENV{"JSON_ERROR_LOG"} );
-
+use constant JSON_ERROR_LOG => (exists $ENV{"JSON_ERROR_LOG"} and $ENV{"JSON_ERROR_LOG"});
 
 ################################################################################
 
@@ -63,7 +62,6 @@ sub handler($) {
 	my $log = $r->log;
 	my $uri = $r->uri;
 
-
 	# We set the binmode for print to utf8 because some language options
 	# use utf8 characters
 	binmode(STDOUT, ":encoding(UTF-8)");
@@ -75,11 +73,11 @@ sub handler($) {
 		my ($warning) = @_;
 		chomp $warning;
 		my $warnings = $r->notes->get("warnings");
-		$warnings = Encode::decode("UTF-8",$warnings);
+		$warnings = Encode::decode("UTF-8", $warnings);
 		$warnings .= "$warning\n";
 		#my $backtrace = join("\n",backtrace());
 		#$warnings .= "$backtrace\n\n";
-		$warnings = Encode::encode("UTF-8",$warnings);
+		$warnings = Encode::encode("UTF-8", $warnings);
 		$r->notes->set(warnings => $warnings);
 
 		$log->warn("[$uri] $warning");
@@ -94,7 +92,7 @@ sub handler($) {
 
 	my $result = do {
 		local $SIG{__WARN__} = $warning_handler;
-		local $SIG{__DIE__} = $exception_handler;
+		local $SIG{__DIE__}  = $exception_handler;
 
 		eval { WeBWorK::dispatch($r) };
 	};
@@ -104,30 +102,30 @@ sub handler($) {
 
 		my $warnings = $r->notes->get("warnings");
 		my $htmlMessage;
-		my $uuid = create_uuid_as_string(UUID_SHA1, UUID_NS_URL, $r->uri )
-		  . "::" . create_uuid_as_string(UUID_TIME);
+		my $uuid = create_uuid_as_string(UUID_SHA1, UUID_NS_URL, $r->uri) . "::" . create_uuid_as_string(UUID_TIME);
 		my $time = time2str("%a %b %d %H:%M:%S %Y", time);
 
-		if ( MIN_HTML_ERRORS ) {
+		if (MIN_HTML_ERRORS) {
 			$htmlMessage = htmlMinMessage($r, $exception, $uuid, $time);
 		} else {
 			$htmlMessage = htmlMessage($r, $warnings, $exception, $uuid, $time, @backtrace);
 		}
 		unless ($r->bytes_sent) {
 			$r->content_type("text/html");
-			$htmlMessage = "<html lang=\"en-US\"><head><title>WeBWorK error</title></head><body>$htmlMessage</body></html>";
+			$htmlMessage =
+				"<html lang=\"en-US\"><head><title>WeBWorK error</title></head><body>$htmlMessage</body></html>";
 		}
 
 		# log the error to the apache error log
 		my $logMessage;
-		if ( JSON_ERROR_LOG ) {
+		if (JSON_ERROR_LOG) {
 			$logMessage = jsonMessage($r, $warnings, $exception, $uuid, $time, @backtrace);
 		} else {
 			$logMessage = textMessage($r, $warnings, $exception, $uuid, $time, @backtrace);
 		}
 		$log->error($logMessage);
 
-		$r->custom_response(FORBIDDEN,$htmlMessage);
+		$r->custom_response(FORBIDDEN, $htmlMessage);
 
 		$result = FORBIDDEN;
 	}
@@ -187,21 +185,21 @@ sub htmlMessage($$$@) {
 	# Warnings have html and look better scrubbed.
 
 	my $scrubber = HTML::Scrubber->new(
-	    default => 1,
-	    script => 0,
-	    comment => 0
-	    );
+		default => 1,
+		script  => 0,
+		comment => 0
+	);
 	$scrubber->default(
-	    undef,
-	    {
-		'*' => 1,
-	    }
-	    );
+		undef,
+		{
+			'*' => 1,
+		}
+	);
 
-	$warnings = $scrubber->scrub($warnings);
+	$warnings  = $scrubber->scrub($warnings);
 	$exception = $scrubber->scrub($exception);
 
-	my @warnings = defined $warnings ? split m|<br />|, $warnings : ();  #fragile
+	my @warnings = defined $warnings ? split m|<br />|, $warnings : ();    #fragile
 	$warnings = htmlWarningsList(@warnings);
 	my $backtrace = htmlBacktrace(@backtrace);
 
@@ -209,29 +207,34 @@ sub htmlMessage($$$@) {
 	# and $ENV{SERVER_ADMIN} which is set by ServerAdmin in httpd.conf is used as a backup
 	# if an explicit email address has not been set.
 
-	$ENV{WEBWORK_SERVER_ADMIN} = $ENV{WEBWORK_SERVER_ADMIN} || $ENV{SERVER_ADMIN} // ''; #guarantee this variable is defined.
+	$ENV{WEBWORK_SERVER_ADMIN} = $ENV{WEBWORK_SERVER_ADMIN} || $ENV{SERVER_ADMIN}
+		// '';    #guarantee this variable is defined.
 
-	my $admin = ($ENV{WEBWORK_SERVER_ADMIN}
-		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
-		: "");
-	my $method = htmlEscape( $r->method  );
-	my $uri = htmlEscape(  $r->uri );
+	my $admin =
+		($ENV{WEBWORK_SERVER_ADMIN}
+			? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
+			: "");
+	my $method  = htmlEscape($r->method);
+	my $uri     = htmlEscape($r->uri);
 	my $headers = do {
-		my %headers = %{$r->headers_in};
+		my %headers = %{ $r->headers_in };
 		if (defined($headers{"sec-ch-ua"})) {
 			# Was getting warnings about the value of "sec-ch-ua" in my testing...
-			$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
+			$headers{"sec-ch-ua"} = join("", $headers{"sec-ch-ua"});
 			$headers{"sec-ch-ua"} =~ s/\"//g;
 		}
 
-		join("",
+		join(
+			"",
 			"<tr><th id=\"header_key\"><small>Key</small></th><th id=\"header_value\"><small>Value</small></th></tr>\n",
-			map { "<tr><td headers=\"header_key\"><small>" .
-				htmlEscape($_) .
-				"</small></td><td headers=\"header_value\"><small>" .
-				htmlEscape($headers{$_}) .
-				"</small></td></tr>\n"
-			} keys %headers );
+			map {
+				"<tr><td headers=\"header_key\"><small>"
+					. htmlEscape($_)
+					. "</small></td><td headers=\"header_value\"><small>"
+					. htmlEscape($headers{$_})
+					. "</small></td></tr>\n"
+			} keys %headers
+		);
 	};
 
 	return <<EOF;
@@ -290,16 +293,16 @@ sub htmlMinMessage($$$@) {
 	# Warnings have html and look better scrubbed.
 
 	my $scrubber = HTML::Scrubber->new(
-	    default => 1,
-	    script => 0,
-	    comment => 0
-	    );
+		default => 1,
+		script  => 0,
+		comment => 0
+	);
 	$scrubber->default(
-	    undef,
-	    {
-		'*' => 1,
-	    }
-	    );
+		undef,
+		{
+			'*' => 1,
+		}
+	);
 
 	$exception = $scrubber->scrub($exception);
 
@@ -310,11 +313,13 @@ sub htmlMinMessage($$$@) {
 	# and $ENV{SERVER_ADMIN} which is set by ServerAdmin in httpd.conf is used as a backup
 	# if an explicit email address has not been set.
 
-	$ENV{WEBWORK_SERVER_ADMIN} = $ENV{WEBWORK_SERVER_ADMIN} || $ENV{SERVER_ADMIN} // ''; #guarantee this variable is defined.
+	$ENV{WEBWORK_SERVER_ADMIN} = $ENV{WEBWORK_SERVER_ADMIN} || $ENV{SERVER_ADMIN}
+		// '';    #guarantee this variable is defined.
 
-	my $admin = ($ENV{WEBWORK_SERVER_ADMIN}
-		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
-		: "");
+	my $admin =
+		($ENV{WEBWORK_SERVER_ADMIN}
+			? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
+			: "");
 
 	return <<EOF;
 <main>
@@ -347,25 +352,25 @@ sub textMessage($$$@) {
 
 	chomp $exception;
 	my $backtrace = textBacktrace(@backtrace);
-	my $uri = $r->uri;
+	my $uri       = $r->uri;
 
 	my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
 
-	my %headers = %{$r->headers_in};
+	my %headers = %{ $r->headers_in };
 	# Was getting JSON errors for the value of "sec-ch-ua" in my testing, so remove it
-	if ( defined( $headers{"sec-ch-ua"} ) ) {
-		$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
+	if (defined($headers{"sec-ch-ua"})) {
+		$headers{"sec-ch-ua"} = join("", $headers{"sec-ch-ua"});
 		$headers{"sec-ch-ua"} =~ s/\"//g;
 	}
 
 	my $additional_json = encode_json({
-			"Error record identifier" => $uuid,
-			"Time" => $time,
-			"Method" => $r->method,
-			"URI" => $r->uri,
-			"HTTP Headers" => {%headers},
-			"Warnings" => [ @warnings ],
-		});
+		"Error record identifier" => $uuid,
+		"Time"                    => $time,
+		"Method"                  => $r->method,
+		"URI"                     => $r->uri,
+		"HTTP Headers"            => {%headers},
+		"Warnings"                => [@warnings],
+	});
 
 	return "[$uuid] [$uri] $additional_json $exception\n$backtrace";
 }
@@ -383,23 +388,23 @@ sub jsonMessage($$$@) {
 	chomp $exception;
 	my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
 
-	my %headers = %{$r->headers_in};
+	my %headers = %{ $r->headers_in };
 	# Was getting JSON errors for the value of "sec-ch-ua" in my testing, so remove it
-	if ( defined( $headers{"sec-ch-ua"} ) ) {
-		$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
+	if (defined($headers{"sec-ch-ua"})) {
+		$headers{"sec-ch-ua"} = join("", $headers{"sec-ch-ua"});
 		$headers{"sec-ch-ua"} =~ s/\"//g;
 	}
 
 	return encode_json({
-			"Error record identifier" => $uuid,
-			"Time" => $time,
-			"Method" => $r->method,
-			"URI" => $r->uri,
-			"HTTP Headers" => {%headers},
-			"Warnings" => [ @warnings ],
-			"Exception" => $exception,
-			"Backtrace" => [ @backtrace ],
-		});
+		"Error record identifier" => $uuid,
+		"Time"                    => $time,
+		"Method"                  => $r->method,
+		"URI"                     => $r->uri,
+		"HTTP Headers"            => {%headers},
+		"Warnings"                => [@warnings],
+		"Exception"               => $exception,
+		"Backtrace"               => [@backtrace],
+	});
 }
 
 ################################################################################
@@ -475,7 +480,7 @@ line breaks with HTML "<br />" tags.
 
 sub htmlEscape($) {
 	my ($string) = @_;
-	$string = $string//'';  # make sure it's defined.
+	$string = $string // '';              # make sure it's defined.
 	$string = encode_entities($string);
 	$string =~ s|\n|<br />|g;
 	return $string;

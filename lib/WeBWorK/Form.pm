@@ -23,26 +23,26 @@ use warnings;
 sub TIESCALAR ($$$) {
 	my ($invocant, $f, $param) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $self = {
-		f => $f,
+	my $self  = {
+		f     => $f,
 		param => $param,
 	};
-	
+
 	return bless $self, $class;
 }
 
 sub FETCH {
-	my $self = shift;
-	my $f = $self->{f};
+	my $self  = shift;
+	my $f     = $self->{f};
 	my $param = $self->{param};
 	return $f->param($param);
 }
 
 sub STORE {
-	my $self = shift;
+	my $self   = shift;
 	my @values = @_;
-	my $f = $self->{f};
-	my $param = $self->{param};
+	my $f      = $self->{f};
+	my $param  = $self->{param};
 	$f->param($param, @values);
 }
 
@@ -64,7 +64,7 @@ sub new {
 	#print "new called with \@_ = ( " . (join ", ", @_)  . " )\n";
 	my ($invocant, $r) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $self = {};
+	my $self  = {};
 
 	return bless $self, $class;
 }
@@ -72,7 +72,7 @@ sub new {
 sub new_from_paramable ($$) {
 	my ($invocant, $r) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $self = {};
+	my $self  = {};
 
 	# list of param names
 	my @params = $r->param;
@@ -86,11 +86,11 @@ sub new_from_paramable ($$) {
 sub new_test {
 	my ($invocant, $r) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $self = {
+	my $self  = {
 		a => [qw(aa ab ac)],
-		b => [ "bcontents" ],
+		b => ["bcontents"],
 		c => [ "cc", "ccd" ],
-		d => [ "what d has" ],
+		d => ["what d has"],
 	};
 
 	return bless $self, $class;
@@ -108,24 +108,24 @@ sub new_test {
 # in different contexts.
 sub param {
 	my ($self, $param, @values) = @_;
-	
+
 	# Called with one argument.  Return keys.
 	if (!defined $param) {
 		return keys %$self;
 	}
-	
+
 	# called with three arguments.  Set a value, then fall through
 	if (scalar(@values)) {
 		if (ref $values[0]) {
 			$self->{$param} = $values[0];
 		} else {
-			$self->{$param} = [ @values ];
+			$self->{$param} = [@values];
 		}
 	}
-	
+
 	# Called with 2+ arguments.  Return requested value
 	if (wantarray) {
-		return @{$self->{$param}};
+		return @{ $self->{$param} };
 	} else {
 		return $self->{$param}[0];
 	}
@@ -152,7 +152,7 @@ sub Delete {
 }
 
 sub printable {
-	my $self = shift;
+	my $self        = shift;
 	my $printedform = "";
 	foreach my $key ($self->param) {
 		$printedform .= "[$key]\n";
@@ -161,7 +161,7 @@ sub printable {
 		}
 		$printedform .= "\n";
 	}
-	
+
 	return $printedform;
 }
 
@@ -179,13 +179,13 @@ sub printable {
 # -- Mike
 
 sub Vars {
-	my $self = shift;
+	my $self       = shift;
 	my %varsFormat = ();
 	foreach my $key ($self->param) {
 		$varsFormat{$key} = join "\0", $self->param($key);
 	}
-	
-	return %varsFormat;	
+
+	return %varsFormat;
 }
 
 1;

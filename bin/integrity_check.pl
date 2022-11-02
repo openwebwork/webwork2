@@ -20,6 +20,7 @@ use Getopt::Std;
 use Data::Dumper;
 
 my $pg_dir;
+
 BEGIN {
 	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
 	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
@@ -41,14 +42,12 @@ if ($opt_v) {
 	$WeBWorK::Debug::Enabled = 0;
 }
 
-
 my $courseName = "tmp_course";
 
-my $ce = new WeBWorK::CourseEnvironment(
-               {webwork_dir=>$ENV{WEBWORK_ROOT},
-                courseName=> $courseName
-               });
-
+my $ce = new WeBWorK::CourseEnvironment({
+	webwork_dir => $ENV{WEBWORK_ROOT},
+	courseName  => $courseName
+});
 
 print "ce ready $ce";
 

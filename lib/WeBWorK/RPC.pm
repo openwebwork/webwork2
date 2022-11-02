@@ -35,42 +35,42 @@ use WeBWorK::Utils qw/runtime_use/;
 sub bootstrap {
 	my ($invocant, %params) = @_;
 	my $class = ref $invocant || $invocant;
-	my $self = bless {}, $class;
-	
+	my $self  = bless {}, $class;
+
 	my $r = $self->{r} = new WeBWorK::RPC::Request;
-	
+
 	my $ce = eval { new WeBWorK::CourseEnvironment(\%WeBWorK::SeedCE) };
 	$@ and die "Failed to initialize course environment: $@\n";
 	$r->ce($ce);
-	
+
 	my $authz = new WeBWorK::Authz($r);
 	$r->authz($authz);
-	
+
 	my $authen_module = WeBWorK::Authen::class($ce, "user_module");
 	runtime_use $authen_module;
 	my $authen = $authen_module->new($r);
 	$r->authen($authen);
-	
+
 	if (defined $ce->{courseName} and $ce->{courseName} ne "") {
 		my $db = new WeBWorK::DB($ce->{dbLayout});
 		$r->db($db);
 	}
-	
+
 	return $self, %params;
 }
 
 sub hi {
-	print STDERR __PACKAGE__."::hi(@_) called\n";
+	print STDERR __PACKAGE__ . "::hi(@_) called\n";
 	return "hello, world";
 }
 
 sub bye {
-	print STDERR __PACKAGE__."::bye(@_) called\n";
+	print STDERR __PACKAGE__ . "::bye(@_) called\n";
 	return "goodbye, cruel world";
 }
 
 sub dumper {
-	print STDERR __PACKAGE__."::dumper(@_) called\n";
+	print STDERR __PACKAGE__ . "::dumper(@_) called\n";
 	return Dumper(\@_);
 }
 
@@ -100,7 +100,7 @@ sub addCourse {
 	die "missing courseID in \%options" unless defined $options{courseID};
 	$options{ce} = new WeBWorK::CourseEnvironment({
 		webwork_dir => $self->{r}->ce->{webwork_dir},
-		courseName => $options{courseID},
+		courseName  => $options{courseID},
 	});
 	return WeBWorK::Utils::CourseManagement::addCourse(%options);
 }

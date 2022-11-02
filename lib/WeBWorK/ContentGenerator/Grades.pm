@@ -292,7 +292,10 @@ sub displayStudentStats {
 			push(
 				@rows,
 				CGI::Tr(
-					CGI::td({ dir => 'ltr' }, format_set_name_display($setID) . ' (version ' . $set->version_id . ')'),
+					CGI::td(
+						{ dir => 'ltr' },
+						format_set_name_display($setID) . ' (version ' . $set->version_id . ')'
+					),
 					CGI::td(
 						{ colspan => $max_problems + 3 },
 						CGI::em($r->maketext('Display of scores for this set is not allowed.'))
@@ -332,8 +335,7 @@ sub displayStudentStats {
 			my $score = defined $problem_scores->[$i] && $show_problem_scores ? $problem_scores->[$i] : '';
 			$cgi_prob_scores[$i] = CGI::td(
 				{ class => 'problem-data' },
-				CGI::span(
-					{ class => $score eq '100' ? 'correct' : $score eq '&nbsp;.&nbsp;' ? 'unattempted' : '' },
+				CGI::span({ class => $score eq '100' ? 'correct' : $score eq '&nbsp;.&nbsp;' ? 'unattempted' : '' },
 					$score)
 					. CGI::br()
 					. (

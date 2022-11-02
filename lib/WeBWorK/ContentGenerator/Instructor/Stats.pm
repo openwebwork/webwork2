@@ -96,7 +96,7 @@ sub siblings {
 
 	# List links depending on if viewing set progress or student progress
 	if ($self->{type} eq 'student') {
-		my $ce = $r->ce;
+		my $ce   = $r->ce;
 		my $user = $r->param('user');
 		# Get all users except the set level proctors, and restrict to the
 		# sections or recitations that are allowed for the user if such
@@ -144,7 +144,7 @@ sub siblings {
 			);
 		}
 	} else {
-		my @setIDs   = sort $db->listGlobalSets;
+		my @setIDs = sort $db->listGlobalSets;
 		for my $setID (@setIDs) {
 			my $problemPage = $urlpath->newFromModule(
 				$urlpath->module, $r,
@@ -239,8 +239,7 @@ sub index {
 			statType => 'set',
 			setID    => $set
 		);
-		push @setLinks,
-			CGI::a({ href => $self->systemLink($setStatisticsPage) }, format_set_name_display($set));
+		push @setLinks, CGI::a({ href => $self->systemLink($setStatisticsPage) }, format_set_name_display($set));
 	}
 
 	# Get a list of students sorted by user_id.
@@ -281,7 +280,7 @@ sub index {
 		CGI::div(
 			{ class => 'col-lg-5 col-sm-6 border border-dark' },
 			CGI::h2({ class => 'text-center fs-3' }, $r->maketext('View statistics by set')),
-			CGI::ul({ dir => 'ltr' }, CGI::li([@setLinks])),
+			CGI::ul({ dir   => 'ltr' }, CGI::li([@setLinks])),
 		),
 		CGI::div(
 			{ class => 'col-lg-5 col-sm-6 border border-dark' },
@@ -508,7 +507,7 @@ sub displaySet {
 		$attempts_percentiles_for_problem{$probID} =
 			{ determine_percentiles([@brackets2], @{ $attempts_list_for_problem{$probID} }) };
 
-		if ($setRecord->assignment_type =~ /gateway/ || !$db->existsUserSet($r->param('user') , $setName)) {
+		if ($setRecord->assignment_type =~ /gateway/ || !$db->existsUserSet($r->param('user'), $setName)) {
 			# If this is a gateway quiz, there is not a valid link to the problem, so use the Problem.pm editMode with
 			# an undefined set instead.
 			$problemPage{$probID} = $self->systemLink(
@@ -674,9 +673,9 @@ sub displaySet {
 					map {
 						my $probID = $_->problem_id;
 						$problemPage{$probID}
-							? CGI::a({ href => $problemPage{$probID}, target => 'ww_stats_problem' },
-								$prettyProblemIDs{$probID})
-							: $prettyProblemIDs{$probID}
+						? CGI::a({ href => $problemPage{$probID}, target => 'ww_stats_problem' },
+							$prettyProblemIDs{$probID})
+						: $prettyProblemIDs{$probID}
 					} @problems
 				]
 			)
@@ -796,8 +795,10 @@ sub displaySet {
 		print CGI::Tr(
 			CGI::th(
 				$problemPage{$probID}
-				? CGI::a({ href => $problemPage{$probID}, target => 'ww_stats_problem' },
-					$r->maketext('Problem [_1]', $prettyProblemIDs{$probID}))
+				? CGI::a(
+					{ href => $problemPage{$probID}, target => 'ww_stats_problem' },
+					$r->maketext('Problem [_1]', $prettyProblemIDs{$probID})
+					)
 				: $prettyProblemIDs{$probID}
 			),
 			CGI::td(

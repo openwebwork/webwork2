@@ -34,7 +34,7 @@ use Encode;
 # BUT one must return a 1 so that error messages can be displayed.
 sub if_loggedin {
 	my ($self, $arg) = @_;
-#	return !$arg;
+	#	return !$arg;
 	return 1;
 }
 
@@ -64,11 +64,11 @@ sub title {
 sub info {
 
 	######### NOTES ON TRANSLATION
-	# -translation of the content found in the info panel.  Since most of this content is in fact read from files, a simple use of maketext would be too limited to translate these types of content efficiently.
+# -translation of the content found in the info panel.  Since most of this content is in fact read from files, a simple use of maketext would be too limited to translate these types of content efficiently.
 
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 
 	my $result;
 	# This section should be kept in sync with the Home.pm version
@@ -108,7 +108,7 @@ sub info {
 	}
 
 	if (defined $result and $result ne "") {
-	    return $result;
+		return $result;
 	} else {
 		return "";
 	}
@@ -124,24 +124,24 @@ sub pre_header_initialize {
 	my ($self) = @_;
 	my $authen = $self->r->authen;
 
-	if ( defined($authen->{redirect}) && $authen->{redirect} ) {
+	if (defined($authen->{redirect}) && $authen->{redirect}) {
 		$self->reply_with_redirect($authen->{redirect});
 	}
 }
 
 sub head {
-	my ($self) = @_;
-	my $ce = $self->r->ce;
+	my ($self)   = @_;
+	my $ce       = $self->r->ce;
 	my $contents = $ce->{options}{metaRobotsContent} // 'none';
-        print '<meta name="robots" content="'.$contents.'" />';
-        return "";
+	print '<meta name="robots" content="' . $contents . '" />';
+	return "";
 }
 
 sub body {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $db      = $r->db;
 	my $urlpath = $r->urlpath;
 
 	# get the authen object to make sure that we should print
@@ -149,20 +149,22 @@ sub body {
 	my $auth = $r->authen;
 
 	# The following line may not work when a sequence of authentication modules
-    # are used, because the preferred module might be external, e.g., LTIBasic,
-    # but a non-external one, e.g., Basic_TheLastChance or
-    # even just WeBWorK::Authen, might handle the ongoing session management.
-    # So this should be set in the course environment when a sequence of
+	# are used, because the preferred module might be external, e.g., LTIBasic,
+	# but a non-external one, e.g., Basic_TheLastChance or
+	# even just WeBWorK::Authen, might handle the ongoing session management.
+	# So this should be set in the course environment when a sequence of
 	# authentication modules is used..
 	#my $externalAuth = (defined($auth->{external_auth}) && $auth->{external_auth} ) ? 1 : 0;
-	my $externalAuth = ((defined($ce->{external_auth}) && $ce->{external_auth})
- 		or (defined($auth->{external_auth}) && $auth->{external_auth}) ) ? 1 : 0;
+	my $externalAuth = (
+		(defined($ce->{external_auth}) && $ce->{external_auth})
+			or (defined($auth->{external_auth}) && $auth->{external_auth})
+	) ? 1 : 0;
 
 	# get some stuff together
-	my $user = $r->param("user") || "";
-	my $key = $r->param("key");
-	my $passwd = $r->param("passwd") || "";
-	my $course = $urlpath->arg("courseID") =~ s/_/ /gr;
+	my $user               = $r->param("user") || "";
+	my $key                = $r->param("key");
+	my $passwd             = $r->param("passwd") || "";
+	my $course             = $urlpath->arg("courseID") =~ s/_/ /gr;
 	my $practiceUserPrefix = $ce->{practiceUserPrefix};
 
 	# don't fill in the user ID for practice users
@@ -174,17 +176,21 @@ sub body {
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
 	my $authen_error = $r->notes->get("authen_error");
-	$authen_error = Encode::decode("UTF-8",$authen_error);
+	$authen_error = Encode::decode("UTF-8", $authen_error);
 
 	if ($authen_error) {
 		print CGI::div({ class => 'alert alert-danger', tabindex => '0' }, $authen_error);
 	}
 
-	if ($externalAuth ) {
-		my $LMS = ($ce->{LMS_url}) ? CGI::a({ href => $ce->{LMS_url} },$ce->{LMS_name}) : $ce->{LMS_name};
+	if ($externalAuth) {
+		my $LMS = ($ce->{LMS_url}) ? CGI::a({ href => $ce->{LMS_url} }, $ce->{LMS_name}) : $ce->{LMS_name};
 		if (!$authen_error || $r->authen() eq "WeBWorK::Authen::LTIBasic") {
-			print CGI::p($r->maketext('The course [_1] uses an external authentication system ([_2]). ' .
-					'Please return to that system to access this course.', CGI::strong($course), $LMS));
+			print CGI::p($r->maketext(
+				'The course [_1] uses an external authentication system ([_2]). '
+					. 'Please return to that system to access this course.',
+				CGI::strong($course),
+				$LMS
+			));
 		} else {
 			print CGI::p($r->maketext(
 				'The course [_1] uses an external authentication system ([_2]). You\'ve authenticated through that '
@@ -267,7 +273,7 @@ sub body {
 			next unless defined $GuestUser->status;
 			next unless $GuestUser->status ne "";
 			push @allowedGuestUsers, $GuestUser
-			if $ce->status_abbrev_has_behavior($GuestUser->status, "allow_course_access");
+				if $ce->status_abbrev_has_behavior($GuestUser->status, "allow_course_access");
 		}
 
 		# Guest login
@@ -275,12 +281,10 @@ sub body {
 			# preserve the form data posted to the requested URI
 			my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
 			print CGI::start_div({ class => 'my-3' });
-			print CGI::p(
-				$r->maketext(
-					'This course supports guest logins. Click [_1] to log into this course as a guest.',
-					CGI::b($r->maketext("Guest Login"))
-				)
-			);
+			print CGI::p($r->maketext(
+				'This course supports guest logins. Click [_1] to log into this course as a guest.',
+				CGI::b($r->maketext("Guest Login"))
+			));
 			print CGI::input({
 				type  => "submit",
 				name  => "login_practice_user",

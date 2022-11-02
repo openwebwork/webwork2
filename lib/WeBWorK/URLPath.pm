@@ -35,7 +35,7 @@ use Scalar::Util qw(weaken);
 
 	sub debug {
 		my ($label, $indent, @message) = @_;
-		my $header = " "x$indent;
+		my $header = " " x $indent;
 		$header .= "$label: " if $label ne "";
 		WeBWorK::Debug::debug($header, @message);
 	}
@@ -128,18 +128,18 @@ our %pathTypes = (
 	root => {
 		name    => 'WeBWorK',
 		parent  => '',
-		kids    => [ qw/course_admin  html2xml pgtotex instructorXMLHandler set_list / ],
+		kids    => [qw/course_admin  html2xml pgtotex instructorXMLHandler set_list /],
 		match   => qr|^/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => '/',
 		display => 'WeBWorK::ContentGenerator::Home',
 	},
 	course_admin => {
 		name    => x('Course Administration'),
 		parent  => 'root',
-		kids    => [ qw/logout options instructor_tools/ ],
+		kids    => [qw/logout options instructor_tools/],
 		match   => qr|^(admin)/|,
-		capture => [ qw/courseID/ ],
+		capture => [qw/courseID/],
 		produce => 'admin/',
 		display => 'WeBWorK::ContentGenerator::CourseAdmin',
 	},
@@ -148,39 +148,41 @@ our %pathTypes = (
 
 	html2xml => {
 		name    => 'html2xml',
-		parent  => 'root', #    'set_list',
-		kids    => [ qw// ],
+		parent  => 'root',                                         #    'set_list',
+		kids    => [qw//],
 		match   => qr|^html2xml/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'html2xml/',
 		display => 'WeBWorK::ContentGenerator::renderViaXMLRPC',
 	},
 	pgtotex => {
 		name    => 'PG to Tex translator',
 		parent  => 'root',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^pgtotex.+|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'pgtotex/',
 		display => 'WeBWorK::ContentGenerator::PGtoTexRenderer',
 	},
 	instructorXMLHandler => {
-		name => 'instructorXMLHandler',
-		parent => 'root',
-		kids => [ qw// ],
+		name    => 'instructorXMLHandler',
+		parent  => 'root',
+		kids    => [qw//],
 		match   => qr|^instructorXMLHandler/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'instructorXMLHandler/',
 		display => 'WeBWorK::ContentGenerator::instructorXMLHandler',
 	},
 	set_list => {
-		name    => '[_4]',
-		parent  => 'root',
-		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz answer_log grades hardcopy achievements
-			logout options instructor_tools problem_list
-			/ ],
+		name   => '[_4]',
+		parent => 'root',
+		kids   => [
+			qw/equation_display feedback gateway_quiz proctored_gateway_quiz answer_log grades hardcopy achievements
+				logout options instructor_tools problem_list
+				/
+		],
 		match   => qr|^([^/]+)/|,
-		capture => [ qw/courseID/ ],
+		capture => [qw/courseID/],
 		produce => '$courseID/',
 		display => 'WeBWorK::ContentGenerator::ProblemSets',
 	},
@@ -190,140 +192,142 @@ our %pathTypes = (
 	equation_display => {
 		name    => x('Equation Display'),
 		parent  => 'set_list',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^equation/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'equation/',
 		display => 'WeBWorK::ContentGenerator::EquationDisplay',
 	},
 	feedback => {
-		name    => x('Feedback'),
-		parent  => 'set_list',
-		kids    => [ qw// ],
-		match   => qr|^feedback/|,
-		capture => [ qw// ],
-		produce => 'feedback/',
-		display => 'WeBWorK::ContentGenerator::Feedback',
+		name         => x('Feedback'),
+		parent       => 'set_list',
+		kids         => [qw//],
+		match        => qr|^feedback/|,
+		capture      => [qw//],
+		produce      => 'feedback/',
+		display      => 'WeBWorK::ContentGenerator::Feedback',
 		unrestricted => 1
 	},
 	gateway_quiz => {
-		name    => x('Gateway Quiz [_2]'),
-		parent  => 'set_list',
-		kids    => [ qw// ],
-		match   => qr|^quiz_mode/([^/]+)/|,
-		capture => [ qw/setID/ ],
-		produce => 'quiz_mode/$setID/',
-		display => 'WeBWorK::ContentGenerator::GatewayQuiz',
+		name         => x('Gateway Quiz [_2]'),
+		parent       => 'set_list',
+		kids         => [qw//],
+		match        => qr|^quiz_mode/([^/]+)/|,
+		capture      => [qw/setID/],
+		produce      => 'quiz_mode/$setID/',
+		display      => 'WeBWorK::ContentGenerator::GatewayQuiz',
 		unrestricted => 1
 	},
 
 	answer_log => {
 		name    => x('Answer Log'),
 		parent  => 'set_list',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^show_answers/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'show_answers/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ShowAnswers',
 	},
 
 	proctored_gateway_quiz => {
-		name    => x('Proctored Gateway Quiz [_2]'),
-		parent  => 'set_list',
-		kids    => [ qw/proctored_gateway_proctor_login/ ],
-		match   => qr|^proctored_quiz_mode/([^/]+)/|,
-		capture => [ qw/setID/ ],
-		produce => 'proctored_quiz_mode/$setID/',
-		display => 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz',
+		name         => x('Proctored Gateway Quiz [_2]'),
+		parent       => 'set_list',
+		kids         => [qw/proctored_gateway_proctor_login/],
+		match        => qr|^proctored_quiz_mode/([^/]+)/|,
+		capture      => [qw/setID/],
+		produce      => 'proctored_quiz_mode/$setID/',
+		display      => 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz',
 		unrestricted => 1
 	},
 	proctored_gateway_proctor_login => {
-		name    => x('Proctored Gateway Quiz [_2] Proctor Login'),
-		parent  => 'proctored_gateway_quiz',
-		kids    => [ qw// ],
-		match   => qr|^proctored_quiz_mode/([^/]+)/|,
-		capture => [ qw/setID/ ],
-		produce => 'proctored_quiz_mode/$setID/proctor_login',
-		display => 'WeBWorK::ContentGenerator::LoginProctor',
+		name         => x('Proctored Gateway Quiz [_2] Proctor Login'),
+		parent       => 'proctored_gateway_quiz',
+		kids         => [qw//],
+		match        => qr|^proctored_quiz_mode/([^/]+)/|,
+		capture      => [qw/setID/],
+		produce      => 'proctored_quiz_mode/$setID/proctor_login',
+		display      => 'WeBWorK::ContentGenerator::LoginProctor',
 		unrestricted => 1
 	},
 	grades => {
 		name    => x('Grades'),
 		parent  => 'set_list',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^grades/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'grades/',
 		display => 'WeBWorK::ContentGenerator::Grades',
 	},
-	achievements  => {
-		name    => x('Achievements'),
-		parent  => 'set_list',
-		kids    => [ qw// ],
-		match   => qr|^achievements/|,
-		capture => [ qw// ],
-		produce => 'achievements/',
-		display => 'WeBWorK::ContentGenerator::Achievements',
+	achievements => {
+		name         => x('Achievements'),
+		parent       => 'set_list',
+		kids         => [qw//],
+		match        => qr|^achievements/|,
+		capture      => [qw//],
+		produce      => 'achievements/',
+		display      => 'WeBWorK::ContentGenerator::Achievements',
 		unrestricted => 1
 	},
 	hardcopy => {
 		name    => x('Hardcopy Generator'),
 		parent  => 'set_list',
-		kids    => [ qw/hardcopy_preselect_set/ ],
+		kids    => [qw/hardcopy_preselect_set/],
 		match   => qr|^hardcopy/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'hardcopy/',
 		display => 'WeBWorK::ContentGenerator::Hardcopy',
 	},
 	hardcopy_preselect_set => {
-		name    => x('Hardcopy Generator'),
-		parent  => 'hardcopy',
-		kids    => [ qw// ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/setID/ ],
-		produce => '$setID/',
-		display => 'WeBWorK::ContentGenerator::Hardcopy',
+		name         => x('Hardcopy Generator'),
+		parent       => 'hardcopy',
+		kids         => [qw//],
+		match        => qr|^([^/]+)/|,
+		capture      => [qw/setID/],
+		produce      => '$setID/',
+		display      => 'WeBWorK::ContentGenerator::Hardcopy',
 		unrestricted => 1
 	},
 	logout => {
 		name    => x('Logout'),
 		parent  => 'set_list',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^logout/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'logout/',
 		display => 'WeBWorK::ContentGenerator::Logout',
 	},
 	options => {
-		name    => x('User Settings'),
-		parent  => 'set_list',
-		kids    => [ qw// ],
-		match   => qr|^options/|,
-		capture => [ qw// ],
-		produce => 'options/',
-		display => 'WeBWorK::ContentGenerator::Options',
+		name         => x('User Settings'),
+		parent       => 'set_list',
+		kids         => [qw//],
+		match        => qr|^options/|,
+		capture      => [qw//],
+		produce      => 'options/',
+		display      => 'WeBWorK::ContentGenerator::Options',
 		unrestricted => 1
 	},
 
 	################################################################################
 
 	instructor_tools => {
-		name    => x('Instructor Tools'),
-		parent  => 'set_list',
-		kids    => [ qw/
-			instructor_user_list instructor_set_list
-			instructor_add_users instructor_achievement_list
-			instructor_set_assigner instructor_file_manager
-			instructor_problem_editor
-			instructor_set_maker
-			instructor_config
-			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_statistics
-			instructor_progress
-			instructor_problem_grader
-			/ ],
+		name   => x('Instructor Tools'),
+		parent => 'set_list',
+		kids   => [
+			qw/
+				instructor_user_list instructor_set_list
+				instructor_add_users instructor_achievement_list
+				instructor_set_assigner instructor_file_manager
+				instructor_problem_editor
+				instructor_set_maker
+				instructor_config
+				instructor_scoring instructor_scoring_download instructor_mail_merge
+				instructor_statistics
+				instructor_progress
+				instructor_problem_grader
+				/
+		],
 		match   => qr|^instructor/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'instructor/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Index',
 	},
@@ -333,27 +337,27 @@ our %pathTypes = (
 	instructor_user_list => {
 		name    => x('Classlist Editor'),
 		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_user_detail/ ],
+		kids    => [qw/instructor_user_detail/],
 		match   => qr|^users/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'users/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList',
 	},
 	instructor_user_detail => {
 		name    => x('Sets assigned to [_1]'),
 		parent  => 'instructor_user_list',
-		kids    => [ qw/instructor_sets_assigned_to_user/ ],
+		kids    => [qw/instructor_sets_assigned_to_user/],
 		match   => qr|^([^/]+)/|,
-		capture => [ qw/userID/ ],
+		capture => [qw/userID/],
 		produce => '$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UserDetail',
 	},
 	instructor_sets_assigned_to_user => {
 		name    => x('Sets Assigned to User'),
 		parent  => 'instructor_user_detail',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^sets/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'sets/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser',
 	},
@@ -363,9 +367,9 @@ our %pathTypes = (
 	instructor_set_list => {
 		name    => x('Hmwk Sets Editor'),
 		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_set_detail/ ],
+		kids    => [qw/instructor_set_detail/],
 		match   => qr|^sets/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'sets/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList',
 	},
@@ -373,9 +377,9 @@ our %pathTypes = (
 	instructor_set_detail => {
 		name    => x('Set Detail for set [_2]'),
 		parent  => 'instructor_set_list',
-		kids    => [ qw/instructor_users_assigned_to_set/ ],
+		kids    => [qw/instructor_users_assigned_to_set/],
 		match   => qr|^([^/]+)/|,
-		capture => [ qw/setID/ ],
+		capture => [qw/setID/],
 		produce => '$setID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetDetail',
 	},
@@ -383,9 +387,9 @@ our %pathTypes = (
 	instructor_users_assigned_to_set => {
 		name    => x('Users Assigned to Set [_2]'),
 		parent  => 'instructor_set_detail',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^users/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'users/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet',
 	},
@@ -393,9 +397,9 @@ our %pathTypes = (
 	instructor_problem_grader => {
 		name    => x('Manual Grader'),
 		parent  => 'instructor_tools',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^grader/([^/]+)/([^/]+)/|,
-		capture => [ qw/setID problemID/ ],
+		capture => [qw/setID problemID/],
 		produce => 'grader/$setID/$problemID',
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemGrader',
 	},
@@ -405,99 +409,99 @@ our %pathTypes = (
 	instructor_add_users => {
 		name    => x('Add Users'),
 		parent  => 'instructor_tools',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^add_users/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'add_users/',
 		display => 'WeBWorK::ContentGenerator::Instructor::AddUsers',
 	},
 	instructor_set_assigner => {
 		name    => x('Set Assigner'),
 		parent  => 'instructor_tools',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^assigner/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'assigner/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Assigner',
 	},
 	instructor_config => {
 		name    => x('Course Configuration'),
 		parent  => 'instructor_tools',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^config/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'config/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Config',
 	},
 	instructor_set_maker => {
 		name    => x('Library Browser'),
 		parent  => 'instructor_tools',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^setmaker/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'setmaker/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker',
 	},
 	instructor_file_manager => {
 		name    => x('File Manager'),
 		parent  => 'instructor_tools',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^file_manager/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'file_manager/',
 		display => 'WeBWorK::ContentGenerator::Instructor::FileManager',
 	},
 	instructor_problem_editor => {
 		name    => x('Problem Editor'),
 		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_problem_editor_withset/ ],
+		kids    => [qw/instructor_problem_editor_withset/],
 		match   => qr|^pgProblemEditor/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'pgProblemEditor/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
 	},
 	instructor_problem_editor_withset => {
 		name    => '[_2]',
 		parent  => 'instructor_problem_editor',
-		kids    => [ qw/instructor_problem_editor_withset_withproblem/ ],
+		kids    => [qw/instructor_problem_editor_withset_withproblem/],
 		match   => qr|^([^/]+)/|,
-		capture => [ qw/setID/ ],
+		capture => [qw/setID/],
 		produce => '$setID/',
 		display => undef,
 	},
 	instructor_problem_editor_withset_withproblem => {
 		name    => '[_3]',
 		parent  => 'instructor_problem_editor_withset',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^([^/]+)/|,
-		capture => [ qw/problemID/ ],
+		capture => [qw/problemID/],
 		produce => '$problemID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
 	},
 	instructor_scoring => {
 		name    => x('Scoring Tools'),
 		parent  => 'instructor_tools',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^scoring/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'scoring/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Scoring',
 	},
 	instructor_scoring_download => {
 		name    => x('Scoring Download'),
 		parent  => 'instructor_tools',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^scoringDownload/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'scoringDownload/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ScoringDownload',
 	},
 	instructor_mail_merge => {
 		name    => x('Email'),
 		parent  => 'instructor_tools',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^send_mail/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'send_mail/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SendMail',
 	},
@@ -507,27 +511,27 @@ our %pathTypes = (
 	instructor_statistics => {
 		name    => x('Statistics'),
 		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_set_statistics instructor_user_statistics/ ],
+		kids    => [qw/instructor_set_statistics instructor_user_statistics/],
 		match   => qr|^stats/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'stats/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
 	instructor_set_statistics => {
 		name    => '[_2]',
 		parent  => 'instructor_statistics',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^(set)/([^/]+)/|,
-		capture => [ qw/statType setID/ ],
+		capture => [qw/statType setID/],
 		produce => 'set/$setID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
 	instructor_user_statistics => {
 		name    => '[_1]',
 		parent  => 'instructor_statistics',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^(student)/([^/]+)/|,
-		capture => [ qw/statType userID/ ],
+		capture => [qw/statType userID/],
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
@@ -535,21 +539,21 @@ our %pathTypes = (
 	################################################################################
 
 	instructor_achievement_list => {
-		name    =>  x('Achievement Editor'),
-		parent  =>  'instructor_tools',
-		kids    =>  [ qw/instructor_achievement_editor instructor_achievement_user_editor/ ],
-		match   =>  qr|^achievement_list/|,
-		capture =>  [ qw// ],
-		produce =>  'achievement_list/',
-		display =>  'WeBWorK::ContentGenerator::Instructor::AchievementList',
+		name    => x('Achievement Editor'),
+		parent  => 'instructor_tools',
+		kids    => [qw/instructor_achievement_editor instructor_achievement_user_editor/],
+		match   => qr|^achievement_list/|,
+		capture => [qw//],
+		produce => 'achievement_list/',
+		display => 'WeBWorK::ContentGenerator::Instructor::AchievementList',
 	},
 
 	instructor_achievement_editor => {
 		name    => x('Achievement Evaluator Editor'),
 		parent  => 'instructor_achievement_list',
-		kids => [ qw// ],
-		match => qr|^([^/]+)/editor/|,
-		capture => [ qw/achievementID/ ],
+		kids    => [qw//],
+		match   => qr|^([^/]+)/editor/|,
+		capture => [qw/achievementID/],
 		produce => '$achievementID/editor/',
 		display => 'WeBWorK::ContentGenerator::Instructor::AchievementEditor',
 	},
@@ -557,9 +561,9 @@ our %pathTypes = (
 	instructor_achievement_user_editor => {
 		name    => x('Achievement User Editor'),
 		parent  => 'instructor_achievement_list',
-		kids => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^([^/]+)/users/|,
-		capture => [ qw/achievementID/ ],
+		capture => [qw/achievementID/],
 		produce => '$achievementID/users/',
 		display => 'WeBWorK::ContentGenerator::Instructor::AchievementUserEditor',
 	},
@@ -569,27 +573,27 @@ our %pathTypes = (
 	instructor_progress => {
 		name    => x('Student Progress'),
 		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_set_progress instructor_user_progress/ ],
+		kids    => [qw/instructor_set_progress instructor_user_progress/],
 		match   => qr|^progress/|,
-		capture => [ qw// ],
+		capture => [qw//],
 		produce => 'progress/',
 		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
 	},
 	instructor_set_progress => {
 		name    => '[_2]',
 		parent  => 'instructor_progress',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^(set)/([^/]+)/|,
-		capture => [ qw/statType setID/ ],
+		capture => [qw/statType setID/],
 		produce => 'set/$setID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
 	},
 	instructor_user_progress => {
 		name    => '[_1]',
 		parent  => 'instructor_progress',
-		kids    => [ qw// ],
+		kids    => [qw//],
 		match   => qr|^(student)/([^/]+)/|,
-		capture => [ qw/statType userID/ ],
+		capture => [qw/statType userID/],
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
 	},
@@ -597,33 +601,33 @@ our %pathTypes = (
 	################################################################################
 
 	problem_list => {
-		name    => '[_2]',
-		parent  => 'set_list',
-		kids    => [ qw/problem_detail/ ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/setID/ ],
-		produce => '$setID/',
-		display => 'WeBWorK::ContentGenerator::ProblemSet',
+		name         => '[_2]',
+		parent       => 'set_list',
+		kids         => [qw/problem_detail/],
+		match        => qr|^([^/]+)/|,
+		capture      => [qw/setID/],
+		produce      => '$setID/',
+		display      => 'WeBWorK::ContentGenerator::ProblemSet',
 		unrestricted => 1
 	},
 	problem_detail => {
-		name    => '[_3]',
-		parent  => 'problem_list',
-		kids    => [ qw/show_me_another/ ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/problemID/ ],
-		produce => '$problemID/',
-		display => 'WeBWorK::ContentGenerator::Problem',
+		name         => '[_3]',
+		parent       => 'problem_list',
+		kids         => [qw/show_me_another/],
+		match        => qr|^([^/]+)/|,
+		capture      => [qw/problemID/],
+		produce      => '$problemID/',
+		display      => 'WeBWorK::ContentGenerator::Problem',
 		unrestricted => 1
 	},
 	show_me_another => {
-		name    => x('Show Me Another'),
-		parent  => 'problem_detail',
-		kids    => [ qw// ],
-		match   => qr|^show_me_another/|,
-		capture => [ qw// ],
-		produce => 'show_me_another/',
-		display => 'WeBWorK::ContentGenerator::ShowMeAnother',
+		name         => x('Show Me Another'),
+		parent       => 'problem_detail',
+		kids         => [qw//],
+		match        => qr|^show_me_another/|,
+		capture      => [qw//],
+		produce      => 'show_me_another/',
+		display      => 'WeBWorK::ContentGenerator::ShowMeAnother',
 		unrestricted => 1
 	},
 );
@@ -665,13 +669,13 @@ for more useful constructors.
 sub new {
 	my ($invocant, %fields) = @_;
 	my $class = ref $invocant || $invocant;
-	my $self = {
+	my $self  = {
 		type => undef,
-		r    => undef,             # will point to the parent request object (for access to the $ce)
+		r    => undef,    # will point to the parent request object (for access to the $ce)
 		args => {},
 		%fields,
 	};
- 	weaken $self -> {r};
+	weaken $self->{r};
 	return bless $self, $class;
 }
 
@@ -683,15 +687,15 @@ is invalid, an exception is thrown.
 =cut
 
 sub newFromPath {
-	my ($invocant,  $path, $r) = @_;
+	my ($invocant, $path, $r) = @_;
 
 	my ($type, %args) = getPathType($path);
-	croak "no type matches path $path" unless $type;
-	croak "URLPath requires a request object parent as second element" unless (ref($r) =~/WeBWorK::Request/);
+	croak "no type matches path $path"                                 unless $type;
+	croak "URLPath requires a request object parent as second element" unless (ref($r) =~ /WeBWorK::Request/);
 
 	return $invocant->new(
 		type => $type,
-		r    => $r,             # will point to the parent request object (for access to the $ce)
+		r    => $r,       # will point to the parent request object (for access to the $ce)
 		args => \%args,
 	);
 }
@@ -707,8 +711,8 @@ sub newFromModule {
 	my ($invocant, $module, $r, %args) = @_;
 
 	my $type = getModuleType($module, keys %args);
-	croak "URLPath requires a request object parent as second element" unless (ref($r) =~/WeBWorK::Request/);
-	croak "no type matches module $module with args", map { " $_=>$args{$_}" } keys %args unless $type;
+	croak "URLPath requires a request object parent as second element" unless (ref($r) =~ /WeBWorK::Request/);
+	croak "no type matches module $module with args", map {" $_=>$args{$_}"} keys %args unless $type;
 
 	return $invocant->new(
 		type => $type,
@@ -830,7 +834,7 @@ restricted users are marked with the unrestricted flag.
 
 sub navigation_restricted {
 	my $self = shift;
-	return defined $pathTypes{$self->{type}}{unrestricted} ? 0 : 1;
+	return defined $pathTypes{ $self->{type} }{unrestricted} ? 0 : 1;
 }
 
 =back
@@ -854,12 +858,12 @@ sub parent {
 	my ($self) = @_;
 	my $type = $self->{type};
 
-	my $newType = $pathTypes{$self->{type}}->{parent};
+	my $newType = $pathTypes{ $self->{type} }->{parent};
 	return undef unless $newType;
 
 	# remove any arguments added by the current node (and therefore not needed by the parent)
 	my @currArgs = @{ $pathTypes{$type}->{capture} };
-	my %newArgs = %{ $self->{args} };
+	my %newArgs  = %{ $self->{args} };
 	delete @newArgs{@currArgs} if @currArgs;
 	# use the same request object "parent" for parent URLPath as for the child
 	return $self->new(type => $newType, r => $self->{r}, args => \%newArgs);
@@ -901,8 +905,8 @@ Reconstructs the path string from a WeBWorK::URLPath.
 
 sub path {
 	my ($self) = @_;
-	my $type = $self->type;
-	my %args = %{ $self->{args} };
+	my $type   = $self->type;
+	my %args   = %{ $self->{args} };
 
 	my $path = buildPathFromType($type);
 	$path = interpolate($path, %args);
@@ -913,8 +917,6 @@ sub path {
 =back
 
 =cut
-
-
 
 ################################################################################
 
@@ -929,8 +931,9 @@ Return a list of the display modules associated with all possible path types.
 =cut
 
 sub all_modules {
-	my @modules = grep { defined } map { $pathTypes{$_}{display} } keys %pathTypes;
-	my %modules; @modules{@modules} = (); # remove duplicates
+	my @modules = grep {defined} map { $pathTypes{$_}{display} } keys %pathTypes;
+	my %modules;
+	@modules{@modules} = ();    # remove duplicates
 	return keys %modules;
 }
 
@@ -987,7 +990,7 @@ sub getModuleType {
 	my %args;
 	@args{@args} = ();
 
-	NODE: foreach my $nodeID (keys %pathTypes) {
+NODE: foreach my $nodeID (keys %pathTypes) {
 		my $node = $pathTypes{$nodeID};
 
 		# module name matches?
@@ -1015,7 +1018,7 @@ sub getModuleType {
 		return $nodeID;
 	}
 
-	return 0; # no node matches
+	return 0;    # no node matches
 }
 
 =item buildPathFromType($type)
@@ -1033,7 +1036,7 @@ sub buildPathFromType($) {
 	while ($type) {
 		$path = $pathTypes{$type}->{produce} . $path;
 		$type = $pathTypes{$type}->{parent};
-	};
+	}
 
 	return $path;
 }
@@ -1063,8 +1066,8 @@ sub visitPathTypeNode($$$$) {
 		die "node $nodeID doesn't exist in node list: failed";
 	}
 
-	my %node = %{ $pathTypes{$nodeID} };
-	my $match = $node{match};
+	my %node          = %{ $pathTypes{$nodeID} };
+	my $match         = $node{match};
 	my @capture_names = @{ $node{capture} };
 
 	# attempt to match $path against $match.
@@ -1077,14 +1080,14 @@ sub visitPathTypeNode($$$$) {
 		if (@capture_names) {
 			my $nexpected = @capture_names;
 			my $ncaptured = @capture_values;
-			my $max = $nexpected > $ncaptured ? $nexpected : $ncaptured;
+			my $max       = $nexpected > $ncaptured ? $nexpected : $ncaptured;
 			warn "captured $ncaptured arguments, expected $nexpected." unless $ncaptured == $nexpected;
 			for (my $i = 0; $i < $max; $i++) {
-				my $name = $capture_names[$i];
+				my $name  = $capture_names[$i];
 				my $value = $capture_values[$i];
 
 				# check to see if the url path parameter is a valid keyfield for the DB.
-				WeBWorK::DB::validateKeyfieldValue($name,$value,1);
+				WeBWorK::DB::validateKeyfieldValue($name, $value, 1);
 
 				if ($i > $nexpected) {
 					warn "captured an unexpected argument: $value -- ignoring it.";
@@ -1122,7 +1125,7 @@ sub visitPathTypeNode($$$$) {
 	if (@kids) {
 		foreach my $kid (@kids) {
 			debug("visitPathTypeNode", $indent, "trying child $kid:");
-			my $result = visitPathTypeNode($kid, $path, $argsRef, $indent+1);
+			my $result = visitPathTypeNode($kid, $path, $argsRef, $indent + 1);
 			# we return in two situations:
 			# if $result is -1, then the kid matched but couldn't consume the rest of the path
 			# if $result is the ID of a node, then the kid matched and consumed the rest of the path

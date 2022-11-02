@@ -43,7 +43,8 @@ ENDPROBLEMTEMPLATE
 
 $json_output->{body_part300_VI} = '$answerTemplate';
 
-$json_output->{body_part500} = '<form id="problemMainForm" class="problem-main-form" name="problemMainForm" action="TO_SET_LATER_FORM_ACTION_URL" method="post">';
+$json_output->{body_part500} =
+	'<form id="problemMainForm" class="problem-main-form" name="problemMainForm" action="TO_SET_LATER_FORM_ACTION_URL" method="post">';
 
 $json_output->{body_part530_VI} = '<div id="problem_body" class="problem-content" $PROBLEM_LANG_AND_DIR>';
 
@@ -63,40 +64,39 @@ ENDPROBLEMTEMPLATE
 
 $json_output->{hidden_input_field} = {};
 
-
-$json_output->{hidden_input_field}{answersSubmitted} = '1';
-$json_output->{hidden_input_field}{sourceFilePath} = '$sourceFilePath';
-$json_output->{hidden_input_field}{problemSource} = '$encoded_source';
-$json_output->{hidden_input_field}{problemSeed} = '$problemSeed';
-$json_output->{hidden_input_field}{problemUUID} = '$problemUUID';
-$json_output->{hidden_input_field}{psvn} = '$psvn';
-$json_output->{hidden_input_field}{pathToProblemFile} = '$fileName';
-$json_output->{hidden_input_field}{courseName} = '$courseID';
-$json_output->{hidden_input_field}{courseID} = '$courseID';
-$json_output->{hidden_input_field}{userID} = '$userID';
-$json_output->{hidden_input_field}{course_password} = '$course_password';
-$json_output->{hidden_input_field}{displayMode} = '$displayMode';
-$json_output->{hidden_input_field}{session_key} = '$session_key';
-$json_output->{hidden_input_field}{outputformat} = 'json';
-$json_output->{hidden_input_field}{theme} = '$theme';
-$json_output->{hidden_input_field}{language} = '$formLanguage';
-$json_output->{hidden_input_field}{showSummary} = '$showSummary';
-$json_output->{hidden_input_field}{showHints} = '$showHints';
-$json_output->{hidden_input_field}{showSolution} = '$showSolution';
-$json_output->{hidden_input_field}{showAnswerNumbers} = '$showAnswerNumbers';
-$json_output->{hidden_input_field}{showPreviewButton} = '$showPreviewButton';
-$json_output->{hidden_input_field}{showCheckAnswersButton} = '$showCheckAnswersButton';
+$json_output->{hidden_input_field}{answersSubmitted}         = '1';
+$json_output->{hidden_input_field}{sourceFilePath}           = '$sourceFilePath';
+$json_output->{hidden_input_field}{problemSource}            = '$encoded_source';
+$json_output->{hidden_input_field}{problemSeed}              = '$problemSeed';
+$json_output->{hidden_input_field}{problemUUID}              = '$problemUUID';
+$json_output->{hidden_input_field}{psvn}                     = '$psvn';
+$json_output->{hidden_input_field}{pathToProblemFile}        = '$fileName';
+$json_output->{hidden_input_field}{courseName}               = '$courseID';
+$json_output->{hidden_input_field}{courseID}                 = '$courseID';
+$json_output->{hidden_input_field}{userID}                   = '$userID';
+$json_output->{hidden_input_field}{course_password}          = '$course_password';
+$json_output->{hidden_input_field}{displayMode}              = '$displayMode';
+$json_output->{hidden_input_field}{session_key}              = '$session_key';
+$json_output->{hidden_input_field}{outputformat}             = 'json';
+$json_output->{hidden_input_field}{theme}                    = '$theme';
+$json_output->{hidden_input_field}{language}                 = '$formLanguage';
+$json_output->{hidden_input_field}{showSummary}              = '$showSummary';
+$json_output->{hidden_input_field}{showHints}                = '$showHints';
+$json_output->{hidden_input_field}{showSolution}             = '$showSolution';
+$json_output->{hidden_input_field}{showAnswerNumbers}        = '$showAnswerNumbers';
+$json_output->{hidden_input_field}{showPreviewButton}        = '$showPreviewButton';
+$json_output->{hidden_input_field}{showCheckAnswersButton}   = '$showCheckAnswersButton';
 $json_output->{hidden_input_field}{showCorrectAnswersButton} = '$showCorrectAnswersButton';
-$json_output->{hidden_input_field}{showFooter} = '$showFooter';
-$json_output->{hidden_input_field}{forcePortNumber} = '$forcePortNumber';
-$json_output->{hidden_input_field}{extraHeaderText} = '$extra_header_text';
+$json_output->{hidden_input_field}{showFooter}               = '$showFooter';
+$json_output->{hidden_input_field}{forcePortNumber}          = '$forcePortNumber';
+$json_output->{hidden_input_field}{extraHeaderText}          = '$extra_header_text';
 
 # These are the real WeBWorK server URLs which the intermediate needs to use
 # to communicate with WW, while the distant client must use URLs of the
 # intermediate server (the man in the middle).
 
-$json_output->{real_webwork_SITE_URL} = '$SITE_URL';
-$json_output->{real_webwork_FORM_ACTION_URL} = '$FORM_ACTION_URL';
+$json_output->{real_webwork_SITE_URL}         = '$SITE_URL';
+$json_output->{real_webwork_FORM_ACTION_URL}  = '$FORM_ACTION_URL';
 $json_output->{internal_problem_lang_and_dir} = '$PROBLEM_LANG_AND_DIR';
 
 # Output back to WebworkClient.pm is the reference to the hash:

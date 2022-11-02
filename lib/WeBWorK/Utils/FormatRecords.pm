@@ -69,33 +69,33 @@ our @EXPORT_OK = qw(
 use constant PRESET_FORMATS => {
 	"WeBWorK::DB::Record::User" => {
 		"uid_lnfn" => {
-			name => "user_id - last_name, first_name",
-			field_order => [ qw/user_id last_name first_name/ ],
+			name          => "user_id - last_name, first_name",
+			field_order   => [qw/user_id last_name first_name/],
 			format_string => "%s - %s, %s",
 		},
 		"lnfn_uid" => {
-			name => "last_name, first_name (user_id)",
-			field_order => [ qw/last_name first_name user_id/ ],
+			name          => "last_name, first_name (user_id)",
+			field_order   => [qw/last_name first_name user_id/],
 			format_string => "%s, %s (%s)",
 		},
 		"lnfn_section" => {
-			name => "last_name, first_name (section)",
-			field_order => [ qw/last_name first_name section/ ],
+			name          => "last_name, first_name (section)",
+			field_order   => [qw/last_name first_name section/],
 			format_string => "%s, %s (%s)",
 		},
 		"lnfn_recitation" => {
-			name => "last_name, first_name (recitation)",
-			field_order => [ qw/last_name first_name recitation/ ],
+			name          => "last_name, first_name (recitation)",
+			field_order   => [qw/last_name first_name recitation/],
 			format_string => "%s, %s (%s)",
 		},
 		"lnfn_secrec" => {
-			name => "last_name, first_name (section/recitation)",
-			field_order => [ qw/last_name first_name section recitation/ ],
+			name          => "last_name, first_name (section/recitation)",
+			field_order   => [qw/last_name first_name section recitation/],
 			format_string => "%s, %s (%s/%s)",
 		},
 		"lnfn_email" => {
-			name => "last_name, first_name (email_address)",
-			field_order => [ qw/last_name first_name email_address/ ],
+			name          => "last_name, first_name (email_address)",
+			field_order   => [qw/last_name first_name email_address/],
 			format_string => "%s, %s (%s)",
 		},
 	},
@@ -108,8 +108,8 @@ use constant PRESET_FORMATS => {
 	},
 	"WeBWorK::DB::Record::SetVersion" => {
 		"sid" => {
-			name        => "set_id",
-			field_order => [qw/set_id/],
+			name            => "set_id",
+			field_order     => [qw/set_id/],
 			format_function => \&format_set_name_display
 		},
 	},
@@ -148,7 +148,7 @@ sub getFormatsForClass {
 	my %presets = map { $_ => $class_presets{$_}{name} } @preset_order;
 
 	#return ( [@field_order, @preset_order], {%fields, %presets} );
-	return ( \@preset_order, \%presets );
+	return (\@preset_order, \%presets);
 }
 
 =item formatRecords(\%options, %Records)
@@ -196,7 +196,7 @@ sub formatRecords {
 
 	# get class info (we assume that the records are all of the same type)
 	my ($tempKey, $tempValue) = each %Records;
-	my $class = ref $tempValue;
+	my $class        = ref $tempValue;
 	my %class_fields = map { $_ => 1 } $class->FIELDS;
 
 	my %options = %$options;
@@ -211,14 +211,14 @@ sub formatRecords {
 		} elsif (exists $class_fields{$preset}) {
 			# it's the name of a field in the current class, in which case we treat it as
 			# a "fields" sort with a single field
-			%options = ( field_order => [ $preset ] );
+			%options = (field_order => [$preset]);
 		} else {
 			croak "preset \"$preset\" not found for class \"$class\"";
 		}
 	}
 
 	croak "field_order not found in options list" unless exists $options{field_order};
-	croak "field_order is not an arrayref" unless ref $options{field_order} eq "ARRAY";
+	croak "field_order is not an arrayref"        unless ref $options{field_order} eq "ARRAY";
 	my @field_order = @{ $options{field_order} };
 	croak "field_order is empty -- no fields to display" unless @field_order;
 
@@ -229,7 +229,7 @@ sub formatRecords {
 	}
 
 	# default format_string is "%s %s %s ... %s".
-	my $format_string = $options{format_string} || "%s " x (@field_order-1) . "%s";
+	my $format_string = $options{format_string} || "%s " x (@field_order - 1) . "%s";
 
 	if ($format_function) {
 		# if we were passed format_function, call it on each record

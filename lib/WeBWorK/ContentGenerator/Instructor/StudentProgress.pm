@@ -33,7 +33,7 @@ use WeBWorK::Utils::Grades qw/list_set_versions/;
 
 # The table format has been borrowed from the Grades.pm module
 sub initialize {
-	my $self     = shift;
+	my $self       = shift;
 	my $r          = $self->{r};
 	my $urlpath    = $r->urlpath;
 	my $type       = $urlpath->arg("statType") || '';
@@ -41,26 +41,25 @@ sub initialize {
 	my $ce         = $self->{ce};
 	my $authz      = $self->{authz};
 	my $courseName = $urlpath->arg('courseID');
- 	my $user       = $r->param('user');
+	my $user       = $r->param('user');
 
- 	# Check permissions
+	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 
- 	$self->{type}  = $type;
- 	if ($type eq 'student') {
- 		my $studentName = $r->urlpath->arg("userID") || $user;
- 		$self->{studentName } = $studentName;
+	$self->{type} = $type;
+	if ($type eq 'student') {
+		my $studentName = $r->urlpath->arg("userID") || $user;
+		$self->{studentName} = $studentName;
 
- 	} elsif ($type eq 'set') {
- 		my $setName = $r->urlpath->arg("setID") || 0;
- 		$self->{setName}     = $setName;
- 		my $setRecord  = $db->getGlobalSet($setName); # checked
+	} elsif ($type eq 'set') {
+		my $setName = $r->urlpath->arg("setID") || 0;
+		$self->{setName} = $setName;
+		my $setRecord = $db->getGlobalSet($setName);    # checked
 		die "global set $setName  not found." unless $setRecord;
 		$self->{set_due_date} = $setRecord->due_date;
-		$self->{setRecord}   = $setRecord;
- 	}
+		$self->{setRecord}    = $setRecord;
+	}
 }
-
 
 sub title {
 	my ($self) = @_;
@@ -71,7 +70,7 @@ sub title {
 	# Check permissions
 	return '' unless $authz->hasPermissions($user, 'access_instructor_tools');
 
-	my $type   = $self->{type};
+	my $type = $self->{type};
 	if ($type eq 'student') {
 		return $r->maketext('Student Progress for [_1] student [_2]', $self->{ce}->{courseName}, $self->{studentName});
 	} elsif ($type eq 'set') {
@@ -199,27 +198,28 @@ sub body {
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
 	if ($type eq 'student') {
-		my $studentName = $self->{studentName};
-		my $studentRecord = $db->getUser($studentName) # checked
+		my $studentName   = $self->{studentName};
+		my $studentRecord = $db->getUser($studentName)    # checked
 			or die "record for user $studentName not found";
-		my $fullName = $studentRecord->full_name;
-        my $courseHomePage = $urlpath->new(type  => 'set_list',
-        	args => {courseID=>$courseName});
+		my $fullName       = $studentRecord->full_name;
+		my $courseHomePage = $urlpath->new(
+			type => 'set_list',
+			args => { courseID => $courseName }
+		);
 		my $email = $studentRecord->email_address;
 
-		print CGI::a({-href=>"mailto:$email"}, $email), CGI::br(),
-			$r->maketext("Section").": ", $studentRecord->section, CGI::br(),
-			$r->maketext("Recitation").": ", $studentRecord->recitation, CGI::br();
+		print CGI::a({ -href => "mailto:$email" }, $email), CGI::br(),
+			$r->maketext("Section") . ": ",    $studentRecord->section,    CGI::br(),
+			$r->maketext("Recitation") . ": ", $studentRecord->recitation, CGI::br();
 
 		if ($authz->hasPermissions($user, "become_student")) {
-			my $act_as_student_url = $self->systemLink($courseHomePage,
-				params => {effectiveUser=>$studentName});
+			my $act_as_student_url = $self->systemLink($courseHomePage, params => { effectiveUser => $studentName });
 
-			print $r->maketext("Act as:")." ".CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);
+			print $r->maketext("Act as:") . " " . CGI::a({ -href => $act_as_student_url }, $studentRecord->user_id);
 		}
 
-		print WeBWorK::ContentGenerator::Grades::displayStudentStats($self,$studentName);
-	} elsif( $type eq 'set') {
+		print WeBWorK::ContentGenerator::Grades::displayStudentStats($self, $studentName);
+	} elsif ($type eq 'set') {
 		$self->displaySets($self->{setName});
 	} elsif ($type eq '') {
 		$self->index;
@@ -228,18 +228,17 @@ sub body {
 
 	}
 
-
 	return '';
 
 }
 
 sub index {
-	my $self          = shift;
-	my $r             = $self->r;
-	my $urlpath       = $r->urlpath;
-	my $ce            = $r->ce;
-	my $db            = $r->db;
-	my $courseName    = $urlpath->arg("courseID");
+	my $self       = shift;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $ce         = $r->ce;
+	my $db         = $r->db;
+	my $courseName = $urlpath->arg("courseID");
 
 	my $user = $r->param("user");
 
@@ -264,8 +263,8 @@ sub index {
 
 	my @setList = map { $_->[0] } $db->listGlobalSetsWhere({}, 'set_id');
 
-	my @setLinks      = ();
-	my @studentLinks  = ();
+	my @setLinks     = ();
+	my @studentLinks = ();
 	for my $set (@setList) {
 		my $setStatisticsPage = $urlpath->newFromModule(
 			$urlpath->module, $r,
@@ -296,7 +295,7 @@ sub index {
 		CGI::div(
 			{ class => 'col-lg-5 col-sm-6 border border-dark' },
 			CGI::h2({ class => 'text-center fs-3' }, $r->maketext('View student progress by set')),
-			CGI::ul({ dir => 'ltr' }, CGI::li([@setLinks]))
+			CGI::ul({ dir   => 'ltr' }, CGI::li([@setLinks]))
 		),
 		CGI::div(
 			{ class => 'col-lg-5 col-sm-6 border border-dark' },
@@ -319,7 +318,8 @@ sub displaySets {
 	my $user       = $r->param('user');
 	my $GlobalSet  = $self->{setRecord};
 	my $root       = $ce->{webworkURLs}->{root};
-	my $setStatsPage = $urlpath->newFromModule($urlpath->module, $r, courseID => $courseName, statType => 'sets', setID => $setName);
+	my $setStatsPage =
+		$urlpath->newFromModule($urlpath->module, $r, courseID => $courseName, statType => 'sets', setID => $setName);
 	my $primary_sort_method_name   = $r->param('primary_sort');
 	my $secondary_sort_method_name = $r->param('secondary_sort');
 	my $ternary_sort_method_name   = $r->param('ternary_sort');
@@ -516,7 +516,7 @@ sub displaySets {
 					total         => 'n/a',
 					section       => $studentRecord->section(),
 					recitation    => $studentRecord->recitation(),
-					problemsRow   => [$r->maketext('no attempt recorded')],
+					problemsRow   => [ $r->maketext('no attempt recorded') ],
 					email_address => $studentRecord->email_address(),
 					date          => 'n/a',
 					testtime      => 'n/a',
@@ -526,8 +526,8 @@ sub displaySets {
 			push(@score_list,
 				($max_hash->{total} && $max_hash->{total} ne 'n/a') ? $max_hash->{score} / $max_hash->{total} : 0);
 			push(@augmentedUserRecords, $max_hash);
-		# if there were no set versions and the set was assigned
-		# to the user, also keep the data
+			# if there were no set versions and the set was assigned
+			# to the user, also keep the data
 		} elsif (!@allSetVersionNames && !$notAssignedSet) {
 			my $dataH = {
 				user_id       => $studentRecord->user_id(),
@@ -545,7 +545,7 @@ sub displaySets {
 			push(@score_list,           0);
 			push(@augmentedUserRecords, $dataH);
 		}
-	} # this closes the loop through all student records
+	}    # this closes the loop through all student records
 	debug("end mainloop");
 
 	@augmentedUserRecords = sort {
@@ -559,8 +559,8 @@ sub displaySets {
 
 	# construct header
 	my @list_problems = map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $setName }, 'problem_id');
-	@list_problems    = ($r->maketext('None')) unless (@list_problems);
-	my $maxProblem    = scalar @list_problems;
+	@list_problems = ($r->maketext('None')) unless (@list_problems);
+	my $maxProblem = scalar @list_problems;
 
 	# for a jitar set we only get the top level problems
 	if ($GlobalSet->assignment_type eq 'jitar') {
@@ -697,14 +697,14 @@ sub displaySets {
 		print CGI::p(
 			$r->maketext('Entries are sorted by [_1]', $display_sort_method_name{$primary_sort_method_name})
 				. (
-				defined $secondary_sort_method_name
-				? $r->maketext(', then by [_1]', $display_sort_method_name{$secondary_sort_method_name})
-				: ''
+					defined $secondary_sort_method_name
+					? $r->maketext(', then by [_1]', $display_sort_method_name{$secondary_sort_method_name})
+					: ''
 				)
 				. (
-				defined $ternary_sort_method_name
-				? $r->maketext(', then by [_1]', $display_sort_method_name{$ternary_sort_method_name})
-				: ''
+					defined $ternary_sort_method_name
+					? $r->maketext(', then by [_1]', $display_sort_method_name{$ternary_sort_method_name})
+					: ''
 				)
 				. '.'
 		);
@@ -849,8 +849,8 @@ sub displaySets {
 	# (the total number of columns is two more than this; we want the
 	# number that missing record information should span)
 	my $numCol = 1;
-	$numCol++ if $showColumns{'date'};
-	$numCol++ if $showColumns{'testtime'};
+	$numCol++              if $showColumns{'date'};
+	$numCol++              if $showColumns{'testtime'};
 	$numCol += $maxProblem if $showColumns{'problems'};
 
 	# Loop that prints the table rows

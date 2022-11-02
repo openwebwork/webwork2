@@ -21,10 +21,10 @@ use warnings;
 # from http://search.cpan.org/src/LDS/CGI.pm-3.20/cgi_docs.html#subclassing
 use vars qw/@ISA $VERSION/;
 require CGI;
-@ISA = 'CGI';
+@ISA     = 'CGI';
 $VERSION = "0.1";
 
-$CGI::DefaultClass = __PACKAGE__;
+$CGI::DefaultClass           = __PACKAGE__;
 $WeBWorK::CGI::AutoloadClass = 'CGI';
 
 sub new {

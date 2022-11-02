@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT} unless defined($WeBWorK::Constants::WEBWORK_DIRECTORY);
-$WeBWorK::Constants::PG_DIRECTORY = $ENV{PG_ROOT} unless defined($WeBWorK::Constants::PG_DIRECTORY);
+$WeBWorK::Constants::PG_DIRECTORY      = $ENV{PG_ROOT}      unless defined($WeBWorK::Constants::PG_DIRECTORY);
 
 ################################################################################
 # WeBWorK::Debug

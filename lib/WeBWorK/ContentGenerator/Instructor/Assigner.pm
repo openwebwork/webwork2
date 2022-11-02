@@ -30,40 +30,41 @@ use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 
 sub pre_header_initialize {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $db = $r->db;
-	my $authz = $r->authz;
-	my $ce = $r->ce;
-	my $user = $r->param('user');
+	my $r      = $self->r;
+	my $db     = $r->db;
+	my $authz  = $r->authz;
+	my $ce     = $r->ce;
+	my $user   = $r->param('user');
 
 	# Permissions dealt with in the body
 	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
 	return "" unless $authz->hasPermissions($user, "assign_problem_sets");
 
 	my @selected_users = $r->param("selected_users");
-	my @selected_sets = $r->param("selected_sets");
+	my @selected_sets  = $r->param("selected_sets");
 
 	if (defined $r->param("assign") || defined $r->param("unassign")) {
-		if  (@selected_users && @selected_sets) {
-			my @results;  # This is not used?
-			if(defined $r->param("assign")) {
+		if (@selected_users && @selected_sets) {
+			my @results;    # This is not used?
+			if (defined $r->param("assign")) {
 				$self->assignSetsToUsers(\@selected_sets, \@selected_users);
 				$self->addgoodmessage($r->maketext('All assignments were made successfully.'));
 			}
 			if (defined $r->param("unassign")) {
-				if(defined $r->param('unassignFromAllSafety') and $r->param('unassignFromAllSafety')==1) {
-					$self->unassignSetsFromUsers(\@selected_sets, \@selected_users) if(defined $r->param("unassign"));
+				if (defined $r->param('unassignFromAllSafety') and $r->param('unassignFromAllSafety') == 1) {
+					$self->unassignSetsFromUsers(\@selected_sets, \@selected_users) if (defined $r->param("unassign"));
 					$self->addgoodmessage($r->maketext('All unassignments were made successfully.'));
-				} else { # asked for unassign, but no safety radio toggle
-					$self->addbadmessage($r->maketext('Unassignments were not done.  You need to both click to "Allow unassign" and click on the Unassign button.'));
+				} else {    # asked for unassign, but no safety radio toggle
+					$self->addbadmessage(
+						$r->maketext(
+							'Unassignments were not done.  You need to both click to "Allow unassign" and click on the Unassign button.'
+						)
+					);
 				}
 			}
 
-			if (@results) { # Can't get here?
-				$self->addbadmessage(
-					"The following error(s) occured while assigning:".
-					CGI::ul(CGI::li(\@results))
-				);
+			if (@results) {    # Can't get here?
+				$self->addbadmessage("The following error(s) occured while assigning:" . CGI::ul(CGI::li(\@results)));
 			}
 		} else {
 			$self->addbadmessage("You must select one or more users below.")
@@ -111,7 +112,7 @@ sub body {
 		: ()
 	});
 
-	my @GlobalSets   = $db->getGlobalSetsWhere();
+	my @GlobalSets = $db->getGlobalSetsWhere();
 
 	print CGI::start_form({ method => 'post', action => $r->uri() });
 	print $self->hidden_authen_fields();
@@ -173,7 +174,10 @@ sub body {
 			}),
 			CGI::div(
 				{ class => 'alert alert-danger p-1 mb-2' },
-				CGI::div({ class => 'mb-1' }, $r->maketext('Do not unassign students unless you know what you are doing.')),
+				CGI::div(
+					{ class => 'mb-1' },
+					$r->maketext('Do not unassign students unless you know what you are doing.')
+				),
 				CGI::div($r->maketext('There is NO undo for unassigning students.'))
 			),
 			CGI::div(

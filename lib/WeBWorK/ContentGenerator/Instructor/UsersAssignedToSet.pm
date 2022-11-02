@@ -227,8 +227,8 @@ sub body {
 				{ class => 'alert alert-danger p-1 mb-3' },
 				$r->maketext(
 					'There is NO undo for this function.  Do not use it unless you know what you are doing!  '
-						. 'When you unassign a student using this button, or by unchecking their name, you destroy all '
-						. "of the data for homework set [_1] for this student.",
+					. 'When you unassign a student using this button, or by unchecking their name, you destroy all '
+					. "of the data for homework set [_1] for this student.",
 					CGI::span({ dir => 'ltr' }, format_set_name_display($setID))
 				)
 			),

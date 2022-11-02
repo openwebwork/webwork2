@@ -43,7 +43,8 @@ sub initialize {
 	if (defined($r->param('addStudents'))) {
 		my @userIDs;
 		my $numberOfStudents = $r->param('number_of_students');
-		warn "Internal error -- the number of students to be added has not been included" unless defined $numberOfStudents;
+		warn "Internal error -- the number of students to be added has not been included"
+			unless defined $numberOfStudents;
 		foreach my $i (1 .. $numberOfStudents) {
 			my $new_user_id  = trim_spaces($r->param("new_user_id_$i"));
 			my $new_password = cryptPassword($r->param("student_id_$i"));
@@ -71,21 +72,39 @@ sub initialize {
 			if ($@) {
 				my $addError = $@;
 				$self->{studentEntryReport} .= join("",
-					CGI::b($r->maketext("Failed to enter student:")), ' ', $newUser->last_name, ", ",$newUser->first_name,
-					CGI::b(", ".$r->maketext("login/studentID:")),' ', $newUser->user_id, "/",$newUser->student_id,
-					CGI::b(", ".$r->maketext("email:")),' ', $newUser->email_address,
-					CGI::b(", ".$r->maketext("section:")),' ', $newUser->section,
-					CGI::br(), CGI::b($r->maketext("Error message:")), ' ', $addError,
-					CGI::hr(),CGI::br(),
+					CGI::b($r->maketext("Failed to enter student:")),
+					' ',
+					$newUser->last_name,
+					", ",
+					$newUser->first_name,
+					CGI::b(", " . $r->maketext("login/studentID:")),
+					' ',
+					$newUser->user_id,
+					"/",
+					$newUser->student_id,
+					CGI::b(", " . $r->maketext("email:")),
+					' ',
+					$newUser->email_address,
+					CGI::b(", " . $r->maketext("section:")),
+					' ',
+					$newUser->section,
+					CGI::br(),
+					CGI::b($r->maketext("Error message:")),
+					' ',
+					$addError,
+					CGI::hr(),
+					CGI::br(),
 				);
 			} else {
 				$db->addPermissionLevel($newPermissionLevel);
 				$db->addPassword($newPassword);
-				$self->{studentEntryReport} .= join("",
-					CGI::b($r->maketext("Entered student:")), ' ', $newUser->last_name, ", ",$newUser->first_name,
-					CGI::b(", ",$r->maketext("login/studentID:")),' ', $newUser->user_id, "/",$newUser->student_id,
-					CGI::b(", ",$r->maketext("email:")),' ', $newUser->email_address,
-					CGI::b(", ",$r->maketext("section:")),' ', $newUser->section,CGI::hr(),CGI::br(),
+				$self->{studentEntryReport} .= join(
+					"",
+					CGI::b($r->maketext("Entered student:")), ' ', $newUser->last_name,     ", ", $newUser->first_name,
+					CGI::b(", ", $r->maketext("login/studentID:")), ' ', $newUser->user_id, "/",
+					$newUser->student_id,
+					CGI::b(", ", $r->maketext("email:")),   ' ', $newUser->email_address,
+					CGI::b(", ", $r->maketext("section:")), ' ', $newUser->section, CGI::hr(), CGI::br(),
 
 				);
 			}
@@ -111,7 +130,8 @@ sub body {
 	my $user        = $r->param('user');
 
 	# Check permissions
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to access the Instructor tools.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		"You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to modify student data.")
@@ -160,11 +180,11 @@ sub addStudentForm {
 					class => 'form-control form-control-sm w-auto'
 				}),
 				CGI::input({
-					type          => 'text',
-					class         => "student-id-input",
-					name          => "student_id_$i",
-					size          => "16",
-					class         => 'form-control form-control-sm w-auto'
+					type  => 'text',
+					class => "student-id-input",
+					name  => "student_id_$i",
+					size  => "16",
+					class => 'form-control form-control-sm w-auto'
 				}),
 				CGI::input({
 					type          => 'text',
@@ -222,7 +242,12 @@ sub addStudentForm {
 		CGI::end_form(),
 		CGI::hr(),
 
-		CGI::start_form({ method => "post", action => $r->uri(), name => "new-users-form", id => "new-users-form" }),
+		CGI::start_form({
+			method => "post",
+			action => $r->uri(),
+			name   => "new-users-form",
+			id     => "new-users-form"
+		}),
 		$self->hidden_authen_fields(),
 		CGI::input({ type => 'hidden', name => "number_of_students", value => $numberOfStudents }),
 		CGI::start_div({ class => 'table-responsive' }),
@@ -250,7 +275,11 @@ sub addStudentForm {
 			class    => 'form-select w-auto mb-2'
 		}),
 		CGI::p(
-			CGI::submit({ name => "addStudents", value => $r->maketext("Add Students"), class => 'btn btn-primary' }),
+			CGI::submit({
+				name  => "addStudents",
+				value => $r->maketext("Add Students"),
+				class => 'btn btn-primary'
+			}),
 		),
 		CGI::end_form(),
 

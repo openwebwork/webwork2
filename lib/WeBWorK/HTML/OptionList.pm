@@ -31,11 +31,9 @@ our @EXPORT_OK = qw(
 	optionList
 );
 
-
-
 sub optionList {
 	my ($options, @Records) = @_;
-	
+
 	my %options = (%$options);
 	# %options must contain:
 	#  name - name of option list -- use $r->param("$name")
@@ -44,59 +42,62 @@ sub optionList {
 	#  default - default selection from pop_up list
 	#  size - number of rows shown in option list
 	#  multiple - are multiple selections allowed?
-	
-	croak "name not found in options" unless exists $options{name};
+
+	croak "name not found in options"    unless exists $options{name};
 	croak "request not found in options" unless exists $options{request};
 	my $name = $options{name};
-	my $r = $options{request};
-	
+	my $r    = $options{request};
+
 	my $default = $options{default};
-	my $size = $options{size};
+	my $size    = $options{size};
 	$size = 1 unless defined $size;
 	my $multiple = $options{multiple};
 	$multiple = 0 unless defined $multiple;
 
 	my $value = $r->param($name) || "";
-	
+
 	my @values = ref $options{values} eq "ARRAY" ? @{ $options{values} } : ();
-	my %labels = ref $options{labels} eq "HASH" ? %{ $options{labels} } : map { $_ => $_ } @values;
-	
+	my %labels = ref $options{labels} eq "HASH"  ? %{ $options{labels} } : map { $_ => $_ } @values;
+
 	# if someone just sends in the labels parameter, use all of them as values
 	@values = keys %labels if (%labels and not @values);
-
 
 	map { $size = 4 + length if (length) > $size } @values;
 
 	my %textfield_options = (
-			name => $name,
-			value => $value,
-			size => $size,		# we need to calculate this to be the same as the popup_menu
+		name  => $name,
+		value => $value,
+		size  => $size,    # we need to calculate this to be the same as the popup_menu
 	);
-	
-	my %popup_options = (
-			-name => $name,
-			-values => \@values,
-			-labels => \%labels,
-			-default => $default || $r->param($name) || 0,
-	);	
 
-	return CGI::span({-class=>"OptionList"},
-		CGI::table({cellpadding => 0, cellspacing => 0, border => 0}, 
+	my %popup_options = (
+		-name    => $name,
+		-values  => \@values,
+		-labels  => \%labels,
+		-default => $default || $r->param($name) || 0,
+	);
+
+	return CGI::span(
+		{ -class => "OptionList" },
+		CGI::table(
+			{ cellpadding => 0, cellspacing => 0, border => 0 },
 			CGI::Tr({}, CGI::td({}, CGI::textfield({%textfield_options}))),
 			CGI::Tr({}, CGI::td({}, CGI::popup_menu({%popup_options}))),
 		)
 	);
 
-	return CGI::span({-class=>"OptionList"},
+	return CGI::span(
+		{ -class => "OptionList" },
 		CGI::textfield({
-			name => $name,
+			name  => $name,
 			value => $value,
-			size => $size,		# we need to calculate this to be the same as the popup_menu
-		}), CGI::br(),
+			size  => $size,    # we need to calculate this to be the same as the popup_menu
+		}),
+		CGI::br(),
 		CGI::popup_menu(
-			-name => $name,
-			-values => \@values,
-			-labels => \%labels,
+			-name    => $name,
+			-values  => \@values,
+			-labels  => \%labels,
 			-default => $r->param($name),
 		),
 	);
