@@ -31,31 +31,33 @@ use WeBWorK::Utils::Tasks qw(renderProblems);
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
-	
-	my $pg = $r->param('pg');
+
+	my $pg   = $r->param('pg');
 	my $file = $r->param('file');
 	my $seed = $r->param('seed');
 	my $mode = $r->param('mode');
 	my $hint = $r->param('hint');
-	my $sol = $r->param('sol');
-	
+	my $sol  = $r->param('sol');
+
 	die "must specify either a PG problems (param 'pg') or a path to a PG file (param 'file') and not both"
-		unless defined $pg and length $pg xor defined $file and length $file;
-	
+		unless defined $pg
+		and length $pg xor defined $file
+		and length $file;
+
 	my $problem = $self->get_problem($pg, $file);
-	my @options = (r=>$r, problem_list=>[\$pg]);
-	
+	my @options = (r => $r, problem_list => [ \$pg ]);
+
 	#push @options, (problem_seed=>$seed) if defined $seed;
 	#push @options, (displayMode=>$mode) if defined $mode;
 	#push @options, (showHints=>$hint) if defined $hint;
 	#push @options, (showSolutions=>$sol) if defined $sol;
-	
+
 	($self->{result}) = renderProblems(@options);
 }
 
 sub get_problem {
 	my ($self, $pg, $file) = @_;
-	
+
 	if (defined $pg) {
 		return \$pg;
 	} else {
@@ -64,11 +66,12 @@ sub get_problem {
 }
 
 use Data::Dumper;
+
 sub content {
 	my ($self) = @_;
 	my $result = $self->{result};
-	my $dump = Dumper($result);
-	
+	my $dump   = Dumper($result);
+
 	print <<EOF;
 <html>
 <head>

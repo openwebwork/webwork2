@@ -84,189 +84,194 @@ use WeBWorK::Debug;
 use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive jitar_id_to_seq seq_to_jitar_id x getAssetURL
 	format_set_name_internal format_set_name_display);
 
-use constant HIDE_SETS_THRESHOLD => 500;
-use constant DEFAULT_VISIBILITY_STATE => 1;
+use constant HIDE_SETS_THRESHOLD                   => 500;
+use constant DEFAULT_VISIBILITY_STATE              => 1;
 use constant DEFAULT_ENABLED_REDUCED_SCORING_STATE => 0;
-use constant ONE_WEEK => 60*60*24*7;
+use constant ONE_WEEK                              => 60 * 60 * 24 * 7;
 
-use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
-use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
+use constant EDIT_FORMS   => [qw(saveEdit cancelEdit)];
+use constant VIEW_FORMS   => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
 # Prepare the tab titles for translation by maketext
 use constant FORM_TITLES => {
-	saveEdit       => x("Save Edit"),
-	cancelEdit     => x("Cancel Edit"),
-	filter         => x("Filter"),
-	sort           => x("Sort"),
-	edit           => x("Edit"),
-	publish        => x("Publish"),
-	import         => x("Import"),
-	export         => x("Export"),
-	score          => x("Score"),
-	create         => x("Create"),
-	delete         => x("Delete"),
-	saveExport     => x("Save Export"),
-	cancelExport   => x("Cancel Export")
+	saveEdit     => x("Save Edit"),
+	cancelEdit   => x("Cancel Edit"),
+	filter       => x("Filter"),
+	sort         => x("Sort"),
+	edit         => x("Edit"),
+	publish      => x("Publish"),
+	import       => x("Import"),
+	export       => x("Export"),
+	score        => x("Score"),
+	create       => x("Create"),
+	delete       => x("Delete"),
+	saveExport   => x("Save Export"),
+	cancelExport => x("Cancel Export")
 };
 
-use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date) ];
-use constant EXPORT_FIELD_ORDER => [ qw( select set_id problems users) ];
+use constant VIEW_FIELD_ORDER =>
+	[qw( set_id problems users visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date)];
+use constant EDIT_FIELD_ORDER =>
+	[qw( set_id visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date)];
+use constant EXPORT_FIELD_ORDER => [qw( select set_id problems users)];
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
-		saveEdit => "modify_problem_sets",
-		edit => "modify_problem_sets",
-		publish => "modify_problem_sets",
-		import => "create_and_delete_problem_sets",
-		export => "modify_set_def_files",
-		saveExport => "modify_set_def_files",
-		score => "score_sets",
-		create => "create_and_delete_problem_sets",
-		delete => "create_and_delete_problem_sets",
+	saveEdit   => "modify_problem_sets",
+	edit       => "modify_problem_sets",
+	publish    => "modify_problem_sets",
+	import     => "create_and_delete_problem_sets",
+	export     => "modify_set_def_files",
+	saveExport => "modify_set_def_files",
+	score      => "score_sets",
+	create     => "create_and_delete_problem_sets",
+	delete     => "create_and_delete_problem_sets",
 };
 
 # permissions needed to view a given field
 use constant FIELD_PERMS => {
-		problems => "modify_problem_sets",
-		users	=> "assign_problem_sets",
+	problems => "modify_problem_sets",
+	users    => "assign_problem_sets",
 };
 
-use constant STATE_PARAMS => [qw(user effectiveUser key visible_sets no_visible_sets prev_visible_sets no_prev_visible_set editMode exportMode primarySortField secondarySortField)];
+use constant STATE_PARAMS => [
+	qw(user effectiveUser key visible_sets no_visible_sets prev_visible_sets no_prev_visible_set editMode exportMode primarySortField secondarySortField)
+];
 
 # note that field_properties for some fields, in particular, gateway
 # parameters, are not currently shown in the edit or display tables
-use constant  FIELD_PROPERTIES => {
+use constant FIELD_PROPERTIES => {
 	set_id => {
-		type => "text",
-		size => 8,
+		type   => "text",
+		size   => 8,
 		access => "readonly",
 	},
 	open_date => {
-		type => "date",
-		size => 22,
+		type   => "date",
+		size   => 22,
 		access => "readwrite",
 	},
 	reduced_scoring_date => {
-		type => "date",
-		size => 22,
+		type   => "date",
+		size   => 22,
 		access => "readwrite",
 	},
 	due_date => {
-		type => "date",
-		size => 22,
+		type   => "date",
+		size   => 22,
 		access => "readwrite",
 	},
 	answer_date => {
-		type => "date",
-		size => 22,
+		type   => "date",
+		size   => 22,
 		access => "readwrite",
 	},
 	visible => {
-		type => "checked",
-		size => 4,
+		type   => "checked",
+		size   => 4,
 		access => "readwrite",
 	},
 	enable_reduced_scoring => {
-		type => "checked",
-		size => 4,
+		type   => "checked",
+		size   => 4,
 		access => "readwrite",
 	},
 	assignment_type => {
-		type => "text",
-		size => 20,
+		type   => "text",
+		size   => 20,
 		access => "readwrite",
 	},
 	attempts_per_version => {
-		type => "text",
-		size => 4,
+		type   => "text",
+		size   => 4,
 		access => "readwrite",
 	},
 	time_interval => {
-		type => "text",
-		size => 10,
+		type   => "text",
+		size   => 10,
 		access => "readwrite",
 	},
 	versions_per_interval => {
-		type => "text",
-		size => 4,
+		type   => "text",
+		size   => 4,
 		access => "readwrite",
 	},
 	version_time_limit => {
-		type => "text",
-		size => 10,
+		type   => "text",
+		size   => 10,
 		access => "readwrite",
 	},
 	problem_randorder => {
-		type => "text",
-		size => 4,
+		type   => "text",
+		size   => 4,
 		access => "readwrite",
 	},
 	problems_per_page => {
-		type => "text",
-		size => 4,
+		type   => "text",
+		size   => 4,
 		access => "readwrite",
 	},
 	version_creation_time => {
-		type => "text",
-		size => 10,
+		type   => "text",
+		size   => 10,
 		access => "readonly",
 	},
 	version_last_attempt_time => {
-		type => "text",
-		size => 10,
+		type   => "text",
+		size   => 10,
 		access => "readonly",
 	},
 	# hide_score and hide_work should be drop down selects with
 	#    options 'N', 'Y' and 'BeforeAnswerDate'.  in that we don't
 	#    allow editing of these fields in this module, this is moot.
 	hide_score => {
-		type => "text",
-		size => 16,
+		type   => "text",
+		size   => 16,
 		access => "readwrite",
 	},
 	hide_work => {
-		type => "text",
-		size => 16,
+		type   => "text",
+		size   => 16,
 		access => "readwrite",
 	},
 	time_limit_cap => {
-		type => "checked",
-		size => 4,
+		type   => "checked",
+		size   => 4,
 		access => "readwrite",
 	},
 	# this should be 'No', 'RestrictTo' or 'DenyFrom'
 	restrict_ip => {
-		type => "text",
-		size => 10,
+		type   => "text",
+		size   => 10,
 		access => "readwrite",
 	},
-#	hide_hint => {
-#		type => "checked",
-#		size => 4,
-#		access => "readwrite",
-#	}
+	#	hide_hint => {
+	#		type => "checked",
+	#		size => 4,
+	#		access => "readwrite",
+	#	}
 };
 
 sub pre_header_initialize {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $authz  = $r->authz;
-	my $urlpath = $r->urlpath;
-	my $user   = $r->param('user');
+	my ($self)     = @_;
+	my $r          = $self->r;
+	my $db         = $r->db;
+	my $authz      = $r->authz;
+	my $urlpath    = $r->urlpath;
+	my $user       = $r->param('user');
 	my $courseName = $urlpath->arg("courseID");
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 
 	# Get the list of global sets and the number of users and cache them for later use.
-	$self->{allSetIDs} = [ $db->listGlobalSets() ];
+	$self->{allSetIDs}  = [ $db->listGlobalSets() ];
 	$self->{totalUsers} = $db->countUsers;
 
-	if (defined $r->param("action") and $r->param("action") eq "score" and $authz->hasPermissions($user, "score_sets")) {
-		my $scope = $r->param("action.score.scope");
+	if (defined $r->param("action") and $r->param("action") eq "score" and $authz->hasPermissions($user, "score_sets"))
+	{
+		my $scope       = $r->param("action.score.scope");
 		my @setsToScore = ();
 
 		if ($scope eq "none") {
@@ -293,15 +298,15 @@ sub pre_header_initialize {
 
 sub initialize {
 
-	my ($self)       = @_;
-	my $r            = $self->r;
-	my $urlpath      = $r->urlpath;
-	my $db           = $r->db;
-	my $ce           = $r->ce;
-	my $authz        = $r->authz;
-	my $courseName   = $urlpath->arg("courseID");
-	my $setID        = $urlpath->arg("setID");
-	my $user         = $r->param('user');
+	my ($self)     = @_;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
+	my $courseName = $urlpath->arg("courseID");
+	my $setID      = $urlpath->arg("setID");
+	my $user       = $r->param('user');
 
 	# Determine if the user has permisson to do anything here.
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
@@ -338,7 +343,7 @@ sub initialize {
 		$self->{selectedSetIDs} = [];
 	}
 
-	$self->{primarySortField} = $r->param("primarySortField") || "due_date";
+	$self->{primarySortField}   = $r->param("primarySortField")   || "due_date";
 	$self->{secondarySortField} = $r->param("secondarySortField") || "open_date";
 
 	#########################################
@@ -359,7 +364,7 @@ sub initialize {
 				$genericParams{$param} = [ $r->param($param) ];
 			}
 			my %actionParams = $self->getActionParams($actionID);
-			my %tableParams = $self->getTableParams();
+			my %tableParams  = $self->getTableParams();
 			$self->addmessage(CGI::div({ class => 'mb-1' }, $r->maketext("Results of last action performed") . ": "));
 			$self->addmessage($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams));
 		} else {
@@ -372,15 +377,15 @@ sub initialize {
 }
 
 sub body {
-	my ($self)       = @_;
-	my $r            = $self->r;
-	my $urlpath      = $r->urlpath;
-	my $db           = $r->db;
-	my $ce           = $r->ce;
-	my $authz        = $r->authz;
-	my $courseName   = $urlpath->arg("courseID");
-	my $setID        = $urlpath->arg("setID");
-	my $user         = $r->param('user');
+	my ($self)     = @_;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
+	my $courseName = $urlpath->arg("courseID");
+	my $setID      = $urlpath->arg("setID");
+	my $user       = $r->param('user');
 
 	my $root = $ce->{webworkURLs}->{root};
 
@@ -402,7 +407,7 @@ sub body {
 	# This table can be consulted when display-ready forms of field names are needed.
 	my %fieldHeaders;
 
-	@fieldHeaders{qw(
+	@fieldHeaders{ qw(
 		problems
 		users
 		filename
@@ -414,16 +419,16 @@ sub body {
 		visible
 		enable_reduced_scoring
 		hide_hint
-	)} = (
+	) } = (
 		CGI::th({ id => 'problems_header' }, $r->maketext("Edit Problems")),
-		CGI::th({ id => 'users_header' }, $r->maketext("Edit Assigned Users")),
+		CGI::th({ id => 'users_header' },    $r->maketext("Edit Assigned Users")),
 		CGI::th({ id => 'filename_header' }, $r->maketext("Set Definition Filename")),
 		CGI::th(CGI::label({ for => 'select-all' }, $r->maketext("Edit Set Data"))),
-		CGI::th({ id => 'open_date_header' }, $r->maketext("Open Date")),
+		CGI::th({ id => 'open_date_header' },            $r->maketext("Open Date")),
 		CGI::th({ id => 'reduced_scoring_date_header' }, $r->maketext("Reduced Scoring Date")),
-		CGI::th({ id => 'due_date_header' }, $r->maketext("Close Date")),
-		CGI::th({ id => 'answer_date_header' }, $r->maketext("Answer Date")),
-		CGI::th({ id => 'visible_header' }, $r->maketext("Visible")),
+		CGI::th({ id => 'due_date_header' },             $r->maketext("Close Date")),
+		CGI::th({ id => 'answer_date_header' },          $r->maketext("Answer Date")),
+		CGI::th({ id => 'visible_header' },              $r->maketext("Visible")),
 		CGI::th($r->maketext("Reduced Scoring")),
 		CGI::th({ id => 'hide_hint_header' }, $r->maketext("Hide Hints"))
 	);
@@ -431,9 +436,9 @@ sub body {
 	my $actionID = $self->{actionID};
 
 	# Retrieve values for member fields
-	my $editMode = $self->{editMode};
-	my $exportMode = $self->{exportMode};
-	my $primarySortField = $self->{primarySortField};
+	my $editMode           = $self->{editMode};
+	my $exportMode         = $self->{exportMode};
+	my $primarySortField   = $self->{primarySortField};
 	my $secondarySortField = $self->{secondarySortField};
 
 	# Get requested sets in the requested order.
@@ -485,7 +490,7 @@ sub body {
 	if (@{ $self->{visibleSetIDs} }) {
 		print CGI::hidden(-name => "visible_sets", -value => $self->{visibleSetIDs});
 	} else {
-		print CGI::hidden(-name=>"no_visible_sets", -value=>"1");
+		print CGI::hidden(-name => "no_visible_sets", -value => "1");
 	}
 
 	if (@{ $self->{prevVisibleSetIDs} }) {
@@ -494,19 +499,20 @@ sub body {
 		print CGI::hidden(-name => "no_prev_visible_sets", -value => "1");
 	}
 
-	print CGI::hidden(-name=>"editMode", -value=>$editMode);
-	print CGI::hidden(-name=>"exportMode", -value=>$exportMode);
+	print CGI::hidden(-name => "editMode",   -value => $editMode);
+	print CGI::hidden(-name => "exportMode", -value => $exportMode);
 
-	print CGI::hidden(-name=>"primarySortField", -value=>$primarySortField);
-	print CGI::hidden(-name=>"secondarySortField", -value=>$secondarySortField);
+	print CGI::hidden(-name => "primarySortField",   -value => $primarySortField);
+	print CGI::hidden(-name => "secondarySortField", -value => $secondarySortField);
 
 	print "\n<!-- state data here -->\n";
 
 	########## print action forms
 
-	print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the set for ALL students."))) if $editMode;
+	print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the set for ALL students.")))
+		if $editMode;
 
-	print CGI::p($r->maketext("Select an action to perform").":");
+	print CGI::p($r->maketext("Select an action to perform") . ":");
 
 	my @formsToShow;
 	if ($editMode) {
@@ -566,10 +572,8 @@ sub body {
 	}
 
 	print CGI::hidden(-name => 'action', -id => 'current_action', -value => $default_choice);
-	print CGI::div(
-		CGI::ul({ class => 'nav nav-tabs mb-2', role => 'tablist' }, @tabArr),
-		CGI::div({ class => 'tab-content' }, @contentArr)
-	);
+	print CGI::div(CGI::ul({ class => 'nav nav-tabs mb-2', role => 'tablist' }, @tabArr),
+		CGI::div({ class => 'tab-content' }, @contentArr));
 
 	print CGI::submit({
 		id    => 'take_action',
@@ -585,14 +589,11 @@ sub body {
 		CGI::th({ id => 'enable_reduced_scoring_header' }, $r->maketext('Enable Reduced Scoring'))
 		if $editMode;
 
-
-	print CGI::p(
-		$r->maketext(
-			"Showing [_1] out of [_2] sets.",
-			scalar @{ $self->{visibleSetIDs} },
-			scalar @{ $self->{allSetIDs} }
-		)
-	);
+	print CGI::p($r->maketext(
+		"Showing [_1] out of [_2] sets.",
+		scalar @{ $self->{visibleSetIDs} },
+		scalar @{ $self->{allSetIDs} }
+	));
 
 	$self->printTableHTML(
 		\@Sets, \%fieldHeaders,
@@ -603,7 +604,7 @@ sub body {
 
 	########## print end of form
 
- 	print CGI::end_form();
+	print CGI::end_form();
 
 	return "";
 }
@@ -799,24 +800,23 @@ sub sort_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r = $self->r;
 
-	my $primary = $actionParams->{"action.sort.primary"}->[0];
+	my $primary   = $actionParams->{"action.sort.primary"}->[0];
 	my $secondary = $actionParams->{"action.sort.secondary"}->[0];
 
-	$self->{primarySortField} = $primary;
+	$self->{primarySortField}   = $primary;
 	$self->{secondarySortField} = $secondary;
 
 	my %names = (
-		set_id		=> $r->maketext("Set Name"),
-		open_date	=> $r->maketext("Open Date"),
-		due_date	=> $r->maketext("Close Date"),
-		answer_date	=> $r->maketext("Answer Date"),
-		visible	=> $r->maketext("Visibility"),
+		set_id      => $r->maketext("Set Name"),
+		open_date   => $r->maketext("Open Date"),
+		due_date    => $r->maketext("Close Date"),
+		answer_date => $r->maketext("Answer Date"),
+		visible     => $r->maketext("Visibility"),
 	);
 
 	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
 		$r->maketext("Sort by [_1] and then by [_2]", $names{$primary}, $names{$secondary}));
 }
-
 
 sub edit_form {
 	my ($self, %actionParams) = @_;
@@ -861,7 +861,7 @@ sub edit_handler {
 		# leave visibleSetIDs alone
 	} elsif ($scope eq "selected") {
 		$result = $r->maketext("editing selected sets");
-		$self->{visibleSetIDs} = $genericParams->{selected_sets}; # an arrayref
+		$self->{visibleSetIDs} = $genericParams->{selected_sets};         # an arrayref
 	}
 	$self->{editMode} = 1;
 
@@ -998,8 +998,8 @@ sub score_form {
 sub score_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 
-	my $r      = $self->r;
-	my $urlpath = $r->urlpath;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
 	my $courseName = $urlpath->arg("courseID");
 
 	my $scope = $actionParams->{"action.score.scope"}->[0];
@@ -1016,18 +1016,17 @@ sub score_handler {
 		@setsToScore = @{ $genericParams->{selected_sets} };
 	}
 
-	my $uri = $self->systemLink( $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::Scoring',$r, courseID=>$courseName),
-					params=>{
-						scoreSelected=>"Score Selected",
-						selectedSet=>\@setsToScore,
-#						recordSingleSetScores=>''
-					}
+	my $uri = $self->systemLink(
+		$urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::Scoring', $r, courseID => $courseName),
+		params => {
+			scoreSelected => "Score Selected",
+			selectedSet   => \@setsToScore,
+			#						recordSingleSetScores=>''
+		}
 	);
-
 
 	return $uri;
 }
-
 
 sub delete_form {
 	my ($self, %actionParams) = @_;
@@ -1146,9 +1145,9 @@ sub create_form {
 sub create_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $ce     = $r->ce;
+	my $r  = $self->r;
+	my $db = $r->db;
+	my $ce = $r->ce;
 
 	my $newSetID = format_set_name_internal($actionParams->{'action.create.name'}[0] // '');
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
@@ -1167,16 +1166,16 @@ sub create_handler {
 	) if $db->existsGlobalSet($newSetID);
 
 	my $newSetRecord = $db->newGlobalSet;
-	my $oldSetID = $self->{selectedSetIDs}->[0];
+	my $oldSetID     = $self->{selectedSetIDs}->[0];
 
 	my $type = $actionParams->{"action.create.type"}->[0];
 	# It's convenient to set the due date two weeks from now so that it is
 	# not accidentally available to students.
 
-	my $dueDate = time+2*ONE_WEEK();
+	my $dueDate    = time + 2 * ONE_WEEK();
 	my $display_tz = $ce->{siteDefaults}{timezone};
-	my $fDueDate = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
-	my $dueTime = $ce->{pg}{timeAssignDue};
+	my $fDueDate   = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
+	my $dueTime    = $ce->{pg}{timeAssignDue};
 
 	# We replace the due time by the one from the config variable
 	# and try to bring it back to unix time if possible
@@ -1189,11 +1188,11 @@ sub create_handler {
 		$newSetRecord->set_header("defaultHeader");
 		$newSetRecord->hardcopy_header("defaultHeader");
 		#Rest of the dates are set according to to course configuration
-		$newSetRecord->open_date($dueDate - 60*$ce->{pg}{assignOpenPriorToDue});
-		$newSetRecord->reduced_scoring_date($dueDate - 60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
+		$newSetRecord->open_date($dueDate - 60 * $ce->{pg}{assignOpenPriorToDue});
+		$newSetRecord->reduced_scoring_date($dueDate - 60 * $ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
 		$newSetRecord->due_date($dueDate);
-		$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});
-		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE());	# don't want students to see an empty set
+		$newSetRecord->answer_date($dueDate + 60 * $ce->{pg}{answersOpenAfterDueDate});
+		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE());    # don't want students to see an empty set
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE());
 		$newSetRecord->assignment_type('default');
 		$db->addGlobalSet($newSetRecord);
@@ -1217,11 +1216,11 @@ sub create_handler {
 			$_->set_id($newSetID);
 			$db->addGlobalSetLocation($_);
 		}
-		if ( $newSetRecord->restricted_login_proctor eq 'Yes' ) {
+		if ($newSetRecord->restricted_login_proctor eq 'Yes') {
 			my $procUser = $db->getUser("set_id:$oldSetID");
 			$procUser->user_id("set_id:$newSetID");
-			eval { $db->addUser( $procUser ) };
-			if ( ! $@ ) {
+			eval { $db->addUser($procUser) };
+			if (!$@) {
 				my $procPerm = $db->getPermissionLevel("set_id:$oldSetID");
 				$procPerm->user_id("set_id:$newSetID");
 				$db->addPermissionLevel($procPerm);
@@ -1231,7 +1230,7 @@ sub create_handler {
 			}
 		}
 	}
-    # Assign set to current active user.
+	# Assign set to current active user.
 	my $userName = $r->param('user');
 	$self->assignSetToUser($userName, $newSetRecord);    # Cures weird date error when no-one assigned to set.
 	$self->addgoodmessage($r->maketext(
@@ -1240,7 +1239,7 @@ sub create_handler {
 	));
 
 	push @{ $self->{visibleSetIDs} }, $newSetID;
-	push @{ $self->{allSetIds} }, $newSetID;
+	push @{ $self->{allSetIds} },     $newSetID;
 
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext('Failed to create new set: [_1]', $@))
 		if $@;
@@ -1389,7 +1388,7 @@ sub import_handler {
 
 	my ($added, $skipped) = $self->importSetsFromDef(
 		$actionParams->{"action.import.number"}[0] > 1
-		? ''    # Cannot assign set names to multiple imports.
+		? ''      # Cannot assign set names to multiple imports.
 		: format_set_name_internal($actionParams->{'action.import.name'}[0]),
 		$actionParams->{'action.import.assign'}[0],
 		$actionParams->{'action.import.start.date'}[0] // 0,
@@ -1406,8 +1405,8 @@ sub import_handler {
 	return CGI::div(
 		{ class => 'alert alert-success p-1 mb-0' },
 		$r->maketext(
-			'[_1] sets added, [_2] sets skipped. Skipped sets: ([_3])',
-			$numAdded, $numSkipped, join(', ', @$skipped)
+			'[_1] sets added, [_2] sets skipped. Skipped sets: ([_3])', $numAdded,
+			$numSkipped,                                                join(', ', @$skipped)
 		)
 	);
 }
@@ -1456,7 +1455,7 @@ sub export_handler {
 		$self->{selectedSetIDs} = $self->{visibleSetIDs};
 	} elsif ($scope eq "selected") {
 		$result = $r->maketext("Sets were selected for export.");
-		$self->{selectedSetIDs} = $self->{visibleSetIDs} = $genericParams->{selected_sets}; # an arrayref
+		$self->{selectedSetIDs} = $self->{visibleSetIDs} = $genericParams->{selected_sets};    # an arrayref
 	}
 	$self->{exportMode} = 1;
 
@@ -1471,10 +1470,10 @@ sub cancelExport_form {
 
 sub cancelExport_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r      = $self->r;
+	my $r = $self->r;
 
 	#$self->{selectedSetIDs) = $self->{visibleSetIDs};
-		# only do the above if we arrived here via "edit selected users"
+	# only do the above if we arrived here via "edit selected users"
 	if (defined $r->param("prev_visible_sets")) {
 		$self->{visibleSetIDs} = [ $r->param("prev_visible_sets") ];
 	} elsif (defined $r->param("no_prev_visible_sets")) {
@@ -1495,7 +1494,7 @@ sub saveExport_form {
 
 sub saveExport_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r           = $self->r;
+	my $r = $self->r;
 
 	my @setIDsToExport = @{ $self->{selectedSetIDs} };
 
@@ -1514,8 +1513,8 @@ sub saveExport_handler {
 	$self->{exportMode} = 0;
 
 	my $numExported = @$exported;
-	my $numSkipped = @$skipped;
-	my $resultFont = $numSkipped ? 'alert-danger' : 'alert-success';
+	my $numSkipped  = @$skipped;
+	my $resultFont  = $numSkipped ? 'alert-danger' : 'alert-success';
 
 	my @reasons = map { "set $_ - " . $reason->{$_} } keys %$reason;
 
@@ -1536,10 +1535,10 @@ sub cancelEdit_form {
 
 sub cancelEdit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r      = $self->r;
+	my $r = $self->r;
 
 	#$self->{selectedSetIDs) = $self->{visibleSetIDs};
-		# only do the above if we arrived here via "edit selected users"
+	# only do the above if we arrived here via "edit selected users"
 	if (defined $r->param("prev_visible_sets")) {
 		$self->{visibleSetIDs} = [ $r->param("prev_visible_sets") ];
 	} elsif (defined $r->param("no_prev_visible_sets")) {
@@ -1560,15 +1559,15 @@ sub saveEdit_form {
 
 sub saveEdit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r           = $self->r;
-	my $db          = $r->db;
-	my $ce          = $r->ce;
+	my $r  = $self->r;
+	my $db = $r->db;
+	my $ce = $r->ce;
 
 	my @visibleSetIDs = @{ $self->{visibleSetIDs} };
 	foreach my $setID (@visibleSetIDs) {
-	        next unless defined($setID);
-		my $Set = $db->getGlobalSet($setID); # checked
-		# FIXME: we may not want to die on bad sets, they're not as bad as bad users
+		next unless defined($setID);
+		my $Set = $db->getGlobalSet($setID);    # checked
+			# FIXME: we may not want to die on bad sets, they're not as bad as bad users
 		die "record for visible set $setID not found" unless $Set;
 
 		foreach my $field ($Set->NONKEYFIELDS()) {
@@ -1592,9 +1591,9 @@ sub saveEdit_handler {
 		}
 
 		# make sure the dates are not more than 10 years in the future
-		my $curr_time = time;
+		my $curr_time        = time;
 		my $seconds_per_year = 31_556_926;
-		my $cutoff = $curr_time + $seconds_per_year*10;
+		my $cutoff           = $curr_time + $seconds_per_year * 10;
 		return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
 			$r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->open_date > $cutoff;
@@ -1617,20 +1616,24 @@ sub saveEdit_handler {
 		}
 
 		# check that the reduced scoring date is in the right place
-		my $enable_reduced_scoring =
-		    $ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
-		    (defined($r->param("set.$setID.enable_reduced_scoring")) ?
-		    $r->param("set.$setID.enable_reduced_scoring") :
-		     $Set->enable_reduced_scoring);
+		my $enable_reduced_scoring = $ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+			&& (
+				defined($r->param("set.$setID.enable_reduced_scoring"))
+				? $r->param("set.$setID.enable_reduced_scoring")
+				: $Set->enable_reduced_scoring);
 
-		if ($enable_reduced_scoring &&
-		    $Set->reduced_scoring_date
-		    && ($Set->reduced_scoring_date > $Set->due_date
-			|| $Set->reduced_scoring_date < $Set->open_date)) {
+		if (
+			$enable_reduced_scoring
+			&& $Set->reduced_scoring_date
+			&& ($Set->reduced_scoring_date > $Set->due_date
+				|| $Set->reduced_scoring_date < $Set->open_date)
+			)
+		{
 			return CGI::div(
 				{ class => 'alert alert-danger p-1 mb-0' },
 				$r->maketext(
-					"Error: Reduced scoring date must come between the open date and close date in set [_1]", $setID
+					"Error: Reduced scoring date must come between the open date and close date in set [_1]",
+					$setID
 				)
 			);
 		}
@@ -1657,10 +1660,10 @@ sub saveEdit_handler {
 
 sub importSetsFromDef {
 	my ($self, $newSetName, $assign, $startdate, @setDefFiles) = @_;
-	my $r     = $self->r;
-	my $ce    = $r->ce;
-	my $db    = $r->db;
-	my $dir   = $ce->{courseDirs}->{templates};
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $db      = $r->db;
+	my $dir     = $ce->{courseDirs}->{templates};
 	my $mindate = 0;
 
 	# if the user includes "following files" in a multiple selection
@@ -1710,7 +1713,7 @@ sub importSetsFromDef {
 
 		# keep track of which as the earliest answer date
 		if ($mindate > $openDate || $mindate == 0) {
-		    $mindate = $openDate;
+			$mindate = $openDate;
 		}
 
 		debug("$set_definition_file: adding set");
@@ -1730,8 +1733,8 @@ sub importSetsFromDef {
 		$newSetRecord->restrict_prob_progression($restrictProbProgression);
 
 		# gateway/version data.  these should are all initialized to ''
-        # by readSetDef, so for non-gateway/versioned sets they'll just
-        # be stored as null
+		# by readSetDef, so for non-gateway/versioned sets they'll just
+		# be stored as null
 		$newSetRecord->assignment_type($assignmentType);
 		$newSetRecord->attempts_per_version($attemptsPerVersion);
 		$newSetRecord->time_interval($timeInterval);
@@ -1747,24 +1750,37 @@ sub importSetsFromDef {
 		$newSetRecord->relax_restrict_ip($relaxRestrictIP);
 
 		#create the set
-		eval {$db->addGlobalSet($newSetRecord)};
+		eval { $db->addGlobalSet($newSetRecord) };
 		die $r->maketext("addGlobalSet [_1] in ProblemSetList:  [_2]", $setName, $@) if $@;
 
 		#do we need to add locations to the set_locations table?
-		if ( $restrictIP ne 'No' && $restrictLoc ) {
-			if ($db->existsLocation( $restrictLoc ) ) {
-				if ( ! $db->existsGlobalSetLocation($setName,$restrictLoc) ) {
+		if ($restrictIP ne 'No' && $restrictLoc) {
+			if ($db->existsLocation($restrictLoc)) {
+				if (!$db->existsGlobalSetLocation($setName, $restrictLoc)) {
 					my $newSetLocation = $db->newGlobalSetLocation;
-					$newSetLocation->set_id( $setName );
-					$newSetLocation->location_id( $restrictLoc );
-					eval {$db->addGlobalSetLocation($newSetLocation)};
-					warn($r->maketext("error adding set location [_1] for set [_2]: [_3]", $restrictLoc, $setName, $@)) if $@;
+					$newSetLocation->set_id($setName);
+					$newSetLocation->location_id($restrictLoc);
+					eval { $db->addGlobalSetLocation($newSetLocation) };
+					warn($r->maketext(
+						"error adding set location [_1] for set [_2]: [_3]",
+						$restrictLoc, $setName, $@
+					))
+						if $@;
 				} else {
 					# this should never happen.
-					warn($r->maketext("input set location [_1] already exists for set [_2].", $restrictLoc, $setName)."\n");
+					warn(
+						$r->maketext(
+							"input set location [_1] already exists for set [_2].", $restrictLoc, $setName
+							)
+							. "\n"
+					);
 				}
 			} else {
-				warn($r->maketext("restriction location [_1] does not exist.  IP restrictions have been ignored.", $restrictLoc)."\n");
+				warn(
+					$r->maketext("restriction location [_1] does not exist.  IP restrictions have been ignored.",
+						$restrictLoc)
+						. "\n"
+				);
 				$newSetRecord->restrict_ip('No');
 				$newSetRecord->relax_restrict_ip('No');
 				eval { $db->putGlobalSet($newSetRecord) };
@@ -1794,10 +1810,9 @@ sub importSetsFromDef {
 
 		if ($assign eq "all") {
 			$self->assignSetToAllUsers($setName);
-		}
-		else {
+		} else {
 			my $userName = $r->param('user');
-			$self->assignSetToUser($userName, $newSetRecord); ## always assign set to instructor
+			$self->assignSetToUser($userName, $newSetRecord);    ## always assign set to instructor
 		}
 	}
 
@@ -1821,17 +1836,17 @@ sub importSetsFromDef {
 
 sub readSetDef {
 	my ($self, $fileName) = @_;
-	my $templateDir   = $self->{ce}->{courseDirs}->{templates};
-	my $filePath      = "$templateDir/$fileName";
-	my $weight_default = $self->{ce}->{problemDefaults}->{value};
+	my $templateDir          = $self->{ce}->{courseDirs}->{templates};
+	my $filePath             = "$templateDir/$fileName";
+	my $weight_default       = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};
 	my $att_to_open_children_default =
-	    $self->{ce}->{problemDefaults}->{att_to_open_children};
+		$self->{ce}->{problemDefaults}->{att_to_open_children};
 	my $counts_parent_grade_default =
-	    $self->{ce}->{problemDefaults}->{counts_parent_grade};
-	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};
+		$self->{ce}->{problemDefaults}->{counts_parent_grade};
+	my $showMeAnother_default  = $self->{ce}->{problemDefaults}->{showMeAnother};
 	my $showHintsAfter_default = $self->{ce}{problemDefaults}{showHintsAfter};
-	my $prPeriod_default=$self->{ce}->{problemDefaults}->{prPeriod};
+	my $prPeriod_default       = $self->{ce}->{problemDefaults}->{prPeriod};
 
 	my $setName = '';
 
@@ -1841,7 +1856,7 @@ sub readSetDef {
 		$setName = $2;
 	} else {
 		$self->addbadmessage(
-		    qq{The setDefinition file name must begin with   <CODE>set</CODE>},
+			qq{The setDefinition file name must begin with   <CODE>set</CODE>},
 			qq{and must end with   <CODE>.def</CODE>  . Every thing in between becomes the name of the set. },
 			qq{For example <CODE>set1.def</CODE>, <CODE>setExam.def</CODE>, and <CODE>setsample7.def</CODE> },
 			qq{define sets named <CODE>1</CODE>, <CODE>Exam</CODE>, and <CODE>sample7</CODE> respectively. },
@@ -1851,45 +1866,44 @@ sub readSetDef {
 	}
 
 	my ($line, $name, $weight, $attemptLimit, $continueFlag);
-	my $paperHeaderFile = '';
+	my $paperHeaderFile  = '';
 	my $screenHeaderFile = '';
-	my $description = '';
+	my $description      = '';
 	my ($dueDate, $openDate, $reducedScoringDate, $answerDate);
 	my @problemData;
 
-# added fields for gateway test/versioned set definitions:
-	my ( $assignmentType, $attemptsPerVersion, $timeInterval, $enableReducedScoring,
-	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
-	     $problemsPerPage, $restrictLoc,
-	     $emailInstructor, $restrictProbProgression,
-	     $countsParentGrade, $attToOpenChildren,
-	     $problemID, $showMeAnother, $showHintsAfter, $prPeriod, $listType
-	     ) =
-		 ('')x16;  # initialize these to ''
-	my ( $timeCap, $restrictIP, $relaxRestrictIP ) = ( 0, 'No', 'No');
-# additional fields currently used only by gateways; later, the world?
-	my ( $hideScore, $hideScoreByProblem, $hideWork, ) = ( 'N', 'N', 'N' );
+	# added fields for gateway test/versioned set definitions:
+	my (
+		$assignmentType,      $attemptsPerVersion, $timeInterval,            $enableReducedScoring,
+		$versionsPerInterval, $versionTimeLimit,   $problemRandOrder,        $problemsPerPage,
+		$restrictLoc,         $emailInstructor,    $restrictProbProgression, $countsParentGrade,
+		$attToOpenChildren,   $problemID,          $showMeAnother,           $showHintsAfter,
+		$prPeriod,            $listType
+	) = ('') x 16;    # initialize these to ''
+	my ($timeCap, $restrictIP, $relaxRestrictIP) = (0, 'No', 'No');
+	# additional fields currently used only by gateways; later, the world?
+	my ($hideScore, $hideScoreByProblem, $hideWork,) = ('N', 'N', 'N');
 
 	my %setInfo;
-	if ( open (SETFILENAME, "$filePath") )    {
-	#####################################################################
-	# Read and check set data
-	#####################################################################
+	if (open(SETFILENAME, "$filePath")) {
+		#####################################################################
+		# Read and check set data
+		#####################################################################
 		while (<SETFILENAME>) {
 
 			chomp($line = $_);
-			$line =~ s|(#.*)||;                              ## don't read past comments
-			unless ($line =~ /\S/) {next;}                   ## skip blank lines
-			$line =~ s|\s*$||;                               ## trim trailing spaces
+			$line =~ s|(#.*)||;                  ## don't read past comments
+			unless ($line =~ /\S/) { next; }     ## skip blank lines
+			$line =~ s|\s*$||;                   ## trim trailing spaces
 			$line =~ m|^\s*(\w+)\s*=?\s*(.*)|;
 
 			######################
 			# sanity check entries
 			######################
 			my $item = $1;
-			$item    = '' unless defined $item;
+			$item = '' unless defined $item;
 			my $value = $2;
-			$value    = '' unless defined $value;
+			$value = '' unless defined $value;
 
 			if ($item eq 'setNumber') {
 				next;
@@ -1902,9 +1916,9 @@ sub readSetDef {
 			} elsif ($item eq 'openDate') {
 				$openDate = $value;
 			} elsif ($item eq 'answerDate') {
-			        $answerDate = $value;
+				$answerDate = $value;
 			} elsif ($item eq 'enableReducedScoring') {
-			        $enableReducedScoring = $value;
+				$enableReducedScoring = $value;
 			} elsif ($item eq 'reducedScoringDate') {
 				$reducedScoringDate = $value;
 			} elsif ($item eq 'assignmentType') {
@@ -1922,29 +1936,30 @@ sub readSetDef {
 			} elsif ($item eq 'problemsPerPage') {
 				$problemsPerPage = $value;
 			} elsif ($item eq 'hideScore') {
-				$hideScore = ( $value ) ? $value : 'N';
+				$hideScore = ($value) ? $value : 'N';
 			} elsif ($item eq 'hideScoreByProblem') {
-				$hideScoreByProblem = ( $value ) ? $value : 'N';
+				$hideScoreByProblem = ($value) ? $value : 'N';
 			} elsif ($item eq 'hideWork') {
-				$hideWork = ( $value ) ? $value : 'N';
+				$hideWork = ($value) ? $value : 'N';
 			} elsif ($item eq 'capTimeLimit') {
-				$timeCap = ( $value ) ? 1 : 0;
+				$timeCap = ($value) ? 1 : 0;
 			} elsif ($item eq 'restrictIP') {
-				$restrictIP = ( $value ) ? $value : 'No';
-			} elsif ($item eq 'restrictLocation' ) {
-				$restrictLoc = ( $value ) ? $value : '';
-			} elsif ( $item eq 'relaxRestrictIP' ) {
-			    $relaxRestrictIP = ( $value ) ? $value : 'No';
-			} elsif ( $item eq 'emailInstructor' ) {
-			    $emailInstructor = ( $value ) ? $value : 0;
-			} elsif ( $item eq 'restrictProbProgression' ) {
-			    $restrictProbProgression = ( $value ) ? $value : 0;
-			} elsif ( $item eq 'description' ) {
-			    $value =~ s/<n>/\n/g;
-			    $description = $value;
-			} elsif ($item eq 'problemList' ||
-			    $item eq 'problemListV2') {
-			    $listType = $item;
+				$restrictIP = ($value) ? $value : 'No';
+			} elsif ($item eq 'restrictLocation') {
+				$restrictLoc = ($value) ? $value : '';
+			} elsif ($item eq 'relaxRestrictIP') {
+				$relaxRestrictIP = ($value) ? $value : 'No';
+			} elsif ($item eq 'emailInstructor') {
+				$emailInstructor = ($value) ? $value : 0;
+			} elsif ($item eq 'restrictProbProgression') {
+				$restrictProbProgression = ($value) ? $value : 0;
+			} elsif ($item eq 'description') {
+				$value =~ s/<n>/\n/g;
+				$description = $value;
+			} elsif ($item eq 'problemList'
+				|| $item eq 'problemListV2')
+			{
+				$listType = $item;
 				last;
 			} else {
 				warn $r->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
@@ -1954,10 +1969,12 @@ sub readSetDef {
 		#####################################################################
 		# Check and format dates
 		#####################################################################
-		my ($time1, $time2, $time3) = map {  $self->parseDateTime($_);  }    ($openDate, $dueDate, $answerDate);
+		my ($time1, $time2, $time3) = map { $self->parseDateTime($_); } ($openDate, $dueDate, $answerDate);
 
 		unless ($time1 <= $time2 and $time2 <= $time3) {
-			warn $r->maketext("The open date: [_1], close date: [_2], and answer date: [_3] must be defined and in chronological order.", $openDate, $dueDate, $answerDate);
+			warn $r->maketext(
+				"The open date: [_1], close date: [_2], and answer date: [_3] must be defined and in chronological order.",
+				$openDate, $dueDate, $answerDate);
 		}
 
 		# validate reduced credit date
@@ -1965,86 +1982,130 @@ sub readSetDef {
 		# Special handling for values which seem to roughly correspond to epoch 0.
 		#    namely if the date string contains 12/31/1969 or 01/01/1970
 		if ($reducedScoringDate) {
-			if ( ( $reducedScoringDate =~ m+12/31/1969+ ) || ( $reducedScoringDate =~ m+01/01/1970+ ) ) {
+			if (($reducedScoringDate =~ m+12/31/1969+) || ($reducedScoringDate =~ m+01/01/1970+)) {
 				my $origReducedScoringDate = $reducedScoringDate;
 				$reducedScoringDate = $self->parseDateTime($reducedScoringDate);
-				if ( $reducedScoringDate != 0 ) {
+				if ($reducedScoringDate != 0) {
 					# In this case we want to treat it BY FORCE as if the value did correspond to epoch 0.
-					warn $r->maketext("The reduced credit date [_1] in the file probably was generated from the Unix epoch 0 value and is being treated as if it was Unix epoch 0.", $origReducedScoringDate );
+					warn $r->maketext(
+						"The reduced credit date [_1] in the file probably was generated from the Unix epoch 0 value and is being treated as if it was Unix epoch 0.",
+						$origReducedScoringDate
+					);
 					$reducedScoringDate = 0;
 				}
 			} else {
-				# Original behavior, which may cause problems for some time-zones when epoch 0 was set and does not parse back to 0
+	 # Original behavior, which may cause problems for some time-zones when epoch 0 was set and does not parse back to 0
 				$reducedScoringDate = $self->parseDateTime($reducedScoringDate);
 			}
 		}
 
 		if ($reducedScoringDate) {
 			if ($reducedScoringDate < $time1 || $reducedScoringDate > $time2) {
-				warn $r->maketext("The reduced credit date should be between the open date [_1] and close date [_2]", $openDate, $dueDate);
-			} elsif ( $reducedScoringDate == 0 && $enableReducedScoring ne 'Y' ) {
+				warn $r->maketext("The reduced credit date should be between the open date [_1] and close date [_2]",
+					$openDate, $dueDate);
+			} elsif ($reducedScoringDate == 0 && $enableReducedScoring ne 'Y') {
 				# In this case - the date in the file was Unix epoch 0 (or treated as such),
 				# and unless $enableReducedScoring eq 'Y' we will leave it as 0.
 			}
 		} else {
-		    $reducedScoringDate = $time2 - 60*$r->{ce}->{pg}{ansEvalDefaults}{reducedScoringPeriod};
+			$reducedScoringDate = $time2 - 60 * $r->{ce}->{pg}{ansEvalDefaults}{reducedScoringPeriod};
 		}
 
 		if ($enableReducedScoring ne '' && $enableReducedScoring eq 'Y') {
-		    $enableReducedScoring = 1;
+			$enableReducedScoring = 1;
 		} elsif ($enableReducedScoring ne '' && $enableReducedScoring eq 'N') {
-		    $enableReducedScoring = 0;
+			$enableReducedScoring = 0;
 		} elsif ($enableReducedScoring ne '') {
-		    warn($r->maketext("The value [_1] for enableReducedScoring is not valid; it will be replaced with 'N'.",$enableReducedScoring)."\n");
-		    $enableReducedScoring = 0;
+			warn(
+				$r->maketext("The value [_1] for enableReducedScoring is not valid; it will be replaced with 'N'.",
+					$enableReducedScoring)
+					. "\n"
+			);
+			$enableReducedScoring = 0;
 		} else {
-		    $enableReducedScoring = DEFAULT_ENABLED_REDUCED_SCORING_STATE;
+			$enableReducedScoring = DEFAULT_ENABLED_REDUCED_SCORING_STATE;
 		}
 
 		# Check header file names
-		$paperHeaderFile =~ s/(.*?)\s*$/$1/;   #remove trailing white space
-		$screenHeaderFile =~ s/(.*?)\s*$/$1/;   #remove trailing white space
+		$paperHeaderFile  =~ s/(.*?)\s*$/$1/;    #remove trailing white space
+		$screenHeaderFile =~ s/(.*?)\s*$/$1/;    #remove trailing white space
 
-                #####################################################################
-                # Gateway/version variable cleanup: convert times into seconds
+		#####################################################################
+		# Gateway/version variable cleanup: convert times into seconds
 		$assignmentType ||= 'default';
 
-		$timeInterval = WeBWorK::Utils::timeToSec( $timeInterval )
-		    if ( $timeInterval );
+		$timeInterval = WeBWorK::Utils::timeToSec($timeInterval)
+			if ($timeInterval);
 		$versionTimeLimit = WeBWorK::Utils::timeToSec($versionTimeLimit)
-		    if ( $versionTimeLimit );
+			if ($versionTimeLimit);
 
 		# check that the values for hideWork and hideScore are valid
-		if ( $hideScore ne 'N' && $hideScore ne 'Y' &&
-		     $hideScore ne 'BeforeAnswerDate' ) {
-			warn($r->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.", $hideScore)."\n");
+		if ($hideScore ne 'N'
+			&& $hideScore ne 'Y'
+			&& $hideScore ne 'BeforeAnswerDate')
+		{
+			warn(
+				$r->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.",
+					$hideScore)
+					. "\n"
+			);
 			$hideScore = 'N';
 		}
-		if ( $hideScoreByProblem ne 'N' && $hideScoreByProblem ne 'Y' &&
-		     $hideScoreByProblem ne 'BeforeAnswerDate' ) {
-			warn($r->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.", $hideScoreByProblem)."\n");
+		if ($hideScoreByProblem ne 'N'
+			&& $hideScoreByProblem ne 'Y'
+			&& $hideScoreByProblem ne 'BeforeAnswerDate')
+		{
+			warn(
+				$r->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.",
+					$hideScoreByProblem)
+					. "\n"
+			);
 			$hideScoreByProblem = 'N';
 		}
-		if ( $hideWork ne 'N' && $hideWork ne 'Y' &&
-		     $hideWork ne 'BeforeAnswerDate' ) {
-			warn($r->maketext("The value [_1] for the hideWork option is not valid; it will be replaced with 'N'.", $hideWork)."\n");
+		if ($hideWork ne 'N'
+			&& $hideWork ne 'Y'
+			&& $hideWork ne 'BeforeAnswerDate')
+		{
+			warn(
+				$r->maketext("The value [_1] for the hideWork option is not valid; it will be replaced with 'N'.",
+					$hideWork)
+					. "\n"
+			);
 			$hideWork = 'N';
 		}
-		if ( $timeCap ne '0' && $timeCap ne '1' ) {
-			warn($r->maketext("The value [_1] for the capTimeLimit option is not valid; it will be replaced with '0'.", $timeCap)."\n");
+		if ($timeCap ne '0' && $timeCap ne '1') {
+			warn(
+				$r->maketext(
+					"The value [_1] for the capTimeLimit option is not valid; it will be replaced with '0'.",
+					$timeCap)
+					. "\n"
+			);
 			$timeCap = '0';
 		}
-		if ( $restrictIP ne 'No' && $restrictIP ne 'DenyFrom' &&
-		     $restrictIP ne 'RestrictTo' ) {
-			warn($r->maketext("The value [_1] for the restrictIP option is not valid; it will be replaced with 'No'.", $restrictIP)."\n");
-			$restrictIP = 'No';
-			$restrictLoc = '';
+		if ($restrictIP ne 'No'
+			&& $restrictIP ne 'DenyFrom'
+			&& $restrictIP ne 'RestrictTo')
+		{
+			warn(
+				$r->maketext(
+					"The value [_1] for the restrictIP option is not valid; it will be replaced with 'No'.",
+					$restrictIP)
+					. "\n"
+			);
+			$restrictIP      = 'No';
+			$restrictLoc     = '';
 			$relaxRestrictIP = 'No';
 		}
-		if ( $relaxRestrictIP ne 'No' &&
-		     $relaxRestrictIP ne 'AfterAnswerDate' &&
-		     $relaxRestrictIP ne 'AfterVersionAnswerDate' ) {
-			warn($r->maketext("The value [_1] for the relaxRestrictIP option is not valid; it will be replaced with 'No'.", $relaxRestrictIP)."\n");
+		if ($relaxRestrictIP ne 'No'
+			&& $relaxRestrictIP ne 'AfterAnswerDate'
+			&& $relaxRestrictIP ne 'AfterVersionAnswerDate')
+		{
+			warn(
+				$r->maketext(
+					"The value [_1] for the relaxRestrictIP option is not valid; it will be replaced with 'No'.",
+					$relaxRestrictIP)
+					. "\n"
+			);
 			$relaxRestrictIP = 'No';
 		}
 		# to verify that restrictLoc is valid requires a database
@@ -2054,7 +2115,6 @@ sub readSetDef {
 		# Read and check list of problems for the set
 		#####################################################################
 
-
 		# NOTE:  There are now two versions of problemList, the first is an unlabeled
 		# list which may or may not contain a showMeAnother variable.  This is supported
 		# but the unlabeled list is hard to work with.  The new version prints a
@@ -2062,214 +2122,205 @@ sub readSetDef {
 
 		if ($listType eq 'problemList') {
 
+			while (<SETFILENAME>) {
+				chomp($line = $_);
+				$line =~ s/(#.*)//;                 ## don't read past comments
+				unless ($line =~ /\S/) { next; }    ## skip blank lines
 
-		    while(<SETFILENAME>) {
-			chomp($line=$_);
-			$line =~ s/(#.*)//;                             ## don't read past comments
-			unless ($line =~ /\S/) {next;}                  ## skip blank lines
+				# commas are valid in filenames, so we have to handle commas
+				# using backslash escaping, so \X will be replaced with X
+				my @line = ();
+				my $curr = '';
+				for (my $i = 0; $i < length $line; $i++) {
+					my $c = substr($line, $i, 1);
+					if ($c eq '\\') {
+						$curr .= substr($line, ++$i, 1);
+					} elsif ($c eq ',') {
+						push @line, $curr;
+						$curr = '';
+					} else {
+						$curr .= $c;
+					}
+				}
+				## anything left?
+				push(@line, $curr) if ($curr);
 
-			# commas are valid in filenames, so we have to handle commas
-			# using backslash escaping, so \X will be replaced with X
-			my @line = ();
-			my $curr = '';
-			for (my $i = 0; $i < length $line; $i++) {
-			    my $c = substr($line,$i,1);
-			    if ($c eq '\\') {
-				$curr .= substr($line,++$i,1);
-			    } elsif ($c eq ',') {
-				push @line, $curr;
-				$curr = '';
-			    } else {
-				$curr .= $c;
-			    }
-			}
-			## anything left?
-			push(@line, $curr) if ( $curr );
+				# read the line and only look for $showMeAnother if it has the correct number of entries
+				# otherwise the default value will be used
+				if (scalar(@line) == 4) {
+					($name, $weight, $attemptLimit, $showMeAnother, $continueFlag) = @line;
+				} else {
+					($name, $weight, $attemptLimit, $continueFlag) = @line;
+				}
 
-			# read the line and only look for $showMeAnother if it has the correct number of entries
-			# otherwise the default value will be used
-			if(scalar(@line)==4){
-			    ($name, $weight, $attemptLimit, $showMeAnother, $continueFlag) = @line;
-			} else {
-			    ($name, $weight, $attemptLimit, $continueFlag) = @line;
-			}
-
-			#####################
-			#  clean up problem values
-			###########################
-			$name =~ s/\s*//g;
-			$weight = "" unless defined($weight);
-			$weight =~ s/[^\d\.]*//g;
-			unless ($weight =~ /\d+/) {$weight = $weight_default;}
-			$attemptLimit = "" unless defined($attemptLimit);
-			$attemptLimit =~ s/[^\d-]*//g;
-			unless ($attemptLimit =~ /\d+/) {$attemptLimit = $max_attempts_default;}
-			$continueFlag = "0" unless( defined($continueFlag) && @problemData );
-			# can't put continuation flag onto the first problem
-			push(@problemData, {source_file    => $name,
-			                    value          =>  $weight,
-			                    max_attempts   => $attemptLimit,
-			                    showMeAnother   => $showMeAnother,
-								showHintsAfter  => $showHintsAfter,
-			                    # use default since it's not going to be in the file
-			                    prPeriod		=> $prPeriod_default,
-			                    continuation   => $continueFlag,
-			     });
-		    }
-		} else {
-
-		    # This is the new version, it looks for pairs of entries
-		    # of the form field name = value
-		    while (<SETFILENAME>) {
-
-			chomp($line = $_);
-			$line =~ s|(#.*)||;                              ## don't read past comments
-			unless ($line =~ /\S/) {next;}                   ## skip blank lines
-			$line =~ s|\s*$||;                               ## trim trailing spaces
-			$line =~ m|^\s*(\w+)\s*=?\s*(.*)|;
-
-			######################
-			# sanity check entries
-			######################
-			my $item = $1;
-			$item    = '' unless defined $item;
-			my $value = $2;
-			$value    = '' unless defined $value;
-
-			if ($item eq 'problem_start') {
-			    next;
-			} elsif ($item eq 'source_file') {
-			    warn($r->maketext('No source_file for problem in .def file')) unless $value;
-			    $name = $value;
-			} elsif ($item eq 'value' ) {
-			    $weight = ( $value ) ? $value : $weight_default;
-			} elsif ( $item eq 'max_attempts' ) {
-			    $attemptLimit = ( $value ) ? $value : $max_attempts_default;
-			} elsif ( $item eq 'showMeAnother' ) {
-			    $showMeAnother = ( $value ) ? $value : 0;
-			} elsif ( $item eq 'showHintsAfter' ) {
-			    $showHintsAfter = ( $value ) ? $value : -2;
-			} elsif ( $item eq 'prPeriod' ) {
-			    $prPeriod = ( $value ) ? $value : 0;
-			} elsif ( $item eq 'restrictProbProgression' ) {
-			    $restrictProbProgression = ( $value ) ? $value : 'No';
-			} elsif ( $item eq 'problem_id' ) {
-			    $problemID = ( $value ) ? $value : '';
-			} elsif ( $item eq 'counts_parent_grade' ) {
-			    $countsParentGrade = ( $value ) ? $value : 0;
-			} elsif ( $item eq 'att_to_open_children' ) {
-			    $attToOpenChildren = ( $value ) ? $value : 0;
-			} elsif ($item eq 'problem_end') {
-
-			    #####################
-			    #  clean up problem values
-			    ###########################
-			    $name =~ s/\s*//g;
-			    $weight = "" unless defined($weight);
-			    $weight =~ s/[^\d\.]*//g;
-			    unless ($weight =~ /\d+/) {$weight = $weight_default;}
-			    $attemptLimit = "" unless defined($attemptLimit);
-			    $attemptLimit =~ s/[^\d-]*//g;
-			    unless ($attemptLimit =~ /\d+/) {$attemptLimit = $max_attempts_default;}
-
-			    unless ($countsParentGrade =~ /(0|1)/) {$countsParentGrade = $counts_parent_grade_default;}
-			    $countsParentGrade =~ s/[^\d-]*//g;
-
-			    unless ($showMeAnother =~ /-?\d+/) {$showMeAnother = $showMeAnother_default;}
-			    $showMeAnother =~ s/[^\d-]*//g;
-
-			    unless ($showHintsAfter =~ /-?\d+/) {$showHintsAfter = $showHintsAfter_default;}
-			    $showHintsAfter =~ s/[^\d-]*//g;
-
-			    unless ($prPeriod =~ /-?\d+/) {$prPeriod = $prPeriod_default;}
-			    $prPeriod =~ s/[^\d-]*//g;
-
-			    unless ($attToOpenChildren =~ /\d+/) {$attToOpenChildren = $att_to_open_children_default;}
-			    $attToOpenChildren =~ s/[^\d-]*//g;
-
-			    if ($assignmentType eq 'jitar') {
-				unless ($problemID =~ /[\d\.]+/) {$problemID = '';}
-				$problemID =~ s/[^\d\.-]*//g;
-				$problemID = seq_to_jitar_id(split(/\./,$problemID));
-			    } else {
-				unless ($problemID =~ /\d+/) {$problemID = '';}
-				$problemID =~ s/[^\d-]*//g;
-			    }
-
-			    # can't put continuation flag onto the first problem
-			    push(@problemData, {source_file    => $name,
-						problemID      => $problemID,
-						value          =>  $weight,
+				#####################
+				#  clean up problem values
+				###########################
+				$name =~ s/\s*//g;
+				$weight = "" unless defined($weight);
+				$weight =~ s/[^\d\.]*//g;
+				unless ($weight =~ /\d+/) { $weight = $weight_default; }
+				$attemptLimit = "" unless defined($attemptLimit);
+				$attemptLimit =~ s/[^\d-]*//g;
+				unless ($attemptLimit =~ /\d+/) { $attemptLimit = $max_attempts_default; }
+				$continueFlag = "0" unless (defined($continueFlag) && @problemData);
+				# can't put continuation flag onto the first problem
+				push(
+					@problemData,
+					{
+						source_file    => $name,
+						value          => $weight,
 						max_attempts   => $attemptLimit,
 						showMeAnother  => $showMeAnother,
 						showHintsAfter => $showHintsAfter,
-						prPeriod		=> $prPeriod,
-						attToOpenChildren => $attToOpenChildren,
-						countsParentGrade => $countsParentGrade,
-				 });
-
-			    # reset the various values
-			    $name = '';
-			    $problemID = '';
-			    $weight = '';
-			    $attemptLimit = '';
-			    $showMeAnother = '';
-				$showHintsAfter = '';
-			    $attToOpenChildren = '';
-			    $countsParentGrade = '';
-
-			} else {
-			    warn $r->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
+						# use default since it's not going to be in the file
+						prPeriod     => $prPeriod_default,
+						continuation => $continueFlag,
+					}
+				);
 			}
-		    }
+		} else {
 
+			# This is the new version, it looks for pairs of entries
+			# of the form field name = value
+			while (<SETFILENAME>) {
+
+				chomp($line = $_);
+				$line =~ s|(#.*)||;                  ## don't read past comments
+				unless ($line =~ /\S/) { next; }     ## skip blank lines
+				$line =~ s|\s*$||;                   ## trim trailing spaces
+				$line =~ m|^\s*(\w+)\s*=?\s*(.*)|;
+
+				######################
+				# sanity check entries
+				######################
+				my $item = $1;
+				$item = '' unless defined $item;
+				my $value = $2;
+				$value = '' unless defined $value;
+
+				if ($item eq 'problem_start') {
+					next;
+				} elsif ($item eq 'source_file') {
+					warn($r->maketext('No source_file for problem in .def file')) unless $value;
+					$name = $value;
+				} elsif ($item eq 'value') {
+					$weight = ($value) ? $value : $weight_default;
+				} elsif ($item eq 'max_attempts') {
+					$attemptLimit = ($value) ? $value : $max_attempts_default;
+				} elsif ($item eq 'showMeAnother') {
+					$showMeAnother = ($value) ? $value : 0;
+				} elsif ($item eq 'showHintsAfter') {
+					$showHintsAfter = ($value) ? $value : -2;
+				} elsif ($item eq 'prPeriod') {
+					$prPeriod = ($value) ? $value : 0;
+				} elsif ($item eq 'restrictProbProgression') {
+					$restrictProbProgression = ($value) ? $value : 'No';
+				} elsif ($item eq 'problem_id') {
+					$problemID = ($value) ? $value : '';
+				} elsif ($item eq 'counts_parent_grade') {
+					$countsParentGrade = ($value) ? $value : 0;
+				} elsif ($item eq 'att_to_open_children') {
+					$attToOpenChildren = ($value) ? $value : 0;
+				} elsif ($item eq 'problem_end') {
+
+					#####################
+					#  clean up problem values
+					###########################
+					$name =~ s/\s*//g;
+					$weight = "" unless defined($weight);
+					$weight =~ s/[^\d\.]*//g;
+					unless ($weight =~ /\d+/) { $weight = $weight_default; }
+					$attemptLimit = "" unless defined($attemptLimit);
+					$attemptLimit =~ s/[^\d-]*//g;
+					unless ($attemptLimit =~ /\d+/) { $attemptLimit = $max_attempts_default; }
+
+					unless ($countsParentGrade =~ /(0|1)/) { $countsParentGrade = $counts_parent_grade_default; }
+					$countsParentGrade =~ s/[^\d-]*//g;
+
+					unless ($showMeAnother =~ /-?\d+/) { $showMeAnother = $showMeAnother_default; }
+					$showMeAnother =~ s/[^\d-]*//g;
+
+					unless ($showHintsAfter =~ /-?\d+/) { $showHintsAfter = $showHintsAfter_default; }
+					$showHintsAfter =~ s/[^\d-]*//g;
+
+					unless ($prPeriod =~ /-?\d+/) { $prPeriod = $prPeriod_default; }
+					$prPeriod =~ s/[^\d-]*//g;
+
+					unless ($attToOpenChildren =~ /\d+/) { $attToOpenChildren = $att_to_open_children_default; }
+					$attToOpenChildren =~ s/[^\d-]*//g;
+
+					if ($assignmentType eq 'jitar') {
+						unless ($problemID =~ /[\d\.]+/) { $problemID = ''; }
+						$problemID =~ s/[^\d\.-]*//g;
+						$problemID = seq_to_jitar_id(split(/\./, $problemID));
+					} else {
+						unless ($problemID =~ /\d+/) { $problemID = ''; }
+						$problemID =~ s/[^\d-]*//g;
+					}
+
+					# can't put continuation flag onto the first problem
+					push(
+						@problemData,
+						{
+							source_file       => $name,
+							problemID         => $problemID,
+							value             => $weight,
+							max_attempts      => $attemptLimit,
+							showMeAnother     => $showMeAnother,
+							showHintsAfter    => $showHintsAfter,
+							prPeriod          => $prPeriod,
+							attToOpenChildren => $attToOpenChildren,
+							countsParentGrade => $countsParentGrade,
+						}
+					);
+
+					# reset the various values
+					$name              = '';
+					$problemID         = '';
+					$weight            = '';
+					$attemptLimit      = '';
+					$showMeAnother     = '';
+					$showHintsAfter    = '';
+					$attToOpenChildren = '';
+					$countsParentGrade = '';
+
+				} else {
+					warn $r->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
+				}
+			}
 
 		}
 
 		close(SETFILENAME);
-		($setName,
-		 $paperHeaderFile,
-		 $screenHeaderFile,
-		 $time1,
-		 $time2,
-		 $time3,
-		 \@problemData,
-		 $assignmentType,
-		 $enableReducedScoring,
-		 $reducedScoringDate,
-		 $attemptsPerVersion, $timeInterval,
-		 $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
-		 $problemsPerPage,
-		 $hideScore,
-		 $hideScoreByProblem,
-		 $hideWork,
-		 $timeCap,
-		 $restrictIP,
-		 $restrictLoc,
-		 $relaxRestrictIP,
-		 $description,
-		 $emailInstructor,
-		 $restrictProbProgression
+		(
+			$setName,              $paperHeaderFile,    $screenHeaderFile,   $time1,
+			$time2,                $time3,              \@problemData,       $assignmentType,
+			$enableReducedScoring, $reducedScoringDate, $attemptsPerVersion, $timeInterval,
+			$versionsPerInterval,  $versionTimeLimit,   $problemRandOrder,   $problemsPerPage,
+			$hideScore,            $hideScoreByProblem, $hideWork,           $timeCap,
+			$restrictIP,           $restrictLoc,        $relaxRestrictIP,    $description,
+			$emailInstructor,      $restrictProbProgression
 		);
 	} else {
-		warn $r->maketext("Can't open file [_1]", $filePath)."\n";
+		warn $r->maketext("Can't open file [_1]", $filePath) . "\n";
 	}
 }
 
 sub exportSetsToDef {
 	my ($self, %filenames) = @_;
 
-	my $r        = $self->r;
-	my $ce       = $r->ce;
-	my $db       = $r->db;
+	my $r  = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
 
 	my (@exported, @skipped, %reason);
 
 SET: foreach my $set (keys %filenames) {
 
 		my $fileName = $filenames{$set};
-		$fileName .= ".def" unless $fileName =~ m/\.def$/;
-		$fileName  = "set" . $fileName unless $fileName =~ m/^set/;
+		$fileName .= ".def"           unless $fileName =~ m/\.def$/;
+		$fileName = "set" . $fileName unless $fileName =~ m/^set/;
 		# files can be exported to sub directories but not parent directories
 		if ($fileName =~ /\.\./) {
 			push @skipped, $set;
@@ -2286,30 +2337,30 @@ SET: foreach my $set (keys %filenames) {
 		my $filePath = $ce->{courseDirs}->{templates} . '/' . $fileName;
 
 		# back up existing file
-		if(-e $filePath) {
-			rename($filePath, "$filePath.bak") or
-				$reason{$set} = $r->maketext("Existing file [_1] could not be backed up and was lost.", $filePath);
+		if (-e $filePath) {
+			rename($filePath, "$filePath.bak")
+				or $reason{$set} = $r->maketext("Existing file [_1] could not be backed up and was lost.", $filePath);
 		}
 
-		my $openDate     = $self->formatDateTime($setRecord->open_date);
-		my $dueDate      = $self->formatDateTime($setRecord->due_date);
-		my $answerDate   = $self->formatDateTime($setRecord->answer_date);
-		my $reducedScoringDate =  $self->formatDateTime($setRecord->reduced_scoring_date);
-		my $description = $setRecord->description;
+		my $openDate           = $self->formatDateTime($setRecord->open_date);
+		my $dueDate            = $self->formatDateTime($setRecord->due_date);
+		my $answerDate         = $self->formatDateTime($setRecord->answer_date);
+		my $reducedScoringDate = $self->formatDateTime($setRecord->reduced_scoring_date);
+		my $description        = $setRecord->description;
 		if ($description) {
-		    $description =~ s/\r?\n/<n>/g;
+			$description =~ s/\r?\n/<n>/g;
 		}
 
-		my $assignmentType = $setRecord->assignment_type;
-		my $enableReducedScoring = $setRecord->enable_reduced_scoring ? 'Y' : 'N';
-		my $setHeader    = $setRecord->set_header;
-		my $paperHeader  = $setRecord->hardcopy_header;
-		my $emailInstructor = $setRecord->email_instructor;
+		my $assignmentType          = $setRecord->assignment_type;
+		my $enableReducedScoring    = $setRecord->enable_reduced_scoring ? 'Y' : 'N';
+		my $setHeader               = $setRecord->set_header;
+		my $paperHeader             = $setRecord->hardcopy_header;
+		my $emailInstructor         = $setRecord->email_instructor;
 		my $restrictProbProgression = $setRecord->restrict_prob_progression;
 
 		my @problemList = $db->getGlobalProblemsWhere({ set_id => $set }, 'problem_id');
 
-		my $problemList  = '';
+		my $problemList = '';
 		for my $problemRecord (@problemList) {
 			my $problem_id = $problemRecord->problem_id();
 
@@ -2327,12 +2378,12 @@ SET: foreach my $set (keys %filenames) {
 			my $attToOpenChildren = $problemRecord->att_to_open_children();
 
 			# backslash-escape commas in fields
-			$source_file   =~ s/([,\\])/\\$1/g;
-			$value         =~ s/([,\\])/\\$1/g;
-			$max_attempts  =~ s/([,\\])/\\$1/g;
-			$showMeAnother =~ s/([,\\])/\\$1/g;
+			$source_file    =~ s/([,\\])/\\$1/g;
+			$value          =~ s/([,\\])/\\$1/g;
+			$max_attempts   =~ s/([,\\])/\\$1/g;
+			$showMeAnother  =~ s/([,\\])/\\$1/g;
 			$showHintsAfter =~ s/([,\\])/\\$1/g;
-			$prPeriod      =~ s/([,\\])/\\$1/g;
+			$prPeriod       =~ s/([,\\])/\\$1/g;
 
 			# This is the new way of saving problem information
 			# the labelled list makes it easier to add variables and
@@ -2352,18 +2403,18 @@ SET: foreach my $set (keys %filenames) {
 
 		# gateway fields
 		my $gwFields = '';
-		if ( $assignmentType =~ /gateway/ ) {
-		    my $attemptsPerV = $setRecord->attempts_per_version;
-		    my $timeInterval = $setRecord->time_interval;
-		    my $vPerInterval = $setRecord->versions_per_interval;
-		    my $vTimeLimit   = $setRecord->version_time_limit;
-		    my $probRandom   = $setRecord->problem_randorder;
-		    my $probPerPage  = $setRecord->problems_per_page;
-		    my $hideScore    = $setRecord->hide_score;
-		    my $hideScoreByProblem  = $setRecord->hide_score_by_problem;
-		    my $hideWork     = $setRecord->hide_work;
-		    my $timeCap      = $setRecord->time_limit_cap;
-		    $gwFields =<<EOG;
+		if ($assignmentType =~ /gateway/) {
+			my $attemptsPerV       = $setRecord->attempts_per_version;
+			my $timeInterval       = $setRecord->time_interval;
+			my $vPerInterval       = $setRecord->versions_per_interval;
+			my $vTimeLimit         = $setRecord->version_time_limit;
+			my $probRandom         = $setRecord->problem_randorder;
+			my $probPerPage        = $setRecord->problems_per_page;
+			my $hideScore          = $setRecord->hide_score;
+			my $hideScoreByProblem = $setRecord->hide_score_by_problem;
+			my $hideWork           = $setRecord->hide_work;
+			my $timeCap            = $setRecord->time_limit_cap;
+			$gwFields = <<EOG;
 
 attemptsPerVersion  = $attemptsPerV
 timeInterval        = $timeInterval
@@ -2376,20 +2427,21 @@ hideScoreByProblem  = $hideScoreByProblem
 hideWork            = $hideWork
 capTimeLimit        = $timeCap
 EOG
-		    chomp($gwFields);
+			chomp($gwFields);
 		}
 
 		# ip restriction fields
-		my $restrictIP = $setRecord->restrict_ip;
+		my $restrictIP     = $setRecord->restrict_ip;
 		my $restrictFields = '';
-		if ( $restrictIP && $restrictIP ne 'No' ) {
+		if ($restrictIP && $restrictIP ne 'No') {
 			# only store the first location
-			my $restrictLoc = ($db->listGlobalSetLocations($setRecord->set_id))[0];
+			my $restrictLoc   = ($db->listGlobalSetLocations($setRecord->set_id))[0];
 			my $relaxRestrict = $setRecord->relax_restrict_ip;
 			$restrictLoc || ($restrictLoc = '');
-			$restrictFields = "restrictIP          = $restrictIP" .
-			    "\nrestrictLocation    = $restrictLoc\n" .
-			    "relaxRestrictIP     = $relaxRestrict\n";
+			$restrictFields =
+				"restrictIP          = $restrictIP"
+				. "\nrestrictLocation    = $restrictLoc\n"
+				. "relaxRestrictIP     = $relaxRestrict\n";
 		}
 
 		my $fileContents = <<EOF;
@@ -2436,11 +2488,11 @@ EOF
 
 sub fieldEditHTML {
 	my ($self, $fieldName, $value, $properties) = @_;
-	my $size = $properties->{size};
-	my $type = $properties->{type};
-	my $access = $properties->{access};
-	my $items = $properties->{items};
-	my $synonyms = $properties->{synonyms};
+	my $size        = $properties->{size};
+	my $type        = $properties->{type};
+	my $access      = $properties->{access};
+	my $items       = $properties->{items};
+	my $synonyms    = $properties->{synonyms};
 	my $headerFiles = $self->{headerFiles};
 
 	if ($access eq "readonly") {
@@ -2507,10 +2559,10 @@ sub fieldEditHTML {
 			class           => 'form-check-input',
 			$value ? (checked => undef) : ()
 		})
-		. CGI::hidden({
-			name  => $fieldName,
-			value => 0
-		});
+			. CGI::hidden({
+				name  => $fieldName,
+				value => 0
+			});
 	}
 }
 
@@ -2681,24 +2733,21 @@ sub recordEditHTML {
 
 sub printTableHTML {
 	my ($self, $SetsRef, $fieldHeadersRef, %options) = @_;
-	my $r                       = $self->r;
-	my $ce = $r->ce;
-	my $authz                   = $r->authz;
-	my $user                    = $r->param('user');
-	my $setTemplate	            = $self->{setTemplate};
-	my @Sets                    = @$SetsRef;
-	my %fieldHeaders            = %$fieldHeadersRef;
+	my $r            = $self->r;
+	my $ce           = $r->ce;
+	my $authz        = $r->authz;
+	my $user         = $r->param('user');
+	my $setTemplate  = $self->{setTemplate};
+	my @Sets         = @$SetsRef;
+	my %fieldHeaders = %$fieldHeadersRef;
 
-	my $editMode                = $options{editMode};
-	my $exportMode              = $options{exportMode};
-	my %selectedSetIDs          = map { $_ => 1 } @{ $options{selectedSetIDs} };
-	my $currentSort             = $options{currentSort};
+	my $editMode       = $options{editMode};
+	my $exportMode     = $options{exportMode};
+	my %selectedSetIDs = map { $_ => 1 } @{ $options{selectedSetIDs} };
+	my $currentSort    = $options{currentSort};
 
 	# names of headings:
-	my @realFieldNames = (
-		$setTemplate->KEYFIELDS,
-		$setTemplate->NONKEYFIELDS,
-	);
+	my @realFieldNames = ($setTemplate->KEYFIELDS, $setTemplate->NONKEYFIELDS,);
 
 	if ($editMode) {
 		@realFieldNames = @{ EDIT_FIELD_ORDER() };
@@ -2710,29 +2759,27 @@ sub printTableHTML {
 		@realFieldNames = @{ EXPORT_FIELD_ORDER() };
 	}
 
-
 	# Remove the enable reduced scoring box if that feature isnt enabled
 	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-		@realFieldNames = grep {!/enable_reduced_scoring|reduced_scoring_date/} @realFieldNames;
+		@realFieldNames = grep { !/enable_reduced_scoring|reduced_scoring_date/ } @realFieldNames;
 	}
 
 	# FIXME: should this always presume to use the templates directory?
 	# (no, but that can wait until we have an abstract ProblemLibrary API -- sam)
 	my $templates_dir = $r->ce->{courseDirs}->{templates};
-	my $exempt_dirs = join "|", keys %{ $r->ce->{courseFiles}->{problibs} };
-	my @headers = listFilesRecursive(
+	my $exempt_dirs   = join "|", keys %{ $r->ce->{courseFiles}->{problibs} };
+	my @headers       = listFilesRecursive(
 		$templates_dir,
-		qr/header.*\.pg$/i, # match these files
-		qr/^(?:$exempt_dirs|CVS)$/, # prune these directories
-		0, # match against file name only
-		1, # prune against path relative to $templates_dir
+		qr/header.*\.pg$/i,            # match these files
+		qr/^(?:$exempt_dirs|CVS)$/,    # prune these directories
+		0,                             # match against file name only
+		1,                             # prune against path relative to $templates_dir
 	);
 
 	@headers = sort @headers;
 	my %headers = map { $_ => $_ } @headers;
-	$headers{""} = $r->maketext("Use System Default");
-	$self->{headerFiles} = \%headers;	# store these header files so we don't have to look for them later.
-
+	$headers{""}         = $r->maketext("Use System Default");
+	$self->{headerFiles} = \%headers;    # store these header files so we don't have to look for them later.
 
 	my @tableHeadings = map { $fieldHeaders{$_} } @realFieldNames;
 
@@ -2762,10 +2809,11 @@ sub printTableHTML {
 	for (my $i = 0; $i < @Sets; $i++) {
 		my $Set = $Sets[$i];
 
-		print $self->recordEditHTML($Set,
-			editMode => $editMode,
-			exportMode => $exportMode,
-			setSelected => exists $selectedSetIDs{$Set->set_id}
+		print $self->recordEditHTML(
+			$Set,
+			editMode    => $editMode,
+			exportMode  => $exportMode,
+			setSelected => exists $selectedSetIDs{ $Set->set_id }
 		);
 	}
 	print CGI::end_tbody();
@@ -2774,8 +2822,8 @@ sub printTableHTML {
 
 	# If there are no users, shown print message.
 	print CGI::p(
-		CGI::i($r->maketext("No sets shown.  Choose one of the options above to list the sets in the course."))
-	) unless @Sets;
+		CGI::i($r->maketext("No sets shown.  Choose one of the options above to list the sets in the course.")))
+		unless @Sets;
 }
 
 # output_JS subroutine

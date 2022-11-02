@@ -13,9 +13,6 @@
 # Artistic License for more details.
 ################################################################################
 
-
-
-
 use strict;
 use warnings;
 
@@ -28,13 +25,12 @@ use Parser;
 use AlgParser;
 use HTML::Entities;
 
-
 #use encodeURI to send code
 
 sub pre_header_initialize {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 	my $PGcode = "";
 	$self->{result} = "";
 
@@ -44,18 +40,18 @@ sub pre_header_initialize {
 }
 
 sub content {
-   #######################################################################
-   # Return content of rendered problem to the browser that requested it #
-   #######################################################################
+	#######################################################################
+	# Return content of rendered problem to the browser that requested it #
+	#######################################################################
 	my $self = shift;
 	print $self->{result};
 }
 
 sub translate {
-	my $self = shift;
-	my $PGcode = shift;
+	my $self       = shift;
+	my $PGcode     = shift;
 	my $mathObject = "*" . $PGcode;
-	eval{$mathObject = AlgParser->new->parse($PGcode)->tolatex};
+	eval { $mathObject = AlgParser->new->parse($PGcode)->tolatex };
 	$self->{result} = $mathObject;
 }
 

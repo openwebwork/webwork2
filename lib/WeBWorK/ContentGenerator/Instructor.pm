@@ -55,7 +55,7 @@ failure messages is returned.
 sub assignSetToUser {
 	my ($self, $userID, $GlobalSet) = @_;
 	my $setID = $GlobalSet->set_id;
-	my $db = $self->{db};
+	my $db    = $self->{db};
 
 	my $UserSet = $db->newUserSet;
 	$UserSet->user_id($userID);
@@ -84,67 +84,63 @@ sub assignSetToUser {
 }
 
 sub assignSetVersionToUser {
-    my ( $self, $userID, $GlobalSet ) = @_;
-# in:  ($self,) $userID = the userID of the user to which to assign the set,
-#      $GlobalSet = the global set object.
-# out: a new set version is assigned to the user.
-# note: we assume that the global set and user are well defined.  I think this
-#    is a safe assumption.  it would be nice to just call assignSetToUser,
-#    but we run into trouble doing that because of the distinction between
-#    the setID and the setVersionID
+	my ($self, $userID, $GlobalSet) = @_;
+	# in:  ($self,) $userID = the userID of the user to which to assign the set,
+	#      $GlobalSet = the global set object.
+	# out: a new set version is assigned to the user.
+	# note: we assume that the global set and user are well defined.  I think this
+	#    is a safe assumption.  it would be nice to just call assignSetToUser,
+	#    but we run into trouble doing that because of the distinction between
+	#    the setID and the setVersionID
 
-    my $setID = $GlobalSet->set_id;
-    my $db = $self->{db};
+	my $setID = $GlobalSet->set_id;
+	my $db    = $self->{db};
 
-# figure out what version we're on, reset setID, get a new user set
-# FIXME: old version; new call follows
-#    my $setVersionNum = $db->getUserSetVersionNumber( $userID, $setID );
-    my @allVersionIDs = $db->listSetVersions( $userID, $setID );
-    my $setVersionNum = ( @allVersionIDs ) ? $allVersionIDs[-1] : 0;
-    $setVersionNum++;
-    my $userSet = $db->newSetVersion;
-    $userSet->user_id( $userID );
-    $userSet->set_id( $setID );
-    $userSet->version_id( $setVersionNum );
+	# figure out what version we're on, reset setID, get a new user set
+	# FIXME: old version; new call follows
+	#    my $setVersionNum = $db->getUserSetVersionNumber( $userID, $setID );
+	my @allVersionIDs = $db->listSetVersions($userID, $setID);
+	my $setVersionNum = (@allVersionIDs) ? $allVersionIDs[-1] : 0;
+	$setVersionNum++;
+	my $userSet = $db->newSetVersion;
+	$userSet->user_id($userID);
+	$userSet->set_id($setID);
+	$userSet->version_id($setVersionNum);
 
-    my @results = ();
-    my $set_assigned = 0;
+	my @results      = ();
+	my $set_assigned = 0;
 
-# add the set to the database
-    eval { $db->addSetVersion( $userSet ) };
-    if ( $@ ) {
-	if ( $@ =~ m/user set exists/ ) {
-	    push( @results, "set $setID,v$setVersionNum is already assigned" .
-		  "to user $userID" );
-	    $set_assigned = 1;
-	} else {
-	    die $@;
+	# add the set to the database
+	eval { $db->addSetVersion($userSet) };
+	if ($@) {
+		if ($@ =~ m/user set exists/) {
+			push(@results, "set $setID,v$setVersionNum is already assigned" . "to user $userID");
+			$set_assigned = 1;
+		} else {
+			die $@;
+		}
 	}
-    }
 
-# populate set with problems
-    my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
+	# populate set with problems
+	my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
 
-# keep track of problems assigned from groups so that we can have multiple
-#    problems from a given group, without duplicates
-    my %groupProblems = ();
+	# keep track of problems assigned from groups so that we can have multiple
+	#    problems from a given group, without duplicates
+	my %groupProblems = ();
 
-    foreach my $GlobalProblem ( @GlobalProblems ) {
-	$GlobalProblem->set_id( $setID );
-# this is getting called from within ContentGenerator, so that $self
-#    isn't an Instructor object---therefore, calling $self->assign...
-#    doesn't work.  the following is an ugly workaround that works b/c
-#    both Instructor and ContentGenerator objects have $self->{db}
-# FIXME  it would be nice to have a better solution to this
-	my @result =
-	    assignProblemToUserSetVersion( $self, $userID, $userSet,
-	    			           $GlobalProblem, \%groupProblems );
-	push( @results, @result ) if ( @result && not $set_assigned );
-    }
+	foreach my $GlobalProblem (@GlobalProblems) {
+		$GlobalProblem->set_id($setID);
+		# this is getting called from within ContentGenerator, so that $self
+		#    isn't an Instructor object---therefore, calling $self->assign...
+		#    doesn't work.  the following is an ugly workaround that works b/c
+		#    both Instructor and ContentGenerator objects have $self->{db}
+		# FIXME  it would be nice to have a better solution to this
+		my @result = assignProblemToUserSetVersion($self, $userID, $userSet, $GlobalProblem, \%groupProblems);
+		push(@results, @result) if (@result && not $set_assigned);
+	}
 
-    return @results;
+	return @results;
 }
-
 
 =item unassignSetFromUser($userID, $setID, $problemID)
 
@@ -180,8 +176,11 @@ sub assignProblemToUser {
 	eval { $db->addUserProblem($UserProblem) };
 	if ($@) {
 		if ($@ =~ m/user problem exists/) {
-			return "problem " . $GlobalProblem->problem_id
-				. " in set " . $GlobalProblem->set_id
+			return
+				"problem "
+				. $GlobalProblem->problem_id
+				. " in set "
+				. $GlobalProblem->set_id
 				. " is already assigned to user $userID.";
 		} else {
 			die $@;
@@ -196,61 +195,62 @@ sub assignProblemToUserSetVersion {
 	my ($self, $userID, $userSet, $GlobalProblem, $groupProbRef, $seed) = @_;
 	my $db = $self->{db};
 
-# conditional to allow selection of problems from a group of problems,
-# defined in a set.
+	# conditional to allow selection of problems from a group of problems,
+	# defined in a set.
 
-    # problem groups are indicated by source files "group:problemGroupName"
-	if ( $GlobalProblem->source_file() =~ /^group:(.+)$/ ) {
-	    my $problemGroupName = $1;
+	# problem groups are indicated by source files "group:problemGroupName"
+	if ($GlobalProblem->source_file() =~ /^group:(.+)$/) {
+		my $problemGroupName = $1;
 
-    # get list of problems in group
-	    my @problemList = $db->listGlobalProblems($problemGroupName);
-        # sanity check: if the group set hasn't been defined or doesn't
-        # actually contain problems (oops), then we can't very well assign
-        # this problem to the user.  we could go on and assign all other
-        # problems, but that results in a partial set.  so we die here if
-        # this happens.  philosophically we're requiring that the instructor
-        # set up the sets correctly or have to deal with the carnage after-
-        # wards.  I'm not sure that this is the best long-term solution.
-        # FIXME: this means that we may have created a set version that
-        # doesn't have any problems.  this is bad.  but it's hard to see
-        # where else to deal with it---fixing the problem requires checking
-        # at the set version-creation level that all the problems in the
-        # set are well defined.  FIXME
-	    die("Error in set version creation: no problems are available " .
-		"in problem group $problemGroupName.  Set " .
-		$userSet->set_id . " has been created for $userID, but " .
-		"does not contain the right problems.\n") if (! @problemList);
+		# get list of problems in group
+		my @problemList = $db->listGlobalProblems($problemGroupName);
+		# sanity check: if the group set hasn't been defined or doesn't
+		# actually contain problems (oops), then we can't very well assign
+		# this problem to the user.  we could go on and assign all other
+		# problems, but that results in a partial set.  so we die here if
+		# this happens.  philosophically we're requiring that the instructor
+		# set up the sets correctly or have to deal with the carnage after-
+		# wards.  I'm not sure that this is the best long-term solution.
+		# FIXME: this means that we may have created a set version that
+		# doesn't have any problems.  this is bad.  but it's hard to see
+		# where else to deal with it---fixing the problem requires checking
+		# at the set version-creation level that all the problems in the
+		# set are well defined.  FIXME
+		die("Error in set version creation: no problems are available "
+				. "in problem group $problemGroupName.  Set "
+				. $userSet->set_id
+				. " has been created for $userID, but "
+				. "does not contain the right problems.\n")
+			if (!@problemList);
 
-	    my $nProb = @problemList;
-	    my $whichProblem = int(rand($nProb));
+		my $nProb        = @problemList;
+		my $whichProblem = int(rand($nProb));
 
-    # we allow selection of multiple problems from a group, but want them to
-    #   be different.  there's probably a better way to do this
-	    if ( defined( $groupProbRef->{$problemGroupName} ) &&
-		 $groupProbRef->{$problemGroupName} =~ /\b$whichProblem\b/ ) {
-		my $nAvail = $nProb -
-		    ( $groupProbRef->{$problemGroupName} =~ tr/,// ) - 1;
+		# we allow selection of multiple problems from a group, but want them to
+		#   be different.  there's probably a better way to do this
+		if (defined($groupProbRef->{$problemGroupName})
+			&& $groupProbRef->{$problemGroupName} =~ /\b$whichProblem\b/)
+		{
+			my $nAvail = $nProb - ($groupProbRef->{$problemGroupName} =~ tr/,//) - 1;
 
-		die("Too many problems selected from group.") if ( ! $nAvail );
+			die("Too many problems selected from group.") if (!$nAvail);
 
-		$whichProblem = int(rand($nProb));
-		while ( $groupProbRef->{$problemGroupName} =~ /\b$whichProblem\b/ ) {
-		    $whichProblem = ( $whichProblem + 1 )%$nProb;
+			$whichProblem = int(rand($nProb));
+			while ($groupProbRef->{$problemGroupName} =~ /\b$whichProblem\b/) {
+				$whichProblem = ($whichProblem + 1) % $nProb;
+			}
 		}
-	    }
-	    if ( defined( $groupProbRef->{$problemGroupName} ) ) {
-		$groupProbRef->{$problemGroupName} .= ",$whichProblem";
-	    } else {
-		$groupProbRef->{$problemGroupName} = "$whichProblem";
-	    }
+		if (defined($groupProbRef->{$problemGroupName})) {
+			$groupProbRef->{$problemGroupName} .= ",$whichProblem";
+		} else {
+			$groupProbRef->{$problemGroupName} = "$whichProblem";
+		}
 
-	    my $prob = $db->getGlobalProblem($problemGroupName,
-					     $problemList[$whichProblem]);
-	    $GlobalProblem->source_file($prob->source_file());
+		my $prob = $db->getGlobalProblem($problemGroupName, $problemList[$whichProblem]);
+		$GlobalProblem->source_file($prob->source_file());
 	}
 
-# all set; do problem assignment
+	# all set; do problem assignment
 	my $UserProblem = $db->newProblemVersion;
 	$UserProblem->user_id($userID);
 	$UserProblem->set_id($userSet->set_id);
@@ -262,15 +262,18 @@ sub assignProblemToUserSetVersion {
 	eval { $db->addProblemVersion($UserProblem) };
 	if ($@) {
 		if ($@ =~ m/user problem exists/) {
-			return "problem " . $GlobalProblem->problem_id
-				. " in set " . $GlobalProblem->set_id
+			return
+				"problem "
+				. $GlobalProblem->problem_id
+				. " in set "
+				. $GlobalProblem->set_id
 				. " is already assigned to user $userID.";
 		} else {
 			die $@;
 		}
 	}
 
-	return();
+	return ();
 }
 
 =item unassignProblemFromUser($userID, $setID, $problemID)
@@ -323,7 +326,7 @@ sub assignSetToAllUsers {
 	foreach my $User (@userRecords) {
 		next unless $self->r->ce->status_abbrev_has_behavior($User->status, "include_in_assignment");
 		my $UserSet = $db->newUserSet;
-		my $userID = $User->user_id;
+		my $userID  = $User->user_id;
 		$UserSet->user_id($userID);
 		$UserSet->set_id($setID);
 		debug("$setID: adding UserSet for $userID");
@@ -426,8 +429,8 @@ sub assignSetsToUsers {
 	my ($self, $setIDsRef, $userIDsRef) = @_;
 	my $db = $self->{db};
 
-	my @setIDs = @$setIDsRef;
-	my @userIDs = @$userIDsRef;
+	my @setIDs     = @$setIDsRef;
+	my @userIDs    = @$userIDsRef;
 	my @GlobalSets = $db->getGlobalSets(@setIDs);
 
 	my @results;
@@ -450,7 +453,7 @@ Unassign each of the given sets from each of the given users.
 
 sub unassignSetsFromUsers {
 	my ($self, $setIDsRef, $userIDsRef) = @_;
-	my @setIDs = @$setIDsRef;
+	my @setIDs  = @$setIDsRef;
 	my @userIDs = @$userIDsRef;
 
 	foreach my $setID (@setIDs) {
@@ -469,8 +472,8 @@ assigned. If any assignments fail, a list of failure messages is returned.
 
 sub assignProblemToAllSetUsers {
 	my ($self, $GlobalProblem) = @_;
-	my $db = $self->{db};
-	my $setID = $GlobalProblem->set_id;
+	my $db      = $self->{db};
+	my $setID   = $GlobalProblem->set_id;
 	my @userIDs = $db->listSetUsers($setID);
 
 	my @results;
@@ -499,23 +502,22 @@ sub assignProblemToAllSetUsers {
 
 sub addProblemToSet {
 	my ($self, %args) = @_;
-	my $db = $self->r->db;
-	my $value_default = $self->{ce}->{problemDefaults}->{value};
-	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};
-	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};
+	my $db                           = $self->r->db;
+	my $value_default                = $self->{ce}->{problemDefaults}->{value};
+	my $max_attempts_default         = $self->{ce}->{problemDefaults}->{max_attempts};
+	my $showMeAnother_default        = $self->{ce}->{problemDefaults}->{showMeAnother};
 	my $att_to_open_children_default = $self->{ce}->{problemDefaults}->{att_to_open_children};
-	my $counts_parent_grade_default = $self->{ce}->{problemDefaults}->{counts_parent_grade};
-	my $showHintsAfter_default = $self->{ce}{problemDefaults}{showHintsAfter};
-	my $prPeriod_default = $self->{ce}->{problemDefaults}->{prPeriod};
-    # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
+	my $counts_parent_grade_default  = $self->{ce}->{problemDefaults}->{counts_parent_grade};
+	my $showHintsAfter_default       = $self->{ce}{problemDefaults}{showHintsAfter};
+	my $prPeriod_default             = $self->{ce}->{problemDefaults}->{prPeriod};
+	# showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
 	my $showMeAnotherCount = 0;
-
 
 	die "addProblemToSet called without specifying the set name." if $args{setName} eq "";
 	my $setName = $args{setName};
 
-	my $sourceFile = $args{sourceFile} or
-		die "addProblemToSet called without specifying the sourceFile.";
+	my $sourceFile = $args{sourceFile}
+		or die "addProblemToSet called without specifying the sourceFile.";
 
 	my $problemID = $args{problemID};
 
@@ -530,20 +532,20 @@ sub addProblemToSet {
 
 	unless ($problemID) {
 
-	    my $set = $db->getGlobalSet($setName);
-	    # for jitar sets the new problem id is the one that
-	    # makes it a new top level problem
-	    if ($set && $set->assignment_type eq 'jitar') {
-		my @problemIDs = $db->listGlobalProblems($setName);
-		if (@problemIDs) {
-		  my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
-		  $problemID = seq_to_jitar_id($seq[0]+1);
+		my $set = $db->getGlobalSet($setName);
+		# for jitar sets the new problem id is the one that
+		# makes it a new top level problem
+		if ($set && $set->assignment_type eq 'jitar') {
+			my @problemIDs = $db->listGlobalProblems($setName);
+			if (@problemIDs) {
+				my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
+				$problemID = seq_to_jitar_id($seq[0] + 1);
+			} else {
+				$problemID = seq_to_jitar_id(1);
+			}
 		} else {
-		  $problemID = seq_to_jitar_id(1);
+			$problemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
 		}
-	    } else {
-		$problemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
-	    }
 	}
 
 	my $problemRecord = $db->newGlobalProblem;
@@ -555,7 +557,7 @@ sub addProblemToSet {
 	$problemRecord->att_to_open_children($attToOpenChildren);
 	$problemRecord->counts_parent_grade($countsParentGrade);
 	$problemRecord->showMeAnother($showMeAnother);
-	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
+	$problemRecord->{showMeAnotherCount} = $showMeAnotherCount;
 	$problemRecord->showHintsAfter($showHintsAfter);
 	$problemRecord->prPeriod($prPeriod);
 	$problemRecord->prCount(0);
@@ -582,7 +584,7 @@ sub hiddenEditForUserFields {
 	my ($self, @editForUser) = @_;
 	my $return = "";
 	foreach my $editUser (@editForUser) {
-		$return .= CGI::input({type=>"hidden", name=>"editForUser", value=>$editUser});
+		$return .= CGI::input({ type => "hidden", name => "editForUser", value => $editUser });
 	}
 
 	return $return;
@@ -599,7 +601,7 @@ sub userCountMessage {
 	} elsif ($count == 1) {
 		$message = $self->r->maketext("1 student");
 	} elsif ($count > $numUsers || $count < 0) {
-		$message = CGI::em($self->r->maketext("an impossible number of users: [_1] out of [_2]",$count,$numUsers));
+		$message = CGI::em($self->r->maketext("an impossible number of users: [_1] out of [_2]", $count, $numUsers));
 	} else {
 		$message = $self->r->maketext("[_1] students out of [_2]", $count, $numUsers);
 	}
@@ -617,21 +619,21 @@ sub setCountMessage {
 	} elsif ($count == $numSets) {
 		$message = $r->maketext("all sets");
 	} elsif ($count == 1) {
-		$message = "1 ".$r->maketext("set");
+		$message = "1 " . $r->maketext("set");
 	} elsif ($count > $numSets || $count < 0) {
-		$message = CGI::em($self->r->maketext("an impossible number of sets: [_1] out of [_2]",$count,$numSets));
+		$message = CGI::em($self->r->maketext("an impossible number of sets: [_1] out of [_2]", $count, $numSets));
 	} else {
-		$message = $count." ".$r->maketext("sets");
+		$message = $count . " " . $r->maketext("sets");
 	}
 
 	return $message;
 }
 
-sub read_dir {  # read a directory
+sub read_dir {    # read a directory
 	my $self      = shift;
 	my $directory = shift;
 	my $pattern   = shift;
-	my @files = grep /$pattern/, WeBWorK::Utils::readDirectory($directory);
+	my @files     = grep /$pattern/, WeBWorK::Utils::readDirectory($directory);
 	return sort @files;
 }
 
@@ -652,8 +654,8 @@ sub read_dir {  # read a directory
 # list classlist files
 sub getCSVList {
 	my ($self) = @_;
-	my $ce = $self->{ce};
-	my $dir = $ce->{courseDirs}->{templates};
+	my $ce     = $self->{ce};
+	my $dir    = $ce->{courseDirs}->{templates};
 	return grep { not m/^\./ and m/\.lst$/ and -f "$dir/$_" } WeBWorK::Utils::readDirectory($dir);
 }
 
@@ -713,35 +715,37 @@ sub getDefList {
 
 sub getScoringFileList {
 	my ($self) = @_;
-	my $ce = $self->{ce};
-	my $dir = $ce->{courseDirs}->{scoring};
+	my $ce     = $self->{ce};
+	my $dir    = $ce->{courseDirs}->{scoring};
 	return $self->read_dir($dir, qr/.*\.csv/);
 }
 
-sub getTemplateFileList {  # find all .pg files under the template tree (time consuming)
+sub getTemplateFileList {    # find all .pg files under the template tree (time consuming)
 	my ($self) = shift;
 	my $subDir = shift;
-	my $ce = $self->{ce};
+	my $ce     = $self->{ce};
 	$subDir = '' unless defined $subDir;
-	my $dir = $ce->{courseDirs}->{templates}."/$subDir";
+	my $dir = $ce->{courseDirs}->{templates} . "/$subDir";
 	# FIXME  currently allows one to see most files in the templates directory.
 	# a better facility for handling auxiliary files would be nice.
 	return $self->read_dir($dir, qr/\.pg$|.*\.html|\.png|\.gif|\.txt|\.pl/);
 }
-sub getTemplateDirList {  # find all .pg files under the template tree (time consuming)
+
+sub getTemplateDirList {    # find all .pg files under the template tree (time consuming)
 	my ($self) = @_;
-	my $ce = $self->{ce};
-	my $dir = $ce->{courseDirs}->{templates};
-	my @list = ();
-	my $wanted = sub { if (-d $_ ) {
-	                        my $current = $_;
-	                        return if $current =~/CVS/;
-	                        return if -l $current;   # don't list links
-	                        my $name = $File::Find::name;
-	                        $name = " Top" if $current =/^\./; #  top directory
-							$name =~ s/^$dir\///;
-							push @list, $name
-					   }
+	my $ce     = $self->{ce};
+	my $dir    = $ce->{courseDirs}->{templates};
+	my @list   = ();
+	my $wanted = sub {
+		if (-d $_) {
+			my $current = $_;
+			return if $current =~ /CVS/;
+			return if -l $current;                 # don't list links
+			my $name = $File::Find::name;
+			$name = " Top" if $current = /^\./;    #  top directory
+			$name =~ s/^$dir\///;
+			push @list, $name;
+		}
 	};
 	File::Find::find($wanted, $dir);
 	return sort @list;

@@ -40,26 +40,24 @@ our @EXPORT_OK = qw(
 
 sub list_set_versions {
 	my ($db, $studentName, $setName, $setIsVersioned) = @_;
-	return ("list_set_versions requires a database reference as the first element") unless ref($db)=~/DB/;
-	my @allSetNames = ();
+	return ("list_set_versions requires a database reference as the first element") unless ref($db) =~ /DB/;
+	my @allSetNames    = ();
 	my $notAssignedSet = 0;
-	if ( $setIsVersioned ) {
+	if ($setIsVersioned) {
 		my @setVersions = $db->listSetVersions($studentName, $setName);
-		@allSetNames = map { "$setName,v$_" } @setVersions;
+		@allSetNames = map {"$setName,v$_"} @setVersions;
 		# if there aren't any set versions, is it because
-		#    the user isn't assigned the set (e.g., is a 
+		#    the user isn't assigned the set (e.g., is a
 		#    proctor), or because the user hasn't completed
 		#    any versions?
-		if ( ! @setVersions ) {
-			$notAssignedSet = 1 if (! $db->existsUserSet($studentName,$setName));
+		if (!@setVersions) {
+			$notAssignedSet = 1 if (!$db->existsUserSet($studentName, $setName));
 		}
 
 	} else {
-		@allSetNames = ( "$setName" );
+		@allSetNames = ("$setName");
 	}
 	(\@allSetNames, $notAssignedSet);
 }
-
-
 
 1;

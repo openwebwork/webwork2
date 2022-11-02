@@ -32,8 +32,8 @@ use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor::SendMail;
 use JSON;
 
-use Time::HiRes qw/gettimeofday/; # for log timestamp
-use Date::Format; # for log timestamp
+use Time::HiRes qw/gettimeofday/;    # for log timestamp
+use Date::Format;                    # for log timestamp
 
 sub create {
 	my ($self, $params) = @_;
@@ -41,53 +41,52 @@ sub create {
 	# note this ce is different from $self->ce!
 	# FIXME!!!!
 	my $ce = WeBWorK::CourseEnvironment->new({
-			webwork_dir => $self->ce->{webwork_dir},
-			courseName => $newcourse
-		});
-	my $db = $self->db;
+		webwork_dir => $self->ce->{webwork_dir},
+		courseName  => $newcourse
+	});
+	my $db    = $self->db;
 	my $authz = $self->{authz};
-	my $out = {};
+	my $out   = {};
 
 	debug("Webservices course creation request.");
 	# make sure course actions are enabled
 	if (!$ce->{webservices}{enableCourseActions}) {
 		debug("Course actions disabled by configuration.");
-		$out->{status} = "failure";
+		$out->{status}  = "failure";
 		$out->{message} = "Course actions disabled by configuration.";
-		return $out
+		return $out;
 	}
 	# only users from the admin course with appropriate permissions allowed
 	if (!($ce->{courseName} eq 'admin')) {
 		debug("Course creation attempt when not logged into admin course.");
-		$out->{status} = "failure";
+		$out->{status}  = "failure";
 		$out->{message} = "Course creation allowed only for admin course users.";
-		return $out
+		return $out;
 	}
 	# prof check is actually done when initiating session, this is just in case
-	if (!$self->{authz}->hasPermissions($params->{'userID'},
-			'create_and_delete_courses')) {
+	if (!$self->{authz}->hasPermissions($params->{'userID'}, 'create_and_delete_courses')) {
 		debug("Course creation attempt with insufficient permission level.");
-		$out->{status} = "failure";
+		$out->{status}  = "failure";
 		$out->{message} = "Insufficient permission level.";
-		return $out
+		return $out;
 	}
-	if ( length($newcourse) > $ce->{maxCourseIdLength} ) {
+	if (length($newcourse) > $ce->{maxCourseIdLength}) {
 		debug("Course creation attempt failed: course ID was too long.");
-		$out->{status} = "failure";
+		$out->{status}  = "failure";
 		$out->{message} = "Course ID cannot exceed " . $ce->{maxCourseIdLength} . " characters.";
-		return $out
+		return $out;
 	}
 
 	# declare params
-	my @professors = ();
-	my $dbLayout = $ce->{dbLayoutName};
-	my %courseOptions = ( dbLayoutName => $dbLayout );
+	my @professors    = ();
+	my $dbLayout      = $ce->{dbLayoutName};
+	my %courseOptions = (dbLayoutName => $dbLayout);
 	my %dbOptions;
 	my @users;
 	my %optional_arguments;
 
-	my $userClass = $ce->{dbLayouts}->{$dbLayout}->{user}->{record};
-	my $passwordClass = $ce->{dbLayouts}->{$dbLayout}->{password}->{record};
+	my $userClass       = $ce->{dbLayouts}->{$dbLayout}->{user}->{record};
+	my $passwordClass   = $ce->{dbLayouts}->{$dbLayout}->{password}->{record};
 	my $permissionClass = $ce->{dbLayouts}->{$dbLayout}->{permission}->{record};
 
 	# copy instructors from admin course
@@ -97,23 +96,23 @@ sub create {
 		my $Password        = $db->getPassword($userID);
 		my $PermissionLevel = $db->getPermissionLevel($userID);
 		push @users, [ $User, $Password, $PermissionLevel ]
-			if $authz->hasPermissions($userID,"create_and_delete_courses");
+			if $authz->hasPermissions($userID, "create_and_delete_courses");
 	}
 
 	# all data prepped, try to actually add the course
 	eval {
 		addCourse(
-			courseID => $newcourse,
-			ce => $ce,
+			courseID      => $newcourse,
+			ce            => $ce,
 			courseOptions => \%courseOptions,
-			dbOptions => \%dbOptions,
-			users => \@users,
+			dbOptions     => \%dbOptions,
+			users         => \@users,
 			%optional_arguments,
 		);
 		addLog($ce, "New course created: " . $newcourse);
 		$out->{status} = "success";
 	} or do {
-		$out->{status} = "failure";
+		$out->{status}  = "failure";
 		$out->{message} = $@;
 	};
 
@@ -121,48 +120,45 @@ sub create {
 }
 
 sub listUsers {
-    my ($self, $params) = @_;
-    my $out = {};
-    my $db = $self->db;
-    my $ce = $self->ce;
+	my ($self, $params) = @_;
+	my $out = {};
+	my $db  = $self->db;
+	my $ce  = $self->ce;
 
+	# make sure course actions are enabled
+	#if (!$ce->{webservices}{enableCourseActions}) {
+	#	$out->{status} = "failure";
+	#	$out->{message} = "Course actions disabled by configuration.";
+	#	return $out
+	#}
 
-    # make sure course actions are enabled
-    #if (!$ce->{webservices}{enableCourseActions}) {
-    #	$out->{status} = "failure";
-    #	$out->{message} = "Course actions disabled by configuration.";
-    #	return $out
-    #}
+	my @tempArray     = $db->listUsers;
+	my @userInfo      = $db->getUsers(@tempArray);
+	my $numGlobalSets = $db->countGlobalSets;
 
-    my @tempArray = $db->listUsers;
-    my @userInfo = $db->getUsers(@tempArray);
-    my $numGlobalSets = $db->countGlobalSets;
+	#%permissionsHash = reverse %permissionsHash;
+	#for(@userInfo){
+	#    @userInfo[i]->{'permission'} = $db->getPermissionLevel(@userInfo[i]->{'user_id'});
+	#}
+	my %permissionsHash = reverse %{ $ce->{userRoles} };
+	foreach my $u (@userInfo) {
+		my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
+		$u->{'permission'} = $PermissionLevel->{'permission'};
+		#$u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
 
-    #%permissionsHash = reverse %permissionsHash;
-    #for(@userInfo){
-    #    @userInfo[i]->{'permission'} = $db->getPermissionLevel(@userInfo[i]->{'user_id'});
-    #}
-    my %permissionsHash = reverse %{$ce->{userRoles}};
-    foreach my $u (@userInfo)
-    {
-        my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
-        $u->{'permission'} = $PermissionLevel->{'permission'};
-        #$u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
-
-
-		my $studid= $u->{'student_id'};
-		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string.
-        $u->{'num_user_sets'} = $db->listUserSets($studid) . "/" . $numGlobalSets;
+		my $studid = $u->{'student_id'};
+		$u->{'student_id'}    = "$studid";    # make sure that the student_id is returned as a string.
+		$u->{'num_user_sets'} = $db->listUserSets($studid) . "/" . $numGlobalSets;
 
 		my $Key = $db->getKey($u->{'user_id'});
-		$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
+		$u->{'login_status'} =
+			($Key and time <= $Key->timestamp() + $ce->{sessionKeyTimeout});    # cribbed from check_session
 
-    }
+	}
 
-
-    $out->{ra_out} = \@userInfo;
-    $out->{text} = encode_utf8_base64("Users for course: ".$self->{courseName});
-    return $out;
+	$out->{ra_out} = \@userInfo;
+	$out->{text}   = encode_utf8_base64("Users for course: " . $self->{courseName});
+	return $out;
 }
 
 sub addUser {
@@ -184,24 +180,22 @@ sub addUser {
 	# 2. Dropped user deciding to re-enrol
 
 	my $olduser = $db->getUser($params->{id});
-	my $id = $params->{'id'};
-	my $permission; # stores user's permission level
+	my $id      = $params->{'id'};
+	my $permission;    # stores user's permission level
 	if ($olduser) {
 		# a dropped user decided to re-enrol
 		my $enrolled = $self->ce->{statuses}->{Enrolled}->{abbrevs}->[0];
 		$olduser->status($enrolled);
 		$db->putUser($olduser);
-		addLog($ce, "User ". $id . " re-enrolled in " .
-			$ce->{courseName});
+		addLog($ce, "User " . $id . " re-enrolled in " . $ce->{courseName});
 		$out->{status} = 'success';
 		$permission = $db->getPermissionLevel($id);
-	}
-	else {
+	} else {
 		# a new user showed up
 		my $ce = $self->ce;
 
 		# student record
-		my $enrolled = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
+		my $enrolled    = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
 		my $new_student = $db->{user}->{record}->new();
 		$new_student->user_id($id);
 		$new_student->first_name($params->{'first_name'});
@@ -217,8 +211,7 @@ sub addUser {
 		my $cryptedpassword = "";
 		if ($params->{'password'}) {
 			$cryptedpassword = cryptPassword($params->{'password'});
-		}
-		elsif ($new_student->student_id()) {
+		} elsif ($new_student->student_id()) {
 			$cryptedpassword = cryptPassword($new_student->student_id());
 		}
 		my $password = $db->newPassword(user_id => $id);
@@ -228,43 +221,45 @@ sub addUser {
 		$permission = $params->{'permission'};
 		if (defined($ce->{userRoles}{$permission})) {
 			$permission = $db->newPermissionLevel(
-				user_id => $id,
-				permission => $ce->{userRoles}{$permission});
-		}
-		else {
-			$permission = $db->newPermissionLevel(user_id => $id,
-				permission => $ce->{userRoles}{student});
+				user_id    => $id,
+				permission => $ce->{userRoles}{$permission}
+			);
+		} else {
+			$permission = $db->newPermissionLevel(
+				user_id    => $id,
+				permission => $ce->{userRoles}{student}
+			);
 		}
 
 		# commit changes to db
 		$out->{status} = 'success';
-		eval{ $db->addUser($new_student); };
+		eval { $db->addUser($new_student); };
 		if ($@) {
-			$out->{status} = 'failure';
+			$out->{status}  = 'failure';
 			$out->{message} = "Add user for $id failed!\n";
 		}
 		eval { $db->addPassword($password); };
 		if ($@) {
-			$out->{status} = 'failure';
+			$out->{status}  = 'failure';
 			$out->{message} = "Add password for $id failed!\n";
 		}
 		eval { $db->addPermissionLevel($permission); };
 		if ($@) {
-			$out->{status} = 'failure';
+			$out->{status}  = 'failure';
 			$out->{message} = "Add permission for $id failed!\n";
 		}
 
-		addLog($ce, "User ". $id . " newly added in " .
-			$ce->{courseName});
+		addLog($ce, "User " . $id . " newly added in " . $ce->{courseName});
 	}
 
 	# only students are assigned homework
-	if ($ce->{webservices}{courseActionsAssignHomework} &&
-		$permission->{permission} == $ce->{userRoles}{student}) {
+	if ($ce->{webservices}{courseActionsAssignHomework}
+		&& $permission->{permission} == $ce->{userRoles}{student})
+	{
 		debug("Assigning homework.");
 		my $ret = assignVisibleSets($db, $id);
 		if ($ret) {
-			$out->{status} = 'failure';
+			$out->{status}  = 'failure';
 			$out->{message} = "User created but unable to assign sets. $ret";
 		}
 	}
@@ -274,30 +269,28 @@ sub addUser {
 
 sub dropUser {
 	my ($self, $params) = @_;
-	my $db = $self->db;
-	my $ce = $self->ce;
+	my $db  = $self->db;
+	my $ce  = $self->ce;
 	my $out = {};
 	debug("Webservices drop user request.");
 
 	# make sure course actions are enabled
 	if (!$ce->{webservices}{enableCourseActions}) {
-		$out->{status} = "failure";
+		$out->{status}  = "failure";
 		$out->{message} = "Course actions disabled by configuration.";
-		return $out
+		return $out;
 	}
 
 	# Mark user as dropped
-	my $drop = $self->ce->{statuses}->{Drop}->{abbrevs}->[0];
+	my $drop   = $self->ce->{statuses}->{Drop}->{abbrevs}->[0];
 	my $person = $db->getUser($params->{'id'});
 	if ($person) {
 		$person->status($drop);
 		$db->putUser($person);
-		addLog($ce, "User ". $person->user_id() . " dropped from " .
-			$ce->{courseName});
+		addLog($ce, "User " . $person->user_id() . " dropped from " . $ce->{courseName});
 		$out->{status} = 'success';
-	}
-	else {
-		$out->{status} = 'failure';
+	} else {
+		$out->{status}  = 'failure';
 		$out->{message} = 'Could not find user';
 	}
 
@@ -307,20 +300,17 @@ sub dropUser {
 sub deleteUser {
 	my ($self, $params) = @_;
 	my $out = {};
-	my $db = $self->db;
-	my $ce = $self->ce;
+	my $db  = $self->db;
+	my $ce  = $self->ce;
 	$out->{text} = encode_utf8_base64("");
 
 	my $user = $params->{'id'};
 
-
 	debug("Webservices delete user request.");
-        debug("Attempting to delete user: " . $user );
+	debug("Attempting to delete user: " . $user);
 
-
-	my $User = $db->getUser($params->{'id'}); # checked
-	die ("record for visible user [_1] not found" . $params->{'id'}) unless $User;
-
+	my $User = $db->getUser($params->{'id'});    # checked
+	die("record for visible user [_1] not found" . $params->{'id'}) unless $User;
 
 	# Why is the following commented out?
 
@@ -333,23 +323,19 @@ sub deleteUser {
 	#	return $out
 	#}
 
-	if ($params->{'id'} eq $params->{'user'} )
-	{
-		$out->{status} = "failure";
+	if ($params->{'id'} eq $params->{'user'}) {
+		$out->{status}  = "failure";
 		$out->{message} = "You can't delete yourself from the course.";
 	} else {
 		my $del = $db->deleteUser($user);
 
-		if($del)
-		{
+		if ($del) {
 			my $result;
 			$result->{delete} = "success";
-			$out->{text} .=encode_utf8_base64("User " . $user . " successfully deleted");
+			$out->{text}   .= encode_utf8_base64("User " . $user . " successfully deleted");
 			$out->{ra_out} .= "delete: success";
-		}
-		else
-		{
-			$out->{text}=encode_utf8_base64("User " . $user . " could not be deleted");
+		} else {
+			$out->{text} = encode_utf8_base64("User " . $user . " could not be deleted");
 			$out->{ra_out} .= "delete : failed";
 		}
 
@@ -359,61 +345,58 @@ sub deleteUser {
 
 }
 
-
 sub editUser {
 	my ($self, $params) = @_;
-    my $db = $self->db;
-    my $ce = $self->ce;
-    my $out = {};
-    debug("Webservices edit user request.");
-    $out->{text} = encode_utf8_base64("");
-    # make sure course actions are enabled
-    #if (!$ce->{webservices}{enableCourseActions}) {
-    #	$out->{status} = "failure";
-    #	$out->{message} = "Course actions disabled by configuration.";
-    #	return $out
-    #}
+	my $db  = $self->db;
+	my $ce  = $self->ce;
+	my $out = {};
+	debug("Webservices edit user request.");
+	$out->{text} = encode_utf8_base64("");
+	# make sure course actions are enabled
+	#if (!$ce->{webservices}{enableCourseActions}) {
+	#	$out->{status} = "failure";
+	#	$out->{message} = "Course actions disabled by configuration.";
+	#	return $out
+	#}
 
-	my $User = $db->getUser($params->{'id'}); # checked
-    die ("record for visible user [_1] not found" . $params->{'id'}) unless $User;
-    my $PermissionLevel = $db->getPermissionLevel($params->{'id'}); # checked
-    die "permissions for [_1] not defined". $params->{'id'} unless defined $PermissionLevel;
-    foreach my $field ($User->NONKEYFIELDS()) {
-    	my $param = "${field}";
-    	if (defined $params->{$param}) {
-    		$User->$field($params->{$param});
-    	}
-    }
-    if($params->{'id'} eq $params->{'user'}){
-        $out->{text} .= encode_utf8_base64("You cannot change your own permissions.");
-    } else {
-        foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
-    	    my $param = "${field}";
-    	    if (defined $params->{$param}) {
-   	    	    $PermissionLevel->$field($params->{$param});
-    	    }
-        }
-    }
+	my $User = $db->getUser($params->{'id'});                          # checked
+	die("record for visible user [_1] not found" . $params->{'id'}) unless $User;
+	my $PermissionLevel = $db->getPermissionLevel($params->{'id'});    # checked
+	die "permissions for [_1] not defined" . $params->{'id'} unless defined $PermissionLevel;
+	foreach my $field ($User->NONKEYFIELDS()) {
+		my $param = "${field}";
+		if (defined $params->{$param}) {
+			$User->$field($params->{$param});
+		}
+	}
+	if ($params->{'id'} eq $params->{'user'}) {
+		$out->{text} .= encode_utf8_base64("You cannot change your own permissions.");
+	} else {
+		foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
+			my $param = "${field}";
+			if (defined $params->{$param}) {
+				$PermissionLevel->$field($params->{$param});
+			}
+		}
+	}
 
-    $db->putUser($User);
-    $db->putPermissionLevel($PermissionLevel);
-    $User = $db->getUser($params->{'id'}); # checked
+	$db->putUser($User);
+	$db->putPermissionLevel($PermissionLevel);
+	$User = $db->getUser($params->{'id'});    # checked
 
-    my %permissionsHash = reverse %{$ce->{userRoles}};
-    $PermissionLevel = $db->getPermissionLevel($User->{'user_id'});
-    $User->{'permission'} = $PermissionLevel->{'permission'};
-    #$User->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
+	my %permissionsHash = reverse %{ $ce->{userRoles} };
+	$PermissionLevel = $db->getPermissionLevel($User->{'user_id'});
+	$User->{'permission'} = $PermissionLevel->{'permission'};
+	#$User->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
 
+	# If the new_password param is set and not equal to the empty string, change the password.
 
-    # If the new_password param is set and not equal to the empty string, change the password.
+	if ((defined $params->{new_password}) and ($params->{new_password} ne "")) {
+		return changeUserPassword($self, $params);
+	}
 
-    if((defined $params->{new_password}) and ($params->{new_password} ne "" ) ) {
-	return changeUserPassword($self,$params);
-    }
-
-
-    $out->{ra_out} = $User;
-    $out->{text} .= encode_utf8_base64("Changes saved");
+	$out->{ra_out} = $User;
+	$out->{text} .= encode_utf8_base64("Changes saved");
 
 	return $out;
 }
@@ -421,13 +404,12 @@ sub editUser {
 #  id :  is the user_id of the user to be changed.
 #  new_password : the
 
-
 sub changeUserPassword {
 
 	my ($self, $params) = @_;
 	my $out = {};
-	my $db = $self->db;
-	my $ce = $self->ce;
+	my $db  = $self->db;
+	my $ce  = $self->ce;
 	$out->{text} = encode_utf8_base64("");
 
 	my $userid = $params->{'id'};
@@ -437,42 +419,39 @@ sub changeUserPassword {
 	# a password or that the user sending the request is the same as the person whose password is being changed.
 	#  my $PermissionLevel = $db->getPermissionLevel($params->{'user'}); # checked
 
-
 	debug("Webservices change user password request.");
-        debug("Attempting to change the password of user: " . $userid );
+	debug("Attempting to change the password of user: " . $userid);
 	debug("The new password:" . $params->{new_password});
 
+	my $User = $db->getUser($userid);    # checked
+	die("record for visible user [_1] not found" . $params->{'id'}) unless $User;
 
-	my $User = $db->getUser($userid); # checked
-	die ("record for visible user [_1] not found" . $params->{'id'}) unless $User;
+	# make sure course actions are enabled
+	#     if (!$ce->{webservices}{enableCourseActions}) {
+	#    	$out->{text} = "failure";
+	#   	$out->{ra_out} = "Course actions disabled by configuration.";
+	#   	return $out
+	#   }
 
+	#my $User = $db->getUser($params->{'id'}); # checked
+	if (!(defined $User)) {
+		$out->{text} = encode_utf8_base64("No record found for user: " . $params->{'id'});
+		return $out;
+	}
 
-    # make sure course actions are enabled
-   #     if (!$ce->{webservices}{enableCourseActions}) {
-    #    	$out->{text} = "failure";
-     #   	$out->{ra_out} = "Course actions disabled by configuration.";
-     #   	return $out
-     #   }
-
-    #my $User = $db->getUser($params->{'id'}); # checked
-    if(!(defined $User)){
-	$out->{text}=encode_utf8_base64("No record found for user: ". $params->{'id'});
-	return $out;
-    }
-
-    # In the next few lines I (pls) changed $params->{$param}->[0] to $params->{$param} to fix a bug.  Not sure why ->[0] was there.
+# In the next few lines I (pls) changed $params->{$param}->[0] to $params->{$param} to fix a bug.  Not sure why ->[0] was there.
 	my $param = "new_password";
 	if ((defined $params->{$param}) and ($params->{$param})) {
-		my $newP = $params->{$param};
-		my $Password = eval {$db->getPassword($User->user_id)}; # checked
+		my $newP          = $params->{$param};
+		my $Password      = eval { $db->getPassword($User->user_id) };    # checked
 		my $cryptPassword = cryptPassword($newP);
 		$Password->password(cryptPassword($newP));
 		eval { $db->putPassword($Password) };
 	}
 
 	$self->{passwordMode} = 0;
-	$out->{text} = encode_utf8_base64("New passwords saved");
-	$out->{ra_out}= "password_change: success";
+	$out->{text}          = encode_utf8_base64("New passwords saved");
+	$out->{ra_out}        = "password_change: success";
 	return $out;
 }
 
@@ -490,10 +469,8 @@ sub addLog {
 	if (open my $f, ">>", $logfile) {
 		print $f $msg;
 		close $f;
-	}
-	else {
-		debug("Error, unable to open student updates log file '$logfile' in".
-			"append mode: $!");
+	} else {
+		debug("Error, unable to open student updates log file '$logfile' in" . "append mode: $!");
 	}
 	return;
 }
@@ -501,7 +478,7 @@ sub addLog {
 sub assignVisibleSets {
 	my ($db, $userID) = @_;
 	my @globalSetIDs = $db->listGlobalSets;
-	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
+	my @GlobalSets   = $db->getGlobalSets(@globalSetIDs);
 
 	my $i = -1;
 	foreach my $GlobalSet (@GlobalSets) {
@@ -515,21 +492,22 @@ sub assignVisibleSets {
 		}
 
 		# assign set to user
-		my $setID = $GlobalSet->set_id;
+		my $setID   = $GlobalSet->set_id;
 		my $UserSet = $db->newUserSet;
 		$UserSet->user_id($userID);
 		$UserSet->set_id($setID);
 		my @results;
 		my $set_assigned = 0;
 		eval { $db->addUserSet($UserSet) };
-		if ( $@ && !($@ =~ m/user set exists/)) {
+
+		if ($@ && !($@ =~ m/user set exists/)) {
 			return "Failed to assign set to user $userID";
 		}
 
 		# assign problem
 		my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
 		foreach my $GlobalProblem (@GlobalProblems) {
-			my $seed = int( rand( 2423) ) + 36;
+			my $seed        = int(rand(2423)) + 36;
 			my $UserProblem = $db->newUserProblem;
 			$UserProblem->user_id($userID);
 			$UserProblem->set_id($GlobalProblem->set_id);
@@ -545,15 +523,13 @@ sub assignVisibleSets {
 	return 0;
 }
 
-
-
 sub getConfigValues {
-	my $ce = shift;
+	my $ce           = shift;
 	my $ConfigValues = $ce->{ConfigValues};
 
 	foreach my $oneConfig (@$ConfigValues) {
 		foreach my $hash (@$oneConfig) {
-			if (ref($hash) eq "HASH"){
+			if (ref($hash) eq "HASH") {
 				my $str = '$ce->' . $hash->{hashVar};
 				$hash->{value} = eval($str);
 			} else {
@@ -565,10 +541,13 @@ sub getConfigValues {
 	# get the list of theme folders in the theme directory and remove . and ..
 	my $themeDir = $ce->{webworkDirs}{themes};
 	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
-	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
+	my $themes = [ grep { !/^\.{1,2}$/ } sort readdir($dh) ];
 
 	# insert the anonymous array of theme folder names into ConfigValues
-	my $modifyThemes = sub { my $item=shift; if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) { $item->{values} =$themes } };
+	my $modifyThemes = sub {
+		my $item = shift;
+		if (ref($item) =~ /HASH/ and $item->{var} eq 'defaultTheme') { $item->{values} = $themes }
+	};
 
 	foreach my $oneConfig (@$ConfigValues) {
 		foreach my $hash (@$oneConfig) {
@@ -581,15 +560,14 @@ sub getConfigValues {
 
 sub getCourseSettings {
 	my ($self, $params) = @_;
-	my $ce = $self->ce;		# course environment
-	my $db = $self->db;		# database
+	my $ce           = $self->ce;              # course environment
+	my $db           = $self->db;              # database
 	my $ConfigValues = getConfigValues($ce);
 
-	my $tz = DateTime::TimeZone->new( name => $ce->{siteDefaults}->{timezone});
+	my $tz = DateTime::TimeZone->new(name => $ce->{siteDefaults}->{timezone});
 	my $dt = DateTime->now();
 
-	my @tzabbr = ("tz_abbr", $tz->short_name_for_datetime( $dt ));
-
+	my @tzabbr = ("tz_abbr", $tz->short_name_for_datetime($dt));
 
 	#debug($tz->short_name_for_datetime($dt));
 
@@ -597,17 +575,17 @@ sub getCourseSettings {
 
 	my $out = {};
 	$out->{ra_out} = $ConfigValues;
-	$out->{text} = encode_utf8_base64("Successfully found the course settings");
-    return $out;
+	$out->{text}   = encode_utf8_base64("Successfully found the course settings");
+	return $out;
 
 }
 
 sub updateSetting {
 	my ($self, $params) = @_;
-	my $ce = $self->ce;		# course environment
-	my $db = $self->db;		# database
+	my $ce = $self->ce;    # course environment
+	my $db = $self->db;    # database
 
-	my $setVar = $params->{var};
+	my $setVar   = $params->{var};
 	my $setValue = $params->{value};
 
 	# this shouldn't be needed, but it seems like it's not get parsed correctly.
@@ -621,110 +599,100 @@ sub updateSetting {
 	my $filename = $ce->{courseDirs}->{root} . "/simple.conf";
 	debug("Write to file: " . $filename);
 
-		my $fileoutput = "#!perl
+	my $fileoutput = "#!perl
 # This file is automatically generated by WeBWorK's web-based
 # configuration module.  Do not make changes directly to this
 # file.  It will be overwritten the next time configuration
 # changes are saved.\n\n";
 
-
 	# read in the file
 
 	open(DAT, $filename) || die("Could not open file!");
-	my @raw_data=<DAT>;
+	my @raw_data = <DAT>;
 	close(DAT);
-
-
-
 
 	my $var;
 	my $line;
 	my $value;
 	my $varFound = 0;
 
-	foreach $line (@raw_data)
-	{
+	foreach $line (@raw_data) {
 		chomp $line;
-	 	if ($line =~ /^\$/) {
-	 		my @tmp = split(/\$/,$line);
-	 		($var,$value) = split(/\s+=\s+/,$tmp[1]);
-	 		if ($var eq $setVar){
-	 			$fileoutput .= "\$" . $var . " = " . $setValue . "\n";
-	 			$varFound = 1;
-	 		} else {
-	 			$fileoutput .= "\$" . $var . " = " . $value . "\n";
-	 		}
+		if ($line =~ /^\$/) {
+			my @tmp = split(/\$/, $line);
+			($var, $value) = split(/\s+=\s+/, $tmp[1]);
+			if ($var eq $setVar) {
+				$fileoutput .= "\$" . $var . " = " . $setValue . "\n";
+				$varFound = 1;
+			} else {
+				$fileoutput .= "\$" . $var . " = " . $value . "\n";
+			}
 		}
 	}
 
-	if (! $varFound) {
+	if (!$varFound) {
 		$fileoutput .= "\$" . $setVar . " = " . $setValue . ";\n";
 	}
 
-	debug ($fileoutput);
-
+	debug($fileoutput);
 
 	my $writeFileErrors;
 	eval {
 		local *OUTPUTFILE;
-		if( open OUTPUTFILE, ">", $filename) {
+		if (open OUTPUTFILE, ">", $filename) {
 			print OUTPUTFILE $fileoutput;
 			close OUTPUTFILE;
 		} else {
-			$writeFileErrors = "I could not open $fileoutput".
-				"We will not be able to make configuration changes unless the permissions are set so that the web server can write to this file.";
+			$writeFileErrors = "I could not open $fileoutput"
+				. "We will not be able to make configuration changes unless the permissions are set so that the web server can write to this file.";
 		}
-	};  # any errors are caught in the next block
+	};    # any errors are caught in the next block
 
 	$writeFileErrors = $@ if $@;
 
-	debug("errors: ". $writeFileErrors);
-
+	debug("errors: " . $writeFileErrors);
 
 	my $out = {};
 	$out->{ra_out} = "";
-	$out->{text} = encode_utf8_base64("Successfully updated the course settings");
-    return $out;
+	$out->{text}   = encode_utf8_base64("Successfully updated the course settings");
+	return $out;
 }
-
 
 ##  pstaabp: This is currently not working.  We need to look into a nice robust way to send email.  It looks like the current
 ## way that WW sends mail is a bit archaic.  The MIME::Lite looks fairly straightforward, but we may need to look into smtp settings a
 ## bit more.
 
-
 sub sendEmail {
 	my ($self, $params) = @_;
 	my $ce = $self->ce;
 
-# Should we build in the merge_file?
-#  get merge file
-#		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
-#		my $delimiter       = ',';
-#		my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
-#		unless (ref($rh_merge_data) ) {
-#			$self->addbadmessage(CGI::p("No merge data file"));
-#			$self->addbadmessage(CGI::p("Can't read merge file $merge_file. No message sent"));
-#			return;
-#		} ;
-#		$self->{rh_merge_data} = $rh_merge_data;
+	# Should we build in the merge_file?
+	#  get merge file
+	#		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
+	#		my $delimiter       = ',';
+	#		my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
+	#		unless (ref($rh_merge_data) ) {
+	#			$self->addbadmessage(CGI::p("No merge data file"));
+	#			$self->addbadmessage(CGI::p("Can't read merge file $merge_file. No message sent"));
+	#			return;
+	#		} ;
+	#		$self->{rh_merge_data} = $rh_merge_data;
 
-		# we don't set the response until we're sure that email can be sent
-#		$self->{response}         = 'send_email';
+	# we don't set the response until we're sure that email can be sent
+	#		$self->{response}         = 'send_email';
 
 	my $smtpServer = $ce->{mail}->{smtpServer};
 
 	debug("smtpServer: " . $smtpServer);
 
-
 	my $mailer = Email::Sender->new({
-				tls_allowed => $ce->{tls_allowed}//1, # the default for this for  Mail::Sender is 1
-				from      => $smtpServer,
-				fake_from => "pstaab\@fitchburgstate.edu",
-				to        => "pstaab\@fitchburgstate.edu",
-				smtp      => $smtpServer,
-				subject   => "Test"
-			});
+		tls_allowed => $ce->{tls_allowed} // 1,        # the default for this for  Mail::Sender is 1
+		from        => $smtpServer,
+		fake_from   => "pstaab\@fitchburgstate.edu",
+		to          => "pstaab\@fitchburgstate.edu",
+		smtp        => $smtpServer,
+		subject     => "Test"
+	});
 }
 
 1;

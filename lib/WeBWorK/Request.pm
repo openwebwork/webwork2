@@ -39,27 +39,27 @@ sub mutable_param {
 	my $self = shift;
 
 	if (not defined $self->{paramcache}) {
-	    my @names = $self->SUPER::param();
-	    foreach my $name (@names) {
-		my @params = $self->SUPER::param($name);
-		@params = map {Encode::decode("UTF-8",$_)} @params;
-		$self->{paramcache}{$name} = [@params];
-	    }
+		my @names = $self->SUPER::param();
+		foreach my $name (@names) {
+			my @params = $self->SUPER::param($name);
+			@params = map { Encode::decode("UTF-8", $_) } @params;
+			$self->{paramcache}{$name} = [@params];
+		}
 	}
 
-	@_ or return keys %{$self->{paramcache}};
+	@_ or return keys %{ $self->{paramcache} };
 
 	my $name = shift;
 	if (@_) {
 		my $val = shift;
 		if (ref $val eq "ARRAY") {
-			$self->{paramcache}{$name} = [@$val]; # make a copy
+			$self->{paramcache}{$name} = [@$val];    # make a copy
 		} else {
 			$self->{paramcache}{$name} = [$val];
 		}
 	}
 	return unless exists $self->{paramcache}{$name};
-	return wantarray ? @{$self->{paramcache}{$name}} : $self->{paramcache}{$name}->[0];
+	return wantarray ? @{ $self->{paramcache}{$name} } : $self->{paramcache}{$name}->[0];
 }
 
 =head1 CONSTRUCTOR
@@ -185,7 +185,7 @@ if the location is "/", the empty string is returned.
 =cut
 
 sub location {
-	my $self = shift;
+	my $self     = shift;
 	my $location = $self->SUPER::location;
 	return $location eq "/" ? "" : $location;
 }

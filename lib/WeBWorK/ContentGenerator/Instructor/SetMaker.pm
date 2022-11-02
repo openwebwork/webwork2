@@ -13,7 +13,6 @@
 # Artistic License for more details.
 ################################################################################
 
-
 package WeBWorK::ContentGenerator::Instructor::SetMaker;
 use base qw(WeBWorK::ContentGenerator::Instructor);
 
@@ -25,7 +24,6 @@ WeBWorK::ContentGenerator::Instructor::SetMaker - Make homework sets.
 
 use strict;
 use warnings;
-
 
 #use CGI qw(-nosticky);
 use WeBWorK::CGI;
@@ -45,12 +43,12 @@ require WeBWorK::Utils::ListingDB;
 
 # we use x to mark strings for maketext
 use constant INCLUDE_CONTRIB_DEFAULT => 0;
-use constant SHOW_HINTS_DEFAULT => 0;
-use constant SHOW_SOLUTIONS_DEFAULT => 0;
-use constant MAX_SHOW_DEFAULT => 20;
-use constant NO_LOCAL_SET_STRING => x('No sets in this course yet');
-use constant MY_PROBLEMS => x('My Problems');
-use constant MAIN_PROBLEMS => x('Unclassified Problems');
+use constant SHOW_HINTS_DEFAULT      => 0;
+use constant SHOW_SOLUTIONS_DEFAULT  => 0;
+use constant MAX_SHOW_DEFAULT        => 20;
+use constant NO_LOCAL_SET_STRING     => x('No sets in this course yet');
+use constant MY_PROBLEMS             => x('My Problems');
+use constant MAIN_PROBLEMS           => x('Unclassified Problems');
 
 use constant LIB2_DATA => {
 	'dbchapter'   => { name => 'library_chapters',    all => x('All Chapters') },
@@ -64,22 +62,30 @@ use constant LIB2_DATA => {
 
 ## Flags for operations on files
 
-use constant ADDED => 1;
-use constant HIDDEN => (1 << 1);
+use constant ADDED   => 1;
+use constant HIDDEN  => (1 << 1);
 use constant SUCCESS => (1 << 2);
 
 ##	for additional problib buttons
-my %problib;	## This is configured in defaults.config
+my %problib;    ## This is configured in defaults.config
 my %ignoredir = (
-	'.' => 1, '..' => 1, 'CVS' => 1, 'tmpEdit' => 1,
-	'headers' => 1, 'macros' => 1, 'email' => 1, 'graphics'=>1, '.svn' => 1, 'achievements' => 1,
+	'.'            => 1,
+	'..'           => 1,
+	'CVS'          => 1,
+	'tmpEdit'      => 1,
+	'headers'      => 1,
+	'macros'       => 1,
+	'email'        => 1,
+	'graphics'     => 1,
+	'.svn'         => 1,
+	'achievements' => 1,
 );
 
 sub prepare_activity_entry {
-	my $self=shift;
-	my $r = $self->r;
+	my $self = shift;
+	my $r    = $self->r;
 	my $user = $self->r->param('user') || 'NO_USER';
-	return("In SetMaker as user $user");
+	return ("In SetMaker as user $user");
 }
 
 ## This is for searching the disk for directories containing pg files.
@@ -102,7 +108,8 @@ sub prepare_activity_entry {
 ## pg file.
 
 sub get_library_sets {
-	my $top = shift; my $dir = shift;
+	my $top = shift;
+	my $dir = shift;
 	# ignore directories that give us an error
 	my @lis = eval { readDirectory($dir) };
 	if ($@) {
@@ -111,85 +118,96 @@ sub get_library_sets {
 	}
 	return (0) if grep /^=library-ignore$/, @lis;
 
-	my @pgfiles = grep { m/\.pg$/ and (not m/(Header|-text)(File)?\.pg$/) and -f "$dir/$_"} @lis;
+	my @pgfiles = grep { m/\.pg$/ and (not m/(Header|-text)(File)?\.pg$/) and -f "$dir/$_" } @lis;
 	my $pgcount = scalar(@pgfiles);
-	my $pgname = $dir; $pgname =~ s!.*/!!; $pgname .= '.pg';
+	my $pgname  = $dir;
+	$pgname =~ s!.*/!!;
+	$pgname .= '.pg';
 	my $combineUp = ($pgcount == 1 && $pgname eq $pgfiles[0] && !(grep /^=library-no-combine$/, @lis));
 
 	my @pgdirs;
-	my @dirs = grep {!$ignoredir{$_} and -d "$dir/$_"} @lis;
-	if ($top == 1) {@dirs = grep {!$problib{$_}} @dirs}
+	my @dirs = grep { !$ignoredir{$_} and -d "$dir/$_" } @lis;
+	if ($top == 1) {
+		@dirs = grep { !$problib{$_} } @dirs;
+	}
 	# Never include Library or Contrib at the top level
-	if ($top == 1) {@dirs = grep {$_ ne 'Library' && $_ ne 'Contrib'} @dirs}
+	if ($top == 1) {
+		@dirs = grep { $_ ne 'Library' && $_ ne 'Contrib' } @dirs;
+	}
 	foreach my $subdir (@dirs) {
 		my @results = get_library_sets(0, "$dir/$subdir");
-		$pgcount += shift @results; push(@pgdirs,@results);
+		$pgcount += shift @results;
+		push(@pgdirs, @results);
 	}
 
 	return ($pgcount, @pgdirs) if $top || $combineUp || grep /^=library-combine-up$/, @lis;
-	return (0,@pgdirs,$dir);
+	return (0, @pgdirs, $dir);
 }
 
 sub get_library_pgs {
-	my $top = shift; my $base = shift; my $dir = shift;
-	my @lis = readDirectory("$base/$dir");
+	my $top  = shift;
+	my $base = shift;
+	my $dir  = shift;
+	my @lis  = readDirectory("$base/$dir");
 	return () if grep /^=library-ignore$/, @lis;
 	return () if !$top && grep /^=library-no-combine$/, @lis;
 
-	my @pgs = grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$base/$dir/$_"} @lis;
-	my $others = scalar(grep { (!m/\.pg$/ || m/(Header|-text)\.pg$/) &&
-	                            !m/(\.(tmp|bak)|~)$/ && -f "$base/$dir/$_" } @lis);
+	my @pgs = grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$base/$dir/$_" } @lis;
+	my $others =
+		scalar(grep { (!m/\.pg$/ || m/(Header|-text)\.pg$/) && !m/(\.(tmp|bak)|~)$/ && -f "$base/$dir/$_" } @lis);
 
-	my @dirs = grep {!$ignoredir{$_} and -d "$base/$dir/$_"} @lis;
-	if ($top == 1) {@dirs = grep {!$problib{$_}} @dirs}
-	foreach my $subdir (@dirs) {push(@pgs, get_library_pgs(0,"$base/$dir",$subdir))}
+	my @dirs = grep { !$ignoredir{$_} and -d "$base/$dir/$_" } @lis;
+	if ($top == 1) {
+		@dirs = grep { !$problib{$_} } @dirs;
+	}
+	foreach my $subdir (@dirs) { push(@pgs, get_library_pgs(0, "$base/$dir", $subdir)) }
 
 	return () unless $top || (scalar(@pgs) == 1 && $others) || grep /^=library-combine-up$/, @lis;
 	return (map {"$dir/$_"} @pgs);
 }
 
 sub list_pg_files {
-	my ($templates,$dir) = @_;
-	my $top = ($dir eq '.')? 1 : 2;
-	my @pgs = get_library_pgs($top,$templates,$dir);
-	return sortByName(undef,@pgs);
+	my ($templates, $dir) = @_;
+	my $top = ($dir eq '.') ? 1 : 2;
+	my @pgs = get_library_pgs($top, $templates, $dir);
+	return sortByName(undef, @pgs);
 }
 
 ## Try to make reading of set defs more flexible.  Additional strategies
 ## for fixing a path can be added here.
 
 sub munge_pg_file_path {
-	my $self = shift;
-	my $pg_path = shift;
+	my $self            = shift;
+	my $pg_path         = shift;
 	my $path_to_set_def = shift;
-	my $end_path = $pg_path;
+	my $end_path        = $pg_path;
 	# if the path is ok, don't fix it
-	return($pg_path) if(-e $self->r->ce->{courseDirs}{templates}."/$pg_path");
+	return ($pg_path) if (-e $self->r->ce->{courseDirs}{templates} . "/$pg_path");
 	# if we have followed a link into a self contained course to get
 	# to the set.def file, we need to insert the start of the path to
 	# the set.def file
 	$end_path = "$path_to_set_def/$pg_path";
-	return($end_path) if(-e $self->r->ce->{courseDirs}{templates}."/$end_path");
+	return ($end_path) if (-e $self->r->ce->{courseDirs}{templates} . "/$end_path");
 	# if we got this far, this path is bad, but we let it produce
 	# an error so the user knows there is a troublesome path in the
 	# set.def file.
-	return($pg_path);
+	return ($pg_path);
 }
 
 ## Problems straight from the OPL database come with MO and static
 ## tag information.  This is for other times, like next/prev page.
 
 sub getDBextras {
-	my $r = shift;
+	my $r              = shift;
 	my $sourceFileName = shift;
 
-	if($sourceFileName =~ /^Library/) {
-		return @{WeBWorK::Utils::ListingDB::getDBextras($r, $sourceFileName)};
+	if ($sourceFileName =~ /^Library/) {
+		return @{ WeBWorK::Utils::ListingDB::getDBextras($r, $sourceFileName) };
 	}
 
-	my $filePath = $r->ce->{courseDirs}{templates}."/$sourceFileName";
-	my $tag_obj = WeBWorK::Utils::Tags->new($filePath);
-	my $isMO = $tag_obj->{MO} || 0;
+	my $filePath = $r->ce->{courseDirs}{templates} . "/$sourceFileName";
+	my $tag_obj  = WeBWorK::Utils::Tags->new($filePath);
+	my $isMO     = $tag_obj->{MO}     || 0;
 	my $isstatic = $tag_obj->{Static} || 0;
 
 	return ($isMO, $isstatic);
@@ -198,81 +216,82 @@ sub getDBextras {
 ## With MLT, problems come in groups, so we need to find next/prev
 ## problems.  Return index, or -1 if there are no more.
 sub next_prob_group {
-	my $ind = shift;
+	my $ind     = shift;
 	my @pgfiles = @_;
-	my $len = scalar(@pgfiles);
-	return -1 if($ind >= $len-1);
-	my $mlt= $pgfiles[$ind]->{morelt} || 0;
-	return $ind+1 if($mlt == 0);
-	while($ind<$len and defined($pgfiles[$ind]->{morelt}) and $pgfiles[$ind]->{morelt} == $mlt) {
+	my $len     = scalar(@pgfiles);
+	return -1 if ($ind >= $len - 1);
+	my $mlt = $pgfiles[$ind]->{morelt} || 0;
+	return $ind + 1 if ($mlt == 0);
+	while ($ind < $len and defined($pgfiles[$ind]->{morelt}) and $pgfiles[$ind]->{morelt} == $mlt) {
 		$ind++;
 	}
-	return -1 if($ind==$len);
+	return -1 if ($ind == $len);
 	return $ind;
 }
 
 sub prev_prob_group {
-	my $ind = shift;
+	my $ind     = shift;
 	my @pgfiles = @_;
-	return -1 if $ind==0;
+	return -1 if $ind == 0;
 	$ind--;
 	my $mlt = $pgfiles[$ind]->{morelt};
-	return $ind if $mlt==0;
+	return $ind if $mlt == 0;
 	# We have to search to the beginning of this group
-	while($ind>=0 and $mlt == $pgfiles[$ind]->{morelt}) {
+	while ($ind >= 0 and $mlt == $pgfiles[$ind]->{morelt}) {
 		$ind--;
 	}
-	return($ind+1);
+	return ($ind + 1);
 }
 
 sub end_prob_group {
-	my $ind = shift;
+	my $ind     = shift;
 	my @pgfiles = @_;
-	my $next = next_prob_group($ind, @pgfiles);
-	return( ($next==-1) ? $#pgfiles : $next-1);
+	my $next    = next_prob_group($ind, @pgfiles);
+	return (($next == -1) ? $#pgfiles : $next - 1);
 }
 
 ## Read a set definition file.  This could be abstracted since it happens
 ## elsewhere.  Here we don't have to process so much of the file.
 
 sub read_set_def {
-	my $self = shift;
-	my $r = $self->r;
+	my $self         = shift;
+	my $r            = $self->r;
 	my $filePathOrig = shift;
-	my $filePath = $r->ce->{courseDirs}{templates}."/$filePathOrig";
+	my $filePath     = $r->ce->{courseDirs}{templates} . "/$filePathOrig";
 	$filePathOrig =~ s/set.*\.def$//;
 	$filePathOrig =~ s|/$||;
 	$filePathOrig = "." if ($filePathOrig !~ /\S/);
 	my @pg_files = ();
 	my ($line, $got_to_pgs, $name, @rest) = ("", 0, "");
-	if ( open (SETFILENAME, "$filePath") )    {
-	    while($line = <SETFILENAME>) {
-		chomp($line);
-		$line =~ s|(#.*)||; # don't read past comments
-		if($got_to_pgs == 1) {
-		    unless ($line =~ /\S/) {next;} # skip blank lines
-		    ($name,@rest) = split (/\s*,\s*/,$line);
-		    $name =~ s/\s*//g;
-		    push @pg_files, $name;
-		} elsif ($got_to_pgs == 2) {
-		    # skip lines which dont identify source files
-		    unless ($line =~ /source_file\s*=\s*(\S+)/) {
-			next;
-		    }
-		    # otherwise we got the name from the regexp
-		    push @pg_files, $1;
-		} else {
-		    $got_to_pgs = 1 if ($line =~ /problemList\s*=/);
-		    $got_to_pgs = 2 if ($line =~ /problemListV2/);
+
+	if (open(SETFILENAME, "$filePath")) {
+		while ($line = <SETFILENAME>) {
+			chomp($line);
+			$line =~ s|(#.*)||;    # don't read past comments
+			if ($got_to_pgs == 1) {
+				unless ($line =~ /\S/) { next; }    # skip blank lines
+				($name, @rest) = split(/\s*,\s*/, $line);
+				$name =~ s/\s*//g;
+				push @pg_files, $name;
+			} elsif ($got_to_pgs == 2) {
+				# skip lines which dont identify source files
+				unless ($line =~ /source_file\s*=\s*(\S+)/) {
+					next;
+				}
+				# otherwise we got the name from the regexp
+				push @pg_files, $1;
+			} else {
+				$got_to_pgs = 1 if ($line =~ /problemList\s*=/);
+				$got_to_pgs = 2 if ($line =~ /problemListV2/);
+			}
 		}
-	    }
 	} else {
-	    $self->addbadmessage($r->maketext("Cannot open [_1]",$filePath));
+		$self->addbadmessage($r->maketext("Cannot open [_1]", $filePath));
 	}
 	# This is where we would potentially munge the pg file paths
 	# One possibility
 	@pg_files = map { $self->munge_pg_file_path($_, $filePathOrig) } @pg_files;
-	return(@pg_files);
+	return (@pg_files);
 }
 
 ## go through past page getting a list of identifiers for the problems
@@ -280,63 +299,66 @@ sub read_set_def {
 ## be hidden
 
 sub get_past_problem_files {
-	my $r = shift;
-	my @found=();
-	my $count =1;
+	my $r     = shift;
+	my @found = ();
+	my $count = 1;
 	while (defined($r->param("filetrial$count"))) {
 		my $val = 0;
-		$val |= ADDED if($r->param("trial$count"));
-		$val |= HIDDEN if($r->param("hideme$count"));
-		push @found, [$r->param("filetrial$count"), $val];
+		$val |= ADDED  if ($r->param("trial$count"));
+		$val |= HIDDEN if ($r->param("hideme$count"));
+		push @found, [ $r->param("filetrial$count"), $val ];
 		$count++;
 	}
-	return(\@found);
+	return (\@found);
 }
 
 #### For adding new problems
 
 sub add_selected {
-	my $self = shift;
-	my $db = shift;
-	my $setName = shift;
-	my @past_problems = @{$self->{past_problems}};
-	my @selected = @past_problems;
+	my $self          = shift;
+	my $db            = shift;
+	my $setName       = shift;
+	my @past_problems = @{ $self->{past_problems} };
+	my @selected      = @past_problems;
 	my (@path, $file, $selected, $freeProblemID);
 
-	my $addedcount=0;
+	my $addedcount = 0;
 
 	for $selected (@selected) {
-		if($selected->[1] & ADDED) {
+		if ($selected->[1] & ADDED) {
 			$file = $selected->[0];
-			my $problemRecord = $self->addProblemToSet(setName => $setName,
-				sourceFile => $file);
+			my $problemRecord = $self->addProblemToSet(
+				setName    => $setName,
+				sourceFile => $file
+			);
 			$freeProblemID++;
 			$self->assignProblemToAllSetUsers($problemRecord);
 			$selected->[1] |= SUCCESS;
 			$addedcount++;
 		}
 	}
-	return($addedcount);
+	return ($addedcount);
 }
-
 
 ############# List of sets of problems in templates directory
 
 sub get_problem_directories {
-        my $r = shift;
-        my $ce = $r->ce;
-	my $lib = shift;
+	my $r      = shift;
+	my $ce     = $r->ce;
+	my $lib    = shift;
 	my $source = $ce->{courseDirs}{templates};
-	my $main = $r->maketext(MY_PROBLEMS); my $isTop = 1;
-	if ($lib) {$source .= "/$lib"; $main = $r->maketext(MAIN_PROBLEMS); $isTop = 2}
+	my $main   = $r->maketext(MY_PROBLEMS);
+	my $isTop  = 1;
+	if ($lib) { $source .= "/$lib"; $main = $r->maketext(MAIN_PROBLEMS); $isTop = 2 }
 	my @all_problem_directories = get_library_sets($isTop, $source);
-	my $includetop = shift @all_problem_directories;
+	my $includetop              = shift @all_problem_directories;
 	my $j;
-	for ($j=0; $j<scalar(@all_problem_directories); $j++) {
+
+	for ($j = 0; $j < scalar(@all_problem_directories); $j++) {
 		$all_problem_directories[$j] =~ s|^$ce->{courseDirs}->{templates}/?||;
 	}
 	@all_problem_directories = sortByName(undef, @all_problem_directories);
-	unshift @all_problem_directories, $main if($includetop);
+	unshift @all_problem_directories, $main if ($includetop);
 	return (\@all_problem_directories);
 }
 
@@ -344,8 +366,8 @@ sub get_problem_directories {
 sub view_problems_line {
 	my $internal_name = shift;
 	my $label         = shift;
-	my $r             = shift;    # so we can get parameter values
-	my $contrib_exist = (-r $r->ce->{courseDirs}{templates}.'/Contrib') ? 1 : 0;
+	my $r             = shift;                                                       # so we can get parameter values
+	my $contrib_exist = (-r $r->ce->{courseDirs}{templates} . '/Contrib') ? 1 : 0;
 
 	my $result = CGI::start_div({ class => 'd-flex flex-wrap justify-content-center' });
 
@@ -377,7 +399,9 @@ sub view_problems_line {
 	# Now we give a choice of the number of problems to show.
 	$result .= CGI::div(
 		{ class => 'd-inline-block ms-2 mb-2' },
-		CGI::label({ for => 'max_shown', class => 'col-form-label col-form-label-sm' }, $r->maketext('Max. Shown:')),
+		CGI::label(
+			{ for => 'max_shown', class => 'col-form-label col-form-label-sm' }, $r->maketext('Max. Shown:')
+		),
 		CGI::popup_menu({
 			name    => 'max_shown',
 			id      => 'max_shown',
@@ -387,27 +411,31 @@ sub view_problems_line {
 		})
 	);
 
-	my $maybe_OPL_box = $contrib_exist ? CGI::div(
-		{ class => 'form-check form-check-inline ms-2' },
-		CGI::checkbox({
-			name            => 'includeOPL',
-			checked         => $r->param('includeOPL') // 1,
-			label           => $r->maketext('Include OPL'),
-			class           => 'form-check-input me-1',
-			labelattributes => { class => 'form-check-label col-form-label-sm' }
-		})
-	) : ();
+	my $maybe_OPL_box = $contrib_exist
+		? CGI::div(
+			{ class => 'form-check form-check-inline ms-2' },
+			CGI::checkbox({
+				name            => 'includeOPL',
+				checked         => $r->param('includeOPL') // 1,
+				label           => $r->maketext('Include OPL'),
+				class           => 'form-check-input me-1',
+				labelattributes => { class => 'form-check-label col-form-label-sm' }
+			})
+		)
+		: ();
 
-	my $maybe_contrib_box = $contrib_exist ? CGI::div(
-		{ class => 'form-check form-check-inline ms-2' },
-		CGI::checkbox({
-			name            => 'includeContrib',
-			checked         => $r->param('includeContrib') // INCLUDE_CONTRIB_DEFAULT,
-			label           => $r->maketext('Include Contrib'),
-			class           => 'form-check-input me-1',
-			labelattributes => { class => 'form-check-label col-form-label-sm' }
-		})
-	) : ();
+	my $maybe_contrib_box = $contrib_exist
+		? CGI::div(
+			{ class => 'form-check form-check-inline ms-2' },
+			CGI::checkbox({
+				name            => 'includeContrib',
+				checked         => $r->param('includeContrib') // INCLUDE_CONTRIB_DEFAULT,
+				label           => $r->maketext('Include Contrib'),
+				class           => 'form-check-input me-1',
+				labelattributes => { class => 'form-check-label col-form-label-sm' }
+			})
+		)
+		: ();
 
 	# Option of whether to show hints and solutions
 	$result .= CGI::div(
@@ -434,7 +462,7 @@ sub view_problems_line {
 				labelattributes => { class => 'form-check-label col-form-label-sm' }
 			})
 		),
-		CGI::hidden({name => 'includeOPL', default => $contrib_exist ? 0 : 1})
+		CGI::hidden({ name => 'includeOPL', default => $contrib_exist ? 0 : 1 })
 	);
 
 	$result .= CGI::end_div();
@@ -491,10 +519,10 @@ sub browse_local_panel {
 
 # Version 2 is local homework sets
 sub browse_mysets_panel {
-	my $self = shift;
-	my $r = $self->r;
-	my $library_selected = shift // '';
-	my $list_of_local_sets = shift;
+	my $self                  = shift;
+	my $r                     = $self->r;
+	my $library_selected      = shift // '';
+	my $list_of_local_sets    = shift;
 	my $labels_for_local_sets = { map { $_ => format_set_name_display($_) } @$list_of_local_sets };
 
 	if (@$list_of_local_sets == 0) {
@@ -537,10 +565,8 @@ sub browse_library_panel {
 	my $libraryRoot = $r->{ce}{problemLibrary}{root};
 
 	unless ($libraryRoot) {
-		print CGI::div(
-			{ class => 'alert alert-danger p-1 mb-2', align => "center" },
-			"The problem library has not been installed."
-		);
+		print CGI::div({ class => 'alert alert-danger p-1 mb-2', align => "center" },
+			"The problem library has not been installed.");
 		return;
 	}
 	# Test if the Library directory link exists.  If not, try to make it
@@ -965,7 +991,7 @@ sub browse_setdef_panel {
 	my $ce               = $r->ce;
 	my $library_selected = shift // '';
 
-	my @list_of_set_defs = $self->getDefList;
+	my @list_of_set_defs    = $self->getDefList;
 	my $labels_for_set_defs = { map { $_ => $_ } @list_of_set_defs };
 
 	if (scalar(@list_of_set_defs) == 0) {
@@ -994,7 +1020,7 @@ sub browse_setdef_panel {
 				values  => \@list_of_set_defs,
 				labels  => $labels_for_set_defs,
 				default => $library_selected,
-				class => 'form-select form-select-sm d-inline w-auto'
+				class   => 'form-select form-select-sm d-inline w-auto'
 			})
 		),
 		view_problems_line('view_setdef_set', $r->maketext('View Problems'), $self->r)
@@ -1003,15 +1029,15 @@ sub browse_setdef_panel {
 
 sub make_top_row {
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r    = $self->r;
+	my $ce   = $r->ce;
 	my %data = @_;
 
-	my $list_of_local_sets = $data{all_db_sets};
+	my $list_of_local_sets    = $data{all_db_sets};
 	my $labels_for_local_sets = { map { $_ => format_set_name_display($_) } @$list_of_local_sets };
-	my $browse_which = $data{browse_which};
-	my $library_selected = $self->{current_library_set};
-	my $set_selected = $r->param('local_sets') // '';
+	my $browse_which          = $data{browse_which};
+	my $library_selected      = $self->{current_library_set};
+	my $set_selected          = $r->param('local_sets') // '';
 	my (@dis1, @dis2, @dis3, @dis4) = ();
 	@dis1 = (disabled => undef) if ($browse_which eq 'browse_npl_library');
 	@dis2 = (disabled => undef) if ($browse_which eq 'browse_local');
@@ -1040,18 +1066,18 @@ sub make_top_row {
 				$r->maketext('Add problems to') . ' ' . CGI::b($r->maketext('Target Set:'))
 			),
 			CGI::popup_menu({
-				name     => 'local_sets',
-				id       => 'local_sets',
-				values   => $list_of_local_sets,
-				labels   => $labels_for_local_sets,
-				default  => $set_selected,
-				override => 1,
-				class    => 'form-select form-select-sm d-inline w-auto mx-2',
-				dir      => 'ltr',
+				name                 => 'local_sets',
+				id                   => 'local_sets',
+				values               => $list_of_local_sets,
+				labels               => $labels_for_local_sets,
+				default              => $set_selected,
+				override             => 1,
+				class                => 'form-select form-select-sm d-inline w-auto mx-2',
+				dir                  => 'ltr',
 				data_no_set_selected => $r->maketext('No Target Set Selected'),
 				data_pick_target_set => $r->maketext('Pick a target set above to add this problem to.'),
-				data_problems_added => $r->maketext('Problems Added'),
-				data_added_to_single => $r->maketext('Added one problem to set [_1].', '{set}'),
+				data_problems_added  => $r->maketext('Problems Added'),
+				data_added_to_single => $r->maketext('Added one problem to set [_1].',   '{set}'),
 				data_added_to_plural => $r->maketext('Added [_1] problems to set [_2].', '{number}', '{set}'),
 			})
 		),
@@ -1152,22 +1178,22 @@ sub make_top_row {
 		$self->browse_library_panel();
 	} elsif ($browse_which eq 'browse_setdefs') {
 		$self->browse_setdef_panel($library_selected);
-	} else { ## handle other problem libraries
-		$self->browse_local_panel($library_selected,$browse_which);
+	} else {    ## handle other problem libraries
+		$self->browse_local_panel($library_selected, $browse_which);
 	}
 
 	print CGI::hr({ class => 'mt-0 mb-2' });
 
-    # For next/previous buttons
+	# For next/previous buttons
 	my ($next_button, $prev_button) = ("", "");
 	my $first_shown = $self->{first_shown};
-	my $last_shown = $self->{last_shown};
+	my $last_shown  = $self->{last_shown};
 	my $first_index = $self->{first_index};
-	my $last_index = $self->{last_index};
-	my @pg_files = @{$self->{pg_files}};
+	my $last_index  = $self->{last_index};
+	my @pg_files    = @{ $self->{pg_files} };
 	if ($first_index > 0) {
 		$prev_button = CGI::submit({
-			name => "prev_page",
+			name  => "prev_page",
 			style => $these_widths,
 			value => $r->maketext("Previous page"),
 			class => 'btn btn-secondary btn-sm mx-1 mb-2'
@@ -1176,8 +1202,8 @@ sub make_top_row {
 	# This will have to be trickier with MLT
 	if ((1 + $last_index) < scalar(@pg_files)) {
 		$next_button = CGI::submit({
-			name => "next_page",
-		   	style => $these_widths,
+			name  => "next_page",
+			style => $these_widths,
 			value => $r->maketext("Next page"),
 			class => 'btn btn-secondary btn-sm mx-1 mb-2'
 		});
@@ -1229,7 +1255,7 @@ sub make_data_row {
 	my $isGatewaySet = defined $setRecord && $setRecord->assignment_type =~ /gateway/;
 
 	my $problem_seed = $self->{'problem_seed'} || 1234;
-	my $edit_link = CGI::a(
+	my $edit_link    = CGI::a(
 		{
 			href => $self->systemLink(
 				$urlpath->newFromModule(
@@ -1363,7 +1389,7 @@ sub make_data_row {
 				src => $r->ce->{webworkURLs}{htdocs} . '/images/pi.svg',
 				alt => $r->maketext('Uses Math Objects')
 			})
-		)
+			)
 		: ''
 	);
 
@@ -1427,11 +1453,14 @@ sub make_data_row {
 								. 'represent a difficult problem.  The Status is often fairly high since  '
 								. 'many students will work on a problem until they get it correct or nearly so.'
 						))
-							. CGI::p({ class => 'mb-0' }, $r->maketext(
-							'Reviewing a problem and looking at both the average Attempts and  '
-								. 'average Status should give instructors valuable information about '
-								. 'the difficulty of the problem.'
-							)),
+							. CGI::p(
+								{ class => 'mb-0' },
+								$r->maketext(
+									'Reviewing a problem and looking at both the average Attempts and  '
+									. 'average Status should give instructors valuable information about '
+									. 'the difficulty of the problem.'
+								)
+							),
 						data_bs_toggle    => 'popover',
 						data_bs_placement => 'top',
 						data_bs_html      => 'true',
@@ -1463,10 +1492,13 @@ sub make_data_row {
 								. 'represents a problem which has been assigned to many students and is  '
 								. 'both popular with instructors and likely bug free.'
 						))
-							. CGI::p({ class => 'mb-0' }, $r->maketext(
-							'Local data is generated when your systems admin runs the script '
-								. 'update-OPL-statistics.'
-							)),
+							. CGI::p(
+								{ class => 'mb-0' },
+								$r->maketext(
+									'Local data is generated when your systems admin runs the script '
+									. 'update-OPL-statistics.'
+								)
+							),
 						data_bs_toggle    => 'popover',
 						data_bs_placement => 'top',
 						data_bs_trigger   => 'hover focus',
@@ -1509,11 +1541,14 @@ sub make_data_row {
 								. 'represent a difficult problem.  The Status is often fairly high since  '
 								. 'many students will work on a problem until they get it correct or nearly so.'
 						))
-							. CGI::p({ class => 'mb-0' }, $r->maketext(
-							'Reviewing a problem and looking at both the average Attempts and  '
-								. 'average Status should give instructors valuable information about '
-								. 'the difficulty of the problem.'
-							)),
+							. CGI::p(
+								{ class => 'mb-0' },
+								$r->maketext(
+									'Reviewing a problem and looking at both the average Attempts and  '
+									. 'average Status should give instructors valuable information about '
+									. 'the difficulty of the problem.'
+								)
+							),
 						data_bs_toggle    => 'popover',
 						data_bs_placement => 'top',
 						data_bs_html      => 'true',
@@ -1553,8 +1588,7 @@ sub make_data_row {
 						data_bs_placement => 'top'
 					}),
 				),
-				CGI::div({ class => 'd-flex flex-wrap align-items-center mb-1 gap-2' },
-					$problem_stats),
+				CGI::div({ class => 'd-flex flex-wrap align-items-center mb-1 gap-2' }, $problem_stats),
 				CGI::div(
 					{ class => 'lb-problem-icons mb-1 d-flex align-items-center' },
 					$mlt, $MOtag, $rerand,
@@ -1589,7 +1623,9 @@ sub make_data_row {
 			CGI::hidden({ name => "filetrial$cnt", default => $sourceFileName, override => 1 }),
 			$tagwidget,
 			CGI::div(
-				CGI::div({ class => 'psr_render_area', id => "psr_render_area_$cnt", data_pg_file => $pg_file }, ''),
+				CGI::div(
+					{ class => 'psr_render_area', id => "psr_render_area_$cnt", data_pg_file => $pg_file }, ''
+				),
 				''
 			)
 		)
@@ -1598,32 +1634,30 @@ sub make_data_row {
 }
 
 sub clear_default {
-	my $r = shift;
-	my $param = shift;
-	my $default = shift;
+	my $r        = shift;
+	my $param    = shift;
+	my $default  = shift;
 	my $newvalue = $r->param($param) || '';
-	$newvalue = '' if($newvalue eq $default);
+	$newvalue = '' if ($newvalue eq $default);
 	$r->param($param, $newvalue);
 }
 
 ### Mainly deal with more like this
 
 sub process_search {
-	my $r = shift;
+	my $r        = shift;
 	my @dbsearch = @_;
 	# Build a hash of MLT entries keyed by morelt_id
 	my %mlt = ();
 	my $mltind;
-	for my $indx (0..$#dbsearch) {
+	for my $indx (0 .. $#dbsearch) {
 		$dbsearch[$indx]->{filepath} =
-			$dbsearch[$indx]->{libraryroot} . "/" .
-			$dbsearch[$indx]->{path} . "/" .
-			$dbsearch[$indx]->{filename};
+			$dbsearch[$indx]->{libraryroot} . "/" . $dbsearch[$indx]->{path} . "/" . $dbsearch[$indx]->{filename};
 		# For debugging
 		$dbsearch[$indx]->{oindex} = $indx;
-		if($mltind = $dbsearch[$indx]->{morelt}) {
-			if(defined($mlt{$mltind})) {
-				push @{$mlt{$mltind}}, $indx;
+		if ($mltind = $dbsearch[$indx]->{morelt}) {
+			if (defined($mlt{$mltind})) {
+				push @{ $mlt{$mltind} }, $indx;
 			} else {
 				$mlt{$mltind} = [$indx];
 			}
@@ -1634,26 +1668,26 @@ sub process_search {
 	# Find MLT leaders, mark entries for no show,
 	# set up children array for leaders
 	for my $mltid (keys %mlt) {
-		my @idlist = @{$mlt{$mltid}};
-		if(scalar(@idlist)>1) {
+		my @idlist = @{ $mlt{$mltid} };
+		if (scalar(@idlist) > 1) {
 			my $leader = WeBWorK::Utils::ListingDB::getMLTleader($r, $mltid) || 0;
-			my $hold = undef;
+			my $hold   = undef;
 			for my $subindx (@idlist) {
-				if($dbsearch[$subindx]->{pgid} == $leader) {
-					$dbsearch[$subindx]->{children}=[];
+				if ($dbsearch[$subindx]->{pgid} == $leader) {
+					$dbsearch[$subindx]->{children} = [];
 					$hold = $subindx;
 				} else {
-					$dbsearch[$subindx]->{noshow}=1;
+					$dbsearch[$subindx]->{noshow} = 1;
 				}
 			}
-			do { # we did not find the leader
-				$hold = $idlist[0];
-				$dbsearch[$hold]->{noshow} = undef;
-				$dbsearch[$hold]->{children}=[];
-			} unless($hold);
-			$mlt{$mltid} = $dbsearch[$hold]; # store ref to leader
-		} else { # only one, no more
-			$dbsearch[$idlist[0]]->{morelt} = 0;
+			do {    # we did not find the leader
+				$hold                        = $idlist[0];
+				$dbsearch[$hold]->{noshow}   = undef;
+				$dbsearch[$hold]->{children} = [];
+			} unless ($hold);
+			$mlt{$mltid} = $dbsearch[$hold];    # store ref to leader
+		} else {    # only one, no more
+			$dbsearch[ $idlist[0] ]->{morelt} = 0;
 			delete $mlt{$mltid};
 		}
 	}
@@ -1661,15 +1695,15 @@ sub process_search {
 	# Put children in leader and delete them, record index of leaders
 	$mltind = 0;
 	while ($mltind < scalar(@dbsearch)) {
-		if($dbsearch[$mltind]->{noshow}) {
+		if ($dbsearch[$mltind]->{noshow}) {
 			# move the entry to the leader
 			my $mltval = $dbsearch[$mltind]->{morelt};
-			push @{$mlt{$mltval}->{children}}, $dbsearch[$mltind];
+			push @{ $mlt{$mltval}->{children} }, $dbsearch[$mltind];
 			splice @dbsearch, $mltind, 1;
 		} else {
-			if($dbsearch[$mltind]->{morelt}) { # a leader
+			if ($dbsearch[$mltind]->{morelt}) {    # a leader
 				for my $mltid (keys %mlt) {
-					if($mltid == $dbsearch[$mltind]->{morelt}) {
+					if ($mltid == $dbsearch[$mltind]->{morelt}) {
 						$mlt{$mltid}->{index} = $mltind;
 						last;
 					}
@@ -1680,10 +1714,10 @@ sub process_search {
 	}
 	# Last pass, reinsert children into dbsearch
 	my @leaders = keys(%mlt);
-	@leaders = reverse sort {$mlt{$a}->{index} <=> $mlt{$b}->{index}} @leaders;
+	@leaders = reverse sort { $mlt{$a}->{index} <=> $mlt{$b}->{index} } @leaders;
 	for my $i (@leaders) {
 		my $base = $mlt{$i}->{index};
-		splice @dbsearch, $base+1, 0, @{$mlt{$i}->{children}};
+		splice @dbsearch, $base + 1, 0, @{ $mlt{$i}->{children} };
 	}
 
 	return @dbsearch;
@@ -1693,43 +1727,47 @@ sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
 	## For all cases, lets set some things
-	$self->{error}=0;
-	my $ce = $r->ce;
-	my $db = $r->db;
+	$self->{error} = 0;
+	my $ce       = $r->ce;
+	my $db       = $r->db;
 	my $maxShown = $r->param('max_shown') || MAX_SHOW_DEFAULT;
-	$maxShown = 10000000 if($maxShown eq 'All'); # let's hope there aren't more
+	$maxShown = 10000000 if ($maxShown eq 'All');    # let's hope there aren't more
 	my $library_basic = $r->param('library_is_basic') || 1;
 	$self->{problem_seed} = $r->param('problem_seed') || 1234;
 	## Fix some parameters
 	for my $key (keys(%{ LIB2_DATA() })) {
-		clear_default($r, LIB2_DATA->{$key}->{name}, LIB2_DATA->{$key}->{all} );
+		clear_default($r, LIB2_DATA->{$key}->{name}, LIB2_DATA->{$key}->{all});
 	}
 	##  Grab library sets to display from parameters list.  We will
 	##  modify this as we go through the if/else tree
-	$self->{current_library_set} =  $r->param('library_sets');
+	$self->{current_library_set} = $r->param('library_sets');
 
 	##	These directories will have individual buttons
-	%problib = %{$ce->{courseFiles}{problibs}} if $ce->{courseFiles}{problibs};
+	%problib = %{ $ce->{courseFiles}{problibs} } if $ce->{courseFiles}{problibs};
 
 	my $userName = $r->param('user');
-	my $user = $db->getUser($userName); # checked
+	my $user     = $db->getUser($userName);    # checked
 	die "record for user $userName (real user) does not exist."
 		unless defined $user;
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
-		return(""); # Error message already produced in the body
+		return ("");                           # Error message already produced in the body
 	}
 
 	## Now one action we have to deal with here
 	if ($r->param('edit_local')) {
-		my $urlpath = $r->urlpath;
-		my $db = $r->db;
+		my $urlpath  = $r->urlpath;
+		my $db       = $r->db;
 		my $checkset = $db->getGlobalSet($r->param('local_sets'));
 		if (not defined($checkset)) {
 			$self->{error} = 1;
 			$self->addbadmessage($r->maketext('You need to select a "Target Set" before you can edit it.'));
 		} else {
-			my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail',  $r, setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
+			my $page = $urlpath->newFromModule(
+				'WeBWorK::ContentGenerator::Instructor::ProblemSetDetail', $r,
+				setID    => $r->param('local_sets'),
+				courseID => $urlpath->arg("courseID")
+			);
 			my $url = $self->systemLink($page);
 			$self->reply_with_redirect($url);
 		}
@@ -1742,39 +1780,39 @@ sub pre_header_initialize {
 	$self->{past_problems} = get_past_problem_files($r);
 	# if we don't end up reusing problems, this will be wiped out
 	# if we do redisplay the same problems, we must adjust this accordingly
-	my $none_shown = scalar(@{$self->{past_problems}})==0;
-	my @pg_files=();
+	my $none_shown            = scalar(@{ $self->{past_problems} }) == 0;
+	my @pg_files              = ();
 	my $use_previous_problems = 1;
-	my $first_shown = $r->param('first_shown') || 0;
-	my $last_shown = $r->param('last_shown');
+	my $first_shown           = $r->param('first_shown') || 0;
+	my $last_shown            = $r->param('last_shown');
 	if (not defined($last_shown)) {
 		$last_shown = -1;
 	}
 	my $first_index = $r->param('first_index') || 0;
-	my $last_index = $r->param('last_index');
+	my $last_index  = $r->param('last_index');
 	if (not defined($last_index)) {
 		$last_index = -1;
 	}
-	my $total_probs = $r->param('total_probs') || 0;
-	my @all_past_list = (); # these are include requested, but not shown
-	my ($j, $count, $omlt, $nmlt, $hold) = (0,0,-1,0,0);
+	my $total_probs   = $r->param('total_probs') || 0;
+	my @all_past_list = ();                              # these are include requested, but not shown
+	my ($j, $count, $omlt, $nmlt, $hold) = (0, 0, -1, 0, 0);
 	while (defined($r->param("all_past_list$j"))) {
 		$nmlt = $r->param("all_past_mlt$j") || 0;
-		push @all_past_list, {'filepath' => $r->param("all_past_list$j"), 'morelt' => $nmlt};
-		if($nmlt != $omlt or $nmlt == 0) {
-			$count++ if($j>0);
-			if($j>$hold+1) {
-				$all_past_list[$hold]->{children} = [2..($j-$hold)];
+		push @all_past_list, { 'filepath' => $r->param("all_past_list$j"), 'morelt' => $nmlt };
+		if ($nmlt != $omlt or $nmlt == 0) {
+			$count++ if ($j > 0);
+			if ($j > $hold + 1) {
+				$all_past_list[$hold]->{children} = [ 2 .. ($j - $hold) ];
 			}
 			$omlt = $nmlt;
 			$hold = $j;
-		} else { # equal and nonzero, so a child
+		} else {    # equal and nonzero, so a child
 			$all_past_list[$j]->{noshow} = 1;
 		}
 		$j++;
 	}
-	if($nmlt && $j-$hold>1) { $all_past_list[$hold]->{children} = [ 2..($j-$hold)]; }
-	$count++ if($j>0);
+	if ($nmlt && $j - $hold > 1) { $all_past_list[$hold]->{children} = [ 2 .. ($j - $hold) ]; }
+	$count++ if ($j > 0);
 
 	############# Default of which problem selector to display
 
@@ -1790,42 +1828,48 @@ sub pre_header_initialize {
 	}
 
 	########### Start the logic through if elsif elsif ...
-    debug("browse_lib", $r->param("$browse_lib"));
-    debug("browse_npl_library", $r->param("browse_npl_library"));
-    debug("browse_mysets", $r->param("browse_mysets"));
-    debug("browse_setdefs", $r->param("browse_setdefs"));
+	debug("browse_lib",         $r->param("$browse_lib"));
+	debug("browse_npl_library", $r->param("browse_npl_library"));
+	debug("browse_mysets",      $r->param("browse_mysets"));
+	debug("browse_setdefs",     $r->param("browse_setdefs"));
 	##### Asked to browse certain problems
 	if ($browse_lib ne '') {
-		$browse_which = $browse_lib;
+		$browse_which                = $browse_lib;
 		$self->{current_library_set} = "";
-		$use_previous_problems = 0; @pg_files = (); ## clear old problems
+		$use_previous_problems       = 0;
+		@pg_files                    = ();            ## clear old problems
 	} elsif ($r->param('browse_npl_library')) {
-		$browse_which = 'browse_npl_library';
+		$browse_which                = 'browse_npl_library';
 		$self->{current_library_set} = "";
-		$use_previous_problems = 0; @pg_files = (); ## clear old problems
+		$use_previous_problems       = 0;
+		@pg_files                    = ();                     ## clear old problems
 	} elsif ($r->param('browse_local')) {
-		$browse_which = 'browse_local';
-		$use_previous_problems = 0; @pg_files = (); ## clear old problems
+		$browse_which          = 'browse_local';
+		$use_previous_problems = 0;
+		@pg_files              = ();                           ## clear old problems
 	} elsif ($r->param('browse_mysets')) {
-		$browse_which = 'browse_mysets';
-		$use_previous_problems = 0; @pg_files = (); ## clear old problems
+		$browse_which          = 'browse_mysets';
+		$use_previous_problems = 0;
+		@pg_files              = ();                           ## clear old problems
 	} elsif ($r->param('browse_setdefs')) {
-		$browse_which = 'browse_setdefs';
+		$browse_which                = 'browse_setdefs';
 		$self->{current_library_set} = "";
-		$use_previous_problems = 0; @pg_files = (); ## clear old problems
+		$use_previous_problems       = 0;
+		@pg_files                    = ();                     ## clear old problems
 
 		##### Change the seed value
 
 	} elsif ($r->param('rerandomize')) {
-		$self->{problem_seed}= 1+$self->{problem_seed};
+		$self->{problem_seed} = 1 + $self->{problem_seed};
 		#$r->param('problem_seed', $problem_seed);
-		$self->addbadmessage($r->maketext('Changing the problem seed for display, but there are no problems showing.')) if $none_shown;
+		$self->addbadmessage($r->maketext('Changing the problem seed for display, but there are no problems showing.'))
+			if $none_shown;
 
 		##### Clear the display
 
 	} elsif ($r->param('cleardisplay')) {
-		@pg_files = ();
-		$use_previous_problems=0;
+		@pg_files              = ();
+		$use_previous_problems = 0;
 		$self->addbadmessage($r->maketext('The display was already cleared.')) if $none_shown;
 
 		##### View problems selected from the local list
@@ -1861,11 +1905,11 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('lib_view')) {
 
-		@pg_files=();
+		@pg_files = ();
 		# TODO: deprecate OPLv1 -- replace getSectionListings with getDBListings($r,0)
 		my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r);
-		@pg_files = process_search($r, @dbsearch);
-		$use_previous_problems=0;
+		@pg_files              = process_search($r, @dbsearch);
+		$use_previous_problems = 0;
 
 		##### View a set from a set*.def
 
@@ -1883,10 +1927,9 @@ sub pre_header_initialize {
 
 		##### Edit the current local homework set
 
-	} elsif ($r->param('edit_local')) { ## Jump to set edit page
+	} elsif ($r->param('edit_local')) {    ## Jump to set edit page
 
-		; # already handled
-
+		;                                  # already handled
 
 		##### Make a new local homework set
 
@@ -1901,13 +1944,16 @@ sub pre_header_initialize {
 			# If we want to munge the input set name, do it here.
 			my $newSetName = format_set_name_internal($r->param('new_set_name'));
 			debug("local_sets was ", $r->param('local_sets'));
-			$r->param('local_sets',$newSetName);  ## use of two parameter param
+			$r->param('local_sets', $newSetName);    ## use of two parameter param
 			debug("new value of local_sets is ", $r->param('local_sets'));
-			if (! $newSetName) {
-			    $self->addbadmessage($r->maketext("You did not specify a new set name."));
+			if (!$newSetName) {
+				$self->addbadmessage($r->maketext("You did not specify a new set name."));
 			} elsif (defined $db->getGlobalSet($newSetName)) {
-			    $self->addbadmessage($r->maketext("The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",$newSetName));
-			} else {			# Do it!
+				$self->addbadmessage($r->maketext(
+					"The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",
+					$newSetName
+				));
+			} else {                                 # Do it!
 				my $newSetRecord = $db->newGlobalSet();
 				$newSetRecord->set_id($newSetName);
 				$newSetRecord->set_header("defaultHeader");
@@ -1915,33 +1961,33 @@ sub pre_header_initialize {
 				# It's convenient to set the due date two weeks from now so that it is
 				# not accidentally available to students.
 
-				my $dueDate = time+2*60*60*24*7;
+				my $dueDate    = time + 2 * 60 * 60 * 24 * 7;
 				my $display_tz = $ce->{siteDefaults}{timezone};
-				my $fDueDate = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
-				my $dueTime = $ce->{pg}{timeAssignDue};
+				my $fDueDate   = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
+				my $dueTime    = $ce->{pg}{timeAssignDue};
 
 				# We replace the due time by the one from the config variable
 				# and try to bring it back to unix time if possible
 				$fDueDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
 
 				$dueDate = $self->parseDateTime($fDueDate, $display_tz);
-				$newSetRecord->open_date($dueDate - 60*$ce->{pg}{assignOpenPriorToDue});
+				$newSetRecord->open_date($dueDate - 60 * $ce->{pg}{assignOpenPriorToDue});
 				$newSetRecord->due_date($dueDate);
-				$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});
+				$newSetRecord->answer_date($dueDate + 60 * $ce->{pg}{answersOpenAfterDueDate});
 
 				$newSetRecord->visible(1);
 				$newSetRecord->enable_reduced_scoring(0);
 				$newSetRecord->assignment_type('default');
-				eval {$db->addGlobalSet($newSetRecord)};
+				eval { $db->addGlobalSet($newSetRecord) };
 				if ($@) {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");
 				} else {
 					$self->addgoodmessage($r->maketext("Set [_1] has been created.", $newSetName));
 					my $selfassign = $r->param('selfassign') || "";
-					$selfassign = "" if($selfassign =~ /false/i); # deal with javascript false
-					if($selfassign) {
+					$selfassign = "" if ($selfassign =~ /false/i);    # deal with javascript false
+					if ($selfassign) {
 						$self->assignSetToUser($userName, $newSetRecord);
-						$self->addgoodmessage($r->maketext("Set [_1] was assigned to [_2]", $newSetName,$userName));
+						$self->addgoodmessage($r->maketext("Set [_1] was assigned to [_2]", $newSetName, $userName));
 					}
 				}
 			}
@@ -1949,111 +1995,109 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('next_page')) {
 		# Can set first/last problem, but not index yet
-		$first_index = $last_index+1;
+		$first_index = $last_index + 1;
 		my $oli = 0;
 		my $cnt = 0;
-		while(($oli = next_prob_group($last_index, @all_past_list)) != -1 and $cnt<$maxShown) {
+		while (($oli = next_prob_group($last_index, @all_past_list)) != -1 and $cnt < $maxShown) {
 			$cnt++;
 			$last_index = $oli;
 		}
 		$last_index = end_prob_group($last_index, @all_past_list);
 	} elsif ($r->param('prev_page')) {
 		# Can set first/last index, but not problem yet
-		$last_index = $first_index-1;
+		$last_index = $first_index - 1;
 		my $oli = 0;
 		my $cnt = 0;
-		while(($oli = prev_prob_group($first_index, @all_past_list)) != -1 and $cnt<$maxShown) {
+		while (($oli = prev_prob_group($first_index, @all_past_list)) != -1 and $cnt < $maxShown) {
 			$cnt++;
 			$first_index = $oli;
 		}
-		$first_index = 0 if($first_index<0);
+		$first_index = 0 if ($first_index < 0);
 
-	#} elsif ($r->param('select_all')) {
+		#} elsif ($r->param('select_all')) {
 		#;
 	} elsif ($r->param('library_basic')) {
 		$library_basic = 1;
 		for my $jj (qw(textchapter textsection textbook)) {
-			$r->param('library_'.$jj,'');
+			$r->param('library_' . $jj, '');
 		}
 	} elsif ($r->param('library_advanced')) {
 		$library_basic = 2;
 	} elsif ($r->param('library_reset')) {
 		for my $jj (qw(chapters sections subjects textbook keywords)) {
-			$r->param('library_'.$jj,'');
+			$r->param('library_' . $jj, '');
 		}
-	#} elsif ($r->param('select_none')) {
-	#	;
+		#} elsif ($r->param('select_none')) {
+		#	;
 	} else {
 		##### No action requested, probably our first time here
 		;
-	}				##### end of the if elsif ...
-
+	}    ##### end of the if elsif ...
 
 	# Get the list of local sets sorted by set_id.
 	my @all_db_sets = map { $_->[0] } $db->listGlobalSetsWhere({}, 'set_id');
 
 	if ($use_previous_problems) {
-		@pg_files = @all_past_list;
+		@pg_files    = @all_past_list;
 		$first_shown = 0;
-		$last_shown = 0;
-		my ($oli, $cnt) = (0,0);
-		while($oli < $first_index and ($oli = next_prob_group($first_shown, @pg_files)) != -1) {
+		$last_shown  = 0;
+		my ($oli, $cnt) = (0, 0);
+		while ($oli < $first_index and ($oli = next_prob_group($first_shown, @pg_files)) != -1) {
 			$cnt++;
 			$first_shown = $oli;
 		}
 		$first_shown = $cnt;
-		$last_shown = $oli;
-		while($oli <= $last_index and $oli != -1) {
+		$last_shown  = $oli;
+		while ($oli <= $last_index and $oli != -1) {
 			$oli = next_prob_group($last_shown, @pg_files);
 			$cnt++;
 			$last_shown = $oli;
 		}
-		$last_shown = $cnt-1;
+		$last_shown  = $cnt - 1;
 		$total_probs = $count;
 	} else {
 		### Main place to set first/last shown for new problems
 		$first_shown = 0;
 		$first_index = 0;
-		$last_index = 0;
-		$last_shown = 1;
+		$last_index  = 0;
+		$last_shown  = 1;
 		$total_probs = 0;
 		my $oli = 0;
-		while(($oli = next_prob_group($last_index, @pg_files)) != -1 and $last_shown<$maxShown) {
+		while (($oli = next_prob_group($last_index, @pg_files)) != -1 and $last_shown < $maxShown) {
 			$last_shown++;
 			$last_index = $oli;
 		}
 		$total_probs = $last_shown;
 		# $last_index points to start of last group
-		$last_shown--; # first_shown = 0
+		$last_shown--;    # first_shown = 0
 		$last_index = end_prob_group($last_index, @pg_files);
-		$oli = $last_index;
-		while(($oli = next_prob_group($oli, @pg_files)) != -1) {
+		$oli        = $last_index;
+		while (($oli = next_prob_group($oli, @pg_files)) != -1) {
 			$total_probs++;
 		}
 	}
 
+	my $library_stats_handler = '';
 
-        my $library_stats_handler = '';
-
-	if ($ce->{problemLibrary}{showLibraryGlobalStats} ||
-	   $ce->{problemLibrary}{showLibraryLocalStats} ) {
-	    $library_stats_handler = WeBWorK::Utils::LibraryStats->new($ce);
+	if ($ce->{problemLibrary}{showLibraryGlobalStats}
+		|| $ce->{problemLibrary}{showLibraryLocalStats})
+	{
+		$library_stats_handler = WeBWorK::Utils::LibraryStats->new($ce);
 	}
 
 	############# Now store data in self for retreival by body
-	$self->{first_shown} = $first_shown;
-	$self->{last_shown} = $last_shown;
-	$self->{first_index} = $first_index;
-	$self->{last_index} = $last_index;
-	$self->{total_probs} = $total_probs;
+	$self->{first_shown}  = $first_shown;
+	$self->{last_shown}   = $last_shown;
+	$self->{first_index}  = $first_index;
+	$self->{last_index}   = $last_index;
+	$self->{total_probs}  = $total_probs;
 	$self->{browse_which} = $browse_which;
 	#$self->{problem_seed} = $problem_seed;
-	$self->{pg_files} = \@pg_files;
-	$self->{all_db_sets} = \@all_db_sets;
-	$self->{library_basic} = $library_basic;
+	$self->{pg_files}              = \@pg_files;
+	$self->{all_db_sets}           = \@all_db_sets;
+	$self->{library_basic}         = $library_basic;
 	$self->{library_stats_handler} = $library_stats_handler;
 }
-
 
 sub title {
 	my ($self) = @_;
@@ -2063,15 +2107,15 @@ sub title {
 sub body {
 	my ($self) = @_;
 
-	my $r = $self->r;
-	my $ce = $r->ce;		# course environment
-	my $db = $r->db;		# database
-	my $j;			# garden variety counter
+	my $r  = $self->r;
+	my $ce = $r->ce;     # course environment
+	my $db = $r->db;     # database
+	my $j;               # garden variety counter
 
 	my $courseID = $self->r->urlpath->arg("courseID");
 	my $userName = $r->param('user');
 
-	my $user = $db->getUser($userName); # checked
+	my $user = $db->getUser($userName);    # checked
 	die "record for user $userName (real user) does not exist."
 		unless defined $user;
 
@@ -2090,17 +2134,17 @@ sub body {
 
 	##########	Extract information computed in pre_header_initialize
 
-	my $first_shown = $self->{first_shown};
-	my $last_shown = $self->{last_shown};
-	my $first_index = $self->{first_index};
-	my $last_index = $self->{last_index};
-	my $total_probs = $self->{total_probs};
+	my $first_shown  = $self->{first_shown};
+	my $last_shown   = $self->{last_shown};
+	my $first_index  = $self->{first_index};
+	my $last_index   = $self->{last_index};
+	my $total_probs  = $self->{total_probs};
 	my $browse_which = $self->{browse_which};
-	my $problem_seed = $self->{problem_seed}||1234;
-	my @pg_files = @{$self->{pg_files}};
-	my @all_db_sets = @{$self->{all_db_sets}};
+	my $problem_seed = $self->{problem_seed} || 1234;
+	my @pg_files     = @{ $self->{pg_files} };
+	my @all_db_sets  = @{ $self->{all_db_sets} };
 
-	my @plist = map {$_->{filepath}} @pg_files[$first_index..$last_index];
+	my @plist = map { $_->{filepath} } @pg_files[ $first_index .. $last_index ];
 
 	# If there are problems to view and a target set is selected, then create a hash of source files in the target set.
 	if (@plist) {
@@ -2119,48 +2163,48 @@ sub body {
 	# Add the course language in a hidden input so that the javascript can get this information.
 	print CGI::hidden({ name => 'hidden_language', value => $ce->{language} });
 
-	print CGI::hidden(-name=>'browse_which', -value=>$browse_which,-override=>1),
-		CGI::hidden(-name=>'problem_seed', -value=>$problem_seed, -override=>1);
-	for ($j = 0 ; $j < scalar(@pg_files) ; $j++) {
-		print CGI::hidden(-name=>"all_past_list$j", -value=>$pg_files[$j]->{filepath}, -override=>1)."\n";
-		print CGI::hidden(-name=>"all_past_mlt$j", -value=>($pg_files[$j]->{morelt} || 0), -override=>1)."\n";
+	print CGI::hidden(-name => 'browse_which', -value => $browse_which, -override => 1),
+		CGI::hidden(-name => 'problem_seed', -value => $problem_seed, -override => 1);
+	for ($j = 0; $j < scalar(@pg_files); $j++) {
+		print CGI::hidden(-name => "all_past_list$j", -value => $pg_files[$j]->{filepath},      -override => 1) . "\n";
+		print CGI::hidden(-name => "all_past_mlt$j",  -value => ($pg_files[$j]->{morelt} || 0), -override => 1) . "\n";
 	}
 
-	print CGI::hidden(-name=>'first_shown', -value=>$first_shown,-override=>1);
+	print CGI::hidden(-name => 'first_shown', -value => $first_shown, -override => 1);
 
-	print CGI::hidden(-name=>'last_shown', -value=>$last_shown, -override=>1);
-	print CGI::hidden(-name=>'first_index', -value=>$first_index);
-	print CGI::hidden(-name=>'last_index', -value=>$last_index);
-	print CGI::hidden(-name=>'total_probs', -value=>$total_probs);
+	print CGI::hidden(-name => 'last_shown',  -value => $last_shown, -override => 1);
+	print CGI::hidden(-name => 'first_index', -value => $first_index);
+	print CGI::hidden(-name => 'last_index',  -value => $last_index);
+	print CGI::hidden(-name => 'total_probs', -value => $total_probs);
 
 	print CGI::start_div({ class => 'library-browser-table' });
 	$self->make_top_row('all_db_sets' => \@all_db_sets, 'browse_which' => $browse_which);
 	print CGI::end_div();
 
 	########## Now print problems
-	my ($jj,$mltnumleft)=(0,-1);
-	for ($jj=0; $jj<scalar(@plist); $jj++) {
-		$pg_files[$jj+$first_index]->{filepath} =~ s|^$ce->{courseDirs}->{templates}/?||;
+	my ($jj, $mltnumleft) = (0, -1);
+	for ($jj = 0; $jj < scalar(@plist); $jj++) {
+		$pg_files[ $jj + $first_index ]->{filepath} =~ s|^$ce->{courseDirs}->{templates}/?||;
 		# For MLT boxes, need to know if we are at the end of a group
 		# make_data_row can't figure this out since it only sees one file
 		$mltnumleft--;
-		my $sourceFileData = $pg_files[$jj+$first_index];
-		$self->make_data_row($sourceFileData, $plist[$jj], $jj+1,$mltnumleft);
-		$mltnumleft = scalar(@{$sourceFileData->{children}}) if($sourceFileData->{children});
+		my $sourceFileData = $pg_files[ $jj + $first_index ];
+		$self->make_data_row($sourceFileData, $plist[$jj], $jj + 1, $mltnumleft);
+		$mltnumleft = scalar(@{ $sourceFileData->{children} }) if ($sourceFileData->{children});
 	}
 
 	########## Finish things off
 	my ($next_button, $prev_button) = ("", "");
 	if ($first_index > 0) {
 		$prev_button = CGI::submit({
-			name => "prev_page",
+			name  => "prev_page",
 			value => $r->maketext("Previous page"),
 			class => 'btn btn-secondary btn-sm'
 		});
 	}
-	if ((1+$last_index)<scalar(@pg_files)) {
+	if ((1 + $last_index) < scalar(@pg_files)) {
 		$next_button = CGI::submit({
-			name => "next_page",
+			name  => "next_page",
 			value => $r->maketext("Next page"),
 			class => 'btn btn-secondary btn-sm'
 		});
@@ -2181,14 +2225,12 @@ sub body {
 			" ",
 			$next_button,
 		);
-		print CGI::p(
-			$r->maketext(
-				'Some problems shown above represent multiple similar problems from the database.  If the (top) '
-					. 'information line for a problem has a letter M for "More", hover your mouse over the M  to '
-					. 'see how many similar problems are hidden, or click on the M to see the problems.  If you click '
-					. 'to view these problems, the M becomes an L, which can be clicked on to hide the problems again.'
-				)
-		);
+		print CGI::p($r->maketext(
+			'Some problems shown above represent multiple similar problems from the database.  If the (top) '
+				. 'information line for a problem has a letter M for "More", hover your mouse over the M  to '
+				. 'see how many similar problems are hidden, or click on the M to see the problems.  If you click '
+				. 'to view these problems, the M becomes an L, which can be clicked on to hide the problems again.'
+		));
 	}
 
 	print CGI::end_form();

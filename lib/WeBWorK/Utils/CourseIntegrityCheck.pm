@@ -29,18 +29,18 @@ use WeBWorK::Utils::CourseManagement qw/listCourses/;
 use WeBWorK::PG::IO;
 use WeBWorK::CGI;
 
-use constant {             # constants describing the comparison of two hashes.
-           ONLY_IN_A=>0,
-           ONLY_IN_B=>1,
-           DIFFER_IN_A_AND_B=>2,
-           SAME_IN_A_AND_B=>3
+use constant {    # constants describing the comparison of two hashes.
+	ONLY_IN_A         => 0,
+	ONLY_IN_B         => 1,
+	DIFFER_IN_A_AND_B => 2,
+	SAME_IN_A_AND_B   => 3
 };
 ################################################################################
 
 sub new {
 	my $invocant = shift;
-	my $class = ref $invocant || $invocant;
-	my $self = bless {}, $class;
+	my $class    = ref $invocant || $invocant;
+	my $self     = bless {}, $class;
 	$self->init(@_);
 	return $self;
 }
@@ -60,14 +60,14 @@ sub init {
 
 	$self->{verbose_sub} = $options{verbose_sub} || \&debug;
 	$self->{confirm_sub} = $options{confirm_sub} || \&ask_permission_stdio;
-	$self->{ce} = $options{ce};
-    my $dbLayoutName = $self->{ce}->{dbLayoutName};
-	$self->{db} =new WeBWorK::DB($self->{ce}->{dbLayouts}->{$dbLayoutName});
+	$self->{ce}          = $options{ce};
+	my $dbLayoutName = $self->{ce}->{dbLayoutName};
+	$self->{db} = new WeBWorK::DB($self->{ce}->{dbLayouts}->{$dbLayoutName});
 }
 
-sub ce { return shift->{ce} }
-sub db { return shift->{db} }
-sub dbh { return shift->{dbh} }
+sub ce      { return shift->{ce} }
+sub db      { return shift->{db} }
+sub dbh     { return shift->{dbh} }
 sub verbose { my $sub = shift->{verbose_sub}; return &$sub(@_) }
 sub confirm { my $sub = shift->{confirm_sub}; return &$sub(@_) }
 
@@ -90,10 +90,10 @@ same as the ones specified by the databaseLayout
 
 sub checkCourseTables {
 	my ($self, $courseName) = @_;
-	my $str='';
-    my $tables_ok = 1;
-    my %dbStatus = ();
-    #################################
+	my $str       = '';
+	my $tables_ok = 1;
+	my %dbStatus  = ();
+	#################################
 	# fetch schema from course environment and search database
 	# for corresponding tables.
 	##########################################################
@@ -101,21 +101,22 @@ sub checkCourseTables {
 	my $ce = $self->{ce};
 	$self->lock_database;
 	foreach my $table (sort keys %$db) {
-	    next if $db->{$table}{params}{non_native}; # skip non-native tables
-	    my $table_name = (exists $db->{$table}->{params}->{tableOverride})? $db->{$table}->{params}->{tableOverride}:$table;
-	    my $database_table_exists = ($db->{$table}->tableExists) ? 1:0;
-	    if ($database_table_exists ) { # exists means the table can be described;
-	       my( $fields_ok, $fieldStatus) = $self->checkTableFields($courseName, $table);
-	       if ($fields_ok) {
-	       	     $dbStatus{$table} = [SAME_IN_A_AND_B()];
-	       } else {
-	       		$dbStatus{$table} = [DIFFER_IN_A_AND_B(),$fieldStatus];
-	       		$tables_ok=0;
-	       }
-	    } else {
-	    	$tables_ok=0;
-	    	$dbStatus{$table}=[ONLY_IN_A(),];
-	    }
+		next if $db->{$table}{params}{non_native};    # skip non-native tables
+		my $table_name =
+			(exists $db->{$table}->{params}->{tableOverride}) ? $db->{$table}->{params}->{tableOverride} : $table;
+		my $database_table_exists = ($db->{$table}->tableExists) ? 1 : 0;
+		if ($database_table_exists) {                 # exists means the table can be described;
+			my ($fields_ok, $fieldStatus) = $self->checkTableFields($courseName, $table);
+			if ($fields_ok) {
+				$dbStatus{$table} = [ SAME_IN_A_AND_B() ];
+			} else {
+				$dbStatus{$table} = [ DIFFER_IN_A_AND_B(), $fieldStatus ];
+				$tables_ok = 0;
+			}
+		} else {
+			$tables_ok = 0;
+			$dbStatus{$table} = [ ONLY_IN_A(), ];
+		}
 	}
 	##########################################################
 	# fetch fetch corresponding tables in the database and
@@ -123,37 +124,38 @@ sub checkCourseTables {
 	##########################################################
 
 	my $dbh = $self->dbh;
-	my $tablePrefix = "${courseName}\\_";   # _ represents any single character in the MySQL like statement so we escape it
-	my $stmt = "show tables like '${tablePrefix}%'";    # mysql request
-	my $result = $dbh->selectall_arrayref($stmt) ;
-	my @tableNames = map {@$_} @$result;             # drill down in the result to the table name level
+	my $tablePrefix =
+		"${courseName}\\_";    # _ represents any single character in the MySQL like statement so we escape it
+	my $stmt       = "show tables like '${tablePrefix}%'";    # mysql request
+	my $result     = $dbh->selectall_arrayref($stmt);
+	my @tableNames = map {@$_} @$result;                      # drill down in the result to the table name level
 
 	# Table names are of the form courseID_table (with an underscore). So if we have two courses mth101 and
 	# mth101_fall09 when we check the tables for mth101 we will inadvertantly pick up the tables for mth101_fall09.
 	# Thus we find all courseID's and exclude the extraneous tables.
 
-	my @courseIDs = listCourses($ce);
-	my @similarIDs =();
+	my @courseIDs  = listCourses($ce);
+	my @similarIDs = ();
 	foreach my $courseID (@courseIDs) {
-	    next unless $courseID =~/^${courseName}\_(.*)/;
-	    push(@similarIDs, $courseID);
+		next unless $courseID =~ /^${courseName}\_(.*)/;
+		push(@similarIDs, $courseID);
 	}
 
-	OUTER_LOOP:
+OUTER_LOOP:
 	foreach my $table (sort @tableNames) {
-	    next unless $table =~/^${courseName}\_(.*)/;  #double check that we only have our course tables and similar ones
+		next unless $table =~ /^${courseName}\_(.*)/; #double check that we only have our course tables and similar ones
 
-	    foreach my $courseID (@similarIDs) {          #exclude tables with similar but wrong names
-		next OUTER_LOOP if $table =~/^${courseID}\_(.*)/;
-	    }
+		foreach my $courseID (@similarIDs) {          #exclude tables with similar but wrong names
+			next OUTER_LOOP if $table =~ /^${courseID}\_(.*)/;
+		}
 
-	    my $schema_name = $1;
-		my $exists = exists($db->{$schema_name});
-        $tables_ok = 0 unless exists($db->{$schema_name});
-		$dbStatus{$schema_name} =[ONLY_IN_B] unless $exists;
+		my $schema_name = $1;
+		my $exists      = exists($db->{$schema_name});
+		$tables_ok              = 0           unless exists($db->{$schema_name});
+		$dbStatus{$schema_name} = [ONLY_IN_B] unless $exists;
 	}
 	$self->unlock_database;
-	return ($tables_ok,\%dbStatus); # table in both schema & database; found in schema only; found in database only
+	return ($tables_ok, \%dbStatus);    # table in both schema & database; found in schema only; found in database only
 }
 
 =item $CIchecker-> updateCourseTables($courseName,  $table_names);
@@ -193,8 +195,8 @@ sub updateCourseTables {
 		# from the table when the database was checked in checkCourseTables and try that.
 		eval { $self->dbh->do("DROP TABLE `${courseName}_$delete_table_name`") };
 		if ($@) {
-			$msg .= CGI::span({ class => 'text-danger' },
-				"Unable to delete table '$delete_table_name' from database: $@")
+			$msg .=
+				CGI::span({ class => 'text-danger' }, "Unable to delete table '$delete_table_name' from database: $@")
 				. CGI::br();
 		} else {
 			$msg .= "Table '$delete_table_name' deleted from database." . CGI::br();
@@ -213,28 +215,29 @@ same as the ones specified by the databaseLayout
 =cut
 
 sub checkTableFields {
-	my ($self,$courseName, $table) = @_;
-	my $fields_ok = 1;
+	my ($self, $courseName, $table) = @_;
+	my $fields_ok   = 1;
 	my %fieldStatus = ();
 	##########################################################
 	# fetch schema from course environment and search database
 	# for corresponding tables.
 	##########################################################
 	my $db = $self->db;
-	my $table_name = (exists $db->{$table}->{params}->{tableOverride})? $db->{$table}->{params}->{tableOverride}:$table;
-	warn "$table_name is a non native table" if $db->{$table}{params}{non_native}; # skip non-native tables
-	my @schema_field_names =  $db->{$table}->{record}->FIELDS;
-	my %schema_override_field_names=();
+	my $table_name =
+		(exists $db->{$table}->{params}->{tableOverride}) ? $db->{$table}->{params}->{tableOverride} : $table;
+	warn "$table_name is a non native table" if $db->{$table}{params}{non_native};    # skip non-native tables
+	my @schema_field_names          = $db->{$table}->{record}->FIELDS;
+	my %schema_override_field_names = ();
 	foreach my $field (sort @schema_field_names) {
-	    my $field_name  = $db->{$table}->{params}->{fieldOverride}->{$field} ||$field;
-	    $schema_override_field_names{$field_name}=$field;
-	    my $database_field_exists = $db->{$table}->tableFieldExists($field_name);
-	    if ($database_field_exists) {
-	    	$fieldStatus{$field} =[SAME_IN_A_AND_B]
-	    } else {
-            $fields_ok = 0;
-	    	$fieldStatus{$field} =[ONLY_IN_A];
-	    }
+		my $field_name = $db->{$table}->{params}->{fieldOverride}->{$field} || $field;
+		$schema_override_field_names{$field_name} = $field;
+		my $database_field_exists = $db->{$table}->tableFieldExists($field_name);
+		if ($database_field_exists) {
+			$fieldStatus{$field} = [SAME_IN_A_AND_B];
+		} else {
+			$fields_ok = 0;
+			$fieldStatus{$field} = [ONLY_IN_A];
+		}
 
 	}
 	##########################################################
@@ -242,18 +245,18 @@ sub checkTableFields {
 	# search for corresponding schema entries.
 	##########################################################
 
-    my $dbh =$self->dbh;                        # grab any database handle
- 	my $stmt = "SHOW COLUMNS FROM `$table_name`";    # mysql request
- 	my $result = $dbh->selectall_arrayref($stmt) ;
- 	my %database_field_names =  map {${$_}[0]=>[$_]} @$result;             # drill down in the result to the field name level
-                                                           #  result is array:  Field      | Type     | Null | Key | Default | Extra
- 	foreach my $field_name (sort keys %database_field_names) {
- 		my $exists = exists($schema_override_field_names{$field_name} );
- 		$fields_ok=0 unless $exists;
- 		$fieldStatus{$field_name} = [ONLY_IN_B] unless $exists;
- 	}
+	my $dbh                  = $self->dbh;                           # grab any database handle
+	my $stmt                 = "SHOW COLUMNS FROM `$table_name`";    # mysql request
+	my $result               = $dbh->selectall_arrayref($stmt);
+	my %database_field_names = map { ${$_}[0] => [$_] } @$result;    # drill down in the result to the field name level
+		#  result is array:  Field      | Type     | Null | Key | Default | Extra
+	foreach my $field_name (sort keys %database_field_names) {
+		my $exists = exists($schema_override_field_names{$field_name});
+		$fields_ok                = 0           unless $exists;
+		$fieldStatus{$field_name} = [ONLY_IN_B] unless $exists;
+	}
 
- 	return ($fields_ok, \%fieldStatus); # table in both schema & database; found in schema only; found in database only
+	return ($fields_ok, \%fieldStatus);  # table in both schema & database; found in schema only; found in database only
 }
 
 =item  $CIchecker->updateTableFields($courseName, $table);
@@ -304,33 +307,30 @@ permissions.
 =cut
 
 sub checkCourseDirectories {
-	my ($self) = @_;
-	my $ce = $self->{ce};
-	my @webworkDirectories = keys %{$ce->{webworkDirs}};
-    my @courseDirectories = keys %{$ce->{courseDirs}};
-    my $str = '';
-    my @results;
-    my $directories_ok =1;
-    foreach my $dir (sort @courseDirectories) {
-        my $path = $ce->{courseDirs}->{$dir};
-        my $status = (-e $path) ?
-          ((-r $path)?'r':'-') .
-    	  ((-w _ )?'w':'-'   ) .
-    	  ((-x _ )?'x':'-'   )    : "missing";
+	my ($self)             = @_;
+	my $ce                 = $self->{ce};
+	my @webworkDirectories = keys %{ $ce->{webworkDirs} };
+	my @courseDirectories  = keys %{ $ce->{courseDirs} };
+	my $str                = '';
+	my @results;
+	my $directories_ok = 1;
+	foreach my $dir (sort @courseDirectories) {
+		my $path   = $ce->{courseDirs}->{$dir};
+		my $status = (-e $path) ? ((-r $path) ? 'r' : '-') . ((-w _ ) ? 'w' : '-') . ((-x _ ) ? 'x' : '-') : "missing";
 
-    	#all directories should be readable, writable and executable
-    	my $class;
-	    if ($status eq 'rwx') {
-	    	$class = 'text-success';
-	    } else {
-	    	$directories_ok = 0;
-	    	$class = 'text-danger';
-	    }
+		#all directories should be readable, writable and executable
+		my $class;
+		if ($status eq 'rwx') {
+			$class = 'text-success';
+		} else {
+			$directories_ok = 0;
+			$class          = 'text-danger';
+		}
 
 		push @results, CGI::li("$dir =>" . CGI::span({ class => $class }, " $path $status <br/>"));
-    }
-    $str = CGI::start_ul(). join(" ",@results) .  CGI::end_ul();
-    return ( $directories_ok, $str);
+	}
+	$str = CGI::start_ul() . join(" ", @results) . CGI::end_ul();
+	return ($directories_ok, $str);
 }
 
 =item $CIchecker->updateCourseDirectories($courseName);
@@ -340,20 +340,21 @@ Creates some course directories automatically.
 =cut
 
 sub updateCourseDirectories {
-	my $self = shift;
-	my $ce = $self->{ce};
-	my @webworkDirectories = keys %{$ce->{webworkDirs}};
-    my @courseDirectories = keys %{$ce->{courseDirs}};
-    my %updateable_directories = (html_temp=>1,mailmerge=>1,tmpEditFileDir=>1);  #FIXME this is hardwired for the time being.
-    foreach my $dir (sort @courseDirectories) {
-    	#HACK for upgrading the achievements directory
-    	if ($dir eq "achievements") {
-    		my $modelCourseAchievementsDir = $ce->{webworkDirs}{courses}."/modelCourse/templates/achievements";
-    		my $modelCourseAchievementsHtmlDir = $ce->{webworkDirs}{courses}."/modelCourse/html/achievements";
-    		my $courseAchievementsDir = $ce->{courseDirs}{achievements};
-    		my $courseAchievementsHtmlDir = $ce->{courseDirs}{achievements_html};
-    		my $courseTemplatesDir = $ce->{courseDirs}{templates};
-    		my $courseHtmlDir = $ce->{courseDirs}{html};
+	my $self               = shift;
+	my $ce                 = $self->{ce};
+	my @webworkDirectories = keys %{ $ce->{webworkDirs} };
+	my @courseDirectories  = keys %{ $ce->{courseDirs} };
+	my %updateable_directories =
+		(html_temp => 1, mailmerge => 1, tmpEditFileDir => 1);    #FIXME this is hardwired for the time being.
+	foreach my $dir (sort @courseDirectories) {
+		#HACK for upgrading the achievements directory
+		if ($dir eq "achievements") {
+			my $modelCourseAchievementsDir     = $ce->{webworkDirs}{courses} . "/modelCourse/templates/achievements";
+			my $modelCourseAchievementsHtmlDir = $ce->{webworkDirs}{courses} . "/modelCourse/html/achievements";
+			my $courseAchievementsDir          = $ce->{courseDirs}{achievements};
+			my $courseAchievementsHtmlDir      = $ce->{courseDirs}{achievements_html};
+			my $courseTemplatesDir             = $ce->{courseDirs}{templates};
+			my $courseHtmlDir                  = $ce->{courseDirs}{html};
 			unless (-e $modelCourseAchievementsDir and -e $modelCourseAchievementsHtmlDir) {
 				print CGI::p(
 					{ class => 'text-danger' },
@@ -381,34 +382,34 @@ sub updateCourseDirectories {
 				}
 			}
 			#print "done with achievements for ",$ce->{courseDirs}{root},"<br/>";
-     	} # end HACK for upgrading achivements
-        next unless exists $updateable_directories{$dir};
-        my $path = $ce->{courseDirs}->{$dir};
-        unless ( -e $path) {   # if by some unlucky chance the tmpDirectory hasn't been created, create it.
-			my $parentDirectory =  $path;
-			$parentDirectory =~s|/$||;  # remove a trailing /
-			$parentDirectory =~s|/[^/]*$||; # remove last node
-			my ($perms, $groupID) = (stat $parentDirectory)[2,5];
+		}    # end HACK for upgrading achivements
+		next unless exists $updateable_directories{$dir};
+		my $path = $ce->{courseDirs}->{$dir};
+		unless (-e $path) {    # if by some unlucky chance the tmpDirectory hasn't been created, create it.
+			my $parentDirectory = $path;
+			$parentDirectory =~ s|/$||;         # remove a trailing /
+			$parentDirectory =~ s|/[^/]*$||;    # remove last node
+			my ($perms, $groupID) = (stat $parentDirectory)[ 2, 5 ];
 			if (-w $parentDirectory) {
 				WeBWorK::PG::IO::createDirectory($path, $perms, $groupID)
 					or warn "Failed to create directory at $path.\n";
 			} else {
-				warn "Permissions error. Can't create directory at $path. Lack write permission on $parentDirectory.\n"
+				warn "Permissions error. Can't create directory at $path. Lack write permission on $parentDirectory.\n";
 			}
 
 		}
 	}
 
-    return ( );
+	return ();
 }
 
 ##############################################################################
 # Database utilities -- borrowed from DBUpgrade.pm ??use or modify??? --MEG
 ##############################################################################
 
-sub lock_database {   # lock named 'webwork.dbugrade' times out after 10 seconds
-	my $self =shift;
-	my $dbh = $self->dbh;
+sub lock_database {    # lock named 'webwork.dbugrade' times out after 10 seconds
+	my $self          = shift;
+	my $dbh           = $self->dbh;
 	my ($lock_status) = $dbh->selectrow_array("SELECT GET_LOCK('webwork.dbupgrade', 10)");
 	if (not defined $lock_status) {
 		die "Couldn't obtain lock because an error occurred.\n";
@@ -420,13 +421,13 @@ sub lock_database {   # lock named 'webwork.dbugrade' times out after 10 seconds
 }
 
 sub unlock_database {
-	my $self =shift;
-	my $dbh = $self->dbh;
+	my $self          = shift;
+	my $dbh           = $self->dbh;
 	my ($lock_status) = $dbh->selectrow_array("SELECT RELEASE_LOCK('webwork.dbupgrade')");
 	if (not defined $lock_status) {
 		# die "Couldn't release lock because the lock does not exist.\n";
-	}elsif ($lock_status) {
-	    return;
+	} elsif ($lock_status) {
+		return;
 	} else {
 		die "Couldn't release lock because the lock is not held by this thread.\n";
 	}
@@ -435,33 +436,33 @@ sub unlock_database {
 ##############################################################################
 
 sub load_sql_table_list {
-	my $self =shift;
-	my $dbh = $self->dbh;
+	my $self           = shift;
+	my $dbh            = $self->dbh;
 	my $sql_tables_ref = $dbh->selectcol_arrayref("SHOW TABLES");
-	$self->{sql_tables} = {}; @{$self->{sql_tables}}{@$sql_tables_ref} = ();
+	$self->{sql_tables} = {};
+	@{ $self->{sql_tables} }{@$sql_tables_ref} = ();
 }
 
 sub register_sql_table {
-	my $self =shift;
+	my $self  = shift;
 	my $table = shift;
-	my $dbh = $self->dbh;
+	my $dbh   = $self->dbh;
 	$self->{sql_tables}{$table} = ();
 }
 
 sub unregister_sql_table {
-	my $self =shift;
+	my $self  = shift;
 	my $table = shift;
-	my $dbh = $self->dbh;
+	my $dbh   = $self->dbh;
 	delete $self->{sql_tables}{$table};
 }
 
 sub sql_table_exists {
-	my $self =shift;
-	my $table=shift;
-	my $dbh = $self->dbh;
+	my $self  = shift;
+	my $table = shift;
+	my $dbh   = $self->dbh;
 	return exists $self->{sql_tables}{$table};
 }
-
 
 ################################################################################
 
@@ -476,8 +477,8 @@ sub ask_permission_stdio {
 		my $resp = <STDIN>;
 		chomp $resp;
 		return $default if $resp eq "";
-		return 1 if lc $resp eq "y";
-		return 0 if lc $resp eq "n";
+		return 1        if lc $resp eq "y";
+		return 0        if lc $resp eq "n";
 		$prompt = 'Please enter "y" or "n".';
 	}
 }

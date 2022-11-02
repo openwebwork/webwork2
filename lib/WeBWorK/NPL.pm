@@ -11,7 +11,7 @@
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
 # Artistic License for more details.
-# 
+#
 # Contributed by W.H. Freeman; Bedford, Freeman, and Worth Publishing Group.
 ################################################################################
 
@@ -63,11 +63,16 @@ our @EXPORT_OK = qw(
 );
 
 our @global_fields = qw(DESCRIPTION KEYWORDS DBsubject DBchapter DBsection Date
-Institution Author UsesAuxiliaryFiles);
+	Institution Author UsesAuxiliaryFiles);
 our @textbook_fields = qw(title edition author chapter section problem);
 
-our %tag2field = ( TitleText => "title", EditionText => "edition",
-AuthorText => "author", Section => "section", Problem => "problem", );
+our %tag2field = (
+	TitleText   => "title",
+	EditionText => "edition",
+	AuthorText  => "author",
+	Section     => "section",
+	Problem     => "problem",
+);
 our %field2tag = reverse %tag2field;
 
 =head1 FUNCTIONS
@@ -101,15 +106,15 @@ inefficient to pull chapters or sections out:
 
 sub read_textbooks {
 	my ($fh, $result) = @_;
-	
+
 	my %curr_textbook;
-	
+
 	while (<$fh>) {
 		s/#.*$//g;
 		next unless /\S/;
 		s/^\s*//;
 		s/\s*$//;
-		
+
 		if (/^(TitleText|EditionText|AuthorText)\(\s*'(.*?)'\s*\)/) {
 			my $field = $tag2field{$1};
 			my $value = $2;
@@ -122,7 +127,7 @@ sub read_textbooks {
 		} elsif (/^(\d+)(?:\.(\d+))?\s*>>>\s*(.*)$/) {
 			my $chapter = $1;
 			my $section = $2;
-			my $name = $3;
+			my $name    = $3;
 			if (defined $section and length $section > 0) {
 				$curr_textbook{"$chapter.$section"} = $name;
 			} else {
@@ -194,22 +199,22 @@ the new tags should appear immediately after the existing tags:
 
 sub read_tags {
 	my ($file, $result, $extra_editing_info) = @_;
-	
+
 	my $fh;
 	if (ref $file) {
 		$fh = $file;
 	} elsif (defined $file and not ref $file) {
 		$fh = new IO::File($file, 'r');
 	}
-	
+
 	my $pos;
 	my $rest = '';
 	my $maxtextbook;
 	while (<$fh>) {
 		#if (0) {
 		if (/^(.*?\#.*?)(\s*)DESCRIPTION/) {
-			my $prefix = $1;
-			my $whitespace = $2;
+			my $prefix      = $1;
+			my $whitespace  = $2;
 			my $description = '';
 			while (<$fh>) {
 				if (/\#.*ENDDESCRIPTION/) {
@@ -226,14 +231,14 @@ sub read_tags {
 				}
 			}
 			if ($extra_editing_info) {
-				$pos = tell $fh;
+				$pos  = tell $fh;
 				$rest = '';
 			}
 		} elsif (/\#.*KEYWORDS\((.*)\)/) {
 			my $keywords = $1;
-			push @{$result->{KEYWORDS}}, parse_keywords($keywords);
+			push @{ $result->{KEYWORDS} }, parse_keywords($keywords);
 			if ($extra_editing_info) {
-				$pos = tell $fh;
+				$pos  = tell $fh;
 				$rest = '';
 			}
 		} elsif (/\#.*(DBsubject|DBchapter|DBsection|Date|Institution|Author)\(\s*(.*?)\s*\)/) {
@@ -248,12 +253,12 @@ sub read_tags {
 			}
 			$result->{$field} = $parsed_value;
 			if ($extra_editing_info) {
-				$pos = tell $fh;
+				$pos  = tell $fh;
 				$rest = '';
 			}
 		} elsif (/\#.*(TitleText|EditionText|AuthorText|Section|Problem)(\d+)\(\s*'(.*?)'\s*\)/) {
 			my $field = $tag2field{$1};
-			my $num = $2;
+			my $num   = $2;
 			my $value = $3;
 			next unless $value =~ /\S/;
 			$value = [ parse_problems($value) ] if $field eq "problem";
@@ -265,8 +270,8 @@ sub read_tags {
 				$result->{textbooks}[$num]{$field} = $value;
 			}
 			if ($extra_editing_info) {
-				$pos = tell $fh;
-				$rest = '';
+				$pos         = tell $fh;
+				$rest        = '';
 				$maxtextbook = $num if not defined $maxtextbook or $num > $maxtextbook;
 			}
 		} elsif (/\#.*(UsesAuxiliaryFiles)\(\s*(.*?)\s*\)/) {
@@ -281,7 +286,7 @@ sub read_tags {
 			}
 			$result->{$field} = $parsed_value;
 			if ($extra_editing_info) {
-				$pos = tell $fh;
+				$pos  = tell $fh;
 				$rest = '';
 			}
 		} else {
@@ -290,32 +295,33 @@ sub read_tags {
 			}
 		}
 	}
-	
+
 	# remove holes in textbook numbering
-	@{$result->{textbooks}} = grep { defined } @{$result->{textbooks}};
-	delete $result->{textbooks} unless @{$result->{textbooks}};
-	
+	@{ $result->{textbooks} } = grep {defined} @{ $result->{textbooks} };
+	delete $result->{textbooks} unless @{ $result->{textbooks} };
+
 	if ($extra_editing_info) {
-		$result->{_pos} = $pos;
-		$result->{_rest} = $rest;
+		$result->{_pos}         = $pos;
+		$result->{_rest}        = $rest;
 		$result->{_maxtextbook} = $maxtextbook;
 	}
 }
 
 sub parse_normal_list {
 	my ($name, $string) = @_;
-	
-	use constant NRM=>0;
-	use constant STR=>1;
-	use constant ESC=>2;
-	use constant STP=>3;
+
+	use constant NRM => 0;
+	use constant STR => 1;
+	use constant ESC => 2;
+	use constant STP => 3;
 	my $state = NRM;
 	my @errors;
 	my @items;
 	my $curr_item = '';
 	my $next_item = 0;
-	foreach my $i (0 .. length($string)-1) {
-		my $c = substr($string,$i,1);
+
+	foreach my $i (0 .. length($string) - 1) {
+		my $c = substr($string, $i, 1);
 		#print "i=$i c=$c state=$state curr_item=$curr_item next_item=$next_item\n";
 		# state changes
 		if ($state == NRM) {
@@ -324,16 +330,16 @@ sub parse_normal_list {
 			} elsif ($c eq ',' or $c eq ' ') {
 				# do nothing -- closequote already consumed curr_item
 			} else {
-				push @errors, 
+				push @errors,
 					"illegal char '$c' in state NRM while parsing value for $name.\n"
-					. "    $string\n"
-					. '    ' . ' 'x$i . "^\n";
+					. "    $string\n" . '    '
+					. ' ' x $i . "^\n";
 				$next_item = 1;
-				$state = STP;
+				$state     = STP;
 			}
 		} elsif ($state == STR) {
 			if ($c eq "'") {
-				$state = NRM;
+				$state     = NRM;
 				$next_item = 1;
 			} elsif ($c eq '\\') {
 				$state = ESC;
@@ -357,12 +363,12 @@ sub parse_normal_list {
 			#print "stored item to list\n";
 		}
 	}
-	
+
 	return \@items, \@errors;
 }
 
 sub parse_normal_value {
-	my ($name, $string) = @_;
+	my ($name,  $string) = @_;
 	my ($items, $errors) = parse_normal_list($name, $string);
 	push @$errors, "only one item allowed in value for $name.\n" if @$items > 1;
 	return shift @$items, $errors;
@@ -393,7 +399,7 @@ sub kwtidy {
 sub parse_problems {
 	my $string = shift;
 	$string =~ s/\D/ /g;
-	return grep { /\S/ } split /\s+/, $string;
+	return grep {/\S/} split /\s+/, $string;
 }
 
 =head2 format_tags
@@ -446,22 +452,22 @@ sub format_tags {
 sub format_tag {
 	my ($field, $value, $n) = @_;
 	my $tag = $field2tag{$field} || $field;
-	
+
 	# problems are always listed in a single string in the tag.
 	if ($field eq "problem") {
 		$value = format_problems($value);
 	}
-	
+
 	# if we have an arrayref, we represent it as multiple strings in one tag.
 	if (ref $value) {
-		$value = join(',', map { "'$_'" } @$value);
+		$value = join(',', map {"'$_'"} @$value);
 	} elsif (defined $value) {
 		$value = "'$value'";
 	} else {
 		warn "value is not defined for field $field!\n";
 		$value = "''";
 	}
-	
+
 	if (defined $n) {
 		return "$tag$n($value)";
 	} else {
@@ -487,17 +493,17 @@ sub format_textbooks {
 
 sub format_textbook {
 	my ($textbook, $n) = @_;
-	
+
 	# combine chapter/section into single section tag
 	my $chapter = $textbook->{chapter};
 	my $section = $textbook->{section};
 	if (defined $chapter or defined $section) {
-		$section = ".$section" if defined $section;
+		$section = ".$section"        if defined $section;
 		$section = "$chapter$section" if defined $chapter;
 		delete $textbook->{chapter};
 		$textbook->{section} = $section;
 	}
-	
+
 	my @result;
 	my @ordered_fields = grep { exists $textbook->{$_} } @textbook_fields;
 	foreach my $field (@ordered_fields) {
@@ -515,7 +521,7 @@ sub format_problems {
 	} else {
 		@problems = ($first, @_);
 	}
-	
+
 	return join(',', @problems);
 }
 
@@ -556,20 +562,20 @@ sub gen_find_tags {
 	my ($pattern, $action, $extra_editing_info) = @_;
 	return sub {
 		return unless /\.pg$/ and -f $File::Find::name;
-		
+
 		my $name = $File::Find::name;
 		#my $relpath = $name;
 		#$relpath =~ s/^$src\///;
-		
+
 		my %tags;
-		
+
 		open my $fh, "<", $name or do {
 			warn "skipping $name: $!\n";
 			return;
 		};
 		read_tags($fh, \%tags, $extra_editing_info);
 		close $fh;
-		
+
 		my (%global_pattern, %textbook_pattern);
 		foreach my $field (@global_fields) {
 			$global_pattern{$field} = $pattern->{$field} if exists $pattern->{$field};
@@ -577,7 +583,7 @@ sub gen_find_tags {
 		foreach my $field (@textbook_fields) {
 			$textbook_pattern{$field} = $pattern->{$field} if exists $pattern->{$field};
 		}
-		
+
 		if (%global_pattern) {
 			return unless match_global(\%tags, \%global_pattern);
 		}
@@ -586,7 +592,7 @@ sub gen_find_tags {
 			$text_index = match_textbook(\%tags, \%textbook_pattern);
 			return unless $text_index >= 0;
 		}
-		
+
 		$action->($name, \%tags, $text_index);
 	};
 }
@@ -602,10 +608,10 @@ sub match_global {
 sub match_textbook {
 	my ($tags, $matches) = @_;
 	return -1 unless defined $tags->{textbooks};
-	my @textbooks = @{$tags->{textbooks}};
-	
+	my @textbooks = @{ $tags->{textbooks} };
+
 	#textbook: foreach my $textbook (@{$tags->{textbooks}}) {
-	textbook: foreach my $i (0 .. $#{$tags->{textbooks}}) {
+textbook: foreach my $i (0 .. $#{ $tags->{textbooks} }) {
 		my $textbook = $tags->{textbooks}[$i];
 		foreach my $field (keys %$matches) {
 			next if $field !~ /^(title|edition|author|chapter|section|problem)$/;

@@ -29,19 +29,19 @@ use CGI qw(-nosticky );
 use WeBWorK::Debug;
 
 sub initialize {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $authz      = $r->authz;
-	my $db         = $r->db;
+	my ($self)        = @_;
+	my $r             = $self->r;
+	my $urlpath       = $r->urlpath;
+	my $authz         = $r->authz;
+	my $db            = $r->db;
 	my $achievementID = $urlpath->arg("achievementID");
-	my $user       = $r->param('user');
+	my $user          = $r->param('user');
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, "edit_achievements");
 
 	$self->{all_users} = [ $db->listUsers ];
-	my %selectedUsers = map {$_ => 1} $r->param('selected');
+	my %selectedUsers = map { $_ => 1 } $r->param('selected');
 
 	my $doAssignToSelected = 0;
 
@@ -58,20 +58,16 @@ sub initialize {
 		&& $r->param('unassignFromAllSafety') == 1)
 	{
 		%selectedUsers = ();
-		$self->addmessage(
-			CGI::div(
-				{ class => 'alert alert-danger p-1 mb-0' },
-				$r->maketext("Achievement has been unassigned to all students.")
-			)
-		);
+		$self->addmessage(CGI::div(
+			{ class => 'alert alert-danger p-1 mb-0' },
+			$r->maketext("Achievement has been unassigned to all students.")
+		));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param('assignToSelected')) {
-		$self->addmessage(
-			CGI::div(
-				{ class => 'alert alert-success p-1 mb-0' },
-				$r->maketext("Achievement has been assigned to selected users.")
-			)
-		);
+		$self->addmessage(CGI::div(
+			{ class => 'alert alert-success p-1 mb-0' },
+			$r->maketext("Achievement has been assigned to selected users.")
+		));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param("unassignFromAll")) {
 		# no action taken
@@ -84,78 +80,80 @@ sub initialize {
 		my %achievementUsers = map { $_ => 1 } $db->listAchievementUsers($achievementID);
 		foreach my $selectedUser (@{ $self->{all_users} }) {
 			if (exists $selectedUsers{$selectedUser} && $achievementUsers{$selectedUser}) {
-			    # update existing user data (in case fields were changed)
-			    my $userAchievement = $db->getUserAchievement($selectedUser,$achievementID);
+				# update existing user data (in case fields were changed)
+				my $userAchievement = $db->getUserAchievement($selectedUser, $achievementID);
 
-			    my $updatedEarned = $r->param("$selectedUser.earned") ? 1:0;
-			    my $earned = $userAchievement->earned ? 1:0;
-			    if ($updatedEarned != $earned) {
+				my $updatedEarned = $r->param("$selectedUser.earned") ? 1 : 0;
+				my $earned        = $userAchievement->earned          ? 1 : 0;
+				if ($updatedEarned != $earned) {
 
-				$userAchievement->earned($updatedEarned);
-				my $globalUserAchievement = $db->getGlobalUserAchievement($selectedUser);
-				my $achievement = $db->getAchievement($achievementID);
+					$userAchievement->earned($updatedEarned);
+					my $globalUserAchievement = $db->getGlobalUserAchievement($selectedUser);
+					my $achievement           = $db->getAchievement($achievementID);
 
-				my $points = $achievement->points || 0;
-				my $initialpoints = $globalUserAchievement->achievement_points || 0;
-				#add the correct number of points if we
-				# are saying that the user now earned the
-				# achievement, or remove them otherwise
-				if ($updatedEarned) {
+					my $points        = $achievement->points                       || 0;
+					my $initialpoints = $globalUserAchievement->achievement_points || 0;
+					#add the correct number of points if we
+					# are saying that the user now earned the
+					# achievement, or remove them otherwise
+					if ($updatedEarned) {
 
-				    $globalUserAchievement->achievement_points(
-					$initialpoints +	$points);
-				} else {
-				    $globalUserAchievement->achievement_points(
-					$initialpoints -	$points);
+						$globalUserAchievement->achievement_points($initialpoints + $points);
+					} else {
+						$globalUserAchievement->achievement_points($initialpoints - $points);
+					}
+
+					$db->putGlobalUserAchievement($globalUserAchievement);
 				}
 
-				$db->putGlobalUserAchievement($globalUserAchievement);
-			    }
-
-
-			    $userAchievement->counter($r->param("$selectedUser.counter"));
-			    $db->putUserAchievement($userAchievement);
+				$userAchievement->counter($r->param("$selectedUser.counter"));
+				$db->putUserAchievement($userAchievement);
 
 			} elsif (exists $selectedUsers{$selectedUser}) {
-			    # add users that dont exist
-			    my $userAchievement = $db->newUserAchievement();
-			    $userAchievement->user_id($selectedUser);
-			    $userAchievement->achievement_id($achievementID);
-			    $db->addUserAchievement($userAchievement);
+				# add users that dont exist
+				my $userAchievement = $db->newUserAchievement();
+				$userAchievement->user_id($selectedUser);
+				$userAchievement->achievement_id($achievementID);
+				$db->addUserAchievement($userAchievement);
 
-			    #If they dont have global achievement data, then add that too
-			    if (not $db->existsGlobalUserAchievement($selectedUser)) {
-				my $globalUserAchievement = $db->newGlobalUserAchievement();
-				$globalUserAchievement->user_id($selectedUser);
-				$db->addGlobalUserAchievement($globalUserAchievement);
-			    }
+				#If they dont have global achievement data, then add that too
+				if (not $db->existsGlobalUserAchievement($selectedUser)) {
+					my $globalUserAchievement = $db->newGlobalUserAchievement();
+					$globalUserAchievement->user_id($selectedUser);
+					$db->addGlobalUserAchievement($globalUserAchievement);
+				}
 
 			} else {
-			    # delete users who are not selected
-			    # but dont delete users who dont exist
-			    next unless $achievementUsers{$selectedUser};
-			    $db->deleteUserAchievement($selectedUser, $achievementID);
+				# delete users who are not selected
+				# but dont delete users who dont exist
+				next unless $achievementUsers{$selectedUser};
+				$db->deleteUserAchievement($selectedUser, $achievementID);
 			}
 		}
 	}
 }
 
 sub body {
-	my ($self)         = @_;
-	my $r              = $self->r;
-	my $urlpath        = $r->urlpath;
-	my $db             = $r->db;
-	my $ce             = $r->ce;
-	my $authz          = $r->authz;
-	my $webworkRoot    = $ce->{webworkURLs}->{root};
-	my $courseName     = $urlpath->arg("courseID");
-	my $achievementID  = $urlpath->arg("achievementID");
-	my $user           = $r->param('user');
+	my ($self)        = @_;
+	my $r             = $self->r;
+	my $urlpath       = $r->urlpath;
+	my $db            = $r->db;
+	my $ce            = $r->ce;
+	my $authz         = $r->authz;
+	my $webworkRoot   = $ce->{webworkURLs}->{root};
+	my $courseName    = $urlpath->arg("courseID");
+	my $achievementID = $urlpath->arg("achievementID");
+	my $user          = $r->param('user');
 
 	return CGI::div({ class => 'alert alert-danger p-1' }, "You are not authorized to edit achievements.")
 		unless $authz->hasPermissions($user, "edit_achievements");
 
-	print CGI::start_form({name=>"user-achievement-form", id=>"user-achievement-form", method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
+	print CGI::start_form({
+		name   => "user-achievement-form",
+		id     => "user-achievement-form",
+		method => "post",
+		action => $self->systemLink($urlpath, authen => 0)
+	});
 
 	# Assign to everyone message
 	print CGI::div(
@@ -187,19 +185,19 @@ sub body {
 		CGI::th($r->maketext('Login Name')),
 		CGI::th($r->maketext('Student Name')),
 		CGI::th({ class => 'text-center' }, $r->maketext('Section')),
-		CGI::th({ class => 'text-center', id => 'earned_header' }, $r->maketext('Earned')),
+		CGI::th({ class => 'text-center', id => 'earned_header' },  $r->maketext('Earned')),
 		CGI::th({ class => 'text-center', id => 'counter_header' }, $r->maketext('Counter'))
 	);
 
 	# get user records
-	my @userRecords  = ();
+	my @userRecords = ();
 	for my $currentUser (@{ $self->{all_users} }) {
-		my $userObj = $db->getUser($currentUser); #checked
+		my $userObj = $db->getUser($currentUser);    #checked
 		die "Unable to find user object for $currentUser. " unless $userObj;
-		push (@userRecords, $userObj );
+		push(@userRecords, $userObj);
 	}
-	@userRecords = sort { ( lc($a->section) cmp lc($b->section) ) ||
-	                     ( lc($a->last_name) cmp lc($b->last_name )) } @userRecords;
+	@userRecords =
+		sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @userRecords;
 
 	#print row for user
 	for my $userRecord (@userRecords) {
@@ -216,11 +214,11 @@ sub body {
 			CGI::td(
 				{ class => 'text-center' },
 				CGI::input({
-					type    => 'checkbox',
-					name    => 'selected',
-					id      => "$user.assigned",
-					value   => $user,
-					class   => 'form-check-input',
+					type  => 'checkbox',
+					name  => 'selected',
+					id    => "$user.assigned",
+					value => $user,
+					class => 'form-check-input',
 					defined $userAchievement ? (checked => undef) : (),
 				})
 			),
@@ -269,8 +267,8 @@ sub body {
 				{ class => 'alert alert-danger p-1 mb-3' },
 				$r->maketext(
 					"There is NO undo for this function.  Do not use it unless you know what you are doing!  "
-						. "When you unassign a student using this button, or by unchecking their name, you destroy all "
-						. "of the data for achievement [_1] for this student.",
+					. "When you unassign a student using this button, or by unchecking their name, you destroy all "
+					. "of the data for achievement [_1] for this student.",
 					$achievementID
 				)
 			),

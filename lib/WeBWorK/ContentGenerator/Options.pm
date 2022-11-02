@@ -142,7 +142,7 @@ sub body {
 							id   => 'currPassword',
 							(defined $Password) ? () : (disabled => 1),
 							class => 'form-control',
-							dir => 'ltr'
+							dir   => 'ltr'
 						})
 					),
 				),
@@ -154,7 +154,9 @@ sub body {
 					),
 					CGI::div(
 						{ class => 'col-sm-6' },
-						CGI::password_field({ name => 'newPassword', id => 'newPassword', class => 'form-control', dir => 'ltr' })
+						CGI::password_field(
+							{ name => 'newPassword', id => 'newPassword', class => 'form-control', dir => 'ltr' }
+						)
 					)
 				),
 				CGI::div(
@@ -226,7 +228,9 @@ sub body {
 					),
 					CGI::div(
 						{ class => 'col-sm-6' },
-						CGI::textfield({ name => 'newAddress', id => 'newAddress', class => 'form-control', dir => 'ltr' })
+						CGI::textfield(
+							{ name => 'newAddress', id => 'newAddress', class => 'form-control', dir => 'ltr' }
+						)
 					)
 				)
 			)

@@ -40,24 +40,24 @@ sub new {
 	my ($invocant, %o) = @_;
 	my $class = ref $invocant || $invocant;
 
-	my @section_list = ref($o{sections}) eq 'ARRAY' ? @{$o{sections}} : @sections;
-	my $section_hash = {@section_list};
-	my $section_order = [ map { $section_list[2 * $_] } 0 .. $#section_list / 2 ];
+	my @section_list  = ref($o{sections}) eq 'ARRAY' ? @{ $o{sections} } : @sections;
+	my $section_hash  = {@section_list};
+	my $section_order = [ map { $section_list[ 2 * $_ ] } 0 .. $#section_list / 2 ];
 	delete $o{sections};
 
 	my $self = {
 		%o,
-		idx => {},
-		section_hash => $section_hash,
+		idx           => {},
+		section_hash  => $section_hash,
 		section_order => $section_order,
 	};
 	return bless $self, $class;
 }
 
 sub convert_pods {
-	my $self = shift;
+	my $self        = shift;
 	my $source_root = $self->{source_root};
-	my $dest_root = $self->{dest_root};
+	my $dest_root   = $self->{dest_root};
 
 	find({ wanted => $self->gen_pod_wanted, no_chdir => 1 }, $source_root);
 	$self->write_index("$dest_root/index.html");
@@ -66,8 +66,8 @@ sub convert_pods {
 sub gen_pod_wanted {
 	my $self = shift;
 	return sub {
-		my $path = $File::Find::name;
-		my $dir = $File::Find::dir;
+		my $path   = $File::Find::name;
+		my $dir    = $File::Find::dir;
 		my ($name) = $path =~ m|^$dir(?:/(.*))?$|;
 		$name = '' unless defined $name;
 
@@ -126,8 +126,8 @@ sub process_pod {
 
 	$pod_name =~ s/^(\/|::)//;
 
-	my $html_dir = $self->{dest_root} . (defined $subdir ? "/$subdir" : "");
-	my $html_path = "$html_dir/$filename";
+	my $html_dir      = $self->{dest_root} . (defined $subdir ? "/$subdir" : "");
+	my $html_path     = "$html_dir/$filename";
 	my $html_rel_path = defined $subdir ? "$subdir/$filename" : $filename;
 
 	$self->update_index($subdir, $html_rel_path, $pod_name);
@@ -144,10 +144,10 @@ sub process_pod {
 sub update_index {
 	my ($self, $subdir, $html_rel_path, $pod_name) = @_;
 	$subdir =~ s|/.*$||;
-	my $idx = $self->{idx};
+	my $idx      = $self->{idx};
 	my $sections = $self->{section_hash};
 	if (exists $sections->{$subdir}) {
-		push @{$idx->{$subdir}}, [ $html_rel_path, $pod_name ];
+		push @{ $idx->{$subdir} }, [ $html_rel_path, $pod_name ];
 	} else {
 		warn "no section for subdir '$subdir'\n";
 	}
@@ -155,21 +155,21 @@ sub update_index {
 
 sub write_index {
 	my ($self, $out_path) = @_;
-	my $idx = $self->{idx};
-	my $sections = $self->{section_hash};
+	my $idx           = $self->{idx};
+	my $sections      = $self->{section_hash};
 	my $section_order = $self->{section_order};
-	my $source_root = $self->{source_root};
+	my $source_root   = $self->{source_root};
 	$source_root =~ s|^.*/||;
 
-	my $title = "Index for $source_root";
+	my $title         = "Index for $source_root";
 	my $content_start = "<ul>";
-	my $content = "";
+	my $content       = "";
 
 	for my $section (@$section_order) {
 		next unless defined $idx->{$section};
 		my $section_name = $sections->{$section};
 		$content_start .= qq{<li><a href="#$section">$section_name</a></li>};
-		my @files = sort @{$idx->{$section}};
+		my @files = sort @{ $idx->{$section} };
 		$content .= qq{<a name="$section"></a>};
 		$content .= qq{<h2><a href="#_podtop_">$section_name</a></h2><ul>};
 		for my $file (sort { $a->[1] cmp $b->[1] } @files) {
@@ -183,22 +183,16 @@ sub write_index {
 	my $date = strftime "%a %b %e %H:%M:%S %Z %Y", localtime;
 
 	my $fh = new IO::File($out_path, '>') or die "Failed to open index '$out_path' for writing: $!\n";
-	print $fh (
-		get_header($title),
-		$content_start,
-		$content,
-		"<p>Generated $date</p>",
-		get_footer()
-	);
+	print $fh (get_header($title), $content_start, $content, "<p>Generated $date</p>", get_footer());
 }
 
 sub do_pod2html {
 	my $self = shift;
-	my %o = @_;
-	my $psx = new PODParser;
+	my %o    = @_;
+	my $psx  = new PODParser;
 	$psx->{source_root} = $self->{source_root};
-	$psx->{verbose} = $self->{verbose};
-	$psx->{base_url} = ($self->{dest_url} // "") . "/" . (($self->{source_root} // "") =~ s|^.*/||r);
+	$psx->{verbose}     = $self->{verbose};
+	$psx->{base_url}    = ($self->{dest_url} // "") . "/" . (($self->{source_root} // "") =~ s|^.*/||r);
 	$psx->output_string(\my $html);
 	$psx->html_header(get_header($o{pod_name}));
 	$psx->html_footer(get_footer());
@@ -208,7 +202,7 @@ sub do_pod2html {
 
 sub get_header {
 	my $title = shift;
-	return <<EOF
+	return <<EOF;
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -243,5 +237,4 @@ EOF
 }
 
 1;
-
 

@@ -15,7 +15,6 @@
 # Artistic License for more details.
 ################################################################################
 
-
 ###############################################################################
 # Web service which manipulates problems and user problems.
 ###############################################################################
@@ -40,7 +39,7 @@ our $PG_DIRECTORY = $WebworkWebservice::PG_DIRECTORY;
 our $COURSENAME   = $WebworkWebservice::COURSENAME;
 our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
 our $PASSWORD     = $WebworkWebservice::PASSWORD;
-our $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $WW_DIRECTORY, courseName => $COURSENAME });
+our $ce           = WeBWorK::CourseEnvironment->new({ webwork_dir => $WW_DIRECTORY, courseName => $COURSENAME });
 
 our $UNIT_TESTS_ON = 0;
 
@@ -49,15 +48,15 @@ sub getUserProblem {
 	my ($self, $params) = @_;
 	my $db = $self->db;
 
-	my $userID = $params->{id};
-	my $setID = $params->{set_id};
+	my $userID    = $params->{id};
+	my $setID     = $params->{set_id};
 	my $problemID = $params->{problem_id};
 
 	my $userProblem = $db->getUserProblem($userID, $setID, $problemID);
 
 	return {
 		ra_out => $userProblem,
-		text => encode_utf8_base64(
+		text   => encode_utf8_base64(
 			"Loaded problem $problemID of set $setID for user $userID in course $self->{courseName}.")
 	};
 }
@@ -67,17 +66,22 @@ sub putUserProblem {
 	my ($self, $params) = @_;
 	my $db = $self->db;
 
-	my $userID = $params->{id};
-	my $setID = $params->{set_id};
+	my $userID    = $params->{id};
+	my $setID     = $params->{set_id};
 	my $problemID = $params->{problem_id};
 
 	my $userProblem;
 	$userProblem = $db->getUserProblem($userID, $setID, $problemID);
 	if (!$userProblem) { return { text => encode_utf8_base64("User problem not found.") }; }
 
-	for ('source_file', 'value', 'max_attempts', 'showMeAnother', 'showMeAnotherCount', 'prPeriod',
-		'prCount', 'problem_seed', 'status', 'attempted', 'last_answer', 'num_correct', 'num_incorrect',
-		'att_to_open_children', 'counts_parent_grade', 'sub_status', 'flags') {
+	for (
+		'source_file',        'value',                'max_attempts',        'showMeAnother',
+		'showMeAnotherCount', 'prPeriod',             'prCount',             'problem_seed',
+		'status',             'attempted',            'last_answer',         'num_correct',
+		'num_incorrect',      'att_to_open_children', 'counts_parent_grade', 'sub_status',
+		'flags'
+		)
+	{
 		$userProblem->{$_} = $params->{$_} if defined($params->{$_});
 	}
 
@@ -86,8 +90,8 @@ sub putUserProblem {
 
 	return {
 		ra_out => $userProblem,
-		text => encode_utf8_base64(
-			"Updated problem $problemID of $setID for user $userID in course $self->{courseName}.")
+		text   =>
+			encode_utf8_base64("Updated problem $problemID of $setID for user $userID in course $self->{courseName}.")
 	};
 }
 
@@ -96,17 +100,22 @@ sub putProblemVersion {
 	my ($self, $params) = @_;
 	my $db = $self->db;
 
-	my $userID = $params->{id};
-	my $setID = $params->{set_id};
+	my $userID    = $params->{id};
+	my $setID     = $params->{set_id};
 	my $versionID = $params->{version_id};
 	my $problemID = $params->{problem_id};
 
 	my $problemVersion = $db->getProblemVersion($userID, $setID, $versionID, $problemID);
 	if (!$problemVersion) { return { text => encode_utf8_base64("Problem version not found.") }; }
 
-	for ('source_file', 'value', 'max_attempts', 'showMeAnother', 'showMeAnotherCount', 'prPeriod',
-		'prCount', 'problem_seed', 'status', 'attempted', 'last_answer', 'num_correct', 'num_incorrect',
-		'att_to_open_children', 'counts_parent_grade', 'sub_status', 'flags') {
+	for (
+		'source_file',        'value',                'max_attempts',        'showMeAnother',
+		'showMeAnotherCount', 'prPeriod',             'prCount',             'problem_seed',
+		'status',             'attempted',            'last_answer',         'num_correct',
+		'num_incorrect',      'att_to_open_children', 'counts_parent_grade', 'sub_status',
+		'flags'
+		)
+	{
 		$problemVersion->{$_} = $params->{$_} if defined($params->{$_});
 	}
 
@@ -115,7 +124,7 @@ sub putProblemVersion {
 
 	return {
 		ra_out => $problemVersion,
-		text => encode_utf8_base64(
+		text   => encode_utf8_base64(
 			"Updated problem $problemID of $setID,v$versionID for user $userID in course $self->{courseName}.")
 	};
 }
@@ -141,9 +150,10 @@ sub putPastAnswer {
 
 	return {
 		ra_out => $pastAnswer,
-		text => encode_utf8_base64(
-			"Updated answer $answerID for problem $pastAnswer->{problem_id} of $pastAnswer->{set_id} " .
-			"for user $pastAnswer->{user_id} in course $self->{courseName}.")
+		text   => encode_utf8_base64(
+			"Updated answer $answerID for problem $pastAnswer->{problem_id} of $pastAnswer->{set_id} "
+				. "for user $pastAnswer->{user_id} in course $self->{courseName}."
+		)
 	};
 }
 

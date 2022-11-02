@@ -33,7 +33,6 @@ C<WeBWorK::ContentGenerator> to call.
 
 =cut
 
-
 use strict;
 use warnings;
 use Time::HiRes qw/time/;
@@ -57,7 +56,7 @@ use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 use Apache2::Upload;
 use Apache2::RequestUtil;
 
-use constant LOGIN_MODULE => "WeBWorK::ContentGenerator::Login";
+use constant LOGIN_MODULE         => "WeBWorK::ContentGenerator::Login";
 use constant PROCTOR_LOGIN_MODULE => "WeBWorK::ContentGenerator::LoginProctor";
 
 BEGIN {
@@ -80,14 +79,14 @@ sub dispatch($) {
 	my ($apache) = @_;
 	my $r = WeBWorK::Request->new($apache);
 
-	my $method = $r->method;
-	my $location = $r->location;
-	my $uri = $r->uri;
-	my $path_info = $r->path_info | "";
-	my $args = $r->args || "";
+	my $method     = $r->method;
+	my $location   = $r->location;
+	my $uri        = $r->uri;
+	my $path_info  = $r->path_info | "";
+	my $args       = $r->args || "";
 	my $dir_config = $r->dir_config;
-	my %conf_vars = map { $_ => $dir_config->{$_} } grep { /^webwork_/ } keys %$dir_config;
-	@SeedCE{keys %conf_vars} = values %conf_vars;
+	my %conf_vars  = map { $_ => $dir_config->{$_} } grep {/^webwork_/} keys %$dir_config;
+	@SeedCE{ keys %conf_vars } = values %conf_vars;
 
 	debug("\n\n===> Begin " . __PACKAGE__ . "::dispatch() <===\n\n");
 	debug("Hi, I'm the new dispatcher!\n");
@@ -109,7 +108,7 @@ sub dispatch($) {
 	# Create a URLPath  object
 	######################################################################
 	my ($path) = $uri =~ m/$location(.*)/;
-	$path = "/" if $path eq ""; # no path at all
+	$path = "/" if $path eq "";    # no path at all
 
 	debug("We can't trust the path-info, so we make our own path.\n");
 	debug("path-info claims: $path_info\n");
@@ -130,8 +129,8 @@ sub dispatch($) {
 
 	debug("-------------------- call to WeBWorK::URLPath::newFromPath\n");
 	my $urlPath = WeBWorK::URLPath->newFromPath($path, $r);
-	                            # pointer to parent request for access to the $ce and language translation ability
-	                            # need to add this pointer whenever a new URLPath is created.
+	# pointer to parent request for access to the $ce and language translation ability
+	# need to add this pointer whenever a new URLPath is created.
 	debug("-------------------- call to WeBWorK::URLPath::newFromPath\n");
 
 	unless ($urlPath) {
@@ -140,12 +139,12 @@ sub dispatch($) {
 	}
 
 	my $displayModule = $urlPath->module;
-	my %displayArgs = $urlPath->args;
+	my %displayArgs   = $urlPath->args;
 
 	unless ($displayModule) {
-	    debug("The display module is empty, so we can DECLINE here.\n");
-	    $path = encode_entities($path);
-	    die "No display module found for path '$path'.";
+		debug("The display module is empty, so we can DECLINE here.\n");
+		$path = encode_entities($path);
+		die "No display module found for path '$path'.";
 	}
 
 	debug("The display module for this path is: $displayModule\n");
@@ -154,8 +153,8 @@ sub dispatch($) {
 		debug("\t$key => $displayArgs{$key}\n");
 	}
 
-	my $selfPath = $urlPath->path;
-	my $parent = $urlPath->parent;
+	my $selfPath   = $urlPath->path;
+	my $parent     = $urlPath->parent;
 	my $parentPath = $parent ? $parent->path : "<no parent>";
 
 	debug("Reconstructing the original path gets us: $selfPath\n");
@@ -170,19 +169,20 @@ sub dispatch($) {
 
 	debug("The raw params:\n");
 	foreach my $key ($r->param) {
-	    #make it so we dont debug plain text passwords
-	    my $vals;
-	    if ($key eq 'passwd'||
-		$key eq 'confirmPassword' ||
-		$key eq 'currPassword' ||
-		$key eq 'newPassword' ||
-		$key =~ /\.new_password/) {
-		$vals = '**********';
-	    } else {
-		my @vals = $r->param($key);
-		$vals = join(", ", map { "'$_'" } @vals);
-	    }
-	    debug("\t$key => $vals\n");
+		#make it so we dont debug plain text passwords
+		my $vals;
+		if ($key eq 'passwd'
+			|| $key eq 'confirmPassword'
+			|| $key eq 'currPassword'
+			|| $key eq 'newPassword'
+			|| $key =~ /\.new_password/)
+		{
+			$vals = '**********';
+		} else {
+			my @vals = $r->param($key);
+			$vals = join(", ", map {"'$_'"} @vals);
+		}
+		debug("\t$key => $vals\n");
 	}
 
 	#mungeParams($r);
@@ -207,32 +207,32 @@ sub dispatch($) {
 		$apache_root_url .= ":$apache_port" if $apache_port != 80;
 	}
 
-
 	####################################################################
 	# Create Course Environment    $ce
 	####################################################################
 	debug("We need to get a course environment (with or without a courseID!)\n");
-	my $ce = eval { new WeBWorK::CourseEnvironment({
-		%SeedCE,
-		courseName => $displayArgs{courseID},
-		# this is kind of a hack, but it's really the only sane way to get this
-		# server information into the PG box
-		apache_hostname => $apache_hostname,
-		apache_port => $apache_port,
-		apache_is_ssl => $apache_is_ssl,
-		apache_root_url => $apache_root_url,
-	}) };
+	my $ce = eval {
+		new WeBWorK::CourseEnvironment({
+			%SeedCE,
+			courseName => $displayArgs{courseID},
+			# this is kind of a hack, but it's really the only sane way to get this
+			# server information into the PG box
+			apache_hostname => $apache_hostname,
+			apache_port     => $apache_port,
+			apache_is_ssl   => $apache_is_ssl,
+			apache_root_url => $apache_root_url,
+		});
+	};
 	$@ and die "Failed to initialize course environment: $@\n";
 	debug("Here's the course environment: $ce\n");
 	$r->ce($ce);
 
-
 	######################
 	# Localizing language
 	######################
-	my $language= $ce->{language} || "en";
+	my $language = $ce->{language} || "en";
 	# $r->language_handle( WeBWorK::Localize->get_handle($language) );
-	$r->language_handle( WeBWorK::Localize::getLoc($language) );
+	$r->language_handle(WeBWorK::Localize::getLoc($language));
 
 	my @uploads;
 
@@ -244,12 +244,10 @@ sub dispatch($) {
 		next unless $u->filename;
 
 		# store the upload
-		my $upload = WeBWorK::Upload->store($u,
-			dir => $ce->{webworkDirs}->{uploadCache}
-		);
+		my $upload = WeBWorK::Upload->store($u, dir => $ce->{webworkDirs}->{uploadCache});
 
 		# store the upload ID and hash in the file upload field
-		my $id = $upload->id;
+		my $id   = $upload->id;
 		my $hash = $upload->hash;
 		$r->param($u->name => "$id $hash");
 	}
@@ -335,12 +333,12 @@ sub dispatch($) {
 			# module we double check this, to be sure that someone isn't taking a
 			# proctored quiz but calling the unproctored ContentGenerator
 			my $urlProducedPath = $urlPath->path();
-			if ( $urlProducedPath =~ /proctored_quiz_mode/i ) {
+			if ($urlProducedPath =~ /proctored_quiz_mode/i) {
 				my $proctor_authen_module = WeBWorK::Authen::class($ce, "proctor_module");
 				runtime_use $proctor_authen_module;
 				my $authenProctor = $proctor_authen_module->new($r);
 				debug("Using proctor_authen_module $proctor_authen_module: $authenProctor\n");
-			    my $procAuthOK = $authenProctor->verify();
+				my $procAuthOK = $authenProctor->verify();
 
 				if (not $procAuthOK) {
 					$displayModule = PROCTOR_LOGIN_MODULE;
@@ -354,7 +352,7 @@ sub dispatch($) {
 	}
 
 	# store the time before we invoke the content generator
-	my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
+	my $cg_start = time;    # this is Time::HiRes's time, which gives floating point values
 
 	debug(("-" x 80) . "\n");
 	debug("Finally, we'll load the display module...\n");
@@ -372,9 +370,13 @@ sub dispatch($) {
 
 	debug("-------------------- call to ${displayModule}::go\n");
 
-	my $cg_end = time;
+	my $cg_end      = time;
 	my $cg_duration = $cg_end - $cg_start;
-	writeTimingLogEntry($ce, "[".$r->uri."]", sprintf("runTime = %.3f sec", $cg_duration)." ".$ce->{dbLayoutName}, "");
+	writeTimingLogEntry(
+		$ce,
+		"[" . $r->uri . "]",
+		sprintf("runTime = %.3f sec", $cg_duration) . " " . $ce->{dbLayoutName}, ""
+	);
 
 	debug("returning result: " . (defined $result ? $result : "UNDEF") . "\n");
 	return $result;
@@ -388,7 +390,7 @@ sub mungeParams {
 	# remove all the params from the request, and store them in the param queue
 	foreach my $key ($r->param) {
 		push @paramQueue, [ $key => [ $r->param($key) ] ];
-		$r->parms->unset($key)
+		$r->parms->unset($key);
 	}
 
 	# exhaust the param queue, decoding encoded params
@@ -403,7 +405,7 @@ sub mungeParams {
 			# we have a whole param encoded in a key
 			# split it up and add it to the end of the queue
 			my ($newKey, $newValue) = split m/\:/, $key;
-			push @paramQueue, [ $newKey, [ $newValue ] ];
+			push @paramQueue, [ $newKey, [$newValue] ];
 		} else {
 			# this is a "normal" param
 			# add it to the param list
@@ -422,32 +424,30 @@ sub mungeParams {
 
 # A sort of wrapper for the built-in split function which uses capital letters as a delimiter, and returns a string containing the separated substrings separated by a whitespace.  Used to make actionID's more readable.
 
-sub split_cap
-{
+sub split_cap {
 	my $str = shift;
 
-	my @str_arr = split(//,$str);
-	my $count = scalar(@str_arr);
+	my @str_arr = split(//, $str);
+	my $count   = scalar(@str_arr);
 
-	my $i = 0;
-	my $prev = 0;
-	my @result = ();
+	my $i          = 0;
+	my $prev       = 0;
+	my @result     = ();
 	my $hasCapital = 0;
-	foreach(@str_arr){
-		if($_ =~ /[A-Z]/){
+	foreach (@str_arr) {
+		if ($_ =~ /[A-Z]/) {
 			$hasCapital = 1;
-			push(@result, join("", @str_arr[$prev..$i-1]));
+			push(@result, join("", @str_arr[ $prev .. $i - 1 ]));
 			$prev = $i;
 		}
 		$i++;
 	}
 
-	unless($hasCapital){
+	unless ($hasCapital) {
 		return $str;
-	}
-	else{
-		push(@result, join("", @str_arr[$prev..$count-1]));
-		return join(" ",@result);
+	} else {
+		push(@result, join("", @str_arr[ $prev .. $count - 1 ]));
+		return join(" ", @result);
 	}
 }
 
@@ -455,32 +455,31 @@ sub split_cap
 
 # a simple subroutine for converting underscores in a given string to whitespace
 
-sub underscore_to_whitespace{
+sub underscore_to_whitespace {
 	my $str = shift;
 
-	my @strArr = split("",$str);
-	foreach(@strArr){
-		if($_ eq "_"){
-			$_ = " "
+	my @strArr = split("", $str);
+	foreach (@strArr) {
+		if ($_ eq "_") {
+			$_ = " ";
 		}
 	}
 
-	my $result = join("",@strArr);
+	my $result = join("", @strArr);
 
 	return $result;
 }
 
-sub remove_duplicates{
+sub remove_duplicates {
 	my @arr = @_;
 
 	my %unique;
 	my @result;
 
-	foreach(@arr){
-		if(defined $unique{$_}){
+	foreach (@arr) {
+		if (defined $unique{$_}) {
 			next;
-		}
-		else{
+		} else {
 			push(@result, $_);
 			$unique{$_} = "seen";
 		}

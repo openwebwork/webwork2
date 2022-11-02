@@ -73,9 +73,9 @@ use WeBWorK::File::Classlist;
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword x getAssetURL);
 use constant HIDE_USERS_THRESHHOLD => 200;
-use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
-use constant PASSWORD_FORMS => [qw(savePassword cancelPassword)];
-use constant VIEW_FORMS => [qw(filter sort edit password import export add delete)];
+use constant EDIT_FORMS            => [qw(saveEdit cancelEdit)];
+use constant PASSWORD_FORMS        => [qw(savePassword cancelPassword)];
+use constant VIEW_FORMS            => [qw(filter sort edit password import export add delete)];
 
 # Prepare the tab titles for translation by maketext
 use constant FORM_TITLES => {
@@ -89,29 +89,31 @@ use constant FORM_TITLES => {
 	export         => x("Export"),
 	add            => x("Add"),
 	delete         => x("Delete"),
-        savePassword   => x("Save Password"),
-        cancelPassword => x("Cancel Password")
+	savePassword   => x("Save Password"),
+	cancelPassword => x("Cancel Password")
 };
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
-		saveEdit => "modify_student_data",
-		edit => "modify_student_data",
-		savePassword => "change_password",
-		password => "change_password",
-		import => "modify_student_data",
-		export => "modify_classlist_files",
-		add => "modify_student_data",
-		delete => "modify_student_data",
+	saveEdit     => "modify_student_data",
+	edit         => "modify_student_data",
+	savePassword => "change_password",
+	password     => "change_password",
+	import       => "modify_student_data",
+	export       => "modify_classlist_files",
+	add          => "modify_student_data",
+	delete       => "modify_student_data",
 };
 
 # permissions needed to view a given field
 use constant FIELD_PERMS => {
-		act_as => "become_student",
-		sets	=> "assign_problem_sets",
+	act_as => "become_student",
+	sets   => "assign_problem_sets",
 };
 
-use constant STATE_PARAMS => [qw(user effectiveUser key visible_users no_visible_users prev_visible_users no_prev_visible_users editMode passwordMode primarySortField secondarySortField ternarySortField labelSortMethod)];
+use constant STATE_PARAMS => [
+	qw(user effectiveUser key visible_users no_visible_users prev_visible_users no_prev_visible_users editMode passwordMode primarySortField secondarySortField ternarySortField labelSortMethod)
+];
 
 use constant SORT_SUBS => {
 	user_id       => \&byUserID,
@@ -126,89 +128,90 @@ use constant SORT_SUBS => {
 	permission    => \&byPermission,
 };
 
-use constant  FIELD_PROPERTIES => {
+use constant FIELD_PROPERTIES => {
 	user_id => {
-		type => "text",
-		size => 8,
+		type   => "text",
+		size   => 8,
 		access => "readonly",
 	},
 	first_name => {
-		type => "text",
-		size => 10,
+		type   => "text",
+		size   => 10,
 		access => "readwrite",
 	},
 	last_name => {
-		type => "text",
-		size => 10,
+		type   => "text",
+		size   => 10,
 		access => "readwrite",
 	},
 	email_address => {
-		type => "text",
-		size => 20,
+		type   => "text",
+		size   => 20,
 		access => "readwrite",
 	},
 	student_id => {
-		type => "text",
-		size => 11,
+		type   => "text",
+		size   => 11,
 		access => "readwrite",
 	},
 	status => {
-		type => "status",
-		size => 4,
+		type   => "status",
+		size   => 4,
 		access => "readwrite",
 	},
 	section => {
-		type => "text",
-		size => 3,
+		type   => "text",
+		size   => 3,
 		access => "readwrite",
 	},
 	recitation => {
-		type => "text",
-		size => 3,
+		type   => "text",
+		size   => 3,
 		access => "readwrite",
 	},
 	comment => {
-		type => "text",
-		size => 20,
+		type   => "text",
+		size   => 20,
 		access => "readwrite",
 	},
 	permission => {
-# this really should be read from $r->ce, but that's not available here
-		type => "permission",
+		# this really should be read from $r->ce, but that's not available here
+		type   => "permission",
 		access => "readwrite",
-		size => 4,
-#		type => "number",
-#		size => 2,
-#		access => "readwrite",
+		size   => 4,
+		#		type => "number",
+		#		size => 2,
+		#		access => "readwrite",
 	},
 	displayMode => {
-	    access => 'hidden',
+		access => 'hidden',
 	},
 	showOldAnswers => {
-	    access => 'hidden',
+		access => 'hidden',
 	},
 	useMathView => {
-	    access => 'hidden',
-    },
+		access => 'hidden',
+	},
 
-    useWirisEditor => {
-	    access => 'hidden',
-    },
-    useMathQuill => {
-	    access => 'hidden',
-    },
-    lis_source_did => {
-	    access => 'hidden',
+	useWirisEditor => {
+		access => 'hidden',
+	},
+	useMathQuill => {
+		access => 'hidden',
+	},
+	lis_source_did => {
+		access => 'hidden',
 	},
 };
+
 sub pre_header_initialize {
-	my $self          = shift;
-	my $r             = $self->r;
-	my $urlpath       = $r->urlpath;
-	my $authz         = $r->authz;
-	my $ce            = $r->ce;
-	my $courseName    = $urlpath->arg("courseID");
-	my $user          = $r->param('user');
+	my $self       = shift;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $authz      = $r->authz;
+	my $ce         = $r->ce;
+	my $courseName = $urlpath->arg("courseID");
+	my $user       = $r->param('user');
 	# Handle redirects, if any.
 	##############################
 	# Redirect to the addUser page
@@ -219,15 +222,16 @@ sub pre_header_initialize {
 
 	defined($r->param('action')) && $r->param('action') eq 'add' && do {
 		# fix url and redirect
-		my $root              = $ce->{webworkURLs}->{root};
+		my $root = $ce->{webworkURLs}->{root};
 
-		my $numberOfStudents  = $r->param('number_of_students');
+		my $numberOfStudents = $r->param('number_of_students');
 		warn $r->maketext("number of students not defined") unless defined $numberOfStudents;
 
-		my $uri=$self->systemLink( $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::AddUsers', $r, courseID=>$courseName),
-		                           params=>{
-		                          			number_of_students=>$numberOfStudents,
-		                                   }
+		my $uri = $self->systemLink(
+			$urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::AddUsers', $r, courseID => $courseName),
+			params => {
+				number_of_students => $numberOfStudents,
+			}
 		);
 		#FIXME  does the display mode need to be defined?
 		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
@@ -251,15 +255,15 @@ sub initialize {
 }
 
 sub body {
-	my ($self)       = @_;
-	my $r            = $self->r;
-	my $urlpath      = $r->urlpath;
-	my $db           = $r->db;
-	my $ce           = $r->ce;
-	my $authz        = $r->authz;
-	my $courseName   = $urlpath->arg("courseID");
-	my $setID        = $urlpath->arg("setID");
-	my $user         = $r->param('user');
+	my ($self)     = @_;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
+	my $courseName = $urlpath->arg("courseID");
+	my $setID      = $urlpath->arg("setID");
+	my $user       = $r->param('user');
 
 	my $root = $ce->{webworkURLs}->{root};
 
@@ -276,7 +280,7 @@ sub body {
 		$userTemplate->FIELDS(),
 		$permissionLevelTemplate->FIELDS();
 
-	@prettyFieldNames{qw(
+	@prettyFieldNames{ qw(
 		user_id
 		first_name
 		last_name
@@ -287,17 +291,12 @@ sub body {
 		recitation
 		comment
 		permission
-	)} = (
-		$r->maketext("Login Name"),
-		$r->maketext("First Name"),
-		$r->maketext("Last Name"),
-		$r->maketext("Email Address"),
-		$r->maketext("Student ID"),
-		$r->maketext("Status"),
-		$r->maketext("Section"),
-		$r->maketext("Recitation"),
-		$r->maketext("Comment"),
-		$r->maketext("Permission Level")
+	) } = (
+		$r->maketext("Login Name"), $r->maketext("First Name"),
+		$r->maketext("Last Name"),  $r->maketext("Email Address"),
+		$r->maketext("Student ID"), $r->maketext("Status"),
+		$r->maketext("Section"),    $r->maketext("Recitation"),
+		$r->maketext("Comment"),    $r->maketext("Permission Level")
 	);
 
 	$self->{prettyFieldNames} = \%prettyFieldNames;
@@ -338,7 +337,6 @@ sub body {
 		$r->maketext("You are not authorized to modify student data"))
 		if $self->{editMode} and not $authz->hasPermissions($user, "modify_student_data");
 
-
 	$self->{passwordMode} = $r->param("passwordMode") || 0;
 
 	return CGI::div({ class => 'alert alert-danger p-1' },
@@ -346,14 +344,13 @@ sub body {
 		if $self->{passwordMode} and not $authz->hasPermissions($user, "modify_student_data");
 
 	if (defined $r->param("labelSortMethod")) {
-		$self->{primarySortField} = $r->param("labelSortMethod");
+		$self->{primarySortField}   = $r->param("labelSortMethod");
 		$self->{secondarySortField} = $r->param("primarySortField");
-		$self->{ternarySortField} = $r->param("secondarySortField");
-	}
-	else {
-		$self->{primarySortField} = $r->param("primarySortField") || "last_name";
+		$self->{ternarySortField}   = $r->param("secondarySortField");
+	} else {
+		$self->{primarySortField}   = $r->param("primarySortField")   || "last_name";
 		$self->{secondarySortField} = $r->param("secondarySortField") || "first_name";
-		$self->{ternarySortField} = $r->param("ternarySortField") || "student_id";
+		$self->{ternarySortField}   = $r->param("ternarySortField")   || "student_id";
 	}
 
 	my (%sections, %recitations);
@@ -368,7 +365,7 @@ sub body {
 
 	my $actionID = $r->param("action");
 	if ($actionID) {
-		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }, @{ PASSWORD_FORMS() } ) {
+		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }, @{ PASSWORD_FORMS() }) {
 			die $r->maketext("Action [_1] not found", $actionID);
 		}
 		# Check permissions
@@ -379,7 +376,7 @@ sub body {
 				$genericParams{$param} = [ $r->param($param) ];
 			}
 			my %actionParams = $self->getActionParams($actionID);
-			my %tableParams = $self->getTableParams();
+			my %tableParams  = $self->getTableParams();
 			print CGI::p(
 				CGI::div(
 					{ class => 'alert alert-success p-1' },
@@ -397,29 +394,28 @@ sub body {
 	}
 
 	# Retrieve values for member fields
-	my $editMode = $self->{editMode};
-	my $passwordMode = $self->{passwordMode};
-	my $primarySortField = $self->{primarySortField};
+	my $editMode           = $self->{editMode};
+	my $passwordMode       = $self->{passwordMode};
+	my $primarySortField   = $self->{primarySortField};
 	my $secondarySortField = $self->{secondarySortField};
-	my $ternarySortField = $self->{ternarySortField};
+	my $ternarySortField   = $self->{ternarySortField};
 
 	# Get requested users
 	my @Users = @{ $self->{visibleUserIDs} } ? $db->getUsers(@{ $self->{visibleUserIDs} }) : ();
 
-	my %sortSubs = %{ SORT_SUBS() };
-	my $primarySortSub = $sortSubs{$primarySortField};
+	my %sortSubs         = %{ SORT_SUBS() };
+	my $primarySortSub   = $sortSubs{$primarySortField};
 	my $secondarySortSub = $sortSubs{$secondarySortField};
-	my $ternarySortSub = $sortSubs{$ternarySortField};
+	my $ternarySortSub   = $sortSubs{$ternarySortField};
 
 	# add permission level to user record hash so we can sort it if necessary
 	if ($primarySortField eq 'permission' or $secondarySortField eq 'permission' or $ternarySortField eq 'permission') {
 		foreach my $User (@Users) {
 			next unless $User;
 			my $permissionLevel = $db->getPermissionLevel($User->user_id);
-        	                $User->{permission} = $permissionLevel->permission;
+			$User->{permission} = $permissionLevel->permission;
 		}
 	}
-
 
 	#	# don't forget to sort in opposite order of importance
 	#	@Users = sort $secondarySortSub @Users;
@@ -427,19 +423,8 @@ sub body {
 	#	#@Users = sort byLnFnUid @Users;
 
 	#   Always have a definite sort order even if first three sorts don't determine things
-	@Users = sort {
-		&$primarySortSub
-			||
-		&$secondarySortSub
-			||
-		&$ternarySortSub
-			||
-		byLastName
-			||
-		byFirstName
-			||
-		byUserID
-		}
+	@Users =
+		sort { &$primarySortSub || &$secondarySortSub || &$ternarySortSub || byLastName || byFirstName || byUserID }
 		@Users;
 
 	my @PermissionLevels;
@@ -448,7 +433,7 @@ sub body {
 		my $User = $Users[$i];
 		# FIXME  utf8, utf8mb4 debugging codes
 		#		warn "UserList: user  name, ".$User->first_name." ".$User->last_name."\n";
-		my $PermissionLevel = $db->getPermissionLevel($User->user_id); # checked
+		my $PermissionLevel = $db->getPermissionLevel($User->user_id);    # checked
 
 		# DBFIXME this should go in the DB layer
 		unless ($PermissionLevel) {
@@ -521,24 +506,24 @@ sub body {
 		print CGI::hidden(-name => "no_prev_visible_users", -value => "1");
 	}
 
-	print CGI::hidden(-name=>"editMode", -value=>$editMode);
+	print CGI::hidden(-name => "editMode", -value => $editMode);
 
-	print CGI::hidden(-name=>"passwordMode", -value=>$passwordMode);
+	print CGI::hidden(-name => "passwordMode", -value => $passwordMode);
 
-	print CGI::hidden(-name=>"primarySortField", -value=>$primarySortField);
-	print CGI::hidden(-name=>"secondarySortField", -value=>$secondarySortField);
-	print CGI::hidden(-name=>"ternarySortField", -value=>$ternarySortField);
+	print CGI::hidden(-name => "primarySortField",   -value => $primarySortField);
+	print CGI::hidden(-name => "secondarySortField", -value => $secondarySortField);
+	print CGI::hidden(-name => "ternarySortField",   -value => $ternarySortField);
 
 	print "\n<!-- state data here -->\n";
 
 	########## print action forms
 
-	print CGI::p($r->maketext("Select an action to perform").":");
+	print CGI::p($r->maketext("Select an action to perform") . ":");
 
 	my @formsToShow;
 	if ($editMode) {
 		@formsToShow = @{ EDIT_FORMS() };
-	}elsif ($passwordMode) {
+	} elsif ($passwordMode) {
 		@formsToShow = @{ PASSWORD_FORMS() };
 	} else {
 		@formsToShow = @{ VIEW_FORMS() };
@@ -582,9 +567,9 @@ sub body {
 			@contentArr,
 			CGI::div(
 				{
-					class            => 'tab-pane fade mb-2' . ($active ? " show$active" : ''),
-					id               => $actionID,
-					role             => 'tabpanel',
+					class           => 'tab-pane fade mb-2' . ($active ? " show$active" : ''),
+					id              => $actionID,
+					role            => 'tabpanel',
 					aria_labelledby => "$actionID-tab"
 				},
 				$self->$actionForm($self->getActionParams($actionID))
@@ -609,23 +594,28 @@ sub body {
 
 	print CGI::p($r->maketext("Showing [_1] out of [_2] users", scalar @Users, scalar @{ $self->{allUserIDs} }));
 
-	print CGI::p($r->maketext("If a password field is left blank, the student's current password will be maintained.")) if $passwordMode;
+	print CGI::p($r->maketext("If a password field is left blank, the student's current password will be maintained."))
+		if $passwordMode;
 	if ($editMode) {
-		print CGI::p($r->maketext('Click on the login name to edit individual problem set data, (e.g. due dates) for these students.'));
+		print CGI::p(
+			$r->maketext(
+				'Click on the login name to edit individual problem set data, (e.g. due dates) for these students.')
+		);
 	}
 
-	$self->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
-		editMode => $editMode,
-		passwordMode => $passwordMode,
-		selectedUserIDs => $self->{selectedUserIDs},
-		primarySortField => $primarySortField,
+	$self->printTableHTML(
+		\@Users, \@PermissionLevels, \%prettyFieldNames,
+		editMode           => $editMode,
+		passwordMode       => $passwordMode,
+		selectedUserIDs    => $self->{selectedUserIDs},
+		primarySortField   => $primarySortField,
 		secondarySortField => $secondarySortField,
-		visableUserIDs => $self->{visibleUserIDs},
+		visableUserIDs     => $self->{visibleUserIDs},
 	);
 
 	########## print end of form
 
- 	print CGI::end_form();
+	print CGI::end_form();
 
 	return "";
 }
@@ -752,7 +742,7 @@ sub filter_form {
 sub filter_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 
-	my $r = $self->r;
+	my $r  = $self->r;
 	my $db = $r->db;
 	my $ce = $r->ce;
 
@@ -767,21 +757,21 @@ sub filter_handler {
 		$self->{visibleUserIDs} = [];
 	} elsif ($scope eq "selected") {
 		$result = $r->maketext("showing selected users");
-		$self->{visibleUserIDs} = $genericParams->{selected_users}; # an arrayref
+		$self->{visibleUserIDs} = $genericParams->{selected_users};         # an arrayref
 	} elsif ($scope eq "match_regex") {
 		$result = $r->maketext("showing matching users");
-		my $regex = $actionParams->{"action.filter.user_ids"}->[0];
-		my $field = $actionParams->{"action.filter.field"}->[0];
+		my $regex       = $actionParams->{"action.filter.user_ids"}->[0];
+		my $field       = $actionParams->{"action.filter.field"}->[0];
 		my @userRecords = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
 		my @userIDs;
-		my %permissionLabels = reverse %{$ce->{userRoles}};
+		my %permissionLabels = reverse %{ $ce->{userRoles} };
 		for my $record (@userRecords) {
 			# add permission level to user record hash so we can match it if necessary
 			# also change permission level and status to their text
 			# labels
 			if ($field eq "permission") {
 				my $permissionLevel = $db->getPermissionLevel($record->user_id);
-				$record->{permission} = $permissionLabels{$permissionLevel->permission};
+				$record->{permission} = $permissionLabels{ $permissionLevel->permission };
 			} elsif ($field eq 'status') {
 				$record->{status} = $ce->status_abbrev_to_name($record->{status});
 			}
@@ -793,10 +783,10 @@ sub filter_handler {
 		$self->{visibleUserIDs} = \@userIDs;
 	} elsif ($scope eq "match_section") {
 		my $section = $actionParams->{"action.filter.section"}->[0];
-		$self->{visibleUserIDs} = $self->{sections}->{$section}; # an arrayref
+		$self->{visibleUserIDs} = $self->{sections}->{$section};    # an arrayref
 	} elsif ($scope eq "match_recitation") {
 		my $recitation = $actionParams->{"action.filter.recitation"}->[0];
-		$self->{visibleUserIDs} = $self->{recitations}->{$recitation}; # an arrayref
+		$self->{visibleUserIDs} = $self->{recitations}->{$recitation};    # an arrayref
 	}
 
 	return $result;
@@ -901,27 +891,28 @@ sub sort_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r = $self->r;
 
-	my $primary = $actionParams->{"action.sort.primary"}->[0];
+	my $primary   = $actionParams->{"action.sort.primary"}->[0];
 	my $secondary = $actionParams->{"action.sort.secondary"}->[0];
-	my $ternary = $actionParams->{"action.sort.ternary"}->[0];
+	my $ternary   = $actionParams->{"action.sort.ternary"}->[0];
 
-	$self->{primarySortField} = $primary;
+	$self->{primarySortField}   = $primary;
 	$self->{secondarySortField} = $secondary;
-	$self->{ternarySortField} = $ternary;
+	$self->{ternarySortField}   = $ternary;
 
 	my %names = (
-				user_id		=> $r->maketext("Login Name"),
-				first_name	=> $r->maketext("First Name"),
-				last_name	=> $r->maketext("Last Name"),
-				student_id	=> $r->maketext("Student ID"),
-				status		=> $r->maketext("Enrollment Status"),
-				section		=> $r->maketext("Section"),
-				recitation	=> $r->maketext("Recitation"),
-				comment		=> $r->maketext("Comment"),
-				permission	=> $r->maketext("Permission Level")
+		user_id    => $r->maketext("Login Name"),
+		first_name => $r->maketext("First Name"),
+		last_name  => $r->maketext("Last Name"),
+		student_id => $r->maketext("Student ID"),
+		status     => $r->maketext("Enrollment Status"),
+		section    => $r->maketext("Section"),
+		recitation => $r->maketext("Recitation"),
+		comment    => $r->maketext("Comment"),
+		permission => $r->maketext("Permission Level")
 	);
 
-	return $r->maketext("Users sorted by [_1], then by [_2], then by [_3]", $names{$primary}, $names{$secondary}, $names{$ternary});
+	return $r->maketext("Users sorted by [_1], then by [_2], then by [_3]",
+		$names{$primary}, $names{$secondary}, $names{$ternary});
 }
 
 sub edit_form {
@@ -967,13 +958,12 @@ sub edit_handler {
 		# leave visibleUserIDs alone
 	} elsif ($scope eq "selected") {
 		$result = $r->maketext("editing selected users");
-		$self->{visibleUserIDs} = $genericParams->{selected_users}; # an arrayref
+		$self->{visibleUserIDs} = $genericParams->{selected_users};         # an arrayref
 	}
 	$self->{editMode} = 1;
 
 	return $result;
 }
-
 
 sub password_form {
 	my ($self, %actionParams) = @_;
@@ -988,7 +978,7 @@ sub password_form {
 		CGI::div(
 			{ class => 'col-auto' },
 			CGI::popup_menu({
-				id     => 'password_select',
+				id      => 'password_select',
 				name    => 'action.password.scope',
 				values  => [qw(all visible selected)],
 				default => $actionParams{'action.password.scope'}[0] || 'selected',
@@ -1018,7 +1008,7 @@ sub password_handler {
 		# leave visibleUserIDs alone
 	} elsif ($scope eq "selected") {
 		$result = $r->maketext("giving new passwords to selected users");
-		$self->{visibleUserIDs} = $genericParams->{selected_users}; # an arrayref
+		$self->{visibleUserIDs} = $genericParams->{selected_users};                         # an arrayref
 	}
 	$self->{passwordMode} = 1;
 
@@ -1060,9 +1050,9 @@ sub delete_form {
 
 sub delete_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r         = $self->r;
-	my $db        = $r->db;
-	my $user      = $r->param('user');
+	my $r     = $self->r;
+	my $db    = $r->db;
+	my $user  = $r->param('user');
 	my $scope = $actionParams->{"action.delete.scope"}->[0];
 
 	my @userIDsToDelete = ();
@@ -1070,14 +1060,14 @@ sub delete_handler {
 		@userIDsToDelete = @{ $self->{selectedUserIDs} };
 	}
 
-	my %allUserIDs = map { $_ => 1 } @{ $self->{allUserIDs} };
-	my %visibleUserIDs = map { $_ => 1 } @{ $self->{visibleUserIDs} };
+	my %allUserIDs      = map { $_ => 1 } @{ $self->{allUserIDs} };
+	my %visibleUserIDs  = map { $_ => 1 } @{ $self->{visibleUserIDs} };
 	my %selectedUserIDs = map { $_ => 1 } @{ $self->{selectedUserIDs} };
 
 	my $error = "";
-	my $num = 0;
+	my $num   = 0;
 	foreach my $userID (@userIDsToDelete) {
-		if ($user eq $userID) { # don't delete yourself!!
+		if ($user eq $userID) {    # don't delete yourself!!
 			$error = $r->maketext("You cannot delete yourself!");
 			next;
 		}
@@ -1088,8 +1078,8 @@ sub delete_handler {
 		$num++;
 	}
 
-	$self->{allUserIDs} = [ keys %allUserIDs ];
-	$self->{visibleUserIDs} = [ keys %visibleUserIDs ];
+	$self->{allUserIDs}      = [ keys %allUserIDs ];
+	$self->{visibleUserIDs}  = [ keys %visibleUserIDs ];
 	$self->{selectedUserIDs} = [ keys %selectedUserIDs ];
 
 	return $r->maketext("Deleted [_1] users.", $num) . ($error ? " $error" : '');
@@ -1199,11 +1189,11 @@ sub import_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r = $self->r;
 
-	my $source = $actionParams->{"action.import.source"}->[0];
-	my $add = $actionParams->{"action.import.add"}->[0];
+	my $source  = $actionParams->{"action.import.source"}->[0];
+	my $add     = $actionParams->{"action.import.add"}->[0];
 	my $replace = $actionParams->{"action.import.replace"}->[0];
 
-	my $fileName = $source;
+	my $fileName  = $source;
 	my $createNew = $add eq "any";
 	my $replaceExisting;
 	my @replaceList;
@@ -1213,24 +1203,24 @@ sub import_handler {
 		$replaceExisting = "none";
 	} elsif ($replace eq "visible") {
 		$replaceExisting = "listed";
-		@replaceList = @{ $self->{visibleUserIDs} };
+		@replaceList     = @{ $self->{visibleUserIDs} };
 	} elsif ($replace eq "selected") {
 		$replaceExisting = "listed";
-		@replaceList = @{ $self->{selectedUserIDs} };
+		@replaceList     = @{ $self->{selectedUserIDs} };
 	}
 
-	my ($replaced, $added, $skipped)
-		= $self->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
+	my ($replaced, $added, $skipped) = $self->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
 
 	# make new users visible... do we really want to do this? probably.
 	push @{ $self->{visibleUserIDs} }, @$added;
-	push @{ $self->{allUserIDs} }, @$added;
+	push @{ $self->{allUserIDs} },     @$added;
 
 	my $numReplaced = @$replaced;
-	my $numAdded = @$added;
-	my $numSkipped = @$skipped;
+	my $numAdded    = @$added;
+	my $numSkipped  = @$skipped;
 
-	return $r->maketext("[_1] users replaced, [_2] users added, [_3] users skipped. Skipped users: ([_4])", $numReplaced, $numAdded, $numSkipped, join (", ", @$skipped));
+	return $r->maketext("[_1] users replaced, [_2] users added, [_3] users skipped. Skipped users: ([_4])",
+		$numReplaced, $numAdded, $numSkipped, join(", ", @$skipped));
 }
 
 sub export_form {
@@ -1304,13 +1294,13 @@ sub export_form {
 
 sub export_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r       = $self->r;
-	my $ce      = $r->ce;
-	my $dir     = $ce->{courseDirs}->{templates};
+	my $r   = $self->r;
+	my $ce  = $r->ce;
+	my $dir = $ce->{courseDirs}->{templates};
 
-	my $scope = $actionParams->{"action.export.scope"}->[0];
+	my $scope  = $actionParams->{"action.export.scope"}->[0];
 	my $target = $actionParams->{"action.export.target"}->[0];
-	my $new = $actionParams->{"action.export.new"}->[0];
+	my $new    = $actionParams->{"action.export.new"}->[0];
 
 	#get name of templates directory as it appears in file manager
 	$dir =~ s|.*/||;
@@ -1346,10 +1336,10 @@ sub cancelEdit_form {
 
 sub cancelEdit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r      = $self->r;
+	my $r = $self->r;
 
 	#$self->{selectedUserIDs} = $self->{visibleUserIDs};
-		# only do the above if we arrived here via "edit selected users"
+	# only do the above if we arrived here via "edit selected users"
 	if (defined $r->param("prev_visible_users")) {
 		$self->{visibleUserIDs} = [ $r->param("prev_visible_users") ];
 	} elsif (defined $r->param("no_prev_visible_users")) {
@@ -1370,16 +1360,16 @@ sub saveEdit_form {
 
 sub saveEdit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r           = $self->r;
-	my $db          = $r->db;
-	my $editorUser = $r->param('user');
+	my $r                    = $self->r;
+	my $db                   = $r->db;
+	my $editorUser           = $r->param('user');
 	my $editorUserPermission = $db->getPermissionLevel($editorUser)->permission;
 
 	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
-		my $User = $db->getUser($userID); # checked
+		my $User = $db->getUser($userID);                          # checked
 		die $r->maketext("record for visible user [_1] not found", $userID) unless $User;
-		my $PermissionLevel = $db->getPermissionLevel($userID); # checked
+		my $PermissionLevel = $db->getPermissionLevel($userID);    # checked
 		die $r->maketext("permissions for [_1] not defined", $userID) unless defined $PermissionLevel;
 		foreach my $field ($User->NONKEYFIELDS()) {
 			my $param = "user.${userID}.${field}";
@@ -1390,8 +1380,9 @@ sub saveEdit_handler {
 
 		foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
 			my $param = "permission.${userID}.${field}";
-			if (defined $tableParams->{$param}->[0] &&
-			    $tableParams->{$param}->[0] <= $editorUserPermission) {
+			if (defined $tableParams->{$param}->[0]
+				&& $tableParams->{$param}->[0] <= $editorUserPermission)
+			{
 				$PermissionLevel->$field($tableParams->{$param}->[0]);
 			}
 		}
@@ -1421,10 +1412,10 @@ sub cancelPassword_form {
 
 sub cancelPassword_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r      = $self->r;
+	my $r = $self->r;
 
 	#$self->{selectedUserIDs} = $self->{visibleUserIDs};
-		# only do the above if we arrived here via "edit selected users"
+	# only do the above if we arrived here via "edit selected users"
 	if (defined $r->param("prev_visible_users")) {
 		$self->{visibleUserIDs} = [ $r->param("prev_visible_users") ];
 	} elsif (defined $r->param("no_prev_visible_users")) {
@@ -1445,17 +1436,17 @@ sub savePassword_form {
 
 sub savePassword_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r           = $self->r;
-	my $db          = $r->db;
+	my $r  = $self->r;
+	my $db = $r->db;
 
 	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
-		my $User = $db->getUser($userID); # checked
+		my $User = $db->getUser($userID);    # checked
 		die $r->maketext("record for visible user [_1] not found", $userID) unless $User;
 		my $param = "user.${userID}.new_password";
 		if ((defined $tableParams->{$param}->[0]) and ($tableParams->{$param}->[0])) {
-			my $newP = $tableParams->{$param}->[0];
-			my $Password = eval {$db->getPassword($User->user_id)}; # checked
+			my $newP          = $tableParams->{$param}->[0];
+			my $Password      = eval { $db->getPassword($User->user_id) };    # checked
 			my $cryptPassword = cryptPassword($newP);
 			if (!defined($Password)) {
 				$Password = $db->newPassword();
@@ -1482,21 +1473,23 @@ sub savePassword_handler {
 	return $r->maketext("New passwords saved");
 }
 
-
 ################################################################################
 # sorts
 ################################################################################
 
-sub byUserID       { lc $a->user_id       cmp lc $b->user_id       }
-sub byFirstName    {  (defined $a->first_name && defined $b->first_name) ?  lc $a->first_name cmp lc $b->first_name  : 0;  }
-sub byLastName     {  (defined $a->last_name  && defined $b->last_name ) ?  lc $a->last_name  cmp lc $b->last_name   : 0;  }
+sub byUserID       { lc $a->user_id cmp lc $b->user_id }
+sub byFirstName    { (defined $a->first_name && defined $b->first_name) ? lc $a->first_name cmp lc $b->first_name : 0; }
+sub byLastName     { (defined $a->last_name && defined $b->last_name) ? lc $a->last_name cmp lc $b->last_name : 0; }
 sub byEmailAddress { lc $a->email_address cmp lc $b->email_address }
-sub byStudentID    { lc $a->student_id    cmp lc $b->student_id    }
-sub byStatus       { lc $a->status        cmp lc $b->status        }
-sub bySection      { lc $a->section       cmp lc $b->section       }
-sub byRecitation   { lc $a->recitation    cmp lc $b->recitation    }
-sub byComment      { lc $a->comment       cmp lc $b->comment       }
-sub byPermission   { $a->{permission}    <=>  $b->{permission}     }  ## permission level is added to user record hash so we can sort it if necessary
+sub byStudentID    { lc $a->student_id cmp lc $b->student_id }
+sub byStatus       { lc $a->status cmp lc $b->status }
+sub bySection      { lc $a->section cmp lc $b->section }
+sub byRecitation   { lc $a->recitation cmp lc $b->recitation }
+sub byComment      { lc $a->comment cmp lc $b->comment }
+
+sub byPermission {
+	$a->{permission} <=> $b->{permission};
+}    ## permission level is added to user record hash so we can sort it if necessary
 
 # sub byLnFnUid { &byLastName || &byFirstName || &byUserID }
 
@@ -1511,7 +1504,7 @@ sub menuLabels {
 
 	my %result;
 	foreach my $key (keys %hash) {
-		my $count = @{ $hash{$key} };
+		my $count      = @{ $hash{$key} };
 		my $displayKey = $key || "<none>";
 		$result{$key} = "$displayKey ($count users)";
 	}
@@ -1522,11 +1515,11 @@ sub menuLabels {
 # (we need a whole suite of higher-level import/export functions somewhere)
 sub importUsersFromCSV {
 	my ($self, $fileName, $createNew, $replaceExisting, @replaceList) = @_;
-	my $r     = $self->r;
-	my $ce    = $r->ce;
-	my $db    = $r->db;
-	my $dir   = $ce->{courseDirs}->{templates};
-	my $user  = $r->param('user');
+	my $r    = $self->r;
+	my $ce   = $r->ce;
+	my $db   = $r->db;
+	my $dir  = $ce->{courseDirs}->{templates};
+	my $user = $r->param('user');
 
 	die $r->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
 	die $r->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
@@ -1553,14 +1546,14 @@ sub importUsersFromCSV {
 	my $default_status_abbrev = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
 
 	foreach my $record (@classlist) {
-		my %record = %$record;
+		my %record  = %$record;
 		my $user_id = $record{user_id};
 
-		unless (WeBWorK::DB::check_user_id($user_id) ) {  # try to catch lines with bad characters
+		unless (WeBWorK::DB::check_user_id($user_id)) {    # try to catch lines with bad characters
 			push @skipped, $user_id;
 			next;
 		}
-		if ($user_id eq $user) { # don't replace yourself!!
+		if ($user_id eq $user) {                           # don't replace yourself!!
 			push @skipped, $user_id;
 			next;
 		}
@@ -1594,9 +1587,9 @@ sub importUsersFromCSV {
 		$record{permission} = $default_permission_level
 			unless defined $record{permission} and $record{permission} ne "";
 
-		my $User = $db->newUser(%record);
+		my $User            = $db->newUser(%record);
 		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => $record{permission});
-		my $Password = $db->newPassword(user_id => $user_id, password => $record{password});
+		my $Password        = $db->newPassword(user_id => $user_id, password => $record{password});
 
 		# DBFIXME use REPLACE
 		if (exists $allUserIDs{$user_id}) {
@@ -1618,26 +1611,26 @@ sub importUsersFromCSV {
 
 sub exportUsersToCSV {
 	my ($self, $fileName, @userIDsToExport) = @_;
-	my $r       = $self->r;
-	my $ce      = $r->ce;
-	my $db      = $r->db;
-	my $dir     = $ce->{courseDirs}->{templates};
+	my $r   = $self->r;
+	my $ce  = $r->ce;
+	my $db  = $r->db;
+	my $dir = $ce->{courseDirs}->{templates};
 
 	die $r->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
 
 	my @records;
 
-	my @Users = $db->getUsers(@userIDsToExport);
-	my @Passwords = $db->getPasswords(@userIDsToExport);
+	my @Users            = $db->getUsers(@userIDsToExport);
+	my @Passwords        = $db->getPasswords(@userIDsToExport);
 	my @PermissionLevels = $db->getPermissionLevels(@userIDsToExport);
 	foreach my $i (0 .. $#userIDsToExport) {
-		my $User = $Users[$i];
-		my $Password = $Passwords[$i];
+		my $User            = $Users[$i];
+		my $Password        = $Passwords[$i];
 		my $PermissionLevel = $PermissionLevels[$i];
 		next unless defined $User;
 		my %record = (
 			defined $PermissionLevel ? $PermissionLevel->toHash : (),
-			defined $Password ? $Password->toHash : (),
+			defined $Password        ? $Password->toHash        : (),
 			$User->toHash,
 		);
 		push @records, \%record;
@@ -1745,42 +1738,57 @@ sub fieldEditHTML {
 
 sub recordEditHTML {
 	my ($self, $User, $PermissionLevel, %options) = @_;
-	my $r           = $self->r;
-	my $urlpath     = $r->urlpath;
-	my $db          = $r->db;
-	my $ce          = $r->ce;
-	my $authz	= $r->authz;
-	my $user	= $r->param('user');
-	my $root        = $ce->{webworkURLs}->{root};
-	my $courseName  = $urlpath->arg("courseID");
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
+	my $user       = $r->param('user');
+	my $root       = $ce->{webworkURLs}->{root};
+	my $courseName = $urlpath->arg("courseID");
 
-	my $editMode = $options{editMode};
+	my $editMode     = $options{editMode};
 	my $passwordMode = $options{passwordMode};
 	my $userSelected = $options{userSelected};
 
 	my $statusClass = $ce->status_abbrev_to_name($User->status);
 
-	my $sets = $db->countUserSets($User->user_id);
+	my $sets      = $db->countUserSets($User->user_id);
 	my $totalSets = $self->{totalSets};
 
-	my $changeEUserURL = $self->systemLink($urlpath->new(type=>'set_list',args=>{courseID=>$courseName}),
-										   params => {effectiveUser => $User->user_id}
+	my $changeEUserURL = $self->systemLink($urlpath->new(type => 'set_list', args => { courseID => $courseName }),
+		params => { effectiveUser => $User->user_id });
+
+	my $setsAssignedToUserURL = $self->systemLink(
+		$urlpath->new(
+			type => 'instructor_user_detail',
+			args => {
+				courseID => $courseName,
+				userID   => $User->user_id
+			}
+		),
+		params => { effectiveUser => $User->user_id }
 	);
 
-	my $setsAssignedToUserURL = $self->systemLink($urlpath->new(type=>'instructor_user_detail',
-	                                                            args=>{courseID => $courseName,
-	                                                                   userID   => $User->user_id
-	                                                                   }),
-										   params => {effectiveUser => $User->user_id}
-	);
-
-	my $userListURL = $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName} )) . "&editMode=1&visible_users=" . $User->user_id;
+	my $userListURL =
+		$self->systemLink($urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName }))
+		. "&editMode=1&visible_users="
+		. $User->user_id;
 
 	my $imageLink = '';
 
 	if ($authz->hasPermissions($user, "modify_student_data")) {
-	  $imageLink = CGI::a({href => $userListURL}, CGI::i({ class => 'icon fas fa-pencil-alt',
-				  data_alt => "Link to Edit Page for " . $User->user_id, aria_hidden => "true" }, ""));
+		$imageLink = CGI::a(
+			{ href => $userListURL },
+			CGI::i(
+				{
+					class       => 'icon fas fa-pencil-alt',
+					data_alt    => "Link to Edit Page for " . $User->user_id,
+					aria_hidden => "true"
+				},
+				""
+			)
+		);
 	}
 
 	my @tableCells;
@@ -1792,11 +1800,11 @@ sub recordEditHTML {
 		# selection checkbox
 		push @tableCells,
 			CGI::input({
-				type    => 'checkbox',
-				id      => $User->user_id . '_checkbox',
-				name    => "selected_users",
-				value   => $User->user_id,
-				class   => "form-check-input",
+				type  => 'checkbox',
+				id    => $User->user_id . '_checkbox',
+				name  => "selected_users",
+				value => $User->user_id,
+				class => "form-check-input",
 				$userSelected ? (checked => undef) : (),
 			});
 
@@ -1844,59 +1852,61 @@ sub recordEditHTML {
 		}
 	}
 	# User ID (edit mode) or Assigned Sets (otherwise)
-	if ( $passwordMode) {
+	if ($passwordMode) {
 		# straight user ID
-		push @tableCells, CGI::div({class=>$statusClass}, $User->user_id);
+		push @tableCells, CGI::div({ class => $statusClass }, $User->user_id);
 	} elsif ($editMode) {
 		# straight user ID
-		 my $userDetailPage = $urlpath->new(type =>'instructor_user_detail',
-					                       args =>{
-						                             courseID => $courseName,
-						                             userID   => $User->user_id, #FIXME eventually this should be a list??
-	                }
-	    );
-	    my $userDetailUrl = $self->systemLink($userDetailPage,params =>{});
-		push @tableCells, CGI::a({href=>$userDetailUrl}, $User->user_id);
+		my $userDetailPage = $urlpath->new(
+			type => 'instructor_user_detail',
+			args => {
+				courseID => $courseName,
+				userID   => $User->user_id,    #FIXME eventually this should be a list??
+			}
+		);
+		my $userDetailUrl = $self->systemLink($userDetailPage, params => {});
+		push @tableCells, CGI::a({ href => $userDetailUrl }, $User->user_id);
 
 	} else {
 		# "edit sets assigned to user" link
 		#push @tableCells, CGI::a({href=>$setsAssignedToUserURL}, "Edit sets");
-		if ( FIELD_PERMS()->{sets} and not $authz->hasPermissions($user, FIELD_PERMS()->{sets}) ) {
+		if (FIELD_PERMS()->{sets} and not $authz->hasPermissions($user, FIELD_PERMS()->{sets})) {
 			push @tableCells, "$sets/$totalSets";
 		} else {
-			push @tableCells, CGI::a({href=>$setsAssignedToUserURL}, "$sets/$totalSets");
+			push @tableCells, CGI::a({ href => $setsAssignedToUserURL }, "$sets/$totalSets");
 		}
 	}
 
 	# User Fields
 	foreach my $field ($User->NONKEYFIELDS) {
-	        my $fieldName = 'user.' . $User->user_id . '.' . $field,
-		my $fieldValue = $User->$field;
+		my $fieldName = 'user.' . $User->user_id . '.' . $field, my $fieldValue = $User->$field;
 # FIXME  utf8, utf8mb4 debugging codes
 #		warn "user values ".join(" ", $User->user_id,$User->first_name, $User->last_name)."\n";
 #		warn "variants". join(" ",$User->user_id, Encode::decode("UTF-8",$User->first_name), Encode::decode("UTF-8",$User->last_name))."\n";
 #		warn "is_utf8 flag, first_name, last_name ".join(" ", utf8::is_utf8($User->first_name)?1:0, utf8::is_utf8($User->last_name)?1:0   )."\n";
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
-	        next if $properties{access} eq 'hidden';
+		next if $properties{access} eq 'hidden';
 		$properties{access} = 'readonly' unless $editMode;
-		$properties{type} = 'email' if ($field eq 'email_address' and !$editMode and !$passwordMode);
-		$fieldValue = $self->nbsp($fieldValue) unless $editMode;
-		push @tableCells, CGI::div({class=>$statusClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+		$properties{type}   = 'email' if ($field eq 'email_address' and !$editMode and !$passwordMode);
+		$fieldValue         = $self->nbsp($fieldValue) unless $editMode;
+		push @tableCells,
+			CGI::div({ class => $statusClass }, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 
 	# PermissionLevel Fields
 	foreach my $field ($PermissionLevel->NONKEYFIELDS) {
 		my $fieldName = 'permission.' . $PermissionLevel->user_id . '.' . $field,
-		my $fieldValue = $PermissionLevel->$field;
+			my $fieldValue = $PermissionLevel->$field;
 		# get name out of permission level
-		if ( $field eq 'permission' ) {
-		  ($fieldValue) = grep { $ce->{userRoles}->{$_} eq $fieldValue } ( keys ( %{$ce->{userRoles}} ) );
-		  $fieldValue = $r->maketext($fieldValue)
+		if ($field eq 'permission') {
+			($fieldValue) = grep { $ce->{userRoles}->{$_} eq $fieldValue } (keys(%{ $ce->{userRoles} }));
+			$fieldValue = $r->maketext($fieldValue);
 		}
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$properties{access} = 'readonly' unless $editMode;
-		$fieldValue = $self->nbsp($fieldValue) unless $editMode;
-		push @tableCells, CGI::div({class=>$statusClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+		$properties{access} = 'readonly'               unless $editMode;
+		$fieldValue         = $self->nbsp($fieldValue) unless $editMode;
+		push @tableCells,
+			CGI::div({ class => $statusClass }, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 
 	return CGI::Tr(CGI::td(\@tableCells));
@@ -1905,27 +1915,24 @@ sub recordEditHTML {
 sub printTableHTML {
 	my ($self, $UsersRef, $PermissionLevelsRef, $fieldNamesRef, %options) = @_;
 	my $r                       = $self->r;
-	my $urlpath     = $r->urlpath;
-	my $courseName  = $urlpath->arg("courseID");
+	my $urlpath                 = $r->urlpath;
+	my $courseName              = $urlpath->arg("courseID");
 	my $userTemplate            = $self->{userTemplate};
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate};
 	my @Users                   = @$UsersRef;
 	my @PermissionLevels        = @$PermissionLevelsRef;
 	my %fieldNames              = %$fieldNamesRef;
 
-	my $editMode                = $options{editMode};
-	my $passwordMode            = $options{passwordMode};
-	my %selectedUserIDs         = map { $_ => 1 } @{ $options{selectedUserIDs} };
-	my $primarySortField        = $options{primarySortField};
-	my $secondarySortField      = $options{secondarySortField};
-	my @visableUserIDs          = @{ $options{visableUserIDs} };
+	my $editMode           = $options{editMode};
+	my $passwordMode       = $options{passwordMode};
+	my %selectedUserIDs    = map { $_ => 1 } @{ $options{selectedUserIDs} };
+	my $primarySortField   = $options{primarySortField};
+	my $secondarySortField = $options{secondarySortField};
+	my @visableUserIDs     = @{ $options{visableUserIDs} };
 
 	# names of headings:
-	my @realFieldNames = (
-		$userTemplate->KEYFIELDS,
-		$userTemplate->NONKEYFIELDS,
-		$permissionLevelTemplate->NONKEYFIELDS,
-	);
+	my @realFieldNames =
+		($userTemplate->KEYFIELDS, $userTemplate->NONKEYFIELDS, $permissionLevelTemplate->NONKEYFIELDS,);
 
 	my @tableHeadings;
 
@@ -1940,22 +1947,22 @@ sub printTableHTML {
 			my $visableUserIDsString = join ':', @visableUserIDs;
 			if (length($visableUserIDsString) < 1830) {
 				%current_state = (
-					primarySortField => "$primarySortField",
-					secondarySortField => "$secondarySortField",
+					primarySortField    => "$primarySortField",
+					secondarySortField  => "$secondarySortField",
 					visable_user_string => "$visableUserIDsString"
 				);
 			} else {
 				%current_state = (
-					primarySortField => "$primarySortField",
+					primarySortField   => "$primarySortField",
 					secondarySortField => "$secondarySortField",
-					show_all_users => "1"
+					show_all_users     => "1"
 				);
 			}
 		} else {
 			%current_state = (
-				primarySortField => "$primarySortField",
+				primarySortField   => "$primarySortField",
 				secondarySortField => "$secondarySortField",
-				no_visible_users => "1"
+				no_visible_users   => "1"
 			);
 		}
 
@@ -2060,11 +2067,11 @@ sub printTableHTML {
 		for my $field (@realFieldNames) {
 			my %properties = %{ FIELD_PROPERTIES()->{$field} };
 			next if $properties{access} eq 'hidden';
-			push @tableHeadings, CGI::th({ id => "${field}_header"}, $fieldNames{$field});
+			push @tableHeadings, CGI::th({ id => "${field}_header" }, $fieldNames{$field});
 		}
 	}
 
-	unshift(@tableHeadings, CGI::th({ id => "new_password_header"}, $r->maketext("New Password"))) if ($passwordMode);
+	unshift(@tableHeadings, CGI::th({ id => "new_password_header" }, $r->maketext("New Password"))) if ($passwordMode);
 
 	# Print the table.
 	print CGI::start_div({ class => 'table-responsive' });
@@ -2081,13 +2088,14 @@ sub printTableHTML {
 	print CGI::start_tbody();
 
 	for (my $i = 0; $i < @Users; $i++) {
-		my $User = $Users[$i];
+		my $User            = $Users[$i];
 		my $PermissionLevel = $PermissionLevels[$i];
 
-		print $self->recordEditHTML($User, $PermissionLevel,
-			editMode => $editMode,
+		print $self->recordEditHTML(
+			$User, $PermissionLevel,
+			editMode     => $editMode,
 			passwordMode => $passwordMode,
-			userSelected => exists $selectedUserIDs{$User->user_id}
+			userSelected => exists $selectedUserIDs{ $User->user_id }
 		);
 	}
 	print CGI::end_tbody();
@@ -2095,9 +2103,10 @@ sub printTableHTML {
 	print CGI::end_table(), CGI::end_div();
 
 	# if there are no users shown print message
-	print CGI::p(
-		CGI::i($r->maketext("No students shown.  Choose one of the options above to list the students in the course."))
-	) unless @Users;
+	print CGI::p(CGI::i(
+		$r->maketext("No students shown.  Choose one of the options above to list the students in the course.")
+	))
+		unless @Users;
 }
 
 # output_JS subroutine

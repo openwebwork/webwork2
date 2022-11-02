@@ -52,7 +52,7 @@ use warnings;
 use version;
 use WeBWorK::Cookie;
 use Date::Format;
-use Socket qw/unpack_sockaddr_in inet_ntoa/; # for logging
+use Socket qw/unpack_sockaddr_in inet_ntoa/;    # for logging
 use WeBWorK::Debug;
 use WeBWorK::Utils qw/writeCourseLog runtime_use/;
 use WeBWorK::Localize;
@@ -72,7 +72,7 @@ use Caliper::Entity;
 ## If GENERIC_ERROR_MESSAGE is constant, we can't translate it
 
 #use vars qw($GENERIC_ERROR_MESSAGE);
-our $GENERIC_ERROR_MESSAGE = "";  # define in new
+our $GENERIC_ERROR_MESSAGE = "";    # define in new
 
 ## WeBWorK-tr end modification
 #####################
@@ -101,26 +101,28 @@ sub class {
 
 	if (exists $ce->{authen}{$type}) {
 		if (ref $ce->{authen}{$type} eq "ARRAY") {
-			my $authen_type = shift @{$ce ->{authen}{$type}};
+			my $authen_type = shift @{ $ce->{authen}{$type} };
 			#debug("ref of authen_type = |" . ref($authen_type) . "|");
-			if (ref ($authen_type) eq "HASH") {
-				if (exists $authen_type->{$ce->{dbLayoutName}}) {
-					return $authen_type->{$ce->{dbLayoutName}};
+			if (ref($authen_type) eq "HASH") {
+				if (exists $authen_type->{ $ce->{dbLayoutName} }) {
+					return $authen_type->{ $ce->{dbLayoutName} };
 				} elsif (exists $authen_type->{"*"}) {
 					return $authen_type->{"*"};
 				} else {
-					die "authentication type '$type' in the course environment has no entry for db layout '", $ce->{dbLayoutName}, "' and no default entry (*)";
+					die "authentication type '$type' in the course environment has no entry for db layout '",
+						$ce->{dbLayoutName}, "' and no default entry (*)";
 				}
 			} else {
-					return $authen_type;
+				return $authen_type;
 			}
 		} elsif (ref $ce->{authen}{$type} eq "HASH") {
-			if (exists $ce->{authen}{$type}{$ce->{dbLayoutName}}) {
-				return $ce->{authen}{$type}{$ce->{dbLayoutName}};
+			if (exists $ce->{authen}{$type}{ $ce->{dbLayoutName} }) {
+				return $ce->{authen}{$type}{ $ce->{dbLayoutName} };
 			} elsif (exists $ce->{authen}{$type}{"*"}) {
 				return $ce->{authen}{$type}{"*"};
 			} else {
-				die "authentication type '$type' in the course environment has no entry for db layout '", $ce->{dbLayoutName}, "' and no default entry (*)";
+				die "authentication type '$type' in the course environment has no entry for db layout '",
+					$ce->{dbLayoutName}, "' and no default entry (*)";
 			}
 		} else {
 			return $ce->{authen}{$type};
@@ -132,25 +134,25 @@ sub class {
 
 sub call_next_authen_method {
 	my $self = shift;
-	my $r = $self -> {r};
-	my $ce = $r -> {ce};
+	my $r    = $self->{r};
+	my $ce   = $r->{ce};
 
 	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
 	#debug("user_authen_module = |$user_authen_module|");
 	if (!defined($user_authen_module) or ($user_authen_module eq "")) {
-		$self->{error} = $r->maketext("No authentication method found for your request.  If this recurs, please speak with your instructor.");
+		$self->{error} = $r->maketext(
+			"No authentication method found for your request.  If this recurs, please speak with your instructor.");
 		$self->{log_error} .= "None of the specified authentication modules could handle the request.";
-		return(0);
+		return (0);
 	} else {
 		runtime_use $user_authen_module;
 		my $authen = $user_authen_module->new($r);
 		#debug("Using user_authen_module $user_authen_module: $authen\n");
 		$r->authen($authen);
 
-		return $authen -> verify;
+		return $authen->verify;
 	}
 }
-
 
 =back
 
@@ -169,10 +171,8 @@ Instantiates a new WeBWorK::Authen object for the given WeBWorK::Requst ($r).
 sub new {
 	my ($invocant, $r) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $self = {
-		r => $r,
-	};
-	weaken $self -> {r};
+	my $self  = { r => $r, };
+	weaken $self->{r};
 	#initialize
 	$GENERIC_ERROR_MESSAGE = $r->maketext("Invalid user ID or password.");
 	bless $self, $class;
@@ -189,22 +189,22 @@ sub new {
 
 =cut
 
-sub  request_has_data_for_this_verification_module {
+sub request_has_data_for_this_verification_module {
 	#debug("Authen::request_has_data_for_this_verification_module will return a 1");
-	return(1);
+	return (1);
 }
 
 sub verify {
 	debug("BEGIN VERIFY");
 	my $self = shift;
-	my $r = $self->{r};
+	my $r    = $self->{r};
 
-	if (! ($self-> request_has_data_for_this_verification_module)) {
-		return ( $self -> call_next_authen_method());
+	if (!($self->request_has_data_for_this_verification_module)) {
+		return ($self->call_next_authen_method());
 	}
 
-	my $result = $self->do_verify;
-	my $error = $self->{error};
+	my $result    = $self->do_verify;
+	my $error     = $self->{error};
 	my $log_error = $self->{log_error};
 
 	$self->{was_verified} = $result ? 1 : 0;
@@ -221,16 +221,18 @@ sub verify {
 		if (defined $log_error) {
 			$self->write_log_entry("LOGIN FAILED $log_error");
 		}
-		if (defined($error) and $error=~/\S/) { # if error message has a least one non-space character.
-			if ( defined( $log_error ) and $log_error eq "inactivity timeout" ) {
+		if (defined($error) and $error =~ /\S/) {    # if error message has a least one non-space character.
+			if (defined($log_error) and $log_error eq "inactivity timeout") {
 				# We don't want to override the localized inactivity timeout message.
 				# so do not check next "if" in this case.
 			} elsif (defined($r->param("user")) or defined($r->param("user_id"))) {
-				$error = $r->maketext("Your authentication failed.  Please try again. Please speak with your instructor if you need help.")
+				$error = $r->maketext(
+					"Your authentication failed.  Please try again. Please speak with your instructor if you need help."
+				);
 			}
 
 		}
-        #warn "LOGIN FAILED: log_error: $log_error; user error: $error";
+		#warn "LOGIN FAILED: log_error: $log_error; user error: $error";
 		$self->maybe_kill_cookie;
 		# if error message has a least one non-space character.
 		if (defined($error) and $error =~ /\S/ and $r->can('notes')) {
@@ -242,10 +244,10 @@ sub verify {
 	my $caliper_sensor = Caliper::Sensor->new($self->{r}->ce);
 	if ($caliper_sensor->caliperEnabled() && $result && $self->{initial_login}) {
 		my $login_event = {
-			'type' => 'SessionEvent',
-			'action' => 'LoggedIn',
+			'type'    => 'SessionEvent',
+			'action'  => 'LoggedIn',
 			'profile' => 'SessionProfile',
-			'object' => Caliper::Entity::webwork_app()
+			'object'  => Caliper::Entity::webwork_app()
 		};
 		$caliper_sensor->sendEvents($self->{r}, [$login_event]);
 	}
@@ -276,8 +278,8 @@ Future calls to was_verified() will return false, until verify() is called again
 
 sub forget_verification {
 	my ($self) = @_;
-	my $r = $self -> {r};
-	my $ce = $r -> {ce};
+	my $r      = $self->{r};
+	my $ce     = $r->{ce};
 
 	$self->{was_verified} = 0;
 
@@ -293,41 +295,41 @@ sub forget_verification {
 
 sub do_verify {
 	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $r    = $self->{r};
+	my $ce   = $r->ce;
+	my $db   = $r->db;
 
 	return 0 unless $db;
 	debug("db ok");
 	return 0 unless $self->get_credentials;
 	debug("credentials ok");
 	return 0 unless $self->check_user;
-	debug ("check user ok");
-	if (defined($self->{login_type}) && $self->{login_type} eq "guest"){
+	debug("check user ok");
+	if (defined($self->{login_type}) && $self->{login_type} eq "guest") {
 		return $self->verify_practice_user;
 	} else {
 		return $self->verify_normal_user;
 	}
 }
 
-sub trim {  # used to trim leading and trailing white space from user_id and password
-            # in get_credentials
-  my $s = shift;
-  # If the value was NOT defined, we want to leave it undefined, so
-  # we can still catch session-timeouts and report them properly.
-  # Thus we only do the following substitution if $s is defined.
-  # Otherwise return the undefined value so a non-defined password
-  # can be caught later by authenticate() for the case of a
-  # session-timeout.
-  $s =~ s/(^\s+|\s+$)//g    if ( defined($s) );
-  return $s;
+sub trim {    # used to trim leading and trailing white space from user_id and password
+			  # in get_credentials
+	my $s = shift;
+	# If the value was NOT defined, we want to leave it undefined, so
+	# we can still catch session-timeouts and report them properly.
+	# Thus we only do the following substitution if $s is defined.
+	# Otherwise return the undefined value so a non-defined password
+	# can be caught later by authenticate() for the case of a
+	# session-timeout.
+	$s =~ s/(^\s+|\s+$)//g if (defined($s));
+	return $s;
 }
 
 sub get_credentials {
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $r      = $self->{r};
+	my $ce     = $r->ce;
+	my $db     = $r->db;
 	debug("self is $self ");
 	# allow guest login: if the "Guest Login" button was clicked, we find an unused
 	# practice user and create a session for it.
@@ -342,103 +344,110 @@ sub get_credentials {
 				my $newKey = $self->create_session($userID);
 				$self->{initial_login} = 1;
 
-				$self->{user_id} = $userID;
-				$self->{session_key} = $newKey;
-				$self->{login_type} = "guest";
+				$self->{user_id}           = $userID;
+				$self->{session_key}       = $newKey;
+				$self->{login_type}        = "guest";
 				$self->{credential_source} = "none";
-				debug("guest user '", $userID. "' key '", $newKey. "'");
+				debug("guest user '", $userID . "' key '", $newKey . "'");
 				return 1;
 			}
 		}
 
 		$self->{log_error} = "no guest logins are available";
-		$self->{error} = $r->maketext("No guest logins are available. Please try again in a few minutes.");
+		$self->{error}     = $r->maketext("No guest logins are available. Please try again in a few minutes.");
 		return 0;
 	}
 
 	my ($cookieUser, $cookieKey, $cookieTimeStamp) = $self->fetchCookie;
 
-	if (defined $cookieUser and defined $r->param("user") ) {
+	if (defined $cookieUser and defined $r->param("user")) {
 		if ($cookieUser ne $r->param("user")) {
 			#croak ("cookieUser = $cookieUser and paramUser = ". $r->param("user") . " are different.");
-			$self->maybe_kill_cookie; # use parameter "user" rather than cookie "user";
+			$self->maybe_kill_cookie;    # use parameter "user" rather than cookie "user";
 		}
-# Use session key for verification
-# else   use cookieKey for verification
-# else    use cookie user name but use password provided by request.
+		# Use session key for verification
+		# else   use cookieKey for verification
+		# else    use cookie user name but use password provided by request.
 
 		if (defined $r->param("key")) {
-			$self->{user_id} = $r->param("user");
-			$self->{session_key} = $r->param("key");
-			$self->{password} = $r->param("passwd");
-			$self->{login_type} = "normal";
+			$self->{user_id}           = $r->param("user");
+			$self->{session_key}       = $r->param("key");
+			$self->{password}          = $r->param("passwd");
+			$self->{login_type}        = "normal";
 			$self->{credential_source} = "params";
-			$self->{user_id}     = trim($self->{user_id});
-			$self->{password}     = trim($self->{password});
+			$self->{user_id}           = trim($self->{user_id});
+			$self->{password}          = trim($self->{password});
 			debug("params user '", $self->{user_id}, "' key '", $self->{session_key}, "'");
 			return 1;
 		} elsif (defined $cookieKey) {
-			$self->{user_id} = $cookieUser;
-			$self->{session_key} = $cookieKey;
-			$self->{cookie_timestamp} = $cookieTimeStamp;
-			$self->{login_type} = "normal";
+			$self->{user_id}           = $cookieUser;
+			$self->{session_key}       = $cookieKey;
+			$self->{cookie_timestamp}  = $cookieTimeStamp;
+			$self->{login_type}        = "normal";
 			$self->{credential_source} = "cookie";
-			$self->{user_id}     = trim($self->{user_id});
-			debug(  "cookie user '", $self->{user_id},
-				"' key '", $self->{session_key},
-				"' cookie_timestamp '", $self->{cookieTimeStamp}, "' "
+			$self->{user_id}           = trim($self->{user_id});
+			debug(
+				"cookie user '",
+				$self->{user_id}, "' key '", $self->{session_key},
+				"' cookie_timestamp '",
+				$self->{cookieTimeStamp}, "' "
 			);
 			return 1;
 		} else {
-			$self->{user_id} = $cookieUser;
-			$self->{session_key} = $cookieKey; # will be undefined
-			$self->{password} = $r->param("passwd");
-			$self->{cookie_timestamp} = $cookieTimeStamp;
-			$self->{login_type} = "normal";
+			$self->{user_id}           = $cookieUser;
+			$self->{session_key}       = $cookieKey;                # will be undefined
+			$self->{password}          = $r->param("passwd");
+			$self->{cookie_timestamp}  = $cookieTimeStamp;
+			$self->{login_type}        = "normal";
 			$self->{credential_source} = "params_and_cookie";
-			$self->{user_id}     = trim($self->{user_id});
-			$self->{password}    = trim($self->{password});
-			debug(  "params and cookie user '", $self->{user_id},
-				"' params and cookie session key = '", $self->{session_key},
-				"' cookie_timestamp '", $self->{cookieTimeStamp}, "' "
+			$self->{user_id}           = trim($self->{user_id});
+			$self->{password}          = trim($self->{password});
+			debug(
+				"params and cookie user '",
+				$self->{user_id}, "' params and cookie session key = '",
+				$self->{session_key},
+				"' cookie_timestamp '",
+				$self->{cookieTimeStamp}, "' "
 			);
 			return 1;
 		}
 	}
 	# at least the user ID is available in request parameters
 	if (defined $r->param("user")) {
-		$self->{user_id} = $r->param("user");
-		$self->{session_key} = $r->param("key");
-		$self->{password} = $r->param("passwd");
-		$self->{login_type} = "normal";
+		$self->{user_id}           = $r->param("user");
+		$self->{session_key}       = $r->param("key");
+		$self->{password}          = $r->param("passwd");
+		$self->{login_type}        = "normal";
 		$self->{credential_source} = "params";
-		$self->{user_id}      = trim($self->{user_id});
-		$self->{password}     = trim($self->{password});
-		debug("params user '", $self->{user_id}, "' key '", $self->{session_key}, "'");
+		$self->{user_id}           = trim($self->{user_id});
+		$self->{password}          = trim($self->{password});
+		debug("params user '",     $self->{user_id},  "' key '", $self->{session_key}, "'");
 		debug("params password '", $self->{password}, "' key '", $self->{session_key}, "'");
 		return 1;
 	}
 
 	if (defined $cookieUser) {
-		$self->{user_id} = $cookieUser;
-		$self->{session_key} = $cookieKey;
-		$self->{cookie_timestamp} = $cookieTimeStamp;
-		$self->{login_type} = "normal";
+		$self->{user_id}           = $cookieUser;
+		$self->{session_key}       = $cookieKey;
+		$self->{cookie_timestamp}  = $cookieTimeStamp;
+		$self->{login_type}        = "normal";
 		$self->{credential_source} = "cookie";
-		$self->{user_id}     = trim($self->{user_id});
-		debug(  "cookie user '", $self->{user_id},
-			"' key '", $self->{session_key},
-			"' cookie_timestamp '", $self->{cookieTimeStamp}, "' "
+		$self->{user_id}           = trim($self->{user_id});
+		debug(
+			"cookie user '",
+			$self->{user_id}, "' key '", $self->{session_key},
+			"' cookie_timestamp '",
+			$self->{cookieTimeStamp}, "' "
 		);
 		return 1;
 	}
 }
 
 sub check_user {
-	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $self  = shift;
+	my $r     = $self->{r};
+	my $ce    = $r->ce;
+	my $db    = $r->db;
 	my $authz = $r->authz;
 
 	my $user_id = $self->{user_id};
@@ -453,7 +462,7 @@ sub check_user {
 
 	unless ($User) {
 		$self->{log_error} = "user unknown";
-		$self->{error} = $GENERIC_ERROR_MESSAGE;
+		$self->{error}     = $GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
 
@@ -461,13 +470,13 @@ sub check_user {
 
 	unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
 		$self->{log_error} = "user not allowed course access";
-		$self->{error} = $GENERIC_ERROR_MESSAGE;
+		$self->{error}     = $GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
 
 	unless ($authz->hasPermissions($user_id, "login")) {
 		$self->{log_error} = "user not permitted to login";
-		$self->{error} = $GENERIC_ERROR_MESSAGE;
+		$self->{error}     = $GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
 
@@ -476,10 +485,10 @@ sub check_user {
 
 sub verify_practice_user {
 	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $r->ce;
+	my $r    = $self->{r};
+	my $ce   = $r->ce;
 
-	my $user_id = $self->{user_id};
+	my $user_id     = $self->{user_id};
 	my $session_key = $self->{session_key};
 
 	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 1);
@@ -490,7 +499,7 @@ sub verify_practice_user {
 			if ($timestampValid) {
 				return 1;
 			} else {
-				$self->{session_key} = $self->create_session($user_id);
+				$self->{session_key}   = $self->create_session($user_id);
 				$self->{initial_login} = 1;
 				return 1;
 			}
@@ -498,22 +507,22 @@ sub verify_practice_user {
 			if ($timestampValid) {
 				my $debugPracticeUser = $ce->{debugPracticeUser};
 				if (defined $debugPracticeUser and $user_id eq $debugPracticeUser) {
-					$self->{session_key} = $self->create_session($user_id);
+					$self->{session_key}   = $self->create_session($user_id);
 					$self->{initial_login} = 1;
 					return 1;
 				} else {
 					$self->{log_error} = "guest account in use";
-					$self->{error} = "That guest account is in use.";
+					$self->{error}     = "That guest account is in use.";
 					return 0;
 				}
 			} else {
-				$self->{session_key} = $self->create_session($user_id);
+				$self->{session_key}   = $self->create_session($user_id);
 				$self->{initial_login} = 1;
 				return 1;
 			}
 		}
 	} else {
-		$self->{session_key} = $self->create_session($user_id);
+		$self->{session_key}   = $self->create_session($user_id);
 		$self->{initial_login} = 1;
 		return 1;
 	}
@@ -521,9 +530,9 @@ sub verify_practice_user {
 
 sub verify_normal_user {
 	my $self = shift;
-	my $r = $self->{r};
+	my $r    = $self->{r};
 
-	my $user_id = $self->{user_id};
+	my $user_id     = $self->{user_id};
 	my $session_key = $self->{session_key};
 
 	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 1);
@@ -535,14 +544,14 @@ sub verify_normal_user {
 		my $auth_result = $self->authenticate;
 
 		if ($auth_result > 0) {
-			$self->{session_key} = $self->create_session($user_id);
+			$self->{session_key}   = $self->create_session($user_id);
 			$self->{initial_login} = 1;
 			return 1;
 		} elsif ($auth_result == 0) {
 			$self->{log_error} = "authentication failed";
-			$self->{error} = $GENERIC_ERROR_MESSAGE;
+			$self->{error}     = $GENERIC_ERROR_MESSAGE;
 			return 0;
-		} else { # ($auth_result < 0) => required data was not present
+		} else {    # ($auth_result < 0) => required data was not present
 			if ($keyMatches and not $timestampValid) {
 				$self->{log_error} = "inactivity timeout";
 				$self->{error} .= $r->maketext("Your session has timed out due to inactivity. Please log in again.");
@@ -557,9 +566,9 @@ sub verify_normal_user {
 # -1 == required data was not present (i.e. password missing)
 sub authenticate {
 	my $self = shift;
-	my $r = $self->{r};
+	my $r    = $self->{r};
 
-	my $user_id = $self->{user_id};
+	my $user_id  = $self->{user_id};
 	my $password = $self->{password};
 
 	if (defined $password) {
@@ -571,8 +580,8 @@ sub authenticate {
 
 sub maybe_send_cookie {
 	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $r -> {ce};
+	my $r    = $self->{r};
+	my $ce   = $r->{ce};
 
 	my ($cookie_user, $cookie_key, $cookie_timestamp, $setID) = $self->fetchCookie;
 
@@ -584,20 +593,27 @@ sub maybe_send_cookie {
 	# (b) a cookie was sent but not used for authentication, and the
 	#     credentials used for authentication were the same as those in
 	#     the cookie
-	my $unused_valid_cookie = ($self->{credential_source} ne "cookie"
-		and defined $cookie_user and $self->{user_id} eq $cookie_user
-		and defined $cookie_key and $self->{session_key} eq $cookie_key);
+	my $unused_valid_cookie =
+		($self->{credential_source} ne "cookie"
+			and defined $cookie_user
+			and $self->{user_id} eq $cookie_user
+			and defined $cookie_key
+			and $self->{session_key} eq $cookie_key);
 
 	# (c) the user asked to have a cookie sent and is not a guest user.
-	my $user_requests_cookie = ($self->{login_type} ne "guest"
-		and ( $r->param("send_cookie")//0 )); # prevent warning if "send_cookie" param is not defined.
+	my $user_requests_cookie = ($self->{login_type} ne "guest" and ($r->param("send_cookie") // 0))
+		;    # prevent warning if "send_cookie" param is not defined.
 
 	# (d) session management is done via cookies.
-	my $session_management_via_cookies =
-		$ce -> {session_management_via} eq "session_cookie";
+	my $session_management_via_cookies = $ce->{session_management_via} eq "session_cookie";
 
-	debug("used_cookie='", $used_cookie, "' unused_valid_cookie='", $unused_valid_cookie, "' user_requests_cookie='", $user_requests_cookie,
-			"' session_management_via_cookies ='", $session_management_via_cookies, "'");
+	debug(
+		"used_cookie='",                       $used_cookie,
+		"' unused_valid_cookie='",             $unused_valid_cookie,
+		"' user_requests_cookie='",            $user_requests_cookie,
+		"' session_management_via_cookies ='", $session_management_via_cookies,
+		"'"
+	);
 
 	if ($used_cookie or $unused_valid_cookie or $user_requests_cookie or $session_management_via_cookies) {
 		#debug("Authen::maybe_send_cookie is sending a cookie");
@@ -614,11 +630,11 @@ sub maybe_kill_cookie {
 
 sub set_params {
 	my $self = shift;
-	my $r = $self->{r};
+	my $r    = $self->{r};
 
 	# A2 - params are not non-modifiable, with no explanation or workaround given in docs. WTF!
-	$r->param("user", $self->{user_id});
-	$r->param("key", $self->{session_key});
+	$r->param("user",   $self->{user_id});
+	$r->param("key",    $self->{session_key});
 	$r->param("passwd", "");
 
 	debug("params user='", $r->param("user"), "' key='", $r->param("key"), "'");
@@ -632,11 +648,11 @@ sub checkPassword {
 	my ($self, $userID, $possibleClearPassword) = @_;
 	my $db = $self->{r}->db;
 
-	my $Password = $db->getPassword($userID); # checked
+	my $Password = $db->getPassword($userID);    # checked
 	if (defined $Password) {
 		# check against WW password database
 		my $possibleCryptPassword = crypt $possibleClearPassword, $Password->password;
-		my $dbPassword = $Password->password;
+		my $dbPassword            = $Password->password;
 		# This next line explicitly insures that
 		# blank or null passwords from the database can never
 		# succeed in matching an entered password
@@ -651,7 +667,8 @@ sub checkPassword {
 		# lib/WeBWorK/Authen.pm we do not assume that an all-white space password would have
 		# already been converted to an empty string and instead explicitly test it for a non-space
 		# character.
-		if (($possibleClearPassword =~/\S/) && ($dbPassword =~/\S/) && $possibleCryptPassword eq $Password->password) {
+		if (($possibleClearPassword =~ /\S/) && ($dbPassword =~ /\S/) && $possibleCryptPassword eq $Password->password)
+		{
 			$self->write_log_entry("AUTH WWDB: password accepted");
 			return 1;
 		} else {
@@ -718,9 +735,9 @@ sub unexpired_session_exists {
 	my $ce = $self->{r}->ce;
 	my $db = $self->{r}->db;
 
-	my $Key = $db->getKey($userID); # checked
+	my $Key = $db->getKey($userID);    # checked
 	return 0 unless defined $Key;
-	if (time <= $Key->timestamp()+$ce->{sessionKeyTimeout}) {
+	if (time <= $Key->timestamp() + $ce->{sessionKeyTimeout}) {
 		# unexpired, but leave timestamp alone
 		return 1;
 	} else {
@@ -740,17 +757,17 @@ sub unexpired_session_exists {
 # The $userID is modified in that case and will not work in the hasPermissions call.
 sub create_session {
 	my ($self, $userID, $newKey, $trueUserID) = @_;
-	my $r = $self->{r};
+	my $r  = $self->{r};
 	my $ce = $r->ce;
 	my $db = $r->db;
 
 	my $timestamp = time;
 	unless ($newKey) {
-		my @chars = @{ $ce->{sessionKeyChars} };
+		my @chars  = @{ $ce->{sessionKeyChars} };
 		my $length = $ce->{sessionKeyLength};
 
 		srand;
-		$newKey = join ("", @chars[map rand(@chars), 1 .. $length]);
+		$newKey = join("", @chars[ map rand(@chars), 1 .. $length ]);
 	}
 
 	my $setID =
@@ -783,7 +800,7 @@ sub check_session {
 	my $ce = $self->{r}->ce;
 	my $db = $self->{r}->db;
 
-	my $Key = $db->getKey($userID); # checked
+	my $Key = $db->getKey($userID);    # checked
 	return 0 unless defined $Key;
 
 	my $keyMatches = (defined $possibleKey and $possibleKey eq $Key->key);
@@ -793,71 +810,70 @@ sub check_session {
 	# Want key not be too old. Use timestamp from DB and
 	# sessionKeyTimeout to determine this even when using cookies
 	# as we do not trust the timestamp provided by a user's browser.
-	my $timestampValid  = ( $time_now <= $Key->timestamp() + $ce->{sessionKeyTimeout} );
+	my $timestampValid = ($time_now <= $Key->timestamp() + $ce->{sessionKeyTimeout});
 
-# first part of if clause is disabled for now until we figure out long term fix for using cookies
-# safely (see pull request #576)   This means that the database key time is always being used
-# even when in "session_cookie" mode
-#	if ($ce -> {session_management_via} eq "session_cookie" and defined($self->{cookie_timestamp})) {
-#		$timestampValid = (time <= $self -> {cookie_timestamp} + $ce->{sessionKeyTimeout});
-#	} else {
-		if ($keyMatches and $timestampValid and $updateTimestamp) {
-			$Key->timestamp(time);
-			$db->putKey($Key);
-		}
-#	}
+	# first part of if clause is disabled for now until we figure out long term fix for using cookies
+	# safely (see pull request #576)   This means that the database key time is always being used
+	# even when in "session_cookie" mode
+	#	if ($ce -> {session_management_via} eq "session_cookie" and defined($self->{cookie_timestamp})) {
+	#		$timestampValid = (time <= $self -> {cookie_timestamp} + $ce->{sessionKeyTimeout});
+	#	} else {
+	if ($keyMatches and $timestampValid and $updateTimestamp) {
+		$Key->timestamp(time);
+		$db->putKey($Key);
+	}
+	#	}
 	return (1, $keyMatches, $timestampValid);
 }
 
 sub killSession {
 	my $self = shift;
 
-	my $r = $self -> {r};
-	my $ce = $r -> {ce};
-	my $db = $r -> {db};
+	my $r  = $self->{r};
+	my $ce = $r->{ce};
+	my $db = $r->{db};
 
 	my $caliper_sensor = Caliper::Sensor->new($ce);
 	if ($caliper_sensor->caliperEnabled()) {
 		my $login_event = {
-			'type' => 'SessionEvent',
-			'action' => 'LoggedOut',
+			'type'    => 'SessionEvent',
+			'action'  => 'LoggedOut',
 			'profile' => 'SessionProfile',
-			'object' => Caliper::Entity::webwork_app()
+			'object'  => Caliper::Entity::webwork_app()
 		};
 		$caliper_sensor->sendEvents($self->{r}, [$login_event]);
 	}
 
 	$self->forget_verification;
-	if ($ce->{session_management_via} eq "session_cookie")  {
+	if ($ce->{session_management_via} eq "session_cookie") {
 		$self->killCookie();
 	}
 
-	my $userID = $r -> param("user");
+	my $userID = $r->param("user");
 	if (defined($userID)) {
-		 $db->deleteKey($userID);
+		$db->deleteKey($userID);
 	}
 }
-
 
 ################################################################################
 # Cookie management
 ################################################################################
 
 sub fetchCookie {
-	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $r->ce;
+	my $self    = shift;
+	my $r       = $self->{r};
+	my $ce      = $r->ce;
 	my $urlpath = $r->urlpath;
 
 	my $courseID = $urlpath->arg("courseID");
 
-	my $cookie = undef;
+	my $cookie  = undef;
 	my %cookies = WeBWorK::Cookie->fetch();
 	$cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
 
 	if ($cookie) {
 		#debug("found a cookie for this course: '", $cookie->as_string, "'");
-	        debug("cookie has this value: '", $cookie->value, "'");
+		debug("cookie has this value: '", $cookie->value, "'");
 		my ($userID, $key, $timestamp, $setID) = split "\t", $cookie->value;
 		if (defined $userID and defined $key and $userID ne "" and $key ne "") {
 			debug("looks good, returning userID='$userID' key='$key'");
@@ -874,7 +890,7 @@ sub fetchCookie {
 
 sub sendCookie {
 	my ($self, $userID, $key, $setID) = @_;
-	my $r = $self->{r};
+	my $r  = $self->{r};
 	my $ce = $r->ce;
 
 	my $courseID = $r->urlpath->arg("courseID");
@@ -882,64 +898,65 @@ sub sendCookie {
 	# This sets the setID in the cookie on initial login.
 	$setID = $r->urlpath->arg("setID")
 		if !$setID
-		&& $r->authen->was_verified && !$r->authz->hasPermissions($userID, 'navigation_allowed');
+		&& $r->authen->was_verified
+		&& !$r->authz->hasPermissions($userID, 'navigation_allowed');
 
- 	my $timestamp = time();
+	my $timestamp = time();
 
 	my $cookie = WeBWorK::Cookie->new(
 		-name     => "WeBWorKCourseAuthen.$courseID",
 		-value    => "$userID\t$key\t$timestamp" . ($setID ? "\t$setID" : ''),
 		-path     => $ce->{webworkURLRoot},
 		-samesite => $ce->{CookieSameSite},
-		-secure   => $ce->{CookieSecure}    # Warning: use 1 only if using https
+		-secure   => $ce->{CookieSecure}                                         # Warning: use 1 only if using https
 	);
 
 	# Set how long the browser should retain the cookie. Using max_age is now recommended,
 	# and overrides expires, but some very old browser only support expires.
-	my $lifetime  = $ce->{CookieLifeTime};
-	if ( $lifetime ne 'session' ) {
-		$cookie->expires( $lifetime );
-		$cookie->max_age( $lifetime );
-	} # as when $lifetime eq 'session' the cookie should be a "session cookie"
-	  # and expire when the browser session is closed.
-	# At present the CookieLifeTime setting only effects how long the browser is to told to retain the cookie.
-	# Ideally, when $ce->{session_management_via} eq "session_cookie", and if the timestamp in the cookie was
-	# secured again client-side tampering, the timestamp and lifetime could be used to provide ongoing session
-	# authentication.
+	my $lifetime = $ce->{CookieLifeTime};
+	if ($lifetime ne 'session') {
+		$cookie->expires($lifetime);
+		$cookie->max_age($lifetime);
+	}    # as when $lifetime eq 'session' the cookie should be a "session cookie"
+		 # and expire when the browser session is closed.
+		 # At present the CookieLifeTime setting only effects how long the browser is to told to retain the cookie.
+		 # Ideally, when $ce->{session_management_via} eq "session_cookie", and if the timestamp in the cookie was
+		 # secured again client-side tampering, the timestamp and lifetime could be used to provide ongoing session
+		 # authentication.
 
- 	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
+	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
 		$cookie->domain($r->hostname);    # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
 	}
 
-#	debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
- 	eval {$r->headers_out->set("Set-Cookie" => $cookie->as_string);};
- 	if ($@) {croak $@; }
+	#	debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
+	eval { $r->headers_out->set("Set-Cookie" => $cookie->as_string); };
+	if ($@) { croak $@; }
 }
 
 sub killCookie {
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $ce = $r->ce;
+	my $r      = $self->{r};
+	my $ce     = $r->ce;
 
 	my $courseID = $r->urlpath->arg("courseID");
 
 	my $cookie = WeBWorK::Cookie->new(
 		-name      => "WeBWorKCourseAuthen.$courseID",
 		-value     => "\t",
-		'-max-age' => "-1d", # 1 day ago
-		-expires   => "-1d", # 1 day ago
+		'-max-age' => "-1d",                             # 1 day ago
+		-expires   => "-1d",                             # 1 day ago
 		-path      => $ce->{webworkURLRoot},
 		-samesite  => $ce->{CookieSameSite},
-		-secure    => $ce->{CookieSecure}    # Warning: use 1 only if using https
+		-secure    => $ce->{CookieSecure}                # Warning: use 1 only if using https
 	);
- 	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
-		$cookie -> domain($r->hostname);  # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
+	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
+		$cookie->domain($r->hostname);    # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
 	}
 
 	#debug( "killCookie is about to set an expired cookie");
 	#debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
- 	eval {$r->headers_out->set("Set-Cookie" => $cookie->as_string);};
- 	if ($@) {croak $@; }
+	eval { $r->headers_out->set("Set-Cookie" => $cookie->as_string); };
+	if ($@) { croak $@; }
 }
 
 # This method is only used for a user that does not have the navigation_allowed permission,
@@ -964,30 +981,31 @@ sub get_session_set_id {
 
 sub write_log_entry {
 	my ($self, $message) = @_;
-	my $r = $self->{r};
+	my $r  = $self->{r};
 	my $ce = $r->ce;
 
-	my $user_id = defined $self->{user_id} ? $self->{user_id} : "";
-	my $login_type = defined $self->{login_type} ? $self->{login_type} : "";
+	my $user_id           = defined $self->{user_id}           ? $self->{user_id}           : "";
+	my $login_type        = defined $self->{login_type}        ? $self->{login_type}        : "";
 	my $credential_source = defined $self->{credential_source} ? $self->{credential_source} : "";
 
 	my ($remote_host, $remote_port);
 
 	my $connection;
 	my $user_agent;
-	eval {$connection = $r->connection};
+	eval { $connection = $r->connection };
 	if ($@) {
 		# no connection available
 		$remote_host = "UNKNOWN" unless defined $remote_host;
 		$remote_port = "UNKNOWN" unless defined $remote_port;
 		$user_agent  = "UNKNOWN";
 	} else {
-		$remote_host = $r->useragent_addr->ip_get || "UNKNOWN";
-		$remote_port = $r->connection->client_addr->port   || "UNKNOWN";
+		$remote_host = $r->useragent_addr->ip_get        || "UNKNOWN";
+		$remote_port = $r->connection->client_addr->port || "UNKNOWN";
 
 		$user_agent = $r->headers_in->{"User-Agent"};
 	}
-	my $log_msg = "$message user_id=$user_id login_type=$login_type credential_source=$credential_source host=$remote_host port=$remote_port UA=$user_agent";
+	my $log_msg =
+		"$message user_id=$user_id login_type=$login_type credential_source=$credential_source host=$remote_host port=$remote_port UA=$user_agent";
 	debug("Writing to login log: '$log_msg'.\n");
 	writeCourseLog($ce, "login_log", $log_msg);
 }

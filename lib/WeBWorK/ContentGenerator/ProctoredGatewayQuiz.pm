@@ -23,5 +23,4 @@ this is a wrapper for GatewayQuiz.pm and has no content
 
 =cut
 
-
 1;

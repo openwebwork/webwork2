@@ -103,19 +103,19 @@ sub new {
 
 	# where do we get the seed variables?
 	if (ref $rest[0] eq "HASH") {
-		%seedVars = %{$rest[0]};
+		%seedVars = %{ $rest[0] };
 	} else {
-		debug __PACKAGE__, ": deprecated four-argument form of new() used.", caller(1),"\n", caller(2),"\n";
-		$seedVars{webwork_dir}    = $rest[0];
-		$seedVars{webwork_url}    = $rest[1];
-		$seedVars{pg_dir}         = $rest[2];
-		$seedVars{courseName}     = $rest[3];
+		debug __PACKAGE__, ": deprecated four-argument form of new() used.", caller(1), "\n", caller(2), "\n";
+		$seedVars{webwork_dir} = $rest[0];
+		$seedVars{webwork_url} = $rest[1];
+		$seedVars{pg_dir}      = $rest[2];
+		$seedVars{courseName}  = $rest[3];
 	}
-	$seedVars{courseName} = $seedVars{courseName}||"___"; # prevents extraneous error messages
+	$seedVars{courseName} = $seedVars{courseName} || "___";    # prevents extraneous error messages
 	my $safe = WWSafe->new;
 	$safe->permit('rand');
 	# to avoid error messages make sure that courseName is defined
-	$seedVars{courseName} = $seedVars{courseName}//"foobar_course";
+	$seedVars{courseName} = $seedVars{courseName} // "foobar_course";
 	# seed course environment with initial values
 	while (my ($var, $val) = each %seedVars) {
 		$val = "" if not defined $val;
@@ -125,7 +125,7 @@ sub new {
 	# Compile the "include" function with all opcodes available.
 	my $include = q[ sub include {
 		my ($file) = @_;
-		my $fullPath = "].$seedVars{webwork_dir}.q[/$file";
+		my $fullPath = "] . $seedVars{webwork_dir} . q[/$file";
 		# This regex matches any string that begins with "../",
 		# ends with "/..", contains "/../", or is "..".
 		if ($fullPath =~ m!(?:^|/)\.\.(?:/|$)!) {
@@ -165,9 +165,6 @@ sub new {
 	$safe->reval($globalFileContents);
 	# warn "end the evaluation\n";
 
-
-
-
 	# if that evaluation failed, we can't really go on...
 	# we need a global environment!
 	$@ and croak "Could not evaluate global environment file $globalEnvironmentFile: $@";
@@ -176,25 +173,25 @@ sub new {
 	# pull it out of $safe's symbol table ad hoc
 	# (we don't want to do the hash conversion yet)
 	no strict 'refs';
-	my $courseEnvironmentFile = ${*{${$safe->root."::"}{courseFiles}}}{environment};
-	my $courseWebConfigFile = $seedVars{web_config_filename} ||
-		${*{${$safe->root."::"}{courseFiles}}}{simpleConfig};
+	my $courseEnvironmentFile = ${ *{ ${ $safe->root . "::" }{courseFiles} } }{environment};
+	my $courseWebConfigFile   = $seedVars{web_config_filename}
+		|| ${ *{ ${ $safe->root . "::" }{courseFiles} } }{simpleConfig};
 	use strict 'refs';
 
 	# make sure the course environment file actually exists (it might not if we don't have a real course)
 	# before we try to read it
-	if(-r $courseEnvironmentFile){
+	if (-r $courseEnvironmentFile) {
 		# read and evaluate the course environment file
 		# if readFile failed, we don't bother trying to reval
-		my $courseFileContents = eval { readFile($courseEnvironmentFile) }; # catch exceptions
+		my $courseFileContents = eval { readFile($courseEnvironmentFile) };       # catch exceptions
 		$@ or $safe->reval($courseFileContents);
-		my $courseWebConfigContents = eval { readFile($courseWebConfigFile) }; # catch exceptions
+		my $courseWebConfigContents = eval { readFile($courseWebConfigFile) };    # catch exceptions
 		$@ or $safe->reval($courseWebConfigContents);
 	}
 
 	# get the safe compartment's namespace as a hash
 	no strict 'refs';
-	my %symbolHash = %{$safe->root."::"};
+	my %symbolHash = %{ $safe->root . "::" };
 	use strict 'refs';
 
 	# convert the symbol hash into a hash of regular variables.
@@ -203,9 +200,9 @@ sub new {
 		# weed out internal symbols
 		next if $name =~ /^(INC|_.*|__ANON__|main::|include)$/;
 		# pull scalar, array, and hash values for this symbol
-		my $scalar = ${*{$symbolHash{$name}}};
-		my @array = @{*{$symbolHash{$name}}};
-		my %hash = %{*{$symbolHash{$name}}};
+		my $scalar = ${ *{ $symbolHash{$name} } };
+		my @array  = @{ *{ $symbolHash{$name} } };
+		my %hash   = %{ *{ $symbolHash{$name} } };
 		# for multiple variables sharing a symbol, scalar takes precedence
 		# over array, which takes precedence over hash.
 		if (defined $scalar) {
@@ -217,30 +214,29 @@ sub new {
 		}
 	}
 	# now that we know the name of the pg_dir we can get the pg VERSION file
-	my $PG_version_file = $self->{'pg_dir'}."/VERSION";
+	my $PG_version_file = $self->{'pg_dir'} . "/VERSION";
 
 	# Try a fallback location
-	if ( !-r $PG_version_file ) {
-	  $PG_version_file = $self->{'webwork_dir'}."/../pg/VERSION";
+	if (!-r $PG_version_file) {
+		$PG_version_file = $self->{'webwork_dir'} . "/../pg/VERSION";
 	}
 	# #	We'll get the pg version here and read it into the safe symbol table
-	if (-r $PG_version_file){
-			#print STDERR ( "\n\nread PG_version file $PG_version_file\n\n");
-		my $PG_version_file_contents = readFile($PG_version_file)//'';
+	if (-r $PG_version_file) {
+		#print STDERR ( "\n\nread PG_version file $PG_version_file\n\n");
+		my $PG_version_file_contents = readFile($PG_version_file) // '';
 		$safe->reval($PG_version_file_contents);
-			#print STDERR ("\n contents: $PG_version_file_contents");
+		#print STDERR ("\n contents: $PG_version_file_contents");
 
 		no strict 'refs';
-		my %symbolHash2 = %{$safe->root."::"};
+		my %symbolHash2 = %{ $safe->root . "::" };
 		#print STDERR "symbolHash".join(' ', keys %symbolHash2);
 		use strict 'refs';
-		$self->{PG_VERSION}=${*{$symbolHash2{PG_VERSION}}};
+		$self->{PG_VERSION} = ${ *{ $symbolHash2{PG_VERSION} } };
 	} else {
-		$self->{PG_VERSION}="unknown";
+		$self->{PG_VERSION} = "unknown";
 		#croak "Cannot read PG version file $PG_version_file";
 		warn "Cannot read PG version file $PG_version_file";
 	}
-
 
 	bless $self, $class;
 
@@ -250,15 +246,18 @@ sub new {
 
 	# create reverse-lookup hash mapping status abbreviations to real names
 	$self->{_status_abbrev_to_name} = {
-		map { my $name = $_; map { $_ => $name } @{$self->{statuses}{$name}{abbrevs}} }
-			keys %{$self->{statuses}}
+		map {
+			my $name = $_;
+			map { $_ => $name } @{ $self->{statuses}{$name}{abbrevs} }
+		}
+			keys %{ $self->{statuses} }
 	};
 
 	# Fixup for courses that still have an underscore, 'heb', 'zh_hk', or 'en_us' saved in their settings files.
 	$self->{language} =~ s/_/-/g;
 	$self->{language} = 'he-IL' if $self->{language} eq 'heb';
 	$self->{language} = 'zh-HK' if $self->{language} eq 'zh-hk';
-	$self->{language} = 'en' if $self->{language} eq 'en-us';
+	$self->{language} = 'en'    if $self->{language} eq 'en-us';
 
 	# now that we're done, we can go ahead and return...
 	return $self;
@@ -321,7 +320,7 @@ sub status_name_to_abbrevs {
 	}
 
 	return unless exists $ce->{statuses}{$status_name};
-	return @{$ce->{statuses}{$status_name}{abbrevs}};
+	return @{ $ce->{statuses}{$status_name}{abbrevs} };
 }
 
 =item status_has_behavior($status_name, $behavior)
@@ -343,10 +342,10 @@ sub status_has_behavior {
 
 	if (exists $ce->{statuses}{$status_name}) {
 		if (exists $ce->{statuses}{$status_name}{behaviors}) {
-			my $num_matches = grep { $_ eq $behavior } @{$ce->{statuses}{$status_name}{behaviors}};
+			my $num_matches = grep { $_ eq $behavior } @{ $ce->{statuses}{$status_name}{behaviors} };
 			return $num_matches > 0;
 		} else {
-			return 0; # no behaviors
+			return 0;    # no behaviors
 		}
 	} else {
 		warn "status '$status_name' not found in \%statuses -- assuming no behaviors.\n";

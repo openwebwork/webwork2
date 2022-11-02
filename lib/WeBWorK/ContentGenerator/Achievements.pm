@@ -33,14 +33,14 @@ use WeBWorK::Utils qw(sortAchievements thaw_base64 getAssetURL);
 
 sub head {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 
 	return "";
 }
 
 sub output_achievement_CSS {
-    return "";
+	return "";
 }
 
 sub initialize {
@@ -78,19 +78,18 @@ sub initialize {
 }
 
 sub body {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
+	my ($self)                 = @_;
+	my $r                      = $self->r;
+	my $db                     = $r->db;
+	my $ce                     = $r->ce;
 	my $globalUserAchievements = $self->{globalData};
-	my $userID = $self->{studentName};
-	my $achievementURL = $ce->{courseURLs}->{achievements};
-
+	my $userID                 = $self->{studentName};
+	my $achievementURL         = $ce->{courseURLs}->{achievements};
 
 	#If they dont have a globalUserAchievements record then they dont have achievements
 	if (not defined($globalUserAchievements)) {
-	    print CGI::p($r->maketext("You don't have any Achievement data associated to you!"));
-	    return "";
+		print CGI::p($r->maketext("You don't have any Achievement data associated to you!"));
+		return "";
 	}
 
 	print CGI::br();
@@ -100,7 +99,7 @@ sub body {
 	my $achievement;
 
 	if ($globalUserAchievements->level_achievement_id) {
-	    $achievement = $db->getAchievement($globalUserAchievements->level_achievement_id);
+		$achievement = $db->getAchievement($globalUserAchievements->level_achievement_id);
 	}
 
 	if ($achievement) {
@@ -126,9 +125,9 @@ sub body {
 			my $prev_level = ($globalData->{prev_level_points}) ? $globalData->{prev_level_points} : 0;
 			my $level_goal = $globalUserAchievements->next_level_points - $prev_level;
 			my $level_prog = $globalUserAchievements->achievement_points - $prev_level;
-			$level_prog = $level_prog >= 0 ? $level_prog : 0;
+			$level_prog = $level_prog >= 0           ? $level_prog : 0;
 			$level_prog = $level_prog <= $level_goal ? $level_prog : $level_goal;
-			my $levelpercentage = int(100*$level_prog/$level_goal);
+			my $levelpercentage = int(100 * $level_prog / $level_goal);
 
 			print CGI::start_div({
 				class      => 'levelouterbar',
@@ -148,19 +147,19 @@ sub body {
 
 	#print any items they have if they have items
 	if ($ce->{achievementItemsEnabled} && $self->{achievementItems}) {
-		my @itemsWithCounts = @{$self->{achievementItems}};
+		my @itemsWithCounts = @{ $self->{achievementItems} };
 		# remove count data so @items is structured as originally designed
-		my @items = ();
+		my @items      = ();
 		my %itemCounts = ();
 		for my $item (@itemsWithCounts) {
-			push (@items, $item->[0]);
-			$itemCounts{$item->[0]->id()} = $item->[1];
-		};
+			push(@items, $item->[0]);
+			$itemCounts{ $item->[0]->id() } = $item->[1];
+		}
 		my $urlpath = $r->urlpath;
-		my @setIDs = $db->listUserSets($userID);
+		my @setIDs  = $db->listUserSets($userID);
 		my @setProblemCount;
 
-		my @userSetIDs = map {[$userID, $_]} @setIDs;
+		my @userSetIDs     = map { [ $userID, $_ ] } @setIDs;
 		my @unfilteredsets = $db->getMergedSets(@userSetIDs);
 		my @sets;
 
@@ -173,8 +172,8 @@ sub body {
 		}
 
 		# Generate array of problem counts
-		for (my $i=0; $i<=$#sets; $i++) {
-			$setProblemCount[$i] = WeBWorK::Utils::max($db->listUserProblems($userID,$sets[$i]->set_id));
+		for (my $i = 0; $i <= $#sets; $i++) {
+			$setProblemCount[$i] = WeBWorK::Utils::max($db->listUserProblems($userID, $sets[$i]->set_id));
 		}
 
 		print CGI::h2($r->maketext('Rewards'));
@@ -184,25 +183,30 @@ sub body {
 			foreach my $item (@items) {
 				# Print each item's name, count, and description
 				print CGI::start_div({ class => 'achievement-item' });
-				if ($itemCounts{$item->id()} > 1) {
-					print CGI::h3($r->maketext($item->name())
-						. ' (' . $r->maketext('[_1] remaining', $itemCounts{$item->id()}) . ')')
-				} elsif ($itemCounts{$item->id()} < 0) {
-					print CGI::h3($r->maketext($item->name()) . ' (' . $r->maketext('unlimited reusability') . ')')
+				if ($itemCounts{ $item->id() } > 1) {
+					print CGI::h3($r->maketext($item->name()) . ' ('
+							. $r->maketext('[_1] remaining', $itemCounts{ $item->id() })
+							. ')');
+				} elsif ($itemCounts{ $item->id() } < 0) {
+					print CGI::h3($r->maketext($item->name()) . ' (' . $r->maketext('unlimited reusability') . ')');
+				} else {
+					print CGI::h3($r->maketext($item->name()));
 				}
-				else {print CGI::h3($r->maketext($item->name()))};
 
 				print CGI::p($r->maketext($item->description()));
 				# Print a modal popup for each item which contains the form necessary to get the data to use the item.
 				# Print the form in the modal body.
-				print CGI::a({
+				print CGI::a(
+					{
 						href           => '#modal_' . $item->id(),
 						role           => 'button',
 						data_bs_toggle => 'modal',
 						class          => 'btn btn-secondary',
 						id             => 'popup_' . $item->id()
-					}, $r->maketext('Use Reward'));
-				print CGI::start_div({ id => 'modal_' . $item->id(), class => 'modal hide fade', tabindex => '-1' });
+					},
+					$r->maketext('Use Reward')
+				);
+				print CGI::start_div({ id    => 'modal_' . $item->id(), class => 'modal hide fade', tabindex => '-1' });
 				print CGI::start_div({ class => 'modal-dialog modal-dialog-centered' });
 				print CGI::start_div({ class => 'modal-content' });
 				print CGI::start_div({ class => 'modal-header' });
@@ -211,11 +215,11 @@ sub body {
 					aria-label="@{[$r->maketext('close')]}"></button>};
 				print CGI::end_div();
 				print CGI::start_form({
-						method => 'post',
-						action => $self->systemLink($urlpath, authen => 0),
-						name   => "itemform_$itemnumber",
-						class  => 'achievementitemform'
-					});
+					method => 'post',
+					action => $self->systemLink($urlpath, authen => 0),
+					name   => "itemform_$itemnumber",
+					class  => 'achievementitemform'
+				});
 				print CGI::start_div({ class => 'modal-body' });
 				# Note: we provide the item with some information about the current sets to help set up the form fields.
 				print $item->print_form(\@sets, \@setProblemCount, $r);
@@ -242,15 +246,15 @@ sub body {
 	#Get all the achievements
 
 	my @allAchievementIDs = $db->listAchievements;
-	if ( @allAchievementIDs ) { # bail if there are no achievements
+	if (@allAchievementIDs) {    # bail if there are no achievements
 		my @achievements = $db->getAchievements(@allAchievementIDs);
 
 		@achievements = sortAchievements(@achievements);
 		my $previousCategory = $achievements[0]->category;
-		my $previousNumber = $achievements[0]->number;
-		my $chainName = $achievements[0]->achievement_id =~ s/^([^_]*_).*$/$1/r;
-		my $chainCount = 0;
-		my $chainStart = 0;
+		my $previousNumber   = $achievements[0]->number;
+		my $chainName        = $achievements[0]->achievement_id =~ s/^([^_]*_).*$/$1/r;
+		my $chainCount       = 0;
+		my $chainStart       = 0;
 
 		print CGI::h2($r->maketext('Badges'));
 
@@ -258,30 +262,30 @@ sub body {
 		foreach my $achievement (@achievements) {
 			#skip the level achievements and only show achievements assigned to user
 			last if ($achievement->category eq 'level');
-			next unless ($db->existsUserAchievement($userID,$achievement->achievement_id));
+			next unless ($db->existsUserAchievement($userID, $achievement->achievement_id));
 			next unless $achievement->enabled;
 
 			#separate categories with whitespace
 			if ($previousCategory ne $achievement->category) {
-			print CGI::br();
+				print CGI::br();
 			}
 
 			#setup up chain achievements
 			my $isChain = 1;
-			if (! $achievement->max_counter ||
-				$achievement->max_counter == 0 ||
-				$previousCategory ne $achievement->category ||
-				$previousNumber + 1 != $achievement->number ||
-				$achievement->achievement_id !~ /^$chainName/ )
+			if (!$achievement->max_counter
+				|| $achievement->max_counter == 0
+				|| $previousCategory ne $achievement->category
+				|| $previousNumber + 1 != $achievement->number
+				|| $achievement->achievement_id !~ /^$chainName/)
 			{
-				$isChain = 0;
+				$isChain    = 0;
 				$chainCount = 0;
-				$chainName = $achievement->achievement_id =~ s/^([^_]*_).*$/$1/r;
+				$chainName  = $achievement->achievement_id =~ s/^([^_]*_).*$/$1/r;
 			}
-			$previousNumber = $achievement->number;
+			$previousNumber   = $achievement->number;
 			$previousCategory = $achievement->category;
 
-			my $userAchievement = $db->getUserAchievement($userID,$achievement->achievement_id);
+			my $userAchievement = $db->getUserAchievement($userID, $achievement->achievement_id);
 
 			#dont show unearned secret achievements
 			next if ($achievement->category eq 'secret' and not $userAchievement->earned);
@@ -294,46 +298,48 @@ sub body {
 			next if ($isChain && ($chainCount > 1 || ($chainCount == '1' && $chainStart == '0')));
 
 			#print achievement and associated progress bar (if there is one)
-			print CGI::start_div(
-				{
-					class => 'cheevoouterbox d-flex justify-content-start align-items-center mb-3 '
-						. ($userAchievement->earned ? 'unlocked' : 'locked')
-				}
-			);
+			print CGI::start_div({
+				class => 'cheevoouterbox d-flex justify-content-start align-items-center mb-3 '
+					. ($userAchievement->earned ? 'unlocked' : 'locked')
+			});
 
 			my $imgSrc;
 			if ($achievement->{icon}) {
-			$imgSrc = $ce->{courseURLs}->{achievements}."/".$achievement->{icon};
+				$imgSrc = $ce->{courseURLs}->{achievements} . "/" . $achievement->{icon};
 			} else {
-			$imgSrc = $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
+				$imgSrc = $ce->{webworkURLs}->{htdocs} . "/images/defaulticon.png";
 			}
 
-			print CGI::div(CGI::img({src=>$imgSrc, alt=>$userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned'}));
+			print CGI::div(CGI::img({
+				src => $imgSrc,
+				alt => $userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned'
+			}));
 			print CGI::start_div({ class => 'ms-3' });
 			print CGI::h3({ class => 'fs-5 mb-1 fw-bold' }, $achievement->name);
-			print CGI::div(CGI::i($r->maketext("[_1] Points:", $achievement->{points})).' '.$achievement->{description});
+			print CGI::div(
+				CGI::i($r->maketext("[_1] Points:", $achievement->{points})) . ' ' . $achievement->{description});
 
 			if ($achievement->max_counter and not $userAchievement->earned) {
-			my $userCounter = $userAchievement->counter;
-			$userCounter = 0 unless ($userAchievement->counter);
-			my $percentage = int(100*$userCounter/$achievement->max_counter);
-			$percentage = $percentage <= 100 ? $percentage : 100;
-			print CGI::start_div({
-				class      => 'cheevoouterbar mt-1',
-				title      => $r->maketext("[_1]% Complete", $percentage),
-				aria_label => $r->maketext("[_1]% Complete", $percentage),
-				role       => 'figure'
-			});
-			print CGI::div({ class => 'cheevoinnerbar', style => sprintf("width:%i%%;", $percentage) }, '');
-			print CGI::end_div();
+				my $userCounter = $userAchievement->counter;
+				$userCounter = 0 unless ($userAchievement->counter);
+				my $percentage = int(100 * $userCounter / $achievement->max_counter);
+				$percentage = $percentage <= 100 ? $percentage : 100;
+				print CGI::start_div({
+					class      => 'cheevoouterbar mt-1',
+					title      => $r->maketext("[_1]% Complete", $percentage),
+					aria_label => $r->maketext("[_1]% Complete", $percentage),
+					role       => 'figure'
+				});
+				print CGI::div({ class => 'cheevoinnerbar', style => sprintf("width:%i%%;", $percentage) }, '');
+				print CGI::end_div();
 			}
 			print CGI::end_div();
 			print CGI::end_div();
 
-			}
-		} else { # no achievements
-		print CGI::p($r->maketext('No achievement badges have been assigned yet.'));
 		}
+	} else {    # no achievements
+		print CGI::p($r->maketext('No achievement badges have been assigned yet.'));
+	}
 
 	return "";
 
@@ -341,7 +347,7 @@ sub body {
 
 sub output_JS {
 	my $self = shift;
-	my $ce = $self->r->ce;
+	my $ce   = $self->r->ce;
 
 	print CGI::script({ src => getAssetURL($ce, 'js/apps/AchievementItems/achievementitems.js'), defer => undef }, '');
 

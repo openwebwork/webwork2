@@ -12,7 +12,7 @@
 #                            (default is [150,150])
 #
 #    tex_size => r           the size to use in TeX mode (as a percentage
-#                            of the line width times 10).  E.g., 500 is 
+#                            of the line width times 10).  E.g., 500 is
 #                            half the width, etc.  (default is 200.)
 #
 #    link => 0 or 1          whether to include a link to the original
@@ -43,33 +43,52 @@
 #  when needed.
 #
 sub Image {
-  my $image = shift; my $ilink;
-  my %options = (
-    size => [150,150], tex_size => 200,
-    link => 0, align => "BOTTOM", tex_center => 0, @_);
-  my ($w,$h) = @{$options{size}};
-  my ($ratio,$link) = ($options{tex_size}*(.001),$options{link});
-  my ($border,$align) = ($options{border},$options{align});
-  my ($tcenter) = $options{tex_center};
-  my $HTML; my $TeX;
-  ($image,$ilink) = @{$image} if (ref($image) eq "ARRAY");
-  $image = alias(insertGraph($image)) if (ref($image) eq "WWPlot");
-  $image = alias($image) unless ($image =~ m!^/!i);
-  if ($ilink) {
-    $ilink = alias(insertGraph($ilink)) if (ref($ilink) eq "WWPlot");
-    $ilink = alias($ilink) unless ($ilink =~ m!^/!i);
-  } else {$ilink = $image}
-  $border = (($link || $ilink ne $image)? 2: 1) unless defined($border);
-  $HTML = '<IMG SRC="'.$image.'" WIDTH="'.$w.
-          '" HEIGHT="'.$h.'" BORDER="'.$border.'" ALIGN="'.$align.'">';
-  $HTML = '<A HREF="'.$ilink.'">'.$HTML.'</A>' if $link or $ilink ne $image;
-  $TeX = '\includegraphics[width='.$ratio.'\linewidth]{'.$image.'}';
-  $TeX = '\centerline{'.$TeX.'}' if $tcenter;
-  MODES(
-    TeX => $TeX."\n",
-    Latex2HTML => $bHTML.$HTML.$eHTML,
-    HTML => $HTML
-  );
+	my $image = shift;
+	my $ilink;
+	my %options = (
+		size       => [ 150, 150 ],
+		tex_size   => 200,
+		link       => 0,
+		align      => "BOTTOM",
+		tex_center => 0,
+		@_
+	);
+	my ($w, $h)          = @{ $options{size} };
+	my ($ratio, $link)   = ($options{tex_size} * (.001), $options{link});
+	my ($border, $align) = ($options{border}, $options{align});
+	my ($tcenter) = $options{tex_center};
+	my $HTML;
+	my $TeX;
+	($image, $ilink) = @{$image} if (ref($image) eq "ARRAY");
+	$image = alias(insertGraph($image)) if (ref($image) eq "WWPlot");
+	$image = alias($image) unless ($image =~ m!^/!i);
+
+	if ($ilink) {
+		$ilink = alias(insertGraph($ilink)) if (ref($ilink) eq "WWPlot");
+		$ilink = alias($ilink) unless ($ilink =~ m!^/!i);
+	} else {
+		$ilink = $image;
+	}
+	$border = (($link || $ilink ne $image) ? 2 : 1) unless defined($border);
+	$HTML =
+		'<IMG SRC="'
+		. $image
+		. '" WIDTH="'
+		. $w
+		. '" HEIGHT="'
+		. $h
+		. '" BORDER="'
+		. $border
+		. '" ALIGN="'
+		. $align . '">';
+	$HTML = '<A HREF="' . $ilink . '">' . $HTML . '</A>' if $link or $ilink ne $image;
+	$TeX  = '\includegraphics[width=' . $ratio . '\linewidth]{' . $image . '}';
+	$TeX  = '\centerline{' . $TeX . '}' if $tcenter;
+	MODES(
+		TeX        => $TeX . "\n",
+		Latex2HTML => $bHTML . $HTML . $eHTML,
+		HTML       => $HTML
+	);
 }
 
 1;

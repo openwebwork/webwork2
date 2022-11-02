@@ -11,14 +11,14 @@ package WebworkSOAP::Classes::Key;
 =cut
 
 sub new {
-    my $self = shift;
-    my $data = shift;
-    $self = {};
-    $self->{user_id} = SOAP::Data->type( 'string', $data->user_id );
-    $self->{key_not_a_keyboard} = SOAP::Data->type( 'string', $data->key_not_a_keyboard );
-    $self->{timestamp} = SOAP::Data->type( 'string', $data->timestamp );
-    bless $self;
-    return $self;
+	my $self = shift;
+	my $data = shift;
+	$self                       = {};
+	$self->{user_id}            = SOAP::Data->type('string', $data->user_id);
+	$self->{key_not_a_keyboard} = SOAP::Data->type('string', $data->key_not_a_keyboard);
+	$self->{timestamp}          = SOAP::Data->type('string', $data->timestamp);
+	bless $self;
+	return $self;
 }
 
 1;

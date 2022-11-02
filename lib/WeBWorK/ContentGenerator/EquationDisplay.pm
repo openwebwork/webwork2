@@ -31,7 +31,7 @@ use WeBWorK::PG::ImageGenerator;
 
 sub display_equation {
 	my ($self, $str) = @_;
-	
+
 	my $imageTag = $self->{image_gen}->add($str, 'inline');
 	$self->{image_gen}->render();
 	return $imageTag;
@@ -43,27 +43,27 @@ sub display_equation {
 
 sub initialize {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	
+	my $r      = $self->r;
+	my $ce     = $r->ce;
+
 	$self->{image_gen} = WeBWorK::PG::ImageGenerator->new(
-		tempDir  => $ce->{webworkDirs}->{tmp}, # global temp dir
-		latex	 => $ce->{externalPrograms}->{latex},
+		tempDir  => $ce->{webworkDirs}->{tmp},                # global temp dir
+		latex    => $ce->{externalPrograms}->{latex},
 		dvipng   => $ce->{externalPrograms}->{dvipng},
 		useCache => 1,
 		cacheDir => $ce->{webworkDirs}->{equationCache},
 		cacheURL => $ce->{webworkURLs}->{equationCache},
 		cacheDB  => $ce->{webworkFiles}->{equationCacheDB},
 	);
-	
+
 	my $equationStr = $r->param('eq');
-	$self->{equationStr} = $equationStr if defined $equationStr;
+	$self->{equationStr} = $equationStr                          if defined $equationStr;
 	$self->{typesetStr}  = $self->display_equation($equationStr) if $equationStr;
 }
 
 #sub path {
 #	my ($self, $args) = @_;
-#	
+#
 #	my $ce = $self->{ce};
 #	my $root = $ce->{webworkURLs}->{root};
 #	my $courseName = $ce->{courseName};
@@ -81,13 +81,13 @@ sub initialize {
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
-	
+
 	#######################################
 	# Initial data for the textarea field where the equation is entered
 	#######################################
 	my $initial_str = "Enter equation here";
 	$initial_str = $r->param('eq') if $self->{equationStr};
-	
+
 	#######################################
 	# Prepare to display the typeset image and
 	# the HTML code that links to the source image.
@@ -96,34 +96,34 @@ sub body {
 	# by display_equation and ImageGenerator.
 	# The server name and port are included in the new url.
 	#######################################
-	my $typesetStr = (defined $self->{typesetStr})?$self->{typesetStr}:'';
-	
+	my $typesetStr = (defined $self->{typesetStr}) ? $self->{typesetStr} : '';
+
 	#### add the host name to the string
 	my $hostName = $r->hostname;
 	my $port     = $r->get_server_port;
-	$hostName    .= ":$port";
+	$hostName .= ":$port";
 	$typesetStr =~ s|src="|src="http://$hostName|;
-	
+
 	my $typeset2Str = $typesetStr;
 	$typeset2Str =~ s/</&lt;/g;
 	$typeset2Str =~ s/>/&gt;/g;
-	
+
 	my $sourceHref = $typesetStr;
 	$sourceHref =~ /"([^"]*)"/;
 	$sourceHref = $1;
-	
+
 	#######################################
 	# Print the page
 	#######################################
-	return join( "",
+	return join("",
 		"Copy the location of this image (or drag and drop) into your editing area:",
 		CGI::br(),
 		$typeset2Str,
 		CGI::br(),
 		$typesetStr,
-		CGI::start_form(-method=>'POST', -action=>$r->uri),
+		CGI::start_form(-method => 'POST', -action => $r->uri),
 		$self->hidden_authen_fields,
-		CGI::textarea( "eq", $initial_str, 5, 40),
+		CGI::textarea("eq", $initial_str, 5, 40),
 		CGI::submit('typeset', 'typeset'),
 		CGI::end_form(),
 	);

@@ -25,10 +25,10 @@ GatewayQuiz proctored tests.
 
 use strict;
 use warnings;
-use CGI                                    qw(-nosticky );
-use WeBWorK::Utils                         qw(readFile dequote);
-use WeBWorK::Utils::Rendering              qw(constructPGOptions);
-use WeBWorK::DB::Utils                     qw(grok_vsetID);
+use CGI qw(-nosticky );
+use WeBWorK::Utils qw(readFile dequote);
+use WeBWorK::Utils::Rendering qw(constructPGOptions);
+use WeBWorK::DB::Utils qw(grok_vsetID);
 use WeBWorK::ContentGenerator::GatewayQuiz qw(can_recordAnswers);
 
 # This content generator is NOT logged in.

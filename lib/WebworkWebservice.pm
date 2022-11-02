@@ -8,30 +8,33 @@ use WebworkSOAP::WSDL;
 use WeBWorK::FakeRequest;
 
 BEGIN {
-    $main::VERSION = "2.4.9";
-    use Cwd;
+	$main::VERSION = "2.4.9";
+	use Cwd;
 
 ###############################################################################
-# Configuration -- set to top webwork directory (webwork2) (set in webwork.apache2-config)
-# Configuration -- set server name
+	# Configuration -- set to top webwork directory (webwork2) (set in webwork.apache2-config)
+	# Configuration -- set server name
 ###############################################################################
 
-    our $webwork_directory = $WeBWorK::Constants::WEBWORK_DIRECTORY; #'/opt/webwork/webwork2';
+	our $webwork_directory = $WeBWorK::Constants::WEBWORK_DIRECTORY;    #'/opt/webwork/webwork2';
 	print "WebworkWebservice: webwork_directory set to ", $WeBWorK::Constants::WEBWORK_DIRECTORY,
-	      " via \$WeBWorK::Constants::WEBWORK_DIRECTORY set in webwork.apache2-config\n";
+		" via \$WeBWorK::Constants::WEBWORK_DIRECTORY set in webwork.apache2-config\n";
 
-	$WebworkWebservice::HOST_NAME     = 'localhost'; # Apache->server->server_hostname;
-	$WebworkWebservice::HOST_PORT     = '80';        # Apache->server->port;
+	$WebworkWebservice::HOST_NAME = 'localhost';                        # Apache->server->server_hostname;
+	$WebworkWebservice::HOST_PORT = '80';                               # Apache->server->port;
 
 ###############################################################################
 
-	eval "use lib '$webwork_directory/lib'"; die $@ if $@;
-	eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
- 	my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_directory });
- 	die "Can't create seed course environment for webwork in $webwork_directory" unless ref($seed_ce);
- 	my $webwork_url = $seed_ce->{webwork_url};
- 	my $pg_dir = $seed_ce->{pg_dir};
- 	eval "use lib '$pg_dir/lib'"; die $@ if $@;
+	eval "use lib '$webwork_directory/lib'";
+	die $@ if $@;
+	eval "use WeBWorK::CourseEnvironment";
+	die $@ if $@;
+	my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_directory });
+	die "Can't create seed course environment for webwork in $webwork_directory" unless ref($seed_ce);
+	my $webwork_url = $seed_ce->{webwork_url};
+	my $pg_dir      = $seed_ce->{pg_dir};
+	eval "use lib '$pg_dir/lib'";
+	die $@ if $@;
 
 	$WebworkWebservice::WW_DIRECTORY = $webwork_directory;
 	$WebworkWebservice::PG_DIRECTORY = $pg_dir;
@@ -39,25 +42,23 @@ BEGIN {
 
 ###############################################################################
 
-	$WebworkWebservice::SITE_PASSWORD      = 'xmluser';     # default password
-	$WebworkWebservice::COURSENAME         = 'the-course-should-be-determined-at-run-time';       # default course
+	$WebworkWebservice::SITE_PASSWORD = 'xmluser';                                        # default password
+	$WebworkWebservice::COURSENAME    = 'the-course-should-be-determined-at-run-time';    # default course
 }
-
 
 use strict;
 use warnings;
 use WeBWorK::Localize;
 
-
-our  $UNIT_TESTS_ON    = 0;
+our $UNIT_TESTS_ON = 0;
 
 # error formatting
-
 
 ###############################################################################
 ###############################################################################
 
 package WebworkWebservice;
+
 =head1 NAME
 
 	WebworkWebservice
@@ -103,47 +104,46 @@ send them to a (local) webservice running webworkXMLRPC.
 =cut
 
 sub pretty_print_rh {
-    shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
+	shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
 	my $rh = shift;
 	return "" unless defined $rh;
 	my $indent = shift || 0;
 
 	my $out = "";
-	return $out if $indent>10;
+	return $out if $indent > 10;
 	my $type = ref($rh);
 
 	if (defined($type) and $type) {
 		$out .= " type = $type; ";
-	} elsif (not defined($rh) ) {
+	} elsif (not defined($rh)) {
 		$out .= " type = scalar; ";
 	}
-	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
-	    $out .= "{\n";
-	    $indent++;
- 		foreach my $key (sort keys %{$rh})  {
- 			$out .= "  "x$indent."$key => " . pretty_print_rh( $rh->{$key}, $indent ) . "\n";
- 		}
- 		$indent--;
- 		$out .= "\n"."  "x$indent."}\n";
+	if (ref($rh) =~ /HASH/ or "$rh" =~ /HASH/) {
+		$out .= "{\n";
+		$indent++;
+		foreach my $key (sort keys %{$rh}) {
+			$out .= "  " x $indent . "$key => " . pretty_print_rh($rh->{$key}, $indent) . "\n";
+		}
+		$indent--;
+		$out .= "\n" . "  " x $indent . "}\n";
 
- 	} elsif (ref($rh)  =~  /ARRAY/ or "$rh" =~/ARRAY/) {
- 	    $out .= " ( ";
- 		foreach my $elem ( @{$rh} )  {
- 		 	$out .= pretty_print_rh($elem, $indent);
+	} elsif (ref($rh) =~ /ARRAY/ or "$rh" =~ /ARRAY/) {
+		$out .= " ( ";
+		foreach my $elem (@{$rh}) {
+			$out .= pretty_print_rh($elem, $indent);
 
- 		}
- 		$out .=  " ) \n";
-	} elsif ( ref($rh) =~ /SCALAR/ ) {
-		$out .= "scalar reference ". ${$rh};
-	} elsif ( ref($rh) =~/Base64/ ) {
-		$out .= "base64 reference " .$$rh;
+		}
+		$out .= " ) \n";
+	} elsif (ref($rh) =~ /SCALAR/) {
+		$out .= "scalar reference " . ${$rh};
+	} elsif (ref($rh) =~ /Base64/) {
+		$out .= "base64 reference " . $$rh;
 	} else {
-		$out .=  $rh;
+		$out .= $rh;
 	}
 
-	return $out." ";
+	return $out . " ";
 }
-
 
 use WebworkWebservice::RenderProblem;
 use WebworkWebservice::LibraryActions;
@@ -206,13 +206,11 @@ Returns the FakeRequest object contained in $webworkXMLRPC.
 
 =cut
 
-
 package WebworkXMLRPC;
 use base qw(WebworkWebservice);
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 use WeBWorK::Debug;
 use JSON;
-
 
 ###########################################################################
 #  authentication and authorization
@@ -224,23 +222,22 @@ sub initiate_session {
 	my $class = ref $invocant || $invocant;
 
 	######### trace commands ######
-	my @caller = caller(1);  # caller data
+	my @caller           = caller(1);    # caller data
 	my $calling_function = $caller[3];
 	#print STDERR  "\n\nWebworkWebservice.pm ".__LINE__." initiate_session called from $calling_function\n";
 	###############################
 
-	my $rh_input     = $args[0];
-	my $permission = $args[1] // "proctor_quiz_login"; # usually level 2
+	my $rh_input   = $args[0];
+	my $permission = $args[1] // "proctor_quiz_login";    # usually level 2
 
 	# identify course
 	if ($UNIT_TESTS_ON) {
-		print STDERR  "WebworkWebservice.pl ".__LINE__." site_password  is " , $rh_input->{site_password},"\n";
-		print STDERR  "WebworkWebservice.pl ".__LINE__." course_password  is " , $rh_input->{course_password},"\n";
-		print STDERR  "WebworkWebservice.pl ".__LINE__." courseID  is " , $rh_input->{courseID},"\n";
-		print STDERR  "WebworkWebservice.pl ".__LINE__." userID  is " , $rh_input->{userID},"\n";
-		print STDERR  "WebworkWebservice.pl ".__LINE__." session_key  is " , $rh_input->{session_key},"\n";
+		print STDERR "WebworkWebservice.pl " . __LINE__ . " site_password  is ",   $rh_input->{site_password},   "\n";
+		print STDERR "WebworkWebservice.pl " . __LINE__ . " course_password  is ", $rh_input->{course_password}, "\n";
+		print STDERR "WebworkWebservice.pl " . __LINE__ . " courseID  is ",        $rh_input->{courseID},        "\n";
+		print STDERR "WebworkWebservice.pl " . __LINE__ . " userID  is ",          $rh_input->{userID},          "\n";
+		print STDERR "WebworkWebservice.pl " . __LINE__ . " session_key  is ",     $rh_input->{session_key},     "\n";
 	}
-
 
 	# create fake version of Apache::Request object
 	# This abstracts some of the work that used to be done by the webworkXMLRPC object
@@ -248,31 +245,31 @@ sub initiate_session {
 	# The $fake_r value returned actually contains subroutines that the WebworkWebservice packages
 	# need to operate.  It may be possible to pass $fake_r instead of $self in those routines.
 
-	my $fake_r = WeBWorK::FakeRequest->new($rh_input, 'xmlrpc_module'); # need to specify authentication module
+	my $fake_r = WeBWorK::FakeRequest->new($rh_input, 'xmlrpc_module');    # need to specify authentication module
 	my $authen = $fake_r->authen;
 	my $authz  = $fake_r->authz;
 
 	# Create WebworkXMLRPC object
 	my $self = {
-		courseName	=>  $rh_input ->{courseID},
-		user_id		=>  $rh_input ->{userID},
-		password    =>  $rh_input ->{course_password},  #should this be course_password?
-		session_key =>  $rh_input ->{session_key},
-		fake_r      =>  $fake_r,
+		courseName  => $rh_input->{courseID},
+		user_id     => $rh_input->{userID},
+		password    => $rh_input->{course_password},    #should this be course_password?
+		session_key => $rh_input->{session_key},
+		fake_r      => $fake_r,
 	};
 	$self = bless $self, $class;
 	if ($UNIT_TESTS_ON) {
-		print STDERR  "WebworkWebservice.pm ".__LINE__." initiate data:\n  ";
-		print STDERR  "class type is ", $class, "\n";
-		print STDERR  "Self has type ", ref($self), "\n";
-		print STDERR   "self has data: \n", format_hash_ref($self), "\n";
-		print STDERR   "authen has type ", ref($authen), "\n";
-		print STDERR   "authz  has type ", ref($authz), "\n";
+		print STDERR "WebworkWebservice.pm " . __LINE__ . " initiate data:\n  ";
+		print STDERR "class type is ",    $class,                 "\n";
+		print STDERR "Self has type ",    ref($self),             "\n";
+		print STDERR "self has data: \n", format_hash_ref($self), "\n";
+		print STDERR "authen has type ",  ref($authen),           "\n";
+		print STDERR "authz  has type ",  ref($authz),            "\n";
 	}
 
 	die "Please use 'course_password' instead of 'password' as the key for submitting
 	passwords to this webservice\n"
-	if exists($rh_input ->{password}) and not exists($rh_input ->{course_password});
+		if exists($rh_input->{password}) and not exists($rh_input->{course_password});
 	#   we need to trick some of the methods within the webwork framework
 	#   since we are not coming in with a standard apache request
 	#   FIXME:  can/should we change this????
@@ -282,7 +279,7 @@ sub initiate_session {
 	# now, here's the problem... WeBWorK::Authen looks at $r->params directly, whereas we
 	# need to look at $user and $sent_pw. this is a perfect opportunity for a mixin, i think.
 	my $authenOK;
-	my $courseName 	= $rh_input->{courseID};
+	my $courseName  = $rh_input->{courseID};
 	my $user_id     = $rh_input->{user_id};
 	my $session_key = $rh_input->{session_key};
 	eval {
@@ -292,18 +289,15 @@ sub initiate_session {
 		my $e;
 		if (Exception::Class->caught('WeBWorK::DB::Ex::TableMissing')) {
 			# was asked to authenticate into a non-existent course
-			die SOAP::Fault
-			->faultcode('404')
-			->faultstring("WebworkWebservice: Course |$courseName| not found.")
+			die SOAP::Fault->faultcode('404')->faultstring("WebworkWebservice: Course |$courseName| not found.");
 		}
 		# this next bit is a Hack to catch errors when the session key has timed out
 		# and an error message which is approximately
 		# "invoked with WeBWorK::FakeRequest object with no `r' key"
-		if ($e = Exception::Class->caught() and $e =~/object\s+with\s+no\s+.r.\s+key/ ) {
+		if ($e = Exception::Class->caught() and $e =~ /object\s+with\s+no\s+.r.\s+key/) {
 			# was asked to authenticate into a non-existent course
-			die SOAP::Fault
-			->faultcode('404')
-			->faultstring("WebworkWebservice: Can't authenticate -- session may have timed out.")
+			die SOAP::Fault->faultcode('404')
+				->faultstring("WebworkWebservice: Can't authenticate -- session may have timed out.");
 		}
 		die "Webservice.pm: Error when trying to authenticate. $e\n";
 	};
@@ -311,24 +305,26 @@ sub initiate_session {
 	# security check -- check that the user is in fact at least a proctor in the course
 	###########################################################################
 
-	$self->{authenOK}  = $authenOK;
-	$self->{authzOK}   = $authz->hasPermissions($self->{user_id}, $permission);
+	$self->{authenOK} = $authenOK;
+	$self->{authzOK}  = $authz->hasPermissions($self->{user_id}, $permission);
 
 	# Update the credentials -- in particular the session_key may have changed.
 	$self->{session_key} = $authen->{session_key};
 
 	if ($UNIT_TESTS_ON) {
-		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication for ",$self->{user_id}, " in course ", $self->{courseName}, " is = ", $self->{authenOK},"\n";
-		print STDERR  "WebworkWebservice.pm ".__LINE__."authorization as instructor for ", $self->{user_id}, " is ", $self->{authzOK},"\n";
-		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication contains ", format_hash_ref($authen),"\n";
-		print STDERR   "self has new data \n", format_hash_ref($self), "\n";
+		print STDERR "WebworkWebservice.pm " . __LINE__ . " authentication for ", $self->{user_id}, " in course ",
+			$self->{courseName}, " is = ", $self->{authenOK}, "\n";
+		print STDERR "WebworkWebservice.pm " . __LINE__ . "authorization as instructor for ", $self->{user_id}, " is ",
+			$self->{authzOK}, "\n";
+		print STDERR "WebworkWebservice.pm " . __LINE__ . " authentication contains ", format_hash_ref($authen), "\n";
+		print STDERR "self has new data \n",                                           format_hash_ref($self),   "\n";
 	}
 
 	# Is there a way to transmit a number as well as a message?
 	# Could be useful for handling errors.
-	debug("initialize webworkXMLRPC object in: ", format_hash_ref($rh_input),"\n") if $UNIT_TESTS_ON;
-	debug("fake_r :", format_hash_ref($fake_r),"\n") if $UNIT_TESTS_ON;
-	die "Could not authenticate user $user_id with key $session_key"  unless $self->{authenOK};
+	debug("initialize webworkXMLRPC object in: ", format_hash_ref($rh_input), "\n") if $UNIT_TESTS_ON;
+	debug("fake_r :",                             format_hash_ref($fake_r),   "\n") if $UNIT_TESTS_ON;
+	die "Could not authenticate user $user_id with key $session_key"                   unless $self->{authenOK};
 	die "User $user_id does not have sufficient privileges in this course $courseName" unless $self->{authzOK};
 	return $self;
 }
@@ -339,14 +335,14 @@ sub initiate_session {
 # $result -> xmlrpcCall(command, in);
 # $result->return_object->{foo} is defined for foo = courseID userID and session_key
 sub do {
-	my $self = shift;
+	my $self   = shift;
 	my $result = shift;
 
-	$result->{session_key}  = $self->{session_key};
-	$result->{userID}       = $self->{user_id};
-	$result->{courseID}     = $self->{courseName};
-	debug("output is ", format_hash_ref($result), "\n" ) if $UNIT_TESTS_ON;
-	return($result);
+	$result->{session_key} = $self->{session_key};
+	$result->{userID}      = $self->{user_id};
+	$result->{courseID}    = $self->{courseName};
+	debug("output is ", format_hash_ref($result), "\n") if $UNIT_TESTS_ON;
+	return ($result);
 }
 
 sub r {
@@ -388,11 +384,11 @@ These are the commands that the WebworkWebservice will respond to.
 =cut
 
 sub searchLib {
-    my $class = shift;
-    my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-    #warn "\n incoming request to listLib:  class is ",ref($self) if $UNIT_TESTS_ON ;
-  	return $self->do( WebworkWebservice::LibraryActions::searchLib($self, $in) );
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	#warn "\n incoming request to listLib:  class is ",ref($self) if $UNIT_TESTS_ON ;
+	return $self->do(WebworkWebservice::LibraryActions::searchLib($self, $in));
 }
 
 =item listLib
@@ -400,23 +396,23 @@ sub searchLib {
 =cut
 
 sub listLib {
-    my $class = shift;
-    my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-    #warn "\n incoming request to listLib:  class is ",ref($self) if $UNIT_TESTS_ON ;
-  	return $self->do( WebworkWebservice::LibraryActions::listLib($self, $in) );
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	#warn "\n incoming request to listLib:  class is ",ref($self) if $UNIT_TESTS_ON ;
+	return $self->do(WebworkWebservice::LibraryActions::listLib($self, $in));
 }
 
 =item listLibraries
 
 =cut
 
-sub listLibraries {     # returns a list of libraries for the default course
+sub listLibraries {    # returns a list of libraries for the default course
 	my $class = shift;
-    my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-    #warn "incoming request to listLibraries:  class is ",ref($self) if $UNIT_TESTS_ON ;
-  	return $self->do( WebworkWebservice::LibraryActions::listLibraries($self, $in) );
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	#warn "incoming request to listLibraries:  class is ",ref($self) if $UNIT_TESTS_ON ;
+	return $self->do(WebworkWebservice::LibraryActions::listLibraries($self, $in));
 }
 
 =item getProblemDirectories
@@ -425,9 +421,9 @@ sub listLibraries {     # returns a list of libraries for the default course
 
 sub getProblemDirectories {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-	return $self->do(WebworkWebservice::LibraryActions::getProblemDirectories($self,$in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::LibraryActions::getProblemDirectories($self, $in));
 }
 
 =item buildBrowseTree
@@ -436,9 +432,9 @@ sub getProblemDirectories {
 
 sub buildBrowseTree {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-	return $self->do(WebworkWebservice::LibraryActions::buildBrowseTree($self,$in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::LibraryActions::buildBrowseTree($self, $in));
 }
 
 =item loadBrowseTree
@@ -447,9 +443,9 @@ sub buildBrowseTree {
 
 sub loadBrowseTree {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-	return $self->do(WebworkWebservice::LibraryActions::loadBrowseTree($self,$in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::LibraryActions::loadBrowseTree($self, $in));
 }
 
 =item loadLocalLibraryTree
@@ -458,9 +454,9 @@ sub loadBrowseTree {
 
 sub loadLocalLibraryTree {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-	return $self->do(WebworkWebservice::LibraryActions::loadLocalLibraryTree($self,$in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::LibraryActions::loadLocalLibraryTree($self, $in));
 }
 
 =item getLocalProblems
@@ -469,9 +465,9 @@ sub loadLocalLibraryTree {
 
 sub getLocalProblems {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-	return $self->do(WebworkWebservice::LibraryActions::getLocalProblems($self,$in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::LibraryActions::getLocalProblems($self, $in));
 }
 
 =item getProblemTags
@@ -480,9 +476,9 @@ sub getLocalProblems {
 
 sub getProblemTags {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-		return $self->do( WebworkWebservice::LibraryActions::getProblemTags($self, $in) );
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::LibraryActions::getProblemTags($self, $in));
 }
 
 =item setProblemTags
@@ -491,9 +487,9 @@ sub getProblemTags {
 
 sub setProblemTags {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_tags");
-		return $self->do( WebworkWebservice::LibraryActions::setProblemTags($self, $in) );
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_tags");
+	return $self->do(WebworkWebservice::LibraryActions::setProblemTags($self, $in));
 }
 
 =item assignSetToUsers
@@ -501,10 +497,10 @@ sub setProblemTags {
 =cut
 
 sub assignSetToUsers {
-  my $class = shift;
-  my $in = shift;
-  my $self = $class->initiate_session($in, "assign_problem_sets");
-  	return $self->do(WebworkWebservice::SetActions::assignSetToUsers($self,$in));
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "assign_problem_sets");
+	return $self->do(WebworkWebservice::SetActions::assignSetToUsers($self, $in));
 }
 
 =item listSets
@@ -512,10 +508,10 @@ sub assignSetToUsers {
 =cut
 
 sub listSets {
-  my $class = shift;
-  my $in = shift;
-  my $self = $class->initiate_session($in, "access_instructor_tools");
-  	return $self->do(WebworkWebservice::SetActions::listLocalSets($self));
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::SetActions::listLocalSets($self));
 }
 
 =item listSetProblems
@@ -524,42 +520,42 @@ sub listSets {
 
 sub listSetProblems {
 	my $class = shift;
-  	my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-  	return $self->do(WebworkWebservice::SetActions::listLocalSetProblems($self, $in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::SetActions::listLocalSetProblems($self, $in));
 }
 
 =item createNewSet
 
 =cut
 
-sub createNewSet{
+sub createNewSet {
 	my $class = shift;
-  	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_problem_sets");
-  	return $self->do(WebworkWebservice::SetActions::createNewSet($self, $in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_problem_sets");
+	return $self->do(WebworkWebservice::SetActions::createNewSet($self, $in));
 }
 
 =item deleteProblemSet
 
 =cut
 
-sub deleteProblemSet{
+sub deleteProblemSet {
 	my $class = shift;
-  	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_problem_sets");
-  	return $self->do(WebworkWebservice::SetActions::deleteProblemSet($self, $in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_problem_sets");
+	return $self->do(WebworkWebservice::SetActions::deleteProblemSet($self, $in));
 }
 
 =item reorderProblems
 
 =cut
 
-sub reorderProblems{
+sub reorderProblems {
 	my $class = shift;
-  	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_problem_sets");
-   	return $self->do(WebworkWebservice::SetActions::reorderProblems($self, $in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_problem_sets");
+	return $self->do(WebworkWebservice::SetActions::reorderProblems($self, $in));
 }
 
 =item addProblem
@@ -568,20 +564,20 @@ sub reorderProblems{
 
 sub addProblem {
 	my $class = shift;
-  	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_problem_sets");
-  	return $self->do(WebworkWebservice::SetActions::addProblem($self, $in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_problem_sets");
+	return $self->do(WebworkWebservice::SetActions::addProblem($self, $in));
 }
 
 =item deleteProblem
 
 =cut
 
-sub deleteProblem{
+sub deleteProblem {
 	my $class = shift;
-  	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_problem_sets");
-  	return $self->do(WebworkWebservice::SetActions::deleteProblem($self, $in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_problem_sets");
+	return $self->do(WebworkWebservice::SetActions::deleteProblem($self, $in));
 }
 
 =item renderProblem
@@ -589,11 +585,11 @@ sub deleteProblem{
 =cut
 
 sub renderProblem {
-    my $class = shift;
-    my $in = shift;
-    my $self = $class->initiate_session($in);
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in);
 
-    return $self->do( WebworkWebservice::RenderProblem::renderProblem($self,$in) );
+	return $self->do(WebworkWebservice::RenderProblem::renderProblem($self, $in));
 }
 
 =item updateProblem
@@ -601,9 +597,9 @@ sub renderProblem {
 =cut
 
 sub updateProblem {
-	my ($class,$in) = @_;
+	my ($class, $in) = @_;
 	my $self = $class->initiate_session($in, "modify_problem_sets");
-	return $self->do(WebworkWebservice::SetActions::updateProblem($self,$in));
+	return $self->do(WebworkWebservice::SetActions::updateProblem($self, $in));
 }
 
 =item saveProblem
@@ -611,9 +607,9 @@ sub updateProblem {
 =cut
 
 sub saveProblem {
-	my ($class,$in) = @_;
+	my ($class, $in) = @_;
 	my $self = $class->initiate_session($in, "modify_problem_sets");
-	return $self->do(WebworkWebservice::LibraryActions::saveProblem($self,$in));
+	return $self->do(WebworkWebservice::LibraryActions::saveProblem($self, $in));
 }
 
 =item readFile
@@ -621,10 +617,10 @@ sub saveProblem {
 =cut
 
 sub readFile {
-    my $class = shift;
-    my $in   = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-  	return $self->do( WebworkWebservice::LibraryActions::readFile($self,$in) );
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::LibraryActions::readFile($self, $in));
 }
 
 =item tex2pdf
@@ -632,10 +628,10 @@ sub readFile {
 =cut
 
 sub tex2pdf {
-    my $class = shift;
-    my $in    = shift;
-    my $self  = $class->initiate_session($in);
-  	return $self->do( WebworkWebservice::MathTranslators::tex2pdf($self,$in) );
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::MathTranslators::tex2pdf($self, $in));
 }
 
 =item createCourse
@@ -654,8 +650,8 @@ sub tex2pdf {
 # Note that we log into the admin course to create courses.
 sub createCourse {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "create_and_delete_courses");
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "create_and_delete_courses");
 	return $self->do(WebworkWebservice::CourseActions::create($self, $in));
 }
 
@@ -663,10 +659,10 @@ sub createCourse {
 
 =cut
 
-sub listUsers{
-    my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
+sub listUsers {
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
 	return $self->do(WebworkWebservice::CourseActions::listUsers($self, $in));
 
 }
@@ -694,8 +690,8 @@ sub listUsers{
 # This user will be added to courseID
 sub addUser {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_student_data");
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_student_data");
 	return $self->do(WebworkWebservice::CourseActions::addUser($self, $in));
 }
 
@@ -713,8 +709,8 @@ sub addUser {
 #}
 sub dropUser {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_student_data");
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_student_data");
 	return $self->do(WebworkWebservice::CourseActions::dropUser($self, $in));
 }
 
@@ -732,8 +728,8 @@ sub dropUser {
 #}
 sub deleteUser {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_student_data");
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_student_data");
 	return $self->do(WebworkWebservice::CourseActions::deleteUser($self, $in));
 }
 
@@ -761,15 +757,16 @@ sub deleteUser {
 #   comment
 #}
 sub editUser {
-    my $class = shift;
-    my $in = shift;
-	my $self = $class->initiate_session($in, "modify_student_data");
-    return $self->do(WebworkWebservice::CourseActions::editUser($self, $in));
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_student_data");
+	return $self->do(WebworkWebservice::CourseActions::editUser($self, $in));
 }
 
 =item changeUserPassword
 
 =cut
+
 # Expecting a hash $in composed of
 #{
 #	'userID' => 'admin',		# these are the usual
@@ -780,13 +777,11 @@ sub editUser {
 #	"new_password": "password"
 #}
 
-
-
-sub changeUserPassword{
-    my $class = shift;
-    my $in = shift;
-	my $self = $class->initiate_session($in, "modify_student_data");
-    return $self->do(WebworkWebservice::CourseActions::changeUserPassword($self, $in));
+sub changeUserPassword {
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_student_data");
+	return $self->do(WebworkWebservice::CourseActions::changeUserPassword($self, $in));
 }
 
 =item sendEmail
@@ -803,13 +798,11 @@ sub changeUserPassword{
 #	"effectiveUser": "eUser"
 #}
 
-
-
-sub sendEmail{
-    my $class = shift;
-    my $in = shift;
-    my $self = $class->initiate_session($in, "send_mail");
-    return $self->do(WebworkWebservice::CourseActions::sendEmail($self, $in));
+sub sendEmail {
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "send_mail");
+	return $self->do(WebworkWebservice::CourseActions::sendEmail($self, $in));
 }
 
 =item getSets
@@ -817,10 +810,10 @@ sub sendEmail{
 =cut
 
 sub getSets {
-    my $class = shift;
-    my $in = shift;
-    my $self = $class->initiate_session($in, "access_instructor_tools");
-    return $self->do(WebworkWebservice::SetActions::getSets($self, $in));
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::SetActions::getSets($self, $in));
 }
 
 =item getUserSets
@@ -828,10 +821,10 @@ sub getSets {
 =cut
 
 sub getUserSets {
-    my $class = shift;
-    my $in = shift;
-    my $self = $class->initiate_session($in, "access_instructor_tools");
-    return $self->do(WebworkWebservice::SetActions::getUserSets($self, $in));
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::SetActions::getUserSets($self, $in));
 }
 
 =item saveUserSets
@@ -839,10 +832,10 @@ sub getUserSets {
 =cut
 
 sub saveUserSets {
-    my $class = shift;
-    my $in = shift;
-    my $self = $class->initiate_session($in, "modify_student_data");
-    return $self->do(WebworkWebservice::SetActions::saveUserSets($self, $in));
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_student_data");
+	return $self->do(WebworkWebservice::SetActions::saveUserSets($self, $in));
 }
 
 =item getSet
@@ -850,21 +843,21 @@ sub saveUserSets {
 =cut
 
 sub getSet {
-    my $class = shift;
-    my $in = shift;
-    my $self = $class->initiate_session($in, "access_instructor_tools");
-    return $self->do(WebworkWebservice::SetActions::getSet($self, $in));
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::SetActions::getSet($self, $in));
 }
 
 =item updateSetProperties
 
 =cut
 
-sub updateSetProperties{
-    my $class = shift;
-    my $in = shift;
-    my $self = $class->initiate_session($in, "modify_problem_sets");
-    return $self->do(WebworkWebservice::SetActions::updateSetProperties($self, $in));
+sub updateSetProperties {
+	my $class = shift;
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_problem_sets");
+	return $self->do(WebworkWebservice::SetActions::updateSetProperties($self, $in));
 }
 
 =item updateUserSet
@@ -873,9 +866,9 @@ sub updateSetProperties{
 
 sub updateUserSet {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_student_data");
-	return $self->do(WebworkWebservice::SetActions::updateUserSet($self,$in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_student_data");
+	return $self->do(WebworkWebservice::SetActions::updateUserSet($self, $in));
 }
 
 =item unassignSetFromUsers
@@ -884,9 +877,9 @@ sub updateUserSet {
 
 sub unassignSetFromUsers {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_student_data");
-	return $self->do(WebworkWebservice::SetActions::unassignSetFromUsers($self,$in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_student_data");
+	return $self->do(WebworkWebservice::SetActions::unassignSetFromUsers($self, $in));
 }
 
 =item listSetUsers
@@ -895,9 +888,9 @@ sub unassignSetFromUsers {
 
 sub listSetUsers {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-	return $self->do(WebworkWebservice::SetActions::listSetUsers($self,$in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::SetActions::listSetUsers($self, $in));
 }
 
 =item getCourseSettings
@@ -906,9 +899,9 @@ sub listSetUsers {
 
 sub getCourseSettings {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_course_files");
-	return $self->do(WebworkWebservice::CourseActions::getCourseSettings($self,$in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_course_files");
+	return $self->do(WebworkWebservice::CourseActions::getCourseSettings($self, $in));
 }
 
 =item updateSetting
@@ -917,9 +910,9 @@ sub getCourseSettings {
 
 sub updateSetting {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
-	return $self->do(WebworkWebservice::CourseActions::updateSetting($self,$in));
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
+	return $self->do(WebworkWebservice::CourseActions::updateSetting($self, $in));
 }
 
 =item getUserProblem
@@ -928,8 +921,8 @@ sub updateSetting {
 
 sub getUserProblem {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "access_instructor_tools");
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "access_instructor_tools");
 	return $self->do(WebworkWebservice::ProblemActions::getUserProblem($self, $in));
 }
 
@@ -939,8 +932,8 @@ sub getUserProblem {
 
 sub putUserProblem {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_student_data");
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_student_data");
 	return $self->do(WebworkWebservice::ProblemActions::putUserProblem($self, $in));
 }
 
@@ -950,8 +943,8 @@ sub putUserProblem {
 
 sub putProblemVersion {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_student_data");
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_student_data");
 	return $self->do(WebworkWebservice::ProblemActions::putProblemVersion($self, $in));
 }
 
@@ -961,8 +954,8 @@ sub putProblemVersion {
 
 sub putPastAnswer {
 	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_student_data");
+	my $in    = shift;
+	my $self  = $class->initiate_session($in, "modify_student_data");
 	return $self->do(WebworkWebservice::ProblemActions::putPastAnswer($self, $in));
 }
 
@@ -984,34 +977,38 @@ sub ce {
 	debug("use ce") if $UNIT_TESTS_ON;
 	$self->{fake_r}->{ce};
 }
+
 sub db {
 	my $self = shift;
 	$self->{fake_r}->{db};
 }
+
 sub param {    # imitate get behavior of the request object params method
-	my $self =shift;
+	my $self  = shift;
 	my $param = shift;
-	my $out = $self->{fake_r}->param($param);
+	my $out   = $self->{fake_r}->param($param);
 	debug("use param $param => $out") if $UNIT_TESTS_ON;
 	$out;
 }
+
 sub authz {
 	my $self = shift;
-	debug("use authz ")  if $UNIT_TESTS_ON;
+	debug("use authz ") if $UNIT_TESTS_ON;
 	$self->{fake_r}->{authz};
 }
+
 sub authen {
 	my $self = shift;
-	debug("use authen ")  if $UNIT_TESTS_ON;
+	debug("use authen ") if $UNIT_TESTS_ON;
 	$self->{fake_r}->{authen};
 }
+
 sub maketext {
 	my $self = shift;
 	#$self->{language_handle}->maketext(@_);
-	debug("use maketext")  if $UNIT_TESTS_ON;
+	debug("use maketext") if $UNIT_TESTS_ON;
 	&{ $self->{fake_r}->{language_handle} }(@_);
 }
-
 
 =head2 WebworkXMLRPC Utility methods
 
@@ -1019,20 +1016,18 @@ sub maketext {
 
 =cut
 
-
 sub format_hash_ref {
-	my $hash = shift;
-	my $out_str="";
-	my $count =4;
-	foreach my $key ( sort keys %$hash) {
-		my $value = defined($hash->{$key})? $hash->{$key}:"--";
-		$out_str.= " $key=>$value ";
+	my $hash    = shift;
+	my $out_str = "";
+	my $count   = 4;
+	foreach my $key (sort keys %$hash) {
+		my $value = defined($hash->{$key}) ? $hash->{$key} : "--";
+		$out_str .= " $key=>$value ";
 		$count--;
-		unless($count) { $out_str.="\n  ";$count =4;}
+		unless ($count) { $out_str .= "\n  "; $count = 4; }
 	}
 	$out_str;
 }
-
 
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --
 # test responses

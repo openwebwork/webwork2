@@ -30,19 +30,21 @@ use WeBWorK::Utils qw(sortByName x getAssetURL format_set_name_display);
 use WeBWorK::Debug;
 
 # We use the x function to mark strings for localizaton
-use constant DATE_FIELDS => {   open_date    => x("Open:"),
-                                reduced_scoring_date => x("Reduced:"),
-	                            due_date     => x("Closes:"),
-	                            answer_date  => x("Answer:")
+use constant DATE_FIELDS => {
+	open_date            => x("Open:"),
+	reduced_scoring_date => x("Reduced:"),
+	due_date             => x("Closes:"),
+	answer_date          => x("Answer:")
 };
-use constant DATE_FIELDS_ORDER =>[qw(open_date reduced_scoring_date due_date answer_date )];
+use constant DATE_FIELDS_ORDER => [qw(open_date reduced_scoring_date due_date answer_date )];
+
 sub initialize {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $urlpath = $r->urlpath;
-	my $db = $r->db;
-	my $authz = $r->authz;
-	my $userID = $r->param("user");
+	my ($self)        = @_;
+	my $r             = $self->r;
+	my $urlpath       = $r->urlpath;
+	my $db            = $r->db;
+	my $authz         = $r->authz;
+	my $userID        = $r->param("user");
 	my $editForUserID = $urlpath->arg("userID");
 
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
@@ -53,19 +55,19 @@ sub initialize {
 	$self->{setRecords} = [ $db->getGlobalSetsWhere({}, 'set_id') ];
 
 	# first check to see if a save form has been submitted
-	return '' unless ($r->param('save_button') ||
-			  $r->param('assignAll'));
+	return '' unless ($r->param('save_button')
+		|| $r->param('assignAll'));
 
 	# As it stands we need to check each set to see if it is still assigned
 	# the forms are not currently set up to simply transmit changes
 
 	my @assignedSets = ();
 	foreach my $set (@{ $self->{setRecords} }) {
-	    # add sets to the assigned list if the parameter is checked or the
-	    # assign all button is pushed.  (already assigned sets will be
-	    # skipped later)
+		# add sets to the assigned list if the parameter is checked or the
+		# assign all button is pushed.  (already assigned sets will be
+		# skipped later)
 		my $setID = $set->set_id;
-	    push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
+		push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
 	}
 
 	# note: assignedSets are those sets that are assigned in the submitted form
@@ -74,10 +76,10 @@ sub initialize {
 	my %selectedSets = map { $_ => 1 } @assignedSets;
 
 	#debug ##########################
-		#print STDERR ("aSsigned sets", join(" ",@assignedSets));
-        #my @params = $r->param();
-        #print STDERR " parameters ", join(" ", @params);
-    ###############
+	#print STDERR ("aSsigned sets", join(" ",@assignedSets));
+	#my @params = $r->param();
+	#print STDERR " parameters ", join(" ", @params);
+	###############
 
 	#Get the user(s) whose records are to be modified
 	#  for now: $editForUserID
@@ -89,7 +91,7 @@ sub initialize {
 	my %userSets = map { $_ => 1 } $db->listUserSets($editForUserID);
 
 	# Go through each possible set
-	debug(" parameters ", join(" ", $r->param()) );
+	debug(" parameters ", join(" ", $r->param()));
 	for my $setRecord (@{ $self->{setRecords} }) {
 		my $setID = $setRecord->set_id;
 		# Does the user want this set to be assigned to the selected user?
@@ -120,7 +122,7 @@ sub initialize {
 				my @setVer =
 					$db->getSetVersionsWhere({ user_id => $editForUserID, set_id => { like => "$setID,v\%" } });
 				for my $setVersionRecord (@setVer) {
-					my $ver = $setVersionRecord->version_id;
+					my $ver    = $setVersionRecord->version_id;
 					my $action = $r->param("set.$setID,v$ver.assignment");
 					if (defined $action) {
 						if ($action eq 'assigned') {
@@ -170,12 +172,12 @@ sub body {
 	return CGI::div({ class => 'alert alert-danger p-1' }, "You are not authorized to edit user specific information.")
 		unless $authz->hasPermissions($userID, "access_instructor_tools");
 
-	my $UserRecord       = $db->getUser($editForUserID);
+	my $UserRecord = $db->getUser($editForUserID);
 
 	my $userName = $UserRecord->first_name . " " . $UserRecord->last_name;
 
 	# create a message about how many sets have been assigned to this user
-	my $setCount = $db->countUserSets($editForUserID);
+	my $setCount      = $db->countUserSets($editForUserID);
 	my $basicInfoPage = $urlpath->new(
 		type => 'instructor_user_list',
 		args => {
@@ -327,24 +329,27 @@ sub outputSetRow {
 				labelattributes => { class => 'form-check-label' }
 			}),
 			defined $mergedSet
-			? CGI::b({ dir => 'ltr' }, CGI::a(
-				{
-					href => $self->systemLink(
-						$urlpath->new(
-							type => 'instructor_set_detail',
-							args => {
-								courseID => $courseID,
-								setID    => $setID . ($version ? ",v$version" : '')
+			? CGI::b(
+				{ dir => 'ltr' },
+				CGI::a(
+					{
+						href => $self->systemLink(
+							$urlpath->new(
+								type => 'instructor_set_detail',
+								args => {
+									courseID => $courseID,
+									setID    => $setID . ($version ? ",v$version" : '')
+								}
+							),
+							params => {
+								effectiveUser => $editForUserID,
+								editForUser   => $editForUserID,
 							}
-						),
-						params => {
-							effectiveUser => $editForUserID,
-							editForUser   => $editForUserID,
-						}
-					)
-				},
-				format_set_name_display($version ? "$setID (version $version)" : $setID)
-			))
+						)
+					},
+					format_set_name_display($version ? "$setID (version $version)" : $setID)
+				)
+				)
 				. ($version ? CGI::hidden({ name => "set.$setID,v$version.assignment", value => 'delete' }) : '')
 			: CGI::b({ dir => 'ltr' }, format_set_name_display($setID)),
 			join '',

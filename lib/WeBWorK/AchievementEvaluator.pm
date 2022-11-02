@@ -118,7 +118,7 @@ sub checkForAchievements {
 	foreach my $achievement (@achievements) {
 		next unless $achievement->enabled;
 		my $userAchievement = $db->getUserAchievement($user_id, $achievement->achievement_id);
-		$userAchievements->{$achievement->achievement_id} = $userAchievement->earned if $userAchievement;
+		$userAchievements->{ $achievement->achievement_id } = $userAchievement->earned if $userAchievement;
 	}
 
 	#Update a couple of "standard" variables in globalData hash.

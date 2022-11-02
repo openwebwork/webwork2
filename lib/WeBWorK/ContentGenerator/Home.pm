@@ -29,10 +29,11 @@ use WeBWorK::CGI;
 use WeBWorK::Utils qw(readFile readDirectory);
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
 use WeBWorK::Localize;
+
 sub info {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 
 	my $result;
 
@@ -58,7 +59,7 @@ sub info {
 	}
 
 	if (defined $result and $result ne "") {
-	    return CGI::h2($r->maketext("Site Information")). $result;
+		return CGI::h2($r->maketext("Site Information")) . $result;
 	} else {
 		return "";
 	}
@@ -92,19 +93,20 @@ sub body {
 
 	if ($haveAdminCourse and !(-f "$coursesDir/admin/hide_directory")) {
 		my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => "admin");
-		print CGI::p(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $r->maketext("Course Administration")));
+		print CGI::p(
+			CGI::a({ href => $self->systemLink($urlpath, authen => 0) }, $r->maketext("Course Administration")));
 	}
 
 	print CGI::h2($r->maketext("Courses"));
 
-	print CGI::start_ul({class => "courses-list"});
+	print CGI::start_ul({ class => "courses-list" });
 
-	foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
-		next if $courseID eq "admin"; # done already above
+	foreach my $courseID (sort { lc($a) cmp lc($b) } @courseIDs) {
+		next if $courseID eq "admin";                        # done already above
 		next if -f "$coursesDir/$courseID/hide_directory";
 		my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);
-		print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID =~ s/_/ /gr));
-	}###place to use underscore sub
+		print CGI::li(CGI::a({ href => $self->systemLink($urlpath, authen => 0) }, $courseID =~ s/_/ /gr));
+	}    ###place to use underscore sub
 
 	print CGI::end_ul();
 

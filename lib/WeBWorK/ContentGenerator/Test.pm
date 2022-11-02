@@ -31,19 +31,19 @@ use WeBWorK::CGI;
 use WeBWorK::Utils qw/undefstr/;
 
 sub body {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $authz = $r->authz;
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $db      = $r->db;
+	my $authz   = $r->authz;
 	my $urlpath = $r->urlpath;
 
 	$self->{pwd} = $r->param("pwd") || "helloworld";
 
 	print CGI::p(
-		"REQUEST_METHOD is $ENV{REQUEST_METHOD}", CGI::br(),
-		"CONTENT_TYPE is $ENV{CONTENT_TYPE}", CGI::br(),
-		"CONTENT_LENGTH is $ENV{CONTENT_LENGTH}",
+		"REQUEST_METHOD is $ENV{REQUEST_METHOD}",
+		CGI::br(), "CONTENT_TYPE is $ENV{CONTENT_TYPE}",
+		CGI::br(), "CONTENT_LENGTH is $ENV{CONTENT_LENGTH}",
 	);
 
 	use Data::Dumper;
@@ -51,40 +51,60 @@ sub body {
 
 	#print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	my $start_form = CGI::start_form(
-		-method=>"POST",
-		-action=>$r->uri,
+		-method => "POST",
+		-action => $r->uri,
 		#-enctype=>'application/x-www-form-urlencoded',
-		-enctype=>'multipart/form-data',
+		-enctype => 'multipart/form-data',
 	);
 	print CGI::pre(CGI::escapeHTML($start_form));
 	print $start_form;
 	print $self->hidden_authen_fields;
 
-	print CGI::p("before action:" . CGI::br()
-		. " \$r->param('pwd')=" . (defined $r->param('pwd') ? $r->param('pwd') : "UNDEF") . CGI::br()
-		. " CGI::param('pwd')=" . (defined CGI::param('pwd') ? CGI::param('pwd') : "UNDEF") . CGI::br()
-		. " \$CGI::Q->{pwd}=" . (defined $CGI::Q->{pwd} ? "@{$CGI::Q->{pwd}}" : "UNDEF") . CGI::br()
-		. " \$self->{pwd}=" . (defined $self->{pwd} ? $self->{pwd} : "UNDEF"));
+	print CGI::p("before action:"
+			. CGI::br()
+			. " \$r->param('pwd')="
+			. (defined $r->param('pwd') ? $r->param('pwd') : "UNDEF")
+			. CGI::br()
+			. " CGI::param('pwd')="
+			. (defined CGI::param('pwd') ? CGI::param('pwd') : "UNDEF")
+			. CGI::br()
+			. " \$CGI::Q->{pwd}="
+			. (defined $CGI::Q->{pwd} ? "@{$CGI::Q->{pwd}}" : "UNDEF")
+			. CGI::br()
+			. " \$self->{pwd}="
+			. (defined $self->{pwd} ? $self->{pwd} : "UNDEF"));
 
 	if (defined $r->param("submit") and $r->param("submit") eq "ChangePWD") {
 		$self->{pwd} = $r->param("new_pwd");
 		print CGI::p("pwd change requested, new pwd is ", $self->{pwd});
 	}
 
-	print "new_pwd: ", CGI::textfield({name=>"new_pwd",value=>$self->{pwd}}), CGI::br();
+	print "new_pwd: ", CGI::textfield({ name => "new_pwd", value => $self->{pwd} }), CGI::br();
 
-	print CGI::p("after action:" . CGI::br()
-		. " \$r->param('pwd')=" . (defined $r->param('pwd') ? $r->param('pwd') : "UNDEF") . CGI::br()
-		. " CGI::param('pwd')=" . (defined CGI::param('pwd') ? CGI::param('pwd') : "UNDEF") . CGI::br()
-		. " \$CGI::Q->{pwd}=" . (defined $CGI::Q->{pwd} ? "@{$CGI::Q->{pwd}}" : "UNDEF") . CGI::br()
-		. " \$self->{pwd}=" . (defined $self->{pwd} ? $self->{pwd} : "UNDEF"));
+	print CGI::p("after action:"
+			. CGI::br()
+			. " \$r->param('pwd')="
+			. (defined $r->param('pwd') ? $r->param('pwd') : "UNDEF")
+			. CGI::br()
+			. " CGI::param('pwd')="
+			. (defined CGI::param('pwd') ? CGI::param('pwd') : "UNDEF")
+			. CGI::br()
+			. " \$CGI::Q->{pwd}="
+			. (defined $CGI::Q->{pwd} ? "@{$CGI::Q->{pwd}}" : "UNDEF")
+			. CGI::br()
+			. " \$self->{pwd}="
+			. (defined $self->{pwd} ? $self->{pwd} : "UNDEF"));
 
-	my $hidden_pwd = CGI::hidden({name=>"pwd",value=>$self->{pwd}});
-	print CGI::p("hidden field is being passed value=>".$self->{pwd}, CGI::br(),
-		"hidden field is ", CGI::pre(CGI::escapeHTML($hidden_pwd)));
+	my $hidden_pwd = CGI::hidden({ name => "pwd", value => $self->{pwd} });
+	print CGI::p(
+		"hidden field is being passed value=>" . $self->{pwd},
+		CGI::br(),
+		"hidden field is ",
+		CGI::pre(CGI::escapeHTML($hidden_pwd))
+	);
 	print $hidden_pwd;
 
-	print CGI::submit({ name => "submit", value => "Refresh", class => 'btn btn-primary' });
+	print CGI::submit({ name => "submit", value => "Refresh",   class => 'btn btn-primary' });
 	print CGI::submit({ name => "submit", value => "ChangePWD", class => 'btn btn-primary' });
 
 	print CGI::end_form();

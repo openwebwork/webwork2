@@ -56,7 +56,7 @@ our @EXPORT_OK = qw(
 	fake_user
 );
 
-use constant fakeSetName => "Undefined_Set";
+use constant fakeSetName  => "Undefined_Set";
 use constant fakeUserName => "Undefined_User";
 
 =head1 FUNCTIONS
@@ -84,7 +84,7 @@ sub fake_set {
 	$set->visible(0);
 	$set->enable_reduced_scoring(0);
 	$set->hardcopy_header("defaultHeader");
-	return($set);
+	return ($set);
 }
 
 sub fake_set_version {
@@ -109,9 +109,8 @@ sub fake_set_version {
 	$set->hide_work('N');
 	$set->restrict_ip('No');
 
-	return($set);
+	return ($set);
 }
-
 
 =item fake_problem
 
@@ -124,7 +123,7 @@ specified, 0 is used.
 =cut
 
 sub fake_problem {
-	my $db = shift;
+	my $db      = shift;
 	my %options = @_;
 	my $problem = $db->newGlobalProblem();
 	#debug("In fake_problem");
@@ -139,15 +138,15 @@ sub fake_problem {
 
 	$problem->problem_seed(0);
 	$problem->problem_seed($options{'problem_seed'})
-		 if(defined($options{'problem_seed'}));
+		if (defined($options{'problem_seed'}));
 
 	$problem->status(0);
 	$problem->sub_status(0);
-	$problem->attempted(2000);  # Large so hints won't be blocked
+	$problem->attempted(2000);    # Large so hints won't be blocked
 	$problem->last_answer("");
 	$problem->num_correct(1000);
 	$problem->num_incorrect(1000);
-	$problem->prCount(-10); # Negative to detect fake problems and disable problem randomization.
+	$problem->prCount(-10);       # Negative to detect fake problems and disable problem randomization.
 
 	#for my $key (keys(%{$problem})){
 	#	my $value = '####UNDEF###';
@@ -157,9 +156,7 @@ sub fake_problem {
 	#	debug($key . " : " . $value);
 	#}
 
-
-
-	return($problem);
+	return ($problem);
 }
 
 =item fake_user
@@ -173,14 +170,14 @@ Make a temporary user for the given database.
 sub fake_user {
 	my ($db) = @_;
 	return $db->newUser(
-		user_id => fakeUserName,
-		first_name=>'',
-		last_name=>'',
-		email_address=>'',
-		student_id=>'',
-		section=>'',
-		recitation=>'',
-		comment=>'',
+		user_id       => fakeUserName,
+		first_name    => '',
+		last_name     => '',
+		email_address => '',
+		student_id    => '',
+		section       => '',
+		recitation    => '',
+		comment       => '',
 	);
 }
 
@@ -256,39 +253,40 @@ Optional. If not specified the problems are numbered from 1.
 
 sub renderProblems {
 	my %args = @_;
-	my $r = $args{r};
-	my $db = $r->db;
-	my $ce = $r->ce;
+	my $r    = $args{r};
+	my $db   = $r->db;
+	my $ce   = $r->ce;
 
 	# Don't print file names as part of the problem to avoid redundant
 	# paths in Library Browser and Homework Sets editor
-	$ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}=[];
+	$ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR} = [];
 
-	my @problem_list = @{$args{problem_list}};
-	my $displayMode = $args{displayMode}
-    	|| $r->param('displayMode')
+	my @problem_list = @{ $args{problem_list} };
+	my $displayMode =
+		$args{displayMode}
+		|| $r->param('displayMode')
 		|| $ce->{pg}{options}{displayMode};
 
 	# special case for display mode 'None' -- we don't have to do anything
 	# FIXME i think this should be handled in SetMaker.pm
 	# SetMaker is not the only user of 'None'
 	if ($displayMode eq 'None') {
-		return map { {body_text=>''} } @problem_list;
+		return map { { body_text => '' } } @problem_list;
 	}
 
-	my $user = $args{user} || fake_user($db);
-	my $set = $args{'this_set'} || fake_set($db);
-	my $problem_seed = $args{'problem_seed'} || $r->param('problem_seed') || 0;
-	my $showHints = $args{showHints} || 0;
-	my $showSolutions = $args{showSolutions} || 0;
+	my $user          = $args{user}             || fake_user($db);
+	my $set           = $args{'this_set'}       || fake_set($db);
+	my $problem_seed  = $args{'problem_seed'}   || $r->param('problem_seed') || 0;
+	my $showHints     = $args{showHints}        || 0;
+	my $showSolutions = $args{showSolutions}    || 0;
 	my $problemNumber = $args{'problem_number'} || 1;
 
 	my $key = $r->param('key');
 
 	# remove any pretty garbage around the problem
-	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
-	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
-	my $problem = fake_problem($db, 'problem_seed'=>$problem_seed);
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble}  = { TeX => '', HTML => '' };
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = { TeX => '', HTML => '' };
+	my $problem = fake_problem($db, 'problem_seed' => $problem_seed);
 	$problem->{value} = -1;
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 
@@ -311,16 +309,7 @@ sub renderProblems {
 			$problem->source_file($onefile);
 		}
 
-		my $pg = new WeBWorK::PG(
-			$ce,
-			$user,
-			$key,
-			$set,
-			$problem,
-			123,
-			$formFields,
-			$translationOptions,
-        );
+		my $pg = new WeBWorK::PG($ce, $user, $key, $set, $problem, 123, $formFields, $translationOptions,);
 
 		push @output, $pg;
 	}

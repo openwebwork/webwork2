@@ -37,7 +37,7 @@ use URI::Escape;
 
 sub new {
 	my $class = shift;
-	my $self = shift;
+	my $self  = shift;
 	$self->{Module} = shift;
 	bless $self, $class;
 	return $self;
@@ -57,15 +57,14 @@ sub comparison_value {
 
 sub convert_newval_source {
 	my ($self, $newvalsource) = @_;
-    my $inlinevarname = WeBWorK::ContentGenerator::Instructor::Config::inline_var($self->{var});
-    my $newval;
-    if($newvalsource =~ /widget/) {
-        $newval = $self->{Module}->{r}->param($newvalsource);
-    } else {
-        $newval = $self->comparison_value(eval('$self->{Module}->{r}->ce->'.
-			$inlinevarname));
-    }
-	return($newval);
+	my $inlinevarname = WeBWorK::ContentGenerator::Instructor::Config::inline_var($self->{var});
+	my $newval;
+	if ($newvalsource =~ /widget/) {
+		$newval = $self->{Module}->{r}->param($newvalsource);
+	} else {
+		$newval = $self->comparison_value(eval('$self->{Module}->{r}->ce->' . $inlinevarname));
+	}
+	return ($newval);
 }
 
 # Bit of text to put in the configuration file.  The result should
@@ -74,11 +73,11 @@ sub convert_newval_source {
 # widget produces
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
-	my $varname = $self->{var};
-	my $newval = $self->convert_newval_source($newvalsource);
+	my $varname   = $self->{var};
+	my $newval    = $self->convert_newval_source($newvalsource);
 	my $cmpoldval = $self->comparison_value($oldval);
-	return '' if($cmpoldval eq $newval);
-	return('$'. $varname . " = '$newval';\n");
+	return '' if ($cmpoldval eq $newval);
+	return ('$' . $varname . " = '$newval';\n");
 }
 
 # A widget to interact with the user
@@ -129,13 +128,13 @@ package configtext;
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
-	my $varname = $self->{var};
-	my $newval = $self->convert_newval_source($newvalsource);
+	my $varname   = $self->{var};
+	my $newval    = $self->convert_newval_source($newvalsource);
 	my $cmpoldval = $self->comparison_value($oldval);
-	return '' if($cmpoldval eq $newval);
+	return '' if ($cmpoldval eq $newval);
 	# Remove quotes from the string, we will have a new type for text with quotes
 	$newval =~ s/['"`]//g;
-	return('$'. $varname . " = '$newval';\n");
+	return ('$' . $varname . " = '$newval';\n");
 }
 
 ########################### configtimezone
@@ -148,17 +147,18 @@ use DateTime::TimeZone;
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
-	my $varname = $self->{var};
-	my $newval = $self->convert_newval_source($newvalsource);
+	my $varname   = $self->{var};
+	my $newval    = $self->convert_newval_source($newvalsource);
 	my $cmpoldval = $self->comparison_value($oldval);
-	return '' if($cmpoldval eq $newval);
-	if(not DateTime::TimeZone->is_valid_name($newval)) {
-		$self->{Module}->addbadmessage("String '$newval' is not a valid time zone.  Reverting to the system default value.");
+	return '' if ($cmpoldval eq $newval);
+	if (not DateTime::TimeZone->is_valid_name($newval)) {
+		$self->{Module}
+			->addbadmessage("String '$newval' is not a valid time zone.  Reverting to the system default value.");
 		return '';
 	}
 	# Remove quotes from the string, we will have a new type for text with quotes
-	$newval =~ s/['"`]//g; #`"'geditsucks
-	return('$'. $varname . " = '$newval';\n");
+	$newval =~ s/['"`]//g;    #`"'geditsucks
+	return ('$' . $varname . " = '$newval';\n");
 }
 
 ########################### configtime
@@ -168,17 +168,17 @@ package configtime;
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
-	my $varname = $self->{var};
-	my $newval = $self->convert_newval_source($newvalsource);
+	my $varname   = $self->{var};
+	my $newval    = $self->convert_newval_source($newvalsource);
 	my $cmpoldval = $self->comparison_value($oldval);
-	return '' if($cmpoldval eq $newval);
+	return '' if ($cmpoldval eq $newval);
 
-	if($newval !~ /^(01|1|02|2|03|3|04|4|05|5|06|6|07|7|08|8|09|9|10|11|12):[0-5]\d(am|pm|AM|PM)$/) {
+	if ($newval !~ /^(01|1|02|2|03|3|04|4|05|5|06|6|07|7|08|8|09|9|10|11|12):[0-5]\d(am|pm|AM|PM)$/) {
 		$self->{Module}->addbadmessage("String '$newval' is not a valid time.  Reverting to the system default value.");
 		return '';
 	}
 
-	return('$'. $varname . " = '$newval';\n");
+	return ('$' . $varname . " = '$newval';\n");
 }
 
 ########################### confignumber
@@ -187,18 +187,20 @@ package confignumber;
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
-	my $varname = $self->{var};
-	my $newval = $self->convert_newval_source($newvalsource);
+	my $varname   = $self->{var};
+	my $newval    = $self->convert_newval_source($newvalsource);
 	my $cmpoldval = $self->comparison_value($oldval);
 	# Remove quotes from the string, we will have a new type for text with quotes
-	$newval =~ s/['"`]//g; #`"'geditsucks
+	$newval =~ s/['"`]//g;    #`"'geditsucks
 	my $newval2 = eval($newval);
-	if($@) {
-		$self->{Module}->addbadmessage("Syntax error in numeric value '$newval' for variable \$$self->{var}.  Reverting to the system default value.");
+	if ($@) {
+		$self->{Module}->addbadmessage(
+			"Syntax error in numeric value '$newval' for variable \$$self->{var}.  Reverting to the system default value."
+		);
 		return '';
 	}
-	return '' if($cmpoldval == $newval2);
-	return('$'. $varname . " = $newval;\n");
+	return '' if ($cmpoldval == $newval2);
+	return ('$' . $varname . " = $newval;\n");
 }
 
 ########################### configboolean
@@ -208,16 +210,16 @@ package configboolean;
 sub comparison_value { return $_[1] ? 1 : 0; }
 
 sub display_value {
-  my ($self, $val) = @_;
-  my $r = $self->{Module}->r;
-  return $r->maketext('True') if $val;
-  return $r->maketext('False');
+	my ($self, $val) = @_;
+	my $r = $self->{Module}->r;
+	return $r->maketext('True') if $val;
+	return $r->maketext('False');
 }
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
-	my $r = $self->{Module}->r;
-	my $newval = $self->convert_newval_source($newvalsource);
+	my $r         = $self->{Module}->r;
+	my $newval    = $self->convert_newval_source($newvalsource);
 	my $cmpoldval = $self->comparison_value($oldval);
 	return '' if $cmpoldval eq $newval;
 	return "\$$self->{var} = $newval;\n";
@@ -236,7 +238,6 @@ sub entry_widget {
 	});
 }
 
-
 ########################### configpermission
 package configpermission;
 @configpermission::ISA = qw(configobject);
@@ -249,30 +250,30 @@ sub comparison_value {
 # This tries to produce a string from a permission number.  If you feed it
 # a string, that's what you get back.
 sub display_value {
-  my ($self, $val) = @_;
-  my $r = $self->{Module}->r;
-  return $r->maketext('nobody') if not defined($val);
-  my %userRoles = %{$self->{Module}->{r}->{ce}->{userRoles}};
-  my %reverseUserRoles = reverse %userRoles;
-  return $r->maketext($reverseUserRoles{$val}) if defined($reverseUserRoles{$val});
-  return $r->maketext($val);
+	my ($self, $val) = @_;
+	my $r = $self->{Module}->r;
+	return $r->maketext('nobody') if not defined($val);
+	my %userRoles        = %{ $self->{Module}->{r}->{ce}->{userRoles} };
+	my %reverseUserRoles = reverse %userRoles;
+	return $r->maketext($reverseUserRoles{$val}) if defined($reverseUserRoles{$val});
+	return $r->maketext($val);
 }
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
-	my $newval = $self->convert_newval_source($newvalsource);
+	my $newval    = $self->convert_newval_source($newvalsource);
 	my $cmpoldval = $self->comparison_value($oldval);
-	my $r = $self->{Module}->r;
-	return '' if($cmpoldval eq $newval);
+	my $r         = $self->{Module}->r;
+	return '' if ($cmpoldval eq $newval);
 	return "\$$self->{var} = $newval;\n";
 }
 
 sub entry_widget {
 	my ($self, $name, $default) = @_;
-	my $ce = $self->{Module}->{r}->{ce};
-	my $r = $self->{Module}->r;
-	my $permHash = {};
-	my %userRoles = %{$ce->{userRoles}};
+	my $ce               = $self->{Module}->{r}->{ce};
+	my $r                = $self->{Module}->r;
+	my $permHash         = {};
+	my %userRoles        = %{ $ce->{userRoles} };
 	my %reverseUserRoles = reverse %userRoles;
 
 	# the value of a permission can be undefined (for nobody),
@@ -281,7 +282,7 @@ sub entry_widget {
 
 	my @values = sort { $userRoles{$a} <=> $userRoles{$b} } keys %userRoles;
 
-	my %labels = map {$_ => $r->maketext($_)} @values;
+	my %labels = map { $_ => $r->maketext($_) } @values;
 	return CGI::popup_menu({
 		name    => $name,
 		id      => $name,
@@ -299,8 +300,8 @@ package configlist;
 sub display_value {
 	my ($self, $val) = @_;
 	return '&nbsp;' if not defined($val);
-	my $str = join(','.CGI::br(), @{$val});
-	$str = '&nbsp;' if $str !~  /\S/;
+	my $str = join(',' . CGI::br(), @{$val});
+	$str = '&nbsp;' if $str !~ /\S/;
 	return $str;
 }
 
@@ -308,29 +309,29 @@ sub comparison_value {
 	my ($self, $val) = @_;
 	$val = [] if not defined($val);
 	my $str = join(',', @{$val});
-	return($str);
+	return ($str);
 }
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
-	my $newval = $self->convert_newval_source($newvalsource);
+	my $newval  = $self->convert_newval_source($newvalsource);
 	my $varname = $self->{var};
 	$oldval = $self->comparison_value($oldval);
-	return '' if($oldval eq $newval);
+	return '' if ($oldval eq $newval);
 	my $str = '';
 
 	$oldval =~ s/^\s*(.*)\s*$/$1/;
 	$newval =~ s/^\s*(.*)\s*$/$1/;
 	$oldval =~ s/[\s,]+/,/sg;
 	$newval =~ s/[\s,]+/,/sg;
-	return '' if($newval eq $oldval);
+	return '' if ($newval eq $oldval);
 	# ok we really have a new value, now turn it back into a string
 	my @parts = split ',', $newval;
-	map { $_ =~ s/['"`]//g } @parts; #`"'geditsucks
-	@parts = map { "'". $_ ."'" } @parts;
-	$str = join(',', @parts);
-	$str = '$'. $varname . " = [$str];\n";
-	return($str);
+	map { $_ =~ s/['"`]//g } @parts;    #`"'geditsucks
+	@parts = map { "'" . $_ . "'" } @parts;
+	$str   = join(',', @parts);
+	$str   = '$' . $varname . " = [$str];\n";
+	return ($str);
 }
 
 sub entry_widget {
@@ -340,11 +341,11 @@ sub entry_widget {
 	my $str = join(', ', @{$default});
 	$str = '' if $str !~ /\S/;
 	return CGI::textarea({
-		name    => $name,
-		id      => $name,
-		rows    => 4,
-		value   => $str,
-		class   => 'form-control form-control-sm'
+		name  => $name,
+		id    => $name,
+		rows  => 4,
+		value => $str,
+		class => 'form-control form-control-sm'
 	});
 }
 
@@ -364,15 +365,15 @@ sub display_value {
 
 sub convert_newval_source {
 	my ($self, $newvalsource) = @_;
-    my $inlinevarname = WeBWorK::ContentGenerator::Instructor::Config::inline_var($self->{var});
-    my @newvals;
-    if($newvalsource =~ /widget/) {
-        @newvals = $self->{Module}->{r}->param($newvalsource);
-    } else {
-        my $newval = eval('$self->{Module}->{r}->{ce}->'. $inlinevarname);
+	my $inlinevarname = WeBWorK::ContentGenerator::Instructor::Config::inline_var($self->{var});
+	my @newvals;
+	if ($newvalsource =~ /widget/) {
+		@newvals = $self->{Module}->{r}->param($newvalsource);
+	} else {
+		my $newval = eval('$self->{Module}->{r}->{ce}->' . $inlinevarname);
 		@newvals = @$newval;
-    }
-	return(@newvals);
+	}
+	return (@newvals);
 }
 
 # Bit of text to put in the configuration file.  The result should
@@ -380,28 +381,28 @@ sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
 	my $varname = $self->{var};
 	my @newvals = $self->convert_newval_source($newvalsource);
-	if($self->{min} and (scalar(@newvals) < $self->{min})) {
+	if ($self->{min} and (scalar(@newvals) < $self->{min})) {
 		$self->{Module}->addbadmessage("You need to select at least $self->{min} display mode.");
-		if($newvalsource =~ /widget/) {
-			return $self->save_string($oldval, 'current'); # try to return the old saved value
+		if ($newvalsource =~ /widget/) {
+			return $self->save_string($oldval, 'current');    # try to return the old saved value
 		} else {
-			return '' ; # the previous saved value was empty, reset to system default
+			return '';    # the previous saved value was empty, reset to system default
 		}
 	}
 	$oldval = $self->comparison_value($oldval);
-	my $newval =  $self->comparison_value(\@newvals);
-	return '' if($oldval eq $newval);
-	@newvals = map { "'".$_."'" } @newvals;
+	my $newval = $self->comparison_value(\@newvals);
+	return '' if ($oldval eq $newval);
+	@newvals = map { "'" . $_ . "'" } @newvals;
 	my $str = join(',', @newvals);
-	$str = '$'. $varname . " = [$str];\n";
-	return($str);
+	$str = '$' . $varname . " = [$str];\n";
+	return ($str);
 }
 
 sub comparison_value {
 	my ($self, $val) = @_;
 	$val = [] if not defined($val);
 	my $str = join(',', @{$val});
-	return($str);
+	return ($str);
 }
 
 sub entry_widget {
@@ -431,11 +432,11 @@ package configpopuplist;
 
 sub display_value {
 	my ($self, $val) = @_;
-  	my $r = $self->{Module}->r;
+	my $r = $self->{Module}->r;
 	$val = 'ur' if not defined($val);
 
 	if ($self->{labels}->{$val}) {
-	    return join(CGI::br(), $r->maketext($self->{labels}->{$val}));
+		return join(CGI::br(), $r->maketext($self->{labels}->{$val}));
 	}
 
 	return join(CGI::br(), $val);
@@ -443,17 +444,17 @@ sub display_value {
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
-	my $varname = $self->{var};
-	my $newval = $self->convert_newval_source($newvalsource);
+	my $varname   = $self->{var};
+	my $newval    = $self->convert_newval_source($newvalsource);
 	my $cmpoldval = $self->comparison_value($oldval);
 	return '' if $cmpoldval eq $newval;
-	return('$'. $varname . " = " . "'$newval';\n");
+	return ('$' . $varname . " = " . "'$newval';\n");
 }
 
 sub entry_widget {
 	my ($self, $name, $default) = @_;
-	my $r = $self->{Module}->r;
-	my %labels = map {$_ => $r->maketext($self->{labels}->{$_} // $_)} @{$self->{values}};
+	my $r      = $self->{Module}->r;
+	my %labels = map { $_ => $r->maketext($self->{labels}->{$_} // $_) } @{ $self->{values} };
 
 	return CGI::popup_menu({
 		name    => $name,
@@ -496,38 +497,39 @@ use WeBWorK::CourseEnvironment;
 # write contents to outputFilePath and return error messages if any
 sub writeFile {
 	my $outputFilePath = shift;
-	my $contents = shift;
+	my $contents       = shift;
 	my $writeFileErrors;
 	eval {
 		local *OUTPUTFILE;
-		if( open OUTPUTFILE, ">utf8:", $outputFilePath) {
+		if (open OUTPUTFILE, ">utf8:", $outputFilePath) {
 			print OUTPUTFILE $contents;
 			close OUTPUTFILE;
 		} else {
-			$writeFileErrors = "I could not open $outputFilePath".
-				CGI::br() . CGI::br().
-				"We will not be able to make configuration changes unless the permissions are set so that the web server can write to this file.";
+			$writeFileErrors =
+				"I could not open $outputFilePath"
+				. CGI::br()
+				. CGI::br()
+				. "We will not be able to make configuration changes unless the permissions are set so that the web server can write to this file.";
 		}
-	};  # any errors are caught in the next block
+	};    # any errors are caught in the next block
 
 	$writeFileErrors = $@ if $@;
-	return($writeFileErrors);
+	return ($writeFileErrors);
 }
 
 # Make a new config object from data
 
 sub objectify {
 	my ($self, $data) = @_;
-	return "config$data->{type}"->new($data,$self);
+	return "config$data->{type}"->new($data, $self);
 }
-
 
 # Take var string from ConfigValues and prepare it for $ce->...
 sub inline_var {
 	my $varstring = shift;
-	return '{'.$varstring.'}' if $varstring =~ /^\w+$/;
+	return '{' . $varstring . '}' if $varstring =~ /^\w+$/;
 	$varstring =~ s/^(\w+)/{$1}->/;
-	return($varstring);
+	return ($varstring);
 }
 
 sub print_navigation_tabs {
@@ -551,37 +553,40 @@ sub print_navigation_tabs {
 }
 
 sub getConfigValues {
-	my $ce = shift;
+	my $ce           = shift;
 	my $ConfigValues = $ce->{ConfigValues};
 
 	# get the list of theme folders in the theme directory and remove . and ..
 	my $themeDir = $ce->{webworkDirs}{themes};
 	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
-	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
+	my $themes = [ grep { !/^\.{1,2}$/ } sort readdir($dh) ];
 
 	# get list of localization dictionaries
 	my $localizeDir = $ce->{webworkDirs}{localize};
 	opendir(my $dh2, $localizeDir) || die "can't opendir $localizeDir: $!";
-	my %seen=();  # find the languages in the localize direction
-	my $languages =[ grep {!$seen{$_} ++}        # remove duplicate items
-			     map {$_=~s/\...$//; $_}        # get rid of suffix
-                 grep {/\.mo$|\.po$/; } sort readdir($dh2) #look at only .mo and .po files
+	my %seen      = ();    # find the languages in the localize direction
+	my $languages = [
+		grep     { !$seen{$_}++ }                         # remove duplicate items
+			map  { $_ =~ s/\...$//; $_ }                  # get rid of suffix
+			grep { /\.mo$|\.po$/; } sort readdir($dh2)    #look at only .mo and .po files
 
-                ];
+	];
 
 	# insert the anonymous array of theme folder names into ConfigValues
 	# FIXME?  Is there a reason this is an array? Couldn't we replace this
 	# with a hash and conceptually simplify this routine? MEG
-	my $modifyThemes = sub { my $item=shift;
-	                         if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) {
-	                            $item->{values} =$themes
-	                         }
-	                        };
-    my $modifyLanguages = sub { my $item=shift;
-	                         if (ref($item)=~/HASH/ and $item->{var} eq 'language' ) {
-	                            $item->{values} =$languages
-	                         }
-	                        };
+	my $modifyThemes = sub {
+		my $item = shift;
+		if (ref($item) =~ /HASH/ and $item->{var} eq 'defaultTheme') {
+			$item->{values} = $themes;
+		}
+	};
+	my $modifyLanguages = sub {
+		my $item = shift;
+		if (ref($item) =~ /HASH/ and $item->{var} eq 'language') {
+			$item->{values} = $languages;
+		}
+	};
 	foreach my $oneConfig (@$ConfigValues) {
 		foreach my $hash (@$oneConfig) {
 			&$modifyThemes($hash);
@@ -593,14 +598,12 @@ sub getConfigValues {
 }
 
 sub pre_header_initialize {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my ($self)       = @_;
+	my $r            = $self->r;
+	my $ce           = $r->ce;
 	my $ConfigValues = getConfigValues($ce);
 	# Get a course environment without course.conf
-	$self->{default_ce} = WeBWorK::CourseEnvironment->new({
-		%WeBWorK::SeedCE,
-	});
+	$self->{default_ce} = WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, });
 
 	$self->{ce_file_dir} = $ce->{courseDirs}->{root};
 
@@ -608,13 +611,13 @@ sub pre_header_initialize {
 	my $ce3 = eval {
 		new WeBWorK::CourseEnvironment({
 			%WeBWorK::SeedCE,
-			courseName => $ce->{courseName},
+			courseName          => $ce->{courseName},
 			web_config_filename => 'noSuchFilePlease',
-		})
+		});
 	};
-	if($r->param("make_changes")) {
+	if ($r->param("make_changes")) {
 		my $widget_count = 0;
-		my $fileoutput = "#!perl
+		my $fileoutput   = "#!perl
 # This file is automatically generated by WeBWorK's web-based
 # configuration module.  Do not make changes directly to this
 # file.  It will be overwritten the next time configuration
@@ -630,17 +633,18 @@ sub pre_header_initialize {
 			shift @configSectionArray;
 			for my $con (@configSectionArray) {
 				my $conobject = $self->objectify($con);
-				if($tab) { # This tab is not being shown
-					my $oldval = eval('$ce3->'.inline_var($con->{var}));
+				if ($tab) {    # This tab is not being shown
+					my $oldval = eval('$ce3->' . inline_var($con->{var}));
 					$fileoutput .= $conobject->save_string($oldval, 'current');
-				} else { # We reached the tab with entry objects
-					$fileoutput .= $conobject->save_string(eval('$ce3->'.inline_var($con->{var})), "widget$widget_count");
+				} else {       # We reached the tab with entry objects
+					$fileoutput .=
+						$conobject->save_string(eval('$ce3->' . inline_var($con->{var})), "widget$widget_count");
 					$widget_count++;
 				}
 			}
 			$tab--;
 		}
-		my $write_result = writeFile($self->{ce_file_dir}."/simple.conf", $fileoutput);
+		my $write_result = writeFile($self->{ce_file_dir} . "/simple.conf", $fileoutput);
 		if ($write_result) {
 			$self->addbadmessage($write_result);
 		} else {
@@ -652,22 +656,20 @@ sub pre_header_initialize {
 sub body {
 	my ($self) = @_;
 
-	my $r = $self->r;
-	my $ce = $r->ce;		# course environment
-	my $db = $r->db;		# database
+	my $r            = $self->r;
+	my $ce           = $r->ce;                 # course environment
+	my $db           = $r->db;                 # database
 	my $ConfigValues = getConfigValues($ce);
-	my $userName = $r->param('user');
+	my $userName     = $r->param('user');
 
-	my $user = $db->getUser($userName); # checked
+	my $user = $db->getUser($userName);        # checked
 	die "record for user $userName (real user) does not exist."
 		unless defined $user;
 
 	### Check that this is a professor
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
-		print "User $userName returned " .
-			$authz->hasPermissions($user, "modify_problem_sets") .
-			" for permission";
+		print "User $userName returned " . $authz->hasPermissions($user, "modify_problem_sets") . " for permission";
 		return (CGI::div(
 			{ class => 'alert alert-danger p-1 mb-0' },
 			CGI::em($r->maketext("You are not authorized to access the Instructor tools."))
@@ -681,43 +683,42 @@ sub body {
 			shift @configSectionArray;
 			for my $con (@configSectionArray) {
 				$docstring = $con->{doc2} || $con->{doc}
-					if($con->{var} eq $r->param('var_name'));
+					if ($con->{var} eq $r->param('var_name'));
 			}
 		}
-		print CGI::h2($r->maketext("Variable Documentation:").' '. CGI::code('$'.$r->param('var_name'))),
+		print CGI::h2($r->maketext("Variable Documentation:") . ' ' . CGI::code('$' . $r->param('var_name'))),
 			CGI::p(),
-			CGI::blockquote( $r->maketext($docstring) );
+			CGI::blockquote($r->maketext($docstring));
 		return "";
 	}
 
 	my $default_ce = $self->{default_ce};
 	# Get the current course environment again in case we just saved changes
-	my $ce4 = eval {
-		new WeBWorK::CourseEnvironment({
-			%WeBWorK::SeedCE,
-			courseName => $ce->{courseName},
-		})
-	};
+	my $ce4 = eval { new WeBWorK::CourseEnvironment({ %WeBWorK::SeedCE, courseName => $ce->{courseName}, }) };
 
 	my $widget_count = 0;
-	if(scalar(@$ConfigValues) == 0) {
-		print CGI::p($r->maketext("The configuration module did not find the data it needs to function.  Have your site administrator check that Constants.pm is up to date."));
+	if (scalar(@$ConfigValues) == 0) {
+		print CGI::p(
+			$r->maketext(
+				"The configuration module did not find the data it needs to function.  Have your site administrator check that Constants.pm is up to date."
+			)
+		);
 		return "";
 	}
 
 	# Start tabs at the top
 	my $current_tab = $r->param('section_tab') || 'tab0';
-	my @tab_names = map { $_->[0] } @{$ConfigValues};
+	my @tab_names   = map { $_->[0] } @{$ConfigValues};
 	$self->print_navigation_tabs($current_tab, @tab_names);
 
-	print CGI::start_form({method=>"post", action=>$r->uri, id=>"config-form", name=>"config-form"});
+	print CGI::start_form({ method => "post", action => $r->uri, id => "config-form", name => "config-form" });
 	print $self->hidden_authen_fields();
-	print CGI::hidden(-name=> 'section_tab', -value=> $current_tab);
+	print CGI::hidden(-name => 'section_tab', -value => $current_tab);
 
 	my $tabnumber = $current_tab;
 	$tabnumber =~ s/tab//;
-	my @configSectionArray = @{$ConfigValues->[$tabnumber]};
-	my $configTitle = shift @configSectionArray;
+	my @configSectionArray = @{ $ConfigValues->[$tabnumber] };
+	my $configTitle        = shift @configSectionArray;
 	print CGI::h2(CGI::b($r->maketext($configTitle)));
 
 	print CGI::start_div({ class => 'table-responsive' });
@@ -746,17 +747,13 @@ sub body {
 	}));
 	print CGI::end_form();
 
-
 	return "";
 }
-
 
 =head1 AUTHOR
 
 Written by John Jones, jj (at) asu.edu.
 
 =cut
-
-
 
 1;

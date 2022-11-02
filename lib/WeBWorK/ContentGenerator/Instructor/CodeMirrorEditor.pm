@@ -105,8 +105,7 @@ sub output_codemirror_html {
 				CGI::div(
 					{ class => 'row align-items-center' },
 					CGI::label(
-						{ for => 'selectTheme', class => 'col-form-label col-auto' },
-						$r->maketext('Theme:')
+						{ for => 'selectTheme', class => 'col-form-label col-auto' }, $r->maketext('Theme:')
 					),
 					CGI::div(
 						{ class => 'col-auto' },
@@ -168,7 +167,7 @@ sub output_codemirror_html {
 					}),
 					CGI::label(
 						{ for => 'forceRTL', class => 'form-check-label' },
-						'Force editor to RTL' # FIXME should have $r->maketext()
+						'Force editor to RTL'    # FIXME should have $r->maketext()
 					)
 				)
 			)

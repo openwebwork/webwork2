@@ -89,7 +89,7 @@ sub title {
 	my $ce   = $r->ce;
 
 	# Using the url arguments won't break if the set/problem are invalid.
-	my $setID       = $r->urlpath->arg('setID');
+	my $setID = $r->urlpath->arg('setID');
 
 	my $title = CGI::span({ dir => 'ltr' }, format_set_name_display($setID));
 
@@ -119,20 +119,20 @@ sub title {
 }
 
 sub templateName {
-	my $self = shift;
-	my $r = $self->r;
-	my $templateName = $r->param('templateName')//'system';
-	$self->{templateName}= $templateName;
+	my $self         = shift;
+	my $r            = $self->r;
+	my $templateName = $r->param('templateName') // 'system';
+	$self->{templateName} = $templateName;
 	$templateName;
 }
 
 sub siblings {
-	my ($self) = @_;
-	my $r         = $self->r;
-	my $db        = $r->db;
-	my $ce        = $r->ce;
-	my $authz     = $r->authz;
-	my $urlpath   = $r->urlpath;
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $db      = $r->db;
+	my $ce      = $r->ce;
+	my $authz   = $r->authz;
+	my $urlpath = $r->urlpath;
 
 	my $courseID  = $urlpath->arg("courseID");
 	my $user      = $r->param('user');
@@ -150,31 +150,39 @@ sub siblings {
 	# do not show hidden siblings unless user is allowed to view hidden sets.
 	unless ($authz->hasPermissions($user, "view_hidden_sets")) {
 		@setIDs = grep {
-			my $set = $db->getMergedSet($eUserID, $_);
+			my $set        = $db->getMergedSet($eUserID, $_);
 			my @restricted = $ce->{options}{enableConditionalRelease} ? is_restricted($db, $set, $eUserID) : ();
-			my $LTIRestricted = defined($ce->{LTIGradeMode}) && $ce->{LTIGradeMode} eq 'homework' && !$set->lis_source_did;
+			my $LTIRestricted =
+				defined($ce->{LTIGradeMode}) && $ce->{LTIGradeMode} eq 'homework' && !$set->lis_source_did;
 
-			after($set->open_date) &&
-			(defined($set->visible()) ? $set->visible() : 1)
-			&& !@restricted
-			&& !$LTIRestricted;
+			after($set->open_date)
+				&& (defined($set->visible()) ? $set->visible() : 1)
+				&& !@restricted
+				&& !$LTIRestricted;
 		} @setIDs;
 	}
 
-	print CGI::start_div({class=>"info-box", id=>"fisheye"});
+	print CGI::start_div({ class => "info-box", id => "fisheye" });
 	print CGI::h2($r->maketext("Sets"));
 	print CGI::start_ul({ class => 'nav flex-column bg-light', dir => 'ltr' });
 
 	debug("Begin printing sets from listUserSets()");
 	for my $setID (@setIDs) {
-		my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r,
-			courseID => $courseID, setID => $setID);
-		print CGI::li({ class => 'nav-item' },
-			CGI::a({
+		my $setPage = $urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::ProblemSet", $r,
+			courseID => $courseID,
+			setID    => $setID
+		);
+		print CGI::li(
+			{ class => 'nav-item' },
+			CGI::a(
+				{
 					$setID eq $thisSetID
 					? (id => $setID, class => 'nav-link active')
 					: (id => $setID, class => 'nav-link', href => $self->systemLink($setPage))
-				}, format_set_name_display($setID))
+				},
+				format_set_name_display($setID)
+			)
 		);
 	}
 	debug("End printing sets from listUserSets()");
@@ -186,23 +194,23 @@ sub siblings {
 }
 
 sub info {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $authz = $r->authz;
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $db      = $r->db;
+	my $authz   = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	return "" if ( $self->{invalidSet} );
+	return "" if ($self->{invalidSet});
 
 	my $courseID = $urlpath->arg("courseID");
-	my $setID = $r->urlpath->arg("setID");
+	my $setID    = $r->urlpath->arg("setID");
 
-	my $userID = $r->param("user");
+	my $userID  = $r->param("user");
 	my $eUserID = $r->param("effectiveUser");
 
 	my $effectiveUser = $db->getUser($eUserID);
-	my $set  = $self->{set};
+	my $set           = $self->{set};
 
 	die "effective user $eUserID not found. One 'acts as' the effective user." unless $effectiveUser;
 	# FIXME: this was already caught in initialize()
@@ -210,20 +218,22 @@ sub info {
 
 	my $psvn = $set->psvn();
 	# hack to prevent errors from uninitialized set_headers.
-	$set->set_header("defaultHeader") unless $set->set_header =~/\S/; # (some non-white space character required)
-	my $screenSetHeader = ($set->set_header eq "defaultHeader") ?
-	$ce->{webworkFiles}->{screenSnippets}->{setHeader} :
-	$set->set_header;
+	$set->set_header("defaultHeader") unless $set->set_header =~ /\S/;    # (some non-white space character required)
+	my $screenSetHeader =
+		($set->set_header eq "defaultHeader") ? $ce->{webworkFiles}->{screenSnippets}->{setHeader} : $set->set_header;
 
-	my $displayMode     = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
+	my $displayMode = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
 
 	if ($authz->hasPermissions($userID, "modify_problem_sets")) {
 		if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
 			$screenSetHeader = $r->param('sourceFilePath');
-			$screenSetHeader = $ce->{courseDirs}{templates}.'/'.$screenSetHeader unless $screenSetHeader =~ m!^/!;
+			$screenSetHeader = $ce->{courseDirs}{templates} . '/' . $screenSetHeader unless $screenSetHeader =~ m!^/!;
 			die "sourceFilePath is unsafe!" unless path_is_subdir($screenSetHeader, $ce->{courseDirs}->{templates});
-			$self->addmessage(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file:")." ",
-					$screenSetHeader));
+			$self->addmessage(CGI::div(
+				{ class => 'temporaryFile' },
+				$r->maketext("Viewing temporary file:") . " ",
+				$screenSetHeader
+			));
 			$displayMode = $r->param("displayMode") if $r->param("displayMode");
 		}
 	}
@@ -232,9 +242,9 @@ sub info {
 
 	# decide what to do about problem number
 	my $problem = WeBWorK::DB::Record::UserProblem->new(
-		problem_id => 0,
-		set_id => $set->set_id,
-		login_id => $effectiveUser->user_id,
+		problem_id  => 0,
+		set_id      => $set->set_id,
+		login_id    => $effectiveUser->user_id,
 		source_file => $screenSetHeader,
 		# the rest of Problem's fields are not needed, i think
 	);
@@ -245,20 +255,24 @@ sub info {
 		$set,
 		$problem,
 		$psvn,
-		{}, # no form fields!
-		{ # translation options
-			displayMode     => $displayMode,
-			showHints       => 0,
-			showSolutions   => 0,
-			processAnswers  => 0,
+		{},    # no form fields!
+		{      # translation options
+			displayMode    => $displayMode,
+			showHints      => 0,
+			showSolutions  => 0,
+			processAnswers => 0,
 		},
 	));
 
 	my $editorURL;
 	if (defined($set) and $authz->hasPermissions($userID, "modify_problem_sets")) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
-			courseID => $courseID, setID => $set->set_id, problemID => 0);
-		$editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
+		my $editorPage = $urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
+			courseID  => $courseID,
+			setID     => $set->set_id,
+			problemID => 0
+		);
+		$editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header' });
 	}
 
 	if ($editorURL) {
@@ -284,17 +298,17 @@ sub info {
 }
 
 sub body {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $authz = $r->authz;
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $authz   = $r->authz;
+	my $ce      = $r->ce;
+	my $db      = $r->db;
 	my $urlpath = $r->urlpath;
 
-	my $courseID = $urlpath->arg("courseID");
-	my $setName = $urlpath->arg("setID");
+	my $courseID      = $urlpath->arg("courseID");
+	my $setName       = $urlpath->arg("setID");
 	my $effectiveUser = $r->param('effectiveUser');
-	my $user = $r->param('user');
+	my $user          = $r->param('user');
 
 	my $set = $self->{set};
 
@@ -303,35 +317,52 @@ sub body {
 			{ class => 'alert alert-danger' },
 			CGI::div(
 				{ class => 'mb-3' },
-				$r->maketext("The selected problem set ([_1]) is not a valid set for [_2]", $setName, $effectiveUser)
+				$r->maketext("The selected problem set ([_1]) is not a valid set for [_2]",
+					$setName, $effectiveUser)
 					. ":"
 			),
 			CGI::div($self->{invalidSet})
 		);
 	}
 
-	my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
+	my $enable_reduced_scoring =
+		$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+		&& $set->enable_reduced_scoring
+		&& $set->reduced_scoring_date
+		&& $set->reduced_scoring_date != $set->due_date;
 
 	my $reduced_scoring_date = $set->reduced_scoring_date;
 	if ($enable_reduced_scoring) {
-		my $dueDate = $self->formatDateTime($set->due_date());
-		my $reducedScoringValue = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};
-		my $reducedScoringPerCent = int(100*$reducedScoringValue+.5);
-		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
+		my $dueDate                   = $self->formatDateTime($set->due_date());
+		my $reducedScoringValue       = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};
+		my $reducedScoringPerCent     = int(100 * $reducedScoringValue + .5);
+		my $beginReducedScoringPeriod = $self->formatDateTime($reduced_scoring_date);
 
 		if (before($reduced_scoring_date)) {
-			print CGI::div({class=>"alert alert-warning mb-3"},
-				$r->maketext("After the reduced scoring period begins all work counts for [_1]% of its value.",
-					$reducedScoringPerCent));
+			print CGI::div(
+				{ class => "alert alert-warning mb-3" },
+				$r->maketext(
+					"After the reduced scoring period begins all work counts for [_1]% of its value.",
+					$reducedScoringPerCent
+				)
+			);
 
 		} elsif (between($reduced_scoring_date, $set->due_date())) {
-			print CGI::div({class=>"alert alert-warning mb-3"},
-				$r->maketext("This set is in its reduced scoring period.  All work counts for [_1]% of its value.",
-					$reducedScoringPerCent));
+			print CGI::div(
+				{ class => "alert alert-warning mb-3" },
+				$r->maketext(
+					"This set is in its reduced scoring period.  All work counts for [_1]% of its value.",
+					$reducedScoringPerCent
+				)
+			);
 		} else {
-			print CGI::div({class=>"alert alert-warning mb-3"},
-				$r->maketext("This set had a reduced scoring period that started on [_1] and ended on [_2].  During that period all work counted for [_3]% of its value.",
-					$beginReducedScoringPeriod, $dueDate, $reducedScoringPerCent));
+			print CGI::div(
+				{ class => "alert alert-warning mb-3" },
+				$r->maketext(
+					"This set had a reduced scoring period that started on [_1] and ended on [_2].  During that period all work counted for [_3]% of its value.",
+					$beginReducedScoringPeriod, $dueDate, $reducedScoringPerCent
+				)
+			);
 		}
 	}
 
@@ -782,7 +813,7 @@ sub body {
 			my $canScoreProblems = 0;
 			if ($authz->hasPermissions($user, "access_instructor_tools") && $authz->hasPermissions($user, "score_sets"))
 			{
-				my @setUsers = $db->listSetUsers($setName);
+				my @setUsers       = $db->listSetUsers($setName);
 				my @globalProblems = $db->getGlobalProblemsWhere({ set_id => $setName });
 
 				my @gradeableProblems;
@@ -810,25 +841,29 @@ sub body {
 			if ($isJitarSet) {
 				push @$thRow,
 					CGI::th(
-					$r->maketext("Adjusted Status")
+						$r->maketext("Adjusted Status")
 						. "&nbsp;"
 						. CGI::a(
-						{
-							class             => 'help-popup',
-							data_bs_placement => 'top',
-							data_bs_toggle    => 'popover',
-							tabindex          => 0,
-							role              => 'button',
-							data_bs_content   => $r->maketext(
-								'The adjusted status of a problem is the larger of the problem\'s status and'
+							{
+								class             => 'help-popup',
+								data_bs_placement => 'top',
+								data_bs_toggle    => 'popover',
+								tabindex          => 0,
+								role              => 'button',
+								data_bs_content   => $r->maketext(
+									'The adjusted status of a problem is the larger of the problem\'s status and'
 									. 'the weighted average of the status of those problems which count towards '
 									. 'the parent grade.'
+								)
+							},
+							CGI::i(
+								{
+									class       => "icon fas fa-question-circle",
+									aria_hidden => "true",
+									data_alt    => "Help Icon"
+								},
+								""
 							)
-						},
-						CGI::i(
-							{ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "Help Icon" },
-							""
-						)
 						)
 					);
 				push @$thRow, CGI::th($r->maketext("Counts for Parent"));
@@ -887,33 +922,39 @@ sub body {
 
 sub problemListRow($$$$$) {
 	my ($self, $set, $problem, $db, $canScoreProblems, $isJitarSet) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $authz = $r->authz;
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $authz   = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	my $courseID = $urlpath->arg("courseID");
-	my $setID = $set->set_id;
-	my $problemID = $problem->problem_id;
+	my $courseID      = $urlpath->arg("courseID");
+	my $setID         = $set->set_id;
+	my $problemID     = $problem->problem_id;
 	my $problemNumber = $problemID;
 
 	my $jitarRestriction = 0;
-	my $problemLevel = 0;
+	my $problemLevel     = 0;
 
 	if ($isJitarSet) {
 		my @seq = jitar_id_to_seq($problemID);
-		$problemLevel = $#seq;
+		$problemLevel  = $#seq;
 		$problemNumber = join('.', @seq);
 	}
 
 	# if the problem is closed we dont even print it
-	if ($isJitarSet && !$authz->hasPermissions($problem->user_id, "view_unopened_sets") && is_jitar_problem_hidden($db, $problem->user_id, $setID, $problemID)) {
+	if ($isJitarSet
+		&& !$authz->hasPermissions($problem->user_id, "view_unopened_sets")
+		&& is_jitar_problem_hidden($db, $problem->user_id, $setID, $problemID))
+	{
 		return '';
 	}
 
-	my $interactiveURL = $self->systemLink(
-		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
-			courseID => $courseID, setID => $setID, problemID => $problemID ));
+	my $interactiveURL = $self->systemLink($urlpath->newFromModule(
+		"WeBWorK::ContentGenerator::Problem", $r,
+		courseID  => $courseID,
+		setID     => $setID,
+		problemID => $problemID
+	));
 
 	my $linkClasses = '';
 	my $interactive;
@@ -936,49 +977,45 @@ sub problemListRow($$$$$) {
 
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	# a blank yields 'infinite' because it evaluates as false with out giving warnings about comparing non-numbers
-	my $remaining = ($problem->max_attempts || -1) < 0
-		? $r->maketext("unlimited")
-		: $problem->max_attempts - $attempts;
+	my $remaining = ($problem->max_attempts || -1) < 0 ? $r->maketext("unlimited") : $problem->max_attempts - $attempts;
 
 	my $value = $problem->value;
 
-	$value = '' if ($isJitarSet && $problemLevel != 0
+	$value = '' if ($isJitarSet
+		&& $problemLevel != 0
 		&& !$problem->counts_parent_grade);
 
 	my $rawStatus = 0;
 	$rawStatus = $problem->status;
 
-	my $status = eval{ wwRound(0, $rawStatus * 100).'%'}; # round to whole number
-	$status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
-	# FIXME  -- this may not cover all cases.
+	my $status = eval { wwRound(0, $rawStatus * 100) . '%' };    # round to whole number
+	$status = 'unknown(FIXME)' if $@;    # use a blank if problem status was not defined or not numeric.
+										 # FIXME  -- this may not cover all cases.
 
 	my $adjustedStatus = '';
 	if (!$isJitarSet || $problemLevel == 0) {
 		$adjustedStatus = jitar_problem_adjusted_status($problem, $db);
-		$adjustedStatus = eval{wwRound(0, $adjustedStatus*100).'%'};
+		$adjustedStatus = eval { wwRound(0, $adjustedStatus * 100) . '%' };
 	}
 
 	my $countsForParent = "";
-	if ($isJitarSet && $problemLevel != 0 ) {
+	if ($isJitarSet && $problemLevel != 0) {
 		$countsForParent = $problem->counts_parent_grade() ? $r->maketext('Yes') : $r->maketext('No');
 
 	}
 
 	my $graderLink = "";
 	if ($canScoreProblems && $self->{gradeableProblems}[$problemID]) {
-		my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader',
-			args => { courseID => $courseID, setID => $setID, problemID => $problemID });
-		$graderLink = CGI::td(CGI::a({href => $self->systemLink($gradeProblemPage)}, $r->maketext("Grade Problem")));
+		my $gradeProblemPage = $urlpath->new(
+			type => 'instructor_problem_grader',
+			args => { courseID => $courseID, setID => $setID, problemID => $problemID }
+		);
+		$graderLink = CGI::td(CGI::a({ href => $self->systemLink($gradeProblemPage) }, $r->maketext("Grade Problem")));
 	} elsif ($canScoreProblems) {
 		$graderLink = CGI::td('');
 	}
 
-	my $problemRow = [CGI::td($interactive),
-		CGI::td([
-				$attempts,
-				$remaining,
-				$value,
-				$status])];
+	my $problemRow = [ CGI::td($interactive), CGI::td([ $attempts, $remaining, $value, $status ]) ];
 	if ($isJitarSet) {
 		push @$problemRow, CGI::td($adjustedStatus);
 		push @$problemRow, CGI::td($countsForParent);

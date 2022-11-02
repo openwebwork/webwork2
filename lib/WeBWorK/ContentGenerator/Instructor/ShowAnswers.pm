@@ -43,11 +43,11 @@ sub initialize {
 	my $authz      = $r->authz;
 	my $courseName = $urlpath->arg("courseID");
 	my $user       = $r->param('user');
-	my $root          = $ce->{webworkURLs}->{root};
-	my $key           = $r->param('key');
+	my $root       = $ce->{webworkURLs}->{root};
+	my $key        = $r->param('key');
 
-	my $selectedSets = [$r->param('selected_sets')] // [];
-	my $selectedProblems = [$r->param('selected_problems')] // [];
+	my $selectedSets     = [ $r->param('selected_sets') ]     // [];
+	my $selectedProblems = [ $r->param('selected_problems') ] // [];
 
 	unless ($authz->hasPermissions($user, "view_answers")) {
 		$self->addbadmessage("You aren't authorized to view past answers");
@@ -59,18 +59,18 @@ sub initialize {
 	# acting the current studentID, setID and problemID will be maintained
 
 	my $extraStopActingParams;
-	$extraStopActingParams->{selected_users} = $r->param('selected_users');
-	$extraStopActingParams->{selected_sets} = $r->param('selected_sets');
+	$extraStopActingParams->{selected_users}    = $r->param('selected_users');
+	$extraStopActingParams->{selected_sets}     = $r->param('selected_sets');
 	$extraStopActingParams->{selected_problems} = $r->param('selected_problems');
-	$r->{extraStopActingParams} = $extraStopActingParams;
+	$r->{extraStopActingParams}                 = $extraStopActingParams;
 
-	my $selectedUsers = [$r->param('selected_users')] // [];
+	my $selectedUsers = [ $r->param('selected_users') ] // [];
 
 	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
 
 	# If not instructor then force table to use current user-id
 	if (!$instructor) {
-	  $selectedUsers = [$user];
+		$selectedUsers = [$user];
 	}
 
 	return CGI::div({ class => 'alert alert-danger' },
@@ -81,8 +81,8 @@ sub initialize {
 	my %prettyProblemNumbers;
 	my %answerTypes;
 
-  	foreach my $studentUser (@$selectedUsers) {
-	    my @sets;
+	foreach my $studentUser (@$selectedUsers) {
+		my @sets;
 
 		# search for selected sets assigned to students
 		my @allSets = $db->listUserSets($studentUser);
@@ -102,153 +102,153 @@ sub initialize {
 
 		}
 
-	    next unless @sets;
+		next unless @sets;
 
-	    foreach my $setRecord (@sets) {
-	        my @problemNumbers;
-		my $setName = $setRecord->set_id;
-		my $isJitarSet = (defined($setRecord->assignment_type) && $setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
+		foreach my $setRecord (@sets) {
+			my @problemNumbers;
+			my $setName    = $setRecord->set_id;
+			my $isJitarSet = (defined($setRecord->assignment_type) && $setRecord->assignment_type eq 'jitar') ? 1 : 0;
 
-		# search for matching problems
-		my @allProblems = $db->listUserProblems($studentUser, $setName);
-		next unless @allProblems;
-		foreach my $problemNumber (@allProblems) {
-		  my $prettyProblemNumber = $problemNumber;
-		  if ($isJitarSet) {
-		    $prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
-		  }
-		  $prettyProblemNumbers{$setName}{$problemNumber} = $prettyProblemNumber;
+			# search for matching problems
+			my @allProblems = $db->listUserProblems($studentUser, $setName);
+			next unless @allProblems;
+			foreach my $problemNumber (@allProblems) {
+				my $prettyProblemNumber = $problemNumber;
+				if ($isJitarSet) {
+					$prettyProblemNumber = join('.', jitar_id_to_seq($problemNumber));
+				}
+				$prettyProblemNumbers{$setName}{$problemNumber} = $prettyProblemNumber;
 
-		  if (grep(/^$prettyProblemNumber$/,@$selectedProblems)) {
-		    push (@problemNumbers, $problemNumber);
-		  }
+				if (grep(/^$prettyProblemNumber$/, @$selectedProblems)) {
+					push(@problemNumbers, $problemNumber);
+				}
+			}
+
+			next unless @problemNumbers;
+
+			foreach my $problemNumber (@problemNumbers) {
+				my @pastAnswerIDs = $db->listProblemPastAnswers($studentUser, $setName, $problemNumber);
+
+				if (!defined($answerTypes{$setName}{$problemNumber})) {
+					#set up a silly problem to figure out what type the answers are
+					#(why isn't this stored somewhere)
+					my $unversionedSetName = $setName;
+					$unversionedSetName =~ s/,v[0-9]*$//;
+					my $displayMode = $self->{displayMode};
+					my $formFields  = { WeBWorK::Form->new_from_paramable($r)->Vars };
+					my $set         = $db->getMergedSet($studentUser, $unversionedSetName);
+					my $problem     = $db->getMergedProblem($studentUser, $unversionedSetName, $problemNumber);
+					my $userobj     = $db->getUser($studentUser);
+					#if these things dont exist then the problem doesnt exist and past answers dont make sense
+					next unless defined($set) && defined($problem) && defined($userobj);
+
+					my $pg = WeBWorK::PG->new(constructPGOptions(
+						$ce, $userobj, $set, $problem,
+						$set->psvn,
+						$formFields,
+						{    # translation options
+							displayMode              => 'plainText',
+							showHints                => 0,
+							showSolutions            => 0,
+							refreshMath2img          => 0,
+							processAnswers           => 1,
+							permissionLevel          => $db->getPermissionLevel($studentUser)->permission,
+							effectivePermissionLevel => $db->getPermissionLevel($studentUser)->permission,
+						},
+					));
+
+					# check to see what type the answers are.  right now it only checks for essay but could do more
+					my %answerHash = %{ $pg->{answers} };
+					my @answerTypes;
+
+					foreach (sortByName(undef, keys %answerHash)) {
+						push(@answerTypes, defined($answerHash{$_}->{type}) ? $answerHash{$_}->{type} : 'undefined');
+					}
+
+					$answerTypes{$setName}{$problemNumber} = [@answerTypes];
+				}
+
+				my @pastAnswers = $db->getPastAnswers(\@pastAnswerIDs);
+
+				foreach my $pastAnswer (@pastAnswers) {
+					my $answerID = $pastAnswer->answer_id;
+					my $answers  = $pastAnswer->answer_string;
+					my $scores   = $pastAnswer->scores;
+					my $time     = $pastAnswer->timestamp;
+					my @scores   = split(//,   $scores);
+					my @answers  = split(/\t/, $answers);
+
+					$records{$studentUser}{$setName}{$problemNumber}{$answerID} = {
+						time        => $time,
+						answers     => [@answers],
+						answerTypes => $answerTypes{$setName}{$problemNumber},
+						scores      => [@scores],
+						comment     => $pastAnswer->comment_string // ''
+					};
+
+				}
+
+			}
 		}
+	}
 
-		next unless @problemNumbers;
-
-		foreach my $problemNumber (@problemNumbers) {
-		  my @pastAnswerIDs = $db->listProblemPastAnswers($studentUser, $setName, $problemNumber);
-
-		  if (!defined($answerTypes{$setName}{$problemNumber})) {
-		    #set up a silly problem to figure out what type the answers are
-		    #(why isn't this stored somewhere)
-		    my $unversionedSetName = $setName;
-		    $unversionedSetName =~ s/,v[0-9]*$//;
-		    my $displayMode   = $self->{displayMode};
-		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-		    my $set = $db->getMergedSet($studentUser, $unversionedSetName);
-		    my $problem = $db->getMergedProblem($studentUser, $unversionedSetName, $problemNumber);
-		    my $userobj = $db->getUser($studentUser);
-		    #if these things dont exist then the problem doesnt exist and past answers dont make sense
-		    next unless defined($set) && defined($problem) && defined($userobj);
-
-			my $pg = WeBWorK::PG->new(constructPGOptions(
-				$ce, $userobj, $set, $problem,
-				$set->psvn,
-				$formFields,
-				{    # translation options
-					displayMode              => 'plainText',
-					showHints                => 0,
-					showSolutions            => 0,
-					refreshMath2img          => 0,
-					processAnswers           => 1,
-					permissionLevel          => $db->getPermissionLevel($studentUser)->permission,
-					effectivePermissionLevel => $db->getPermissionLevel($studentUser)->permission,
-				},
-			));
-
-		    # check to see what type the answers are.  right now it only checks for essay but could do more
-		    my %answerHash = %{ $pg->{answers} };
-		    my @answerTypes;
-
-		    foreach (sortByName(undef, keys %answerHash)) {
-		      push(@answerTypes,defined($answerHash{$_}->{type})?$answerHash{$_}->{type}:'undefined');
-		    }
-
-		    $answerTypes{$setName}{$problemNumber} = [@answerTypes];
-		  }
-
-		  my @pastAnswers = $db->getPastAnswers(\@pastAnswerIDs);
-
-		  foreach my $pastAnswer (@pastAnswers) {
-		    my $answerID = $pastAnswer->answer_id;
-		    my $answers = $pastAnswer->answer_string;
-		    my $scores = $pastAnswer->scores;
-		    my $time = $pastAnswer->timestamp;
-		    my @scores = split(//, $scores);
-		    my @answers = split(/\t/,$answers);
-
-
-		    $records{$studentUser}{$setName}{$problemNumber}{$answerID} =  { time => $time,
-										     answers => [@answers],
-										     answerTypes => $answerTypes{$setName}{$problemNumber},
-										     scores => [@scores],
-										     comment => $pastAnswer->comment_string // '' };
-
-		  }
-
-		}
-	      }
-	  }
-
-	$self->{records} = \%records;
+	$self->{records}              = \%records;
 	$self->{prettyProblemNumbers} = \%prettyProblemNumbers;
 
 	# Prepare a csv if we are an instructor
 	if ($instructor && $r->param('createCSV')) {
-	    my $filename = PAST_ANSWERS_FILENAME;
-	    my $scoringDir = $ce->{courseDirs}->{scoring};
-	    my $fullFilename = "${scoringDir}/${filename}.csv";
-	    if (-e $fullFilename) {
-		my $i=1;
-		while(-e "${scoringDir}/${filename}_bak$i.csv") {$i++;}      #don't overwrite existing backups
-		my $bakFileName ="${scoringDir}/${filename}_bak$i.csv";
-		rename $fullFilename, $bakFileName or warn "Unable to rename $filename to $bakFileName";
-	    }
-
-	    $filename .= '.csv';
-
-	    open my $fh, ">:utf8", $fullFilename or warn "Unable to open $fullFilename for writing";
-
-	    my $csv = Text::CSV->new({"eol"=>"\n"});
-	    my @columns;
-
-	    $columns[0] = $r->maketext('User ID');
-	    $columns[1] = $r->maketext('Set ID');
-	    $columns[2] = $r->maketext('Problem Number');
-	    $columns[3] = $r->maketext('Timestamp');
-	    $columns[4] = $r->maketext('Scores');
-	    $columns[5] = $r->maketext('Answers');
-	    $columns[6] = $r->maketext('Comment');
-
-	    $csv->print($fh, \@columns);
-
-	    foreach my $studentID (sort keys %records) {
-		$columns[0] = $studentID;
-		foreach my $setID (sort keys %{$records{$studentID}}) {
-		    $columns[1] = $setID;
-		    foreach my $probNum (sort {$a <=> $b} keys %{$records{$studentID}{$setID}}) {
-		      $columns[2] = $prettyProblemNumbers{$setID}{$probNum};
-		      foreach my $answerID (sort {$a <=> $b} keys %{$records{$studentID}{$setID}{$probNum}}) {
-			my %record = %{$records{$studentID}{$setID}{$probNum}{$answerID}};
-
-			$columns[3] = $self->formatDateTime($record{time});
-			$columns[4] = join(',' ,@{$record{scores}});
-			$columns[5] = join("\t" ,@{$record{answers}});
-			$columns[6] = $record{comment};
-
-			$csv->print($fh,\@columns);
-		      }
-		    }
+		my $filename     = PAST_ANSWERS_FILENAME;
+		my $scoringDir   = $ce->{courseDirs}->{scoring};
+		my $fullFilename = "${scoringDir}/${filename}.csv";
+		if (-e $fullFilename) {
+			my $i = 1;
+			while (-e "${scoringDir}/${filename}_bak$i.csv") { $i++; }    #don't overwrite existing backups
+			my $bakFileName = "${scoringDir}/${filename}_bak$i.csv";
+			rename $fullFilename, $bakFileName or warn "Unable to rename $filename to $bakFileName";
 		}
-	    }
 
-	    close($fh) or warn "Couldn't Close $fullFilename";
+		$filename .= '.csv';
 
-	    }
+		open my $fh, ">:utf8", $fullFilename or warn "Unable to open $fullFilename for writing";
+
+		my $csv = Text::CSV->new({ "eol" => "\n" });
+		my @columns;
+
+		$columns[0] = $r->maketext('User ID');
+		$columns[1] = $r->maketext('Set ID');
+		$columns[2] = $r->maketext('Problem Number');
+		$columns[3] = $r->maketext('Timestamp');
+		$columns[4] = $r->maketext('Scores');
+		$columns[5] = $r->maketext('Answers');
+		$columns[6] = $r->maketext('Comment');
+
+		$csv->print($fh, \@columns);
+
+		foreach my $studentID (sort keys %records) {
+			$columns[0] = $studentID;
+			foreach my $setID (sort keys %{ $records{$studentID} }) {
+				$columns[1] = $setID;
+				foreach my $probNum (sort { $a <=> $b } keys %{ $records{$studentID}{$setID} }) {
+					$columns[2] = $prettyProblemNumbers{$setID}{$probNum};
+					foreach my $answerID (sort { $a <=> $b } keys %{ $records{$studentID}{$setID}{$probNum} }) {
+						my %record = %{ $records{$studentID}{$setID}{$probNum}{$answerID} };
+
+						$columns[3] = $self->formatDateTime($record{time});
+						$columns[4] = join(',',  @{ $record{scores} });
+						$columns[5] = join("\t", @{ $record{answers} });
+						$columns[6] = $record{comment};
+
+						$csv->print($fh, \@columns);
+					}
+				}
+			}
+		}
+
+		close($fh) or warn "Couldn't Close $fullFilename";
+
+	}
 
 }
-
 
 sub body {
 	my $self       = shift;
@@ -365,7 +365,8 @@ sub body {
 				{ class => 'fw-bold fs-5 mb-2' },
 				$r->maketext('Download:'),
 				CGI::a(
-					{ href => $self->systemLink($scoringDownloadPage, params => { getFile => $filename }) }, $filename
+					{ href => $self->systemLink($scoringDownloadPage, params => { getFile => $filename }) },
+					$filename
 				)
 			);
 
@@ -383,8 +384,8 @@ sub body {
 			{ id => 'site_description', style => 'display:none' },
 			CGI::em($r->maketext(
 				'This is the past answer viewer.  Students can only see their answers, and they will not be able to '
-				. 'see which parts are correct.  Instructors can view any users answers using the form below and the '
-				. 'answers will be colored according to correctness.'
+					. 'see which parts are correct.  Instructors can view any users answers using the form below and the '
+					. 'answers will be colored according to correctness.'
 			))
 		);
 
@@ -491,8 +492,8 @@ sub body {
 				my @pastAnswerIDs = sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName}{$problemNumber} };
 				my $prettyProblemNumber = $prettyProblemNumbers->{$setName}{$problemNumber};
 				print CGI::h3($r->maketext(
-					"Past Answers for [_1], set [_2], problem [_3]",
-					$studentUser, CGI::span({ dir => 'ltr' }, format_set_name_display($setName)), $prettyProblemNumber
+					"Past Answers for [_1], set [_2], problem [_3]",                $studentUser,
+					CGI::span({ dir => 'ltr' }, format_set_name_display($setName)), $prettyProblemNumber
 				));
 
 				my @row;
@@ -500,11 +501,10 @@ sub body {
 
 				my $previousTime = -1;
 
-				print CGI::start_div({ class => 'table-responsive' }),
-					CGI::start_table({
-						class => 'past-answer-table table table-striped',
-						dir   => "ltr"    # The answers are not well formatted in RTL mode
-					});
+				print CGI::start_div({ class => 'table-responsive' }), CGI::start_table({
+					class => 'past-answer-table table table-striped',
+					dir   => "ltr"                                      # The answers are not well formatted in RTL mode
+				});
 
 				foreach my $answerID (@pastAnswerIDs) {
 					$foundMatches = 1 unless $foundMatches;
@@ -592,41 +592,41 @@ sub body {
 }
 
 sub byData {
-  my ($A,$B) = ($a,$b);
-  $A =~ s/\|[01]*\t([^\t]+)\t.*/|$1/; # remove answers and correct/incorrect status
-  $B =~ s/\|[01]*\t([^\t]+)\t.*/|$1/;
-  return $A cmp $B;
+	my ($A, $B) = ($a, $b);
+	$A =~ s/\|[01]*\t([^\t]+)\t.*/|$1/;    # remove answers and correct/incorrect status
+	$B =~ s/\|[01]*\t([^\t]+)\t.*/|$1/;
+	return $A cmp $B;
 }
 
 # sorts problem ID's so that all just-in-time like ids are at the bottom
 # of the list in order and other problems
 sub prob_id_sort {
 
-  my @seqa = split(/\./,$a);
-  my @seqb = split(/\./,$b);
+	my @seqa = split(/\./, $a);
+	my @seqb = split(/\./, $b);
 
-  # go through problem number sequence
-  for (my $i = 0; $i <= $#seqa; $i++) {
-    # if at some point two numbers are different return the comparison.
-    # e.g. 2.1.3 vs 1.2.6
-    if ($seqa[$i] != $seqb[$i]) {
-      return $seqa[$i] <=> $seqb[$i];
-    }
+	# go through problem number sequence
+	for (my $i = 0; $i <= $#seqa; $i++) {
+		# if at some point two numbers are different return the comparison.
+		# e.g. 2.1.3 vs 1.2.6
+		if ($seqa[$i] != $seqb[$i]) {
+			return $seqa[$i] <=> $seqb[$i];
+		}
 
-    # if all of the values are equal but b is shorter then it comes first
-    # i.e. 2.1.3 vs 2.1
-    if ($i == $#seqb) {
-      return 1;
-    }
-  }
+		# if all of the values are equal but b is shorter then it comes first
+		# i.e. 2.1.3 vs 2.1
+		if ($i == $#seqb) {
+			return 1;
+		}
+	}
 
-  # if all of the values are equal and a and b are the same length then equal
-  # otherwise a was shorter than b so a comes first.
-  if ($#seqa == $#seqb) {
-    return 0;
-  } else {
-    return -1;
-  }
+	# if all of the values are equal and a and b are the same length then equal
+	# otherwise a was shorter than b so a comes first.
+	if ($#seqa == $#seqb) {
+		return 0;
+	} else {
+		return -1;
+	}
 }
 
 sub output_JS {

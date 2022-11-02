@@ -34,7 +34,7 @@ use URI::Escape;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive trim_spaces getAssetURL);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse retitleCourse deleteCourse listCourses archiveCourse
-                                        listArchivedCourses unarchiveCourse initNonNativeTables);
+	listArchivedCourses unarchiveCourse initNonNativeTables);
 use WeBWorK::Utils::CourseIntegrityCheck;
 use WeBWorK::DB;
 #use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
@@ -45,13 +45,13 @@ use File::stat;
 use Time::localtime;
 
 sub pre_header_initialize {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $authz = $r->authz;
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $db      = $r->db;
+	my $authz   = $r->authz;
 	my $urlpath = $r->urlpath;
-	my $user        = $r->param('user');
+	my $user    = $r->param('user');
 
 	# check permissions
 	unless ($authz->hasPermissions($user, "create_and_delete_courses")) {
@@ -63,14 +63,12 @@ sub pre_header_initialize {
 	my $status_message = $r->param("status_message");
 	$self->addmessage(CGI::p("$status_message")) if $status_message;
 
+	# Check that the non-native tables are present in the database
+	# These are the tables which are not course specific
 
-    # Check that the non-native tables are present in the database
-    # These are the tables which are not course specific
+	my $table_update_result = initNonNativeTables($ce, $ce->{dbLayoutName});
 
-    my $table_update_result = initNonNativeTables($ce, $ce->{dbLayoutName});
-
-    $self->addgoodmessage(CGI::p("$table_update_result")) if $table_update_result;
-
+	$self->addgoodmessage(CGI::p("$table_update_result")) if $table_update_result;
 
 	my @errors;
 	my $method_to_call;
@@ -89,9 +87,8 @@ sub pre_header_initialize {
 			} else {
 				$method_to_call = "add_course_form";
 			}
-		}
 
-		elsif ($subDisplay eq "rename_course") {
+		} elsif ($subDisplay eq "rename_course") {
 			if (defined $r->param("rename_course")) {
 				@errors = $self->rename_course_validate;
 				if (@errors) {
@@ -108,11 +105,11 @@ sub pre_header_initialize {
 					$method_to_call = "do_rename_course";
 				}
 			} elsif (defined $r->param("confirm_retitle_course")) {
-				    $method_to_call = "do_retitle_course";
+				$method_to_call = "do_retitle_course";
 
-			} elsif (defined $r->param("upgrade_course_tables") ){
-			    # upgrade and revalidate
-			    @errors = $self->rename_course_validate;
+			} elsif (defined $r->param("upgrade_course_tables")) {
+				# upgrade and revalidate
+				@errors = $self->rename_course_validate;
 				if (@errors) {
 					$method_to_call = "rename_course_form";
 				} else {
@@ -122,9 +119,8 @@ sub pre_header_initialize {
 			} else {
 				$method_to_call = "rename_course_form";
 			}
-		}
 
-		elsif ($subDisplay eq "delete_course") {
+		} elsif ($subDisplay eq "delete_course") {
 			if (defined $r->param("delete_course")) {
 				# validate or confirm
 				@errors = $self->delete_course_validate;
@@ -141,16 +137,14 @@ sub pre_header_initialize {
 				} else {
 					$method_to_call = "do_delete_course";
 				}
-			}
-			elsif (defined ($r->param("delete_course_refresh"))) {
+			} elsif (defined($r->param("delete_course_refresh"))) {
 				$method_to_call = "delete_course_form";
 			} else {
 				# form only
 				$method_to_call = "delete_course_form";
 			}
-		}
 
-		elsif ($subDisplay eq "export_database") {
+		} elsif ($subDisplay eq "export_database") {
 			if (defined $r->param("export_database")) {
 				@errors = $self->export_database_validate;
 				if (@errors) {
@@ -165,9 +159,8 @@ sub pre_header_initialize {
 			} else {
 				$method_to_call = "export_database_form";
 			}
-		}
 
-		elsif ($subDisplay eq "import_database") {
+		} elsif ($subDisplay eq "import_database") {
 			if (defined $r->param("import_database")) {
 				@errors = $self->import_database_validate;
 				if (@errors) {
@@ -178,54 +171,52 @@ sub pre_header_initialize {
 			} else {
 				$method_to_call = "import_database_form";
 			}
-		}
 
-		elsif ($subDisplay eq "archive_course") {
-		  if (defined $r->param("archive_course") ||
-		      defined $r->param("skip_archive_course")) {
+		} elsif ($subDisplay eq "archive_course") {
+			if (defined $r->param("archive_course")
+				|| defined $r->param("skip_archive_course"))
+			{
 
-		    # validate -- if invalid, start over.
-		    # if form is valid a page indicating the status of
-		    # database tables and directories is presented.
-		    # If they are ok, then you can push archive button, otherwise
-		    # you can quit or choose to upgrade the tables
-		    @errors = $self->archive_course_validate;
-		    if (@errors) {
-		      $method_to_call = "archive_course_form";
-		    } else {
-		      $method_to_call = "archive_course_confirm"; #check tables & directories
-		    }
-		  } elsif (defined $r->param("confirm_archive_course")) {
-		    # validate and archive
-		    # the "archive it" button has been pushed and the
-		    # course will be archived
-		    # a report on success or failure will be generated
-		    @errors = $self->archive_course_validate;
-		    if (@errors) {
-		      $method_to_call = "archive_course_form";
-		    } else {
-		      $method_to_call = "do_archive_course";
-		    }
-		  } elsif (defined $r->param("upgrade_course_tables") ){
-		    # upgrade and revalidate
-		    # the "upgrade course" button has been pushed
-		    # after the course has been upgraded you are returned
-		    # to the confirm page.
-		    @errors = $self->archive_course_validate;
-		    if (@errors) {
-		      $method_to_call = "archive_course_form";
-		    } else {
-		      $method_to_call = "archive_course_confirm"; # upgrade and recheck tables & directories.
-		    }
-		  }
-		  elsif (defined ($r->param("archive_course_refresh"))) {
-		    $method_to_call = "archive_course_form";
-		  } else {
-		    # form only
-		    $method_to_call = "archive_course_form";
-		  }
-		}
-		elsif ($subDisplay eq "unarchive_course") {
+				# validate -- if invalid, start over.
+				# if form is valid a page indicating the status of
+				# database tables and directories is presented.
+				# If they are ok, then you can push archive button, otherwise
+				# you can quit or choose to upgrade the tables
+				@errors = $self->archive_course_validate;
+				if (@errors) {
+					$method_to_call = "archive_course_form";
+				} else {
+					$method_to_call = "archive_course_confirm";    #check tables & directories
+				}
+			} elsif (defined $r->param("confirm_archive_course")) {
+				# validate and archive
+				# the "archive it" button has been pushed and the
+				# course will be archived
+				# a report on success or failure will be generated
+				@errors = $self->archive_course_validate;
+				if (@errors) {
+					$method_to_call = "archive_course_form";
+				} else {
+					$method_to_call = "do_archive_course";
+				}
+			} elsif (defined $r->param("upgrade_course_tables")) {
+				# upgrade and revalidate
+				# the "upgrade course" button has been pushed
+				# after the course has been upgraded you are returned
+				# to the confirm page.
+				@errors = $self->archive_course_validate;
+				if (@errors) {
+					$method_to_call = "archive_course_form";
+				} else {
+					$method_to_call = "archive_course_confirm";    # upgrade and recheck tables & directories.
+				}
+			} elsif (defined($r->param("archive_course_refresh"))) {
+				$method_to_call = "archive_course_form";
+			} else {
+				# form only
+				$method_to_call = "archive_course_form";
+			}
+		} elsif ($subDisplay eq "unarchive_course") {
 			if (defined $r->param("unarchive_course")) {
 				# validate or confirm
 				@errors = $self->unarchive_course_validate;
@@ -247,8 +238,7 @@ sub pre_header_initialize {
 				# start at the beginning -- get drop down list of courses to unarchive
 				$method_to_call = "unarchive_course_form";
 			}
-		}
-		elsif ($subDisplay eq "upgrade_course") {
+		} elsif ($subDisplay eq "upgrade_course") {
 			if (defined $r->param("upgrade_course")) {
 				# validate or confirm
 				# if form is valid present details of analysis of the course structure
@@ -272,64 +262,54 @@ sub pre_header_initialize {
 				# start at the beginning -- get list of courses and their status
 				$method_to_call = "upgrade_course_form";
 			}
-		}
-		elsif ($subDisplay eq "manage_locations") {
-			if (defined ($r->param("manage_location_action"))) {
-				$method_to_call =
-				    $r->param("manage_location_action");
-			}
-			else{
+		} elsif ($subDisplay eq "manage_locations") {
+			if (defined($r->param("manage_location_action"))) {
+				$method_to_call = $r->param("manage_location_action");
+			} else {
 				$method_to_call = "manage_location_form";
 			}
-		}
-		elsif ($subDisplay eq "hide_inactive_course") {
-#			warn "subDisplay is $subDisplay";
-			if (defined ($r->param("hide_course"))) {
+		} elsif ($subDisplay eq "hide_inactive_course") {
+			#			warn "subDisplay is $subDisplay";
+			if (defined($r->param("hide_course"))) {
 				@errors = $self->hide_course_validate;
 				if (@errors) {
 					$method_to_call = "hide_inactive_course_form";
 				} else {
-				$method_to_call = "do_hide_inactive_course";
-			  }
-			}
-			elsif (defined ($r->param("unhide_course"))) {
+					$method_to_call = "do_hide_inactive_course";
+				}
+			} elsif (defined($r->param("unhide_course"))) {
 				@errors = $self->unhide_course_validate;
 				if (@errors) {
 					$method_to_call = "hide_inactive_course_form";
 				} else {
-				$method_to_call = "do_unhide_inactive_course";
-			  }
-			}
-			elsif (defined ($r->param("hide_course_refresh"))) {
+					$method_to_call = "do_unhide_inactive_course";
+				}
+			} elsif (defined($r->param("hide_course_refresh"))) {
+				$method_to_call = "hide_inactive_course_form";
+			} else {
 				$method_to_call = "hide_inactive_course_form";
 			}
-			else{
-				$method_to_call = "hide_inactive_course_form";
-			}
-		}
-		elsif ($subDisplay eq "registration") {
-			if (defined ($r->param("register_site"))) {
-				$method_to_call =  "do_registration";
-			}
-			else{
+		} elsif ($subDisplay eq "registration") {
+			if (defined($r->param("register_site"))) {
+				$method_to_call = "do_registration";
+			} else {
 				$method_to_call = "registration_form";
 			}
-		}
-		else {
+		} else {
 			@errors = "Unrecognized sub-display @{[ CGI::b($subDisplay) ]}.";
 		}
 	}
 
-	$self->{errors} = \@errors;
+	$self->{errors}         = \@errors;
 	$self->{method_to_call} = $method_to_call;
 }
 
 sub body {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $authz = $r->authz;
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $db      = $r->db;
+	my $authz   = $r->authz;
 	my $urlpath = $r->urlpath;
 
 	my $user = $r->param('user');
@@ -339,16 +319,17 @@ sub body {
 		return "";
 	}
 	my $method_to_call = $self->{method_to_call};
-	my $methodMessage ="";
+	my $methodMessage  = "";
 
 	(defined($method_to_call) and $method_to_call eq "do_export_database") && do {
-	    my @export_courseID = $r->param("export_courseID");
-	    my $course_ids = join(", ", @export_courseID);
-		$methodMessage  = CGI::p("Exporting database for course(s) $course_ids").
-		CGI::p(".... please wait....
+		my @export_courseID = $r->param("export_courseID");
+		my $course_ids      = join(", ", @export_courseID);
+		$methodMessage = CGI::p("Exporting database for course(s) $course_ids") . CGI::p(
+			".... please wait....
 		If your browser times out you will
 		still be able to download the exported database using the
-		file manager.").CGI::hr();
+		file manager."
+		) . CGI::hr();
 	};
 
 	print CGI::ul(
@@ -358,7 +339,8 @@ sub body {
 				{ class => 'nav-item' },
 				CGI::a(
 					{
-						href  => $self->systemLink($urlpath, params => { subDisplay => $_->[0], %{ $_->[2] // {} } }),
+						href =>
+							$self->systemLink($urlpath, params => { subDisplay => $_->[0], %{ $_->[2] // {} } }),
 						class => 'nav-link' . (($r->param('subDisplay') // '') eq $_->[0] ? ' active' : '')
 					},
 					$_->[1]
@@ -390,8 +372,7 @@ sub body {
 
 	print $self->display_registration_form;
 
-	my @errors = @{$self->{errors}};
-
+	my @errors = @{ $self->{errors} };
 
 	if (@errors) {
 		print CGI::div(
@@ -404,14 +385,22 @@ sub body {
 	if (defined $method_to_call and $method_to_call ne "") {
 		$self->$method_to_call;
 	} else {
-		    my $msg = "";
-	    	$msg .= CGI::li($r->maketext("unable to write to directory [_1]", $ce->{webworkDirs}{logs}))  unless -w $ce->{webworkDirs}{logs};
-	    	$msg .=  CGI::li($r->maketext("unable to write to directory [_1]", $ce->{webworkDirs}{tmp}))  unless -w $ce->{webworkDirs}{tmp};
-	    	$msg .=  CGI::li($r->maketext("unable to write to directory [_1]", $ce->{webworkDirs}{DATA}))  unless -w $ce->{webworkDirs}{DATA};
-	    	if ($msg) {
-		  print CGI::h2($r->maketext("Directory permission errors ")).CGI::ul($msg).
-		    CGI::p($r->maketext("The webwork server must be able to write to these directories. Please correct the permssion errors.")) ;
-			}
+		my $msg = "";
+		$msg .= CGI::li($r->maketext("unable to write to directory [_1]", $ce->{webworkDirs}{logs}))
+			unless -w $ce->{webworkDirs}{logs};
+		$msg .= CGI::li($r->maketext("unable to write to directory [_1]", $ce->{webworkDirs}{tmp}))
+			unless -w $ce->{webworkDirs}{tmp};
+		$msg .= CGI::li($r->maketext("unable to write to directory [_1]", $ce->{webworkDirs}{DATA}))
+			unless -w $ce->{webworkDirs}{DATA};
+		if ($msg) {
+			print CGI::h2($r->maketext("Directory permission errors "))
+				. CGI::ul($msg)
+				. CGI::p(
+					$r->maketext(
+					"The webwork server must be able to write to these directories. Please correct the permssion errors."
+					)
+				);
+		}
 
 		print $self->upgrade_notification();
 
@@ -420,11 +409,14 @@ sub body {
 		print CGI::start_ol();
 
 		my @courseIDs = listCourses($ce);
-		foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
-			next if $courseID eq "admin"; # done already above
-			next if $courseID eq "modelCourse"; # modelCourse isn't a real course so don't create missing directories, etc
- 			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);
-			print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID));
+		foreach my $courseID (sort { lc($a) cmp lc($b) } @courseIDs) {
+			next if $courseID eq "admin";    # done already above
+			next
+				if $courseID eq
+				"modelCourse";               # modelCourse isn't a real course so don't create missing directories, etc
+			my $urlpath =
+				$r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);
+			print CGI::li(CGI::a({ href => $self->systemLink($urlpath, authen => 0) }, $courseID));
 		}
 
 		print CGI::end_ol();
@@ -433,8 +425,8 @@ sub body {
 		print CGI::start_ol();
 
 		@courseIDs = listArchivedCourses($ce);
-		foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
-			print CGI::li($courseID),
+		foreach my $courseID (sort { lc($a) cmp lc($b) } @courseIDs) {
+			print CGI::li($courseID),;
 		}
 
 		print CGI::end_ol();
@@ -648,31 +640,27 @@ sub add_course_form {
 
 sub add_course_validate {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 	#my $db = $r->db;
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 
+	my $add_courseID          = trim_spaces($r->param("add_courseID"))          || "";
+	my $add_courseTitle       = trim_spaces($r->param("add_courseTitle"))       || "";
+	my $add_courseInstitution = trim_spaces($r->param("add_courseInstitution")) || "";
 
-	my $add_courseID                     = trim_spaces( $r->param("add_courseID") ) || "";
-	my $add_courseTitle                  = trim_spaces( $r->param("add_courseTitle") ) || "";
-	my $add_courseInstitution            = trim_spaces( $r->param("add_courseInstitution") ) || "";
+	my $add_admin_users = trim_spaces($r->param("add_admin_users")) || "";
 
-	my $add_admin_users                  = trim_spaces( $r->param("add_admin_users") ) || "";
-
-	my $add_initial_userID               = trim_spaces( $r->param("add_initial_userID") ) || "";
-	my $add_initial_password             = trim_spaces( $r->param("add_initial_password") ) || "";
-	my $add_initial_confirmPassword      = trim_spaces( $r->param("add_initial_confirmPassword") ) || "";
-	my $add_initial_firstName            = trim_spaces( $r->param("add_initial_firstName") ) || "";
-	my $add_initial_lastName             = trim_spaces( $r->param("add_initial_lastName") ) || "";
-	my $add_initial_email                = trim_spaces( $r->param("add_initial_email") ) || "";
-	my $add_templates_course             = trim_spaces( $r->param("add_templates_course") ) || "";
-	my $add_config_file                  = trim_spaces( $r->param("add_config_file") ) || "";
-	my $add_dbLayout                     = trim_spaces( $r->param("add_dbLayout") ) || "";
-
-
-
+	my $add_initial_userID          = trim_spaces($r->param("add_initial_userID"))          || "";
+	my $add_initial_password        = trim_spaces($r->param("add_initial_password"))        || "";
+	my $add_initial_confirmPassword = trim_spaces($r->param("add_initial_confirmPassword")) || "";
+	my $add_initial_firstName       = trim_spaces($r->param("add_initial_firstName"))       || "";
+	my $add_initial_lastName        = trim_spaces($r->param("add_initial_lastName"))        || "";
+	my $add_initial_email           = trim_spaces($r->param("add_initial_email"))           || "";
+	my $add_templates_course        = trim_spaces($r->param("add_templates_course"))        || "";
+	my $add_config_file             = trim_spaces($r->param("add_config_file"))             || "";
+	my $add_dbLayout                = trim_spaces($r->param("add_dbLayout"))                || "";
 
 	######################
 
@@ -681,14 +669,14 @@ sub add_course_validate {
 	if ($add_courseID eq "") {
 		push @errors, $r->maketext("You must specify a course ID.");
 	}
-	unless ($add_courseID =~ /^[\w-]*$/) { # regex copied from CourseAdministration.pm
+	unless ($add_courseID =~ /^[\w-]*$/) {    # regex copied from CourseAdministration.pm
 		push @errors, $r->maketext("Course ID may only contain letters, numbers, hyphens, and underscores.");
 	}
 	if (grep { $add_courseID eq $_ } listCourses($ce)) {
 		push @errors, $r->maketext("A course with ID [_1] already exists.", $add_courseID);
 	}
-	if ( length($add_courseID) > $ce->{maxCourseIdLength} ) {
-                push @errors, $r->maketext("Course ID cannot exceed [_1] characters.", $ce->{maxCourseIdLength});
+	if (length($add_courseID) > $ce->{maxCourseIdLength}) {
+		push @errors, $r->maketext("Course ID cannot exceed [_1] characters.", $ce->{maxCourseIdLength});
 	}
 
 	if ($add_initial_userID ne "") {
@@ -727,40 +715,39 @@ sub add_course_validate {
 }
 
 sub do_add_course {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $authz = $r->authz;
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $db      = $r->db;
+	my $authz   = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	my $add_courseID                     = trim_spaces( $r->param("add_courseID") ) || "";
-	my $add_courseTitle                  = trim_spaces( $r->param("add_courseTitle") ) || "";
-	my $add_courseInstitution            = trim_spaces( $r->param("add_courseInstitution") ) || "";
+	my $add_courseID          = trim_spaces($r->param("add_courseID"))          || "";
+	my $add_courseTitle       = trim_spaces($r->param("add_courseTitle"))       || "";
+	my $add_courseInstitution = trim_spaces($r->param("add_courseInstitution")) || "";
 
-	my $add_admin_users                  = trim_spaces( $r->param("add_admin_users") ) || "";
+	my $add_admin_users = trim_spaces($r->param("add_admin_users")) || "";
 
-	my $add_initial_userID               = trim_spaces( $r->param("add_initial_userID") ) || "";
-	my $add_initial_password             = trim_spaces( $r->param("add_initial_password") ) || "";
-	my $add_initial_confirmPassword      = trim_spaces( $r->param("add_initial_confirmPassword") ) || "";
-	my $add_initial_firstName            = trim_spaces( $r->param("add_initial_firstName") ) || "";
-	my $add_initial_lastName             = trim_spaces( $r->param("add_initial_lastName") ) || "";
-	my $add_initial_email                = trim_spaces( $r->param("add_initial_email") ) || "";
+	my $add_initial_userID          = trim_spaces($r->param("add_initial_userID"))          || "";
+	my $add_initial_password        = trim_spaces($r->param("add_initial_password"))        || "";
+	my $add_initial_confirmPassword = trim_spaces($r->param("add_initial_confirmPassword")) || "";
+	my $add_initial_firstName       = trim_spaces($r->param("add_initial_firstName"))       || "";
+	my $add_initial_lastName        = trim_spaces($r->param("add_initial_lastName"))        || "";
+	my $add_initial_email           = trim_spaces($r->param("add_initial_email"))           || "";
 
-	my $add_templates_course             = trim_spaces( $r->param("add_templates_course") ) || "";
-	my $add_config_file                  = trim_spaces( $r->param("add_config_file") ) || "";
+	my $add_templates_course = trim_spaces($r->param("add_templates_course")) || "";
+	my $add_config_file      = trim_spaces($r->param("add_config_file"))      || "";
 
-	my $add_dbLayout                     = trim_spaces( $r->param("add_dbLayout") ) || "";
+	my $add_dbLayout = trim_spaces($r->param("add_dbLayout")) || "";
 
 	my $ce2 = new WeBWorK::CourseEnvironment({
-		%WeBWorK::SeedCE,
-		courseName => $add_courseID,
+		%WeBWorK::SeedCE, courseName => $add_courseID,
 	});
 
-	my %courseOptions = ( dbLayoutName => $add_dbLayout );
+	my %courseOptions = (dbLayoutName => $add_dbLayout);
 
 	if ($add_initial_email ne "") {
-		$courseOptions{allowedRecipients} = [ $add_initial_email ];
+		$courseOptions{allowedRecipients} = [$add_initial_email];
 		# don't set feedbackRecipients -- this just gets in the way of the more
 		# intelligent "receive_recipients" method.
 		#$courseOptions{feedbackRecipients} = [ $add_initial_email ];
@@ -776,21 +763,23 @@ sub do_add_course {
 	# copy users from current (admin) course if desired
 	if ($add_admin_users ne "") {
 
-	    foreach my $userID ($db->listUsers) {
-		if ($userID eq $add_initial_userID) {
-		    $self->addbadmessage($r->maketext("User '[_1]' will not be copied from admin course as it is the initial instructor.",$userID));
-		    next;
-		}
-		my $PermissionLevel = $db->newPermissionLevel();
-		$PermissionLevel->user_id($userID);
-		$PermissionLevel->permission($ce->{userRoles}->{admin});
-		my $User            = $db->getUser($userID);
-		my $Password        = $db->getPassword($userID);
+		foreach my $userID ($db->listUsers) {
+			if ($userID eq $add_initial_userID) {
+				$self->addbadmessage($r->maketext(
+					"User '[_1]' will not be copied from admin course as it is the initial instructor.", $userID
+				));
+				next;
+			}
+			my $PermissionLevel = $db->newPermissionLevel();
+			$PermissionLevel->user_id($userID);
+			$PermissionLevel->permission($ce->{userRoles}->{admin});
+			my $User     = $db->getUser($userID);
+			my $Password = $db->getPassword($userID);
 
-		push @users, [ $User, $Password, $PermissionLevel ]
-		    if $authz->hasPermissions($userID,"create_and_delete_courses");
-		#only transfer the "instructors" in the admin course classlist.
-	    }
+			push @users, [ $User, $Password, $PermissionLevel ]
+				if $authz->hasPermissions($userID, "create_and_delete_courses");
+			#only transfer the "instructors" in the admin course classlist.
+		}
 	}
 
 	# add initial instructor if desired
@@ -814,7 +803,7 @@ sub do_add_course {
 		push @users, [ $User, $Password, $PermissionLevel ];
 	}
 
-	push @{$courseOptions{PRINT_FILE_NAMES_FOR}}, map { $_->[0]->user_id } @users;
+	push @{ $courseOptions{PRINT_FILE_NAMES_FOR} }, map { $_->[0]->user_id } @users;
 
 	# include any optional arguments, including a template course and the
 	# course title and course institution.
@@ -852,36 +841,34 @@ sub do_add_course {
 		# get rid of any partially built courses
 		# FIXME  -- this is too fragile
 		unless ($error =~ /course exists/) {
-			eval {
-				deleteCourse(
-					courseID   => $add_courseID,
-					ce         => $ce2,
-					dbOptions  => \%dbOptions,
-				);
-			}
+			eval { deleteCourse(courseID => $add_courseID, ce => $ce2, dbOptions => \%dbOptions,); }
 		}
 	} else {
-	    #log the action
-	    writeLog($ce, "hosted_courses", join("\t",
-	    	"\tAdded",
-	    	( defined $add_courseInstitution ? $add_courseInstitution : "(no institution specified)" ),
-	    	( defined $add_courseTitle ? $add_courseTitle : "(no title specified)" ),
-	    	$add_courseID,
-	    	$add_initial_firstName,
-	    	$add_initial_lastName,
-	  		$add_initial_email,
-	    ));
-	    # add contact to admin course as student?
-	    # FIXME -- should we do this?
-	    if ($add_initial_userID =~ /\S/) {
-	        my $composite_id = "${add_initial_userID}_${add_courseID}"; # student id includes school name and contact
-			my $User = $db->newUser(
-			user_id       => $composite_id,          # student id includes school name and contact
-			first_name    => $add_initial_firstName,
-			last_name     => $add_initial_lastName,
-			student_id    => $add_initial_userID,
-			email_address => $add_initial_email,
-			status        => "C",
+		#log the action
+		writeLog(
+			$ce,
+			"hosted_courses",
+			join("\t",
+				"\tAdded",
+				(defined $add_courseInstitution ? $add_courseInstitution : "(no institution specified)"),
+				(defined $add_courseTitle       ? $add_courseTitle       : "(no title specified)"),
+				$add_courseID,
+				$add_initial_firstName,
+				$add_initial_lastName,
+				$add_initial_email,
+			)
+		);
+		# add contact to admin course as student?
+		# FIXME -- should we do this?
+		if ($add_initial_userID =~ /\S/) {
+			my $composite_id = "${add_initial_userID}_${add_courseID}";    # student id includes school name and contact
+			my $User         = $db->newUser(
+				user_id       => $composite_id,                            # student id includes school name and contact
+				first_name    => $add_initial_firstName,
+				last_name     => $add_initial_lastName,
+				student_id    => $add_initial_userID,
+				email_address => $add_initial_email,
+				status        => "C",
 			);
 			my $Password = $db->newPassword(
 				user_id  => $composite_id,
@@ -894,26 +881,29 @@ sub do_add_course {
 			# add contact to admin course as student
 			# or if this contact and course already exist in a dropped status
 			# change the student's status to enrolled
-			if (my $oldUser = $db->getUser($composite_id) ) {
-				warn "Replacing old data for $composite_id  status: ". $oldUser->status;
+			if (my $oldUser = $db->getUser($composite_id)) {
+				warn "Replacing old data for $composite_id  status: " . $oldUser->status;
 				$db->deleteUser($composite_id);
 			}
-			eval { $db->addUser($User)                       }; warn $@ if $@;
-			eval { $db->addPassword($Password)               }; warn $@ if $@;
-			eval { $db->addPermissionLevel($PermissionLevel) }; warn $@ if $@;
+			eval { $db->addUser($User) };
+			warn $@ if $@;
+			eval { $db->addPassword($Password) };
+			warn $@ if $@;
+			eval { $db->addPermissionLevel($PermissionLevel) };
+			warn $@ if $@;
 		}
 		print CGI::div(
 			{ class => 'alert alert-success p-1 mb-2' },
 			$r->maketext("Successfully created the course [_1]", $add_courseID),
 		);
-		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
-			courseID => $add_courseID);
+		my $newCoursePath =
+			$urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $add_courseID);
 		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
-		print CGI::div({ class => 'text-center mb-2'},
-			CGI::a({href=>$newCourseURL}, $r->maketext("Log into [_1]",$add_courseID)),
+		print CGI::div(
+			{ class => 'text-center mb-2' },
+			CGI::a({ href => $newCourseURL }, $r->maketext("Log into [_1]", $add_courseID)),
 		);
 	}
-
 
 }
 
@@ -954,7 +944,7 @@ sub rename_course_form {
 			CGI::label(
 				{ for => 'rename_oldCourseID', class => 'col-sm-6 col-form-label fw-bold' },
 				$r->maketext('Course ID:')
-				),
+			),
 			CGI::div(
 				{ class => 'col-sm-6' },
 				CGI::scrolling_list({
@@ -1033,7 +1023,8 @@ sub rename_course_form {
 						checked         => $r->param('rename_newCourseInstitution_checkbox') || '',
 						value           => 'on',
 						class           => 'form-check-input',
-						labelattributes => { class => 'form-check-label', id => 'rename_newCourseInstitution_label' }
+						labelattributes =>
+							{ class => 'form-check-label', id => 'rename_newCourseInstitution_label' }
 					})
 				)
 			),
@@ -1056,94 +1047,104 @@ sub rename_course_form {
 
 sub rename_course_confirm {
 
-    my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my ($self) = @_;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 
-	my $rename_oldCourseID           = $r->param("rename_oldCourseID")     || "";
-	my $rename_newCourseID           = $r->param("rename_newCourseID")     || "";
-	my $rename_newCourseID_checkbox     = $r->param("rename_newCourseID_checkbox")  || "";    ;
+	my $rename_oldCourseID          = $r->param("rename_oldCourseID")          || "";
+	my $rename_newCourseID          = $r->param("rename_newCourseID")          || "";
+	my $rename_newCourseID_checkbox = $r->param("rename_newCourseID_checkbox") || "";
 
-	my $rename_newCourseTitle           = $r->param("rename_newCourseTitle")     || "";
-	my $rename_newCourseTitle_checkbox  = $r->param("rename_newCourseTitle_checkbox")    || ""; ;
- 	my $rename_newCourseInstitution           = $r->param("rename_newCourseInstitution")     || "";
-	my $rename_newCourseInstitution_checkbox     = $r->param("rename_newCourseInstitution_checkbox") || ""   ;
-
+	my $rename_newCourseTitle                = $r->param("rename_newCourseTitle")                || "";
+	my $rename_newCourseTitle_checkbox       = $r->param("rename_newCourseTitle_checkbox")       || "";
+	my $rename_newCourseInstitution          = $r->param("rename_newCourseInstitution")          || "";
+	my $rename_newCourseInstitution_checkbox = $r->param("rename_newCourseInstitution_checkbox") || "";
 
 	my $ce2 = new WeBWorK::CourseEnvironment({
-		%WeBWorK::SeedCE,
-		courseName => $rename_oldCourseID,
+		%WeBWorK::SeedCE, courseName => $rename_oldCourseID,
 	});
 ######################################################
 ## Create strings confirming title and institution change
 ######################################################
 	# connect to database to get old title and institution
-	my $dbLayoutName = $ce->{dbLayoutName};
-	my $db = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
-	my $oldDB =new WeBWorK::DB($ce2->{dbLayouts}->{$dbLayoutName});
-	my $rename_oldCourseTitle = $oldDB->getSettingValue('courseTitle')//'""';
-	my $rename_oldCourseInstitution = $oldDB->getSettingValue('courseInstitution')//'""';
+	my $dbLayoutName                = $ce->{dbLayoutName};
+	my $db                          = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
+	my $oldDB                       = new WeBWorK::DB($ce2->{dbLayouts}->{$dbLayoutName});
+	my $rename_oldCourseTitle       = $oldDB->getSettingValue('courseTitle')       // '""';
+	my $rename_oldCourseInstitution = $oldDB->getSettingValue('courseInstitution') // '""';
 
-	my ($change_course_title_str, $change_course_institution_str)=("");
-	if ( $rename_newCourseTitle_checkbox) {
-		$change_course_title_str =$r->maketext("Change title from [_1] to [_2]", $rename_oldCourseTitle, $rename_newCourseTitle);
+	my ($change_course_title_str, $change_course_institution_str) = ("");
+	if ($rename_newCourseTitle_checkbox) {
+		$change_course_title_str =
+			$r->maketext("Change title from [_1] to [_2]", $rename_oldCourseTitle, $rename_newCourseTitle);
 	}
-	if ( $rename_newCourseInstitution_checkbox) {
-		$change_course_institution_str=$r->maketext("Change course institution from [_1] to [_2]", $rename_oldCourseInstitution, $rename_newCourseInstitution);
+	if ($rename_newCourseInstitution_checkbox) {
+		$change_course_institution_str = $r->maketext("Change course institution from [_1] to [_2]",
+			$rename_oldCourseInstitution, $rename_newCourseInstitution);
 	}
 
 #############################################################################
-# If we are only changing the title or institution we can cut this short
+	# If we are only changing the title or institution we can cut this short
 #############################################################################
-	unless ($rename_newCourseID_checkbox) {  # in this case do not change course ID
-		print CGI::start_form(-method=>"POST", -action=>$r->uri);
+	unless ($rename_newCourseID_checkbox) {    # in this case do not change course ID
+		print CGI::start_form(-method => "POST", -action => $r->uri);
 		print $self->hidden_authen_fields;
 		print $self->hidden_fields("subDisplay");
-		print $self->hidden_fields(qw/rename_oldCourseID rename_newCourseID
-		  rename_newCourseTitle rename_newCourseInstitution
-		  rename_newCourseID_checkbox rename_newCourseInstitution_checkbox
-		  rename_newCourseTitle_checkbox /);
-		print CGI::hidden(-name=>"rename_oldCourseTitle",
-					  -default=>$rename_oldCourseTitle,
-		              -id=>"hidden_rename_oldCourseTitle");
-		print CGI::hidden(-name=>"rename_oldCourseInstitution",
-		              -default=>$rename_oldCourseInstitution,
-		              -id=>"hidden_rename_oldCourseInstitution");
+		print $self->hidden_fields(
+			qw/rename_oldCourseID rename_newCourseID
+				rename_newCourseTitle rename_newCourseInstitution
+				rename_newCourseID_checkbox rename_newCourseInstitution_checkbox
+				rename_newCourseTitle_checkbox /
+		);
+		print CGI::hidden(
+			-name    => "rename_oldCourseTitle",
+			-default => $rename_oldCourseTitle,
+			-id      => "hidden_rename_oldCourseTitle"
+		);
+		print CGI::hidden(
+			-name    => "rename_oldCourseInstitution",
+			-default => $rename_oldCourseInstitution,
+			-id      => "hidden_rename_oldCourseInstitution"
+		);
 
-		print CGI::div({style=>"text-align: left"},
-			    CGI::hr(),
-			    CGI::h4($r->maketext("Make these changes in  course:")." $rename_oldCourseID"),
-			    CGI::p($change_course_title_str),
-			    CGI::p($change_course_institution_str),
-				CGI::submit({
-					   	name => "decline_retitle_course",
-					   	value => $r->maketext("Don't make changes"),
-					   	class => 'btn btn-primary'
-				   	}),
-				"&nbsp;",
-				CGI::submit({
-					   	name => "confirm_retitle_course",
-					   	value => $r->maketext("Make changes"),
-					   	class => 'btn btn-primary'
-					}) ,
-			    CGI::hr(),
-			);
-		 print CGI::end_form();
-         return;
+		print CGI::div(
+			{ style => "text-align: left" },
+			CGI::hr(),
+			CGI::h4($r->maketext("Make these changes in  course:") . " $rename_oldCourseID"),
+			CGI::p($change_course_title_str),
+			CGI::p($change_course_institution_str),
+			CGI::submit({
+				name  => "decline_retitle_course",
+				value => $r->maketext("Don't make changes"),
+				class => 'btn btn-primary'
+			}),
+			"&nbsp;",
+			CGI::submit({
+				name  => "confirm_retitle_course",
+				value => $r->maketext("Make changes"),
+				class => 'btn btn-primary'
+			}),
+			CGI::hr(),
+		);
+		print CGI::end_form();
+		return;
 	}
 
 #############################################################################
-# Check database
+	# Check database
 #############################################################################
 
-	my ($tables_ok,$dbStatus);
-	if ($ce2->{dbLayoutName} ) {
-	     my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
-	    ($tables_ok,$dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
+	my ($tables_ok, $dbStatus);
+	if ($ce2->{dbLayoutName}) {
+		my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce => $ce2);
+		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
 		if ($r->param("upgrade_course_tables")) {
-			my @schema_table_names = keys %$dbStatus;  # update tables missing from database;
-			my @tables_to_create = grep {$dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A} @schema_table_names;
-			my @tables_to_alter  = grep {$dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B} @schema_table_names;
+			my @schema_table_names = keys %$dbStatus;    # update tables missing from database;
+			my @tables_to_create =
+				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A } @schema_table_names;
+			my @tables_to_alter =
+				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B }
+				@schema_table_names;
 			my $msg = $CIchecker->updateCourseTables($rename_oldCourseID, [@tables_to_create]);
 			foreach my $table_name (@tables_to_alter) {
 				$msg .= $CIchecker->updateTableFields($rename_oldCourseID, $table_name);
@@ -1151,8 +1152,7 @@ sub rename_course_confirm {
 			print CGI::p({ class => 'text-success fw-bold' }, $msg);
 
 		}
- 		($tables_ok,$dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
-
+		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
 
 		# print db status
 
@@ -1180,50 +1180,56 @@ sub rename_course_confirm {
 				$r->maketext("Schema and database field definitions do not agree")
 			),
 		);
-		my $all_tables_ok=1;
-		my $extra_database_tables=0;
-		my $extra_database_fields=0;
-		my $str=CGI::h4($r->maketext("Report on database structure for course [_1]:",  $rename_oldCourseID)).CGI::br();
+		my $all_tables_ok         = 1;
+		my $extra_database_tables = 0;
+		my $extra_database_fields = 0;
+		my $str =
+			CGI::h4($r->maketext("Report on database structure for course [_1]:", $rename_oldCourseID)) . CGI::br();
 		foreach my $table (sort keys %$dbStatus) {
-		    my $table_status = $dbStatus->{$table}->[0];
-			$str .= CGI::b($table).': '. $msg{ $table_status } . CGI::br();
+			my $table_status = $dbStatus->{$table}->[0];
+			$str .= CGI::b($table) . ': ' . $msg{$table_status} . CGI::br();
 
-			CASE: {
+		CASE: {
 				$table_status == WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B
-					&& do{ last CASE;
+					&& do {
+						last CASE;
 					};
 				$table_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A
-					&& do{
-						   $all_tables_ok = 0; last CASE;
+					&& do {
+						$all_tables_ok = 0;
+						last CASE;
 					};
 				$table_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B
-					&& do{
-						   $extra_database_tables = 1; last CASE;
+					&& do {
+						$extra_database_tables = 1;
+						last CASE;
 					};
 				$table_status == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B
-					&& do{
-					    my %fieldInfo = %{ $dbStatus->{$table}->[1] };
+					&& do {
+						my %fieldInfo = %{ $dbStatus->{$table}->[1] };
 						foreach my $key (keys %fieldInfo) {
-						    my $field_status = $fieldInfo{$key}->[0];
-						    CASE2: {
-						    	$field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B
-						    		&& do{
-						    		   $extra_database_fields = 1; last CASE2;
-						    		};
-						    	$field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A
-						    		&& do{
-						    		   $all_tables_ok=0; last CASE2;
-						    		};
-						    }
-							$str .= CGI::br()."\n&nbsp;&nbsp; $key => ". $msg2{$field_status };
+							my $field_status = $fieldInfo{$key}->[0];
+						CASE2: {
+								$field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B
+								&& do {
+									$extra_database_fields = 1;
+									last CASE2;
+								};
+								$field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A
+								&& do {
+									$all_tables_ok = 0;
+									last CASE2;
+								};
+							}
+							$str .= CGI::br() . "\n&nbsp;&nbsp; $key => " . $msg2{$field_status};
 						}
 					};
 			}
-			$str.=CGI::br();
+			$str .= CGI::br();
 
 		}
 #############################################################################
-# Report on databases
+		# Report on databases
 #############################################################################
 
 		print CGI::p($str);
@@ -1259,7 +1265,7 @@ sub rename_course_confirm {
 		}
 
 #############################################################################
-# Check directories
+		# Check directories
 #############################################################################
 
 		my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories($ce2);
@@ -1271,118 +1277,131 @@ sub rename_course_confirm {
 			);
 
 #############################################################################
-# Print form for choosing next action.
+		# Print form for choosing next action.
 #############################################################################
 
-
-
-		print CGI::start_form(-method=>"POST", -action=>$r->uri);
+		print CGI::start_form(-method => "POST", -action => $r->uri);
 		print $self->hidden_authen_fields;
 		print $self->hidden_fields("subDisplay");
-		print $self->hidden_fields(qw/rename_oldCourseID rename_newCourseID
-		  rename_newCourseTitle rename_newCourseInstitution
-		  rename_newCourseID_checkbox rename_newCourseInstitution_checkbox
-		  rename_newCourseTitle_checkbox /);
-		print CGI::hidden(-name=>"rename_oldCourseTitle",
-					  -default=>$rename_oldCourseTitle,
-		              -id=>"hidden_rename_oldCourseTitle");
-		print CGI::hidden(-name=>"rename_oldCourseInstitution",
-		              -default=>$rename_oldCourseInstitution,
-		              -id=>"hidden_rename_oldCourseInstitution");
+		print $self->hidden_fields(
+			qw/rename_oldCourseID rename_newCourseID
+				rename_newCourseTitle rename_newCourseInstitution
+				rename_newCourseID_checkbox rename_newCourseInstitution_checkbox
+				rename_newCourseTitle_checkbox /
+		);
+		print CGI::hidden(
+			-name    => "rename_oldCourseTitle",
+			-default => $rename_oldCourseTitle,
+			-id      => "hidden_rename_oldCourseTitle"
+		);
+		print CGI::hidden(
+			-name    => "rename_oldCourseInstitution",
+			-default => $rename_oldCourseInstitution,
+			-id      => "hidden_rename_oldCourseInstitution"
+		);
 
+		# grab some values we'll need
+		# fail if the source course does not exist
 
-			# grab some values we'll need
-            # fail if the source course does not exist
-
-
-
-		if ($all_tables_ok && $directories_ok ) { # no missing tables or missing fields or directories
-			print CGI::p({style=>"text-align: center"},
-			    CGI::hr(),
-			    CGI::h4($r->maketext("Rename [_1] to [_2]", $rename_oldCourseID, $rename_newCourseID)),
-			    CGI::div($change_course_title_str),
-			    CGI::div($change_course_institution_str),
+		if ($all_tables_ok && $directories_ok) {    # no missing tables or missing fields or directories
+			print CGI::p(
+				{ style => "text-align: center" },
+				CGI::hr(),
+				CGI::h4($r->maketext("Rename [_1] to [_2]", $rename_oldCourseID, $rename_newCourseID)),
+				CGI::div($change_course_title_str),
+				CGI::div($change_course_institution_str),
 				CGI::submit({
-						name => "decline_rename_course",
-						value => $r->maketext("Don't rename"),
-						class => 'btn btn-primary'
-					}),
+					name  => "decline_rename_course",
+					value => $r->maketext("Don't rename"),
+					class => 'btn btn-primary'
+				}),
 				"&nbsp;",
 				CGI::submit({
-						name => "confirm_rename_course",
-						value => $r->maketext("Rename"),
-						class => 'btn btn-primary'
-					}),
+					name  => "confirm_rename_course",
+					value => $r->maketext("Rename"),
+					class => 'btn btn-primary'
+				}),
 			);
-		} elsif(  $directories_ok  ) {
-			print CGI::p({style=>"text-align: center"},
+		} elsif ($directories_ok) {
+			print CGI::p(
+				{ style => "text-align: center" },
 				CGI::submit({
-						name => "decline_rename_course",
-					   	-value => $r->maketext("Don't rename"),
-						class => 'btn btn-primary'
-					}),
+					name   => "decline_rename_course",
+					-value => $r->maketext("Don't rename"),
+					class  => 'btn btn-primary'
+				}),
 				"&nbsp;",
 				CGI::submit({
-						name => "upgrade_course_tables",
-					   	value => $r->maketext("Upgrade Course Tables"),
-						class => 'btn btn-primary'
-					}),
+					name  => "upgrade_course_tables",
+					value => $r->maketext("Upgrade Course Tables"),
+					class => 'btn btn-primary'
+				}),
 			);
-		} else  {
-			print CGI::p({style=>"text-align: center"},
+		} else {
+			print CGI::p(
+				{ style => "text-align: center" },
 				CGI::submit({
-						name => "decline_rename_course",
-					   	-value => $r->maketext("Don't rename"),
-						class => 'btn btn-primary'
-					}),
-				CGI::br(),$r->maketext("Directory structure needs to be repaired manually before renaming.")
+					name   => "decline_rename_course",
+					-value => $r->maketext("Don't rename"),
+					class  => 'btn btn-primary'
+				}),
+				CGI::br(),
+				$r->maketext("Directory structure needs to be repaired manually before renaming.")
 			);
 		}
 		print CGI::end_form();
 	}
 }
+
 sub rename_course_validate {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 
-	my $rename_oldCourseID              = $r->param("rename_oldCourseID")     || "";
-	my $rename_newCourseID              = $r->param("rename_newCourseID")     || "";
-	my $rename_newCourseID_checkbox     = $r->param("rename_newCourseID_checkbox")   || "";  ;
+	my $rename_oldCourseID          = $r->param("rename_oldCourseID")          || "";
+	my $rename_newCourseID          = $r->param("rename_newCourseID")          || "";
+	my $rename_newCourseID_checkbox = $r->param("rename_newCourseID_checkbox") || "";
 
-	my $rename_newCourseTitle           = $r->param("rename_newCourseTitle")     || "";
-	my $rename_newCourseTitle_checkbox  = $r->param("rename_newCourseTitle_checkbox")  || ""   ;
- 	my $rename_newCourseInstitution           = $r->param("rename_newCourseInstitution")     || "";
-	my $rename_newCourseInstitution_checkbox     = $r->param("rename_newCourseInstitution_checkbox")  || ""  ;
+	my $rename_newCourseTitle                = $r->param("rename_newCourseTitle")                || "";
+	my $rename_newCourseTitle_checkbox       = $r->param("rename_newCourseTitle_checkbox")       || "";
+	my $rename_newCourseInstitution          = $r->param("rename_newCourseInstitution")          || "";
+	my $rename_newCourseInstitution_checkbox = $r->param("rename_newCourseInstitution_checkbox") || "";
 
 	my @errors;
 
 	if ($rename_oldCourseID eq "") {
 		push @errors, $r->maketext("You must select a course to rename.");
 	}
-	if ($rename_newCourseID eq "" and $rename_newCourseID_checkbox eq 'on' ) {
+	if ($rename_newCourseID eq "" and $rename_newCourseID_checkbox eq 'on') {
 		push @errors, $r->maketext("You must specify a new name for the course.");
 	}
 	if ($rename_oldCourseID eq $rename_newCourseID and $rename_newCourseID_checkbox eq 'on') {
 		push @errors, $r->maketext("Can't rename to the same name.");
 	}
-	if ($rename_newCourseID_checkbox eq 'on' && length($rename_newCourseID) > $ce->{maxCourseIdLength} ) {
+	if ($rename_newCourseID_checkbox eq 'on' && length($rename_newCourseID) > $ce->{maxCourseIdLength}) {
 		push @errors, $r->maketext("Course ID cannot exceed [_1] characters.", $ce->{maxCourseIdLength});
 	}
-	unless ($rename_newCourseID =~ /^[\w-]*$/) { # regex copied from CourseAdministration.pm
+	unless ($rename_newCourseID =~ /^[\w-]*$/) {    # regex copied from CourseAdministration.pm
 		push @errors, $r->maketext("Course ID may only contain letters, numbers, hyphens, and underscores.");
 	}
 	if (grep { $rename_newCourseID eq $_ } listCourses($ce)) {
-		push @errors, $r->maketext("A course with ID [_1] already exists.",$rename_newCourseID);
+		push @errors, $r->maketext("A course with ID [_1] already exists.", $rename_newCourseID);
 	}
-	if ($rename_newCourseTitle eq "" and $rename_newCourseTitle_checkbox eq 'on')  {
+	if ($rename_newCourseTitle eq "" and $rename_newCourseTitle_checkbox eq 'on') {
 		push @errors, $r->maketext("You must specify a new title for the course.");
 	}
-	if ($rename_newCourseInstitution eq "" and $rename_newCourseInstitution_checkbox eq 'on')  {
+	if ($rename_newCourseInstitution eq "" and $rename_newCourseInstitution_checkbox eq 'on') {
 		push @errors, $r->maketext("You must specify a new institution for the course.");
 	}
-	unless ($rename_newCourseID or $rename_newCourseID_checkbox or $rename_newCourseTitle_checkbox or $rename_newCourseInstitution_checkbox) {
-		push @errors, $r->maketext("No changes specified.  You must mark the checkbox of the item(s) to be changed and enter the change data.");
+	unless ($rename_newCourseID
+		or $rename_newCourseID_checkbox
+		or $rename_newCourseTitle_checkbox
+		or $rename_newCourseInstitution_checkbox)
+	{
+		push @errors,
+			$r->maketext(
+			"No changes specified.  You must mark the checkbox of the item(s) to be changed and enter the change data."
+			);
 	}
 
 	return @errors;
@@ -1390,95 +1409,96 @@ sub rename_course_validate {
 
 sub do_retitle_course {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
+	my $db     = $r->db;
 	#my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	my $rename_oldCourseID           = $r->param("rename_oldCourseID")     || "";
-#	my $rename_newCourseID           = $r->param("rename_newCourseID")     || "";
-#   There is no new course, but there are new titles and institutions
-	my $rename_newCourseTitle         = $r->param("rename_newCourseTitle")     || "";
-	my $rename_newCourseInstitution   = $r->param("rename_newCourseInstitution")     || "";
-	my $rename_oldCourseTitle         = $r->param("rename_oldCourseTitle")     || "";
-	my $rename_oldCourseInstitution   = $r->param("rename_oldCourseInstitution")     || "";
-	my $title_checkbox                = $r->param("rename_newCourseTitle_checkbox")  || ""   ;
-	my $institution_checkbox          = $r->param("rename_newCourseInstitution_checkbox")  || ""  ;
+	my $rename_oldCourseID = $r->param("rename_oldCourseID") || "";
+	#	my $rename_newCourseID           = $r->param("rename_newCourseID")     || "";
+	#   There is no new course, but there are new titles and institutions
+	my $rename_newCourseTitle       = $r->param("rename_newCourseTitle")                || "";
+	my $rename_newCourseInstitution = $r->param("rename_newCourseInstitution")          || "";
+	my $rename_oldCourseTitle       = $r->param("rename_oldCourseTitle")                || "";
+	my $rename_oldCourseInstitution = $r->param("rename_oldCourseInstitution")          || "";
+	my $title_checkbox              = $r->param("rename_newCourseTitle_checkbox")       || "";
+	my $institution_checkbox        = $r->param("rename_newCourseInstitution_checkbox") || "";
 
-#	$rename_newCourseID = $rename_oldCourseID ;  #since they are the same FIXME
+	#	$rename_newCourseID = $rename_oldCourseID ;  #since they are the same FIXME
 	# define new courseTitle and new courseInstitution
 	my %optional_arguments = ();
-	$optional_arguments{courseTitle}       = $rename_newCourseTitle if $title_checkbox;
+	$optional_arguments{courseTitle}       = $rename_newCourseTitle       if $title_checkbox;
 	$optional_arguments{courseInstitution} = $rename_newCourseInstitution if $institution_checkbox;
 
 	my $ce2;
-	my %dbOptions =();
-	eval {
-		$ce2 = new WeBWorK::CourseEnvironment({
-			%WeBWorK::SeedCE,
-			courseName => $rename_oldCourseID,
-		});
-	};
+	my %dbOptions = ();
+	eval { $ce2 = new WeBWorK::CourseEnvironment({ %WeBWorK::SeedCE, courseName => $rename_oldCourseID, }); };
 	warn "failed to create environment in do_retitle_course $@" if $@;
 
-	eval {
-		retitleCourse(
-			courseID      => $rename_oldCourseID,
-			ce            => $ce2,
-			dbOptions     => \%dbOptions,
-			%optional_arguments,
-		);
-	};
+	eval { retitleCourse(courseID => $rename_oldCourseID, ce => $ce2, dbOptions => \%dbOptions,
+			%optional_arguments,); };
 	if ($@) {
 		my $error = $@;
 		print CGI::div(
 			{ class => 'alert alert-danger p-1 mb-2' },
-			CGI::p($r->maketext("An error occured while changing the title of the course [_1].", $rename_oldCourseID)),
+			CGI::p($r->maketext(
+				"An error occured while changing the title of the course [_1].", $rename_oldCourseID)),
 			CGI::div({ class => 'font-monospace' }, CGI::escapeHTML($error)),
 		);
 	} else {
 		print CGI::div(
 			{ class => 'alert alert-success p-1 mb-2' },
-			($title_checkbox) ? CGI::div($r->maketext("The title of the course [_1] has been changed from [_2] to [_3]",$rename_oldCourseID, $rename_oldCourseTitle, $rename_newCourseTitle))
-			:'',
-			($institution_checkbox) ? CGI::div($r->maketext("The institution associated with the course [_1] has been changed from [_2] to [_3]",$rename_oldCourseID, $rename_oldCourseInstitution, $rename_newCourseInstitution))
-			:'',
+			($title_checkbox) ? CGI::div($r->maketext(
+				"The title of the course [_1] has been changed from [_2] to [_3]",
+				$rename_oldCourseID, $rename_oldCourseTitle, $rename_newCourseTitle
+			)) : '',
+			($institution_checkbox) ? CGI::div($r->maketext(
+				"The institution associated with the course [_1] has been changed from [_2] to [_3]",
+				$rename_oldCourseID, $rename_oldCourseInstitution, $rename_newCourseInstitution
+			)) : '',
 		);
-		 writeLog($ce, "hosted_courses", join("\t",
-	    	"\t",$r->maketext("Retitled"),
-	    	"",
-	    	"",
-		$r->maketext("[_1] title and institution changed from [_2] to [_3] and from [_4] to [_5]",$rename_oldCourseID, $rename_oldCourseTitle, $rename_newCourseTitle, $rename_oldCourseInstitution, $rename_newCourseInstitution)
-	    ));
-		my $oldCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
-			courseID => $rename_oldCourseID);
+		writeLog(
+			$ce,
+			"hosted_courses",
+			join(
+				"\t", "\t",
+				$r->maketext("Retitled"),
+				"", "",
+				$r->maketext(
+					"[_1] title and institution changed from [_2] to [_3] and from [_4] to [_5]",
+					$rename_oldCourseID,          $rename_oldCourseTitle, $rename_newCourseTitle,
+					$rename_oldCourseInstitution, $rename_newCourseInstitution
+				)
+			)
+		);
+		my $oldCoursePath =
+			$urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $rename_oldCourseID);
 		my $oldCourseURL = $self->systemLink($oldCoursePath, authen => 0);
-		print CGI::div({style=>"text-align: center"},
-			CGI::a({href=>$oldCourseURL}, $r->maketext("Log into [_1]", $rename_oldCourseID)),
+		print CGI::div(
+			{ style => "text-align: center" },
+			CGI::a({ href => $oldCourseURL }, $r->maketext("Log into [_1]", $rename_oldCourseID)),
 		);
 	}
 }
 
 sub do_rename_course {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
+	my $db     = $r->db;
 	#my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	my $rename_oldCourseID            = $r->param("rename_oldCourseID")     || "";
-	my $rename_newCourseID            = $r->param("rename_newCourseID")     || "";
-	my $rename_newCourseTitle         = $r->param("rename_newCourseTitle")     || "";
-	my $rename_newCourseInstitution   = $r->param("rename_newCourseInstitution")     || "";
-	my $title_checkbox                = $r->param("rename_newCourseTitle_checkbox")  || ""   ;
-	my $institution_checkbox          = $r->param("rename_newCourseInstitution_checkbox")  || ""  ;
-
+	my $rename_oldCourseID          = $r->param("rename_oldCourseID")                   || "";
+	my $rename_newCourseID          = $r->param("rename_newCourseID")                   || "";
+	my $rename_newCourseTitle       = $r->param("rename_newCourseTitle")                || "";
+	my $rename_newCourseInstitution = $r->param("rename_newCourseInstitution")          || "";
+	my $title_checkbox              = $r->param("rename_newCourseTitle_checkbox")       || "";
+	my $institution_checkbox        = $r->param("rename_newCourseInstitution_checkbox") || "";
 
 	my $ce2 = new WeBWorK::CourseEnvironment({
-		%WeBWorK::SeedCE,
-		courseName => $rename_oldCourseID,
+		%WeBWorK::SeedCE, courseName => $rename_oldCourseID,
 	});
 
 	my $dbLayoutName = $ce->{dbLayoutName};
@@ -1487,18 +1507,20 @@ sub do_rename_course {
 	my %optional_arguments = ();
 	my ($title_message, $institution_message);
 	if ($title_checkbox) {
-		$optional_arguments{courseTitle}       = $rename_newCourseTitle;
-		$title_message = $r->maketext("The title of the course [_1] is now [_2]", $rename_newCourseID, $rename_newCourseTitle) ,
+		$optional_arguments{courseTitle} = $rename_newCourseTitle;
+		$title_message =
+			$r->maketext("The title of the course [_1] is now [_2]", $rename_newCourseID, $rename_newCourseTitle),;
 
 	} else {
 
 	}
 	if ($institution_checkbox) {
 		$optional_arguments{courseInstitution} = $rename_newCourseInstitution;
-		$institution_message = $r->maketext("The institution associated with the course [_1] is now [_2]", $rename_newCourseID, $rename_newCourseInstitution),
+		$institution_message = $r->maketext("The institution associated with the course [_1] is now [_2]",
+			$rename_newCourseID, $rename_newCourseInstitution),
+			;
 
 	}
-
 
 	# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
 	# below this line, we would grab values from getopt and put them in this hash
@@ -1507,10 +1529,10 @@ sub do_rename_course {
 
 	eval {
 		renameCourse(
-			courseID      => $rename_oldCourseID,
-			ce            => $ce2,
-			dbOptions     => \%dbOptions,
-			newCourseID   => $rename_newCourseID,
+			courseID    => $rename_oldCourseID,
+			ce          => $ce2,
+			dbOptions   => \%dbOptions,
+			newCourseID => $rename_newCourseID,
 			%optional_arguments,
 		);
 	};
@@ -1518,7 +1540,10 @@ sub do_rename_course {
 		my $error = $@;
 		print CGI::div(
 			{ class => 'alert alert-danger p-1 mb-2' },
-			CGI::p( $r->maketext("An error occured while renaming the course [_1] to [_2]:", $rename_oldCourseID, $rename_newCourseID)),
+			CGI::p($r->maketext(
+				"An error occured while renaming the course [_1] to [_2]:", $rename_oldCourseID,
+				$rename_newCourseID
+			)),
 			CGI::div({ class => 'font-monospace' }, CGI::escapeHTML($error)),
 		);
 	} else {
@@ -1526,19 +1551,18 @@ sub do_rename_course {
 			{ class => 'alert alert-success p-1 mb-2' },
 			CGI::p($title_message),
 			CGI::p($institution_message),
-			CGI::p($r->maketext("Successfully renamed the course [_1] to [_2]", $rename_oldCourseID, $rename_newCourseID)),
+			CGI::p($r->maketext(
+				"Successfully renamed the course [_1] to [_2]",
+				$rename_oldCourseID, $rename_newCourseID
+			)),
 		);
-		 writeLog($ce, "hosted_courses", join("\t",
-	    	"\tRenamed",
-	    	"",
-	    	"",
-	    	"$rename_oldCourseID to $rename_newCourseID",
-	    ));
-		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
-			courseID => $rename_newCourseID);
+		writeLog($ce, "hosted_courses", join("\t", "\tRenamed", "", "", "$rename_oldCourseID to $rename_newCourseID",));
+		my $newCoursePath =
+			$urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $rename_newCourseID);
 		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
-		print CGI::div({style=>"text-align: center"},
-			CGI::a({href=>$newCourseURL}, $r->maketext("Log into [_1]", $rename_newCourseID)),
+		print CGI::div(
+			{ style => "text-align: center" },
+			CGI::a({ href => $newCourseURL }, $r->maketext("Log into [_1]", $rename_newCourseID)),
 		);
 	}
 }
@@ -1546,7 +1570,7 @@ sub do_rename_course {
 ################################################################################
 
 my %coursesData;
-sub byLoginActivity {$coursesData{$a}{'epoch_modify_time'} <=> $coursesData{$b}{'epoch_modify_time'}}
+sub byLoginActivity { $coursesData{$a}{'epoch_modify_time'} <=> $coursesData{$b}{'epoch_modify_time'} }
 
 sub delete_course_form {
 	my ($self) = @_;
@@ -1635,7 +1659,8 @@ sub delete_course_form {
 				)
 			)
 		} (
-			[ alphabetically => $r->maketext('alphabetically') ], [ last_login => $r->maketext('by last login date') ]
+			[ alphabetically => $r->maketext('alphabetically') ],
+			[ last_login     => $r->maketext('by last login date') ]
 		),
 	);
 
@@ -1696,25 +1721,24 @@ sub delete_course_form {
 
 sub delete_course_validate {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 	#my $db = $r->db;
 	#my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	my $delete_courseID     = $r->param("delete_courseID")     || "";
+	my $delete_courseID = $r->param("delete_courseID") || "";
 
 	my @errors;
 
 	if ($delete_courseID eq "") {
-		push @errors,  $r->maketext("You must specify a course name.");
+		push @errors, $r->maketext("You must specify a course name.");
 	} elsif ($delete_courseID eq $urlpath->arg("courseID")) {
-		push @errors,  $r->maketext("You cannot delete the course you are currently using.");
+		push @errors, $r->maketext("You cannot delete the course you are currently using.");
 	}
 
 	my $ce2 = new WeBWorK::CourseEnvironment({
-		%WeBWorK::SeedCE,
-		courseName => $delete_courseID,
+		%WeBWorK::SeedCE, courseName => $delete_courseID,
 	});
 
 	return @errors;
@@ -1762,17 +1786,16 @@ sub delete_course_confirm {
 
 sub do_delete_course {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
+	my $db     = $r->db;
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 
-	my $delete_courseID     = $r->param("delete_courseID")     || "";
+	my $delete_courseID = $r->param("delete_courseID") || "";
 
 	my $ce2 = new WeBWorK::CourseEnvironment({
-		%WeBWorK::SeedCE,
-		courseName => $delete_courseID,
+		%WeBWorK::SeedCE, courseName => $delete_courseID,
 	});
 
 	# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
@@ -1780,13 +1803,7 @@ sub do_delete_course {
 	# but for now the hash can remain empty
 	my %dbOptions;
 
-	eval {
-		deleteCourse(
-			courseID => $delete_courseID,
-			ce => $ce2,
-			dbOptions => \%dbOptions,
-		);
-	};
+	eval { deleteCourse(courseID => $delete_courseID, ce => $ce2, dbOptions => \%dbOptions,); };
 
 	if ($@) {
 		my $error = $@;
@@ -1796,18 +1813,18 @@ sub do_delete_course {
 			CGI::div({ class => 'font-monospace' }, CGI::escapeHTML($error)),
 		);
 	} else {
-	    # mark the contact person in the admin course as dropped.
-	    # find the contact person for the course by searching the admin classlist.
-	    my @contacts = grep /_$delete_courseID$/,  $db->listUsers;
-	    if (@contacts) {
-			die "Incorrect number of contacts for the course $delete_courseID". join(" ", @contacts) if @contacts !=1;
+		# mark the contact person in the admin course as dropped.
+		# find the contact person for the course by searching the admin classlist.
+		my @contacts = grep /_$delete_courseID$/, $db->listUsers;
+		if (@contacts) {
+			die "Incorrect number of contacts for the course $delete_courseID" . join(" ", @contacts) if @contacts != 1;
 			#warn "contacts", join(" ", @contacts);
 			#my $composite_id = "${add_initial_userID}_${add_courseID}";
-			my $composite_id  = $contacts[0];
+			my $composite_id = $contacts[0];
 
 			# mark the contact person as dropped.
-			my $User = $db->getUser($composite_id);
-			my $status_name = 'Drop';
+			my $User         = $db->getUser($composite_id);
+			my $status_name  = 'Drop';
 			my $status_value = ($ce->status_name_to_abbrevs($status_name))[0];
 			$User->status($status_value);
 			$db->putUser($User);
@@ -1817,22 +1834,19 @@ sub do_delete_course {
 			{ class => 'alert alert-success p-1 mb-2' },
 			$r->maketext("Successfully deleted the course [_1].", $delete_courseID),
 		);
-		 writeLog($ce, "hosted_courses", join("\t",
-	    	"\tDeleted",
-	    	"",
-	    	"",
-	    	$delete_courseID,
-	    ));
-		print CGI::start_form(-method=>"POST", -action=>$r->uri);
+		writeLog($ce, "hosted_courses", join("\t", "\tDeleted", "", "", $delete_courseID,));
+		print CGI::start_form(-method => "POST", -action => $r->uri);
 		print $self->hidden_authen_fields;
 		print $self->hidden_fields("subDisplay");
 
-		print CGI::p({style=>"text-align: center"},
+		print CGI::p(
+			{ style => "text-align: center" },
 			CGI::submit({
-					name => "decline_delete_course",
-					value => $r->maketext("OK"),
-					class => 'btn btn-primary'
-				}));
+				name  => "decline_delete_course",
+				value => $r->maketext("OK"),
+				class => 'btn btn-primary'
+			})
+		);
 
 		print CGI::end_form();
 	}
@@ -1852,7 +1866,7 @@ sub archive_course_form {
 			. 'application.'
 	));
 
-	my @courseIDs  = listCourses($ce);
+	my @courseIDs = listCourses($ce);
 
 	unless (@courseIDs) {
 		print CGI::p($r->maketext('No courses found'));
@@ -1893,8 +1907,8 @@ sub archive_course_form {
 	if ($archive_listing_format eq 'last_login') {
 		# This should be an empty array except for the model course
 		@noLoginLogIDs = sort { lc($a) cmp lc($b) } @noLoginLogIDs;
-		@loginLogIDs = sort byLoginActivity @loginLogIDs; # oldest first
-		@courseIDs   = (@noLoginLogIDs, @loginLogIDs);
+		@loginLogIDs   = sort byLoginActivity @loginLogIDs;           # oldest first
+		@courseIDs     = (@noLoginLogIDs, @loginLogIDs);
 	} else {
 		# in this case we sort alphabetically
 		@courseIDs = sort { lc($a) cmp lc($b) } @courseIDs;
@@ -1932,7 +1946,8 @@ sub archive_course_form {
 				)
 			)
 		} (
-			[ alphabetically => $r->maketext('alphabetically') ], [ last_login => $r->maketext('by last login date') ]
+			[ alphabetically => $r->maketext('alphabetically') ],
+			[ last_login     => $r->maketext('by last login date') ]
 		),
 	);
 
@@ -2012,20 +2027,20 @@ sub archive_course_form {
 
 sub archive_course_validate {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 	#my $db = $r->db;
 	#my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	my @archive_courseIDs     = $r->param("archive_courseIDs");
-	@archive_courseIDs        = () unless @archive_courseIDs;
+	my @archive_courseIDs = $r->param("archive_courseIDs");
+	@archive_courseIDs = () unless @archive_courseIDs;
 	my @errors;
 	foreach my $archive_courseID (@archive_courseIDs) {
 		if ($archive_courseID eq "") {
-			push @errors,  $r->maketext("You must specify a course name.");
+			push @errors, $r->maketext("You must specify a course name.");
 		} elsif ($archive_courseID eq $urlpath->arg("courseID")) {
-			push @errors,  $r->maketext("You cannot archive the course you are currently using.");
+			push @errors, $r->maketext("You cannot archive the course you are currently using.");
 		}
 	}
 
@@ -2039,56 +2054,56 @@ sub archive_course_validate {
 
 sub archive_course_confirm {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 	#my $db = $r->db;
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 
-	print CGI::h2( $r->maketext("Archive Course"));
+	print CGI::h2($r->maketext("Archive Course"));
 
-	my $delete_course_flag   = $r->param("delete_course")        || "";
+	my $delete_course_flag = $r->param("delete_course") || "";
 
-	my @archive_courseIDs     = $r->param("archive_courseIDs");
-	@archive_courseIDs        = () unless @archive_courseIDs;
+	my @archive_courseIDs = $r->param("archive_courseIDs");
+	@archive_courseIDs = () unless @archive_courseIDs;
 	# if we are skipping a course remove one from
 	# the list of courses
 	if (defined $r->param("skip_archive_course")) {
-	  shift @archive_courseIDs;
+		shift @archive_courseIDs;
 	}
 
-	my $archive_courseID  = $archive_courseIDs[0];
+	my $archive_courseID = $archive_courseIDs[0];
 
 	my $ce2 = new WeBWorK::CourseEnvironment({
-		%WeBWorK::SeedCE,
-		courseName => $archive_courseID,
+		%WeBWorK::SeedCE, courseName => $archive_courseID,
 	});
 
-
-	my ($tables_ok,$dbStatus);
+	my ($tables_ok, $dbStatus);
 #############################################################################
-# Check database
+	# Check database
 #############################################################################
 	my %missing_fields;
-	if ($ce2->{dbLayoutName} ) {
-	    my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
-	    ($tables_ok,$dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
+	if ($ce2->{dbLayoutName}) {
+		my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce => $ce2);
+		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
 		if ($r->param("upgrade_course_tables")) {
-			my @schema_table_names = keys %$dbStatus;  # update tables missing from database;
-			my @tables_to_create = grep {$dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A} @schema_table_names;
-			my @tables_to_alter  = grep {$dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B} @schema_table_names;
+			my @schema_table_names = keys %$dbStatus;    # update tables missing from database;
+			my @tables_to_create =
+				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A } @schema_table_names;
+			my @tables_to_alter =
+				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B }
+				@schema_table_names;
 			my $msg = $CIchecker->updateCourseTables($archive_courseID, [@tables_to_create]);
 			foreach my $table_name (@tables_to_alter) {
 				$msg .= $CIchecker->updateTableFields($archive_courseID, $table_name);
 			}
 			print CGI::p({ class => 'text-success fw-bold' }, $msg);
 		}
-		if ($r->param("upgrade_course_tables") ) {
+		if ($r->param("upgrade_course_tables")) {
 
-			$CIchecker -> updateCourseDirectories();   # needs more error messages
+			$CIchecker->updateCourseDirectories();    # needs more error messages
 		}
- 		($tables_ok,$dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
-
+		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
 
 		# print db status
 
@@ -2116,50 +2131,55 @@ sub archive_course_confirm {
 				$r->maketext("Schema and database field definitions do not agree")
 			),
 		);
-		my $all_tables_ok=1;
-		my $extra_database_tables=0;
-		my $extra_database_fields=0;
-		my $str=CGI::h4($r->maketext("Report on database structure for course [_1]:", $archive_courseID)).CGI::br();
+		my $all_tables_ok         = 1;
+		my $extra_database_tables = 0;
+		my $extra_database_fields = 0;
+		my $str = CGI::h4($r->maketext("Report on database structure for course [_1]:", $archive_courseID)) . CGI::br();
 		foreach my $table (sort keys %$dbStatus) {
-		    my $table_status = $dbStatus->{$table}->[0];
-			$str .= CGI::b($table) .": ".  $msg{ $table_status } . CGI::br();
+			my $table_status = $dbStatus->{$table}->[0];
+			$str .= CGI::b($table) . ": " . $msg{$table_status} . CGI::br();
 
-			CASE: {
+		CASE: {
 				$table_status == WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B
-					&& do{ last CASE;
+					&& do {
+						last CASE;
 					};
 				$table_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A
-					&& do{
-						   $all_tables_ok = 0; last CASE;
+					&& do {
+						$all_tables_ok = 0;
+						last CASE;
 					};
 				$table_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B
-					&& do{
-						   $extra_database_tables = 1; last CASE;
+					&& do {
+						$extra_database_tables = 1;
+						last CASE;
 					};
 				$table_status == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B
-					&& do{
-					    my %fieldInfo = %{ $dbStatus->{$table}->[1] };
+					&& do {
+						my %fieldInfo = %{ $dbStatus->{$table}->[1] };
 						foreach my $key (keys %fieldInfo) {
-						    my $field_status = $fieldInfo{$key}->[0];
-						    CASE2: {
-						    	$field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B
-						    		&& do{
-						    		   $extra_database_fields = 1; last CASE2;
-						    		};
-						    	$field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A
-						    		&& do{
-						    		   $all_tables_ok=0; last CASE2;
-						    		};
-						    }
-							$str .= CGI::br()."\n&nbsp;&nbsp;$key => ". $msg2{$field_status };
+							my $field_status = $fieldInfo{$key}->[0];
+						CASE2: {
+								$field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B
+								&& do {
+									$extra_database_fields = 1;
+									last CASE2;
+								};
+								$field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A
+								&& do {
+									$all_tables_ok = 0;
+									last CASE2;
+								};
+							}
+							$str .= CGI::br() . "\n&nbsp;&nbsp;$key => " . $msg2{$field_status};
 						}
 					};
 			}
-			$str.=CGI::br();
+			$str .= CGI::br();
 
 		}
 #############################################################################
-# Report on databases
+		# Report on databases
 #############################################################################
 
 		print CGI::p($str);
@@ -2202,7 +2222,7 @@ sub archive_course_confirm {
 			);
 		}
 #############################################################################
-# Check directories and report
+		# Check directories and report
 #############################################################################
 
 		my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories($ce2);
@@ -2214,25 +2234,25 @@ sub archive_course_confirm {
 			);
 
 #############################################################################
-# Print form for choosing next action.
+		# Print form for choosing next action.
 #############################################################################
 
-		print CGI::start_form(-method=>"POST", -action=>$r->uri);
+		print CGI::start_form(-method => "POST", -action => $r->uri);
 		print $self->hidden_authen_fields;
 		print $self->hidden_fields("subDisplay");
 		print $self->hidden_fields(qw/delete_course/);
-		print CGI::hidden('archive_courseID', $archive_courseID);
-		print CGI::hidden('archive_courseIDs',@archive_courseIDs);
-			# grab some values we'll need
+		print CGI::hidden('archive_courseID',  $archive_courseID);
+		print CGI::hidden('archive_courseIDs', @archive_courseIDs);
+		# grab some values we'll need
 		my $course_dir   = $ce2->{courseDirs}{root};
 		my $archive_path = $ce2->{webworkDirs}{courses} . "/$archive_courseID.tar.gz";
-        # fail if the source course does not exist
+		# fail if the source course does not exist
 		unless (-e $course_dir) {
-			print CGI::p(  $r->maketext("[_1]: The directory for the course not found.",$archive_courseID));
+			print CGI::p($r->maketext("[_1]: The directory for the course not found.", $archive_courseID));
 		}
 
-		if ($all_tables_ok && $directories_ok ) { # no missing fields
-			# Warn about overwriting an existing archive
+		if ($all_tables_ok && $directories_ok) {    # no missing fields
+													# Warn about overwriting an existing archive
 			if (-e $archive_path and -w $archive_path) {
 				print CGI::p(
 					{ class => 'text-danger fw-bold' },
@@ -2245,52 +2265,57 @@ sub archive_course_confirm {
 				);
 			}
 			# archive execute button
-			print CGI::p({ style => "text-align: center" },
+			print CGI::p(
+				{ style => "text-align: center" },
 				CGI::submit({
-						name => "decline_archive_course",
-					   	value => $r->maketext("Stop Archiving"),
-						class => 'btn btn-primary'
-					}),
-				"&nbsp;",
-				scalar(@archive_courseIDs) > 1
-					? CGI::submit({
-							name => "skip_archive_course",
-							value => $r->maketext("Skip archiving this course"),
-							class => 'btn btn-primary'
-						}) . "&nbsp;"
-					: '',
-				CGI::submit({
-						name => "confirm_archive_course",
-					   	value => $r->maketext("Archive"),
-						class => 'btn btn-primary'
-					}) ,
-			);
-		} elsif( $directories_ok)  {
-			print CGI::p({style=>"text-align: center"},
-				CGI::submit({
-						name => "decline_archive_course",
-						-value => $r->maketext("Don't Archive"),
-						class => 'btn btn-primary'
-					}),
-				"&nbsp;",
-				CGI::submit({
-						name => "upgrade_course_tables",
-						value => $r->maketext("Upgrade Course Tables"),
-						class => 'btn btn-primary'
-					})
-			);
-		} else {
-			print CGI::p({style=>"text-align: center"},
-			CGI::br(),
-			$r->maketext("Directory structure needs to be repaired manually before archiving."),CGI::br(),
-			CGI::submit({
-					name => "decline_archive_course",
-				   	value => $r->maketext("Don't Archive"),
+					name  => "decline_archive_course",
+					value => $r->maketext("Stop Archiving"),
 					class => 'btn btn-primary'
 				}),
-			CGI::submit({
-					name => "upgrade_course_tables",
-				   	value => $r->maketext("Attempt to upgrade directories"),
+				"&nbsp;",
+				scalar(@archive_courseIDs) > 1
+				? CGI::submit({
+					name  => "skip_archive_course",
+					value => $r->maketext("Skip archiving this course"),
+					class => 'btn btn-primary'
+				})
+					. "&nbsp;"
+				: '',
+				CGI::submit({
+					name  => "confirm_archive_course",
+					value => $r->maketext("Archive"),
+					class => 'btn btn-primary'
+				}),
+			);
+		} elsif ($directories_ok) {
+			print CGI::p(
+				{ style => "text-align: center" },
+				CGI::submit({
+					name   => "decline_archive_course",
+					-value => $r->maketext("Don't Archive"),
+					class  => 'btn btn-primary'
+				}),
+				"&nbsp;",
+				CGI::submit({
+					name  => "upgrade_course_tables",
+					value => $r->maketext("Upgrade Course Tables"),
+					class => 'btn btn-primary'
+				})
+			);
+		} else {
+			print CGI::p(
+				{ style => "text-align: center" },
+				CGI::br(),
+				$r->maketext("Directory structure needs to be repaired manually before archiving."),
+				CGI::br(),
+				CGI::submit({
+					name  => "decline_archive_course",
+					value => $r->maketext("Don't Archive"),
+					class => 'btn btn-primary'
+				}),
+				CGI::submit({
+					name  => "upgrade_course_tables",
+					value => $r->maketext("Attempt to upgrade directories"),
 					class => 'btn btn-primary'
 				}),
 			);
@@ -2304,21 +2329,19 @@ sub archive_course_confirm {
 
 sub do_archive_course {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
+	my $db     = $r->db;
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 
-
-	my $delete_course_flag   = $r->param("delete_course")        || "";
-	my @archive_courseIDs     = $r->param("archive_courseIDs");
-	@archive_courseIDs        = () unless @archive_courseIDs;
+	my $delete_course_flag = $r->param("delete_course") || "";
+	my @archive_courseIDs  = $r->param("archive_courseIDs");
+	@archive_courseIDs = () unless @archive_courseIDs;
 	my $archive_courseID = $archive_courseIDs[0];
 
 	my $ce2 = new WeBWorK::CourseEnvironment({
-		%WeBWorK::SeedCE,
-		courseName => $archive_courseID,
+		%WeBWorK::SeedCE, courseName => $archive_courseID,
 	});
 
 	# Remove course specific temp files before archiving
@@ -2335,13 +2358,7 @@ sub do_archive_course {
 	# but for now the hash can remain empty
 	my %dbOptions;
 
-	eval {
-		archiveCourse(
-			courseID => $archive_courseID,
-			ce => $ce2,
-			dbOptions => \%dbOptions,
-		);
-	};
+	eval { archiveCourse(courseID => $archive_courseID, ce => $ce2, dbOptions => \%dbOptions,); };
 
 	if ($@) {
 		my $error = $@;
@@ -2351,25 +2368,12 @@ sub do_archive_course {
 			CGI::div({ class => 'font-monospace' }, CGI::escapeHTML($error)),
 		);
 	} else {
-		print CGI::div(
-			{ class => 'alert alert-success p-1 mb-2' },
-			$r->maketext("Successfully archived the course [_1].", $archive_courseID)
-		);
-		 writeLog($ce, "hosted_courses", join("\t",
-	    	"\tarchived",
-	    	"",
-	    	"",
-	    	$archive_courseID,
-	    ));
+		print CGI::div({ class => 'alert alert-success p-1 mb-2' },
+			$r->maketext("Successfully archived the course [_1].", $archive_courseID));
+		writeLog($ce, "hosted_courses", join("\t", "\tarchived", "", "", $archive_courseID,));
 
 		if ($delete_course_flag) {
-			eval {
-				deleteCourse(
-					courseID => $archive_courseID,
-					ce => $ce2,
-					dbOptions => \%dbOptions,
-				);
-			};
+			eval { deleteCourse(courseID => $archive_courseID, ce => $ce2, dbOptions => \%dbOptions,); };
 
 			if ($@) {
 				my $error = $@;
@@ -2381,16 +2385,17 @@ sub do_archive_course {
 			} else {
 				# mark the contact person in the admin course as dropped.
 				# find the contact person for the course by searching the admin classlist.
-				my @contacts = grep /_$archive_courseID$/,  $db->listUsers;
+				my @contacts = grep /_$archive_courseID$/, $db->listUsers;
 				if (@contacts) {
-					die "Incorrect number of contacts for the course $archive_courseID". join(" ", @contacts) if @contacts !=1;
+					die "Incorrect number of contacts for the course $archive_courseID" . join(" ", @contacts)
+						if @contacts != 1;
 					#warn "contacts", join(" ", @contacts);
 					#my $composite_id = "${add_initial_userID}_${add_courseID}";
-					my $composite_id  = $contacts[0];
+					my $composite_id = $contacts[0];
 
 					# mark the contact person as dropped.
-					my $User = $db->getUser($composite_id);
-					my $status_name = 'Drop';
+					my $User         = $db->getUser($composite_id);
+					my $status_name  = 'Drop';
 					my $status_value = ($ce->status_name_to_abbrevs($status_name))[0];
 					$User->status($status_value);
 					$db->putUser($User);
@@ -2402,39 +2407,39 @@ sub do_archive_course {
 				);
 			}
 
-
 		}
-		shift @archive_courseIDs;  # remove the course which has just been archived.
+		shift @archive_courseIDs;    # remove the course which has just been archived.
 		if (@archive_courseIDs) {
-			print CGI::start_form(-method=>"POST", -action=>$r->uri);
+			print CGI::start_form(-method => "POST", -action => $r->uri);
 			print $self->hidden_authen_fields;
 			print $self->hidden_fields("subDisplay");
 			print $self->hidden_fields(qw/delete_course/);
 
-			print CGI::hidden('archive_courseIDs',@archive_courseIDs);
-			print CGI::p({ style => "text-align: center" },
-			   	CGI::submit({
-					   	name => "decline_archive_course",
-					   	value => $r->maketext("Stop archiving courses"),
-						class => 'btn btn-primary'
-					}),
+			print CGI::hidden('archive_courseIDs', @archive_courseIDs);
+			print CGI::p(
+				{ style => "text-align: center" },
 				CGI::submit({
-						name => "archive_course",
-						value => $r->maketext("Archive next course"),
-						class => 'btn btn-primary'
-					})
+					name  => "decline_archive_course",
+					value => $r->maketext("Stop archiving courses"),
+					class => 'btn btn-primary'
+				}),
+				CGI::submit({
+					name  => "archive_course",
+					value => $r->maketext("Archive next course"),
+					class => 'btn btn-primary'
+				})
 			);
- 			print CGI::end_form();
- 		} else {
-			print CGI::start_form(-method=>"POST", -action=>$r->uri);
+			print CGI::end_form();
+		} else {
+			print CGI::start_form(-method => "POST", -action => $r->uri);
 			print $self->hidden_authen_fields;
 			print $self->hidden_fields("subDisplay");
-			print CGI::hidden('archive_courseIDs',$archive_courseID);
+			print CGI::hidden('archive_courseIDs', $archive_courseID);
 			print CGI::p(CGI::submit({
-						name => "decline_archive_course",
-						value => $r->maketext("OK"),
-						class => 'btn btn-primary'
-					}));
+				name  => "decline_archive_course",
+				value => $r->maketext("OK"),
+				class => 'btn btn-primary'
+			}));
 			print CGI::end_form();
 		}
 	}
@@ -2495,7 +2500,7 @@ sub unarchive_course_form {
 					class    => 'form-select'
 				})
 			)
-			),
+		),
 		CGI::div(
 			{ class => 'row mb-2 align-items-center' },
 			CGI::div(
@@ -2525,94 +2530,98 @@ sub unarchive_course_form {
 		)
 	);
 
-	print CGI::div(
-		CGI::submit({
-			name  => 'unarchive_course',
-			value => $r->maketext('Unarchive Course'),
-			class => 'btn btn-primary'
-		})
-	);
+	print CGI::div(CGI::submit({
+		name  => 'unarchive_course',
+		value => $r->maketext('Unarchive Course'),
+		class => 'btn btn-primary'
+	}));
 
 	print CGI::end_form();
 }
 
 sub unarchive_course_validate {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 	#my $db = $r->db;
 	#my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	my $unarchive_courseID                   = $r->param("unarchive_courseID")             || "";
-	my $create_newCourseID                   = $r->param("create_newCourseID")      || "";
-	my $new_courseID                         = $r->param("new_courseID")    || "";
+	my $unarchive_courseID = $r->param("unarchive_courseID") || "";
+	my $create_newCourseID = $r->param("create_newCourseID") || "";
+	my $new_courseID       = $r->param("new_courseID")       || "";
 	my @errors;
 	#by default we use the archive name for the course
 	my $courseID = $unarchive_courseID;
 	$courseID =~ s/\.tar\.gz$//;
 
-	if ( $create_newCourseID) {
+	if ($create_newCourseID) {
 		$courseID = $new_courseID;
 	}
 	debug(" unarchive_courseID $unarchive_courseID new_courseID $new_courseID ");
 
 	if ($courseID eq "") {
 		push @errors, $r->maketext("You must specify a course name.");
-	} elsif ( -d $ce->{webworkDirs}->{courses}."/$courseID" ) {
-	    #Check that a directory for this course doesn't already exist
-		push @errors, $r->maketext("A directory already exists with the name [_1]. You must first delete this existing course before you can unarchive.",$courseID);
-	} elsif ( length($courseID) > $ce->{maxCourseIdLength} ) {
+	} elsif (-d $ce->{webworkDirs}->{courses} . "/$courseID") {
+		#Check that a directory for this course doesn't already exist
+		push @errors,
+			$r->maketext(
+				"A directory already exists with the name [_1]. You must first delete this existing course before you can unarchive.",
+				$courseID
+			);
+	} elsif (length($courseID) > $ce->{maxCourseIdLength}) {
 		push @errors, $r->maketext("Course ID cannot exceed [_1] characters.", $ce->{maxCourseIdLength});
 	}
-
 
 	return @errors;
 }
 
 sub unarchive_course_confirm {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 	#my $db = $r->db;
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 
 	print CGI::h2($r->maketext("Unarchive Course"));
 
-	my $unarchive_courseID                    = $r->param("unarchive_courseID")     || "";
-	my $create_newCourseID                    = $r->param("create_newCourseID")     || "";
-	my $new_courseID                          = $r->param("new_courseID")           || "";
+	my $unarchive_courseID = $r->param("unarchive_courseID") || "";
+	my $create_newCourseID = $r->param("create_newCourseID") || "";
+	my $new_courseID       = $r->param("new_courseID")       || "";
 
-	my $courseID = $unarchive_courseID; $courseID =~ s/\.tar\.gz$//;
+	my $courseID = $unarchive_courseID;
+	$courseID =~ s/\.tar\.gz$//;
 
-	if ( $create_newCourseID) {
+	if ($create_newCourseID) {
 		$courseID = $new_courseID;
 	}
 
-    debug(" unarchive_courseID $unarchive_courseID new_courseID $new_courseID ");
+	debug(" unarchive_courseID $unarchive_courseID new_courseID $new_courseID ");
 
-	print CGI::start_form(-method=>"POST", -action=>$r->uri);
-		print CGI::p($r->maketext("Unarchive [_1] to course:", $unarchive_courseID),
-	             CGI::input({-name=>'new_courseID', -value=>$courseID})
+	print CGI::start_form(-method => "POST", -action => $r->uri);
+	print CGI::p(
+		$r->maketext("Unarchive [_1] to course:", $unarchive_courseID),
+		CGI::input({ -name => 'new_courseID', -value => $courseID })
 	);
 
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	print $self->hidden_fields(qw/unarchive_courseID create_newCourseID/);
 
-	print CGI::p({ style => "text-align: center" },
+	print CGI::p(
+		{ style => "text-align: center" },
 		CGI::submit({
-				name => "decline_unarchive_course",
-			   	value => $r->maketext("Don't Unarchive"),
-				class => 'btn btn-primary'
-			}),
+			name  => "decline_unarchive_course",
+			value => $r->maketext("Don't Unarchive"),
+			class => 'btn btn-primary'
+		}),
 		"&nbsp;",
 		CGI::submit({
-				name => "confirm_unarchive_course",
-			   	value => $r->maketext("Unarchive"),
-				class => 'btn btn-primary'
-			}),
+			name  => "confirm_unarchive_course",
+			value => $r->maketext("Unarchive"),
+			class => 'btn btn-primary'
+		}),
 	);
 
 	print CGI::end_form();
@@ -2620,24 +2629,24 @@ sub unarchive_course_confirm {
 
 sub do_unarchive_course {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 	#my $db = $r->db;
 	#my $authz = $r->authz;
-	my $urlpath = $r->urlpath;
-	my $new_courseID           = $r->param("new_courseID")           || "";
-	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
+	my $urlpath            = $r->urlpath;
+	my $new_courseID       = $r->param("new_courseID")       || "";
+	my $unarchive_courseID = $r->param("unarchive_courseID") || "";
 
-	my $old_courseID   = $unarchive_courseID;
+	my $old_courseID = $unarchive_courseID;
 	$old_courseID =~ s/.tar.gz//;
 
 	#eval {
-		unarchiveCourse(
-			newCourseID => $new_courseID,
-			oldCourseID => $old_courseID,
-			archivePath =>$ce->{webworkDirs}->{courses}."/$unarchive_courseID",
-			ce => $ce,
-		);
+	unarchiveCourse(
+		newCourseID => $new_courseID,
+		oldCourseID => $old_courseID,
+		archivePath => $ce->{webworkDirs}->{courses} . "/$unarchive_courseID",
+		ce          => $ce,
+	);
 	#};
 
 	if ($@) {
@@ -2652,30 +2661,26 @@ sub do_unarchive_course {
 			{ class => 'alert alert-success p-1 mb-2' },
 			$r->maketext("Successfully unarchived [_1] to the course [_2]", $unarchive_courseID, $new_courseID),
 		);
-		 writeLog($ce, "hosted_courses", join("\t",
-	    	"\tunarchived",
-	    	"",
-	    	"",
-	    	"$unarchive_courseID to $new_courseID",
-	    ));
+		writeLog($ce, "hosted_courses", join("\t", "\tunarchived", "", "", "$unarchive_courseID to $new_courseID",));
 
-		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
-			courseID => $new_courseID);
+		my $newCoursePath =
+			$urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $new_courseID);
 		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
-		print CGI::div({style=>"text-align: center"},
-			CGI::a({href=>$newCourseURL}, $r->maketext("Log into [_1]", $new_courseID)),
+		print CGI::div(
+			{ style => "text-align: center" },
+			CGI::a({ href => $newCourseURL }, $r->maketext("Log into [_1]", $new_courseID)),
 		);
 
-		print CGI::start_form(-method=>"POST", -action=>$r->uri);
+		print CGI::start_form(-method => "POST", -action => $r->uri);
 		print $self->hidden_authen_fields;
 		print $self->hidden_fields("subDisplay");
-		print CGI::hidden("unarchive_courseID",$unarchive_courseID);
+		print CGI::hidden("unarchive_courseID", $unarchive_courseID);
 		print CGI::p(CGI::submit({
-					name => "decline_unarchive_course",
-					value => $r->maketext("Unarchive Next Course"),
-					class => 'btn btn-primary'
-				}));
- 		print CGI::end_form();
+			name  => "decline_unarchive_course",
+			value => $r->maketext("Unarchive Next Course"),
+			class => 'btn btn-primary'
+		}));
+		print CGI::end_form();
 	}
 }
 
@@ -3202,16 +3207,18 @@ sub manage_location_form {
 	}));
 
 	unless (@locations) {
-		print CGI::div({ class => 'row mt-3' },
-			CGI::div({ class => 'col-lg-8 col-md-9 fw-bold' }, $r->maketext('No locations are currently defined.')));
+		print CGI::div(
+			{ class => 'row mt-3' },
+			CGI::div({ class => 'col-lg-8 col-md-9 fw-bold' }, $r->maketext('No locations are currently defined.'))
+		);
 		return;
 	}
 
 	# Existing location table
 	print CGI::start_div({ class => 'table-responsive mt-3' }),
 		CGI::start_table({ class => 'table table-sm font-sm table-bordered table-striped' });
-	print CGI::thead(CGI::Tr(CGI::th([
-		$r->maketext('Select'), $r->maketext('Location'), $r->maketext('Description'), $r->maketext('Addresses') ])));
+	print CGI::thead(CGI::Tr(CGI::th([ $r->maketext('Select'), $r->maketext('Location'), $r->maketext('Description'),
+		$r->maketext('Addresses') ])));
 	print CGI::start_tbody();
 	for my $loc (@locations) {
 		my $editAddr = $self->systemLink(
@@ -3243,13 +3250,13 @@ sub manage_location_form {
 
 sub add_location_handler {
 	my $self = shift();
-	my $r = $self->r;
-	my $db = $r->db;
+	my $r    = $self->r;
+	my $db   = $r->db;
 
 	# the location data we're to add
-	my $locationID = $r->param("new_location_name");
+	my $locationID    = $r->param("new_location_name");
 	my $locationDescr = $r->param("new_location_description");
-	my $locationAddr = $r->param("new_location_addresses");
+	my $locationAddr  = $r->param("new_location_addresses");
 	# break the addresses up
 	$locationAddr =~ s/\s*-\s*/-/g;
 	$locationAddr =~ s/\s*\/\s*/\//g;
@@ -3257,8 +3264,8 @@ sub add_location_handler {
 
 	# sanity checks
 	my $badAddr = '';
-	foreach my $addr ( @addresses ) {
-		unless ( new Net::IP($addr) ) {
+	foreach my $addr (@addresses) {
+		unless (new Net::IP($addr)) {
 			$badAddr .= "$addr, ";
 			$locationAddr =~ s/$addr\n//s;
 		}
@@ -3268,56 +3275,79 @@ sub add_location_handler {
 	# a check to be sure that the location addresses don't already
 	#    exist
 	my $badLocAddr = '';
-	if ( ! $badAddr && $locationID ) {
-		if ( $db->countLocationAddresses( $locationID ) ) {
+	if (!$badAddr && $locationID) {
+		if ($db->countLocationAddresses($locationID)) {
 			my @allLocAddr = $db->listLocationAddresses($locationID);
-			foreach my $addr ( @addresses ) {
+			foreach my $addr (@addresses) {
 				$badLocAddr .= "$addr, "
-					if ( grep {/^$addr$/} @allLocAddr );
+					if (grep {/^$addr$/} @allLocAddr);
 			}
 			$badLocAddr =~ s/, $//;
 		}
 	}
 
-	if ( ! @addresses || ! $locationID || ! $locationDescr ) {
-		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
-			$r->maketext("Missing required input data. Please check that you have filled in all of the create location fields and resubmit."));
-	} elsif ( $badAddr ) {
+	if (!@addresses || !$locationID || !$locationDescr) {
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext(
+				"Missing required input data. Please check that you have filled in all of the create location fields and resubmit."
+			)
+		);
+	} elsif ($badAddr) {
 		$r->param("new_location_addresses", $locationAddr);
-		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
-			$r->maketext("Address(es) [_1] is(are) not in a recognized form.  Please check your data entry and resubmit.",$badAddr));
-	} elsif ( $db->existsLocation( $locationID ) ) {
-		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
-			$r->maketext("A location with the name [_1] already exists in the database.  Did you mean to edit that location instead?",$locationID));
-	} elsif ( $badLocAddr ) {
-		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
-			$r->maketext("Address(es) [_1] already exist in the database.  THIS SHOULD NOT HAPPEN!  Please double check the integrity of the WeBWorK database before continuing.", $badLocAddr));
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext(
+				"Address(es) [_1] is(are) not in a recognized form.  Please check your data entry and resubmit.",
+				$badAddr
+			)
+		);
+	} elsif ($db->existsLocation($locationID)) {
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext(
+				"A location with the name [_1] already exists in the database.  Did you mean to edit that location instead?",
+				$locationID
+			)
+		);
+	} elsif ($badLocAddr) {
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext(
+				"Address(es) [_1] already exist in the database.  THIS SHOULD NOT HAPPEN!  Please double check the integrity of the WeBWorK database before continuing.",
+				$badLocAddr
+			)
+		);
 	} else {
 		# add the location
 		my $locationObj = $db->newLocation;
-		$locationObj->location_id( $locationID );
-		$locationObj->description( $locationDescr );
-		$db->addLocation( $locationObj );
+		$locationObj->location_id($locationID);
+		$locationObj->description($locationDescr);
+		$db->addLocation($locationObj);
 
 		# and add the addresses
-		foreach my $addr ( @addresses ) {
+		foreach my $addr (@addresses) {
 			my $locationAddress = $db->newLocationAddress;
 			$locationAddress->location_id($locationID);
 			$locationAddress->ip_mask($addr);
 
-			$db->addLocationAddress( $locationAddress );
+			$db->addLocationAddress($locationAddress);
 		}
 
 		# we've added the location, so clear those param
 		#    entries
-		$r->param('manage_location_action','none');
-		$r->param('new_location_name','');
-		$r->param('new_location_description','');
-		$r->param('new_location_addresses','');
+		$r->param('manage_location_action',   'none');
+		$r->param('new_location_name',        '');
+		$r->param('new_location_description', '');
+		$r->param('new_location_addresses',   '');
 
 		print CGI::div(
 			{ class => 'alert alert-success p-1 mb-2' },
-			$r->maketext("Location [_1] has been created, with addresses [_2].", $locationID, join(', ', @addresses)));
+			$r->maketext(
+				"Location [_1] has been created, with addresses [_2].",
+				$locationID, join(', ', @addresses)
+			)
+		);
 	}
 
 	$self->manage_location_form;
@@ -3325,48 +3355,49 @@ sub add_location_handler {
 
 sub delete_location_handler {
 	my $self = shift;
-	my $r = $self->r;
-	my $db = $r->db;
+	my $r    = $self->r;
+	my $db   = $r->db;
 
 	# what location are we deleting?
 	my $locationID = $r->param("delete_location");
 	# check for selected deletions if appropriate
-	my @delLocations = ( $locationID );
-	if ( $locationID eq 'selected_locations' ) {
+	my @delLocations = ($locationID);
+	if ($locationID eq 'selected_locations') {
 		@delLocations = $r->param("delete_selected");
-		$locationID = @delLocations;
+		$locationID   = @delLocations;
 	}
 	# are we sure?
 	my $confirm = $r->param("delete_confirm");
 
 	my $badID;
-	if ( ! $locationID ) {
+	if (!$locationID) {
 		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
 			$r->maketext("Please provide a location name to delete."));
 
-	} elsif ( $badID = $self->existsLocations_helper( @delLocations ) ) {
+	} elsif ($badID = $self->existsLocations_helper(@delLocations)) {
 		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
 			$r->maketext("No location with name [_1] exists in the database", $badID));
 
-	} elsif ( ! $confirm || $confirm ne 'true' ) {
+	} elsif (!$confirm || $confirm ne 'true') {
 		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
 			$r->maketext("Location deletion requires confirmation."));
 	} else {
-		foreach ( @delLocations ) {
-			$db->deleteLocation( $_ );
+		foreach (@delLocations) {
+			$db->deleteLocation($_);
 		}
 		print CGI::div({ class => 'alert alert-success p-1 mb-2' },
 			$r->maketext("Deleted Location(s): [_1]", join(', ', @delLocations)));
-		$r->param('manage_location_action','none');
-		$r->param('delete_location','');
+		$r->param('manage_location_action', 'none');
+		$r->param('delete_location',        '');
 	}
 	$self->manage_location_form;
 }
+
 sub existsLocations_helper {
 	my ($self, @locations) = @_;
 	my $db = $self->r->db;
-	foreach ( @locations ) {
-		return $_ if ( ! $db->existsLocation($_) );
+	foreach (@locations) {
+		return $_ if (!$db->existsLocation($_));
 	}
 	return 0;
 }
@@ -3507,24 +3538,29 @@ sub edit_location_form {
 
 sub edit_location_handler {
 	my $self = shift;
-	my $r = $self->r;
-	my $db = $r->db;
+	my $r    = $self->r;
+	my $db   = $r->db;
 
-	my $locationID = $r->param("edit_location");
+	my $locationID   = $r->param("edit_location");
 	my $locationDesc = $r->param("location_description");
 	my $addAddresses = $r->param("new_location_addresses");
 	my @delAddresses = $r->param("delete_location_addresses");
-	my $deleteAll = $r->param("delete_all_addresses");
+	my $deleteAll    = $r->param("delete_all_addresses");
 
 	# gut check
-	if ( ! $locationID ) {
+	if (!$locationID) {
 		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
 			$r->maketext("No location specified to edit. Please check your input data."));
 		$self->manage_location_form;
 
-	} elsif ( ! $db->existsLocation( $locationID ) ) {
-		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
-			$r->maketext("Location [_1] does not exist in the WeBWorK database.  Please check your input (perhaps you need to reload the location management page?).", $locationID));
+	} elsif (!$db->existsLocation($locationID)) {
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext(
+				"Location [_1] does not exist in the WeBWorK database.  Please check your input (perhaps you need to reload the location management page?).",
+				$locationID
+			)
+		);
 		$self->manage_location_form;
 	} else {
 		my $location = $db->getLocation($locationID);
@@ -3533,15 +3569,14 @@ sub edit_location_handler {
 		#   all of the existing addresses, we don't use this list
 		#   to determine which addresses to add, however.
 		my @currentAddr = $db->listLocationAddresses($locationID);
-		my @compareAddr = ( ! $deleteAll || $deleteAll ne 'true' )
-			? @currentAddr : ();
+		my @compareAddr = (!$deleteAll || $deleteAll ne 'true') ? @currentAddr : ();
 
 		my $doneMsg = '';
 
 		if ($locationDesc && $location->description ne $locationDesc) {
 			$location->description($locationDesc);
 			$db->putLocation($location);
-			$doneMsg .= CGI::p({},$r->maketext("Updated location description."));
+			$doneMsg .= CGI::p({}, $r->maketext("Updated location description."));
 		}
 		# get the actual addresses to add out of the text field
 		$addAddresses =~ s/\s*-\s*/-/g;
@@ -3551,27 +3586,34 @@ sub edit_location_handler {
 		# make sure that we're adding and deleting only those
 		#    addresses that are not yet/currently in the location
 		#    addresses
-		my @toAdd = ();  my @noAdd = ();
-		my @toDel = ();  my @noDel = ();
-		foreach my $addr ( @addAddresses ) {
-			if (grep {/^$addr$/} @compareAddr) {push(@noAdd,$addr);}
-			else { push(@toAdd, $addr); }
+		my @toAdd = ();
+		my @noAdd = ();
+		my @toDel = ();
+		my @noDel = ();
+		foreach my $addr (@addAddresses) {
+			if (grep {/^$addr$/} @compareAddr) {
+				push(@noAdd, $addr);
+			} else {
+				push(@toAdd, $addr);
+			}
 		}
-		if ( $deleteAll && $deleteAll eq 'true' ) {
+		if ($deleteAll && $deleteAll eq 'true') {
 			@toDel = @currentAddr;
 		} else {
-			foreach my $addr ( @delAddresses ) {
+			foreach my $addr (@delAddresses) {
 				if (grep {/^$addr$/} @currentAddr) {
-					push(@toDel,$addr);
-				} else { push(@noDel, $addr); }
+					push(@toDel, $addr);
+				} else {
+					push(@noDel, $addr);
+				}
 			}
 		}
 
 		# and make sure that all of the addresses we're adding are
 		#    a sensible form
 		my $badAddr = '';
-		foreach my $addr ( @toAdd ) {
-			unless ( new Net::IP($addr) ) {
+		foreach my $addr (@toAdd) {
+			unless (new Net::IP($addr)) {
 				$badAddr .= "$addr, ";
 			}
 		}
@@ -3582,10 +3624,10 @@ sub edit_location_handler {
 		#    note that we don't allow deletion and then addition
 		#    of the same address normally, however; in that case
 		#    we'll end up just deleting the address.
-		foreach ( @toDel ) {
+		foreach (@toDel) {
 			$db->deleteLocationAddress($locationID, $_);
 		}
-		foreach ( @toAdd ) {
+		foreach (@toAdd) {
 			my $locAddr = $db->newLocationAddress;
 			$locAddr->location_id($locationID);
 			$locAddr->ip_mask($_);
@@ -3594,13 +3636,24 @@ sub edit_location_handler {
 		}
 
 		my $addrMsg = '';
-		$addrMsg .= $r->maketext("Deleted addresses [_1] from location.", join(', ', @toDel)) . CGI::br() if ( @toDel );
-		$addrMsg .= $r->maketext("Added addresses [_1] to location [_2].", join(', ', @toAdd), $locationID) if ( @toAdd );
+		$addrMsg .= $r->maketext("Deleted addresses [_1] from location.", join(', ', @toDel)) . CGI::br() if (@toDel);
+		$addrMsg .= $r->maketext("Added addresses [_1] to location [_2].", join(', ', @toAdd), $locationID) if (@toAdd);
 
 		my $badMsg = '';
-		$badMsg .= $r->maketext('Address(es) [_1] in the add list is(are) already in the location [_2], and so were skipped.', join(', ', @noAdd), $locationID) . CGI::br() if ( @noAdd );
-		$badMsg .= $r->maketext("Address(es) [_1] is(are) not in a recognized form.  Please check your data entry and try again.",$badAddr) . CGI::br() if ( $badAddr );
-		$badMsg .= $r->maketext('Address(es) [_1] in the delete list is(are) not in the location [_2], and so were skipped.',join(', ', @noDel),$locationID) if ( @noDel );
+		$badMsg .=
+			$r->maketext('Address(es) [_1] in the add list is(are) already in the location [_2], and so were skipped.',
+				join(', ', @noAdd), $locationID)
+			. CGI::br()
+			if (@noAdd);
+		$badMsg .= $r->maketext(
+			"Address(es) [_1] is(are) not in a recognized form.  Please check your data entry and try again.",
+			$badAddr)
+			. CGI::br()
+			if ($badAddr);
+		$badMsg .=
+			$r->maketext('Address(es) [_1] in the delete list is(are) not in the location [_2], and so were skipped.',
+				join(', ', @noDel), $locationID)
+			if (@noDel);
 
 		print CGI::div({ class => 'alert alert-danger p-1 mb-2' }, $badMsg)
 			if ($badMsg);
@@ -3653,7 +3706,7 @@ sub hide_inactive_course_form {
 	if ($hide_listing_format eq 'last_login') {
 		# This should be an empty arrey except for the model course.
 		@noLoginLogIDs = sort { lc($a) cmp lc($b) } @noLoginLogIDs;
-		@loginLogIDs   = sort byLoginActivity @loginLogIDs;    # oldest first
+		@loginLogIDs   = sort byLoginActivity @loginLogIDs;           # oldest first
 		@hideCourseIDs = (@noLoginLogIDs, @loginLogIDs);
 	} else {
 		# In this case we sort alphabetically
@@ -3702,7 +3755,8 @@ sub hide_inactive_course_form {
 				)
 			)
 		} (
-			[ alphabetically => $r->maketext('alphabetically') ], [ last_login => $r->maketext('by last login date') ]
+			[ alphabetically => $r->maketext('alphabetically') ],
+			[ last_login     => $r->maketext('by last login date') ]
 		),
 	);
 
@@ -3772,14 +3826,14 @@ sub hide_inactive_course_form {
 
 sub hide_course_validate {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 	#my $db = $r->db;
 	#my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	my @hide_courseIDs     = $r->param("hide_courseIDs");
-	@hide_courseIDs        = () unless @hide_courseIDs;
+	my @hide_courseIDs = $r->param("hide_courseIDs");
+	@hide_courseIDs = () unless @hide_courseIDs;
 
 	my @errors;
 
@@ -3789,54 +3843,59 @@ sub hide_course_validate {
 	return @errors;
 }
 
-
 sub do_hide_inactive_course {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 
-  my $coursesDir = $ce->{webworkDirs}->{courses};
+	my $coursesDir = $ce->{webworkDirs}->{courses};
 
 	my $hide_courseID;
-	my @hide_courseIDs     = $r->param("hide_courseIDs");
-	@hide_courseIDs        = () unless @hide_courseIDs;
+	my @hide_courseIDs = $r->param("hide_courseIDs");
+	@hide_courseIDs = () unless @hide_courseIDs;
 
-	my $hideDirFileContent = $r->maketext('Place a file named "hide_directory" in a course or other directory and it will not show up in the courses list on the WeBWorK home page. It will still appear in the Course Administration listing.');
+	my $hideDirFileContent = $r->maketext(
+		'Place a file named "hide_directory" in a course or other directory and it will not show up in the courses list on the WeBWorK home page. It will still appear in the Course Administration listing.'
+	);
 
-	my @succeeded_courses = ();
-	my $succeeded_count = 0;
-	my @failed_courses = ();
+	my @succeeded_courses    = ();
+	my $succeeded_count      = 0;
+	my @failed_courses       = ();
 	my $already_hidden_count = 0;
 
-  foreach $hide_courseID (@hide_courseIDs) {
-  	my $hideDirFile = "$coursesDir/$hide_courseID/hide_directory";
-  	if (-f $hideDirFile) {
-  		$already_hidden_count++;
-  		next;
-  	} else {
-  		local *HIDEFILE;
-  		if (open (HIDEFILE, ">", $hideDirFile)) {
-  			print HIDEFILE "$hideDirFileContent";
-  			close HIDEFILE;
-  			push @succeeded_courses,$hide_courseID;
-  			$succeeded_count++;
-  		} else {
-  			push @failed_courses,$hide_courseID;
-  		}
-  	}
-  }
+	foreach $hide_courseID (@hide_courseIDs) {
+		my $hideDirFile = "$coursesDir/$hide_courseID/hide_directory";
+		if (-f $hideDirFile) {
+			$already_hidden_count++;
+			next;
+		} else {
+			local *HIDEFILE;
+			if (open(HIDEFILE, ">", $hideDirFile)) {
+				print HIDEFILE "$hideDirFileContent";
+				close HIDEFILE;
+				push @succeeded_courses, $hide_courseID;
+				$succeeded_count++;
+			} else {
+				push @failed_courses, $hide_courseID;
+			}
+		}
+	}
 
 	if (@failed_courses) {
-		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
-			CGI::p($r->maketext("Errors occured while hiding the courses listed below when attempting to create the file hide_directory in the course's directory. Check the ownership and permissions of the course's directory, e.g [_1]",
-					"$coursesDir/$failed_courses[0]/")),
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
+			CGI::p($r->maketext(
+				"Errors occured while hiding the courses listed below when attempting to create the file hide_directory in the course's directory. Check the ownership and permissions of the course's directory, e.g [_1]",
+				"$coursesDir/$failed_courses[0]/"
+			)),
 			join(CGI::br(), @failed_courses)
 		);
 	}
 	my $succeeded_message = '';
 
 	if ($succeeded_count < 1 and $already_hidden_count > 0) {
-		$succeeded_message = $r->maketext("Except for possible errors listed above, all selected courses are already hidden.");
+		$succeeded_message =
+			$r->maketext("Except for possible errors listed above, all selected courses are already hidden.");
 	}
 
 	if ($succeeded_count) {
@@ -3850,14 +3909,14 @@ sub do_hide_inactive_course {
 
 sub unhide_course_validate {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 	#my $db = $r->db;
 	#my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	my @unhide_courseIDs     = $r->param("hide_courseIDs");
-	@unhide_courseIDs        = () unless @unhide_courseIDs;
+	my @unhide_courseIDs = $r->param("hide_courseIDs");
+	@unhide_courseIDs = () unless @unhide_courseIDs;
 
 	my @errors;
 
@@ -3867,41 +3926,41 @@ sub unhide_course_validate {
 	return @errors;
 }
 
-
 sub do_unhide_inactive_course {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 
-  my $coursesDir = $ce->{webworkDirs}->{courses};
+	my $coursesDir = $ce->{webworkDirs}->{courses};
 
 	my $unhide_courseID;
-	my @unhide_courseIDs     = $r->param("hide_courseIDs");
-	@unhide_courseIDs        = () unless @unhide_courseIDs;
+	my @unhide_courseIDs = $r->param("hide_courseIDs");
+	@unhide_courseIDs = () unless @unhide_courseIDs;
 
-	my @succeeded_courses = ();
-	my $succeeded_count = 0;
-	my @failed_courses = ();
+	my @succeeded_courses     = ();
+	my $succeeded_count       = 0;
+	my @failed_courses        = ();
 	my $already_visible_count = 0;
 
-  foreach $unhide_courseID (@unhide_courseIDs) {
-  	my $hideDirFile = "$coursesDir/$unhide_courseID/hide_directory";
-  	unless (-f $hideDirFile) {
-  		$already_visible_count++;
-  		next;
-  	}
-  	remove_tree("$hideDirFile", {error => \my $err});
-  	if (@$err) {
-  		push @failed_courses,$unhide_courseID;
-    } else {
-  	push @succeeded_courses,$unhide_courseID;
-		$succeeded_count++;
-  	}
-  }
-  my $succeeded_message = '';
+	foreach $unhide_courseID (@unhide_courseIDs) {
+		my $hideDirFile = "$coursesDir/$unhide_courseID/hide_directory";
+		unless (-f $hideDirFile) {
+			$already_visible_count++;
+			next;
+		}
+		remove_tree("$hideDirFile", { error => \my $err });
+		if (@$err) {
+			push @failed_courses, $unhide_courseID;
+		} else {
+			push @succeeded_courses, $unhide_courseID;
+			$succeeded_count++;
+		}
+	}
+	my $succeeded_message = '';
 
-  if ($succeeded_count < 1 and $already_visible_count > 0) {
-		$succeeded_message = $r->maketext("Except for possible errors listed above, all selected courses are already unhidden.");
+	if ($succeeded_count < 1 and $already_visible_count > 0) {
+		$succeeded_message =
+			$r->maketext("Except for possible errors listed above, all selected courses are already unhidden.");
 	}
 
 	if ($succeeded_count) {
@@ -3923,198 +3982,220 @@ sub do_unhide_inactive_course {
 	}
 }
 
-
 sub upgrade_notification {
-    my $self = shift;
-    my $r = $self->r;
-    my $ce = $r->ce;
-    my $db = $r->db;
+	my $self = shift;
+	my $r    = $self->r;
+	my $ce   = $r->ce;
+	my $db   = $r->db;
 
-    # exit if notifications are disabled
-    return unless $ce->{enableGitUpgradeNotifier};
+	# exit if notifications are disabled
+	return unless $ce->{enableGitUpgradeNotifier};
 
-    my $git = $ce->{externalPrograms}->{git};
-    my $WeBWorKRemote = $ce->{gitWeBWorKRemoteName};
-    my $WeBWorKBranch = $ce->{gitWeBWorKBranchName};
-    my $PGRemote = $ce->{gitPGRemoteName};
-    my $PGBranch = $ce->{gitPGBranchName};
-    my $LibraryRemote = $ce->{gitLibraryRemoteName};
-    my $LibraryBranch = $ce->{gitLibraryBranchName};
+	my $git           = $ce->{externalPrograms}->{git};
+	my $WeBWorKRemote = $ce->{gitWeBWorKRemoteName};
+	my $WeBWorKBranch = $ce->{gitWeBWorKBranchName};
+	my $PGRemote      = $ce->{gitPGRemoteName};
+	my $PGBranch      = $ce->{gitPGBranchName};
+	my $LibraryRemote = $ce->{gitLibraryRemoteName};
+	my $LibraryBranch = $ce->{gitLibraryBranchName};
 
-    # we can tproceed unless we have git;
-    if (!(defined($git) && -x $git)) {
-	warn('External Program "git" not found.  Check your site.conf');
-	return;
-    }
+	# we can tproceed unless we have git;
+	if (!(defined($git) && -x $git)) {
+		warn('External Program "git" not found.  Check your site.conf');
+		return;
+	}
 
-    my $upgradeMessage = '';
-    my $upgradesAvailable = 0;
-    my $output;
-    my @lines;
-    my $commit;
+	my $upgradeMessage    = '';
+	my $upgradesAvailable = 0;
+	my $output;
+	my @lines;
+	my $commit;
 
-    if ($WeBWorKRemote && $WeBWorKBranch) {
-    # Check if there is an updated version of webwork available
-    # this is done by using ls-remote to get the commit sha at the
-    # head of the remote branch and looking to see if that sha is in
-    # the currently selected local branch
+	if ($WeBWorKRemote && $WeBWorKBranch) {
+		# Check if there is an updated version of webwork available
+		# this is done by using ls-remote to get the commit sha at the
+		# head of the remote branch and looking to see if that sha is in
+		# the currently selected local branch
+		chdir($ce->{webwork_dir});
+		my $currentBranch = `$git symbolic-ref --short HEAD`;
+		$output = `$git ls-remote --heads $WeBWorKRemote`;
+		@lines  = split /\n/, $output;
+		$commit = -1;
+
+		foreach my $line (@lines) {
+			if ($line =~ /refs\/heads\/$WeBWorKBranch$/) {
+				$line =~ /^(\w+)/;
+				$commit = $1;
+				last;
+			}
+		}
+
+		$output = `$git branch --contains $commit`;
+
+		if ($commit ne '-1' && $output !~ /\s+$currentBranch(\s+|$)/) {
+			# There are upgrades, we need to figure out if its a
+			# new version or not
+			# This is done by using ls-remote to get the commit sha's
+			# at the heads of the remote tags.
+			# Tags of the form WeBWorK-x.y are release tags.  If there is
+			# an sha there which isn't in the current branch then there must
+			# be a newer version.
+
+			$output = `$git ls-remote --tags $WeBWorKRemote`;
+			@lines  = split /\n/, $output;
+			my $newversion = 0;
+
+			foreach my $line (@lines) {
+				next unless $line =~ /\/tags\/WeBWorK-/;
+				$line =~ /^(\w+)/;
+				$commit = $1;
+				$output = `$git branch --contains $commit`;
+
+				if ($output !~ /\s+$currentBranch(\s+|$)/) {
+					# There is a version tag which contains a commit that
+					# isn't in the current branch so there must
+					# be a new version
+					$newversion = 1;
+					last;
+				}
+			}
+
+			if ($newversion) {
+				$upgradesAvailable = 1;
+				$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of WeBWorK available.')));
+			} else {
+				$upgradesAvailable = 1;
+				$upgradeMessage .= CGI::Tr(CGI::td($r->maketext(
+					'There are upgrades available for your current branch of WeBWorK from branch [_1] in remote [_2].',
+					$WeBWorKBranch,
+					$WeBWorKRemote
+				)));
+			}
+		} elsif ($commit eq '-1') {
+			$upgradesAvailable = 1;
+			$upgradeMessage .= CGI::Tr(CGI::td($r->maketext(
+				"Couldn't find WeBWorK Branch [_1] in remote [_2]", $WeBWorKBranch, $WeBWorKRemote)));
+		} else {
+			$upgradeMessage .= CGI::Tr(CGI::td($r->maketext(
+				'Your current branch of WeBWorK is up to date with branch [_1] in remote [_2].', $WeBWorKBranch,
+				$WeBWorKRemote
+			)));
+		}
+	}
+
+	if ($PGRemote && $PGBranch) {
+		# Check if there is an updated version of pg available
+		# this is done by using ls-remote to get the commit sha at the
+		# head of the remote branch and looking to see if that sha is in
+		# the currently selected local branch
+		chdir($ce->{pg_dir});
+		my $currentBranch = `$git symbolic-ref --short HEAD`;
+		$output = `$git ls-remote --heads $PGRemote`;
+		@lines  = split /\n/, $output;
+		$commit = '-1';
+
+		foreach my $line (@lines) {
+			if ($line =~ /refs\/heads\/$PGBranch$/) {
+				$line =~ /^(\w+)\s+/;
+				$commit = $1;
+				last;
+			}
+		}
+
+		$output = `$git branch --contains $commit`;
+
+		if ($commit ne '-1' && $output !~ /\s+$currentBranch(\s+|$)/) {
+			# There are upgrades, we need to figure out if its a
+			# new version or not
+			# This is done by using ls-remote to get the commit sha's
+			# at the heads of the remote tags.
+			# Tags of the form WeBWorK-x.y are release tags.  If there is
+			# an sha there which isn't in the local branch then there must
+			# be a newer version.
+			$output = `$git ls-remote --tags $PGRemote`;
+			@lines  = split /\n/, $output;
+			my $newversion = 0;
+
+			foreach my $line (@lines) {
+				next unless $line =~ /\/tags\/PG-/;
+				$line =~ /^(\w+)/;
+				$commit = $1;
+				$output = `$git branch --contains $commit`;
+				if ($output !~ /\s+$currentBranch(\s+|$)/) {
+					# There is a version tag which contains a commit that
+					# isn't in the current branch so there must
+					# be a new version
+					$newversion = 1;
+					last;
+				}
+			}
+
+			if ($newversion) {
+				$upgradesAvailable = 1;
+				$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of PG available.')));
+			} else {
+				$upgradesAvailable = 1;
+				$upgradeMessage .= CGI::Tr(CGI::td($r->maketext(
+					'There are upgrades available for your current branch of PG from branch [_1] in remote [_2].',
+					$PGBranch, $PGRemote
+				)));
+			}
+		} elsif ($commit eq '-1') {
+			$upgradesAvailable = 1;
+			$upgradeMessage .=
+				CGI::Tr(CGI::td($r->maketext("Couldn't find PG Branch [_1] in remote [_2]", $PGBranch, $PGRemote)));
+		} else {
+			$upgradeMessage .= CGI::Tr(CGI::td($r->maketext(
+				'Your current branch of PG is up to date with branch [_1] in remote [_2].',
+				$PGBranch, $PGRemote
+			)));
+
+		}
+	}
+
+	die "Couldn't find "
+		. $ce->{problemLibrary}{root}
+		. '.  Are you sure $problemLibrary{root} is set correctly in localOverrides.conf?'
+		unless chdir($ce->{problemLibrary}{root});
+
+	if ($LibraryRemote && $LibraryBranch) {
+		# Check if there is an updated version of the OPL available
+		# this is done by using ls-remote to get the commit sha at the
+		# head of the remote branch and looking to see if that sha is in
+		# the local current branch
+		my $currentBranch = `$git symbolic-ref --short HEAD`;
+		$output = `$git ls-remote --heads $LibraryRemote`;
+		@lines  = split /\n/, $output;
+		$commit = '-1';
+
+		foreach my $line (@lines) {
+			if ($line =~ /refs\/heads\/$LibraryBranch$/) {
+				$line =~ /^(\w+)\s+/;
+				$commit = $1;
+				last;
+			}
+		}
+
+		$output = `$git branch --contains $commit`;
+
+		if ($commit ne '-1' && $output !~ /\s+$currentBranch(\s+|$)/) {
+			$upgradesAvailable = 1;
+			$upgradeMessage .=
+				CGI::Tr(CGI::td($r->maketext('There are upgrades available for the Open Problem Library.')));
+		} elsif ($commit eq '-1') {
+			$upgradesAvailable = 1;
+			$upgradeMessage .= CGI::Tr(
+				CGI::td($r->maketext(
+					"Couldn't find OPL Branch [_1] in remote [_2]", $LibraryBranch, $LibraryRemote)));
+		} else {
+			$upgradeMessage .= CGI::Tr(CGI::td($r->maketext(
+				'Your current branch of the Open Problem Library is up to date.',
+				$LibraryBranch, $LibraryRemote
+			)));
+		}
+	}
+
 	chdir($ce->{webwork_dir});
-	my $currentBranch = `$git symbolic-ref --short HEAD`;
-	$output = `$git ls-remote --heads $WeBWorKRemote`;
-	@lines = split /\n/, $output;
-	$commit=-1;
-
-	foreach my $line (@lines) {
-	    if ($line =~ /refs\/heads\/$WeBWorKBranch$/) {
-		$line =~ /^(\w+)/;
-		$commit = $1;
-		last;
-	    }
-	}
-
-	$output = `$git branch --contains $commit`;
-
-	if ($commit ne '-1' && $output !~ /\s+$currentBranch(\s+|$)/) {
-	    # There are upgrades, we need to figure out if its a
-	    # new version or not
-	    # This is done by using ls-remote to get the commit sha's
-	    # at the heads of the remote tags.
-	    # Tags of the form WeBWorK-x.y are release tags.  If there is
-	    # an sha there which isn't in the current branch then there must
-	    # be a newer version.
-
-	    $output = `$git ls-remote --tags $WeBWorKRemote`;
-	    @lines = split /\n/, $output;
-	    my $newversion = 0;
-
-	    foreach my $line (@lines) {
-		next unless $line =~ /\/tags\/WeBWorK-/;
-		$line =~ /^(\w+)/;
-		$commit = $1;
-		$output = `$git branch --contains $commit`;
-
-		if ($output !~ /\s+$currentBranch(\s+|$)/) {
-		    # There is a version tag which contains a commit that
-		    # isn't in the current branch so there must
-		    # be a new version
-		    $newversion = 1;
-		    last;
-		}
-	    }
-
-	    if ($newversion) {
-		$upgradesAvailable = 1;
-		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of WeBWorK available.')));
-	    } else {
-		$upgradesAvailable = 1;
-		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current branch of WeBWorK from branch [_1] in remote [_2].', $WeBWorKBranch, $WeBWorKRemote)));
-	    }
-	} elsif ($commit eq '-1') {
-	    $upgradesAvailable = 1;
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext("Couldn't find WeBWorK Branch [_1] in remote [_2]", $WeBWorKBranch, $WeBWorKRemote)));
-	}  else {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current branch of WeBWorK is up to date with branch [_1] in remote [_2].', $WeBWorKBranch, $WeBWorKRemote)));
-	}
-    }
-
-    if ($PGRemote && $PGBranch) {
-	# Check if there is an updated version of pg available
-	# this is done by using ls-remote to get the commit sha at the
-	# head of the remote branch and looking to see if that sha is in
-	# the currently selected local branch
-	chdir($ce->{pg_dir});
-	my $currentBranch = `$git symbolic-ref --short HEAD`;
-	$output = `$git ls-remote --heads $PGRemote`;
-	@lines = split /\n/, $output;
-	$commit='-1';
-
-	foreach my $line (@lines) {
-	    if ($line =~ /refs\/heads\/$PGBranch$/) {
-		$line =~ /^(\w+)\s+/;
-		$commit = $1;
-		last;
-	    }
-	}
-
-	$output = `$git branch --contains $commit`;
-
-	if ($commit ne '-1' && $output !~ /\s+$currentBranch(\s+|$)/) {
-	    # There are upgrades, we need to figure out if its a
-	    # new version or not
-	    # This is done by using ls-remote to get the commit sha's
-	    # at the heads of the remote tags.
-	    # Tags of the form WeBWorK-x.y are release tags.  If there is
-	    # an sha there which isn't in the local branch then there must
-	    # be a newer version.
-	    $output = `$git ls-remote --tags $PGRemote`;
-	    @lines = split /\n/, $output;
-	    my $newversion = 0;
-
-	    foreach my $line (@lines) {
-		next unless $line =~ /\/tags\/PG-/;
-		$line =~ /^(\w+)/;
-		$commit = $1;
-		$output = `$git branch --contains $commit`;
-		if ($output !~ /\s+$currentBranch(\s+|$)/) {
-		    # There is a version tag which contains a commit that
-		    # isn't in the current branch so there must
-		    # be a new version
-		    $newversion = 1;
-		    last;
-		}
-	    }
-
-	    if ($newversion) {
-		$upgradesAvailable = 1;
-		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of PG available.')));
-	    } else {
-		$upgradesAvailable = 1;
-		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current branch of PG from branch [_1] in remote [_2].', $PGBranch, $PGRemote)));
-	    }
-	} elsif ($commit eq '-1') {
-	    $upgradesAvailable = 1;
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext("Couldn't find PG Branch [_1] in remote [_2]", $PGBranch, $PGRemote)));
-	}  else {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current branch of PG is up to date with branch [_1] in remote [_2].', $PGBranch, $PGRemote)));
-
-	}
-    }
-
-    die "Couldn't find ".$ce->{problemLibrary}{root}.'.  Are you sure $problemLibrary{root} is set correctly in localOverrides.conf?' unless
-	chdir($ce->{problemLibrary}{root});
-
-    if ($LibraryRemote && $LibraryBranch) {
-	# Check if there is an updated version of the OPL available
-	# this is done by using ls-remote to get the commit sha at the
-	# head of the remote branch and looking to see if that sha is in
-	# the local current branch
-	my $currentBranch = `$git symbolic-ref --short HEAD`;
-	$output = `$git ls-remote --heads $LibraryRemote`;
-	@lines = split /\n/, $output;
-	$commit='-1';
-
-	foreach my $line (@lines) {
-	    if ($line =~ /refs\/heads\/$LibraryBranch$/) {
-		$line =~ /^(\w+)\s+/;
-		$commit = $1;
-		last;
-	    }
-	}
-
-	$output = `$git branch --contains $commit`;
-
-	if ($commit ne '-1' && $output !~ /\s+$currentBranch(\s+|$)/) {
-	    $upgradesAvailable = 1;
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for the Open Problem Library.')));
-	} elsif ($commit eq '-1') {
-	    $upgradesAvailable = 1;
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext("Couldn't find OPL Branch [_1] in remote [_2]", $LibraryBranch, $LibraryRemote)));
-	} else {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current branch of the Open Problem Library is up to date.', $LibraryBranch, $LibraryRemote)));
-	}
-    }
-
-    chdir($ce->{webwork_dir});
 
 	if ($upgradesAvailable) {
 		$upgradeMessage =
@@ -4131,7 +4212,6 @@ sub upgrade_notification {
 ################################################################################
 #   registration forms added by Mike Gage 5-5-2008
 ################################################################################
-
 
 our $registered_file_name = "registered_???";
 
@@ -4247,22 +4327,28 @@ sub registration_form {
 }
 
 sub do_registration {
-	my $self = shift;
-	my $ce   = $self->r->ce;
-	my $registered_file_path = $ce->{courseDirs}->{root}."/$registered_file_name";
+	my $self                 = shift;
+	my $ce                   = $self->r->ce;
+	my $registered_file_path = $ce->{courseDirs}->{root} . "/$registered_file_name";
 	# warn qq!`echo "info" >$registered_file_path`!;
 	`echo "info" >$registered_file_path`;
 
-	print  "\n<center>",CGI::p({style=>"text-align: left; width:60%"},q{Registration banner has been hidden. We appreciate your registering your server with the WeBWorK Project!"});
+	print "\n<center>",
+		CGI::p(
+			{ style => "text-align: left; width:60%" },
+			q{Registration banner has been hidden. We appreciate your registering your server with the WeBWorK Project!"}
+		);
 
-	print CGI::start_form(-method=>"POST", -action=>$self->r->uri);
+	print CGI::start_form(-method => "POST", -action => $self->r->uri);
 	print $self->hidden_authen_fields;
-	print CGI::p({ style => "text-align: center" },
+	print CGI::p(
+		{ style => "text-align: center" },
 		CGI::submit({
-				name => "registration_completed",
-				label => "Continue",
-				class => 'btn btn-primary'
-			}));
+			name  => "registration_completed",
+			label => "Continue",
+			class => 'btn btn-primary'
+		})
+	);
 	print CGI::end_form();
 	print "</center>";
 
@@ -4297,7 +4383,7 @@ sub formatReportOnDatabaseTables {
 	my $extra_database_tables = 0;
 	my $extra_database_fields = 0;
 
-	my $str                   = CGI::start_ul();
+	my $str = CGI::start_ul();
 	for my $table (sort keys %$dbStatus) {
 		my $table_status = $dbStatus->{$table}[0];
 		$str .= CGI::start_li();
