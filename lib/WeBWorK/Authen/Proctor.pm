@@ -27,7 +27,7 @@ use warnings;
 use WeBWorK::Debug;
 use WeBWorK::DB::Utils qw(grok_vsetID);
 
-use constant GENERIC_ERROR_MESSAGE => "Invalid user ID or password.";
+use constant GENERIC_ERROR_MESSAGE => 'Invalid user ID or password.';
 
 ## this is only overridden for debug logging
 #sub verify {
@@ -51,17 +51,17 @@ sub get_credentials {
 	my ($set_id, $version_id) = grok_vsetID($urlpath->arg('setID'));
 
 	# at least the user ID is available in request parameters
-	if (defined $r->param("proctor_user")) {
-		my $student_user_id = $r->param("effectiveUser");
-		$self->{user_id} = $r->param("proctor_user");
+	if (defined $r->param('proctor_user')) {
+		my $student_user_id = $r->param('effectiveUser');
+		$self->{user_id} = $r->param('proctor_user');
 		if ($self->{user_id} eq $set_id) {
 			$self->{user_id} = "set_id:$set_id";
 		}
-		$self->{session_key} = $r->param("proctor_key");
-		$self->{password}    = $r->param("proctor_passwd");
+		$self->{session_key} = $r->param('proctor_key');
+		$self->{password}    = $r->param('proctor_passwd');
 		$self->{login_type} =
-			$r->param("submitAnswers") ? "proctor_grading:$student_user_id" : "proctor_login:$student_user_id";
-		$self->{credential_source} = "params";
+			$r->param('submitAnswers') ? "proctor_grading:$student_user_id" : "proctor_login:$student_user_id";
+		$self->{credential_source} = 'params';
 		return 1;
 	}
 }
@@ -75,24 +75,24 @@ sub check_user {
 	my $db    = $r->db;
 	my $authz = $r->authz;
 
-	my $submitAnswers   = $r->param("submitAnswers");
+	my $submitAnswers   = $r->param('submitAnswers');
 	my $user_id         = $self->{user_id};
-	my $past_proctor_id = $r->param("past_proctor_user") || $user_id;
+	my $past_proctor_id = $r->param('past_proctor_user') || $user_id;
 
 	# for set-level authentication we prepended "set_id:"
 	my $show_user_id = $user_id;
 	$show_user_id =~ s/^set_id://;
 
-	if (defined $user_id and ($user_id eq "" || $show_user_id eq "")) {
-		$self->{log_error} = "no user id specified";
-		$self->{error}     = "You must specify a user ID.";
+	if (defined $user_id and ($user_id eq '' || $show_user_id eq '')) {
+		$self->{log_error} = 'no user id specified';
+		$self->{error}     = 'You must specify a user ID.';
 		return 0;
 	}
 
 	my $User = $db->getUser($user_id);
 
 	unless ($User) {
-		$self->{log_error} = "user unknown";
+		$self->{log_error} = 'user unknown';
 		$self->{error}     = GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
@@ -103,29 +103,52 @@ sub check_user {
 	#    it seems to me is an overlap between course permissions and
 	#    course status behaviors.
 
-	unless ($authz->hasPermissions($user_id, "login")) {
-		$self->{log_error} = "user not permitted to login";
+	unless ($authz->hasPermissions($user_id, 'login')) {
+		$self->{log_error} = 'user not permitted to login';
 		$self->{error}     = GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
 
 	if ($submitAnswers) {
-		unless ($authz->hasPermissions($user_id, "proctor_quiz_grade")) {
+		unless ($authz->hasPermissions($user_id, 'proctor_quiz_grade')) {
 			# only set the error if this proctor is different
 			#    than the past proctor, implying that we have
 			#    tried to grade with a new proctor id
 			if ($past_proctor_id ne $user_id) {
-				$self->{log_error} = "user not permitted " . "to proctor quiz grading.";
+				$self->{log_error} = 'user not permitted to proctor quiz grading.';
 				$self->{error} =
-					"User $show_user_id is not " . "authorized to proctor test grade " . "submissions in this course.";
+					"User $show_user_id is not authorized to proctor test grade submissions in this course.";
 			}
 
 			return 0;
 		}
 	} else {
-		unless ($authz->hasPermissions($user_id, "proctor_quiz_login")) {
-			$self->{log_error} = "user not permitted to proctor " . "quiz logins.";
-			$self->{error} = "User $show_user_id is not " . "authorized to proctor test logins in this " . "course.";
+		# Need a UserSet to determine if it is configured to skip grade proctor
+		# authorization to grade the quiz. Require a grade proctor permission level
+		# to start a quiz that skips authorization to grade it. This ensures that
+		# a grade proctor level of authorization is always required.
+		my ($setName, $versionNum) = grok_vsetID($r->urlpath->arg('setID'));
+		my $userSet = $db->getMergedSet($r->param('effectiveUser'), $setName);
+		unless (
+			$authz->hasPermissions($user_id, 'proctor_quiz_grade')
+			|| (($userSet->use_grade_proctor eq 'Yes' || $userSet->restricted_login_proctor eq 'Yes')
+				&& $authz->hasPermissions($user_id, 'proctor_quiz_login'))
+			)
+		{
+			# Set the error based on if a single set password was required, a grade
+			# grade proctor was required to start, or a login proctor was required.
+			if ($userSet->restricted_login_proctor eq 'Yes') {
+				$self->{log_error} = 'invalid set password to start quiz.';
+				$self->{error}     = 'This quiz requires a set password to start, and the password was invalid.';
+			} elsif ($userSet->use_grade_proctor ne 'Yes') {
+				$self->{log_error} =
+					'grade proctor required to login and user is not permitted to proctor quiz grading.';
+				$self->{error} = "This quiz requires a grade proctor to start, and user $show_user_id is not "
+					. 'authorized to proctor test grade submissions in this course.';
+			} else {
+				$self->{log_error} = 'user not permitted to proctor quiz logins.';
+				$self->{error}     = "User $show_user_id is not authorized to proctor test logins in this course.";
+			}
 			return 0;
 		}
 	}
@@ -137,9 +160,9 @@ sub set_params {
 	my $self = shift;
 	my $r    = $self->{r};
 
-	$r->param("proctor_user",   $self->{user_id});
-	$r->param("proctor_key",    $self->{session_key});
-	$r->param("proctor_passwd", "");
+	$r->param('proctor_user',   $self->{user_id});
+	$r->param('proctor_key',    $self->{session_key});
+	$r->param('proctor_passwd', '');
 }
 
 # rewrite the userID to include both the proctor's and the student's user ID
@@ -163,8 +186,8 @@ sub proctor_key_id {
 	my ($self, $userID, $newKey) = @_;
 	my $r = $self->{r};
 
-	my $proctor_key_id = $r->param("effectiveUser") . "," . $userID;
-	$proctor_key_id .= ",g" if $self->{login_type} =~ /^proctor_grading/;
+	my $proctor_key_id = $r->param('effectiveUser') . ',' . $userID;
+	$proctor_key_id .= ',g' if $self->{login_type} =~ /^proctor_grading/;
 
 	return $proctor_key_id;
 }

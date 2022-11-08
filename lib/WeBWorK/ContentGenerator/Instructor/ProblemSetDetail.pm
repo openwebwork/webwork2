@@ -317,7 +317,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	use_grade_proctor => {
-		name     => x('Require Grade Proctor'),
+		name     => x('Require Grade Authorization'),
 		type     => 'choose',
 		override => 'any',
 		choices  => [qw(Yes No)],
@@ -327,8 +327,9 @@ use constant FIELD_PROPERTIES => {
 		},
 		default   => 'Yes',
 		help_text => x(
-			'Proctored tests always require login proctor authorization to start the test. Configure if '
-				. 'proctored tests also require grade proctor authorization to grade the test at the end.'
+			'Proctored tests always require authorization to start the test. Set to "Yes" to require login '
+				. 'proctor authorization to start and grade proctor authorization to grade. Set to "No" to '
+				. 'require grade proctor authorization to start and no authorization to grade.'
 		),
 	},
 	restrict_prob_progression => {
