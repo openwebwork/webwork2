@@ -29,13 +29,21 @@ use WeBWorK::DB::Utils qw(grok_vsetID);
 
 use constant GENERIC_ERROR_MESSAGE => 'Invalid user ID or password.';
 
-## this is only overridden for debug logging
-#sub verify {
-#	debug("BEGIN PROCTOR VERIFY");
-#	my $result = $_[0]->SUPER::verify(@_[1..$#_]);
-#	debug("END PROCTOR VERIFY");
-#	return $result;
-#}
+sub verify {
+	my $self = shift;
+	my $r = $self->{r};
+
+	# At this point the usual authentication has already occured and the user has been verified.  If the
+	# use_grade_proctor option is set to 'No', then proctor authorization is not not needed.  So return 1 here to skip
+	# proctor authorization and proceed on to the GatewayQuiz module which will grade the test.
+	if ($r->param('submitAnswers')) {
+		my ($setName, $versionNum) = grok_vsetID($r->urlpath->arg('setID'));
+		my $userSet = $r->db->getMergedSetVersion($r->param('effectiveUser'), $setName, $versionNum);
+		return 1 if $userSet && $userSet->use_grade_proctor eq 'No';
+	}
+
+	return $self->SUPER::verify(@_);
+}
 
 # this is similar to the method in the base class, with these differences:
 #  1. no guest logins
