@@ -40,7 +40,7 @@ use WeBWorK::Debug;
 use constant SET_FIELDS => [
 	qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description
 		enable_reduced_scoring  restricted_release restricted_status restrict_ip relax_restrict_ip
-		assignment_type use_grade_proctor attempts_per_version version_time_limit time_limit_cap
+		assignment_type use_grade_auth_proctor attempts_per_version version_time_limit time_limit_cap
 		versions_per_interval time_interval problem_randorder problems_per_page
 		hide_score:hide_score_by_problem hide_work hide_hint restrict_prob_progression email_instructor)
 ];
@@ -316,20 +316,20 @@ use constant FIELD_PROPERTIES => {
 			'BeforeAnswerDate' => x('Only after set answer date')
 		},
 	},
-	use_grade_proctor => {
-		name     => x('Require Grade Authorization'),
+	use_grade_auth_proctor => {
+		name     => x('Require Proctor Authorization to'),
 		type     => 'choose',
 		override => 'any',
 		choices  => [qw(Yes No)],
 		labels   => {
-			Yes => x('Yes'),
-			No  => x('No')
+			Yes => x('Both Start and Grade'),
+			No  => x('Only Start')
 		},
 		default   => 'Yes',
 		help_text => x(
-			'Proctored tests always require authorization to start the test. Set to "Yes" to require login '
-				. 'proctor authorization to start and grade proctor authorization to grade. Set to "No" to '
-				. 'require grade proctor authorization to start and no authorization to grade.'
+			'Proctored tests always require authorization to start the test. "Both Start and Grade" will require '
+				. 'login proctor authorization to start and grade proctor authorization to grade. "Only Start" '
+				. 'requires grade proctor authorization to start and no authorization to grade.'
 		),
 	},
 	restrict_prob_progression => {
@@ -971,7 +971,8 @@ sub extraSetFields {
 	if ($globalRecord->assignment_type eq 'proctored_gateway') {
 		# Dropdown menu to configure using a grade proctor.
 		$procFields = CGI::Tr(
-			CGI::td([ $self->FieldHTML($userID, $setID, undef, $globalRecord, $userRecord, 'use_grade_proctor') ]));
+			CGI::td([
+				$self->FieldHTML($userID, $setID, undef, $globalRecord, $userRecord, 'use_grade_auth_proctor') ]));
 		# We use a routine other than FieldHTML because of getting the default value here.
 		$procFields .= CGI::Tr(CGI::td([ $self->proctoredFieldHTML($userID, $setID, $globalRecord) ]))
 			unless ($forUsers);

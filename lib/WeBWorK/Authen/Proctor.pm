@@ -31,15 +31,15 @@ use constant GENERIC_ERROR_MESSAGE => 'Invalid user ID or password.';
 
 sub verify {
 	my $self = shift;
-	my $r = $self->{r};
+	my $r    = $self->{r};
 
-	# At this point the usual authentication has already occured and the user has been verified.  If the
-	# use_grade_proctor option is set to 'No', then proctor authorization is not not needed.  So return 1 here to skip
-	# proctor authorization and proceed on to the GatewayQuiz module which will grade the test.
+	# At this point the usual authentication has already occurred and the user has been verified.  If the
+	# use_grade_auth_proctor option is set to 'No', then proctor authorization is not not needed.  So return
+	# 1 here to skip proctor authorization and proceed on to the GatewayQuiz module which will grade the test.
 	if ($r->param('submitAnswers')) {
 		my ($setName, $versionNum) = grok_vsetID($r->urlpath->arg('setID'));
 		my $userSet = $r->db->getMergedSetVersion($r->param('effectiveUser'), $setName, $versionNum);
-		return 1 if $userSet && $userSet->use_grade_proctor eq 'No';
+		return 1 if $userSet && $userSet->use_grade_auth_proctor eq 'No';
 	}
 
 	return $self->SUPER::verify(@_);
@@ -139,7 +139,7 @@ sub check_user {
 		my $userSet = $db->getMergedSet($r->param('effectiveUser'), $setName);
 		unless (
 			$authz->hasPermissions($user_id, 'proctor_quiz_grade')
-			|| (($userSet->use_grade_proctor eq 'Yes' || $userSet->restricted_login_proctor eq 'Yes')
+			|| (($userSet->use_grade_auth_proctor eq 'Yes' || $userSet->restricted_login_proctor eq 'Yes')
 				&& $authz->hasPermissions($user_id, 'proctor_quiz_login'))
 			)
 		{
@@ -148,7 +148,7 @@ sub check_user {
 			if ($userSet->restricted_login_proctor eq 'Yes') {
 				$self->{log_error} = 'invalid set password to start quiz.';
 				$self->{error}     = 'This quiz requires a set password to start, and the password was invalid.';
-			} elsif ($userSet->use_grade_proctor ne 'Yes') {
+			} elsif ($userSet->use_grade_auth_proctor ne 'Yes') {
 				$self->{log_error} =
 					'grade proctor required to login and user is not permitted to proctor quiz grading.';
 				$self->{error} = "This quiz requires a grade proctor to start, and user $show_user_id is not "
