@@ -1990,11 +1990,11 @@ sub getAssetURL {
 	}
 
 	unless ($staticPGAssets) {
-		my $staticAssetsList = "$WeBWorK::Constants::PG_DIRECTORY/htdocs/static-assets.json";
+		my $staticAssetsList = "$ce->{pg_dir}/htdocs/static-assets.json";
 		$staticPGAssets = readJSON($staticAssetsList);
 		unless ($staticPGAssets) {
 			warn "ERROR: '$staticAssetsList' not found or not readable!\n"
-				. "You may need to run 'npm install' from '$WeBWorK::Constants::PG_DIRECTORY/htdocs'.";
+				. "You may need to run 'npm install' from '$ce->{pg_dir}/htdocs'.";
 			$staticPGAssets = {};
 		}
 	}
@@ -2008,7 +2008,7 @@ sub getAssetURL {
 	}
 
 	unless ($thirdPartyPGDependencies) {
-		my $packageJSON = "$WeBWorK::Constants::PG_DIRECTORY/htdocs/package.json";
+		my $packageJSON = "$ce->{pg_dir}/htdocs/package.json";
 		my $data        = readJSON($packageJSON);
 		warn "ERROR: '$packageJSON' not found or not readable!\n" unless $data && defined $data->{dependencies};
 		$thirdPartyPGDependencies = $data->{dependencies} // {};

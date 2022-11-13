@@ -44,8 +44,9 @@ if ($opt_v) {
 
 my $courseName = "tmp_course";
 
-my $ce = new WeBWorK::CourseEnvironment({
+my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
+	pg_dir      => $pg_dir,
 	courseName  => $courseName
 });
 

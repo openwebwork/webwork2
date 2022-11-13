@@ -27,7 +27,7 @@ use lib "$pg_dir/lib";
 use WeBWorK::CourseEnvironment;
 use Helper 'runScript';
 
-my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $ENV{WEBWORK_ROOT} });
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $pg_dir });
 
 my $rawData;
 my $releaseDataFF =

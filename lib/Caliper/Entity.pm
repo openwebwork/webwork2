@@ -20,9 +20,8 @@ sub webwork_app {
 	my $resource_iri = Caliper::ResourseIri->new($ce);
 
 	# $ce doesn't have WW_VERSION when doing login/logout for some reason
-	my $webwork_dir = $WeBWorK::Constants::WEBWORK_DIRECTORY;
-	my $seed_ce     = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
-	my $ww_version  = $seed_ce->{WW_VERSION} || "unknown";
+	my $seed_ce    = WeBWorK::CourseEnvironment->new;
+	my $ww_version = $seed_ce->{WW_VERSION} || "unknown";
 
 	return {
 		'id'      => $resource_iri->webwork(),

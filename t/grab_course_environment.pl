@@ -43,10 +43,7 @@ BEGIN {
              It should be set to the webwork2 directory (e.g. /opt/webwork/webwork2)"
 		unless exists $ENV{WEBWORK_ROOT};
 
-	# Unused variable, but define it twice to avoid an error message.
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT};
-
-	print "Webwork root directory is $WeBWorK::Constants::WEBWORK_DIRECTORY\n\n";
+	print "Webwork root directory is $ENV{WEBWORK_ROOT}\n";
 }
 
 BEGIN {
@@ -54,7 +51,7 @@ BEGIN {
 	my $courseName = 'daemon_course';
 
 	#Define the OpaqueServer static variables
-	my $topDir = $WeBWorK::Constants::WEBWORK_DIRECTORY;
+	my $topDir = $ENV{WEBWORK_ROOT};
 	$topDir =~ s|webwork2?$||;    # remove webwork2 link
 	my $root_dir          = "$topDir/ww_opaque_server";
 	my $root_pg_dir       = "$topDir/pg";

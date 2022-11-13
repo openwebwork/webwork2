@@ -40,10 +40,6 @@ the action of the content generator module for the designated route.
 use Time::HiRes qw/time/;
 
 use WeBWorK::Localize;
-
-# Load WeBWorK::Constants before anything else.  This sets package variables in several packages.
-use WeBWorK::Constants;
-
 use WeBWorK::Authen;
 use WeBWorK::Authz;
 use WeBWorK::CourseEnvironment;
@@ -165,7 +161,7 @@ async sub dispatch ($c) {
 
 	# Create Course Environment
 	debug("We need to get a course environment (with or without a courseID!)\n");
-	my $ce = eval { WeBWorK::CourseEnvironment->new({ %SeedCE, courseName => $routeCaptures{courseID} }) };
+	my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $routeCaptures{courseID} }) };
 	$@ and die "Failed to initialize course environment: $@\n";
 	debug("Here's the course environment: $ce\n");
 	$c->ce($ce);

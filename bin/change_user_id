@@ -45,7 +45,8 @@ my $new_user_id = shift;
 
 my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
-	courseName => $courseID
+	pg_dir      => $pg_dir,
+	courseName  => $courseID
 });
 
 my $db = new WeBWorK::DB($ce->{dbLayout});

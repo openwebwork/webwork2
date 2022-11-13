@@ -38,8 +38,9 @@ use WeBWorK::Utils::CourseManagement qw/listCourses/;
 my $time = time();
 
 # get course environment and open up database
-my $ce = new WeBWorK::CourseEnvironment({
+my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
+	pg_dir      => $pg_dir
 });
 
 # decide whether the mysql installation can handle

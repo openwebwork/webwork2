@@ -13,9 +13,8 @@ sub new {
 	my ($class, $ce) = @_;
 
 	# need to use $seed_ce in case of logout
-	my $webwork_dir = $WeBWorK::Constants::WEBWORK_DIRECTORY;
-	my $seed_ce     = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
-	my $base_url    = $seed_ce->{server_root_url} . $seed_ce->{webwork_url};
+	my $seed_ce  = WeBWorK::CourseEnvironment->new;
+	my $base_url = $seed_ce->{server_root_url} . $seed_ce->{webwork_url};
 	if (defined($seed_ce->{caliper}{base_url}) && $seed_ce->{caliper}{base_url} ne '') {
 		$base_url = $seed_ce->{caliper}{base_url};
 	}

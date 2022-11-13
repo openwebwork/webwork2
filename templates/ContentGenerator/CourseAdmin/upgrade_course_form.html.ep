@@ -23,7 +23,7 @@
 			% next if $courseID eq 'modelCourse';    # modelCourse isn't a real course so it can't be upgraded.
 			% next unless $courseID =~ /\S/;         # Skip empty courseIDs (there shouldn't be any)
 			%
-			% my $tempCE = eval { WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $courseID }) };
+			% my $tempCE = eval { WeBWorK::CourseEnvironment->new({ courseName => $courseID }) };
 			% if ($@) {
 				<%= maketext(q{Can't create course environment for [_1] because [_2]}, $courseID, $@) =%>
 			% }

@@ -149,13 +149,12 @@ sub pre_header_initialize ($c) {
 	my $ce           = $c->ce;
 	my $configValues = $c->getConfigValues($ce);
 	# Get a course environment without course.conf
-	$c->{default_ce} = WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, });
+	$c->{default_ce} = WeBWorK::CourseEnvironment->new;
 
 	$c->{ce_file_dir} = $ce->{courseDirs}{root};
 
 	# Get a copy of the course environment which does not have simple.conf loaded
 	my $ce3 = WeBWorK::CourseEnvironment->new({
-		%WeBWorK::SeedCE,
 		courseName          => $ce->{courseName},
 		web_config_filename => 'noSuchFilePlease'
 	});

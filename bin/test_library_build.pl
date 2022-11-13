@@ -6,9 +6,6 @@ BEGIN {
 	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
 	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
 	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
-
-	# Unused variable, but define it to avoid an error message.
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
 }
 
 # Get database connection
@@ -19,7 +16,7 @@ use WeBWorK::CourseEnvironment;
 use OPLUtils qw/build_library_directory_tree build_library_subject_tree build_library_textbook_tree/;
 use DBI;
 
-my $ce  = new WeBWorK::CourseEnvironment({ webwork_dir => $ENV{WEBWORK_ROOT} });
+my $ce  = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $pg_dir });
 my $dbh = DBI->connect(
 	$ce->{database_dsn},
 	$ce->{database_username},

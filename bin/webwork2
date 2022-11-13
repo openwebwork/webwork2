@@ -33,9 +33,6 @@ BEGIN {
 
 	$WeBWorK::SeedCE{webwork_dir} = $ENV{WEBWORK_ROOT};
 	$WeBWorK::SeedCE{pg_dir}      = $ENV{PG_ROOT};
-	# Define these twice to avoid annoying used only once warnings.
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = $WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT};
-	$WeBWorK::Constants::PG_DIRECTORY      = $WeBWorK::Constants::PG_DIRECTORY      = $ENV{PG_ROOT};
 }
 
 use Mojolicious::Commands;

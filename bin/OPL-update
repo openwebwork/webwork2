@@ -18,10 +18,6 @@ use strict;
 use warnings;
 
 BEGIN {
-        die "WEBWORK_ROOT not found in environment.\n"
-                unless exists $ENV{WEBWORK_ROOT};
-	# Unused variable, but define it to avoid an error message.
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
 	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
 	$ENV{PG_ROOT} //= "$ENV{WEBWORK_ROOT}/../pg";
 	die "The pg directory must be defined in PG_ROOT" unless (-e $ENV{PG_ROOT});
@@ -34,7 +30,7 @@ use lib "$ENV{WEBWORK_ROOT}/bin";
 use WeBWorK::CourseEnvironment;
 use Helper 'runScript';
 
-my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $ENV{PG_ROOT} });
 
 print "\nDownloading the latest OPL release.\n";
 runScript("$ENV{WEBWORK_ROOT}/bin/download-OPL-metadata-release.pl");
