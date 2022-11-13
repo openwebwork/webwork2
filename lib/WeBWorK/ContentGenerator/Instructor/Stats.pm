@@ -29,7 +29,8 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
-use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status format_set_name_display);
+use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status format_set_name_display getAssetURL grade_set);
+use SVG;
 
 # The table format has been borrowed from the Grades.pm module
 sub initialize {
@@ -57,6 +58,20 @@ sub initialize {
 	}
 }
 
+sub output_JS {
+	my $self = shift;
+	my $r    = $self->r;
+	my $ce   = $r->ce;
+	print CGI::script(
+		{
+			src   => getAssetURL($ce, 'js/apps/Stats/stats.js'),
+			defer => undef,
+		},
+		''
+	);
+	return '';
+}
+
 sub title {
 	my $self = shift;
 	my $r    = $self->r;
@@ -67,12 +82,8 @@ sub title {
 	if ($type eq 'student') {
 		return $r->maketext('Statistics for [_1] student [_2]', $self->{ce}{courseName}, $self->{studentName});
 	} elsif ($type eq 'set') {
-		return $r->maketext(
-			'Statistics for [_1] set [_2]. Closes [_3]',
-			$self->{ce}{courseName} =~ s/_/ /gr,
-			CGI::span({ dir => 'ltr' }, format_set_name_display($self->{setName})),
-			$self->formatDateTime($self->{set_due_date})
-		);
+		return $r->maketext('Statistics for [_1]',
+			CGI::span({ dir => 'ltr' }, format_set_name_display($self->{setName})));
 	}
 
 	return $r->maketext('Statistics');
@@ -356,7 +367,7 @@ sub displaySet {
 	my @index_list;                              # List of all student indices
 	my @score_list;                              # List of all student total percentage scores
 	my %attempts_list_for_problem;               # A list of the number of attempts for each problem
-	my %num_attempts_for_problem;                # The total number of attempst for this problem (sum of above list)
+	my %num_attempts_for_problem;                # The total number of attempts for this problem (sum of above list)
 	my %num_students_attempting_problem;         # The number of students attempting this problem.
 	my %correct_answers_for_problem;             # The number of students correctly answering this problem
 												 # (partial correctness allowed).
@@ -410,9 +421,12 @@ sub displaySet {
 
 	debug('begin main loop');
 	for my $studentRecord (@userRecords) {
-		next unless $ce->status_abbrev_has_behavior($studentRecord->status, 'include_in_stats');
-
 		my $student = $studentRecord->user_id;
+
+		# Only include students in stats.
+		next
+			unless ($ce->status_abbrev_has_behavior($studentRecord->status, 'include_in_stats')
+				&& $db->getPermissionLevel($student)->permission == $ce->{userRoles}{student});
 
 		my $totalRight                 = 0;
 		my $total                      = 0;
@@ -421,13 +435,32 @@ sub displaySet {
 
 		debug("Begin obtaining problem records for user $student set $setName");
 		my @problemRecords;
+		my $noSkip = 0;
 		if ($setRecord->assignment_type =~ /gateway/) {
-			@problemRecords =
-				$db->getProblemVersionsWhere({ user_id => $student, set_id => { like => "$setName,v\%" } });
+			# Only use the version with the best score.
+			my @setVersions = $db->getMergedSetVersionsWhere({ user_id => $student, set_id => { like => "$setName,v\%" } });
+			if (@setVersions) {
+				my $maxVersion = 0;
+				my $maxStatus  = 0;
+				foreach my $verSet (@setVersions) {
+					my ($total, $possible) = grade_set($db, $verSet, $student, 1);
+					if ($total / $possible > $maxStatus) {
+						$maxStatus = $total / $possible;
+						$maxVersion = $verSet->version_id;
+					}
+				}
+				@problemRecords = $db->getAllMergedProblemVersions($student, $setName, $maxVersion);
+			} else {
+				# Check if student is assigned to the quiz but hasn't started any version.
+				$noSkip = 1 if $db->getMergedSet($student, $setName);
+			}
 		} else {
 			@problemRecords = $db->getUserProblemsWhere({ user_id => $student, set_id => $setName });
 		}
 		debug("End obtaining problem records for user $student set $setName");
+
+		# Don't include students who are not assigned to set.
+		next unless ($noSkip || @problemRecords);
 
 		for my $problemRecord (@problemRecords) {
 			my $probID = $problemRecord->problem_id;
@@ -532,135 +565,206 @@ sub displaySet {
 		}
 	}
 
+	# Set Information
+	my $statusHelp = '';
+	my $status     = $r->maketext('Open');
+	if (time < $setRecord->open_date) {
+		$status = $r->maketext('Before Open Date');
+	} elsif ($setRecord->enable_reduced_scoring
+		&& time > $setRecord->reduced_scoring_date
+		&& time < $setRecord->due_date)
+	{
+		$status = $r->maketext('Reduced Scoring Period');
+	} elsif (time > $setRecord->due_date && time < $setRecord->answer_date) {
+		$status = $r->maketext('Closed');
+	} else {
+		$status     = $r->maketext('Answers Available');
+		$statusHelp = CGI::a(
+			{
+				class           => 'help-popup float-end',
+				data_bs_content => $r->maketext(
+					'Answer availability for gateway quizzes depends on multiple gateway quiz settings. This only '
+					. 'indicates the template answer date has passed. See set editor for actual availability.'
+				),
+				data_bs_placement => 'top',
+				data_bs_toggle    => 'popover',
+				role              => 'button',
+				tabindex          => 0
+			},
+			CGI::i(
+				{
+					class       => 'icon fas fa-question-circle',
+					data_alt    => $r->maketext('Help Icon'),
+					aria_hidden => 'true'
+				},
+				''
+			)
+		) if $setRecord->assignment_type =~ /gateway/;
+	}
+	$status .= ' (' . $r->maketext('Hidden') . ')' unless $setRecord->visible;
+
+	print CGI::div(
+		{ class => 'table-responsive' },
+		CGI::table(
+			{ class => 'stats-table table table-bordered', style => 'width: auto' },
+			CGI::Tr(
+				CGI::th(
+					$r->maketext('Status')
+						. CGI::a(
+							{
+								class           => 'help-popup float-end',
+								data_bs_content => $r->maketext(
+									'This gives the status and dates of the main set. '
+									. 'Indvidual students may have different settings.'
+								),
+								data_bs_placement => 'top',
+								data_bs_toggle    => 'popover',
+								role              => 'button',
+								tabindex          => 0
+							},
+							CGI::i(
+								{
+									class       => 'icon fas fa-question-circle',
+									data_alt    => $r->maketext('Help Icon'),
+									aria_hidden => 'true'
+								},
+								''
+							)
+						)
+				),
+				CGI::td($status . $statusHelp)
+			),
+			CGI::Tr(CGI::th($r->maketext('# of Students')), CGI::td(scalar(@score_list))),
+			CGI::Tr(
+				CGI::th($r->maketext('Open Date')),
+				CGI::td($self->formatDateTime($setRecord->open_date, undef, $ce->{studentDateDisplayFormat}))
+			),
+			$setRecord->enable_reduced_scoring
+			? CGI::Tr(
+				CGI::th($r->maketext('Reduced Scoring Date')),
+				CGI::td($self->formatDateTime(
+					$setRecord->reduced_scoring_date, undef, $ce->{studentDateDisplayFormat}
+				))
+				)
+			: '',
+			CGI::Tr(
+				CGI::th($r->maketext('Close Date')),
+				CGI::td($self->formatDateTime($setRecord->due_date, undef, $ce->{studentDateDisplayFormat}))
+			),
+			CGI::Tr(
+				CGI::th($r->maketext('Answer Date')),
+				CGI::td($self->formatDateTime($setRecord->answer_date, undef, $ce->{studentDateDisplayFormat}))
+			),
+		)
+	);
+
+	# Overall Stats.
+	print CGI::h2($r->maketext('Overall Results'));
+
+	# Histogram of total scores.
+	my @buckets = map {0} 1 .. 10;
+	foreach (@score_list) { $buckets[ $_ > 0.995 ? 9 : int(10 * $_ + 0.05) ]++ }
+	my $maxCount = 0;
+	foreach (@buckets) { $maxCount = $_ if $_ > $maxCount; }
+	$maxCount = int($maxCount / 5) + 1;
+	print $self->buildBarChart(
+		[ reverse(@buckets) ],
+		xAxisLabels => [ '90-100', '80-89', '70-79', '60-69', '50-59', '40-49', '30-39', '20-29', '10-19', '0-9' ],
+		yMax        => 5 * $maxCount,
+		yAxisLabels => [ map { $_ * $maxCount } 0 .. 5 ],
+		mainTitle   => $r->maketext('Overall Set Grades'),
+		xTitle      => $r->maketext('Percent Ranges'),
+		yTitle      => $r->maketext('Number of Students'),
+		barWidth    => 35,
+		barSep      => 5,
+		isPercent   => 0,
+		leftMargin  => 40 + 5 * length(5 * $maxCount),
+	);
+
+	# Overall Average
+	my ($mean, $stddev) = $self->computeStats(\@score_list);
+	print CGI::div(
+		{ class => 'table-responsive' },
+		CGI::table(
+			{ class => 'stats-table table table-bordered', style => 'width: auto;' },
+			CGI::Tr(CGI::th($r->maketext('Average Percent')),    CGI::td(sprintf('%0.1f', 100 * $mean))),
+			CGI::Tr(CGI::th($r->maketext('Standard Deviation')), CGI::td(sprintf('%0.1f', 100 * $stddev)))
+		)
+	);
+
+	# Table showing percentile statistics for scores and success indices.
+	print CGI::p(
+		$r->maketext(
+			'The percentage of students receiving at least these scores. The median score is in the 50% column.')
+	);
+	print CGI::div(
+		{ class => 'table-responsive' },
+		CGI::table(
+			{ class => 'stats-table table table-bordered' },
+			CGI::Tr(
+				CGI::th($r->maketext('% of students')),
+				CGI::td({ class => 'text-center' }, \@brackets1),
+				CGI::td({ class => 'text-center' }, $r->maketext('top score'))
+			),
+			CGI::Tr(
+				CGI::th($r->maketext('Score')),
+				CGI::td(
+					{ class => 'text-center' },
+					[ prevent_repeats map { sprintf('%0.0f', 100 * $score_percentiles{$_}) } @brackets1 ]
+				),
+				CGI::td({ class => 'text-center' }, sprintf('%0.0f', 100))
+			),
+			CGI::Tr(
+				CGI::th($r->maketext('Success Index')),
+				CGI::td(
+					{ class => 'text-center' },
+					[ prevent_repeats map { sprintf('%0.0f', 100 * $index_percentiles{$_}) } @brackets1 ]
+				),
+				CGI::td({ class => 'text-center' }, sprintf('%0.0f', 100))
+			)
+		)
+	);
+
+	# Individual problem stats.
+	print CGI::h2($r->maketext('Individual Problem Results'));
+
 	# SVG bar graph showing the percentage of students with correct answers for each problem.
-
-	my ($barwidth, $barsep) = (22, 4);
-	my $totalbarwidth = $barwidth + 2 * $barsep;
-	my ($topmargin, $rightmargin, $bottommargin, $leftmargin) = (30, 20, 35, 40);
-	my ($plotwindowwidth, $plotwindowheight) = (@problems * ($barwidth + 2 * $barsep), 200);
-	# Since $plotwindowheight = 200, the height of each bar is 2 * percentagescore.
-	if ($plotwindowwidth < 450) { $plotwindowwidth = 450; }
-	my ($imagewidth, $imageheight) =
-		($leftmargin + $plotwindowwidth + $rightmargin, $topmargin + $plotwindowheight + $bottommargin);
-	$imagewidth += 200 if $isJitarSet;
-	my ($titlexpixel, $titleypixel) = ($leftmargin + sprintf('%d', $plotwindowwidth / 2), $topmargin - 10);
-	my ($xaxislabelxpixel, $xaxislabelypixel) = ($titlexpixel, $imageheight - 5);
-	my $yaxislabelxpixel = $leftmargin - 4;
-
-	# Create a string for the svg image.
-	my $svg =
-		'<svg id="bargraph" xmlns="http://www.w3.org/2000/svg" '
-		. qq!width="100%" height="100%" viewbox="0 0 $imagewidth $imageheight" !
-		. 'aria-labelledby="bargraphtitle">'
-
-		. qq!<rect id="bargraphwindow" x="0" y="0" width="$imagewidth" height="$imageheight" !
-		. ' rx="20" ry="20" stroke="#888" stroke-width="2" stroke-opacity="1" fill="white" fill-opacity="0" />'
-
-		. qq!<text id="bargraphtitle" x="$titlexpixel" y="$titleypixel" !
-		. 'font-family="sans-serif" font-size="14" fill="black" text-anchor="middle" font-weight="bold">'
-		. $r->maketext('Percentage of Active Students with Correct Answers')
-		. '</text>'
-
-		. qq!<text id="bargraphxaxislabel" x="$xaxislabelxpixel" y="$xaxislabelypixel" !
-		. 'font-family="sans-serif" font-size="14" fill="black" text-anchor="middle" font-weight="normal">'
-		. $r->maketext('Problem Number')
-		. '</text>'
-
-		. qq!<rect id="bargraphplotwindow" x="$leftmargin" y="$topmargin" !
-		. qq!width="$plotwindowwidth" height="$plotwindowheight" !
-		. 'fill="white" stroke="#bbb" stroke-width="1" fill-opacity="0" stroke-opacity="1" />';
-
-	my $yaxislabelypixel = 0;
-	my $yaxislabel       = '';
-	for my $i (0 .. 5) {
-		$yaxislabelypixel = $topmargin + 5 + ($i * sprintf('%d', $plotwindowheight / 5));
-		$yaxislabel       = 20 * (5 - $i);
-		$svg .=
-			qq!<text id="bargraphylabel$yaxislabel" x="$yaxislabelxpixel" y="$yaxislabelypixel" !
-			. 'font-family="sans-serif" font-size="12" fill="black" text-anchor="end" font-weight="normal">'
-			. $yaxislabel
-			. '%</text>';
-	}
-
-	my $yaxisruleypixel      = 0;
-	my $yaxisrulerightxpixel = $leftmargin + $plotwindowwidth;
-	for my $i (1 .. 9) {
-		$yaxisruleypixel = $topmargin + ($i * sprintf('%d', $plotwindowheight / 10));
-		$svg .=
-			qq!<line x1="$leftmargin" y1="$yaxisruleypixel" !
-			. qq!x2="$yaxisrulerightxpixel" y2="$yaxisruleypixel" !
-			. 'stroke="#bbb" stroke-width="1" stroke-opacity="1" />';
-	}
-
-	my $problabelypixel = $topmargin + $plotwindowheight + 15;
-
+	my (@problemData, @problemLabels, @jitarBars);
 	for (my $i = 0; $i <= $#problems; $i++) {
 		my $probID = $problems[$i]->problem_id;
 
-		my $percentcorrect = 0;
-		my $barheight      = 0;
-		my $barxpixel      = 0;
-		my $barypixel      = 0;
-
-		if ($isJitarSet && $topLevelProblems{$probID}) {
-			$percentcorrect = $num_students_attempting_problem{$probID}
-				? sprintf('%0.0f',
-					100 * $correct_adjusted_answers_for_problem{$probID} / $num_students_attempting_problem{$probID})
-				: 0;    # Avoid division by zero
-			$barheight = sprintf('%d', $percentcorrect * $plotwindowheight / 100);
-			$barxpixel = $leftmargin + $i * ($barwidth + 2 * $barsep) + $barsep + 3;
-			$barypixel = $topmargin + $plotwindowheight - $barheight;
-			$svg .=
-				qq!<rect id="adjbar$probID" x="$barxpixel" y="$barypixel" width="$barwidth" height="$barheight" !
-				. 'fill="rgb(0,51,136)" />';
+		if ($isJitarSet) {
+			if ($topLevelProblems{$probID}) {
+				push(
+					@jitarBars,
+					$num_students_attempting_problem{$probID}
+					? sprintf('%0.2f',
+						$correct_adjusted_answers_for_problem{$probID} / $num_students_attempting_problem{$probID})
+					: 0
+				);    # Avoid division by zero
+			} else {
+				push(@jitarBars, -1);    # Don't draw bars for non-top level problem.
+			}
 		}
-		$percentcorrect =
+		push(@problemData,
 			$num_students_attempting_problem{$probID}
-			? sprintf('%0.0f', 100 * $correct_answers_for_problem{$probID} / $num_students_attempting_problem{$probID})
-			: 0;    # Avoid division by zero
-		$barheight = sprintf('%d', $percentcorrect * $plotwindowheight / 100);
-		$barxpixel = $leftmargin + $i * $totalbarwidth + $barsep;
-		$barypixel = $topmargin + $plotwindowheight - $barheight;
-
-		my $problabelxpixel = $leftmargin + $i * $totalbarwidth + sprintf('%d', $totalbarwidth / 2);
+			? sprintf('%0.2f', $correct_answers_for_problem{$probID} / $num_students_attempting_problem{$probID})
+			: 0);                        # Avoid division by zero
 
 		my $prettyID = $prettyProblemIDs{$probID};
 		$prettyID = '##' if (length($prettyID) > 4);
-		$svg .=
-			'<a '
-			. ($problemPage{$probID} ? qq!href="$problemPage{$probID}"! : '')
-			. ' target="ww_stats_problem">'
-			. qq!<rect id="bar$probID" x="$barxpixel" y="$barypixel" !
-			. qq!width="$barwidth" height="$barheight" fill="rgb(0,153,198)" />!
-			. qq!<text id="problem$probID" x="$problabelxpixel" y="$problabelypixel" !
-			. qq!font-family="sans-serif" font-size="12" fill="black" text-anchor="middle">$prettyID</text></a>!;
+		push(@problemLabels, $prettyID);
 	}
 
-	# Print a legend if its a jitar set
-	if ($isJitarSet) {
-		my $barxpixel = $leftmargin + $plotwindowwidth + 10;
-		my $barypixel = 55;
-		$svg .= qq!<rect id="legend1" x="$barxpixel" y="$barypixel" width="10" height="10" fill="rgb(0,153,198)" />!;
-		$svg .=
-			qq!<text id="legend1lab" x="${\($barxpixel + 15)}" y="${\($barypixel + 10)}" !
-			. 'font-family="sans-serif" font-size="12" fill="black" text-anchor="start">'
-			. $r->maketext('Correct Status')
-			. '</text>';
-
-		$barypixel = $barypixel - 15;
-		$svg .= qq!<rect id="legend2" x="$barxpixel" y="$barypixel" width="10" height="10" fill="rgb(0,51,136)" />!;
-		$svg .=
-			qq!<text id="legend2lab" x="${\($barxpixel + 15)}" y="${\($barypixel + 10)}" !
-			. 'font-family="sans-serif" font-size="12" fill="black" text-anchor="start">'
-			. $r->maketext('Correct Adjusted Status')
-			. '</text>';
-	}
-
-	$svg .= '</svg>';
-
-	print CGI::div({ class => 'img-fluid mb-3', style => "max-width:${imagewidth}px" }, $svg);
-
-	# Print tables
+	print $self->buildBarChart(
+		\@problemData,
+		yAxisLabels => [ '0%', '20%', '40%', '60%', '80%', '100%' ],
+		xAxisLabels => \@problemLabels,
+		mainTitle   => $r->maketext('Percentage Grade of Active Students'),
+		xTitle      => $r->maketext('Problem Number'),
+		isJitar     => $isJitarSet,
+		jitarBars   => $isJitarSet ? \@jitarBars : [],
+	);
 
 	# Table showing the percentage of students with correct answers for each problems
 	print CGI::p($r->maketext('The percentage of active students with correct answers for each problem')),
@@ -681,7 +785,7 @@ sub displaySet {
 			)
 		),
 		CGI::Tr(
-			CGI::th($r->maketext('% correct')),
+			CGI::th($r->maketext('Avg percent')),
 			CGI::td(
 				{ class => 'text-center' },
 				[
@@ -716,7 +820,7 @@ sub displaySet {
 			: ''
 		),
 		CGI::Tr(
-			CGI::th($r->maketext('avg attempts')),
+			CGI::th($r->maketext('Avg attempts')),
 			CGI::td(
 				{ class => 'text-center' },
 				[
@@ -749,46 +853,13 @@ sub displaySet {
 	print CGI::end_table(), CGI::end_div();
 
 	# Table showing percentile statistics for scores and success indices.
-	print CGI::p(CGI::i(
-		$r->maketext(
-			'The percentage of students receiving at least these scores. The median score is in the 50% column.')
-	));
-	print CGI::div(
-		{ class => 'table-responsive' },
-		CGI::table(
-			{ class => 'stats-table table table-bordered' },
-			CGI::Tr(
-				CGI::th($r->maketext('% students')),
-				CGI::td({ class => 'text-center' }, \@brackets1),
-				CGI::td({ class => 'text-center' }, $r->maketext('top score'))
-			),
-			CGI::Tr(
-				CGI::th($r->maketext('Score')),
-				CGI::td(
-					{ class => 'text-center' },
-					[ prevent_repeats map { sprintf('%0.0f', 100 * $score_percentiles{$_}) } @brackets1 ]
-				),
-				CGI::td({ class => 'text-center' }, sprintf('%0.0f', 100))
-			),
-			CGI::Tr(
-				CGI::th($r->maketext('Success Index')),
-				CGI::td(
-					{ class => 'text-center' },
-					[ prevent_repeats map { sprintf('%0.0f', 100 * $index_percentiles{$_}) } @brackets1 ]
-				),
-				CGI::td({ class => 'text-center' }, sprintf('%0.0f', 100))
-			)
-		)
-	);
-
-	# Table showing percentile statistics for scores and success indices.
-	print CGI::p(CGI::i(
+	print CGI::p(
 		$r->maketext(
 			'Percentile cutoffs for number of attempts. The 50% column shows the median number of attempts.')
-		)),
+		),
 		CGI::start_div({ class => 'table-responsive' }),
 		CGI::start_table({ class => 'stats-table table table-bordered' }),
-		CGI::Tr(CGI::th($r->maketext('% students')), CGI::td({ class => 'text-center' }, \@brackets2));
+		CGI::Tr(CGI::th($r->maketext('% of students')), CGI::td({ class => 'text-center' }, \@brackets2));
 
 	for my $problem (@problems) {
 		my $probID = $problem->problem_id;
@@ -814,6 +885,243 @@ sub displaySet {
 	print CGI::end_table(), CGI::end_div();
 
 	return '';
+}
+
+# Compute Mean / Median / Std Deviation.
+sub computeStats {
+	my $self = shift;
+	return (0, 0) unless (ref($_[0]) eq 'ARRAY' && @{ $_[0] });
+	my $data = shift;
+	my $n    = scalar(@$data);
+	my $sum  = 0;
+	foreach (0 .. $n - 1) { $sum += $data->[$_]; }
+	my $mean = sprintf('%0.4g', $sum / $n);
+	$sum = 0;
+	foreach (0 .. $n - 1) { $sum += ($data->[$_] - $mean)**2; }
+	my $stddev = ($n > 1) ? sqrt($sum / ($n - 1)) : 0;
+	return ($mean, $stddev);
+}
+
+# Create SVG bar graph from input data.
+sub buildBarChart {
+	my $self = shift;
+	my $r    = $self->r;
+	my $data = shift;
+	return '' unless (@$data);
+	$self->{barCount} = 1 unless $self->{barCount};
+	my $id   = $self->{barCount}++;
+	my %opts = (
+		yAxisLabels  => [],
+		xAxisLabels  => [],
+		yAxisTicks   => 9,
+		yMax         => 1,
+		isPercent    => 1,
+		isJitar      => 0,
+		jitarBars    => [],
+		mainTitle    => '',
+		xTitle       => '',
+		yTitle       => '',
+		barWidth     => 22,
+		barSep       => 4,
+		barFill      => 'rgb(0,153,198)',
+		jitarFill    => 'rgb(0,51,136)',
+		topMargin    => 30,
+		rightMargin  => 20,
+		bottomMargin => 45,
+		leftMargin   => 40,
+		minWidth     => 450,
+		plotHeight   => 200,
+		@_,
+	);
+	$opts{rightMargin} += 160 if $opts{isJitar};
+
+	my $n;
+	# Image size calculations.
+	my $barWidth  = $opts{barWidth} + 2 * $opts{barSep};
+	my $plotWidth = scalar(@$data) * $barWidth;
+	$plotWidth = $opts{minWidth} if ($plotWidth < $opts{minWidth});
+	my $imageWidth  = $opts{leftMargin} + $plotWidth + $opts{rightMargin};
+	my $imageHeight = $opts{topMargin} + $opts{plotHeight} + $opts{bottomMargin};
+
+	# Create SVG image output.
+	my $svg = SVG->new(
+		-inline          => 1,
+		id               => "bar_graph_$id",
+		height           => '100%',
+		width            => '100%',
+		viewbox          => '-2 -2 ' . ($imageWidth + 3) . ' ' . ($imageHeight + 3),
+		'aria-labeledby' => 'bar_graph_title',
+	);
+
+	# Main graph setup.
+	$svg->rect(
+		id               => "bar_graph_window_$id",
+		x                => 0,
+		y                => 0,
+		width            => $imageWidth,
+		height           => $imageHeight,
+		rx               => 20,
+		ry               => 20,
+		fill             => 'white',
+		'fill-opacity'   => 0,
+		stroke           => '#888',
+		'stroke-width'   => 1,
+		'stroke-opacity' => 1,
+	);
+	$svg->text(
+		id            => "bar_graph_title_$id",
+		x             => $opts{leftMargin} + int($plotWidth / 2),
+		y             => $opts{topMargin} / 2,
+		'font-family' => 'sans-serif',
+		'font-size'   => 14,
+		fill          => 'black',
+		'text-anchor' => 'middle',
+		'font-weight' => 'bold',
+	)->cdata($opts{mainTitle})
+		if ($opts{mainTitle});
+	$svg->text(
+		id            => "bar_graph_xaxis_label_$id",
+		x             => $opts{leftMargin} + int($plotWidth / 2),
+		y             => $imageHeight - 10,
+		'font-family' => 'sans-serif',
+		'font-size'   => 14,
+		fill          => 'black',
+		'text-anchor' => 'middle',
+	)->cdata($opts{xTitle})
+		if ($opts{xTitle});
+	$svg->text(
+		id            => "bar_graph_yaxis_label_$id",
+		x             => 20,
+		y             => $opts{topMargin} + int($opts{plotHeight} / 2),
+		transform     => 'rotate(-90, 20, ' . ($opts{topMargin} + int($opts{plotHeight} / 2)) . ')',
+		'font-family' => 'sans-serif',
+		'font-size'   => 14,
+		'text-anchor' => 'middle',
+	)->cdata($opts{yTitle})
+		if $opts{yTitle};
+	$svg->rect(
+		id               => "bar_graph_plot_window_$id",
+		x                => $opts{leftMargin},
+		y                => $opts{topMargin},
+		width            => $plotWidth,
+		height           => $opts{plotHeight},
+		fill             => 'white',
+		'fill-opacity'   => 0,
+		stroke           => '#888',
+		'stroke-width'   => 1,
+		'stroke-opacity' => 1,
+	);
+
+	# Jitar Legend.
+	if ($opts{isJitar}) {
+		$svg->rect(
+			x      => $opts{leftMargin} + $plotWidth + 10,
+			y      => $opts{topMargin} + 20,
+			width  => 10,
+			height => 10,
+			stroke => $opts{jitarFill},
+			fill   => $opts{jitarFill},
+		);
+		$svg->text(
+			x             => $opts{leftMargin} + $plotWidth + 25,
+			y             => $opts{topMargin} + 30,
+			'font-family' => 'sans-serif',
+			'font-size'   => 12,
+			'text-anchor' => 'start',
+		)->cdata($r->maketext('Correct Adjusted Status'));
+		$svg->rect(
+			x      => $opts{leftMargin} + $plotWidth + 10,
+			y      => $opts{topMargin} + 40,
+			width  => 10,
+			height => 10,
+			stroke => $opts{barFill},
+			fill   => $opts{barFill},
+		);
+		$svg->text(
+			x             => $opts{leftMargin} + $plotWidth + 25,
+			y             => $opts{topMargin} + 50,
+			'font-family' => 'sans-serif',
+			'font-size'   => 12,
+			'text-anchor' => 'start',
+		)->cdata($r->maketext('Correct Status'));
+	}
+
+	# y-axis labels.
+	$n = scalar(@{ %opts{yAxisLabels} }) - 1;
+	my $yOffset = int($opts{plotHeight} / (10 * $n));
+	foreach (0 .. $n) {
+		my $yPos = $opts{topMargin} + ($n - $_) * int($opts{plotHeight} / $n) + $yOffset;
+		$svg->text(
+			x             => $opts{leftMargin} - 5,
+			y             => $yPos,
+			'font-family' => 'sans-serif',
+			'font-size'   => 14,
+			'text-anchor' => 'end',
+			'font-size'   => 12,
+		)->cdata($opts{yAxisLabels}->[$_]);
+	}
+
+	# y-axis ticks.
+	$n = $opts{yAxisTicks} + 1;
+	foreach (1 .. $opts{yAxisTicks}) {
+		my $yPos = $opts{topMargin} + $_ * int($opts{plotHeight} / $n);
+		$svg->line(
+			x1               => $opts{leftMargin},
+			y1               => $yPos,
+			x2               => $imageWidth - $opts{rightMargin},
+			y2               => $yPos,
+			stroke           => '#888',
+			'stroke-width'   => 1,
+			'stroke-opacity' => 1,
+		);
+	}
+
+	# Bars.
+	$n = scalar(@$data) - 1;
+	foreach (0 .. $n) {
+		my $xPos    = $opts{leftMargin} + $_ * $barWidth + $opts{barSep};
+		my $yHeight = int($opts{plotHeight} * $data->[$_] / $opts{yMax} + 0.5);
+		if ($opts{isJitar} && $opts{jitarBars}->[$_] > 0) {
+			my $jHeight = int($opts{plotHeight} * $opts{jitarBars}->[$_] / $opts{yMax} + 0.5);
+			$svg->rect(
+				x              => $xPos,
+				y              => $opts{topMargin} + $opts{plotHeight} - $jHeight,
+				width          => $opts{barWidth} + $opts{barSep},
+				height         => $jHeight,
+				fill           => $opts{jitarFill},
+				'data-tooltip' => $opts{isPercent} ? (100 * $data->[$_]) . '%' : $data->[$_],
+				class          => 'bar_graph_bar',
+			);
+		}
+		$svg->rect(
+			x              => $xPos,
+			y              => $opts{topMargin} + $opts{plotHeight} - $yHeight,
+			width          => $opts{barWidth},
+			height         => $yHeight,
+			fill           => $opts{barFill},
+			'data-tooltip' => $opts{isPercent} ? (100 * $data->[$_]) . '%' : $data->[$_],
+			class          => 'bar_graph_bar',
+		);
+		$svg->text(
+			x             => $xPos + $opts{barWidth} / 2,
+			y             => $imageHeight - $opts{bottomMargin} + 15,
+			'font-family' => 'sans-serif',
+			'text-anchor' => 'middle',
+			'font-size'   => 12,
+		)->cdata($opts{xAxisLabels}->[$_]);
+	}
+
+	# Tooltip div. Only include once.
+	my $tooltip = ($id > 1) ? '' : CGI::div(
+		{
+			id    => 'bar_tooltip',
+			style =>
+				'position: absolute; display: none; background: cornsilk; border: 1px solid black; border-radius: 5px; padding: 5px;'
+		},
+		''
+	);
+
+	return $tooltip . CGI::div({ class => 'img-fluid mb-3', style => "max-width: ${imageWidth}px" }, $svg->render);
 }
 
 1;
