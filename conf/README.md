@@ -1,9 +1,9 @@
 # Configuration of webwork2
 
 Do not directly modify any of the files in the initial git clone of webwork2. If a filename contains `.dist` then the
-file is intended to be copied to a file by the same name without `.dist` and the copy modified as needed. If a filename
-does not contain `.dist` then it should not be modified. Copies of the `.dist` files will remain unchanged when
-webwork2 is upgraded, but the modifications to the other files will be lost or cause conflict.
+file is intended to be copied to a file by the same name without `.dist` and the copy modified as needed. Specific
+instructions are given below. If a filename **does** contain `.dist` then it should **not** be modified. If changes
+are made to `.dist` files, then the modifications will be lost or cause conflict when webwork2 is upgraded.
 
 ## Configuration files for webwork2
 
@@ -12,7 +12,7 @@ Basic webwork2 configuration files.
 - `site.conf.dist` should be copied to `site.conf`, and contains global variables required for basic server
   configuration. This file is read first in the initialization sequence.
 - `defaults.config` contains initial settings for many customizable options in WeBWorK. This file is read second in the
-  initialization sequence.
+  initialization sequence. **This file should not be changed**
 - `localOverrides.conf.dist` should be copied to `localOverrides.conf`. `localOverrides.conf` will be read after the
   `defaults.config` file is processed and will overwrite configurations in `defaults.config`. Use this file to make
   changes to the settings in `defaults.config`.
@@ -24,8 +24,8 @@ Configuration extension files.
 - `authen_LTI.conf.dist` should be copied to `authen_LTI.conf` if you want to allow LTI authentication into webwork2
   from an LMS.
 - `LTIConfigVariables.config` includes some additional variables used by `authen_LTI.conf` and is included by that file.
-- `authen_CAS.conf.dist` should be copied to authen_CAS.conf to configure CAS authentication.
-- `authen_ldap.conf.dist` should be copied to authen_ldap.conf to configure LDAP authentication.
+- `authen_CAS.conf.dist` should be copied to `authen_CAS.conf` to configure CAS authentication.
+- `authen_ldap.conf.dist` should be copied to `authen_ldap.conf` to configure LDAP authentication.
 
 Server configuration files.
 
@@ -33,8 +33,10 @@ Server configuration files.
   `webwork2.mojolicious.yml` if you need to change those settings. You usually will need to do this.
 - `webwork2.dist.service` is a systemd configuration file for linux systems that serves the webwork2 app via the
   Mojolicious hypnotoad server. If you need to change it, then copy it to `webwork2.service`.
-- `webwork2.apache2.4.dist.conf` is only used if you proxy hypnotoad via apache2.
-- `webwork2.nginx.dist.conf` is only used if you proxy hypnotoad via nginx.
+- `webwork2.apache2.4.dist.conf` is only used if you proxy hypnotoad via apache2. Copy this to `webwork2.apache2.4.conf`
+  if any changes need to be made.
+- `webwork2.nginx.dist.conf` is only used if you proxy hypnotoad via nginx. Copy this to `webwork2.nginx.conf` if any
+  changes need to be made.
 
 ## Initial configururation of webwork2
 
@@ -53,16 +55,20 @@ copy to the corresponding `.dist` file for this.
 
 ## Running webwork2 for development
 
-Make sure that `$server_root_url` in site.conf is set to `http://localhost:3000`. After any other changes in the
-initial configuration of webwork2 you are ready to run webwork2 for development. To do so from the webwork2 directory
-execute the following
+There are two important settings that you may need to change in `site.conf`
+
+- make sure that `$server_root_url` is set to `http://localhost:3000`.
+- make sure that `$pg_dir` is set to the top of your pg directory.
+
+After any other changes in the initial configuration of webwork2 you are ready to run webwork2 for development.
+To do so from the webwork2 directory execute the following
 
 ```bash
 ./bin/dev_scripts/webwork2-morbo
 ```
 
 Note that if you have permissions set for standard production use, then you may need to run this script as the server
-user. You can do this on Ubuntu/Debian systems with
+user. You can do this on Ubuntu/Debian systems or MacOS with
 
 ```bash
 sudo -u www-data ./bin/dev_scripts/webwork2-morbo
@@ -70,7 +76,7 @@ sudo -u www-data ./bin/dev_scripts/webwork2-morbo
 
 Use the server user on your system instead of "www-data" if it is different.
 
-You can now open your browser to `http://localhost/webwork2:3000`.
+You can now open your browser to `http://localhost:3000/webwork2`.
 
 ## Direct deployment of webwork2 for production via hypnotoad
 
@@ -92,9 +98,9 @@ First set up the webwork2 Mojolicious app:
 
 It is not advisable to run the Mojolicious hypnotoad server as the root user or as any user that can directly login to
 the server. Instead use a user that does not have a login account. On Ubuntu systems you can use the `www-data` user
-that is already available. If a user is needed you can create the user `webwork`, for example, with `sudo useradd -M
-webwork`. Make sure that the user has read access to the ssl certificates given in the configuration above if using
-certificates.
+that is already available. If a user is needed you can create the user `webwork`, for example, with
+`sudo useradd -M webwork`. Make sure that the user has read access to the ssl certificates given in the configuration
+above if using certificates.
 
 The `authbind` program will be used to allow the chosen user to bind to port 80 or 443 (whichever was chosen above).
 Install it with your distribution's package manager. To configure it execute the following commands. Make sure to
@@ -159,11 +165,12 @@ First install and configure nginx. This is not covered in this document.
 Then set up the webwork2 Mojolicious app:
 
 - Copy `webwork2.mojolicious.dist.yml` to `webwork2.mojolicious.yml` if you want to modify settings in that file.
-- Copy `webwork2.nginx.dist.conf` to `webwork2.nginx.conf`.
-- Usually that files will not need to be modified. You could even use the `.dist` file directly in most cases.
+- Copy `webwork2.nginx.dist.conf` to `webwork2.nginx.conf` if you want to modify any settings. This will setup
+  a reverse proxy for all webwork2 paths to proxy to the hypnotoad server. Usually this file will not need to be
+  modified. You could even use the `.dist` file directly in most cases.
 - Edit your nginx server configuration file (this may be in `/etc/nginx/conf.d` or `/etc/nginx/sites-available`) and add
   the line `include /opt/webwork/webwork2/conf/webwork2.nginx.conf;` to the end of the `server` section in that file.
-- Execute the following from the `/opt/webwork/webwork` directory to enable the webwork2 nginx configuration:
+- Execute the following from the `/opt/webwork/webwork2` directory to enable the webwork2 nginx configuration:
 
 ```bash
 sudo systemctl restart nginx
