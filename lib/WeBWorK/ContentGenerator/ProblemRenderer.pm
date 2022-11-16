@@ -25,10 +25,13 @@ amount of UI garbage.
 
 use strict;
 use warnings;
+
+use Future::AsyncAwait;
+
 use WeBWorK::CGI;
 use WeBWorK::Utils::Tasks qw(renderProblems);
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
 

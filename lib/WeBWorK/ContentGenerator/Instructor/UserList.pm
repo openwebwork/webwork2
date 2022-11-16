@@ -203,8 +203,7 @@ use constant FIELD_PROPERTIES => {
 		access => 'hidden',
 	},
 };
-
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my $self       = shift;
 	my $r          = $self->r;
 	my $urlpath    = $r->urlpath;

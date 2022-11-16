@@ -16,7 +16,6 @@
 package WeBWorK::ContentGenerator::Instructor::PGProblemEditor;
 use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator::Instructor);
-use base qw(WeBWorK::ContentGenerator::renderViaXMLRPC);
 
 use constant DEFAULT_SEED => 123456;
 
@@ -144,7 +143,7 @@ use constant FORM_PERMS => {
 
 our $BLANKPROBLEM = 'blankProblem.pg';
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self)  = @_;
 	my $r       = $self->r;
 	my $ce      = $r->ce;

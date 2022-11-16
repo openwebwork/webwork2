@@ -50,20 +50,17 @@ subclasses.
 use strict;
 use warnings;
 use version;
-use WeBWorK::Cookie;
+
 use Date::Format;
 use Socket qw/unpack_sockaddr_in inet_ntoa/;    # for logging
-use WeBWorK::Debug;
-use WeBWorK::Utils qw/writeCourseLog runtime_use/;
-use WeBWorK::Localize;
 use URI::Escape;
 use Carp;
 use Scalar::Util qw(weaken);
+use Mojo::Util qw(url_escape url_unescape);
 
-use APR::SockAddr;
-use Apache2::Connection;
-use APR::Request::Error;
-
+use WeBWorK::Debug;
+use WeBWorK::Utils qw/writeCourseLog runtime_use/;
+use WeBWorK::Localize;
 use Caliper::Sensor;
 use Caliper::Entity;
 
@@ -235,8 +232,8 @@ sub verify {
 		#warn "LOGIN FAILED: log_error: $log_error; user error: $error";
 		$self->maybe_kill_cookie;
 		# if error message has a least one non-space character.
-		if (defined($error) and $error =~ /\S/ and $r->can('notes')) {
-			$r->notes->set(authen_error => $error);
+		if (defined($error) and $error =~ /\S/) {
+			$r->stash(authen_error => $error);
 			# FIXME this is a hack to accomodate the webworkservice remixes
 		}
 	}
@@ -583,6 +580,8 @@ sub maybe_send_cookie {
 	my $r    = $self->{r};
 	my $ce   = $r->{ce};
 
+	return if $r->{rpc};
+
 	my ($cookie_user, $cookie_key, $cookie_timestamp, $setID) = $self->fetchCookie;
 
 	# we send a cookie if any of these conditions are met:
@@ -625,6 +624,9 @@ sub maybe_send_cookie {
 
 sub maybe_kill_cookie {
 	my $self = shift;
+
+	return if $self->{r}{rpc};
+
 	$self->killCookie(@_);
 }
 
@@ -865,16 +867,14 @@ sub fetchCookie {
 	my $ce      = $r->ce;
 	my $urlpath = $r->urlpath;
 
-	my $courseID = $urlpath->arg("courseID");
+	return if $r->{rpc};
 
-	my $cookie  = undef;
-	my %cookies = WeBWorK::Cookie->fetch();
-	$cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
+	my $cookie = $r->cookie('WeBWorKCourseAuthen.' . $urlpath->arg('courseID'));
 
 	if ($cookie) {
-		#debug("found a cookie for this course: '", $cookie->as_string, "'");
-		debug("cookie has this value: '", $cookie->value, "'");
-		my ($userID, $key, $timestamp, $setID) = split "\t", $cookie->value;
+		$cookie = url_unescape($cookie);
+		debug("cookie has this value: '", $cookie, "'");
+		my ($userID, $key, $timestamp, $setID) = split "\t", $cookie;
 		if (defined $userID and defined $key and $userID ne "" and $key ne "") {
 			debug("looks good, returning userID='$userID' key='$key'");
 			return ($userID, $key, $timestamp, $setID);
@@ -893,6 +893,8 @@ sub sendCookie {
 	my $r  = $self->{r};
 	my $ce = $r->ce;
 
+	return if $r->{rpc};
+
 	my $courseID = $r->urlpath->arg("courseID");
 
 	# This sets the setID in the cookie on initial login.
@@ -901,36 +903,35 @@ sub sendCookie {
 		&& $r->authen->was_verified
 		&& !$r->authz->hasPermissions($userID, 'navigation_allowed');
 
-	my $timestamp = time();
+	my $timestamp = time;
 
-	my $cookie = WeBWorK::Cookie->new(
-		-name     => "WeBWorKCourseAuthen.$courseID",
-		-value    => "$userID\t$key\t$timestamp" . ($setID ? "\t$setID" : ''),
-		-path     => $ce->{webworkURLRoot},
-		-samesite => $ce->{CookieSameSite},
-		-secure   => $ce->{CookieSecure}                                         # Warning: use 1 only if using https
-	);
+	my $cookie_params = {
+		path     => $ce->{webworkURLRoot},
+		samesite => $ce->{CookieSameSite},
+		secure   => $ce->{CookieSecure}
+	};
 
 	# Set how long the browser should retain the cookie. Using max_age is now recommended,
-	# and overrides expires, but some very old browser only support expires.
+	# and overrides expires, but some very old browsers only support expires.
 	my $lifetime = $ce->{CookieLifeTime};
 	if ($lifetime ne 'session') {
-		$cookie->expires($lifetime);
-		$cookie->max_age($lifetime);
-	}    # as when $lifetime eq 'session' the cookie should be a "session cookie"
-		 # and expire when the browser session is closed.
-		 # At present the CookieLifeTime setting only effects how long the browser is to told to retain the cookie.
-		 # Ideally, when $ce->{session_management_via} eq "session_cookie", and if the timestamp in the cookie was
-		 # secured again client-side tampering, the timestamp and lifetime could be used to provide ongoing session
-		 # authentication.
-
-	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
-		$cookie->domain($r->hostname);    # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
+		$cookie_params->{expires} = $timestamp + $lifetime;
+		$cookie_params->{max_age} = $lifetime;
 	}
+	# When $lifetime eq 'session' the cookie will be a "session cookie" and expire when the browser session is closed.
+	# At present the CookieLifeTime setting only effects how long the browser is to told to retain the cookie.
+	# Ideally, when $ce->{session_management_via} eq "session_cookie", and if the timestamp in the cookie was
+	# secured again client-side tampering, the timestamp and lifetime could be used to provide ongoing session
+	# authentication.
 
-	#	debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
-	eval { $r->headers_out->set("Set-Cookie" => $cookie->as_string); };
-	if ($@) { croak $@; }
+	# If the hostname is 'localhost' or '127.0.0.1', then the cookie domain must be omitted.
+	my $hostname = $r->req->url->to_abs->host;
+	$cookie_params->{domain} = $hostname if ($hostname ne 'localhost' && $hostname ne '127.0.0.1');
+
+	$r->cookie(
+		"WeBWorKCourseAuthen.$courseID" => url_escape("$userID\t$key\t$timestamp" . ($setID ? "\t$setID" : '')),
+		$cookie_params
+	);
 }
 
 sub killCookie {
@@ -940,23 +941,19 @@ sub killCookie {
 
 	my $courseID = $r->urlpath->arg("courseID");
 
-	my $cookie = WeBWorK::Cookie->new(
-		-name      => "WeBWorKCourseAuthen.$courseID",
-		-value     => "\t",
-		'-max-age' => "-1d",                             # 1 day ago
-		-expires   => "-1d",                             # 1 day ago
-		-path      => $ce->{webworkURLRoot},
-		-samesite  => $ce->{CookieSameSite},
-		-secure    => $ce->{CookieSecure}                # Warning: use 1 only if using https
-	);
-	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
-		$cookie->domain($r->hostname);    # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
-	}
+	my $cookie_params = {
+		max_age  => 0,
+		expires  => 0,
+		path     => $ce->{webworkURLRoot},
+		samesite => $ce->{CookieSameSite},
+		secure   => $ce->{CookieSecure}
+	};
 
-	#debug( "killCookie is about to set an expired cookie");
-	#debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
-	eval { $r->headers_out->set("Set-Cookie" => $cookie->as_string); };
-	if ($@) { croak $@; }
+	# If the hostname is 'localhost' or '127.0.0.1', then the cookie domain must be omitted.
+	my $hostname = $r->req->url->to_abs->host;
+	$cookie_params->{domain} = $hostname if ($hostname ne 'localhost' && $hostname ne '127.0.0.1');
+
+	$r->cookie("WeBWorKCourseAuthen.$courseID" => '', $cookie_params);
 }
 
 # This method is only used for a user that does not have the navigation_allowed permission,
@@ -981,34 +978,20 @@ sub get_session_set_id {
 
 sub write_log_entry {
 	my ($self, $message) = @_;
-	my $r  = $self->{r};
-	my $ce = $r->ce;
+	my $r = $self->{r};
 
-	my $user_id           = defined $self->{user_id}           ? $self->{user_id}           : "";
-	my $login_type        = defined $self->{login_type}        ? $self->{login_type}        : "";
-	my $credential_source = defined $self->{credential_source} ? $self->{credential_source} : "";
+	my $user_id           = $self->{user_id}           // '';
+	my $login_type        = $self->{login_type}        // '';
+	my $credential_source = $self->{credential_source} // '';
 
-	my ($remote_host, $remote_port);
+	my $remote_host = $r->useragent_ip || 'UNKNOWN';
+	my $remote_port = $r->remote_port  || 'UNKNOWN';
+	my $user_agent  = $r->headers_in->{'User-Agent'};
 
-	my $connection;
-	my $user_agent;
-	eval { $connection = $r->connection };
-	if ($@) {
-		# no connection available
-		$remote_host = "UNKNOWN" unless defined $remote_host;
-		$remote_port = "UNKNOWN" unless defined $remote_port;
-		$user_agent  = "UNKNOWN";
-	} else {
-		$remote_host = $r->useragent_addr->ip_get        || "UNKNOWN";
-		$remote_port = $r->connection->client_addr->port || "UNKNOWN";
-
-		$user_agent = $r->headers_in->{"User-Agent"};
-	}
-	my $log_msg =
-		"$message user_id=$user_id login_type=$login_type credential_source=$credential_source host=$remote_host port=$remote_port UA=$user_agent";
+	my $log_msg = "$message user_id=$user_id login_type=$login_type credential_source=$credential_source "
+		. "host=$remote_host port=$remote_port UA=$user_agent";
 	debug("Writing to login log: '$log_msg'.\n");
-	writeCourseLog($ce, "login_log", $log_msg);
+	writeCourseLog($r->ce, 'login_log', $log_msg);
 }
 
 1;
-

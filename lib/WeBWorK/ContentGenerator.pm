@@ -44,25 +44,27 @@ use strict;
 use warnings;
 
 use Carp;
-
-use Apache2::Const;
-use WeBWorK::CGI;
-use WeBWorK::File::Scoring qw/parse_scoring_file/;
+use Mojo::IOLoop;
 use Date::Format;
 use URI::Escape;
-use WeBWorK::Debug;
-use WeBWorK::PG;
 use MIME::Base64;
-use WeBWorK::Template qw(template);
-use WeBWorK::Localize;
-
 use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
-use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients generateURLs getAssetURL format_set_name_display);
-use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use Encode;
 use Email::Sender::Transport::SMTP;
+use Future::AsyncAwait;
+
+use WeBWorK::CGI;
+use WeBWorK::File::Scoring qw/parse_scoring_file/;
+use WeBWorK::Debug;
+use WeBWorK::PG;
+use WeBWorK::Template qw(template);
+use WeBWorK::Localize;
+use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients generateURLs getAssetURL format_set_name_display);
+use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
+
+use Future::AsyncAwait;
 
 our $TRACE_WARNINGS = 0;    # set to 1 to trace channel used by warning message
 
@@ -83,11 +85,10 @@ sub new {
 	my ($invocant, $r) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self  = {
-		r         => $r,             # this is now a WeBWorK::Request
-		ce        => $r->ce(),       # these three are here for
-		db        => $r->db(),       # backward-compatability
-		authz     => $r->authz(),    # with unconverted CGs
-		noContent => undef,          # FIXME this should get clobbered at some point
+		r     => $r,             # this is now a WeBWorK::Request
+		ce    => $r->ce(),       # these three are here for
+		db    => $r->db(),       # backward-compatability
+		authz => $r->authz(),    # with unconverted CGs
 	};
 	weaken $self->{r};
 	bless $self, $class;
@@ -132,11 +133,7 @@ didn't perform its function!
 
 =item 3
 
-At this point, go() will terminate if the request is a HEAD request or if the
-field $self->{noContent} contains a true value.
-
-FIXME: I don't think we'll need noContent after reply_with_redirect() is
-adopted by all modules.
+At this point, go() will terminate if the request is a HEAD request.
 
 =item 4
 
@@ -152,7 +149,7 @@ The method content() is called to send the page content to client.
 
 =cut
 
-sub go {
+async sub go {
 	my ($self) = @_;
 	my $r      = $self->r;
 	my $ce     = $r->ce;
@@ -161,42 +158,39 @@ sub go {
 	# update all of the grades because things can get out of sync if
 	# instructors add or modify sets.
 	if ($ce->{LTIGradeMode} and ref($r->{db} // '')) {
-
 		my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
 
-		my $post_connection_action = sub {
-			my $grader = shift;
-
-			# catch exceptions generated during the sending process
-			my $result_message = eval { $grader->mass_update() };
-			if ($@) {
-				# add the die message to the result message
-				$result_message .=
-					"An error occurred while trying to update grades via LTI.\n" . "The error message is:\n\n$@\n\n";
-				# and also write it to the apache log
-				$r->log->error("An error occurred while trying to update grades via LTI: $@\n");
+		Mojo::IOLoop->timer(
+			1 => sub {
+				# Catch exceptions generated during the sending process.
+				eval { $grader->mass_update() };
+				if ($@) {
+					# Write errors to the Mojolicious log
+					$r->log->error("An error occurred while trying to update grades via LTI: $@\n");
+				}
 			}
-		};
-		$r->connection->pool->cleanup_register($post_connection_action, $grader);
+		);
+
+		Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 	}
 
 	# check to verify if there are set-level problems with running
-	#    this content generator (individual content generators must
-	#    check $self->{invalidSet} and react correctly)
+	# this content generator (individual content generators must
+	# check $self->{invalidSet} and react correctly)
 	my $authz = $r->authz;
 	$self->{invalidSet} = $authz->checkSet();
 
-	my $returnValue = Apache2::Const::OK;
+	my $returnValue = 0;
 
 	# We only write to the activity log if it has been defined and if
 	# we are in a specific course.  The latter check is to prevent attempts
 	# to write to a course log file when viewing the top-level list of
 	# courses page.
 	WeBWorK::Utils::writeCourseLog($ce, 'activity_log', $self->prepare_activity_entry)
-		if ($r->urlpath->arg("courseID")
-			and $r->ce->{courseFiles}->{logs}->{activity_log});
+		if ($r->urlpath->arg('courseID')
+			and $r->ce->{courseFiles}{logs}{activity_log});
 
-	$self->pre_header_initialize(@_) if $self->can("pre_header_initialize");
+	await $self->pre_header_initialize(@_) if $self->can('pre_header_initialize');
 
 	# send a file instead of a normal reply (reply_with_file() sets this field)
 	defined $self->{reply_with_file} and do {
@@ -210,12 +204,15 @@ sub go {
 
 	my $headerReturn = $self->header(@_);
 	$returnValue = $headerReturn if defined $headerReturn;
-	# FIXME: we won't need noContent after reply_with_redirect() is adopted
-	return $returnValue if $r->header_only or $self->{noContent};
 
-	$self->initialize() if $self->can("initialize");
+	return $returnValue if $r->req->method eq 'HEAD';
 
-	$self->content();
+	if ($self->can('initialize')) {
+		my $initialize = $self->initialize;
+		await $initialize if ref $initialize eq 'Future' || ref $initialize eq 'Mojo::Promise';
+	}
+
+	await $self->content();
 
 	return $returnValue;
 }
@@ -249,23 +246,21 @@ sub do_reply_with_file {
 	my $delete_after = $fileHash->{delete_after};
 
 	# if there was a problem, we return here and let go() worry about sending the reply
-	return Apache2::Const::NOT_FOUND unless -e $source;
-	return Apache2::Const::FORBIDDEN unless -r $source;
-
-	my $fh;
+	return 404 unless -e $source;
+	return 403 unless -r $source;
 
 	# send our custom HTTP header
-	$r->content_type($type);
-	$r->headers_out->{"Content-Disposition"} = "attachment; filename=\"$name\"";
+	$r->res->headers->content_type($type);
+	$r->res->headers->add("Content-Disposition" => qq{attachment; filename="$name"});
 
 	# send the file
-	$r->sendfile($source);
+	$r->reply->file($source);
 
 	if ($delete_after) {
 		unlink $source or warn "failed to unlink $source after sending: $!";
 	}
 
-	return;    # (see comment on return statement in do_reply_with_redirect, below.)
+	return;
 }
 
 =item do_reply_with_redirect($url)
@@ -278,26 +273,10 @@ sub do_reply_with_redirect {
 	my ($self, $url) = @_;
 	my $r = $self->r;
 
-	$r->status(Apache2::Const::REDIRECT);
-	$r->headers_out->{"Location"} = $url;
+	$r->res->code(302);
+	$r->res->headers->add(Location => $url);
 
-	return;    # we need to explicitly return noting here, otherwise we return $url under Apache2.
-			   # the return value from the mod_perl handler is used to set the HTTP status code,
-			   # but we're setting it explicitly above. i think we should dispense with setting it
-			   # with the return value altogether, and always do it with $r->status. the other way
-			   # is too oblique and error-prone. this is probably a FIXME.
-			   #
-			   # Apache::WeBWorK::handler always returns the value it got from WeBWorK::dispatch
-			   # WeBWorK::dispatch always returns the value it got from WW::ContentGenerator::go
-			   # WW::ContentGenerator::go works like this:
-			   #		- if reply_with_file, return the return value from do_reply_with_file
-			   #		  (do_reply_with_file actually uses this to return NOT_FOUND/FORBIDDEN)
-			   #		- if reply_with_redirect, return the return value from do_reply_with_redirect
-			   #		  (do_reply_with_redirect does NOT use this -- it sets $r->status instead!)
-			   #		- if header returns a defined value, return that
-			   #		  (CG::header always returns OK!)
-			   #		- otherwise, return OK (this never happens!)
-			   # there are no longer any legitimate header() methods other than the one in CG.pm
+	return;
 }
 
 =back
@@ -464,10 +443,8 @@ type.
 
 sub header {
 	my $self = shift;
-	my $r    = $self->r;
-
-	$r->content_type("text/html; charset=utf-8");
-	return Apache2::Const::OK;
+	$self->r->res->headers->content_type('text/html; charset=utf-8');
+	return 0;
 }
 
 =item initialize()
@@ -565,7 +542,7 @@ location of the template is looked up in the course environment.
 
 =cut
 
-sub content {
+async sub content {
 	my ($self) = @_;
 	my $r      = $self->r;
 	my $ce     = $r->ce;
@@ -595,7 +572,7 @@ sub content {
 
 		}
 	}
-	template($templateFile, $self);
+	await template($templateFile, $self);
 }
 
 =back
@@ -1396,6 +1373,24 @@ sub title {
 	return '';
 }
 
+=item webwork_url
+
+Defined in this package.
+
+Outputs the $webwork_url defined in site.conf, unless $webwork_url is equal to
+"/", in which case this outputs the empty string.
+
+This is used to set a value in a global webworkConfig javascript variable,
+that can be accessed in javascript files.
+
+=cut
+
+sub webwork_url {
+	my $self = shift;
+	print $self->r->location;
+	return '';
+}
+
 =item warnings()
 
 Defined in this package.
@@ -1412,7 +1407,7 @@ sub warnings {
 	my $r = $self->r;
 	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
-	my $warnings = $r->notes->get("warnings");
+	my $warnings = $r->stash('warnings') // '';
 	$warnings = Encode::decode("UTF-8", $warnings);
 	print $self->warningOutput($warnings) if $warnings;
 	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
@@ -1600,10 +1595,10 @@ sub if_warnings {
 	my ($self, $arg) = @_;
 	my $r = $self->r;
 
-	if ($r->notes->get("warnings") || ($self->{pgerrors})) {
+	if ($r->stash('warnings') || $self->{pgerrors}) {
 		return $arg;
 	} else {
-		!$arg;
+		return !$arg;
 	}
 }
 
@@ -2195,7 +2190,7 @@ sub systemLink {
 
 	my $url;
 
-	$url = $r->ce->{apache_root_url} if $options{use_abs_url};
+	$url = $r->ce->{server_root_url} if $options{use_abs_url};
 	$url .= $r->location . $urlpath->path;
 	my $first = 1;
 
@@ -2262,7 +2257,7 @@ sub errorOutput($$$) {
 	my $r = $self->{r};
 	print "Entering ContentGenerator::errorOutput subroutine</br>" if $TRACE_WARNINGS;
 	my $time    = time2str("%a %b %d %H:%M:%S %Y", time);
-	my $method  = $r->method;
+	my $method  = $r->req->method;
 	my $uri     = $r->uri;
 	my $headers = do {
 		my %headers = %{ $r->headers_in };
@@ -2361,7 +2356,7 @@ sub warningOutput($$) {
 	$warnings = join("", @warnings);
 
 	my $time   = time2str("%a %b %d %H:%M:%S %Y", time);
-	my $method = $r->method;
+	my $method = $r->req->method;
 	my $uri    = $r->uri;
 	#my $headers = do {
 	#	my %headers = $r->headers_in;
@@ -2377,7 +2372,7 @@ sub warningOutput($$) {
 		),
 		CGI::h3($r->maketext("Warning messages")),
 		CGI::ul($warnings), CGI::h3($r->maketext("Request information")), CGI::table(
-			{ border => "1" },
+			{ class => 'table-bordered' },
 			CGI::Tr({}, CGI::td($r->maketext("Time")),   CGI::td($time)),
 			CGI::Tr({}, CGI::td($r->maketext("Method")), CGI::td($method)),
 			CGI::Tr({}, CGI::td($r->maketext("URI")),    CGI::td($uri)),

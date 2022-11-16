@@ -38,10 +38,6 @@ $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
 #$WeBWorK::Debug::Enabled = 1;
 
-use APR::SockAddr;
-use Apache2::Connection;
-use APR::Request::Error;
-
 our $GENERIC_ERROR_MESSAGE =
 	"Your authentication failed.  Please return to " . "your Course Management System ([_1]) and login again.";
 our $GENERIC_MISSING_USER_ID_ERROR_MESSAGE =
@@ -150,8 +146,8 @@ sub request_has_data_for_this_verification_module {
 	my $r    = $self->{r};
 
 	# See comment in get_credentials()
-	if ($r->{xmlrpc}) {
-		#debug("LTIBasic returning 1 because it is an xmlrpc call");
+	if ($r->{rpc}) {
+		#debug("LTIBasic returning 1 because it is an rpc call");
 		return 1;
 	}
 	if (!(defined $r->param("oauth_consumer_key"))
@@ -199,8 +195,8 @@ sub get_credentials {
 	# Library Browser).
 	# Similar changes are needed in check_user() and verify_normal_user().
 
-	if ($r->{xmlrpc}) {
-		#debug("falling back to superclass get_credentials (xmlrpc call)");
+	if ($r->{rpc}) {
+		#debug("falling back to superclass get_credentials (rpc call)");
 		return $self->SUPER::get_credentials(@_);
 	}
 
@@ -349,8 +345,8 @@ sub check_user {
 	#debug("LTIBasic::check_user has been called for user_id = |$user_id|");
 
 	# See comment in get_credentials()
-	if ($r->{xmlrpc}) {
-		#debug("falling back to superclass check_user (xmlrpc call)");
+	if ($r->{rpc}) {
+		#debug("falling back to superclass check_user (rpc call)");
 		return $self->SUPER::check_user(@_);
 	}
 
@@ -420,8 +416,8 @@ sub verify_normal_user {
 	#debug("LTIBasic::verify_normal_user called for user |$user_id|");
 
 	# See comment in get_credentials()
-	if ($r->{xmlrpc}) {
-		#debug("falling back to superclass verify_normal_user (xmlrpc call)");
+	if ($r->{rpc}) {
+		#debug("falling back to superclass verify_normal_user (rpc call)");
 		return $self->SUPER::verify_normal_user(@_);
 	}
 
@@ -461,8 +457,8 @@ sub authenticate {
 	my ($r, $user) = map { $self->{$_}; } ('r', 'user_id');
 
 	# See comment in get_credentials()
-	if ($r->{xmlrpc}) {
-		#debug("falling back to superclass authenticate (xmlrpc call)");
+	if ($r->{rpc}) {
+		#debug("falling back to superclass authenticate (rpc call)");
 		return $self->SUPER::authenticate(@_);
 	}
 

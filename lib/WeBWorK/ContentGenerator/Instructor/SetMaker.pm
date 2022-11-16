@@ -1723,7 +1723,7 @@ sub process_search {
 	return @dbsearch;
 }
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
 	## For all cases, lets set some things

@@ -63,22 +63,16 @@ my @applicationsList = qw(
 	pngtopnm
 );
 
-my @apache2ModulesList = qw(
-	Apache2::Request
-	Apache2::ServerRec
-	Apache2::ServerUtil
-);
-
 my @modulesList = qw(
 	Archive::Zip
 	Array::Utils
 	Benchmark
 	Carp
 	CGI
-	CGI::Cookie
 	Class::Accessor
 	Data::Dump
 	Data::Dumper
+	Data::Structure::Util
 	Data::UUID
 	Date::Format
 	Date::Parse
@@ -101,6 +95,7 @@ my @modulesList = qw(
 	File::Spec
 	File::stat
 	File::Temp
+	Future::AsyncAwait
 	GD
 	Getopt::Long
 	Getopt::Std
@@ -119,6 +114,8 @@ my @modulesList = qw(
 	Locale::Maketext::Simple
 	LWP::Protocol::https
 	MIME::Base64
+	Mojolicious
+	Mojolicious::Plugin::NotYAMLConfig
 	Net::IP
 	Net::LDAPS
 	Net::OAuth
@@ -149,14 +146,15 @@ my @modulesList = qw(
 	XML::Parser::EasyTree
 	XML::Simple
 	XML::Writer
-	XMLRPC::Lite
 	YAML::XS
 );
 
 my %moduleVersion = (
+	'Future::AsyncAwait'   => 0.52,
+	'IO::Socket::SSL'      => 2.007,
 	'LWP::Protocol::https' => 6.06,
+	'Mojolicious'          => 9.22,
 	'Net::SSLeay'          => 1.46,
-	'IO::Socket::SSL'      => 2.007
 );
 
 my ($test_programs, $test_modules, $show_help);
@@ -169,8 +167,6 @@ GetOptions(
 	'h|help'     => \$show_help,
 );
 pod2usage(2) if $show_help;
-
-push @modulesList, @apache2ModulesList;
 
 my @PATH = split(/:/, $ENV{PATH});
 

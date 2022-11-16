@@ -26,6 +26,8 @@ deal with versioning sets
 use strict;
 use warnings;
 
+use Future::AsyncAwait;
+
 use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
@@ -33,7 +35,7 @@ use WeBWorK::PG::IO;
 # Use the ContentGenerator formatDateTime, not the version in Utils.
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
 	path_is_subdir before after getAssetURL between wwRound is_restricted);
-use WeBWorK::Utils::Rendering qw(constructPGOptions getTranslatorDebuggingOptions);
+use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
 use WeBWorK::Utils::ProblemProcessing qw/create_ans_str_from_responses compute_reduced_score/;
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
@@ -440,7 +442,7 @@ sub get_instructor_comment {
 
 # FIXME need to make $Set and $set be used consistently
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self) = @_;
 
 	# if authz->checkSet has failed, this set is invalid, and no need to proceeded.
@@ -1126,7 +1128,7 @@ sub pre_header_initialize {
 		# this is the actual translation of each problem.  errors are
 		#    stored in @{$self->{errors}} in each case
 		if ((grep /^$pIndex$/, @probsToDisplay) || $submitAnswers) {
-			$pg = $self->getProblemHTML($self->{effectiveUser}, $set, $formFields, $ProblemN);
+			$pg = await $self->getProblemHTML($self->{effectiveUser}, $set, $formFields, $ProblemN);
 		}
 		push(@pg_results, $pg);
 	}
@@ -2595,7 +2597,7 @@ sub body {
 # Evaluation utilities
 ############################################################################
 
-sub getProblemHTML {
+async sub getProblemHTML {
 	my ($self, $EffectiveUser, $set, $formFields, $mergedProblem, $pgFile) = @_;
 	# in:  $EffectiveUser is the effective user we're working as, $set is the
 	#      merged set version, %$formFields the form fields from the input form
@@ -2625,7 +2627,7 @@ sub getProblemHTML {
 			# the rest of Problem's fields are not needed, i think
 		);
 	}
-	# figure out if we're allowed to get solutions and call PG->new accordingly.
+	# figure out if we're allowed to get solutions and call renderPG accordingly.
 	my $showCorrectAnswers = $self->{will}->{showCorrectAnswers};
 	my $showHints          = $self->{will}->{showHints};
 	my $showSolutions      = $self->{will}->{showSolutions};
@@ -2634,8 +2636,8 @@ sub getProblemHTML {
 	# FIXME  I'm not sure that problem_id is what we want here  FIXME
 	my $problemNumber = $mergedProblem->problem_id;
 
-	my $pg = WeBWorK::PG->new(constructPGOptions(
-		$ce,
+	my $pg = await renderPG(
+		$r,
 		$EffectiveUser,
 		$set,
 		$mergedProblem,
@@ -2655,19 +2657,11 @@ sub getProblemHTML {
 			isInstructor       => $r->authz->hasPermissions($self->{userName}, 'view_answers'),
 			debuggingOptions   => getTranslatorDebuggingOptions($r->authz, $self->{userName})
 		},
-	));
+	);
 
-	# FIXME  is problem_id the correct thing in the following two stanzas?
-	# FIXME  the original version had "problem number", which is what we want.
-	# FIXME  I think problem_id will work, too
-	if ($pg->{warnings} ne "") {
-		push @{ $self->{warnings} },
-			{
-				set     => "$setName,v$setVersionNumber",
-				problem => $mergedProblem->problem_id,
-				message => $pg->{warnings},
-			};
-	}
+	# Warnings in the renderPG subprocess will not be caught by the global warning handler of this process.
+	# So rewarn them and let the global warning handler take care of it.
+	warn $pg->{warnings} if $pg->{warnings};
 
 	if ($pg->{flags}->{error_flag}) {
 		push @{ $self->{errors} },

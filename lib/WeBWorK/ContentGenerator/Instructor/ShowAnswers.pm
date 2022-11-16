@@ -24,17 +24,19 @@ WeBWorK::ContentGenerator::Instructor::ShowAnswers.pm  -- display past answers o
 
 use strict;
 use warnings;
-#use CGI;
+
+use Future::AsyncAwait;
+use Text::CSV;
+
 use WeBWorK::CGI;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id getAssetURL format_set_name_display);
-use WeBWorK::Utils::Rendering qw(constructPGOptions);
+use WeBWorK::Utils::Rendering qw(renderPG);
 use PGcore;
-use Text::CSV;
 
 use constant PAST_ANSWERS_FILENAME => 'past_answers';
 
-sub initialize {
+async sub initialize {
 	my $self       = shift;
 	my $r          = $self->r;
 	my $urlpath    = $r->urlpath;
@@ -142,8 +144,8 @@ sub initialize {
 					#if these things dont exist then the problem doesnt exist and past answers dont make sense
 					next unless defined($set) && defined($problem) && defined($userobj);
 
-					my $pg = WeBWorK::PG->new(constructPGOptions(
-						$ce, $userobj, $set, $problem,
+					my $pg = await renderPG(
+						$r, $userobj, $set, $problem,
 						$set->psvn,
 						$formFields,
 						{    # translation options
@@ -155,7 +157,7 @@ sub initialize {
 							permissionLevel          => $db->getPermissionLevel($studentUser)->permission,
 							effectivePermissionLevel => $db->getPermissionLevel($studentUser)->permission,
 						},
-					));
+					);
 
 					# check to see what type the answers are.  right now it only checks for essay but could do more
 					my %answerHash = %{ $pg->{answers} };
@@ -245,9 +247,7 @@ sub initialize {
 		}
 
 		close($fh) or warn "Couldn't Close $fullFilename";
-
 	}
-
 }
 
 sub body {
@@ -391,7 +391,8 @@ sub body {
 
 		print CGI::hr();
 
-		print CGI::start_form({ -target => 'WW_Info', -id => 'past-answer-form' }, "POST", $showAnswersURL);
+		print CGI::start_form(
+			{ action => $showAnswersURL, target => 'WW_Info', id => 'past-answer-form', method => 'POST' });
 		print $self->hidden_authen_fields();
 
 		print CGI::div(

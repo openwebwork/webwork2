@@ -44,7 +44,7 @@ use File::Path 'remove_tree';
 use File::stat;
 use Time::localtime;
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self)  = @_;
 	my $r       = $self->r;
 	my $ce      = $r->ce;
@@ -4247,7 +4247,7 @@ sub display_registration_form {
 							"mailto:$ce->{webworkSecListManagers}?subject=",
 							uri_escape('Joining ww-security-announce'),
 							'&body=',
-							uri_escape("Server URL: $ce->{apache_root_url}\n"),
+							uri_escape("Server URL: $ce->{server_root_url}\n"),
 							uri_escape("WeBWorK version: $ce->{WW_VERSION}\n"),
 							uri_escape("Institution name: \n"))
 					},

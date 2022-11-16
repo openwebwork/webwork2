@@ -71,12 +71,11 @@ $json_output->{hidden_input_field}{problemSeed}              = '$problemSeed';
 $json_output->{hidden_input_field}{problemUUID}              = '$problemUUID';
 $json_output->{hidden_input_field}{psvn}                     = '$psvn';
 $json_output->{hidden_input_field}{pathToProblemFile}        = '$fileName';
-$json_output->{hidden_input_field}{courseName}               = '$courseID';
 $json_output->{hidden_input_field}{courseID}                 = '$courseID';
-$json_output->{hidden_input_field}{userID}                   = '$userID';
-$json_output->{hidden_input_field}{course_password}          = '$course_password';
+$json_output->{hidden_input_field}{user}                     = '$user';
+$json_output->{hidden_input_field}{passwd}                   = '$passwd';
 $json_output->{hidden_input_field}{displayMode}              = '$displayMode';
-$json_output->{hidden_input_field}{session_key}              = '$session_key';
+$json_output->{hidden_input_field}{key}                      = '$key';
 $json_output->{hidden_input_field}{outputformat}             = 'json';
 $json_output->{hidden_input_field}{theme}                    = '$theme';
 $json_output->{hidden_input_field}{language}                 = '$formLanguage';
@@ -88,7 +87,6 @@ $json_output->{hidden_input_field}{showPreviewButton}        = '$showPreviewButt
 $json_output->{hidden_input_field}{showCheckAnswersButton}   = '$showCheckAnswersButton';
 $json_output->{hidden_input_field}{showCorrectAnswersButton} = '$showCorrectAnswersButton';
 $json_output->{hidden_input_field}{showFooter}               = '$showFooter';
-$json_output->{hidden_input_field}{forcePortNumber}          = '$forcePortNumber';
 $json_output->{hidden_input_field}{extraHeaderText}          = '$extra_header_text';
 
 # These are the real WeBWorK server URLs which the intermediate needs to use

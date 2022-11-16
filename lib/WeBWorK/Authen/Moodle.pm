@@ -36,7 +36,6 @@ data, change permission level, add user, delete user. Run this for a rough estim
 use strict;
 use warnings;
 use Digest::MD5 qw/md5_hex/;
-use WeBWorK::Cookie;
 use WeBWorK::Debug;
 use Date::Parse;    # for moodle 1.7 date parsing
 
@@ -192,8 +191,7 @@ sub fetch_moodle_session {
 	my $r      = $self->{r};
 	my $db     = $r->db;
 
-	my %cookies = WeBWorK::Cookie->fetch($r);
-	my $cookie  = $cookies{"MoodleSession"};
+	my $cookie = $r->req->cookie('MoodleSession');
 	return unless $cookie;
 
 	my $session_table = $self->prefix_table($self->{sql_session_table});
@@ -224,8 +222,7 @@ sub update_moodle_session {
 	my $r      = $self->{r};
 	my $db     = $r->db;
 
-	my %cookies = WeBWorK::Cookie->fetch($r);
-	my $cookie  = $cookies{"MoodleSession"};
+	my $cookie = $r->req->cookie('MoodleSession');
 	return unless $cookie;
 
 	my $config_table = $self->prefix_table("config");

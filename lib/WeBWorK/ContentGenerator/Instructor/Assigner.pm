@@ -28,7 +28,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self) = @_;
 	my $r      = $self->r;
 	my $db     = $r->db;

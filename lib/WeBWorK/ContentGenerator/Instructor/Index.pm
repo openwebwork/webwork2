@@ -37,7 +37,7 @@ use constant E_MIN_ONE_SET  => x('Please select at least one set.');
 use constant E_SET_NAME     => x('Please specify a homework set name.');
 use constant E_BAD_NAME     => x('Please use only letters, digits, dashes, underscores, and periods in your set name.');
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self)  = @_;
 	my $r       = $self->r;
 	my $ce      = $r->ce;

@@ -16,7 +16,6 @@
 package WeBWorK::ContentGenerator::Instructor::AchievementEditor;
 use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator::Instructor);
-use base qw(WeBWorK::ContentGenerator::renderViaXMLRPC);
 
 =head1 NAME
 
@@ -45,7 +44,7 @@ use constant ACTION_FORM_TITLES => {
 
 use constant DEFAULT_ICON => "defaulticon.png";
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self)  = @_;
 	my $r       = $self->r;
 	my $ce      = $r->ce;

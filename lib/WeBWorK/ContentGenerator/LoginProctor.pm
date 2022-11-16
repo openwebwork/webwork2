@@ -25,9 +25,12 @@ GatewayQuiz proctored tests.
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+
+use Future::AsyncAwait;
+use CGI qw(-nosticky);
+
 use WeBWorK::Utils qw(readFile dequote);
-use WeBWorK::Utils::Rendering qw(constructPGOptions);
+use WeBWorK::Utils::Rendering qw(renderPG);
 use WeBWorK::DB::Utils qw(grok_vsetID);
 use WeBWorK::ContentGenerator::GatewayQuiz qw(can_recordAnswers);
 
@@ -41,7 +44,7 @@ sub if_loggedin {
 	return !$arg;
 }
 
-sub info {
+async sub info {
 	my ($self) = @_;
 	my $r      = $self->r;
 	my $ce     = $r->ce;
@@ -65,8 +68,8 @@ sub info {
 		# the rest of Problem's fields are not needed, i think
 	);
 
-	my $pg = WeBWorK::PG->new(constructPGOptions(
-		$ce,
+	my $pg = await renderPG(
+		$r,
 		$effectiveUser,
 		$set,
 		$problem,
@@ -78,9 +81,11 @@ sub info {
 			showSolutions  => 0,
 			processAnswers => 0,
 		},
-	));
+	);
 
-	return CGI::h2($r->maketext('Set Info')) . $pg->{body_text};
+	print CGI::h2($r->maketext('Set Info')) . $pg->{body_text};
+
+	return '';
 }
 
 sub body {
@@ -175,7 +180,7 @@ sub body {
 	# if invalid authentication is found.  If this is done, it's a signal to
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
-	my $authen_error = $r->notes->get('authen_error');
+	my $authen_error = $r->stash('authen_error');
 	if ($authen_error) {
 		print CGI::div({ class => 'alert alert-danger' }, $authen_error);
 	}

@@ -25,17 +25,20 @@ WeBWorK::ContentGenerator::ShowMeAnother - Show students alternate versions of c
 
 use strict;
 use warnings;
+
 use WeBWorK::CGI;
 use WeBWorK::PG;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound before after jitar_id_to_seq format_set_name_display);
-use WeBWorK::Utils::Rendering qw(constructPGOptions getTranslatorDebuggingOptions);
+use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
+
+use Future::AsyncAwait;
 
 ################################################################################
 # output utilities
 ################################################################################
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 	my ($self)  = @_;
 	my $r       = $self->r;
 	my $ce      = $r->ce;
@@ -58,7 +61,7 @@ sub pre_header_initialize {
 	$r->param("problemSeed", '');
 
 	# Run existsing initialization
-	$self->SUPER::pre_header_initialize();
+	await $self->SUPER::pre_header_initialize();
 
 	# this has to be set back because of CGI and sticky params.
 	$r->param("problemSeed", $problemSeed);
@@ -138,8 +141,8 @@ sub pre_header_initialize {
 	$can->{showMeAnother} = $self->can_showMeAnother(@args, $submitAnswers);
 
 	# store text of original problem for later comparison with text from problem with new seed
-	my $showMeAnotherOriginalPG = WeBWorK::PG->new(constructPGOptions(
-		$ce,
+	my $showMeAnotherOriginalPG = await renderPG(
+		$r,
 		$effectiveUser,
 		$set, $problem,
 		$set->psvn,
@@ -156,12 +159,12 @@ sub pre_header_initialize {
 			useMathView              => $self->{will}{useMathView},
 			useWirisEditor           => $self->{will}{useWirisEditor},
 		},
-	));
+	);
 
 	my $orig_body_text = $showMeAnotherOriginalPG->{body_text};
-	for (keys %{ $showMeAnotherOriginalPG->{pgcore}{PG_alias}{resource_list} }) {
-		$orig_body_text =~ s/$showMeAnotherOriginalPG->{pgcore}{PG_alias}{resource_list}{$_}{uri}{content}//g
-			if (defined $showMeAnotherOriginalPG->{pgcore}{PG_alias}{resource_list}{$_}{uri}{content});
+	for (keys %{ $showMeAnotherOriginalPG->{resource_list} }) {
+		$orig_body_text =~ s/$showMeAnotherOriginalPG->{resource_list}{$_}//g
+			if defined $showMeAnotherOriginalPG->{resource_list}{$_};
 	}
 
 	# if showMeAnother is active, then output a new problem in a new tab with a new seed
@@ -175,8 +178,8 @@ sub pre_header_initialize {
 		for my $i (0 .. $ce->{pg}->{options}->{showMeAnotherGeneratesDifferentProblem}) {
 			do { $newProblemSeed = int(rand(10000)) } until ($newProblemSeed != $oldProblemSeed);
 			$problem->{problem_seed} = $newProblemSeed;
-			my $showMeAnotherNewPG = WeBWorK::PG->new(constructPGOptions(
-				$ce,
+			my $showMeAnotherNewPG = await renderPG(
+				$r,
 				$effectiveUser,
 				$set, $problem,
 				$set->psvn,
@@ -193,12 +196,12 @@ sub pre_header_initialize {
 					useMathView              => $self->{will}{useMathView},
 					useWirisEditor           => $self->{will}{useWirisEditor},
 				},
-			));
+			);
 
 			my $new_body_text = $showMeAnotherNewPG->{body_text};
-			for (keys %{ $showMeAnotherNewPG->{pgcore}{PG_alias}{resource_list} }) {
-				$new_body_text =~ s/$showMeAnotherNewPG->{pgcore}{PG_alias}{resource_list}{$_}{uri}{content}//g
-					if (defined $showMeAnotherNewPG->{pgcore}{PG_alias}{resource_list}{$_}{uri}{content});
+			for (keys %{ $showMeAnotherNewPG->{resource_list} }) {
+				$new_body_text =~ s/$showMeAnotherNewPG->{resource_list}{$_}//g
+					if defined $showMeAnotherNewPG->{resource_list}{$_};
 			}
 
 			# check to see if we've found a new version
@@ -235,8 +238,8 @@ sub pre_header_initialize {
 		$problem->problem_seed($problemSeed);
 		#### One last check to see if students  have hard coded in a key
 		#### which matches the original problem
-		my $showMeAnotherNewPG = WeBWorK::PG->new(constructPGOptions(
-			$ce,
+		my $showMeAnotherNewPG = await renderPG(
+			$r,
 			$effectiveUser,
 			$set, $problem,
 			$set->psvn,
@@ -253,7 +256,7 @@ sub pre_header_initialize {
 				useMathView              => $self->{will}{useMathView},
 				useWirisEditor           => $self->{will}{useWirisEditor},
 			},
-		));
+		);
 
 		if ($showMeAnotherNewPG->{body_text} eq $showMeAnotherOriginalPG->{body_text}) {
 			$showMeAnother{IsPossible}   = 0;
@@ -304,8 +307,8 @@ sub pre_header_initialize {
 	### picked a new problem seed.
 
 	debug("begin pg processing");
-	my $pg = WeBWorK::PG->new(constructPGOptions(
-		$ce,
+	my $pg = await renderPG(
+		$r,
 		$effectiveUser,
 		$set, $problem,
 		$set->psvn,
@@ -325,7 +328,11 @@ sub pre_header_initialize {
 			isInstructor             => $authz->hasPermissions($userName, 'view_answers'),
 			debuggingOptions         => getTranslatorDebuggingOptions($authz, $userName)
 		},
-	));
+	);
+
+	# Warnings in the renderPG subprocess will not be caught by the global warning handler of this process.
+	# So rewarn them and let the global warning handler take care of it.
+	warn $pg->{warnings} if $pg->{warnings};
 
 	debug("end pg processing");
 
@@ -333,19 +340,20 @@ sub pre_header_initialize {
 	$can->{showHints}     &&= $pg->{flags}->{hintExists};
 	$can->{showSolutions} &&= $pg->{flags}->{solutionExists};
 
-	##### record errors #########
-	if (ref($pg->{pgcore})) {
-		my @debug_messages   = @{ $pg->{pgcore}->get_debug_messages };
-		my @warning_messages = @{ $pg->{pgcore}->get_warning_messages };
-		my @internal_errors  = @{ $pg->{pgcore}->get_internal_debug_messages };
-		$self->{pgerrors}         = @debug_messages || @warning_messages || @internal_errors;
-		$self->{pgdebug}          = \@debug_messages;
-		$self->{pgwarning}        = \@warning_messages;
-		$self->{pginternalerrors} = \@internal_errors;
-	} else {
-		warn "Processing of this PG problem was not completed.  Probably because of a syntax error.
-		      The translator died prematurely and no PG warning messages were transmitted.";
-	}
+	# Record errors
+	$self->{pgdebug}          = $pg->{debug_messages}          if ref $pg->{debug_messages} eq 'ARRAY';
+	$self->{pgwarning}        = $pg->{warning_messages}        if ref $pg->{warning_messages} eq 'ARRAY';
+	$self->{pginternalerrors} = $pg->{internal_debug_messages} if ref $pg->{internal_debug_messages} eq 'ARRAY';
+	# $self->{pgerrors} is defined if any of the above are defined, and is nonzero if any are non-empty.
+	$self->{pgerrors} =
+		@{ $self->{pgdebug} // [] } || @{ $self->{pgwarning} // [] } || @{ $self->{pginternalerrors} // [] }
+		if defined $self->{pgdebug} || defined $self->{pgwarning} || defined $self->{pginternalerrors};
+
+	# If $self->{pgerrors} is not defined, then the PG messages arrays were not defined,
+	# which means $pg->{pgcore} was not defined and the translator died.
+	warn 'Processing of this PG problem was not completed.  Probably because of a syntax error. '
+		. 'The translator died prematurely and no PG warning messages were transmitted.'
+		unless defined $self->{pgerrors};
 
 	$self->{showMeAnother} = \%showMeAnother;
 	$self->{pg}            = $pg;

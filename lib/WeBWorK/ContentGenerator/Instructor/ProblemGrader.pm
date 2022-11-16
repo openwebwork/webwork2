@@ -17,10 +17,13 @@
 
 package WeBWorK::ContentGenerator::Instructor::ProblemGrader;
 use base qw(WeBWorK::ContentGenerator);
-use WeBWorK::Utils qw(sortByName getAssetURL);
-use WeBWorK::Utils::Rendering qw(constructPGOptions);
-use WeBWorK::PG;
+
+use Future::AsyncAwait;
 use HTML::Entities;
+
+use WeBWorK::Utils qw(sortByName getAssetURL);
+use WeBWorK::Utils::Rendering qw(renderPG);
+use WeBWorK::PG;
 
 =head1 NAME
 
@@ -29,7 +32,7 @@ use HTML::Entities;
 use strict;
 use warnings;
 
-sub pre_header_initialize {
+async sub pre_header_initialize {
 
 	my ($self)  = @_;
 	my $r       = $self->r;
@@ -143,7 +146,7 @@ sub initialize {
 	}
 }
 
-sub body {
+async sub body {
 	my ($self)      = @_;
 	my $r           = $self->r;
 	my $urlpath     = $r->urlpath;
@@ -176,8 +179,8 @@ sub body {
 		unless $set && $problem;
 
 	#set up a silly problem to render the problem text
-	my $pg = WeBWorK::PG->new(constructPGOptions(
-		$ce, $user, $set, $problem,
+	my $pg = await renderPG(
+		$r, $user, $set, $problem,
 		$set->psvn,
 		$formFields,
 		{    # translation options
@@ -190,7 +193,7 @@ sub body {
 			effectivePermissionLevel => $db->getPermissionLevel($userID)->permission,
 			isInstructor             => 1
 		},
-	));
+	);
 
 	# check to see what type the answers are.  right now it only checks for essay but could do more
 	my %answerHash = %{ $pg->{answers} };

@@ -27,9 +27,12 @@ use warnings;
 use feature 'signatures';
 no warnings qw(experimental::signatures);
 
+use Mojo::IOLoop;
+use Data::Structure::Util qw(unbless);
+
 use WeBWorK::Utils qw(formatDateTime);
 
-our @EXPORT_OK = qw(constructPGOptions getTranslatorDebuggingOptions);
+our @EXPORT_OK = qw(constructPGOptions getTranslatorDebuggingOptions renderPG);
 
 =head1 constructPGOptions
 
@@ -206,6 +209,76 @@ sub getTranslatorDebuggingOptions ($authz, $userName) {
 			show_answer_group_info
 			)
 	};
+}
+
+=head1 renderPG
+
+This method requires a course environment, user, set, problem, psvn, form
+fields, and translation options.  These are passed to the WeBWorK::PG
+constructor inside of a subprocess.  The created object is then parsed into a
+hash that containing all of the data webwork2 needs for rendering and processing
+the problem.  Note that this hash can not contain any blessed references.  Those
+will all be lost in the return value from the process.
+
+The return value of the method is a Mojo::Promise that will resolve to the above
+hash when awaited.
+
+=cut
+
+sub renderPG ($r, $effectiveUser, $set, $problem, $psvn, $formFields, $translationOptions) {
+	# Set the inactivity timeout to be 5 seconds more than the PG timeout.
+	$r->inactivity_timeout($WeBWorK::PG::TIMEOUT + 5);
+
+	return Mojo::IOLoop->subprocess->run_p(sub {
+
+		# Set the default signal handlers here.  The PG signal handlers will do the work.  If these are not set, then
+		# Mojo::Base, Mojo::Exception, and Mojo::EventEmitter need to be shared to the safe compartment since those are
+		# needed by the global webwork2 signal handlers.
+		local $SIG{__WARN__} = 'DEFAULT';
+		local $SIG{__DIE__}  = 'DEFAULT';
+
+		my $pg = WeBWorK::PG->new(constructPGOptions(
+			$r->ce, $effectiveUser, $set, $problem, $psvn, $formFields, $translationOptions));
+
+		my $ret = {
+			body_text        => $pg->{body_text},
+			head_text        => $pg->{head_text},
+			post_header_text => $pg->{post_header_text},
+			answers          => unbless($pg->{answers}),
+			errors           => $pg->{errors},
+			warnings         => $pg->{warnings},
+			result           => $pg->{result},
+			state            => $pg->{state},
+			flags            => $pg->{flags},
+		};
+
+		if (ref $pg->{pgcore}) {
+			$ret->{internal_debug_messages} = $pg->{pgcore}->get_internal_debug_messages;
+			$ret->{warning_messages}        = $pg->{pgcore}->get_warning_messages();
+			$ret->{debug_messages}          = $pg->{pgcore}->get_debug_messages();
+			$ret->{PG_ANSWERS_HASH}         = {
+				map {
+					$_ => {
+						response_obj => unbless($pg->{pgcore}{PG_ANSWERS_HASH}{$_}->response_obj),
+						rh_ans       => $pg->{pgcore}{PG_ANSWERS_HASH}{$_}{ans_eval}{rh_ans}
+					}
+				}
+					keys %{ $pg->{pgcore}{PG_ANSWERS_HASH} }
+			};
+			$ret->{resource_list} = {
+				map { $_ => $pg->{pgcore}{PG_alias}{resource_list}{$_}{uri}{content} }
+					keys %{ $pg->{pgcore}{PG_alias}{resource_list} }
+			};
+		}
+
+		# Save the problem source. This is used by Caliper::Entity. Why?
+		$ret->{problem_source_code} = $pg->{translator}{source} if ref $pg->{translator};
+
+		$pg->free;
+		return $ret;
+	})->catch(sub ($err) {
+		return { body_text => '', answers => {}, flags => { error_flag => 1 }, errors => $err };
+	});
 }
 
 1;

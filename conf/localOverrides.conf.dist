@@ -508,32 +508,31 @@ $mail{feedbackRecipients}    = [
 # The following variables can be set to control cookie behavior.
 
 # Set the value of the samesite attribute of the WeBWorK cookie:
-#    See: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
-#         https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
-#         https://tools.ietf.org/html/draft-west-cookie-incrementalism-00
+# See: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
+#      https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+#      https://tools.ietf.org/html/draft-west-cookie-incrementalism-00
 
 # Notes about the $CookieSameSite options:
-#   The "None" setting should only be used with HTTPS and when $CookieSecure = 1; is set below. The "None" setting is also less secure and can allow certain types of cross-site attacks.
-#   The "Strict" setting can break the links in the system generated feedback emails when read in a web mail client.
-#   Due to those factors, the "Lax" setting is probably the optimal choice for typical WeBWorK servers.
+# The "None" setting should only be used with HTTPS and when $CookieSecure = 1; is set below. The "None" setting is
+# also less secure and can allow certain types of cross-site attacks.
+# The "Strict" setting can break the links in the system generated feedback emails when read in a web mail client.
+# Due to those factors, the "Lax" setting is probably the optimal choice for typical WeBWorK servers.
 
 #$CookieSameSite = "None";
 #$CookieSameSite = "Strict";
 #$CookieSameSite = "Lax";
 
 # Set the value of the secure cookie attribute:
+# Default is 0 here, as 1 will not work without https
 #$CookieSecure = 1;
 
-# At present the CookieLifeTime setting only effect how long the
-# browser is to supposed to retain the cookie.
-#     https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
-#$CookieLifeTime = "+7d";
+# The CookieLifeTime setting determines how long the browser should retain the cookie.
+# See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
+# The CookieLifeTime value should be numeric and in seconds, or should be set to "session", in which case
+# the Cookie will expire when the browser session ends (a "session cookie").
+# The default value is 7 days.
+#$CookieLifeTime = 604800;
 #$CookieLifeTime = "session";
-
-# NOTE: In general the cookie lifespan settings use the CGI.pm relative time settings.
-# Search for "30 seconds from now" at https://metacpan.org/pod/CGI to see the various options.
-# A WW option is to set it to "session", in which case the Cookie will expire when the
-# browser session ends (a "session cookie").
 
 ################################################################################
 # Searching for set.def files to import

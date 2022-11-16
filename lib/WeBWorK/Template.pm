@@ -23,10 +23,10 @@ WeBWorK::Template - apply a template to a ContentGenerator.
 =head1 SYNOPSIS
 
  use WeBWorK::Template qw/template/;
- 
+
  my $templateFile = "default.template";
  my $cg = WeBWorK::ContentGenerator::SomeSubclass->new($r);
- 
+
  template($templateFile, $cg);
 
 =head1 DESCRIPTION
@@ -99,6 +99,9 @@ Several predicate functions are defined in WeBWorK::ContentGenerator.
 
 use strict;
 use warnings;
+
+use Future::AsyncAwait;
+
 use WeBWorK::Utils qw(readFile);
 
 our @EXPORT    = ();
@@ -118,7 +121,7 @@ template.
 
 =cut
 
-sub template {
+async sub template {
 	my ($templatePath, $cg) = @_;
 
 	# the truth value of the top of this stack determines if we're printing output or not.
@@ -152,6 +155,8 @@ sub template {
 			} elsif ($ifstack[-1]) {
 				if ($cg->can($function)) {
 					my @result = $cg->$function({@args});
+					@result = await $result[0]
+						if @result && ref $result[0] eq 'Future' || ref $result[0] eq 'Mojo::Promise';
 					if (@result && defined($result[0])) {
 						print @result;
 					} else {

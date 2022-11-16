@@ -269,7 +269,7 @@ sub problem_user {
 			'tags'                 => $unblessed_tags,
 			'problem_seed'         => $problem_user->problem_seed(),
 			'source_text'          => $problem_user->status(),
-			'problem_source_code'  => $pg->{'translator'}->{'source'},
+			'problem_source_code'  => $pg->{problem_source_code},
 			'problem_html_text'    => $pg->{'body_text'},
 			'status'               => $problem_user->status(),
 			'attempted'            => $problem_user->attempted(),
