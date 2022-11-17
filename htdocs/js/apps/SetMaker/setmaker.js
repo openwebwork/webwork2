@@ -2,8 +2,13 @@
 	const webworkURL = webworkConfig?.webwork_url ?? '/webwork2';
 	const basicWebserviceURL = `${webworkURL}/instructor_rpc`;
 
+	let unloading = false;
+	window.addEventListener('beforeunload', () => unloading = true);
+
 	// Informational alerts/errors
 	const alertToast = (title, msg, good = false) => {
+		if (unloading) return;
+
 		const toastContainer = document.createElement('div');
 		toastContainer.classList.add(
 			'toast-container', 'position-fixed', 'top-50', 'start-50',  'translate-middle', 'p-3');
