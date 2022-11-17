@@ -45,43 +45,25 @@ sub initialize {
 
 	$self->{type} = $urlpath->arg('statType') || '';
 	if ($self->{type} eq 'student') {
-		my $studentName = $urlpath->arg('userID') || $user;
-		$self->{studentName} = $studentName;
+		my $studentID = $urlpath->arg('userID') || $user;
+		$self->{studentID} = $studentID;
 
 	} elsif ($self->{type} eq 'set') {
-		my $setName = $urlpath->arg('setID') || 0;
-		$self->{setName} = $setName;
-		my $setRecord = $db->getGlobalSet($setName);
+		my $setID = $urlpath->arg('setID') || 0;
+		$self->{setID} = $setID;
+		my $setRecord = $db->getGlobalSet($setID);
 		return unless $setRecord;
-		$self->{set_due_date} = $setRecord->due_date;
-		$self->{setRecord}    = $setRecord;
+		$self->{setRecord} = $setRecord;
 		my $problemID = $urlpath->arg('problemID') || 0;
 		if ($problemID) {
 			$self->{prettyID} =
 				$setRecord->assignment_type eq 'jitar' ? join('.', jitar_id_to_seq($problemID)) : $problemID;
 			$self->{type} = 'problem';
-			my $problemRecord = $db->getGlobalProblem($setName, $problemID);
+			my $problemRecord = $db->getGlobalProblem($setID, $problemID);
 			return unless $problemRecord;
 			$self->{problemRecord} = $problemRecord;
 		}
 	}
-}
-
-sub output_JS {
-	my $self = shift;
-	my $r    = $self->r;
-	my $ce   = $r->ce;
-	print CGI::script(
-		{
-			src   => getAssetURL($ce, 'js/apps/Stats/stats.js'),
-			defer => undef,
-		},
-		''
-	);
-	if ($self->{type} eq 'problem') {
-		print CGI::script({ src => getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') }, '');
-	}
-	return '';
 }
 
 sub title {
@@ -92,14 +74,14 @@ sub title {
 
 	my $type = $self->{type};
 	if ($type eq 'student') {
-		return $r->maketext('Statistics for student [_1]', $self->{studentName});
+		return $r->maketext('Statistics for student [_1]', $self->{studentID});
 	} elsif ($type eq 'set') {
 		return $r->maketext('Statistics for [_1]',
-			CGI::span({ dir => 'ltr' }, format_set_name_display($self->{setName})));
+			CGI::span({ dir => 'ltr' }, format_set_name_display($self->{setID})));
 	} elsif ($type eq 'problem') {
 		return $r->maketext(
 			'Statsitcs for [_1] problem [_2]',
-			CGI::span({ dir => 'ltr' }, format_set_name_display($self->{setName})),
+			CGI::span({ dir => 'ltr' }, format_set_name_display($self->{setID})),
 			$self->{prettyID}
 		);
 	}
@@ -112,7 +94,7 @@ sub path {
 	my $r          = $self->r;
 	my $urlpath    = $r->urlpath;
 	my $courseName = $urlpath->arg('courseID');
-	my $setName    = $self->{setName}           || '';
+	my $setID      = $self->{setID}             || '';
 	my $problemID  = $urlpath->arg('problemID') || '';
 	my $prettyID   = $self->{prettyID}          || '';
 	my $type       = $self->{type};
@@ -124,12 +106,12 @@ sub path {
 		Statistics         => $r->location . "/$courseName/instructor/stats",
 	);
 	if ($type eq 'student') {
-		push(@path, $self->{studentName} => '');
+		push(@path, $self->{studentID} => '');
 	} elsif ($type eq 'set') {
-		push(@path, format_set_name_display($setName) => '');
+		push(@path, format_set_name_display($setID) => '');
 	} elsif ($type eq 'problem') {
 		push(
-			@path, format_set_name_display($setName) => $r->location . "/$courseName/instructor/stats/set/$setName",
+			@path, format_set_name_display($setID) => $r->location . "/$courseName/instructor/stats/set/$setID",
 			$prettyID => ''
 		);
 	} else {
@@ -177,7 +159,7 @@ sub siblings {
 				{ class => 'nav-item' },
 				CGI::a(
 					{
-						$user_id eq $self->{studentName}
+						$user_id eq $self->{studentID}
 						? (class => 'nav-link active')
 						: (href => $self->systemLink($userStatisticsPage), class => 'nav-link')
 					},
@@ -199,7 +181,7 @@ sub siblings {
 				{ class => 'nav-item' },
 				CGI::a(
 					{
-						defined $self->{setName} && $setID eq $self->{setName}
+						defined $self->{setID} && $setID eq $self->{setID}
 						? (class => 'nav-link active')
 						: (
 							href =>
@@ -231,10 +213,10 @@ sub body {
 		unless $authz->hasPermissions($user, 'access_instructor_tools');
 
 	if ($self->{type} eq 'student') {
-		my $studentRecord = $r->db->getUser($self->{studentName});
+		my $studentRecord = $r->db->getUser($self->{studentID});
 		unless ($studentRecord) {
 			return CGI::div({ class => 'alert alert-danger p-1' },
-				$r->maketext('Record for user [_1] not found.', $self->{studentName}));
+				$r->maketext('Record for user [_1] not found.', $self->{studentID}));
 		}
 
 		my $courseHomePage = $urlpath->new(
@@ -249,16 +231,16 @@ sub body {
 
 		if ($authz->hasPermissions($user, 'become_student')) {
 			my $act_as_student_url =
-				$self->systemLink($courseHomePage, params => { effectiveUser => $self->{studentName} });
+				$self->systemLink($courseHomePage, params => { effectiveUser => $self->{studentID} });
 
 			print $r->maketext('Act as:') . ' ', CGI::a({ href => $act_as_student_url }, $studentRecord->user_id);
 		}
 
-		print WeBWorK::ContentGenerator::Grades::displayStudentStats($self, $self->{studentName});
+		print WeBWorK::ContentGenerator::Grades::displayStudentStats($self, $self->{studentID});
 	} elsif ($self->{type} eq 'set') {
-		$self->displaySet();
+		$self->display_set();
 	} elsif ($self->{type} eq 'problem') {
-		$self->displayProblem();
+		$self->display_problem();
 	} elsif ($self->{type} eq '') {
 		$self->index;
 	} else {
@@ -274,7 +256,7 @@ sub get_problems {
 	my $r             = $self->r;
 	my $db            = $r->db;
 	my $urlpath       = $r->urlpath;
-	my $setID         = $self->{setName};
+	my $setID         = $self->{setID};
 	my $setRecord     = $self->{setRecord};
 	my $prettyID      = $self->{prettyID} || '';
 	my $filterSection = $r->param('filterSection');
@@ -405,7 +387,7 @@ sub get_students {
 		__PACKAGE__, $r,
 		courseID  => $urlpath->arg('courseID'),
 		statType  => $self->{type},
-		setID     => $self->{setName},
+		setID     => $self->{setID},
 		problemID => $urlpath->arg('problemID') || ''
 	);
 
@@ -516,7 +498,7 @@ sub index {
 	);
 }
 
-sub displaySet {
+sub display_set {
 	my $self       = shift;
 	my $r          = $self->r;
 	my $urlpath    = $r->urlpath;
@@ -524,12 +506,12 @@ sub displaySet {
 	my $ce         = $r->ce;
 	my $user       = $r->param('user');
 	my $courseName = $urlpath->arg('courseID');
-	my $setName    = $urlpath->arg('setID');
+	my $setID      = $urlpath->arg('setID');
 	my $setRecord  = $self->{setRecord};
 	my $filter     = $r->param('filterSection');
 
 	unless ($setRecord) {
-		print CGI::div({ class => 'alert alert-danger p-1' }, $r->maketext('Global set [_1] not found.', $setName));
+		print CGI::div({ class => 'alert alert-danger p-1' }, $r->maketext('Global set [_1] not found.', $setID));
 		return;
 	}
 
@@ -569,7 +551,7 @@ sub displaySet {
 				'WeBWorK::ContentGenerator::Instructor::Stats', $r,
 				courseID  => $courseName,
 				statType  => 'set',
-				setID     => $setName,
+				setID     => $setID,
 				problemID => $probID
 			),
 			params => $filter ? { filterSection => $filter } : {}
@@ -587,7 +569,7 @@ sub displaySet {
 					{
 						href => $self->systemLink($urlpath->new(
 							type => 'instructor_problem_grader',
-							args => { courseID => $courseName, setID => $setName, problemID => $probID }
+							args => { courseID => $courseName, setID => $setID, problemID => $probID }
 						))
 					},
 					$r->maketext('Grade Problem [_1]', $prettyIDs{$probID})
@@ -624,24 +606,24 @@ sub displaySet {
 		if ($setRecord->assignment_type =~ /gateway/) {
 			# Only use the quiz version with the best score.
 			my @setVersions =
-				$db->getMergedSetVersionsWhere({ user_id => $student, set_id => { like => "$setName,v\%" } });
+				$db->getMergedSetVersionsWhere({ user_id => $student, set_id => { like => "$setID,v\%" } });
 			if (@setVersions) {
 				my $maxVersion = 1;
 				my $maxStatus  = 0;
-				foreach my $verSet (@setVersions) {
+				for my $verSet (@setVersions) {
 					my ($total, $possible) = grade_set($db, $verSet, $student, 1);
 					if ($possible > 0 && $total / $possible >= $maxStatus) {
 						$maxStatus  = $total / $possible;
 						$maxVersion = $verSet->version_id;
 					}
 				}
-				@problemRecords = $db->getAllMergedProblemVersions($student, $setName, $maxVersion);
+				@problemRecords = $db->getAllMergedProblemVersions($student, $setID, $maxVersion);
 			} else {
 				# Check if student is assigned to the quiz but hasn't started any version.
-				$noSkip = 1 if $db->getMergedSet($student, $setName);
+				$noSkip = 1 if $db->getMergedSet($student, $setID);
 			}
 		} else {
-			@problemRecords = $db->getUserProblemsWhere({ user_id => $student, set_id => $setName });
+			@problemRecords = $db->getUserProblemsWhere({ user_id => $student, set_id => $setID });
 		}
 		# Don't include students who are not assigned to set.
 		next unless ($noSkip || @problemRecords);
@@ -701,7 +683,7 @@ sub displaySet {
 
 	# Loop over the problems one more time to build stats tables.
 	my (@avgScore, @adjScore, @avgAttempts, @numActive, @attemptsList, @successList);
-	foreach (@problems) {
+	for (@problems) {
 		my $probID  = $_->problem_id;
 		my $nStu    = $num_students_attempting_problem{$probID};
 		my $avgS    = $nStu ? $total_status_for_problem{$probID} / $nStu : 0;
@@ -820,11 +802,11 @@ sub displaySet {
 
 	# Histogram of total scores.
 	my @buckets = map {0} 1 .. 10;
-	foreach (@score_list) { $buckets[ $_ > 0.995 ? 9 : int(10 * $_ + 0.05) ]++ }
+	for (@score_list) { $buckets[ $_ > 0.995 ? 9 : int(10 * $_ + 0.05) ]++ }
 	my $maxCount = 0;
-	foreach (@buckets) { $maxCount = $_ if $_ > $maxCount; }
+	for (@buckets) { $maxCount = $_ if $_ > $maxCount; }
 	$maxCount = int($maxCount / 5) + 1;
-	print $self->buildBarChart(
+	print $self->build_bar_chart(
 		[ reverse(@buckets) ],
 		xAxisLabels => [ '90-100', '80-89', '70-79', '60-69', '50-59', '40-49', '30-39', '20-29', '10-19', '0-9' ],
 		yMax        => 5 * $maxCount,
@@ -860,10 +842,10 @@ sub displaySet {
 	);
 
 	# Overall Average
-	my ($mean, $stddev) = $self->computeStats(@score_list);
-	my ($avgAttempts) = $self->computeStats(grep(!/-/, @avgAttempts));
+	my ($mean, $stddev) = $self->compute_stats(@score_list);
+	my ($avgAttempts) = $self->compute_stats(grep(!/-/, @avgAttempts));
 	my $overallSuccess = $avgAttempts ? $mean**2 / $avgAttempts : 0;
-	($overallSuccess) = $self->computeStats(@index_list);
+	($overallSuccess) = $self->compute_stats(@index_list);
 	print CGI::div(
 		{ class => 'table-responsive' },
 		CGI::table(
@@ -884,7 +866,7 @@ sub displaySet {
 		$r->maketext(
 			'The percentage of students receiving at least these scores. The median score is in the 50% column.')
 	);
-	print $self->bracketTable(
+	print $self->bracket_table(
 		[ 90,                                                 80, 70, 60, 50, 40, 30, 20, 10 ],
 		[ [ map { sprintf('%0.0f', 100 * $_) } @score_list ], [ map { sprintf('%0.0f', 100 * $_) } @index_list ] ],
 		[ $r->maketext('Percent Score'),                      $r->maketext('Success Index') . $successHelp ],
@@ -922,7 +904,7 @@ sub displaySet {
 		push(@problemLabels, $prettyID);
 	}
 
-	print $self->buildBarChart(
+	print $self->build_bar_chart(
 		\@problemData,
 		yAxisLabels => [ '0%', '20%', '40%', '60%', '80%', '100%' ],
 		xAxisLabels => \@problemLabels,
@@ -949,19 +931,19 @@ sub displaySet {
 		push(@problemLabels, $r->maketext('Manual Grader'));
 		push(@problemData,   \@GradeableRows);
 	}
-	print $self->statsTable(\@problemLabels, \@problemData);
+	print $self->stats_table(\@problemLabels, \@problemData);
 
 	# Table showing percentile statistics for scores and success indices.
 	print CGI::p(
 		$r->maketext(
 			'Percentile cutoffs for number of attempts. The 50% column shows the median number of attempts.')
 	);
-	print $self->bracketTable([ 95, 75, 50, 25, 5, 1 ], \@attemptsList, \@problemLinks, reverse => 1);
+	print $self->bracket_table([ 95, 75, 50, 25, 5, 1 ], \@attemptsList, \@problemLinks, reverse => 1);
 
 	return '';
 }
 
-sub displayProblem {
+sub display_problem {
 	my $self          = shift;
 	my $r             = $self->r;
 	my $urlpath       = $r->urlpath;
@@ -969,7 +951,7 @@ sub displayProblem {
 	my $ce            = $r->ce;
 	my $user          = $r->param('user');
 	my $courseID      = $urlpath->arg('courseID');
-	my $setName       = $self->{setName};
+	my $setID         = $self->{setID};
 	my $problemID     = $urlpath->arg('problemID');
 	my $prettyID      = $self->{prettyID};
 	my $setRecord     = $self->{setRecord};
@@ -978,12 +960,12 @@ sub displayProblem {
 	my $topLevelJitar = $prettyID !~ /\./;
 
 	unless ($setRecord) {
-		print CGI::div({ class => 'alert alert-danger p-1' }, $r->maketext('Global set [_1] not found.', $setName));
+		print CGI::div({ class => 'alert alert-danger p-1' }, $r->maketext('Global set [_1] not found.', $setID));
 		return;
 	}
 	unless ($problemRecord) {
 		print CGI::div({ class => 'alert alert-danger p-1' },
-			$r->maketext('Global problem [_1] not found for set [_2].', $prettyID, $setName));
+			$r->maketext('Global problem [_1] not found for set [_2].', $prettyID, $setID));
 		return;
 	}
 
@@ -998,10 +980,10 @@ sub displayProblem {
 		if ($setRecord->assignment_type =~ /gateway/) {
 			my @problemRecords =
 				$db->getProblemVersionsWhere(
-					{ user_id => $student, problem_id => $problemID, set_id => { like => "$setName,v\%" } });
+					{ user_id => $student, problem_id => $problemID, set_id => { like => "$setID,v\%" } });
 			my $maxRecord = 0;
 			my $maxStatus = 0;
-			foreach (0 .. $#problemRecords) {
+			for (0 .. $#problemRecords) {
 				if ($problemRecords[$_]->status > $maxStatus) {
 					$maxRecord = $_;
 					$maxStatus = $problemRecords[$_]->status;
@@ -1009,7 +991,7 @@ sub displayProblem {
 			}
 			$studentProblem = $problemRecords[$maxRecord];
 		} else {
-			$studentProblem = $db->getMergedProblem($student, $setName, $problemID);
+			$studentProblem = $db->getMergedProblem($student, $setID, $problemID);
 		}
 		# Don't include students who are not assigned to set.
 		next unless ($studentProblem);
@@ -1048,17 +1030,17 @@ sub displayProblem {
 
 	# Histogram of total scores.
 	my @buckets = map {0} 1 .. 10;
-	foreach (@problemScores) { $buckets[ $_ > 0.995 ? 9 : int(10 * $_ + 0.05) ]++ }
+	for (@problemScores) { $buckets[ $_ > 0.995 ? 9 : int(10 * $_ + 0.05) ]++ }
 	my $maxCount = 0;
-	foreach (@buckets) { $maxCount = $_ if $_ > $maxCount; }
+	for (@buckets) { $maxCount = $_ if $_ > $maxCount; }
 	my @jitarBars = ();
 	if ($isJitarSet && $topLevelJitar) {
 		@jitarBars = map {0} 1 .. 10;
-		foreach (@adjustedScores) { $jitarBars[ $_ > 0.995 ? 9 : int(10 * $_ + 0.05) ]++ }
-		foreach (@jitarBars)      { $maxCount = $_ if $_ > $maxCount; }
+		for (@adjustedScores) { $jitarBars[ $_ > 0.995 ? 9 : int(10 * $_ + 0.05) ]++ }
+		for (@jitarBars)      { $maxCount = $_ if $_ > $maxCount; }
 	}
 	$maxCount = int($maxCount / 5) + 1;
-	print $self->buildBarChart(
+	print $self->build_bar_chart(
 		[ reverse(@buckets) ],
 		xAxisLabels => [ '90-100', '80-89', '70-79', '60-69', '50-59', '40-49', '30-39', '20-29', '10-19', '0-9' ],
 		yMax        => 5 * $maxCount,
@@ -1115,8 +1097,8 @@ sub displayProblem {
 	);
 
 	# Overall Average
-	my ($mean,  $stddev)  = $self->computeStats(@problemScores);
-	my ($mean2, $stddev2) = $self->computeStats(@problemAttempts);
+	my ($mean,  $stddev)  = $self->compute_stats(@problemScores);
+	my ($mean2, $stddev2) = $self->compute_stats(@problemAttempts);
 	my $successIndex = $mean2 ? $mean**2 / $mean2 : 0;
 	print CGI::div(
 		{ class => 'table-responsive' },
@@ -1148,14 +1130,14 @@ sub displayProblem {
 	}
 	push(@tableHeaders, $r->maketext('Success Index') . $successHelp2);
 	push(@tableData,    [ map { sprintf('%0.0f', 100 * $_) } @successList ]);
-	print $self->bracketTable([ 90, 80, 70, 60, 50, 40, 30, 20, 10 ], \@tableData, \@tableHeaders, showMax => 1,);
+	print $self->bracket_table([ 90, 80, 70, 60, 50, 40, 30, 20, 10 ], \@tableData, \@tableHeaders, showMax => 1,);
 
 	# Table showing attempts percentiles
 	print CGI::p(
 		$r->maketext(
 			'Percentile cutoffs for number of attempts. The 50% column shows the median number of attempts.')
 	);
-	print $self->bracketTable(
+	print $self->bracket_table(
 		[ 95, 75, 50, 25, 5, 1 ],
 		[ \@problemAttempts ],
 		[ $r->maketext('# of attempts') ],
@@ -1171,7 +1153,7 @@ sub displayProblem {
 			},
 			$self->hidden_authen_fields,
 			CGI::input({ type => 'hidden', id => 'hidden_course_id',  name => 'courseID',  value => $courseID }),
-			CGI::input({ type => 'hidden', id => 'hidden_set_id',     name => 'setID',     value => $setName }),
+			CGI::input({ type => 'hidden', id => 'hidden_set_id',     name => 'setID',     value => $setID }),
 			CGI::input({ type => 'hidden', id => 'hidden_problem_id', name => 'problemID', value => $problemID }),
 			CGI::input({
 				type  => 'hidden',
@@ -1181,28 +1163,29 @@ sub displayProblem {
 			}),
 			CGI::div(
 				CGI::a(
-					{ id => 'pdr_render', class => 'btn btn-primary', role => 'button', tabindex => 0 },
+					{ id => 'problem_render_btn', class => 'btn btn-primary', role => 'button', tabindex => 0 },
 					$r->maketext('Render Problem')
 				),
 				CGI::a(
 					{
-						class => 'btn btn-primary',
-						href  => $self->systemLink($urlpath->new(
+						class  => 'btn btn-primary',
+						target => 'WW_Editor',
+						href   => $self->systemLink($urlpath->new(
 							type => 'instructor_problem_editor_withset_withproblem',
-							args => { courseID => $courseID, setID => $setName, problemID => $problemID }
+							args => { courseID => $courseID, setID => $setID, problemID => $problemID }
 						))
 					},
 					$r->maketext('Edit Problem')
 				)
 			),
-			CGI::div({ id => 'psr_render_area', class => 'psr_render_area m-3' }, '')
+			CGI::div({ id => 'problem_render_area', class => 'psr_render_area m-3' }, '')
 		);
 
 	return '';
 }
 
 # Determines the percentage of students whose score is greater than a given value.
-sub determinePercentiles {
+sub determine_percentiles {
 	my $self             = shift;
 	my $percent_brackets = shift;
 	my @list_of_scores   = sort { $a <=> $b } @_;
@@ -1216,7 +1199,7 @@ sub determinePercentiles {
 }
 
 # Replace an array such as "[0, 0, 0, 86, 86, 100, 100, 100]" by "[0, '-', '-', 86, '-', 100, '-', '-']"
-sub preventRepeats {
+sub prevent_repeats {
 	my $self    = shift;
 	my @inarray = @_;
 	my @outarray;
@@ -1235,7 +1218,7 @@ sub preventRepeats {
 }
 
 # Create percentile bracket table.
-sub bracketTable {
+sub bracket_table {
 	my $self     = shift;
 	my $r        = $self->r;
 	my $brackets = shift;
@@ -1255,18 +1238,18 @@ sub bracketTable {
 	while (@$data) {
 		my $row = shift(@$data);
 		my %percentiles =
-			ref($row) eq 'ARRAY' ? $self->determinePercentiles($brackets, @$row) : map { $_ => '-' } @$brackets;
+			ref($row) eq 'ARRAY' ? $self->determine_percentiles($brackets, @$row) : map { $_ => '-' } @$brackets;
 		my @tableData = map { $percentiles{$_} } @$brackets;
-		@tableData = reverse(@tableData)               if $opts{reverse};
-		@tableData = $self->preventRepeats(@tableData) if ref($row) eq 'ARRAY';
+		@tableData = reverse(@tableData)                if $opts{reverse};
+		@tableData = $self->prevent_repeats(@tableData) if ref($row) eq 'ARRAY';
 		push(@tableData, $opts{reverse} ? $percentiles{min} : $percentiles{max}) if $opts{showMax};
 		push(@headOut,   shift(@$heads));
 		push(@dataOut,   \@tableData);
 	}
-	return $self->statsTable(\@headOut, \@dataOut);
+	return $self->stats_table(\@headOut, \@dataOut);
 }
 
-sub statsTable {
+sub stats_table {
 	my $self  = shift;
 	my $heads = shift;
 	my $data  = shift;
@@ -1282,22 +1265,22 @@ sub statsTable {
 }
 
 # Compute Mean / Std Deviation.
-sub computeStats {
+sub compute_stats {
 	my $self = shift;
 	my @data = @_;
 	my $n    = scalar(@data);
 	return (0, 0, 0) unless ($n > 0);
 	my $sum = 0;
-	foreach (@data) { $sum += $_; }
+	for (@data) { $sum += $_; }
 	my $mean = sprintf('%0.4g', $sum / $n);
 	my $sum2 = 0;
-	foreach (@data) { $sum2 += ($_ - $mean)**2; }
+	for (@data) { $sum2 += ($_ - $mean)**2; }
 	my $stddev = ($n > 1) ? sqrt($sum2 / ($n - 1)) : 0;
 	return ($mean, $stddev, $sum);
 }
 
 # Create SVG bar graph from input data.
-sub buildBarChart {
+sub build_bar_chart {
 	my $self = shift;
 	my $r    = $self->r;
 	my $data = shift;
@@ -1444,7 +1427,7 @@ sub buildBarChart {
 	# y-axis labels.
 	$n = scalar(@{ $opts{yAxisLabels} }) - 1;
 	my $yOffset = int($opts{plotHeight} / (10 * $n));
-	foreach (0 .. $n) {
+	for (0 .. $n) {
 		my $yPos = $opts{topMargin} + ($n - $_) * int($opts{plotHeight} / $n) + $yOffset;
 		$svg->text(
 			x             => $opts{leftMargin} - 5,
@@ -1458,7 +1441,7 @@ sub buildBarChart {
 
 	# y-axis ticks.
 	$n = $opts{yAxisTicks} + 1;
-	foreach (1 .. $opts{yAxisTicks}) {
+	for (1 .. $opts{yAxisTicks}) {
 		my $yPos = $opts{topMargin} + $_ * int($opts{plotHeight} / $n);
 		$svg->line(
 			x1               => $opts{leftMargin},
@@ -1473,30 +1456,32 @@ sub buildBarChart {
 
 	# Bars.
 	$n = scalar(@$data) - 1;
-	foreach (0 .. $n) {
+	for (0 .. $n) {
 		my $xPos    = $opts{leftMargin} + $_ * $barWidth + $opts{barSep};
 		my $yHeight = int($opts{plotHeight} * $data->[$_] / $opts{yMax} + 0.5);
 		if ($opts{isJitarSet} && $opts{jitarBars}->[$_] > 0) {
 			my $jHeight = int($opts{plotHeight} * $opts{jitarBars}->[$_] / $opts{yMax} + 0.5);
 			$svg->rect(
-				x              => $xPos,
-				y              => $opts{topMargin} + $opts{plotHeight} - $jHeight,
-				width          => $opts{barWidth} + $opts{barSep},
-				height         => $jHeight,
-				fill           => $opts{jitarFill},
-				'data-tooltip' => $opts{isPercent} ? (100 * $opts{jitarBars}->[$_]) . '%' : $opts{jitarBars}->[$_],
-				class          => 'bar_graph_bar',
+				x                => $xPos,
+				y                => $opts{topMargin} + $opts{plotHeight} - $jHeight,
+				width            => $opts{barWidth} + $opts{barSep},
+				height           => $jHeight,
+				fill             => $opts{jitarFill},
+				'data-bs-toggle' => 'tooltip',
+				'data-bs-title'  => $opts{isPercent} ? (100 * $opts{jitarBars}->[$_]) . '%' : $opts{jitarBars}->[$_],
+				class            => 'bar_graph_bar',
 			);
 		}
 		my $tag = @{ $opts{barLinks} } ? $svg->anchor(-href => $opts{barLinks}->[$_]) : $svg;
 		$tag->rect(
-			x              => $xPos,
-			y              => $opts{topMargin} + $opts{plotHeight} - $yHeight,
-			width          => $opts{barWidth},
-			height         => $yHeight,
-			fill           => $opts{barFill},
-			'data-tooltip' => $opts{isPercent} ? (100 * $data->[$_]) . '%' : $data->[$_],
-			class          => 'bar_graph_bar',
+			x                => $xPos,
+			y                => $opts{topMargin} + $opts{plotHeight} - $yHeight,
+			width            => $opts{barWidth},
+			height           => $yHeight,
+			fill             => $opts{barFill},
+			'data-bs-toggle' => 'tooltip',
+			'data-bs-title'  => $opts{isPercent} ? (100 * $data->[$_]) . '%' : $data->[$_],
+			class            => 'bar_graph_bar',
 		);
 		$tag->text(
 			x             => $xPos + $opts{barWidth} / 2,
@@ -1507,17 +1492,19 @@ sub buildBarChart {
 		)->cdata($opts{xAxisLabels}->[$_]);
 	}
 
-	# Tooltip div. Only include once.
-	my $tooltip = ($id > 1) ? '' : CGI::div(
-		{
-			id    => 'bar_tooltip',
-			style =>
-				'position: absolute; display: none; background: cornsilk; border: 1px solid black; border-radius: 5px; padding: 5px;'
-		},
-		''
-	);
+	return CGI::div({ class => 'img-fluid mb-3', style => "max-width: ${imageWidth}px" }, $svg->render);
+}
 
-	return $tooltip . CGI::div({ class => 'img-fluid mb-3', style => "max-width: ${imageWidth}px" }, $svg->render);
+sub output_JS {
+	my $self = shift;
+	my $r    = $self->r;
+	my $ce   = $r->ce;
+
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/Stats/stats.js'), defer => undef, }, '')
+		if ($self->{type} eq 'set' || $self->{type} eq 'problem');
+	print CGI::script({ src => getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') }, '')
+		if ($self->{type} eq 'problem');
+	return '';
 }
 
 1;

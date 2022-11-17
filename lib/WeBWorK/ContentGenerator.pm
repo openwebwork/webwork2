@@ -947,20 +947,26 @@ sub links {
 							)
 						);
 						if (defined $problemID) {
-							print CGI::start_li({ class => 'nav-item' });
-							print CGI::start_ul({ class => 'nav flex-column' });
 							print CGI::li(
-								{ class => 'nav-item', dir => 'ltr' },
-								&$makelink(
-									"${pfx}Stats",
-									text         => $r->maketext('Problem [_1]', $prettyProblemID),
-									urlpath_args =>
-										{ %args, statType => 'ste', setID => $nvSetID, problemID => $problemID },
-									systemlink_args => \%systemlink_args
+								{ class => 'nav-item' },
+								CGI::ul(
+									{ class => 'nav flex-column' },
+									CGI::li(
+										{ class => 'nav-item', dir => 'ltr' },
+										&$makelink(
+											"${pfx}Stats",
+											text         => $r->maketext('Problem [_1]', $prettyProblemID),
+											urlpath_args => {
+												%args,
+												statType  => 'ste',
+												setID     => $nvSetID,
+												problemID => $problemID
+											},
+											systemlink_args => \%systemlink_args
+										)
+									)
 								)
 							);
-							print CGI::end_ul();
-							print CGI::end_li();
 						}
 					}
 					print CGI::end_ul();

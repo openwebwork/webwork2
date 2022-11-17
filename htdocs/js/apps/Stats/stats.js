@@ -1,23 +1,12 @@
 (() => {
 	// Hover action to show exact value of each bar.
-	document.querySelectorAll('.bar_graph_bar').forEach((el) => {
-		el.addEventListener('mousemove', (evt) => {
-			const tooltip = document.getElementById('bar_tooltip');
-			tooltip.innerHTML = evt.target.dataset.tooltip;
-			tooltip.style.display = 'block';
-			tooltip.style.left = evt.pageX + 10 + 'px';
-			tooltip.style.top = evt.pageY + 10 + 'px';
-		});
-		el.addEventListener('mouseout', () => {
-			document.getElementById('bar_tooltip').style.display = 'none';
-		});
-	});
+	document.querySelectorAll('.bar_graph_bar').forEach((el) => new bootstrap.Tooltip(el, { trigger: 'hover' }));
 
 	// Send a request to the webwork webservice and render a problem.
 	const basicWebserviceURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/render_rpc`;
 
 	const render = () => new Promise((resolve) => {
-		const renderArea = document.getElementById(`psr_render_area`);
+		const renderArea = document.getElementById(`problem_render_area`);
 
 		const ro = {
 			user: document.getElementById('hidden_user')?.value,
@@ -44,19 +33,14 @@
 				'</style>',
 		};
 
-		if (!(ro.user && ro.courseID && ro.key)) {
-			renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-				+ 'Missing hidden credentials: user, session_key, courseID</div>';
-			resolve();
-			return;
-		}
-
 		if (ro.sourceFilePath.startsWith('group')) {
 			renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0" style="font-weight:bold">'
 				+ 'Problem source is drawn from a grouping set.</div>';
 			resolve();
 			return;
 		}
+
+		renderArea.innerHTML = '<div class="alert alert-success p-1">Loading Please Wait...</div>';
 
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -85,7 +69,7 @@
 				throw 'There was an error rendering this problem!';
 
 			const iframe = document.createElement('iframe');
-			iframe.id = 'psr_render_iframe';
+			iframe.id = 'problem_render_iframe';
 			iframe.style.border = 'none';
 			iframe.srcdoc = data.html;
 			renderArea.innerHTML = '';
@@ -105,13 +89,13 @@
 	});
 
 	const hide = () => {
-		const iframe = document.getElementById('psr_render_iframe');
+		const iframe = document.getElementById('problem_render_iframe');
 		if (iframe && iframe.iFrameResizer) iframe.iFrameResizer.close();
 	};
 
 	// Set up the render button.
-	document.getElementById('pdr_render')?.addEventListener('click', () => {
-		const btn = document.getElementById('pdr_render');
+	document.getElementById('problem_render_btn')?.addEventListener('click', () => {
+		const btn = document.getElementById('problem_render_btn');
 		if (btn.innerHTML == 'Render Problem') {
 			btn.innerHTML = 'Hide Problem';
 			render();
@@ -119,6 +103,6 @@
 			btn.innerHTML = 'Render Problem';
 			hide();
 		}
-	}, { passive: true });
+	});
 
 })();
