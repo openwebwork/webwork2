@@ -159,30 +159,9 @@ sub siblings {
 
 	# List links depending on if viewing set progress or student progress
 	if ($self->{type} eq 'student') {
-		my $ce   = $r->ce;
-		my $user = $r->param('user');
-		# Get all users except the set level proctors, and restrict to the
-		# sections or recitations that are allowed for the user if such
-		# restrictions are defined.  This list is sorted by last_name,
-		# then first_name, then user_id.
-		my @studentRecords = $db->getUsersWhere(
-			{
-				user_id => { not_like => 'set_id:%' },
-				$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
-				? (
-					-or => [
-						$ce->{viewable_sections}{$user}
-						? (section => { in => $ce->{viewable_sections}{$user} })
-						: (),
-						$ce->{viewable_recitations}{$user}
-						? (recitation => { in => $ce->{viewable_recitations}{$user} })
-						: ()
-					]
-					)
-				: ()
-			},
-			[qw/last_name first_name user_id/]
-		);
+		my $ce             = $r->ce;
+		my $user           = $r->param('user');
+		my @studentRecords = $self->get_students(1);
 
 		for my $studentRecord (@studentRecords) {
 			my $first_name         = $studentRecord->first_name;
@@ -208,6 +187,7 @@ sub siblings {
 		}
 	} else {
 		my @setIDs = sort $db->listGlobalSets;
+		my $filter = $r->param('filterSection');
 		for my $setID (@setIDs) {
 			my $problemPage = $urlpath->newFromModule(
 				$urlpath->module, $r,
@@ -221,7 +201,11 @@ sub siblings {
 					{
 						defined $self->{setName} && $setID eq $self->{setName}
 						? (class => 'nav-link active')
-						: (href => $self->systemLink($problemPage), class => 'nav-link')
+						: (
+							href =>
+								$self->systemLink($problemPage, params => $filter ? { filterSection => $filter } : {}),
+							class => 'nav-link'
+						)
 					},
 					format_set_name_display($setID)
 				)
@@ -284,6 +268,200 @@ sub body {
 	return '';
 }
 
+# Get a list of problem records and build a problem menu.
+sub get_problems {
+	my $self          = shift;
+	my $r             = $self->r;
+	my $db            = $r->db;
+	my $urlpath       = $r->urlpath;
+	my $setID         = $self->{setName};
+	my $setRecord     = $self->{setRecord};
+	my $prettyID      = $self->{prettyID} || '';
+	my $filterSection = $r->param('filterSection');
+	my $isJitarSet    = $setRecord->assignment_type eq 'jitar';
+	my @problems      = $db->getGlobalProblemsWhere({ set_id => $setID }, 'problem_id');
+
+	return (
+		CGI::div(
+			{ class => 'btn-group student-nav-filter-selector mx-2' },
+			CGI::a(
+				{
+					href           => '#',
+					id             => 'problemMenu',
+					class          => 'btn btn-primary dropdown-toggle',
+					role           => 'button',
+					data_bs_toggle => 'dropdown',
+					aria_expanded  => 'false',
+				},
+				$prettyID ? $r->maketext('Problem [_1]', $prettyID) : $r->maketext('All problems')
+			),
+			CGI::ul(
+				{
+					class           => 'dropdown-menu',
+					role            => 'menu',
+					aria_labelledby => 'problemMenu'
+				},
+				CGI::li(CGI::a(
+					{
+						class => 'dropdown-item',
+						style => $prettyID ? '' : 'background-color: #8F8',
+						href  => $self->systemLink(
+							$urlpath->newFromModule(
+								__PACKAGE__, $r,
+								courseID => $urlpath->arg('courseID'),
+								statType => $self->{type},
+								setID    => $setID,
+							),
+							params => $filterSection ? { filterSection => $filterSection } : {}
+						)
+					},
+					$r->maketext('All problems')
+				)),
+				(
+					map {
+						my $probID    = $isJitarSet ? join('.', jitar_id_to_seq($_->problem_id)) : $_->problem_id;
+						my $statsPage = $urlpath->newFromModule(
+							__PACKAGE__, $r,
+							courseID  => $urlpath->arg('courseID'),
+							statType  => $self->{type},
+							setID     => $setID,
+							problemID => $_->problem_id
+						);
+						CGI::li(CGI::a(
+							{
+								class => 'dropdown-item',
+								style => $probID eq $prettyID ? 'background-color: #8F8' : '',
+								href  => $self->systemLink(
+									$statsPage, params => $filterSection ? { filterSection => $filterSection } : {}
+								)
+							},
+							$r->maketext('Problem [_1]', $probID)
+						))
+					} @problems
+				)
+			)
+		),
+		@problems
+	);
+}
+
+# Get a list of student records and create a section/recitation menu.
+sub get_students {
+	my $self     = shift;
+	my $noFilter = shift;
+	my $r        = $self->r;
+	my $ce       = $r->ce;
+	my $db       = $r->db;
+	my $urlpath  = $r->urlpath;
+	my $user     = $r->param('user');
+
+	# Get a list of students sorted by user_id.
+	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
+	# user if such restrictions are defined.  This list is sorted by last_name, then first_name, then user_id.
+	my @studentRecords = $db->getUsersWhere(
+		{
+			user_id => { not_like => 'set_id:%' },
+			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+			? (
+				-or => [
+					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
+					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+				]
+				)
+			: ()
+		},
+		[qw/last_name first_name user_id/]
+	);
+
+	return @studentRecords if $noFilter;
+
+	# Create a hash of sections and recitations, if there are any for the course.
+	# Filter out all records except for current/auditing students for stats.
+	# Filter out students not in selected section/recitation.
+	my $filterSection = $r->param('filterSection');
+	my %sections;
+	my @outStudents;
+	for my $student (@studentRecords) {
+		# Only include current/auditing students in stats.
+		next
+			unless ($ce->status_abbrev_has_behavior($student->status, 'include_in_stats')
+				&& $db->getPermissionLevel($student->user_id)->permission == $ce->{userRoles}{student});
+
+		my $section = $student->section;
+		$sections{"section:$section"} = $r->maketext('Section [_1]', $section)
+			if $section && !$sections{"section:$section"};
+		my $recitation = $student->recitation;
+		$sections{"recitation:$recitation"} = $r->maketext('Recitation [_1]', $recitation)
+			if $recitation && !$sections{"recitation:$recitation"};
+
+		# Only add users who match the selected section/recitation.
+		push(@outStudents, $student)
+			if (!$filterSection
+				|| ($filterSection =~ /^section:(.*)$/    && $section eq $1)
+				|| ($filterSection =~ /^recitation:(.*)$/ && $recitation eq $1));
+	}
+
+	my $statsPage = $urlpath->newFromModule(
+		__PACKAGE__, $r,
+		courseID  => $urlpath->arg('courseID'),
+		statType  => $self->{type},
+		setID     => $self->{setName},
+		problemID => $urlpath->arg('problemID') || ''
+	);
+
+	# Create a section/recitation "filter by" dropdown if there are sections or recitations.
+	my $filterMenu = (scalar keys %sections)
+		? CGI::div(
+			{ class => 'btn-group student-nav-filter-selector mx-2' },
+			CGI::a(
+				{
+					href           => '#',
+					id             => 'filterSection',
+					class          => 'btn btn-primary dropdown-toggle',
+					role           => 'button',
+					data_bs_toggle => 'dropdown',
+					aria_expanded  => 'false',
+				},
+				$filterSection ? $sections{$filterSection} : $r->maketext('All sections')
+			),
+			CGI::ul(
+				{
+					class           => 'dropdown-menu',
+					role            => 'menu',
+					aria_labelledby => 'filterSection'
+				},
+				CGI::li(CGI::a(
+					{
+						class => 'dropdown-item',
+						style => $filterSection ? '' : 'background-color: #8F8',
+						href  => $self->systemLink($statsPage)
+					},
+					$r->maketext('All sections')
+				)),
+				(
+					map {
+						CGI::li(CGI::a(
+							{
+								class => 'dropdown-item',
+								style => ($filterSection || '') eq $_ ? 'background-color: #8F8' : '',
+								href  => $self->systemLink(
+									$statsPage,
+									params => {
+										filterSection => $_
+									}
+								)
+							},
+							$sections{$_}
+						))
+					} sort keys %sections
+				)
+			)
+		)
+		: '';
+
+	return ($filterMenu, @outStudents);
+}
+
 sub index {
 	my $self       = shift;
 	my $r          = $self->r;
@@ -307,24 +485,7 @@ sub index {
 		push @setLinks, CGI::a({ href => $self->systemLink($setStatisticsPage) }, format_set_name_display($set));
 	}
 
-	# Get a list of students sorted by user_id.
-	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
-	# user if such restrictions are defined.  This list is sorted by last_name, then first_name, then user_id.
-	my @studentRecords = $db->getUsersWhere(
-		{
-			user_id => { not_like => 'set_id:%' },
-			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
-			? (
-				-or => [
-					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
-					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
-				]
-				)
-			: ()
-		},
-		[qw/last_name first_name user_id/]
-	);
-
+	my @studentRecords = $self->get_students(1);
 	for my $student (@studentRecords) {
 		my $first_name = $student->first_name;
 		my $last_name  = $student->last_name;
@@ -365,6 +526,7 @@ sub displaySet {
 	my $courseName = $urlpath->arg('courseID');
 	my $setName    = $urlpath->arg('setID');
 	my $setRecord  = $self->{setRecord};
+	my $filter     = $r->param('filterSection');
 
 	unless ($setRecord) {
 		print CGI::div({ class => 'alert alert-danger p-1' }, $r->maketext('Global set [_1] not found.', $setName));
@@ -372,7 +534,7 @@ sub displaySet {
 	}
 
 	# Get a list of the global problem records for this set.
-	my @problems = $db->getGlobalProblemsWhere({ set_id => $setName }, 'problem_id');
+	my ($problemMenu, @problems) = $self->get_problems;
 	my %prettyIDs;         # Format problem ID for jitar sets.
 	my @problemHref;       # List of href for links to the problem stats page.
 	my @problemLinks;      # List of html formatted links of the form "Problem problem_id".
@@ -402,13 +564,16 @@ sub displaySet {
 		$prettyIDs{$probID} = $isJitarSet ? join('.', jitar_id_to_seq($problem->problem_id)) : $problem->problem_id;
 
 		# Link to individual problem stats page.
-		my $statsLink = $self->systemLink($urlpath->newFromModule(
-			'WeBWorK::ContentGenerator::Instructor::Stats', $r,
-			courseID  => $courseName,
-			statType  => 'set',
-			setID     => $setName,
-			problemID => $probID
-		));
+		my $statsLink = $self->systemLink(
+			$urlpath->newFromModule(
+				'WeBWorK::ContentGenerator::Instructor::Stats', $r,
+				courseID  => $courseName,
+				statType  => 'set',
+				setID     => $setName,
+				problemID => $probID
+			),
+			params => $filter ? { filterSection => $filter } : {}
+		);
 		push(@problemHref,    $statsLink);
 		push(@problemIDLinks, CGI::a({ href => $statsLink }, $prettyIDs{$probID}));
 		push(@problemLinks,   CGI::a({ href => $statsLink }, $r->maketext('Problem [_1]', $prettyIDs{$probID})));
@@ -446,29 +611,9 @@ sub displaySet {
 	# Only count top level problems for Jitar sets.
 	my $num_problems = ($isJitarSet) ? scalar(keys %topLevelProblems) : scalar(@problemLinks);
 
-	# Get a list of student records to loop through. Get all users except the set level proctors, and restrict
-	# to the sections or recitations that are allowed for the user if such restrictions are defined.
-	my @studentRecords = $db->getUsersWhere(
-		{
-			user_id => { not_like => 'set_id:%' },
-			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
-			? (
-				-or => [
-					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
-					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
-				]
-				)
-			: ()
-		},
-	);
+	my ($filterMenu, @studentRecords) = $self->get_students();
 	for my $studentRecord (@studentRecords) {
-		my $student = $studentRecord->user_id;
-
-		# Only include current/auditing students in stats.
-		next
-			unless ($ce->status_abbrev_has_behavior($studentRecord->status, 'include_in_stats')
-				&& $db->getPermissionLevel($student)->permission == $ce->{userRoles}{student});
-
+		my $student                    = $studentRecord->user_id;
 		my $totalRight                 = 0;
 		my $total                      = 0;
 		my $total_num_attempts_for_set = 0;
@@ -612,6 +757,8 @@ sub displaySet {
 		) if $setRecord->assignment_type =~ /gateway/;
 	}
 	$status .= ' (' . $r->maketext('Hidden') . ')' unless $setRecord->visible;
+
+	print CGI::div({ class => 'mb-3' }, $r->maketext('Showing statistics for:') . $filterMenu . $problemMenu);
 
 	print CGI::div(
 		{ class => 'table-responsive' },
@@ -840,34 +987,14 @@ sub displayProblem {
 		return;
 	}
 
-	# Get a list of student records to loop through. Get all users except the set level proctors, and restrict
-	# to the sections or recitations that are allowed for the user if such restrictions are defined.
-	my @studentRecords = $db->getUsersWhere(
-		{
-			user_id => { not_like => 'set_id:%' },
-			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
-			? (
-				-or => [
-					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
-					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
-				]
-				)
-			: ()
-		},
-	);
-
+	my ($filterMenu, @studentRecords) = $self->get_students;
 	my (@problemScores, @adjustedScores, @problemAttempts, @successList);
 	my $activeStudents   = 0;
 	my $inactiveStudents = 0;
 	for my $studentRecord (@studentRecords) {
 		my $student = $studentRecord->user_id;
-
-		# Only include students in stats.
-		next
-			unless ($ce->status_abbrev_has_behavior($studentRecord->status, 'include_in_stats')
-				&& $db->getPermissionLevel($student)->permission == $ce->{userRoles}{student});
-
 		my $studentProblem;
+
 		if ($setRecord->assignment_type =~ /gateway/) {
 			my @problemRecords =
 				$db->getProblemVersionsWhere(
@@ -915,6 +1042,9 @@ sub displayProblem {
 			$inactiveStudents++;
 		}
 	}
+
+	my ($problemMenu) = $self->get_problems;
+	print CGI::div({ class => 'mb-3' }, $r->maketext('Showing statistics for:') . $filterMenu . $problemMenu);
 
 	# Histogram of total scores.
 	my @buckets = map {0} 1 .. 10;
