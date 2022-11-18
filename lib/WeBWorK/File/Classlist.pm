@@ -38,8 +38,8 @@ our @EXPORT = qw/parse_classlist write_classlist/;
 sub parse_classlist($) {
 	my ($file) = @_;
 
-	use open qw( :encoding(UTF-8) :std );    # assume classlist is utf8 encoded
-	my $fh = new IO::File($file, "<")
+	# assume classlist is utf8 encoded
+	my $fh = IO::File->new($file, '<:encoding(UTF-8)')
 		or die "Failed to open classlist '$file' for reading: $!\n";
 
 	my (@records);
@@ -95,7 +95,7 @@ sub parse_classlist($) {
 sub write_classlist($@) {
 	my ($file, @records) = @_;
 
-	my $fh = new IO::File($file, '>:encoding(UTF-8)')
+	my $fh = IO::File->new($file, '>:encoding(UTF-8)')
 		or die "Failed to open classist '$file' for writing: $!\n";
 
 	my $csv = Text::CSV->new({ binary => 1 });

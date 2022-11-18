@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::FakeRequest;
-use parent WeBWorK::Request;
+use parent qw(WeBWorK::Request);
 
 =head1 NAME
 
