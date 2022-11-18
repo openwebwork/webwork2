@@ -261,7 +261,7 @@ sub body {
 			print CGI::end_div();
 		}
 
-		print CGI::submit({ type => "submit", value => $r->maketext("Continue"), class => 'btn btn-primary' });
+		print CGI::submit({ value => $r->maketext("Continue"), class => 'btn btn-primary' });
 		print CGI::end_div();
 
 		# Determine if there are valid practice users.
