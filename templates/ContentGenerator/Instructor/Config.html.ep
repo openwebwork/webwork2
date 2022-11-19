@@ -1,0 +1,69 @@
+% unless ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+	<div class="alert alert-danger p-1 mb-0">
+		<em><%= maketext('You are not authorized to modify the course configuration.') %></em>
+	</div>
+	% last;
+% }
+%
+% my $configValues = $cg->getConfigValues($ce);
+%
+% if (param('show_long_doc')) {
+	% my $docstring;
+	% for my $consec (@$configValues) {
+		% my @configSectionArray = @$consec;
+		% shift @configSectionArray;
+		% for my $con (@configSectionArray) {
+			% $docstring = $con->{doc2} || $con->{doc} if ($con->{var} eq param('var_name'));
+		% }
+	% }
+	%
+	<h2><%= maketext('Variable Documentation:') %> <code>$<%= param('var_name') %></code></h2>
+	<p><blockquote><%== maketext($docstring) %></blockquote></p>
+% } else {
+	% # Get the current course environment again in case changes were just saved.
+	% my $ce4 = WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $ce->{courseName}, });
+	%
+	% if (@$configValues == 0) {
+		<p>
+			<%= maketext(
+				'The configuration module did not find the data it needs to function.  '
+					. 'Have your site administrator check that site configuration files are up to date.'
+			) =%>
+		</p>
+	% } else {
+		% my $current_tab = param('section_tab') || 'tab0';
+		<%= $cg->generate_navigation_tabs($current_tab, map { $_->[0] } @$configValues) =%>
+		%
+		<%= form_for $c->uri, method => 'POST', id => 'config-form', name => 'config-form', begin =%>
+			<%= $cg->hidden_authen_fields =%>
+			<%= hidden_field section_tab => $current_tab =%>
+			%
+			% my $tabnumber = $current_tab =~ s/tab//r;
+			% my @configSectionArray = @{ $configValues->[$tabnumber] };
+			%
+			<h2><b><%= maketext(shift @configSectionArray) %></b></h2>
+			%
+			<div class="table-responsive">
+				<table class="table table-bordered align-middle">
+					<tr>
+						<th><%= maketext('Setting') %></th>
+						<th class="text-center"><%= maketext('Default') %></th>
+						<th class="text-center"><%= maketext('Current') %></th>
+					</tr>
+					% for my $con (@configSectionArray) {
+						% my $conobject = $cg->objectify($con);
+						% my $name      = ($conobject->{var} =~ s/[{]/-/gr) =~ s/[}]//gr;
+						<tr>
+							<td><%= $conobject->what_string %></td>
+							<td class="text-center">
+								<%= $conobject->display_value($con->get_value($cg->{default_ce})) %>
+							</td>
+							<td><%= $conobject->entry_widget($con->get_value($ce4)) =%></td>
+						</tr>
+					% }
+				</table>
+			</div>
+			<p><%= submit_button maketext('Save Changes'), name => 'make_changes',  class => 'btn btn-primary' =%></p>
+		<% end =%>
+	% }
+% }

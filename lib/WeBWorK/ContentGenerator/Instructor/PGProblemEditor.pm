@@ -112,12 +112,9 @@ use warnings;
 use HTML::Entities;
 use URI::Escape;
 use File::Copy;
-use File::Basename qw(dirname);
 
-use WeBWorK::Utils qw(getAssetURL jitar_id_to_seq not_blank path_is_subdir seq_to_jitar_id x format_set_name_display
+use WeBWorK::Utils qw(jitar_id_to_seq not_blank path_is_subdir seq_to_jitar_id x
 	surePathToFile readDirectory readFile max);
-use WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor
-	qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
 
 use constant DEFAULT_SEED => 123456;
 
@@ -216,11 +213,13 @@ async sub pre_header_initialize {
 	# Default problem contents
 	$self->{r_problemContents} = \'';
 
+	$self->{status_message} //= $r->c;
+
 	# Determine action.  If an invalid action is sent in, assume this is an initial edit.
 	$self->{action} = $r->param('action') // '';
 	if ($self->{action} && grep { $_ eq $self->{action} } @{ ACTION_FORMS() }) {
 		my $actionHandler = "$self->{action}_handler";
-		$self->$actionHandler($self->getActionParams);
+		$self->$actionHandler;
 	}
 
 	return;
@@ -229,8 +228,15 @@ async sub pre_header_initialize {
 sub initialize {
 	my $self  = shift;
 	my $r     = $self->r;
+	my $ce    = $r->ce;
+	my $db    = $r->db;
 	my $authz = $r->authz;
 	my $user  = $r->param('user');
+
+	# Make sure these are defined for the templates.
+	$r->stash->{problemContents}  = '';
+	$r->stash->{formsToShow}      = ACTION_FORMS();
+	$r->stash->{actionFormTitles} = ACTION_FORM_TITLES();
 
 	# Check permissions
 	return
@@ -249,58 +255,82 @@ sub initialize {
 		$self->addbadmessage(
 			$r->maketext('The file "[_1]" cannot be found.', $self->shortPath($self->{inputFilePath})));
 	} elsif (!-w $self->{inputFilePath} && $file_type ne 'blank_problem') {
-		$self->addbadmessage(CGI::div(
-			{ class => 'd-flex flex-column gap-1' },
-			CGI::div($r->maketext('The file "[_1]" is protected!', $self->shortPath($self->{inputFilePath}))),
-			CGI::div(
-				$r->maketext(
-					'To edit this text you must first make a copy of this file using the "New Version" action below.')
-			)
+		$self->addbadmessage($r->maketext(
+			'The file "[_1]" is protected! '
+				. 'To edit this text you must first make a copy of this file using the "New Version" action below.',
+			$self->shortPath($self->{inputFilePath})
 		));
 	}
 
 	if ($self->{inputFilePath} =~ /$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
-		$self->addbadmessage(CGI::div(
-			{ class => 'd-flex flex-column gap-1' },
-			CGI::div($r->maketext('The file "[_1]" is a blank problem!', $self->shortPath($self->{inputFilePath}))),
-			CGI::div(
-				$r->maketext(
-					'To edit this text you must use the "New Version" action below to save it to another file.')
-			)
+		$self->addbadmessage($r->maketext(
+			'The file "[_1]" is a blank problem!'
+				. 'To edit this text you must use the "New Version" action below to save it to another file.',
+			$self->shortPath($self->{inputFilePath})
 		));
 	}
+
+	# Find the text for the problem, either in the temporary file if it exists, in the original file in the template
+	# directory, or in the problem contents gathered in the initialization phase.
+
+	my $problemContents = ${ $self->{r_problemContents} };
+
+	unless ($problemContents =~ /\S/) {    # non-empty contents
+		if (-r $self->{tempFilePath} && !-d $self->{tempFilePath}) {
+			if (path_is_subdir($self->{tempFilePath}, $ce->{courseDirs}{templates}, 1)) {
+				eval { $problemContents = readFile($self->{tempFilePath}) };
+				$problemContents = $@ if $@;
+				$self->{inputFilePath} = $self->{tempFilePath};
+			} else {
+				$r->stash->{file_error} = $r->maketext('Unable to open a temporary file at the given location.');
+			}
+		} elsif (-r $self->{editFilePath} && !-d $self->{editFilePath}) {
+			if (path_is_subdir($self->{editFilePath}, $ce->{courseDirs}{templates}, 1)
+				|| $self->{editFilePath} eq $ce->{webworkFiles}{screenSnippets}{setHeader}
+				|| $self->{editFilePath} eq $ce->{webworkFiles}{hardcopySnippets}{setHeader}
+				|| $self->{editFilePath} eq $ce->{webworkFiles}{screenSnippets}{blankProblem})
+			{
+				eval { $problemContents = readFile($self->{editFilePath}) };
+				$problemContents = $@ if $@;
+				$self->{inputFilePath} = $self->{editFilePath};
+
+			} else {
+				$r->stash->{file_error} = $r->maketext('The given file path is not a valid location.');
+			}
+		} else {
+			# File not existing is not an error
+			$problemContents = '';
+		}
+	}
+
+	$r->stash->{problemContents} = $problemContents;
+
+	$self->{prettyProblemNumber} = $self->{problemID} // '';
+	$self->{set}                 = $self->r->db->getGlobalSet($self->{setID}) if $self->{setID};
+	$self->{prettyProblemNumber} = join('.', jitar_id_to_seq($self->{prettyProblemNumber}))
+		if $self->{set} && $self->{set}->assignment_type eq 'jitar';
 
 	return;
 }
 
 sub path {
 	my ($self, $args) = @_;
-	my $r                   = $self->r;
-	my $urlpath             = $r->urlpath;
-	my $courseName          = $urlpath->arg('courseID');
-	my $setName             = $urlpath->arg('setID') // '';
-	my $problemNumber       = $urlpath->arg('problemID') || '';
-	my $prettyProblemNumber = $problemNumber;
-
-	if ($setName) {
-		my $set = $r->db->getGlobalSet($setName);
-		if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
-			$prettyProblemNumber = join('.', jitar_id_to_seq($problemNumber));
-		}
-	}
+	my $r             = $self->r;
+	my $urlpath       = $r->urlpath;
+	my $courseName    = $urlpath->arg('courseID');
+	my $setName       = $urlpath->arg('setID') // '';
+	my $problemNumber = $urlpath->arg('problemID') || '';
 
 	# We need to build a path to the problem being edited by hand, since it is not the same as the urlpath for this
 	# page.  The bread crumb path leads back to the problem being edited, not to the Instructor tool.
-	print $self->pathMacro(
+	return $self->pathMacro(
 		$args,
-		'WeBWorK'              => $r->location,
-		$courseName            => $r->location . "/$courseName",
-		$setName               => $r->location . "/$courseName/$setName",
-		$prettyProblemNumber   => $r->location . "/$courseName/$setName/$problemNumber",
-		$r->maketext('Editor') => ''
+		'WeBWorK'                    => $r->location,
+		$courseName                  => $r->location . "/$courseName",
+		$setName                     => $r->location . "/$courseName/$setName",
+		$self->{prettyProblemNumber} => $r->location . "/$courseName/$setName/$problemNumber",
+		$r->maketext('Editor')       => ''
 	);
-
-	return '';
 }
 
 sub title {
@@ -322,284 +352,6 @@ sub title {
 	}
 
 	return $r->maketext('Problem [_1]', $problemNumber);
-}
-
-sub body {
-	my $self  = shift;
-	my $r     = $self->r;
-	my $db    = $r->db;
-	my $ce    = $r->ce;
-	my $authz = $r->authz;
-	my $user  = $r->param('user');
-
-	# Check permissions
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		$r->maketext('You are not authorized to access the Instructor tools.'))
-		unless $authz->hasPermissions($user, 'access_instructor_tools');
-
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		$r->maketext('You are not authorized to modify problems.'))
-		unless $authz->hasPermissions($user, 'modify_student_data');
-
-	# Gather info
-	my $editFilePath  = $self->{editFilePath};    # Path to the permanent file being edited.
-	my $tempFilePath  = $self->{tempFilePath};    # Path to the file currently being worked with (might be a .tmp file).
-	my $inputFilePath = $self->{inputFilePath};   # Path to the file for input, (might be a .tmp file).
-	my $setName       = $self->{setID} // '';     # Allow the numeric set name 0.
-	my $problemNumber = $self->{problemID};
-	my $fullSetName   = $self->{fullSetID} // $setName;
-	$problemNumber = defined $problemNumber ? $problemNumber : '';
-
-	# Construct reference row for PGproblemEditor.
-	my @PG_Editor_References;
-	for my $link (
-		{
-			# http://webwork.maa.org/wiki/Category:Problem_Techniques
-			label   => $r->maketext('Problem Techniques'),
-			url     => $ce->{webworkURLs}{problemTechniquesHelpURL},
-			target  => 'techniques_window',
-			tooltip => $r->maketext('Snippets of PG code illustrating specific techniques'),
-		},
-		{
-			# http://webwork.maa.org/wiki/Category:MathObjects
-			label   => $r->maketext('Math Objects'),
-			url     => $ce->{webworkURLs}{MathObjectsHelpURL},
-			target  => 'math_objects',
-			tooltip => $r->maketext('Wiki summary page for MathObjects'),
-		},
-		{
-			# http://webwork.maa.org/pod/pg_TRUNK/
-			label   => $r->maketext('POD'),
-			url     => $ce->{webworkURLs}{PODHelpURL},
-			target  => 'pod_docs',
-			tooltip => $r->maketext(
-				'Documentation from source code for PG modules and macro files. '
-					. 'Often the most up-to-date information.'
-			),
-		},
-		{
-			# https://courses1.webwork.maa.org/webwork2/cervone_course/PGML/1/?login_practice_user=true
-			label   => $r->maketext('PGML'),
-			url     => $ce->{webworkURLs}{PGMLHelpURL},
-			target  => 'PGML',
-			tooltip => $r->maketext(
-				'PG mark down syntax used to format WeBWorK questions. '
-					. 'This interactive lab can help you to learn the techniques.'
-			),
-		},
-		{
-			# http://webwork.maa.org/wiki/Category:Authors
-			label   => $r->maketext('Author Info'),
-			url     => $ce->{webworkURLs}{AuthorHelpURL},
-			target  => 'author_info',
-			tooltip => $r->maketext('Top level of author information on the wiki.'),
-		},
-		# Only show the report bugs in problem button if editing an OPL or Contrib problem.
-		$editFilePath =~ m|^$ce->{courseDirs}{templates}/([^/]*)/| && ($1 eq 'Library' || $1 eq 'Contrib')
-		? {
-			label => $r->maketext('Report Bugs in this Problem'),
-			url   => "$ce->{webworkURLs}{bugReporter}?product=Problem%20libraries"
-				. "&component=$1&bug_file_loc=${editFilePath}_with_problemSeed=$self->{problemSeed}",
-			target  => 'bug_report',
-			tooltip => $r->maketext(
-				'Report bugs in a WeBWorK question/problem using this link. '
-					. 'The very first time you do this you will need to register with an email address so that '
-					. 'information on the bug fix can be reported back to you.'
-			),
-		}
-		: {}
-		)
-	{
-		next unless $link->{url};
-		push(
-			@PG_Editor_References,
-			CGI::a(
-				{
-					href              => $link->{url},
-					target            => $link->{target},
-					title             => $link->{tooltip},
-					class             => 'reference-link btn btn-sm btn-info',
-					data_bs_toggle    => 'tooltip',
-					data_bs_placement => 'top'
-				},
-				$link->{label}
-			)
-		);
-	}
-
-	# Find the text for the problem, either in the temporary file if it exists, in the original file in the template
-	# directory, or in the problem contents gathered in the initialization phase.
-
-	my $problemContents = ${ $self->{r_problemContents} };
-
-	unless ($problemContents =~ /\S/) {    # non-empty contents
-		if (-r $tempFilePath && !-d $tempFilePath) {
-			return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-				$r->maketext('Unable to open a temporary file at the given location.'))
-				unless path_is_subdir($tempFilePath, $ce->{courseDirs}{templates}, 1);
-
-			eval { $problemContents = readFile($tempFilePath) };
-			$problemContents = $@ if $@;
-			$inputFilePath   = $tempFilePath;
-		} elsif (-r $editFilePath && !-d $editFilePath) {
-			return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-				$r->maketext('The given file path is not a valid location.'))
-				unless path_is_subdir($editFilePath, $ce->{courseDirs}{templates}, 1)
-				|| $editFilePath eq $ce->{webworkFiles}{screenSnippets}{setHeader}
-				|| $editFilePath eq $ce->{webworkFiles}{hardcopySnippets}{setHeader}
-				|| $editFilePath eq $ce->{webworkFiles}{screenSnippets}{blankProblem};
-
-			eval { $problemContents = readFile($editFilePath) };
-			$problemContents = $@ if $@;
-			$inputFilePath   = $editFilePath;
-		} else {
-			# File not existing is not an error
-			$problemContents = '';
-		}
-	}
-
-	my $protected_file = !-w $inputFilePath;
-
-	my $prettyProblemNumber = $problemNumber;
-	my $set                 = $self->r->db->getGlobalSet($setName);
-	$prettyProblemNumber = join('.', jitar_id_to_seq($problemNumber)) if $set && $set->assignment_type eq 'jitar';
-
-	my %titles = (
-		blank_problem                => x('Editing <strong>blank problem</strong> in file "[_1]".'),
-		set_header                   => x('Editing <strong>set header</strong> file "[_1]".'),
-		hardcopy_header              => x('Editing <strong>hardcopy header</strong> file "[_1]".'),
-		course_info                  => x('Editing <strong>course information</strong> file "[_1]".'),
-		''                           => x('Editing <strong>unknown file type</strong> in file "[_1]".'),
-		source_path_for_problem_file => x('Editing <strong>unassigned problem</strong> file "[_1]".')
-	);
-	my $header = CGI::i(
-		$self->{file_type} eq 'problem'
-		? $r->maketext(
-			'Editing <strong>problem [_1] of set [_2]</strong> in file "[_3]".',
-			$prettyProblemNumber,
-			CGI::span({ dir => 'ltr' }, format_set_name_display($fullSetName)),
-			CGI::span({ dir => 'ltr' }, $self->shortPath($inputFilePath))
-			)
-		: $r->maketext($titles{ $self->{file_type} }, $self->shortPath($inputFilePath))
-	);
-	$header = $self->isTempEditFilePath($inputFilePath)
-		? CGI::div({ class => 'temporaryFile' }, $header)    # Use colors if this is a temporary file.
-		: $header;
-
-	# Output page contents
-
-	print CGI::div({ class => 'mb-2' }, $header);
-	print CGI::start_form({
-		method  => 'POST',
-		id      => 'editor',
-		name    => 'editor',
-		action  => $r->uri,
-		enctype => 'application/x-www-form-urlencoded',
-		class   => 'col-12'
-	});
-
-	print $self->hidden_authen_fields;
-	print CGI::hidden({ name => 'file_type',      value => $self->{file_type} });
-	print CGI::hidden({ name => 'courseID',       value => $self->{courseID} });
-	print CGI::hidden({ name => 'hidden_set_id',  value => $setName }) if defined $setName;
-	print CGI::hidden({ name => 'sourceFilePath', value => $self->{sourceFilePath} })
-		if not_blank($self->{sourceFilePath});
-	print CGI::hidden({ name => 'edit_file_path', value => $self->getRelativeSourceFilePath($self->{editFilePath}) })
-		if ($self->{file_type} eq 'problem' || $self->{file_type} eq 'source_path_for_problem_file')
-		&& not_blank($self->{editFilePath});
-	print CGI::hidden({ name => 'temp_file_path', value => $self->{tempFilePath} }) if not_blank($self->{tempFilePath});
-
-	print CGI::div({ class => 'mb-2' }, @PG_Editor_References);
-
-	print CGI::div(
-		{ class => 'row mb-2' },
-		CGI::div(
-			{ class => 'col-lg-6 col-md-12 order-last order-lg-first' },
-			generate_codemirror_html($r, 'problemContents', $problemContents)
-		),
-		CGI::div(
-			{ class => 'col-lg-6 col-md-12 mb-lg-0 mb-2 order-first order-lg-last' },
-			CGI::div(
-				{ class => 'p-0', id => 'pgedit-render-area', },
-				CGI::div(
-					{
-						class => 'placeholder d-flex flex-column justify-content-center align-items-center '
-							. 'bg-secondary h-100'
-					},
-					CGI::div({ class => 'fs-1' }, $r->maketext('Loading...')),
-					CGI::i({ class => 'fa-solid fa-spinner fa-spin fa-2x' }, '')
-				)
-			)
-		)
-	);
-
-	print generate_codemirror_controls_html($r);
-
-	# Print action forms
-
-	my @formsToShow      = @{ ACTION_FORMS() };
-	my %actionFormTitles = %{ ACTION_FORM_TITLES() };
-	my $default_choice;
-
-	my @tabArr;
-	my @contentArr;
-
-	for my $actionID (@formsToShow) {
-		my $actionForm    = "${actionID}_form";
-		my $line_contents = $self->$actionForm;
-		my $active        = '';
-
-		if ($line_contents) {
-			unless ($default_choice) { $active = ' active'; $default_choice = $actionID; }
-			push(
-				@tabArr,
-				CGI::li(
-					{ class => 'nav-item', role => 'presentation' },
-					CGI::a(
-						{
-							href           => "#$actionID",
-							class          => "nav-link action-link$active",
-							id             => "$actionID-tab",
-							data_action    => $actionID,
-							data_bs_toggle => 'tab',
-							data_bs_target => "#$actionID",
-							role           => 'tab',
-							aria_controls  => $actionID,
-							aria_selected  => $active ? 'true' : 'false'
-						},
-						$r->maketext($actionFormTitles{$actionID})
-					)
-				)
-			);
-			push(
-				@contentArr,
-				CGI::div(
-					{
-						class           => 'tab-pane fade' . ($active ? " show$active" : ''),
-						id              => $actionID,
-						role            => 'tabpanel',
-						aria_labelledby => "$actionID-tab"
-					},
-					$line_contents
-				)
-			);
-		}
-	}
-
-	print CGI::hidden({ name => 'action', id => 'current_action', value => $default_choice });
-	print CGI::div(CGI::ul({ class => 'nav nav-tabs mb-2', role => 'tablist' }, @tabArr),
-		CGI::div({ class => 'tab-content' }, @contentArr));
-
-	print CGI::div(CGI::submit({
-		id    => 'submit_button_id',
-		name  => 'submit',
-		value => $r->maketext('Take Action!'),
-		class => 'btn btn-primary'
-	}));
-
-	print CGI::end_form();
-
-	return '';
 }
 
 #  Convert initial path component to [TMPL], [COURSE], or [WW].
@@ -901,11 +653,11 @@ sub saveFileChanges {
 				$self->shortPath($outputFilePath)
 			);
 		} else {
-			$errorMessage = $r->maketext(
+			$errorMessage = $r->b($r->maketext(
 				'Unable to write to "[_1]": [_2]',
 				$self->shortPath($outputFilePath),
-				CGI::pre($writeFileErrors)
-			);
+				$r->tag('pre', $writeFileErrors)
+			));
 		}
 
 		$self->addbadmessage($errorMessage);
@@ -931,7 +683,7 @@ sub saveFileChanges {
 				# Don't copy directories and don't copy files that have already been copied.
 				if (-f $fromPath && -r $fromPath && !-e $toPath) {
 					# Need to use binary transfer for image files.  File::Copy does this.
-					$self->addbadmessage(CGI::div($r->maketext('Error copying [_1] to [_2].', $fromPath, $toPath)))
+					$self->addbadmessage($r->maketext('Error copying [_1] to [_2].', $fromPath, $toPath))
 						unless copy($fromPath, $toPath);
 				}
 			}
@@ -962,23 +714,10 @@ sub saveFileChanges {
 
 	# Announce that the file was saved unless it was a temporary file.
 	unless ($self->isTempEditFilePath($outputFilePath)) {
-		my $msg = $r->maketext('Saved to file "[_1]"', $self->shortPath($outputFilePath));
-		$self->addgoodmessage($msg);
+		$self->addgoodmessage($r->maketext('Saved to file "[_1]"', $self->shortPath($outputFilePath)));
 	}
 
 	return;
-}
-
-sub getActionParams {
-	my ($self) = @_;
-	my $r = $self->r;
-
-	my %actionParams;
-	for ($r->param) {
-		next unless $_ =~ m/^action\.$self->{action}\./;
-		$actionParams{$_} = [ $r->param($_) ];
-	}
-	return %actionParams;
 }
 
 # Fix line endings in the problem contents.
@@ -988,83 +727,12 @@ sub fixProblemContents {
 	return $problemContents =~ s/(\r\n)|(\r)/\n/gr;
 }
 
-sub view_form {
-	my $self = shift;
-	my $r    = $self->r;
-
-	# Hardcopy headers are previewed from the hardcopy generation tab.
-	return '' if $self->{file_type} eq 'hardcopy_header';
-
-	return CGI::div(
-		CGI::div(
-			{ class => 'row align-items-center' },
-			CGI::label(
-				{ for => 'action_view_seed_id', class => 'col-form-label col-auto mb-2' },
-				$r->maketext('Using what seed?')
-			),
-			CGI::div(
-				{ class => 'col-auto mb-2' },
-				CGI::textfield({
-					id    => 'action_view_seed_id',
-					name  => 'action.view.seed',
-					value => $self->{problemSeed},
-					class => 'form-control form-control-sm'
-				})
-			),
-			CGI::div(
-				{ class => 'col-auto mb-2' },
-				CGI::button({
-					id    => 'randomize_view_seed_id',
-					name  => 'action.randomize.view.seed',
-					value => $r->maketext('Randomize Seed'),
-					class => 'btn btn-info btn-sm'
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row align-items-center mb-2' },
-			CGI::label(
-				{ for => 'action_view_displayMode_id', class => 'col-form-label col-auto' },
-				$r->maketext('Using what display mode?')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'action_view_displayMode_id',
-					name    => 'action.view.displayMode',
-					values  => $self->r->ce->{pg}{displayModes},
-					class   => 'form-select form-select-sm d-inline w-auto',
-					default => $self->{displayMode}
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row g-0 mb-2' },
-			CGI::div(
-				{ class => 'form-check mb-2' },
-				CGI::input({
-					type  => 'checkbox',
-					id    => 'newWindowView',
-					class => 'form-check-input'
-				}),
-				CGI::label(
-					{ for => 'newWindowView', class => 'form-check-label' },
-					$r->maketext('Open in new window')
-				)
-			)
-		)
-	);
-}
-
 sub view_handler {
-	my ($self, %actionParams) = @_;
+	my ($self) = @_;
 	my $r = $self->r;
 
-	my $problemSeed = $actionParams{'action.view.seed'} ? $actionParams{'action.view.seed'}[0] : DEFAULT_SEED();
-	my $displayMode =
-		$actionParams{'action.view.displayMode'}
-		? $actionParams{'action.view.displayMode'}[0]
-		: $self->r->ce->{pg}{options}{displayMode};
+	my $problemSeed = $r->param('action.view.seed')        // DEFAULT_SEED();
+	my $displayMode = $r->param('action.view.displayMode') // $self->r->ce->{pg}{options}{displayMode};
 
 	# Grab the problemContents from the form in order to save it to the tmp file.
 	$self->{r_problemContents} = \(fixProblemContents($self->r->param('problemContents')));
@@ -1097,7 +765,7 @@ sub view_handler {
 				problemSeed    => $problemSeed,
 				editMode       => 'temporaryFile',
 				sourceFilePath => $relativeTempFilePath,
-				status_message => uri_escape_utf8($self->{status_message})
+				status_message => uri_escape_utf8($self->{status_message}->join(''))
 			}
 		));
 	} elsif ($self->{file_type} eq 'set_header') {
@@ -1114,7 +782,7 @@ sub view_handler {
 				problemSeed    => $problemSeed,
 				editMode       => 'temporaryFile',
 				sourceFilePath => $relativeTempFilePath,
-				status_message => uri_escape_utf8($self->{status_message})
+				status_message => uri_escape_utf8($self->{status_message}->join(''))
 			}
 		));
 	} elsif ($self->{file_type} eq 'hardcopy_header') {
@@ -1131,7 +799,7 @@ sub view_handler {
 				problemSeed    => $problemSeed,
 				editMode       => 'temporaryFile',
 				sourceFilePath => $relativeTempFilePath,
-				status_message => uri_escape_utf8($self->{status_message})
+				status_message => uri_escape_utf8($self->{status_message}->join(''))
 			}
 		));
 	} elsif ($self->{file_type} eq 'course_info') {
@@ -1145,7 +813,7 @@ sub view_handler {
 				course_info    => $self->{tempFilePath},
 				editMode       => 'temporaryFile',
 				sourceFilePath => $relativeTempFilePath,
-				status_message => uri_escape_utf8($self->{status_message})
+				status_message => uri_escape_utf8($self->{status_message}->join(''))
 			}
 		));
 	} else {
@@ -1155,168 +823,20 @@ sub view_handler {
 	return;
 }
 
-sub hardcopy_form {
-	my $self = shift;
-	my $r    = $self->r;
-	my $ce   = $r->ce;
-
-	return '' if $self->{file_type} eq 'course_info';
-
-	return CGI::div(
-		CGI::div(
-			{ class => 'row align-items-center' },
-			CGI::label(
-				{ for => 'action_hardcopy_seed_id', class => 'col-form-label col-auto mb-2' },
-				$r->maketext('Using what seed?')
-			),
-			CGI::div(
-				{ class => 'col-auto mb-2' },
-				CGI::textfield({
-					id    => 'action_hardcopy_seed_id',
-					name  => 'action.hardcopy.seed',
-					value => $self->{problemSeed},
-					class => 'form-control form-control-sm'
-				})
-			),
-			CGI::div(
-				{ class => 'col-auto mb-2' },
-				CGI::button({
-					id    => 'randomize_hardcopy_seed_id',
-					name  => 'action.randomize.hardcopy.seed',
-					value => $r->maketext('Randomize Seed'),
-					class => 'btn btn-info btn-sm'
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row align-items-center mb-2' },
-			CGI::label(
-				{ for => 'action_hardcopy_format_id', class => 'col-form-label col-auto' },
-				$r->maketext('Using which hardcopy format?'),
-				CGI::a(
-					{
-						class           => 'help-popup',
-						data_bs_content => $r->maketext(
-							'If "PDF" is selected, then a PDF file will be generated for download, unless there are '
-								. 'errors.  If errors occur generating a PDF file or "TeX Source" is selected then a '
-								. 'zip file will be generated for download that contains the TeX source file and '
-								. 'resources needed for generating the PDF file using pdflatex.'
-						),
-						data_bs_placement => 'top',
-						data_bs_toggle    => 'popover',
-						role              => 'button',
-						tabindex          => 0
-					},
-					CGI::i(
-						{
-							class       => 'icon fas fa-question-circle',
-							data_alt    => $r->maketext('Help Icon'),
-							aria_hidden => 'true'
-						},
-						''
-					)
-				)
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'action_hardcopy_format_id',
-					name    => 'action.hardcopy.format',
-					values  => [ 'pdf', 'tex' ],
-					labels  => { pdf => $r->maketext('PDF'), tex => $r->maketext('TeX Source') },
-					default => $r->param('action.hardcopy.format') // 'pdf',
-					class   => 'form-select form-select-sm d-inline w-auto',
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row align-items-center mb-2' },
-			CGI::label(
-				{ for => 'action_hardcopy_theme_id', class => 'col-form-label col-auto' },
-				$r->maketext('Using which hardcopy theme?')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'action_hardcopy_theme_id',
-					name    => 'action.hardcopy.theme',
-					values  => $ce->{hardcopyThemes},
-					default => $r->param('action.hardcopy.theme') // $ce->{hardcopyTheme},
-					labels  => { map { $_ => $ce->{hardcopyThemeNames}{$_} } @{ $ce->{hardcopyThemes} } },
-					class   => 'form-select form-select-sm d-inline w-auto'
-				})
-			)
-		)
-	);
-}
-
 # The hardcopy action is handled by javascript.  This is provided just in case
 # something goes wrong and the action gets called.
 sub hardcopy_action { }
 
-sub add_problem_form {
-	my $self = shift;
-	my $r    = $self->r;
-
-	return '' if $self->{file_type} eq 'course_info';
-
-	my $allSetNames = [ map { $_->[0] =~ s/^set|\.def$//gr } $r->db->listGlobalSetsWhere({}, 'set_id') ];
-
-	return CGI::div(
-		CGI::div(
-			{ class => 'row align-items-center mb-2' },
-			CGI::label(
-				{ for => 'action_add_problem_target_set_id', class => 'col-form-label col-auto' },
-				$r->maketext('Add to what set?')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'action_add_problem_target_set_id',
-					name    => 'action.add_problem.target_set',
-					values  => $allSetNames,
-					labels  => { map { $_ => format_set_name_display($_) } @$allSetNames },
-					class   => 'form-select form-select-sm d-inline w-auto',
-					dir     => 'ltr',
-					default => $self->{setID} // ''
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row align-items-center mb-2' },
-			CGI::label(
-				{ for => 'action_add_problem_file_type_id', class => 'col-form-label col-auto' },
-				$r->maketext('Add as what filetype?')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id     => 'action_add_problem_file_type_id',
-					name   => 'action.add_problem.file_type',
-					values => [ 'problem', 'set_header', 'hardcopy_header' ],
-					labels => {
-						problem         => 'problem',
-						set_header      => 'set header',
-						hardcopy_header => 'hardcopy header',
-					},
-					class   => 'form-select form-select-sm d-inline w-auto',
-					default => $self->{file_type}
-				})
-			)
-		)
-	);
-}
-
 sub add_problem_handler {
-	my ($self, %actionParams) = @_;
-	my $r  = $self->r;
-	my $db = $r->db;
+	my ($self) = @_;
+	my $r      = $self->r;
+	my $db     = $r->db;
 
 	my $templatesPath  = $self->r->ce->{courseDirs}{templates};
 	my $sourceFilePath = $self->{editFilePath} =~ s|^$templatesPath/||r;
 
-	my $targetSetName  = $actionParams{'action.add_problem.target_set'}[0];
-	my $targetFileType = $actionParams{'action.add_problem.file_type'}[0];
+	my $targetSetName  = $r->param('action.add_problem.target_set');
+	my $targetFileType = $r->param('action.add_problem.file_type');
 
 	if ($targetFileType eq 'problem') {
 		my $targetProblemNumber;
@@ -1325,8 +845,9 @@ sub add_problem_handler {
 
 		if ($set->assignment_type eq 'jitar') {
 			# For jitar sets new problems are put as top level problems at the end.
-			my @problemIDs = map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $targetSetName }, 'problem_id');
-			my @seq        = jitar_id_to_seq($problemIDs[-1]);
+			my @problemIDs =
+				map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $targetSetName }, 'problem_id');
+			my @seq = jitar_id_to_seq($problemIDs[-1]);
 			$targetProblemNumber = seq_to_jitar_id($seq[0] + 1);
 		} else {
 			$targetProblemNumber = 1 + max($db->listGlobalProblems($targetSetName));
@@ -1366,7 +887,7 @@ sub add_problem_handler {
 				problemSeed    => $self->{problemSeed},
 				editMode       => 'savedFile',
 				sourceFilePath => $self->getRelativeSourceFilePath($sourceFilePath),
-				status_message => uri_escape_utf8($self->{status_message}),
+				status_message => uri_escape_utf8($self->{status_message}->join('')),
 				file_type      => 'problem',
 			}
 		));
@@ -1399,7 +920,7 @@ sub add_problem_handler {
 			params => {
 				displayMode    => $self->{displayMode},
 				editMode       => 'savedFile',
-				status_message => uri_escape_utf8($self->{status_message}),
+				status_message => uri_escape_utf8($self->{status_message}->join('')),
 			}
 		));
 	} elsif ($targetFileType eq 'hardcopy_header') {
@@ -1432,7 +953,7 @@ sub add_problem_handler {
 			params => {
 				displayMode    => $self->{displayMode},
 				editMode       => 'savedFile',
-				status_message => uri_escape_utf8($self->{status_message}),
+				status_message => uri_escape_utf8($self->{status_message}->join('')),
 			}
 		));
 	} else {
@@ -1440,44 +961,6 @@ sub add_problem_handler {
 	}
 
 	return;
-}
-
-sub save_form {
-	my $self = shift;
-	my $r    = $self->r;
-
-	if ($self->{editFilePath} =~ /$BLANKPROBLEM$/) {
-		# Can't save blank problems without changing names.
-		return '';
-	} elsif (-w $self->{editFilePath}) {
-		return CGI::div(
-			CGI::div(
-				{ class => 'mb-2' },
-				$r->maketext(
-					'Save to [_1] and View',
-					CGI::b({ dir => 'ltr' }, $self->shortPath($self->{editFilePath}))
-				)
-			),
-			CGI::div(
-				{ class => 'form-check mb-2' },
-				CGI::input({
-					type  => 'checkbox',
-					name  => 'newWindowSave',
-					id    => 'newWindowSave',
-					class => 'form-check-input',
-					$self->{file_type} eq 'hardcopy_header' ? (checked => undef) : ()
-				}),
-				CGI::label(
-					{ for => 'newWindowSave', class => 'form-check-label' },
-					$r->maketext('Open in new window')
-				)
-			),
-			CGI::hidden({ name => 'action.save.source_file', value => $self->{editFilePath} }),
-		);
-	} else {
-		# Can't save. No write permission.
-		return '';
-	}
 }
 
 sub save_handler {
@@ -1525,7 +1008,7 @@ sub save_handler {
 				problemSeed    => $self->{problemSeed},
 				editMode       => 'savedFile',
 				sourceFilePath => $self->getRelativeSourceFilePath($self->{editFilePath}),
-				status_message => uri_escape_utf8($self->{status_message})
+				status_message => uri_escape_utf8($self->{status_message}->join(''))
 			}
 		));
 	} elsif ($self->{file_type} eq 'set_header') {
@@ -1540,7 +1023,7 @@ sub save_handler {
 				displayMode    => $self->{displayMode},
 				problemSeed    => $self->{problemSeed},
 				editMode       => 'savedFile',
-				status_message => uri_escape_utf8($self->{status_message})
+				status_message => uri_escape_utf8($self->{status_message}->join(''))
 			}
 		));
 	} elsif ($self->{file_type} eq 'hardcopy_header') {
@@ -1555,7 +1038,7 @@ sub save_handler {
 				displayMode    => $self->{displayMode},
 				problemSeed    => $self->{problemSeed},
 				editMode       => 'savedFile',
-				status_message => uri_escape_utf8($self->{status_message})
+				status_message => uri_escape_utf8($self->{status_message}->join(''))
 			}
 		));
 	} elsif ($self->{file_type} eq 'course_info') {
@@ -1567,7 +1050,7 @@ sub save_handler {
 			),
 			params => {
 				editMode       => 'savedFile',
-				status_message => uri_escape_utf8($self->{status_message})
+				status_message => uri_escape_utf8($self->{status_message}->join(''))
 			}
 		));
 	} elsif ($self->{file_type} eq 'source_path_for_problem_file') {
@@ -1586,7 +1069,7 @@ sub save_handler {
 				# The path relative to the templates directory is required.
 				sourceFilePath => $self->{editFilePath},
 				file_type      => 'source_path_for_problem_file',
-				status_message => uri_escape_utf8($self->{status_message})
+				status_message => uri_escape_utf8($self->{status_message}->join(''))
 			}
 		));
 	} else {
@@ -1596,137 +1079,23 @@ sub save_handler {
 	return;
 }
 
-sub save_as_form {
-	my $self = shift;
-	my $r    = $self->r;
-
-	# Don't show the save as form when editing an existing course info file.
-	return '' if $self->{file_type} eq 'course_info' && -e $self->{editFilePath};
-
-	my $templatesDir  = $self->r->ce->{courseDirs}{templates};
-	my $shortFilePath = $self->{editFilePath} =~ s|^$templatesDir/||r;
-
-	# Suggest that modifications be saved to the "local" subdirectory if its not in a writeable directory
-	$shortFilePath = 'local/' . $shortFilePath
-		if (!-w dirname($self->{editFilePath}));
-
-	# If it is an absolute path make it relative.
-	$shortFilePath =~ s|^/*|| if $shortFilePath =~ m|^/|;
-
-	my $probNum = $self->{file_type} eq 'problem' ? $self->{problemID} : 'header';
-
-	# Don't add or replace problems to sets if the set is the Undefined_Set or if the problem is the blank_problem.
-	my $can_add_problem_to_set =
-		not_blank($self->{setID}) && $self->{setID} ne 'Undefined_Set' && $self->{file_type} ne 'blank_problem';
-
-	my $prettyProbNum = $probNum;
-	if ($self->{setID}) {
-		my $set = $self->r->db->getGlobalSet($self->{setID});
-		$prettyProbNum = join('.', jitar_id_to_seq($probNum))
-			if ($self->{file_type} eq 'problem' && $set && $set->assignment_type eq 'jitar');
-	}
-
-	return CGI::div(
-		CGI::div(
-			{ class => 'row align-items-center mb-2' },
-			CGI::label(
-				{ for => 'action_save_as_target_file_id', class => 'col-form-label col-auto' },
-				$r->maketext('Save file to:')
-			),
-			CGI::div(
-				{ class => 'col-auto d-inline-flex', dir => 'ltr' },
-				CGI::div(
-					{ class => 'editor-save-path input-group input-group-sm' },
-					CGI::label({ for => 'action_save_as_target_file_id', class => 'input-group-text' }, '[TMPL]/'),
-					CGI::textfield({
-						id    => 'action_save_as_target_file_id',
-						name  => 'action.save_as.target_file',
-						size  => 60,
-						value => $shortFilePath,
-						class => 'form-control form-control-sm',
-						dir   => 'ltr',
-						# Don't allow changing the file name for course info files.
-						# The filename needs to be what is set in the course environment.
-						$self->{file_type} eq 'course_info' ? (readonly => undef) : ()
-					})
-				)
-			),
-			CGI::hidden({ name => 'action.save_as.source_file', value => $self->{editFilePath} }),
-			CGI::hidden({ name => 'action.save_as.file_type',   value => $self->{file_type} })
-		),
-		$can_add_problem_to_set ? CGI::div(
-			{ class => 'form-check' },
-			CGI::input({
-				type    => 'radio',
-				id      => 'action_save_as_saveMode_rename_id',
-				name    => 'action.save_as.saveMode',
-				value   => 'rename',
-				checked => undef,
-				class   => 'form-check-input',
-			}),
-			CGI::label(
-				{ for => 'action_save_as_saveMode_rename_id', class => 'form-check-label' },
-				$r->maketext(
-					'Replace current problem: [_1]',
-					CGI::strong(
-						CGI::span({ dir => 'ltr' }, format_set_name_display($self->{fullSetID}))
-							. "/$prettyProbNum"
-					)
-				)
-			)
-		) : '',
-		$can_add_problem_to_set ? CGI::div(
-			{ class => 'form-check' },
-			CGI::input({
-				type  => 'radio',
-				id    => 'action_save_as_saveMode_new_problem_id',
-				name  => 'action.save_as.saveMode',
-				value => 'add_to_set_as_new_problem',
-				class => 'form-check-input',
-			}),
-			CGI::label(
-				{ for => 'action_save_as_saveMode_new_problem_id', class => 'form-check-label' },
-				$r->maketext(
-					'Append to end of [_1] set',
-					CGI::strong({ dir => 'ltr' }, format_set_name_display($self->{fullSetID}))
-				)
-			)
-		) : '',
-		$self->{file_type} eq 'course_info' ? '' : CGI::div(
-			{ class => 'form-check' },
-			CGI::input({
-				type  => 'radio',
-				id    => 'action_save_as_saveMode_independent_problem_id',
-				name  => 'action.save_as.saveMode',
-				value => 'new_independent_problem',
-				class => 'form-check-input',
-				$can_add_problem_to_set ? () : (checked => undef)
-			}),
-			CGI::label(
-				{ for => 'action_save_as_saveMode_independent_problem_id', class => 'form-check-label' },
-				$r->maketext('Create unattached problem')
-			)
-		)
-	);
-}
-
 sub save_as_handler {
-	my ($self, %actionParams) = @_;
+	my ($self) = @_;
 	my $r = $self->r;
 
-	$self->{status_message} = '';
+	$self->{status_message} = $r->c;
 
 	my $do_not_save = 0;
 
-	my $saveMode      = $actionParams{'action.save_as.saveMode'}[0] || 'no_save_mode_selected';
-	my $new_file_name = ($actionParams{'action.save_as.target_file'}[0] || '') =~ s/^\s*|\s*$//gr;
-	$self->{sourceFilePath} = $actionParams{'action.save_as.source_file'}[0] || '';  # Store for use in saveFileChanges.
-	my $file_type = $actionParams{'action.save_as.file_type'}[0] || '';
+	my $saveMode      = $r->param('action.save_as.saveMode') || 'no_save_mode_selected';
+	my $new_file_name = ($r->param('action.save_as.target_file') || '') =~ s/^\s*|\s*$//gr;
+	$self->{sourceFilePath} = $r->param('action.save_as.source_file') || '';    # Store for use in saveFileChanges.
+	my $file_type = $r->param('action.save_as.file_type') || '';
 
 	# Need a non-blank file name.
 	if (!$new_file_name) {
 		$do_not_save = 1;
-		$self->addbadmessage(CGI::div($r->maketext('Please specify a file to save to.')));
+		$self->addbadmessage($r->maketext('Please specify a file to save to.'));
 	}
 
 	# Rescue the user in case they forgot to end the file name with the pg extension.
@@ -1744,15 +1113,15 @@ sub save_as_handler {
 	my $outputFilePath = $self->r->ce->{courseDirs}{templates} . "/$new_file_name";
 	if (defined $outputFilePath && -e $outputFilePath) {
 		$do_not_save = 1;
-		$self->addbadmessage(CGI::div($r->maketext(
+		$self->addbadmessage($r->maketext(
 			'File "[_1]" exists. File not saved. No changes have been made.  '
 				. 'You can change the file path for this problem manually from the "Hmwk Sets Editor" page',
 			$self->shortPath($outputFilePath)
-		)));
-		$self->addgoodmessage(CGI::div($r->maketext(
+		));
+		$self->addgoodmessage($r->maketext(
 			'The text box now contains the source of the original problem. '
 				. 'You can recover lost edits by using the Back button on your browser.'
-		)));
+		));
 	} else {
 		$self->{editFilePath} = $outputFilePath;
 		# saveFileChanges will update the tempFilePath and inputFilePath as needed.  Don't do that here.
@@ -1809,23 +1178,19 @@ sub save_as_handler {
 					$self->{versionID}
 					? $self->r->db->putProblemVersion($problemRecord)
 					: $self->r->db->putGlobalProblem($problemRecord);
-				my $prettyProblemNumber = $self->{problemID};
-				my $set                 = $self->r->db->getGlobalSet($self->{setID});
-				$prettyProblemNumber = join('.', jitar_id_to_seq($self->{problemID}))
-					if ($set && $set->assignment_type eq 'jitar');
 
 				if ($result) {
 					$self->addgoodmessage($r->maketext(
 						'The source file for "set [_1] / problem [_2] has been changed from "[_3]" to "[_4]".',
 						$self->{fullSetID},
-						$prettyProblemNumber,
+						$self->{prettyProblemNumber},
 						$self->shortPath($self->{sourceFilePath}),
 						$self->shortPath($outputFilePath)
 					));
 				} else {
 					$self->addbadmessage($r->maketext(
 						'Unable to change the source file path for set [_1], problem [_2]. Unknown error.',
-						$self->{fullSetID}, $prettyProblemNumber
+						$self->{fullSetID}, $self->{prettyProblemNumber}
 					));
 				}
 			}
@@ -1917,19 +1282,10 @@ sub save_as_handler {
 			sourceFilePath => $self->getRelativeSourceFilePath($outputFilePath),
 			problemSeed    => $self->{problemSeed},
 			file_type      => $new_file_type,
-			status_message => uri_escape_utf8($self->{status_message})
+			status_message => uri_escape_utf8($self->{status_message}->join(''))
 		}
 	));
 	return;
-}
-
-sub revert_form {
-	my $self = shift;
-	my $r    = $self->r;
-	return $r->maketext('Error: The original file [_1] cannot be read.', $self->{editFilePath})
-		unless $self->{file_type} eq 'course_info' || -r $self->{editFilePath};
-	return '' unless defined $self->{tempFilePath} && -e $self->{tempFilePath};
-	return $r->maketext('Revert to [_1]', CGI::span({ dir => 'ltr' }, $self->shortPath($self->{editFilePath})));
 }
 
 sub revert_handler {
@@ -1952,22 +1308,11 @@ sub revert_handler {
 	$self->addgoodmessage($r->maketext('Deleted temporary file [_1].', $self->shortPath($self->{tempFilePath})));
 
 	$self->{r_problemContents} = \'';
+	$r->param('problemContents', undef);
 
 	$self->addgoodmessage($r->maketext('Reverted to original file "[_1]".', $self->shortPath($self->{editFilePath})));
 
 	return;
-}
-
-sub output_JS {
-	my $self = shift;
-	my $ce   = $self->r->ce;
-
-	output_codemirror_static_files($ce);
-
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'),           defer => undef }, '');
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/PGProblemEditor/pgproblemeditor.js'), defer => undef }, '');
-
-	return '';
 }
 
 1;

@@ -52,7 +52,6 @@ Note:  Only database keyfield values can be used as path parameters.
  course_admin                        /admin/ -> logout, options, instructor_tools
  render_rpc                          /render_rpc/
  html2xml                            /html2xml/
- pgtotex                             /pgtotex/
  instructor_rpc                      /instructor_rpc/
  set_list                            /$courseID/
 
@@ -71,7 +70,6 @@ Note:  Only database keyfield values can be used as path parameters.
 
  instructor_user_list                /$courseID/instructor/users/
  instructor_user_detail              /$courseID/instructor/users/$userID/
- instructor_sets_assigned_to_user    /$courseID/instructor/users/$userID/sets/
 
  instructor_set_list                 /$courseID/instructor/sets/
  instructor_set_detail               /$courseID/instructor/sets/$setID/
@@ -132,7 +130,7 @@ our %pathTypes = (
 	root => {
 		name    => 'WeBWorK',
 		parent  => '',
-		kids    => [qw/course_admin render_rpc html2xml pgtotex instructor_rpc set_list /],
+		kids    => [qw/course_admin render_rpc html2xml instructor_rpc set_list /],
 		match   => qr|^/|,
 		capture => [qw//],
 		produce => '/',
@@ -169,15 +167,6 @@ our %pathTypes = (
 		capture => [qw//],
 		produce => 'html2xml/',
 		display => 'WeBWorK::ContentGenerator::RenderViaRPC',
-	},
-	pgtotex => {
-		name    => 'PG to Tex translator',
-		parent  => 'root',
-		kids    => [qw//],
-		match   => qr|^pgtotex.+|,
-		capture => [qw//],
-		produce => 'pgtotex/',
-		display => 'WeBWorK::ContentGenerator::PGtoTexRenderer',
 	},
 	instructor_rpc => {
 		name    => 'instructor_rpc',
@@ -362,20 +351,11 @@ our %pathTypes = (
 	instructor_user_detail => {
 		name    => x('Sets assigned to [_1]'),
 		parent  => 'instructor_user_list',
-		kids    => [qw/instructor_sets_assigned_to_user/],
+		kids    => [qw//],
 		match   => qr|^([^/]+)/|,
 		capture => [qw/userID/],
 		produce => '$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UserDetail',
-	},
-	instructor_sets_assigned_to_user => {
-		name    => x('Sets Assigned to User'),
-		parent  => 'instructor_user_detail',
-		kids    => [qw//],
-		match   => qr|^sets/|,
-		capture => [qw//],
-		produce => 'sets/',
-		display => 'WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser',
 	},
 
 	################################################################################
@@ -522,7 +502,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::SendMail',
 	},
 	instructor_lti_update => {
-		name    => x('LTI Update'),
+		name    => x('LTI Grade Update'),
 		parent  => 'instructor_tools',
 		kids    => [qw//],
 		match   => qr|^lti_update/|,
@@ -725,7 +705,7 @@ sub newFromPath {
 
 	my ($type, %args) = getPathType($path);
 	croak "no type matches path $path"                                 unless $type;
-	croak "URLPath requires a request object parent as second element" unless (ref($r) =~ /WeBWorK::Request/);
+	croak "URLPath requires a request object parent as second element" unless $r->isa('WeBWorK::Request');
 
 	return $invocant->new(
 		type => $type,
@@ -745,7 +725,7 @@ sub newFromModule {
 	my ($invocant, $module, $r, %args) = @_;
 
 	my $type = getModuleType($module, keys %args);
-	croak "URLPath requires a request object parent as second element" unless (ref($r) =~ /WeBWorK::Request/);
+	croak "URLPath requires a request object parent as second element" unless $r->isa('WeBWorK::Request');
 	croak "no type matches module $module with args", map {" $_=>$args{$_}"} keys %args unless $type;
 
 	return $invocant->new(
@@ -836,7 +816,7 @@ sub name {
 		$pathTypes{ $self->{type} }{name},
 		$args{userID} // '',
 		$displayHTML
-		? CGI::span({ dir => 'ltr' }, format_set_name_display($args{setID} // ''))
+		? $self->{r}->tag('span', dir => 'ltr', format_set_name_display($args{setID} // ''))
 		: format_set_name_display($args{setID} // ''),
 		$args{problemID} // '',
 		($args{courseID} // '') =~ s/_/ /gr

@@ -29,7 +29,7 @@ use Digest::SHA qw(sha1_base64);
 use Mojo::Util qw(xml_escape);
 use Mojo::DOM;
 
-use WeBWorK::Utils::AttemptsTable;
+use WeBWorK::HTML::AttemptsTable;
 use WeBWorK::Utils qw(getAssetURL);
 use WeBWorK::Utils::LanguageAndDirection;
 
@@ -158,8 +158,8 @@ sub formatRenderedProblem {
 
 	# Do not produce an AttemptsTable when we had a rendering error.
 	if (!$renderErrorOccurred) {
-		my $tbl = WeBWorK::Utils::AttemptsTable->new(
-			$rh_result->{answers} // {},
+		my $tbl = WeBWorK::HTML::AttemptsTable->new(
+			$rh_result->{answers} // {}, $ws->r,
 			answersSubmitted    => $ws->{inputs_ref}{answersSubmitted}     // 0,
 			answerOrder         => $rh_result->{flags}{ANSWER_ENTRY_ORDER} // [],
 			displayMode         => $displayMode,
@@ -230,14 +230,13 @@ sub formatRenderedProblem {
 		$output->{ww_version} = $ce->{WW_VERSION};
 		$output->{pg_version} = $ce->{PG_VERSION};
 
-		# Convert to JSON
-		return JSON->new->utf8(0)->encode($output);
+		# Convert to JSON and render.
+		$ws->r->render(data => JSON->new->utf8(0)->encode($output));
 	}
 
-	# Render the appropriate template in the templates/RPCRenderFormats folder depending on the outputformat.
+	# Setup arnd render the appropriate template in the templates/RPCRenderFormats folder depending on the outputformat.
 	# "ptx" has a special template.  "json" uses the default json template.  All others use the default html template.
-	# Note that render_to_string returns a Mojo::ByteStream object which must be stringified with to_string.
-	my $template = $ws->r->render_to_string(
+	my %template_params = (
 		template => $formatName eq 'ptx' ? 'RPCRenderFormats/ptx' : 'RPCRenderFormats/default',
 		$formatName eq 'json' ? (format => 'json') : (),
 		formatName               => $formatName,
@@ -282,10 +281,11 @@ sub formatRenderedProblem {
 		showCorrectAnswersButton => $ws->{inputs_ref}{showCorrectAnswersButton} // '',
 		showFooter               => $ws->{inputs_ref}{showFooter}               // '',
 		pretty_print             => \&pretty_print
-	)->to_string;
+	);
 
-	return $template if $formatName eq 'json' || !$ws->{inputs_ref}{send_pg_flags};
-	return JSON->new->utf8(0)->encode({ html => $template, pg_flags => $rh_result->{flags} });
+	return $ws->r->render(%template_params) if $formatName eq 'json' || !$ws->{inputs_ref}{send_pg_flags};
+	return $ws->r->render(
+		json => { html => $ws->r->render_to_string(%template_params), pg_flags => $rh_result->{flags} });
 }
 
 sub saveGradeToLTI {

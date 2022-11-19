@@ -811,12 +811,13 @@ sub archiveCourse {
 		croak "$courseID: course not found";
 	}
 
+	my $message = '';
+
 	# replace previous archived file if it exists.
 	if (-e $archive_path) {
 		unlink($archive_path) if (-w $archive_path);
 		unless (-e $archive_path) {
-			print CGI::p({ -style => 'color:red; font-weight:bold' },
-				"The archival version of '$courseID' has been replaced'.\n");
+			$message .= "The archival version of '$courseID' has been replaced'.";
 		} else {
 			croak "Unable to replace the archival version of '$courseID'";
 		}
@@ -868,6 +869,8 @@ sub archiveCourse {
 		croak "Failed to create archived file at '$archive_path'. File already exists.";
 	}
 	_archiveCourse_remove_dump_dir($ce, $dump_dir);
+
+	return $message;
 }
 
 sub _archiveCourse_remove_dump_dir {
@@ -1194,7 +1197,7 @@ that are not associated with a particular course
 
 sub initNonNativeTables {
 	my ($ce, $dbLayoutName, %options) = @_;
-	my $str = '';
+	my @messages;
 	# Create a database handler
 	my $db = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
 
@@ -1220,7 +1223,7 @@ sub initNonNativeTables {
 			if ($schema_obj->can("create_table")) {
 				#warn "creating table $database_table_name  with object $schema_obj";
 				$schema_obj->create_table;
-				$str .= "Table '$table' created as '$database_table_name' in database." . CGI::br();
+				push(@messages, "Table '$table' created as '$database_table_name' in database.");
 			} else {
 				# warn "Skipping creation of '$table' table: no create_table method\n";
 			}
@@ -1257,9 +1260,7 @@ sub initNonNativeTables {
 
 	}
 
-	# unlock database
-	$str;
-
+	return @messages;
 }
 
 ################################################################################

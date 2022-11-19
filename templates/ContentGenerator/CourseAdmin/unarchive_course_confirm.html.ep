@@ -1,0 +1,14 @@
+<h2><%= maketext('Unarchive Course') %></h2>
+%= form_for $c->uri, method => 'POST', begin
+	<p>
+		<%= maketext('Unarchive [_1] to course:', $unarchive_courseID) %>
+		<input type="text" name="new_courseID" value="<%= $courseID %>">
+	</p>
+	<%= $cg->hidden_authen_fields =%>
+	<%= $cg->hidden_fields(qw(subDisplay unarchive_courseID create_newCourseID)) =%>
+	<div class="d-flex justify-content-center gap-2">
+		<%= submit_button maketext(q{Don't Unarchive}),
+			name => 'decline_unarchive_course', class => 'btn btn-primary' =%>
+		<%= submit_button maketext('Unarchive'), name => 'confirm_unarchive_course', class => 'btn btn-primary' =%>
+	</div>
+% end

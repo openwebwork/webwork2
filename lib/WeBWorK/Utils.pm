@@ -25,7 +25,7 @@ WeBWorK::Utils - useful utilities used by other WeBWorK modules.
 
 use strict;
 use warnings;
-#use Apache::DB;
+
 use DateTime;
 use DateTime::TimeZone;
 use Date::Parse;
@@ -38,7 +38,6 @@ use Errno;
 use File::Path qw(rmtree);
 use Storable;
 use Carp;
-#use Mail::Sender;
 use Storable qw(nfreeze thaw);
 use JSON;
 

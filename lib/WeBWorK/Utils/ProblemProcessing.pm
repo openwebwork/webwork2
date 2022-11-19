@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::Utils::ProblemProcessing;
-use base qw(Exporter);
+use parent qw(Exporter);
 
 =head1 NAME
 
@@ -29,7 +29,6 @@ use warnings;
 use Email::Stuffer;
 use Try::Tiny;
 
-use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils
 	qw(writeLog writeCourseLogGivenTime encodeAnswers before after jitar_problem_adjusted_status jitar_id_to_seq);
@@ -42,7 +41,6 @@ our @EXPORT_OK = qw(
 	process_and_log_answer
 	compute_reduced_score
 	create_ans_str_from_responses
-	check_invalid
 	jitar_send_warning_email
 );
 
@@ -252,18 +250,18 @@ sub process_and_log_answer {
 					if ($LTIGradeMode eq 'course') {
 						if ($grader->submit_course_grade($problem->user_id)) {
 							$scoreRecordedMessage .=
-								CGI::br() . $r->maketext('Your score was successfully sent to the LMS.');
+								$r->tag('br') . $r->maketext('Your score was successfully sent to the LMS.');
 						} else {
 							$scoreRecordedMessage .=
-								CGI::br() . $r->maketext('Your score was not successfully sent to the LMS.');
+								$r->tag('br') . $r->maketext('Your score was not successfully sent to the LMS.');
 						}
 					} elsif ($LTIGradeMode eq 'homework') {
 						if ($grader->submit_set_grade($problem->user_id, $problem->set_id)) {
 							$scoreRecordedMessage .=
-								CGI::br() . $r->maketext('Your score was successfully sent to the LMS.');
+								$r->tag('br') . $r->maketext('Your score was successfully sent to the LMS.');
 						} else {
 							$scoreRecordedMessage .=
-								CGI::br() . $r->maketext('Your score was not successfully sent to the LMS.');
+								$r->tag('br') . $r->maketext('Your score was not successfully sent to the LMS.');
 						}
 					}
 				}
@@ -355,36 +353,6 @@ sub create_ans_str_from_responses {
 	# past_answers_string is stored in past_answer table.
 	# encoded_last_answer_string is used in `last_answer` entry of the problem_user table.
 	return ($past_answers_string, $encoded_last_answer_string, $scores2, $isEssay2);
-}
-
-# Checks to see if the current problem set is valid for the current user,
-# Returns 'valid' if it is and an error message if it's not.
-sub check_invalid {
-	my $self          = shift;
-	my $r             = $self->r;
-	my $urlpath       = $r->urlpath;
-	my $effectiveUser = $r->param('effectiveUser');
-
-	if ($self->{invalidSet}) {
-		return CGI::div(
-			{ class => 'alert alert-danger' },
-			CGI::p($r->maketext(
-				'The selected problem set ([_1]) is not a valid set for [_2].', $urlpath->arg('setID'),
-				$effectiveUser
-			)),
-			CGI::p($self->{invalidSet})
-		);
-	} elsif ($self->{invalidProblem}) {
-		return CGI::div(
-			{ class => 'alert alert-danger' },
-			CGI::p($r->maketext(
-				'The selected problem ([_1]) is not a valid problem for set [_2].', $urlpath->arg('problemID'),
-				$self->{set}->set_id
-			))
-		);
-	} else {
-		return 'valid';
-	}
 }
 
 # If you provide this subroutine with a userProblem it will notify the instructors of the course that the student has

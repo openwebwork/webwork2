@@ -60,29 +60,6 @@ $mail{feedbackRecipients}    = [
 # Use this to customize the text of the feedback button.
 #$feedback_button_name = "Email Instructor";
 
-
-
-################################################################################
-# Repository Information
-###############################################################################
-# This is where you put your custom remote and branch for your WeBWorK, PG and OPL
-# github repositories.
-# To disable checking for a particular repository, set the remote and branch
-# variables to be empty strings.
-
-# Note:  This process uses git ls-remote which can be very slow on some
-# systems, so it is disabled by default.  Enabling this may make the course
-# list page in the admin course very slow.
-
-#$enableGitUpgradeNotifier = 1;
-
-#$gitWeBWorKRemoteName = "origin";
-#$gitWeBWorKBranchName = "main";
-#$gitPGRemoteName = "origin";
-#$gitPGBranchName = "main";
-#$gitLibraryRemoteName = "origin";
-#$gitLibraryBranchName = "main";
-
 ################################################################################
 # Theme
 ################################################################################

@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Feedback;
-use base qw(WeBWorK::ContentGenerator);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -22,23 +22,17 @@ WeBWorK::ContentGenerator::Feedback - Send mail to professors.
 
 =cut
 
-# *** feedback should be exempt from authentication, so that people can send
-# feedback from the login page!
-
 use strict;
 use warnings;
 use utf8;
+
 use Data::Dumper;
-use Data::Dump qw/dump/;
-use WeBWorK::Debug;
-use WeBWorK::CGI;
 use Email::Stuffer;
 use Try::Tiny;
-use WeBWorK::Upload;
-
-use Socket qw/unpack_sockaddr_in inet_ntoa/;    # for remote host/port info
 use Text::Wrap qw(wrap);
-use WeBWorK::Utils qw/ decodeAnswers/;
+
+use WeBWorK::Upload;
+use WeBWorK::Utils qw/decodeAnswers/;
 
 # request paramaters used
 #
@@ -63,7 +57,7 @@ use WeBWorK::Utils qw/ decodeAnswers/;
 # problem object for current problem (if from Problem)
 # display options (if from Problem)
 
-sub body {
+sub initialize {
 	my ($self) = @_;
 	my $r      = $self->r;
 	my $ce     = $r->ce;
@@ -71,59 +65,45 @@ sub body {
 	my $authz  = $r->authz;
 
 	# get form fields
-	my $key                = $r->param("key");
-	my $userName           = $r->param("user");
-	my $module             = $r->param("module");
-	my $setName            = $r->param("set");
-	my $problemNumber      = $r->param("problem");
-	my $displayMode        = $r->param("displayMode");
-	my $showOldAnswers     = $r->param("showOldAnswers");
-	my $showCorrectAnswers = $r->param("showCorrectAnswers");
-	my $showHints          = $r->param("showHints");
-	my $showSolutions      = $r->param("showSolutions");
-	my $from               = $r->param("from");
-	my $feedback           = $r->param("feedback");
-	my $courseID           = $r->urlpath->arg("courseID");
+	my $userID    = $r->param('user');
+	my $module    = $r->param('module');
+	my $setID     = $r->param('set');
+	my $problemID = $r->param('problem');
+	my $from      = $r->param('from');
+	my $feedback  = $r->param('feedback');
+	my $courseID  = $r->urlpath->arg('courseID');
 
 	my ($user, $set, $problem);
-	$user = $db->getUser($userName)    # checked
-		if defined $userName and $userName ne "";
+
+	$user = $db->getUser($userID) if $userID;
+	$r->stash->{user_email_address} = $user ? $user->email_address : '';
+
 	if (defined $user) {
-		$set = $db->getMergedSet($userName, $setName)    # checked
-			if defined $setName and $setName ne "";
-		$problem = $db->getMergedProblem($userName, $setName, $problemNumber)    # checked
-			if defined $set and defined $problemNumber && $problemNumber ne "";
+		$set     = $db->getMergedSet($userID, $setID) if defined $setID && $setID ne '';
+		$problem = $db->getMergedProblem($userID, $setID, $problemID)
+			if defined $set && defined $problemID && $problemID ne '';
 	} else {
-		$set = $db->getGlobalSet($setName)                                       # checked
-			if defined $setName and $setName ne "";
-		$problem = $db->getGlobalProblem($setName, $problemNumber)               # checked
-			if defined $set and defined $problemNumber && $problemNumber ne "";
+		$set     = $db->getGlobalSet($setID) if defined $setID && $setID ne '';
+		$problem = $db->getGlobalProblem($setID, $problemID)
+			if defined $set && defined $problemID && $problemID ne '';
 	}
 
-	# generate context URLs
-	my ($emailableURL, $returnURL) = $self->generateURLs(set_id => $setName, problem_id => $problemNumber);
+	# Generate context URLs.
+	(my $emailableURL, $r->stash->{returnURL}) = $self->generateURLs(set_id => $setID, problem_id => $problemID);
 
-	my $homeModulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Home", $r);
-	my $systemURL      = $self->systemLink($homeModulePath, authen => 0, use_abs_url => 1);
+	return unless $authz->hasPermissions($userID, 'submit_feedback');
 
-	unless ($authz->hasPermissions($userName, "submit_feedback")) {
-		$self->feedbackNotAllowed($returnURL);
-		return "";
-	}
-
-	# determine the recipients of the email
+	# Determine the recipients of the email.
 	my @recipients = $self->getFeedbackRecipients($user);
+	$r->stash->{numRecipients} = scalar @recipients;
 
-	unless (@recipients) {
-		$self->noRecipientsAvailable($returnURL);
-		return "";
-	}
+	return unless $r->stash->{numRecipients};
 
-	if (defined $r->param("sendFeedback")) {
-		# get verbosity level
-		my $verbosity = $ce->{mail}->{feedbackVerbosity};
+	if (defined $r->param('sendFeedback')) {
+		# Get verbosity level.
+		my $verbosity = $ce->{mail}{feedbackVerbosity};
 
-		# determine the sender of the email
+		# Determine the sender of the email.
 		my $sender;
 		if ($user) {
 			if ($user->email_address) {
@@ -139,14 +119,13 @@ sub body {
 			$sender = $from;
 		}
 
-		# sanity checks
 		unless ($sender) {
-			$self->feedbackForm($user, $returnURL, "No Sender specified.");
-			return "";
+			$r->stash->{send_error} = $r->maketext('No Sender specified.');
+			return;
 		}
 		unless ($feedback) {
-			$self->feedbackForm($user, $returnURL, "Message was blank.");
-			return "";
+			$r->stash->{send_error} = $r->maketext('Message was blank.');
+			return;
 		}
 
 		my %subject_map = (
@@ -158,21 +137,19 @@ sub body {
 			'r' => $user    ? $user->recitation    : undef,
 			'%' => '%',
 		);
-		my $chars   = join("", keys %subject_map);
-		my $subject = $ce->{mail}{feedbackSubjectFormat}
-			|| "WeBWorK question from %c: %u set %s/prob %p";    # default if not entered
-		$subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ""/eg;
+		my $chars   = join('', keys %subject_map);
+		my $subject = $ce->{mail}{feedbackSubjectFormat} || 'WeBWorK question from %c: %u set %s/prob %p';
+		$subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ''/eg;
 
-		# If in the future any fields in the subject can contain non-ASCII characters
-		# then we will also need:
-		# $subject = Encode::encode("MIME-Header", $subject);
-		# at present, this does not seem to be necessary.
+		# Get info about remote user.
+		my $remote_host = $r->useragent_ip || 'UNKNOWN';
+		my $remote_port = $r->remote_port  || 'UNKNOWN';
 
-		# get info about remote user (stolen from &WeBWorK::Authen::write_log_entry)
-		my ($remote_host, $remote_port);
-
-		$remote_host = $r->useragent_ip || "UNKNOWN";
-		$remote_port = $r->remote_port  || "UNKNOWN";
+		my $systemURL = $self->systemLink(
+			$r->urlpath->newFromModule("WeBWorK::ContentGenerator::Home", $r),
+			authen      => 0,
+			use_abs_url => 1
+		);
 
 		my $msg = qq/This  message was automatically generated by the WeBWorK
 system at $systemURL, in response to a request from $remote_host:$remote_port.
@@ -188,34 +165,36 @@ $emailableURL
 		if ($problem and $verbosity >= 1) {
 			$msg .=
 				qq/***** Data about the problem processor: ***** \n\n/
-				. "Display Mode:         $displayMode\n"
-				. "Show Old Answers:     "
-				. ($showOldAnswers ? "yes" : "no") . "\n"
-				. " Show Correct Answers: "
-				. ($showCorrectAnswers ? "yes" : "no") . "\n"
-				. " Show Hints:           "
-				. ($showHints ? "yes" : "no") . "\n"
-				. " Show Solutions:       "
-				. ($showSolutions ? "yes" : "no") . "\n\n";
+				. 'Display Mode:         '
+				. $r->param('displayMode') . "\n"
+				. 'Show Old Answers:     '
+				. ($r->param('showOldAnswers') ? 'yes' : 'no') . "\n"
+				. 'Show Correct Answers: '
+				. ($r->param('showCorrectAnswers') ? 'yes' : 'no') . "\n"
+				. 'Show Hints:           '
+				. ($r->param('showHints') ? 'yes' : 'no') . "\n"
+				. 'Show Solutions:       '
+				. ($r->param('showSolutions') ? 'yes' : 'no') . "\n\n";
 		}
 
-		if ($user and $verbosity >= 1) {
+		if ($user && $verbosity >= 1) {
 			$msg .= "***** Data about the user: *****\n\n";
 			$msg .= $self->format_user($user) . "\n";
 		}
 
-		if ($problem and $verbosity >= 1) {
+		if ($problem && $verbosity >= 1) {
 			$msg .= "***** Data about the problem: *****\n\n";
 			$msg .= $self->format_userproblem($problem) . "\n";
 		}
-		if ($set and $verbosity >= 1) {
+		if ($set && $verbosity >= 1) {
 			$msg .= "***** Data about the homework set: *****\n\n" . $self->format_userset($set) . "\n";
 		}
-		if ($ce and $verbosity >= 2) {
-			$msg .= "***** Data about the environment: *****\n\n", $msg .= Dumper($ce) . "\n\n";
+		if ($ce && $verbosity >= 2) {
+			$msg .= "***** Data about the environment: *****\n\n" . Dumper($ce) . "\n\n";
 		}
 
-		my $email = Email::Stuffer->to(join(',', @recipients))->from($sender)->subject($subject)->text_body($msg)
+		my $email =
+			Email::Stuffer->to(join(',', @recipients))->from($sender)->subject($subject)->text_body($msg)
 			->header('X-Remote-Host' => $remote_host);
 
 		# Extra headers
@@ -248,148 +227,50 @@ $emailableURL
 
 			# Check to see that this is an allowed filetype.
 			unless (lc($filename =~ s/.*\.//r) =~ /^(jpe?g|gif|png|pdf|zip|txt|csv)$/) {
-				$self->feedbackForm($user, $returnURL,
-					$r->maketext('The filetype of the attached file "[_1]" is not allowed.', $filename));
-				return '';
+				$r->stash->{send_error} =
+					$r->maketext('The filetype of the attached file "[_1]" is not allowed.', $filename);
+				return;
 			}
 
 			# Check to see that the attached file does not exceed the allowed size.
 			if (length($contents) > $ce->{mail}{maxAttachmentSize} * 1000000) {
-				$self->feedbackForm(
-					$user,
-					$returnURL,
-					$r->maketext(
-						'The attached file "[_1]" exceeds the allowed attachment size of [quant,_2,megabyte].',
-						$filename, $ce->{mail}{maxAttachmentSize}
-					)
-				);
-				return '';
+
+				$r->stash->{send_error} =
+					$r->maketext('The attached file "[_1]" exceeds the allowed attachment size of [quant,_2,megabyte].',
+						$filename, $ce->{mail}{maxAttachmentSize});
+				return;
 			}
 
 			# Attach the file.
 			$email->attach($contents, filename => $filename);
 		}
 
-	# $ce->{mail}{set_return_path} is the address used to report returned email if defined and non empty.
-	# It is an argument used in sendmail() (aka Email::Stuffer::send_or_die).
-	# For arcane historical reasons sendmail actually sets the field "MAIL FROM" and the smtp server then
-	# uses that to set "Return-Path".
-	# references:
-	#  https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
-	#  https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
+		# $ce->{mail}{set_return_path} is the address used to report returned email if defined and non empty.
+		# It is an argument used in sendmail (via Email::Stuffer::send_or_die).
+		# For arcane historical reasons sendmail actually sets the field "MAIL FROM" and the smtp server then
+		# uses that to set "Return-Path".
+		# references:
+		#  https://stackoverflow.com/questions/1235534/
+		#      what-is-the-behavior-difference-between-return-path-reply-to-and-from
+		#  https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
 		try {
 			$email->send_or_die({
 				# createEmailSenderTransportSMTP is defined in ContentGenerator
 				transport => $self->createEmailSenderTransportSMTP(),
 				$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
 			});
-			print CGI::p($r->maketext('Your message was sent successfully.'));
-			print CGI::p(CGI::a({ -href => $returnURL }, $r->maketext('Return to your work')));
-			print CGI::pre(wrap('', '', $feedback));
 		} catch {
-			$self->feedbackForm($user, $returnURL, "Failed to send message: $_");
+			$r->stash->{send_error} = $r->maketext('Failed to send message: [_1]', $_);
 		};
-	} else {
-		# just print the feedback form, with no message
-		$self->feedbackForm($user, $returnURL, '');
 	}
 
-	return '';
-}
-
-sub feedbackNotAllowed {
-	my ($self, $returnURL) = @_;
-
-	print CGI::p("You are not allowed to send e-mail.");
-	print CGI::p(CGI::a({ -href => $returnURL }, "Cancel E-Mail")) if $returnURL;
-}
-
-sub noRecipientsAvailable {
-	my ($self, $returnURL) = @_;
-
-	print CGI::p("No e-mail recipients are listed for this course.");
-	print CGI::p(CGI::a({ -href => $returnURL }, "Cancel E-Mail")) if $returnURL;
+	return;
 }
 
 sub title {
-	my ($self, $user, $returnURL, $message) = @_;
+	my ($self) = @_;
 	my $r = $self->r;
-	return $r->maketext("E-mail Instructor");
-}
-
-sub feedbackForm {
-	my ($self, $user, $returnURL, $message) = @_;
-	my $r = $self->r;
-
-	print CGI::start_form(-method => 'POST', -action => $r->uri);
-	print $self->hidden_authen_fields;
-	print $self->hidden_fields(qw(
-		module set problem displayMode showOldAnswers showCorrectAnswers
-		showHints showSolutions
-	));
-
-	print CGI::div(
-		{ class => 'mb-3' },
-		$r->maketext(
-			'Use this form to ask your instructor a question, to report a problem with the WeBWorK system, or '
-				. 'to report an error in a problem you are attempting. Along with your message, additional '
-				. 'information about the state of the system will be included.'
-		)
-	);
-
-	print CGI::div(
-		{ class => 'row mb-3' },
-		CGI::label({ for => 'from', class => 'col-form-label col-auto' }, CGI::b($r->maketext('From:'))),
-		CGI::div(
-			{ class => 'col-auto' },
-			CGI::textfield({
-				class => 'form-control',
-				size  => 40,
-				name  => 'from',
-				id    => 'from',
-				$user && $user->email_address
-				? (disabled => undef, readonly => undef, value => $user->email_address)
-				: (required => undef, value => $r->param('from') // '')
-			})
-		)
-	);
-	print CGI::div({ class => 'alert alert-danger mb-3' }, $message) if $message;
-	print CGI::div(
-		{ class => 'mb-3' },
-		CGI::label({ for => 'feedback', class => 'form-label' }, CGI::b($r->maketext('E-mail:'))),
-		CGI::textarea({
-			name        => 'feedback',
-			id          => 'feedback',
-			rows        => '20',
-			class       => 'form-control',
-			placeholder => $r->maketext('Compose Email Message'),
-			value       => $r->param('feedback') // '',
-			required    => undef
-		}),
-	);
-
-	# Attachment
-	print CGI::div(
-		{ class => 'row mb-3' },
-		CGI::label(
-			{ for => 'attachment', class => 'col-form-label col-auto' }, CGI::b($r->maketext('Attachment:'))
-		),
-		CGI::div(
-			{ class => 'col-auto' },
-			CGI::filefield({
-				name   => 'attachment',
-				id     => 'attachment',
-				class  => 'form-control',
-				accept => 'image/*,application/pdf,application/zip,text/plain,text/csv'
-			})
-		)
-	);
-
-	print CGI::submit(
-		{ name => 'sendFeedback', value => $r->maketext('Send E-mail'), class => 'btn btn-primary mb-1' });
-	print CGI::end_form();
-	print CGI::div(CGI::a({ href => $returnURL, class => 'btn btn-primary mt-2' }, $r->maketext('Cancel E-mail')))
-		if $returnURL;
+	return $r->ce->{feedback_button_name} || $r->maketext('E-mail Instructor');
 }
 
 sub getFeedbackRecipients {

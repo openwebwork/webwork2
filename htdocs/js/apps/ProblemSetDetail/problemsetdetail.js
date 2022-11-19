@@ -402,7 +402,7 @@
 			if (iframe && iframe.iFrameResizer) {
 				iframe.iFrameResizer.close();
 				renderArea.innerHTML = '';
-			} else if (renderArea.innerHTML != '') {
+			} else if (/\S/.test(renderArea.innerHTML)) {
 				renderArea.innerHTML = '';
 			} else {
 				collapsibles[id]?.show();
@@ -460,5 +460,26 @@
 		const overrideCheck = document.getElementById(select.dataset.override);
 		if (!overrideCheck) return;
 		select.addEventListener('change', () => overrideCheck.checked = select.value != '');
+	});
+
+	// This changes the set header textbox text to the currently selected option in the select menu.
+	document.querySelectorAll('.combo-box').forEach((comboBox) => {
+		const comboBoxText = comboBox.querySelector('.combo-box-text');
+		const comboBoxSelect = comboBox.querySelector('.combo-box-select');
+
+		if (!comboBoxText || !comboBoxSelect) return;
+
+		// Try to select best option in select menu as user types in the textbox.
+		comboBoxText.addEventListener('keyup', () => {
+			let i = 0;
+			for (;
+				i < comboBoxSelect.options.length && comboBoxSelect.options[i].value.indexOf(comboBoxText.value) != 0;
+				++i) {}
+			comboBoxSelect.selectedIndex = i;
+		});
+
+		// Set the textbox text to be same as that of select menu
+		comboBoxSelect.addEventListener('change',
+			() => comboBoxText.value = comboBoxSelect.options[comboBoxSelect.selectedIndex].value);
 	});
 })();

@@ -1,0 +1,12 @@
+<tr>
+	<td></td>
+	<td><%= label_for "problem.$problemID.attempts.id" => maketext('Attempts') =%></td>
+	<td></td>
+	<td>
+		<%= text_field "problem.$problemID.attempts",
+			($problemRecord->num_correct || 0) + ($problemRecord->num_incorrect || 0),
+			id => "problem.$problemID.attempts.id", class => 'form-control form-control-sm',
+			readonly => undef, size => 5 =%>
+	</td>
+	<td></td>
+</tr>

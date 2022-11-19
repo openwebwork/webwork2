@@ -28,7 +28,6 @@ use warnings;
 use Carp;
 use WeBWorK::Debug;
 use DBI;
-use WeBWorK::CGI;
 use WeBWorK::Utils qw(formatDateTime);
 use WeBWorK::Localize;
 use WeBWorK::ContentGenerator::Instructor;
@@ -867,4 +866,3 @@ sub maybe_purge_nonces {
 }
 
 1;
-

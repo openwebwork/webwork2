@@ -25,7 +25,7 @@
 
 # SKEL: Declare the name and superclass of your module here:
 package WeBWorK::ContentGenerator::Skeleton;
-use base qw(WeBWorK::ContentGenerator);
+use parent qw(WeBWorK::ContentGenerator);
 
 # SKEL: change the name of the module below and provide a short description. Add
 # additional POD documentation as you see fit.
@@ -33,7 +33,9 @@ use base qw(WeBWorK::ContentGenerator);
 =head1 NAME
 
 WeBWorK::ContentGenerator::Skeleton - Template for creating subclasses of
-WeBWorK::ContentGenerator.
+WeBWorK::ContentGenerator.  Note that in addition to creating your module
+from this template, you must create a Mojolicious template that generates
+the main body of the page.
 
 =cut
 
@@ -44,9 +46,6 @@ use warnings;
 # need to add a "use" line here if you will be instantiating now objects or
 # calling free functions. If you have an existing instance (like $self->r) you
 # can use it without a corresponding "use" line. Sample lines are given below:
-#
-# You'll probably want to generate HTML code:
-#use CGI qw(-nosticky );
 #
 # You might need some utility functions:
 #use WeBWorK::Utils qw(function1 function2);
@@ -61,17 +60,14 @@ use warnings;
 #	# the self hash for later retrieveal.
 #}
 
-# SKEL: To emit your own HTTP header, uncomment this:
+# SKEL: This method is not actually of any use anymore.
 #
 #sub header {
 #	my ($self) = @_;
 #
-#	# Generate your HTTP header here.
-#
-#	# If you return something, it will be used as the HTTP status code for this
-#	# request. The Apache::Constants module might be useful for gerating status
-#	# codes. If you don't return anything, the status code "OK" will be used.
-#	return "";
+#	# The return value of this method is not used.
+#	# The practice is to return the status code of the response.
+#	return 0;
 #}
 
 # SKEL: If you need to do any processing after the HTTP header is sent, but before
@@ -85,14 +81,18 @@ use warnings;
 #	# the self hash for later retrieveal.
 #}
 
+# Note that all of the template methods below except head should ensure that the
+# return value is a Mojo::ByteStream object if the return value contains HTML.
+
 # SKEL: If you need to add tags to the document <HEAD>, uncomment this method:
 #
 #sub head {
 #	my ($self) = @_;
 #
-#	# You can print head tags here, like <META>, <SCRIPT>, etc.
+#	my $output = '';
+#	# You can append head tags to $output, like <META>, <SCRIPT>, etc.
 #
-#	return "";
+#	return $output;
 #}
 
 # SKEL: To fill in the "info" box (to the right of the main body), use this
@@ -101,9 +101,10 @@ use warnings;
 #sub info {
 #	my ($self) = @_;
 #
-#	# Print HTML here.
+#	my $output = '';
+#	# Append HTML to $output.
 #
-#	return "";
+#	return $output;
 #}
 
 # SKEL: To provide navigation links, use this method:
@@ -111,10 +112,12 @@ use warnings;
 #sub nav {
 #	my ($self, $args) = @_;
 #
+#	my $output = '';
+#
 #	# See the documentation of path() and pathMacro() in
 #	# WeBWorK::ContentGenerator for more information.
 #
-#	return "";
+#	return $output;
 #}
 
 # SKEL: For a little box for display options, etc., use this method:
@@ -122,9 +125,10 @@ use warnings;
 #sub options {
 #	my ($self) = @_;
 #
-#	# Print HTML here.
+#	my $output = '';
+#	# Append HTML to $output.
 #
-#	return "";
+#	return $output;
 #}
 
 # SKEL: For a list of sibling objects, use this method:
@@ -132,42 +136,14 @@ use warnings;
 #sub siblings {
 #	my ($self, $args) = @_;
 #
+#	my $output = '';
+#
 #	# See the documentation of siblings() and siblingsMacro() in
 #	# WeBWorK::ContentGenerator for more information.
 #	#
 #	# Refer to implementations in ProblemSet and Problem.
 #
-#	return "";
+#	return $output;
 #}
-
-# SKEL: Okay, here's the body. Most of your stuff will go here:
-#
-sub body {
-	my ($self) = @_;
-
-	# SKEL: Useful things from the superclass:
-	#
-	# The WeBWorK::Request object. Good for accessing request params and so on.
-	#my $r = $self->r;
-	#
-	# Do you need data from the course environment?
-	#my $ce = $r->ce;
-	#
-	# Will you be accessing the database?
-	#my $db = $r->db;
-	#
-	# Query authorization:
-	#my $authz = $r->authz;
-	#
-	# The WeBWorK::URLPath object. Necessary for getting/generating URL data:
-	#my $urlpath = $r->urlpath;
-
-	# FIXME: Add more examples of common idioms, mention WeBWorK::HTML::*
-	# classes, refer to superclass methods.
-
-	# SKEL: Print your content here!
-
-	return "";
-}
 
 1;

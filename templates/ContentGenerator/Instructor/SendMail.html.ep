@@ -1,0 +1,31 @@
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to access instructor tools') %></div>
+	% last;
+% }
+%
+% unless ($authz->hasPermissions(param('user'), 'send_mail')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to send mail to students') %></div>
+	% last;
+% }
+%
+% my $response = $cg->{response} // '';
+%
+% if ($response eq 'preview') {
+	<%= $cg->print_preview($urlpath->arg('setID')) =%>
+% } else {
+	% if ($response eq 'send_email' && $cg->{ra_send_to} && @{ $cg->{ra_send_to} }) {
+		% my $message = begin
+			<i>
+				<%= maketext(
+					'Email is being sent to [quant,_1,recipient]. You will be notified by email '
+						. 'when the task is completed.  This may take several minutes if the class is large.',
+					scalar(@{ $cg->{ra_send_to} })
+				) =%>
+			</i>
+		% end
+		% $cg->addgoodmessage($message->());
+		% $cg->{message} = $message->();
+	% }
+	%
+	<%= include('ContentGenerator/Instructor/SendMail/main_form') =%>
+% }

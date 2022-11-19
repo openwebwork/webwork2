@@ -1,7 +1,7 @@
 (() => {
 	const form = document.forms['instructor-tools-form'];
 
-	form.addEventListener('submit', (e) => {
+	form?.addEventListener('submit', (e) => {
 		const selectedUsers = Array.from(document.querySelector('select[name=selected_users]')?.options ?? [])
 			.filter((option) => option.selected);
 		const selectedSets = Array.from(document.querySelector('select[name=selected_sets]')?.options ?? [])
@@ -25,7 +25,7 @@
 		}
 
 		if (messages.length) {
-			const msgBoxes = document.querySelectorAll('.Message');
+			const msgBoxes = document.querySelectorAll('.message');
 			msgBoxes.forEach((msgBox) => {
 				while (msgBox.firstChild) msgBox.firstChild.remove();
 				const container = document.createElement('div');

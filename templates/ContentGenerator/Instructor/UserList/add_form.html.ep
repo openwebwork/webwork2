@@ -1,0 +1,9 @@
+<div class="row mb-2">
+	<%= label_for 'add_entry', class => 'col-form-label col-form-label-sm col-auto', begin =%>
+		<%= maketext('Add how many users?') %><span class="required-field">*</span>
+	<% end =%>
+	<div class="col-auto">
+		<%= text_field number_of_students => 1, id => 'add_entry', size => 3, 'aria-required' => 'true',
+			class => 'form-control form-control-sm' =%>
+	</div>
+</div>

@@ -1,0 +1,55 @@
+% use WeBWorK::Utils::ListingDB qw(getAllDBsubjects getAllDBchapters getAllDBsections countDBListings);
+%
+<div>
+	<%= hidden_field library_is_basic => 1 =%>
+	<div class="row mb-2">
+		<div class="col-md-6 col-sm-8 offset-md-3">
+			<div class="row mb-1">
+				<%= label_for library_subjects => maketext('Subject:'),
+					class => 'col-2 col-form-label col-form-label-sm' =%>
+				<div class="col-10">
+					<%= select_field library_subjects => [
+							[ maketext('All Subjects') => '', selected => undef ],
+							getAllDBsubjects($c)
+						],
+						id => 'library_subjects', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
+			<div class="row mb-1">
+				<%= label_for library_chapters => maketext('Chapter:'),
+					class => 'col-2 col-form-label col-form-label-sm' =%>
+				<div class="col-10">
+					<%= select_field library_chapters => [
+							[ maketext('All Chapters') => '', selected => undef ],
+							getAllDBchapters($c)
+						],
+						id => 'library_chapters', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
+			<div class="row mb-1">
+				<%= label_for library_sections => maketext('Section:'),
+					class => 'col-2 col-form-label col-form-label-sm' =%>
+				<div class="col-10">
+					<%= select_field library_sections => [
+							[ maketext('All Sections') => '', selected => undef ],
+							getAllDBsections($c)
+						],
+						id => 'library_sections', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-3 col-sm-4 mb-1 d-flex flex-sm-column justify-content-sm-start justify-content-center">
+			<%= submit_button maketext('Advanced Search'), name => 'library_advanced',
+				class => 'btn btn-secondary btn-sm library-panel-btn' =%>
+		</div>
+	</div>
+	<%= include 'ContentGenerator/Instructor/SetMaker/view_problems_line', internal_name => 'lib_view' =%>
+	<div class="text-center" id="library_count_line">
+		<label class="col-form-label-sm">
+			% my $listingsCount = countDBListings($c);
+			<%= $listingsCount == 0
+				? maketext('There are no matching WeBWorK problems')
+				: maketext('There are [_1] matching WeBWorK problems', $listingsCount) =%>
+		</label>
+	</div>
+</div>

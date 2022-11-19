@@ -21,7 +21,7 @@ Mojolicious::WeBWorK - Mojolicious app for WeBWorK 2.
 
 =cut
 
-use Mojo::Base 'Mojolicious', -signatures, -async_await;
+use Mojo::Base 'Mojolicious', -signatures;
 use Env qw(WEBWORK_SERVER_ADMIN);
 
 use WeBWorK;
@@ -61,6 +61,14 @@ sub startup ($app) {
 			"webwork_server_admin_email for reporting bugs has been set to $WEBWORK_SERVER_ADMIN in site.conf");
 	}
 
+	# Make the htdocs directory the first place to search for static files.  At this point this is only used by the
+	# exception templates, but it could be used to improve the getAssetURL method together with the Mojolicious
+	# url_for_asset controller method.
+	unshift(@{ $app->static->paths }, $webwork_htdocs_dir);
+
+	# Add the themes directory to the template search paths.
+	push(@{ $app->renderer->paths }, $ce->{webworkDirs}{themes});
+
 	# Helpers
 
 	# This replaces the previous Apache2::RequestUtil method that was overriden in the WeBWorK::Request module to return
@@ -69,6 +77,14 @@ sub startup ($app) {
 
 	$app->helper(server_root_url => sub ($) { return $server_root_url; });
 	$app->helper(webwork_url     => sub ($) { return $webwork_url; });
+
+	$app->helper(
+		maketext => sub ($c, @args) {
+			return $c->language_handle->(@args);
+			# Comment out the above line and uncomment below to check that your strings are run through maketext.
+			#return 'xXx' . $c->language_handle->(@args) . 'xXx';
+		}
+	);
 
 	# Add a hook to add extra headers if set in the config file.
 	if (ref $config->{extra_headers} eq 'HASH') {

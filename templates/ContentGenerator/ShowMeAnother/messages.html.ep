@@ -1,0 +1,38 @@
+% use WeBWorK::Utils qw(before after);
+%
+% if ($cg->{pg}{result}{msg}) {
+	<p><b><%= maketext('Note') %>:</b> <i><%= $cg->{pg}{result}{msg} %></i></p>
+% }
+%
+% if ($cg->{pg}{flags}{hintExists}
+	% && $authz->hasPermissions($cg->{userName}, 'always_show_hint')
+	% && !$cg->{options}{showHints}) {
+	% my $showHintsAfter =
+		% $cg->{set}->hide_hint                 ? -1
+		% : $cg->{problem}->showHintsAfter > -2 ? $cg->{problem}->showHintsAfter
+		% :                                       $ce->{pg}{options}{showHintsAfter};
+	<p>
+		<b><%= maketext('Note') %>:</b>
+		<i>
+			<%= maketext(
+				$showHintsAfter == -1
+				? 'The hint shown is an instructor preview and will not be shown to students.'
+				: 'The hint shown is an instructor preview and will be shown to students after '
+					. "$showHintsAfter attempts on the original problem."
+			) =%>
+		</i>
+	</p>
+% }
+%
+% if ($cg->{pg}{flags}{solutionExists}
+	% && $authz->hasPermissions($cg->{userName}, 'always_show_solution')
+	% && !$cg->{options}{showSolutions}) {
+	<p>
+		<b><%= maketext('Note') %>:</b>
+		<i>
+			<%= maketext('The solution shown is an instructor preview and '
+				. 'will only be shown to students after the due date.'
+			) =%>
+		</i>
+	</p>
+% }

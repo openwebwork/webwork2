@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::Utils::Rendering;
-use base qw(Exporter);
+use parent qw(Exporter);
 
 =head1 NAME
 

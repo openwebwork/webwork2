@@ -37,7 +37,6 @@ use warnings;
 
 use Time::HiRes qw/time/;
 use HTML::Entities qw/encode_entities/;
-
 use Future::AsyncAwait;
 
 use WeBWorK::Localize;
@@ -53,7 +52,6 @@ use WeBWorK::Debug;
 use WeBWorK::Request;
 use WeBWorK::Upload;
 use WeBWorK::URLPath;
-use WeBWorK::CGI;
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 
 use constant LOGIN_MODULE         => "WeBWorK::ContentGenerator::Login";
@@ -76,8 +74,8 @@ BEGIN {
 our %SeedCE;
 
 async sub dispatch {
-	my $controller = shift;
-	my $r          = WeBWorK::Request->new($controller);
+	my $r = shift;
+
 	$r->submitTime(time);    # this is Time::HiRes's time, which gives floating point values
 
 	my $method    = $r->req->method;
@@ -258,55 +256,58 @@ async sub dispatch {
 		debug("(here's the DB handle: $db)\n");
 		$r->db($db);
 
-		my $authenOK = $authen->verify;
-		if ($authenOK) {
-			my $userID = $r->param("user");
-			debug("Hi, $userID, glad you made it.\n");
+		# Don't check authentication if the user is logging out.
+		if ($displayModule ne 'WeBWorK::ContentGenerator::Logout') {
+			my $authenOK = $authen->verify;
+			if ($authenOK) {
+				my $userID = $r->param("user");
+				debug("Hi, $userID, glad you made it.\n");
 
-			# tell authorizer to cache this user's permission level
-			$authz->setCachedUser($userID);
+				# tell authorizer to cache this user's permission level
+				$authz->setCachedUser($userID);
 
-			debug("Now we deal with the effective user:\n");
-			my $eUserID = $r->param("effectiveUser") || $userID;
-			debug("userID=$userID eUserID=$eUserID\n");
-			if ($userID ne $eUserID) {
-				debug("userID and eUserID differ... seeing if userID has 'become_student' permission.\n");
-				my $su_authorized = $authz->hasPermissions($userID, "become_student");
-				if ($su_authorized) {
-					debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
-				} else {
-					debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
-					die "You do not have permission to act as another user.
+				debug("Now we deal with the effective user:\n");
+				my $eUserID = $r->param("effectiveUser") || $userID;
+				debug("userID=$userID eUserID=$eUserID\n");
+				if ($userID ne $eUserID) {
+					debug("userID and eUserID differ... seeing if userID has 'become_student' permission.\n");
+					my $su_authorized = $authz->hasPermissions($userID, "become_student");
+					if ($su_authorized) {
+						debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
+					} else {
+						debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
+						die "You do not have permission to act as another user.
 					Close down your browser (this clears temporary cookies),
 					restart and try again.\n";
+					}
 				}
-			}
 
-			# set effectiveUser in case it was changed or not set to begin with
-			$r->param("effectiveUser" => $eUserID);
+				# set effectiveUser in case it was changed or not set to begin with
+				$r->param("effectiveUser" => $eUserID);
 
-			# if we're doing a proctored test, after the user has been authenticated
-			# we need to also check on the proctor.  note that in the gateway quiz
-			# module we double check this, to be sure that someone isn't taking a
-			# proctored quiz but calling the unproctored ContentGenerator
-			my $urlProducedPath = $urlPath->path();
-			if ($urlProducedPath =~ /proctored_test_mode/i) {
-				my $proctor_authen_module = WeBWorK::Authen::class($ce, "proctor_module");
-				runtime_use $proctor_authen_module;
-				my $authenProctor = $proctor_authen_module->new($r);
-				debug("Using proctor_authen_module $proctor_authen_module: $authenProctor\n");
-				my $procAuthOK = $authenProctor->verify();
+				# if we're doing a proctored test, after the user has been authenticated
+				# we need to also check on the proctor.  note that in the gateway quiz
+				# module we double check this, to be sure that someone isn't taking a
+				# proctored quiz but calling the unproctored ContentGenerator
+				my $urlProducedPath = $urlPath->path();
+				if ($urlProducedPath =~ /proctored_test_mode/i) {
+					my $proctor_authen_module = WeBWorK::Authen::class($ce, "proctor_module");
+					runtime_use $proctor_authen_module;
+					my $authenProctor = $proctor_authen_module->new($r);
+					debug("Using proctor_authen_module $proctor_authen_module: $authenProctor\n");
+					my $procAuthOK = $authenProctor->verify();
 
-				if (not $procAuthOK) {
-					$displayModule = PROCTOR_LOGIN_MODULE;
+					if (not $procAuthOK) {
+						$displayModule = PROCTOR_LOGIN_MODULE;
+					}
 				}
+			} else {
+				debug("Bad news: authentication failed!\n");
+				# For a remote procedure call continue on to the original display module.
+				# It will give the authentication failure response.
+				$displayModule = LOGIN_MODULE if !$r->{rpc};
+				debug("set displayModule to $displayModule\n");
 			}
-		} else {
-			debug("Bad news: authentication failed!\n");
-			# For a remote procedure call continue on to the original display module.
-			# It will give the authentication failure response.
-			$displayModule = LOGIN_MODULE if !$r->{rpc};
-			debug("set displayModule to $displayModule\n");
 		}
 	}
 

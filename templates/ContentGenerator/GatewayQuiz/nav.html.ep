@@ -1,0 +1,134 @@
+% # Cap the number of tests shown to at most 200.
+% my $numAfter     = $#$userRecords - $currentTestIndex;
+% my $numBefore    = 200 - ($numAfter < 100 ? $numAfter : 100);
+% my $minTestIndex = $currentTestIndex < $numBefore      ? 0                   : $currentTestIndex - $numBefore;
+% my $maxTestIndex = $minTestIndex + 200 < $#$userRecords ? $minTestIndex + 200 : $#$userRecords;
+%
+<div class="row sticky-nav" role="navigation" aria-label="user navigation">
+	<div class="user-nav">
+		<div class="btn-group" role="group" aria-label="student selector">
+			% if ($prevTest) {
+				<%= link_to sprintf(
+						$cg->systemLink(
+							$setPage,
+							params => {
+								effectiveUser     => $prevTest->user_id,
+								currentPage       => $pageNumber,
+								showProblemGrader => $cg->{will}{showProblemGrader},
+								$filter ? (studentNavFilter => $filter) : ()
+							}
+						),
+						$prevTest->{setVersion}
+					),
+					data  => { bs_toggle => 'tooltip', bs_placement => 'top' },
+					title => "$prevTest->{displayName} (version $prevTest->{setVersion})",
+					class => 'btn btn-primary student-nav-button',
+					begin =%>
+					<i class="fas fa-chevron-left"></i>
+				<% end =%>
+			% } else {
+				<span class="btn btn-primary disabled"><i class="fas fa-chevron-left"></i></span>
+			% }
+			<div class="btn-group student-nav-selector">
+				<%= link_to $userRecords->[$currentTestIndex]{displayName}
+						. " (version $userRecords->[$currentTestIndex]{setVersion})" => '#',
+					id              => 'studentSelector',
+					class           => 'btn btn-primary dropdown-toggle',
+					role            => 'button',
+					data            => { bs_toggle => 'dropdown' },
+					'aria-expanded' => 'false' =%>
+				<ul class="dropdown-menu" role ="menu" aria-labelledby="studentSelector">
+					% for (@$userRecords[ $minTestIndex .. $maxTestIndex ]) {
+						<li>
+							<%= link_to "$_->{displayName} (version $_->{setVersion})" => sprintf(
+									$cg->systemLink(
+										$setPage,
+										params => {
+											effectiveUser     => $_->user_id,
+											currentPage       => $pageNumber,
+											showProblemGrader => $cg->{will}{showProblemGrader},
+											$filter ? (studentNavFilter => $filter) : ()
+										}
+									),
+									$_->{setVersion}
+								),
+								tabindex => '-1',
+								style    => $_->{currentTest} ? 'background-color: #8F8' : '',
+								class    => 'dropdown-item' =%>
+						</li>
+					% }
+				</ul>
+			</div>
+			% if ($nextTest) {
+				<%= link_to sprintf(
+						$cg->systemLink(
+							$setPage,
+							params => {
+								effectiveUser     => $nextTest->user_id,
+								currentPage       => $pageNumber,
+								showProblemGrader => $cg->{will}{showProblemGrader},
+								$filter ? (studentNavFilter => $filter) : ()
+							}
+						),
+						$nextTest->{setVersion}
+					),
+					data  => { bs_toggle    => 'tooltip', bs_placement => 'top' },
+					title => "$nextTest->{displayName} (version $nextTest->{setVersion})",
+					class => 'btn btn-primary student-nav-button',
+					begin =%>
+					<i class="fas fa-chevron-right"></i>
+				<% end =%>
+			% } else {
+				<span class="btn btn-primary disabled"><i class="fas fa-chevron-right"></i></span>
+			% }
+		</div>
+		% # Create a section/recitation filter by dropdown if there are sections or recitaitons.
+		% if (scalar keys %$filters) {
+			<div class="btn-group student-nav-filter-selector">
+				<%= link_to $filter ? $filters->{$filter}[0] : maketext('Showing all tests') => '#',
+						id              => 'testSelectorFilter',
+						class           => 'btn btn-primary dropdown-toggle dropdown-toggle-split',
+						role            => 'button',
+						data            => { bs_toggle => 'dropdown' },
+						'aria-expanded' => 'false' =%>
+				<ul class="dropdown-menu" role="menu" aria-labelledby="testSelectorFilter">
+					% # If a filter is currently in use, then add an item that will remove that filter.
+					% if ($filter) {
+						<li>
+							<%= link_to maketext('Show all tests') => sprintf(
+									$cg->systemLink(
+										$setPage,
+										params => {
+											effectiveUser     => param('effectiveUser'),
+											currentPage       => $pageNumber,
+											showProblemGrader => $cg->{will}{showProblemGrader}
+										}
+									),
+									$setVersion
+								),
+								class => 'dropdown-item' =%>
+						</li>
+					% }
+					% for (sort keys %$filters) {
+						<li>
+							<%= link_to $filters->{$_}[0] => sprintf(
+									$cg->systemLink(
+										$setPage,
+										params => {
+											effectiveUser     => $filters->{$_}[1],
+											currentPage       => $pageNumber,
+											showProblemGrader => $cg->{will}{showProblemGrader},
+											studentNavFilter  => $_
+										}
+									),
+									$filters->{$_}[2]
+								),
+								class => 'dropdown-item',
+								style => ($filter || '') eq $_ ? 'background-color: #8F8' : '' =%>
+						</li>
+					% }
+				</ul>
+			</div>
+		% }
+	</div>
+</div>

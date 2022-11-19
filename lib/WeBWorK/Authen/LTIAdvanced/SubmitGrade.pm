@@ -25,10 +25,10 @@ WeBWorK::Authen::LTIAdvanced::SubmitGrade - pass back grades to an enabled LMS
 use strict;
 use warnings;
 use WeBWorK::Debug;
-use WeBWorK::CGI;
 use Carp;
 use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets wwRound);
 use Net::OAuth;
+use HTML::Entities;
 use HTTP::Request;
 use LWP::UserAgent;
 use UUID::Tiny ':std';
@@ -188,18 +188,15 @@ sub submit_set_grade {
 	return $self->submit_grade($userSet->lis_source_did, $score);
 }
 
-# error in reporting michael.gage@rochester.edu, Demo, Global $r object is not available. Set:
-# 	PerlOptions +GlobalRequest
-# in httpd.conf at /opt/rh/perl516/root/usr/local/share/perl5/CGI.pm line 346, <IN> line 76.
-# so we don't use CGI::escapeHTML in post processing mode but use this local version instead.
-
-sub local_escape_html {    # a local version of escapeHTML that works for post processing
-	my $self    = shift;    # a grading object
-	my @message = @_;
+# Escape HTML in messages when post processing is not being done.  When post processing is being done these messages are
+# sent to a log file, and so escaping HTML makes the messages even less readable.  Note that this should never be used
+# with the "debug" method as those messages always go into a log file.
+sub local_escape_html {
+	my ($self, @message) = @_;
 	if ($self->{post_processing_mode}) {
-		return join('', @message);    # this goes to log files in post processing to escapeHTML is not essential
+		return join('', @message);
 	} else {
-		return CGI::escapeHTML(@message);    #FIXME -- why won't this work in post_processing_mode (missing $r ??)
+		return HTML::Entities::encode_entities(join('', @message));
 	}
 }
 
@@ -408,7 +405,7 @@ EOS
 			debug(
 				"Unable to retrieve prior grade from LMS. Note that if your server time is not correct, this may fail for reasons which are less than obvious from the error messages. Error: "
 					. $response->message);
-			debug(CGI::escapeHTML($response->content));
+			debug($response->content);
 			return 0;
 		}
 	}
@@ -620,4 +617,3 @@ sub mass_update {
 }
 
 1;
-

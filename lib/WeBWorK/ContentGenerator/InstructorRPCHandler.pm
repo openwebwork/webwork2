@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::InstructorRPCHandler;
-use base qw(WeBWorK::ContentGenerator);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -75,27 +75,24 @@ async sub pre_header_initialize {
 	return;
 }
 
-async sub content {
+sub content {
 	my $self = shift;
 
 	# This endpoint always responds with a valid JSON response.
-	$self->r->res->headers->content_type('application/json; charset=utf-8');
 
-	if (ref($self->{output}) !~ /WebworkWebservice/) {
-		print JSON->new->utf8->encode({ error => $self->{output} });
-		return;
-	}
+	return $self->r->render(json => { error => $self->{output} }) if (ref($self->{output}) !~ /WebworkWebservice/);
 
 	my $rpc_service = $self->{output};
 	if ($rpc_service->error_string) {
-		print JSON->new->utf8->encode({ error => $rpc_service->error_string });
+		return $self->r->render(json => { error => $rpc_service->error_string });
 	} else {
-		print JSON->new->utf8->encode({
-			server_response => $rpc_service->return_object->{text},
-			result_data     => $rpc_service->return_object->{ra_out} // ''
-		});
+		return $self->r->render(
+			json => {
+				server_response => $rpc_service->return_object->{text},
+				result_data     => $rpc_service->return_object->{ra_out} // ''
+			}
+		);
 	}
-	return;
 }
 
 1;

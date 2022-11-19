@@ -1,0 +1,39 @@
+% use WeBWorK::Utils qw(wwRound);
+%
+<h2><%= $fullName %></h2>
+<div class="table-responsive">
+	<table class="grade-table table table-bordered table-sm font-xs" id="grades_table">
+		<tr>
+			<th rowspan="2" scope="col"><%= maketext('Set') %></th>
+			<th rowspan="2" scope="col"><%= maketext('Percent') %></th>
+			<th rowspan="2" scope="col"><%= maketext('Score') %></th>
+			<th rowspan="2" scope="col"><%= maketext('Out Of') %></th>
+			<th rowspan="2" scope="<%= $max_problems %>"><%= maketext('Problems') %></th>
+		</tr>
+		<tr>
+			% for (1 .. $max_problems) {
+				<th scope="col" class="problem-data"><%= $_ %></th>
+			% }
+		</tr>
+		%
+		<%= $rows =%>
+		%
+		% # Compute the percentage correct.
+		% my $totalRightPercent = 100 * wwRound(2, $courseTotal ? $courseTotalRight / $courseTotal : 0);
+		%
+		% if ($ce->{showCourseHomeworkTotals}) {
+			<tr class="grades-course-total">
+				<th scope="row"><%= maketext('Homework Totals') %></th>
+				<td>
+					<span class="<%=
+						$totalRightPercent == 0 ? 'unattempted' : $totalRightPercent == 100 ? 'correct' : '' %>">
+						<%= $totalRightPercent . '%' %>
+					</span>
+				</td>
+				<td><%= $courseTotalRight %></td>
+				<td><%= $courseTotal %></td>
+				<td colspan="<%= $max_problems %>">&nbsp;</td>
+			</tr>
+		% }
+	</table>
+</div>

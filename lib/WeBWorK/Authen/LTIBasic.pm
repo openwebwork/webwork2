@@ -28,7 +28,6 @@ use warnings;
 use Carp;
 use WeBWorK::Debug;
 use DBI;
-use WeBWorK::CGI;
 use WeBWorK::Utils qw(formatDateTime);
 use WeBWorK::Localize;
 use URI::Escape;
@@ -352,7 +351,7 @@ sub check_user {
 
 	if (!defined($user_id) or (defined $user_id and $user_id eq "")) {
 		$self->{log_error} .= "no user id specified";
-		my $LMS = ($ce->{LMS_url}) ? CGI::a({ href => $ce->{LMS_url} }, $ce->{LMS_name}) : $ce->{LMS_name};
+		my $LMS = $ce->{LMS_url} ? $r->link_to($ce->{LMS_name} => $ce->{LMS_url}) : $ce->{LMS_name};
 		$self->{error} = $r->maketext($GENERIC_MISSING_USER_ID_ERROR_MESSAGE, $LMS);
 		return 0;
 	}
@@ -477,7 +476,7 @@ sub authenticate {
 	#debug("Nonce = |" . $self-> {oauth_nonce} . "|");
 	my $nonce = WeBWorK::Authen::LTIBasic::Nonce->new($r, $self->{oauth_nonce}, $self->{oauth_timestamp});
 	if (!($nonce->ok)) {
-		my $LMS = ($ce->{LMS_url}) ? CGI::a({ href => $ce->{LMS_url} }, $ce->{LMS_name}) : $ce->{LMS_name};
+		my $LMS = $ce->{LMS_url} ? $r->link_to($ce->{LMS_name} => $ce->{LMS_url}) : $ce->{LMS_name};
 		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r););
 		$self->{error} .= $r->maketext(
 			$GENERIC_ERROR_MESSAGE
@@ -890,4 +889,3 @@ sub print_keys {
 }
 
 1;
-

@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::RenderViaRPC;
-use base qw(WeBWorK::ContentGenerator);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -36,7 +36,6 @@ use strict;
 use warnings;
 
 use Future::AsyncAwait;
-use JSON;
 
 use WebworkWebservice;
 
@@ -49,7 +48,7 @@ async sub pre_header_initialize {
 	unless ($r->authen->was_verified) {
 		$self->{output} =
 			$self->{wantsjson}
-			? JSON->new->utf8->encode({ error => 'render_rpc: authentication failed.' })
+			? { error => 'render_rpc: authentication failed.' }
 			: 'render_rpc: authentication failed.';
 		return;
 	}
@@ -60,34 +59,25 @@ async sub pre_header_initialize {
 	my $rpc_service = WebworkWebservice->new($r);
 	await $rpc_service->rpc_execute('renderProblem');
 	if ($rpc_service->error_string) {
-		$self->{output} =
-			$self->{wantsjson}
-			? JSON->new->utf8->encode({ error => $rpc_service->error_string })
-			: $rpc_service->error_string;
+		$self->{output} = $self->{wantsjson} ? { error => $rpc_service->error_string } : $rpc_service->error_string;
 		return;
 	}
 
-	# Format the return in the requested format.
+	# Format the return in the requested format.  A response is rendered unless there is an error.
 	$self->{output} = $rpc_service->formatRenderedProblem;
+
 	return;
 }
 
-# Override the default ContentGenerator header method.  It always returns 0 and sets the content type to text/html.
-# When hardcopy generation occurs, the result may have already been rendered.  Return the response code in that case.
-sub header {
-	my $self = shift;
-	return $self->r->res->code || 0;
-}
-
-async sub content {
+sub content {
 	my $self = shift;
 
-	# Hardcopy generation may have already rendered a response.  Stop here in that case.
+	# If there were no errors a response will have been rendered.  Return in that case.
 	return if $self->r->res->code;
 
-	$self->r->res->headers->content_type(($self->{wantsjson} ? 'application/json;' : 'text/html;') . ' charset=utf-8');
-	print $self->{output};
-	return 0;
+	# Handle rendering of errors.
+	return $self->r->render(json => $self->{output}) if $self->{wantsjson};
+	return $self->r->render(text => $self->{output});
 }
 
 1;

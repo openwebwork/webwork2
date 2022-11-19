@@ -14,8 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::ProblemSetList;
-use base qw(WeBWorK);
-use base qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
@@ -74,14 +73,15 @@ Delete sets:
 =cut
 
 # FIXME: rather than having two types of boolean modes $editMode and $exportMode
-#	make one $mode variable that contains a string like "edit", "view", or "export"
+# make one $mode variable that contains a string like "edit", "view", or "export"
 
 use strict;
 use warnings;
-#use CGI qw(-nosticky );
-use WeBWorK::CGI;
+
+use Mojo::File;
+
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive jitar_id_to_seq seq_to_jitar_id x getAssetURL
+use WeBWorK::Utils qw(timeToSec listFilesRecursive jitar_id_to_seq seq_to_jitar_id x
 	format_set_name_internal format_set_name_display);
 
 use constant HIDE_SETS_THRESHOLD                   => 500;
@@ -89,168 +89,55 @@ use constant DEFAULT_VISIBILITY_STATE              => 1;
 use constant DEFAULT_ENABLED_REDUCED_SCORING_STATE => 0;
 use constant ONE_WEEK                              => 60 * 60 * 24 * 7;
 
-use constant EDIT_FORMS   => [qw(saveEdit cancelEdit)];
+use constant EDIT_FORMS   => [qw(save_edit cancel_edit)];
 use constant VIEW_FORMS   => [qw(filter sort edit publish import export score create delete)];
-use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
+use constant EXPORT_FORMS => [qw(save_export cancel_export)];
 
 # Prepare the tab titles for translation by maketext
 use constant FORM_TITLES => {
-	saveEdit     => x("Save Edit"),
-	cancelEdit   => x("Cancel Edit"),
-	filter       => x("Filter"),
-	sort         => x("Sort"),
-	edit         => x("Edit"),
-	publish      => x("Publish"),
-	import       => x("Import"),
-	export       => x("Export"),
-	score        => x("Score"),
-	create       => x("Create"),
-	delete       => x("Delete"),
-	saveExport   => x("Save Export"),
-	cancelExport => x("Cancel Export")
+	save_edit     => x("Save Edit"),
+	cancel_edit   => x("Cancel Edit"),
+	filter        => x("Filter"),
+	sort          => x("Sort"),
+	edit          => x("Edit"),
+	publish       => x("Publish"),
+	import        => x("Import"),
+	export        => x("Export"),
+	score         => x("Score"),
+	create        => x("Create"),
+	delete        => x("Delete"),
+	save_export   => x("Save Export"),
+	cancel_export => x("Cancel Export")
 };
 
 use constant VIEW_FIELD_ORDER =>
-	[qw( set_id problems users visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date)];
+	[qw(set_id problems users visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date)];
 use constant EDIT_FIELD_ORDER =>
-	[qw( set_id visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date)];
-use constant EXPORT_FIELD_ORDER => [qw( select set_id problems users)];
+	[qw(set_id visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date)];
+use constant EXPORT_FIELD_ORDER => [qw(set_id problems users)];
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
-	saveEdit   => "modify_problem_sets",
-	edit       => "modify_problem_sets",
-	publish    => "modify_problem_sets",
-	import     => "create_and_delete_problem_sets",
-	export     => "modify_set_def_files",
-	saveExport => "modify_set_def_files",
-	score      => "score_sets",
-	create     => "create_and_delete_problem_sets",
-	delete     => "create_and_delete_problem_sets",
+	save_edit   => "modify_problem_sets",
+	edit        => "modify_problem_sets",
+	publish     => "modify_problem_sets",
+	import      => "create_and_delete_problem_sets",
+	export      => "modify_set_def_files",
+	save_export => "modify_set_def_files",
+	score       => "score_sets",
+	create      => "create_and_delete_problem_sets",
+	delete      => "create_and_delete_problem_sets",
 };
 
-# permissions needed to view a given field
-use constant FIELD_PERMS => {
-	problems => "modify_problem_sets",
-	users    => "assign_problem_sets",
-};
-
-use constant STATE_PARAMS => [
-	qw(user effectiveUser key visible_sets no_visible_sets prev_visible_sets no_prev_visible_set editMode exportMode primarySortField secondarySortField)
-];
-
-# note that field_properties for some fields, in particular, gateway
-# parameters, are not currently shown in the edit or display tables
-use constant FIELD_PROPERTIES => {
-	set_id => {
-		type   => "text",
-		size   => 8,
-		access => "readonly",
-	},
-	open_date => {
-		type   => "date",
-		size   => 22,
-		access => "readwrite",
-	},
-	reduced_scoring_date => {
-		type   => "date",
-		size   => 22,
-		access => "readwrite",
-	},
-	due_date => {
-		type   => "date",
-		size   => 22,
-		access => "readwrite",
-	},
-	answer_date => {
-		type   => "date",
-		size   => 22,
-		access => "readwrite",
-	},
-	visible => {
-		type   => "checked",
-		size   => 4,
-		access => "readwrite",
-	},
-	enable_reduced_scoring => {
-		type   => "checked",
-		size   => 4,
-		access => "readwrite",
-	},
-	assignment_type => {
-		type   => "text",
-		size   => 20,
-		access => "readwrite",
-	},
-	attempts_per_version => {
-		type   => "text",
-		size   => 4,
-		access => "readwrite",
-	},
-	time_interval => {
-		type   => "text",
-		size   => 10,
-		access => "readwrite",
-	},
-	versions_per_interval => {
-		type   => "text",
-		size   => 4,
-		access => "readwrite",
-	},
-	version_time_limit => {
-		type   => "text",
-		size   => 10,
-		access => "readwrite",
-	},
-	problem_randorder => {
-		type   => "text",
-		size   => 4,
-		access => "readwrite",
-	},
-	problems_per_page => {
-		type   => "text",
-		size   => 4,
-		access => "readwrite",
-	},
-	version_creation_time => {
-		type   => "text",
-		size   => 10,
-		access => "readonly",
-	},
-	version_last_attempt_time => {
-		type   => "text",
-		size   => 10,
-		access => "readonly",
-	},
-	# hide_score and hide_work should be drop down selects with
-	#    options 'N', 'Y' and 'BeforeAnswerDate'.  in that we don't
-	#    allow editing of these fields in this module, this is moot.
-	hide_score => {
-		type   => "text",
-		size   => 16,
-		access => "readwrite",
-	},
-	hide_work => {
-		type   => "text",
-		size   => 16,
-		access => "readwrite",
-	},
-	time_limit_cap => {
-		type   => "checked",
-		size   => 4,
-		access => "readwrite",
-	},
-	# this should be 'No', 'RestrictTo' or 'DenyFrom'
-	restrict_ip => {
-		type   => "text",
-		size   => 10,
-		access => "readwrite",
-	},
-	#	hide_hint => {
-	#		type => "checked",
-	#		size => 4,
-	#		access => "readwrite",
-	#	}
+# Note that these are the only fields that are ever shown on this page.
+# The set_id is handle separately, and so is not in this list.
+use constant FIELD_TYPES => {
+	open_date              => 'date',
+	reduced_scoring_date   => 'date',
+	due_date               => 'date',
+	answer_date            => 'date',
+	visible                => 'check',
+	enable_reduced_scoring => 'check'
 };
 
 async sub pre_header_initialize {
@@ -294,10 +181,11 @@ async sub pre_header_initialize {
 
 		$self->reply_with_redirect($uri);
 	}
+
+	return;
 }
 
 sub initialize {
-
 	my ($self)     = @_;
 	my $r          = $self->r;
 	my $urlpath    = $r->urlpath;
@@ -308,20 +196,23 @@ sub initialize {
 	my $setID      = $urlpath->arg("setID");
 	my $user       = $r->param('user');
 
+	# Make sure these are defined for the templats.
+	$r->stash->{fieldNames}  = VIEW_FIELD_ORDER();
+	$r->stash->{formsToShow} = VIEW_FORMS();
+	$r->stash->{formTitles}  = FORM_TITLES();
+	$r->stash->{formPerms}   = FORM_PERMS();
+	$r->stash->{fieldTypes}  = FIELD_TYPES();
+	$r->stash->{sets}        = [];
+
 	# Determine if the user has permisson to do anything here.
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 
 	# Determine if edit mode or export mode is request, and check permissions for these modes.
 	$self->{editMode} = $r->param("editMode") || 0;
-	return if $self->{editMode} and not $authz->hasPermissions($user, 'modify_problem_sets');
+	return if $self->{editMode} && !$authz->hasPermissions($user, 'modify_problem_sets');
 
 	$self->{exportMode} = $r->param("exportMode") || 0;
-	return if $self->{exportMode} and not $authz->hasPermissions($user, 'modify_set_def_files');
-
-	my $root = $ce->{webworkURLs}->{root};
-
-	# Templates for getting field names
-	my $setTemplate = $self->{setTemplate} = $db->newGlobalSet;
+	return if $self->{exportMode} && !$authz->hasPermissions($user, 'modify_set_def_files');
 
 	if (defined $r->param("visible_sets")) {
 		$self->{visibleSetIDs} = [ $r->param("visible_sets") ];
@@ -346,10 +237,7 @@ sub initialize {
 	$self->{primarySortField}   = $r->param("primarySortField")   || "due_date";
 	$self->{secondarySortField} = $r->param("secondarySortField") || "open_date";
 
-	#########################################
-	#  call action handler
-	#########################################
-
+	# Call action handler
 	my $actionID = $r->param("action");
 	$self->{actionID} = $actionID;
 	if ($actionID) {
@@ -359,359 +247,52 @@ sub initialize {
 		# Check permissions
 		if (not FORM_PERMS()->{$actionID} or $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
 			my $actionHandler = "${actionID}_handler";
-			my %genericParams;
-			foreach my $param (qw(selected_sets)) {
-				$genericParams{$param} = [ $r->param($param) ];
-			}
-			my %actionParams = $self->getActionParams($actionID);
-			my %tableParams  = $self->getTableParams();
-			$self->addmessage(CGI::div({ class => 'mb-1' }, $r->maketext("Results of last action performed") . ": "));
-			$self->addmessage($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams));
+			$self->addmessage($r->tag('p', class => 'mb-1', $r->maketext("Results of last action performed") . ": "));
+			$self->addmessage($self->$actionHandler);
 		} else {
-			return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-				CGI::p($r->maketext("You are not authorized to perform this action.")));
+			$self->addbadmessage($r->maketext('You are not authorized to perform this action.'));
 		}
 	} else {
 		$self->addgoodmessage($r->maketext("Please select action to be performed."));
 	}
-}
 
-sub body {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $db         = $r->db;
-	my $ce         = $r->ce;
-	my $authz      = $r->authz;
-	my $courseName = $urlpath->arg("courseID");
-	my $setID      = $urlpath->arg("setID");
-	my $user       = $r->param('user');
+	$r->stash->{fieldNames} =
+		$self->{editMode} ? EDIT_FIELD_ORDER() : $self->{exportMode} ? EXPORT_FIELD_ORDER() : VIEW_FIELD_ORDER();
+	if (!$r->ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
+		$r->stash->{fieldNames} =
+			[ grep { !/enable_reduced_scoring|reduced_scoring_date/ } @{ $r->stash->{fieldNames} } ];
+	}
 
-	my $root = $ce->{webworkURLs}->{root};
-
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		$r->maketext("You are not authorized to access the instructor tools."))
-		unless $authz->hasPermissions($user, "access_instructor_tools");
-
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		CGI::p($r->maketext("You are not authorized to modify homework sets.")))
-		if $self->{editMode} and not $authz->hasPermissions($user, "modify_problem_sets");
-
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		CGI::p($r->maketext("You are not authorized to modify set definition files.")))
-		if $self->{exportMode} and not $authz->hasPermissions($user, "modify_set_def_files");
-
-	# templates for getting field names
-	my $setTemplate = $self->{setTemplate} = $db->newGlobalSet;
-
-	# This table can be consulted when display-ready forms of field names are needed.
-	my %fieldHeaders;
-
-	@fieldHeaders{ qw(
-		problems
-		users
-		filename
-		set_id
-		open_date
-		reduced_scoring_date
-		due_date
-		answer_date
-		visible
-		enable_reduced_scoring
-		hide_hint
-	) } = (
-		CGI::th({ id => 'problems_header' }, $r->maketext("Edit Problems")),
-		CGI::th({ id => 'users_header' },    $r->maketext("Edit Assigned Users")),
-		CGI::th({ id => 'filename_header' }, $r->maketext("Set Definition Filename")),
-		CGI::th(CGI::label({ for => 'select-all' }, $r->maketext("Edit Set Data"))),
-		CGI::th({ id => 'open_date_header' },            $r->maketext("Open Date")),
-		CGI::th({ id => 'reduced_scoring_date_header' }, $r->maketext("Reduced Scoring Date")),
-		CGI::th({ id => 'due_date_header' },             $r->maketext("Close Date")),
-		CGI::th({ id => 'answer_date_header' },          $r->maketext("Answer Date")),
-		CGI::th({ id => 'visible_header' },              $r->maketext("Visible")),
-		CGI::th($r->maketext("Reduced Scoring")),
-		CGI::th({ id => 'hide_hint_header' }, $r->maketext("Hide Hints"))
-	);
-
-	my $actionID = $self->{actionID};
-
-	# Retrieve values for member fields
-	my $editMode           = $self->{editMode};
-	my $exportMode         = $self->{exportMode};
-	my $primarySortField   = $self->{primarySortField};
-	my $secondarySortField = $self->{secondarySortField};
-
+	$r->stash->{formsToShow} = $self->{editMode} ? EDIT_FORMS() : $self->{exportMode} ? EXPORT_FORMS() : VIEW_FORMS();
 	# Get requested sets in the requested order.
-	my @Sets =
+	$r->stash->{sets} = [
 		@{ $self->{visibleSetIDs} }
-		? $db->getGlobalSetsWhere({ set_id => $self->{visibleSetIDs} }, [ $primarySortField, $secondarySortField ])
-		: ();
+		? $db->getGlobalSetsWhere({ set_id => $self->{visibleSetIDs} },
+			[ $self->{primarySortField}, $self->{secondarySortField} ])
+		: ()
+	];
 
-	########## print site identifying information
-
-	print CGI::input({
-		type  => 'button',
-		id    => 'show_hide',
-		value => $r->maketext('Show/Hide Site Description'),
-		class => 'btn btn-info mb-2'
-	});
-	print CGI::p(
-		{ id => 'site_description', style => 'display:none' },
-		CGI::em($r->maketext(
-			'This is the homework sets editor page where you can view and edit the homework sets that exist in this '
-				. 'course and the problems that they contain. The top of the page contains forms which allow you to '
-				. 'filter which sets to display in the table, sort the sets in a chosen order, edit homework sets, '
-				. 'publish homework sets, import/export sets from/to an external file, score sets, or create/delete '
-				. 'sets.  To use, please select the action you would like to perform, enter in the relevant '
-				. 'information in the fields below, and hit the "Take Action!" button at the bottom of the form.  The '
-				. 'bottom of the page contains a table displaying the sets and several pieces of relevant information. '
-				. 'The Edit Set Data field in the table contains checkboxes for selection and a link to the set data '
-				. 'editing page.  The cells in the Edit Problems fields contain links which take you to a page where '
-				. 'you can edit the containing problems, and the cells in the edit assigned users field contains links '
-				. 'which take you to a page where you can edit what students the set is assigned to.'
-		))
-	);
-
-	########## print beginning of form
-
-	print CGI::start_form({
-		method => 'post',
-		action => $self->systemLink($urlpath, authen => 0),
-		id     => 'problemsetlist',
-		name   => 'problemsetlist',
-		class  => 'font-sm'
-	});
-	print $self->hidden_authen_fields();
-
-	########## print state data
-
-	print "\n<!-- state data here -->\n";
-
-	if (@{ $self->{visibleSetIDs} }) {
-		print CGI::hidden(-name => "visible_sets", -value => $self->{visibleSetIDs});
-	} else {
-		print CGI::hidden(-name => "no_visible_sets", -value => "1");
-	}
-
-	if (@{ $self->{prevVisibleSetIDs} }) {
-		print CGI::hidden(-name => "prev_visible_sets", -value => $self->{prevVisibleSetIDs});
-	} else {
-		print CGI::hidden(-name => "no_prev_visible_sets", -value => "1");
-	}
-
-	print CGI::hidden(-name => "editMode",   -value => $editMode);
-	print CGI::hidden(-name => "exportMode", -value => $exportMode);
-
-	print CGI::hidden(-name => "primarySortField",   -value => $primarySortField);
-	print CGI::hidden(-name => "secondarySortField", -value => $secondarySortField);
-
-	print "\n<!-- state data here -->\n";
-
-	########## print action forms
-
-	print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the set for ALL students.")))
-		if $editMode;
-
-	print CGI::p($r->maketext("Select an action to perform") . ":");
-
-	my @formsToShow;
-	if ($editMode) {
-		@formsToShow = @{ EDIT_FORMS() };
-	} elsif ($exportMode) {
-		@formsToShow = @{ EXPORT_FORMS() };
-	} else {
-		@formsToShow = @{ VIEW_FORMS() };
-	}
-	my %formTitles = %{ FORM_TITLES() };
-
-	my @tabArr;
-	my @contentArr;
-	my $default_choice;
-
-	for my $actionID (@formsToShow) {
-		# Check permissions
-		next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
-
-		my $actionForm = "${actionID}_form";
-
-		my $active = '';
-		$active = ' active', $default_choice = $actionID unless $default_choice;
-
-		push(
-			@tabArr,
-			CGI::li(
-				{ class => 'nav-item', role => 'presentation' },
-				CGI::a(
-					{
-						href           => "#$actionID",
-						class          => "nav-link action-link$active",
-						id             => "$actionID-tab",
-						data_action    => $actionID,
-						data_bs_toggle => 'tab',
-						data_bs_target => "#$actionID",
-						role           => 'tab',
-						aria_controls  => $actionID,
-						aria_selected  => $active ? 'true' : 'false'
-					},
-					$r->maketext($formTitles{$actionID})
-				)
-			)
-		);
-		push(
-			@contentArr,
-			CGI::div(
-				{
-					class           => 'tab-pane fade mb-2' . ($active ? " show$active" : ''),
-					id              => $actionID,
-					role            => 'tabpanel',
-					aria_labelledby => "$actionID-tab"
-				},
-				$self->$actionForm($self->getActionParams($actionID))
-			)
-		);
-	}
-
-	print CGI::hidden(-name => 'action', -id => 'current_action', -value => $default_choice);
-	print CGI::div(CGI::ul({ class => 'nav nav-tabs mb-2', role => 'tablist' }, @tabArr),
-		CGI::div({ class => 'tab-content' }, @contentArr));
-
-	print CGI::submit({
-		id    => 'take_action',
-		value => $r->maketext('Take Action!'),
-		class => 'btn btn-primary mb-3'
-	});
-
-	########## print table
-
-	########## first adjust heading if in editMode
-	$fieldHeaders{set_id} = CGI::th($r->maketext("Edit Set")) if $editMode;
-	$fieldHeaders{enable_reduced_scoring} =
-		CGI::th({ id => 'enable_reduced_scoring_header' }, $r->maketext('Enable Reduced Scoring'))
-		if $editMode;
-
-	print CGI::p($r->maketext(
-		"Showing [_1] out of [_2] sets.",
-		scalar @{ $self->{visibleSetIDs} },
-		scalar @{ $self->{allSetIDs} }
-	));
-
-	$self->printTableHTML(
-		\@Sets, \%fieldHeaders,
-		editMode       => $editMode,
-		exportMode     => $exportMode,
-		selectedSetIDs => $self->{selectedSetIDs},
-	);
-
-	########## print end of form
-
-	print CGI::end_form();
-
-	return "";
+	return;
 }
 
-################################################################################
-# extract particular params and put them in a hash (values are ARRAYREFs!)
-################################################################################
+# Action handlers
+# The forms for the actions are templates.
 
-sub getActionParams {
-	my ($self, $actionID) = @_;
-	my $r = $self->{r};
-
-	my %actionParams;
-	foreach my $param ($r->param) {
-		next unless $param =~ m/^action\.$actionID\./;
-		$actionParams{$param} = [ $r->param($param) ];
-	}
-	return %actionParams;
-}
-
-sub getTableParams {
-	my ($self) = @_;
-	my $r = $self->{r};
-
-	my %tableParams;
-	foreach my $param ($r->param) {
-		next unless $param =~ m/^(?:.*set)\./;
-		$tableParams{$param} = [ $r->param($param) ];
-	}
-	return %tableParams;
-}
-
-################################################################################
-# actions and action triggers
-################################################################################
-
-# filter, edit, cancelEdit, and saveEdit should stay with the display module and
-# not be real "actions". that way, all actions are shown in view mode and no
+# filter, edit, cancel_edit, and save_edit should stay with the display module and
+# not be real "actions". That way, all actions are shown in view mode and no
 # actions are shown in edit mode.
 
-sub filter_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-
-	return CGI::div(
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'filter_select', class => 'col-form-label col-form-label-sm col-sm-auto' },
-				$r->maketext('Show which sets?')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'filter_select',
-					name    => 'action.filter.scope',
-					values  => [qw(all none selected match_ids visible unvisible)],
-					default => $actionParams{'action.filter.scope'}[0] || 'match_ids',
-					class   => 'form-select form-select-sm',
-					labels  => {
-						all       => $r->maketext('all sets'),
-						none      => $r->maketext('no sets'),
-						selected  => $r->maketext('selected sets'),
-						visible   => $r->maketext('sets visible to students'),
-						unvisible => $r->maketext('sets hidden from students'),
-						match_ids => $r->maketext('enter matching set IDs below'),
-					}
-				})
-			)
-		),
-		CGI::div(
-			{ id => 'filter_elements', class => 'row mb-2' },
-			CGI::label(
-				{ for => 'filter_text', class => 'col-form-label col-form-label-sm col-sm-auto' },
-				$r->maketext('Match on what? (separate multiple IDs with commas)')
-					. CGI::span({ class => 'required-field' }, '*')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::textfield({
-					id            => 'filter_text',
-					name          => 'action.filter.set_ids',
-					value         => $actionParams{'action.filter.set_ids'}[0] // '',
-					aria_required => 'true',
-					class         => 'form-control form-control-sm',
-					dir           => 'ltr'
-				})
-			)
-		),
-		CGI::div(
-			{ id => 'filter_err_msg', class => 'alert alert-danger p-1 mb-2 d-inline-flex d-none' },
-			$r->maketext('Please enter in a value to match in the filter field.')
-		)
-	);
-}
-
-# this action handler modifies the "visibleSetIDs" field based on the contents
-# of the "action.filter.scope" parameter and the "selected_sets"
+# This action handler modifies the "visibleSetIDs" field based on the contents
+# of the "action.filter.scope" parameter and the "selected_sets".
 sub filter_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my ($self) = @_;
 
 	my $r  = $self->r;
 	my $db = $r->db;
 
 	my $result;
 
-	my $scope = $actionParams->{"action.filter.scope"}->[0];
+	my $scope = $r->param('action.filter.scope');
 
 	if ($scope eq "all") {
 		$result = $r->maketext("showing all sets");
@@ -721,13 +302,12 @@ sub filter_handler {
 		$self->{visibleSetIDs} = [];
 	} elsif ($scope eq "selected") {
 		$result = $r->maketext("showing selected sets");
-		$self->{visibleSetIDs} = $genericParams->{selected_sets};
+		$self->{visibleSetIDs} = [ $r->param('selected_sets') ];
 	} elsif ($scope eq "match_ids") {
 		$result = $r->maketext("showing matching sets");
-		my @searchTerms = map { format_set_name_internal($_) } split /\s*,\s*/,
-			$actionParams->{'action.filter.set_ids'}[0];
-		my $regexTerms = join('|', @searchTerms);
-		my @setIDs     = grep {/$regexTerms/i} @{ $self->{allSetIDs} };
+		my @searchTerms = map { format_set_name_internal($_) } split /\s*,\s*/, $r->param('action.filter.set_ids');
+		my $regexTerms  = join('|', @searchTerms);
+		my @setIDs      = grep {/$regexTerms/i} @{ $self->{allSetIDs} };
 		$self->{visibleSetIDs} = \@setIDs;
 	} elsif ($scope eq "visible") {
 		$result = $r->maketext("showing sets that are visible to students");
@@ -737,71 +317,15 @@ sub filter_handler {
 		$self->{visibleSetIDs} = [ map { $_->[0] } $db->listGlobalSetsWhere({ visible => 0 }) ];
 	}
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
-}
-
-sub sort_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-
-	return CGI::div(
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'sort_select_1', class => 'col-form-label col-form-label-sm', style => 'width:4.5rem' },
-				$r->maketext('Sort by') . ':'
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'sort_select_1',
-					name    => 'action.sort.primary',
-					values  => [qw(set_id open_date due_date answer_date visible)],
-					default => $actionParams{'action.sort.primary'}[0] || 'due_date',
-					class   => 'form-select form-select-sm',
-					labels  => {
-						set_id      => $r->maketext('Set Name'),
-						open_date   => $r->maketext('Open Date'),
-						due_date    => $r->maketext('Close Date'),
-						answer_date => $r->maketext('Answer Date'),
-						visible     => $r->maketext('Visibility'),
-					}
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'sort_select_2', class => 'col-form-label col-form-label-sm', style => 'width:4.5rem' },
-				$r->maketext('Then by') . ':'
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'sort_select_2',
-					name    => 'action.sort.secondary',
-					values  => [qw(set_id open_date due_date answer_date visible)],
-					default => $actionParams{'action.sort.secondary'}[0] || 'open_date',
-					class   => 'form-select form-select-sm',
-					labels  => {
-						set_id      => $r->maketext('Set Name'),
-						open_date   => $r->maketext('Open Date'),
-						due_date    => $r->maketext('Close Date'),
-						answer_date => $r->maketext('Answer Date'),
-						visible     => $r->maketext('Visibility'),
-					}
-				})
-			)
-		)
-	);
+	return $r->tag('div', class => 'alert alert-success p-1 mb-0', $result);
 }
 
 sub sort_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my ($self) = @_;
 	my $r = $self->r;
 
-	my $primary   = $actionParams->{"action.sort.primary"}->[0];
-	my $secondary = $actionParams->{"action.sort.secondary"}->[0];
+	my $primary   = $r->param('action.sort.primary');
+	my $secondary = $r->param('action.sort.secondary');
 
 	$self->{primarySortField}   = $primary;
 	$self->{secondarySortField} = $secondary;
@@ -814,45 +338,20 @@ sub sort_handler {
 		visible     => $r->maketext("Visibility"),
 	);
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
-		$r->maketext("Sort by [_1] and then by [_2]", $names{$primary}, $names{$secondary}));
-}
-
-sub edit_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-
-	return CGI::div(
-		{ class => 'row mb-2' },
-		CGI::label(
-			{ for => 'edit_select', class => 'col-form-label col-form-label-sm col-auto' },
-			$r->maketext('Edit which sets?')
-		),
-		CGI::div(
-			{ class => 'col-auto' },
-			CGI::popup_menu({
-				id      => 'edit_select',
-				name    => 'action.edit.scope',
-				values  => [qw(all visible selected)],
-				default => $actionParams{'action.edit.scope'}[0] || 'selected',
-				class   => 'form-select form-select-sm',
-				labels  => {
-					all      => $r->maketext('all sets'),
-					visible  => $r->maketext('listed sets'),
-					selected => $r->maketext('selected sets'),
-				}
-			})
-		)
+	return $r->tag(
+		'div',
+		class => 'alert alert-success p-1 mb-0',
+		$r->maketext("Sort by [_1] and then by [_2]", $names{$primary}, $names{$secondary})
 	);
 }
 
 sub edit_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my ($self) = @_;
 	my $r = $self->r;
 
 	my $result;
 
-	my $scope = $actionParams->{"action.edit.scope"}->[0];
+	my $scope = $r->param('action.edit.scope');
 	if ($scope eq "all") {
 		$result = $r->maketext("editing all sets");
 		$self->{visibleSetIDs} = $self->{allSetIDs};
@@ -861,75 +360,23 @@ sub edit_handler {
 		# leave visibleSetIDs alone
 	} elsif ($scope eq "selected") {
 		$result = $r->maketext("editing selected sets");
-		$self->{visibleSetIDs} = $genericParams->{selected_sets};         # an arrayref
+		$self->{visibleSetIDs} = [ $r->param('selected_sets') ];
 	}
 	$self->{editMode} = 1;
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
-}
-
-sub publish_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-
-	return CGI::div(
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'publish_filter_select', class => 'col-form-label col-form-label-sm col-sm-auto' },
-				$r->maketext('Choose which sets to be affected') . ':'
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'publish_filter_select',
-					name    => 'action.publish.scope',
-					values  => [qw(none all visible selected)],
-					default => $actionParams{'action.publish.scope'}[0] || 'selected',
-					class   => 'form-select form-select-sm',
-					labels  => {
-						none     => $r->maketext('no sets'),
-						all      => $r->maketext('all sets'),
-						visible  => $r->maketext('listed sets'),
-						selected => $r->maketext('selected sets'),
-					}
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'publish_visibility_select', class => 'col-form-label col-form-label-sm col-sm-auto' },
-				$r->maketext('Choose visibility of the sets to be affected') . ':'
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'publish_visibility_select',
-					name    => 'action.publish.value',
-					values  => [ 0, 1 ],
-					default => $actionParams{'action.publish.value'}->[0] || '1',
-					class   => 'form-select form-select-sm d-inline w-auto',
-					labels  => {
-						0 => $r->maketext('Hidden'),
-						1 => $r->maketext('Visible'),
-					}
-				})
-			)
-		)
-	);
+	return $r->tag('div', class => 'alert alert-success p-1 mb-0', $result);
 }
 
 sub publish_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my ($self) = @_;
 
 	my $r  = $self->r;
 	my $db = $r->db;
 
 	my $result = "";
 
-	my $scope = $actionParams->{"action.publish.scope"}->[0];
-	my $value = $actionParams->{"action.publish.value"}->[0];
+	my $scope = $r->param('action.publish.scope');
+	my $value = $r->param('action.publish.value');
 
 	my $verb = $value ? $r->maketext("made visible for") : $r->maketext("hidden from");
 
@@ -937,72 +384,63 @@ sub publish_handler {
 
 	if ($scope eq "none") {
 		@setIDs = ();
-		$result = CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext("No change made to any set"));
+		$result = $r->tag('div', class => 'alert alert-danger p-1 mb-0', $r->maketext("No change made to any set"));
 	} elsif ($scope eq "all") {
 		@setIDs = @{ $self->{allSetIDs} };
 		$result = $value
-			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
-				$r->maketext("All sets made visible for all students"))
-			: CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext("All sets hidden from all students"));
+			? $r->tag(
+				'div',
+				class => 'alert alert-success p-1 mb-0',
+				$r->maketext("All sets made visible for all students")
+			)
+			: $r->tag(
+				'div',
+				class => 'alert alert-success p-1 mb-0',
+				$r->maketext("All sets hidden from all students")
+			);
 	} elsif ($scope eq "visible") {
 		@setIDs = @{ $self->{visibleSetIDs} };
 		$result = $value
-			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
-				$r->maketext("All listed sets were made visible for all the students"))
-			: CGI::div({ class => 'alert alert-success p-1 mb-0' },
-				$r->maketext("All listed sets were hidden from all the students"));
+			? $r->tag(
+				'div',
+				class => 'alert alert-success p-1 mb-0',
+				$r->maketext("All listed sets were made visible for all the students")
+			)
+			: $r->tag(
+				'div',
+				class => 'alert alert-success p-1 mb-0',
+				$r->maketext("All listed sets were hidden from all the students")
+			);
 	} elsif ($scope eq "selected") {
-		@setIDs = @{ $genericParams->{selected_sets} };
+		@setIDs = $r->param('selected_sets');
 		$result = $value
-			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
-				$r->maketext("All selected sets made visible for all students"))
-			: CGI::div({ class => 'alert alert-success p-1 mb-0' },
-				$r->maketext("All selected sets hidden from all students"));
+			? $r->tag(
+				'div',
+				class => 'alert alert-success p-1 mb-0',
+				$r->maketext("All selected sets made visible for all students")
+			)
+			: $r->tag(
+				'div',
+				class => 'alert alert-success p-1 mb-0',
+				$r->maketext("All selected sets hidden from all students")
+			);
 	}
 
 	# Can we use UPDATE here, instead of fetch/change/store?
 	my @sets = $db->getGlobalSets(@setIDs);
 	map { $_->visible($value); $db->putGlobalSet($_); } @sets;
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
-}
-
-sub score_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-
-	return CGI::div(
-		{ class => 'row mb-2' },
-		CGI::label(
-			{ for => 'score_select', class => 'col-form-label col-form-label-sm col-auto' },
-			$r->maketext('Score which sets?')
-		),
-		CGI::div(
-			{ class => 'col-auto' },
-			CGI::popup_menu({
-				id      => 'score_select',
-				name    => 'action.score.scope',
-				values  => [qw(none all selected)],
-				default => $actionParams{'action.score.scope'}[0] || 'none',
-				class   => 'form-select form-select-sm',
-				labels  => {
-					none     => $r->maketext('no sets'),
-					all      => $r->maketext('all sets'),
-					selected => $r->maketext('selected sets'),
-				}
-			})
-		)
-	);
+	return $r->tag('div', class => 'alert alert-success p-1 mb-0', $result);
 }
 
 sub score_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my ($self) = @_;
 
 	my $r          = $self->r;
 	my $urlpath    = $r->urlpath;
 	my $courseName = $urlpath->arg("courseID");
 
-	my $scope = $actionParams->{"action.score.scope"}->[0];
+	my $scope = $r->param('action.score.scope');
 	my @setsToScore;
 
 	if ($scope eq "none") {
@@ -1013,7 +451,7 @@ sub score_handler {
 	} elsif ($scope eq "visible") {
 		@setsToScore = @{ $self->{visibleSetIDs} };
 	} elsif ($scope eq "selected") {
-		@setsToScore = @{ $genericParams->{selected_sets} };
+		@setsToScore = $r->param('selected_sets');
 	}
 
 	my $uri = $self->systemLink(
@@ -1021,53 +459,19 @@ sub score_handler {
 		params => {
 			scoreSelected => "Score Selected",
 			selectedSet   => \@setsToScore,
-			#						recordSingleSetScores=>''
 		}
 	);
 
 	return $uri;
 }
 
-sub delete_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-
-	return CGI::div(
-		CGI::div(
-			{ class => 'd-inline-block alert alert-danger p-1 mb-2' },
-			CGI::em($r->maketext('Warning: Deletion destroys all set-related data and is not undoable!'))
-		),
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'delete_select', class => 'col-form-label col-form-label-sm col-auto' },
-				$r->maketext('Delete which sets?')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'delete_select',
-					name    => 'action.delete.scope',
-					values  => [qw(none selected)],
-					default => $actionParams{'action.delete.scope'}[0] || 'none',
-					class   => 'form-select form-select-sm',
-					labels  => {
-						none     => $r->maketext('no sets'),
-						selected => $r->maketext('selected sets'),
-					}
-				})
-			)
-		)
-	);
-}
-
 sub delete_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my ($self) = @_;
 
 	my $r  = $self->r;
 	my $db = $r->db;
 
-	my $scope = $actionParams->{"action.delete.scope"}->[0];
+	my $scope = $r->param('action.delete.scope');
 
 	my @setIDsToDelete = ();
 
@@ -1091,73 +495,30 @@ sub delete_handler {
 	$self->{selectedSetIDs} = [ keys %selectedSetIDs ];
 
 	my $num = @setIDsToDelete;
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext('deleted [_1] sets', $num));
-}
-
-sub create_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-
-	return CGI::div(
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'create_text', class => 'col-form-label col-form-label-sm col-auto' },
-				$r->maketext('Name the new set') . CGI::span({ class => 'required-field' }, '*') . ':'
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::textfield({
-					id            => 'create_text',
-					name          => 'action.create.name',
-					value         => $actionParams{'action.create.name'}[0] || '',
-					maxlength     => '100',
-					aria_required => 'true',
-					class         => 'form-control form-control-sm',
-					dir           => 'ltr'
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'create_select', class => 'col-form-label col-form-label-sm col-auto' },
-				$r->maketext("Create as what type of set?")
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'create_select',
-					name    => 'action.create.type',
-					values  => [qw(empty copy)],
-					default => $actionParams{'action.create.type'}[0] || 'empty',
-					class   => 'form-select form-select-sm',
-					labels  => {
-						empty => $r->maketext('a new empty set'),
-						copy  => $r->maketext('a duplicate of the first selected set'),
-					}
-				})
-			)
-		)
-	);
+	return $r->tag('div', class => 'alert alert-success p-1 mb-0', $r->maketext('deleted [_1] sets', $num));
 }
 
 sub create_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my ($self) = @_;
 
 	my $r  = $self->r;
 	my $db = $r->db;
 	my $ce = $r->ce;
 
-	my $newSetID = format_set_name_internal($actionParams->{'action.create.name'}[0] // '');
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		$r->maketext("Failed to create new set: set name cannot exceed 100 characters."))
-		if (length($newSetID) > 100);
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		$r->maketext("Failed to create new set: no set name specified!"))
-		unless $newSetID =~ /\S/;
-	return CGI::div(
-		{ class => 'alert alert-danger p-1 mb-0' },
+	my $newSetID = format_set_name_internal($r->param('action.create.name') // '');
+	return $r->tag(
+		'div',
+		class => 'alert alert-danger p-1 mb-0',
+		$r->maketext("Failed to create new set: set name cannot exceed 100 characters.")
+	) if (length($newSetID) > 100);
+	return $r->tag(
+		'div',
+		class => 'alert alert-danger p-1 mb-0',
+		$r->maketext("Failed to create new set: no set name specified!")
+	) unless $newSetID =~ /\S/;
+	return $r->tag(
+		'div',
+		class => 'alert alert-danger p-1 mb-0',
 		$r->maketext(
 			"The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",
 			$newSetID)
@@ -1168,7 +529,7 @@ sub create_handler {
 	my $newSetRecord = $db->newGlobalSet;
 	my $oldSetID     = $self->{selectedSetIDs}->[0];
 
-	my $type = $actionParams->{"action.create.type"}->[0];
+	my $type = $r->param('action.create.type');
 	# It's convenient to set the due date two weeks from now so that it is
 	# not accidentally available to students.
 
@@ -1197,9 +558,11 @@ sub create_handler {
 		$newSetRecord->assignment_type('default');
 		$db->addGlobalSet($newSetRecord);
 	} elsif ($type eq "copy") {
-		return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-			$r->maketext('Failed to duplicate set: no set selected for duplication!'))
-			unless $oldSetID =~ /\S/;
+		return $r->tag(
+			'div',
+			class => 'alert alert-danger p-1 mb-0',
+			$r->maketext('Failed to duplicate set: no set selected for duplication!')
+		) unless $oldSetID =~ /\S/;
 		$newSetRecord = $db->getGlobalSet($oldSetID);
 		$newSetRecord->set_id($newSetID);
 		$db->addGlobalSet($newSetRecord);
@@ -1235,164 +598,36 @@ sub create_handler {
 	$self->assignSetToUser($userName, $newSetRecord);    # Cures weird date error when no-one assigned to set.
 	$self->addgoodmessage($r->maketext(
 		'Set [_1] was assigned to [_2].',
-		CGI::span({ dir => 'ltr' }, format_set_name_display($newSetID)), $userName
+		$r->tag('span', dir => 'ltr', format_set_name_display($newSetID)), $userName
 	));
 
 	push @{ $self->{visibleSetIDs} }, $newSetID;
 	push @{ $self->{allSetIds} },     $newSetID;
 
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext('Failed to create new set: [_1]', $@))
+	return $r->tag('div', class => 'alert alert-danger p-1 mb-0', $r->maketext('Failed to create new set: [_1]', $@))
 		if $@;
 
-	return CGI::div(
-		{ class => 'alert alert-success p-1 mb-0' },
-		$r->maketext(
+	return $r->tag(
+		'div',
+		class => 'alert alert-success p-1 mb-0',
+		$r->b($r->maketext(
 			'Successfully created new set [_1]',
-			CGI::span({ dir => 'ltr' }, format_set_name_display($newSetID))
-		)
-	);
-}
-
-sub import_form {
-	my ($self, %actionParams) = @_;
-
-	my $r     = $self->r;
-	my $authz = $r->authz;
-	my $user  = $r->param('user');
-	my $ce    = $r->ce;
-
-	return CGI::div(
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'import_amt_select', class => 'col-form-label col-form-label-sm col-md-auto' },
-				$r->maketext('Import how many sets?')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'import_amt_select',
-					name    => 'action.import.number',
-					values  => [ 1, 8 ],
-					default => $actionParams{'action.import.number'}[0] || '1',
-					class   => 'form-select form-select-sm',
-					labels  => {
-						1 => $r->maketext('a single set'),
-						8 => $r->maketext('multiple sets'),
-					}
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row align-items-center mb-2' },
-			CGI::label(
-				{ for => 'import_source_select', class => 'col-form-label col-form-label-sm col-md-auto' },
-				$r->maketext('Import from where?')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					name    => 'action.import.source',
-					id      => 'import_source_select',
-					values  => [ '', $self->getDefList() ],
-					labels  => { '' => $r->maketext('Enter filenames below') },
-					default => defined($actionParams{'action.import.source'})
-					? $actionParams{'action.import.source'}
-					: '',
-					class => 'form-select form-select-sm',
-					dir   => 'ltr',
-					size  => $actionParams{'action.import.number'}[0] || '1',
-					defined($actionParams{'action.import.number'}[0])
-						&& $actionParams{'action.import.number'}[0] ne '1' ? (multiple => undef) : ()
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'import_text', class => 'col-form-label col-form-label-sm col-md-auto' },
-				$r->maketext('Import sets with names') . ':'
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::textfield({
-					id    => 'import_text',
-					name  => 'action.import.name',
-					value => $actionParams{'action.import.name'}[0] || '',
-					class => 'form-control form-control-sm',
-					dir   => 'ltr'
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'import_date_shift', class => 'col-form-label col-form-label-sm col-md-auto' },
-				$r->maketext('Shift dates so that the earliest is') . ':'
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::div(
-					{ class => 'input-group input-group-sm flatpickr' },
-					CGI::textfield({
-						id             => 'import_date_shift',
-						name           => 'action.import.start.date',
-						size           => '27',
-						value          => $actionParams{'action.import.start.date'}[0] || '',
-						class          => 'form-control',
-						data_input     => undef,
-						data_done_text => $r->maketext('Done'),
-						data_locale    => $ce->{language},
-						data_timezone  => $ce->{siteDefaults}{timezone}
-					}),
-					CGI::a(
-						{
-							class       => 'btn btn-secondary btn-sm',
-							data_toggle => undef,
-							role        => 'button',
-							tabindex    => 0,
-							aria_label  => $r->maketext('Pick date and time')
-						},
-						CGI::i({ class => 'fas fa-calendar-alt' }, '')
-					)
-				)
-			)
-		),
-		$authz->hasPermissions($user, 'assign_problem_sets') ? CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'import_users_select', class => 'col-form-label col-form-label-sm col-md-auto' },
-				$r->maketext('Assign this set to which users?')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					id      => 'import_users_select',
-					name    => 'action.import.assign',
-					value   => [qw(user all)],
-					default => $actionParams{'action.import.assign'}[0] || 'none',
-					class   => 'form-select form-select-sm',
-					labels  => {
-						all  => $r->maketext('all current users') . '.',
-						user => $r->maketext('only') . ' ' . $user . '.',
-					}
-				})
-			)
-		) : ''    #user does not have permissions to assign problem sets
+			$r->tag('span', dir => 'ltr', format_set_name_display($newSetID))
+		))
 	);
 }
 
 sub import_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my ($self) = @_;
 	my $r = $self->r;
 
 	my ($added, $skipped) = $self->importSetsFromDef(
-		$actionParams->{"action.import.number"}[0] > 1
-		? ''      # Cannot assign set names to multiple imports.
-		: format_set_name_internal($actionParams->{'action.import.name'}[0]),
-		$actionParams->{'action.import.assign'}[0],
-		$actionParams->{'action.import.start.date'}[0] // 0,
-		@{ $actionParams->{'action.import.source'} }
+		$r->param('action.import.number') > 1
+		? ''    # Cannot assign set names to multiple imports.
+		: format_set_name_internal($r->param('action.import.name')),
+		$r->param('action.import.assign'),
+		$r->param('action.import.start.date') // 0,
+		$r->param('action.import.source')
 	);
 
 	# Make new sets visible.
@@ -1402,8 +637,9 @@ sub import_handler {
 	my $numAdded   = @$added;
 	my $numSkipped = @$skipped;
 
-	return CGI::div(
-		{ class => 'alert alert-success p-1 mb-0' },
+	return $r->tag(
+		'div',
+		class => 'alert alert-success p-1 mb-0',
 		$r->maketext(
 			'[_1] sets added, [_2] sets skipped. Skipped sets: ([_3])', $numAdded,
 			$numSkipped,                                                join(', ', @$skipped)
@@ -1411,42 +647,14 @@ sub import_handler {
 	);
 }
 
-sub export_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-
-	return CGI::div(
-		{ class => 'row mb-2' },
-		CGI::label(
-			{ for => 'export_select', class => 'col-form-label col-form-label-sm col-auto' },
-			$r->maketext('Prepare which sets for export?')
-		),
-		CGI::div(
-			{ class => 'col-auto' },
-			CGI::popup_menu({
-				id      => 'export_select',
-				name    => 'action.export.scope',
-				values  => [qw(all visible selected)],
-				default => $actionParams{'action.export.scope'}[0] || 'visible',
-				class   => 'form-select form-select-sm',
-				labels  => {
-					all      => $r->maketext('all sets'),
-					visible  => $r->maketext('listed sets'),
-					selected => $r->maketext('selected sets'),
-				}
-			})
-		)
-	);
-}
-
 # this does not actually export any files, rather it sends us to a new page in order to export the files
 sub export_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my ($self) = @_;
 	my $r = $self->r;
 
 	my $result;
 
-	my $scope = $actionParams->{"action.export.scope"}->[0];
+	my $scope = $r->param('action.export.scope');
 	if ($scope eq "all") {
 		$result = $r->maketext("All sets were selected for export.");
 		$self->{selectedSetIDs} = $self->{visibleSetIDs} = $self->{allSetIDs};
@@ -1455,21 +663,15 @@ sub export_handler {
 		$self->{selectedSetIDs} = $self->{visibleSetIDs};
 	} elsif ($scope eq "selected") {
 		$result = $r->maketext("Sets were selected for export.");
-		$self->{selectedSetIDs} = $self->{visibleSetIDs} = $genericParams->{selected_sets};    # an arrayref
+		$self->{selectedSetIDs} = $self->{visibleSetIDs} = [ $r->param('selected_sets') ];
 	}
 	$self->{exportMode} = 1;
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
+	return $r->tag('div', class => 'alert alert-success p-1 mb-0', $result);
 }
 
-sub cancelExport_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-	return CGI::span($r->maketext('Abandon export'));
-}
-
-sub cancelExport_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+sub cancel_export_handler {
+	my ($self) = @_;
 	my $r = $self->r;
 
 	#$self->{selectedSetIDs) = $self->{visibleSetIDs};
@@ -1483,22 +685,16 @@ sub cancelExport_handler {
 	}
 	$self->{exportMode} = 0;
 
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext('export abandoned'));
+	return $r->tag('div', class => 'alert alert-danger p-1 mb-0', $r->maketext('export abandoned'));
 }
 
-sub saveExport_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-	return CGI::span($r->maketext('Confirm which sets to export.'));
-}
-
-sub saveExport_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+sub save_export_handler {
+	my ($self) = @_;
 	my $r = $self->r;
 
 	my @setIDsToExport = @{ $self->{selectedSetIDs} };
 
-	my %filenames = map { $_ => (@{ $tableParams->{"set.$_"} }[0] || $_) } @setIDsToExport;
+	my %filenames = map { $_ => ($r->param("set.$_") || $_) } @setIDsToExport;
 
 	my ($exported, $skipped, $reason) = $self->exportSetsToDef(%filenames);
 
@@ -1506,8 +702,6 @@ sub saveExport_handler {
 		$self->{visibleSetIDs} = [ $r->param("prev_visible_sets") ];
 	} elsif (defined $r->param("no_prev_visble_sets")) {
 		$self->{visibleSetIDs} = [];
-	} else {
-		# leave it alone
 	}
 
 	$self->{exportMode} = 0;
@@ -1518,23 +712,19 @@ sub saveExport_handler {
 
 	my @reasons = map { "set $_ - " . $reason->{$_} } keys %$reason;
 
-	return CGI::div(
-		{ class => "alert $resultFont p-1 mb-0" },
-		$r->maketext(
+	return $r->tag(
+		'div',
+		class => "alert $resultFont p-1 mb-0",
+		$r->b($r->maketext(
 			'[_1] sets exported, [_2] sets skipped. Skipped sets: ([_3])',
-			$numExported, $numSkipped, ($numSkipped) ? CGI::ul(CGI::li(\@reasons)) : ''
-		)
+			$numExported, $numSkipped,
+			$numSkipped ? $r->tag('ul', $r->c(map { $r->tag('li', $_) } @reasons)->join('')) : ''
+		))
 	);
 }
 
-sub cancelEdit_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-	return CGI::span($r->maketext('Abandon changes'));
-}
-
-sub cancelEdit_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+sub cancel_edit_handler {
+	my ($self) = @_;
 	my $r = $self->r;
 
 	#$self->{selectedSetIDs) = $self->{visibleSetIDs};
@@ -1548,44 +738,37 @@ sub cancelEdit_handler {
 	}
 	$self->{editMode} = 0;
 
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext('changes abandoned'));
+	return $r->tag('div', class => 'alert alert-danger p-1 mb-0', $r->maketext('changes abandoned'));
 }
 
-sub saveEdit_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-	return CGI::span($r->maketext('Save changes'));
-}
-
-sub saveEdit_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r  = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
+sub save_edit_handler {
+	my ($self) = @_;
+	my $r      = $self->r;
+	my $db     = $r->db;
+	my $ce     = $r->ce;
 
 	my @visibleSetIDs = @{ $self->{visibleSetIDs} };
 	foreach my $setID (@visibleSetIDs) {
 		next unless defined($setID);
-		my $Set = $db->getGlobalSet($setID);    # checked
-			# FIXME: we may not want to die on bad sets, they're not as bad as bad users
+		my $Set = $db->getGlobalSet($setID);
+		# FIXME: we may not want to die on bad sets, they're not as bad as bad users
 		die "record for visible set $setID not found" unless $Set;
 
 		foreach my $field ($Set->NONKEYFIELDS()) {
-			my $param = "set.${setID}.${field}";
-			if (defined $tableParams->{$param}[0]) {
+			my $value = $r->param("set.$setID.$field");
+			if (defined $value) {
 				if ($field =~ /_date/) {
-					$Set->$field($tableParams->{$param}[0]);
+					$Set->$field($value);
 				} elsif ($field eq 'enable_reduced_scoring') {
 					# If we are enableing reduced scoring, make sure the reduced scoring date
 					# is set and in a proper interval.
-					my $value = $tableParams->{$param}[0];
 					$Set->enable_reduced_scoring($value);
 					if (!$Set->reduced_scoring_date) {
 						$Set->reduced_scoring_date(
 							$Set->due_date - 60 * $ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
 					}
 				} else {
-					$Set->$field($tableParams->{$param}->[0]);
+					$Set->$field($value);
 				}
 			}
 		}
@@ -1594,25 +777,37 @@ sub saveEdit_handler {
 		my $curr_time        = time;
 		my $seconds_per_year = 31_556_926;
 		my $cutoff           = $curr_time + $seconds_per_year * 10;
-		return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-			$r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID))
-			if $Set->open_date > $cutoff;
-		return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-			$r->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID))
-			if $Set->due_date > $cutoff;
-		return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-			$r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID))
-			if $Set->answer_date > $cutoff;
+		return $r->tag(
+			'div',
+			class => 'alert alert-danger p-1 mb-0',
+			$r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID)
+		) if $Set->open_date > $cutoff;
+		return $r->tag(
+			'div',
+			class => 'alert alert-danger p-1 mb-0',
+			$r->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID)
+		) if $Set->due_date > $cutoff;
+		return $r->tag(
+			'div',
+			class => 'alert alert-danger p-1 mb-0',
+			$r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID)
+		) if $Set->answer_date > $cutoff;
 
 		# Check that the open, due and answer dates are in increasing order.
 		# Bail if this is not correct.
 		if ($Set->open_date > $Set->due_date) {
-			return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-				$r->maketext("Error: Close date must come after open date in set [_1]", $setID));
+			return $r->tag(
+				'div',
+				class => 'alert alert-danger p-1 mb-0',
+				$r->maketext("Error: Close date must come after open date in set [_1]", $setID)
+			);
 		}
 		if ($Set->due_date > $Set->answer_date) {
-			return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-				$r->maketext("Error: Answer date must come after close date in set [_1]", $setID));
+			return $r->tag(
+				'div',
+				class => 'alert alert-danger p-1 mb-0',
+				$r->maketext("Error: Answer date must come after close date in set [_1]", $setID)
+			);
 		}
 
 		# check that the reduced scoring date is in the right place
@@ -1629,8 +824,9 @@ sub saveEdit_handler {
 				|| $Set->reduced_scoring_date < $Set->open_date)
 			)
 		{
-			return CGI::div(
-				{ class => 'alert alert-danger p-1 mb-0' },
+			return $r->tag(
+				'div',
+				class => 'alert alert-danger p-1 mb-0',
 				$r->maketext(
 					"Error: Reduced scoring date must come between the open date and close date in set [_1]",
 					$setID
@@ -1651,12 +847,10 @@ sub saveEdit_handler {
 
 	$self->{editMode} = 0;
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext("changes saved"));
+	return $r->tag('div', class => 'alert alert-success p-1 mb-0', $r->maketext("changes saved"));
 }
 
-################################################################################
-# utilities
-################################################################################
+# Utilities
 
 sub importSetsFromDef {
 	my ($self, $newSetName, $assign, $startdate, @setDefFiles) = @_;
@@ -1669,7 +863,7 @@ sub importSetsFromDef {
 	# if the user includes "following files" in a multiple selection
 	# it shows up here as "" which causes the importing to die
 	# so, we select on filenames containing non-whitespace
-	@setDefFiles = grep(/\S/, @setDefFiles);
+	@setDefFiles = grep {/\S/} @setDefFiles;
 
 	# FIXME: do we really want everything to fail on one bad file name?
 	foreach my $fileName (@setDefFiles) {
@@ -1856,16 +1050,16 @@ sub readSetDef {
 		$setName = $2;
 	} else {
 		$self->addbadmessage(
-			qq{The setDefinition file name must begin with   <CODE>set</CODE>},
-			qq{and must end with   <CODE>.def</CODE>  . Every thing in between becomes the name of the set. },
-			qq{For example <CODE>set1.def</CODE>, <CODE>setExam.def</CODE>, and <CODE>setsample7.def</CODE> },
-			qq{define sets named <CODE>1</CODE>, <CODE>Exam</CODE>, and <CODE>sample7</CODE> respectively. },
-			qq{The filename, $fileName, you entered is not legal\n }
+			qq{The setDefinition file name must begin with <strong>set</strong> and must end with },
+			qq{<strong>.def</strong>. Every thing in between becomes the name of the set. For example },
+			qq{<strong>set1.def</strong>, <strong>setExam.def</strong>, and <strong>setsample7.def</strong> define },
+			qq{sets named <strong>1</strong>, <strong>Exam</strong>, and <strong>sample7</strong> respectively. },
+			qq{The filename "$fileName" you entered is not legal\n }
 		);
 
 	}
 
-	my ($line, $name, $weight, $attemptLimit, $continueFlag);
+	my ($name, $weight, $attemptLimit, $continueFlag);
 	my $paperHeaderFile  = '';
 	my $screenHeaderFile = '';
 	my $description      = '';
@@ -1885,21 +1079,17 @@ sub readSetDef {
 	my ($hideScore, $hideScoreByProblem, $hideWork,) = ('N', 'N', 'N');
 
 	my %setInfo;
-	if (open(SETFILENAME, "$filePath")) {
-		#####################################################################
+	if (my $SETFILENAME = Mojo::File->new($filePath)->open('<')) {
 		# Read and check set data
-		#####################################################################
-		while (<SETFILENAME>) {
+		while (my $line = <$SETFILENAME>) {
 
-			chomp($line = $_);
-			$line =~ s|(#.*)||;                  ## don't read past comments
-			unless ($line =~ /\S/) { next; }     ## skip blank lines
-			$line =~ s|\s*$||;                   ## trim trailing spaces
+			chomp $line;
+			$line =~ s|(#.*)||;                  # Don't read past comments
+			unless ($line =~ /\S/) { next; }     # Skip blank lines
+			$line =~ s|\s*$||;                   # Trim trailing spaces
 			$line =~ m|^\s*(\w+)\s*=?\s*(.*)|;
 
-			######################
-			# sanity check entries
-			######################
+			# Sanity check entries
 			my $item = $1;
 			$item = '' unless defined $item;
 			my $value = $2;
@@ -1966,14 +1156,12 @@ sub readSetDef {
 			}
 		}
 
-		#####################################################################
 		# Check and format dates
-		#####################################################################
 		my ($time1, $time2, $time3) = map { $self->parseDateTime($_); } ($openDate, $dueDate, $answerDate);
 
 		unless ($time1 <= $time2 and $time2 <= $time3) {
-			warn $r->maketext(
-				"The open date: [_1], close date: [_2], and answer date: [_3] must be defined and in chronological order.",
+			warn $r->maketext('The open date: [_1], close date: [_2], and answer date: [_3] '
+					. 'must be defined and in chronological order.',
 				$openDate, $dueDate, $answerDate);
 		}
 
@@ -1988,13 +1176,15 @@ sub readSetDef {
 				if ($reducedScoringDate != 0) {
 					# In this case we want to treat it BY FORCE as if the value did correspond to epoch 0.
 					warn $r->maketext(
-						"The reduced credit date [_1] in the file probably was generated from the Unix epoch 0 value and is being treated as if it was Unix epoch 0.",
+						'The reduced credit date [_1] in the file probably was generated from '
+							. 'the Unix epoch 0 value and is being treated as if it was Unix epoch 0.',
 						$origReducedScoringDate
 					);
 					$reducedScoringDate = 0;
 				}
 			} else {
-	 # Original behavior, which may cause problems for some time-zones when epoch 0 was set and does not parse back to 0
+				# Original behavior, which may cause problems for some time-zones when epoch 0 was set and does not
+				# parse back to 0.
 				$reducedScoringDate = $self->parseDateTime($reducedScoringDate);
 			}
 		}
@@ -2027,10 +1217,9 @@ sub readSetDef {
 		}
 
 		# Check header file names
-		$paperHeaderFile  =~ s/(.*?)\s*$/$1/;    #remove trailing white space
-		$screenHeaderFile =~ s/(.*?)\s*$/$1/;    #remove trailing white space
+		$paperHeaderFile  =~ s/(.*?)\s*$/$1/;    # Remove trailing white space
+		$screenHeaderFile =~ s/(.*?)\s*$/$1/;    # Remove trailing white space
 
-		#####################################################################
 		# Gateway/version variable cleanup: convert times into seconds
 		$assignmentType ||= 'default';
 
@@ -2039,7 +1228,7 @@ sub readSetDef {
 		$versionTimeLimit = WeBWorK::Utils::timeToSec($versionTimeLimit)
 			if ($versionTimeLimit);
 
-		# check that the values for hideWork and hideScore are valid
+		# Check that the values for hideWork and hideScore are valid.
 		if ($hideScore ne 'N'
 			&& $hideScore ne 'Y'
 			&& $hideScore ne 'BeforeAnswerDate')
@@ -2111,9 +1300,7 @@ sub readSetDef {
 		# to verify that restrictLoc is valid requires a database
 		#    call, so we defer that until we return to add the set
 
-		#####################################################################
 		# Read and check list of problems for the set
-		#####################################################################
 
 		# NOTE:  There are now two versions of problemList, the first is an unlabeled
 		# list which may or may not contain a showMeAnother variable.  This is supported
@@ -2122,8 +1309,8 @@ sub readSetDef {
 
 		if ($listType eq 'problemList') {
 
-			while (<SETFILENAME>) {
-				chomp($line = $_);
+			while (my $line = <$SETFILENAME>) {
+				chomp $line;
 				$line =~ s/(#.*)//;                 ## don't read past comments
 				unless ($line =~ /\S/) { next; }    ## skip blank lines
 
@@ -2142,7 +1329,7 @@ sub readSetDef {
 						$curr .= $c;
 					}
 				}
-				## anything left?
+				# anything left?
 				push(@line, $curr) if ($curr);
 
 				# read the line and only look for $showMeAnother if it has the correct number of entries
@@ -2153,9 +1340,7 @@ sub readSetDef {
 					($name, $weight, $attemptLimit, $continueFlag) = @line;
 				}
 
-				#####################
-				#  clean up problem values
-				###########################
+				# clean up problem values
 				$name =~ s/\s*//g;
 				$weight = "" unless defined($weight);
 				$weight =~ s/[^\d\.]*//g;
@@ -2180,20 +1365,17 @@ sub readSetDef {
 				);
 			}
 		} else {
-
 			# This is the new version, it looks for pairs of entries
 			# of the form field name = value
-			while (<SETFILENAME>) {
+			while (my $line = <$SETFILENAME>) {
 
-				chomp($line = $_);
-				$line =~ s|(#.*)||;                  ## don't read past comments
-				unless ($line =~ /\S/) { next; }     ## skip blank lines
-				$line =~ s|\s*$||;                   ## trim trailing spaces
+				chomp $line;
+				$line =~ s|(#.*)||;                  # Don't read past comments
+				unless ($line =~ /\S/) { next; }     # Skip blank lines
+				$line =~ s|\s*$||;                   # Trim trailing spaces
 				$line =~ m|^\s*(\w+)\s*=?\s*(.*)|;
 
-				######################
 				# sanity check entries
-				######################
 				my $item = $1;
 				$item = '' unless defined $item;
 				my $value = $2;
@@ -2224,9 +1406,7 @@ sub readSetDef {
 					$attToOpenChildren = ($value) ? $value : 0;
 				} elsif ($item eq 'problem_end') {
 
-					#####################
 					#  clean up problem values
-					###########################
 					$name =~ s/\s*//g;
 					$weight = "" unless defined($weight);
 					$weight =~ s/[^\d\.]*//g;
@@ -2292,8 +1472,8 @@ sub readSetDef {
 
 		}
 
-		close(SETFILENAME);
-		(
+		$SETFILENAME->close;
+		return (
 			$setName,              $paperHeaderFile,    $screenHeaderFile,   $time1,
 			$time2,                $time3,              \@problemData,       $assignmentType,
 			$enableReducedScoring, $reducedScoringDate, $attemptsPerVersion, $timeInterval,
@@ -2463,10 +1643,9 @@ EOF
 
 		$filePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates}, $filePath);
 		eval {
-			local *SETDEF;
-			open SETDEF, ">$filePath" or die $r->maketext("Failed to open [_1]", $filePath);
-			print SETDEF $fileContents;
-			close SETDEF;
+			open(my $SETDEF, '>', $filePath) or die $r->maketext("Failed to open [_1]", $filePath);
+			print $SETDEF $fileContents;
+			close $SETDEF;
 		};
 
 		if ($@) {
@@ -2479,401 +1658,6 @@ EOF
 	}
 
 	return \@exported, \@skipped, \%reason;
-
-}
-
-################################################################################
-# "display" methods
-################################################################################
-
-sub fieldEditHTML {
-	my ($self, $fieldName, $value, $properties) = @_;
-	my $size        = $properties->{size};
-	my $type        = $properties->{type};
-	my $access      = $properties->{access};
-	my $items       = $properties->{items};
-	my $synonyms    = $properties->{synonyms};
-	my $headerFiles = $self->{headerFiles};
-
-	if ($access eq "readonly") {
-		return CGI::span({ dir => 'ltr' }, $value) if ($type eq 'date');
-		return $value;
-	}
-
-	if ($type eq 'number' || $type eq 'text') {
-		return CGI::div(
-			{ class => 'input-group input-group-sm flex-nowrap' },
-			CGI::input({
-				type            => 'text',
-				name            => $fieldName,
-				id              => "${fieldName}_id",
-				aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
-				value           => $value,
-				size            => $size,
-				class           => 'form-control w-auto'
-			})
-		);
-	}
-
-	if ($type eq 'date') {
-		return CGI::div(
-			{ class => 'input-group input-group-sm flex-nowrap flatpickr' },
-			CGI::textfield({
-				name            => $fieldName,
-				id              => "${fieldName}_id",
-				aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
-				value           => $value,
-				size            => $size,
-				class           => 'form-control w-auto ' . ($fieldName =~ /\.open_date/ ? ' datepicker-group' : ''),
-				placeholder     => $self->r->maketext("None Specified"),
-				data_input      => undef,
-				data_done_text  => $self->r->maketext('Done'),
-				data_locale     => $self->r->ce->{language},
-				data_timezone   => $self->r->ce->{siteDefaults}{timezone},
-				role            => 'button',
-				tabindex        => 0
-			}),
-			CGI::a(
-				{
-					class       => 'btn btn-secondary btn-sm',
-					data_toggle => undef,
-					role        => 'button',
-					tabindex    => 0,
-					aria_label  => $self->r->maketext('Pick date and time')
-				},
-				CGI::i({ class => 'fas fa-calendar-alt' }, '')
-			)
-		);
-	}
-
-	if ($type eq "checked") {
-		# If the checkbox is checked it returns a 1, if it is unchecked it returns nothing
-		# in which case the hidden field overrides the parameter with a 0.
-		# This is actually the accepted way to do this.
-		return CGI::input({
-			type            => 'checkbox',
-			id              => "${fieldName}_id",
-			name            => $fieldName,
-			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
-			value           => 1,
-			class           => 'form-check-input',
-			$value ? (checked => undef) : ()
-		})
-			. CGI::hidden({
-				name  => $fieldName,
-				value => 0
-			});
-	}
-}
-
-sub recordEditHTML {
-	my ($self, $Set, %options) = @_;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $ce         = $r->ce;
-	my $db         = $r->db;
-	my $authz      = $r->authz;
-	my $user       = $r->param('user');
-	my $root       = $ce->{webworkURLs}{root};
-	my $courseName = $urlpath->arg('courseID');
-
-	my $editMode    = $options{editMode};
-	my $exportMode  = $options{exportMode};
-	my $setSelected = $options{setSelected};
-
-	my $visibleClass = $Set->visible ? 'font-visible' : 'font-hidden';
-	my $enable_reduced_scoringClass =
-		$Set->enable_reduced_scoring
-		? $r->maketext('Reduced Scoring Enabled')
-		: $r->maketext('Reduced Scoring Disabled');
-
-	my $users      = $db->countSetUsers($Set->set_id);
-	my $totalUsers = $self->{totalUsers};
-
-	my $problems = $db->countGlobalProblems($Set->set_id);
-
-	my $usersAssignedToSetURL = $self->systemLink($urlpath->new(
-		type => 'instructor_users_assigned_to_set',
-		args => { courseID => $courseName, setID => $Set->set_id }
-	));
-	my $prettySetID    = format_set_name_display($Set->set_id);
-	my $problemListURL = $self->systemLink(
-		$urlpath->new(type => 'instructor_set_detail', args => { courseID => $courseName, setID => $Set->set_id }));
-	my $problemSetListURL = $self->systemLink(
-		$urlpath->new(type => 'instructor_set_list', args => { courseID => $courseName, setID => $Set->set_id }))
-		. '&editMode=1&visible_sets='
-		. $Set->set_id;
-	my $imageLink = '';
-
-	if ($authz->hasPermissions($user, 'modify_problem_sets')) {
-		$imageLink = CGI::a({ href => $problemSetListURL },
-			CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => 'true' }, ''));
-	}
-
-	my @tableCells;
-	my %fakeRecord;
-	my $set_id = $Set->set_id;
-
-	$fakeRecord{select} = CGI::input({
-		type  => 'checkbox',
-		name  => 'selected_sets',
-		value => $set_id,
-		class => 'form-check-input',
-		$setSelected ? (checked => undef) : (),
-	});
-	$fakeRecord{set_id} =
-		$editMode
-		? CGI::a({ href => $problemListURL }, $set_id)
-		: CGI::span({ class => $visibleClass }, $set_id) . ' ' . $imageLink;
-	$fakeRecord{problems} =
-		(FIELD_PERMS()->{problems} and not $authz->hasPermissions($user, FIELD_PERMS()->{problems}))
-		? $problems
-		: CGI::a({ href => $problemListURL }, "$problems");
-	$fakeRecord{users} =
-		(FIELD_PERMS()->{users} and not $authz->hasPermissions($user, FIELD_PERMS()->{users}))
-		? "$users/$totalUsers"
-		: CGI::a({ href => $usersAssignedToSetURL }, "$users/$totalUsers");
-	$fakeRecord{filename} = CGI::input({ -name => "set.$set_id", -value => "set$set_id.def", -size => 60 });
-
-	# Select
-	if ($editMode) {
-		# No checkbox column in this case.
-		push(@tableCells, CGI::td({ dir => 'ltr' }, CGI::a({ href => $problemListURL }, $prettySetID)));
-	} else {
-		# Set ID
-		my $label = CGI::span(
-			{
-				class             => "set-label set-id-tooltip $visibleClass",
-				data_bs_toggle    => 'tooltip',
-				data_bs_placement => 'right',
-				data_bs_title     => $Set->description()
-			},
-			$prettySetID
-			)
-			. ' '
-			. $imageLink;
-
-		# Selection checkbox
-		push @tableCells,
-			CGI::td(CGI::input({
-				type  => 'checkbox',
-				id    => "${set_id}_id",
-				name  => 'selected_sets',
-				value => $set_id,
-				class => 'form-check-input',
-				$setSelected ? (checked => undef) : (),
-			}));
-
-		push @tableCells,
-			CGI::td(CGI::div(
-				{ class => 'label-with-edit-icon', dir => 'ltr' },
-				CGI::label({ for => "${set_id}_id" }, $label)
-			));
-	}
-
-	# Problems link
-	if (!$editMode) {
-		# "problem list" link
-		push @tableCells, CGI::td(CGI::a({ href => $problemListURL }, $problems));
-	}
-
-	# Users link
-	if (!$editMode) {
-		# "edit users assigned to set" link
-		push @tableCells, CGI::td(CGI::a({ href => $usersAssignedToSetURL }, "$users/$totalUsers"));
-	}
-
-	# determine which non-key fields to show
-	my @fieldsToShow;
-	if ($editMode) {
-		@fieldsToShow = @{ EDIT_FIELD_ORDER() };
-	} elsif ($exportMode) {
-		@fieldsToShow = @{ EXPORT_FIELD_ORDER() };
-	} else {
-		@fieldsToShow = @{ VIEW_FIELD_ORDER() };
-	}
-
-	# Remove the enable reduced scoring box if that feature isnt enabled
-	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-		@fieldsToShow = grep { !/enable_reduced_scoring|reduced_scoring_date/ } @fieldsToShow;
-	}
-
-	# make a hash out of this so we can test membership easily
-	my %nonkeyfields;
-	@nonkeyfields{ $Set->NONKEYFIELDS } = ();
-
-	# Set Fields
-	for my $field (@fieldsToShow) {
-		next unless exists $nonkeyfields{$field};
-		my $fieldName = 'set.' . $set_id . '.' . $field, my $fieldValue = $Set->$field;
-
-		my %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$properties{access} = 'readonly' unless $editMode;
-
-		$fieldValue = $self->formatDateTime($fieldValue, '', 'datetime_format_short', $ce->{language})
-			if !$editMode && $field =~ /_date/;
-
-		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
-		$fieldValue = $fieldValue ? $r->maketext('Yes') : $r->maketext('No')
-			if $field =~ /visible/ and not $editMode;
-		$fieldValue = $fieldValue ? $r->maketext('Yes') : $r->maketext('No')
-			if $field =~ /enable_reduced_scoring/ and not $editMode;
-		$fieldValue = $fieldValue ? $r->maketext('Yes') : $r->maketext('No')
-			if $field =~ /hide_hint/ and not $editMode;
-
-		push @tableCells,
-			CGI::td(CGI::span(
-				{ class => "d-inline-block w-100 text-center $visibleClass" },
-				$self->fieldEditHTML($fieldName, $fieldValue, \%properties)
-			));
-	}
-
-	return CGI::Tr(@tableCells);
-}
-
-sub printTableHTML {
-	my ($self, $SetsRef, $fieldHeadersRef, %options) = @_;
-	my $r            = $self->r;
-	my $ce           = $r->ce;
-	my $authz        = $r->authz;
-	my $user         = $r->param('user');
-	my $setTemplate  = $self->{setTemplate};
-	my @Sets         = @$SetsRef;
-	my %fieldHeaders = %$fieldHeadersRef;
-
-	my $editMode       = $options{editMode};
-	my $exportMode     = $options{exportMode};
-	my %selectedSetIDs = map { $_ => 1 } @{ $options{selectedSetIDs} };
-	my $currentSort    = $options{currentSort};
-
-	# names of headings:
-	my @realFieldNames = ($setTemplate->KEYFIELDS, $setTemplate->NONKEYFIELDS,);
-
-	if ($editMode) {
-		@realFieldNames = @{ EDIT_FIELD_ORDER() };
-	} else {
-		@realFieldNames = @{ VIEW_FIELD_ORDER() };
-	}
-
-	if ($exportMode) {
-		@realFieldNames = @{ EXPORT_FIELD_ORDER() };
-	}
-
-	# Remove the enable reduced scoring box if that feature isnt enabled
-	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-		@realFieldNames = grep { !/enable_reduced_scoring|reduced_scoring_date/ } @realFieldNames;
-	}
-
-	# FIXME: should this always presume to use the templates directory?
-	# (no, but that can wait until we have an abstract ProblemLibrary API -- sam)
-	my $templates_dir = $r->ce->{courseDirs}->{templates};
-	my $exempt_dirs   = join "|", keys %{ $r->ce->{courseFiles}->{problibs} };
-	my @headers       = listFilesRecursive(
-		$templates_dir,
-		qr/header.*\.pg$/i,            # match these files
-		qr/^(?:$exempt_dirs|CVS)$/,    # prune these directories
-		0,                             # match against file name only
-		1,                             # prune against path relative to $templates_dir
-	);
-
-	@headers = sort @headers;
-	my %headers = map { $_ => $_ } @headers;
-	$headers{""}         = $r->maketext("Use System Default");
-	$self->{headerFiles} = \%headers;    # store these header files so we don't have to look for them later.
-
-	my @tableHeadings = map { $fieldHeaders{$_} } @realFieldNames;
-
-	if (!$editMode) {
-		unshift @tableHeadings,
-			CGI::th(CGI::input({
-				type              => 'checkbox',
-				id                => 'select-all',
-				aria_label        => $r->maketext('Select all sets'),
-				data_select_group => 'selected_sets',
-				class             => 'select-all form-check-input'
-			}));
-	}
-
-	# Print the table
-	print CGI::start_div({ class => 'table-responsive' });
-	print CGI::start_table({
-		id    => "set_table_id",
-		class => "set_table table table-sm table-bordered caption-top font-sm" . ($editMode ? ' align-middle' : '')
-	});
-
-	print CGI::caption($r->maketext("Set List"));
-
-	print CGI::thead(CGI::Tr(@tableHeadings));
-
-	print CGI::start_tbody();
-	for (my $i = 0; $i < @Sets; $i++) {
-		my $Set = $Sets[$i];
-
-		print $self->recordEditHTML(
-			$Set,
-			editMode    => $editMode,
-			exportMode  => $exportMode,
-			setSelected => exists $selectedSetIDs{ $Set->set_id }
-		);
-	}
-	print CGI::end_tbody();
-
-	print CGI::end_table(), CGI::end_div();
-
-	# If there are no users, shown print message.
-	print CGI::p(
-		CGI::i($r->maketext("No sets shown.  Choose one of the options above to list the sets in the course.")))
-		unless @Sets;
-}
-
-# output_JS subroutine
-
-# outputs all of the Javascript required for this page
-
-sub output_JS {
-	my $self = shift;
-	my $ce   = $self->r->ce;
-
-	# Print javascript and style for the flatpickr date/time picker.
-	print CGI::Link({ rel => 'stylesheet', href => getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') });
-	print CGI::Link({
-		rel  => 'stylesheet',
-		href => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css')
-	});
-	print CGI::script({ src => getAssetURL($ce, 'node_modules/luxon/build/global/luxon.min.js'), defer => undef }, '');
-	print CGI::script({ src => getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.js'), defer => undef }, '');
-	if ($ce->{language} !~ /^en/) {
-		print CGI::script(
-			{
-				src => getAssetURL(
-					$ce, 'node_modules/flatpickr/dist/l10n/' . ($ce->{language} =~ s/^(..).*/$1/gr) . '.js'
-				),
-				defer => undef
-			},
-			''
-		);
-	}
-	print CGI::script(
-		{
-			src   => getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
-			defer => undef
-		},
-		''
-	);
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/DatePicker/datepicker.js'), defer => undef }, '');
-
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'),         defer => undef }, '');
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/ProblemSetList/problemsetlist.js'), defer => undef }, '');
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/ShowHide/show_hide.js'),            defer => undef }, '');
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/SelectAll/selectall.js'),           defer => undef }, '');
-
-	return '';
 }
 
 1;
-
-=head1 AUTHOR
-
-Written by Robert Van Dam, toenail (at) cif.rochester.edu
-
-=cut

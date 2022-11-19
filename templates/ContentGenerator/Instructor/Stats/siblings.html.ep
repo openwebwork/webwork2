@@ -1,0 +1,58 @@
+% # Note that this template is used by both WeBWorK::ContentGenerator::Instructor::Stats and
+% # WeBWorK::ContentGenerator::Instructor::StudentProgress.
+%
+% use WeBWorK::Utils qw(format_set_name_display);
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	% last;
+% }
+%
+% my $courseID = $urlpath->arg('courseID');
+%
+<div class="info-box" id="fisheye">
+	<h2><%= $header %></h2>
+	% if ($cg->{type} eq 'student') {
+		<ul class="nav flex-column problem-list">
+			% for (@{ $cg->{student_records} }) {
+				<li class="nav-item">
+					<%= tag 'a',
+						$_->user_id eq $cg->{studentID}
+						? (class => 'nav-link active')
+						: (
+							href => $cg->systemLink($urlpath->newFromModule(
+								$urlpath->module, $c,
+								courseID => $courseID,
+								statType => 'student',
+								userID   => $_->user_id
+							)),
+							class => 'nav-link'
+						), begin =%>
+						<%= $_->last_name =%>, <%= $_->first_name %> (<%= $_->user_id %>)
+					<% end =%>
+				</li>
+			% }
+		</ul>
+	% } else {
+		<ul class="nav flex-column problem-list" dir="ltr">
+			% for (sort $db->listGlobalSets) {
+				<li class="nav-item">
+					<%= tag 'a',
+						defined $cg->{setID} && $_ eq $cg->{setID} ? (class => 'nav-link active')
+						: (
+							href => $cg->systemLink(
+								$urlpath->newFromModule(
+									$urlpath->module, $c,
+									courseID => $courseID,
+									setID    => $_,
+									statType => 'set',
+								),
+								params => param('filter') ? { filter => param('filter') } : {}
+							),
+							class => 'nav-link'
+						),
+						format_set_name_display($_) =%>
+				</li>
+			% }
+		</ul>
+	% }
+</div>

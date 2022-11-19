@@ -1,0 +1,137 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for css => begin
+	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') =%>
+	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css') =%>
+% end
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'node_modules/luxon/build/global/luxon.min.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.js'), defer => undef =%>
+	% if ($ce->{language} !~ /^en/) {
+		<%= javascript
+			getAssetURL($ce, 'node_modules/flatpickr/dist/l10n/' . ($ce->{language} =~ s/^(..).*/$1/gr) . '.js'),
+			defer => undef =%>
+	% }
+	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
+		defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/apps/DatePicker/datepicker.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'),         defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/apps/ProblemSetList/problemsetlist.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/apps/ShowHide/show_hide.js'),            defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/apps/SelectAll/selectall.js'),           defer => undef =%>
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to access instructor tools.') %></div>
+	% last;
+% }
+%
+% if ($cg->{editMode} && !$authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to modify homework sets.') %></div>
+	% last;
+% }
+%
+% if ($cg->{exportMode} && !$authz->hasPermissions(param('user'), 'modify_set_def_files')) {
+	<div class="alert alert-danger p-1 mb-0">
+		<%= maketext('You are not authorized to modify set definition files.') =%>
+	</div>
+	% last;
+% }
+%
+<button type="button" id="show_hide" class="btn btn-info mb-2">
+	<%= maketext('Show/Hide Site Description') =%>
+</button>
+<p id="site_description" style="display:none">
+	<em>
+		<%= maketext(
+			'This is the homework sets editor page where you can view and edit the homework sets that exist in this '
+				. 'course and the problems that they contain. The top of the page contains forms which allow you to '
+				. 'filter which sets to display in the table, sort the sets in a chosen order, edit homework sets, '
+				. 'publish homework sets, import/export sets from/to an external file, score sets, or create/delete '
+				. 'sets.  To use, please select the action you would like to perform, enter in the relevant '
+				. 'information in the fields below, and hit the "Take Action!" button at the bottom of the form.  The '
+				. 'bottom of the page contains a table displaying the sets and several pieces of relevant information. '
+				. 'The Edit Set Data field in the table contains checkboxes for selection and a link to the set data '
+				. 'editing page.  The cells in the Edit Problems fields contain links which take you to a page where '
+				. 'you can edit the containing problems, and the cells in the edit assigned users field contains links '
+				. 'which take you to a page where you can edit what students the set is assigned to.'
+		) =%>
+	</em>
+</p>
+%
+<%= form_for $cg->systemLink($urlpath, authen => 0), method => 'post',
+	id => 'problemsetlist', name => 'problemsetlist', class  => 'font-sm', begin =%>
+	<%= $cg->hidden_authen_fields =%>
+	%
+	% # Show state data
+	% if (@{ $cg->{visibleSetIDs} }) {
+		% for (@{ $cg->{visibleSetIDs} }) {
+			<%= hidden_field visible_sets => $_ =%>
+		% }
+	% } else {
+		<%= hidden_field no_visible_sets => '1' =%>
+	% }
+	% if (@{ $cg->{prevVisibleSetIDs} }) {
+		% for (@{ $cg->{prevVisibleSetIDs} }) {
+			<%= hidden_field prev_visible_sets => $_ =%>
+		% }
+	% } else {
+		<%= hidden_field no_prev_visible_sets => '1' =%>
+	% }
+	<%= hidden_field editMode => $cg->{editMode} =%>
+	<%= hidden_field exportMode => $cg->{exportMode} =%>
+	<%= hidden_field primarySortField => $cg->{primarySortField} =%>
+	<%= hidden_field secondarySortField => $cg->{secondarySortField} =%>
+	%
+	% if ($cg->{editMode}) {
+		<p><b><%= maketext('Any changes made below will be reflected in the set for ALL students.') =%></b></p>
+	% }
+	%
+	% # Output action forms
+	% my $default_choice;
+	%
+	% for my $actionID (@$formsToShow) {
+		% # Check permissions
+		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
+		%
+		% my $active        = '';
+		% unless ($default_choice) { $active = ' active'; $default_choice = $actionID; }
+		%
+		% content_for 'tab-list' => begin
+			<li class="nav-item" role="presentation">
+				<%= link_to maketext($formTitles->{$actionID}) => "#$actionID",
+					class           => "nav-link action-link$active",
+					id              => "$actionID-tab",
+					role            => 'tab',
+					data            => { action => $actionID, bs_toggle => 'tab', bs_target => "#$actionID" },
+					'aria-controls' => $actionID,
+					'aria-selected' => $active ? 'true' : 'false' =%>
+			</li>
+		% end
+		% content_for 'tab-content' => begin
+			<div class="tab-pane fade mb-2 <%= $active ? " show$active" : '' %>" id="<%= $actionID %>"
+				role="tabpanel" aria-labelledby="<%= $actionID %>-tab">
+				<%= include "ContentGenerator/Instructor/ProblemSetList/${actionID}_form" =%>
+			</div>
+		% end
+	% }
+	%
+	<%= hidden_field action => $default_choice, id => 'current_action' =%>
+	<div>
+		<ul class="nav nav-tabs mb-2" role="tablist"><%= content 'tab-list' =%></ul>
+		<div class="tab-content"><%= content 'tab-content' %></div>
+	</div>
+	<div>
+		<%= submit_button maketext('Take Action!'), id => 'take_action', class => 'btn btn-primary mb-3' =%>
+	</div>
+	%
+	<p class="mb-2">
+		<%= maketext('Showing [_1] out of [_2] sets.',
+			scalar @{ $cg->{visibleSetIDs} },
+			scalar @{ $cg->{allSetIDs} }
+		) =%>
+	</p>
+	%
+	<%= include 'ContentGenerator/Instructor/ProblemSetList/set_list_table' =%>
+<% end =%>

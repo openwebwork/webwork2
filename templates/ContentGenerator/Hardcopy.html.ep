@@ -1,0 +1,56 @@
+% my $perm_view_errors = $authz->hasPermissions(param('user'), 'download_hardcopy_view_errors');
+%
+% if ($cg->has_errors) {
+	% my $file_path     = $cg->{file_path};
+	% my %temp_file_map = %{ $cg->{temp_file_map} // {} };
+	%
+	% if ($perm_view_errors) {
+		<p><%= maketext('Errors occured while generating hardcopy:') %></p>
+		<ul>
+			% for (@{ $cg->get_errors }) {
+				<li><%= $_ %></li>
+			% }
+		</ul>
+	% }
+	%
+	% if ($file_path) {
+		<p>
+			<%= maketext(
+				'A hardcopy file was generated, but it may not be complete or correct. Please check that no problems '
+					. 'are missing and that they are all legible. If not, please inform your instructor.') =%>
+			<br>
+			<%= link_to(
+				maketext('Download Hardcopy') => $cg->systemLink(
+					$urlpath->newFromModule($urlpath->module, $c, courseID => $urlpath->arg('courseID')),
+					params => { tempFilePath => $file_path }
+				)
+			) =%>
+		</p>
+	% } else {
+		<p>
+			<%= maketext(
+				'WeBWorK was unable to generate a paper copy of this homework set.  Please inform your instructor.'
+			) =%>
+		</p>
+	% }
+	%
+	% if ($perm_view_errors && keys %temp_file_map) {
+		<p>
+			<%= maketext('You can also examine the following temporary files: ') =%>
+			<%= c(
+				map {
+					link_to $_ => $cg->systemLink(
+						$urlpath->newFromModule($urlpath->module, $c, courseID => $urlpath->arg('courseID')),
+						params => { tempFilePath => $temp_file_map{$_} }
+					)
+				} keys %temp_file_map
+			)->join(', ') =%>
+		</p>
+	% }
+	<hr>
+% }
+%
+% # don't display the retry form if there are errors and the user doesn't have permission to view the errors.
+% unless ($cg->has_errors && !$perm_view_errors) {
+	<%= $cg->display_form =%>
+% }

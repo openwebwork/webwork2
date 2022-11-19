@@ -229,7 +229,7 @@ if (argv.useCDN || process.env.USE_CDN) {
 // Set up the watcher.
 if (argv.watchFiles) console.log('\x1b[32mEstablishing watches and performing initial build.\x1b[0m');
 chokidar.watch(['js/apps', 'themes'], {
-	ignored: /\.min\.(js|css)$/,
+	ignored: /layouts|\.min\.(js|css)$/,
 	cwd: __dirname, // Make sure all paths are given relative to the htdocs directory.
 	usePolling: true, // Needed to get changes to symlinks.
 	interval: 500,

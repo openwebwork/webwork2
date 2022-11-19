@@ -1,0 +1,28 @@
+% use WeBWorK::Utils::CourseManagement qw(listCourses);
+%
+% my $coursesDir = $ce->{webworkDirs}{courses};
+% my @courseIDs = listCourses($ce);
+%
+<p><%= maketext('Welcome to WeBWorK!') %></p>
+%
+% if ((grep { $_ eq 'admin' } @courseIDs) && !-f "$coursesDir/admin/hide_directory") {
+	<p>
+		<%=	link_to maketext('Course Administration') => $cg->systemLink(
+			$urlpath->newFromModule('WeBWorK::ContentGenerator::ProblemSets', $c, courseID => 'admin'),
+			authen => 0) =%>
+	</p>
+% }
+%
+<h2><%= maketext('Courses') %></h2>
+%
+<ul class="courses-list">
+	% for my $courseID (sort { lc($a) cmp lc($b) } @courseIDs) {
+		% next if $courseID eq 'admin';                        # Already shown above.
+		% next if -f "$coursesDir/$courseID/hide_directory";
+		<li>
+			<%= link_to $courseID =~ s/_/ /gr => $cg->systemLink(
+				$urlpath->newFromModule('WeBWorK::ContentGenerator::ProblemSets', $c, courseID => $courseID),
+				authen => 0) =%>
+		</li>
+	% }
+</ul>

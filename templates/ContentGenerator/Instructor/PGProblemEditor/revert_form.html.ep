@@ -1,0 +1,5 @@
+% if ($cg->{file_type} ne 'course_info' && !-r $cg->{editFilePath}) {
+	<%= maketext('Error: The original file [_1] cannot be read.', $cg->{editFilePath}) =%>
+% } elsif (defined $cg->{tempFilePath} && -e $cg->{tempFilePath}) {
+	<%== maketext('Revert to [_1]', tag('span', dir => 'ltr', $cg->shortPath($cg->{editFilePath}))) =%>
+%}

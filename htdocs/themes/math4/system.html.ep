@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html <%== $cg->output_course_lang_and_dir %>>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+%
+% ################################################################################
+% # WeBWorK Online Homework Delivery System
+% # Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+% #
+% # This program is free software; you can redistribute it and/or modify it under
+% # the terms of either: (a) the GNU General Public License as published by the
+% # Free Software Foundation; either version 2, or (at your option) any later
+% # version, or (b) the "Artistic License" which comes with this package.
+% #
+% # This program is distributed in the hope that it will be useful, but WITHOUT
+% # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+% # Artistic License for more details.
+% ################################################################################
+%
+<link rel="icon" type="x-image/icon"
+	href="<%= $cg->url({ type => 'webwork', name => 'htdocs', file => 'images/favicon.ico' }) %>">
+%
+% # CSS Loads
+<%= stylesheet $cg->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
+<%= stylesheet $cg->url({
+	type => 'webwork', name => 'htdocs',
+	file => 'node_modules/@fortawesome/fontawesome-free/css/all.min.css'
+}) =%>
+<%= stylesheet $cg->url({ type => 'webwork', name => 'theme', file => 'math4.css' }) =%>
+<%= content 'css' =%>
+% if ($cg->exists_theme_file('math4-overrides.css')) {
+	<%= stylesheet $cg->url({ type => 'webwork', name => 'theme', file => 'math4-overrides.css' }) =%>
+% }
+%
+% # Webwork configuration for javascript
+<script>const webworkConfig = { webwork_url: '<%= $cg->webwork_url %>' };</script>
+%
+% # JS Loads
+<%= javascript $cg->url({ type => 'webwork', name => 'htdocs', file => 'js/apps/MathJaxConfig/mathjax-config.js' }),
+	defer => undef =%>
+<%= javascript $cg->url({ type => 'webwork', name => 'htdocs', file => 'node_modules/mathjax/es5/tex-svg.js' }),
+	id => 'MathJax-script', defer => undef =%>
+<%= javascript $cg->url({ type => 'webwork', name => 'htdocs', file => 'node_modules/jquery/dist/jquery.min.js' }) %>
+<%= javascript $cg->url({
+	type => 'webwork', name => 'htdocs',
+	file => 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'
+	}), defer => undef =%>
+<%= javascript $cg->url({ type => 'webwork', name => 'theme', file => 'math4.js' }), defer => undef =%>
+<%= content 'js' =%>
+% if ($cg->exists_theme_file('math4-overrides.js')) {
+	<%= javascript $cg->url({ type => 'webwork', name => 'theme', file => 'math4-overrides.js' }), defer => undef =%>
+% }
+%
+% if ($cg->can('head')) {
+	<%== $cg->head =%>
+% }
+%
+<title><%= $cg->path({ style => 'text', text => ' : ', textonly => '1' }) %></title>
+</head>
+%
+<body>
+<%= link_to 'Skip to main content' => '#page-title', id => 'stmc-link', class => 'sr-only sr-only-focusable' =%>
+%
+<div class="container-fluid">
+	% # Header
+	<div id="masthead" class="row" role="banner">
+		<div class="col-md-2 webwork_logo"><%= $cg->webwork_logo %></div>
+		<div class="col-md-6 institution_logo"><%= $cg->institution_logo %></div>
+		<div id="login-status" class="col-md-4"><%= include 'ContentGenerator/Base/login_status' %></div>
+	</div>
+	% # Breadcrumb
+	<div id="breadcrumb-row" class="row my-2">
+		<div class="col-12 d-flex align-items-center">
+			% if ($cg->can('links') || $cg->can('siblings') || $cg->can('options')) {
+				<button type="button" class="btn btn-secondary" id="toggle-sidebar">
+					<span id="toggle-sidebar-icon">
+						<i class="icon fas fa-chevron-left" aria-hidden="true" data-alt="close sidebar"></i>
+					</span>
+				</button>
+			% }
+			<nav id="breadcrumb-navigation" aria-label="breadcrumb navigation" class="w-100">
+				<ol class="breadcrumb">
+					<%= $cg->path({ style => 'bootstrap', text => '' }) =%>
+				</ol>
+			</nav>
+		</div>
+	</div>
+	<div id="body-row" class="d-flex">
+		% # Navigation
+		% if ($cg->can('links') || $cg->can('siblings') || $cg->can('options')) {
+			<div id="site-navigation" class="d-flex flex-column" role="navigation" aria-label="main navigation">
+				% if ($cg->can('links')) {
+					<div id="site-links" class="bg-light"><%= $cg->links %></div>
+				% }
+				% if ($cg->can('siblings')) {
+					<div id="siblings"><%= $cg->siblings %></div>
+				% }
+				% if ($cg->can('options')) {
+					<div id="options" class="info-box"><%= $cg->options %></div>
+				% }
+			</div>
+		% }
+		%
+		% # Main Content Area
+		<div id="content" class="<%=
+			$cg->can('links') || $cg->can('siblings') || $cg->can('options')
+				? 'flex-grow-1'
+				: 'flex-grow-1 toggle-width' %>">
+			%
+			% # Navigation, e.g.: Prev, Up, Next for homeworks
+			% if ($cg->can('nav')) {
+				<%= $cg->nav({ style => 'buttons', separator => '' }) =%>
+			% }
+			%
+			% # Page Title
+			% if ($cg->can('title')) {
+				<div class="row">
+					<div class="col-12">
+						<h1 id="page-title" class="page-title"><%== $cg->title %></h1>
+					</div>
+				</div>
+			% }
+			%
+			% # Message for the user
+			% if ($cg->can('message')) {
+				<div id="message" class="message"><%= $cg->message %></div>
+			% }
+			%
+			% # Indicate presence of perl warnings
+			% if ($cg->have_warnings) {
+				<div class="row g-0">
+					<div id="alert-error" class="col-12 alert alert-danger"><%== $cg->warningMessage %></div>
+				</div>
+			% }
+			%
+			% # Display the page body.
+			<div class="row">
+				<div class="body <%= $cg->can('info') ? 'col-md-8' : 'col-12' %>">
+					<%= content =%>
+				</div>
+				% if ($cg->can('info')) {
+					<div id="info-panel-right" class="col-md-4 mb-md-0 mb-2 order-md-last order-first">
+						<div class="info-box">
+							<%= $cg->info =%>
+						</div>
+					</div>
+				% }
+			</div>
+			%
+			% if ($cg->have_warnings) {
+				<div id="warnings" class="Warnings alert alert-danger mt-2"><%= $cg->warnings %></div>
+			% }
+			% if ($cg->can('message')) {
+				<div id="message_bottom" class="message"><%= $cg->message %></div>
+			% }
+		</div>
+	</div>
+</div>
+%
+% # Footer
+<div id="footer" role="contentinfo"><%= include 'ContentGenerator/Base/footer' %></div>
+%
+</body>
+</html>

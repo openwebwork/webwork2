@@ -1,0 +1,100 @@
+% my $courseName = $urlpath->arg('courseID');
+%
+% my $statusClass = $ce->status_abbrev_to_name($user->status);
+%
+<tr>
+	% unless ($cg->{editMode} || $cg->{passwordMode}) {
+		% # Select checkboxes
+		<td>
+			<%= check_box selected_users => $user->user_id, id => $user->user_id . '_checkbox',
+				class => 'form-check-input', $userSelected ? (checked => undef) : () =%>
+		</td>
+		% # User id
+		<td>
+			<div class="label-with-edit-icon">
+				% # Make the user id the label for the select user checkbox.
+				<%= label_for $user->user_id . '_checkbox', begin =%>
+					% if (!$authz->hasPermissions(param('user'), 'become_student')) {
+						<%= $user->user_id =%>
+					% } else {
+						<%= link_to $user->user_id => $cg->systemLink(
+							$urlpath->new(type => 'set_list', args => { courseID => $courseName }),
+							params => { effectiveUser => $user->user_id }
+						) =%>
+					% }
+				<% end =%>
+				<%= link_to $cg->systemLink(
+						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName }),
+						params => { editMode => 1, visible_users => $user->user_id }
+					), begin =%>
+					<i class="icon fas fa-pencil-alt" aria-hidden="true"
+						data-alt="<%= maketext('Link to Edit Page for [_1]', $user->user_id) %>">
+					</i>
+				% end
+			</div>
+		</td>
+		% # Login Status
+		<td>
+			% if (
+				% $db->existsKeyWhere({
+					% user_id => $user->user_id,
+					% timestamp => { '>=' => time - $ce->{sessionKeyTimeout} }
+				% })
+			% )
+			% {
+				<b><%= maketext('Active') %></b>
+			% } else {
+				<em><%= maketext('Inactive') %></em>
+			% }
+		</td>
+	% }
+	%
+	% if ($cg->{passwordMode}) {
+		% # New password field
+		<td>
+			% if ($user->user_id eq param('user')) {
+				% # Don't allow a professor to change their own password from this form.
+				<div class="alert alert-danger px-1 py-0 m-0">
+					<%= maketext('You may not change your own password here!') =%>
+				</div>
+			% } else {
+				% my $fieldName = 'user.' . $user->user_id . '.new_password';
+				% param($fieldName, undef);
+				<%= text_field $fieldName => '', id => "${fieldName}_id", 'aria-labelledby' => 'new_password_header',
+					size => 14, class => 'form-control form-control-sm d-inline w-auto' =%>
+			% }
+		</td>
+		% # User ID
+		<td><div class="<%= $statusClass %>"><%= $user->user_id %></div></td>
+	% } elsif ($cg->{editMode}) {
+		% # User ID ("edit sets assigned to user" link)
+		<td>
+			<%= link_to $user->user_id => $cg->systemLink($urlpath->new(
+				type => 'instructor_user_detail',
+				args => { courseID => $courseName, userID   => $user->user_id }
+			)) =%>
+		</td>
+	% } else {
+		% # User ID ("edit sets assigned to user" link)
+		<td>
+			% my $sets = $db->countUserSets($user->user_id);
+			% if (!$authz->hasPermissions(param('user'), 'assign_problem_sets')) {
+				<%= $sets =%>/<%= $cg->{totalSets} =%>
+			% } else {
+				<%= link_to "$sets/$cg->{totalSets}" => $cg->systemLink($urlpath->new(
+					type => 'instructor_user_detail',
+					args => { courseID => $courseName, userID   => $user->user_id }
+				)) =%>
+			% }
+		</td>
+	% }
+	% # User Fields
+	% for my $field ($user->NONKEYFIELDS, 'permission') {
+		% next unless defined $fieldProperties->{$field};
+		<td>
+			<div class="<%= $statusClass %>">
+			   	<%= include 'ContentGenerator/Instructor/UserList/user_list_field', user => $user, field => $field =%>
+			</div>
+		</td>
+	% }
+</tr>

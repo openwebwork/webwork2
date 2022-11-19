@@ -14,13 +14,16 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::ProctoredGatewayQuiz;
-use base qw(WeBWorK::ContentGenerator::GatewayQuiz);
+use parent qw(WeBWorK::ContentGenerator::GatewayQuiz);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::ProctoredGatewayQuiz - 
+WeBWorK::ContentGenerator::ProctoredGatewayQuiz -
 this is a wrapper for GatewayQuiz.pm and has no content
 
 =cut
+
+use strict;
+use warnings;
 
 1;

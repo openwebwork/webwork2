@@ -1,0 +1,46 @@
+% # Note that this template is used by both WeBWorK::ContentGenerator::Instructor::Stats and
+% # WeBWorK::ContentGenerator::Instructor::StudentProgress.
+%
+% use WeBWorK::Utils qw(format_set_name_display);
+%
+% my $courseID = $urlpath->arg('courseID');
+%
+<div class="row">
+	<div class="col-lg-5 col-sm-6 mb-2">
+		<div class="card h-100">
+			<div class="card-body p-2">
+				<h2 class="card-title text-center fs-3"><%= $set_header %></h2>
+				<ul dir="ltr">
+					% for ($db->listGlobalSetsWhere({}, 'set_id')) {
+						<li>
+							<%= link_to format_set_name_display($_->[0]) =>
+								$cg->systemLink($urlpath->newFromModule(
+									$urlpath->module, $c, courseID => $courseID, statType => 'set', setID => $_->[0]
+								)) =%>
+						</li>
+					% }
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="col-lg-5 col-sm-6 mb-2">
+		<div class="card h-100">
+			<div class="card-body p-2">
+				<h2 class="card-title text-center fs-3"><%= $student_header %></h2>
+				<ul>
+					% for (@{ $cg->{student_records} }) {
+						<li>
+							<%= link_to $_->last_name . ', ' . $_->first_name . ' (' . $_->user_id . ')' =>
+								$cg->systemLink($urlpath->newFromModule(
+									$urlpath->module, $c,
+									courseID => $courseID,
+									statType => 'student',
+									userID   => $_->user_id
+								)) =%>
+						</li>
+					% }
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>

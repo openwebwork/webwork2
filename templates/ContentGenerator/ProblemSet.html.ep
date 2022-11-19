@@ -1,0 +1,64 @@
+% use WeBWorK::Utils qw(before between);
+%
+% if ($cg->{invalidSet}) {
+	<div class="alert alert-danger">
+		<p class="mb-3">
+			<%= maketext(
+				'The selected problem set ([_1]) is not a valid set for [_2].', $urlpath->arg('setID'),
+				param('effectiveUser')
+			) =%>
+		</p>
+		<p class="mb-0"><%== $cg->{invalidSet} %></p>
+	</div>
+	% last;
+% }
+%
+% my $set = $cg->{set};
+%
+% if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+	% && $set->enable_reduced_scoring
+	% && $set->reduced_scoring_date
+	% && $set->reduced_scoring_date != $set->due_date
+% ) {
+	% my $reduced_scoring_date      = $set->reduced_scoring_date;
+	% my $reducedScoringPerCent     = int(100 * $ce->{pg}{ansEvalDefaults}{reducedScoringValue} + .5);
+	%
+	% if (before($reduced_scoring_date)) {
+		<div class="alert alert-warning mb-3">
+			<%= maketext(
+				'After the reduced scoring period begins all work counts for [_1]% of its value.',
+				$reducedScoringPerCent
+			) =%>
+		</div>
+	% } elsif (between($reduced_scoring_date, $set->due_date)) {
+		<div class="alert alert-warning mb-3">
+			<%= maketext(
+				'This set is in its reduced scoring period.  All work counts for [_1]% of its value.',
+				$reducedScoringPerCent
+			) =%>
+		</div>
+	% } else {
+		<div class="alert alert-warning mb-3">
+			<%= maketext(
+				'This set had a reduced scoring period that started on [_1] and ended on [_2].  '
+					. 'During that period all work counted for [_3]% of its value.',
+				$cg->formatDateTime($reduced_scoring_date), $cg->formatDateTime($set->due_date), $reducedScoringPerCent
+			) =%>
+		</div>
+	% }
+% }
+%
+<%= $set->assignment_type =~ /gateway/ ? $cg->gateway_body : $cg->problem_list =%>
+%
+<div class="mb-3">
+	<%= $cg->feedbackMacro(
+		module             => $urlpath->module,
+		set                => $set->set_id,
+		problem            => '',
+		displayMode        => $cg->{displayMode},
+		showOldAnswers     => '',
+		showCorrectAnswers => '',
+		showHints          => '',
+		showSolutions      => '',
+	) =%>
+</div>

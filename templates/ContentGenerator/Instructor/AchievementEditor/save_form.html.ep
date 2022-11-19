@@ -1,0 +1,3 @@
+% if (-w $cg->{sourceFilePath}) {
+	<b><%== maketext('Save [_1]', tag('b', $cg->shortPath($cg->{sourceFilePath}))) %></b>
+% }

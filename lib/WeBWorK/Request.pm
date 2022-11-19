@@ -23,55 +23,38 @@ Mojolicious::Controller with additional WeBWorK-specific fields.
 
 =cut
 
-use strict;
-use warnings;
-
 use Encode;
 
 use WeBWorK::Localize;
 
-=head1 CONSTRUCTOR
-
-=over
-
-=item WeBWorK::Request->new($controller)
-
-Creates a new WeBWorK::Request. A Mojolicious::Controller object must be passed.
-
-=back
-
-=cut
-
-sub new {
-	my ($invocant, $controller) = @_;
-	my $class = ref $invocant || $invocant;
-	# Construct the superclass instance
-	my $self = $controller;
-	return bless $self, $class;
-}
-
 # The Mojolicous::Controller param method does not work quite the same as the previous WeBWorK::Request method did. So
 # this override method emulates the old behavior.
-sub param {
-	my ($self, $name, $val) = @_;
-
+# FIXME: This override should be dropped and the Mojolicious::Controller param and every_param methods used directly.
+# Mojolicious already keeps a cache of parameter values and also allows setting of parameters.  So everything done here
+# is redundant.
+sub param ($self, $name = undef, $val = undef) {
 	if (!defined $self->{paramcache}) {
-		for my $name (@{ $self->SUPER::req->params->names }) {
-			$self->{paramcache}{$name} = $self->SUPER::req->every_param($name);
+		for my $name (@{ $self->req->params->names }) {
+			$self->{paramcache}{$name} = $self->req->every_param($name);
 		}
 	}
 
 	return keys %{ $self->{paramcache} } unless $name;
 
-	if (defined $val) {
-		if (ref $val eq 'ARRAY') {
-			$self->{paramcache}{$name} = [@$val];    # make a copy
+	if (@_ == 3) {
+		if (!defined $val) {
+			$self->{paramcache}{$name} = [];
+		} elsif (ref $val eq 'ARRAY') {
+			$self->{paramcache}{$name} = [@$val];    # Make a copy
 		} else {
 			$self->{paramcache}{$name} = [$val];
 		}
+		# Set the Mojo::Message::Request param value to the same thing as the paramcache value.
+		# This ensures that the values set via this method are picked up in forms.
+		$self->req->param($name, $self->{paramcache}{$name});
 	}
 	return unless exists $self->{paramcache}{$name};
-	return wantarray ? @{ $self->{paramcache}{$name} } : $self->{paramcache}{$name}->[0];
+	return wantarray ? @{ $self->{paramcache}{$name} } : $self->{paramcache}{$name}[0];
 }
 
 =head1 METHODS
@@ -82,65 +65,69 @@ sub param {
 
 Return the course environment (WeBWorK::CourseEnvironment) associated with this
 request. If $new is specified, set the course environment to $new before
-returning the value.
+returning the value.  In this case the value of $new is also saved to the stash
+as 'ce'.  This means that this value is available as $ce in the templates.
 
 =cut
 
-sub ce {
-	my ($self, $new) = @_;
-	$self->{ce} = $new if defined $new;
+sub ce ($self, $new = undef) {
+	$self->stash->{ce} = $self->{ce} = $new if defined $new;
 	return $self->{ce};
 }
 
 =item $r->db([$new])
 
 Return the database (WeBWorK::DB) associated with this request. If $new is
-specified, set the database to $new before returning the value.
+specified, set the database to $new before returning the value.  In this case
+the value of $new is also saved to the stash as 'db'.  This means that this is
+available as $db in the templates.
 
 =cut
 
-sub db {
-	my ($self, $new) = @_;
-	$self->{db} = $new if defined $new;
+sub db ($self, $new = undef) {
+	$self->stash->{db} = $self->{db} = $new if defined $new;
 	return $self->{db};
 }
 
 =item $r->authen([$new])
 
 Return the authenticator (WeBWorK::Authen) associated with this request. If $new
-is specified, set the authenticator to $new before returning the value.
+is specified, set the authenticator to $new before returning the value.  In this
+case the value of $new is also saved to the stash as 'authen'.  This means that
+this value is available as $authen in the templates.
 
 =cut
 
-sub authen {
-	my ($self, $new) = @_;
-	$self->{authen} = $new if defined $new;
+sub authen ($self, $new = undef) {
+	$self->stash->{authen} = $self->{authen} = $new if defined $new;
 	return $self->{authen};
 }
 
 =item $r->authz([$new])
 
 Return the authorizer (WeBWorK::Authz) associated with this request. If $new is
-specified, set the authorizer to $new before returning the value.
+specified, set the authorizer to $new before returning the value.  In this case
+the value of $new is also saved to the stash as 'authz'.  This means that this
+value is available as $authz in the templates.
 
 =cut
 
-sub authz {
-	my ($self, $new) = @_;
-	$self->{authz} = $new if defined $new;
+sub authz ($self, $new = undef) {
+	$self->stash->{authz} = $self->{authz} = $new if defined $new;
 	return $self->{authz};
 }
 
 =item urlpath([$new])
 
 Return the URL path (WeBWorK::URLPath) associated with this request. If $new is
-specified, set the URL path to $new before returning the value.
+specified, set the URL path to $new before returning the value.  In this case
+the value of $new is also saved to the stash as 'urlpath'.  This means that this
+value is available as $urlpath in the templates.
 
 =cut
 
-sub urlpath {
-	my ($self, $new) = @_;
-	$self->{urlpath} = $new if defined $new;
+sub urlpath ($self, $new = undef) {
+	$self->stash->{urlpath} = $self->{urlpath} = $new if defined $new;
 	return $self->{urlpath};
 }
 
@@ -153,23 +140,14 @@ the value.
 
 =cut
 
-sub submitTime {
-	my ($self, $new) = @_;
-	$self->{submitTime} = $new if defined $new;
+sub submitTime ($self, $new = undef) {
+	$self->stash->{submitTime} = $self->{submitTime} = $new if defined $new;
 	return $self->{submitTime};
 }
 
-sub language_handle {
-	my ($self, $new) = @_;
+sub language_handle ($self, $new = undef) {
 	$self->{language_handle} = $new if defined $new;
 	return $self->{language_handle};
-}
-
-sub maketext {
-	my ($self, @args) = @_;
-	return &{ $self->{language_handle} }(@args);
-	# Comment out the above line and uncomment below to check that your strings are run through maketext.
-	# return 'xXx'.&{ $self->{language_handle} }(@_).'xXx';
 }
 
 =item Other methods
@@ -186,24 +164,20 @@ that were used previously.
 
 =cut
 
-sub uri {
-	my $self = shift;
-	return $self->SUPER::req->url->path->to_string;
+sub uri ($self) {
+	return $self->req->url->path->to_string;
 }
 
-sub headers_in {
-	my $self = shift;
-	return $self->SUPER::req->headers->to_hash;
+sub headers_in ($self) {
+	return $self->req->headers->to_hash;
 }
 
-sub useragent_ip {
-	my $self = shift;
-	return $self->SUPER::tx->remote_address;
+sub useragent_ip ($self) {
+	return $self->tx->remote_address;
 }
 
-sub remote_port {
-	my $self = shift;
-	return $self->SUPER::tx->remote_port;
+sub remote_port ($self) {
+	return $self->tx->remote_port;
 }
 
 =head1 adaptLegacyParameters
@@ -214,9 +188,7 @@ This should be deleted when the html2xml endpoint is removed.
 
 =cut
 
-sub adaptLegacyParameters {
-	my $self = shift;
-
+sub adaptLegacyParameters ($self) {
 	for ([ 'userID', 'user' ], [ 'courseName', 'courseID' ], [ 'course_password', 'passwd' ], [ 'session_key', 'key' ])
 	{
 		$self->param($_->[1], $self->param($_->[0])) if defined $self->param($_->[0]) && !defined $self->param($_->[1]);

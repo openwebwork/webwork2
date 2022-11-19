@@ -21,7 +21,7 @@ use warnings;
 
 use Data::Structure::Util qw(unbless);
 
-use WeBWorK::Debug qw(debug);
+use WeBWorK::Debug;
 
 sub getUserProblem {
 	my ($invocant, $self, $params) = @_;

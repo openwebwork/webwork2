@@ -173,6 +173,8 @@ specified, set the URL path to $new before returning the value.
 
 Return the subroutine that translates phrases (defined in WeBWorK::Localization)
 
+=back
+
 =cut
 
 1;

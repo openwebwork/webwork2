@@ -65,31 +65,6 @@
 			() => window.open(helpLink.href, helpLink.target, 'width=550,height=350,scrollbars=yes,resizable=yes'))
 	);
 
-	// Focus on an alert-danger element if one is around and focusable.
-	Array.from(document.querySelectorAll('.alert-danger')).shift()?.focus();
-
-	// ComboBox (see lib/WeBWorK/HTML/ComboBox.pm)
-	// This changes the textbox text to the currently selected option in the select menu.
-	document.querySelectorAll('.combo-box').forEach((comboBox) => {
-		const comboBoxText = comboBox.querySelector('.combo-box-text');
-		const comboBoxSelect = comboBox.querySelector('.combo-box-select');
-
-		if (!comboBoxText || !comboBoxSelect) return;
-
-		// Try to select best option in select menu as user types in the textbox.
-		comboBoxText.addEventListener('keyup', () => {
-			let i = 0;
-			for (;
-				i < comboBoxSelect.options.length && comboBoxSelect.options[i].value.indexOf(comboBoxText.value) != 0;
-				++i) {}
-			comboBoxSelect.selectedIndex = i;
-		});
-
-		// Set the textbox text to be same as that of select menu
-		comboBoxSelect.addEventListener('change',
-			() => comboBoxText.value = comboBoxSelect.options[comboBoxSelect.selectedIndex].value);
-	});
-
 	// Turn help boxes into popovers
 	document.querySelectorAll('.help-popup').forEach((popover) => {
 		new bootstrap.Popover(popover, {trigger: 'hover focus'});

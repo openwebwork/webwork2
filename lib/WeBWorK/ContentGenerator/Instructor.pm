@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor;
-use base qw(WeBWorK::ContentGenerator);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -25,9 +25,9 @@ tools, providing useful utility functions.
 
 use strict;
 use warnings;
-#use CGI qw(-nosticky );
-use WeBWorK::CGI;
+
 use File::Find;
+
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(jitar_id_to_seq seq_to_jitar_id);
@@ -136,7 +136,7 @@ sub assignSetVersionToUser {
 		#    both Instructor and ContentGenerator objects have $self->{db}
 		# FIXME  it would be nice to have a better solution to this
 		my @result = assignProblemToUserSetVersion($self, $userID, $userSet, $GlobalProblem, \%groupProblems);
-		push(@results, @result) if (@result && not $set_assigned);
+		push(@results, @result) if (@result && !$set_assigned);
 	}
 
 	return @results;
@@ -153,6 +153,8 @@ sub unassignSetFromUser {
 	my $db = $self->{db};
 
 	$db->deleteUserSet($userID, $setID);
+
+	return;
 }
 
 =item assignProblemToUser($userID, $GlobalProblem, $seed)
@@ -287,6 +289,8 @@ sub unassignProblemFromUser {
 	my $db = $self->{db};
 
 	$db->deleteUserProblem($userID, $setID, $problemID);
+
+	return;
 }
 
 =back
@@ -363,6 +367,8 @@ sub unassignSetFromAllUsers {
 	foreach my $userID (@userIDs) {
 		$self->unassignSetFromUser($userID, $setID);
 	}
+
+	return;
 }
 
 =item assignAllSetsToUser($userID)
@@ -404,6 +410,8 @@ sub unassignAllSetsFromUser {
 	foreach my $setID (@setIDs) {
 		$self->unassignSetFromUser($userID, $setID);
 	}
+
+	return;
 }
 
 =back
@@ -461,6 +469,8 @@ sub unassignSetsFromUsers {
 			$self->unassignSetFromUser($userID, $setID);
 		}
 	}
+
+	return;
 }
 
 =item assignProblemToAllSetUsers($GlobalProblem)
@@ -538,7 +548,7 @@ sub addProblemToSet {
 		if ($set && $set->assignment_type eq 'jitar') {
 			my @problemIDs = $db->listGlobalProblems($setName);
 			if (@problemIDs) {
-				my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
+				my @seq = jitar_id_to_seq($problemIDs[-1]);
 				$problemID = seq_to_jitar_id($seq[0] + 1);
 			} else {
 				$problemID = seq_to_jitar_id(1);
@@ -580,61 +590,12 @@ sub addProblemToSet {
 
 =cut
 
-sub hiddenEditForUserFields {
-	my ($self, @editForUser) = @_;
-	my $return = "";
-	foreach my $editUser (@editForUser) {
-		$return .= CGI::input({ type => "hidden", name => "editForUser", value => $editUser });
-	}
-
-	return $return;
-}
-
-sub userCountMessage {
-	my ($self, $count, $numUsers) = @_;
-
-	my $message;
-	if ($count == 0) {
-		$message = CGI::em($self->r->maketext("no students"));
-	} elsif ($count == $numUsers) {
-		$message = $self->r->maketext("all students");
-	} elsif ($count == 1) {
-		$message = $self->r->maketext("1 student");
-	} elsif ($count > $numUsers || $count < 0) {
-		$message = CGI::em($self->r->maketext("an impossible number of users: [_1] out of [_2]", $count, $numUsers));
-	} else {
-		$message = $self->r->maketext("[_1] students out of [_2]", $count, $numUsers);
-	}
-
-	return $message;
-}
-
-sub setCountMessage {
-	my ($self, $count, $numSets) = @_;
-	my $r = $self->r;
-
-	my $message;
-	if ($count == 0) {
-		$message = CGI::em($r->maketext("no sets"));
-	} elsif ($count == $numSets) {
-		$message = $r->maketext("all sets");
-	} elsif ($count == 1) {
-		$message = "1 " . $r->maketext("set");
-	} elsif ($count > $numSets || $count < 0) {
-		$message = CGI::em($self->r->maketext("an impossible number of sets: [_1] out of [_2]", $count, $numSets));
-	} else {
-		$message = $count . " " . $r->maketext("sets");
-	}
-
-	return $message;
-}
-
 sub read_dir {    # read a directory
 	my $self      = shift;
 	my $directory = shift;
 	my $pattern   = shift;
-	my @files     = grep /$pattern/, WeBWorK::Utils::readDirectory($directory);
-	return sort @files;
+	my @files     = sort grep {/$pattern/} WeBWorK::Utils::readDirectory($directory);
+	return @files;
 }
 
 =back
@@ -667,7 +628,9 @@ sub loadSetDefListFile {
 			open(my $fh, "<:encoding(UTF-8)", $file)
 				or die "FATAL: Unable to open '$file'!";
 			local $/;
-			<$fh>;
+			my $contents = <$fh>;
+			close $fh;
+			$contents;
 		};
 
 		return @{ JSON->new->decode($data) };
@@ -688,9 +651,11 @@ sub getDefList {
 
 	# get_set_defs_wanted is a closure over @found_set_defs
 	my $get_set_defs_wanted = sub {
-		$File::Find::prune = 1, return
-			if $File::Find::dir =~ /^$topdir\/Library/ || $File::Find::dir =~ /^$topdir\/Contrib/;
-		$File::Find::prune = 1, return if @{ [ $File::Find::dir =~ /\//g ] } > $max_depth;
+		if ($File::Find::dir =~ /^$topdir\/Library/ || $File::Find::dir =~ /^$topdir\/Contrib/) {
+			$File::Find::prune = 1;
+			return;
+		}
+		if (@{ [ $File::Find::dir =~ /\//g ] } > $max_depth) { $File::Find::prune = 1; return; }
 		push @found_set_defs, $_ =~ s|^$topdir/?||r if m|/set[^/]*\.def$|;
 	};
 
@@ -735,7 +700,7 @@ sub getTemplateDirList {    # find all .pg files under the template tree (time c
 	my ($self) = @_;
 	my $ce     = $self->{ce};
 	my $dir    = $ce->{courseDirs}->{templates};
-	my @list   = ();
+	my @list;
 	my $wanted = sub {
 		if (-d $_) {
 			my $current = $_;
@@ -748,7 +713,8 @@ sub getTemplateDirList {    # find all .pg files under the template tree (time c
 		}
 	};
 	File::Find::find($wanted, $dir);
-	return sort @list;
+	@list = sort @list;
+	return @list;
 }
 
 =back

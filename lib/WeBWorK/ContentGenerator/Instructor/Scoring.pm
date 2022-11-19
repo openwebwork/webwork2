@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::Scoring;
-use base qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
@@ -24,11 +24,9 @@ WeBWorK::ContentGenerator::Instructor::Scoring - Generate scoring data files
 
 use strict;
 use warnings;
-#use CGI qw(-nosticky );
-use WeBWorK::CGI;
+
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readFile seq_to_jitar_id jitar_id_to_seq jitar_problem_adjusted_status wwRound x
-	format_set_name_display);
+use WeBWorK::Utils qw(readFile jitar_id_to_seq jitar_problem_adjusted_status wwRound x);
 use WeBWorK::ContentGenerator::Instructor::FileManager;
 
 our @userInfoColumnHeadings =
@@ -51,7 +49,6 @@ sub initialize {
 	return unless $authz->hasPermissions($user, "score_sets");
 
 	my @selected        = $r->param('selectedSet');
-	my $scoreSelected   = $r->param('scoreSelected');
 	my $scoringFileName = $r->param('scoringFileName') || "${courseName}_totals";
 	$scoringFileName =~ s/\.csv\s*$//;
 	$scoringFileName .= '.csv';    # must end in .csv
@@ -67,7 +64,7 @@ sub initialize {
 	$self->{ra_set_ids}     = [ map { $_->set_id } @setRecords ];
 	$self->{rh_set_records} = { map { $_->set_id => $_ } @setRecords };
 
-	if (defined $scoreSelected && @selected && $scoringFileNameOK) {
+	if (@selected && $scoringFileNameOK) {
 
 		my @totals                = ();
 		my $recordSingleSetScores = $r->param('recordSingleSetScores');
@@ -123,161 +120,8 @@ sub initialize {
 			));
 		}
 	}
-}
 
-sub body {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $ce         = $r->ce;
-	my $authz      = $r->authz;
-	my $scoringDir = $ce->{courseDirs}->{scoring};
-	my $courseName = $urlpath->arg("courseID");
-	my $user       = $r->param('user');
-
-	my $scoringPage = $urlpath->newFromModule($urlpath->module, $r, courseID => $courseName);
-	my $scoringURL  = $self->systemLink($scoringPage, authen => 0);
-
-	my $scoringDownloadPage =
-		$urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ScoringDownload", $r, courseID => $courseName);
-
-	my $scoringFileName = $self->{scoringFileName};
-
-	# Check permissions
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		"You are not authorized to access the Instructor tools.")
-		unless $authz->hasPermissions($user, "access_instructor_tools");
-
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to score sets.")
-		unless $authz->hasPermissions($user, "score_sets");
-
-	print CGI::div(
-		{ class => 'border border-dark p-2', style => 'max-width:700px' },
-		CGI::start_form({ name => 'scoring-form', id => 'scoring-form', method => 'POST', action => $scoringURL }),
-		$self->hidden_authen_fields,
-		CGI::hidden({ name => 'scoreSelected', value => 1 }),
-		CGI::div(
-			{ class => 'row' },
-			CGI::div(
-				{ class => 'col-sm-5 mb-2' },
-				CGI::label({ for => 'selectedSet', class => 'form-label' }, $r->maketext('Selected sets:')),
-				CGI::scrolling_list({
-					name     => 'selectedSet',
-					id       => 'selectedSet',
-					values   => $self->{ra_set_ids},
-					labels   => { map { $_ => format_set_name_display($_) } @{ $self->{ra_set_ids} } },
-					defaults => [ $self->r->param('selectedSet') ],
-					size     => 10,
-					multiple => 1,
-					class    => 'form-select',
-					dir      => 'ltr'
-				})
-			),
-			CGI::div(
-				{ class => 'col-sm-7 my-sm-auto mb-2' },
-				CGI::div(
-					{ class => 'form-check' },
-					CGI::checkbox({
-						name            => 'includeIndex',
-						value           => 1,
-						label           => $r->maketext('Include Success Index'),
-						checked         => $r->param('includeIndex') // 0,
-						class           => 'form-check-input',
-						labelattributes => { class => 'form-check-label' }
-					})
-				),
-				CGI::div(
-					{ class => 'form-check' },
-					CGI::checkbox({
-						name            => 'recordSingleSetScores',
-						value           => 1,
-						label           => $r->maketext('Record Scores for Single Sets'),
-						checked         => $r->param('recordSingleSetScores') // 0,
-						class           => 'form-check-input',
-						labelattributes => { class => 'form-check-label' }
-					})
-				),
-				CGI::div(
-					{ class => 'form-check' },
-					CGI::checkbox({
-						name            => 'padFields',
-						value           => 1,
-						label           => $r->maketext('Pad Fields'),
-						checked         => $r->param('padFields') // 1,
-						class           => 'form-check-input',
-						labelattributes => { class => 'form-check-label' }
-					})
-				),
-				CGI::div(
-					{ class => 'form-check' },
-					CGI::checkbox({
-						name            => 'includePercentEachSet',
-						value           => 1,
-						label           => $r->maketext('Include percentage grades columns for all sets'),
-						checked         => $r->param('includePercentEachSet') // 1,
-						class           => 'form-check-input',
-						labelattributes => { class => 'form-check-label' }
-					})
-				)
-			)
-		),
-		CGI::div(
-			{ class => 'd-flex flex-sm-nowrap flex-wrap' },
-			CGI::input({
-				type  => 'submit',
-				value => $r->maketext('Score selected set(s) and save to:'),
-				name  => 'score-sets',
-				id    => 'score-sets',
-				class => 'btn btn-primary btn-sm me-2 mb-sm-0 mb-2'
-			}),
-			CGI::textfield({
-				name            => 'scoringFileName',
-				size            => '40',
-				value           => $scoringFileName,
-				class           => 'form-control form-control-sm',
-				aria_labelledby => 'score-sets'
-			})
-		),
-		CGI::end_form()
-	);
-
-	if ($authz->hasPermissions($user, "score_sets")) {
-		my @selected = $r->param('selectedSet');
-		if (@selected) {
-			print CGI::p($r->maketext("All of these files will also be made available for mail merge."));
-		}
-		foreach my $setID (@selected) {
-
-			my @validFiles;
-			foreach my $type ("scr", "ful") {
-				my $filename = "s$setID$type.csv";
-				my $path     = "$scoringDir/$filename";
-				push @validFiles, $filename if -f $path;
-			}
-			if (@validFiles) {
-				print CGI::h2("$setID");
-				foreach my $filename (@validFiles) {
-					#print CGI::a({href=>"../scoringDownload/?getFile=${filename}&".$self->url_authen_args}, $filename);
-					print CGI::a(
-						{ href => $self->systemLink($scoringDownloadPage, params => { getFile => $filename }) },
-						$filename);
-					print CGI::br();
-				}
-				print CGI::hr();
-			}
-		}
-		if (-f "$scoringDir/$scoringFileName") {
-			print CGI::h2($r->maketext("Totals"));
-#print CGI::a({href=>"../scoringDownload/?getFile=${courseName}_totals.csv&".$self->url_authen_args}, "${courseName}_totals.csv");
-			print CGI::a(
-				{ href => $self->systemLink($scoringDownloadPage, params => { getFile => "$scoringFileName" }) },
-				"$scoringFileName");
-			print CGI::hr();
-			print CGI::pre({ style => 'font-size:smaller' }, WeBWorK::Utils::readFile("$scoringDir/$scoringFileName"));
-		}
-	}
-
-	return "";
+	return;
 }
 
 # If, some day, it becomes possible to assign a different number of problems to each student, this code
@@ -307,17 +151,6 @@ sub scoreSet {
 
 	my $setRecord = $self->{rh_set_records}{$setID};
 	die "global set $setID not found. " unless $setRecord;
-	#my %users;
-	#my %userStudentID=();
-	#foreach my $userID ($db->listUsers()) {
-	#	my $userRecord = $db->getUser($userID); # checked
-	#	die "user record for $userID not found" unless $userID;
-	#	# FIXME: if two users have the same student ID, the second one will
-	#	# clobber the first one. this is bad!
-	#	# The key is what we'd like to sort by.
-	#	$users{$userRecord->student_id} = $userRecord;
-	#	$userStudentID{$userID} = $userRecord->student_id;
-	#}
 
 	my %Users         = %$UsersRef;            # user objects hashed on user ID
 	my @sortedUserIDs = @$sortedUserIDsRef;    # user IDs sorted by student ID
@@ -384,8 +217,6 @@ sub scoreSet {
 	for (my $i = 0; $i < @sortedUserIDs + 7; $i++) {    # 7 is how many descriptive fields there are in each column
 		push @scoringData, [];
 	}
-
-	#my @userKeys = sort keys %users; # list of "student IDs" NOT user IDs
 
 	if ($scoringItems->{header}) {
 		$scoringData[0][0] = $r->maketext("NO OF FIELDS");
@@ -536,8 +367,6 @@ sub scoreSet {
 		}
 
 		for (my $user = 0; $user < @sortedUserIDs; $user++) {
-			#my $userProblem = $userProblems{    $users{$userKeys[$user]}->user_id   };
-			#my $userProblem = $UserProblems{$sers{$userKeys[$user]}->user_id}{$problemIDs[$problem]};
 			my $userProblem = $UserProblems{ $sortedUserIDs[$user] }{ $problemIDs[$problem] };
 			unless (defined $userProblem) {  # assume an empty problem record if the problem isn't assigned to this user
 				$userProblem = $db->newUserProblem;
@@ -719,10 +548,15 @@ sub everything2normal {
 	my @result    = ();
 	my $adjstatus = 0;
 
-	# if its has adjusted status columns we need to include
-	# those as well
+	# If its has adjusted status columns we need to include those as well.
 	my $str = $self->r->maketext('ADJ STATUS');
-	if (grep(grep(/$str/, @{$_}), @everything)) {
+	if (
+		grep {
+			grep {/$str/}
+				@$_
+		} @everything
+		)
+	{
 		$adjstatus = 1;
 	}
 
@@ -771,6 +605,7 @@ sub appendColumns {
 	for (my $i = 0; $i < @a1; $i++) {
 		push @{ $a1[$i] }, @{ $a2[$i] };
 	}
+	return;
 }
 
 # Reads a CSV file and returns an array of arrayrefs, each containing a
@@ -812,6 +647,8 @@ sub writeCSV {
 		print $fh "\n";
 	}
 	close $fh;
+
+	return;
 }
 
 # As soon as backwards compatability is no longer a concern and we don't expect to have
@@ -836,9 +673,9 @@ sub writeStandardCSV {
 		print $fh "\n";
 	}
 	close $fh;
-}
 
-###
+	return;
+}
 
 # This particular unquote method unquotes (optionally) quoted strings in the
 # traditional CSV style (double-quote for literal quote, etc.)

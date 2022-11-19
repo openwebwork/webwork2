@@ -121,7 +121,7 @@ table caption {
 	}
 }
 
-#loginstatus {
+#login-status {
 	padding: 5px 5px 5px 0;
 	color: var(--ww-primary-foreground-color, white);
 	text-align: right;
@@ -375,6 +375,7 @@ h2.page-title {
 }
 
 .problem-sub-header {
+	margin-top: 0.25rem;
 	font-weight: bold;
 	font-size: 14px;
 	line-height: 1.4;
@@ -385,6 +386,15 @@ h2.page-title {
 		white-space: normal;
 		color: inherit;
 	}
+}
+
+.error-output {
+	word-wrap: break-word;
+	color: #d63384;
+	font-size: 0.875rem;
+	direction: ltr;
+	font-family: monospace;
+	font-size: 9pt;
 }
 
 /* Question nav section */
@@ -420,7 +430,7 @@ h2.page-title {
 }
 
 /* Message section */
-.Message:not(:empty) {
+.message:not(:empty) {
 	display: inline-block;
 	margin-bottom: 0.5rem;
 }
@@ -608,6 +618,15 @@ ul.courses-list {
 
 	#library_sets {
 		max-width: 50%
+	}
+
+	.browse-lib-btn,
+	.library-action-btn {
+		width: 9.3rem;
+	}
+
+	.library-panel-btn {
+		max-width: 9rem;
 	}
 }
 
@@ -936,6 +955,11 @@ span {
 			transition: none;
 			border-radius: 3px;
 		}
+	}
+
+	.problem-score,
+	.answer-part-score {
+		width: 5.5rem;
 	}
 }
 

@@ -1,0 +1,43 @@
+% if ($authen && $authen->was_verified) {
+	% my $db = stash('db');
+	%
+	% my $userID          = param('user');
+	% my $user            = $db->getUser($userID);
+	% my $effectiveUserID = param('effectiveUser');
+	% my $userName        = $user->full_name || $user->user_id;
+	%
+	% my $logoutURL = $cg->systemLink(
+		% $urlpath->newFromModule('WeBWorK::ContentGenerator::Logout', $c, courseID => $urlpath->arg('courseID'))
+	% );
+	%
+	% # This will contain any extra parameters which are needed to make
+	% # the page function properly.  This will normally be empty.
+	% my $extraStopActingParams = $c->{extraStopActingParams} // {};
+	% $extraStopActingParams->{effectiveUser} = $userID;
+	% my $stopActingURL = $cg->systemLink($urlpath, params => $extraStopActingParams);
+	%
+	% if ($effectiveUserID eq $userID) {
+		<%= maketext('Logged in as [_1].', $userName) %>
+		<%= link_to $logoutURL, class => 'btn btn-light btn-sm ms-2', begin %>
+		<%= maketext('Log Out') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true" data-alt="signout"></i>
+		<% end %>
+	% } else {
+		% my $effectiveUser = $db->getUser($effectiveUserID);
+		% my $effectiveUserName =
+			% $effectiveUser->full_name
+			% ? join(' ', $effectiveUser->full_name, '(' . $effectiveUser->user_id . ')')
+			% : $effectiveUser->user_id;
+		%
+		<%= maketext('Logged in as [_1].', $userName) %>
+		<%= link_to $logoutURL, class => 'btn btn-light btn-sm ms-2', begin %>
+		<%= maketext('Log Out') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true" data-alt="signout"></i>
+		<% end %>
+		<br>
+		<%= maketext('Acting as [_1].', $effectiveUserName) %>
+		<%= link_to $stopActingURL, class => 'btn btn-light btn-sm ms-2', begin %>
+		<%= maketext('Stop Acting') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true" data-alt="signout"></i>
+		<% end %>
+	% }
+% } else {
+	<%= maketext('Not logged in.') =%>
+% }

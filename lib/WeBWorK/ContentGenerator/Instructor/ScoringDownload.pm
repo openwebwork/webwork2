@@ -14,8 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::ScoringDownload;
-use base qw(WeBWorK::ContentGenerator::Instructor);
-use WeBWorK::ContentGenerator::Instructor::FileManager;
+use parent qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
@@ -25,6 +24,10 @@ WeBWorK::ContentGenerator::Instructor::ScoringDownload - Download scoring data f
 
 use strict;
 use warnings;
+
+# FIXME: This should be integrated into scoring.pm, and this file deleted.
+
+use WeBWorK::ContentGenerator::Instructor::FileManager;
 
 async sub pre_header_initialize {
 	my ($self)     = @_;
@@ -51,47 +54,8 @@ async sub pre_header_initialize {
 	} else {
 		$self->addbadmessage("You do not have permission to access scoring data.");
 	}
-}
 
-1;
-
-__END__
-
-# FIXME replace all crap with a call to reply_with_file
-# FIXME and then maybe merge that functionality into Scoring.pm
-sub header {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $ce         = $r->ce;
-	my $scoringDir = $ce->{courseDirs}->{scoring};
-	my $file       = $r->param('getFile');
-	if (-f "$scoringDir/$file") {
-		$r->content_type('text/comma-separated-values');
-		$r->header_out("Content-Disposition" => "attachment; filename=$file;");
-		$r->send_http_header();
-		return OK;
-	} else {
-		$self->{noContent} = 1;
-		return NOT_FOUND;
-	}
-}
-
-sub content {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $ce         = $r->ce;
-	my $authz      = $r->authz;
-	my $scoringDir = $ce->{courseDirs}->{scoring};
-	my $user       = $r->param('user');
-
-	if (!$authz->hasPermissions($user, "score_sets")) {
-		print "You do not have permission to access scoring data";
-	} else {
-		my $file = $r->param('getFile');
-		open my $fh, "<:utf8", "$scoringDir/$file";
-		print while (<$fh>);
-		close $fh;
-	}
+	return;
 }
 
 1;

@@ -1,0 +1,16 @@
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to access instructor tools') %></div>
+	% last;
+% }
+%
+% if ($cg->{type} eq 'student') {
+	% # Stats and StudentProgress share this template.
+	<%= include 'ContentGenerator/Instructor/Stats/student_stats' =%>
+% } elsif ($cg->{type} eq 'set') {
+	<%= $cg->displaySets($cg->{setID}) =%>
+% } else {
+	% # Stats and StudentProgress share this template also.
+	<%= include 'ContentGenerator/Instructor/Stats/index',
+		set_header     => maketext('View student progress by set'),
+		student_header => maketext('View student progress by student') =%>
+% }
