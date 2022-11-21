@@ -2168,14 +2168,14 @@ sub readSetDef {
 				push(
 					@problemData,
 					{
-						source_file    => $name,
-						value          => $weight,
-						max_attempts   => $attemptLimit,
-						showMeAnother  => $showMeAnother,
-						showHintsAfter => $showHintsAfter,
-						# use default since it's not going to be in the file
-						prPeriod     => $prPeriod_default,
-						continuation => $continueFlag,
+						source_file   => $name,
+						value         => $weight,
+						max_attempts  => $attemptLimit,
+						showMeAnother => $showMeAnother,
+						continuation  => $continueFlag,
+						# Use defaults for these since they are not going to be in the file.
+						prPeriod       => $prPeriod_default,
+						showHintsAfter => $showHintsAfter_default,
 					}
 				);
 			}
