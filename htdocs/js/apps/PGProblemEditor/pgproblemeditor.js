@@ -37,13 +37,11 @@
 			key: document.getElementById('hidden_key')?.value
 		};
 
-		if (!(request_object.user && request_object.courseID && request_object.key)) return;
-
 		request_object.rpc_command = 'saveFile';
 		request_object.outputFilePath = document.getElementsByName('temp_file_path')[0]?.value ?? '';
 		request_object.fileContents = webworkConfig?.pgCodeMirror?.getValue() ?? '';
 
-		if (!request_object.outputFilePath || !request_object.fileContents) return;
+		if (!request_object.outputFilePath) return;
 
 		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
 			.then((response) => response.json())
@@ -182,6 +180,8 @@
 		if (fileType === 'course_info') {
 			const contents = webworkConfig?.pgCodeMirror?.getValue();
 			if (contents) renderArea.innerHTML = contents;
+			else
+				renderArea.innerHTML = '<div class="alert alert-danger p-1 m-2 fw-bold">The file has no content.</div>';
 
 			// Typeset any math content that may be in the course info file.
 			if (window.MathJax) {

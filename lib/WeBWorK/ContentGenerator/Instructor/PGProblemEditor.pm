@@ -1600,6 +1600,9 @@ sub save_as_form {
 	my $self = shift;
 	my $r    = $self->r;
 
+	# Don't show the save as form when editing an existing course info file.
+	return '' if $self->{file_type} eq 'course_info' && -e $self->{editFilePath};
+
 	my $templatesDir  = $self->r->ce->{courseDirs}{templates};
 	my $shortFilePath = $self->{editFilePath} =~ s|^$templatesDir/||r;
 
@@ -1641,56 +1644,55 @@ sub save_as_form {
 						size  => 60,
 						value => $shortFilePath,
 						class => 'form-control form-control-sm',
-						dir   => 'ltr'
+						dir   => 'ltr',
+						# Don't allow changing the file name for course info files.
+						# The filename needs to be what is set in the course environment.
+						$self->{file_type} eq 'course_info' ? (readonly => undef) : ()
 					})
 				)
 			),
 			CGI::hidden({ name => 'action.save_as.source_file', value => $self->{editFilePath} }),
 			CGI::hidden({ name => 'action.save_as.file_type',   value => $self->{file_type} })
 		),
-		(
-			$can_add_problem_to_set ? CGI::div(
-				{ class => 'form-check' },
-				CGI::input({
-					type    => 'radio',
-					id      => 'action_save_as_saveMode_rename_id',
-					name    => 'action.save_as.saveMode',
-					value   => 'rename',
-					checked => undef,
-					class   => 'form-check-input',
-				}),
-				CGI::label(
-					{ for => 'action_save_as_saveMode_rename_id', class => 'form-check-label' },
-					$r->maketext(
-						'Replace current problem: [_1]',
-						CGI::strong(
-							CGI::span({ dir => 'ltr' }, format_set_name_display($self->{fullSetID}))
-								. "/$prettyProbNum"
-						)
+		$can_add_problem_to_set ? CGI::div(
+			{ class => 'form-check' },
+			CGI::input({
+				type    => 'radio',
+				id      => 'action_save_as_saveMode_rename_id',
+				name    => 'action.save_as.saveMode',
+				value   => 'rename',
+				checked => undef,
+				class   => 'form-check-input',
+			}),
+			CGI::label(
+				{ for => 'action_save_as_saveMode_rename_id', class => 'form-check-label' },
+				$r->maketext(
+					'Replace current problem: [_1]',
+					CGI::strong(
+						CGI::span({ dir => 'ltr' }, format_set_name_display($self->{fullSetID}))
+							. "/$prettyProbNum"
 					)
 				)
-			) : ''
-		),
-		(
-			$can_add_problem_to_set ? CGI::div(
-				{ class => 'form-check' },
-				CGI::input({
-					type  => 'radio',
-					id    => 'action_save_as_saveMode_new_problem_id',
-					name  => 'action.save_as.saveMode',
-					value => 'add_to_set_as_new_problem',
-					class => 'form-check-input',
-				}),
-				CGI::label(
-					{ for => 'action_save_as_saveMode_new_problem_id', class => 'form-check-label' },
-					$r->maketext(
-						'Append to end of [_1] set',
-						CGI::strong({ dir => 'ltr' }, format_set_name_display($self->{fullSetID}))
-					)
+			)
+		) : '',
+		$can_add_problem_to_set ? CGI::div(
+			{ class => 'form-check' },
+			CGI::input({
+				type  => 'radio',
+				id    => 'action_save_as_saveMode_new_problem_id',
+				name  => 'action.save_as.saveMode',
+				value => 'add_to_set_as_new_problem',
+				class => 'form-check-input',
+			}),
+			CGI::label(
+				{ for => 'action_save_as_saveMode_new_problem_id', class => 'form-check-label' },
+				$r->maketext(
+					'Append to end of [_1] set',
+					CGI::strong({ dir => 'ltr' }, format_set_name_display($self->{fullSetID}))
 				)
-			) : ''
-		),
-		CGI::div(
+			)
+		) : '',
+		$self->{file_type} eq 'course_info' ? '' : CGI::div(
 			{ class => 'form-check' },
 			CGI::input({
 				type  => 'radio',
@@ -1760,7 +1762,11 @@ sub save_as_handler {
 		$self->saveFileChanges($outputFilePath);
 		my $targetProblemNumber;
 
-		if ($saveMode eq 'rename' && -r $outputFilePath) {
+		if ($file_type eq 'course_info') {
+			# The saveMode is not set for course_info files as there are no such options presented in the form.
+			# So set that here so that the correct redirect is chosen below.
+			$saveMode = 'new_course_info';
+		} elsif ($saveMode eq 'rename' && -r $outputFilePath) {
 			# Modify source file path in problem.
 			if ($file_type eq 'set_header') {
 				my $setRecord = $self->r->db->getGlobalSet($self->{setID});
@@ -1869,7 +1875,11 @@ sub save_as_handler {
 	my $problemPage;
 	my $new_file_type;
 
-	if ($saveMode eq 'new_independent_problem') {
+	if ($saveMode eq 'new_course_info') {
+		$problemPage = $self->r->urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
+			$r, courseID => $self->{courseID});
+		$new_file_type = 'course_info';
+	} elsif ($saveMode eq 'new_independent_problem') {
 		$problemPage = $self->r->urlpath->newFromModule(
 			'WeBWorK::ContentGenerator::Instructor::PGProblemEditor', $r,
 			courseID  => $self->{courseID},
@@ -1917,7 +1927,7 @@ sub revert_form {
 	my $self = shift;
 	my $r    = $self->r;
 	return $r->maketext('Error: The original file [_1] cannot be read.', $self->{editFilePath})
-		unless -r $self->{editFilePath};
+		unless $self->{file_type} eq 'course_info' || -r $self->{editFilePath};
 	return '' unless defined $self->{tempFilePath} && -e $self->{tempFilePath};
 	return $r->maketext('Revert to [_1]', CGI::span({ dir => 'ltr' }, $self->shortPath($self->{editFilePath})));
 }
