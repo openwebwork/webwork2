@@ -75,7 +75,7 @@ sub can_showOldAnswers {
 	return 0 unless $authz->hasPermissions($User->user_id, "can_show_old_answers");
 
 	return (
-		before($Set->due_date())
+		before($Set->due_date(),$self->r->{submitTime})
 			|| $authz->hasPermissions($User->user_id, "view_hidden_work")
 			|| ($Set->hide_work() eq 'N'
 				|| ($Set->hide_work() eq 'BeforeAnswerDate' && time > $tmplSet->answer_date))
@@ -108,12 +108,12 @@ sub can_showCorrectAnswers {
 
 	my $canShowScores = $Set->hide_score_by_problem eq 'N'
 		&& ($Set->hide_score eq 'N'
-			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)));
+			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date,$self->r->{submitTime})));
 
 	return (
 		(
 			(
-				after($Set->answer_date) || ($attemptsUsed >= $maxAttempts
+				after($Set->answer_date,$self->r->{submitTime}) || ($attemptsUsed >= $maxAttempts
 					&& $maxAttempts != 0
 					&& $Set->due_date() == $Set->answer_date())
 			)
@@ -166,12 +166,12 @@ sub can_showSolutions {
 
 	my $canShowScores = $Set->hide_score_by_problem eq 'N'
 		&& ($Set->hide_score eq 'N'
-			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)));
+			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date,$self->r->{submitTime})));
 
 	return (
 		(
 			(
-				after($Set->answer_date) || ($attemptsUsed >= $attempts_per_version
+				after($Set->answer_date,$self->r->{submitTime}) || ($attemptsUsed >= $attempts_per_version
 					&& $attempts_per_version != 0
 					&& $Set->due_date() == $Set->answer_date())
 			)
@@ -194,7 +194,7 @@ sub can_recordAnswers {
 	# easy first case: never record answers for undefined sets
 	return 0 if $Set->set_id eq "Undefined_Set";
 
-	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : time();
+	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : $self->r->{submitTime};
 	# get the sag time after the due date in which we'll still grade the test
 	my $grace = $self->{ce}->{gatewayGracePeriod};
 
@@ -262,7 +262,7 @@ sub can_checkAnswers {
 		return 0;
 	}
 
-	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : time();
+	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : $self->r->{submitTime};
 	# get the sag time after the due date in which we'll still grade the test
 	my $grace = $self->{ce}->{gatewayGracePeriod};
 
@@ -283,7 +283,7 @@ sub can_checkAnswers {
 
 	my $canShowScores = $Set->hide_score_by_problem eq 'N'
 		&& ($Set->hide_score eq 'N'
-			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)));
+			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date,$self->r->{submitTime})));
 
 	if (before($Set->open_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
@@ -328,12 +328,12 @@ sub can_showScore {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, $tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 
-	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : time();
+	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : $self->r->{submitTime};
 
 	# address hiding scores by problem
 	my $canShowScores = (
 		$Set->hide_score eq 'N' || ($Set->hide_score eq 'BeforeAnswerDate'
-			&& after($tmplSet->answer_date))
+			&& after($tmplSet->answer_date,$self->r->{submitTime}))
 	);
 
 	return ($authz->hasPermissions($User->user_id, "view_hidden_work") || $canShowScores);
@@ -531,12 +531,14 @@ async sub pre_header_initialize {
 				$set     = fake_set_version($db);
 				$Problem = fake_problem($db);
 
+				my $creation_time = time();
+
 				$tmplSet->assignment_type("gateway");
 				$tmplSet->attempts_per_version(0);
 				$tmplSet->time_interval(0);
 				$tmplSet->versions_per_interval(1);
 				$tmplSet->version_time_limit(0);
-				$tmplSet->version_creation_time(time());
+				$tmplSet->version_creation_time($creation_time);
 				$tmplSet->problem_randorder(0);
 				$tmplSet->problems_per_page(1);
 				$tmplSet->hide_score('N');
@@ -549,7 +551,7 @@ async sub pre_header_initialize {
 				$set->time_interval(0);
 				$set->versions_per_interval(1);
 				$set->version_time_limit(0);
-				$set->version_creation_time(time());
+				$set->version_creation_time($creation_time);
 				$set->time_limit_cap('0');
 
 				$Problem->problem_id(1);
@@ -628,9 +630,9 @@ async sub pre_header_initialize {
 	# date.  If a specific version has not been requested and conditional release is enabled, then this also checks to
 	# see if the conditions have been met for a conditional release.
 	my $isOpen = (
-		$requestedVersion ? ($set && $set->open_date && after($set->open_date)) : ($tmplSet
+		$requestedVersion ? ($set && $set->open_date && after($set->open_date,$self->r->{submitTime})) : ($tmplSet
 				&& $tmplSet->open_date
-				&& after($tmplSet->open_date)
+				&& after($tmplSet->open_date,$self->r->{submitTime})
 				&& !($ce->{options}{enableConditionalRelease} && is_restricted($db, $tmplSet, $effectiveUserName)))
 		)
 		|| $authz->hasPermissions($userName, "view_unopened_sets");
@@ -640,7 +642,7 @@ async sub pre_header_initialize {
 	my $isClosed =
 		$tmplSet
 		&& $tmplSet->due_date
-		&& (after($tmplSet->due_date())
+		&& (after($tmplSet->due_date(),$self->r->{submitTime})
 			&& !$authz->hasPermissions($userName, "record_answers_after_due_date"));
 
 	# to determine if we need a new version, we need to know whether this
@@ -698,7 +700,7 @@ async sub pre_header_initialize {
 	#    more extensible to a limitation like "one version per hour",
 	#    and we can set it to two sets per 12 hours for most "2ce daily"
 	#    type applications
-	my $timeNow = time();
+	my $timeNow = $r->{submitTime}; # Time::HiRes saved time set in dispatch() of lib/WeBWorK.pm
 	my $grace   = $ce->{gatewayGracePeriod};
 
 	my $currentNumVersions = 0;    # this is the number of versions in the
@@ -2062,8 +2064,8 @@ sub body {
 	# Display the reduced scoring message if reduced scoring is enabled and the set is in the reduced scoring period.
 	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 		&& $set->enable_reduced_scoring
-		&& after($set->reduced_scoring_date)
-		&& before($set->due_date)
+		&& after($set->reduced_scoring_date,$self->r->{submitTime})
+		&& before($set->due_date,$self->r->{submitTime})
 		&& ($can{recordAnswersNextTime} || $submitAnswers))
 	{
 		print CGI::div(
