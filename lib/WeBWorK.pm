@@ -78,7 +78,7 @@ our %SeedCE;
 async sub dispatch {
 	my $controller = shift;
 	my $r          = WeBWorK::Request->new($controller);
-	$r->submitTime(time); # this is Time::HiRes's time, which gives floating point values
+	$r->submitTime(time);    # this is Time::HiRes's time, which gives floating point values
 
 	my $method    = $r->req->method;
 	my $location  = $r->location;

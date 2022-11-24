@@ -123,13 +123,14 @@ sub process_and_log_answer {
 
 			# store state in DB if it makes sense
 			if ($will{recordAnswers}) {
-				my $score = compute_reduced_score($ce, $problem, $set, $pg->{state}{recorded_score}, $self->r->{submitTime});
+				my $score =
+					compute_reduced_score($ce, $problem, $set, $pg->{state}{recorded_score}, $self->r->{submitTime});
 				$problem->status($score) if $score > $problem->status;
 
 				$problem->sub_status($problem->status)
 					if (!$r->{ce}{pg}{ansEvalDefaults}{enableReducedScoring}
 						|| !$set->enable_reduced_scoring
-						|| before($set->reduced_scoring_date,$self->r->{submitTime}));
+						|| before($set->reduced_scoring_date, $self->r->{submitTime}));
 
 				$problem->attempted(1);
 				$problem->num_correct($pg->{state}{num_of_correct_ans});
@@ -265,7 +266,7 @@ sub process_and_log_answer {
 					}
 				}
 			} else {
-				if (before($set->open_date,$self->r->{submitTime}) || after($set->due_date,$self->r->{submitTime})) {
+				if (before($set->open_date, $self->r->{submitTime}) || after($set->due_date, $self->r->{submitTime})) {
 					$scoreRecordedMessage =
 						$r->maketext('Your score was not recorded because this homework set is closed.');
 				} else {
@@ -292,7 +293,7 @@ sub compute_reduced_score {
 		|| !$set->enable_reduced_scoring
 		|| !$set->reduced_scoring_date
 		|| $set->reduced_scoring_date == $set->due_date
-		|| before($set->reduced_scoring_date,$submitTime)
+		|| before($set->reduced_scoring_date, $submitTime)
 		|| $score <= $problem->sub_status)
 	{
 		return $score;

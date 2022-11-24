@@ -75,7 +75,7 @@ sub can_showOldAnswers {
 	return 0 unless $authz->hasPermissions($User->user_id, "can_show_old_answers");
 
 	return (
-		before($Set->due_date(),$self->r->{submitTime})
+		before($Set->due_date(), $self->r->{submitTime})
 			|| $authz->hasPermissions($User->user_id, "view_hidden_work")
 			|| ($Set->hide_work() eq 'N'
 				|| ($Set->hide_work() eq 'BeforeAnswerDate' && time > $tmplSet->answer_date))
@@ -108,12 +108,12 @@ sub can_showCorrectAnswers {
 
 	my $canShowScores = $Set->hide_score_by_problem eq 'N'
 		&& ($Set->hide_score eq 'N'
-			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date,$self->r->{submitTime})));
+			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $self->r->{submitTime})));
 
 	return (
 		(
 			(
-				after($Set->answer_date,$self->r->{submitTime}) || ($attemptsUsed >= $maxAttempts
+				after($Set->answer_date, $self->r->{submitTime}) || ($attemptsUsed >= $maxAttempts
 					&& $maxAttempts != 0
 					&& $Set->due_date() == $Set->answer_date())
 			)
@@ -166,12 +166,12 @@ sub can_showSolutions {
 
 	my $canShowScores = $Set->hide_score_by_problem eq 'N'
 		&& ($Set->hide_score eq 'N'
-			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date,$self->r->{submitTime})));
+			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $self->r->{submitTime})));
 
 	return (
 		(
 			(
-				after($Set->answer_date,$self->r->{submitTime}) || ($attemptsUsed >= $attempts_per_version
+				after($Set->answer_date, $self->r->{submitTime}) || ($attemptsUsed >= $attempts_per_version
 					&& $attempts_per_version != 0
 					&& $Set->due_date() == $Set->answer_date())
 			)
@@ -283,7 +283,7 @@ sub can_checkAnswers {
 
 	my $canShowScores = $Set->hide_score_by_problem eq 'N'
 		&& ($Set->hide_score eq 'N'
-			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date,$self->r->{submitTime})));
+			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $self->r->{submitTime})));
 
 	if (before($Set->open_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
@@ -333,7 +333,7 @@ sub can_showScore {
 	# address hiding scores by problem
 	my $canShowScores = (
 		$Set->hide_score eq 'N' || ($Set->hide_score eq 'BeforeAnswerDate'
-			&& after($tmplSet->answer_date,$self->r->{submitTime}))
+			&& after($tmplSet->answer_date, $self->r->{submitTime}))
 	);
 
 	return ($authz->hasPermissions($User->user_id, "view_hidden_work") || $canShowScores);
@@ -630,9 +630,9 @@ async sub pre_header_initialize {
 	# date.  If a specific version has not been requested and conditional release is enabled, then this also checks to
 	# see if the conditions have been met for a conditional release.
 	my $isOpen = (
-		$requestedVersion ? ($set && $set->open_date && after($set->open_date,$self->r->{submitTime})) : ($tmplSet
+		$requestedVersion ? ($set && $set->open_date && after($set->open_date, $self->r->{submitTime})) : ($tmplSet
 				&& $tmplSet->open_date
-				&& after($tmplSet->open_date,$self->r->{submitTime})
+				&& after($tmplSet->open_date, $self->r->{submitTime})
 				&& !($ce->{options}{enableConditionalRelease} && is_restricted($db, $tmplSet, $effectiveUserName)))
 		)
 		|| $authz->hasPermissions($userName, "view_unopened_sets");
@@ -642,7 +642,7 @@ async sub pre_header_initialize {
 	my $isClosed =
 		$tmplSet
 		&& $tmplSet->due_date
-		&& (after($tmplSet->due_date(),$self->r->{submitTime})
+		&& (after($tmplSet->due_date(), $self->r->{submitTime})
 			&& !$authz->hasPermissions($userName, "record_answers_after_due_date"));
 
 	# to determine if we need a new version, we need to know whether this
@@ -700,11 +700,11 @@ async sub pre_header_initialize {
 	#    more extensible to a limitation like "one version per hour",
 	#    and we can set it to two sets per 12 hours for most "2ce daily"
 	#    type applications
-	my $timeNow = $r->{submitTime}; # Time::HiRes saved time set in dispatch() of lib/WeBWorK.pm
+	my $timeNow = $r->{submitTime};            # Time::HiRes saved time set in dispatch() of lib/WeBWorK.pm
 	my $grace   = $ce->{gatewayGracePeriod};
 
-	my $currentNumVersions = 0;    # this is the number of versions in the
-								   #    time interval
+	my $currentNumVersions = 0;                # this is the number of versions in the
+											   #    time interval
 	my $totalNumVersions   = 0;
 
 	# we don't need to check this if $self->{invalidSet} is already set,
@@ -1652,13 +1652,13 @@ sub body {
 			# Next, store the state in the database if answers are being recorded.
 			if ($submitAnswers && $will{recordAnswers}) {
 				my $score =
-					compute_reduced_score($ce, $problem, $set, $pg_result->{state}{recorded_score},$timeNow);
+					compute_reduced_score($ce, $problem, $set, $pg_result->{state}{recorded_score}, $timeNow);
 				$problem->status($score) if $score > $problem->status;
 
 				$problem->sub_status($problem->status)
 					if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 						|| !$set->enable_reduced_scoring
-						|| before($set->reduced_scoring_date,$timeNow));
+						|| before($set->reduced_scoring_date, $timeNow));
 
 				$problem->attempted(1);
 				$problem->num_correct($pg_result->{state}{num_of_correct_ans});
@@ -2064,8 +2064,8 @@ sub body {
 	# Display the reduced scoring message if reduced scoring is enabled and the set is in the reduced scoring period.
 	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 		&& $set->enable_reduced_scoring
-		&& after($set->reduced_scoring_date,$self->r->{submitTime})
-		&& before($set->due_date,$self->r->{submitTime})
+		&& after($set->reduced_scoring_date, $self->r->{submitTime})
+		&& before($set->due_date, $self->r->{submitTime})
 		&& ($can{recordAnswersNextTime} || $submitAnswers))
 	{
 		print CGI::div(
