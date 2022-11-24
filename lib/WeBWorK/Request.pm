@@ -144,6 +144,21 @@ sub urlpath {
 	return $self->{urlpath};
 }
 
+=item $r->submitTime([$new])
+
+Return the time this request was received for processing, which we refer
+to as the submitTime. The time is recorded very early on in the processing
+of the request. If $new is specified, set submitTime to $new before returning
+the value.
+
+=cut
+
+sub submitTime {
+	my ($self, $new) = @_;
+	$self->{submitTime} = $new if defined $new;
+	return $self->{submitTime};
+}
+
 sub language_handle {
 	my ($self, $new) = @_;
 	$self->{language_handle} = $new if defined $new;

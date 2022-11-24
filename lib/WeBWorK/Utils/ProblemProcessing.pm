@@ -80,8 +80,13 @@ sub process_and_log_answer {
 			create_ans_str_from_responses($self, $pg);
 
 		if (!$authz->hasPermissions($effectiveUser, 'dont_log_past_answers')) {
+			# Use the time the submission processing began, but must convert the
+			# floating point value from Time::HiRes to an integer for use below.
+			# Truncate towards 0 intentionally, so the integer value set is never
+			# larger than the original floating point value.
+			my $timestamp = int($self->r->{submitTime});
+
 			# store in answer_log
-			my $timestamp = $self->{submitTime}; # Use the time the submission processing began
 			writeCourseLog(
 				$ce,
 				'answer_log',
@@ -118,13 +123,13 @@ sub process_and_log_answer {
 
 			# store state in DB if it makes sense
 			if ($will{recordAnswers}) {
-				my $score = compute_reduced_score($ce, $problem, $set, $pg->{state}{recorded_score}, $self->{submitTime});
+				my $score = compute_reduced_score($ce, $problem, $set, $pg->{state}{recorded_score}, $self->r->{submitTime});
 				$problem->status($score) if $score > $problem->status;
 
 				$problem->sub_status($problem->status)
 					if (!$r->{ce}{pg}{ansEvalDefaults}{enableReducedScoring}
 						|| !$set->enable_reduced_scoring
-						|| before($set->reduced_scoring_date,$self->{submitTime}));
+						|| before($set->reduced_scoring_date,$self->r->{submitTime}));
 
 				$problem->attempted(1);
 				$problem->num_correct($pg->{state}{num_of_correct_ans});
@@ -260,7 +265,7 @@ sub process_and_log_answer {
 					}
 				}
 			} else {
-				if (before($set->open_date,$self->{submitTime}) || after($set->due_date,$self->{submitTime})) {
+				if (before($set->open_date,$self->r->{submitTime}) || after($set->due_date,$self->r->{submitTime})) {
 					$scoreRecordedMessage =
 						$r->maketext('Your score was not recorded because this homework set is closed.');
 				} else {
