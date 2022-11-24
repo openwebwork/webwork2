@@ -113,7 +113,7 @@ sub can_showCorrectAnswers {
 	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
 
-	return after($Set->answer_date)
+	return after($Set->answer_date,$self->{submitTime})
 		|| $authz->hasPermissions($User->user_id, "show_correct_answers_before_answer_date");
 }
 
@@ -177,7 +177,7 @@ sub can_showSolutions {
 
 	return
 		$authz->hasPermissions($User->user_id, 'always_show_solutions')
-		|| after($Set->answer_date)
+		|| after($Set->answer_date,$self->{submitTime})
 		|| $authz->hasPermissions($User->user_id, "show_solutions_before_answer_date");
 }
 
@@ -188,9 +188,9 @@ sub can_recordAnswers {
 	if ($User->user_id ne $EffectiveUser->user_id) {
 		return $authz->hasPermissions($User->user_id, "record_answers_when_acting_as_student");
 	}
-	if (before($Set->open_date)) {
+	if (before($Set->open_date,$self->{submitTime})) {
 		return $authz->hasPermissions($User->user_id, "record_answers_before_open_date");
-	} elsif (between($Set->open_date, $Set->due_date)) {
+	} elsif (between($Set->open_date, $Set->due_date, $self->{submitTime})) {
 		my $max_attempts  = $Problem->max_attempts;
 		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
 		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
@@ -198,9 +198,9 @@ sub can_recordAnswers {
 		} else {
 			return $authz->hasPermissions($User->user_id, "record_answers_after_open_date_without_attempts");
 		}
-	} elsif (between($Set->due_date, $Set->answer_date)) {
+	} elsif (between($Set->due_date, $Set->answer_date, $self->{submitTime})) {
 		return $authz->hasPermissions($User->user_id, "record_answers_after_due_date");
-	} elsif (after($Set->answer_date)) {
+	} elsif (after($Set->answer_date,$self->{submitTime})) {
 		return $authz->hasPermissions($User->user_id, "record_answers_after_answer_date");
 	}
 }
@@ -218,9 +218,9 @@ sub can_checkAnswers {
 		return 0;
 	}
 
-	if (before($Set->open_date)) {
+	if (before($Set->open_date,$self->{submitTime})) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
-	} elsif (between($Set->open_date, $Set->due_date)) {
+	} elsif (between($Set->open_date, $Set->due_date, $self->{submitTime})) {
 		my $max_attempts  = $Problem->max_attempts;
 		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
 		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
@@ -228,9 +228,9 @@ sub can_checkAnswers {
 		} else {
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts");
 		}
-	} elsif (between($Set->due_date, $Set->answer_date)) {
+	} elsif (between($Set->due_date, $Set->answer_date, $self->{submitTime})) {
 		return $authz->hasPermissions($User->user_id, "check_answers_after_due_date");
-	} elsif (after($Set->answer_date)) {
+	} elsif (after($Set->answer_date,$self->{submitTime})) {
 		return $authz->hasPermissions($User->user_id, "check_answers_after_answer_date");
 	}
 }
@@ -271,7 +271,7 @@ sub can_showMeAnother {
 	# get the hash of information about showMeAnother
 	my %showMeAnother = %{ $self->{showMeAnother} };
 
-	if (after($Set->open_date)
+	if (after($Set->open_date,$self->{submitTime})
 		or $self->r->authz->hasPermissions($self->r->param('user'), "can_use_show_me_another_early"))
 	{
 		# if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
@@ -388,6 +388,9 @@ async sub content {
 
 async sub pre_header_initialize {
 	my ($self)  = @_;
+
+	$self->{submitTime} = time(); # Save a fixed value as the submission time
+
 	my $r       = $self->r;
 	my $ce      = $r->ce;
 	my $db      = $r->db;
@@ -707,7 +710,7 @@ async sub pre_header_initialize {
 		$problem->{prCount} += $submitAnswers ? 1 : 0;
 
 		$requestNewSeed = 0
-			if ($problem->{prCount} < $rerandomizePeriod || after($set->due_date));
+			if ($problem->{prCount} < $rerandomizePeriod || after($set->due_date,$self->{submitTime}));
 
 		if ($requestNewSeed) {
 			# obtain new random seed to hopefully change the problem
@@ -782,7 +785,7 @@ async sub pre_header_initialize {
 		-value => $problem->num_correct + $problem->num_incorrect + ($submitAnswers ? 1 : 0)
 	});
 
-	if ($prEnabled && $problem->{prCount} >= $rerandomizePeriod && !after($set->due_date)) {
+	if ($prEnabled && $problem->{prCount} >= $rerandomizePeriod && !after($set->due_date,$self->{submitTime})) {
 		$showMeAnother{active}          = 0;
 		$must{requestNewSeed}           = 1;
 		$can{requestNewSeed}            = 1;
@@ -1610,8 +1613,8 @@ sub output_message {
 
 	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 		&& $self->{set}->enable_reduced_scoring
-		&& after($self->{set}->reduced_scoring_date)
-		&& before($self->{set}->due_date))
+		&& after($self->{set}->reduced_scoring_date,$self->{submitTime})
+		&& before($self->{set}->due_date,$self->{submitTime}))
 	{
 		print CGI::p(
 			CGI::b($r->maketext('Note') . ': '),
@@ -1948,7 +1951,7 @@ sub output_submit_buttons {
 					tabindex          => '0',
 					data_bs_toggle    => 'tooltip',
 					data_bs_placement => 'right',
-					data_bs_title     => before($r->db->getGlobalSet($self->{set}->set_id)->open_date)
+					data_bs_title     => before($r->db->getGlobalSet($self->{set}->set_id)->open_date,$self->{submitTime})
 					? $r->maketext('The problem set is not yet open')
 					: $exhausted eq 'exhausted' ? $r->maketext('Feature exhausted for this problem')
 					: $r->maketext(
@@ -1997,15 +2000,15 @@ sub output_score_summary {
 
 		$prMessage = ' ' . $r->maketext('Request new version now.') if ($attempts_before_rr == 0);
 	}
-	$prMessage = '' if after($set->due_date) or before($set->open_date);
+	$prMessage = '' if after($set->due_date,$self->{submitTime}) or before($set->open_date,$self->{submitTime});
 
 	my $setClosed = 0;
 	my $setClosedMessage;
-	if (before($set->open_date) || after($set->due_date)) {
+	if (before($set->open_date,$self->{submitTime}) || after($set->due_date,$self->{submitTime})) {
 		$setClosed = 1;
-		if (before($set->open_date)) {
+		if (before($set->open_date,$self->{submitTime})) {
 			$setClosedMessage = $r->maketext("This homework set is not yet open.");
-		} elsif (after($set->due_date)) {
+		} elsif (after($set->due_date,$self->{submitTime})) {
 			$setClosedMessage = $r->maketext("This homework set is closed.");
 		}
 	}
@@ -2023,7 +2026,7 @@ sub output_score_summary {
 			$self->{submitAnswers}
 			? (
 				$r->maketext('You received a score of [_1] for this attempt.',
-					wwRound(0, compute_reduced_score($ce, $problem, $set, $pg->{result}{score}) * 100) . '%')
+					wwRound(0, compute_reduced_score($ce, $problem, $set, $pg->{result}{score}, $self->{submitTime}) * 100) . '%')
 					. CGI::br()
 				)
 			: '',

@@ -81,7 +81,7 @@ sub process_and_log_answer {
 
 		if (!$authz->hasPermissions($effectiveUser, 'dont_log_past_answers')) {
 			# store in answer_log
-			my $timestamp = time();
+			my $timestamp = $self->{submitTime}; # Use the time the submission processing began
 			writeCourseLog(
 				$ce,
 				'answer_log',
@@ -118,13 +118,13 @@ sub process_and_log_answer {
 
 			# store state in DB if it makes sense
 			if ($will{recordAnswers}) {
-				my $score = compute_reduced_score($ce, $problem, $set, $pg->{state}{recorded_score});
+				my $score = compute_reduced_score($ce, $problem, $set, $pg->{state}{recorded_score}, $self->{submitTime});
 				$problem->status($score) if $score > $problem->status;
 
 				$problem->sub_status($problem->status)
 					if (!$r->{ce}{pg}{ansEvalDefaults}{enableReducedScoring}
 						|| !$set->enable_reduced_scoring
-						|| before($set->reduced_scoring_date));
+						|| before($set->reduced_scoring_date,$self->{submitTime}));
 
 				$problem->attempted(1);
 				$problem->num_correct($pg->{state}{num_of_correct_ans});
@@ -260,7 +260,7 @@ sub process_and_log_answer {
 					}
 				}
 			} else {
-				if (before($set->open_date) || after($set->due_date)) {
+				if (before($set->open_date,$self->{submitTime}) || after($set->due_date,$self->{submitTime})) {
 					$scoreRecordedMessage =
 						$r->maketext('Your score was not recorded because this homework set is closed.');
 				} else {
@@ -280,14 +280,14 @@ sub process_and_log_answer {
 # Determines if a set is in the reduced scoring period, and if so returns the reduced score.
 # Otherwise it returns the unadjusted score.
 sub compute_reduced_score {
-	my ($ce, $problem, $set, $score) = @_;
+	my ($ce, $problem, $set, $score, $submitTime) = @_;
 
 	# If no adjustments need to be applied, return the full score.
 	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 		|| !$set->enable_reduced_scoring
 		|| !$set->reduced_scoring_date
 		|| $set->reduced_scoring_date == $set->due_date
-		|| before($set->reduced_scoring_date)
+		|| before($set->reduced_scoring_date,$submitTime)
 		|| $score <= $problem->sub_status)
 	{
 		return $score;

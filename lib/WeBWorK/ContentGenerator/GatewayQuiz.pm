@@ -1650,13 +1650,13 @@ sub body {
 			# Next, store the state in the database if answers are being recorded.
 			if ($submitAnswers && $will{recordAnswers}) {
 				my $score =
-					compute_reduced_score($ce, $problem, $set, $pg_result->{state}{recorded_score});
+					compute_reduced_score($ce, $problem, $set, $pg_result->{state}{recorded_score},$timeNow);
 				$problem->status($score) if $score > $problem->status;
 
 				$problem->sub_status($problem->status)
 					if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 						|| !$set->enable_reduced_scoring
-						|| before($set->reduced_scoring_date));
+						|| before($set->reduced_scoring_date,$timeNow));
 
 				$problem->attempted(1);
 				$problem->num_correct($pg_result->{state}{num_of_correct_ans});
@@ -1942,7 +1942,7 @@ sub body {
 			my $pScore = 0;
 			if (ref $pg) {
 				# If a pg object is available, then use the pg recorded score and save it in the @probStatus array.
-				$pScore = compute_reduced_score($ce, $problems[$i], $set, $pg->{state}{recorded_score});
+				$pScore = compute_reduced_score($ce, $problems[$i], $set, $pg->{state}{recorded_score}, $timeNow);
 				$probStatus[$i] = $pScore if $pScore > $probStatus[$i];
 			} else {
 				# If a pg object is not available, then use the saved problem status.
