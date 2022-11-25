@@ -533,22 +533,20 @@ EOS
 # does a mass update of all grades.  This is all user grades for
 # course grade mode and all user set grades for homework grade mode.
 sub mass_update {
-	my $self = shift;
-	my $r    = $self->{r};
-	my $ce   = $r->{ce};
-	my $db   = $self->{r}->{db};
+	my $self   = shift;
+	my $update = shift;
+	my $name   = shift || '';
+	my $name2  = shift || '';
+	my $r      = $self->{r};
+	my $ce     = $r->{ce};
+	my $db     = $self->{r}->{db};
 	$self->{post_processing_mode} = 1;
 
 	# sanity check
 	warn("course environment is not defined") unless ref($ce // '');
 	warn("database reference is not defined") unless ref($db // '');
 
-	my $lastUpdate     = $db->getSettingValue('LTILastUpdate') // 0;
-	my $updateInterval = $ce->{LTIMassUpdateInterval}          // -1;    # -1 suppresses update
-
-	if ($updateInterval != -1
-		&& time - $lastUpdate > $updateInterval)
-	{
+	if ($update eq 'all') {
 
 		warn "\nperforming mass_update via LTI" if $ce->{debug_lti_grade_passback};
 
@@ -579,6 +577,49 @@ sub mass_update {
 
 				}
 			}
+		}
+	} elsif ($update eq 'set' && $ce->{LTIGradeMode} eq 'homework') {
+		my $set   = $name;
+		my @users = $db->listSetUsers($set);
+
+		warn "\nperforming mass_update of set $set via LTI" if $ce->{debug_lti_grade_passback};
+		warn "\nmass_update: all users assigned to set $set :\n" . join(" ", @users) . "\n"
+			if $ce->{debug_lti_grade_passback};
+
+		for my $user (@users) {
+			eval { $self->submit_set_grade($user, $set); };
+			if ($@) {
+				warn "error in reporting $user, $@" if $ce->{debug_lti_grade_passback};
+			}
+		}
+	} elsif ($update eq 'user') {
+		my $user = $name;
+
+		warn "\nperforming mass_update of user $user via LTI" if $ce->{debug_lti_grade_passback};
+
+		if ($ce->{LTIGradeMode} eq 'course') {
+			$self->submit_course_grade($user);
+		} elsif ($ce->{LTIGradeMode} eq 'homework') {
+			my @sets = $db->listUserSets($user);
+
+			warn "\nmass_update: all sets assigned to user $user :\n" . join(" ", @sets) . "\n"
+				if $ce->{debug_lti_grade_passback};
+			for my $set (@sets) {
+				eval { $self->submit_set_grade($user, $set); };
+				if ($@) {
+					warn "error in reporting $set, $@" if $ce->{debug_lti_grade_passback};
+				}
+			}
+		}
+	} elsif ($update eq 'user_set' && $ce->{LTIGradeMode} eq 'homework') {
+		my $user = $name;
+		my $set  = $name2;
+
+		warn "\nperforming mass_update of user $user and set $set via LTI" if $ce->{debug_ti_grade_passback};
+
+		eval { $self->submit_set_grade($user, $set); };
+		if ($@) {
+			warn "error in reporting $user, $set, $@" if $ce->{debug_lti_grade_passback};
 		}
 	}
 	$self->{post_processing_mode} = 0;

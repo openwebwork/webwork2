@@ -104,6 +104,8 @@ Note:  Only database keyfield values can be used as path parameters.
  instructor_set_progress             /$courseID/instructor/StudentProgress/set/$setID/
  instructor_user_progress            /$courseID/instructor/StudentProgress/student/$userID/
 
+ instructor_lti_update               /$courseID/instructor/lti_update/
+
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
  show_me_another                     /$courseID/$setID/$problemID/show_me_another
@@ -337,6 +339,7 @@ our %pathTypes = (
 				instructor_statistics
 				instructor_progress
 				instructor_problem_grader
+				instructor_lti_update
 				/
 		],
 		match   => qr|^instructor/|,
@@ -517,6 +520,15 @@ our %pathTypes = (
 		capture => [qw//],
 		produce => 'send_mail/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SendMail',
+	},
+	instructor_lti_update => {
+		name    => x('LTI Update'),
+		parent  => 'instructor_tools',
+		kids    => [qw//],
+		match   => qr|^lti_update/|,
+		capture => [qw//],
+		produce => 'lti_update/',
+		display => 'WeBWorK::ContentGenerator::Instructor::LTIUpdate'
 	},
 
 	################################################################################

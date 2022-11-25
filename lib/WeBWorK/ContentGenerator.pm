@@ -158,20 +158,24 @@ async sub go {
 	# update all of the grades because things can get out of sync if
 	# instructors add or modify sets.
 	if ($ce->{LTIGradeMode} and ref($r->{db} // '')) {
-		my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
+		my $lastUpdate     = $r->db->getSettingValue('LTILastUpdate') || 0;
+		my $updateInterval = $ce->{LTIMassUpdateInterval}             || -1;    # Never update
+		if ($updateInterval != -1 && time - $lastUpdate > $updateInterval) {
+			my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
 
-		Mojo::IOLoop->timer(
-			1 => sub {
-				# Catch exceptions generated during the sending process.
-				eval { $grader->mass_update() };
-				if ($@) {
-					# Write errors to the Mojolicious log
-					$r->log->error("An error occurred while trying to update grades via LTI: $@\n");
+			Mojo::IOLoop->timer(
+				1 => sub {
+					# Catch exceptions generated during the sending process.
+					eval { $grader->mass_update('all') };
+					if ($@) {
+						# Write errors to the Mojolicious log
+						$r->log->error("An error occurred while trying to update grades via LTI: $@\n");
+					}
 				}
-			}
-		);
+			);
 
-		Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+			Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+		}
 	}
 
 	# check to verify if there are set-level problems with running
@@ -1089,6 +1093,17 @@ sub links {
 							"${pfx}Config",
 							urlpath_args    => {%args},
 							systemlink_args => \%systemlink_args
+						)
+					);
+				}
+				if ($ce->{LTIGradeMode} && $authz->hasPermissions($userID, 'score_sets')) {
+					print CGI::li(
+						{ class => 'nav-item' },
+						&$makelink(
+							"${pfx}LTIUpdate",
+							text            => $r->maketext('LTI Grade Update'),
+							urlpath_args    => \%args,
+							systemlink_args => \%systemlink_args,
 						)
 					);
 				}
