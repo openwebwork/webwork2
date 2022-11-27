@@ -319,6 +319,26 @@ $mail{tls_allowed} = 0;
 $mail{maxAttachmentSize} = 10;
 
 ################################################################################
+# Minion job queue options
+################################################################################
+
+# This is the Minion backend that will be used by the job queue.
+# The corresponding perl package for this backend must be installed.
+# Some availabled backends are:
+# Minion::Backend::Pg (use 'Pg' below)
+# Minion::Backend::mysql (use 'mysql' below)
+# Minion::Backend::SQLite (use 'SQLite' below)
+# The simplest to use is the SQLite backend as it requires no additional setup.
+$job_queue{backend} = 'SQLite';
+
+# Database dsn for the Minion job queue. Some examples of settings for the
+# respective backends follow. The postgres and mysql examples will need to be
+# modified to work. The default sqlite setting will work as is.
+#$job_queue{database_dsn} = "postgresql://dbuser@/webwork2_job_queue";
+#$job_queue{database_dsn} = "mysql://dbuser:dbpasswd@localhost/webwork2_job_queue";
+$job_queue{database_dsn} = "sqlite:$webwork_dir/DATA/webwork2_job_queue.db";
+
+################################################################################
 # Problem library options
 ################################################################################
 #

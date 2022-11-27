@@ -38,7 +38,7 @@ use WeBWorK::Upload;
 
 use Socket qw/unpack_sockaddr_in inet_ntoa/;    # for remote host/port info
 use Text::Wrap qw(wrap);
-use WeBWorK::Utils qw/ decodeAnswers/;
+use WeBWorK::Utils qw/decodeAnswers createEmailSenderTransportSMTP/;
 
 # request paramaters used
 #
@@ -270,17 +270,17 @@ $emailableURL
 			$email->attach($contents, filename => $filename);
 		}
 
-	# $ce->{mail}{set_return_path} is the address used to report returned email if defined and non empty.
-	# It is an argument used in sendmail() (aka Email::Stuffer::send_or_die).
-	# For arcane historical reasons sendmail actually sets the field "MAIL FROM" and the smtp server then
-	# uses that to set "Return-Path".
-	# references:
-	#  https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
-	#  https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
+		# $ce->{mail}{set_return_path} is the address used to report returned email if defined and non empty.
+		# It is an argument used in sendmail() (aka Email::Stuffer::send_or_die).
+		# For arcane historical reasons sendmail actually sets the field "MAIL FROM" and the smtp server then
+		# uses that to set "Return-Path".
+		# references:
+		#  https://stackoverflow.com/questions/1235534/
+		#    what-is-the-behavior-difference-between-return-path-reply-to-and-from
+		#  https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
 		try {
 			$email->send_or_die({
-				# createEmailSenderTransportSMTP is defined in ContentGenerator
-				transport => $self->createEmailSenderTransportSMTP(),
+				transport => createEmailSenderTransportSMTP($ce),
 				$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
 			});
 			print CGI::p($r->maketext('Your message was sent successfully.'));

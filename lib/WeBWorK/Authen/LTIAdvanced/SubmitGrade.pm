@@ -14,7 +14,6 @@
 ################################################################################
 
 package WeBWorK::Authen::LTIAdvanced::SubmitGrade;
-use base qw/WeBWorK::Authen::LTIAdvanced/;
 
 =head1 NAME
 
@@ -24,75 +23,74 @@ WeBWorK::Authen::LTIAdvanced::SubmitGrade - pass back grades to an enabled LMS
 
 use strict;
 use warnings;
-use WeBWorK::Debug;
-use WeBWorK::CGI;
-use Carp;
-use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets wwRound);
-use Net::OAuth;
-use HTTP::Request;
-use LWP::UserAgent;
-use UUID::Tiny ':std';
-use Mojo::IOLoop;
 
+use Carp;
+use Net::OAuth;
+use HTML::Entities;
+use Mojo::UserAgent;
+use UUID::Tiny ':std';
 use Digest::SHA qw(sha1_base64);
+
+use WeBWorK::Debug;
+use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets wwRound);
 
 # This package contains utilities for submitting grades to the LMS
 sub new {
 	my ($invocant, $r) = @_;
-	my $class = ref($invocant) || $invocant;
-	my $self  = { r => $r, };
-	# sanity check
-	my $ce = $r->{ce};
-	my $db = $self->{r}->{db};
 
-	unless (ref($ce // '') and ref($db) // '') {
-		warn("course environment is not defined") unless ref($ce // '');
-		warn("database reference is not defined") unless ref($db // '');
-		croak("Could not create WeBWorK::Authen::LTIAdvanced::SubmitGrade object, missing items from request");
+	# Sanity check
+	unless (ref($r->{ce}) && ref($r->{db})) {
+		warn('course environment is not defined') unless ref($r->{ce});
+		warn('database reference is not defined') unless ref($r->{db});
+		croak('Could not create WeBWorK::Authen::LTIAdvanced::SubmitGrade object, missing items from request');
 	}
 
-	bless $self, $class;
-	return $self;
+	return bless { r => $r }, ref($invocant) || $invocant;
+}
+
+# Use the app log for warnings in post processing mode as perl warnings are not caught in the job queue.
+# Otherwise just use warn as those are caught by the webwork2 handler.
+sub warning {
+	my ($self, $warning) = @_;
+	if ($self->{post_processing_mode}) {
+		$self->{r}{app}->log->warn($warning);
+	} else {
+		warn $warning;
+	}
+	return;
 }
 
 # This updates the sourcedid for the object we are looking at.  Its either
 # the sourcedid for the user for course grades or the sourcedid for the
 # userset for homework grades.
 sub update_sourcedid {
-	my $self   = shift;
-	my $userID = shift;
-	my $r      = $self->{r};
-	my $ce     = $r->{ce};
-	my $db     = $self->{r}->{db};
+	my ($self, $userID) = @_;
+	my $r  = $self->{r};
+	my $ce = $r->{ce};
+	my $db = $r->{db};
 
 	# These parameters are used to build the passback request
 	# warn if no outcome service url
 	if (!defined($r->param('lis_outcome_service_url'))) {
-		carp "The parameter lis_outcome_service_url is not defined.  Unable to report grades to the LMS."
-			. " Are external grades enabled in the LMS?"
+		carp 'The parameter lis_outcome_service_url is not defined.  Unable to report grades to the LMS.'
+			. ' Are external grades enabled in the LMS?'
 			if $ce->{debug_lti_grade_passback};
 	} else {
 		# otherwise keep it up to date
 		my $lis_outcome_service_url = $db->getSettingValue('lis_outcome_service_url');
-		if (!defined($lis_outcome_service_url)
-			|| $lis_outcome_service_url ne $r->param('lis_outcome_service_url'))
-		{
+		if (!defined($lis_outcome_service_url) || $lis_outcome_service_url ne $r->param('lis_outcome_service_url')) {
 			$db->setSettingValue('lis_outcome_service_url', $r->param('lis_outcome_service_url'));
 		}
 	}
 
 	# these parameters have to be here or we couldn't have gotten this far
 	my $consumer_key = $db->getSettingValue('consumer_key');
-	if (!defined($consumer_key)
-		|| $consumer_key ne $r->param('oauth_consumer_key'))
-	{
+	if (!defined($consumer_key) || $consumer_key ne $r->param('oauth_consumer_key')) {
 		$db->setSettingValue('consumer_key', $r->param('oauth_consumer_key'));
 	}
 
 	my $signature_method = $db->getSettingValue('signature_method');
-	if (!defined($signature_method)
-		|| $signature_method ne $r->param('oauth_signature_method'))
-	{
+	if (!defined($signature_method) || $signature_method ne $r->param('oauth_signature_method')) {
 		$db->setSettingValue('signature_method', $r->param('oauth_signature_method'));
 	}
 
@@ -101,8 +99,8 @@ sub update_sourcedid {
 	# depending on the request and the mode we are in.
 	my $sourcedid = $r->param('lis_result_sourcedid');
 	if (!defined($sourcedid)) {
-		warn "No LISSourceID! Some LMS's do not give grades to instructors, but this "
-			. "could also be a sign that external grades are not enabled in your LMS."
+		warn q{No LISSourceID! Some LMS's do not give grades to instructors, but this }
+			. 'could also be a sign that external grades are not enabled in your LMS.'
 			if $ce->{debug_lti_grade_passback};
 	} elsif ($ce->{LTIGradeMode} eq 'course') {
 		# Update the SourceDID for the user if we are in course mode
@@ -113,59 +111,47 @@ sub update_sourcedid {
 		}
 	} elsif ($ce->{LTIGradeMode} eq 'homework') {
 		my $urlpath = $r->urlpath;
-		my $setID   = $urlpath->arg("setID");
+		my $setID   = $urlpath->arg('setID');
 		if (!defined($setID)) {
-			warn "Not a link to a Problem Set and in homework grade mode."
-				. " Links to WeBWorK should point to specific problem sets.";
+			warn 'Not a link to a Problem Set and in homework grade mode.'
+				. ' Links to WeBWorK should point to specific problem sets.';
 		} else {
 			my $set = $db->getUserSet($userID, $setID);
-			# if set is not defined and we are going to a page with
-			# is set dependent then there are problems that will be caught
-			# later
-			if (
-				defined($set)
-				&& (!defined($set->lis_source_did)
-					|| $set->lis_source_did ne $sourcedid)
-				)
-			{
+			if (defined($set) && (!defined($set->lis_source_did) || $set->lis_source_did ne $sourcedid)) {
 				$set->lis_source_did($sourcedid);
 				$db->putUserSet($set);
-
 			}
 		}
 	}
-}    # end update_sourcedid
 
-# computes and submits the course grade for userID to the LMS
-# the course grade is the average of all sets assigned to the user.
+	return;
+}
+
+# Computes and submits the course grade for userID to the LMS.
+# The course grade is the average of all sets assigned to the user.
 sub submit_course_grade {
-	my $self   = shift;
-	my $userID = shift;
-	my $r      = $self->{r};
-	my $ce     = $r->{ce};
-	my $db     = $self->{r}->{db};
+	my ($self, $userID) = @_;
+	my $r  = $self->{r};
+	my $ce = $r->{ce};
+	my $db = $r->{db};
 
 	my $score = grade_all_sets($db, $userID);
 	my $user  = $db->getUser($userID);
 
-	die("$userID does not exist") unless $user;
-	warn "submitting all grades for user: $userID  \n" if $ce->{debug_lti_grade_passback};
-	warn "lis_source_did is not available for user: $userID \n"
-		if !($user->lis_source_did)
-		and $ce->{debug_lti_grade_passback};
-	return $self->submit_grade($user->lis_source_did, $score);
+	die "$userID does not exist" unless $user;
+	$self->warning("submitting all grades for user: $userID") if $ce->{debug_lti_grade_passback};
+	$self->warning("lis_source_did is not available for user: $userID")
+		if !($user->lis_source_did) && $ce->{debug_lti_grade_passback};
 
+	return $self->submit_grade($user->lis_source_did, $score);
 }
 
-# computes and submits the set grade for $userID and $setID to the
-# LMS.  For gateways the best score is used.
+# Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.
 sub submit_set_grade {
-	my $self   = shift;
-	my $userID = shift;
-	my $setID  = shift;
-	my $r      = $self->{r};
-	my $ce     = $r->{ce};
-	my $db     = $self->{r}->{db};
+	my ($self, $userID, $setID) = @_;
+	my $r  = $self->{r};
+	my $ce = $r->{ce};
+	my $db = $r->{db};
 
 	my $user = $db->getUser($userID);
 
@@ -174,55 +160,45 @@ sub submit_set_grade {
 	my $userSet = $db->getMergedSet($userID, $setID);
 	my $score   = 0;
 
-	if ($userSet->assignment_type() =~ /gateway/) {
+	if ($userSet->assignment_type =~ /gateway/) {
 		$score = grade_gateway($db, $userSet, $userSet->set_id, $userID);
 	} else {
 		$score = grade_set($db, $userSet, $userID, 0);
 	}
-	# make debug prettier
+
 	my $message_string = '';
-	$message_string .= "\nmass_update: " if $self->{post_processing_mode};
+	$message_string .= 'mass_update: ' if $self->{post_processing_mode};
 	$message_string .= "submitting grade for user: $userID set $setID ";
-	$message_string .= "-- lis_source_did is not available " unless ($userSet->lis_source_did);
-	warn($message_string . "\n") if $ce->{debug_lti_grade_passback};
+	$message_string .= '-- lis_source_did is not available ' unless ($userSet->lis_source_did);
+	$self->warning($message_string) if $ce->{debug_lti_grade_passback};
+
 	return $self->submit_grade($userSet->lis_source_did, $score);
 }
 
-# error in reporting michael.gage@rochester.edu, Demo, Global $r object is not available. Set:
-# 	PerlOptions +GlobalRequest
-# in httpd.conf at /opt/rh/perl516/root/usr/local/share/perl5/CGI.pm line 346, <IN> line 76.
-# so we don't use CGI::escapeHTML in post processing mode but use this local version instead.
+# Escape HTML in messages when post processing is not being done.  When post processing is being done these messages are
+# sent to a log file, and so escaping HTML makes the messages even less readable.  Note that this should never be used
+# with the "debug" method as those messages always go into a log file.
+sub local_escape_html {
+	my ($self, @message) = @_;
 
-sub local_escape_html {    # a local version of escapeHTML that works for post processing
-	my $self    = shift;    # a grading object
-	my @message = @_;
 	if ($self->{post_processing_mode}) {
-		return join('', @message);    # this goes to log files in post processing to escapeHTML is not essential
+		return join('', @message);
 	} else {
-		return CGI::escapeHTML(@message);    #FIXME -- why won't this work in post_processing_mode (missing $r ??)
+		return HTML::Entities::encode_entities(join('', @message));
 	}
 }
 
-# submits a score of $score to the lms with $sourcedid as the
-# identifier.
+# Submits a score of $score to the lms with $sourcedid as the identifier.
 sub submit_grade {
-	my $self      = shift;
-	my $sourcedid = shift;
-	my $score     = shift;
-	my $r         = $self->{r};
-	my $ce        = $r->{ce};
-	my $db        = $self->{r}->{db};
+	my ($self, $sourcedid, $score) = @_;
+	my $r  = $self->{r};
+	my $ce = $r->{ce};
+	my $db = $r->{db};
 
 	$score = wwRound(2, $score);
 
-	# We have to fail gracefully here because some users, like instructors,
-	# may not actually have a sourcedid
-	if (!$sourcedid) {
-		#     debug("No sourcedid for this user/assignment.  Some LMS's do not provide ".
-		#      "sourcedid for instructors so this may not be a problem, or it might ".
-		#      "mean your settings are not correct.") if $ce->{debug_lti_grade_passback};
-		return 0;
-	}
+	# Fail gracefully.  Some users, like instructors, may not actually have a sourcedid.
+	return 0 if (!$sourcedid);
 
 	# Needed in both phases
 	my $bodyhash;
@@ -232,44 +208,41 @@ sub submit_grade {
 	my $response;
 
 	my $request_url = $db->getSettingValue('lis_outcome_service_url');
-	if (!defined($request_url) || $request_url eq "") {
-		warn("Cannot send/retrieve grades to/from the LMS, no lis_outcome_service_url");
+	if (!$request_url) {
+		$self->warning('Cannot send/retrieve grades to/from the LMS, no lis_outcome_service_url');
 		return 0;
 	}
 
 	my $consumer_key = $db->getSettingValue('consumer_key');
-	if (!defined($consumer_key) || $consumer_key eq "") {
-		warn("Cannot send/retrieve grades to/from the LMS, no consumer_key");
+	if (!$consumer_key) {
+		$self->warning('Cannot send/retrieve grades to/from the LMS, no consumer_key');
 		return 0;
 	}
 
 	my $signature_method = $db->getSettingValue('signature_method');
-	if (!defined($signature_method) || $signature_method eq "") {
-		warn("Cannot send/retrieve grades to/from the LMS, no signature_method");
+	if (!$signature_method) {
+		$self->warning('Cannot send/retrieve grades to/from the LMS, no signature_method');
 		return 0;
 	}
 
-	debug("found data required for submitting grades to LMS");
+	debug('found data required for submitting grades to LMS');
 
-	# Generate a better nonce, first a portion unique for the sourcedid
-	# which should be dependent on the student + the assignment if a
-	# "homework" level sourcedid. This part can be used twice
+	# Generate a nonce. Start with a portion that is unique for the sourcedid.  This should be dependent on the student.
+	# If grade mode is "homework", this is also dependent on the assignment.  This part can be used twice.
 	my $uuid_p1 = create_uuid_as_string(UUID_SHA1, UUID_NS_URL, $sourcedid);
 
-	# Second part is a time dependent portion
+	# The second part is time dependent.
 	my $uuid_p2 = create_uuid_as_string(UUID_TIME);
 
-	my $lti_check_prior = $ce->{lti_check_prior} // 0;    # Should we first poll the LMS for the current grade
+	my $lti_do_send = 1;
 
-	my $lti_do_send = 1;                                  # Default to yes
+	if ($ce->{lti_check_prior} // 0) {
+		# Poll the LMS for prior grade.
 
-	if ($lti_check_prior) {
+		$lti_do_send = 0;
 
-		# Poll the LMS for prior grade
-
-		$lti_do_send = 0;                                 # Change default to no, and change below if needed
-
-	 # This is boilerplate XML used to retrieve the currently recorded score for $sourcedid (which will later be tested)
+		# This is boilerplate XML used to retrieve the currently recorded score for $sourcedid
+		# (which will later be tested)
 		my $readResultXML = <<EOS;
 <?xml version = "1.0" encoding = "UTF-8"?>
 <imsx_POXEnvelopeRequest xmlns = "http://www.imsglobal.org/services/ltiv1p1/xsd/imsoms_v1p0">
@@ -295,126 +268,103 @@ EOS
 
 		$bodyhash = sha1_base64($readResultXML);
 
-		# since sha1_base64 doesn't pad we have to do so manually
+		# Since sha1_base64 doesn't pad we have to do so manually.
 		while (length($bodyhash) % 4) {
 			$bodyhash .= '=';
 		}
 
-		warn("Retrieving prior grade using sourcedid: $sourcedid")
-			if $ce->{debug_lti_parameters};
+		$self->warning("Retrieving prior grade using sourcedid: $sourcedid") if $ce->{debug_lti_parameters};
 
-		$requestGen = Net::OAuth->request("consumer");
+		$requestGen = Net::OAuth->request('consumer');
 
 		$requestGen->add_required_message_params('body_hash');
 
 		$gradeRequest = $requestGen->new(
 			request_url      => $request_url,
-			request_method   => "POST",
+			request_method   => 'POST',
 			consumer_secret  => $ce->{LTIBasicConsumerSecret},
 			consumer_key     => $consumer_key,
 			signature_method => $signature_method,
 			nonce            => "${uuid_p1}__${uuid_p2}",
-			timestamp        => time(),
+			timestamp        => time,
 			body_hash        => $bodyhash
 		);
 		$gradeRequest->sign();
 
-		$HTTPRequest = HTTP::Request->new(
-			$gradeRequest->request_method,
+		$response = Mojo::UserAgent->new->post(
 			$gradeRequest->request_url,
-			[
-				'Authorization' => $gradeRequest->to_authorization_header,
-				'Content-Type'  => 'application/xml',
-			],
-			$readResultXML,
-		);
-
-		$response = LWP::UserAgent->new->request($HTTPRequest);
+			{ 'Authorization' => $gradeRequest->to_authorization_header, 'Content-Type' => 'application/xml' },
+			$readResultXML
+		)->result;
 
 		# debug section
-		if ($ce->{debug_lti_grade_passback} and $ce->{debug_lti_parameters}) {
-			warn "The request was:\n " . ($self->local_escape_html(join(" ", %$HTTPRequest)));
-			warn "The nonce used is ${uuid_p1}__${uuid_p2}\n";
-			warn "The response is:\n " . ($self->local_escape_html(join(" ", %$response)));
-			warn "The request was:\n " . ($self->local_escape_html(join(" ", %$HTTPRequest)));
-			debug("The request was:\n " . ($self->local_escape_html(join(" ", %$HTTPRequest))));
-			debug("The nonce used is ${uuid_p1}__${uuid_p2}\n");
-			debug("The response is:\n " . ($self->local_escape_html(join(" ", %$response))));
+		if ($ce->{debug_lti_grade_passback} && $ce->{debug_lti_parameters}) {
+			$self->warning("The request was:\n " . $self->local_escape_html($readResultXML));
+			$self->warning("The nonce used is ${uuid_p1}__${uuid_p2}");
+			$self->warning("The response is:\n " . $self->local_escape_html($response->to_string));
+			debug("The request was:\n " . $readResultXML);
+			debug("The nonce used is ${uuid_p1}__${uuid_p2}");
+			debug("The response is:\n " . $response->to_string);
 		}
 
 		if ($response->is_success) {
-			$response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
+			my $content = $response->body;
+			$content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
 			my $message = $1;
 			if ($message ne 'success') {
-				warn(
-					"Unable to retrieve prior grade from LMS. Note that if your server time is not correct, this may fail for reasons which are less than obvious from the error messages. Error: "
+				$self->warning(
+					'Unable to retrieve prior grade from LMS. Note that if your server time is not correct, '
+						. 'this may fail for reasons which are less than obvious from the error messages. Error: '
 						. $message);
-				debug(
-					"Unable to retrieve prior grade from LMS. Note that if your server time is not correct, this may fail for reasons which are less than obvious from the error messages. Error: "
+				debug('Unable to retrieve prior grade from LMS. Note that if your server time is not correct, '
+						. 'this may fail for reasons which are less than obvious from the error messages. Error: '
 						. $message);
-				#debug(CGI::escapeHTML($response->content));
 				return 0;
 			} else {
 				my $oldScore;
 				# Possibly no score yet.
-				if ($response->content =~ /<textString\/>/) {
-					$oldScore = "";
+				if ($content =~ /<textString\/>/) {
+					$oldScore = '';
 				} else {
-					$response->content =~ /<textString>\s*(\S+)\s*<\/textString>/;
+					$content =~ /<textString>\s*(\S+)\s*<\/textString>/;
 					$oldScore = $1;
 				}
 				# Do not update the score if no change.
-				if ($oldScore eq "success") {
+				if ($oldScore eq 'success') {
 					# Blackboard seems to return this when there is no prior grade.
 					# See: https://webwork.maa.org/moodle/mod/forum/discuss.php?d=5002
-					debug("LMS grade will be updated. sourcedid: "
-							. $sourcedid
-							. " Old score: "
-							. $oldScore
-							. " New score: "
-							. $score)
-						if ($ce->{debug_lti_grade_passback});
+					debug("LMS grade will be updated. sourcedid: $sourcedid; Old score: $oldScore; New score: $score")
+						if $ce->{debug_lti_grade_passback};
 					$lti_do_send = 1;    # Change back to sending the update
-				} elsif ($oldScore ne "" && abs($score - $oldScore) < 0.001) {
+				} elsif ($oldScore ne '' && abs($score - $oldScore) < 0.001) {
 					# LMS has essentially the same score, no reason to update it
-					debug("LMS grade will NOT be updated - grade unchanges. Old score: "
-							. $oldScore
-							. " New score: "
-							. $score)
-						if ($ce->{debug_lti_grade_passback});
-					warn("LMS grade will NOT be updated - grade unchanges. Old score: "
-							. $oldScore
-							. " New score: "
-							. $score)
+					debug("LMS grade will NOT be updated - grade unchanges. Old score: $oldScore; New score: $score")
+						if $ce->{debug_lti_grade_passback};
+					$self->warning('LMS grade will NOT be updated - grade unchanged. '
+							. "Old score: $oldScore; New score: $score")
 						if ($ce->{debug_lti_grade_passback});
 					$lti_do_send = 0;    # Do not send
 					return 1;
 				} else {
 					$lti_do_send = 1;    # Change back to sending the update
-					debug("LMS grade will be updated. sourcedid: "
-							. $sourcedid
-							. " Old score: "
-							. $oldScore
-							. " New score: "
-							. $score)
-						if ($ce->{debug_lti_grade_passback});
+					debug("LMS grade will be updated. sourcedid: $sourcedid; Old score: $oldScore; New score: $score")
+						if $ce->{debug_lti_grade_passback};
 				}
 			}
 		} else {
-			warn(
-				"Unable to retrieve prior grade from LMS. Note that if your server time is not correct, this may fail for reasons which are less than obvious from the error messages. Error: "
+			$self->warning('Unable to retrieve prior grade from LMS. Note that if your server time is not correct, '
+					. 'this may fail for reasons which are less than obvious from the error messages. Error: '
 					. $response->message)
 				if ($ce->{debug_lti_grade_passback});
-			debug(
-				"Unable to retrieve prior grade from LMS. Note that if your server time is not correct, this may fail for reasons which are less than obvious from the error messages. Error: "
+			debug('Unable to retrieve prior grade from LMS. Note that if your server time is not correct, '
+					. 'this may fail for reasons which are less than obvious from the error messages. Error: '
 					. $response->message);
-			debug(CGI::escapeHTML($response->content));
+			debug(CGI::escapeHTML($response->body));
 			return 0;
 		}
 	}
 
 	if ($lti_do_send) {
-
 		# Send the LMS the new grade
 
 		# This is boilerplate XML used to submit the $score for $sourcedid
@@ -454,22 +404,21 @@ EOS
 			$bodyhash .= '=';
 		}
 		my $message2 = '';
-		$message2 .= "mass_update: " if $self->{post_processing_mode};
-		$message2 .= "Submitting grade using sourcedid: $sourcedid and score: $score\n";
-		warn($message2) if $ce->{debug_lti_grade_passback};
+		$message2 .= 'mass_update: ' if $self->{post_processing_mode};
+		$message2 .= "Submitting grade using sourcedid: $sourcedid and score: $score";
+		$self->warning($message2) if $ce->{debug_lti_grade_passback};
 
-		$requestGen = Net::OAuth->request("consumer");
+		$requestGen = Net::OAuth->request('consumer');
 		debug("obtained requestGen $requestGen");
 
 		$requestGen->add_required_message_params('body_hash');
-		debug("add required message params");
 
 		# Change the time dependent portion of the nonce for the second stage
-		$uuid_p2 .= "-step2";
+		$uuid_p2 .= '-step2';
 
 		$gradeRequest = $requestGen->new(
 			request_url      => $request_url,
-			request_method   => "POST",
+			request_method   => 'POST',
 			consumer_secret  => $ce->{LTIBasicConsumerSecret},
 			consumer_key     => $consumer_key,
 			signature_method => $signature_method,
@@ -477,71 +426,60 @@ EOS
 			timestamp        => time(),
 			body_hash        => $bodyhash
 		);
-		debug("created grade request " . $gradeRequest);
-		$gradeRequest->sign();
-		debug("signed grade request");
+		debug("created grade request $gradeRequest");
+		$gradeRequest->sign;
+		debug('signed grade request');
 
-		$HTTPRequest = HTTP::Request->new(
-			$gradeRequest->request_method,
+		$response = Mojo::UserAgent->new->post(
 			$gradeRequest->request_url,
-			[
-				'Authorization' => $gradeRequest->to_authorization_header,
-				'Content-Type'  => 'application/xml',
-			],
-			$replaceResultXML,
-		);
-		debug("posting grade request: $HTTPRequest");
-
-		$response = eval { LWP::UserAgent->new->request($HTTPRequest); };
-		if ($@) {
-			warn "error sending HTTP request to LMS, $@";
-		}
+			{ 'Authorization' => $gradeRequest->to_authorization_header, 'Content-Type' => 'application/xml' },
+			$replaceResultXML
+		)->result;
 
 		# debug section
-		if ($ce->{debug_lti_grade_passback} and $ce->{debug_lti_parameters}) {
-			warn "The request was:\n " . ($self->local_escape_html(join(" ", %$HTTPRequest)));
-			warn "The nonce used is ${uuid_p1}__${uuid_p2}\n";
-			warn "The response is:\n " . ($self->local_escape_html(join(" ", %$response)));
-			warn "The request was:\n " . ($self->local_escape_html(join(" ", %$HTTPRequest)));
-			debug("The request was:\n " . ($self->local_escape_html(join(" ", %$HTTPRequest))));
-			debug("The nonce used is ${uuid_p1}__${uuid_p2}\n");
-			debug("The response is:\n " . ($self->local_escape_html(join(" ", %$response))));
+		if ($ce->{debug_lti_grade_passback} && $ce->{debug_lti_parameters}) {
+			$self->warning("The request was:\n " . $self->local_escape_html($replaceResultXML));
+			$self->warning("The nonce used is ${uuid_p1}__${uuid_p2}");
+			$self->warning("The response is:\n " . $self->local_escape_html($response->to_string));
+			debug("The request was:\n " . $replaceResultXML);
+			debug("The nonce used is ${uuid_p1}__${uuid_p2}");
+			debug("The response is:\n " . $response->to_string);
 		}
 
 		if ($response->is_success) {
-			$response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
+			$response->body =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
 			my $message = $1;
-			warn("result is: $message\n") if $ce->{debug_lti_grade_passback};
+			$self->warning("result is: $message") if $ce->{debug_lti_grade_passback};
 			if ($message ne 'success') {
-				debug("Unable to update LMS grade $sourcedid . LMS responded with message: " . $message);
+				debug("Unable to update LMS grade $sourcedid . LMS responded with message: $message");
 				return 0;
 			} else {
-				# if we got here we got successes from both the post and the lms
-				debug("Successfully updated LMS grade $sourcedid. LMS responded with message: " . $message);
+				# If we got here, we got successes from both the post and the lms.
+				debug("Successfully updated LMS grade $sourcedid. LMS responded with message: $message");
 			}
 		} else {
-			debug("Unable to update LMS grade $sourcedid. Error: " . ($response->message));
-			debug($self->local_escape_html($response->content));
+			debug("Unable to update LMS grade $sourcedid. Error: " . $response->message);
+			debug($response->body);
 			return 0;
 		}
-		debug("Success submitting grade using sourcedid: $sourcedid and score: $score\n");
+		debug("Success submitting grade using sourcedid: $sourcedid and score: $score");
 
-		return 1;    # success
+		return 1;
 	}
-	return 0;        # failure as a fallback value
+
+	return 0;
 }
 
-# does a mass update of all grades.  This is all user grades for
+# Perform a mass update of all grades.  This is all user grades for
 # course grade mode and all user set grades for homework grade mode.
+# Note that this is not a class method.
+# Also, the only required paramter is $r.
 sub mass_update {
-	my ($self, $update, $name, $name2) = @_;
-	$name  ||= '';
-	$name2 ||= '';
-	my $r  = $self->{r};
+	my ($r, $manual_update, $userID, $setID) = @_;
 	my $ce = $r->ce;
 	my $db = $r->db;
 
-	# sanity check
+	# Sanity check.
 	unless (ref($ce)) {
 		warn('course environment is not defined');
 		return;
@@ -552,72 +490,29 @@ sub mass_update {
 	}
 
 	# Only run an automatic update if the time interval has passed.
-	if ($update eq 'auto') {
+	if (!$manual_update) {
 		my $lastUpdate     = $db->getSettingValue('LTILastUpdate') || 0;
-		my $updateInterval = $ce->{LTIMassUpdateInterval}          || -1;    # Never update
+		my $updateInterval = $ce->{LTIMassUpdateInterval} // -1;
 		return unless ($updateInterval != -1 && time - $lastUpdate > $updateInterval);
-		$update = 'all';
 	}
-
-	$self->{post_processing_mode} = 1;
-	$db->setSettingValue('LTILastUpdate', time()) if $update eq 'all';
 
 	# Send warning if debug_lti_grade_passback is set.
 	if ($ce->{debug_lti_grade_passback}) {
-		if ($update eq 'all') {
-			warn "starting mass_update of all sets and users via LTI";
-		} elsif ($update eq 'set' && $ce->{LTIGradeMode} eq 'homework') {
-			warn "starting mass_update of set $name for all users via LTI";
-		} elsif ($update eq 'user') {
-			warn "starting mass_update of all sets for user $name via LTI";
-		} elsif ($update eq 'user_set' && $ce->{LTIGradeMode} eq 'homework') {
-			warn "starting mass_update of user $name and set $name2 via LTI";
+		if ($setID && $userID && $ce->{LTIGradeMode} eq 'homework') {
+			warn "LTI Mass Update: Queueing grade update for user $userID and set $setID.\n";
+		} elsif ($setID && $ce->{LTIGradeMode} eq 'homework') {
+			warn "LTI Mass Update: Queueing grade update for all users assigned to set $setID.\n";
+		} elsif ($userID) {
+			warn "LTI Mass Update: Queueing grade update of all sets assigned to user $userID.\n";
+		} else {
+			$db->setSettingValue('LTILastUpdate', time);
+			warn "LTI Mass Update: Queueing grade update for all sets and users.\n";
 		}
 	}
 
-	# Start update loop.
-	Mojo::IOLoop->timer(
-		1 => sub {
-			eval {
-				# Determine what needs to be updated.
-				my %updateUsers;
-				if ($update eq 'all') {
-					if ($ce->{LTIGradeMode} eq 'course') {
-						%updateUsers = map { $_ => 'update_course_grade' } $db->listUsers;
-					} elsif ($ce->{LTIGradeMode} eq 'homework') {
-						%updateUsers = map { $_ => [ $db->listUserSets($_) ] } $db->listUsers;
-					}
-				} elsif ($update eq 'set' && $ce->{LTIGradeMode} eq 'homework') {
-					%updateUsers = map { $_ => [$name] } $db->listSetUsers($name);
-				} elsif ($update eq 'user') {
-					if ($ce->{LTIGradeMode} eq 'course') {
-						$updateUsers{$name} = 'update_course_grade';
-					} elsif ($ce->{LTIGradeMode} eq 'homework') {
-						$updateUsers{$name} = [ $db->listUserSets($name) ];
-					}
-				} elsif ($update eq 'user_set' && $ce->{LTIGradeMode} eq 'homework') {
-					$updateUsers{$name} = [$name2];
-				}
+	$r->minion->enqueue(lti_mass_update => [ $ce->{courseName}, $userID, $setID ]);
 
-				for my $user (keys %updateUsers) {
-					if (ref($updateUsers{$user}) eq 'ARRAY') {
-						for my $set (@{ $updateUsers{$user} }) {
-							$self->submit_set_grade($user, $set);
-						}
-					} elsif ($updateUsers{$user} eq 'update_course_grade') {
-						$self->submit_course_grade($user);
-					}
-				}
-			};
-			if ($@) {
-				# Write errors to the Mojolicious log.
-				$r->log->error("An error occured while trying to mass_update grades via LTI: $@\n");
-			}
-			$self->{post_processing_mode} = 0;
-		}
-	);
-	Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+	return;
 }
 
 1;
-

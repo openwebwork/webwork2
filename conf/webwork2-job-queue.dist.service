@@ -1,0 +1,16 @@
+[Unit]
+Description=webwork2 job queue
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+RuntimeDirectory=webwork2
+PIDFile=/run/webwork2/webwork2-job-queue.pid
+WorkingDirectory=/opt/webwork/webwork2
+ExecStart=/opt/webwork/webwork2/bin/webwork2 minion worker -m production
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

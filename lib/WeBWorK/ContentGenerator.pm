@@ -51,7 +51,6 @@ use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
 use Encode;
-use Email::Sender::Transport::SMTP;
 use Future::AsyncAwait;
 
 use WeBWorK::CGI;
@@ -153,13 +152,10 @@ async sub go {
 	my $r      = $self->r;
 	my $ce     = $r->ce;
 
-	# If grades are begin passed back to the lti then we peroidically
-	# update all of the grades because things can get out of sync if
-	# instructors add or modify sets.
-	if ($ce->{LTIGradeMode} and ref($r->{db} // '')) {
-		my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
-		$grader->mass_update('auto');
-	}
+	# If grades are being passed back to the lti, then peroidically update all of the
+	# grades because things can get out of sync if instructors add or modify sets.
+	WeBWorK::Authen::LTIAdvanced::SubmitGrade::mass_update($r)
+		if $r->urlpath->arg('courseID') && ref($r->db) && $ce->{LTIGradeMode};
 
 	# check to verify if there are set-level problems with running
 	# this content generator (individual content generators must
@@ -2442,43 +2438,6 @@ sub read_scoring_file {
 	my ($self, $fileName) = @_;
 	return {} if $fileName eq "None";    # callers expect a hashref in all cases
 	return parse_scoring_file($self->r->ce->{courseDirs}{scoring} . "/$fileName");
-}
-
-=item createEmailSenderTransportSMTP
-
-Wrapper that creates an Email::Sender::Transport::SMTP object
-
-=cut
-
-# this function abstracts the process of creating a transport layer for SendMail
-# it is used in Feedback.pm, SendMail.pm and Utils/ProblemProcessing.pm (for JITAR messages)
-
-sub createEmailSenderTransportSMTP {
-	my $self = shift;
-	my $ce   = $self->r->ce;
-	my $transport;
-	if (defined $ce->{mail}->{smtpPort}) {
-		$transport = Email::Sender::Transport::SMTP->new({
-			host    => $ce->{mail}->{smtpServer},
-			ssl     => $ce->{mail}->{tls_allowed} // 0,    ## turn off ssl security by default
-			port    => $ce->{mail}->{smtpPort},
-			timeout => $ce->{mail}->{smtpTimeout},
-			# debug => 1,
-		});
-	} else {
-		$transport = Email::Sender::Transport::SMTP->new({
-			host    => $ce->{mail}->{smtpServer},
-			ssl     => $ce->{mail}->{tls_allowed} // 0,    ## turn off ssl security by default
-			timeout => $ce->{mail}->{smtpTimeout},
-			# debug => 1,
-		});
-	}
-	#warn "port is ", $transport->port();
-	#warn "ssl is ", $transport->ssl();
-	#warn "tls_allowed is ", $ce->{mail}->{tls_allowed}//'';
-	#warn "smtpPort is set to ", $ce->{mail}->{smtpPort}//'';
-
-	return $transport;
 }
 
 =back

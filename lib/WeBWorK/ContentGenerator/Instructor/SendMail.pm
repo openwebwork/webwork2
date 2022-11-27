@@ -36,7 +36,7 @@ use WeBWorK::Debug;
 use Socket qw/unpack_sockaddr_in inet_ntoa/;    # for remote host/port info
 use Text::Wrap qw(wrap);
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
-use WeBWorK::Utils qw/readFile readDirectory/;
+use WeBWorK::Utils qw/processEmailMessage createEmailSenderTransportSMTP/;
 use WeBWorK::Utils::FilterRecords qw/filterRecords/;
 
 sub initialize {
@@ -369,7 +369,7 @@ sub initialize {
 		# Save the message
 		#################################################################
 		$self->saveProblem($temp_body, "${emailDirectory}/$output_file")
-			unless ($output_file =~ /^[~.]/ || $output_file =~ /\.\./ || not $output_file =~ m|\.msg$|);
+			unless ($output_file =~ /^[~.]/ || $output_file =~ /\.\./ || !$output_file =~ m|\.msg$|);
 		unless ($self->{submit_message} or not -w "${emailDirectory}/$output_file")
 		{    # if there are no errors report success
 			$self->addgoodmessage(
@@ -426,28 +426,24 @@ sub initialize {
 
 		# Do actual mailing in the after the response is sent, since it could take a long time
 		# FIXME we need to do a better job providing status notifications for long-running email jobs
-		Mojo::IOLoop->timer(
-			1 => sub {
-				# catch exceptions generated during the sending process
-				my $result_message = eval { $self->mail_message_to_recipients() };
-				if ($@) {
-					# add the die message to the result message
-					$result_message .=
-						"An error occurred while trying to send email.\n" . "The error message is:\n\n$@\n\n";
-					# and also write it to the Mojolicious log
-					$r->log->error("An error occurred while trying to send email: $@\n");
-				}
-				# this could fail too...
-				eval { $self->email_notification($result_message) };
-				if ($@) {
-					$r->log->error("An error occured while trying to send the email notification: $@\n");
-				}
-			}
+		$r->minion->enqueue(
+			send_instructor_email => [ {
+				courseName  => $r->urlpath->arg("courseID"),
+				recipients  => $self->{ra_send_to},
+				subject     => $self->{subject},
+				text        => ${ $self->{r_text} // \'' },
+				merge_data  => $self->{rh_merge_data},
+				from        => $self->{from},
+				defaultFrom => $self->{defaultFrom},
+				remote_host => $self->{remote_host},
+			} ]
 		);
 	} else {
 		$self->addbadmessage(CGI::p($r->maketext("Didn't recognize action")));
 	}
-}    #end initialize
+
+	return;
+}
 
 sub body {
 	my ($self)   = @_;
@@ -468,7 +464,7 @@ sub body {
 		unless $authz->hasPermissions($user, "send_mail");
 
 	if ($response eq 'preview') {
-		$self->print_preview($setID);
+		return $self->print_preview($setID);
 	} elsif ($response eq 'send_email' and $self->{ra_send_to} and @{ $self->{ra_send_to} }) {
 		my $message = CGI::i($r->maketext(
 			"Email is being sent to [quant,_1,recipient]. You will be notified by email
@@ -478,11 +474,10 @@ sub body {
 		$self->addgoodmessage($message);
 		$self->{message} .= $message;
 
-		$self->print_form($setID);
+		return $self->print_form($setID);
 	} else {
-		$self->print_form($setID);
+		return $self->print_form($setID);
 	}
-
 }
 
 sub print_preview {
@@ -492,7 +487,7 @@ sub print_preview {
 	my $setID   = $urlpath->arg("setID");
 
 	#  get preview user
-	my $ur = $r->db->getUser($self->{preview_user});    #checked
+	my $ur = $r->db->getUser($self->{preview_user});
 	die "record for preview user " . $self->{preview_user} . " not found." unless $ur;
 
 	#  get merge file
@@ -500,7 +495,23 @@ sub print_preview {
 	my $delimiter     = ',';
 	my $rh_merge_data = $self->read_scoring_file("$merge_file", "$delimiter");
 
-	my ($msg, $preview_header) = $self->process_message($ur, $rh_merge_data, 1);    # 1 == for preview
+	if (($self->{merge_file} // 'None') ne 'None' && !defined $rh_merge_data->{ $ur->student_id }) {
+		$self->addbadmessage(CGI::p(
+			'No merge data for student id: '
+				. $ur->student_id
+				. '; name: '
+				. $ur->first_name . ' '
+				. $ur->last_name
+				. '; login: '
+				. $ur->user_id
+		));
+	}
+
+	my ($msg, $preview_header) = processEmailMessage(
+		${ $self->{r_text} // \'' },
+		$ur,            $self->r->ce->status_abbrev_to_name($ur->status),
+		$rh_merge_data, 1
+	);
 
 	my $recipients   = join(" ", @{ $self->{ra_send_to} });
 	my $errorMessage = defined($self->{submit_message}) ? CGI::i($self->{submit_message}) : '';
@@ -529,13 +540,20 @@ sub print_preview {
 	# <user@domain.com>.
 	$msg = encode_entities($msg);
 
-	$msg = join("", $errorMessage, $preview_header, $msg);
+	return CGI::div(
+		{ class => 'mb-3', dir => 'ltr' },
+		CGI::pre($errorMessage)
+			. CGI::h2({ class => 'fs-3' }, $r->maketext("This sample mail would be sent to [_1]", $ur->email_address))
+			. CGI::pre($msg)
+			. CGI::h2({ class => 'fs-3' }, $r->maketext('Merge file data:'))
+			. CGI::pre($errorMessage)
+			. CGI::pre(CGI::p($preview_header))
 
-	return
-		CGI::div({ class => 'mb-3', dir => 'ltr' }, CGI::pre($msg))
-		. CGI::p($r->maketext('Use browser back button to return from preview mode.'))
-		. CGI::h3($r->maketext('Emails to be sent to the following:'))
-		. $recipients;
+		)
+		. CGI::h2({ class => 'fs-3' }, $r->maketext('Emails to be sent to the following:'))
+		. $recipients
+		. CGI::div({ class => 'alert alert-info p-1 mt-3' },
+			$r->maketext('Use browser back button to return from preview mode.'));
 }
 
 sub print_form {
@@ -905,20 +923,19 @@ sub print_form {
 ##############################################################################
 
 sub saveProblem {
-	my $self = shift;
-	my ($body, $probFileName) = @_;
-	local (*PROBLEM);
-	open(PROBLEM, ">:encoding(UTF-8)", $probFileName)
+	my ($self, $body, $probFileName) = @_;
+	open(my $PROBLEM, ">:encoding(UTF-8)", $probFileName)
 		|| $self->addbadmessage(
 			CGI::p(
 				"Could not open $probFileName for writing.
 						Check that the  permissions for this problem are 660 (-rw-rw----)"
 			)
 		);
-	print PROBLEM $body if -w $probFileName;
-	close PROBLEM;
+	print $PROBLEM $body if -w $probFileName;
+	close $PROBLEM;
 	chmod 0660, "$probFileName"
 		|| $self->addbadmessage(CGI::p("CAN'T CHANGE PERMISSIONS ON FILE $probFileName"));
+	return;
 }
 
 sub read_input_file {
@@ -928,14 +945,15 @@ sub read_input_file {
 	my ($text, @text);
 	my $header = '';
 	my ($subject, $from, $replyTo);
-	local (*FILE);
 	if (-e "$filePath" and -r "$filePath") {
-		open FILE, "<:encoding(UTF-8)",
-			$filePath || do { $self->addbadmessage(CGI::p($r->maketext("Can't open [_1]", $filePath))); return };
-		while ($header !~ s/Message:\s*$//m and not eof(FILE)) {
-			$header .= <FILE>;
+		open my $FILE, "<:encoding(UTF-8)", $filePath
+			or do { $self->addbadmessage(CGI::p($r->maketext("Can't open [_1]", $filePath))); return };
+		while ($header !~ s/Message:\s*$//m and not eof($FILE)) {
+			$header .= <$FILE>;
 		}
-		$text = join('', <FILE>);
+		$text = join('', <$FILE>);
+		close $FILE;
+
 		$text   =~ s/^\s*//;           # remove initial white space if any.
 		$header =~ /^From:\s(.*)$/m;
 		$from = $1 or $from = $self->{defaultFrom};
@@ -967,99 +985,6 @@ sub get_merge_file_names {
 		;    #FIXME ? check that only readable files are listed.
 }
 
-sub mail_message_to_recipients {
-	my $self            = shift;
-	my $r               = $self->r;
-	my $ce              = $r->ce;
-	my $subject         = $self->{subject};
-	my $from            = $self->{from};
-	my @recipients      = @{ $self->{ra_send_to} };
-	my $rh_merge_data   = $self->{rh_merge_data};
-	my $merge_file      = $self->{merge_file};
-	my $result_message  = '';
-	my $failed_messages = 0;
-	my $error_messages  = '';
-
-	for my $recipient (@recipients) {
-		$error_messages = '';
-
-		my $ur = $self->{db}->getUser($recipient);    #checked
-		unless ($ur) {
-			$error_messages .= "Record for user $recipient not found\n";
-			next;
-		}
-		unless ($ur->email_address =~ /\S/) {         #unless address contains a non-blank charachter
-			$error_messages .= "User $recipient does not have an email address -- skipping\n";
-			next;
-		}
-
-		my $msg = eval { $self->process_message($ur, $rh_merge_data) };
-		$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
-
-		my $email = Email::Stuffer->to($ur->email_address)->from($from)->subject($subject)->text_body($msg)
-			->header('X-Remote-Host' => $self->{remote_host});
-
-	# $ce->{mail}{set_return_path} is the address used to report returned email if defined and non empty.
-	# It is an argument used in sendmail() (aka Email::Stuffer::send_or_die).
-	# For arcane historical reasons sendmail actually sets the field "MAIL FROM" and the smtp server then
-	# uses that to set "Return-Path".
-	# references:
-	#  https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
-	#  https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
-		try {
-			$email->send_or_die({
-				# createEmailSenderTransportSMTP is defined in ContentGenerator
-				transport => $self->createEmailSenderTransportSMTP(),
-				$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
-			});
-			debug 'email sent successfully to ' . $ur->email_address;
-		} catch {
-			debug "Error sending email: $_";
-			debug dump $@;
-			$error_messages .= "Error sending email: $_";
-			next;
-		};
-
-		$result_message .= $r->maketext("Message sent to [_1] at [_2].", $recipient, $ur->email_address) . "\n"
-			unless $error_messages;
-	} continue {    #update failed messages before continuing loop
-		if ($error_messages) {
-			$failed_messages++;
-			$result_message .= $error_messages;
-		}
-	}
-	my $courseName           = $self->r->urlpath->arg("courseID");
-	my $number_of_recipients = scalar(@recipients) - $failed_messages;
-	$result_message = $r->maketext(
-		"A message with the subject line \"[_1]\" has been sent to [quant,_2,recipient] in the class [_3].  "
-			. "There were [_4] message(s) that could not be sent.",
-		$subject, $number_of_recipients, $courseName, $failed_messages)
-		. "\n\n"
-		. $result_message;
-
-}
-
-sub email_notification {
-	my $self           = shift;
-	my $result_message = shift;
-	my $ce             = $self->r->ce;
-
-	my $email = Email::Stuffer->to($self->{defaultFrom})->from($self->{defaultFrom})->subject('WeBWorK email sent')
-		->text_body($result_message)->header('X-Remote-Host' => $self->{remote_host});
-
-	try {
-		$email->send_or_die({
-			# createEmailSenderTransportSMTP is defined in ContentGenerator
-			transport => $self->createEmailSenderTransportSMTP(),
-			$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
-		});
-	} catch {
-		warn "Error sending email: $_";
-	};
-
-	warn "\nWW::Instructor::SendMail:: instructor message sent from $self->{defaultFrom}\n";
-}
-
 sub getRecord {
 	my $self      = shift;
 	my $line      = shift;
@@ -1077,75 +1002,17 @@ sub getRecord {
 	@lineArray = split(/\s*${delimiter}\s*/, $line);    # split line into fields
 	$lineArray[0] =~ s/^\s*//;                          # remove white space from first element
 	pop @lineArray;                                     # remove the last artificial field
-	@lineArray;
-}
-
-sub process_message {
-	my $self          = shift;
-	my $ur            = shift;
-	my $rh_merge_data = shift;
-	my $for_preview   = shift;
-	my $r             = $self->r;
-	my $text       = defined($self->{r_text}) ? ${ $self->{r_text} } : 'FIXME no text was produced by initialization!!';
-	my $merge_file = (defined($self->{merge_file})) ? $self->{merge_file} : 'None';
-
-	my $status_name = $self->r->ce->status_abbrev_to_name($ur->status);
-	$status_name = $ur->status unless defined $status_name;
-
-	#user macros that can be used in the email message
-	my $SID        = $ur->student_id;
-	my $FN         = $ur->first_name;
-	my $LN         = $ur->last_name;
-	my $SECTION    = $ur->section;
-	my $RECITATION = $ur->recitation;
-	my $STATUS     = $status_name;
-	my $EMAIL      = $ur->email_address;
-	my $LOGIN      = $ur->user_id;
-
-	# get record from merge file
-	# FIXME this is inefficient.  The info should be cached
-	my @COL = defined($rh_merge_data->{$SID}) ? @{ $rh_merge_data->{$SID} } : ();
-	if ($merge_file ne 'None' and not defined($rh_merge_data->{$SID}) and $for_preview) {
-		$self->addbadmessage(CGI::p("No merge data for student id:$SID; name:$FN $LN; login:$LOGIN"));
-	}
-	unshift(@COL, "");    ## this makes COL[1] the first column
-	my $endCol = @COL;
-	# for safety, only evaluate special variables
-	my $msg = $text;
-	$msg =~ s/\$SID/$SID/g;
-	$msg =~ s/\$LN/$LN/g;
-	$msg =~ s/\$FN/$FN/g;
-	$msg =~ s/\$STATUS/$STATUS/g;
-	$msg =~ s/\$SECTION/$SECTION/g;
-	$msg =~ s/\$RECITATION/$RECITATION/g;
-	$msg =~ s/\$EMAIL/$EMAIL/g;
-	$msg =~ s/\$LOGIN/$LOGIN/g;
-
-	if (defined($COL[1])) {    # prevents extraneous error messages.
-		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/g;
-	} else {                   # prevents extraneous $COL's in email message
-		$msg =~ s/\$COL\[(\-?\d+)\]//g;
-	}
-
-	$msg =~ s/\r//g;
-
-	if ($for_preview) {
-		my @preview_COL = @COL;
-		shift @preview_COL;    ## shift back for preview
-		my $preview_header = CGI::p('', data_format(1 .. ($#COL)), "<br>", data_format2(@preview_COL))
-			. CGI::h3($r->maketext("This sample mail would be sent to [_1]", $EMAIL));
-		return $msg, $preview_header;
-	} else {
-		return $msg;
-	}
+	return @lineArray;
 }
 
 sub data_format {
-	map { "COL[$_]" . '&nbsp;' x (3 - length($_)); } @_;    # problems if $_ has length bigger than 4
+	my @data = @_;
+	return map { "COL[$_]" . '&nbsp;' x (3 - length($_)); } @data;    # problems if $_ has length bigger than 4
 }
 
 sub data_format2 {
-	map { $_ =~ s/\s/&nbsp;/g; $_ } map { sprintf('%-8.8s', $_); } @_;
+	my @data = @_;
+	return map { $_ =~ s/\s/&nbsp;/gr } map { sprintf('%-8.8s', $_); } @data;
 }
 
 1;

@@ -25,7 +25,7 @@ WeBWorK::Utils - useful utilities used by other WeBWorK modules.
 
 use strict;
 use warnings;
-#use Apache::DB;
+
 use DateTime;
 use DateTime::TimeZone;
 use Date::Parse;
@@ -38,9 +38,9 @@ use Errno;
 use File::Path qw(rmtree);
 use Storable;
 use Carp;
-#use Mail::Sender;
 use Storable qw(nfreeze thaw);
 use JSON;
+use Email::Sender::Transport::SMTP;
 
 use open IO => ':encoding(UTF-8)';
 
@@ -117,6 +117,8 @@ our @EXPORT_OK = qw(
 	jitar_problem_adjusted_status
 	jitar_problem_finished
 	fetchEmailRecipients
+	processEmailMessage
+	createEmailSenderTransportSMTP
 	generateURLs
 	getAssetURL
 	x
@@ -1782,6 +1784,65 @@ sub fetchEmailRecipients {
 			&& defined $sender
 			&& defined $sender->section ? (section => $sender->section) : (),
 		});
+}
+
+sub processEmailMessage {
+	my ($text, $user_record, $STATUS, $merge_data, $for_preview) = @_;
+
+	# User macros that can be used in the email message
+	my $SID        = $user_record->student_id;
+	my $FN         = $user_record->first_name;
+	my $LN         = $user_record->last_name;
+	my $SECTION    = $user_record->section;
+	my $RECITATION = $user_record->recitation;
+	my $EMAIL      = $user_record->email_address;
+	my $LOGIN      = $user_record->user_id;
+
+	# Get record from merge data.
+	my @COL = defined($merge_data->{$SID}) ? @{ $merge_data->{$SID} } : ();
+	unshift(@COL, '');    # This makes COL[1] the first column.
+
+	# For safety, only evaluate special variables.
+	my $msg = $text;
+	$msg =~ s/\$SID/$SID/g;
+	$msg =~ s/\$LN/$LN/g;
+	$msg =~ s/\$FN/$FN/g;
+	$msg =~ s/\$STATUS/$STATUS/g;
+	$msg =~ s/\$SECTION/$SECTION/g;
+	$msg =~ s/\$RECITATION/$RECITATION/g;
+	$msg =~ s/\$EMAIL/$EMAIL/g;
+	$msg =~ s/\$LOGIN/$LOGIN/g;
+
+	if (defined $COL[1]) {
+		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/g;
+	} else {
+		$msg =~ s/\$COL\[(\-?\d+)\]//g;
+	}
+
+	$msg =~ s/\r//g;
+
+	if ($for_preview) {
+		my @preview_COL = @COL;
+		shift @preview_COL;    # Shift of the added empty string for preview.
+		return $msg,
+			join(' ',
+				'', (map { "COL[$_]" . '&nbsp;' x (3 - length $_) } 1 .. $#COL),
+				'<br>', (map { $_ =~ s/\s/&nbsp;/gr } map { sprintf('%-8.8s', $_); } @preview_COL));
+	} else {
+		return $msg;
+	}
+}
+
+# This function abstracts the process of creating a transport layer for SendMail.
+# It is used in Feedback.pm, SendMail.pm and Utils/ProblemProcessing.pm (for JITAR messages).
+sub createEmailSenderTransportSMTP {
+	my $ce = shift;
+	return Email::Sender::Transport::SMTP->new({
+		host => $ce->{mail}{smtpServer},
+		ssl  => $ce->{mail}{tls_allowed} // 0,
+		defined $ce->{mail}->{smtpPort} ? (port => $ce->{mail}{smtpPort}) : (),
+		timeout => $ce->{mail}{smtpTimeout},
+	});
 }
 
 # Requires a CG object.

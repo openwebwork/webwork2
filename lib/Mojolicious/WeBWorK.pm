@@ -61,6 +61,11 @@ sub startup ($app) {
 			"webwork_server_admin_email for reporting bugs has been set to $WEBWORK_SERVER_ADMIN in site.conf");
 	}
 
+	# Setup the Minion job queue.
+	$app->plugin(Minion => { $ce->{job_queue}{backend} => $ce->{job_queue}{database_dsn} });
+	$app->minion->add_task(lti_mass_update       => 'Mojolicious::WeBWorK::Tasks::LTIMassUpdate');
+	$app->minion->add_task(send_instructor_email => 'Mojolicious::WeBWorK::Tasks::SendInstructorEmail');
+
 	# Helpers
 
 	# This replaces the previous Apache2::RequestUtil method that was overriden in the WeBWorK::Request module to return

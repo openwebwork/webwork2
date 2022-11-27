@@ -33,6 +33,8 @@ Server configuration files.
   `webwork2.mojolicious.yml` if you need to change those settings. You usually will need to do this.
 - `webwork2.dist.service` is a systemd configuration file for linux systems that serves the webwork2 app via the
   Mojolicious hypnotoad server. If you need to change it, then copy it to `webwork2.service`.
+- `webwork2-job-queue.dist.service` is a systemd configuration file for linux systems that runs the webwork2 job queue
+  via Minion. If you need to change it, then copy it to `webwork2-job-queue.service`.
 - `webwork2.apache2.4.dist.conf` is only used if you proxy hypnotoad via apache2. Copy this to `webwork2.apache2.4.conf`
   if any changes need to be made.
 - `webwork2.nginx.dist.conf` is only used if you proxy hypnotoad via nginx. Copy this to `webwork2.nginx.conf` if any
@@ -78,6 +80,18 @@ Use the server user on your system instead of "www-data" if it is different.
 
 You can now open your browser to `http://localhost:3000/webwork2`.
 
+For development and testing of the webwork2 job queue additionally execute the following.
+
+```bash
+./bin/webwork2 minion worker
+```
+
+Note that this needs to be run by the same user as the webwork2 app. Both need to have read and write access to the
+SQLite database file that is used for the job queue.
+
+Additionally note that the Minion worker does not hot reload. You must manually restart the worker to reload with
+changes to the task modules.
+
 ## Direct deployment of webwork2 for production via hypnotoad
 
 This is the simplest way to deploy webwork2 for production. Note that you should only use this if your server is
@@ -115,7 +129,7 @@ sudo chmod 500 /etc/autobind/byport/443
 Then set up the systemd service:
 
 - Copy `webwork2.dist.service` to `webwork2.servcice`.
-- Comment out the the `Environment` setting in the copy.
+- Comment out the `Environment` setting in the copy.
 - Set the `User` and `Group` settings to the user chosen above.
 - Append `authbind --deep` to the beginning of the `ExecStart` command.
 - To enable and start the service, execute
@@ -184,4 +198,21 @@ Now set up the systemd service:
 ```bash
 sudo systemctl enable /opt/webwork/webwork2/conf/webwork2.service
 sudo systemctl start webwork2
+```
+
+### Deployment of the webwork2 job queue for all server arrangments
+
+Some long running processes are not directly run by the webwork2 Mojolicious app. Particularly mass grade updates via
+LTI and sending of instructor emails. Instead these tasks are executed via the webwork2 Minion job queue.
+
+Set up the job queue:
+
+- Copy `webwork2-job-queue.dist.service` to `webwork2-job-queue.service`.
+
+Then execute the following to start the job queue:
+
+```bash
+sudo systemctl enable /opt/webwork/webwork2/conf/webwork2-job-queue.service
+sudo systemctl start webwork2-job-queue
+
 ```

@@ -33,44 +33,38 @@ sub initialize {
 	# Check permissions
 	return unless ($r->authz->hasPermissions($user, 'score_sets') && $ce->{LTIGradeMode} && $r->param('updateLTI'));
 
-	my $setID       = $r->param('updateSetID')  || 'All Sets';
-	my $userID      = $r->param('updateUserID') || 'All Users';
-	my $prettySetID = format_set_name_display($setID);
+	my $setID       = $r->param('updateSetID');
+	my $userID      = $r->param('updateUserID');
+	my $prettySetID = format_set_name_display($setID // '');
 
 	# Test if setID and userID are valid.
-	unless ($userID eq 'All Users' || $db->getUser($userID)) {
-		$self->{errorMessage} = $r->maketext('Update aborted. Invalid user [_1].', $userID);
+	if ($userID && !$db->getUser($userID)) {
+		$self->addbadmessage($r->maketext('Update aborted. Invalid user [_1].', $userID));
 		return;
 	}
-	unless ($ce->{LTIGradeMode} eq 'course' || $setID eq 'All Sets' || $db->getGlobalSet($setID)) {
-		$self->{errorMessage} = $r->maketext('Update aborted. Invalid set [_1].', $prettySetID);
+	if ($ce->{LTIGradeMode} eq 'homework' && $setID && !$db->getGlobalSet($setID)) {
+		$self->addbadmessage($r->maketext('Update aborted. Invalid set [_1].', $prettySetID));
 		return;
 	}
 
-	my @updateParms;
-	if ($setID eq 'All Sets' && $userID eq 'All Users') {
-		@updateParms = ('all');
-		$self->{updateMessage} =
-			$ce->{LTIGradeMode} eq 'homework'
-			? $r->maketext('LTI update of all users and sets started.')
-			: $r->maketext('LTI update of all users started.');
-	} elsif ($setID eq 'All Sets') {
-		@updateParms = ('user', $userID);
-		$self->{updateMessage} = $r->maketext('LTI update of user [_1] started.', $userID);
-	} elsif ($userID eq 'All Users') {
-		@updateParms = ('set', $setID);
-		$self->{updateMessage} = $r->maketext('LTI update of set [_1] started.', $prettySetID);
-	} elsif ($ce->{LTIGradeMode} eq 'homework') {
-		@updateParms = ('user_set', $userID, $setID);
-		$self->{updateMessage} = $r->maketext('LTI update of user [_1] and set [_2] started.', $userID, $prettySetID);
+	if ($setID && $userID && $ce->{LTIGradeMode} eq 'homework') {
+		$self->addgoodmessage($r->maketext('LTI update of user [_1] and set [_2] queued.', $userID, $prettySetID));
+	} elsif ($setID && $ce->{LTIGradeMode} eq 'homework') {
+		$self->addgoodmessage($r->maketext('LTI update of set [_1] queued.', $prettySetID));
+	} elsif ($userID) {
+		$self->addgoodmessage($r->maketext('LTI update of user [_1] queued.', $userID));
 	} else {
-		# Abort update. A post with a valid setID was sent in course LTIGradeMode,
-		# but the page shouldn't allow this. Don't set an updateMessage for this case.
-		return;
+		$self->addgoodmessage($ce->{LTIGradeMode} eq 'homework'
+			? $r->maketext('LTI update of all users and sets queued.')
+			: $r->maketext('LTI update of all users queued.'));
 	}
 
-	my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
-	$grader->mass_update(@updateParms);
+	# Note that if somehow this point is reached with a setID and grade mode is "course",
+	# then the setID will be ignored by the job.
+
+	WeBWorK::Authen::LTIAdvanced::SubmitGrade::mass_update($r, 1, $userID, $setID);
+
+	return;
 }
 
 sub title {
@@ -94,10 +88,6 @@ sub body {
 	return CGI::div({ class => 'alert alert-danger p-1' },
 		$r->maketext('LTI grade passback is not enabled for this course'))
 		unless $ce->{LTIGradeMode};
-
-	# Update / error messages.
-	print CGI::div({ class => 'alert alert-warning p-1' }, $self->{errorMessage})  if defined($self->{errorMessage});
-	print CGI::div({ class => 'alert alert-success p-1' }, $self->{updateMessage}) if defined($self->{updateMessage});
 
 	my $gradeMode      = $ce->{LTIGradeMode};
 	my $lastUpdate     = $db->getSettingValue('LTILastUpdate') || 0;
@@ -149,16 +139,16 @@ sub body {
 				CGI::popup_menu({
 					id      => 'updateUserID',
 					name    => 'updateUserID',
-					value   => [ 'All Users', @users ],
-					default => 'All Users',
+					value   => [ '', @users ],
+					default => $r->param('updateUserID') // '',
 					class   => 'form-select',
 					labels  => {
-						'All Users' => $r->maketext('All Users'),
+						'' => $r->maketext('All Users'),
 						map { $_ => $_ } @users
 					},
 					attributes => $gradeMode eq 'homework'
 					? {
-						'All Users' => { 'data-sets' => join(':', @sets) },
+						'' => { 'data-sets' => join(':', @sets) },
 						map { $_ => { 'data-sets' => join(':', sort($db->listUserSets($_))) } } @users
 					}
 					: {}
@@ -176,15 +166,15 @@ sub body {
 				CGI::popup_menu({
 					id      => 'updateSetID',
 					name    => 'updateSetID',
-					value   => [ 'All Sets', @sets ],
-					default => 'All Sets',
+					value   => [ '', @sets ],
+					default => $r->param('updateSetID') // '',
 					class   => 'form-select',
 					labels  => {
-						'All Sets' => $r->maketext('All Sets'),
+						'' => $r->maketext('All Sets'),
 						map { $_ => format_set_name_display($_) } @sets
 					},
 					attributes => {
-						'All Sets' => { 'data-users' => join(':', @users) },
+						'' => { 'data-users' => join(':', @users) },
 						map { $_ => { 'data-users' => join(':', sort($db->listSetUsers($_))) } } @sets
 					}
 				})
