@@ -29,8 +29,8 @@ use Try::Tiny;
 use Mojo::JSON qw(encode_json decode_json);
 
 use WeBWorK::Debug;
-use WeBWorK::Utils
-	qw(writeLog writeCourseLogGivenTime encodeAnswers before after jitar_problem_adjusted_status jitar_id_to_seq);
+use WeBWorK::Utils qw(writeLog writeCourseLogGivenTime encodeAnswers before after jitar_problem_adjusted_status
+	jitar_id_to_seq createEmailSenderTransportSMTP);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 
 use Caliper::Sensor;
@@ -434,8 +434,7 @@ Comment:    $comment
 	#  https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
 	try {
 		$email->send_or_die({
-			# createEmailSenderTransportSMTP is defined in ContentGenerator
-			transport => $c->createEmailSenderTransportSMTP(),
+			transport => createEmailSenderTransportSMTP($ce),
 			$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
 		});
 		debug('Successfully sent JITAR alert message');
