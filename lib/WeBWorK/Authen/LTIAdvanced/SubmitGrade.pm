@@ -32,6 +32,7 @@ use Net::OAuth;
 use HTTP::Request;
 use LWP::UserAgent;
 use UUID::Tiny ':std';
+use Mojo::IOLoop;
 
 use Digest::SHA qw(sha1_base64);
 
@@ -533,96 +534,89 @@ EOS
 # does a mass update of all grades.  This is all user grades for
 # course grade mode and all user set grades for homework grade mode.
 sub mass_update {
-	my $self   = shift;
-	my $update = shift;
-	my $name   = shift || '';
-	my $name2  = shift || '';
-	my $r      = $self->{r};
-	my $ce     = $r->{ce};
-	my $db     = $self->{r}->{db};
-	$self->{post_processing_mode} = 1;
+	my ($self, $update, $name, $name2) = @_;
+	$name  ||= '';
+	$name2 ||= '';
+	my $r  = $self->{r};
+	my $ce = $r->ce;
+	my $db = $r->db;
 
 	# sanity check
-	warn("course environment is not defined") unless ref($ce // '');
-	warn("database reference is not defined") unless ref($db // '');
+	unless (ref($ce)) {
+		warn('course environment is not defined');
+		return;
+	}
+	unless (ref($db)) {
+		warn('database reference is not defined');
+		return;
+	}
 
-	if ($update eq 'all') {
+	# Only run an automatic update if the time interval has passed.
+	if ($update eq 'auto') {
+		my $lastUpdate     = $db->getSettingValue('LTILastUpdate') || 0;
+		my $updateInterval = $ce->{LTIMassUpdateInterval}          || -1;    # Never update
+		return unless ($updateInterval != -1 && time - $lastUpdate > $updateInterval);
+		$update = 'all';
+	}
 
-		warn "\nperforming mass_update via LTI" if $ce->{debug_lti_grade_passback};
+	$self->{post_processing_mode} = 1;
+	$db->setSettingValue('LTILastUpdate', time()) if $update eq 'all';
 
-		$db->setSettingValue('LTILastUpdate', time());
-
-		if ($ce->{LTIGradeMode} eq 'course') {
-			my @users = $db->listUsers();
-
-			foreach my $user (@users) {
-				$self->submit_course_grade($user);
-			}
-
-		} elsif ($ce->{LTIGradeMode} eq 'homework') {
-			my @users = $db->listUsers();
-
-			foreach my $user (@users) {
-				my @sets = $db->listUserSets($user);
-				warn "\nmass_update: all sets assigned to user $user :\n" . join(" ", @sets) . "\n"
-					if $ce->{debug_lti_grade_passback};
-				foreach my $set (@sets) {
-					eval {
-					  #$self->update_sourcedid($user);  #CHECK is this the right user id -- this doesn't update properly
-						$self->submit_set_grade($user, $set);
-					};
-					if ($@) {
-						warn "error in reporting $user, $set, $@" if $ce->{debug_lti_grade_passback};
-					}
-
-				}
-			}
-		}
-	} elsif ($update eq 'set' && $ce->{LTIGradeMode} eq 'homework') {
-		my $set   = $name;
-		my @users = $db->listSetUsers($set);
-
-		warn "\nperforming mass_update of set $set via LTI" if $ce->{debug_lti_grade_passback};
-		warn "\nmass_update: all users assigned to set $set :\n" . join(" ", @users) . "\n"
-			if $ce->{debug_lti_grade_passback};
-
-		for my $user (@users) {
-			eval { $self->submit_set_grade($user, $set); };
-			if ($@) {
-				warn "error in reporting $user, $@" if $ce->{debug_lti_grade_passback};
-			}
-		}
-	} elsif ($update eq 'user') {
-		my $user = $name;
-
-		warn "\nperforming mass_update of user $user via LTI" if $ce->{debug_lti_grade_passback};
-
-		if ($ce->{LTIGradeMode} eq 'course') {
-			$self->submit_course_grade($user);
-		} elsif ($ce->{LTIGradeMode} eq 'homework') {
-			my @sets = $db->listUserSets($user);
-
-			warn "\nmass_update: all sets assigned to user $user :\n" . join(" ", @sets) . "\n"
-				if $ce->{debug_lti_grade_passback};
-			for my $set (@sets) {
-				eval { $self->submit_set_grade($user, $set); };
-				if ($@) {
-					warn "error in reporting $set, $@" if $ce->{debug_lti_grade_passback};
-				}
-			}
-		}
-	} elsif ($update eq 'user_set' && $ce->{LTIGradeMode} eq 'homework') {
-		my $user = $name;
-		my $set  = $name2;
-
-		warn "\nperforming mass_update of user $user and set $set via LTI" if $ce->{debug_ti_grade_passback};
-
-		eval { $self->submit_set_grade($user, $set); };
-		if ($@) {
-			warn "error in reporting $user, $set, $@" if $ce->{debug_lti_grade_passback};
+	# Send warning if debug_lti_grade_passback is set.
+	if ($ce->{debug_lti_grade_passback}) {
+		if ($update eq 'all') {
+			warn "starting mass_update of all sets and users via LTI";
+		} elsif ($update eq 'set' && $ce->{LTIGradeMode} eq 'homework') {
+			warn "starting mass_update of set $name for all users via LTI";
+		} elsif ($update eq 'user') {
+			warn "starting mass_update of all sets for user $name via LTI";
+		} elsif ($update eq 'user_set' && $ce->{LTIGradeMode} eq 'homework') {
+			warn "starting mass_update of user $name and set $name2 via LTI";
 		}
 	}
-	$self->{post_processing_mode} = 0;
+
+	# Start update loop.
+	Mojo::IOLoop->timer(
+		1 => sub {
+			eval {
+				# Determine what needs to be updated.
+				my %updateUsers;
+				if ($update eq 'all') {
+					if ($ce->{LTIGradeMode} eq 'course') {
+						%updateUsers = map { $_ => 'update_course_grade' } $db->listUsers;
+					} elsif ($ce->{LTIGradeMode} eq 'homework') {
+						%updateUsers = map { $_ => [ $db->listUserSets($_) ] } $db->listUsers;
+					}
+				} elsif ($update eq 'set' && $ce->{LTIGradeMode} eq 'homework') {
+					%updateUsers = map { $_ => [$name] } $db->listSetUsers($name);
+				} elsif ($update eq 'user') {
+					if ($ce->{LTIGradeMode} eq 'course') {
+						$updateUsers{$name} = 'update_course_grade';
+					} elsif ($ce->{LTIGradeMode} eq 'homework') {
+						$updateUsers{$name} = [ $db->listUserSets($name) ];
+					}
+				} elsif ($update eq 'user_set' && $ce->{LTIGradeMode} eq 'homework') {
+					$updateUsers{$name} = [$name2];
+				}
+
+				for my $user (keys %updateUsers) {
+					if (ref($updateUsers{$user}) eq 'ARRAY') {
+						for my $set (@{ $updateUsers{$user} }) {
+							$self->submit_set_grade($user, $set);
+						}
+					} elsif ($updateUsers{$user} eq 'update_course_grade') {
+						$self->submit_course_grade($user);
+					}
+				}
+			};
+			if ($@) {
+				# Write errors to the Mojolicious log.
+				$r->log->error("An error occured while trying to mass_update grades via LTI: $@\n");
+			}
+			$self->{post_processing_mode} = 0;
+		}
+	);
+	Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 }
 
 1;

@@ -21,7 +21,6 @@ use parent qw(WeBWorK::ContentGenerator);
 use strict;
 use warnings;
 
-use Mojo::IOLoop;
 use WeBWorK::Utils(qw(format_set_name_display));
 
 sub initialize {
@@ -74,18 +73,7 @@ sub initialize {
 	}
 
 	my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
-
-	Mojo::IOLoop->timer(
-		1 => sub {
-			# Catch exceptions generated during the sending process.
-			eval { $grader->mass_update(@updateParms) };
-			if ($@) {
-				# Write errors to the Mojolicious log
-				$r->log->error("An error occurred while trying to update grades via LTI: $@\n");
-			}
-		}
-	);
-	Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+	$grader->mass_update(@updateParms);
 }
 
 sub title {
