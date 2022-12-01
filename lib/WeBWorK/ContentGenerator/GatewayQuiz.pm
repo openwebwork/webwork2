@@ -2224,12 +2224,12 @@ sub body {
 	#    reset the assignment_type in this case, so we'll use that to
 	#    decide if we should give a path to an unproctored test.
 	my $action = $r->uri();
-	$action =~ s/proctored_quiz_mode/quiz_mode/ if ($set->assignment_type() eq 'gateway');
+	$action =~ s/proctored_test_mode/test_mode/ if ($set->assignment_type() eq 'gateway');
 	# we also want to be sure that if we're in a set, the 'action' in the
 	#    form points us to the same set.
 	my $setname = $set->set_id;
 	my $setvnum = $set->version_id;
-	$action =~ s/(quiz_mode\/$setname)\/?$/$1,v$setvnum\//;    #"
+	$action =~ s/(test_mode\/$setname)\/?$/$1,v$setvnum\//;    #"
 
 	if (!$can{recordAnswersNextTime} && !$canShowWork) {
 		# Problems can not be shown.

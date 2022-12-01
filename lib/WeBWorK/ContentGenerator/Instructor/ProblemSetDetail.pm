@@ -228,10 +228,10 @@ use constant FIELD_PROPERTIES => {
 		override => 'all',
 		choices  => [qw(default gateway proctored_gateway jitar)],
 		labels   => {
-			default           => 'homework',
-			gateway           => 'gateway/quiz',
-			proctored_gateway => 'proctored gateway/quiz',
-			jitar             => 'just-in-time'
+			default           => x('homework'),
+			gateway           => x('test'),
+			proctored_gateway => x('proctored test'),
+			jitar             => x('just-in-time')
 		},
 	},
 	version_time_limit => {
@@ -243,7 +243,7 @@ use constant FIELD_PROPERTIES => {
 		convertby => 60,
 	},
 	time_limit_cap => {
-		name     => x('Cap Test Time at Set Close Date?'),
+		name     => x('Cap Test Time at Set Close Date'),
 		type     => 'choose',
 		override => 'all',
 		choices  => [qw(0 1)],
@@ -293,7 +293,7 @@ use constant FIELD_PROPERTIES => {
 		default  => '1',
 	},
 	'hide_score:hide_score_by_problem' => {
-		name     => x('Show Scores on Finished Assignments?'),
+		name     => x('Show Scores on Finished Tests'),
 		type     => 'choose',
 		choices  => [qw(N:N Y:Y BeforeAnswerDate:N N:Y BeforeAnswerDate:Y)],
 		override => 'any',
@@ -948,7 +948,7 @@ sub extraSetFields {
 				$gwFields .= CGI::Tr(CGI::td([@fieldData]));
 			}
 		}
-		$gwhdr .= CGI::Tr(CGI::td({ colspan => $nF }, CGI::em($r->maketext("Gateway parameters"))))
+		$gwhdr .= CGI::Tr(CGI::td({ colspan => $nF }, CGI::em($r->maketext('Test parameters'))))
 			if ($nF);
 		$extraFields = "$gwhdr$gwFields";
 

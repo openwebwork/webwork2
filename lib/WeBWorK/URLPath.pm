@@ -58,9 +58,9 @@ Note:  Only database keyfield values can be used as path parameters.
 
  equation_display                    /$courseID/equation/
  feedback                            /$courseID/feedback/
- gateway_quiz                        /$courseID/quiz_mode/$setID/
- proctored_gateway_quiz              /$courseID/proctored_quiz_mode/$setID/
- proctored_gateway_proctor_login     /$courseID/proctored_quiz_mode/$setID/proctor_login/
+ gateway_quiz                        /$courseID/test_mode/$setID/
+ proctored_gateway_quiz              /$courseID/proctored_test_mode/$setID/
+ proctored_gateway_proctor_login     /$courseID/proctored_test_mode/$setID/proctor_login/
  grades                              /$courseID/grades/
  hardcopy                            /$courseID/hardcopy/
  hardcopy_preselect_set              /$courseID/hardcopy/$setID/
@@ -222,12 +222,12 @@ our %pathTypes = (
 		unrestricted => 1
 	},
 	gateway_quiz => {
-		name         => x('Gateway Quiz [_2]'),
+		name         => x('Test [_2]'),
 		parent       => 'set_list',
 		kids         => [qw//],
-		match        => qr|^quiz_mode/([^/]+)/|,
+		match        => qr|^test_mode/([^/]+)/|,
 		capture      => [qw/setID/],
-		produce      => 'quiz_mode/$setID/',
+		produce      => 'test_mode/$setID/',
 		display      => 'WeBWorK::ContentGenerator::GatewayQuiz',
 		unrestricted => 1
 	},
@@ -243,22 +243,22 @@ our %pathTypes = (
 	},
 
 	proctored_gateway_quiz => {
-		name         => x('Proctored Gateway Quiz [_2]'),
+		name         => x('Proctored Test [_2]'),
 		parent       => 'set_list',
 		kids         => [qw/proctored_gateway_proctor_login/],
-		match        => qr|^proctored_quiz_mode/([^/]+)/|,
+		match        => qr|^proctored_test_mode/([^/]+)/|,
 		capture      => [qw/setID/],
-		produce      => 'proctored_quiz_mode/$setID/',
+		produce      => 'proctored_test_mode/$setID/',
 		display      => 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz',
 		unrestricted => 1
 	},
 	proctored_gateway_proctor_login => {
-		name         => x('Proctored Gateway Quiz [_2] Proctor Login'),
+		name         => x('Proctored Test [_2] Proctor Login'),
 		parent       => 'proctored_gateway_quiz',
 		kids         => [qw//],
-		match        => qr|^proctored_quiz_mode/([^/]+)/|,
+		match        => qr|^proctored_test_mode/([^/]+)/|,
 		capture      => [qw/setID/],
-		produce      => 'proctored_quiz_mode/$setID/proctor_login',
+		produce      => 'proctored_test_mode/$setID/proctor_login',
 		display      => 'WeBWorK::ContentGenerator::LoginProctor',
 		unrestricted => 1
 	},

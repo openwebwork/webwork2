@@ -310,9 +310,9 @@ sub displayStudentStats {
 		if (defined $set->assignment_type && $set->assignment_type =~ /gateway/) {
 			$setIsVersioned = 1;
 			if ($set->assignment_type eq 'proctored_gateway') {
-				$act_as_student_set_url =~ s/($courseName)\//$1\/proctored_quiz_mode\//;
+				$act_as_student_set_url =~ s/($courseName)\//$1\/proctored_test_mode\//;
 			} else {
-				$act_as_student_set_url =~ s/($courseName)\//$1\/quiz_mode\//;
+				$act_as_student_set_url =~ s/($courseName)\//$1\/test_mode\//;
 			}
 		}
 

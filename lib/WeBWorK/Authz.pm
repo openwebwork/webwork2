@@ -475,10 +475,8 @@ sub checkSet {
 		&& !WeBWorK::Authen::Proctor->new($r, $ce, $db)->verify())
 	{
 		return $r->maketext(
-			"Requested set '[_1]' is a proctored test/quiz assignment, "
-				. 'but no valid proctor authorization has been obtained.',
-			$setName
-		);
+			"Requested set '[_1]' is a proctored test, but no valid proctor authorization has been obtained.",
+			$setName);
 	}
 
 	# Check for ip restrictions.
