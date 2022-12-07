@@ -97,6 +97,7 @@ Note:  Only database keyfield values can be used as path parameters.
 
  instructor_statistics               /$courseID/instructor/stats/
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID/
+ instructor_problem_statistics       /$courseID/instructor/stats/set/$setID/$problemID/
  instructor_user_statistics          /$courseID/instructor/stats/student/$userID/
 
  instructor_progress                 /$courseID/instructor/StudentProgress/
@@ -532,10 +533,19 @@ our %pathTypes = (
 	instructor_set_statistics => {
 		name    => '[_2]',
 		parent  => 'instructor_statistics',
-		kids    => [qw//],
+		kids    => [qw/instructor_problem_statistics/],
 		match   => qr|^(set)/([^/]+)/|,
 		capture => [qw/statType setID/],
 		produce => 'set/$setID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
+	},
+	instructor_problem_statistics => {
+		name    => '[_3]',
+		parent  => 'instructor_set_statistics',
+		kids    => [qw//],
+		match   => qr|^([^/]+)/|,
+		capture => [qw/problemID/],
+		produce => '$problemID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
 	instructor_user_statistics => {

@@ -133,6 +133,7 @@ my @modulesList = qw(
 	Socket
 	Statistics::R::IO
 	String::ShellQuote
+	SVG
 	Template
 	Text::CSV
 	Text::Wrap
