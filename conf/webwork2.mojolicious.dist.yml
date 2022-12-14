@@ -74,19 +74,89 @@ hypnotoad:
     # Below is an example of how to use ssl certificates when using the docker build.
     #- https://*:8080?cert=/etc/ssl/local/fullchain.pem&key=/etc/ssl/local/privkey.pem
 
-  accepts: 400
-  workers: 10
-  spare: 5
-  clients: 100
-  requests: 5
-  graceful_timeout: 45
+  # Documentation about the settings being provided below can be found at
+  # https://docs.mojolicious.org/Mojo/Server/Hypnotoad#SETTINGS
+
+  # WeBWorK is essentially all blocking code, so allowing hypnotoad to allow
+  # a worker to accept additional requests when a request is being processed
+  # can cause severe latency/delays when a new request is waiting for a "slow"
+  # request to be completed. Thus, in accordance with the recommendations for
+  # such settings, for example in https://github.com/mojolicious/mojo/wiki/Benchmarking
+  # set clients to 1, and set workers to a larger number.
+
+  # Critical tuning for a production server is to increase workers based on the
+  # system resources available (primarily RAM) and the expected concurrent load.
+  #    workers is the number of hypnotoad processing which are created and
+  #            run at all times to be available to server requests.
+  #    spare is the number of additional workers which can be started as
+  #            replacements for workers which have been signaled to stop
+  #            themselves (gracefully) in order to be replaced by a new worker.
+  # Since spare allows additional workers to be started before old ones have
+  # stopped, the value of workers+spare needs to take into account the
+  # available memory of the system.
+  #
+  # The majority of RAM available for workers should probably be dedicated to
+  # making workers as high as possible, to allow connections from many end
+  # users to be accepted and processed in parallel. However, due to the extensive
+  # amount of time (heartbeat_timeout+graceful_timeout) a worker can remain busy
+  # before being forcefully killed, reserving some RAM to allow a moderate value
+  # of spare is recommended.
+  #
+  # We recommend setting spare to at least 5 on a server with under 8GB of RAM,
+  # and at least 8-10 on a server with over 8GB of RAM. As possible, consider
+  # increasing spare to about 10% of the value of workers on your server, should that
+  # be larger than the setting suggested above.
+  #
+  # Recommendations for tuning of workers and spare based on RAM available:
+  #    Consider using 10-12 workers and one spare for each GB of RAM
+  #    (after setting aside 2-4 GB of RAM for the OS and all other software needed).
+  # On a machine with less than 8GB of RAM, decrease workers and raise spare to make
+  # sure that spare is at least 5.
+  # These are provisional recommendations based on some testing, but without
+  # experience with the Mojolicious webwork system in a production environment.
+  #
+  # It is recommended to monitor memory usage under load to determine what further
+  # tuning of the settings may be appropriate.
+
+  clients: 1
+  workers: 25
+  spare: 8
+
+  # WeBWorK apparently has some memory leaks which lead to workers using up more memory
+  # over time as additional requests are processed.
+  # Requests which process many problem renders in a single call will
+  # trigger faster accumulation of "lost memory". The "accepts" parameter
+  # should be kept relatively low to avoid the "lost memory" from causing
+  # significant problems.
+  accepts: 100
+
+  # Keep-alive related settings. These limit how long an inactive connection
+  # (one with no active request) can remain open, and how many requests (ex.
+  # for additional files) can be sent over the same connection.
+  # In order to prevent a worker from being kept waiting for additional requests
+  # from a browser which in not active, keep_alive_timeout is set relatively low,
+  # but an attempt is made to allow a bit of time before connections will be
+  # closed, to reduce the need for a new connection to be opened if a user
+  # is actively navigating on the site.
+  # To allow all dependencies of a WeBWorK page to be served over a single
+  # connection the value of requests was set to 50.
+  keep_alive_timeout: 15
+  requests: 50
+
+  # The graceful_timeout determines how long hypnotoad will wait before hard
+  # killing a worker which was marked as failing to send heartbeats due to
+  # failing or having "blocked" while doing a very slow operation.
+  # After the graceful_timeout passes, the worker will be killed and whatever
+  # it was doing will get stopped without completing. Potentially, this could
+  # cause inconsistencies in the database or other less than ideal outcomes.
+  # Try to set to provide enough spare time to avoid such problems!
+  graceful_timeout: 120
 
   # The following timeout settings will be sufficient in most cases.  However, if you have large class sizes they may
   # not be enough.  If you are seeing long requests fail then increase these.  This may happen, for example, if you have
   # a class with thousands of users and try to assign a set to all users.  In that case you may need much larger values.
   # Note that if you are serving via a proxy, you may also need to increase the timeouts for the proxy server.
   inactivity_timeout: 60
-  keep_alive_timeout: 60
   heartbeat_timeout: 60
 
   # Make sure that the user the server is being run as has access to this file.
