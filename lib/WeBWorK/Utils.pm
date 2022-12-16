@@ -103,6 +103,7 @@ our @EXPORT_OK = qw(
 	thaw_base64
 	undefstr
 	writeCourseLog
+	writeCourseLogGivenTime
 	writeLog
 	writeTimingLogEntry
 	wwRound
@@ -816,6 +817,11 @@ sub writeLog($$@) {
 
 sub writeCourseLog($$@) {
 	my ($ce, $facility, @message) = @_;
+	writeCourseLogGivenTime($ce, $facility, time, @message);
+}
+
+sub writeCourseLogGivenTime($$@) {
+	my ($ce, $facility, $myTime, @message) = @_;
 	unless ($ce->{courseFiles}->{logs}->{$facility}) {
 		warn "There is no course log file for the $facility facility defined.\n";
 		return;
@@ -824,7 +830,7 @@ sub writeCourseLog($$@) {
 	surePathToFile($ce->{courseDirs}->{root}, $logFile);
 	local *LOG;
 	if (open LOG, ">>:utf8", $logFile) {
-		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
+		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", $myTime), "] @message\n";
 		close LOG;
 	} else {
 		warn "failed to open $logFile for writing: $!";

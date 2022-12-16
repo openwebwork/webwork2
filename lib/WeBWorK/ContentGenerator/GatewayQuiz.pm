@@ -33,7 +33,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 # Use the ContentGenerator formatDateTime, not the version in Utils.
-use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
+use WeBWorK::Utils qw(writeLog writeCourseLogGivenTime encodeAnswers decodeAnswers
 	path_is_subdir before after getAssetURL between wwRound is_restricted);
 use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
 use WeBWorK::Utils::ProblemProcessing qw/create_ans_str_from_responses compute_reduced_score/;
@@ -700,11 +700,15 @@ async sub pre_header_initialize {
 	#    more extensible to a limitation like "one version per hour",
 	#    and we can set it to two sets per 12 hours for most "2ce daily"
 	#    type applications
-	my $timeNow = $r->{submitTime};            # Time::HiRes saved time set in dispatch() of lib/WeBWorK.pm
-	my $grace   = $ce->{gatewayGracePeriod};
+	my $timeNow = $r->{submitTime};    # Time::HiRes saved time set in dispatch() of lib/WeBWorK.pm
 
-	my $currentNumVersions = 0;                # this is the number of versions in the
-											   #    time interval
+	# Convert the floating point value from Time::HiRes to an integer
+	# for use below. Truncate towards 0.
+	my $timeNowInt = int($timeNow);
+
+	my $grace = $ce->{gatewayGracePeriod};
+
+	my $currentNumVersions = 0;    # this is the number of versions in the time interval
 	my $totalNumVersions   = 0;
 
 	# we don't need to check this if $self->{invalidSet} is already set,
@@ -778,14 +782,14 @@ async sub pre_header_initialize {
 				$set->visible(1);
 				# set up creation time, open and due dates
 				my $ansOffset = $set->answer_date() - $set->due_date();
-				$set->version_creation_time($timeNow);
-				$set->open_date($timeNow);
+				$set->version_creation_time($timeNowInt);
+				$set->open_date($timeNowInt);
 				# figure out the due date, taking into account
 				#    any time limit cap
 				my $dueTime =
 					($timeLimit == 0 || ($set->time_limit_cap && $timeNow + $timeLimit > $set->due_date))
 					? $set->due_date
-					: $timeNow + $timeLimit;
+					: $timeNowInt + $timeLimit;
 
 				$set->due_date($dueTime);
 				$set->answer_date($set->due_date + $ansOffset);
@@ -1466,6 +1470,10 @@ sub body {
 	my $timeNow = $self->{timeNow};
 	my $grace   = $ce->{gatewayGracePeriod};
 
+	# Convert the floating point value from Time::HiRes to an integer
+	# for use below. Truncate towards 0.
+	my $timeNowInt = int($timeNow);
+
 	#########################################
 	# preliminary error checking and output
 	#########################################
@@ -1761,13 +1769,14 @@ sub body {
 					$past_answers_string = "No answer entered\t";
 				}
 
-				# Write to courseLog
-				writeCourseLog(
+				# Write to courseLog, use the recorded time of when the submission was received, but as an integer
+				writeCourseLogGivenTime(
 					$self->{ce},
 					"answer_log",
+					$timeNowInt,
 					join("",
-						'|',            $problem->user_id, '|', $setVName, '|', ($i + 1), '|', $scores,
-						"\t$timeNow\t", "$past_answers_string")
+						'|', $problem->user_id, '|', $setVName, '|', ($i + 1), '|', $scores,
+						"\t$timeNowInt\t", "$past_answers_string")
 				);
 
 				# Add to PastAnswer db
@@ -1776,7 +1785,7 @@ sub body {
 				$pastAnswer->user_id($problem->user_id);
 				$pastAnswer->set_id($setVName);
 				$pastAnswer->problem_id($problem->problem_id);
-				$pastAnswer->timestamp($timeNow);
+				$pastAnswer->timestamp($timeNowInt);
 				$pastAnswer->scores($scores);
 				$pastAnswer->answer_string($past_answers_string);
 				$pastAnswer->source_file($problem->source_file);
@@ -1880,7 +1889,7 @@ sub body {
 		)
 	{
 		# Save the submission time if we're recording the answer, or if the first submission occurs after the due_date.
-		$set->version_last_attempt_time($timeNow)
+		$set->version_last_attempt_time($timeNowInt)
 			if ($submitAnswers
 				&& ($will{recordAnswers} || (!$set->version_last_attempt_time && $timeNow > $set->due_date + $grace)));
 
@@ -1962,7 +1971,7 @@ sub body {
 	#    and if the submission fell in the grace period round it to the
 	#    due_date
 	my $exceededAllowedTime = 0;
-	my $endTime             = ($set->version_last_attempt_time) ? $set->version_last_attempt_time : $timeNow;
+	my $endTime             = ($set->version_last_attempt_time) ? $set->version_last_attempt_time : $timeNowInt;
 	if ($endTime > $set->due_date && $endTime < $set->due_date + $grace) {
 		$endTime = $set->due_date;
 	} elsif ($endTime > $set->due_date) {
@@ -2084,7 +2093,7 @@ sub body {
 	# Display timer or information about elapsed time, print link, and information about any recorded score if not
 	# submitAnswers or checkAnswers.
 	if ($can{recordAnswersNextTime}) {
-		my $timeLeft = $set->due_date() - $timeNow;    # This is in seconds
+		my $timeLeft = $set->due_date() - $timeNowInt;    # This is in seconds
 
 		# Print the timer if there is less than 24 hours left.
 		if ($timeLeft < 86400) {
@@ -2092,7 +2101,7 @@ sub body {
 				{
 					id                   => 'gwTimer',
 					class                => 'alert alert-warning p-1',
-					data_server_time     => $timeNow,
+					data_server_time     => $timeNowInt,
 					data_server_due_time => $set->due_date(),
 					data_grace_period    => $ce->{gatewayGracePeriod},
 					data_alert_title     => $r->maketext('Test Time Notification'),

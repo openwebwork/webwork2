@@ -31,7 +31,8 @@ use Try::Tiny;
 
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers before after jitar_problem_adjusted_status jitar_id_to_seq);
+use WeBWorK::Utils
+	qw(writeLog writeCourseLogGivenTime encodeAnswers before after jitar_problem_adjusted_status jitar_id_to_seq);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 
 use Caliper::Sensor;
@@ -87,9 +88,10 @@ sub process_and_log_answer {
 			my $timestamp = int($self->r->{submitTime});
 
 			# store in answer_log
-			writeCourseLog(
+			writeCourseLogGivenTime(
 				$ce,
 				'answer_log',
+				$timestamp,
 				join('',
 					'|', $problem->user_id, '|',  $problem->set_id, '|',  $problem->problem_id,
 					'|', $scores2,          "\t", $timestamp,       "\t", $past_answers_string,
