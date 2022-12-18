@@ -126,6 +126,7 @@ RUN apt-get update \
 	libsql-abstract-perl \
 	libstring-shellquote-perl \
 	libsub-uplevel-perl \
+        libsvg-perl \
 	libtemplate-perl \
 	libtest-deep-perl \
 	libtest-exception-perl \
