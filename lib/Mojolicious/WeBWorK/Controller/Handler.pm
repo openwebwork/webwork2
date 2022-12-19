@@ -26,7 +26,6 @@ use Mojo::Base 'Mojolicious::Controller', -signatures, -async_await;
 use HTML::Entities;
 use HTML::Scrubber;
 use Date::Format;
-use Encode;
 use JSON::MaybeXS;
 use UUID::Tiny ':std';
 
@@ -56,7 +55,7 @@ async sub handler ($c) {
 			$log->warn("[$uri] $warning");
 		};
 
-		$SIG{__DIE__} = my $exception_handler = sub {
+		$SIG{__DIE__} = sub {
 			@backtrace = backtrace();
 			die @_;
 		};
@@ -77,10 +76,6 @@ async sub handler ($c) {
 	if ($@) {
 		my $exception = $@;
 
-		# Set the binmode for print to utf8 because some language options use utf8 characters.
-		binmode(STDOUT, ':encoding(UTF-8)');
-		my $warnings = Encode::encode('UTF-8', $c->stash->{warnings});
-
 		my $htmlMessage;
 		my $uuid = create_uuid_as_string(UUID_SHA1, UUID_NS_URL, $uri) . "::" . create_uuid_as_string(UUID_TIME);
 		my $time = time2str('%a %b %d %H:%M:%S %Y', time);
@@ -88,19 +83,19 @@ async sub handler ($c) {
 		if ($c->config('MIN_HTML_ERRORS')) {
 			$htmlMessage = htmlMinMessage($c, $exception, $uuid, $time);
 		} else {
-			$htmlMessage = htmlMessage($c, $warnings, $exception, $uuid, $time, @backtrace);
+			$htmlMessage = htmlMessage($c, $c->stash->{warnings}, $exception, $uuid, $time, @backtrace);
 		}
 
 		# Log the error to the Mojolicious error log
 		my $logMessage = '';
 		if ($c->config('JSON_ERROR_LOG')) {
-			$logMessage = jsonMessage($c, $warnings, $exception, $uuid, $time, @backtrace);
+			$logMessage = jsonMessage($c, $c->stash->{warnings}, $exception, $uuid, $time, @backtrace);
 		} else {
-			$logMessage = textMessage($c, $warnings, $exception, $uuid, $time, @backtrace);
+			$logMessage = textMessage($c, $c->stash->{warnings}, $exception, $uuid, $time, @backtrace);
 		}
 		$c->log->error($logMessage);
 
-		$c->res->headers->content_type('text/html') unless ($c->res->headers->content_type);
+		$c->res->headers->content_type('text/html; charset=utf-8') unless $c->res->headers->content_type;
 		$output = '<!DOCTYPE html>'
 			. qq{<html lang="en-US"><head><title>WeBWorK error</title></head><body>$htmlMessage</body></html>};
 		$result = 403;

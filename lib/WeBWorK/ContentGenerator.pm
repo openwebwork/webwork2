@@ -1419,22 +1419,16 @@ Defined in this package.
 
 Print accumulated warnings.
 
-The implementation in this package checks for a note in the request named
+The implementation in this package checks for a stash key named
 "warnings". If present, its contents are formatted and returned.
 
 =cut
 
 sub warnings {
 	my ($self) = @_;
-	my $r = $self->r;
-	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
-	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
-	my $warnings = $r->stash('warnings') // '';
-	$warnings = Encode::decode("UTF-8", $warnings);
-	print $self->warningOutput($warnings) if $warnings;
-	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
-
-	return "";
+	print CGI::p("Entering ContentGenerator::warnings")     if $TRACE_WARNINGS;
+	print $self->warningOutput($self->r->stash->{warnings}) if $self->r->stash->{warnings};
+	return '';
 }
 
 =item help()

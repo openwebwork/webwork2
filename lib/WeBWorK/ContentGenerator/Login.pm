@@ -28,7 +28,6 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(readFile dequote jitar_id_to_seq format_set_name_display);
-use Encode;
 
 # This content generator is NOT logged in.
 # BUT one must return a 1 so that error messages can be displayed.
@@ -176,7 +175,6 @@ sub body {
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
 	my $authen_error = $r->stash('authen_error') // '';
-	$authen_error = Encode::decode("UTF-8", $authen_error);
 
 	if ($authen_error) {
 		print CGI::div({ class => 'alert alert-danger', tabindex => '0' }, $authen_error);
