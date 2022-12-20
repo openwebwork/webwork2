@@ -33,7 +33,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 # Use the ContentGenerator formatDateTime, not the version in Utils.
-use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
+use WeBWorK::Utils qw(writeLog writeCourseLogGivenTime encodeAnswers decodeAnswers
 	path_is_subdir before after getAssetURL between wwRound is_restricted);
 use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
 use WeBWorK::Utils::ProblemProcessing qw/create_ans_str_from_responses compute_reduced_score/;
@@ -75,7 +75,7 @@ sub can_showOldAnswers {
 	return 0 unless $authz->hasPermissions($User->user_id, "can_show_old_answers");
 
 	return (
-		before($Set->due_date())
+		before($Set->due_date(), $self->r->{submitTime})
 			|| $authz->hasPermissions($User->user_id, "view_hidden_work")
 			|| ($Set->hide_work() eq 'N'
 				|| ($Set->hide_work() eq 'BeforeAnswerDate' && time > $tmplSet->answer_date))
@@ -108,12 +108,12 @@ sub can_showCorrectAnswers {
 
 	my $canShowScores = $Set->hide_score_by_problem eq 'N'
 		&& ($Set->hide_score eq 'N'
-			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)));
+			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $self->r->{submitTime})));
 
 	return (
 		(
 			(
-				after($Set->answer_date) || ($attemptsUsed >= $maxAttempts
+				after($Set->answer_date, $self->r->{submitTime}) || ($attemptsUsed >= $maxAttempts
 					&& $maxAttempts != 0
 					&& $Set->due_date() == $Set->answer_date())
 			)
@@ -166,12 +166,12 @@ sub can_showSolutions {
 
 	my $canShowScores = $Set->hide_score_by_problem eq 'N'
 		&& ($Set->hide_score eq 'N'
-			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)));
+			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $self->r->{submitTime})));
 
 	return (
 		(
 			(
-				after($Set->answer_date) || ($attemptsUsed >= $attempts_per_version
+				after($Set->answer_date, $self->r->{submitTime}) || ($attemptsUsed >= $attempts_per_version
 					&& $attempts_per_version != 0
 					&& $Set->due_date() == $Set->answer_date())
 			)
@@ -194,7 +194,7 @@ sub can_recordAnswers {
 	# easy first case: never record answers for undefined sets
 	return 0 if $Set->set_id eq "Undefined_Set";
 
-	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : time();
+	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : $self->r->{submitTime};
 	# get the sag time after the due date in which we'll still grade the test
 	my $grace = $self->{ce}->{gatewayGracePeriod};
 
@@ -262,7 +262,7 @@ sub can_checkAnswers {
 		return 0;
 	}
 
-	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : time();
+	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : $self->r->{submitTime};
 	# get the sag time after the due date in which we'll still grade the test
 	my $grace = $self->{ce}->{gatewayGracePeriod};
 
@@ -283,7 +283,7 @@ sub can_checkAnswers {
 
 	my $canShowScores = $Set->hide_score_by_problem eq 'N'
 		&& ($Set->hide_score eq 'N'
-			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)));
+			|| ($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $self->r->{submitTime})));
 
 	if (before($Set->open_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
@@ -328,12 +328,12 @@ sub can_showScore {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, $tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 
-	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : time();
+	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : $self->r->{submitTime};
 
 	# address hiding scores by problem
 	my $canShowScores = (
 		$Set->hide_score eq 'N' || ($Set->hide_score eq 'BeforeAnswerDate'
-			&& after($tmplSet->answer_date))
+			&& after($tmplSet->answer_date, $self->r->{submitTime}))
 	);
 
 	return ($authz->hasPermissions($User->user_id, "view_hidden_work") || $canShowScores);
@@ -531,12 +531,14 @@ async sub pre_header_initialize {
 				$set     = fake_set_version($db);
 				$Problem = fake_problem($db);
 
+				my $creation_time = time();
+
 				$tmplSet->assignment_type("gateway");
 				$tmplSet->attempts_per_version(0);
 				$tmplSet->time_interval(0);
 				$tmplSet->versions_per_interval(1);
 				$tmplSet->version_time_limit(0);
-				$tmplSet->version_creation_time(time());
+				$tmplSet->version_creation_time($creation_time);
 				$tmplSet->problem_randorder(0);
 				$tmplSet->problems_per_page(1);
 				$tmplSet->hide_score('N');
@@ -549,7 +551,7 @@ async sub pre_header_initialize {
 				$set->time_interval(0);
 				$set->versions_per_interval(1);
 				$set->version_time_limit(0);
-				$set->version_creation_time(time());
+				$set->version_creation_time($creation_time);
 				$set->time_limit_cap('0');
 
 				$Problem->problem_id(1);
@@ -628,9 +630,9 @@ async sub pre_header_initialize {
 	# date.  If a specific version has not been requested and conditional release is enabled, then this also checks to
 	# see if the conditions have been met for a conditional release.
 	my $isOpen = (
-		$requestedVersion ? ($set && $set->open_date && after($set->open_date)) : ($tmplSet
+		$requestedVersion ? ($set && $set->open_date && after($set->open_date, $self->r->{submitTime})) : ($tmplSet
 				&& $tmplSet->open_date
-				&& after($tmplSet->open_date)
+				&& after($tmplSet->open_date, $self->r->{submitTime})
 				&& !($ce->{options}{enableConditionalRelease} && is_restricted($db, $tmplSet, $effectiveUserName)))
 		)
 		|| $authz->hasPermissions($userName, "view_unopened_sets");
@@ -640,7 +642,7 @@ async sub pre_header_initialize {
 	my $isClosed =
 		$tmplSet
 		&& $tmplSet->due_date
-		&& (after($tmplSet->due_date())
+		&& (after($tmplSet->due_date(), $self->r->{submitTime})
 			&& !$authz->hasPermissions($userName, "record_answers_after_due_date"));
 
 	# to determine if we need a new version, we need to know whether this
@@ -698,11 +700,15 @@ async sub pre_header_initialize {
 	#    more extensible to a limitation like "one version per hour",
 	#    and we can set it to two sets per 12 hours for most "2ce daily"
 	#    type applications
-	my $timeNow = time();
-	my $grace   = $ce->{gatewayGracePeriod};
+	my $timeNow = $r->{submitTime};    # Time::HiRes saved time set in dispatch() of lib/WeBWorK.pm
 
-	my $currentNumVersions = 0;    # this is the number of versions in the
-								   #    time interval
+	# Convert the floating point value from Time::HiRes to an integer
+	# for use below. Truncate towards 0.
+	my $timeNowInt = int($timeNow);
+
+	my $grace = $ce->{gatewayGracePeriod};
+
+	my $currentNumVersions = 0;    # this is the number of versions in the time interval
 	my $totalNumVersions   = 0;
 
 	# we don't need to check this if $self->{invalidSet} is already set,
@@ -776,14 +782,14 @@ async sub pre_header_initialize {
 				$set->visible(1);
 				# set up creation time, open and due dates
 				my $ansOffset = $set->answer_date() - $set->due_date();
-				$set->version_creation_time($timeNow);
-				$set->open_date($timeNow);
+				$set->version_creation_time($timeNowInt);
+				$set->open_date($timeNowInt);
 				# figure out the due date, taking into account
 				#    any time limit cap
 				my $dueTime =
 					($timeLimit == 0 || ($set->time_limit_cap && $timeNow + $timeLimit > $set->due_date))
 					? $set->due_date
-					: $timeNow + $timeLimit;
+					: $timeNowInt + $timeLimit;
 
 				$set->due_date($dueTime);
 				$set->answer_date($set->due_date + $ansOffset);
@@ -1464,6 +1470,10 @@ sub body {
 	my $timeNow = $self->{timeNow};
 	my $grace   = $ce->{gatewayGracePeriod};
 
+	# Convert the floating point value from Time::HiRes to an integer
+	# for use below. Truncate towards 0.
+	my $timeNowInt = int($timeNow);
+
 	#########################################
 	# preliminary error checking and output
 	#########################################
@@ -1650,13 +1660,13 @@ sub body {
 			# Next, store the state in the database if answers are being recorded.
 			if ($submitAnswers && $will{recordAnswers}) {
 				my $score =
-					compute_reduced_score($ce, $problem, $set, $pg_result->{state}{recorded_score});
+					compute_reduced_score($ce, $problem, $set, $pg_result->{state}{recorded_score}, $timeNow);
 				$problem->status($score) if $score > $problem->status;
 
 				$problem->sub_status($problem->status)
 					if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 						|| !$set->enable_reduced_scoring
-						|| before($set->reduced_scoring_date));
+						|| before($set->reduced_scoring_date, $timeNow));
 
 				$problem->attempted(1);
 				$problem->num_correct($pg_result->{state}{num_of_correct_ans});
@@ -1759,13 +1769,14 @@ sub body {
 					$past_answers_string = "No answer entered\t";
 				}
 
-				# Write to courseLog
-				writeCourseLog(
+				# Write to courseLog, use the recorded time of when the submission was received, but as an integer
+				writeCourseLogGivenTime(
 					$self->{ce},
 					"answer_log",
+					$timeNowInt,
 					join("",
-						'|',            $problem->user_id, '|', $setVName, '|', ($i + 1), '|', $scores,
-						"\t$timeNow\t", "$past_answers_string")
+						'|', $problem->user_id, '|', $setVName, '|', ($i + 1), '|', $scores,
+						"\t$timeNowInt\t", "$past_answers_string")
 				);
 
 				# Add to PastAnswer db
@@ -1774,7 +1785,7 @@ sub body {
 				$pastAnswer->user_id($problem->user_id);
 				$pastAnswer->set_id($setVName);
 				$pastAnswer->problem_id($problem->problem_id);
-				$pastAnswer->timestamp($timeNow);
+				$pastAnswer->timestamp($timeNowInt);
 				$pastAnswer->scores($scores);
 				$pastAnswer->answer_string($past_answers_string);
 				$pastAnswer->source_file($problem->source_file);
@@ -1878,7 +1889,7 @@ sub body {
 		)
 	{
 		# Save the submission time if we're recording the answer, or if the first submission occurs after the due_date.
-		$set->version_last_attempt_time($timeNow)
+		$set->version_last_attempt_time($timeNowInt)
 			if ($submitAnswers
 				&& ($will{recordAnswers} || (!$set->version_last_attempt_time && $timeNow > $set->due_date + $grace)));
 
@@ -1942,7 +1953,7 @@ sub body {
 			my $pScore = 0;
 			if (ref $pg) {
 				# If a pg object is available, then use the pg recorded score and save it in the @probStatus array.
-				$pScore = compute_reduced_score($ce, $problems[$i], $set, $pg->{state}{recorded_score});
+				$pScore = compute_reduced_score($ce, $problems[$i], $set, $pg->{state}{recorded_score}, $timeNow);
 				$probStatus[$i] = $pScore if $pScore > $probStatus[$i];
 			} else {
 				# If a pg object is not available, then use the saved problem status.
@@ -1960,7 +1971,7 @@ sub body {
 	#    and if the submission fell in the grace period round it to the
 	#    due_date
 	my $exceededAllowedTime = 0;
-	my $endTime             = ($set->version_last_attempt_time) ? $set->version_last_attempt_time : $timeNow;
+	my $endTime             = ($set->version_last_attempt_time) ? $set->version_last_attempt_time : $timeNowInt;
 	if ($endTime > $set->due_date && $endTime < $set->due_date + $grace) {
 		$endTime = $set->due_date;
 	} elsif ($endTime > $set->due_date) {
@@ -2062,8 +2073,8 @@ sub body {
 	# Display the reduced scoring message if reduced scoring is enabled and the set is in the reduced scoring period.
 	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 		&& $set->enable_reduced_scoring
-		&& after($set->reduced_scoring_date)
-		&& before($set->due_date)
+		&& after($set->reduced_scoring_date, $self->r->{submitTime})
+		&& before($set->due_date, $self->r->{submitTime})
 		&& ($can{recordAnswersNextTime} || $submitAnswers))
 	{
 		print CGI::div(
@@ -2082,7 +2093,7 @@ sub body {
 	# Display timer or information about elapsed time, print link, and information about any recorded score if not
 	# submitAnswers or checkAnswers.
 	if ($can{recordAnswersNextTime}) {
-		my $timeLeft = $set->due_date() - $timeNow;    # This is in seconds
+		my $timeLeft = $set->due_date() - $timeNowInt;    # This is in seconds
 
 		# Print the timer if there is less than 24 hours left.
 		if ($timeLeft < 86400) {
@@ -2090,7 +2101,7 @@ sub body {
 				{
 					id                   => 'gwTimer',
 					class                => 'alert alert-warning p-1',
-					data_server_time     => $timeNow,
+					data_server_time     => $timeNowInt,
 					data_server_due_time => $set->due_date(),
 					data_grace_period    => $ce->{gatewayGracePeriod},
 					data_alert_title     => $r->maketext('Test Time Notification'),

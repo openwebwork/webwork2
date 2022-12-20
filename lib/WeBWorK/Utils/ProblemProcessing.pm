@@ -31,7 +31,8 @@ use Try::Tiny;
 
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers before after jitar_problem_adjusted_status jitar_id_to_seq);
+use WeBWorK::Utils
+	qw(writeLog writeCourseLogGivenTime encodeAnswers before after jitar_problem_adjusted_status jitar_id_to_seq);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 
 use Caliper::Sensor;
@@ -80,11 +81,17 @@ sub process_and_log_answer {
 			create_ans_str_from_responses($self, $pg);
 
 		if (!$authz->hasPermissions($effectiveUser, 'dont_log_past_answers')) {
+			# Use the time the submission processing began, but must convert the
+			# floating point value from Time::HiRes to an integer for use below.
+			# Truncate towards 0 intentionally, so the integer value set is never
+			# larger than the original floating point value.
+			my $timestamp = int($self->r->{submitTime});
+
 			# store in answer_log
-			my $timestamp = time();
-			writeCourseLog(
+			writeCourseLogGivenTime(
 				$ce,
 				'answer_log',
+				$timestamp,
 				join('',
 					'|', $problem->user_id, '|',  $problem->set_id, '|',  $problem->problem_id,
 					'|', $scores2,          "\t", $timestamp,       "\t", $past_answers_string,
@@ -118,13 +125,14 @@ sub process_and_log_answer {
 
 			# store state in DB if it makes sense
 			if ($will{recordAnswers}) {
-				my $score = compute_reduced_score($ce, $problem, $set, $pg->{state}{recorded_score});
+				my $score =
+					compute_reduced_score($ce, $problem, $set, $pg->{state}{recorded_score}, $self->r->{submitTime});
 				$problem->status($score) if $score > $problem->status;
 
 				$problem->sub_status($problem->status)
 					if (!$r->{ce}{pg}{ansEvalDefaults}{enableReducedScoring}
 						|| !$set->enable_reduced_scoring
-						|| before($set->reduced_scoring_date));
+						|| before($set->reduced_scoring_date, $self->r->{submitTime}));
 
 				$problem->attempted(1);
 				$problem->num_correct($pg->{state}{num_of_correct_ans});
@@ -260,7 +268,7 @@ sub process_and_log_answer {
 					}
 				}
 			} else {
-				if (before($set->open_date) || after($set->due_date)) {
+				if (before($set->open_date, $self->r->{submitTime}) || after($set->due_date, $self->r->{submitTime})) {
 					$scoreRecordedMessage =
 						$r->maketext('Your score was not recorded because this homework set is closed.');
 				} else {
@@ -280,14 +288,14 @@ sub process_and_log_answer {
 # Determines if a set is in the reduced scoring period, and if so returns the reduced score.
 # Otherwise it returns the unadjusted score.
 sub compute_reduced_score {
-	my ($ce, $problem, $set, $score) = @_;
+	my ($ce, $problem, $set, $score, $submitTime) = @_;
 
 	# If no adjustments need to be applied, return the full score.
 	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 		|| !$set->enable_reduced_scoring
 		|| !$set->reduced_scoring_date
 		|| $set->reduced_scoring_date == $set->due_date
-		|| before($set->reduced_scoring_date)
+		|| before($set->reduced_scoring_date, $submitTime)
 		|| $score <= $problem->sub_status)
 	{
 		return $score;
