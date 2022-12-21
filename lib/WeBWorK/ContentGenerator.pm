@@ -1069,16 +1069,6 @@ sub links {
 					);
 				}
 
-				if ($authz->hasPermissions($userID, "manage_course_files")) {
-					print CGI::li(
-						{ class => 'nav-item' },
-						&$makelink(
-							"${pfx}Config",
-							urlpath_args    => {%args},
-							systemlink_args => \%systemlink_args
-						)
-					);
-				}
 				if ($ce->{LTIGradeMode} && $authz->hasPermissions($userID, 'score_sets')) {
 					print CGI::li(
 						{ class => 'nav-item' },
@@ -1087,6 +1077,17 @@ sub links {
 							text            => $r->maketext('LTI Grade Update'),
 							urlpath_args    => \%args,
 							systemlink_args => \%systemlink_args,
+						)
+					);
+				}
+
+				if ($authz->hasPermissions($userID, "manage_course_files")) {
+					print CGI::li(
+						{ class => 'nav-item' },
+						&$makelink(
+							"${pfx}Config",
+							urlpath_args    => {%args},
+							systemlink_args => \%systemlink_args
 						)
 					);
 				}
