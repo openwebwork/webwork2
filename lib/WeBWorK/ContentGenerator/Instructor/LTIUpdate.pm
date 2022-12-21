@@ -21,7 +21,7 @@ use parent qw(WeBWorK::ContentGenerator);
 use strict;
 use warnings;
 
-use WeBWorK::Utils(qw(format_set_name_display));
+use WeBWorK::Utils(qw(format_set_name_display getAssetURL));
 
 sub initialize {
 	my $self = shift;
@@ -31,10 +31,7 @@ sub initialize {
 	my $user = $r->param('user');
 
 	# Check permissions
-	return unless $r->authz->hasPermissions($user, 'score_sets');
-	return unless $ce->{LTIGradeMode};
-
-	return unless $r->param('updateLTI');
+	return unless ($r->authz->hasPermissions($user, 'score_sets') && $ce->{LTIGradeMode} && $r->param('updateLTI'));
 
 	my $setID       = $r->param('updateSetID')  || 'All Sets';
 	my $userID      = $r->param('updateUserID') || 'All Users';
@@ -157,12 +154,17 @@ sub body {
 					labels  => {
 						'All Users' => $r->maketext('All Users'),
 						map { $_ => $_ } @users
+					},
+					attributes => $gradeMode eq 'homework'
+					? {
+						'All Users' => { 'data-sets' => join(':', @sets) },
+						map { $_ => { 'data-sets' => join(':', sort($db->listUserSets($_))) } } @users
 					}
+					: {}
 				})
 			)
 		),
-		$gradeMode eq 'homework'
-		? CGI::div(
+		$gradeMode eq 'homework' ? CGI::div(
 			{ class => 'row mb-3' },
 			CGI::label(
 				{ for => 'updateSetID', class => 'col-auto col-form-label fw-bold' },
@@ -179,11 +181,14 @@ sub body {
 					labels  => {
 						'All Sets' => $r->maketext('All Sets'),
 						map { $_ => format_set_name_display($_) } @sets
+					},
+					attributes => {
+						'All Sets' => { 'data-users' => join(':', @users) },
+						map { $_ => { 'data-users' => join(':', sort($db->listSetUsers($_))) } } @sets
 					}
 				})
 			)
-		)
-		: '',
+		) : '',
 		CGI::submit({
 			id    => 'updateLTI',
 			name  => 'updateLTI',
@@ -217,6 +222,18 @@ sub format_interval {
 	chop($out);
 
 	return $out;
+}
+
+sub output_JS {
+	my $self = shift;
+	my $r    = $self->r;
+	my $ce   = $r->ce;
+
+	# Only use javascript to update menus if using homework grade mode.
+	print CGI::script({ src => getAssetURL($ce, 'js/apps/LTIUpdate/ltiupdate.js'), defer => undef, }, '')
+		if $ce->{LTIGradeMode} eq 'homework';
+
+	return '';
 }
 
 1;
