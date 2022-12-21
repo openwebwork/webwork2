@@ -239,7 +239,8 @@ sub body {
 				class          => 'form-control',
 				placeholder    => '',
 				autocapitalize => 'none',
-				spellcheck     => 'false'
+				spellcheck     => 'false',
+				autocomplete   => 'new-password'
 			}),
 			CGI::label({ for => 'proctor_user' }, $r->maketext('Proctor Username'))
 		);
@@ -259,11 +260,12 @@ sub body {
 	print CGI::div(
 		{ class => 'col-xl-5 col-lg-6 col-md-7 col-sm-8 form-floating mb-2' },
 		CGI::password_field({
-			name        => 'proctor_passwd',
-			id          => 'proctor_passwd',
-			value       => '',
-			class       => 'form-control',
-			placeholder => ''
+			name         => 'proctor_passwd',
+			id           => 'proctor_passwd',
+			value        => '',
+			class        => 'form-control',
+			placeholder  => '',
+			autocomplete => 'new-password'
 		}),
 		CGI::label({ for => 'proctor_passwd' }, $r->maketext('Proctor Password'))
 	);
