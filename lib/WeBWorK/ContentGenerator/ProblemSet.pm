@@ -8,7 +8,7 @@ problem set.
 
 =cut
 
-use WeBWorK::Debug;
+use WeBWorK::Debug            qw(debug);
 use WeBWorK::Utils            qw(wwRound);
 use WeBWorK::Utils::DateTime  qw(after);
 use WeBWorK::Utils::Files     qw(path_is_subdir);

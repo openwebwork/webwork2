@@ -14,7 +14,7 @@ use WeBWorK::Utils                   qw(cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Utils::Files            qw(surePathToFile path_is_subdir);
 use WeBWorK::ConfigValues            qw(getConfigValues);
-use WeBWorK::Debug;
+use WeBWorK::Debug                   qw(debug);
 
 sub createCourse {
 	my ($invocant, $self, $params) = @_;

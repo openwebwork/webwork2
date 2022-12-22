@@ -8,7 +8,7 @@ users to which sets are assigned.
 
 =cut
 
-use WeBWorK::Debug;
+use WeBWorK::Debug             qw(debug);
 use WeBWorK::Utils::Instructor qw(assignSetToAllUsers assignSetToGivenUsers);
 use WeBWorK::Utils::Sets       qw(format_set_name_display);
 

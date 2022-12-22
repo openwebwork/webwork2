@@ -14,7 +14,7 @@ use File::stat;
 use Time::localtime;
 
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Debug;
+use WeBWorK::Debug                   qw(debug);
 use WeBWorK::Utils                   qw(cryptPassword trim_spaces);
 use WeBWorK::Utils::CourseManagement qw(
 	addCourse

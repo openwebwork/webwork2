@@ -29,7 +29,7 @@ use WeBWorK::Authen;
 use WeBWorK::Authz;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Debug;
+use WeBWorK::Debug qw(debug);
 use WeBWorK::Upload;
 use WeBWorK::Utils qw(runtime_use);
 use WeBWorK::ContentGenerator::Login;

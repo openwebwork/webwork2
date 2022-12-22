@@ -16,7 +16,6 @@ use Scalar::Util qw(weaken);
 
 use WeBWorK::DB::Utils qw(parse_dsn);
 use WeBWorK::DB::Utils::SQLAbstractIdentTrans;
-use WeBWorK::Debug;
 
 =head1 SUPPORTED PARAMS
 
@@ -63,11 +62,13 @@ sub sql_init {
 		};
 	}
 
-	$self->{sql} = new WeBWorK::DB::Utils::SQLAbstractIdentTrans(
+	$self->{sql} = WeBWorK::DB::Utils::SQLAbstractIdentTrans->new(
 		quote_char      => "`",
 		name_sep        => ".",
 		transform_table => $transform_table
 	);
+
+	return;
 }
 
 ################################################################################
@@ -419,7 +420,7 @@ sub tableExists {
 	my $self   = shift;
 	my $stmt   = $self->_exists_table_stmt;
 	my $result = eval { $self->dbh->do($stmt); };
-	(caught WeBWorK::DB::Ex::TableMissing) ? 0 : 1;
+	return WeBWorK::DB::Ex::TableMissing->caught ? 0 : 1;
 }
 
 sub _exists_table_stmt {
@@ -474,7 +475,7 @@ sub get_fields_where_i {
 	$fields ||= [ $self->fields ];
 
 	my $sth = $self->_get_fields_where_prepex($fields, $where, $order);
-	return new Iterator sub {
+	return Iterator->new(sub {
 		my @row = $sth->fetchrow_array;
 		if (@row) {
 			return \@row;
@@ -483,7 +484,7 @@ sub get_fields_where_i {
 			undef $sth;      # allow the statement handle to get garbage-collected
 			Iterator::is_done();
 		}
-	};
+	});
 }
 
 # helper, returns a prepared statement handle
@@ -807,7 +808,7 @@ sub list {
 }
 
 # oldapi
-sub exists {
+sub exists {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 	my ($self, @keyparts) = @_;
 	return $self->exists_where($self->keyparts_to_where(@keyparts));
 }
@@ -837,7 +838,7 @@ sub put {
 }
 
 # oldapi
-sub delete {
+sub delete {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 	my ($self, @keyparts) = @_;
 	return $self->delete_where($self->keyparts_to_where(@keyparts));
 }

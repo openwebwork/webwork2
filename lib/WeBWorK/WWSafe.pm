@@ -1,3 +1,4 @@
+## no critic
 package WeBWorK::WWSafe;
 
 #use 5.003_11;
@@ -637,4 +638,3 @@ Reworked to use the Opcode module and other changes added by Tim Bunce.
 Currently maintained by the Perl 5 Porters, <perl5-porters@perl.org>.
 
 =cut
-

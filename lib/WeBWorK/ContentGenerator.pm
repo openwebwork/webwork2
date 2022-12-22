@@ -768,6 +768,7 @@ sub url ($c, $args) {
 		return $ce->{courseURLs}{$name};
 	} else {
 		warn __PACKAGE__ . "::url: unrecognized type '$type'.\n";
+		return;
 	}
 }
 

@@ -43,6 +43,8 @@ activity, regardless of their permission level.
 
 use strict;
 use warnings;
+use version;
+
 use Carp qw/croak/;
 
 use WeBWorK::Utils::DateTime qw(before);
@@ -50,7 +52,6 @@ use WeBWorK::Utils::Sets     qw(restricted_set_message);
 use WeBWorK::Authen::Proctor;
 use Net::IP;
 use Scalar::Util qw(weaken);
-use version;
 
 ################################################################################
 
@@ -159,6 +160,8 @@ sub setCachedUser {
 	} else {
 		warn "setCachedUser() called with userID undefined.";
 	}
+
+	return;
 }
 
 =item hasPermissions($userID, $activity)
@@ -181,13 +184,10 @@ assumes that the user does not have permission.
 # This currently only uses two of it's arguments, but it accepts any number, in
 # case in the future calculating certain permissions requires more information.
 sub hasPermissions {
-	if (@_ != 3 and not(@_ == 4 and $_[3] eq 'equal')) {
-		shift @_;    # get rid of self
-		my $nargs = @_;
-		croak "hasPermissions called with $nargs arguments instead of the expected 2: '@_'";
-	}
-
 	my ($self, $userID, $activity, $exactness) = @_;
+	croak 'hasPermissions called with the incorrect number of arguments' unless defined $activity;
+	croak 'hasPermissions called with an incorrect exactness argument' if defined $exactness && $exactness ne 'equal';
+
 	if (!defined($exactness)) { $exactness = 'ge'; }
 	my $c  = $self->{c};
 	my $ce = $c->ce;
@@ -519,7 +519,7 @@ sub invalidIPAddress {
 			|| $set->restrict_ip eq ''
 			|| $set->restrict_ip eq 'No');
 
-	my $clientIP = new Net::IP($c->tx->remote_address);
+	my $clientIP = Net::IP->new($c->tx->remote_address);
 
 	# make sure that we're using the non-versioned set name
 	$setName =~ s/,v\d+$//;
@@ -539,7 +539,7 @@ sub invalidIPAddress {
 	) if (!@restrictAddresses);
 
 	# build a set of IP objects to match against
-	my @restrictIPs = (map { new Net::IP($_) } @restrictAddresses);
+	my @restrictIPs = (map { Net::IP->new($_) } @restrictAddresses);
 
 	# and check the clientAddress against these: is $clientIP
 	#    in @restrictIPs?

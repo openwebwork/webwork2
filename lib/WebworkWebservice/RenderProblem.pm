@@ -7,7 +7,7 @@ use Future::AsyncAwait;
 use Benchmark;
 use Mojo::Util qw(url_unescape);
 
-use WeBWorK::Debug;
+use WeBWorK::Debug qw(debug);
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::DB::Utils        qw(global2user fake_set fake_problem);

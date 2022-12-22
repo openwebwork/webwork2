@@ -26,8 +26,6 @@ use warnings;
 
 use Carp;
 
-use WeBWorK::Debug;
-
 our @EXPORT_OK = qw(get_lang_and_dir get_problem_lang_and_dir);
 
 =head1 FUNCTIONS

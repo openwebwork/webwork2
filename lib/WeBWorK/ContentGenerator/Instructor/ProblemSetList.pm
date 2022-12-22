@@ -63,7 +63,7 @@ Delete sets:
 
 use Mojo::File;
 
-use WeBWorK::Debug;
+use WeBWorK::Debug             qw(debug);
 use WeBWorK::Utils             qw(x);
 use WeBWorK::Utils::DateTime   qw(getDefaultSetDueDate);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);

@@ -1,5 +1,5 @@
 package WeBWorK::DB::Schema::NewSQL;
-use base qw(WeBWorK::DB::Schema);
+use parent qw(WeBWorK::DB::Schema);
 
 =head1 NAME
 
@@ -9,7 +9,9 @@ WeBWorK::DB::Schema::NewSQL - base class for SQL access.
 
 use strict;
 use warnings;
-use Carp           qw(croak);
+
+use Carp qw(croak);
+
 use WeBWorK::Utils qw/undefstr/;
 
 use constant TABLES => qw(*);
@@ -194,7 +196,7 @@ sub initial_records {
 sub box {
 	my ($self, $values) = @_;
 	# promote undef values to empty strings. eventually we'd like to stop doing this (FIXME)
-	map { $_ = "" if not defined $_ } @$values;
+	for (@$values) { $_ //= '' }
 	return $self->{record}->new($values);
 }
 
@@ -202,7 +204,7 @@ sub unbox {
 	my ($self, $Record) = @_;
 	my @values = $Record->toArray;
 	# demote empty strings to undef. eventually we'd like to stop doing this (FIXME)
-	map { $_ = undef if defined $_ and $_ eq "" } @values;
+	@values = map { defined $_ && $_ eq '' ? undef : $_ } @values;
 	return \@values;
 }
 
@@ -247,7 +249,7 @@ sub keyparts_to_where {
 sub keyparts_list_to_where {
 	my ($self, @keyparts_list) = @_;
 
-	map { $_ = $self->keyparts_to_where(@$_) } @keyparts_list;
+	@keyparts_list = map { $self->keyparts_to_where(@$_) } @keyparts_list;
 	return \@keyparts_list;
 }
 
@@ -276,7 +278,7 @@ sub tableExists {
 	my $self   = shift;
 	my $stmt   = $self->_exists_table_stmt;
 	my $result = eval { $self->dbh->do($stmt); };
-	(caught WeBWorK::DB::Ex::TableMissing) ? 0 : 1;
+	return (caught WeBWorK::DB::Ex::TableMissing) ? 0 : 1;
 }
 
 sub _exists_table_stmt {

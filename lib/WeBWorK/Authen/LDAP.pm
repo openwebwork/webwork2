@@ -1,5 +1,5 @@
 package WeBWorK::Authen::LDAP;
-use base qw/WeBWorK::Authen/;
+use parent qw(WeBWorK::Authen);
 
 use strict;
 use warnings;

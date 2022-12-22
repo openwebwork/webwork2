@@ -9,12 +9,12 @@ WeBWorK::ContentGenerator::Instructor::SetMaker - Make homework sets.
 
 use Mojo::File;
 
-use WeBWorK::Debug;
+use WeBWorK::Debug             qw(debug);
 use WeBWorK::Utils             qw(sortByName x);
 use WeBWorK::Utils::DateTime   qw(getDefaultSetDueDate);
 use WeBWorK::Utils::Instructor qw(assignSetToUser assignProblemToAllSetUsers addProblemToSet);
 use WeBWorK::Utils::LibraryStats;
-use WeBWorK::Utils::ListingDB qw(getDBListings);
+use WeBWorK::Utils::ListingDB qw(getDBListings getMLTleader);
 use WeBWorK::Utils::Sets      qw(format_set_name_internal);
 use WeBWorK::Utils::Tags;
 
@@ -323,7 +323,7 @@ sub process_search ($c, @dbsearch) {
 	for my $mltid (keys %mlt) {
 		my @idlist = @{ $mlt{$mltid} };
 		if (scalar(@idlist) > 1) {
-			my $leader = WeBWorK::Utils::ListingDB::getMLTleader($c, $mltid) || 0;
+			my $leader = getMLTleader($c, $mltid) || 0;
 			my $hold   = undef;
 			for my $subindex (@idlist) {
 				if ($dbsearch[$subindex]->{pgid} == $leader) {

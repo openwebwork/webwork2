@@ -15,8 +15,8 @@ use lib "$ENV{WEBWORK_ROOT}/lib";
 
 use WeBWorK::CourseEnvironment;
 
-use WeBWorK::DB;
-use WeBWorK::File::Classlist;
+use WeBWorK::DB              qw(check_user_id);
+use WeBWorK::File::Classlist qw(parse_classlist);
 use WeBWorK::Utils           qw(cryptPassword);
 use WeBWorK::File::Classlist qw(parse_classlist);
 

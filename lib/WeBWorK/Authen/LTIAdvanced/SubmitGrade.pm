@@ -13,7 +13,7 @@ use Mojo::UserAgent;
 use UUID::Tiny ':std';
 use Digest::SHA qw(sha1_base64);
 
-use WeBWorK::Debug;
+use WeBWorK::Debug                      qw(debug);
 use WeBWorK::Utils                      qw(wwRound);
 use WeBWorK::Utils::Sets                qw(grade_all_sets);
 use WeBWorK::Authen::LTI::GradePassback qw(getSetPassbackScore);

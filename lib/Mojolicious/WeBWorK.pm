@@ -148,7 +148,7 @@ sub startup ($app) {
 
 			$c->stash->{orig_sig_warn} = $SIG{__WARN__};
 
-			$SIG{__WARN__} = sub {
+			$SIG{__WARN__} = sub {    ## no critic (Variables::RequireLocalizedPunctuationVars)
 				my ($warning) = @_;
 				chomp $warning;
 				$c->stash->{warnings} .= "$warning\n";
@@ -168,7 +168,8 @@ sub startup ($app) {
 
 	$app->hook(
 		after_dispatch => sub ($c) {
-			$SIG{__WARN__} = ref($c->stash->{orig_sig_warn}) eq 'CODE' ? $c->stash->{orig_sig_warn} : 'DEFAULT';
+			$SIG{__WARN__} =    ## no critic (Variables::RequireLocalizedPunctuationVars)
+				ref($c->stash->{orig_sig_warn}) eq 'CODE' ? $c->stash->{orig_sig_warn} : 'DEFAULT';
 
 			if ($c->isa('WeBWorK::ContentGenerator') && $c->ce) {
 				$c->authen->store_session if $c->authen;

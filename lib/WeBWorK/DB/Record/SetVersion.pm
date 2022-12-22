@@ -1,5 +1,5 @@
 package WeBWorK::DB::Record::SetVersion;
-use base WeBWorK::DB::Record::UserSet;
+use parent qw(WeBWorK::DB::Record::UserSet);
 
 =head1 NAME
 

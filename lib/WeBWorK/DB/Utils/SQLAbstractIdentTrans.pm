@@ -54,7 +54,7 @@ sub update {
 	return $self->SUPER::update($self->_transform_table($table), $set, $where, $options);
 }
 
-sub delete {
+sub delete {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 	my ($self, $table, $where, $options) = @_;
 	return $self->SUPER::delete($self->_transform_table($table), $where, $options);
 }
