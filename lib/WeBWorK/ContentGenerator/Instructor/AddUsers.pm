@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::AddUsers;
-use parent qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -26,6 +26,7 @@ use strict;
 use warnings;
 
 use WeBWorK::Utils qw/cryptPassword trim_spaces/;
+use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
 sub initialize {
 	my ($self) = @_;
@@ -99,7 +100,7 @@ sub initialize {
 		}
 		if (defined $r->param('assignSets')) {
 			my @setIDs = $r->param('assignSets');
-			$self->assignSetsToUsers(\@setIDs, \@userIDs);
+			assignSetsToUsers($db, \@setIDs, \@userIDs);
 		}
 	}
 

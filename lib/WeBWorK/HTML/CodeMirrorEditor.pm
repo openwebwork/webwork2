@@ -18,9 +18,9 @@ use parent qw(Exporter);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::CodeMirrorEditor is a module for
-displaying a CodeMirror editor on a page.  This is currently used by the
-AchievementEditor.pm and PGProblemEditor.pm modules.
+WeBWorK::HTML::CodeMirrorEditor is a module for displaying a CodeMirror editor
+on a page.  This is currently used by the AchievementEditor.pm and
+PGProblemEditor.pm modules.
 
 =cut
 

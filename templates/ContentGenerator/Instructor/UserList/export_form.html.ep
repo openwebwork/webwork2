@@ -1,3 +1,5 @@
+% use WeBWorK::Utils::Instructor qw(getCSVList);
+%
 <div>
    	<div class="row mb-2">
 		<%= label_for export_select_scope => maketext('Export which users?'),
@@ -17,7 +19,7 @@
 		<div class="col-auto">
 			<%= select_field 'action.export.target' => [
 					[ maketext('Enter filename below') => 'new' ],
-					$cg->getCSVList
+					getCSVList($ce)
 				],
 				id => 'export_select_target', class => 'form-select form-select-sm' =%>
 		</div>

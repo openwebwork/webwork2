@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::PGProblemEditor;
-use parent qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -115,6 +115,7 @@ use File::Copy;
 
 use WeBWorK::Utils qw(jitar_id_to_seq not_blank path_is_subdir seq_to_jitar_id x
 	surePathToFile readDirectory readFile max);
+use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
 
 use constant DEFAULT_SEED => 123456;
 
@@ -854,13 +855,14 @@ sub add_problem_handler {
 		}
 
 		# Update problem record
-		my $problemRecord = $self->addProblemToSet(
+		my $problemRecord = addProblemToSet(
+			$db, $r->ce->{problemDefaults},
 			setName    => $targetSetName,
 			sourceFile => $sourceFilePath,
 			problemID  => $targetProblemNumber,
 		);
 
-		$self->assignProblemToAllSetUsers($problemRecord);
+		assignProblemToAllSetUsers($db, $problemRecord);
 
 		$self->addgoodmessage($r->maketext(
 			'Added [_1] to [_2] as problem [_3]',
@@ -1081,7 +1083,8 @@ sub save_handler {
 
 sub save_as_handler {
 	my ($self) = @_;
-	my $r = $self->r;
+	my $r      = $self->r;
+	my $db     = $r->db;
 
 	$self->{status_message} = $r->c;
 
@@ -1107,10 +1110,10 @@ sub save_as_handler {
 
 	# Grab the problemContents from the form in order to save it to a new permanent file.
 	# Later we will unlink (delete) the current temporary file.
-	$self->{r_problemContents} = \(fixProblemContents($self->r->param('problemContents')));
+	$self->{r_problemContents} = \(fixProblemContents($r->param('problemContents')));
 
 	# Construct the output file path
-	my $outputFilePath = $self->r->ce->{courseDirs}{templates} . "/$new_file_name";
+	my $outputFilePath = $r->ce->{courseDirs}{templates} . "/$new_file_name";
 	if (defined $outputFilePath && -e $outputFilePath) {
 		$do_not_save = 1;
 		$self->addbadmessage($r->maketext(
@@ -1138,9 +1141,9 @@ sub save_as_handler {
 		} elsif ($saveMode eq 'rename' && -r $outputFilePath) {
 			# Modify source file path in problem.
 			if ($file_type eq 'set_header') {
-				my $setRecord = $self->r->db->getGlobalSet($self->{setID});
+				my $setRecord = $db->getGlobalSet($self->{setID});
 				$setRecord->set_header($new_file_name);
-				if ($self->r->db->putGlobalSet($setRecord)) {
+				if ($db->putGlobalSet($setRecord)) {
 					$self->addgoodmessage($r->maketext(
 						'The set header for set [_1] has been renamed to "[_2]".', $self->{setID},
 						$self->shortPath($outputFilePath)
@@ -1152,9 +1155,9 @@ sub save_as_handler {
 					));
 				}
 			} elsif ($file_type eq 'hardcopy_header') {
-				my $setRecord = $self->r->db->getGlobalSet($self->{setID});
+				my $setRecord = $db->getGlobalSet($self->{setID});
 				$setRecord->hardcopy_header($new_file_name);
-				if ($self->r->db->putGlobalSet($setRecord)) {
+				if ($db->putGlobalSet($setRecord)) {
 					$self->addgoodmessage($r->maketext(
 						'The hardcopy header for set [_1] has been renamed to "[_2]".', $self->{setID},
 						$self->shortPath($outputFilePath)
@@ -1168,16 +1171,14 @@ sub save_as_handler {
 			} else {
 				my $problemRecord;
 				if ($self->{versionID}) {
-					$problemRecord = $self->r->db->getMergedProblemVersion($r->param('effectiveUser'),
+					$problemRecord = $db->getMergedProblemVersion($r->param('effectiveUser'),
 						$self->{setID}, $1, $self->{problemID});
 				} else {
-					$problemRecord = $self->r->db->getGlobalProblem($self->{setID}, $self->{problemID});
+					$problemRecord = $db->getGlobalProblem($self->{setID}, $self->{problemID});
 				}
 				$problemRecord->source_file($new_file_name);
 				my $result =
-					$self->{versionID}
-					? $self->r->db->putProblemVersion($problemRecord)
-					: $self->r->db->putGlobalProblem($problemRecord);
+					$self->{versionID} ? $db->putProblemVersion($problemRecord) : $db->putGlobalProblem($problemRecord);
 
 				if ($result) {
 					$self->addgoodmessage($r->maketext(
@@ -1195,24 +1196,25 @@ sub save_as_handler {
 				}
 			}
 		} elsif ($saveMode eq 'add_to_set_as_new_problem') {
-			my $set = $self->r->db->getGlobalSet($self->{setID});
+			my $set = $db->getGlobalSet($self->{setID});
 
 			# For jitar sets new problems are put as top level problems at the end.
 			if ($set->assignment_type eq 'jitar') {
-				my @problemIDs = $self->r->db->listGlobalProblems($self->{setID});
+				my @problemIDs = $db->listGlobalProblems($self->{setID});
 				@problemIDs = sort { $a <=> $b } @problemIDs;
 				my @seq = jitar_id_to_seq($problemIDs[-1]);
 				$targetProblemNumber = seq_to_jitar_id($seq[0] + 1);
 			} else {
-				$targetProblemNumber = 1 + max($self->r->db->listGlobalProblems($self->{setID}));
+				$targetProblemNumber = 1 + max($db->listGlobalProblems($self->{setID}));
 			}
 
-			my $problemRecord = $self->addProblemToSet(
+			my $problemRecord = addProblemToSet(
+				$db, $r->ce->{problemDefaults},
 				setName    => $self->{setID},
 				sourceFile => $new_file_name,
 				problemID  => $targetProblemNumber,    # Added to end of set
 			);
-			$self->assignProblemToAllSetUsers($problemRecord);
+			assignProblemToAllSetUsers($db, $problemRecord);
 			$self->addgoodmessage($r->maketext(
 				'Added [_1] to [_2] as problem [_3].',
 				$new_file_name,
@@ -1265,7 +1267,7 @@ sub save_as_handler {
 			'WeBWorK::ContentGenerator::Instructor::PGProblemEditor', $r,
 			courseID  => $self->{courseID},
 			setID     => $self->{setID},
-			problemID => $do_not_save ? $self->{problemID} : max($self->r->db->listGlobalProblems($self->{setID}))
+			problemID => $do_not_save ? $self->{problemID} : max($db->listGlobalProblems($self->{setID}))
 		);
 		$new_file_type = $file_type;
 	} else {

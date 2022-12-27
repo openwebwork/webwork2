@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::Assigner;
-use parent qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -24,6 +24,8 @@ WeBWorK::ContentGenerator::Instructor::Assigner - Assign homework sets to users.
 
 use strict;
 use warnings;
+
+use WeBWorK::Utils::Instructor qw(assignSetsToUsers unassignSetsFromUsers);
 
 async sub pre_header_initialize {
 	my ($self) = @_;
@@ -48,12 +50,12 @@ async sub pre_header_initialize {
 		if (@selected_users && @selected_sets) {
 			my @results;    # This is not used?
 			if (defined $r->param('assign')) {
-				$self->assignSetsToUsers(\@selected_sets, \@selected_users);
+				assignSetsToUsers($db, \@selected_sets, \@selected_users);
 				$self->addgoodmessage($r->maketext('All assignments were made successfully.'));
 			}
 			if (defined $r->param('unassign')) {
 				if (defined $r->param('unassignFromAllSafety') and $r->param('unassignFromAllSafety') == 1) {
-					$self->unassignSetsFromUsers(\@selected_sets, \@selected_users) if (defined $r->param('unassign'));
+					unassignSetsFromUsers($db, \@selected_sets, \@selected_users) if (defined $r->param('unassign'));
 					$self->addgoodmessage($r->maketext('All unassignments were made successfully.'));
 				} else {    # asked for unassign, but no safety radio toggle
 					$self->addbadmessage($r->maketext(

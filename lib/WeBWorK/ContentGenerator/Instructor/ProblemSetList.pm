@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::ProblemSetList;
-use parent qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -83,6 +83,7 @@ use Mojo::File;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(timeToSec listFilesRecursive jitar_id_to_seq seq_to_jitar_id x
 	format_set_name_internal format_set_name_display);
+use WeBWorK::Utils::Instructor qw(assignSetToUser assignSetToAllUsers addProblemToSet);
 
 use constant HIDE_SETS_THRESHOLD                   => 500;
 use constant DEFAULT_VISIBILITY_STATE              => 1;
@@ -595,7 +596,7 @@ sub create_handler {
 	}
 	# Assign set to current active user.
 	my $userName = $r->param('user');
-	$self->assignSetToUser($userName, $newSetRecord);    # Cures weird date error when no-one assigned to set.
+	assignSetToUser($db, $userName, $newSetRecord);    # Cures weird date error when no-one assigned to set.
 	$self->addgoodmessage($r->maketext(
 		'Set [_1] was assigned to [_2].',
 		$r->tag('span', dir => 'ltr', format_set_name_display($newSetID)), $userName
@@ -988,7 +989,8 @@ sub importSetsFromDef {
 		# add problems
 		my $freeProblemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
 		foreach my $rh_problem (@problemList) {
-			$self->addProblemToSet(
+			addProblemToSet(
+				$db, $ce->{problemDefaults},
 				setName           => $setName,
 				sourceFile        => $rh_problem->{source_file},
 				problemID         => $rh_problem->{problemID} ? $rh_problem->{problemID} : $freeProblemID++,
@@ -1003,10 +1005,10 @@ sub importSetsFromDef {
 		}
 
 		if ($assign eq "all") {
-			$self->assignSetToAllUsers($setName);
+			assignSetToAllUsers($db, $ce, $setName);
 		} else {
 			my $userName = $r->param('user');
-			$self->assignSetToUser($userName, $newSetRecord);    ## always assign set to instructor
+			assignSetToUser($db, $userName, $newSetRecord);    ## always assign set to instructor
 		}
 	}
 

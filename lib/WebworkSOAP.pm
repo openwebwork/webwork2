@@ -8,7 +8,6 @@ use WeBWorK::Utils::CourseManagement
 use WeBWorK::DB;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::CourseEnvironment;
-use WeBWorK::ContentGenerator::Instructor;
 
 use WebworkSOAP::Classes::GlobalSet;
 use WebworkSOAP::Classes::UserSet;

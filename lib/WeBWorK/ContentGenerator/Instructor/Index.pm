@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::Index;
-use parent qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 

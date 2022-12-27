@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::AchievementList;
-use parent qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -51,6 +51,7 @@ use Mojo::File;
 use Text::CSV;
 
 use WeBWorK::Utils qw(sortAchievements x);
+use WeBWorK::Utils::Instructor qw(read_dir);
 
 # Forms
 use constant EDIT_FORMS   => [qw(save_edit cancel_edit)];
@@ -677,7 +678,7 @@ sub getAxpList {
 	my ($self) = @_;
 	my $ce     = $self->{ce};
 	my $dir    = $ce->{courseDirs}->{achievements};
-	return $self->read_dir($dir, qr/.*\.axp/);
+	return read_dir($dir, qr/.*\.axp/);
 }
 
 1;

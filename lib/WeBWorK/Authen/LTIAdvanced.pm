@@ -30,7 +30,7 @@ use WeBWorK::Debug;
 use DBI;
 use WeBWorK::Utils qw(formatDateTime);
 use WeBWorK::Localize;
-use WeBWorK::ContentGenerator::Instructor;
+use WeBWorK::Utils::Instructor qw(assignSetToUser);
 use URI::Escape;
 use Net::OAuth;
 
@@ -657,8 +657,7 @@ sub create_user {
 	$r->authz->{PermissionLevel} = $newPermissionLevel;    #cache the Permission Level Record.
 
 	# Assign existing sets
-	my $instructorTools = WeBWorK::ContentGenerator::Instructor->new($r);
-	my @setsToAssign    = ();
+	my @setsToAssign = ();
 
 	my @globalSetIDs = $db->listGlobalSets;
 	my @GlobalSets   = $db->getGlobalSets(@globalSetIDs);
@@ -666,7 +665,7 @@ sub create_user {
 		# assign all visible or "published" sets
 		if ($globalSet->visible) {
 			push @setsToAssign, $globalSet;
-			$instructorTools->assignSetToUser($userID, $globalSet);
+			assignSetToUser($db, $userID, $globalSet);
 		}
 	}
 	$self->{numberOfSetsAssigned} = scalar @setsToAssign;

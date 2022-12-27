@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::SetMaker;
-use parent qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -33,6 +33,7 @@ use WeBWorK::Utils qw(readDirectory sortByName x format_set_name_internal);
 use WeBWorK::Utils::Tags;
 use WeBWorK::Utils::LibraryStats;
 use WeBWorK::Utils::ListingDB qw(getSectionListings);
+use WeBWorK::Utils::Instructor qw(assignSetToUser assignProblemToAllSetUsers addProblemToSet);
 
 # Use x to mark strings for maketext
 use constant MY_PROBLEMS   => x('My Problems');
@@ -298,12 +299,13 @@ sub add_selected {
 	for my $selected (@selected) {
 		if ($selected->[1] & ADDED) {
 			my $file          = $selected->[0];
-			my $problemRecord = $self->addProblemToSet(
+			my $problemRecord = addProblemToSet(
+				$db, $self->r->ce->{problemDefaults},
 				setName    => $setName,
 				sourceFile => $file
 			);
 			$freeProblemID++;
-			$self->assignProblemToAllSetUsers($problemRecord);
+			assignProblemToAllSetUsers($db, $problemRecord);
 			$selected->[1] |= SUCCESS;
 			$addedcount++;
 		}
@@ -648,7 +650,7 @@ async sub pre_header_initialize {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");
 				} else {
 					$self->addgoodmessage($r->maketext("Set [_1] has been created.", $newSetName));
-					$self->assignSetToUser($userName, $newSetRecord);
+					assignSetToUser($db, $userName, $newSetRecord);
 					$self->addgoodmessage($r->maketext("Set [_1] was assigned to [_2]", $newSetName, $userName));
 				}
 			}

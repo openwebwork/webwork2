@@ -18,8 +18,7 @@ use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::Stats - Display statistics by user or
-problem set.
+WeBWorK::ContentGenerator::Grades - Display statistics by user.
 
 =cut
 

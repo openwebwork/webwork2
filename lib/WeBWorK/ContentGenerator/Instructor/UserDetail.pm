@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::UserDetail;
-use parent qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -26,6 +26,7 @@ use strict;
 use warnings;
 
 use WeBWorK::Utils qw(x);
+use WeBWorK::Utils::Instructor qw(assignSetToUser);
 use WeBWorK::Debug;
 
 # We use the x function to mark strings for localizaton
@@ -84,7 +85,7 @@ sub initialize {
 			# Does the user want this set to be assigned to the selected user?
 			if (exists $selectedSets{$setID}) {
 				# Assign the set if it isn't assigned already.
-				$self->assignSetToUser($editForUserID, $setRecord) if (!$userSets{$setID});
+				assignSetToUser($db, $editForUserID, $setRecord) if (!$userSets{$setID});
 
 				# Override dates
 				my $userSetRecord = $db->getUserSet($editForUserID, $setID);

@@ -17,9 +17,9 @@ package WeBWorK::HTML::SingleProblemGrader;
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::SingleProblemGrader is a module for
-manually grading a single webwork problem.  It is displayed with the problem
-when an instructor is acting as a student.
+WeBWorK::HTML::SingleProblemGrader is a module for manually grading a single
+webwork problem.  It is displayed with the problem when an instructor is acting
+as a student.
 
 =cut
 

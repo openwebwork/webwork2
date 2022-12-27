@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::ProblemSetDetail;
-use parent qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -27,6 +27,7 @@ use strict;
 use warnings;
 
 use WeBWorK::Utils qw(cryptPassword jitar_id_to_seq seq_to_jitar_id x format_set_name_internal format_set_name_display);
+use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
 
 # These constants determine which fields belong to what type of record.
 use constant SET_FIELDS => [
@@ -1837,7 +1838,8 @@ sub initialize {
 					close($TEMPFILE);
 
 					# Update problem record
-					my $problemRecord = $self->addProblemToSet(
+					my $problemRecord = addProblemToSet(
+						$db, $ce->{problemDefaults},
 						setName    => $setID,
 						sourceFile => $new_file_path,
 						problemID  => $setRecord->assignment_type eq 'jitar'
@@ -1845,7 +1847,7 @@ sub initialize {
 						: $targetProblemNumber,
 					);
 
-					$self->assignProblemToAllSetUsers($problemRecord);
+					assignProblemToAllSetUsers($db, $problemRecord);
 					$self->addgoodmessage($r->maketext(
 						"Added [_1] to [_2] as problem [_3]",
 						$new_file_path, $setID, $targetProblemNumber

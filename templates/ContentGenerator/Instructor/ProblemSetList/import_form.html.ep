@@ -1,3 +1,5 @@
+% use WeBWorK::Utils::Instructor qw(getDefList);
+%
 <div>
 	<div class="row mb-2">
 		<%= label_for import_amt_select => maketext('Import how many sets?'),
@@ -16,7 +18,7 @@
 		<div class="col-auto">
 			<%= select_field 'action.import.source' => [
 					[ maketext('Enter filenames below') => '', selected => undef ],
-					$cg->getDefList
+					getDefList($ce)
 				],
 				id => 'import_source_select', class => 'form-select form-select-sm', dir => 'ltr',
 				size => param('action.import.number') || 1,

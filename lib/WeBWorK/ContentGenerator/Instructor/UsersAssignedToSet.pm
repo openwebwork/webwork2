@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet;
-use parent qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -28,6 +28,7 @@ use warnings;
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(format_set_name_display);
+use WeBWorK::Utils::Instructor qw(assignSetToUser assignSetToAllUsers);
 
 sub initialize {
 	my ($self)  = @_;
@@ -49,7 +50,7 @@ sub initialize {
 	if (defined $r->param('assignToAll')) {
 		debug("assignSetToAllUsers($setID)");
 		$self->addgoodmessage($r->maketext("Problems have been assigned to all current users."));
-		$self->assignSetToAllUsers($setID);
+		assignSetToAllUsers($db, $r->ce, $setID);
 		debug("done assignSetToAllUsers($setID)");
 	} elsif (defined $r->param('unassignFromAll')
 		&& defined($r->param('unassignFromAllSafety'))
@@ -79,7 +80,7 @@ sub initialize {
 			if (exists $selectedUsers{$selectedUser}) {
 				unless ($setUsers{$selectedUser}) {    # skip users already in the set
 					debug("assignSetToUser($selectedUser, ...)");
-					$self->assignSetToUser($selectedUser, $setRecord);
+					assignSetToUser($db, $selectedUser, $setRecord);
 					debug("done assignSetToUser($selectedUser, ...)");
 				}
 			} else {

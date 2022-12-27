@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::SendMail;
-use parent qw(WeBWorK::ContentGenerator::Instructor);
+use parent qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -32,6 +32,7 @@ use Data::Dump qw/dump/;
 use Text::Wrap qw(wrap);
 
 use WeBWorK::Debug;
+use WeBWorK::Utils::Instructor qw(read_dir);
 
 sub initialize {
 	my ($self) = @_;
@@ -503,14 +504,13 @@ sub read_input_file {
 
 sub get_message_file_names {
 	my $self = shift;
-	return $self->read_dir($self->{ce}->{courseDirs}->{email}, '\\.msg$');
+	return read_dir($self->{ce}{courseDirs}{email}, '\\.msg$');
 }
 
 sub get_merge_file_names {
 	my $self = shift;
-	return 'None',
-		$self->read_dir($self->{ce}->{courseDirs}->{scoring}, '\\.csv$')
-		;    #FIXME ? check that only readable files are listed.
+	# FIXME: Check that only readable files are listed.
+	return 'None', read_dir($self->{ce}{courseDirs}{scoring}, '\\.csv$');
 }
 
 sub mail_message_to_recipients {

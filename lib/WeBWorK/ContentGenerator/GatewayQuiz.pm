@@ -34,6 +34,7 @@ use WeBWorK::PG::ImageGenerator;
 # Use the ContentGenerator formatDateTime, not the version in Utils.
 use WeBWorK::Utils qw(writeLog writeCourseLogGivenTime encodeAnswers decodeAnswers
 	path_is_subdir before after between wwRound is_restricted);
+use WeBWorK::Utils::Instructor qw(assignSetVersionToUser);
 use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
 use WeBWorK::Utils::ProblemProcessing qw/create_ans_str_from_responses compute_reduced_score/;
 use WeBWorK::DB::Utils qw(global2user);
@@ -584,7 +585,7 @@ async sub pre_header_initialize {
 				# Assign the set, get the right name, version number, etc., and redefine the $set and $problem for the
 				# remainder of this method.
 				my $setTmpl = $db->getUserSet($effectiveUserID, $setID);
-				WeBWorK::ContentGenerator::Instructor::assignSetVersionToUser($self, $effectiveUserID, $setTmpl);
+				assignSetVersionToUser($db, $effectiveUserID, $setTmpl);
 				$setVersionNumber++;
 
 				# Get a clean version of the set and merged version to use in the rest of the routine.
