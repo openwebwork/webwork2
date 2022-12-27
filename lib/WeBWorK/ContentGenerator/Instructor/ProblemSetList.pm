@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::ProblemSetList;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -74,9 +74,6 @@ Delete sets:
 
 # FIXME: rather than having two types of boolean modes $editMode and $exportMode
 # make one $mode variable that contains a string like "edit", "view", or "export"
-
-use strict;
-use warnings;
 
 use Mojo::File;
 
@@ -141,135 +138,123 @@ use constant FIELD_TYPES => {
 	enable_reduced_scoring => 'check'
 };
 
-async sub pre_header_initialize {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $db         = $r->db;
-	my $authz      = $r->authz;
-	my $urlpath    = $r->urlpath;
-	my $user       = $r->param('user');
-	my $courseName = $urlpath->arg("courseID");
+sub pre_header_initialize ($c) {
+	my $db         = $c->db;
+	my $authz      = $c->authz;
+	my $user       = $c->param('user');
+	my $courseName = $c->stash('courseID');
 
 	# Check permissions
-	return unless $authz->hasPermissions($user, "access_instructor_tools");
+	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 
 	# Get the list of global sets and the number of users and cache them for later use.
-	$self->{allSetIDs}  = [ $db->listGlobalSets() ];
-	$self->{totalUsers} = $db->countUsers;
+	$c->{allSetIDs}  = [ $db->listGlobalSets ];
+	$c->{totalUsers} = $db->countUsers;
 
-	if (defined $r->param("action") and $r->param("action") eq "score" and $authz->hasPermissions($user, "score_sets"))
-	{
-		my $scope       = $r->param("action.score.scope");
-		my @setsToScore = ();
+	if (defined $c->param('action') && $c->param('action') eq 'score' && $authz->hasPermissions($user, 'score_sets')) {
+		my $scope = $c->param('action.score.scope');
+		my @setsToScore;
 
-		if ($scope eq "none") {
-			return $r->maketext("No sets selected for scoring");
-		} elsif ($scope eq "all") {
-			@setsToScore = @{ $self->{allSetIDs} };
-		} elsif ($scope eq "visible") {
-			@setsToScore = @{ $r->param("visibleSetIDs") };
-		} elsif ($scope eq "selected") {
-			@setsToScore = $r->param("selected_sets");
+		if ($scope eq 'none') {
+			return $c->maketext('No sets selected for scoring');
+		} elsif ($scope eq 'all') {
+			@setsToScore = @{ $c->{allSetIDs} };
+		} elsif ($scope eq 'visible') {
+			@setsToScore = @{ $c->param('visibleSetIDs') };
+		} elsif ($scope eq 'selected') {
+			@setsToScore = $c->param('selected_sets');
 		}
 
-		my $uri = $self->systemLink(
-			$urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::Scoring', $r, courseID => $courseName),
-			params => {
-				scoreSelected => "ScoreSelected",
-				selectedSet   => \@setsToScore,
-			}
-		);
-
-		$self->reply_with_redirect($uri);
+		$c->reply_with_redirect($c->systemLink(
+			$c->url_for('instructor_scoring'),
+			params => { scoreSelected => 'ScoreSelected', selectedSet => \@setsToScore }
+		));
 	}
 
 	return;
 }
 
-sub initialize {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $db         = $r->db;
-	my $ce         = $r->ce;
-	my $authz      = $r->authz;
-	my $courseName = $urlpath->arg("courseID");
-	my $setID      = $urlpath->arg("setID");
-	my $user       = $r->param('user');
+sub initialize ($c) {
+	my $db         = $c->db;
+	my $ce         = $c->ce;
+	my $authz      = $c->authz;
+	my $courseName = $c->stash('courseID');
+	my $setID      = $c->stash('setID');
+	my $user       = $c->param('user');
 
 	# Make sure these are defined for the templats.
-	$r->stash->{fieldNames}  = VIEW_FIELD_ORDER();
-	$r->stash->{formsToShow} = VIEW_FORMS();
-	$r->stash->{formTitles}  = FORM_TITLES();
-	$r->stash->{formPerms}   = FORM_PERMS();
-	$r->stash->{fieldTypes}  = FIELD_TYPES();
-	$r->stash->{sets}        = [];
+	$c->stash->{fieldNames}  = VIEW_FIELD_ORDER();
+	$c->stash->{formsToShow} = VIEW_FORMS();
+	$c->stash->{formTitles}  = FORM_TITLES();
+	$c->stash->{formPerms}   = FORM_PERMS();
+	$c->stash->{fieldTypes}  = FIELD_TYPES();
+	$c->stash->{sets}        = [];
 
 	# Determine if the user has permisson to do anything here.
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 
 	# Determine if edit mode or export mode is request, and check permissions for these modes.
-	$self->{editMode} = $r->param("editMode") || 0;
-	return if $self->{editMode} && !$authz->hasPermissions($user, 'modify_problem_sets');
+	$c->{editMode} = $c->param("editMode") || 0;
+	return if $c->{editMode} && !$authz->hasPermissions($user, 'modify_problem_sets');
 
-	$self->{exportMode} = $r->param("exportMode") || 0;
-	return if $self->{exportMode} && !$authz->hasPermissions($user, 'modify_set_def_files');
+	$c->{exportMode} = $c->param("exportMode") || 0;
+	return if $c->{exportMode} && !$authz->hasPermissions($user, 'modify_set_def_files');
 
-	if (defined $r->param("visible_sets")) {
-		$self->{visibleSetIDs} = [ $r->param("visible_sets") ];
-	} elsif (defined $r->param("no_visible_sets")) {
-		$self->{visibleSetIDs} = [];
+	if (defined $c->param("visible_sets")) {
+		$c->{visibleSetIDs} = [ $c->param("visible_sets") ];
+	} elsif (defined $c->param("no_visible_sets")) {
+		$c->{visibleSetIDs} = [];
 	} else {
-		if (@{ $self->{allSetIDs} } > HIDE_SETS_THRESHOLD) {
-			$self->{visibleSetIDs} = [];
+		if (@{ $c->{allSetIDs} } > HIDE_SETS_THRESHOLD) {
+			$c->{visibleSetIDs} = [];
 		} else {
-			$self->{visibleSetIDs} = $self->{allSetIDs};
+			$c->{visibleSetIDs} = $c->{allSetIDs};
 		}
 	}
 
-	$self->{prevVisibleSetIDs} = $self->{visibleSetIDs};
+	$c->{prevVisibleSetIDs} = $c->{visibleSetIDs};
 
-	if (defined $r->param("selected_sets")) {
-		$self->{selectedSetIDs} = [ $r->param("selected_sets") ];
+	if (defined $c->param("selected_sets")) {
+		$c->{selectedSetIDs} = [ $c->param("selected_sets") ];
 	} else {
-		$self->{selectedSetIDs} = [];
+		$c->{selectedSetIDs} = [];
 	}
 
-	$self->{primarySortField}   = $r->param("primarySortField")   || "due_date";
-	$self->{secondarySortField} = $r->param("secondarySortField") || "open_date";
+	$c->{primarySortField}   = $c->param("primarySortField")   || "due_date";
+	$c->{secondarySortField} = $c->param("secondarySortField") || "open_date";
 
 	# Call action handler
-	my $actionID = $r->param("action");
-	$self->{actionID} = $actionID;
+	my $actionID = $c->param("action");
+	$c->{actionID} = $actionID;
 	if ($actionID) {
 		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }, @{ EXPORT_FORMS() }) {
-			die $r->maketext("Action [_1] not found", $actionID);
+			die $c->maketext("Action [_1] not found", $actionID);
 		}
 		# Check permissions
 		if (not FORM_PERMS()->{$actionID} or $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
 			my $actionHandler = "${actionID}_handler";
-			$self->addmessage($r->tag('p', class => 'mb-1', $r->maketext("Results of last action performed") . ": "));
-			$self->addmessage($self->$actionHandler);
+			$c->addmessage($c->tag('p', class => 'mb-1', $c->maketext("Results of last action performed") . ": "));
+			$c->addmessage($c->$actionHandler);
 		} else {
-			$self->addbadmessage($r->maketext('You are not authorized to perform this action.'));
+			$c->addbadmessage($c->maketext('You are not authorized to perform this action.'));
 		}
 	} else {
-		$self->addgoodmessage($r->maketext("Please select action to be performed."));
+		$c->addgoodmessage($c->maketext("Please select action to be performed."));
 	}
 
-	$r->stash->{fieldNames} =
-		$self->{editMode} ? EDIT_FIELD_ORDER() : $self->{exportMode} ? EXPORT_FIELD_ORDER() : VIEW_FIELD_ORDER();
-	if (!$r->ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-		$r->stash->{fieldNames} =
-			[ grep { !/enable_reduced_scoring|reduced_scoring_date/ } @{ $r->stash->{fieldNames} } ];
+	$c->stash->{fieldNames} =
+		$c->{editMode} ? EDIT_FIELD_ORDER() : $c->{exportMode} ? EXPORT_FIELD_ORDER() : VIEW_FIELD_ORDER();
+	if (!$c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
+		$c->stash->{fieldNames} =
+			[ grep { !/enable_reduced_scoring|reduced_scoring_date/ } @{ $c->stash->{fieldNames} } ];
 	}
 
-	$r->stash->{formsToShow} = $self->{editMode} ? EDIT_FORMS() : $self->{exportMode} ? EXPORT_FORMS() : VIEW_FORMS();
+	$c->stash->{formsToShow} = $c->{editMode} ? EDIT_FORMS() : $c->{exportMode} ? EXPORT_FORMS() : VIEW_FORMS();
 	# Get requested sets in the requested order.
-	$r->stash->{sets} = [
-		@{ $self->{visibleSetIDs} }
-		? $db->getGlobalSetsWhere({ set_id => $self->{visibleSetIDs} },
-			[ $self->{primarySortField}, $self->{secondarySortField} ])
+	$c->stash->{sets} = [
+		@{ $c->{visibleSetIDs} }
+		? $db->getGlobalSetsWhere({ set_id => $c->{visibleSetIDs} },
+			[ $c->{primarySortField}, $c->{secondarySortField} ])
 		: ()
 	];
 
@@ -285,145 +270,133 @@ sub initialize {
 
 # This action handler modifies the "visibleSetIDs" field based on the contents
 # of the "action.filter.scope" parameter and the "selected_sets".
-sub filter_handler {
-	my ($self) = @_;
-
-	my $r  = $self->r;
-	my $db = $r->db;
+sub filter_handler ($c) {
+	my $db = $c->db;
 
 	my $result;
 
-	my $scope = $r->param('action.filter.scope');
+	my $scope = $c->param('action.filter.scope');
 
 	if ($scope eq "all") {
-		$result = $r->maketext("showing all sets");
-		$self->{visibleSetIDs} = $self->{allSetIDs};
+		$result = $c->maketext("showing all sets");
+		$c->{visibleSetIDs} = $c->{allSetIDs};
 	} elsif ($scope eq "none") {
-		$result = $r->maketext("showing no sets");
-		$self->{visibleSetIDs} = [];
+		$result = $c->maketext("showing no sets");
+		$c->{visibleSetIDs} = [];
 	} elsif ($scope eq "selected") {
-		$result = $r->maketext("showing selected sets");
-		$self->{visibleSetIDs} = [ $r->param('selected_sets') ];
+		$result = $c->maketext("showing selected sets");
+		$c->{visibleSetIDs} = [ $c->param('selected_sets') ];
 	} elsif ($scope eq "match_ids") {
-		$result = $r->maketext("showing matching sets");
-		my @searchTerms = map { format_set_name_internal($_) } split /\s*,\s*/, $r->param('action.filter.set_ids');
+		$result = $c->maketext("showing matching sets");
+		my @searchTerms = map { format_set_name_internal($_) } split /\s*,\s*/, $c->param('action.filter.set_ids');
 		my $regexTerms  = join('|', @searchTerms);
-		my @setIDs      = grep {/$regexTerms/i} @{ $self->{allSetIDs} };
-		$self->{visibleSetIDs} = \@setIDs;
+		my @setIDs      = grep {/$regexTerms/i} @{ $c->{allSetIDs} };
+		$c->{visibleSetIDs} = \@setIDs;
 	} elsif ($scope eq "visible") {
-		$result = $r->maketext("showing sets that are visible to students");
-		$self->{visibleSetIDs} = [ map { $_->[0] } $db->listGlobalSetsWhere({ visible => 1 }) ];
+		$result = $c->maketext("showing sets that are visible to students");
+		$c->{visibleSetIDs} = [ map { $_->[0] } $db->listGlobalSetsWhere({ visible => 1 }) ];
 	} elsif ($scope eq "unvisible") {
-		$result = $r->maketext("showing sets that are hidden from students");
-		$self->{visibleSetIDs} = [ map { $_->[0] } $db->listGlobalSetsWhere({ visible => 0 }) ];
+		$result = $c->maketext("showing sets that are hidden from students");
+		$c->{visibleSetIDs} = [ map { $_->[0] } $db->listGlobalSetsWhere({ visible => 0 }) ];
 	}
 
-	return $r->tag('div', class => 'alert alert-success p-1 mb-0', $result);
+	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $result);
 }
 
-sub sort_handler {
-	my ($self) = @_;
-	my $r = $self->r;
+sub sort_handler ($c) {
+	my $primary   = $c->param('action.sort.primary');
+	my $secondary = $c->param('action.sort.secondary');
 
-	my $primary   = $r->param('action.sort.primary');
-	my $secondary = $r->param('action.sort.secondary');
-
-	$self->{primarySortField}   = $primary;
-	$self->{secondarySortField} = $secondary;
+	$c->{primarySortField}   = $primary;
+	$c->{secondarySortField} = $secondary;
 
 	my %names = (
-		set_id      => $r->maketext("Set Name"),
-		open_date   => $r->maketext("Open Date"),
-		due_date    => $r->maketext("Close Date"),
-		answer_date => $r->maketext("Answer Date"),
-		visible     => $r->maketext("Visibility"),
+		set_id      => $c->maketext("Set Name"),
+		open_date   => $c->maketext("Open Date"),
+		due_date    => $c->maketext("Close Date"),
+		answer_date => $c->maketext("Answer Date"),
+		visible     => $c->maketext("Visibility"),
 	);
 
-	return $r->tag(
+	return $c->tag(
 		'div',
 		class => 'alert alert-success p-1 mb-0',
-		$r->maketext("Sort by [_1] and then by [_2]", $names{$primary}, $names{$secondary})
+		$c->maketext("Sort by [_1] and then by [_2]", $names{$primary}, $names{$secondary})
 	);
 }
 
-sub edit_handler {
-	my ($self) = @_;
-	my $r = $self->r;
-
+sub edit_handler ($c) {
 	my $result;
 
-	my $scope = $r->param('action.edit.scope');
+	my $scope = $c->param('action.edit.scope');
 	if ($scope eq "all") {
-		$result = $r->maketext("editing all sets");
-		$self->{visibleSetIDs} = $self->{allSetIDs};
+		$result = $c->maketext("editing all sets");
+		$c->{visibleSetIDs} = $c->{allSetIDs};
 	} elsif ($scope eq "visible") {
-		$result = $r->maketext("editing listed sets");
+		$result = $c->maketext("editing listed sets");
 		# leave visibleSetIDs alone
 	} elsif ($scope eq "selected") {
-		$result = $r->maketext("editing selected sets");
-		$self->{visibleSetIDs} = [ $r->param('selected_sets') ];
+		$result = $c->maketext("editing selected sets");
+		$c->{visibleSetIDs} = [ $c->param('selected_sets') ];
 	}
-	$self->{editMode} = 1;
+	$c->{editMode} = 1;
 
-	return $r->tag('div', class => 'alert alert-success p-1 mb-0', $result);
+	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $result);
 }
 
-sub publish_handler {
-	my ($self) = @_;
-
-	my $r  = $self->r;
-	my $db = $r->db;
+sub publish_handler ($c) {
+	my $db = $c->db;
 
 	my $result = "";
 
-	my $scope = $r->param('action.publish.scope');
-	my $value = $r->param('action.publish.value');
+	my $scope = $c->param('action.publish.scope');
+	my $value = $c->param('action.publish.value');
 
-	my $verb = $value ? $r->maketext("made visible for") : $r->maketext("hidden from");
+	my $verb = $value ? $c->maketext("made visible for") : $c->maketext("hidden from");
 
 	my @setIDs;
 
 	if ($scope eq "none") {
 		@setIDs = ();
-		$result = $r->tag('div', class => 'alert alert-danger p-1 mb-0', $r->maketext("No change made to any set"));
+		$result = $c->tag('div', class => 'alert alert-danger p-1 mb-0', $c->maketext("No change made to any set"));
 	} elsif ($scope eq "all") {
-		@setIDs = @{ $self->{allSetIDs} };
+		@setIDs = @{ $c->{allSetIDs} };
 		$result = $value
-			? $r->tag(
+			? $c->tag(
 				'div',
 				class => 'alert alert-success p-1 mb-0',
-				$r->maketext("All sets made visible for all students")
+				$c->maketext("All sets made visible for all students")
 			)
-			: $r->tag(
+			: $c->tag(
 				'div',
 				class => 'alert alert-success p-1 mb-0',
-				$r->maketext("All sets hidden from all students")
+				$c->maketext("All sets hidden from all students")
 			);
 	} elsif ($scope eq "visible") {
-		@setIDs = @{ $self->{visibleSetIDs} };
+		@setIDs = @{ $c->{visibleSetIDs} };
 		$result = $value
-			? $r->tag(
+			? $c->tag(
 				'div',
 				class => 'alert alert-success p-1 mb-0',
-				$r->maketext("All listed sets were made visible for all the students")
+				$c->maketext("All listed sets were made visible for all the students")
 			)
-			: $r->tag(
+			: $c->tag(
 				'div',
 				class => 'alert alert-success p-1 mb-0',
-				$r->maketext("All listed sets were hidden from all the students")
+				$c->maketext("All listed sets were hidden from all the students")
 			);
 	} elsif ($scope eq "selected") {
-		@setIDs = $r->param('selected_sets');
+		@setIDs = $c->param('selected_sets');
 		$result = $value
-			? $r->tag(
+			? $c->tag(
 				'div',
 				class => 'alert alert-success p-1 mb-0',
-				$r->maketext("All selected sets made visible for all students")
+				$c->maketext("All selected sets made visible for all students")
 			)
-			: $r->tag(
+			: $c->tag(
 				'div',
 				class => 'alert alert-success p-1 mb-0',
-				$r->maketext("All selected sets hidden from all students")
+				$c->maketext("All selected sets hidden from all students")
 			);
 	}
 
@@ -431,58 +404,44 @@ sub publish_handler {
 	my @sets = $db->getGlobalSets(@setIDs);
 	map { $_->visible($value); $db->putGlobalSet($_); } @sets;
 
-	return $r->tag('div', class => 'alert alert-success p-1 mb-0', $result);
+	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $result);
 }
 
-sub score_handler {
-	my ($self) = @_;
+sub score_handler ($c) {
+	my $courseName = $c->stash('courseID');
 
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $courseName = $urlpath->arg("courseID");
-
-	my $scope = $r->param('action.score.scope');
+	my $scope = $c->param('action.score.scope');
 	my @setsToScore;
 
-	if ($scope eq "none") {
+	if ($scope eq 'none') {
 		@setsToScore = ();
-		return $r->maketext("No sets selected for scoring");
-	} elsif ($scope eq "all") {
-		@setsToScore = @{ $self->{allSetIDs} };
-	} elsif ($scope eq "visible") {
-		@setsToScore = @{ $self->{visibleSetIDs} };
-	} elsif ($scope eq "selected") {
-		@setsToScore = $r->param('selected_sets');
+		return $c->maketext('No sets selected for scoring');
+	} elsif ($scope eq 'all') {
+		@setsToScore = @{ $c->{allSetIDs} };
+	} elsif ($scope eq 'visible') {
+		@setsToScore = @{ $c->{visibleSetIDs} };
+	} elsif ($scope eq 'selected') {
+		@setsToScore = $c->param('selected_sets');
 	}
 
-	my $uri = $self->systemLink(
-		$urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::Scoring', $r, courseID => $courseName),
-		params => {
-			scoreSelected => "Score Selected",
-			selectedSet   => \@setsToScore,
-		}
-	);
-
-	return $uri;
+	return $c->systemLink($c->url_for('instructor_scoring'),
+		params => { scoreSelected => 'Score Selected', selectedSet => \@setsToScore });
 }
 
-sub delete_handler {
-	my ($self) = @_;
+sub delete_handler ($c) {
+	my $db = $c->db;
 
-	my $r  = $self->r;
-	my $db = $r->db;
-
-	my $scope = $r->param('action.delete.scope');
+	my $scope = $c->param('action.delete.scope');
 
 	my @setIDsToDelete = ();
 
 	if ($scope eq "selected") {
-		@setIDsToDelete = @{ $self->{selectedSetIDs} };
+		@setIDsToDelete = @{ $c->{selectedSetIDs} };
 	}
 
-	my %allSetIDs      = map { $_ => 1 } @{ $self->{allSetIDs} };
-	my %visibleSetIDs  = map { $_ => 1 } @{ $self->{visibleSetIDs} };
-	my %selectedSetIDs = map { $_ => 1 } @{ $self->{selectedSetIDs} };
+	my %allSetIDs      = map { $_ => 1 } @{ $c->{allSetIDs} };
+	my %visibleSetIDs  = map { $_ => 1 } @{ $c->{visibleSetIDs} };
+	my %selectedSetIDs = map { $_ => 1 } @{ $c->{selectedSetIDs} };
 
 	foreach my $setID (@setIDsToDelete) {
 		delete $allSetIDs{$setID};
@@ -491,59 +450,56 @@ sub delete_handler {
 		$db->deleteGlobalSet($setID);
 	}
 
-	$self->{allSetIDs}      = [ keys %allSetIDs ];
-	$self->{visibleSetIDs}  = [ keys %visibleSetIDs ];
-	$self->{selectedSetIDs} = [ keys %selectedSetIDs ];
+	$c->{allSetIDs}      = [ keys %allSetIDs ];
+	$c->{visibleSetIDs}  = [ keys %visibleSetIDs ];
+	$c->{selectedSetIDs} = [ keys %selectedSetIDs ];
 
 	my $num = @setIDsToDelete;
-	return $r->tag('div', class => 'alert alert-success p-1 mb-0', $r->maketext('deleted [_1] sets', $num));
+	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $c->maketext('deleted [_1] sets', $num));
 }
 
-sub create_handler {
-	my ($self) = @_;
+sub create_handler ($c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
-	my $r  = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
-
-	my $newSetID = format_set_name_internal($r->param('action.create.name') // '');
-	return $r->tag(
+	my $newSetID = format_set_name_internal($c->param('action.create.name') // '');
+	return $c->tag(
 		'div',
 		class => 'alert alert-danger p-1 mb-0',
-		$r->maketext("Failed to create new set: set name cannot exceed 100 characters.")
+		$c->maketext("Failed to create new set: set name cannot exceed 100 characters.")
 	) if (length($newSetID) > 100);
-	return $r->tag(
+	return $c->tag(
 		'div',
 		class => 'alert alert-danger p-1 mb-0',
-		$r->maketext("Failed to create new set: no set name specified!")
+		$c->maketext("Failed to create new set: no set name specified!")
 	) unless $newSetID =~ /\S/;
-	return $r->tag(
+	return $c->tag(
 		'div',
 		class => 'alert alert-danger p-1 mb-0',
-		$r->maketext(
+		$c->maketext(
 			"The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",
 			$newSetID)
 			. " "
-			. $r->maketext("No set created.")
+			. $c->maketext("No set created.")
 	) if $db->existsGlobalSet($newSetID);
 
 	my $newSetRecord = $db->newGlobalSet;
-	my $oldSetID     = $self->{selectedSetIDs}->[0];
+	my $oldSetID     = $c->{selectedSetIDs}->[0];
 
-	my $type = $r->param('action.create.type');
+	my $type = $c->param('action.create.type');
 	# It's convenient to set the due date two weeks from now so that it is
 	# not accidentally available to students.
 
 	my $dueDate    = time + 2 * ONE_WEEK();
 	my $display_tz = $ce->{siteDefaults}{timezone};
-	my $fDueDate   = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
+	my $fDueDate   = $c->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
 	my $dueTime    = $ce->{pg}{timeAssignDue};
 
 	# We replace the due time by the one from the config variable
 	# and try to bring it back to unix time if possible
 	$fDueDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
 
-	$dueDate = $self->parseDateTime($fDueDate, $display_tz);
+	$dueDate = $c->parseDateTime($fDueDate, $display_tz);
 
 	if ($type eq "empty") {
 		$newSetRecord->set_id($newSetID);
@@ -559,10 +515,10 @@ sub create_handler {
 		$newSetRecord->assignment_type('default');
 		$db->addGlobalSet($newSetRecord);
 	} elsif ($type eq "copy") {
-		return $r->tag(
+		return $c->tag(
 			'div',
 			class => 'alert alert-danger p-1 mb-0',
-			$r->maketext('Failed to duplicate set: no set selected for duplication!')
+			$c->maketext('Failed to duplicate set: no set selected for duplication!')
 		) unless $oldSetID =~ /\S/;
 		$newSetRecord = $db->getGlobalSet($oldSetID);
 		$newSetRecord->set_id($newSetID);
@@ -595,53 +551,50 @@ sub create_handler {
 		}
 	}
 	# Assign set to current active user.
-	my $userName = $r->param('user');
+	my $userName = $c->param('user');
 	assignSetToUser($db, $userName, $newSetRecord);    # Cures weird date error when no-one assigned to set.
-	$self->addgoodmessage($r->maketext(
+	$c->addgoodmessage($c->maketext(
 		'Set [_1] was assigned to [_2].',
-		$r->tag('span', dir => 'ltr', format_set_name_display($newSetID)), $userName
+		$c->tag('span', dir => 'ltr', format_set_name_display($newSetID)), $userName
 	));
 
-	push @{ $self->{visibleSetIDs} }, $newSetID;
-	push @{ $self->{allSetIds} },     $newSetID;
+	push @{ $c->{visibleSetIDs} }, $newSetID;
+	push @{ $c->{allSetIds} },     $newSetID;
 
-	return $r->tag('div', class => 'alert alert-danger p-1 mb-0', $r->maketext('Failed to create new set: [_1]', $@))
+	return $c->tag('div', class => 'alert alert-danger p-1 mb-0', $c->maketext('Failed to create new set: [_1]', $@))
 		if $@;
 
-	return $r->tag(
+	return $c->tag(
 		'div',
 		class => 'alert alert-success p-1 mb-0',
-		$r->b($r->maketext(
+		$c->b($c->maketext(
 			'Successfully created new set [_1]',
-			$r->tag('span', dir => 'ltr', format_set_name_display($newSetID))
+			$c->tag('span', dir => 'ltr', format_set_name_display($newSetID))
 		))
 	);
 }
 
-sub import_handler {
-	my ($self) = @_;
-	my $r = $self->r;
-
-	my ($added, $skipped) = $self->importSetsFromDef(
-		$r->param('action.import.number') > 1
+sub import_handler ($c) {
+	my ($added, $skipped) = $c->importSetsFromDef(
+		$c->param('action.import.number') > 1
 		? ''    # Cannot assign set names to multiple imports.
-		: format_set_name_internal($r->param('action.import.name')),
-		$r->param('action.import.assign'),
-		$r->param('action.import.start.date') // 0,
-		$r->param('action.import.source')
+		: format_set_name_internal($c->param('action.import.name')),
+		$c->param('action.import.assign'),
+		$c->param('action.import.start.date') // 0,
+		$c->param('action.import.source')
 	);
 
 	# Make new sets visible.
-	push @{ $self->{visibleSetIDs} }, @$added;
-	push @{ $self->{allSetIDs} },     @$added;
+	push @{ $c->{visibleSetIDs} }, @$added;
+	push @{ $c->{allSetIDs} },     @$added;
 
 	my $numAdded   = @$added;
 	my $numSkipped = @$skipped;
 
-	return $r->tag(
+	return $c->tag(
 		'div',
 		class => 'alert alert-success p-1 mb-0',
-		$r->maketext(
+		$c->maketext(
 			'[_1] sets added, [_2] sets skipped. Skipped sets: ([_3])', $numAdded,
 			$numSkipped,                                                join(', ', @$skipped)
 		)
@@ -649,63 +602,52 @@ sub import_handler {
 }
 
 # this does not actually export any files, rather it sends us to a new page in order to export the files
-sub export_handler {
-	my ($self) = @_;
-	my $r = $self->r;
-
+sub export_handler ($c) {
 	my $result;
 
-	my $scope = $r->param('action.export.scope');
+	my $scope = $c->param('action.export.scope');
 	if ($scope eq "all") {
-		$result = $r->maketext("All sets were selected for export.");
-		$self->{selectedSetIDs} = $self->{visibleSetIDs} = $self->{allSetIDs};
+		$result = $c->maketext("All sets were selected for export.");
+		$c->{selectedSetIDs} = $c->{visibleSetIDs} = $c->{allSetIDs};
 	} elsif ($scope eq "visible") {
-		$result = $r->maketext("Visible sets were selected for export.");
-		$self->{selectedSetIDs} = $self->{visibleSetIDs};
+		$result = $c->maketext("Visible sets were selected for export.");
+		$c->{selectedSetIDs} = $c->{visibleSetIDs};
 	} elsif ($scope eq "selected") {
-		$result = $r->maketext("Sets were selected for export.");
-		$self->{selectedSetIDs} = $self->{visibleSetIDs} = [ $r->param('selected_sets') ];
+		$result = $c->maketext("Sets were selected for export.");
+		$c->{selectedSetIDs} = $c->{visibleSetIDs} = [ $c->param('selected_sets') ];
 	}
-	$self->{exportMode} = 1;
+	$c->{exportMode} = 1;
 
-	return $r->tag('div', class => 'alert alert-success p-1 mb-0', $result);
+	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $result);
 }
 
-sub cancel_export_handler {
-	my ($self) = @_;
-	my $r = $self->r;
-
-	#$self->{selectedSetIDs) = $self->{visibleSetIDs};
-	# only do the above if we arrived here via "edit selected users"
-	if (defined $r->param("prev_visible_sets")) {
-		$self->{visibleSetIDs} = [ $r->param("prev_visible_sets") ];
-	} elsif (defined $r->param("no_prev_visible_sets")) {
-		$self->{visibleSetIDs} = [];
+sub cancel_export_handler ($c) {
+	if (defined $c->param("prev_visible_sets")) {
+		$c->{visibleSetIDs} = [ $c->param("prev_visible_sets") ];
+	} elsif (defined $c->param("no_prev_visible_sets")) {
+		$c->{visibleSetIDs} = [];
 	} else {
 		# leave it alone
 	}
-	$self->{exportMode} = 0;
+	$c->{exportMode} = 0;
 
-	return $r->tag('div', class => 'alert alert-danger p-1 mb-0', $r->maketext('export abandoned'));
+	return $c->tag('div', class => 'alert alert-danger p-1 mb-0', $c->maketext('export abandoned'));
 }
 
-sub save_export_handler {
-	my ($self) = @_;
-	my $r = $self->r;
+sub save_export_handler ($c) {
+	my @setIDsToExport = @{ $c->{selectedSetIDs} };
 
-	my @setIDsToExport = @{ $self->{selectedSetIDs} };
+	my %filenames = map { $_ => ($c->param("set.$_") || $_) } @setIDsToExport;
 
-	my %filenames = map { $_ => ($r->param("set.$_") || $_) } @setIDsToExport;
+	my ($exported, $skipped, $reason) = $c->exportSetsToDef(%filenames);
 
-	my ($exported, $skipped, $reason) = $self->exportSetsToDef(%filenames);
-
-	if (defined $r->param("prev_visible_sets")) {
-		$self->{visibleSetIDs} = [ $r->param("prev_visible_sets") ];
-	} elsif (defined $r->param("no_prev_visble_sets")) {
-		$self->{visibleSetIDs} = [];
+	if (defined $c->param("prev_visible_sets")) {
+		$c->{visibleSetIDs} = [ $c->param("prev_visible_sets") ];
+	} elsif (defined $c->param("no_prev_visble_sets")) {
+		$c->{visibleSetIDs} = [];
 	}
 
-	$self->{exportMode} = 0;
+	$c->{exportMode} = 0;
 
 	my $numExported = @$exported;
 	my $numSkipped  = @$skipped;
@@ -713,42 +655,35 @@ sub save_export_handler {
 
 	my @reasons = map { "set $_ - " . $reason->{$_} } keys %$reason;
 
-	return $r->tag(
+	return $c->tag(
 		'div',
 		class => "alert $resultFont p-1 mb-0",
-		$r->b($r->maketext(
+		$c->b($c->maketext(
 			'[_1] sets exported, [_2] sets skipped. Skipped sets: ([_3])',
 			$numExported, $numSkipped,
-			$numSkipped ? $r->tag('ul', $r->c(map { $r->tag('li', $_) } @reasons)->join('')) : ''
+			$numSkipped ? $c->tag('ul', $c->c(map { $c->tag('li', $_) } @reasons)->join('')) : ''
 		))
 	);
 }
 
-sub cancel_edit_handler {
-	my ($self) = @_;
-	my $r = $self->r;
-
-	#$self->{selectedSetIDs) = $self->{visibleSetIDs};
-	# only do the above if we arrived here via "edit selected users"
-	if (defined $r->param("prev_visible_sets")) {
-		$self->{visibleSetIDs} = [ $r->param("prev_visible_sets") ];
-	} elsif (defined $r->param("no_prev_visible_sets")) {
-		$self->{visibleSetIDs} = [];
+sub cancel_edit_handler ($c) {
+	if (defined $c->param("prev_visible_sets")) {
+		$c->{visibleSetIDs} = [ $c->param("prev_visible_sets") ];
+	} elsif (defined $c->param("no_prev_visible_sets")) {
+		$c->{visibleSetIDs} = [];
 	} else {
 		# leave it alone
 	}
-	$self->{editMode} = 0;
+	$c->{editMode} = 0;
 
-	return $r->tag('div', class => 'alert alert-danger p-1 mb-0', $r->maketext('changes abandoned'));
+	return $c->tag('div', class => 'alert alert-danger p-1 mb-0', $c->maketext('changes abandoned'));
 }
 
-sub save_edit_handler {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $ce     = $r->ce;
+sub save_edit_handler ($c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
-	my @visibleSetIDs = @{ $self->{visibleSetIDs} };
+	my @visibleSetIDs = @{ $c->{visibleSetIDs} };
 	foreach my $setID (@visibleSetIDs) {
 		next unless defined($setID);
 		my $Set = $db->getGlobalSet($setID);
@@ -756,7 +691,7 @@ sub save_edit_handler {
 		die "record for visible set $setID not found" unless $Set;
 
 		foreach my $field ($Set->NONKEYFIELDS()) {
-			my $value = $r->param("set.$setID.$field");
+			my $value = $c->param("set.$setID.$field");
 			if (defined $value) {
 				if ($field =~ /_date/) {
 					$Set->$field($value);
@@ -778,44 +713,44 @@ sub save_edit_handler {
 		my $curr_time        = time;
 		my $seconds_per_year = 31_556_926;
 		my $cutoff           = $curr_time + $seconds_per_year * 10;
-		return $r->tag(
+		return $c->tag(
 			'div',
 			class => 'alert alert-danger p-1 mb-0',
-			$r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID)
+			$c->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID)
 		) if $Set->open_date > $cutoff;
-		return $r->tag(
+		return $c->tag(
 			'div',
 			class => 'alert alert-danger p-1 mb-0',
-			$r->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID)
+			$c->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID)
 		) if $Set->due_date > $cutoff;
-		return $r->tag(
+		return $c->tag(
 			'div',
 			class => 'alert alert-danger p-1 mb-0',
-			$r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID)
+			$c->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID)
 		) if $Set->answer_date > $cutoff;
 
 		# Check that the open, due and answer dates are in increasing order.
 		# Bail if this is not correct.
 		if ($Set->open_date > $Set->due_date) {
-			return $r->tag(
+			return $c->tag(
 				'div',
 				class => 'alert alert-danger p-1 mb-0',
-				$r->maketext("Error: Close date must come after open date in set [_1]", $setID)
+				$c->maketext("Error: Close date must come after open date in set [_1]", $setID)
 			);
 		}
 		if ($Set->due_date > $Set->answer_date) {
-			return $r->tag(
+			return $c->tag(
 				'div',
 				class => 'alert alert-danger p-1 mb-0',
-				$r->maketext("Error: Answer date must come after close date in set [_1]", $setID)
+				$c->maketext("Error: Answer date must come after close date in set [_1]", $setID)
 			);
 		}
 
 		# check that the reduced scoring date is in the right place
 		my $enable_reduced_scoring = $ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 			&& (
-				defined($r->param("set.$setID.enable_reduced_scoring"))
-				? $r->param("set.$setID.enable_reduced_scoring")
+				defined($c->param("set.$setID.enable_reduced_scoring"))
+				? $c->param("set.$setID.enable_reduced_scoring")
 				: $Set->enable_reduced_scoring);
 
 		if (
@@ -825,10 +760,10 @@ sub save_edit_handler {
 				|| $Set->reduced_scoring_date < $Set->open_date)
 			)
 		{
-			return $r->tag(
+			return $c->tag(
 				'div',
 				class => 'alert alert-danger p-1 mb-0',
-				$r->maketext(
+				$c->maketext(
 					"Error: Reduced scoring date must come between the open date and close date in set [_1]",
 					$setID
 				)
@@ -838,43 +773,41 @@ sub save_edit_handler {
 		$db->putGlobalSet($Set);
 	}
 
-	if (defined $r->param("prev_visible_sets")) {
-		$self->{visibleSetIDs} = [ $r->param("prev_visible_sets") ];
-	} elsif (defined $r->param("no_prev_visble_sets")) {
-		$self->{visibleSetIDs} = [];
+	if (defined $c->param("prev_visible_sets")) {
+		$c->{visibleSetIDs} = [ $c->param("prev_visible_sets") ];
+	} elsif (defined $c->param("no_prev_visble_sets")) {
+		$c->{visibleSetIDs} = [];
 	} else {
 		# leave it alone
 	}
 
-	$self->{editMode} = 0;
+	$c->{editMode} = 0;
 
-	return $r->tag('div', class => 'alert alert-success p-1 mb-0', $r->maketext("changes saved"));
+	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $c->maketext("changes saved"));
 }
 
 # Utilities
 
-sub importSetsFromDef {
-	my ($self, $newSetName, $assign, $startdate, @setDefFiles) = @_;
-	my $r       = $self->r;
-	my $ce      = $r->ce;
-	my $db      = $r->db;
-	my $dir     = $ce->{courseDirs}->{templates};
+sub importSetsFromDef ($c, $newSetName, $assign, $startdate, @setDefFiles) {
+	my $ce      = $c->ce;
+	my $db      = $c->db;
+	my $dir     = $ce->{courseDirs}{templates};
 	my $mindate = 0;
 
-	# if the user includes "following files" in a multiple selection
-	# it shows up here as "" which causes the importing to die
-	# so, we select on filenames containing non-whitespace
+	# If the user includes "following files" in a multiple selection
+	# it shows up here as "" which causes the importing to die.
+	# So, we select on filenames containing non-whitespace.
 	@setDefFiles = grep {/\S/} @setDefFiles;
 
 	# FIXME: do we really want everything to fail on one bad file name?
 	foreach my $fileName (@setDefFiles) {
-		die $r->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
+		die $c->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
 			unless -r "$dir/$fileName";
 	}
 
 	# Get a list of set ids of existing sets in the course.  This is used to
 	# ensure that an imported set does not already exist.
-	my %allSets = map { $_ => 1 } @{ $self->{allSetIDs} };
+	my %allSets = map { $_ => 1 } @{ $c->{allSetIDs} };
 
 	my (@added, @skipped);
 
@@ -890,7 +823,7 @@ sub importSetsFromDef {
 			$hideScore,            $hideScoreByProblem, $hideWork,           $timeCap,
 			$restrictIP,           $restrictLoc,        $relaxRestrictIP,    $description,
 			$emailInstructor,      $restrictProbProgression
-		) = $self->readSetDef($set_definition_file);
+		) = $c->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -946,7 +879,7 @@ sub importSetsFromDef {
 
 		#create the set
 		eval { $db->addGlobalSet($newSetRecord) };
-		die $r->maketext("addGlobalSet [_1] in ProblemSetList:  [_2]", $setName, $@) if $@;
+		die $c->maketext("addGlobalSet [_1] in ProblemSetList:  [_2]", $setName, $@) if $@;
 
 		#do we need to add locations to the set_locations table?
 		if ($restrictIP ne 'No' && $restrictLoc) {
@@ -956,7 +889,7 @@ sub importSetsFromDef {
 					$newSetLocation->set_id($setName);
 					$newSetLocation->location_id($restrictLoc);
 					eval { $db->addGlobalSetLocation($newSetLocation) };
-					warn($r->maketext(
+					warn($c->maketext(
 						"error adding set location [_1] for set [_2]: [_3]",
 						$restrictLoc, $setName, $@
 					))
@@ -964,7 +897,7 @@ sub importSetsFromDef {
 				} else {
 					# this should never happen.
 					warn(
-						$r->maketext(
+						$c->maketext(
 							"input set location [_1] already exists for set [_2].", $restrictLoc, $setName
 							)
 							. "\n"
@@ -972,7 +905,7 @@ sub importSetsFromDef {
 				}
 			} else {
 				warn(
-					$r->maketext("restriction location [_1] does not exist.  IP restrictions have been ignored.",
+					$c->maketext("restriction location [_1] does not exist.  IP restrictions have been ignored.",
 						$restrictLoc)
 						. "\n"
 				);
@@ -1007,7 +940,7 @@ sub importSetsFromDef {
 		if ($assign eq "all") {
 			assignSetToAllUsers($db, $ce, $setName);
 		} else {
-			my $userName = $r->param('user');
+			my $userName = $c->param('user');
 			assignSetToUser($db, $userName, $newSetRecord);    ## always assign set to instructor
 		}
 	}
@@ -1030,28 +963,24 @@ sub importSetsFromDef {
 	return \@added, \@skipped;
 }
 
-sub readSetDef {
-	my ($self, $fileName) = @_;
-	my $templateDir          = $self->{ce}->{courseDirs}->{templates};
-	my $filePath             = "$templateDir/$fileName";
-	my $weight_default       = $self->{ce}->{problemDefaults}->{value};
-	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};
-	my $att_to_open_children_default =
-		$self->{ce}->{problemDefaults}->{att_to_open_children};
-	my $counts_parent_grade_default =
-		$self->{ce}->{problemDefaults}->{counts_parent_grade};
-	my $showMeAnother_default  = $self->{ce}->{problemDefaults}->{showMeAnother};
-	my $showHintsAfter_default = $self->{ce}{problemDefaults}{showHintsAfter};
-	my $prPeriod_default       = $self->{ce}->{problemDefaults}->{prPeriod};
+sub readSetDef ($c, $fileName) {
+	my $ce                           = $c->ce;
+	my $templateDir                  = $ce->{courseDirs}{templates};
+	my $filePath                     = "$templateDir/$fileName";
+	my $weight_default               = $ce->{problemDefaults}{value};
+	my $max_attempts_default         = $ce->{problemDefaults}{max_attempts};
+	my $att_to_open_children_default = $ce->{problemDefaults}{att_to_open_children};
+	my $counts_parent_grade_default  = $ce->{problemDefaults}{counts_parent_grade};
+	my $showMeAnother_default        = $ce->{problemDefaults}{showMeAnother};
+	my $showHintsAfter_default       = $ce->{problemDefaults}{showHintsAfter};
+	my $prPeriod_default             = $ce->{problemDefaults}{prPeriod};
 
 	my $setName = '';
-
-	my $r = $self->r;
 
 	if ($fileName =~ m|^(.*/)?set([.\w-]+)\.def$|) {
 		$setName = $2;
 	} else {
-		$self->addbadmessage(
+		$c->addbadmessage(
 			qq{The setDefinition file name must begin with <strong>set</strong> and must end with },
 			qq{<strong>.def</strong>. Every thing in between becomes the name of the set. For example },
 			qq{<strong>set1.def</strong>, <strong>setExam.def</strong>, and <strong>setsample7.def</strong> define },
@@ -1154,15 +1083,15 @@ sub readSetDef {
 				$listType = $item;
 				last;
 			} else {
-				warn $r->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
+				warn $c->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
 			}
 		}
 
 		# Check and format dates
-		my ($time1, $time2, $time3) = map { $self->parseDateTime($_); } ($openDate, $dueDate, $answerDate);
+		my ($time1, $time2, $time3) = map { $c->parseDateTime($_); } ($openDate, $dueDate, $answerDate);
 
 		unless ($time1 <= $time2 and $time2 <= $time3) {
-			warn $r->maketext('The open date: [_1], close date: [_2], and answer date: [_3] '
+			warn $c->maketext('The open date: [_1], close date: [_2], and answer date: [_3] '
 					. 'must be defined and in chronological order.',
 				$openDate, $dueDate, $answerDate);
 		}
@@ -1174,10 +1103,10 @@ sub readSetDef {
 		if ($reducedScoringDate) {
 			if (($reducedScoringDate =~ m+12/31/1969+) || ($reducedScoringDate =~ m+01/01/1970+)) {
 				my $origReducedScoringDate = $reducedScoringDate;
-				$reducedScoringDate = $self->parseDateTime($reducedScoringDate);
+				$reducedScoringDate = $c->parseDateTime($reducedScoringDate);
 				if ($reducedScoringDate != 0) {
 					# In this case we want to treat it BY FORCE as if the value did correspond to epoch 0.
-					warn $r->maketext(
+					warn $c->maketext(
 						'The reduced credit date [_1] in the file probably was generated from '
 							. 'the Unix epoch 0 value and is being treated as if it was Unix epoch 0.',
 						$origReducedScoringDate
@@ -1187,20 +1116,20 @@ sub readSetDef {
 			} else {
 				# Original behavior, which may cause problems for some time-zones when epoch 0 was set and does not
 				# parse back to 0.
-				$reducedScoringDate = $self->parseDateTime($reducedScoringDate);
+				$reducedScoringDate = $c->parseDateTime($reducedScoringDate);
 			}
 		}
 
 		if ($reducedScoringDate) {
 			if ($reducedScoringDate < $time1 || $reducedScoringDate > $time2) {
-				warn $r->maketext("The reduced credit date should be between the open date [_1] and close date [_2]",
+				warn $c->maketext("The reduced credit date should be between the open date [_1] and close date [_2]",
 					$openDate, $dueDate);
 			} elsif ($reducedScoringDate == 0 && $enableReducedScoring ne 'Y') {
 				# In this case - the date in the file was Unix epoch 0 (or treated as such),
 				# and unless $enableReducedScoring eq 'Y' we will leave it as 0.
 			}
 		} else {
-			$reducedScoringDate = $time2 - 60 * $r->{ce}->{pg}{ansEvalDefaults}{reducedScoringPeriod};
+			$reducedScoringDate = $time2 - 60 * $ce->{pg}{ansEvalDefaults}{reducedScoringPeriod};
 		}
 
 		if ($enableReducedScoring ne '' && $enableReducedScoring eq 'Y') {
@@ -1209,7 +1138,7 @@ sub readSetDef {
 			$enableReducedScoring = 0;
 		} elsif ($enableReducedScoring ne '') {
 			warn(
-				$r->maketext("The value [_1] for enableReducedScoring is not valid; it will be replaced with 'N'.",
+				$c->maketext("The value [_1] for enableReducedScoring is not valid; it will be replaced with 'N'.",
 					$enableReducedScoring)
 					. "\n"
 			);
@@ -1236,7 +1165,7 @@ sub readSetDef {
 			&& $hideScore ne 'BeforeAnswerDate')
 		{
 			warn(
-				$r->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.",
+				$c->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.",
 					$hideScore)
 					. "\n"
 			);
@@ -1247,7 +1176,7 @@ sub readSetDef {
 			&& $hideScoreByProblem ne 'BeforeAnswerDate')
 		{
 			warn(
-				$r->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.",
+				$c->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.",
 					$hideScoreByProblem)
 					. "\n"
 			);
@@ -1258,7 +1187,7 @@ sub readSetDef {
 			&& $hideWork ne 'BeforeAnswerDate')
 		{
 			warn(
-				$r->maketext("The value [_1] for the hideWork option is not valid; it will be replaced with 'N'.",
+				$c->maketext("The value [_1] for the hideWork option is not valid; it will be replaced with 'N'.",
 					$hideWork)
 					. "\n"
 			);
@@ -1266,7 +1195,7 @@ sub readSetDef {
 		}
 		if ($timeCap ne '0' && $timeCap ne '1') {
 			warn(
-				$r->maketext(
+				$c->maketext(
 					"The value [_1] for the capTimeLimit option is not valid; it will be replaced with '0'.",
 					$timeCap)
 					. "\n"
@@ -1278,7 +1207,7 @@ sub readSetDef {
 			&& $restrictIP ne 'RestrictTo')
 		{
 			warn(
-				$r->maketext(
+				$c->maketext(
 					"The value [_1] for the restrictIP option is not valid; it will be replaced with 'No'.",
 					$restrictIP)
 					. "\n"
@@ -1292,7 +1221,7 @@ sub readSetDef {
 			&& $relaxRestrictIP ne 'AfterVersionAnswerDate')
 		{
 			warn(
-				$r->maketext(
+				$c->maketext(
 					"The value [_1] for the relaxRestrictIP option is not valid; it will be replaced with 'No'.",
 					$relaxRestrictIP)
 					. "\n"
@@ -1386,7 +1315,7 @@ sub readSetDef {
 				if ($item eq 'problem_start') {
 					next;
 				} elsif ($item eq 'source_file') {
-					warn($r->maketext('No source_file for problem in .def file')) unless $value;
+					warn($c->maketext('No source_file for problem in .def file')) unless $value;
 					$name = $value;
 				} elsif ($item eq 'value') {
 					$weight = ($value) ? $value : $weight_default;
@@ -1468,7 +1397,7 @@ sub readSetDef {
 					$countsParentGrade = '';
 
 				} else {
-					warn $r->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
+					warn $c->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
 				}
 			}
 
@@ -1485,16 +1414,14 @@ sub readSetDef {
 			$emailInstructor,      $restrictProbProgression
 		);
 	} else {
-		warn $r->maketext("Can't open file [_1]", $filePath) . "\n";
+		warn $c->maketext("Can't open file [_1]", $filePath) . "\n";
+		return;
 	}
 }
 
-sub exportSetsToDef {
-	my ($self, %filenames) = @_;
-
-	my $r  = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
+sub exportSetsToDef ($c, %filenames) {
+	my $ce = $c->ce;
+	my $db = $c->db;
 
 	my (@exported, @skipped, %reason);
 
@@ -1506,14 +1433,14 @@ SET: foreach my $set (keys %filenames) {
 		# files can be exported to sub directories but not parent directories
 		if ($fileName =~ /\.\./) {
 			push @skipped, $set;
-			$reason{$set} = $r->maketext("Illegal filename contains '..'");
+			$reason{$set} = $c->maketext("Illegal filename contains '..'");
 			next SET;
 		}
 
 		my $setRecord = $db->getGlobalSet($set);
 		unless (defined $setRecord) {
 			push @skipped, $set;
-			$reason{$set} = $r->maketext("No record found.");
+			$reason{$set} = $c->maketext("No record found.");
 			next SET;
 		}
 		my $filePath = $ce->{courseDirs}->{templates} . '/' . $fileName;
@@ -1521,13 +1448,13 @@ SET: foreach my $set (keys %filenames) {
 		# back up existing file
 		if (-e $filePath) {
 			rename($filePath, "$filePath.bak")
-				or $reason{$set} = $r->maketext("Existing file [_1] could not be backed up and was lost.", $filePath);
+				or $reason{$set} = $c->maketext("Existing file [_1] could not be backed up and was lost.", $filePath);
 		}
 
-		my $openDate           = $self->formatDateTime($setRecord->open_date);
-		my $dueDate            = $self->formatDateTime($setRecord->due_date);
-		my $answerDate         = $self->formatDateTime($setRecord->answer_date);
-		my $reducedScoringDate = $self->formatDateTime($setRecord->reduced_scoring_date);
+		my $openDate           = $c->formatDateTime($setRecord->open_date);
+		my $dueDate            = $c->formatDateTime($setRecord->due_date);
+		my $answerDate         = $c->formatDateTime($setRecord->answer_date);
+		my $reducedScoringDate = $c->formatDateTime($setRecord->reduced_scoring_date);
 		my $description        = $setRecord->description;
 		if ($description) {
 			$description =~ s/\r?\n/<n>/g;
@@ -1645,7 +1572,7 @@ EOF
 
 		$filePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates}, $filePath);
 		eval {
-			open(my $SETDEF, '>', $filePath) or die $r->maketext("Failed to open [_1]", $filePath);
+			open(my $SETDEF, '>', $filePath) or die $c->maketext("Failed to open [_1]", $filePath);
 			print $SETDEF $fileContents;
 			close $SETDEF;
 		};

@@ -14,6 +14,7 @@
 ################################################################################
 
 package WeBWorK::HTML::SingleProblemGrader;
+use Mojo::Base -signatures;
 
 =head1 NAME
 
@@ -27,16 +28,11 @@ use WeBWorK::PG;
 use WeBWorK::Localize;
 use WeBWorK::Utils 'wwRound';
 
-use strict;
-use warnings;
+sub new ($class, $c, $pg, $userProblem) {
+	$class = ref($class) || $class;
 
-sub new {
-	my ($class, $r, $pg, $userProblem) = @_;
-	$class = ref($class) ? ref($class) : $class;
-
-	my $db        = $r->db;
-	my $urlpath   = $r->urlpath;
-	my $courseID  = $urlpath->arg('courseID');
+	my $db        = $c->db;
+	my $courseID  = $c->stash('courseID');
 	my $setID     = $userProblem->set_id;
 	my $versionID = ref($userProblem) =~ /::ProblemVersion/ ? $userProblem->version_id : 0;
 	my $studentID = $userProblem->user_id;
@@ -61,7 +57,7 @@ sub new {
 		recorded_score => $recordedScore,
 		past_answer_id => $userPastAnswerID // 0,
 		comment_string => $comment,
-		r              => $r
+		c              => $c
 	};
 	bless $self, $class;
 
@@ -69,9 +65,8 @@ sub new {
 }
 
 # Output the problem grader.
-sub insertGrader {
-	my $self = shift;
-	return $self->{r}->include('HTML/SingleProblemGrader/grader', grader => $self);
+sub insertGrader ($self) {
+	return $self->{c}->include('HTML/SingleProblemGrader/grader', grader => $self);
 }
 
 1;

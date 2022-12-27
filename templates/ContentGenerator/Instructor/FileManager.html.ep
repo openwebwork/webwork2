@@ -9,14 +9,14 @@
 	% last;
 % }
 %
-% unless (defined $cg->{pwd}) {
+% unless (defined $c->{pwd}) {
 	<em><%= maktext('You have specified an illegal working directory!') %></em>
 	% last;
 % }
 %
-<%= form_for $cg->systemLink($urlpath->newFromModule($urlpath->module, $c, courseID => $cg->{courseName}), authen => 0),
-	method => 'POST', id => 'FileManager', enctype => 'multipart/form-data', name => 'FileManager', begin =%>
-	<%= $cg->hidden_authen_fields =%>
+<%= form_for current_route, method => 'POST', enctype => 'multipart/form-data',
+	id => 'FileManager', name => 'FileManager', begin =%>
+	<%= $c->hidden_authen_fields =%>
 	%
 	% my $action = param('action') || param('formAction') || param('confirmed') || 'Init';
 	%
@@ -51,12 +51,12 @@
 	% # Look up the current action and perform it.
 	% my $method = $methods{$action};
 	% if ($method) {
-		<%= $cg->$method =%>
+		<%= $c->$method =%>
 	% } else {
-		% $cg->addbadmessage('Unknown action');
-		<%= $cg->Refresh =%>
+		% $c->addbadmessage('Unknown action');
+		<%= $c->Refresh =%>
 	% }
 	%
-	<%= hidden_field pwd => $cg->{pwd} =%>
+	<%= hidden_field pwd => $c->{pwd} =%>
 	<%= hidden_field formAction => '' =%>
 <% end =%>

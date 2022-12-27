@@ -39,15 +39,15 @@
 	</div>
 % }
 %
-%= form_for $c->uri, method => 'POST', begin
+%= form_for current_route, method => 'POST', begin
 	% # Add the form data posted to the requested URI in hidden fields.
 	% my @fields_to_print =
 		% grep { !/^(user|effectiveUser|passwd|key|force_password_authen|proctor_user|proctor_key|proctor_password)$/ }
 			% param;
 	% if (@fields_to_print) {
-		<%= $cg->hidden_fields(@fields_to_print) %>
+		<%= $c->hidden_fields(@fields_to_print) %>
 	% }
-	<%= $cg->hidden_authen_fields =%>
+	<%= $c->hidden_authen_fields =%>
 	%
 	<%= hidden_field past_proctor_user => param('past_proctor_user') || param('proctor_user') =%>
 	<%= hidden_field past_proctor_key  => param('past_proctor_key')  || param('proctor_key') =%>
@@ -60,7 +60,7 @@
 			<div><%= maketext(q{User's username is:}) %> <strong><%= param('effectiveUser') // '' %></strong></div>
 			<div>
 				<%= maketext(q{User's name is:}) %>
-				<strong><%= $cg->{effectiveUser}->first_name %> <%= $cg->{effectiveUser}->last_name %></strong>
+				<strong><%= $c->{effectiveUser}->first_name %> <%= $c->{effectiveUser}->last_name %></strong>
 			</div>
 		</div>
 		<div class="col-xl-5 col-lg-6 col-md-7 col-sm-8 form-floating mb-2">

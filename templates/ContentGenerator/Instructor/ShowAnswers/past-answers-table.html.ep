@@ -1,13 +1,13 @@
 % use WeBWorK::Utils qw(format_set_name_display);
 %
-% my $records      = $cg->{records};
+% my $records      = $c->{records};
 % my $foundMatches = 0;
 %
 % for my $studentUser (sort keys %$records) {
 	% for my $setName (sort keys %{ $records->{$studentUser} }) {
 		% for my $problemNumber (sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName} }) {
 			% my @pastAnswerIDs = sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName}{$problemNumber} };
-			% my $prettyProblemNumber = $cg->{prettyProblemNumbers}{$setName}{$problemNumber};
+			% my $prettyProblemNumber = $c->{prettyProblemNumbers}{$setName}{$problemNumber};
 			<h3>
 				<%== maketext('Past Answers for [_1], set [_2], problem [_3]',
 					$studentUser, tag('span', dir => 'ltr', format_set_name_display($setName)), $prettyProblemNumber
@@ -28,7 +28,7 @@
 						<tr <%== $record{time} - $previousTime > $ce->{sessionKeyTimeout}
 							? 'class="table-rule"' : '' %>>
 							<td style="width:10px"></td>
-							<td><small><%= $cg->formatDateTime($record{time}) %></small></td>
+							<td><small><%= $c->formatDateTime($record{time}) %></small></td>
 							% for (my $i = 0; $i <= $upper_limit; $i++) {
 								% my $answer     = $answers[$i]             // '';
 								% my $answerType = $record{answerTypes}[$i] // '';

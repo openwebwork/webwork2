@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Login;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -22,39 +22,31 @@ WeBWorK::ContentGenerator::Login - display a login form.
 
 =cut
 
-use strict;
-use warnings;
-
 use WeBWorK::Utils qw(readFile jitar_id_to_seq format_set_name_display);
 
-sub title {
-	my ($self) = @_;
-	my $r = $self->r;
-
+sub page_title ($c) {
 	# If the url is for a problem page, then the title is the set and problem id.
-	my $problemID = $self->r->urlpath->arg('problemID');
+	my $problemID = $c->stash('problemID');
 	if ($problemID) {
-		my $setID = $self->r->urlpath->arg('setID');
+		my $setID = $c->stash('setID');
 
 		# Print the pretty version of the problem id for a jitar set.
-		my $set = $r->db->getGlobalSet($setID);
+		my $set = $c->db->getGlobalSet($setID);
 		if ($set && $set->assignment_type eq 'jitar') {
 			$problemID = join('.', jitar_id_to_seq($problemID));
 		}
 
-		return $r->maketext('[_1]: Problem [_2]',
-			$r->tag('span', dir => 'ltr', format_set_name_display($setID)), $problemID);
+		return $c->maketext('[_1]: Problem [_2]',
+			$c->tag('span', dir => 'ltr', format_set_name_display($setID)), $problemID);
 	}
 
-	return $self->SUPER::title();
+	return $c->SUPER::page_title();
 }
 
-sub info {
-	my $self = shift;
-	my $r    = $self->r;
-	my $ce   = $r->ce;
+sub info ($c) {
+	my $ce = $c->ce;
 
-	my $result = $r->c;
+	my $result = $c->c;
 
 	# This section should be kept in sync with the Home.pm version.
 
@@ -62,28 +54,25 @@ sub info {
 	# Login info is relative to the templates directory.
 	push(
 		@$result,
-		$self->output_info_file(
-			$r->maketext('Login Info'),
+		$c->output_info_file(
+			$c->maketext('Login Info'),
 			"$ce->{courseDirs}{templates}/$ce->{courseFiles}{login_info}"
 		)
 	) if ($ce->{courseFiles}{login_info});
 
-	push(@$result, $self->output_info_file($r->maketext('Site Information'), $ce->{webworkFiles}{site_info}))
+	push(@$result, $c->output_info_file($c->maketext('Site Information'), $ce->{webworkFiles}{site_info}))
 		if $ce->{webworkFiles}{site_info};
 
 	return $result->join('');
 }
 
-sub output_info_file {
-	my ($self, $info_title, $info_file) = @_;
-	my $r = $self->r;
-
+sub output_info_file ($c, $info_title, $info_file) {
 	if (-f $info_file) {
 		my $text = eval { readFile($info_file) };
 		if ($@) {
-			return $r->tag('h2', $info_title) . $r->tag('div', class => 'alert alert-danger p-1 mb-2', $@);
+			return $c->tag('h2', $info_title) . $c->tag('div', class => 'alert alert-danger p-1 mb-2', $@);
 		} elsif ($text =~ /\S/) {
-			return $r->tag('h2', $info_title) . $text;
+			return $c->tag('h2', $info_title) . $text;
 		}
 	}
 
@@ -91,19 +80,16 @@ sub output_info_file {
 }
 
 # Override the can method to disable links for the login page.
-sub can {
-	my ($self, $arg) = @_;
-	return $arg eq 'links' ? 0 : $self->SUPER::can($arg);
+sub can ($c, $arg) {
+	return $arg eq 'links' ? 0 : $c->SUPER::can($arg);
 }
 
-async sub pre_header_initialize {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $ce     = $r->ce;
-	my $authen = $r->authen;
+sub pre_header_initialize ($c) {
+	my $ce     = $c->ce;
+	my $authen = $c->authen;
 
 	if ($authen->{redirect}) {
-		$self->reply_with_redirect($authen->{redirect});
+		$c->reply_with_redirect($authen->{redirect});
 		return;
 	}
 
@@ -111,21 +97,21 @@ async sub pre_header_initialize {
 	# might be external, e.g., LTIBasic, but a non-external one, e.g., Basic_TheLastChance or even just WeBWorK::Authen,
 	# might handle the ongoing session management.  So this should be set in the course environment when a sequence of
 	# authentication modules is used.
-	$r->stash->{externalAuth} = $ce->{external_auth} || $authen->{external_auth};
+	$c->stash->{externalAuth} = $ce->{external_auth} || $authen->{external_auth};
 
 	my $hidden_fields = '';
 	my @allowedGuestUsers;
 
-	if (!$r->stash->{externalAuth}) {
+	if (!$c->stash->{externalAuth}) {
 		# Preserve the form data posted to the requested URI
-		my @fields_to_print = grep { !m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
+		my @fields_to_print = grep { !m/^(user|passwd|key|force_passwd_authen)$/ } $c->param;
 
 		# Important note. If hidden_fields is passed an empty array it prints ALL parameters as hidden fields.
 		# That is not what we want in this case, so we don't print at all if @fields_to_print is empty.
-		$hidden_fields = $self->hidden_fields(@fields_to_print) if (@fields_to_print);
+		$hidden_fields = $c->hidden_fields(@fields_to_print) if (@fields_to_print);
 
 		# Determine if there are valid practice users.
-		my @GuestUsers = $r->db->getUsersWhere({ user_id => { like => "$ce->{practiceUserPrefix}\%" } });
+		my @GuestUsers = $c->db->getUsersWhere({ user_id => { like => "$ce->{practiceUserPrefix}\%" } });
 		for my $GuestUser (@GuestUsers) {
 			next unless defined $GuestUser->status;
 			next unless $GuestUser->status ne '';
@@ -134,16 +120,14 @@ async sub pre_header_initialize {
 		}
 	}
 
-	$r->stash->{hidden_fields}     = $hidden_fields;
-	$r->stash->{allowedGuestUsers} = \@allowedGuestUsers;
+	$c->stash->{hidden_fields}     = $hidden_fields;
+	$c->stash->{allowedGuestUsers} = \@allowedGuestUsers;
 
 	return;
 }
 
-sub head {
-	my ($self) = @_;
-	my $r = $self->r;
-	return $r->tag('meta', name => 'robots', content => $r->ce->{options}{metaRobotsContent} // 'none');
+sub head ($c) {
+	return $c->tag('meta', name => 'robots', content => $c->ce->{options}{metaRobotsContent} // 'none');
 }
 
 1;

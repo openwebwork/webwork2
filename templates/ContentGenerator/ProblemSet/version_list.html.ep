@@ -1,15 +1,12 @@
 % use WeBWorK::Utils qw(is_restricted);
 %
-% my $courseID    = $urlpath->arg('courseID');
-% my $set         = $cg->{set};
+% my $courseID    = stash('courseID');
+% my $set         = $c->{set};
 % my $user        = param('user');
 % my $multiSet    = $authz->hasPermissions($user, 'view_multiple_sets');
 % my $maxVersions = $set->versions_per_interval || 0;
 %
-% my $urlModule =
-	% $set->assignment_type =~ /proctored/
-	% ? 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz'
-	% : 'WeBWorK::ContentGenerator::GatewayQuiz';
+% my $routeName = $set->assignment_type =~ /proctored/ ? 'proctored_gateway_quiz' : 'gateway_quiz';
 %
 % if ($continueVersion) {
 	% # Display information about the current test and a continue open test button.
@@ -81,11 +78,8 @@
 	% }
 	%
 	<div class="mb-3">
-		<%= link_to maketext('Continue Open Test') => $cg->systemLink($urlpath->newFromModule(
-				$urlModule, $c,
-				courseID => $courseID,
-				setID    => $set->set_id . ',v' . $continueVersion->version_id
-			)),
+		<%= link_to maketext('Continue Open Test') =>
+				$c->systemLink(url_for($routeName, setID => $set->set_id . ',v' . $continueVersion->version_id)),
 			class => 'btn btn-primary' =%>
 	</div>
 % } elsif (($timeNow >= $set->open_date || $authz->hasPermissions($user, 'view_hidden_sets'))
@@ -128,11 +122,7 @@
 	% }
 	%
 	<div class="mb-3">
-		<%= link_to maketext('Start New Test') => $cg->systemLink($urlpath->newFromModule(
-				$urlModule, $c,
-				courseID => $courseID,
-				setID    => $set->set_id
-			)),
+		<%= link_to maketext('Start New Test') => $c->systemLink(url_for($routeName, setID => $set->set_id)),
 			class => 'btn btn-primary' =%>
 	</div>
 % } else {
@@ -144,7 +134,7 @@
 		% my $nextTime = ($currentVersions == $maxVersions) ? $lastTime + $timeInterval : $timeNow + $timeInterval;
 		% if ($nextTime < $set->due_date) {
 			% $msg = maketext('Next test will be available by [_1].',
-				% $cg->formatDateTime($nextTime, 0, $ce->{studentDateDisplayFormat}));
+				% $c->formatDateTime($nextTime, 0, $ce->{studentDateDisplayFormat}));
 		% }
 	% }
 	%
@@ -179,12 +169,8 @@
 					% for my $ver (@$versionData) {
 						% my $interactive = maketext('Version [_1]', $ver->{version});
 						% if ($authz->hasPermissions($user, 'view_hidden_work') || $ver->{show_link}) {
-							<% $interactive = link_to $interactive => $cg->systemLink($urlpath->newFromModule(
-									$ver->{proctored}
-									? 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz'
-									: 'WeBWorK::ContentGenerator::GatewayQuiz',
-									$c,
-									courseID => $courseID,
+							<% $interactive = link_to $interactive => $c->systemLink(url_for(
+									$ver->{proctored} ? 'proctored_gateway_quiz' : 'gateway_quiz',
 									setID    => $ver->{id}
 								)),
 								class             => 'set-id-tooltip text-nowrap',
@@ -204,12 +190,8 @@
 							% $interactive = label_for $ver->{id} => $interactive;
 						% } elsif ($ver->{show_download}) {
 							% # Only display download option if answers are available.
-							<% $control = link_to $cg->systemLink(
-									$urlpath->newFromModule(
-										'WeBWorK::ContentGenerator::Hardcopy', $c,
-										courseID => $courseID,
-										setID    => $ver->{id}
-									),
+							<% $control = link_to $c->systemLink(
+									url_for('hardcopy_preselect_set', setID => $ver->{id}),
 									params => { selected_sets => $ver->{id} }
 								),
 								class => 'hardcopy-link',
@@ -236,13 +218,9 @@
 	%
 	% if ($multiSet) {
 		% # Show form for generating hardcopies of test versions.
-		<%= form_for $cg->systemLink(
-				$urlpath->newFromModule('WeBWorK::ContentGenerator::Hardcopy', $c, courseID => $courseID),
-				authen => 0
-			),
-			name => 'problem-sets-form', id => 'problem-sets-form', method => 'POST',
+		<%= form_for 'hardcopy_preselect_set', method => 'POST', name => 'problem-sets-form', id => 'problem-sets-form',
 			begin =%>
-			<%= $cg->hidden_authen_fields =%>
+			<%= $c->hidden_authen_fields =%>
 			<%= $version_list->() =%>
 			<div class="mb-3">
 				<%= input_tag reset => maketext('Deselect All Test Versions'),

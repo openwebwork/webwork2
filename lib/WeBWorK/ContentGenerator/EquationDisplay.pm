@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::EquationDisplay;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -22,14 +22,10 @@ WeBWorK::ContentGenerator::EquationDisplay -- create .png version of TeX equatio
 
 =cut
 
-use strict;
-use warnings;
-
 use WeBWorK::PG::ImageGenerator;
 
-sub display_equation {
-	my ($self, $str) = @_;
-	my $ce = $self->r->ce;
+sub display_equation ($c, $str) {
+	my $ce = $c->ce;
 
 	my $image_gen = WeBWorK::PG::ImageGenerator->new(
 		tempDir         => $ce->{webworkDirs}{tmp},
@@ -49,20 +45,17 @@ sub display_equation {
 	return $imageTag;
 }
 
-sub initialize {
-	my ($self) = @_;
-	my $r = $self->r;
-
-	my $equationStr = $r->param('eq') // '';
+sub initialize ($c) {
+	my $equationStr = $c->param('eq') // '';
 
 	# Prepare to display the typeset image and the HTML code that links to the source image.  The HTML code is linked
 	# also to the image address This requires digging out the link from the string returned by display_equation and
 	# ImageGenerator.  The server name and port are included in the new url.
-	$r->stash->{typesetStr} = $equationStr ? $self->display_equation($equationStr) : '';
+	$c->stash->{typesetStr} = $equationStr ? $c->display_equation($equationStr) : '';
 
 	# Add the host name to the string.
-	my $hostName = $r->req->url->to_abs->host_port;
-	$r->stash->{typesetStr} =~ s|src="|src="http://$hostName|;
+	my $hostName = $c->req->url->to_abs->host_port;
+	$c->stash->{typesetStr} =~ s|src="|src="http://$hostName|;
 
 	return;
 }

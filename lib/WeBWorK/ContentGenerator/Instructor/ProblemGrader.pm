@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::ProblemGrader;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
 =head1 NAME
 
@@ -23,34 +23,28 @@ manually grading webwork problems.
 
 =cut
 
-use strict;
-use warnings;
-
-use Future::AsyncAwait;
 use HTML::Entities;
 
 use WeBWorK::Utils qw(sortByName wwRound);
 use WeBWorK::Utils::Rendering qw(renderPG);
 use WeBWorK::PG;
+use WeBWorK::Form;
 
-async sub initialize {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $authz      = $r->authz;
-	my $db         = $r->db;
-	my $ce         = $r->ce;
-	my $courseName = $urlpath->arg('courseID');
-	my $setID      = $urlpath->arg('setID');
-	my $problemID  = $urlpath->arg('problemID');
-	my $userID     = $r->param('user');
+async sub initialize ($c) {
+	my $authz      = $c->authz;
+	my $db         = $c->db;
+	my $ce         = $c->ce;
+	my $courseName = $c->stash('courseID');
+	my $setID      = $c->stash('setID');
+	my $problemID  = $c->stash('problemID');
+	my $userID     = $c->param('user');
 
 	return unless $authz->hasPermissions($userID, 'access_instructor_tools');
 	return unless $authz->hasPermissions($userID, 'score_sets');
 
 	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
 	# user if such restrictions are defined.  The users are sorted first by section, then by last name.
-	$self->{users} = [
+	$c->{users} = [
 		$db->getUsersWhere(
 			{
 				user_id => { not_like => 'set_id:%' },
@@ -71,7 +65,7 @@ async sub initialize {
 
 	# First process student problems and answers and cache relevant data used both for
 	# saving grades and displaying the grader table.
-	for my $user (@{ $self->{users} }) {
+	for my $user (@{ $c->{users} }) {
 		$user->{data}{problem} = $db->getUserProblem($user->user_id, $setID, $problemID);
 		next unless $user->{data}{problem};
 
@@ -81,24 +75,24 @@ async sub initialize {
 	}
 
 	# Update grades if saving.
-	if ($r->param('assignGrades')) {
-		$self->addmessage($r->tag(
+	if ($c->param('assignGrades')) {
+		$c->addmessage($c->tag(
 			'p',
 			class => 'alert alert-success p-1 my-2',
-			$r->maketext('Grades have been saved for all current users.')
+			$c->maketext('Grades have been saved for all current users.')
 		));
 
-		for my $user (@{ $self->{users} }) {
+		for my $user (@{ $c->{users} }) {
 			my $userID      = $user->user_id;
 			my $userProblem = $user->{data}{problem};
-			next unless $userProblem && defined $r->param("$userID.score");
+			next unless $userProblem && defined $c->param("$userID.score");
 
 			# Update grades and set flags.
 			$userProblem->{flags} =~ s/needs_grading/graded/;
-			if ($r->param("$userID.mark_correct")) {
+			if ($c->param("$userID.mark_correct")) {
 				$userProblem->status(1);
 			} else {
-				my $newscore = $r->param("$userID.score") / 100;
+				my $newscore = $c->param("$userID.score") / 100;
 				if ($newscore != $userProblem->status) {
 					$userProblem->status($newscore);
 				}
@@ -107,7 +101,7 @@ async sub initialize {
 			$db->putUserProblem($userProblem);
 
 			# Save the instructor comment to the latest past answer.
-			if (my $comment = $r->param("$userID.comment") && defined $user->{data}{past_answer}) {
+			if (my $comment = $c->param("$userID.comment") && defined $user->{data}{past_answer}) {
 				$user->{data}{past_answer}->comment_string($comment);
 				warn q{Couldn't save comment} unless $db->putPastAnswer($user->{data}{past_answer});
 			}
@@ -117,20 +111,20 @@ async sub initialize {
 	my $user = $db->getUser($userID);
 	return unless $user;    # This should never happen at this point.
 
-	$self->{set}     = $db->getMergedSet($userID, $setID);
-	$self->{problem} = $db->getMergedProblem($userID, $setID, $problemID);
+	$c->{set}     = $db->getMergedSet($userID, $setID);
+	$c->{problem} = $db->getMergedProblem($userID, $setID, $problemID);
 
-	return unless $self->{set} && $self->{problem};
+	return unless $c->{set} && $c->{problem};
 
 	# Render the problem text.
-	$self->{pg} = await renderPG(
-		$r, $user,
-		$self->{set},
-		$self->{problem},
-		$self->{set}->psvn,
-		{ WeBWorK::Form->new_from_paramable($r)->Vars },
+	$c->{pg} = await renderPG(
+		$c, $user,
+		$c->{set},
+		$c->{problem},
+		$c->{set}->psvn,
+		{ WeBWorK::Form->new_from_paramable($c)->Vars },
 		{
-			displayMode              => $user->displayMode || $r->ce->{pg}{options}{displayMode},
+			displayMode              => $user->displayMode || $c->ce->{pg}{options}{displayMode},
 			showHints                => 0,
 			showSolutions            => 0,
 			refreshMath2img          => 0,

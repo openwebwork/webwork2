@@ -4,21 +4,20 @@
 % my $minTestIndex = $currentTestIndex < $numBefore      ? 0                   : $currentTestIndex - $numBefore;
 % my $maxTestIndex = $minTestIndex + 200 < $#$userRecords ? $minTestIndex + 200 : $#$userRecords;
 %
+% my $setID = $c->{set}->set_id;
+%
 <div class="row sticky-nav" role="navigation" aria-label="user navigation">
 	<div class="user-nav">
 		<div class="btn-group" role="group" aria-label="student selector">
 			% if ($prevTest) {
-				<%= link_to sprintf(
-						$cg->systemLink(
-							$setPage,
-							params => {
-								effectiveUser     => $prevTest->user_id,
-								currentPage       => $pageNumber,
-								showProblemGrader => $cg->{will}{showProblemGrader},
-								$filter ? (studentNavFilter => $filter) : ()
-							}
-						),
-						$prevTest->{setVersion}
+				<%= link_to $c->systemLink(
+						url_for('gateway_quiz', setID => "$setID,v$prevTest->{setVersion}"),
+						params => {
+							effectiveUser     => $prevTest->user_id,
+							currentPage       => $pageNumber,
+							showProblemGrader => $c->{will}{showProblemGrader},
+							$filter ? (studentNavFilter => $filter) : ()
+						}
 					),
 					data  => { bs_toggle => 'tooltip', bs_placement => 'top' },
 					title => "$prevTest->{displayName} (version $prevTest->{setVersion})",
@@ -40,17 +39,14 @@
 				<ul class="dropdown-menu" role ="menu" aria-labelledby="studentSelector">
 					% for (@$userRecords[ $minTestIndex .. $maxTestIndex ]) {
 						<li>
-							<%= link_to "$_->{displayName} (version $_->{setVersion})" => sprintf(
-									$cg->systemLink(
-										$setPage,
-										params => {
-											effectiveUser     => $_->user_id,
-											currentPage       => $pageNumber,
-											showProblemGrader => $cg->{will}{showProblemGrader},
-											$filter ? (studentNavFilter => $filter) : ()
-										}
-									),
-									$_->{setVersion}
+							<%= link_to "$_->{displayName} (version $_->{setVersion})" => $c->systemLink(
+									url_for('gateway_quiz', setID => "$setID,v$_->{setVersion}"),
+									params => {
+										effectiveUser     => $_->user_id,
+										currentPage       => $pageNumber,
+										showProblemGrader => $c->{will}{showProblemGrader},
+										$filter ? (studentNavFilter => $filter) : ()
+									}
 								),
 								tabindex => '-1',
 								style    => $_->{currentTest} ? 'background-color: #8F8' : '',
@@ -60,17 +56,14 @@
 				</ul>
 			</div>
 			% if ($nextTest) {
-				<%= link_to sprintf(
-						$cg->systemLink(
-							$setPage,
-							params => {
-								effectiveUser     => $nextTest->user_id,
-								currentPage       => $pageNumber,
-								showProblemGrader => $cg->{will}{showProblemGrader},
-								$filter ? (studentNavFilter => $filter) : ()
-							}
-						),
-						$nextTest->{setVersion}
+				<%= link_to $c->systemLink(
+						url_for('gateway_quiz', setID => "$setID,v$nextTest->{setVersion}"),
+						params => {
+							effectiveUser     => $nextTest->user_id,
+							currentPage       => $pageNumber,
+							showProblemGrader => $c->{will}{showProblemGrader},
+							$filter ? (studentNavFilter => $filter) : ()
+						}
 					),
 					data  => { bs_toggle    => 'tooltip', bs_placement => 'top' },
 					title => "$nextTest->{displayName} (version $nextTest->{setVersion})",
@@ -95,33 +88,27 @@
 					% # If a filter is currently in use, then add an item that will remove that filter.
 					% if ($filter) {
 						<li>
-							<%= link_to maketext('Show all tests') => sprintf(
-									$cg->systemLink(
-										$setPage,
-										params => {
-											effectiveUser     => param('effectiveUser'),
-											currentPage       => $pageNumber,
-											showProblemGrader => $cg->{will}{showProblemGrader}
-										}
-									),
-									$setVersion
+							<%= link_to maketext('Show all tests') => $c->systemLink(
+									url_for('gateway_quiz', setID => "$setID,v$setVersion"),
+									params => {
+										effectiveUser     => param('effectiveUser'),
+										currentPage       => $pageNumber,
+										showProblemGrader => $c->{will}{showProblemGrader}
+									}
 								),
 								class => 'dropdown-item' =%>
 						</li>
 					% }
 					% for (sort keys %$filters) {
 						<li>
-							<%= link_to $filters->{$_}[0] => sprintf(
-									$cg->systemLink(
-										$setPage,
-										params => {
-											effectiveUser     => $filters->{$_}[1],
-											currentPage       => $pageNumber,
-											showProblemGrader => $cg->{will}{showProblemGrader},
-											studentNavFilter  => $_
-										}
-									),
-									$filters->{$_}[2]
+							<%= link_to $filters->{$_}[0] => $c->systemLink(
+									url_for('gateway_quiz', setID => "$setID,v$filters->{$_}[2]"),
+									params => {
+										effectiveUser     => $filters->{$_}[1],
+										currentPage       => $pageNumber,
+										showProblemGrader => $c->{will}{showProblemGrader},
+										studentNavFilter  => $_
+									}
 								),
 								class => 'dropdown-item',
 								style => ($filter || '') eq $_ ? 'background-color: #8F8' : '' =%>

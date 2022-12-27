@@ -33,7 +33,7 @@ use Mojo::File qw(path tempdir);
 
 sub hardcopyRenderedProblem {
 	my $ws = shift;     # $ws is a WebworkWebservice object.
-	my $r  = $ws->r;
+	my $c  = $ws->c;
 	my $ce = $ws->ce;
 
 	my $rh_result = $ws->return_object;
@@ -94,9 +94,9 @@ sub hardcopyRenderedProblem {
 		# Send the pdf file if it was successfully generated with no errors.
 		my $pdf_file = $working_dir->child('hardcopy.pdf');
 		if (-e $pdf_file && !@errors) {
-			$r->res->headers->content_type('application/pdf');
-			$r->res->headers->add('Content-Disposition' => qq{attachment; filename=$returnFileName.pdf});
-			$r->reply->file($pdf_file);
+			$c->res->headers->content_type('application/pdf');
+			$c->res->headers->add('Content-Disposition' => qq{attachment; filename=$returnFileName.pdf});
+			$c->reply->file($pdf_file);
 			return;
 		}
 	}
@@ -108,9 +108,9 @@ sub hardcopyRenderedProblem {
 	# Send the zip file if it exists.
 	my $zip_file = $temp_dir_path->child('hardcopy.zip');
 	if (-e $zip_file) {
-		$r->res->headers->content_type('application/zip');
-		$r->res->headers->add('Content-Disposition' => qq{attachment; filename=$returnFileName.zip});
-		$r->reply->file($zip_file);
+		$c->res->headers->content_type('application/zip');
+		$c->res->headers->add('Content-Disposition' => qq{attachment; filename=$returnFileName.zip});
+		$c->reply->file($zip_file);
 		return;
 	}
 
@@ -126,7 +126,7 @@ sub generate_hardcopy_tex {
 	my $src_file = $working_dir->child('hardcopy.tex');
 
 	# Copy the common tex files into the working directory
-	my $ce         = $ws->r->ce;
+	my $ce         = $ws->c->ce;
 	my $common_dir = path($ce->{webworkDirs}{texinputs_common});
 	for (qw{packages.tex CAPA.tex PGML.tex}) {
 		eval { $common_dir->child($_)->copy_to($working_dir) };
@@ -181,8 +181,8 @@ sub generate_hardcopy_pdf {
 	# Call pdflatex
 	my $pdflatex_cmd =
 		'TEXINPUTS=.:'
-		. shell_quote($ws->r->ce->{webworkDirs}{texinputs_common}) . ': '
-		. $ws->r->ce->{externalPrograms}{pdflatex}
+		. shell_quote($ws->c->ce->{webworkDirs}{texinputs_common}) . ': '
+		. $ws->c->ce->{externalPrograms}{pdflatex}
 		. ' > pdflatex.stdout 2> pdflatex.stderr hardcopy';
 
 	if (my $rawexit = system $pdflatex_cmd) {
@@ -202,8 +202,8 @@ sub generate_hardcopy_pdf {
 
 sub write_tex {
 	my ($ws, $FH, $errors) = @_;
-	my $r  = $ws->r;
-	my $ce = $r->ce;
+	my $c  = $ws->c;
+	my $ce = $c->ce;
 
 	# Determine snippets theme directory.
 	my $themeDir = "$ce->{webworkDirs}{conf}/snippets/hardcopyThemes/"
@@ -218,7 +218,7 @@ sub write_tex {
 
 sub write_problem_tex {
 	my ($ws, $FH) = @_;
-	my $r = $ws->r;
+	my $c = $ws->c;
 
 	my $rh_result = $ws->return_object;
 
@@ -233,7 +233,7 @@ sub write_problem_tex {
 		if (@ans_entry_order) {
 			my $correctTeX =
 				"\n\n\\vspace{\\baselineskip}\\par{\\small{\\it "
-				. $r->maketext("Correct Answers:")
+				. $c->maketext("Correct Answers:")
 				. "}\n\\begin{itemize}\n";
 
 			for (@ans_entry_order) {
@@ -253,7 +253,7 @@ sub write_problem_tex {
 	# If there are any PG warnings and the view_problem_debugging_info parameter was set,
 	# then append the warnings to end of the tex file.
 	if ($ws->{inputs_ref}{view_problem_debugging_info} && $rh_result->{pg_warnings}) {
-		print $FH "\n\n\\vspace{\\baselineskip}\\par\n" . $r->maketext('Warning messages:') . "\n\\begin{itemize}\n";
+		print $FH "\n\n\\vspace{\\baselineskip}\\par\n" . $c->maketext('Warning messages:') . "\n\\begin{itemize}\n";
 		for (split("\n", $rh_result->{pg_warnings})) {
 			print $FH "\\item \\verb|$_|\n";
 		}

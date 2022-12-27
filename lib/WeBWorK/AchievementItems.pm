@@ -14,11 +14,9 @@
 ################################################################################
 
 package WeBWorK::AchievementItems;
+use Mojo::Base -signatures;
 
 use WeBWorK::Utils qw(thaw_base64);
-
-use strict;
-use warnings;
 
 # List of available achievement items.  Make sure to add any new items to this list. Furthermore, the elements in this
 # list have to match the class name of the achievement item classes loaded below.
@@ -51,14 +49,12 @@ Note: the ID has to match the name of the class.
 
 =cut
 
-sub id          { return shift->{id}; }
-sub name        { return shift->{name}; }
-sub description { return shift->{description}; }
+sub id          ($c) { return $c->{id}; }
+sub name        ($c) { return $c->{name}; }
+sub description ($c) { return $c->{description}; }
 
 # This is a global method that returns all of the provided users items.
-sub UserItems {
-	my ($userName, $db, $ce) = @_;
-
+sub UserItems ($userName, $db, $ce) {
 	# return unless the user has global achievement data
 	my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
 
@@ -78,9 +74,7 @@ sub UserItems {
 
 # Utility method for outputing a form row with a label and popup menu.
 # The id, label_text, and values are required parameters.
-sub form_popup_menu_row {
-	my ($r, %options) = @_;
-
+sub form_popup_menu_row ($c, %options) {
 	my %params = (
 		id                  => '',
 		label_text          => '',
@@ -96,16 +90,16 @@ sub form_popup_menu_row {
 	$params{menu_attr}{class}           //= 'form-select';
 	$params{menu_container_attr}{class} //= 'col-8';
 
-	my $row_contents = $r->c(
-		$r->label_for($params{id} => $params{label_text}, %{ $params{label_attr} }),
-		$r->tag(
+	my $row_contents = $c->c(
+		$c->label_for($params{id} => $params{label_text}, %{ $params{label_attr} }),
+		$c->tag(
 			'div',
 			%{ $params{menu_container_attr} },
-			$r->select_field($params{id} => $params{values}, id => $params{id}, %{ $params{menu_attr} })
+			$c->select_field($params{id} => $params{values}, id => $params{id}, %{ $params{menu_attr} })
 		)
 	)->join('');
 
-	return $params{add_container} ? $r->tag('div', class => 'row mb-3', $row_contents) : $row_contents;
+	return $params{add_container} ? $c->tag('div', class => 'row mb-3', $row_contents) : $row_contents;
 }
 
 END {

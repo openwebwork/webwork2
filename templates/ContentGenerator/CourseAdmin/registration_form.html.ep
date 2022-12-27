@@ -61,8 +61,8 @@
 			</p>
 			<hr>
 			<p>You can hide this "registration" banner for the future by clicking the button below.</p>
-			<%= form_for $c->uri, method => 'POST', id => 'return_to_main_page', begin =%>
-				<%= $cg->hidden_authen_fields =%>
+			<%= form_for current_route, method => 'POST', id => 'return_to_main_page', begin =%>
+				<%= $c->hidden_authen_fields =%>
 				<%= hidden_field subDisplay => 'registration' =%>
 				<div class="text-center">
 					<%= submit_button 'Hide the banner.',

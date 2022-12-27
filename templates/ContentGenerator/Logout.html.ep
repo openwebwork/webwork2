@@ -1,5 +1,3 @@
-% my $courseID = $urlpath->arg('courseID');
-%
 <p><%= maketext('You have been logged out of WeBWorK.') =%></p>
 %
 % # The following check may not work when a sequence of authentication modules are used, because the preferred module
@@ -10,16 +8,12 @@
 	<p>
 		<%== maketext(
 			'The course [_1] uses an external authentication system ([_2]). Please go there to log in again.',
-			tag('strong', $courseID),
+			tag('strong', stash('courseID')),
 			$ce->{LMS_url} ? link_to(tag('strong', $ce->{LMS_name}) => $ce->{LMS_url}) : $ce->{LMS_name}
 		) =%>
 	</p>
 % } else {
-	<%= form_for
-		$c->location
-			. $urlpath->newFromModule('WeBWorK::ContentGenerator::ProblemSets', $c, courseID => $courseID)->path,
-		method => 'POST',
-		begin =%>
+	<%= form_for 'set_list', method => 'POST', begin =%>
 		<%= hidden_field force_passwd_authen => 1 =%>
 		<p><%= submit_button maketext('Log In Again'), name  => 'submit', class => 'btn btn-primary' =%></p>
 	<% end =%>

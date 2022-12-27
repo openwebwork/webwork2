@@ -14,26 +14,20 @@
 ################################################################################
 
 package WeBWorK::ConfigObject::list;
-use parent qw(WeBWorK::ConfigObject);
+use Mojo::Base 'WeBWorK::ConfigObject', -signatures;
 
-use strict;
-use warnings;
-
-sub display_value {
-	my ($self, $val) = @_;
-	my $r = $self->{Module}->r;
-	return $r->b('&nbsp;') if ref $val ne 'ARRAY';
-	my $str = $r->c(@$val)->join(',' . $r->tag('br'));
-	return $str =~ /\S/ ? $str : $r->b('&nbsp');
+sub display_value ($self, $val) {
+	my $c = $self->{c};
+	return $c->b('&nbsp;') if ref $val ne 'ARRAY';
+	my $str = $c->c(@$val)->join(',' . $c->tag('br'));
+	return $str =~ /\S/ ? $str : $c->b('&nbsp');
 }
 
-sub comparison_value {
-	my ($self, $val) = @_;
+sub comparison_value ($self, $val) {
 	return join(',', @{ $val // [] });
 }
 
-sub save_string {
-	my ($self, $oldval, $use_current) = @_;
+sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current);
 	$oldval = $self->comparison_value($oldval);
 
@@ -49,10 +43,9 @@ sub save_string {
 	return "\$$self->{var} = [" . join(',', map {"'$_'"} map { $_ =~ s/['"`]//gr } split(',', $newval)) . "];\n";
 }
 
-sub entry_widget {
-	my ($self, $default) = @_;
+sub entry_widget ($self, $default) {
 	my $str = join(', ', @{ $default // [] });
-	return $self->{Module}->r->text_area(
+	return $self->{c}->text_area(
 		$self->{name} => $str =~ /\S/ ? $str : '',
 		id            => $self->{name},
 		rows          => 4,

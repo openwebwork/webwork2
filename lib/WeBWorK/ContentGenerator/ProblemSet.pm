@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::ProblemSet;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
 =head1 NAME
 
@@ -23,69 +23,59 @@ problem set.
 
 =cut
 
-use strict;
-use warnings;
-
-use Future::AsyncAwait;
-
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(path_is_subdir is_restricted wwRound before between after grade_set format_set_name_display);
 use WeBWorK::Utils::Rendering qw(renderPG);
 use WeBWorK::Localize;
 
-async sub initialize {
-	my ($self)  = @_;
-	my $r       = $self->r;
-	my $db      = $r->db;
-	my $ce      = $r->ce;
-	my $urlpath = $r->urlpath;
-	my $authz   = $r->authz;
+async sub initialize ($c) {
+	my $db    = $c->db;
+	my $ce    = $c->ce;
+	my $authz = $c->authz;
 
-	# $self->{invalidSet} is set in checkSet which is called by ContentGenerator.pm
-	return if $self->{invalidSet};
+	# $c->{invalidSet} is set in checkSet which is called by ContentGenerator.pm
+	return if $c->{invalidSet};
 
-	# This will all be valid if checkSet did not set $self->{invalidSet}.
-	my $userID  = $r->param('user');
-	my $eUserID = $r->param('effectiveUser');
+	# This will all be valid if checkSet did not set $c->{invalidSet}.
+	my $userID  = $c->param('user');
+	my $eUserID = $c->param('effectiveUser');
 
 	my $user          = $db->getUser($userID);
 	my $effectiveUser = $db->getUser($eUserID);
-	$self->{set} = $authz->{merged_set};
+	$c->{set} = $authz->{merged_set};
 
-	$self->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
+	$c->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
 
 	# Display status messages.
-	$self->addmessage($r->tag('p', class => 'my-2', $r->b($r->param('status_message')))) if $r->param('status_message');
+	$c->addmessage($c->tag('p', class => 'my-2', $c->b($c->param('status_message')))) if $c->param('status_message');
 
 	if ($authz->hasPermissions($userID, 'view_hidden_sets')) {
-		if ($self->{set}->visible) {
-			$self->addmessage(
-				$r->tag('span', class => 'font-visible', $r->maketext('This set is visible to students.')));
+		if ($c->{set}->visible) {
+			$c->addmessage($c->tag('span', class => 'font-visible', $c->maketext('This set is visible to students.')));
 		} else {
-			$self->addmessage(
-				$r->tag('span', class => 'font-hidden', $r->maketext('This set is hidden from students.')));
+			$c->addmessage($c->tag('span', class => 'font-hidden', $c->maketext('This set is hidden from students.')));
 		}
 	}
 
 	# Hack to prevent errors from uninitialized set_headers.
-	$self->{set}->set_header('defaultHeader') unless $self->{set}->set_header =~ /\S/;
+	$c->{set}->set_header('defaultHeader') unless $c->{set}->set_header =~ /\S/;
 	my $screenSetHeader =
-		$self->{set}->set_header eq 'defaultHeader'
+		$c->{set}->set_header eq 'defaultHeader'
 		? $ce->{webworkFiles}{screenSnippets}{setHeader}
-		: $self->{set}->set_header;
+		: $c->{set}->set_header;
 
 	# Note this may be different than the display mode above when previewing a temporary set header file.
-	my $displayMode = $r->param('displayMode') || $ce->{pg}{options}{displayMode};
+	my $displayMode = $c->param('displayMode') || $ce->{pg}{options}{displayMode};
 
 	if ($authz->hasPermissions($userID, 'modify_problem_sets')) {
-		if (defined $r->param('editMode') && $r->param('editMode') eq 'temporaryFile') {
-			$screenSetHeader = $r->param('sourceFilePath');
+		if (defined $c->param('editMode') && $c->param('editMode') eq 'temporaryFile') {
+			$screenSetHeader = $c->param('sourceFilePath');
 			$screenSetHeader = "$ce->{courseDirs}{templates}/$screenSetHeader" unless $screenSetHeader =~ m!^/!;
 			die 'sourceFilePath is unsafe!' unless path_is_subdir($screenSetHeader, $ce->{courseDirs}{templates});
-			$self->addmessage($r->tag(
+			$c->addmessage($c->tag(
 				'div',
 				class => 'temporaryFile',
-				$r->maketext('Viewing temporary file: [_1]', $screenSetHeader)
+				$c->maketext('Viewing temporary file: [_1]', $screenSetHeader)
 			));
 		}
 	}
@@ -94,47 +84,45 @@ async sub initialize {
 
 	my $problem = WeBWorK::DB::Record::UserProblem->new(
 		problem_id  => 0,
-		set_id      => $self->{set}->set_id,
+		set_id      => $c->{set}->set_id,
 		login_id    => $effectiveUser->user_id,
 		source_file => $screenSetHeader
 	);
 
-	$self->{pg} = await renderPG($r, $effectiveUser, $self->{set}, $problem, $self->{set}->psvn, {},
-		{ displayMode => $displayMode });
+	$c->{pg} =
+		await renderPG($c, $effectiveUser, $c->{set}, $problem, $c->{set}->psvn, {}, { displayMode => $displayMode });
 
 	return;
 }
 
-sub nav {
-	my ($self, $args) = @_;
-	my $r = $self->r;
-
+sub nav ($c, $args) {
 	# Don't show the nav if the user does not have unrestricted navigation permissions.
-	return '' unless $r->authz->hasPermissions($r->param('user'), 'navigation_allowed');
+	return '' unless $c->authz->hasPermissions($c->param('user'), 'navigation_allowed');
 
-	my @links =
-		($r->maketext('Homework Sets'), $r->location . $r->urlpath->parent->path, $r->maketext('Homework Sets'));
-	return $r->tag(
+	my @links = (
+		$c->maketext('Homework Sets'),
+		$c->url_for($c->app->routes->lookup($c->current_route)->parent->name),
+		$c->maketext('Homework Sets')
+	);
+	return $c->tag(
 		'div',
 		class      => 'row sticky-nav',
 		role       => 'navigation',
 		aria_label => 'problem navigation',
-		$r->tag('div', $self->navMacro($args, '', @links))
+		$c->tag('div', $c->navMacro($args, {}, @links))
 	);
 }
 
-sub title {
-	my $self = shift;
-	my $r    = $self->r;
-	my $ce   = $r->ce;
+sub page_title ($c) {
+	my $ce = $c->ce;
 
-	# Using the url arguments won't break if the set/problem are invalid.
-	my $setID = $r->urlpath->arg('setID');
+	# Using the url path parameters won't break if the set/problem are invalid.
+	my $setID = $c->stash('setID');
 
-	my $title = $r->tag('span', dir => 'ltr', format_set_name_display($setID));
+	my $title = $c->tag('span', dir => 'ltr', format_set_name_display($setID));
 
 	# Put either due date or reduced scoring date in the title.
-	my $set = $r->db->getMergedSet($r->param('effectiveUser'), $setID);
+	my $set = $c->db->getMergedSet($c->param('effectiveUser'), $setID);
 	if (defined($set) && between($set->open_date, $set->due_date)) {
 		if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 			&& $set->enable_reduced_scoring
@@ -143,31 +131,28 @@ sub title {
 			&& before($set->reduced_scoring_date))
 		{
 			$title .= ' - '
-				. $r->maketext(
+				. $c->maketext(
 					'Due [_1], after which reduced scoring is available until [_2]',
-					$self->formatDateTime($set->reduced_scoring_date, undef, $ce->{studentDateDisplayFormat}),
-					$self->formatDateTime($set->due_date,             undef, $ce->{studentDateDisplayFormat})
+					$c->formatDateTime($set->reduced_scoring_date, undef, $ce->{studentDateDisplayFormat}),
+					$c->formatDateTime($set->due_date,             undef, $ce->{studentDateDisplayFormat})
 				);
 		} elsif ($set->due_date) {
 			$title .= ' - '
-				. $r->maketext('Closes [_1]',
-					$self->formatDateTime($set->due_date, undef, $ce->{studentDateDisplayFormat}));
+				. $c->maketext('Closes [_1]',
+					$c->formatDateTime($set->due_date, undef, $ce->{studentDateDisplayFormat}));
 		}
 	}
 
 	return $title;
 }
 
-sub siblings {
-	my ($self)  = @_;
-	my $r       = $self->r;
-	my $db      = $r->db;
-	my $ce      = $r->ce;
-	my $authz   = $r->authz;
-	my $urlpath = $r->urlpath;
+sub siblings ($c) {
+	my $db    = $c->db;
+	my $ce    = $c->ce;
+	my $authz = $c->authz;
 
-	my $user    = $r->param('user');
-	my $eUserID = $r->param('effectiveUser');
+	my $user    = $c->param('user');
+	my $eUserID = $c->param('effectiveUser');
 
 	# Restrict navigation to other problem sets if not allowed.
 	return '' unless $authz->hasPermissions($user, 'navigation_allowed');
@@ -192,32 +177,30 @@ sub siblings {
 		} @setIDs;
 	}
 
-	return $r->include('ContentGenerator/ProblemSet/siblings', setIDs => \@setIDs);
+	return $c->include('ContentGenerator/ProblemSet/siblings', setIDs => \@setIDs);
 }
 
 sub info {
-	my ($self) = @_;
-	return '' unless $self->{pg};
-	return $self->r->include('ContentGenerator/ProblemSet/info');
+	my ($c) = @_;
+	return '' unless $c->{pg};
+	return $c->include('ContentGenerator/ProblemSet/info');
 }
 
 # This is called by the ContentGenerator/ProblemSet/body template for a regular homework set.
 # It lists the problems in the set.
-sub problem_list {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $authz  = $r->authz;
-	my $db     = $r->db;
+sub problem_list ($c) {
+	my $authz = $c->authz;
+	my $db    = $c->db;
 
-	my $setID = $r->urlpath->arg('setID');
-	my $user  = $r->param('user');
+	my $setID = $c->stash('setID');
+	my $user  = $c->param('user');
 
 	my @problems =
-		$db->getMergedProblemsWhere({ user_id => $r->param('effectiveUser'), set_id => $setID }, 'problem_id');
+		$db->getMergedProblemsWhere({ user_id => $c->param('effectiveUser'), set_id => $setID }, 'problem_id');
 
 	if (@problems) {
 		# Check permissions and see if any of the problems are gradeable
-		$self->{canScoreProblems} = 0;
+		$c->{canScoreProblems} = 0;
 		if ($authz->hasPermissions($user, 'access_instructor_tools') && $authz->hasPermissions($user, 'score_sets')) {
 			my @setUsers       = $db->listSetUsers($setID);
 			my @globalProblems = $db->getGlobalProblemsWhere({ set_id => $setID });
@@ -225,31 +208,28 @@ sub problem_list {
 			my @gradeableProblems;
 			for my $problem (@globalProblems) {
 				if ($problem->flags =~ /essay/) {
-					$self->{canScoreProblems} = 1;
+					$c->{canScoreProblems} = 1;
 					$gradeableProblems[ $problem->problem_id ] = 1;
 				}
 			}
 
-			$self->{gradeableProblems} = \@gradeableProblems if $self->{canScoreProblems};
+			$c->{gradeableProblems} = \@gradeableProblems if $c->{canScoreProblems};
 		}
 	}
 
-	return $r->include('ContentGenerator/ProblemSet/problem_list', problems => \@problems);
+	return $c->include('ContentGenerator/ProblemSet/problem_list', problems => \@problems);
 }
 
 # This is called by the ContentGenerator/ProblemSet/body template for a test.
 # It gives some information about the test parameters, and lists the versions.
-sub gateway_body {
-	my ($self)  = @_;
-	my $r       = $self->r;
-	my $authz   = $r->authz;
-	my $ce      = $r->ce;
-	my $db      = $r->db;
-	my $urlpath = $r->urlpath;
+sub gateway_body ($c) {
+	my $authz = $c->authz;
+	my $ce    = $c->ce;
+	my $db    = $c->db;
 
-	my $set           = $self->{set};
-	my $effectiveUser = $r->param('effectiveUser');
-	my $user          = $r->param('user');
+	my $set           = $c->{set};
+	my $effectiveUser = $c->param('effectiveUser');
+	my $user          = $c->param('user');
 
 	my $timeNow   = time;
 	my $timeLimit = $set->version_time_limit || 0;
@@ -285,17 +265,16 @@ sub gateway_body {
 
 		# Build data hash for this version.
 		my $data = {};
-		$data->{id}      = $set->set_id . ',v' . $verSet->version_id;
-		$data->{version} = $verSet->version_id;
-		$data->{start} =
-			$self->formatDateTime($verSet->version_creation_time, undef, $ce->{studentDateDisplayFormat});
+		$data->{id}        = $set->set_id . ',v' . $verSet->version_id;
+		$data->{version}   = $verSet->version_id;
+		$data->{start}     = $c->formatDateTime($verSet->version_creation_time, undef, $ce->{studentDateDisplayFormat});
 		$data->{proctored} = $verSet->assignment_type =~ /proctored/;
 
 		# Display close date if this is not a timed test.
 		my $closeText = '';
 		if (!$timeLimit) {
-			$closeText = $r->maketext('Closes on [_1]',
-				$self->formatDateTime($verSet->due_date, undef, $ce->{studentDateDisplayFormat}));
+			$closeText = $c->maketext('Closes on [_1]',
+				$c->formatDateTime($verSet->due_date, undef, $ce->{studentDateDisplayFormat}));
 		}
 
 		if (defined $verSet->version_last_attempt_time && $verSet->version_last_attempt_time > 0) {
@@ -303,18 +282,18 @@ sub gateway_body {
 				&& ($maxSubmits <= 0 || ($maxSubmits > 0 && $verSubmits < $maxSubmits)))
 			{
 				if ($verSubmits > 0) {
-					$data->{end} = $r->maketext('Additional submissions available.') . " $closeText";
+					$data->{end} = $c->maketext('Additional submissions available.') . " $closeText";
 				} else {
 					$data->{end} = $closeText;
 				}
 			} else {
 				$data->{end} =
-					$self->formatDateTime($verSet->version_last_attempt_time, undef, $ce->{studentDateDisplayFormat});
+					$c->formatDateTime($verSet->version_last_attempt_time, undef, $ce->{studentDateDisplayFormat});
 			}
 		} elsif ($timeNow < $verSet->due_date) {
-			$data->{end} = $r->maketext('Test not yet submitted.') . " $closeText";
+			$data->{end} = $c->maketext('Test not yet submitted.') . " $closeText";
 		} else {
-			$data->{end} = $r->maketext('No submissions. Over time.');
+			$data->{end} = $c->maketext('No submissions. Over time.');
 		}
 
 		# Status Logic: Assuming it is always after the open date for test versions.
@@ -332,13 +311,13 @@ sub gateway_body {
 
 		if ($timeNow < $verSet->due_date + $ce->{gatewayGracePeriod}) {
 			if ($maxSubmits > 0 && $verSubmits >= $maxSubmits) {
-				$data->{status} = $r->maketext('Completed.');
-				$data->{status} .= $r->maketext(' Answers Available.') if ($canShowAns);
+				$data->{status} = $c->maketext('Completed.');
+				$data->{status} .= $c->maketext(' Answers Available.') if ($canShowAns);
 			} else {
 				if ($verSubmits) {
-					$data->{status} = $r->maketext('Open. Submitted.');
+					$data->{status} = $c->maketext('Open. Submitted.');
 				} else {
-					$data->{status} = $r->maketext('Open.');
+					$data->{status} = $c->maketext('Open.');
 				}
 				if (($maxSubmits == 0 && !$verSubmits) || $verSubmits < $maxSubmits) {
 					$continueVersion = $verSet;
@@ -348,11 +327,11 @@ sub gateway_body {
 			}
 		} else {
 			if ($verSubmits > 0) {
-				$data->{status} = $r->maketext('Completed.');
+				$data->{status} = $c->maketext('Completed.');
 			} else {
-				$data->{status} = $r->maketext('Closed.');
+				$data->{status} = $c->maketext('Closed.');
 			}
-			$data->{status} .= $r->maketext(' Answers Available.') if ($canShowAns);
+			$data->{status} .= $c->maketext(' Answers Available.') if ($canShowAns);
 		}
 
 		# Only show download link if work is not hidden.
@@ -376,7 +355,7 @@ sub gateway_body {
 		push @versionData, $data;
 	}
 
-	return $r->include(
+	return $c->include(
 		'ContentGenerator/ProblemSet/version_list',
 		continueVersion  => $continueVersion,
 		continueTimeLeft => $continueTimeLeft,

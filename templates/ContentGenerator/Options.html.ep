@@ -1,18 +1,18 @@
-% unless (defined $cg->{user}) {
+% unless (defined $c->{user}) {
 	<div class="alert alert-danger p-1 my-2"><%= maketext('User "[_1]" not found.', param('user')) %></div>
 	% last;
 % }
 %
-% unless (defined $cg->{effectiveUser}) {
+% unless (defined $c->{effectiveUser}) {
 	<div class="alert alert-danger p-1 my-2"><%= maketext('User "[_1]" not found.', param('effectiveUser')) %></div>
 	% last;
 % }
 %
-% my $userID      = $cg->{user}->user_id;
-% my $e_user_name = $cg->{effectiveUser}->first_name . ' ' . $cg->{effectiveUser}->last_name;
+% my $userID    = $c->{user}->user_id;
+% my $eUserName = $c->{effectiveUser}->first_name . ' ' . $c->{effectiveUser}->last_name;
 %
-%= form_for $c->uri, method => 'POST', begin
-	<%= $cg->hidden_authen_fields =%>
+%= form_for current_route, method => 'POST', begin
+	<%= $c->hidden_authen_fields =%>
 	%
 	% if ($authz->hasPermissions($userID, 'change_password')) {
 		<h2><%= maketext('Change Password') %></h2>
@@ -22,23 +22,23 @@
 					<%= label_for 'currPassword', class => 'col-form-label col-sm-6', begin =%>
 						<%= maketext(
 							q{[_1]'s Current Password},
-							$cg->{user}->first_name . ' ' . $cg->{user}->last_name
+							$c->{user}->first_name . ' ' . $c->{user}->last_name
 						) =%>
 					<% end =%>
 					<div class="col-sm-6">
 						<%= password_field 'currPassword', id => 'currPassword', class => 'form-control', dir => 'ltr',
-							$cg->{has_password} ? () : (disabled => 1) =%>
+							$c->{has_password} ? () : (disabled => 1) =%>
 					</div>
 				</div>
 				<div class="row mb-2">
-					<%= label_for newPassword => maketext("[_1]'s New Password", $e_user_name),
+					<%= label_for newPassword => maketext("[_1]'s New Password", $eUserName),
 						class => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%= password_field 'newPassword', id => 'newPassword', class => 'form-control', dir => 'ltr' =%>
 					</div>
 				</div>
 				<div class="row mb-2">
-					<%= label_for confirmPassword => maketext("Confirm [_1]'s New Password", $e_user_name),
+					<%= label_for confirmPassword => maketext("Confirm [_1]'s New Password", $eUserName),
 						class => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%= password_field 'confirmPassword', id => 'confirmPassword',
@@ -54,15 +54,15 @@
 		<div class="row mb-2">
 			<div class="col-lg-8 col-md-10">
 				<div class="row mb-2">
-					<%= label_for currAddress => maketext("[_1]'s Current Address", $e_user_name),
+					<%= label_for currAddress => maketext("[_1]'s Current Address", $eUserName),
 						class => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
-						<%= text_field currAddress => $cg->{effectiveUser}->email_address,
+						<%= text_field currAddress => $c->{effectiveUser}->email_address,
 							readonly => undef, id => 'currAddress', class => 'form-control', dir => 'ltr' =%>
 					</div>
 				</div>
 				<div class="row mb-2">
-					<%= label_for newAddress => maketext("[_1]'s New Address", $e_user_name),
+					<%= label_for newAddress => maketext("[_1]'s New Address", $eUserName),
 						class => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%= text_field newAddress => '', id => 'newAddress', class => 'form-control', dir => 'ltr' =%>
@@ -76,7 +76,7 @@
 		<h2><%= maketext('Change Display Settings') %></h2>
 		%
 		% my $display_settings_block = begin
-			% my $curr_displayMode = $cg->{effectiveUser}->displayMode || $ce->{pg}{options}{displayMode};
+			% my $curr_displayMode = $c->{effectiveUser}->displayMode || $ce->{pg}{options}{displayMode};
 			% my %display_modes    = %{ WeBWorK::PG::DISPLAY_MODES() };
 			% my @active_modes     = grep { exists $display_modes{$_} } @{ $ce->{pg}{displayModes} };
 			%
@@ -97,8 +97,8 @@
 			%
 			% if ($authz->hasPermissions($userID, 'can_show_old_answers')) {
 				% my $curr_showOldAnswers =
-					% $cg->{effectiveUser}->showOldAnswers ne ''
-					% ? $cg->{effectiveUser}->showOldAnswers
+					% $c->{effectiveUser}->showOldAnswers ne ''
+					% ? $c->{effectiveUser}->showOldAnswers
 					% : $ce->{pg}{options}{showOldAnswers};
 				<div class="mb-3">
 					<fieldset>
@@ -119,8 +119,8 @@
 			% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView') {
 				% # Note, 0 is a legal value, so we can't use || in setting this
 				% my $curr_useMathView =
-					% $cg->{effectiveUser}->useMathView ne ''
-					% ? $cg->{effectiveUser}->useMathView
+					% $c->{effectiveUser}->useMathView ne ''
+					% ? $c->{effectiveUser}->useMathView
 					% : $ce->{pg}{options}{useMathView};
 				<div class="mb-3">
 					<fieldset>
@@ -141,8 +141,8 @@
 			% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS') {
 				% # Note, 0 is a legal value, so we can't use || in setting this
 				% my $curr_useWirisEditor =
-					% $cg->{effectiveUser}->useWirisEditor ne ''
-					% ? $cg->{effectiveUser}->useWirisEditor
+					% $c->{effectiveUser}->useWirisEditor ne ''
+					% ? $c->{effectiveUser}->useWirisEditor
 					% : $ce->{pg}{options}{useWirisEditor};
 				<div class="mb-3">
 					<fieldset>
@@ -163,8 +163,8 @@
 			% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
 				% # Note, 0 is a legal value, so we can't use || in setting this
 				% my $curr_useMathQuill =
-					% $cg->{effectiveUser}->useMathQuill ne ''
-					% ? $cg->{effectiveUser}->useMathQuill
+					% $c->{effectiveUser}->useMathQuill ne ''
+					% ? $c->{effectiveUser}->useMathQuill
 					% : $ce->{pg}{options}{useMathQuill};
 				<div class="mb-3">
 					<fieldset>

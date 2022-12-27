@@ -1,4 +1,4 @@
-% my $name   = "$cg->{pwd}/$file" =~ s!^\./?!!r;
+% my $name   = "$c->{pwd}/$file" =~ s!^\./?!!r;
 % my %button = (name => 'action', class => 'btn btn-sm btn-secondary w-100');
 %
 <div class="d-flex">
@@ -24,4 +24,4 @@
 </div>
 %
 <%= hidden_field files => $file =%>
-<%= $cg->HiddenFlags =%>
+<%= $c->HiddenFlags =%>

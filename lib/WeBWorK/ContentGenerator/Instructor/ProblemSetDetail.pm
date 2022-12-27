@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::ProblemSetDetail;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -22,9 +22,6 @@ WeBWorK::ContentGenerator::Instructor::ProblemSetDetail - Edit general set and
 specific user/set information as well as problem information
 
 =cut
-
-use strict;
-use warnings;
 
 use WeBWorK::Utils qw(cryptPassword jitar_id_to_seq seq_to_jitar_id x format_set_name_internal format_set_name_display);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
@@ -528,12 +525,9 @@ use constant FIELD_PROPERTIES_GWQUIZ => {
 # Create a table of fields for the given parameters, one row for each db field.
 # If only the setID is included, it creates a table of set information.
 # If the problemID is included, it creates a table of problem information.
-sub fieldTable {
-	my ($self, $userID, $setID, $problemID, $globalRecord, $userRecord, $setType) = @_;
-
-	my $r           = $self->r;
-	my $ce          = $r->ce;
-	my @editForUser = $r->param('editForUser');
+sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $setType = undef) {
+	my $ce          = $c->ce;
+	my @editForUser = $c->param('editForUser');
 	my $forUsers    = scalar(@editForUser);
 	my $forOneUser  = $forUsers == 1;
 	my $isGWset     = defined $setType && $setType =~ /gateway/ ? 1 : 0;
@@ -564,20 +558,20 @@ sub fieldTable {
 		@fieldOrder = @{ SET_FIELD_ORDER() };
 
 		($extraFields, $ipFields, $numLocations, $procFields) =
-			$self->extraSetFields($userID, $setID, $globalRecord, $userRecord, $forUsers);
+			$c->extraSetFields($userID, $setID, $globalRecord, $userRecord, $forUsers);
 	}
 
-	my $rows = $r->c;
+	my $rows = $c->c;
 
 	if ($forUsers) {
 		push(
 			@$rows,
-			$r->tag(
+			$c->tag(
 				'tr',
-				$r->c(
-					$r->tag('td', colspan => '3', ''),
-					$r->tag('th', $r->maketext('User Value')),
-					$r->tag('th', $r->maketext('Class value'))
+				$c->c(
+					$c->tag('td', colspan => '3', ''),
+					$c->tag('th', $c->maketext('User Value')),
+					$c->tag('th', $c->maketext('Class value'))
 				)->join('')
 			)
 		);
@@ -637,8 +631,8 @@ sub fieldTable {
 		next if ($field eq 'prPeriod' && !$ce->{pg}{options}{enablePeriodicRandomization});
 
 		unless ($properties{type} eq 'hidden') {
-			my @row = $self->fieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field);
-			push(@$rows, $r->tag('tr', $r->c(map { $r->tag('td', $_) } @row)->join(''))) if @row > 1;
+			my @row = $c->fieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field);
+			push(@$rows, $c->tag('tr', $c->c(map { $c->tag('td', $_) } @row)->join(''))) if @row > 1;
 		}
 
 		# Finally, put in extra fields that are exceptions to the usual display mechanism.
@@ -651,7 +645,7 @@ sub fieldTable {
 		my $problemRecord = $userRecord;
 		push(
 			@$rows,
-			$r->include(
+			$c->include(
 				'ContentGenerator/Instructor/ProblemSetDetail/attempts_row',
 				problemID     => $problemID,
 				problemRecord => $problemRecord
@@ -659,7 +653,7 @@ sub fieldTable {
 		);
 	}
 
-	return $r->tag(
+	return $c->tag(
 		'table',
 		class => 'table table-sm table-borderless align-middle font-sm w-auto mb-0',
 		$rows->join('')
@@ -669,24 +663,21 @@ sub fieldTable {
 # Returns a list of information and HTML widgets for viewing and editing the specified db fields.
 # If only the setID is included, it creates a list of set information.
 # If the problemID is included, it creates a list of problem information.
-sub fieldHTML {
-	my ($self, $userID, $setID, $problemID, $globalRecord, $userRecord, $field) = @_;
-
-	my $r           = $self->r;
-	my $db          = $r->db;
-	my @editForUser = $r->param('editForUser');
+sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $field) {
+	my $db          = $c->db;
+	my @editForUser = $c->param('editForUser');
 	my $forUsers    = @editForUser;
 	my $forOneUser  = $forUsers == 1;
 
-	return $r->maketext('No data exists for set [_1] and problem [_2]', $setID, $problemID) unless $globalRecord;
-	return $r->maketext('No user specific data exists for user [_1]', $userID)
+	return $c->maketext('No data exists for set [_1] and problem [_2]', $setID, $problemID) unless $globalRecord;
+	return $c->maketext('No user specific data exists for user [_1]', $userID)
 		if $forOneUser && $globalRecord && !$userRecord;
 
 	my %properties = %{ FIELD_PROPERTIES()->{$field} };
 	my %labels     = %{ $properties{labels} };
 
 	for my $key (keys %labels) {
-		$labels{$key} = $r->maketext($labels{$key});
+		$labels{$key} = $c->maketext($labels{$key});
 	}
 
 	return '' if $properties{type} eq 'hidden';
@@ -726,7 +717,7 @@ sub fieldHTML {
 	$userValue   = defined $userValue   ? ($labels{$userValue}   || $userValue)   : $blankfield;
 
 	if ($field =~ /_date/) {
-		$globalValue = $self->formatDateTime($globalValue, '', 'datetime_format_short', $r->ce->{language})
+		$globalValue = $c->formatDateTime($globalValue, '', 'datetime_format_short', $c->ce->{language})
 			if $forUsers && defined $globalValue && $globalValue ne '';
 	}
 
@@ -756,34 +747,34 @@ sub fieldHTML {
 
 	if ($edit) {
 		if ($field =~ /_date/) {
-			$inputType = $r->tag(
+			$inputType = $c->tag(
 				'div',
 				class => 'input-group input-group-sm flatpickr',
-				$r->c(
-					$r->text_field(
+				$c->c(
+					$c->text_field(
 						"$recordType.$recordID.$field",
 						$forUsers ? $userValue : $globalValue,
 						id    => "$recordType.$recordID.${field}_id",
 						class => 'form-control form-control-sm'
 							. ($field eq 'open_date' ? ' datepicker-group' : ''),
-						placeholder => $r->maketext('None Specified'),
+						placeholder => $c->maketext('None Specified'),
 						data        => {
 							input     => undef,
-							done_text => $r->maketext('Done'),
-							locale    => $r->ce->{language},
-							timezone  => $r->ce->{siteDefaults}{timezone},
+							done_text => $c->maketext('Done'),
+							locale    => $c->ce->{language},
+							timezone  => $c->ce->{siteDefaults}{timezone},
 							override  => "$recordType.$recordID.$field.override_id"
 						},
 						$forUsers && $check ? ('aria-labelledby' => "$recordType.$recordID.$field.label") : (),
 					),
-					$r->tag(
+					$c->tag(
 						'a',
 						class        => 'btn btn-secondary btn-sm',
 						data         => { toggle => undef },
 						role         => 'button',
 						tabindex     => 0,
-						'aria-label' => $r->maketext('Pick date and time'),
-						$r->tag('i', class => 'fas fa-calendar-alt', 'aria-hidden' => 'true', '')
+						'aria-label' => $c->maketext('Pick date and time'),
+						$c->tag('i', class => 'fas fa-calendar-alt', 'aria-hidden' => 'true', '')
 					)
 				)->join('')
 			);
@@ -791,7 +782,7 @@ sub fieldHTML {
 			my $value = $forUsers ? $userValue : $globalValue;
 			$value = format_set_name_display($value =~ s/\s*,\s*/,/gr) if $field eq 'restricted_release';
 
-			$inputType = $r->text_field(
+			$inputType = $c->text_field(
 				"$recordType.$recordID.$field", $value,
 				id    => "$recordType.$recordID.${field}_id",
 				data  => { override => "$recordType.$recordID.$field.override_id" },
@@ -814,7 +805,7 @@ sub fieldHTML {
 			$value = ($forUsers && $userRecord->$field ne '' ? $userRecord->$field : $globalRecord->$field);
 		}
 
-		$inputType = $r->select_field(
+		$inputType = $c->select_field(
 			"$recordType.$recordID.$field", [
 				map { [ $labels{$_} => $_, $_ eq $value ? (selected => undef) : () ] } @{ $properties{choices} }
 			],
@@ -827,7 +818,7 @@ sub fieldHTML {
 
 	my $gDisplVal =
 		(defined $properties{labels} && defined $properties{labels}{$globalValue})
-		? $r->maketext($properties{labels}{$globalValue})
+		? $c->maketext($properties{labels}{$globalValue})
 		: $globalValue;
 	$gDisplVal = format_set_name_display($gDisplVal) if $field eq 'restricted_release';
 
@@ -836,7 +827,7 @@ sub fieldHTML {
 	push @return,
 		(
 			$check
-			? $r->check_box(
+			? $c->check_box(
 				"$recordType.$recordID.$field.override", $field,
 				id    => "$recordType.$recordID.$field.override_id",
 				class => 'form-check-input',
@@ -846,9 +837,9 @@ sub fieldHTML {
 		) if $forUsers;
 
 	push @return,
-		$r->label_for(
+		$c->label_for(
 			($forUsers && $check ? "$recordType.$recordID.$field.override_id" : "$recordType.$recordID.${field}_id"),
-			$r->maketext($properties{name}),
+			$c->maketext($properties{name}),
 			$forUsers && $check
 			? (class => 'form-check-label mb-0', id => "$recordType.$recordID.$field.label")
 			: (class => 'form-label mb-0'),
@@ -856,20 +847,20 @@ sub fieldHTML {
 
 	push @return,
 		$properties{help_text}
-		? $r->tag(
+		? $c->tag(
 			'a',
 			class    => 'help-popup',
 			role     => 'button',
 			tabindex => 0,
 			data     => {
-				bs_content   => $r->maketext($properties{help_text}),
+				bs_content   => $c->maketext($properties{help_text}),
 				bs_placement => 'top',
 				bs_toggle    => 'popover'
 			},
-			$r->tag(
+			$c->tag(
 				'i',
 				class         => 'icon fas fa-question-circle',
-				data          => { alt => $r->maketext('Help Icon') },
+				data          => { alt => $c->maketext('Help Icon') },
 				'aria-hidden' => 'true'
 			)
 		)
@@ -880,7 +871,7 @@ sub fieldHTML {
 	push @return,
 		(
 			$gDisplVal ne ''
-			? $r->text_field(
+			? $c->text_field(
 				"$recordType.$recordID.$field.class_value",
 				$gDisplVal,
 				readonly          => undef,
@@ -896,10 +887,8 @@ sub fieldHTML {
 }
 
 # Return weird fields that are non-native or which are displayed for only some sets.
-sub extraSetFields {
-	my ($self, $userID, $setID, $globalRecord, $userRecord, $forUsers) = @_;
-	my $db = $self->r->{db};
-	my $r  = $self->r;
+sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) {
+	my $db = $c->{db};
 
 	my $extraFields = '';
 
@@ -914,18 +903,16 @@ sub extraSetFields {
 				if (($gwfield eq "time_interval" || $gwfield eq "versions_per_interval")
 					&& ($forUsers && $userRecord->can('version_id')));
 
-			my @fieldData = $self->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, $gwfield);
+			my @fieldData = $c->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, $gwfield);
 			if (@fieldData && defined($fieldData[0]) && $fieldData[0] ne '') {
 				$num_columns = @fieldData if @fieldData > $num_columns;
-				push(@gwFields, $r->tag('tr', $r->c(map { $r->tag('td', $_) } @fieldData)->join('')));
+				push(@gwFields, $c->tag('tr', $c->c(map { $c->tag('td', $_) } @fieldData)->join('')));
 			}
 		}
 
-		$extraFields = $r->c(
+		$extraFields = $c->c(
 			$num_columns
-			? $r->tag(
-				'tr', $r->tag('td', colspan => $num_columns, $r->tag('em', $r->maketext('Test parameters')))
-				)
+			? $c->tag('tr', $c->tag('td', colspan => $num_columns, $c->tag('em', $c->maketext('Test parameters'))))
 			: '',
 			@gwFields
 		)->join('');
@@ -935,16 +922,16 @@ sub extraSetFields {
 		my $jthdr       = '';
 		my @jtFields;
 		for my $jtfield (@{ JITAR_SET_FIELD_ORDER() }) {
-			my @fieldData = $self->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, $jtfield);
+			my @fieldData = $c->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, $jtfield);
 			if (@fieldData && defined($fieldData[0]) && $fieldData[0] ne '') {
 				$num_columns = @fieldData if (@fieldData > $num_columns);
-				push(@jtFields, $r->tag('tr', $r->c(map { $r->tag('td', $_) } @fieldData)->join('')));
+				push(@jtFields, $c->tag('tr', $c->c(map { $c->tag('td', $_) } @fieldData)->join('')));
 			}
 		}
-		$extraFields = $r->c(
+		$extraFields = $c->c(
 			$num_columns
-			? $r->tag('tr',
-				$r->tag('td', colspan => $num_columns, $r->tag('em', $r->maketext('Just-In-Time parameters'))))
+			? $c->tag('tr',
+				$c->tag('td', colspan => $num_columns, $c->tag('em', $c->maketext('Just-In-Time parameters'))))
 			: '',
 			@jtFields
 		)->join('');
@@ -955,16 +942,16 @@ sub extraSetFields {
 	# If this is a proctored test, then add a dropdown menu to configure using a grade proctor
 	# and a proctored set password input.
 	if ($globalRecord->assignment_type eq 'proctored_gateway') {
-		$procFields = $r->c(
+		$procFields = $c->c(
 			# Dropdown menu to configure using a grade proctor.
-			$r->tag(
+			$c->tag(
 				'tr',
-				$r->c(
-					map { $r->tag('td', $_) }
-						$self->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, 'use_grade_auth_proctor')
+				$c->c(
+					map { $c->tag('td', $_) }
+						$c->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, 'use_grade_auth_proctor')
 				)->join('')
 			),
-			$forUsers ? '' : $r->include(
+			$forUsers ? '' : $c->include(
 				'ContentGenerator/Instructor/ProblemSetDetail/restricted_login_proctor_password_row',
 				globalRecord => $globalRecord
 			)
@@ -995,7 +982,7 @@ sub extraSetFields {
 			$ipOverride       = 1;
 		}
 
-		$ipFields = $r->include(
+		$ipFields = $c->include(
 			'ContentGenerator/Instructor/ProblemSetDetail/ip_locations_row',
 			forUsers         => $forUsers,
 			ipOverride       => $ipOverride,
@@ -1009,11 +996,8 @@ sub extraSetFields {
 
 # This is a recursive function which displays the tree structure of jitar sets.
 # Each child is displayed as a nested ordered list.
-sub print_nested_list {
-	my ($self, $nestedHash) = @_;
-	my $r = $self->r;
-
-	my $output = $r->c;
+sub print_nested_list ($c, $nestedHash) {
+	my $output = $c->c;
 
 	# This hash contains information about the problem at this node.  Output the problem row and delete the "id" and
 	# "row" keys.  Any remaining keys are references to child nodes which are shown in a sub list via the recursion.
@@ -1023,22 +1007,22 @@ sub print_nested_list {
 		my $id = delete $nestedHash->{id};
 		push(
 			@$output,
-			$r->tag(
+			$c->tag(
 				'li',
 				class => 'psd_list_item',
 				id    => "psd_list_item_$id",
-				$r->c(
+				$c->c(
 					delete $nestedHash->{row},
-					$r->tag(
+					$c->tag(
 						'ol',
 						class => 'sortable-branch collapse',
 						id    => "psd_sublist_$id",
 						sub {
-							my $sub_output = $r->c;
+							my $sub_output = $c->c;
 							my @keys       = keys %$nestedHash;
 							if (@keys) {
 								for (sort { $a <=> $b } @keys) {
-									push(@$sub_output, $self->print_nested_list($nestedHash->{$_}));
+									push(@$sub_output, $c->print_nested_list($nestedHash->{$_}));
 								}
 							}
 							return $sub_output->join('');
@@ -1053,10 +1037,7 @@ sub print_nested_list {
 }
 
 # Handles rearrangement necessary after changes to problem ordering.
-sub handle_problem_numbers {
-	my ($self, $newProblemNumbers, $db, $setID) = @_;
-	my $r = $self->r;
-
+sub handle_problem_numbers ($c, $newProblemNumbers, $db, $setID) {
 	# Check to see that everything has a number and if anything was renumbered.
 	my $force = 0;
 	for my $j (keys %$newProblemNumbers) {
@@ -1080,10 +1061,10 @@ sub handle_problem_numbers {
 		next if $newProblemNumbers->{$j} == $j;
 
 		$problemHash{$j} = $db->getGlobalProblem($setID, $j);
-		die $r->maketext("global [_1] for set [_2] not found.", $j, $setID) unless $problemHash{$j};
+		die $c->maketext("global [_1] for set [_2] not found.", $j, $setID) unless $problemHash{$j};
 		foreach my $user (@setUsers) {
 			$userProblemHash{$user}{$j} = $db->getUserProblem($user, $setID, $j);
-			warn $r->maketext(
+			warn $c->maketext(
 				"UserProblem missing for user=[_1] set=[_2] problem=[_3]. This may indicate database corruption.",
 				$user, $setID, $j)
 				. "\n"
@@ -1135,25 +1116,23 @@ sub handle_problem_numbers {
 
 # Primarily saves any changes into the correct set or problem records (global vs user).
 # Also deals with deleting or rearranging problems.
-sub initialize {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $ce     = $r->ce;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
-	my $setID  = $r->urlpath->arg('setID');
+sub initialize ($c) {
+	my $db    = $c->db;
+	my $ce    = $c->ce;
+	my $authz = $c->authz;
+	my $user  = $c->param('user');
+	my $setID = $c->stash('setID');
 
 	# Make sure these are defined for the templates.
-	$r->stash->{fullSetID}        = $setID;
-	$r->stash->{headers}          = HEADER_ORDER();
-	$r->stash->{field_properties} = FIELD_PROPERTIES();
-	$r->stash->{display_modes}    = WeBWorK::PG::DISPLAY_MODES();
-	$r->stash->{unassignedUsers}  = [];
-	$r->stash->{problemIDList}    = [];
-	$r->stash->{globalProblems}   = {};
-	$r->stash->{userProblems}     = {};
-	$r->stash->{mergedProblems}   = {};
+	$c->stash->{fullSetID}        = $setID;
+	$c->stash->{headers}          = HEADER_ORDER();
+	$c->stash->{field_properties} = FIELD_PROPERTIES();
+	$c->stash->{display_modes}    = WeBWorK::PG::DISPLAY_MODES();
+	$c->stash->{unassignedUsers}  = [];
+	$c->stash->{problemIDList}    = [];
+	$c->stash->{globalProblems}   = {};
+	$c->stash->{userProblems}     = {};
+	$c->stash->{mergedProblems}   = {};
 
 	# A set may be provided with a version number (as in setID,v#).
 	# If so obtain the template set id and version number.
@@ -1163,22 +1142,22 @@ sub initialize {
 		$setID =~ s/,v(\d+)$//;
 	}
 
-	$r->stash->{setID}             = $setID;
-	$r->stash->{editingSetVersion} = $editingSetVersion;
+	$c->stash->{setID}             = $setID;
+	$c->stash->{editingSetVersion} = $editingSetVersion;
 
 	my $setRecord = $db->getGlobalSet($setID);
-	$r->stash->{setRecord} = $setRecord;
+	$c->stash->{setRecord} = $setRecord;
 	return unless $setRecord;
 
 	return unless ($authz->hasPermissions($user, 'access_instructor_tools'));
 	return unless ($authz->hasPermissions($user, 'modify_problem_sets'));
 
-	my @editForUser = $r->param('editForUser');
+	my @editForUser = $c->param('editForUser');
 
 	my $forUsers = scalar(@editForUser);
-	$r->stash->{forUsers} = $forUsers;
+	$c->stash->{forUsers} = $forUsers;
 	my $forOneUser = $forUsers == 1;
-	$r->stash->{forOneUser} = $forOneUser;
+	$c->stash->{forOneUser} = $forOneUser;
 
 	# If editing a versioned set, it only makes sense edit it for one user.
 	return if ($editingSetVersion && !$forOneUser);
@@ -1189,17 +1168,17 @@ sub initialize {
 	my %undoLabels;
 	for my $key (keys %properties) {
 		%{ $undoLabels{$key} } =
-			map { $r->maketext($properties{$key}{labels}{$_}) => $_ } keys %{ $properties{$key}{labels} };
+			map { $c->maketext($properties{$key}{labels}{$_}) => $_ } keys %{ $properties{$key}{labels} };
 	}
 
 	my ($open_date, $due_date, $answer_date, $reduced_scoring_date);
 	my $error = 0;
-	if (defined $r->param('submit_changes')) {
+	if (defined $c->param('submit_changes')) {
 		my @names = ("open_date", "due_date", "answer_date", "reduced_scoring_date");
 
 		my %dates;
 		for (@names) {
-			$dates{$_} = $r->param("set.$setID.$_") || '';
+			$dates{$_} = $c->param("set.$setID.$_") || '';
 			if (defined $undoLabels{$_}{ $dates{$_} } || !$dates{$_}) {
 				$dates{$_} = $setRecord->$_;
 			}
@@ -1210,20 +1189,19 @@ sub initialize {
 			($open_date, $due_date, $answer_date, $reduced_scoring_date) = map { $dates{$_} || 0 } @names;
 
 			if ($answer_date < $due_date || $answer_date < $open_date) {
-				$self->addbadmessage(
-					$r->maketext("Answers cannot be made available until on or after the close date!"));
-				$error = $r->param('submit_changes');
+				$c->addbadmessage($c->maketext("Answers cannot be made available until on or after the close date!"));
+				$error = $c->param('submit_changes');
 			}
 
 			if ($due_date < $open_date) {
-				$self->addbadmessage($r->maketext("Answers cannot be due until on or after the open date!"));
-				$error = $r->param('submit_changes');
+				$c->addbadmessage($c->maketext("Answers cannot be due until on or after the open date!"));
+				$error = $c->param('submit_changes');
 			}
 
 			my $enable_reduced_scoring = $ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 				&& (
-					defined($r->param("set.$setID.enable_reduced_scoring"))
-					? $r->param("set.$setID.enable_reduced_scoring")
+					defined($c->param("set.$setID.enable_reduced_scoring"))
+					? $c->param("set.$setID.enable_reduced_scoring")
 					: $setRecord->enable_reduced_scoring);
 
 			if (
@@ -1233,9 +1211,9 @@ sub initialize {
 					|| $reduced_scoring_date < $open_date)
 				)
 			{
-				$self->addbadmessage(
-					$r->maketext("The reduced scoring date should be between the open date and close date."));
-				$error = $r->param('submit_changes');
+				$c->addbadmessage(
+					$c->maketext("The reduced scoring date should be between the open date and close date."));
+				$error = $c->param('submit_changes');
 			}
 
 			# Make sure the dates are not more than 10 years in the future.
@@ -1243,28 +1221,28 @@ sub initialize {
 			my $seconds_per_year = 31_556_926;
 			my $cutoff           = $curr_time + $seconds_per_year * 10;
 			if ($open_date > $cutoff) {
-				$self->addbadmessage(
-					$r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID));
-				$error = $r->param('submit_changes');
+				$c->addbadmessage(
+					$c->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID));
+				$error = $c->param('submit_changes');
 			}
 			if ($due_date > $cutoff) {
-				$self->addbadmessage(
-					$r->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID));
-				$error = $r->param('submit_changes');
+				$c->addbadmessage(
+					$c->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID));
+				$error = $c->param('submit_changes');
 			}
 			if ($answer_date > $cutoff) {
-				$self->addbadmessage(
-					$r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID));
-				$error = $r->param('submit_changes');
+				$c->addbadmessage(
+					$c->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID));
+				$error = $c->param('submit_changes');
 			}
 		}
 	}
 
 	if ($error) {
-		$self->addbadmessage($r->maketext("No changes were saved!"));
+		$c->addbadmessage($c->maketext("No changes were saved!"));
 	}
 
-	if (defined $r->param('submit_changes') && !$error) {
+	if (defined $c->param('submit_changes') && !$error) {
 
 		my $oldAssignmentType = $setRecord->assignment_type();
 
@@ -1287,11 +1265,11 @@ sub initialize {
 			foreach my $record (@userRecords) {
 				foreach my $field (@{ SET_FIELDS() }) {
 					next unless canChange($forUsers, $field);
-					my $override = $r->param("set.$setID.$field.override");
+					my $override = $c->param("set.$setID.$field.override");
 
 					if (defined $override && $override eq $field) {
 
-						my $param = $r->param("set.$setID.$field");
+						my $param = $c->param("set.$setID.$field");
 						$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : ""
 							unless defined $param && $param ne "";
 
@@ -1338,10 +1316,10 @@ sub initialize {
 			# database routines to deal with the versioned setID, or fudging it at this end by manually putting in the
 			# versioned ID setID,v#.  Neither of these seems desirable, so for now it's not allowed
 			if (!$editingSetVersion) {
-				if ($r->param("set.$setID.selected_ip_locations.override")) {
+				if ($c->param("set.$setID.selected_ip_locations.override")) {
 					foreach my $record (@userRecords) {
 						my $userID            = $record->user_id;
-						my @selectedLocations = $r->param("set.$setID.selected_ip_locations");
+						my @selectedLocations = $c->param("set.$setID.selected_ip_locations");
 						my @userSetLocations  = $db->listUserSetLocations($userID, $setID);
 						my @addSetLocations   = ();
 						my @delSetLocations   = ();
@@ -1378,14 +1356,14 @@ sub initialize {
 			foreach my $field (@{ SET_FIELDS() }) {
 				next unless canChange($forUsers, $field);
 
-				my $param = $r->param("set.$setID.$field");
+				my $param = $c->param("set.$setID.$field");
 				$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : ""
 					unless defined $param && $param ne "";
 				my $unlabel = $undoLabels{$field}->{$param};
 				$param = $unlabel if defined $unlabel;
 				if ($field =~ /restricted_release/ && $param) {
 					$param = format_set_name_internal($param =~ s/\s*,\s*/,/gr);
-					$self->check_sets($db, $param);
+					$c->check_sets($db, $param);
 				}
 				if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby} && $param) {
 					$param = $param * $properties{$field}->{convertby};
@@ -1405,8 +1383,8 @@ sub initialize {
 			$db->putGlobalSet($setRecord);
 
 			# Save IP restriction Location information
-			if (defined($r->param("set.$setID.restrict_ip")) and $r->param("set.$setID.restrict_ip") ne 'No') {
-				my @selectedLocations  = $r->param("set.$setID.selected_ip_locations");
+			if (defined($c->param("set.$setID.restrict_ip")) && $c->param("set.$setID.restrict_ip") ne 'No') {
+				my @selectedLocations  = $c->param("set.$setID.selected_ip_locations");
 				my @globalSetLocations = $db->listGlobalSetLocations($setID);
 				my @addSetLocations    = ();
 				my @delSetLocations    = ();
@@ -1434,12 +1412,12 @@ sub initialize {
 			}
 
 			# Save proctored problem proctor user information
-			if ($r->param("set.$setID.restricted_login_proctor_password")
+			if ($c->param("set.$setID.restricted_login_proctor_password")
 				&& $setRecord->assignment_type eq 'proctored_gateway')
 			{
 				# In this case add a set-level proctor or update the password.
 				my $procID = "set_id:$setID";
-				my $pass   = $r->param("set.$setID.restricted_login_proctor_password");
+				my $pass   = $c->param("set.$setID.restricted_login_proctor_password");
 				# Should we carefully check in this case that the user and password exist?  The code in the add stanza
 				# is pretty careful to be sure that there's a one-to-one correspondence between the existence of the
 				# user and the setting of the set restricted_login_proctor field, so we assume that just checking the
@@ -1448,7 +1426,7 @@ sub initialize {
 					# A new password was submitted. So save it.
 					my $dbPass = eval { $db->getPassword($procID) };
 					if ($@) {
-						$self->addbadmessage($r->maketext(
+						$c->addbadmessage($c->maketext(
 							'Error getting old set-proctor password from the database: [_1].  '
 								. 'No update to the password was done.',
 							$@
@@ -1474,7 +1452,7 @@ sub initialize {
 
 					eval { $db->addUser($procUser) };
 					if ($@) {
-						$self->addbadmessage($r->maketext("Error adding set-level proctor: [_1]", $@));
+						$c->addbadmessage($c->maketext("Error adding set-level proctor: [_1]", $@));
 					} else {
 						$db->addPermissionLevel($procPerm);
 						$db->addPassword($procPass);
@@ -1503,7 +1481,7 @@ sub initialize {
 		my @problemRecords = $db->getGlobalProblems(map { [ $setID, $_ ] } @problemIDs);
 		foreach my $problemRecord (@problemRecords) {
 			my $problemID = $problemRecord->problem_id;
-			die $r->maketext("Global problem [_1] for set [_2] not found.", $problemID, $setID) unless $problemRecord;
+			die $c->maketext("Global problem [_1] for set [_2] not found.", $problemID, $setID) unless $problemRecord;
 
 			if ($forUsers) {
 				# Since we're editing for specific users, we don't allow the GlobalProblem record to be altered on that
@@ -1529,10 +1507,10 @@ sub initialize {
 					for my $field (@{ PROBLEM_FIELDS() }) {
 						next unless canChange($forUsers, $field);
 
-						my $override = $r->param("problem.$problemID.$field.override");
+						my $override = $c->param("problem.$problemID.$field.override");
 						if (defined $override && $override eq $field) {
 
-							my $param = $r->param("problem.$problemID.$field");
+							my $param = $c->param("problem.$problemID.$field");
 							$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : ""
 								unless defined $param && $param ne "";
 							my $unlabel = $undoLabels{$field}->{$param};
@@ -1540,7 +1518,7 @@ sub initialize {
 							# Protect exploits with source_file
 							if ($field eq 'source_file') {
 								if ($param =~ /\.\./ || $param =~ /^\//) {
-									$self->addbadmessage($r->maketext(
+									$c->addbadmessage($c->maketext(
 										'Source file paths cannot include .. or start with /: '
 											. 'your source file path was modified.'
 									));
@@ -1560,7 +1538,7 @@ sub initialize {
 					for my $field (@{ USER_PROBLEM_FIELDS() }) {
 						next unless canChange($forUsers, $field);
 
-						my $param = $r->param("problem.$problemID.$field");
+						my $param = $c->param("problem.$problemID.$field");
 						$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : ""
 							unless defined $param && $param ne "";
 						my $unlabel = $undoLabels{$field}->{$param};
@@ -1568,7 +1546,7 @@ sub initialize {
 						# Protect exploits with source_file
 						if ($field eq 'source_file') {
 							if ($param =~ /\.\./ || $param =~ /^\//) {
-								$self->addbadmessage($r->maketext(
+								$c->addbadmessage($c->maketext(
 									'Source file paths cannot include .. or start with /: '
 										. 'your source file path was modified.'
 								));
@@ -1597,7 +1575,7 @@ sub initialize {
 				foreach my $field (@{ PROBLEM_FIELDS() }) {
 					next unless canChange($forUsers, $field);
 
-					my $param = $r->param("problem.$problemID.$field");
+					my $param = $c->param("problem.$problemID.$field");
 					$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : ""
 						unless defined $param && $param ne "";
 					my $unlabel = $undoLabels{$field}->{$param};
@@ -1606,7 +1584,7 @@ sub initialize {
 					# Protect exploits with source_file
 					if ($field eq 'source_file') {
 						if ($param =~ /\.\./ || $param =~ /^\//) {
-							$self->addbadmessage($r->maketext(
+							$c->addbadmessage($c->maketext(
 								'Source file paths cannot include .. or start with /: '
 									. 'your source file path was modified.'
 							));
@@ -1626,7 +1604,7 @@ sub initialize {
 				# Changes" on the global page MUCH faster.
 				my %useful;
 				foreach my $field (@{ USER_PROBLEM_FIELDS() }) {
-					my $param = $r->param("problem.$problemID.$field");
+					my $param = $c->param("problem.$problemID.$field");
 					$useful{$field} = 1 if defined $param and $param ne "";
 				}
 
@@ -1637,7 +1615,7 @@ sub initialize {
 						foreach my $field (keys %useful) {
 							next unless canChange($forUsers, $field);
 
-							my $param = $r->param("problem.$problemID.$field");
+							my $param = $c->param("problem.$problemID.$field");
 							$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : ""
 								unless defined $param && $param ne "";
 							my $unlabel = $undoLabels{$field}->{$param};
@@ -1653,7 +1631,7 @@ sub initialize {
 
 		# Mark the specified problems as correct for all users (not applicable when editing a set version, because this
 		# only shows up when editing for users or editing the global set/problem, not for one user)
-		for my $problemID ($r->param('markCorrect')) {
+		for my $problemID ($c->param('markCorrect')) {
 			my @userProblemIDs =
 				$forUsers
 				? (map { [ $_, $setID, $problemID ] } @editForUser)
@@ -1690,7 +1668,7 @@ sub initialize {
 		}
 
 		# Delete all problems marked for deletion (not applicable when editing for users).
-		foreach my $problemID ($r->param('deleteProblem')) {
+		foreach my $problemID ($c->param('deleteProblem')) {
 			$db->deleteGlobalProblem($setID, $problemID);
 
 			# If it is a jitar, then delete all of the child problems.
@@ -1731,10 +1709,10 @@ sub initialize {
 			# we dont want to confuse the script by changing the problem
 			# ids out from under it so remove the params
 			foreach my $id (@ids) {
-				$r->param("prob_num_$id", undef);
+				$c->param("prob_num_$id", undef);
 			}
 
-			handle_problem_numbers($self, \%newProblemNumbers, $db, $setID);
+			$c->handle_problem_numbers(\%newProblemNumbers, $db, $setID);
 		}
 
 		# Reorder problems
@@ -1748,25 +1726,25 @@ sub initialize {
 				my @idSeq;
 				my $id = $jj;
 
-				next unless $r->param('prob_num_' . $id);
+				next unless $c->param('prob_num_' . $id);
 
-				unshift @idSeq, $r->param('prob_num_' . $id);
-				while (defined $r->param('prob_parent_id_' . $id)) {
-					$id = $r->param('prob_parent_id_' . $id);
-					unshift @idSeq, $r->param('prob_num_' . $id);
+				unshift @idSeq, $c->param('prob_num_' . $id);
+				while (defined $c->param('prob_parent_id_' . $id)) {
+					$id = $c->param('prob_parent_id_' . $id);
+					unshift @idSeq, $c->param('prob_num_' . $id);
 				}
 
 				$newProblemNumbers{$jj} = seq_to_jitar_id(@idSeq);
 
 			} else {
-				$newProblemNumbers{$jj} = $r->param('prob_num_' . $jj);
+				$newProblemNumbers{$jj} = $c->param('prob_num_' . $jj);
 			}
 		}
 
-		handle_problem_numbers($self, \%newProblemNumbers, $db, $setID) unless defined $r->param('undo_changes');
+		$c->handle_problem_numbers(\%newProblemNumbers, $db, $setID) unless defined $c->param('undo_changes');
 
 		# Make problem numbers consecutive if required
-		if ($r->param('force_renumber')) {
+		if ($c->param('force_renumber')) {
 			my %newProblemNumbers = ();
 			my $prevNum           = 0;
 			my @prevSeq           = (0);
@@ -1776,12 +1754,12 @@ sub initialize {
 					my @idSeq;
 					my $id = $jj;
 
-					next unless $r->param('prob_num_' . $id);
+					next unless $c->param('prob_num_' . $id);
 
-					unshift @idSeq, $r->param('prob_num_' . $id);
-					while (defined $r->param('prob_parent_id_' . $id)) {
-						$id = $r->param('prob_parent_id_' . $id);
-						unshift @idSeq, $r->param('prob_num_' . $id);
+					unshift @idSeq, $c->param('prob_num_' . $id);
+					while (defined $c->param('prob_parent_id_' . $id)) {
+						$id = $c->param('prob_parent_id_' . $id);
+						unshift @idSeq, $c->param('prob_num_' . $id);
 					}
 
 					# we dont really care about the content of idSeq
@@ -1803,16 +1781,16 @@ sub initialize {
 				}
 			}
 
-			handle_problem_numbers($self, \%newProblemNumbers, $db, $setID) unless defined $r->param('undo_changes');
+			$c->handle_problem_numbers(\%newProblemNumbers, $db, $setID) unless defined $c->param('undo_changes');
 		}
 
 		# Add blank problem if needed
-		if (defined($r->param("add_blank_problem")) and $r->param("add_blank_problem") == 1) {
+		if (defined($c->param("add_blank_problem")) and $c->param("add_blank_problem") == 1) {
 			# Get number of problems to add and clean the entry
-			my $newBlankProblems = (defined($r->param("add_n_problems"))) ? $r->param("add_n_problems") : 1;
+			my $newBlankProblems = (defined($c->param("add_n_problems"))) ? $c->param("add_n_problems") : 1;
 			$newBlankProblems = int($newBlankProblems);
 			my $MAX_NEW_PROBLEMS = 20;
-			my @ids              = $self->r->db->listGlobalProblems($setID);
+			my @ids              = $c->db->listGlobalProblems($setID);
 
 			if ($setRecord->assignment_type eq 'jitar') {
 				for (my $i = 0; $i <= $#ids; $i++) {
@@ -1833,7 +1811,7 @@ sub initialize {
 					my $new_file_path   = "set$setID/" . BLANKPROBLEM();
 					my $fullPath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}{templates}, '/' . $new_file_path);
 
-					open(my $TEMPFILE, '>', $fullPath) or warn $r->maketext(q{Can't write to file [_1]}, $fullPath);
+					open(my $TEMPFILE, '>', $fullPath) or warn $c->maketext(q{Can't write to file [_1]}, $fullPath);
 					print $TEMPFILE $problemContents;
 					close($TEMPFILE);
 
@@ -1848,13 +1826,13 @@ sub initialize {
 					);
 
 					assignProblemToAllSetUsers($db, $problemRecord);
-					$self->addgoodmessage($r->maketext(
+					$c->addgoodmessage($c->maketext(
 						"Added [_1] to [_2] as problem [_3]",
 						$new_file_path, $setID, $targetProblemNumber
 					));
 				}
 			} else {
-				$self->addbadmessage($r->maketext(
+				$c->addbadmessage($c->maketext(
 					"Could not add [_1] problems to this set.  The number must be between 1 and [_2]",
 					$newBlankProblems, $MAX_NEW_PROBLEMS
 				));
@@ -1862,7 +1840,7 @@ sub initialize {
 		}
 
 		# Sets the specified header to "defaultHeader" so that the default file will get used.
-		foreach my $header ($r->param('defaultHeader')) {
+		foreach my $header ($c->param('defaultHeader')) {
 			$setRecord->$header("defaultHeader");
 		}
 	}
@@ -1879,32 +1857,32 @@ sub initialize {
 			}
 		}
 		@editForUser = sort @assignedUsers;
-		$r->param('editForUser', \@editForUser);
+		$c->param('editForUser', \@editForUser);
 	}
 
-	$r->stash->{unassignedUsers} = \@unassignedUsers;
+	$c->stash->{unassignedUsers} = \@unassignedUsers;
 
 	# Check that if a set version for a user is being edited, that it exists as well
 	return if $editingSetVersion && !$db->existsSetVersion($editForUser[0], $setID, $editingSetVersion);
 
 	# Get global problem records for all problems sorted by problem id.
 	my @globalProblems = $db->getGlobalProblemsWhere({ set_id => $setID }, 'problem_id');
-	$r->stash->{problemIDList}  = [ map { $_->problem_id } @globalProblems ];
-	$r->stash->{globalProblems} = { map { $_->problem_id => $_ } @globalProblems };
+	$c->stash->{problemIDList}  = [ map { $_->problem_id } @globalProblems ];
+	$c->stash->{globalProblems} = { map { $_->problem_id => $_ } @globalProblems };
 
 	# If editing for one user, get user problem records for all problems also sorted by problem_id.
 	if (@editForUser == 1) {
-		$r->stash->{userProblems} = { map { $_->problem_id => $_ }
+		$c->stash->{userProblems} = { map { $_->problem_id => $_ }
 				$db->getUserProblemsWhere({ user_id => $editForUser[0], set_id => $setID }, 'problem_id') };
 
 		if ($editingSetVersion) {
-			$r->stash->{mergedProblems} = {
+			$c->stash->{mergedProblems} = {
 				map { $_->problem_id => $_ } $db->getMergedProblemVersionsWhere(
 					{ user_id => $editForUser[0], set_id => { like => "$setID,v\%" } }, 'problem_id'
 				)
 			};
 		} else {
-			$r->stash->{mergedProblems} = { map { $_->problem_id => $_ }
+			$c->stash->{mergedProblems} = { map { $_->problem_id => $_ }
 					$db->getMergedProblemsWhere({ user_id => $editForUser[0], set_id => $setID }, 'problem_id') };
 		}
 	}
@@ -1912,24 +1890,22 @@ sub initialize {
 	# Reset all the parameters dealing with set/problem/header information.  It may not be obvious why this is necessary
 	# when saving changes, but when the problems are reordered the param problem.1.source_file needs to be the source
 	# file of the problem that is NOW #1 and not the problem that WAS #1.
-	for my $param ($r->param) {
-		$r->param($param, undef) if $param =~ /^(set|problem|header)\./ && $param !~ /displaymode/;
+	for my $param ($c->param) {
+		$c->param($param, undef) if $param =~ /^(set|problem|header)\./ && $param !~ /displaymode/;
 	}
 
 	# Reset checkboxes that should always be unchecked when the page loads.
-	$r->param('deleteProblem',     undef);
-	$r->param('markCorrect',       undef);
-	$r->param('force_renumber',    undef);
-	$r->param('add_blank_problem', undef);
+	$c->param('deleteProblem',     undef);
+	$c->param('markCorrect',       undef);
+	$c->param('force_renumber',    undef);
+	$c->param('add_blank_problem', undef);
 
 	return;
 }
 
 # Helper method for checking if two values are different.
 # The return values will usually be thrown away, but they could be useful for debugging.
-sub changed {
-	my ($first, $second) = @_;
-
+sub changed ($first, $second) {
 	return "def/undef" if defined $first  && !defined $second;
 	return "undef/def" if !defined $first && defined $second;
 	return ""          if !defined $first && !defined $second;
@@ -1942,9 +1918,7 @@ sub changed {
 # 	any means it can be changed for anyone
 # 	one means it can ONLY be changed for one at a time. (eg problem_seed)
 # 	all means it can ONLY be changed for all at a time. (eg set_header)
-sub canChange {
-	my ($forUsers, $field) = @_;
-
+sub canChange ($forUsers, $field) {
 	my %properties = %{ FIELD_PROPERTIES() };
 	my $forOneUser = $forUsers == 1;
 
@@ -1957,14 +1931,11 @@ sub canChange {
 }
 
 # Helper method that determines if a file is valid and returns a pretty error message.
-sub checkFile {
-	my ($self, $filePath, $headerType) = @_;
+sub checkFile ($c, $filePath, $headerType) {
+	my $ce = $c->ce;
 
-	my $r  = $self->r;
-	my $ce = $r->ce;
-
-	return $r->maketext("No source filePath specified") unless $filePath;
-	return $r->maketext("Problem source is drawn from a grouping set") if $filePath =~ /^group/;
+	return $c->maketext("No source filePath specified") unless $filePath;
+	return $c->maketext("Problem source is drawn from a grouping set") if $filePath =~ /^group/;
 
 	if ($filePath eq "defaultHeader") {
 		if ($headerType eq 'set_header') {
@@ -1972,7 +1943,7 @@ sub checkFile {
 		} elsif ($headerType eq 'hardcopy_header') {
 			$filePath = $ce->{webworkFiles}{hardcopySnippets}{setHeader};
 		} else {
-			return $r->maketext("Invalid headerType [_1]", $headerType);
+			return $c->maketext("Invalid headerType [_1]", $headerType);
 		}
 	} else {
 		# Only filePaths in the template directory can be accessed.
@@ -1981,55 +1952,48 @@ sub checkFile {
 
 	my $fileError;
 	return ""                                                if -e $filePath && -f $filePath && -r $filePath;
-	return $r->maketext("This source file is not readable!") if -e $filePath && -f $filePath;
-	return $r->maketext("This source file is a directory!")  if -d $filePath;
-	return $r->maketext("This source file does not exist!") unless -e $filePath;
-	return $r->maketext("This source file is not a plain file!");
+	return $c->maketext("This source file is not readable!") if -e $filePath && -f $filePath;
+	return $c->maketext("This source file is a directory!")  if -d $filePath;
+	return $c->maketext("This source file does not exist!") unless -e $filePath;
+	return $c->maketext("This source file is not a plain file!");
 }
 
 # Make sure restrictor sets exist.
-sub check_sets {
-	my ($self, $db, $sets_string) = @_;
+sub check_sets ($c, $db, $sets_string) {
 	my @proposed_sets = split(/\s*,\s*/, $sets_string);
-	foreach (@proposed_sets) {
-		$self->addbadmessage("Error: $_ is not a valid set name in restricted release list!")
+	for (@proposed_sets) {
+		$c->addbadmessage("Error: $_ is not a valid set name in restricted release list!")
 			unless $db->existsGlobalSet($_);
 	}
 
 	return;
 }
 
-sub userCountMessage {
-	my ($self, $count, $numUsers) = @_;
-	my $r = $self->r;
-
+sub userCountMessage ($c, $count, $numUsers) {
 	if ($count == 0) {
-		return $r->tag('em', $r->maketext('no students'));
+		return $c->tag('em', $c->maketext('no students'));
 	} elsif ($count == $numUsers) {
-		return $r->maketext('all students');
+		return $c->maketext('all students');
 	} elsif ($count == 1) {
-		return $r->maketext('1 student');
+		return $c->maketext('1 student');
 	} elsif ($count > $numUsers || $count < 0) {
-		return $r->tag('em', $r->maketext('an impossible number of users: [_1] out of [_2]', $count, $numUsers));
+		return $c->tag('em', $c->maketext('an impossible number of users: [_1] out of [_2]', $count, $numUsers));
 	} else {
-		return $r->maketext('[_1] students out of [_2]', $count, $numUsers);
+		return $c->maketext('[_1] students out of [_2]', $count, $numUsers);
 	}
 }
 
-sub setCountMessage {
-	my ($self, $count, $numSets) = @_;
-	my $r = $self->r;
-
+sub setCountMessage ($c, $count, $numSets) {
 	if ($count == 0) {
-		return $r->tag('em', $r->maketext('no sets'));
+		return $c->tag('em', $c->maketext('no sets'));
 	} elsif ($count == $numSets) {
-		return $r->maketext('all sets');
+		return $c->maketext('all sets');
 	} elsif ($count == 1) {
-		return $r->maketext('1 set');
+		return $c->maketext('1 set');
 	} elsif ($count > $numSets || $count < 0) {
-		return $r->tag('em', $self->r->maketext('an impossible number of sets: [_1] out of [_2]', $count, $numSets));
+		return $c->tag('em', $c->maketext('an impossible number of sets: [_1] out of [_2]', $count, $numSets));
 	} else {
-		return $r->maketext('[_1] sets', $count);
+		return $c->maketext('[_1] sets', $count);
 	}
 }
 

@@ -14,18 +14,13 @@
 ################################################################################
 
 package WeBWorK::AchievementItems::FullCreditProb;
-use parent qw(WeBWorK::AchievementItems);
+use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to give full credit on a single problem
 
-use strict;
-use warnings;
-
 use WeBWorK::Utils qw(between x nfreeze_base64 thaw_base64 format_set_name_display);
 
-sub new {
-	my ($class) = @_;
-
+sub new ($class) {
 	return bless {
 		id          => 'FullCreditProb',
 		name        => x('Greater Rod of Revelation'),
@@ -33,9 +28,7 @@ sub new {
 	}, $class;
 }
 
-sub print_form {
-	my ($self, $sets, $setProblemCount, $r) = @_;
-
+sub print_form ($self, $sets, $setProblemCount, $c) {
 	# Construct a dropdown with open sets and another with problems.
 	# Javascript ensures the appropriate number of problems are shown for the selected set.
 
@@ -61,33 +54,32 @@ sub print_form {
 		push(@problemIDs, [ $i => $i, $i > $openSets[0][3]{max} ? (style => 'display:none') : () ]);
 	}
 
-	return $r->c(
-		$r->tag(
+	return $c->c(
+		$c->tag(
 			'p',
-			$r->maketext(
+			$c->maketext(
 				'Please choose the set name and problem number of the question which should be given full credit.')
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			$r,
+			$c,
 			id         => 'fcp_set_id',
-			label_text => $r->maketext('Set Name'),
+			label_text => $c->maketext('Set Name'),
 			values     => \@openSets,
 			menu_attr  => { dir => 'ltr', data => { problems => 'fcp_problem_id' } }
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			$r,
+			$c,
 			id                  => 'fcp_problem_id',
-			label_text          => $r->maketext('Problem Number'),
+			label_text          => $c->maketext('Problem Number'),
 			values              => \@problemIDs,
 			menu_container_attr => { class => 'col-3' }
 		)
 	)->join('');
 }
 
-sub use_item {
-	my ($self, $userName, $r) = @_;
-	my $db = $r->db;
-	my $ce = $r->ce;
+sub use_item ($self, $userName, $c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
 	# Validate data
 
@@ -97,10 +89,10 @@ sub use_item {
 	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
 	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
 
-	my $setID = $r->param('fcp_set_id');
+	my $setID = $c->param('fcp_set_id');
 	return 'You need to input a Set Name' unless defined $setID;
 
-	my $problemID = $r->param('fcp_problem_id');
+	my $problemID = $c->param('fcp_problem_id');
 	return 'You need to input a Problem Number' unless $problemID;
 
 	my $problem = $db->getUserProblem($userName, $setID, $problemID);

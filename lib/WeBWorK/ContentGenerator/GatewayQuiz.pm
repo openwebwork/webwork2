@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::GatewayQuiz;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
 =head1 NAME
 
@@ -23,10 +23,6 @@ deal with versioning sets
 
 =cut
 
-use strict;
-use warnings;
-
-use Future::AsyncAwait;
 use Mojo::Promise;
 
 use WeBWorK::Form;
@@ -47,40 +43,37 @@ use Caliper::Sensor;
 use Caliper::Entity;
 
 # Disable links for gateway tests.
-sub can {
-	my ($self, $arg) = @_;
-	return $arg eq 'links' ? 0 : $self->SUPER::can($arg);
+sub can ($c, $arg) {
+	return $arg eq 'links' ? 0 : $c->SUPER::can($arg);
 }
 
 # "can" methods
 # Subroutines to determine if a user "can" perform an action. Each subroutine is
 # called with the following arguments:
-#   ($self, $user, $effectiveUser, $set, $problem, $tmplSet)
+#   ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet)
 # In addition can_recordAnswers and can_checkAnswers have the argument $submitAnswers
 # that is used to distinguish between this submission and the next.
 
-sub can_showOldAnswers {
-	my ($self, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) = @_;
-	my $authz = $self->r->authz;
+sub can_showOldAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
+	my $authz = $c->authz;
 
 	return 0 unless $authz->hasPermissions($user->user_id, 'can_show_old_answers');
 
 	return (
-		before($set->due_date, $self->r->submitTime)
+		before($set->due_date, $c->submitTime)
 			|| $authz->hasPermissions($user->user_id, 'view_hidden_work')
 			|| ($set->hide_work eq 'N'
-				|| ($set->hide_work eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $self->r->submitTime)))
+				|| ($set->hide_work eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $c->submitTime)))
 	);
 }
 
-sub can_showCorrectAnswers {
-	my ($self, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) = @_;
-	my $authz = $self->r->authz;
+sub can_showCorrectAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
+	my $authz = $c->authz;
 
 	# Allow correct answers to be viewed after all attempts at a version
 	# are exhausted or if it is after the answer date.
 	my $attemptsPerVersion = $set->attempts_per_version || 0;
-	my $attemptsUsed       = $problem->num_correct + $problem->num_incorrect + ($self->{submitAnswers} ? 1 : 0);
+	my $attemptsUsed       = $problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} ? 1 : 0);
 
 	# This is complicated by trying to address hiding scores by problem.  That is, if $set->hide_score_by_problem and
 	# $set->hide_score are both set, then we should allow scores to be shown, but not show the score on any individual
@@ -89,7 +82,7 @@ sub can_showCorrectAnswers {
 	return (
 		(
 			(
-				after($set->answer_date, $self->r->submitTime) || ($attemptsUsed >= $attemptsPerVersion
+				after($set->answer_date, $c->submitTime) || ($attemptsUsed >= $attemptsPerVersion
 					&& $attemptsPerVersion != 0
 					&& $set->due_date == $set->answer_date)
 			)
@@ -98,40 +91,36 @@ sub can_showCorrectAnswers {
 			&& (
 				$authz->hasPermissions($user->user_id, 'view_hidden_work')
 				|| $set->hide_score_by_problem eq 'N' && ($set->hide_score eq 'N'
-					|| ($set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $self->r->submitTime)))
+					|| ($set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $c->submitTime)))
 			)
 	);
 }
 
-sub can_showProblemGrader {
-	my ($self, $user, $permissionLevel, $effectiveUser, $set) = @_;
-	my $authz = $self->r->authz;
+sub can_showProblemGrader ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
+	my $authz = $c->authz;
 
 	return ($authz->hasPermissions($user->user_id, 'access_instructor_tools')
 			&& $authz->hasPermissions($user->user_id, 'score_sets')
 			&& $set->set_id ne 'Undefined_Set'
-			&& !$self->{invalidSet});
+			&& !$c->{invalidSet});
 }
 
-sub can_showHints { return 1; }
+sub can_showHints ($c) { return 1; }
 
-sub can_showSolutions {
-	my ($self, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) = @_;
-	my $authz = $self->r->authz;
+sub can_showSolutions ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
+	my $authz = $c->authz;
 
 	return 1 if $authz->hasPermissions($user->user_id, 'always_show_solution');
 
 	# This is the same as can_showCorrectAnswers.
-	return $self->can_showCorrectAnswers($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet,
-		$self->{submitAnswers});
+	return $c->can_showCorrectAnswers($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet);
 }
 
 # Allow for a version_last_attempt_time which is the time the set was submitted. If that is present we use that instead
 # of the current time to decide if answers can be recorded.  This deals with the time between the submission time and
 # the proctor authorization.
-sub can_recordAnswers {
-	my ($self, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers) = @_;
-	my $authz = $self->r->authz;
+sub can_recordAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet = 0, $submitAnswers = 0) {
+	my $authz = $c->authz;
 
 	# Never record answers for undefined sets
 	return 0 if $set->set_id eq 'Undefined_Set';
@@ -147,12 +136,12 @@ sub can_recordAnswers {
 	my $submitTime =
 		($set->assignment_type eq 'proctored_gateway' && $set->version_last_attempt_time)
 		? $set->version_last_attempt_time
-		: $self->r->submitTime;
+		: $c->submitTime;
 
 	return $authz->hasPermissions($user->user_id, 'record_answers_before_open_date')
 		if before($set->open_date, $submitTime);
 
-	if (between($set->open_date, $set->due_date + $self->{ce}{gatewayGracePeriod}, $submitTime)) {
+	if (between($set->open_date, $set->due_date + $c->ce->{gatewayGracePeriod}, $submitTime)) {
 		# Look at maximum attempts per version, not for the set, to determine the number of attempts allowed.
 		my $attemptsPerVersion = $set->attempts_per_version || 0;
 		my $attemptsUsed       = $problem->num_correct + $problem->num_incorrect + ($submitAnswers ? 1 : 0);
@@ -165,7 +154,7 @@ sub can_recordAnswers {
 	}
 
 	return $authz->hasPermissions($user->user_id, 'record_answers_after_due_date')
-		if between(($set->due_date + $self->{ce}{gatewayGracePeriod}), $set->answer_date, $submitTime);
+		if between(($set->due_date + $c->ce->{gatewayGracePeriod}), $set->answer_date, $submitTime);
 
 	return $authz->hasPermissions($user->user_id, 'record_answers_after_answer_date')
 		if after($set->answer_date, $submitTime);
@@ -176,18 +165,17 @@ sub can_recordAnswers {
 # Allow for a version_last_attempt_time which is the time the set was submitted.  If that is present, then use that
 # instead of the current time to decide if answers can be checked.  This deals with the time between the submission time
 # and the proctor authorization.
-sub can_checkAnswers {
-	my ($self, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers) = @_;
-	my $authz = $self->r->authz;
+sub can_checkAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers = 0) {
+	my $authz = $c->authz;
 
 	return 0
-		if $self->can_recordAnswers($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers)
+		if $c->can_recordAnswers($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers)
 		&& !$authz->hasPermissions($user->user_id, 'can_check_and_submit_answers');
 
 	my $submitTime =
 		($set->assignment_type eq 'proctored_gateway' && $set->version_last_attempt_time)
 		? $set->version_last_attempt_time
-		: $self->r->submitTime;
+		: $c->submitTime;
 
 	return $authz->hasPermissions($user->user_id, 'check_answers_before_open_date')
 		if before($set->open_date, $submitTime);
@@ -197,9 +185,9 @@ sub can_checkAnswers {
 	# To deal with this, use the least restrictive view of hiding, and then filter for the problems themselves later.
 
 	my $canShowProblemScores =
-		$self->can_showProblemScores($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet);
+		$c->can_showProblemScores($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet);
 
-	if (between($set->open_date, $set->due_date + $self->{ce}{gatewayGracePeriod}, $submitTime)) {
+	if (between($set->open_date, $set->due_date + $c->ce->{gatewayGracePeriod}, $submitTime)) {
 		# Look at maximum attempts per version, not for the set, to determine the number of attempts allowed.
 		my $attempts_per_version = $set->attempts_per_version || 0;
 		my $attempts_used        = $problem->num_correct + $problem->num_incorrect + ($submitAnswers ? 1 : 0);
@@ -214,7 +202,7 @@ sub can_checkAnswers {
 	}
 
 	return $authz->hasPermissions($user->user_id, 'check_answers_after_due_date') && $canShowProblemScores
-		if between(($set->due_date + $self->{ce}{gatewayGracePeriod}), $set->answer_date, $submitTime);
+		if between(($set->due_date + $c->ce->{gatewayGracePeriod}), $set->answer_date, $submitTime);
 
 	return $authz->hasPermissions($user->user_id, 'check_answers_after_answer_date') && $canShowProblemScores
 		if after($set->answer_date, $submitTime);
@@ -222,54 +210,47 @@ sub can_checkAnswers {
 	return 0;
 }
 
-sub can_showScore {
-	my ($self, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) = @_;
+sub can_showScore ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
 	return
-		$self->r->authz->hasPermissions($user->user_id, 'view_hidden_work')
+		$c->authz->hasPermissions($user->user_id, 'view_hidden_work')
 		|| $set->hide_score eq 'N'
-		|| ($set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $self->r->submitTime));
+		|| ($set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $c->submitTime));
 }
 
-sub can_showProblemScores {
-	my ($self, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) = @_;
-	return $self->can_showScore($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet)
-		&& ($set->hide_score_by_problem eq 'N' || $self->r->authz->hasPermissions($user->user_id, 'view_hidden_work'));
+sub can_showProblemScores ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
+	return $c->can_showScore($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet)
+		&& ($set->hide_score_by_problem eq 'N' || $c->authz->hasPermissions($user->user_id, 'view_hidden_work'));
 }
 
-sub can_showWork {
-	my ($self, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) = @_;
-	return $self->r->authz->hasPermissions($user->user_id, 'view_hidden_work')
+sub can_showWork ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
+	return $c->authz->hasPermissions($user->user_id, 'view_hidden_work')
 		|| ($set->hide_work eq 'N'
-			|| ($set->hide_work eq 'BeforeAnswerDate' && $self->r->submitTime > $tmplSet->answer_date));
+			|| ($set->hide_work eq 'BeforeAnswerDate' && $c->submitTime > $tmplSet->answer_date));
 }
 
-sub can_useMathView {
-	my ($self) = @_;
-	return $self->r->ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView';
+sub can_useMathView ($c) {
+	return $c->ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView';
 }
 
-sub can_useWirisEditor {
-	my ($self) = @_;
-	return $self->r->ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS';
+sub can_useWirisEditor ($c) {
+	return $c->ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS';
 }
 
-sub can_useMathQuill {
-	my ($self) = @_;
-	return $self->r->ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill';
+sub can_useMathQuill ($c) {
+	return $c->ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill';
 }
 
 # Output utility
-sub attemptResults {
-	my ($self, $pg, $showCorrectAnswers, $showAttemptResults, $showSummary) = @_;
-	my $ce = $self->{ce};
+sub attemptResults ($c, $pg, $showCorrectAnswers, $showAttemptResults, $showSummary) {
+	my $ce = $c->ce;
 
 	# Create AttemptsTable object
 	my $tbl = WeBWorK::HTML::AttemptsTable->new(
 		$pg->{answers},
-		$self->r,
+		$c,
 		answersSubmitted    => 1,
 		answerOrder         => $pg->{flags}{ANSWER_ENTRY_ORDER},
-		displayMode         => $self->{displayMode},
+		displayMode         => $c->{displayMode},
 		showHeadline        => 0,
 		showAnswerNumbers   => 0,
 		showAttemptAnswers  => $ce->{pg}{options}{showEvaluatedAnswers},
@@ -298,14 +279,12 @@ sub attemptResults {
 	return $answerTemplate;
 }
 
-sub get_instructor_comment {
-	my ($self, $problem) = @_;
-
+sub get_instructor_comment ($c, $problem) {
 	return unless ref($problem) =~ /ProblemVersion/;
 
-	my $db               = $self->r->db;
+	my $db               = $c->db;
 	my $userPastAnswerID = $db->latestProblemPastAnswer(
-		$self->{ce}{courseName},
+		$c->ce->{courseName},
 		$problem->user_id, $problem->set_id . ',v' . $problem->version_id,
 		$problem->problem_id
 	);
@@ -320,31 +299,27 @@ sub get_instructor_comment {
 
 # Template methods
 
-async sub pre_header_initialize {
-	my ($self) = @_;
-	my $r = $self->r;
-
+async sub pre_header_initialize ($c) {
 	# Make sure these are defined for the templates.
-	$r->stash->{problems}        = [];
-	$r->stash->{pg_results}      = [];
-	$r->stash->{startProb}       = 0;
-	$r->stash->{endProb}         = 0;
-	$r->stash->{numPages}        = 0;
-	$r->stash->{pageNumber}      = 0;
-	$r->stash->{problem_numbers} = [];
-	$r->stash->{probOrder}       = [];
+	$c->stash->{problems}        = [];
+	$c->stash->{pg_results}      = [];
+	$c->stash->{startProb}       = 0;
+	$c->stash->{endProb}         = 0;
+	$c->stash->{numPages}        = 0;
+	$c->stash->{pageNumber}      = 0;
+	$c->stash->{problem_numbers} = [];
+	$c->stash->{probOrder}       = [];
 
 	# If authz->checkSet has failed, then this set is invalid.  No need to proceeded.
-	return if $self->{invalidSet};
+	return if $c->{invalidSet};
 
-	my $ce      = $r->ce;
-	my $db      = $r->db;
-	my $authz   = $r->authz;
-	my $urlpath = $r->urlpath;
+	my $ce    = $c->ce;
+	my $db    = $c->db;
+	my $authz = $c->authz;
 
-	my $setID           = $urlpath->arg('setID');
-	my $userID          = $r->param('user');
-	my $effectiveUserID = $r->param('effectiveUser');
+	my $setID           = $c->stash('setID');
+	my $userID          = $c->param('user');
+	my $effectiveUserID = $c->param('effectiveUser');
 
 	# User checks
 	my $user = $db->getUser($userID);
@@ -374,10 +349,10 @@ async sub pre_header_initialize {
 	if ($setID eq 'Undefined_Set') {
 		# Make sure these are defined
 		$requestedVersion = 1;
-		$self->{assignment_type} = 'gateway';
+		$c->{assignment_type} = 'gateway';
 
 		if (!$authz->hasPermissions($userID, 'modify_problem_sets')) {
-			$self->{invalidSet} = 'You do not have the authorization level required to view/edit undefined sets.';
+			$c->{invalidSet} = 'You do not have the authorization level required to view/edit undefined sets.';
 
 			# Define these so that we can drop through to report the error in body.
 			$tmplSet = fake_set($db);
@@ -385,8 +360,8 @@ async sub pre_header_initialize {
 			$problem = fake_problem($db);
 		} else {
 			# In this case we're creating a fake set from the input, so the input must include a source file.
-			if (!$r->param('sourceFilePath')) {
-				$self->{invalidSet} =
+			if (!$c->param('sourceFilePath')) {
+				$c->{invalidSet} =
 					'An Undefined_Set was requested, but no source file for the contained problem was provided.';
 
 				# Define these so that we can drop through to report the error in body.
@@ -395,7 +370,7 @@ async sub pre_header_initialize {
 				$problem = fake_problem($db);
 
 			} else {
-				my $sourceFPath = $r->param('sourceFilePath');
+				my $sourceFPath = $c->param('sourceFilePath');
 				die('sourceFilePath is unsafe!')
 					unless path_is_subdir($sourceFPath, $ce->{courseDirs}{templates}, 1);
 
@@ -430,18 +405,18 @@ async sub pre_header_initialize {
 				$problem->source_file($sourceFPath);
 				$problem->user_id($effectiveUserID);
 				$problem->value(1);
-				$problem->problem_seed($r->param('problemSeed')) if ($r->param('problemSeed'));
+				$problem->problem_seed($c->param('problemSeed')) if ($c->param('problemSeed'));
 			}
 		}
 	} else {
 		# Get the template set, i.e., the non-versioned set that's assigned to the user.
-		# If this failed in authz->checkSet, then $self->{invalidSet} is set.
+		# If this failed in authz->checkSet, then $c->{invalidSet} is set.
 		$tmplSet = $db->getMergedSet($effectiveUserID, $setID);
 
 		# Now that is has been validated that this is a gateway test, save the assignment test for the processing of
 		# proctor keys for graded proctored tests.  If a set was not obtained from the database, store a fake value here
 		# to be able to continue.
-		$self->{assignment_type} = $tmplSet->assignment_type || 'gateway';
+		$c->{assignment_type} = $tmplSet->assignment_type || 'gateway';
 
 		# next, get the latest (current) version of the set if we don't have a
 		#     requested version number
@@ -457,10 +432,10 @@ async sub pre_header_initialize {
 		die('No requested version when returning to problem?!')
 			if (
 				(
-					$r->param('previewAnswers')
-					|| $r->param('checkAnswers')
-					|| $r->param('submitAnswers')
-					|| $r->param('newPage')
+					$c->param('previewAnswers')
+					|| $c->param('checkAnswers')
+					|| $c->param('submitAnswers')
+					|| $c->param('newPage')
 				)
 				&& !$requestedVersion
 			);
@@ -490,9 +465,9 @@ async sub pre_header_initialize {
 	# date.  If a specific version has not been requested and conditional release is enabled, then this also checks to
 	# see if the conditions have been met for a conditional release.
 	my $isOpen = (
-		$requestedVersion ? ($set && $set->open_date && after($set->open_date, $self->r->submitTime)) : ($tmplSet
+		$requestedVersion ? ($set && $set->open_date && after($set->open_date, $c->submitTime)) : ($tmplSet
 				&& $tmplSet->open_date
-				&& after($tmplSet->open_date, $self->r->submitTime)
+				&& after($tmplSet->open_date, $c->submitTime)
 				&& !($ce->{options}{enableConditionalRelease} && is_restricted($db, $tmplSet, $effectiveUserID)))
 		)
 		|| $authz->hasPermissions($userID, 'view_unopened_sets');
@@ -500,7 +475,7 @@ async sub pre_header_initialize {
 	my $isClosed =
 		$tmplSet
 		&& $tmplSet->due_date
-		&& after($tmplSet->due_date, $self->r->submitTime)
+		&& after($tmplSet->due_date, $c->submitTime)
 		&& !$authz->hasPermissions($userID, 'record_answers_after_due_date');
 
 	# To determine if we need a new version, we need to know whether this version exceeds the number of attempts per
@@ -543,12 +518,12 @@ async sub pre_header_initialize {
 	my $currentNumVersions = 0;    # this is the number of versions in the time interval
 	my $totalNumVersions   = 0;
 
-	if ($setVersionNumber && !$self->{invalidSet} && $setID ne 'Undefined_Set') {
+	if ($setVersionNumber && !$c->{invalidSet} && $setID ne 'Undefined_Set') {
 		my @setVersionIDs = $db->listSetVersions($effectiveUserID, $setID);
 		my @setVersions   = $db->getSetVersions(map { [ $effectiveUserID, $setID,, $_ ] } @setVersionIDs);
 		for (@setVersions) {
 			$totalNumVersions++;
-			$currentNumVersions++ if (!$timeInterval || $_->version_creation_time() > ($r->submitTime - $timeInterval));
+			$currentNumVersions++ if (!$timeInterval || $_->version_creation_time() > ($c->submitTime - $timeInterval));
 		}
 	}
 
@@ -556,7 +531,7 @@ async sub pre_header_initialize {
 
 	my $versionIsOpen = 0;
 
-	if ($isOpen && !$isClosed && !$self->{invalidSet}) {
+	if ($isOpen && !$isClosed && !$c->{invalidSet}) {
 		# If specific version was not requested, then create a new one if needed.
 		if (!$requestedVersion) {
 			if (
@@ -567,7 +542,7 @@ async sub pre_header_initialize {
 						(
 							($maxAttemptsPerVersion == 0 && $currentNumAttempts > 0)
 							|| ($maxAttemptsPerVersion != 0 && $currentNumAttempts >= $maxAttemptsPerVersion)
-							|| $r->submitTime >= $set->due_date + $ce->{gatewayGracePeriod}
+							|| $c->submitTime >= $set->due_date + $ce->{gatewayGracePeriod}
 						)
 						&& (!$versionsPerInterval || $currentNumVersions < $versionsPerInterval)
 					)
@@ -577,7 +552,7 @@ async sub pre_header_initialize {
 					|| (
 						$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
 						|| ($authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student')
-							&& $r->param('createnew_ok'))
+							&& $c->param('createnew_ok'))
 					)
 				)
 				)
@@ -596,7 +571,7 @@ async sub pre_header_initialize {
 				$problem = $db->getMergedProblemVersion($effectiveUserID, $setID, $setVersionNumber, $setPNum[0]);
 
 				# Convert the floating point value from Time::HiRes to an integer for use below. Truncate towards 0.
-				my $timeNowInt = int($r->submitTime);
+				my $timeNowInt = int($c->submitTime);
 
 				# Set up creation time, and open and due dates.
 				my $ansOffset = $set->answer_date - $set->due_date;
@@ -604,7 +579,7 @@ async sub pre_header_initialize {
 				$set->open_date($timeNowInt);
 				# Figure out the due date, taking into account the time limit cap.
 				my $dueTime =
-					$timeLimit == 0 || ($set->time_limit_cap && $r->submitTime + $timeLimit > $set->due_date)
+					$timeLimit == 0 || ($set->time_limit_cap && $c->submitTime + $timeLimit > $set->due_date)
 					? $set->due_date
 					: $timeNowInt + $timeLimit;
 
@@ -632,14 +607,14 @@ async sub pre_header_initialize {
 				$currentNumAttempts = 0;
 
 			} elsif ($maxAttempts != -1 && $totalNumVersions > $maxAttempts) {
-				$self->{invalidSet} = 'No new versions of this assignment are available, '
+				$c->{invalidSet} = 'No new versions of this assignment are available, '
 					. 'because you have already taken the maximum number allowed.';
 
 			} elsif ($effectiveUserID ne $userID
 				&& $authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student'))
 			{
 
-				$self->{invalidSet} =
+				$c->{invalidSet} =
 					"User $effectiveUserID is being acted "
 					. 'as.  If you continue, you will create a new version of this set '
 					. 'for that user, which will count against their allowed maximum '
@@ -647,20 +622,20 @@ async sub pre_header_initialize {
 					. 'IS NOT WHAT YOU WANT TO DO.  Please be sure that you want to '
 					. 'do this before clicking the "Create new set version" link '
 					. 'below.  Alternately, PRESS THE "BACK" BUTTON and continue.';
-				$self->{invalidVersionCreation} = 1;
+				$c->{invalidVersionCreation} = 1;
 
 			} elsif ($effectiveUserID ne $userID) {
-				$self->{invalidSet} = "User $effectiveUserID is being acted as.  "
+				$c->{invalidSet} = "User $effectiveUserID is being acted as.  "
 					. 'When acting as another user, new versions of the set cannot be created.';
-				$self->{invalidVersionCreation} = 2;
+				$c->{invalidVersionCreation} = 2;
 
 			} elsif (($maxAttemptsPerVersion == 0 || $currentNumAttempts < $maxAttemptsPerVersion)
-				&& $r->submitTime < $set->due_date() + $ce->{gatewayGracePeriod})
+				&& $c->submitTime < $set->due_date() + $ce->{gatewayGracePeriod})
 			{
-				if (between($set->open_date(), $set->due_date() + $ce->{gatewayGracePeriod}, $r->submitTime)) {
+				if (between($set->open_date(), $set->due_date() + $ce->{gatewayGracePeriod}, $c->submitTime)) {
 					$versionIsOpen = 1;
 				} else {
-					$self->{invalidSet} =
+					$c->{invalidSet} =
 						'No new  versions of this assignment are available, because the set is not open or its time'
 						. ' limit has expired.';
 				}
@@ -668,7 +643,7 @@ async sub pre_header_initialize {
 			} elsif ($versionsPerInterval
 				&& ($currentNumVersions >= $versionsPerInterval))
 			{
-				$self->{invalidSet} =
+				$c->{invalidSet} =
 					'You have already taken all available versions of this test in the current time interval.  '
 					. 'You may take the test again after the time interval has expired.';
 
@@ -682,20 +657,20 @@ async sub pre_header_initialize {
 					|| $authz->hasPermissions($userID, 'record_set_version_answers_when_acting_as_student'))
 				)
 			{
-				if (between($set->open_date(), $set->due_date() + $ce->{gatewayGracePeriod}, $r->submitTime)) {
+				if (between($set->open_date(), $set->due_date() + $ce->{gatewayGracePeriod}, $c->submitTime)) {
 					$versionIsOpen = 1;
 				}
 			}
 		}
 
-	} elsif (!$self->{invalidSet} && !$requestedVersion) {
-		$self->{invalidSet} = 'This set is closed.  No new set versions may be taken.';
+	} elsif (!$c->{invalidSet} && !$requestedVersion) {
+		$c->{invalidSet} = 'This set is closed.  No new set versions may be taken.';
 	}
 
 	# If the set or problem is invalid, then delete any proctor keys if any and return.
-	if ($self->{invalidSet} || $self->{invalidProblem}) {
-		if (defined $self->{assignment_type} && $self->{assignment_type} eq 'proctored_gateway') {
-			my $proctorID = $r->param('proctor_user');
+	if ($c->{invalidSet} || $c->{invalidProblem}) {
+		if (defined $c->{assignment_type} && $c->{assignment_type} eq 'proctored_gateway') {
+			my $proctorID = $c->param('proctor_user');
 			if ($proctorID) {
 				eval { $db->deleteKey("$effectiveUserID,$proctorID"); };
 				eval { $db->deleteKey("$effectiveUserID,$proctorID,g"); };
@@ -707,41 +682,41 @@ async sub pre_header_initialize {
 	# Save problem and user data
 
 	my $psvn = $set->psvn();
-	$self->{tmplSet} = $tmplSet;
-	$self->{set}     = $set;
-	$self->{problem} = $problem;
+	$c->{tmplSet} = $tmplSet;
+	$c->{set}     = $set;
+	$c->{problem} = $problem;
 
-	$self->{userID}        = $userID;
-	$self->{user}          = $user;
-	$self->{effectiveUser} = $effectiveUser;
+	$c->{userID}        = $userID;
+	$c->{user}          = $user;
+	$c->{effectiveUser} = $effectiveUser;
 
-	$self->{isOpen}        = $isOpen;
-	$self->{isClosed}      = $isClosed;
-	$self->{versionIsOpen} = $versionIsOpen;
+	$c->{isOpen}        = $isOpen;
+	$c->{isClosed}      = $isClosed;
+	$c->{versionIsOpen} = $versionIsOpen;
 
 	# Form processing
 
 	# Get the current page, if it's given.
-	my $currentPage = $r->param('currentPage') || 1;
+	my $currentPage = $c->param('currentPage') || 1;
 
 	# This is a hack to manage changing pages.  Set previewAnswers to
 	# false if the "pageChangeHack" input is set (a page change link was used).
-	$r->param('previewAnswers', 0) if ($r->param('pageChangeHack'));
+	$c->param('previewAnswers', 0) if $c->param('pageChangeHack');
 
-	$self->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
+	$c->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
 
 	# Set options from request parameters.
-	$self->{redisplay}      = $r->param('redisplay');
-	$self->{submitAnswers}  = $r->param('submitAnswers') || 0;
-	$self->{checkAnswers}   = $r->param('checkAnswers')   // 0;
-	$self->{previewAnswers} = $r->param('previewAnswers') // 0;
-	$self->{formFields}     = { WeBWorK::Form->new_from_paramable($r)->Vars };
+	$c->{redisplay}      = $c->param('redisplay');
+	$c->{submitAnswers}  = $c->param('submitAnswers') || 0;
+	$c->{checkAnswers}   = $c->param('checkAnswers')   // 0;
+	$c->{previewAnswers} = $c->param('previewAnswers') // 0;
+	$c->{formFields}     = { WeBWorK::Form->new_from_paramable($c)->Vars };
 
 	# Permissions
 
 	# Bail without doing anything if the set isn't yet open for this user.
-	if (!($self->{isOpen} || $authz->hasPermissions($userID, 'view_unopened_sets'))) {
-		$self->{invalidSet} = 'This set is not yet open.';
+	if (!($c->{isOpen} || $authz->hasPermissions($userID, 'view_unopened_sets'))) {
+		$c->{invalidSet} = 'This set is not yet open.';
 		return;
 	}
 
@@ -749,19 +724,19 @@ async sub pre_header_initialize {
 	my %want = (
 		showOldAnswers => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
 		# showProblemGrader implies showCorrectAnswers.  This is a convenience for grading.
-		showCorrectAnswers => ($r->param('showProblemGrader') || 0)
-			|| ($r->param('showCorrectAnswers') && ($self->{submitAnswers} || $self->{checkAnswers}))
+		showCorrectAnswers => ($c->param('showProblemGrader') || 0)
+			|| ($c->param('showCorrectAnswers') && ($c->{submitAnswers} || $c->{checkAnswers}))
 			|| 0,
-		showProblemGrader => $r->param('showProblemGrader')
+		showProblemGrader => $c->param('showProblemGrader')
 			|| 0,
 		# Hints are not yet implemented in gateway quzzes.
 		showHints => 0,
 		# showProblemGrader implies showSolutions.  Another convenience for grading.
-		showSolutions => $r->param('showProblemGrader')
-			|| ($r->param('showSolutions') && ($self->{submitAnswers} || $self->{checkAnswers})),
-		recordAnswers => $self->{submitAnswers} && !$authz->hasPermissions($userID, 'avoid_recording_answers'),
+		showSolutions => $c->param('showProblemGrader')
+			|| ($c->param('showSolutions') && ($c->{submitAnswers} || $c->{checkAnswers})),
+		recordAnswers => $c->{submitAnswers} && !$authz->hasPermissions($userID, 'avoid_recording_answers'),
 		# we also want to check answers if we were checking answers and are switching between pages
-		checkAnswers   => $self->{checkAnswers},
+		checkAnswers   => $c->{checkAnswers},
 		useMathView    => $user->useMathView ne ''    ? $user->useMathView    : $ce->{pg}{options}{useMathView},
 		useWirisEditor => $user->useWirisEditor ne '' ? $user->useWirisEditor : $ce->{pg}{options}{useWirisEditor},
 		useMathQuill   => $user->useMathQuill ne ''   ? $user->useMathQuill   : $ce->{pg}{options}{useMathQuill},
@@ -784,30 +759,30 @@ async sub pre_header_initialize {
 	# Does the user have permission to use certain options?
 	my @args = ($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet);
 	my %can  = (
-		showOldAnswers        => $self->can_showOldAnswers(@args),
-		showCorrectAnswers    => $self->can_showCorrectAnswers(@args),
-		showProblemGrader     => $self->can_showProblemGrader(@args),
-		showHints             => $self->can_showHints(@args),
-		showSolutions         => $self->can_showSolutions(@args),
-		recordAnswers         => $self->can_recordAnswers(@args),
-		checkAnswers          => $self->can_checkAnswers(@args),
-		recordAnswersNextTime => $self->can_recordAnswers(@args, $self->{submitAnswers}),
-		checkAnswersNextTime  => $self->can_checkAnswers(@args, $self->{submitAnswers}),
-		showScore             => $self->can_showScore(@args),
-		showProblemScores     => $self->can_showProblemScores(@args),
-		showWork              => $self->can_showWork(@args),
-		useMathView           => $self->can_useMathView,
-		useWirisEditor        => $self->can_useWirisEditor,
-		useMathQuill          => $self->can_useMathQuill
+		showOldAnswers        => $c->can_showOldAnswers(@args),
+		showCorrectAnswers    => $c->can_showCorrectAnswers(@args),
+		showProblemGrader     => $c->can_showProblemGrader(@args),
+		showHints             => $c->can_showHints,
+		showSolutions         => $c->can_showSolutions(@args),
+		recordAnswers         => $c->can_recordAnswers(@args),
+		checkAnswers          => $c->can_checkAnswers(@args),
+		recordAnswersNextTime => $c->can_recordAnswers(@args, $c->{submitAnswers}),
+		checkAnswersNextTime  => $c->can_checkAnswers(@args, $c->{submitAnswers}),
+		showScore             => $c->can_showScore(@args),
+		showProblemScores     => $c->can_showProblemScores(@args),
+		showWork              => $c->can_showWork(@args),
+		useMathView           => $c->can_useMathView,
+		useWirisEditor        => $c->can_useWirisEditor,
+		useMathQuill          => $c->can_useMathQuill
 	);
 
 	# Final values for options
 	my %will = map { $_ => $can{$_} && ($must{$_} || $want{$_}) } keys %must;
 
-	$self->{want} = \%want;
-	$self->{must} = \%must;
-	$self->{can}  = \%can;
-	$self->{will} = \%will;
+	$c->{want} = \%want;
+	$c->{must} = \%must;
+	$c->{can}  = \%can;
+	$c->{will} = \%will;
 
 	# Set up problem numbering and multipage variables.
 
@@ -826,7 +801,7 @@ async sub pre_header_initialize {
 	# Update startProb and endProb for multipage tests
 	if ($set->problems_per_page) {
 		$numProbPerPage = $set->problems_per_page;
-		$pageNumber     = $r->param('newPage') || $currentPage;
+		$pageNumber     = $c->param('newPage') || $currentPage;
 
 		$numPages = scalar(@problemNumbers) / $numProbPerPage;
 		$numPages = int($numPages) + 1 if (int($numPages) != $numPages);
@@ -868,7 +843,7 @@ async sub pre_header_initialize {
 	my @pg_results;
 
 	# pg errors are stored here.
-	$self->{errors} = [];
+	$c->{errors} = [];
 
 	# Process the problems as needed.
 	my @mergedProblems;
@@ -884,16 +859,16 @@ async sub pre_header_initialize {
 		my $problemN = $mergedProblems[$pIndex];
 
 		if (!defined $problemN) {
-			$self->{invalidSet} = 'One or more of the problems in this set have not been assigned to you.';
+			$c->{invalidSet} = 'One or more of the problems in this set have not been assigned to you.';
 			return;
 		}
 
 		# sticky answers are set up here
-		if (!($self->{submitAnswers} || $self->{previewAnswers} || $self->{checkAnswers} || $r->param('newPage'))
+		if (!($c->{submitAnswers} || $c->{previewAnswers} || $c->{checkAnswers} || $c->param('newPage'))
 			&& $will{showOldAnswers})
 		{
 			my %oldAnswers = decodeAnswers($problemN->last_answer);
-			$self->{formFields}{$_} = $oldAnswers{$_} for (keys %oldAnswers);
+			$c->{formFields}{$_} = $oldAnswers{$_} for (keys %oldAnswers);
 		}
 
 		push(@problems, $problemN);
@@ -901,8 +876,8 @@ async sub pre_header_initialize {
 		# If this problem DOES NOT need to be translated, store a defined but false placeholder in the array.
 		my $pg = 0;
 		# This is the actual translation of each problem.
-		if ((grep {/^$pIndex$/} @probsToDisplay) || $self->{submitAnswers}) {
-			push @renderPromises, $self->getProblemHTML($self->{effectiveUser}, $set, $self->{formFields}, $problemN);
+		if ((grep {/^$pIndex$/} @probsToDisplay) || $c->{submitAnswers}) {
+			push @renderPromises, $c->getProblemHTML($c->{effectiveUser}, $set, $c->{formFields}, $problemN);
 			# If this problem DOES need to be translated, store an undefined placeholder in the array.
 			# This will be replaced with the rendered problem after all of the above promises are awaited.
 			$pg = undef;
@@ -917,21 +892,21 @@ async sub pre_header_initialize {
 		$_ = (shift @renderedPG)->[0] if !defined $_;
 	}
 
-	$r->stash->{problems}        = \@problems;
-	$r->stash->{pg_results}      = \@pg_results;
-	$r->stash->{startProb}       = $startProb;
-	$r->stash->{endProb}         = $endProb;
-	$r->stash->{numPages}        = $numPages;
-	$r->stash->{pageNumber}      = $pageNumber;
-	$r->stash->{problem_numbers} = \@problemNumbers;
-	$r->stash->{probOrder}       = \@probOrder;
+	$c->stash->{problems}        = \@problems;
+	$c->stash->{pg_results}      = \@pg_results;
+	$c->stash->{startProb}       = $startProb;
+	$c->stash->{endProb}         = $endProb;
+	$c->stash->{numPages}        = $numPages;
+	$c->stash->{pageNumber}      = $pageNumber;
+	$c->stash->{problem_numbers} = \@problemNumbers;
+	$c->stash->{probOrder}       = \@probOrder;
 
 	my $versionID = $set->version_id;
 	my $setVName  = "$setID,v$versionID";
 
 	# Report everything with the request submit time. Convert the floating point
 	# value from Time::HiRes to an integer for use below. Truncate towards 0.
-	my $timeNowInt = int($r->submitTime);
+	my $timeNowInt = int($c->submitTime);
 
 	# Answer processing
 
@@ -941,14 +916,14 @@ async sub pre_header_initialize {
 	my $LTIGradeResult       = -1;
 
 	# Save results to database as appropriate
-	if ($self->{submitAnswers} || (($self->{previewAnswers} || $r->param('newPage')) && $can{recordAnswers})) {
+	if ($c->{submitAnswers} || (($c->{previewAnswers} || $c->param('newPage')) && $can{recordAnswers})) {
 		# If answers are being submitted, then save the problems to the database.  If this is a preview or pages change
 		# and answers can be recorded, then save the last answer for future reference.
 
 		# First, deal with answers being submitted for a proctored exam.  Delete the proctor keys that authorized the
 		# grading, so that it isn't possible to log in and take another proctored test without being reauthorized.
-		if ($self->{submitAnswers} && $self->{assignment_type} eq 'proctored_gateway') {
-			my $proctorID = $r->param('proctor_user');
+		if ($c->{submitAnswers} && $c->{assignment_type} eq 'proctored_gateway') {
+			my $proctorID = $c->param('proctor_user');
 
 			# If there are no attempts left, delete all proctor keys for this user.
 			if ($set->attempts_per_version - 1 - $problem->num_correct - $problem->num_incorrect <= 0) {
@@ -958,9 +933,9 @@ async sub pre_header_initialize {
 				eval { $db->deleteKey("$effectiveUserID,$proctorID,g"); };
 				# In this case there may be a past login proctor key that can be kept so that another login to continue
 				# working the test is not needed.
-				if ($r->param('past_proctor_user') && $r->param('past_proctor_key')) {
-					$r->param('proctor_user', $r->param('past_proctor_user'));
-					$r->param('proctor_key',  $r->param('past_proctor_key'));
+				if ($c->param('past_proctor_user') && $c->param('past_proctor_key')) {
+					$c->param('proctor_user', $c->param('past_proctor_user'));
+					$c->param('proctor_key',  $c->param('past_proctor_key'));
 				}
 			}
 			# This is unsubtle, but we'd rather not have bogus keys sitting around.
@@ -984,11 +959,11 @@ async sub pre_header_initialize {
 			if (ref $pg_result) {
 				my ($past_answers_string, $scores, $isEssay);    # Not used here
 				($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) =
-					create_ans_str_from_responses($self, $pg_result);
+					create_ans_str_from_responses($c, $pg_result);
 			} else {
 				my $prefix         = sprintf('Q%04d_', $problemNumbers[$i]);
-				my @fields         = sort grep {/^(?!previous).*$prefix/} (keys %{ $self->{formFields} });
-				my %answersToStore = map       { $_ => $self->{formFields}->{$_} } @fields;
+				my @fields         = sort grep {/^(?!previous).*$prefix/} (keys %{ $c->{formFields} });
+				my %answersToStore = map       { $_ => $c->{formFields}->{$_} } @fields;
 				my @answer_order   = @fields;
 				$encoded_last_answer_string = encodeAnswers(%answersToStore, @answer_order);
 			}
@@ -998,15 +973,15 @@ async sub pre_header_initialize {
 			$pureProblem->last_answer($encoded_last_answer_string);
 
 			# Store the state in the database if answers are being recorded.
-			if ($self->{submitAnswers} && $will{recordAnswers}) {
+			if ($c->{submitAnswers} && $will{recordAnswers}) {
 				my $score =
-					compute_reduced_score($ce, $problem, $set, $pg_result->{state}{recorded_score}, $r->submitTime);
+					compute_reduced_score($ce, $problem, $set, $pg_result->{state}{recorded_score}, $c->submitTime);
 				$problem->status($score) if $score > $problem->status;
 
 				$problem->sub_status($problem->status)
 					if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 						|| !$set->enable_reduced_scoring
-						|| before($set->reduced_scoring_date, $r->submitTime));
+						|| before($set->reduced_scoring_date, $c->submitTime));
 
 				$problem->attempted(1);
 				$problem->num_correct($pg_result->{state}{num_of_correct_ans});
@@ -1023,12 +998,12 @@ async sub pre_header_initialize {
 					# used in a string comparison.  Don't compare translated strings!
 					$scoreRecordedMessage[ $probOrder[$i] ] = 'recorded';
 				} else {
-					$scoreRecordedMessage[ $probOrder[$i] ] = $r->maketext('Your score was not recorded because '
+					$scoreRecordedMessage[ $probOrder[$i] ] = $c->maketext('Your score was not recorded because '
 							. 'there was a failure in storing the problem record to the database.');
 				}
 
 				# Write the transaction log
-				writeLog($self->{ce}, 'transaction',
+				writeLog($c->ce, 'transaction',
 					$problem->problem_id . "\t"
 						. $problem->set_id . "\t"
 						. $problem->user_id . "\t"
@@ -1041,21 +1016,21 @@ async sub pre_header_initialize {
 						. $problem->last_answer . "\t"
 						. $problem->num_correct . "\t"
 						. $problem->num_incorrect);
-			} elsif ($self->{submitAnswers}) {
+			} elsif ($c->{submitAnswers}) {
 				# This is the case answers were submitted but can not be saved. Report an error message.
-				if ($self->{isClosed}) {
+				if ($c->{isClosed}) {
 					$scoreRecordedMessage[ $probOrder[$i] ] =
-						$r->maketext('Your score was not recorded because this problem set version is not open.');
+						$c->maketext('Your score was not recorded because this problem set version is not open.');
 				} elsif ($problem->num_correct + $problem->num_incorrect >= $set->attempts_per_version) {
-					$scoreRecordedMessage[ $probOrder[$i] ] = $r->maketext(
+					$scoreRecordedMessage[ $probOrder[$i] ] = $c->maketext(
 						'Your score was not recorded because you have no attempts remaining on this set version.');
-				} elsif (!$self->{versionIsOpen}) {
-					my $endTime = ($set->version_last_attempt_time) ? $set->version_last_attempt_time : $r->submitTime;
+				} elsif (!$c->{versionIsOpen}) {
+					my $endTime = ($set->version_last_attempt_time) ? $set->version_last_attempt_time : $c->submitTime;
 					if ($endTime > $set->due_date && $endTime < $set->due_date + $ce->{gatewayGracePeriod}) {
 						$endTime = $set->due_date;
 					}
 					my $elapsed = int(($endTime - $set->open_date) / 0.6 + 0.5) / 100;
-					$scoreRecordedMessage[ $probOrder[$i] ] = $r->maketext(
+					$scoreRecordedMessage[ $probOrder[$i] ] = $c->maketext(
 						'Your score was not recorded because you have exceeded the time limit for this test. '
 							. '(Time taken: [_1] min; allowed: [_2] min.)',
 						$elapsed,
@@ -1063,7 +1038,7 @@ async sub pre_header_initialize {
 						($set->due_date - $set->open_date) / 60
 					);
 				} else {
-					$scoreRecordedMessage[ $probOrder[$i] ] = $r->maketext('Your score was not recorded.');
+					$scoreRecordedMessage[ $probOrder[$i] ] = $c->maketext('Your score was not recorded.');
 				}
 			} else {
 				# The final case is that of a preview or page change.  Save the last answers for the problems.
@@ -1072,9 +1047,9 @@ async sub pre_header_initialize {
 		}
 
 		# Try to update the student score on the LMS if that option is enabled.
-		my $LTIGradeMode = $self->{ce}{LTIGradeMode} // '';
-		if ($self->{submitAnswers} && $will{recordAnswers} && $LTIGradeMode && $self->{ce}{LTIGradeOnSubmit}) {
-			my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
+		my $LTIGradeMode = $c->ce->{LTIGradeMode} // '';
+		if ($c->{submitAnswers} && $will{recordAnswers} && $LTIGradeMode && $c->ce->{LTIGradeOnSubmit}) {
+			my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($c);
 			if ($LTIGradeMode eq 'course') {
 				$LTIGradeResult = $grader->submit_course_grade($effectiveUserID);
 			} elsif ($LTIGradeMode eq 'homework') {
@@ -1085,16 +1060,16 @@ async sub pre_header_initialize {
 		# Finally, log student answers answers are being submitted, provided that answers can be recorded.  Note that
 		# this will log an overtime submission (or any case where someone submits the test, or spoofs a request to
 		# submit a test).
-		my $answer_log = $self->{ce}{courseFiles}{logs}{answer_log};
+		my $answer_log = $c->ce->{courseFiles}{logs}{answer_log};
 
-		if (defined $answer_log && $self->{submitAnswers}) {
+		if (defined $answer_log && $c->{submitAnswers}) {
 			for my $i (0 .. $#problems) {
 				next unless ref($pg_results[ $probOrder[$i] ]);
 
 				my $problem = $problems[ $probOrder[$i] ];
 
 				my ($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) =
-					create_ans_str_from_responses($self, $pg_results[ $probOrder[$i] ]);
+					create_ans_str_from_responses($c, $pg_results[ $probOrder[$i] ]);
 				$past_answers_string =~ s/\t+$/\t/;
 
 				if (!$past_answers_string || $past_answers_string =~ /^\t$/) {
@@ -1103,7 +1078,7 @@ async sub pre_header_initialize {
 
 				# Write to courseLog, use the recorded time of when the submission was received, but as an integer
 				writeCourseLogGivenTime(
-					$self->{ce},
+					$c->ce,
 					'answer_log',
 					$timeNowInt,
 					join('',
@@ -1113,7 +1088,7 @@ async sub pre_header_initialize {
 
 				# Add to PastAnswer db
 				my $pastAnswer = $db->newPastAnswer();
-				$pastAnswer->course_id($urlpath->arg('courseID'));
+				$pastAnswer->course_id($c->stash('courseID'));
 				$pastAnswer->user_id($problem->user_id);
 				$pastAnswer->set_id($setVName);
 				$pastAnswer->problem_id($problem->problem_id);
@@ -1125,13 +1100,13 @@ async sub pre_header_initialize {
 			}
 		}
 
-		my $caliper_sensor = Caliper::Sensor->new($self->{ce});
+		my $caliper_sensor = Caliper::Sensor->new($c->ce);
 		if ($caliper_sensor->caliperEnabled() && defined $answer_log) {
 			my $events = [];
 
-			my $startTime = $r->param('startTime');
-			my $endTime   = int($r->submitTime);
-			if ($self->{submitAnswers} && $will{recordAnswers}) {
+			my $startTime = $c->param('startTime');
+			my $endTime   = int($c->submitTime);
+			if ($c->{submitAnswers} && $will{recordAnswers}) {
 				for my $i (0 .. $#problems) {
 					my $problem                  = $problems[ $probOrder[$i] ];
 					my $pg                       = $pg_results[ $probOrder[$i] ];
@@ -1140,13 +1115,11 @@ async sub pre_header_initialize {
 						'action'  => 'Completed',
 						'profile' => 'AssessmentProfile',
 						'object'  => Caliper::Entity::problem_user(
-							$self->{ce},            $db,
-							$problem->set_id(),     $versionID,
-							$problem->problem_id(), $problem->user_id(),
-							$pg
+							$c->ce, $db, $problem->set_id(), $versionID, $problem->problem_id(),
+							$problem->user_id(), $pg
 						),
 						'generated' => Caliper::Entity::answer(
-							$self->{ce},
+							$c->ce,
 							$db,
 							$problem->set_id(),
 							$versionID,
@@ -1163,9 +1136,9 @@ async sub pre_header_initialize {
 					'type'      => 'AssessmentEvent',
 					'action'    => 'Submitted',
 					'profile'   => 'AssessmentProfile',
-					'object'    => Caliper::Entity::problem_set($self->{ce}, $db, $setID),
+					'object'    => Caliper::Entity::problem_set($c->ce, $db, $setID),
 					'generated' => Caliper::Entity::problem_set_attempt(
-						$self->{ce}, $db, $setID, $versionID, $effectiveUserID, $startTime, $endTime
+						$c->ce, $db, $setID, $versionID, $effectiveUserID, $startTime, $endTime
 					),
 				};
 				push @$events, $submitted_set_event;
@@ -1174,9 +1147,9 @@ async sub pre_header_initialize {
 					'type'      => 'AssessmentEvent',
 					'action'    => 'Paused',
 					'profile'   => 'AssessmentProfile',
-					'object'    => Caliper::Entity::problem_set($self->{ce}, $db, $setID),
+					'object'    => Caliper::Entity::problem_set($c->ce, $db, $setID),
 					'generated' => Caliper::Entity::problem_set_attempt(
-						$self->{ce}, $db, $setID, $versionID, $effectiveUserID, $startTime, $endTime
+						$c->ce, $db, $setID, $versionID, $effectiveUserID, $startTime, $endTime
 					),
 				};
 				push @$events, $paused_set_event;
@@ -1188,26 +1161,26 @@ async sub pre_header_initialize {
 				'object'  => Caliper::Entity::webwork_app(),
 			};
 			push @$events, $tool_use_event;
-			$caliper_sensor->sendEvents($r, $events);
+			$caliper_sensor->sendEvents($c, $events);
 
 			# Reset start time
-			$r->param('startTime', '');
+			$c->param('startTime', '');
 		}
 	}
 	debug('end answer processing');
 
-	$self->{scoreRecordedMessage} = \@scoreRecordedMessage;
-	$self->{LTIGradeResult}       = $LTIGradeResult;
+	$c->{scoreRecordedMessage} = \@scoreRecordedMessage;
+	$c->{LTIGradeResult}       = $LTIGradeResult;
 
 	# Additional set-level database manipulation: We want to save the time that a set was submitted, and for proctored
 	# tests we want to reset the assignment type after a set is submitted for the last time so that it's possible to
 	# look at it later without getting proctor authorization.
 	if (
 		(
-			$self->{submitAnswers}
+			$c->{submitAnswers}
 			&& (
 				$will{recordAnswers}
-				|| (!$set->version_last_attempt_time && $r->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
+				|| (!$set->version_last_attempt_time && $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
 			)
 		)
 		|| (
@@ -1218,7 +1191,7 @@ async sub pre_header_initialize {
 					$userID ne $effectiveUserID
 					&& $authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
 					&& $set->attempts_per_version > 0
-					&& ($problem->num_correct + $problem->num_incorrect + ($self->{submitAnswers} ? 1 : 0) >=
+					&& ($problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} ? 1 : 0) >=
 						$set->attempts_per_version)
 				)
 			)
@@ -1228,10 +1201,10 @@ async sub pre_header_initialize {
 		# Save the submission time if we're recording the answer, or if the first submission occurs after the due_date.
 		$set->version_last_attempt_time($timeNowInt)
 			if (
-				$self->{submitAnswers}
+				$c->{submitAnswers}
 				&& (
 					$will{recordAnswers}
-					|| (!$set->version_last_attempt_time && $r->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
+					|| (!$set->version_last_attempt_time && $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
 				)
 			);
 
@@ -1244,7 +1217,7 @@ async sub pre_header_initialize {
 						$userID ne $effectiveUserID
 						&& $authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
 						&& $set->attempts_per_version > 0
-						&& ($problem->num_correct + $problem->num_incorrect + ($self->{submitAnswers} ? 1 : 0) >=
+						&& ($problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} ? 1 : 0) >=
 							$set->attempts_per_version)
 					)
 				)
@@ -1263,19 +1236,19 @@ async sub pre_header_initialize {
 	my @probStatus;
 
 	# Figure out the recorded score for the set, and the score on this attempt.
-	$self->{recordedScore} = 0;
-	$self->{totalPossible} = 0;
+	$c->{recordedScore} = 0;
+	$c->{totalPossible} = 0;
 	for (@problems) {
 		my $pv = $_->value // 1;
-		$self->{totalPossible} += $pv;
-		$self->{recordedScore} += $_->status * $pv if defined $_->status;
-		push(@probStatus, ($r->param('probstatus' . $_->problem_id) || $_->status || 0));
+		$c->{totalPossible} += $pv;
+		$c->{recordedScore} += $_->status * $pv if defined $_->status;
+		push(@probStatus, ($c->param('probstatus' . $_->problem_id) || $_->status || 0));
 	}
 
 	# To get the attempt score, determine the score for each problem, and multiply the total for the problem by the
 	# weight (value) of the problem.  Avoid translating all of the problems when checking answers.
 	# Note that it is okay to ignore problem order here as all arrays used are index the same.
-	$self->{attemptScore} = 0;
+	$c->{attemptScore} = 0;
 	if ($will{recordAnswers} || $will{checkAnswers}) {
 		my $i = 0;
 		for my $pg (@pg_results) {
@@ -1283,103 +1256,90 @@ async sub pre_header_initialize {
 			my $pScore = 0;
 			if (ref $pg) {
 				# If a pg object is available, then use the pg recorded score and save it in the @probStatus array.
-				$pScore = compute_reduced_score($ce, $problems[$i], $set, $pg->{state}{recorded_score}, $r->submitTime);
+				$pScore = compute_reduced_score($ce, $problems[$i], $set, $pg->{state}{recorded_score}, $c->submitTime);
 				$probStatus[$i] = $pScore if $pScore > $probStatus[$i];
 			} else {
 				# If a pg object is not available, then use the saved problem status.
 				$pScore = $probStatus[$i];
 			}
-			$self->{attemptScore} += $pScore * $pValue;
+			$c->{attemptScore} += $pScore * $pValue;
 			$i++;
 		}
 
-		$self->{attemptScore} = wwRound(2, $self->{attemptScore});
+		$c->{attemptScore} = wwRound(2, $c->{attemptScore});
 	}
-	$self->{probStatus} = \@probStatus;
+	$c->{probStatus} = \@probStatus;
 
 	# To compute the elapsed time, take into account the last submission time or the current time if the test hasn't
 	# been submitted. Also, if the submission is during the grace period, then round it to the due date.
-	$self->{exceededAllowedTime} = 0;
+	$c->{exceededAllowedTime} = 0;
 	my $endTime = $set->version_last_attempt_time ? $set->version_last_attempt_time : $timeNowInt;
 	if ($endTime > $set->due_date && $endTime < $set->due_date + $ce->{gatewayGracePeriod}) {
 		$endTime = $set->due_date;
 	} elsif ($endTime > $set->due_date) {
-		$self->{exceededAllowedTime} = 1;
+		$c->{exceededAllowedTime} = 1;
 	}
-	$self->{elapsedTime} = int(($endTime - $set->open_date) / 0.6 + 0.5) / 100;
+	$c->{elapsedTime} = int(($endTime - $set->open_date) / 0.6 + 0.5) / 100;
 
 	# Get the number of attempts and number of remaining attempts.
-	$self->{attemptNumber} =
-		$problem->num_correct + $problem->num_incorrect + ($self->{submitAnswers} && $will{recordAnswers} ? 1 : 0);
-	$self->{numAttemptsLeft} = ($set->attempts_per_version || 0) - $self->{attemptNumber};
+	$c->{attemptNumber} =
+		$problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} && $will{recordAnswers} ? 1 : 0);
+	$c->{numAttemptsLeft} = ($set->attempts_per_version || 0) - $c->{attemptNumber};
 
 	return;
 }
 
-sub head {
-	my ($self) = @_;
-	return '' unless ref $self->r->stash->{pg_results} eq 'ARRAY';
+sub head ($c) {
+	return '' unless ref $c->stash->{pg_results} eq 'ARRAY';
 	my $head_text = '';
-	for (@{ $self->r->stash->{pg_results} }) {
+	for (@{ $c->stash->{pg_results} }) {
 		next unless ref $_;
 		$head_text .= $_->{head_text} if $_->{head_text};
 	}
 	return $head_text;
 }
 
-sub path {
-	my ($self, $args) = @_;
-
-	my $r          = $self->r;
-	my $ce         = $self->{ce};
-	my $setID      = $r->urlpath->arg('setID');
-	my $root       = $ce->{webworkURLs}{root};
+sub path ($c, $args) {
+	my $ce         = $c->ce;
+	my $setID      = $c->stash('setID');
 	my $courseName = $ce->{courseName};
 
-	my $navigation_allowed = $r->authz->hasPermissions($r->param('user'), 'navigation_allowed');
+	my $navigation_allowed = $c->authz->hasPermissions($c->param('user'), 'navigation_allowed');
 
-	return $self->pathMacro(
+	return $c->pathMacro(
 		$args,
-		'WeBWorK'   => $navigation_allowed ? $root               : '',
-		$courseName => $navigation_allowed ? "$root/$courseName" : '',
-		$setID eq 'Undefined_Set' || $self->{invalidSet}
+		'WeBWorK'   => $navigation_allowed ? $c->url_for('root')     : '',
+		$courseName => $navigation_allowed ? $c->url_for('set_list') : '',
+		$setID eq 'Undefined_Set' || $c->{invalidSet}
 		? ($setID => '')
 		: (
-			$self->{set}->set_id => "$root/"
-				. $r->urlpath->newFromModule(
-					'WeBWorK::ContentGenerator::ProblemSet', $r,
-					courseID => $courseName,
-					setID    => $self->{set}->set_id
-			)->path,
-			'v' . $self->{set}->version_id => ''
+			$c->{set}->set_id           => $c->url_for('problem_list', setID => $c->{set}->set_id),
+			'v' . $c->{set}->version_id => ''
 		),
 	);
 }
 
-sub nav {
-	my ($self, $args) = @_;
-	my $r               = $self->r;
-	my $db              = $r->db;
-	my $userID          = $r->param('user');
-	my $effectiveUserID = $r->param('effectiveUser');
+sub nav ($c, $args) {
+	my $db              = $c->db;
+	my $userID          = $c->param('user');
+	my $effectiveUserID = $c->param('effectiveUser');
 
-	return '' if $self->{invalidSet};
+	return '' if $c->{invalidSet};
 
 	# Set up and display a student navigation for those that have permission to act as a student.
-	if ($r->authz->hasPermissions($userID, 'become_student') && $effectiveUserID ne $userID) {
-		my $setID = $self->{set}->set_id;
+	if ($c->authz->hasPermissions($userID, 'become_student') && $effectiveUserID ne $userID) {
+		my $setID = $c->{set}->set_id;
 
 		return '' if $setID eq 'Undefined_Set';
 
-		my $setVersion = $self->{set}->version_id;
-		my $courseName = $self->{ce}{courseName};
+		my $setVersion = $c->{set}->version_id;
 
 		# Find all versions of this set that have been taken (excluding those taken by the current user).
 		my @users =
 			$db->listSetVersionsWhere({ user_id => { not_like => $userID }, set_id => { like => "$setID,v\%" } });
 		my @allUserRecords = $db->getUsers(map { $_->[0] } @users);
 
-		my $filter = $r->param('studentNavFilter');
+		my $filter = $c->param('studentNavFilter');
 
 		# Format the student names for display, and associate the users with the test versions.
 		my %filters;
@@ -1389,11 +1349,11 @@ sub nav {
 			# recitation.  This user will be switched to when the filter is selected.
 			my $section = $allUserRecords[$_]->section;
 			$filters{"section:$section"} =
-				[ $r->maketext('Filter by section [_1]', $section), $allUserRecords[$_]->user_id, $users[$_][2] ]
+				[ $c->maketext('Filter by section [_1]', $section), $allUserRecords[$_]->user_id, $users[$_][2] ]
 				if $section && !$filters{"section:$section"};
 			my $recitation = $allUserRecords[$_]->recitation;
 			$filters{"recitation:$recitation"} =
-				[ $r->maketext('Filter by recitation [_1]', $recitation), $allUserRecords[$_]->user_id, $users[$_][2] ]
+				[ $c->maketext('Filter by recitation [_1]', $recitation), $allUserRecords[$_]->user_id, $users[$_][2] ]
 				if $recitation && !$filters{"recitation:$recitation"};
 
 			# Only keep this user if it satisfies the selected filter if a filter was selected.
@@ -1435,77 +1395,61 @@ sub nav {
 		$userRecords[$currentTestIndex]{currentTest} = 1;
 
 		# Show the student nav.
-		return $r->include(
+		return $c->include(
 			'ContentGenerator/GatewayQuiz/nav',
 			userRecords      => \@userRecords,
 			setVersion       => $setVersion,
 			prevTest         => $prevTest,
 			nextTest         => $nextTest,
 			currentTestIndex => $currentTestIndex,
-			setPage => $r->urlpath->newFromModule(__PACKAGE__, $r, courseID => $courseName, setID => "$setID,v%s"),
-			filters => \%filters,
-			filter  => $filter
+			filters          => \%filters,
+			filter           => $filter
 		);
 	}
 }
 
-sub warningMessage {
-	my $self = shift;
-	return $self->r->maketext('<strong>Warning</strong>: There may be something wrong with a question in this test. '
+sub warningMessage ($c) {
+	return $c->maketext('<strong>Warning</strong>: There may be something wrong with a question in this test. '
 			. 'Please inform your instructor including the warning messages below.');
 }
 
 # Evaluation utility
-async sub getProblemHTML {
-	my ($self, $effectiveUser, $set, $formFields, $mergedProblem, $pgFile) = @_;
-	# $effectiveUser is the current effective user, $set is the merged set version, $formFields is a reference to the
-	# hash of parameters from the input form that need to be passed to the translator, and $mergedProblem and $pgFile
-	# are what we'd expect.  $pgFile is optional. The translated problem is returned.
-
-	my $r                = $self->r;
+# $effectiveUser is the current effective user, $set is the merged set version, $formFields is a reference to the
+# hash of parameters from the input form that need to be passed to the translator, and $mergedProblem
+# is what we'd expect.
+async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem) {
 	my $setID            = $set->set_id;
 	my $setVersionNumber = $set->version_id;
 
-	if ((!defined $mergedProblem || !$mergedProblem->problem_id) && $pgFile) {
-		$mergedProblem = WeBWorK::DB::Record::ProblemVersion->new(
-			set_id      => $setID,
-			version_id  => $setVersionNumber,
-			problem_id  => 0,
-			login_id    => $effectiveUser->user_id,
-			source_file => $pgFile,
-			# The rest of problem fields are not needed.
-		);
-	}
-
 	# Figure out solutions are allowed and call renderPG accordingly.
-	my $showCorrectAnswers = $self->{will}{showCorrectAnswers};
-	my $showHints          = $self->{will}{showHints};
-	my $showSolutions      = $self->{will}{showSolutions};
-	my $processAnswers     = $self->{will}{checkAnswers};
+	my $showCorrectAnswers = $c->{will}{showCorrectAnswers};
+	my $showHints          = $c->{will}{showHints};
+	my $showSolutions      = $c->{will}{showSolutions};
+	my $processAnswers     = $c->{will}{checkAnswers};
 
 	# FIXME: I'm not sure that problem_id is what we want here.
 	my $problemNumber = $mergedProblem->problem_id;
 
 	my $pg = await renderPG(
-		$r,
+		$c,
 		$effectiveUser,
 		$set,
 		$mergedProblem,
 		$set->psvn,
 		$formFields,
 		{
-			displayMode        => $self->{displayMode},
+			displayMode        => $c->{displayMode},
 			showHints          => $showHints,
 			showSolutions      => $showSolutions,
 			refreshMath2img    => $showHints || $showSolutions,
 			processAnswers     => 1,
 			QUIZ_PREFIX        => 'Q' . sprintf('%04d', $problemNumber) . '_',
-			useMathQuill       => $self->{will}{useMathQuill},
-			useMathView        => $self->{will}{useMathView},
-			useWirisEditor     => $self->{will}{useWirisEditor},
+			useMathQuill       => $c->{will}{useMathQuill},
+			useMathView        => $c->{will}{useMathView},
+			useWirisEditor     => $c->{will}{useWirisEditor},
 			forceScaffoldsOpen => 1,
-			isInstructor       => $r->authz->hasPermissions($self->{userID}, 'view_answers'),
-			debuggingOptions   => getTranslatorDebuggingOptions($r->authz, $self->{userID})
+			isInstructor       => $c->authz->hasPermissions($c->{userID}, 'view_answers'),
+			debuggingOptions   => getTranslatorDebuggingOptions($c->authz, $c->{userID})
 		},
 	);
 
@@ -1514,7 +1458,7 @@ async sub getProblemHTML {
 	warn $pg->{warnings} if $pg->{warnings};
 
 	if ($pg->{flags}{error_flag}) {
-		push @{ $self->{errors} },
+		push @{ $c->{errors} },
 			{
 				set     => "$setID,v$setVersionNumber",
 				problem => $mergedProblem->problem_id,

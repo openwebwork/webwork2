@@ -1,13 +1,13 @@
 % use WeBWorK::Utils qw(before after);
 %
-% if ($cg->{pg}{result}{msg}) {
-	<p><b><%= maketext('Note') %>:</b> <i><%== $cg->{pg}{result}{msg} %></i></p>
+% if ($c->{pg}{result}{msg}) {
+	<p><b><%= maketext('Note') %>:</b> <i><%== $c->{pg}{result}{msg} %></i></p>
 % }
 %
 % if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
-	% && $cg->{set}->enable_reduced_scoring
-	% && after($cg->{set}->reduced_scoring_date, $c->submitTime)
-	% && before($cg->{set}->due_date, $c->submitTime))
+	% && $c->{set}->enable_reduced_scoring
+	% && after($c->{set}->reduced_scoring_date, $c->submitTime)
+	% && before($c->{set}->due_date, $c->submitTime))
 % {
 	<p>
 		<b><%= maketext('Note') %>:</b>
@@ -20,11 +20,11 @@
 	</p>
 % }
 %
-% if ($cg->{pg}{flags}{hintExists} && $authz->hasPermissions($cg->{userID}, 'always_show_hint')) {
+% if ($c->{pg}{flags}{hintExists} && $authz->hasPermissions($c->{userID}, 'always_show_hint')) {
 	% my $showHintsAfter =
-		% $cg->{set}->hide_hint                 ? -1
-		% : $cg->{problem}->showHintsAfter > -2 ? $cg->{problem}->showHintsAfter
-		% :                                       $ce->{pg}{options}{showHintsAfter};
+		% $c->{set}->hide_hint                 ? -1
+		% : $c->{problem}->showHintsAfter > -2 ? $c->{problem}->showHintsAfter
+		% :                                      $ce->{pg}{options}{showHintsAfter};
 	<p>
 		<b><%= maketext('Note') %>:</b>
 		<i>
@@ -38,7 +38,7 @@
 	</p>
 % }
 %
-% if ($cg->{pg}{flags}{solutionExists} && $authz->hasPermissions($cg->{userID}, 'always_show_solution')) {
+% if ($c->{pg}{flags}{solutionExists} && $authz->hasPermissions($c->{userID}, 'always_show_solution')) {
 	<p>
 		<b><%= maketext('Note') %>:</b>
 		<i>

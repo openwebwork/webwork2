@@ -14,19 +14,14 @@
 ################################################################################
 
 package WeBWorK::AchievementItems::ReducedCred;
-use parent qw(WeBWorK::AchievementItems);
+use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to extend a close date by 24 hours for reduced credit
 # Reduced scoring needs to be enabled for this item to work.
 
-use strict;
-use warnings;
-
 use WeBWorK::Utils qw(after between x nfreeze_base64 thaw_base64 format_set_name_display);
 
-sub new {
-	my ($class) = @_;
-
+sub new ($class) {
 	return bless {
 		id          => 'ReducedCred',
 		name        => x('Ring of Reduction'),
@@ -37,9 +32,7 @@ sub new {
 	}, $class;
 }
 
-sub print_form {
-	my ($self, $sets, $setProblemCount, $r) = @_;
-
+sub print_form ($self, $sets, $setProblemCount, $c) {
 	my @openSets;
 
 	for my $i (0 .. $#$sets) {
@@ -47,22 +40,21 @@ sub print_form {
 			if (between($sets->[$i]->open_date, $sets->[$i]->due_date) && $sets->[$i]->assignment_type eq 'default');
 	}
 
-	return $r->c(
-		$r->tag('p', $r->maketext('Choose the set which you would like to enable partial credit for.')),
+	return $c->c(
+		$c->tag('p', $c->maketext('Choose the set which you would like to enable partial credit for.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			$r,
+			$c,
 			id         => 'red_set_id',
-			label_text => $r->maketext('Set Name'),
+			label_text => $c->maketext('Set Name'),
 			values     => \@openSets,
 			menu_attr  => { dir => 'ltr' }
 		)
 	)->join('');
 }
 
-sub use_item {
-	my ($self, $userName, $r) = @_;
-	my $db = $r->db;
-	my $ce = $r->ce;
+sub use_item ($self, $userName, $c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
 	# Validate data
 
@@ -76,7 +68,7 @@ sub use_item {
 	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
 	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
 
-	my $setID = $r->param('red_set_id');
+	my $setID = $c->param('red_set_id');
 	return "You need to input a Set Name" unless defined $setID;
 
 	my $set     = $db->getMergedSet($userName, $setID);

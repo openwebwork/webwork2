@@ -17,9 +17,9 @@
 	<p><%= link_to maketext('Return to your work') => $returnURL =%></p>
 	<pre><%= wrap('', '', param('feedback')) =%></pre>
 % } else {
-	<%= form_for $c->uri, method => 'POST', enctype => 'multipart/form-data', begin =%>
-		<%= $cg->hidden_authen_fields =%>
-		<%= $cg->hidden_fields(qw(module set problem displayMode showOldAnswers
+	<%= form_for current_route, method => 'POST', enctype => 'multipart/form-data', begin =%>
+		<%= $c->hidden_authen_fields =%>
+		<%= $c->hidden_fields(qw(route set problem displayMode showOldAnswers
 			showCorrectAnswers showHints showSolutions)) =%>
 		%
 		<div class="mb-3">

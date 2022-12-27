@@ -1,8 +1,6 @@
 % use WeBWorK::Utils qw(readFile);
 %
-% my $fileManagerURL =
-	% $cg->systemLink($urlpath->newFromModule($urlpath->module, $c, courseID => $cg->{courseName}),
-	% params => { download => $filename, pwd => $cg->{pwd} });
+% my $fileManagerURL = $c->systemLink(url_for, params => { download => $filename, pwd => $c->{pwd} } );
 %
 % # Include a download link
 <div class="d-flex justify-content-between">

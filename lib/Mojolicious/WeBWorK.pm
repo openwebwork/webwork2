@@ -14,6 +14,7 @@
 ################################################################################
 
 package Mojolicious::WeBWorK;
+use Mojo::Base 'Mojolicious', -signatures, -async_await;
 
 =head1 NAME
 
@@ -21,11 +22,12 @@ Mojolicious::WeBWorK - Mojolicious app for WeBWorK 2.
 
 =cut
 
-use Mojo::Base 'Mojolicious', -signatures;
 use Env qw(WEBWORK_SERVER_ADMIN);
 
 use WeBWorK;
 use WeBWorK::CourseEnvironment;
+use WeBWorK::Utils qw(x writeTimingLogEntry);
+use WeBWorK::Utils::Routes qw(setup_content_generator_routes);
 
 sub startup ($app) {
 	# Set up logging.
@@ -80,9 +82,10 @@ sub startup ($app) {
 
 	$app->helper(
 		maketext => sub ($c, @args) {
-			return $c->language_handle->(@args);
+			return $args[0] unless $c->stash->{language_handle};
+			return $c->stash->{language_handle}->(@args);
 			# Comment out the above line and uncomment below to check that your strings are run through maketext.
-			#return 'xXx' . $c->language_handle->(@args) . 'xXx';
+			#return 'xXx' . $c->stash->{language_handle}->(@args) . 'xXx';
 		}
 	);
 
@@ -101,8 +104,52 @@ sub startup ($app) {
 		);
 	}
 
+	$app->hook(
+		around_action => async sub ($next, $c, $action, $last) {
+			return $next->() unless $c->isa('WeBWorK::ContentGenerator');
+
+			my $uri = $c->req->url->path->to_string;
+			$c->stash->{warnings} //= '';
+
+			$c->stash->{orig_sig_warn} = $SIG{__WARN__};
+
+			$SIG{__WARN__} = sub {
+				my ($warning) = @_;
+				chomp $warning;
+				$c->stash->{warnings} .= "$warning\n";
+				$c->log->warn("[$uri] $warning");
+			};
+
+			$c->timing->begin('content_generator_rendering');
+
+			my ($result, $message) = eval { await WeBWorK::dispatch($c) };
+			return $c->reply->exception($@)                    if $@;
+			return $c->render(text => $message, status => 404) if !$result && $message;
+			return $next->()                                   if $result;
+
+			return 0;
+		}
+	);
+
+	$app->hook(
+		after_dispatch => sub ($c) {
+			$SIG{__WARN__} = $c->stash->{orig_sig_warn} if defined $c->stash->{orig_sig_warn};
+
+			if ($c->isa('WeBWorK::ContentGenerator') && $c->ce) {
+				writeTimingLogEntry(
+					$c->ce,
+					'[' . $c->url_for . ']',
+					sprintf('runTime = %.3f sec', $c->timing->elapsed('content_generator_rendering')) . ' '
+						. $c->ce->{dbLayoutName},
+					''
+				);
+			}
+		}
+	);
+
 	# Router
 	my $r = $app->routes;
+	push(@{ $r->namespaces }, 'WeBWorK::ContentGenerator');
 
 	# Provide access to webwork2 and pg resources.  A resource from $webwork_htdocs_dir is used if present, then
 	# $pg_dir/htdocs is checked if the file is not found there.
@@ -127,7 +174,7 @@ sub startup ($app) {
 
 	# Provide access to course-specific resources.
 	$r->any(
-		"$webwork_courses_url/:course/*static" => sub ($c) {
+		"$webwork_courses_url/#course/*static" => sub ($c) {
 			my $file = "$webwork_courses_dir/" . $c->stash('course') . '/html/' . $c->stash('static');
 			return $c->reply->file($file) if -r $file;
 			return $c->render(data => 'File not found', status => 404);
@@ -148,9 +195,10 @@ sub startup ($app) {
 		# comparison, and in perl all strings containing alphabetic characters are numerically equal.  So if this is not
 		# numeric all keys that are passed in will succeed in authentication.  Very dangerous!
 		if ($config->{soap_authen_key} =~ /^\d*$/) {
-			$app->log->info("SOAP endpoints enabled");
+			$app->log->info('SOAP endpoints enabled');
 			$WeBWorK::SeedCE{soap_authen_key} = $config->{soap_authen_key};
 
+			push(@{ $r->namespaces }, 'WebworkSOAP');
 			$r->any('/webwork2_wsdl')->to('SOAP#wsdl');
 			$r->post('/webwork2_rpc')->to('SOAP#dispatch');
 		} else {
@@ -159,10 +207,15 @@ sub startup ($app) {
 		}
 	}
 
-	# Send all routes under $webwork_url to the handler.
 	# Note that these routes must come last to support the case that $webwork_url is '/'.
-	$r->any($webwork_url)->to('Handler#handler');
-	$r->any("$webwork_url/*path-info")->to('Handler#handler');
+
+	my $cg_r = $r->under($webwork_url)->name('root');
+	$cg_r->get('/')->to('Home#go')->name('root');
+
+	# The course admin route is set up here because of its special stash value.
+	$cg_r->any('/admin')->to('CourseAdmin#go', courseID => 'admin')->name('course_admin');
+
+	setup_content_generator_routes($cg_r);
 
 	$r->any(
 		'/' => sub ($c) {

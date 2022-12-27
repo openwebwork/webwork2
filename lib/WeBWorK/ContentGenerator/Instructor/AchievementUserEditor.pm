@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::AchievementUserEditor;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -23,59 +23,53 @@ users assigned to an achievement.
 
 =cut
 
-use strict;
-use warnings;
-
-sub initialize {
-	my ($self)        = @_;
-	my $r             = $self->r;
-	my $urlpath       = $r->urlpath;
-	my $authz         = $r->authz;
-	my $db            = $r->db;
-	my $achievementID = $urlpath->arg('achievementID');
-	my $user          = $r->param('user');
+sub initialize ($c) {
+	my $authz         = $c->authz;
+	my $db            = $c->db;
+	my $achievementID = $c->stash('achievementID');
+	my $user          = $c->param('user');
 
 	# Make sure this is defined for the template.
-	$r->stash->{userRecords} = [];
+	$c->stash->{userRecords} = [];
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, 'edit_achievements');
 
 	my @all_users     = $db->listUsers;
-	my %selectedUsers = map { $_ => 1 } $r->param('selected');
+	my %selectedUsers = map { $_ => 1 } $c->param('selected');
 
 	my $doAssignToSelected = 0;
 
 	#Check and see if we need to assign or unassign things
-	if (defined $r->param('assignToAll')) {
-		$self->addmessage($r->tag(
+	if (defined $c->param('assignToAll')) {
+		$c->addmessage($c->tag(
 			'p',
 			class => 'alert alert-success p-1 mb-0',
-			$r->maketext('Achievement has been assigned to all users.')
+			$c->maketext('Achievement has been assigned to all users.')
 		));
 		%selectedUsers      = map { $_ => 1 } @all_users;
 		$doAssignToSelected = 1;
-	} elsif (defined $r->param('unassignFromAll')
-		&& defined($r->param('unassignFromAllSafety'))
-		&& $r->param('unassignFromAllSafety') == 1)
+	} elsif (defined $c->param('unassignFromAll')
+		&& defined($c->param('unassignFromAllSafety'))
+		&& $c->param('unassignFromAllSafety') == 1)
 	{
 		%selectedUsers = ();
-		$self->addmessage($r->tag(
+		$c->addmessage($c->tag(
 			'p',
 			class => 'alert alert-danger p-1 mb-0',
-			$r->maketext('Achievement has been unassigned to all students.')
+			$c->maketext('Achievement has been unassigned to all students.')
 		));
 		$doAssignToSelected = 1;
-	} elsif (defined $r->param('assignToSelected')) {
-		$self->addmessage($r->tag(
+	} elsif (defined $c->param('assignToSelected')) {
+		$c->addmessage($c->tag(
 			'p',
 			class => 'alert alert-success p-1 mb-0',
-			$r->maketext('Achievement has been assigned to selected users.')
+			$c->maketext('Achievement has been assigned to selected users.')
 		));
 		$doAssignToSelected = 1;
-	} elsif (defined $r->param('unassignFromAll')) {
+	} elsif (defined $c->param('unassignFromAll')) {
 		# no action taken
-		$self->addmessage($r->tag('p', class => 'alert alert-danger p-1 mb-0', $r->maketext('No action taken')));
+		$c->addmessage($c->tag('p', class => 'alert alert-danger p-1 mb-0', $c->maketext('No action taken')));
 	}
 
 	#do actual assignment and unassignment
@@ -87,7 +81,7 @@ sub initialize {
 				# update existing user data (in case fields were changed)
 				my $userAchievement = $db->getUserAchievement($selectedUser, $achievementID);
 
-				my $updatedEarned = $r->param("$selectedUser.earned") ? 1 : 0;
+				my $updatedEarned = $c->param("$selectedUser.earned") ? 1 : 0;
 				my $earned        = $userAchievement->earned          ? 1 : 0;
 				if ($updatedEarned != $earned) {
 
@@ -110,7 +104,7 @@ sub initialize {
 					$db->putGlobalUserAchievement($globalUserAchievement);
 				}
 
-				$userAchievement->counter($r->param("$selectedUser.counter"));
+				$userAchievement->counter($c->param("$selectedUser.counter"));
 				$db->putUserAchievement($userAchievement);
 
 			} elsif (exists $selectedUsers{$selectedUser}) {
@@ -138,14 +132,14 @@ sub initialize {
 
 	my @userRecords;
 	for my $currentUser (@all_users) {
-		my $userObj = $r->db->getUser($currentUser);
+		my $userObj = $c->db->getUser($currentUser);
 		die "Unable to find user object for $currentUser. " unless $userObj;
 		push(@userRecords, $userObj);
 	}
 	@userRecords =
 		sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @userRecords;
 
-	$r->stash->{userRecords} = \@userRecords;
+	$c->stash->{userRecords} = \@userRecords;
 
 	return;
 }

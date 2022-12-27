@@ -14,7 +14,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			% my %selectedAchievementIDs = map { $_ => 1 } @{ $cg->{selectedAchievementIDs} };
+			% my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
 			% for (@$achievements) {
 				% my $achievement_id = $_->achievement_id;
 				<tr>

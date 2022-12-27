@@ -7,7 +7,7 @@
 	% }
 % }
 % my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $db_report) =
-	% $cg->formatReportOnDatabaseTables($tables_ok, $dbStatus);
+	% $c->formatReportOnDatabaseTables($dbStatus);
 <%= $db_report %>
 % if ($extra_database_tables) {
 	<p class="text-danger fw-bold">
@@ -59,9 +59,9 @@
 	</p>
 % }
 % # Print form for choosing next action.
-%= form_for $c->uri, method => 'POST', begin
-	<%= $cg->hidden_authen_fields =%>
-	<%= $cg->hidden_fields(qw(subDisplay delete_course)) =%>
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields(qw(subDisplay delete_course)) =%>
 	<%= hidden_field archive_courseID => $archive_courseID =%>
 	% for (@$archive_courseIDs) {
 		<%= hidden_field archive_courseIDs => $_ =%>
@@ -108,4 +108,4 @@
 				name => 'upgrade_course_tables', class => 'btn btn-primary' =%>
 		</div>
 	% }
-% end
+<% end =%>

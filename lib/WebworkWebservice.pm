@@ -21,7 +21,7 @@ WebworkWebservice
 
 =head1 SYNPOSIS
 
-    my $rpc_service = WebworkWebservice->new($r);
+    my $rpc_service = WebworkWebservice->new($c);
     await $rpc_service->rpc_execute('command_to_execute');
 
 After that, if the command is 'renderProblem', use
@@ -71,11 +71,11 @@ use HardcopyRenderedProblem;
 =cut
 
 sub new {
-	my ($invocant, $r, %options) = @_;
+	my ($invocant, $c, %options) = @_;
 	my $class = ref $invocant || $invocant;
 	return bless {
-		r             => $r,
-		inputs_ref    => { WeBWorK::Form->new_from_paramable($r)->Vars },
+		c             => $c,
+		inputs_ref    => { WeBWorK::Form->new_from_paramable($c)->Vars },
 		return_object => {},
 		error_string  => '',
 		%options
@@ -111,8 +111,8 @@ the result_object of the instance.  An error_string will be set on failure.
 
 async sub rpc_execute {
 	my ($self, $command) = @_;
-	my $r       = $self->r;
-	my $user_id = $r->param('user');
+	my $c       = $self->c;
+	my $user_id = $c->param('user');
 
 	$command //= 'renderProblem';
 
@@ -122,7 +122,7 @@ async sub rpc_execute {
 
 	# Check that the user has permission to perform this command.
 	return $self->error_string(__PACKAGE__ . ": User $user_id does not have permission for the command $command")
-		unless $r->authz->hasPermissions($user_id, $permission);
+		unless $c->authz->hasPermissions($user_id, $permission);
 
 	# Determine the package that contains the method for this command.
 	my $command_package = '';
@@ -179,18 +179,18 @@ sub formatRenderedProblem {
 	return FormatRenderedProblem::formatRenderedProblem($self);
 }
 
-=head2 r
+=head2 c
 
-Returns the WeBWorK::Request object contained in $webworkRPC.
+Returns the WeBWorK::Controller object contained in $webworkRPC.
 
 =cut
 
-sub r {
+sub c {
 	my $self = shift;
-	return $self->{r};
+	return $self->{c};
 }
 
-=head2 Pass through methods which access the data in the WeBWorK::Request object
+=head2 Pass through methods which access the data in the WeBWorK::Controller object
 
     ce
     db
@@ -203,32 +203,32 @@ sub r {
 
 sub ce {
 	my $self = shift;
-	return $self->{r}{ce};
+	return $self->{c}->ce;
 }
 
 sub db {
 	my $self = shift;
-	return $self->{r}{db};
+	return $self->{c}->db;
 }
 
 sub param {
 	my ($self, $param) = @_;
-	return $self->{r}->param($param);
+	return $self->{c}->param($param);
 }
 
 sub authz {
 	my $self = shift;
-	return $self->{r}{authz};
+	return $self->{c}->authz;
 }
 
 sub authen {
 	my $self = shift;
-	return $self->{r}{authen};
+	return $self->{c}->authen;
 }
 
 sub maketext {
 	my $self = shift;
-	return &{ $self->{r}{language_handle} }(@_);
+	return $self->{c}->language_handle->(@_);
 }
 
 =head2 command_permission

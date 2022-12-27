@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::AddUsers;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -22,54 +22,49 @@ WeBWorK::ContentGenerator::Instructor::AddUsers - Menu interface for adding user
 
 =cut
 
-use strict;
-use warnings;
-
 use WeBWorK::Utils qw/cryptPassword trim_spaces/;
 use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
-sub initialize {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $ce     = $r->ce;
-	my $authz  = $r->authz;
+sub initialize ($c) {
+	my $db    = $c->db;
+	my $ce    = $c->ce;
+	my $authz = $c->authz;
 
-	my $user = $r->param('user');
+	my $user = $c->param('user');
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 	return unless $authz->hasPermissions($user, 'modify_student_data');
 
-	if (defined $r->param('addStudents')) {
-		$self->{studentEntryReport} = $r->c;
+	if (defined $c->param('addStudents')) {
+		$c->{studentEntryReport} = $c->c;
 
 		my @userIDs;
-		my $numberOfStudents = $r->param('number_of_students') // 0;
+		my $numberOfStudents = $c->param('number_of_students') // 0;
 
 		# FIXME: Handle errors if user already exists as well as all other errors that could occur (including errors
 		# when adding the permission, adding the password, and assigning sets to the users).
 		for my $i (1 .. $numberOfStudents) {
-			my $new_user_id  = trim_spaces($r->param("new_user_id_$i"));
-			my $new_password = cryptPassword($r->param("student_id_$i"));
+			my $new_user_id  = trim_spaces($c->param("new_user_id_$i"));
+			my $new_password = cryptPassword($c->param("student_id_$i"));
 			next unless $new_user_id;
 
 			my $newUser = $db->newUser;
 			$newUser->user_id($new_user_id);
-			$newUser->last_name(trim_spaces($r->param("last_name_$i")));
-			$newUser->first_name(trim_spaces($r->param("first_name_$i")));
-			$newUser->student_id(trim_spaces($r->param("student_id_$i")));
-			$newUser->email_address(trim_spaces($r->param("email_address_$i")));
-			$newUser->section(trim_spaces($r->param("section_$i")));
-			$newUser->recitation(trim_spaces($r->param("recitation_$i")));
-			$newUser->comment(trim_spaces($r->param("comment_$i")));
+			$newUser->last_name(trim_spaces($c->param("last_name_$i")));
+			$newUser->first_name(trim_spaces($c->param("first_name_$i")));
+			$newUser->student_id(trim_spaces($c->param("student_id_$i")));
+			$newUser->email_address(trim_spaces($c->param("email_address_$i")));
+			$newUser->section(trim_spaces($c->param("section_$i")));
+			$newUser->recitation(trim_spaces($c->param("recitation_$i")));
+			$newUser->comment(trim_spaces($c->param("comment_$i")));
 			$newUser->status($ce->status_name_to_abbrevs($ce->{default_status}));
 
 			eval { $db->addUser($newUser) };
 			if ($@) {
 				push(
-					@{ $self->{studentEntryReport} },
-					$r->include(
+					@{ $c->{studentEntryReport} },
+					$c->include(
 						'ContentGenerator/Instructor/AddUsers/student_entry_report',
 						newUser  => $newUser,
 						addError => $@
@@ -89,8 +84,8 @@ sub initialize {
 				$db->addPassword($newPassword);
 
 				push(
-					@{ $self->{studentEntryReport} },
-					$r->include(
+					@{ $c->{studentEntryReport} },
+					$c->include(
 						'ContentGenerator/Instructor/AddUsers/student_entry_report',
 						newUser  => $newUser,
 						addError => ''
@@ -98,8 +93,8 @@ sub initialize {
 				);
 			}
 		}
-		if (defined $r->param('assignSets')) {
-			my @setIDs = $r->param('assignSets');
+		if (defined $c->param('assignSets')) {
+			my @setIDs = $c->param('assignSets');
 			assignSetsToUsers($db, \@setIDs, \@userIDs);
 		}
 	}

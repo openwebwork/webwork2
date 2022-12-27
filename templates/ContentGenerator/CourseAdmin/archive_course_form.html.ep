@@ -17,7 +17,7 @@
 				. 'or "visible".'
 		) =%>
 	</p>
-	<%= form_for $c->uri, method => 'POST', begin =%>
+	<%= form_for current_route, method => 'POST', begin =%>
 		<div class="mb-3">
 			<div class="mb-2"><%= maketext('Select a listing format:') %></div>
 			% for (
@@ -39,8 +39,8 @@
 				name => 'archive_course_refresh', class => 'btn btn-primary' =%>
 			<%= submit_button maketext('Archive Courses'), name => 'archive_course', class => 'btn btn-primary' =%>
 		</div>
-		<%= $cg->hidden_authen_fields =%>
-		<%= $cg->hidden_fields('subDisplay') =%>
+		<%= $c->hidden_authen_fields =%>
+		<%= $c->hidden_fields('subDisplay') =%>
 		<div class="mb-2"><%= maketext('Select course(s) to archive.') %></div>
 		<div class="row mb-2">
 			<%= label_for archive_courseIDs => maketext('Course Name:'), class => 'col-auto col-form-label fw-bold' =%>

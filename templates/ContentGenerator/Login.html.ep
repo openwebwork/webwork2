@@ -4,7 +4,7 @@
 	<div class="alert alert-danger" tabindex="0"><%= stash('authen_error') =%></div>
 % }
 %
-% my $course = $urlpath->arg('courseID') =~ s/_/ /gr;
+% my $course = (stash('courseID') // '') =~ s/_/ /gr;
 %
 % if ($externalAuth) {
 	% my $LMS = $ce->{LMS_url} ? link_to($ce->{LMS_name} => $ce->{LMS_url}) : $ce->{LMS_name};
@@ -36,7 +36,7 @@
 		</p>
 	% }
 	%
-	<%= form_for $c->uri, method => 'POST', id => 'login_form', begin =%>
+	<%= form_for current_route, method => 'POST', id => 'login_form', begin =%>
 		<%= $hidden_fields =%>
 		%
 		<div class="col-xl-5 col-lg-6 col-md-7 col-sm-8 my-3">

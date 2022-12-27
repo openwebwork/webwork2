@@ -15,7 +15,7 @@
 
 # This module prints out the list of achievements that a student has earned
 package WeBWorK::ContentGenerator::Achievements;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -24,48 +24,35 @@ This produces a list of earned achievements for each student.
 
 =cut
 
-use strict;
-use warnings;
-
 use WeBWorK::Utils qw(sortAchievements thaw_base64);
 use WeBWorK::AchievementItems;
 
-sub head {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $ce     = $r->ce;
-
-	return '';
-}
-
-sub initialize {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $ce     = $r->ce;
+sub initialize ($c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
 	# Get user Data
-	$self->{userName}    = $r->param('user');
-	$self->{studentName} = $r->param('effectiveUser') // $self->{userName};
-	$self->{globalData}  = $db->getGlobalUserAchievement($self->{studentName});
+	$c->{userName}    = $c->param('user');
+	$c->{studentName} = $c->param('effectiveUser') // $c->{userName};
+	$c->{globalData}  = $db->getGlobalUserAchievement($c->{studentName});
 
 	# Check to see if user items are enabled and if the user has achievement data.
-	if ($ce->{achievementItemsEnabled} && defined $self->{globalData}) {
-		my $itemsWithCounts = WeBWorK::AchievementItems::UserItems($self->{studentName}, $db, $ce);
-		$self->{achievementItems} = $itemsWithCounts;
+	if ($ce->{achievementItemsEnabled} && defined $c->{globalData}) {
+		my $itemsWithCounts = WeBWorK::AchievementItems::UserItems($c->{studentName}, $db, $ce);
+		$c->{achievementItems} = $itemsWithCounts;
 
-		my $usedItem = $r->param('useditem');
+		my $usedItem = $c->param('useditem');
 
 		# If the useditem parameter is defined then the student wanted to use an item, so lets do that by calling the
 		# appropriate item's use method and printing results.
 		if (defined $usedItem) {
-			my $error = $itemsWithCounts->[$usedItem][0]->use_item($self->{studentName}, $r);
+			my $error = $itemsWithCounts->[$usedItem][0]->use_item($c->{studentName}, $c);
 			if ($error) {
-				$self->addbadmessage($error);
+				$c->addbadmessage($error);
 			} else {
 				if   ($itemsWithCounts->[$usedItem][1] != 1) { --$itemsWithCounts->[$usedItem][1]; }
 				else                                         { splice(@$itemsWithCounts, $usedItem, 1); }
-				$self->addgoodmessage($r->maketext('Reward used successfully!'));
+				$c->addgoodmessage($c->maketext('Reward used successfully!'));
 			}
 		}
 	}
@@ -73,22 +60,20 @@ sub initialize {
 	return;
 }
 
-sub getAchievementLevelData {
-	my ($self) = @_;
-
+sub getAchievementLevelData ($c) {
 	my ($achievement, $level_progress, $level_goal, $level_percentage);
 
-	if ($self->{globalData}->level_achievement_id) {
-		$achievement = $self->r->db->getAchievement($self->{globalData}->level_achievement_id);
+	if ($c->{globalData}->level_achievement_id) {
+		$achievement = $c->db->getAchievement($c->{globalData}->level_achievement_id);
 	}
 
 	if ($achievement) {
-		if ($self->{globalData}->next_level_points) {
+		if ($c->{globalData}->next_level_points) {
 			# Get prev_level_points from the globalData frozen_hash in the database.
-			my $globalData = $self->{globalData}->frozen_hash ? thaw_base64($self->{globalData}->frozen_hash) : {};
+			my $globalData = $c->{globalData}->frozen_hash ? thaw_base64($c->{globalData}->frozen_hash) : {};
 			my $prev_level = $globalData->{prev_level_points} || 0;
-			$level_goal       = $self->{globalData}->next_level_points - $prev_level;
-			$level_progress   = $self->{globalData}->achievement_points - $prev_level;
+			$level_goal       = $c->{globalData}->next_level_points - $prev_level;
+			$level_progress   = $c->{globalData}->achievement_points - $prev_level;
 			$level_progress   = 0           if $level_progress < 0;
 			$level_progress   = $level_goal if $level_progress > $level_goal;
 			$level_percentage = int(100 * $level_progress / $level_goal);
@@ -103,17 +88,16 @@ sub getAchievementLevelData {
 	);
 }
 
-sub getAchievementItemsData {
-	my ($self) = @_;
-	my $db = $self->r->db;
+sub getAchievementItemsData ($c) {
+	my $db = $c->db;
 
-	my $userID = $self->{studentName};
+	my $userID = $c->{studentName};
 
 	my (@items, %itemCounts, @sets, @setProblemCount);
 
-	if ($self->r->ce->{achievementItemsEnabled} && $self->{achievementItems}) {
+	if ($c->ce->{achievementItemsEnabled} && $c->{achievementItems}) {
 		# Remove count data so @items is structured as originally designed.
-		for my $item (@{ $self->{achievementItems} }) {
+		for my $item (@{ $c->{achievementItems} }) {
 			push(@items, $item->[0]);
 			$itemCounts{ $item->[0]->id() } = $item->[1];
 		}
@@ -137,13 +121,11 @@ sub getAchievementItemsData {
 	);
 }
 
-sub getAchievementsData {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $ce     = $r->ce;
+sub getAchievementsData ($c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
-	my $userID = $self->{studentName};
+	my $userID = $c->{studentName};
 
 	my (@visibleAchievements, %userAchievements);
 

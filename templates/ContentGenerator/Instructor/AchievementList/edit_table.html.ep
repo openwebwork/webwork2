@@ -1,4 +1,4 @@
-% if (!@{ $cg->{selectedAchievementIDs} }) {
+% if (!@{ $c->{selectedAchievementIDs} }) {
 	<p><i><%= maketext('No achievements shown.  Select an achievement to edit!') =%></i></p>
 % } else {
 	<div class="table-responsive">
@@ -32,7 +32,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				% my %selectedAchievementIDs = map { $_ => 1 } @{ $cg->{selectedAchievementIDs} };
+				% my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
 				% for my $achievement (@$achievements) {
 					% my $achievement_id = $achievement->achievement_id;
 					% if ($selectedAchievementIDs{$achievement_id}) {

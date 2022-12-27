@@ -6,7 +6,7 @@
 %
 <h2><%= maketext('Upgrade Courses') %></h2>
 <div class="mb-2"><%= maketext('Update the checked directories?') %></div>
-%= form_for $c->uri, method => 'POST', id => 'courselist', name => 'courselist', begin
+<%= form_for current_route, method => 'POST', id => 'courselist', name => 'courselist', begin =%>
 	<div class="mb-2">
 		<button type="button" class="select-all btn btn-sm btn-secondary" data-select-group="upgrade_courseIDs">
 			<%= maketext('Select all eligible courses') =%>
@@ -15,8 +15,8 @@
 			<%= maketext('Unselect all courses') =%>
 		</button>
 	</div>
-	<%= $cg->hidden_authen_fields =%>
-	<%= $cg->hidden_fields('subDisplay') =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
 	%
 	<ul>
 		% for my $courseID (@courseIDs) {
@@ -41,10 +41,7 @@
 						</label>
 					</div>
 				% }
-				<%= link_to $courseID => $cg->systemLink(
-					$urlpath->newFromModule('WeBWorK::ContentGenerator::ProblemSets', $c, courseID => $courseID),
-					authen => 0
-				) =%>
+				<%= link_to $courseID => 'set_list' => { courseID => $courseID } =%>
 				<code><%= $tempCE->{dbLayoutName} %></code>
 				% if (!$directories_ok) {
 					<span class="alert alert-danger p-1 mb-0">
@@ -60,4 +57,4 @@
 		% }
 	</ul>
 	<%= submit_button maketext('Upgrade Courses'), name => 'upgrade_course', class => 'btn btn-primary' =%>
-% end
+<% end =%>

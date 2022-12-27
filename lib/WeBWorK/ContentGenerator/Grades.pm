@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Grades;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -22,28 +22,19 @@ WeBWorK::ContentGenerator::Grades - Display statistics by user.
 
 =cut
 
-use strict;
-use warnings;
-
 use WeBWorK::Utils qw(jitar_id_to_seq wwRound after grade_set format_set_name_display);
 use WeBWorK::Localize;
 
-sub initialize {
-	my $self = shift;
-	my $r    = $self->r;
-
-	$self->{studentID} = $r->param('effectiveUser') // $r->param('user');
-
+sub initialize ($c) {
+	$c->{studentID} = $c->param('effectiveUser') // $c->param('user');
 	return;
 }
 
-sub scoring_info {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $ce     = $r->ce;
+sub scoring_info ($c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
-	my $user = $db->getUser($self->{studentID});
+	my $user = $db->getUser($c->{studentID});
 	return '' unless $user;
 
 	my $message_file = 'report_grades.msg';
@@ -52,8 +43,8 @@ sub scoring_info {
 
 	# Return if the files don't exist.
 	if (!(-e "$ce->{courseDirs}{scoring}/$merge_file" && -e "$filePath")) {
-		if ($r->authz->hasPermissions($r->param('user'), 'access_instructor_tools')) {
-			return $r->maketext(
+		if ($c->authz->hasPermissions($c->param('user'), 'access_instructor_tools')) {
+			return $c->maketext(
 				'There is no additional grade information.  A message about additional grades can go in '
 					. '~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be '
 					. 'edited using the "Email" link and the "File Manager" link in the left margin.',
@@ -64,7 +55,7 @@ sub scoring_info {
 		}
 	}
 
-	my $rh_merge_data = $self->read_scoring_file($merge_file, ',');
+	my $rh_merge_data = $c->read_scoring_file($merge_file);
 	my $text;
 	my $header = '';
 	if (-e $filePath and -r $filePath) {
@@ -76,7 +67,7 @@ sub scoring_info {
 		close($FILE);
 	} else {
 		return r->c('There is no additional grade information.',
-			$r->tag('br'), "The message file $filePath cannot be found.")->join('');
+			$c->tag('br'), "The message file $filePath cannot be found.")->join('');
 	}
 
 	my $status_name = $ce->status_abbrev_to_name($user->status);
@@ -118,18 +109,18 @@ sub scoring_info {
 	$msg =~ s/\r//g;
 	$msg =~ s/\n/<br>/g;
 
-	my $output = $r->c($r->tag(
+	my $output = $c->c($c->tag(
 		'div',
 		class => 'additional-scoring-msg card bg-light p-2',
-		$r->c($r->tag('h3', $r->maketext('Scoring Message')), $msg)->join('')
+		$c->c($c->tag('h3', $c->maketext('Scoring Message')), $msg)->join('')
 	));
 
 	push(
 		@$output,
-		$r->tag(
+		$c->tag(
 			'div',
 			class => 'mt-2',
-			$r->maketext(
+			$c->maketext(
 				'This scoring message is generated from ~[TMPL~]/email/[_1]. It is merged with the file '
 					. '~[Scoring~]/[_2]. These files can be edited using the "Email" link and the "File Manager" '
 					. 'link in the left margin.',
@@ -137,21 +128,19 @@ sub scoring_info {
 				$merge_file
 			)
 		)
-	) if $r->authz->hasPermissions($r->param('user'), 'access_instructor_tools');
+	) if $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools');
 
 	return $output->join('');
 }
 
-sub displayStudentStats {
-	my ($self, $studentID) = @_;
-	my $r     = $self->r;
-	my $db    = $r->db;
-	my $ce    = $r->ce;
-	my $authz = $r->authz;
+sub displayStudentStats ($c, $studentID) {
+	my $db    = $c->db;
+	my $ce    = $c->ce;
+	my $authz = $c->authz;
 
 	my $studentRecord = $db->getUser($studentID);
 	unless ($studentRecord) {
-		$self->addbadmessage($r->maketext('Record for user [_1] not found.', $studentID));
+		$c->addbadmessage($c->maketext('Record for user [_1] not found.', $studentID));
 		return '';
 	}
 
@@ -220,13 +209,10 @@ sub displayStudentStats {
 	my $numGatewayVersions = 0;
 	my $bestGatewayScore   = 0;
 
-	my $rows = $r->c;
+	my $rows = $c->c;
 	for my $setID (@allSetIDs) {
 		my $act_as_student_set_url =
-			"$ce->{webworkURLs}{root}/$courseName/$setID/?user="
-			. $r->param('user')
-			. "&effectiveUser=$effectiveUser&key="
-			. $r->param('key');
+			$c->systemLink($c->url_for('problem_list', setID => $setID), params => { effectiveUser => $effectiveUser });
 		my $set = $setsByID{$setID};
 
 		# If the set is a template gateway set and there are no versions, we acknowledge that the set exists and the
@@ -234,14 +220,14 @@ sub displayStudentStats {
 		if (defined $setVersionsCount{$setID}) {
 			next if $setVersionsCount{$setID};
 			push @$rows,
-				$r->tag(
+				$c->tag(
 					'tr',
-					$r->c(
-						$r->tag('td', dir => 'ltr', format_set_name_display($setID)),
-						$r->tag(
+					$c->c(
+						$c->tag('td', dir => 'ltr', format_set_name_display($setID)),
+						$c->tag(
 							'td',
 							colspan => $max_problems + 3,
-							$r->tag('em', $r->maketext('No versions of this assignment have been taken.'))
+							$c->tag('em', $c->maketext('No versions of this assignment have been taken.'))
 						)
 				)->join('')
 				);
@@ -254,25 +240,25 @@ sub displayStudentStats {
 			&& $set->assignment_type =~ /gateway/
 			&& defined $set->hide_score
 			&& (
-				!$authz->hasPermissions($r->param('user'), 'view_hidden_work')
+				!$authz->hasPermissions($c->param('user'), 'view_hidden_work')
 				&& ($set->hide_score eq 'Y' || ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date))
 			)
 			)
 		{
 			push(
 				@$rows,
-				$r->tag(
+				$c->tag(
 					'tr',
-					$r->c(
-						$r->tag(
+					$c->c(
+						$c->tag(
 							'td',
 							dir => 'ltr',
 							format_set_name_display($setID) . ' (version ' . $set->version_id . ')'
 						),
-						$r->tag(
+						$c->tag(
 							'td',
 							colspan => $max_problems + 3,
-							$r->tag('em', $r->maketext('Display of scores for this set is not allowed.'))
+							$c->tag('em', $c->maketext('Display of scores for this set is not allowed.'))
 						)
 					)->join('')
 				)
@@ -300,7 +286,7 @@ sub displayStudentStats {
 		my $show_problem_scores = 1;
 
 		if (defined $set->hide_score_by_problem
-			&& !$authz->hasPermissions($r->param('user'), 'view_hidden_work')
+			&& !$authz->hasPermissions($c->param('user'), 'view_hidden_work')
 			&& $set->hide_score_by_problem eq 'Y')
 		{
 			$show_problem_scores = 0;
@@ -310,19 +296,19 @@ sub displayStudentStats {
 			my $score = defined $problem_scores->[$i] && $show_problem_scores ? $problem_scores->[$i] : '';
 			push(
 				@html_prob_scores,
-				$r->tag(
+				$c->tag(
 					'td',
 					class => 'problem-data',
-					$r->c(
-						$r->tag(
+					$c->c(
+						$c->tag(
 							'span',
 							class => $score eq '100' ? 'correct' : $score eq '&nbsp;.&nbsp;' ? 'unattempted' : '',
-							$r->b($score)
+							$c->b($score)
 						),
-						$r->tag('br'),
+						$c->tag('br'),
 						(defined $problem_incorrect_attempts->[$i] && $show_problem_scores)
 						? $problem_incorrect_attempts->[$i]
-						: $r->b('&nbsp;')
+						: $c->b('&nbsp;')
 					)->join('')
 				)
 			);
@@ -369,24 +355,24 @@ sub displayStudentStats {
 			}
 		}
 
-		push @$rows, $r->tag(
+		push @$rows, $c->tag(
 			'tr',
-			$r->c(
-				$r->tag(
+			$c->c(
+				$c->tag(
 					'th',
 					scope => 'row',
 					dir   => 'ltr',
-					$r->link_to(format_set_name_display($setID) => $act_as_student_set_url)
+					$c->link_to(format_set_name_display($setID) => $act_as_student_set_url)
 				),
-				$r->tag('td', $r->tag('span', class => $class, $totalRightPercent . '%')),
-				$r->tag('td', sprintf('%0.2f', $totalRight)),                                # score
-				$r->tag('td', $total),                                                       # out of
+				$c->tag('td', $c->tag('span', class => $class, $totalRightPercent . '%')),
+				$c->tag('td', sprintf('%0.2f', $totalRight)),                                # score
+				$c->tag('td', $total),                                                       # out of
 				@html_prob_scores                                                            # problems
 			)->join('')
 		);
 	}
 
-	return $r->include(
+	return $c->include(
 		'ContentGenerator/Grades/student_stats',
 		fullName         => $fullName,
 		max_problems     => $max_problems,

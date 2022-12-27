@@ -1,10 +1,10 @@
 <h2><%= maketext('Manage Locations') %></h2>
 <p><strong><%= maketext('Currently defined locations are listed below.') %></strong></p>
-%= form_for $c->uri, method => 'POST', begin
+<%= form_for current_route, method => 'POST', begin =%>
 	% my @locationIDs = map  { $_->location_id } @$locations;
 	%
-	<%= $cg->hidden_authen_fields =%>
-	<%= $cg->hidden_fields('subDisplay') =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
 	%
 	<div class="col-lg-8 col-md-9">
 		<div class="mb-2 fw-bold"><%= maketext('Select an action to perform:') =%></div>
@@ -128,8 +128,8 @@
 							</td>
 							<td>
 								<%= label_for $_->location_id . '_id' =>
-									link_to $_->location_id => $cg->systemLink(
-										$urlpath,
+									link_to $_->location_id => $c->systemLink(
+										url_for,
 										params => {
 											subDisplay             => 'manage_locations',
 											manage_location_action => 'edit_location_form',
@@ -149,4 +149,4 @@
 			<div class="col-lg-8 col-md-9 fw-bold"><%= maketext('No locations are currently defined.') %></div>
 		</div>
 	% }
-% end
+<% end =%>

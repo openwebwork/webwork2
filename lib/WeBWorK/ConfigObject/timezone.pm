@@ -14,24 +14,18 @@
 ################################################################################
 
 package WeBWorK::ConfigObject::timezone;
-use parent qw(WeBWorK::ConfigObject);
+use Mojo::Base 'WeBWorK::ConfigObject', -signatures;
 
 # Just like WeBWorK::ConfigObject::text, but it validates the timezone before saving.
 
-use strict;
-use warnings;
-
 use DateTime::TimeZone;
 
-sub save_string {
-	my ($self, $oldval, $use_current) = @_;
-
+sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current);
 	return '' if $self->comparison_value($oldval) eq $newval;
 
 	if (not DateTime::TimeZone->is_valid_name($newval)) {
-		$self->{Module}
-			->addbadmessage("String '$newval' is not a valid time zone.  Reverting to the system default value.");
+		$self->{c}->addbadmessage("String '$newval' is not a valid time zone.  Reverting to the system default value.");
 		return '';
 	}
 

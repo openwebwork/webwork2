@@ -7,8 +7,8 @@
 	% }
 % }
 % my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $db_report) =
-	% $cg->formatReportOnDatabaseTables($tables_ok, $dbStatus);
-<%= $db_report %>
+	% $c->formatReportOnDatabaseTables($dbStatus);
+<%= $db_report =%>
 % if ($extra_database_tables) {
 	<p class="text-danger fw-bold">
 		<%= maketext(
@@ -46,9 +46,9 @@
 % }
 <hr>
 % # Print form for choosing next action.
-%= form_for $c->uri, method => 'POST', begin
-	<%= $cg->hidden_authen_fields =%>
-	<%= $cg->hidden_fields(
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields(
 		qw(subDisplay rename_oldCourseID rename_newCourseID rename_newCourseTitle rename_newCourseInstitution
 			rename_newCourseID_checkbox rename_newCourseInstitution_checkbox rename_newCourseTitle_checkbox)
 	) =%>
@@ -87,4 +87,4 @@
 			<%= submit_button maketext(q{Don't rename}), name => 'decline_rename_course', class => 'btn btn-primary' =%>
 		</div>
 	% }
-% end
+<% end =%>

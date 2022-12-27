@@ -14,18 +14,13 @@
 ################################################################################
 
 package WeBWorK::AchievementItems::ResurrectHW;
-use parent qw(WeBWorK::AchievementItems);
+use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to resurrect a homework for 24 hours
 
-use strict;
-use warnings;
-
 use WeBWorK::Utils qw(after x nfreeze_base64 thaw_base64 format_set_name_display);
 
-sub new {
-	my ($class) = @_;
-
+sub new ($class) {
 	return bless {
 		id          => 'ResurrectHW',
 		name        => x('Scroll of Resurrection'),
@@ -33,9 +28,7 @@ sub new {
 	}, $class;
 }
 
-sub print_form {
-	my ($self, $sets, $setProblemCount, $r) = @_;
-
+sub print_form ($self, $sets, $setProblemCount, $c) {
 	# List all of the sets that are closed or past their reduced scoring date.
 
 	my @closedSets;
@@ -47,22 +40,21 @@ sub print_form {
 				|| ($sets->[$i]->reduced_scoring_date && after($$sets[$i]->reduced_scoring_date)));
 	}
 
-	return $r->c(
-		$r->tag('p', $r->maketext('Choose the set which you would like to resurrect.')),
+	return $c->c(
+		$c->tag('p', $c->maketext('Choose the set which you would like to resurrect.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			$r,
+			$c,
 			id         => 'res_set_id',
-			label_text => $r->maketext('Set Name'),
+			label_text => $c->maketext('Set Name'),
 			values     => \@closedSets,
 			menu_attr  => { dir => 'ltr' }
 		)
 	)->join('');
 }
 
-sub use_item {
-	my ($self, $userName, $r) = @_;
-	my $db = $r->db;
-	my $ce = $r->ce;
+sub use_item ($self, $userName, $c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
 	# Validate data
 
@@ -72,7 +64,7 @@ sub use_item {
 	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
 	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
 
-	my $setID = $r->param('res_set_id');
+	my $setID = $c->param('res_set_id');
 	return 'You need to input a Set Name' unless defined $setID;
 
 	my $set = $db->getUserSet($userName, $setID);

@@ -1,8 +1,8 @@
 % use WeBWorK::Utils qw(is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status
 %	jitar_id_to_seq wwRound);
 %
-% my $courseID      = $urlpath->arg('courseID');
-% my $setID         = $cg->{set}->set_id;
+% my $courseID      = stash('courseID');
+% my $setID         = $c->{set}->set_id;
 % my $problemID     = $problem->problem_id;
 % my $problemNumber = $problemID;
 % my $problemLevel  = 0;
@@ -37,12 +37,8 @@
 				</span>
 			% } else {
 				<%= link_to(
-					maketext('Problem [_1]', $problemNumber) => $cg->systemLink($urlpath->newFromModule(
-						'WeBWorK::ContentGenerator::Problem', $c,
-						courseID  => $courseID,
-						setID     => $setID,
-						problemID => $problemID
-					)),
+					maketext('Problem [_1]', $problemNumber) =>
+						$c->systemLink(url_for('problem_detail', problemID => $problemID)),
 					class => "$linkClasses text-nowrap"
 				) =%>
 			% }
@@ -73,15 +69,11 @@
 			</td>
 		% }
 		% # Grader
-		% if ($cg->{canScoreProblems}) {
+		% if ($c->{canScoreProblems}) {
 			<td>
-				% if ($cg->{gradeableProblems}[$problemID]) {
-					<%= link_to(
-						maketext('Grade Problem') => $cg->systemLink($urlpath->new(
-							type => 'instructor_problem_grader',
-							args => { courseID => $courseID, setID => $setID, problemID => $problemID }
-						))
-					) =%>
+				% if ($c->{gradeableProblems}[$problemID]) {
+					<%= link_to(maketext('Grade Problem') =>
+						$c->systemLink(url_for('instructor_problem_grader', problemID => $problemID))) =%>
 				% }
 			</td>
 		% }

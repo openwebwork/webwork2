@@ -1,17 +1,15 @@
 % use WeBWorK::Utils qw(format_set_name_display);
 %
-% my $courseName = $urlpath->arg('courseID');
-%
 % my $visibleClass   = $set->visible ? 'font-visible' : 'font-hidden';
 % my $set_id         = $set->set_id;
 % my $prettySetID    = format_set_name_display($set_id);
-% my $problemListURL = $cg->systemLink(
-	% $urlpath->new(type => 'instructor_set_detail', args => { courseID => $courseName, setID => $set_id }));
 %
 <tr>
 %
-% if ($cg->{editMode}) {
-	<td dir="ltr"><%= link_to $prettySetID => $problemListURL %></td>
+% if ($c->{editMode}) {
+	<td dir="ltr">
+		<%= link_to $prettySetID => $c->systemLink(url_for('instructor_set_detail', setID => $set_id)) %>
+	</td>
 % } else {
 	<td>
 		% param(selected_sets => [ param('selected_sets'), $set_id ]) if $setSelected;
@@ -25,13 +23,10 @@
 					<%= $prettySetID =%>
 				</span>
 				% if ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
-					<%= link_to $cg->systemLink($urlpath->new(
-								type => 'instructor_set_list',
-								args => { courseID => $courseName, setID => $set_id }
-							),
-							params => { editMode => 1, visible_sets => $set_id }
-						),
-						begin =%>
+					<%= link_to $c->systemLink(
+						url_for('instructor_set_list', setID => $set_id),
+						params => { editMode => 1, visible_sets => $set_id }
+					), begin =%>
 						<i class="icon fas fa-pencil-alt" data-alt="edit" aria-hidden="true"></i>
 					<% end =%>
 				% }
@@ -39,13 +34,14 @@
 		</div>
 	</td>
 	%# Problems link
-	<td><%= link_to $db->countGlobalProblems($set_id) => $problemListURL %></td>
+	<td>
+		<%= link_to $db->countGlobalProblems($set_id) =>
+			$c->systemLink(url_for('instructor_set_detail', setID => $set_id)) %>
+	</td>
 	% # Users link
 	<td>
-		<%= link_to $db->countSetUsers($set_id) . "/$cg->{totalUsers}" => $cg->systemLink($urlpath->new(
-				type => 'instructor_users_assigned_to_set',
-				args => { courseID => $courseName, setID => $set_id }
-			)) =%>
+		<%= link_to $db->countSetUsers($set_id) . "/$c->{totalUsers}" =>
+			$c->systemLink(url_for('instructor_users_assigned_to_set', setID => $set_id)) =%>
 	</td>
 % }
 %

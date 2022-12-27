@@ -133,25 +133,20 @@ Mojo::ByteStream object if it contains html or characters that need escaping.
 =cut
 
 package WeBWorK::HTML::AttemptsTable;
-use parent qw(Class::Accessor);
-
-use strict;
-use warnings;
+use Mojo::Base 'Class::Accessor', -signatures;
 
 use Scalar::Util 'blessed';
 use WeBWorK::Utils 'wwRound';
 
-# %options must contain: r
 # %options may contain:  displayMode, submitted, imgGen, ce
 # At least one of imgGen or ce must be provided if displayMode is 'images'.
-sub new {
-	my ($class, $rh_answers, $r, %options) = @_;
+sub new ($class, $rh_answers, $c, %options) {
 	$class = ref $class || $class;
-	ref($rh_answers) =~ /HASH/  or die 'The first entry to AttemptsTable must be a hash of answers';
-	$r->isa('WeBWorK::Request') or die 'The second entry to AttemptsTable must be a WeBWorK::Request';
+	ref($rh_answers) =~ /HASH/     or die 'The first entry to AttemptsTable must be a hash of answers';
+	$c->isa('WeBWorK::Controller') or die 'The second entry to AttemptsTable must be a WeBWorK::Controller';
 	my $self = bless {
 		answers             => $rh_answers,
-		r                   => $r,
+		c                   => $c,
 		answerOrder         => $options{answerOrder}      // [],
 		answersSubmitted    => $options{answersSubmitted} // 0,
 		summary             => undef,                                # summary provided by problem grader (set in _init)
@@ -168,7 +163,7 @@ sub new {
 	}, $class;
 
 	# Create accessors/mutators
-	$self->mk_ro_accessors(qw(answers answerOrder answersSubmitted displayMode imgGen showAnswerNumbers
+	$self->mk_ro_accessors(qw(answers c answerOrder answersSubmitted displayMode imgGen showAnswerNumbers
 		showAttemptAnswers showHeadline showAttemptPreviews showAttemptResults showCorrectAnswers showSummary));
 	$self->mk_accessors(qw(showMessages summary));
 
@@ -179,8 +174,7 @@ sub new {
 }
 
 # Verify the display mode, and build imgGen if it is not supplied.
-sub _init {
-	my ($self, %options) = @_;
+sub _init ($self, %options) {
 	$self->{submitted}   = $options{submitted} // 0;
 	$self->{displayMode} = $options{displayMode} || 'MathJax';
 
@@ -217,23 +211,13 @@ sub _init {
 
 	# Make sure that the provided summary is a Mojo::ByteStream object.
 	$self->summary(blessed($options{summary})
-			&& $options{summary}->isa('Mojo::ByteStream') ? $options{summary} : $self->r->b($options{summary} // ''));
+			&& $options{summary}->isa('Mojo::ByteStream') ? $options{summary} : $self->c->b($options{summary} // ''));
 
 	return;
 }
 
-sub r {
-	my ($self, @args) = @_;
-	return $self->{r};
-}
-
-sub formatAnswerRow {
-	my $self         = shift;
-	my $rh_answer    = shift;
-	my $ans_id       = shift;
-	my $answerNumber = shift;
-
-	my $r = $self->r;
+sub formatAnswerRow ($self, $rh_answer, $ans_id, $answerNumber) {
+	my $c = $self->c;
 
 	my $answerString         = $rh_answer->{student_ans}               // '';
 	my $answerPreview        = $self->previewAnswer($rh_answer)        // '&nbsp;';
@@ -247,81 +231,78 @@ sub formatAnswerRow {
 	$self->{numEssay}   += ($rh_answer->{type} // '') eq 'essay';
 	$self->{numBlanks}++ unless $answerString =~ /\S/ || $answerScore >= 1;
 
-	my $feedbackMessageClass = ($answerMessage eq '') ? '' : $r->maketext('FeedbackMessage');
+	my $feedbackMessageClass = ($answerMessage eq '') ? '' : $c->maketext('FeedbackMessage');
 
 	my $resultString;
 	my $resultStringClass;
 	if ($answerScore >= 1) {
-		$resultString      = $r->maketext('correct');
+		$resultString      = $c->maketext('correct');
 		$resultStringClass = 'ResultsWithoutError';
 	} elsif (($rh_answer->{type} // '') eq 'essay') {
-		$resultString = $r->maketext('Ungraded');
+		$resultString = $c->maketext('Ungraded');
 		$self->{essayFlag} = 1;
 	} elsif ($answerScore == 0) {
 		$resultStringClass = 'ResultsWithError';
-		$resultString      = $r->maketext('incorrect');
+		$resultString      = $c->maketext('incorrect');
 	} else {
-		$resultString = $r->maketext('[_1]% correct', wwRound(0, $answerScore * 100));
+		$resultString = $c->maketext('[_1]% correct', wwRound(0, $answerScore * 100));
 	}
-	my $attemptResults = $r->tag(
+	my $attemptResults = $c->tag(
 		'td',
 		class => $resultStringClass,
-		$r->tag('a', href => '#', data => { answer_id => $ans_id }, $self->nbsp($resultString))
+		$c->tag('a', href => '#', data => { answer_id => $ans_id }, $self->nbsp($resultString))
 	);
 
-	return $r->c(
-		$self->showAnswerNumbers   ? $r->tag('td', $answerNumber)                                               : '',
-		$self->showAttemptAnswers  ? $r->tag('td', dir => 'auto', $self->nbsp($answerString))                   : '',
+	return $c->c(
+		$self->showAnswerNumbers   ? $c->tag('td', $answerNumber)                                               : '',
+		$self->showAttemptAnswers  ? $c->tag('td', dir => 'auto', $self->nbsp($answerString))                   : '',
 		$self->showAttemptPreviews ? $self->formatToolTip($answerString, $answerPreview)                        : '',
 		$self->showAttemptResults  ? $attemptResults                                                            : '',
 		$self->showCorrectAnswers  ? $self->formatToolTip($correctAnswer, $correctAnswerPreview)                : '',
-		$self->showMessages        ? $r->tag('td', class => $feedbackMessageClass, $self->nbsp($answerMessage)) : ''
+		$self->showMessages        ? $c->tag('td', class => $feedbackMessageClass, $self->nbsp($answerMessage)) : ''
 	)->join('');
 }
 
 # Determine whether any answers were submitted and create answer template if they have been.
-sub answerTemplate {
-	my $self = shift;
-	my $r    = $self->r;
+sub answerTemplate ($self) {
+	my $c = $self->c;
 
 	return '' unless $self->answersSubmitted;    # Only print if there is at least one non-blank answer
 
-	my $tableRows = $r->c;
+	my $tableRows = $c->c;
 
 	push(
 		@$tableRows,
-		$r->tag(
+		$c->tag(
 			'tr',
-			$r->c(
-				$self->showAnswerNumbers   ? $r->tag('th', '#')                            : '',
-				$self->showAttemptAnswers  ? $r->tag('th', $r->maketext('Entered'))        : '',
-				$self->showAttemptPreviews ? $r->tag('th', $r->maketext('Answer Preview')) : '',
-				$self->showAttemptResults  ? $r->tag('th', $r->maketext('Result'))         : '',
-				$self->showCorrectAnswers  ? $r->tag('th', $r->maketext('Correct Answer')) : '',
-				$self->showMessages        ? $r->tag('th', $r->maketext('Message'))        : ''
+			$c->c(
+				$self->showAnswerNumbers   ? $c->tag('th', '#')                            : '',
+				$self->showAttemptAnswers  ? $c->tag('th', $c->maketext('Entered'))        : '',
+				$self->showAttemptPreviews ? $c->tag('th', $c->maketext('Answer Preview')) : '',
+				$self->showAttemptResults  ? $c->tag('th', $c->maketext('Result'))         : '',
+				$self->showCorrectAnswers  ? $c->tag('th', $c->maketext('Correct Answer')) : '',
+				$self->showMessages        ? $c->tag('th', $c->maketext('Message'))        : ''
 			)->join('')
 		)
 	);
 
 	my $answerNumber = 0;
 	for (@{ $self->answerOrder() }) {
-		push @$tableRows, $r->tag('tr', $self->formatAnswerRow($self->{answers}{$_}, $_, ++$answerNumber));
+		push @$tableRows, $c->tag('tr', $self->formatAnswerRow($self->{answers}{$_}, $_, ++$answerNumber));
 	}
 
-	return $r->c(
+	return $c->c(
 		$self->showHeadline
-		? $r->tag('h2', class => 'attemptResultsHeader', $r->maketext('Results for this submission'))
+		? $c->tag('h2', class => 'attemptResultsHeader', $c->maketext('Results for this submission'))
 		: '',
-		$r->tag('table', class => 'attemptResults table table-sm table-bordered', $tableRows->join('')),
+		$c->tag('table', class => 'attemptResults table table-sm table-bordered', $tableRows->join('')),
 		$self->showSummary ? $self->createSummary : ''
 	)->join('');
 }
 
-sub previewAnswer {
-	my $self         = shift;
-	my $answerResult = shift;
-	my $displayMode  = $self->displayMode;
-	my $imgGen       = $self->imgGen;
+sub previewAnswer ($self, $answerResult) {
+	my $displayMode = $self->displayMode;
+	my $imgGen      = $self->imgGen;
 
 	my $tex = $answerResult->{preview_latex_string};
 
@@ -336,15 +317,13 @@ sub previewAnswer {
 	} elsif ($displayMode eq 'images') {
 		return $imgGen->add($tex);
 	} elsif ($displayMode eq 'MathJax') {
-		return $self->r->tag('script', type => 'math/tex', mode => 'display', $self->r->b($tex));
+		return $self->c->tag('script', type => 'math/tex', mode => 'display', $self->c->b($tex));
 	}
 }
 
-sub previewCorrectAnswer {
-	my $self         = shift;
-	my $answerResult = shift;
-	my $displayMode  = $self->displayMode;
-	my $imgGen       = $self->imgGen;
+sub previewCorrectAnswer ($self, $answerResult) {
+	my $displayMode = $self->displayMode;
+	my $imgGen      = $self->imgGen;
 
 	my $tex = $answerResult->{correct_ans_latex_string};
 
@@ -360,14 +339,13 @@ sub previewCorrectAnswer {
 	} elsif ($displayMode eq 'images') {
 		return $imgGen->add($tex);
 	} elsif ($displayMode eq 'MathJax') {
-		return $self->r->tag('script', type => 'math/tex', mode => 'display', $self->r->b($tex));
+		return $self->c->tag('script', type => 'math/tex', mode => 'display', $self->c->b($tex));
 	}
 }
 
 # Create summary
-sub createSummary {
-	my $self = shift;
-	my $r    = $self->r;
+sub createSummary ($self) {
+	my $c = $self->c;
 
 	my $numCorrect = $self->{numCorrect};
 	my $numBlanks  = $self->{numBlanks};
@@ -377,27 +355,27 @@ sub createSummary {
 
 	unless (defined($self->summary) and $self->summary =~ /\S/) {
 		# Default messages
-		$summary = $r->c;
+		$summary = $c->c;
 		my @answerNames = @{ $self->answerOrder() };
 		if (scalar @answerNames == 1) {
 			if ($numCorrect == scalar @answerNames) {
 				push(
 					@$summary,
-					$r->tag(
+					$c->tag(
 						'div',
 						class => 'ResultsWithoutError mb-2',
-						$r->maketext('The answer above is correct.')
+						$c->maketext('The answer above is correct.')
 					)
 				);
 			} elsif ($self->{essayFlag}) {
-				push(@$summary, $r->tag('div', $r->maketext('Some answers will be graded later.')));
+				push(@$summary, $c->tag('div', $c->maketext('Some answers will be graded later.')));
 			} else {
 				push(
 					@$summary,
-					$r->tag(
+					$c->tag(
 						'div',
 						class => 'ResultsWithError mb-2',
-						$r->maketext('The answer above is NOT correct.')
+						$c->maketext('The answer above is NOT correct.')
 					)
 				);
 			}
@@ -406,29 +384,29 @@ sub createSummary {
 				if ($numEssay) {
 					push(
 						@$summary,
-						$r->tag(
+						$c->tag(
 							'div',
 							class => 'ResultsWithoutError mb-2',
-							$r->maketext('All of the gradeable answers above are correct.')
+							$c->maketext('All of the gradeable answers above are correct.')
 						)
 					);
 				} else {
 					push(
 						@$summary,
-						$r->tag(
+						$c->tag(
 							'div',
 							class => 'ResultsWithoutError mb-2',
-							$r->maketext('All of the answers above are correct.')
+							$c->maketext('All of the answers above are correct.')
 						)
 					);
 				}
 			} elsif ($numBlanks + $numEssay != scalar(@answerNames)) {
 				push(
 					@$summary,
-					$r->tag(
+					$c->tag(
 						'div',
 						class => 'ResultsWithError mb-2',
-						$r->maketext('At least one of the answers above is NOT correct.')
+						$c->maketext('At least one of the answers above is NOT correct.')
 					)
 				);
 			}
@@ -436,10 +414,10 @@ sub createSummary {
 				my $s = ($numBlanks > 1) ? '' : 's';
 				push(
 					@$summary,
-					$r->tag(
+					$c->tag(
 						'div',
 						class => 'ResultsAlert mb-2',
-						$r->maketext(
+						$c->maketext(
 							'[quant,_1,of the questions remains,of the questions remain] unanswered.', $numBlanks
 						)
 					)
@@ -450,24 +428,21 @@ sub createSummary {
 	} else {
 		$summary = $self->summary;    # Summary defined by grader
 	}
-	$summary = $r->tag('div', role => 'alert', class => 'attemptResultsSummary', $summary);
+	$summary = $c->tag('div', role => 'alert', class => 'attemptResultsSummary', $summary);
 	$self->summary($summary);
 	return $summary;
 }
 
 # Utility subroutine that prevents unwanted line breaks, and ensures that the return value is a Mojo::ByteStream object.
-sub nbsp {
-	my ($self, $str) = @_;
-	return $self->r->b(defined $str && $str =~ /\S/ ? $str : '&nbsp;');
+sub nbsp ($self, $str) {
+	return $self->c->b(defined $str && $str =~ /\S/ ? $str : '&nbsp;');
 }
 
 # Note that formatToolTip output includes the <td></td> wrapper.
-sub formatToolTip {
-	my ($self, $answer, $formattedAnswer) = @_;
-
-	return $self->r->tag(
+sub formatToolTip ($self, $answer, $formattedAnswer) {
+	return $self->c->tag(
 		'td',
-		$self->r->tag(
+		$self->c->tag(
 			'span',
 			class => 'answer-preview',
 			data  => {

@@ -31,14 +31,14 @@ use constant GENERIC_ERROR_MESSAGE => 'Invalid user ID or password.';
 
 sub verify {
 	my $self = shift;
-	my $r    = $self->{r};
+	my $c    = $self->{c};
 
 	# At this point the usual authentication has already occurred and the user has been verified.  If the
 	# use_grade_auth_proctor option is set to 'No', then proctor authorization is not not needed.  So return
 	# 1 here to skip proctor authorization and proceed on to the GatewayQuiz module which will grade the test.
-	if ($r->param('submitAnswers')) {
-		my ($setName, $versionNum) = grok_vsetID($r->urlpath->arg('setID'));
-		my $userSet = $r->db->getMergedSetVersion($r->param('effectiveUser'), $setName, $versionNum);
+	if ($c->param('submitAnswers')) {
+		my ($setName, $versionNum) = grok_vsetID($c->stash('setID'));
+		my $userSet = $c->db->getMergedSetVersion($c->param('effectiveUser'), $setName, $versionNum);
 		return 1 if $userSet && $userSet->use_grade_auth_proctor eq 'No';
 	}
 
@@ -51,24 +51,23 @@ sub verify {
 #  3. user_id/session_key/password come from params proctor_user/proctor_key/proctor_passwd
 sub get_credentials {
 	my ($self) = @_;
-	my $r      = $self->{r};
-	my $ce     = $r->ce;
-	my $db     = $r->db;
+	my $c      = $self->{c};
+	my $ce     = $c->ce;
+	my $db     = $c->db;
 
-	my $urlpath = $r->urlpath;
-	my ($set_id, $version_id) = grok_vsetID($urlpath->arg('setID'));
+	my ($set_id, $version_id) = grok_vsetID($c->stash('setID'));
 
 	# at least the user ID is available in request parameters
-	if (defined $r->param('proctor_user')) {
-		my $student_user_id = $r->param('effectiveUser');
-		$self->{user_id} = $r->param('proctor_user');
+	if (defined $c->param('proctor_user')) {
+		my $student_user_id = $c->param('effectiveUser');
+		$self->{user_id} = $c->param('proctor_user');
 		if ($self->{user_id} eq $set_id) {
 			$self->{user_id} = "set_id:$set_id";
 		}
-		$self->{session_key} = $r->param('proctor_key');
-		$self->{password}    = $r->param('proctor_passwd');
+		$self->{session_key} = $c->param('proctor_key');
+		$self->{password}    = $c->param('proctor_passwd');
 		$self->{login_type} =
-			$r->param('submitAnswers') ? "proctor_grading:$student_user_id" : "proctor_login:$student_user_id";
+			$c->param('submitAnswers') ? "proctor_grading:$student_user_id" : "proctor_login:$student_user_id";
 		$self->{credential_source} = 'params';
 		return 1;
 	}
@@ -78,14 +77,14 @@ sub get_credentials {
 #    to proctor quizzes
 sub check_user {
 	my $self  = shift;
-	my $r     = $self->{r};
-	my $ce    = $r->ce;
-	my $db    = $r->db;
-	my $authz = $r->authz;
+	my $c     = $self->{c};
+	my $ce    = $c->ce;
+	my $db    = $c->db;
+	my $authz = $c->authz;
 
-	my $submitAnswers   = $r->param('submitAnswers');
+	my $submitAnswers   = $c->param('submitAnswers');
 	my $user_id         = $self->{user_id};
-	my $past_proctor_id = $r->param('past_proctor_user') || $user_id;
+	my $past_proctor_id = $c->param('past_proctor_user') || $user_id;
 
 	# for set-level authentication we prepended "set_id:"
 	my $show_user_id = $user_id;
@@ -135,8 +134,8 @@ sub check_user {
 		# authorization to grade the quiz. Require a grade proctor permission level
 		# to start a quiz that skips authorization to grade it. This ensures that
 		# a grade proctor level of authorization is always required.
-		my ($setName, $versionNum) = grok_vsetID($r->urlpath->arg('setID'));
-		my $userSet = $db->getMergedSet($r->param('effectiveUser'), $setName);
+		my ($setName, $versionNum) = grok_vsetID($c->stash('setID'));
+		my $userSet = $db->getMergedSet($c->param('effectiveUser'), $setName);
 		unless (
 			$authz->hasPermissions($user_id, 'proctor_quiz_grade')
 			|| (($userSet->use_grade_auth_proctor eq 'Yes' || $userSet->restricted_login_proctor eq 'Yes')
@@ -166,11 +165,11 @@ sub check_user {
 # proctor_user, proctor_key, and proctor_passwd are used
 sub set_params {
 	my $self = shift;
-	my $r    = $self->{r};
+	my $c    = $self->{c};
 
-	$r->param('proctor_user',   $self->{user_id});
-	$r->param('proctor_key',    $self->{session_key});
-	$r->param('proctor_passwd', '');
+	$c->param('proctor_user',   $self->{user_id});
+	$c->param('proctor_key',    $self->{session_key});
+	$c->param('proctor_passwd', '');
 }
 
 # rewrite the userID to include both the proctor's and the student's user ID
@@ -192,9 +191,9 @@ sub check_session {
 # proctor key ID rewriting helper
 sub proctor_key_id {
 	my ($self, $userID, $newKey) = @_;
-	my $r = $self->{r};
+	my $c = $self->{c};
 
-	my $proctor_key_id = $r->param('effectiveUser') . ',' . $userID;
+	my $proctor_key_id = $c->param('effectiveUser') . ',' . $userID;
 	$proctor_key_id .= ',g' if $self->{login_type} =~ /^proctor_grading/;
 
 	return $proctor_key_id;

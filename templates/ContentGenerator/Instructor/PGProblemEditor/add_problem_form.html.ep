@@ -1,4 +1,4 @@
-% last if $cg->{file_type} eq 'course_info';
+% last if $c->{file_type} eq 'course_info';
 %
 % my $allSetNames = [ map { $_->[0] =~ s/^set|\.def$//gr } $db->listGlobalSetsWhere({}, 'set_id') ];
 %
@@ -9,7 +9,7 @@
 		<div class="col-auto">
 			<%= select_field 'action.add_problem.target_set' => [
 					map { [
-						format_set_name_display($_) => $_, $_ eq $cg->{setID} ? (selected => undef) : ()
+						format_set_name_display($_) => $_, $_ eq $c->{setID} ? (selected => undef) : ()
 					] } @$allSetNames
 				],
 				id => 'action_add_problem_target_set_id', class => 'form-select form-select-sm d-inline w-auto',
@@ -21,7 +21,7 @@
 			class => 'col-form-label col-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.add_problem.file_type' => [
-					map { [ $_ =~ s/_/ /gr => $_, $cg->{file_type} eq $_ ? (selected => undef) : () ] }
+					map { [ $_ =~ s/_/ /gr => $_, $c->{file_type} eq $_ ? (selected => undef) : () ] }
 					('problem', 'set_header', 'hardcopy_header')
 				],
 				id => 'action_add_problem_file_type_id', class => 'form-select form-select-sm d-inline w-auto' =%>

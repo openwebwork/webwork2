@@ -516,7 +516,7 @@ sub updateSetting {
 sub saveFile {
 	my ($invocant, $self, $params) = @_;
 
-	my $r  = $self->r;
+	my $c  = $self->c;
 	my $ce = $self->ce;
 
 	my $outputFilePath = $params->{outputFilePath};
@@ -525,7 +525,7 @@ sub saveFile {
 	if ($outputFilePath && $outputFilePath =~ /\S/) {
 		return {
 			ra_out => 0,
-			text   => $r->maketext(
+			text   => $c->maketext(
 				'File not saved. The file "[_1]" is not contained in the templates directory!',
 				$outputFilePath
 			)
@@ -541,7 +541,7 @@ sub saveFile {
 		open(my $outfile, '>:encoding(UTF-8)', $outputFilePath)
 			or return {
 				ra_out => 0,
-				text   => $r->maketext('File not saved. Failed to open "[_1]" for writing.', $outputFilePath)
+				text   => $c->maketext('File not saved. Failed to open "[_1]" for writing.', $outputFilePath)
 			};
 		print $outfile $params->{fileContents};
 		close $outfile;
@@ -549,7 +549,7 @@ sub saveFile {
 
 	return {
 		ra_out => 1,
-		text   => $r->maketext('Saved to file "[_1]"', $outputFilePath =~ s/$ce->{courseDirs}{templates}/[TMPL]/r)
+		text   => $c->maketext('Saved to file "[_1]"', $outputFilePath =~ s/$ce->{courseDirs}{templates}/[TMPL]/r)
 	};
 }
 

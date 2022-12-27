@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::UserList;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -62,9 +62,6 @@ Export users:
 		- new file on server (create): [ filename ]
 
 =cut
-
-use strict;
-use warnings;
 
 use WeBWorK::File::Classlist qw(parse_classlist write_classlist);
 use WeBWorK::Utils qw(cryptPassword x);
@@ -135,71 +132,65 @@ use constant FIELD_PROPERTIES => {
 	permission    => { name => x('Permission Level'),  type => 'permission' },
 };
 
-async sub pre_header_initialize {
-	my $self    = shift;
-	my $r       = $self->r;
-	my $authz   = $r->authz;
-	my $urlpath = $r->urlpath;
-	my $ce      = $r->ce;
-	my $db      = $r->db;
-	my $user    = $r->param('user');
+sub pre_header_initialize ($c) {
+	my $authz = $c->authz;
+	my $ce    = $c->ce;
+	my $db    = $c->db;
+	my $user  = $c->param('user');
 
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 
-	$self->{editMode}     = $r->param('editMode')     || 0;
-	$self->{passwordMode} = $r->param('passwordMode') || 0;
+	$c->{editMode}     = $c->param('editMode')     || 0;
+	$c->{passwordMode} = $c->param('passwordMode') || 0;
 
-	return if ($self->{passwordMode} || $self->{editMode}) && !$authz->hasPermissions($user, 'modify_student_data');
+	return if ($c->{passwordMode} || $c->{editMode}) && !$authz->hasPermissions($user, 'modify_student_data');
 
-	if (defined $r->param('action') && $r->param('action') eq 'add') {
+	if (defined $c->param('action') && $c->param('action') eq 'add') {
 		# Redirect to the addUser page
-		$self->reply_with_redirect($self->systemLink(
-			$urlpath->newFromModule(
-				'WeBWorK::ContentGenerator::Instructor::AddUsers',
-				$r, courseID => $urlpath->arg('courseID')
-			),
-			params => { number_of_students => $r->param('number_of_students') // 1 }
+		$c->reply_with_redirect($c->systemLink(
+			$c->url_for('instructor_add_users'),
+			params => { number_of_students => $c->param('number_of_students') // 1 }
 		));
 		return;
 	}
 
 	# Get a list of all users except set-level proctors from the database.
 	my @allUsers = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
-	$self->{allUserIDs} = [ map { $_->user_id } @allUsers ];
+	$c->{allUserIDs} = [ map { $_->user_id } @allUsers ];
 
 	# Get the number of sets in the course for use in the "assigned sets" links.
-	$self->{totalSets} = $db->countGlobalSets;
+	$c->{totalSets} = $db->countGlobalSets;
 
-	if (defined $r->param('visible_user_string')) {
-		$self->{visibleUserIDs} = [ split /:/, $r->param('visible_user_string') ];
-	} elsif (defined $r->param('visible_users')) {
-		$self->{visibleUserIDs} = [ $r->param('visible_users') ];
-	} elsif (defined $r->param('no_visible_users')) {
-		$self->{visibleUserIDs} = [];
+	if (defined $c->param('visible_user_string')) {
+		$c->{visibleUserIDs} = [ split /:/, $c->param('visible_user_string') ];
+	} elsif (defined $c->param('visible_users')) {
+		$c->{visibleUserIDs} = [ $c->param('visible_users') ];
+	} elsif (defined $c->param('no_visible_users')) {
+		$c->{visibleUserIDs} = [];
 	} else {
-		if (@{ $self->{allUserIDs} } > HIDE_USERS_THRESHHOLD && !defined $r->param('show_all_users')) {
-			$self->{visibleUserIDs} = [];
+		if (@{ $c->{allUserIDs} } > HIDE_USERS_THRESHHOLD && !defined $c->param('show_all_users')) {
+			$c->{visibleUserIDs} = [];
 		} else {
-			$self->{visibleUserIDs} = [ @{ $self->{allUserIDs} } ];
+			$c->{visibleUserIDs} = [ @{ $c->{allUserIDs} } ];
 		}
 	}
 
-	$self->{prevVisibleUserIDs} = $self->{visibleUserIDs};
+	$c->{prevVisibleUserIDs} = $c->{visibleUserIDs};
 
-	if (defined $r->param('selected_users')) {
-		$self->{selectedUserIDs} = [ $r->param('selected_users') ];
+	if (defined $c->param('selected_users')) {
+		$c->{selectedUserIDs} = [ $c->param('selected_users') ];
 	} else {
-		$self->{selectedUserIDs} = [];
+		$c->{selectedUserIDs} = [];
 	}
 
-	if (defined $r->param('labelSortMethod')) {
-		$self->{primarySortField}   = $r->param('labelSortMethod');
-		$self->{secondarySortField} = $r->param('primarySortField');
-		$self->{ternarySortField}   = $r->param('secondarySortField');
+	if (defined $c->param('labelSortMethod')) {
+		$c->{primarySortField}   = $c->param('labelSortMethod');
+		$c->{secondarySortField} = $c->param('primarySortField');
+		$c->{ternarySortField}   = $c->param('secondarySortField');
 	} else {
-		$self->{primarySortField}   = $r->param('primarySortField')   || 'last_name';
-		$self->{secondarySortField} = $r->param('secondarySortField') || 'first_name';
-		$self->{ternarySortField}   = $r->param('ternarySortField')   || 'student_id';
+		$c->{primarySortField}   = $c->param('primarySortField')   || 'last_name';
+		$c->{secondarySortField} = $c->param('secondarySortField') || 'first_name';
+		$c->{ternarySortField}   = $c->param('ternarySortField')   || 'student_id';
 	}
 
 	my (%sections, %recitations);
@@ -207,40 +198,39 @@ async sub pre_header_initialize {
 		push @{ $sections{ defined $user->section       ? $user->section    : '' } }, $user->user_id;
 		push @{ $recitations{ defined $user->recitation ? $user->recitation : '' } }, $user->user_id;
 	}
-	$self->{sections}    = \%sections;
-	$self->{recitations} = \%recitations;
+	$c->{sections}    = \%sections;
+	$c->{recitations} = \%recitations;
 
-	my $actionID = $r->param('action');
+	my $actionID = $c->param('action');
 	if ($actionID) {
 		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }, @{ PASSWORD_FORMS() }) {
-			die $r->maketext('Action [_1] not found', $actionID);
+			die $c->maketext('Action [_1] not found', $actionID);
 		}
 		if (!FORM_PERMS()->{$actionID} || $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
 			# Call the action handler
 			my $actionHandler = "${actionID}_handler";
-			$self->addgoodmessage($r->maketext(
-				'Result of last action performed: [_1]', $r->tag('i', $self->$actionHandler)));
+			$c->addgoodmessage($c->maketext('Result of last action performed: [_1]', $c->tag('i', $c->$actionHandler)));
 		} else {
-			$self->addbadmessage($r->maketext('You are not authorized to perform this action.'));
+			$c->addbadmessage($c->maketext('You are not authorized to perform this action.'));
 		}
 	} else {
-		$self->addgoodmessage($r->maketext("Please select action to be performed."));
+		$c->addgoodmessage($c->maketext("Please select action to be performed."));
 	}
 
 	# Get requested users
-	$self->{visibleUsers} = [ @{ $self->{visibleUserIDs} } ? $db->getUsers(@{ $self->{visibleUserIDs} }) : () ];
+	$c->{visibleUsers} = [ @{ $c->{visibleUserIDs} } ? $db->getUsers(@{ $c->{visibleUserIDs} }) : () ];
 
-	my $primarySortSub   = SORT_SUBS()->{ $self->{primarySortField} };
-	my $secondarySortSub = SORT_SUBS()->{ $self->{secondarySortField} };
-	my $ternarySortSub   = SORT_SUBS()->{ $self->{ternarySortField} };
+	my $primarySortSub   = SORT_SUBS()->{ $c->{primarySortField} };
+	my $secondarySortSub = SORT_SUBS()->{ $c->{secondarySortField} };
+	my $ternarySortSub   = SORT_SUBS()->{ $c->{ternarySortField} };
 
 	# Add permission level to the user record hash so we can sort by it.
-	for my $user (@{ $self->{visibleUsers} }) {
+	for my $user (@{ $c->{visibleUsers} }) {
 		my $permissionLevel = $db->getPermissionLevel($user->user_id);
 
 		unless ($permissionLevel) {
 			# Uh oh! No permission level record found!
-			$self->addbadmessage($r->maketext('Added missing permission level for user [_1].', $user->user_id));
+			$c->addbadmessage($c->maketext('Added missing permission level for user [_1].', $user->user_id));
 
 			# Create a new permission level record.
 			$permissionLevel = $db->newPermissionLevel;
@@ -255,55 +245,51 @@ async sub pre_header_initialize {
 	}
 
 	# Always have a definite sort order in case the first three sorts don't determine things.
-	$self->{visibleUsers} = [
+	$c->{visibleUsers} = [
 		sort { &$primarySortSub || &$secondarySortSub || &$ternarySortSub || byLastName || byFirstName || byUserID }
-			@{ $self->{visibleUsers} }
+			@{ $c->{visibleUsers} }
 	];
 
 	return;
 }
 
-sub initialize {
-	my ($self) = @_;
-	my $r = $self->r;
-
+sub initialize ($c) {
 	# Make sure these are defined for the template.
 	# This is done here as it needs to occur after the action handler has been executed.
-	$r->stash->{formsToShow} =
-		$self->{editMode} ? EDIT_FORMS() : $self->{passwordMode} ? PASSWORD_FORMS() : VIEW_FORMS();
-	$r->stash->{formTitles}      = FORM_TITLES();
-	$r->stash->{formPerms}       = FORM_PERMS();
-	$r->stash->{fields}          = FIELDS();
-	$r->stash->{fieldProperties} = FIELD_PROPERTIES();
+	$c->stash->{formsToShow} =
+		$c->{editMode} ? EDIT_FORMS() : $c->{passwordMode} ? PASSWORD_FORMS() : VIEW_FORMS();
+	$c->stash->{formTitles}      = FORM_TITLES();
+	$c->stash->{formPerms}       = FORM_PERMS();
+	$c->stash->{fields}          = FIELDS();
+	$c->stash->{fieldProperties} = FIELD_PROPERTIES();
+
+	return;
 }
 
 # Action handlers
 
 # This action handler modifies the "visibleUserIDs" field based on the contents
 # of the "action.filter.scope" parameter and the "selected_users".
-sub filter_handler {
-	my ($self) = @_;
-
-	my $r  = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
+sub filter_handler ($c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
 	my $result;
 
-	my $scope = $r->param('action.filter.scope');
+	my $scope = $c->param('action.filter.scope');
 	if ($scope eq 'all') {
-		$result = $r->maketext('showing all users');
-		$self->{visibleUserIDs} = $self->{allUserIDs};
+		$result = $c->maketext('showing all users');
+		$c->{visibleUserIDs} = $c->{allUserIDs};
 	} elsif ($scope eq 'none') {
-		$result = $r->maketext('showing no users');
-		$self->{visibleUserIDs} = [];
+		$result = $c->maketext('showing no users');
+		$c->{visibleUserIDs} = [];
 	} elsif ($scope eq 'selected') {
-		$result = $r->maketext('showing selected users');
-		$self->{visibleUserIDs} = [ $r->param('selected_users') ];
+		$result = $c->maketext('showing selected users');
+		$c->{visibleUserIDs} = [ $c->param('selected_users') ];
 	} elsif ($scope eq 'match_regex') {
-		$result = $r->maketext('showing matching users');
-		my $regex       = $r->param('action.filter.user_ids');
-		my $field       = $r->param('action.filter.field');
+		$result = $c->maketext('showing matching users');
+		my $regex       = $c->param('action.filter.user_ids');
+		my $field       = $c->param('action.filter.field');
 		my @userRecords = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
 		my @userIDs;
 		my %permissionLabels = reverse %{ $ce->{userRoles} };
@@ -319,102 +305,91 @@ sub filter_handler {
 			}
 			push @userIDs, $record->user_id if $record->{$field} =~ /^$regex/i;
 		}
-		$self->{visibleUserIDs} = \@userIDs;
+		$c->{visibleUserIDs} = \@userIDs;
 	} elsif ($scope eq 'match_ids') {
-		my @userIDs = split /\s*,\s*/, $r->param('action.filter.user_ids');
-		$self->{visibleUserIDs} = \@userIDs;
+		my @userIDs = split /\s*,\s*/, $c->param('action.filter.user_ids');
+		$c->{visibleUserIDs} = \@userIDs;
 	} elsif ($scope eq 'match_section') {
-		my $section = $r->param('action.filter.section');
-		$self->{visibleUserIDs} = $self->{sections}{$section};    # an arrayref
+		my $section = $c->param('action.filter.section');
+		$c->{visibleUserIDs} = $c->{sections}{$section};    # an arrayref
 	} elsif ($scope eq 'match_recitation') {
-		my $recitation = $r->param('action.filter.recitation');
-		$self->{visibleUserIDs} = $self->{recitations}{$recitation};    # an arrayref
+		my $recitation = $c->param('action.filter.recitation');
+		$c->{visibleUserIDs} = $c->{recitations}{$recitation};    # an arrayref
 	}
 
 	return $result;
 }
 
-sub sort_handler {
-	my ($self) = @_;
-	my $r = $self->r;
+sub sort_handler ($c) {
+	$c->{primarySortField}   = $c->param('action.sort.primary');
+	$c->{secondarySortField} = $c->param('action.sort.secondary');
+	$c->{ternarySortField}   = $c->param('action.sort.ternary');
 
-	$self->{primarySortField}   = $r->param('action.sort.primary');
-	$self->{secondarySortField} = $r->param('action.sort.secondary');
-	$self->{ternarySortField}   = $r->param('action.sort.ternary');
-
-	return $r->maketext(
+	return $c->maketext(
 		'Users sorted by [_1], then by [_2], then by [_3]',
-		$r->maketext(FIELD_PROPERTIES()->{ $self->{primarySortField} }{name}),
-		$r->maketext(FIELD_PROPERTIES()->{ $self->{secondarySortField} }{name}),
-		$r->maketext(FIELD_PROPERTIES()->{ $self->{ternarySortField} }{name})
+		$c->maketext(FIELD_PROPERTIES()->{ $c->{primarySortField} }{name}),
+		$c->maketext(FIELD_PROPERTIES()->{ $c->{secondarySortField} }{name}),
+		$c->maketext(FIELD_PROPERTIES()->{ $c->{ternarySortField} }{name})
 	);
 }
 
-sub edit_handler {
-	my ($self) = @_;
-	my $r = $self->r;
-
+sub edit_handler ($c) {
 	my $result;
 
-	my $scope = $r->param('action.edit.scope');
+	my $scope = $c->param('action.edit.scope');
 	if ($scope eq 'all') {
-		$result = $r->maketext('editing all users');
-		$self->{visibleUserIDs} = $self->{allUserIDs};
+		$result = $c->maketext('editing all users');
+		$c->{visibleUserIDs} = $c->{allUserIDs};
 	} elsif ($scope eq 'visible') {
-		$result = $r->maketext('editing visible users');
+		$result = $c->maketext('editing visible users');
 		# leave visibleUserIDs alone
 	} elsif ($scope eq 'selected') {
-		$result = $r->maketext('editing selected users');
-		$self->{visibleUserIDs} = [ $r->param('selected_users') ];
+		$result = $c->maketext('editing selected users');
+		$c->{visibleUserIDs} = [ $c->param('selected_users') ];
 	}
-	$self->{editMode} = 1;
+	$c->{editMode} = 1;
 
 	return $result;
 }
 
-sub password_handler {
-	my ($self) = @_;
-	my $r = $self->r;
-
+sub password_handler ($c) {
 	my $result;
 
-	my $scope = $r->param('action.password.scope');
+	my $scope = $c->param('action.password.scope');
 	if ($scope eq 'all') {
-		$result = $r->maketext('giving new passwords to all users');
-		$self->{visibleUserIDs} = $self->{allUserIDs};
+		$result = $c->maketext('giving new passwords to all users');
+		$c->{visibleUserIDs} = $c->{allUserIDs};
 	} elsif ($scope eq 'visible') {
-		$result = $r->maketext('giving new passwords to visible users');
+		$result = $c->maketext('giving new passwords to visible users');
 		# leave visibleUserIDs alone
 	} elsif ($scope eq 'selected') {
-		$result = $r->maketext('giving new passwords to selected users');
-		$self->{visibleUserIDs} = [ $r->param('selected_users') ];
+		$result = $c->maketext('giving new passwords to selected users');
+		$c->{visibleUserIDs} = [ $c->param('selected_users') ];
 	}
-	$self->{passwordMode} = 1;
+	$c->{passwordMode} = 1;
 
 	return $result;
 }
 
-sub delete_handler {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $user   = $r->param('user');
-	my $scope  = $r->param('action.delete.scope');
+sub delete_handler ($c) {
+	my $db    = $c->db;
+	my $user  = $c->param('user');
+	my $scope = $c->param('action.delete.scope');
 
 	my @userIDsToDelete = ();
 	if ($scope eq 'selected') {
-		@userIDsToDelete = @{ $self->{selectedUserIDs} };
+		@userIDsToDelete = @{ $c->{selectedUserIDs} };
 	}
 
-	my %allUserIDs      = map { $_ => 1 } @{ $self->{allUserIDs} };
-	my %visibleUserIDs  = map { $_ => 1 } @{ $self->{visibleUserIDs} };
-	my %selectedUserIDs = map { $_ => 1 } @{ $self->{selectedUserIDs} };
+	my %allUserIDs      = map { $_ => 1 } @{ $c->{allUserIDs} };
+	my %visibleUserIDs  = map { $_ => 1 } @{ $c->{visibleUserIDs} };
+	my %selectedUserIDs = map { $_ => 1 } @{ $c->{selectedUserIDs} };
 
 	my $error = '';
 	my $num   = 0;
 	foreach my $userID (@userIDsToDelete) {
 		if ($user eq $userID) {    # don't delete yourself!!
-			$error = $r->maketext('You cannot delete yourself!');
+			$error = $c->maketext('You cannot delete yourself!');
 			next;
 		}
 		delete $allUserIDs{$userID};
@@ -424,25 +399,22 @@ sub delete_handler {
 		$num++;
 	}
 
-	$self->{allUserIDs}      = [ keys %allUserIDs ];
-	$self->{visibleUserIDs}  = [ keys %visibleUserIDs ];
-	$self->{selectedUserIDs} = [ keys %selectedUserIDs ];
+	$c->{allUserIDs}      = [ keys %allUserIDs ];
+	$c->{visibleUserIDs}  = [ keys %visibleUserIDs ];
+	$c->{selectedUserIDs} = [ keys %selectedUserIDs ];
 
-	return $r->maketext('Deleted [_1] users.', $num) . ($error ? " $error" : '');
+	return $c->maketext('Deleted [_1] users.', $num) . ($error ? " $error" : '');
 }
 
-sub add_handler {
+sub add_handler ($c) {
 	# This action is redirected to the AddUsers.pm module using ../instructor/add_user/...
 	return '';
 }
 
-sub import_handler {
-	my ($self) = @_;
-	my $r = $self->r;
-
-	my $source  = $r->param('action.import.source');
-	my $add     = $r->param('action.import.add');
-	my $replace = $r->param('action.import.replace');
+sub import_handler ($c) {
+	my $source  = $c->param('action.import.source');
+	my $add     = $c->param('action.import.add');
+	my $replace = $c->param('action.import.replace');
 
 	my $fileName  = $source;
 	my $createNew = $add eq 'any';
@@ -454,35 +426,33 @@ sub import_handler {
 		$replaceExisting = 'none';
 	} elsif ($replace eq 'visible') {
 		$replaceExisting = 'listed';
-		@replaceList     = @{ $self->{visibleUserIDs} };
+		@replaceList     = @{ $c->{visibleUserIDs} };
 	} elsif ($replace eq 'selected') {
 		$replaceExisting = 'listed';
-		@replaceList     = @{ $self->{selectedUserIDs} };
+		@replaceList     = @{ $c->{selectedUserIDs} };
 	}
 
-	my ($replaced, $added, $skipped) = $self->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
+	my ($replaced, $added, $skipped) = $c->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
 
 	# make new users visible... do we really want to do this? probably.
-	push @{ $self->{visibleUserIDs} }, @$added;
-	push @{ $self->{allUserIDs} },     @$added;
+	push @{ $c->{visibleUserIDs} }, @$added;
+	push @{ $c->{allUserIDs} },     @$added;
 
 	my $numReplaced = @$replaced;
 	my $numAdded    = @$added;
 	my $numSkipped  = @$skipped;
 
-	return $r->maketext('[_1] users replaced, [_2] users added, [_3] users skipped. Skipped users: ([_4])',
+	return $c->maketext('[_1] users replaced, [_2] users added, [_3] users skipped. Skipped users: ([_4])',
 		$numReplaced, $numAdded, $numSkipped, join(', ', @$skipped));
 }
 
-sub export_handler {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $ce     = $r->ce;
-	my $dir    = $ce->{courseDirs}->{templates};
+sub export_handler ($c) {
+	my $ce  = $c->ce;
+	my $dir = $ce->{courseDirs}{templates};
 
-	my $scope  = $r->param('action.export.scope');
-	my $target = $r->param('action.export.target');
-	my $new    = $r->param('action.export.new');
+	my $scope  = $c->param('action.export.scope');
+	my $target = $c->param('action.export.target');
+	my $new    = $c->param('action.export.new');
 
 	#get name of templates directory as it appears in file manager
 	$dir =~ s|.*/||;
@@ -498,56 +468,51 @@ sub export_handler {
 
 	my @userIDsToExport;
 	if ($scope eq 'all') {
-		@userIDsToExport = @{ $self->{allUserIDs} };
+		@userIDsToExport = @{ $c->{allUserIDs} };
 	} elsif ($scope eq 'visible') {
-		@userIDsToExport = @{ $self->{visibleUserIDs} };
+		@userIDsToExport = @{ $c->{visibleUserIDs} };
 	} elsif ($scope eq 'selected') {
-		@userIDsToExport = @{ $self->{selectedUserIDs} };
+		@userIDsToExport = @{ $c->{selectedUserIDs} };
 	}
 
-	$self->exportUsersToCSV($fileName, @userIDsToExport);
+	$c->exportUsersToCSV($fileName, @userIDsToExport);
 
-	return $r->maketext('[_1] users exported to file [_2]', scalar @userIDsToExport, "$dir/$fileName");
+	return $c->maketext('[_1] users exported to file [_2]', scalar @userIDsToExport, "$dir/$fileName");
 }
 
-sub cancel_edit_handler {
-	my ($self) = @_;
-	my $r = $self->r;
-
-	if (defined $r->param('prev_visible_users')) {
-		$self->{visibleUserIDs} = [ $r->param('prev_visible_users') ];
-	} elsif (defined $r->param('no_prev_visible_users')) {
-		$self->{visibleUserIDs} = [];
+sub cancel_edit_handler ($c) {
+	if (defined $c->param('prev_visible_users')) {
+		$c->{visibleUserIDs} = [ $c->param('prev_visible_users') ];
+	} elsif (defined $c->param('no_prev_visible_users')) {
+		$c->{visibleUserIDs} = [];
 	}
-	$self->{editMode} = 0;
+	$c->{editMode} = 0;
 
-	return $r->maketext('Changes abandoned');
+	return $c->maketext('Changes abandoned');
 }
 
-sub save_edit_handler {
-	my ($self)               = @_;
-	my $r                    = $self->r;
-	my $db                   = $r->db;
-	my $editorUser           = $r->param('user');
+sub save_edit_handler ($c) {
+	my $db                   = $c->db;
+	my $editorUser           = $c->param('user');
 	my $editorUserPermission = $db->getPermissionLevel($editorUser)->permission;
 
-	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
+	my @visibleUserIDs = @{ $c->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
 		my $User = $db->getUser($userID);
-		die $r->maketext('record for visible user [_1] not found', $userID) unless $User;
+		die $c->maketext('record for visible user [_1] not found', $userID) unless $User;
 		my $PermissionLevel = $db->getPermissionLevel($userID);
-		die $r->maketext('permissions for [_1] not defined', $userID) unless defined $PermissionLevel;
+		die $c->maketext('permissions for [_1] not defined', $userID) unless defined $PermissionLevel;
 		foreach my $field ($User->NONKEYFIELDS()) {
 			my $param = "user.$userID.$field";
-			if (defined $r->param($param)) {
-				$User->$field($r->param($param));
+			if (defined $c->param($param)) {
+				$User->$field($c->param($param));
 			}
 		}
 
 		foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
 			my $param = "permission.$userID.$field";
-			if (defined $r->param($param) && $r->param($param) <= $editorUserPermission) {
-				$PermissionLevel->$field($r->param($param));
+			if (defined $c->param($param) && $c->param($param) <= $editorUserPermission) {
+				$PermissionLevel->$field($c->param($param));
 			}
 		}
 
@@ -555,43 +520,38 @@ sub save_edit_handler {
 		$db->putPermissionLevel($PermissionLevel);
 	}
 
-	if (defined $r->param('prev_visible_users')) {
-		$self->{visibleUserIDs} = [ $r->param('prev_visible_users') ];
-	} elsif (defined $r->param('no_prev_visible_users')) {
-		$self->{visibleUserIDs} = [];
+	if (defined $c->param('prev_visible_users')) {
+		$c->{visibleUserIDs} = [ $c->param('prev_visible_users') ];
+	} elsif (defined $c->param('no_prev_visible_users')) {
+		$c->{visibleUserIDs} = [];
 	}
 
-	$self->{editMode} = 0;
+	$c->{editMode} = 0;
 
-	return $r->maketext('Changes saved');
+	return $c->maketext('Changes saved');
 }
 
-sub cancel_password_handler {
-	my ($self) = @_;
-	my $r = $self->r;
-
-	if (defined $r->param('prev_visible_users')) {
-		$self->{visibleUserIDs} = [ $r->param('prev_visible_users') ];
-	} elsif (defined $r->param('no_prev_visible_users')) {
-		$self->{visibleUserIDs} = [];
+sub cancel_password_handler ($c) {
+	if (defined $c->param('prev_visible_users')) {
+		$c->{visibleUserIDs} = [ $c->param('prev_visible_users') ];
+	} elsif (defined $c->param('no_prev_visible_users')) {
+		$c->{visibleUserIDs} = [];
 	}
-	$self->{passwordMode} = 0;
+	$c->{passwordMode} = 0;
 
-	return $r->maketext('Changes abandoned');
+	return $c->maketext('Changes abandoned');
 }
 
-sub save_password_handler {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $db     = $r->db;
+sub save_password_handler ($c) {
+	my $db = $c->db;
 
-	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
+	my @visibleUserIDs = @{ $c->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
 		my $User = $db->getUser($userID);
-		die $r->maketext('record for visible user [_1] not found', $userID) unless $User;
+		die $c->maketext('record for visible user [_1] not found', $userID) unless $User;
 		my $param = "user.${userID}.new_password";
-		if ($r->param($param)) {
-			my $newP          = $r->param($param);
+		if ($c->param($param)) {
+			my $newP          = $c->param($param);
 			my $Password      = eval { $db->getPassword($User->user_id) };
 			my $cryptPassword = cryptPassword($newP);
 			if (!defined($Password)) {
@@ -606,42 +566,39 @@ sub save_password_handler {
 		}
 	}
 
-	if (defined $r->param('prev_visible_users')) {
-		$self->{visibleUserIDs} = [ $r->param('prev_visible_users') ];
-	} elsif (defined $r->param('no_prev_visible_users')) {
-		$self->{visibleUserIDs} = [];
+	if (defined $c->param('prev_visible_users')) {
+		$c->{visibleUserIDs} = [ $c->param('prev_visible_users') ];
+	} elsif (defined $c->param('no_prev_visible_users')) {
+		$c->{visibleUserIDs} = [];
 	}
 
-	$self->{passwordMode} = 0;
+	$c->{passwordMode} = 0;
 
-	return $r->maketext('New passwords saved');
+	return $c->maketext('New passwords saved');
 }
 
 # Sort methods
 
-sub byUserID { lc $a->user_id cmp lc $b->user_id }
+sub byUserID { return lc $a->user_id cmp lc $b->user_id }
 
 sub byFirstName {
-	(defined $a->first_name && defined $b->first_name) ? lc $a->first_name cmp lc $b->first_name : 0;
+	return (defined $a->first_name && defined $b->first_name) ? lc $a->first_name cmp lc $b->first_name : 0;
 }
-sub byLastName     { (defined $a->last_name && defined $b->last_name) ? lc $a->last_name cmp lc $b->last_name : 0; }
-sub byEmailAddress { lc $a->email_address cmp lc $b->email_address }
-sub byStudentID    { lc $a->student_id cmp lc $b->student_id }
-sub byStatus       { lc $a->status cmp lc $b->status }
-sub bySection      { lc $a->section cmp lc $b->section }
-sub byRecitation   { lc $a->recitation cmp lc $b->recitation }
-sub byComment      { lc $a->comment cmp lc $b->comment }
+sub byLastName { return (defined $a->last_name && defined $b->last_name) ? lc $a->last_name cmp lc $b->last_name : 0; }
+sub byEmailAddress { return lc $a->email_address cmp lc $b->email_address }
+sub byStudentID    { return lc $a->student_id cmp lc $b->student_id }
+sub byStatus       { return lc $a->status cmp lc $b->status }
+sub bySection      { return lc $a->section cmp lc $b->section }
+sub byRecitation   { return lc $a->recitation cmp lc $b->recitation }
+sub byComment      { return lc $a->comment cmp lc $b->comment }
 
 # Permission level is added to the user record hash so we can sort by it if necessary.
-sub byPermission {
-	return $a->{permission} <=> $b->{permission};
-}
+sub byPermission { return $a->{permission} <=> $b->{permission}; }
 
 # Utilities
 
 # generate labels for section/recitation popup menus
-sub menuLabels {
-	my ($self, $hashRef) = @_;
+sub menuLabels ($c, $hashRef) {
 	my %hash = %$hashRef;
 
 	my %result;
@@ -655,19 +612,17 @@ sub menuLabels {
 
 # FIXME REFACTOR this belongs in a utility class so that addcourse can use it!
 # (we need a whole suite of higher-level import/export functions somewhere)
-sub importUsersFromCSV {
-	my ($self, $fileName, $createNew, $replaceExisting, @replaceList) = @_;
-	my $r    = $self->r;
-	my $ce   = $r->ce;
-	my $db   = $r->db;
+sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceList) {
+	my $ce   = $c->ce;
+	my $db   = $c->db;
 	my $dir  = $ce->{courseDirs}->{templates};
-	my $user = $r->param('user');
+	my $user = $c->param('user');
 
-	die $r->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
-	die $r->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
+	die $c->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
+	die $c->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
 		unless -r "$dir/$fileName";
 
-	my %allUserIDs = map { $_ => 1 } @{ $self->{allUserIDs} };
+	my %allUserIDs = map { $_ => 1 } @{ $c->{allUserIDs} };
 	my %replaceOK;
 	if ($replaceExisting eq 'none') {
 		%replaceOK = ();
@@ -751,14 +706,12 @@ sub importUsersFromCSV {
 	return \@replaced, \@added, \@skipped;
 }
 
-sub exportUsersToCSV {
-	my ($self, $fileName, @userIDsToExport) = @_;
-	my $r   = $self->r;
-	my $ce  = $r->ce;
-	my $db  = $r->db;
+sub exportUsersToCSV ($c, $fileName, @userIDsToExport) {
+	my $ce  = $c->ce;
+	my $db  = $c->db;
 	my $dir = $ce->{courseDirs}->{templates};
 
-	die $r->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
+	die $c->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
 
 	my @records;
 
@@ -779,6 +732,8 @@ sub exportUsersToCSV {
 	}
 
 	write_classlist("$dir/$fileName", @records);
+
+	return;
 }
 
 1;

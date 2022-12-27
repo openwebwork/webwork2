@@ -14,16 +14,13 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::Scoring;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
 WeBWorK::ContentGenerator::Instructor::Scoring - Generate scoring data files
 
 =cut
-
-use strict;
-use warnings;
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(readFile jitar_id_to_seq jitar_problem_adjusted_status wwRound x);
@@ -33,41 +30,38 @@ our @userInfoColumnHeadings =
 	(x("STUDENT ID"), x("login ID"), x("LAST NAME"), x("FIRST NAME"), x("SECTION"), x("RECITATION"));
 our @userInfoFields = ("student_id", "user_id", "last_name", "first_name", "section", "recitation");
 
-sub initialize {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $ce         = $r->ce;
-	my $db         = $r->db;
-	my $authz      = $r->authz;
+sub initialize ($c) {
+	my $ce         = $c->ce;
+	my $db         = $c->db;
+	my $authz      = $c->authz;
 	my $scoringDir = $ce->{courseDirs}->{scoring};
-	my $courseName = $urlpath->arg("courseID");
-	my $user       = $r->param('user');
+	my $courseName = $c->stash('courseID');
+	my $user       = $c->param('user');
 
 	# Check permission
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	return unless $authz->hasPermissions($user, "score_sets");
 
-	my @selected        = $r->param('selectedSet');
-	my $scoringFileName = $r->param('scoringFileName') || "${courseName}_totals";
+	my @selected        = $c->param('selectedSet');
+	my $scoringFileName = $c->param('scoringFileName') || "${courseName}_totals";
 	$scoringFileName =~ s/\.csv\s*$//;
 	$scoringFileName .= '.csv';    # must end in .csv
 	my $scoringFileNameOK =
 		($scoringFileName eq WeBWorK::ContentGenerator::Instructor::FileManager::checkName($scoringFileName));
-	$self->{scoringFileName} = $scoringFileName;
+	$c->{scoringFileName} = $scoringFileName;
 
-	$self->{padFields}             = defined($r->param('padFields'))             ? 1 : 0;
-	$self->{includePercentEachSet} = defined($r->param('includePercentEachSet')) ? 1 : 0;
+	$c->{padFields}             = defined($c->param('padFields'))             ? 1 : 0;
+	$c->{includePercentEachSet} = defined($c->param('includePercentEachSet')) ? 1 : 0;
 
 	# Save the list of global sets sorted by set_id.
 	my @setRecords = $db->getGlobalSetsWhere({}, 'set_id');
-	$self->{ra_set_ids}     = [ map { $_->set_id } @setRecords ];
-	$self->{rh_set_records} = { map { $_->set_id => $_ } @setRecords };
+	$c->{ra_set_ids}     = [ map { $_->set_id } @setRecords ];
+	$c->{rh_set_records} = { map { $_->set_id => $_ } @setRecords };
 
 	if (@selected && $scoringFileNameOK) {
 
 		my @totals                = ();
-		my $recordSingleSetScores = $r->param('recordSingleSetScores');
+		my $recordSingleSetScores = $c->param('recordSingleSetScores');
 
 		# Get all users sorted by last_name, then first_name, then user_id.
 		debug("pre-fetching users");
@@ -83,38 +77,37 @@ sub initialize {
 
 		my $scoringType = ($recordSingleSetScores) ? 'everything' : 'totals';
 		my (@everything, @normal, @full, @info, @totalsColumn);
-		@info   = $self->scoreSet($selected[0], "info", undef, \%Users, \@sortedUserIDs) if defined($selected[0]);
+		@info   = $c->scoreSet($selected[0], "info", undef, \%Users, \@sortedUserIDs) if defined($selected[0]);
 		@totals = @info;
-		my $showIndex = defined($r->param('includeIndex')) ? defined($r->param('includeIndex')) : 0;
+		my $showIndex = defined($c->param('includeIndex')) ? defined($c->param('includeIndex')) : 0;
 
 		foreach my $setID (@selected) {
 			next unless defined $setID;
 			if ($scoringType eq 'everything') {
-				@everything   = $self->scoreSet($setID, "everything", $showIndex, \%Users, \@sortedUserIDs);
-				@normal       = $self->everything2normal(@everything);
-				@full         = $self->everything2full(@everything);
-				@info         = $self->everything2info(@everything);
-				@totalsColumn = $self->everything2totals(@everything);
-				$self->appendColumns(\@totals, \@totalsColumn);
-				$self->writeCSV("$scoringDir/s${setID}scr.csv", @normal);
-				$self->writeCSV("$scoringDir/s${setID}ful.csv", @full);
+				@everything   = $c->scoreSet($setID, "everything", $showIndex, \%Users, \@sortedUserIDs);
+				@normal       = $c->everything2normal(@everything);
+				@full         = $c->everything2full(@everything);
+				@info         = $c->everything2info(@everything);
+				@totalsColumn = $c->everything2totals(@everything);
+				$c->appendColumns(\@totals, \@totalsColumn);
+				$c->writeCSV("$scoringDir/s${setID}scr.csv", @normal);
+				$c->writeCSV("$scoringDir/s${setID}ful.csv", @full);
 			} else {
-				@totalsColumn = $self->scoreSet($setID, "totals", $showIndex, \%Users, \@sortedUserIDs);
-				$self->appendColumns(\@totals, \@totalsColumn);
+				@totalsColumn = $c->scoreSet($setID, "totals", $showIndex, \%Users, \@sortedUserIDs);
+				$c->appendColumns(\@totals, \@totalsColumn);
 			}
 		}
-		my @sum_scores =
-			$self->sumScores(\@totals, $showIndex, \%Users, \@sortedUserIDs, $self->{includePercentEachSet});
-		$self->appendColumns(\@totals, \@sum_scores);
-		$self->writeCSV("$scoringDir/$scoringFileName", @totals);
+		my @sum_scores = $c->sumScores(\@totals, $showIndex, \%Users, \@sortedUserIDs, $c->{includePercentEachSet});
+		$c->appendColumns(\@totals, \@sum_scores);
+		$c->writeCSV("$scoringDir/$scoringFileName", @totals);
 
 	} else {
-		if ($r->param('score-sets') && !@selected) {    # nothing selected for scoring
-			$self->addbadmessage($r->maketext("You must select one or more sets for scoring!"));
+		if ($c->param('score-sets') && !@selected) {    # nothing selected for scoring
+			$c->addbadmessage($c->maketext("You must select one or more sets for scoring!"));
 		}
 		if (!$scoringFileNameOK) {                      # fileName is not properly formed
-			$self->addbadmessage($r->maketext("Your file name is not valid! "));
-			$self->addbadmessage($r->maketext(
+			$c->addbadmessage($c->maketext("Your file name is not valid! "));
+			$c->addbadmessage($c->maketext(
 				"A file name cannot begin with a dot, it cannot be empty, it cannot contain a "
 					. "directory path component and only the characters -_.a-zA-Z0-9 and space are allowed."
 			));
@@ -132,10 +125,8 @@ sub initialize {
 #   everything: "full" plus a totals column
 #   info: student info columns only
 #   totals: total column only
-sub scoreSet {
-	my ($self, $setID, $format, $showIndex, $UsersRef, $sortedUserIDsRef) = @_;
-	my $r  = $self->r;
-	my $db = $r->db;
+sub scoreSet ($c, $setID, $format, $showIndex, $UsersRef, $sortedUserIDsRef) {
+	my $db = $c->db;
 	my @scoringData;
 	my $scoringItems = {
 		info            => 0,
@@ -149,7 +140,7 @@ sub scoreSet {
 	$format = "normal" unless $format eq "full" or $format eq "everything" or $format eq "totals" or $format eq "info";
 	my $columnsPerProblem = ($format eq "full" or $format eq "everything") ? 3 : 1;
 
-	my $setRecord = $self->{rh_set_records}{$setID};
+	my $setRecord = $c->{rh_set_records}{$setID};
 	die "global set $setID not found. " unless $setRecord;
 
 	my %Users         = %$UsersRef;            # user objects hashed on user ID
@@ -219,12 +210,12 @@ sub scoreSet {
 	}
 
 	if ($scoringItems->{header}) {
-		$scoringData[0][0] = $r->maketext("NO OF FIELDS");
-		$scoringData[1][0] = $r->maketext("SET NAME");
-		$scoringData[2][0] = $r->maketext("PROB NUMBER");
-		$scoringData[3][0] = $r->maketext("CLOSE DATE");
-		$scoringData[4][0] = $r->maketext("CLOSE TIME");
-		$scoringData[5][0] = $r->maketext("PROB VALUE");
+		$scoringData[0][0] = $c->maketext("NO OF FIELDS");
+		$scoringData[1][0] = $c->maketext("SET NAME");
+		$scoringData[2][0] = $c->maketext("PROB NUMBER");
+		$scoringData[3][0] = $c->maketext("CLOSE DATE");
+		$scoringData[4][0] = $c->maketext("CLOSE TIME");
+		$scoringData[5][0] = $c->maketext("PROB VALUE");
 
 		# Write identifying information about the users
 
@@ -234,7 +225,7 @@ sub scoreSet {
 					$scoringData[$i][$field] = "";
 				}
 			}
-			$scoringData[6][$field] = $r->maketext($userInfoColumnHeadings[$field]);
+			$scoringData[6][$field] = $c->maketext($userInfoColumnHeadings[$field]);
 			for (my $user = 0; $user < @sortedUserIDs; $user++) {
 				my $fieldName = $userInfoFields[$field];
 				$scoringData[ $user + 7 ][$field] = $Users{ $sortedUserIDs[$user] }->$fieldName;
@@ -300,7 +291,7 @@ sub scoreSet {
 	debug("done pre-fetching user problems for set $setID");
 
 	# Write the problem data
-	my $dueDateString = $self->formatDateTime($setRecord->due_date);
+	my $dueDateString = $c->formatDateTime($setRecord->due_date);
 	my ($dueDate, $dueTime) = $dueDateString =~ /^(.*) at (.*)$/;
 	my $valueTotal       = 0;
 	my %userStatusTotals = ();
@@ -327,21 +318,21 @@ sub scoreSet {
 			$scoringData[3][$column] = $dueDate;
 			$scoringData[4][$column] = $dueTime;
 			$scoringData[5][$column] = $globalProblem->value;
-			$scoringData[6][$column] = $r->maketext("STATUS");
+			$scoringData[6][$column] = $c->maketext("STATUS");
 			my $extraColumns = 0;
 
 			if ($isJitarSet) {
 				$extraColumns++;
-				$scoringData[6][ $column + $extraColumns ] = $r->maketext("ADJ STATUS");
+				$scoringData[6][ $column + $extraColumns ] = $c->maketext("ADJ STATUS");
 			}
 
 			if ($scoringItems->{header}
 				and $scoringItems->{problemAttempts})
 			{    # Fill in with blanks, or maybe the problem number
 				$extraColumns++;
-				$scoringData[6][ $column + $extraColumns ] = $r->maketext("#corr");
+				$scoringData[6][ $column + $extraColumns ] = $c->maketext("#corr");
 				$extraColumns++;
-				$scoringData[6][ $column + $extraColumns ] = $r->maketext("#incorr");
+				$scoringData[6][ $column + $extraColumns ] = $c->maketext("#incorr");
 			}
 
 			for (my $row = 0; $row < 6; $row++) {
@@ -438,7 +429,7 @@ sub scoreSet {
 		$scoringData[3][$totalsColumn] = "";
 		$scoringData[4][$totalsColumn] = "";
 		$scoringData[5][$totalsColumn] = $valueTotal;
-		$scoringData[6][$totalsColumn] = $r->maketext("total");
+		$scoringData[6][$totalsColumn] = $c->maketext("total");
 
 		if ($scoringItems->{successIndex}) {
 			$scoringData[0][ $totalsColumn + 1 ] = "";
@@ -447,7 +438,7 @@ sub scoreSet {
 			$scoringData[3][ $totalsColumn + 1 ] = "";
 			$scoringData[4][ $totalsColumn + 1 ] = "";
 			$scoringData[5][ $totalsColumn + 1 ] = '100';
-			$scoringData[6][ $totalsColumn + 1 ] = $r->maketext("index");
+			$scoringData[6][ $totalsColumn + 1 ] = $c->maketext("index");
 		}
 		for (my $user = 0; $user < @sortedUserIDs; $user++) {
 			$userStatusTotals{$user} = $userStatusTotals{$user} || 0;
@@ -462,18 +453,12 @@ sub scoreSet {
 	return @scoringData;
 }
 
-sub sumScores {    # Create a totals column for each student
-	 # Also create columns with percentage grades per assignment if requested
-	my $self                              = shift;
-	my $r_totals                          = shift;
-	my $showIndex                         = shift;
-	my $r_users                           = shift;
-	my $r_sorted_user_ids                 = shift;
-	my $addPercentagePerAssignmentColumns = shift;
-	my $r                                 = $self->r;
-	my $db                                = $r->db;
-	my @scoringData                       = ();
-	my $index_increment                   = ($showIndex) ? 2 : 1;
+# Create a totals column for each student
+# Also create columns with percentage grades per assignment if requested
+sub sumScores ($c, $r_totals, $showIndex, $r_users, $r_sorted_user_ids, $addPercentagePerAssignmentColumns) {
+	my $db              = $c->db;
+	my @scoringData     = ();
+	my $index_increment = ($showIndex) ? 2 : 1;
 	# This whole thing is a hack, but here goes.  We're going to sum the appropriate columns of the totals file:
 	# I believe we have $r_totals->[rows]->[cols]  -- the way it's printed out.
 	my $start_column = 6;                       #The problem column
@@ -511,13 +496,13 @@ sub sumScores {    # Create a totals column for each student
 	}
 
 	my @HeaderRowsData0 = ('', '');
-	my @HeaderRowsData1 = ($r->maketext('summary'), $r->maketext('%score'));
+	my @HeaderRowsData1 = ($c->maketext('summary'), $c->maketext('%score'));
 	my @HeaderRowsData2 = ('', '');
 	if ($addPercentagePerAssignmentColumns) {
 		for (my $j = $start_column; $j <= $last_column; $j += $index_increment) {
 			push(@HeaderRowsData0, '');
 			push(@HeaderRowsData1, $r_totals->[1]->[$j]);     # The assignment number
-			push(@HeaderRowsData2, $r->maketext('%score'));
+			push(@HeaderRowsData2, $c->maketext('%score'));
 		}
 	}
 	$scoringData[1] = [@HeaderRowsData1];
@@ -534,22 +519,20 @@ sub sumScores {    # Create a totals column for each student
 
 # Often it's more efficient to just get everything out of the database
 # and then pick out what you want later.  Hence, these "everything2*" functions
-sub everything2info {
-	my ($self, @everything) = @_;
-	my @result = ();
+sub everything2info ($c, @everything) {
+	my @result;
 	foreach my $row (@everything) {
 		push @result, [ @{$row}[ 0 .. 4 ] ];
 	}
 	return @result;
 }
 
-sub everything2normal {
-	my ($self, @everything) = @_;
-	my @result    = ();
+sub everything2normal ($c, @everything) {
+	my @result;
 	my $adjstatus = 0;
 
 	# If its has adjusted status columns we need to include those as well.
-	my $str = $self->r->maketext('ADJ STATUS');
+	my $str = $c->maketext('ADJ STATUS');
 	if (
 		grep {
 			grep {/$str/}
@@ -580,8 +563,7 @@ sub everything2normal {
 	return @result;
 }
 
-sub everything2full {
-	my ($self, @everything) = @_;
+sub everything2full ($c, @everything) {
 	my @result = ();
 	foreach my $row (@everything) {
 		push @result, [ @{$row}[ 0 .. ($#{$row} - 1) ] ];
@@ -589,17 +571,15 @@ sub everything2full {
 	return @result;
 }
 
-sub everything2totals {
-	my ($self, @everything) = @_;
-	my @result = ();
+sub everything2totals ($c, @everything) {
+	my @result;
 	foreach my $row (@everything) {
 		push @result, [ ${$row}[ $#{$row} ] ];
 	}
 	return @result;
 }
 
-sub appendColumns {
-	my ($self, $a1, $a2) = @_;
+sub appendColumns ($c, $a1, $a2) {
 	my @a1 = @$a1;
 	my @a2 = @$a2;
 	for (my $i = 0; $i < @a1; $i++) {
@@ -612,9 +592,7 @@ sub appendColumns {
 # row of data:
 # (["c1r1", "c1r2", "c1r3"], ["c2r1", "c2r2", "c2r3"])
 # Write a CSV file from an array in the same format that readCSV produces
-sub writeCSV {
-	my ($self, $filename, @csv) = @_;
-
+sub writeCSV ($c, $filename, @csv) {
 	my @lengths = ();
 	for (my $row = 0; $row < @csv; $row++) {
 		for (my $column = 0; $column < @{ $csv[$row] }; $column++) {
@@ -641,7 +619,7 @@ sub writeCSV {
 	foreach my $row (@csv) {
 		my @rowPadded = ();
 		foreach (my $column = 0; $column < @$row; $column++) {
-			push @rowPadded, $self->pad($row->[$column], $lengths[$column] + 1);
+			push @rowPadded, $c->pad($row->[$column], $lengths[$column] + 1);
 		}
 		print $fh join(",", @rowPadded);
 		print $fh "\n";
@@ -655,21 +633,19 @@ sub writeCSV {
 # to use old ww1.x code to read the output anymore, I recommend switching to using
 # these routines, which are more versatile and compatable with other programs which
 # deal with CSV files.
-sub readStandardCSV {
-	my ($self, $fileName) = @_;
-	my @result = ();
-	my @rows   = split m/\n/, readFile($fileName);
+sub readStandardCSV ($c, $fileName) {
+	my @result;
+	my @rows = split m/\n/, readFile($fileName);
 	foreach my $row (@rows) {
-		push @result, [ $self->splitQuoted($row) ];
+		push @result, [ $c->splitQuoted($row) ];
 	}
 	return @result;
 }
 
-sub writeStandardCSV {
-	my ($self, $filename, @csv) = @_;
+sub writeStandardCSV ($c, $filename, @csv) {
 	open my $fh, ">:encoding(UTF-8)", $filename;
 	foreach my $row (@csv) {
-		print $fh (join ",", map { $self->quote($_) } @$row);
+		print $fh (join ",", map { $c->quote($_) } @$row);
 		print $fh "\n";
 	}
 	close $fh;
@@ -679,8 +655,7 @@ sub writeStandardCSV {
 
 # This particular unquote method unquotes (optionally) quoted strings in the
 # traditional CSV style (double-quote for literal quote, etc.)
-sub unquote {
-	my ($self, $string) = @_;
+sub unquote ($c, $string) {
 	if ($string =~ m/^"(.*)"$/) {
 		$string = $1;
 		$string =~ s/""/"/;
@@ -690,8 +665,7 @@ sub unquote {
 
 # Should you wish to treat whitespace differently, this routine has been designed
 # to make it easy to do so.
-sub splitQuoted {
-	my ($self, $string) = @_;
+sub splitQuoted ($c, $string) {
 	my ($leadingSpace, $preText, $quoted, $postText, $trailingSpace, $result);
 	my @result   = ();
 	my $continue = 1;
@@ -722,8 +696,7 @@ sub splitQuoted {
 }
 
 # This particular quoting method does CSV-style (double a quote to escape it) quoting when necessary.
-sub quote {
-	my ($self, $string) = @_;
+sub quote ($c, $string) {
 	if ($string =~ m/[", ]/) {
 		$string =~ s/"/""/;
 		$string = "\"$string\"";
@@ -731,18 +704,16 @@ sub quote {
 	return $string;
 }
 
-sub pad {
-	my ($self, $string, $padTo) = @_;
-	$string = '' unless defined $string;
-	return $string unless $self->{padFields} == 1;
+sub pad ($c, $string, $padTo) {
+	$string = ''   unless defined $string;
+	return $string unless $c->{padFields} == 1;
 	my $spaces = $padTo - length $string;
 
 	#	return " "x$spaces.$string;
 	return $string . " " x $spaces;
 }
 
-sub maxLength {
-	my ($self, $arrayRef) = @_;
+sub maxLength ($c, $arrayRef) {
 	my $max = 0;
 	foreach my $cell (@$arrayRef) {
 		$max = length $cell unless length $cell < $max;

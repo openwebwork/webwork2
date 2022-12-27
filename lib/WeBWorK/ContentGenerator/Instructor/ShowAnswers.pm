@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::ShowAnswers;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
 =head1 NAME
 
@@ -22,10 +22,6 @@ WeBWorK::ContentGenerator::Instructor::ShowAnswers.pm  -- display past answers o
 
 =cut
 
-use strict;
-use warnings;
-
-use Future::AsyncAwait;
 use Text::CSV;
 use Mojo::File;
 
@@ -34,20 +30,17 @@ use WeBWorK::Utils::Rendering qw(renderPG);
 
 use constant PAST_ANSWERS_FILENAME => 'past_answers';
 
-async sub initialize {
-	my $self    = shift;
-	my $r       = $self->r;
-	my $urlpath = $r->urlpath;
-	my $db      = $r->db;
-	my $ce      = $r->ce;
-	my $authz   = $r->authz;
-	my $user    = $r->param('user');
+async sub initialize ($c) {
+	my $db    = $c->db;
+	my $ce    = $c->ce;
+	my $authz = $c->authz;
+	my $user  = $c->param('user');
 
-	my $selectedSets     = [ $r->param('selected_sets') ]     // [];
-	my $selectedProblems = [ $r->param('selected_problems') ] // [];
+	my $selectedSets     = [ $c->param('selected_sets') ]     // [];
+	my $selectedProblems = [ $c->param('selected_problems') ] // [];
 
 	unless ($authz->hasPermissions($user, "view_answers")) {
-		$self->addbadmessage("You aren't authorized to view past answers");
+		$c->addbadmessage("You aren't authorized to view past answers");
 		return;
 	}
 
@@ -56,12 +49,12 @@ async sub initialize {
 	# acting the current studentID, setID and problemID will be maintained
 
 	my $extraStopActingParams;
-	$extraStopActingParams->{selected_users}    = $r->param('selected_users');
-	$extraStopActingParams->{selected_sets}     = $r->param('selected_sets');
-	$extraStopActingParams->{selected_problems} = $r->param('selected_problems');
-	$r->{extraStopActingParams}                 = $extraStopActingParams;
+	$extraStopActingParams->{selected_users}    = $c->param('selected_users');
+	$extraStopActingParams->{selected_sets}     = $c->param('selected_sets');
+	$extraStopActingParams->{selected_problems} = $c->param('selected_problems');
+	$c->{extraStopActingParams}                 = $extraStopActingParams;
 
-	my $selectedUsers = [ $r->param('selected_users') ] // [];
+	my $selectedUsers = [ $c->param('selected_users') ] // [];
 
 	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
 
@@ -129,8 +122,8 @@ async sub initialize {
 					#(why isn't this stored somewhere)
 					my $unversionedSetName = $setName;
 					$unversionedSetName =~ s/,v[0-9]*$//;
-					my $displayMode = $self->{displayMode};
-					my $formFields  = { WeBWorK::Form->new_from_paramable($r)->Vars };
+					my $displayMode = $c->{displayMode};
+					my $formFields  = { WeBWorK::Form->new_from_paramable($c)->Vars };
 					my $set         = $db->getMergedSet($studentUser, $unversionedSetName);
 					my $problem     = $db->getMergedProblem($studentUser, $unversionedSetName, $problemNumber);
 					my $userobj     = $db->getUser($studentUser);
@@ -140,7 +133,7 @@ async sub initialize {
 					my $gProblem = $db->getGlobalProblem($unversionedSetName, $problemNumber);
 
 					my $pg = await renderPG(
-						$r, $userobj, $set, $problem,
+						$c, $userobj, $set, $problem,
 						$set->psvn,
 						$formFields,
 						{    # translation options
@@ -189,11 +182,11 @@ async sub initialize {
 		}
 	}
 
-	$self->{records}              = \%records;
-	$self->{prettyProblemNumbers} = \%prettyProblemNumbers;
+	$c->{records}              = \%records;
+	$c->{prettyProblemNumbers} = \%prettyProblemNumbers;
 
 	# Prepare a csv if we are an instructor
-	if ($instructor && $r->param('createCSV')) {
+	if ($instructor && $c->param('createCSV')) {
 		my $filename     = PAST_ANSWERS_FILENAME;
 		my $scoringDir   = $ce->{courseDirs}->{scoring};
 		my $fullFilename = "${scoringDir}/${filename}.csv";
@@ -211,13 +204,13 @@ async sub initialize {
 			my $csv = Text::CSV->new({ "eol" => "\n" });
 			my @columns;
 
-			$columns[0] = $r->maketext('User ID');
-			$columns[1] = $r->maketext('Set ID');
-			$columns[2] = $r->maketext('Problem Number');
-			$columns[3] = $r->maketext('Timestamp');
-			$columns[4] = $r->maketext('Scores');
-			$columns[5] = $r->maketext('Answers');
-			$columns[6] = $r->maketext('Comment');
+			$columns[0] = $c->maketext('User ID');
+			$columns[1] = $c->maketext('Set ID');
+			$columns[2] = $c->maketext('Problem Number');
+			$columns[3] = $c->maketext('Timestamp');
+			$columns[4] = $c->maketext('Scores');
+			$columns[5] = $c->maketext('Answers');
+			$columns[6] = $c->maketext('Comment');
 
 			$csv->print($fh, \@columns);
 
@@ -230,7 +223,7 @@ async sub initialize {
 						foreach my $answerID (sort { $a <=> $b } keys %{ $records{$studentID}{$setID}{$probNum} }) {
 							my %record = %{ $records{$studentID}{$setID}{$probNum}{$answerID} };
 
-							$columns[3] = $self->formatDateTime($record{time});
+							$columns[3] = $c->formatDateTime($record{time});
 							$columns[4] = join(',',  @{ $record{scores} });
 							$columns[5] = join("\t", @{ $record{answers} });
 							$columns[6] = $record{comment};
@@ -243,19 +236,17 @@ async sub initialize {
 
 			$fh->close;
 		} else {
-			$r->log->warn("Unable to open $fullFilename for writing");
+			$c->log->warn("Unable to open $fullFilename for writing");
 		}
 	}
 
 	return;
 }
 
-sub getInstructorData {
-	my $self = shift;
-	my $r    = $self->r;
-	my $db   = $r->db;
-	my $ce   = $r->ce;
-	my $user = $r->param('user');
+sub getInstructorData ($c) {
+	my $db   = $c->db;
+	my $ce   = $c->ce;
+	my $user = $c->param('user');
 
 	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for
 	# the user if such restrictions are defined.

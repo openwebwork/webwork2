@@ -12,22 +12,17 @@
 	% last;
 % }
 %
-% my $urlpath    = $urlpath;
-% my $courseName = $urlpath->arg('courseID');
 % my $scoringDir = $ce->{courseDirs}{scoring};
-% my $scoringDownloadPage =
-	% $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ScoringDownload', $c, courseID => $courseName);
 %
 <div class="border border-dark p-2" style="max-width:700px">
-	<%= form_for $cg->systemLink($urlpath->newFromModule($urlpath->module, $c, courseID => $courseName), authen => 0),
-		name => 'scoring-form', id => 'scoring-form', method => 'POST', begin =%>
-		<%= $cg->hidden_authen_fields =%>
+	<%= form_for current_route, name => 'scoring-form', id => 'scoring-form', method => 'POST', begin =%>
+		<%= $c->hidden_authen_fields =%>
 		<%= hidden_field returning => 1 =%>
 		<div class="row">
 			<div class="col-sm-5 mb-2">
 				<%= label_for selectedSet => maketext('Selected sets:'), class => 'form-label' =%>
 				<%= select_field selectedSet =>
-						[ map { [ format_set_name_display($_) => $_ ] } @{ $cg->{ra_set_ids} } ],
+						[ map { [ format_set_name_display($_) => $_ ] } @{ $c->{ra_set_ids} } ],
 					id => 'selectedSet', class => 'form-select', size => 10, multiple => undef, dir => 'ltr' =%>
 			</div>
 			<div class="col-sm-7 my-sm-auto mb-2">
@@ -62,7 +57,7 @@
 		<div class="d-flex flex-sm-nowrap flex-wrap">
 			<%= submit_button maketext('Score selected set(s) and save to:'), name => 'score-sets',
 				id => 'score-sets', class => 'btn btn-primary btn-sm me-2 mb-sm-0 mb-2' =%>
-			<%= text_field scoringFileName => $cg->{scoringFileName}, class => 'form-control form-control-sm',
+			<%= text_field scoringFileName => $c->{scoringFileName}, class => 'form-control form-control-sm',
 				size => '40', 'aria-labelledby' => 'score-sets' =%>
 		</div>
 	<% end =%>
@@ -81,19 +76,20 @@
 		% push @validFiles, $filename if -f $path;
 	% }
 	% if (@validFiles) {
-		<h2><%= $setID %></h2>
+		<h2 dir="ltr"><%= format_set_name_display($setID) %></h2>
 		% for my $filename (@validFiles) {
 			<div class="mb-3">
-				<%= link_to $filename => $cg->systemLink($scoringDownloadPage, params => { getFile => $filename }) =%>
+				<%= link_to $filename =>
+					$c->systemLink(url_for('instructor_scoring_download'), params => { getFile => $filename }) =%>
 			</div>
 		% }
 		<hr>
 	% }
 % }
-% if (-f "$scoringDir/$cg->{scoringFileName}") {
+% if (-f "$scoringDir/$c->{scoringFileName}") {
 	<h2><%= maketext('Totals') %></h2>
-	<%= link_to $cg->{scoringFileName} =>
-		$cg->systemLink($scoringDownloadPage, params => { getFile => $cg->{scoringFileName} }) =%>
+	<%= link_to $c->{scoringFileName} =>
+		$c->systemLink(url_for('instructor_scoring_download'), params => { getFile => $c->{scoringFileName} }) =%>
 	<hr>
-	<pre style="font-size:smaller"><%== WeBWorK::Utils::readFile("$scoringDir/$cg->{scoringFileName}") =%></pre>
+	<pre style="font-size:smaller"><%== WeBWorK::Utils::readFile("$scoringDir/$c->{scoringFileName}") =%></pre>
 % }

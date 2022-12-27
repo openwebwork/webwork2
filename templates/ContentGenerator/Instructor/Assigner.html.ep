@@ -14,8 +14,8 @@
 	<%= maketext('Select one or more sets and one or more users below to assign/unassign '
 		. 'each selected set to/from all selected users.') =%>
 </p>
-<%= form_for $c->uri, method => 'post', begin =%>
-	<%= $cg->hidden_authen_fields =%>
+<%= form_for current_route, method => 'post', begin =%>
+	<%= $c->hidden_authen_fields =%>
 	%
 	<div>
 		<div class="row gx-3">
@@ -25,7 +25,7 @@
 					{
 						name            => 'selected_users',
 						id              => 'selected_users',
-						request         => $c,
+						controller      => $c,
 						default_sort    => 'lnfn',
 						default_format  => 'lnfn_uid',
 						default_filters => ['all'],
@@ -40,7 +40,7 @@
 					{
 						name            => 'selected_sets',
 						id              => 'selected_sets',
-						request         => $c,
+						controller      => $c,
 						default_sort    => 'set_id',
 						default_format  => 'sid',
 						default_filters => ['all'],

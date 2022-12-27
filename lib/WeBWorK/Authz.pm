@@ -21,8 +21,8 @@ WeBWorK::Authz - check user permissions.
 
 =head1 SYNOPSIS
 
- # create new authorizer -- $r is a WeBWorK::Request object.
- my $authz = new WeBWorK::Authz($r);
+ # create new authorizer -- $c is a WeBWorK::Controller object.
+ my $authz = new WeBWorK::Authz($c);
 
  # tell authorizer to cache permission level of user spammy.
  $authz->setCachedUser("spammy");
@@ -72,20 +72,20 @@ use version;
 
 =over
 
-=item WeBWorK::Authz->new($r)
+=item WeBWorK::Authz->new($c)
 
-Creates a new authorizer instance. $r is a WeBWorK::Request object. It must
+Creates a new authorizer instance. $c is a WeBWorK::Controller object. It must
 already have its C<ce> and C<db> fields set.
 
 =cut
 
 sub new {
-	my ($invocant, $r) = @_;
+	my ($invocant, $c) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $self  = { r => $r, };
-	weaken $self->{r};
+	my $self  = { c => $c, };
+	#weaken $self->{c};
 
-	$r->{permission_retrieval_error} = 0;
+	$c->{permission_retrieval_error} = 0;
 	bless $self, $class;
 	return $self;
 }
@@ -111,15 +111,15 @@ WeBWorK to cache the "real" user.
 
 sub setCachedUser {
 	my ($self, $userID) = @_;
-	my $r  = $self->{r};
-	my $db = $r->db;
+	my $c  = $self->{c};
+	my $db = $c->db;
 
 	delete $self->{userID};
 	delete $self->{PermissionLevel};
 
 	if (defined $userID) {
 		$self->{userID} = $userID;
-		if (!$db->existsUser($userID) && defined($r->param("lis_person_sourcedid"))) {
+		if (!$db->existsUser($userID) && defined($c->param("lis_person_sourcedid"))) {
 			# This is a new user referred via an LTI link.
 			# Do not attempt to cache the permission here.
 			# Rather, the LTIBasic authentication module should cache the permission.
@@ -144,17 +144,17 @@ sub setCachedUser {
 		{
 			# cache the  permission level record in this request to avoid later database calls
 			$self->{PermissionLevel} = $PermissionLevel;
-		} elsif (defined($r->param("lis_person_sourcedid"))
-			or defined($r->param("lis_person_sourced_id"))
-			or defined($r->param("lis_person_source_id"))
-			or defined($r->param("lis_person_sourceid"))
-			or defined($r->param("lis_person_contact_email_primary")))
+		} elsif (defined($c->param("lis_person_sourcedid"))
+			or defined($c->param("lis_person_sourced_id"))
+			or defined($c->param("lis_person_source_id"))
+			or defined($c->param("lis_person_sourceid"))
+			or defined($c->param("lis_person_contact_email_primary")))
 		{
 			# This is a new user referred via an LTI link.
 			# Do not attempt to cache the permission here.
 			# Rather, the LTIBasic authentication module should cache the permission.
 			return 1;
-		} elsif (defined($r->param("oauth_nonce"))) {
+		} elsif (defined($c->param("oauth_nonce"))) {
 			# This is a LTI attempt that doesn't have an lis_person_sourcedid username.
 			croak(
 				"Your request did not specify your username.  Perhaps you were attempting to authenticate via LTI but the LTI tool did not transmit "
@@ -162,8 +162,8 @@ sub setCachedUser {
 			);
 
 		} else {
-			if ($r->{permission_retrieval_error} == 0) {
-				$r->{permission_retrieval_error} = 1;
+			if ($c->{permission_retrieval_error} == 0) {
+				$c->{permission_retrieval_error} = 1;
 				croak "Unable to retrieve your permissions, perhaps due to a collision "
 					. "between your request and that of another user "
 					. "(or possibly an unfinished request of yours). "
@@ -203,9 +203,9 @@ sub hasPermissions {
 
 	my ($self, $userID, $activity, $exactness) = @_;
 	if (!defined($exactness)) { $exactness = 'ge'; }
-	my $r  = $self->{r};
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $c  = $self->{c};
+	my $ce = $c->ce;
+	my $db = $c->db;
 
 	# this may need to be changed if we get other permission level data sources
 	return 0 unless defined $db;
@@ -236,12 +236,12 @@ sub hasPermissions {
 
 	if (defined $PermissionLevel) {
 		$permission_level = $PermissionLevel->permission;
-	} elsif (defined($r->param("lis_person_sourcedid"))) {
+	} elsif (defined($c->param("lis_person_sourcedid"))) {
 		# This is an LTI login.  Let's see if the LITBasic authentication module will handle this.
 		#return 1;
 	} else {
 		# uh, oh. this user has no permission level record!
-		if ($r->{permission_retrieval_error} != 1) {
+		if ($c->{permission_retrieval_error} != 1) {
 			warn "User '$userID' has no PermissionLevel record -- assuming no permission.";
 		}
 		return 0;
@@ -289,9 +289,9 @@ sub hasPermissions {
 #########################  IU Addition  ###############
 sub hasExactPermissions {
 	my ($self, $userID, $activity) = @_;
-	my $r  = $self->{r};
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $c  = $self->{c};
+	my $ce = $c->ce;
+	my $db = $c->db;
 
 	#	my $Permission = $db->getPermissionLevel($user); # checked
 	#	return 0 unless defined $Permission;
@@ -322,7 +322,7 @@ sub hasExactPermissions {
 		$permission_level = $PermissionLevel->permission;
 	} else {
 		# uh, oh. this user has no permission level record!
-		if ($r->{permission_retrieval_error} != 1) {
+		if ($c->{permission_retrieval_error} != 1) {
 			warn "User '$userID' has no PermissionLevel record -- assuming no permission.";
 		}
 		return 0;
@@ -351,21 +351,20 @@ sub hasExactPermissions {
 #### set-level authorization routines
 
 sub checkSet {
-	my $self    = shift;
-	my $r       = $self->{r};
-	my $ce      = $r->ce;
-	my $db      = $r->db;
-	my $urlPath = $r->urlpath;
+	my $self = shift;
+	my $c    = $self->{c};
+	my $ce   = $c->ce;
+	my $db   = $c->db;
 
-	my $node_name = $urlPath->type;
+	my $node_name = $c->current_route;
 
 	# First check to see if we have to worried about set-level access restrictions.
 	return 0 unless (grep {/^$node_name$/} (qw(problem_list problem_detail gateway_quiz proctored_gateway_quiz)));
 
 	# To check set restrictions we need a set and a user.
-	my $setName           = $urlPath->arg("setID");
-	my $userName          = $r->param("user");
-	my $effectiveUserName = $r->param("effectiveUser");
+	my $setName           = $c->stash('setID');
+	my $userName          = $c->param("user");
+	my $effectiveUserName = $c->param("effectiveUser");
 
 	# If there is no input userName, then the content generator will be forcing a login, so just bail.
 	return 0 if (!$userName || !$effectiveUserName);
@@ -386,17 +385,17 @@ sub checkSet {
 			if ($db->existsSetVersion($effectiveUserName, $setName, $verNum)) {
 				$set = $db->getMergedSetVersion($effectiveUserName, $setName, $verNum);
 			} else {
-				return $r->maketext("Requested version ([_1]) of set '[_2]' is not assigned to user [_3].",
+				return $c->maketext("Requested version ([_1]) of set '[_2]' is not assigned to user [_3].",
 					$verNum, $setName, $effectiveUserName);
 			}
 		}
 		if (!$set) {
-			return $r->maketext("Requested set '[_1]' could not be found in the database for user [_2].",
+			return $c->maketext("Requested set '[_1]' could not be found in the database for user [_2].",
 				$setName, $effectiveUserName);
 		}
 		# Don't allow versioned sets to be viewed from the problem-list page.
 		if ($node_name eq 'problem_list') {
-			return $r->maketext("Requested version ([_1]) of set '[_2]' can not be directly accessed.", $verNum,
+			return $c->maketext("Requested version ([_1]) of set '[_2]' can not be directly accessed.", $verNum,
 				$setName);
 		}
 	} else {
@@ -410,11 +409,11 @@ sub checkSet {
 				# happens for instructor tool users.
 				return 0;
 			} else {
-				return $r->maketext("Requested set '[_1]' is not assigned to user [_2].", $setName, $effectiveUserName);
+				return $c->maketext("Requested set '[_1]' is not assigned to user [_2].", $setName, $effectiveUserName);
 			}
 		}
 		if (!$set) {
-			return $r->maketext("Requested set '[_1]' could not be found in the database for user [_2].",
+			return $c->maketext("Requested set '[_1]' could not be found in the database for user [_2].",
 				$setName, $effectiveUserName);
 		}
 	}
@@ -434,13 +433,13 @@ sub checkSet {
 		)
 		)
 	{
-		return $r->maketext("Requested set '[_1]' is not yet open.", $setName);
+		return $c->maketext("Requested set '[_1]' is not yet open.", $setName);
 	}
 
 	# Check to make sure that the set is visible, and that the user is allowed to view hidden sets.
 	my $visible = $set && $set->visible ne '0' && $set->visible ne '1' ? 1 : $set->visible;
 	if (!$visible && !$self->hasPermissions($userName, "view_hidden_sets")) {
-		return $r->maketext("Requested set '[_1]' is not available yet.", $setName);
+		return $c->maketext("Requested set '[_1]' is not available yet.", $setName);
 	}
 
 	# Check to see if conditional release conditions have been met.
@@ -448,18 +447,18 @@ sub checkSet {
 		&& is_restricted($db, $set, $effectiveUserName)
 		&& !$self->hasPermissions($userName, "view_unopened_sets"))
 	{
-		return $r->maketext("The prerequisite conditions have not been met for set '[_1]'.", $setName);
+		return $c->maketext("The prerequisite conditions have not been met for set '[_1]'.", $setName);
 	}
 
 	# Check to be sure that gateways are being sent to the correct content generator.
 	if (defined($set->assignment_type) && $set->assignment_type =~ /gateway/ && $node_name eq 'problem_detail') {
-		return $r->maketext(
+		return $c->maketext(
 			"Requested set '[_1]' is a test/quiz assignment but the regular homework assignment content "
 				. 'generator [_2] was called.  Try re-entering the set from the problem sets listing page.',
 			$setName, $node_name
 		);
 	} elsif ((!defined($set->assignment_type) || $set->assignment_type eq 'default') && $node_name =~ /gateway/) {
-		return $r->maketext(
+		return $c->maketext(
 			"Requested set '[_1]' is a homework assignment but the gateway/quiz content generator [_2] was called.  "
 				. 'Try re-entering the set from the problem sets listing page.',
 			$setName, $node_name
@@ -472,10 +471,10 @@ sub checkSet {
 	if (defined($set->assignment_type)
 		&& $set->assignment_type =~ /proctored/
 		&& $node_name ne 'problem_list'
-		&& !WeBWorK::Authen::Proctor->new($r, $ce, $db)->verify())
+		&& !WeBWorK::Authen::Proctor->new($c, $ce, $db)->verify())
 	{
-		return $r->maketext(
-			"Requested set '[_1]' is a proctored test, but no valid proctor authorization has been obtained.",
+		return $c->maketext(
+			'Requested set "[_1]" is a proctored test, but no valid proctor authorization has been obtained.',
 			$setName);
 	}
 
@@ -488,8 +487,8 @@ sub checkSet {
 	my $LTIGradeMode = $ce->{LTIGradeMode} // '';
 
 	if ($LTIGradeMode eq 'homework' && !$self->hasPermissions($userName, "view_unopened_sets")) {
-		my $LMS = $ce->{LMS_url} ? $r->link_to($ce->{LMS_name} => $ce->{LMS_url}) : $ce->{LMS_name};
-		return $r->maketext(
+		my $LMS = $ce->{LMS_url} ? $c->link_to($ce->{LMS_name} => $ce->{LMS_url}) : $ce->{LMS_name};
+		return $c->maketext(
 			'You must use your Learning Management System ([_1]) to access this set.  '
 				. 'Try logging in to the Learning Management System and visiting the set from there.',
 			$LMS
@@ -507,14 +506,12 @@ sub invalidIPAddress {
 	my $self = shift;
 	my $set  = shift;
 
-	my $r       = $self->{r};
-	my $db      = $r->db;
-	my $ce      = $r->ce;
-	my $urlPath = $r->urlpath;
-	#	my $setName = $urlPath->arg("setID");  # not always defined
+	my $c                 = $self->{c};
+	my $db                = $c->db;
+	my $ce                = $c->ce;
 	my $setName           = $set->set_id;
-	my $userName          = $r->param("user");
-	my $effectiveUserName = $r->param("effectiveUser");
+	my $userName          = $c->param("user");
+	my $effectiveUserName = $c->param("effectiveUser");
 
 	return 0
 		if (!defined($set->restrict_ip)
@@ -522,7 +519,7 @@ sub invalidIPAddress {
 			|| $set->restrict_ip eq 'No'
 			|| $self->hasPermissions($userName, 'view_ip_restricted_sets'));
 
-	my $clientIP = new Net::IP($r->useragent_ip);
+	my $clientIP = new Net::IP($c->tx->remote_address);
 
 	# make sure that we're using the non-versioned set name
 	$setName =~ s/,v\d+$//;
@@ -534,7 +531,7 @@ sub invalidIPAddress {
 
 	# if there are no addresses in the locations, return an error that
 	#    says this
-	return $r->maketext(
+	return $c->maketext(
 		"Client ip address [_1] is not allowed to work this assignment, because the assignment has ip address restrictions and there are no allowed locations associated with the restriction.  Contact your professor to have this problem resolved.",
 		$clientIP->ip()
 	) if (!@restrictAddresses);

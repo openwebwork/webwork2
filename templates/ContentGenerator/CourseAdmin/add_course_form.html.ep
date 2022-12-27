@@ -2,9 +2,9 @@
 %
 <h2><%= maketext('Add Course') %></h2>
 %
-%= form_for $c->uri, method => 'POST', begin
-	<%= $cg->hidden_authen_fields =%>
-	<%= $cg->hidden_fields('subDisplay') =%>
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
 	%
 	<p><%= maketext(
 		'Specify an ID, title, and institution for the new course. The course ID may contain only letters, '
@@ -128,4 +128,4 @@
 	</div>
 	<%= hidden_field add_dbLayout => 'sql_single' =%>
 	<%= submit_button maketext('Add Course'), name => 'add_course', class => 'btn btn-primary' =%>
-% end
+<% end =%>

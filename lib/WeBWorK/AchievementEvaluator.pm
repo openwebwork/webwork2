@@ -14,16 +14,13 @@
 ################################################################################
 
 package WeBWorK::AchievementEvaluator;
-use parent qw(Exporter);
+use Mojo::Base 'Exporter', -signatures;
 
 =head1 NAME
 
   WeBWorK::AchievementEvaluator  -  Runs achievement evaluators for problems.
 
 =cut
-
-use strict;
-use warnings;
 
 use DateTime;
 
@@ -33,11 +30,10 @@ use WWSafe;
 
 our @EXPORT_OK = qw(checkForAchievements);
 
-sub checkForAchievements {
-	my ($problem_in, $pg, $r, %options) = @_;
+sub checkForAchievements ($problem_in, $pg, $c, %options) {
 	our $problem = $problem_in;
-	my $db = $r->db;
-	my $ce = $r->ce;
+	my $db = $c->db;
+	my $ce = $c->ce;
 
 	# Date and time for course timezone (may differ from the server timezone)
 	# Saved into separate array
@@ -45,7 +41,7 @@ sub checkForAchievements {
 	my $dtCourseTime = DateTime->from_epoch(epoch => time(), time_zone => $ce->{siteDefaults}{timezone} || 'local');
 
 	# Set up variables and get achievements
-	my $cheevoMessage = $r->c;
+	my $cheevoMessage = $c->c;
 	my $user_id       = $problem->user_id;
 	my $set_id        = $problem->set_id;
 
@@ -246,7 +242,7 @@ sub checkForAchievements {
 			}
 
 			# Construct the cheevo message using the cheevoMessage template.
-			push(@$cheevoMessage, $r->include('AchievementEvaluator/cheevoMessage', achievement => $achievement));
+			push(@$cheevoMessage, $c->include('AchievementEvaluator/cheevoMessage', achievement => $achievement));
 
 			my $points = $achievement->points;
 			#just in case points is an ininitialzied variable
@@ -269,7 +265,7 @@ sub checkForAchievements {
 	$db->putGlobalUserAchievement($globalUserAchievement);
 
 	if (@$cheevoMessage) {
-		return $r->tag(
+		return $c->tag(
 			'div',
 			class =>
 				'cheevo-toast-container toast-container position-absolute top-0 start-50 translate-middle-x p-3',

@@ -1,10 +1,10 @@
 % use WeBWorK::Utils qw(getAssetURL);
 %
 % content_for js => begin
-	% if ($cg->{type} eq 'set' || $cg->{type} eq 'problem') {
+	% if (current_route =~ /^instructor_(set|problem)_statistics$/) {
 		<%= javascript getAssetURL($ce, 'js/apps/Stats/stats.js'), defer => undef =%>
 	% }
-	% if ($cg->{type} eq 'problem') {
+	% if (current_route eq 'instructor_problem_statistics') {
 		<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
 	% }
 % end
@@ -14,13 +14,13 @@
 	% last;
 % }
 %
-% if ($cg->{type} eq 'student') {
+% if (current_route eq 'instructor_user_statistics') {
 	% # Stats and StudentProgress share this template.
 	<%= include 'ContentGenerator/Instructor/Stats/student_stats' =%>
-% } elsif ($cg->{type} eq 'set') {
-	<%= $cg->set_stats =%>
-% } elsif ($cg->{type} eq 'problem') {
-	<%= $cg->problem_stats =%>
+% } elsif (current_route eq 'instructor_set_statistics') {
+	<%= $c->set_stats =%>
+% } elsif (current_route eq 'instructor_problem_statistics') {
+	<%= $c->problem_stats =%>
 % } else {
 	% # Stats and StudentProgress share this template also.
 	<%= include 'ContentGenerator/Instructor/Stats/index',

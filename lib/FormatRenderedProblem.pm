@@ -62,7 +62,7 @@ sub formatRenderedProblem {
 		$forbidGradePassback                = 1;    # due to render error
 	}
 
-	my $SITE_URL = $ws->r->server_root_url;
+	my $SITE_URL = $ws->c->server_root_url;
 
 	my $displayMode = $ws->{inputs_ref}{displayMode} // 'MathJax';
 
@@ -159,7 +159,7 @@ sub formatRenderedProblem {
 	# Do not produce an AttemptsTable when we had a rendering error.
 	if (!$renderErrorOccurred) {
 		my $tbl = WeBWorK::HTML::AttemptsTable->new(
-			$rh_result->{answers} // {}, $ws->r,
+			$rh_result->{answers} // {}, $ws->c,
 			answersSubmitted    => $ws->{inputs_ref}{answersSubmitted}     // 0,
 			answerOrder         => $rh_result->{flags}{ANSWER_ENTRY_ORDER} // [],
 			displayMode         => $displayMode,
@@ -231,7 +231,7 @@ sub formatRenderedProblem {
 		$output->{pg_version} = $ce->{PG_VERSION};
 
 		# Convert to JSON and render.
-		$ws->r->render(data => JSON->new->utf8(0)->encode($output));
+		$ws->c->render(data => JSON->new->utf8(0)->encode($output));
 	}
 
 	# Setup arnd render the appropriate template in the templates/RPCRenderFormats folder depending on the outputformat.
@@ -245,7 +245,7 @@ sub formatRenderedProblem {
 		lh                       => WeBWorK::Localize::getLangHandle($ws->{inputs_ref}{language} // 'en'),
 		rh_result                => $rh_result,
 		SITE_URL                 => $SITE_URL,
-		FORM_ACTION_URL          => $SITE_URL . $ws->r->webwork_url . '/render_rpc',
+		FORM_ACTION_URL          => $SITE_URL . $ws->c->webwork_url . '/render_rpc',
 		COURSE_LANG_AND_DIR      => get_lang_and_dir($formLanguage),
 		theme                    => $ws->{inputs_ref}{theme} || $ce->{defaultTheme},
 		courseID                 => $ws->{inputs_ref}{courseID} // '',
@@ -283,9 +283,9 @@ sub formatRenderedProblem {
 		pretty_print             => \&pretty_print
 	);
 
-	return $ws->r->render(%template_params) if $formatName eq 'json' || !$ws->{inputs_ref}{send_pg_flags};
-	return $ws->r->render(
-		json => { html => $ws->r->render_to_string(%template_params), pg_flags => $rh_result->{flags} });
+	return $ws->c->render(%template_params) if $formatName eq 'json' || !$ws->{inputs_ref}{send_pg_flags};
+	return $ws->c->render(
+		json => { html => $ws->c->render_to_string(%template_params), pg_flags => $rh_result->{flags} });
 }
 
 sub saveGradeToLTI {
@@ -378,22 +378,22 @@ EOS
 			$response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
 			my $message = $1;
 			if ($message ne 'success') {
-				$LTIGradeMessage = $ws->r->tag('p', "Unable to update LMS grade. Error: $message")->to_string;
+				$LTIGradeMessage = $ws->c->tag('p', "Unable to update LMS grade. Error: $message")->to_string;
 				push(@{ $rh_result->{debug_messages} }, xml_escape($response->content));
 			} else {
-				$LTIGradeMessage = $ws->r->tag('p', 'Grade sucessfully saved.')->to_string;
+				$LTIGradeMessage = $ws->c->tag('p', 'Grade sucessfully saved.')->to_string;
 			}
 		} else {
-			$LTIGradeMessage = $ws->r->tag('p', 'Unable to update LMS grade. Error: ' . $response->message)->to_string;
+			$LTIGradeMessage = $ws->c->tag('p', 'Unable to update LMS grade. Error: ' . $response->message)->to_string;
 			push(@{ $rh_result->{debug_messages} }, xml_escape($response->content));
 		}
 	}
 
 	# save parameters for next time
-	$LTIGradeMessage .= $ws->r->hidden_field(lis_outcome_service_url => $request_url)->to_string;
-	$LTIGradeMessage .= $ws->r->hidden_field(oauth_consumer_key      => $consumer_key)->to_string;
-	$LTIGradeMessage .= $ws->r->hidden_field(oauth_signature_method  => $signature_method)->to_string;
-	$LTIGradeMessage .= $ws->r->hidden_field(lis_result_sourcedid    => $sourcedid)->to_string;
+	$LTIGradeMessage .= $ws->c->hidden_field(lis_outcome_service_url => $request_url)->to_string;
+	$LTIGradeMessage .= $ws->c->hidden_field(oauth_consumer_key      => $consumer_key)->to_string;
+	$LTIGradeMessage .= $ws->c->hidden_field(oauth_signature_method  => $signature_method)->to_string;
+	$LTIGradeMessage .= $ws->c->hidden_field(lis_result_sourcedid    => $sourcedid)->to_string;
 
 	return $LTIGradeMessage;
 }

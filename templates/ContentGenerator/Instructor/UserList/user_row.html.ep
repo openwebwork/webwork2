@@ -1,9 +1,7 @@
-% my $courseName = $urlpath->arg('courseID');
-%
 % my $statusClass = $ce->status_abbrev_to_name($user->status);
 %
 <tr>
-	% unless ($cg->{editMode} || $cg->{passwordMode}) {
+	% unless ($c->{editMode} || $c->{passwordMode}) {
 		% # Select checkboxes
 		<td>
 			<%= check_box selected_users => $user->user_id, id => $user->user_id . '_checkbox',
@@ -17,16 +15,14 @@
 					% if (!$authz->hasPermissions(param('user'), 'become_student')) {
 						<%= $user->user_id =%>
 					% } else {
-						<%= link_to $user->user_id => $cg->systemLink(
-							$urlpath->new(type => 'set_list', args => { courseID => $courseName }),
+						<%= link_to $user->user_id => $c->systemLink(
+							url_for('set_list'),
 							params => { effectiveUser => $user->user_id }
 						) =%>
 					% }
 				<% end =%>
-				<%= link_to $cg->systemLink(
-						$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseName }),
-						params => { editMode => 1, visible_users => $user->user_id }
-					), begin =%>
+				<%= link_to $c->systemLink(url_for, params => { editMode => 1, visible_users => $user->user_id }),
+					begin =%>
 					<i class="icon fas fa-pencil-alt" aria-hidden="true"
 						data-alt="<%= maketext('Link to Edit Page for [_1]', $user->user_id) %>">
 					</i>
@@ -49,7 +45,7 @@
 		</td>
 	% }
 	%
-	% if ($cg->{passwordMode}) {
+	% if ($c->{passwordMode}) {
 		% # New password field
 		<td>
 			% if ($user->user_id eq param('user')) {
@@ -66,25 +62,21 @@
 		</td>
 		% # User ID
 		<td><div class="<%= $statusClass %>"><%= $user->user_id %></div></td>
-	% } elsif ($cg->{editMode}) {
+	% } elsif ($c->{editMode}) {
 		% # User ID ("edit sets assigned to user" link)
 		<td>
-			<%= link_to $user->user_id => $cg->systemLink($urlpath->new(
-				type => 'instructor_user_detail',
-				args => { courseID => $courseName, userID   => $user->user_id }
-			)) =%>
+			<%= link_to $user->user_id =>
+				$c->systemLink(url_for('instructor_user_detail', userID => $user->user_id)) =%>
 		</td>
 	% } else {
 		% # User ID ("edit sets assigned to user" link)
 		<td>
 			% my $sets = $db->countUserSets($user->user_id);
 			% if (!$authz->hasPermissions(param('user'), 'assign_problem_sets')) {
-				<%= $sets =%>/<%= $cg->{totalSets} =%>
+				<%= $sets =%>/<%= $c->{totalSets} =%>
 			% } else {
-				<%= link_to "$sets/$cg->{totalSets}" => $cg->systemLink($urlpath->new(
-					type => 'instructor_user_detail',
-					args => { courseID => $courseName, userID   => $user->user_id }
-				)) =%>
+				<%= link_to "$sets/$c->{totalSets}" =>
+					$c->systemLink(url_for('instructor_user_detail', userID => $user->user_id)) =%>
 			% }
 		</td>
 	% }

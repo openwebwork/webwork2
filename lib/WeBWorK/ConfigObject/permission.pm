@@ -14,43 +14,36 @@
 ################################################################################
 
 package WeBWorK::ConfigObject::permission;
-use parent qw(WeBWorK::ConfigObject);
+use Mojo::Base 'WeBWorK::ConfigObject', -signatures;
 
-use strict;
-use warnings;
-
-sub comparison_value {
-	my ($self, $val) = @_;
+sub comparison_value ($self, $val) {
 	return $val // 'nobody';
 }
 
 # This tries to produce a string from a permission number.  If you feed it a string, that's what you get back.
-sub display_value {
-	my ($self, $val) = @_;
-	my $r = $self->{Module}->r;
-	return $r->maketext('nobody') if !defined $val;
-	my %reverseUserRoles = reverse %{ $r->ce->{userRoles} };
-	return defined $reverseUserRoles{$val} ? $r->maketext($reverseUserRoles{$val}) : $r->maketext($val);
+sub display_value ($self, $val) {
+	my $c = $self->{c};
+	return $c->maketext('nobody') if !defined $val;
+	my %reverseUserRoles = reverse %{ $c->ce->{userRoles} };
+	return defined $reverseUserRoles{$val} ? $c->maketext($reverseUserRoles{$val}) : $c->maketext($val);
 }
 
-sub save_string {
-	my ($self, $oldval, $use_current) = @_;
+sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current);
 	return '' if $self->comparison_value($oldval) eq $newval;
 	return "\$$self->{var} = '$newval';\n";
 }
 
-sub entry_widget {
-	my ($self, $default) = @_;
-	my $r = $self->{Module}->r;
+sub entry_widget ($self, $default) {
+	my $c = $self->{c};
 
 	# The value of a permission can be undefined (for nobody), a standard permission number, or some other number
-	my %userRoles = %{ $r->ce->{userRoles} };
+	my %userRoles = %{ $c->ce->{userRoles} };
 	my @values    = sort { $userRoles{$a} <=> $userRoles{$b} } keys %userRoles;
 
-	return $r->select_field(
+	return $c->select_field(
 		$self->{name} =>
-			[ map { [ $r->maketext($_) => $_, ($default // 'nobody') eq $_ ? (selected => undef) : () ] } @values ],
+			[ map { [ $c->maketext($_) => $_, ($default // 'nobody') eq $_ ? (selected => undef) : () ] } @values ],
 		id    => $self->{name},
 		class => 'form-select form-select-sm',
 	);

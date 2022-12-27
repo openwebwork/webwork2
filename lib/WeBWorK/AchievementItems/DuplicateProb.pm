@@ -14,18 +14,13 @@
 ################################################################################
 
 package WeBWorK::AchievementItems::DuplicateProb;
-use parent qw(WeBWorK::AchievementItems);
+use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to turn one problem into another problem
 
-use strict;
-use warnings;
-
 use WeBWorK::Utils qw(between x nfreeze_base64 thaw_base64 format_set_name_display);
 
-sub new {
-	my ($class, $r) = @_;
-
+sub new ($class) {
 	return bless {
 		id          => 'DuplicateProb',
 		name        => x('Box of Transmogrification'),
@@ -33,9 +28,7 @@ sub new {
 	}, $class;
 }
 
-sub print_form {
-	my ($self, $sets, $setProblemCount, $r) = @_;
-
+sub print_form ($self, $sets, $setProblemCount, $c) {
 	# Show open sets and allow for a choice of two problems from the set.
 
 	my @openSets;
@@ -60,41 +53,41 @@ sub print_form {
 		push(@problemIDs, [ $i => $i, $i > $openSets[0][3]{max} ? (style => 'display:none') : () ]);
 	}
 
-	return $r->c(
-		$r->tag(
+	return $c->c(
+		$c->tag(
 			'p',
-			$r->maketext(
+			$c->maketext(
 				'Please choose the set, the problem you would like to copy, '
 					. 'and the problem you would like to copy it to.'
 			)
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			$r,
+			$c,
 			id         => 'tran_set_id',
-			label_text => $r->maketext('Set Name'),
+			label_text => $c->maketext('Set Name'),
 			values     => \@openSets,
 			menu_attr  => {
 				dir  => 'ltr',
 				data => { problems => 'tran_problem_id', problems2 => 'tran_problem_id2' }
 			}
 		),
-		$r->tag(
+		$c->tag(
 			'div',
 			class => 'row mb-3',
-			$r->c(
+			$c->c(
 				WeBWorK::AchievementItems::form_popup_menu_row(
-					$r,
+					$c,
 					id                  => 'tran_problem_id',
 					values              => \@problemIDs,
-					label_text          => $r->maketext('Copy this Problem'),
+					label_text          => $c->maketext('Copy this Problem'),
 					menu_container_attr => { class => 'col-2 ps-0' },
 					add_container       => 0
 				),
 				WeBWorK::AchievementItems::form_popup_menu_row(
-					$r,
+					$c,
 					id                  => 'tran_problem_id2',
 					values              => \@problemIDs,
-					label_text          => $r->maketext('To this Problem'),
+					label_text          => $c->maketext('To this Problem'),
 					menu_container_attr => { class => 'col-2 ps-0' },
 					add_container       => 0
 				)
@@ -103,10 +96,9 @@ sub print_form {
 	)->join('');
 }
 
-sub use_item {
-	my ($self, $userName, $r) = @_;
-	my $db = $r->db;
-	my $ce = $r->ce;
+sub use_item ($self, $userName, $c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
 	# Validate data
 
@@ -116,13 +108,13 @@ sub use_item {
 	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
 	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
 
-	my $setID = $r->param('tran_set_id');
+	my $setID = $c->param('tran_set_id');
 	return 'You need to input a Set Name' unless defined $setID;
 
-	my $problemID = $r->param('tran_problem_id');
+	my $problemID = $c->param('tran_problem_id');
 	return 'You need to input a Problem Number' unless $problemID;
 
-	my $problemID2 = $r->param('tran_problem_id2');
+	my $problemID2 = $c->param('tran_problem_id2');
 	return 'You need to input a Problem Number' unless $problemID2;
 
 	return 'You need to pick 2 different problems!' if $problemID == $problemID2;

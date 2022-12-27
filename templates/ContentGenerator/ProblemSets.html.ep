@@ -24,7 +24,7 @@
 						% if ($sort eq 'name') {
 							<span><%= maketext('Name') %></span>
 						% } else {
-							<%= link_to maketext('Name') => $cg->systemLink($urlpath, params => { sort => 'name' }) =%>
+							<%= link_to maketext('Name') => $c->systemLink(url_for, params => { sort => 'name' }) =%>
 						% }
 					</th>
 					<th scope="col">
@@ -32,7 +32,7 @@
 							<span><%= maketext('Status') %></span>
 						% } else {
 							<%= link_to maketext('Status') =>
-								$cg->systemLink($urlpath, params => { sort => 'status' }) =%>
+								$c->systemLink(url_for, params => { sort => 'status' }) =%>
 						% }
 					</th>
 					<th scope="col" class="hardcopy">
@@ -51,7 +51,7 @@
 				% # Versions are not shown here. Instead they are on the ProblemSet page for the gateway quiz.
 				% for my $set (@$sets) {
 					% if ($set->visible || $authz->hasPermissions(param('user'), 'view_hidden_sets')) {
-						<%= $cg->setListRow($set) =%>
+						<%= $c->setListRow($set) =%>
 					% }
 				% }
 			</tbody>
@@ -60,18 +60,8 @@
 % end
 %
 % if ($authz->hasPermissions(param('user'), 'view_multiple_sets')) {
-	<%= form_for $cg->systemLink(
-			$urlpath->newFromModule(
-				'WeBWorK::ContentGenerator::Hardcopy',
-				$c, courseID => $urlpath->arg('courseID')
-			),
-			authen => 0
-		),
-		name   => 'problem-sets-form',
-		id     => 'problem-sets-form',
-		method => 'POST',
-		begin =%>
-		<%= $cg->hidden_authen_fields =%>
+	<%= form_for 'hardcopy', name => 'problem-sets-form', id => 'problem-sets-form', method => 'POST', begin =%>
+		<%= $c->hidden_authen_fields =%>
 		<%= content 'set_table' =%>
 		<div class="mb-3">
 			<%= input_tag reset => maketext('Deselect All Sets'),
@@ -86,8 +76,8 @@
 	<%= content 'set_table' =%>
 % }
 %
-<%= $cg->feedbackMacro(
-	module             => $urlpath->module,
+<%= $c->feedbackMacro(
+	route              => current_route,
 	set                => '',
 	problem            => '',
 	displayMode        => '',

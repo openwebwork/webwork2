@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::HTML::ScrollingRecordList;
-use parent qw(Exporter);
+use Mojo::Base 'Exporter', -signatures;
 
 =head1 NAME
 
@@ -22,9 +22,6 @@ WeBWorK::HTML::ScrollingRecordList - HTML widget for a scrolling list of
 records.
 
 =cut
-
-use strict;
-use warnings;
 
 use Carp;
 
@@ -34,13 +31,11 @@ use WeBWorK::Utils::FilterRecords qw(getFiltersForClass filterRecords);
 
 our @EXPORT_OK = qw(scrollingRecordList);
 
-sub scrollingRecordList {
-	my ($options, @records) = @_;
-
+sub scrollingRecordList ($options, @records) {
 	my %options = (default_filters => [], default_sort => '', %$options);
 	# %options must contain:
-	#  name - name of scrolling list
-	#  request - the WeBWorK::Request object for the current request
+	#  name       - name of scrolling list
+	#  controller - the WeBWorK::Controller object for the current route
 	# may contain:
 	#  default_sort - name of sort to use by default
 	#  default_format - name of format to use by default
@@ -49,10 +44,10 @@ sub scrollingRecordList {
 	#  multiple - are multiple selections allowed?
 
 	my $name = $options{name};
-	my $r    = $options{request};
+	my $c    = $options{controller};
 
-	croak 'name not found in options'    unless defined $name;
-	croak 'request not found in options' unless defined $r;
+	croak 'name not found in options'       unless defined $name;
+	croak 'controller not found in options' unless defined $c;
 
 	my ($sorts, $formats, $filters, $formattedRecords) = ([], [], [], []);
 
@@ -64,8 +59,8 @@ sub scrollingRecordList {
 		$filters = getFiltersForClass(@records);
 
 		my @selected_filters;
-		if (defined $r->param("$name!filter")) {
-			@selected_filters = $r->param("$name!filter");
+		if (defined $c->param("$name!filter")) {
+			@selected_filters = $c->param("$name!filter");
 			@selected_filters = ("all") unless @selected_filters;
 		} else {
 			@selected_filters = @{ $options{default_filters} };
@@ -74,13 +69,13 @@ sub scrollingRecordList {
 		$formattedRecords = formatRecords(
 			$options{default_format},
 			sortRecords(
-				$r->param("$name!sort") || $options{default_sort} || (@$sorts ? $sorts->[0][1] : ''),
+				$c->param("$name!sort") || $options{default_sort} || (@$sorts ? $sorts->[0][1] : ''),
 				filterRecords(\@selected_filters, @records)
 			)
 		);
 	}
 
-	return $r->include(
+	return $c->include(
 		'HTML/ScrollingRecordList/scrollingRecordList',
 		name             => $name,
 		options          => \%options,

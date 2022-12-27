@@ -1,5 +1,5 @@
-% my %can  = %{ $cg->{can} };
-% my %will = %{ $cg->{will} };
+% my %can  = %{ $c->{can} };
+% my %will = %{ $c->{will} };
 %
 % if ($can{showCorrectAnswers}
 	% || $can{showProblemGrader}

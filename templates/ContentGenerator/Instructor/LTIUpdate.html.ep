@@ -25,27 +25,27 @@
 		<tr><th><%= maketext('LTI Grade Mode') %></th><td><%= $ce->{LTIGradeMode} %></td></tr>
 		<tr>
 			<th><%= maketext('Update Interval') %></th>
-			<td><%= $updateInterval > -1 ? $cg->format_interval($updateInterval) : maketext('Never') %></td>
+			<td><%= $updateInterval > -1 ? $c->format_interval($updateInterval) : maketext('Never') %></td>
 		</tr>
 		<tr>
 			<th><%= maketext('Last Full Update') %></th>
 			<td>
 				<%= $lastUpdate
-					? $cg->formatDateTime($lastUpdate, 0, $ce->{studentDateDisplayFormat})
+					? $c->formatDateTime($lastUpdate, 0, $ce->{studentDateDisplayFormat})
 					: maketext('Never') =%>
 			</td>
 		</tr>
 		% if ($updateInterval > -1) {
 			<tr>
 				<th><%= maketext('Next Update') %></th>
-				<td><%= $cg->formatDateTime($lastUpdate + $updateInterval, 0, $ce->{studentDateDisplayFormat}) =%></td>
+				<td><%= $c->formatDateTime($lastUpdate + $updateInterval, 0, $ce->{studentDateDisplayFormat}) =%></td>
 			</tr>
 		% }
 	</table>
 </div>
 %
 <h2><%= maketext('Start LTI Grade Update') %></h2>
-<%= form_for $c->uri, method => 'POST', id => 'updateLTIForm', name => 'updateLTIForm', begin =%>
+<%= form_for current_route, method => 'POST', id => 'updateLTIForm', name => 'updateLTIForm', begin =%>
 	<div class="row mb-3">
 		<%= label_for updateUserID => maketext('Update user:'), class => 'col-auto col-form-label fw-bold' =%>
 		<div class="col-auto">

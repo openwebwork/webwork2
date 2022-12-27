@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::ScoringDownload;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -22,37 +22,32 @@ WeBWorK::ContentGenerator::Instructor::ScoringDownload - Download scoring data f
 
 =cut
 
-use strict;
-use warnings;
-
 # FIXME: This should be integrated into scoring.pm, and this file deleted.
 
 use WeBWorK::ContentGenerator::Instructor::FileManager;
 
-async sub pre_header_initialize {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $ce         = $r->ce;
-	my $authz      = $r->authz;
+sub pre_header_initialize ($c) {
+	my $ce         = $c->ce;
+	my $authz      = $c->authz;
 	my $scoringDir = $ce->{courseDirs}->{scoring};
-	my $file       = $r->param('getFile');
-	my $user       = $r->param('user');
+	my $file       = $c->param('getFile');
+	my $user       = $c->param('user');
 
 	# the parameter 'getFile" needs to be sanitized. (see bug #3793 )
 	# See checkName in FileManager.pm for a more complete sanitization.
 	if ($authz->hasPermissions($user, "score_sets")) {
 		unless ($file eq WeBWorK::ContentGenerator::Instructor::FileManager::checkName($file)) {    #
-			$self->addbadmessage($r->maketext("Your file name is not valid! "));
-			$self->addbadmessage($r->maketext(
+			$c->addbadmessage($c->maketext("Your file name is not valid! "));
+			$c->addbadmessage($c->maketext(
 				"A file name cannot begin with a dot, it cannot be empty, it cannot contain a "
 					. "directory path component and only the characters -_.a-zA-Z0-9 and space are allowed."
 			));
 		} else {
-			$self->reply_with_file("text/comma-separated-values", "$scoringDir/$file", $file, 0);
+			$c->reply_with_file("text/comma-separated-values", "$scoringDir/$file", $file, 0);
 			# 0==don't delete file after downloading
 		}
 	} else {
-		$self->addbadmessage("You do not have permission to access scoring data.");
+		$c->addbadmessage("You do not have permission to access scoring data.");
 	}
 
 	return;

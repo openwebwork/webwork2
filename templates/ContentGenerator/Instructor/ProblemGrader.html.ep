@@ -20,28 +20,22 @@
 	% last;
 % }
 %
-% unless ($cg->{set} && $cg->{problem}) {
+% unless ($c->{set} && $c->{problem}) {
 	<div class="alert alert-danger p-1 mb-0">
 		<%= maketext('This set needs to be assigned to you before you can grade it.') =%>
 	</div>
 	% last;
 % }
 %
-% my $courseName = $urlpath->arg('courseID');
-% my $setID      = $urlpath->arg('setID');
-% my $problemID  = $urlpath->arg('problemID');
-%
 % # Check to see what type the answers are.
 % my @answerTypes;
-% for (sortByName(undef, keys %{ $cg->{pg}{answers} })) {
-	% push(@answerTypes, $cg->{pg}{answers}{$_}{type});
+% for (sortByName(undef, keys %{ $c->{pg}{answers} })) {
+	% push(@answerTypes, $c->{pg}{answers}{$_}{type});
 % }
 %
-<div class="problem-content col-md-12 col-lg-10"><%== $cg->{pg}{body_text} %></div>
+<div class="problem-content col-md-12 col-lg-10"><%== $c->{pg}{body_text} %></div>
 %
-<%= form_for $cg->systemLink($urlpath, authen => 0), method => 'POST', id => 'problem-grader-form',
-	name => 'problem-grader-form', begin =%>
-	%
+<%= form_for current_route, method => 'POST', id => 'problem-grader-form', name => 'problem-grader-form', begin =%>
 	<div class="table-responsive">
 		<table class="table table-sm table-bordered caption-top">
 			<thead>
@@ -61,13 +55,13 @@
 				</tr>
 			</thead>
 			<tbody>
-				% for my $user (@{ $cg->{users} }) {
+				% for my $user (@{ $c->{users} }) {
 					% next unless $user->{data}{problem};
 					% # Skip this user if the pg file for the user's past answer doesn't match the current pg file.
 					% next
 						% if (defined $user->{data}{past_answer}
 							% && defined $user->{data}{past_answer}->source_file
-							% && $user->{data}{past_answer}->source_file ne $cg->{problem}->source_file);
+							% && $user->{data}{past_answer}->source_file ne $c->{problem}->source_file);
 					%
 					% my $userID = $user->user_id;
 					%
@@ -76,15 +70,8 @@
 						<td>
 							<div class="<%= ($user->{data}{problem}->flags =~ /needs_grading/ ? 'NeedsGrading ' : '')
 								. ($ce->status_abbrev_to_name($user->status) || '') %>">
-								<%= link_to $user->last_name . ', ' . $user->first_name => $cg->systemLink(
-										$urlpath->new(
-											type => 'problem_detail',
-											args => {
-												courseID  => $courseName,
-												setID     => $setID,
-												problemID => $problemID
-											}
-										),
+								<%= link_to $user->last_name . ', ' . $user->first_name => $c->systemLink(
+										url_for('problem_detail'),
 										params => { effectiveUser => $userID }
 									),
 									target => 'WW_View' =%>
@@ -149,6 +136,6 @@
 			</tbody>
 		</table>
 	</div>
-	<%= $cg->hidden_authen_fields =%>
+	<%= $c->hidden_authen_fields =%>
 	<%= submit_button maketext('Save'), name => 'assignGrades', class => 'btn btn-primary mb-2' =%>
 <% end =%>

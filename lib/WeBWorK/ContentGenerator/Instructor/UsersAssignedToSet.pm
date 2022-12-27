@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -23,52 +23,46 @@ users to which sets are assigned.
 
 =cut
 
-use strict;
-use warnings;
-
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(format_set_name_display);
 use WeBWorK::Utils::Instructor qw(assignSetToUser assignSetToAllUsers);
 
-sub initialize {
-	my ($self)  = @_;
-	my $r       = $self->r;
-	my $urlpath = $r->urlpath;
-	my $authz   = $r->authz;
-	my $db      = $r->db;
-	my $setID   = $urlpath->arg("setID");
-	my $user    = $r->param('user');
+sub initialize ($c) {
+	my $authz = $c->authz;
+	my $db    = $c->db;
+	my $setID = $c->stash('setID');
+	my $user  = $c->param('user');
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	return unless $authz->hasPermissions($user, "assign_problem_sets");
 
-	my %selectedUsers = map { $_ => 1 } $r->param('selected');
+	my %selectedUsers = map { $_ => 1 } $c->param('selected');
 
 	my $doAssignToSelected = 0;
 
-	if (defined $r->param('assignToAll')) {
+	if (defined $c->param('assignToAll')) {
 		debug("assignSetToAllUsers($setID)");
-		$self->addgoodmessage($r->maketext("Problems have been assigned to all current users."));
-		assignSetToAllUsers($db, $r->ce, $setID);
+		$c->addgoodmessage($c->maketext("Problems have been assigned to all current users."));
+		assignSetToAllUsers($db, $c->ce, $setID);
 		debug("done assignSetToAllUsers($setID)");
-	} elsif (defined $r->param('unassignFromAll')
-		&& defined($r->param('unassignFromAllSafety'))
-		&& $r->param('unassignFromAllSafety') == 1)
+	} elsif (defined $c->param('unassignFromAll')
+		&& defined($c->param('unassignFromAllSafety'))
+		&& $c->param('unassignFromAllSafety') == 1)
 	{
 		%selectedUsers = ();
-		$self->addgoodmessage($r->maketext("Problems for all students have been unassigned."));
+		$c->addgoodmessage($c->maketext("Problems for all students have been unassigned."));
 		$doAssignToSelected = 1;
-	} elsif (defined $r->param('assignToSelected')) {
-		$self->addgoodmessage($r->maketext("Problems for selected students have been reassigned."));
+	} elsif (defined $c->param('assignToSelected')) {
+		$c->addgoodmessage($c->maketext("Problems for selected students have been reassigned."));
 		$doAssignToSelected = 1;
-	} elsif (defined $r->param("unassignFromAll")) {
+	} elsif (defined $c->param("unassignFromAll")) {
 		# no action taken
-		$self->addbadmessage($r->maketext("No action taken"));
+		$c->addbadmessage($c->maketext("No action taken"));
 	}
 
 	# Get all user records and cache them for later use.
-	$self->{user_records} =
+	$c->{user_records} =
 		[ $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } }, [qw/section last_name first_name/]) ];
 
 	if ($doAssignToSelected) {
@@ -76,7 +70,7 @@ sub initialize {
 		die "Unable to get global set record for $setID " unless $setRecord;
 
 		my %setUsers = map { $_ => 1 } $db->listSetUsers($setID);
-		for my $selectedUser (map { $_->user_id } @{ $self->{user_records} }) {
+		for my $selectedUser (map { $_->user_id } @{ $c->{user_records} }) {
 			if (exists $selectedUsers{$selectedUser}) {
 				unless ($setUsers{$selectedUser}) {    # skip users already in the set
 					debug("assignSetToUser($selectedUser, ...)");

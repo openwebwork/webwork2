@@ -14,10 +14,7 @@
 ################################################################################
 
 package WeBWorK::ConfigObject::text;
-use parent qw(WeBWorK::ConfigObject);
-
-use strict;
-use warnings;
+use Mojo::Base 'WeBWorK::ConfigObject', -signatures;
 
 # The base ConfigObject handles everything for this package.  This is just a namespace.
 

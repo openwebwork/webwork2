@@ -3,12 +3,9 @@
 	% last;
 % }
 %
-% my $achievementID = $urlpath->arg('achievementID');
+% my $achievementID = stash('achievementID');
 %
-<%= form_for $cg->systemLink($urlpath, authen => 0), method => 'post',
-	name => 'user-achievement-form', id => 'user-achievement-form',
-	begin =%>
-	%
+<%= form_for current_route, method => 'post', name => 'user-achievement-form', id => 'user-achievement-form', begin =%>
 	% # Assign to everyone message
 	<div class="my-2">
 		<%= submit_button maketext('Assign to All Current Users'), name => 'assignToAll', class => 'btn btn-primary' =%>
@@ -74,7 +71,7 @@
 		</table>
 	</div>
 	%
-	<%= $cg->hidden_authen_fields =%>
+	<%= $c->hidden_authen_fields =%>
 	<%= submit_button maketext('Save'), name => 'assignToSelected', class => 'btn btn-primary' =%>
 	%
 	% # Output unassign from all button.

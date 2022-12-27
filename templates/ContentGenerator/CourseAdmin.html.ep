@@ -34,9 +34,8 @@
 	% )
 	% {
 		<li class="nav-item">
-			<%= link_to $_->[1] => $cg->systemLink($urlpath,
-					params => { subDisplay => $_->[0], %{ $_->[2] // {} } }
-				),
+			<%= link_to $_->[1] =>
+				$c->systemLink(url_for, params => { subDisplay => $_->[0], %{ $_->[2] // {} } }),
 				class => 'nav-link' . ((param('subDisplay') // '') eq $_->[0] ? ' active' : '') =%>
 		</li>
 	% }
@@ -44,22 +43,22 @@
 %
 <hr class="mt-0">
 %
-<%= include 'ContentGenerator/CourseAdmin/registration_form', cg => $cg; %>
+<%= include 'ContentGenerator/CourseAdmin/registration_form' %>
 %
-% if (@{ $cg->{errors} }) {
+% if (@{ $c->{errors} }) {
 	<div class="alert alert-danger p-1 mb-2">
 		<div class="mb-1"><%= maketext('Please correct the following errors and try again:') %></div>
 		<ul class="mb-1">
-			% for (@{ $cg->{errors} }) {
+			% for (@{ $c->{errors} }) {
 				<li><%= $_ %></li>
 			% }
 		</ul>
 	</div>
 % }
 %
-% if ($cg->{method_to_call}) {
-	% my $method_to_call = $cg->{method_to_call};
-	<%= $cg->$method_to_call =%>
+% if ($c->{method_to_call}) {
+	% my $method_to_call = $c->{method_to_call};
+	<%= $c->$method_to_call =%>
 % } else {
 	% unless (-w $ce->{webworkDirs}{logs} && -w $ce->{webworkDirs}{tmp} && -w $ce->{webworkDirs}{DATA}) {
 		<h2><%= maketext('Directory permission errors') %></h2>
@@ -86,12 +85,7 @@
 	<ol>
 		% for (sort { lc($a) cmp lc($b) } listCourses($ce)) {
 			% next if $_ eq 'admin' || $_ eq 'modelCourse';
-			<li>
-				<%= link_to $_ => $cg->systemLink(
-					$urlpath->newFromModule('WeBWorK::ContentGenerator::ProblemSets', $c, courseID => $_),
-					authen => 0
-				) =%>
-			</li>
+			<li><%= link_to $_ => 'set_list' => { courseID => $_ } =%></li>
 		% }
 	</ol>
 	%

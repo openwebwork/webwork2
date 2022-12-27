@@ -14,7 +14,7 @@
 	attempt was made to create the link, but that failed. Check the permissions in your <code>templates</code>
 	directory.
 	% end
-	% $cg->addbadmessage($msg->());
+	% $c->addbadmessage($msg->());
 % }
 %
 % # Now check which version to use.
@@ -22,7 +22,7 @@
 % if ($libraryVersion == 1) {
  	<div class="alert alert-danger p-1 mb-2 text-center">Problem library version 1 is no longer supported.</div>
 % } elsif ($libraryVersion >= 2) {
-	% if ($cg->{library_basic} == 1) {
+	% if ($c->{library_basic} == 1) {
 		<%= include 'ContentGenerator/Instructor/SetMaker/browse_library_panel_simple' =%>
 	% } else {
 		<%= include 'ContentGenerator/Instructor/SetMaker/browse_library_panel_advanced' =%>

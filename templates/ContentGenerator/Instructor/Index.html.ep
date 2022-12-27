@@ -19,8 +19,8 @@
 	<%= maketext('Select user(s) and/or set(s) below and click the action button of your choice.') =%>
 </p>
 %
-%= form_for $c->uri, method => 'POST', id => 'instructor-tools-form', begin
-	<%= $cg->hidden_authen_fields =%>
+<%= form_for current_route, method => 'POST', id => 'instructor-tools-form', begin =%>
+	<%= $c->hidden_authen_fields =%>
 	%
 	<div class="row gx-3">
 		<div class="col-xl-5 col-md-6 mb-2">
@@ -28,7 +28,7 @@
 			<%= scrollingRecordList(
 				{
 					name            => 'selected_users',
-					request         => $c,
+					controller      => $c,
 					default_sort    => 'lnfn',
 					default_format  => 'lnfn_uid',
 					default_filters => ['all'],
@@ -45,7 +45,7 @@
 			<%= scrollingRecordList(
 				{
 					name            => 'selected_sets',
-					request         => $c,
+					controller      => $c,
 					default_sort    => 'set_id',
 					default_format  => 'sid',
 					default_filters => ['all'],
@@ -74,10 +74,7 @@
 				<%= submit_button maketext('Edit'),
 					name       => 'edit_users',
 					class      => 'btn btn-sm btn-secondary',
-					formaction => $cg->systemLink($urlpath->newFromModule(
-						'WeBWorK::ContentGenerator::Instructor::UserList', $c,
-						courseID => $courseID
-					)),
+					formaction => $c->systemLink(url_for 'instructor_user_list'),
 					data => { users_needed => 'at least one', error_users => maketext($E_MIN_ONE_USER) } =%>
 				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
 					<%== maketext('class list data for selected <b>users</b>') =%>\
@@ -156,10 +153,7 @@
 				<%= submit_button maketext('Score'),
 					name       => 'score_sets',
 					class      => 'btn btn-sm btn-secondary',
-					formaction => $cg->systemLink($urlpath->newFromModule(
-						'WeBWorK::ContentGenerator::Instructor::Scoring', $c,
-						courseID => $courseID
-					)),
+					formaction => $c->systemLink(url_for 'instructor_scoring'),
 					data => { sets_needed => 'at least one', error_sets => maketext($E_MIN_ONE_SET) } =%>
 				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
 					<%== maketext('selected <b>sets</b>') =%>\
@@ -192,10 +186,7 @@
 					# directly submitted to that module without modification.
 					name       => 'assign',
 					class      => 'btn btn-sm btn-secondary',
-					formaction => $cg->systemLink($urlpath->newFromModule(
-						'WeBWorK::ContentGenerator::Instructor::Assigner', $c,
-						courseID => $courseID
-					)),
+					formaction => $c->systemLink(url_for 'instructor_set_assigner'),
 					data => {
 						users_needed => 'at least one',
 						error_users  => maketext($E_MIN_ONE_USER),
@@ -251,4 +242,4 @@
 			% }
 		</div>
 	</div>
-% end
+<% end =%>

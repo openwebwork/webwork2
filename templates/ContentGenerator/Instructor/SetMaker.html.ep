@@ -15,31 +15,31 @@
 	% last;
 % }
 %
-<%= form_for $c->uri, method => 'POST', name => 'library_browser_form', begin =%>
-	<%= $cg->hidden_authen_fields =%>
-	<%= hidden_field courseID => $urlpath->arg('courseID'), id => 'hidden_courseID' =%>
+<%= form_for current_route, method => 'POST', name => 'library_browser_form', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= hidden_field courseID => $courseID, id => 'hidden_courseID' =%>
 	<%= hidden_field hidden_language => $ce->{language} =%>
-	<%= hidden_field browse_which => $cg->{browse_which} =%>
-	<%= hidden_field problem_seed => $cg->{problem_seed} =%>
+	<%= hidden_field browse_which => $c->{browse_which} =%>
+	<%= hidden_field problem_seed => $c->{problem_seed} =%>
 	% for (my $i = 0; $i < @$pg_files; ++$i) {
 		<%= hidden_field "all_past_list$i" => $pg_files->[$i]{filepath} =%>
 		<%= hidden_field "all_past_mlt$i", => $pg_files->[$i]{morelt} || 0 =%>
 	% }
-	<%= hidden_field first_shown => $cg->{first_shown} =%>
-	<%= hidden_field last_shown => $cg->{last_shown} =%>
-	<%= hidden_field first_index => $cg->{first_index} =%>
-	<%= hidden_field last_index => $cg->{last_index} =%>
-	<%= hidden_field total_probs => $cg->{total_probs} =%>
+	<%= hidden_field first_shown => $c->{first_shown} =%>
+	<%= hidden_field last_shown => $c->{last_shown} =%>
+	<%= hidden_field first_index => $c->{first_index} =%>
+	<%= hidden_field last_index => $c->{last_index} =%>
+	<%= hidden_field total_probs => $c->{total_probs} =%>
 	%
 	<div class="library-browser-table">
 		<%= include('ContentGenerator/Instructor/SetMaker/top_row',
-			local_sets => $cg->{all_db_sets}, browse_which => $cg->{browse_which}) =%>
+			local_sets => $c->{all_db_sets}, browse_which => $c->{browse_which}) =%>
 	</div>
 	%
 	% # Show problems
 	% for (my $i = 0; $i < @$plist; ++$i) {
-		% $pg_files->[ $i + $cg->{first_index} ]{filepath} =~ s|^$ce->{courseDirs}{templates}/?||;
-		% my $sourceFileData = $pg_files->[ $i + $cg->{first_index} ];
+		% $pg_files->[ $i + $c->{first_index} ]{filepath} =~ s|^$ce->{courseDirs}{templates}/?||;
+		% my $sourceFileData = $pg_files->[ $i + $c->{first_index} ];
 		% if ($sourceFileData->{children}) {
 			% # If this problem has children, then show the problem and all children.
 			<div id="mlt-table<%= $i + 1 %>" class="lb-mlt-group">
@@ -48,9 +48,9 @@
 				% for (@{ $sourceFileData->{children} }) {
 					% ++$i;
 					% last if $i == @$plist;    # Protection in case of malformed data.
-					% $pg_files->[ $i + $cg->{first_index} ]{filepath} =~ s|^$ce->{courseDirs}{templates}/?||;
+					% $pg_files->[ $i + $c->{first_index} ]{filepath} =~ s|^$ce->{courseDirs}{templates}/?||;
 					<%= include 'ContentGenerator/Instructor/SetMaker/problem_row',
-						sourceFileData => $pg_files->[ $i + $cg->{first_index} ],
+						sourceFileData => $pg_files->[ $i + $c->{first_index} ],
 						pg_file => $plist->[$i], cnt => $i + 1 =%>
 				% }
 			</div>
@@ -63,17 +63,17 @@
 	% if (@$pg_files) {
 		<div class="my-2">
 			<span id="what_shown">
-				<span id="firstshown"><%= $cg->{first_shown} + 1 %></span>-<span id="lastshown"><%=
-					$cg->{last_shown} + 1 %></span>
+				<span id="firstshown"><%= $c->{first_shown} + 1 %></span>-<span id="lastshown"><%=
+					$c->{last_shown} + 1 %></span>
 			</span>
 			<%= maketext('of') %>
-			<span id="totalshown"><%= $cg->{total_probs} %></span>
+			<span id="totalshown"><%= $c->{total_probs} %></span>
 			<%= maketext('shown') %>
-			% if ($cg->{first_index} > 0) {
+			% if ($c->{first_index} > 0) {
 				<%= submit_button maketext('Previous page'), name => 'prev_page',
 					class => 'btn btn-secondary btn-sm' =%>
 			% }
-			% if (1 + $cg->{last_index} < @$pg_files) {
+			% if (1 + $c->{last_index} < @$pg_files) {
 				<%= submit_button maketext('Next page'), name => 'next_page', class => 'btn btn-secondary btn-sm' =%>
 			% }
 		</div>

@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::StudentProgress;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -22,28 +22,22 @@ WeBWorK::ContentGenerator::Instructor::StudentProgress - Display Student Progres
 
 =cut
 
-use strict;
-use warnings;
-
 use WeBWorK::Utils qw(jitar_id_to_seq wwRound grade_set format_set_name_display);
 use WeBWorK::Utils::Grades qw(list_set_versions);
 
-sub initialize {
-	my $self    = shift;
-	my $r       = $self->{r};
-	my $urlpath = $r->urlpath;
-	my $db      = $self->{db};
-	my $ce      = $self->{ce};
-	my $user    = $r->param('user');
+sub initialize ($c) {
+	my $db   = $c->db;
+	my $ce   = $c->ce;
+	my $user = $c->param('user');
 
 	# Check permissions
-	return unless $r->authz->hasPermissions($user, "access_instructor_tools");
+	return unless $c->authz->hasPermissions($user, "access_instructor_tools");
 
 	# Cache a list of all users except set level proctors and practice users, and restrict to the sections or
 	# recitations that are allowed for the user if such restrictions are defined.  This list is sorted by last_name,
 	# then first_name, then user_id.  This is used in multiple places in this module, and is guaranteed to be used at
 	# least once.  So it is done here to prevent extra database access.
-	$self->{student_records} = [
+	$c->{student_records} = [
 		$db->getUsersWhere(
 			{
 				user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
@@ -60,62 +54,50 @@ sub initialize {
 		)
 	];
 
-	$self->{type} = $urlpath->arg("statType") || '';
-	if ($self->{type} eq 'student') {
-		$self->{studentID} = $r->urlpath->arg("userID") || $user;
-	} elsif ($self->{type} eq 'set') {
-		$self->{setID} = $r->urlpath->arg("setID") || 0;
-		my $setRecord = $db->getGlobalSet($self->{setID});
+	if ($c->current_route eq 'instructor_user_progress') {
+		$c->{studentID} = $c->stash('userID');
+	} elsif ($c->current_route eq 'instructor_set_progress') {
+		my $setRecord = $db->getGlobalSet($c->stash('setID'));
 		return unless $setRecord;
-		$self->{setRecord} = $setRecord;
+		$c->{setRecord} = $setRecord;
 	}
 
 	return;
 }
 
-sub title {
-	my ($self) = @_;
-	my $r = $self->r;
+sub page_title ($c) {
+	return '' unless $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools');
 
-	return '' unless $r->authz->hasPermissions($r->param('user'), 'access_instructor_tools');
-
-	my $type = $self->{type};
-	if ($type eq 'student') {
-		return $r->maketext('Student Progress for [_1] student [_2]', $self->{ce}{courseName}, $self->{studentID});
-	} elsif ($type eq 'set') {
-		return $r->maketext(
+	if ($c->current_route eq 'instructor_user_progress') {
+		return $c->maketext('Student Progress for [_1] student [_2]', $c->ce->{courseName}, $c->{studentID});
+	} elsif ($c->current_route eq 'instructor_set_progress') {
+		return $c->maketext(
 			'Student Progress for [_1] set [_2]. Closes [_3]',
-			$self->{ce}{courseName},
-			$r->tag('span', dir => 'ltr', format_set_name_display($self->{setID})),
-			$self->formatDateTime($self->{setRecord}->due_date)
+			$c->ce->{courseName},
+			$c->tag('span', dir => 'ltr', format_set_name_display($c->stash('setID'))),
+			$c->formatDateTime($c->{setRecord}->due_date)
 		);
 	}
 
-	return $r->maketext('Student Progress');
+	return $c->maketext('Student Progress');
 }
 
-sub siblings {
-	my $self = shift;
+sub siblings ($c) {
 	# Stats and StudentProgress share this template.
-	return $self->r->include('ContentGenerator/Instructor/Stats/siblings',
-		header => $self->r->maketext('Student Progress'));
+	return $c->include('ContentGenerator/Instructor/Stats/siblings', header => $c->maketext('Student Progress'));
 }
 
 # Display student progress table
-sub displaySets {
-	my $self    = shift;
-	my $r       = $self->r;
-	my $urlpath = $r->urlpath;
-	my $db      = $r->db;
-	my $ce      = $r->ce;
+sub displaySets ($c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
-	my $setIsVersioned =
-		defined $self->{setRecord}->assignment_type && $self->{setRecord}->assignment_type =~ /gateway/;
+	my $setIsVersioned = defined $c->{setRecord}->assignment_type && $c->{setRecord}->assignment_type =~ /gateway/;
 
 	# The returning parameter lets us set defaults for versioned sets
-	if ($setIsVersioned && !$r->param('returning')) {
-		$r->param('show_date',     1) if !$r->param('show_date');
-		$r->param('show_testtime', 1) if !$r->param('show_testtime');
+	if ($setIsVersioned && !$c->param('returning')) {
+		$c->param('show_date',     1) if !$c->param('show_date');
+		$c->param('show_testtime', 1) if !$c->param('show_testtime');
 	}
 
 	# For versioned sets some of the columns are optionally shown.  The following flags keep track of which ones to
@@ -124,25 +106,25 @@ sub displaySets {
 
 	my %showColumns = $setIsVersioned
 		? (
-			date     => $r->param('show_date')       // 0,
-			testtime => $r->param('show_testtime')   // 0,
-			problems => $r->param('show_problems')   // 0,
-			section  => $r->param('show_section')    // 0,
-			recit    => $r->param('show_recitation') // 0,
-			login    => $r->param('show_login')      // 0,
+			date     => $c->param('show_date')       // 0,
+			testtime => $c->param('show_testtime')   // 0,
+			problems => $c->param('show_problems')   // 0,
+			section  => $c->param('show_section')    // 0,
+			recit    => $c->param('show_recitation') // 0,
+			login    => $c->param('show_login')      // 0,
 		)
 		: (date => 0, testtime => 0, problems => 1, section => 1, recit => 1, login => 1);
-	my $showBestOnly = $setIsVersioned ? $r->param('show_best_only') : 0;
+	my $showBestOnly = $setIsVersioned ? $c->param('show_best_only') : 0;
 
 	my @score_list;
 	my @user_set_list;
 
-	for my $studentRecord (@{ $self->{student_records} }) {
+	for my $studentRecord (@{ $c->{student_records} }) {
 		next unless $ce->status_abbrev_has_behavior($studentRecord->status, 'include_in_stats');
 
 		my $studentName = $studentRecord->user_id;
 		my ($allSetVersionNames, $notAssignedSet) =
-			list_set_versions($db, $studentName, $self->{setID}, $setIsVersioned);
+			list_set_versions($db, $studentName, $c->stash('setID'), $setIsVersioned);
 
 		next if $notAssignedSet;
 
@@ -167,9 +149,9 @@ sub displaySets {
 					$testTime = $timeLimit if ($testTime > $timeLimit);
 					$testTime = sprintf('%3.1f min', $testTime);
 				} elsif (time - $set->open_date < $set->version_time_limit) {
-					$testTime = $r->maketext('still open');
+					$testTime = $c->maketext('still open');
 				} else {
-					$testTime = $r->maketext('time limit exceeded');
+					$testTime = $c->maketext('time limit exceeded');
 				}
 			} else {
 				$set = $db->getMergedSet($studentName, $setName);
@@ -224,9 +206,9 @@ sub displaySets {
 		}
 	}
 
-	my $primary_sort_method   = $r->param('primary_sort');
-	my $secondary_sort_method = $r->param('secondary_sort');
-	my $ternary_sort_method   = $r->param('ternary_sort');
+	my $primary_sort_method   = $c->param('primary_sort');
+	my $secondary_sort_method = $c->param('secondary_sort');
+	my $ternary_sort_method   = $c->param('ternary_sort');
 
 	my $sort_method = sub {
 		my ($m, $n, $sort_method_name) = @_;
@@ -251,11 +233,11 @@ sub displaySets {
 	} @user_set_list;
 
 	# Construct header
-	my @problems = map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $self->{setID} }, 'problem_id');
-	@problems = ($r->maketext('None')) unless @problems;
+	my @problems = map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $c->stash('setID') }, 'problem_id');
+	@problems = ($c->maketext('None')) unless @problems;
 
 	# For a jitar set we only get the top level problems
-	if ($self->{setRecord}->assignment_type eq 'jitar') {
+	if ($c->{setRecord}->assignment_type eq 'jitar') {
 		my @topLevelProblems;
 		for my $id (@problems) {
 			my @seq = jitar_id_to_seq($id);
@@ -269,7 +251,7 @@ sub displaySets {
 	$numCols++                    if $showColumns{testtime};
 	$numCols += scalar(@problems) if $showColumns{problems};
 
-	return $r->include(
+	return $c->include(
 		'ContentGenerator/Instructor/StudentProgress/set_progress',
 		setIsVersioned        => $setIsVersioned,
 		showColumns           => \%showColumns,

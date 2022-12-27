@@ -1,4 +1,4 @@
-% my $set     = $cg->{set};
+% my $set = $c->{set};
 %
 % if (@$problems) {
 	% my $isJitarSet = $set->assignment_type eq 'jitar';
@@ -34,7 +34,7 @@
 						</th>
 						<th><%= maketext('Counts for Parent') %></th>
 					% }
-					% if ($cg->{canScoreProblems}) {
+					% if ($c->{canScoreProblems}) {
 						<th><%= maketext('Grader') %></th>
 					% }
 				</tr>
@@ -52,9 +52,7 @@
 % }
 %
 <div class="mb-3">
-	<%= link_to maketext('Download PDF or TeX Hardcopy for Current Set') => $cg->systemLink($urlpath->newFromModule(
-		'WeBWorK::ContentGenerator::Hardcopy', $c,
-		courseID => $urlpath->arg('courseID'),
-		setID    => $urlpath->arg('setID')
-	)), class => 'btn btn-primary' =%>
+	<%= link_to
+		maketext('Download PDF or TeX Hardcopy for Current Set') => $c->systemLink(url_for 'hardcopy_preselect_set'),
+		class => 'btn btn-primary' =%>
 </div>

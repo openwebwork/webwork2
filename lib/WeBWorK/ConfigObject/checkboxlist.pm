@@ -14,32 +14,25 @@
 ################################################################################
 
 package WeBWorK::ConfigObject::checkboxlist;
-use parent qw(WeBWorK::ConfigObject);
+use Mojo::Base 'WeBWorK::ConfigObject', -signatures;
 
-use strict;
-use warnings;
-
-sub display_value {
-	my ($self, $val) = @_;
-	my $r = $self->{Module}->r;
-	return $r->c(@{ $val // [] })->join($r->tag('br'));
+sub display_value ($self, $val) {
+	return $self->{c}->c(@{ $val // [] })->join($self->{c}->tag('br'));
 }
 
 # r->param() returns an array, so a custom version of convert_newval_source is needed.
-sub convert_newval_source {
-	my ($self, $use_current) = @_;
+sub convert_newval_source ($self, $use_current) {
 	if ($use_current) {
-		return @{ $self->get_value($self->{Module}->r->ce) };
+		return @{ $self->get_value($self->{c}->ce) };
 	} else {
-		return $self->{Module}->r->param($self->{name});
+		return $self->{c}->param($self->{name});
 	}
 }
 
-sub save_string {
-	my ($self, $oldval, $use_current) = @_;
+sub save_string ($self, $oldval, $use_current = 0) {
 	my @newvals = $self->convert_newval_source($use_current);
 	if ($self->{min} && scalar(@newvals) < $self->{min}) {
-		$self->{Module}->addbadmessage("You need to select at least $self->{min} display mode.");
+		$self->{c}->addbadmessage("You need to select at least $self->{min} display mode.");
 		return '' if $use_current;
 		return $self->save_string($oldval, 1);
 	}
@@ -47,24 +40,22 @@ sub save_string {
 	return "\$$self->{var} = [" . join(',', map {"'$_'"} @newvals) . "];\n";
 }
 
-sub comparison_value {
-	my ($self, $val) = @_;
+sub comparison_value ($self, $val) {
 	return join(',', @{ $val // [] });
 }
 
-sub entry_widget {
-	my ($self, $default) = @_;
-	my $r = $self->{Module}->r;
-	return $r->c(
+sub entry_widget ($self, $default) {
+	my $c = $self->{c};
+	return $c->c(
 		map {
-			$r->tag(
+			$c->tag(
 				'div',
 				class => 'form-check',
-				$r->tag(
+				$c->tag(
 					'label',
 					class => 'form-check-label',
-					$r->c(
-						$r->check_box(
+					$c->c(
+						$c->check_box(
 							$self->{name} => $_,
 							{ map { $_ => 1 } @$default }->{$_} ? (checked => undef) : (),
 							class => 'form-check-input',

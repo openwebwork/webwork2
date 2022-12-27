@@ -2,9 +2,9 @@
 % # display.
 % if ($setIsVersioned) {
 	<div class="card bg-light mb-3">
-		<%= form_for $cg->systemLink($urlpath, authen => 0), method => 'post',
+		<%= form_for current_route, method => 'post',
 			id => 'sp-gateway-form', name => 'StudentProgress', begin =%>
-			<%= $cg->hidden_authen_fields =%>
+			<%= $c->hidden_authen_fields =%>
 			<%= hidden_field returning => 1 =%>
 			<div class="card-body">
 				<h5 class="card-title"><%= maketext("Display options: Show") %></h5>
@@ -124,15 +124,6 @@
 	% : ()
 % );
 %
-% my $courseID = $urlpath->arg('courseID');
-%
-% my $setStatsPage = $urlpath->newFromModule(
-	% $urlpath->module, $c,
-	% courseID => $courseID,
-	% statType => 'sets',
-	% setID    => $cg->{setID}
-% );
-%
 % # Start table output
 <div class="table-responsive">
 	<table class="grade-table table table-bordered table-sm font-xs">
@@ -143,17 +134,17 @@
 					<%= maketext('Name') %>
 					<br>
 					<%= link_to maketext('First') =>
-						$cg->systemLink($setStatsPage, params => { primary_sort => 'first_name', %params }) =%>
+						$c->systemLink(url_for, params => { primary_sort => 'first_name', %params }) =%>
 					&nbsp;&nbsp;&nbsp;
 					<%= link_to maketext('Last') =>
-						$cg->systemLink($setStatsPage, params => { primary_sort => 'last_name', %params }) =%>
+						$c->systemLink(url_for, params => { primary_sort => 'last_name', %params }) =%>
 					<br>
 					<%= link_to maketext('Email') =>
-						$cg->systemLink($setStatsPage, params => { primary_sort => 'email_address', %params }) =%>
+						$c->systemLink(url_for, params => { primary_sort => 'email_address', %params }) =%>
 				</th>
 				<th <%== $rowspan %>>
 					<%= link_to maketext('Score') =>
-						$cg->systemLink($setStatsPage, params => { primary_sort => 'score', %params }) =%>
+						$c->systemLink(url_for, params => { primary_sort => 'score', %params }) =%>
 				</th>
 				<th <%== $rowspan %>><%= maketext('Out Of') %></th>
 				% # Additional columns that may be shown depending on if showing a gateway quiz and user selection.
@@ -169,19 +160,19 @@
 				% if ($showColumns->{section}) {
 					<th <%== $rowspan %>>
 						<%= link_to maketext('Section') =>
-							$cg->systemLink($setStatsPage, params => { primary_sort => 'section', %params }) =%>
+							$c->systemLink(url_for, params => { primary_sort => 'section', %params }) =%>
 					</th>
 				% }
 				% if ($showColumns->{recit}) {
 					<th <%== $rowspan %>>
 						<%= link_to maketext('Recitation') =>
-							$cg->systemLink($setStatsPage, params => { primary_sort => 'recitation', %params }) =%>
+							$c->systemLink(url_for, params => { primary_sort => 'recitation', %params }) =%>
 					</th>
 				% }
 				% if ($showColumns->{login}) {
 					<th <%== $rowspan %>>
 						<%= link_to maketext('Login Name') =>
-							$cg->systemLink($setStatsPage, params => { primary_sort => 'user_id', %params }) =%>
+							$c->systemLink(url_for, params => { primary_sort => 'user_id', %params }) =%>
 					</th>
 				% }
 			</tr>
@@ -203,12 +194,8 @@
 				% my $email    = $rec->{record}{email_address};
 				%
 				% if ($setIsVersioned) {
-					% my $interactiveURL = $cg->systemLink(
-						% $urlpath->newFromModule(
-							% 'WeBWorK::ContentGenerator::ProblemSet', $c,
-							% courseID => $courseID,
-							% setID    => $cg->{setID}
-						% ),
+					% my $interactiveURL = $c->systemLink(
+						% url_for('problem_list'),
 						% params => { effectiveUser => $rec->{record}{user_id} }
 					% );
 					%
@@ -216,12 +203,8 @@
 						% # If total is -1, then this is a user that hasn't taken any tests.
 						% if ($rec->{total} != -1) {
 							% # Make a versioned set name format nicer and link to the test version.
-							% my $versionLink = link_to "version $rec->{version}" => $cg->systemLink(
-								% $urlpath->newFromModule(
-									% 'WeBWorK::ContentGenerator::GatewayQuiz', $c,
-									% courseID => $courseID,
-									% setID    => "$cg->{setID},v$rec->{version}"
-								% ),
+							% my $versionLink = link_to "version $rec->{version}" => $c->systemLink(
+								% url_for('gateway_quiz', setID => "$setID,v$rec->{version}"),
 								% params => { effectiveUser => $rec->{record}{user_id} }
 							% );
 							%
@@ -289,15 +272,10 @@
 					<tr>
 						<td>
 							<div>
-								<%= link_to $fullName =>
-									$cg->systemLink(
-										$urlpath->newFromModule(
-											'WeBWorK::ContentGenerator::ProblemSet', $c,
-											courseID => $courseID,
-											setID    => $cg->{setID}
-										),
-										params => { effectiveUser => $rec->{record}{user_id} }
-									) =%>
+								<%= link_to $fullName => $c->systemLink(
+									url_for('problem_list'),
+									params => { effectiveUser => $rec->{record}{user_id} }
+								) =%>
 							</div>
 							% if ($email) {
 								<div><%= link_to $email => "mailto:$email" %></div>

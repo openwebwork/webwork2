@@ -13,9 +13,9 @@
 # Artistic License for more details.
 ################################################################################
 
-package Mojolicious::WeBWorK::Controller::SOAP;
+package WebworkSOAP::SOAP;
+use Mojo::Base 'Mojolicious::Controller', -signatures;
 
-use Mojo::Base 'Mojolicious::Controller', -signatures, -async_await;
 use Pod::WSDL;
 use SOAP::Lite;
 

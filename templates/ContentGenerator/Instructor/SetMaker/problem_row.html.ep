@@ -5,7 +5,7 @@
 % my $isMO           = $sourceFileData->{MO};
 %
 % if (!defined $isMO) {
-	% ($isMO, $isstatic) = $cg->getDBextras($sourceFileName);
+	% ($isMO, $isstatic) = $c->getDBextras($sourceFileName);
 % }
 %
 % # Determine if the target set is a gateway assignment.
@@ -42,7 +42,7 @@
 % # Get statistics to display
 %
 % if ($ce->{problemLibrary}{showLibraryGlobalStats}) {
-	% my $stats = $cg->{library_stats_handler}->getGlobalStats($sourceFileName);
+	% my $stats = $c->{library_stats_handler}->getGlobalStats($sourceFileName);
 	% if ($stats->{students_attempted}) {
 		% content_for "global-problem-stats-$cnt" => begin
 			<div class="d-inline-block font-sm text-nowrap">
@@ -98,7 +98,7 @@
 %
 % my $local_problem_stats = '';
 % if ($ce->{problemLibrary}{showLibraryLocalStats}) {
-	% my $stats = $cg->{library_stats_handler}->getLocalStats($sourceFileName);
+	% my $stats = $c->{library_stats_handler}->getLocalStats($sourceFileName);
 	% if ($stats->{students_attempted}) {
 		% content_for "local-problem-stats-$cnt" => begin
 			<div class="d-inline-block font-sm text-nowrap">
@@ -196,16 +196,14 @@
 						<i class="fas fa-random" aria-hidden="true"></i>
 					</span>
 				% }
-				<%= link_to $cg->systemLink(
-						$urlpath->newFromModule(
-							'WeBWorK::ContentGenerator::Instructor::PGProblemEditor', $c,
-							courseID  => $urlpath->arg('courseID'),
+				<%= link_to $c->systemLink(
+						url_for('instructor_problem_editor_withset_withproblem',
 							setID     => 'Undefined_Set',
-							problemID => '1'
+						   	problemID => '1'
 						),
 						params => {
 							sourceFilePath => $sourceFileName,
-							problemSeed    => $cg->{problem_seed}
+							problemSeed    => $c->{problem_seed}
 						}
 					),
 					id     => "editit$cnt",
@@ -219,18 +217,15 @@
 					begin =%>
 					<i class="icon fas fa-pencil-alt" data-alt="edit" aria-hidden="true"></i>
 				<% end =%>
-				<%= link_to $cg->systemLink(
-						$urlpath->newFromModule(
-							'WeBWorK::ContentGenerator::' . ($isGatewaySet ? 'GatewayQuiz' : 'Problem'),
-							$c,
-							courseID => $urlpath->arg('courseID'),
-							setID    => 'Undefined_Set',
+				<%= link_to $c->systemLink(
+						url_for($isGatewaySet ? 'gateway_quiz' : 'problem_detail',
+							setID => 'Undefined_Set',
 							$isGatewaySet ? () : (problemID => '1')
 						),
 						params => {
 							effectiveUser  => scalar(param('user')),
 							editMode       => 'SetMaker',
-							problemSeed    => $cg->{problem_seed},
+							problemSeed    => $c->{problem_seed},
 							sourceFilePath => $sourceFileName,
 							displayMode    => (
 								!defined param('mydisplayMode') || param('mydisplayMode') eq 'None'
@@ -257,7 +252,7 @@
 		</div>
 		<div class="lb-problem-sub-header d-flex">
 			<div class="lb-problem-path font-sm flex-grow-1 flex-shrink-1"><%= $sourceFileName %></div>
-			<div class="lb-inset text-nowrap <%= $cg->{isInSet}{$sourceFileName} ? '' : ' d-none' %>"
+			<div class="lb-inset text-nowrap <%= $c->{isInSet}{$sourceFileName} ? '' : ' d-none' %>"
 				id="inset<%= $cnt %>">
 				<i><b><%= maketext('(in target set)') %></b></i>
 			</div>

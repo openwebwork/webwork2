@@ -1,5 +1,5 @@
 % if ($type eq 'date') {
-	% if ($cg->{editMode}) {
+	% if ($c->{editMode}) {
 		<div class="input-group input-group-sm flex-nowrap flatpickr">
 			<%= text_field $name => $value,
 				id          => "${name}_id",
@@ -22,11 +22,11 @@
 		</div>
 	% } else {
 		<span dir="ltr">
-			<%= $cg->formatDateTime($value, '', 'datetime_format_short', $ce->{language}) =%>
+			<%= $c->formatDateTime($value, '', 'datetime_format_short', $ce->{language}) =%>
 		</span>
 	% }
 % } elsif ($type eq 'check') {
-	% if ($cg->{editMode}) {
+	% if ($c->{editMode}) {
 		% # If the checkbox is checked it returns a 1, if it is unchecked it returns nothing
 		% # in which case the hidden field overrides the parameter with a 0.
 		<%= check_box $name => 1, id => "${name}_id", class => 'form-check-input',
@@ -39,7 +39,7 @@
 % } else {
 	% # This case is not actually needed as only the "date" and "check" types occur.
 	% # This is a fallback in case someone tries add a type without learning this system.
-	% if ($cg->{editMode}) {
+	% if ($c->{editMode}) {
 		<div class="input-group input-group-sm flex-nowrap">
 			<%= text_field $name => $value, id => "${name}_id", class  => 'form-control w-auto',
 				'aria-labelledby' => ($name =~ s/^.*\.([^.]*)$/$1/r) . '_header',

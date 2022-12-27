@@ -3,11 +3,11 @@
 	% last;
 % }
 %
-% if ($cg->{type} eq 'student') {
+% if (current_route eq 'instructor_user_progress') {
 	% # Stats and StudentProgress share this template.
 	<%= include 'ContentGenerator/Instructor/Stats/student_stats' =%>
-% } elsif ($cg->{type} eq 'set') {
-	<%= $cg->displaySets($cg->{setID}) =%>
+% } elsif (current_route eq 'instructor_set_progress') {
+	<%= $c->displaySets =%>
 % } else {
 	% # Stats and StudentProgress share this template also.
 	<%= include 'ContentGenerator/Instructor/Stats/index',

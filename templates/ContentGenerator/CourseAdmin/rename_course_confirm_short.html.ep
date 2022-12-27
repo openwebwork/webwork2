@@ -1,8 +1,8 @@
 <h2><%= maketext('Rename Course') =%></h2>
-%= form_for $c->uri, method => 'POST', begin
-	<%= $cg->hidden_authen_fields =%>
-	<%= $cg->hidden_fields('subDisplay') =%>
-	<%= $cg->hidden_fields(
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
+	<%= $c->hidden_fields(
 		qw/rename_oldCourseID rename_newCourseID rename_newCourseTitle rename_newCourseInstitution
 			rename_newCourseID_checkbox rename_newCourseInstitution_checkbox rename_newCourseTitle_checkbox/
 	) =%>
@@ -27,4 +27,4 @@
 			<%= submit_button maketext('Make changes'), name => 'confirm_retitle_course', class => 'btn btn-primary' =%>
 		</div>
 	</div>
-% end
+<% end =%>

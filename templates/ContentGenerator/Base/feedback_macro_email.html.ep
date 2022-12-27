@@ -1,12 +1,7 @@
-<%= form_for $cg->systemLink(
-		$urlpath->newFromModule('WeBWorK::ContentGenerator::Feedback', $c, courseID => $urlpath->arg('courseID')),
-		authen => 0
-	),
-	method => 'POST',
-	begin %>
+<%= form_for 'feedback', method => 'POST', begin %>
 	% # This is used in forms with hidden_authen_fields already included on many pages.
 	% # So we need to change the hidden fields to be email-hidden.
-	<%= $cg->hidden_authen_fields('email-') =%>
+	<%= $c->hidden_authen_fields('email-') =%>
 	% while (my ($key, $value) = each %$params) {
 		% next if $key eq 'pg_object';    # Not used in internal feedback mechanism
 		<%= hidden_field $key => $value =%>

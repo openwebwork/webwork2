@@ -12,4 +12,4 @@
 	</div>
 </div>
 <%= hidden_field confirmed => $button =%>
-<%= $cg->HiddenFlags =%>
+<%= $c->HiddenFlags =%>

@@ -5,9 +5,9 @@
 % my @courseIDs = sort { lc($a) cmp lc($b) } listCourses($ce);
 %
 % if (@courseIDs) {
-	<%= form_for $c->uri, method => 'POST', begin =%>
-		<%= $cg->hidden_authen_fields =%>
-		<%= $cg->hidden_fields('subDisplay') =%>
+	<%= form_for current_route, method => 'POST', begin =%>
+		<%= $c->hidden_authen_fields =%>
+		<%= $c->hidden_fields('subDisplay') =%>
 		%
 		<p>
 			<%= maketext(

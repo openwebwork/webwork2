@@ -20,5 +20,5 @@
 <table class="table-bordered">
 	<tr><td><%= maketext('Time') %><td><%= time2str('%a %b %d %H:%M:%S %Y', time) %></td></tr>
 	<tr><td><%= maketext('Method') %><td><%= $c->req->method %></td></tr>
-	<tr><td><%= maketext('URI') %><td><%= $c->uri %></td></tr>
+	<tr><td><%= maketext('URI') %><td><%= url_for %></td></tr>
 </table>

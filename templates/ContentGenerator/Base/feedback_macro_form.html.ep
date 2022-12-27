@@ -2,8 +2,8 @@
 % use Encode;
 %
 % # enctype="multipart/form-data"
-%= form_for $feedbackFormURL, method => 'POST', target => 'WW_info', begin
-	<%= $cg->hidden_authen_fields =%>
+<%= form_for $feedbackFormURL, method => 'POST', target => 'WW_info', begin =%>
+	<%= $c->hidden_authen_fields =%>
 	%
 	% while (my ($key, $value) = each %$params) {
 		% if ($key eq 'pg_object') {
@@ -24,4 +24,4 @@
 		<%= submit_button maketext($ce->{feedback_button_name}) || maketext('Email instructor'),
 			name  => 'feedbackForm', class => 'btn btn-primary' =%>
 	</p>
-% end
+<% end =%>

@@ -25,14 +25,13 @@
 	</em>
 </p>
 %
-<%= form_for $cg->systemLink($urlpath, authen => 0),
-	method => 'post', id => 'achievement-list', name => 'achievementlist', class => 'font-sm',
+<%= form_for current_route, method => 'post', id => 'achievement-list', name => 'achievementlist', class => 'font-sm',
 	begin =%>
-	<%= $cg->hidden_authen_fields =%>
-	<%= hidden_field editMode => $cg->{editMode} =%>
-	<%= hidden_field exportMode => $cg->{exportMode} =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= hidden_field editMode => $c->{editMode} =%>
+	<%= hidden_field exportMode => $c->{exportMode} =%>
 	%
-	% if ($cg->{editMode}) {
+	% if ($c->{editMode}) {
 		<p><b><%= maketext('Any changes made below will be reflected in the achievement for ALL students.') %></b></p>
 	% }
 	%
@@ -61,9 +60,9 @@
 		</div>
 	</div>
 	<%= submit_button maketext('Take Action!'), id => 'take_action', class => 'btn btn-primary mb-3' =%>
-	% if ($cg->{exportMode}) {
+	% if ($c->{exportMode}) {
 		<%= include 'ContentGenerator/Instructor/AchievementList/export_table' =%>
-	% } elsif ($cg->{editMode}) {
+	% } elsif ($c->{editMode}) {
 		<%= include 'ContentGenerator/Instructor/AchievementList/edit_table' =%>
 	% } else {
 		<%= include 'ContentGenerator/Instructor/AchievementList/default_table' =%>

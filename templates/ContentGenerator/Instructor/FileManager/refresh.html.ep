@@ -1,8 +1,8 @@
-% my $pwd   = $cg->{pwd};
-% my $files = $cg->directoryListing($pwd);
+% my $pwd   = $c->{pwd};
+% my $files = $c->directoryListing($pwd);
 %
 % unless ($files) {
-	% $cg->addbadmessage(maketext(q{The directory you specified doesn't exist}));
+	% $c->addbadmessage(maketext(q{The directory you specified doesn't exist}));
 	% $files = [];
 % }
 %
@@ -12,7 +12,7 @@
 		<div class="input-group input-group-sm">
 			<%= submit_button '^', name  => 'action', $pwd eq '.' || $pwd eq '' ? (disabled => undef) : (),
 				class => 'btn btn-sm btn-secondary' =%>
-			<%= select_field directory => $cg->directoryMenu($pwd), class => 'form-select', dir => 'ltr' =%>
+			<%= select_field directory => $c->directoryMenu($pwd), class => 'form-select', dir => 'ltr' =%>
 		</div>
 	</div>
 	<div class="col-md-4 mb-2">
@@ -27,7 +27,7 @@
 %
 % # Directory Listing and column of buttons
 % my %button = (name => 'action', style => 'width:10em', class => 'file-manager-btn btn btn btn-sm btn-secondary');
-% my $width  = ($cg->getFlag('dates') && scalar(@{$files}) > 0) ? '' : ' width:30em';
+% my $width  = ($c->getFlag('dates') && scalar(@{$files}) > 0) ? '' : ' width:30em';
 <div class="row">
 	<div class="col-md-8 mb-2">
 		<%= select_field files => $files, id => 'files', class => 'form-select font-monospace h-100',

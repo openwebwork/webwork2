@@ -1,8 +1,7 @@
 % use WeBWorK::Utils qw(before);
 %
-% my $ce            = $cg->r->ce;
-% my %can           = %{ $cg->{can} };
-% my %will          = %{ $cg->{will} };
+% my %can           = %{ $c->{can} };
+% my %will          = %{ $c->{will} };
 % my $effectiveUser = param('effectiveUser');
 %
 % if ($will{requestNewSeed}) {
@@ -29,16 +28,10 @@
 		% }
 	% }
 	%
-	% my %showMeAnother = %{ $cg->{showMeAnother} };
+	% my %showMeAnother = %{ $c->{showMeAnother} };
 	% if ($can{showMeAnother}) {
 		% # only output showMeAnother button if we're not on the showMeAnother page
-		<%= link_to maketext('Show me another') => $cg->systemLink($urlpath->newFromModule(
-					'WeBWorK::ContentGenerator::ShowMeAnother',
-					$c,
-					courseID  => $urlpath->arg('courseID'),
-					setID     => $cg->{problem}->set_id,
-					problemID => $cg->{problem}->problem_id
-				)),
+		<%= link_to maketext('Show me another') => $c->systemLink(url_for('show_me_another')),
 				class  => 'set-id-tooltip btn btn-primary mb-1',
 				id     => 'SMA_button',
 				target => 'WW_Show_Me_Another',
@@ -65,7 +58,7 @@
 			<span class="set-id-tooltip d-inline-block" tabindex="0" data-bs-toggle="tooltip"
 				data-bs-placement="right"
 				data-bs-title="<%=
-					before($db->getGlobalSet($cg->{set}->set_id)->open_date, $c->submitTime)
+					before($db->getGlobalSet($c->{set}->set_id)->open_date, $c->submitTime)
 					? maketext('The problem set is not yet open')
 					: $exhausted eq 'exhausted' ? maketext('Feature exhausted for this problem')
 					: maketext(

@@ -32,44 +32,44 @@
 	% source_path_for_problem_file => x('Editing <strong>unassigned problem</strong> file "[_1]".')
 % );
 %
-% my $setName = $urlpath->arg('setID') // '';
-% my $fullSetName = $cg->{fullSetID} // $setName;
+% my $setName     = stash('setID')  // '';
+% my $fullSetName = $c->{fullSetID} // $setName;
 %
 % my $header = begin
 	<i>
-		<%== $cg->{file_type} eq 'problem'
+		<%== $c->{file_type} eq 'problem'
 			? maketext(
 				'Editing <strong>problem [_1] of set [_2]</strong> in file "[_3]".',
-				$cg->{prettyProblemNumber},
+				$c->{prettyProblemNumber},
 				tag('span', dir => 'ltr', format_set_name_display($fullSetName)),
-				tag('span', dir => 'ltr', $cg->shortPath($cg->{inputFilePath}))
+				tag('span', dir => 'ltr', $c->shortPath($c->{inputFilePath}))
 				)
-			: maketext($titles{ $cg->{file_type} }, $cg->shortPath($cg->{inputFilePath})) =%>
+			: maketext($titles{ $c->{file_type} }, $c->shortPath($c->{inputFilePath})) =%>
 	</i>
 % end
-% $header = $cg->isTempEditFilePath($cg->{inputFilePath})
+% $header = $c->isTempEditFilePath($c->{inputFilePath})
 	% ? tag('div', class => 'temporaryFile', $header)    # Use colors if this is a temporary file.
 	% : $header->();
 %
 <div class="mb-2"><%= $header %></div>
-<%= form_for $c->uri, method => 'POST', id => 'editor', name => 'editor',
+<%= form_for current_route, method => 'POST', id => 'editor', name => 'editor',
    	enctype => 'application/x-www-form-urlencoded', class => 'col-12', begin =%>
-	<%= $cg->hidden_authen_fields =%>
-	<%= hidden_field file_type => $cg->{file_type} =%>
-	<%= hidden_field courseID => $cg->{courseID} =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= hidden_field file_type => $c->{file_type} =%>
+	<%= hidden_field courseID => $c->{courseID} =%>
 	% if (defined $setName) {
 		<%= hidden_field hidden_set_id => $setName =%>
 	% }
-	% if (not_blank($cg->{sourceFilePath})) {
-		<%= hidden_field sourceFilePath => $cg->{sourceFilePath} =%>
+	% if (not_blank($c->{sourceFilePath})) {
+		<%= hidden_field sourceFilePath => $c->{sourceFilePath} =%>
 	% }
-	% if (($cg->{file_type} eq 'problem' || $cg->{file_type} eq 'source_path_for_problem_file')
-		% && not_blank($cg->{editFilePath}))
+	% if (($c->{file_type} eq 'problem' || $c->{file_type} eq 'source_path_for_problem_file')
+		% && not_blank($c->{editFilePath}))
 	% {
-		<%= hidden_field edit_file_path => $cg->getRelativeSourceFilePath($cg->{editFilePath}) =%>
+		<%= hidden_field edit_file_path => $c->getRelativeSourceFilePath($c->{editFilePath}) =%>
 	% }
-	% if (not_blank($cg->{tempFilePath})) {
-		<%= hidden_field temp_file_path => $cg->{tempFilePath} =%>
+	% if (not_blank($c->{tempFilePath})) {
+		<%= hidden_field temp_file_path => $c->{tempFilePath} =%>
 	% }
 	%
 	% # PG problem authoring resource links
@@ -110,10 +110,10 @@
 			class  => 'reference-link btn btn-sm btn-info',
 			data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 		% # Only show the report bugs in problem button if editing an OPL or Contrib problem.
-		% if ($cg->{editFilePath} =~ m|^$ce->{courseDirs}{templates}/([^/]*)/| && ($1 eq 'Library' || $1 eq 'Contrib')) {
+		% if ($c->{editFilePath} =~ m|^$ce->{courseDirs}{templates}/([^/]*)/| && ($1 eq 'Library' || $1 eq 'Contrib')) {
 			<%= link_to maketext('Report Bugs in this Problem') =>
 					"$ce->{webworkURLs}{bugReporter}?product=Problem%20libraries"
-					. "&component=$1&bug_file_loc=$cg->{editFilePath}_with_problemSeed=$cg->{problemSeed}",
+					. "&component=$1&bug_file_loc=$c->{editFilePath}_with_problemSeed=$c->{problemSeed}",
 				target => 'bug_report',
 				title  => maketext(
 					'Report bugs in a WeBWorK question/problem using this link. '

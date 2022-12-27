@@ -10,9 +10,7 @@
 	% last;
 % }
 %
-% my $setID   = $urlpath->arg('setID');
-%
-<%= form_for $cg->systemLink($urlpath, authen => 0), method => 'post', begin =%>
+<%= form_for current_route, method => 'post', begin =%>
 	<div class="my-2">
 		<%= submit_button maketext('Assign to All Current Users'), name  => 'assignToAll',
 			class => 'btn btn-primary' =%>
@@ -43,7 +41,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				% for my $user (@{ $cg->{user_records} }) {
+				% for my $user (@{ $c->{user_records} }) {
 					% my $userID  = $user->user_id;
 					% my $userSet = $db->getUserSet($userID, $setID);
 					%
@@ -63,15 +61,12 @@
 						<td class="text-center"><%= $user->section %></td>
 						% if (defined $userSet) {
 							<td>
-								<%= $cg->formatDateTime($userSet->due_date, '',
+								<%= $c->formatDateTime($userSet->due_date, '',
 									'datetime_format_short', $ce->{language}) =%>
 							</td>
 							<td>
-								<%= link_to maketext('Edit data for [_1]', $userID) => $cg->systemLink(
-									$urlpath->new(
-										type => param('pageVersion') || 'instructor_set_detail',
-										args => { courseID => $urlpath->arg('courseID'), setID => $setID }
-									),
+								<%= link_to maketext('Edit data for [_1]', $userID) => $c->systemLink(
+									url_for('instructor_set_detail'),
 									params => { editForUser => $userID }
 								) =%>
 							</td>
@@ -84,7 +79,7 @@
 			</tbody>
 		</table>
 	</div>
-	<%= $cg->hidden_authen_fields =%>
+	<%= $c->hidden_authen_fields =%>
 	<%= submit_button maketext('Save'), name => 'assignToSelected', class => 'btn btn-primary' =%>
 	<hr>
 	<div>

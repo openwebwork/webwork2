@@ -3,9 +3,9 @@
 %
 % use WeBWorK::ContentGenerator::Grades;
 %
-% my $studentRecord = $db->getUser($cg->{studentID});
+% my $studentRecord = $db->getUser($c->{studentID});
 % unless ($studentRecord) {
-	<div class="alert alert-danger p-1"><%= maketext('Record for user [_1] not found.', $cg->{studentID}) %></div>
+	<div class="alert alert-danger p-1"><%= maketext('Record for user [_1] not found.', $c->{studentID}) %></div>
 	% last;
 % }
 %
@@ -24,8 +24,7 @@
 % }
 % if ($authz->hasPermissions(param('user'), 'become_student')) {
 	<%= maketext('Act as:') =%>
-	<%= link_to $studentRecord->user_id => $cg->systemLink(
-		$urlpath->new(type => 'set_list', args => { courseID => $urlpath->arg('courseID') }),
-		params => { effectiveUser => $cg->{studentID} }) =%>
+	<%= link_to $studentRecord->user_id =>
+		$c->systemLink(url_for('set_list'), params => { effectiveUser => $c->{studentID} }) =%>
 % }
-<%= WeBWorK::ContentGenerator::Grades::displayStudentStats($cg, $cg->{studentID}) =%>
+<%= WeBWorK::ContentGenerator::Grades::displayStudentStats($c, $c->{studentID}) =%>

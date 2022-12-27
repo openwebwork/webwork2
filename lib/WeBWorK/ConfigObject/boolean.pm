@@ -14,34 +14,26 @@
 ################################################################################
 
 package WeBWorK::ConfigObject::boolean;
-use parent qw(WeBWorK::ConfigObject);
+use Mojo::Base 'WeBWorK::ConfigObject', -signatures;
 
-use strict;
-use warnings;
+sub comparison_value ($self, $value) { return $value ? 1 : 0; }
 
-sub comparison_value { my ($self, $value) = @_; return $value ? 1 : 0; }
-
-sub display_value {
-	my ($self, $val) = @_;
-	my $r = $self->{Module}->r;
-	return $r->maketext('True') if $val;
-	return $r->maketext('False');
+sub display_value ($self, $val) {
+	return $self->{c}->maketext('True') if $val;
+	return $self->{c}->maketext('False');
 }
 
-sub save_string {
-	my ($self, $oldval, $use_current) = @_;
+sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current);
 	return '' if $self->comparison_value($oldval) eq $newval;
 	return "\$$self->{var} = $newval;\n";
 }
 
-sub entry_widget {
-	my ($self, $default) = @_;
-	my $r = $self->{Module}->r;
-	return $r->select_field(
+sub entry_widget ($self, $default) {
+	return $self->{c}->select_field(
 		$self->{name} => [
-			[ $r->maketext('True')  => 1, $default == 1 ? (selected => undef) : () ],
-			[ $r->maketext('False') => 0, $default == 0 ? (selected => undef) : () ]
+			[ $self->{c}->maketext('True')  => 1, $default == 1 ? (selected => undef) : () ],
+			[ $self->{c}->maketext('False') => 0, $default == 0 ? (selected => undef) : () ]
 		],
 		id    => $self->{name},
 		class => 'form-select form-select-sm'

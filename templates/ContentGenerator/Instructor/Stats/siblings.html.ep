@@ -7,24 +7,17 @@
 	% last;
 % }
 %
-% my $courseID = $urlpath->arg('courseID');
-%
 <div class="info-box" id="fisheye">
 	<h2><%= $header %></h2>
-	% if ($cg->{type} eq 'student') {
+	% if (current_route =~ /^instructor_user_/) {
 		<ul class="nav flex-column problem-list">
-			% for (@{ $cg->{student_records} }) {
+			% for (@{ $c->{student_records} }) {
 				<li class="nav-item">
 					<%= tag 'a',
-						$_->user_id eq $cg->{studentID}
+						$_->user_id eq $c->{studentID}
 						? (class => 'nav-link active')
 						: (
-							href => $cg->systemLink($urlpath->newFromModule(
-								$urlpath->module, $c,
-								courseID => $courseID,
-								statType => 'student',
-								userID   => $_->user_id
-							)),
+							href => $c->systemLink(url_for(current_route, userID => $_->user_id)),
 							class => 'nav-link'
 						), begin =%>
 						<%= $_->last_name =%>, <%= $_->first_name %> (<%= $_->user_id %>)
@@ -37,15 +30,10 @@
 			% for (sort $db->listGlobalSets) {
 				<li class="nav-item">
 					<%= tag 'a',
-						defined $cg->{setID} && $_ eq $cg->{setID} ? (class => 'nav-link active')
+						defined stash('setID') && $_ eq stash('setID') ? (class => 'nav-link active')
 						: (
-							href => $cg->systemLink(
-								$urlpath->newFromModule(
-									$urlpath->module, $c,
-									courseID => $courseID,
-									setID    => $_,
-									statType => 'set',
-								),
+							href => $c->systemLink(
+								url_for(current_route, setID => $_, problemID => ''),
 								params => param('filter') ? { filter => param('filter') } : {}
 							),
 							class => 'nav-link'

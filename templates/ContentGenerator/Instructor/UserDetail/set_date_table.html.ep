@@ -56,7 +56,7 @@
 			</td>
 			<td class="px-1 text-nowrap">
 				<span dir="ltr">
-					<%= $cg->formatDateTime($globalValue, '', 'datetime_format_short', $ce->{language}) =%>
+					<%= $c->formatDateTime($globalValue, '', 'datetime_format_short', $ce->{language}) =%>
 				</span>
 			</td>
 		</tr>

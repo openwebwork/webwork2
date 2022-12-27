@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::Stats;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -23,29 +23,23 @@ homework set (including sv graphs).
 
 =cut
 
-use strict;
-use warnings;
-
 use SVG;
 
 use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status format_set_name_display grade_set);
 
-sub initialize {
-	my $self    = shift;
-	my $r       = $self->r;
-	my $urlpath = $r->urlpath;
-	my $db      = $r->db;
-	my $ce      = $r->ce;
-	my $user    = $r->param('user');
+sub initialize ($c) {
+	my $db   = $c->db;
+	my $ce   = $c->ce;
+	my $user = $c->param('user');
 
 	# Check permissions
-	return unless $r->authz->hasPermissions($user, 'access_instructor_tools');
+	return unless $c->authz->hasPermissions($user, 'access_instructor_tools');
 
 	# Cache a list of all users except set level proctors and practice users, and restrict to the sections or
 	# recitations that are allowed for the user if such restrictions are defined.  This list is sorted by last_name,
 	# then first_name, then user_id.  This is used in multiple places in this module, and is guaranteed to be used at
 	# least once.  So it is done here to prevent extra database access.
-	$self->{student_records} = [
+	$c->{student_records} = [
 		$db->getUsersWhere(
 			{
 				user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
@@ -62,115 +56,74 @@ sub initialize {
 		)
 	];
 
-	$self->{type} = $urlpath->arg('statType') || '';
-	if ($self->{type} eq 'student') {
-		$self->{studentID} = $urlpath->arg('userID') || $user;
-	} elsif ($self->{type} eq 'set') {
-		$self->{setID} = $urlpath->arg('setID') || 0;
-		my $setRecord = $db->getGlobalSet($self->{setID});
+	if ($c->current_route eq 'instructor_user_statistics') {
+		$c->{studentID} = $c->stash('userID');
+	} elsif ($c->current_route =~ /^instructor_(set|problem)_statistics$/) {
+		my $setRecord = $db->getGlobalSet($c->stash('setID'));
 		return unless $setRecord;
-		$self->{setRecord} = $setRecord;
-		my $problemID = $urlpath->arg('problemID') || 0;
+		$c->{setRecord} = $setRecord;
+		my $problemID = $c->stash('problemID') || 0;
 		if ($problemID) {
-			$self->{prettyID} =
+			$c->{prettyID} =
 				$setRecord->assignment_type eq 'jitar' ? join('.', jitar_id_to_seq($problemID)) : $problemID;
-			$self->{type} = 'problem';
-			my $problemRecord = $db->getGlobalProblem($self->{setID}, $problemID);
+			my $problemRecord = $db->getGlobalProblem($c->stash('setID'), $problemID);
 			return unless $problemRecord;
-			$self->{problemRecord} = $problemRecord;
+			$c->{problemRecord} = $problemRecord;
 		}
 	}
 
 	return;
 }
 
-sub title {
-	my $self = shift;
-	my $r    = $self->r;
+sub page_title ($c) {
+	return '' unless $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools');
 
-	return '' unless $r->authz->hasPermissions($r->param('user'), 'access_instructor_tools');
+	my $setID = $c->stash('setID') || '';
 
-	my $type = $self->{type};
-	if ($type eq 'student') {
-		return $r->maketext('Statistics for student [_1]', $self->{studentID});
-	} elsif ($type eq 'set') {
-		return $r->maketext('Statistics for [_1]',
-			$r->tag('span', dir => 'ltr', format_set_name_display($self->{setID})));
-	} elsif ($type eq 'problem') {
-		return $r->maketext(
+	if ($c->current_route eq 'instructor_user_statistics') {
+		return $c->maketext('Statistics for student [_1]', $c->{studentID});
+	} elsif ($c->current_route eq 'instructor_set_statistics') {
+		return $c->maketext('Statistics for [_1]', $c->tag('span', dir => 'ltr', format_set_name_display($setID)));
+	} elsif ($c->current_route eq 'instructor_problem_statistics') {
+		return $c->maketext(
 			'Statsitcs for [_1] problem [_2]',
-			$r->tag('span', dir => 'ltr', format_set_name_display($self->{setID})),
-			$self->{prettyID}
+			$c->tag('span', dir => 'ltr', format_set_name_display($setID)),
+			$c->{prettyID}
 		);
 	}
 
-	return $r->maketext('Statistics');
+	return $c->maketext('Statistics');
 }
 
-sub path {
-	my ($self, $args) = @_;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $courseName = $urlpath->arg('courseID');
-	my $setID      = $self->{setID}             || '';
-	my $problemID  = $urlpath->arg('problemID') || '';
-	my $prettyID   = $self->{prettyID}          || '';
-	my $type       = $self->{type};
-
-	my @path = (
-		WeBWork            => $r->location,
-		$courseName        => $r->location . "/$courseName",
-		'Instructor Tools' => $r->location . "/$courseName/instructor",
-		Statistics         => $r->location . "/$courseName/instructor/stats",
-	);
-	if ($type eq 'student') {
-		push(@path, $self->{studentID} => '');
-	} elsif ($type eq 'set') {
-		push(@path, format_set_name_display($setID) => '');
-	} elsif ($type eq 'problem') {
-		push(
-			@path, format_set_name_display($setID) => $r->location . "/$courseName/instructor/stats/set/$setID",
-			$prettyID => ''
-		);
-	} else {
-		$path[-1] = '';
-	}
-
-	return $self->pathMacro($args, @path);
-}
-
-sub siblings {
-	my $self = shift;
+sub siblings ($c) {
 	# Stats and StudentProgress share this template.
-	return $self->r->include('ContentGenerator/Instructor/Stats/siblings', header => $self->r->maketext('Statistics'));
+	return $c->include('ContentGenerator/Instructor/Stats/siblings', header => $c->maketext('Statistics'));
 }
 
 # Apply the currently selected filter to the the student records cached in initialize, and return a reference to the
 # list of students and a reference to a hash of section/recitation filters.
-sub filter_students {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $ce     = $r->ce;
-	my $db     = $r->db;
-	my $user   = $r->param('user');
+sub filter_students ($c) {
+	my $ce   = $c->ce;
+	my $db   = $c->db;
+	my $user = $c->param('user');
 
 	# Create a hash of sections and recitations, if there are any for the course.
 	# Filter out all records except for current/auditing students for stats.
 	# Filter out students not in selected section/recitation.
-	my $filter = $r->param('filter');
+	my $filter = $c->param('filter');
 	my %filters;
 	my @outStudents;
-	for my $student (@{ $self->{student_records} }) {
+	for my $student (@{ $c->{student_records} }) {
 		# Only include current/auditing students in stats.
 		next
 			unless ($ce->status_abbrev_has_behavior($student->status, 'include_in_stats')
 				&& $db->getPermissionLevel($student->user_id)->permission == $ce->{userRoles}{student});
 
 		my $section = $student->section;
-		$filters{"section:$section"} = $r->maketext('Section [_1]', $section)
+		$filters{"section:$section"} = $c->maketext('Section [_1]', $section)
 			if $section && !$filters{"section:$section"};
 		my $recitation = $student->recitation;
-		$filters{"recitation:$recitation"} = $r->maketext('Recitation [_1]', $recitation)
+		$filters{"recitation:$recitation"} = $c->maketext('Recitation [_1]', $recitation)
 			if $recitation && !$filters{"recitation:$recitation"};
 
 		# Only add users who match the selected section/recitation.
@@ -183,24 +136,22 @@ sub filter_students {
 	return (\@outStudents, \%filters);
 }
 
-sub set_stats {
-	my $self = shift;
-	my $r    = $self->r;
+sub set_stats ($c) {
+	return $c->tag(
+		'div',
+		class => 'alert alert-danger p-1',
+		$c->maketext('Global set [_1] not found.', $c->stash('setID'))
+	) unless $c->{setRecord};
 
-	return $r->tag('div', class => 'alert alert-danger p-1', $r->maketext('Global set [_1] not found.', $self->{setID}))
-		unless $self->{setRecord};
-
-	my $urlpath  = $r->urlpath;
-	my $db       = $r->db;
-	my $courseID = $urlpath->arg('courseID');
+	my $db = $c->db;
 
 	# Get a list of the global problem records for this set.
-	my @problems = $db->getGlobalProblemsWhere({ set_id => $self->{setID} }, 'problem_id');
+	my @problems = $db->getGlobalProblemsWhere({ set_id => $c->stash('setID') }, 'problem_id');
 
 	# Total point value of the set.
 	my $totalValue = 0;
 
-	my $isJitarSet = $self->{setRecord}->assignment_type eq 'jitar';
+	my $isJitarSet = $c->{setRecord}->assignment_type eq 'jitar';
 
 	# For jitar sets we need to know which problems are top level problems.
 	my %topLevelProblems;
@@ -224,16 +175,9 @@ sub set_stats {
 		$problem->{prettyID} = $isJitarSet ? join('.', jitar_id_to_seq($problem->problem_id)) : $problem->problem_id;
 
 		# Link to individual problem stats page.
-		$problem->{statsLink} = $self->systemLink(
-			$urlpath->newFromModule(
-				'WeBWorK::ContentGenerator::Instructor::Stats', $r,
-				courseID  => $courseID,
-				statType  => 'set',
-				setID     => $self->{setID},
-				problemID => $probID
-			),
-			params => $r->param('filter') ? { filter => $r->param('filter') } : {}
-		);
+		$problem->{statsLink} =
+			$c->systemLink($c->url_for('instructor_set_statistics', setID => $c->stash('setID'), problemID => $probID),
+				params => $c->param('filter') ? { filter => $c->param('filter') } : {});
 
 		$showGraderRow = 1 if $problem->flags =~ /essay/;
 
@@ -251,7 +195,7 @@ sub set_stats {
 	# Only count top level problems for Jitar sets.
 	my $num_problems = $isJitarSet ? scalar(keys %topLevelProblems) : scalar(@problems);
 
-	my ($students, $filters) = $self->filter_students;
+	my ($students, $filters) = $c->filter_students;
 	for my $studentRecord (@$students) {
 		my $student                    = $studentRecord->user_id;
 		my $totalRight                 = 0;
@@ -261,10 +205,11 @@ sub set_stats {
 		# Get problem data for student.
 		my @problemRecords;
 		my $noSkip = 0;
-		if ($self->{setRecord}->assignment_type =~ /gateway/) {
+		if ($c->{setRecord}->assignment_type =~ /gateway/) {
 			# Only use the quiz version with the best score.
 			my @setVersions =
-				$db->getMergedSetVersionsWhere({ user_id => $student, set_id => { like => "$self->{setID},v\%" } });
+				$db->getMergedSetVersionsWhere(
+					{ user_id => $student, set_id => { like => $c->stash('setID') . ',v%' } });
 			if (@setVersions) {
 				my $maxVersion = 1;
 				my $maxStatus  = 0;
@@ -275,13 +220,13 @@ sub set_stats {
 						$maxVersion = $verSet->version_id;
 					}
 				}
-				@problemRecords = $db->getAllMergedProblemVersions($student, $self->{setID}, $maxVersion);
+				@problemRecords = $db->getAllMergedProblemVersions($student, $c->stash('setID'), $maxVersion);
 			} else {
 				# Check if student is assigned to the quiz but hasn't started any version.
-				$noSkip = 1 if $db->getMergedSet($student, $self->{setID});
+				$noSkip = 1 if $db->getMergedSet($student, $c->stash('setID'));
 			}
 		} else {
-			@problemRecords = $db->getUserProblemsWhere({ user_id => $student, set_id => $self->{setID} });
+			@problemRecords = $db->getUserProblemsWhere({ user_id => $student, set_id => $c->stash('setID') });
 		}
 		# Don't include students who are not assigned to set.
 		next unless ($noSkip || @problemRecords);
@@ -368,10 +313,10 @@ sub set_stats {
 	@buckets  = reverse(@buckets);
 
 	# Overall average
-	my ($mean, $stddev) = $self->compute_stats(@score_list);
-	my ($overallAvgAttempts) = $self->compute_stats(grep { !/-/ } @avgAttempts);
+	my ($mean, $stddev) = $c->compute_stats(@score_list);
+	my ($overallAvgAttempts) = $c->compute_stats(grep { !/-/ } @avgAttempts);
 	my $overallSuccess = $overallAvgAttempts ? $mean**2 / $overallAvgAttempts : 0;
-	($overallSuccess) = $self->compute_stats(@index_list);
+	($overallSuccess) = $c->compute_stats(@index_list);
 
 	# Data for the SVG bar graph showing the percentage of students with correct answers for each problem.
 	my (@svgProblemData, @svgProblemLabels, @jitarBars);
@@ -399,7 +344,7 @@ sub set_stats {
 		push(@svgProblemLabels, length $_->{prettyID} > 4 ? '##' : $_->{prettyID});
 	}
 
-	return $r->include(
+	return $c->include(
 		'ContentGenerator/Instructor/Stats/set_stats',
 		filters            => $filters,
 		problems           => \@problems,
@@ -426,30 +371,29 @@ sub set_stats {
 	);
 }
 
-sub problem_stats {
-	my $self = shift;
-	my $r    = $self->r;
-
-	return $r->tag('div', class => 'alert alert-danger p-1', $r->maketext('Global set [_1] not found.', $self->{setID}))
-		unless ($self->{setRecord});
-
-	return $r->tag(
+sub problem_stats ($c) {
+	return $c->tag(
 		'div',
 		class => 'alert alert-danger p-1',
-		$r->maketext('Global problem [_1] not found for set [_2].', $self->{prettyID}, $self->{setID})
-	) unless ($self->{problemRecord});
+		$c->maketext('Global set [_1] not found.', $c->stash('setID'))
+	) unless $c->{setRecord};
 
-	my $db        = $r->db;
-	my $ce        = $r->ce;
-	my $urlpath   = $r->urlpath;
-	my $user      = $r->param('user');
-	my $courseID  = $urlpath->arg('courseID');
-	my $problemID = $urlpath->arg('problemID');
+	return $c->tag(
+		'div',
+		class => 'alert alert-danger p-1',
+		$c->maketext('Global problem [_1] not found for set [_2].', $c->{prettyID}, $c->stash('setID'))
+	) unless $c->{problemRecord};
 
-	my $isJitarSet    = $self->{setRecord}->assignment_type eq 'jitar';
-	my $topLevelJitar = $self->{prettyID} !~ /\./;
+	my $db        = $c->db;
+	my $ce        = $c->ce;
+	my $user      = $c->param('user');
+	my $courseID  = $c->stash('courseID');
+	my $problemID = $c->stash('problemID');
 
-	my ($students, $filters) = $self->filter_students;
+	my $isJitarSet    = $c->{setRecord}->assignment_type eq 'jitar';
+	my $topLevelJitar = $c->{prettyID} !~ /\./;
+
+	my ($students, $filters) = $c->filter_students;
 	my (@problemScores, @adjustedScores, @problemAttempts, @successList);
 	my $activeStudents   = 0;
 	my $inactiveStudents = 0;
@@ -457,10 +401,11 @@ sub problem_stats {
 		my $student = $studentRecord->user_id;
 		my $studentProblem;
 
-		if ($self->{setRecord}->assignment_type =~ /gateway/) {
+		if ($c->{setRecord}->assignment_type =~ /gateway/) {
 			my @problemRecords =
 				$db->getProblemVersionsWhere(
-					{ user_id => $student, problem_id => $problemID, set_id => { like => "$self->{setID},v\%" } });
+					{ user_id => $student, problem_id => $problemID, set_id => { like => $c->stash('setID') . ',v%' } }
+				);
 			my $maxRecord = 0;
 			my $maxStatus = 0;
 			for (0 .. $#problemRecords) {
@@ -471,7 +416,7 @@ sub problem_stats {
 			}
 			$studentProblem = $problemRecords[$maxRecord];
 		} else {
-			$studentProblem = $db->getMergedProblem($student, $self->{setID}, $problemID);
+			$studentProblem = $db->getMergedProblem($student, $c->stash('setID'), $problemID);
 		}
 		# Don't include students who are not assigned to set.
 		next unless ($studentProblem);
@@ -521,15 +466,15 @@ sub problem_stats {
 	$maxCount  = int($maxCount / 5) + 1;
 
 	# Overall statistics
-	my ($mean,  $stddev)  = $self->compute_stats(@problemScores);
-	my ($mean2, $stddev2) = $self->compute_stats(@problemAttempts);
+	my ($mean,  $stddev)  = $c->compute_stats(@problemScores);
+	my ($mean2, $stddev2) = $c->compute_stats(@problemAttempts);
 	my $successIndex = $mean2 ? $mean**2 / $mean2 : 0;
 
-	return $r->include(
+	return $c->include(
 		'ContentGenerator/Instructor/Stats/problem_stats',
 		filters          => $filters,
 		problemID        => $problemID,
-		problems         => [ $db->getGlobalProblemsWhere({ set_id => $self->{setID} }, 'problem_id') ],
+		problems         => [ $db->getGlobalProblemsWhere({ set_id => $c->stash('setID') }, 'problem_id') ],
 		buckets          => \@buckets,
 		maxCount         => $maxCount,
 		isJitarSet       => $isJitarSet,
@@ -549,8 +494,7 @@ sub problem_stats {
 }
 
 # Determines the percentage of students whose score is greater than a given value.
-sub determine_percentiles {
-	my ($self, $percent_brackets, @data) = @_;
+sub determine_percentiles ($c, $percent_brackets, @data) {
 	my @list_of_scores = sort { $a <=> $b } @data;
 	my $num_students   = $#list_of_scores;
 	# For example, $percentiles{75} = @list_of_scores[int(25 * $num_students / 100)]
@@ -562,8 +506,7 @@ sub determine_percentiles {
 }
 
 # Replace an array such as "[0, 0, 0, 86, 86, 100, 100, 100]" by "[0, '-', '-', 86, '-', 100, '-', '-']"
-sub prevent_repeats {
-	my ($self, @inarray) = @_;
+sub prevent_repeats ($c, @inarray) {
 	my @outarray;
 	my $saved_item = shift @inarray;
 	push @outarray, $saved_item;
@@ -580,32 +523,28 @@ sub prevent_repeats {
 }
 
 # Create percentile bracket table.
-sub bracket_table {
-	my ($self, $brackets, $data, $headers, %options) = @_;
-	my $r = $self->r;
-
+sub bracket_table ($c, $brackets, $data, $headers, %options) {
 	my @dataOut = ([@$brackets]);
-	push(@{ $dataOut[-1] }, $r->maketext('Top Score')) if $options{showMax};
+	push(@{ $dataOut[-1] }, $c->maketext('Top Score')) if $options{showMax};
 
 	for (@$data) {
 		my %percentiles =
-			ref($_) eq 'ARRAY' ? $self->determine_percentiles($brackets, @$_) : map { $_ => '-' } @$brackets;
+			ref($_) eq 'ARRAY' ? $c->determine_percentiles($brackets, @$_) : map { $_ => '-' } @$brackets;
 		my @tableData = map { $percentiles{$_} } @$brackets;
-		@tableData = reverse(@tableData)                if $options{reverse};
-		@tableData = $self->prevent_repeats(@tableData) if ref($_) eq 'ARRAY';
+		@tableData = reverse(@tableData)             if $options{reverse};
+		@tableData = $c->prevent_repeats(@tableData) if ref($_) eq 'ARRAY';
 		push(@tableData, $options{reverse} ? $percentiles{min} : $percentiles{max}) if $options{showMax};
 		push(@dataOut, \@tableData);
 	}
-	return $r->include(
+	return $c->include(
 		'ContentGenerator/Instructor/Stats/stats_table',
-		tableHeaders => [ $r->maketext('Percent of Students'), @$headers ],
+		tableHeaders => [ $c->maketext('Percent of Students'), @$headers ],
 		tableData    => \@dataOut
 	);
 }
 
 # Compute Mean / Std Deviation.
-sub compute_stats {
-	my ($self, @data) = @_;
+sub compute_stats ($c, @data) {
 	my $n = scalar(@data);
 	return (0, 0, 0) unless ($n > 0);
 	my $sum = 0;
@@ -618,12 +557,10 @@ sub compute_stats {
 }
 
 # Create SVG bar graph from input data.
-sub build_bar_chart {
-	my ($self, $data, %options) = @_;
-	my $r = $self->r;
+sub build_bar_chart ($c, $data, %options) {
 	return '' unless (@$data);
-	$self->{barCount} = 1 unless $self->{barCount};
-	my $id   = $self->{barCount}++;
+	$c->{barCount} = 1 unless $c->{barCount};
+	my $id   = $c->{barCount}++;
 	my %opts = (
 		yAxisLabels  => [],
 		xAxisLabels  => [],
@@ -744,7 +681,7 @@ sub build_bar_chart {
 			'font-family' => 'sans-serif',
 			'font-size'   => 12,
 			'text-anchor' => 'start',
-		)->cdata($r->maketext('Correct Adjusted Status'));
+		)->cdata($c->maketext('Correct Adjusted Status'));
 		$svg->rect(
 			x      => $opts{leftMargin} + $plotWidth + 10,
 			y      => $opts{topMargin} + 40,
@@ -759,7 +696,7 @@ sub build_bar_chart {
 			'font-family' => 'sans-serif',
 			'font-size'   => 12,
 			'text-anchor' => 'start',
-		)->cdata($r->maketext('Correct Status'));
+		)->cdata($c->maketext('Correct Status'));
 	}
 
 	# y-axis labels.
@@ -832,11 +769,11 @@ sub build_bar_chart {
 
 	# FIXME:  The invalid html attribute xmlns:svg needs to be removed. The SVG module needs to be fixed to not
 	# add this invalid attribute when rendering for html.
-	return $r->tag(
+	return $c->tag(
 		'div',
 		class => 'img-fluid mb-3',
 		style => "max-width: ${imageWidth}px",
-		$r->b($svg->render =~ s/xmlns:svg="[^"]*"//r)
+		$c->b($svg->render =~ s/xmlns:svg="[^"]*"//r)
 	);
 }
 

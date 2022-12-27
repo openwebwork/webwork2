@@ -9,7 +9,7 @@
 		% # Look up the files to be deleted, and for directories add a trailing slash and the contents of the directory.
 		<ul>
 			% for my $file (@$files) {
-				% if (defined $cg->checkPWD("$cg->{pwd}/$file", 1)) {
+				% if (defined $c->checkPWD("$c->{pwd}/$file", 1)) {
 					<li>
 						% if (-l "$dir/$file") {
 							<%= $file %>@
@@ -75,4 +75,4 @@
 % for (@$files) {
 	<%= hidden_field files => $_ =%>
 % }
-<%= $cg->HiddenFlags =%>
+<%= $c->HiddenFlags =%>

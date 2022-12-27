@@ -1,7 +1,7 @@
 <h2><%= maketext('Delete Course') =%></h2>
 %
 % if (@$courseIDs) {
-	<%= form_for $c->uri, method => 'POST', begin =%>
+	<%= form_for current_route, method => 'POST', begin =%>
 		<p>
 			<%= maketext(
 				'Courses are listed either alphabetically or in order by the time of most recent login activity, '
@@ -31,8 +31,8 @@
 				name  => 'delete_course_refresh', class => 'btn btn-primary' =%>
 			<%= submit_button maketext('Delete Course'), name => 'delete_course', class => 'btn btn-primary' =%>
 		</div>
-		<%= $cg->hidden_authen_fields =%>
-		<%= $cg->hidden_fields('subDisplay') =%>
+		<%= $c->hidden_authen_fields =%>
+		<%= $c->hidden_fields('subDisplay') =%>
 		<div class="mb-2"><%= maketext('Select a course to delete.') %></div>
 		<div class="row mb-2">
 			<%= label_for delete_courseID => maketext('Course Name:'), class => 'col-auto col-form-label fw-bold' =%>

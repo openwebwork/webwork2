@@ -1,10 +1,8 @@
 % use WeBWorK::Utils qw(format_set_name_display);
 %
 % # my ($set, $userSet, $mergedSet, $version) = @_;
-% my $urlpath       = $cg->r->urlpath;
-% my $editForUserID = $urlpath->arg('userID');
-% my $setID         = $set->set_id;
-% my $version       = stash 'version';
+% my $setID   = $set->set_id;
+% my $version = stash 'version';
 <tr>
 	<td class="text-center">
 		<label class="form-check-label">
@@ -16,15 +14,9 @@
 		% if (defined $mergedSet) {
 			<b dir="ltr">
 				<%= link_to format_set_name_display($version ? "$setID (version $version)" : $setID) =>
-					$cg->systemLink(
-						$urlpath->new(
-							type => 'instructor_set_detail',
-							args => {
-								courseID => $urlpath->arg('courseID'),
-								setID    => $setID . ($version ? ",v$version" : '')
-							}
-						),
-						params => { effectiveUser => $editForUserID, editForUser => $editForUserID }
+					$c->systemLink(
+						url_for('instructor_set_detail', setID => $setID . ($version ? ",v$version" : '')),
+						params => { editForUser => $userID }
 					) =%>
 			</b>
 			% if ($version) {

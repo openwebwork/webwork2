@@ -16,7 +16,7 @@
 			. 'or "visible".'
 	) =%>
 </p>
-%= form_for $c->uri, method => 'POST', begin
+<%= form_for current_route, method => 'POST', begin =%>
 	<div class="mb-3">
 		<div class="mb-2"><%= maketext('Select a listing format:') =%></div>
 		% for (
@@ -38,8 +38,8 @@
 		<%= submit_button maketext('Hide Courses'), name => 'hide_course', class => 'btn btn-primary' =%>
 		<%= submit_button maketext('Unhide Courses'), name => 'unhide_course', class => 'btn btn-primary' =%>
 	</div>
-	<%= $cg->hidden_authen_fields =%>
-	<%= $cg->hidden_fields('subDisplay') =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
 	%
 	<div class="mb-2"><%= maketext('Select course(s) to hide or unhide.') %></div>
 	<div class="row mb-2">
@@ -57,4 +57,4 @@
 		<%= submit_button maketext('Hide Courses'), name => 'hide_course', class => 'btn btn-primary' =%>
 		<%= submit_button maketext('Unhide Courses'), name => 'unhide_course', class => 'btn btn-primary' =%>
 	</div>
-% end
+<% end =%>

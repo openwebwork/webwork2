@@ -14,18 +14,13 @@
 ################################################################################
 
 package WeBWorK::AchievementItems::ExtendDueDateGW;
-use parent qw(WeBWorK::AchievementItems);
+use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to extend the due date on a gateway
 
-use strict;
-use warnings;
-
 use WeBWorK::Utils qw(between x nfreeze_base64 thaw_base64 format_set_name_display);
 
-sub new {
-	my ($class) = @_;
-
+sub new ($class) {
 	return bless {
 		id          => 'ExtendDueDateGW',
 		name        => x('Amulet of Extension'),
@@ -34,11 +29,10 @@ sub new {
 	}, $class;
 }
 
-sub print_form {
-	my ($self, $sets, $setProblemCount, $r) = @_;
-	my $db = $r->db;
+sub print_form ($self, $sets, $setProblemCount, $c) {
+	my $db = $c->db;
 
-	my $effectiveUserName = $r->param('effectiveUser') // $r->param('user');
+	my $effectiveUserName = $c->param('effectiveUser') // $c->param('user');
 	my @unfilteredsets = $db->getMergedSets(map { [ $effectiveUserName, $_ ] } $db->listUserSets($effectiveUserName));
 	my @openGateways;
 
@@ -50,22 +44,21 @@ sub print_form {
 			&& between($set->open_date, $set->due_date);
 	}
 
-	return $r->c(
-		$r->tag('p', $r->maketext('Extend the close date for which Gateway?')),
+	return $c->c(
+		$c->tag('p', $c->maketext('Extend the close date for which Gateway?')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
-			$r,
+			$c,
 			id         => 'eddgw_gw_id',
-			label_text => $r->maketext('Gateway Name'),
+			label_text => $c->maketext('Gateway Name'),
 			values     => \@openGateways,
 			menu_attr  => { dir => 'ltr' }
 		)
 	)->join('');
 }
 
-sub use_item {
-	my ($self, $userName, $r) = @_;
-	my $db = $r->db;
-	my $ce = $r->ce;
+sub use_item ($self, $userName, $c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
 	# Validate data
 
@@ -75,7 +68,7 @@ sub use_item {
 	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
 	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
 
-	my $setID = $r->param('eddgw_gw_id');
+	my $setID = $c->param('eddgw_gw_id');
 	return 'You need to input a Gateway Name' unless defined $setID;
 
 	my $set     = $db->getMergedSet($userName, $setID);

@@ -27,16 +27,17 @@
 	</tr>
 	<tr>
 		<td class="p-1"><%= maketext('URI') %></td>
-		<td class="p-1"><%= $c->uri %></td>
+		<td class="p-1"><%= url_for %></td>
 	</tr>
 	<tr>
 		<td class="p-1"><%= maketext('HTTP Headers') %></td>
 		<td class="p-0">
 			<table>
-				% for (keys %{ $c->headers_in }) {
+				% my %headers = %{ $c->req->headers->to_hash };
+				% for (keys %headers) {
 					<tr>
 						<td class="p-1 border"><small><%= $_ %></small></td>
-						<td class="p-1 border"><small><%= $c->headers_in->{$_} %></small></td>
+						<td class="p-1 border"><small><%= $headers{$_} %></small></td>
 					</tr>
 				% }
 			</table>

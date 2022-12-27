@@ -4,10 +4,7 @@
 <ul class="nav flex-column">
 	% unless ($restricted_navigation) {
 		<li class="nav-item">
-			<%= link_to
-				maketext('Courses') =>
-					$cg->systemLink($urlpath->newFromModule('WeBWorK::ContentGenerator::Home', $c), authen => 0),
-					class => 'nav-link' %>
+			<%= link_to maketext('Courses') => 'root', class => 'nav-link' %>
 		</li>
 	% }
 	% if (defined $courseID && $authen->was_verified) {
@@ -17,7 +14,7 @@
 				<span class="nav-link disabled"><%= maketext('Homework Sets') %></span>
 			% } else {
 				<%= $makelink->(
-					'ProblemSets',
+					'set_list',
 					text => $ce->{courseName} eq 'admin'
 						? maketext('Course Administration')
 						: maketext('Homework Sets'),
@@ -37,24 +34,24 @@
 					<li class="nav-item">
 						% if ($setRecord->assignment_type =~ /proctor/ && $setID =~ /,v(\d)+$/) {
 							<%= $makelink->(
-								'ProctoredGatewayQuiz',
-								text         => $prettySetID,
-								urlpath_args => { setID => $setID },
-								link_attrs   => { dir => 'ltr' }
+								'proctored_gateway_quiz',
+								text       => $prettySetID,
+								captures   => { setID => $setID },
+								link_attrs => { dir => 'ltr' }
 							) %>
 						% } elsif ($setRecord->assignment_type =~ /gateway/ && $setID =~ /,v(\d)+$/) {
 							<%= $makelink->(
-								'GatewayQuiz',
-								text         => $prettySetID,
-								urlpath_args => { setID => $setID },
-								link_attrs   => { dir => 'ltr' }
+								'gateway_quiz',
+								text       => $prettySetID,
+								captures   => { setID => $setID },
+								link_attrs => { dir => 'ltr' }
 							) %>
 						% } else {
 							<%= $makelink->(
-								'ProblemSet',
-								text         => $prettySetID,
-								urlpath_args => { setID => $setID },
-								link_attrs   => { dir => 'ltr' }
+								'problem_list',
+								text       => $prettySetID,
+								captures   => { setID => $setID },
+								link_attrs => { dir => 'ltr' }
 							) %>
 						% }
 					</li>
@@ -67,9 +64,9 @@
 										<a class="nav-link"><%= maketext('Problem [_1]', $prettyProblemID) %></a>
 									% } else {
 										<%= $makelink->(
-											'Problem',
-											text         => maketext('Problem [_1]', $prettyProblemID),
-											urlpath_args => { setID => $setID, problemID => $problemID },
+											'problem_detail',
+											text     => maketext('Problem [_1]', $prettyProblemID),
+											captures => { setID => $setID, problemID => $problemID },
 										) %>
 									% }
 								</li>
@@ -84,35 +81,35 @@
 			% || $authz->hasPermissions($userID, 'change_email_address')
 			% || $authz->hasPermissions($userID, 'change_pg_display_settings'))
 		% {
-			<li class="nav-item"><%= $makelink->('Options') %></li>
+			<li class="nav-item"><%= $makelink->('options') %></li>
 		% }
 		%
 		% unless ($restricted_navigation || $courseID eq 'admin') {
-			<li class="nav-item"><%= $makelink->('Grades') %></li>
+			<li class="nav-item"><%= $makelink->('grades') %></li>
 		% }
 		%
 		% if ($ce->{achievementsEnabled}) {
-			<li class="nav-item"><%= $makelink->('Achievements') %></li>
+			<li class="nav-item"><%= $makelink->('achievements') %></li>
 		% }
 		%
 		% if ($authz->hasPermissions($userID, 'access_instructor_tools')) {
-			<li class="nav-item"><%= $makelink->('Instructor::Index') %></li>
+			<li class="nav-item"><%= $makelink->('instructor_tools') %></li>
 			<li class="nav-item">
 				<ul class="nav flex-column">
 					% # Class list editor
-					<li class="nav-item"><%= $makelink->('Instructor::UserList') %></li>
+					<li class="nav-item"><%= $makelink->('instructor_user_list') %></li>
 					% # Homework Set Editor
-					<li class="nav-item"><%= $makelink->('Instructor::ProblemSetList') %></li>
+					<li class="nav-item"><%= $makelink->('instructor_set_list') %></li>
 					% # Editor link.  Only shown for non-versioned sets
 					% if (defined $setID && $setID !~ /,v\d+$/) {
 						<li class="nav-item">
 							<ul class="nav flex-column">
 								<li class="nav-item">
 									<%= $makelink->(
-										'Instructor::ProblemSetDetail',
-										text            => $prettySetID,
-										urlpath_args    => { setID => $setID },
-										link_attrs      => { dir => 'ltr' }
+										'instructor_set_detail',
+										text       => $prettySetID,
+										captures   => { setID => $setID },
+										link_attrs => { dir => 'ltr' }
 									); %>
 								</li>
 								% if (defined $problemID) {
@@ -120,10 +117,10 @@
 										<ul class="nav flex-column">
 											<li class="nav-item">
 												<%= $makelink->(
-													'Instructor::PGProblemEditor',
-													text            => maketext('Problem [_1]', $prettyProblemID),
-													urlpath_args    => { setID => $setID, problemID => $problemID },
-													target          => 'WW_Editor'
+													'instructor_problem_editor_withset_withproblem',
+													text     => maketext('Problem [_1]', $prettyProblemID),
+													captures => { setID => $setID, problemID => $problemID },
+													target   => 'WW_Editor'
 												) %>
 											</li>
 										</ul>
@@ -133,30 +130,28 @@
 						</li>
 					% }
 					% # Library Browser
-					<li class="nav-item">
-						<%= $makelink->('Instructor::SetMaker', text => maketext('Library Browser')) %>
-					</li>
+					<li class="nav-item"><%= $makelink->('instructor_set_maker') %></li>
 					% # Statistics
 					<li class="nav-item">
-						<%= $makelink->('Instructor::Stats') %>
+						<%= $makelink->('instructor_statistics') %>
 						% if ($userID ne $eUserID || defined $setID || defined $urlUserID) {
 						<ul class="nav flex-column">
 							% if (defined $urlUserID) {
 								<li class="nav-item">
 									<%= $makelink->(
-										'Instructor::Stats',
-										text         => $urlUserID,
-										urlpath_args => { statType => "student", userID => $urlUserID },
+										'instructor_user_statistics',
+										text     => $urlUserID,
+										captures => { userID => $urlUserID },
 									) %>
 								</li>
 							% }
 							% if ($userID ne $eUserID && (!defined $urlUserID || $urlUserID ne $eUserID)) {
 								<li class="nav-item">
 									<%=	$makelink->(
-										'Instructor::Stats',
-										text         => $eUserID,
-										urlpath_args => { statType => 'student', userID => $eUserID },
-										active       => $urlpath->type eq 'instructor_user_statistics'
+										'instructor_user_statistics',
+										text     => $eUserID,
+										captures => { userID => $eUserID },
+										active   => current_route eq 'instructor_user_statistics'
 											&& !defined $urlUserID
 									) %>
 								</li>
@@ -164,10 +159,10 @@
 							% if (defined $setID) {
 								<li class="nav-item" dir="ltr">
 									<%= $makelink->(
-										'Instructor::Stats',
+										'instructor_set_statistics',
 										# Make sure a versioned set id is not used for the statistics link.
-										text         => $prettySetID =~ s/,v\d+$//r,
-										urlpath_args => { statType => 'set', setID => $setID =~ s/,v\d+$//r }
+										text     => $prettySetID =~ s/,v\d+$//r,
+										captures => { setID => $setID =~ s/,v\d+$//r }
 									) %>
 								</li>
 								% if (defined $problemID) {
@@ -175,10 +170,9 @@
 										<ul class="nav flex-column">
 											<li class="nav-item">
 												<%= $makelink->(
-													'Instructor::Stats',
-													text         => maketext('Problem [_1]', $prettyProblemID),
-													urlpath_args => {
-														statType  => 'ste',
+													'instructor_problem_statistics',
+													text     => maketext('Problem [_1]', $prettyProblemID),
+													captures => {
 														setID     => $setID =~ s/,v\d+$//r,
 														problemID => $problemID
 													}
@@ -192,25 +186,25 @@
 						% }
 					</li>
 					% # Student Progress
-					<li class="nav-item"><%= $makelink->('Instructor::StudentProgress') %>
+					<li class="nav-item"><%= $makelink->('instructor_progress') %>
 						% if ($userID ne $eUserID || defined $setID || defined $urlUserID) {
 							<ul class="nav flex-column">
 								% if (defined $urlUserID) {
 									<li class="nav-item">
 										<%= $makelink->(
-											'Instructor::StudentProgress',
-											text         => $urlUserID,
-											urlpath_args => { statType => 'student', userID => $urlUserID },
+											'instructor_user_progress',
+											text     => $urlUserID,
+											captures => { userID => $urlUserID },
 										) %>
 									</li>
 								% }
 								% if ($userID ne $eUserID && (!defined $urlUserID || $urlUserID ne $eUserID)) {
 									<li class="nav-item">
 										<%= $makelink->(
-											'Instructor::StudentProgress',
-											text            => $eUserID,
-											urlpath_args    => { statType => 'student', userID => $eUserID },
-											active          => $urlpath->type eq 'instructor_user_progress'
+											'instructor_user_progress',
+											text     => $eUserID,
+											captures => { userID => $eUserID },
+											active   => current_route eq 'instructor_user_progress'
 												&& !defined $urlUserID
 										) %>
 									</li>
@@ -218,10 +212,10 @@
 								% if (defined $setID) {
 									<li class="nav-item" dir="ltr">
 										<%= $makelink->(
-											'Instructor::StudentProgress',
+											'instructor_set_progress',
 											# Make sure a versioned set id is not used for the progress link.
-											text         => $prettySetID =~ s/,v\d+$//r,
-											urlpath_args => { statType => 'set', setID => $setID =~ s/,v\d+$//r },
+											text     => $prettySetID =~ s/,v\d+$//r,
+											captures => { setID => $setID =~ s/,v\d+$//r },
 										) %>
 									</li>
 								% }
@@ -230,19 +224,19 @@
 					</li>
 					% # Scoring
 					% if ($authz->hasPermissions($userID, 'score_sets')) {
-						<li class="nav-item"><%= $makelink->('Instructor::Scoring') %></li>
+						<li class="nav-item"><%= $makelink->('instructor_scoring') %></li>
 					% }
 					% # Achievment Editor
 					% if ($ce->{achievementsEnabled} && $authz->hasPermissions($userID, 'edit_achievements')) {
-						<li class="nav-item"><%= $makelink->('Instructor::AchievementList') %></li>
+						<li class="nav-item"><%= $makelink->('instructor_achievement_list') %></li>
 						% if (defined $achievementID) {
 							<li class="nav-item">
 								<ul class="nav flex-column">
 									<li class="nav-item">
 										<%= $makelink->(
-											'Instructor::AchievementEditor',
-											text            => $achievementID =~ s/_/ /gr,
-											urlpath_args    => { achievementID => $achievementID },
+											'instructor_achievement_editor',
+											text     => $achievementID =~ s/_/ /gr,
+											captures => { achievementID => $achievementID },
 										) %>
 									</li>
 								</ul>
@@ -251,36 +245,36 @@
 					% }
 					% # Email
 					% if ($authz->hasPermissions($userID, 'send_mail')) {
-						<li class="nav-item"><%= $makelink->('Instructor::SendMail') %></li>
+						<li class="nav-item"><%= $makelink->('instructor_mail_merge') %></li>
 					% }
 					% # File Manager
 					% if ($authz->hasPermissions($userID, 'manage_course_files')) {
-						<li class="nav-item"><%= $makelink->('Instructor::FileManager') %></li>
+						<li class="nav-item"><%= $makelink->('instructor_file_manager') %></li>
 					% }
 					% # LTI Grade Update
 					% if ($ce->{LTIGradeMode} && $authz->hasPermissions($userID, 'score_sets')) {
-						<li class="nav-item"><%= $makelink->('Instructor::LTIUpdate') %></li>
+						<li class="nav-item"><%= $makelink->('instructor_lti_update') %></li>
 					% }
 					% # Course Configuration
 					% if ($authz->hasPermissions($userID, "manage_course_files")) {
-						<li class="nav-item"><%= $makelink->('Instructor::Config') %></li>
+						<li class="nav-item"><%= $makelink->('instructor_config') %></li>
 					% }
 					% # Instructor help
 					<li class="nav-item">
-						<%= $cg->helpMacro('instructor_links',
+						<%= $c->helpMacro('instructor_links',
 							{ label => maketext('Help'), class => 'nav-link' }) %>
 					</li>
 					% # Help link
-					<li class="nav-item"><%= $cg->help({ class => 'nav-link' }) %></li>
+					<li class="nav-item"><%= $c->help({ class => 'nav-link' }) %></li>
 					% # Show the archive course link only on the FileManager page
 					% if (
 						% $authz->hasPermissions($userID, 'manage_course_files')
-						% && $urlpath->module eq 'WeBWorK::ContentGenerator::Instructor::FileManager'
+						% && current_route eq 'instructor_file_manager'
 					% )
 					% {
 						<li class="nav-item">
 							<%= $makelink->(
-								'Instructor::FileManager',
+								'instructor_file_manager',
 								text              => maketext('Archive this Course'),
 								systemlink_params => { archiveCourse => 1 },
 								active            => 0

@@ -14,18 +14,13 @@
 ################################################################################
 
 package WeBWorK::AchievementItems::Surprise;
-use parent qw(WeBWorK::AchievementItems);
+use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to print a suprise message
 
-use strict;
-use warnings;
-
 use WeBWorK::Utils qw(x);
 
-sub new {
-	my ($class) = @_;
-
+sub new ($class) {
 	return bless {
 		id          => 'Surprise',
 		name        => x('Mysterious Package (with Ribbons)'),
@@ -33,22 +28,20 @@ sub new {
 	}, $class;
 }
 
-sub print_form {
-	my ($self, $sets, $setProblemCount, $r) = @_;
-
+sub print_form ($self, $sets, $setProblemCount, $c) {
 	# The form opens the file "suprise_message.txt" in the achievements
 	# folder and prints the contents of the file.
 
-	open my $MESSAGE, '<', "$r->{ce}{courseDirs}{achievements}/surprise_message.txt"
-		or return $r->tag('p', $r->maketext(q{I couldn't find the file [ACHIEVEMENT_DIR]/surprise_message.txt!}));
+	open my $MESSAGE, '<', "$c->{ce}{courseDirs}{achievements}/surprise_message.txt"
+		or return $c->tag('p', $c->maketext(q{I couldn't find the file [ACHIEVEMENT_DIR]/surprise_message.txt!}));
 	local $/ = undef;
 	my $message = <$MESSAGE>;
 	close $MESSAGE;
 
-	return $r->tag('div', $r->b($message));
+	return $c->tag('div', $c->b($message));
 }
 
-sub use_item {
+sub use_item ($self, $userName, $c) {
 	# This doesn't do anything.
 }
 

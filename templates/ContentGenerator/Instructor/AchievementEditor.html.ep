@@ -13,14 +13,14 @@
 % }
 %
 <div class="mb-2">
-	<i><%= maketext('Editing achievement in file "[_1]"', $cg->shortPath($cg->{sourceFilePath})) =%></i>
+	<i><%= maketext('Editing achievement in file "[_1]"', $c->shortPath($c->{sourceFilePath})) =%></i>
 </div>
-<%= form_for $c->uri, method => 'POST', id => 'editor', name => 'editor',
+<%= form_for current_route, method => 'POST', id => 'editor', name => 'editor',
 	enctype => 'application/x-www-form-urlencoded',
 	begin =%>
-	<%= $cg->hidden_authen_fields =%>
-	% if (not_blank($cg->{sourceFilePath})) {
-		<%= hidden_field sourceFilePath => $cg->{sourceFilePath} =%>
+	<%= $c->hidden_authen_fields =%>
+	% if (not_blank($c->{sourceFilePath})) {
+		<%= hidden_field sourceFilePath => $c->{sourceFilePath} =%>
 	% }
 	%
 	<div class="mb-2"><%= generate_codemirror_html($c, 'achievementContents', $achievementContents) =%></div>

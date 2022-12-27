@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::ProctoredGatewayQuiz;
-use parent qw(WeBWorK::ContentGenerator::GatewayQuiz);
+use Mojo::Base 'WeBWorK::ContentGenerator::GatewayQuiz', -signatures;
 
 =head1 NAME
 
@@ -22,8 +22,5 @@ WeBWorK::ContentGenerator::ProctoredGatewayQuiz -
 this is a wrapper for GatewayQuiz.pm and has no content
 
 =cut
-
-use strict;
-use warnings;
 
 1;

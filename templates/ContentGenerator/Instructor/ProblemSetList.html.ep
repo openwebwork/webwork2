@@ -27,12 +27,12 @@
 	% last;
 % }
 %
-% if ($cg->{editMode} && !$authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+% if ($c->{editMode} && !$authz->hasPermissions(param('user'), 'modify_problem_sets')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to modify homework sets.') %></div>
 	% last;
 % }
 %
-% if ($cg->{exportMode} && !$authz->hasPermissions(param('user'), 'modify_set_def_files')) {
+% if ($c->{exportMode} && !$authz->hasPermissions(param('user'), 'modify_set_def_files')) {
 	<div class="alert alert-danger p-1 mb-0">
 		<%= maketext('You are not authorized to modify set definition files.') =%>
 	</div>
@@ -60,31 +60,31 @@
 	</em>
 </p>
 %
-<%= form_for $cg->systemLink($urlpath, authen => 0), method => 'post',
-	id => 'problemsetlist', name => 'problemsetlist', class  => 'font-sm', begin =%>
-	<%= $cg->hidden_authen_fields =%>
+<%= form_for current_route, method => 'post', id => 'problemsetlist', name => 'problemsetlist', class  => 'font-sm',
+	begin =%>
+	<%= $c->hidden_authen_fields =%>
 	%
 	% # Show state data
-	% if (@{ $cg->{visibleSetIDs} }) {
-		% for (@{ $cg->{visibleSetIDs} }) {
+	% if (@{ $c->{visibleSetIDs} }) {
+		% for (@{ $c->{visibleSetIDs} }) {
 			<%= hidden_field visible_sets => $_ =%>
 		% }
 	% } else {
 		<%= hidden_field no_visible_sets => '1' =%>
 	% }
-	% if (@{ $cg->{prevVisibleSetIDs} }) {
-		% for (@{ $cg->{prevVisibleSetIDs} }) {
+	% if (@{ $c->{prevVisibleSetIDs} }) {
+		% for (@{ $c->{prevVisibleSetIDs} }) {
 			<%= hidden_field prev_visible_sets => $_ =%>
 		% }
 	% } else {
 		<%= hidden_field no_prev_visible_sets => '1' =%>
 	% }
-	<%= hidden_field editMode => $cg->{editMode} =%>
-	<%= hidden_field exportMode => $cg->{exportMode} =%>
-	<%= hidden_field primarySortField => $cg->{primarySortField} =%>
-	<%= hidden_field secondarySortField => $cg->{secondarySortField} =%>
+	<%= hidden_field editMode => $c->{editMode} =%>
+	<%= hidden_field exportMode => $c->{exportMode} =%>
+	<%= hidden_field primarySortField => $c->{primarySortField} =%>
+	<%= hidden_field secondarySortField => $c->{secondarySortField} =%>
 	%
-	% if ($cg->{editMode}) {
+	% if ($c->{editMode}) {
 		<p><b><%= maketext('Any changes made below will be reflected in the set for ALL students.') =%></b></p>
 	% }
 	%
@@ -128,8 +128,8 @@
 	%
 	<p class="mb-2">
 		<%= maketext('Showing [_1] out of [_2] sets.',
-			scalar @{ $cg->{visibleSetIDs} },
-			scalar @{ $cg->{allSetIDs} }
+			scalar @{ $c->{visibleSetIDs} },
+			scalar @{ $c->{allSetIDs} }
 		) =%>
 	</p>
 	%

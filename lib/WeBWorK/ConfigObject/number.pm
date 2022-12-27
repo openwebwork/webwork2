@@ -14,17 +14,12 @@
 ################################################################################
 
 package WeBWorK::ConfigObject::number;
-use parent qw(WeBWorK::ConfigObject);
+use Mojo::Base 'WeBWorK::ConfigObject', -signatures;
 
-use strict;
-use warnings;
-
-sub save_string {
-	my ($self, $oldval, $use_current) = @_;
-
+sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current) =~ s/['"`]//gr;
 	if ($newval !~ m/^[+-]?\d*(\.\d*)?$/) {
-		$self->{Module}->addbadmessage(qq{Invalid numeric value "$newval" for variable \$$self->{var}.  }
+		$self->{c}->addbadmessage(qq{Invalid numeric value "$newval" for variable \$$self->{var}.  }
 				. 'Reverting to the system default value.');
 		return '';
 	}

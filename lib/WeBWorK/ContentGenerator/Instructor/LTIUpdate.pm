@@ -16,90 +16,82 @@
 # This page is for triggering LTI grade updates
 
 package WeBWorK::ContentGenerator::Instructor::LTIUpdate;
-use parent qw(WeBWorK::ContentGenerator);
-
-use strict;
-use warnings;
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 use WeBWorK::Utils(qw(format_set_name_display getAssetURL));
 
-sub initialize {
-	my $self = shift;
-	my $r    = $self->r;
-	my $db   = $r->db;
-	my $ce   = $r->ce;
+sub initialize ($c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
 	# Make sure these are defined for the template.
-	$r->stash->{sets}       = [];
-	$r->stash->{users}      = [];
-	$r->stash->{lastUpdate} = 0;
+	$c->stash->{sets}       = [];
+	$c->stash->{users}      = [];
+	$c->stash->{lastUpdate} = 0;
 
-	return unless ($r->authz->hasPermissions($r->param('user'), 'score_sets') && $ce->{LTIGradeMode});
+	return unless ($c->authz->hasPermissions($c->param('user'), 'score_sets') && $ce->{LTIGradeMode});
 
-	$r->stash->{sets}       = [ sort $db->listGlobalSets ] if $ce->{LTIGradeMode} eq 'homework';
-	$r->stash->{users}      = [ sort $db->listUsers ];
-	$r->stash->{lastUpdate} = $db->getSettingValue('LTILastUpdate') || 0;
+	$c->stash->{sets}       = [ sort $db->listGlobalSets ] if $ce->{LTIGradeMode} eq 'homework';
+	$c->stash->{users}      = [ sort $db->listUsers ];
+	$c->stash->{lastUpdate} = $db->getSettingValue('LTILastUpdate') || 0;
 
-	return unless ($r->param('updateLTI'));
+	return unless ($c->param('updateLTI'));
 
-	my $setID       = $r->param('updateSetID')  || 'All Sets';
-	my $userID      = $r->param('updateUserID') || 'All Users';
+	my $setID       = $c->param('updateSetID')  || 'All Sets';
+	my $userID      = $c->param('updateUserID') || 'All Users';
 	my $prettySetID = format_set_name_display($setID);
 
 	# Test if setID and userID are valid.
 	unless ($userID eq 'All Users' || $db->getUser($userID)) {
-		$self->addbadmessage($r->maketext('Update aborted. Invalid user [_1].', $userID));
+		$c->addbadmessage($c->maketext('Update aborted. Invalid user [_1].', $userID));
 		return;
 	}
 	unless ($ce->{LTIGradeMode} eq 'course' || $setID eq 'All Sets' || $db->getGlobalSet($setID)) {
-		$self->addbadmessage($r->maketext('Update aborted. Invalid set [_1].', $prettySetID));
+		$c->addbadmessage($c->maketext('Update aborted. Invalid set [_1].', $prettySetID));
 		return;
 	}
 
 	my @updateParms;
 	if ($setID eq 'All Sets' && $userID eq 'All Users') {
 		@updateParms = ('all');
-		$self->addgoodmessage($ce->{LTIGradeMode} eq 'homework'
-			? $r->maketext('LTI update of all users and sets started.')
-			: $r->maketext('LTI update of all users started.'));
+		$c->addgoodmessage($ce->{LTIGradeMode} eq 'homework'
+			? $c->maketext('LTI update of all users and sets started.')
+			: $c->maketext('LTI update of all users started.'));
 	} elsif ($setID eq 'All Sets') {
 		@updateParms = ('user', $userID);
-		$self->addgoodmessage($r->maketext('LTI update of user [_1] started.', $userID));
+		$c->addgoodmessage($c->maketext('LTI update of user [_1] started.', $userID));
 	} elsif ($userID eq 'All Users') {
 		@updateParms = ('set', $setID);
-		$self->addgoodmessage($r->maketext('LTI update of set [_1] started.', $prettySetID));
+		$c->addgoodmessage($c->maketext('LTI update of set [_1] started.', $prettySetID));
 	} elsif ($ce->{LTIGradeMode} eq 'homework') {
 		@updateParms = ('user_set', $userID, $setID);
-		$self->addgoodmessage($r->maketext('LTI update of user [_1] and set [_2] started.', $userID, $prettySetID));
+		$c->addgoodmessage($c->maketext('LTI update of user [_1] and set [_2] started.', $userID, $prettySetID));
 	} else {
 		# Abort update. A post with a valid setID was sent in course LTIGradeMode,
 		# but the page shouldn't allow this. Don't set an updateMessage for this case.
 		return;
 	}
 
-	my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
+	my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($c);
 	$grader->mass_update(@updateParms);
 }
 
-sub format_interval {
-	my $self    = shift;
-	my $r       = $self->r;
-	my $seconds = shift;
+sub format_interval ($c, $seconds) {
 	my $minutes = int($seconds / 60);
 	my $hours   = int($minutes / 60);
 	my $days    = int($hours / 24);
 	my $out     = '';
 
-	return $r->maketext('0 seconds') unless $seconds > 0;
+	return $c->maketext('0 seconds') unless $seconds > 0;
 
 	$seconds = $seconds - 60 * $minutes;
 	$minutes = $minutes - 60 * $hours;
 	$hours   = $hours - 24 * $days;
 
-	$out .= $r->maketext('[quant,_1,day]',    $days) . ' '    if $days;
-	$out .= $r->maketext('[quant,_1,hour]',   $hours) . ' '   if $hours;
-	$out .= $r->maketext('[quant,_1,minute]', $minutes) . ' ' if $minutes;
-	$out .= $r->maketext('[quant,_1,second]', $seconds) . ' ' if $seconds;
+	$out .= $c->maketext('[quant,_1,day]',    $days) . ' '    if $days;
+	$out .= $c->maketext('[quant,_1,hour]',   $hours) . ' '   if $hours;
+	$out .= $c->maketext('[quant,_1,minute]', $minutes) . ' ' if $minutes;
+	$out .= $c->maketext('[quant,_1,second]', $seconds) . ' ' if $seconds;
 	chop($out);
 
 	return $out;

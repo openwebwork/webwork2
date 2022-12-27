@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Options;
-use parent qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -22,126 +22,119 @@ WeBWorK::ContentGenerator::Options - Change user options.
 
 =cut
 
-use strict;
-use warnings;
-
 use WeBWorK::Utils qw(cryptPassword);
 use WeBWorK::Localize;
 
-sub initialize {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $authz  = $r->authz;
+sub initialize ($c) {
+	my $db    = $c->db;
+	my $authz = $c->authz;
 
-	my $userID = $r->param('user');
-	$self->{user} = $db->getUser($userID);
-	return unless defined $self->{user};
+	my $userID = $c->param('user');
+	$c->{user} = $db->getUser($userID);
+	return unless defined $c->{user};
 
-	my $effectiveUserID = $r->param('effectiveUser');
-	$self->{effectiveUser} = $db->getUser($effectiveUserID);
-	return unless defined $self->{effectiveUser};
+	my $effectiveUserID = $c->param('effectiveUser');
+	$c->{effectiveUser} = $db->getUser($effectiveUserID);
+	return unless defined $c->{effectiveUser};
 
-	my $changeOptions = $r->param('changeOptions');
+	my $changeOptions = $c->param('changeOptions');
 
 	if ($authz->hasPermissions($userID, 'change_password')) {
-		my $currP    = $r->param('currPassword');
-		my $newP     = $r->param('newPassword');
-		my $confirmP = $r->param('confirmPassword');
+		my $currP    = $c->param('currPassword');
+		my $newP     = $c->param('newPassword');
+		my $confirmP = $c->param('confirmPassword');
 
 		# Note that it is ok if the password doesn't exist because students might be setting it for the first time.
-		my $password = eval { $db->getPassword($self->{user}->user_id) };
+		my $password = eval { $db->getPassword($c->{user}->user_id) };
 
 		if ($changeOptions && ($newP || $confirmP)) {
 			my $effectiveUserPassword =
-				$userID ne $effectiveUserID ? eval { $db->getPassword($self->{effectiveUser}->user_id) } : $password;
+				$userID ne $effectiveUserID ? eval { $db->getPassword($c->{effectiveUser}->user_id) } : $password;
 
 			# Check that either password is not defined or if it is defined then we have the right one.
 			if (!defined $password || crypt($currP // '', $password->password) eq $password->password) {
-				my $e_user_name = $self->{effectiveUser}->first_name . ' ' . $self->{effectiveUser}->last_name;
+				my $e_user_name = $c->{effectiveUser}->first_name . ' ' . $c->{effectiveUser}->last_name;
 				if ($newP eq $confirmP) {
 					if (!defined $effectiveUserPassword) {
 						$effectiveUserPassword = $db->newPassword();
-						$effectiveUserPassword->user_id($self->{effectiveUser}->user_id);
+						$effectiveUserPassword->user_id($c->{effectiveUser}->user_id);
 						$effectiveUserPassword->password(cryptPassword($newP));
 						eval { $db->addPassword($effectiveUserPassword) };
 						$password = $password // $effectiveUserPassword;
 						if ($@) {
-							$self->addbadmessage(
-								$r->maketext("Couldn't change [_1]'s password: [_2]", $e_user_name, $@));
+							$c->addbadmessage($c->maketext("Couldn't change [_1]'s password: [_2]", $e_user_name, $@));
 						} else {
-							$self->addgoodmessage($r->maketext("[_1]'s password has been changed.", $e_user_name));
+							$c->addgoodmessage($c->maketext("[_1]'s password has been changed.", $e_user_name));
 						}
 					} else {
 						$effectiveUserPassword->password(cryptPassword($newP));
 						eval { $db->putPassword($effectiveUserPassword) };
 						$password = $password // $effectiveUserPassword;
 						if ($@) {
-							$self->addbadmessage(
-								$r->maketext("Couldn't change [_1]'s password: [_2]", $e_user_name, $@));
+							$c->addbadmessage($c->maketext("Couldn't change [_1]'s password: [_2]", $e_user_name, $@));
 						} else {
-							$self->addgoodmessage($r->maketext("[_1]'s password has been changed.", $e_user_name));
+							$c->addgoodmessage($c->maketext("[_1]'s password has been changed.", $e_user_name));
 						}
 					}
 				} else {
-					$self->addbadmessage($r->maketext(
+					$c->addbadmessage($c->maketext(
 						"The passwords you entered in the [_1] and [_2] fields don't match. "
 							. 'Please retype your new password and try again.',
-						$r->tag('b', $r->maketext("[_1]'s New Password",         $e_user_name)),
-						$r->tag('b', $r->maketext("Confirm [_1]'s New Password", $e_user_name))
+						$c->tag('b', $c->maketext("[_1]'s New Password",         $e_user_name)),
+						$c->tag('b', $c->maketext("Confirm [_1]'s New Password", $e_user_name))
 					));
 				}
 			} else {
-				$self->addbadmessage($r->maketext(
+				$c->addbadmessage($c->maketext(
 					'The password you entered in the [_1] field does not match your current password. '
 						. 'Please retype your current password and try again.',
-					$r->tag(
+					$c->tag(
 						'b',
-						$r->maketext(
+						$c->maketext(
 							"[_1]'s Current Password",
-							$self->{user}->first_name . ' ' . $self->{user}->last_name
+							$c->{user}->first_name . ' ' . $c->{user}->last_name
 						)
 					)
 				));
 			}
 		}
-		$self->{has_password} = defined $password;
+		$c->{has_password} = defined $password;
 	}
 
-	my $newA = $r->param('newAddress');
+	my $newA = $c->param('newAddress');
 	if ($changeOptions && $authz->hasPermissions($userID, 'change_email_address') && $newA) {
-		my $oldA = $self->{effectiveUser}->email_address;
-		$self->{effectiveUser}->email_address($newA);
-		eval { $db->putUser($self->{effectiveUser}) };
+		my $oldA = $c->{effectiveUser}->email_address;
+		$c->{effectiveUser}->email_address($newA);
+		eval { $db->putUser($c->{effectiveUser}) };
 		if ($@) {
-			$self->{effectiveUser}->email_address($oldA);
-			$self->addbadmessage($r->maketext("Couldn't change your email address: [_1]", $@));
+			$c->{effectiveUser}->email_address($oldA);
+			$c->addbadmessage($c->maketext("Couldn't change your email address: [_1]", $@));
 		} else {
-			$self->addgoodmessage($r->maketext('Your email address has been changed.'));
+			$c->addgoodmessage($c->maketext('Your email address has been changed.'));
 		}
 	}
 
 	if ($changeOptions && $authz->hasPermissions($userID, 'change_pg_display_settings')) {
 		if (
-			(defined($r->param('displayMode')) && $self->{effectiveUser}->displayMode() ne $r->param('displayMode'))
-			|| (defined($r->param('showOldAnswers'))
-				&& $self->{effectiveUser}->showOldAnswers() ne $r->param('showOldAnswers'))
-			|| (defined($r->param('useWirisEditor'))
-				&& $self->{effectiveUser}->useWirisEditor() ne $r->param('useWirisEditor'))
-			|| (defined($r->param('useMathQuill'))
-				&& $self->{effectiveUser}->useMathQuill() ne $r->param('useMathQuill'))
+			(defined($c->param('displayMode')) && $c->{effectiveUser}->displayMode() ne $c->param('displayMode'))
+			|| (defined($c->param('showOldAnswers'))
+				&& $c->{effectiveUser}->showOldAnswers() ne $c->param('showOldAnswers'))
+			|| (defined($c->param('useWirisEditor'))
+				&& $c->{effectiveUser}->useWirisEditor() ne $c->param('useWirisEditor'))
+			|| (defined($c->param('useMathQuill'))
+				&& $c->{effectiveUser}->useMathQuill() ne $c->param('useMathQuill'))
 			)
 		{
-			$self->{effectiveUser}->displayMode($r->param('displayMode'));
-			$self->{effectiveUser}->showOldAnswers($r->param('showOldAnswers'));
-			$self->{effectiveUser}->useWirisEditor($r->param('useWirisEditor'));
-			$self->{effectiveUser}->useMathQuill($r->param('useMathQuill'));
+			$c->{effectiveUser}->displayMode($c->param('displayMode'));
+			$c->{effectiveUser}->showOldAnswers($c->param('showOldAnswers'));
+			$c->{effectiveUser}->useWirisEditor($c->param('useWirisEditor'));
+			$c->{effectiveUser}->useMathQuill($c->param('useMathQuill'));
 
-			eval { $db->putUser($self->{effectiveUser}) };
+			eval { $db->putUser($c->{effectiveUser}) };
 			if ($@) {
-				$self->addbadmessage($r->maketext("Couldn't save your display options: [_1]", $@));
+				$c->addbadmessage($c->maketext("Couldn't save your display options: [_1]", $@));
 			} else {
-				$self->addgoodmessage($r->maketext('Your display options have been saved.'));
+				$c->addgoodmessage($c->maketext('Your display options have been saved.'));
 			}
 		}
 	}

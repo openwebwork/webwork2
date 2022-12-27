@@ -23,7 +23,7 @@ use Net::LDAP qw/LDAP_INVALID_CREDENTIALS/;
 
 sub checkPassword {
 	my ($self, $userID, $possibleClearPassword) = @_;
-	my $ce       = $self->{r}->ce;
+	my $ce       = $self->{c}->ce;
 	my $failover = $ce->{authen}{ldap_options}{failover};
 
 	debug("LDAP module is doing the password checking.\n");
@@ -46,7 +46,7 @@ sub checkPassword {
 
 sub ldap_authen_uid {
 	my ($self, $uid, $password) = @_;
-	my $ce           = $self->{r}->ce;
+	my $ce           = $self->{c}->ce;
 	my $hosts        = $ce->{authen}{ldap_options}{net_ldap_hosts};
 	my $opts         = $ce->{authen}{ldap_options}{net_ldap_opts};
 	my $base         = $ce->{authen}{ldap_options}{net_ldap_base};

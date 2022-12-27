@@ -28,42 +28,33 @@
 	% last;
 % }
 %
-% my $editForUserID = $urlpath->arg('userID');
-% unless ($cg->{userRecord}) {
-	<div class="alert alert-danger p-1"><%= maketext('User [_1] not found.', $editForUserID) %></div>
+% unless ($c->{userRecord}) {
+	<div class="alert alert-danger p-1"><%= maketext('User [_1] not found.', $userID) %></div>
 	% last;
 % }
 %
-% my $courseID    = $urlpath->arg('courseID');
 % my @editForSets = param('editForSets');
 %
-% my $userName = $cg->{userRecord}->first_name . ' ' . $cg->{userRecord}->last_name;
+% my $userName = $c->{userRecord}->first_name . ' ' . $c->{userRecord}->last_name;
 %
 % # Display a message about how many sets have been assigned to this user.
 <div class="text-center my-3">
 	<h2 class="fs-6">
 		<%== maketext(
 			'Edit [_1] for [_2] ([_3]) who has been assigned [_4] sets.',
-			link_to(maketext('class list data') => $cg->systemLink(
-				$urlpath->new(type => 'instructor_user_list', args => { courseID => $courseID }),
-				params => { visible_users => $editForUserID, editMode => 1 }
+			link_to(maketext('class list data') => $c->systemLink(
+				url_for('instructor_user_list'),
+				params => { visible_users => $userID, editMode => 1 }
 			)),
 			$userName,
-			$editForUserID,
-			scalar(keys %{ $cg->{userSetRecords} })
+			$userID,
+			scalar(keys %{ $c->{userSetRecords} })
 		) =%>
 	</h2>
 </div>
 %
-<%= form_for $cg->systemLink(
-		$urlpath->new(
-			type => 'instructor_user_detail',
-			args => { courseID => $courseID, userID => $editForUserID }
-		),
-		authen => 0
-	),
-	method => 'post', name => 'UserDetail', id => 'UserDetail', begin =%>
-	<%= $cg->hidden_authen_fields =%>
+<%= form_for current_route, method => 'post', name => 'UserDetail', id => 'UserDetail', begin =%>
+	<%= $c->hidden_authen_fields =%>
 	%
 	<div class="mb-2">
 		<%= submit_button maketext('Assign All Sets to Current User'),
@@ -94,29 +85,29 @@
 		<table class="table table-bordered table-sm font-sm align-middle">
 			<tr>
 				<th class="text-center" colspan="3">
-					<%= maketext("Sets assigned to [_1] ([_2])", $userName, $editForUserID) =%>
+					<%= maketext("Sets assigned to [_1] ([_2])", $userName, $userID) =%>
 				</th>
 			</tr>
 			<tr>
 				<th class="text-center"><%= maketext('Assigned') %></th>
-				<th><%= maketext("Edit set for [_1]", $editForUserID) %></th>
+				<th><%= maketext("Edit set for [_1]", $userID) %></th>
 				<th><%= maketext('Dates') %></th>
 			</tr>
-			% for my $set (@{ $cg->{setRecords} }) {
+			% for my $set (@{ $c->{setRecords} }) {
 				% my $setID = $set->set_id;
 				%
 				<%= include 'ContentGenerator/Instructor/UserDetail/set_row',
 					set       => $set,
-				   	userSet   => $cg->{userSetRecords}{$setID},
-				   	mergedSet => $cg->{mergedSetRecords}{$setID} =%>
+				   	userSet   => $c->{userSetRecords}{$setID},
+				   	mergedSet => $c->{mergedSetRecords}{$setID} =%>
 				%
 				% if ($set->assignment_type =~ /gateway/) {
-					% for (0 .. $#{ $cg->{setVersions}{$setID} }) {
+					% for (0 .. $#{ $c->{setVersions}{$setID} }) {
 						<%= include 'ContentGenerator/Instructor/UserDetail/set_row',
 							set       => $set,
-							userSet   => $cg->{setVersions}{$setID}[$_],
-							mergedSet => $cg->{mergedVersions}{$setID}[$_],
-							version   => $cg->{setVersions}{$setID}[$_]->version_id =%>
+							userSet   => $c->{setVersions}{$setID}[$_],
+							mergedSet => $c->{mergedVersions}{$setID}[$_],
+							version   => $c->{setVersions}{$setID}[$_]->version_id =%>
 					% }
 				% }
 			% }

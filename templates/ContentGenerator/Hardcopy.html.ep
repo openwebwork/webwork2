@@ -1,13 +1,13 @@
 % my $perm_view_errors = $authz->hasPermissions(param('user'), 'download_hardcopy_view_errors');
 %
-% if ($cg->has_errors) {
-	% my $file_path     = $cg->{file_path};
-	% my %temp_file_map = %{ $cg->{temp_file_map} // {} };
+% if ($c->has_errors) {
+	% my $file_path     = $c->{file_path};
+	% my %temp_file_map = %{ $c->{temp_file_map} // {} };
 	%
 	% if ($perm_view_errors) {
 		<p><%= maketext('Errors occured while generating hardcopy:') %></p>
 		<ul>
-			% for (@{ $cg->get_errors }) {
+			% for (@{ $c->get_errors }) {
 				<li><%= $_ %></li>
 			% }
 		</ul>
@@ -20,10 +20,7 @@
 					. 'are missing and that they are all legible. If not, please inform your instructor.') =%>
 			<br>
 			<%= link_to(
-				maketext('Download Hardcopy') => $cg->systemLink(
-					$urlpath->newFromModule($urlpath->module, $c, courseID => $urlpath->arg('courseID')),
-					params => { tempFilePath => $file_path }
-				)
+				maketext('Download Hardcopy') => $c->systemLink(url_for, params => { tempFilePath => $file_path })
 			) =%>
 		</p>
 	% } else {
@@ -39,10 +36,7 @@
 			<%= maketext('You can also examine the following temporary files: ') =%>
 			<%= c(
 				map {
-					link_to $_ => $cg->systemLink(
-						$urlpath->newFromModule($urlpath->module, $c, courseID => $urlpath->arg('courseID')),
-						params => { tempFilePath => $temp_file_map{$_} }
-					)
+					link_to $_ => $c->systemLink(url_for, params => { tempFilePath => $temp_file_map{$_} })
 				} keys %temp_file_map
 			)->join(', ') =%>
 		</p>
@@ -51,6 +45,6 @@
 % }
 %
 % # don't display the retry form if there are errors and the user doesn't have permission to view the errors.
-% unless ($cg->has_errors && !$perm_view_errors) {
-	<%= $cg->display_form =%>
+% unless ($c->has_errors && !$perm_view_errors) {
+	<%= $c->display_form =%>
 % }

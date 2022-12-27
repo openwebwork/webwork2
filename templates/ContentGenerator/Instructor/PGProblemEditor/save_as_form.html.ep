@@ -3,28 +3,28 @@
 % use WeBWorK::Utils qw(jitar_id_to_seq not_blank format_set_name_display);
 %
 % # Don't show the save as form when editing an existing course info file.
-% last if $cg->{file_type} eq 'course_info' && -e $cg->{editFilePath};
+% last if $c->{file_type} eq 'course_info' && -e $c->{editFilePath};
 %
 % my $templatesDir  = $ce->{courseDirs}{templates};
-% my $shortFilePath = $cg->{editFilePath} =~ s|^$templatesDir/||r;
+% my $shortFilePath = $c->{editFilePath} =~ s|^$templatesDir/||r;
 %
 % # Suggest that modifications be saved to the "local" subdirectory if its not in a writeable directory
-% $shortFilePath = "local/$shortFilePath" if !-w dirname($cg->{editFilePath});
+% $shortFilePath = "local/$shortFilePath" if !-w dirname($c->{editFilePath});
 %
 % # If it is an absolute path make it relative.
 % $shortFilePath =~ s|^/*|| if $shortFilePath =~ m|^/|;
 %
-% my $probNum = $cg->{file_type} eq 'problem' ? $cg->{problemID} : 'header';
+% my $probNum = $c->{file_type} eq 'problem' ? $c->{problemID} : 'header';
 %
 % # Don't add or replace problems to sets if the set is the Undefined_Set or if the problem is the blank_problem.
 % my $can_add_problem_to_set =
-	% not_blank($cg->{setID}) && $cg->{setID} ne 'Undefined_Set' && $cg->{file_type} ne 'blank_problem';
+	% not_blank($c->{setID}) && $c->{setID} ne 'Undefined_Set' && $c->{file_type} ne 'blank_problem';
 %
 % my $prettyProbNum = $probNum;
-% if ($cg->{setID}) {
-	% my $set = $db->getGlobalSet($cg->{setID});
+% if ($c->{setID}) {
+	% my $set = $db->getGlobalSet($c->{setID});
 	% $prettyProbNum = join('.', jitar_id_to_seq($probNum))
-		% if ($cg->{file_type} eq 'problem' && $set && $set->assignment_type eq 'jitar');
+		% if ($c->{file_type} eq 'problem' && $set && $set->assignment_type eq 'jitar');
 % }
 %
 <div>
@@ -39,11 +39,11 @@
 					size => 60, dir  => 'ltr',
 					# Don't allow changing the file name for course info files.
 					# The filename needs to be what is set in the course environment.
-					$cg->{file_type} eq 'course_info' ? (readonly => undef) : () =%>
+					$c->{file_type} eq 'course_info' ? (readonly => undef) : () =%>
 			</div>
 		</div>
-		<%= hidden_field 'action.save_as.source_file' => $cg->{editFilePath} =%>
-		<%= hidden_field 'action.save_as.file_type' => $cg->{file_type} =%>
+		<%= hidden_field 'action.save_as.source_file' => $c->{editFilePath} =%>
+		<%= hidden_field 'action.save_as.file_type' => $c->{file_type} =%>
 	</div>
 	% if ($can_add_problem_to_set) {
 		<div class="form-check">
@@ -54,7 +54,7 @@
 					tag(
 						'strong',
 						c(
-							tag('span', dir => 'ltr', format_set_name_display($cg->{fullSetID})),
+							tag('span', dir => 'ltr', format_set_name_display($c->{fullSetID})),
 							"/$prettyProbNum"
 						)->join('')
 					)
@@ -67,12 +67,12 @@
 			<%= label_for 'action_save_as_saveMode_new_problem_id', class => 'form-check-label', begin =%>
 				<%== maketext(
 					'Append to end of [_1] set',
-					tag('strong', dir => 'ltr', format_set_name_display($cg->{fullSetID}))
+					tag('strong', dir => 'ltr', format_set_name_display($c->{fullSetID}))
 				) =%>
 			<% end =%>
 		</div>
 	% }
-	% if ($cg->{file_type} ne 'course_info') {
+	% if ($c->{file_type} ne 'course_info') {
 		<div class="form-check">
 			<%= radio_button 'action.save_as.saveMode' => 'new_independent_problem',
 				id => 'action_save_as_saveMode_independent_problem_id', class => 'form-check-input',

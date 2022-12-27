@@ -1,12 +1,12 @@
 % $selected_library //= '';
 % my $lib = (stash('lib') || '') =~ s/^browse_//r;
 %
-% my $prob_dirs = $cg->get_problem_directories($lib);
+% my $prob_dirs = $c->get_problem_directories($lib);
 %
 <div class="InfoPanel">
 	<div class="mb-2">
 		<%= label_for library_sets =>
-				maketext('[_1] Problems:', $lib eq '' ? maketext('Local') : $cg->{problibs}{$lib}),
+				maketext('[_1] Problems:', $lib eq '' ? maketext('Local') : $c->{problibs}{$lib}),
 			class => 'col-form-label-sm' =%>
 		<%= select_field library_sets => [
 				@$prob_dirs == 0 ? [ maketext('Found no directories containing problems') => '' ]

@@ -1,4 +1,4 @@
-%= form_for $c->uri, method => 'POST', begin
+<%= form_for current_route, method => 'POST', begin =%>
 	<% my $checkALLs = begin =%>
 		% if ($extra_database_tables_exist) {
 			<div class="form-check">
@@ -31,8 +31,8 @@
 		<h3><%= maketext('No course id defined') %></h3>
 	% }
 	%
-	<%= $cg->hidden_authen_fields =%>
-	<%= $cg->hidden_fields('subDisplay') =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
 	%
 	<div class="mb-3">
 		<%= $checkALLs->() %>
@@ -45,4 +45,4 @@
 		<%= submit_button maketext(q{Don't Upgrade}), name => 'decline_upgrade_course', class => 'btn btn-primary' =%>
 		<%= submit_button maketext('Upgrade'), name => 'confirm_upgrade_course', class => 'btn btn-primary' =%>
 	</div>
-% end
+<% end =%>

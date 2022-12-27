@@ -4,16 +4,16 @@
 	<div class="row align-items-center mb-2">
 		<%= label_for 'action.save_as.target_file_id' => maketext('Save as:'), class => 'col-form-label col-auto' =%>
 		<div class="col-auto">
-			<%= text_field 'action.save_as.target_file' => $cg->getRelativeSourceFilePath($cg->{sourceFilePath}),
+			<%= text_field 'action.save_as.target_file' => $c->getRelativeSourceFilePath($c->{sourceFilePath}),
 				id => 'action.save_as.target_file_id', size => 40, class => 'form-control form-control-sm' =%>
 		</div>
-		<%=  hidden_field 'action.save_as.source_file' => $cg->{sourceFilePath} =%>
+		<%=  hidden_field 'action.save_as.source_file' => $c->{sourceFilePath} =%>
 	</div>
 	<div class="form-check mb-2">
 		<%= radio_button 'action.save_as.saveMode' => 'use_in_current',
 			id => 'action.save_as.saveMode.use_in_current', class => 'form-check-input' =%>
 		<%= label_for 'action.save_as.saveMode.use_in_current', class => 'form-check-label', begin =%>
-			<%== maketext('Use in achievement [_1]', tag('b', $cg->{achievementID})) =%>
+			<%== maketext('Use in achievement [_1]', tag('b', $c->{achievementID})) =%>
 		<% end =%>
 	</div>
 	<div class="mb-2">

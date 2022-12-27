@@ -14,32 +14,26 @@
 ################################################################################
 
 package WeBWorK::ConfigObject::popuplist;
-use parent qw(WeBWorK::ConfigObject);
+use Mojo::Base 'WeBWorK::ConfigObject', -signatures;
 
-use strict;
-use warnings;
-
-sub display_value {
-	my ($self, $val) = @_;
-	my $r = $self->{Module}->r;
+sub display_value ($self, $val) {
+	my $c = $self->{c};
 	$val //= 'ur';
-	return $r->c($r->maketext($self->{labels}{$val}))->join($r->tag('br')) if ($self->{labels}{$val});
-	return $r->c($val)->join($r->tag('br'));
+	return $c->c($c->maketext($self->{labels}{$val}))->join($c->tag('br')) if ($self->{labels}{$val});
+	return $c->c($val)->join($c->tag('br'));
 }
 
-sub save_string {
-	my ($self, $oldval, $use_current) = @_;
+sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current);
 	return '' if $self->comparison_value($oldval) eq $newval;
 	return ("\$$self->{var} = '$newval';\n");
 }
 
-sub entry_widget {
-	my ($self, $default) = @_;
-	my $r = $self->{Module}->r;
-	return $r->select_field(
+sub entry_widget ($self, $default) {
+	my $c = $self->{c};
+	return $c->select_field(
 		$self->{name} => [
-			map { [ $r->maketext($self->{labels}{$_} // $_) => $_, $default eq $_ ? (selected => undef) : () ] }
+			map { [ $c->maketext($self->{labels}{$_} // $_) => $_, $default eq $_ ? (selected => undef) : () ] }
 				@{ $self->{values} }
 		],
 		id    => $self->{name},

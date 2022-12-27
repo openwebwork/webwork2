@@ -1,8 +1,8 @@
 % use WeBWorK::Utils qw(format_set_name_display);
 % use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 %
-%= form_for $c->uri, name => 'hardcopy-form', id => 'hardcopy-form', method => 'POST', begin
-	<%= $cg->hidden_authen_fields =%>
+%= form_for current_route, name => 'hardcopy-form', id => 'hardcopy-form', method => 'POST', begin
+	<%= $c->hidden_authen_fields =%>
 	<%= hidden_field in_hc_form => 1 =%>
 	%
 	% if ($multiuser) {
@@ -21,7 +21,7 @@
 					{
 						name            => 'selected_users',
 						id              => 'selected_users',
-						request         => $c,
+						controller      => $c,
 						default_sort    => 'lnfn',
 						default_format  => 'lnfn_uid',
 						default_filters => ['all'],
@@ -38,7 +38,7 @@
 					{
 						name            => 'selected_sets',
 						id              => 'selected_sets',
-						request         => $c,
+						controller      => $c,
 						default_sort    => 'set_id',
 						default_format  => 'sid',
 						default_filters => ['all'],
@@ -125,7 +125,7 @@
 				</div>
 			</div>
 		</div>
-		% if ($cg->{can_show_source_file}) {
+		% if ($c->{can_show_source_file}) {
 			<div class="row">
 				<div class="col-md-8">
 					<div class="input-group input-group-sm mb-2">

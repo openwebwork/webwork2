@@ -4,7 +4,7 @@
 	% # Output css for jquery-ui for problems to use.
 	<%= stylesheet getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.css') =%>
 	%
-	<%= stylesheet $cg->url({ type => 'webwork', name => 'theme', file => 'achievements.css' }) =%>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'achievements.css' }) =%>
 	%
 	% # Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	% # or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
@@ -13,8 +13,8 @@
 	% if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq 'ARRAY') {
 		% push(@cssFiles, { file => $_, external => 0 }) for @{ $ce->{pg}{specialPGEnvironmentVars}{extra_css_files} };
 	% }
-	% if (ref($cg->{pg}{flags}{extra_css_files}) eq 'ARRAY') {
-		% push @cssFiles, @{ $cg->{pg}{flags}{extra_css_files} };
+	% if (ref($c->{pg}{flags}{extra_css_files}) eq 'ARRAY') {
+		% push @cssFiles, @{ $c->{pg}{flags}{extra_css_files} };
 	% }
 	% my %cssFilesAdded;    # Used to avoid duplicates
 	% for (@cssFiles) {
@@ -39,7 +39,7 @@
 	% }
 	%
 	% # This is for the problem grader
-	% if ($cg->{will}{showProblemGrader}) {
+	% if ($c->{will}{showProblemGrader}) {
 		<%= javascript getAssetURL($ce, 'js/apps/ProblemGrader/problemgrader.js'), defer => undef =%>
 	%}
 	%
@@ -47,9 +47,9 @@
 	<%= javascript getAssetURL($ce, 'js/apps/Problem/problem.js'), defer => undef =%>
 	%
 	% # Add JS files requested by problems via ADD_JS_FILE() in the PG file.
-	% if (ref($cg->{pg}{flags}{extra_js_files}) eq 'ARRAY') {
+	% if (ref($c->{pg}{flags}{extra_js_files}) eq 'ARRAY') {
 		% my %jsFiles;
-		% for (@{ $cg->{pg}{flags}{extra_js_files} }) {
+		% for (@{ $c->{pg}{flags}{extra_js_files} }) {
 			% next if $jsFiles{ $_->{file} };
 			% $jsFiles{ $_->{file} } = 1;
 			% my %attributes = ref($_->{attributes}) eq 'HASH' ? %{ $_->{attributes} } : ();
@@ -62,39 +62,44 @@
 	% }
 % end
 %
-<%== $cg->post_header_text =%>
-<div class="row"><div id="tag_info" class="col-12"><%= $cg->output_tag_info %></div></div>
-<div id="custom_edit_message" class="row"><div class="col-lg-10"><%= $cg->output_custom_edit_message %></div></div>
-<div class="row"><div id="output_summary" class="col-lg-10"><%= $cg->output_summary %></div></div>
+% if ($c->{invalidProblem} || !$c->{set}) {
+	<div class="alert alert-danger p-1 my-3"><%= maketext('This problem is not valid.') %></div>
+	% last;
+% }
+%
+<%== $c->post_header_text =%>
+<div class="row"><div id="tag_info" class="col-12"><%= $c->output_tag_info %></div></div>
+<div id="custom_edit_message" class="row"><div class="col-lg-10"><%= $c->output_custom_edit_message %></div></div>
+<div class="row"><div id="output_summary" class="col-lg-10"><%= $c->output_summary %></div></div>
 <div class="row">
-	<div id="output_achievement_message" class="col-lg-10"><%= $cg->output_achievement_message %></div>
+	<div id="output_achievement_message" class="col-lg-10"><%= $c->output_achievement_message %></div>
 </div>
-<div class="row"><div id="output_comments" class="col-lg-10"><%= $cg->output_comments %></div></div>
-<div class="row"><div id="output_grader" class="col-lg-10"><%= $cg->output_grader %></div></div>
+<div class="row"><div id="output_comments" class="col-lg-10"><%= $c->output_comments %></div></div>
+<div class="row"><div id="output_grader" class="col-lg-10"><%= $c->output_grader %></div></div>
 <div class="row">
 	<div class="col-lg-10">
-		<%= form_for $c->uri, method => 'POST', name => 'problemMainForm',
+		<%= form_for current_route, method => 'POST', name => 'problemMainForm',
 			id => 'problemMainForm', class => 'problem-main-form', begin =%>
-			<%= $cg->hidden_authen_fields =%>
+			<%= $c->hidden_authen_fields =%>
 			<%= hidden_field(startTime => param('startTime') || time) =%>
-			<% if ($cg->can('output_hidden_info')) {
-				<%= $cg->output_hidden_info =%>
+			<% if ($c->can('output_hidden_info')) {
+				<%= $c->output_hidden_info =%>
 			% }
 			<div class="problem">
 				<div id="problem_body" class="problem-content"
-					<%== $cg->output_problem_lang_and_dir %>>
-					<%= $cg->output_problem_body =%>
+					<%== $c->output_problem_lang_and_dir %>>
+					<%= $c->output_problem_body =%>
 				</div>
-				<%= $cg->output_message =%>
+				<%= $c->output_message =%>
 			</div>
-			<div class="checkboxes-container col-12 my-2"><%= $cg->output_checkboxes %></div>
-			<div class="submit-buttons-container col-12 my-2"><%= $cg->output_submit_buttons %></div>
-			<div id="score_summary" class="scoreSummary"><%= $cg->output_score_summary %></div>
-			<%= $cg->output_misc =%>
+			<div class="checkboxes-container col-12 my-2"><%= $c->output_checkboxes %></div>
+			<div class="submit-buttons-container col-12 my-2"><%= $c->output_submit_buttons %></div>
+			<div id="score_summary" class="scoreSummary"><%= $c->output_score_summary %></div>
+			<%= $c->output_misc =%>
 		<% end =%>
 	</div>
 </div>
 <div id="problemFooter" class="problemFooter">
-	<%= $cg->output_past_answer_button =%>
-	<%= $cg->output_email_instructor =%>
+	<%= $c->output_past_answer_button =%>
+	<%= $c->output_email_instructor =%>
 </div>

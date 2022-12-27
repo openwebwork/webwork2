@@ -6,16 +6,9 @@
 		% for my $setID (@$setIDs) {
 			<li class="nav-item">
 				<%= tag 'a',
-					$setID eq $urlpath->arg('setID')
+					$setID eq stash('setID')
 					? (class => 'nav-link active')
-					: (
-						href => $cg->systemLink($urlpath->newFromModule(
-							$urlpath->module, $c,
-							courseID => $urlpath->arg('courseID'),
-							setID    => $setID
-						)),
-						class => 'nav-link',
-					),
+					: (href => $c->systemLink(url_for('problem_list', setID => $setID)), class => 'nav-link'),
 					id => $setID,
 					format_set_name_display($setID) =%>
 			</li>

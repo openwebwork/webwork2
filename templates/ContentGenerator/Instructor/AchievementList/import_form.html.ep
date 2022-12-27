@@ -5,7 +5,7 @@
 		<div class="col-auto">
 			<%= select_field 'action.import.source' => [
 					[ maketext('Select import file') => '', selected => undef ],
-					$cg->getAxpList
+					$c->getAxpList
 				],
 				id    => 'import_file_select',
 				class => 'form-select form-select-sm d-inline w-auto' =%>

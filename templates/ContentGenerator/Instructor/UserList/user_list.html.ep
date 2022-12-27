@@ -1,12 +1,10 @@
-% my $courseName = $urlpath->arg('courseID');
-%
-% if ($cg->{passwordMode}) {
+% if ($c->{passwordMode}) {
 	% content_for 'user-list-table-headings' => begin
 		<th id="new_password_header"><%= maketext('New Password') %></th>
 	% end
 % }
 %
-% unless ($cg->{editMode} || $cg->{passwordMode}) {
+% unless ($c->{editMode} || $c->{passwordMode}) {
 	% content_for 'user-list-table-headings' => begin
 		<th>
 			<%= check_box 'select-all' => 'on', id => 'select-all', 'aria-label' => maketext('Select all users'),
@@ -63,7 +61,7 @@
 %
 <div class="table-responsive">
 	<table id="classlist-table" class="table table-sm table-bordered caption-top font-sm <%=
-		$cg->{editMode} || $cg->{passwordMode} ? ' align-middle' : '' =%>">
+		$c->{editMode} || $c->{passwordMode} ? ' align-middle' : '' =%>">
 		<caption><%= maketext('Users List') %></caption>
 		<thead>
 			<tr>
@@ -71,8 +69,8 @@
 			</tr>
 		</thead>
 		<tbody>
-			% my %selectedUserIDs = map { $_ => 1 } @{ $cg->{selectedUserIDs} };
-			% for (@{ $cg->{visibleUsers} }) {
+			% my %selectedUserIDs = map { $_ => 1 } @{ $c->{selectedUserIDs} };
+			% for (@{ $c->{visibleUsers} }) {
 				<%= include 'ContentGenerator/Instructor/UserList/user_row',
 					user => $_, userSelected => exists $selectedUserIDs{ $_->user_id } =%>
 			% }
@@ -81,7 +79,7 @@
 </div>
 %
 % # If there are no users shown print message.
-% unless (@{ $cg->{visibleUsers} }) {
+% unless (@{ $c->{visibleUsers} }) {
 	<p>
 		<i>
 			<%= maketext('No students shown.  Choose one of the options above to list the students in the course.') =%>

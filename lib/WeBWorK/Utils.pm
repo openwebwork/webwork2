@@ -1766,11 +1766,10 @@ ID: foreach my $id (@problemIDs) {
 # a user may also be submitted, in case we need to filter by section
 
 sub fetchEmailRecipients {
-	my ($self, $permissionType, $sender) = @_;    # sender argument is optional
-	my $r     = $self->r;
-	my $db    = $r->db;
-	my $ce    = $r->ce;
-	my $authz = $r->authz;
+	my ($c, $permissionType, $sender) = @_;    # sender argument is optional
+	my $db    = $c->db;
+	my $ce    = $c->ce;
+	my $authz = $c->authz;
 
 	return unless $permissionType;
 
@@ -1792,55 +1791,37 @@ sub fetchEmailRecipients {
 # this subroutine could be expanded to.
 
 sub generateURLs {
-	my $self     = shift;
+	my $c        = shift;
 	my %params   = @_;
-	my $r        = $self->r;
-	my $db       = $r->db;
-	my $urlpath  = $r->urlpath;
-	my $userName = $r->param("user");
+	my $db       = $c->db;
+	my $userName = $c->param('user');
 
 	# generate context URLs
 	my $emailableURL;
 	my $returnURL;
 	if ($userName) {
-		my $modulePath;
+		my $routePath;
 		my @args;
-		if (defined $params{set_id} && $params{set_id} ne "") {
+		if (defined $params{set_id} && $params{set_id} ne '') {
 			if ($params{problem_id}) {
-				$modulePath = $r->urlpath->newFromModule(
-					"WeBWorK::ContentGenerator::Problem", $r,
-					courseID  => $r->urlpath->arg("courseID"),
-					setID     => $params{set_id},
-					problemID => $params{problem_id},
-				);
-				@args = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
+				$routePath = $c->url_for('problem_detail', setID => $params{set_id}, problemID => $params{problem_id});
+				@args      = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
 			} else {
-				$modulePath = $r->urlpath->newFromModule(
-					"WeBWorK::ContentGenerator::ProblemSet", $r,
-					courseID => $r->urlpath->arg("courseID"),
-					setID    => $params{set_id},
-				);
-				@args = ();
+				$routePath = $c->url_for('problem_list', setID => $params{set_id});
 			}
 		} else {
-			$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",
-				$r, courseID => $r->urlpath->arg("courseID"),);
-			@args = ();
+			$routePath = $c->url_for('set_list');
 		}
-		$emailableURL = $self->systemLink(
-			$modulePath,
+		$emailableURL = $c->systemLink(
+			$routePath,
 			authen      => 0,
-			params      => [ "effectiveUser", @args ],
+			params      => [ 'effectiveUser', @args ],
 			use_abs_url => 1,
 		);
-		$returnURL = $self->systemLink(
-			$modulePath,
-			authen => 1,
-			params => [@args],
-		);
+		$returnURL = $c->systemLink($routePath, params => [@args]);
 	} else {
-		$emailableURL = "(not available)";
-		$returnURL    = "";
+		$emailableURL = '(not available)';
+		$returnURL    = '';
 	}
 	if ($params{url_type}) {
 		if ($params{url_type} eq 'relative') {
@@ -1851,7 +1832,6 @@ sub generateURLs {
 	} else {
 		return ($emailableURL, $returnURL);
 	}
-	return;
 }
 
 my $staticWWAssets;

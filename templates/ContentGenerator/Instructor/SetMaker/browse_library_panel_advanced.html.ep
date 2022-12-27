@@ -85,7 +85,7 @@
 								</label>
 							</div>
 						% }
-						<%= $cg->helpMacro('Levels') =%>
+						<%= $c->helpMacro('Levels') =%>
 					</div>
 				</div>
 			</div>

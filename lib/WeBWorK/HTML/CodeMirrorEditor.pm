@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::HTML::CodeMirrorEditor;
-use parent qw(Exporter);
+use Mojo::Base 'Exporter', -signatures;
 
 =head1 NAME
 
@@ -23,9 +23,6 @@ on a page.  This is currently used by the AchievementEditor.pm and
 PGProblemEditor.pm modules.
 
 =cut
-
-use strict;
-use warnings;
 
 use WeBWorK::Utils qw(getAssetURL);
 
@@ -66,17 +63,14 @@ use constant CODEMIRROR_ADDONS_JS => [
 	'scroll/annotatescrollbar.js', 'edit/matchbrackets.js'
 ];
 
-sub generate_codemirror_html {
-	my ($r, $name, $contents) = @_;
-
+sub generate_codemirror_html ($c, $name, $contents = '') {
 	# Output the textarea that will be used by CodeMirror.
 	# If CodeMirror is disabled, then this is directly the editing area.
-	return $r->text_area($name => $contents, id => $name, class => 'codeMirrorEditor');
+	return $c->text_area($name => $contents, id => $name, class => 'codeMirrorEditor');
 }
 
-sub generate_codemirror_controls_html {
-	my $r  = shift;
-	my $ce = $r->ce;
+sub generate_codemirror_controls_html ($c) {
+	my $ce = $c->ce;
 
 	return '' unless $ce->{options}{PGCodeMirror};
 
@@ -92,12 +86,11 @@ sub generate_codemirror_controls_html {
 		push @$keymapValues, [ $_ => getAssetURL($ce, "node_modules/codemirror/keymap/$_.js") ];
 	}
 
-	return $r->include('HTML/CodeMirrorEditor/controls', themeValues => $themeValues, keymapValues => $keymapValues);
+	return $c->include('HTML/CodeMirrorEditor/controls', themeValues => $themeValues, keymapValues => $keymapValues);
 }
 
-sub output_codemirror_static_files {
-	my $r = shift;
-	return $r->include(
+sub output_codemirror_static_files ($c) {
+	return $c->include(
 		'HTML/CodeMirrorEditor/js',
 		codemirrorAddonsCSS => CODEMIRROR_ADDONS_CSS(),
 		codemirrorAddonsJS  => CODEMIRROR_ADDONS_JS()

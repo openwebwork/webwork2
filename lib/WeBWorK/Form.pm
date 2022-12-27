@@ -62,7 +62,7 @@ use warnings;
 
 sub new {
 	#print "new called with \@_ = ( " . (join ", ", @_)  . " )\n";
-	my ($invocant, $r) = @_;
+	my ($invocant, $c) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self  = {};
 
@@ -70,28 +70,15 @@ sub new {
 }
 
 sub new_from_paramable ($$) {
-	my ($invocant, $r) = @_;
+	my ($invocant, $c) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self  = {};
 
 	# list of param names
-	my @params = $r->param;
+	my @params = $c->param;
 	foreach my $key (@params) {
-		$self->{$key} = [ $r->param($key) ];
+		$self->{$key} = [ $c->param($key) ];
 	}
-
-	return bless $self, $class;
-}
-
-sub new_test {
-	my ($invocant, $r) = @_;
-	my $class = ref($invocant) || $invocant;
-	my $self  = {
-		a => [qw(aa ab ac)],
-		b => ["bcontents"],
-		c => [ "cc", "ccd" ],
-		d => ["what d has"],
-	};
 
 	return bless $self, $class;
 }

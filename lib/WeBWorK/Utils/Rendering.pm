@@ -14,18 +14,13 @@
 ################################################################################
 
 package WeBWorK::Utils::Rendering;
-use parent qw(Exporter);
+use Mojo::Base 'Exporter', -signatures;
 
 =head1 NAME
 
 WeBWorK::Utils::Rendering - utilities for rendering problems.
 
 =cut
-
-use strict;
-use warnings;
-use feature 'signatures';
-no warnings qw(experimental::signatures);
 
 use Mojo::IOLoop;
 use Data::Structure::Util qw(unbless);
@@ -225,20 +220,13 @@ hash when awaited.
 
 =cut
 
-sub renderPG ($r, $effectiveUser, $set, $problem, $psvn, $formFields, $translationOptions) {
+sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translationOptions) {
 	# Set the inactivity timeout to be 5 seconds more than the PG timeout.
-	$r->inactivity_timeout($WeBWorK::PG::TIMEOUT + 5);
+	$c->inactivity_timeout($WeBWorK::PG::TIMEOUT + 5);
 
 	return Mojo::IOLoop->subprocess->run_p(sub {
-
-		# Set the default signal handlers here.  The PG signal handlers will do the work.  If these are not set, then
-		# Mojo::Base, Mojo::Exception, and Mojo::EventEmitter need to be shared to the safe compartment since those are
-		# needed by the global webwork2 signal handlers.
-		local $SIG{__WARN__} = 'DEFAULT';
-		local $SIG{__DIE__}  = 'DEFAULT';
-
 		my $pg = WeBWorK::PG->new(constructPGOptions(
-			$r->ce, $effectiveUser, $set, $problem, $psvn, $formFields, $translationOptions));
+			$c->ce, $effectiveUser, $set, $problem, $psvn, $formFields, $translationOptions));
 
 		my $ret = {
 			body_text        => $pg->{body_text},

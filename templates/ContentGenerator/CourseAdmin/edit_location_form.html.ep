@@ -7,9 +7,9 @@
 	) =%>
 </p>
 %
-%= form_for $c->uri, method => 'POST', begin
-	<%= $cg->hidden_authen_fields =%>
-	<%= $cg->hidden_fields('subDisplay') =%>
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
 	<%= hidden_field edit_location => $locationID =%>
 	<%= hidden_field manage_location_action => 'edit_location_handler' =%>
 	%
@@ -58,4 +58,4 @@
 	<div>
 		<%= submit_button maketext('Take Action!'), class => 'btn btn-primary' =%>
 	</div>
-% end
+<% end =%>

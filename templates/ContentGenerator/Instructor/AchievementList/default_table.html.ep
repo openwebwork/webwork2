@@ -1,5 +1,3 @@
-% my $courseName = $urlpath->arg('courseID');
-%
 <div class="table-responsive">
 	<table class="table table-sm table-bordered font-sm" id="achievement-table">
 		<thead>
@@ -21,7 +19,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			% my %selectedAchievementIDs = map { $_ => 1 } @{ $cg->{selectedAchievementIDs} };
+			% my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
 			% for (@$achievements) {
 				% my $achievement_id = $_->achievement_id;
 				<tr>
@@ -35,11 +33,8 @@
 						<div class="label-with-edit-icon">
 							<%= label_for "${achievement_id}_id", begin =%>
 								<%= $_->achievement_id %>
-								<%= link_to $cg->systemLink(
-										$urlpath->new(
-											type => 'instructor_achievement_list',
-											args => { courseID => $courseName }
-										),
+								<%= link_to $c->systemLink(
+										url_for('instructor_achievement_list'),
 										params => { editMode => 1, selected_achievements => $achievement_id }
 									),
 									begin %>
@@ -54,21 +49,13 @@
 					<td><%= $_->category %></td>
 					<td>
 						% my $num_users = $db->countAchievementUsers($_->achievement_id);
-						<%= link_to "$num_users/$cg->{totalUsers}" => $cg->systemLink(
-							$urlpath->newFromModule(
-								"WeBWorK::ContentGenerator::Instructor::AchievementUserEditor", $c,
-								courseID      => $courseName,
-								achievementID => $achievement_id
-							)
+						<%= link_to "$num_users/$c->{totalUsers}" => $c->systemLink(
+							url_for('instructor_achievement_user_editor', achievementID => $achievement_id)
 						) =%>
 					</td>
 					<td class="text-nowrap">
-						<%= link_to maketext('Edit Evaluator') => $cg->systemLink(
-							$urlpath->newFromModule(
-								"WeBWorK::ContentGenerator::Instructor::AchievementEditor", $c,
-								courseID      => $courseName,
-								achievementID => $achievement_id
-							),
+						<%= link_to maketext('Edit Evaluator') => $c->systemLink(
+							url_for('instructor_achievement_editor', achievementID => $achievement_id),
 							params => { sourceFilePath => $ce->{courseDirs}{achievements}. '/' . $_->test }
 						) =%>
 					</td>

@@ -242,7 +242,7 @@ async sub renderProblem {
 	$ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = { TeX => '', HTML => '' } if $rh->{noprepostambles};
 
 	my $pg =
-		await renderPG($ws->r, $effectiveUser, $setRecord, $problemRecord, $setRecord->psvn, $rh, $translationOptions);
+		await renderPG($ws->c, $effectiveUser, $setRecord, $problemRecord, $setRecord->psvn, $rh, $translationOptions);
 
 	# New version of output:
 	return {

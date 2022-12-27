@@ -1,17 +1,17 @@
 % # Cap the number of students shown to at most 200.
 % my $numAfter        = $#$userRecords - $currentUserIndex;
 % my $numBefore       = 200 - ($numAfter < 100 ? $numAfter : 100);
-% my $minStudentIndex = $currentUserIndex < $numBefore         ? 0 : $currentUserIndex - $numBefore;
+% my $minStudentIndex = $currentUserIndex < $numBefore ? 0 : $currentUserIndex - $numBefore;
 % my $maxStudentIndex = $minStudentIndex + 200 < $#$userRecords ? $minStudentIndex + 200 : $#$userRecords;
 %
 <div class="user-nav d-flex submit-buttons-container">
 	<div class="btn-group" role="group" aria-label="student selector">
 		% if ($prevUser) {
-			<%= link_to $cg->systemLink(
+			<%= link_to $c->systemLink(
 					$problemPage,
 					params => {
 						effectiveUser     => $prevUser->user_id,
-						showProblemGrader => $cg->{will}{showProblemGrader},
+						showProblemGrader => $c->{will}{showProblemGrader},
 						$filter ? (studentNavFilter => $filter) : ()
 					}
 				),
@@ -31,11 +31,11 @@
 			<ul class="dropdown-menu" role="menu" aria-labelledby="studentSelector">
 				% for (@$userRecords[ $minStudentIndex .. $maxStudentIndex ]) {
 					<li>
-						<%= link_to $_->{displayName} => $cg->systemLink(
+						<%= link_to $_->{displayName} => $c->systemLink(
 								$problemPage,
 								params => {
 									effectiveUser     => $_->user_id,
-									showProblemGrader => $cg->{will}{showProblemGrader},
+									showProblemGrader => $c->{will}{showProblemGrader},
 									$filter ? (studentNavFilter => $filter) : ()
 								}
 							),
@@ -46,11 +46,11 @@
 			</ul>
 		</div>
 		% if ($nextUser) {
-			<%= link_to $cg->systemLink(
+			<%= link_to $c->systemLink(
 					$problemPage,
 					params => {
 						effectiveUser     => $nextUser->user_id,
-						showProblemGrader => $cg->{will}{showProblemGrader},
+						showProblemGrader => $c->{will}{showProblemGrader},
 						$filter ? (studentNavFilter => $filter) : ()
 					}
 				),
@@ -74,22 +74,22 @@
 				% # If a filter is currently in use, then add an item that will remove that filter.
 				% if ($filter) {
 					<li>
-						<%= link_to maketext('Show all students') => $cg->systemLink(
+						<%= link_to maketext('Show all students') => $c->systemLink(
 								$problemPage,
 								params => {
 									effectiveUser     => $eUserID,
-									showProblemGrader => $cg->{will}{showProblemGrader}
+									showProblemGrader => $c->{will}{showProblemGrader}
 								}
 							), class => 'dropdown-item' =%>
 					</li>
 				% }
 				% for (sort keys %$filters) {
 					<li>
-						<%= link_to $filters->{$_}[0] => $cg->systemLink(
+						<%= link_to $filters->{$_}[0] => $c->systemLink(
 								$problemPage,
 								params => {
 									effectiveUser     => $filters->{$_}[1],
-									showProblemGrader => $cg->{will}{showProblemGrader},
+									showProblemGrader => $c->{will}{showProblemGrader},
 									studentNavFilter  => $_
 								}
 							),

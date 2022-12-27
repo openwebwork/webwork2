@@ -51,7 +51,6 @@
 % # If one or more users are specified in the "editForUser" param, only the data for those users
 % # becomes editable, not all the data.
 %
-% my $courseID     = $urlpath->arg('courseID');
 % my $isGatewaySet = $setRecord->assignment_type =~ /gateway/;
 % my $isJitarSet   = $setRecord->assignment_type eq 'jitar';
 % my $userToShow   = @editForUser ? $editForUser[0] : param('user');
@@ -76,7 +75,7 @@
 		</div>
 	% }
 	%
-	% my $setDetailPage = $urlpath->newFromModule($urlpath->module, $c, courseID => $courseID, setID => $setID);
+	% my $setDetailPage = url_for(setID => $setID);
 	%
 	% # Calculate links for the users being edited.
 	% my $userLinks = c;
@@ -91,19 +90,15 @@
 				<%== maketext(
 					'Assigned to [_1].',
 					link_to(
-						$cg->setCountMessage($db->countUserSets($user->user_id), $db->countGlobalSets) =>
-							$cg->systemLink($urlpath->newFromModule(
-								'WeBWorK::ContentGenerator::Instructor::UserDetail', $c,
-								courseID => $courseID,
-								userID   => $user->user_id
-							))
+						$c->setCountMessage($db->countUserSets($user->user_id), $db->countGlobalSets) =>
+							$c->systemLink(url_for('instructor_user_detail', userID => $user->user_id))
 					)
 				) =%>
 			% } else {
 				<%== maketext(
 					'Edit set [_1] for this user.',
 					link_to(
-						$setID => $cg->systemLink(
+						$setID => $c->systemLink(
 							$setDetailPage, params => { effectiveUser => $user->user_id, editForUser => $user->user_id }
 						)
 					)
@@ -131,11 +126,11 @@
 				) =%>
 			</div>
 			<div class="col-md-6 mt-md-0 mt-2">
-				<%= link_to $cg->systemLink($setDetailPage), begin =%>
+				<%= link_to $c->systemLink($setDetailPage), begin =%>
 					<%== maketext(
 							'Edit set [_1] for ALL students assigned to this set.',
 							tag('strong', dir => 'ltr', format_set_name_display($setID))
-						) => $cg->systemLink($setDetailPage) =%>
+						) => $c->systemLink($setDetailPage) =%>
 				<% end =%>
 				% # Handy messages when editing gateway sets.
 				% if ($isGatewaySet && !$editingSetVersion) {
@@ -155,20 +150,14 @@
 				<%== maketext(
 					'This set [_1] is assigned to [_2].',
 					tag('strong', dir => 'ltr', format_set_name_display($setID)),
-					$cg->userCountMessage($db->countSetUsers($setID), $db->countUsers)
+					$c->userCountMessage($db->countSetUsers($setID), $db->countUsers)
 				) =%>
 			</div>
 			<div class="col-md-6 mt-md-0 mt-2">
 				<%== maketext(
 					'Edit [_1] of set [_2].',
-					link_to(maketext('individual versions') => $cg->systemLink(
-						$urlpath->newFromModule(
-							"WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet", $c,
-							courseID => $courseID,
-							setID    => $setID
-						),
-						params => { pageVersion => "instructor_set_detail" }
-					)),
+					link_to(maketext('individual versions') =>
+						$c->systemLink(url_for 'instructor_users_assigned_to_set')),
 					tag('span', dir => 'ltr', format_set_name_display($setID))
 				) =%>
 			</div>
@@ -184,15 +173,12 @@
 	% }
 </div>
 %
-<%= form_for $cg->systemLink(
-		$urlpath->newFromModule($urlpath->module, $c, courseID => $courseID, setID => $fullSetID),
-		authen => 0
-	), id => 'problem_set_form', name => 'problem_set_form', method => 'POST', begin =%>
+<%= form_for current_route, method => 'POST', id => 'problem_set_form', name => 'problem_set_form', begin =%>
 	%
 	% for (@editForUser) {
 		<%= hidden_field editForUser => $_ =%>
 	% }
-	<%= $cg->hidden_authen_fields =%>
+	<%= $c->hidden_authen_fields =%>
 	<%= hidden_field courseID => $courseID, id => 'hidden_course_id' =%>
 	<%= hidden_field setID => $setID, id => 'hidden_set_id' =%>
 	% if ($editingSetVersion) {
@@ -211,7 +197,7 @@
 		<div class="card-body p-2">
 			<div class="card-title fw-bold"><%= maketext('General Information') %></div>
 			<div class="card-text">
-				<%= $cg->fieldTable($userToShow, $setID, undef, $setRecord,
+				<%= $c->fieldTable($userToShow, $setID, undef, $setRecord,
 				   	$editingSetVersion
 					? $db->getSetVersion($userToShow, $setID, $editingSetVersion)
 					: $db->getUserSet($userToShow, $setID)) =%>
@@ -252,15 +238,9 @@
 									</tr>
 									<tr>
 										<td>
-											<%= link_to $cg->systemLink(
-													$urlpath->new(
-														type => 'instructor_problem_editor_withset_withproblem',
-														args => {
-															courseID  => $courseID,
-															setID     => $setID,
-															problemID => 0
-														}
-													),
+											<%= link_to $c->systemLink(
+													url_for('instructor_problem_editor_withset_withproblem',
+														setID => $setID, problemID => 0),
 													params => { file_type => $headerType }
 												),
 												class  => 'psd_edit btn btn-secondary btn-sm',
@@ -274,12 +254,12 @@
 												<i class="icon fas fa-pencil-alt" data-alt="<%= maketext('Edit') =%>">
 												</i>
 											<% end =%>
-											<%= link_to $cg->systemLink($urlpath->new(
-													type => {
+											<%= link_to $c->systemLink(url_for(
+													{
 														set_header      => 'problem_list',
 														hardcopy_header => 'hardcopy_preselect_set'
 													}->{$headerType},
-													args => { courseID => $courseID, setID => $setID }
+													setID => $setID
 												)),
 												class  => 'psd_view btn btn-secondary btn-sm',
 												target => 'WW_View',
@@ -419,7 +399,7 @@
 					% $repeatFile = '';
 				% }
 				%
-				% my $error = $cg->checkFile($problemFile, undef);
+				% my $error = $c->checkFile($problemFile, undef);
 				%
 				% # Show the "Try It" and "Edit It" links if there's a well defined problem to view. This is when editing a
 				% # homework set, or editing a gateway set version, or editing a gateway set and the problem is not a group
@@ -451,7 +431,7 @@
 				% # be in use for which the problem is generated and then stored in the problem version.
 				% my $problemToShow = $editingSetVersion ? $mergedProblems->{$problemID} : $userProblems->{$problemID};
 				%
-				% my @source_file_parts = $cg->fieldHTML($userToShow, $setID, $problemID, $globalProblems->{$problemID},
+				% my @source_file_parts = $c->fieldHTML($userToShow, $setID, $problemID, $globalProblems->{$problemID},
 					% $problemToShow, 'source_file');
 				%
 				% my $problemRow = begin
@@ -480,13 +460,9 @@
 									</i>
 								</button>
 								% if ($showLinks) {
-									<%= link_to $cg->systemLink($urlpath->new(
-											type => 'instructor_problem_editor_withset_withproblem',
-											args => {
-												courseID  => $courseID,
-												setID     => $fullSetID,
-												problemID => $problemID
-											}
+									<%= link_to $c->systemLink(url_for(
+											'instructor_problem_editor_withset_withproblem',
+											setID => $fullSetID, problemID => $problemID
 										)),
 										class  => 'psd_edit btn btn-secondary btn-sm',
 										target => 'WW_Editor',
@@ -501,15 +477,8 @@
 								% }
 								% if ($showLinks) {
 									<%= link_to $isGatewaySet
-										? $cg->systemLink(
-											$urlpath->new(
-												type => 'gateway_quiz',
-												args => {
-													courseID  => $courseID,
-													setID     => 'Undefined_Set',
-													problemID => '1'
-												}
-											),
+										? $c->systemLink(
+											url_for('gateway_quiz', setID => 'Undefined_Set', problemID => '1'),
 											params => {
 												effectiveUser  =>
 													@editForUser == 1 ? $editForUser[0] : param('user'),
@@ -519,12 +488,8 @@
 												: $globalProblems->{$problemID}->source_file
 											}
 											)
-										: $cg->systemLink(
-											$urlpath->new(
-												type => 'problem_detail',
-												args =>
-													{ courseID => $courseID, setID => $setID, problemID => $problemID }
-											),
+										: $c->systemLink(
+											url_for('problem_detail', setID => $setID, problemID => $problemID),
 											params => {
 												effectiveUser => @editForUser == 1 ? $editForUser[0] : param('user')
 											}
@@ -541,9 +506,8 @@
 									<% end =%>
 								% }
 								% if ($showLinks && $problemRecord->flags =~ /essay/) {
-								<%= link_to $cg->systemLink($urlpath->new(
-										type => 'instructor_problem_grader',
-										args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID }
+								<%= link_to $c->systemLink(url_for(
+										'instructor_problem_grader', setID => $fullSetID, problemID => $problemID
 									)),
 									class => "pdr_grader btn btn-secondary btn-sm",
 									data  => {
@@ -619,8 +583,8 @@
 							</div>
 							<div class="row">
 								<div class="col-md-5">
-									<%= $cg->fieldTable(
-										$userToShow,                 $setID,         $problemID,
+									<%= $c->fieldTable(
+										$userToShow,                   $setID,         $problemID,
 										$globalProblems->{$problemID}, $problemToShow, $setRecord->assignment_type
 									) =%>
 								</div>
@@ -659,7 +623,7 @@
 					%
 					% # Use recursion to print the nested lists.
 					% for (sort { $a <=> $b } keys %$nestedIDHash) {
-						<%= $cg->print_nested_list($nestedIDHash->{$_}) =%>
+						<%= $c->print_nested_list($nestedIDHash->{$_}) =%>
 					% }
 				% } else {
 					% for (0 .. $#$problemIDList) {
