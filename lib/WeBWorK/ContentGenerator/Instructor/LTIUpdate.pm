@@ -39,11 +39,11 @@ sub initialize {
 
 	# Test if setID and userID are valid.
 	unless ($userID eq 'All Users' || $db->getUser($userID)) {
-		$self->{updateMessage} = $r->maketext('Update aborted. Invalid user [_1].', $userID);
+		$self->{errorMessage} = $r->maketext('Update aborted. Invalid user [_1].', $userID);
 		return;
 	}
 	unless ($ce->{LTIGradeMode} eq 'course' || $setID eq 'All Sets' || $db->getGlobalSet($setID)) {
-		$self->{updateMessage} = $r->maketext('Update aborted. Invalid set [_1].', $prettySetID);
+		$self->{errorMessage} = $r->maketext('Update aborted. Invalid set [_1].', $prettySetID);
 		return;
 	}
 
@@ -54,7 +54,7 @@ sub initialize {
 			$ce->{LTIGradeMode} eq 'homework'
 			? $r->maketext('LTI update of all users and sets started.')
 			: $r->maketext('LTI update of all users started.');
-	} elsif ($setID eq 'All Sets' && $ce->{LTIGradeMode} eq 'homework') {
+	} elsif ($setID eq 'All Sets') {
 		@updateParms = ('user', $userID);
 		$self->{updateMessage} = $r->maketext('LTI update of user [_1] started.', $userID);
 	} elsif ($userID eq 'All Users') {
@@ -95,8 +95,9 @@ sub body {
 		$r->maketext('LTI grade passback is not enabled for this course'))
 		unless $ce->{LTIGradeMode};
 
-	# Update message.
-	print CGI::div({ class => 'alert alert-warning p-1' }, $self->{updateMessage}) if defined($self->{updateMessage});
+	# Update / error messages.
+	print CGI::div({ class => 'alert alert-warning p-1' }, $self->{errorMessage})  if defined($self->{errorMessage});
+	print CGI::div({ class => 'alert alert-success p-1' }, $self->{updateMessage}) if defined($self->{updateMessage});
 
 	my $gradeMode      = $ce->{LTIGradeMode};
 	my $lastUpdate     = $db->getSettingValue('LTILastUpdate') || 0;
