@@ -44,7 +44,6 @@ use strict;
 use warnings;
 
 use Carp;
-use Mojo::IOLoop;
 use Date::Format;
 use URI::Escape;
 use MIME::Base64;
@@ -159,19 +158,7 @@ async sub go {
 	# instructors add or modify sets.
 	if ($ce->{LTIGradeMode} and ref($r->{db} // '')) {
 		my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
-
-		Mojo::IOLoop->timer(
-			1 => sub {
-				# Catch exceptions generated during the sending process.
-				eval { $grader->mass_update() };
-				if ($@) {
-					# Write errors to the Mojolicious log
-					$r->log->error("An error occurred while trying to update grades via LTI: $@\n");
-				}
-			}
-		);
-
-		Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+		$grader->mass_update('auto');
 	}
 
 	# check to verify if there are set-level problems with running
@@ -1078,6 +1065,18 @@ sub links {
 							"${pfx}FileManager",
 							urlpath_args    => {%args},
 							systemlink_args => \%systemlink_args
+						)
+					);
+				}
+
+				if ($ce->{LTIGradeMode} && $authz->hasPermissions($userID, 'score_sets')) {
+					print CGI::li(
+						{ class => 'nav-item' },
+						&$makelink(
+							"${pfx}LTIUpdate",
+							text            => $r->maketext('LTI Grade Update'),
+							urlpath_args    => \%args,
+							systemlink_args => \%systemlink_args,
 						)
 					);
 				}
