@@ -129,7 +129,7 @@
 							<thead>
 								<tr><th><%= maketext('Macro') %></th><th><%= maketext('Value') %></th></tr>
 							</thead>
-							<tbody>
+							<tbody class="table-group-divider">
 								<tr><td>$SID</td><td><%= maketext('Student ID') %></td></tr>
 								<tr><td>$FN</td><td><%= maketext('First name') %></td></tr>
 								<tr><td>$LN</td><td><%= maketext('Last name') %></td></tr>

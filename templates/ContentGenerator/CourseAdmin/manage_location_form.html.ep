@@ -117,7 +117,7 @@
 						<th><%= maketext('Addresses') %></th>
 					</tr>
 				</thead>
-				<tbody>
+				<tbody class="table-group-divider">
 					% for (@$locations) {
 						<tr>
 							<td>

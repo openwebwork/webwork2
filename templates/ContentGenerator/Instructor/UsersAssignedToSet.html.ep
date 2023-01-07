@@ -40,7 +40,7 @@
 					<th><%= maketext('Edit Data') %></th>
 				</tr>
 			</thead>
-			<tbody>
+			<tbody class="table-group-divider">
 				% for my $user (@{ $c->{user_records} }) {
 					% my $userID  = $user->user_id;
 					% my $userSet = $db->getUserSet($userID, $setID);

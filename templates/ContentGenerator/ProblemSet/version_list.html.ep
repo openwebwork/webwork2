@@ -151,7 +151,7 @@
 		<div class="table-responsive">
 			<table class="problem_set_table table table-sm caption-top font-sm">
 				<caption><%= maketext('Test Versions') %></caption>
-				<thead>
+				<thead class="table-group-divider">
 					<tr>
 						<th scope="col"><%= maketext('Versions') %></th>
 						<th scope="col"><%= maketext('Status') %></th>
@@ -165,7 +165,7 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody>
+				<tbody class="table-group-divider">
 					% for my $ver (@$versionData) {
 						% my $interactive = maketext('Version [_1]', $ver->{version});
 						% if ($authz->hasPermissions($user, 'view_hidden_work') || $ver->{show_link}) {
