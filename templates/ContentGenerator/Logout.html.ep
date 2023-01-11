@@ -9,7 +9,10 @@
 		<%== maketext(
 			'The course [_1] uses an external authentication system ([_2]). Please go there to log in again.',
 			tag('strong', stash('courseID')),
-			$ce->{LMS_url} ? link_to(tag('strong', $ce->{LMS_name}) => $ce->{LMS_url}) : $ce->{LMS_name}
+			$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
+				? link_to(tag('strong', $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name}) =>
+					$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
+				: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name}
 		) =%>
 	</p>
 % } else {

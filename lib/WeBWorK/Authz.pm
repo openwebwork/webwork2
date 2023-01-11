@@ -487,7 +487,10 @@ sub checkSet {
 	my $LTIGradeMode = $ce->{LTIGradeMode} // '';
 
 	if ($LTIGradeMode eq 'homework' && !$self->hasPermissions($userName, "view_unopened_sets")) {
-		my $LMS = $ce->{LMS_url} ? $c->link_to($ce->{LMS_name} => $ce->{LMS_url}) : $ce->{LMS_name};
+		my $LMS =
+			$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
+			? $c->link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
+			: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
 		return $c->maketext(
 			'You must use your Learning Management System ([_1]) to access this set.  '
 				. 'Try logging in to the Learning Management System and visiting the set from there.',

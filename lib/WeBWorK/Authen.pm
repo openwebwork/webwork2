@@ -280,7 +280,6 @@ sub forget_verification {
 sub do_verify {
 	my $self = shift;
 	my $c    = $self->{c};
-	my $ce   = $c->ce;
 	my $db   = $c->db;
 
 	return 0 unless $db;
@@ -924,7 +923,7 @@ sub killCookie {
 	my $c      = $self->{c};
 	my $ce     = $c->ce;
 
-	my $courseID = $c->stash('courseID');
+	my $courseID = $c->stash('courseID') // '';
 
 	my $cookie_params = {
 		max_age  => 0,

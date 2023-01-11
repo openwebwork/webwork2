@@ -674,7 +674,7 @@ async sub pre_header_initialize ($c) {
 	$c->{pg}   = $pg;
 
 	# Process and log answers
-	$c->{scoreRecordedMessage} = process_and_log_answer($c) || '';
+	$c->{scoreRecordedMessage} = await process_and_log_answer($c) || '';
 
 	return;
 }

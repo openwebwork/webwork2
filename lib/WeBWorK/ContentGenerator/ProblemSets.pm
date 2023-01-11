@@ -189,7 +189,11 @@ sub setListRow ($c, $set) {
 					$c->tag('br'),
 					$c->maketext(
 						'You must log into this set via your Learning Management System ([_1]).',
-						$ce->{LMS_url} ? $c->link_to($ce->{LMS_name} => $ce->{LMS_url}) : $ce->{LMS_name}
+						$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
+						? $c->link_to(
+							$ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
+							)
+						: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name}
 					)
 				)->join('');
 				$interactive = $display_name;

@@ -94,7 +94,13 @@ sub request_has_data_for_this_verification_module {
 		return 1;
 	}
 
-	# We need at least these things to verify an oauth request
+	# This module insists that the course is configured for LTI 1.3.
+	if (!$c->ce->{LTIVersion} || $c->ce->{LTIVersion} ne 'v1p1') {
+		debug('LTIAdvanced returning that it is not configured for this course');
+		return 0;
+	}
+
+	# We need at least these things to verify an oauth request.
 	if (!(defined $c->param("oauth_consumer_key"))
 		|| !(defined $c->param("oauth_signature"))
 		|| !(defined $c->param("oauth_nonce"))
@@ -158,7 +164,7 @@ sub get_credentials {
 
 	# Determine the WW user_id to use, if possible
 
-	if (!$ce->{preferred_source_of_username}) {
+	if (!$ce->{LTI}{v1p1}{preferred_source_of_username}) {
 		warn
 			"LTI is not properly configured (no preferred_source_of_username). Please contact your instructor or system administrator.";
 		$self->{error} = $c->maketext(
@@ -177,7 +183,7 @@ sub get_credentials {
 		$self->{email} = uri_unescape($c->param("lis_person_contact_email_primary")) // "";
 	}
 
-	if ($ce->{preferred_source_of_username} eq "lis_person_sourcedid") {
+	if ($ce->{LTI}{v1p1}{preferred_source_of_username} eq "lis_person_sourcedid") {
 		foreach my $key (@lis_person_sourcedid_options) {
 			if ($c->param($key)) {
 				$user_id_source  = $key;
@@ -186,7 +192,7 @@ sub get_credentials {
 				last;
 			}
 		}
-	} elsif ($ce->{preferred_source_of_username} eq "lis_person_contact_email_primary"
+	} elsif ($ce->{LTI}{v1p1}{preferred_source_of_username} eq "lis_person_contact_email_primary"
 		&& $self->{email} ne "")
 	{
 		$user_id_source  = "lis_person_contact_email_primary";
@@ -194,16 +200,16 @@ sub get_credentials {
 		$self->{user_id} = $self->{email};
 
 		# Strip off the part of the address after @ if requested to do so:
-		$self->{user_id} =~ s/@.*$// if $ce->{strip_address_from_email};
-	} elsif ($c->param($ce->{preferred_source_of_username})) {
-		$user_id_source  = $ce->{preferred_source_of_username};
+		$self->{user_id} =~ s/@.*$// if $ce->{LTI}{v1p1}{strip_address_from_email};
+	} elsif ($c->param($ce->{LTI}{v1p1}{preferred_source_of_username})) {
+		$user_id_source  = $ce->{LTI}{v1p1}{preferred_source_of_username};
 		$type_of_source  = "preferred_source_of_username";
-		$self->{user_id} = $c->param($ce->{preferred_source_of_username});
+		$self->{user_id} = $c->param($ce->{LTI}{v1p1}{preferred_source_of_username});
 	}
 
 	# Fallback if necessary
-	if (!defined($self->{user_id}) && $ce->{fallback_source_of_username}) {
-		if ($ce->{fallback_source_of_username} eq "lis_person_sourcedid") {
+	if (!defined($self->{user_id}) && $ce->{LTI}{v1p1}{fallback_source_of_username}) {
+		if ($ce->{LTI}{v1p1}{fallback_source_of_username} eq "lis_person_sourcedid") {
 			foreach my $key (@lis_person_sourcedid_options) {
 				if ($c->param($key)) {
 					$user_id_source  = $key;
@@ -212,7 +218,7 @@ sub get_credentials {
 					last;
 				}
 			}
-		} elsif ($ce->{fallback_source_of_username} eq "lis_person_contact_email_primary"
+		} elsif ($ce->{LTI}{v1p1}{fallback_source_of_username} eq "lis_person_contact_email_primary"
 			&& $self->{email} ne "")
 		{
 			$user_id_source  = "lis_person_contact_email_primary";
@@ -220,18 +226,18 @@ sub get_credentials {
 			$self->{user_id} = $self->{email};
 
 			# Strip off the part of the address after @ if requested to do so:
-			$self->{user_id} =~ s/@.*$// if $ce->{strip_address_from_email};
-		} elsif ($c->param($ce->{fallback_source_of_username})) {
-			$user_id_source  = $ce->{fallback_source_of_username};
+			$self->{user_id} =~ s/@.*$// if $ce->{LTI}{v1p1}{strip_address_from_email};
+		} elsif ($c->param($ce->{LTI}{v1p1}{fallback_source_of_username})) {
+			$user_id_source  = $ce->{LTI}{v1p1}{fallback_source_of_username};
 			$type_of_source  = "fallback_source_of_username";
-			$self->{user_id} = $c->param($ce->{fallback_source_of_username});
+			$self->{user_id} = $c->param($ce->{LTI}{v1p1}{fallback_source_of_username});
 		}
 	}
 
 	# if we were able to set a user_id
 	if (defined($self->{user_id}) && $self->{user_id} ne "") {
 		# Make user_id lowercase for consistency in naming if configured.
-		$self->{user_id} = lc($self->{user_id}) if ($ce->{lti_lowercase_username});
+		$self->{user_id} = lc($self->{user_id}) if ($ce->{LTI}{v1p1}{lowercase_username});
 
 		map { $self->{ $_->[0] } = $c->param($_->[1]); } (
 			[ 'role',               'roles' ],
@@ -246,10 +252,10 @@ sub get_credentials {
 			[ 'recitation',         'custom_recitation' ],
 		);
 
-		if (defined($ce->{preferred_source_of_student_id})
+		if (defined($ce->{LTI}{v1p1}{preferred_source_of_student_id})
 			&& defined($c->param($ce->{preferred_source_of_student_id})))
 		{
-			$self->{student_id} = $c->param($ce->{preferred_source_of_student_id});
+			$self->{student_id} = $c->param($ce->{LTI}{v1p1}{preferred_source_of_student_id});
 		} else {
 			$self->{student_id} = "";    # fall back to avoid a warning when debug_lti_parameters enabled
 		}
@@ -260,11 +266,13 @@ sub get_credentials {
 			warn "=========== summary ============\n";
 			warn "User id is |$self->{user_id}| (obtained from $user_id_source which was $type_of_source)\n";
 			warn "User mail address is |$self->{email}|\n";
-			warn "strip_address_from_email is |", $ce->{strip_address_from_email} // 0, "|\n";
+			warn "strip_address_from_email is |", $ce->{LTI}{v1p1}{strip_address_from_email} // 0, "|\n";
 			warn "Student id is |$self->{student_id}|\n";
-			warn "preferred_source_of_username is |$ce->{preferred_source_of_username}|\n";
-			warn "fallback_source_of_username is |",    $ce->{fallback_source_of_username}    // 'undefined', "|\n";
-			warn "preferred_source_of_student_id is |", $ce->{preferred_source_of_student_id} // 'undefined', "|\n";
+			warn "preferred_source_of_username is |$ce->{LTI}{v1p1}{preferred_source_of_username}|\n";
+			warn "fallback_source_of_username is |", $ce->{LTI}{v1p1}{fallback_source_of_username} // 'undefined',
+				"|\n";
+			warn "preferred_source_of_student_id is |",
+				$ce->{LTI}{v1p1}{preferred_source_of_student_id} // 'undefined', "|\n";
 			warn "================================\n";
 		}
 		if (!defined($self->{user_id})) {
@@ -312,17 +320,19 @@ sub check_user {
 
 	if (!$User) {
 		my %options;
-		$options{ $ce->{preferred_source_of_username} } = 1 if ($ce->{preferred_source_of_username});
-		$options{ $ce->{fallback_source_of_username} }  = 1 if ($ce->{fallback_source_of_username});
+		$options{ $ce->{LTI}{v1p1}{preferred_source_of_username} } = 1
+			if ($ce->{LTI}{v1p1}{preferred_source_of_username});
+		$options{ $ce->{LTI}{v1p1}{fallback_source_of_username} } = 1
+			if ($ce->{LTI}{v1p1}{fallback_source_of_username});
 
 		# May need to add alternate "spellings" for lis_person_sourcedid
 		my $use_lis_person_sourcedid_options = 0;
-		if (defined($ce->{preferred_source_of_username})
-			&& $ce->{preferred_source_of_username} eq "lis_person_sourcedid")
+		if (defined($ce->{LTI}{v1p1}{preferred_source_of_username})
+			&& $ce->{LTI}{v1p1}{preferred_source_of_username} eq "lis_person_sourcedid")
 		{
 			$use_lis_person_sourcedid_options = 1;
-		} elsif (defined($ce->{fallback_source_of_username})
-			&& $ce->{fallback_source_of_username} eq "lis_person_sourcedid")
+		} elsif (defined($ce->{LTI}{v1p1}{fallback_source_of_username})
+			&& $ce->{LTI}{v1p1}{fallback_source_of_username} eq "lis_person_sourcedid")
 		{
 			$use_lis_person_sourcedid_options = 1;
 		}
@@ -442,11 +452,11 @@ sub authenticate {
 
 	# We need to provide the request URL when verifying the OAuth request.
 	# We use the url request by default, but also allow it to be overriden
-	my $path = $ce->{LTIBasicToThisSiteURL} || ($c->url_for->to_abs =~ s|/?$|/|r);
+	my $path = $ce->{LTI}{v1p1}{BasicToThisSiteURL} || ($c->url_for->to_abs =~ s|/?$|/|r);
 
 	if ($ce->{debug_lti_parameters}) {
-		warn("The following path was reconstructed by WeBWorK.  It should match the path in the LMS:\n");
-		warn("$path\n");
+		warn "The following path was reconstructed by WeBWorK.  It should match the path in the LMS:\n";
+		warn "$path\n";
 	}
 
 	# We also try a version without the trailing / in case that was not
@@ -460,14 +470,14 @@ sub authenticate {
 			$requestHash,
 			request_url     => $path,
 			request_method  => "POST",
-			consumer_secret => $ce->{LTIBasicConsumerSecret},
+			consumer_secret => $ce->{LTI}{v1p1}{BasicConsumerSecret},
 		);
 
 		$altrequest = Net::OAuth->request("request token")->from_hash(
 			$requestHash,
 			request_url     => $altpath,
 			request_method  => "POST",
-			consumer_secret => $ce->{LTIBasicConsumerSecret},
+			consumer_secret => $ce->{LTI}{v1p1}{BasicConsumerSecret},
 		);
 	};
 
@@ -540,7 +550,8 @@ sub authenticate {
 				);
 			}
 		} else {
-			$self->{initial_login} = 1;    # Set here so login gets logged when $ce->{LMSManageUserData} is false
+			# Set here so login gets logged when $ce->{LMSManageUserData} is false
+			$self->{initial_login} = 1;
 		}
 
 		# If we are using grade passback then make sure the data
@@ -590,14 +601,14 @@ sub create_user {
 	}
 
 	my $nr = scalar(@LTIroles);
-	if (!defined($ce->{userRoles}->{ $ce->{LMSrolesToWeBWorKroles}->{ $LTIroles[0] } })) {
+	if (!defined($ce->{userRoles}->{ $ce->{LTI}{v1p1}{LMSrolesToWeBWorKroles}->{ $LTIroles[0] } })) {
 		croak("Cannot find a WeBWorK role that corresponds to the LMS role of " . $LTIroles[0] . ".");
 	}
 
-	my $LTI_webwork_permissionLevel = $ce->{userRoles}->{ $ce->{LMSrolesToWeBWorKroles}->{ $LTIroles[0] } };
+	my $LTI_webwork_permissionLevel = $ce->{userRoles}->{ $ce->{LTI}{v1p1}{LMSrolesToWeBWorKroles}->{ $LTIroles[0] } };
 	if ($nr > 1) {
 		for (my $j = 1; $j < $nr; $j++) {
-			my $wwRole = $ce->{LMSrolesToWeBWorKroles}->{ $LTIroles[$j] };
+			my $wwRole = $ce->{LTI}{v1p1}{LMSrolesToWeBWorKroles}->{ $LTIroles[$j] };
 			next unless defined $wwRole;
 			if ($LTI_webwork_permissionLevel < $ce->{userRoles}->{$wwRole}) {
 				$LTI_webwork_permissionLevel = $ce->{userRoles}->{$wwRole};
@@ -636,8 +647,8 @@ sub create_user {
 	$newUser->student_id($self->{student_id} // "");
 
 	# Allow sites to customize the user
-	if (defined($ce->{LTI_modify_user})) {
-		$ce->{LTI_modify_user}($self, $newUser);
+	if (defined($ce->{LTI}{v1p1}{modify_user})) {
+		$ce->{LTI}{v1p1}{modify_user}($self, $newUser);
 	}
 
 	$db->addUser($newUser);
@@ -682,12 +693,12 @@ sub create_user {
 	$db->addGlobalUserAchievement($globalUserAchievement);
 
 	# Give schools the chance to modify newly added sets
-	if (defined($ce->{LTI_modify_user_set})) {
+	if (defined($ce->{LTI}{v1p1}{modify_user_set})) {
 		foreach my $globalSet (@setsToAssign) {
 			my $userSet = $db->getUserSet($userID, $globalSet->set_id);
 			next unless $userSet;
 
-			$ce->{LTI_modify_user_set}($self, $globalSet, $userSet);
+			$ce->{LTI}{v1p1}{modify_user_set}($self, $globalSet, $userSet);
 			$db->putUserSet($userSet);
 		}
 	}
@@ -730,8 +741,8 @@ sub maybe_update_user {
 		$tempUser->student_id($self->{student_id} // "");
 
 		# Allow sites to customize the temp user
-		if (defined($ce->{LTI_modify_user})) {
-			$ce->{LTI_modify_user}($self, $tempUser);
+		if (defined($ce->{LTI}{v1p1}{modify_user})) {
+			$ce->{LTI}{v1p1}{modify_user}($self, $tempUser);
 		}
 
 		my @elements = qw(last_name first_name
@@ -803,7 +814,7 @@ sub ok {
 
 	$self->maybe_purge_nonces();
 
-	if ($self->{timestamp} < time() - $ce->{NonceLifeTime}) {
+	if ($self->{timestamp} < time() - $ce->{LTI}{v1p1}{NonceLifeTime}) {
 		if ($ce->{debug_lti_parameters}) {
 			warn("Nonce Expired.  Your NonceLifeTime may be too short");
 		}
@@ -835,9 +846,7 @@ sub ok {
 
 sub maybe_purge_nonces {
 	my $self      = shift;
-	my $c         = $self->{c};
-	my $ce        = $c->ce;
-	my $db        = $c->db;
+	my $db        = $self->{c}->db;
 	my $time      = time;
 	my $lastPurge = $db->getSettingValue('lastNoncePurge');
 
@@ -855,7 +864,6 @@ sub maybe_purge_nonces {
 
 		$db->setSettingValue('lastNoncePurge', $time);
 	}
-
 }
 
 1;
