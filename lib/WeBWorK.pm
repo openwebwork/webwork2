@@ -290,7 +290,7 @@ async sub dispatch {
 			# module we double check this, to be sure that someone isn't taking a
 			# proctored quiz but calling the unproctored ContentGenerator
 			my $urlProducedPath = $urlPath->path();
-			if ($urlProducedPath =~ /proctored_quiz_mode/i) {
+			if ($urlProducedPath =~ /proctored_test_mode/i) {
 				my $proctor_authen_module = WeBWorK::Authen::class($ce, "proctor_module");
 				runtime_use $proctor_authen_module;
 				my $authenProctor = $proctor_authen_module->new($r);
