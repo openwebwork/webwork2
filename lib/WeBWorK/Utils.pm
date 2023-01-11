@@ -76,7 +76,6 @@ our @EXPORT_OK = qw(
 	encode_utf8_base64
 	fisher_yates_shuffle
 	formatDateTime
-	has_aux_files
 	intDateTime
 	list2hash
 	listFilesRecursive
@@ -1219,23 +1218,6 @@ sub sortAchievements {
 sub not_blank ($) {    # check that a string exists and is not blank
 	my $str = shift;
 	return (defined($str) and $str =~ /\S/);
-}
-
-###########################################################
-# If things have worked so far determine if the file might be accompanied by auxiliary files
-
-#
-sub has_aux_files ($) {    #  determine whether a question has auxiliary files
-						   # a path ending in    foo/foo.pg  is assumed to contain auxilliary files
-	my $path = shift;
-	if (not_blank($path)) {
-		my ($dir, $prob) = $path =~ m|([^/]+)/([^/]+)\.pg$|;    # must be a problem file ending in .pg
-		return 1 if (defined($dir) and defined($prob) and $dir eq $prob);
-	} else {
-		warn "This subroutine cannot handle empty paths: |$path|", caller();
-	}
-	return 0;                                                   # no aux files with this .pg file
-
 }
 
 sub is_restricted {

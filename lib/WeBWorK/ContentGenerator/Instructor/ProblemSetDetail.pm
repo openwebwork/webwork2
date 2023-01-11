@@ -2528,8 +2528,7 @@ sub body {
 				type => 'instructor_problem_editor_withset_withproblem',
 				args => { courseID => $courseID, setID => $setID, problemID => 0 }
 			);
-			my $editHeaderLink =
-				$self->systemLink($editHeaderPage, params => { file_type => $headerType, make_local_copy => 1 });
+			my $editHeaderLink = $self->systemLink($editHeaderPage, params => { file_type => $headerType });
 
 			my $viewHeaderPage =
 				$urlpath->new(type => $headerModules{$headerType}, args => { courseID => $courseID, setID => $setID });
@@ -2725,7 +2724,7 @@ sub body {
 					type => 'instructor_problem_editor_withset_withproblem',
 					args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID }
 				);
-				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
+				$editProblemLink = $self->systemLink($editProblemPage);
 				$viewProblemPage = $urlpath->new(
 					type => 'gateway_quiz',
 					args => {
@@ -2751,7 +2750,7 @@ sub body {
 					type => 'instructor_problem_editor_withset_withproblem',
 					args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID }
 				);
-				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
+				$editProblemLink = $self->systemLink($editProblemPage);
 				# FIXME: should we have an "act as" type link here when editing for multiple users?
 				$viewProblemPage = $urlpath->new(
 					type => 'problem_detail',

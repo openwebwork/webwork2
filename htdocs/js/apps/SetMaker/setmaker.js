@@ -495,11 +495,6 @@
 					container.innerHTML = data.pg_flags.comment;
 					iframe.after(container);
 				}
-				if (data.warnings) {
-					const container = document.createElement('div');
-					container.innerHTML = data.warnings;
-					iframe.after(container);
-				}
 				iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe);
 				iframe.addEventListener('load', () => resolve());
 			}

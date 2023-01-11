@@ -83,7 +83,9 @@ my $config = LoadFile($config_file);
 # Note: Don't watch all of the webwork htdocs directory.  If the htdocs/tmp directory is watched, then any time a file
 # is written in htdocs/tmp by a request the server will reload.  This would cause that request to fail.
 # Also watch the webwork/conf directory.
-push(@watch, "$webwork_root/lib", "$webwork_root/htdocs/js", "$webwork_root/htdocs/themes","$webwork_root/conf");
+push(@watch,
+	"$webwork_root/lib",           "$webwork_root/templates", "$webwork_root/htdocs/js",
+	"$webwork_root/htdocs/themes", "$webwork_root/conf");
 
 # Add the pg lib and pg htdocs directory if they are readable.
 push(@watch, "$config->{pg_dir}/lib")    if -r "$config->{pg_dir}/lib";

@@ -64,6 +64,7 @@ use WebworkWebservice::SetActions;
 use WebworkWebservice::CourseActions;
 use WebworkWebservice::ProblemActions;
 use FormatRenderedProblem;
+use HardcopyRenderedProblem;
 
 =head2 new (constructor)
 
@@ -99,8 +100,6 @@ sub error_string {
 	$self->{error_string} = $string if defined $string && $string =~ /\S/;
 	return $self->{error_string};
 }
-
-=over
 
 =head2 rpc_execute
 
@@ -159,11 +158,15 @@ async sub rpc_execute {
 	return $self->return_object($result);
 }
 
+=over
+
 =item formatRenderedProblem
 
 This is called by WeBWorK::ContentGenerator::RenderViaRPC::pre_header_initialize
 to format the return result of the WebworkWebservice::renderProblem method.
-This method just calls FormatRenderedProblem::formatRenderedProblem.
+This method calls HardcopyRenderedProblem::hardcopyRenderedProblem if the
+outputformat is tex or pdf, and calls FormatRenderedProblem::formatRenderedProblem
+otherwise.
 
 =back
 
@@ -171,6 +174,8 @@ This method just calls FormatRenderedProblem::formatRenderedProblem.
 
 sub formatRenderedProblem {
 	my $self = shift;
+	return HardcopyRenderedProblem::hardcopyRenderedProblem($self)
+		if $self->{inputs_ref}{outputformat} eq 'tex' || $self->{inputs_ref}{outputformat} eq 'pdf';
 	return FormatRenderedProblem::formatRenderedProblem($self);
 }
 
@@ -247,6 +252,7 @@ sub command_permission {
 		changeUserPassword => 'modify_student_data',
 		getCourseSettings  => 'access_instructor_tools',
 		updateSetting      => 'manage_course_files',
+		saveFile           => 'modify_problem_sets',
 
 		# WebworkWebservice::LibraryActions
 		listLibraries         => 'access_instructor_tools',
