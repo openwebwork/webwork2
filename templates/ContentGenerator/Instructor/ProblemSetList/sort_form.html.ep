@@ -1,0 +1,30 @@
+<div>
+	<div class="row mb-2">
+		<%= label_for sort_select_1 => maketext('Sort by') . ':', class => 'col-form-label col-form-label-sm',
+			style => 'width:4.5rem' =%>
+		<div class="col-auto">
+			<%= select_field 'action.sort.primary' => [
+					[ maketext('Set Name')    => 'set_id' ],
+					[ maketext('Open Date')   => 'open_date' ],
+					[ maketext('Close Date')  => 'due_date', selected => undef ],
+					[ maketext('Answer Date') => 'answer_date' ],
+					[ maketext('Visibility')  => 'visible' ]
+				],
+				id => 'sort_select_1', class   => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for sort_select_2 => maketext('Then by') . ':', class => 'col-form-label col-form-label-sm',
+			style => 'width:4.5rem' =%>
+		<div class="col-auto">
+			<%= select_field 'action.sort.secondary' => [
+					[ maketext('Set Name')    => 'set_id' ],
+					[ maketext('Open Date')   => 'open_date', selected => undef],
+					[ maketext('Close Date')  => 'due_date' ],
+					[ maketext('Answer Date') => 'answer_date' ],
+					[ maketext('Visibility')  => 'visible' ]
+				],
+				id => 'sort_select_2', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+</div>

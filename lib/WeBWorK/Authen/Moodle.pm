@@ -52,7 +52,7 @@ sub new {
 # (this is similar to what happens when a guest user is selected.)
 sub get_credentials {
 	my $self = shift;
-	my $r    = $self->{r};
+	my $c    = $self->{c};
 
 	my $super_result = $self->SUPER::get_credentials;
 	if ($super_result) {
@@ -98,7 +98,7 @@ sub site_fixup {
 # this is overridden to accommodate this.
 sub checkPassword {
 	my ($self, $userID, $possibleClearPassword) = @_;
-	my $db = $self->{r}->db;
+	my $db = $self->{c}->db;
 
 	debug("Moodle module is doing the password checking.\n");
 
@@ -166,14 +166,14 @@ sub init_mdl_session {
 	my $self = shift;
 
 	# version-specific stuff
-	$self->{moodle17}          = $self->{r}->ce->{authen}{moodle_options}{moodle17};
+	$self->{moodle17}          = $self->{c}->ce->{authen}{moodle_options}{moodle17};
 	$self->{sql_session_table} = $self->{moodle17} ? "sessions2" : "sessions";
 	$self->{sql_data_field}    = $self->{moodle17} ? "sessdata"  : "data";
 
 	$self->{mdl_dbh} = DBI->connect_cached(
-		$self->{r}->ce->{authen}{moodle_options}{dsn},
-		$self->{r}->ce->{authen}{moodle_options}{username},
-		$self->{r}->ce->{authen}{moodle_options}{password},
+		$self->{c}->ce->{authen}{moodle_options}{dsn},
+		$self->{c}->ce->{authen}{moodle_options}{username},
+		$self->{c}->ce->{authen}{moodle_options}{password},
 		{
 			PrintError => 0,
 			RaiseError => 1,
@@ -188,10 +188,10 @@ sub fetch_moodle_session {
 	# Note that we don't worry about the user being in this course at this point.
 	# That is taken care of in Schema::Moodle::User.
 	my ($self) = @_;
-	my $r      = $self->{r};
-	my $db     = $r->db;
+	my $c      = $self->{c};
+	my $db     = $c->db;
 
-	my $cookie = $r->req->cookie('MoodleSession');
+	my $cookie = $c->req->cookie('MoodleSession');
 	return unless $cookie;
 
 	my $session_table = $self->prefix_table($self->{sql_session_table});
@@ -219,10 +219,10 @@ sub fetch_moodle_session {
 sub update_moodle_session {
 	# extend the timeout of the current moodle session, if one exists.
 	my ($self) = @_;
-	my $r      = $self->{r};
-	my $db     = $r->db;
+	my $c      = $self->{c};
+	my $db     = $c->db;
 
-	my $cookie = $r->req->cookie('MoodleSession');
+	my $cookie = $c->req->cookie('MoodleSession');
 	return unless $cookie;
 
 	my $config_table = $self->prefix_table("config");
@@ -244,8 +244,8 @@ sub update_moodle_session {
 
 sub prefix_table {
 	my ($self, $base) = @_;
-	if (defined $self->{r}->ce->{authen}{moodle_options}{table_prefix}) {
-		return $self->{r}->ce->{authen}{moodle_options}{table_prefix} . $base;
+	if (defined $self->{c}->ce->{authen}{moodle_options}{table_prefix}) {
+		return $self->{c}->ce->{authen}{moodle_options}{table_prefix} . $base;
 	} else {
 		return $base;
 	}

@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::AchievementEvaluator;
-use base qw(WeBWorK);
+use Mojo::Base 'Exporter', -signatures;
 
 =head1 NAME
 
@@ -22,35 +22,26 @@ use base qw(WeBWorK);
 
 =cut
 
-use strict;
-use warnings;
-use WeBWorK::CGI;
-use WeBWorK::Utils qw(before after readFile sortAchievements nfreeze_base64 thaw_base64);
-use WeBWorK::Utils::Tags;
 use DateTime;
 
+use WeBWorK::Utils qw(sortAchievements nfreeze_base64 thaw_base64);
+use WeBWorK::Utils::Tags;
 use WWSafe;
 
-sub checkForAchievements {
+our @EXPORT_OK = qw(checkForAchievements);
 
-	our $problem = shift;
-	my $pg      = shift;
-	my $r       = shift;
-	my %options = @_;
-	my $db      = $r->db;
-	my $ce      = $r->ce;
-
-	my $course_display_tz = $ce->{siteDefaults}{timezone};
-	# the following line from Utils.pm
-	$course_display_tz ||= "local";    # do our best to provide default vaules
+sub checkForAchievements ($problem_in, $pg, $c, %options) {
+	our $problem = $problem_in;
+	my $db = $c->db;
+	my $ce = $c->ce;
 
 	# Date and time for course timezone (may differ from the server timezone)
 	# Saved into separate array
 	# https://metacpan.org/pod/DateTime
-	my $dtCourseTime = DateTime->from_epoch(epoch => time(), time_zone => $course_display_tz);
+	my $dtCourseTime = DateTime->from_epoch(epoch => time(), time_zone => $ce->{siteDefaults}{timezone} || 'local');
 
-	#set up variables and get achievements
-	my $cheevoMessage = '';
+	# Set up variables and get achievements
+	my $cheevoMessage = $c->c;
 	my $user_id       = $problem->user_id;
 	my $set_id        = $problem->set_id;
 
@@ -98,7 +89,7 @@ sub checkForAchievements {
 		$dtCourseTime->month, $dtCourseTime->year, $dtCourseTime->day_of_week
 	);
 
-	my $compartment = new WWSafe;
+	my $compartment = WWSafe->new;
 
 	#initialize things that are ""
 	if (not $achievementPoints) {
@@ -170,7 +161,7 @@ sub checkForAchievements {
 	if ($isGatewaySet) {
 		$problem = undef;
 	} else {
-		my $templateDir = $ce->{courseDirs}->{templates};
+		my $templateDir = $ce->{courseDirs}{templates};
 		$tags = WeBWorK::Utils::Tags->new($templateDir . '/' . $problem->source_file());
 	}
 
@@ -193,14 +184,13 @@ sub checkForAchievements {
 		$globalData $counter $nextLevelPoints $set $achievementPoints $tags @courseDateTime));
 
 	#load any preamble code
-	# this line causes the whole file to be read into one string
-	local $/;
 	my $preamble = '';
 	my $source;
-	if (-e "$ce->{courseDirs}->{achievements}/$ce->{achievementPreambleFile}") {
-		open(PREAMB, '<', "$ce->{courseDirs}->{achievements}/$ce->{achievementPreambleFile}");
-		$preamble = <PREAMB>;
-		close(PREAMB);
+	if (-e "$ce->{courseDirs}{achievements}/$ce->{achievementPreambleFile}") {
+		local $/;
+		open(my $PREAMB, '<', "$ce->{courseDirs}{achievements}/$ce->{achievementPreambleFile}");
+		$preamble = <$PREAMB>;
+		close($PREAMB);
 	}
 	#loop through the various achievements, see if they have been obtained,
 	foreach my $achievement (@achievements) {
@@ -223,11 +213,12 @@ sub checkForAchievements {
 		$maxCounter = $achievement->max_counter;
 
 		#check the achievement using Safe
-		my $sourceFilePath = $ce->{courseDirs}->{achievements} . '/' . $achievement->test;
+		my $sourceFilePath = $ce->{courseDirs}{achievements} . '/' . $achievement->test;
 		if (-e $sourceFilePath) {
-			open(SOURCE, '<', $sourceFilePath);
-			$source = <SOURCE>;
-			close(SOURCE);
+			local $/ = undef;
+			open(my $SOURCE, '<', $sourceFilePath);
+			$source = <$SOURCE>;
+			close($SOURCE);
 		} else {
 			warn('Couldnt find achievement evaluator $sourceFilePath');
 			next;
@@ -250,41 +241,8 @@ sub checkForAchievements {
 				$globalUserAchievement->next_level_points($nextLevelPoints);
 			}
 
-			#build the cheevo message. New level messages are slightly different
-			my $imgSrc = $ce->{server_root_url};
-			if ($achievement->{icon}) {
-				$imgSrc .= $ce->{courseURLs}->{achievements} . "/" . $achievement->{icon};
-			} else {
-				$imgSrc .= $ce->{webworkURLs}->{htdocs} . "/images/defaulticon.png";
-			}
-
-			$cheevoMessage .= CGI::start_div({
-				class       => 'cheevo-toast toast hide',
-				role        => 'alert',
-				aria_live   => 'polite',
-				aria_atomic => 'true'
-			});
-			$cheevoMessage .= CGI::start_div({ class => 'toast-body d-flex align-items-center' });
-
-			$cheevoMessage .= CGI::img({ src => $imgSrc, alt => 'Achievement Icon' });
-
-			$cheevoMessage .= CGI::start_div({ class => 'cheevopopuptext' });
-			if ($achievement->category eq 'level') {
-				$cheevoMessage = $cheevoMessage . CGI::h2("$achievement->{name}");
-				# Print the description as part of the message if we are using items.
-				$cheevoMessage .=
-					CGI::div($ce->{achievementItemsEnabled}
-						? $achievement->{description}
-						: $r->maketext("Congratulations, you earned a new level!"));
-			} else {
-				$cheevoMessage .= CGI::h2("$achievement->{name}");
-				$cheevoMessage .= CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
-			}
-			$cheevoMessage .= CGI::end_div();
-
-			$cheevoMessage .= q{<button type="button" class="btn-close me-2 m-auto"
-								data-bs-dismiss="toast" aria-label="Close"></button>};
-			$cheevoMessage .= CGI::end_div() . CGI::end_div();
+			# Construct the cheevo message using the cheevoMessage template.
+			push(@$cheevoMessage, $c->include('AchievementEvaluator/cheevoMessage', achievement => $achievement));
 
 			my $points = $achievement->points;
 			#just in case points is an ininitialzied variable
@@ -306,17 +264,16 @@ sub checkForAchievements {
 	$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
 	$db->putGlobalUserAchievement($globalUserAchievement);
 
-	if ($cheevoMessage) {
-		$cheevoMessage = CGI::div(
-			{
-				class => "cheevo-toast-container toast-container "
-					. "position-absolute top-0 start-50 translate-middle-x p-3"
-			},
-			$cheevoMessage
+	if (@$cheevoMessage) {
+		return $c->tag(
+			'div',
+			class =>
+				'cheevo-toast-container toast-container position-absolute top-0 start-50 translate-middle-x p-3',
+			$cheevoMessage->join('')
 		);
 	}
 
-	return $cheevoMessage;
+	return '';
 }
 
 1;

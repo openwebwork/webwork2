@@ -1,0 +1,20 @@
+% if (defined $c->{set} && $authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+	<h2 class="d-flex align-items-center justify-content-center">
+		<%= maketext('Set Info') =%>
+		<%= link_to maketext('Edit') => $c->systemLink(
+				url_for('instructor_problem_editor_withset_withproblem', setID => $c->{set}->set_id, problemID => 0),
+				params => { file_type => 'set_header' }
+			),
+			target => 'WW_Editor', class => 'btn btn-sm btn-info m-1' =%>
+	</h2>
+% } else {
+	<h2><%= maketext('Set Info') %></h2>
+% }
+%
+% if ($c->{pg}{flags}{error_flag}) {
+	<div class="alert alert-danger p-1 mb-0">
+		<%= $c->errorOutput($c->{pg}{errors}, $c->{pg}{body_text}) =%>
+	</div>
+% } else {
+	<%== $c->{pg}{body_text} =%>
+% }

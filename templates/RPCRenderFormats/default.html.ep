@@ -61,7 +61,7 @@
 						</div>
 					% }
 					%== $LTIGradeMessage
-
+					%
 					%= hidden_field answersSubmitted         => 1
 					%= hidden_field sourceFilePath           => $sourceFilePath
 					%= hidden_field problemSource            => $problemSource
@@ -90,7 +90,7 @@
 					% if ($formatName eq 'debug' && $ws->{inputs_ref}{clientDebug}) {
 						%= hidden_field clientDebug => $ws->{inputs_ref}{clientDebug}
 					% }
-
+					%
 					<div class="submit-buttons-container col-12 mb-2">
 						% # Submit buttons (all are shown by default)
 						% if ($showPreviewButton ne '0') {

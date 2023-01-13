@@ -1,0 +1,78 @@
+% use WeBWorK::Utils qw(readDirectory listFilesRecursive);
+%
+% # Show the confirmation dialog box
+<div class="card w-75 mx-auto">
+	<div class="card-body">
+		<div class="mb-3">
+			<b><%= maketext('Warning') %>:</b> <%= maketext('You have requested that the following items be deleted') %>
+		</div>
+		% # Look up the files to be deleted, and for directories add a trailing slash and the contents of the directory.
+		<ul>
+			% for my $file (@$files) {
+				% if (defined $c->checkPWD("$c->{pwd}/$file", 1)) {
+					<li>
+						% if (-l "$dir/$file") {
+							<%= $file %>@
+						% } elsif (-d "$dir/$file") {
+							% my @contents;
+							% my $dcount = 0;
+							% for my $item (readDirectory("$dir/$file")) {
+								% next if $item eq '.' || $item eq '..';
+								% push @contents, begin
+									% if (-l "$dir/$file/$item") {
+										<div class="ms-3"><%= $item %>@</div>
+									% } elsif (-d "$dir/$file/$item") {
+										% my $count = scalar(listFilesRecursive("$dir/$file/$item", '.*'));
+										% $dcount += $count;
+										<div class="d-flex justify-content-between ms-3 me-5">
+											<%= $item %>/
+											<small><i><%= maketext('([quant,_1,item])', $count) %></i></small>
+										</div>
+									% } else {
+										<div class="ms-3"><%= $item %></div>
+									% }
+								% end
+								% $dcount += 1;
+							% }
+							%
+							<div class="d-flex justify-content-between me-4">
+								<%= $file %>/
+								<small><i><%= maketext('([quant,_1,item] total)', $dcount) %></i></small>
+							</div>
+							% if (@contents > 15) {
+								<%= c(map { $_->() } @contents[ 0 .. 10 ])->join('') =%>
+								<div class="ms-3">&nbsp; .</div>
+								<div class="ms-3">&nbsp; .</div>
+								<div class="ms-3">&nbsp; .</div>
+							% } else {
+								<%= c(map { $_->() } @contents)->join('') =%>
+							% }
+						% } else {
+							<%= $file %>
+						% }
+					</li>
+				% }
+			% }
+		</ul>
+		% if (grep { -d "$dir/$_" } @$files) {
+			<p>
+				<%= maketext(
+					'Some of these files are directories. Only delete directories if you really know what you are '
+						. 'doing. You can seriously damage your course if you delete the wrong thing.') =%>
+			</p>
+		% }
+		<p class="alert alert-danger p-1 mb-3">
+			<%= maketext('There is no undo for deleting files or directories!') =%>
+		</p>
+		<p><%= maketext('Really delete the items listed above?') %></p>
+		<div class="d-flex justify-content-evenly">
+			<%= submit_button maketext('Cancel'), name => 'action', class => 'btn btn-sm btn-secondary' =%>
+			<%= submit_button maketext('Delete'), name => 'action', class => 'btn btn-sm btn-secondary' =%>
+		</div>
+	</div>
+</div>
+<%= hidden_field confirmed => 'Delete' =%>
+% for (@$files) {
+	<%= hidden_field files => $_ =%>
+% }
+<%= $c->HiddenFlags =%>

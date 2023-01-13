@@ -36,20 +36,20 @@ sub caliperEnabled {
 }
 
 sub sendEvent {
-	my ($self, $r, $event_hash) = @_;
+	my ($self, $c, $event_hash) = @_;
 
-	return $self->sendEvents($r, [$event_hash]);
+	return $self->sendEvents($c, [$event_hash]);
 }
 
 sub sendEvents {
-	my ($self, $r, $array_of_events) = @_;
+	my ($self, $c, $array_of_events) = @_;
 	return 0 unless $self->caliperEnabled();
 
 	for my $event_hash (@$array_of_events) {
-		Caliper::Event::add_defaults($r, $event_hash);
+		Caliper::Event::add_defaults($c, $event_hash);
 	}
 
-	my $ce           = $r->{ce};
+	my $ce           = $c->ce;
 	my $resource_iri = Caliper::ResourseIri->new($ce);
 	my $async        = HTTP::Async->new;
 	$async->timeout(5);

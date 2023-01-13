@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::RenderViaRPC;
-use base qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
 =head1 NAME
 
@@ -32,62 +32,40 @@ result is returned in the JSON or HTML format as determined by the request type.
 
 =cut
 
-use strict;
-use warnings;
-
-use Future::AsyncAwait;
-use JSON;
-
 use WebworkWebservice;
 
-async sub pre_header_initialize {
-	my $self = shift;
-	my $r    = $self->r;
+async sub pre_header_initialize ($c) {
+	$c->{wantsjson} = ($c->param('outputformat') // '') eq 'json' || ($c->param('send_pg_flags') // 0);
 
-	$self->{wantsjson} = ($r->param('outputformat') // '') eq 'json' || ($r->param('send_pg_flags') // 0);
-
-	unless ($r->authen->was_verified) {
-		$self->{output} =
-			$self->{wantsjson}
-			? JSON->new->utf8->encode({ error => 'render_rpc: authentication failed.' })
-			: 'render_rpc: authentication failed.';
+	unless ($c->authen->was_verified) {
+		$c->{output} =
+			$c->{wantsjson} ? { error => 'render_rpc: authentication failed.' } : 'render_rpc: authentication failed.';
 		return;
 	}
 
-	$r->param('displayMode', 'tex') if ($r->param('outputformat') eq 'pdf' || $r->param('outputformat') eq 'tex');
+	$c->param('displayMode', 'tex') if ($c->param('outputformat') eq 'pdf' || $c->param('outputformat') eq 'tex');
 
-	# Call the WebworkWebservice to render the problem and store the result in $self->return_object.
-	my $rpc_service = WebworkWebservice->new($r);
+	# Call the WebworkWebservice to render the problem and store the result in $c->return_object.
+	my $rpc_service = WebworkWebservice->new($c);
 	await $rpc_service->rpc_execute('renderProblem');
 	if ($rpc_service->error_string) {
-		$self->{output} =
-			$self->{wantsjson}
-			? JSON->new->utf8->encode({ error => $rpc_service->error_string })
-			: $rpc_service->error_string;
+		$c->{output} = $c->{wantsjson} ? { error => $rpc_service->error_string } : $rpc_service->error_string;
 		return;
 	}
 
-	# Format the return in the requested format.
-	$self->{output} = $rpc_service->formatRenderedProblem;
+	# Format the return in the requested format.  A response is rendered unless there is an error.
+	$c->{output} = $rpc_service->formatRenderedProblem;
+
 	return;
 }
 
-# Override the default ContentGenerator header method.  It always returns 0 and sets the content type to text/html.
-# When hardcopy generation occurs, the result may have already been rendered.  Return the response code in that case.
-sub header {
-	my $self = shift;
-	return $self->r->res->code || 0;
-}
+sub content ($c) {
+	# If there were no errors a response will have been rendered.  Return in that case.
+	return if $c->res->code;
 
-async sub content {
-	my $self = shift;
-
-	# Hardcopy generation may have already rendered a response.  Stop here in that case.
-	return if $self->r->res->code;
-
-	$self->r->res->headers->content_type(($self->{wantsjson} ? 'application/json;' : 'text/html;') . ' charset=utf-8');
-	print $self->{output};
-	return 0;
+	# Handle rendering of errors.
+	return $c->render(json => $c->{output}) if $c->{wantsjson};
+	return $c->render(text => $c->{output});
 }
 
 1;

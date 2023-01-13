@@ -286,6 +286,8 @@ sub searchLib {
 		$self->{library_textbook}    = $rh->{library_textbook};
 		$self->{library_textchapter} = $rh->{library_textchapter};
 		$self->{library_textsection} = $rh->{library_textsection};
+		$self->{includeOPL}          = $rh->{includeOPL};
+		$self->{includeContrib}      = $rh->{includeContrib};
 		my $count = WeBWorK::Utils::ListingDB::countDBListings($self);
 		$out->{text}   = 'Count done.';
 		$out->{ra_out} = [$count];

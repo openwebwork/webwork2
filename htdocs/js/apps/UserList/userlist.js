@@ -25,4 +25,30 @@
 		export_select_target.addEventListener('change', classlist_add_export_elements);
 		classlist_add_export_elements();
 	}
+
+	// Submit the user list form when a sort header is clicked or enter or space is pressed when it has focus.
+	const userListForm = document.forms['userlist'];
+	const currentAction = document.getElementById('current_action');
+
+	if (userListForm && currentAction) {
+		for (const header of document.querySelectorAll('.sort-header')) {
+			const submitSortMethod = (e) => {
+				e.preventDefault();
+
+				currentAction.value = '';
+
+				const sortInput = document.createElement('input');
+				sortInput.name = 'labelSortMethod';
+				sortInput.value = header.dataset.sortField;
+				userListForm.append(sortInput);
+
+				userListForm.submit();
+			};
+
+			header.addEventListener('click', submitSortMethod);
+			header.addEventListener('keydown', (e) => {
+				if (e.key === ' ' || e.key === 'Enter') submitSortMethod(e);
+			});
+		}
+	}
 })();

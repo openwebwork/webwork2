@@ -1,0 +1,30 @@
+% # Note that this template is used by both WeBWorK::ContentGenerator::Instructor::Stats and
+% # WeBWorK::ContentGenerator::Instructor::StudentProgress.
+%
+% use WeBWorK::ContentGenerator::Grades;
+%
+% my $studentRecord = $db->getUser($c->{studentID});
+% unless ($studentRecord) {
+	<div class="alert alert-danger p-1"><%= maketext('Record for user [_1] not found.', $c->{studentID}) %></div>
+	% last;
+% }
+%
+% my $email  = $studentRecord->email_address;
+% if ($email) {
+	<%= link_to $email => "mailto:$email" =%>
+	<br>
+% }
+% if ($studentRecord->section ne '') {
+	<%= maketext('Section') =%>: <%= $studentRecord->section %>
+	<br>
+% }
+% if ($studentRecord->recitation ne '') {
+	<%= maketext('Recitation') =%>: <%= $studentRecord->recitation %>
+	<br>
+% }
+% if ($authz->hasPermissions(param('user'), 'become_student')) {
+	<%= maketext('Act as:') =%>
+	<%= link_to $studentRecord->user_id =>
+		$c->systemLink(url_for('set_list'), params => { effectiveUser => $c->{studentID} }) =%>
+% }
+<%= WeBWorK::ContentGenerator::Grades::displayStudentStats($c, $c->{studentID}) =%>

@@ -6,6 +6,8 @@
 // The timer code relies on the existence of data attributes for the gwTimer div created by GatewayQuiz.pm.
 
 (() => {
+	if (!document.gwquiz) return;
+
 	// Gateway timer
 	const timerDiv = document.getElementById('gwTimer'); // The timer div element
 	let actuallySubmit = false; // This needs to be set to true to allow an actual submission.

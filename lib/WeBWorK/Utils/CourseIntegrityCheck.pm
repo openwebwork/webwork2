@@ -17,17 +17,21 @@ package WeBWorK::Utils::CourseIntegrityCheck;
 
 =head1 NAME
 
-WeBWorK::Utils::CourseIntegrityCheck - check that course  database tables agree with database schema and
-that course directory structure is correct.
+WeBWorK::Utils::CourseIntegrityCheck - check that course  database tables agree
+with database schema and that course directory structure is correct.
 
 =cut
 
 use strict;
 use warnings;
+
 use WeBWorK::Debug;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
 use WeBWorK::PG::IO;
-use WeBWorK::CGI;
+
+# Developer note:  This file should not format messages in html.  Instead return an array of tuples.  Each tuple should
+# contain the message components, and the last element of the tuple should be 0 or 1 to indicate failure or success
+# respectively.  See the updateCourseTables, updateTableFields, and updateCourseDirectories methods.
 
 use constant {    # constants describing the comparison of two hashes.
 	ONLY_IN_A         => 0,
@@ -38,10 +42,10 @@ use constant {    # constants describing the comparison of two hashes.
 ################################################################################
 
 sub new {
-	my $invocant = shift;
-	my $class    = ref $invocant || $invocant;
-	my $self     = bless {}, $class;
-	$self->init(@_);
+	my ($invocant, %options) = @_;
+	my $class = ref $invocant || $invocant;
+	my $self  = bless {}, $class;
+	$self->init(%options);
 	return $self;
 }
 
@@ -62,19 +66,22 @@ sub init {
 	$self->{confirm_sub} = $options{confirm_sub} || \&ask_permission_stdio;
 	$self->{ce}          = $options{ce};
 	my $dbLayoutName = $self->{ce}->{dbLayoutName};
-	$self->{db} = new WeBWorK::DB($self->{ce}->{dbLayouts}->{$dbLayoutName});
+	$self->{db} = WeBWorK::DB->new($self->{ce}{dbLayouts}->{$dbLayoutName});
+
+	return;
 }
 
 sub ce      { return shift->{ce} }
 sub db      { return shift->{db} }
 sub dbh     { return shift->{dbh} }
-sub verbose { my $sub = shift->{verbose_sub}; return &$sub(@_) }
-sub confirm { my $sub = shift->{confirm_sub}; return &$sub(@_) }
+sub verbose { my ($self, @args) = @_; my $sub = $self->{verbose_sub}; return &$sub(@args) }
+sub confirm { my ($self, @args) = @_; my $sub = $self->{confirm_sub}; return &$sub(@args) }
 
 sub DESTROY {
 	my ($self) = @_;
 	$self->unlock_database;
 	$self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+	return;
 }
 
 ##################################################################
@@ -93,19 +100,17 @@ sub checkCourseTables {
 	my $str       = '';
 	my $tables_ok = 1;
 	my %dbStatus  = ();
-	#################################
-	# fetch schema from course environment and search database
-	# for corresponding tables.
-	##########################################################
+
+	# Fetch schema from course environment and search database for corresponding tables.
 	my $db = $self->db;
 	my $ce = $self->{ce};
 	$self->lock_database;
 	foreach my $table (sort keys %$db) {
-		next if $db->{$table}{params}{non_native};    # skip non-native tables
+		next if $db->{$table}{params}{non_native};    # Skip non-native tables
 		my $table_name =
 			(exists $db->{$table}->{params}->{tableOverride}) ? $db->{$table}->{params}->{tableOverride} : $table;
 		my $database_table_exists = ($db->{$table}->tableExists) ? 1 : 0;
-		if ($database_table_exists) {                 # exists means the table can be described;
+		if ($database_table_exists) {                 # Exists means the table can be described
 			my ($fields_ok, $fieldStatus) = $self->checkTableFields($courseName, $table);
 			if ($fields_ok) {
 				$dbStatus{$table} = [ SAME_IN_A_AND_B() ];
@@ -118,22 +123,18 @@ sub checkCourseTables {
 			$dbStatus{$table} = [ ONLY_IN_A(), ];
 		}
 	}
-	##########################################################
-	# fetch fetch corresponding tables in the database and
-	# search for corresponding schema entries.
-	##########################################################
 
+	# Fetch fetch corresponding tables in the database and search for corresponding schema entries.
 	my $dbh = $self->dbh;
-	my $tablePrefix =
-		"${courseName}\\_";    # _ represents any single character in the MySQL like statement so we escape it
-	my $stmt       = "show tables like '${tablePrefix}%'";    # mysql request
-	my $result     = $dbh->selectall_arrayref($stmt);
-	my @tableNames = map {@$_} @$result;                      # drill down in the result to the table name level
+	# _ represents any single character in the MySQL like statement so we escape it
+	my $tablePrefix = "${courseName}\\_";
+	my $stmt        = "show tables like '${tablePrefix}%'";    # mysql request
+	my $result      = $dbh->selectall_arrayref($stmt);
+	my @tableNames  = map {@$_} @$result;                      # Drill down in the result to the table name level
 
 	# Table names are of the form courseID_table (with an underscore). So if we have two courses mth101 and
 	# mth101_fall09 when we check the tables for mth101 we will inadvertantly pick up the tables for mth101_fall09.
 	# Thus we find all courseID's and exclude the extraneous tables.
-
 	my @courseIDs  = listCourses($ce);
 	my @similarIDs = ();
 	foreach my $courseID (@courseIDs) {
@@ -143,9 +144,10 @@ sub checkCourseTables {
 
 OUTER_LOOP:
 	foreach my $table (sort @tableNames) {
-		next unless $table =~ /^${courseName}\_(.*)/; #double check that we only have our course tables and similar ones
+		# Double check that we only have our course tables and similar ones.
+		next unless $table =~ /^${courseName}\_(.*)/;
 
-		foreach my $courseID (@similarIDs) {          #exclude tables with similar but wrong names
+		foreach my $courseID (@similarIDs) {    # Exclude tables with similar but wrong names.
 			next OUTER_LOOP if $table =~ /^${courseID}\_(.*)/;
 		}
 
@@ -155,7 +157,7 @@ OUTER_LOOP:
 		$dbStatus{$schema_name} = [ONLY_IN_B] unless $exists;
 	}
 	$self->unlock_database;
-	return ($tables_ok, \%dbStatus);    # table in both schema & database; found in schema only; found in database only
+	return ($tables_ok, \%dbStatus);
 }
 
 =item $CIchecker-> updateCourseTables($courseName,  $table_names);
@@ -168,24 +170,22 @@ sub updateCourseTables {
 	my ($self, $courseName, $schema_table_names, $delete_table_names) = @_;
 	my $db = $self->db;
 	$self->lock_database;
-	warn 'Programmers: Pass reference to the array of table names to be updated.'
-		unless ref($schema_table_names) eq 'ARRAY';
+	warn 'Pass reference to the array of table names to be updated.' unless ref($schema_table_names) eq 'ARRAY';
 
-	my $msg = '';
+	my @messages;
 
 	# Add tables
 	for my $schema_table_name (sort @$schema_table_names) {
-		next if $db->{$schema_table_name}{params}{non_native};    # skip non-native tables
+		next if $db->{$schema_table_name}{params}{non_native};    # Skip non-native tables
 		my $schema_obj = $db->{$schema_table_name};
 		my $database_table_name =
 			exists $schema_obj->{params}{tableOverride} ? $schema_obj->{params}{tableOverride} : $schema_table_name;
 
 		if ($schema_obj->can('create_table')) {
 			$schema_obj->create_table;
-			$msg .= "Table $schema_table_name created as $database_table_name in database." . CGI::br();
+			push(@messages, [ "Table $schema_table_name created as $database_table_name in database.", 1 ]);
 		} else {
-			$msg .= CGI::span({ class => 'text-danger' },
-				"Skipping creation of '$schema_table_name' table: no create_table method");
+			push(@messages, [ "Skipping creation of '$schema_table_name' table: no create_table method", 0 ]);
 		}
 	}
 
@@ -195,16 +195,14 @@ sub updateCourseTables {
 		# from the table when the database was checked in checkCourseTables and try that.
 		eval { $self->dbh->do("DROP TABLE `${courseName}_$delete_table_name`") };
 		if ($@) {
-			$msg .=
-				CGI::span({ class => 'text-danger' }, "Unable to delete table '$delete_table_name' from database: $@")
-				. CGI::br();
+			push(@messages, [ "Unable to delete table '$delete_table_name' from database: $@", 0 ]);
 		} else {
-			$msg .= "Table '$delete_table_name' deleted from database." . CGI::br();
+			push(@messages, [ "Table '$delete_table_name' deleted from database.", 1 ]);
 		}
 	}
 
 	$self->unlock_database;
-	return $msg;
+	return @messages;
 }
 
 =item  $CIchecker->checkTableFields($courseName, $table);
@@ -218,10 +216,8 @@ sub checkTableFields {
 	my ($self, $courseName, $table) = @_;
 	my $fields_ok   = 1;
 	my %fieldStatus = ();
-	##########################################################
-	# fetch schema from course environment and search database
-	# for corresponding tables.
-	##########################################################
+
+	# Fetch schema from course environment and search database for corresponding tables.
 	my $db = $self->db;
 	my $table_name =
 		(exists $db->{$table}->{params}->{tableOverride}) ? $db->{$table}->{params}->{tableOverride} : $table;
@@ -240,23 +236,22 @@ sub checkTableFields {
 		}
 
 	}
-	##########################################################
-	# fetch fetch corresponding tables in the database and
-	# search for corresponding schema entries.
-	##########################################################
 
-	my $dbh                  = $self->dbh;                           # grab any database handle
-	my $stmt                 = "SHOW COLUMNS FROM `$table_name`";    # mysql request
+	# Fetch corresponding tables in the database and search for corresponding schema entries.
+	my $dbh  = $self->dbh;                           # Get a database handle
+	my $stmt = "SHOW COLUMNS FROM `$table_name`";    # mysql request
+
+	# result is array:  Field | Type | Null | Key | Default | Extra
 	my $result               = $dbh->selectall_arrayref($stmt);
-	my %database_field_names = map { ${$_}[0] => [$_] } @$result;    # drill down in the result to the field name level
-		#  result is array:  Field      | Type     | Null | Key | Default | Extra
+	my %database_field_names = map { ${$_}[0] => [$_] } @$result;    # Drill down in the result to the field name level
+
 	foreach my $field_name (sort keys %database_field_names) {
 		my $exists = exists($schema_override_field_names{$field_name});
 		$fields_ok                = 0           unless $exists;
 		$fieldStatus{$field_name} = [ONLY_IN_B] unless $exists;
 	}
 
-	return ($fields_ok, \%fieldStatus);  # table in both schema & database; found in schema only; found in database only
+	return ($fields_ok, \%fieldStatus);
 }
 
 =item  $CIchecker->updateTableFields($courseName, $table);
@@ -268,7 +263,7 @@ the same as the ones specified by the databaseLayout
 
 sub updateTableFields {
 	my ($self, $courseName, $table, $delete_field_names) = @_;
-	my $msg = '';
+	my @messages;
 
 	# Fetch schema from course environment and search database for corresponding tables.
 	my $db         = $self->db;
@@ -281,7 +276,7 @@ sub updateTableFields {
 		if ($fieldStatus->{$field_name}[0] == ONLY_IN_A) {
 			my $schema_obj = $db->{$table};
 			if ($schema_obj->can('add_column_field') && $schema_obj->add_column_field($field_name)) {
-				$msg .= "Added column '$field_name' to table '$table'" . CGI::br();
+				push(@messages, [ "Added column '$field_name' to table '$table'", 1 ]);
 			}
 		}
 	}
@@ -291,12 +286,12 @@ sub updateTableFields {
 		if ($fieldStatus->{$field_name} && $fieldStatus->{$field_name}[0] == ONLY_IN_B) {
 			my $schema_obj = $db->{$table};
 			if ($schema_obj->can('drop_column_field') && $schema_obj->drop_column_field($field_name)) {
-				$msg .= "Dropped column '$field_name' from table '$table'" . CGI::br();
+				push(@messages, [ "Dropped column '$field_name' from table '$table'", 1 ]);
 			}
 		}
 	}
 
-	return $msg;
+	return @messages;
 }
 
 =item $CIchecker->checkCourseDirectories($courseName);
@@ -307,30 +302,24 @@ permissions.
 =cut
 
 sub checkCourseDirectories {
-	my ($self)             = @_;
-	my $ce                 = $self->{ce};
-	my @webworkDirectories = keys %{ $ce->{webworkDirs} };
-	my @courseDirectories  = keys %{ $ce->{courseDirs} };
-	my $str                = '';
+	my ($self) = @_;
+	my $ce = $self->{ce};
+
 	my @results;
 	my $directories_ok = 1;
-	foreach my $dir (sort @courseDirectories) {
-		my $path   = $ce->{courseDirs}->{$dir};
-		my $status = (-e $path) ? ((-r $path) ? 'r' : '-') . ((-w _ ) ? 'w' : '-') . ((-x _ ) ? 'x' : '-') : "missing";
 
-		#all directories should be readable, writable and executable
-		my $class;
-		if ($status eq 'rwx') {
-			$class = 'text-success';
-		} else {
-			$directories_ok = 0;
-			$class          = 'text-danger';
-		}
+	for my $dir (sort keys %{ $ce->{courseDirs} }) {
+		my $path   = $ce->{courseDirs}{$dir};
+		my $status = -e $path ? (-r $path ? 'r' : '-') . (-w _ ? 'w' : '-') . (-x _ ? 'x' : '-') : 'missing';
 
-		push @results, CGI::li("$dir =>" . CGI::span({ class => $class }, " $path $status <br/>"));
+		# All directories should be readable, writable and executable.
+		my $good = $status eq 'rwx';
+		$directories_ok = 0 if !$good;
+
+		push @results, [ $dir, $path, $good ];
 	}
-	$str = CGI::start_ul() . join(" ", @results) . CGI::end_ul();
-	return ($directories_ok, $str);
+
+	return ($directories_ok, \@results);
 }
 
 =item $CIchecker->updateCourseDirectories($courseName);
@@ -339,68 +328,84 @@ Creates some course directories automatically.
 
 =cut
 
+# FIXME: This method needs work.  It should give better messages, and should at least attempt to fix permissions if
+# possible.  It also should deal with some of the other course directories that it skips.
+
 sub updateCourseDirectories {
-	my $self               = shift;
-	my $ce                 = $self->{ce};
-	my @webworkDirectories = keys %{ $ce->{webworkDirs} };
-	my @courseDirectories  = keys %{ $ce->{courseDirs} };
-	my %updateable_directories =
-		(html_temp => 1, mailmerge => 1, tmpEditFileDir => 1);    #FIXME this is hardwired for the time being.
-	foreach my $dir (sort @courseDirectories) {
-		#HACK for upgrading the achievements directory
-		if ($dir eq "achievements") {
-			my $modelCourseAchievementsDir     = $ce->{webworkDirs}{courses} . "/modelCourse/templates/achievements";
-			my $modelCourseAchievementsHtmlDir = $ce->{webworkDirs}{courses} . "/modelCourse/html/achievements";
+	my $self = shift;
+	my $ce   = $self->{ce};
+
+	my @courseDirectories = keys %{ $ce->{courseDirs} };
+
+	#FIXME this is hardwired for the time being.
+	my %updateable_directories = (html_temp => 1, mailmerge => 1, tmpEditFileDir => 1);
+
+	my @messages;
+
+	for my $dir (sort @courseDirectories) {
+		# Hack for upgrading the achievements directory.
+		if ($dir eq 'achievements') {
+			my $modelCourseAchievementsDir     = "$ce->{webworkDirs}{courses}/modelCourse/templates/achievements";
+			my $modelCourseAchievementsHtmlDir = "$ce->{webworkDirs}{courses}/modelCourse/html/achievements";
 			my $courseAchievementsDir          = $ce->{courseDirs}{achievements};
 			my $courseAchievementsHtmlDir      = $ce->{courseDirs}{achievements_html};
 			my $courseTemplatesDir             = $ce->{courseDirs}{templates};
 			my $courseHtmlDir                  = $ce->{courseDirs}{html};
-			unless (-e $modelCourseAchievementsDir and -e $modelCourseAchievementsHtmlDir) {
-				print CGI::p(
-					{ class => 'text-danger' },
-					"Your modelCourse in the 'courses' directory is out of date or missing. Please update it from "
-						. "webwork/webwork2/courses.dist directory before upgrading the other courses. Cannot find "
-						. "MathAchievements directory $modelCourseAchievementsDir nor MathAchievements picture "
-						. "directory $modelCourseAchievementsHtmlDir"
+			unless (-e $modelCourseAchievementsDir && -e $modelCourseAchievementsHtmlDir) {
+				push(
+					@messages,
+					[
+						'Your modelCourse in the "courses" directory is out of date or missing. Please update it from '
+							. 'webwork/webwork2/courses.dist directory before upgrading the other courses. Cannot find '
+							. "MathAchievements directory $modelCourseAchievementsDir nor MathAchievements picture "
+							. "directory $modelCourseAchievementsHtmlDir",
+						0
+					]
 				);
 			} else {
-				unless (-e $courseAchievementsDir and -e $courseAchievementsHtmlDir) {
-					print CGI::p({ class => 'text-success' },
-						"We'll try to update the achievements directory for $ce->{courseDirs}{root}");
+				unless (-e $courseAchievementsDir && -e $courseAchievementsHtmlDir) {
+					push(@messages,
+						[ "Attempting to update the achievements directory for $ce->{courseDirs}{root}", 1 ]);
 					if (-e $courseAchievementsDir) {
-						print CGI::p({ class => 'text-success' }, 'Achievements directory is already present');
+						push(@messages, [ 'Achievements directory is already present', 1 ]);
 					} else {
-						system 'cp -RPpi $modelCourseAchievementsDir $courseTemplatesDir ';
-						print CGI::p({ class => 'text-success' }, 'Achievements directory created');
+						system "cp -RPpi $modelCourseAchievementsDir $courseTemplatesDir";
+						push(@messages, [ 'Achievements directory created', 1 ]);
 					}
 					if (-e $courseAchievementsHtmlDir) {
-						print CGI::p({ class => 'text-success' }, 'Achievements html directory is already present');
+						push(@messages, [ 'Achievements html directory is already present', 1 ]);
 					} else {
 						system "cp -RPpi $modelCourseAchievementsHtmlDir $courseHtmlDir ";
-						print CGI::p({ class => 'text-success' }, 'Achievements html directory created');
+						push(@messages, [ 'Achievements html directory created', 1 ]);
 					}
 				}
 			}
-			#print "done with achievements for ",$ce->{courseDirs}{root},"<br/>";
-		}    # end HACK for upgrading achivements
+		}
+
 		next unless exists $updateable_directories{$dir};
 		my $path = $ce->{courseDirs}->{$dir};
-		unless (-e $path) {    # if by some unlucky chance the tmpDirectory hasn't been created, create it.
+		unless (-e $path) {    # If the directory does not exist, create it.
 			my $parentDirectory = $path;
-			$parentDirectory =~ s|/$||;         # remove a trailing /
-			$parentDirectory =~ s|/[^/]*$||;    # remove last node
+			$parentDirectory =~ s|/$||;         # Remove a trailing forward slash
+			$parentDirectory =~ s|/[^/]*$||;    # Remove last node
 			my ($perms, $groupID) = (stat $parentDirectory)[ 2, 5 ];
 			if (-w $parentDirectory) {
 				WeBWorK::PG::IO::createDirectory($path, $perms, $groupID)
-					or warn "Failed to create directory at $path.\n";
+					or push(@messages, [ "Failed to create directory at $path.", 0 ]);
 			} else {
-				warn "Permissions error. Can't create directory at $path. Lack write permission on $parentDirectory.\n";
+				push(
+					@messages,
+					[
+						"Permissions error. Can't create directory at $path. "
+							. "Lack write permission on $parentDirectory.",
+						0
+					]
+				);
 			}
-
 		}
 	}
 
-	return ();
+	return \@messages;
 }
 
 ##############################################################################
@@ -414,10 +419,10 @@ sub lock_database {    # lock named 'webwork.dbugrade' times out after 10 second
 	if (not defined $lock_status) {
 		die "Couldn't obtain lock because an error occurred.\n";
 	}
-	if ($lock_status) {
-	} else {
+	if (!$lock_status) {
 		die "Timed out while waiting for lock.\n";
 	}
+	return;
 }
 
 sub unlock_database {
@@ -431,6 +436,7 @@ sub unlock_database {
 	} else {
 		die "Couldn't release lock because the lock is not held by this thread.\n";
 	}
+	return;
 }
 
 ##############################################################################
@@ -441,6 +447,7 @@ sub load_sql_table_list {
 	my $sql_tables_ref = $dbh->selectcol_arrayref("SHOW TABLES");
 	$self->{sql_tables} = {};
 	@{ $self->{sql_tables} }{@$sql_tables_ref} = ();
+	return;
 }
 
 sub register_sql_table {
@@ -448,6 +455,7 @@ sub register_sql_table {
 	my $table = shift;
 	my $dbh   = $self->dbh;
 	$self->{sql_tables}{$table} = ();
+	return;
 }
 
 sub unregister_sql_table {
@@ -455,6 +463,7 @@ sub unregister_sql_table {
 	my $table = shift;
 	my $dbh   = $self->dbh;
 	delete $self->{sql_tables}{$table};
+	return;
 }
 
 sub sql_table_exists {
@@ -474,13 +483,14 @@ sub ask_permission_stdio {
 
 	while (1) {
 		print "$prompt $options ";
-		my $resp = <STDIN>;
+		my $resp = <ARGV>;
 		chomp $resp;
 		return $default if $resp eq "";
 		return 1        if lc $resp eq "y";
 		return 0        if lc $resp eq "n";
 		$prompt = 'Please enter "y" or "n".';
 	}
+	return 0;
 }
 
 =back

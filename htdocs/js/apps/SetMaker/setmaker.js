@@ -39,21 +39,15 @@
 	};
 
 	const init_webservice = (command) => {
-		const myUser = document.getElementById('hidden_user')?.value;
-		const myCourseID = document.getElementById('hidden_courseID')?.value;
-		const mySessionKey = document.getElementById('hidden_key')?.value;
-		const requestObject = { rpc_command: 'listLib', library_name: 'Library', command: 'buildtree' };
-		if (myUser && mySessionKey && myCourseID) {
-			requestObject.user = myUser;
-			requestObject.key = mySessionKey;
-			requestObject.courseID = myCourseID;
-		} else {
-			alertToast('Missing hidden credentials', `user: ${myUser ?? 'uknown'}, session_key: ${
-				mySessionKey ?? 'unknown'}, courseID: ${myCourseID ?? 'unknown'}`);
-			return null;
-		}
-		requestObject.rpc_command = command;
-		return requestObject;
+		return {
+			rpc_command: 'listLib',
+			library_name: 'Library',
+			command: 'buildtree',
+			user: document.getElementById('hidden_user')?.value,
+			key: document.getElementById('hidden_key')?.value,
+			courseID: document.getElementById('hidden_courseID')?.value,
+			rpc_command: command
+		};
 	};
 
 	// Content request handling
@@ -61,29 +55,25 @@
 	const libSubjects = document.querySelector('select[name="library_subjects"]');
 	const libChapters = document.querySelector('select[name="library_chapters"]');
 	const libSections = document.querySelector('select[name="library_sections"]');
+	const libraryTextbook = document.querySelector('select[name="library_textbook"]');
+	const libraryChapter = document.querySelector('select[name="library_textchapter"]');
+	const librarySection = document.querySelector('select[name="library_textsection"]');
+	const includeOPL = document.querySelector('[name="includeOPL"]');
+	const includeContrib = document.querySelector('[name="includeContrib"]');
 
 	const lib_update = async (who, what) => {
 		const child = { subjects: 'chapters', chapters: 'sections', sections: 'count' };
 
-		const all = `All ${who.charAt(0).toUpperCase()}${who.slice(1)}`;
-
 		const requestObject = init_webservice('searchLib');
-		if (!requestObject) return; // Missing credentials
-
-		const subj = libSubjects?.value ?? '';
-		const chap = libChapters?.value ?? '';
-		const sect = libSections?.value ?? '';
-
-		const lib_text = document.querySelector('[name="library_textbook"]')?.value ?? '';
-		const lib_textchap = document.querySelector('[name="library_textchapter"]')?.value ?? '';
-		const lib_textsect = document.querySelector('[name="library_textsection"]')?.value ?? '';
-
-		requestObject.library_subjects = subj === 'All Subjects' ? '' : subj;
-		requestObject.library_chapters = chap === 'All Chapters' ? '' : chap;
-		requestObject.library_sections = sect === 'All Sections' ? '' : sect;
-		requestObject.library_textbooks = lib_text === 'All Textbooks' ? '' : lib_text;
-		requestObject.library_textchapter = lib_textchap === 'All Chapters' ? '' : lib_textchap;
-		requestObject.library_textsection = lib_textsect === 'All Sections' ? '' : lib_textsect;
+		requestObject.library_subjects = libSubjects?.value ?? '';
+		requestObject.library_chapters = libChapters?.value ?? '';
+		requestObject.library_sections = libSections?.value ?? '';
+		requestObject.library_textbook = libraryTextbook?.value ?? '';
+		requestObject.library_textchapter = libraryChapter?.value ?? '';
+		requestObject.library_textsection = librarySection?.value ?? '';
+		requestObject.includeOPL = (includeOPL.type === 'checkbox' && includeOPL?.checked) ||
+			(includeOPL.type === 'hidden' && includeOPL.value) ? 1 : 0;
+		requestObject.includeContrib = includeContrib?.checked ? 1 : 0;
 
 		if (who == 'count') {
 			requestObject.command = 'countDBListings';
@@ -109,7 +99,7 @@
 						throw data.error;
 					} else {
 						const num = data.result_data[0];
-						document.getElementById('library_count_line').innerHTML = num === '1'
+						document.getElementById('library_count_line').firstElementChild.innerHTML = num === '1'
 							? 'There is 1 matching WeBWorK problem'
 							: `There are ${num} matching WeBWorK problems.`;
 					}
@@ -121,13 +111,13 @@
 		}
 
 		if (what == 'clear') {
-			setselect(`library_${who}`, [all]);
+			setselect(`library_${who}`, []);
 			lib_update(child[who], 'clear');
 			return;
 		}
 
-		if (who == 'chapters' && subj == '') { lib_update(who, 'clear'); return; }
-		if (who == 'sections' && chap == '') { lib_update(who, 'clear'); return; }
+		if (who == 'chapters' && requestObject.library_subjects == '') { lib_update(who, 'clear'); return; }
+		if (who == 'sections' && requestObject.library_chapters == '') { lib_update(who, 'clear'); return; }
 
 		requestObject.command = who == 'sections' ? 'getSectionListings' : 'getAllDBchapters';
 
@@ -151,9 +141,7 @@
 				if (data.error) {
 					throw data.error;
 				} else {
-					const arr = data.result_data;
-					arr.unshift(all);
-					setselect(`library_${who}`, arr);
+					setselect(`library_${who}`, data.result_data);
 					lib_update(child[who], 'clear');
 				}
 			}
@@ -164,7 +152,10 @@
 
 	const setselect = (selname, newarray) => {
 		const sel = document.querySelector(`[name="${selname}"]`);
+		// Save the 'all' option, remove all options, and then restore the 'all' option.
+		const select_all_option = sel.firstChild;
 		while (sel.firstChild) sel.lastChild.remove();
+		sel.append(select_all_option);
 		newarray.forEach((val) => {
 			const option = document.createElement('option');
 			option.value = val;
@@ -176,8 +167,18 @@
 	libChapters?.addEventListener('change', () => lib_update('sections', 'get'));
 	libSubjects?.addEventListener('change', () => lib_update('chapters', 'get'));
 	libSections?.addEventListener('change', () => lib_update('count', 'clear'));
+	includeOPL?.addEventListener('change', () => lib_update('count', 'clear'));
+	includeContrib?.addEventListener('change', () => lib_update('count', 'clear'));
 	document.querySelectorAll('input[name="level"]').forEach(
 		(level) => level.addEventListener('change', () => lib_update('count', 'clear')));
+
+	// Set up the advanced view selects to submit the form when changed.
+	const libraryBrowserForm = document.forms['library_browser_form'];
+	if (libraryBrowserForm) {
+		libraryTextbook?.addEventListener('change', () => libraryBrowserForm.submit());
+		libraryChapter?.addEventListener('change', () => libraryBrowserForm.submit());
+		librarySection?.addEventListener('change', () => libraryBrowserForm.submit());
+	}
 
 	// Add problems to target set
 	const addme = async (path, who) => {
@@ -190,7 +191,6 @@
 		}
 
 		const request = init_webservice('addProblem');
-		if (!request) return;
 		request.set_id = target;
 
 		const pathlist = [];
@@ -241,7 +241,7 @@
 	};
 
 	document.querySelector('input[name="select_all"]')?.addEventListener('click', () => addme('', 'all'));
-	document.querySelectorAll('input[name="add_me"]')
+	document.querySelectorAll('button.add_me')
 		.forEach((btn) => btn.addEventListener('click', () => addme(btn.dataset.sourceFile, 'one')));
 
 	// Update the messages about which problems are in the current set.
@@ -381,7 +381,7 @@
 
 		const mltIcon = document.getElementById(`mlt${cnt}`);
 		if(mltIcon.textContent == 'M') {
-			unshownAreas.forEach((area) => area.style.display = 'block');
+			unshownAreas.forEach((area) => area.classList.remove('d-none'));
 			// Render any problems that were hidden that have not yet been rendered.
 			for (const area of unshownAreas) {
 				const iframe = area.querySelector('iframe[id^=psr_render_iframe_]');
@@ -394,7 +394,7 @@
 			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] })
 			count = -count;
 		} else {
-			unshownAreas.forEach((area) => area.style.display = 'none');
+			unshownAreas.forEach((area) => area.classList.add('d-none'));
 			mltIcon.textContent = 'M';
 			mltIcon.dataset.bsTitle = mltIcon.dataset.moreText;
 			bootstrap.Tooltip.getInstance(mltIcon)?.dispose();
@@ -516,8 +516,9 @@
 	// Render all visible problems on the page
 	(async () => {
 		for (const renderArea of renderAreas) {
-			if (renderArea.style.display === 'none') continue;
-			await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
+			const id = renderArea.id.match(/^psr_render_area_(\d+)/)[1];
+			if (document.getElementById(`pgrow${id}`)?.classList.contains('d-none')) continue;
+			await render(id);
 		}
 	})();
 

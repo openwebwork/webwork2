@@ -28,7 +28,6 @@ use warnings;
 use Carp;
 use WeBWorK::Debug;
 use DBI;
-use WeBWorK::CGI;
 use WeBWorK::Utils qw(formatDateTime);
 use WeBWorK::Localize;
 use URI::Escape;
@@ -52,16 +51,16 @@ our $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE =
 
 =over
 
-=item new($r)
+=item new($c)
 
-Instantiates a new WeBWorK::Authen object for the given WeBWorK::Requst ($r).
+Instantiates a new WeBWorK::Authen object for the given WeBWorK::Controller ($c).
 
 =cut
 
 sub new {
-	my ($invocant, $r) = @_;
+	my ($invocant, $c) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $self  = { r => $r, };
+	my $self  = { c => $c, };
 	#initialize
 	bless $self, $class;
 	return $self;
@@ -143,17 +142,17 @@ our @lis_person_sourcedid_options = (
 sub request_has_data_for_this_verification_module {
 	#debug("LTIBasic has been called for data verification");
 	my $self = shift;
-	my $r    = $self->{r};
+	my $c    = $self->{c};
 
 	# See comment in get_credentials()
-	if ($r->{rpc}) {
+	if ($c->{rpc}) {
 		#debug("LTIBasic returning 1 because it is an rpc call");
 		return 1;
 	}
-	if (!(defined $r->param("oauth_consumer_key"))
-		or !(defined $r->param("oauth_signature"))
-		or !(defined $r->param("oauth_nonce"))
-		or !(defined $r->param("oauth_timestamp")))
+	if (!(defined $c->param("oauth_consumer_key"))
+		or !(defined $c->param("oauth_signature"))
+		or !(defined $c->param("oauth_nonce"))
+		or !(defined $c->param("oauth_timestamp")))
 	{
 		#debug("LTIBasic returning that it has insufficent data");
 		return (0);
@@ -165,19 +164,17 @@ sub request_has_data_for_this_verification_module {
 
 sub get_credentials {
 	my $self = shift;
-	my $r    = $self->{r};
-	my $ce   = $r->{ce};
+	my $c    = $self->{c};
+	my $ce   = $c->ce;
 
 	#debug("LTIBasic::get_credentials has been called\n");
 
 	## debug code MEG
 	if ($ce->{debug_lti_parameters}) {
-		my $rh_headers = $r->headers_in;    #request headers
-
-		my @parameter_names  = $r->param;   # form parameter names
+		my @parameter_names  = $c->param;    # form parameter names
 		my $parameter_report = '';
 		foreach my $key (@parameter_names) {
-			$parameter_report .= "$key => " . $r->param($key) . "\n";
+			$parameter_report .= "$key => " . $c->param($key) . "\n";
 		}
 		warn("===== parameters received =======\n", $parameter_report);
 	}
@@ -195,7 +192,7 @@ sub get_credentials {
 	# Library Browser).
 	# Similar changes are needed in check_user() and verify_normal_user().
 
-	if ($r->{rpc}) {
+	if ($c->{rpc}) {
 		#debug("falling back to superclass get_credentials (rpc call)");
 		return $self->SUPER::get_credentials(@_);
 	}
@@ -205,10 +202,10 @@ sub get_credentials {
 	if (!$ce->{preferred_source_of_username}) {
 		warn
 			"LTI is not properly configured (no preferred_source_of_username). Please contact your instructor or system administrator.";
-		$self->{error} = $r->maketext(
+		$self->{error} = $c->maketext(
 			"There was an error during the login process.  Please speak to your instructor or system administrator.");
 		debug("No preferred_source_of_username in "
-				. $r->ce->{'courseName'}
+				. $c->ce->{'courseName'}
 				. " so LTIBasic::get_credentials is returning a 0\n");
 		return 0;
 	}
@@ -217,16 +214,16 @@ sub get_credentials {
 	my $type_of_source = "";
 
 	$self->{email} = "";    # set an initial value to avoid warnings when not provided
-	if (defined($r->param("lis_person_contact_email_primary"))) {
-		$self->{email} = uri_unescape($r->param("lis_person_contact_email_primary")) // "";
+	if (defined($c->param("lis_person_contact_email_primary"))) {
+		$self->{email} = uri_unescape($c->param("lis_person_contact_email_primary")) // "";
 	}
 
 	if ($ce->{preferred_source_of_username} eq "lis_person_sourcedid") {
 		foreach my $key (@lis_person_sourcedid_options) {
-			if ($r->param($key)) {
+			if ($c->param($key)) {
 				$user_id_source  = $key;
 				$type_of_source  = "preferred_source_of_username";
-				$self->{user_id} = $r->param($key);
+				$self->{user_id} = $c->param($key);
 				last;
 			}
 		}
@@ -239,20 +236,20 @@ sub get_credentials {
 
 		# Strip off the part of the address after @ if requested to do so:
 		$self->{user_id} =~ s/@.*$// if $ce->{strip_address_from_email};
-	} elsif ($r->param($ce->{preferred_source_of_username})) {
+	} elsif ($c->param($ce->{preferred_source_of_username})) {
 		$user_id_source  = $ce->{preferred_source_of_username};
 		$type_of_source  = "preferred_source_of_username";
-		$self->{user_id} = $r->param($ce->{preferred_source_of_username});
+		$self->{user_id} = $c->param($ce->{preferred_source_of_username});
 	}
 
 	# Fallback if necessary
 	if (!defined($self->{user_id}) && $ce->{fallback_source_of_username}) {
 		if ($ce->{fallback_source_of_username} eq "lis_person_sourcedid") {
 			foreach my $key (@lis_person_sourcedid_options) {
-				if ($r->param($key)) {
+				if ($c->param($key)) {
 					$user_id_source  = $key;
 					$type_of_source  = "fallback_source_of_username";
-					$self->{user_id} = $r->param($key);
+					$self->{user_id} = $c->param($key);
 					last;
 				}
 			}
@@ -265,16 +262,16 @@ sub get_credentials {
 
 			# Strip off the part of the address after @ if requested to do so:
 			$self->{user_id} =~ s/@.*$// if $ce->{strip_address_from_email};
-		} elsif ($r->param($ce->{fallback_source_of_username})) {
+		} elsif ($c->param($ce->{fallback_source_of_username})) {
 			$user_id_source  = $ce->{fallback_source_of_username};
 			$type_of_source  = "fallback_source_of_username";
-			$self->{user_id} = $r->param($ce->{fallback_source_of_username});
+			$self->{user_id} = $c->param($ce->{fallback_source_of_username});
 		}
 	}
 
 	# if we were able to set a user_id
 	if (defined($self->{user_id}) && $self->{user_id} ne "") {
-		map { $self->{ $_->[0] } = $r->param($_->[1]); } (
+		map { $self->{ $_->[0] } = $c->param($_->[1]); } (
 			#['user_id', 'lis_person_sourcedid'],
 			[ 'role',               'roles' ],
 			[ 'last_name',          'lis_person_name_family' ],
@@ -290,9 +287,9 @@ sub get_credentials {
 		);
 
 		if (defined($ce->{preferred_source_of_student_id})
-			&& defined($r->param($ce->{preferred_source_of_student_id})))
+			&& defined($c->param($ce->{preferred_source_of_student_id})))
 		{
-			$self->{student_id} = $r->param($ce->{preferred_source_of_student_id});
+			$self->{student_id} = $c->param($ce->{preferred_source_of_student_id});
 		} else {
 			$self->{student_id} = "";    # fall back to avoid a warning when debug_lti_parameters enabled
 		}
@@ -329,7 +326,7 @@ sub get_credentials {
 	#debug("LTIBasic::get_credentials is returning a 0\n");
 	warn
 		"LTI is not properly configured (failed to obtain user_id from preferred_source_of_username or fallback_source_of_username). Please contact your instructor or system administrator.";
-	$self->{error} = $r->maketext(
+	$self->{error} = $c->maketext(
 		"There was an error during the login process.  Please speak to your instructor or system administrator.");
 	return 0;
 }
@@ -337,23 +334,23 @@ sub get_credentials {
 # minor modification of method in superclass
 sub check_user {
 	my $self = shift;
-	my $r    = $self->{r};
-	my ($ce, $db, $authz) = map { $r->$_; } ('ce', 'db', 'authz');
+	my $c    = $self->{c};
+	my ($ce, $db, $authz) = map { $c->$_; } ('ce', 'db', 'authz');
 
 	my $user_id = $self->{user_id};
 
 	#debug("LTIBasic::check_user has been called for user_id = |$user_id|");
 
 	# See comment in get_credentials()
-	if ($r->{rpc}) {
+	if ($c->{rpc}) {
 		#debug("falling back to superclass check_user (rpc call)");
 		return $self->SUPER::check_user(@_);
 	}
 
 	if (!defined($user_id) or (defined $user_id and $user_id eq "")) {
 		$self->{log_error} .= "no user id specified";
-		my $LMS = ($ce->{LMS_url}) ? CGI::a({ href => $ce->{LMS_url} }, $ce->{LMS_name}) : $ce->{LMS_name};
-		$self->{error} = $r->maketext($GENERIC_MISSING_USER_ID_ERROR_MESSAGE, $LMS);
+		my $LMS = $ce->{LMS_url} ? $c->link_to($ce->{LMS_name} => $ce->{LMS_url}) : $ce->{LMS_name};
+		$self->{error} = $c->maketext($GENERIC_MISSING_USER_ID_ERROR_MESSAGE, $LMS);
 		return 0;
 	}
 
@@ -377,7 +374,7 @@ sub check_user {
 		}
 
 		foreach my $key (keys(%options), ($use_lis_person_sourcedid_options ? @lis_person_sourcedid_options : ())) {
-			if (defined($r->param($key))) {
+			if (defined($c->param($key))) {
 				debug(
 					"User |$user_id| is unknown but may be an new user from an LSM via LTI. Saw a value for $key About to return a 1"
 				);
@@ -386,20 +383,20 @@ sub check_user {
 		}
 
 		$self->{log_error} .= " $user_id - user unknown";
-		$self->{error} = $r->maketext(
+		$self->{error} = $c->maketext(
 			"There was an error during the login process.  Please speak to your instructor or system administrator.");
 		return 0;
 	}
 
 	unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
 		$self->{log_error} .= "LOGIN FAILED $user_id - course access denied";
-		$self->{error} = $r->maketext($GENERIC_DENIED_LOGIN_ERROR_MESSAGE);
+		$self->{error} = $c->maketext($GENERIC_DENIED_LOGIN_ERROR_MESSAGE);
 		return 0;
 	}
 
 	unless ($authz->hasPermissions($user_id, "login")) {
 		$self->{log_error} .= "LOGIN FAILED $user_id - no permission to login";
-		$self->{error} = $r->maketext($GENERIC_DENIED_LOGIN_ERROR_MESSAGE);
+		$self->{error} = $c->maketext($GENERIC_DENIED_LOGIN_ERROR_MESSAGE);
 		return 0;
 	}
 	#debug("LTIBasic::check_user is about to return a 1.");
@@ -411,12 +408,12 @@ sub verify_practice_user { return (0); }
 
 sub verify_normal_user {
 	my $self = shift;
-	my ($r, $user_id, $session_key) = map { $self->{$_}; } ('r', 'user_id', 'session_key');
+	my ($c, $user_id, $session_key) = map { $self->{$_}; } ('c', 'user_id', 'session_key');
 
 	#debug("LTIBasic::verify_normal_user called for user |$user_id|");
 
 	# See comment in get_credentials()
-	if ($r->{rpc}) {
+	if ($c->{rpc}) {
 		#debug("falling back to superclass verify_normal_user (rpc call)");
 		return $self->SUPER::verify_normal_user(@_);
 	}
@@ -434,11 +431,11 @@ sub verify_normal_user {
 
 	# are used in computing the OAuth_signature.  If there
 
-	# are any changes in $r -> {paramcache} (see Request.pm)
+	# are any changes in $c->{paramcache} (see Controller.pm)
 	# before authentication occurs, then authentication will FAIL
 	# even if the consumer_secret is correct.
 
-	$r->param("user" => $user_id);
+	$c->param("user" => $user_id);
 
 	if ($auth_result eq "1") {
 		#debug("About to call create_session.");
@@ -446,7 +443,7 @@ sub verify_normal_user {
 		#debug("session_key=|" . $self -> {session_key} . "|.");
 		return 1;
 	} else {
-		$self->{error} = $r->maketext($auth_result);
+		$self->{error} = $c->maketext($auth_result);
 		$self->{log_error} .= "$user_id - authentication failed: " . $self->{error};
 		return 0;
 	}
@@ -454,47 +451,47 @@ sub verify_normal_user {
 
 sub authenticate {
 	my $self = shift;
-	my ($r, $user) = map { $self->{$_}; } ('r', 'user_id');
+	my ($c, $user) = map { $self->{$_}; } ('c', 'user_id');
 
 	# See comment in get_credentials()
-	if ($r->{rpc}) {
+	if ($c->{rpc}) {
 		#debug("falling back to superclass authenticate (rpc call)");
 		return $self->SUPER::authenticate(@_);
 	}
 
 	#debug("LTIBasic::authenticate called for user |$user|");
-	#debug "ref(r) = |". ref($r) . "|";
-	#debug "ref of r->{paramcache} = |" . ref($r -> {paramcache}) . "|";
-	#debug "request_method = |" . $r -> request_method . "|";
-	my $ce          = $r->ce;
-	my $db          = $r->db;
-	my $courseName  = $r->ce->{'courseName'};
+	#debug "ref(c) = |". ref($c) . "|";
+	#debug "ref of c->{paramcache} = |" . ref($c -> {paramcache}) . "|";
+	#debug "request_method = |" . $c -> request_method . "|";
+	my $ce          = $c->ce;
+	my $db          = $c->db;
+	my $courseName  = $c->ce->{'courseName'};
 	my $webmaster   = $ce->{Local_Email_Addresses}->{Webmaster};
 	my $verify_code = 0;
 	my $timestamp   = 0;
 
 	# Check nonce to see whether request is legitimate
 	#debug("Nonce = |" . $self-> {oauth_nonce} . "|");
-	my $nonce = WeBWorK::Authen::LTIBasic::Nonce->new($r, $self->{oauth_nonce}, $self->{oauth_timestamp});
+	my $nonce = WeBWorK::Authen::LTIBasic::Nonce->new($c, $self->{oauth_nonce}, $self->{oauth_timestamp});
 	if (!($nonce->ok)) {
-		my $LMS = ($ce->{LMS_url}) ? CGI::a({ href => $ce->{LMS_url} }, $ce->{LMS_name}) : $ce->{LMS_name};
-		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r););
-		$self->{error} .= $r->maketext(
+		my $LMS = $ce->{LMS_url} ? $c->link_to($ce->{LMS_name} => $ce->{LMS_url}) : $ce->{LMS_name};
+		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($c););
+		$self->{error} .= $c->maketext(
 			$GENERIC_ERROR_MESSAGE
 				. ":  Something was wrong with your Nonce LTI parameters.  If this recurs, please speak with your instructor",
 			$LMS
 		);
 		return 0;
 	}
-	#debug( "r->param(oauth_signature) = |" . $r -> param("oauth_signature") . "|");
+	#debug( "c->param(oauth_signature) = |" . $c -> param("oauth_signature") . "|");
 	my %request_hash;
-	my @keys = keys %{ $r->{paramcache} };
+	my @keys = keys %{ $c->{paramcache} };
 	foreach my $key (@keys) {
-		$request_hash{$key} = $r->param($key);
+		$request_hash{$key} = $c->param($key);
 		#debug("$key -> |" . $requestHash -> {$key} . "|");
 	}
 	my $requestHash = \%request_hash;
-	my $path        = $ce->{server_root_url} . $ce->{webwork_url} . $r->urlpath()->path;
+	my $path        = $c->url_for->to_abs =~ s|/?$|/|r;
 	$path = $ce->{LTIBasicToThisSiteURL} ? $ce->{LTIBasicToThisSiteURL} : $path;
 
 	my $altpath = $path;
@@ -521,19 +518,19 @@ sub authenticate {
 
 	if ($@) {
 		#debug("construction of Net::OAuth object failed: $@");
-		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r););
-		$self->{error} .= $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
-		$self->{error} .= $r->maketext(
+		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($c););
+		$self->{error} .= $c->maketext("Your authentication failed.  Please return to Oncourse and login again.");
+		$self->{error} .= $c->maketext(
 			"Something was wrong with your LTI parameters.  If this recurs, please speak with your instructor");
 		$self->{log_error} .= "Construction of OAuth request record failed";
 		return 0;
 	} else {
 		if (!$request->verify && !$altrequest->verify) {
 			#debug("LTIBasic::authenticate request-> verify failed");
-			#debug("<h2> OAuth verification Failed</h2> "; print_keys($r));
-			$self->{error} .= $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
+			#debug("<h2> OAuth verification Failed</h2> "; print_keys($c));
+			$self->{error} .= $c->maketext("Your authentication failed.  Please return to Oncourse and login again.");
 			$self->{error} .=
-				$r->maketext("Your LTI OAuth verification failed.  If this recurs, please speak with your instructor");
+				$c->maketext("Your LTI OAuth verification failed.  If this recurs, please speak with your instructor");
 			$self->{log_error} .= "OAuth verification failed.  Check the Consumer Secret.";
 			return 0;
 		} else {
@@ -543,7 +540,7 @@ sub authenticate {
 			# and assign a permission level on that basis.
 			############################################################
 			my $userID         = $self->{user_id};
-			my $LTIrolesString = $r->param("roles");
+			my $LTIrolesString = $c->param("roles");
 			my @LTIroles       = split /,/, $LTIrolesString;
 
 			#remove the urn string if its present
@@ -579,7 +576,7 @@ sub authenticate {
 			# The code works for the U. of Rochester Blackboard
 			##################################################################
 
-			# 			my $LTI_section = $r->param("context_label");   #  for example: MTH208.2014FALL.54648
+			# 			my $LTI_section = $c->param("context_label");   #  for example: MTH208.2014FALL.54648
 			# 			my ($course_number, $semester, $CRN) = split(/\./, $LTI_section);
 			# 			if ($self->{section} eq "unknown" and $CRN ) {
 			# 			    $self->{section}= $CRN//"unknown"; # update unknown sections from CRN if possible
@@ -598,8 +595,8 @@ sub authenticate {
 					if ($ce->{debug_lti_parameters});
 				if ($LTI_webwork_permissionLevel > $ce->{userRoles}->{"ta"}) {
 					$self->{log_error} .= "userID: $userID --" . ' ' . $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE;
-					croak $r->maketext("userID: [_1] --", $userID)
-						. $r->maketext($GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE);
+					croak $c->maketext("userID: [_1] --", $userID)
+						. $c->maketext($GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE);
 				}
 				my $newUser = $db->newUser();
 				$newUser->user_id($userID);
@@ -621,7 +618,7 @@ sub authenticate {
 				$newPermissionLevel->user_id($userID);
 				$newPermissionLevel->permission($LTI_webwork_permissionLevel);
 				$db->addPermissionLevel($newPermissionLevel);
-				$r->authz->{PermissionLevel} = $newPermissionLevel;    #cache the Permission Level Record.
+				$c->authz->{PermissionLevel} = $newPermissionLevel;    #cache the Permission Level Record.
 					# Assign existing sets
 					# This module is not a subclass of WeBWorK::ContentGenerator::Instuctor,
 					#  do the methods defined therein for assigning problem sets and problems
@@ -813,7 +810,7 @@ sub authenticate {
 		}
 	}
 	#debug("LTIBasic is returning a failed authentication");
-	$self->{error} = $r->maketext($GENERIC_ERROR_MESSAGE, $ce->{LMS_name});
+	$self->{error} = $c->maketext($GENERIC_ERROR_MESSAGE, $ce->{LMS_name});
 	return (0);
 }
 
@@ -826,10 +823,10 @@ sub authenticate {
 package WeBWorK::Authen::LTIBasic::Nonce;
 
 sub new {
-	my ($invocant, $r, $nonce, $timestamp) = @_;
+	my ($invocant, $c, $nonce, $timestamp) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self  = {
-		r         => $r,
+		c         => $c,
 		nonce     => $nonce,
 		timestamp => $timestamp,
 	};
@@ -839,12 +836,12 @@ sub new {
 
 sub ok {
 	my $self = shift;
-	my $r    = $self->{r};
-	my $ce   = $r->{ce};
+	my $c    = $self->{c};
+	my $ce   = $c->ce;
 	if ($self->{timestamp} < time() - $ce->{NonceLifeTime}) {
 		return 0;
 	}
-	my $db  = $self->{r}->{db};
+	my $db  = $self->{c}->db;
 	my $Key = $db->getKey($self->{nonce});
 
 	# If we *haven't* used this nonce before then we are OK.
@@ -878,16 +875,15 @@ sub ok {
 ################################################################################
 
 sub print_keys {
-	my ($self, $r) = @_;
-	my @keys = keys %{ $r->{paramcache} };
+	my ($self, $c) = @_;
+	my @keys = keys %{ $c->{paramcache} };
 	my %request_hash;
 	my $key;
 	foreach $key (@keys) {
-		$request_hash{$key} = $r->param($key);
+		$request_hash{$key} = $c->param($key);
 		warn("$key -> |" . $request_hash{$key} . "|");
 	}
 	my $requestHash = \%request_hash;
 }
 
 1;
-

@@ -1,0 +1,2 @@
+<%= $c->displayStudentStats($c->{studentID}) =%>
+<%= $c->scoring_info =%>

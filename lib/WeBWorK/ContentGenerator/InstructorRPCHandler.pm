@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::InstructorRPCHandler;
-use base qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
 =head1 NAME
 
@@ -35,67 +35,55 @@ error occurs, then the response will contain an "error" key.
 
 =cut
 
-use strict;
-use warnings;
-
-use Future::AsyncAwait;
 use JSON;
 
 use WebworkWebservice;
 
-async sub pre_header_initialize {
-	my $self = shift;
-	my $r    = $self->r;
-
-	unless ($r->authen->was_verified) {
-		$self->{output} = 'instructor_rpc: authentication failed.';
+async sub pre_header_initialize ($c) {
+	unless ($c->authen->was_verified) {
+		$c->{output} = 'instructor_rpc: authentication failed.';
 		return;
 	}
 
-	my $rpc_command = $r->param('rpc_command');
+	my $rpc_command = $c->param('rpc_command');
 
 	unless ($rpc_command) {
-		$self->{output} = 'instructor_rpc: rpc_command not provided.';
+		$c->{output} = 'instructor_rpc: rpc_command not provided.';
 		return;
 	}
 
 	# The renderProblem command is not supported by this method.
 	# The render_rpc endpoint should be used for that instead.
 	if ($rpc_command eq 'renderProblem') {
-		$self->{output} =
+		$c->{output} =
 			'instructor_rpc: The renderProblem command is not supported by this endpoint. Use render_rpc instead';
 		return;
 	}
 
 	# Call the WebworkWebservice to execute the requested command.
-	my $rpc_service = WebworkWebservice->new($r);
+	my $rpc_service = WebworkWebservice->new($c);
 	await $rpc_service->rpc_execute($rpc_command);
-	$self->{output} = $rpc_service;
+	$c->{output} = $rpc_service;
 
 	return;
 }
 
-async sub content {
-	my $self = shift;
-
+sub content ($c) {
 	# This endpoint always responds with a valid JSON response.
-	$self->r->res->headers->content_type('application/json; charset=utf-8');
 
-	if (ref($self->{output}) !~ /WebworkWebservice/) {
-		print JSON->new->utf8->encode({ error => $self->{output} });
-		return;
-	}
+	return $c->render(json => { error => $c->{output} }) if (ref($c->{output}) !~ /WebworkWebservice/);
 
-	my $rpc_service = $self->{output};
+	my $rpc_service = $c->{output};
 	if ($rpc_service->error_string) {
-		print JSON->new->utf8->encode({ error => $rpc_service->error_string });
+		return $c->render(json => { error => $rpc_service->error_string });
 	} else {
-		print JSON->new->utf8->encode({
-			server_response => $rpc_service->return_object->{text},
-			result_data     => $rpc_service->return_object->{ra_out} // ''
-		});
+		return $c->render(
+			json => {
+				server_response => $rpc_service->return_object->{text},
+				result_data     => $rpc_service->return_object->{ra_out} // ''
+			}
+		);
 	}
-	return;
 }
 
 1;

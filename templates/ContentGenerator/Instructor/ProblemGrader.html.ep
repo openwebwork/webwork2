@@ -1,0 +1,141 @@
+% use WeBWorK::Utils qw(sortByName wwRound getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/apps/ProblemGrader/problemgrader.js'), defer => undef =%>
+% end
+%
+% content_for css => begin
+	<%= stylesheet getAssetURL($ce, 'js/apps/Problem/problem.css') =%>
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1 mb-0">
+		<%= maketext('You are not authorized to access instructor tools.') =%>
+	</div>
+	% last;
+% }
+%
+% unless ($authz->hasPermissions(param('user'), 'score_sets')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maktext('You are not authorized to grade homework sets.') %></div>
+	% last;
+% }
+%
+% unless ($c->{set} && $c->{problem}) {
+	<div class="alert alert-danger p-1 mb-0">
+		<%= maketext('This set needs to be assigned to you before you can grade it.') =%>
+	</div>
+	% last;
+% }
+%
+% # Check to see what type the answers are.
+% my @answerTypes;
+% for (sortByName(undef, keys %{ $c->{pg}{answers} })) {
+	% push(@answerTypes, $c->{pg}{answers}{$_}{type});
+% }
+%
+<div class="problem-content col-md-12 col-lg-10"><%== $c->{pg}{body_text} %></div>
+%
+<%= form_for current_route, method => 'POST', id => 'problem-grader-form', name => 'problem-grader-form', begin =%>
+	<div class="table-responsive">
+		<table class="table table-sm table-bordered caption-top">
+			<thead>
+				<tr>
+					<th><%= maketext('Section') %></th>
+					<th><%= maketext('Name') %></th>
+					<th><%= maketext('Latest Answers') %></th>
+					<th id="mark-all-correct-header" class="text-center">
+						<%= maketext('Mark Correct') %>
+					   	<br>
+						<button type="button" id="check_all_mark_corrects" class="btn btn-secondary btn-sm">
+							<%= maketext('Mark All') =%>
+						</button>
+					</th>
+					<th id="score-header"><%= maketext('Score (%)') %></th>
+					<th id="comment-header"><%= maketext('Comment') %></th>
+				</tr>
+			</thead>
+			<tbody>
+				% for my $user (@{ $c->{users} }) {
+					% next unless $user->{data}{problem};
+					% # Skip this user if the pg file for the user's past answer doesn't match the current pg file.
+					% next
+						% if (defined $user->{data}{past_answer}
+							% && defined $user->{data}{past_answer}->source_file
+							% && $user->{data}{past_answer}->source_file ne $c->{problem}->source_file);
+					%
+					% my $userID = $user->user_id;
+					%
+					<tr>
+						<td class="text-center"><%= $user->section %></td>
+						<td>
+							<div class="<%= ($user->{data}{problem}->flags =~ /needs_grading/ ? 'NeedsGrading ' : '')
+								. ($ce->status_abbrev_to_name($user->status) || '') %>">
+								<%= link_to $user->last_name . ', ' . $user->first_name => $c->systemLink(
+										url_for('problem_detail'),
+										params => { effectiveUser => $userID }
+									),
+									target => 'WW_View' =%>
+							</div>
+						</td>
+						<td>
+							% if ($user->{data}{past_answer} ) {
+								% my @scores  = split(//,   $user->{data}{past_answer}->scores);
+								% my @answers = split(/\t/, $user->{data}{past_answer}->answer_string);
+								%
+								% for (my $i = 0; $i <= $#answers; $i++) {
+									% if (!defined $answerTypes[$i]) {
+										% # If the answer type is undefined then just display the result.
+										<p><%= $answers[$i] %></p>
+									% } elsif ($answerTypes[$i] eq 'essay') {
+										% # If the answer is an essay answer then display it line by line.
+										<div class="essay-answer">
+											% for (split /\n/, $answers[$i]) {
+												<%= $_ =%>
+												<br>
+											% }
+										</div>
+									% } elsif ($answerTypes[$i] eq 'Value (Formula)') {
+										% # If its a formula then mark it as tex for MathJax and color it.
+										<div class="graded-answer"
+											style="<%= $scores[$i] ? 'color:#060' : 'color:#600' %>">
+											`<%= $answers[$i] %>`
+										</div>
+									% } else {
+										% # If it isn't an essay or a formula then show it as text and color it.
+										<div class="graded-answer"
+											style="<%= $scores[$i] ? 'color:#060' : 'color:#600' %>">
+											<%= $answers[$i] %>
+										</div>
+									% }
+								% }
+							% } else {
+								<%= 'There are no answers for this student.' =%>
+							% }
+						</td>
+						<td class="text-center">
+							<%= check_box "$userID.mark_correct" => '1', class => 'mark_correct form-check-input',
+								'aria-labelledby' => 'mark-all-correct-header' =%>
+						</td>
+						<td>
+							<%= number_field "$userID.score" => wwRound(0, $user->{data}{problem}->status * 100),
+								class => 'score-selector form-select form-select-sm', style => 'width:6.5rem;',
+								min => 0, max => 100, autocomplete => 'off', 'aria-labelledby' => 'score-header' =%>
+						</td>
+						<td>
+							% if ($user->{data}{past_answer}) {
+								<%= text_area "$userID.comment" => $user->{data}{past_answer}->comment_string,
+									rows  => 3, class => 'form-control', 'aria-labelledby' => 'comment-header' =%>
+								<br>
+								<button name="$userID.preview" class="preview btn btn-secondary btn-sm" type="button">
+									<%= maketext('Preview') =%>
+								</button>
+							% }
+						</td>
+					</tr>
+				% }
+			</tbody>
+		</table>
+	</div>
+	<%= $c->hidden_authen_fields =%>
+	<%= submit_button maketext('Save'), name => 'assignGrades', class => 'btn btn-primary mb-2' =%>
+<% end =%>

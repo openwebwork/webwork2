@@ -1,0 +1,12 @@
+<div class="row mb-2">
+	<%= label_for score_select => maketext('Score which sets?'),
+		class => 'col-form-label col-form-label-sm col-auto' =%>
+	<div class="col-auto">
+		<%= select_field 'action.score.scope' => [
+				[ maketext('no sets')       => 'none', selected => undef ],
+				[ maketext('all sets')      => 'all' ],
+				[ maketext('selected sets') => 'selected' ]
+			],
+			id => 'score_select', class => 'form-select form-select-sm' =%>
+	</div>
+</div>

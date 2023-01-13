@@ -582,8 +582,4 @@ sub deleteProblem {
 	return { text => "Problem removed from $setName" };
 }
 
-=back
-
-=cut
-
 1;

@@ -1,0 +1,64 @@
+% use WeBWorK::Utils qw(before between);
+%
+% if ($c->{invalidSet}) {
+	<div class="alert alert-danger">
+		<p class="mb-3">
+			<%= maketext(
+				'The selected problem set ([_1]) is not a valid set for [_2].',
+				stash('setID'), param('effectiveUser')
+			) =%>
+		</p>
+		<p class="mb-0"><%== $c->{invalidSet} %></p>
+	</div>
+	% last;
+% }
+%
+% my $set = $c->{set};
+%
+% if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+	% && $set->enable_reduced_scoring
+	% && $set->reduced_scoring_date
+	% && $set->reduced_scoring_date != $set->due_date
+% ) {
+	% my $reduced_scoring_date  = $set->reduced_scoring_date;
+	% my $reducedScoringPerCent = int(100 * $ce->{pg}{ansEvalDefaults}{reducedScoringValue} + .5);
+	%
+	% if (before($reduced_scoring_date)) {
+		<div class="alert alert-warning mb-3">
+			<%= maketext(
+				'After the reduced scoring period begins all work counts for [_1]% of its value.',
+				$reducedScoringPerCent
+			) =%>
+		</div>
+	% } elsif (between($reduced_scoring_date, $set->due_date)) {
+		<div class="alert alert-warning mb-3">
+			<%= maketext(
+				'This set is in its reduced scoring period.  All work counts for [_1]% of its value.',
+				$reducedScoringPerCent
+			) =%>
+		</div>
+	% } else {
+		<div class="alert alert-warning mb-3">
+			<%= maketext(
+				'This set had a reduced scoring period that started on [_1] and ended on [_2].  '
+					. 'During that period all work counted for [_3]% of its value.',
+				$c->formatDateTime($reduced_scoring_date), $c->formatDateTime($set->due_date), $reducedScoringPerCent
+			) =%>
+		</div>
+	% }
+% }
+%
+<%= $set->assignment_type =~ /gateway/ ? $c->gateway_body : $c->problem_list =%>
+%
+<div class="mb-3">
+	<%= $c->feedbackMacro(
+		route              => current_route,
+		set                => $set->set_id,
+		problem            => '',
+		displayMode        => $c->{displayMode},
+		showOldAnswers     => '',
+		showCorrectAnswers => '',
+		showHints          => '',
+		showSolutions      => '',
+	) =%>
+</div>

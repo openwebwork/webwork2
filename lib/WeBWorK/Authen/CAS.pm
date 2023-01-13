@@ -27,7 +27,7 @@ use WeBWorK::Debug;
 
 sub checkSetUser {
 	my ($self, $user_id, $new_id) = @_;
-	my $ce = $self->{r}->ce;
+	my $ce = $self->{c}->ce;
 
 	unless (defined $ce->{authen}{cas_options}{sudoers}) {
 		$self->{error} = "Set-user capability is not enabled.";
@@ -61,8 +61,8 @@ sub checkSetUser {
 
 sub get_credentials {
 	my $self = shift;
-	my $r    = $self->{r};
-	my $ce   = $r->ce;
+	my $c    = $self->{c};
+	my $ce   = $c->ce;
 
 	# Disable password authentication
 	$self->{external_auth} = 1;
@@ -75,17 +75,17 @@ sub get_credentials {
 	# when authenticating javascript web service requests (e.g., the
 	# Library Browser).
 
-	if ($r->{rpc}) {
+	if ($c->{rpc}) {
 		debug("falling back to superclass get_credentials (rpc call)");
 		return $self->SUPER::get_credentials(@_);
 	}
 
 	# if we come in with a user_id, then we've already authenticated
 	#    through the CAS.  So just check the provided user and session key.
-	if (defined $r->param('key') && defined $r->param('user')) {
+	if (defined $c->param('key') && defined $c->param('user')) {
 		# These lines were copied from the superclass get_credentials.
-		$self->{session_key}       = $r->param('key');
-		$self->{user_id}           = $r->param('user');
+		$self->{session_key}       = $c->param('key');
+		$self->{user_id}           = $c->param('user');
 		$self->{login_type}        = 'normal';
 		$self->{credential_source} = 'params';
 		debug("CAS params user '", $self->{user_id}, "' key '", $self->{session_key}, "'");
@@ -93,7 +93,7 @@ sub get_credentials {
 		#    determine the enrollment status of any other student if
 		#    they know the userid (which is public information at
 		#    Berkeley).  That would be a privacy violation.
-		my $Key = $r->db->getKey($self->{user_id});
+		my $Key = $c->db->getKey($self->{user_id});
 		unless (defined $Key && $Key->key eq $self->{session_key}) {
 			debug(
 				'undefined or invalid session key:  $Key->key = ',
@@ -102,7 +102,7 @@ sub get_credentials {
 				$self->{session_key}
 			);
 			$self->{error} = "Invalid session key";
-			$r->param('key' => undef);
+			$c->param('key' => undef);
 			return $self->get_credentials();
 		}
 		return 1;
@@ -115,14 +115,14 @@ sub get_credentials {
 		#    CAFile => $cas_certs);
 		my $cas = new AuthCAS(%{ $ce->{authen}{cas_options}{AuthCAS_opts} });
 
-		my $service = $r->unparsed_uri();
+		my $service = $c->unparsed_uri();
 		# Remove the "ticket=..." parameter that the CAS server added
 		# (Not sure if the second test is really needed.)
 		$service =~ s/[?&]ticket=[^&]*$//
 			or $service =~ s/([?&])ticket=[^&]*&/$1/;
 		$service = $ce->{server_root_url} . $service;
 		debug("service = $service");
-		my $ticket = $r->param('ticket');
+		my $ticket = $c->param('ticket');
 		unless (defined $ticket) {
 			# there's no ticket, so redirect to get one
 			#
@@ -143,7 +143,7 @@ sub get_credentials {
 			return 0;
 		} else {
 			debug("ticket is good, user is $user_id");
-			my $new_id = $r->param('setUser');
+			my $new_id = $c->param('setUser');
 			if (defined $new_id) {
 				return 0
 					unless checkSetUser($self, $user_id, $new_id);
@@ -151,7 +151,7 @@ sub get_credentials {
 				$user_id = $new_id;
 			}
 			$self->{'user_id'} = $user_id;
-			$self->{r}->param('user', $user_id);
+			$self->{c}->param('user', $user_id);
 			$self->{session_key}       = undef;
 			$self->{password}          = "not\tvalid";
 			$self->{login_type}        = 'normal';
@@ -176,7 +176,7 @@ sub checkPassword {
 sub logout_user {
 	my ($self) = @_;
 
-	my $ce = $self->{r}->ce;
+	my $ce = $self->{c}->ce;
 
 	# Using AuthCAS::getServerLogoutURL($service) would be overkill,
 	# and (more important) it would send us back here after logging out,

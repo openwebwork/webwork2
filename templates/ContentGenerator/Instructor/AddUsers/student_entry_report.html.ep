@@ -1,0 +1,33 @@
+<div class="input-group input-group-sm mb-2">
+	<span class="input-group-text">
+		<b><%= $addError ? maketext('Failed to add user:') : maketext('Added user:') %></b>
+	</span>
+	<span class="input-group-text"><%= $newUser->last_name %>, <%= $newUser->first_name %></span>
+	<span class="input-group-text"><b><%= maketext('Login:') %></b></span>
+	<span class="input-group-text"><%= $newUser->user_id %></span>
+	% if ($newUser->student_id) {
+		<span class="input-group-text"><b><%= maketext('Student ID:') %></b></span>
+		<span class="input-group-text"><%= $newUser->student_id %></span>
+	% }
+	% if ($newUser->email_address) {
+		<span class="input-group-text"><b><%= maketext('Email:') %></b></span>
+		<span class="input-group-text"><%= $newUser->email_address %></span>
+	% }
+	% if ($newUser->section ne '') {
+		<span class="input-group-text"><b><%= maketext('Section:') %></b></span>
+		<span class="input-group-text"><%= $newUser->section %></span>
+	% }
+	% if ($newUser->recitation ne '') {
+		<span class="input-group-text"><b><%= maketext('Recitation:') %></b></span>
+		<span class="input-group-text"><%= $newUser->recitation %></span>
+	% }
+	% if ($newUser->comment) {
+		<span class="input-group-text"><b><%= maketext('Comment:') %></b></span>
+		<span class="input-group-text"><%= $newUser->comment %></span>
+	% }
+</div>
+% if ($addError) {
+	<div class="alert alert-danger mb-2 p-1" role="alert">
+		<b><%= maketext('Error message:') %></b> <span class="mb-0"><%= $addError %></span>
+	</div>
+% }

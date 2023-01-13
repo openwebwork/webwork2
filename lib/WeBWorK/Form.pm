@@ -52,7 +52,7 @@ package WeBWorK::Form;
 
 =head1 NAME
 
-WeBWorK::Form - extract form input from an Apache::Request and provide an
+WeBWorK::Form - extract form input from a Mojolicious::Controller and provide an
 interface to it.
 
 =cut
@@ -62,7 +62,7 @@ use warnings;
 
 sub new {
 	#print "new called with \@_ = ( " . (join ", ", @_)  . " )\n";
-	my ($invocant, $r) = @_;
+	my ($invocant, $c) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self  = {};
 
@@ -70,28 +70,15 @@ sub new {
 }
 
 sub new_from_paramable ($$) {
-	my ($invocant, $r) = @_;
+	my ($invocant, $c) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self  = {};
 
 	# list of param names
-	my @params = $r->param;
+	my @params = $c->param;
 	foreach my $key (@params) {
-		$self->{$key} = [ $r->param($key) ];
+		$self->{$key} = [ $c->param($key) ];
 	}
-
-	return bless $self, $class;
-}
-
-sub new_test {
-	my ($invocant, $r) = @_;
-	my $class = ref($invocant) || $invocant;
-	my $self  = {
-		a => [qw(aa ab ac)],
-		b => ["bcontents"],
-		c => [ "cc", "ccd" ],
-		d => ["what d has"],
-	};
 
 	return bless $self, $class;
 }
@@ -164,11 +151,6 @@ sub printable {
 
 	return $printedform;
 }
-
-# This partially supports the :cgi-lib Vars() interface, a-la CGI.pm.  Not
-# supported is being called in scalar context, which in CGI.pm returned a
-# tied hashref to the original form data.  WeBWorK didn't need that, so I
-# didn't add it.  If you're feeling industrious...
 
 #FIXME?  I originally changed   join("\0",....)  to join(\0, ....) since I'm pretty sure that what was desired
 # was a string separated by nulls.   If one of the items in the list began with a number  eg 14

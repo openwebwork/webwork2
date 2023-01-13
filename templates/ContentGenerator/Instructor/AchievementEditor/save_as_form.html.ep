@@ -1,0 +1,36 @@
+% # There are three things you can do with a new achievement editor.
+% # You can replace the current achievement, use it in a new achievement, or not use it at all.
+<div>
+	<div class="row align-items-center mb-2">
+		<%= label_for 'action.save_as.target_file_id' => maketext('Save as:'), class => 'col-form-label col-auto' =%>
+		<div class="col-auto">
+			<%= text_field 'action.save_as.target_file' => $c->getRelativeSourceFilePath($c->{sourceFilePath}),
+				id => 'action.save_as.target_file_id', size => 40, class => 'form-control form-control-sm' =%>
+		</div>
+		<%=  hidden_field 'action.save_as.source_file' => $c->{sourceFilePath} =%>
+	</div>
+	<div class="form-check mb-2">
+		<%= radio_button 'action.save_as.saveMode' => 'use_in_current',
+			id => 'action.save_as.saveMode.use_in_current', class => 'form-check-input' =%>
+		<%= label_for 'action.save_as.saveMode.use_in_current', class => 'form-check-label', begin =%>
+			<%== maketext('Use in achievement [_1]', tag('b', $c->{achievementID})) =%>
+		<% end =%>
+	</div>
+	<div class="mb-2">
+		<div class="form-check d-inline-block">
+			<%= radio_button 'action.save_as.saveMode' => 'use_in_new',
+				id => 'action.save_as.saveMode.use_in_new', class => 'form-check-input' =%>
+			<%= label_for 'action.save_as.saveMode.use_in_new' => maketext('Use in new achievement:'),
+				class => 'form-check-label me-1', id => 'action.save_as.saveMode.use_in_new.label' =%>
+		</div>
+		<%= text_field 'action.save_as.id' => '',
+			'aria-labelledby' => 'action.save_as.saveMode.use_in_new.label',
+			class             => 'form-control form-control-sm d-inline w-auto' =%>
+	</div>
+	<div class="form-check">
+		<%= radio_button 'action.save_as.saveMode' => 'dont_use',
+			id => 'action.save_as.saveMode.dont_use', class => 'form-check-input' =%>
+		<%= label_for 'action.save_as.saveMode.dont_use' => maketext(q{Don't use in an achievement}),
+			class => 'form-check-label' =%>
+	</div>
+</div>

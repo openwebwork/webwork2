@@ -1,0 +1,39 @@
+% # Note that this template is used by both WeBWorK::ContentGenerator::Instructor::Stats and
+% # WeBWorK::ContentGenerator::Instructor::StudentProgress.
+%
+% use WeBWorK::Utils qw(format_set_name_display);
+%
+% my $type = current_route =~ s/instructor_//r;
+%
+<div class="row">
+	<div class="col-lg-5 col-sm-6 mb-2">
+		<div class="card h-100">
+			<div class="card-body p-2">
+				<h2 class="card-title text-center fs-3"><%= $set_header %></h2>
+				<ul dir="ltr">
+					% for ($db->listGlobalSetsWhere({}, 'set_id')) {
+						<li>
+							<%= link_to format_set_name_display($_->[0]) =>
+								$c->systemLink(url_for("instructor_set_$type", setID => $_->[0])) =%>
+						</li>
+					% }
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="col-lg-5 col-sm-6 mb-2">
+		<div class="card h-100">
+			<div class="card-body p-2">
+				<h2 class="card-title text-center fs-3"><%= $student_header %></h2>
+				<ul>
+					% for (@{ $c->{student_records} }) {
+						<li>
+							<%= link_to $_->last_name . ', ' . $_->first_name . ' (' . $_->user_id . ')' =>
+								$c->systemLink(url_for("instructor_user_$type", userID   => $_->user_id)) =%>
+						</li>
+					% }
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>

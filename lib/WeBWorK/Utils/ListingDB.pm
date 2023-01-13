@@ -195,7 +195,7 @@ sub makeKeywordWhere {
 =item getDBextras($path)
 Get flags for whether a pg file uses Math Objects, and if it is static
 
-$r is a Apache request object so we can get the right table names
+$c is a WeBWorK::Controller object so we can get the right table names
 
 $path is the path to the file
 
@@ -204,10 +204,10 @@ Output is an array reference: [MO, static]
 =cut
 
 sub getDBextras {
-	my $r      = shift;
+	my $c      = shift;
 	my $path   = shift;
-	my %tables = getTables($r->ce);
-	my $dbh    = getDB($r->ce);
+	my %tables = getTables($c->ce);
+	my $dbh    = getDB($c->ce);
 	my ($mo, $static) = (0, 0);
 
 	$path =~ s|^Library/||;
@@ -224,10 +224,10 @@ sub getDBextras {
 	return [ $mo, $static ];
 }
 
-=item getDBTextbooks($r)
+=item getDBTextbooks($c)
 Returns textbook dependent entries.
 
-$r is a Apache request object so we can extract whatever parameters we want
+$c is a WeBWorK::Controller object so we can extract whatever parameters we want
 
 $thing is a string of either 'textbook', 'textchapter', or 'textsection' to
 specify what to return.
@@ -238,16 +238,16 @@ consistent with the DB subject, chapter, section selected.
 =cut
 
 sub getDBTextbooks {
-	my $r          = shift;
+	my $c          = shift;
 	my $thing      = shift || 'textbook';
-	my $dbh        = getDB($r->ce);
-	my %tables     = getTables($r->ce);
+	my $dbh        = getDB($c->ce);
+	my %tables     = getTables($c->ce);
 	my $extrawhere = '';
 	# Handle DB* restrictions
 	my @search_params = ();
-	my $subj          = $r->param('library_subjects') || "";
-	my $chap          = $r->param('library_chapters') || "";
-	my $sec           = $r->param('library_sections') || "";
+	my $subj          = $c->param('library_subjects') || "";
+	my $chap          = $c->param('library_chapters') || "";
+	my $sec           = $c->param('library_sections') || "";
 	if ($subj) {
 		$subj =~ s/'/\\'/g;
 		$extrawhere .= " AND t.name = ?\n";
@@ -264,7 +264,7 @@ sub getDBTextbooks {
 		push @search_params, $sec;
 	}
 	my $textextrawhere = '';
-	my $textid         = $r->param('library_textbook') || '';
+	my $textid         = $c->param('library_textbook') || '';
 	if ($textid and $thing ne 'textbook') {
 		$textextrawhere .= " AND tbk.textbook_id= ? ";
 		push @search_params, $textid;
@@ -272,7 +272,7 @@ sub getDBTextbooks {
 		return ([]) if ($thing ne 'textbook');
 	}
 
-	my $textchap = $r->param('library_textchapter') || '';
+	my $textchap = $c->param('library_textchapter') || '';
 	$textchap =~ s/^\s*\d+\.\s*//;
 	if ($textchap and $thing eq 'textsection') {
 		$textextrawhere .= " AND tc.name= ? ";
@@ -333,20 +333,20 @@ sub getDBTextbooks {
 	}
 }
 
-=item getAllDBsubjects($r)
+=item getAllDBsubjects($c)
 Returns an array of DBsubject names
 
-$r is the Apache request object
+$c is the WeBWorK::Controller object
 
 =cut
 
 sub getAllDBsubjects {
-	my $r       = shift;
-	my %tables  = getTables($r->ce);
+	my $c       = shift;
+	my %tables  = getTables($c->ce);
 	my @results = ();
 	my @row;
 	my $query = "SELECT DISTINCT name, DBsubject_id FROM `$tables{dbsubject}` ORDER BY DBsubject_id";
-	my $dbh   = getDB($r->ce);
+	my $dbh   = getDB($c->ce);
 	my $sth   = $dbh->prepare($query);
 	$sth->execute();
 
@@ -357,21 +357,21 @@ sub getAllDBsubjects {
 	return @results;
 }
 
-=item getAllDBchapters($r)
+=item getAllDBchapters($c)
 Returns an array of DBchapter names
 
-$r is the Apache request object
+$c is the WeBWorK::Controller object
 
 =cut
 
 sub getAllDBchapters {
-	my $r       = shift;
-	my %tables  = getTables($r->ce);
-	my $subject = $r->param('library_subjects');
+	my $c       = shift;
+	my %tables  = getTables($c->ce);
+	my $subject = $c->param('library_subjects');
 	return () unless ($subject);
-	my $dbh = getDB($r->ce);
+	my $dbh = getDB($c->ce);
 
-	my $query = "SELECT DISTINCT c.name, c.DBchapter_id       
+	my $query = "SELECT DISTINCT c.name, c.DBchapter_id
 				FROM `$tables{dbchapter}` c,
 				`$tables{dbsubject}` t
                  WHERE c.DBsubject_id = t.DBsubject_id AND
@@ -381,21 +381,21 @@ sub getAllDBchapters {
 	return @results;
 }
 
-=item getAllDBsections($r)
+=item getAllDBsections($c)
 Returns an array of DBsection names
 
-$r is the Apache request object
+$c is the WeBWorK::Controller object
 
 =cut
 
 sub getAllDBsections {
-	my $r       = shift;
-	my %tables  = getTables($r->ce);
-	my $subject = $r->param('library_subjects');
+	my $c       = shift;
+	my %tables  = getTables($c->ce);
+	my $subject = $c->param('library_subjects');
 	return () unless ($subject);
-	my $chapter = $r->param('library_chapters');
+	my $chapter = $c->param('library_chapters');
 	return () unless ($chapter);
-	my $dbh = getDB($r->ce);
+	my $dbh = getDB($c->ce);
 
 	my $query = "SELECT DISTINCT s.name, s.DBsection_id
                  FROM `$tables{dbsection}` s,
@@ -408,34 +408,34 @@ sub getAllDBsections {
 	return @results;
 }
 
-=item getDBListings($r)
+=item getDBListings($c)
 Returns an array of hash references with the keys: path, filename.
 
-$r is an Apache request object that has all needed data inside of it
+$c is a WeBWorK::Controller object that has all needed data inside of it
 
 Here, we search on all known fields out of r
 
 =cut
 
 sub getDBListings {
-	my $r               = shift;
+	my $c               = shift;
 	my $amcounter       = shift;            # 0-1 if I am a counter.
-	my $ce              = $r->ce;
+	my $ce              = $c->ce;
 	my %tables          = getTables($ce);
-	my $subj            = $r->param('library_subjects') || "";
-	my $chap            = $r->param('library_chapters') || "";
-	my $sec             = $r->param('library_sections') || "";
-	my $include_opl     = $r->param('includeOPL')     // 1;
-	my $include_contrib = $r->param('includeContrib') // 0;
+	my $subj            = $c->param('library_subjects') || "";
+	my $chap            = $c->param('library_chapters') || "";
+	my $sec             = $c->param('library_sections') || "";
+	my $include_opl     = $c->param('includeOPL')     // 1;
+	my $include_contrib = $c->param('includeContrib') // 0;
 
 	# Make sure these strings are internally encoded in UTF-8
 	utf8::upgrade($subj);
 	utf8::upgrade($chap);
 	utf8::upgrade($sec);
 
-	my $keywords = $r->param('library_keywords') || "";
+	my $keywords = $c->param('library_keywords') || "";
 	# Next could be an array, an array reference, or nothing
-	my @levels = $r->param('level');
+	my @levels = $c->param('level');
 	if (scalar(@levels) == 1 and ref($levels[0]) eq 'ARRAY') {
 		@levels = @{ $levels[0] };
 	}
@@ -476,7 +476,7 @@ sub getDBListings {
 	my $haveTextInfo        = 0;
 	my @textInfo_parameters = ();
 	for my $j (qw( textbook textchapter textsection )) {
-		my $foo = $r->param(LIBRARY_STRUCTURE->{$j}{name}) || '';
+		my $foo = $c->param(LIBRARY_STRUCTURE->{$j}{name}) || '';
 		$foo =~ s/^\s*\d+\.\s*//;
 		if ($foo) {
 			$haveTextInfo = 1;
@@ -545,15 +545,15 @@ sub getDBListings {
 }
 
 sub countDBListings {
-	my $r = shift;
-	return (getDBListings($r, 1));
+	my $c = shift;
+	return (getDBListings($c, 1));
 }
 
 sub getMLTleader {
-	my $r      = shift;
+	my $c      = shift;
 	my $mltid  = shift;
-	my %tables = getTables($r->ce);
-	my $dbh    = getDB($r->ce);
+	my %tables = getTables($c->ce);
+	my $dbh    = getDB($c->ce);
 	my $query  = "SELECT leader FROM `$tables{morelt}` WHERE morelt_id=\"$mltid\"";
 	my $row    = $dbh->selectrow_arrayref($query);
 	return $row->[0];
@@ -565,13 +565,13 @@ sub getMLTleader {
 # if section is omitted, get all from the chapter
 sub getSectionListings {
 	# TODO: eliminate this subroutine after deprecating OPLv1
-	my $r       = shift;
-	my $ce      = $r->ce;
+	my $c       = shift;
+	my $ce      = $c->ce;
 	my $version = $ce->{problemLibrary}->{version} || 1;
-	if ($version => 2) { return (getDBListings($r, 0)) }
-	my $subj = $r->param('library_subjects') || "";
-	my $chap = $r->param('library_chapters') || "";
-	my $sec  = $r->param('library_sections') || "";
+	if ($version => 2) { return (getDBListings($c, 0)) }
+	my $subj = $c->param('library_subjects') || "";
+	my $chap = $c->param('library_chapters') || "";
+	my $sec  = $c->param('library_sections') || "";
 
 	my $chapstring = '';
 	if ($chap) {

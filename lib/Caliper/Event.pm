@@ -14,13 +14,13 @@ use Caliper::Sensor;
 
 # Constructor
 sub add_defaults {
-	my ($r, $event_hash) = @_;
-	my $ce = $r->{ce};
-	my $db = $r->{db};
+	my ($c, $event_hash) = @_;
+	my $ce = $c->ce;
+	my $db = $c->db;
 	my $ug = new Data::UUID;
 
-	my $user_id     = $r->param('user');
-	my $session_key = $r->param('key');
+	my $user_id     = $c->param('user');
+	my $session_key = $c->param('key');
 	my $uuid        = $ug->create_str;
 	my $actor       = Caliper::Actor::generate_actor($ce, $db, $user_id);
 

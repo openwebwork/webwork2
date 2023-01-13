@@ -5,9 +5,9 @@
 	// Send a request to the webwork webservice and render a problem.
 	const basicWebserviceURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/render_rpc`;
 
-	const render = () => new Promise((resolve) => {
-		const renderArea = document.getElementById(`problem_render_area`);
+	const renderArea = document.getElementById(`problem_render_area`);
 
+	const render = () => new Promise((resolve) => {
 		const ro = {
 			user: document.getElementById('hidden_user')?.value,
 			courseID: document.getElementById('hidden_course_id')?.value,
@@ -88,20 +88,21 @@
 		});
 	});
 
-	const hide = () => {
-		const iframe = document.getElementById('problem_render_iframe');
-		if (iframe && iframe.iFrameResizer) iframe.iFrameResizer.close();
-	};
-
 	// Set up the render button.
-	document.getElementById('problem_render_btn')?.addEventListener('click', () => {
-		const btn = document.getElementById('problem_render_btn');
-		if (btn.innerHTML == 'Render Problem') {
-			btn.innerHTML = 'Hide Problem';
-			render();
+	const btn = document.getElementById('problem_render_btn');
+	btn?.addEventListener('click', () => {
+		const iframe = document.getElementById('problem_render_iframe');
+		if (iframe && iframe.iFrameResizer) {
+			iframe.iFrameResizer.close();
+			renderArea.innerHTML = '';
+			btn.textContent = btn.dataset.renderText;
+		} else if (/\S/.test(renderArea.innerHTML)) {
+			renderArea.innerHTML = '';
+			btn.textContent = btn.dataset.renderText;
 		} else {
-			btn.innerHTML = 'Render Problem';
-			hide();
+			btn.textContent = btn.dataset.hideText;
+			renderArea.innerHTML = '<div class="alert alert-success p-1 mb-0">Loading Please Wait...</div>';
+			render();
 		}
 	});
 

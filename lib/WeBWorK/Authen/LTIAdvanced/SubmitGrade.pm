@@ -25,10 +25,10 @@ WeBWorK::Authen::LTIAdvanced::SubmitGrade - pass back grades to an enabled LMS
 use strict;
 use warnings;
 use WeBWorK::Debug;
-use WeBWorK::CGI;
 use Carp;
 use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets wwRound);
 use Net::OAuth;
+use HTML::Entities;
 use HTTP::Request;
 use LWP::UserAgent;
 use UUID::Tiny ':std';
@@ -38,12 +38,12 @@ use Digest::SHA qw(sha1_base64);
 
 # This package contains utilities for submitting grades to the LMS
 sub new {
-	my ($invocant, $r) = @_;
+	my ($invocant, $c) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $self  = { r => $r, };
+	my $self  = { c => $c, };
 	# sanity check
-	my $ce = $r->{ce};
-	my $db = $self->{r}->{db};
+	my $ce = $c->ce;
+	my $db = $self->{c}->db;
 
 	unless (ref($ce // '') and ref($db) // '') {
 		warn("course environment is not defined") unless ref($ce // '');
@@ -61,13 +61,13 @@ sub new {
 sub update_sourcedid {
 	my $self   = shift;
 	my $userID = shift;
-	my $r      = $self->{r};
-	my $ce     = $r->{ce};
-	my $db     = $self->{r}->{db};
+	my $c      = $self->{c};
+	my $ce     = $c->ce;
+	my $db     = $self->{c}->db;
 
 	# These parameters are used to build the passback request
 	# warn if no outcome service url
-	if (!defined($r->param('lis_outcome_service_url'))) {
+	if (!defined($c->param('lis_outcome_service_url'))) {
 		carp "The parameter lis_outcome_service_url is not defined.  Unable to report grades to the LMS."
 			. " Are external grades enabled in the LMS?"
 			if $ce->{debug_lti_grade_passback};
@@ -75,31 +75,31 @@ sub update_sourcedid {
 		# otherwise keep it up to date
 		my $lis_outcome_service_url = $db->getSettingValue('lis_outcome_service_url');
 		if (!defined($lis_outcome_service_url)
-			|| $lis_outcome_service_url ne $r->param('lis_outcome_service_url'))
+			|| $lis_outcome_service_url ne $c->param('lis_outcome_service_url'))
 		{
-			$db->setSettingValue('lis_outcome_service_url', $r->param('lis_outcome_service_url'));
+			$db->setSettingValue('lis_outcome_service_url', $c->param('lis_outcome_service_url'));
 		}
 	}
 
 	# these parameters have to be here or we couldn't have gotten this far
 	my $consumer_key = $db->getSettingValue('consumer_key');
 	if (!defined($consumer_key)
-		|| $consumer_key ne $r->param('oauth_consumer_key'))
+		|| $consumer_key ne $c->param('oauth_consumer_key'))
 	{
-		$db->setSettingValue('consumer_key', $r->param('oauth_consumer_key'));
+		$db->setSettingValue('consumer_key', $c->param('oauth_consumer_key'));
 	}
 
 	my $signature_method = $db->getSettingValue('signature_method');
 	if (!defined($signature_method)
-		|| $signature_method ne $r->param('oauth_signature_method'))
+		|| $signature_method ne $c->param('oauth_signature_method'))
 	{
-		$db->setSettingValue('signature_method', $r->param('oauth_signature_method'));
+		$db->setSettingValue('signature_method', $c->param('oauth_signature_method'));
 	}
 
 	# The $sourcedid is what identifies the user and assignment
 	# to the LMS.  It is either a course grade or a set grade
 	# depending on the request and the mode we are in.
-	my $sourcedid = $r->param('lis_result_sourcedid');
+	my $sourcedid = $c->param('lis_result_sourcedid');
 	if (!defined($sourcedid)) {
 		warn "No LISSourceID! Some LMS's do not give grades to instructors, but this "
 			. "could also be a sign that external grades are not enabled in your LMS."
@@ -112,8 +112,7 @@ sub update_sourcedid {
 			$db->putUser($User);
 		}
 	} elsif ($ce->{LTIGradeMode} eq 'homework') {
-		my $urlpath = $r->urlpath;
-		my $setID   = $urlpath->arg("setID");
+		my $setID = $c->stash('setID');
 		if (!defined($setID)) {
 			warn "Not a link to a Problem Set and in homework grade mode."
 				. " Links to WeBWorK should point to specific problem sets.";
@@ -141,9 +140,9 @@ sub update_sourcedid {
 sub submit_course_grade {
 	my $self   = shift;
 	my $userID = shift;
-	my $r      = $self->{r};
-	my $ce     = $r->{ce};
-	my $db     = $self->{r}->{db};
+	my $c      = $self->{c};
+	my $ce     = $c->ce;
+	my $db     = $self->{c}->db;
 
 	my $score = grade_all_sets($db, $userID);
 	my $user  = $db->getUser($userID);
@@ -163,9 +162,9 @@ sub submit_set_grade {
 	my $self   = shift;
 	my $userID = shift;
 	my $setID  = shift;
-	my $r      = $self->{r};
-	my $ce     = $r->{ce};
-	my $db     = $self->{r}->{db};
+	my $c      = $self->{c};
+	my $ce     = $c->ce;
+	my $db     = $c->db;
 
 	my $user = $db->getUser($userID);
 
@@ -188,18 +187,15 @@ sub submit_set_grade {
 	return $self->submit_grade($userSet->lis_source_did, $score);
 }
 
-# error in reporting michael.gage@rochester.edu, Demo, Global $r object is not available. Set:
-# 	PerlOptions +GlobalRequest
-# in httpd.conf at /opt/rh/perl516/root/usr/local/share/perl5/CGI.pm line 346, <IN> line 76.
-# so we don't use CGI::escapeHTML in post processing mode but use this local version instead.
-
-sub local_escape_html {    # a local version of escapeHTML that works for post processing
-	my $self    = shift;    # a grading object
-	my @message = @_;
+# Escape HTML in messages when post processing is not being done.  When post processing is being done these messages are
+# sent to a log file, and so escaping HTML makes the messages even less readable.  Note that this should never be used
+# with the "debug" method as those messages always go into a log file.
+sub local_escape_html {
+	my ($self, @message) = @_;
 	if ($self->{post_processing_mode}) {
-		return join('', @message);    # this goes to log files in post processing to escapeHTML is not essential
+		return join('', @message);
 	} else {
-		return CGI::escapeHTML(@message);    #FIXME -- why won't this work in post_processing_mode (missing $r ??)
+		return HTML::Entities::encode_entities(join('', @message));
 	}
 }
 
@@ -209,9 +205,9 @@ sub submit_grade {
 	my $self      = shift;
 	my $sourcedid = shift;
 	my $score     = shift;
-	my $r         = $self->{r};
-	my $ce        = $r->{ce};
-	my $db        = $self->{r}->{db};
+	my $c         = $self->{c};
+	my $ce        = $c->ce;
+	my $db        = $self->{c}->db;
 
 	$score = wwRound(2, $score);
 
@@ -408,7 +404,7 @@ EOS
 			debug(
 				"Unable to retrieve prior grade from LMS. Note that if your server time is not correct, this may fail for reasons which are less than obvious from the error messages. Error: "
 					. $response->message);
-			debug(CGI::escapeHTML($response->content));
+			debug($response->content);
 			return 0;
 		}
 	}
@@ -537,9 +533,9 @@ sub mass_update {
 	my ($self, $update, $name, $name2) = @_;
 	$name  ||= '';
 	$name2 ||= '';
-	my $r  = $self->{r};
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $c  = $self->{c};
+	my $ce = $c->ce;
+	my $db = $c->db;
 
 	# sanity check
 	unless (ref($ce)) {
@@ -611,7 +607,7 @@ sub mass_update {
 			};
 			if ($@) {
 				# Write errors to the Mojolicious log.
-				$r->log->error("An error occured while trying to mass_update grades via LTI: $@\n");
+				$c->log->error("An error occured while trying to mass_update grades via LTI: $@\n");
 			}
 			$self->{post_processing_mode} = 0;
 		}
@@ -620,4 +616,3 @@ sub mass_update {
 }
 
 1;
-

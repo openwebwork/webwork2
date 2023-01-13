@@ -1,0 +1,30 @@
+<tr class="align-top">
+	% if ($forUsers) {
+		<td>
+			<%= check_box "set.$setID.selected_ip_locations.override",
+				id => "set.$setID.selected_ip_locations.override_id", class => 'form-check-input',
+				$ipOverride ? (checked => undef) : () =%>
+		</td>
+	% }
+	<td>
+		<%= label_for $forUsers ? "set.$setID.selected_ip_locations.override_id"
+			: "set.$setID.selected_ip_locations_id" => maketext('Restrict Locations'),
+			$forUsers ? (id => "set.$setID.selected_ip_locations.label", class => 'form-check-label')
+			: (class => 'form-label') =%>
+	</td>
+	<td></td>
+	<td>
+		<%= select_field "set.$setID.selected_ip_locations" =>
+			[ map { [ $_ => $_, $defaultLocations->{$_} ? (selected => undef) : () ] } @$locations ],
+			id => "set.$setID.selected_ip_locations_id", size => 5, multiple => undef,
+			class => 'form-select form-select-sm',
+			$forUsers ? ('aria-labelledby' => "set.$setID.selected_ip_locations.label") : () =%>
+	</td>
+	% if ($forUsers) {
+		<td>
+			<%= text_area "set.$setID.selected_ip_locations.class_value" => join("\n", @$globalLocations),
+				readonly => undef, rows => 5, class => 'form-control form-control-sm',
+				'aria-labelledby' => "set.$setID.selected_ip_locations.label" =%>
+		</td>
+	% }
+</tr>

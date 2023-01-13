@@ -1,0 +1,3 @@
+% if (-w $c->{sourceFilePath}) {
+	<%== maketext('Save [_1]', tag('b', $c->shortPath($c->{sourceFilePath}))) %>
+% }

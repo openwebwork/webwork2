@@ -1,0 +1,46 @@
+% # Note that this template is used by both WeBWorK::ContentGenerator::Instructor::Stats and
+% # WeBWorK::ContentGenerator::Instructor::StudentProgress.
+%
+% use WeBWorK::Utils qw(format_set_name_display);
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	% last;
+% }
+%
+<div class="info-box" id="fisheye">
+	<h2><%= $header %></h2>
+	% if (current_route =~ /^instructor_user_/) {
+		<ul class="nav flex-column problem-list">
+			% for (@{ $c->{student_records} }) {
+				<li class="nav-item">
+					<%= tag 'a',
+						$_->user_id eq $c->{studentID}
+						? (class => 'nav-link active')
+						: (
+							href => $c->systemLink(url_for(current_route, userID => $_->user_id)),
+							class => 'nav-link'
+						), begin =%>
+						<%= $_->last_name =%>, <%= $_->first_name %> (<%= $_->user_id %>)
+					<% end =%>
+				</li>
+			% }
+		</ul>
+	% } else {
+		<ul class="nav flex-column problem-list" dir="ltr">
+			% for (sort $db->listGlobalSets) {
+				<li class="nav-item">
+					<%= tag 'a',
+						defined stash('setID') && $_ eq stash('setID') ? (class => 'nav-link active')
+						: (
+							href => $c->systemLink(
+								url_for(current_route, setID => $_, problemID => ''),
+								params => param('filter') ? { filter => param('filter') } : {}
+							),
+							class => 'nav-link'
+						),
+						format_set_name_display($_) =%>
+				</li>
+			% }
+		</ul>
+	% }
+</div>

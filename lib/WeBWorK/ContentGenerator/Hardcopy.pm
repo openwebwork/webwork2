@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Hardcopy;
-use base qw(WeBWorK::ContentGenerator);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
 =head1 NAME
 
@@ -23,22 +23,13 @@ problem sets.
 
 =cut
 
-use strict;
-use warnings;
-
-#use Apache::Constants qw/:common REDIRECT/;
-#use CGI qw(-nosticky );
-use WeBWorK::CGI;
-
 use File::Path;
 use File::Temp qw/tempdir/;
-use Future::AsyncAwait;
 use String::ShellQuote;
 use Archive::Zip qw(:ERROR_CODES);
+
 use WeBWorK::DB::Utils qw/user2global/;
-use WeBWorK::Debug;
 use WeBWorK::Form;
-use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
 use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after x format_set_name_display/;
 use WeBWorK::Utils::Rendering qw(renderPG);
@@ -54,7 +45,7 @@ If true, don't delete temporary files.
 
 =cut
 
-our $PreserveTempFiles = 0 unless defined $PreserveTempFiles;
+our $PreserveTempFiles = $PreserveTempFiles // 0;
 
 =back
 
@@ -67,7 +58,7 @@ our %HC_FORMATS        = (
 );
 our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 
-# custom fields used in $self hash
+# custom fields used in $c hash
 # FOR HEAVEN'S SAKE, PLEASE KEEP THIS UP-TO-DATE!
 #
 # file_path
@@ -87,8 +78,9 @@ our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 #   Set by generate_hardcopy(), and used by pre_header_initialize(), used by body()
 #
 # hardcopy_errors
-#   reference to array containing HTML strings describing generation errors (and warnings)
-#   used by add_errors(), get_errors(), get_errors_ref()
+#   reference to an array of Mojo::ByteStream objects containing HTML strings
+#   describing generation errors (and warnings)
+#   used by add_error(), has_errors(), get_errors()
 #
 # at_least_one_problem_rendered_without_error
 #   set to a true value by write_problem_tex if it is able to sucessfully render
@@ -121,28 +113,26 @@ our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 # UI subroutines
 ################################################################################
 
-async sub pre_header_initialize {
-	my $self  = shift;
-	my $r     = $self->r;
-	my $ce    = $r->ce;
-	my $db    = $r->db;
-	my $authz = $r->authz;
+async sub pre_header_initialize ($c) {
+	my $ce    = $c->ce;
+	my $db    = $c->db;
+	my $authz = $c->authz;
 
-	my $userID            = $r->param('user');
-	my $eUserID           = $r->param('effectiveUser');
-	my @setIDs            = $r->param('selected_sets');
-	my @userIDs           = $r->param('selected_users');
-	my $hardcopy_format   = $r->param('hardcopy_format');
-	my $generate_hardcopy = $r->param('generate_hardcopy');
+	my $userID            = $c->param('user');
+	my $eUserID           = $c->param('effectiveUser');
+	my @setIDs            = $c->param('selected_sets');
+	my @userIDs           = $c->param('selected_users');
+	my $hardcopy_format   = $c->param('hardcopy_format');
+	my $generate_hardcopy = $c->param('generate_hardcopy');
 
 	# This should never happen, but apparently it did once (see bug #714), so we check for it.
 	die 'Parameter "user" not defined -- this should never happen' unless defined $userID;
 
 	# Check to see if the user is authorized to view source file paths.
-	$self->{can_show_source_file} =
+	$c->{can_show_source_file} =
 		($db->getPermissionLevel($userID)->permission >=
 			$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL})
-		|| grep($_ eq $userID, @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} });
+		|| (grep { $_ eq $userID } @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} });
 
 	if ($generate_hardcopy) {
 		my $validation_failed = 0;
@@ -152,28 +142,28 @@ async sub pre_header_initialize {
 
 		# Make sure the format is valid.
 		unless (grep { $_ eq $hardcopy_format } keys %HC_FORMATS) {
-			$self->addbadmessage("'$hardcopy_format' is not a valid hardcopy format.");
+			$c->addbadmessage(qq{"$hardcopy_format" is not a valid hardcopy format.});
 			$validation_failed = 1;
 		}
 
 		# Make sure we are allowed to generate hardcopy in this format.
 		unless ($authz->hasPermissions($userID, "download_hardcopy_format_$hardcopy_format")) {
-			$self->addbadmessage(
-				$r->maketext('You do not have permission to generate hardcopy in [_1] format.', $hardcopy_format));
+			$c->addbadmessage(
+				$c->maketext('You do not have permission to generate hardcopy in [_1] format.', $hardcopy_format));
 			$validation_failed = 1;
 		}
 
 		# Make sure we are allowed to use this hardcopy theme.
 		unless ($authz->hasPermissions($userID, 'download_hardcopy_change_theme')
-			|| !defined($r->param('hardcopy_theme')))
+			|| !defined($c->param('hardcopy_theme')))
 		{
-			$self->addbadmessage($r->maketext('You do not have permission to change the hardcopy theme.'));
+			$c->addbadmessage($c->maketext('You do not have permission to change the hardcopy theme.'));
 			$validation_failed = 1;
 		}
 
 		# Is there at least one user selected?
 		unless (@userIDs) {
-			$self->addbadmessage($r->maketext('Please select at least one user and try again.'));
+			$c->addbadmessage($c->maketext('Please select at least one user and try again.'));
 			$validation_failed = 1;
 		}
 
@@ -182,7 +172,7 @@ async sub pre_header_initialize {
 		# When professors don't select any sets the size of @setIDs is 0.
 		# The following test catches both cases and prevents warning messages in the case of a professor's empty array.
 		unless (@setIDs && $setIDs[0] =~ /\S+/) {
-			$self->addbadmessage($r->maketext('Please select at least one set and try again.'));
+			$c->addbadmessage($c->maketext('Please select at least one set and try again.'));
 			$validation_failed = 1;
 		}
 
@@ -195,18 +185,18 @@ async sub pre_header_initialize {
 
 		my $perm_viewunopened = $authz->hasPermissions($userID, 'view_unopened_sets');
 
-		if (@setIDs > 1 and not $perm_multiset) {
-			$self->addbadmessage('You are not permitted to generate hardcopy for multiple sets. '
+		if (@setIDs > 1 && !$perm_multiset) {
+			$c->addbadmessage('You are not permitted to generate hardcopy for multiple sets. '
 					. 'Please select a single set and try again.');
 			$validation_failed = 1;
 		}
-		if (@userIDs > 1 and not $perm_multiuser) {
-			$self->addbadmessage('You are not permitted to generate hardcopy for multiple users. '
+		if (@userIDs > 1 && !$perm_multiuser) {
+			$c->addbadmessage('You are not permitted to generate hardcopy for multiple users. '
 					. 'Please select a single user and try again.');
 			$validation_failed = 1;
 		}
-		if (@userIDs and $userIDs[0] ne $eUserID and not $perm_multiuser) {
-			$self->addbadmessage('You are not permitted to generate hardcopy for other users.');
+		if (@userIDs && $userIDs[0] ne $eUserID && !$perm_multiuser) {
+			$c->addbadmessage('You are not permitted to generate hardcopy for other users.');
 			$validation_failed = 1;
 			# FIXME: Download_hardcopy_multiuser controls both whether a user can generate hardcopy
 			# that contains sets for multiple users AND whether the user can generate hardcopy that contains
@@ -243,8 +233,8 @@ async sub pre_header_initialize {
 							)
 						{
 							$validation_failed = 1;
-							$self->addbadmessage(
-								$r->maketext('You are not permitted to generate a hardcopy for an unopened set.'));
+							$c->addbadmessage(
+								$c->maketext('You are not permitted to generate a hardcopy for an unopened set.'));
 							last;
 
 						}
@@ -257,8 +247,8 @@ async sub pre_header_initialize {
 							)
 						{
 							$validation_failed = 1;
-							$self->addbadmessage(
-								$r->maketext(
+							$c->addbadmessage(
+								$c->maketext(
 									'You are not permitted to generate a hardcopy for a set with hidden work.')
 							);
 							last;
@@ -266,9 +256,9 @@ async sub pre_header_initialize {
 
 						if ($authz->invalidIPAddress($userSet)) {
 							$validation_failed = 1;
-							$self->addbadmessage($r->maketext(
+							$c->addbadmessage($c->maketext(
 								'You are not allowed to generate a hardcopy for [_1] from your IP address, [_2].',
-								$userSet->set_id, $r->useragent_ip
+								$userSet->set_id, $c->tx->remote_address
 							));
 							last;
 						}
@@ -283,35 +273,35 @@ async sub pre_header_initialize {
 		}
 
 		unless ($validation_failed) {
-			$self->{canShowScore} = \%canShowScore;
-			$self->{mergedSets}   = \%mergedSets;
-			my $result = await $self->generate_hardcopy($hardcopy_format, \@userIDs, \@setIDs);
-			if ($self->get_errors) {
+			$c->{canShowScore} = \%canShowScore;
+			$c->{mergedSets}   = \%mergedSets;
+			my $result = await $c->generate_hardcopy($hardcopy_format, \@userIDs, \@setIDs);
+			if ($c->has_errors) {
 				# Store the result data in self hash so that body() can make a link to it.
-				$self->{file_path}     = $result->{file_path};
-				$self->{temp_file_map} = $result->{temp_file_map};
+				$c->{file_path}     = $result->{file_path};
+				$c->{temp_file_map} = $result->{temp_file_map};
 			} else {
 				# Send the file only (it is deleted from the server after it is sent).
-				$self->reply_with_file($result->{file_type}, $result->{file_path}, $result->{file_name}, 1);
+				$c->reply_with_file($result->{file_type}, $result->{file_path}, $result->{file_name}, 1);
 			}
 		}
 
 		return;
 	}
 
-	my $tempFile = $r->param('tempFilePath');
+	my $tempFile = $c->param('tempFilePath');
 	if ($tempFile) {
-		my $courseID     = $r->urlpath->arg('courseID');
+		my $courseID     = $c->stash('courseID');
 		my $baseName     = $tempFile =~ s/.*\/([^\/]*)$/$1/r;
 		my $fullFilePath = "$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID/$tempFile";
 
 		unless (-e $fullFilePath) {
-			$self->addbadmessage($r->maketext('The requested file "[_1]" does not exist on the server.', $tempFile));
+			$c->addbadmessage($c->maketext('The requested file "[_1]" does not exist on the server.', $tempFile));
 			return;
 		}
 
 		unless ($baseName =~ /\.$userID\./ || $authz->hasPermissions($userID, 'download_hardcopy_multiuser')) {
-			$self->addbadmessage($r->maketext('You do not have permission to access the requested file "[_1]".'),
+			$c->addbadmessage($c->maketext('You do not have permission to access the requested file "[_1]".'),
 				$tempFile);
 			return;
 		}
@@ -322,114 +312,33 @@ async sub pre_header_initialize {
 		$type = 'application/pdf' if $baseName =~ m/\.pdf/;
 		$type = 'application/zip' if $baseName =~ m/\.zip/;
 
-		$self->reply_with_file($type, $fullFilePath, $baseName);
+		$c->reply_with_file($type, $fullFilePath, $baseName);
 	}
 
 	return;
 }
 
-sub body {
-	my ($self)           = @_;
-	my $r                = $self->r;
-	my $userID           = $self->r->param('user');
-	my $perm_view_errors = $self->r->authz->hasPermissions($userID, 'download_hardcopy_view_errors');
-	$perm_view_errors = defined $perm_view_errors ? $perm_view_errors : 0;
-
-	if (my $num = $self->get_errors) {
-		my $file_path     = $self->{file_path};
-		my %temp_file_map = %{ $self->{temp_file_map} // {} };
-		if ($perm_view_errors) {
-			print CGI::p($r->maketext('[quant,_1,error] occured while generating hardcopy:', $num));
-
-			print CGI::ul(CGI::li($self->get_errors_ref));
-		}
-
-		if ($file_path) {
-			print CGI::p(
-				$r->maketext(
-					'A hardcopy file was generated, but it may not be complete or correct. Please check that no '
-						. 'problems are missing and that they are all legible. If not, please inform your instructor.'
-				),
-				'<br>',
-				CGI::a(
-					{
-						href => $self->systemLink(
-							$r->urlpath->newFromModule(
-								$r->urlpath->module, $r, courseID => $r->urlpath->arg('courseID')
-							),
-							params => { tempFilePath => $file_path }
-						)
-					},
-					$r->maketext('Download Hardcopy')
-				),
-			);
-		} else {
-			print CGI::p(
-				$r->maketext(
-					'WeBWorK was unable to generate a paper copy of this homework set.  Please inform your instructor.')
-			);
-		}
-
-		if ($perm_view_errors) {
-			if (%temp_file_map) {
-				print CGI::start_p();
-				print $r->maketext('You can also examine the following temporary files: ');
-				my $first = 1;
-				while (my ($temp_file_name, $temp_file_url) = each %temp_file_map) {
-					if ($first) {
-						$first = 0;
-					} else {
-						print ', ';
-					}
-					print CGI::a(
-						{
-							href => $self->systemLink(
-								$r->urlpath->newFromModule(
-									$r->urlpath->module, $r, courseID => $r->urlpath->arg('courseID')
-								),
-								params => { tempFilePath => $temp_file_url }
-							)
-						},
-						$temp_file_name
-					);
-				}
-				print CGI::end_p();
-			}
-		}
-
-		print CGI::hr();
-	}
-
-	# don't display the retry form if there are errors and the user doesn't have permission to view the errors.
-	unless ($self->get_errors and not $perm_view_errors) {
-		$self->display_form();
-	}
-	'';    # return a blank
-}
-
-sub display_form {
-	my ($self)  = @_;
-	my $r       = $self->r;
-	my $db      = $r->db;
-	my $ce      = $r->ce;
-	my $authz   = $r->authz;
-	my $userID  = $r->param("user");
-	my $eUserID = $r->param("effectiveUser");
+sub display_form ($c) {
+	my $db      = $c->db;
+	my $ce      = $c->ce;
+	my $authz   = $c->authz;
+	my $userID  = $c->param("user");
+	my $eUserID = $c->param("effectiveUser");
 
 	# first time we show up here, fill in some values
-	unless ($r->param("in_hc_form")) {
+	unless ($c->param("in_hc_form")) {
 		# if a set was passed in via the path_info, add that to the list of sets.
-		my $singleSet = $r->urlpath->arg("setID");
-		if (defined $singleSet and $singleSet ne "") {
-			my @selected_sets = $r->param("selected_sets");
-			$r->param("selected_sets" => [ @selected_sets, $singleSet ])
+		my $singleSet = $c->stash('setID');
+		if (defined $singleSet && $singleSet ne '') {
+			my @selected_sets = $c->param("selected_sets");
+			$c->param("selected_sets" => [ @selected_sets, $singleSet ])
 				unless grep { $_ eq $singleSet } @selected_sets;
 		}
 
 		# if no users are selected, select the effective user
-		my @selected_users = $r->param("selected_users");
+		my @selected_users = $c->param("selected_users");
 		unless (@selected_users) {
-			$r->param("selected_users" => $eUserID);
+			$c->param("selected_users" => $eUserID);
 		}
 	}
 
@@ -449,18 +358,16 @@ sub display_form {
 	}
 
 	# get format names hash for radio buttons
-	my %format_labels = map { $_ => $r->maketext($HC_FORMATS{$_}{name}) || $_ } @formats;
-
-	print CGI::start_form(-name => "hardcopy-form", -id => "hardcopy-form", -method => "POST", -action => $r->uri);
-	print $self->hidden_authen_fields();
-	print CGI::hidden("in_hc_form", 1);
+	my %format_labels = map { $_ => $c->maketext($HC_FORMATS{$_}{name}) || $_ } @formats;
 
 	my $canShowCorrectAnswers = 0;
-	my $canShowSolutions      = 0;
 
-	if ($perm_multiuser and $perm_multiset) {
+	my (@users, @wantedSets, @setVersions);
+	my ($user,  $user_id,    $selected_set_id);
+
+	if ($perm_multiuser && $perm_multiset) {
 		# Get all users for selection.
-		my @Users = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
+		@users = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
 
 		# Get sets for selection.
 		# Note that we are getting GlobalSets instead of using the list of UserSets assigned to the
@@ -473,95 +380,34 @@ sub display_form {
 		# FIXME: This is another place where we assume that there is a one-to-one correspondence between
 		# assignment_type =~ gateway and versioned sets.  I think we really should have a "is_versioned" flag on set
 		# objects instead.
-		my @SetVersions = ();
 		for my $v (grep { $_->assignment_type =~ /gateway/ } @GlobalSets) {
 			# FIXME: The set_id change here is a hideous, horrible hack.  The identifying key for a global set is the
 			# set_id.  Those for a set version are the set_id and version_id.  But this means that we have trouble
 			# displaying them both together in HTML::scrollingRecordList.  So we brutally play tricks with the set_id
 			# here, which probably is not very robust, and certainly is aesthetically displeasing.  Yuck.
-			push(@SetVersions,
+			push(@setVersions,
 				map { $_->set_id($_->set_id . ",v" . $_->version_id); $_ }
 					$db->getSetVersionsWhere({ user_id => $eUserID, set_id => { like => $v->set_id . ',v%' } }));
 		}
 
 		# Filter out global gateway sets.  Only the versioned sets may be printed.
-		my @WantedGlobalSets = grep { $_->assignment_type !~ /gateway/ } @GlobalSets;
-
-		print CGI::p($r->maketext(
-			"Select the homework sets for which to generate hardcopy versions. You may"
-				. " also select multiple users from the users list. You will receive hardcopy"
-				. " for each (set, user) pair."
-		));
-
-		print CGI::div(
-			{ class => 'row gx-3' },
-			CGI::div(
-				{ class => 'col-xl-5 col-md-6 mb-2' },
-				CGI::div(
-					{ class => 'fw-bold text-center' },
-					CGI::label({ for => 'selected_users' }, $r->maketext('Users'))
-				),
-				scrollingRecordList(
-					{
-						name            => 'selected_users',
-						id              => 'selected_users',
-						request         => $r,
-						default_sort    => 'lnfn',
-						default_format  => 'lnfn_uid',
-						default_filters => ['all'],
-						attrs           => {
-							size     => 20,
-							multiple => $perm_multiuser
-						}
-					},
-					@Users
-				)
-			),
-			CGI::div(
-				{ class => 'col-xl-5 col-md-6 mb-2' },
-				CGI::div(
-					{ class => 'fw-bold text-center' },
-					CGI::label({ for => 'selected_sets' }, $r->maketext('Sets'))
-				),
-				scrollingRecordList(
-					{
-						name            => 'selected_sets',
-						id              => 'selected_sets',
-						request         => $r,
-						default_sort    => 'set_id',
-						default_format  => 'sid',
-						default_filters => ['all'],
-						attrs           => {
-							size     => 20,
-							multiple => $perm_multiset,
-							dir      => 'ltr'
-						}
-					},
-					@WantedGlobalSets,
-					@SetVersions
-				)
-			)
-		);
+		@wantedSets = grep { $_->assignment_type !~ /gateway/ } @GlobalSets;
 
 		$canShowCorrectAnswers = 1;
-		$canShowSolutions      = 1;
-
 	} else {    # single user mode
-		my $user = $db->getUser($eUserID);
+		$user = $db->getUser($eUserID);
 
-		my $selected_set_id = $r->param("selected_sets");
-		$selected_set_id = '' unless defined $selected_set_id;
+		$selected_set_id = $c->param("selected_sets") // '';
 
-		my $selected_user_id = $user->user_id;
-		print CGI::hidden("selected_sets", $selected_set_id), CGI::hidden("selected_users", $selected_user_id);
+		$user_id = $user->user_id;
 
 		my $mergedSet;
 		if ($selected_set_id =~ /(.*),v(\d+)$/) {
 			# Determining if answers can be shown is more complicated for gateway tests.
 			my $the_set_id      = $1;
 			my $the_set_version = $2;
-			$mergedSet = $db->getMergedSetVersion($selected_user_id, $the_set_id, $the_set_version);
-			my $mergedProblem = $db->getMergedProblemVersion($selected_user_id, $the_set_id, $the_set_version, 1);
+			$mergedSet = $db->getMergedSetVersion($user_id, $the_set_id, $the_set_version);
+			my $mergedProblem = $db->getMergedProblemVersion($user_id, $the_set_id, $the_set_version, 1);
 
 			# Get the parameters needed to determine if correct answers may be shown.
 			my $maxAttempts  = $mergedSet->attempts_per_version()                          || 0;
@@ -585,217 +431,72 @@ sub display_form {
 				);
 
 		} else {
-			$mergedSet = $db->getMergedSet($selected_user_id, $selected_set_id);
+			$mergedSet = $db->getMergedSet($user_id, $selected_set_id);
 
 			$canShowCorrectAnswers = $perm_view_answers
 				|| (defined($mergedSet) && after($mergedSet->answer_date));
 		}
 		# Make display for versioned sets a bit nicer
 		$selected_set_id =~ s/,v(\d+)$/ (version $1)/;
-
-		print CGI::p($r->maketext(
-			"Download hardcopy of set [_1] for [_2]?",
-			CGI::span({ dir => 'ltr' }, format_set_name_display($selected_set_id)),
-			$user->first_name . " " . $user->last_name
-		));
-
-		$canShowSolutions = $canShowCorrectAnswers;
 	}
 
-	# Using maketext on the next line would trigger errors when a local hardcopyTheme is installed.
-	# my %hardcopyThemeNames = map {$_ => $r->maketext($ce->{hardcopyThemeNames}->{$_})} @{$ce->{hardcopyThemes}};
-	my %hardcopyThemeNames = map { $_ => $ce->{hardcopyThemeNames}->{$_} } @{ $ce->{hardcopyThemes} };
-
-	print CGI::div(
-		{ class => 'row' },
-		CGI::div(
-			{ class => 'col-md-8 font-sm mb-2' },
-			$r->maketext(
-				'You may choose to show any of the following data. Correct answers, hints, and solutions '
-					. 'are only available [_1] after the answer date of the homework set.',
-				$perm_multiuser ? "to privileged users or" : ""
-			)
-		),
-		CGI::div(
-			{ class => 'row' },
-			CGI::div(
-				{ class => 'col-md-8' },
-				CGI::div(
-					{ class => 'input-group input-group-sm mb-2' },
-					CGI::span({ class => 'input-group-text' }, CGI::b($r->maketext("Show:"))),
-					CGI::div(
-						{ class => 'input-group-text' },
-						CGI::checkbox({
-							name            => "printStudentAnswers",
-							checked         => $r->param("printStudentAnswers") // 1,    # Checked by default
-							label           => $r->maketext("Student answers"),
-							class           => 'form-check-input me-2',
-							labelattributes => { class => 'form-check-label' }
-						})
-					),
-					CGI::div(
-						{ class => 'input-group-text' },
-						CGI::checkbox({
-							name            => "showComments",
-							checked         => scalar($r->param("showComments")) || 0,
-							label           => $r->maketext("Comments"),
-							class           => 'form-check-input me-2',
-							labelattributes => { class => 'form-check-label' }
-						})
-					),
-					$canShowCorrectAnswers ? CGI::div(
-						{ class => 'input-group-text' },
-						CGI::checkbox({
-							name            => "showCorrectAnswers",
-							checked         => scalar($r->param("showCorrectAnswers")) || 0,
-							label           => $r->maketext("Correct answers"),
-							class           => 'form-check-input me-2',
-							labelattributes => { class => 'form-check-label' }
-						})
-					) : '',
-					$canShowSolutions ? CGI::div(
-						{ class => 'input-group-text' },
-						CGI::checkbox({
-							name            => "showHints",
-							checked         => scalar($r->param("showHints")) || 0,
-							label           => $r->maketext("Hints"),
-							class           => 'form-check-input me-2',
-							labelattributes => { class => 'form-check-label' }
-						})
-					) : '',
-					$canShowSolutions ? CGI::div(
-						{ class => 'input-group-text' },
-						CGI::checkbox({
-							name            => "showSolutions",
-							checked         => scalar($r->param("showSolutions")) || 0,
-							label           => $r->maketext("Solutions"),
-							class           => 'form-check-input me-2',
-							labelattributes => { class => 'form-check-label' }
-						})
-					) : ''
-				)
-			)
-		),
-		CGI::div(
-			{ class => 'row' },
-			CGI::div(
-				{ class => 'col-md-8' },
-				CGI::div(
-					{ class => 'input-group input-group-sm mb-2' },
-					CGI::span({ class => 'input-group-text' }, CGI::b($r->maketext("Hardcopy Format:"))),
-					CGI::div(
-						{ class => 'input-group-text' },
-						CGI::radio_group({
-							name            => "hardcopy_format",
-							values          => \@formats,
-							default         => scalar($r->param("hardcopy_format")) || $HC_DEFAULT_FORMAT,
-							labels          => \%format_labels,
-							class           => 'form-check-input me-2',
-							labelattributes => { class => 'form-check-label me-3' }
-						})
-					)
-				)
-			)
-		),
-		$self->{can_show_source_file} ? CGI::div(
-			{ class => 'row' },
-			CGI::div(
-				{ class => 'col-md-8' },
-				CGI::div(
-					{ class => 'input-group input-group-sm mb-2' },
-					CGI::span({ class => 'input-group-text' }, CGI::b($r->maketext("Show Problem Source File:"))),
-					CGI::div(
-						{ class => 'input-group-text' },
-						CGI::radio_group({
-							name            => "show_source_file",
-							values          => [ "Yes", "No" ],
-							default         => "Yes",
-							labels          => { Yes => $r->maketext("Yes"), No => $r->maketext("No") },
-							class           => 'form-check-input me-2',
-							labelattributes => { class => 'form-check-label me-3' }
-						})
-					)
-				)
-			)
-		) : '',
-		$perm_change_theme ? CGI::div(
-			{ class => 'row' },
-			CGI::div(
-				{ class => 'col-md-8' },
-				CGI::div(
-					{ class => 'input-group input-group-sm mb-2' },
-					CGI::span({ class => 'input-group-text' }, CGI::b($r->maketext("Hardcopy Theme"))),
-					CGI::div(
-						{ class => 'input-group-text' },
-						CGI::radio_group({
-							name            => "hardcopy_theme",
-							values          => $ce->{hardcopyThemes},
-							default         => scalar($r->param("hardcopyTheme")) || $ce->{hardcopyTheme},
-							labels          => \%hardcopyThemeNames,
-							class           => 'form-check-input me-2',
-							labelattributes => { class => 'form-check-label me-3' }
-						})
-					)
-				)
-			)
-		) : '',
-		CGI::div(
-			{ class => '' },
-			CGI::submit({
-				name  => "generate_hardcopy",
-				value => $perm_multiuser
-				? $r->maketext("Generate hardcopy for selected sets and selected users")
-				: $r->maketext("Generate Hardcopy"),
-				class => 'btn btn-primary'
-			})
-		)
+	return $c->include(
+		'ContentGenerator/Hardcopy/form',
+		canShowCorrectAnswers => $canShowCorrectAnswers,
+		multiuser             => $perm_multiuser && $perm_multiset,
+		can_change_theme      => $perm_change_theme,
+		users                 => \@users,
+		wantedSets            => \@wantedSets,
+		setVersions           => \@setVersions,
+		user                  => $user,
+		user_id               => $user_id,
+		selected_set_id       => $selected_set_id,
+		formats               => \@formats,
+		default_format        => $HC_DEFAULT_FORMAT,
+		format_labels         => \%format_labels,
+		can_change_theme      => $perm_change_theme
 	);
-
-	print CGI::end_form();
-
-	return "";
 }
 
 ################################################################################
 # harddcopy generating subroutines
 ################################################################################
 
-async sub generate_hardcopy {
-	my ($self, $format, $userIDsRef, $setIDsRef) = @_;
-	my $r     = $self->r;
-	my $ce    = $r->ce;
-	my $db    = $r->db;
-	my $authz = $r->authz;
+async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
+	my $ce    = $c->ce;
+	my $db    = $c->db;
+	my $authz = $c->authz;
 
-	my $courseID = $r->urlpath->arg('courseID');
-	my $userID   = $r->param('user');
+	my $courseID = $c->stash('courseID');
+	my $userID   = $c->param('user');
 
 	# Create the temporary directory.  Use mkpath to ensure it exists (mkpath is pretty much `mkdir -p`).
 	my $temp_dir_parent_path = "$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID";
 	eval { mkpath($temp_dir_parent_path) };
 	if ($@) {
-		$self->add_errors(
-			"Couldn't create hardcopy directory $temp_dir_parent_path: " . CGI::code(CGI::escapeHTML($@)));
+		$c->add_error("Couldn't create hardcopy directory $temp_dir_parent_path: ", $c->tag('code', $@));
 		return;
 	}
 
 	# Create a randomly named working directory in the hardcopy directory.
 	my $temp_dir_path = eval { tempdir('work.XXXXXXXX', DIR => $temp_dir_parent_path) };
 	if ($@) {
-		$self->add_errors("Couldn't create temporary working directory: " . CGI::code(CGI::escapeHTML($@)));
+		$c->add_error(q{Couldn't create temporary working directory: }, $c->tag('code', $@));
 		return;
 	}
 
 	# Do some error checking.
 	unless (-e $temp_dir_path) {
-		$self->add_errors("Temporary directory '"
-				. CGI::code(CGI::escapeHTML($temp_dir_path))
-				. "' does not exist, but creation didn't fail. This shouldn't happen.");
+		$c->add_error(
+			'Temporary directory "',
+			$c->tag('code', $temp_dir_path),
+			q{" does not exist, but creation didn't fail. This shouldn't happen.}
+		);
 		return;
 	}
 	unless (-w $temp_dir_path) {
-		$self->add_errors("Temporary directory '" . CGI::code(CGI::escapeHTML($temp_dir_path)) . "' is not writeable.");
-		$self->delete_temp_dir($temp_dir_path);
+		$c->add_error('Temporary directory "', $c->tag('code', $temp_dir_path), '" is not writeable.');
+		$c->delete_temp_dir($temp_dir_path);
 		return;
 	}
 
@@ -804,33 +505,33 @@ async sub generate_hardcopy {
 
 	# Create TeX file.
 
-	my $open_result = open my $FH, '>:encoding(UTF-8)', $tex_file_path;
-	unless ($open_result) {
-		$self->add_errors("Failed to open file '"
-				. CGI::code(CGI::escapeHTML($tex_file_path))
-				. "' for writing: "
-				. CGI::code(CGI::escapeHTML($!)));
-		$self->delete_temp_dir($temp_dir_path);
+	if (open my $FH, '>:encoding(UTF-8)', $tex_file_path) {
+		await $c->write_multiuser_tex($FH, $userIDsRef, $setIDsRef);
+		close $FH;
+	} else {
+		$c->add_error('Failed to open file "', $c->tag('code', $tex_file_path), '" for writing: ', $c->tag('code', $!));
+		$c->delete_temp_dir($temp_dir_path);
 		return;
+
 	}
-	await $self->write_multiuser_tex($FH, $userIDsRef, $setIDsRef);
-	close $FH;
 
 	# If no problems were successfully rendered, we can't continue.
-	unless ($self->{at_least_one_problem_rendered_without_error}) {
-		$self->add_errors("No problems rendered. Can't continue.");
-		$self->delete_temp_dir($temp_dir_path);
+	unless ($c->{at_least_one_problem_rendered_without_error}) {
+		$c->add_error(q{No problems rendered. Can't continue.});
+		$c->delete_temp_dir($temp_dir_path);
 		return;
 	}
 
 	# If the hardcopy.tex file was not generated, fail now.
 	unless (-e "$temp_dir_path/hardcopy.tex") {
-		$self->add_errors("'"
-				. CGI::code("hardcopy.tex")
-				. "' not written to temporary directory '"
-				. CGI::code(CGI::escapeHTML($temp_dir_path))
-				. "'. Can't continue.");
-		$self->delete_temp_dir($temp_dir_path);
+		$c->add_error(
+			'"',
+			$c->tag('code', 'hardcopy.tex'),
+			'" not written to temporary directory "',
+			$c->tag('code', $temp_dir_path),
+			q{". Can't continue.}
+		);
+		$c->delete_temp_dir($temp_dir_path);
 		return;
 	}
 
@@ -846,7 +547,7 @@ async sub generate_hardcopy {
 	# @temp_files is a list of temporary files of interest used by the subroutine.
 	# (all are relative to $temp_dir_path)
 	my $format_subr = $HC_FORMATS{$format}{subr};
-	my ($final_file_name, @temp_files) = $self->$format_subr($temp_dir_path, $final_file_basename);
+	my ($final_file_name, @temp_files) = $c->$format_subr($temp_dir_path, $final_file_basename);
 	my $final_file_path = "$temp_dir_path/$final_file_name";
 
 	# Calculate paths for each temp file of interest.  These paths are relative to the $temp_dir_parent_path.
@@ -856,11 +557,13 @@ async sub generate_hardcopy {
 
 	# Make sure the final file exists.
 	unless (-e $final_file_path) {
-		$self->add_errors("Final hardcopy file '"
-				. CGI::code(CGI::escapeHTML($final_file_path))
-				. "' not found after calling '"
-				. CGI::code(CGI::escapeHTML($format_subr)) . "': "
-				. CGI::code(CGI::escapeHTML($!)));
+		$c->add_error(
+			'Final hardcopy file "',
+			$c->tag('code', $final_file_path),
+			"' not found after calling '",
+			$c->tag('code', $format_subr),
+			"': ", $c->tag('code', $!)
+		);
 		return { temp_file_map => \%temp_file_map };
 	}
 
@@ -869,24 +572,27 @@ async sub generate_hardcopy {
 	my $mv_cmd = '2>&1 ' . $ce->{externalPrograms}{mv} . ' ' . shell_quote($final_file_path, $final_file_final_path);
 	my $mv_out = readpipe $mv_cmd;
 	if ($?) {
-		$self->add_errors("Failed to move hardcopy file '"
-				. CGI::code(CGI::escapeHTML($final_file_name))
-				. "' from '"
-				. CGI::code(CGI::escapeHTML($temp_dir_path))
-				. "' to '"
-				. CGI::code(CGI::escapeHTML($temp_dir_parent_path)) . "':"
-				. CGI::br()
-				. CGI::pre(CGI::escapeHTML($mv_out)));
+		$c->add_error(
+			'Failed to move hardcopy file "',
+			$c->tag('code', $final_file_name),
+			'" from "',
+			$c->tag('code', $temp_dir_path),
+			'" to "',
+			$c->tag('code', $temp_dir_parent_path),
+			'":',
+			$c->tag('br'),
+			$c->tag('pre', $mv_out)
+		);
 		$final_file_final_path = "$temp_dir_rel_path/$final_file_name";
 	}
 
 	# If there were any errors, then the final file will not be served directly, but will be served via reply_with_file
 	# and the full file path will be built at that time.  So the path needs to be relative to the temporary directory
 	# parent path.
-	$final_file_final_path =~ s/^$temp_dir_parent_path\/// if ($self->get_errors);
+	$final_file_final_path =~ s/^$temp_dir_parent_path\/// if ($c->has_errors);
 
 	# remove the temp directory if there are no errors
-	$self->delete_temp_dir($temp_dir_path) unless ($self->get_errors || $PreserveTempFiles);
+	$c->delete_temp_dir($temp_dir_path) unless ($c->has_errors || $PreserveTempFiles);
 
 	warn "Preserved temporary files in directory '$temp_dir_path'.\n" if $PreserveTempFiles;
 
@@ -899,16 +605,15 @@ async sub generate_hardcopy {
 }
 
 # helper function to remove temp dirs
-sub delete_temp_dir {
-	my ($self, $temp_dir_path) = @_;
-
-	my $rm_cmd = '2>&1 ' . $self->r->ce->{externalPrograms}{rm} . ' -rf ' . shell_quote($temp_dir_path);
+sub delete_temp_dir ($c, $temp_dir_path) {
+	my $rm_cmd = '2>&1 ' . $c->ce->{externalPrograms}{rm} . ' -rf ' . shell_quote($temp_dir_path);
 	my $rm_out = readpipe $rm_cmd;
 	if ($?) {
-		$self->add_errors("Failed to remove temporary directory '"
-				. CGI::code(CGI::escapeHTML($temp_dir_path)) . "':"
-				. CGI::br()
-				. CGI::pre($rm_out));
+		$c->add_error(
+			'Failed to remove temporary directory "',
+			$c->tag('code', $temp_dir_path),
+			'":', $c->tag('br'), $c->tag('pre', $rm_out)
+		);
 	}
 
 	return;
@@ -922,54 +627,55 @@ sub delete_temp_dir {
 # error (also located in $temp_dir_path).  These are returned whether or not an error actually
 # occured.
 
-sub generate_hardcopy_tex {
-	my ($self, $temp_dir_path, $final_file_basename) = @_;
-
+sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	my $src_name    = "hardcopy.tex";
 	my $bundle_path = "$temp_dir_path/$final_file_basename";
 
 	# Create directory for the tex bundle
 	if (!mkdir $bundle_path) {
-		$self->add_errors("Failed to create directory '"
-				. CGI::code(CGI::escapeHTML($bundle_path)) . "': "
-				. CGI::br()
-				. CGI::pre(CGI::escapeHTML($!)));
+		$c->add_error(
+			'Failed to create directory "',
+			$c->tag('code', $bundle_path),
+			'": ', $c->tag('br'), $c->tag('pre', $!)
+		);
 		return $src_name;
 	}
 
 	# Move the tex file into the bundle directory
 	my $mv_cmd =
-		"2>&1 " . $self->r->ce->{externalPrograms}{mv} . " " . shell_quote("$temp_dir_path/$src_name", $bundle_path);
+		"2>&1 " . $c->ce->{externalPrograms}{mv} . " " . shell_quote("$temp_dir_path/$src_name", $bundle_path);
 	my $mv_out = readpipe $mv_cmd;
 
 	if ($?) {
-		$self->add_errors("Failed to move '"
-				. CGI::code(CGI::escapeHTML($src_name))
-				. "' into directory '"
-				. CGI::code(CGI::escapeHTML($bundle_path)) . "':"
-				. CGI::br()
-				. CGI::pre(CGI::escapeHTML($mv_out)));
+		$c->add_error(
+			'Failed to move "',
+			$c->tag('code', $src_name),
+			'" into directory "',
+			$c->tag('code', $bundle_path),
+			'":', $c->tag('br'), $c->tag('pre', $mv_out)
+		);
 		return $src_name;
 	}
 
 	# Copy the common tex files into the bundle directory
-	my $ce = $self->r->ce;
+	my $ce = $c->ce;
 	for (qw{packages.tex CAPA.tex PGML.tex}) {
 		my $cp_cmd =
 			"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{webworkDirs}{texinputs_common}/$_", $bundle_path);
 		my $cp_out = readpipe $cp_cmd;
 		if ($?) {
-			$self->add_errors("Failed to copy '"
-					. CGI::code(CGI::escapeHTML("$ce->{webworkDirs}{texinputs_common}/$_"))
-					. "' into directory '"
-					. CGI::code(CGI::escapeHTML($bundle_path)) . "':"
-					. CGI::br()
-					. CGI::pre(CGI::escapeHTML($cp_out)));
+			$c->add_error(
+				'Failed to copy "',
+				$c->tag('code', "$ce->{webworkDirs}{texinputs_common}/$_"),
+				'" into directory "',
+				$c->tag('code', $bundle_path),
+				'":', $c->tag('br'), $c->tag('pre', $cp_out)
+			);
 		}
 	}
 
 	# Attempt to copy image files used into the working directory.
-	my $resource_list = $self->{resource_list};
+	my $resource_list = $c->{resource_list};
 	if (ref $resource_list eq 'ARRAY' && @$resource_list) {
 		if (open(my $in_fh, "<", "$bundle_path/$src_name")) {
 			local $/;
@@ -984,12 +690,13 @@ sub generate_hardcopy_tex {
 				my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote($resource, $bundle_path);
 				my $cp_out = readpipe $cp_cmd;
 				if ($?) {
-					$self->add_errors("Failed to copy image '"
-							. CGI::code(CGI::escapeHTML($resource))
-							. "' into directory '"
-							. CGI::code(CGI::escapeHTML($bundle_path)) . "':"
-							. CGI::br()
-							. CGI::pre(CGI::escapeHTML($cp_out)));
+					$c->add_error(
+						'Failed to copy image "',
+						$c->tag('code', $resource),
+						'" into directory "',
+						$c->tag('code', $bundle_path),
+						'":', $c->tag('br'), $c->tag('pre', $cp_out)
+					);
 				}
 			}
 
@@ -999,8 +706,7 @@ sub generate_hardcopy_tex {
 			print $out_fh $data;
 			close $out_fh;
 		} else {
-			$self->add_errors(
-				"Failed to open '" . CGI::code(CGI::escapeHTML("$bundle_path/$src_name")) . "' for reading.");
+			$c->add_error('Failed to open "', $c->tag('code', "$bundle_path/$src_name"), '" for reading.');
 		}
 	}
 
@@ -1010,58 +716,62 @@ sub generate_hardcopy_tex {
 
 	my $zip_file = "$final_file_basename.zip";
 	unless ($zip->writeToFileNamed("$temp_dir_path/$zip_file") == AZ_OK) {
-		$self->add_errors(
-			"Failed to create zip archive of directory '" . CGI::code(CGI::escapeHTML($bundle_path)) . "'");
+		$c->add_error('Failed to create zip archive of directory "', $c->tag('code', $bundle_path), '"');
 		return "$bundle_path/$src_name";
 	}
 
 	return $zip_file;
 }
 
-sub generate_hardcopy_pdf {
-	my ($self, $temp_dir_path, $final_file_basename) = @_;
+sub find_log_first_error ($log) {
+	my ($line, $first_error);
+	while ($line = <$log>) {
+		if ($first_error) {
+			last if $line =~ /^!\s+/;
+			$first_error .= $line;
+		} elsif ($line =~ /^!\s+/) {
+			$first_error = $line;
+		}
+	}
 
+	return $first_error;
+}
+
+sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 	# call pdflatex - we don't want to chdir in the mod_perl process, as
 	# that might step on the feet of other things (esp. in Apache 2.0)
 	my $pdflatex_cmd = "cd "
 		. shell_quote($temp_dir_path) . " && "
 		. "TEXINPUTS=.:"
-		. shell_quote($self->r->ce->{webworkDirs}{texinputs_common}) . ": "
-		. $self->r->ce->{externalPrograms}{pdflatex}
+		. shell_quote($c->ce->{webworkDirs}{texinputs_common}) . ": "
+		. $c->ce->{externalPrograms}{pdflatex}
 		. " >pdflatex.stdout 2>pdflatex.stderr hardcopy";
 	if (my $rawexit = system $pdflatex_cmd) {
 		my $exit   = $rawexit >> 8;
 		my $signal = $rawexit & 127;
 		my $core   = $rawexit & 128;
-		$self->add_errors("Failed to convert TeX to PDF with command '"
-				. CGI::code(CGI::escapeHTML($pdflatex_cmd))
-				. "' (exit=$exit signal=$signal core=$core).");
+		$c->add_error(
+			'Failed to convert TeX to PDF with command "',
+			$c->tag('code', $pdflatex_cmd),
+			qq{" (exit=$exit signal=$signal core=$core).}
+		);
 
 		# read hardcopy.log and report first error
 		my $hardcopy_log = "$temp_dir_path/hardcopy.log";
 		if (-e $hardcopy_log) {
 			if (open my $LOG, "<:encoding(UTF-8)", $hardcopy_log) {
-				my $line;
-				while ($line = <$LOG>) {
-					last if $line =~ /^!\s+/;
-				}
-				my $first_error = $line;
-				while ($line = <$LOG>) {
-					last if $line =~ /^!\s+/;
-					$first_error .= $line;
-				}
+				my $first_error = find_log_first_error($LOG);
 				close $LOG;
 				if (defined $first_error) {
-					$self->add_errors(
-						"First error in TeX log is:" . CGI::br() . CGI::pre(CGI::escapeHTML($first_error)));
+					$c->add_error('First error in TeX log is:', $c->tag('br'), $c->tag('pre', $first_error));
 				} else {
-					$self->add_errors("No errors encoundered in TeX log.");
+					$c->add_error('No errors encoundered in TeX log.');
 				}
 			} else {
-				$self->add_errors("Could not read TeX log: " . CGI::code(CGI::escapeHTML($!)));
+				$c->add_error('Could not read TeX log: ', $c->tag('code', $!));
 			}
 		} else {
-			$self->add_errors("No TeX log was found.");
+			$c->add_error('No TeX log was found.');
 		}
 	}
 
@@ -1071,18 +781,21 @@ sub generate_hardcopy_pdf {
 	my $src_name  = "hardcopy.pdf";
 	my $dest_name = "$final_file_basename.pdf";
 	my $mv_cmd    = "2>&1 "
-		. $self->r->ce->{externalPrograms}{mv} . " "
+		. $c->ce->{externalPrograms}{mv} . " "
 		. shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
 	my $mv_out = readpipe $mv_cmd;
 	if ($?) {
-		$self->add_errors("Failed to rename '"
-				. CGI::code(CGI::escapeHTML($src_name))
-				. "' to '"
-				. CGI::code(CGI::escapeHTML($dest_name))
-				. "' in directory '"
-				. CGI::code(CGI::escapeHTML($temp_dir_path)) . "':"
-				. CGI::br()
-				. CGI::pre(CGI::escapeHTML($mv_out)));
+		$c->add_error(
+			'Failed to rename "',
+			$c->tag('code', $src_name),
+			'" to "',
+			$c->tag('code', $dest_name),
+			'" in directory "',
+			$c->tag('code', $temp_dir_path),
+			'":',
+			$c->tag('br'),
+			$c->tag('pre', $mv_out)
+		);
 		$final_file_name = $src_name;
 	} else {
 		$final_file_name = $dest_name;
@@ -1095,73 +808,73 @@ sub generate_hardcopy_pdf {
 # TeX aggregating subroutines
 ################################################################################
 
-async sub write_multiuser_tex {
-	my ($self, $FH, $userIDsRef, $setIDsRef) = @_;
-	my $r  = $self->r;
-	my $ce = $r->ce;
+async sub write_multiuser_tex ($c, $FH, $userIDsRef, $setIDsRef) {
+	my $ce = $c->ce;
 
 	my @userIDs = @$userIDsRef;
 	my @setIDs  = @$setIDsRef;
 
 	# get snippets
-	my $theme     = $r->param('hardcopy_theme') // $ce->{hardcopyTheme};
+	my $theme     = $c->param('hardcopy_theme') // $ce->{hardcopyTheme};
 	my $themeDir  = $ce->{webworkDirs}->{conf} . '/snippets/hardcopyThemes/' . $theme;
 	my $preamble  = $ce->{webworkFiles}->{hardcopySnippets}->{preamble}    // "$themeDir/hardcopyPreamble.tex";
 	my $postamble = $ce->{webworkFiles}->{hardcopySnippets}->{postamble}   // "$themeDir/hardcopyPostamble.tex";
 	my $divider   = $ce->{webworkFiles}->{hardcopySnippets}->{userDivider} // "$themeDir/hardcopyUserDivider.tex";
 
 	# write preamble
-	$self->write_tex_file($FH, $preamble);
+	$c->write_tex_file($FH, $preamble);
 
 	# write section for each user
 	while (defined(my $userID = shift @userIDs)) {
-		await $self->write_multiset_tex($FH, $userID, @setIDs);
-		$self->write_tex_file($FH, $divider) if @userIDs;    # divide users, but not after the last user
+		await $c->write_multiset_tex($FH, $userID, @setIDs);
+		$c->write_tex_file($FH, $divider) if @userIDs;    # divide users, but not after the last user
 	}
 
 	# write postamble
-	$self->write_tex_file($FH, $postamble);
+	$c->write_tex_file($FH, $postamble);
+
+	return;
 }
 
-async sub write_multiset_tex {
-	my ($self, $FH, $targetUserID, @setIDs) = @_;
-	my $r  = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
+async sub write_multiset_tex ($c, $FH, $targetUserID, @setIDs) {
+	my $ce = $c->ce;
+	my $db = $c->db;
 
 	# get user record
-	my $TargetUser = $db->getUser($targetUserID);    # checked
+	my $TargetUser = $db->getUser($targetUserID);
 	unless ($TargetUser) {
-		$self->add_errors("Can't generate hardcopy for user '"
-				. CGI::code(CGI::escapeHTML($targetUserID))
-				. "' -- no such user exists.\n");
+		$c->add_error(
+			q{Can't generate hardcopy for user "},
+			$c->tag('code', $targetUserID),
+			qq{" -- no such user exists.\n}
+		);
 		return;
 	}
 
 	# get set divider
-	my $theme    = $r->param('hardcopy_theme') // $ce->{hardcopyTheme};
+	my $theme    = $c->param('hardcopy_theme') // $ce->{hardcopyTheme};
 	my $themeDir = $ce->{webworkDirs}->{conf} . '/snippets/hardcopyThemes/' . $theme;
 	my $divider  = $ce->{webworkFiles}->{hardcopySnippets}->{setDivider} // "$themeDir/hardcopySetDivider.tex";
 
 	# write each set
 	while (defined(my $setID = shift @setIDs)) {
-		await $self->write_set_tex($FH, $TargetUser, $setID);
-		$self->write_tex_file($FH, $divider) if @setIDs;    # divide sets, but not after the last set
+		await $c->write_set_tex($FH, $TargetUser, $setID);
+		$c->write_tex_file($FH, $divider) if @setIDs;    # divide sets, but not after the last set
 	}
+
+	return;
 }
 
-async sub write_set_tex {
-	my ($self, $FH, $TargetUser, $setID) = @_;
-	my $r      = $self->r;
-	my $ce     = $r->ce;
-	my $db     = $r->db;
-	my $authz  = $r->authz;
-	my $userID = $r->param("user");
+async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
+	my $ce     = $c->ce;
+	my $db     = $c->db;
+	my $authz  = $c->authz;
+	my $userID = $c->param("user");
 
 	# we may already have the MergedSet from checking hide_work and
 	#    hide_score in pre_header_initialize; check to see if that's true,
 	#    and otherwise, get the set.
-	my %mergedSets = %{ $self->{mergedSets} };
+	my %mergedSets = %{ $c->{mergedSets} };
 	my $uid        = $TargetUser->user_id;
 	my $MergedSet;
 	my $versioned = 0;
@@ -1180,37 +893,40 @@ async sub write_set_tex {
 		}
 	}
 	# save versioned info for use in write_problem_tex
-	$self->{versioned} = $versioned;
+	$c->{versioned} = $versioned;
 
 	unless ($MergedSet) {
-		$self->add_errors("Can't generate hardcopy for set ''"
-				. CGI::code(CGI::escapeHTML($setID))
-				. "' for user '"
-				. CGI::code(CGI::escapeHTML($TargetUser->user_id))
-				. "' -- set is not assigned to that user.");
+		$c->add_error(
+			q{Can't generate hardcopy for set "},
+			$c->tag('code', $setID),
+			'" for user "',
+			$c->tag('code', $TargetUser->user_id),
+			'" -- set is not assigned to that user.'
+		);
 		return;
 	}
 
 	# see if the *real* user is allowed to access this problem set
-	if ($MergedSet->open_date > time and not $authz->hasPermissions($userID, "view_unopened_sets")) {
-		$self->add_errors("Can't generate hardcopy for set '"
-				. CGI::code(CGI::escapeHTML($setID))
-				. "' for user '"
-				. CGI::code(CGI::escapeHTML($TargetUser->user_id))
-				. "' -- set is not yet open.");
+	if ($MergedSet->open_date > time && !$authz->hasPermissions($userID, "view_unopened_sets")) {
+		$c->add_error(
+			q{Can't generate hardcopy for set "},
+			$c->tag('code', $setID),
+			'" for user "',
+			$c->tag('code', $TargetUser->user_id),
+			'" -- set is not yet open.'
+		);
 		return;
 	}
-	if (not $MergedSet->visible and not $authz->hasPermissions($userID, "view_hidden_sets")) {
-		$self->addbadmessage("Can't generate hardcopy for set '"
-				. CGI::code(CGI::escapeHTML($setID))
-				. "' for user '"
-				. CGI::code(CGI::escapeHTML($TargetUser->user_id))
-				. "' -- set is not visible to students.");
+	if (!$MergedSet->visible && !$authz->hasPermissions($userID, "view_hidden_sets")) {
+		$c->addbadmessage($c->maketext(
+			q{Can't generate hardcopy for set "[_1]" for user "[_2]". The set is not visible to students.},
+			$setID, $TargetUser->user_id,
+		));
 		return;
 	}
 
 	# get snippets
-	my $theme    = $r->param('hardcopy_theme') // $ce->{hardcopyTheme};
+	my $theme    = $c->param('hardcopy_theme') // $ce->{hardcopyTheme};
 	my $themeDir = $ce->{webworkDirs}->{conf} . '/snippets/hardcopyThemes/' . $theme;
 	my $header =
 		$MergedSet->hardcopy_header
@@ -1245,7 +961,7 @@ async sub write_set_tex {
 	}
 
 	# write set header
-	await $self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header);    # 0 => pg file specified directly
+	await $c->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header);    # 0 => pg file specified directly
 
 	print $FH "\\medskip\\hrule\\nobreak\\smallskip";
 
@@ -1254,26 +970,26 @@ async sub write_set_tex {
 	#   problem numbers
 	my $i = 1;
 	while (my $problemID = shift @problemIDs) {
-		$self->write_tex_file($FH, $divider) if $i > 1;
-		$self->{versioned} = $i              if $versioned;
-		await $self->write_problem_tex($FH, $TargetUser, $MergedSet, $problemID);
+		$c->write_tex_file($FH, $divider) if $i > 1;
+		$c->{versioned} = $i              if $versioned;
+		await $c->write_problem_tex($FH, $TargetUser, $MergedSet, $problemID);
 		$i++;
 	}
 
 	# write footer
-	await $self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $footer);    # 0 => pg file specified directly
+	await $c->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $footer);    # 0 => pg file specified directly
+
+	return;
 }
 
-async sub write_problem_tex {
-	my ($self, $FH, $TargetUser, $MergedSet, $problemID, $pgFile) = @_;
-	my $r            = $self->r;
-	my $ce           = $r->ce;
-	my $db           = $r->db;
-	my $authz        = $r->authz;
-	my $userID       = $r->param("user");
-	my $eUserID      = $r->param("effectiveUser");
-	my $versioned    = $self->{versioned};
-	my %canShowScore = %{ $self->{canShowScore} };
+async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $problemID = 0, $pgFile = undef) {
+	my $ce           = $c->ce;
+	my $db           = $c->db;
+	my $authz        = $c->authz;
+	my $userID       = $c->param("user");
+	my $eUserID      = $c->param("effectiveUser");
+	my $versioned    = $c->{versioned};
+	my %canShowScore = %{ $c->{canShowScore} };
 
 	my @errors;
 
@@ -1292,13 +1008,15 @@ async sub write_problem_tex {
 
 		# handle nonexistent problem
 		unless ($MergedProblem) {
-			$self->add_errors("Can't generate hardcopy for problem '"
-					. CGI::code(CGI::escapeHTML($problemID))
-					. "' in set '"
-					. CGI::code(CGI::escapeHTML($MergedSet->set_id))
-					. "' for user '"
-					. CGI::code(CGI::escapeHTML($MergedSet->user_id))
-					. "' -- problem does not exist in that set or is not assigned to that user.");
+			$c->add_error(
+				q{Can't generate hardcopy for problem "},
+				$c->tag('code', $problemID),
+				'" in set "',
+				$c->tag('code', $MergedSet->set_id),
+				'" for user "',
+				$c->tag('code', $MergedSet->user_id),
+				'" -- problem does not exist in that set or is not assigned to that user.'
+			);
 			return;
 		}
 	} elsif ($pgFile) {
@@ -1321,18 +1039,18 @@ async sub write_problem_tex {
 	# (eventually, we'd like to be able to use the same code as Problem)
 	my $versionName = $MergedSet->set_id . (($versioned) ? ",v" . $MergedSet->version_id : '');
 
-	my $showCorrectAnswers  = $r->param("showCorrectAnswers")  || 0;
-	my $printStudentAnswers = $r->param("printStudentAnswers") || 0;
-	my $showHints           = $r->param("showHints")           || 0;
-	my $showSolutions       = $r->param("showSolutions")       || 0;
-	my $showComments        = $r->param("showComments")        || 0;
+	my $showCorrectAnswers  = $c->param("showCorrectAnswers")  || 0;
+	my $printStudentAnswers = $c->param("printStudentAnswers") || 0;
+	my $showHints           = $c->param("showHints")           || 0;
+	my $showSolutions       = $c->param("showSolutions")       || 0;
+	my $showComments        = $c->param("showComments")        || 0;
 
 	unless (
 		(
 			$authz->hasPermissions($userID, "show_correct_answers_before_answer_date")
-			or (
+			|| (
 				time > $MergedSet->answer_date
-				or ($versioned
+				|| ($versioned
 					&& $MergedProblem->num_correct + $MergedProblem->num_incorrect >=
 					$MergedSet->attempts_per_version
 					&& $MergedSet->due_date == $MergedSet->answer_date)
@@ -1357,7 +1075,7 @@ async sub write_problem_tex {
 	}
 
 	my $pg = await renderPG(
-		$r,
+		$c,
 		$TargetUser,
 		$MergedSet,
 		$MergedProblem,
@@ -1378,34 +1096,27 @@ async sub write_problem_tex {
 		}
 	);
 
-	push(@{ $self->{resource_list} }, map { $pg->{resource_list}{$_} } keys %{ $pg->{resource_list} })
+	push(@{ $c->{resource_list} }, map { $pg->{resource_list}{$_} } keys %{ $pg->{resource_list} })
 		if ref $pg->{resource_list} eq 'HASH';
 
 	# only bother to generate this info if there were warnings or errors
 	my $edit_url;
 	my $problem_name;
 	my $problem_desc;
-	if ($pg->{warnings} ne "" or $pg->{flags}->{error_flag}) {
-		my $edit_urlpath = $r->urlpath->newFromModule(
-			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
-			courseID  => $r->urlpath->arg("courseID"),
-			setID     => $MergedProblem->set_id,
-			problemID => $MergedProblem->problem_id,
+	if ($pg->{warnings} ne '' || $pg->{flags}->{error_flag}) {
+		$edit_url = $c->systemLink(
+			$c->url_for(
+				'instructor_problem_editor_withset_withproblem',
+				setID     => $MergedProblem->set_id,
+				problemID => $MergedProblem->problem_id,
+			),
+			$MergedProblem->problem_id == 0
+				# link for a fake problem (like a header file)
+			? (params =>
+					{ sourceFilePath => $MergedProblem->source_file, problemSeed => $MergedProblem->problem_seed })
+				# link for a real problem
+			: (),
 		);
-
-		if ($MergedProblem->problem_id == 0) {
-			# link for an fake problem (like a header file)
-			$edit_url = $self->systemLink(
-				$edit_urlpath,
-				params => {
-					sourceFilePath => $MergedProblem->source_file,
-					problemSeed    => $MergedProblem->problem_seed,
-				},
-			);
-		} else {
-			# link for a real problem
-			$edit_url = $self->systemLink($edit_urlpath);
-		}
 
 		if ($MergedProblem->problem_id == 0) {
 			$problem_name = "snippet";
@@ -1429,33 +1140,42 @@ async sub write_problem_tex {
 	}
 
 	# deal with PG warnings
-	if ($pg->{warnings} ne "") {
-		$self->add_errors(
-			CGI::a({ href => $edit_url, target => "WW_Editor" }, $r->maketext("~[Edit~]")) . ' '
-				. $r->maketext(
-					"Warnings encountered while processing [_1]. Error text: [_2]",
-					$problem_desc,
-					CGI::br() . CGI::pre(CGI::escapeHTML($pg->{warnings}))
-				)
+	if ($pg->{warnings}) {
+		$c->add_error(
+			$c->link_to(
+				$c->tag('button', type => 'button', class => 'btn btn-sm btn-secondary', $c->maketext('Edit')) =>
+					$edit_url,
+				target => 'WW_Editor'
+			),
+			' ',
+			$c->b($c->maketext(
+				"Warnings encountered while processing [_1]. Error text: [_2]",
+				$problem_desc,
+				$c->tag('br') . $c->tag('pre', $pg->{warnings})
+			))
 		);
 	}
 
 	# deal with PG errors
-	if ($pg->{flags}->{error_flag}) {
-		$self->add_errors(
-			CGI::a({ href => $edit_url, target => "WW_Editor" }, $r->maketext("~[Edit~]")) . ' '
-				. $r->maketext(
-					"Errors encountered while processing [_1]. This [_2] has been omitted from the hardcopy. Error text: [_3]",
-					$problem_desc,
-					$problem_name,
-					CGI::br() . CGI::pre(CGI::escapeHTML($pg->{errors}))
-				)
+	if ($pg->{flags}{error_flag}) {
+		$c->add_error(
+			$c->link_to(
+				$c->tag('button', type => 'button', class => 'btn btn-sm btn-secondary', $c->maketext('Edit')) =>
+					$edit_url,
+				target => 'WW_Editor'
+			),
+			' ',
+			$c->b($c->maketext(
+				'Errors encountered while processing [_1]. This [_2] has been omitted from the hardcopy. '
+					. 'Error text: [_3]',
+				$problem_desc, $problem_name, $c->tag('br') . $c->tag('pre', $pg->{errors})
+			))
 		);
 		return;
 	}
 
 	# if we got here, there were no errors (because errors cause a return above)
-	$self->{at_least_one_problem_rendered_without_error} = 1;
+	$c->{at_least_one_problem_rendered_without_error} = 1;
 
 	my $body_text = $pg->{body_text};
 
@@ -1464,19 +1184,19 @@ async sub write_problem_tex {
 			# Use the pretty problem number if its a jitar problem
 			my $id       = $MergedProblem->problem_id;
 			my $prettyID = join('.', jitar_id_to_seq($id));
-			print $FH "{\\bf " . $r->maketext("Problem [_1].", $prettyID) . "}";
+			print $FH "{\\bf " . $c->maketext("Problem [_1].", $prettyID) . "}";
 		} elsif ($MergedProblem->problem_id != 0) {
 			print $FH "{\\bf "
-				. $r->maketext("Problem [_1].", $versioned ? $versioned : $MergedProblem->problem_id) . "}";
+				. $c->maketext("Problem [_1].", $versioned ? $versioned : $MergedProblem->problem_id) . "}";
 		}
 
 		my $problemValue = $MergedProblem->value;
 		if (defined($problemValue)) {
-			my $points = $problemValue == 1 ? $r->maketext('point') : $r->maketext('points');
+			my $points = $problemValue == 1 ? $c->maketext('point') : $c->maketext('points');
 			print $FH " {\\bf\\footnotesize($problemValue $points)}";
 		}
 
-		if ($self->{can_show_source_file} && $r->param("show_source_file") eq "Yes") {
+		if ($c->{can_show_source_file} && $c->param("show_source_file") eq "Yes") {
 			print $FH " {\\footnotesize\\path|" . $MergedProblem->source_file . "|}";
 		}
 
@@ -1495,26 +1215,26 @@ async sub write_problem_tex {
 		my $pgScore = $pg->{state}->{recorded_score};
 		my $corrMsg = ' submitted: ';
 		if ($pgScore == 1) {
-			$corrMsg .= $r->maketext('(correct)');
+			$corrMsg .= $c->maketext('(correct)');
 		} elsif ($pgScore == 0) {
-			$corrMsg .= $r->maketext('(incorrect)');
+			$corrMsg .= $c->maketext('(incorrect)');
 		} else {
-			$corrMsg .= $r->maketext('(score [_1])', $pgScore);
+			$corrMsg .= $c->maketext('(score [_1])', $pgScore);
 		}
 
 		$corrMsg .= "\n \\\\ \n recorded: ";
 		my $recScore = $MergedProblem->status;
 		if ($recScore == 1) {
-			$corrMsg .= $r->maketext('(correct)');
+			$corrMsg .= $c->maketext('(correct)');
 		} elsif ($recScore == 0) {
-			$corrMsg .= $r->maketext('(incorrect)');
+			$corrMsg .= $c->maketext('(incorrect)');
 		} else {
-			$corrMsg .= $r->maketext('(score [_1])', $recScore);
+			$corrMsg .= $c->maketext('(score [_1])', $recScore);
 		}
 
 		my $stuAnswers =
 			"\\par{\\small{\\it "
-			. $r->maketext("Answer(s) submitted:") . "}\n"
+			. $c->maketext("Answer(s) submitted:") . "}\n"
 			. "\\vspace{-\\parskip}\\begin{itemize}\n";
 		for my $ansName (@ans_entry_order) {
 			my $stuAns;
@@ -1536,7 +1256,7 @@ async sub write_problem_tex {
 	}
 
 	if ($showComments) {
-		my $userPastAnswerID = $db->latestProblemPastAnswer($r->urlpath->arg("courseID"),
+		my $userPastAnswerID = $db->latestProblemPastAnswer($c->stash('courseID'),
 			$MergedProblem->user_id, $versionName, $MergedProblem->problem_id);
 
 		my $pastAnswer = $userPastAnswerID                          ? $db->getPastAnswer($userPastAnswerID) : 0;
@@ -1544,7 +1264,7 @@ async sub write_problem_tex {
 
 		my $commentMsg =
 			"\\par{\\small{\\it "
-			. $r->maketext("Instructor Feedback:") . "}\n"
+			. $c->maketext("Instructor Feedback:") . "}\n"
 			. "\\vspace{-\\parskip}\n"
 			. "\\begin{lstlisting}\n$comment\\end{lstlisting}\n"
 			. "\\par\n";
@@ -1555,7 +1275,7 @@ async sub write_problem_tex {
 	#   isn't defined for versioned sets?  this seems odd FIXME  GWCHANGE
 	if ($showCorrectAnswers && $MergedProblem->problem_id != 0 && @ans_entry_order) {
 		my $correctTeX =
-			"\\par{\\small{\\it " . $r->maketext("Correct Answers:") . "}\n" . "\\vspace{-\\parskip}\\begin{itemize}\n";
+			"\\par{\\small{\\it " . $c->maketext("Correct Answers:") . "}\n" . "\\vspace{-\\parskip}\\begin{itemize}\n";
 
 		foreach my $ansName (@ans_entry_order) {
 			my $correctAnswer = $pg->{answers}{$ansName}{correct_ans_latex_string}
@@ -1567,15 +1287,14 @@ async sub write_problem_tex {
 
 		print $FH $correctTeX;
 	}
+
+	return;
 }
 
-sub write_tex_file {
-	my ($self, $FH, $file) = @_;
-
+sub write_tex_file ($c, $FH, $file) {
 	my $tex = eval { readFile($file) };
 	if ($@) {
-		$self->add_errors(
-			"Failed to include TeX file '" . CGI::code(CGI::escapeHTML($file)) . "': " . CGI::escapeHTML($@));
+		$c->add_error('Failed to include TeX file "', $c->tag('code', $file), '": ', $c->tag('pre', $@));
 	} else {
 		print $FH $tex;
 	}
@@ -1585,19 +1304,16 @@ sub write_tex_file {
 # utilities
 ################################################################################
 
-sub add_errors {
-	my ($self, @errors) = @_;
-	push @{ $self->{hardcopy_errors} }, @errors;
+sub add_error ($c, @error_parts) {
+	push @{ $c->{hardcopy_errors} }, $c->c(@error_parts)->join('');
 }
 
-sub get_errors {
-	my ($self) = @_;
-	return $self->{hardcopy_errors} ? @{ $self->{hardcopy_errors} } : ();
+sub has_errors ($c) {
+	return scalar @{ $c->{hardcopy_errors} // [] };
 }
 
-sub get_errors_ref {
-	my ($self) = @_;
-	return $self->{hardcopy_errors};
+sub get_errors ($c) {
+	return $c->{hardcopy_errors};
 }
 
 1;

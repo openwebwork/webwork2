@@ -1,0 +1,19 @@
+% last unless stash('course_info_contents') || stash('course_info_error');
+%
+% if ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<h2 class="d-flex align-items-center justify-content-center">
+		<%= maketext('Course Info') =%>
+		<%= link_to(maketext('Edit') =>
+				$c->systemLink(url_for('instructor_problem_editor'), params => { file_type => 'course_info' }),
+			target => 'WW_Editor', class => 'btn btn-sm btn-info m-1') =%>
+	</h2>
+	% if (stash('course_info_error')) {
+		<div class="alert alert-danger p-1 mb-0"><%= stash('course_info_error') %></div>
+	% }
+% } else {
+	<h2><%= maketext('Course Info') %></h2>
+% }
+%
+% if (stash('course_info_contents')) {
+	<%== stash('course_info_contents') =%>
+% }
