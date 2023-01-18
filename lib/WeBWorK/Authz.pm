@@ -122,7 +122,7 @@ sub setCachedUser {
 		if (!$db->existsUser($userID) && defined($c->param("lis_person_sourcedid"))) {
 			# This is a new user referred via an LTI link.
 			# Do not attempt to cache the permission here.
-			# Rather, the LTIBasic authentication module should cache the permission.
+			# Rather, the LTI authentication module should cache the permission.
 			return 1;
 		}
 		my $PermissionLevel;
@@ -152,7 +152,7 @@ sub setCachedUser {
 		{
 			# This is a new user referred via an LTI link.
 			# Do not attempt to cache the permission here.
-			# Rather, the LTIBasic authentication module should cache the permission.
+			# Rather, the LTI authentication module should cache the permission.
 			return 1;
 		} elsif (defined($c->param("oauth_nonce"))) {
 			# This is a LTI attempt that doesn't have an lis_person_sourcedid username.
