@@ -25,14 +25,17 @@ via the IMS LTI Basic/OAuth protocol.
 
 use strict;
 use warnings;
+
 use Carp;
-use WeBWorK::Debug;
 use DBI;
+use URI::Escape;
+use Net::OAuth;
+
+use WeBWorK::Debug;
 use WeBWorK::Utils qw(formatDateTime);
 use WeBWorK::Localize;
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
-use URI::Escape;
-use Net::OAuth;
+use WeBWorK::Authen::LTIAdvanced::Nonce;
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
@@ -630,7 +633,6 @@ sub create_user {
 			"The instructor account with user id [_1] does not exist.  Please create the account manually via WeBWorK.",
 			$userID
 		);
-		return 0;
 	}
 
 	my $newUser = $db->newUser();
@@ -779,90 +781,6 @@ sub maybe_update_user {
 		} else {
 			return 1;    # No changes needed
 		}
-	}
-}
-
-################################################################################
-# NONCE SUB-PACKAGE
-################################################################################
-
-package WeBWorK::Authen::LTIAdvanced::Nonce;
-
-# This controls how often the key database is scrubbed for old nonce's
-use constant NONCE_PURGE_FREQUENCY => 7200;    # 2 hours
-
-# This controls how old a nonce is before it is purged
-use constant NONCE_LIFETIME => 21600;          # 6 hours
-
-sub new {
-	my ($invocant, $c, $nonce, $timestamp) = @_;
-	my $class = ref($invocant) || $invocant;
-	my $self  = {
-		c         => $c,
-		nonce     => $nonce,
-		timestamp => $timestamp,
-	};
-	bless $self, $class;
-	return $self;
-}
-
-sub ok {
-	my $self = shift;
-	my $c    = $self->{c};
-	my $ce   = $c->ce;
-	my $db   = $c->db;
-
-	$self->maybe_purge_nonces();
-
-	if ($self->{timestamp} < time() - $ce->{LTI}{v1p1}{NonceLifeTime}) {
-		if ($ce->{debug_lti_parameters}) {
-			warn("Nonce Expired.  Your NonceLifeTime may be too short");
-		}
-		return 0;
-	}
-
-	my $Key = $db->getKey($self->{nonce});
-	# If we *haven't* used this nonce before then we are OK.
-	if (!defined($Key)) {
-		# nonce, timestamp are ok.	Add the nonce so its not used again
-		$Key = $db->newKey(
-			user_id   => $self->{nonce},
-			key       => "nonce",
-			timestamp => $self->{"timestamp"},
-		);
-		$db->addKey($Key);
-		return 1;
-	} else {
-		# The nonce is in the database - so was used "recently" so should NOT be allowed
-		if ($Key->timestamp < $self->{"timestamp"}) {
-			# Update timestamp - so deletion will be delayed from the most recent value
-			# of oauth_timestamp sent by the LTI consumer and not from an earlier timestamp.
-			$Key->timestamp($self->{"timestamp"});
-			$db->putKey($Key);
-		}
-		return 0;
-	}
-}
-
-sub maybe_purge_nonces {
-	my $self      = shift;
-	my $db        = $self->{c}->db;
-	my $time      = time;
-	my $lastPurge = $db->getSettingValue('lastNoncePurge');
-
-	# only purge if the last purge was never or over NONCE_PURGE_FREQUENCY ago
-	if (!defined($lastPurge) || ($time - $lastPurge > NONCE_PURGE_FREQUENCY)) {
-		my @userIDs = $db->listKeys();
-		my @Keys    = $db->getKeys(@userIDs);
-
-		# Delete any "nonce" keys that are older than NONCE_LIFETIME
-		foreach my $Key (@Keys) {
-			if ($Key->key eq "nonce" && ($time - $Key->timestamp > NONCE_LIFETIME)) {
-				$db->deleteKey($Key->user_id);
-			}
-		}
-
-		$db->setSettingValue('lastNoncePurge', $time);
 	}
 }
 
