@@ -63,12 +63,12 @@
 	<table id="classlist-table" class="table table-sm table-bordered caption-top font-sm <%=
 		$c->{editMode} || $c->{passwordMode} ? ' align-middle' : '' =%>">
 		<caption><%= maketext('Users List') %></caption>
-		<thead>
+		<thead class="table-group-divider">
 			<tr>
 				<%= content 'user-list-table-headings' =%>
 			</tr>
 		</thead>
-		<tbody>
+		<tbody class="table-group-divider">
 			% my %selectedUserIDs = map { $_ => 1 } @{ $c->{selectedUserIDs} };
 			% for (@{ $c->{visibleUsers} }) {
 				<%= include 'ContentGenerator/Instructor/UserList/user_row',

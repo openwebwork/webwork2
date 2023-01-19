@@ -184,7 +184,7 @@
 				</tr>
 			% }
 		</thead>
-		<tbody>
+		<tbody class="table-group-divider">
 			% # This is used to determine when all gateway versions for one user have been displayed and the next user
 			% # is being switched to.
 			% my $prevUserID = '';

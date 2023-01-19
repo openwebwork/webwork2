@@ -2,8 +2,9 @@
 	<p><i><%= maketext('No achievements shown.  Select an achievement to edit!') =%></i></p>
 % } else {
 	<div class="table-responsive">
-		<table class="table table-sm table-bordered font-sm" id="achievement-table">
-			<thead>
+		<table class="table table-sm table-bordered font-sm caption-top" id="achievement-table">
+			<caption><%= maketext('Achievement List') %></caption>
+			<thead class="table-group-divider">
 				<tr>
 					<th class="align-top"><%= maketext('Icon') %></th>
 					<th class="align-top">
@@ -31,7 +32,7 @@
 					</th>
 				</tr>
 			</thead>
-			<tbody>
+			<tbody class="table-group-divider">
 				% my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
 				% for my $achievement (@$achievements) {
 					% my $achievement_id = $achievement->achievement_id;

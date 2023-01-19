@@ -7,7 +7,7 @@
 	<div class="table-responsive">
 		<table class="problem_set_table table caption-top font-sm">
 			<caption><%= maketext('Problems') %></caption>
-			<thead>
+			<thead class="table-group-divider">
 				<tr>
 					<th><%= maketext('Name') %></th>
 					<th><%= maketext('Attempts') %></th>
@@ -39,7 +39,7 @@
 					% }
 				</tr>
 			</thead>
-			<tbody>
+			<tbody class="table-group-divider">
 				% for my $problem (@$problems) {
 					<%= include 'ContentGenerator/ProblemSet/problem_list_row',
 						problem => $problem, isJitarSet => $isJitarSet =%>

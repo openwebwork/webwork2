@@ -26,48 +26,51 @@
 	% # Output table
 	<div class="table-responsive">
 		<table class="table table-sm table-bordered font-sm align-middle w-auto">
-			<tr>
-				<th class="text-center"><%= maketext('Assigned') %></th>
-				<th><%= maketext('Login Name') %></th>
-				<th><%= maketext('Student Name') %></th>
-				<th class="text-center"><%= maketext('Section') %></th>
-				<th class="text-center" id="earned_header"><%= maketext('Earned') %></th>
-				<th class="text-center" id="counter_header"><%= maketext('Counter') %></th>
-			</tr>
-			%
-			% # Output row for user
-			% for my $userRecord (@$userRecords) {
-				% my $statusClass     = $ce->status_abbrev_to_name($userRecord->status) || '';
-				% my $user            = $userRecord->user_id;
-				% my $userAchievement = $db->getUserAchievement($user, $achievementID);
-				% my $prettyName      = $userRecord->last_name . ', ' . $userRecord->first_name;
-				%
+			<thead>
 				<tr>
-					<td class="text-center">
-						<input type="checkbox" name="selected" id="<%= $user %>.assigned" value="<%= $user %>"
-							class="form-check-input" <%= defined $userAchievement ? 'checked' : '' %>>
-					</td>
-					<td><%= label_for "$user.assigned" => $user %></td>
-					<td><%= $prettyName %></td>
-					<td class="text-center"><%= $userRecord->section %></td>
-					% if (defined $userAchievement) {
-						<td class="text-center">
-							<%= check_box "$user.earned" => '1',
-								'aria-labelledby' => 'earned_header',
-								class             => 'form-check-input',
-								(ref $userAchievement ? $userAchievement->earned : 0) ? (checked => undef) : () =%>
-						</td>
-						<td class="text-center">
-							<%= text_field "$user.counter" => ref $userAchievement ? $userAchievement->counter : 0,
-									'aria-labelledby' => 'counter_header',
-									size              => 6,
-									class             => 'form-control form-control-sm' =%>
-						</td>
-					% } else {
-						<td></td><td></td>
-					% }
+					<th class="text-center"><%= maketext('Assigned') %></th>
+					<th><%= maketext('Login Name') %></th>
+					<th><%= maketext('Student Name') %></th>
+					<th class="text-center"><%= maketext('Section') %></th>
+					<th class="text-center" id="earned_header"><%= maketext('Earned') %></th>
+					<th class="text-center" id="counter_header"><%= maketext('Counter') %></th>
 				</tr>
-			% }
+			</thead>
+			<tbody class="table-group-divider">
+				% # Output row for user
+				% for my $userRecord (@$userRecords) {
+					% my $statusClass     = $ce->status_abbrev_to_name($userRecord->status) || '';
+					% my $user            = $userRecord->user_id;
+					% my $userAchievement = $db->getUserAchievement($user, $achievementID);
+					% my $prettyName      = $userRecord->last_name . ', ' . $userRecord->first_name;
+					%
+					<tr>
+						<td class="text-center">
+							<input type="checkbox" name="selected" id="<%= $user %>.assigned" value="<%= $user %>"
+								class="form-check-input" <%= defined $userAchievement ? 'checked' : '' %>>
+						</td>
+						<td><%= label_for "$user.assigned" => $user %></td>
+						<td><%= $prettyName %></td>
+						<td class="text-center"><%= $userRecord->section %></td>
+						% if (defined $userAchievement) {
+							<td class="text-center">
+								<%= check_box "$user.earned" => '1',
+									'aria-labelledby' => 'earned_header',
+									class             => 'form-check-input',
+									(ref $userAchievement ? $userAchievement->earned : 0) ? (checked => undef) : () =%>
+							</td>
+							<td class="text-center">
+								<%= text_field "$user.counter" => ref $userAchievement ? $userAchievement->counter : 0,
+										'aria-labelledby' => 'counter_header',
+										size              => 6,
+										class             => 'form-control form-control-sm' =%>
+							</td>
+						% } else {
+							<td></td><td></td>
+						% }
+					</tr>
+				% }
+			</tbody>
 		</table>
 	</div>
 	%

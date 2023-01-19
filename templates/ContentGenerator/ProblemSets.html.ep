@@ -18,7 +18,7 @@
 			%
 			% # Setlist table headers
 			% my $sort = param('sort') || 'status';
-			<thead>
+			<thead class="table-group-divider">
 				<tr>
 					<th scope="col">
 						% if ($sort eq 'name') {
@@ -44,7 +44,7 @@
 				</tr>
 			</thead>
 			%
-			<tbody>
+			<tbody class="table-group-divider">
 				% my $sets = stash('sets') // [];
 				%
 				% # Regular sets and gateway template sets are merged, but sorted either by name or urgency.

@@ -540,12 +540,12 @@
 									id => "problem_${problemID}_default_source_file" =%>
 							</div>
 							% if (!@editForUser) {
-								<div class="col-md-1 col-2 d-flex align-items-center justify-content-end
+								<div class="accordion col-md-1 col-2 d-flex align-items-center justify-content-end
 									order-md-last order-2">
-									<button class="accordion-button pdr_detail_collapse ps-0 w-auto" type="button"
-										data-bs-toggle="collapse" data-bs-target="#pdr_details_<%= $problemID %>"
-										aria-expanded="true" aria-controls="pdr_details_<%= $problemID %>"
+									<button href="#" class="accordion-button pdr_detail_collapse ps-0 w-auto"
+										type="button" aria-expanded="true" aria-controls="pdr_details_<%= $problemID %>"
 										aria-label="<%= maketext('Collapse Problem Details') %>"
+										data-bs-toggle="collapse" data-bs-target="#pdr_details_<%= $problemID %>"
 										data-expand-text="<%= maketext('Expand Problem Details') %>"
 										data-collapse-text="<%= maketext('Collapse Problem Details') %>">
 									</button>

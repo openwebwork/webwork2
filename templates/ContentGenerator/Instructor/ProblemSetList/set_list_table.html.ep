@@ -18,7 +18,7 @@
 		%
 		<caption><%= maketext('Set List') %></caption>
 		%
-		<thead>
+		<thead class="table-group-divider">
 			<tr>
 				% if (!$c->{editMode}) {
 					<th>
@@ -32,7 +32,7 @@
 			</tr>
 		</thead>
 		%
-		<tbody>
+		<tbody class="table-group-divider">
 			% my %selectedSetIDs = (map { $_ => 1 } @{ $c->{selectedSetIDs} });
 			% for (@$sets) {
 				<%= include 'ContentGenerator/Instructor/ProblemSetList/set_list_row',
