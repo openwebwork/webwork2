@@ -2,7 +2,6 @@
 	% qw(sortByName listFilesRecursive jitar_id_to_seq seq_to_jitar_id format_set_name_display getAssetURL);
 %
 % content_for css => begin
-	% log->info('hello');
 	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') =%>
 	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css') =%>
 % end

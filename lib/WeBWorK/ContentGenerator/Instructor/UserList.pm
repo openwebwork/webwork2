@@ -509,11 +509,9 @@ sub save_edit_handler ($c) {
 			}
 		}
 
-		foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
-			my $param = "permission.$userID.$field";
-			if (defined $c->param($param) && $c->param($param) <= $editorUserPermission) {
-				$PermissionLevel->$field($c->param($param));
-			}
+		my $param = "user.$userID.permission";
+		if (defined $c->param($param) && $c->param($param) <= $editorUserPermission) {
+			$PermissionLevel->permission($c->param($param));
 		}
 
 		$db->putUser($User);
