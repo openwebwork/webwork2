@@ -238,6 +238,10 @@ chown www-data:www-data  $APP_ROOT/courses/admin/*
 
 echo "End fixing ownership and permissions"
 
+# Start the Minion job queue.
+echo "Starting Minion job queue"
+sudo -E -u www-data bin/webwork2 minion worker -m production &
+
 # The code below allows you to use
 #    docker container exec -it webwork2_app_1 hypnotoad -s bin/webwork2
 # to restart the webwork2 Mojolicious app in the container in a "nice" way.
