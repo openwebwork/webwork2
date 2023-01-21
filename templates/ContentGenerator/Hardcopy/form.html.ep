@@ -82,26 +82,26 @@
 					</div>
 					<div class="input-group-text">
 						<label class="form-check-label">
-							<%= check_box showComments => 0, class => 'form-check-input me-2' =%>
+							<%= check_box showComments => 1, class => 'form-check-input me-2' =%>
 							<%= maketext('Comments') =%>
 						</label>
 					</div>
 					% if ($canShowCorrectAnswers) {
 						<div class="input-group-text">
 							<label class="form-check-label">
-								<%= check_box showCorrectAnswers => 0, class => 'form-check-input me-2' =%>
+								<%= check_box showCorrectAnswers => 1, class => 'form-check-input me-2' =%>
 								<%= maketext('Correct answers') =%>
 							</label>
 						</div>
 						<div class="input-group-text">
 							<label class="form-check-label">
-								<%= check_box showHints => 0, class => 'form-check-input me-2' =%>
+								<%= check_box showHints => 1, class => 'form-check-input me-2' =%>
 								<%= maketext('Hints') =%>
 							</label>
 						</div>
 						<div class="input-group-text">
 							<label class="form-check-label">
-								<%= check_box showSolutions => 0, class => 'form-check-input me-2' =%>
+								<%= check_box showSolutions => 1, class => 'form-check-input me-2' =%>
 								<%= maketext('Solutions') =%>
 							</label>
 						</div>
