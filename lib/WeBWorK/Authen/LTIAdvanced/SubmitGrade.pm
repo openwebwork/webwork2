@@ -26,7 +26,6 @@ use warnings;
 
 use Carp;
 use Net::OAuth;
-use HTML::Entities;
 use Mojo::UserAgent;
 use UUID::Tiny ':std';
 use Digest::SHA qw(sha1_base64);
@@ -55,7 +54,7 @@ sub warning {
 	if ($self->{post_processing_mode}) {
 		$self->{c}{app}->log->warn($warning);
 	} else {
-		warn $warning;
+		warn "$warning\n";
 	}
 	return;
 }
@@ -174,18 +173,6 @@ sub submit_set_grade {
 	return $self->submit_grade($userSet->lis_source_did, $score);
 }
 
-# Escape HTML in messages when post processing is not being done.  When post processing is being done these messages are
-# sent to a log file, and so escaping HTML makes the messages even less readable.  Note that this should never be used
-# with the "debug" method as those messages always go into a log file.
-sub local_escape_html {
-	my ($self, @message) = @_;
-	if ($self->{post_processing_mode}) {
-		return join('', @message);
-	} else {
-		return HTML::Entities::encode_entities(join('', @message));
-	}
-}
-
 # Submits a score of $score to the lms with $sourcedid as the identifier.
 sub submit_grade {
 	my ($self, $sourcedid, $score) = @_;
@@ -297,9 +284,9 @@ EOS
 
 		# debug section
 		if ($ce->{debug_lti_grade_passback} && $ce->{debug_lti_parameters}) {
-			$self->warning("The request was:\n " . $self->local_escape_html($readResultXML));
+			$self->warning("The request was:\n " . $readResultXML);
 			$self->warning("The nonce used is ${uuid_p1}__${uuid_p2}");
-			$self->warning("The response is:\n " . $self->local_escape_html($response->to_string));
+			$self->warning("The response is:\n " . $response->to_string);
 			debug("The request was:\n " . $readResultXML);
 			debug("The nonce used is ${uuid_p1}__${uuid_p2}");
 			debug("The response is:\n " . $response->to_string);
@@ -436,9 +423,9 @@ EOS
 
 		# debug section
 		if ($ce->{debug_lti_grade_passback} && $ce->{debug_lti_parameters}) {
-			$self->warning("The request was:\n " . $self->local_escape_html($replaceResultXML));
+			$self->warning("The request was:\n " . $replaceResultXML);
 			$self->warning("The nonce used is ${uuid_p1}__${uuid_p2}");
-			$self->warning("The response is:\n " . $self->local_escape_html($response->to_string));
+			$self->warning("The response is:\n " . $response->to_string);
 			debug("The request was:\n " . $replaceResultXML);
 			debug("The nonce used is ${uuid_p1}__${uuid_p2}");
 			debug("The response is:\n " . $response->to_string);
