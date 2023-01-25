@@ -100,5 +100,6 @@
 	"node_modules/jquery/dist/jquery.min.js": "https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js",
 	"node_modules/luxon/build/global/luxon.min.js": "https://cdn.jsdelivr.net/npm/luxon@3.2.1/build/global/luxon.min.js",
 	"node_modules/mathjax/es5/tex-svg.js": "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js",
+	"node_modules/shortcut-buttons-flatpickr/dist/shortcut-buttons-flatpickr.min.js": "https://cdn.jsdelivr.net/npm/shortcut-buttons-flatpickr@0.4.0/dist/shortcut-buttons-flatpickr.min.js",
 	"node_modules/sortablejs/Sortable.min.js": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"
 }

@@ -69,7 +69,18 @@
 				clickOpens: false,
 				disableMobile: true,
 				wrap: true,
-				plugins: [ new confirmDatePlugin({ confirmText: rule.dataset.doneText ?? 'Done', showAlways: true }) ],
+				plugins: [
+					new confirmDatePlugin({ confirmText: rule.dataset.doneText ?? 'Done', showAlways: true }),
+					new ShortcutButtonsPlugin({
+						button: [
+							{
+								label: rule.dataset.nowText ?? 'Now',
+								attributes: { class: 'btn btn-sm btn-secondary mx-auto mb-1' }
+							}
+						],
+						onClick: (index, fp) => fp.setDate(new Date())
+					})
+				],
 				onChange(selectedDates) {
 					if (this.input.value === orig_value) this.altInput.classList.remove('changed');
 					else this.altInput.classList.add('changed');

@@ -89,7 +89,18 @@
 			clickOpens: false,
 			disableMobile: true,
 			wrap: true,
-			plugins: [ new confirmDatePlugin({ confirmText: importDateShift.dataset.doneText, showAlways: true }) ],
+			plugins: [
+				new confirmDatePlugin({ confirmText: importDateShift.dataset.doneText, showAlways: true }),
+				new ShortcutButtonsPlugin({
+					button: [
+						{
+							label: importDateShift.dataset.nowText ?? 'Now',
+							attributes: { class: 'btn btn-sm btn-secondary mx-auto my-2' }
+						}
+					],
+					onClick: (index, fp) => fp.setDate(new Date())
+				})
+			],
 			onReady(selectedDates) {
 				// Flatpickr hides the original input and adds the alternate input after it.  That messes up the
 				// bootstrap input group styling.  So move the now hidden original input after the created alternate

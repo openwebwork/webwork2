@@ -15,6 +15,8 @@
 	% }
 	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
 		defer => undef =%>
+	<%= javascript getAssetURL($ce, 'node_modules/shortcut-buttons-flatpickr/dist/shortcut-buttons-flatpickr.min.js'),
+		defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/apps/DatePicker/datepicker.js'), defer => undef =%>
 	%
 	% # Add javascript specifically for this module.

@@ -763,6 +763,7 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 						data        => {
 							input     => undef,
 							done_text => $c->maketext('Done'),
+							now_text  => $c->maketext('Now'),
 							locale    => $c->ce->{language},
 							timezone  => $c->ce->{siteDefaults}{timezone},
 							override  => "$recordType.$recordID.$field.override_id"

@@ -47,6 +47,7 @@
 								override  => "set.$setID.$field.override_id",
 								input     => undef,
 								done_text => maketext('Done'),
+								now_text  => maketext('Now'),
 								locale    => $ce->{language},
 								timezone  => $ce->{siteDefaults}{timezone}
 							} =%>
