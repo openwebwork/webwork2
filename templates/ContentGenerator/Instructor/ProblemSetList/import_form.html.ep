@@ -44,10 +44,11 @@
 					id => 'import_date_shift', size => '27', class => 'form-control',
 					data => {
 						input => undef,
-					   	done_text => maketext('Done'),
-						now_text  => maketext('Now'),
-						locale    => $ce->{language},
-						timezone  => $ce->{siteDefaults}{timezone}
+					   	done_text  => maketext('Done'),
+						today_text => maketext('Today'),
+						now_text   => maketext('Now'),
+						locale     => $ce->{language},
+						timezone   => $ce->{siteDefaults}{timezone}
 					} =%>
 				<a class="btn btn-secondary btn-sm" data-toggle role="button" tabindex="0"
 					aria-label="<%= maketext('Pick date and time') =%>">

@@ -45,11 +45,12 @@
 							class       => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
 							data => {
 								override  => "set.$setID.$field.override_id",
-								input     => undef,
-								done_text => maketext('Done'),
-								now_text  => maketext('Now'),
-								locale    => $ce->{language},
-								timezone  => $ce->{siteDefaults}{timezone}
+								input      => undef,
+								done_text  => maketext('Done'),
+								today_text => maketext('Today'),
+								now_text   => maketext('Now'),
+								locale     => $ce->{language},
+								timezone   => $ce->{siteDefaults}{timezone}
 							} =%>
 						<a class="btn btn-secondary btn-sm" data-toggle><i class="fas fa-calendar-alt"></i></a>
 					</div>

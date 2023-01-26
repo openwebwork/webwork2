@@ -74,11 +74,27 @@
 					new ShortcutButtonsPlugin({
 						button: [
 							{
+								label: rule.dataset.todayText ?? 'Today',
+								attributes: { class: 'btn btn-sm btn-secondary ms-auto me-1 mb-1' }
+							},
+							{
 								label: rule.dataset.nowText ?? 'Now',
-								attributes: { class: 'btn btn-sm btn-secondary mx-auto mb-1' }
+								attributes: { class: 'btn btn-sm btn-secondary me-auto mb-1' }
 							}
 						],
-						onClick: (index, fp) => fp.setDate(new Date())
+						onClick: (index, fp) => {
+							if (index === 0) {
+								const today = new Date();
+								// If there isn't a selected date, then use 12:00 am on the current date.
+								const selectedDate = fp.selectedDates[0] ?? new Date(new Date().toDateString());
+								selectedDate.setFullYear(today.getFullYear())
+								selectedDate.setMonth(today.getMonth())
+								selectedDate.setDate(today.getDate());
+								fp.setDate(selectedDate);
+							} else if (index === 1) {
+								fp.setDate(new Date());
+							}
+						}
 					})
 				],
 				onChange(selectedDates) {

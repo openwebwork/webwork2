@@ -761,12 +761,13 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 							. ($field eq 'open_date' ? ' datepicker-group' : ''),
 						placeholder => $c->maketext('None Specified'),
 						data        => {
-							input     => undef,
-							done_text => $c->maketext('Done'),
-							now_text  => $c->maketext('Now'),
-							locale    => $c->ce->{language},
-							timezone  => $c->ce->{siteDefaults}{timezone},
-							override  => "$recordType.$recordID.$field.override_id"
+							input      => undef,
+							done_text  => $c->maketext('Done'),
+							today_text => $c->maketext('Today'),
+							now_text   => $c->maketext('Now'),
+							locale     => $c->ce->{language},
+							timezone   => $c->ce->{siteDefaults}{timezone},
+							override   => "$recordType.$recordID.$field.override_id"
 						},
 						$forUsers && $check ? ('aria-labelledby' => "$recordType.$recordID.$field.label") : (),
 					),

@@ -9,11 +9,12 @@
 				role        => 'button',
 				tabindex    => 0,
 				data        => {
-					input     => undef,
-					done_text => maketext('Done'),
-					now_text  => maketext('Now'),
-					locale    => $ce->{language},
-					timezone  => $ce->{siteDefaults}{timezone}
+					input      => undef,
+					done_text  => maketext('Done'),
+					today_text => maketext('Today'),
+					now_text   => maketext('Now'),
+					locale     => $ce->{language},
+					timezone   => $ce->{siteDefaults}{timezone}
 				},
 				'aria-labelledby' => ($name =~ s/^.*\.([^.]*)$/$1/r) . '_header' =%>
 			<a class="btn btn-secondary btn-sm" data-toggle role="button" tabindex="0"
