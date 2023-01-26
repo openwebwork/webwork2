@@ -85,8 +85,9 @@
 % }
 <hr class="mt-0 mb-2">
 <div class="d-flex flex-wrap justify-content-center">
-	<%= submit_button maketext('Add All'), name => 'select_all',
-		class => 'library-action-btn btn btn-primary btn-sm mx-1 mb-2' =%>
+	<button class="library-action-btn add-all-btn btn btn-primary btn-sm mx-1 mb-2" type="button">
+		<%= maketext('Add All') =%>
+	</button>
 	<%= submit_button maketext('Clear Problem Display'), name => 'cleardisplay',
 		class => 'library-action-btn btn btn-secondary btn-sm mx-1 mb-2' =%>
 	% if ($c->{first_index} > 0) {
