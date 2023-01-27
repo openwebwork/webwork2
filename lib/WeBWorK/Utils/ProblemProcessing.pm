@@ -115,7 +115,6 @@ async sub process_and_log_answer ($c) {
 
 			# add to PastAnswer db
 			my $pastAnswer = $db->newPastAnswer();
-			$pastAnswer->course_id($courseID);
 			$pastAnswer->user_id($problem->user_id);
 			$pastAnswer->set_id($problem->set_id);
 			$pastAnswer->problem_id($problem->problem_id);

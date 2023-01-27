@@ -99,8 +99,7 @@ async sub initialize ($c) {
 			next unless defined $_->{problem};
 			my $versionID = ref($_->{problem}) =~ /::ProblemVersion/ ? $_->{problem}->version_id : 0;
 			my $userPastAnswerID =
-				$db->latestProblemPastAnswer($courseName, $user->user_id, $setID . ($versionID ? ",v$versionID" : ''),
-					$problemID);
+				$db->latestProblemPastAnswer($user->user_id, $setID . ($versionID ? ",v$versionID" : ''), $problemID);
 			$_->{past_answer} = $db->getPastAnswer($userPastAnswerID) if ($userPastAnswerID);
 			($_->{problemNumber}, $_->{pageNumber}) = getTestProblemPosition($db, $_->{problem}) if $versionID;
 

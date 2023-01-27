@@ -239,7 +239,7 @@ foreach my $courseID (@courses) {
 					$row[24] = defined($tags->{keywords}) ? join(',', @{ $tags->{keywords} }) : '';
 				}
 
-				my @answerIDs = $db->listProblemPastAnswers($courseID, $userID, $setID, $problemID);
+				my @answerIDs = $db->listProblemPastAnswers($userID, $setID, $problemID);
 				my @answers   = $db->getPastAnswers(\@answerIDs);
 
 				# go through attempts
