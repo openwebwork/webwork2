@@ -62,6 +62,14 @@ JSON_ERROR_LOG: 0
 #  /webwork2_files:
 #    Access-Control-Allow-Origin: '*'
 
+# The user and group to run the server as.  These are only used when the
+# webwork2 app is in production mode and run as the root user.  This means that
+# these settings are not used when proxying via another web server like apache2
+# or nginx.  In that case hypnotoad should directly be run as the correct
+# non-root user.
+server_user: www-data
+server_group: www-data
+
 # hypnotoad server configuration
 # See https://docs.mojolicious.org/Mojo/Server/Daemon
 # Any of the attributes listed there can be set in this section.

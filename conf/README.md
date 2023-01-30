@@ -43,7 +43,7 @@ Server configuration files.
 ## Initial configururation of webwork2
 
 - Copy `site.conf.dist` to `site.conf` and `localOverrides.conf.dist` to `localOverrides.conf`, and adjust the variables
-  in `site.conf` as needed. In particular you will need to set `$server_root_url` to the the server name, and set
+  in `site.conf` as needed. In particular you will need to set `$server_root_url` to the server name, and set
   `$database_password` to the password for the database.
 - Adjust the variables in `localOverrides.conf` to customize your server for your needs.
 - Copy any of the other `.dist` files and adjust the variables in them as needed. Note that those files will need to be
@@ -101,37 +101,29 @@ with Shibboleth authentication.
 First set up the webwork2 Mojolicious app:
 
 - Copy `webwork2.mojolicious.dist.yml` to `webwork2.mojolicious.yml`.
-- To run the server without ssl certificates change `listen` in the `hypnotoad` section at the end of the file to
+- Change `server_user` and `server_group` to the appropriate values for your system.  On Ubuntu appropriate values are
+  `www-data` for both.
+- To run the server without SSL certificates change `listen` in the `hypnotoad` section at the end of the file to
   `- http://*:80`. This is not recommended for production use.
-- To use ssl certificates change `listen` in the `hypnotoad` section to
+- To use SSL certificates change `listen` in the `hypnotoad` section to
   `- https://*:443?cert=/path/to/fullchain.pem&key=/path/to/privkey.pem`.
 - Change `proxy: 1` to `proxy: 0` or comment out that line.
 - You may also want to adjust the other settings in the file. The `server_root_url_redirect` setting may be useful.
 - Instead of using that setting, you can also copy `htdocs/index.dist.html` to `htdocs/index.html` and that will be the
   server front page.
+- Install the Perl module `Mojolicious::Plugin::SetUserGroup`.
 
-It is not advisable to run the Mojolicious hypnotoad server as the root user or as any user that can directly login to
-the server. Instead use a user that does not have a login account. On Ubuntu systems you can use the `www-data` user
-that is already available. If a user is needed you can create the user `webwork`, for example, with
-`sudo useradd -M webwork`. Make sure that the user has read access to the ssl certificates given in the configuration
-above if using certificates.
-
-The `authbind` program will be used to allow the chosen user to bind to port 80 or 443 (whichever was chosen above).
-Install it with your distribution's package manager. To configure it execute the following commands. Make sure to
-change `443` to `80` if not using ssl certificates, and change `www-data` to the username chosen above.
-
-```bash
-sudo touch /etc/autobind/byport/443
-sudo chown www-data /etc/autobind/byport/443
-sudo chmod 500 /etc/autobind/byport/443
-```
+The Mojolicious hypnotoad server will be started by the root user and the user and group will be switched to what is set
+for `server_user` and `server_group` after the app starts.  It is not advisable to run the Mojolicious hypnotoad server
+as a user that can directly login to the server.  On Ubuntu systems you can use the `www-data` user that is already
+available. If a user is needed you can create the user `webwork`, for example, with `sudo useradd -M webwork`.  Make
+sure that the user has read access to the SSL certificates given in the configuration above if using certificates.
+Usually the user and group will be the same.
 
 Then set up the systemd service:
 
-- Copy `webwork2.dist.service` to `webwork2.servcice`.
-- Comment out the `Environment` setting in the copy.
-- Set the `User` and `Group` settings to the user chosen above.
-- Append `authbind --deep` to the beginning of the `ExecStart` command.
+- Copy `webwork2.dist.service` to `webwork2.service`.
+- Comment out the `User`, `Group`, and `Environment` settings in the copy.
 - To enable and start the service, execute
 
 ```bash
@@ -151,7 +143,7 @@ Then set up the webwork2 Mojolicious app:
 
 - Copy `webwork2.mojolicious.dist.yml` to `webwork2.mojolicious.yml` if you want to modify settings in that file.
 - Copy `webwork2.apache2.4.dist.conf` to `webwork2.apache2.4.conf`.
-- Change the `X-Forwarded-Proto` to `http` if you do not have ssl certificates.
+- Change the `X-Forwarded-Proto` to `http` if you do not have SSL certificates.
 - Execute the following from the `/opt/webwork/webwork` directory to enable the webwork2 apache configuration:
 
 ```bash

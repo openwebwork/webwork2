@@ -31,7 +31,7 @@ use WeBWorK::Utils::Routes qw(setup_content_generator_routes);
 
 sub startup ($app) {
 	# Set up logging.
-	$app->log->path($app->home->child('logs', 'webwork2.log')) if $ENV{MOJO_MODE} && $ENV{MOJO_MODE} eq 'production';
+	$app->log->path($app->home->child('logs', 'webwork2.log')) if $app->mode eq 'production';
 
 	# Load configuration from config file
 	my $config_file = "$ENV{WEBWORK_ROOT}/conf/webwork2.mojolicious.yml";
@@ -40,6 +40,11 @@ sub startup ($app) {
 
 	# Configure the application
 	$app->secrets($config->{secrets});
+
+	# Load the plugin that switches the server to the non-root server user and group
+	# if the app is run as root and is in production mode.
+	$app->plugin(SetUserGroup => { user => $config->{server_user}, group => $config->{server_group} })
+		if $app->mode eq 'production' && $> == 0;
 
 	# Load a minimal course environment
 	my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
