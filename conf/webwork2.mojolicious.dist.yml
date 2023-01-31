@@ -70,6 +70,12 @@ JSON_ERROR_LOG: 0
 server_user: www-data
 server_group: www-data
 
+# Change redirect_http_to_https to 1 to have all http requests redirected to
+# https.  You will also need to add "- http://*:80" as well as "- http://*:443"
+# to the hypnotoad listen values below for this to work.  This should only be
+# used when serving the webwork2 app directly.
+redirect_http_to_https: 0
+
 # hypnotoad server configuration
 # See https://docs.mojolicious.org/Mojo/Server/Daemon
 # Any of the attributes listed there can be set in this section.
