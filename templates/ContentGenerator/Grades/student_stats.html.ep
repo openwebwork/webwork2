@@ -8,7 +8,7 @@
 			<th rowspan="2" scope="col"><%= maketext('Percent') %></th>
 			<th rowspan="2" scope="col"><%= maketext('Score') %></th>
 			<th rowspan="2" scope="col"><%= maketext('Out Of') %></th>
-			<th rowspan="2" scope="<%= $max_problems %>"><%= maketext('Problems') %></th>
+			<th colspan="<%= $max_problems %>" scope="col"><%= maketext('Problems') %></th>
 		</tr>
 		<tr>
 			% for (1 .. $max_problems) {
