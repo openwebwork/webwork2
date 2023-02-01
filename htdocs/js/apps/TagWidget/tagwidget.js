@@ -78,7 +78,7 @@
 			library_name: 'Library',
 			command: 'searchLib',
 			user: document.getElementById('hidden_user')?.value,
-			courseID: document.getElementById('hidden_courseID')?.value,
+			courseID: document.getElementsByName('hidden_course_id')[0]?.value,
 			key: document.getElementById('hidden_key')?.value,
 			...values
 		};

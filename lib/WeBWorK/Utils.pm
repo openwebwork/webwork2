@@ -105,6 +105,7 @@ our @EXPORT_OK = qw(
 	writeLog
 	writeTimingLogEntry
 	wwRound
+	getTestProblemPosition
 	is_restricted
 	grade_set
 	grade_gateway
@@ -1217,6 +1218,47 @@ sub sortAchievements {
 sub not_blank ($) {    # check that a string exists and is not blank
 	my $str = shift;
 	return (defined($str) and $str =~ /\S/);
+}
+
+# Given $problem which should be a problem version, getTestProblemPosition returns the 0 based problem number for the
+# problem on the test, and the 1 based page number for the page on the test that the problem is on.
+sub getTestProblemPosition {
+	my ($db, $problem) = @_;
+
+	my $set            = $db->getMergedSetVersion($problem->user_id, $problem->set_id, $problem->version_id);
+	my @problemNumbers = $db->listProblemVersions($set->user_id, $set->set_id, $set->version_id);
+
+	my $problemNumber = 0;
+
+	if ($set->problem_randorder) {
+		# Find the test problem order using the set psvn for the seed in the same way that the GatewayQuiz module does.
+		my @problemOrder = (0 .. $#problemNumbers);
+		my $pgrand       = PGrandom->new;
+		$pgrand->srand($set->psvn);
+		my $count = 0;
+		while (@problemOrder) {
+			my $index = splice(@problemOrder, int($pgrand->rand(scalar(@problemOrder))), 1);
+			if ($problemNumbers[$index] == $problem->problem_id) {
+				$problemNumber = $count;
+				last;
+			}
+			++$count;
+		}
+	} else {
+		($problemNumber) = grep { $problemNumbers[$_] == $problem->problem_id } 0 .. $#problemNumbers;
+	}
+
+	my $pageNumber;
+
+	# Update startProb and endProb for multipage tests
+	if ($set->problems_per_page) {
+		$pageNumber = ($problemNumber + 1) / $set->problems_per_page;
+		$pageNumber = int($pageNumber) + 1 if int($pageNumber) != $pageNumber;
+	} else {
+		$pageNumber = 1;
+	}
+
+	return ($problemNumber, $pageNumber);
 }
 
 sub is_restricted {

@@ -234,8 +234,8 @@
 							problemSeed    => $c->{problem_seed},
 							sourceFilePath => $sourceFileName,
 							displayMode    => (
-								!defined param('mydisplayMode') || param('mydisplayMode') eq 'None'
-							) ? $ce->{pg}{options}{displayMode} : param('mydisplayMode'),
+								!defined param('problem_displaymode') || param('problem_displaymode') eq 'None'
+							) ? $ce->{pg}{options}{displayMode} : param('problem_displaymode'),
 						}
 					),
 					id     => "tryit$cnt",
@@ -265,7 +265,7 @@
 		</div>
 		<%= hidden_field "filetrial$cnt" => $sourceFileName =%>
 		<div>
-			<div class="psr_render_area" id="psr_render_area_<%= $cnt %>" data-pg-file="<%= $pg_file %>"></div>
+			<div class="rpc_render_area" id="problem_render_area_<%= $cnt %>" data-pg-file="<%= $pg_file %>"></div>
 		</div>
 	</div>
 </div>

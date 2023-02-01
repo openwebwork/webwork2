@@ -6,8 +6,8 @@
 	<%= submit_button maketext('View Problems'), name => $internal_name, class => 'btn btn-secondary btn-sm mb-2' =%>
 	%
 	<div class="d-inline-block ms-2 mb-2">
-		<%= label_for mydisplayMode => maketext('Display Mode:'), class => 'col-form-label col-form-label-sm' =%>
-		<%= select_field mydisplayMode => [
+		<%= label_for 'problem_displaymode' => maketext('Display Mode:'), class => 'col-form-label col-form-label-sm' =%>
+		<%= select_field 'problem_displaymode' => [
 				(
 					map { [ $_ => $_, $_ eq $ce->{pg}{options}{displayMode} ? (selected => undef) : () ] }
 					grep { exists WeBWorK::PG::DISPLAY_MODES()->{$_} } @{ $ce->{pg}{displayModes} }
@@ -16,8 +16,8 @@
 				# but means don't render the problem in this module.
 				[ maketext('None') => 'None' ]
 			],
-			id => 'mydisplayMode', class => 'form-select form-select-sm d-inline w-auto' =%>
-		<%= hidden_field original_displayMode => param('mydisplayMode') || $ce->{pg}{options}{displayMode} =%>
+			id => 'problem_displaymode', class => 'form-select form-select-sm d-inline w-auto' =%>
+		<%= hidden_field original_displayMode => param('problem_displaymode') || $ce->{pg}{options}{displayMode} =%>
 	</div>
 	% # Give a choice of the number of problems to show.
 	<div class="d-inline-block ms-2 mb-2">

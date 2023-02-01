@@ -64,12 +64,12 @@ sub process_and_log_answer ($c) {
 	my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id);
 	my $answer_log  = $ce->{courseFiles}{logs}{answer_log};
 
-	my ($encoded_last_answer_string, $scores2, $isEssay2);
+	my ($encoded_last_answer_string, $scores2, $answer_types_string);
 	my $scoreRecordedMessage = '';
 
 	if (defined($answer_log) && defined($pureProblem) && $submitAnswers) {
 		my $past_answers_string;
-		($past_answers_string, $encoded_last_answer_string, $scores2, $isEssay2) =
+		($past_answers_string, $encoded_last_answer_string, $scores2, $answer_types_string) =
 			create_ans_str_from_responses($c, $pg);
 
 		if (!$authz->hasPermissions($effectiveUser, 'dont_log_past_answers')) {
@@ -136,23 +136,10 @@ sub process_and_log_answer ($c) {
 				$pureProblem->num_correct($pg->{state}{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg->{state}{num_of_incorrect_ans});
 
-				# Add flags for an essay question.  If its an essay question and we are submitting then there could be
-				# potential changes, and it should be flagged as needing grading.  Also check for the appropriate flag
-				# in the global problem and set it.
-
-				if ($isEssay2 && $pureProblem->{flags} !~ /needs_grading/) {
-					$pureProblem->{flags} =~ s/graded,//;
-					$pureProblem->{flags} .= "needs_grading,";
-				}
-
-				my $globalProblem = $db->getGlobalProblem($problem->set_id, $problem->problem_id);
-				if ($isEssay2 && $globalProblem->{flags} !~ /essay/) {
-					$globalProblem->{flags} .= 'essay,';
-					$db->putGlobalProblem($globalProblem);
-				} elsif (!$isEssay2 && $globalProblem->{flags} =~ /essay/) {
-					$globalProblem->{flags} =~ s/essay,//;
-					$db->putGlobalProblem($globalProblem);
-				}
+				# Add flags which are really a comma separated list of answer types.  If its an essay question and the
+				# user is submitting an answer then there could be potential changes. So the problem is also flagged as
+				# needing grading by appending ":needs_grading" to the answer types.
+				$pureProblem->flags($answer_types_string . ($answer_types_string =~ /essay/ ? ':needs_grading' : ''));
 
 				if ($db->putUserProblem($pureProblem)) {
 					$scoreRecordedMessage = $c->maketext('Your score was recorded.');
@@ -296,7 +283,8 @@ sub compute_reduced_score ($ce, $problem, $set, $score, $submitTime) {
 }
 
 # create answer string from responses hash
-# ($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) = create_ans_str_from_responses($problem, $pg)
+# ($past_answers_string, $encoded_last_answer_string, $scores, $answer_types_string)
+#     = create_ans_str_from_responses($problem, $pg)
 #
 # input: $problem - a 'WeBWorK::ContentGenerator::Problem object that has $problem->{formFields} set to a hash
 #                   containing the appropriate data.
@@ -307,8 +295,8 @@ sub compute_reduced_score ($ce, $problem, $set, $score, $submitTime) {
 # in order to keep those objects persistent -- as long as RECORD_FORM_ANSWER
 # is used to preserve objects by piggy backing on the persistence mechanism for answers.
 sub create_ans_str_from_responses ($problem, $pg) {
-	my $scores2  = '';
-	my $isEssay2 = 0;
+	my $scores2 = '';
+	my @answerTypes;
 	my %answers_to_store;
 	my @past_answers_order;
 	my @last_answer_order;
@@ -316,7 +304,7 @@ sub create_ans_str_from_responses ($problem, $pg) {
 	my %pg_answers_hash = %{ $pg->{PG_ANSWERS_HASH} };
 	foreach my $ans_id (@{ $pg->{flags}{ANSWER_ENTRY_ORDER} // [] }) {
 		$scores2 .= ($pg_answers_hash{$ans_id}{rh_ans}{score} // 0) >= 1 ? "1" : "0";
-		$isEssay2 = 1 if ($pg_answers_hash{$ans_id}{rh_ans}{type} // '') eq 'essay';
+		push @answerTypes, $pg_answers_hash{$ans_id}{rh_ans}{type} // '';
 		foreach my $response_id (@{ $pg_answers_hash{$ans_id}{response_obj}{response_order} }) {
 			$answers_to_store{$response_id} = $problem->{formFields}{$response_id};
 			push @past_answers_order, $response_id;
@@ -343,7 +331,7 @@ sub create_ans_str_from_responses ($problem, $pg) {
 	my $encoded_last_answer_string = encodeAnswers(%answers_to_store, @last_answer_order);
 	# past_answers_string is stored in past_answer table.
 	# encoded_last_answer_string is used in `last_answer` entry of the problem_user table.
-	return ($past_answers_string, $encoded_last_answer_string, $scores2, $isEssay2);
+	return ($past_answers_string, $encoded_last_answer_string, $scores2, join(',', @answerTypes));
 }
 
 # If you provide this subroutine with a userProblem it will notify the instructors of the course that the student has

@@ -953,11 +953,11 @@ async sub pre_header_initialize ($c) {
 
 			my %answerHash;
 			my @answer_order;
-			my $encoded_last_answer_string;
+			my ($encoded_last_answer_string, $answer_types_string);
 
 			if (ref $pg_result) {
-				my ($past_answers_string, $scores, $isEssay);    # Not used here
-				($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) =
+				my ($past_answers_string, $scores);    # Not used here
+				($past_answers_string, $encoded_last_answer_string, $scores, $answer_types_string) =
 					create_ans_str_from_responses($c, $pg_result);
 			} else {
 				my $prefix         = sprintf('Q%04d_', $problemNumbers[$i]);
@@ -967,7 +967,7 @@ async sub pre_header_initialize ($c) {
 				$encoded_last_answer_string = encodeAnswers(%answersToStore, @answer_order);
 			}
 
-			# Get the last answer
+			# Set the last answer
 			$problem->last_answer($encoded_last_answer_string);
 			$pureProblem->last_answer($encoded_last_answer_string);
 
@@ -991,6 +991,14 @@ async sub pre_header_initialize ($c) {
 				$pureProblem->attempted(1);
 				$pureProblem->num_correct($pg_result->{state}{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg_result->{state}{num_of_incorrect_ans});
+
+				if ($answer_types_string) {
+					# Add flags which are really a comma separated list of answer types.  If its an essay question and
+					# the user is submitting an answer then there could be potential changes. So the problem is also
+					# flagged as needing grading by appending ":needs_grading" to the answer types.
+					$pureProblem->flags(
+						$answer_types_string . ($answer_types_string =~ /essay/ ? ':needs_grading' : ''));
+				}
 
 				if ($db->putProblemVersion($pureProblem)) {
 					# Use a simple untranslated value here.  This message will never be shown, and will later be
@@ -1067,7 +1075,7 @@ async sub pre_header_initialize ($c) {
 
 				my $problem = $problems[ $probOrder[$i] ];
 
-				my ($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) =
+				my ($past_answers_string, $encoded_last_answer_string, $scores, $answer_types_string) =
 					create_ans_str_from_responses($c, $pg_results[ $probOrder[$i] ]);
 				$past_answers_string =~ s/\t+$/\t/;
 
