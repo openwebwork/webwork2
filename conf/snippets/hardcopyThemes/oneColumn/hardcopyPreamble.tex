@@ -1,11 +1,17 @@
 \batchmode
-\documentclass[11pt]{amsart}
+\documentclass[11pt]{exam}
 \input{packages.tex}
 
-\usepackage{fullpage}
+\usepackage[text={7.5in,9in},centering]{geometry}
+\setlength{\columnsep}{.25in}
+\setlength{\columnseprule}{.4pt}
 
 % This is used to signal PG that we are not using multicols
 \newcommand{\nocolumns}{}
+
+\makeatletter
+\qformat{{\bf Problem \thequestiontitle.} \if@placepoints{\bf\footnotesize(\thepoints)}\fi \hfill}
+\makeatother
 
 \input{CAPA.tex}
 \input{PGML.tex}
