@@ -24,6 +24,7 @@ WeBWorK::Utils::Rendering - utilities for rendering problems.
 
 use Mojo::IOLoop;
 use Data::Structure::Util qw(unbless);
+use Mojo::JSON qw(decode_json);
 
 use WeBWorK::Utils qw(formatDateTime);
 
@@ -146,7 +147,20 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{debuggingOptions} = $translationOptions->{debuggingOptions} // {};
 
 	# Answer Information
-	$options{inputs_ref}     = $formFields;
+	$options{inputs_ref} = $formFields;
+
+	# if external data is requested, fetch it for a user/set
+	if ($ce->{pg}{options}{externalData}) {
+		$options{external_data} = {};
+		my $db = WeBWorK::DB->new($ce->{dbLayout});
+
+		my @data = $db->getUserSetData($user->user_id, $set->set_id);
+		for my $d (@data) {
+			my $decoded = decode_json($d->{value});
+			$options{external_data}{ $d->{key_id} } = $decoded->{value};
+		}
+	}
+
 	$options{processAnswers} = $translationOptions->{processAnswers};
 
 	# Directories and URLs

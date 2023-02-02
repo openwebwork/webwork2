@@ -2251,6 +2251,75 @@ sub getAllMergedProblemVersions {
 	return $self->{problem_version_merged}->get_records_where($where, $order);
 }
 
+# external user set data functions
+
+BEGIN {
+	*UserSetData            = gen_schema_accessor("user_set_data");
+	*newUserSetData         = gen_new("user_set_data");
+	*countUserSetDataWhere  = gen_count_where("user_set_data");
+	*existsUserSetDataWhere = gen_exists_where("user_set_data");
+	*listUserSetDataWhere   = gen_list_where("user_set_data");
+	*getUserSetDataWhere    = gen_get_records_where("user_set_data");
+}
+
+sub countUserSetData { return scalar shift->listData(@_) }
+
+sub listUserSetData {
+	my ($self) = shift->checkArgs(\@_, qw/set_id user_id/);
+	if (wantarray) {
+		return map {@$_} $self->{user_set_data}->get_fields_where(['key_id']);
+	} else {
+		return $self->{user_set_data}->count_where;
+	}
+}
+
+sub existsUserSetKeyDatum {
+	my ($self, $user_id, $set_id, $key_id) = shift->checkArgs(\@_, qw/user_id set_id key_id/);
+	return $self->{user_set_data}->exists($key_id, $user_id, $set_id);
+}
+
+sub getUserSetKeyDatum {
+	my ($self, $user_id, $set_id, $key_id) = shift->checkArgs(\@_, qw/user_id set_id key_id/);
+	return ($self->{user_set_data}->get_records_where({ key_id => $key_id, user_id => $user_id, set_id => $set_id }))
+		[0];
+}
+
+sub getUserSetData {
+	my ($self, $user_id, $set_id) = shift->checkArgs(\@_, qw/user_id set_id/);
+	return $self->{user_set_data}->get_records_where({ user_id => $user_id, set_id => $set_id });
+}
+
+sub getUserSetKeyData {
+	my ($self, @dataIDs) = shift->checkArgs(\@_, qw/key_id*/);
+	return $self->{user_set_data}->gets(map { [$_] } @dataIDs);
+}
+
+sub addUserSetDatum {
+	my ($self, $data) = shift->checkArgs(\@_, qw/REC:user_set_data/);
+
+	eval { return $self->{user_set_data}->add($data); };
+	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
+		croak "addUserSetData: datum exists (perhaps you meant to use putData?)";
+	} elsif ($@) {
+		die $@;
+	}
+}
+
+sub putUserSetDatum {
+	my ($self, $data) = shift->checkArgs(\@_, qw/REC:user_set_data/);
+	my $rows = $self->{user_set_data}->put($data);
+	if ($rows == 0) {
+		croak "putData: datum not found (perhaps you meant to use addData?)";
+	} else {
+		return $rows;
+	}
+}
+
+sub deleteUserSetKeyDatum {
+	my ($self, $user_id, $set_id, $key_id) = shift->checkArgs(\@_, qw/user_id set_id key_id/);
+	return $self->{user_set_data}->delete($key_id, $user_id, $set_id);
+}
+
 ################################################################################
 # utilities
 ################################################################################

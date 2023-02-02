@@ -373,7 +373,17 @@ $dbLayouts{sql_single} = {
 			tableOverride => "${courseName}_global_user_achievement"
 		},
 	},
-
+	user_set_data => {
+		record => "WeBWorK::DB::Record::UserSetData",
+		schema => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => $database_dsn,
+		engine => $database_storage_engine,
+		character_set => $database_character_set,
+		params => { %sqlParams,
+			tableOverride => "${courseName}_user_set_data"
+		},
+	},
 };
 
 # include ("conf/database.conf");  # uncomment to provide local overrides

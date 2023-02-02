@@ -170,6 +170,7 @@
 					?? document.getElementById('problemContents')?.value ?? '');
 				requestData.set('send_pg_flags', 1);
 				requestData.set(button.name, button.value);
+				requestData.set('set_id', document.getElementsByName('hidden_set_id')[0]?.value ?? 'Unknown Set');
 
 				renderProblem(requestData);
 
