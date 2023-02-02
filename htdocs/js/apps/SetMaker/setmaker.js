@@ -240,7 +240,7 @@
 			true);
 	};
 
-	document.querySelector('input[name="select_all"]')?.addEventListener('click', () => addme('', 'all'));
+	document.querySelector('.library-action-btn.add-all-btn')?.addEventListener('click', () => addme('', 'all'));
 	document.querySelectorAll('button.add_me')
 		.forEach((btn) => btn.addEventListener('click', () => addme(btn.dataset.sourceFile, 'one')));
 
