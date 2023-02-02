@@ -290,6 +290,7 @@ use constant FIELD_PROPERTIES => {
 			'N:Y'                => x('Totals only (not problem scores)'),
 			'BeforeAnswerDate:Y' => x('Totals only, only after answer date')
 		},
+		default => 'N:N',
 	},
 	hide_work => {
 		name     => x('Show Problems on Finished Tests'),
@@ -301,6 +302,7 @@ use constant FIELD_PROPERTIES => {
 			'Y'                => x('No'),
 			'BeforeAnswerDate' => x('Only after set answer date')
 		},
+		default => 'N',
 	},
 	use_grade_auth_proctor => {
 		name     => x('Require Proctor Authorization to'),
