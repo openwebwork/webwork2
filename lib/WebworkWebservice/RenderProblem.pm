@@ -226,7 +226,7 @@ async sub renderProblem {
 		effectivePermissionLevel => $rh->{effectivePermissionLevel} || $rh->{permissionLevel} || 0,
 		useMathQuill             => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill',
 		useMathView              => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView',
-		useWiris                 => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS',
+		useWirisEditor           => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS',
 		isInstructor             => $rh->{isInstructor}       // 0,
 		forceScaffoldsOpen       => $rh->{forceScaffoldsOpen} // 0,
 		debuggingOptions         => {
