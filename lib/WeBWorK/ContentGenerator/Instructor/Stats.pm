@@ -86,7 +86,7 @@ sub page_title ($c) {
 		return $c->maketext('Statistics for [_1]', $c->tag('span', dir => 'ltr', format_set_name_display($setID)));
 	} elsif ($c->current_route eq 'instructor_problem_statistics') {
 		return $c->maketext(
-			'Statsitcs for [_1] problem [_2]',
+			'Statistics for [_1] problem [_2]',
 			$c->tag('span', dir => 'ltr', format_set_name_display($setID)),
 			$c->{prettyID}
 		);
