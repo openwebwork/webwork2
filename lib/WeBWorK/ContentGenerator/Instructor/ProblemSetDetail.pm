@@ -1880,7 +1880,7 @@ sub initialize ($c) {
 		if ($editingSetVersion) {
 			$c->stash->{mergedProblems} = {
 				map { $_->problem_id => $_ } $db->getMergedProblemVersionsWhere(
-					{ user_id => $editForUser[0], set_id => { like => "$setID,v\%" } }, 'problem_id'
+					{ user_id => $editForUser[0], set_id => "$setID,v$editingSetVersion" }, 'problem_id'
 				)
 			};
 		} else {
