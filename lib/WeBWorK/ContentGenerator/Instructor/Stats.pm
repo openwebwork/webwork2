@@ -176,7 +176,8 @@ sub set_stats ($c) {
 
 		# Link to individual problem stats page.
 		$problem->{statsLink} =
-			$c->systemLink($c->url_for('instructor_set_statistics', setID => $c->stash('setID'), problemID => $probID),
+			$c->systemLink(
+				$c->url_for('instructor_problem_statistics', setID => $c->stash('setID'), problemID => $probID),
 				params => $c->param('filter') ? { filter => $c->param('filter') } : {});
 
 		$showGraderRow = 1 if $problem->flags =~ /essay/;
