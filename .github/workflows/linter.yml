@@ -14,9 +14,9 @@ on:
 jobs:
   perltidy:
     name: Run perltidy on Perl Files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container:
-      image: perl:5.32
+      image: perl:5.34
     steps:
       - uses: actions/checkout@v3
       - name: perl -V
@@ -28,5 +28,6 @@ jobs:
       - name: Run perltidy
         shell: bash
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           shopt -s extglob globstar nullglob
           perltidy --pro=./.perltidyrc -b -bext='/' ./**/*.p[lm] ./**/*.t && git diff --exit-code
