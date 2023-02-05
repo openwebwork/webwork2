@@ -162,9 +162,15 @@
 			<div class="lb-problem-add d-flex align-items-center mb-1">
 				<button class="add_me btn btn-primary btn-sm" type="button"
 					data-bs-title="<%= maketext('Add problem to target set') %>"
-					data-source-file="<%= $sourceFileName %>" data-bs-toggle="tooltip" data-bs-placement="top">
+					data-source-file-path="<%= $sourceFileName %>" data-bs-toggle="tooltip" data-bs-placement="top">
 					<%= maketext('Add') %>
 				</button>
+				% if ($authz->hasPermissions(param('user'), 'modify_tags')) {
+					<button id="tagger<%= $cnt %>" class="tag-edit-btn btn btn-secondary btn-sm ms-2" type="button"
+						data-source-file="<%= "$ce->{courseDirs}{templates}/$sourceFileName" %>">
+						<%= maketext('Edit Tags') =%>
+					</button>
+				% }
 			</div>
 			<div class="d-flex flex-wrap align-items-center mb-1 gap-2">
 				<%= content "global-problem-stats-$cnt" =%>
@@ -258,11 +264,6 @@
 			</div>
 		</div>
 		<%= hidden_field "filetrial$cnt" => $sourceFileName =%>
-		% if ($authz->hasPermissions(param('user'), 'modify_tags')) {
-			<div id="tagger<%= $cnt %>" class="tag-widget"
-				data-source-file-path="<%= "$ce->{courseDirs}{templates}/$sourceFileName" %>">
-			</div>
-		% }
 		<div>
 			<div class="psr_render_area" id="psr_render_area_<%= $cnt %>" data-pg-file="<%= $pg_file %>"></div>
 		</div>

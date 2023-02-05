@@ -1130,6 +1130,22 @@ sub page_title ($c) {
 		)->join('');
 	}
 
+	# Add the tag edit button to the sub header if the user has permission to edit tags.
+	if ($c->authz->hasPermissions($c->param('user'), 'modify_tags')) {
+		$subheader = $c->c(
+			$subheader,
+			$c->tag(
+				'button',
+				id    => 'tagger',
+				type  => 'button',
+				class => 'tag-edit-btn btn btn-secondary btn-sm ms-2',
+				data  => { source_file => $c->ce->{courseDirs}{templates} . '/' . $c->{problem}{source_file} },
+				$c->maketext('Edit Tags')
+			),
+			$c->hidden_field(courseID => $c->stash('courseID'), id => 'hidden_courseID')
+		)->join('');
+	}
+
 	return $c->c($header, $c->tag('span', class => 'problem-sub-header d-block', $subheader))->join('');
 }
 
@@ -1592,24 +1608,6 @@ sub output_achievement_message ($c) {
 		&& $c->{problem}->set_id ne 'Undefined_Set')
 	{
 		return checkForAchievements($c->{problem}, $c->{pg}, $c);
-	}
-
-	return '';
-}
-
-# Puts the tags in the page
-sub output_tag_info ($c) {
-	if ($c->authz->hasPermissions($c->param('user'), 'modify_tags')) {
-		return $c->c(
-			$c->tag(
-				'div',
-				id    => 'tagger',
-				class => 'tag-widget',
-				data  => { source_file_path => $c->ce->{courseDirs}{templates} . '/' . $c->{problem}{source_file} },
-				''
-			),
-			$c->hidden_field(courseID => $c->stash('courseID'), id => 'hidden_courseID')
-		)->join('');
 	}
 
 	return '';

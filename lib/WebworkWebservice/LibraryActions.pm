@@ -395,6 +395,8 @@ sub getProblemTags {
 	return $out;
 }
 
+# FIXME: Why are library_subjects, library_chapters, library_sections plural?  Each has a value that is a single
+# subject, chapter, or section.  This is also done in many places above.
 sub setProblemTags {
 	my ($invocant, $self, $rh) = @_;
 	my $path   = $rh->{command};
