@@ -91,7 +91,8 @@ for my $key (keys %$data_keys) {
 # Fetch all data with a given user_id and set_id
 
 my @user_set_data = $db->getUserSetData('homer', 'set1');
-is scalar(@user_set_data), 4, 'Check that the number of user set data for a given user/set is correct';
+is scalar(@user_set_data),                 4, 'Check that the number of user set data for a given user/set is correct';
+is $db->countUserSetData('homer', 'set1'), 4, 'Count the number of keys for a given user in a course';
 
 my $user_set_data3 = (grep { $_->{key_id} eq 'key3' } @user_set_data)[0];
 is $user_set_data3->{value}, $data_keys->{key3}, 'Check that the value of another key is correct';

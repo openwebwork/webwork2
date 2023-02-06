@@ -27,9 +27,9 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		key_id  => { type => "TINYBLOB NOT NULL", key => 1 },
-		user_id => { type => "TINYBLOB NOT NULL", key => 1 },
-		set_id  => { type => "TINYBLOB NOT NULL", key => 1 },
+		key_id  => { type => "VARCHAR(100) NOT NULL", key => 1 },
+		user_id => { type => "VARCHAR(100) NOT NULL", key => 1 },
+		set_id  => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		value   => { type => "TEXT" }
 	);
 }

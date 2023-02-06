@@ -460,37 +460,44 @@ Comment:    $comment
 # If a problem uses external data, save to a database
 sub process_external_data {
 	my $c       = shift;
-	my $r       = $c->r;
 	my $db      = $c->db;
 	my $pg      = $c->{pg};
 	my $problem = $c->{problem};
 
-	return unless $r->{submitAnswers};
+	return unless $c->{submitAnswers};
 
 	# find the _ext_data answers.  This only occurs when answers are checked/submitted.
 	my @ext_data = grep {/^_ext_data/} @{ $pg->{flags}{KEPT_EXTRA_ANSWERS} };
 
 	for (@ext_data) {
-		my ($t, $ans_name, $key) = split(/:/, $_);
-
-		my $stud_ans = $pg->{PG_ANSWERS_HASH}{$ans_name}{rh_ans}{student_ans};
-		# turn this into an array of numbers
-		my @values = map { $_ + 0 } split(/,/, $stud_ans);
+		my ($t, $ans_name, $type, $key) = split(/:/, $_);
 
 		next if $pg->{PG_ANSWERS_HASH}{$ans_name}{rh_ans}{score} == 0;
 
+		my $stud_ans = $pg->{PG_ANSWERS_HASH}{$ans_name}{rh_ans}{student_value};
+
+		# Each data type needs to be processed:
+		my $value;
+		if ($type eq 'numeric_list') {
+			my @values = map { $_ + 0 } split(/,/, $stud_ans);
+			$value = encode_json({ value => [@values] });
+		} elsif ($type eq 'string') {
+			$value = encode_json({ value => '' . $stud_ans });
+		} elsif ($type eq 'real') {
+			$value = encode_json({ value => 0 + $stud_ans });
+		}
+
 		if ($db->existsUserSetKeyDatum($problem->user_id, $problem->set_id, $key)) {
 			my $d = $db->getUserSetKeyDatum($problem->user_id, $problem->set_id, $key);
-			$d->{value} = encode_json({ value => [@values] });
+			$d->{value} = $value;
 			$db->putUserSetDatum($d);
 		} else {
-			my $datum = $db->newUserSetData({
+			$db->addUserSetDatum($db->newUserSetData({
 				user_id => $problem->user_id,
 				set_id  => $problem->set_id,
 				key_id  => $key,
-				value   => encode_json({ value => [@values] })
-			});
-			$db->addUserSetDatum($datum);
+				value   => $value
+			}));
 		}
 	}
 }

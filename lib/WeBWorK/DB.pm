@@ -2262,7 +2262,7 @@ BEGIN {
 	*getUserSetDataWhere    = gen_get_records_where("user_set_data");
 }
 
-sub countUserSetData { return scalar shift->listData(@_) }
+sub countUserSetData { return scalar shift->listUserSetData(@_) }
 
 sub listUserSetData {
 	my ($self) = shift->checkArgs(\@_, qw/set_id user_id/);

@@ -149,17 +149,8 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	# Answer Information
 	$options{inputs_ref} = $formFields;
 
-	# if external data is requested, fetch it for a user/set
-	if ($ce->{pg}{options}{externalData}) {
-		$options{external_data} = {};
-		my $db = WeBWorK::DB->new($ce->{dbLayout});
-
-		my @data = $db->getUserSetData($user->user_id, $set->set_id);
-		for my $d (@data) {
-			my $decoded = decode_json($d->{value});
-			$options{external_data}{ $d->{key_id} } = $decoded->{value};
-		}
-	}
+	# External Data
+	$options{external_data} = $translationOptions->{external_data} // {};
 
 	$options{processAnswers} = $translationOptions->{processAnswers};
 
@@ -237,6 +228,17 @@ hash when awaited.
 sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translationOptions) {
 	# Set the inactivity timeout to be 5 seconds more than the PG timeout.
 	$c->inactivity_timeout($WeBWorK::PG::TIMEOUT + 5);
+
+	# if external data is requested, fetch it for a user/set
+	if ($c->ce->{pg}{options}{externalData}) {
+		$translationOptions->{external_data} = {};
+
+		my @data = $c->db->getUserSetData($effectiveUser->user_id, $set->set_id);
+		for my $d (@data) {
+			my $decoded = decode_json($d->{value});
+			$translationOptions->{external_data}{ $d->{key_id} } = $decoded->{value};
+		}
+	}
 
 	return Mojo::IOLoop->subprocess->run_p(sub {
 		my $pg = WeBWorK::PG->new(constructPGOptions(

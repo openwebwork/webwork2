@@ -38,8 +38,12 @@ htdocs/themes/*
 !htdocs/themes/layouts
 
 DATA/*
+!DATA/uploads
+DATA/uploads/*
 !*README*
 
 docker-compose.yml
 docker-config/ssl/*
 !docker-config/ssl/Readme
+
+.vscode/
