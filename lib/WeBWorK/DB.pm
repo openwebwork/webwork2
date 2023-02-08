@@ -97,12 +97,14 @@ use warnings;
 use Carp;
 use Data::Dumper;
 use Scalar::Util qw/blessed/;
+use HTML::Entities qw( encode_entities );
+use Mojo::JSON qw(encode_json decode_json);
+
 use WeBWorK::DB::Schema;
 use WeBWorK::DB::Utils qw/make_vsetID grok_vsetID grok_setID_from_vsetID_sql
 	grok_versionID_from_vsetID_sql/;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use);
-use HTML::Entities qw( encode_entities );
 
 =for comment
 
@@ -2253,71 +2255,82 @@ sub getAllMergedProblemVersions {
 
 # external user set data functions
 
-BEGIN {
-	*UserSetData            = gen_schema_accessor("user_set_data");
-	*newUserSetData         = gen_new("user_set_data");
-	*countUserSetDataWhere  = gen_count_where("user_set_data");
-	*existsUserSetDataWhere = gen_exists_where("user_set_data");
-	*listUserSetDataWhere   = gen_list_where("user_set_data");
-	*getUserSetDataWhere    = gen_get_records_where("user_set_data");
+# return an array ref of all keys for a user set
+
+sub getUserSetDataKeys {
+	my ($self, $user_id, $set_id) = shift->checkArgs(\@_, qw/user_id set_id/);
+	my $data = $self->getUserSetData($user_id, $set_id);
+	my @keys = keys %$data;
+	return \@keys;
 }
 
-sub countUserSetData { return scalar shift->listUserSetData(@_) }
-
-sub listUserSetData {
-	my ($self) = shift->checkArgs(\@_, qw/set_id user_id/);
-	if (wantarray) {
-		return map {@$_} $self->{user_set_data}->get_fields_where(['key_id']);
-	} else {
-		return $self->{user_set_data}->count_where;
-	}
-}
+# check if usersetdata key exists
 
 sub existsUserSetKeyDatum {
-	my ($self, $user_id, $set_id, $key_id) = shift->checkArgs(\@_, qw/user_id set_id key_id/);
-	return $self->{user_set_data}->exists($key_id, $user_id, $set_id);
+	my ($self, $user_id, $set_id, $key) = shift->checkArgs(\@_, qw/user_id set_id key/);
+	my $ext_data = $self->getUserSetData($user_id, $set_id);
+	return defined $ext_data->{$key};
 }
 
+# Get a single user set key datum for given user/set/key
+
 sub getUserSetKeyDatum {
-	my ($self, $user_id, $set_id, $key_id) = shift->checkArgs(\@_, qw/user_id set_id key_id/);
-	return ($self->{user_set_data}->get_records_where({ key_id => $key_id, user_id => $user_id, set_id => $set_id }))
-		[0];
+	my ($self, $user_id, $set_id, $key) = shift->checkArgs(\@_, qw/user_id set_id key/);
+	my $data = $self->getUserSetData($user_id, $set_id);
+	return $data->{$key};
 }
+
+# Get a hash ref of all user set data associated with a user/set
 
 sub getUserSetData {
 	my ($self, $user_id, $set_id) = shift->checkArgs(\@_, qw/user_id set_id/);
-	return $self->{user_set_data}->get_records_where({ user_id => $user_id, set_id => $set_id });
+	my $user_set = $self->getUserSet($user_id, $set_id);
+	croak "The user set for user: $user_id and set: $set_id does not exist"
+		unless $user_set;
+	my $ext_data_str = $user_set->{external_data} || '{}';
+	return decode_json($ext_data_str);
 }
 
-sub getUserSetKeyData {
-	my ($self, @dataIDs) = shift->checkArgs(\@_, qw/key_id*/);
-	return $self->{user_set_data}->gets(map { [$_] } @dataIDs);
-}
-
-sub addUserSetDatum {
-	my ($self, $data) = shift->checkArgs(\@_, qw/REC:user_set_data/);
-
-	eval { return $self->{user_set_data}->add($data); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addUserSetData: datum exists (perhaps you meant to use putData?)";
-	} elsif ($@) {
-		die $@;
-	}
-}
+# Put a single user set datum in the form of a hash ref with fields: user_id, set_id, key, value
 
 sub putUserSetDatum {
-	my ($self, $data) = shift->checkArgs(\@_, qw/REC:user_set_data/);
-	my $rows = $self->{user_set_data}->put($data);
-	if ($rows == 0) {
-		croak "putData: datum not found (perhaps you meant to use addData?)";
-	} else {
-		return $rows;
-	}
+	my ($self, $data) = @_;
+	# Checks that $data is a hashref with keys user_id, set_id, key, value
+	my @fields = sort(keys %$data);
+	croak "The fields of the input must be only user_id, set_id, key, value"
+		unless "@fields" eq 'key set_id user_id value';
+
+	my $user_set = $self->getUserSet($data->{user_id}, $data->{set_id});
+	croak "The user set for user: $data->{user_id} and set: $data->{set_id} does not exist"
+		unless $user_set;
+	my $ext_data_str = $user_set->{external_data} || '{}';
+
+	my $ext_data = decode_json($ext_data_str);
+	$ext_data->{ $data->{key} } = $data->{value};
+	$user_set->{external_data} = encode_json($ext_data);
+	$self->putUserSet($user_set);
 }
 
-sub deleteUserSetKeyDatum {
-	my ($self, $user_id, $set_id, $key_id) = shift->checkArgs(\@_, qw/user_id set_id key_id/);
-	return $self->{user_set_data}->delete($key_id, $user_id, $set_id);
+# Delete a single key/value associated with a user/set.
+
+sub deleteUserSetDataKey {
+	my ($self, $user_id, $set_id, $key) = shift->checkArgs(\@_, qw/user_id set_id key/);
+	my $user_set = $self->getUserSet($user_id, $set_id);
+	my $data     = decode_json($user_set->{external_data});
+	my $value    = $data->{$key};
+	delete $data->{$key};
+	$user_set->{external_data} = encode_json($data);
+	$self->putUserSet($user_set);
+	return { $key => $value };
+}
+
+# Delete all data associated with a given user/set.
+
+sub deleteUserSetData {
+	my ($self, $user_id, $set_id) = shift->checkArgs(\@_, qw/user_id set_id/);
+	my $user_set = $self->getUserSet($user_id, $set_id);
+	$user_set->{external_data} = '{}';
+	$self->putUserSet($user_set);
 }
 
 ################################################################################

@@ -22,6 +22,7 @@ use lib "$webwork_root/lib";
 use lib "$pg_root/lib";
 
 use Clone qw/clone/;
+use Data::Dumper;
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
@@ -38,91 +39,89 @@ require($settings_file);
 my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $webwork_root, courseName => $db_settings->{course_name} });
 my $db = WeBWorK::DB->new($ce->{dbLayout});
 
-# Start with an empty database table:
+# Create a new user, set and user set to test.
 
-my @data = $db->{user_set_data}->delete_where({});
+my $user_id = 'user_to_test_the_db';
+my $set_id  = 'set_to_test_the_db';
+
+$db->addUser($db->newUser({
+	user_id    => $user_id,
+	first_name => 'Homer',
+	last_name  => 'Simpson'
+}));
+
+$db->addGlobalSet($db->newGlobalSet({
+	set_id => $set_id,
+}));
+
+$db->addUserSet($db->newUserSet({
+	user_id => $user_id,
+	set_id  => $set_id
+}));
 
 # Add a new datum:
 
-my $new_user_set_datum = $db->newUserSetData({
-	user_id => 'homer',
-	set_id  => 'set1',
-	key_id  => 'key1',
-	value   => '{ z => 25 }'
+$db->putUserSetDatum({
+	user_id => $user_id,
+	set_id  => $set_id,
+	key     => 'key1',
+	value   => 25
 });
 
-$db->addUserSetDatum($new_user_set_datum);
+my $ext_data1 = $db->getUserSetData($user_id, $set_id);
 
-my @keys = $db->listUserSetData('homer', 'set1');
+ok $db->existsUserSetKeyDatum($user_id,  $set_id, 'key1'),            'Check that the data for the key exists';
+ok !$db->existsUserSetKeyDatum($user_id, $set_id, 'nonexistent_key'), 'Check that the data for the key does not exists';
 
-is scalar(@keys), 1,        'There is one datum in the db.';
-is \@keys,        ['key1'], 'The proper data keys are in the db.';
+is $ext_data1, { key1 => 25 }, 'Check that the uset set data was stored correctly.';
+is $db->getUserSetKeyDatum($user_id, $set_id, 'key1'), 25, 'Check that the data is retrieved correctly';
 
-# Check the existsUserSetDatum function
+# update the key
 
-ok $db->existsUserSetKeyDatum('homer', 'set1', 'key1'), 'Check that the item exists in the db.';
+$db->putUserSetDatum({
+	user_id => $user_id,
+	set_id  => $set_id,
+	key     => 'key1',
+	value   => [ 1, 2, 3 ]
+});
 
-# Check that the added data is correct:
+my $ext_data2 = $db->getUserSetData($user_id, $set_id);
 
-my $datum2 = $db->getUserSetKeyDatum('homer', 'set1', 'key1');
-is $datum2, $new_user_set_datum, 'Check that the correct item is in the db.';
-
-# Update the data
-
-my $updated_user_set_datum = clone $new_user_set_datum;
-$updated_user_set_datum->{value} = '{ z => 35 }';
-$db->putUserSetDatum($updated_user_set_datum);
-
-my $updated_datum_from_db = $db->getUserSetKeyDatum('homer', 'set1', 'key1');
-is $updated_datum_from_db, $updated_user_set_datum, 'Check that the datum is updated correctly.';
+is $ext_data2, { key1 => [ 1, 2, 3 ] }, 'Check that the data was updated.';
+is $db->getUserSetKeyDatum($user_id, $set_id, 'key1'), [ 1, 2, 3 ], 'Check that the key is retrieved correctly';
 
 # Add some additional data
 
-my $data_keys = { key2 => 'x => [1,2,3]', key3 => 'x => {a => 1}', key4 => 'y => 5' };
+my $data_keys = { key2 => [ 'a', 'b', 'c' ], key3 => { a => 1 }, key4 => 'hello' };
 for my $key (keys %$data_keys) {
-	$db->addUserSetDatum($db->newUserSetData({
-		user_id => 'homer',
-		set_id  => 'set1',
-		key_id  => $key,
+	$db->putUserSetDatum({
+		user_id => $user_id,
+		set_id  => $set_id,
+		key     => $key,
 		value   => $data_keys->{$key}
-	}));
+	});
 }
 
-# Fetch all data with a given user_id and set_id
+my @all_keys = sort (@{ $db->getUserSetDataKeys($user_id, $set_id) });
+is \@all_keys, [ 'key1', 'key2', 'key3', 'key4' ], 'Check the list of keys';
 
-my @user_set_data = $db->getUserSetData('homer', 'set1');
-is scalar(@user_set_data),                 4, 'Check that the number of user set data for a given user/set is correct';
-is $db->countUserSetData('homer', 'set1'), 4, 'Count the number of keys for a given user in a course';
+for my $key ('key2', 'key3', 'key4') {
+	is $db->getUserSetKeyDatum($user_id, $set_id, $key), $data_keys->{$key}, 'Check different data types';
+}
 
-my $user_set_data3 = (grep { $_->{key_id} eq 'key3' } @user_set_data)[0];
-is $user_set_data3->{value}, $data_keys->{key3}, 'Check that the value of another key is correct';
+# Delete a key
 
-# add some other keys for a different user.
-my $d1 = {
-	user_id => 'lisa',
-	set_id  => 'set1',
-	key_id  => 'key1',
-	value   => '{"x": [1,2,3]}'
-};
+my $key_data = $db->deleteUserSetDataKey($user_id, $set_id, 'key4');
+is $key_data, { key4 => 'hello' }, 'Delete a key from the user set data';
+@all_keys = sort (@{ $db->getUserSetDataKeys($user_id, $set_id) });
+is \@all_keys, [ 'key1', 'key2', 'key3' ], 'Check that the key was deleted.';
 
-my $d2 = {
-	user_id => 'lisa',
-	set_id  => 'set1',
-	key_id  => 'key2',
-	value   => '{"y": ["a","b","c"]}'
-};
+# Delete all data associated with a user set
+$db->deleteUserSetData($user_id, $set_id);
 
-$db->addUserSetDatum($db->newUserSetData($d1));
-$db->addUserSetDatum($db->newUserSetData($d2));
+# Delete the created user, set and user_set
 
-my @data2 = $db->getUserSetData('lisa', 'set1');
-
-is \@data2, [ $d1, $d2 ], 'Check that added data for a different user is correct.';
-
-# delete a user set key datum
-$db->deleteUserSetKeyDatum('homer', 'set1', 'key1');
-
-# and check that it has been deleted
-ok !$db->existsUserSetKeyDatum('homer', 'set1', 'key1'), 'Check that the user set datum has been deleted.';
+$db->deleteUser($user_id);
+$db->deleteGlobalSet($set_id);
 
 done_testing();
