@@ -156,19 +156,6 @@ async sub go ($c) {
 	return $c->header;
 }
 
-=item r()
-
-Returns a reference to $c (this object) which is a WeBWorK::Controller object.
-
-FIXME: This method will be removed once all ContentGenerator modules
-are converted.
-
-=cut
-
-sub r ($c) {
-	return $c;
-}
-
 =item do_reply_with_file($fileHash)
 
 Handler for reply_with_file(), used by go(). DO NOT CALL THIS METHOD DIRECTLY.
