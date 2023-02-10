@@ -67,15 +67,14 @@
 
 		luxon.Settings.defaultLocale = importDateShift.dataset.locale ?? 'en';
 
-		// Compute the time difference between the current browser timezone and the the course timezone.
+		// Compute the time difference between the current browser timezone and the course timezone.
 		// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
-		// Note that this is converted to microseconds.
-		const timezoneAdjustment =
-			parseInt(Intl.DateTimeFormat('en-US', { timeZoneName: 'shortOffset' })
-				.format(new Date).split(' ')[1].slice(3) || '0') * 3600000
-			- parseInt(Intl.DateTimeFormat('en-US',
-				{ timeZone: importDateShift.dataset.timezone ?? 'UTC', timeZoneName: 'shortOffset' })
-				.format(new Date).split(' ')[1].slice(3) || '0') * 3600000
+		// Note that this is in seconds.
+		const timezoneAdjustment = (
+			(new Date((new Date).toLocaleString('en-US'))).getTime() -
+			(new Date((new Date).toLocaleString('en-US',
+				{ timeZone: importDateShift.dataset.timezone ?? 'America/New_York' }))).getTime()
+		);
 
 		const fp = flatpickr(importDateShift.parentNode, {
 			allowInput: true,
