@@ -142,6 +142,15 @@
 	iframe.title = 'Rendered content';
 	iframe.id = 'pgedit-render-iframe';
 
+	// Adjust the height of the iframe when the window is resized and when the iframe loads.
+	const adjustIFrameHeight = () => {
+		if (document.body.clientWidth < 992) {
+			if (iframe.contentDocument)
+				renderArea.style.height = `${iframe.contentDocument.documentElement.offsetHeight + 2}px`;
+		} else renderArea.style.height = `${editorArea.offsetHeight}px`;
+	};
+	window.addEventListener('resize', adjustIFrameHeight);
+
 	// When one of the problem form submit buttons is clicked, set the source for the problem in the
 	// hidden problemSource input to the current contents of the CodeMirror editor so that changes
 	// are immediate.
@@ -167,6 +176,12 @@
 				saveTempFile();
 			});
 		}
+
+		adjustIFrameHeight();
+
+		// Scroll to the top of the render window if the current scroll position is below that.
+		const renderAreaRect = renderArea.getBoundingClientRect();
+		if (renderAreaRect.top < 0) window.scrollBy(0, renderAreaRect.top);
 	});
 
 	const render = () => new Promise((resolve) => {
