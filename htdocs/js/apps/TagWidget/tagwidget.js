@@ -106,7 +106,7 @@
 			modal.tabIndex = -1;
 
 			const dialog = document.createElement('div');
-			dialog.classList.add('modal-dialog', 'modal-dialog-centered');
+			dialog.classList.add('modal-dialog', 'modal-dialog-centered', 'modal-lg');
 			modal.append(dialog);
 
 			const content = document.createElement('div');
@@ -132,44 +132,62 @@
 			const body = document.createElement('div');
 			body.classList.add('modal-body');
 
-			this.subjectSelect = document.createElement('select');
-			this.subjectSelect.classList.add('form-select', 'mb-2');
-			this.subjectSelect.setAttribute('aria-label', 'Select subject');
-			this.subjectSelect.add(new Option('All Subjects', '', true));
+			for (const [select, label] of [
+				['subjectSelect', 'Subject'],
+				['chapterSelect', 'Chapter'],
+				['sectionSelect', 'Section'],
+				['levelSelect', 'Level']
+			]) {
+				const row = document.createElement('div');
+				row.classList.add('row', 'mb-2');
+
+				const labelEl = document.createElement('label');
+				labelEl.classList.add('col-sm-2', 'col-form-label');
+				labelEl.textContent = `${label}:`;
+				labelEl.setAttribute('for', select);
+
+				const selectColumn = document.createElement('div');
+				selectColumn.classList.add('col-sm-10');
+				row.append(labelEl, selectColumn);
+
+				this[select] = document.createElement('select');
+				this[select].id = select;
+				this[select].classList.add('form-select');
+				this[select].add(new Option(`Select ${label}`, '', true));
+				selectColumn.append(this[select]);
+
+				body.append(row);
+			}
+
 			this.subjectSelect.addEventListener('change', () =>
 				this.update('chapter', { DBsubject: '', DBchapter: '', DBsection: '' })
 			);
-			body.append(this.subjectSelect);
 
-			this.chapterSelect = document.createElement('select');
-			this.chapterSelect.classList.add('form-select', 'mb-2');
-			this.chapterSelect.setAttribute('aria-label', 'Select chapter');
-			this.chapterSelect.add(new Option('All Chapters', '', true));
 			this.chapterSelect.addEventListener('change', () =>
 				this.update('section', { DBsubject: '', DBchapter: '', DBsection: '' })
 			);
-			body.append(this.chapterSelect);
 
-			this.sectionSelect = document.createElement('select');
-			this.sectionSelect.classList.add('form-select', 'mb-2');
-			this.sectionSelect.setAttribute('aria-label', 'Select section');
-			this.sectionSelect.add(new Option('All Sections', '', true));
-			body.append(this.sectionSelect);
-
-			this.levelSelect = document.createElement('select');
-			this.levelSelect.classList.add('form-select');
-			this.levelSelect.setAttribute('aria-label', 'Select level');
-			this.levelSelect.add(new Option('Level', '', true));
 			for (const j of Array(6).keys()) {
 				this.levelSelect.add(new Option(j + 1));
 			}
-			body.append(this.levelSelect);
 
 			// Show the status menu if this is a problem in "Pending".
 			if (/^Pending\//.test(this.filePath.replace(/^.*templates\//, ''))) {
+				const statusRow = document.createElement('div');
+				statusRow.classList.add('row', 'mt-2');
+
+				const statusLabel = document.createElement('label');
+				statusLabel.classList.add('col-sm-2', 'col-form-label');
+				statusLabel.textContent = 'Status:';
+				statusLabel.setAttribute('for', 'statusSelect');
+
+				const statusColumn = document.createElement('div');
+				statusColumn.classList.add('col-sm-10');
+				statusRow.append(statusLabel, statusColumn);
+
 				this.statusSelect = document.createElement('select');
-				this.statusSelect.classList.add('form-select', 'mt-2');
-				this.statusSelect.setAttribute('aria-label', 'Change status');
+				this.statusSelect.id = 'statusSelect';
+				this.statusSelect.classList.add('form-select');
 				for (const value of [
 					['Accept', 'A'],
 					['Review', '0', true, true],
@@ -179,7 +197,9 @@
 				]) {
 					this.statusSelect.add(new Option(...value));
 				}
-				body.append(this.statusSelect);
+				statusColumn.append(this.statusSelect);
+
+				body.append(statusRow);
 			}
 
 			const footer = document.createElement('div');
@@ -240,10 +260,10 @@
 				section: 'level'
 			};
 
-			const allText = `All ${category.charAt(0).toUpperCase() + category.slice(1)}s`;
+			const defaultOption = `Select ${category.charAt(0).toUpperCase() + category.slice(1)}`;
 
 			if (clear) {
-				this.setSelect(category, allText);
+				this.setSelect(category, defaultOption);
 				return this.update(child[category], values);
 			}
 
@@ -254,25 +274,25 @@
 			if (category === 'chapter' && subject === '') return this.update(category, values, true);
 			if (category === 'section' && chapter === '') return this.update(category, values, true);
 
-			this.setSelect(category, allText, readFromTaxonomy(category, [subject, chapter, section]), values);
+			this.setSelect(category, defaultOption, readFromTaxonomy(category, [subject, chapter, section]), values);
 
 			this.update(child[category], values);
 		}
 
-		setSelect(category, allText, options = [], values = {}) {
+		setSelect(category, defaultOption, options = [], values = {}) {
 			const select = this[`${category}Select`];
 			while (select.lastChild) select.firstChild.remove();
 
 			const currentValue = values[`DB${category}`];
 
-			select.add(new Option(allText, '', true, !!currentValue));
+			select.add(new Option(defaultOption, '', true, !!currentValue));
 
 			for (const option of options) {
 				select.add(new Option(option, option, false, option === currentValue));
 			}
 
 			if (currentValue && !select.value) {
-				showMessage(`Provided ${category} "${currentValue}" is not in the taxonomy.`)
+				showMessage(`Provided ${category} "${currentValue}" is not in the taxonomy.`);
 				select.add(new Option(currentValue, currentValue, false, true));
 			}
 		}
