@@ -22,7 +22,7 @@ htdocs/index.html
 htdocs/**/*.min.js
 htdocs/**/*.min.css
 htdocs/themes/*/images/*
-!htdocs/themes/*/images/maa_logo.png
+!htdocs/themes/*/images/maa_logo.svg
 !htdocs/themes/*/images/webwork_logo.svg
 !htdocs/themes/math4/images/webwork_square.svg
 htdocs/themes/*/*.css
