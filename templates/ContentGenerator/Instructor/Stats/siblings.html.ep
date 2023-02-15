@@ -33,7 +33,8 @@
 						defined stash('setID') && $_ eq stash('setID') ? (class => 'nav-link active')
 						: (
 							href => $c->systemLink(
-								url_for(current_route, setID => $_, problemID => ''),
+								url_for(current_route =~ s/instructor_(progress|statistics)/instructor_set_$1/r,
+									setID => $_, problemID => ''),
 								params => param('filter') ? { filter => param('filter') } : {}
 							),
 							class => 'nav-link'
