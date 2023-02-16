@@ -193,6 +193,8 @@
 			return;
 		}
 
+		const isProblem = fileType && /problem/.test(fileType) ? 1 : 0;
+
 		renderProblem(new URLSearchParams({
 			user: document.getElementById('hidden_user')?.value,
 			courseID: document.getElementsByName('courseID')[0]?.value,
@@ -213,9 +215,9 @@
 			isInstructor: 1,
 			noprepostambles: 1,
 			processAnswers: 0,
-			showPreviewButton: fileType && fileType === 'problem' ? 1 : 0,
-			showCheckAnswersButton: fileType && fileType === 'problem' ? 1 : 0,
-			showCorrectAnswersButton: fileType && fileType === 'problem' ? 1 : 0,
+			showPreviewButton: isProblem,
+			showCheckAnswersButton: isProblem,
+			showCorrectAnswersButton: isProblem,
 			showFooter: 0,
 			displayMode: document.getElementById('action_view_displayMode_id')?.value ?? 'MathJax',
 			language: document.querySelector('input[name="hidden_language"]')?.value ?? 'en',
