@@ -140,8 +140,9 @@ sub pre_header_initialize ($c) {
 
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 
-	$c->{editMode}     = $c->param('editMode')     || 0;
-	$c->{passwordMode} = $c->param('passwordMode') || 0;
+	$c->{userPermission} = $db->getPermissionLevel($user)->permission;
+	$c->{editMode}       = $c->param('editMode')     || 0;
+	$c->{passwordMode}   = $c->param('passwordMode') || 0;
 
 	return if ($c->{passwordMode} || $c->{editMode}) && !$authz->hasPermissions($user, 'modify_student_data');
 
@@ -375,21 +376,28 @@ sub delete_handler ($c) {
 	my $db    = $c->db;
 	my $user  = $c->param('user');
 	my $scope = $c->param('action.delete.scope');
+	my $perm  = $c->{userPermission};
 
 	my @userIDsToDelete = ();
 	if ($scope eq 'selected') {
 		@userIDsToDelete = @{ $c->{selectedUserIDs} };
 	}
 
-	my %allUserIDs      = map { $_ => 1 } @{ $c->{allUserIDs} };
-	my %visibleUserIDs  = map { $_ => 1 } @{ $c->{visibleUserIDs} };
-	my %selectedUserIDs = map { $_ => 1 } @{ $c->{selectedUserIDs} };
+	my %allUserIDs      = map { $_            => 1 } @{ $c->{allUserIDs} };
+	my %visibleUserIDs  = map { $_            => 1 } @{ $c->{visibleUserIDs} };
+	my %selectedUserIDs = map { $_            => 1 } @{ $c->{selectedUserIDs} };
+	my %permissionbyID  = map { $_->{user_id} => $_->{permission} } @{ $c->{visibleUsers} };
 
-	my $error = '';
-	my $num   = 0;
+	my @resultText;
+	my $num = 0;
 	foreach my $userID (@userIDsToDelete) {
 		if ($user eq $userID) {    # don't delete yourself!!
-			$error = $c->maketext('You cannot delete yourself!');
+			push @resultText, $c->maketext('You cannot delete yourself!');
+			next;
+		}
+
+		if ($permissionbyID{$userID} > $perm) {
+			push @resultText, $c->maketext('You cannot delete someone with permissions higher than your own.');
 			next;
 		}
 		delete $allUserIDs{$userID};
@@ -403,7 +411,8 @@ sub delete_handler ($c) {
 	$c->{visibleUserIDs}  = [ keys %visibleUserIDs ];
 	$c->{selectedUserIDs} = [ keys %selectedUserIDs ];
 
-	return $c->maketext('Deleted [_1] users.', $num) . ($error ? " $error" : '');
+	unshift @resultText, $c->maketext('Deleted [_1] users.', $num);
+	return join(' ', @resultText);
 }
 
 sub add_handler ($c) {
@@ -493,8 +502,7 @@ sub cancel_edit_handler ($c) {
 
 sub save_edit_handler ($c) {
 	my $db                   = $c->db;
-	my $editorUser           = $c->param('user');
-	my $editorUserPermission = $db->getPermissionLevel($editorUser)->permission;
+	my $editorUserPermission = $c->{userPermission};
 
 	my @visibleUserIDs = @{ $c->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
@@ -502,6 +510,9 @@ sub save_edit_handler ($c) {
 		die $c->maketext('record for visible user [_1] not found', $userID) unless $User;
 		my $PermissionLevel = $db->getPermissionLevel($userID);
 		die $c->maketext('permissions for [_1] not defined', $userID) unless defined $PermissionLevel;
+		# delete requests for elevated users should never make it this far
+		die $c->maketext('insufficient permission to edit [_1]', $userID)
+			unless ($editorUserPermission >= $PermissionLevel);
 		foreach my $field ($User->NONKEYFIELDS()) {
 			my $param = "user.$userID.$field";
 			if (defined $c->param($param)) {
@@ -547,6 +558,9 @@ sub save_password_handler ($c) {
 	foreach my $userID (@visibleUserIDs) {
 		my $User = $db->getUser($userID);
 		die $c->maketext('record for visible user [_1] not found', $userID) unless $User;
+		# password requests for elevated users should never make it this far
+		die $c->maketext('insufficient permission to edit [_1]', $userID)
+			unless ($c->{userPermission} >= $User->permission);
 		my $param = "user.${userID}.new_password";
 		if ($c->param($param)) {
 			my $newP          = $c->param($param);
@@ -615,6 +629,7 @@ sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceLis
 	my $db   = $c->db;
 	my $dir  = $ce->{courseDirs}->{templates};
 	my $user = $c->param('user');
+	my $perm = $db->getPermissionLevel($user)->permission;
 
 	die $c->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
 	die $c->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
@@ -649,6 +664,10 @@ sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceLis
 			next;
 		}
 		if ($user_id eq $user) {                           # don't replace yourself!!
+			push @skipped, $user_id;
+			next;
+		}
+		if ($record{permission} && $perm < $record{permission}) {
 			push @skipped, $user_id;
 			next;
 		}

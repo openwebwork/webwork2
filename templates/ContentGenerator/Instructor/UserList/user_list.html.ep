@@ -71,6 +71,7 @@
 		<tbody class="table-group-divider">
 			% my %selectedUserIDs = map { $_ => 1 } @{ $c->{selectedUserIDs} };
 			% for (@{ $c->{visibleUsers} }) {
+				% next if ($c->{editMode} && $_->{permission} > $c->{userPermission});
 				<%= include 'ContentGenerator/Instructor/UserList/user_row',
 					user => $_, userSelected => exists $selectedUserIDs{ $_->user_id } =%>
 			% }
