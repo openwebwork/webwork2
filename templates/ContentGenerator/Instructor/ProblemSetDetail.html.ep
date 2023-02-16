@@ -16,6 +16,8 @@
 	% }
 	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
 		defer => undef =%>
+	<%= javascript getAssetURL($ce, 'node_modules/shortcut-buttons-flatpickr/dist/shortcut-buttons-flatpickr.min.js'),
+		defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/apps/DatePicker/datepicker.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'node_modules/sortablejs/Sortable.min.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>

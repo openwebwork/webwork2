@@ -20,6 +20,7 @@
         "jquery-ui-dist": "^1.13.2",
         "luxon": "^3.2.1",
         "mathjax": "^3.2.2",
+        "shortcut-buttons-flatpickr": "^0.4.0",
         "sortablejs": "^1.15.0"
     },
     "devDependencies": {
