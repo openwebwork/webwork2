@@ -970,7 +970,7 @@ $args->{label} is the displayed label, and $args->{class} is added to the html c
 
 =cut
 
-sub helpMacro ($c, $name, $args) {
+sub helpMacro ($c, $name, $args = {}) {
 	my $label = $args->{label}
 		// $c->tag('i', class => 'icon fas fa-question-circle', 'aria-hidden' => 'true', data => { alt => ' ? ' }, '');
 	delete $args->{label};
