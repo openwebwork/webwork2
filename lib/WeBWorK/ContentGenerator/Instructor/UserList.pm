@@ -157,24 +157,27 @@ sub pre_header_initialize ($c) {
 	# Get a list of all users except set-level proctors from the database.
 	my @allUsersDB = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
 
+	my %permissionLevels =
+		map { $_->user_id => $_->permission } $db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
+
 	# Add permission level to the user record hash.
 	for my $user (@allUsersDB) {
-		my $permissionRecord = $db->getPermissionLevel($user->user_id);
-
-		unless ($permissionRecord) {
+		unless (defined $permissionLevels{ $user->user_id }) {
 			# Uh oh! No permission level record found!
 			$c->addbadmessage($c->maketext('Added missing permission level for user [_1].', $user->user_id));
 
 			# Create a new permission level record.
-			$permissionRecord = $db->newPermissionLevel;
+			my $permissionRecord = $db->newPermissionLevel;
 			$permissionRecord->user_id($user->user_id);
 			$permissionRecord->permission(0);
 
 			# Add it to the database.
 			$db->addPermissionLevel($permissionRecord);
+
+			$permissionLevels{ $user->user_id } = 0;
 		}
 
-		$user->{permission} = $permissionRecord->permission;
+		$user->{permission} = $permissionLevels{ $user->user_id };
 	}
 
 	my %allUsers = map { $_->user_id => $_ } @allUsersDB;
