@@ -40,15 +40,15 @@
 %
 <%= form_for current_route, method => 'POST', name => 'userlist', id => 'user-list-form', class => 'font-sm', begin =%>
 	<%= $c->hidden_authen_fields =%>
-	% if (@{ $c->{visibleUserIDs} }) {
-		% for (@{ $c->{visibleUserIDs} }) {
+	% if (scalar(keys %{ $c->{visibleUserIDs} })) {
+		% for (keys %{ $c->{visibleUserIDs} }) {
 			<%= hidden_field visible_users => $_ =%>
 		% }
 	% } else {
 		<%= hidden_field no_visible_users => '1' =%>
 	% }
-	% if (@{ $c->{prevVisibleUserIDs} }) {
-		% for (@{ $c->{prevVisibleUserIDs} }) {
+	% if (scalar(keys %{ $c->{prevVisibleUserIDs} })) {
+		% for (keys %{ $c->{prevVisibleUserIDs} }) {
 			<%= hidden_field prev_visible_users => $_ =%>
 		% }
 	% } else {
@@ -99,7 +99,7 @@
 	</div>
 	%
 	<p class="mb-0"><%= maketext('Showing [_1] out of [_2] users',
-		scalar(@{ $c->{visibleUsers} }), scalar(@{ $c->{allUserIDs} })) =%></p>
+		scalar(keys %{ $c->{visibleUserIDs} }), scalar(@{ $c->{allUserIDs} })) =%></p>
 	%
 	% if ($c->{passwordMode}) {
 		<p>

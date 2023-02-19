@@ -140,9 +140,8 @@ sub pre_header_initialize ($c) {
 
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 
-	$c->{userPermission} = $db->getPermissionLevel($user)->permission;
-	$c->{editMode}       = $c->param('editMode')     || 0;
-	$c->{passwordMode}   = $c->param('passwordMode') || 0;
+	$c->{editMode}     = $c->param('editMode')     || 0;
+	$c->{passwordMode} = $c->param('passwordMode') || 0;
 
 	return if ($c->{passwordMode} || $c->{editMode}) && !$authz->hasPermissions($user, 'modify_student_data');
 
@@ -156,51 +155,64 @@ sub pre_header_initialize ($c) {
 	}
 
 	# Get a list of all users except set-level proctors from the database.
-	my @allUsers = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
-	$c->{allUserIDs} = [ map { $_->user_id } @allUsers ];
+	my @allUsersDB = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
 
-	# Get the number of sets in the course for use in the "assigned sets" links.
-	$c->{totalSets} = $db->countGlobalSets;
+	# Add permission level to the user record hash.
+	for my $user (@allUsersDB) {
+		my $permissionRecord = $db->getPermissionLevel($user->user_id);
 
-	if (defined $c->param('visible_user_string')) {
-		$c->{visibleUserIDs} = [ split /:/, $c->param('visible_user_string') ];
-	} elsif (defined $c->param('visible_users')) {
-		$c->{visibleUserIDs} = [ $c->param('visible_users') ];
-	} elsif (defined $c->param('no_visible_users')) {
-		$c->{visibleUserIDs} = [];
-	} else {
-		if (@{ $c->{allUserIDs} } > HIDE_USERS_THRESHHOLD && !defined $c->param('show_all_users')) {
-			$c->{visibleUserIDs} = [];
-		} else {
-			$c->{visibleUserIDs} = [ @{ $c->{allUserIDs} } ];
+		unless ($permissionRecord) {
+			# Uh oh! No permission level record found!
+			$c->addbadmessage($c->maketext('Added missing permission level for user [_1].', $user->user_id));
+
+			# Create a new permission level record.
+			$permissionRecord = $db->newPermissionLevel;
+			$permissionRecord->user_id($user->user_id);
+			$permissionRecord->permission(0);
+
+			# Add it to the database.
+			$db->addPermissionLevel($permissionRecord);
 		}
+
+		$user->{permission} = $permissionRecord->permission;
 	}
 
+	my %allUsers = map { $_->user_id => $_ } @allUsersDB;
+	$c->{userPermission} = $allUsers{$user}{permission};
+
+	# Get the number of sets in the course for use in the "assigned sets" links.
+	$c->{totalSets}  = $db->countGlobalSets;
+	$c->{allUserIDs} = [ keys %allUsers ];
+	$c->{allUsers}   = \%allUsers;
+
+	if (defined $c->param('visible_users')) {
+		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->every_param('visible_users') } };
+	} elsif (@allUsersDB > HIDE_USERS_THRESHHOLD || defined $c->param('no_visible_users')) {
+		$c->{visibleUserIDs} = {};
+	} else {
+		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->{allUserIDs} } };
+	}
 	$c->{prevVisibleUserIDs} = $c->{visibleUserIDs};
 
 	if (defined $c->param('selected_users')) {
-		$c->{selectedUserIDs} = [ $c->param('selected_users') ];
+		$c->{selectedUserIDs} = { map { $_ => 1 } @{ $c->every_param('selected_users') } };
 	} else {
-		$c->{selectedUserIDs} = [];
+		$c->{selectedUserIDs} = {};
 	}
 
+	$c->{userIsEditable} =
+		{ map { $allUsers{$_}{permission} > $c->{userPermission} ? () : ($_ => 1) } (keys %allUsers) };
+
+	# Always have a definite sort order.
 	if (defined $c->param('labelSortMethod')) {
 		$c->{primarySortField}   = $c->param('labelSortMethod');
-		$c->{secondarySortField} = $c->param('primarySortField');
-		$c->{ternarySortField}   = $c->param('secondarySortField');
+		$c->{secondarySortField} = $c->param('primarySortField')   || 'last_name';
+		$c->{ternarySortField}   = $c->param('secondarySortField') || 'first_name';
 	} else {
 		$c->{primarySortField}   = $c->param('primarySortField')   || 'last_name';
 		$c->{secondarySortField} = $c->param('secondarySortField') || 'first_name';
 		$c->{ternarySortField}   = $c->param('ternarySortField')   || 'student_id';
 	}
-
-	my (%sections, %recitations);
-	for my $user (@allUsers) {
-		push @{ $sections{ defined $user->section       ? $user->section    : '' } }, $user->user_id;
-		push @{ $recitations{ defined $user->recitation ? $user->recitation : '' } }, $user->user_id;
-	}
-	$c->{sections}    = \%sections;
-	$c->{recitations} = \%recitations;
 
 	my $actionID = $c->param('action');
 	if ($actionID) {
@@ -218,37 +230,15 @@ sub pre_header_initialize ($c) {
 		$c->addgoodmessage($c->maketext("Please select action to be performed."));
 	}
 
-	# Get requested users
-	$c->{visibleUsers} = [ @{ $c->{visibleUserIDs} } ? $db->getUsers(@{ $c->{visibleUserIDs} }) : () ];
-
+	# Sort all users
 	my $primarySortSub   = SORT_SUBS()->{ $c->{primarySortField} };
 	my $secondarySortSub = SORT_SUBS()->{ $c->{secondarySortField} };
 	my $ternarySortSub   = SORT_SUBS()->{ $c->{ternarySortField} };
 
-	# Add permission level to the user record hash so we can sort by it.
-	for my $user (@{ $c->{visibleUsers} }) {
-		my $permissionLevel = $db->getPermissionLevel($user->user_id);
-
-		unless ($permissionLevel) {
-			# Uh oh! No permission level record found!
-			$c->addbadmessage($c->maketext('Added missing permission level for user [_1].', $user->user_id));
-
-			# Create a new permission level record.
-			$permissionLevel = $db->newPermissionLevel;
-			$permissionLevel->user_id($user->user_id);
-			$permissionLevel->permission(0);
-
-			# Add it to the database.
-			$db->addPermissionLevel($permissionLevel);
-		}
-
-		$user->{permission} = $permissionLevel->permission;
-	}
-
-	# Always have a definite sort order in case the first three sorts don't determine things.
-	$c->{visibleUsers} = [
-		sort { &$primarySortSub || &$secondarySortSub || &$ternarySortSub || byLastName || byFirstName || byUserID }
-			@{ $c->{visibleUsers} }
+	$c->{allUserIDs}    = [ keys %allUsers ];
+	$c->{sortedUserIDs} = [
+		map  { $_->user_id }
+		sort { &$primarySortSub || &$secondarySortSub || &$ternarySortSub } (values %allUsers)
 	];
 
 	return;
@@ -272,7 +262,6 @@ sub initialize ($c) {
 # This action handler modifies the "visibleUserIDs" field based on the contents
 # of the "action.filter.scope" parameter and the "selected_users".
 sub filter_handler ($c) {
-	my $db = $c->db;
 	my $ce = $c->ce;
 
 	my $result;
@@ -280,42 +269,32 @@ sub filter_handler ($c) {
 	my $scope = $c->param('action.filter.scope');
 	if ($scope eq 'all') {
 		$result = $c->maketext('showing all users');
-		$c->{visibleUserIDs} = $c->{allUserIDs};
+		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->{allUserIDs} } };
 	} elsif ($scope eq 'none') {
 		$result = $c->maketext('showing no users');
-		$c->{visibleUserIDs} = [];
+		$c->{visibleUserIDs} = {};
 	} elsif ($scope eq 'selected') {
 		$result = $c->maketext('showing selected users');
-		$c->{visibleUserIDs} = [ $c->param('selected_users') ];
+		$c->{visibleUserIDs} = $c->{selectedUserIDs};
 	} elsif ($scope eq 'match_regex') {
 		$result = $c->maketext('showing matching users');
-		my $regex       = $c->param('action.filter.user_ids');
-		my $field       = $c->param('action.filter.field');
-		my @userRecords = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
-		my @userIDs;
+		my $regex    = $c->param('action.filter.user_ids');
+		my $field    = $c->param('action.filter.field');
+		my %allUsers = %{ $c->{allUsers} };
+		my @matchingUserIDs;
 		my %permissionLabels = reverse %{ $ce->{userRoles} };
-		for my $record (@userRecords) {
-			# add permission level to user record hash so we can match it if necessary
-			# also change permission level and status to their text
-			# labels
+		for my $userID (@{ $c->{allUserIDs} }) {
 			if ($field eq 'permission') {
-				my $permissionLevel = $db->getPermissionLevel($record->user_id);
-				$record->{permission} = $permissionLabels{ $permissionLevel->permission };
+				push @matchingUserIDs, $userID
+					if ($permissionLabels{ $allUsers{$userID}{permission} } =~ /^$regex/i);
 			} elsif ($field eq 'status') {
-				$record->{status} = $ce->status_abbrev_to_name($record->{status});
+				push @matchingUserIDs, $userID
+					if ($ce->status_abbrev_to_name($allUsers{$userID}{status}) =~ /^$regex/i);
+			} else {
+				push @matchingUserIDs, $userID if $allUsers{$userID}{$field} =~ /^$regex/i;
 			}
-			push @userIDs, $record->user_id if $record->{$field} =~ /^$regex/i;
 		}
-		$c->{visibleUserIDs} = \@userIDs;
-	} elsif ($scope eq 'match_ids') {
-		my @userIDs = split /\s*,\s*/, $c->param('action.filter.user_ids');
-		$c->{visibleUserIDs} = \@userIDs;
-	} elsif ($scope eq 'match_section') {
-		my $section = $c->param('action.filter.section');
-		$c->{visibleUserIDs} = $c->{sections}{$section};    # an arrayref
-	} elsif ($scope eq 'match_recitation') {
-		my $recitation = $c->param('action.filter.recitation');
-		$c->{visibleUserIDs} = $c->{recitations}{$recitation};    # an arrayref
+		$c->{visibleUserIDs} = { map { $_ => 1 } @matchingUserIDs };
 	}
 
 	return $result;
@@ -336,38 +315,42 @@ sub sort_handler ($c) {
 
 sub edit_handler ($c) {
 	my $result;
+	my @usersToEdit;
 
 	my $scope = $c->param('action.edit.scope');
 	if ($scope eq 'all') {
-		$result = $c->maketext('editing all users');
-		$c->{visibleUserIDs} = $c->{allUserIDs};
+		$result      = $c->maketext('editing all users');
+		@usersToEdit = grep { $c->{userIsEditable}{$_} } @{ $c->{allUserIDs} };
 	} elsif ($scope eq 'visible') {
-		$result = $c->maketext('editing visible users');
-		# leave visibleUserIDs alone
+		$result      = $c->maketext('editing visible users');
+		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{visibleUserIDs} });
 	} elsif ($scope eq 'selected') {
-		$result = $c->maketext('editing selected users');
-		$c->{visibleUserIDs} = [ $c->param('selected_users') ];
+		$result      = $c->maketext('editing selected users');
+		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
 	}
-	$c->{editMode} = 1;
+	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
+	$c->{editMode}       = 1;
 
 	return $result;
 }
 
 sub password_handler ($c) {
 	my $result;
+	my @usersToEdit;
 
 	my $scope = $c->param('action.password.scope');
 	if ($scope eq 'all') {
-		$result = $c->maketext('giving new passwords to all users');
-		$c->{visibleUserIDs} = $c->{allUserIDs};
+		$result      = $c->maketext('giving new passwords to all users');
+		@usersToEdit = grep { $c->{userIsEditable}{$_} } @{ $c->{allUserIDs} };
 	} elsif ($scope eq 'visible') {
-		$result = $c->maketext('giving new passwords to visible users');
-		# leave visibleUserIDs alone
+		$result      = $c->maketext('giving new passwords to visible users');
+		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{visibleUserIDs} });
 	} elsif ($scope eq 'selected') {
-		$result = $c->maketext('giving new passwords to selected users');
-		$c->{visibleUserIDs} = [ $c->param('selected_users') ];
+		$result      = $c->maketext('giving new passwords to selected users');
+		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
 	}
-	$c->{passwordMode} = 1;
+	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
+	$c->{passwordMode}   = 1;
 
 	return $result;
 }
@@ -376,40 +359,31 @@ sub delete_handler ($c) {
 	my $db    = $c->db;
 	my $user  = $c->param('user');
 	my $scope = $c->param('action.delete.scope');
-	my $perm  = $c->{userPermission};
+	my $num   = 0;
 
-	my @userIDsToDelete = ();
-	if ($scope eq 'selected') {
-		@userIDsToDelete = @{ $c->{selectedUserIDs} };
-	}
+	return $c->maketext('Deleted [_1] users.', $num) if ($scope eq 'none');
 
-	my %allUserIDs      = map { $_            => 1 } @{ $c->{allUserIDs} };
-	my %visibleUserIDs  = map { $_            => 1 } @{ $c->{visibleUserIDs} };
-	my %selectedUserIDs = map { $_            => 1 } @{ $c->{selectedUserIDs} };
-	my %permissionbyID  = map { $_->{user_id} => $_->{permission} } @{ $c->{visibleUsers} };
+	# grep on userIsEditable would still enforce permissions, but no UI feedback
+	my @userIDsToDelete = keys %{ $c->{selectedUserIDs} };
 
 	my @resultText;
-	my $num = 0;
 	foreach my $userID (@userIDsToDelete) {
-		if ($user eq $userID) {    # don't delete yourself!!
+		if ($userID eq $user) {
 			push @resultText, $c->maketext('You cannot delete yourself!');
 			next;
 		}
 
-		if ($permissionbyID{$userID} > $perm) {
-			push @resultText, $c->maketext('You cannot delete someone with permissions higher than your own.');
+		unless ($c->{userIsEditable}{$userID}) {
+			push @resultText, $c->maketext('You are not allowed to delete [_1].', $userID);
 			next;
 		}
-		delete $allUserIDs{$userID};
-		delete $visibleUserIDs{$userID};
-		delete $selectedUserIDs{$userID};
+		delete $c->{allUsers}{$userID};
+		delete $c->{visibleUserIDs}{$userID};
+		delete $c->{selectedUserIDs}{$userID};
+		delete $c->{userIsEditable}{$userID};
 		$db->deleteUser($userID);
 		$num++;
 	}
-
-	$c->{allUserIDs}      = [ keys %allUserIDs ];
-	$c->{visibleUserIDs}  = [ keys %visibleUserIDs ];
-	$c->{selectedUserIDs} = [ keys %selectedUserIDs ];
 
 	unshift @resultText, $c->maketext('Deleted [_1] users.', $num);
 	return join(' ', @resultText);
@@ -430,22 +404,30 @@ sub import_handler ($c) {
 	my $replaceExisting;
 	my @replaceList;
 	if ($replace eq 'any') {
-		$replaceExisting = 'any';
+		# even in any mode, do not allow replacement of higher permission users
+		$replaceExisting = 'listed';
+		@replaceList     = grep { $c->{userIsEditable}{$_} } @{ $c->{allUserIDs} };
 	} elsif ($replace eq 'none') {
 		$replaceExisting = 'none';
 	} elsif ($replace eq 'visible') {
 		$replaceExisting = 'listed';
-		@replaceList     = @{ $c->{visibleUserIDs} };
+		@replaceList     = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{visibleUserIDs} });
 	} elsif ($replace eq 'selected') {
 		$replaceExisting = 'listed';
-		@replaceList     = @{ $c->{selectedUserIDs} };
+		@replaceList     = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
 	}
 
 	my ($replaced, $added, $skipped) = $c->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
 
-	# make new users visible... do we really want to do this? probably.
-	push @{ $c->{visibleUserIDs} }, @$added;
-	push @{ $c->{allUserIDs} },     @$added;
+	# make new users visible and update records of replaced users
+	for (@$added) {
+		$c->{allUsers}{ $_->user_id }       = $_;
+		$c->{visibleUserIDs}{ $_->user_id } = 1;
+		$c->{userIsEditable}{ $_->user_id } = 1;
+	}
+	for (@$replaced) {
+		$c->{allUsers}{ $_->user_id } = $_;
+	}
 
 	my $numReplaced = @$replaced;
 	my $numAdded    = @$added;
@@ -479,9 +461,9 @@ sub export_handler ($c) {
 	if ($scope eq 'all') {
 		@userIDsToExport = @{ $c->{allUserIDs} };
 	} elsif ($scope eq 'visible') {
-		@userIDsToExport = @{ $c->{visibleUserIDs} };
+		@userIDsToExport = keys %{ $c->{visibleUserIDs} };
 	} elsif ($scope eq 'selected') {
-		@userIDsToExport = @{ $c->{selectedUserIDs} };
+		@userIDsToExport = keys %{ $c->{selectedUserIDs} };
 	}
 
 	$c->exportUsersToCSV($fileName, @userIDsToExport);
@@ -491,9 +473,9 @@ sub export_handler ($c) {
 
 sub cancel_edit_handler ($c) {
 	if (defined $c->param('prev_visible_users')) {
-		$c->{visibleUserIDs} = [ $c->param('prev_visible_users') ];
+		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->every_param('prev_visible_users') } };
 	} elsif (defined $c->param('no_prev_visible_users')) {
-		$c->{visibleUserIDs} = [];
+		$c->{visibleUserIDs} = {};
 	}
 	$c->{editMode} = 0;
 
@@ -501,18 +483,16 @@ sub cancel_edit_handler ($c) {
 }
 
 sub save_edit_handler ($c) {
-	my $db                   = $c->db;
-	my $editorUserPermission = $c->{userPermission};
+	my $db = $c->db;
 
-	my @visibleUserIDs = @{ $c->{visibleUserIDs} };
+	my @visibleUserIDs = keys %{ $c->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
 		my $User = $db->getUser($userID);
 		die $c->maketext('record for visible user [_1] not found', $userID) unless $User;
 		my $PermissionLevel = $db->getPermissionLevel($userID);
 		die $c->maketext('permissions for [_1] not defined', $userID) unless defined $PermissionLevel;
 		# delete requests for elevated users should never make it this far
-		die $c->maketext('insufficient permission to edit [_1]', $userID)
-			unless ($editorUserPermission >= $PermissionLevel);
+		die $c->maketext('insufficient permission to edit [_1]', $userID) unless ($c->{userIsEditable}{$userID});
 		foreach my $field ($User->NONKEYFIELDS()) {
 			my $param = "user.$userID.$field";
 			if (defined $c->param($param)) {
@@ -521,7 +501,7 @@ sub save_edit_handler ($c) {
 		}
 
 		my $param = "user.$userID.permission";
-		if (defined $c->param($param) && $c->param($param) <= $editorUserPermission) {
+		if (defined $c->param($param) && $c->param($param) <= $c->{userPermission}) {
 			$PermissionLevel->permission($c->param($param));
 		}
 
@@ -530,9 +510,9 @@ sub save_edit_handler ($c) {
 	}
 
 	if (defined $c->param('prev_visible_users')) {
-		$c->{visibleUserIDs} = [ $c->param('prev_visible_users') ];
+		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->every_param('prev_visible_users') } };
 	} elsif (defined $c->param('no_prev_visible_users')) {
-		$c->{visibleUserIDs} = [];
+		$c->{visibleUserIDs} = {};
 	}
 
 	$c->{editMode} = 0;
@@ -542,9 +522,9 @@ sub save_edit_handler ($c) {
 
 sub cancel_password_handler ($c) {
 	if (defined $c->param('prev_visible_users')) {
-		$c->{visibleUserIDs} = [ $c->param('prev_visible_users') ];
+		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->every_param('prev_visible_users') } };
 	} elsif (defined $c->param('no_prev_visible_users')) {
-		$c->{visibleUserIDs} = [];
+		$c->{visibleUserIDs} = {};
 	}
 	$c->{passwordMode} = 0;
 
@@ -554,13 +534,12 @@ sub cancel_password_handler ($c) {
 sub save_password_handler ($c) {
 	my $db = $c->db;
 
-	my @visibleUserIDs = @{ $c->{visibleUserIDs} };
+	my @visibleUserIDs = keys %{ $c->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
 		my $User = $db->getUser($userID);
 		die $c->maketext('record for visible user [_1] not found', $userID) unless $User;
 		# password requests for elevated users should never make it this far
-		die $c->maketext('insufficient permission to edit [_1]', $userID)
-			unless ($c->{userPermission} >= $User->permission);
+		die $c->maketext('insufficient permission to edit [_1]', $userID) unless ($c->{userIsEditable}{$userID});
 		my $param = "user.${userID}.new_password";
 		if ($c->param($param)) {
 			my $newP          = $c->param($param);
@@ -579,9 +558,9 @@ sub save_password_handler ($c) {
 	}
 
 	if (defined $c->param('prev_visible_users')) {
-		$c->{visibleUserIDs} = [ $c->param('prev_visible_users') ];
+		$c->{visibleUserIDs} = $c->every_param('prev_visible_users');
 	} elsif (defined $c->param('no_prev_visible_users')) {
-		$c->{visibleUserIDs} = [];
+		$c->{visibleUserIDs} = {};
 	}
 
 	$c->{passwordMode} = 0;
@@ -710,13 +689,15 @@ sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceLis
 			$db->putUser($User);
 			$db->putPermissionLevel($PermissionLevel);
 			$db->putPassword($Password);
-			push @replaced, $user_id;
+			$User->{permission} = $PermissionLevel->permission;
+			push @replaced, $User;
 		} else {
 			$allUserIDs{$user_id} = 1;
 			$db->addUser($User);
 			$db->addPermissionLevel($PermissionLevel);
 			$db->addPassword($Password);
-			push @added, $user_id;
+			$User->{permission} = $PermissionLevel->permission;
+			push @added, $User;
 		}
 	}
 

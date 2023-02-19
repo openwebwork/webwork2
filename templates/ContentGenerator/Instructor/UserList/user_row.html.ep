@@ -1,11 +1,10 @@
 % my $statusClass = $ce->status_abbrev_to_name($user->status);
-% my $allowed     = $c->{userPermission} >= $user->{permission} ? 1 : 0;
 %
 <tr>
 	% unless ($c->{editMode} || $c->{passwordMode}) {
 		% # Select checkboxes
 		<td>
-			% if ($allowed) {
+			% if ($editable) {
 				<%= check_box selected_users => $user->user_id, id => $user->user_id . '_checkbox',
 					class => 'form-check-input', $userSelected ? (checked => undef) : () =%>
 			% }
@@ -24,7 +23,7 @@
 						) =%>
 					% }
 				<% end =%>
-				% if ($allowed) {
+				% if ($editable) {
 					<%= link_to $c->systemLink(url_for, params => { editMode => 1, visible_users => $user->user_id }),
 						begin =%>
 						<i class="icon fas fa-pencil-alt" aria-hidden="true"
@@ -54,11 +53,11 @@
 		% # New password field
 		<td>
 			% if ($user->user_id eq param('user')) {
-				% # Don't allow a professor to change their own password from this form.
+				% # Don't allow a user to change their own password from this form.
 				<div class="alert alert-danger px-1 py-0 m-0">
 					<%= maketext('You may not change your own password here!') =%>
 				</div>
-			% } elsif (!$allowed) {
+			% } elsif (!$editable) {
 				% # Prevent modification of users with elevated permissions.
 				<div class="alert alert-danger px-1 py-0 m-0">
 					<%= maketext('You may not change this user\'s password!') =%>

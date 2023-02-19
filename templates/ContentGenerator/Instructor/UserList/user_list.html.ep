@@ -69,21 +69,19 @@
 			</tr>
 		</thead>
 		<tbody class="table-group-divider">
-			% my %selectedUserIDs = map { $_ => 1 } @{ $c->{selectedUserIDs} };
-			% for (@{ $c->{visibleUsers} }) {
-				% next if ($c->{editMode} && $_->{permission} > $c->{userPermission});
+			% for (grep { $c->{visibleUserIDs}{$_} } @{ $c->{sortedUserIDs} }) {
 				<%= include 'ContentGenerator/Instructor/UserList/user_row',
-					user => $_, userSelected => exists $selectedUserIDs{ $_->user_id } =%>
+					user => $c->{allUsers}{$_}, userSelected => exists $c->{selectedUserIDs}{$_}, editable => exists $c->{userIsEditable}{$_} =%>
 			% }
 		</tbody>
 	</table>
 </div>
 %
 % # If there are no users shown print message.
-% unless (@{ $c->{visibleUsers} }) {
+% unless (scalar(keys %{ $c->{visibleUserIDs} })) {
 	<p>
 		<i>
-			<%= maketext('No students shown.  Choose one of the options above to list the students in the course.') =%>
+			<%= maketext('No students shown. Choose one of the options above to list the students in the course.') =%>
 		</i>
 	</p>
 % }
