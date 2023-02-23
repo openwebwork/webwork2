@@ -27,6 +27,7 @@ use Mojo::File;
 
 use WeBWorK::Utils qw(sortByName jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(renderPG);
+use WeBWorK::Form;
 
 use constant PAST_ANSWERS_FILENAME => 'past_answers';
 
