@@ -10,9 +10,6 @@ conf/*
 !conf/*.dist*
 !conf/*.config
 !conf/snippets
-!conf/dev
-conf/dev/*
-!conf/dev/*.dist*
 
 node_modules
 
@@ -46,4 +43,5 @@ docker-compose.yml
 docker-config/ssl/*
 !docker-config/ssl/Readme
 
-.vscode/
+.vscode
+.vim

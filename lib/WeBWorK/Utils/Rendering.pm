@@ -23,6 +23,7 @@ WeBWorK::Utils::Rendering - utilities for rendering problems.
 =cut
 
 use Mojo::IOLoop;
+use Mojo::JSON qw(decode_json);
 use Data::Structure::Util qw(unbless);
 
 use WeBWorK::Utils qw(formatDateTime);
@@ -146,12 +147,11 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{debuggingOptions} = $translationOptions->{debuggingOptions} // {};
 
 	# Answer Information
-	$options{inputs_ref} = $formFields;
+	$options{inputs_ref}     = $formFields;
+	$options{processAnswers} = $translationOptions->{processAnswers};
 
 	# External Data
-	$options{external_data} = $translationOptions->{external_data} // {};
-
-	$options{processAnswers} = $translationOptions->{processAnswers};
+	$options{external_data} = decode_json($set->{external_data} || '{}');
 
 	# Directories and URLs
 	$options{macrosPath}        = $ce->{pg}{directories}{macrosPath};
@@ -227,11 +227,6 @@ hash when awaited.
 sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translationOptions) {
 	# Set the inactivity timeout to be 5 seconds more than the PG timeout.
 	$c->inactivity_timeout($WeBWorK::PG::TIMEOUT + 5);
-
-	# if external data is requested, fetch it for a user/set
-	if ($c->ce->{pg}{options}{externalData}) {
-		$translationOptions->{external_data} = $c->db->getUserSetData($effectiveUser->user_id, $set->set_id);
-	}
 
 	return Mojo::IOLoop->subprocess->run_p(sub {
 		my $pg = WeBWorK::PG->new(constructPGOptions(

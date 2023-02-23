@@ -1,7 +1,0 @@
-# Set the course name used for testing the user_set_data tests.
-# Copy this file to conf/dev/db_settings.conf and change the course name below if
-# you wish to run the tests in `t/db_tests`
-
-$dev_settings = { course_name => 'course_used_to_test'};
-
-1;
