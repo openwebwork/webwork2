@@ -241,7 +241,8 @@ sub pre_header_initialize ($c) {
 	$c->{allUserIDs}    = [ keys %allUsers ];
 	$c->{sortedUserIDs} = [
 		map  { $_->user_id }
-		sort { &$primarySortSub || &$secondarySortSub || &$ternarySortSub } (values %allUsers)
+		sort { &$primarySortSub || &$secondarySortSub || &$ternarySortSub }
+		grep { $c->{visibleUserIDs}{ $_->user_id } } (values %allUsers)
 	];
 
 	return;
@@ -561,7 +562,7 @@ sub save_password_handler ($c) {
 	}
 
 	if (defined $c->param('prev_visible_users')) {
-		$c->{visibleUserIDs} = $c->every_param('prev_visible_users');
+		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->every_param('prev_visible_users') } };
 	} elsif (defined $c->param('no_prev_visible_users')) {
 		$c->{visibleUserIDs} = {};
 	}
@@ -611,7 +612,7 @@ sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceLis
 	my $db   = $c->db;
 	my $dir  = $ce->{courseDirs}->{templates};
 	my $user = $c->param('user');
-	my $perm = $db->getPermissionLevel($user)->permission;
+	my $perm = $c->{userPermission};
 
 	die $c->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
 	die $c->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
