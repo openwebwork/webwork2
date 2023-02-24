@@ -28,7 +28,6 @@ use HTML::Entities;
 use WeBWorK::Utils qw(sortByName wwRound);
 use WeBWorK::Utils::Rendering qw(renderPG);
 use WeBWorK::PG;
-use WeBWorK::Form;
 
 async sub initialize ($c) {
 	my $authz      = $c->authz;
@@ -122,7 +121,7 @@ async sub initialize ($c) {
 		$c->{set},
 		$c->{problem},
 		$c->{set}->psvn,
-		{ WeBWorK::Form->new_from_paramable($c)->Vars },
+		$c->req->params->to_hash,
 		{
 			displayMode              => $user->displayMode || $c->ce->{pg}{options}{displayMode},
 			showHints                => 0,

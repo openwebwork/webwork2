@@ -56,7 +56,6 @@ use warnings;
 use Future::AsyncAwait;
 
 use WeBWorK::Localize;
-use WeBWorK::Form;
 use WeBWorK::CourseEnvironment;
 use WebworkWebservice::RenderProblem;
 use WebworkWebservice::LibraryActions;
@@ -75,7 +74,7 @@ sub new {
 	my $class = ref $invocant || $invocant;
 	return bless {
 		c             => $c,
-		inputs_ref    => { WeBWorK::Form->new_from_paramable($c)->Vars },
+		inputs_ref    => $c->req->params->to_hash,
 		return_object => {},
 		error_string  => '',
 		%options

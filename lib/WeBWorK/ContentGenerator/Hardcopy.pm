@@ -29,7 +29,6 @@ use String::ShellQuote;
 use Archive::Zip qw(:ERROR_CODES);
 
 use WeBWorK::DB::Utils qw/user2global/;
-use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after x format_set_name_display/;
 use WeBWorK::Utils::Rendering qw(renderPG);
