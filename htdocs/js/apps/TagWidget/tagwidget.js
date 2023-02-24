@@ -293,7 +293,8 @@
 
 			if (currentValue && !select.value) {
 				showMessage(`Provided ${category} "${currentValue}" is not in the taxonomy.`);
-				select.add(new Option(currentValue, currentValue, false, true));
+				select.remove(0);
+				select.add(new Option(currentValue, currentValue, false, true), 0);
 			}
 		}
 
