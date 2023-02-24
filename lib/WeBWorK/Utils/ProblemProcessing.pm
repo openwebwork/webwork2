@@ -335,7 +335,7 @@ sub create_ans_str_from_responses ($problem, $pg) {
 		"\t",
 		map {
 			ref($answers_to_store{$_}) eq 'ARRAY'
-				? join(" ", @{ $answers_to_store{$_} })
+				? join('&#9070;', @{ $answers_to_store{$_} })
 				: ($answers_to_store{$_} // '')
 		} @past_answers_order
 	);
