@@ -61,8 +61,10 @@
 						<td class="text-center"><%= $user->section %></td>
 						% if (defined $userSet) {
 							<td>
-								<%= $c->formatDateTime($userSet->due_date, '',
-									'datetime_format_short', $ce->{language}) =%>
+								% if ($userSet->due_date) {
+									<%= $c->formatDateTime($userSet->due_date, '',
+										'datetime_format_short', $ce->{language}) =%>
+								% }
 							</td>
 							<td>
 								<%= link_to maketext('Edit data for [_1]', $userID) => $c->systemLink(
