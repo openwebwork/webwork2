@@ -40,6 +40,7 @@
 				const sortInput = document.createElement('input');
 				sortInput.name = 'labelSortMethod';
 				sortInput.value = header.dataset.sortField;
+				sortInput.type = 'hidden';
 				userListForm.append(sortInput);
 
 				userListForm.submit();

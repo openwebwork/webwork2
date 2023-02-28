@@ -4,8 +4,10 @@
 	% unless ($c->{editMode} || $c->{passwordMode}) {
 		% # Select checkboxes
 		<td>
-			<%= check_box selected_users => $user->user_id, id => $user->user_id . '_checkbox',
-				class => 'form-check-input', $userSelected ? (checked => undef) : () =%>
+			% if ($editable) {
+				<%= check_box selected_users => $user->user_id, id => $user->user_id . '_checkbox',
+					class => 'form-check-input', $userSelected ? (checked => undef) : () =%>
+			% }
 		</td>
 		% # User id
 		<td>
@@ -21,12 +23,14 @@
 						) =%>
 					% }
 				<% end =%>
-				<%= link_to $c->systemLink(url_for, params => { editMode => 1, visible_users => $user->user_id }),
-					begin =%>
-					<i class="icon fas fa-pencil-alt" aria-hidden="true"
-						data-alt="<%= maketext('Link to Edit Page for [_1]', $user->user_id) %>">
-					</i>
-				% end
+				% if ($editable) {
+					<%= link_to $c->systemLink(url_for, params => { editMode => 1, visible_users => $user->user_id }),
+						begin =%>
+						<i class="icon fas fa-pencil-alt" aria-hidden="true"
+							data-alt="<%= maketext('Link to Edit Page for [_1]', $user->user_id) %>">
+						</i>
+					% end
+				% }
 			</div>
 		</td>
 		% # Login Status
@@ -49,9 +53,14 @@
 		% # New password field
 		<td>
 			% if ($user->user_id eq param('user')) {
-				% # Don't allow a professor to change their own password from this form.
+				% # Don't allow a user to change their own password from this form.
 				<div class="alert alert-danger px-1 py-0 m-0">
 					<%= maketext('You may not change your own password here!') =%>
+				</div>
+			% } elsif (!$editable) {
+				% # Prevent modification of users with elevated permissions.
+				<div class="alert alert-danger px-1 py-0 m-0">
+					<%= maketext('You may not change this user\'s password!') =%>
 				</div>
 			% } else {
 				% my $fieldName = 'user.' . $user->user_id . '.new_password';
