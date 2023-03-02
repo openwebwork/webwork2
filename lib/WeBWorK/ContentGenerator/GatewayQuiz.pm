@@ -25,7 +25,6 @@ deal with versioning sets
 
 use Mojo::Promise;
 
-use WeBWorK::Form;
 use WeBWorK::PG::ImageGenerator;
 # Use the ContentGenerator formatDateTime, not the version in Utils.
 use WeBWorK::Utils qw(writeLog writeCourseLogGivenTime encodeAnswers decodeAnswers
@@ -710,7 +709,7 @@ async sub pre_header_initialize ($c) {
 	$c->{submitAnswers}  = $c->param('submitAnswers') || 0;
 	$c->{checkAnswers}   = $c->param('checkAnswers')   // 0;
 	$c->{previewAnswers} = $c->param('previewAnswers') // 0;
-	$c->{formFields}     = { WeBWorK::Form->new_from_paramable($c)->Vars };
+	$c->{formFields}     = $c->req->params->to_hash;
 
 	# Permissions
 

@@ -27,7 +27,6 @@ use Mojo::File;
 
 use WeBWorK::Utils qw(sortByName jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(renderPG);
-use WeBWorK::Form;
 
 use constant PAST_ANSWERS_FILENAME => 'past_answers';
 
@@ -124,7 +123,7 @@ async sub initialize ($c) {
 					my $unversionedSetName = $setName;
 					$unversionedSetName =~ s/,v[0-9]*$//;
 					my $displayMode = $c->{displayMode};
-					my $formFields  = { WeBWorK::Form->new_from_paramable($c)->Vars };
+					my $formFields  = $c->req->params->to_hash;
 					my $set         = $db->getMergedSet($studentUser, $unversionedSetName);
 					my $problem     = $db->getMergedProblem($studentUser, $unversionedSetName, $problemNumber);
 					my $userobj     = $db->getUser($studentUser);

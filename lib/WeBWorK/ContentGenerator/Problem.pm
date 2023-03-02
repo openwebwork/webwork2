@@ -24,7 +24,6 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 use WeBWorK::HTML::SingleProblemGrader;
 use WeBWorK::Debug;
-use WeBWorK::Form;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::Utils qw(decodeAnswers is_restricted path_is_subdir before after between
 	wwRound is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status
@@ -440,7 +439,7 @@ async sub pre_header_initialize ($c) {
 	my $previewAnswers = $c->param('previewAnswers');
 	my $requestNewSeed = $c->param('requestNewSeed') // 0;
 
-	my $formFields = { WeBWorK::Form->new_from_paramable($c)->Vars };
+	my $formFields = $c->req->params->to_hash;
 
 	# Check for a page refresh which causes a cached form resubmission.  In that case this is
 	# not a valid submission of answers.

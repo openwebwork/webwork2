@@ -43,7 +43,7 @@
 									% if ($answer eq '') {
 										<small><i><%= maketext('empty') %></i></small>
 									% } else {
-										<%= $answer =%>
+										<%== $answer =%>
 									% }
 								</td>
 							% }
