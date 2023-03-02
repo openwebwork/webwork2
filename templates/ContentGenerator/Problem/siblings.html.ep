@@ -1,4 +1,4 @@
-<div class="info-box" id="fisheye">
+<div class="info-box bg-light">
 	<h2><%= maketext('Problems') %></h2>
 	% if ($num_of_problems > 0 && $ce->{pg}{options}{enableProgressBar}) {
 		% my $unattempted                    = $num_of_problems - $total_correct - $total_incorrect - $total_inprogress;

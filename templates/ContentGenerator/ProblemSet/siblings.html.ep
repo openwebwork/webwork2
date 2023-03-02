@@ -1,6 +1,6 @@
 % use WeBWorK::Utils qw(format_set_name_display);
 %
-<div class="info-box" id="fisheye">
+<div class="info-box bg-light">
 	<h2><%= maketext('Sets') %></h2>
 	<ul class="nav flex-column bg-light" dir="ltr">
 		% for my $setID (@$setIDs) {

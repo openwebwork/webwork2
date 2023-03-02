@@ -89,11 +89,6 @@ $breadcrumb-active-color: #495057;
 }
 
 // Overrides
-.container-fluid {
-	padding-top: calc(var(--#{$variable-prefix}gutter-x, #{$container-padding-x}) * 0.5);
-	padding-bottom: calc(var(--#{$variable-prefix}gutter-x, #{$container-padding-x}) * 0.5);
-}
-
 a:not(.btn):focus {
 	color: $link-hover-color;
 	outline-style: solid;

@@ -7,7 +7,7 @@
 	% last;
 % }
 %
-<div class="info-box" id="fisheye">
+<div class="info-box bg-light">
 	<h2><%= $header %></h2>
 	% if (current_route =~ /^instructor_user_/) {
 		<ul class="nav flex-column problem-list">

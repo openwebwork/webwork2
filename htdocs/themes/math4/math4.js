@@ -18,13 +18,12 @@
 	if (navigation_element) {
 		const threshold = 768
 		let currentWidth = window.innerWidth;
-		const toggle_icon = document.querySelector('#toggle-sidebar-icon i');
 		const content = document.getElementById('content');
 
 		const toggleSidebar = () => {
 			navigation_element.classList.toggle('toggle-width');
+			navigation_element.classList.remove('invisible');
 			content.classList.toggle('toggle-width');
-			toggle_icon?.classList.toggle('toggle-icon');
 
 			if (currentWidth < threshold) {
 				const overlay = document.createElement('div');
@@ -34,7 +33,6 @@
 					overlay.remove();
 					navigation_element.classList.toggle('toggle-width');
 					content.classList.toggle('toggle-width');
-					toggle_icon?.classList.toggle('toggle-icon');
 					document.body.classList.remove('no-scroll');
 				});
 				document.body.classList.add('no-scroll');
@@ -43,8 +41,21 @@
 
 		document.getElementById('toggle-sidebar')?.addEventListener('click', toggleSidebar);
 
+		if (currentWidth < threshold) navigation_element.classList.add('invisible');
+
+		navigation_element.addEventListener('transitionend', () => {
+			if (
+				(window.innerWidth >= threshold && navigation_element.classList.contains('toggle-width')) ||
+				(window.innerWidth < threshold && !navigation_element.classList.contains('toggle-width'))
+			)
+				navigation_element.classList.add('invisible');
+		});
+
 		// If the window width changes open or close the sidebar appropriately.
 		window.addEventListener('resize', () => {
+			if (!navigation_element.classList.contains('toggle-width') && window.innerWidth >= threshold)
+				navigation_element.classList.remove('invisible');
+
 			if ((navigation_element.classList.contains('toggle-width') &&
 				window.innerWidth < threshold && currentWidth >= threshold) ||
 				(navigation_element.classList.contains('toggle-width') &&
