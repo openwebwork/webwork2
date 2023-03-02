@@ -35,7 +35,7 @@
 	% # This is for tagging menus (if allowed)
 	% if ($authz->hasPermissions(param('user'), 'modify_tags')) {
 		<%= javascript getAssetURL($ce, 'js/apps/TagWidget/tagwidget.js'), id => 'tag-widget-script', defer => undef,
-			data => { taxo => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
+			data => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
 	% }
 	%
 	% # This is for the problem grader
@@ -68,7 +68,6 @@
 % }
 %
 <%== $c->post_header_text =%>
-<div class="row"><div id="tag_info" class="col-12"><%= $c->output_tag_info %></div></div>
 <div id="custom_edit_message" class="row"><div class="col-lg-10"><%= $c->output_custom_edit_message %></div></div>
 <div class="row"><div id="output_summary" class="col-lg-10"><%= $c->output_summary %></div></div>
 <div class="row">

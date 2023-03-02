@@ -6,7 +6,7 @@
 	%
 	% if ($authz->hasPermissions(scalar(param('user')), 'modify_tags')) {
 		<%= javascript "$ce->{webworkURLs}{htdocs}/js/apps/TagWidget/tagwidget.js", id => 'tag-widget-script',
-			defer => undef, data => { taxo => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
+			defer => undef, data => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
 	% }
 % end
 %
