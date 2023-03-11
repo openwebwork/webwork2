@@ -31,12 +31,13 @@ use WeBWorK::Utils 'wwRound';
 sub new ($class, $c, $pg, $userProblem) {
 	$class = ref($class) || $class;
 
-	my $db        = $c->db;
-	my $courseID  = $c->stash('courseID');
-	my $setID     = $userProblem->set_id;
-	my $versionID = ref($userProblem) =~ /::ProblemVersion/ ? $userProblem->version_id : 0;
-	my $studentID = $userProblem->user_id;
-	my $problemID = $userProblem->problem_id;
+	my $db           = $c->db;
+	my $courseID     = $c->stash('courseID');
+	my $setID        = $userProblem->set_id;
+	my $versionID    = ref($userProblem) =~ /::ProblemVersion/ ? $userProblem->version_id : 0;
+	my $studentID    = $userProblem->user_id;
+	my $problemID    = $userProblem->problem_id;
+	my $problemValue = $userProblem->value;
 
 	# Get the currently saved score.
 	my $recordedScore = $userProblem->status;
@@ -52,6 +53,7 @@ sub new ($class, $c, $pg, $userProblem) {
 		course_id      => $courseID,
 		student_id     => $studentID,
 		problem_id     => $problemID,
+		problem_value  => $problemValue,
 		set_id         => $setID,
 		version_id     => $versionID,
 		recorded_score => $recordedScore,
