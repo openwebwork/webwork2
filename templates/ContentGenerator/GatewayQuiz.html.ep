@@ -174,8 +174,14 @@
 	% )
 	% {
 		<div class="gwMessage">
-			<%= maketext('The recorded score for this version is  [_1]/[_2].',
-				wwRound(2, $c->{recordedScore}), $c->{totalPossible}) =%>
+			<%== maketext(
+				'Your recorded score for this version is [_1]/[_2] ([_3]%).',
+				'<span id="test-recorded-score">' . wwRound(2, $c->{recordedScore}) . '</span>',
+				'<span id="test-total-possible">' . $c->{totalPossible} . '</span>',
+				'<span id="test-recorded-percent">'
+					. wwRound(0, 100 * $c->{recordedScore} / $c->{totalPossible})
+					. '</span>'
+			) =%>
 		</div>
 	% }
 % } elsif ($c->{will}{checkAnswers}) {
@@ -186,8 +192,14 @@
 					$c->{attemptScore}, $c->{totalPossible}) =%>
 			</strong>
 			<br>
-			<%= maketext('The recorded score for this version is [_1]/[_2].',
-				wwRound(2, $c->{recordedScore}), $c->{totalPossible}) =%>
+			<%== maketext(
+				'Your recorded score for this version is [_1]/[_2] ([_3]%).',
+				'<span id="test-recorded-score">' . wwRound(2, $c->{recordedScore}) . '</span>',
+				'<span id="test-total-possible">' . $c->{totalPossible} . '</span>',
+				'<span id="test-recorded-percent">'
+					. wwRound(0, 100 * $c->{recordedScore} / $c->{totalPossible})
+					. '</span>'
+			) =%>
 		</div>
 	% }
 % }
@@ -299,8 +311,15 @@
 	% if (!$c->{checkAnswers} && !$c->{submitAnswers} && $c->{can}{showScore}) {
 		<div class="gwMessage">
 			<strong>
-				<%= maketext('Your recorded score on this test (version [_1]) is [_2]/[_3].',
-					$setVersionID, wwRound(2, $c->{recordedScore}), $c->{totalPossible})
+				<%== maketext(
+						'Your recorded score on this test (version [_1]) is [_2]/[_3] ([_4]%).',
+						$setVersionID,
+						'<span id="test-recorded-score">' . wwRound(2, $c->{recordedScore}) . '</span>',
+						'<span id="test-total-possible">' . $c->{totalPossible} . '</span>',
+						'<span id="test-recorded-percent">'
+							. wwRound(0, 100 * $c->{recordedScore} / $c->{totalPossible})
+							. '</span>'
+					)
 					. (
 						$c->{exceededAllowedTime} && $c->{recordedScore} == 0
 						? ' ' . maketext('You exceeded the allowed time.')
@@ -392,7 +411,8 @@
 				</td>
 			% end
 			% content_for 'gw-navigation-score-row' => begin
-				<td class="score" data-problem-id="<%= $problems->[ $probOrder->[$i] ]->problem_id %>">
+				<td class="score" data-problem-id="<%= $problems->[ $probOrder->[$i] ]->problem_id %>"
+					data-problem-value="<%= $problems->[ $probOrder->[$i] ]->value %>">
 					% if ($c->{probStatus}[ $probOrder->[$i] ] == 1) {
 						&#128175;
 					% } else {

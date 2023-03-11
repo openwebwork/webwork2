@@ -137,12 +137,22 @@
 					} else {
 						// Update the hidden problem status fields and score table for gateway quizzes
 						if (saveData.versionId !== '0') {
-							for (const scoreCell of document.querySelectorAll(
-								`table.gwNavigation td.score[data-problem-id="${saveData.problemId}"]`)) {
-								scoreCell.textContent = scoreInput.value == '100' ? '\u{1F4AF}' : scoreInput.value;
-							}
 							document.gwquiz.elements['probstatus' + saveData.problemId].value =
 								parseInt(scoreInput.value) / 100;
+							let testValue = 0;
+							for (const scoreCell of document.querySelectorAll('table.gwNavigation td.score')) {
+								if (scoreCell.dataset.problemId == saveData.problemId) {
+									scoreCell.textContent = scoreInput.value == '100' ? '\u{1F4AF}' : scoreInput.value;
+								}
+								testValue += document.gwquiz.elements['probstatus' + scoreCell.dataset.problemId].value *
+									scoreCell.dataset.problemValue;
+							}
+							const recordedScore = document.getElementById('test-recorded-score');
+							if (recordedScore) {
+								recordedScore.textContent = Math.round(100 * testValue / 2) / 100;
+								document.getElementById('test-recorded-percent').textContent =
+									Math.round(100 * testValue / (2 * document.getElementById('test-total-possible').textContent));
+							}
 						}
 
 						if (saveData.pastAnswerId !== '0') {
