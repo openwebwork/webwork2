@@ -272,6 +272,8 @@ sub formatRenderedProblem {
 		uriEncodedProblemSource  => $ws->{inputs_ref}{uriEncodedProblemSource} // '',
 		fileName                 => $ws->{inputs_ref}{fileName}                // '',
 		formLanguage             => $formLanguage,
+		isInstructor             => $ws->{inputs_ref}{isInstructor}       // '',
+		forceScaffoldsOpen       => $ws->{inputs_ref}{forceScaffoldsOpen} // '',
 		showSummary              => $showSummary,
 		showHints                => $ws->{inputs_ref}{showHints}     // '',
 		showSolutions            => $ws->{inputs_ref}{showSolutions} // '',
