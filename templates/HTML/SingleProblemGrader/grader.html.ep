@@ -61,8 +61,8 @@
 			% }
 		% }
 
-		% # Total point value. Hide unless point value > 1.
-		% if ($grader->{problem_value} > 1) {
+		% # Total point value. Show only if configured to.
+		% unless ($ce->{problemGraderScore} eq 'Percent') {
 			<div class="row align-items-center mb-2">
 				<%= label_for "score_problem$grader->{problem_id}_points",
 					class => 'col-fixed col-form-label',
@@ -72,10 +72,19 @@
 						class => 'help-popup',
 						data => {
 							bs_content => maketext(
-								'The initial value is the total number points for the answer(s) that are '
-								. 'currently shown.  If this is modified, it will be used to compute the '
-								. 'total problem score below.  This score is not saved, and will be reset '
-								. 'to the score for the shown answer(s) if the page is reloaded.'
+								'The initial value is the currently saved score as a point value computed '
+								. 'using the percent score.  This point value is used to compute the percent '
+								. 'score (rounded to a whole percent) that can be saved.'
+							)
+							. (
+								@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1
+								? ' '
+								. maketext(
+									'This can computed from the answer sub scores above using the weights shown '
+									. 'if they are modified.  Alternatively, enter the point score you want '
+									. 'saved here (the above sub scores will be ignored).'
+								)
+								: ''
 							),
 							bs_placement => 'top',
 							bs_toggle    => 'popover'
@@ -99,8 +108,12 @@
 			</div>
 		% }
 
-		% # Total problem score
-		<div class="row align-items-center mb-2">
+		% # Total problem score. Hide if configured to only show point values.
+		% if ($ce->{problemGraderScore} eq 'Point') {
+			<div class="row align-items-center mb-2 d-none">
+		% } else {
+			<div class="row align-items-center mb-2">
+		% }
 			<%= label_for "score_problem$grader->{problem_id}",
 				class => 'col-fixed col-form-label',
 				begin =%>
