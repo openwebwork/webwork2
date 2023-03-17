@@ -155,6 +155,9 @@ sub displayStudentStats ($c, $studentID) {
 	my %setVersionsCount;
 	my @allSetIDs;
 	for my $set (@sets) {
+		# Don't show hidden sets unless user has appropriate permissions.
+		next unless ($set->visible || $authz->hasPermissions($c->param('user'), 'view_hidden_sets'));
+
 		my $setID = $set->set_id();
 
 		# FIXME: Here, as in many other locations, we assume that there is a one-to-one matching between versioned sets
@@ -202,7 +205,8 @@ sub displayStudentStats ($c, $studentID) {
 			# For other sets we just count the number of problems.
 			$num_of_problems = $db->countGlobalProblems($setID);
 		}
-		$max_problems = $max_problems < $num_of_problems ? $num_of_problems : $max_problems;
+		$max_problems =
+			$set && after($set->open_date) && $max_problems < $num_of_problems ? $num_of_problems : $max_problems;
 	}
 
 	# Variables to help compute gateway scores.
@@ -215,6 +219,27 @@ sub displayStudentStats ($c, $studentID) {
 			$c->systemLink($c->url_for('problem_list', setID => $setID), params => { effectiveUser => $effectiveUser });
 		my $set = $setsByID{$setID};
 
+		# Determine if set is a test and create the test url.
+		my $setIsVersioned          = 0;
+		my $act_as_student_test_url = '';
+		if (defined $set->assignment_type && $set->assignment_type =~ /gateway/) {
+			$setIsVersioned = 1;
+			if ($set->assignment_type eq 'proctored_gateway') {
+				$act_as_student_test_url = $act_as_student_set_url =~ s/($courseName)\//$1\/proctored_test_mode\//r;
+			} else {
+				$act_as_student_test_url = $act_as_student_set_url =~ s/($courseName)\//$1\/test_mode\//r;
+			}
+			# Remove version from set url
+			$act_as_student_set_url =~ s/,v\d+//;
+		}
+
+		# Format set name based on set visibility.
+		my $setName = $c->tag(
+			'span',
+			class => $set->visible ? 'font-visible' : 'font-hidden',
+			format_set_name_display($setID =~ s/,v\d+$//r)
+		);
+
 		# If the set is a template gateway set and there are no versions, we acknowledge that the set exists and the
 		# student hasn't attempted it. Otherwise, we skip it and let the versions speak for themselves.
 		if (defined $setVersionsCount{$setID}) {
@@ -223,11 +248,24 @@ sub displayStudentStats ($c, $studentID) {
 				$c->tag(
 					'tr',
 					$c->c(
-						$c->tag('td', dir => 'ltr', format_set_name_display($setID)),
+						$c->tag(
+							'th',
+							dir => 'ltr',
+							(after($set->open_date) || $authz->hasPermissions($c->param('user'), 'view_unopened_sets'))
+							? $c->link_to($setName => $act_as_student_set_url)
+							: $setName
+						),
 						$c->tag(
 							'td',
 							colspan => $max_problems + 3,
-							$c->tag('em', $c->maketext('No versions of this assignment have been taken.'))
+							$c->tag(
+								'em',
+								after($set->open_date) ? $c->maketext('No versions of this test have been taken.')
+								: $c->maketext(
+									'Will open on [_1].',
+									$c->formatDateTime($set->open_date, undef, $ce->{studentDateDsiplayFormat})
+								)
+							)
 						)
 				)->join('')
 				);
@@ -245,36 +283,37 @@ sub displayStudentStats ($c, $studentID) {
 			)
 			)
 		{
+			# Add a link to the test version if the problems can be seen.
+			my $thisSetName =
+				$c->link_to($setName => $act_as_student_set_url) . ' ('
+				. (
+					(
+						$set->hide_work eq 'N'
+						|| ($set->hide_work eq 'BeforeAnswerDate' && time >= $set->answer_date)
+						|| $authz->hasPermissions($c->param('user'), 'view_unopened_sets')
+					)
+					? $c->link_to($c->maketext('version [_1]', $set->version_id) => $act_as_student_test_url)
+					: $c->maketext('version [_1]', $set->version_id)
+				) . ')';
 			push(
 				@$rows,
 				$c->tag(
 					'tr',
 					$c->c(
 						$c->tag(
-							'td',
+							'th',
 							dir => 'ltr',
-							format_set_name_display($setID) . ' (version ' . $set->version_id . ')'
+							sub {$thisSetName}
 						),
 						$c->tag(
 							'td',
 							colspan => $max_problems + 3,
-							$c->tag('em', $c->maketext('Display of scores for this set is not allowed.'))
+							$c->tag('em', $c->maketext('Display of scores for this test is not allowed.'))
 						)
 					)->join('')
 				)
 			);
 			next;
-		}
-
-		# If its a gateway, adjust the act-as url.
-		my $setIsVersioned = 0;
-		if (defined $set->assignment_type && $set->assignment_type =~ /gateway/) {
-			$setIsVersioned = 1;
-			if ($set->assignment_type eq 'proctored_gateway') {
-				$act_as_student_set_url =~ s/($courseName)\//$1\/proctored_test_mode\//;
-			} else {
-				$act_as_student_set_url =~ s/($courseName)\//$1\/test_mode\//;
-			}
 		}
 
 		my ($totalRight, $total, $problem_scores, $problem_incorrect_attempts) =
@@ -326,8 +365,7 @@ sub displayStudentStats ($c, $studentID) {
 		# If its a gateway set, then in order to mimic the scoring done in Scoring Tools we need to use the best score a
 		# student had.  Otherwise we just add the set to the running course total.
 		if ($setIsVersioned) {
-			# Prettify versioned set display
-			$setID =~ s/(.+),v(\d+)$/${1} (version $2)/;
+			$setID =~ /(.+),v(\d+)$/;
 			my $gatewayName    = $1;
 			my $currentVersion = $2;
 
@@ -355,21 +393,61 @@ sub displayStudentStats ($c, $studentID) {
 			}
 		}
 
-		push @$rows, $c->tag(
-			'tr',
-			$c->c(
+		# Only show scores for open sets, and don't link to non open sets.
+		if (after($set->open_date) || $authz->hasPermissions($c->param('user'), 'view_unopened_sets')) {
+			# Set the set name and link. If a test, don't link to the version unless the problems can be seen.
+			my $thisSetName = $setIsVersioned
+				? $c->link_to($setName => $act_as_student_set_url) . ' ('
+				. (
+					(
+						$set->hide_work eq 'N'
+						|| ($set->hide_work eq 'BeforeAnswerDate' && time >= $set->answer_date)
+						|| $authz->hasPermissions($c->param('user'), 'view_unopened_sets')
+					)
+					? $c->link_to($c->maketext('version [_1]', $set->version_id) => $act_as_student_test_url)
+					: $c->maketext('version [_1]', $set->version_id)
+				)
+				. ')'
+				: $c->link_to($setName => $act_as_student_set_url);
+			push @$rows, $c->tag(
+				'tr',
+				$c->c(
+					$c->tag(
+						'th',
+						scope => 'row',
+						dir   => 'ltr',
+						sub {$thisSetName}
+					),
+					$c->tag('td', $c->tag('span', class => $class, $totalRightPercent . '%')),
+					$c->tag('td', sprintf('%0.2f', $totalRight)),                                # score
+					$c->tag('td', $total),                                                       # out of
+					@html_prob_scores                                                            # problems
+				)->join('')
+			);
+		} else {
+			push @$rows,
 				$c->tag(
-					'th',
-					scope => 'row',
-					dir   => 'ltr',
-					$c->link_to(format_set_name_display($setID) => $act_as_student_set_url)
-				),
-				$c->tag('td', $c->tag('span', class => $class, $totalRightPercent . '%')),
-				$c->tag('td', sprintf('%0.2f', $totalRight)),                                # score
-				$c->tag('td', $total),                                                       # out of
-				@html_prob_scores                                                            # problems
-			)->join('')
-		);
+					'tr',
+					$c->c(
+						$c->tag(
+							'th',
+							dir => 'ltr',
+							$setName
+						),
+						$c->tag(
+							'td',
+							colspan => $max_problems + 3,
+							$c->tag(
+								'em',
+								$c->maketext(
+									'Will open on [_1].',
+									$c->formatDateTime($set->open_date, undef, $ce->{studentDateDsiplayFormat})
+								)
+							)
+						)
+				)->join('')
+				);
+		}
 	}
 
 	return $c->include(
