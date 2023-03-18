@@ -156,10 +156,7 @@ sub displaySets ($c) {
 						my @ProblemNums = $db->listUserProblems($studentRecord->user_id, $setName);
 						my $Problem =
 							$db->getMergedProblemVersion($studentRecord->user_id, $setName, $vNum, $ProblemNums[0]);
-						my $verSubmits =
-							(defined $Problem && $Problem->num_correct ne '')
-							? $Problem->num_correct + $Problem->num_incorrect
-							: 0;
+						my $verSubmits = defined $Problem ? $Problem->num_correct + $Problem->num_incorrect : 0;
 						$timeLeft = sprintf('%3.1f min', ($set->version_time_limit - time + $set->open_date) / 60)
 							if ($set->attempts_per_version == 0 || $verSubmits < $set->attempts_per_version);
 					}
