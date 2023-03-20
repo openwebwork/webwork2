@@ -11,4 +11,23 @@
 		<%= label_for newWindowSave => maketext('Open in new window'), class => 'form-check-label' =%>
 	</div>
 	<%= hidden_field 'action.save.source_file' => $c->{editFilePath} =%>
+
+	% # Backup options
+	% my $backupMax = $c->ce->{options}{editorNumberOfBackups};
+	% if ($backupMax > 0) {
+		<div class="form-check mb-2">
+			<%= check_box backupFile => 1, id => 'backupFile', class => 'form-check-input', checked => undef =%>
+			<%= label_for backupFile => maketext('Create backup'), class => 'form-check-label' =%>
+		</div>
+
+		% # Show option to delete oldest backup if it exists. Check option if at backup capacity.
+		% my @backupTimes = $c->getBackupTimes;
+		% if (@backupTimes) {
+			<div class="form-check mb-2">
+				<%= check_box deleteBackup => 1, id => 'deleteBackup', class => 'form-check-input',
+					scalar(@backupTimes) < $backupMax ? () : (checked => undef) =%>
+				<%= label_for deleteBackup => maketext('Delete oldest backup'), class => 'form-check-label' =%>
+			</div>
+		% }
+	% }
 </div>
