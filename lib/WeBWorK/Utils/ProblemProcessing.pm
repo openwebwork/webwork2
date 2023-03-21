@@ -475,19 +475,11 @@ sub process_external_data {
 	my $json_data = decode_json($user_set->{external_data} || '{}');
 
 	for (@ext_data) {
-		my ($t, $ans_name, $type, $key) = split(/:/, $_);
+		my ($t, $ans_name, $key) = split(/:/, $_);
 
 		next if $pg->{PG_ANSWERS_HASH}{$ans_name}{rh_ans}{score} == 0;
 
-		# Process the data according to the declared type.
-		if ($type eq 'numeric_list') {
-			$json_data->{$key} =
-				[ map { $_ + 0 } split(/,/, $pg->{PG_ANSWERS_HASH}{$ans_name}{rh_ans}{student_value}) ];
-		} elsif ($type eq 'string') {
-			$json_data->{$key} = '' . $pg->{PG_ANSWERS_HASH}{$ans_name}{rh_ans}{student_value};
-		} elsif ($type eq 'real') {
-			$json_data->{$key} = 0 + $pg->{PG_ANSWERS_HASH}{$ans_name}{rh_ans}{student_value};
-		}
+		$json_data->{$key} = $pg->{PG_ANSWERS_HASH}{$ans_name}{rh_ans}{student_value};
 	}
 
 	$user_set->external_data(encode_json($json_data));
