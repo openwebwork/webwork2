@@ -30,8 +30,10 @@
 		% if ($contrib_exists) {
 			<div class="form-check form-check-inline ms-2">
 				<label class="form-check-label col-form-label-sm">
-					<%= check_box includeOPL => 'on', checked => undef, class => 'form-check-input me-1' =%>
+					% param('includeOPL', 'on') unless defined param('includeOPL');
+					<%= check_box includeOPL => 'on', class => 'form-check-input me-1' =%>
 					<%= maketext('Include OPL') =%>
+					<%= hidden_field includeOPL => 0 =%>
 				</label>
 			</div>
 			<div class="form-check form-check-inline ms-2">
