@@ -40,7 +40,8 @@
 						<% end =%>
 					<% end =%>
 					<div class="col-sm">
-						<%= number_field 'answer-part-score' => $scores[$part],
+						% param('answer-part-score', $scores[$part]);
+						<%= number_field 'answer-part-score' => '',
 							class => 'answer-part-score form-control form-control-sm d-inline',
 							id    =>
 								"score_problem$grader->{problem_id}_$grader->{pg}{flags}{ANSWER_ENTRY_ORDER}[$part]",
@@ -91,7 +92,8 @@
 				<% end =%>
 			<% end =%>
 			<div class="col-sm">
-				<%= number_field 'grader-problem-score' => wwRound(0, $grader->{recorded_score} * 100),
+				% param('grader-problem-score', wwRound(0, $grader->{recorded_score} * 100));
+				<%= number_field 'grader-problem-score' => '',
 					min          => 0,
 					max          => 100,
 					autocomplete => "off",
@@ -107,7 +109,8 @@
 				<%= label_for "comment_problem$grader->{problem_id}" => maketext('Comment:'),
 					class => 'col-fixed col-form-label' =%>
 				<div class="col-sm">
-					<%= text_area 'grader-instructor-comment' => $grader->{comment_string},
+					% param('grader-instructor-comment', $grader->{comment_string});
+					<%= text_area 'grader-instructor-comment' => '',
 						id    => "comment_problem$grader->{problem_id}",
 						class => 'grader-problem-comment form-control d-inline',
 						data  => { problem_id => $grader->{problem_id} },
