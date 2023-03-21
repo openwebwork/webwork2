@@ -527,12 +527,13 @@ use constant FIELD_PROPERTIES_GWQUIZ => {
 # Create a table of fields for the given parameters, one row for each db field.
 # If only the setID is included, it creates a table of set information.
 # If the problemID is included, it creates a table of problem information.
-sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $setType = undef) {
+sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = undef, $setType = undef) {
 	my $ce          = $c->ce;
 	my @editForUser = $c->param('editForUser');
 	my $forUsers    = scalar(@editForUser);
 	my $forOneUser  = $forUsers == 1;
-	my $isGWset     = defined $setType && $setType =~ /gateway/ ? 1 : 0;
+	my $isGWset     = defined $setType && $setType =~ /gateway/;
+	my $isJitarSet  = defined $setType && $setType =~ /jitar/;
 
 	# Needed for gateway/jitar output
 	my $extraFields = '';
@@ -549,9 +550,9 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $se
 
 	my @fieldOrder;
 	if (defined $problemID) {
-		if ($setType eq 'jitar') {
+		if ($isJitarSet) {
 			@fieldOrder = @{ JITAR_PROBLEM_FIELD_ORDER() };
-		} elsif ($setType =~ /gateway/) {
+		} elsif ($isGWset) {
 			@fieldOrder = @{ GATEWAY_PROBLEM_FIELD_ORDER() };
 		} else {
 			@fieldOrder = @{ PROBLEM_FIELD_ORDER() };
