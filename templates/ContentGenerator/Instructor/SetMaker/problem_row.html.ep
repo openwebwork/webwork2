@@ -162,7 +162,7 @@
 			<div class="lb-problem-add d-flex align-items-center mb-1">
 				<button class="add_me btn btn-primary btn-sm" type="button"
 					data-bs-title="<%= maketext('Add problem to target set') %>"
-					data-source-file-path="<%= $sourceFileName %>" data-bs-toggle="tooltip" data-bs-placement="top">
+					data-source-file="<%= $sourceFileName %>" data-bs-toggle="tooltip" data-bs-placement="top">
 					<%= maketext('Add') %>
 				</button>
 				% if ($authz->hasPermissions(param('user'), 'modify_tags')) {
