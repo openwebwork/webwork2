@@ -87,7 +87,7 @@
 	);
 
 	// Set up popovers in the attemptResults table.
-	document.querySelectorAll('table.attemptResults td span.answer-preview').forEach((popover) => {
+	document.querySelectorAll('table.attemptResults td div.answer-preview').forEach((popover) => {
 		if (popover.dataset.bsContent) new bootstrap.Popover(popover, {trigger: 'click', html: true, sanitize: false});
 	});
 
