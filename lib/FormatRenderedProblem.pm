@@ -231,7 +231,7 @@ sub formatRenderedProblem {
 		$output->{pg_version} = $ce->{PG_VERSION};
 
 		# Convert to JSON and render.
-		$ws->c->render(data => JSON->new->utf8(0)->encode($output));
+		$ws->c->render(data => JSON->new->utf8(1)->encode($output));
 	}
 
 	# Setup arnd render the appropriate template in the templates/RPCRenderFormats folder depending on the outputformat.
@@ -285,7 +285,7 @@ sub formatRenderedProblem {
 
 	return $ws->c->render(%template_params) if $formatName eq 'json' || !$ws->{inputs_ref}{send_pg_flags};
 	return $ws->c->render(
-		json => { html => $ws->c->render_to_string(%template_params), pg_flags => $rh_result->{flags} });
+		json => { html => $ws->c->render_to_string(%template_params)->to_string, pg_flags => $rh_result->{flags} });
 }
 
 sub saveGradeToLTI {
