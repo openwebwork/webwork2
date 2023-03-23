@@ -1,6 +1,10 @@
 'use strict';
 
 (() => {
+	const roundPointValue = (pointValue, score) => {
+		pointValue.value = (Math.round((score * pointValue.max / 100) / pointValue.step) * pointValue.step).toFixed(2);
+	};
+
 	// Comment preview popovers.
 	document.querySelectorAll('.preview').forEach((el) => {
 		el.addEventListener('click', () => {
@@ -40,7 +44,7 @@
 				document.getElementById(`score_problem${problemId}`).value = Math.round(score);
 
 				const pointValue = document.getElementById(`score_problem${problemId}_points`);
-				if (pointValue) pointValue.value = Math.round(score * pointValue.max / 10) / 10;
+				if (pointValue) roundPointValue(pointValue, score);
 			}
 			document.getElementById(`grader_messages_problem${problemId}`).innerHTML = '';
 		});
@@ -75,7 +79,7 @@
 					const pointValue = document.getElementById(`score_problem${problemId}_points`);
 					if (pointValue) {
 						pointValue.classList.remove('is-invalid');
-						pointValue.value = Math.round(el.value * pointValue.max / 10) / 10;
+						roundPointValue(pointValue, el.value);
 					}
 				}
 			}

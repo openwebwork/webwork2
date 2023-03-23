@@ -63,6 +63,23 @@
 
 		% # Total point value. Show only if configured to.
 		% unless ($ce->{problemGraderScore} eq 'Percent') {
+			% # Compute a reasonable step size based on point value.
+			% # First use some preset nice values, then only use whole
+			% # point values, such that the step size >= 1% of total.
+			% my $stepSize;
+			% if ($grader->{problem_value} == 1) {
+				% $stepSize = 0.01;
+			% } elsif ($grader->{problem_value} <= 5) {
+				% $stepSize = 0.05;
+			% } elsif ($grader->{problem_value} <= 10) {
+				% $stepSize = 0.1;
+			% } elsif ($grader->{problem_value} <= 25) {
+				% $stepSize = 0.25;
+			% } elsif ($grader->{problem_value} <= 50) {
+				% $stepSize = 0.5;
+			% } else {
+				% $stepSize = int(($grader->{problem_value} - 1) / 100) + 1;
+			% }
 			<div class="row align-items-center mb-2">
 				<%= label_for "score_problem$grader->{problem_id}_points",
 					class => 'col-fixed col-form-label',
@@ -99,7 +116,7 @@
 					<%= number_field 'grader-problem-points' => '',
 						min          => 0,
 						max          => $grader->{problem_value},
-						step         => 0.1,
+						step         => $stepSize,
 						autocomplete => 'off',
 						id           => "score_problem$grader->{problem_id}_points",
 						class        => "problem-points form-control form-control-sm d-inline",
