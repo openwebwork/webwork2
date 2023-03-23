@@ -120,8 +120,8 @@ use constant ACTION_FORM_TITLES => {
 	view        => x('View/Reload'),
 	hardcopy    => x('Generate Hardcopy'),
 	add_problem => x('Append'),
-	save        => x('Update'),
-	save_as     => x('New Version'),
+	save        => x('Save'),
+	save_as     => x('Save As'),
 	revert      => x('Revert'),
 };
 
