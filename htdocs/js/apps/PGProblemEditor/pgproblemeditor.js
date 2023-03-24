@@ -43,6 +43,10 @@
 
 		if (!request_object.outputFilePath) return;
 
+		document.getElementById('action_revert_type_revert_id').disabled = false;
+		document.getElementById('revert-to-tmp-container')?.classList.remove('d-none');
+		document.getElementById('revert-tab')?.classList.remove('disabled');
+
 		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
 			.then((response) => response.json())
 			.then((data) => showMessage(data.server_response, data.result_data))
@@ -78,6 +82,10 @@
 
 		if (actionView && actionView.classList.contains('active')) {
 			if (document.getElementById('newWindowView')?.checked) {
+				document.getElementById('action_revert_type_revert_id').disabled = false;
+				document.getElementById('revert-to-tmp-container')?.classList.remove('d-none');
+				document.getElementById('revert-tab')?.classList.remove('disabled');
+
 				if (editorForm) editorForm.target = 'WW_View';
 			} else {
 				e.preventDefault();
@@ -92,7 +100,16 @@
 			&& actionSave.classList.contains('active')
 			&& document.getElementById('newWindowSave')?.checked
 			&& editorForm)
+		{
+			if (document.getElementById('backupFile')?.checked) {
+				document.getElementById('show-backups-comment')?.classList.remove('d-none');
+				const deleteBackupCheck = document.getElementById('deleteBackup');
+				if (deleteBackupCheck) deleteBackupCheck.disabled = false;
+			}
+			document.getElementById('revert-tab')?.classList.remove('disabled');
+
 			editorForm.target = 'WW_View';
+		}
 
 
 		const actionHardcopy = document.getElementById('hardcopy');

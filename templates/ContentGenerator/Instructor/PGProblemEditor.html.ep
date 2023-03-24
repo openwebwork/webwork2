@@ -146,13 +146,17 @@
 	% for my $actionID (@$formsToShow) {
 		% my $line_contents = include("ContentGenerator/Instructor/PGProblemEditor/${actionID}_form");
 		% my $active        = '';
+		% my $disabled =
+			% $actionID eq 'revert'
+			% && (!defined($c->{tempFilePath}) || !-e $c->{tempFilePath})
+			% && !$c->getBackupTimes ? ' disabled' : '';
 		%
-		% if ($line_contents && $line_contents ne '') {
+		% if (($line_contents && $line_contents ne '') || $actionID eq 'revert') {
 			% unless ($default_choice) { $active = ' active'; $default_choice = $actionID; }
 			% content_for 'tab-list' => begin
 				<li class="nav-item" role="presentation">
 					<%= link_to maketext($actionFormTitles->{$actionID}) => "#$actionID",
-						class           => "nav-link action-link$active",
+						class           => "nav-link action-link$active$disabled",
 						id              => "$actionID-tab",
 						data            => { action => $actionID, bs_toggle => 'tab', bs_target => "#$actionID" },
 						role            => 'tab',

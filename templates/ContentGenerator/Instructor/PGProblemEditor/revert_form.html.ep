@@ -18,15 +18,13 @@
 			<%= maketext('Select action:') %>
 		</div>
 
-		% if ($foundTempFile) {
-			<div class="form-check mb-2">
-				<%= radio_button 'action.revert.type' => 'revert', id => 'action_revert_type_revert_id',
-					checked => undef, class => 'form-check-input' =%>
-				<%= label_for 'action_revert_type_revert_id', class => 'form-check-label', begin =%>
-					<%== maketext('Revert to [_1]', tag('span', dir => 'ltr', $c->shortPath($c->{editFilePath}))) =%>
-				<% end =%>
-			</div>
-		% }
+		<div class="form-check mb-2<%= $foundTempFile ? '' : ' d-none' %>" id="revert-to-tmp-container">
+			<%= radio_button 'action.revert.type' => 'revert', id => 'action_revert_type_revert_id',
+				checked => undef, class => 'form-check-input' =%>
+			<%= label_for 'action_revert_type_revert_id', class => 'form-check-label', begin =%>
+				<%== maketext('Revert to [_1]', tag('span', dir => 'ltr', $c->shortPath($c->{editFilePath}))) =%>
+			<% end =%>
+		</div>
 
 		<div class="row align-items-center mb-2">
 			<div class="col-auto">
@@ -78,9 +76,14 @@
 			% }
 		</div>
 	</div>
-% } elsif ($foundTempFile) {
-	<div class="mb-2">
+% } else {
+	<div class="mb-2<%= $foundTempFile ? '' : ' d-none' %>" id="revert-to-tmp-container">
 		<%== maketext('Revert to [_1]', tag('span', dir => 'ltr', $c->shortPath($c->{editFilePath}))) =%>
+		<%= hidden_field 'action.revert.type' => 'revert', id => 'action_revert_type_revert_id',
+			$foundTempFile ? () : (disabled => undef) =%>
 	</div>
-	<%= hidden_field 'action.revert.type' => 'revert' =%>
+	<div class="mb-2 d-none" id="show-backups-comment">
+		<%== maketext('Reload the page to see backup files that have been made.') =%>
+	</div>
+
 % }

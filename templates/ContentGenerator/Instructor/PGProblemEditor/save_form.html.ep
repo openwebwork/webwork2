@@ -22,12 +22,10 @@
 
 		% # Show option to delete oldest backup if it exists. Check option if at backup capacity.
 		% my @backupTimes = $c->getBackupTimes;
-		% if (@backupTimes) {
-			<div class="form-check mb-2">
-				<%= check_box deleteBackup => 1, id => 'deleteBackup', class => 'form-check-input',
-					scalar(@backupTimes) < $backupMax ? () : (checked => undef) =%>
-				<%= label_for deleteBackup => maketext('Delete oldest backup'), class => 'form-check-label' =%>
-			</div>
-		% }
+		<div class="form-check mb-2">
+			<%= check_box deleteBackup => 1, id => 'deleteBackup', class => 'form-check-input',
+				@backupTimes < $backupMax ? () : (checked => undef), @backupTimes ? () : (disabled => undef) =%>
+			<%= label_for deleteBackup => maketext('Delete oldest backup'), class => 'form-check-label' =%>
+		</div>
 	% }
 </div>
