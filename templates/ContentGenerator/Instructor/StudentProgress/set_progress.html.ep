@@ -77,7 +77,7 @@
 	% if ($setIsVersioned) {
 		<p>
 			<%= maketext(
-				q{Click a student's name to see the student\'s test summary page. }
+				q{Click a student's name to see the student's test summary page. }
 					. q{Click a test's version number to see the corresponding test version. }
 					. 'Click a heading to sort the table.'
 			) =%>
