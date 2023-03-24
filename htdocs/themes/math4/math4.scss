@@ -972,6 +972,8 @@ td.alt-source {
 		&.alert-success, &.alert-danger {
 			transition: none;
 			border-radius: 3px;
+			color: var(--bs-alert-color);
+			background-color: var(--bs-alert-bg);
 		}
 	}
 

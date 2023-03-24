@@ -125,51 +125,51 @@
 			</div>
 		% }
 
-		% # Total problem score. Hide if configured to only show point values.
+		% # Total problem score. (Hidden if configured to only show point values.)
 		% if ($ce->{problemGraderScore} eq 'Point') {
-			<div class="row align-items-center mb-2 d-none">
+			<%= hidden_field 'grader-problem-score' => wwRound(0, $grader->{recorded_score} * 100),
+				id   => "score_problem$grader->{problem_id}",
+				data => { problem_id => $grader->{problem_id} } =%>
 		% } else {
 			<div class="row align-items-center mb-2">
-		% }
-			<%= label_for "score_problem$grader->{problem_id}",
-				class => 'col-fixed col-form-label',
-				begin =%>
-				<%= maketext('Problem Score (%):') %>
-				<%= link_to '#',
-					class => 'help-popup',
-					data => {
-						bs_content =>
-						maketext('The initial value is the currently saved score for this student.')
-						. (
-							@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1
-							? ' '
-							. maketext(
-								'This is the only part of the score that is actually saved. '
-								. 'This is computed from the answer sub scores above using the weights shown if they '
-								. 'are modified.  Alternatively, enter the score you want saved here '
-								. '(the above sub scores will be ignored).'
-							)
-							: ''
-						),
-						bs_placement => 'top',
-						bs_toggle    => 'popover'
-					},
-					begin =%>
-					<i class="icon fas fa-question-circle" aria-hidden="true" data-alt="Help Icon"></i>
-					<span class="sr-only-glyphicon">Help Icon</span>
+				<%= label_for "score_problem$grader->{problem_id}", class => 'col-fixed col-form-label', begin =%>
+					<%= maketext('Problem Score (%):') %>
+					<%= link_to '#',
+						class => 'help-popup',
+						data => {
+							bs_content =>
+							maketext('The initial value is the currently saved score for this student.')
+							. (
+								@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1
+								? ' '
+								. maketext(
+									'This is the only part of the score that is actually saved. '
+									. 'This is computed from the answer sub scores above using the weights shown if '
+									. 'they are modified.  Alternatively, enter the score you want saved here '
+									. '(the above sub scores will be ignored).'
+								)
+								: ''
+							),
+							bs_placement => 'top',
+							bs_toggle    => 'popover'
+						},
+						begin =%>
+						<i class="icon fas fa-question-circle" aria-hidden="true" data-alt="Help Icon"></i>
+						<span class="sr-only-glyphicon">Help Icon</span>
+					<% end =%>
 				<% end =%>
-			<% end =%>
-			<div class="col-sm">
-				% param('grader-problem-score', wwRound(0, $grader->{recorded_score} * 100));
-				<%= number_field 'grader-problem-score' => '',
-					min          => 0,
-					max          => 100,
-					autocomplete => "off",
-					id           => "score_problem$grader->{problem_id}",
-					class        => "problem-score form-control form-control-sm d-inline",
-					data         => { problem_id => $grader->{problem_id} } =%>
+				<div class="col-sm">
+					% param('grader-problem-score', wwRound(0, $grader->{recorded_score} * 100));
+					<%= number_field 'grader-problem-score' => '',
+						min          => 0,
+						max          => 100,
+						autocomplete => "off",
+						id           => "score_problem$grader->{problem_id}",
+						class        => "problem-score form-control form-control-sm d-inline",
+						data         => { problem_id => $grader->{problem_id} } =%>
+				</div>
 			</div>
-		</div>
+		% }
 
 		% # Instructor comment
 		% if ($grader->{past_answer_id}) {
