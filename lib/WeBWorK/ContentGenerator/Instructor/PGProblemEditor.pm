@@ -599,7 +599,7 @@ sub backupFile ($c, $outputFilePath) {
 	}
 }
 
-sub saveFileChanges ($c, $outputFilePath, $backup = undef) {
+sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 	my $ce              = $c->ce;
 	my $problemContents = ${ $c->{r_problemContents} };
 
@@ -947,7 +947,7 @@ sub save_handler ($c) {
 				. 'The problem set may have changed. Please reopen this file from the homework sets editor.'
 		));
 	} else {
-		$c->saveFileChanges($c->{editFilePath}, $c->param('backupFile'));
+		$c->saveFileChanges($c->{editFilePath}, scalar($c->param('backupFile')));
 	}
 
 	# Don't redirect unless it was requested to open in a new window.

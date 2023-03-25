@@ -16,7 +16,9 @@
 	% my $backupMax = $c->ce->{options}{editorNumberOfBackups};
 	% if ($backupMax > 0) {
 		<div class="form-check mb-2">
-			<%= check_box backupFile => 1, id => 'backupFile', class => 'form-check-input', checked => undef =%>
+			% param('backupFile', 1) unless defined param('backupFile');
+			<%= check_box backupFile => 1, id => 'backupFile', class => 'form-check-input' =%>
+			<%= hidden_field backupFile => 0 =%>
 			<%= label_for backupFile => maketext('Create backup'), class => 'form-check-label' =%>
 		</div>
 
