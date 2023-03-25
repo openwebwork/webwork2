@@ -31,7 +31,7 @@
 	% my %showMeAnother = %{ $c->{showMeAnother} };
 	% if ($can{showMeAnother}) {
 		% # only output showMeAnother button if we're not on the showMeAnother page
-		<%= link_to maketext('Show me another') => $c->systemLink(url_for('show_me_another')),
+		<%= link_to maketext('Show Me Another') => $c->systemLink(url_for('show_me_another')),
 				class  => 'set-id-tooltip btn btn-primary mb-1',
 				id     => 'SMA_button',
 				target => 'WW_Show_Me_Another',
@@ -66,7 +66,7 @@
 						$showMeAnother{TriesNeeded}
 					) =%>">
 				<button class="btn btn-primary mb-1" type="button" disabled>
-					<%= maketext('Show me another [_1]', $exhausted) =%>
+					<%= maketext('Show Me Another [_1]', $exhausted) =%>
 				</button>
 			</span>
 		% }
