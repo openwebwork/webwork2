@@ -28,8 +28,10 @@
 
 		<div class="row align-items-center mb-2">
 			<div class="col-auto">
+				% param('action.revert.type', 'backup')
+					% if !$foundTempFile && (param('action.revert.type') // '') eq 'revert';
 				<%= radio_button 'action.revert.type' => 'backup', id => 'action_revert_type_backup_id',
-					class => 'form-check-input', $foundTempFile ? () : (checked => undef) =%>
+					class => 'form-check-input' =%>
 				<%= label_for 'action_revert_type_backup_id', class => 'form-check-label ms-2', begin =%>
 					<%= scalar(@backupTimes) == 1
 						? maketext(
