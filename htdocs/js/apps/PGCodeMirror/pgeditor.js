@@ -69,7 +69,7 @@
 	};
 
 	const cm = webworkConfig.pgCodeMirror = CodeMirror.fromTextArea(document.querySelector('.codeMirrorEditor'), {
-		mode: 'PG',
+		mode: document.querySelector('.codeMirrorEditor')?.dataset.mode ?? 'PG',
 		indentUnit: 4,
 		tabMode: 'spaces',
 		lineNumbers: true,

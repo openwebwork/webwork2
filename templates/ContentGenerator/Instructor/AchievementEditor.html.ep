@@ -3,7 +3,7 @@
 	% qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
 %
 % content_for js => begin
-	<%= output_codemirror_static_files($c) =%>
+	<%= output_codemirror_static_files($c, 'perl') =%>
 	<%= javascript getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'), defer => undef =%>
 % end
 %
@@ -23,7 +23,7 @@
 		<%= hidden_field sourceFilePath => $c->{sourceFilePath} =%>
 	% }
 	%
-	<div class="mb-2"><%= generate_codemirror_html($c, 'achievementContents', $achievementContents) =%></div>
+	<div class="mb-2"><%= generate_codemirror_html($c, 'achievementContents', $achievementContents, 'perl') =%></div>
 	<%= generate_codemirror_controls_html($c) =%>
 	%
 	% # Output action forms

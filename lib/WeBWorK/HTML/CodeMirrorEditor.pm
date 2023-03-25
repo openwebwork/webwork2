@@ -63,10 +63,10 @@ use constant CODEMIRROR_ADDONS_JS => [
 	'scroll/annotatescrollbar.js', 'edit/matchbrackets.js'
 ];
 
-sub generate_codemirror_html ($c, $name, $contents = '') {
+sub generate_codemirror_html ($c, $name, $contents = '', $mode = 'PG') {
 	# Output the textarea that will be used by CodeMirror.
 	# If CodeMirror is disabled, then this is directly the editing area.
-	return $c->text_area($name => $contents, id => $name, class => 'codeMirrorEditor');
+	return $c->text_area($name => $contents, id => $name, class => 'codeMirrorEditor', data => { mode => $mode });
 }
 
 sub generate_codemirror_controls_html ($c) {
@@ -89,11 +89,12 @@ sub generate_codemirror_controls_html ($c) {
 	return $c->include('HTML/CodeMirrorEditor/controls', themeValues => $themeValues, keymapValues => $keymapValues);
 }
 
-sub output_codemirror_static_files ($c) {
+sub output_codemirror_static_files ($c, $mode = 'PG') {
 	return $c->include(
 		'HTML/CodeMirrorEditor/js',
 		codemirrorAddonsCSS => CODEMIRROR_ADDONS_CSS(),
-		codemirrorAddonsJS  => CODEMIRROR_ADDONS_JS()
+		codemirrorAddonsJS  => CODEMIRROR_ADDONS_JS(),
+		codemirrorModesJS   => $mode eq 'htmlmixed' ? [ 'xml', 'css', 'javascript', 'htmlmixed' ] : [$mode]
 	);
 }
 
