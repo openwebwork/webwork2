@@ -20,7 +20,7 @@
 
 		<div class="form-check mb-2<%= $foundTempFile ? '' : ' d-none' %>" id="revert-to-tmp-container">
 			<%= radio_button 'action.revert.type' => 'revert', id => 'action_revert_type_revert_id',
-				checked => undef, class => 'form-check-input' =%>
+				checked => undef, class => 'form-check-input', $foundTempFile ? () : (disabled => undef) =%>
 			<%= label_for 'action_revert_type_revert_id', class => 'form-check-label', begin =%>
 				<%== maketext('Revert to [_1]', tag('span', dir => 'ltr', $c->shortPath($c->{editFilePath}))) =%>
 			<% end =%>
@@ -29,7 +29,7 @@
 		<div class="row align-items-center mb-2">
 			<div class="col-auto">
 				% param('action.revert.type', 'backup')
-					% if !$foundTempFile && (param('action.revert.type') // '') eq 'revert';
+					% if !$foundTempFile && (!param('action.revert.type') || param('action.revert.type') eq 'revert');
 				<%= radio_button 'action.revert.type' => 'backup', id => 'action_revert_type_backup_id',
 					class => 'form-check-input' =%>
 				<%= label_for 'action_revert_type_backup_id', class => 'form-check-label ms-2', begin =%>
@@ -55,7 +55,7 @@
 
 		<div class="row align-items-center mb-2">
 			<div class="col-auto">
-				<%= radio_button 'action.revert.type' => 'delete', id => "action_revert_type_delete_id",
+				<%= radio_button 'action.revert.type' => 'delete', id => 'action_revert_type_delete_id',
 					class => 'form-check-input' =%>
 				<%= label_for "action_revert_type_delete_id", class => 'form-check-label ms-2', begin =%>
 					<%= scalar(@backupTimes) == 1

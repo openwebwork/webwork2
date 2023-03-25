@@ -43,9 +43,13 @@
 
 		if (!request_object.outputFilePath) return;
 
-		document.getElementById('action_revert_type_revert_id').disabled = false;
 		document.getElementById('revert-to-tmp-container')?.classList.remove('d-none');
 		document.getElementById('revert-tab')?.classList.remove('disabled');
+		const revertRadio = document.getElementById('action_revert_type_revert_id');
+		if (revertRadio && revertRadio.disabled) {
+			revertRadio.disabled = false;
+			revertRadio.checked = true;
+		}
 
 		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
 			.then((response) => response.json())
@@ -73,6 +77,17 @@
 		});
 	}
 
+	const revertBackupCheck = document.getElementById('action_revert_type_backup_id');
+	if (revertBackupCheck) {
+		document.getElementById('action_revert_backup_time_id')
+			?.addEventListener('change', () => revertBackupCheck.checked = true);
+	}
+	const deleteBackupCheck = document.getElementById('action_revert_type_delete_id');
+	if (deleteBackupCheck) {
+		document.getElementById('action_revert_delete_number_id')
+			?.addEventListener('change', () => deleteBackupCheck.checked = true);
+	}
+
 	document.getElementById('submit_button_id')?.addEventListener('click', async (e) => {
 		const actionView = document.getElementById('view');
 		const editorForm = document.getElementById('editor');
@@ -82,9 +97,13 @@
 
 		if (actionView && actionView.classList.contains('active')) {
 			if (document.getElementById('newWindowView')?.checked) {
-				document.getElementById('action_revert_type_revert_id').disabled = false;
-				document.getElementById('revert-to-tmp-container')?.classList.remove('d-none');
 				document.getElementById('revert-tab')?.classList.remove('disabled');
+				document.getElementById('revert-to-tmp-container')?.classList.remove('d-none');
+				const revertRadio = document.getElementById('action_revert_type_revert_id');
+				if (revertRadio && revertRadio.disabled) {
+					revertRadio.disabled = false;
+					revertRadio.checked = true;
+				}
 
 				if (editorForm) editorForm.target = 'WW_View';
 			} else {
