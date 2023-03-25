@@ -192,17 +192,17 @@ sub pre_header_initialize ($c) {
 	}
 
 	# Initialize these values in case of failure in the getFilePaths method.
-	$c->{editFilePath}  = '';
-	$c->{tempFilePath}  = '';
-	$c->{inputFilePath} = '';
-	$c->{backBasePath}  = '';
+	$c->{editFilePath}   = '';
+	$c->{tempFilePath}   = '';
+	$c->{inputFilePath}  = '';
+	$c->{backupBasePath} = '';
 
 	# Determine the paths for the file.
 	# getFilePath defines:
-	#   $c->{editFilePath}:  path to the permanent file to be edited
-	#   $c->{tempFilePath}:  path to the temporary file to be edited with .tmp suffix
-	#   $c->{inputFilePath}: path to the file for input, (this is either the editFilePath or the tempFilePath)
-	#   $c->{backBasePath}:  base path to the backup files
+	#   $c->{editFilePath}:    path to the permanent file to be edited
+	#   $c->{tempFilePath}:    path to the temporary file to be edited with .tmp suffix
+	#   $c->{inputFilePath}:   path to the file for input, (this is either the editFilePath or the tempFilePath)
+	#   $c->{backupBasePath}:  base path to the backup files
 	$c->getFilePaths;
 
 	# Default problem contents
@@ -464,10 +464,10 @@ sub isTempEditFilePath ($c, $path) {
 }
 
 # Determine file paths. This defines the following variables:
-#   $c->{editFilePath}  -- path to permanent file
-#   $c->{tempFilePath}  -- temporary file name to use (may not exist)
-#   $c->{inputFilePath} -- actual file to read and edit (will be one of the above)
-#   $c->{backBasePath}  -- base path to backup files
+#   $c->{editFilePath}    -- path to permanent file
+#   $c->{tempFilePath}    -- temporary file name to use (may not exist)
+#   $c->{inputFilePath}   -- actual file to read and edit (will be one of the above)
+#   $c->{backupBasePath}  -- base path to backup files
 sub getFilePaths ($c) {
 	my $ce   = $c->ce;
 	my $db   = $c->db;
@@ -553,9 +553,9 @@ sub getFilePaths ($c) {
 	}
 
 	# The path to the permanent file is now verified and stored in $editFilePath
-	$c->{editFilePath} = $editFilePath;
-	$c->{tempFilePath} = $c->determineTempEditFilePath($editFilePath);
-	$c->{backBasePath} = $c->{tempFilePath} =~ s/.$user.tmp/.bak/r;
+	$c->{editFilePath}   = $editFilePath;
+	$c->{tempFilePath}   = $c->determineTempEditFilePath($editFilePath);
+	$c->{backupBasePath} = $c->{tempFilePath} =~ s/.$user.tmp/.bak/r;
 
 	# $c->{inputFilePath} is $c->{tempFilePath} if it is exists and is readable.
 	# Otherwise it is the original $c->{editFilePath}.
@@ -565,22 +565,22 @@ sub getFilePaths ($c) {
 }
 
 sub getBackupTimes ($c) {
-	my $backBasePath = $c->{backBasePath};
-	my @files        = glob("$backBasePath*");
+	my $backupBasePath = $c->{backupBasePath};
+	my @files          = glob("$backupBasePath*");
 	return unless @files;
-	return reverse(map { $_ =~ s/$backBasePath//r } @files);
+	return reverse(map { $_ =~ s/$backupBasePath//r } @files);
 }
 
 sub backupFile ($c, $outputFilePath) {
 	my $ce = $c->ce;
 	return unless $ce->{options}{editorNumberOfBackups} && $ce->{options}{editorNumberOfBackups} > 0;
 
-	my $backupTime   = time;
-	my $backFilePath = $c->{backBasePath} . $backupTime;
+	my $backupTime     = time;
+	my $backupFilePath = $c->{backupBasePath} . $backupTime;
 
 	# Make sure any missing directories are created.
-	surePathToFile($ce->{courseDirs}{templates}, $backFilePath);
-	copy($outputFilePath, $backFilePath);
+	surePathToFile($ce->{courseDirs}{templates}, $backupFilePath);
+	copy($outputFilePath, $backupFilePath);
 	$c->addgoodmessage($c->maketext(
 		'Backup created on [_1]',
 		$c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat})
@@ -588,15 +588,15 @@ sub backupFile ($c, $outputFilePath) {
 
 	# Delete oldest backup if option is present.
 	if ($c->param('deleteBackup')) {
-		my @backupTimes    = $c->getBackupTimes;
-		my $backupTime     = @backupTimes[$#backupTimes];
-		my $backFilePath   = $c->{backBasePath} . $backupTime;
-		my $formatBackTime = $c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat});
-		if (-e $backFilePath) {
-			unlink($backFilePath);
-			$c->addgoodmessage($c->maketext('Deleted backup from [_1].', $formatBackTime));
+		my @backupTimes      = $c->getBackupTimes;
+		my $backupTime       = @backupTimes[$#backupTimes];
+		my $backupFilePath   = $c->{backupBasePath} . $backupTime;
+		my $formatBackupTime = $c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat});
+		if (-e $backupFilePath) {
+			unlink($backupFilePath);
+			$c->addgoodmessage($c->maketext('Deleted backup from [_1].', $formatBackupTime));
 		} else {
-			$c->addbadmessage($c->maketext('Unable to delete backup from [_1].', $formatBackTime));
+			$c->addbadmessage($c->maketext('Unable to delete backup from [_1].', $formatBackupTime));
 		}
 	}
 }
@@ -1244,22 +1244,22 @@ sub revert_handler ($c) {
 		$c->addgoodmessage($c->maketext('Deleted temporary file "[_1]".',    $c->shortPath($c->{tempFilePath})));
 		$c->addgoodmessage($c->maketext('Reverted to original file "[_1]".', $c->shortPath($c->{editFilePath})));
 	} elsif ($revertType eq 'backup') {
-		my $backupTime   = $c->param('action.revert.backup.time') || '';
-		my $backFilePath = $c->{backBasePath} . $backupTime;
+		my $backupTime     = $c->param('action.revert.backup.time') || '';
+		my $backupFilePath = $c->{backupBasePath} . $backupTime;
 		$c->{inputFilePath} = $c->{tempFilePath};
 
-		if (-r $backFilePath) {
-			copy($backFilePath, $c->{tempFilePath});
+		if (-r $backupFilePath) {
+			copy($backupFilePath, $c->{tempFilePath});
 			$c->addgoodmessage($c->maketext(
 				'Restored backup from [_1].',
 				$c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat})
 			));
 		} else {
-			$c->addbadmessage($c->maketext('Unable to read backup file "[_1]".', $c->shortPath($backFilePath)));
+			$c->addbadmessage($c->maketext('Unable to read backup file "[_1]".', $c->shortPath($backupFilePath)));
 		}
 	} elsif ($revertType eq 'delete') {
 		my $delTime     = $c->param('action.revert.delete.time');
-		my $delFilePath = $c->{backBasePath} . $delTime;
+		my $delFilePath = $c->{backupBasePath} . $delTime;
 
 		if (-e $delFilePath) {
 			unlink($delFilePath);
