@@ -6,7 +6,7 @@
 %
 % if ($will{requestNewSeed}) {
 	<%= submit_button maketext('Request New Version'), id => 'submitAnswers_id', name => 'requestNewSeed',
-		formtarget => '_self', class => 'btn btn-primary' =%>
+		formtarget => '_self', class => 'btn btn-primary mb-1' =%>
 % } else {
 	<%= submit_button maketext('Preview My Answers'), id => 'previewAnswers_id', formtarget => '_self',
 		name => 'previewAnswers', class => 'btn btn-primary mb-1' =%>
@@ -21,7 +21,7 @@
 			% # If acting as a student, make it clear that answer submissions will
 			% # apply to the student's records, not the instructor's.
 			<%= submit_button maketext('Submit Answers for [_1]', $effectiveUser), id => 'submitAnswers_id',
-				name => 'submitAnswers', class => 'btn btn-primary' =%>
+				name => 'submitAnswers', class => 'btn btn-primary mb-1' =%>
 		% } else {
 			<%= submit_button maketext('Submit Answers'), id => 'submitAnswers_id', name => 'submitAnswers',
 				formtarget => '_self', class => 'btn btn-primary mb-1' =%>
