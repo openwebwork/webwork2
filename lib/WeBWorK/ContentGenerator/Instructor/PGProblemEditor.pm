@@ -566,7 +566,9 @@ sub getFilePaths ($c) {
 
 sub getBackupTimes ($c) {
 	my $backBasePath = $c->{backBasePath};
-	return reverse(map { $_ =~ s/$backBasePath//r } glob("$backBasePath*"));
+	my @files        = glob("$backBasePath*");
+	return unless @files;
+	return reverse(map { $_ =~ s/$backBasePath//r } @files);
 }
 
 sub backupFile ($c, $outputFilePath) {
