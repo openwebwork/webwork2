@@ -149,24 +149,25 @@ sub displaySets ($c) {
 					$testTime = ($set->version_last_attempt_time - $set->open_date) / 60;
 					my $timeLimit = $set->version_time_limit / 60;
 					$testTime = $timeLimit if ($testTime > $timeLimit);
-					$testTime = sprintf('%3.1f min', $testTime);
-					$timeLeft = '0 min';
+					$testTime = $c->maketext("[quant,_1,minute]", sprintf('%3.1f', $testTime));
+					$timeLeft = 0;
 					if ($showColumns{timeleft} && time - $set->open_date < $set->version_time_limit) {
 						# Get a problem to determine how many submits have been made.
 						my @ProblemNums = $db->listUserProblems($studentRecord->user_id, $setName);
 						my $Problem =
 							$db->getMergedProblemVersion($studentRecord->user_id, $setName, $vNum, $ProblemNums[0]);
 						my $verSubmits = defined $Problem ? $Problem->num_correct + $Problem->num_incorrect : 0;
-						$timeLeft = sprintf('%3.1f min', ($set->version_time_limit - time + $set->open_date) / 60)
+						$timeLeft = sprintf('%3.1f', ($set->version_time_limit - time + $set->open_date) / 60)
 							if ($set->attempts_per_version == 0 || $verSubmits < $set->attempts_per_version);
 					}
 				} elsif (time - $set->open_date < $set->version_time_limit) {
 					$testTime = $c->maketext('still open');
-					$timeLeft = sprintf('%3.1f min', ($set->version_time_limit - time + $set->open_date) / 60);
+					$timeLeft = sprintf('%3.1f', ($set->version_time_limit - time + $set->open_date) / 60);
 				} else {
 					$testTime = $c->maketext('time limit exceeded');
-					$timeLeft = '0 min';
+					$timeLeft = 0;
 				}
+				$timeLeft = $c->maketext('[quant,_1,minute]', $timeLeft);
 			} else {
 				$set = $db->getMergedSet($studentName, $setName);
 			}
