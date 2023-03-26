@@ -572,9 +572,7 @@ sub getBackupTimes ($c) {
 }
 
 sub backupFile ($c, $outputFilePath) {
-	my $ce = $c->ce;
-	return unless $ce->{options}{editorNumberOfBackups} && $ce->{options}{editorNumberOfBackups} > 0;
-
+	my $ce             = $c->ce;
 	my $backupTime     = time;
 	my $backupFilePath = $c->{backupBasePath} . $backupTime;
 
@@ -589,7 +587,7 @@ sub backupFile ($c, $outputFilePath) {
 	# Delete oldest backup if option is present.
 	if ($c->param('deleteBackup')) {
 		my @backupTimes      = $c->getBackupTimes;
-		my $backupTime       = @backupTimes[$#backupTimes];
+		my $backupTime       = $backupTimes[-1];
 		my $backupFilePath   = $c->{backupBasePath} . $backupTime;
 		my $formatBackupTime = $c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat});
 		if (-e $backupFilePath) {
@@ -599,6 +597,7 @@ sub backupFile ($c, $outputFilePath) {
 			$c->addbadmessage($c->maketext('Unable to delete backup from [_1].', $formatBackupTime));
 		}
 	}
+	return;
 }
 
 sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
