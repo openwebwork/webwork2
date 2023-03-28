@@ -295,7 +295,11 @@ sub answerTemplate ($self) {
 		$self->showHeadline
 		? $c->tag('h2', class => 'attemptResultsHeader', $c->maketext('Results for this submission'))
 		: '',
-		$c->tag('table', class => 'attemptResults table table-sm table-bordered', $tableRows->join('')),
+		$c->tag(
+			'div',
+			class => 'table-responsive',
+			$c->tag('table', class => 'attemptResults table table-sm table-bordered', $tableRows->join(''))
+		),
 		$self->showSummary ? $self->createSummary : ''
 	)->join('');
 }
@@ -317,7 +321,7 @@ sub previewAnswer ($self, $answerResult) {
 	} elsif ($displayMode eq 'images') {
 		return $imgGen->add($tex);
 	} elsif ($displayMode eq 'MathJax') {
-		return $self->c->tag('script', type => 'math/tex', mode => 'display', $self->c->b($tex));
+		return $self->c->tag('script', type => 'math/tex; mode=display', $self->c->b($tex));
 	}
 }
 
@@ -339,7 +343,7 @@ sub previewCorrectAnswer ($self, $answerResult) {
 	} elsif ($displayMode eq 'images') {
 		return $imgGen->add($tex);
 	} elsif ($displayMode eq 'MathJax') {
-		return $self->c->tag('script', type => 'math/tex', mode => 'display', $self->c->b($tex));
+		return $self->c->tag('script', type => 'math/tex; mode=display', $self->c->b($tex));
 	}
 }
 
@@ -443,7 +447,7 @@ sub formatToolTip ($self, $answer, $formattedAnswer) {
 	return $self->c->tag(
 		'td',
 		$self->c->tag(
-			'span',
+			'div',
 			class => 'answer-preview',
 			data  => {
 				bs_toggle    => 'popover',
