@@ -16,8 +16,13 @@
 		% for my $addon (@$codemirrorAddonsJS) {
 			<%= javascript getAssetURL($ce, "node_modules/codemirror/addon/$addon"), defer => undef =%>
 		% }
+		% for my $mode (@$codemirrorModesJS) {
+			<%= javascript getAssetURL(
+					$ce,
+					$mode eq 'PG' ? 'js/apps/PGCodeMirror/PG.js' : "node_modules/codemirror/mode/$mode/$mode.js"
+				), defer => undef =%>
+		% }
 		%
-		<%= javascript getAssetURL($ce, 'js/apps/PGCodeMirror/PG.js'), defer => undef =%>
 		<%= javascript getAssetURL($ce, 'js/apps/PGCodeMirror/pgeditor.js'), defer => undef =%>
 	% end
 % }

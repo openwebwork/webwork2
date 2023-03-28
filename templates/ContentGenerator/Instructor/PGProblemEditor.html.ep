@@ -2,8 +2,9 @@
 % use WeBWorK::HTML::CodeMirrorEditor
 	% qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
 %
+% my $codemirrorMode = $c->{file_type} eq 'course_info' ? 'htmlmixed' : 'PG';
 % content_for js => begin
-	<%= output_codemirror_static_files($c) =%>
+	<%= output_codemirror_static_files($c, $codemirrorMode) =%>
 	<%= javascript getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'),           defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/apps/PGProblemEditor/pgproblemeditor.js'), defer => undef =%>
 % end
@@ -126,7 +127,7 @@
 	</div>
 	<div class="row mb-2">
 		<div class="col-lg-6 col-md-12 order-last order-lg-first">
-			<%= generate_codemirror_html($c, 'problemContents', $problemContents) =%>
+			<%= generate_codemirror_html($c, 'problemContents', $problemContents, $codemirrorMode) =%>
 		</div>
 		<div class="col-lg-6 col-md-12 mb-lg-0 mb-2 order-first order-lg-last">
 			<div class="p-0" id="pgedit-render-area">
