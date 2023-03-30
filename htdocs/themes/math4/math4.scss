@@ -972,10 +972,13 @@ td.alt-source {
 		&.alert-success, &.alert-danger {
 			transition: none;
 			border-radius: 3px;
+			color: var(--bs-alert-color);
+			background-color: var(--bs-alert-bg);
 		}
 	}
 
 	.problem-score,
+	.problem-points,
 	.answer-part-score {
 		width: 5.5rem;
 	}

@@ -21,21 +21,46 @@
 		});
 	});
 
+	const setPointInputValue = (pointInput, score) =>
+		pointInput.value = (Math.round(score * pointInput.max / 100 / pointInput.step) * pointInput.step).toFixed(2);
+
 	// Compute the problem score from any answer sub scores, and update the problem score input.
 	document.querySelectorAll('.answer-part-score').forEach((part) => {
 		part.addEventListener('input', () => {
 			const problemId = part.dataset.problemId;
 			const answerLabels = JSON.parse(part.dataset.answerLabels);
 
-			if (!part.checkValidity()) part.classList.add('is-invalid');
-			else part.classList.remove('is-invalid');
+			if (!part.checkValidity()) {
+				part.classList.add('is-invalid');
+			} else {
+				part.classList.remove('is-invalid');
 
-			let score = 0;
-			answerLabels.forEach((label) => {
-				const partElt = document.getElementById(`score_problem${problemId}_${label}`);
-				score += partElt.value * partElt.dataset.weight;
-			});
-			document.getElementById(`score_problem${problemId}`).value = Math.round(score);
+				let score = 0;
+				answerLabels.forEach((label) => {
+					const partElt = document.getElementById(`score_problem${problemId}_${label}`);
+					score += partElt.value * partElt.dataset.weight;
+				});
+				document.getElementById(`score_problem${problemId}`).value = Math.round(score);
+
+				const pointInput = document.getElementById(`score_problem${problemId}_points`);
+				if (pointInput) setPointInputValue(pointInput, score);
+			}
+			document.getElementById(`grader_messages_problem${problemId}`).innerHTML = '';
+		});
+	});
+
+	// Update problem score if point value changes and is a valid value.
+	document.querySelectorAll('.problem-points').forEach((pointInput) => {
+		pointInput.addEventListener('input', () => {
+			const problemId = pointInput.dataset.problemId;
+			if (pointInput.checkValidity()) {
+				const scoreInput = document.getElementById(`score_problem${problemId}`);
+				pointInput.classList.remove('is-invalid');
+				scoreInput.classList.remove('is-invalid');
+				scoreInput.value = Math.round(100 * pointInput.value / pointInput.max);
+			} else {
+				pointInput.classList.add('is-invalid');
+			}
 			document.getElementById(`grader_messages_problem${problemId}`).innerHTML = '';
 		});
 	});
@@ -43,9 +68,20 @@
 	// Clear messages when the score or comment are changed.
 	document.querySelectorAll('.problem-score,.grader-problem-comment').forEach((el) => {
 		el.addEventListener('input', () => {
-			if (!el.checkValidity()) el.classList.add('is-invalid');
-			else el.classList.remove('is-invalid');
+			const problemId = el.dataset.problemId;
+			if (!el.checkValidity()) {
+				el.classList.add('is-invalid');
+			} else {
+				el.classList.remove('is-invalid');
 
+				if (el.classList.contains('problem-score')) {
+					const pointInput = document.getElementById(`score_problem${problemId}_points`);
+					if (pointInput) {
+						pointInput.classList.remove('is-invalid');
+						setPointInputValue(pointInput, el.value);
+					}
+				}
+			}
 			document.getElementById(`grader_messages_problem${el.dataset.problemId}`).innerHTML = '';
 		});
 	});
@@ -104,12 +140,23 @@
 					} else {
 						// Update the hidden problem status fields and score table for gateway quizzes
 						if (saveData.versionId !== '0') {
-							for (const scoreCell of document.querySelectorAll(
-								`table.gwNavigation td.score[data-problem-id="${saveData.problemId}"]`)) {
-								scoreCell.textContent = scoreInput.value == '100' ? '\u{1F4AF}' : scoreInput.value;
-							}
 							document.gwquiz.elements['probstatus' + saveData.problemId].value =
 								parseInt(scoreInput.value) / 100;
+							let testValue = 0;
+							for (const scoreCell of document.querySelectorAll('table.gwNavigation td.score')) {
+								if (scoreCell.dataset.problemId == saveData.problemId) {
+									scoreCell.textContent = scoreInput.value == '100' ? '\u{1F4AF}' : scoreInput.value;
+								}
+								testValue += document.gwquiz.elements['probstatus'
+									+ scoreCell.dataset.problemId].value * scoreCell.dataset.problemValue;
+							}
+							const recordedScore = document.getElementById('test-recorded-score');
+							if (recordedScore) {
+								recordedScore.textContent = Math.round(100 * testValue / 2) / 100;
+								document.getElementById('test-recorded-percent').textContent =
+									Math.round(100 * testValue /
+										(2 * document.getElementById('test-total-possible').textContent));
+							}
 						}
 
 						if (saveData.pastAnswerId !== '0') {
