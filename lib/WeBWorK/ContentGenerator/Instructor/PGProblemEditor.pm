@@ -120,8 +120,8 @@ use constant ACTION_FORM_TITLES => {
 	view        => x('View/Reload'),
 	hardcopy    => x('Generate Hardcopy'),
 	add_problem => x('Append'),
-	save        => x('Update'),
-	save_as     => x('New Version'),
+	save        => x('Save'),
+	save_as     => x('Save As'),
 	revert      => x('Revert'),
 };
 
@@ -192,15 +192,17 @@ sub pre_header_initialize ($c) {
 	}
 
 	# Initialize these values in case of failure in the getFilePaths method.
-	$c->{editFilePath}  = '';
-	$c->{tempFilePath}  = '';
-	$c->{inputFilePath} = '';
+	$c->{editFilePath}   = '';
+	$c->{tempFilePath}   = '';
+	$c->{inputFilePath}  = '';
+	$c->{backupBasePath} = '';
 
 	# Determine the paths for the file.
 	# getFilePath defines:
-	#   $c->{editFilePath}:  path to the permanent file to be edited
-	#   $c->{tempFilePath}:  path to the temporary file to be edited with .tmp suffix
-	#   $c->{inputFilePath}: path to the file for input, (this is either the editFilePath or the tempFilePath)
+	#   $c->{editFilePath}:    path to the permanent file to be edited
+	#   $c->{tempFilePath}:    path to the temporary file to be edited with .tmp suffix
+	#   $c->{inputFilePath}:   path to the file for input, (this is either the editFilePath or the tempFilePath)
+	#   $c->{backupBasePath}:  base path to the backup files
 	$c->getFilePaths;
 
 	# Default problem contents
@@ -462,12 +464,14 @@ sub isTempEditFilePath ($c, $path) {
 }
 
 # Determine file paths. This defines the following variables:
-#   $c->{editFilePath}  -- path to permanent file
-#   $c->{tempFilePath}  -- temporary file name to use (may not exist)
-#   $c->{inputFilePath} -- actual file to read and edit (will be one of the above)
+#   $c->{editFilePath}    -- path to permanent file
+#   $c->{tempFilePath}    -- temporary file name to use (may not exist)
+#   $c->{inputFilePath}   -- actual file to read and edit (will be one of the above)
+#   $c->{backupBasePath}  -- base path to backup files
 sub getFilePaths ($c) {
-	my $ce = $c->ce;
-	my $db = $c->db;
+	my $ce   = $c->ce;
+	my $db   = $c->db;
+	my $user = $c->param('user');
 
 	my $editFilePath;
 
@@ -549,8 +553,9 @@ sub getFilePaths ($c) {
 	}
 
 	# The path to the permanent file is now verified and stored in $editFilePath
-	$c->{editFilePath} = $editFilePath;
-	$c->{tempFilePath} = $c->determineTempEditFilePath($editFilePath);
+	$c->{editFilePath}   = $editFilePath;
+	$c->{tempFilePath}   = $c->determineTempEditFilePath($editFilePath);
+	$c->{backupBasePath} = $c->{tempFilePath} =~ s/.$user.tmp/.bak/r;
 
 	# $c->{inputFilePath} is $c->{tempFilePath} if it is exists and is readable.
 	# Otherwise it is the original $c->{editFilePath}.
@@ -559,11 +564,45 @@ sub getFilePaths ($c) {
 	return;
 }
 
-sub saveFileChanges ($c, $outputFilePath, $problemContents = undef) {
-	my $ce = $c->ce;
+sub getBackupTimes ($c) {
+	my $backupBasePath = $c->{backupBasePath};
+	my @files          = glob("$backupBasePath*");
+	return unless @files;
+	return reverse(map { $_ =~ s/$backupBasePath//r } @files);
+}
 
-	$problemContents = $$problemContents if defined $problemContents && ref $problemContents;
-	$problemContents = ${ $c->{r_problemContents} } unless not_blank($problemContents);
+sub backupFile ($c, $outputFilePath) {
+	my $ce             = $c->ce;
+	my $backupTime     = time;
+	my $backupFilePath = $c->{backupBasePath} . $backupTime;
+
+	# Make sure any missing directories are created.
+	surePathToFile($ce->{courseDirs}{templates}, $backupFilePath);
+	copy($outputFilePath, $backupFilePath);
+	$c->addgoodmessage($c->maketext(
+		'Backup created on [_1]',
+		$c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat})
+	));
+
+	# Delete oldest backup if option is present.
+	if ($c->param('deleteBackup')) {
+		my @backupTimes      = $c->getBackupTimes;
+		my $backupTime       = $backupTimes[-1];
+		my $backupFilePath   = $c->{backupBasePath} . $backupTime;
+		my $formatBackupTime = $c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat});
+		if (-e $backupFilePath) {
+			unlink($backupFilePath);
+			$c->addgoodmessage($c->maketext('Deleted backup from [_1].', $formatBackupTime));
+		} else {
+			$c->addbadmessage($c->maketext('Unable to delete backup from [_1].', $formatBackupTime));
+		}
+	}
+	return;
+}
+
+sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
+	my $ce              = $c->ce;
+	my $problemContents = ${ $c->{r_problemContents} };
 
 	# Read and update the targetFile and targetFile.tmp files in the directory.
 	# If a .tmp file already exists use that, unless the revert button has been pressed.
@@ -584,6 +623,9 @@ sub saveFileChanges ($c, $outputFilePath, $problemContents = undef) {
 
 	# Make sure any missing directories are created.
 	surePathToFile($ce->{courseDirs}{templates}, $outputFilePath);
+
+	# Backup file if asked.
+	$c->backupFile($outputFilePath) if $backup;
 
 	# Actually save the file.
 	if (open my $outfile, '>:encoding(UTF-8)', $outputFilePath) {
@@ -906,7 +948,7 @@ sub save_handler ($c) {
 				. 'The problem set may have changed. Please reopen this file from the homework sets editor.'
 		));
 	} else {
-		$c->saveFileChanges($c->{editFilePath});
+		$c->saveFileChanges($c->{editFilePath}, scalar($c->param('backupFile')));
 	}
 
 	# Don't redirect unless it was requested to open in a new window.
@@ -1181,9 +1223,8 @@ sub save_as_handler ($c) {
 }
 
 sub revert_handler ($c) {
-	my $ce = $c->ce;
-
-	$c->{inputFilePath} = $c->{editFilePath};
+	my $ce   = $c->ce;
+	my $user = $c->param('user');
 
 	unless (path_is_subdir($c->{tempFilePath}, $ce->{courseDirs}{templates}, 1)) {
 		$c->addbadmessage($c->maketext(
@@ -1193,14 +1234,48 @@ sub revert_handler ($c) {
 		return;
 	}
 
-	# Unlink the temp files;
-	unlink($c->{tempFilePath});
-	$c->addgoodmessage($c->maketext('Deleted temporary file [_1].', $c->shortPath($c->{tempFilePath})));
+	# Determine revert action
+	my $revertType = $c->param('action.revert.type') || 'do_not_revert';
+
+	if ($revertType eq 'revert') {
+		$c->{inputFilePath} = $c->{editFilePath};
+		unlink($c->{tempFilePath});
+		$c->addgoodmessage($c->maketext('Deleted temporary file "[_1]".',    $c->shortPath($c->{tempFilePath})));
+		$c->addgoodmessage($c->maketext('Reverted to original file "[_1]".', $c->shortPath($c->{editFilePath})));
+	} elsif ($revertType eq 'backup') {
+		my $backupTime     = $c->param('action.revert.backup.time') || '';
+		my $backupFilePath = $c->{backupBasePath} . $backupTime;
+		$c->{inputFilePath} = $c->{tempFilePath};
+
+		if (-r $backupFilePath) {
+			copy($backupFilePath, $c->{tempFilePath});
+			$c->addgoodmessage($c->maketext(
+				'Restored backup from [_1].',
+				$c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat})
+			));
+		} else {
+			$c->addbadmessage($c->maketext('Unable to read backup file "[_1]".', $c->shortPath($backupFilePath)));
+		}
+	} elsif ($revertType eq 'delete') {
+		my $delTime     = $c->param('action.revert.delete.time');
+		my $delFilePath = $c->{backupBasePath} . $delTime;
+
+		if (-e $delFilePath) {
+			unlink($delFilePath);
+			$c->addgoodmessage($c->maketext(
+				'Deleted backup from [_1].',
+				$c->formatDateTime($delTime, undef, $ce->{studentDateDisplayFormat})
+			));
+		} else {
+			$c->addbadmessage($c->maketext('Unable to delete backup file "[_1]".', $c->shortPath($delFilePath)));
+		}
+		return;
+	} else {
+		return;
+	}
 
 	$c->{r_problemContents} = \'';
 	$c->param('problemContents', undef);
-
-	$c->addgoodmessage($c->maketext('Reverted to original file "[_1]".', $c->shortPath($c->{editFilePath})));
 
 	return;
 }
