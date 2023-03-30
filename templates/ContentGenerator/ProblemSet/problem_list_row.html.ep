@@ -69,12 +69,11 @@
 			</td>
 		% }
 		% # Grader
-		% if ($c->{canScoreProblems}) {
+		% if ($authz->hasPermissions(param('user'), 'access_instructor_tools')
+			% && $authz->hasPermissions(param('user'), 'score_sets')) {
 			<td>
-				% if ($c->{gradeableProblems}[$problemID]) {
-					<%= link_to(maketext('Grade Problem') =>
-						$c->systemLink(url_for('instructor_problem_grader', problemID => $problemID))) =%>
-				% }
+				<%= link_to(maketext('Grade Problem') =>
+					$c->systemLink(url_for('instructor_problem_grader', problemID => $problemID))) =%>
 			</td>
 		% }
 	</tr>

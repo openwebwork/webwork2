@@ -198,25 +198,6 @@ sub problem_list ($c) {
 	my @problems =
 		$db->getMergedProblemsWhere({ user_id => $c->param('effectiveUser'), set_id => $setID }, 'problem_id');
 
-	if (@problems) {
-		# Check permissions and see if any of the problems are gradeable
-		$c->{canScoreProblems} = 0;
-		if ($authz->hasPermissions($user, 'access_instructor_tools') && $authz->hasPermissions($user, 'score_sets')) {
-			my @setUsers       = $db->listSetUsers($setID);
-			my @globalProblems = $db->getGlobalProblemsWhere({ set_id => $setID });
-
-			my @gradeableProblems;
-			for my $problem (@globalProblems) {
-				if ($problem->flags =~ /essay/) {
-					$c->{canScoreProblems} = 1;
-					$gradeableProblems[ $problem->problem_id ] = 1;
-				}
-			}
-
-			$c->{gradeableProblems} = \@gradeableProblems if $c->{canScoreProblems};
-		}
-	}
-
 	return $c->include('ContentGenerator/ProblemSet/problem_list', problems => \@problems);
 }
 

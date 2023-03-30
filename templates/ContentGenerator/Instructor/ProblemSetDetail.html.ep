@@ -1,5 +1,6 @@
 % use WeBWorK::Utils
-	% qw(sortByName listFilesRecursive jitar_id_to_seq seq_to_jitar_id format_set_name_display getAssetURL);
+	% qw(sortByName listFilesRecursive jitar_id_to_seq seq_to_jitar_id format_set_name_display getAssetURL),
+	% qw(getTestProblemPosition);
 %
 % content_for css => begin
 	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') =%>
@@ -21,6 +22,7 @@
 	<%= javascript getAssetURL($ce, 'js/apps/DatePicker/datepicker.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'node_modules/sortablejs/Sortable.min.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
+	<%= javascript getAssetURL($ce, 'js/apps/RenderProblem/renderproblem.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/apps/ProblemSetDetail/problemsetdetail.js'), defer => undef =%>
 % end
 %
@@ -180,7 +182,7 @@
 		<%= hidden_field editForUser => $_ =%>
 	% }
 	<%= $c->hidden_authen_fields =%>
-	<%= hidden_field courseID => $courseID, id => 'hidden_course_id' =%>
+	<%= hidden_field hidden_course_id => $courseID =%>
 	<%= hidden_field setID => $setID, id => 'hidden_set_id' =%>
 	% if ($editingSetVersion) {
 		<%= hidden_field versionID => $editingSetVersion, id => 'hidden_version_id' =%>
@@ -368,7 +370,7 @@
 			% }
 			<div class="input-group d-inline-flex flex-nowrap w-auto py-1">
 				<%= label_for problem_displaymode => maketext('Display Mode:'), class => 'input-group-text' =%>
-				<%= select_field 'problem.displaymode' => [
+				<%= select_field 'problem_displaymode' => [
 						grep { exists $display_modes->{$_} } @{ $ce->{pg}{displayModes} }
 					],
 					id => 'problem_displaymode', class => 'form-select w-auto flex-grow-0' =%>
@@ -401,11 +403,6 @@
 				% }
 				%
 				% my $error = $c->checkFile($problemFile, undef);
-				%
-				% # Show the "Try It" and "Edit It" links if there's a well defined problem to view. This is when editing a
-				% # homework set, or editing a gateway set version, or editing a gateway set and the problem is not a group
-				% # problem.  Also add "grade problem" links for problems which have essay questions.
-				% my $showLinks = !$isGatewaySet || $editingSetVersion || $problemFile !~ /^group/;
 				%
 				% my $problemNumber     = $problemID;
 				% my $lastProblemNumber = $problemID;
@@ -452,15 +449,21 @@
 									id => "prob_num_$problemID" =%>
 								<%= hidden_field "prob_parent_id_$problemID" => $parentID,
 									id => "prob_parent_id_$problemID" =%>
-								<button id="pdr_render_<%= $problemID %>" class="pdr_render btn btn-secondary btn-sm"
-									data-bs-toggle="tooltip" data-bs-placement="top"
-									data-bs-title="<%= maketext('Render Problem') %>"
-									type="button">
-									<i class="icon far fa-image" data-alt="<%= maketext('Render') %>"
-										aria-hidden="true">
-									</i>
-								</button>
-								% if ($showLinks) {
+								%
+								% # Show the "Render Problem", "Edit Problem", and "Open in New Window" links if there
+								% # is a well defined problem to view. This is when editing a homework set, editing a
+								% # gateway set version, or editing a gateway set and the problem is not drawing from
+								% # grouping set.  Really the only case needed here is that of a group problem.
+								% if (!$isGatewaySet || $editingSetVersion || $problemFile !~ /^group/) {
+									<button id="pdr_render_<%= $problemID %>"
+										class="pdr_render btn btn-secondary btn-sm"
+										data-bs-toggle="tooltip" data-bs-placement="top"
+										data-bs-title="<%= maketext('Render Problem') %>"
+										type="button">
+										<i class="icon far fa-image" data-alt="<%= maketext('Render') %>"
+											aria-hidden="true">
+										</i>
+									</button>
 									<%= link_to $c->systemLink(url_for(
 											'instructor_problem_editor_withset_withproblem',
 											setID => $fullSetID, problemID => $problemID
@@ -475,26 +478,45 @@
 										begin =%>
 										<i class="icon fas fa-pencil-alt" data-alt="<%= maketext('Edit') %>"></i>
 									<% end =%>
-								% }
-								% if ($showLinks) {
-									<%= link_to $isGatewaySet
-										? $c->systemLink(
-											url_for('gateway_quiz', setID => 'Undefined_Set', problemID => '1'),
-											params => {
-												effectiveUser  =>
-													@editForUser == 1 ? $editForUser[0] : param('user'),
-												problemSeed    => $problemToShow ? $problemToShow->problem_seed : '',
-												sourceFilePath => $problemToShow
-												? $problemToShow->source_file
-												: $globalProblems->{$problemID}->source_file
-											}
-											)
-										: $c->systemLink(
-											url_for('problem_detail', setID => $setID, problemID => $problemID),
-											params => {
-												effectiveUser => @editForUser == 1 ? $editForUser[0] : param('user')
-											}
-										),
+									% my $problemLink;
+									% if ($isGatewaySet) {
+										% # If editing a set version, then open the actual set version.
+										% # Otherwise, the best that can be done is to use an undefined set.
+										% if ($editingSetVersion) {
+											% my ($problemNumber, $pageNumber) =
+												% getTestProblemPosition($db, $problemToShow);
+											% $problemLink = $c->systemLink(url_for('gateway_quiz',
+													% setID => $problemToShow->set_id
+														% . ',v' . $problemToShow->version_id,
+													% problemID => $problemToShow->problem_id
+												%),
+												% params => {
+													% effectiveUser => $editForUser[0],
+													% currentPage   => $pageNumber
+												% }
+											% )->fragment("prob$problemNumber");
+										% } else {
+											% $problemLink = $c->systemLink(
+												% url_for('gateway_quiz', setID => 'Undefined_Set', problemID => '1'),
+												% params => {
+													% effectiveUser  =>
+														% @editForUser == 1 ? $editForUser[0] : param('user'),
+													% problemSeed => $problemToShow ? $problemToShow->problem_seed : '',
+													% sourceFilePath => $problemToShow && $problemToShow->source_file
+														% ? $problemToShow->source_file
+														% : $globalProblems->{$problemID}->source_file
+												% }
+											% )
+										% }
+									% } else {
+										% $problemLink = $c->systemLink(
+											% url_for('problem_detail', setID => $setID, problemID => $problemID),
+											% params => {
+												% effectiveUser => @editForUser == 1 ? $editForUser[0] : param('user')
+											% }
+										% )
+									% }
+									<%= link_to $problemLink,
 										class  => 'psd_view btn btn-secondary btn-sm',
 										target => 'WW_View',
 										data   => {
@@ -506,19 +528,21 @@
 										<i class="icon far fa-eye" data-alt="<%= maketext('View') %>"></i>
 									<% end =%>
 								% }
-								% if ($showLinks && $problemRecord->flags =~ /essay/) {
-								<%= link_to $c->systemLink(url_for(
-										'instructor_problem_grader', setID => $fullSetID, problemID => $problemID
-									)),
-									class => "pdr_grader btn btn-secondary btn-sm",
-									data  => {
-										bs_toggle    => "tooltip",
-										bs_placement => "top",
-										bs_title     => maketext("Grade Problem")
-									},
-									begin =%>
-									<i class="icon fas fa-edit" data-alt="<%= maketext("Grade") %>"></i>
-								<% end =%>
+								% if ($authz->hasPermissions(param('user'), 'score_sets')) {
+									<%= link_to $c->systemLink(url_for(
+											'instructor_problem_grader',
+										   	setID     => $setID,
+										   	problemID => $problemID
+										)),
+										class => "pdr_grader btn btn-secondary btn-sm",
+										data  => {
+											bs_toggle    => "tooltip",
+											bs_placement => "top",
+											bs_title     => maketext("Grade Problem")
+										},
+										begin =%>
+										<i class="icon fas fa-edit" data-alt="<%= maketext("Grade") %>"></i>
+									<% end =%>
 								% }
 							</div>
 							<div class="col-md-2 col-3 order-md-2 order-3">
@@ -593,7 +617,7 @@
 									% if ($repeatFile) {
 										<div class="alert alert-danger p-1 mb-2 fw-bold"><%= $repeatFile %></div>
 									% }
-									<div class="psr_render_area" id="psr_render_area_<%= $problemID %>">\
+									<div class="rpc_render_area" id="psr_render_area_<%= $problemID %>">\
 										<% if ($error) { =%>\
 											<div class="alert alert-danger p-1 mb-0 fw-bold"><%= $error %></div>
 										<% } =%>\

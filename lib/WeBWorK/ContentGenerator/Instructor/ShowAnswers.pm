@@ -31,54 +31,46 @@ use WeBWorK::Utils::Rendering qw(renderPG);
 use constant PAST_ANSWERS_FILENAME => 'past_answers';
 
 async sub initialize ($c) {
-	my $db    = $c->db;
-	my $ce    = $c->ce;
-	my $authz = $c->authz;
-	my $user  = $c->param('user');
+	my $db   = $c->db;
+	my $ce   = $c->ce;
+	my $user = $c->param('user');
 
-	my $selectedSets     = [ $c->param('selected_sets') ]     // [];
-	my $selectedProblems = [ $c->param('selected_problems') ] // [];
-
-	unless ($authz->hasPermissions($user, "view_answers")) {
-		$c->addbadmessage("You aren't authorized to view past answers");
+	unless ($c->authz->hasPermissions($user, 'view_answers')) {
+		$c->addbadmessage(q{You aren't authorized to view past answers});
 		return;
 	}
 
-	# The stop acting button doesn't perform a submit action and so
-	# these extra parameters are passed so that if an instructor stops
-	# acting the current studentID, setID and problemID will be maintained
+	# The stop acting button doesn't perform a submit action and so these extra parameters are passed so that if an
+	# instructor stops acting the current studentID, setID and problemID will be maintained.
+	$c->{extraStopActingParams}{selected_users}    = $c->param('selected_users');
+	$c->{extraStopActingParams}{selected_sets}     = $c->param('selected_sets');
+	$c->{extraStopActingParams}{selected_problems} = $c->param('selected_problems');
 
-	my $extraStopActingParams;
-	$extraStopActingParams->{selected_users}    = $c->param('selected_users');
-	$extraStopActingParams->{selected_sets}     = $c->param('selected_sets');
-	$extraStopActingParams->{selected_problems} = $c->param('selected_problems');
-	$c->{extraStopActingParams}                 = $extraStopActingParams;
+	my $selectedUsers    = [ $c->param('selected_users') ]    // [];
+	my $selectedSets     = [ $c->param('selected_sets') ]     // [];
+	my $selectedProblems = [ $c->param('selected_problems') ] // [];
 
-	my $selectedUsers = [ $c->param('selected_users') ] // [];
-
-	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
+	my $instructor = $c->authz->hasPermissions($user, 'access_instructor_tools');
 
 	# If not instructor then force table to use current user-id
-	if (!$instructor) {
-		$selectedUsers = [$user];
-	}
+	$selectedUsers = [$user] if !$instructor;
 
 	return unless $selectedUsers && $selectedSets && $selectedProblems;
 
 	my %records;
 	my %prettyProblemNumbers;
-	my %answerTypes;
+	my %fallbackAnswerTypes;
 
-	foreach my $studentUser (@$selectedUsers) {
+	for my $studentUser (@$selectedUsers) {
 		my @sets;
 
 		# search for selected sets assigned to students
 		my @allSets = $db->listUserSets($studentUser);
-		foreach my $setName (@allSets) {
+		for my $setName (@allSets) {
 			my $set = $db->getMergedSet($studentUser, $setName);
 			if (defined($set->assignment_type) && $set->assignment_type =~ /gateway/) {
 				my @versions = $db->listSetVersions($studentUser, $setName);
-				foreach my $version (@versions) {
+				for my $version (@versions) {
 					if (grep {/^$setName,v$version$/} @$selectedSets) {
 						$set = $db->getUserSet($studentUser, "$setName,v$version");
 						push(@sets, $set);
@@ -92,7 +84,7 @@ async sub initialize ($c) {
 
 		next unless @sets;
 
-		foreach my $setRecord (@sets) {
+		for my $setRecord (@sets) {
 			my @problemNumbers;
 			my $setName    = $setRecord->set_id;
 			my $isJitarSet = (defined($setRecord->assignment_type) && $setRecord->assignment_type eq 'jitar') ? 1 : 0;
@@ -100,7 +92,7 @@ async sub initialize ($c) {
 			# search for matching problems
 			my @allProblems = $db->listUserProblems($studentUser, $setName);
 			next unless @allProblems;
-			foreach my $problemNumber (@allProblems) {
+			for my $problemNumber (@allProblems) {
 				my $prettyProblemNumber = $problemNumber;
 				if ($isJitarSet) {
 					$prettyProblemNumber = join('.', jitar_id_to_seq($problemNumber));
@@ -114,53 +106,73 @@ async sub initialize ($c) {
 
 			next unless @problemNumbers;
 
-			foreach my $problemNumber (@problemNumbers) {
-				my @pastAnswerIDs = $db->listProblemPastAnswers($studentUser, $setName, $problemNumber);
+			for my $problemNumber (@problemNumbers) {
+				my @pastAnswers = $db->getPastAnswersWhere(
+					{ user_id => $studentUser, set_id => $setName, problem_id => $problemNumber }, 'answer_id');
+				next unless @pastAnswers;
 
-				if (!defined($answerTypes{$setName}{$problemNumber})) {
-					#set up a silly problem to figure out what type the answers are
-					#(why isn't this stored somewhere)
-					my $unversionedSetName = $setName;
-					$unversionedSetName =~ s/,v[0-9]*$//;
-					my $displayMode = $c->{displayMode};
-					my $formFields  = $c->req->params->to_hash;
-					my $set         = $db->getMergedSet($studentUser, $unversionedSetName);
-					my $problem     = $db->getMergedProblem($studentUser, $unversionedSetName, $problemNumber);
-					my $userobj     = $db->getUser($studentUser);
-					#if these things dont exist then the problem doesnt exist and past answers dont make sense
-					next unless defined($set) && defined($problem) && defined($userobj);
+				# Get answer types from the user problem.
+				my $problem;
+				if ($setRecord->assignment_type =~ /gateway/) {
+					my ($unversionedSetID, $versionID) = $setName =~ /^([^,]*),v(\d*)$/;
+					$problem =
+						$db->getMergedProblemVersion($studentUser, $unversionedSetID, $versionID, $problemNumber);
+				} else {
+					$problem = $db->getMergedProblem($studentUser, $setName, $problemNumber);
+				}
+				# If a problem was not found for this user, then it doesn't make sense to show past answers.
+				next unless defined $problem;
 
-					my $gProblem = $db->getGlobalProblem($unversionedSetName, $problemNumber);
+				my @answerTypes;
+				# If $problem->flags ends in a comma, then this is the old type of flags value without answer types.
+				@answerTypes = split(',', $problem->flags =~ s/:needs_grading$//r)
+					if $problem->flags && $problem->flags !~ /,$/;
 
-					my $pg = await renderPG(
-						$c, $userobj, $set, $problem,
-						$set->psvn,
-						$formFields,
-						{    # translation options
-							displayMode              => 'plainText',
-							showHints                => 0,
-							showSolutions            => 0,
-							refreshMath2img          => 0,
-							processAnswers           => 1,
-							permissionLevel          => $db->getPermissionLevel($studentUser)->permission,
-							effectivePermissionLevel => $db->getPermissionLevel($studentUser)->permission,
-						},
-					);
+				# If the answer types were not saved in the flags for this user, then render the user's problem to
+				# figure out what type the answers are.  This is usually only the case for the old type of flags value,
+				# which means this is a course restored from a course archive from a previous version of webwork2.
+				if (!@answerTypes) {
+					if (!defined $fallbackAnswerTypes{$setName}{$problemNumber}) {
+						my $set;
+						if ($setName =~ /,v[0-9]*$/) {
+							my ($unversionedSetID, $versionID) = $setName =~ /^([^,]*),v(\d*)$/;
+							$set = $db->getMergedSetVersion($studentUser, $unversionedSetID, $versionID);
+						} else {
+							$set = $db->getMergedSet($studentUser, $setName);
+						}
+						my $userRecord = $db->getUser($studentUser);
 
-					# check to see what type the answers are.  right now it only checks for essay but could do more
-					my %answerHash = %{ $pg->{answers} };
-					my @answerTypes;
+						next unless defined $set && defined $userRecord;
 
-					foreach (sortByName(undef, keys %answerHash)) {
-						push(@answerTypes, defined($answerHash{$_}->{type}) ? $answerHash{$_}->{type} : 'undefined');
+						my $pg = await renderPG(
+							$c,
+							$userRecord,
+							$set, $problem,
+							$set->psvn,
+							{},
+							{    # translation options
+								displayMode              => 'plainText',
+								processAnswers           => 1,
+								showHints                => 0,
+								showSolutions            => 0,
+								refreshMath2img          => 0,
+								permissionLevel          => 0,
+								effectivePermissionLevel => 0,
+							},
+						);
+
+						for (@{ $pg->{flags}{ANSWER_ENTRY_ORDER} // [] }) {
+							push(
+								@{ $fallbackAnswerTypes{$setName}{$problemNumber} },
+								$pg->{PG_ANSWERS_HASH}{$_}{rh_ans}{type} // 'undefined'
+							);
+						}
 					}
-
-					$answerTypes{$setName}{$problemNumber} = [@answerTypes];
+					@answerTypes = @{ $fallbackAnswerTypes{$setName}{$problemNumber} }
+						if defined $fallbackAnswerTypes{$setName}{$problemNumber};
 				}
 
-				my @pastAnswers = $db->getPastAnswers(\@pastAnswerIDs);
-
-				foreach my $pastAnswer (@pastAnswers) {
+				for my $pastAnswer (@pastAnswers) {
 					my $answerID = $pastAnswer->answer_id;
 					my $answers  = $pastAnswer->answer_string;
 					my $scores   = $pastAnswer->scores;
@@ -171,19 +183,17 @@ async sub initialize ($c) {
 					$records{$studentUser}{$setName}{$problemNumber}{$answerID} = {
 						time        => $time,
 						answers     => [@answers],
-						answerTypes => $answerTypes{$setName}{$problemNumber},
+						answerTypes => \@answerTypes,
 						scores      => [@scores],
 						comment     => $pastAnswer->comment_string // ''
 					};
-
 				}
-
 			}
 		}
 	}
 
-	$c->{records}              = \%records;
-	$c->{prettyProblemNumbers} = \%prettyProblemNumbers;
+	$c->stash->{records}              = \%records;
+	$c->stash->{prettyProblemNumbers} = \%prettyProblemNumbers;
 
 	# Prepare a csv if we are an instructor
 	if ($instructor && $c->param('createCSV')) {
@@ -201,7 +211,7 @@ async sub initialize ($c) {
 
 		if (my $fh = Mojo::File->new($fullFilename)->open('>:encoding(UTF-8)')) {
 
-			my $csv = Text::CSV->new({ "eol" => "\n" });
+			my $csv = Text::CSV->new({ eol => "\n" });
 			my @columns;
 
 			$columns[0] = $c->maketext('User ID');
@@ -214,13 +224,13 @@ async sub initialize ($c) {
 
 			$csv->print($fh, \@columns);
 
-			foreach my $studentID (sort keys %records) {
+			for my $studentID (sort keys %records) {
 				$columns[0] = $studentID;
-				foreach my $setID (sort keys %{ $records{$studentID} }) {
+				for my $setID (sort keys %{ $records{$studentID} }) {
 					$columns[1] = $setID;
-					foreach my $probNum (sort { $a <=> $b } keys %{ $records{$studentID}{$setID} }) {
+					for my $probNum (sort { $a <=> $b } keys %{ $records{$studentID}{$setID} }) {
 						$columns[2] = $prettyProblemNumbers{$setID}{$probNum};
-						foreach my $answerID (sort { $a <=> $b } keys %{ $records{$studentID}{$setID}{$probNum} }) {
+						for my $answerID (sort { $a <=> $b } keys %{ $records{$studentID}{$setID}{$probNum} }) {
 							my %record = %{ $records{$studentID}{$setID}{$probNum}{$answerID} };
 
 							$columns[3] = $c->formatDateTime($record{time});
@@ -314,7 +324,7 @@ sub byData {
 	return $A cmp $B;
 }
 
-# sorts problem ID's so that all just-in-time like ids are at the bottom
+# Sorts problem ID's so that all just-in-time like ids are at the bottom
 # of the list in order and other problems
 sub prob_id_sort {
 

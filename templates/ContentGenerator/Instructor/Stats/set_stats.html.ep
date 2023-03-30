@@ -1,3 +1,7 @@
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/apps/Stats/stats.js'), defer => undef =%>
+% end
+%
 % # Filter and problem selectors.
 <div class="d-flex align-items-center mt-1 mb-3">
 	<%= maketext('Showing statistics for:') =%>
@@ -184,15 +188,13 @@
 			<th><%= maketext('# of Active Students') %></th>
 			<% for (@$numActive) { %><td class="text-center"><%= $_ %></td><% } =%>
 		</tr>
-		% if ($showGraderRow) {
+		% if ($authz->hasPermissions(param('user'), 'score_sets')) {
 			<tr>
 				<th><%= maketext('Manual Grader') %></th>
 				% for (@$problems) {
 					<td class="text-center">
-						% if ($_->flags =~ /essay/) {
-							<%= link_to maketext('Grade Problem [_1]', $_->{prettyID}) =>
-								$c->systemLink(url_for('instructor_problem_grader', problemID => $_->problem_id)) %>
-						% }
+						<%= link_to $_->{prettyID} =>
+							$c->systemLink(url_for('instructor_problem_grader', problemID => $_->problem_id)) %>
 					</td>
 				% }
 			</tr>

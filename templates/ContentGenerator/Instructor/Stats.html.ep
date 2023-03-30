@@ -1,14 +1,5 @@
 % use WeBWorK::Utils qw(getAssetURL);
 %
-% content_for js => begin
-	% if (current_route =~ /^instructor_(set|problem)_statistics$/) {
-		<%= javascript getAssetURL($ce, 'js/apps/Stats/stats.js'), defer => undef =%>
-	% }
-	% if (current_route eq 'instructor_problem_statistics') {
-		<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
-	% }
-% end
-%
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
 	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to access instructor tools') %></div>
 	% last;

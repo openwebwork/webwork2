@@ -2,6 +2,7 @@
 %
 % content_for js => begin
 	<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
+	<%= javascript getAssetURL($ce, 'js/apps/RenderProblem/renderproblem.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/apps/SetMaker/setmaker.js'), defer => undef =%>
 	%
 	% if ($authz->hasPermissions(scalar(param('user')), 'modify_tags')) {
@@ -17,7 +18,7 @@
 %
 <%= form_for current_route, method => 'POST', name => 'library_browser_form', begin =%>
 	<%= $c->hidden_authen_fields =%>
-	<%= hidden_field courseID => $courseID, id => 'hidden_courseID' =%>
+	<%= hidden_field hidden_course_id => $courseID =%>
 	<%= hidden_field hidden_language => $ce->{language} =%>
 	<%= hidden_field browse_which => $c->{browse_which} =%>
 	<%= hidden_field problem_seed => $c->{problem_seed} =%>

@@ -156,9 +156,6 @@ sub set_stats ($c) {
 	# For jitar sets we need to know which problems are top level problems.
 	my %topLevelProblems;
 
-	# Show a grading link for any essay problems in the set (if any).
-	my $showGraderRow = 0;
-
 	# Compile the following data for all students.
 	my @index_list;                         # List of all student success indicators.
 	my @score_list;                         # List of all student total percentage scores.
@@ -179,8 +176,6 @@ sub set_stats ($c) {
 			$c->systemLink(
 				$c->url_for('instructor_problem_statistics', setID => $c->stash('setID'), problemID => $probID),
 				params => $c->param('filter') ? { filter => $c->param('filter') } : {});
-
-		$showGraderRow = 1 if $problem->flags =~ /essay/;
 
 		# Store the point value of each problem.
 		$totalValue += $problem->value;
@@ -367,7 +362,6 @@ sub set_stats ($c) {
 		avgAttempts        => \@avgAttempts,
 		successList        => \@successList,
 		numActive          => \@numActive,
-		showGraderRow      => $showGraderRow,
 		attemptsList       => \@attemptsList
 	);
 }

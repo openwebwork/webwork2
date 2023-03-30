@@ -851,7 +851,11 @@ input.changed[type=text] { /* orange */
 	}
 }
 
-.psr_render_area iframe {
+.rpc_render_area_container {
+	background-color: #f5f5f5;
+}
+
+.rpc_render_area iframe {
 	width: 100%;
 	border-radius: 5px;
 }
@@ -929,11 +933,22 @@ span {
 
 /* Problem graders */
 
-.NeedsGrading { font-weight: bold; }
+span.needs-grading,
+td.needs-grading {
+	background-color: #fff3cd;
+
+	div {
+		font-weight: bold;
+	}
+}
+
+span.alt-source,
+td.alt-source {
+	background-color: #e6e7e9;
+}
 
 #problem-grader-form {
-	.graded-answer:not(:last-child),
-	.essay-answer:not(:last-child) {
+	.past-answer:not(:last-child) {
 		border-bottom: 1px solid #d5d5d5;
 		margin-bottom: 2px;
 		padding-bottom: 5px;

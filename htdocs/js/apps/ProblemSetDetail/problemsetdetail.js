@@ -228,8 +228,8 @@
 
 	// Set up the button to hide all rendered problems.
 	document.getElementById('psd_hide_all')?.addEventListener('click', () => {
-		document.querySelectorAll('.psr_render_area').forEach((renderArea) => {
-			const iframe = renderArea.querySelector('[id^=psr_render_iframe_]');
+		document.querySelectorAll('.rpc_render_area').forEach((renderArea) => {
+			const iframe = renderArea.querySelector('[id^="psr_render_area_"][id$="_iframe"]');
 			if (iframe && iframe.iFrameResizer) iframe.iFrameResizer.close();
 		});
 	}, { passive: true });
@@ -300,23 +300,10 @@
 		const renderArea = document.getElementById(`psr_render_area_${id}`);
 
 		const ro = {
-			user: document.getElementById('hidden_user')?.value,
-			courseID: document.getElementById('hidden_course_id')?.value,
-			key: document.getElementById('hidden_key')?.value
+			problemSeed: document.getElementById(`problem.${id}.problem_seed_id`)?.value ?? 1,
+			sourceFilePath: document.getElementById(`problem.${id}.source_file_id`)?.value ||
+			document.getElementById(`problem_${id}_default_source_file`)?.value,
 		};
-
-		if (!(ro.user && ro.courseID && ro.key)) {
-			renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-				+ 'Missing hidden credentials: user, session_key, courseID</div>';
-			resolve();
-			return;
-		}
-
-		const problemSeed = document.getElementById(`problem.${id}.problem_seed_id`);
-		ro.problemSeed = problemSeed ? problemSeed.value : 1;
-
-		ro.sourceFilePath = document.getElementById(`problem.${id}.source_file_id`)?.value ||
-			document.getElementById(`problem_${id}_default_source_file`)?.value;
 
 		if (ro.sourceFilePath.startsWith('group')) {
 			renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0" style="font-weight:bold">'
@@ -331,66 +318,11 @@
 		const versionIDInput = document.getElementById('hidden_version_id');
 		if (versionIDInput) ro.version_id = versionIDInput.value;
 
-		ro.outputformat = 'simple';
-		ro.showAnswerNumbers = 0;
 		ro.set_id = document.getElementById('hidden_set_id')?.value ?? 'Unknown Set';
 		ro.probNum = id;
-		ro.showHints = 1;
-		ro.showSolutions = 1;
-		ro.permissionLevel = 10;
-		ro.isInstructor = 1;
-		ro.noprepostambles = 1;
-		ro.processAnswers = 0;
-		ro.showFooter = 0;
-		ro.displayMode = document.getElementById('problem_displaymode')?.value ?? 'MathJax';
 		ro.language = document.querySelector('input[name="hidden_language"]')?.value ?? 'en';
-		ro.send_pg_flags = 1;
-		ro.extra_header_text = '<style>' +
-			'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
-			'</style>';
 
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-		fetch(
-			basicWebserviceURL,
-			{
-				method: 'post',
-				mode: 'same-origin',
-				body: new URLSearchParams(ro),
-				signal: controller.signal
-			}
-		).then((response) => {
-			clearTimeout(timeoutId);
-			return response.json();
-		}).then((data) => {
-			// If the error is set, show that.
-			if (data.error) throw data.error;
-			// This generally shouldn't happen.
-			if (!data.html) throw 'A server error occured.  The response had no content';
-			// Give nicer file not found error
-			if (/this problem file was empty/i.test(data.html)) throw 'No Such File or Directory!';
-			// Give nicer problem rendering error
-			if ((data.pg_flags && data.pg_flags.error_flag) ||
-				/error caught by translator while processing problem/i.test(data.html))
-				throw 'There was an error rendering this problem!';
-
-			const iframe = document.createElement('iframe');
-			iframe.id = `psr_render_iframe_${id}`;
-			iframe.style.border = 'none';
-			iframe.srcdoc = data.html;
-			renderArea.innerHTML = '';
-			renderArea.append(iframe);
-
-			if (data.pg_flags && data.pg_flags.comment)
-				iframe.insertAdjacentHTML('afterend', data.pg_flags.comment);
-
-			iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe);
-			iframe.addEventListener('load', () => resolve());
-		}).catch((err) => {
-			renderArea.innerHTML = `<div class="alert alert-danger p-1 mb-0 fw-bold">${err?.message ?? err}</div>`;
-			resolve();
-		});
+		webworkConfig.renderProblem(renderArea, ro).then(resolve);
 	});
 
 	// Set up the problem render buttons.
@@ -398,7 +330,7 @@
 		renderButton.addEventListener('click', () => {
 			const id = renderButton.id.match(/^pdr_render_(\d+)/)[1];
 			const renderArea = document.getElementById(`psr_render_area_${id}`);
-			const iframe = document.getElementById(`psr_render_iframe_${id}`);
+			const iframe = document.getElementById(`psr_render_area_${id}_iframe`);
 			if (iframe && iframe.iFrameResizer) {
 				iframe.iFrameResizer.close();
 				renderArea.innerHTML = '';
@@ -417,7 +349,7 @@
 		Object.keys(collapsibles).forEach((row) => collapsibles[row].show());
 		document.querySelectorAll('.sortable-branch.collapse').forEach(
 			(branch) => bootstrap.Collapse.getInstance(branch)?.show());
-		const renderAreas = document.querySelectorAll('.psr_render_area');
+		const renderAreas = document.querySelectorAll('.rpc_render_area');
 		for (const renderArea of renderAreas) {
 			renderArea.innerHTML = '<div class="alert alert-success p-1 mb-0">Loading Please Wait...</div>';
 		}

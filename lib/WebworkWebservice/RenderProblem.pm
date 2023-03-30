@@ -229,6 +229,7 @@ async sub renderProblem {
 		useWirisEditor           => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS',
 		isInstructor             => $rh->{isInstructor}       // 0,
 		forceScaffoldsOpen       => $rh->{forceScaffoldsOpen} // 0,
+		QUIZ_PREFIX              => $rh->{answerPrefix},
 		debuggingOptions         => {
 			show_resource_info          => $rh->{show_resource_info}          // 0,
 			view_problem_debugging_info => $rh->{view_problem_debugging_info} // 0,

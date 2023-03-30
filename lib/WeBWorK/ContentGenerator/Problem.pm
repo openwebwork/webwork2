@@ -1141,7 +1141,7 @@ sub page_title ($c) {
 				data  => { source_file => $c->ce->{courseDirs}{templates} . '/' . $c->{problem}{source_file} },
 				$c->maketext('Edit Tags')
 			),
-			$c->hidden_field(courseID => $c->stash('courseID'), id => 'hidden_courseID')
+			$c->hidden_field(hidden_course_id => $c->stash('courseID'))
 		)->join('');
 	}
 

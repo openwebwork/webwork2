@@ -1,3 +1,9 @@
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/apps/RenderProblem/renderproblem.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/apps/Stats/stats.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
+% end
+%
 <div class="mb-3">
 	<%= maketext('Showing statistics for:') =%>
 	<%= include 'ContentGenerator/Instructor/Stats/student_filter_menu', filters => $filters =%>
@@ -78,21 +84,34 @@
 </p>
 <%= $c->bracket_table([ 95, 75, 50, 25, 5, 1 ], [ $problemAttempts ], [ maketext('# of attempts') ], reverse => 1) =%>
 %
+% if ($c->{problemRecord}->source_file =~ /^group:/) {
+	<div class="alert alert-info">
+		<%= maketext('Problem source is drawn from a grouping set and can not be directly rendered or edited.') %>
+	</div>
+	% last;
+% }
+%
 % # Render Problem
-<div class="mt-3 p-3 border rounded" style="background-color: #f5f5f5;">
+<div class="rpc_render_area_container mt-2 p-2 border rounded">
 	<%= $c->hidden_authen_fields =%>
-	<%= hidden_field courseID => $courseID, id => 'hidden_course_id' =%>
+	<%= hidden_field hidden_course_id => $courseID =%>
+	<%= hidden_field hidden_language => $ce->{language} =%>
 	<%= hidden_field setID => $setID, id => 'hidden_set_id' =%>
 	<%= hidden_field problemID => $problemID, id => 'hidden_problem_id' =%>
 	<%= hidden_field sourceFilePath => $c->{problemRecord}->source_file, id => 'hidden_source_file' =%>
-	<div class="d-flex gap-3">
-		<button id="problem_render_btn" class="btn btn-primary" type="button" tabindex="0"
-			data-render-text="<%= maketext('Render Problem') %>" data-hide-text="<%= maketext('Hide Problem') %>" >
-			<%= maketext('Render Problem') =%>
-		</button>
-		<%= link_to maketext('Edit Problem') =>
-				$c->systemLink(url_for('instructor_problem_editor_withset_withproblem')),
-			class => 'btn btn-primary', target => 'WW_Editor' =%>
+	<div class="btn-toolbar gap-3">
+		<div class="input-group pt-1">
+			<%= label_for problem_displaymode => maketext('Display Mode:'), class => 'input-group-text' =%>
+			<%= select_field 'problem_displaymode' => [
+					grep { exists WeBWorK::PG::DISPLAY_MODES()->{$_} } @{ $ce->{pg}{displayModes} }
+				],
+				id => 'problem_displaymode', class => 'form-select' =%>
+		</div>
+		<div class="btn-group pt-1">
+			<%= link_to maketext('Edit Problem') =>
+					$c->systemLink(url_for('instructor_problem_editor_withset_withproblem')),
+				class => 'btn btn-primary', target => 'WW_Editor' =%>
+		</div>
 	</div>
-	<div id="problem_render_area" class="psr_render_area mt-2"></div>
+	<div id="problem_render_area" class="rpc_render_area mt-2"></div>
 </div>

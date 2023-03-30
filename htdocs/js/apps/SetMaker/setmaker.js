@@ -45,7 +45,7 @@
 			command: 'buildtree',
 			user: document.getElementById('hidden_user')?.value,
 			key: document.getElementById('hidden_key')?.value,
-			courseID: document.getElementById('hidden_courseID')?.value,
+			courseID: document.getElementsByName('hidden_course_id')[0]?.value,
 			rpc_command: command
 		};
 	};
@@ -60,6 +60,8 @@
 	const librarySection = document.querySelector('select[name="library_textsection"]');
 	const includeOPL = document.querySelector('[name="includeOPL"]');
 	const includeContrib = document.querySelector('[name="includeContrib"]');
+
+	const countLine = document.getElementById('library_count_line');
 
 	const lib_update = async (who, what) => {
 		const child = { subjects: 'chapters', chapters: 'sections', sections: 'count' };
@@ -76,6 +78,9 @@
 		requestObject.includeContrib = includeContrib?.checked ? 1 : 0;
 
 		if (who == 'count') {
+			// Don't perform a count if there is no count line to update.
+			if (!countLine) return;
+
 			requestObject.command = 'countDBListings';
 
 			const controller = new AbortController();
@@ -99,7 +104,7 @@
 						throw data.error;
 					} else {
 						const num = data.result_data[0];
-						document.getElementById('library_count_line').firstElementChild.innerHTML = num === '1'
+						countLine.firstElementChild.innerHTML = num === '1'
 							? 'There is 1 matching WeBWorK problem'
 							: `There are ${num} matching WeBWorK problems.`;
 					}
@@ -384,7 +389,7 @@
 			unshownAreas.forEach((area) => area.classList.remove('d-none'));
 			// Render any problems that were hidden that have not yet been rendered.
 			for (const area of unshownAreas) {
-				const iframe = area.querySelector('iframe[id^=psr_render_iframe_]');
+				const iframe = area.querySelector('iframe[id^="problem_render_area_"][id$="_iframe"]');
 				if (iframe && iframe.iFrameResizer) iframe.iFrameResizer.resize();
 				else await render(area.id.match(/^pgrow(\d+)/)[1]);
 			}
@@ -411,102 +416,27 @@
 		attachEventListeners(button, () => togglemlt(button.dataset.mltCnt, button.dataset.mltNoshowClass)));
 
 	// Problem rendering
-
-	const basicRendererURL = `${webworkURL}/render_rpc`;
-
 	const render = (id) => new Promise((resolve) => {
-		const renderArea = document.getElementById(`psr_render_area_${id}`);
+		const renderArea = document.getElementById(`problem_render_area_${id}`);
 		if (!renderArea) { resolve(); return; }
 
-		let iframe = renderArea.querySelector(`#psr_render_iframe_${id}`);
-		if (iframe && iframe.iFrameResizer) iframe.contentDocument.location.replace('about:blank');
-
-		const ro = {
-			user: document.getElementById('hidden_user')?.value,
-			courseID: document.getElementById('hidden_courseID')?.value,
-			key: document.getElementById('hidden_key')?.value
-		};
-
-		if (!(ro.user && ro.courseID && ro.key)) {
-			renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-				+ 'Missing hidden credentials: user, session_key, courseID</div>';
-			resolve();
-			return;
-		}
-
-		ro.sourceFilePath = renderArea.dataset.pgFile;
-		ro.outputformat = 'simple';
-		ro.showAnswerNumbers = 0;
-		ro.problemSeed = Math.floor((Math.random()*10000));
-		ro.showHints = document.querySelector('input[name="showHints"]')?.checked ? 1 : 0;
-		ro.showSolutions = document.querySelector('input[name="showSolutions"]')?.checked ? 1 : 0;
-		ro.isInstructor = 1;
-		ro.forceScaffoldsOpen = 1;
-		ro.noprepostambles = 1;
-		ro.processAnswers = 0;
-		ro.showFooter = 0;
-		ro.displayMode = document.querySelector('select[name="mydisplayMode"]').value ?? 'MathJax';
-		ro.language = document.querySelector('input[name="hidden_language"]')?.value ?? 'en';
-
 		// Abort if the display mode is not set to None
-		if (ro.displayMode === 'None') {
+		if (document.getElementById('problem_displaymode')?.value === 'None') {
 			while (renderArea.firstChild) renderArea.firstChild.remove();
 			resolve();
 			return;
 		}
 
-		ro.send_pg_flags = 1;
-		ro.extra_header_text = '<style>' +
-			'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
-			'</style>';
-
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-		fetch(basicRendererURL, {
-			method: 'post',
-			mode: 'same-origin',
-			body: new URLSearchParams(ro),
-			signal: controller.signal
-		}).then((response) => {
-			clearTimeout(timeoutId);
-			return response.json();
-		}).then((data) => {
-			// If the error is set, show that.
-			if (data.error) throw data.error;
-			// This shouldn't happen if the error is not set.
-			if (!data.html) throw 'A server error occured.  The response had no content.';
-			// Give nicer file not found error
-			if (/this problem file was empty/i.test(data.html)) throw 'No Such File or Directory!';
-			// Give nicer problem rendering error
-			if ((data.pg_flags && data.pg_flags.error_flag) ||
-				/error caught by translator while processing problem/i.test(data.html))
-				throw 'There was an error rendering this problem!';
-
-			if (!(iframe && iframe.iFrameResizer)) {
-				iframe = document.createElement('iframe');
-				iframe.id = `psr_render_iframe_${id}`;
-				iframe.style.border = 'none';
-				while (renderArea.firstChild) renderArea.firstChild.remove();
-				renderArea.append(iframe);
-
-				if (data.pg_flags && data.pg_flags.comment) {
-					const container = document.createElement('div');
-					container.innerHTML = data.pg_flags.comment;
-					iframe.after(container);
-				}
-				iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe);
-				iframe.addEventListener('load', () => resolve());
-			}
-			iframe.srcdoc = data.html;
-		}).catch((err) => {
-			renderArea.innerHTML = `<div class="alert alert-danger p-1 mb-0 fw-bold">${err?.message ?? err}</div>`;
-			resolve();
-		});
+		webworkConfig.renderProblem(renderArea, {
+			sourceFilePath: renderArea.dataset.pgFile,
+			problemSeed: Math.floor(Math.random() * 10000),
+			showHints: document.querySelector('input[name="showHints"]')?.checked ? 1 : 0,
+			showSolutions: document.querySelector('input[name="showSolutions"]')?.checked ? 1 : 0
+		}).then(resolve);
 	});
 
 	// Find all render areas
-	const renderAreas = document.querySelectorAll('.psr_render_area');
+	const renderAreas = document.querySelectorAll('.rpc_render_area');
 
 	// Add the loading message to all render areas.
 	for (const renderArea of renderAreas) {
@@ -516,7 +446,7 @@
 	// Render all visible problems on the page
 	(async () => {
 		for (const renderArea of renderAreas) {
-			const id = renderArea.id.match(/^psr_render_area_(\d+)/)[1];
+			const id = renderArea.id.match(/^problem_render_area_(\d+)/)[1];
 			if (document.getElementById(`pgrow${id}`)?.classList.contains('d-none')) continue;
 			await render(id);
 		}
