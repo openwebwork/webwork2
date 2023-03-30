@@ -240,8 +240,7 @@ sub gateway_body ($c) {
 		# Get a problem to determine how many submits have been made.
 		my @ProblemNums = $db->listUserProblems($effectiveUser, $set->set_id);
 		my $Problem = $db->getMergedProblemVersion($effectiveUser, $set->set_id, $verSet->version_id, $ProblemNums[0]);
-		my $verSubmits =
-			(defined $Problem && $Problem->num_correct ne '') ? $Problem->num_correct + $Problem->num_incorrect : 0;
+		my $verSubmits = defined $Problem ? $Problem->num_correct + $Problem->num_incorrect : 0;
 		my $maxSubmits = $verSet->attempts_per_version || 0;
 
 		# Build data hash for this version.

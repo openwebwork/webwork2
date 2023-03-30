@@ -504,8 +504,7 @@ async sub pre_header_initialize ($c) {
 	$versionsPerInterval = 0 if !defined $versionsPerInterval || $versionsPerInterval eq '';
 
 	# Every problem in the set is assumed have the same submission characteristics.
-	my $currentNumAttempts =
-		defined $problem && $problem->num_correct ne '' ? $problem->num_correct + $problem->num_incorrect : 0;
+	my $currentNumAttempts = defined $problem ? $problem->num_correct + $problem->num_incorrect : 0;
 
 	# $maxAttempts is the maximum number of versions that can be created.
 	# If the problem isn't defined it doesn't matter.

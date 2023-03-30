@@ -29,6 +29,12 @@
 					</div>
 					<div class="form-check form-check-inline">
 						<label class="form-check-label">
+							<%= check_box show_timeleft => 1, class => 'form-check-input' =%>
+							<%= maketext('time remaining') =%>
+						</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<label class="form-check-label">
 							<%= check_box show_problems => 1, class => 'form-check-input' =%>
 							<%= maketext('problems') =%>
 						</label>
@@ -71,7 +77,7 @@
 	% if ($setIsVersioned) {
 		<p>
 			<%= maketext(
-				q{Click a student's name to see the student\'s test summary page. }
+				q{Click a student's name to see the student's test summary page. }
 					. q{Click a test's version number to see the corresponding test version. }
 					. 'Click a heading to sort the table.'
 			) =%>
@@ -116,6 +122,7 @@
 		% show_best_only  => $showBestOnly,
 		% show_date       => $showColumns->{date},
 		% show_testtime   => $showColumns->{testtime},
+		% show_timeleft   => $showColumns->{timeleft},
 		% show_problems   => $showColumns->{problems},
 		% show_section    => $showColumns->{section},
 		% show_recitation => $showColumns->{recit},
@@ -153,6 +160,9 @@
 				% }
 				% if ($showColumns->{testtime}) {
 					<th <%== $rowspan %>><%= maketext('Test Time') %></th>
+				% }
+				% if ($showColumns->{timeleft}) {
+					<th <%== $rowspan %>><%= maketext('Time Remaining') %></th>
 				% }
 				% if ($showColumns->{problems}) {
 					<th colspan="<%= scalar(@$problems) %>"><%= maketext('Problems') %></th>
@@ -231,6 +241,9 @@
 							% }
 							% if ($showColumns->{testtime}) {
 								<td><%= $rec->{testtime} %></td>
+							% }
+							% if ($showColumns->{timeleft}) {
+								<td><%= $rec->{timeleft} %></td>
 							% }
 							% if ($showColumns->{problems}) {
 								% if (@{ $rec->{problem_scores} }) {
