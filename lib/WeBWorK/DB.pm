@@ -94,15 +94,17 @@ record class currently defined for that table in C<%dbLayout>.
 
 use strict;
 use warnings;
+
 use Carp;
 use Data::Dumper;
 use Scalar::Util qw/blessed/;
+use HTML::Entities qw( encode_entities );
+
 use WeBWorK::DB::Schema;
 use WeBWorK::DB::Utils qw/make_vsetID grok_vsetID grok_setID_from_vsetID_sql
 	grok_versionID_from_vsetID_sql/;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use);
-use HTML::Entities qw( encode_entities );
 
 =for comment
 

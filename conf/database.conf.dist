@@ -373,7 +373,6 @@ $dbLayouts{sql_single} = {
 			tableOverride => "${courseName}_global_user_achievement"
 		},
 	},
-
 };
 
 # include ("conf/database.conf");  # uncomment to provide local overrides
