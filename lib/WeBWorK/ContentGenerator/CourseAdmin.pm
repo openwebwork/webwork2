@@ -335,6 +335,7 @@ sub do_add_course ($c) {
 			$PermissionLevel->permission($ce->{userRoles}{admin});
 			my $User     = $db->getUser($userID);
 			my $Password = $db->getPassword($userID);
+			$User->status('O');    # Add admin user as an observer.
 
 			push @users, [ $User, $Password, $PermissionLevel ]
 				if $authz->hasPermissions($userID, 'create_and_delete_courses');
@@ -349,7 +350,7 @@ sub do_add_course ($c) {
 			last_name     => $add_initial_lastName,
 			student_id    => $add_initial_userID,
 			email_address => $add_initial_email,
-			status        => 'C',
+			status        => 'O',
 		);
 		my $Password = $db->newPassword(
 			user_id  => $add_initial_userID,

@@ -116,8 +116,7 @@ sub filter_students ($c) {
 	for my $student (@{ $c->{student_records} }) {
 		# Only include current/auditing students in stats.
 		next
-			unless ($ce->status_abbrev_has_behavior($student->status, 'include_in_stats')
-				&& $db->getPermissionLevel($student->user_id)->permission == $ce->{userRoles}{student});
+			unless ($ce->status_abbrev_has_behavior($student->status, 'include_in_stats'));
 
 		my $section = $student->section;
 		$filters{"section:$section"} = $c->maketext('Section [_1]', $section)
