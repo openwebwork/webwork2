@@ -1004,7 +1004,7 @@ sub readSetDef ($c, $fileName) {
 		$restrictLoc,         $emailInstructor,    $restrictProbProgression, $countsParentGrade,
 		$attToOpenChildren,   $problemID,          $showMeAnother,           $showHintsAfter,
 		$prPeriod,            $listType
-	) = ('') x 16;    # initialize these to ''
+	) = ('') x 18;    # initialize these to ''
 	my ($timeCap, $restrictIP, $relaxRestrictIP) = (0, 'No', 'No');
 	# additional fields currently used only by gateways; later, the world?
 	my ($hideScore, $hideScoreByProblem, $hideWork,) = ('N', 'N', 'N');
