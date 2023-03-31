@@ -142,7 +142,6 @@ async sub pre_header_initialize ($c) {
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
 			useMathQuill             => $c->{will}{useMathQuill},
 			useMathView              => $c->{will}{useMathView},
-			useWirisEditor           => $c->{will}{useWirisEditor},
 		},
 	);
 
@@ -179,7 +178,6 @@ async sub pre_header_initialize ($c) {
 					effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
 					useMathQuill             => $c->{will}{useMathQuill},
 					useMathView              => $c->{will}{useMathView},
-					useWirisEditor           => $c->{will}{useWirisEditor},
 				},
 			);
 
@@ -239,7 +237,6 @@ async sub pre_header_initialize ($c) {
 				effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
 				useMathQuill             => $c->{will}{useMathQuill},
 				useMathView              => $c->{will}{useMathView},
-				useWirisEditor           => $c->{will}{useWirisEditor},
 			},
 		);
 
@@ -302,7 +299,6 @@ async sub pre_header_initialize ($c) {
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
 			useMathQuill             => $c->{will}{useMathQuill},
 			useMathView              => $c->{will}{useMathView},
-			useWirisEditor           => $c->{will}{useWirisEditor},
 			forceScaffoldsOpen       => 0,
 			isInstructor             => $authz->hasPermissions($userName, 'view_answers'),
 			debuggingOptions         => getTranslatorDebuggingOptions($authz, $userName)
