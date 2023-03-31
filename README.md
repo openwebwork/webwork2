@@ -31,8 +31,5 @@ New users interested in getting started with their own WeBWorK server, or instru
 
 ## Information For Developers
 
-People interested in developing new features for WeBWorK should take a look at the following resources.  People interested in developing new problems for WeBWorK should visit [Problem Authors](http://webwork.maa.org/wiki/Authors).
-*  [First Time Setup](https://github.com/openwebwork/webwork2/wiki/First-Time-Setup) - Setting up your clone of this github repo for the first time.
-*  [Coding and Workflow](https://github.com/openwebwork/webwork2/wiki/Coding-and-Workflow) -  Our suggested workflow processes.  Following this will make it much easier to get code accepted into the repo.
-*  [Creating Pull Requests](https://github.com/openwebwork/webwork2/wiki/Creating-Pull-Requests) - Instructions on how to submit a pull request.
-*  [More Information](https://github.com/openwebwork/webwork2/wiki/) - Our Github wiki has additional information for developers, including information about WeBWorK3.
+* People interested in developing new features for WeBWorK can start at https://webwork.maa.org/wiki/Category:Developers, or start a [discussion on GitHub](https://github.com/openwebwork/webwork2/discussions) to engage with the current developers.
+* People interested in developing new problems for WeBWorK should visit [Problem Authors](http://webwork.maa.org/wiki/Authors).
