@@ -465,6 +465,48 @@ sub restore_tables {
 }
 
 ################################################################################
+# transaction support
+################################################################################
+
+# Any course will have the user table, so that allows getting the database
+# handle.
+
+sub start_transaction {
+	my $self = shift;
+	eval { $self->{user}->dbh->begin_work; };
+	if ($@) {
+		my $msg = "Error in start_transaction: $@";
+		if ($msg =~ /Already in a transaction/) {
+			warn "Aborting active transaction.";
+			$self->{user}->dbh->rollback;
+		}
+		croak $msg;
+	}
+}
+
+sub end_transaction {
+	my $self = shift;
+	eval { $self->{user}->dbh->commit; };
+	if ($@) {
+		my $msg = "Error in end_transaction: $@";
+		$self->abort_transaction;
+		croak $msg;
+	}
+}
+
+sub abort_transaction {
+	my $self = shift;
+	eval {
+		$self->{user}->dbh->{AutoCommit} = 0;
+		$self->{user}->dbh->rollback;
+	};
+	if ($@) {
+		my $msg = "Error in abort_transaction: $@";
+		croak $msg;
+	}
+}
+
+################################################################################
 # user functions
 ################################################################################
 
@@ -1537,6 +1579,41 @@ sub addUserSet {
 	}
 }
 
+# Used to add a list of UserSet records to the DB in less DB calls.
+sub addMultipleUserSets {
+	my ($self, @userSetList) = @_;
+
+	# Do a single checkArgs call, all records in the list were made in the same manner
+	$self->checkArgs([ $userSetList[0] ], qw/REC:set_user/);
+
+	my @badUserIDs;
+	my %badSetIDs;
+	my @toInsert;
+	for my $userSet (@userSetList) {
+		if ($self->{user}->exists($userSet->user_id)) {
+			if ($self->{set}->exists($userSet->set_id)) {
+				# This record is OK
+				push(@toInsert, $userSet);
+			} else {
+				$badSetIDs{ $userSet->set_id } = 1;
+			}
+		} else {
+			push(@badUserIDs, join("", 'user ', $userSet->user_id, " not found, cannot add set ", $userSet->set_id));
+		}
+	}
+	my $badSetIDerrorMsg =
+		keys(%badSetIDs) ? join(" ", 'bad set IDs seen:', keys(%badSetIDs)) : "";
+
+	eval { return $self->{set_user}->insert_records([@toInsert]); };
+	if ($@) {
+		croak join("\n", "addMultipleUserSets errors:\nDB call error: $@", $badSetIDerrorMsg, @badUserIDs);
+	}
+
+	if (@badUserIDs || keys(@badUserIDs)) {
+		croak join("\n", "addMultipleUserSets errors:\n", $badSetIDerrorMsg, @badUserIDs);
+	}
+}
+
 # the code from putUserSet() is duplicated in large part in the following
 # putVersionedUserSet; c.f. that routine
 sub putUserSet {
@@ -2050,6 +2127,54 @@ sub addUserProblem {
 		croak "addUserProblem: user problem exists (perhaps you meant to use putUserProblem?)";
 	} elsif ($@) {
 		die $@;
+	}
+}
+
+# Used to add multiple problems to a SINGLE set with less DB calls.
+# Not for use by versioned sets
+# This expects @problemLists to be a 2 dimensional array, each
+# entry being the problemList array for one user.
+sub addUserMultipleProblems {
+	my ($self, @problemLists) = @_;
+
+	my $firstUserProblem = $problemLists[0][0];
+	if (!defined($firstUserProblem) || !defined($firstUserProblem->user_id)) {
+		croak "Error in request to addUserMultipleProblems";
+	}
+	my $user_id = $firstUserProblem->user_id;
+	my $set_id  = $firstUserProblem->set_id;
+
+	my ($nv_set_id, $versionNum) = grok_vsetID($set_id);
+	croak "addUserMultipleProblems does not support versioned sets"
+		if defined($versionNum);
+
+	# Possible improvement, if a version set was sent, make calls to addUserProblem for each one.
+
+	# Do a single checkArgs call, all records in the list were made in the same manner
+	my @tmp = ($firstUserProblem);
+	$self->checkArgs(\@tmp, qw/VREC:problem_user/);
+
+	# Array in which all records to add are collected
+	my @collectedProblemList = ();
+
+	for my $problemListRef (@problemLists) {
+		$user_id = $problemListRef->[0]->user_id;
+		croak "addMultipleUserProblems: user set $set_id for user $user_id not found"
+			unless $self->{set_user}->exists($user_id, $set_id);
+
+		# Test whether there are already problem records for this user in this set, as in that case
+		# inserting multiple records at once would trigger an error.
+		my $where = [ user_id_eq_set_id_eq => $user_id, $set_id ];
+
+		croak "addMultipleUserProblems cannot be run as set $set_id already contains some problems for user $user_id"
+			if $self->{problem_user}->count_where($where);
+		# If we got here, we can add this list of problems to those to insert into the database
+		push(@collectedProblemList, @{$problemListRef});
+	}
+
+	eval { $self->{problem_user}->insert_records([@collectedProblemList]); };
+	if ($@) {
+		croak "addUserMultipleProblems: $@";
 	}
 }
 
