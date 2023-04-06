@@ -27,7 +27,7 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		user_id              => { type => "TINYBLOB NOT NULL", key => 1 },
+		user_id              => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		achievement_points   => { type => "INT" },
 		next_level_points    => { type => "INT" },
 		level_achievement_id => { type => "VARCHAR(100)" },

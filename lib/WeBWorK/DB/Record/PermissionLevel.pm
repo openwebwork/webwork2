@@ -28,7 +28,7 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		user_id    => { type => "TINYBLOB NOT NULL", key => 1 },
+		user_id    => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		permission => { type => "INT" },
 
 	);

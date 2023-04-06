@@ -28,8 +28,8 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		user_id     => { type => "TINYBLOB NOT NULL", key => 1 },
-		set_id      => { type => "TINYBLOB NOT NULL", key => 1 },
+		user_id     => { type => "VARCHAR(100) NOT NULL", key => 1 },
+		set_id      => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		problem_id  => { type => "INT NOT NULL",      key => 1 },
 		source_file => { type => "TEXT" },
 		# FIXME i think value should be able to hold decimal values...

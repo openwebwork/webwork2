@@ -27,8 +27,8 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		user_id        => { type => "TINYBLOB NOT NULL", key => 1 },
-		achievement_id => { type => "TINYBLOB NOT NULL", key => 1 },
+		user_id        => { type => "VARCHAR(100) NOT NULL", key => 1 },
+		achievement_id => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		earned         => { type => "INT" },
 		counter        => { type => "INT" },
 		# VARCHAR(1024) is only supported by MySQL version 5.0.3 and
