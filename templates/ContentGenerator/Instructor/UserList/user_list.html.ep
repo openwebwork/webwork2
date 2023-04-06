@@ -73,7 +73,7 @@
 				<%= include 'ContentGenerator/Instructor/UserList/user_row',
 					user         => $c->{allUsers}{$_},
 					userSelected => exists $c->{selectedUserIDs}{$_},
-					editable     => exists $c->{userIsEditable}{$_} 
+					editable     => exists $c->{userIsEditable}{$_}
 				=%>
 			% }
 		</tbody>
