@@ -201,10 +201,6 @@ sub can_useMathView ($c) {
 	return $c->ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView';
 }
 
-sub can_useWirisEditor ($c) {
-	return $c->ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS';
-}
-
 sub can_useMathQuill ($c) {
 	return $c->ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill';
 }
@@ -501,9 +497,8 @@ async sub pre_header_initialize ($c) {
 		showResourceInfo   => $c->param('showResourceInfo')   || $ce->{pg}{options}{showResourceInfo},
 		showHints          => 1,
 		showSolutions      => 1,
-		useMathView        => $user->useMathView ne ''    ? $user->useMathView    : $ce->{pg}{options}{useMathView},
-		useWirisEditor     => $user->useWirisEditor ne '' ? $user->useWirisEditor : $ce->{pg}{options}{useWirisEditor},
-		useMathQuill       => $user->useMathQuill ne ''   ? $user->useMathQuill   : $ce->{pg}{options}{useMathQuill},
+		useMathView        => $user->useMathView ne ''  ? $user->useMathView  : $ce->{pg}{options}{useMathView},
+		useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}{options}{useMathQuill},
 		recordAnswers      => $c->{submitAnswers},
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
@@ -525,7 +520,6 @@ async sub pre_header_initialize ($c) {
 		showMeAnother      => 0,
 		getSubmitButton    => 0,
 		useMathView        => 0,
-		useWirisEditor     => 0,
 		useMathQuill       => 0,
 	);
 
@@ -547,7 +541,6 @@ async sub pre_header_initialize ($c) {
 		showMeAnother      => $c->can_showMeAnother(@args, $c->{submitAnswers}),
 		getSubmitButton    => $c->can_recordAnswers(@args, $c->{submitAnswers}),
 		useMathView        => $c->can_useMathView,
-		useWirisEditor     => $c->can_useWirisEditor,
 		useMathQuill       => $c->can_useMathQuill,
 	);
 
@@ -620,7 +613,6 @@ async sub pre_header_initialize ($c) {
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserID)->permission,
 			useMathQuill             => $will{useMathQuill},
 			useMathView              => $will{useMathView},
-			useWirisEditor           => $will{useWirisEditor},
 			forceScaffoldsOpen       => 0,
 			isInstructor             => $authz->hasPermissions($userID, 'view_answers'),
 			debuggingOptions         => getTranslatorDebuggingOptions($authz, $userID)

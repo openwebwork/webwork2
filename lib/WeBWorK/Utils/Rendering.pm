@@ -175,7 +175,6 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{useMathQuill}   = $translationOptions->{useMathQuill};
 	$options{useMathView}    = $translationOptions->{useMathView};
 	$options{mathViewLocale} = $ce->{pg}{options}{mathViewLocale};
-	$options{useWirisEditor} = $translationOptions->{useWirisEditor};
 
 	$options{__files__} = {
 		root => $ce->{webworkDirs}{root},        # used to shorten filenames

@@ -231,10 +231,6 @@ sub can_useMathView ($c) {
 	return $c->ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView';
 }
 
-sub can_useWirisEditor ($c) {
-	return $c->ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS';
-}
-
 sub can_useMathQuill ($c) {
 	return $c->ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill';
 }
@@ -734,10 +730,9 @@ async sub pre_header_initialize ($c) {
 			|| ($c->param('showSolutions') && ($c->{submitAnswers} || $c->{checkAnswers})),
 		recordAnswers => $c->{submitAnswers} && !$authz->hasPermissions($userID, 'avoid_recording_answers'),
 		# we also want to check answers if we were checking answers and are switching between pages
-		checkAnswers   => $c->{checkAnswers},
-		useMathView    => $user->useMathView ne ''    ? $user->useMathView    : $ce->{pg}{options}{useMathView},
-		useWirisEditor => $user->useWirisEditor ne '' ? $user->useWirisEditor : $ce->{pg}{options}{useWirisEditor},
-		useMathQuill   => $user->useMathQuill ne ''   ? $user->useMathQuill   : $ce->{pg}{options}{useMathQuill},
+		checkAnswers => $c->{checkAnswers},
+		useMathView  => $user->useMathView ne ''  ? $user->useMathView  : $ce->{pg}{options}{useMathView},
+		useMathQuill => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}{options}{useMathQuill},
 	);
 
 	# Are certain options enforced?
@@ -750,7 +745,6 @@ async sub pre_header_initialize ($c) {
 		recordAnswers      => 0,
 		checkAnswers       => 0,
 		useMathView        => 0,
-		useWirisEditor     => 0,
 		useMathQuill       => 0,
 	);
 
@@ -770,7 +764,6 @@ async sub pre_header_initialize ($c) {
 		showProblemScores     => $c->can_showProblemScores(@args),
 		showWork              => $c->can_showWork(@args),
 		useMathView           => $c->can_useMathView,
-		useWirisEditor        => $c->can_useWirisEditor,
 		useMathQuill          => $c->can_useMathQuill
 	);
 
@@ -1452,7 +1445,6 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 			QUIZ_PREFIX        => 'Q' . sprintf('%04d', $problemNumber) . '_',
 			useMathQuill       => $c->{will}{useMathQuill},
 			useMathView        => $c->{will}{useMathView},
-			useWirisEditor     => $c->{will}{useWirisEditor},
 			forceScaffoldsOpen => 1,
 			isInstructor       => $c->authz->hasPermissions($c->{userID}, 'view_answers'),
 			debuggingOptions   => getTranslatorDebuggingOptions($c->authz, $c->{userID})

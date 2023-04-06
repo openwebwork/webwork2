@@ -215,8 +215,6 @@ $mail{feedbackRecipients}    = [
 
 # This sets if mathview is available on the PG editor for use as a minimal latex equation editor
 #$options{PGMathView} = 1;
-# This sets if WirisEditor is available on the PG editor for use as a minimal latex equation editor
-#$options{PGWirisEditor}= 1;
 # This sets if MathQuill is available on the PG editor for use as a minimal latex equation editor
 #$options{PGMathQuill}= 1;
 
@@ -335,7 +333,6 @@ $mail{feedbackRecipients}    = [
 
 #$pg{specialPGEnvironmentVars}{entryAssist} = 'MathQuill';
 #$pg{specialPGEnvironmentVars}{entryAssist} = 'MathView';
-#$pg{specialPGEnvironmentVars}{entryAssist} = 'WIRIS';
 
 ################################################################################
 # Directory for temporary files
