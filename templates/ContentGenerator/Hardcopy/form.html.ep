@@ -55,7 +55,7 @@
 		<p>
 			<%== maketext(
 				'Download hardcopy of set [_1] for [_2]?',
-				tag('span', dir => 'ltr', format_set_name_display($selected_set_id)),
+				tag('span', dir => 'ltr', format_set_name_display($selected_set_id =~ s/,v(\d+)$/ (version $1)/r)),
 				join(' ', $user->first_name, $user->last_name)
 			) =%>
 		</p>
