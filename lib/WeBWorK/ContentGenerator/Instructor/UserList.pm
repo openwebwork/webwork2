@@ -238,12 +238,16 @@ sub pre_header_initialize ($c) {
 	my $secondarySortSub = SORT_SUBS()->{ $c->{secondarySortField} };
 	my $ternarySortSub   = SORT_SUBS()->{ $c->{ternarySortField} };
 
-	$c->{allUserIDs}    = [ keys %allUsers ];
+	$c->{allUserIDs} = [ keys %allUsers ];
+
+	# Always have a definite sort order in case the first three sorts don't determine things.
 	$c->{sortedUserIDs} = [
 		map  { $_->user_id }
-		sort { &$primarySortSub || &$secondarySortSub || &$ternarySortSub }
+		sort { &$primarySortSub || &$secondarySortSub || &$ternarySortSub || byLastName || byFirstName || byUserID }
 		grep { $c->{visibleUserIDs}{ $_->user_id } } (values %allUsers)
 	];
+
+	for (@{ $c->{sortedUserIDs} }) { $c->log->info($_); }
 
 	return;
 }
@@ -511,6 +515,9 @@ sub save_edit_handler ($c) {
 
 		$db->putUser($User);
 		$db->putPermissionLevel($PermissionLevel);
+
+		$User->{permission} = $PermissionLevel->permission;
+		$c->{allUsers}{$userID} = $User;
 	}
 
 	if (defined $c->param('prev_visible_users')) {
