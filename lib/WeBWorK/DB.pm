@@ -2137,28 +2137,18 @@ sub addUserProblem {
 sub addUserMultipleProblems {
 	my ($self, @problemLists) = @_;
 
-	my $firstUserProblem = $problemLists[0][0];
-	if (!defined($firstUserProblem) || !defined($firstUserProblem->user_id)) {
-		croak "Error in request to addUserMultipleProblems";
-	}
-	my $user_id = $firstUserProblem->user_id;
-	my $set_id  = $firstUserProblem->set_id;
-
-	my ($nv_set_id, $versionNum) = grok_vsetID($set_id);
-	croak "addUserMultipleProblems does not support versioned sets"
-		if defined($versionNum);
-
-	# Possible improvement, if a version set was sent, make calls to addUserProblem for each one.
+	croak "Error in request to addUserMultipleProblems" if ref($problemLists[0]) ne 'ARRAY';
 
 	# Do a single checkArgs call, all records in the list were made in the same manner
-	my @tmp = ($firstUserProblem);
-	$self->checkArgs(\@tmp, qw/VREC:problem_user/);
+	$self->checkArgs([ $problemLists[0][0] ], qw/REC:problem_user/);
+
+	my $set_id = $problemLists[0][0]->set_id;
 
 	# Array in which all records to add are collected
-	my @collectedProblemList = ();
+	my @collectedProblemList;
 
 	for my $problemListRef (@problemLists) {
-		$user_id = $problemListRef->[0]->user_id;
+		my $user_id = $problemListRef->[0]->user_id;
 		croak "addMultipleUserProblems: user set $set_id for user $user_id not found"
 			unless $self->{set_user}->exists($user_id, $set_id);
 
