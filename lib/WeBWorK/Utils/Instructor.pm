@@ -41,8 +41,10 @@ our @EXPORT_OK = qw(
 	assignAllSetsToUser
 	unassignAllSetsFromUser
 	assignSetsToUsers
+	assignSetToGivenUsers
 	unassignSetsFromUsers
 	assignProblemToAllSetUsers
+	assignMultipleProblemsToGivenUsers
 	addProblemToSet
 	read_dir
 	getCSVList
@@ -90,11 +92,22 @@ sub assignSetToUser {
 		}
 	}
 
-	my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
-	foreach my $GlobalProblem (@GlobalProblems) {
-		my @result = assignProblemToUser($db, $userID, $GlobalProblem);
-		push @results, @result if @result and not $set_assigned;
+	my @globalProblemIDs = $db->listGlobalProblems($setID);
+
+	my $result;
+	# Make the next operation as close to a transaction as possible
+	eval {
+		$db->start_transaction;
+		$result = assignMultipleProblemsToGivenUsers($db, [$userID], $setID, @globalProblemIDs);
+		$db->end_transaction;
+	};
+	if ($@) {
+		my $msg = "assignSetToUser: error during asignMultipleProblemsToGivenUsers: $@";
+		$db->abort_transaction;
+		die $msg;
 	}
+
+	push @results, $result if $result and not $set_assigned;
 
 	return @results;
 }
@@ -151,6 +164,47 @@ sub assignSetVersionToUser {
 	}
 
 	return @results;
+}
+
+=item assignMultipleProblemsToGivenUsers($db, $userIDsRef, $set_id, @globalProblemIDs)
+
+Assigns all the problems of the given $set_id to the given users.
+The list of users are sent as an array reference
+If any assignments fail, an error message is returned.
+
+=cut
+
+sub assignMultipleProblemsToGivenUsers {
+	my ($db, $userIDsRef, $set_id, @globalProblemIDs) = @_;
+
+	if (!@globalProblemIDs) {    # When the set is empty there is nothing to do
+		return;
+	}
+
+	my @allRecords;
+	for my $userID (@{$userIDsRef}) {
+		my @records;
+		for my $problem_id (@globalProblemIDs) {
+			my $userProblem = $db->newUserProblem;
+			$userProblem->user_id($userID);
+			$userProblem->set_id($set_id);
+			$userProblem->problem_id($problem_id);
+			initializeUserProblem($userProblem, undef);    # No $seed
+			push(@records, $userProblem);
+		}
+		push(@allRecords, [@records]);
+	}
+
+	eval { $db->addUserMultipleProblems(@allRecords) };
+	if ($@) {
+		if ($@ =~ m/user problems existed/) {
+			return "some problem in the set $set_id were already assigned to one of the users being processed.\n $@";
+		} else {
+			die $@;
+		}
+	}
+
+	return;
 }
 
 =item assignProblemToUser($db, $userID, $GlobalProblem, $seed)
@@ -286,8 +340,10 @@ sub assignProblemToUserSetVersion {
 
 =item assignSetToAllUsers($db, $ce, $setID)
 
-Assigns the set specified and all problems contained therein to all users in
-the course. This is more efficient than repeatedly calling assignSetToUser().
+Assigns the set specified and all problems contained therein to all users
+in the course. This skips users whose status does not have the behavior
+include_in_assignment.
+This is more efficient than repeatedly calling assignSetToUser().
 If any assignments fail, a list of failure messages is returned.
 
 =cut
@@ -299,35 +355,67 @@ sub assignSetToAllUsers {
 	my @userRecords = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
 	debug("$setID: (done with that)");
 
+	return assignSetToGivenUsers($db, $ce, $setID, 0, @userRecords);
+}
+
+=item assignSetToGivenUsers($db, $ce, $setID, $alwaysInclude, @userRecords)
+
+Assigns the set specified and all problems contained therein to all users
+in the list provided.
+When $alwaysInclude is false, it will skip users whose status does not
+have the behavior include_in_assignment.
+This is more efficient than repeatedly calling assignSetToUser().
+If any assignments fail, an error message is returned.
+
+=cut
+
+sub assignSetToGivenUsers {
+	my ($db, $ce, $setID, $alwaysInclude, @userRecords) = @_;
+
 	debug("$setID: getting problem list");
-	my @GlobalProblems = $db->getAllGlobalProblems($setID);
+	my @globalProblemIDs = $db->listGlobalProblems($setID);
 	debug("$setID: (done with that)");
 
 	my @results;
 
+	my @userSetsToAdd;
+	my @usersToProcess;
 	foreach my $User (@userRecords) {
-		next unless $ce->status_abbrev_has_behavior($User->status, "include_in_assignment");
-		my $UserSet = $db->newUserSet;
-		my $userID  = $User->user_id;
-		$UserSet->user_id($userID);
-		$UserSet->set_id($setID);
-		debug("$setID: adding UserSet for $userID");
-		eval { $db->addUserSet($UserSet) };
-		if ($@) {
-			next if $@ =~ m/user set exists/;
-			die $@;
-		}
-		debug("$setID: (done with that)");
+		next unless ($alwaysInclude || $ce->status_abbrev_has_behavior($User->status, "include_in_assignment"));
+		my $userID = $User->user_id;
+		next if $db->existsUserSet($userID, $setID);
 
-		debug("$setID: adding UserProblems for $userID");
-		foreach my $GlobalProblem (@GlobalProblems) {
-			my @result = assignProblemToUser($db, $userID, $GlobalProblem);
-			push @results, @result if @result;
-		}
-		debug("$setID: (done with that)");
+		my $userSet = $db->newUserSet;
+		$userSet->user_id($userID);
+		$userSet->set_id($setID);
+		debug("Scheduled $setID: adding UserSet for $userID");
+		push(@userSetsToAdd,  $userSet);
+		push(@usersToProcess, $userID);
 	}
+	return unless @usersToProcess;    # nothing to do
 
-	return @results;
+	# Insert them all at once
+	eval {
+		$db->start_transaction;
+		$db->addMultipleUserSets(@userSetsToAdd);
+	};
+	if ($@) {
+		my $msg = "assignSetToGivenUsers: error during addMultipleUserSets: $@";
+		$db->abort_transaction;
+		die $msg;
+	}
+	# Now add the problem records - as a batch
+	my $result;
+	eval {
+		$result = assignMultipleProblemsToGivenUsers($db, [@usersToProcess], $setID, @globalProblemIDs);
+		$db->end_transaction;
+	};
+	if ($@) {
+		my $msg = "assignSetToGivenUsers: error during assignMultipleProblemsToGivenUsers: $@";
+		$db->abort_transaction;
+		die $msg;
+	}
+	return $result;
 }
 
 =item unassignSetFromAllUsers($db, $setID)
@@ -401,7 +489,7 @@ sub unassignAllSetsFromUser {
 
 =over
 
-=item assignSetsToUsers($db, $setIDsRef, $userIDsRef)
+=item assignSetsToUsers($db, $ce, $setIDsRef, $userIDsRef)
 
 Assign each of the given sets to each of the given users. If any assignments
 fail, a list of failure messages is returned.
@@ -409,19 +497,14 @@ fail, a list of failure messages is returned.
 =cut
 
 sub assignSetsToUsers {
-	my ($db, $setIDsRef, $userIDsRef) = @_;
+	my ($db, $ce, $setIDsRef, $userIDsRef) = @_;
 
-	my @setIDs     = @$setIDsRef;
-	my @userIDs    = @$userIDsRef;
-	my @GlobalSets = $db->getGlobalSets(@setIDs);
-
+	my @userRecords = $db->getUsers(@$userIDsRef);
 	my @results;
 
-	foreach my $GlobalSet (@GlobalSets) {
-		foreach my $userID (@userIDs) {
-			my @result = assignSetToUser($db, $userID, $GlobalSet);
-			push @results, @result if @result;
-		}
+	foreach my $setID (@$setIDsRef) {
+		my $result = assignSetToGivenUsers($db, $ce, $setID, 1, @userRecords);
+		push @results, $result if $result;
 	}
 
 	return @results;
