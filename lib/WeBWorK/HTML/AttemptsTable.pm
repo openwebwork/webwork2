@@ -46,7 +46,7 @@ answer to a WeBWorK problem.  It is used in Problem.pm, OpaqueServer.pm, standAl
 
 =head2 new
 
-	my $tbl = WeBWorK::Utils::AttemptsTable->new(
+	my $tbl = WeBWorK::HTML::AttemptsTable->new(
 		$answers,
 		answersSubmitted       => 1,
 		answerOrder            => $pg->{flags}{ANSWER_ENTRY_ORDER},
