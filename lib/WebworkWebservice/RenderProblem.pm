@@ -98,7 +98,7 @@ async sub renderProblem {
 
 	my $setVersionId = $rh->{version_id} || 0;
 
-	my $problemNumber = $rh->{probNum}      // 1;
+	my $problemNumber = $rh->{probNum}      // 0;
 	my $psvn          = $rh->{psvn}         // 1234;
 	my $problemValue  = $rh->{problemValue} // 1;
 	my $lastAnswer    = '';
@@ -146,9 +146,9 @@ async sub renderProblem {
 
 	# obtain the merged problem for $effectiveUser
 	my $problemRecord =
-		$setVersionId
-		? $db->getMergedProblemVersion($effectiveUserName, $setName, $setVersionId, $problemNumber)
-		: $db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
+		!$problemNumber ? undef
+		: $setVersionId ? $db->getMergedProblemVersion($effectiveUserName, $setName, $setVersionId, $problemNumber)
+		:                 $db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
 
 	if (defined $problemRecord) {
 		# If a problem from the database is used, the passed in problem seed is ignored.
@@ -158,8 +158,8 @@ async sub renderProblem {
 		# If that is not yet defined obtain the global problem,
 		# convert it to a user problem, and add fake user data
 		my $userProblemClass = $db->{problem_user}{record};
-		my $globalProblem    = $db->getGlobalProblem($setName, $problemNumber);    # checked
-			# if the global problem doesn't exist either, bail!
+		my $globalProblem    = $db->getGlobalProblem($setName, $problemNumber);
+		# if the global problem doesn't exist either, bail!
 		if (not defined $globalProblem) {
 			$problemRecord = fake_problem($db);
 		} else {
