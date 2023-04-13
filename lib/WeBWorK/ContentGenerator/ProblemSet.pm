@@ -34,7 +34,10 @@ async sub initialize ($c) {
 	my $authz = $c->authz;
 
 	# $c->{invalidSet} is set in checkSet which is called by ContentGenerator.pm
-	return if $c->{invalidSet};
+	return
+		if $c->{invalidSet}
+		&& ($c->{invalidSet} !~ /^Client ip address .* is not in the list of addresses/
+			|| $authz->{merged_set}->assignment_type !~ /gateway/);
 
 	# This will all be valid if checkSet did not set $c->{invalidSet}.
 	my $userID  = $c->param('user');
@@ -322,7 +325,7 @@ sub gateway_body ($c) {
 			: 0;
 		$data->{show_link} = ($data->{status} =~ /Open/ || $data->{show_download});
 
-		$data->{score} = '&nbsp;';
+		$data->{score} = '';
 		# Only show score if user has permission and assignment has at least one submit.
 		if ($authz->hasPermissions($user, 'view_hidden_work')
 			|| ($verSet->hide_score eq 'N'                && $verSubmits >= 1)

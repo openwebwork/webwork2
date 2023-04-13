@@ -1,6 +1,11 @@
 % use WeBWorK::Utils qw(before between);
 %
-% if ($c->{invalidSet}) {
+% if (
+	% $c->{invalidSet}
+	% && ($c->{invalidSet} !~ /^Client ip address .* is not in the list of addresses/
+		% || $authz->{merged_set}->assignment_type !~ /gateway/)
+	% )
+% {
 	<div class="alert alert-danger">
 		<p class="mb-3">
 			<%= maketext(
