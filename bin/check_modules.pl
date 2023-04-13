@@ -112,6 +112,8 @@ my @modulesList = qw(
 	Locale::Maketext::Simple
 	LWP::Protocol::https
 	MIME::Base64
+	Minion
+	Minion::Backend::SQLite
 	Mojolicious
 	Mojolicious::Plugin::NotYAMLConfig
 	Net::IP

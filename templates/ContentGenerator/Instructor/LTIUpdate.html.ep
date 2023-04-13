@@ -51,7 +51,7 @@
 		<div class="col-auto">
 			<%= select_field updateUserID => [
 					[
-						maketext('All Users') => 'All Users',
+						maketext('All Users') => '',
 						selected             => undef,
 						$ce->{LTIGradeMode} eq 'homework' ? (data => { sets => join(':', @$sets) }) : (),
 					],
@@ -68,7 +68,7 @@
 			<div class="col-auto">
 				<%= select_field updateSetID => [
 						[
-							maketext('All Sets') => 'All Sets',
+							maketext('All Sets') => '',
 							selected             => undef,
 							data                 => { users => join(':', @$users) }
 						],

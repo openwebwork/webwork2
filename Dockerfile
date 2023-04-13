@@ -108,6 +108,8 @@ RUN apt-get update \
 	libmail-sender-perl \
 	libmariadb-dev \
 	libmime-tools-perl \
+	libminion-backend-sqlite-perl \
+	libminion-perl \
 	libmodule-build-perl \
 	libmodule-pluggable-perl \
 	libmojolicious-perl \
@@ -126,7 +128,7 @@ RUN apt-get update \
 	libsql-abstract-perl \
 	libstring-shellquote-perl \
 	libsub-uplevel-perl \
-        libsvg-perl \
+	libsvg-perl \
 	libtemplate-perl \
 	libtest-deep-perl \
 	libtest-exception-perl \
