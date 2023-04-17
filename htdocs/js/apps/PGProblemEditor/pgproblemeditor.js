@@ -39,7 +39,8 @@
 
 		request_object.rpc_command = 'saveFile';
 		request_object.outputFilePath = document.getElementsByName('temp_file_path')[0]?.value ?? '';
-		request_object.fileContents = webworkConfig?.pgCodeMirror?.getValue() ?? '';
+		request_object.fileContents = webworkConfig?.pgCodeMirror?.getValue()
+			?? document.getElementById('problemContents')?.value ?? '';
 
 		if (!request_object.outputFilePath) return;
 
