@@ -149,6 +149,15 @@
 	// CodeMirror is disabled in localOverrides.conf.
 	const editorArea = document.querySelector('.CodeMirror') ?? document.getElementById('problemContents');
 
+	// Add hot key, ctrl-enter, to render the problem
+	editorArea.addEventListener('keydown', async (e) => {
+		if (e.ctrlKey && e.code === 'Enter') {
+			e.preventDefault();
+			await render();
+			saveTempFile();
+		}
+	});
+
 	// Synchronize the heights of the render area and the editor area for wide windows.
 	if (editorArea && renderArea) {
 		const codeMirrorResizeObserver = new ResizeObserver((entries) => {
