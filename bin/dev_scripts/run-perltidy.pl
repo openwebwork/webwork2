@@ -42,6 +42,9 @@ that backup files will be created with the C<.bak> extension, and will be
 deleted if there are no errors.  Note that this behavior may be changed by
 passing a different value for the C<-bext> option.
 
+Note that the C<-v> flag makes this script verbose, and does not output the
+perltidy version as it would usually do for perltidy.
+
 Finally, if no files are passed on the command line, then perltidy will be
 executed on all files with the extensions C<.pl>, C<.pm>, or C<.t> in the
 WEBWORK_ROOT directory.  If files are passed on the command line, then perltidy
@@ -62,23 +65,26 @@ die "Version 20220613 or newer of perltidy is required for this script.\n"
 die "The webwork2 directory must be defined in WEBWORK_ROOT.\n"
 	unless -e $ENV{WEBWORK_ROOT} && -r "$ENV{WEBWORK_ROOT}/.perltidyrc";
 
+my $verbose = 0;
+my (@args, @files);
+for (@ARGV) {
+	if    ($_ eq '-v') { $verbose = 1 }
+	elsif ($_ =~ /^-/) { push(@args, $_) }
+	else               { push(@files, $_) }
+}
+
 # Validate options that were passed.
 my %options;
-my $err = Perl::Tidy::perltidy(dump_options => \%options);
+my $err = Perl::Tidy::perltidy(argv => \@args, dump_options => \%options);
 exit $err                                               if $err;
 die "The -pro option is not suppored by this script.\n" if defined $options{profile};
 
-my (@args, @files);
-for (@ARGV) {
-	if   ($_ =~ /^-/) { push(@args,  $_); }
-	else              { push(@files, $_); }
-}
 unshift(@args, '-bext=/') unless defined $options{'backup-file-extension'};
 
 if (@files) {
 	for (@files) {
 		push(@args, $_);
-		say "Tidying file: $_";
+		say "Tidying file: $_" if $verbose;
 		Perl::Tidy::perltidy(argv => \@args, perltidyrc => "$ENV{WEBWORK_ROOT}/.perltidyrc");
 		pop(@args);
 	}
@@ -98,7 +104,7 @@ if (@files) {
 
 				return unless $path =~ /\.p[lm]$/ || $path =~ /\.t$/;
 
-				say "Tidying file: $path";
+				say "Tidying file: $path" if $verbose;
 
 				push(@args, $path);
 				Perl::Tidy::perltidy(argv => \@args, perltidyrc => "$ENV{WEBWORK_ROOT}/.perltidyrc");
