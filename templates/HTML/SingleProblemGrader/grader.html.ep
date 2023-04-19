@@ -180,12 +180,11 @@
 					% param('grader-instructor-comment', $grader->{comment_string});
 					<%= text_area 'grader-instructor-comment' => '',
 						id    => "comment_problem$grader->{problem_id}",
-						class => 'grader-problem-comment form-control d-inline',
+						class => 'grader-problem-comment form-control d-inline latexentryfield',
 						data  => { problem_id => $grader->{problem_id} },
 						rows  => 3 =%>
-					<button class="preview btn btn-secondary mt-1" type="button">
-						<%= maketext('Preview Comment') %>
-					</button>
+					<%= hidden_field "MaThQuIlL_comment_problem$grader->{problem_id}" => '',
+						id => "MaThQuIlL_comment_problem$grader->{problem_id}" =%>
 				</div>
 			</div>
 		% }
@@ -193,7 +192,7 @@
 		% # Save button
 		<div class="row align-items-center">
 			<div class="col-fixed mt-2">
-				<button class="save-grade btn btn-secondary" type="button"
+				<button class="save-grade btn btn-sm btn-secondary" type="button"
 					id="<%= "save_grade_problem$grader->{problem_id}" %>"
 					data-course-id="<%= $grader->{course_id} %>"
 					data-student-id="<%= $grader->{student_id} %>"
