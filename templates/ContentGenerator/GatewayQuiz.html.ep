@@ -36,11 +36,11 @@
 %
 % content_for js => begin
 	% if ($c->{will}{showProblemGrader}) {
-		<%= javascript getAssetURL($ce, 'js/apps/ProblemGrader/problemgrader.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/ProblemGrader/problemgrader.js'), defer => undef =%>
 	% }
 	%
 	% # Page specfific javascript
-	<%= javascript getAssetURL($ce, 'js/apps/GatewayQuiz/gateway.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/GatewayQuiz/gateway.js'), defer => undef =%>
 	%
 	% # Output javascript for jquery-ui for problems to use.
 	<%= javascript getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.js') =%>

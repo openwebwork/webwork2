@@ -24,7 +24,7 @@
 	% }
 	% # Add the local storage javascript for the sticky format.
 	% if ($formatName eq 'sticky') {
-		%= javascript getAssetURL($ce, 'js/apps/LocalStorage/localstorage.js'), defer => undef
+		%= javascript getAssetURL($ce, 'js/LocalStorage/localstorage.js'), defer => undef
 	% }
 	% for (@$extra_js_files) {
 		%= javascript $_->{file}, %{ $_->{attributes} }

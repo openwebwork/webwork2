@@ -189,7 +189,7 @@ const processFile = async (file, _details) => {
 };
 
 const themesDir = path.resolve(__dirname, 'themes');
-const jsDir = path.resolve(__dirname, 'js/apps');
+const jsDir = path.resolve(__dirname, 'js');
 
 // Remove generated files from previous builds.
 cleanDir(themesDir);
@@ -209,7 +209,7 @@ for (const file of fs.readdirSync(themesDir, { withFileTypes: true })) {
 
 // Set up the watcher.
 if (argv.watchFiles) console.log('\x1b[32mEstablishing watches and performing initial build.\x1b[0m');
-chokidar.watch(['js/apps', 'themes'], {
+chokidar.watch(['js', 'themes'], {
 	ignored: /layouts|\.min\.(js|css)$/,
 	cwd: __dirname, // Make sure all paths are given relative to the htdocs directory.
 	usePolling: true, // Needed to get changes to symlinks.

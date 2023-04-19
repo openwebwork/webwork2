@@ -1,7 +1,7 @@
 % use WeBWorK::Utils qw(getAssetURL);
 %
 % content_for js => begin
-	<%= javascript getAssetURL($ce, 'js/apps/ShowHide/show_hide.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/ShowHide/show_hide.js'), defer => undef =%>
 % end
 %
 % unless ($authz->hasPermissions(param('user'), 'view_answers')) {

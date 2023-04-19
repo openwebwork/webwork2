@@ -1,5 +1,5 @@
 % content_for js => begin
-	<%= javascript getAssetURL($ce, 'js/apps/Stats/stats.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/Stats/stats.js'), defer => undef =%>
 % end
 %
 % # Filter and problem selectors.

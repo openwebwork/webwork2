@@ -4,7 +4,7 @@
 %
 % content_for js => begin
 	<%= output_codemirror_static_files($c, 'perl') =%>
-	<%= javascript getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
 % end
 %
 % unless ($authz->hasPermissions(param('user'), 'edit_achievements')) {

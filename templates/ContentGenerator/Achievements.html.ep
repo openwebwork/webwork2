@@ -5,7 +5,7 @@
 % end
 %
 % content_for js => begin
-	<%= javascript getAssetURL($ce, 'js/apps/AchievementItems/achievementitems.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/AchievementItems/achievementitems.js'), defer => undef =%>
 % end
 %
 % # Exit if there is no global achievement data for this user.

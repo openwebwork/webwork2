@@ -2,11 +2,11 @@
 %
 % content_for js => begin
 	<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
-	<%= javascript getAssetURL($ce, 'js/apps/RenderProblem/renderproblem.js'), defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/apps/SetMaker/setmaker.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/RenderProblem/renderproblem.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/SetMaker/setmaker.js'), defer => undef =%>
 	%
 	% if ($authz->hasPermissions(scalar(param('user')), 'modify_tags')) {
-		<%= javascript "$ce->{webworkURLs}{htdocs}/js/apps/TagWidget/tagwidget.js", id => 'tag-widget-script',
+		<%= javascript "$ce->{webworkURLs}{htdocs}/js/TagWidget/tagwidget.js", id => 'tag-widget-script',
 			defer => undef, data => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
 	% }
 % end

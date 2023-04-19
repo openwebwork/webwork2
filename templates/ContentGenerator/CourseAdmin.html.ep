@@ -2,7 +2,7 @@
 % use WeBWorK::Utils qw(getAssetURL);
 %
 % content_for js => begin
-	<%= javascript getAssetURL($ce, 'js/apps/SelectAll/selectall.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
 % end
 %
 % unless ($authz->hasPermissions(param('user'), 'create_and_delete_courses')) {
