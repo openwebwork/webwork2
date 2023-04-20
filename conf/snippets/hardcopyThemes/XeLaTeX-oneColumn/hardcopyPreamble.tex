@@ -1,6 +1,8 @@
 \batchmode
-\documentclass[11pt]{amsart}
+\documentclass[11pt]{exam}
 \input{packages.tex}
+
+\usepackage[text={7.5in,9in},centering]{geometry}
 
 % For XeLaTeX + polyglossia
 \usepackage{fontspec}
@@ -22,18 +24,24 @@
 %\setsansfont{sans font name}
 
 % If needed - can load the bidi package to support RTL and LTR languages
-% using automatic direction changes (where it works) for Unicode UTF-8 
+% using automatic direction changes (where it works) for Unicode UTF-8
 % encoded text.
-% The bidi package needs to be loaded AFTER caption, xcolor.
+% The bidi package needs to be loaded AFTER caption, xcolor, and geometry.
 %\usepackage{bidi}
 
 % WeBWorK used Control+_ = ^_ for verbatim... so we change its charcode
 \catcode`\=12
 
-\usepackage{fullpage}
-
 % This is used to signal PG that we are not using multicols
 \newcommand{\nocolumns}{}
+
+% This removes the margin for questions from the exam class.  At this point we only use questions and not parts or
+% supparts, but if those are used a similar thing will be needed for those as well.
+\renewcommand{\questionshook}{\leftmargin=0pt\labelwidth=-\labelsep}
+
+\makeatletter
+\qformat{{\bf Problem \thequestiontitle.} \if@placepoints{\bf\footnotesize(\thepoints)}\fi \hfill}
+\makeatother
 
 \input{CAPA.tex}
 \input{PGML.tex}

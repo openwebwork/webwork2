@@ -6,6 +6,10 @@
 \setlength{\columnsep}{.25in}
 \setlength{\columnseprule}{.4pt}
 
+% This removes the margin for questions from the exam class.  At this point we only use questions and not parts or
+% supparts, but if those are used a similar thing will be needed for those as well.
+\renewcommand{\questionshook}{\leftmargin=0pt\labelwidth=-\labelsep}
+
 \makeatletter
 \qformat{{\bf Problem \thequestiontitle.} \if@placepoints{\bf\footnotesize(\thepoints)}\fi \hfill}
 \makeatother

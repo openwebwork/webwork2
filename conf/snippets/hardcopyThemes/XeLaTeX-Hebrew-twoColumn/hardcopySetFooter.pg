@@ -1,6 +1,6 @@
-# 
+#
 # hardcopySetFooter.pg - generic hardcopy set footer file
-# 
+#
 
 DOCUMENT();
 loadMacros(
@@ -9,7 +9,6 @@ loadMacros(
 );
 
 BEGIN_TEXT
-$BEGIN_ONE_COLUMN
 
 \newfontfamily\libertine{Linux Libertine O}
 
@@ -21,7 +20,6 @@ $BEGIN_ONE_COLUMN
 \noindent{\tiny נוצר על ידי \textenglish{WeBWorK} {\libertine \copyright}}
 \end{hebrew}
 
-$END_ONE_COLUMN
 END_TEXT
 
 ENDDOCUMENT();
