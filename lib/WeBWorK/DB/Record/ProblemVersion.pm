@@ -34,8 +34,8 @@ BEGIN {
 	__PACKAGE__->_fields(
 		user_id    => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		set_id     => { type => "VARCHAR(100) NOT NULL", key => 1 },
-		version_id => { type => "INT NOT NULL",      key => 1 },
-		problem_id => { type => "INT NOT NULL",      key => 1 },
+		version_id => { type => "INT NOT NULL",          key => 1 },
+		problem_id => { type => "INT NOT NULL",          key => 1 },
 		@nonkeyfields,
 	);
 }
