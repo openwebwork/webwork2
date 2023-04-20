@@ -19,6 +19,7 @@ package WeBWorK::ContentGenerator::Instructor::LTIUpdate;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 use WeBWorK::Utils(qw(format_set_name_display getAssetURL));
+use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 
 sub initialize ($c) {
 	my $db = $c->db;
@@ -37,43 +38,38 @@ sub initialize ($c) {
 
 	return unless ($c->param('updateLTI'));
 
-	my $setID       = $c->param('updateSetID')  || 'All Sets';
-	my $userID      = $c->param('updateUserID') || 'All Users';
-	my $prettySetID = format_set_name_display($setID);
+	my $setID       = $c->param('updateSetID');
+	my $userID      = $c->param('updateUserID');
+	my $prettySetID = format_set_name_display($setID // '');
 
 	# Test if setID and userID are valid.
-	unless ($userID eq 'All Users' || $db->getUser($userID)) {
+	if ($userID && !$db->getUser($userID)) {
 		$c->addbadmessage($c->maketext('Update aborted. Invalid user [_1].', $userID));
 		return;
 	}
-	unless ($ce->{LTIGradeMode} eq 'course' || $setID eq 'All Sets' || $db->getGlobalSet($setID)) {
+	if ($ce->{LTIGradeMode} eq 'homework' && $setID && !$db->getGlobalSet($setID)) {
 		$c->addbadmessage($c->maketext('Update aborted. Invalid set [_1].', $prettySetID));
 		return;
 	}
 
-	my @updateParms;
-	if ($setID eq 'All Sets' && $userID eq 'All Users') {
-		@updateParms = ('all');
-		$c->addgoodmessage($ce->{LTIGradeMode} eq 'homework'
-			? $c->maketext('LTI update of all users and sets started.')
-			: $c->maketext('LTI update of all users started.'));
-	} elsif ($setID eq 'All Sets') {
-		@updateParms = ('user', $userID);
-		$c->addgoodmessage($c->maketext('LTI update of user [_1] started.', $userID));
-	} elsif ($userID eq 'All Users') {
-		@updateParms = ('set', $setID);
-		$c->addgoodmessage($c->maketext('LTI update of set [_1] started.', $prettySetID));
-	} elsif ($ce->{LTIGradeMode} eq 'homework') {
-		@updateParms = ('user_set', $userID, $setID);
-		$c->addgoodmessage($c->maketext('LTI update of user [_1] and set [_2] started.', $userID, $prettySetID));
+	if ($setID && $userID && $ce->{LTIGradeMode} eq 'homework') {
+		$c->addgoodmessage($c->maketext('LTI update of user [_1] and set [_2] queued.', $userID, $prettySetID));
+	} elsif ($setID && $ce->{LTIGradeMode} eq 'homework') {
+		$c->addgoodmessage($c->maketext('LTI update of set [_1] queued.', $prettySetID));
+	} elsif ($userID) {
+		$c->addgoodmessage($c->maketext('LTI update of user [_1] queued.', $userID));
 	} else {
-		# Abort update. A post with a valid setID was sent in course LTIGradeMode,
-		# but the page shouldn't allow this. Don't set an updateMessage for this case.
-		return;
+		$c->addgoodmessage($ce->{LTIGradeMode} eq 'homework'
+			? $c->maketext('LTI update of all users and sets queued.')
+			: $c->maketext('LTI update of all users queued.'));
 	}
 
-	my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($c);
-	$grader->mass_update(@updateParms);
+	# Note that if somehow this point is reached with a setID and grade mode is "course",
+	# then the setID will be ignored by the job.
+
+	WeBWorK::Authen::LTIAdvanced::SubmitGrade::mass_update($c, 1, $userID, $setID);
+
+	return;
 }
 
 sub format_interval ($c, $seconds) {

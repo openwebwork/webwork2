@@ -108,12 +108,13 @@ sub displaySets ($c) {
 		? (
 			date     => $c->param('show_date')       // 0,
 			testtime => $c->param('show_testtime')   // 0,
+			timeleft => $c->param('show_timeleft')   // 0,
 			problems => $c->param('show_problems')   // 0,
 			section  => $c->param('show_section')    // 0,
 			recit    => $c->param('show_recitation') // 0,
 			login    => $c->param('show_login')      // 0,
 		)
-		: (date => 0, testtime => 0, problems => 1, section => 1, recit => 1, login => 1);
+		: (date => 0, testtime => 0, timeleft => 0, problems => 1, section => 1, recit => 1, login => 1);
 	my $showBestOnly = $setIsVersioned ? $c->param('show_best_only') : 0;
 
 	my @score_list;
@@ -137,6 +138,7 @@ sub displaySets ($c) {
 			# For versioned tests we might be displaying the test date and test time.
 			my $dateOfTest = '';
 			my $testTime   = '';
+			my $timeLeft   = '';
 
 			if ($setIsVersioned) {
 				($setName, $vNum) = ($setName =~ /(.+),v(\d+)$/);
@@ -147,12 +149,25 @@ sub displaySets ($c) {
 					$testTime = ($set->version_last_attempt_time - $set->open_date) / 60;
 					my $timeLimit = $set->version_time_limit / 60;
 					$testTime = $timeLimit if ($testTime > $timeLimit);
-					$testTime = sprintf('%3.1f min', $testTime);
+					$testTime = $c->maketext("[quant,_1,minute]", sprintf('%3.1f', $testTime));
+					$timeLeft = 0;
+					if ($showColumns{timeleft} && time - $set->open_date < $set->version_time_limit) {
+						# Get a problem to determine how many submits have been made.
+						my @ProblemNums = $db->listUserProblems($studentRecord->user_id, $setName);
+						my $Problem =
+							$db->getMergedProblemVersion($studentRecord->user_id, $setName, $vNum, $ProblemNums[0]);
+						my $verSubmits = defined $Problem ? $Problem->num_correct + $Problem->num_incorrect : 0;
+						$timeLeft = sprintf('%3.1f', ($set->version_time_limit - time + $set->open_date) / 60)
+							if ($set->attempts_per_version == 0 || $verSubmits < $set->attempts_per_version);
+					}
 				} elsif (time - $set->open_date < $set->version_time_limit) {
 					$testTime = $c->maketext('still open');
+					$timeLeft = sprintf('%3.1f', ($set->version_time_limit - time + $set->open_date) / 60);
 				} else {
 					$testTime = $c->maketext('time limit exceeded');
+					$timeLeft = 0;
 				}
+				$timeLeft = $c->maketext('[quant,_1,minute]', $timeLeft);
 			} else {
 				$set = $db->getMergedSet($studentName, $setName);
 			}
@@ -167,6 +182,7 @@ sub displaySets ($c) {
 				total              => $total,
 				date               => $dateOfTest,
 				testtime           => $testTime,
+				timeleft           => $timeLeft,
 				problem_scores     => $problem_scores,
 				incorrect_attempts => ''
 			};
@@ -198,6 +214,7 @@ sub displaySets ($c) {
 					total              => -1,
 					date               => '',
 					testtime           => '',
+					timeleft           => '',
 					problem_scores     => [],
 					incorrect_attempts => [],
 					%$max_version_data
@@ -249,6 +266,7 @@ sub displaySets ($c) {
 	my $numCols = 1;
 	$numCols++                    if $showColumns{date};
 	$numCols++                    if $showColumns{testtime};
+	$numCols++                    if $showColumns{timeleft};
 	$numCols += scalar(@problems) if $showColumns{problems};
 
 	return $c->include(

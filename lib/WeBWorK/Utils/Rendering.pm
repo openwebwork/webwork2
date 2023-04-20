@@ -23,6 +23,7 @@ WeBWorK::Utils::Rendering - utilities for rendering problems.
 =cut
 
 use Mojo::IOLoop;
+use Mojo::JSON qw(decode_json);
 use Data::Structure::Util qw(unbless);
 
 use WeBWorK::Utils qw(formatDateTime);
@@ -149,6 +150,9 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{inputs_ref}     = $formFields;
 	$options{processAnswers} = $translationOptions->{processAnswers};
 
+	# External Data
+	$options{external_data} = decode_json($set->{external_data} || '{}');
+
 	# Directories and URLs
 	$options{macrosPath}        = $ce->{pg}{directories}{macrosPath};
 	$options{htmlPath}          = $ce->{pg}{directories}{htmlPath};
@@ -171,7 +175,6 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{useMathQuill}   = $translationOptions->{useMathQuill};
 	$options{useMathView}    = $translationOptions->{useMathView};
 	$options{mathViewLocale} = $ce->{pg}{options}{mathViewLocale};
-	$options{useWirisEditor} = $translationOptions->{useWirisEditor};
 
 	$options{__files__} = {
 		root => $ce->{webworkDirs}{root},        # used to shorten filenames

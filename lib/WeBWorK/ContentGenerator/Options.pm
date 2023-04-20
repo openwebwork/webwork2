@@ -119,15 +119,12 @@ sub initialize ($c) {
 			(defined($c->param('displayMode')) && $c->{effectiveUser}->displayMode() ne $c->param('displayMode'))
 			|| (defined($c->param('showOldAnswers'))
 				&& $c->{effectiveUser}->showOldAnswers() ne $c->param('showOldAnswers'))
-			|| (defined($c->param('useWirisEditor'))
-				&& $c->{effectiveUser}->useWirisEditor() ne $c->param('useWirisEditor'))
 			|| (defined($c->param('useMathQuill'))
 				&& $c->{effectiveUser}->useMathQuill() ne $c->param('useMathQuill'))
 			)
 		{
 			$c->{effectiveUser}->displayMode($c->param('displayMode'));
 			$c->{effectiveUser}->showOldAnswers($c->param('showOldAnswers'));
-			$c->{effectiveUser}->useWirisEditor($c->param('useWirisEditor'));
 			$c->{effectiveUser}->useMathQuill($c->param('useMathQuill'));
 
 			eval { $db->putUser($c->{effectiveUser}) };

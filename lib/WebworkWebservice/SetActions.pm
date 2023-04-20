@@ -24,6 +24,7 @@ use JSON;
 use Data::Structure::Util qw(unbless);
 
 use WeBWorK::Utils qw(max formatDateTime jitar_id_to_seq seq_to_jitar_id);
+use WeBWorK::Utils::Instructor qw(assignSetToGivenUsers assignMultipleProblemsToGivenUsers);
 use WeBWorK::Debug;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 
@@ -276,62 +277,23 @@ sub assignSetToUsers {
 	my $setID     = $params->{set_id};
 	my $GlobalSet = $db->getGlobalSet($params->{set_id});
 
+	my %setUsers = map { $_ => 1 } $db->listSetUsers($setID);
+
 	debug("users: " . $params->{users});
 	my @users = split(',', $params->{users});
-
+	my @usersToAdd;
 	my @results;
-	for my $userID (@users) {
-		my $UserSet = $db->newUserSet;
-		$UserSet->user_id($userID);
-		$UserSet->set_id($setID);
+	for my $user (@users) {
+		if ($setUsers{$user}) {
+			push @results, "set $setID is already assigned to user $user.";
 
-		my $set_assigned = 0;
-
-		eval { $db->addUserSet($UserSet) };
-		if ($@) {
-			if ($@ =~ m/user set exists/) {
-				push @results, "set $setID is already assigned to user $userID.";
-				$set_assigned = 1;
-			} else {
-				die $@;
-			}
-		}
-
-		my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
-		for my $GlobalProblem (@GlobalProblems) {
-			my @result = assignProblemToUser($self, $userID, $GlobalProblem);
-			push @results, @result if @result and not $set_assigned;
+		} else {
+			push @usersToAdd, $user;
 		}
 	}
+	push @results, assignSetToGivenUsers($db, $self->ce, $setID, 1, $db->getUsers(@usersToAdd));
 
 	return { ra_out => \@results, text => "Successfully assigned users to set $params->{set_id}" };
-}
-
-#problem utils from Instructor.pm
-sub assignProblemToUser {
-	my ($self, $userID, $GlobalProblem, $seed) = @_;
-	my $db = $self->db;
-
-	my $UserProblem = $db->newUserProblem;
-	$UserProblem->user_id($userID);
-	$UserProblem->set_id($GlobalProblem->set_id);
-	$UserProblem->problem_id($GlobalProblem->problem_id);
-	initializeUserProblem($UserProblem, $seed);
-
-	eval { $db->addUserProblem($UserProblem) };
-	if ($@) {
-		if ($@ =~ m/user problem exists/) {
-			return { text => "problem "
-					. $GlobalProblem->problem_id
-					. " in set "
-					. $GlobalProblem->set_id
-					. " is already assigned to user $userID." };
-		} else {
-			die $@;
-		}
-	}
-
-	return { text => "Assigned Problem to $userID" };
 }
 
 sub deleteProblemSet {
@@ -554,12 +516,9 @@ sub addProblem {
 
 	my @results;
 	my @userIDs = $db->listSetUsers($setName);
-	for my $userID (@userIDs) {
-		my @result = assignProblemToUser($self, $userID, $problemRecord);
-		push @results, @result if @result;
-	}
+	my $result  = assignMultipleProblemsToGivenUsers($db, \@userIDs, $setName, ($problemID));
+	push @results, $result if $result;
 
-	#assignProblemToAllSetUsers($self, $problemRecord);
 	return { text => "Problem added to $setName" };
 }
 

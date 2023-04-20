@@ -11,4 +11,21 @@
 		<%= label_for newWindowSave => maketext('Open in new window'), class => 'form-check-label' =%>
 	</div>
 	<%= hidden_field 'action.save.source_file' => $c->{editFilePath} =%>
+
+	% # Backup options
+	<div class="form-check mb-2">
+		% param('backupFile', 1) unless defined param('backupFile');
+		<%= check_box backupFile => 1, id => 'backupFile', class => 'form-check-input' =%>
+		<%= hidden_field backupFile => 0 =%>
+		<%= label_for backupFile => maketext('Create backup'), class => 'form-check-label' =%>
+	</div>
+
+	% # Show option to delete oldest backup if it exists.
+	% my @backupTimes = $c->getBackupTimes;
+	% if (@backupTimes) {
+		<div class="form-check mb-2">
+			<%= check_box deleteBackup => 1, id => 'deleteBackup', class => 'form-check-input' =%>
+			<%= label_for deleteBackup => maketext('Delete oldest backup'), class => 'form-check-label' =%>
+		</div>
+	% }
 </div>

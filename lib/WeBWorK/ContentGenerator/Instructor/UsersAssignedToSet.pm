@@ -25,7 +25,7 @@ users to which sets are assigned.
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(format_set_name_display);
-use WeBWorK::Utils::Instructor qw(assignSetToUser assignSetToAllUsers);
+use WeBWorK::Utils::Instructor qw(assignSetToAllUsers assignSetToGivenUsers);
 
 sub initialize ($c) {
 	my $authz = $c->authz;
@@ -70,17 +70,22 @@ sub initialize ($c) {
 		die "Unable to get global set record for $setID " unless $setRecord;
 
 		my %setUsers = map { $_ => 1 } $db->listSetUsers($setID);
+		my @usersToAdd;
 		for my $selectedUser (map { $_->user_id } @{ $c->{user_records} }) {
 			if (exists $selectedUsers{$selectedUser}) {
 				unless ($setUsers{$selectedUser}) {    # skip users already in the set
-					debug("assignSetToUser($selectedUser, ...)");
-					assignSetToUser($db, $selectedUser, $setRecord);
-					debug("done assignSetToUser($selectedUser, ...)");
+					debug("saving $selectedUser to be added to set later");
+					push(@usersToAdd, $selectedUser);
 				}
 			} else {
 				next unless $setUsers{$selectedUser};    # skip users not in the set
 				$db->deleteUserSet($selectedUser, $setID);
 			}
+		}
+		if (@usersToAdd) {
+			debug("assignSetToGivenUsers(...)");
+			assignSetToGivenUsers($db, $c->ce, $setID, 1, $db->getUsers(@usersToAdd));
+			debug("done assignSetToGivenUsers(...)");
 		}
 	}
 

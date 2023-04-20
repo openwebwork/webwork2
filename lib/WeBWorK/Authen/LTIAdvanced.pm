@@ -150,7 +150,7 @@ sub get_credentials {
 			"oauth_nonce        = $oauth_time",
 			"WW_server_time     = $curr_time",
 			"diff(server-oauth) = $delta_time seconds ($delta_min minutes)",
-			"============================");
+			"============================\n");
 	}
 
 	#disable password login
@@ -257,7 +257,7 @@ sub get_credentials {
 		# For setting up its helpful to print out what the system think the
 		# User id and address is at this point
 		if ($ce->{debug_lti_parameters}) {
-			warn "=========== summary ============";
+			warn "=========== summary ============\n";
 			warn "User id is |$self->{user_id}| (obtained from $user_id_source which was $type_of_source)\n";
 			warn "User mail address is |$self->{email}|\n";
 			warn "strip_address_from_email is |", $ce->{strip_address_from_email} // 0, "|\n";
@@ -445,8 +445,8 @@ sub authenticate {
 	my $path = $ce->{LTIBasicToThisSiteURL} || ($c->url_for->to_abs =~ s|/?$|/|r);
 
 	if ($ce->{debug_lti_parameters}) {
-		warn("The following path was reconstructed by WeBWorK.  It should match the path in the LMS:");
-		warn($path);
+		warn("The following path was reconstructed by WeBWorK.  It should match the path in the LMS:\n");
+		warn("$path\n");
 	}
 
 	# We also try a version without the trailing / in case that was not

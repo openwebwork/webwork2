@@ -435,8 +435,6 @@ sub display_form ($c) {
 			$canShowCorrectAnswers = $perm_view_answers
 				|| (defined($mergedSet) && after($mergedSet->answer_date));
 		}
-		# Make display for versioned sets a bit nicer
-		$selected_set_id =~ s/,v(\d+)$/ (version $1)/;
 	}
 
 	return $c->include(

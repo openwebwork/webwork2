@@ -28,7 +28,7 @@ use Try::Tiny;
 use Text::Wrap qw(wrap);
 
 use WeBWorK::Upload;
-use WeBWorK::Utils qw/decodeAnswers/;
+use WeBWorK::Utils qw/decodeAnswers createEmailSenderTransportSMTP/;
 
 # request paramaters used
 #
@@ -246,7 +246,7 @@ $emailableURL
 		try {
 			$email->send_or_die({
 				# createEmailSenderTransportSMTP is defined in ContentGenerator
-				transport => $c->createEmailSenderTransportSMTP(),
+				transport => createEmailSenderTransportSMTP($ce),
 				$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
 			});
 		} catch {

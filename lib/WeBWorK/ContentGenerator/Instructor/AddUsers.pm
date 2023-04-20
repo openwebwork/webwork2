@@ -95,7 +95,7 @@ sub initialize ($c) {
 		}
 		if (defined $c->param('assignSets')) {
 			my @setIDs = $c->param('assignSets');
-			assignSetsToUsers($db, \@setIDs, \@userIDs);
+			assignSetsToUsers($db, $ce, \@setIDs, \@userIDs);
 		}
 	}
 

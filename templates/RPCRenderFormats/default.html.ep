@@ -78,6 +78,8 @@
 					%= hidden_field outputformat             => $formatName
 					%= hidden_field theme                    => $theme
 					%= hidden_field language                 => $formLanguage
+					%= hidden_field isInstructor             => $isInstructor
+					%= hidden_field forceScaffoldsOpen       => $forceScaffoldsOpen
 					%= hidden_field showSummary              => $showSummary
 					%= hidden_field showHints                => $showHints
 					%= hidden_field showSolutions            => $showSolutions

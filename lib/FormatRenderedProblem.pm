@@ -231,7 +231,7 @@ sub formatRenderedProblem {
 		$output->{pg_version} = $ce->{PG_VERSION};
 
 		# Convert to JSON and render.
-		$ws->c->render(data => JSON->new->utf8(1)->encode($output));
+		return $ws->c->render(data => JSON->new->utf8(1)->encode($output));
 	}
 
 	# Setup arnd render the appropriate template in the templates/RPCRenderFormats folder depending on the outputformat.
@@ -272,6 +272,8 @@ sub formatRenderedProblem {
 		uriEncodedProblemSource  => $ws->{inputs_ref}{uriEncodedProblemSource} // '',
 		fileName                 => $ws->{inputs_ref}{fileName}                // '',
 		formLanguage             => $formLanguage,
+		isInstructor             => $ws->{inputs_ref}{isInstructor}       // '',
+		forceScaffoldsOpen       => $ws->{inputs_ref}{forceScaffoldsOpen} // '',
 		showSummary              => $showSummary,
 		showHints                => $ws->{inputs_ref}{showHints}     // '',
 		showSolutions            => $ws->{inputs_ref}{showSolutions} // '',

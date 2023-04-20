@@ -45,7 +45,7 @@ sub pre_header_initialize ($c) {
 		if (@selected_users && @selected_sets) {
 			my @results;    # This is not used?
 			if (defined $c->param('assign')) {
-				assignSetsToUsers($db, \@selected_sets, \@selected_users);
+				assignSetsToUsers($db, $ce, \@selected_sets, \@selected_users);
 				$c->addgoodmessage($c->maketext('All assignments were made successfully.'));
 			}
 			if (defined $c->param('unassign')) {

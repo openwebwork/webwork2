@@ -138,28 +138,6 @@
 				</div>
 			% }
 			%
-			% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS') {
-				% # Note, 0 is a legal value, so we can't use || in setting this
-				% my $curr_useWirisEditor =
-					% $c->{effectiveUser}->useWirisEditor ne ''
-					% ? $c->{effectiveUser}->useWirisEditor
-					% : $ce->{pg}{options}{useWirisEditor};
-				<div class="mb-3">
-					<fieldset>
-						<legend class="lead"><%= maketext('Use Equation Editor?') %></legend>
-						% for (1, 0) {
-							<div class="form-check form-check-inline">
-								<%= radio_button useWirisEditor => $_,
-									id => "useWirisEditor$_", class => 'form-check-input',
-									$_ eq $curr_useWirisEditor ? (checked => undef) : () =%>
-								<%= label_for "useWirisEditor$_" => $_ ? maketext('Yes') : maketext('No'),
-									class => 'form-check-label' =%>
-							</div>
-						% }
-					</fieldset>
-				</div>
-			% }
-			%
 			% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
 				% # Note, 0 is a legal value, so we can't use || in setting this
 				% my $curr_useMathQuill =
