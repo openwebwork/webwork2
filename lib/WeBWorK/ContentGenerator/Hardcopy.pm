@@ -960,7 +960,7 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 	# write set header
 	await $c->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header);    # 0 => pg file specified directly
 
-	print $FH "\\medskip\\hrule\\nobreak\\smallskip";
+	print $FH "\\medskip\\hrule\\nobreak\\smallskip\n\\begin{questions}\n";
 
 	# write each problem
 	# for versioned problem sets (gateway tests) we like to include
@@ -972,6 +972,8 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 		await $c->write_problem_tex($FH, $TargetUser, $MergedSet, $problemID);
 		$i++;
 	}
+
+	print $FH "\\end{questions}\n";
 
 	# write footer
 	await $c->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $footer);    # 0 => pg file specified directly
@@ -1177,24 +1179,23 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $problemID = 0, $
 	my $body_text = $pg->{body_text};
 
 	if ($problemID) {
+		my $id = $MergedProblem->problem_id;
 		if (defined($MergedSet) && $MergedSet->assignment_type eq 'jitar') {
 			# Use the pretty problem number if its a jitar problem
-			my $id       = $MergedProblem->problem_id;
-			my $prettyID = join('.', jitar_id_to_seq($id));
-			print $FH "{\\bf " . $c->maketext("Problem [_1].", $prettyID) . "}";
-		} elsif ($MergedProblem->problem_id != 0) {
-			print $FH "{\\bf "
-				. $c->maketext("Problem [_1].", $versioned ? $versioned : $MergedProblem->problem_id) . "}";
+			$id = join('.', jitar_id_to_seq($id));
+		} elsif ($id != 0 && $versioned) {
+			$id = $versioned;    # this cannot be right?
 		}
 
 		my $problemValue = $MergedProblem->value;
 		if (defined($problemValue)) {
-			my $points = $problemValue == 1 ? $c->maketext('point') : $c->maketext('points');
-			print $FH " {\\bf\\footnotesize($problemValue $points)}";
+			print $FH "\\titledquestion{$id}[$problemValue]\n";
+		} else {
+			print $FH "\\titledquestion{$id}\n";
 		}
 
 		if ($c->{can_show_source_file} && $c->param("show_source_file") eq "Yes") {
-			print $FH " {\\footnotesize\\path|" . $MergedProblem->source_file . "|}";
+			print $FH "{\\footnotesize\\path|" . $MergedProblem->source_file . "|}\n";
 		}
 
 		print $FH "\\smallskip\n\n";
