@@ -21,6 +21,7 @@ use strict;
 # Get the necessary packages, including adding webwork to our path.
 
 my $pg_dir;
+
 BEGIN {
 	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
 	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
@@ -39,10 +40,9 @@ use DBI;
 
 my $ce = new WeBWorK::CourseEnvironment({
 	webwork_dir => $ENV{WEBWORK_ROOT},
-	});
+});
 
 my $configured_OPL_path = $ce->{problemLibrary}{root};
-
 
 # Drop the "OpenProblemLibrary" from the end of the path
 
@@ -50,7 +50,7 @@ $configured_OPL_path =~ s+OpenProblemLibrary++;
 
 # Check that it exists
 
-if ( -d "$configured_OPL_path" ) {
+if (-d "$configured_OPL_path") {
 	print "OPL path seems to be $configured_OPL_path\n";
 } else {
 	print "OPL path seems to be misconfigured as $configured_OPL_path which does not exist.\n";
@@ -60,7 +60,7 @@ if ( -d "$configured_OPL_path" ) {
 # Set TABLE-DUMP path and make directory if necessary
 
 my $prepared_OPL_tables_dir = "${configured_OPL_path}/TABLE-DUMP";
-if ( ! -d "$prepared_OPL_tables_dir" ) {
+if (!-d "$prepared_OPL_tables_dir") {
 	`mkdir -p $prepared_OPL_tables_dir`;
 }
 
@@ -77,23 +77,23 @@ my $dbuser = $ce->{database_username};
 my $dbpass = $ce->{database_password};
 
 $dbuser = shell_quote($dbuser);
-$db = shell_quote($db);
+$db     = shell_quote($db);
 
-$ENV{'MYSQL_PWD'}=$dbpass;
+$ENV{'MYSQL_PWD'} = $dbpass;
 
 # decide whether the mysql installation can handle
 # utf8mb4 and that should be used for the OPL
 
-my $ENABLE_UTF8MB4 = $ce->{ENABLE_UTF8MB4}?1:0;
+my $ENABLE_UTF8MB4 = $ce->{ENABLE_UTF8MB4} ? 1 : 0;
 
-my $character_set =  ($ENABLE_UTF8MB4)? "utf8mb4":"utf8";
+my $character_set = ($ENABLE_UTF8MB4) ? "utf8mb4" : "utf8";
 
 my $mysql_command = $ce->{externalPrograms}->{mysql};
 
 # check to see if the prepared_OPL_tables_file exists and if it does load it in
 
 if (-e $prepared_OPL_tables_file) {
-  `$mysql_command --host=$host --port=$port --user=$dbuser --default-character-set=$character_set $db < $prepared_OPL_tables_file`;
+	`$mysql_command --host=$host --port=$port --user=$dbuser --default-character-set=$character_set $db < $prepared_OPL_tables_file`;
 }
 
 1;

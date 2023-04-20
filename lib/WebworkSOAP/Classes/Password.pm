@@ -10,14 +10,13 @@ package WebworkSOAP::Classes::Password;
 =cut
 
 sub new {
-    my $self = shift;
-    my $data = shift;
-    $self = {};
-    $self->{user_id} = SOAP::Data->type( 'string', $data->user_id );
-    $self->{password} = SOAP::Data->type( 'string', $data->password );
-    bless $self;
-    return $self;
+	my $self = shift;
+	my $data = shift;
+	$self             = {};
+	$self->{user_id}  = SOAP::Data->type('string', $data->user_id);
+	$self->{password} = SOAP::Data->type('string', $data->password);
+	bless $self;
+	return $self;
 }
-
 
 1;

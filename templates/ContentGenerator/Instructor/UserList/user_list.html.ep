@@ -1,0 +1,90 @@
+% if ($c->{passwordMode}) {
+	% content_for 'user-list-table-headings' => begin
+		<th id="new_password_header"><%= maketext('New Password') %></th>
+	% end
+% }
+%
+% unless ($c->{editMode} || $c->{passwordMode}) {
+	% content_for 'user-list-table-headings' => begin
+		<th>
+			<%= check_box 'select-all' => 'on', id => 'select-all', 'aria-label' => maketext('Select all users'),
+				data => { select_group => 'selected_users' }, class => 'select-all form-check-input' =%>
+		</th>
+		<th>
+			<%= label_for 'select-all' =>
+				link_to maketext('Login Name') => '#', class => 'sort-header',
+					data => { sort_field => 'user_id' } =%>
+		</th>
+		<th><%= maketext('Login Status') %></th>
+		<th><%= maketext('Assigned Sets') %></th>
+		<th>
+			<%= link_to maketext('First Name') => '#', class => 'sort-header',
+				data => { sort_field => 'first_name' } %>
+		</th>
+		<th>
+			<%= link_to maketext('Last Name') => '#', class => 'sort-header',
+				data => { sort_field => 'last_name' } =%>
+		</th>
+		<th><%= maketext('Email Link') %></th>
+		<th>
+			<%= link_to maketext('Student ID') => '#', class => 'sort-header',
+				data => { sort_field => 'student_id' } =%>
+		</th>
+		<th>
+			<%= link_to maketext('Status') => '#', class => 'sort-header',
+				data => { sort_field => 'status' } =%>
+		</th>
+		<th>
+			<%= link_to maketext('Section') => '#', class => 'sort-header',
+				data => { sort_field => 'section' } =%>
+		</th>
+		<th>
+			<%= link_to maketext('Recitation') => '#', class => 'sort-header',
+				data => { sort_field => 'recitation' } =%>
+		</th>
+		<th>
+			<%= link_to maketext('Comment') => '#', class => 'sort-header',
+				data => { sort_field => 'comment' } =%>
+		</th>
+		<th>
+			<%= link_to maketext('Permission Level') => '#', class => 'sort-header',
+				data => { sort_field => 'permission' } =%>
+		</th>
+	% end
+% } else {
+	% content_for 'user-list-table-headings' => begin
+		% for my $field (@$fields) {
+			<th id="<%= $field %>_header"><%= $fieldProperties->{$field}{name} %></th>
+		% }
+	% end
+% }
+%
+<div class="table-responsive">
+	<table id="classlist-table" class="table table-sm table-bordered caption-top font-sm <%=
+		$c->{editMode} || $c->{passwordMode} ? ' align-middle' : '' =%>">
+		<caption><%= maketext('Users List') %></caption>
+		<thead class="table-group-divider">
+			<tr>
+				<%= content 'user-list-table-headings' =%>
+			</tr>
+		</thead>
+		<tbody class="table-group-divider">
+			% for (@{ $c->{sortedUserIDs} }) {
+				<%= include 'ContentGenerator/Instructor/UserList/user_row',
+					user         => $c->{allUsers}{$_},
+					userSelected => exists $c->{selectedUserIDs}{$_},
+					editable     => exists $c->{userIsEditable}{$_}
+				=%>
+			% }
+		</tbody>
+	</table>
+</div>
+%
+% # If there are no users shown print message.
+% unless (scalar(@{ $c->{sortedUserIDs} })) {
+	<p>
+		<i>
+			<%= maketext('No students shown. Choose one of the options above to list the students in the course.') =%>
+		</i>
+	</p>
+% }

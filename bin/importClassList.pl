@@ -19,7 +19,7 @@ my $pg_dir;
 
 BEGIN {
 	die "WEBWORK_ROOT not found in environment.\n"
-	  unless exists $ENV{WEBWORK_ROOT};
+		unless exists $ENV{WEBWORK_ROOT};
 	$webwork_dir = $ENV{WEBWORK_ROOT};
 	print "importClassList.pl:  WeBWorK root directory set to $webwork_dir\n";
 
@@ -41,26 +41,26 @@ use WeBWorK::Utils qw(cryptPassword);
 use strict;
 use warnings;
 
-if((scalar(@ARGV) != 2)) {
-  print "\nSyntax is: importClassList.pl course_id path_to_classlist_file.lst\n\n";
-  exit();
+if ((scalar(@ARGV) != 2)) {
+	print "\nSyntax is: importClassList.pl course_id path_to_classlist_file.lst\n\n";
+	exit();
 }
 
 my $courseID = shift;
 
 my $fileName = shift;
-die "Not able to read from file $fileName : does it exist? is it readable?" unless ( -r "$fileName" );
+die "Not able to read from file $fileName : does it exist? is it readable?" unless (-r "$fileName");
 
 my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
-	courseName => $courseID
+	courseName  => $courseID
 });
 
 my $db = new WeBWorK::DB($ce->{dbLayout});
 
-my $createNew = 1;            # Always set to true, so add new users
-my $replaceExisting = "none"; # Always set to "none" so no existing accounts are changed
-my @replaceList =();          # Empty list
+my $createNew       = 1;         # Always set to true, so add new users
+my $replaceExisting = "none";    # Always set to "none" so no existing accounts are changed
+my @replaceList     = ();        # Empty list
 my (@replaced, @added, @skipped);
 
 # This was copied with MINOR changes from lib/WeBWorK/ContentGenerator/Instructor/UserList.pm
@@ -92,12 +92,12 @@ sub importUsersFromCSV {
 	my $default_status_abbrev = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
 
 	foreach my $record (@classlist) {
-		my %record = %$record;
+		my %record  = %$record;
 		my $user_id = $record{user_id};
 
 		print "Saw user_id = $user_id\n";
 
-		unless (WeBWorK::DB::check_user_id($user_id) ) {  # try to catch lines with bad characters
+		unless (WeBWorK::DB::check_user_id($user_id)) {    # try to catch lines with bad characters
 			push @skipped, $user_id;
 			next;
 		}
@@ -131,9 +131,9 @@ sub importUsersFromCSV {
 		$record{permission} = $default_permission_level
 			unless defined $record{permission} and $record{permission} ne "";
 
-		my $User = $db->newUser(%record);
+		my $User            = $db->newUser(%record);
 		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => $record{permission});
-		my $Password = $db->newPassword(user_id => $user_id, password => $record{password});
+		my $Password        = $db->newPassword(user_id => $user_id, password => $record{password});
 
 		# DBFIXME use REPLACE
 		if (exists $allUserIDs{$user_id}) {
@@ -149,10 +149,9 @@ sub importUsersFromCSV {
 		}
 	}
 
-
-	print( "Added:\n\t",    join("\n\t", @added),    "\n\n" );
-	print( "Skipped:\n\t",  join("\n\t", @skipped),  "\n\n" );
-	print( "Replaced:\n\t", join("\n\t", @replaced), "\n\n" );
+	print("Added:\n\t",    join("\n\t", @added),    "\n\n");
+	print("Skipped:\n\t",  join("\n\t", @skipped),  "\n\n");
+	print("Replaced:\n\t", join("\n\t", @replaced), "\n\n");
 
 }
 

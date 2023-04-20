@@ -60,29 +60,6 @@ $mail{feedbackRecipients}    = [
 # Use this to customize the text of the feedback button.
 #$feedback_button_name = "Email Instructor";
 
-
-
-################################################################################
-# Repository Information
-###############################################################################
-# This is where you put your custom remote and branch for your WeBWorK, PG and OPL
-# github repositories.
-# To disable checking for a particular repository, set the remote and branch
-# variables to be empty strings.
-
-# Note:  This process uses git ls-remote which can be very slow on some
-# systems, so it is disabled by default.  Enabling this may make the course
-# list page in the admin course very slow.
-
-#$enableGitUpgradeNotifier = 1;
-
-#$gitWeBWorKRemoteName = "origin";
-#$gitWeBWorKBranchName = "main";
-#$gitPGRemoteName = "origin";
-#$gitPGBranchName = "main";
-#$gitLibraryRemoteName = "origin";
-#$gitLibraryBranchName = "main";
-
 ################################################################################
 # Theme
 ################################################################################
@@ -238,8 +215,6 @@ $mail{feedbackRecipients}    = [
 
 # This sets if mathview is available on the PG editor for use as a minimal latex equation editor
 #$options{PGMathView} = 1;
-# This sets if WirisEditor is available on the PG editor for use as a minimal latex equation editor
-#$options{PGWirisEditor}= 1;
 # This sets if MathQuill is available on the PG editor for use as a minimal latex equation editor
 #$options{PGMathQuill}= 1;
 
@@ -280,22 +255,6 @@ $mail{feedbackRecipients}    = [
 # precedence over all other locations.
 
 ################################################################################
-# Adding to the applet search path.
-################################################################################
-
-# If a full URL is given, it is used unmodified. If an
-# absolute path is given, the URL of the local server is prepended to it.
-#
-# For example, if an item is "/math/applets",
-# and the local server is  "https://math.yourschool.edu",
-# then the URL "https://math.yourschool.edu/math/applets" will be used.
-#
-# If your new applets location is a subdirectory of the webwork htdocs directory, you may
-# use notation such as "$webworkURLs{htdocs}/newsubdir"
-
-#$pg{directories}{appletPath} = [ @{$pg{directories}{appletPath}} , "new/url" ];
-
-################################################################################
 # Problem creation defaults
 ################################################################################
 
@@ -325,6 +284,12 @@ $mail{feedbackRecipients}    = [
 # Setting this to a positive value will override the course-wide setting
 #$problemDefaults{prPeriod} = -1;
 
+# The default number of attempts after which to show hints for newly created problems.
+# It is suggested to use the value of -2, which means that the course-wide setting would be used
+# Setting this to -2 defaults to the use of course-wide settings (suggested)
+# Setting this to -1 disables hints in problems.
+# Setting this to 0 or more will show hints after that number of attempts.
+#$problemDefaults{showHintsAfter} = 2;
 
 ################################################################################
 # Periodic re-randomization
@@ -368,7 +333,6 @@ $mail{feedbackRecipients}    = [
 
 #$pg{specialPGEnvironmentVars}{entryAssist} = 'MathQuill';
 #$pg{specialPGEnvironmentVars}{entryAssist} = 'MathView';
-#$pg{specialPGEnvironmentVars}{entryAssist} = 'WIRIS';
 
 ################################################################################
 # Directory for temporary files
@@ -506,6 +470,11 @@ $mail{feedbackRecipients}    = [
 
 #$session_management_via = "key";
 
+## This is the length of time (in seconds) after which a user's session becomes
+## invalid if they have no activity. The default is 30 minutes (60*30 seconds).
+
+#$sessionKeyTimeout = 60*60*2;
+
 ################################################################################
 # Cookie control settings
 ################################################################################
@@ -513,32 +482,31 @@ $mail{feedbackRecipients}    = [
 # The following variables can be set to control cookie behavior.
 
 # Set the value of the samesite attribute of the WeBWorK cookie:
-#    See: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
-#         https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
-#         https://tools.ietf.org/html/draft-west-cookie-incrementalism-00
+# See: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
+#      https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+#      https://tools.ietf.org/html/draft-west-cookie-incrementalism-00
 
 # Notes about the $CookieSameSite options:
-#   The "None" setting should only be used with HTTPS and when $CookieSecure = 1; is set below. The "None" setting is also less secure and can allow certain types of cross-site attacks.
-#   The "Strict" setting can break the links in the system generated feedback emails when read in a web mail client.
-#   Due to those factors, the "Lax" setting is probably the optimal choice for typical WeBWorK servers.
+# The "None" setting should only be used with HTTPS and when $CookieSecure = 1; is set below. The "None" setting is
+# also less secure and can allow certain types of cross-site attacks.
+# The "Strict" setting can break the links in the system generated feedback emails when read in a web mail client.
+# Due to those factors, the "Lax" setting is probably the optimal choice for typical WeBWorK servers.
 
 #$CookieSameSite = "None";
 #$CookieSameSite = "Strict";
 #$CookieSameSite = "Lax";
 
 # Set the value of the secure cookie attribute:
+# Default is 0 here, as 1 will not work without https
 #$CookieSecure = 1;
 
-# At present the CookieLifeTime setting only effect how long the
-# browser is to supposed to retain the cookie.
-#     https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
-#$CookieLifeTime = "+7d";
+# The CookieLifeTime setting determines how long the browser should retain the cookie.
+# See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
+# The CookieLifeTime value should be numeric and in seconds, or should be set to "session", in which case
+# the Cookie will expire when the browser session ends (a "session cookie").
+# The default value is 7 days.
+#$CookieLifeTime = 604800;
 #$CookieLifeTime = "session";
-
-# NOTE: In general the cookie lifespan settings use the CGI.pm relative time settings.
-# Search for "30 seconds from now" at https://metacpan.org/pod/CGI to see the various options.
-# A WW option is to set it to "session", in which case the Cookie will expire when the
-# browser session ends (a "session cookie").
 
 ################################################################################
 # Searching for set.def files to import
@@ -555,9 +523,9 @@ $mail{feedbackRecipients}    = [
 ################################################################################
 
 #$permissionLevels{show_resource_info}               = "admin";
-#$permissionLevels{show_pg_info_checkbox}            = "admin";
-#$permissionLevels{show_answer_hash_info_checkbox}   = "admin";
-#$permissionLevels{show_answer_group_info_checkbox}  = "admin";
+#$permissionLevels{show_pg_info}                     = "admin";
+#$permissionLevels{show_answer_hash_info}            = "admin";
+#$permissionLevels{show_answer_group_info}           = "admin";
 #$permissionLevels{modify_tags}                      = "admin";
 
 ################################################################################
@@ -579,10 +547,10 @@ $mail{feedbackRecipients}    = [
 #$hardcopyThemeNames = {
 	#oneColumn => 'One Column',
 	#twoColumn => 'Two Columns',
-	#XeLaTeX-oneColumn => 'English - one Column',
-	#XeLaTeX-twoColumn => 'English - two Columns',
-	#XeLaTeX-Hebrew-oneColumn => 'Hebrew/English - one Column',
-	#XeLaTeX-Hebrew-twoColumn => 'Hebrew/English - two Columns',
+	#'XeLaTeX-oneColumn' => 'English - one Column',
+	#'XeLaTeX-twoColumn' => 'English - two Columns',
+	#'XeLaTeX-Hebrew-oneColumn' => 'Hebrew/English - one Column',
+	#'XeLaTeX-Hebrew-twoColumn' => 'Hebrew/English - two Columns',
 #};
 
 # This is needed to enforce an order that the options are presented when making a hardcopy

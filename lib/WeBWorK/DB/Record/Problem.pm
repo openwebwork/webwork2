@@ -36,6 +36,7 @@ BEGIN {
 		counts_parent_grade  => { type => "INT" },
 		showMeAnother        => { type => "INT" },
 		showMeAnotherCount   => { type => "INT" },
+		showHintsAfter       => { type => "INT NOT NULL DEFAULT -2" },
 		# periodic re-randomization period
 		prPeriod => { type => "INT" },
 		# periodic re-randomization number of attempts for the current seed

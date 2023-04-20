@@ -1,0 +1,20 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to access instructor tools') %></div>
+	% last;
+% }
+%
+% if (current_route eq 'instructor_user_statistics') {
+	% # Stats and StudentProgress share this template.
+	<%= include 'ContentGenerator/Instructor/Stats/student_stats' =%>
+% } elsif (current_route eq 'instructor_set_statistics') {
+	<%= $c->set_stats =%>
+% } elsif (current_route eq 'instructor_problem_statistics') {
+	<%= $c->problem_stats =%>
+% } else {
+	% # Stats and StudentProgress share this template also.
+	<%= include 'ContentGenerator/Instructor/Stats/index',
+		set_header     => maketext('View statistics by set'),
+		student_header => maketext('View statistics by student') =%>
+% }

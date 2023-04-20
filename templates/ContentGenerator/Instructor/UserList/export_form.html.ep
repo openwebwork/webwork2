@@ -1,0 +1,39 @@
+% use WeBWorK::Utils::Instructor qw(getCSVList);
+%
+<div>
+   	<div class="row mb-2">
+		<%= label_for export_select_scope => maketext('Export which users?'),
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.export.scope' => [
+					[ maketext('all users')      => 'all' ],
+					[ maketext('visible users')  => 'visible', selected => undef ],
+					[ maketext('selected users') => 'selected' ],
+				],
+				id => 'export_select_scope', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for export_select_target => maketext('Export to what kind of file?'),
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.export.target' => [
+					[ maketext('Enter filename below') => 'new' ],
+					getCSVList($ce)
+				],
+				id => 'export_select_target', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div id="export_elements" class="row mb-2">
+		<%= label_for 'export_filename', class => 'col-form-label col-form-label-sm col-sm-auto', begin =%>
+			<%= maketext('Filename') %><span class="required-field">*</span>
+		<% end =%>
+		<div class="col-auto d-inline-flex">
+			<div class="input-group input-group-sm">
+				<%= text_field 'action.export.new' => '', id => 'export_filename', 'aria-required' => 'true',
+					class => 'form-control form-control-sm' =%>
+				<span class="input-group-text font-monospace">.lst</span>
+			</div>
+		</div>
+	</div>
+</div>

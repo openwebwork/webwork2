@@ -18,13 +18,12 @@
 	if (navigation_element) {
 		const threshold = 768
 		let currentWidth = window.innerWidth;
-		const toggle_icon = document.querySelector('#toggle-sidebar-icon i');
 		const content = document.getElementById('content');
 
 		const toggleSidebar = () => {
 			navigation_element.classList.toggle('toggle-width');
+			navigation_element.classList.remove('invisible');
 			content.classList.toggle('toggle-width');
-			toggle_icon?.classList.toggle('toggle-icon');
 
 			if (currentWidth < threshold) {
 				const overlay = document.createElement('div');
@@ -34,7 +33,6 @@
 					overlay.remove();
 					navigation_element.classList.toggle('toggle-width');
 					content.classList.toggle('toggle-width');
-					toggle_icon?.classList.toggle('toggle-icon');
 					document.body.classList.remove('no-scroll');
 				});
 				document.body.classList.add('no-scroll');
@@ -43,8 +41,21 @@
 
 		document.getElementById('toggle-sidebar')?.addEventListener('click', toggleSidebar);
 
+		if (currentWidth < threshold) navigation_element.classList.add('invisible');
+
+		navigation_element.addEventListener('transitionend', () => {
+			if (
+				(window.innerWidth >= threshold && navigation_element.classList.contains('toggle-width')) ||
+				(window.innerWidth < threshold && !navigation_element.classList.contains('toggle-width'))
+			)
+				navigation_element.classList.add('invisible');
+		});
+
 		// If the window width changes open or close the sidebar appropriately.
 		window.addEventListener('resize', () => {
+			if (!navigation_element.classList.contains('toggle-width') && window.innerWidth >= threshold)
+				navigation_element.classList.remove('invisible');
+
 			if ((navigation_element.classList.contains('toggle-width') &&
 				window.innerWidth < threshold && currentWidth >= threshold) ||
 				(navigation_element.classList.contains('toggle-width') &&
@@ -65,31 +76,6 @@
 			() => window.open(helpLink.href, helpLink.target, 'width=550,height=350,scrollbars=yes,resizable=yes'))
 	);
 
-	// Focus on an alert-danger element if one is around and focusable.
-	Array.from(document.querySelectorAll('.alert-danger')).shift()?.focus();
-
-	// ComboBox (see lib/WeBWorK/HTML/ComboBox.pm)
-	// This changes the textbox text to the currently selected option in the select menu.
-	document.querySelectorAll('.combo-box').forEach((comboBox) => {
-		const comboBoxText = comboBox.querySelector('.combo-box-text');
-		const comboBoxSelect = comboBox.querySelector('.combo-box-select');
-
-		if (!comboBoxText || !comboBoxSelect) return;
-
-		// Try to select best option in select menu as user types in the textbox.
-		comboBoxText.addEventListener('keyup', () => {
-			let i = 0;
-			for (;
-				i < comboBoxSelect.options.length && comboBoxSelect.options[i].value.indexOf(comboBoxText.value) != 0;
-				++i) {}
-			comboBoxSelect.selectedIndex = i;
-		});
-
-		// Set the textbox text to be same as that of select menu
-		comboBoxSelect.addEventListener('change',
-			() => comboBoxText.value = comboBoxSelect.options[comboBoxSelect.selectedIndex].value);
-	});
-
 	// Turn help boxes into popovers
 	document.querySelectorAll('.help-popup').forEach((popover) => {
 		new bootstrap.Popover(popover, {trigger: 'hover focus'});
@@ -101,7 +87,7 @@
 	);
 
 	// Set up popovers in the attemptResults table.
-	document.querySelectorAll('table.attemptResults td span.answer-preview').forEach((popover) => {
+	document.querySelectorAll('table.attemptResults td div.answer-preview').forEach((popover) => {
 		if (popover.dataset.bsContent) new bootstrap.Popover(popover, {trigger: 'click', html: true, sanitize: false});
 	});
 

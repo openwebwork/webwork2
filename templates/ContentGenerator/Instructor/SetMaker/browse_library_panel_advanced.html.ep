@@ -1,0 +1,119 @@
+% use WeBWorK::Utils::ListingDB qw(getAllDBsubjects getAllDBchapters getAllDBsections getDBTextbooks countDBListings);
+%
+<div>
+	<%= hidden_field library_is_basic => 2 =%>
+	<div class="text-center">
+		<label class="col-form-label-sm pt-0"><%= maketext('All Selected Constraints Joined by "And"') =%></label>
+	</div>
+	<div class="row mb-1">
+		<div class="col-md-6 col-sm-8 mb-1 offset-md-3">
+			<div class="row mb-1">
+				<%= label_for library_subjects => maketext('Subject:'),
+					class => 'col-3 col-form-label col-form-label-sm' =%>
+				<div class="col-9">
+					<%= select_field library_subjects => [
+							[ maketext('All Subjects') => '', selected => undef ],
+							getAllDBsubjects($c)
+						],
+						id => 'library_subjects', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
+			<div class="row mb-1">
+				<%= label_for library_chapters => maketext('Chapter:'),
+					class => 'col-3 col-form-label col-form-label-sm' =%>
+				<div class="col-9">
+					<%= select_field library_chapters => [
+							[ maketext('All Chapters') => '', selected => undef ],
+							getAllDBchapters($c)
+						],
+						id => 'library_chapters', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
+			<div class="row mb-1">
+				<%= label_for library_sections => maketext('Section:'),
+					class => 'col-3 col-form-label col-form-label-sm' =%>
+				<div class="col-9">
+					<%= select_field library_sections => [
+							[ maketext('All Sections') => '', selected => undef ],
+							getAllDBsections($c)
+						],
+						id => 'library_sections', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
+			<div class="row mb-1">
+				<%= label_for library_textbook => maketext('Textbook:'),
+					class => 'col-3 col-form-label col-form-label-sm' =%>
+				<div class="col-9">
+					<%= select_field library_textbook => [
+							[ maketext('All Textbooks') => '', selected => undef ],
+							map { [ "$_->[1] by $_->[2] (edition $_->[3])" => $_->[0] ] } @{ getDBTextbooks($c) }
+						],
+						id => 'library_textbook', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
+			<div class="row mb-1">
+				<%= label_for library_textchapter => maketext('Text chapter:'),
+					class => 'col-3 col-form-label col-form-label-sm text-nowrap' =%>
+				<div class="col-9">
+					<%= select_field library_textchapter => [
+							[ maketext('All Chapters') => '', selected => undef ],
+							map { $_->[0] } @{ getDBTextbooks($c, 'textchapter') }
+						],
+						id => 'library_textchapter', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
+			<div class="row mb-1">
+				<%= label_for library_textsection => maketext('Text section:'),
+					class => 'col-3 col-form-label col-form-label-sm text-nowrap' =%>
+				<div class="col-9">
+					<%= select_field library_textsection => [
+							[ maketext('All Sections') => '', selected => undef ],
+							map { $_->[0] } @{ getDBTextbooks($c, 'textsection') }
+						],
+						id => 'library_textsection', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
+			<div class="row mb-1">
+				<label class="col-3 col-form-label col-form-label-sm"><%= maketext('Level:') %></label>
+				<div class="col-9">
+					<div class="d-flex justify-content-between align-items-center">
+						% for (1 .. 6) {
+							<div class="form-check form-check-inline">
+								<label class="form-check-label col-form-label-sm">
+									<%= check_box level => $_, class => 'form-check-input' =%>
+									<%= $_ =%>
+								</label>
+							</div>
+						% }
+						<%= $c->helpMacro('Levels') =%>
+					</div>
+				</div>
+			</div>
+			<div class="row mb-1">
+				<%= label_for library_keywords => maketext('Keywords:'),
+					class => 'col-3 col-form-label col-form-label-sm' =%>
+				<div class="col-9">
+					<%= text_field library_keywords => '',
+						id => 'library_keywords', class => 'form-control form-control-sm' =%>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-3 col-sm-4 mb-1 d-flex flex-sm-column justify-content-sm-start justify-content-center">
+			<%= submit_button maketext('Update Menus'), name => 'lib_select_subject',
+				class => 'btn btn-secondary btn-sm mb-1 library-panel-btn' =%>
+			<%= submit_button maketext('Reset'), name => 'library_reset',
+				class => 'btn btn-secondary btn-sm mb-1 ms-sm-0 ms-2 library-panel-btn' =%>
+			<%= submit_button maketext('Basic Search'), name => 'library_basic',
+				class => 'btn btn-secondary btn-sm mb-1 ms-sm-0 ms-2 library-panel-btn' =%>
+		</div>
+	</div>
+	<%= include 'ContentGenerator/Instructor/SetMaker/view_problems_line', internal_name => 'lib_view' =%>
+	<div class="text-center" id="library_count_line">
+		<label class="col-form-label-sm">
+			% my $listingsCount = countDBListings($c);
+			<%= $listingsCount == 0
+				? maketext('There are no matching WeBWorK problems')
+				: maketext('There are [_1] matching WeBWorK problems', $listingsCount) =%>
+		</label>
+	</div>
+</div>

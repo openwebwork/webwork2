@@ -1,8 +1,14 @@
 (() => {
-	const basicWebserviceURL = '/webwork2/instructorXMLHandler';
+	const webworkURL = webworkConfig?.webwork_url ?? '/webwork2';
+	const basicWebserviceURL = `${webworkURL}/instructor_rpc`;
 
-	// Informational alerts
+	let unloading = false;
+	window.addEventListener('beforeunload', () => unloading = true);
+
+	// Informational alerts/errors
 	const alertToast = (title, msg, good = false) => {
+		if (unloading) return;
+
 		const toastContainer = document.createElement('div');
 		toastContainer.classList.add(
 			'toast-container', 'position-fixed', 'top-50', 'start-50',  'translate-middle', 'p-3');
@@ -21,30 +27,6 @@
 		bsToast.show();
 	};
 
-	// Error display
-	const reportWWerror = (data) => {
-		const modal = document.createElement('div');
-		modal.classList.add('modal', 'modal-dialog-centered', 'gt-modal');
-		modal.tabIndex = -1;
-		modal.setAttribute('aria-labelledby', 'webwork-error-modal');
-		modal.setAttribute('aria-hidden', 'true');
-
-		modal.innerHTML = '<div class="modal-dialog modal-xl"><div class="modal-content">' +
-			'<div class="modal-header">' +
-			`<h5 class="modal-title" id="webwork-error-modal">WeBWorK Error</h5>` +
-			'<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
-			'</div>' +
-			`<div class="modal-body">${data}</div>` +
-			'<div class="modal-footer">' +
-			'<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>' +
-			'</div>' +
-			'</div></div>';
-		document.body.append(modal);
-		const bsModal = new bootstrap.Modal(modal);
-		bsModal.show();
-		modal.addEventListener('hidden.bs.modal', () => { bsModal.dispose(); modal.remove(); });
-	}
-
 	// This is a convenience method for attaching both a click and keydown handler to spans that are inert by default.
 	const attachEventListeners = (button, handler) => {
 		button.addEventListener('click', handler);
@@ -57,21 +39,15 @@
 	};
 
 	const init_webservice = (command) => {
-		const myUser = document.getElementById('hidden_user')?.value;
-		const myCourseID = document.getElementById('hidden_courseID')?.value;
-		const mySessionKey = document.getElementById('hidden_key')?.value;
-		const requestObject = { xml_command: 'listLib', library_name: 'Library', command: 'buildtree' };
-		if (myUser && mySessionKey && myCourseID) {
-			requestObject.user = myUser;
-			requestObject.session_key = mySessionKey;
-			requestObject.courseID = myCourseID;
-		} else {
-			alertToast('Missing hidden credentials', `user: ${myUser ?? 'uknown'}, session_key: ${
-				mySessionKey ?? 'unknown'}, courseID: ${myCourseID ?? 'unknown'}`);
-			return null;
-		}
-		requestObject.xml_command = command;
-		return requestObject;
+		return {
+			rpc_command: 'listLib',
+			library_name: 'Library',
+			command: 'buildtree',
+			user: document.getElementById('hidden_user')?.value,
+			key: document.getElementById('hidden_key')?.value,
+			courseID: document.getElementsByName('hidden_course_id')[0]?.value,
+			rpc_command: command
+		};
 	};
 
 	// Content request handling
@@ -79,31 +55,32 @@
 	const libSubjects = document.querySelector('select[name="library_subjects"]');
 	const libChapters = document.querySelector('select[name="library_chapters"]');
 	const libSections = document.querySelector('select[name="library_sections"]');
+	const libraryTextbook = document.querySelector('select[name="library_textbook"]');
+	const libraryChapter = document.querySelector('select[name="library_textchapter"]');
+	const librarySection = document.querySelector('select[name="library_textsection"]');
+	const includeOPL = document.querySelector('[name="includeOPL"]');
+	const includeContrib = document.querySelector('[name="includeContrib"]');
+
+	const countLine = document.getElementById('library_count_line');
 
 	const lib_update = async (who, what) => {
 		const child = { subjects: 'chapters', chapters: 'sections', sections: 'count' };
 
-		const all = `All ${who.charAt(0).toUpperCase()}${who.slice(1)}`;
-
 		const requestObject = init_webservice('searchLib');
-		if (!requestObject) return; // Missing credentials
-
-		const subj = libSubjects?.value ?? '';
-		const chap = libChapters?.value ?? '';
-		const sect = libSections?.value ?? '';
-
-		const lib_text = document.querySelector('[name="library_textbook"]')?.value ?? '';
-		const lib_textchap = document.querySelector('[name="library_textchapter"]')?.value ?? '';
-		const lib_textsect = document.querySelector('[name="library_textsection"]')?.value ?? '';
-
-		requestObject.library_subjects = subj === 'All Subjects' ? '' : subj;
-		requestObject.library_chapters = chap === 'All Chapters' ? '' : chap;
-		requestObject.library_sections = sect === 'All Sections' ? '' : sect;
-		requestObject.library_textbooks = lib_text === 'All Textbooks' ? '' : lib_text;
-		requestObject.library_textchapter = lib_textchap === 'All Chapters' ? '' : lib_textchap;
-		requestObject.library_textsection = lib_textsect === 'All Sections' ? '' : lib_textsect;
+		requestObject.library_subjects = libSubjects?.value ?? '';
+		requestObject.library_chapters = libChapters?.value ?? '';
+		requestObject.library_sections = libSections?.value ?? '';
+		requestObject.library_textbook = libraryTextbook?.value ?? '';
+		requestObject.library_textchapter = libraryChapter?.value ?? '';
+		requestObject.library_textsection = librarySection?.value ?? '';
+		requestObject.includeOPL = (includeOPL.type === 'checkbox' && includeOPL?.checked) ||
+			(includeOPL.type === 'hidden' && includeOPL.value) ? 1 : 0;
+		requestObject.includeContrib = includeContrib?.checked ? 1 : 0;
 
 		if (who == 'count') {
+			// Don't perform a count if there is no count line to update.
+			if (!countLine) return;
+
 			requestObject.command = 'countDBListings';
 
 			const controller = new AbortController();
@@ -120,30 +97,32 @@
 				clearTimeout(timeoutId);
 
 				if (!response.ok) {
-					const data = await response.text();
-					if (/WeBWorK error/.test(data)) reportWWerror(data);
-					else throw 'Unknown server communication error.';
+					throw 'Unknown server communication error.';
 				} else {
 					const data = await response.json();
-					const num = data.result_data[0];
-					document.getElementById('library_count_line').innerHTML = num === '1'
-						? 'There is 1 matching WeBWorK problem'
-						: `There are ${num} matching WeBWorK problems.`;
+					if (data.error) {
+						throw data.error;
+					} else {
+						const num = data.result_data[0];
+						countLine.firstElementChild.innerHTML = num === '1'
+							? 'There is 1 matching WeBWorK problem'
+							: `There are ${num} matching WeBWorK problems.`;
+					}
 				}
 			} catch (e) {
-				alertToast(basicWebserviceURL, e.message);
+				alertToast(basicWebserviceURL, e?.message ?? e);
 			}
 			return;
 		}
 
 		if (what == 'clear') {
-			setselect(`library_${who}`, [all]);
+			setselect(`library_${who}`, []);
 			lib_update(child[who], 'clear');
 			return;
 		}
 
-		if (who == 'chapters' && subj == '') { lib_update(who, 'clear'); return; }
-		if (who == 'sections' && chap == '') { lib_update(who, 'clear'); return; }
+		if (who == 'chapters' && requestObject.library_subjects == '') { lib_update(who, 'clear'); return; }
+		if (who == 'sections' && requestObject.library_chapters == '') { lib_update(who, 'clear'); return; }
 
 		requestObject.command = who == 'sections' ? 'getSectionListings' : 'getAllDBchapters';
 
@@ -161,24 +140,27 @@
 			clearTimeout(timeoutId);
 
 			if (!response.ok) {
-				const data = await response.text();
-				if (/WeBWorK error/.test(data)) reportWWerror(data);
-				else throw 'Unknown server communication error.';
+				throw 'Unknown server communication error.';
 			} else {
 				const data = await response.json();
-				const arr = data.result_data;
-				arr.unshift(all);
-				setselect(`library_${who}`, arr);
-				lib_update(child[who], 'clear');
+				if (data.error) {
+					throw data.error;
+				} else {
+					setselect(`library_${who}`, data.result_data);
+					lib_update(child[who], 'clear');
+				}
 			}
 		} catch (e) {
-			alertToast(basicWebserviceURL, e.message);
+			alertToast(basicWebserviceURL, e?.message ?? e);
 		}
 	};
 
 	const setselect = (selname, newarray) => {
 		const sel = document.querySelector(`[name="${selname}"]`);
+		// Save the 'all' option, remove all options, and then restore the 'all' option.
+		const select_all_option = sel.firstChild;
 		while (sel.firstChild) sel.lastChild.remove();
+		sel.append(select_all_option);
 		newarray.forEach((val) => {
 			const option = document.createElement('option');
 			option.value = val;
@@ -190,8 +172,18 @@
 	libChapters?.addEventListener('change', () => lib_update('sections', 'get'));
 	libSubjects?.addEventListener('change', () => lib_update('chapters', 'get'));
 	libSections?.addEventListener('change', () => lib_update('count', 'clear'));
+	includeOPL?.addEventListener('change', () => lib_update('count', 'clear'));
+	includeContrib?.addEventListener('change', () => lib_update('count', 'clear'));
 	document.querySelectorAll('input[name="level"]').forEach(
 		(level) => level.addEventListener('change', () => lib_update('count', 'clear')));
+
+	// Set up the advanced view selects to submit the form when changed.
+	const libraryBrowserForm = document.forms['library_browser_form'];
+	if (libraryBrowserForm) {
+		libraryTextbook?.addEventListener('change', () => libraryBrowserForm.submit());
+		libraryChapter?.addEventListener('change', () => libraryBrowserForm.submit());
+		librarySection?.addEventListener('change', () => libraryBrowserForm.submit());
+	}
 
 	// Add problems to target set
 	const addme = async (path, who) => {
@@ -204,7 +196,6 @@
 		}
 
 		const request = init_webservice('addProblem');
-		if (!request) return;
 		request.set_id = target;
 
 		const pathlist = [];
@@ -234,14 +225,14 @@
 				clearTimeout(timeoutId);
 
 				if (!response.ok) {
-					const data = await response.text();
-					if (/WeBWorK error/.test(data)) reportWWerror(data);
-					else throw 'Unknown server communication error.';
-					return;
+					throw 'Unknown server communication error.';
+				} else {
+					const data = await response.json();
+					if (data.error) throw data.error;
 				}
 			}
 		} catch (e) {
-			alertToast(basicWebserviceURL, e.message);
+			alertToast(basicWebserviceURL, e?.message ?? e);
 			return;
 		}
 
@@ -254,13 +245,13 @@
 			true);
 	};
 
-	document.querySelector('input[name="select_all"]')?.addEventListener('click', () => addme('', 'all'));
-	document.querySelectorAll('input[name="add_me"]')
+	document.querySelector('.library-action-btn.add-all-btn')?.addEventListener('click', () => addme('', 'all'));
+	document.querySelectorAll('button.add_me')
 		.forEach((btn) => btn.addEventListener('click', () => addme(btn.dataset.sourceFile, 'one')));
 
 	// Update the messages about which problems are in the current set.
 	const markinset = async () => {
-		const ro = init_webservice('listSetProblems');
+		const ro = init_webservice('listGlobalSetProblems');
 		ro.set_id = document.getElementById('local_sets')?.value;
 		ro.command = 'true';
 
@@ -279,20 +270,22 @@
 
 			if (response.ok) {
 				const data = await response.json();
-				const paths = data.result_data.map((problem) => problem.path);
-				const shownProbs = document.querySelectorAll('[name^="filetrial"]');
-				for (const shownProb of shownProbs) {
-					const inset = document.getElementById(`inset${shownProb.name.replace('filetrial', '')}`);
-					if (paths.includes(shownProb.value)) inset?.classList.remove('d-none');
-					else inset?.classList.add('d-none');
+				if (data.error) {
+					throw data.error;
+				} else {
+					const paths = data.result_data.map((problem) => problem.path);
+					const shownProbs = document.querySelectorAll('[name^="filetrial"]');
+					for (const shownProb of shownProbs) {
+						const inset = document.getElementById(`inset${shownProb.name.replace('filetrial', '')}`);
+						if (paths.includes(shownProb.value)) inset?.classList.remove('d-none');
+						else inset?.classList.add('d-none');
+					}
 				}
 			} else {
-				const data = await response.text();
-				if (/WeBWorK error/.test(data)) reportWWerror(data);
-				else throw 'Unknown server communication error.';
+				throw 'Unknown server communication error.';
 			}
 		} catch (e) {
-			alertToast(basicWebserviceURL, e.message);
+			alertToast(basicWebserviceURL, e?.message ?? e);
 		}
 	};
 
@@ -393,10 +386,10 @@
 
 		const mltIcon = document.getElementById(`mlt${cnt}`);
 		if(mltIcon.textContent == 'M') {
-			unshownAreas.forEach((area) => area.style.display = 'block');
+			unshownAreas.forEach((area) => area.classList.remove('d-none'));
 			// Render any problems that were hidden that have not yet been rendered.
 			for (const area of unshownAreas) {
-				const iframe = area.querySelector('iframe[id^=psr_render_iframe_]');
+				const iframe = area.querySelector('iframe[id^="problem_render_area_"][id$="_iframe"]');
 				if (iframe && iframe.iFrameResizer) iframe.iFrameResizer.resize();
 				else await render(area.id.match(/^pgrow(\d+)/)[1]);
 			}
@@ -406,7 +399,7 @@
 			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] })
 			count = -count;
 		} else {
-			unshownAreas.forEach((area) => area.style.display = 'none');
+			unshownAreas.forEach((area) => area.classList.add('d-none'));
 			mltIcon.textContent = 'M';
 			mltIcon.dataset.bsTitle = mltIcon.dataset.moreText;
 			bootstrap.Tooltip.getInstance(mltIcon)?.dispose();
@@ -423,121 +416,27 @@
 		attachEventListeners(button, () => togglemlt(button.dataset.mltCnt, button.dataset.mltNoshowClass)));
 
 	// Problem rendering
-
-	const basicRendererURL = '/webwork2/html2xml';
-
 	const render = (id) => new Promise((resolve) => {
-		const renderArea = document.getElementById(`psr_render_area_${id}`);
+		const renderArea = document.getElementById(`problem_render_area_${id}`);
 		if (!renderArea) { resolve(); return; }
 
-		let iframe = renderArea.querySelector(`#psr_render_iframe_${id}`);
-		if (iframe && iframe.iFrameResizer) iframe.contentDocument.location.replace('about:blank');
-
-		const ro = {
-			userID: document.getElementById('hidden_user')?.value,
-			courseID: document.getElementById('hidden_courseID')?.value,
-			session_key: document.getElementById('hidden_key')?.value
-		};
-
-		if (!(ro.userID && ro.courseID && ro.session_key)) {
-			renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-				+ 'Missing hidden credentials: user, session_key, courseID</div>';
-			resolve();
-			return;
-		}
-
-		ro.sourceFilePath = renderArea.dataset.pgFile;
-		ro.outputformat = 'simple';
-		ro.showAnswerNumbers = 0;
-		ro.problemSeed = Math.floor((Math.random()*10000));
-		ro.showHints = document.querySelector('input[name="showHints"]')?.checked ? 1 : 0;
-		ro.showSolutions = document.querySelector('input[name="showSolutions"]')?.checked ? 1 : 0;
-		ro.noprepostambles = 1;
-		ro.processAnswers = 0;
-		ro.showFooter = 0;
-		ro.displayMode = document.querySelector('select[name="mydisplayMode"]').value ?? 'MathJax';
-		ro.language = document.querySelector('input[name="hidden_language"]')?.value ?? 'en';
-
 		// Abort if the display mode is not set to None
-		if (ro.displayMode === 'None') {
+		if (document.getElementById('problem_displaymode')?.value === 'None') {
 			while (renderArea.firstChild) renderArea.firstChild.remove();
 			resolve();
 			return;
 		}
 
-		ro.send_pg_flags = 1;
-		ro.extra_header_text = '<style>' +
-			'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
-			'</style>';
-		if (window.location.port) ro.forcePortNumber = window.location.port;
-
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-		fetch(basicRendererURL, {
-			method: 'post',
-			mode: 'same-origin',
-			body: new URLSearchParams(ro),
-			signal: controller.signal
-		}).then((response) => {
-			clearTimeout(timeoutId);
-			return response.json();
-		}).then((data) => {
-			// Give nicer session timeout error
-			if (!data.html || /Can\'t authenticate -- session may have timed out/i.test(data.html) ||
-				/Webservice.pm: Error when trying to authenticate./i.test(data.html)) {
-				renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-					+ "Can't authenticate -- session may have timed out.</div>";
-				resolve();
-				return;
-			}
-			// Give nicer file not found error
-			if (/this problem file was empty/i.test(data.html)) {
-				renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-					+ 'No Such File or Directory!</div>';
-				resolve();
-				return;
-			}
-			// Give nicer problem rendering error
-			if ((data.pg_flags && data.pg_flags.error_flag) ||
-				/error caught by translator while processing problem/i.test(data.html) ||
-				/error message for command: renderproblem/i.test(data.html)) {
-				renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-					+ 'There was an error rendering this problem!</div>';
-				resolve();
-				return;
-			}
-
-			if (!(iframe && iframe.iFrameResizer)) {
-				iframe = document.createElement('iframe');
-				iframe.id = `psr_render_iframe_${id}`;
-				iframe.style.border = 'none';
-				while (renderArea.firstChild) renderArea.firstChild.remove();
-				renderArea.append(iframe);
-
-				if (data.pg_flags && data.pg_flags.comment) {
-					const container = document.createElement('div');
-					container.innerHTML = data.pg_flags.comment;
-					iframe.after(container);
-				}
-				if (data.warnings) {
-					const container = document.createElement('div');
-					container.innerHTML = data.warnings;
-					iframe.after(container);
-				}
-				iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe);
-				iframe.addEventListener('load', () => resolve());
-			}
-			iframe.srcdoc = data.html;
-		}).catch((err) => {
-			renderArea.innerHTML = '<div class="alert alert-danger p-1 mb-0 fw-bold">'
-				+ `${basicRendererURL}: ${err.message}</div>`;
-			resolve();
-		});
+		webworkConfig.renderProblem(renderArea, {
+			sourceFilePath: renderArea.dataset.pgFile,
+			problemSeed: Math.floor(Math.random() * 10000),
+			showHints: document.querySelector('input[name="showHints"]')?.checked ? 1 : 0,
+			showSolutions: document.querySelector('input[name="showSolutions"]')?.checked ? 1 : 0
+		}).then(resolve);
 	});
 
 	// Find all render areas
-	const renderAreas = document.querySelectorAll('.psr_render_area');
+	const renderAreas = document.querySelectorAll('.rpc_render_area');
 
 	// Add the loading message to all render areas.
 	for (const renderArea of renderAreas) {
@@ -547,8 +446,9 @@
 	// Render all visible problems on the page
 	(async () => {
 		for (const renderArea of renderAreas) {
-			if (renderArea.style.display === 'none') continue;
-			await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
+			const id = renderArea.id.match(/^problem_render_area_(\d+)/)[1];
+			if (document.getElementById(`pgrow${id}`)?.classList.contains('d-none')) continue;
+			await render(id);
 		}
 	})();
 

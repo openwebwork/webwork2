@@ -1,0 +1,271 @@
+% use WeBWorK::Utils qw(wwRound);
+%
+% my $sourceFileName = $sourceFileData->{filepath} =~ s|^\./||r;
+% my $isstatic       = $sourceFileData->{static};
+% my $isMO           = $sourceFileData->{MO};
+%
+% if (!defined $isMO) {
+	% ($isMO, $isstatic) = $c->getDBextras($sourceFileName);
+% }
+%
+% # Determine if the target set is a gateway assignment.
+% my $setRecord =
+	% (defined param('local_sets') && param('local_sets') ne '')
+	% ? $db->getGlobalSet(param('local_sets'))
+	% : undef;
+% my $isGatewaySet = defined $setRecord && $setRecord->assignment_type =~ /gateway/;
+%
+% my $noshowclass = $sourceFileData->{morelt} ? "MLT$sourceFileData->{morelt}" : "NS$cnt";
+% if ($sourceFileData->{children}) {
+	% my $numchild = @{ $sourceFileData->{children} };
+	% content_for "mlt-$cnt" => begin
+		<%= tag('span',
+			class    => 'lb-mlt-parent btn btn-sm btn-secondary',
+			id       => "mlt$cnt",
+			tabindex => 0,
+			role     => 'button',
+			data     => {
+				mlt_cnt          => $cnt,
+				mlt_noshow_class => $noshowclass,
+				less_text        => maketext('Show less like this'),
+				more_text        => maketext('Show [_1] more like this', $numchild),
+				bs_title         => maketext('Show [_1] more like this', $numchild),
+				bs_toggle        => 'tooltip',
+				bs_placement     => 'top'
+			},
+			'M'
+		) =%>
+	% end
+	% $noshowclass = "NS$cnt";
+% }
+%
+% # Get statistics to display
+%
+% if ($ce->{problemLibrary}{showLibraryGlobalStats}) {
+	% my $stats = $c->{library_stats_handler}->getGlobalStats($sourceFileName);
+	% if ($stats->{students_attempted}) {
+		% content_for "global-problem-stats-$cnt" => begin
+			<div class="d-inline-block font-sm text-nowrap">
+				<span class="info-button text-primary" title="<%= maketext('Global Usage Data') %>"
+					data-bs-content="<%= maketext(
+						'Global data on problem usage is contributed by many institutions using '
+							. 'WeBWorK all over the world. The Usage figure is the total number of  '
+							. 'individuals who have attemped this problem at least once. A high figure '
+							. 'represents a problem which has been assigned to many students and is  '
+							. 'both popular with instructors and likely bug free.'
+					) %>"
+					data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" tabindex="0"
+					role="button">
+					<%= maketext('GLOBAL Usage') . ': ' =%>
+				</span>
+				<%= $stats->{students_attempted} . ', ' =%>
+				<span class="info-button text-primary" title="<%= maketext('Global Attempts') %>"
+					data-bs-content="<%= maketext(
+						'The Attempts figure is the global average of the number of attempts '
+							. '(both correct and incorrect) individuals take on this problem.  '
+							. 'A high figure may represent a difficult problem.  Note that problems '
+							. 'with multiple parts may have higher average attempts since many students  '
+							. 'will submit an answer to each part before continuing and each such  '
+							. 'submittal counts as an attempt.'
+					) %>"
+					data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" tabindex="0"
+					role="button">
+					<%= maketext('Attempts') . ': ' =%>
+				</span>
+				<%= wwRound(2, $stats->{average_attempts}) . ', ' =%>
+				<span class="info-button text-primary" title="<%= maketext('Global Status') %>"
+					data-bs-content="<%= tag('p', maketext(
+						'The Status figure is the global average of the Status '
+							. 'individuals have earned on this problem. The Status is the percentage '
+							. 'correct (from 0% to 100%) recorded for the problem.  A low figure may  '
+							. 'represent a difficult problem.  The Status is often fairly high since  '
+							. 'many students will work on a problem until they get it correct or nearly so.'
+					))
+					. tag('p', class => 'mb-0', maketext(
+						'Reviewing a problem and looking at both the average Attempts and  '
+							. 'average Status should give instructors valuable information about '
+							. 'the difficulty of the problem.'
+					)) %>"
+					data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true"
+					data-bs-trigger="hover focus" tabindex="0" role="button">
+					<%= maketext('Status') . ': ' =%>
+				</span>
+				<%= wwRound(0, 100 * $stats->{average_status}) =%>
+			</div>
+		% end
+	% }
+% }
+%
+% my $local_problem_stats = '';
+% if ($ce->{problemLibrary}{showLibraryLocalStats}) {
+	% my $stats = $c->{library_stats_handler}->getLocalStats($sourceFileName);
+	% if ($stats->{students_attempted}) {
+		% content_for "local-problem-stats-$cnt" => begin
+			<div class="d-inline-block font-sm text-nowrap">
+				<span class="info-button text-primary" title="<%= maketext('Local Usage Data') %>"
+					data-bs-content="<%= tag('p', maketext(
+						'Local data on problem usage is generated and maintained by your institution. '
+							. 'The Usage figure is the total number of local '
+							. 'individuals who have attemped this problem at least once. A high figure '
+							. 'represents a problem which has been assigned to many students and is  '
+							. 'both popular with instructors and likely bug free.'
+					))
+					. tag('p', class => 'mb-0', maketext(
+						'Local data is generated when your systems admin runs the script '
+							. 'update-OPL-statistics.'
+					)) %>"
+					data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-html="true"
+					tabindex="0" role="button">
+					<%= maketext('LOCAL Usage') . ': ' =%>
+				</span>
+				<%= $stats->{students_attempted} . ', ' =%>
+				<span class="info-button text-primary" title="<%= maketext('Local Attempts') %>"
+					data-bs-content="<%= maketext(
+						'The Attempts figure is the local average of the number of attempts '
+							. '(both correct and incorrect) individuals at your institution take on this problem. '
+							. 'A high figure may represent a difficult problem.  Note that problems '
+							. 'with multiple parts may have higher average attempts since many students  '
+							. 'will submit an answer to each part before continuing and each such  '
+							. 'submittal counts as an attempt.'
+					) %>"
+					data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" tabindex="0"
+					role="button">
+					<%= maketext('Attempts') . ': ' =%>
+				</span>
+				<%= wwRound(2, $stats->{average_attempts}) . ', ' =%>
+				<span class="info-button text-primary" title="<%= maketext('Local Status') %>"
+					data-bs-content="<%= tag('p', maketext(
+						'The Status figure is the local average of the Status '
+							. 'individuals at your institution have earned on this problem. The Status is the '
+							. 'percentage correct (from 0% to 100%) recorded for the problem.  A low figure may  '
+							. 'represent a difficult problem.  The Status is often fairly high since  '
+							. 'many students will work on a problem until they get it correct or nearly so.'
+					))
+					. tag('p', class => 'mb-0', maketext(
+						'Reviewing a problem and looking at both the average Attempts and  '
+							. 'average Status should give instructors valuable information about '
+							. 'the difficulty of the problem.'
+					)) %>"
+					data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-trigger="hover focus"
+					tabindex="0" role="button">
+					<%= maketext('Status') . ': ' =%>
+				</span>
+				<%= wwRound(0, 100 * $stats->{average_status}) =%>
+			</div>
+		% end
+	% }
+% }
+%
+<div id="pgrow<%= $cnt %>" class="lb-problem-row <%= $noshowclass %> <%= $sourceFileData->{noshow} ? 'd-none' : '' %>">
+	<div class="card p-2">
+		<div class="lb-problem-header d-flex flex-wrap justify-content-between">
+			<div class="lb-problem-add d-flex align-items-center mb-1">
+				<button class="add_me btn btn-primary btn-sm" type="button"
+					data-bs-title="<%= maketext('Add problem to target set') %>"
+					data-source-file="<%= $sourceFileName %>" data-bs-toggle="tooltip" data-bs-placement="top">
+					<%= maketext('Add') %>
+				</button>
+				% if ($authz->hasPermissions(param('user'), 'modify_tags')) {
+					<button id="tagger<%= $cnt %>" class="tag-edit-btn btn btn-secondary btn-sm ms-2" type="button"
+						data-source-file="<%= "$ce->{courseDirs}{templates}/$sourceFileName" %>">
+						<%= maketext('Edit Tags') =%>
+					</button>
+				% }
+			</div>
+			<div class="d-flex flex-wrap align-items-center mb-1 gap-2">
+				<%= content "global-problem-stats-$cnt" =%>
+				<%= content "local-problem-stats-$cnt" =%>
+			</div>
+			<div class="lb-problem-icons mb-1 d-flex align-items-center">
+				<%= content "mlt-$cnt" =%>
+				<span class="motag">
+					% if ($isMO) {
+						<span class="info-button btn btn-sm btn-secondary" title="<%= maketext('Uses Math Objects') %>"
+							data-bs-content="<%= maketext(
+								'Some WeBWorK problems are programmed using what are called <i>Math Objects</i>. '
+									. 'These problems are preferred by some people because they '
+									. 'provide a more consistent collection of messages to faulty student '
+									. 'answers, particularly for answers which are way off base.'
+							) %>"
+							data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true"
+							data-bs-trigger="hover focus" tabindex="0" role="button">
+							<%= image "$ce->{webworkURLs}{htdocs}/images/pi.svg",
+								alt => maketext('Uses Math Objects') =%>
+						</span>
+					% }
+				</span>
+				% if (!$isstatic) {
+					<span class="rerandomize_problem_button btn btn-sm btn-secondary"
+						data-target-problem="<%= $cnt %>" data-bs-title="<%= maketext('Randomize') %>"
+						data-bs-toggle="tooltip" data-bs-placement="top" tabindex="0"
+						role="button" aria-label="rerandomize problem">
+						<i class="fas fa-random" aria-hidden="true"></i>
+					</span>
+				% }
+				<%= link_to $c->systemLink(
+						url_for('instructor_problem_editor_withset_withproblem',
+							setID     => 'Undefined_Set',
+						   	problemID => '1'
+						),
+						params => {
+							sourceFilePath => $sourceFileName,
+							problemSeed    => $c->{problem_seed}
+						}
+					),
+					id     => "editit$cnt",
+					class  => 'btn btn-sm btn-secondary',
+					target => 'WW_Editor',
+					data   => {
+						bs_title     => maketext('Edit it'),
+						bs_toggle    => 'tooltip',
+						bs_placement => 'top'
+					},
+					begin =%>
+					<i class="icon fas fa-pencil-alt" data-alt="edit" aria-hidden="true"></i>
+				<% end =%>
+				<%= link_to $c->systemLink(
+						url_for($isGatewaySet ? 'gateway_quiz' : 'problem_detail',
+							setID => 'Undefined_Set',
+							$isGatewaySet ? () : (problemID => '1')
+						),
+						params => {
+							effectiveUser  => scalar(param('user')),
+							editMode       => 'SetMaker',
+							problemSeed    => $c->{problem_seed},
+							sourceFilePath => $sourceFileName,
+							displayMode    => (
+								!defined param('problem_displaymode') || param('problem_displaymode') eq 'None'
+							) ? $ce->{pg}{options}{displayMode} : param('problem_displaymode'),
+						}
+					),
+					id     => "tryit$cnt",
+					class  => 'text-decoration-none btn btn-sm btn-secondary',
+					target => 'WW_View',
+					data   => {
+						bs_title     => maketext('Try it'),
+						bs_toggle    => 'tooltip',
+						bs_placement => 'top'
+					},
+					begin =%>
+					<i class="far fa-eye"></i>
+				<% end =%>
+				<span class="dont-show btn btn-sm btn-secondary" data-bs-title="<%= maketext('Hide this problem') %>"
+					data-row-cnt="<%= $cnt %>" data-bs-toggle="tooltip" data-bs-placement="top" tabindex="0"
+					role="button" aria-label="hide this problem">
+					<i class="fas fa-times" aria-hidden="true"></i>
+				</span>
+			</div>
+		</div>
+		<div class="lb-problem-sub-header d-flex">
+			<div class="lb-problem-path font-sm flex-grow-1 flex-shrink-1"><%= $sourceFileName %></div>
+			<div class="lb-inset text-nowrap <%= $c->{isInSet}{$sourceFileName} ? '' : ' d-none' %>"
+				id="inset<%= $cnt %>">
+				<i><b><%= maketext('(in target set)') %></b></i>
+			</div>
+		</div>
+		<%= hidden_field "filetrial$cnt" => $sourceFileName =%>
+		<div>
+			<div class="rpc_render_area" id="problem_render_area_<%= $cnt %>" data-pg-file="<%= $pg_file %>"></div>
+		</div>
+	</div>
+</div>

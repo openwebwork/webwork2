@@ -26,8 +26,8 @@ use File::Find;
 
 sub new {
 	my $invocant = shift;
-	my $class = ref $invocant || $invocant;
-	my $self = $class->SUPER::new(@_);
+	my $class    = ref $invocant || $invocant;
+	my $self     = $class->SUPER::new(@_);
 	$self->perldoc_url_prefix("https://metacpan.org/pod/");
 	$self->index(1);
 	$self->backlink(1);
@@ -61,8 +61,8 @@ sub pod_wanted {
 	my $self = shift;
 	return sub {
 		my $filename = $_;
-		my $path = $File::Find::name;
-		my $dir = $File::Find::dir;
+		my $path     = $File::Find::name;
+		my $dir      = $File::Find::dir;
 
 		$File::Find::prune = 1, return if ($self->{pod_found});
 

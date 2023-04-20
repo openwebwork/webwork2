@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en-US">
+%
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" type="x-image/icon" href="/images/favicon.ico">
+	<title>WeBWorK error</title>
+</head>
+%
+<body>
+	<!-- Request ID: <%= $c->req->request_id %> -->
+	<div style="text-align:left">
+		<h1>WeBWorK error</h1>
+		<p>An error occured while processing your request.</p>
+		<p>
+			For help, please send mail to this site's webmaster\
+			% # $ENV{WEBWORK_SERVER_ADMIN} is set from $webwork_server_admin_email in site.conf.
+			<% if ($ENV{WEBWORK_SERVER_ADMIN}) { =%>
+				<%= link_to $ENV{WEBWORK_SERVER_ADMIN} => "mailto:$ENV{WEBWORK_SERVER_ADMIN}" %>\
+			<% } =%>\
+			, including all of the following information as well as what what you were doing when the error occured.
+		</p>
+		<h2>Error record identifier</h2>
+		<p style="margin-left:2em;color:#dc2a2a"><code><%= $uuid =%></code></p>
+		% if (my $warnings = stash 'warnings') {
+			<h2>Warning messages</h2>
+			<ul>
+				% for (split m/\n+/, $warnings) {
+					<li><code><%= $_ %></code></li>
+				% }
+			</ul>
+		% }
+		% if (my $exception = stash 'exception') {
+			<h2>Error messages</h2>
+			<p style="margin-left:2em;color:#dc2a2a"><code><%= $exception->message =%></code></p>
+			<h2>Context</h2>
+			<ul>
+				% for (@{$exception->lines_before}) {
+					<li><pre style="display:inline"><code><%= $_->[0] %>: <%= $_->[1] %></code></pre></li>
+				% }
+				% if (defined $exception->line->[1]) {
+					<li>
+						<pre style="display:inline;color:#dc2a2a"><% =%>\
+							<code><%= $exception->line->[0] %>: <%= $exception->line->[1] %></code><% =%>\
+						</pre>
+					</li>
+				% }
+				% for (@{$exception->lines_after}) {
+					<li><pre style="display:inline"><code><%= $_->[0] %>: <%= $_->[1] %></code></pre></li>
+				% }
+			</ul>
+			<h2>Call stack</h2>
+			<ul>
+				% for (@{ $exception->frames }) {
+					<li><code>in <%= $_->[3] %> called at line <%= $_->[2] %> of <%= $_->[1] %></code></li>
+					% # Stop when the backtrace gets back to the WeBWorK handler.
+				  	% # Everything after that is in the Mojolicious library code.
+					% last if $_->[0] eq 'Mojolicious::WeBWorK::Controller::Handler';
+				% }
+			</ul>
+		% }
+		<h2>Request information</h2>
+		<div>
+			<p>The HTTP request information is included in the following table.</p>
+			<div style="overflow-x:auto;">
+				<table aria-labelledby="req_info_summary1" style="border-collapse:collapse">
+					<caption id="req_info_summary1">HTTP request information</caption>
+					<tr>
+						<th id="outer_item" style="border:1px solid black;">Item</th>
+						<th id="outer_data" style="border:1px solid black;">Data</th>
+					</tr>
+					<tr>
+						<td headers="outer_item" style="border:1px solid black;">Method</td>
+						<td headers="outer_data" style="border:1px solid black;"><%= $c->req->method %></td>
+					</tr>
+					<tr>
+						<td headers="outer_item" style="border:1px solid black;">URI</td>
+						<td headers="outer_data" style="border:1px solid black;">
+							<%= $c->req->url->to_abs->to_string %>
+						</td>
+					</tr>
+					<tr>
+						<td headers="outer_item" style="border:1px solid black;">HTTP Headers</td>
+						<td headers="outer_data" style="border:1px solid black;">
+							<table style="border-collapse:collapse" aria-labelledby="req_header_summary">
+								<caption id="req_header_summary">HTTP request headers</caption>
+								<tr>
+									<th id="header_key" style="border:1px solid black;"><small>Key</small></th>
+									<th id="header_value" style="border:1px solid black;"><small>Value</small></th>
+								</tr>
+								% my %headers = %{ $c->req->headers->to_hash };
+								% if (defined($headers{'sec-ch-ua'})) {
+									% # Avoid warnings about the value of 'sec-ch-ua'.
+									% # (It is doubtful that this is needed anymore.)
+									% $headers{'sec-ch-ua'} = join('', $headers{'sec-ch-ua'});
+									% $headers{'sec-ch-ua'} =~ s/\"//g;
+								% }
+								% for (keys %headers) {
+									<tr>
+										<td headers="header_key" style="border:1px solid black;">
+											<small><%= $_ %></small>
+										</td>
+										<td headers="header_value" style="border:1px solid black;">
+											<small><%= $headers{$_} %></small>
+										</td>
+									</tr>
+								% }
+							</table>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<h2>Time generated:</h2>
+		<p style="margin-left:2em;"><%= $time %></p>
+	</div>
+</body>
+%
+</html>

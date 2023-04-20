@@ -966,8 +966,9 @@
 				newPrevState.string = string;
 
 				if (stream.sol()) {
-					if (stream.match(/^ *(>> +)?[ivxIVX]+[.\)] /) ||
-							stream.match(/^ *(>> +)?[\w\d][.\)] /) ||
+					if (stream.match(/^ *(>> +)?[ivxlIVXL]+[.)] /) ||
+							stream.match(/^ *(>> +)?\d+[.)] /) ||
+							stream.match(/^ *(>> +)?\w[.)] /) ||
 							stream.match(/^ *(>> +)?[*\-+o] /)) { // Lists
 						return "atom strong";
 					}

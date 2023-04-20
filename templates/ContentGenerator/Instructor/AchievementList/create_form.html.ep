@@ -1,0 +1,23 @@
+<div>
+	<div class="row mb-2">
+		<%= label_for 'create_text', class => 'col-form-label col-form-label-sm col-auto', begin =%>
+			<%= maketext('Create a new achievement with ID') =%><span class="required-field">*</span>:
+		<% end =%>
+		<div class="col-auto">
+			<%= text_field 'action.create.id' => '', id => 'create_text',
+				class => 'form-control form-control-sm d-inline w-auto' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for create_select => maketext("Create as what type of achievement?"),
+			class => 'col-form-label col-form-label-sm col-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.create.type' => [
+					[ maketext('a new empty achievement')                       => 'empty', selected => undef ],
+					[ maketext('a duplicate of the first selected achievement') => 'copy' ],
+				],
+				id    => 'create_select',
+				class => 'form-select form-select-sm d-inline w-auto' =%>
+		</div>
+	</div>
+</div>

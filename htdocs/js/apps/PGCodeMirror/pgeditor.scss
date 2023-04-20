@@ -1,0 +1,64 @@
+/* WeBWorK Online Homework Delivery System
+ * Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of either: (a) the GNU General Public License as published by the
+ * Free Software Foundation; either version 2, or (at your option) any later
+ * version, or (b) the "Artistic License" which comes with this package.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+ * Artistic License for more details.
+ */
+
+.CodeMirror {
+	border: 1px solid #ddd;
+	min-height: 400px;
+	resize: vertical;
+}
+
+// This style is only used if the CodeMirror editor is disabled in localOverrides.conf.
+.codeMirrorEditor {
+	border: 1px solid #ddd;
+	padding: 2px;
+	height: 550px;
+	min-height: 400px;
+	width: 100%;
+	resize: vertical;
+}
+
+// Additional CSS for codemirror addons and overrides
+
+// CodeMirror overrides
+.CodeMirror-code {
+	outline: none;
+}
+
+pre.CodeMirror-line {
+	unicode-bidi: embed;
+}
+
+// Match Highligher CSS
+.CodeMirror-focused {
+	.cm-matchhighlight {
+		background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVQI12NgYGBgkKzc8x9CMDAwAAAmhwSbidEoSQAAAABJRU5ErkJggg==);
+		background-position: bottom;
+		background-repeat: repeat-x;
+	}
+}
+
+.cm-matchhighlight {
+	background-color: lightgreen;
+}
+
+.CodeMirror-selection-highlight-scrollbar {
+	background-color: green;
+}
+
+// CSS to highlight trailing whitespace in PGML blocks
+.cm-trailingspace {
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAACCAYAAAB/qH1jAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3QUXCToH00Y1UgAAACFJREFUCNdjPMDBUc/AwNDAAAFMTAwMDA0OP34wQgX/AQBYgwYEx4f9lQAAAABJRU5ErkJggg==);
+	background-position: bottom left;
+	background-repeat: repeat-x;
+}

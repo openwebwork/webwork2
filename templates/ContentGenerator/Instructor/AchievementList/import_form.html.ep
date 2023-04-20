@@ -1,0 +1,26 @@
+<div>
+	<div class="row mb-2">
+		<%= label_for import_file_select => maketext('Import from where?'),
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.import.source' => [
+					[ maketext('Select import file') => '', selected => undef ],
+					$c->getAxpList
+				],
+				id    => 'import_file_select',
+				class => 'form-select form-select-sm d-inline w-auto' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for import_users_select => maketext('Assign this achievement to which users?'),
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.import.assign' => [
+					[ maketext('all current users') => 'all' ],
+					[ maketext('no users')          => 'none', selected => undef ],
+				],
+				id    => 'import_users_select',
+				class => 'form-select form-select-sm d-inline w-auto' =%>
+		</div>
+	</div>
+</div>

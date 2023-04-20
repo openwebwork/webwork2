@@ -55,7 +55,8 @@ cd $LOCDIR
 
 echo "Updating $WEBWORK_ROOT/webwork2.pot"
 
-xgettext.pl -o webwork2.pot -D $WEBWORK_ROOT/lib -D $PG_ROOT/lib -D $PG_ROOT/macros $WEBWORK_ROOT/conf/defaults.config $WEBWORK_ROOT/conf/LTIConfigValues.config
+xgettext.pl -o webwork2.pot -D $WEBWORK_ROOT/lib -D $PG_ROOT/lib -D $PG_ROOT/macros -D $WEBWORK_ROOT/templates \
+	$WEBWORK_ROOT/conf/defaults.config $WEBWORK_ROOT/conf/LTIConfigValues.config
 
 if $UPDATE_PO; then
 	find $LOCDIR -name '*.po' -exec bash -c "echo \"Updating {}\"; msgmerge -qUN {} webwork2.pot" \;

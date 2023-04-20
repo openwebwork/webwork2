@@ -27,7 +27,7 @@ use strict;
 use warnings;
 use WeBWorK::Utils::CourseManagement::sql_single;
 
-*archiveCourseHelper = \&WeBWorK::Utils::CourseManagement::sql_single::archiveCourseHelper;
+*archiveCourseHelper   = \&WeBWorK::Utils::CourseManagement::sql_single::archiveCourseHelper;
 *unarchiveCourseHelper = \&WeBWorK::Utils::CourseManagement::sql_single::unarchiveCourseHelper;
 
 1;

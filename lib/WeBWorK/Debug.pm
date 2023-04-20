@@ -105,14 +105,14 @@ sub debug {
 	#print STDERR "in ww::debug\n";
 	#print STDERR $WeBWorK::Constants::WEBWORK_DIRECTORY . "\n";
 	#print STDERR $Logfile . "\n";
-	
+
 	if ($Enabled) {
 		my ($package, $filename, $line, $subroutine) = caller(1);
 		return if defined $AllowSubroutineOutput and not $subroutine =~ m/$AllowSubroutineOutput/;
-		return if defined $DenySubroutineOutput and $subroutine =~ m/$DenySubroutineOutput/;
-		
+		return if defined $DenySubroutineOutput  and $subroutine     =~ m/$DenySubroutineOutput/;
+
 		my ($sec, $msec) = gettimeofday;
-		my $date = time2str("%a %b %d %H:%M:%S.$msec %Y", $sec);
+		my $date         = time2str("%a %b %d %H:%M:%S.$msec %Y", $sec);
 		my $finalMessage = "[$date] $subroutine: " . join("", @message);
 		$finalMessage .= "\n" unless $finalMessage =~ m/\n$/;
 

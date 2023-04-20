@@ -1,0 +1,26 @@
+<div>
+	<div class="row mb-2">
+		<%= label_for publish_filter_select => maketext('Choose which sets to be affected') . ':',
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.publish.scope' => [
+					[ maketext('no sets')       => 'none' ],
+					[ maketext('all sets')      => 'all' ],
+					[ maketext('listed sets')   => 'visible' ],
+					[ maketext('selected sets') => 'selected', selected => undef ]
+				],
+				id => 'publish_filter_select', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for publish_visibility_select => maketext('Choose visibility of the sets to be affected') . ':',
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.publish.value' => [
+					[ maketext('Hidden')  => 0 ],
+					[ maketext('Visible') => 1, selected => undef ]
+			],
+			id => 'publish_visibility_select', class => 'form-select form-select-sm d-inline w-auto' =%>
+		</div>
+	</div>
+</div>

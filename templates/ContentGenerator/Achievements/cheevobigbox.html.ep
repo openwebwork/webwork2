@@ -1,0 +1,22 @@
+% last unless $achievement;
+%
+<div class="cheevobigbox mt-3">
+	<div class="d-flex align-items-center gap-3">
+		<%= image $achievement->{icon}
+			? "$ce->{courseURLs}{achievements}/$achievement->{icon}"
+			: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png", alt => 'Level Icon' =%>
+		<div>
+			<h1><%= $achievement->name %></h1>
+			% if ($c->{globalData}->next_level_points) {
+				<div class="levelouterbar" title="<%= maketext('[_1]% Complete', $level_percentage) %>"
+					aria-label="<%= maketext('[_1]% Complete', $level_percentage) %>" role="figure">
+					<div class="levelinnerbar" style="width:<%= $level_percentage %>%"></div>
+				</div>
+				<div><strong><%= maketext('Level Progress:') %></strong> <%= "$level_progress/$level_goal" %></div>
+			% }
+			<div>
+				<strong><%= maketext('Total Points:') %></strong> <%= $c->{globalData}->achievement_points %>
+			</div>
+		</div>
+	</div>
+</div>

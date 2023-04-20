@@ -1,0 +1,66 @@
+% # Note that this template is used by both WeBWorK::ContentGenerator::Instructor::Stats and
+% # WeBWorK::ContentGenerator::Instructor::StudentProgress.
+%
+% use WeBWorK::Utils qw(format_set_name_display jitar_id_to_seq);
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	% last;
+% }
+%
+<div class="info-box bg-light">
+	<h2><%= $header %></h2>
+	% if (current_route =~ /^instructor_user_/) {
+		<ul class="nav flex-column problem-list">
+			% for (@{ $c->{student_records} }) {
+				<li class="nav-item">
+					<%= tag 'a',
+						$_->user_id eq $c->{studentID}
+						? (class => 'nav-link active')
+						: (
+							href => $c->systemLink(url_for(current_route, userID => $_->user_id)),
+							class => 'nav-link'
+						), begin =%>
+						<%= $_->last_name =%>, <%= $_->first_name %> (<%= $_->user_id %>)
+					<% end =%>
+				</li>
+			% }
+		</ul>
+	% } elsif (current_route eq 'instructor_problem_statistics') {
+		<ul class="nav flex-column problem-list">
+			% for (map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => stash->{setID} }, 'problem_id')) {
+				<li class="nav-item">
+					<%= tag 'a',
+						$_ eq stash('problemID') ? (class => 'nav-link active')
+						: (
+							href => $c->systemLink(
+								url_for(current_route, problemID => $_),
+								params => param('filter') ? { filter => param('filter') } : {}
+							),
+							class => 'nav-link'
+						),
+						maketext('Problem [_1]',
+							$c->{setRecord}->assignment_type eq 'jitar' ? join('.', jitar_id_to_seq($_)) : $_)
+					=%>
+				</li>
+			% }
+		</ul>
+	% } else {
+		<ul class="nav flex-column problem-list" dir="ltr">
+			% for (map { $_->[0] } $db->listGlobalSetsWhere({}, 'set_id')) {
+				<li class="nav-item">
+					<%= tag 'a',
+						defined stash('setID') && $_ eq stash('setID') ? (class => 'nav-link active')
+						: (
+							href => $c->systemLink(
+								url_for(current_route =~ s/instructor_(progress|statistics)/instructor_set_$1/r,
+									setID => $_),
+								params => param('filter') ? { filter => param('filter') } : {}
+							),
+							class => 'nav-link'
+						),
+						format_set_name_display($_) =%>
+				</li>
+			% }
+		</ul>
+	% }
+</div>

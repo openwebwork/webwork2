@@ -1,0 +1,53 @@
+% if ($type eq 'date') {
+	% if ($c->{editMode}) {
+		<div class="input-group input-group-sm flex-nowrap flatpickr">
+			<%= text_field $name => $value,
+				id          => "${name}_id",
+				class       => 'form-control w-auto ' . ($name =~ /\.open_date/ ? ' datepicker-group' : ''),
+				size        => 22,
+				placeholder => maketext('None Specified'),
+				role        => 'button',
+				tabindex    => 0,
+				data        => {
+					input      => undef,
+					done_text  => maketext('Done'),
+					today_text => maketext('Today'),
+					now_text   => maketext('Now'),
+					locale     => $ce->{language},
+					timezone   => $ce->{siteDefaults}{timezone}
+				},
+				'aria-labelledby' => ($name =~ s/^.*\.([^.]*)$/$1/r) . '_header' =%>
+			<a class="btn btn-secondary btn-sm" data-toggle role="button" tabindex="0"
+				aria-label="<%= maketext('Pick date and time') %>">
+				<i class="fas fa-calendar-alt"></i>
+			</a>
+		</div>
+	% } else {
+		<span dir="ltr">
+			<%= $c->formatDateTime($value, '', 'datetime_format_short', $ce->{language}) =%>
+		</span>
+	% }
+% } elsif ($type eq 'check') {
+	% if ($c->{editMode}) {
+		% # If the checkbox is checked it returns a 1, if it is unchecked it returns nothing
+		% # in which case the hidden field overrides the parameter with a 0.
+		<%= check_box $name => 1, id => "${name}_id", class => 'form-check-input',
+			'aria-labelledby' => ($name =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+			$value ? (checked => undef) : () =%>
+		<%= hidden_field $name => 0 =%>
+	% } else {
+		<%= $value ? maketext('Yes') : maketext('No') =%>
+	% }
+% } else {
+	% # This case is not actually needed as only the "date" and "check" types occur.
+	% # This is a fallback in case someone tries add a type without learning this system.
+	% if ($c->{editMode}) {
+		<div class="input-group input-group-sm flex-nowrap">
+			<%= text_field $name => $value, id => "${name}_id", class  => 'form-control w-auto',
+				'aria-labelledby' => ($name =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+				size => 10 =%>
+		</div>
+	% } else {
+		<%= $value =%>
+	% }
+% }

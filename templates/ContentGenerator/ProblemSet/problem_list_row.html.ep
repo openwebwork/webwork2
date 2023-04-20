@@ -1,0 +1,80 @@
+% use WeBWorK::Utils qw(is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status
+%	jitar_id_to_seq wwRound);
+%
+% my $courseID      = stash('courseID');
+% my $setID         = $c->{set}->set_id;
+% my $problemID     = $problem->problem_id;
+% my $problemNumber = $problemID;
+% my $problemLevel  = 0;
+%
+% if ($isJitarSet
+	% && !$authz->hasPermissions($problem->user_id, 'view_unopened_sets')
+	% && is_jitar_problem_hidden($db, $problem->user_id, $setID, $problemID))
+% {
+	% # If the problem is closed, don't show it.
+% } else {
+	% if ($isJitarSet) {
+		% my @seq = jitar_id_to_seq($problemID);
+		% $problemLevel  = $#seq;
+		% $problemNumber = join('.', @seq);
+	% }
+	%
+	% my $attempts    = $problem->num_correct + $problem->num_incorrect;
+	% my $linkClasses = $problemLevel != 0 ? "nested-problem-$problemLevel" : '';
+	%
+	<tr>
+		% # Problem number
+		<td>
+			% if (
+				% $isJitarSet
+				% && !$authz->hasPermissions($problem->user_id, 'view_unopened_sets')
+				% && is_jitar_problem_closed($db, $ce, $problem->user_id, $setID, $problemID)
+			% )
+			% {
+				% # If the problem is jitar restricted, then show it greyed out.
+				<span class="<%= $linkClasses %> disabled-problem text-nowrap">
+					<%= maketext('Problem [_1]', $problemNumber) %>
+				</span>
+			% } else {
+				<%= link_to(
+					maketext('Problem [_1]', $problemNumber) =>
+						$c->systemLink(url_for('problem_detail', problemID => $problemID)),
+					class => "$linkClasses text-nowrap"
+				) =%>
+			% }
+		</td>
+		% # Attempts
+		<td><%= $attempts %></td>
+		% # Remaining number of attempts
+		<td><%= ($problem->max_attempts || -1) < 0 ? maketext('unlimited') : $problem->max_attempts - $attempts %></td>
+		% # Problem value (Worth)
+		<td>
+			% if (!$isJitarSet || $problemLevel == 0 || $problem->counts_parent_grade) {
+				<%= $problem->value %>
+			% }
+		</td>
+		% # Status
+		<td><%= wwRound(0, $problem->status * 100) %>%</td>
+		% # Jitar problem status and counts for parent columns.
+		% if ($isJitarSet) {
+			<td>
+				% if ($problemLevel == 0) {
+					<%= wwRound(0, jitar_problem_adjusted_status($problem, $db) * 100) %>%
+				% }
+			</td>
+			<td>
+				<%= $isJitarSet && $problemLevel != 0 && $problem->counts_parent_grade
+					? maketext('Yes')
+					: maketext('No') =%>
+			</td>
+		% }
+		% # Grader
+		% if ($authz->hasPermissions(param('user'), 'access_instructor_tools')
+			% && $authz->hasPermissions(param('user'), 'score_sets')) {
+			<td>
+				<%= link_to(maketext('Grade Problem') =>
+					$c->systemLink(url_for('instructor_problem_grader', problemID => $problemID))) =%>
+			</td>
+		% }
+	</tr>
+% }

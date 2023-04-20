@@ -1,0 +1,170 @@
+% unless (defined $c->{user}) {
+	<div class="alert alert-danger p-1 my-2"><%= maketext('User "[_1]" not found.', param('user')) %></div>
+	% last;
+% }
+%
+% unless (defined $c->{effectiveUser}) {
+	<div class="alert alert-danger p-1 my-2"><%= maketext('User "[_1]" not found.', param('effectiveUser')) %></div>
+	% last;
+% }
+%
+% my $userID    = $c->{user}->user_id;
+% my $eUserName = $c->{effectiveUser}->first_name . ' ' . $c->{effectiveUser}->last_name;
+%
+%= form_for current_route, method => 'POST', begin
+	<%= $c->hidden_authen_fields =%>
+	%
+	% if ($authz->hasPermissions($userID, 'change_password')) {
+		<h2><%= maketext('Change Password') %></h2>
+		<div class="row mb-2">
+			<div class="col-lg-8 col-md-10">
+				<div class="row mb-2">
+					<%= label_for 'currPassword', class => 'col-form-label col-sm-6', begin =%>
+						<%= maketext(
+							q{[_1]'s Current Password},
+							$c->{user}->first_name . ' ' . $c->{user}->last_name
+						) =%>
+					<% end =%>
+					<div class="col-sm-6">
+						<%= password_field 'currPassword', id => 'currPassword', class => 'form-control', dir => 'ltr',
+							$c->{has_password} ? () : (disabled => 1) =%>
+					</div>
+				</div>
+				<div class="row mb-2">
+					<%= label_for newPassword => maketext("[_1]'s New Password", $eUserName),
+						class => 'col-form-label col-sm-6' =%>
+					<div class="col-sm-6">
+						<%= password_field 'newPassword', id => 'newPassword', class => 'form-control', dir => 'ltr' =%>
+					</div>
+				</div>
+				<div class="row mb-2">
+					<%= label_for confirmPassword => maketext("Confirm [_1]'s New Password", $eUserName),
+						class => 'col-form-label col-sm-6' =%>
+					<div class="col-sm-6">
+						<%= password_field 'confirmPassword', id => 'confirmPassword',
+							class => 'form-control', dir => 'ltr' =%>
+					</div>
+				</div>
+			</div>
+		</div>
+	% }
+	%
+	% if ($authz->hasPermissions($userID, 'change_email_address')) {
+		<h2><%= maketext('Change Email Address') %></h2>
+		<div class="row mb-2">
+			<div class="col-lg-8 col-md-10">
+				<div class="row mb-2">
+					<%= label_for currAddress => maketext("[_1]'s Current Address", $eUserName),
+						class => 'col-form-label col-sm-6' =%>
+					<div class="col-sm-6">
+						<%= text_field currAddress => $c->{effectiveUser}->email_address,
+							readonly => undef, id => 'currAddress', class => 'form-control', dir => 'ltr' =%>
+					</div>
+				</div>
+				<div class="row mb-2">
+					<%= label_for newAddress => maketext("[_1]'s New Address", $eUserName),
+						class => 'col-form-label col-sm-6' =%>
+					<div class="col-sm-6">
+						<%= text_field newAddress => '', id => 'newAddress', class => 'form-control', dir => 'ltr' =%>
+					</div>
+				</div>
+			</div>
+		</div>
+	% }
+	%
+	% if ($authz->hasPermissions($userID, 'change_pg_display_settings')) {
+		<h2><%= maketext('Change Display Settings') %></h2>
+		%
+		% my $display_settings_block = begin
+			% my $curr_displayMode = $c->{effectiveUser}->displayMode || $ce->{pg}{options}{displayMode};
+			% my %display_modes    = %{ WeBWorK::PG::DISPLAY_MODES() };
+			% my @active_modes     = grep { exists $display_modes{$_} } @{ $ce->{pg}{displayModes} };
+			%
+			% if (@active_modes > 1) {
+				<div class="mb-3">
+					<fieldset>
+						<legend class="lead"><%= maketext('View equations as') . ':' =%></legend>
+						% for (@active_modes) {
+							<div class="form-check form-check-inline">
+								<%= radio_button displayMode => $_, id => "displayMode-$_", class => 'form-check-input',
+									$_ eq $curr_displayMode ? (checked => undef) : () =%>
+								<%= label_for "displayMode-$_" => $_, class => 'form-check-label' =%>
+							</div>
+						% }
+					</fieldset>
+				</div>
+			%}
+			%
+			% if ($authz->hasPermissions($userID, 'can_show_old_answers')) {
+				% my $curr_showOldAnswers =
+					% $c->{effectiveUser}->showOldAnswers ne ''
+					% ? $c->{effectiveUser}->showOldAnswers
+					% : $ce->{pg}{options}{showOldAnswers};
+				<div class="mb-3">
+					<fieldset>
+						<legend class="lead"><%= maketext('Show saved answers?') =%></legend>
+						% for (1, 0) {
+							<div class="form-check form-check-inline">
+								<%= radio_button showOldAnswers => $_,
+									id => "showOldAnswers$_", class => 'form-check-input',
+									$_ eq $curr_showOldAnswers ? (checked => undef) : () =%>
+								<%= label_for "showOldAnswers$_" => $_ ? maketext('Yes') : maketext('No'),
+									class => 'form-check-label' =%>
+							</div>
+						% }
+					</fieldset>
+				</div>
+			% }
+			%
+			% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView') {
+				% # Note, 0 is a legal value, so we can't use || in setting this
+				% my $curr_useMathView =
+					% $c->{effectiveUser}->useMathView ne ''
+					% ? $c->{effectiveUser}->useMathView
+					% : $ce->{pg}{options}{useMathView};
+				<div class="mb-3">
+					<fieldset>
+						<legend class="lead"><%= maketext('Use Equation Editor?') %></fieldset>
+						% for (1, 0) {
+							<div class="form-check form-check-inline">
+								<%= radio_button useMathView => $_,
+									id => "useMathView$_", class => 'form-check-input',
+									$_ eq $curr_useMathView ? (checked => undef) : () =%>
+								<%= label_for "useMathView$_" => $_ ? maketext('Yes') : maketext('No'),
+									class => 'form-check-label' =%>
+							</div>
+						% }
+					</fieldset>
+				</div>
+			% }
+			%
+			% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
+				% # Note, 0 is a legal value, so we can't use || in setting this
+				% my $curr_useMathQuill =
+					% $c->{effectiveUser}->useMathQuill ne ''
+					% ? $c->{effectiveUser}->useMathQuill
+					% : $ce->{pg}{options}{useMathQuill};
+				<div class="mb-3">
+					<fieldset>
+						<legend class="lead"><%= maketext('Use live equation rendering?') %></legend>
+						% for (1, 0) {
+							<div class="form-check form-check-inline">
+								<%= radio_button useMathQuill => $_,
+									id => "useMathQuill$_", class => 'form-check-input',
+									$_ eq $curr_useMathQuill ? (checked => undef) : () =%>
+								<%= label_for "useMathQuill$_" => $_ ? maketext('Yes') : maketext('No'),
+									class => 'form-check-label' =%>
+							</div>
+						% }
+					</fieldset>
+				</div>
+			% }
+		% end
+		% my $result = $display_settings_block->();
+		% if ($result) {
+			<div class="mb-3"><%= $result =%></div>
+		% }
+	% }
+	%
+	<%= submit_button maketext('Change User Settings'), name => 'changeOptions', class => 'btn btn-primary' =%>
+% end

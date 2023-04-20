@@ -1,0 +1,36 @@
+% use WeBWorK::Utils::Instructor qw(getCSVList);
+%
+<div>
+	<div class="row mb-2">
+		<%= label_for import_select_source => maketext('Import users from what file?'),
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.import.source' => [ getCSVList($ce) ],
+				id => 'import_select_source', class => 'form-select form-select-sm', dir => 'ltr' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for import_select_replace => maketext('Replace which users?'),
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.import.replace' => [
+					[ maketext('any users')      => 'any' ],
+					[ maketext('visible users')  => 'visible' ],
+					[ maketext('selected users') => 'selected' ],
+					[ maketext('no users')       => 'none', selected => undef ]
+				],
+				id => 'import_select_replace', class   => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for import_select_add => maketext('Add which new users?'),
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.import.add' => [
+					[ maketext('any users') => 'any', selected => undef ],
+					[ maketext('no users')  => 'none' ]
+				],
+				id => 'import_select_add', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+</div>

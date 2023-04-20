@@ -37,6 +37,7 @@ BEGIN {
 		max_attempts       => { type => "INT" },
 		showMeAnother      => { type => "INT" },
 		showMeAnotherCount => { type => "INT" },
+		showHintsAfter     => { type => "INT" },
 		# periodic re-randomization period
 		prPeriod => { type => "INT" },
 		# periodic re-randomization number of attempts for the current seed
@@ -49,9 +50,10 @@ BEGIN {
 		num_incorrect        => { type => "INT" },
 		att_to_open_children => { type => "INT" },
 		counts_parent_grade  => { type => "INT" },
-		sub_status           => { type => "FLOAT" },  # A subsidiary status used to implement the reduced scoring period
-													  # a field for flags which need to be set
-		flags                => { type => "TEXT" },
+		# A subsidiary status used to implement the reduced scoring period
+		sub_status => { type => "FLOAT" },
+		# a field for flags which need to be set
+		flags => { type => "TEXT" },
 	);
 }
 

@@ -21,6 +21,7 @@ use strict;
 # Get the necessary packages, including adding webwork to our path.
 
 my $pg_dir;
+
 BEGIN {
 	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
 	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
@@ -38,10 +39,9 @@ use DBI;
 
 my $ce = new WeBWorK::CourseEnvironment({
 	webwork_dir => $ENV{WEBWORK_ROOT},
-	});
+});
 
 my $configured_OPL_path = $ce->{problemLibrary}{root};
-
 
 # Drop the "OpenProblemLibrary" from the end of the path
 
@@ -49,7 +49,7 @@ $configured_OPL_path =~ s+OpenProblemLibrary++;
 
 # Check that it exists
 
-if ( -d "$configured_OPL_path" ) {
+if (-d "$configured_OPL_path") {
 	print "OPL path seems to be $configured_OPL_path\n";
 } else {
 	print "OPL path seems to be misconfigured as $configured_OPL_path which does not exist.\n";
@@ -59,7 +59,7 @@ if ( -d "$configured_OPL_path" ) {
 # Set TABLE-DUMP path and make directory if necessary
 
 my $prepared_OPL_tables_dir = "${configured_OPL_path}/TABLE-DUMP";
-if ( ! -d "$prepared_OPL_tables_dir" ) {
+if (!-d "$prepared_OPL_tables_dir") {
 	`mkdir -p $prepared_OPL_tables_dir`;
 }
 
@@ -76,16 +76,16 @@ my $dbuser = $ce->{database_username};
 my $dbpass = $ce->{database_password};
 
 $dbuser = shell_quote($dbuser);
-$db = shell_quote($db);
+$db     = shell_quote($db);
 
-$ENV{'MYSQL_PWD'}=$dbpass;
+$ENV{'MYSQL_PWD'} = $dbpass;
 
 # decide whether the mysql installation can handle
 # utf8mb4 and that should be used for the OPL
 
-my $ENABLE_UTF8MB4 = $ce->{ENABLE_UTF8MB4}?1:0;
+my $ENABLE_UTF8MB4 = $ce->{ENABLE_UTF8MB4} ? 1 : 0;
 
-my $character_set =  ($ENABLE_UTF8MB4)? "utf8mb4":"utf8";
+my $character_set = ($ENABLE_UTF8MB4) ? "utf8mb4" : "utf8";
 
 # Get mysqldump_command
 
@@ -93,7 +93,8 @@ my $mysqldump_command = $ce->{externalPrograms}->{mysqldump};
 
 # The tables to dump are:
 
-my $OPL_tables_to_dump = "OPL_DBsubject OPL_DBchapter OPL_DBsection OPL_author OPL_path OPL_pgfile OPL_keyword OPL_pgfile_keyword OPL_textbook OPL_chapter OPL_section OPL_problem OPL_morelt OPL_pgfile_problem";
+my $OPL_tables_to_dump =
+	"OPL_DBsubject OPL_DBchapter OPL_DBsection OPL_author OPL_path OPL_pgfile OPL_keyword OPL_pgfile_keyword OPL_textbook OPL_chapter OPL_section OPL_problem OPL_morelt OPL_pgfile_problem";
 
 # Tables NOT dumped:
 # OPL_problem_user - is created by bin/update-OPL-statistics and need not be archived
@@ -106,10 +107,10 @@ print "Dumping OPL tables\n";
 # see: https://serverfault.com/questions/912162/mysqldump-throws-unknown-table-column-statistics-in-information-schema-1109
 #      https://github.com/drush-ops/drush/issues/4410
 
-my $column_statistics_off = "";
+my $column_statistics_off      = "";
 my $test_for_column_statistics = `$mysqldump_command --help | grep 'column-statistics'`;
-if ( $test_for_column_statistics ) {
-  $column_statistics_off = " --column-statistics=0 ";
+if ($test_for_column_statistics) {
+	$column_statistics_off = " --column-statistics=0 ";
 }
 
 `$mysqldump_command --host=$host --port=$port --user=$dbuser --default-character-set=$character_set $column_statistics_off $db $OPL_tables_to_dump  > $prepared_OPL_tables_file`;

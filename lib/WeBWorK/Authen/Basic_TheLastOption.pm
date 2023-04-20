@@ -28,6 +28,4 @@ be the last one in the array of the Authen module hashes.
 
 =cut
 
-
-
 1;
