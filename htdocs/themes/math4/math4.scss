@@ -51,7 +51,7 @@ table caption {
 
 .visually-hidden-focusable:active,
 .visually-hidden-focusable:focus {
-	z-index: 4;
+	z-index: 21;
 }
 
 $masthead-height: 70px !default;
@@ -68,7 +68,7 @@ $layout-divider-color: #aaa !default;
 	border-bottom: 1px solid $layout-divider-color;
 	margin: 0;
 	padding: 0;
-	z-index: 3;
+	z-index: 20;
 
 	@media only screen and (max-width: 768px) {
 		position: static;
@@ -89,7 +89,7 @@ $layout-divider-color: #aaa !default;
 		justify-content: space-between;
 		padding: 5px 0;
 		background-color: var(--ww-logo-background-color, #104aad);
-		z-index: 3;
+		z-index: 20;
 
 		img {
 			max-height: $masthead-height - 15px;
@@ -404,7 +404,7 @@ h2.page-title {
 	gap: 0.5rem;
 	align-content: space-between;
 	justify-content: space-between;
-	z-index: 1;
+	z-index: 20;
 	position: sticky;
 	top: $masthead-height;
 	background-color: white;
