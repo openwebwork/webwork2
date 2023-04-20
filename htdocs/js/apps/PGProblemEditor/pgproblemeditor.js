@@ -300,8 +300,6 @@
 				if (data.error) throw data.error;
 				// This generally shouldn't happen.
 				if (!data.html) throw 'A server error occured.  The response had no content';
-				// Give a nicer file not found error.
-				if (/this problem file was empty/i.test(data.html)) throw 'No Such File or Directory!';
 
 				renderArea.replaceChildren(iframe);
 				iframe.srcdoc = data.html;

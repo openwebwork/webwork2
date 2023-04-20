@@ -51,8 +51,7 @@
 				if (data.error) throw data.error;
 				// This shouldn't happen if the error is not set.
 				if (!data.html) throw 'A server error occured.  The response had no content.';
-				// Give nicer file not found error
-				if (/this problem file was empty/i.test(data.html)) throw 'No Such File or Directory!';
+				if (/this problem file was empty/i.test(data.html)) throw 'No such file or file was empty!';
 				// Give nicer problem rendering error
 				if (
 					(data.pg_flags && data.pg_flags.error_flag) ||

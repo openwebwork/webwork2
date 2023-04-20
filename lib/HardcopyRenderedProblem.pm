@@ -41,7 +41,7 @@ sub hardcopyRenderedProblem {
 	# Deal with PG errors
 	return $rh_result->{errors} if $rh_result->{flags}{error_flag};
 
-	return 'Unable to decode problem text.' unless $rh_result->{text};
+	return 'This problem has no content.' unless $rh_result->{text};
 
 	my @errors;
 
