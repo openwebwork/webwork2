@@ -114,6 +114,19 @@ sub startup ($app) {
 		);
 	}
 
+	# Add a hook that redirects http to https if configured to do so.
+	if ($config->{redirect_http_to_https}) {
+		$app->hook(
+			before_dispatch => sub ($c) {
+				my $request_url = $c->req->url->to_abs;
+				if ($request_url->scheme eq 'http') {
+					$request_url->scheme('https');
+					$c->redirect_to($request_url);
+				}
+			}
+		);
+	}
+
 	$app->hook(
 		around_action => async sub ($next, $c, $action, $last) {
 			return $next->() unless $c->isa('WeBWorK::ContentGenerator');
