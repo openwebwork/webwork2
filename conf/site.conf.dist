@@ -397,4 +397,11 @@ $siteDefaults{locale}="";
 # unavailable_after (example: "index, unavailable_after: 23-Jul-2007 18:00:00 EST")
 $options{metaRobotsContent}='noindex, nofollow';
 
+################################################################################
+# Third Party Assets CDN/Local
+################################################################################
+# Set to 1 to serve third party assets files from a CDN.  Otherwise these
+# asset files are served from the local node_modules directories.
+$options{thirdPartyAssetsUseCDN} = 0;
+
 1; #final line of the file to reassure perl that it was read properly.
