@@ -9,7 +9,6 @@ on:
   push:
     branches-ignore: [main, develop]
   pull_request:
-    branches: [main, develop]
 
 jobs:
   perltidy:
