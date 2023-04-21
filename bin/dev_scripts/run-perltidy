@@ -1,7 +1,0 @@
-#!/bin/bash
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
-INPUTDIR=$(dirname $(dirname $SCRIPT_DIR))
-
-shopt -s extglob globstar nullglob
-perltidy --pro=$INPUTDIR/.perltidyrc -b -bext='/' $INPUTDIR/**/*.p[lm] $INPUTDIR/**/*.t
