@@ -70,11 +70,75 @@
 		});
 	}
 
-	// Open help in a new window on a helpMacro click.
-	document.querySelectorAll('.help-macro').forEach((helpLink) =>
-		helpLink.addEventListener('click',
-			() => window.open(helpLink.href, helpLink.target, 'width=550,height=350,scrollbars=yes,resizable=yes'))
-	);
+	// Open help in a modal dialog on a helpMacro click.
+	for (const helpLink of document.querySelectorAll('.help-macro')) {
+		helpLink.addEventListener('click', (e) => {
+			e.preventDefault();
+
+			const modal = document.createElement('div');
+			modal.classList.add('modal', 'fade');
+			modal.setAttribute('aria-label', 'webwork help dialog');
+			modal.tabIndex = -1;
+
+			const dialog = document.createElement('div');
+			dialog.classList.add('modal-dialog', 'modal-lg', 'modal-dialog-centered', 'modal-dialog-scrollable');
+			modal.append(dialog);
+
+			const content = document.createElement('div');
+			content.classList.add('modal-content');
+			dialog.append(content);
+
+			const header = document.createElement('div');
+			header.classList.add('modal-header');
+
+			const title = document.createElement('h1');
+			title.classList.add('fs-5', 'm-0');
+			title.textContent = 'WeBWorK Help';
+
+			const closeButton = document.createElement('button');
+			closeButton.type = 'button';
+			closeButton.classList.add('btn-close');
+			closeButton.dataset.bsDismiss = 'modal';
+			closeButton.setAttribute('aria-label', 'close');
+
+			header.append(title, closeButton);
+
+			const body = document.createElement('div');
+			body.classList.add('modal-body');
+
+			const placeholder = document.createElement('p');
+			placeholder.classList.add('m-0', 'placeholder-glow');
+			const placeholderContent = document.createElement('span');
+			placeholderContent.classList.add('placeholder', 'w-100', 'd-inline-block');
+			placeholderContent.style.minHeight = '50px';
+			placeholder.append(placeholderContent);
+			body.append(placeholder);
+
+			content.append(header, body);
+
+			document.body.append(modal);
+
+			modal.addEventListener('hidden.bs.modal', () => {
+				bsModal.dispose();
+				modal.remove();
+			});
+
+			const bsModal = new bootstrap.Modal(modal);
+			bsModal.show();
+
+			// Retrieve url content.
+			fetch(helpLink.href)
+				.then((response) => (response.ok ? response.text() : response))
+				.then((data) => {
+					if (typeof data == 'object') {
+						console.log(`ERROR: ${data.status} ${data.statusText}`);
+					} else {
+						body.innerHTML = data;
+					}
+				})
+				.catch((err) => console.log(err));
+		});
+	}
 
 	// Turn help boxes into popovers
 	document.querySelectorAll('.help-popup').forEach((popover) => {
