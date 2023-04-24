@@ -64,6 +64,7 @@
 			const alertStatus = sessionStorage.getItem('gatewayAlertStatus');
 
 			if (remainingTime <= 10 - gracePeriod) {
+				if (!alertStatus) return;
 				sessionStorage.removeItem('gatewayAlertStatus');
 				actuallySubmit = true;
 				submitAnswers.click();
@@ -104,9 +105,13 @@
 
 		if (!timerDiv.dataset.acting) {
 			if (remainingTime <= 10 - gracePeriod) {
-				// Submit the test if time is expired and near the end of grace period.
-				actuallySubmit = true;
-				submitAnswers.click();
+				if (sessionStorage.getItem('gatewayAlertStatus')) {
+					sessionStorage.removeItem('gatewayAlertStatus');
+
+					// Submit the test if time is expired and near the end of grace period.
+					actuallySubmit = true;
+					submitAnswers.click();
+				}
 			} else {
 				// Set the timer text and check alerts at page load.
 				updateTimer();
