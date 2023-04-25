@@ -62,35 +62,10 @@ sub entry_widget ($self, $default) {
 	);
 }
 
-# This produces the documentation string and image link to more documentation.  It is the same for all config types.
+# This produces the documentation string and modal containing detailed documentation.
+# It is the same for all config types.
 sub what_string ($self) {
-	my $c = $self->{c};
-
-	return $c->tag(
-		'div',
-		class => 'd-flex justify-content-between align-items-center',
-		$c->c(
-			$c->tag(
-				'div',
-				ref $self eq 'WeBWorK::ConfigObject::checkboxlist'
-				? $c->b($c->maketext($self->{doc}))
-				: $c->label_for($self->{name} => $c->b($c->maketext($self->{doc})))
-			),
-			$c->link_to(
-				$c->tag(
-					'i',
-					class         => 'icon fas fa-question-circle',
-					'aria-hidden' => 'true',
-					data          => { alt => 'help' },
-					''
-				) => $c->systemLink(
-					$c->url_for('instructor_config'),
-					params => { show_long_doc => 1, var_name => $self->{var} }
-				),
-				target => '_blank'
-			)
-		)->join('')
-	);
+	return $self->{c}->include('ContentGenerator/Instructor/Config/config_help', configObject => $self);
 }
 
 1;

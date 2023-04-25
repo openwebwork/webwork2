@@ -20,7 +20,7 @@ sub display_value ($self, $val) {
 	my $c = $self->{c};
 	return $c->b('&nbsp;') if ref $val ne 'ARRAY';
 	my $str = $c->c(@$val)->join(',' . $c->tag('br'));
-	return $str =~ /\S/ ? $str : $c->b('&nbsp');
+	return $str =~ /\S/ ? $str : $c->b('&nbsp;');
 }
 
 sub comparison_value ($self, $val) {
