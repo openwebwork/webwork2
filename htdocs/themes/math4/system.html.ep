@@ -165,5 +165,8 @@
 	</div>
 </div>
 %
+% # This is a place that modal dialog html markup can be safely placed if needed by a page.
+<%= content 'modal-dialog-area' =%>
+%
 </body>
 </html>

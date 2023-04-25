@@ -972,12 +972,10 @@ sub helpMacro ($c, $name, $args = {}) {
 		// $c->tag('i', class => 'icon fas fa-question-circle', 'aria-hidden' => 'true', data => { alt => ' ? ' }, '');
 	delete $args->{label};
 
-	$args->{class} = 'help-macro ' . ($args->{class} // '');
-
 	my $ce = $c->ce;
-	$name = 'no_help' unless -e "$ce->{webworkDirs}{local_help}/$name.html";
+	$name = 'no_help' unless -e "$ce->{webworkDirs}{root}/templates/HelpFiles/$name.html.ep";
 
-	return $c->link_to($label => "$ce->{webworkURLs}{local_help}/$name.html", target => 'ww_help', %$args);
+	return $c->include("HelpFiles/$name", name => $name, label => $label, args => $args);
 }
 
 =item feedbackMacro(%params)
