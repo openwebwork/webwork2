@@ -39,7 +39,8 @@
 
 		request_object.rpc_command = 'saveFile';
 		request_object.outputFilePath = document.getElementsByName('temp_file_path')[0]?.value ?? '';
-		request_object.fileContents = webworkConfig?.pgCodeMirror?.getValue() ?? '';
+		request_object.fileContents = webworkConfig?.pgCodeMirror?.getValue()
+			?? document.getElementById('problemContents')?.value ?? '';
 
 		if (!request_object.outputFilePath) return;
 
@@ -147,6 +148,15 @@
 	// This is either the div created by the CodeMirror editor or the problemContents textarea in the case that
 	// CodeMirror is disabled in localOverrides.conf.
 	const editorArea = document.querySelector('.CodeMirror') ?? document.getElementById('problemContents');
+
+	// Add hot key, ctrl-enter, to render the problem
+	editorArea.addEventListener('keydown', async (e) => {
+		if (e.ctrlKey && e.code === 'Enter') {
+			e.preventDefault();
+			await render();
+			saveTempFile();
+		}
+	});
 
 	// Synchronize the heights of the render area and the editor area for wide windows.
 	if (editorArea && renderArea) {
