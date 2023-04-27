@@ -268,7 +268,7 @@ sub scoreSet ($c, $setID, $format, $showIndex, $UsersRef, $sortedUserIDsRef) {
 					my $score = 0;
 					foreach (values(%versionUserProblems)) {
 						my $status = $_->status || 0;
-						my $value  = $_->value  // 1;
+						my $value  = $_->value // 1;
 						# some of these are coming in null; I'm not
 						# why, or if this should be necessary
 						$_->status($status);
