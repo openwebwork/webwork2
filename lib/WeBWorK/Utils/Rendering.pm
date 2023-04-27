@@ -120,6 +120,9 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{num_of_correct_ans}   = $problem->num_correct;
 	$options{num_of_incorrect_ans} = $problem->num_incorrect;
 
+	# Persistent problem data
+	$options{PERSISTENCE_HASH} = decode_json($problem->problem_data || '{}');
+
 	# Language
 	$options{language}            = $ce->{language};
 	$options{language_subroutine} = WeBWorK::Localize::getLoc($options{language});
@@ -260,6 +263,8 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 				map { $_ => $pg->{pgcore}{PG_alias}{resource_list}{$_}{uri}{content} }
 					keys %{ $pg->{pgcore}{PG_alias}{resource_list} }
 			};
+			$ret->{PERSISTENCE_HASH_UPDATED} = $pg->{pgcore}{PERSISTENCE_HASH_UPDATED};
+			$ret->{PERSISTENCE_HASH}         = $pg->{pgcore}{PERSISTENCE_HASH};
 		}
 
 		# Save the problem source. This is used by Caliper::Entity. Why?

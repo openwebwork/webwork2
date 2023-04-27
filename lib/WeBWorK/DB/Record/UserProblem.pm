@@ -54,6 +54,8 @@ BEGIN {
 		sub_status => { type => "FLOAT" },
 		# a field for flags which need to be set
 		flags => { type => "TEXT" },
+		# additional stored data for this problem, internally uses JSON:
+		problem_data => { type => "MEDIUMTEXT" },
 	);
 }
 

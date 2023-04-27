@@ -65,6 +65,27 @@ sub process_and_log_answer ($c) {
 	my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id);
 	my $answer_log  = $ce->{courseFiles}{logs}{answer_log};
 
+	# Transfer persistent problem data from the PERSISTENCE_HASH:
+	# - Get keys to update first, to avoid extra work when no updates
+	#   are needed. When none, we avoid the need to decode/encode JSON,
+	#   or to save the pureProblem.
+	# - We are assuming that there is no need to DELETE old
+	#   persistent data if the hash is empty, even if in
+	#   potential there may be some data already in the database.
+	if (defined($pureProblem)) {
+		my @persistent_data_keys = keys %{ $pg->{PERSISTENCE_HASH_UPDATED} };
+		if (@persistent_data_keys) {
+			my $json_data = decode_json($pureProblem->{problem_data} || '{}');
+			for my $key (@persistent_data_keys) {
+				$json_data->{$key} = $pg->{PERSISTENCE_HASH}{$key};
+			}
+			$pureProblem->problem_data(encode_json($json_data));
+			if (!$submitAnswers) {    # would not be saved below
+				$db->putUserProblem($pureProblem);
+			}
+		}
+	}
+
 	my ($encoded_last_answer_string, $scores2, $answer_types_string);
 	my $scoreRecordedMessage = '';
 
@@ -117,7 +138,6 @@ sub process_and_log_answer ($c) {
 			# store last answer to database for use in "sticky" answers
 			$problem->last_answer($encoded_last_answer_string);
 			$pureProblem->last_answer($encoded_last_answer_string);
-			$db->putUserProblem($pureProblem);
 
 			# store state in DB if it makes sense
 			if ($will{recordAnswers}) {
@@ -251,6 +271,8 @@ sub process_and_log_answer ($c) {
 					}
 				}
 			} else {
+				# The "sticky" answers get saved here when $will{recordAnswers} is false
+				$db->putUserProblem($pureProblem);
 				if (before($set->open_date, $c->submitTime) || after($set->due_date, $c->submitTime)) {
 					$scoreRecordedMessage =
 						$c->maketext('Your score was not recorded because this homework set is closed.');
