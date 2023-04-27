@@ -26,7 +26,7 @@
     "devDependencies": {
         "autoprefixer": "^10.4.13",
         "chokidar": "^3.5.3",
-        "cssnano": "^5.1.14",
+        "cssnano": "^6.0.0",
         "postcss": "^8.4.21",
         "rtlcss": "^4.0.0",
         "sass": "^1.57.1",
