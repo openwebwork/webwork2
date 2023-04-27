@@ -118,7 +118,7 @@
 					<%= maketext('List of insertable macros') =%>
 				</button>
 			</div>
-			<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+			<div class="position-fixed top-0 end-0 p-3" style="z-index: 21">
 				<div id="insertable-macros" class="toast bg-white" role="alert" aria-live="polite" aria-atomic="true">
 					<div class="toast-header">
 						<strong class="me-auto"><%= maketext('List of insertable macros') %></strong>
