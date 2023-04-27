@@ -192,7 +192,7 @@ async sub renderProblem {
 	if ($rh->{problemSource}) {
 		$r_problem_source = \(decode_utf8_base64($rh->{problemSource}) =~ tr/\r/\n/r);
 		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
-	} elsif ($rh->{rawProblemSource}) {
+	} elsif (defined $rh->{rawProblemSource}) {
 		$r_problem_source = \$rh->{rawProblemSource};
 		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
 	} elsif ($rh->{uriEncodedProblemSource}) {

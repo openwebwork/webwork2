@@ -52,11 +52,8 @@ sub formatRenderedProblem {
 
 	my $renderErrorOccurred = 0;
 
-	my $problemText = '';
-	if ($rh_result->{text}) {
-		$problemText = $rh_result->{text};
-	} else {
-		$problemText .= "Unable to decode problem text:<br>$ws->{error_string}<br>" . format_hash_ref($rh_result);
+	my $problemText = $rh_result->{text} // '';
+	if ($rh_result->{flags}{error_flag}) {
 		$rh_result->{problem_result}{score} = 0;    # force score to 0 for such errors.
 		$renderErrorOccurred                = 1;
 		$forbidGradePassback                = 1;    # due to render error
@@ -398,13 +395,6 @@ EOS
 	$LTIGradeMessage .= $ws->c->hidden_field(lis_result_sourcedid    => $sourcedid)->to_string;
 
 	return $LTIGradeMessage;
-}
-
-# Error formatting
-sub format_hash_ref {
-	my $hash = shift;
-	warn 'Use a hash reference' unless ref($hash) =~ /HASH/;
-	return join(' ', map { $_ // '--' } %$hash) . "\n";
 }
 
 # Nice output for debugging
