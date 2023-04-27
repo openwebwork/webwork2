@@ -80,7 +80,7 @@ $LTI{v1p1}{fallback_source_of_username} = '';
 # lis_person_contact_email_primary, and the email is being used as the WeBWorK user_id, then if
 # the following setting is enabled, then WeBWorK will strip off the domain portion of the email
 # (after the '@') and just use the username.
-$LTI{v1p1}{strip_address_from_email} = 0;
+$LTI{v1p1}{strip_domain_from_email} = 0;
 
 # This feature should not be used if emails could collide after the domain is removed.
 

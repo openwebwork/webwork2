@@ -73,7 +73,7 @@ $LTI{v1p3}{fallback_source_of_username} = '';
 # setting is enabled, then WeBWorK will strip off the domain portion of the email (after the
 # '@') and just use the username in the case that the email is used.  This feature should not be
 # used if emails could collide after the domain is removed.
-$LTI{v1p3}{strip_address_from_email} = 0;
+$LTI{v1p3}{strip_domain_from_email} = 0;
 
 # Depending on the username source, capitalization may vary between students, such as when using
 # an email address to get the username. Turning this option on will make all usernames

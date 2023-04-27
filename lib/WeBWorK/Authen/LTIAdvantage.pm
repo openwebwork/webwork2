@@ -272,7 +272,7 @@ sub get_credentials ($self) {
 
 	if ($self->{user_id}) {
 		# Strip off the part of the address after @ if the email address was used and it was requested to do so.
-		$self->{user_id} =~ s/@.*$// if $user_id_source eq 'email' && $ce->{LTI}{v1p3}{strip_address_from_email};
+		$self->{user_id} =~ s/@.*$// if $user_id_source eq 'email' && $ce->{LTI}{v1p3}{strip_domain_from_email};
 
 		# Make user_id lowercase for consistency in naming if configured.
 		$self->{user_id} = lc($self->{user_id}) if $ce->{LTI}{v1p3}{lowercase_username};
@@ -296,7 +296,7 @@ sub get_credentials ($self) {
 			warn "=========== SUMMARY ============\n";
 			warn "User id is |$self->{user_id}| (obtained from $user_id_source which was $type_of_source)\n";
 			warn "User email address is |$self->{email}|\n";
-			warn "strip_address_from_email is |", $ce->{LTI}{v1p3}{strip_address_from_email} // 0, "|\n";
+			warn "strip_domain_from_email is |", $ce->{LTI}{v1p3}{strip_domain_from_email} // 0, "|\n";
 			warn "Student id is |$self->{student_id}|\n";
 			warn "preferred_source_of_username is |$ce->{LTI}{v1p3}{preferred_source_of_username}|\n";
 			warn "fallback_source_of_username is |", $ce->{LTI}{v1p3}{fallback_source_of_username} // 'undefined',

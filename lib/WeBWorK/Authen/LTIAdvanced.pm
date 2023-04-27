@@ -203,7 +203,7 @@ sub get_credentials {
 		$self->{user_id} = $self->{email};
 
 		# Strip off the part of the address after @ if requested to do so:
-		$self->{user_id} =~ s/@.*$// if $ce->{LTI}{v1p1}{strip_address_from_email};
+		$self->{user_id} =~ s/@.*$// if $ce->{LTI}{v1p1}{strip_domain_from_email};
 	} elsif ($c->param($ce->{LTI}{v1p1}{preferred_source_of_username})) {
 		$user_id_source  = $ce->{LTI}{v1p1}{preferred_source_of_username};
 		$type_of_source  = "preferred_source_of_username";
@@ -229,7 +229,7 @@ sub get_credentials {
 			$self->{user_id} = $self->{email};
 
 			# Strip off the part of the address after @ if requested to do so:
-			$self->{user_id} =~ s/@.*$// if $ce->{LTI}{v1p1}{strip_address_from_email};
+			$self->{user_id} =~ s/@.*$// if $ce->{LTI}{v1p1}{strip_domain_from_email};
 		} elsif ($c->param($ce->{LTI}{v1p1}{fallback_source_of_username})) {
 			$user_id_source  = $ce->{LTI}{v1p1}{fallback_source_of_username};
 			$type_of_source  = "fallback_source_of_username";
@@ -269,7 +269,7 @@ sub get_credentials {
 			warn "=========== summary ============\n";
 			warn "User id is |$self->{user_id}| (obtained from $user_id_source which was $type_of_source)\n";
 			warn "User mail address is |$self->{email}|\n";
-			warn "strip_address_from_email is |", $ce->{LTI}{v1p1}{strip_address_from_email} // 0, "|\n";
+			warn "strip_domain_from_email is |", $ce->{LTI}{v1p1}{strip_domain_from_email} // 0, "|\n";
 			warn "Student id is |$self->{student_id}|\n";
 			warn "preferred_source_of_username is |$ce->{LTI}{v1p1}{preferred_source_of_username}|\n";
 			warn "fallback_source_of_username is |", $ce->{LTI}{v1p1}{fallback_source_of_username} // 'undefined',
