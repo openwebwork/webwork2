@@ -122,7 +122,12 @@
 		% if ($c->can('page_title')) {
 			<div class="row">
 				<div class="col-12">
-					<h1 id="page-title" class="page-title"><%== $c->page_title %></h1>
+					<h1 id="page-title" class="page-title">
+						<%== $c->page_title %>
+						% if (param('user') && $authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+							<%= $c->help({ label_size => 'fa-xs' }) %>
+						% }
+					</h1>
 				</div>
 			</div>
 		% }
