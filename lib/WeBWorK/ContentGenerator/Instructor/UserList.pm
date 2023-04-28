@@ -247,8 +247,6 @@ sub pre_header_initialize ($c) {
 		grep { $c->{visibleUserIDs}{ $_->user_id } } (values %allUsers)
 	];
 
-	for (@{ $c->{sortedUserIDs} }) { $c->log->info($_); }
-
 	return;
 }
 
