@@ -2148,15 +2148,17 @@ sub addUserMultipleProblems {
 	my @collectedProblemList;
 
 	for my $problemListRef (@problemLists) {
-		my $user_id = $problemListRef->[0]->user_id;
+		my $user_id    = $problemListRef->[0]->user_id;
+		my $problem_id = $problemListRef->[0]->problem_id;
 		croak "addMultipleUserProblems: user set $set_id for user $user_id not found"
 			unless $self->{set_user}->exists($user_id, $set_id);
 
 		# Test whether there are already problem records for this user in this set, as in that case
 		# inserting multiple records at once would trigger an error.
-		my $where = [ user_id_eq_set_id_eq => $user_id, $set_id ];
+		my $where = [ user_id_eq_set_id_eq_problem_id_eq => $user_id, $set_id, $problem_id ];
 
-		croak "addMultipleUserProblems cannot be run as set $set_id already contains some problems for user $user_id"
+		croak
+			"addMultipleUserProblems cannot be run as set $set_id already contains one of the requested problems for user $user_id"
 			if $self->{problem_user}->count_where($where);
 		# If we got here, we can add this list of problems to those to insert into the database
 		push(@collectedProblemList, @{$problemListRef});
