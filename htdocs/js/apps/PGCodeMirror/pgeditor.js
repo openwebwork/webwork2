@@ -19,7 +19,7 @@
 		return new Promise((resolve, reject) => {
 			let shouldAppend = false;
 			let el;
-			if (/\.js(?:\??[0-9a-zA-Z=]*)$/.exec(src)) {
+			if (/\.js(?:\?[0-9a-zA-Z=^.]*)?$/.exec(src)) {
 				el = document.querySelector(`script[src="${src}"]`);
 				if (!el) {
 					el = document.createElement('script');
@@ -27,7 +27,7 @@
 					el.src = src;
 					shouldAppend = true;
 				}
-			} else if (/\.css(?:\??[0-9a-zA-Z=]*)$/.exec(src)) {
+			} else if (/\.css(?:\?[0-9a-zA-Z=^.]*)?$/.exec(src)) {
 				el = document.querySelector(`link[href="${src}"]`);
 				if (!el) {
 					el = document.createElement('link');
@@ -57,7 +57,8 @@
 	};
 
 	const loadConfig = async (file) => {
-		const configName = [...file.matchAll(/.*\/([^.]*?)(?:\.min)?\.(?:js|css)$/g)][0]?.[1] ?? 'default';
+		const configName = [...file.matchAll(/.*\/([^.]*?)(?:\.min)?\.(?:js|css)(?:\?[0-9a-zA-Z=^.]*)?$/g)][0]?.[1]
+			?? 'default';
 		if (configName !== 'default') {
 			try {
 				await loadResource(file);
