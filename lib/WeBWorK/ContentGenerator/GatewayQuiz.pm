@@ -1316,7 +1316,7 @@ async sub pre_header_initialize ($c) {
 	if ($will{recordAnswers} || $will{checkAnswers}) {
 		my $i = 0;
 		for my $pg (@pg_results) {
-			my $pValue = $problems[$i]->value ? $problems[$i]->value : 1;
+			my $pValue = $problems[$i]->value // 1;
 			my $pScore = 0;
 			if (ref $pg) {
 				# If a pg object is available, then use the pg recorded score and save it in the @probStatus array.
