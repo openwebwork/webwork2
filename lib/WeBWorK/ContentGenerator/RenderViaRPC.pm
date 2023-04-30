@@ -39,7 +39,9 @@ async sub pre_header_initialize ($c) {
 
 	unless ($c->authen->was_verified) {
 		$c->{output} =
-			$c->{wantsjson} ? { error => 'render_rpc: authentication failed.' } : 'render_rpc: authentication failed.';
+			$c->{wantsjson}
+			? { error => $c->maketext('Authentication failed. Log in again to continue.') }
+			: $c->maketext('Authentication failed. Log in again to continue.');
 		return;
 	}
 

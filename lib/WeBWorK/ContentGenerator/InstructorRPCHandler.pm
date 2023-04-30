@@ -41,7 +41,7 @@ use WebworkWebservice;
 
 async sub pre_header_initialize ($c) {
 	unless ($c->authen->was_verified) {
-		$c->{output} = 'instructor_rpc: authentication failed.';
+		$c->{output} = $c->maketext('Authentication failed. Log in again to continue.');
 		return;
 	}
 
