@@ -217,17 +217,6 @@ sub verify {
 		if (defined $log_error) {
 			$self->write_log_entry("LOGIN FAILED $log_error");
 		}
-		if (defined($error) and $error =~ /\S/) {    # if error message has a least one non-space character.
-			if (defined($log_error) and $log_error eq "inactivity timeout") {
-				# We don't want to override the localized inactivity timeout message.
-				# so do not check next "if" in this case.
-			} elsif (defined($c->param("user")) or defined($c->param("user_id"))) {
-				$error = $c->maketext(
-					"Your authentication failed.  Please try again. Please speak with your instructor if you need help."
-				);
-			}
-
-		}
 		#warn "LOGIN FAILED: log_error: $log_error; user error: $error";
 		$self->maybe_kill_cookie;
 		# if error message has a least one non-space character.
