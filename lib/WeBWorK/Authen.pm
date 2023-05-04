@@ -217,7 +217,6 @@ sub verify {
 		if (defined $log_error) {
 			$self->write_log_entry("LOGIN FAILED $log_error");
 		}
-		#warn "LOGIN FAILED: log_error: $log_error; user error: $error";
 		$self->maybe_kill_cookie;
 		# if error message has a least one non-space character.
 		if (defined($error) and $error =~ /\S/) {
