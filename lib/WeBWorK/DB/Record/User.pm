@@ -27,7 +27,7 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		user_id        => { type => "TINYBLOB NOT NULL", key => 1 },
+		user_id        => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		first_name     => { type => "TEXT" },
 		last_name      => { type => "TEXT" },
 		email_address  => { type => "TEXT" },
@@ -40,7 +40,7 @@ BEGIN {
 		showOldAnswers => { type => "INT" },
 		useMathView    => { type => "INT" },
 		useMathQuill   => { type => "INT" },
-		lis_source_did => { type => "BLOB" },
+		lis_source_did => { type => "TEXT" },
 	);
 }
 

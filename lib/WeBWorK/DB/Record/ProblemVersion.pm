@@ -32,10 +32,10 @@ BEGIN {
 	my $field_data   = $base->FIELD_DATA;
 	my @nonkeyfields = map { $_ => $field_data->{$_} } $base->NONKEYFIELDS;
 	__PACKAGE__->_fields(
-		user_id    => { type => "TINYBLOB NOT NULL", key => 1 },
-		set_id     => { type => "TINYBLOB NOT NULL", key => 1 },
-		version_id => { type => "INT NOT NULL",      key => 1 },
-		problem_id => { type => "INT NOT NULL",      key => 1 },
+		user_id    => { type => "VARCHAR(100) NOT NULL", key => 1 },
+		set_id     => { type => "VARCHAR(100) NOT NULL", key => 1 },
+		version_id => { type => "INT NOT NULL",          key => 1 },
+		problem_id => { type => "INT NOT NULL",          key => 1 },
 		@nonkeyfields,
 	);
 }
