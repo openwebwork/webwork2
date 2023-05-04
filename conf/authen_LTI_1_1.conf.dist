@@ -132,7 +132,7 @@ $LTI{v1p1}{NonceLifeTime} = 60;    # in seconds
 # This allows you to override the URL that Oauth will use to validate the authentication.  This
 # is important if you have some sort of setup (e.g. load distributing) where the path in the LMS
 # does not match the path that ends up in the webwork page.
-$LTI{v1p1}{BasicToThisSiteURL} = '';
+$LTI{v1p1}{OverrideSiteURL} = '';
 
 ################################################################################################
 # LTI 1.1 LMS Roles Mapped to WeBWorK Roles
