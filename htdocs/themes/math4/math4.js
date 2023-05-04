@@ -70,12 +70,6 @@
 		});
 	}
 
-	// Open help in a new window on a helpMacro click.
-	document.querySelectorAll('.help-macro').forEach((helpLink) =>
-		helpLink.addEventListener('click',
-			() => window.open(helpLink.href, helpLink.target, 'width=550,height=350,scrollbars=yes,resizable=yes'))
-	);
-
 	// Turn help boxes into popovers
 	document.querySelectorAll('.help-popup').forEach((popover) => {
 		new bootstrap.Popover(popover, {trigger: 'hover focus'});

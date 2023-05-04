@@ -731,19 +731,12 @@ sub warnings ($c) {
 
 =item help()
 
-Display a link to context-sensitive help. If the argument C<name> is defined,
-the link will be to the help document for that name. Otherwise the current
-content generator package name will be used.
+Display a link to context-sensitive help for the current content generator module.
 
 =cut
 
 sub help ($c, $args) {
-	my $name = $args->{name};
-	$name = ref($c) unless defined($name);
-	$name =~ s/WeBWorK::ContentGenerator:://;
-	$name =~ s/://g;
-
-	return $c->helpMacro($name, $args);
+	return $c->helpMacro((ref($c) =~ s/WeBWorK::ContentGenerator:://r) =~ s/://gr, $args);
 }
 
 =item url($args)
@@ -959,25 +952,32 @@ sub navMacro ($c, $args, $tail, @links) {
 
 =item helpMacro($name)
 
-This escape is represented by a question mark which links to an html page in the
-helpFiles  directory.  Currently the link is made to the file $name.html
+This method outputs a link that opens a modal dialog containing the results of rendering a
+HelpFiles template.  The template file that is rendered is $name.html.  If that file does not
+exist, then nothing is output.
 
-The optional argument $args is a hash that may contain the keys label or class.
-$args->{label} is the displayed label, and $args->{class} is added to the html class attribute if defined.
+The optional argument $args is a hash that may contain the keys label, label_size, or class.
+$args->{label} is the displayed label, $args->{label_size} is a font awesome size class and is
+only used if $args->{label} is not set, and $args->{class} is added to the html class attribute
+if defined.
 
 =cut
 
 sub helpMacro ($c, $name, $args = {}) {
-	my $label = $args->{label}
-		// $c->tag('i', class => 'icon fas fa-question-circle', 'aria-hidden' => 'true', data => { alt => ' ? ' }, '');
-	delete $args->{label};
-
-	$args->{class} = 'help-macro ' . ($args->{class} // '');
-
 	my $ce = $c->ce;
-	$name = 'no_help' unless -e "$ce->{webworkDirs}{local_help}/$name.html";
+	return '' unless -e "$ce->{webworkDirs}{root}/templates/HelpFiles/$name.html.ep";
 
-	return $c->link_to($label => "$ce->{webworkURLs}{local_help}/$name.html", target => 'ww_help', %$args);
+	my $label = $args->{label} // $c->tag(
+		'i',
+		class         => 'icon fa-solid fa-circle-question ' . ($args->{label_size} // ''),
+		'aria-hidden' => 'true',
+		data          => { alt => ' ? ' },
+		''
+	);
+	delete $args->{label};
+	delete $args->{label_size};
+
+	return $c->include("HelpFiles/$name", name => $name, label => $label, args => $args);
 }
 
 =item feedbackMacro(%params)

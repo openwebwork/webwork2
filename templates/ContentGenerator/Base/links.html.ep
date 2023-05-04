@@ -259,13 +259,11 @@
 					% if ($authz->hasPermissions($userID, "manage_course_files")) {
 						<li class="nav-item"><%= $makelink->('instructor_config') %></li>
 					% }
-					% # Instructor help
+					% # Instructor links help
 					<li class="nav-item">
 						<%= $c->helpMacro('instructor_links',
 							{ label => maketext('Help'), class => 'nav-link' }) %>
 					</li>
-					% # Help link
-					<li class="nav-item"><%= $c->help({ class => 'nav-link' }) %></li>
 					% # Show the archive course link only on the FileManager page
 					% if (
 						% $authz->hasPermissions($userID, 'manage_course_files')
