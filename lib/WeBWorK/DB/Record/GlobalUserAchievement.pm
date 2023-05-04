@@ -31,7 +31,7 @@ BEGIN {
 		achievement_points   => { type => "INT" },
 		next_level_points    => { type => "INT" },
 		level_achievement_id => { type => "VARCHAR(100)" },
-		frozen_hash => { type => "MEDIUMBLOB" },
+		frozen_hash          => { type => "MEDIUMBLOB" },
 	);
 }
 
