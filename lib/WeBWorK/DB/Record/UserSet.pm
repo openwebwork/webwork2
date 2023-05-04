@@ -62,7 +62,7 @@ BEGIN {
 		restrict_prob_progression => { type => "INT" },
 		email_instructor          => { type => "INT" },
 		lis_source_did            => { type => "TEXT" },
-		external_data             => { type => "TEXT" },
+		external_data             => { type => "MEDIUMTEXT" },
 	);
 }
 
