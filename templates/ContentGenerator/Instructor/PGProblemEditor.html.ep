@@ -95,15 +95,25 @@
 			),
 			class  => 'reference-link btn btn-sm btn-info',
 			data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
-		% # https://courses1.webwork.maa.org/webwork2/cervone_course/PGML/1/?login_practice_user=true
-		<%= link_to maketext('PGML') => $ce->{webworkURLs}{PGMLHelpURL},
-			target => 'PGML',
-			title  => maketext(
-				'PG mark down syntax used to format WeBWorK questions. '
-				. 'This interactive lab can help you to learn the techniques.'
-			),
-			class  => 'reference-link btn btn-sm btn-info',
-			data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
+		% # PGML lab problem rendered as an unattached problem in a new window.
+		% if (-e "$ce->{courseDirs}{templates}/PGMLLab/PGML-lab.pg") {
+			<%= link_to maketext('PGML') => $c->systemLink(
+					url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
+					params => {
+						displayMode    => $ce->{pg}{options}{displayMode},
+						problemSeed    => 1234,
+						editMode       => 'temporaryFile',
+						sourceFilePath => 'PGMLLab/PGML-lab.pg'
+					}
+				),
+				target => 'PGML',
+				title  => maketext(
+					'PG markdown syntax used to format WeBWorK questions. '
+					. 'This interactive lab can help you to learn the techniques.'
+				),
+				class  => 'reference-link btn btn-sm btn-info',
+				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
+		% }
 		% # http://webwork.maa.org/wiki/Category:Authors
 		<%= link_to maketext('Author Info') => $ce->{webworkURLs}{AuthorHelpURL},
 			target => 'author_info',
