@@ -17,5 +17,8 @@
 % title maketext('Answer Log Help');
 %
 <p class="m-0">
-	<%= maketext('Show past answers for selections of students, sets, and problems.') =%>
+	<%= maketext('Show past answers.  Students can only see their past answers, and they will not be able to see '
+		. 'which parts are correct.  Instructors can use the form to select any combination of users, sets, and '
+		. 'problems to view.  The table below will list the past answers colored according to correctness '
+		. '(green is correct).  Use control + click to select multiple users, sets, or problems.') =%>
 </p>
