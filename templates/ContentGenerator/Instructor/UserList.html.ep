@@ -16,28 +16,6 @@
 	% last;
 % }
 %
-% # Site identifying information
-<button id="show_hide" type="button" class="btn btn-info mb-2"><%= maketext('Show/Hide Site Description') =%></button>
-<p id="site_description" style="display:none">
-	<em>
-		<%= maketext(
-			'This is the classlist editor page, where you can view and edit the records of all the students currently '
-				. 'enrolled in this course.  The top of the page contains forms which allow you to filter which '
-				. 'students to view, sort your students in a chosen order, edit student records, give new passwords to '
-				. 'students, import/export student records from/to external files, or add/delete students.  To use, '
-				. 'please select the action you would like to perform, enter in the relevant information in the fields '
-				. 'below, and hit the "Take Action!" button at the bottom of the form.  The bottom of the page '
-				. 'contains a table containing the student usernames and their information. Clicking on the links in '
-				. 'the column headers of the table will sort the table by the field it corresponds to. The Login Name '
-				. 'fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow '
-				. 'you to act as the selected user.  There is also an edit link following the name which will take you '
-				. 'to a page where you can edit the selected user\'s information.  Clicking the emails will allow you '
-				. 'to email the corresponding user.  Clicking the links in the entries in the assigned sets columns '
-				. 'will take you to a page where you can view and reassign the sets for the selected user. '
-		) =%>
-	</em>
-</p>
-%
 <%= form_for current_route, method => 'POST', name => 'userlist', id => 'user-list-form', class => 'font-sm', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	% if (keys %{ $c->{visibleUserIDs} }) {

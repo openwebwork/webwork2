@@ -11,20 +11,6 @@
 	% last;
 % }
 %
-<button id="show_hide" type="button" class="btn btn-info mb-2">
-	<%= maketext("Show/Hide Site Description") =%>
-</button>
-<p id="site_description" style="display:none">
-	<em>
-		<%= maketext(
-			'This is the Achievement Editor.  It is used to edit the achievements available to students.  Please keep '
-				. 'in mind the following facts: Achievments are displayed, and evaluated, in the order they are '
-				. 'listed. The "secret" category creates achievements which are not visible to students until they are '
-				. 'earned.  The "level" category is used for the achievements associated to a users level.'
-		) =%>
-	</em>
-</p>
-%
 <%= form_for current_route, method => 'post', id => 'achievement-list', name => 'achievementlist', class => 'font-sm',
 	begin =%>
 	<%= $c->hidden_authen_fields =%>
