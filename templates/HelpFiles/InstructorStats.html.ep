@@ -20,8 +20,3 @@
 	<%= maketext('This page is a useful tool for instructors who want to see how their students are doing. Statistics '
 		. 'can either be viewed for a single set or for a single user simply by clicking on the link.') =%>
 </p>
-<p class="mb-0">
-	<%== maketext('The "Success Index" column is: '
-		. '<code>(totalNumberOfCorrectProblems / totalNumberOfProblems)^2/ AvgNumberOfAttemptsPerProblem)</code>,'
-		. 'which is a useful measure for summarizing how well students are doing.') =%>
-</p>

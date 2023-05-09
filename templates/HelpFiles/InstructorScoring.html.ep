@@ -56,8 +56,9 @@
 		. 'courseName_totals_bak1.csv -- so you can recover using the File Manager.)') =%>
 </p>
 <p class="mb-0">
-	<%== maketext('If you upload your file on the web with the name: <code>report_grades_data.csv</code> and also '
-		. 'create an email message with the name <code>report_grade.msg</code> with the approriate <code>$COL</code> '
-		. 'variables then not only can you email the message with the embedded grades to the students, but files with '
-		. 'those exact names are automatically appended to the "Grades" page seen by the students.') =%>
+	<%== maketext('If you upload your file on the web with the name: [_1] and also create an email message with the '
+		. 'name [_2] with the approriate [_3] variables then not only can you email the message with the embedded '
+		. 'grades to the students, but files with those exact names are automatically appended to the "Grades" page '
+		. 'seen by the students.',
+		'<code>report_grades_data.csv</code>', '<code>report_grade.msg</code>', '<code>$COL</code>') =%>
 </p>
