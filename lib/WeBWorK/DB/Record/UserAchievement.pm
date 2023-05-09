@@ -31,10 +31,7 @@ BEGIN {
 		achievement_id => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		earned         => { type => "INT" },
 		counter        => { type => "INT" },
-		# VARCHAR(1024) is only supported by MySQL version 5.0.3 and
-		# later, but it makes freezing and thawing safer to have
-		# more available characters
-		frozen_hash => { type => "VARCHAR(1024)" },
+		frozen_hash    => { type => "MEDIUMBLOB" },
 	);
 }
 
