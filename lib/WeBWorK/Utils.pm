@@ -1818,13 +1818,20 @@ sub fetchEmailRecipients {
 
 	return unless $permissionType;
 
-	return
+	# FIXME:  This is a very expensive and slow process.  It retrieves all users from the database that have email
+	# addresses, and then proceeds to check permissions for all of those users.  For large classes this can be extremely
+	# slow.  Fixing this would require completely reworking the way that feedback recipients are determined.
+	my @recipients =
 		map { $_->rfc822_mailbox } grep { $authz->hasPermissions($_->user_id, $permissionType) } $db->getUsersWhere({
 			email_address => { '!=', undef },
 			$ce->{feedback_by_section}
 			&& defined $sender
 			&& defined $sender->section ? (section => $sender->section) : (),
 		});
+
+	push @recipients, @{ $ce->{mail}{feedbackRecipients} } if ref($ce->{mail}{feedbackRecipients}) eq 'ARRAY';
+
+	return @recipients;
 }
 
 sub processEmailMessage {

@@ -994,6 +994,8 @@ sub feedbackMacro ($c, %params) {
 		return $c->link_to(($c->maketext($c->ce->{feedback_button_name}) || $c->maketext('Email instructor')) =>
 				$c->ce->{courseURLs}{feedbackURL});
 	} elsif ($c->ce->{courseURLs}{feedbackFormURL}) {
+		$params{notifyAddresses} =
+			join(';', $c->fetchEmailRecipients('receive_feedback', $c->db->getUser($c->param('user'))));
 		return $c->include(
 			'ContentGenerator/Base/feedback_macro_form',
 			params          => \%params,

@@ -1660,15 +1660,16 @@ sub output_past_answer_button ($c) {
 sub output_email_instructor ($c) {
 	my $user = $c->db->getUser($c->param('user'));
 
+	# FIXME: Most of what is passed here is only needed by the feedback form, and should be extracted in the
+	# feedbackMacro method and only for that case.
 	return $c->feedbackMacro(
-		route           => $c->current_route,
-		courseId        => $c->stash('courseID'),
-		set             => $c->{set}->set_id,
-		problem         => $c->{problem}->problem_id,
-		problemPath     => $c->{problem}->source_file,
-		randomSeed      => $c->{problem}->problem_seed,
-		notifyAddresses => join(';', $c->fetchEmailRecipients('receive_feedback', $user)),
-		emailableURL    => $c->generateURLs(
+		route        => $c->current_route,
+		courseId     => $c->stash('courseID'),
+		set          => $c->{set}->set_id,
+		problem      => $c->{problem}->problem_id,
+		problemPath  => $c->{problem}->source_file,
+		randomSeed   => $c->{problem}->problem_seed,
+		emailableURL => $c->generateURLs(
 			url_type   => 'absolute',
 			set_id     => $c->{set}->set_id,
 			problem_id => $c->{problem}->problem_id

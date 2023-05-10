@@ -28,7 +28,7 @@ use Try::Tiny;
 use Text::Wrap qw(wrap);
 
 use WeBWorK::Upload;
-use WeBWorK::Utils qw/decodeAnswers createEmailSenderTransportSMTP/;
+use WeBWorK::Utils qw(decodeAnswers createEmailSenderTransportSMTP fetchEmailRecipients);
 
 # request paramaters used
 #
@@ -88,7 +88,7 @@ sub initialize ($c) {
 	return unless $authz->hasPermissions($userID, 'submit_feedback');
 
 	# Determine the recipients of the email.
-	my @recipients = $c->getFeedbackRecipients($user);
+	my @recipients = $c->fetchEmailRecipients('receive_feedback', $user);
 	$c->stash->{numRecipients} = scalar @recipients;
 
 	return unless $c->stash->{numRecipients};
@@ -259,36 +259,6 @@ $emailableURL
 
 sub page_title ($c) {
 	return $c->ce->{feedback_button_name} || $c->maketext('E-mail Instructor');
-}
-
-sub getFeedbackRecipients ($c, $user) {
-	my $ce    = $c->ce;
-	my $db    = $c->db;
-	my $authz = $c->authz;
-
-	my @recipients;
-
-	# send to all users with permission to receive_feedback and an email address
-	foreach my $rcptName ($db->listUsers()) {
-		if ($authz->hasPermissions($rcptName, "receive_feedback")) {
-			my $rcpt = $db->getUser($rcptName);    # checked
-			next
-				if $ce->{feedback_by_section}
-				and defined $user
-				and defined $rcpt->section
-				and defined $user->section
-				and $rcpt->section ne $user->section;
-			if ($rcpt and $rcpt->email_address) {
-				push @recipients, $rcpt->rfc822_mailbox;
-			}
-		}
-	}
-
-	if (defined $ce->{mail}->{feedbackRecipients}) {
-		push @recipients, @{ $ce->{mail}->{feedbackRecipients} };
-	}
-
-	return @recipients;
 }
 
 sub format_user ($c, $user) {
