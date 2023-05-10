@@ -8,7 +8,7 @@
 	<%= hidden_field $fieldName => 0 =%>
 % } elsif ($fieldName =~ /\.assignment_type$/) {
 	% my @allowedTypes = split(',', $value);
-	% for my $type ([ default => 'homework' ], [ gateway => 'gateways' ], [ jitar => 'just-in-time' ]) {
+	% for my $type ([ default => 'homework' ], [ gateway => 'tests' ], [ jitar => 'just-in-time' ]) {
 		<label class="form-check-label me-1">
 			<%= $type->[1] =%>
 			<%= check_box $fieldName => $type->[0], class => 'form-check-input me-1',

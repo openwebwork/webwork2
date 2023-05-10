@@ -1,8 +1,7 @@
 <h2 class="my-3"><%= maketext('Badges') %></h2>
 %
-% my $previousCategory = $achievements->[0]->category;
-%
 % if (@$achievements) {
+	% my $previousCategory = $achievements->[0]->category;
 	% for my $achievement (@$achievements) {
 		% # Separate categories with whitespace.
 		% if ($achievement->category ne $previousCategory) {
