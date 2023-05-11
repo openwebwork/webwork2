@@ -122,7 +122,7 @@ sub setCachedUser {
 		if (!$db->existsUser($userID) && defined($c->param("lis_person_sourcedid"))) {
 			# This is a new user referred via an LTI link.
 			# Do not attempt to cache the permission here.
-			# Rather, the LTIBasic authentication module should cache the permission.
+			# Rather, the LTI authentication module should cache the permission.
 			return 1;
 		}
 		my $PermissionLevel;
@@ -152,7 +152,7 @@ sub setCachedUser {
 		{
 			# This is a new user referred via an LTI link.
 			# Do not attempt to cache the permission here.
-			# Rather, the LTIBasic authentication module should cache the permission.
+			# Rather, the LTI authentication module should cache the permission.
 			return 1;
 		} elsif (defined($c->param("oauth_nonce"))) {
 			# This is a LTI attempt that doesn't have an lis_person_sourcedid username.
@@ -487,7 +487,10 @@ sub checkSet {
 	my $LTIGradeMode = $ce->{LTIGradeMode} // '';
 
 	if ($LTIGradeMode eq 'homework' && !$self->hasPermissions($userName, "view_unopened_sets")) {
-		my $LMS = $ce->{LMS_url} ? $c->link_to($ce->{LMS_name} => $ce->{LMS_url}) : $ce->{LMS_name};
+		my $LMS =
+			$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
+			? $c->link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
+			: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
 		return $c->maketext(
 			'You must use your Learning Management System ([_1]) to access this set.  '
 				. 'Try logging in to the Learning Management System and visiting the set from there.',

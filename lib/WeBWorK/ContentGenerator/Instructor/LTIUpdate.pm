@@ -19,7 +19,7 @@ package WeBWorK::ContentGenerator::Instructor::LTIUpdate;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 use WeBWorK::Utils(qw(format_set_name_display getAssetURL));
-use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
+use WeBWorK::Authen::LTI::MassUpdate qw(mass_update);
 
 sub initialize ($c) {
 	my $db = $c->db;
@@ -67,7 +67,7 @@ sub initialize ($c) {
 	# Note that if somehow this point is reached with a setID and grade mode is "course",
 	# then the setID will be ignored by the job.
 
-	WeBWorK::Authen::LTIAdvanced::SubmitGrade::mass_update($c, 1, $userID, $setID);
+	mass_update($c, 1, $userID, $setID);
 
 	return;
 }

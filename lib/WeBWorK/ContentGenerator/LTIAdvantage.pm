@@ -1,4 +1,4 @@
-################################################################################
+###############################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
 #
@@ -13,25 +13,26 @@
 # Artistic License for more details.
 ################################################################################
 
-package WeBWorK::DB::Record::Key;
-use base WeBWorK::DB::Record;
+package WeBWorK::ContentGenerator::LTIAdvantage;
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
-=head1 NAME
+use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
+use WeBWorK::Debug;
 
-WeBWorK::DB::Record::Key - represent a record from the key table.
+sub login ($c) {
+	return $c->render('ContentGenerator/LTIAdvantage/login_repost');
+}
 
-=cut
+sub launch ($c) {
+	return $c->redirect_to($c->systemLink($c->url_for($c->stash->{LTILauncRedirect})));
+}
 
-use strict;
-use warnings;
+sub keys ($c) {
+	my ($public_keyset, $err) = WeBWorK::Authen::LTIAdvantage::SubmitGrade::get_site_key($c->ce);
+	return $c->render(json => $public_keyset) if $public_keyset;
 
-BEGIN {
-	__PACKAGE__->_fields(
-		user_id   => { type => "VARCHAR(100) NOT NULL", key => 1 },
-		key       => { type => "TEXT" },
-		timestamp => { type => "BIGINT" },
-		set_id    => { type => "TINYTEXT" },
-	);
+	debug("Error loading or generating site keys: $err");
+	return $c->render(data => 'Internal site configuration error', status => 500);
 }
 
 1;

@@ -93,10 +93,7 @@ sub pre_header_initialize ($c) {
 		return;
 	}
 
-	# The following check may not work when a sequence of authentication modules are used, because the preferred module
-	# might be external, e.g., LTIBasic, but a non-external one, e.g., Basic_TheLastChance or even just WeBWorK::Authen,
-	# might handle the ongoing session management.  So this should be set in the course environment when a sequence of
-	# authentication modules is used.
+	# This should be set in the course environment when a sequence of authentication modules is used.
 	$c->stash->{externalAuth} = $ce->{external_auth} || $authen->{external_auth};
 
 	my $hidden_fields = '';

@@ -4,7 +4,9 @@
 	<div class="alert alert-danger">
 		<b>
 			<%= maketext('You must access assignments from your Course Management System ([_1]).',
-				$ce->{LMS_url} ? link_to($ce->{LMS_name} => $ce->{LMS_url}) : $ce->{LMS_name}) =%>
+				$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
+					? link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
+					: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name}) =%>
 		</b>
 	</div>
 	% last;
