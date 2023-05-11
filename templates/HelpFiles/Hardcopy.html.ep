@@ -17,47 +17,43 @@
 % title maketext('Hardcopy Help');
 %
 <p>
-	<%= maketext('Generate hardcopies in PDF or latex format of assignments. To produce a '
-		. 'set of hardcopies, one selects the users on the left and the sets on the right. '
-		. 'All users and sets are listed.') %>
+	<%= maketext('Generate hardcopies of assignments in PDF or latex format. To produce a '
+		. 'hardcopy, one selects the users on the left and the sets on the right. '
+		. 'All users and sets are listed.') =%>
 </p>
 <p>
-	<%= maketext('In both cases, one can select the field of sorting, the format of '
-		. 'the display list.  The filter of "Display all records" is the only possible '
-		. 'filter.  The "Change Display Settings" must be clicked to update the list.') %>
+	<%= maketext('In both cases, one can select the sort field, the format of the display list, and the filter. '
+		. '"Change Display Settings" must be clicked to update the list.') =%>
 </p>
 <p>
-	<%= maketext('There are many option available at the bottom:') %>
+	<%= maketext('There are many options available at the bottom:') =%>
 </p>
 <dl>
-	<dt> <%= maketext('Show') %></dt>
-	<dd> <%= maketext('Toggle each of the option to include or not include in each problem.') %> </dd>
+	<dt><%= maketext('Show') %></dt>
+	<dd><%= maketext('Toggle each of the options to include or not include in the output.') %> </dd>
 
-	<dt> <%= maketext('Hardcopy Format') %></dt>
-	<dd> <%= maketext('If "TeX Source" is selected, a set of latex files will be produced.  If '
-		. '"Adobe PDF" is selected then only a PDF file will be produced.') %> </dd>
-
-	<dt> <%= maketext('Show Problem Source File') %></dt>
+	<dt><%= maketext('Hardcopy Format') %></dt>
 	<dd>
-		<%= maketext('If selected, the file path of the problem source will be printed in the output.') %>
+		<%= maketext('If "TeX Source" is selected, a zip file containing a TeX file and other files needed to generate '
+			. 'a PDF hardcopy will be produced. If "Adobe PDF" is selected then only a PDF file will be produced.') =%>
 	</dd>
 
-	<dt> <%= maketext('Hardcopy Theme') %></dt>
-	<dd> <%= maketext('This will determine if the output is in one or two columns.') %> </dd>
+	<dt><%= maketext('Show Problem Source File') %></dt>
+	<dd><%= maketext('If selected, the file path of the problem source will be printed in the output.') %></dd>
+
+	<dt><%= maketext('Hardcopy Theme') %></dt>
+	<dd><%= maketext('This will determine if the output is in one or two columns.') %> </dd>
 </dl>
-
 <p>
-	<%== maketext('Once the "Generate Hardcopy for selected sets and selected users" is clicked '
-		. 'the output will be a single problem set for each set and for each user. If '
-		. 'PDF output was selected, a single PDF file is generated for each user.  If TeX '
-		. 'output is selected, a zip file with latex files will be generated. The main file '
-		. 'is called [_1] and a hardcopy can be generated with the '
-		. 'command [_2].','<code>hardcopy.tex</code>', '<code>pdflatex</code>') %>
+	<%== maketext('Once "Generate Hardcopy for selected sets and selected users" is clicked a file in the selected '
+		. 'hardcopy format will be generated and offered for download. If PDF output was selected, a single PDF file '
+		. 'is generated. If TeX output is selected, a zip file is generated that contains all files needed to '
+		. 'generated the hardcopy PDF file via [_1]. The main TeX file is called [_2].',
+		'<code>pdflatex</code>', '<code>hardcopy.tex</code>') =%>
 </p>
-
-<p>
+<p class="mb-0">
 	<%= maketext('Note that if there are errors, they will be shown at the top of the page. '
 		. 'In some cases, a hard copy is still generated and a link called "Download Hardcopy" '
-		. 'appears.  In addition, the latex file, log and error files are generated which can '
-		. 'be used in troubleshooting.') %>
+		. 'appears. In addition, the latex file, log and error files are generated which can '
+		. 'be used in troubleshooting.') =%>
 </p>

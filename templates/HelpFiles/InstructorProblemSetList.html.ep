@@ -18,7 +18,7 @@
 %
 <p>
 	<%= maketext('This page manages all of the homework sets (including quizzes/tests). '
-	. 'The following allow editing directly of a single problem set.') %>
+		. 'The following allow editing directly of a single problem set.') =%>
 </p>
 <dl>
 	<dt><%= maketext('"Edit Problems" column') %></dt>
@@ -26,9 +26,9 @@
 		<%= maketext('Indicates the number of problems in the set. Clicking on the link opens the set detail page '
 			. 'which allows you to modify set parameters, edit set headers, and change parameters of problems in the '
 			. 'set such as the number of allowed attempts or the weight (credit value). You can also add, remove, '
-			. 'view, edit, and reorder the problems in the set.') %>
+			. 'view, edit, and reorder the problems in the set.') =%>
 	</dd>
-	<dt><%= maketext('"Edit Assigned Sets" column') %></dt>
+	<dt><%= maketext('"Edit Assigned Users" column') %></dt>
 	<dd>
 		<%= maketext('Shows how many instructors and students have been assigned this problem set, out of the total '
 			. 'number in the class. Clicking on this link allows you to assign the set to users, unassign this '
@@ -37,9 +37,9 @@
 	</dd>
 	<dt><%= maketext('Changing dates') %></dt>
 	<dd>
-		<%= maketext('Dates for problem sets can be edited by clicking the pencil icon in the "Edit Set Data" column next '
-			. 'to the set name. To change dates for several sets at once, click the check box in the "Select" column '
-			. 'and choose "Edit selected" from the tasks above.') =%>
+		<%= maketext('Dates for problem sets can be edited by clicking the pencil icon in the "Edit Set Data" column '
+			. 'next to the set name. To change dates for several sets at once, click the check box in the "Select" '
+			. 'column and choose "Edit selected" from the tasks above.') =%>
 	</dd>
 </dl>
 <h2><%= maketext('Primary Actions') %></h2>
@@ -82,12 +82,10 @@
 	</dd>
 
 	<dt><%= maketext('Create') %></dt>
-	<dd><%= maketext('Create a new set with a given name.  This can either create an empty set or a duplicate of '
-		. 'an existing set.') %></dd>
-
+	<dd>
+		<%= maketext('Create a new set with a given name. This can either create an empty set or a duplicate of '
+			. 'an existing set.') =%>
+	</dd>
 	<dt><%= maketext('Delete') %></dt>
 	<dd><%= maketext('Delete the sets checked below. Be careful, this cannot be undone.') %></dd>
 </dl>
-
-
-
