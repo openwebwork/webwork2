@@ -127,7 +127,7 @@
 			. 'as it will be rendered for students in the set. If "Create backup" is checked then a backup of the '
 			. 'current file on disk will be created before overwriting it with the contents of the editor window. If a '
 			. 'backup already exists, then a "Delete oldest backup" check box will be present. If that is checked, '
-			. 'then the oldest backup will be deleted when "Take Action!" is clicked. These backups can be reverted '
+			. 'then the oldest backup will be deleted when "Save" is clicked. These backups can be reverted '
 			. 'to and managed on the "Revert" tab.') =%>
 	</dd>
 
@@ -169,7 +169,4 @@
 			. 'changes will be lost. This option is only active when a temporary file or a backup file exists. You '
 			. 'may also delete backups that have been made with this tab.') =%>
 	</dd>
-
-	<dt><%= maketext('Take Action!') %></dt>
-	<dd><%= maketext('Executes the action selected above.') %></dd>
 </dl>

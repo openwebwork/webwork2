@@ -26,7 +26,7 @@
 	<%= maketext('This page gives access to information about the student, independent of the homework sets '
 		. 'assigned to them.') =%>
 </p>
-<p><%= maketext('To perform an action select the desired action tab and click the "Take Action!" button.') %></p>
+<p><%= maketext('To perform an action select the desired action tab and click the submit button.') %></p>
 
 <h2><%= maketext('How to:') %></h2>
 <dl>
@@ -43,9 +43,9 @@
 	<dd>
 		<%= maketext('You can edit the class list data for a single student by clicking on the pencil icon next to '
 			. 'their login name. To edit several students at once click on the "Select" checkbox next to their names, '
-			. 'click on the radio button for editing selected users and then click "Take Action!". You can also edit '
-			. 'all visible users (those students currently being displayed) or even all users in the course although '
-			. 'this last option might take a long time to load for a large class.') =%>
+			. 'click on the radio button for editing selected users and then click the "Edit" button. You can also '
+			. 'edit all visible users (those students currently being displayed) or even all users in the course '
+			. 'although this last option might take a long time to load for a large class.') =%>
 	</dd>
 
 	<dd>

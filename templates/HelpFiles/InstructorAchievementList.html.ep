@@ -19,7 +19,7 @@
 <p>
 	<%= maketext('Manage achievements for the course.  The actions allow one to edit, assign, import, export, score, '
 		. 'create, or delete achievements.  The action form is at the top to select the desired action and options to '
-		. 'preform when the "Take Action!" button is pressed.  Below the action form is the list of all the '
+		. 'perform when the submit button is pressed.  Below the action form is the list of all the '
 		. 'achievements, ordered by their achievement "Number".') =%>
 </p>
 <p>
@@ -91,7 +91,7 @@
 	<dd>
 		<%= maketext('You can edit a single achievement by clicking on the pencil icon next to the achievement ID.  '
 			. 'You can edit multiple achievements by selecting which achievements to edit, then click the '
-			. '"Take Action!" button. You can edit all of the achievements by changing which achievements to edit form '
+			. '"Edit" button. You can edit all of the achievements by changing which achievements to edit form '
 			. '"selected achievements" to "all achievements", or click the checkbox next to the Achievement ID to '
 			. 'select all achievements.') =%>
 	</dd>
