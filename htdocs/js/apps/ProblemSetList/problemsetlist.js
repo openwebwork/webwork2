@@ -1,5 +1,5 @@
 (() => {
-	// Show the filter error message if the 'Take Action' button is clicked when matching set IDs without having entered
+	// Show the filter error message if the 'Filter' button is clicked when matching set IDs without having entered
 	// a text to filter on.
 	document.getElementById('take_action')?.addEventListener('click',
 		(e) => {

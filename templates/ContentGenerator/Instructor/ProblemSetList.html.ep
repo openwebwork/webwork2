@@ -125,7 +125,8 @@
 		<div class="tab-content"><%= content 'tab-content' %></div>
 	</div>
 	<div>
-		<%= submit_button maketext('Take Action!'), id => 'take_action', class => 'btn btn-primary mb-3' =%>
+		<%= submit_button maketext($formTitles->{$default_choice}),
+			id => 'take_action', class => 'btn btn-primary mb-3' =%>
 	</div>
 	%
 	<p class="mb-2">

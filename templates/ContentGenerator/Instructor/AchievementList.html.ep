@@ -59,7 +59,8 @@
 			% }
 		</div>
 	</div>
-	<%= submit_button maketext('Take Action!'), id => 'take_action', class => 'btn btn-primary mb-3' =%>
+	<%= submit_button maketext($formTitles->{ $formsToShow->[0] }),
+		id => 'take_action', class => 'btn btn-primary mb-3' =%>
 	% if ($c->{exportMode}) {
 		<%= include 'ContentGenerator/Instructor/AchievementList/export_table' =%>
 	% } elsif ($c->{editMode}) {
