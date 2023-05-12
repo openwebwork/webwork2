@@ -1,3 +1,5 @@
+<%= include 'ContentGenerator/Base/set_status', set => $c->{setRecord} =%>
+%
 % # In the case of gateway tests, add a form with checkboxes that allow customization of what is included in the
 % # display.
 % if ($setIsVersioned) {
