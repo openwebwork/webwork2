@@ -177,14 +177,14 @@ sub displaySets ($c) {
 			$score = wwRound(2, $score);
 
 			my $version_data = {
-				version            => $vNum,
-				score              => $score,
-				total              => $total,
-				date               => $dateOfTest,
-				testtime           => $testTime,
-				timeleft           => $timeLeft,
-				problem_scores     => $problem_scores,
-				incorrect_attempts => ''
+				version                    => $vNum,
+				score                      => $score,
+				total                      => $total,
+				date                       => $dateOfTest,
+				testtime                   => $testTime,
+				timeleft                   => $timeLeft,
+				problem_scores             => $problem_scores,
+				problem_incorrect_attempts => $problem_incorrect_attempts
 			};
 
 			if ($showBestOnly) {
