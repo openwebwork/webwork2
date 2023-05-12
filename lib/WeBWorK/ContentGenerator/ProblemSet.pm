@@ -116,14 +116,6 @@ sub nav ($c, $args) {
 	);
 }
 
-sub page_title ($c) {
-	my $ce = $c->ce;
-
-	# Using the url path parameters won't break if the set/problem are invalid.
-	my $setID = $c->stash('setID');
-	return $c->tag('span', dir => 'ltr', format_set_name_display($setID));
-}
-
 sub siblings ($c) {
 	my $db    = $c->db;
 	my $ce    = $c->ce;
