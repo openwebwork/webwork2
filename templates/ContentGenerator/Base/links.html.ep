@@ -129,6 +129,8 @@
 							</ul>
 						</li>
 					% }
+					% # Set assigner
+					<li class="nav-item"><%= $makelink->('instructor_set_assigner') %></li>
 					% # Library Browser
 					<li class="nav-item"><%= $makelink->('instructor_set_maker') %></li>
 					% # Statistics
