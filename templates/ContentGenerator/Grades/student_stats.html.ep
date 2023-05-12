@@ -8,7 +8,19 @@
 			<th rowspan="2" scope="col"><%= maketext('Percent') %></th>
 			<th rowspan="2" scope="col"><%= maketext('Score') %></th>
 			<th rowspan="2" scope="col"><%= maketext('Out Of') %></th>
-			<th colspan="<%= $max_problems %>" scope="col"><%= maketext('Problems') %></th>
+			<th colspan="<%= $max_problems %>" scope="col">
+				<%= maketext('Problems') %>
+				<a class="help-popup" role="button" tabindex="0" data-bs-placement="top"
+					data-bs-toggle="popover"
+					data-bs-content="<%= maketext(
+						'The top number is the percent score on the problem.  A period (.) indicates a problem '
+						. 'has not been attempted. The bottom number is the number of incorrect attempts.'
+					) =%>">
+					<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') =%>"
+						aria-hidden="true">
+					</i>
+				</a>
+			</th>
 		</tr>
 		<tr>
 			% for (1 .. $max_problems) {
