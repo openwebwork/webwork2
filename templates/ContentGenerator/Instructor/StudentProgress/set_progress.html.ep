@@ -66,14 +66,6 @@
 %
 % # Table description. Only show the problem description if the problems column is shown.
 <div>
-	% if (!$setIsVersioned || $showColumns->{problems}) {
-		<p>
-			<%= maketext(
-				'A period (.) indicates a problem has not been attempted, and a number from 0 to 100 indicates '
-					. 'the grade earned. The number on the second line gives the number of incorrect attempts.'
-			) =%>
-		</p>
-	% }
 	% if ($setIsVersioned) {
 		<p>
 			<%= maketext(
@@ -165,7 +157,19 @@
 					<th <%== $rowspan %>><%= maketext('Time Remaining') %></th>
 				% }
 				% if ($showColumns->{problems}) {
-					<th colspan="<%= scalar(@$problems) %>"><%= maketext('Problems') %></th>
+					<th colspan="<%= scalar(@$problems) %>">
+						<%= maketext('Problems') =%>
+						<a class="help-popup" role="button" tabindex="0" data-bs-placement="top"
+							data-bs-toggle="popover"
+							data-bs-content="<%= maketext(
+								'The top number is the percent score on the problem.  A period (.) indicates a problem '
+								. 'has not been attempted. The bottom number is the number of incorrect attempts.'
+							) =%>">
+							<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') =%>"
+								aria-hidden="true">
+							</i>
+						</a>
+					</th>
 				% }
 				% if ($showColumns->{section}) {
 					<th <%== $rowspan %>>
