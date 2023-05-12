@@ -219,6 +219,12 @@ $layout-divider-color: #aaa !default;
 					color: var(--ww-primary-foreground-color, white);
 				}
 			}
+			&.list-group-item {
+				.nav-link:focus {
+					position: relative;
+					z-index: 2;
+				}
+			}
 		}
 	}
 
