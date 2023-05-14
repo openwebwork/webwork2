@@ -88,8 +88,6 @@ sub initialize ($c) {
 		$action = 'saveDefault';
 	} elsif ($c->param('openMessage')) {
 		$action = 'openMessage';
-	} elsif ($c->param('updateSettings')) {
-		$action = 'updateSettings';
 	} elsif ($c->param('previewMessage')) {
 		$action = 'previewMessage';
 	}
@@ -102,8 +100,6 @@ sub initialize ($c) {
 	$c->{defaultReply}   = $ur->rfc822_mailbox;
 	$c->{defaultSubject} = $c->stash('courseID') . ' notice';
 
-	$c->{rows}    = (defined($c->param('rows')))    ? $c->param('rows')    : $ce->{mail}->{editor_window_rows};
-	$c->{columns} = (defined($c->param('columns'))) ? $c->param('columns') : $ce->{mail}->{editor_window_columns};
 	$c->{default_msg_file}     = $default_msg_file;
 	$c->{old_default_msg_file} = $old_default_msg_file;
 	$c->{merge_file}           = $mergefile;
@@ -180,6 +176,7 @@ sub initialize ($c) {
 	my $output_file = 'FIXME no output file specified';
 	if ($action eq 'saveDefault') {
 		$output_file = $default_msg_file;
+		$c->param('openfilename', $output_file);
 	} elsif ($action eq 'saveMessage' or $action eq 'saveAs') {
 		if (defined($savefilename) and $savefilename) {
 			$output_file = $savefilename;
@@ -219,9 +216,11 @@ sub initialize ($c) {
 	# Get inputs
 	my ($from, $replyTo, $r_text, $subject);
 	if ($input_source eq 'file') {
-
 		($from, $replyTo, $subject, $r_text) = $c->read_input_file("$emailDirectory/$input_file");
-
+		$c->param('from',    $from)      if $from;
+		$c->param('replyTo', $replyTo)   if $replyTo;
+		$c->param('subject', $subject)   if $subject;
+		$c->param('body',    ${$r_text}) if $r_text;
 	} elsif ($input_source eq 'form') {
 		# read info from the form
 		# bail if there is no message body
@@ -234,7 +233,6 @@ sub initialize ($c) {
 		$c->addbadmessage($c->maketext('You didn\'t enter any message.'))
 			unless $c->param('body') =~ /\S/;
 		$r_text = \$body;
-
 	}
 
 	my $remote_host = $c->tx->remote_address || "UNKNOWN";
@@ -250,11 +248,6 @@ sub initialize ($c) {
 	#     first time actions
 	#          open new file
 	#          open default file
-	#     choose merge file actions
-	#          chose merge button
-	#     option actions
-	#       'reset rows'
-
 	#     save actions
 	#       "save" button
 	#       "save as" button
@@ -270,13 +263,7 @@ sub initialize ($c) {
 	my $to            = $c->param('To');
 	my $script_action = '';
 
-	if (not $action
-		or $action eq 'openMessage'
-		or $action eq 'updateSettings')
-	{
-
-		return '';
-	}
+	return '' if (not $action or $action eq 'openMessage');
 
 	# If form is submitted deal with filled out forms
 	# and various actions resulting from different buttons

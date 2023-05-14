@@ -1,6 +1,7 @@
 <h2 class="fs-3"><%= maketext('This sample mail would be sent to [_1]', $ur->email_address) %></h2>
 <div class="mb-3" dir="ltr"><pre><%= $msg %></pre></div>
 <h2 class="fs-3"><%= maketext('Merge file data:') %></h2>
+<p><%= maketext('Showing data from merge file: [_1]', $c->{merge_file}) %></p>
 <div class="mb-3" dir="ltr"><pre><%== $preview_header %></pre></div>
 % if (@{ $c->{ra_send_to} }) {
 	<h2 class="fs-3"><%= maketext('Emails to be sent to the following:') %></h2>
