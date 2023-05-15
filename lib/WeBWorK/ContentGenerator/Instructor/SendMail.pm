@@ -475,7 +475,7 @@ sub data_format ($c, @data) {
 }
 
 sub data_format2 ($c, @data) {
-	return map { $_ =~ s/\s/&nbsp;/gr } map { sprintf('%-8.8s', $_) } @data;
+	return map { $_ =~ s/\s/&nbsp;/gr } map { sprintf('%-8.7s', $_) } @data;
 }
 
 1;
