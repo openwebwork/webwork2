@@ -2,7 +2,7 @@
 %
 % my $merge_file = $c->{merge_file} // 'None';
 %
-<%= form_for current_route, method => 'post', begin =%>
+<%= form_for current_route, id => 'mail-main-form', method => 'post', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	%
 	% # Email settings
@@ -19,7 +19,6 @@
 								$c->get_message_file_names
 							],
 							id => 'openfilename', class => 'form-select form-select-sm' =%>
-						<%= submit_button maketext('Open'), name => 'openMessage', class => 'btn btn-secondary' =%>
 					</div>
 					<div class="input-group input-group-sm mb-2">
 						<%= label_for 'merge_file', class => 'input-group-text', begin =%>
@@ -30,7 +29,6 @@
 								$c->get_merge_file_names
 							],
 							id => 'merge_file', class => 'form-select form-select-sm' =%>
-						<%= submit_button maketext('View'), name => 'viewMergeFile', class => 'btn btn-secondary' =%>
 					</div>
 					<div class="row mb-1">
 						<%= label_for from => maketext('From:'),
