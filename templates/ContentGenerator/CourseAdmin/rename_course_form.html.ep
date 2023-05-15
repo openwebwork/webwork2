@@ -2,7 +2,7 @@
 %
 <h2><%= maketext('Rename Course') %></h2>
 %
-% my @courseIDs = sort { lc($a) cmp lc($b) } listCourses($ce);
+% my @courseIDs = sort { lc($a) cmp lc($b) } grep { $_ ne stash('courseID') } listCourses($ce);
 %
 % if (@courseIDs) {
 	<%= form_for current_route, method => 'POST', begin =%>
