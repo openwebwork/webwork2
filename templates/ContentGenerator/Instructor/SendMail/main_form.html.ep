@@ -181,7 +181,9 @@
 			% if ($c->{input_file}) {
 				<div class="input-group input-group-sm w-auto m-1">
 					<%= submit_button maketext('Save'), name => 'saveMessage', class => 'btn btn-secondary btn-sm' =%>
-					<span class="input-group-text"><%= maketext('to') . ' ' . $c->{output_file} %></span>
+					<span class="input-group-text">
+						<strong><%= maketext('to') %></strong>&nbsp;<%= $c->{output_file} %>
+					</span>
 				</div>
 			% }
 			<div class="input-group input-group-sm w-auto m-1">
