@@ -66,10 +66,21 @@
 							<%= label_for send_to_selected => maketext('Send to selected students'),
 								class => 'form-check-label' =%>
 					</div>
-					<div class="mb-2">
-						<%= submit_button maketext('Preview Message'),
+					% if ($c->{preview_user}) {
+						<div class="input-group input-group-sm mb-2">
+							<%= submit_button maketext('Preview Message'),
 								name => 'previewMessage', class => 'btn btn-secondary btn-sm' =%>
-					</div>
+							<span class="input-group-text text-nowrap">
+								<strong><%= maketext('for') %></strong>&nbsp;
+								<span id="preview-user" data-default="<%=
+									$c->{defaultPreviewUser}->last_name . ', ' . $c->{defaultPreviewUser}->first_name
+									. ' (' . $c->{defaultPreviewUser}->user_id . ')' %>">
+									<%= $c->{preview_user}->last_name . ', ' . $c->{preview_user}->first_name
+										. ' (' . $c->{preview_user}->user_id . ')' =%>
+								</span>
+							</span>
+						</div>
+					% }
 					<div class="mb-2">
 						<%= submit_button maketext('Send Email'), name => 'sendEmail',
 							class => 'btn btn-secondary btn-sm d-inline w-auto' =%>
@@ -136,11 +147,12 @@
 	% # Merge file fragment and message text area field
 	% if ($merge_file ne 'None') {
 		<div class="mb-2">
-			<%= maketext('Viewing data from merge file [_1] for user [_2].', $merge_file, $c->{preview_user}) =%>
+			<%= maketext('Viewing data from merge file [_1] for user [_2].',
+				$merge_file, $c->{preview_user}->user_id) =%>
 		</div>
 	% }
 	% my $rh_merge_data = $c->read_scoring_file($merge_file);
-	% my @merge_data = eval { @{ $rh_merge_data->{ $db->getUser($c->{preview_user})->student_id } } };
+	% my @merge_data = eval { @{ $rh_merge_data->{ $c->{preview_user}->student_id } } };
 	% if ($@ && $merge_file ne 'None') {
 		<div class="mb-3"><%= maketext('No merge data found.') =%></div>
 	% } elsif (@merge_data) {
@@ -159,8 +171,7 @@
 		<%= label_for 'email-body', class => 'form-label', begin =%>
 			<%= maketext("Email Body:") %><span class="required-field">*</span>
 		<% end =%>
-		<%= text_area body =>
-			defined $c->{r_text} ? ${ $c->{r_text} } : 'FIXME no text was produced by initialization!',
+		<%= text_area body => $c->{r_text} // 'FIXME no text was produced by initialization!',
 			id => 'email-body', rows => $ce->{mail}->{editor_window_rows}, class => 'form-control' %>
 	</div>
 	%

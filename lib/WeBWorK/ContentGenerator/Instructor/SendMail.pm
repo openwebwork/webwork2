@@ -96,16 +96,17 @@ sub initialize ($c) {
 	my $ur = $db->getUser($user);
 
 	# Store data
-	$c->{defaultFrom}    = $ur->rfc822_mailbox;
-	$c->{defaultReply}   = $ur->rfc822_mailbox;
-	$c->{defaultSubject} = $c->stash('courseID') . ' notice';
+	$c->{defaultPreviewUser} = $ur;
+	$c->{defaultFrom}        = $ur->rfc822_mailbox;
+	$c->{defaultReply}       = $ur->rfc822_mailbox;
+	$c->{defaultSubject}     = $c->stash('courseID') . ' notice';
 
 	$c->{default_msg_file}     = $default_msg_file;
 	$c->{old_default_msg_file} = $old_default_msg_file;
 	$c->{merge_file}           = $mergefile;
 
 	my @classList = (defined($c->param('classList'))) ? $c->param('classList') : ($user);
-	$c->{preview_user} = $classList[0] || $user;
+	$c->{preview_user} = $c->db->getUser($classList[0] || $user);
 
 	# Gather database data
 	# Get all users except set level proctors and practice users.  If the current user has restrictions on viewable
@@ -217,10 +218,10 @@ sub initialize ($c) {
 	my ($from, $replyTo, $r_text, $subject);
 	if ($input_source eq 'file') {
 		($from, $replyTo, $subject, $r_text) = $c->read_input_file("$emailDirectory/$input_file");
-		$c->param('from',    $from)      if $from;
-		$c->param('replyTo', $replyTo)   if $replyTo;
-		$c->param('subject', $subject)   if $subject;
-		$c->param('body',    ${$r_text}) if $r_text;
+		$c->param('from',    $from)    if $from;
+		$c->param('replyTo', $replyTo) if $replyTo;
+		$c->param('subject', $subject) if $subject;
+		$c->param('body',    $$r_text) if $r_text;
 	} elsif ($input_source eq 'form') {
 		# read info from the form
 		# bail if there is no message body
@@ -376,28 +377,26 @@ sub initialize ($c) {
 }
 
 sub print_preview ($c) {
-	# Get preview user
-	my $ur = $c->db->getUser($c->{preview_user});
-	die "record for preview user " . $c->{preview_user} . " not found." unless $ur;
+	die "record for preview user " . $c->{preview_user} . " not found." unless $c->{preview_user};
 
 	# Get merge file
 	my $merge_file    = (defined($c->{merge_file})) ? $c->{merge_file} : 'None';
 	my $rh_merge_data = $c->read_scoring_file($merge_file);
 
-	if (($c->{merge_file} // 'None') ne 'None' && !defined $rh_merge_data->{ $ur->student_id }) {
+	if (($c->{merge_file} // 'None') ne 'None' && !defined $rh_merge_data->{ $c->{preview_user}->student_id }) {
 		$c->addbadmessage('No merge data for student id: '
-				. $ur->student_id
+				. $c->{preview_user}->student_id
 				. '; name: '
-				. $ur->first_name . ' '
-				. $ur->last_name
+				. $c->{preview_user}->first_name . ' '
+				. $c->{preview_user}->last_name
 				. '; login: '
-				. $ur->user_id);
+				. $c->{preview_user}->user_id);
 	}
 
 	my ($msg, $preview_header) = processEmailMessage(
 		${ $c->{r_text} // \'' },
-		$ur,            $c->ce->status_abbrev_to_name($ur->status),
-		$rh_merge_data, 1
+		$c->{preview_user}, $c->ce->status_abbrev_to_name($c->{preview_user}->status),
+		$rh_merge_data,     1
 	);
 
 	# The content in message is going to be displayed in HTML.
@@ -405,10 +404,10 @@ sub print_preview ($c) {
 	# Note that this escaping is done in the Mojolicious template automatically.
 	$msg = join(
 		"",
-		"To: ",       $ur->email_address, "\n",
-		"From: ",     $c->{from},         "\n",
-		"Reply-To: ", $c->{replyTo},      "\n",
-		"Subject: ",  $c->{subject},      "\n",
+		"To: ",       $c->{preview_user}->email_address, "\n",
+		"From: ",     $c->{from},                        "\n",
+		"Reply-To: ", $c->{replyTo},                     "\n",
+		"Subject: ",  $c->{subject},                     "\n",
 		# In a real mails we would UTF-8 encode the message and give the Content-Type header. For the preview which is
 		# displayed as html, just add the header, but do NOT use Encode::encode("UTF-8",$msg).
 		"Content-Type: text/plain; charset=UTF-8\n\n",
@@ -419,7 +418,7 @@ sub print_preview ($c) {
 	return $c->include(
 		'ContentGenerator/Instructor/SendMail/preview',
 		preview_header => $preview_header,
-		ur             => $ur,
+		ur             => $c->{preview_user},
 		msg            => $msg,
 		recipients     => join(" ", @{ $c->{ra_send_to} })
 	);
