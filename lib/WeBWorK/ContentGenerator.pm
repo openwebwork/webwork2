@@ -536,7 +536,7 @@ sub links ($c) {
 		# Do not use HTML::Entities::encode_entities on the link text.
 		# Mojolicious has already encoded html entities at this point.
 		return $c->link_to(
-			($options{text} // route_title($c, $route_name)) => $c->systemLink(
+			($options{text} // route_title($c, $route_name, 1)) => $c->systemLink(
 				$new_url, params => { %systemlink_params, %{ $options{systemlink_params} // {} } }
 			),
 			class => 'nav-link' . ($active ? ' active' : ''),
@@ -691,7 +691,7 @@ sub page_title ($c) {
 		return $db->getSettingValue('courseTitle');
 	} else {
 		# Display the route name
-		return route_title($c, $c->current_route);
+		return route_title($c, $c->current_route, 1);
 	}
 }
 

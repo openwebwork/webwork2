@@ -143,12 +143,10 @@
 		% }
 	% }
 	%
-	% # Is it past due date?
-	% if ($timeNow >= $set->due_date) {
-		% $msg = maketext('This test is closed.');
+	% # Only print status message if the set is open.
+	% if ($timeNow < $set->due_date) {
+		<div class="alert alert-dark"><strong><%= $msg %></strong></div>
 	% }
-	%
-	<div class="alert alert-dark"><strong><%= $msg %></strong></div>
 % }
 %
 % if (@$setVersions) {
