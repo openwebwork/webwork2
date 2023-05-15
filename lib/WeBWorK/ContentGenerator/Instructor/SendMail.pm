@@ -55,10 +55,6 @@ sub initialize ($c) {
 	my $savefilename = $c->param('savefilename');
 	my $mergefile    = $c->param('merge_file');
 
-	#FIXME  get these values from global course environment (see subroutines as well)
-	my $default_msg_file     = 'default.msg';
-	my $old_default_msg_file = 'old_default.msg';
-
 	#if mergefile or openfilename haven't been defined via parameter
 	# check the database to see if there is a file we should use.
 	# if they have been defined via parameter then we should update the db
@@ -84,8 +80,6 @@ sub initialize ($c) {
 		$action = 'saveMessage';
 	} elsif ($c->param('saveAs')) {
 		$action = 'saveAs';
-	} elsif ($c->param('saveDefault')) {
-		$action = 'saveDefault';
 	} elsif ($c->param('openMessage')) {
 		$action = 'openMessage';
 	} elsif ($c->param('previewMessage')) {
@@ -100,10 +94,7 @@ sub initialize ($c) {
 	$c->{defaultFrom}        = $ur->rfc822_mailbox;
 	$c->{defaultReply}       = $ur->rfc822_mailbox;
 	$c->{defaultSubject}     = $c->stash('courseID') . ' notice';
-
-	$c->{default_msg_file}     = $default_msg_file;
-	$c->{old_default_msg_file} = $old_default_msg_file;
-	$c->{merge_file}           = $mergefile;
+	$c->{merge_file}         = $mergefile;
 
 	my @classList = (defined($c->param('classList'))) ? $c->param('classList') : ($user);
 	$c->{preview_user} = $c->db->getUser($classList[0] || $user);
@@ -146,7 +137,6 @@ sub initialize ($c) {
 	# Check the validity of the input file name
 	my $input_file = '';
 	# Make sure an input message file was submitted and exists.
-	# Otherwise use the default message.
 	if (defined($openfilename)) {
 		if (-e "${emailDirectory}/$openfilename") {
 			if (-R "${emailDirectory}/$openfilename") {
@@ -159,32 +149,25 @@ sub initialize ($c) {
 				));
 			}
 		} else {
-			$input_file = $default_msg_file;
 			$c->addbadmessage($c->maketext(
 				'The file [_1] cannot be found. '
 					. 'Check whether it exists and whether the directory [_2] can be read by the webserver. ',
 				"$emailDirectory/$openfilename",
 				$emailDirectory
 			));
-			$c->addbadmessage($c->maketext('Using contents of the default message [_1] instead.', $default_msg_file));
 		}
-	} else {
-		$input_file = $default_msg_file;
 	}
 	$c->{input_file} = $input_file;
 
 	# Determine the file name to save message into
 	my $output_file = 'FIXME no output file specified';
-	if ($action eq 'saveDefault') {
-		$output_file = $default_msg_file;
-		$c->param('openfilename', $output_file);
-	} elsif ($action eq 'saveMessage' or $action eq 'saveAs') {
+	if ($action eq 'saveMessage' or $action eq 'saveAs') {
 		if (defined($savefilename) and $savefilename) {
 			$output_file = $savefilename;
 		} else {
 			$c->addbadmessage($c->maketext('No filename was specified for saving!  The message was not saved.'));
 		}
-	} elsif (defined($input_file)) {
+	} else {
 		$output_file = $input_file;
 	}
 
@@ -196,7 +179,7 @@ sub initialize ($c) {
 				. 'Please specify a different file or move the needed file to the email directory.'
 		));
 	}
-	unless ($output_file =~ m|\.msg$|) {
+	if ($output_file && $output_file !~ m|\.msg$|) {
 		$c->addbadmessage($c->maketext(
 			'Invalid file name "[_1]". All email file names must end with the ".msg" extension.  '
 				. 'Choose a file name with the ".msg" extension. The message was not saved.',
@@ -248,11 +231,9 @@ sub initialize ($c) {
 	#Determine the appropriate script action from the buttons
 	#     first time actions
 	#          open new file
-	#          open default file
 	#     save actions
 	#       "save" button
 	#       "save as" button
-	#       "save as default" button
 	#     preview actions
 	#       'preview' button
 	#     email actions
@@ -269,7 +250,7 @@ sub initialize ($c) {
 	# If form is submitted deal with filled out forms
 	# and various actions resulting from different buttons
 
-	if ($action eq 'saveMessage' or $action eq 'saveAs' or $action eq 'saveDefault') {
+	if ($action eq 'saveMessage' or $action eq 'saveAs') {
 
 		# construct message body
 		my $temp_body = ${$r_text};
@@ -292,14 +273,6 @@ sub initialize ($c) {
 				"$emailDirectory/$openfilename"
 			));
 			return;
-		}
-
-		# Back up existing file?
-		if ($action eq 'saveDefault' and -e "$emailDirectory/$default_msg_file") {
-			rename("$emailDirectory/$default_msg_file", "$emailDirectory/$old_default_msg_file")
-				or die "Can't rename $emailDirectory/$default_msg_file to $emailDirectory/$old_default_msg_file ",
-				"Check permissions for webserver on directory $emailDirectory. $!";
-			$c->addgoodmessage($c->maketext('Backup file [_1] created.', "$emailDirectory/$old_default_msg_file"),);
 		}
 
 		# Save the message

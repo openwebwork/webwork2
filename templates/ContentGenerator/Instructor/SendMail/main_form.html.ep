@@ -15,8 +15,10 @@
 							<strong><%= maketext('Message file:') %></strong>
 						<% end =%>
 						<%= select_field openfilename => [
-								map { [ $_ => $_, $_ eq $c->{input_file} ? (selected => undef) : () ] }
-								$c->get_message_file_names
+								map { [
+									$_ => $_, ($_ eq 'None' || $_ eq $c->{input_file}) ? (selected => undef) : ()
+								] }
+								($c->{input_file} ? () : 'None', $c->get_message_file_names)
 							],
 							id => 'openfilename', class => 'form-select form-select-sm' =%>
 					</div>
@@ -169,26 +171,24 @@
 		<%= label_for 'email-body', class => 'form-label', begin =%>
 			<%= maketext("Email Body:") %><span class="required-field">*</span>
 		<% end =%>
-		<%= text_area body => $c->{r_text} // 'FIXME no text was produced by initialization!',
+		<%= text_area body => $c->{r_text},
 			id => 'email-body', rows => $ce->{mail}->{editor_window_rows}, class => 'form-control' %>
 	</div>
 	%
 	% # Action buttons
 	<div class="card">
 		<div class="card-body p-1 d-md-flex flex-wrap justify-content-evenly">
-			<div class="input-group input-group-sm w-auto m-1">
-				<%= submit_button maketext('Save'), name => 'saveMessage', class => 'btn btn-secondary btn-sm' =%>
-				<span class="input-group-text"><%= maketext('to') . ' ' . $c->{output_file} %></span>
-			</div>
+			% if ($c->{input_file}) {
+				<div class="input-group input-group-sm w-auto m-1">
+					<%= submit_button maketext('Save'), name => 'saveMessage', class => 'btn btn-secondary btn-sm' =%>
+					<span class="input-group-text"><%= maketext('to') . ' ' . $c->{output_file} %></span>
+				</div>
+			% }
 			<div class="input-group input-group-sm w-auto m-1">
 				<%= submit_button maketext('Save as') . ':', name => 'saveAs', id => 'saveAs',
 					class => 'btn btn-secondary btn-sm' =%>
-				<%= text_field savefilename => $c->{output_file}, size => 20,
-					class => 'form-control form-control-sm', 'aria-labelledby' => 'saveAs' =%>
-			</div>
-			<div class="input-group input-group-sm w-auto m-1">
-				<%= submit_button maketext('Save as Default'), name => 'saveDefault',
-					class => 'btn btn-secondary btn-sm' =%>
+				<%= text_field savefilename => $c->{output_file} ? $c->{output_file} : 'default.msg',
+					size => 20, class => 'form-control form-control-sm', 'aria-labelledby' => 'saveAs' =%>
 			</div>
 		</div>
 	</div>
