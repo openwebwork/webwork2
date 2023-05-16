@@ -28,7 +28,7 @@ sub new ($class) {
 		id          => 'ResurrectGW',
 		name        => x('Necromancers Charm'),
 		description => x(
-			'Reopens any gateway test for an additional 24 hours. This allows you to take a test even if the '
+			'Reopens any test for an additional 24 hours. This allows you to take a test even if the '
 				. 'close date has past. This item does not allow you to take additional versions of the test.'
 		)
 	}, $class;
@@ -48,11 +48,11 @@ sub print_form ($self, $sets, $setProblemCount, $c) {
 	}
 
 	return $c->c(
-		$c->tag('p', $c->maketext('Resurrect which Gateway?')),
+		$c->tag('p', $c->maketext('Resurrect which test?')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			$c,
 			id         => 'resgw_gw_id',
-			label_text => $c->maketext('Gateway Name'),
+			label_text => $c->maketext('Test Name'),
 			values     => \@sets,
 			menu_attr  => { dir => 'ltr' }
 		)
@@ -72,7 +72,7 @@ sub use_item ($self, $userName, $c) {
 	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
 
 	my $setID = $c->param('resgw_gw_id');
-	return 'You need to input a Gateway Name' unless defined $setID;
+	return 'You need to input a Test Name' unless defined $setID;
 
 	my $set = $db->getUserSet($userName, $setID);
 	return q{Couldn't find that set!} unless $set;

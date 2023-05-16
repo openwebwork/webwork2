@@ -24,8 +24,8 @@ sub new ($class) {
 	return bless {
 		id          => 'ExtendDueDateGW',
 		name        => x('Amulet of Extension'),
-		description => x(
-			'Extends the close date of a gateway test by 24 hours. Note: The test must still be open for this to work.')
+		description =>
+			x('Extends the close date of a test by 24 hours. Note: The test must still be open for this to work.')
 	}, $class;
 }
 
@@ -45,11 +45,11 @@ sub print_form ($self, $sets, $setProblemCount, $c) {
 	}
 
 	return $c->c(
-		$c->tag('p', $c->maketext('Extend the close date for which Gateway?')),
+		$c->tag('p', $c->maketext('Extend the close date for which test?')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			$c,
 			id         => 'eddgw_gw_id',
-			label_text => $c->maketext('Gateway Name'),
+			label_text => $c->maketext('Test Name'),
 			values     => \@openGateways,
 			menu_attr  => { dir => 'ltr' }
 		)
@@ -69,7 +69,7 @@ sub use_item ($self, $userName, $c) {
 	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
 
 	my $setID = $c->param('eddgw_gw_id');
-	return 'You need to input a Gateway Name' unless defined $setID;
+	return 'You need to input a Test Name' unless defined $setID;
 
 	my $set     = $db->getMergedSet($userName, $setID);
 	my $userSet = $db->getUserSet($userName, $setID);
