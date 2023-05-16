@@ -72,6 +72,10 @@ sub initialize ($c) {
 		$mergefile = undef unless (-e "$ce->{courseDirs}{scoring}/$mergefile");
 	}
 
+	# None is the parameter value for no file.
+	$openfilename = undef if (defined($openfilename) && $openfilename eq 'None');
+	$mergefile    = undef if (defined($mergefile)    && $mergefile eq 'None');
+
 	# Figure out action from submit data
 	my $action = '';
 	if ($c->param('sendEmail')) {
@@ -94,7 +98,7 @@ sub initialize ($c) {
 	$c->{defaultFrom}        = $ur->rfc822_mailbox;
 	$c->{defaultReply}       = $ur->rfc822_mailbox;
 	$c->{defaultSubject}     = $c->stash('courseID') . ' notice';
-	$c->{merge_file}         = $mergefile;
+	$c->{merge_file}         = $mergefile // 'None';
 
 	my @classList = (defined($c->param('classList'))) ? $c->param('classList') : ($user);
 	$c->{preview_user} = $c->db->getUser($classList[0] || $user);
@@ -135,7 +139,7 @@ sub initialize ($c) {
 	$c->{ra_send_to} = \@send_to;
 
 	# Check the validity of the input file name
-	my $input_file = '';
+	my $input_file;
 	# Make sure an input message file was submitted and exists.
 	if (defined($openfilename)) {
 		if (-e "${emailDirectory}/$openfilename") {
@@ -157,10 +161,11 @@ sub initialize ($c) {
 			));
 		}
 	}
-	$c->{input_file} = $input_file;
+	$c->{input_file} = $input_file // 'None';
 
 	# Determine the file name to save message into
 	my $output_file = 'FIXME no output file specified';
+	$savefilename = $input_file if $action eq 'saveMessage';
 	if ($action eq 'saveMessage' or $action eq 'saveAs') {
 		if (defined($savefilename) and $savefilename) {
 			$output_file = $savefilename;
@@ -168,7 +173,7 @@ sub initialize ($c) {
 			$c->addbadmessage($c->maketext('No filename was specified for saving!  The message was not saved.'));
 		}
 	} else {
-		$output_file = $input_file;
+		$output_file = $input_file // '';
 	}
 
 	# Sanity check on save file name
@@ -188,6 +193,7 @@ sub initialize ($c) {
 	}
 
 	$c->{output_file} = $output_file;
+	$c->param('savefilename', $output_file) if ($c->param('savefilename') && $output_file);
 
 	# Determine input source
 	my $input_source;
@@ -200,7 +206,20 @@ sub initialize ($c) {
 	# Get inputs
 	my ($from, $replyTo, $r_text, $subject);
 	if ($input_source eq 'file') {
-		($from, $replyTo, $subject, $r_text) = $c->read_input_file("$emailDirectory/$input_file");
+		if (defined($input_file)) {
+			($from, $replyTo, $subject, $r_text) = $c->read_input_file("$emailDirectory/$input_file");
+		} else {
+			$from    = $c->{defaultFrom};
+			$replyTo = $c->{defaultReply};
+			$subject = $c->{defaultSubject};
+
+			# If action is openMessage and no file was found, then 'None' was selected.
+			# In this case empty the message body and set the saved file name to default.msg.
+			if ($action eq 'openMessage') {
+				$c->param('body',         '')            if $c->param('body');
+				$c->param('savefilename', 'default.msg') if $c->param('savefilename');
+			}
+		}
 		$c->param('from',    $from)    if $from;
 		$c->param('replyTo', $replyTo) if $replyTo;
 		$c->param('subject', $subject) if $subject;
@@ -213,9 +232,9 @@ sub initialize ($c) {
 		$replyTo = $c->param('replyTo');
 		$subject = $c->param('subject');
 		my $body = $c->param('body');
-		# Sanity check: body must contain non-white space
+		# Sanity check: body must contain non-white space when previewing message.
 		$c->addbadmessage($c->maketext('You didn\'t enter any message.'))
-			unless $c->param('body') =~ /\S/;
+			unless ($action ne 'previewMessage' || $c->param('body') =~ /\S/);
 		$r_text = \$body;
 	}
 
@@ -270,7 +289,7 @@ sub initialize ($c) {
 		if ($action eq 'saveAs' and -e "$emailDirectory/$output_file") {
 			$c->addbadmessage($c->maketext(
 				'The file [_1] already exists and cannot be overwritten. The message was not saved.',
-				"$emailDirectory/$openfilename"
+				"$emailDirectory/$output_file"
 			));
 			return;
 		}
@@ -288,6 +307,12 @@ sub initialize ($c) {
 		$c->{response} = 'preview';
 
 	} elsif ($action eq 'sendEmail') {
+		# Don't try to send an empty message.
+		unless (${ $c->{r_text} } =~ /\S/) {
+			$c->addbadmessage($c->maketext('Email body is empty. No message sent. '));
+			return;
+		}
+
 		# verify format of From address (one valid rfc2822/rfc5322 address)
 		my @parsed_from_addrs = Email::Address::XS->parse($c->{from});
 		unless (@parsed_from_addrs == 1) {
@@ -312,7 +337,7 @@ sub initialize ($c) {
 		}
 
 		#  get merge file
-		my $merge_file    = (defined($c->{merge_file})) ? $c->{merge_file} : 'None';
+		my $merge_file    = $c->{merge_file};
 		my $rh_merge_data = $c->read_scoring_file($merge_file);
 		unless (ref($rh_merge_data)) {
 			$c->addbadmessage($c->maketext("No merge data file"));
@@ -353,10 +378,10 @@ sub print_preview ($c) {
 	die "record for preview user " . $c->{preview_user} . " not found." unless $c->{preview_user};
 
 	# Get merge file
-	my $merge_file    = (defined($c->{merge_file})) ? $c->{merge_file} : 'None';
+	my $merge_file    = $c->{merge_file};
 	my $rh_merge_data = $c->read_scoring_file($merge_file);
 
-	if (($c->{merge_file} // 'None') ne 'None' && !defined $rh_merge_data->{ $c->{preview_user}->student_id }) {
+	if ($merge_file ne 'None' && !defined $rh_merge_data->{ $c->{preview_user}->student_id }) {
 		$c->addbadmessage('No merge data for student id: '
 				. $c->{preview_user}->student_id
 				. '; name: '
