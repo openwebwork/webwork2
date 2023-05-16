@@ -286,7 +286,7 @@
 			% && $ce->{webworkURLs}{bugReporter} ne ''
 			% && $authz->hasPermissions($userID, 'report_bugs'))
 		% {
-			<li class="list-group-item nav-item">
+			<li class="list-group-item list-group-item-primary nav-item">
 				%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link'
 			</li>
 		% }
