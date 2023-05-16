@@ -13,8 +13,9 @@
 							<strong><%= maketext('Message file:') %></strong>
 						<% end =%>
 						<%= select_field openfilename => [
+								[ None => '' ],
 								map { [ $_ => $_, $_ eq $c->{input_file} ? (selected => undef) : () ] }
-								('None', $c->get_message_file_names)
+								$c->get_message_file_names
 							],
 							id => 'openfilename', class => 'form-select form-select-sm' =%>
 					</div>
@@ -23,6 +24,7 @@
 							<strong><%= maketext('Merge file:') %></strong>
 						<% end =%>
 						<%= select_field merge_file => [
+								[ None => '' ],
 								map { [ $_ => $_, $_ eq $c->{merge_file} ? (selected => undef) : () ] }
 								$c->get_merge_file_names
 							],
@@ -141,7 +143,7 @@
 	</div>
 	%
 	% # Show valid rows of selected merge file.
-	% if ($c->{merge_file} ne 'None') {
+	% if ($c->{merge_file}) {
 		<div class="mb-2"><%= maketext('Showing data from merge file: [_1]', $c->{merge_file}) =%></div>
 		% my $rh_merge_data = $c->read_scoring_file($c->{merge_file});
 		% my @rows;
@@ -174,7 +176,7 @@
 	% # Save buttons
 	<div class="card">
 		<div class="card-body p-1 d-md-flex flex-wrap justify-content-evenly">
-			% if ($c->{input_file} ne 'None') {
+			% if ($c->{input_file}) {
 				<div class="input-group input-group-sm w-auto m-1">
 					<%= submit_button maketext('Save'), name => 'saveMessage', class => 'btn btn-secondary btn-sm' =%>
 					<span class="input-group-text">

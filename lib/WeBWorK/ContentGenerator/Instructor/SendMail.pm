@@ -38,18 +38,14 @@ sub initialize ($c) {
 	my $authz = $c->authz;
 	my $user  = $c->param('user');
 
-	my @selected_filters;
-	if   (defined($c->param('classList!filter'))) { @selected_filters = $c->param('classList!filter'); }
-	else                                          { @selected_filters = ("all"); }
-
 	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	return unless $authz->hasPermissions($user, "send_mail");
 
 	# Gather directory data
-	my $emailDirectory    = $ce->{courseDirs}->{email};
-	my $scoringDirectory  = $ce->{courseDirs}->{scoring};
-	my $templateDirectory = $ce->{courseDirs}->{templates};
+	my $emailDirectory    = $ce->{courseDirs}{email};
+	my $scoringDirectory  = $ce->{courseDirs}{scoring};
+	my $templateDirectory = $ce->{courseDirs}{templates};
 
 	my $openfilename = $c->param('openfilename');
 	my $savefilename = $c->param('savefilename');
@@ -59,22 +55,22 @@ sub initialize ($c) {
 	# check the database to see if there is a file we should use.
 	# if they have been defined via parameter then we should update the db
 
-	if (defined($openfilename) && $openfilename) {
+	if ($openfilename) {
 		$db->setSettingValue("${user}_openfile", $openfilename);
+	} elsif (defined $openfilename) {
+		$db->deleteSetting("${user}_openfile");
 	} elsif ($db->settingExists("${user}_openfile")) {
 		$openfilename = $db->getSettingValue("${user}_openfile");
 	}
 
-	if (defined($mergefile) && $mergefile) {
+	if ($mergefile) {
 		$db->setSettingValue("${user}_mergefile", $mergefile);
+	} elsif (defined $mergefile) {
+		$db->deleteSetting("${user}_mergefile");
 	} elsif ($db->settingExists("${user}_mergefile")) {
 		$mergefile = $db->getSettingValue("${user}_mergefile");
 		$mergefile = undef unless (-e "$ce->{courseDirs}{scoring}/$mergefile");
 	}
-
-	# None is the parameter value for no file.
-	$openfilename = undef if (defined($openfilename) && $openfilename eq 'None');
-	$mergefile    = undef if (defined($mergefile)    && $mergefile eq 'None');
 
 	# Figure out action from submit data
 	my $action = '';
@@ -98,9 +94,9 @@ sub initialize ($c) {
 	$c->{defaultFrom}        = $ur->rfc822_mailbox;
 	$c->{defaultReply}       = $ur->rfc822_mailbox;
 	$c->{defaultSubject}     = $c->stash('courseID') . ' notice';
-	$c->{merge_file}         = $mergefile // 'None';
+	$c->{merge_file}         = $mergefile // '';
 
-	my @classList = (defined($c->param('classList'))) ? $c->param('classList') : ($user);
+	my @classList = $c->param('classList') // ($user);
 	$c->{preview_user} = $c->db->getUser($classList[0] || $user);
 
 	# Gather database data
@@ -139,9 +135,9 @@ sub initialize ($c) {
 	$c->{ra_send_to} = \@send_to;
 
 	# Check the validity of the input file name
-	my $input_file;
+	my $input_file = '';
 	# Make sure an input message file was submitted and exists.
-	if (defined($openfilename)) {
+	if ($openfilename) {
 		if (-e "${emailDirectory}/$openfilename") {
 			if (-R "${emailDirectory}/$openfilename") {
 				$input_file = $openfilename;
@@ -161,13 +157,13 @@ sub initialize ($c) {
 			));
 		}
 	}
-	$c->{input_file} = $input_file // 'None';
+	$c->{input_file} = $input_file;
 
 	# Determine the file name to save message into
-	my $output_file = 'FIXME no output file specified';
+	my $output_file = '';
 	$savefilename = $input_file if $action eq 'saveMessage';
 	if ($action eq 'saveMessage' or $action eq 'saveAs') {
-		if (defined($savefilename) and $savefilename) {
+		if ($savefilename) {
 			$output_file = $savefilename;
 		} else {
 			$c->addbadmessage($c->maketext('No filename was specified for saving!  The message was not saved.'));
@@ -206,7 +202,7 @@ sub initialize ($c) {
 	# Get inputs
 	my ($from, $replyTo, $r_text, $subject);
 	if ($input_source eq 'file') {
-		if (defined($input_file)) {
+		if ($input_file) {
 			($from, $replyTo, $subject, $r_text) = $c->read_input_file("$emailDirectory/$input_file");
 		} else {
 			$from    = $c->{defaultFrom};
@@ -261,8 +257,7 @@ sub initialize ($c) {
 	#     error actions (various)
 
 	# if no form is submitted, gather data needed to produce the mail form and return
-	my $to            = $c->param('To');
-	my $script_action = '';
+	my $to = $c->param('To');
 
 	return '' if (not $action or $action eq 'openMessage');
 
@@ -270,6 +265,19 @@ sub initialize ($c) {
 	# and various actions resulting from different buttons
 
 	if ($action eq 'saveMessage' or $action eq 'saveAs') {
+		# Check that an output file was specified and protect against overwriting an existing file.
+		if ($action eq 'saveAs') {
+			if (!$output_file) {
+				# A message has been already set if no output filename was specified.  So just return here in that case.
+				return;
+			} elsif (-e "$emailDirectory/$output_file") {
+				$c->addbadmessage($c->maketext(
+					'The file [_1] already exists and cannot be overwritten. The message was not saved.',
+					"$emailDirectory/$output_file"
+				));
+				return;
+			}
+		}
 
 		# construct message body
 		my $temp_body = ${$r_text};
@@ -284,15 +292,6 @@ sub initialize ($c) {
 			# Do NOT encode to UTF-8 here.
 			$temp_body
 		);
-
-		# overwrite protection
-		if ($action eq 'saveAs' and -e "$emailDirectory/$output_file") {
-			$c->addbadmessage($c->maketext(
-				'The file [_1] already exists and cannot be overwritten. The message was not saved.',
-				"$emailDirectory/$output_file"
-			));
-			return;
-		}
 
 		# Save the message
 		$c->saveMessageFile($temp_body, "${emailDirectory}/$output_file")
@@ -349,10 +348,6 @@ sub initialize ($c) {
 		# we don't set the response until we're sure that email can be sent
 		$c->{response} = 'send_email';
 
-		# FIXME i'm not sure why we're pulling this out here -- mail_message_to_recipients does have
-		# access to the course environment and should just grab it directly
-		$c->{smtpServer} = $ce->{mail}->{smtpServer};
-
 		# Do actual mailing in the after the response is sent, since it could take a long time
 		# FIXME we need to do a better job providing status notifications for long-running email jobs
 		$c->minion->enqueue(
@@ -381,7 +376,7 @@ sub print_preview ($c) {
 	my $merge_file    = $c->{merge_file};
 	my $rh_merge_data = $c->read_scoring_file($merge_file);
 
-	if ($merge_file ne 'None' && !defined $rh_merge_data->{ $c->{preview_user}->student_id }) {
+	if ($merge_file && !defined $rh_merge_data->{ $c->{preview_user}->student_id }) {
 		$c->addbadmessage('No merge data for student id: '
 				. $c->{preview_user}->student_id
 				. '; name: '
@@ -477,7 +472,7 @@ sub get_message_file_names ($c) {
 
 sub get_merge_file_names ($c) {
 	# FIXME: Check that only readable files are listed.
-	return 'None', read_dir($c->{ce}{courseDirs}{scoring}, '\\.csv$');
+	return read_dir($c->{ce}{courseDirs}{scoring}, '\\.csv$');
 }
 
 sub getRecord ($c, $line, $delimiter = ',') {
