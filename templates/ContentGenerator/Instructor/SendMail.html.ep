@@ -30,7 +30,6 @@
 			</i>
 		% end
 		% $c->addgoodmessage($message->());
-		% $c->{message} = $message->();
 	% }
 	%
 	<%= include('ContentGenerator/Instructor/SendMail/main_form') =%>
