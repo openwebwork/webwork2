@@ -408,12 +408,16 @@ sub print_preview ($c) {
 		"\n"
 	);
 
+	# Associate usernames to student ids to test if merge data is found.
+	my %student_ids = map { $_->user_id => $_->student_id } @{ $c->{ra_user_records} };
+
 	return $c->include(
 		'ContentGenerator/Instructor/SendMail/preview',
 		preview_header => $preview_header,
 		ur             => $c->{preview_user},
 		msg            => $msg,
-		recipients     => join(" ", @{ $c->{ra_send_to} })
+		merge_data     => $rh_merge_data,
+		student_ids    => \%student_ids,
 	);
 }
 
