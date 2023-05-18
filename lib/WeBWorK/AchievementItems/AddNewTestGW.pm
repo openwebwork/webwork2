@@ -25,8 +25,8 @@ sub new ($class) {
 		id          => 'AddNewTestGW',
 		name        => x('Oil of Cleansing'),
 		description => x(
-			'Unlock an additional version of a Gateway Test.  If used before the close date of '
-				. 'the Gateway Test this will allow you to generate a new version of the test.'
+			'Unlock an additional version of a test.  If used before the close date of '
+				. 'the test this will allow you to generate a new version of the test.'
 		)
 	}, $class;
 }
@@ -47,11 +47,11 @@ sub print_form ($self, $sets, $setProblemCount, $c) {
 	}
 
 	return $c->c(
-		$c->tag('p', $c->maketext('Add a new test for which Gateway?')),
+		$c->tag('p', $c->maketext('Add a new version for which test?')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			$c,
 			id         => 'adtgw_gw_id',
-			label_text => $c->maketext('Gateway Name'),
+			label_text => $c->maketext('Test Name'),
 			values     => \@openGateways,
 			menu_attr  => { dir => 'ltr' }
 		)
@@ -70,7 +70,7 @@ sub use_item ($self, $userName, $c) {
 	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
 
 	my $setID = $c->param('adtgw_gw_id');
-	return 'You need to input a Gateway Name' unless defined $setID;
+	return 'You need to input a Test Name' unless defined $setID;
 
 	my $set     = $db->getMergedSet($userName, $setID);
 	my $userSet = $db->getUserSet($userName, $setID);

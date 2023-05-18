@@ -243,7 +243,7 @@ my %routeParameters = (
 		unrestricted => 1
 	},
 	proctored_gateway_proctor_login => {
-		title        => x('Proctored Gateway Quiz [_2] Proctor Login'),
+		title        => x('Proctored Test [_2] Proctor Login'),
 		module       => 'LoginProctor',
 		path         => '/proctor_login',
 		unrestricted => 1
