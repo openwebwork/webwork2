@@ -1,26 +1,6 @@
 'use strict';
 
 (() => {
-	// Comment preview popovers.
-	document.querySelectorAll('.preview').forEach((el) => {
-		el.addEventListener('click', () => {
-			el.dataset.bsContent =
-				el.parentNode.querySelector('textarea')?.value.replace(/</g, '< ').replace(/>/g, ' >');
-			if (el.dataset.bsContent) {
-				const popover = new bootstrap.Popover(el, {
-					html: true, trigger: 'focus', placement: 'bottom', delay: { show: 0, hide: 200 }
-				});
-				el.addEventListener('hidden.bs.popover', () => popover.dispose(), { once: true });
-				popover.show();
-				if (window.MathJax) {
-					MathJax.startup.promise = MathJax.startup.promise.then(
-						() => MathJax.typesetPromise(['.popover-body'])
-					);
-				}
-			}
-		});
-	});
-
 	const setPointInputValue = (pointInput, score) =>
 		pointInput.value = (Math.round(score * pointInput.max / 100 / pointInput.step) * pointInput.step).toFixed(2);
 

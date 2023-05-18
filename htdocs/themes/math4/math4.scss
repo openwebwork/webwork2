@@ -954,6 +954,14 @@ td.alt-source {
 		margin-bottom: 2px;
 		padding-bottom: 5px;
 	}
+
+	.restricted-width-col {
+		width: 0.1%;
+	}
+
+	.grader-comment-col {
+		min-width: 300px;
+	}
 }
 
 .problem-grader-table {
@@ -984,12 +992,10 @@ td.alt-source {
 	}
 }
 
-/* Equation editor bugfixes */
-#eqEditorDiv {
-	overflow: visible;
-}
-
-#openEqEditor {
-	min-height: 35px;
-	min-width: 43px;
+#problem-grader-form,
+.problem-grader-table {
+	.mv-container .mv-inner-container,
+	.mq-latex-editor-container .mq-latex-editor-inner-container {
+		width: 100%;
+	}
 }
