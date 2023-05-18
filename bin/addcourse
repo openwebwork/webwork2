@@ -84,7 +84,7 @@ use lib "$pg_dir/lib";
 use WeBWorK::CourseEnvironment;
 
 # Grab course environment (by reading webwork2/conf/defaults.config)
-my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $webwork_dir, pg_dir => $pg_dir });
 
 use WeBWorK::DB;
 use WeBWorK::File::Classlist;

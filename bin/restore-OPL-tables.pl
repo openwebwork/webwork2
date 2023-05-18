@@ -38,8 +38,9 @@ use DBI;
 
 # get course environment and configured OPL path
 
-my $ce = new WeBWorK::CourseEnvironment({
+my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
+	pg_dir      => $pg_dir
 });
 
 my $configured_OPL_path = $ce->{problemLibrary}{root};

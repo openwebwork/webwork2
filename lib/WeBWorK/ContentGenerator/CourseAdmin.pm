@@ -309,9 +309,7 @@ sub do_add_course ($c) {
 
 	my $add_dbLayout = trim_spaces($c->param('add_dbLayout')) || '';
 
-	my $ce2 = WeBWorK::CourseEnvironment->new({
-		%WeBWorK::SeedCE, courseName => $add_courseID,
-	});
+	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $add_courseID });
 
 	my %courseOptions = (dbLayoutName => $add_dbLayout);
 
@@ -499,7 +497,7 @@ sub rename_course_confirm ($c) {
 	my $rename_newCourseTitle       = $c->param('rename_newCourseTitle')       || '';
 	my $rename_newCourseInstitution = $c->param('rename_newCourseInstitution') || '';
 
-	my $ce2 = WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $rename_oldCourseID });
+	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $rename_oldCourseID });
 
 	# Create strings confirming title and institution change.
 	# Connect to the database to get old title and institution.
@@ -647,7 +645,7 @@ sub do_retitle_course ($c) {
 	$optional_arguments{courseInstitution} = $rename_newCourseInstitution if $institution_checkbox;
 
 	my $ce2;
-	eval { $ce2 = WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $rename_oldCourseID }); };
+	eval { $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $rename_oldCourseID }); };
 	warn "failed to create environment in do_retitle_course $@" if $@;
 
 	eval { retitleCourse(courseID => $rename_oldCourseID, ce => $ce2, dbOptions => {}, %optional_arguments); };
@@ -740,7 +738,7 @@ sub do_rename_course ($c) {
 	eval {
 		renameCourse(
 			courseID    => $rename_oldCourseID,
-			ce          => WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $rename_oldCourseID }),
+			ce          => WeBWorK::CourseEnvironment->new({ courseName => $rename_oldCourseID }),
 			dbOptions   => {},
 			newCourseID => $rename_newCourseID,
 			%optional_arguments
@@ -876,7 +874,7 @@ sub do_delete_course ($c) {
 	eval {
 		deleteCourse(
 			courseID  => $delete_courseID,
-			ce        => WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $delete_courseID }),
+			ce        => WeBWorK::CourseEnvironment->new({ courseName => $delete_courseID }),
 			dbOptions => {}
 		);
 	};
@@ -1010,7 +1008,7 @@ sub archive_course_confirm ($c) {
 
 	my $archive_courseID = $archive_courseIDs[0];
 
-	my $ce2 = WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $archive_courseID });
+	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $archive_courseID });
 
 	if ($ce2->{dbLayoutName}) {
 		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
@@ -1063,7 +1061,7 @@ sub do_archive_course ($c) {
 	my @archive_courseIDs = $c->param('archive_courseIDs');
 	my $archive_courseID  = $archive_courseIDs[0];
 
-	my $ce2 = WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $archive_courseID });
+	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $archive_courseID });
 
 	# Remove course specific temp files before archiving, but don't delete the temp directory itself.
 	remove_tree($ce2->{courseDirs}{html_temp}, { keep_root => 1 });
@@ -1351,7 +1349,7 @@ sub upgrade_course_confirm ($c) {
 		next unless $upgrade_courseID =~ /\S/;    # skip empty values
 
 		# Analyze one course
-		my $ce2 = WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $upgrade_courseID });
+		my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $upgrade_courseID });
 
 		# Create integrity checker
 		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
@@ -1467,7 +1465,7 @@ sub do_upgrade_course ($c) {
 		next unless $upgrade_courseID =~ /\S/;    # Omit blank course IDs
 
 		# Update one course
-		my $ce2 = WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $upgrade_courseID });
+		my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $upgrade_courseID });
 
 		# Create integrity checker
 		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);

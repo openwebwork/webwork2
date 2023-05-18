@@ -43,7 +43,7 @@ use lib "$ENV{WEBWORK_ROOT}/bin";
 use OPLUtils qw/writeJSONtoFile/;
 use WeBWorK::CourseEnvironment;
 
-my $ce          = new WeBWorK::CourseEnvironment({ webwork_dir => $ENV{WEBWORK_ROOT} });
+my $ce          = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $pg_root });
 my $libraryRoot = $ce->{problemLibrary}{root};
 my $contribRoot = $ce->{contribLibrary}{root};
 

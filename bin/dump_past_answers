@@ -126,8 +126,9 @@ my $csv               = new Text::CSV->new({ binary => 1 })
 	or die "Cannot use CSV: " . Text::CSV->error_diag();
 $csv->eol("\n");
 
-my $ce = new WeBWorK::CourseEnvironment({
+my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
+	pg_dir      => $pg_dir,
 });
 
 my @courses          = listCourses($ce);
@@ -140,8 +141,9 @@ my @row;
 foreach my $courseID (@courses) {
 	next if $courseID eq 'admin' || $courseID eq 'modelCourse';
 
-	$ce = new WeBWorK::CourseEnvironment({
+	$ce = WeBWorK::CourseEnvironment->({
 		webwork_dir => $ENV{WEBWORK_ROOT},
+		pg_dir      => $pg_dir,
 		courseName  => $courseID,
 	});
 	$db = new WeBWorK::DB($ce->{dbLayout});

@@ -53,6 +53,7 @@ die "Not able to read from file $fileName : does it exist? is it readable?" unle
 
 my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
+	pg_dir      => $pg_dir,
 	courseName  => $courseID
 });
 

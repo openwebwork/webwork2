@@ -28,7 +28,7 @@ sub run ($job, $courseID, $userID = '', $setID = '') {
 	# can start.  New jobs retry every minute until they can aquire their own lock.
 	return $job->retry({ delay => 60 }) unless my $guard = $job->minion->guard('lti_mass_update', 3600);
 
-	my $ce = eval { WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $courseID }) };
+	my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $courseID }) };
 	return $job->fail("Could not construct course environment for $courseID.") unless $ce;
 
 	my $db = WeBWorK::DB->new($ce->{dbLayout});

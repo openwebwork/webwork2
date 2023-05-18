@@ -137,7 +137,8 @@ usage_error("must specify COURSEID.") unless $courseID;
 # bring up a minimal course environment
 my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
-	courseName => $courseID,
+	pg_dir      => $ENV{PG_ROOT},
+	courseName  => $courseID,
 });
 
 my $dbLayout = $ce->{dbLayoutName};

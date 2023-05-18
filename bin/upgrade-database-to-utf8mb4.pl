@@ -154,7 +154,7 @@ use WeBWorK::DB;
 use WeBWorK::Utils::CourseManagement qw{listCourses};
 
 # Load a minimal course environment.
-my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $ENV{WEBWORK_ROOT} });
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $ENV{PG_ROOT} });
 
 # Get DB connection settings.
 my $dbname = $ce->{database_name};

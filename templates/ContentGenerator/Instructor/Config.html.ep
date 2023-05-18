@@ -8,7 +8,7 @@
 % my $configValues = $c->getConfigValues($ce);
 %
 % # Get the current course environment again in case changes were just saved.
-% my $ce4 = WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $ce->{courseName}, });
+% my $ce4 = WeBWorK::CourseEnvironment->new({ courseName => $ce->{courseName}, });
 %
 % if (@$configValues == 0) {
 	<p>

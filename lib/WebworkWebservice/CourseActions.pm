@@ -46,10 +46,7 @@ sub createCourse {
 		if length($params->{name}) > $admin_ce->{maxCourseIdLength};
 
 	# Bring up a minimal course environment for the new course.
-	my $ce = WeBWorK::CourseEnvironment->new({
-		webwork_dir => $admin_ce->{webwork_dir},
-		courseName  => $params->{name}
-	});
+	my $ce = WeBWorK::CourseEnvironment->new({ courseName => $params->{name} });
 
 	# Copy user from admin course.
 	# Modified from do_add_course in WeBWorK::ContentGenerator::CourseAdmin.

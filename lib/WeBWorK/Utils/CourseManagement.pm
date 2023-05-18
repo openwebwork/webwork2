@@ -340,11 +340,8 @@ sub addCourse {
 
 	if (exists $options{templatesFrom}) {
 		my $sourceCourse = $options{templatesFrom};
-		my $sourceCE     = new WeBWorK::CourseEnvironment({
-			get_SeedCE($ce),
-			courseName => $sourceCourse,    # override courseName
-		});
-		my $sourceDir = $sourceCE->{courseDirs}->{templates};
+		my $sourceCE     = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $sourceCourse });
+		my $sourceDir    = $sourceCE->{courseDirs}->{templates};
 		## copy templates ##
 		if (-d $sourceDir) {
 			my $destDir = $ce->{courseDirs}{templates};
@@ -958,9 +955,7 @@ sub unarchiveCourse {
 
 	##### step 3: read the course environment for this course #####
 
-	my $ce2 = new WeBWorK::CourseEnvironment({
-		get_SeedCE($ce), courseName => $currCourseID,
-	});
+	my $ce2 = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $currCourseID });
 
 	# pull out some useful stuff
 	my $course_dir    = $ce2->{courseDirs}{root};
@@ -1038,9 +1033,7 @@ sub _unarchiveCourse_move_away {
 	my ($ce, $courseID) = @_;
 
 	# course environment for before the course is moved
-	my $ce2 = new WeBWorK::CourseEnvironment({
-		get_SeedCE($ce), courseName => $courseID,
-	});
+	my $ce2 = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $courseID });
 
 	# if course directory doesn't exist, we don't have to do anything
 	return unless -e $ce2->{courseDirs}{root};
@@ -1056,9 +1049,7 @@ sub _unarchiveCourse_move_away {
 	);
 
 	# course environment for after the course is moved
-	my $ce3 = new WeBWorK::CourseEnvironment({
-		get_SeedCE($ce), courseName => $tmpCourseID,
-	});
+	my $ce3 = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $tmpCourseID });
 
 	# data to pass to renameCourse when moving the course back to it's original name
 	my $restore_course_data = {

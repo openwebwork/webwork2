@@ -178,3 +178,28 @@ hypnotoad:
 
   # Comment out the line below if serving directly.
   proxy: 1
+
+# The remainder of the settings in this file are primarily for developers,
+# and you usually do not need to change anything below here.
+
+debug:
+  # If set to 1, WeBWorK::Debug will print extensive debugging output.
+  enabled: 0
+
+  # If set, debugging output will be sent to the file named rather than STDERR.
+  # Note that the server must have write access to this file's location.
+  #logfile: /opt/webwork/webwork2/logs/debug.log
+
+  # Prevent subroutines matching the given regular expression from logging.
+  # For example to remove all messages from subroutines in a WeBWorK::Authen
+  # module uncomment the following example.
+  #deny_subroutine_output: ^WeBWorK::Authen::.*$
+
+  # Allow only subroutines matching the following regular expression to log.
+  # For example to only allow messages from subroutines in a WeBWorK::Authen
+  # module uncomment the following example.
+  #allow_subroutine_output: ^WeBWorK::Authen::.*$
+
+hardcopy:
+  # If 1, don't delete temporary files created when a hardcopy is generated.
+  preserve_temp_files: 0

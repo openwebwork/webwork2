@@ -51,73 +51,54 @@ safe compartment into a hash. This hash becomes the course environment.
 
 use strict;
 use warnings;
+
 use Carp;
+use Opcode qw(empty_opset);
+
 use WWSafe;
 use WeBWorK::Utils qw(readFile);
 use WeBWorK::Debug;
-use Opcode qw(empty_opset);
 
 =head1 CONSTRUCTION
 
 =over
 
-=item new(HASHREF)
+=item new($seedVars)
 
-HASHREF is a reference to a hash containing scalar variables with which to seed
-the course environment. It must contain at least a value for the key
-C<webworkRoot>.
+C<$seedVars> is an optional argument.  If provided it must be a reference to a
+hash containing scalar variables with which to seed the course environment. It
+may contain values for the keys C<webwork_dir>, C<pg_dir>, C<courseName>, and
+C<web_config_filename>.
 
-The C<new> method finds the file F<conf/defaults.config> relative to the given
+If C<webwork_dir> or C<pg_dir> are not given in C<$seedVars> they will be taken
+from the C<%WeBWorK::SeedCE> hash.  If they are still not found in that hash,
+then they will be taken from the system environment variables C<WEBWORK_ROOT>
+and C<PG_ROOT>.
+
+The C<new> method finds the file F<conf/defaults.config> relative to the
 C<webwork_dir> directory. After reading this file, it uses the
 C<$courseFiles{environment}> variable, if present, to locate the course
 environment file. If found, the file is read and added to the environment.
 
-=item new(ROOT URLROOT PGROOT COURSENAME)
-
-A deprecated form of the constructor in which four seed variables are given
-explicitly: C<webwork_dir>, C<webwork_url>, C<pg_dir>, and C<courseName>.
-
 =cut
 
-# NEW SYNTAX
-#
-# new($invocant, $seedVarsRef)
-#   $invocant       implicitly set by caller
-#   $seedVarsRef    reference to hash containing scalar variables with which to
-#                   seed the course environment
-#
-# OLD SYNTAX
-#
-# new($invocant, $webworkRoot, $webworkURLRoot, $pgRoot, $courseName)
-#   $invocant          implicitly set by caller
-#   $webworkRoot       directory that contains the WeBWorK distribution
-#   $webworkURLRoot    URL that points to the WeBWorK system
-#   $pgRoot            directory that contains the PG distribution
-#   $courseName        name of the course being used
 sub new {
-	my ($invocant, @rest) = @_;
+	my ($invocant, $seedVars) = @_;
 	my $class = ref($invocant) || $invocant;
 
-	# contains scalar symbols/values with which to seed course environment
-	my %seedVars;
+	$seedVars //= {};
+	croak __PACKAGE__ . ": The only argument for new must be a hash reference.\n" unless ref($seedVars) eq 'HASH';
 
-	# where do we get the seed variables?
-	if (ref $rest[0] eq "HASH") {
-		%seedVars = %{ $rest[0] };
-	} else {
-		debug __PACKAGE__, ": deprecated four-argument form of new() used.", caller(1), "\n", caller(2), "\n";
-		$seedVars{webwork_dir} = $rest[0];
-		$seedVars{webwork_url} = $rest[1];
-		$seedVars{pg_dir}      = $rest[2];
-		$seedVars{courseName}  = $rest[3];
-	}
-	$seedVars{courseName} = $seedVars{courseName} || "___";    # prevents extraneous error messages
+	# Get the webwork_dir and pg_dir from the SeedCE or the environment if not set.
+	$seedVars->{webwork_dir} //= $WeBWorK::SeedCE{webwork_dir} // $ENV{WEBWORK_ROOT};
+	$seedVars->{pg_dir}      //= $WeBWorK::SeedCE{pg_dir}      // $ENV{PG_ROOT};
+
+	$seedVars->{courseName} ||= '___';    # prevents extraneous error messages
+
 	my $safe = WWSafe->new;
 	$safe->permit('rand');
-	# to avoid error messages make sure that courseName is defined
-	$seedVars{courseName} = $seedVars{courseName} // "foobar_course";
 	# seed course environment with initial values
-	while (my ($var, $val) = each %seedVars) {
+	while (my ($var, $val) = each %$seedVars) {
 		$val = "" if not defined $val;
 		$safe->reval("\$$var = '$val';");
 	}
@@ -125,7 +106,7 @@ sub new {
 	# Compile the "include" function with all opcodes available.
 	my $include = q[ sub include {
 		my ($file) = @_;
-		my $fullPath = "] . $seedVars{webwork_dir} . q[/$file";
+		my $fullPath = "] . $seedVars->{webwork_dir} . q[/$file";
 		# This regex matches any string that begins with "../",
 		# ends with "/..", contains "/../", or is "..".
 		if ($fullPath =~ m!(?:^|/)\.\.(?:/|$)!) {
@@ -151,16 +132,14 @@ sub new {
 
 	# determine location of globalEnvironmentFile
 	my $globalEnvironmentFile;
-	if (-r "$seedVars{webwork_dir}/conf/defaults.config") {
-		$globalEnvironmentFile = "$seedVars{webwork_dir}/conf/defaults.config";
+	if (-r "$seedVars->{webwork_dir}/conf/defaults.config") {
+		$globalEnvironmentFile = "$seedVars->{webwork_dir}/conf/defaults.config";
 	} else {
 		croak "Cannot read global environment file $globalEnvironmentFile";
 	}
 
 	# read and evaluate the global environment file
 	my $globalFileContents = readFile($globalEnvironmentFile);
-	# warn "about to evaluate defaults.conf $seedVars{courseName}\n";
-	# warn  join(" | ", (caller(1))[0,1,2,3,4] ), "\n";
 	$safe->share_from('main', [qw(%ENV)]);
 	$safe->reval($globalFileContents);
 	# warn "end the evaluation\n";
@@ -174,7 +153,7 @@ sub new {
 	# (we don't want to do the hash conversion yet)
 	no strict 'refs';
 	my $courseEnvironmentFile = ${ *{ ${ $safe->root . "::" }{courseFiles} } }{environment};
-	my $courseWebConfigFile   = $seedVars{web_config_filename}
+	my $courseWebConfigFile   = $seedVars->{web_config_filename}
 		|| ${ *{ ${ $safe->root . "::" }{courseFiles} } }{simpleConfig};
 	use strict 'refs';
 
