@@ -11,23 +11,20 @@ use File::Copy;
 use File::Path;
 use JSON;
 
-my $pg_dir;
-
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n"
-		unless exists $ENV{WEBWORK_ROOT};
-	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
-	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+	use Mojo::File qw(curfile);
+	use Env qw(WEBWORK_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
 use lib "$ENV{WEBWORK_ROOT}/bin";
-use lib "$pg_dir/lib";
 
 use WeBWorK::CourseEnvironment;
 use Helper 'runScript';
 
-my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $pg_dir });
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
 
 my $rawData;
 my $releaseDataFF =

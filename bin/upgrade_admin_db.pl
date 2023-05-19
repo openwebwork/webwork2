@@ -14,17 +14,15 @@
 # Artistic License for more details.
 ################################################################################
 
-my $pg_dir;
-
 BEGIN {
-	die('You need to set the WEBWORK_ROOT environment variable.\n')
-		unless ($ENV{WEBWORK_ROOT});
-	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
-	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+	use Mojo::File qw(curfile);
+	use Env qw(WEBWORK_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
-use lib "$pg_dir/lib";
+
 use WeBWorK::CourseEnvironment;
 
 use WeBWorK::DB;
@@ -37,7 +35,6 @@ my $upgrade_courseID = 'admin';
 
 my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
-	pg_dir      => $pg_dir,
 	courseName  => $upgrade_courseID,
 });
 #warn "do_upgrade_course: updating |$upgrade_courseID| from" , join("|",@upgrade_courseIDs);

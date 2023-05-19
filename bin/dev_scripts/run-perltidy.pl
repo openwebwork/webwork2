@@ -28,8 +28,9 @@ Run perltidy on webwork2 source files.
 
 =head1 OPTIONS
 
-For this script to work the WEBWORK_ROOT environment variable must be set, and
-the .perltidyrc file in the webwork2 root directory must be readable.
+For this script to work the the .perltidyrc file in the webwork2 root directory
+must be readable.  Note that the webwork2 root directory is automatically
+detected.
 
 This script accepts all of the options that are accepted by perltidy.  See the
 perltidy documentation for details.
@@ -47,7 +48,7 @@ perltidy version as it would usually do for perltidy.
 
 Finally, if no files are passed on the command line, then perltidy will be
 executed on all files with the extensions C<.pl>, C<.pm>, or C<.t> in the
-WEBWORK_ROOT directory.  If files are passed on the command line, then perltidy
+webwork2 root directory.  If files are passed on the command line, then perltidy
 will only be executed on the listed files.
 
 =cut
@@ -58,12 +59,15 @@ use feature 'say';
 
 use Perl::Tidy;
 use File::Find qw(find);
+use Mojo::File qw(curfile);
+
+my $webwork_root = curfile->dirname->dirname->dirname;
 
 die "Version 20220613 or newer of perltidy is required for this script.\n"
 	. "The installed version is $Perl::Tidy::VERSION.\n"
 	unless $Perl::Tidy::VERSION >= 20220613;
-die "The webwork2 directory must be defined in WEBWORK_ROOT.\n"
-	unless -e $ENV{WEBWORK_ROOT} && -r "$ENV{WEBWORK_ROOT}/.perltidyrc";
+die "The .perltidyrc file in the webwork root directory is not readable.\n"
+	unless -r "$webwork_root/.perltidyrc";
 
 my $verbose = 0;
 my (@args, @files);
@@ -85,7 +89,7 @@ if (@files) {
 	for (@files) {
 		push(@args, $_);
 		say "Tidying file: $_" if $verbose;
-		Perl::Tidy::perltidy(argv => \@args, perltidyrc => "$ENV{WEBWORK_ROOT}/.perltidyrc");
+		Perl::Tidy::perltidy(argv => \@args, perltidyrc => "$webwork_root/.perltidyrc");
 		pop(@args);
 	}
 } else {
@@ -107,12 +111,12 @@ if (@files) {
 				say "Tidying file: $path" if $verbose;
 
 				push(@args, $path);
-				Perl::Tidy::perltidy(argv => \@args, perltidyrc => "$ENV{WEBWORK_ROOT}/.perltidyrc");
+				Perl::Tidy::perltidy(argv => \@args, perltidyrc => "$webwork_root/.perltidyrc");
 				pop(@args);
 			},
 			no_chdir => 1
 		},
-		$ENV{WEBWORK_ROOT}
+		$webwork_root
 	);
 }
 

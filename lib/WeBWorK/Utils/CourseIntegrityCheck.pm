@@ -26,8 +26,8 @@ use strict;
 use warnings;
 
 use WeBWorK::Debug;
+use WeBWorK::Utils qw/createDirectory/;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
-use WeBWorK::PG::IO;
 
 # Developer note:  This file should not format messages in html.  Instead return an array of tuples.  Each tuple should
 # contain the message components, and the last element of the tuple should be 0 or 1 to indicate failure or success
@@ -390,7 +390,7 @@ sub updateCourseDirectories {
 			$parentDirectory =~ s|/[^/]*$||;    # Remove last node
 			my ($perms, $groupID) = (stat $parentDirectory)[ 2, 5 ];
 			if (-w $parentDirectory) {
-				WeBWorK::PG::IO::createDirectory($path, $perms, $groupID)
+				createDirectory($path, $perms, $groupID)
 					or push(@messages, [ "Failed to create directory at $path.", 0 ]);
 			} else {
 				push(

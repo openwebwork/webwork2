@@ -26,7 +26,7 @@ use DateTime;
 
 use WeBWorK::Utils qw(sortAchievements nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::Tags;
-use WWSafe;
+use Safe;
 
 our @EXPORT_OK = qw(checkForAchievements);
 
@@ -89,7 +89,7 @@ sub checkForAchievements ($problem_in, $pg, $c, %options) {
 		$dtCourseTime->month, $dtCourseTime->year, $dtCourseTime->day_of_week
 	);
 
-	my $compartment = WWSafe->new;
+	my $compartment = Safe->new;
 
 	#initialize things that are ""
 	if (not $achievementPoints) {

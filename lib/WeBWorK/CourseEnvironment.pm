@@ -55,7 +55,7 @@ use warnings;
 use Carp;
 use Opcode qw(empty_opset);
 
-use WWSafe;
+use Safe;
 use WeBWorK::Utils qw(readFile);
 use WeBWorK::Debug;
 
@@ -95,7 +95,7 @@ sub new {
 
 	$seedVars->{courseName} ||= '___';    # prevents extraneous error messages
 
-	my $safe = WWSafe->new;
+	my $safe = Safe->new;
 	$safe->permit('rand');
 	# seed course environment with initial values
 	while (my ($var, $val) = each %$seedVars) {
