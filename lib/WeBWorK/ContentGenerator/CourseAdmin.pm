@@ -381,7 +381,6 @@ sub do_add_course ($c) {
 			courseID      => $add_courseID,
 			ce            => $ce2,
 			courseOptions => \%courseOptions,
-			dbOptions     => {},
 			users         => \@users,
 			%optional_arguments,
 		);
@@ -400,7 +399,7 @@ sub do_add_course ($c) {
 		# Get rid of any partially built courses.
 		# FIXME: This is too fragile.
 		unless ($error =~ /course exists/) {
-			eval { deleteCourse(courseID => $add_courseID, ce => $ce2, dbOptions => {}); }
+			eval { deleteCourse(courseID => $add_courseID, ce => $ce2); }
 		}
 	} else {
 		#log the action
@@ -644,7 +643,7 @@ sub do_retitle_course ($c) {
 	eval { $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $rename_oldCourseID }); };
 	warn "failed to create environment in do_retitle_course $@" if $@;
 
-	eval { retitleCourse(courseID => $rename_oldCourseID, ce => $ce2, dbOptions => {}, %optional_arguments); };
+	eval { retitleCourse(courseID => $rename_oldCourseID, ce => $ce2, %optional_arguments); };
 	if ($@) {
 		my $error = $@;
 		return $c->tag(
@@ -730,12 +729,10 @@ sub do_rename_course ($c) {
 			$rename_newCourseID, $optional_arguments{courseInstitution});
 	}
 
-	# dbOptions is left over from when we had 'gdbm' and 'sql' database layouts. For now the hash can remain empty.
 	eval {
 		renameCourse(
 			courseID    => $rename_oldCourseID,
 			ce          => WeBWorK::CourseEnvironment->new({ courseName => $rename_oldCourseID }),
-			dbOptions   => {},
 			newCourseID => $rename_newCourseID,
 			%optional_arguments
 		);
@@ -866,12 +863,10 @@ sub do_delete_course ($c) {
 
 	my $delete_courseID = $c->param('delete_courseID') || '';
 
-	# dbOptions is left over from when we had 'gdbm' and 'sql' database layouts. For now the hash can remain empty.
 	eval {
 		deleteCourse(
-			courseID  => $delete_courseID,
-			ce        => WeBWorK::CourseEnvironment->new({ courseName => $delete_courseID }),
-			dbOptions => {}
+			courseID => $delete_courseID,
+			ce       => WeBWorK::CourseEnvironment->new({ courseName => $delete_courseID }),
 		);
 	};
 
@@ -1068,8 +1063,7 @@ sub do_archive_course ($c) {
 		remove_tree($orgDefaultCourseTempDir);
 	}
 
-	# dbOptions is left over from when we had 'gdbm' and 'sql' database layouts. For now the hash can remain empty.
-	my $message = eval { archiveCourse(courseID => $archive_courseID, ce => $ce2, dbOptions => {}); };
+	my $message = eval { archiveCourse(courseID => $archive_courseID, ce => $ce2); };
 
 	if ($@) {
 		my $error = $@;
@@ -1095,7 +1089,7 @@ sub do_archive_course ($c) {
 		writeLog($ce, 'hosted_courses', join("\t", "\tarchived", '', '', $archive_courseID,));
 
 		if ($c->param('delete_course')) {
-			eval { deleteCourse(courseID => $archive_courseID, ce => $ce2, dbOptions => {}); };
+			eval { deleteCourse(courseID => $archive_courseID, ce => $ce2); };
 
 			if ($@) {
 				my $error = $@;
