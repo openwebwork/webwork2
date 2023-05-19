@@ -17,17 +17,24 @@
 
 use strict;
 
-# Get the necessary packages, including adding
-# webwork and pg library to our path.
-my $pg_dir;
-
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
-	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
-	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+	use Mojo::File qw(curfile);
+	use YAML::XS qw(LoadFile);
+	use Env qw(WEBWORK_ROOT PG_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
+
+	# Load the configuration file to obtain the PG root directory.
+	my $config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.yml";
+	$config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.dist.yml" unless -e $config_file;
+	my $config = LoadFile($config_file);
+	$PG_ROOT = $config->{pg_dir};
+
+	die "The pg directory must be correctly defined in conf/webwork2.mojolicious.yml" unless -e $ENV{PG_ROOT};
 }
+
 use lib "$ENV{WEBWORK_ROOT}/lib";
-use lib "$pg_dir/lib";
+use lib "$ENV{PG_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
 use String::ShellQuote;
 
@@ -40,7 +47,7 @@ my $time = time();
 # get course environment and open up database
 my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
-	pg_dir      => $pg_dir
+	pg_dir      => $ENV{PG_ROOT}
 });
 
 # decide whether the mysql installation can handle

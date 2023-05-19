@@ -14,22 +14,25 @@
 # Artistic License for more details.
 ################################################################################
 
-my $webwork_dir;
-my $pg_dir;
-
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n"
-		unless exists $ENV{WEBWORK_ROOT};
-	$webwork_dir = $ENV{WEBWORK_ROOT};
-	print "importClassList.pl:  WeBWorK root directory set to $webwork_dir\n";
+	use Mojo::File qw(curfile);
+	use YAML::XS qw(LoadFile);
+	use Env qw(WEBWORK_ROOT PG_ROOT);
 
-	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
-	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+	$WEBWORK_ROOT = curfile->dirname->dirname;
+
+	# Load the configuration file to obtain the PG root directory.
+	my $config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.yml";
+	$config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.dist.yml" unless -e $config_file;
+	my $config = LoadFile($config_file);
+	$PG_ROOT = $config->{pg_dir};
+
+	die "The pg directory must be correctly defined in conf/webwork2.mojolicious.yml" unless -e $ENV{PG_ROOT};
 }
 
 # link to WeBWorK and pg code libraries
-use lib "$webwork_dir/lib";
-use lib "$pg_dir/lib";
+use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$ENV{PG_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
 
 use WeBWorK::DB qw(check_user_id);
@@ -53,7 +56,7 @@ die "Not able to read from file $fileName : does it exist? is it readable?" unle
 
 my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
-	pg_dir      => $pg_dir,
+	pg_dir      => $ENV{PG_ROOT},
 	courseName  => $courseID
 });
 

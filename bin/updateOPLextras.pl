@@ -69,21 +69,29 @@ pod2usage(2) unless ($textbooks || $directories || $subjects || $all);
 #
 ####
 
-my $pg_dir;
-
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
-	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
-	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+	use Mojo::File qw(curfile);
+	use YAML::XS qw(LoadFile);
+	use Env qw(WEBWORK_ROOT PG_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
+
+	# Load the configuration file to obtain the PG root directory.
+	my $config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.yml";
+	$config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.dist.yml" unless -e $config_file;
+	my $config = LoadFile($config_file);
+	$PG_ROOT = $config->{pg_dir};
+
+	die "The pg directory must be correctly defined in conf/webwork2.mojolicious.yml" unless -e $ENV{PG_ROOT};
 }
 
 use lib "$ENV{WEBWORK_ROOT}/bin";
 use lib "$ENV{WEBWORK_ROOT}/lib";
-use lib "$pg_dir/lib";
+use lib "$ENV{PG_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
 use OPLUtils qw/build_library_directory_tree build_library_subject_tree build_library_textbook_tree/;
 
-my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $pg_dir });
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $ENV{PG_ROOT} });
 
 # decide whether the mysql installation can handle
 # utf8mb4 and that should be used for the OPL

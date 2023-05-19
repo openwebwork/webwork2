@@ -8,10 +8,8 @@ generate-OPL-set-def-list - find all set definition files in the OPL and Contrib
 
 generate-OPL-set-def-list
 
-The environment variable $WEBWORK_ROOT must be set with the location of
-webwork2, and either the environment variable $PG_ROOT must be set with the
-location of pg, or pg must be located in the parent directory of the webwork2
-location.
+The variable pg_dir must be set with the location of pg in webwork2.mojolicious.yml.
+Note that the webwork root location will be automatically detected.
 
 =head1 DESCRIPTION
 
@@ -25,30 +23,37 @@ $WEBWORK_ROOT/htdocs/DATA/contrib-set-defs.json.
 use strict;
 use warnings;
 
-use Pod::Usage;
 use File::Find;
 
-my $pg_root;
-
 BEGIN {
-	pod2usage(2) unless exists $ENV{WEBWORK_ROOT};
-	$pg_root = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
-	pod2usage(2) unless (-e $pg_root);
+	use Mojo::File qw(curfile);
+	use YAML::XS qw(LoadFile);
+	use Env qw(WEBWORK_ROOT PG_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
+
+	# Load the configuration file to obtain the PG root directory.
+	my $config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.yml";
+	$config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.dist.yml" unless -e $config_file;
+	my $config = LoadFile($config_file);
+	$PG_ROOT = $config->{pg_dir};
+
+	die "The pg directory must be correctly defined in conf/webwork2.mojolicious.yml" unless -e $ENV{PG_ROOT};
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
-use lib "$pg_root/lib";
+use lib "$ENV{PG_ROOT}/lib";
 use lib "$ENV{WEBWORK_ROOT}/bin";
 
 use OPLUtils qw/writeJSONtoFile/;
 use WeBWorK::CourseEnvironment;
 
-my $ce          = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $pg_root });
+my $ce          = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $ENV{PG_ROOT} });
 my $libraryRoot = $ce->{problemLibrary}{root};
 my $contribRoot = $ce->{contribLibrary}{root};
 
 print "Using WeBWorK root: $ENV{WEBWORK_ROOT}\n";
-print "Using PG root: $pg_root\n";
+print "Using PG root: $ENV{PG_ROOT}\n";
 print "Using library root: $libraryRoot\n";
 print "Using contrib root: $contribRoot\n";
 

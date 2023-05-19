@@ -24,21 +24,21 @@ WeBWorK::Utils::CourseManagement - create, rename, and delete courses.
 
 use strict;
 use warnings;
+
 use Carp;
 use DBI;
+use String::ShellQuote;
+use UUID::Tiny qw(create_uuid_as_string);
+
 use WeBWorK::Debug;
 use File::Path qw(rmtree);
 use File::Copy qw(move);
 use File::Spec;
-use String::ShellQuote;
 use WeBWorK::CourseEnvironment;
+use WeBWorK::DB;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use readDirectory pretty_print_rh);
-use UUID::Tiny qw(create_uuid_as_string);
-#use WeBWorK::Utils::DBUpgrade;
-use PGUtil;    # for not_null() macro
 
-our @EXPORT    = ();
 our @EXPORT_OK = qw(
 	listCourses
 	listArchivedCourses
@@ -790,7 +790,7 @@ sub archiveCourse {
 	my $data_dir         = $ce->{courseDirs}{DATA};
 	my $dump_dir         = "$data_dir/mysqldump";
 	my $archive_path;
-	if (PGUtil::not_null($options{archive_path})) {
+	if (defined $options{archive_path} && $options{archive_path} =~ /S/) {
 		$archive_path = $options{archive_path};
 	} else {
 		$archive_path = $ce->{webworkDirs}{courses} . "/$courseID.tar.gz";

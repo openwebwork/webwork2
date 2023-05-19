@@ -9,8 +9,7 @@
 
 # In order for this script to work:
 #   1) The OPL downloaded to your machine (the .pg files)
-#   2) The environment variable WEBWORK_ROOT needs to be
-#      correctly defined (as with other scripts here).
+#   2) The variable pg_dir needs to be correctly set in conf/webwork2.mojolicious.yml.
 #   3) Configuration for the OPL in site.conf needs to be
 #      done (basically just setting the path to the OPL files).
 
@@ -18,9 +17,19 @@ use strict;
 use warnings;
 
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
-	$ENV{PG_ROOT} //= "$ENV{WEBWORK_ROOT}/../pg";
-	die "The pg directory must be defined in PG_ROOT" unless (-e $ENV{PG_ROOT});
+	use Mojo::File qw(curfile);
+	use YAML::XS qw(LoadFile);
+	use Env qw(WEBWORK_ROOT PG_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
+
+	# Load the configuration file to obtain the PG root directory.
+	my $config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.yml";
+	$config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.dist.yml" unless -e $config_file;
+	my $config = LoadFile($config_file);
+	$PG_ROOT = $config->{pg_dir};
+
+	die "The pg directory must be correctly defined in conf/webwork2.mojolicious.yml" unless -e $ENV{PG_ROOT};
 }
 
 # Get database connection

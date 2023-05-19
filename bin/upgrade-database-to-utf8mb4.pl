@@ -125,8 +125,19 @@ use strict;
 use warnings;
 
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n" unless $ENV{WEBWORK_ROOT};
-	die "PG_ROOT not found in environment.\n"      unless $ENV{PG_ROOT};
+	use Mojo::File qw(curfile);
+	use YAML::XS qw(LoadFile);
+	use Env qw(WEBWORK_ROOT PG_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
+
+	# Load the configuration file to obtain the PG root directory.
+	my $config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.yml";
+	$config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.dist.yml" unless -e $config_file;
+	my $config = LoadFile($config_file);
+	$PG_ROOT = $config->{pg_dir};
+
+	die "The pg directory must be correctly defined in conf/webwork2.mojolicious.yml" unless -e $ENV{PG_ROOT};
 }
 
 use Getopt::Long qw(:config bundling);
