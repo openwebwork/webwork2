@@ -41,13 +41,20 @@ sub startup ($app) {
 	# Configure the application
 	$app->secrets($config->{secrets});
 
+	# Set constants from the configuration.
+	$WeBWorK::Debug::Enabled                                = $config->{debug}{enabled} // 0;
+	$WeBWorK::Debug::Logfile                                = $config->{debug}{logfile} // '';
+	$WeBWorK::Debug::DenySubroutineOutput                   = $config->{debug}{deny_subroutine_output};
+	$WeBWorK::Debug::AllowSubroutineOutput                  = $config->{debug}{allow_subroutine_output};
+	$WeBWorK::ContentGenerator::Hardcopy::PreserveTempFiles = $config->{hardcopy}{preserve_temp_files} // 0;
+
 	# Load the plugin that switches the server to the non-root server user and group
 	# if the app is run as root and is in production mode.
 	$app->plugin(SetUserGroup => { user => $config->{server_user}, group => $config->{server_group} })
 		if $app->mode eq 'production' && $> == 0;
 
 	# Load a minimal course environment
-	my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
+	my $ce = WeBWorK::CourseEnvironment->new;
 
 	# Set important configuration variables
 	my $webwork_url         = $ce->{webwork_url};

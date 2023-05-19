@@ -45,9 +45,8 @@
 					<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top"
 						data-bs-toggle="popover"
 						data-bs-content="<%= maketext(
-							'Answer availability for gateway quizzes depends on multiple gateway quiz settings. '
-								. 'This only indicates the template answer date has passed. '
-								. 'See set editor for actual availability.'
+							'Answer availability for tests depends on multiple settings.  This only indicates the '
+								. 'template answer date has passed.  See set editor for actual availability.'
 						) =%>">
 						<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') =%>"
 							aria-hidden="true">

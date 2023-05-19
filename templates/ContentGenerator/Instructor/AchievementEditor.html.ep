@@ -61,5 +61,8 @@
 		<ul class="nav nav-tabs mb-2" role="tablist"><%= content 'tab-list' =%></ul>
 		<div class="tab-content"><%= content 'tab-content' %></div>
 	</div>
-	<div><%= submit_button maketext('Take Action!'), name => 'submit', class => 'btn btn-primary' %></div>
+	<div>
+		<%= submit_button maketext($actionFormTitles->{$default_choice}),
+			name => 'submit', id => 'take_action', class => 'btn btn-primary' %>
+	</div>
 <% end =%>

@@ -126,6 +126,22 @@ sub getConfigValues ($c, $ce) {
 		}
 	}
 
+	if (!$ce->{LTIVersion}) {
+		# If LTI authentication is not enabled for this course, then remove the LTI tab.
+		$configValues = [ grep { $_->[0] ne 'LTI' } @$configValues ];
+	} else {
+		# Remove the LTI settings for the LTI version that is not enabled for this course.
+		for my $oneConfig (@$configValues) {
+			next unless $oneConfig->[0] eq 'LTI';
+			$oneConfig = [
+				grep {
+					ref($_) ne 'HASH' || $_->{var} !~ /^LTI\{v1p[13]\}/ || $_->{var} =~ /^LTI\{$ce->{LTIVersion}\}/
+				} @$oneConfig
+			];
+			last;
+		}
+	}
+
 	return $configValues;
 }
 
@@ -133,13 +149,12 @@ sub pre_header_initialize ($c) {
 	my $ce           = $c->ce;
 	my $configValues = $c->getConfigValues($ce);
 	# Get a course environment without course.conf
-	$c->{default_ce} = WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, });
+	$c->{default_ce} = WeBWorK::CourseEnvironment->new;
 
 	$c->{ce_file_dir} = $ce->{courseDirs}{root};
 
 	# Get a copy of the course environment which does not have simple.conf loaded
 	my $ce3 = WeBWorK::CourseEnvironment->new({
-		%WeBWorK::SeedCE,
 		courseName          => $ce->{courseName},
 		web_config_filename => 'noSuchFilePlease'
 	});

@@ -37,6 +37,7 @@ use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
+use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
 use WeBWorK::HTML::AttemptsTable;
 use PGrandom;
 use Caliper::Sensor;
@@ -1072,20 +1073,19 @@ async sub pre_header_initialize ($c) {
 		}
 
 		# Try to update the student score on the LMS if that option is enabled.
-		my $LTIGradeMode = $c->ce->{LTIGradeMode} // '';
-		if ($c->{submitAnswers} && $will{recordAnswers} && $LTIGradeMode && $c->ce->{LTIGradeOnSubmit}) {
-			my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($c);
-			if ($LTIGradeMode eq 'course') {
-				$LTIGradeResult = $grader->submit_course_grade($effectiveUserID);
-			} elsif ($LTIGradeMode eq 'homework') {
-				$LTIGradeResult = $grader->submit_set_grade($effectiveUserID, $setID);
+		if ($c->{submitAnswers} && $will{recordAnswers} && $ce->{LTIGradeMode} && $ce->{LTIGradeOnSubmit}) {
+			my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);
+			if ($ce->{LTIGradeMode} eq 'course') {
+				$LTIGradeResult = await $grader->submit_course_grade($effectiveUserID);
+			} elsif ($ce->{LTIGradeMode} eq 'homework') {
+				$LTIGradeResult = await $grader->submit_set_grade($effectiveUserID, $setID);
 			}
 		}
 
 		# Finally, log student answers answers are being submitted, provided that answers can be recorded.  Note that
 		# this will log an overtime submission (or any case where someone submits the test, or spoofs a request to
 		# submit a test).
-		my $answer_log = $c->ce->{courseFiles}{logs}{answer_log};
+		my $answer_log = $ce->{courseFiles}{logs}{answer_log};
 
 		if (defined $answer_log && $c->{submitAnswers}) {
 			for my $i (0 .. $#problems) {

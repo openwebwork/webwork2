@@ -28,7 +28,7 @@ use WeBWorK::Utils qw/processEmailMessage createEmailSenderTransportSMTP/;
 # Send instructor email messages to students.
 # FIXME: This job currently allows multiple jobs to run at once.  Should it be limited?
 sub run ($job, $mail_data) {
-	my $ce = eval { WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $mail_data->{courseName} }) };
+	my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $mail_data->{courseName} }) };
 	return $job->fail("Could not construct course environment for $mail_data->{courseName}.") unless $ce;
 
 	my $db = WeBWorK::DB->new($ce->{dbLayout});

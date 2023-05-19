@@ -83,7 +83,7 @@ use lib "$pg_dir/lib";
 use WeBWorK::CourseEnvironment;
 use OPLUtils qw/build_library_directory_tree build_library_subject_tree build_library_textbook_tree/;
 
-my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $ENV{WEBWORK_ROOT} });
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $pg_dir });
 
 # decide whether the mysql installation can handle
 # utf8mb4 and that should be used for the OPL

@@ -217,7 +217,7 @@ sub count_report {
 
 
 # bring up a minimal course environment
-my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $pg_dir });
 
 my $dirHead = $ce->{webworkDirs}->{equationCache};
 my $cachePath = $ce->{webworkFiles}->{equationCacheDB};

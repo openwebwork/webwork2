@@ -88,7 +88,8 @@ usage() unless $course and $command and $file;
 
 my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
-	courseName => $course,
+	pg_dir      => $pg_dir,
+	courseName  => $course,
 });
 
 my $db = WeBWorK::DB->new($ce->{dbLayout});

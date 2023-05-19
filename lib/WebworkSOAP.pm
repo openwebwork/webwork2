@@ -38,7 +38,7 @@ sub new {
 	my ($self, $authenKey, $courseName) = @_;
 	$self = {};
 	#Construct Course
-	my $ce = eval { new WeBWorK::CourseEnvironment({ %SeedCE, courseName => $courseName }) };
+	my $ce = eval { WeBWorK::CourseEnvironment->new({ %SeedCE, courseName => $courseName }) };
 	$@ and soap_fault_major("Course Environment cannot be constructed.<br>$@");
 	#Authentication Check
 	if ($ce->{soap_authen_key} != $authenKey) {
@@ -103,7 +103,7 @@ sub hello {
 
 sub list_courses {
 	my ($self, $authenKey) = @_;
-	my $ce = eval { new WeBWorK::CourseEnvironment({%WeBWorK::SeedCE}) };
+	my $ce = eval { WeBWorK::CourseEnvironment->new };
 	$@ and soap_fault_major("Internal Course Environment cannot be constructed.");
 	if ($authenKey != $WebworkSOAP::SeedCE{soap_authen_key}) {
 		soap_fault_authen;

@@ -6,10 +6,24 @@
 	<%= javascript getAssetURL($ce, 'js/apps/RenderProblem/renderproblem.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/apps/ProblemGrader/problemgrader.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
+	<%= javascript getAssetURL($ce, 'js/apps/Essay/essay.js'), defer => undef =%>
+	% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
+		<%= javascript getAssetURL($ce, 'node_modules/mathquill/dist/mathquill.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/apps/MathQuill/mqeditor.js'), defer => undef =%>
+	% } elsif ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView') {
+		<%= javascript getAssetURL($ce, "js/apps/MathView/$ce->{pg}{options}{mathViewLocale}"), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/apps/MathView/mathview.js'), defer => undef =%>
+	% }
 % end
 %
 % content_for css => begin
 	<%= stylesheet getAssetURL($ce, 'js/apps/Problem/problem.css') =%>
+	% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
+		<%= stylesheet getAssetURL($ce, 'node_modules/mathquill/dist/mathquill.css') =%>
+		<%= stylesheet getAssetURL($ce, 'js/apps/MathQuill/mqeditor.css') =%>
+	% } elsif ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView') {
+		<%= stylesheet getAssetURL($ce, 'js/apps/MathView/mathview.css') =%>
+	% }
 % end
 %
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
@@ -104,7 +118,7 @@
 					<th><%= maketext('Latest Answers') %></th>
 					<th id="mark-all-correct-header" class="text-center">
 						<%= label_for 'select-all' => maketext('Mark Correct') =%>
-					   	<br>
+						<br>
 						<%= check_box 'select-all' => 'on', id => 'select-all', class => 'select-all form-check-input',
 							data => { select_group => 'mark_correct' } =%>
 					</th>
@@ -138,7 +152,7 @@
 						% }
 						<tr>
 							% if ($haveSections) {
-								<td class="text-center"><%= $user->section %></td>
+								<td class="text-center restricted-width-col"><%= $user->section %></td>
 							% }
 							% $problemNeedsGrading = 1 if $_->{problem}->flags =~ /:needs_grading$/;
 							<td class="<%= $_->{problem}->flags =~ /:needs_grading$/ ? 'needs-grading' : ''%>">
@@ -182,28 +196,29 @@
 									<%= 'There are no answers for this student.' =%>
 								% }
 							</td>
-							<td class="text-center">
+							<td class="text-center restricted-width-col">
 								% param("$userID.$versionID.mark_correct", undef);
 								<%= check_box "$userID.$versionID.mark_correct" => '1',
 									class             => 'mark_correct form-check-input',
 									'aria-labelledby' => 'mark-all-correct-header' =%>
 							</td>
-							<td>
+							<td class="restricted-width-col">
 								% param("$userID.$versionID.score", undef);
 								<%= number_field "$userID.$versionID.score" =>
 										wwRound(0, $_->{problem}->status * 100),
-									class => 'score-selector form-control form-control-sm', style => 'width:6.5rem;',
-									min => 0, max => 100, autocomplete => 'off',
-								   	'aria-labelledby' => 'score-header' =%>
+									class => 'score-selector form-control form-control-sm restricted-width-col',
+									style => 'width:6.5rem;', min => 0, max => 100, autocomplete => 'off',
+									'aria-labelledby' => 'score-header' =%>
 							</td>
-							<td>
+							<td class="grader-comment-column">
 								% if (defined $_->{past_answer}) {
 									<%= text_area "$userID.$versionID.comment" => $_->{past_answer}->comment_string,
-										rows  => 3, class => 'form-control', 'aria-labelledby' => 'comment-header' =%>
-									<br>
-									<button class="preview btn btn-secondary btn-sm" type="button">
-										<%= maketext('Preview') =%>
-									</button>
+										id => "${userID}_${versionID}_comment",
+										rows  => 3, class => 'form-control latexentryfield',
+										'aria-labelledby' => 'comment-header' =%>
+									<%= hidden_field "MaThQuIlL_${userID}_${versionID}_comment" => '',
+										id => "MaThQuIlL_${userID}_${versionID}_comment",
+										data => { eqn_editor_btn_after => 'true' } =%>
 								% }
 							</td>
 						</tr>
@@ -215,7 +230,7 @@
 			<div class='mb-3'>
 				<span class='needs-grading fw-bold p-2'><%= maketext('Name') %></span>
 				\( = \)
- 				<%= maketext('Problem has an essay answer that needs to be graded.') =%>
+				<%= maketext('Problem has an essay answer that needs to be graded.') =%>
 			</div>
 		% }
 		<div id="alt-source-key" class='mb-3 d-none'>

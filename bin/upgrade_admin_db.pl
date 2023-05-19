@@ -35,8 +35,9 @@ use WeBWorK::Utils::CourseIntegrityCheck;
 ##########################
 my $upgrade_courseID = 'admin';
 
-my $ce = new WeBWorK::CourseEnvironment({
+my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
+	pg_dir      => $pg_dir,
 	courseName  => $upgrade_courseID,
 });
 #warn "do_upgrade_course: updating |$upgrade_courseID| from" , join("|",@upgrade_courseIDs);

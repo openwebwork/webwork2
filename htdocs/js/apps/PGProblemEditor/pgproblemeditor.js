@@ -89,7 +89,7 @@
 			?.addEventListener('change', () => deleteBackupCheck.checked = true);
 	}
 
-	document.getElementById('submit_button_id')?.addEventListener('click', async (e) => {
+	document.getElementById('take_action')?.addEventListener('click', async (e) => {
 		const actionView = document.getElementById('view');
 		const editorForm = document.getElementById('editor');
 
@@ -287,7 +287,7 @@
 		})).then(() => resolve());
 	});
 
-	// This is used to protect against rapid successive clicks on the "Randomize Seed" or "Take Action" buttons.
+	// This is used to protect against rapid successive clicks on the "Randomize Seed" or "View/Reload" buttons.
 	let rendering = false;
 
 	const renderProblem = (body) => new Promise((resolve) => {

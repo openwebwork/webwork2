@@ -116,39 +116,6 @@ sub nav ($c, $args) {
 	);
 }
 
-sub page_title ($c) {
-	my $ce = $c->ce;
-
-	# Using the url path parameters won't break if the set/problem are invalid.
-	my $setID = $c->stash('setID');
-
-	my $title = $c->tag('span', dir => 'ltr', format_set_name_display($setID));
-
-	# Put either due date or reduced scoring date in the title.
-	my $set = $c->db->getMergedSet($c->param('effectiveUser'), $setID);
-	if (defined($set) && between($set->open_date, $set->due_date)) {
-		if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
-			&& $set->enable_reduced_scoring
-			&& $set->reduced_scoring_date
-			&& $set->reduced_scoring_date != $set->due_date
-			&& before($set->reduced_scoring_date))
-		{
-			$title .= ' - '
-				. $c->maketext(
-					'Due [_1], after which reduced scoring is available until [_2]',
-					$c->formatDateTime($set->reduced_scoring_date, undef, $ce->{studentDateDisplayFormat}),
-					$c->formatDateTime($set->due_date,             undef, $ce->{studentDateDisplayFormat})
-				);
-		} elsif ($set->due_date) {
-			$title .= ' - '
-				. $c->maketext('Closes [_1]',
-					$c->formatDateTime($set->due_date, undef, $ce->{studentDateDisplayFormat}));
-		}
-	}
-
-	return $title;
-}
-
 sub siblings ($c) {
 	my $db    = $c->db;
 	my $ce    = $c->ce;

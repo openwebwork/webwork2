@@ -32,6 +32,10 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  instructor_rpc                      /instructor_rpc
  html2xml                            /html2xml
 
+ ltiadvantage_login                  /ltiadvantage/login
+ ltiadvantage_launch                 /ltiadvantage/launch
+ ltiadvantage_keys                   /ltiadvantage/keys
+
  set_list                            /$courseID
 
  logout                              /$courseID/logout
@@ -129,9 +133,10 @@ my %routeParameters = (
 	root => {
 		title => 'WeBWorK',
 		# 'course_admin' is also a child of 'root' but that is a special case that is setup separately.
-		children => [qw(render_rpc html2xml instructor_rpc set_list)],
-		module   => 'Home',
-		path     => '/'
+		children =>
+			[qw(render_rpc html2xml instructor_rpc ltiadvantage_login ltiadvantage_launch ltiadvantage_keys set_list)],
+		module => 'Home',
+		path   => '/'
 	},
 
 	course_admin => {
@@ -157,6 +162,27 @@ my %routeParameters = (
 		title  => 'html2xml',
 		module => 'RenderViaRPC',
 		path   => '/html2xml'
+	},
+
+	# Both of these routes end up at the login screen on failure, and the title is not used anywhere else.
+	# Hence the title 'Login'.
+	ltiadvantage_login => {
+		title  => x('Login'),
+		module => 'LTIAdvantage',
+		path   => '/ltiadvantage/login',
+		action => 'login'
+	},
+	ltiadvantage_launch => {
+		title  => x('Login'),
+		module => 'LTIAdvantage',
+		path   => '/ltiadvantage/launch',
+		action => 'launch'
+	},
+	ltiadvantage_keys => {
+		title  => 'keys',
+		module => 'LTIAdvantage',
+		path   => '/ltiadvantage/keys',
+		action => 'keys'
 	},
 
 	set_list => {
@@ -217,7 +243,7 @@ my %routeParameters = (
 		unrestricted => 1
 	},
 	proctored_gateway_proctor_login => {
-		title        => x('Proctored Gateway Quiz [_2] Proctor Login'),
+		title        => x('Proctored Test [_2] Proctor Login'),
 		module       => 'LoginProctor',
 		path         => '/proctor_login',
 		unrestricted => 1
@@ -465,14 +491,16 @@ sub setup_content_generator_routes {
 sub setup_content_generator_routes_recursive {
 	my ($route, $child) = @_;
 
+	my $action = $routeParameters{$child}{action} // 'go';
+
 	if ($routeParameters{$child}{children}) {
 		my $child_route = $route->under($routeParameters{$child}{path})->name($child);
-		$child_route->any('/')->to("$routeParameters{$child}{module}#go")->name($child);
+		$child_route->any('/')->to("$routeParameters{$child}{module}#$action")->name($child);
 		for (@{ $routeParameters{$child}{children} }) {
 			setup_content_generator_routes_recursive($child_route, $_);
 		}
 	} else {
-		$route->any($routeParameters{$child}{path})->to("$routeParameters{$child}{module}#go")->name($child);
+		$route->any($routeParameters{$child}{path})->to("$routeParameters{$child}{module}#$action")->name($child);
 	}
 
 	return;

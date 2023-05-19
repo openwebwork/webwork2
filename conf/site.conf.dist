@@ -237,9 +237,6 @@ $database_password ='passwordRW';
 # server.  You may use the defaults unless you have things in different places.
 #################################################################################
 
-# Root directory of PG.
-$pg_dir              = "/opt/webwork/pg";
-
 # URL and path to htdocs directory.
 $webwork_htdocs_url  = "/webwork2_files";
 $webwork_htdocs_dir  = "$webwork_dir/htdocs";

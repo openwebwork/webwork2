@@ -40,10 +40,6 @@ the action of the content generator module for the designated route.
 use Time::HiRes qw/time/;
 
 use WeBWorK::Localize;
-
-# Load WeBWorK::Constants before anything else.  This sets package variables in several packages.
-use WeBWorK::Constants;
-
 use WeBWorK::Authen;
 use WeBWorK::Authz;
 use WeBWorK::CourseEnvironment;
@@ -112,6 +108,27 @@ async sub dispatch ($c) {
 		$routeCaptures{courseID} = $c->param('courseID') if $c->param('courseID');
 	}
 
+	# If this is the login phase of an LTI 1.3 login, then extract the courseID from the target_link_uri.
+	if ($c->current_route eq 'ltiadvantage_login') {
+		my $target = $c->param('target_link_uri') ? $c->url_for($c->param('target_link_uri'))->path : '';
+		$c->stash->{courseID} = $1 if $target =~ m|$location/([^/]*)|;
+		$routeCaptures{courseID} = $c->stash->{courseID} || '___';
+	}
+
+	# If this is the launch phase of an LTI 1.3 login, then get the courseID from the state.  Note that this data can
+	# not be trusted.  It will be verified once the JWT is decrypted.  Also see the comments about the hacks involved
+	# here in the WeBWorK::Authen::LTIAdvantage::verify method.
+	if ($c->current_route eq 'ltiadvantage_launch') {
+		$c->stash->{LTIState} = $c->param('state') || ',set_id:';
+		($c->stash->{lti_lms_user_id}, $c->stash->{courseID}) = split ',set_id:', $c->stash->{LTIState};
+		if ($c->stash->{courseID} && $c->stash->{lti_lms_user_id}) {
+			$c->stash->{courseID} =~ s/@/-/g;
+			$routeCaptures{courseID} = $c->stash->{courseID};
+		} else {
+			$routeCaptures{courseID} = '___';
+		}
+	}
+
 	debug("The display module for this route is $displayModule\n");
 	debug("This route has the following captures:\n");
 	for my $key (keys %routeCaptures) {
@@ -144,7 +161,7 @@ async sub dispatch ($c) {
 
 	# Create Course Environment
 	debug("We need to get a course environment (with or without a courseID!)\n");
-	my $ce = eval { WeBWorK::CourseEnvironment->new({ %SeedCE, courseName => $routeCaptures{courseID} }) };
+	my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $routeCaptures{courseID} }) };
 	$@ and die "Failed to initialize course environment: $@\n";
 	debug("Here's the course environment: $ce\n");
 	$c->ce($ce);
@@ -181,22 +198,24 @@ async sub dispatch ($c) {
 	debug("Using user_authen_module $user_authen_module: $authen\n");
 	$c->authen($authen);
 
-	my $db;
-
 	if ($routeCaptures{courseID}) {
 		debug("We got a courseID from the route, now we can do some stuff:\n");
 
 		return (0, 'This course does not exist.') unless -e $ce->{courseDirs}{root};
 
 		debug("...we can create a database object...\n");
-		$db = WeBWorK::DB->new($ce->{dbLayout});
+		my $db = WeBWorK::DB->new($ce->{dbLayout});
 		debug("(here's the DB handle: $db)\n");
 		$c->db($db);
 
 		# Don't check authentication if the user is logging out.
 		if ($displayModule ne 'WeBWorK::ContentGenerator::Logout') {
-			my $authenOK = $authen->verify;
-			if ($authenOK) {
+			if ($authen->verify) {
+				# If this is the first phase of LTI 1.3 authentication, then return so its special content generator
+				# module will render and submit the login repost form.  This does not contain the neccessary information
+				# to continue here.
+				return 1 if $c->current_route eq 'ltiadvantage_login';
+
 				my $userID = $c->param('user');
 				debug("Hi, $userID, glad you made it.\n");
 
@@ -245,8 +264,8 @@ async sub dispatch ($c) {
 				return 1 if $c->{rpc};
 
 				debug("Bad news: authentication failed!\n");
+				debug("Rendering WeBWorK::ContentGenerator::Login\n");
 				await WeBWorK::ContentGenerator::Login->new($c)->go();
-				debug("set displayModule to WeBWorK::ContentGenerator::Login\n");
 				return 0;
 			}
 		}

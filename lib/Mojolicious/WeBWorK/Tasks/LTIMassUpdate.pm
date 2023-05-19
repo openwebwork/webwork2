@@ -17,6 +17,7 @@ package Mojolicious::WeBWorK::Tasks::LTIMassUpdate;
 use Mojo::Base 'Minion::Job', -signatures;
 
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
+use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 
@@ -27,7 +28,7 @@ sub run ($job, $courseID, $userID = '', $setID = '') {
 	# can start.  New jobs retry every minute until they can aquire their own lock.
 	return $job->retry({ delay => 60 }) unless my $guard = $job->minion->guard('lti_mass_update', 3600);
 
-	my $ce = eval { WeBWorK::CourseEnvironment->new({ %WeBWorK::SeedCE, courseName => $courseID }) };
+	my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $courseID }) };
 	return $job->fail("Could not construct course environment for $courseID.") unless $ce;
 
 	my $db = WeBWorK::DB->new($ce->{dbLayout});
@@ -44,38 +45,35 @@ sub run ($job, $courseID, $userID = '', $setID = '') {
 	}
 
 	# Pass a fake controller object that will work for the grader.
-	my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new({ ce => $ce, db => $db, app => $job->app });
-	$grader->{post_processing_mode} = 1;
+	my $grader =
+		$ce->{LTIVersion} eq 'v1p1'
+		? WeBWorK::Authen::LTIAdvanced::SubmitGrade->new({ ce => $ce, db => $db, app => $job->app }, 1)
+		: WeBWorK::Authen::LTIAdvantage::SubmitGrade->new({ ce => $ce, db => $db, app => $job->app }, 1);
 
-	eval {
-		# Determine what needs to be updated.
-		my %updateUsers;
-		if ($setID && $userID && $ce->{LTIGradeMode} eq 'homework') {
-			$updateUsers{$userID} = [$setID];
-		} elsif ($setID && $ce->{LTIGradeMode} eq 'homework') {
-			%updateUsers = map { $_ => [$setID] } $db->listSetUsers($setID);
-		} else {
-			if ($ce->{LTIGradeMode} eq 'course') {
-				%updateUsers = map { $_ => 'update_course_grade' } ($userID || $db->listUsers);
-			} elsif ($ce->{LTIGradeMode} eq 'homework') {
-				%updateUsers = map { $_ => [ $db->listUserSets($_) ] } ($userID || $db->listUsers);
-			}
+	# Determine what needs to be updated.
+	my %updateUsers;
+	if ($setID && $userID && $ce->{LTIGradeMode} eq 'homework') {
+		$updateUsers{$userID} = [$setID];
+	} elsif ($setID && $ce->{LTIGradeMode} eq 'homework') {
+		%updateUsers = map { $_ => [$setID] } $db->listSetUsers($setID);
+	} else {
+		if ($ce->{LTIGradeMode} eq 'course') {
+			%updateUsers = map { $_ => 'update_course_grade' } ($userID || $db->listUsers);
+		} elsif ($ce->{LTIGradeMode} eq 'homework') {
+			%updateUsers = map { $_ => [ $db->listUserSets($_) ] } ($userID || $db->listUsers);
 		}
+	}
 
-		for my $user (keys %updateUsers) {
-			if (ref($updateUsers{$user}) eq 'ARRAY') {
-				for my $set (@{ $updateUsers{$user} }) {
-					$grader->submit_set_grade($user, $set);
-				}
-			} elsif ($updateUsers{$user} eq 'update_course_grade') {
-				$grader->submit_course_grade($user);
+	# Minion does not support asynchronous jobs.  At least if you want notification of job completion.  So call the
+	# Mojolicious::Promise wait method instead.
+	for my $user (keys %updateUsers) {
+		if (ref($updateUsers{$user}) eq 'ARRAY') {
+			for my $set (@{ $updateUsers{$user} }) {
+				$grader->submit_set_grade($user, $set)->wait;
 			}
+		} elsif ($updateUsers{$user} eq 'update_course_grade') {
+			$grader->submit_course_grade($user)->wait;
 		}
-	};
-	if ($@) {
-		# Write errors to the Mojolicious log.
-		$job->app->log->error("An error occured while trying to mass update grades via LTI: $@");
-		return $job->fail("An error ocurred while trying to mass update grades for $courseID: $@");
 	}
 
 	$job->app->log->info("Updated grades via LTI for course $courseID.");

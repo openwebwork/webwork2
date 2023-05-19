@@ -19,39 +19,9 @@
 % }
 %
 % my $set = $c->{set};
-%
-% if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
-	% && $set->enable_reduced_scoring
-	% && $set->reduced_scoring_date
-	% && $set->reduced_scoring_date != $set->due_date
-% ) {
-	% my $reduced_scoring_date  = $set->reduced_scoring_date;
-	% my $reducedScoringPerCent = int(100 * $ce->{pg}{ansEvalDefaults}{reducedScoringValue} + .5);
-	%
-	% if (before($reduced_scoring_date)) {
-		<div class="alert alert-warning mb-3">
-			<%= maketext(
-				'After the reduced scoring period begins all work counts for [_1]% of its value.',
-				$reducedScoringPerCent
-			) =%>
-		</div>
-	% } elsif (between($reduced_scoring_date, $set->due_date)) {
-		<div class="alert alert-warning mb-3">
-			<%= maketext(
-				'This set is in its reduced scoring period.  All work counts for [_1]% of its value.',
-				$reducedScoringPerCent
-			) =%>
-		</div>
-	% } else {
-		<div class="alert alert-warning mb-3">
-			<%= maketext(
-				'This set had a reduced scoring period that started on [_1] and ended on [_2].  '
-					. 'During that period all work counted for [_3]% of its value.',
-				$c->formatDateTime($reduced_scoring_date), $c->formatDateTime($set->due_date), $reducedScoringPerCent
-			) =%>
-		</div>
-	% }
-% }
+% 
+% # Stats message displays the current status of the set and states the next important date.
+<%= include 'ContentGenerator/Base/set_status', set => $set =%>
 %
 <%= $set->assignment_type =~ /gateway/ ? $c->gateway_body : $c->problem_list =%>
 %

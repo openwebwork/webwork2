@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::Utils::ProblemProcessing;
-use Mojo::Base 'Exporter', -signatures;
+use Mojo::Base 'Exporter', -signatures, -async_await;
 
 =head1 NAME
 
@@ -32,6 +32,7 @@ use WeBWorK::Debug;
 use WeBWorK::Utils qw(writeLog writeCourseLogGivenTime encodeAnswers before after jitar_problem_adjusted_status
 	jitar_id_to_seq createEmailSenderTransportSMTP);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
+use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
 
 use Caliper::Sensor;
 use Caliper::Entity;
@@ -48,7 +49,7 @@ our @EXPORT_OK = qw(
 # Note that $c must be a WeBWorK::ContentGenerator object whose associated route is parented by the set_list route.
 # In addition $c must have the neccessary hash data values set for this method.
 # Those are 'will', 'problem', 'pg', and 'set'.
-sub process_and_log_answer ($c) {
+async sub process_and_log_answer ($c) {
 	my $ce            = $c->ce;
 	my $db            = $c->db;
 	my $effectiveUser = $c->param('effectiveUser');
@@ -247,37 +248,34 @@ sub process_and_log_answer ($c) {
 					$c->param('startTime', '');
 				}
 
-				#Try to update the student score on the LMS
-				# if that option is enabled.
-				my $LTIGradeMode = $ce->{LTIGradeMode} // '';
-				if ($LTIGradeMode && $ce->{LTIGradeOnSubmit}) {
-					my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($c);
-					if ($LTIGradeMode eq 'course') {
-						if ($grader->submit_course_grade($problem->user_id)) {
-							$scoreRecordedMessage .=
-								$c->tag('br') . $c->maketext('Your score was successfully sent to the LMS.');
-						} else {
-							$scoreRecordedMessage .=
-								$c->tag('br') . $c->maketext('Your score was not successfully sent to the LMS.');
-						}
-					} elsif ($LTIGradeMode eq 'homework') {
-						if ($grader->submit_set_grade($problem->user_id, $problem->set_id)) {
-							$scoreRecordedMessage .=
-								$c->tag('br') . $c->maketext('Your score was successfully sent to the LMS.');
-						} else {
-							$scoreRecordedMessage .=
-								$c->tag('br') . $c->maketext('Your score was not successfully sent to the LMS.');
-						}
+				my $LTIGradeResult = -1;
+
+				# Try to update the student score on the LMS if that option is enabled.
+				if ($ce->{LTIGradeMode} && $ce->{LTIGradeOnSubmit}) {
+					$LTIGradeResult = 0;
+					my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);
+					if ($ce->{LTIGradeMode} eq 'course') {
+						$LTIGradeResult = await $grader->submit_course_grade($problem->user_id);
+					} elsif ($ce->{LTIGradeMode} eq 'homework') {
+						$LTIGradeResult = await $grader->submit_set_grade($problem->user_id, $problem->set_id);
 					}
+				}
+
+				if ($LTIGradeResult == 0) {
+					$scoreRecordedMessage .=
+						$c->tag('br') . $c->maketext('Your score was not successfully sent to the LMS.');
+				} elsif ($LTIGradeResult > 0) {
+					$scoreRecordedMessage .=
+						$c->tag('br') . $c->maketext('Your score was successfully sent to the LMS.');
 				}
 			} else {
 				# The "sticky" answers get saved here when $will{recordAnswers} is false
 				$db->putUserProblem($pureProblem);
 				if (before($set->open_date, $c->submitTime) || after($set->due_date, $c->submitTime)) {
-					$scoreRecordedMessage =
+					$scoreRecordedMessage .=
 						$c->maketext('Your score was not recorded because this homework set is closed.');
 				} else {
-					$scoreRecordedMessage = $c->maketext('Your score was not recorded.');
+					$scoreRecordedMessage .= $c->maketext('Your score was not recorded.');
 				}
 			}
 		} else {

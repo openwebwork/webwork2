@@ -52,7 +52,7 @@ use WeBWorK::File::Scoring qw(parse_scoring_file);
 use WeBWorK::PG;
 use WeBWorK::Localize;
 use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients generateURLs getAssetURL format_set_name_display);
-use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
+use WeBWorK::Authen::LTI::MassUpdate qw(mass_update);
 use WeBWorK::Utils::LanguageAndDirection qw(get_lang_and_dir);
 use WeBWorK::Utils::Routes qw(route_title route_navigation_is_restricted);
 
@@ -109,8 +109,7 @@ async sub go ($c) {
 
 	# If grades are being passed back to the lti, then peroidically update all of the
 	# grades because things can get out of sync if instructors add or modify sets.
-	WeBWorK::Authen::LTIAdvanced::SubmitGrade::mass_update($c)
-		if $c->stash('courseID') && ref($c->db) && $ce->{LTIGradeMode};
+	mass_update($c) if $c->stash('courseID') && ref($c->db) && $ce->{LTIGradeMode};
 
 	# Check to determine if this is a problem set response.  Individual content generators must check
 	# $c->{invalidSet} and react appropriately.
@@ -537,7 +536,7 @@ sub links ($c) {
 		# Do not use HTML::Entities::encode_entities on the link text.
 		# Mojolicious has already encoded html entities at this point.
 		return $c->link_to(
-			($options{text} // route_title($c, $route_name)) => $c->systemLink(
+			($options{text} // route_title($c, $route_name, 1)) => $c->systemLink(
 				$new_url, params => { %systemlink_params, %{ $options{systemlink_params} // {} } }
 			),
 			class => 'nav-link' . ($active ? ' active' : ''),
@@ -692,7 +691,7 @@ sub page_title ($c) {
 		return $db->getSettingValue('courseTitle');
 	} else {
 		# Display the route name
-		return route_title($c, $c->current_route);
+		return route_title($c, $c->current_route, 1);
 	}
 }
 

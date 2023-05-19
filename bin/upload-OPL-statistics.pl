@@ -32,8 +32,9 @@ use WeBWorK::CourseEnvironment;
 use Net::Domain qw/domainname/;
 use String::ShellQuote;
 
-my $ce = new WeBWorK::CourseEnvironment({
+my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
+	pg_dir      => $pg_dir,
 });
 
 # Get DB connection settings
@@ -66,7 +67,7 @@ with the WeBWorK community if you agree:
   * the average number of attempts made per user on the problem
   * the average completion percentage for each user who attempted the problem
 
-Share OPL usage statistics with the WeBWorK community [Y/N]: 
+Share OPL usage statistics with the WeBWorK community [Y/N]:
 END_REQUEST
 	$input = <STDIN>;
 	chomp $input;

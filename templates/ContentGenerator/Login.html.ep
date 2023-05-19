@@ -7,9 +7,11 @@
 % my $course = (stash('courseID') // '') =~ s/_/ /gr;
 %
 % if ($externalAuth) {
-	% my $LMS = $ce->{LMS_url} ? link_to($ce->{LMS_name} => $ce->{LMS_url}) : $ce->{LMS_name};
+	% my $LMS = $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
+		% ? link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
+		% : $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
 	%
-	% if (!stash('authen_error') || $authen eq 'WeBWorK::Authen::LTIBasic') {
+	% if (!stash('authen_error')) {
 		<p>
 			<%== maketext('The course [_1] uses an external authentication system ([_2]). '
 				. 'Please return to that system to access this course.',

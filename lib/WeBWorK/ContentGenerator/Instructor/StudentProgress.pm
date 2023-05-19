@@ -69,13 +69,11 @@ sub page_title ($c) {
 	return '' unless $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools');
 
 	if ($c->current_route eq 'instructor_user_progress') {
-		return $c->maketext('Student Progress for [_1] student [_2]', $c->ce->{courseName}, $c->{studentID});
+		return $c->maketext('Student Progress for [_1]', $c->{studentID});
 	} elsif ($c->current_route eq 'instructor_set_progress') {
 		return $c->maketext(
-			'Student Progress for [_1] set [_2]. Closes [_3]',
-			$c->ce->{courseName},
+			'Student Progress for set [_1]',
 			$c->tag('span', dir => 'ltr', format_set_name_display($c->stash('setID'))),
-			$c->formatDateTime($c->{setRecord}->due_date)
 		);
 	}
 
@@ -177,14 +175,14 @@ sub displaySets ($c) {
 			$score = wwRound(2, $score);
 
 			my $version_data = {
-				version            => $vNum,
-				score              => $score,
-				total              => $total,
-				date               => $dateOfTest,
-				testtime           => $testTime,
-				timeleft           => $timeLeft,
-				problem_scores     => $problem_scores,
-				incorrect_attempts => ''
+				version                    => $vNum,
+				score                      => $score,
+				total                      => $total,
+				date                       => $dateOfTest,
+				testtime                   => $testTime,
+				timeleft                   => $timeLeft,
+				problem_scores             => $problem_scores,
+				problem_incorrect_attempts => $problem_incorrect_attempts
 			};
 
 			if ($showBestOnly) {

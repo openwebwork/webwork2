@@ -69,6 +69,8 @@ my @modulesList = qw(
 	Benchmark
 	Carp
 	Class::Accessor
+	Crypt::JWT
+	Crypt::PK::RSA
 	Data::Dump
 	Data::Dumper
 	Data::Structure::Util
@@ -112,6 +114,7 @@ my @modulesList = qw(
 	Locale::Maketext::Simple
 	LWP::Protocol::https
 	MIME::Base64
+	Math::Random::Secure
 	Minion
 	Minion::Backend::SQLite
 	Mojolicious
