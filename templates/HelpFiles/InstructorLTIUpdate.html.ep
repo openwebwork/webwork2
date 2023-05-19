@@ -20,5 +20,5 @@
 	<%= maketext('This page gives information about mass LTI grade updates, and allows you to trigger a grade update '
 		. 'for all users and all sets, all sets for one user, all users for one set, or one user for one set.  When '
 		. 'a user is selected, the sets drop down menu is updated to only allow selecting sets assigned the selected '
-		. 'user.  Similarly when a set is selected, the user menu is updated to only allow selecting valid users.) =%>
+		. 'user.  Similarly when a set is selected, the user menu is updated to only allow selecting valid users.') =%>
 </p>
