@@ -20,7 +20,11 @@
 	<%= maketext('This page allows you to configure course settings such as permission levels, display modes '
 		. 'allowed, default display mode, email feedback behavior, and much more.') =%>
 </p>
-<p class="mb-0">
+<p>
 	<%= maketext('Click on each of the tabs to view the configuration items. The question mark icon provides access '
 		. 'to information about the behavior of the configuration settings.') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('Note that some settings require an additional page load after "Save Changes" is clicked in order '
+		. 'to take effect.  This is true for a theme change for example.') =%>
 </p>
