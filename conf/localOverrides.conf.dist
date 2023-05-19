@@ -38,11 +38,21 @@
 # Additional mail settings in defaults.config can be overridden here
 ################################################################################
 
-# This setting is only used if you need to send email from within a PG problem
-# (e.g. surveys, essay questions).  It is not necessary for using the email
-# tools in WeBWorK.  You can set email addresses here for users who need to
-# receive email from problems in all courses, or in course.conf for professors
-# who will receive email from problems in a single course.
+# By default, feedback is sent to all users who have permission to
+# receive_feedback in a course. If this list is non-empty, feedback is also sent
+# to the addresses specified here.
+#
+# * If you want to disable feedback altogether, leave this empty and set
+#   $permissionLevels{submit_feedback} = 'nobody'. This will cause the
+#   feedback button to go away as well.
+#
+# * If you want to send email ONLY to addresses in this list, set
+#   $permissionLevels{receive_feedback} = 'nobody'.
+#
+# Items in this list may be bare addresses, or RFC822 mailboxes, like:
+#   'Joe User <joe.user@example.com>'
+# The advantage of this form is that the resulting email will include the name
+# of the recipient in the "To" field of the email.
 
 $mail{feedbackRecipients}    = [
 	#'prof1@yourserver.yourdomain.edu',

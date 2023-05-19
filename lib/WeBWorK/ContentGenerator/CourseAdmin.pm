@@ -313,10 +313,6 @@ sub do_add_course ($c) {
 
 	my %courseOptions = (dbLayoutName => $add_dbLayout);
 
-	if ($add_initial_email ne '') {
-		$courseOptions{allowedRecipients} = [$add_initial_email];
-	}
-
 	my @users;
 
 	# copy users from current (admin) course if desired
