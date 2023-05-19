@@ -505,11 +505,7 @@ sub renameCourse {
 	}
 
 	# get new course environment
-	my $newCE = $oldCE->new(
-		$oldCE->{webworkDirs}->{root},
-		$oldCE->{webworkURLs}->{root},
-		$oldCE->{pg}->{directories}->{root}, $newCourseID,
-	);
+	my $newCE = $oldCE->new({ courseName => $newCourseID });
 
 	# find the course dirs that still exist in their original locations
 	# (i.e. are not subdirs of $courseDir)
