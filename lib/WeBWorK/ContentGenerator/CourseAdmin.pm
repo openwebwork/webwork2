@@ -1233,6 +1233,10 @@ sub unarchive_course_validate ($c) {
 		push @errors, $c->maketext('Course ID cannot exceed [_1] characters.', $ce->{maxCourseIdLength});
 	}
 
+	unless ($courseID =~ /^[\w-]*$/) {    # regex copied from CourseAdministration.pm
+		push @errors, $c->maketext('Course ID may only contain letters, numbers, hyphens, and underscores.');
+	}
+
 	return @errors;
 }
 
