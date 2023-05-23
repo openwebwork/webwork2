@@ -441,31 +441,23 @@ sub read_input_file ($c, $filePath) {
 	my $header = '';
 	my ($subject, $from, $replyTo);
 
-	if (-e "$filePath" and -r "$filePath") {
-		open my $FILE, "<:encoding(UTF-8)", $filePath
-			or do { $c->addbadmessage($c->maketext(q{Can't open [_1]}, $filePath)); return };
-		while ($header !~ s/Message:\s*$//m and not eof($FILE)) {
-			$header .= <$FILE>;
-		}
-		$text = join('', <$FILE>);
-		close $FILE;
-
-		$text   =~ s/^\s*//;           # remove initial white space if any.
-		$header =~ /^From:\s(.*)$/m;
-		$from = $1 or $from = $c->{defaultFrom};
-
-		$header =~ /^Reply-To:\s(.*)$/m;
-		$replyTo = $1 or $replyTo = $c->{defaultReply};
-
-		$header =~ /^Subject:\s(.*)$/m;
-		$subject = $1;
-
-	} else {
-		$from    = $c->{defaultFrom};
-		$replyTo = $c->{defaultReply};
-		$text    = (-e "$filePath") ? "FIXME file $filePath can't be read" : "FIXME file $filePath doesn't exist";
-		$subject = $c->{defaultSubject};
+	open my $FILE, "<:encoding(UTF-8)", $filePath
+		or do { $c->addbadmessage($c->maketext(q{Can't open [_1]}, $filePath)); return };
+	while ($header !~ s/Message:\s*$//m and not eof($FILE)) {
+		$header .= <$FILE>;
 	}
+	$text = join('', <$FILE>);
+	close $FILE;
+
+	$text   =~ s/^\s*//;           # remove initial white space if any.
+	$header =~ /^From:\s(.*)$/m;
+	$from = $1 || $c->{defaultFrom};
+
+	$header =~ /^Reply-To:\s(.*)$/m;
+	$replyTo = $1 || $c->{defaultReply};
+
+	$header =~ /^Subject:\s(.*)$/m;
+	$subject = $1 || $c->{defaultSubject};
 
 	return ($from, $replyTo, $subject, \$text);
 }
