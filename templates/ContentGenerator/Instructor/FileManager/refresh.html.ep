@@ -77,7 +77,7 @@
 				</label>
 				<label class="form-check-label me-4">
 					<%= radio_button format => 'Binary', class => 'form-check-input me-2' =%>
-					<%= maketext('Text') =%>
+					<%= maketext('Binary') =%>
 				</label>
 				<label class="form-check-label me-4">
 					<%= radio_button format => 'Automatic', class => 'form-check-input me-2', checked => undef =%>
