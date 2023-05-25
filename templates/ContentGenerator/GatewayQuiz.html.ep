@@ -596,8 +596,12 @@
 				% # Print out hidden fields with the current last answers.
 				% my $curr_prefix = 'Q' . sprintf('%04d', $problem_numbers->[ $probOrder->[$i] ]) . '_';
 				% for my $curr_field (grep {/^(?!previous).*$curr_prefix/} keys %{ $c->{formFields} }) {
-					% for (split(/\0/, $c->{formFields}{$curr_field} // '')) {
-						<%= hidden_field $curr_field => $_ =%>
+					% if (ref($c->{formFields}{$curr_field}) eq 'ARRAY') {
+						% for (@{ $c->{formFields}{$curr_field} }) {
+							<%= hidden_field $curr_field => $_ =%>
+						% }
+					% } else {
+						<%= hidden_field $curr_field => $c->{formFields}{$curr_field} // '' =%>
 					% }
 				% }
 				% # Store the problem status for continued attempts recording.
