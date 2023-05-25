@@ -162,12 +162,9 @@ environment.
 $courseOptions is a reference to a hash containing the following options:
 
  dbLayoutName         => $dbLayoutName
- allowedRecipients    => $mail{allowedRecipients}
- feedbackRecipients   => $mail{feedbackRecipients}
  PRINT_FILE_NAMES_FOR => $pg{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}
 
-C<dbLayoutName> is required. C<allowedRecipients>, C<feedbackRecipients>, and
-C<PRINT_FILE_NAMES_FOR> are references to arrays.
+C<dbLayoutName> is required. C<PRINT_FILE_NAMES_FOR> is a reference to an array.
 
 $dbOptions is a reference to a hash containing information required to create a
 database for the course. Current database layouts do not require additional
@@ -1350,119 +1347,32 @@ sub writeCourseConf {
 
 	print $fh <<'EOF';
 #!perl
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright 2000-2016 The WeBWorK Project, http://openwebwork.sf.net/
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
 
-# This file is used to override the global WeBWorK course environment for
-# requests to this course. All package variables set in this file are added to
-# the course environment. If you wish to set a variable here but omit it from
-# the course environment,  use the "my" keyword. Commonly changed configuration
-# options are noted below.
+# This file is used to override the global WeBWorK course environment for this course.
 
 EOF
 
 	print $fh <<'EOF';
 # Database Layout (global value typically defined in defaults.config)
-#
 # Several database are defined in the file conf/database.conf and stored in the
 # hash %dbLayouts.
-#
 # The database layout is always set here, since one should be able to change the
 # default value in localOverrides.conf without disrupting existing courses.
-#
 # defaults.config values:
 EOF
 
 	print $fh "# \t", '$dbLayoutName = \'', protectQString($ce->{dbLayoutName}), '\';', "\n";
 	print $fh "# \t", '*dbLayout = $dbLayouts{$dbLayoutName};', "\n";
-	print $fh "\n";
 
 	if (defined $options{dbLayoutName}) {
 		print $fh '$dbLayoutName = \'', protectQString($options{dbLayoutName}), '\';', "\n";
 		print $fh '*dbLayout = $dbLayouts{$dbLayoutName};', "\n";
-		print $fh "\n";
-	} else {
-		print $fh "\n\n\n";
-	}
-
-	print $fh <<'EOF';
-# Allowed Mail Recipients (global value typically not defined)
-#
-# Defines addresses to which the PG system is allowed to send mail. This should
-# probably be set to the addresses of professors of this course. Sending mail
-# from the PG system (i.e. questionaires, essay questions) will fail if this is
-# not set.
-#
-# defaults.config values:
-EOF
-
-	if (defined $ce->{mail}->{allowedRecipients}) {
-		print $fh "# \t", '$mail{allowedRecipients} = [',
-			join(", ", map { "'" . protectQString($_) . "'" } @{ $ce->{mail}->{allowedRecipients} }), '];', "\n";
-	} else {
-		print $fh "# \t", '$mail{allowedRecipients} = [  ];', "\n";
 	}
 	print $fh "\n";
-
-	if (defined $options{allowedRecipients}) {
-		print $fh '$mail{allowedRecipients} = [',
-			join(", ", map { "'" . protectQString($_) . "'" } @{ $options{allowedRecipients} }), '];', "\n";
-		print $fh "\n";
-	} else {
-		print $fh "\n\n\n";
-	}
-
-	print $fh <<'EOF';
-# By default, feedback is sent to all users who have permission to
-# receive_feedback. If this list is non-empty, feedback is also sent to the
-# addresses specified here.
-#
-# * If you want to disable feedback altogether, leave this empty and set
-#   $permissionLevels{submit_feedback} = undef;
-#   This will cause the
-#   feedback button to go away as well.
-#
-# * If you want to send email ONLY to addresses in this list, set
-#   $permissionLevels{receive_feedback} = undef;
-#
-# It's often useful to set this in the course.conf to change the behavior of
-# feedback for a specific course.
-# defaults.config values:
-EOF
-
-	if (defined $ce->{mail}->{feedbackRecipients}) {
-		print $fh "# \t", '$mail{feedbackRecipients} = [',
-			join(", ", map { "'" . protectQString($_) . "'" } @{ $ce->{mail}->{feedbackRecipients} }), '];', "\n";
-	} else {
-		print $fh "# \t", '$mail{feedbackRecipients} = [  ];', "\n";
-	}
-	print $fh "\n";
-
-	if (defined $options{feedbackRecipients}) {
-		print $fh '$mail{feedbackRecipients} = [',
-			join(", ", map { "'" . protectQString($_) . "'" } @{ $options{feedbackRecipients} }), '];', "\n";
-		print $fh "\n";
-	} else {
-		print $fh "\n\n\n";
-	}
 
 	print $fh <<'EOF';
 # Users for whom to label problems with the PG file name (global value typically "professor")
-#
 # For users in this list, PG will display the source file name when rendering a problem.
-#
 # defaults.config values:
 EOF
 
@@ -1472,16 +1382,12 @@ EOF
 			map { "'" . protectQString($_) . "'" } @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} }),
 			'];', "\n";
 	} else {
-		print $fh "# \t", '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [  ];', "\n";
+		print $fh "# \t", '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [ ];', "\n";
 	}
-	print $fh "\n";
 
 	if (defined $options{PRINT_FILE_NAMES_FOR}) {
 		print $fh '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [',
 			join(", ", map { "'" . protectQString($_) . "'" } @{ $options{PRINT_FILE_NAMES_FOR} }), '];', "\n";
-		print $fh "\n";
-	} else {
-		print $fh "\n\n\n";
 	}
 }
 
