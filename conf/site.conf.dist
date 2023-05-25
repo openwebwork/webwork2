@@ -241,6 +241,9 @@ $database_password ='passwordRW';
 $webwork_htdocs_url  = "/webwork2_files";
 $webwork_htdocs_dir  = "$webwork_dir/htdocs";
 
+# URL for the pg htdocs directory.
+$pg_htdocs_url = "/pg_files";
+
 # URL and path to courses directory.
 $webwork_courses_url = "/webwork2_course_files";
 $webwork_courses_dir = "/opt/webwork/courses"; # a typical place to put course directories
