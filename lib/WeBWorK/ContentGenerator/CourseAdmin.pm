@@ -932,7 +932,7 @@ sub do_delete_course ($c) {
 sub archive_course_form ($c) {
 	my $ce = $c->ce;
 
-	my @courseIDs = listCourses($ce);
+	my @courseIDs = grep { $_ ne $c->stash('courseID') } listCourses($ce);
 	my %courseLabels;
 
 	if (@courseIDs) {
