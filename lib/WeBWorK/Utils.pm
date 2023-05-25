@@ -1807,24 +1807,35 @@ ID: foreach my $id (@problemIDs) {
 	return 1;
 }
 
-# requires a CG object, and a permission type
-# a user may also be submitted, in case we need to filter by section
-
+# Requires a ContentGenerator object, and a permission type.
+# If the optional sender argument is provided, then filter on the section of the given sender.
 sub fetchEmailRecipients {
-	my ($c, $permissionType, $sender) = @_;    # sender argument is optional
+	my ($c, $permissionType, $sender) = @_;
 	my $db    = $c->db;
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 
-	return unless $permissionType;
-
 	return
-		map { $_->rfc822_mailbox } grep { $authz->hasPermissions($_->user_id, $permissionType) } $db->getUsersWhere({
+		unless $permissionType
+		&& defined $ce->{permissionLevels}{$permissionType}
+		&& defined $ce->{userRoles}{ $ce->{permissionLevels}{$permissionType} };
+
+	my @recipients =
+		map { $_->rfc822_mailbox } $db->getUsersWhere({
+			user_id => [
+				map { $_->user_id } $db->getPermissionLevelsWhere(
+					{ permission => { '>=' => $ce->{userRoles}{ $ce->{permissionLevels}{$permissionType} } } }
+				)
+			],
 			email_address => { '!=', undef },
 			$ce->{feedback_by_section}
 			&& defined $sender
 			&& defined $sender->section ? (section => $sender->section) : (),
 		});
+
+	push @recipients, @{ $ce->{mail}{feedbackRecipients} } if ref($ce->{mail}{feedbackRecipients}) eq 'ARRAY';
+
+	return @recipients;
 }
 
 sub processEmailMessage {
