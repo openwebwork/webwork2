@@ -332,7 +332,7 @@ my %routeParameters = (
 		path   => '/instructor'
 	},
 	instructor_user_list => {
-		title    => x('Classlist Editor'),
+		title    => x('User Manager'),
 		children => [qw(instructor_user_detail)],
 		module   => 'Instructor::UserList',
 		path     => '/users'

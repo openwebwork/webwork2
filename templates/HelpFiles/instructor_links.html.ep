@@ -34,7 +34,7 @@
 			. '<strong>Assign individual sets</strong> '
 			. 'and <strong>Edit individual due dates</strong>.') =%>
 	</dd>
-	<dt><%= maketext('Classlist Editor') %></dt>
+	<dt><%= maketext('User Manager') %></dt>
 	<dd>
 		<%= maketext('Edit class roster data. Add students, edit student data, drop students from class, import '
 			. 'students from a classlist, and give user professor privileges. Access to individual homework sets.') =%>
