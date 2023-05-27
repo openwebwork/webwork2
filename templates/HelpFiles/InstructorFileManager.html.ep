@@ -45,10 +45,10 @@
 	<dd>
 		<%== maketext('These are stored in the templates directory. The format of '
 			. '<strong>Set Definition files</strong> is described in the <a [_1]>Set Definition specification</a>. '
-			. 'Set definition files are mainly useful for '
-			. 'transferring set assignments from one course to another and are created when exporting a problem '
-			. 'set from the "Hmwk Sets Editor". Each set defintion file contains a list of problems used and the '
-			. 'dates and times. These definitions can be imported into the current course.',
+			. 'Set definition files are mainly useful for transferring set assignments from one course to another '
+			. 'and are created when exporting a problem set from the "Assigment Manager". Each set definition file '
+			. 'contains a list of problems used and the dates and times. These definitions can be imported into the '
+			. 'current course.',
 			'href="https://webwork.maa.org/wiki/Set_Definition_Files" target="Webworkdocs"') =%>
 	</dd>
 	<dt><%= maketext('Class list (".lst") files') %></dt>
@@ -75,7 +75,7 @@
 	<dd>
 		<%= maketext('These are the files from which problems are generated and are located in the templates '
 			. 'directory or in subdirectories. They can be edited directly using the "Edit" link on each problem '
-			. 'page or from the "Hmwk Sets Editor". The File Manager allows you to upload or download these files. 	'
+			. 'page or from the "Assigment Manager". The File Manager allows you to upload or download these files. 	'
 			. 'Directories that start with "set" contain pg files and are generated when exporting a problem set in '
 			. 'which there are local versions of a problem.') =%>
 	</dd>

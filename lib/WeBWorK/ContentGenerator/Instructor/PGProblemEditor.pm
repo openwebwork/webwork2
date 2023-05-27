@@ -1129,8 +1129,9 @@ sub save_as_handler ($c) {
 			$c->shortPath($outputFilePath)
 		));
 		$c->addbadmessage(
-			$c->maketext('You can change the file path for this problem manually from the "Hmwk Sets Editor" page'))
-			if defined $c->{setID};
+			$c->maketext(
+				'You can change the file path for this problem manually from the "Assignment Manager" page')
+		) if defined $c->{setID};
 		$c->addgoodmessage($c->maketext(
 			'The text box now contains the source of the original problem. '
 				. 'You can recover lost edits by using the Back button on your browser.'

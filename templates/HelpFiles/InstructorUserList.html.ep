@@ -150,22 +150,22 @@
 
 	<dt><%= maketext('Assign sets to many students') %></dt>
 	<dd>
-		<%= maketext('This is done from the "Hmwk Sets Editor" or from the "Instructor Tools" page if you wish to '
+		<%= maketext('This is done from the "Assigment Manager" or from the "Instructor Tools" page if you wish to '
 			. 'assign a homework set to all students or a large group of students (e.g. a section).') =%>
 	</dd>
 
 	<dt><%= maketext('Change dates for a homework set for the whole class.') %></dt>
-	<dd><%= maketext('This is done from the "Hmwk Sets Editor" or from the "Instructor Tools" page.') %></dd>
+	<dd><%= maketext('This is done from the "Assigment Manager" or from the "Instructor Tools" page.') %></dd>
 
 	<dt><%= maketext('Change the grading on a homework set for an entire class.') %></dt>
 	<dd>
 		<%= maketext('You might want to do this if you want to give full credit to everyone on a particular problem '
-			. q{that was not worded correctly, or wasn't working properly. This is done from the "Hmwk Sets Editor" }
+			. q{that was not worded correctly, or wasn't working properly. This is done from the "Assigment Manager" }
 			. 'page or the "Instructor Tools" page.') =%>
 	</dd>
 
 	<dt><%= maketext('Change the number of atttempts allowed on a problem.') %></dt>
-	<dd><%= maketext('This is done from the "Hmwk Sets Editor" page or the "Instructor tools" page.') %></dd>
+	<dd><%= maketext('This is done from the "Assigment Manager" page or the "Instructor tools" page.') %></dd>
 </dl>
 
 <p>
