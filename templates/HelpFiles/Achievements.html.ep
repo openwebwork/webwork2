@@ -14,15 +14,10 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('Add Users Help');
+% title maketext('Achievements Help');
 %
-<p>
-	<%= maketext('Add users to the course.  Select the number of students/users to add and '
-		. 'then add any desired information.  The only mandatory information is the "Login Name". '
-		. 'Any other fields may be left blank.  The "Student ID" will be the initial password for '
-		. 'the user if provided.') =%>
-</p>
-<p class="mb-0">
-	<%= maketext('Multiple sets may be assigned to the users by holding down the shift key or the ctrl key while '
-		. 'selecting from the list.') =%>
+<p class="m-0">
+	<%= maketext(q{This page displays a student's current achievement level and progress toward the next level, }
+		. 'and lists the rewards and badges that the student has earned. If rewards have been earned, '
+		. 'then the student may also redeem those rewards.') =%>
 </p>

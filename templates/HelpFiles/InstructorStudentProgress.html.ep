@@ -14,15 +14,20 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('Add Users Help');
+% title maketext('Student Progress Help');
 %
 <p>
-	<%= maketext('Add users to the course.  Select the number of students/users to add and '
-		. 'then add any desired information.  The only mandatory information is the "Login Name". '
-		. 'Any other fields may be left blank.  The "Student ID" will be the initial password for '
-		. 'the user if provided.') =%>
+	<%= maketext('This page is useful for monitoring student progress on assignments. Student progress '
+		. 'can either be viewed for a single set or for a single student.') =%>
+</p>
+<p>
+	<%= maketext('When viewing student progress for a set, the score for the set and the status for problems in the '
+		. 'set are listed for all students.  The table can be sorted by clicking the links in the table header.  '
+		. q{Click the student's name to access the student's set.  When viewing progress for a test, additional }
+		. 'columns can be shown/hidden by updating the display at the top') =%>
 </p>
 <p class="mb-0">
-	<%= maketext('Multiple sets may be assigned to the users by holding down the shift key or the ctrl key while '
-		. 'selecting from the list.') =%>
+	<%= maketext('When viewing progress for a single student, their grades page is shown which lists set totals and '
+		. 'per problem grades for each set assigned to the student.  This shows the same information as the '
+		. 'statistics page for the student.') =%>
 </p>

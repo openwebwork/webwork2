@@ -26,28 +26,49 @@
 	<dd>
 		<dl>
 			<dt>
-				<a href="https://webwork.maa.org/wiki/Category:Problem_Techniques">
+				<a href="https://webwork.maa.org/wiki/Category:Problem_Techniques" target="techniques_window">
 					<%= maketext('Problem Techniques') =%>
 				</a>
 			</dt>
 			<dd><%= maketext('This links to a list of problem authoring techniques.') %></dd>
-			<dt><a href="https://webwork.maa.org/wiki/Category:MathObjects"><%= maketext('Math Objects') %></a></dt>
+			<dt>
+				<a href="https://webwork.maa.org/wiki/Category:MathObjects" target="math_objects">
+					<%= maketext('Math Objects') %>
+				</a>
+			</dt>
 			<dd><%= maketext('This links to a page describing Math Object usage.') %></dd>
-			<dt><a href="https://webwork.maa.org/pod/">POD</a></dt>
+			<dt><a href="https://webwork.maa.org/pod/" target="pod_docs"><%= maketext('POD') %></a></dt>
 			<dd>
 				<%= maketext('This link gives details for many macros. It links to documentation embedded in the '
 					. 'macro files themselves.') =%>
 			</dd>
 			<dt>
-				<a href="https://demo.webwork.rochester.edu/webwork2/cervone_course/PGML/1?login_practice_user=true">
-					PGML
-				</a>
+				% if (-e "$ce->{courseDirs}{templates}/PGMLLab/PGML-lab.pg") {
+					<%= link_to maketext('PGML') => $c->systemLink(
+							url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
+							params => {
+								displayMode    => $ce->{pg}{options}{displayMode},
+								problemSeed    => 1234,
+								editMode       => 'temporaryFile',
+								sourceFilePath => 'PGMLLab/PGML-lab.pg'
+							}
+						),
+						target => 'PGML' =%>
+					% } else {
+						<a><%= maketext('PGML') %></a>
+					% }
 			</dt>
 			<dd>
-				<%= maketext('This links to a WeBWorK "problem" which allows you to try out '
-					. 'fragments of PGML code.') =%>
+				<%= maketext('This links to a WeBWorK "problem" which allows you to try out fragments of PGML code. '
+					. 'This link will not be available if the file [_1] is not located in the templates directory of '
+					. 'the course.',
+					'PGMLLab/PGML-lab.pg') =%>
 			</dd>
-			<dt><a href="https://webwork.maa.org/wiki/Category:Authors"><%= maketext('Author Info') %></a></dt>
+			<dt>
+				<a href="https://webwork.maa.org/wiki/Category:Authors" target="author_info">
+					<%= maketext('Author Info') %>
+				</a>
+			</dt>
 			<dd><%= maketext('This links to problem authoring information on the WeBWorK wiki.') %></dd>
 		</dl>
 	</dd>
@@ -106,7 +127,7 @@
 			. 'as it will be rendered for students in the set. If "Create backup" is checked then a backup of the '
 			. 'current file on disk will be created before overwriting it with the contents of the editor window. If a '
 			. 'backup already exists, then a "Delete oldest backup" check box will be present. If that is checked, '
-			. 'then the oldest backup will be deleted when "Take Action!" is clicked. These backups can be reverted '
+			. 'then the oldest backup will be deleted when "Save" is clicked. These backups can be reverted '
 			. 'to and managed on the "Revert" tab.') =%>
 	</dd>
 
@@ -148,7 +169,4 @@
 			. 'changes will be lost. This option is only active when a temporary file or a backup file exists. You '
 			. 'may also delete backups that have been made with this tab.') =%>
 	</dd>
-
-	<dt><%= maketext('Take Action!') %></dt>
-	<dd><%= maketext('Executes the action selected above.') %></dd>
 </dl>

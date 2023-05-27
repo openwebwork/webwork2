@@ -1,17 +1,6 @@
 % use WeBWorK::HTML::ScrollingRecordList qw(scrollingRecordList);
 % use WeBWorK::Utils qw(format_set_name_display);
 %
-<button type="button" id="show_hide" class="btn btn-info mb-2"><%= maketext('Show/Hide Site Description') %></button>
-<p id="site_description" style="display:none">
-	<em>
-		<%= maketext(
-			'This is the past answer viewer.  Students can only see their answers, and they will not be able to '
-				. 'see which parts are correct.  Instructors can view any users answers using the form below and the '
-				. 'answers will be colored according to correctness.'
-		) =%>
-	</em>
-</p>
-<hr>
 <%= form_for current_route, target => 'WW_Info', id => 'past-answer-form', method => 'POST', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	%

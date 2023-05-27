@@ -14,15 +14,11 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('Add Users Help');
+% title maketext('LTI Grade Update Help');
 %
-<p>
-	<%= maketext('Add users to the course.  Select the number of students/users to add and '
-		. 'then add any desired information.  The only mandatory information is the "Login Name". '
-		. 'Any other fields may be left blank.  The "Student ID" will be the initial password for '
-		. 'the user if provided.') =%>
-</p>
-<p class="mb-0">
-	<%= maketext('Multiple sets may be assigned to the users by holding down the shift key or the ctrl key while '
-		. 'selecting from the list.') =%>
+<p class="m-0">
+	<%= maketext('This page gives information about mass LTI grade updates, and allows you to trigger a grade update '
+		. 'for all users and all sets, all sets for one user, all users for one set, or one user for one set.  When '
+		. 'a user is selected, the sets drop down menu is updated to only allow selecting sets assigned the selected '
+		. 'user.  Similarly when a set is selected, the user menu is updated to only allow selecting valid users.') =%>
 </p>

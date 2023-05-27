@@ -14,15 +14,11 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('Add Users Help');
+% title maketext('Answer Log Help');
 %
-<p>
-	<%= maketext('Add users to the course.  Select the number of students/users to add and '
-		. 'then add any desired information.  The only mandatory information is the "Login Name". '
-		. 'Any other fields may be left blank.  The "Student ID" will be the initial password for '
-		. 'the user if provided.') =%>
-</p>
-<p class="mb-0">
-	<%= maketext('Multiple sets may be assigned to the users by holding down the shift key or the ctrl key while '
-		. 'selecting from the list.') =%>
+<p class="m-0">
+	<%= maketext('Show past answers.  Students can only see their past answers, and they will not be able to see '
+		. 'which parts are correct.  Instructors can use the form to select any combination of users, sets, and '
+		. 'problems to view.  The table below will list the past answers colored according to correctness '
+		. '(green is correct).  Use control + click to select multiple users, sets, or problems.') =%>
 </p>

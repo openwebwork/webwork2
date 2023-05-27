@@ -14,18 +14,44 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('Set List Help');
+% title maketext('Homwork Sets Editor Help');
 %
+<p>
+	<%= maketext('This page manages all of the homework sets (including quizzes/tests). '
+		. 'The following allow editing directly of a single problem set.') =%>
+</p>
+<dl>
+	<dt><%= maketext('"Edit Problems" column') %></dt>
+	<dd>
+		<%= maketext('Indicates the number of problems in the set. Clicking on the link opens the set detail page '
+			. 'which allows you to modify set parameters, edit set headers, and change parameters of problems in the '
+			. 'set such as the number of allowed attempts or the weight (credit value). You can also add, remove, '
+			. 'view, edit, and reorder the problems in the set.') =%>
+	</dd>
+	<dt><%= maketext('"Edit Assigned Users" column') %></dt>
+	<dd>
+		<%= maketext('Shows how many instructors and students have been assigned this problem set, out of the total '
+			. 'number in the class. Clicking on this link allows you to assign the set to users, unassign this '
+			. 'set from users, and to individually edit the assignment for specific users. For changing dates for '
+			. 'individual users there are also shortcuts from the "Instructor Tools" link.') =%>
+	</dd>
+	<dt><%= maketext('Changing dates') %></dt>
+	<dd>
+		<%= maketext('Dates for problem sets can be edited by clicking the pencil icon in the "Edit Set Data" column '
+			. 'next to the set name. To change dates for several sets at once, click the check box in the "Select" '
+			. 'column and choose "Edit selected" from the tasks above.') =%>
+	</dd>
+</dl>
 <h2><%= maketext('Primary Actions') %></h2>
 <dl>
 	<dt><%= maketext('Filter') %></dt>
 	<dd><%= maketext('Display sets matching a selected criteria. Useful if there are many sets.') %></dd>
 
 	<dt><%= maketext('Sort') %></dt>
-	<dd><%= maketext('Sorts the lists displayed; by due date, name, etc.') %></dd>
+	<dd><%= maketext('Sorts the lists displayed by due date, name, etc.') %></dd>
 
 	<dt><%= maketext('Edit') %></dt>
-	<dd><%= maketext('The sets checked below will become available for editing the due dates and set headers.') %></dd>
+	<dd><%= maketext('The sets checked below will become available for editing the due dates and visibility.') %></dd>
 
 	<dt><%= maketext('Publish') %></dt>
 	<dd>
@@ -36,8 +62,10 @@
 
 	<dt><%= maketext('Import') %></dt>
 	<dd>
-		<%= maketext('Import a set from a set definition file. '
-			. '(Use the "File Manager" to upload/download set definition files.)') =%>
+		<%= maketext('Import a single set or multiple sets from a set definition file. '
+			. '(Use the "File Manager" to upload/download set definition files.) The "Shift Dates..." '
+			. 'option is useful for problem sets that were used from other courses and will shift all of '
+			. 'the dates.' ) =%>
 	</dd>
 
 	<dt><%= maketext('Export') %></dt>
@@ -49,39 +77,15 @@
 
 	<dt><%= maketext('Score') %></dt>
 	<dd>
-		<%= maketext('Student scores for the sets selected below will be calculated. This and other scoring operations '
-			. 'can also be done using the "Scoring Tools" link.') =%>
+		<%= maketext('Student scores for the sets selected below will be calculated. This and other scoring '
+			. 'operations can also be done using the "Scoring Tools" link.') =%>
 	</dd>
 
 	<dt><%= maketext('Create') %></dt>
-	<dd><%= maketext('Create a new, empty set. This can also be done directly from the "Library Browser".') %></dd>
-
+	<dd>
+		<%= maketext('Create a new set with a given name. This can either create an empty set or a duplicate of '
+			. 'an existing set.') =%>
+	</dd>
 	<dt><%= maketext('Delete') %></dt>
 	<dd><%= maketext('Delete the sets checked below. Be careful, this cannot be undone.') %></dd>
-</dl>
-
-<h2><%= maketext('Other actions') %></h2>
-<dl>
-	<dt><%= maketext('"Edit Problems" column') %></dt>
-	<dd>
-		<%== maketext('Indicates the number of problems in the set. Clicking on this link opens the set detail page '
-			. 'which allows you to modify set parameters, edit set headers, and change parameters of problems in the '
-			. 'set such as the number of allowed attempts or the weight (credit value). You can also add, remove, '
-			. 'view, edit, and reorder the problems in the set.') =%>
-	</dd>
-	<dt><%= maketext('"Edit Assigned Sets" column') %></dt>
-	<dd>
-		<%= maketext('Shows how many instructors and students have been assigned this problem set, out of the total '
-			. q{number in the class. (While testing it is best to assign the problem only to instructors and TA's. }
-			. 'Once the set is ready, assign it to the entire class or section.) Clicking on this link allows you to '
-			. 'assign the set to users, unassign this set from users, and to individually edit the assignment for '
-			. 'specific users. For changing dates for individual users there are also shortcuts from the '
-			. '"Instructor Tools" link.') =%>
-	</dd>
-	<dt><%= maketext('Changing dates') %></dt>
-	<dd>
-		<%= maketext('Dates for problem sets can be edited by clicking the pencil in the "Edit Set Data" column next '
-			. 'to the set name. To change dates for several sets at once, click the check box in the "Select" column '
-			. 'and choose "Edit selected" from the tasks above.') =%>
-	</dd>
 </dl>

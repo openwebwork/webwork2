@@ -26,7 +26,7 @@
 	<%= maketext('This page gives access to information about the student, independent of the homework sets '
 		. 'assigned to them.') =%>
 </p>
-<p><%= maketext('To perform an action select the desired action tab and click the "Take Action!" button.') %></p>
+<p><%= maketext('To perform an action select the desired action tab and click the submit button.') %></p>
 
 <h2><%= maketext('How to:') %></h2>
 <dl>
@@ -43,9 +43,9 @@
 	<dd>
 		<%= maketext('You can edit the class list data for a single student by clicking on the pencil icon next to '
 			. 'their login name. To edit several students at once click on the "Select" checkbox next to their names, '
-			. 'click on the radio button for editing selected users and then click "Take Action!". You can also edit '
-			. 'all visible users (those students currently being displayed) or even all users in the course although '
-			. 'this last option might take a long time to load for a large class.') =%>
+			. 'click on the radio button for editing selected users and then click the "Edit" button. You can also '
+			. 'edit all visible users (those students currently being displayed) or even all users in the course '
+			. 'although this last option might take a long time to load for a large class.') =%>
 	</dd>
 
 	<dd>
@@ -145,7 +145,7 @@
 			. 'grade for each problem is listed as "status" on this third page).') =%>
 	</dd>
 
-	<dt><%= maketext('Extend the number of attempts allowed a student on a given problem<') %></dt>
+	<dt><%= maketext('Extend the number of attempts allowed a student on a given problem.') %></dt>
 	<dd>
 		<%= maketext(q{Click first in the "Assigned Sets" column in the student's row. This will take you to a new }
 			. 'page where you will click on the link to the homework set where the grade change is to be made.') =%>
@@ -153,27 +153,27 @@
 
 	<dt><%= maketext('Assign sets to many students') %></dt>
 	<dd>
-		<%= maketext('This is done from the "Hmwrk Sets Editor" or from the "Instructor Tools" page if you wish to '
+		<%= maketext('This is done from the "Hmwk Sets Editor" or from the "Instructor Tools" page if you wish to '
 			. 'assign a homework set to all students or a large group of students (e.g. a section).') =%>
 	</dd>
 
 	<dt><%= maketext('Change dates for a homework set for the whole class.') %></dt>
-	<dd><%= maketext('This is done from the "Hmwrk Sets Editor" or from the "Instructor Tools" page.') %></dd>
+	<dd><%= maketext('This is done from the "Hmwk Sets Editor" or from the "Instructor Tools" page.') %></dd>
 
 	<dt><%= maketext('Change the grading on a homework set for an entire class.') %></dt>
 	<dd>
 		<%= maketext('You might want to do this if you want to give full credit to everyone on a particular problem '
-			. q{that was not worded correctly, or wasn't working properly. This is done from the "Hmwk sets editor" }
-			. 'page or the "Instructor tools" page.') =%>
+			. q{that was not worded correctly, or wasn't working properly. This is done from the "Hmwk Sets Editor" }
+			. 'page or the "Instructor Tools" page.') =%>
 	</dd>
 
 	<dt><%= maketext('Change the number of atttempts allowed on a problem.') %></dt>
-	<dd><%= maketext('This is done from the "Hmwk sets editor" page or the "Instructor tools" page.') %></dd>
+	<dd><%= maketext('This is done from the "Hmwk Sets Editor" page or the "Instructor tools" page.') %></dd>
 </dl>
 
 <p>
-	<%= maketext('Many of these editing activities can also be done more quickly from the "Instructor tools" page '
-		. 'where students and homework sets can be selected simultaneously. The Instructor Tools page is useful for '
+	<%= maketext('Many of these editing activities can also be done more quickly from the "Instructor Tools" page '
+		. 'where students and homework sets can be selected simultaneously. The "Instructor Tools" page is useful for '
 		. 'quick editing of one or two students. The initial setup of the class can be done best from this page. '
 		. 'Importing and exporting class lists can only be done from this page. Deleting students can only be '
 		. 'done from this page.') =%>

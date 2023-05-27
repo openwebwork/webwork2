@@ -1,0 +1,67 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Achievement Evaluator Editor Help');
+%
+<p>
+	<%= maketext('An achievement evaluator is a perl script that is run after each problem is submitted which returns '
+		. 'a truth value of 0 (didn\'t earn) or 1 (earn). The evaluator is given access to different variables which '
+		. 'contain data about the problem and set that is used to determine if the achievement is earned or not.') =%>
+</p>
+<p>
+	<%= maketext('Use the editor to edit the evaluator and the action form at the bottom to save the evaluator. You '
+		. 'can either overwrite the current evaluator file or save as a new evaluator file.') =%>
+</p>
+<h2><%= maketext('Evaluator Variables') %></h2>
+<p>
+	<%= maketext('Here is a list of the variables the evaluator has access to. Unless indicated, changes to the '
+		. 'variables will not be saved.  Evaluators are run in the same order they are listed on the achievement '
+		. 'editor page and are only run if the achievement has not been earned. Keep this in mind when using '
+		. 'persistent global data.') =%>
+</p>
+<ul>
+	<li><code>$problem</code>:
+		<%= maketext('A hash reference which contains the problem data.') =%>
+	</li>
+	<li><code>$set</code>:
+		<%= maketext('A hash reference which contains the set data.') =%>
+	</li>
+	<li><code>@setProblems</code>:
+		<%= maketext('An array which lists the hash reference of all the problems in the current set.') =%>
+	</li>
+	<li><code>$counter</code>:
+		<%= maketext('The current value of the achievement counter. Changes to this variable will be saved.') =%>
+	</li>
+	<li><code>$maxCounter</code>:
+		<%= maketext('The goal value of the achievement counter.') =%>
+	</li>
+	<li><code>$tags</code>:
+		<%= maketext('A hash reference which contains a problems metadata, such as DBsubject, DBchapter, DBsection, '
+			. ' and so on.') =%>
+	</li>
+	<li><code>$userAchievements</code>:
+		<%= maketext('A hash reference in which the keys are the achievement_id\'s assigned to the current user and '
+			. 'the values are 0 or 1 which stores if the user has earned the associated achievement or not.') =%>
+	</li>
+	<li><code>$localData</code>:
+		<%= maketext('A hash reference which saves data for this user and this achievement. This hash is persistent '
+			. 'between evaluations and changes to this variable will be saved in the database.') =%>
+	</li>
+	<li><code>$globalData</code>:
+		<%= maketext('A hash reference which saves global data for this user. This hash is persistent between '
+			. 'evaluations and changes to this variable will be saved in the database.') =%>
+	</li>
+</ul>

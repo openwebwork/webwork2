@@ -17,18 +17,18 @@
 % title maketext('Instructor Tools Help');
 %
 <p>
-	<%= maketext(q{This page allows quick access to an individual student's homework set, a homework set for the }
-		. 'entire class, or the class roster data for one or more students.') =%>
-</p>
-<p>
-	<%= maketext('It is a collection of short cut techniques which allow you to modify the database with fewer page '
-		. 'clicks than are required when using the "Class List Editor" or "Hmwk Sets Editor" pages. It is often more '
-		. 'efficient because multiple students and sets can be selected at the same time. For example, after selecting '
-		. 'several students and a set you can change the close date for all selected students for that set, or after '
-		. 'selecting several students and several sets the students can all be assigned to the selected sets at once.'
-	) =%>
+	<%= maketext('This page is a collection of tools to modify users and sets.  These tools are short cuts for '
+		. 'common actions that allow selecting multiple users or sets to act on at once.  Because multiple users '
+		. 'and sets can be acted on at the same time, it is often more efficient to use this page when modifying '
+		. 'multiple items.  For example, after selecting several users and a set you can change the close date for '
+		. 'all selected users for that set.  This page also gives access to "View/Edit all sets for one user", '
+		. 'which can be used to access settings for all sets including test versions for that user.') =%>
 </p>
 <p class="mb-0">
-	<%== maketext('Importing and exporting class lists, and deleting students <strong>must</strong> be done from the '
-		. 'class list editor.') =%>
+	<%= maketext('Use the "Users" and "Sets" forms to select which users and sets to act on.  Multiple items can be '
+		. 'selected using ctrl-click or shift-click.  The action buttons are grouped into three categories.  The '
+		. 'first is a set of actions that act on the selected users, the second is a set of actions that act on the '
+		. 'selected sets, and the third is a set of actions for acting on a combination of sets and users.  If an '
+		. 'invalid number of users or sets are selected, the action will not be preformed, and an error message '
+		. 'will be placed on the page.') =%>
 </p>

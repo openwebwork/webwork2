@@ -16,8 +16,24 @@
 % layout 'help_macro';
 % title maketext('Grades Help');
 %
-<!--
-FIXME: This needs work. The prior contents of this file were clearly obsolete. When updating this remember that these
-help contents are not shown for students.
--->
-<p class="m-0"><%= maketext('Students may view their grades on this page.') %></p>
+<p>
+	<%= maketext(q{This page shows the student's current grades for all sets they are assigned to.  Only visible sets }
+		. 'are shown to the student, while invisible set names are italic when viewed as an instructor.  Students can '
+		. 'only see the per problem grades on open assignments.') =%>
+</p>
+<p>
+	<%= maketext('The total grade row at the bottom shows the total score and percent average over all open '
+		. 'assignments.  The total grade row can be shown/hidden under general course configuration settings.') =%>
+</p>
+<p class="m-0">
+	<%== maketext(
+		'Additional (external) grades can be shown on this page by placing them in the CSV file [_1].  The first six '
+			. 'columns must be (in order): Student ID, Username, Last Name, First Name, Section, Recitation.  The '
+			. 'remaining columns can list any external grades.  To display the grades, the CSV file is merged with '
+			. 'the "Email" message [_2], which will be rendered and displayed below the grade table.  The message can '
+			. 'be created on the "Email" page and the CSV file can be created/uploaded using the "File Manager".  '
+			. 'External grades can only be displayed here and are not included in any totals or statistics.',
+		'<code>[Scoring]/report_grades_data.csv</code>',
+		'<code>[TMPL]/email/report_grades.msg</code>',
+	) =%>
+</p>
