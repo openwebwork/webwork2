@@ -129,7 +129,9 @@
 			% }
 
 			% # Set assigner
-			<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_set_assigner') %></li>
+			<li class="list-group-item list-group-item-primary nav-item">
+				<%= $makelink->('instructor_set_assigner') %>
+			</li>
 			% # Library Browser
 			<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_set_maker') %></li>
 			% # Statistics
@@ -225,13 +227,17 @@
 			</li>
 			% # Scoring
 			% if ($authz->hasPermissions($userID, 'score_sets')) {
-				<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_scoring') %></li>
+				<li class="list-group-item list-group-item-primary nav-item">
+					<%= $makelink->('instructor_scoring') %>
+				</li>
 			% }
 			% # Achievment Editor
 			% if ($ce->{achievementsEnabled} && $authz->hasPermissions($userID, 'edit_achievements')) {
-				<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_achievement_list') %></li>
+				<li class="list-group-item list-group-item-primary nav-item">
+					<%= $makelink->('instructor_achievement_list') %>
+				</li>
 				% if (defined $achievementID) {
-					<li class="nav-item">
+					<li class="list-group-item list-group-item-primary nav-item">
 						<ul class="nav flex-column">
 							<li class="nav-item">
 								<%= $makelink->(
@@ -246,24 +252,31 @@
 			% }
 			% # Email
 			% if ($authz->hasPermissions($userID, 'send_mail')) {
-				<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_mail_merge') %></li>
+				<li class="list-group-item list-group-item-primary nav-item">
+					<%= $makelink->('instructor_mail_merge') %>
+				</li>
 			% }
 			% # File Manager
 			% if ($authz->hasPermissions($userID, 'manage_course_files')) {
-				<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_file_manager') %></li>
+				<li class="list-group-item list-group-item-primary nav-item">
+					<%= $makelink->('instructor_file_manager') %>
+				</li>
 			% }
 			% # LTI Grade Update
 			% if ($ce->{LTIGradeMode} && $authz->hasPermissions($userID, 'score_sets')) {
-				<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_lti_update') %></li>
+				<li class="list-group-item list-group-item-primary nav-item">
+					<%= $makelink->('instructor_lti_update') %>
+				</li>
 			% }
 			% # Course Configuration
 			% if ($authz->hasPermissions($userID, "manage_course_files")) {
-				<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_config') %></li>
+				<li class="list-group-item list-group-item-primary nav-item">
+					<%= $makelink->('instructor_config') %>
+				</li>
 			% }
 			% # Instructor links help
 			<li class="list-group-item list-group-item-primary nav-item">
-				<%= $c->helpMacro('instructor_links',
-					{ label => maketext('Help'), class => 'nav-link' }) %>
+				<%= $c->helpMacro('instructor_links', { label => maketext('Help'), class => 'nav-link' }) %>
 			</li>
 			% # Show the archive course link only on the FileManager page
 			% if (
@@ -287,7 +300,7 @@
 			% && $authz->hasPermissions($userID, 'report_bugs'))
 		% {
 			<li class="list-group-item list-group-item-primary nav-item">
-				%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link'
+				<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' %>
 			</li>
 		% }
 	% }
