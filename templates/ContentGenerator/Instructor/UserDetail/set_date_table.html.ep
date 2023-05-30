@@ -13,7 +13,7 @@
 			<%= maketext("User overrides") =%>
 		</th>
 		<th scope="col">
-			<%= maketext("Set defaults") =%>
+			<%= maketext("Set values") =%>
 		</th>
 	</tr>
 	% for my $field (@$fields) {
