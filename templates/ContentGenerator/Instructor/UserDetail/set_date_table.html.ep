@@ -8,6 +8,14 @@
 % }
 %
 <table>
+	<tr>
+		<th scope="col" colspan="3">
+			<%= maketext("User overrides") =%>
+		</th>
+		<th scope="col">
+			<%= maketext("Set defaults") =%>
+		</th>
+	</tr>
 	% for my $field (@$fields) {
 		% # Skip reduced credit dates for sets which don't have them.
 		% next
