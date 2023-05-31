@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
 
 my $host              = $ENV{WEBWORK_DB_HOST};
 my $port              = $ENV{WEBWORK_DB_PORT};
