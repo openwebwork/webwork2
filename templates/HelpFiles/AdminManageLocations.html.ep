@@ -1,0 +1,34 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Manage Locations Help');
+%
+<p>
+	<%= maketext('Fill out the form below to add, edit, or delete locations.  Locations are used to restrict access '
+		. 'to sets based on ip address.  Locations are configured here in the administration course, then used in a '
+		. 'normal course.  When configuring a set to use a restricted ip address, the instructor can choose to '
+		. 'either restrict access to the location or deny access from a location, which are identified by their '
+		. 'name.  Instructors can select multiple locations to restrict access to.') =%>
+</p>
+<p>
+	<%= maketext('Locations are a list of ip addresses.  Ip addresses can be a single address (e.g. 192.168.1.101), '
+		. 'a range of ip address (e.g. 192.168.1.101-192.168.1.150), or an ip address mask (e.g. 192.168.1.0/24). '
+		. 'Enter one ip address per line, using as many lines as needed for each location.') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('Locations are edited by adding new ip addresses to the location, or deleting existing address.  '
+		. 'You must select the confirm checkbox when deleting a location, and this cannot be undone.') =%>
+</p>

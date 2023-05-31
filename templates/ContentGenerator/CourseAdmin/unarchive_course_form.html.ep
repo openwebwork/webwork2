@@ -1,6 +1,6 @@
 % use WeBWorK::Utils::CourseManagement qw(listArchivedCourses);
 %
-<h2><%= maketext('Unarchive Course') %></h2>
+<h2><%= maketext('Unarchive Course') %> <%= $c->helpMacro('AdminUnarchiveCourse') %></h2>
 <p>
 	<%= maketext(
 		'Restores a course from a gzipped tar archive (.tar.gz). After unarchiving, the course database is '
