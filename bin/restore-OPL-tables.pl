@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 ################################################################################
 # WeBWorK Online Homework Delivery System

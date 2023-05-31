@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # This script reads the timing log and outputs timing information including
 # the number and per cent of accesses taking various amount of time.
