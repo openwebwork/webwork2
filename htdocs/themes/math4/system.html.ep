@@ -65,8 +65,8 @@
 	class => 'visually-hidden-focusable bg-white p-2 m-3 position-absolute' =%>
 %
 % # Header
-<div id="masthead" class="row" role="banner">
-	<div class="col-md-3 col-lg-2 webwork_logo">
+<div class="masthead" role="banner">
+	<div class="webwork-logo">
 		% if ($c->can('links') || $c->can('siblings') || $c->can('options')) {
 			<button type="button" class="navbar-toggler ms-3 me-2 p-0 fa-2x" id="toggle-sidebar"
 				aria-controls="site-navigation">
@@ -78,8 +78,8 @@
 		% }
 		<%= $c->webwork_logo %>
 	</div>
-	<div class="col-lg-6 col-md-5 institution_logo"><%= $c->institution_logo %></div>
-	<div id="login-status" class="col-md-4"><%= include 'ContentGenerator/Base/login_status' %></div>
+	<div class="institution-logo"><%= $c->institution_logo %></div>
+	<div class="login-status"><%= include 'ContentGenerator/Base/login_status' %></div>
 </div>
 % # Navigation
 % if ($c->can('links') || $c->can('siblings') || $c->can('options')) {
