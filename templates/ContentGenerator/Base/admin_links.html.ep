@@ -42,6 +42,7 @@
 	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('options') %></li>
 	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_user_list') %></li>
 	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_mail_merge') %></li>
+	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_file_manager') %></li>
 	<li class="list-group-item list-group-item-primary nav-item">
 		<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' =%>
 	</li>
