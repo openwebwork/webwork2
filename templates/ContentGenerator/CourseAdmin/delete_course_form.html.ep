@@ -1,4 +1,4 @@
-<h2><%= maketext('Delete Course') =%></h2>
+<h2><%= maketext('Delete Course') %> <%= $c->helpMacro('AdminDeleteCourse') %></h2>
 %
 % if (@$courseIDs) {
 	<%= form_for current_route, method => 'POST', begin =%>

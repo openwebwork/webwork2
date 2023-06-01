@@ -1,4 +1,4 @@
-<h2><%= maketext('Archive Course') =%></h2>
+<h2><%= maketext('Archive Course') %> <%= $c->helpMacro('AdminArchiveCourse') %></h2>
 <p>
 	<%= maketext(
 		'Creates a gzipped tar archive (.tar.gz) of a course in the WeBWorK courses directory. '

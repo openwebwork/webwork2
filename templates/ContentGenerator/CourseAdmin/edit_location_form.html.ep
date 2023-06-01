@@ -1,4 +1,4 @@
-<h2><%= maketext('Editing location [_1]', $locationID) %></h2>
+<h2><%= maketext('Editing location [_1]', $locationID) %> <%= $c->helpMacro('AdminManageLocations') %></h2>
 <p>
 	<%= maketext(
 		'Edit the current value of the location description, if desired, then add and select addresses to delete, '

@@ -1,3 +1,4 @@
+<h2><%= maketext('Upgrade Courses') %> <%= $c->helpMacro('AdminUpgradeCourses') %></h2>
 <%= form_for current_route, method => 'POST', begin =%>
 	<% my $checkALLs = begin =%>
 		% if ($extra_database_tables_exist) {

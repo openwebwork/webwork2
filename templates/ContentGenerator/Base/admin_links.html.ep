@@ -44,6 +44,9 @@
 	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_mail_merge') %></li>
 	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_file_manager') %></li>
 	<li class="list-group-item list-group-item-primary nav-item">
+		<%= $c->helpMacro('admin_links', { label => maketext('Help'), class => 'nav-link' }) =%>
+	</li>
+	<li class="list-group-item list-group-item-primary nav-item">
 		<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' =%>
 	</li>
 </ul>
