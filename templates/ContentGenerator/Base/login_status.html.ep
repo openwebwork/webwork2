@@ -6,31 +6,26 @@
 	% my $effectiveUserID = param('effectiveUser');
 	% my $userName        = $user->full_name || $user->user_id;
 	%
-	% if ($effectiveUserID eq $userID) {
-		<%= maketext('Logged in as [_1].', $userName) %>
-		<%= link_to $c->systemLink(url_for 'logout'), class => 'btn btn-light btn-sm ms-2', begin %>
-		<%= maketext('Log Out') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true" data-alt="signout"></i>
-		<% end %>
-	% } else {
-		% # This will contain any extra parameters which are needed to make
-		% # the page function properly.  This will normally be empty.
-		% my $extraStopActingParams = $c->{extraStopActingParams} // {};
-		% $extraStopActingParams->{effectiveUser} = $userID;
-		%
+	<%= maketext('Logged in as [_1].', $userName) %>
+	<%= link_to $c->systemLink(url_for 'logout'), class => 'btn btn-light btn-sm ms-2', begin %>
+	<%= maketext('Log Out') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true" data-alt="signout"></i>
+	<% end %>
+	%
+	% if ($effectiveUserID ne $userID) {
 		% my $effectiveUser = $db->getUser($effectiveUserID);
+		% unless ($effectiveUser) {
+			% param('effectiveUser', $userID);
+			% next;
+		% }
 		% my $effectiveUserName =
 			% $effectiveUser->full_name
 			% ? join(' ', $effectiveUser->full_name, '(' . $effectiveUser->user_id . ')')
 			% : $effectiveUser->user_id;
 		%
-		<%= maketext('Logged in as [_1].', $userName) %>
-		<%= link_to $c->systemLink(url_for 'logout'), class => 'btn btn-light btn-sm ms-2', begin %>
-		<%= maketext('Log Out') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true" data-alt="signout"></i>
-		<% end %>
 		<br>
 		<%= maketext('Acting as [_1].', $effectiveUserName) %>
-		<%= link_to $c->systemLink(url_for, params => $extraStopActingParams), class => 'btn btn-light btn-sm ms-2',
-			begin %>
+		<%= link_to $c->systemLink(url_for, params => { effectiveUser => $userID }),
+			class => 'btn btn-light btn-sm ms-2', begin %>
 		<%= maketext('Stop Acting') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true" data-alt="signout"></i>
 		<% end %>
 	% }
