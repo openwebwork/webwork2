@@ -241,6 +241,9 @@ sub new {
 			keys %{ $self->{statuses} }
 	};
 
+	# Make sure that this is set in case it is not defined in site.conf.
+	$self->{pg_htdocs_url} //= '/pg_files';
+
 	# Fixup for courses that still have an underscore, 'heb', 'zh_hk', or 'en_us' saved in their settings files.
 	$self->{language} =~ s/_/-/g;
 	$self->{language} = 'he-IL' if $self->{language} eq 'heb';
