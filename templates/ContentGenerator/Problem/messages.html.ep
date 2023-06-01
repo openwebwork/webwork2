@@ -28,12 +28,12 @@
 	<p>
 		<b><%= maketext('Note') %>:</b>
 		<i>
-			<%= maketext(
-				$showHintsAfter == -1
-				? 'The hint shown is an instructor preview and will not be shown to students.'
-				: 'The hint shown is an instructor preview and will be shown to students after '
-					. "$showHintsAfter attempts."
-			) =%>
+			<%= $showHintsAfter == -1
+				? maketext('The hint shown is an instructor preview and will not be shown to students.')
+				: maketext(
+					'The hint shown is an instructor preview and will be shown to students after [quant,_1,attempt].',
+					$showHintsAfter
+				) =%>
 		</i>
 	</p>
 % }
