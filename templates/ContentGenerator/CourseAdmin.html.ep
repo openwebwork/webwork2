@@ -12,37 +12,6 @@
 	% last;
 % }
 %
-<ul class="nav nav-pills justify-content-center my-2">
-	% for (
-		% [
-		% 	'add_course',
-		% 	maketext('Add Course'),
-		% 	{
-		% 		add_admin_users      => 1,
-		% 		add_config_file      => 1,
-		% 		add_dbLayout         => 'sql_single',
-		% 		add_templates_course => $ce->{siteDefaults}{default_templates_course} || ''
-		% 	}
-		% ],
-		% [ 'rename_course',        maketext('Rename Course') ],
-		% [ 'delete_course',        maketext('Delete Course') ],
-		% [ 'archive_course',       maketext('Archive Course') ],
-		% [ 'unarchive_course',     maketext('Unarchive Course') ],
-		% [ 'upgrade_course',       maketext('Upgrade Courses') ],
-		% [ 'manage_locations',     maketext('Manage Locations') ],
-		% [ 'hide_inactive_course', maketext('Hide Courses') ],
-	% )
-	% {
-		<li class="nav-item">
-			<%= link_to $_->[1] =>
-				$c->systemLink(url_for, params => { subDisplay => $_->[0], %{ $_->[2] // {} } }),
-				class => 'nav-link' . ((param('subDisplay') // '') eq $_->[0] ? ' active' : '') =%>
-		</li>
-	% }
-</ul>
-%
-<hr class="mt-0">
-%
 <%= include 'ContentGenerator/CourseAdmin/registration_form' %>
 %
 % if (@{ $c->{errors} }) {
