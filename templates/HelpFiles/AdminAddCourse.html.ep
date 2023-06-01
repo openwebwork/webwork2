@@ -1,0 +1,37 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Add Course Help');
+%
+<p>
+	<%= maketext('Create a new course.  The "Course ID" is used as the course name and is used in course links.  '
+		. 'Underscores appear as spaces when displaying the course name.  The "Course Title" is used as the title '
+		. 'on the course home page.') =%>
+</p>
+<p>
+	<%= maketext('The WeBWorK administrators need to be added to the course in order for them to access the course.  '
+		. 'Unchecking this option will make it so WeBWorK administrators cannot directly login to the course.') =%>
+</p>
+<p>
+	<%= maketext('The simple configuration file is the name of the configuration file created when using the "Course '
+		. 'Configuration" page to configure course options.  This option sets if this configuration file is copied '
+		. 'from the old course or not and instead use the server defaults.') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('Enter the details of the course instructor to be added when the course is created.  This user '
+		. 'will also be added to the admin course with the username "userID_courseID" so you can manage and '
+		. 'email the instructors of the courses on the server.') =%>
+</p>

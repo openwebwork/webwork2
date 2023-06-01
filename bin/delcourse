@@ -117,7 +117,7 @@ my $sql_host = "";
 my $sql_port = "";
 my $sql_user = "";
 my $sql_pass = "";
-my $sql_db = "";
+my $sql_db   = "";
 
 ##### get command-line options #####
 
@@ -126,7 +126,7 @@ GetOptions(
 	"sql-port=s" => \$sql_port,
 	"sql-user=s" => \$sql_user,
 	"sql-pass=s" => \$sql_pass,
-	"sql-db=s" => \$sql_db,
+	"sql-db=s"   => \$sql_db,
 );
 my $courseID = shift;
 
@@ -144,31 +144,14 @@ my $ce = WeBWorK::CourseEnvironment->new({
 my $dbLayout = $ce->{dbLayoutName};
 
 if ($dbLayout eq "sql") {
-	usage_error("must specify --sql-user.")   unless $sql_user;
-	usage_error("must specify --sql-pass.")   unless $sql_pass;
-	usage_error("must specify --sql-db.")     unless $sql_db;
-}
-
-##### set up parameters to pass to deleteCourse() #####
-
-my %dbOptions;
-if ($dbLayout eq "sql") {
-	$dbOptions{host}     = $sql_host if $sql_host ne "";
-	$dbOptions{port}     = $sql_port if $sql_port ne "";
-	$dbOptions{username} = $sql_user;
-	$dbOptions{password} = $sql_pass;
-	$dbOptions{database} = $sql_db;
+	usage_error("must specify --sql-user.") unless $sql_user;
+	usage_error("must specify --sql-pass.") unless $sql_pass;
+	usage_error("must specify --sql-db.")   unless $sql_db;
 }
 
 ##### call deleteCourse(), handle errors #####
 
-eval {
-	deleteCourse(
-		courseID      => $courseID,
-		ce            => $ce,
-		dbOptions     => \%dbOptions,
-	);
-};
+eval { deleteCourse(courseID => $courseID, ce => $ce); };
 
 if ($@) {
 	my $error = $@;

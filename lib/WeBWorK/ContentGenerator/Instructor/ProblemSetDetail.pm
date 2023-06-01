@@ -573,8 +573,8 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 				'tr',
 				$c->c(
 					$c->tag('td', colspan => '3', ''),
-					$c->tag('th', $c->maketext('User Value')),
-					$c->tag('th', $c->maketext('Class value'))
+					$c->tag('th', $c->maketext('User overrides')),
+					$c->tag('th', $c->maketext('Set values'))
 				)->join('')
 			)
 		);

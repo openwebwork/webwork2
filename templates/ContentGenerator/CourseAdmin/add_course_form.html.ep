@@ -1,6 +1,6 @@
 % use WeBWorK::Utils::CourseManagement qw(listCourses);
 %
-<h2><%= maketext('Add Course') %></h2>
+<h2><%= maketext('Add Course') %> <%= $c->helpMacro('AdminAddCourse') %></h2>
 %
 <%= form_for current_route, method => 'POST', begin =%>
 	<%= $c->hidden_authen_fields =%>

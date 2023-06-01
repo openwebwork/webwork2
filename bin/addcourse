@@ -165,11 +165,6 @@ usage_error("can't specify --professors without also specifying --users.")
 
 my %courseOptions = (dbLayoutName => $dbLayout);
 
-# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
-# below this line, we would grab values from getopt and put them in this hash
-# but for now the hash can remain empty
-my %dbOptions;
-
 my @users;
 if ($users) {
 	# this is a hack to create records without bringing up a DB object
@@ -253,7 +248,6 @@ eval {
 		courseID      => $courseID,
 		ce            => $ce,
 		courseOptions => \%courseOptions,
-		dbOptions     => \%dbOptions,
 		users         => \@users,
 		%optional_arguments,
 	);

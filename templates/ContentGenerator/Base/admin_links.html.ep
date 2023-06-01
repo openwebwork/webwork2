@@ -1,0 +1,52 @@
+<h2 class="navbar-brand mb-0"><%= maketext('Admin Menu') %></h2>
+<ul class="nav flex-column">
+	<li class="list-group-item list-group-item-primary nav-item">
+		<%= link_to maketext('Courses') => 'root', class => 'nav-link' %>
+	</li>
+	<li class="list-group-item list-group-item-primary nav-item">
+		<%= $makelink->(
+			'set_list',
+			text   => maketext('Course Administration'),
+			active => !param('subDisplay') && $c->url_for =~ /admin$/ ? 1 : 0
+		) %>
+	</li>
+	% for (
+		% [
+		% 	'add_course',
+		% 	maketext('Add Course'),
+		% 	{
+		% 		add_admin_users      => 1,
+		% 		add_config_file      => 1,
+		% 		add_dbLayout         => 'sql_single',
+		% 		add_templates_course => $ce->{siteDefaults}{default_templates_course} || ''
+		% 	}
+		% ],
+		% [ 'rename_course',        maketext('Rename Course') ],
+		% [ 'delete_course',        maketext('Delete Course') ],
+		% [ 'archive_course',       maketext('Archive Course') ],
+		% [ 'unarchive_course',     maketext('Unarchive Course') ],
+		% [ 'upgrade_course',       maketext('Upgrade Courses') ],
+		% [ 'manage_locations',     maketext('Manage Locations') ],
+		% [ 'hide_inactive_course', maketext('Hide Courses') ],
+	% )
+	% {
+		<li class="list-group-item list-group-item-primary nav-item">
+			<%= $makelink->(
+				'set_list',
+				text              => $_->[1],
+				systemlink_params => { subDisplay => $_->[0], %{ $_->[2] // {} } },
+				active            => (param('subDisplay') // '') eq $_->[0],
+			) %>
+		</li>
+	% }
+	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('options') %></li>
+	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_user_list') %></li>
+	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_mail_merge') %></li>
+	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_file_manager') %></li>
+	<li class="list-group-item list-group-item-primary nav-item">
+		<%= $c->helpMacro('admin_links', { label => maketext('Help'), class => 'nav-link' }) =%>
+	</li>
+	<li class="list-group-item list-group-item-primary nav-item">
+		<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' =%>
+	</li>
+</ul>

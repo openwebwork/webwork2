@@ -1,5 +1,9 @@
 % use WeBWorK::Utils qw(jitar_id_to_seq);
 %
+% if ($ce->{courseName} eq 'admin') {
+	<%= include 'ContentGenerator/Base/admin_links' =%>
+	% next;
+% }
 <h2 class="navbar-brand mb-0"><%= maketext('Main Menu') %></h2>
 <ul class="nav flex-column">
 	% unless ($restricted_navigation) {
@@ -13,12 +17,7 @@
 			% if ($restricted_navigation) {
 				<span class="nav-link disabled"><%= maketext('Homework Sets') %></span>
 			% } else {
-				<%= $makelink->(
-					'set_list',
-					text => $ce->{courseName} eq 'admin'
-						? maketext('Course Administration')
-						: maketext('Homework Sets'),
-				) %>
+				<%= $makelink->('set_list', text => maketext('Homework Sets')) %>
 			% }
 		</li>
 		%
@@ -287,7 +286,7 @@
 			% && $authz->hasPermissions($userID, 'report_bugs'))
 		% {
 			<li class="list-group-item nav-item">
-				%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link'
+				<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' =%>
 			</li>
 		% }
 	% }

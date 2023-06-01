@@ -59,6 +59,7 @@ sub startup ($app) {
 	# Set important configuration variables
 	my $webwork_url         = $ce->{webwork_url};
 	my $webwork_htdocs_url  = $ce->{webwork_htdocs_url};
+	my $pg_htdocs_url       = $ce->{pg_htdocs_url} // '/pg_files';
 	my $webwork_htdocs_dir  = $ce->{webwork_htdocs_dir};
 	my $webwork_courses_url = $ce->{webwork_courses_url};
 	my $webwork_courses_dir = $ce->{webwork_courses_dir};
@@ -193,9 +194,9 @@ sub startup ($app) {
 		}
 	);
 
-	# Provide direct access to pg_files.
+	# Provide direct access to the pg htdocs location.
 	$r->any(
-		'pg_files/*static' => sub ($c) {
+		"$pg_htdocs_url/*static" => sub ($c) {
 			my $pg_htdocs_file = "$ENV{PG_ROOT}/htdocs/" . $c->stash('static');
 			return $c->reply->file($pg_htdocs_file) if -r $pg_htdocs_file;
 			return $c->render(data => 'File not found', status => 404);

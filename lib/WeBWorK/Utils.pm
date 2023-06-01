@@ -2037,7 +2037,7 @@ sub getAssetURL {
 		return $wwFile if $wwFile;
 
 		my $pgFile =
-			getThirdPartyAssetURL($file, $thirdPartyPGDependencies, '/pg_files',
+			getThirdPartyAssetURL($file, $thirdPartyPGDependencies, $ce->{pg_htdocs_url},
 				$ce->{options}{thirdPartyAssetsUseCDN});
 		return $pgFile if $pgFile;
 	}
@@ -2068,10 +2068,11 @@ sub getAssetURL {
 	return "$ce->{webworkURLs}{htdocs}/$staticWWAssets->{$file}" if defined $staticWWAssets->{$file};
 
 	# Now check to see if this is a file in the pg htdocs location with a rtl variant.
-	return "/pg_files/$staticPGAssets->{$rtlfile}" if defined $rtlfile && defined $staticPGAssets->{$rtlfile};
+	return "$ce->{pg_htdocs_url}/$staticPGAssets->{$rtlfile}"
+		if defined $rtlfile && defined $staticPGAssets->{$rtlfile};
 
 	# Next check to see if this is a file in the pg htdocs location.
-	return "/pg_files/$staticPGAssets->{$file}" if defined $staticPGAssets->{$file};
+	return "$ce->{pg_htdocs_url}/$staticPGAssets->{$file}" if defined $staticPGAssets->{$file};
 
 	# If the file was not found in the lists, then assume it is in the webwork htdocs location, and use the given file
 	# name.  If it is actually in the pg htdocs location, then the Mojolicious rewrite will send it there.

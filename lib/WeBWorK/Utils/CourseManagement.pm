@@ -142,11 +142,10 @@ sub listArchivedCourses {
 
 %options must contain:
 
- courseID => $courseID,
- ce => $ce,
+ courseID      => $courseID,
+ ce            => $ce,
  courseOptions => $courseOptions,
- dbOptions => $dbOptions,
- users => $users
+ users         => $users
 
 %options may contain:
 
@@ -165,12 +164,6 @@ $courseOptions is a reference to a hash containing the following options:
  PRINT_FILE_NAMES_FOR => $pg{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}
 
 C<dbLayoutName> is required. C<PRINT_FILE_NAMES_FOR> is a reference to an array.
-
-$dbOptions is a reference to a hash containing information required to create a
-database for the course. Current database layouts do not require additional
-information, so specify a reference to an empty hash. If $dbOptions is
-undefined, addCourse() assumes that the database has already been created, and
-skips that step in the course creation process.
 
 $users is a list of arrayrefs, each containing a User, Password, and
 PermissionLevel record for a single user:
@@ -196,8 +189,7 @@ sub addCourse {
 	my $courseID      = $options{courseID};
 	my $ce            = $options{ce};
 	my %courseOptions = %{ $options{courseOptions} };
-	my %dbOptions     = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
-	my @users         = exists $options{users}      ? @{ $options{users} }     : ();
+	my @users         = exists $options{users} ? @{ $options{users} } : ();
 
 	debug \@users;
 
@@ -409,7 +401,6 @@ sub addCourse {
 
  courseID => $courseID,
  ce => $ce,
- dbOptions => $dbOptions,
  newCourseID => $newCourseID,
 
 %options may also contain:
@@ -423,11 +414,6 @@ Rename the course named $courseID to $newCourseID.
 
 $ce is a WeBWorK::CourseEnvironment object that describes the existing course's
 environment.
-
-$dbOptions is a reference to a hash containing information required to create
-the course's new database and delete the course's old database. Current database
-layouts do not require additional information, so specify a reference to an
-empty hash.
 
 The name of the course's directory is changed to $newCourseID.
 
@@ -454,11 +440,9 @@ sub renameCourse {
 	#    $toCourseID ($newCourseID)
 	#    $toCE (construct from $oldCE)
 	#    $dbLayoutName ($oldCE->{dbLayoutName})
-	#    %options ($dbOptions)
 
 	my $oldCourseID  = $options{courseID};
 	my $oldCE        = $options{ce};
-	my %dbOptions    = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
 	my $newCourseID  = $options{newCourseID};
 	my $skipDBRename = $options{skipDBRename} || 0;
 
@@ -600,13 +584,10 @@ Options must contain:
 
  courseID => $courseID,
  ce => $ce,
- dbOptions => $dbOptions,
-
 
 Options may contain
  newCourseTitle => $courseTitle,
  newCourseInstitution => $courseInstitution,
-
 
 =cut
 
@@ -616,12 +597,10 @@ sub retitleCourse {
 	#    $courseID ($oldCourseID)
 	#    $ce ($oldCE)
 	#    $dbLayoutName ($ce->{dbLayoutName})
-	#    %options ($dbOptions)
 	#    courseTitle
 	#    courseInstitution
-	my $courseID  = $options{courseID};
-	my $ce        = $options{ce};
-	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
+	my $courseID = $options{courseID};
+	my $ce       = $options{ce};
 
 	# get the database layout out of the options hash
 	my $dbLayoutName = $ce->{dbLayoutName};
@@ -644,19 +623,12 @@ Options must contain:
 
  courseID => $courseID,
  ce => $ce,
- dbOptions => $dbOptions,
 
 $ce is a WeBWorK::CourseEnvironment object that describes the course's
 environment. It is your responsability to pass a course environment object that
 describes the course to be deleted. Do not pass the course environment object
 associated with the request, unless you are deleting the course you're currently
 using.
-
-$dbOptions is a reference to a hash containing information required to delete
-the database for the course. Current database layouts do not require additional
-information, so specify a reference to an empty hash. If $dbOptions is
-undefined, addCourse() assumes that the database has already been deleted, and
-skips that step in the course deletion process.
 
 Deletes the course named $courseID. The course directory is removed.
 
@@ -667,9 +639,8 @@ Any errors encountered while deleting the course are returned.
 sub deleteCourse {
 	my (%options) = @_;
 
-	my $courseID  = $options{courseID};
-	my $ce        = $options{ce};
-	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
+	my $courseID = $options{courseID};
+	my $ce       = $options{ce};
 
 	# make sure the user isn't brain damaged
 	die "the course environment supplied doesn't appear to describe the course $courseID. can't proceed."

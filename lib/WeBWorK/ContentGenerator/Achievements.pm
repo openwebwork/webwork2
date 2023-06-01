@@ -76,7 +76,7 @@ sub getAchievementLevelData ($c) {
 			$level_progress   = $c->{globalData}->achievement_points - $prev_level;
 			$level_progress   = 0           if $level_progress < 0;
 			$level_progress   = $level_goal if $level_progress > $level_goal;
-			$level_percentage = int(100 * $level_progress / $level_goal);
+			$level_percentage = $level_goal ? int(100 * $level_progress / $level_goal) : 0;
 		}
 	}
 
