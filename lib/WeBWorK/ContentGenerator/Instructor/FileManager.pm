@@ -581,6 +581,7 @@ sub directoryMenu ($c, $dir) {
 		push(@values, [ $dir => $pwd ]);
 	}
 	push(@values, [ $c->{courseName} => '.' ]);
+	$c->param('directory', $values[0][0]);
 	return \@values;
 }
 
