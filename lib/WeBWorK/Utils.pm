@@ -87,6 +87,7 @@ our @EXPORT_OK = qw(
 	path_is_subdir
 	pretty_print_rh
 	readDirectory
+	createDirectory
 	readFile
 	ref2string
 	removeTempDirectory
@@ -238,6 +239,33 @@ sub readDirectory($) {
 	my @result = readdir $dh;
 	close $dh;
 	return @result;
+}
+
+=item createDirectory($dirName, $permission, $numgid)
+
+Creates a directory with the given name, permission bits, and group ID.
+
+=cut
+
+sub createDirectory {
+	my ($dirName, $permission, $numgid) = @_;
+
+	$permission = (defined($permission)) ? $permission : '0770';
+	my $errors = '';
+	mkdir($dirName, $permission)
+		or $errors .= "Can't do mkdir($dirName, $permission): $!\n" . caller(3);
+	chmod($permission, $dirName)
+		or $errors .= "Can't do chmod($permission, $dirName): $!\n" . caller(3);
+	unless ($numgid == -1) {
+		chown(-1, $numgid, $dirName)
+			or $errors .= "Can't do chown(-1,$numgid,$dirName): $!\n" . caller(3);
+	}
+	if ($errors) {
+		warn $errors;
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 =item @matches = listFilesRecusive($dir, $match_qr, $prune_qr, $match_full, $prune_full)

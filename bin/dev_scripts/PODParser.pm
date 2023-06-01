@@ -1,4 +1,3 @@
-#!/usr/bin/perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork

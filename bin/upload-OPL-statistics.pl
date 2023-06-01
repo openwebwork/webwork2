@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
@@ -17,25 +17,21 @@
 
 # This script dumps the local OPL statistics table and uploads it.
 
-my $pg_dir;
-
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
-	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
-	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+	use Mojo::File qw(curfile);
+	use Env qw(WEBWORK_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
+
 use lib "$ENV{WEBWORK_ROOT}/lib";
-use lib "$pg_dir/lib";
 
 use WeBWorK::CourseEnvironment;
 
 use Net::Domain qw/domainname/;
 use String::ShellQuote;
 
-my $ce = WeBWorK::CourseEnvironment->new({
-	webwork_dir => $ENV{WEBWORK_ROOT},
-	pg_dir      => $pg_dir,
-});
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
 
 # Get DB connection settings
 

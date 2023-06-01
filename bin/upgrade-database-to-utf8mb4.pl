@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
@@ -125,8 +125,10 @@ use strict;
 use warnings;
 
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n" unless $ENV{WEBWORK_ROOT};
-	die "PG_ROOT not found in environment.\n"      unless $ENV{PG_ROOT};
+	use Mojo::File qw(curfile);
+	use Env qw(WEBWORK_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
 
 use Getopt::Long qw(:config bundling);
@@ -148,13 +150,13 @@ GetOptions(
 pod2usage(-verbose => $show_help ? 2 : 0) if $show_help || !(@courses || $all || $upgrade_non_native);
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
-use lib "$ENV{PG_ROOT}/lib";
+
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Utils::CourseManagement qw{listCourses};
 
 # Load a minimal course environment.
-my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, pg_dir => $ENV{PG_ROOT} });
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
 
 # Get DB connection settings.
 my $dbname = $ce->{database_name};

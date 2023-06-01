@@ -55,7 +55,7 @@ use warnings;
 use Carp;
 use Opcode qw(empty_opset);
 
-use WWSafe;
+use Safe;
 use WeBWorK::Utils qw(readFile);
 use WeBWorK::Debug;
 
@@ -95,7 +95,13 @@ sub new {
 
 	$seedVars->{courseName} ||= '___';    # prevents extraneous error messages
 
-	my $safe = WWSafe->new;
+	# Mojolicious sets the INT and TERM signal handlers, and perl Safe overrides those (as those signals can be used to
+	# break out of Safe) which causes an error later when the Mojolicious signals handlers are not called as they should
+	# be.  So the current signal handlers are cached here and restored after the Safe reval is completed.
+	my %ORIG_SIG;
+	$ORIG_SIG{$_} = $SIG{$_} for keys %SIG;
+
+	my $safe = Safe->new;
 	$safe->permit('rand');
 	# seed course environment with initial values
 	while (my ($var, $val) = each %$seedVars) {
@@ -216,6 +222,9 @@ sub new {
 		#croak "Cannot read PG version file $PG_version_file";
 		warn "Cannot read PG version file $PG_version_file";
 	}
+
+	# Restore the original signal handlers.
+	local $SIG{$_} = $ORIG_SIG{$_} for keys %ORIG_SIG;
 
 	bless $self, $class;
 

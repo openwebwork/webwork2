@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
@@ -19,13 +19,10 @@
 generate-ww-pg-pod.pl - Convert WeBWorK and PG POD into HTML form.
 
 =head1 SYNOPSIS
- 
+
 generate-ww-pg-pod.pl [options]
- 
+
  Options:
-   -w|--webwork-root     Directory containing a git clone of webwork2.
-                         If this option is not set, then the environment
-                         variable $WEBWORK_ROOT will be used if it is set.
    -p|--pg-root          Directory containing  a git clone of pg.
                          If this option is not set, then the environment
                          variable $PG_ROOT will be used if it is set.
@@ -35,13 +32,13 @@ generate-ww-pg-pod.pl [options]
    -v|--verbose          Increase the verbosity of the output.
                          (Use multiple times for more verbosity.)
 
-Note that at least one of the options --webwork-root or --pg-root must be provided
-(or there is nothing to do!).
+Note that --pg-root must be provided or the PG_ROOT environment variable set
+if the POD for pg is desired.
 
 =head1 DESCRIPTION
- 
+
 Convert WeBWorK and PG POD into HTML form.
- 
+
 =cut
 
 use strict;
@@ -49,20 +46,18 @@ use warnings;
 use Getopt::Long qw(:config bundling);
 use Pod::Usage;
 
-my ($webwork_root, $pg_root, $output_dir, $base_url);
+my ($pg_root, $output_dir, $base_url);
 my $verbose = 0;
 GetOptions(
-	'w|webwork-root=s' => \$webwork_root,
-	'p|pg-root=s'      => \$pg_root,
-	'o|output-dir=s'   => \$output_dir,
-	'b|base-url=s'     => \$base_url,
-	'v|verbose+'       => \$verbose
+	'p|pg-root=s'    => \$pg_root,
+	'o|output-dir=s' => \$output_dir,
+	'b|base-url=s'   => \$base_url,
+	'v|verbose+'     => \$verbose
 );
 
-$webwork_root = $ENV{WEBWORK_ROOT} if !$webwork_root;
-$pg_root      = $ENV{PG_ROOT}      if !$pg_root;
+$pg_root = $ENV{PG_ROOT} if !$pg_root;
 
-pod2usage(2) unless (($webwork_root || $pg_root) && $output_dir);
+pod2usage(2) unless $output_dir;
 
 $base_url = "/" if !$base_url;
 
@@ -72,6 +67,8 @@ use File::Basename qw(dirname);
 
 use lib dirname(__FILE__);
 use PODtoHTML;
+
+my $webwork_root = dirname(dirname(dirname(__FILE__)));
 
 for my $dir ($webwork_root, $pg_root) {
 	next unless $dir && -d $dir;
