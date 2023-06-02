@@ -37,7 +37,7 @@ use File::Spec;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(runtime_use readDirectory pretty_print_rh);
+use WeBWorK::Utils qw(runtime_use readDirectory pretty_print_rh surePathToFile);
 
 our @EXPORT_OK = qw(
 	listCourses
@@ -132,7 +132,7 @@ Lists the courses which have been archived (end in .tar.gz).
 
 sub listArchivedCourses {
 	my ($ce) = @_;
-	my $coursesDir = $ce->{webworkDirs}->{courses};
+	my $coursesDir = "$ce->{webworkDirs}->{courses}/admin/archives";
 	return grep {m/\.tar\.gz$/} readDirectory($coursesDir);
 }
 
@@ -721,9 +721,10 @@ sub deleteCourse {
  courseID  => $courseID,
  ce        => $ce,
 
-Creates a gzipped tar archive (.tar.gz) of the course $courseID in the WeBWorK
-courses directory. Before archiving, the course database is dumped into a
-subdirectory of the course's DATA directory.
+Creates a gzipped tar archive (.tar.gz) of the course $courseID and places it in the
+archives directory of the admin course or in the location given in the optional archive_path
+option.  Before archiving, the course database is dumped into a subdirectory of the course's
+DATA directory.
 
 Only files and directories stored directly in the course directory are archived.
 The contents of linked files is not archived although the symbolic links
@@ -751,10 +752,10 @@ sub archiveCourse {
 	# grab some values we'll need
 	my $course_dir = $ce->{courseDirs}{root};
 
-	# tmp_archive_path is used as the target of the tar.gz operation
-	# After this is done the final tar.gz file is moved either to the course directory
-	# or the course/myCourse/templates   directory (when saving individual courses)
-	# this prevents us from tarring a directory to which we have just added a file
+	# tmp_archive_path is used as the target of the tar.gz operation.
+	# After this is done the final tar.gz file is moved either to the admin course archives directory
+	# course/admin/archives or the supplied archive_path option if it is present.
+	# This prevents us from tarring a directory to which we have just added a file
 	# see bug #2022 -- for error messages on some operating systems
 	my $uuidStub         = create_uuid_as_string();
 	my $tmp_archive_path = $ce->{webworkDirs}{courses} . "/${uuidStub}_$courseID.tar.gz";
@@ -764,7 +765,7 @@ sub archiveCourse {
 	if (defined $options{archive_path} && $options{archive_path} =~ /S/) {
 		$archive_path = $options{archive_path};
 	} else {
-		$archive_path = $ce->{webworkDirs}{courses} . "/$courseID.tar.gz";
+		$archive_path = "$ce->{webworkDirs}{courses}/admin/archives/$courseID.tar.gz";
 	}
 
 	# fail if the source course does not exist
@@ -821,6 +822,8 @@ sub archiveCourse {
 	##### step 3: cleanup -- remove database dump files from course directory #####
 
 	unless (-e $archive_path) {
+		# Make sure any missing directories are creates.
+		surePathToFile($ce->{webworkDirs}{courses}, $archive_path);
 		unless (move($tmp_archive_path, $archive_path)) {
 			unlink($tmp_archive_path);    #clean up
 			croak "Failed to rename archived file to '$archive_path': $!";

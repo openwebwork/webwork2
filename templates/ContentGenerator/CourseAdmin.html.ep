@@ -59,6 +59,12 @@
 	</ol>
 	%
 	<h2><%= maketext('Archived Courses') =%></h2>
+	<p>
+		<%= link_to maketext('Download/upload archived courses') => $c->systemLink(
+			url_for('instructor_file_manager'),
+			params => { pwd => 'archives' },
+		) =%>
+	</p>
 	<ol>
 		% for (sort { lc($a) cmp lc($b) } listArchivedCourses($ce)) {
 			<li><%= $_ %></li>
