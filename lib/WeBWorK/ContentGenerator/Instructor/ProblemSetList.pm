@@ -466,21 +466,30 @@ sub create_handler ($c) {
 	return $c->tag(
 		'div',
 		class => 'alert alert-danger p-1 mb-0',
-		$c->maketext("Failed to create new set: set name cannot exceed 100 characters.")
+		$c->maketext("Failed to create new set: Set name cannot exceed 100 characters.")
 	) if (length($newSetID) > 100);
 	return $c->tag(
 		'div',
 		class => 'alert alert-danger p-1 mb-0',
-		$c->maketext("Failed to create new set: no set name specified!")
+		$c->maketext("Failed to create new set: No set name specified.")
 	) unless $newSetID =~ /\S/;
 	return $c->tag(
 		'div',
 		class => 'alert alert-danger p-1 mb-0',
 		$c->maketext(
-			"The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",
-			$newSetID)
-			. " "
-			. $c->maketext("No set created.")
+			'Failed to create new set: Invalid characters in set name "[_1]". '
+				. 'A set name may only contain letters, numbers, hyphens, and spaces.',
+			$newSetID =~ s/_/ /gr
+		)
+	) unless $newSetID =~ m/^[-a-zA-Z0-9_.]*$/;
+	return $c->tag(
+		'div',
+		class => 'alert alert-danger p-1 mb-0',
+		$c->maketext(
+			'The set name "[_1]" is already in use. Pick a different name if you would like to start a new set. '
+				. 'No set created.',
+			$newSetID
+		)
 	) if $db->existsGlobalSet($newSetID);
 
 	my $newSetRecord = $db->newGlobalSet;
