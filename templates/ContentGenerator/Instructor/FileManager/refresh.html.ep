@@ -47,7 +47,9 @@
 					unarchive_text => maketext('Unpack Archive')
 				},
 				%button =%>
-			<%= submit_button maketext('Archive Course'), id => 'ArchiveCourse', %button =%>
+			% unless ($c->{courseName} eq 'admin') {
+				<%= submit_button maketext('Archive Course'), id => 'ArchiveCourse', %button =%>
+			% }
 			<div style="height: 10px"></div>
 			<%= submit_button maketext('New File'), id => 'NewFile', %button =%>
 			<%= submit_button maketext('New Folder'), id => 'NewFolder', %button =%>
