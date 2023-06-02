@@ -767,6 +767,7 @@ sub archiveCourse {
 		$archive_path = $options{archive_path};
 	} else {
 		$archive_path = "$ce->{webworkDirs}{courses}/admin/archives/$courseID.tar.gz";
+		surePathToFile($ce->{webworkDirs}{courses}, $archive_path);
 	}
 
 	# fail if the source course does not exist
@@ -823,8 +824,6 @@ sub archiveCourse {
 	##### step 3: cleanup -- remove database dump files from course directory #####
 
 	unless (-e $archive_path) {
-		# Make sure any missing directories are creates.
-		surePathToFile($ce->{webworkDirs}{courses}, $archive_path);
 		unless (move($tmp_archive_path, $archive_path)) {
 			unlink($tmp_archive_path);    #clean up
 			croak "Failed to rename archived file to '$archive_path': $!";
