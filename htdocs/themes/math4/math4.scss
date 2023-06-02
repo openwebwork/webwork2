@@ -109,6 +109,10 @@ $layout-divider-color: #aaa !default;
 			}
 		}
 
+		@media only screen and (min-width: 1200px) {
+			width: 15%;
+		}
+
 		a, span {
 			display: inline-block;
 			margin-right: 0.5rem;
@@ -193,6 +197,10 @@ $layout-divider-color: #aaa !default;
 		}
 	}
 
+	@media only screen and (min-width: 1200px) {
+		width: 15%;
+	}
+
 	.navbar-brand {
 		text-transform: uppercase;
 		padding: 0.5rem 0 0.25rem 1rem;
@@ -265,6 +273,11 @@ $layout-divider-color: #aaa !default;
 		width: 100%;
 		margin-top: 0;
 		margin-left: auto;
+	}
+
+	@media only screen and (min-width: 1200px) {
+		margin-left: 15%;
+		width: 85%;
 	}
 }
 
