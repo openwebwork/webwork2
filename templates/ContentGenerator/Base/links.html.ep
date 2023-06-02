@@ -264,21 +264,6 @@
 				<%= $c->helpMacro('instructor_links',
 					{ label => maketext('Help'), class => 'nav-link' }) %>
 			</li>
-			% # Show the archive course link only on the FileManager page
-			% if (
-				% $authz->hasPermissions($userID, 'manage_course_files')
-				% && current_route eq 'instructor_file_manager'
-			% )
-			% {
-				<li class="list-group-item nav-item">
-					<%= $makelink->(
-						'instructor_file_manager',
-						text              => maketext('Archive this Course'),
-						systemlink_params => { archiveCourse => 1 },
-						active            => 0
-					) %>
-				</li>
-			% }
 		% }
 		%
 		% if (exists $ce->{webworkURLs}{bugReporter}

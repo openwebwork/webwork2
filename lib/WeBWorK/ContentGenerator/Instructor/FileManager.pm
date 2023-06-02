@@ -52,7 +52,7 @@ sub pre_header_initialize ($c) {
 
 	$c->downloadFile($c->param('download')) if defined $c->param('download');
 
-	if ($c->param('archiveCourse')) {
+	if ($action && ($action eq 'Archive Course' || $action eq $c->maketext('Archive Course'))) {
 		my $ce       = $c->ce;
 		my $courseID = $c->stash('courseID');
 
