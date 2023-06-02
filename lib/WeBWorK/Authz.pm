@@ -260,6 +260,14 @@ sub hasPermissions {
 		if (defined $activity_role) {
 			if (exists $userRoles->{$activity_role}) {
 				my $role_permlevel = $userRoles->{$activity_role};
+				# Elevate all permissions greater than a student in the admin course to the
+				# create_and_delete_courses level.  This way a user either has access to all
+				# or only student level permissions tools in the admin course.
+				if (defined($ce->{courseName}) && $ce->{courseName} eq 'admin') {
+					my $admin_permlevel = $userRoles->{ $permissionLevels->{create_and_delete_courses} };
+					$role_permlevel = $admin_permlevel
+						if $role_permlevel > $userRoles->{student} && $role_permlevel < $admin_permlevel;
+				}
 				if (defined $role_permlevel) {
 					if ($exactness eq 'ge') {
 						return $permission_level >= $role_permlevel;
