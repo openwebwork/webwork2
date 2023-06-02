@@ -132,7 +132,8 @@ Lists the courses which have been archived (end in .tar.gz).
 
 sub listArchivedCourses {
 	my ($ce) = @_;
-	my $coursesDir = "$ce->{webworkDirs}->{courses}/admin/archives";
+	my $coursesDir = "$ce->{webworkDirs}{courses}/admin/archives";
+	surePathToFile($ce->{webworkDirs}{courses}, "$coursesDir/test");    # Ensure archives directory exists.
 	return grep {m/\.tar\.gz$/} readDirectory($coursesDir);
 }
 
