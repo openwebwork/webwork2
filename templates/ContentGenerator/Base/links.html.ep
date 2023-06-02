@@ -6,11 +6,6 @@
 % }
 <h2 class="navbar-brand mb-0"><%= maketext('Main Menu') %></h2>
 <ul class="nav flex-column">
-	% unless ($restricted_navigation) {
-		<li class="list-group-item list-group-item-primary nav-item">
-			<%= link_to maketext('Courses') => 'root', class => 'nav-link' %>
-		</li>
-	% }
 	% if (defined $courseID && $authen->was_verified) {
 		% # Homework Sets or Course Administration
 		<li class="list-group-item list-group-item-primary nav-item">
