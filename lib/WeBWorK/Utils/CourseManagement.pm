@@ -37,7 +37,7 @@ use File::Spec;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(runtime_use readDirectory pretty_print_rh surePathToFile);
+use WeBWorK::Utils qw(runtime_use readDirectory surePathToFile);
 
 our @EXPORT_OK = qw(
 	listCourses
