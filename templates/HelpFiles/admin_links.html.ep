@@ -25,6 +25,10 @@
 </p>
 
 <dl>
+	<dt><%= maketext('User Settings') %></dt>
+	<dd><%= maketext('Use this page to change your password.') =%></dd>
+	<dt><%= maketext('Course Listings') %></dt>
+	<dd><%= maketext('View/access current and archived courses.') =%></dd>
 	<dt><%= maketext('Add Course') %></dt>
 	<dd><%= maketext('Create a new course on this server.') =%></dd>
 	<dt><%= maketext('Rename Course') %></dt>
@@ -37,12 +41,10 @@
 	<dd><%= maketext(q{Restore a .tar.gz archive.}) =%></dd>
 	<dt><%= maketext('Upgrade Courses') %></dt>
 	<dd><%= maketext('Upgrade courses from a previous version of WeBWorK.') =%></dd>
-	<dt><%= maketext('Manage Locations') %></dt>
-	<dd><%= maketext('Configure ip ranges (locations) that can used to restrict set access.') =%></dd>
 	<dt><%= maketext('Hide Courses') %></dt>
-	<dd><%= maketext('Configure which course links appear on the main "Courses" page.') =%></dd>
-	<dt><%= maketext('User Settings') %></dt>
-	<dd><%= maketext('Use this page to change your password.') =%></dd>
+	<dd><%= maketext('Configure which course links appear on the site landing page.') =%></dd>
+	<dt><%= maketext('Manage Locations') %></dt>
+	<dd><%= maketext('Configure ip ranges (locations) that can be used to restrict set access.') =%></dd>
 	<dt><%= maketext('Classlist Editor') %></dt>
 	<dd>
 		<%= maketext('Manage instructors.  When instructors are added to a newly created course, they are also '

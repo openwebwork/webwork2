@@ -7,14 +7,14 @@
 	<li class="list-group-item nav-item">
 		<%= $makelink->(
 			'set_list',
-			text   => maketext('Course Administration'),
+			text   => maketext('Course Listings'),
 			active => !param('subDisplay') && $c->url_for =~ /admin$/ ? 1 : 0
 		) %>
 	</li>
 	% for (
 		% [
 		% 	'add_course',
-		% 	maketext('Add Course'),
+		% 	maketext('Add Courses'),
 		% 	{
 		% 		add_admin_users      => 1,
 		% 		add_config_file      => 1,
@@ -22,13 +22,13 @@
 		% 		add_templates_course => $ce->{siteDefaults}{default_templates_course} || ''
 		% 	}
 		% ],
-		% [ 'rename_course',        maketext('Rename Course') ],
-		% [ 'delete_course',        maketext('Delete Course') ],
-		% [ 'archive_course',       maketext('Archive Course') ],
-		% [ 'unarchive_course',     maketext('Unarchive Course') ],
+		% [ 'rename_course',        maketext('Rename Courses') ],
+		% [ 'delete_course',        maketext('Delete Courses') ],
+		% [ 'archive_course',       maketext('Archive Courses') ],
+		% [ 'unarchive_course',     maketext('Unarchive Courses') ],
 		% [ 'upgrade_course',       maketext('Upgrade Courses') ],
-		% [ 'manage_locations',     maketext('Manage Locations') ],
 		% [ 'hide_inactive_course', maketext('Hide Courses') ],
+		% [ 'manage_locations',     maketext('Manage Locations') ],
 	% )
 	% {
 		<li class="list-group-item nav-item">
