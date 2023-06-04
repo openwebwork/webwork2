@@ -83,7 +83,7 @@
 </div>
 % # Navigation
 % if ($c->can('links') || $c->can('siblings') || $c->can('options')) {
-	<div id="site-navigation" class="d-flex flex-column bg-light" role="navigation" aria-label="main navigation">
+	<nav id="site-navigation" class="d-flex flex-column bg-light" aria-label="main navigation">
 		% if ($c->can('links')) {
 			<div id="site-links"><%= $c->links %></div>
 		% }
@@ -93,7 +93,7 @@
 		% if ($c->can('options')) {
 			<div id="options" class="info-box"><%= $c->options %></div>
 		% }
-	</div>
+	</nav>
 % }
 %
 <div class="d-flex">

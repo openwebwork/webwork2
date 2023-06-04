@@ -1,4 +1,3 @@
-<h2 class="navbar-brand mb-0"><%= maketext('Admin Menu') %></h2>
 <ul class="nav flex-column">
 	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('options') %></li>
 	<li class="list-group-item nav-item">

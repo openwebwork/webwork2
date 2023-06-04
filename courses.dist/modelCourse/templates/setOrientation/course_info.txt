@@ -5,11 +5,11 @@
 If you haven't already done so, you should change your password to
 something other than your student ID or whatever your instructor
 used as your initial password.  To do this, click on the
-User Settings link under MAIN MENU in the list at the far left, 
+User Settings link in the sidebar navigation at the far left,
 and follow the directions on that page. Note you can collapse and
-uncollapse the MAIN MENU by clicking on the boxed angle bracket just 
-above the boldface course name so if you don't see the MAIN MENU click 
-on the boxed angle bracket to make MAIN MENU reappear.
+uncollapse the sidebar navigation by clicking on the three bars "hamburger"
+icon at the top left. So if you don't see the sidebar navigation, click
+on the three bars to make it reappear.
 
 <p align="justify">
 

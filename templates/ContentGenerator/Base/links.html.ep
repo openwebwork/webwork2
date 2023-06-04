@@ -4,7 +4,6 @@
 	<%= include 'ContentGenerator/Base/admin_links' =%>
 	% next;
 % }
-<h2 class="navbar-brand mb-0"><%= maketext('Main Menu') %></h2>
 <ul class="nav flex-column">
 	% if (defined $courseID && $authen->was_verified) {
 		% # Homework Sets or Course Administration
