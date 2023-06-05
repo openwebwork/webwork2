@@ -50,6 +50,10 @@ sub info ($c) {
 
 	# This section should be kept in sync with the Home.pm version.
 
+	# The "default" data in the distribution model course login_info.txt file.
+	my $default_login_info_text =
+		eval { readFile("$ce->{webwork_dir}/courses.dist/modelCourse/templates/login_info.txt") };
+
 	# List the login info first.
 	# Login info is relative to the templates directory.
 	push(
@@ -58,7 +62,10 @@ sub info ($c) {
 			$c->maketext('Login Info'),
 			"$ce->{courseDirs}{templates}/$ce->{courseFiles}{login_info}"
 		)
-	) if ($ce->{courseFiles}{login_info});
+		)
+		if ($ce->{courseFiles}{login_info}
+			&& $default_login_info_text ne
+			eval { readFile("$ce->{courseDirs}{templates}/$ce->{courseFiles}{login_info}") });
 
 	push(@$result, $c->output_info_file($c->maketext('Site Information'), $ce->{webworkFiles}{site_info}))
 		if $ce->{webworkFiles}{site_info};
