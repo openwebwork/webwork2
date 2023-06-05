@@ -1,4 +1,0 @@
-
-Place a file named "hide_directory" in a course or other directory
-and it will not show up in the courses list on the WeBWorK home page.
-It will still appear in the Course Administration listing.
