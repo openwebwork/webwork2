@@ -29,10 +29,6 @@ use WeBWorK::Localize;
 # What do we consider a "recent" problem set?
 use constant RECENT => 2 * 7 * 24 * 60 * 60;    # Two-Weeks in seconds
 
-# The "default" data in the course_info.txt file.
-use constant DEFAULT_COURSE_INFO_TXT =>
-	"Put information about your course here.  Click the edit button above to add your own message.\n";
-
 sub can ($c, $arg) {
 	if ($arg eq 'info') {
 		my $ce = $c->ce;
@@ -42,11 +38,15 @@ sub can ($c, $arg) {
 
 		my $course_info_path = "$ce->{courseDirs}{templates}/$ce->{courseFiles}{course_info}";
 
-		my $text = DEFAULT_COURSE_INFO_TXT;
+		# The "default" data in the distribution model course course_info.txt file.
+		my $default_course_info_text =
+			eval { readFile("$ce->{webwork_dir}/courses.dist/modelCourse/templates/course_info.txt") };
+
+		my $text = $default_course_info_text;
 		$text = eval { readFile($course_info_path) } if (-f $course_info_path);
 
 		return $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools')
-			|| $text ne DEFAULT_COURSE_INFO_TXT;
+			|| $text ne $default_course_info_text;
 	}
 
 	return $c->SUPER::can($arg);

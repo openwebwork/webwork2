@@ -1,1 +1,16 @@
-Put information about your course here.  Click the edit button above to add your own message.
+Click the edit button above to put information about your course here.
+Students will not see this panel until you make an edit.
+
+<!-- This file can use plain text as above, but is really a snippet of HTML.  -->
+<!-- So you may build course info using HTML markup. Here is a small template -->
+<!-- you might start with. Remove the HTML comment delimiters to use it.      -->
+
+<!--
+<dl>
+	<dt>Instructor</dt>
+	<dd>FirstName LastName</dd>
+
+	<dt>Email</dt>
+	<dd>first.last@myschool.edu</dd>
+</dl>
+-->
