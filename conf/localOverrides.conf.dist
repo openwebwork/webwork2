@@ -106,7 +106,7 @@ $mail{feedbackRecipients}    = [
 # rather than a centrally-stored file shared by all courses.
 
 #$webworkFiles{hardcopySnippets}{setHeader} = "$courseDirs{templates}/ASimpleCombinedHeaderFile.pg";
-#$webworkFiles{hardcopySnippets}{setHeader} = "$courseDirs{templates}/ASimpleHardCopyHeaderFile.pg";
+#$webworkFiles{hardcopySnippets}{setHeader} = "$courseDirs{templates}/MyHardCopyHeaderFile.pg";
 
 # The set header is displayed on the problem set page. It is a PG file.
 # One of these default files which is used if a specific files is not selected
@@ -114,7 +114,7 @@ $mail{feedbackRecipients}    = [
 # rather than a centrally-stored file shared by all courses.
 
 #$webworkFiles{screenSnippets}{setHeader} = "$courseDirs{templates}/ASimpleCombinedHeaderFile.pg";
-#$webworkFiles{screenSnippets}{setHeader} = "$courseDirs{templates}/ASimpleScreenHeaderFile.pg";
+#$webworkFiles{screenSnippets}{setHeader} = "$courseDirs{templates}/MyScreenHeaderFile.pg";
 
 ################################################################################
 # Settings for the admin course
