@@ -1,89 +1,46 @@
 # ASimpleCombinedHeaderFile.pg
 # This header file can be used for both the screen and hardcopy output
 
-
 DOCUMENT();
 
 loadMacros(
-	"PG.pl",
-	"PGbasicmacros.pl",
-	#"source.pl", #uncommenting this will display "show source" button if that is permitted
+	"PGstandard.pl",
+	"PGML.pl",
 	"PGcourse.pl",
-	"PGML.pl"
 );
 
-TEXT($BEGIN_ONE_COLUMN);
+#####################################################################
+# Content to print only in PDF output
+# Use PGML markup
 
-####################################################
-#
-# The item below is printed out only when a hardcopy is made.
-#
-####################################################
+$TeXonly = <<'PGML';
+This PDF is available for convenience. Assignments must be submitted within *WeBWorK* for credit.
+PGML
 
-TEXT(MODES(TeX =>EV3(<<'EOT'),HTML=>""));
+#####################################################################
+# Content to print only in HTML output
+# Use PGML markup
 
-% This is a TeX comment
-% Use this space to add header text to pdf hardcopies
-% Text added here will not be displayed in the browser
+$HTMLonly = <<"PGML";
+This assignment will close on *$formattedDueDate*.
+PGML
 
-EOT
-
-####################################################
-#
-# End of hardcopy only output.
-#
-####################################################
-
-
-####################################################
-#
-# The items below are printed out only when set is displayed on screen
-#
-####################################################
-TEXT(MODES(TeX =>"",HTML=>EV3(<<'EOT')));
-
-$BBOLD WeBWorK  Assignment \{ protect_underbar($setNumber) \}  is due :  $formattedDueDate. $EBOLD
-$PAR
-Here's the list of
-\{ htmlLink(qq!http://webwork.maa.org/wiki/Available_Functions!,"functions and symbols") \}
- which WeBWorK understands.
-$BR
-EOT
-
-####################################################
-# Uncomment and edit the lines below if this course has a web page. Note that this is comment in Perl mode.
-# IMPORTANT: Make sure the EOT at the bottom is at the beginning of a line with no spaces preceding it.
-#TEXT(MODES(TeX =>"",HTML=>EV3(<<'EOT')));
-#See the course web page for information \{ htmlLink(qq!http://yoururl/yourcourse!,"your course name") \}
-#EOT
-####################################################
-
-####################################################
-#
-# End of screen only output.
-#
-####################################################
-
-####################################################
-#
-# Anything between the BEGIN_PGML AND END_PGML lines
-# will be printed in both screen and hardcopy output
-#
-####################################################
+#####################################################################
+# The last line of PGML below prints the items from above.
+# Other content will appear in all output forms.
 
 BEGIN_PGML
+[@ MODES(TeX => $TeXonly, HTML => $HTMLonly) @]**
 
+If all else fails, try answering with [`90^{\circ}`] because that is
+always right.
 END_PGML
 
-TEXT($END_ONE_COLUMN);
-
-####################################################
-#
+#####################################################################
 # The following lines can be used to customize the PDF output
 # by following the documentation for the LaTeX exam class
 # http://mirrors.ctan.org/macros/latex/contrib/exam/examdoc.pdf
-#
-####################################################
+# Note this is direct code for a tex file, not PGML markup
 
 TEXT(MODES(TeX => EV3(<<'EOT'),HTML=>""));
 
@@ -117,4 +74,4 @@ TEXT(MODES(TeX => EV3P({processVariables => 0}, <<'EOT'), HTML => ''));
 
 EOT
 
-ENDDOCUMENT();        # This should be the last executable line in the problem.
+ENDDOCUMENT();
