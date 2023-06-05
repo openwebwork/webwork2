@@ -47,12 +47,6 @@
 				<%= maketext('Add WeBWorK administrators to new course') =%>
 			</label>
 		</div>
-		<div class="form-check">
-			<label class="form-check-label">
-				<%= check_box 'add_config_file' => 1, class => 'form-check-input' =%>
-				<%= maketext('Copy simple configuration file to new course') =%>
-			</label>
-		</div>
 	</div>
 	<div class="mb-2">
 		<%= maketext(
@@ -109,13 +103,13 @@
 		</div>
 	</div>
 	<div class="mb-1">
-		<%= maketext('To copy problem templates from an existing course, select the course below.') =%>
+		<%= maketext('To copy the templates and html folders from an existing course, select the course below.') =%>
 	</div>
 	<div class="row mb-3">
 		% my @existingCourses = sort { lc($a) cmp lc($b) } grep { $_ ne stash('courseID') } listCourses($ce);
 		% unshift(@existingCourses, sort { lc($a) cmp lc($b) } @{ $ce->{modelCoursesForCopy} });
 		%
-		<%= label_for add_templates_course => maketext('Copy templates from:'),
+		<%= label_for add_templates_course => maketext('Copy from:'),
 			class => 'col-auto col-form-label fw-bold' =%>
 		<div class="col-auto">
 			<%= select_field add_templates_course => [
@@ -124,6 +118,14 @@
 				],
 				id      => 'add_templates_course',
 				class   => 'form-select' =%>
+		</div>
+		<div class="mb-3">
+			<div class="form-check">
+				<label class="form-check-label">
+					<%= check_box 'add_config_file' => 1, class => 'form-check-input' =%>
+					<%= maketext('Also copy simple configuration file') =%>
+				</label>
+			</div>
 		</div>
 	</div>
 	<%= hidden_field add_dbLayout => 'sql_single' =%>
