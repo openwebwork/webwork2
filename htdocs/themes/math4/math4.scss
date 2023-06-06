@@ -56,13 +56,15 @@ table caption {
 
 $masthead-height: 70px !default;
 $layout-divider-color: #aaa !default;
+$site-nav-width: 250px !default;
 
 /* Banner */
-#masthead {
+.masthead {
 	position: fixed;
 	top: 0;
 	left: 0;
 	right: 0;
+	display: flex;
 	height: $masthead-height;
 	background-color: var(--bs-primary, #038);
 	border-bottom: 1px solid $layout-divider-color;
@@ -72,6 +74,7 @@ $layout-divider-color: #aaa !default;
 
 	@media only screen and (max-width: 768px) {
 		position: static;
+		flex-direction: column;
 		height: unset;
 	}
 
@@ -83,13 +86,14 @@ $layout-divider-color: #aaa !default;
 		}
 	}
 
-	.webwork_logo {
+	.webwork-logo {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		padding: 5px 0;
 		background-color: var(--ww-logo-background-color, #104aad);
 		z-index: 20;
+		width: $site-nav-width;
 
 		img {
 			max-height: $masthead-height - 15px;
@@ -99,6 +103,7 @@ $layout-divider-color: #aaa !default;
 		@media only screen and (max-width: 768px) {
 			height: 0.75 * $masthead-height;
 			position: fixed;
+			width: 100%;
 
 			img {
 				max-height: 0.75 * $masthead-height - 11px;
@@ -111,8 +116,9 @@ $layout-divider-color: #aaa !default;
 		}
 	}
 
-	.institution_logo {
+	.institution-logo {
 		display: flex;
+		flex-grow: 1;
 		align-items: center;
 		padding: 8px 0;
 		max-height: $masthead-height - 1px;
@@ -133,7 +139,8 @@ $layout-divider-color: #aaa !default;
 		}
 	}
 
-	#login-status {
+	.login-status {
+		flex-shrink: 1;
 		height: $masthead-height - 1px;
 		padding: 4px 10px 4px 0;
 		color: var(--ww-primary-foreground-color, white);
@@ -155,7 +162,7 @@ $layout-divider-color: #aaa !default;
 #site-navigation {
 	position: fixed;
 	line-height: 1.2rem;
-	width: 20%;
+	width: $site-nav-width;
 	left: 0;
 	margin-top: $masthead-height;
 	height: calc(100% - $masthead-height);
@@ -244,11 +251,11 @@ $layout-divider-color: #aaa !default;
 }
 
 #content {
-	margin-left: 20%;
+	margin-left: $site-nav-width;
 	transition-property: margin;
 	transition-duration: 0.3s;
 	margin-top: $masthead-height;
-	width: 80%;
+	width: calc(100% - $site-nav-width);
 
 	&.toggle-width {
 		width: 100%;
