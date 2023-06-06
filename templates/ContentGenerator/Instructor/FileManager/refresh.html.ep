@@ -109,13 +109,13 @@
 		<div class="input-group input-group-sm">
 			<div class="input-group-text">
 				<label class="form-check-label">
-					<%= check_box unpack => 1, checked => undef, class => 'form-check-input me-2' =%>
+					<%= check_box unpack => 1, class => 'form-check-input me-2' =%>
 					<%= maketext('Unpack archives automatically') =%>
 				</label>
 			</div>
 			<div class="input-group-text flex-grow-1">
 				<label class="form-check-label">
-					<%= check_box autodelete => 1, checked => undef, class => 'form-check-input me-2' =%>
+					<%= check_box autodelete => 1, class => 'form-check-input me-2' =%>
 					<%= maketext('then delete them') =%>
 				</label>
 			</div>

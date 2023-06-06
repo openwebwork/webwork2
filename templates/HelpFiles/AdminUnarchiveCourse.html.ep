@@ -24,6 +24,5 @@
 </p>
 <p class="mb-0">
 	<%= maketext('Archived courses are located inside the "archives" directory of the "admin" course.  Use '
-		. 'the "File Manager" to upload additional .tar.gz files to be unarchived.  The "archives" directory '
-		. 'is found by first going up one level to the "admin" course root directory.') =%>
+		. 'the "File Manager" to upload additional .tar.gz files to be unarchived.') =%>
 </p>

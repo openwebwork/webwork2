@@ -103,9 +103,9 @@ sub downloadFile ($c, $filename, $directory = '') {
 
 # First time through
 sub Init ($c) {
-	$c->param('unpack',     1);
-	$c->param('autodelete', 1);
-	$c->param('format',     'Automatic');
+	$c->param('unpack',     1)           unless defined($c->param('unpack'));
+	$c->param('autodelete', 1)           unless defined($c->param('autodelete'));
+	$c->param('format',     'Automatic') unless defined($c->param('format'));
 	return $c->Refresh;
 }
 

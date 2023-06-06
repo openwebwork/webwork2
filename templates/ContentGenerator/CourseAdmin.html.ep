@@ -62,7 +62,7 @@
 	<p>
 		<%= link_to maketext('Download/upload archived courses') => $c->systemLink(
 			url_for('instructor_file_manager'),
-			params => { pwd => 'archives' },
+			params => { pwd => 'archives', unpack => 0, autodelete => 0 },
 		) =%>
 	</p>
 	<ol>
