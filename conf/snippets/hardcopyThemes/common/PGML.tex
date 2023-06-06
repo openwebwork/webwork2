@@ -5,10 +5,10 @@
 \newdimen\pgmlPixels
 
 \pgmlPixels=.5pt
-\pgmlPercent=.01\hsize
 
 {\catcode`\^^M=\active%
   \gdef\pgmlSetup{%
+    \pgmlPercent=.01\hsize%
     \parskip=0pt%
     \def\par{\ifmmode\else\endgraf\fi\ignorespaces}%
     \catcode`\^^M=\active%
