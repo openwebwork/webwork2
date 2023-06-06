@@ -326,7 +326,7 @@ sub addCourse {
 	writeCourseConf($fh, $ce, %courseOptions);
 	close $fh;
 
-	##### step 5: copy templates and html #####
+	##### step 5: copy templates, html, and simple.conf if desired #####
 
 	if (exists $options{templatesFrom}) {
 		my $sourceCourse = $options{templatesFrom};
@@ -391,7 +391,6 @@ sub addCourse {
 		}
 
 	}
-	######## set 6: copy html/achievements contents ##############
 }
 
 ################################################################################
