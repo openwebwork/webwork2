@@ -52,7 +52,7 @@ sub pre_header_initialize ($c) {
 
 	$c->downloadFile($c->param('download')) if defined $c->param('download');
 
-	if ($c->param('archiveCourse')) {
+	if ($action && ($action eq 'Archive Course' || $action eq $c->maketext('Archive Course'))) {
 		my $ce       = $c->ce;
 		my $courseID = $c->stash('courseID');
 
@@ -103,9 +103,9 @@ sub downloadFile ($c, $filename, $directory = '') {
 
 # First time through
 sub Init ($c) {
-	$c->param('unpack',     1);
-	$c->param('autodelete', 1);
-	$c->param('format',     'Automatic');
+	$c->param('unpack',     1)           unless defined($c->param('unpack'));
+	$c->param('autodelete', 1)           unless defined($c->param('autodelete'));
+	$c->param('format',     'Automatic') unless defined($c->param('format'));
 	return $c->Refresh;
 }
 

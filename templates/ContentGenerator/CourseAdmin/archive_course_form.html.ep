@@ -1,12 +1,4 @@
 <h2><%= maketext('Archive Course') %> <%= $c->helpMacro('AdminArchiveCourse') %></h2>
-<p>
-	<%= maketext(
-		'Creates a gzipped tar archive (.tar.gz) of a course in the WeBWorK courses directory. '
-			. 'Before archiving, the course database is dumped into a subdirectory of the course\'s DATA directory. '
-			. 'Currently the archive facility is only available for mysql databases. It depends on the mysqldump '
-			. 'application.'
-	) =%>
-</p>
 %
 % if (@$courseIDs) {
 	<p>

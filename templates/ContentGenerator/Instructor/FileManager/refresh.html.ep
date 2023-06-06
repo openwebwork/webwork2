@@ -47,6 +47,9 @@
 					unarchive_text => maketext('Unpack Archive')
 				},
 				%button =%>
+			% unless ($c->{courseName} eq 'admin') {
+				<%= submit_button maketext('Archive Course'), id => 'ArchiveCourse', %button =%>
+			% }
 			<div style="height: 10px"></div>
 			<%= submit_button maketext('New File'), id => 'NewFile', %button =%>
 			<%= submit_button maketext('New Folder'), id => 'NewFolder', %button =%>
@@ -106,13 +109,13 @@
 		<div class="input-group input-group-sm">
 			<div class="input-group-text">
 				<label class="form-check-label">
-					<%= check_box unpack => 1, checked => undef, class => 'form-check-input me-2' =%>
+					<%= check_box unpack => 1, class => 'form-check-input me-2' =%>
 					<%= maketext('Unpack archives automatically') =%>
 				</label>
 			</div>
 			<div class="input-group-text flex-grow-1">
 				<label class="form-check-label">
-					<%= check_box autodelete => 1, checked => undef, class => 'form-check-input me-2' =%>
+					<%= check_box autodelete => 1, class => 'form-check-input me-2' =%>
 					<%= maketext('then delete them') =%>
 				</label>
 			</div>
