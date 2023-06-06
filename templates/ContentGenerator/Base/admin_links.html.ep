@@ -3,7 +3,8 @@
 	<li class="list-group-item list-group-item-primary nav-item">
 		<%= link_to maketext('Courses') => 'root', class => 'nav-link' %>
 	</li>
-	<li class="list-group-item list-group-item-primary nav-item">
+	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('options') %></li>
+	<li class="list-group-item nav-item">
 		<%= $makelink->(
 			'set_list',
 			text   => maketext('Course Administration'),
@@ -30,7 +31,7 @@
 		% [ 'hide_inactive_course', maketext('Hide Courses') ],
 	% )
 	% {
-		<li class="list-group-item list-group-item-primary nav-item">
+		<li class="list-group-item nav-item">
 			<%= $makelink->(
 				'set_list',
 				text              => $_->[1],
@@ -39,19 +40,19 @@
 			) %>
 		</li>
 	% }
-	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('options') %></li>
-	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_user_list') %></li>
-	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('instructor_mail_merge') %></li>
-	<li class="list-group-item list-group-item-primary nav-item">
+	<li class="list-group-item nav-item"><%= $makelink->('instructor_user_list') %></li>
+	<li class="list-group-item nav-item"><%= $makelink->('instructor_mail_merge') %></li>
+	<li class="list-group-item nav-item">
 		<%= $makelink->(
 			'instructor_file_manager',
 			systemlink_params => { pwd => '.', unpack => 0, autodelete => 0 }
 		) %>
 	</li>
-	<li class="list-group-item list-group-item-primary nav-item">
+	<li class="list-group-item nav-item"><%= $makelink->('instructor_file_manager') %></li>
+	<li class="list-group-item nav-item">
 		<%= $c->helpMacro('admin_links', { label => maketext('Help'), class => 'nav-link' }) =%>
 	</li>
-	<li class="list-group-item list-group-item-primary nav-item">
+	<li class="list-group-item nav-item">
 		<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' =%>
 	</li>
 </ul>
