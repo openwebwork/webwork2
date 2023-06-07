@@ -130,26 +130,28 @@
 								link_attrs => { dir => 'ltr' }
 							); %>
 						</li>
-						% if (defined $problemID) {
-							<li class="nav-item">
-								<ul class="nav flex-column">
-									<li class="nav-item">
-										<%= $makelink->(
-											'instructor_problem_editor_withset_withproblem',
-											text     => maketext('Problem [_1]', $prettyProblemID),
-											captures => { setID => $setID, problemID => $problemID },
-											target   => 'WW_Editor'
-										) %>
-									</li>
-								</ul>
-							</li>
-						% }
 					</ul>
 				</li>
 			% }
 
 			% # Set assigner
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_assigner') %></li>
+			% # Problem Editor
+			<li class="list-group-item nav-item"><%= $makelink->('instructor_problem_editor') %></li>
+			% if (defined $problemID) {
+				<li class="nav-item">
+					<ul class="nav flex-column">
+						<li class="nav-item">
+							<%= $makelink->(
+								'instructor_problem_editor_withset_withproblem',
+								text     => maketext('[_1] #[_2]', $prettySetID, $prettyProblemID),
+								captures => { setID => $setID, problemID => $problemID },
+								target   => 'WW_Editor'
+							) %>
+						</li>
+					</ul>
+				</li>
+			% }
 			% # Library Browser
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_maker') %></li>
 			% # Statistics
