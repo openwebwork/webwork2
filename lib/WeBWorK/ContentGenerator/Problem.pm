@@ -703,24 +703,19 @@ sub warnings ($c) {
 			$c->tag(
 				'div',
 				$c->c(
-					$c->tag('h3', style => 'color:red;', $c->maketext('PG question processing error messages')),
-					@pgdebug ? $c->tag(
-						'p',
-						$c->c($c->tag('h3', $c->maketext('PG debug messages')),
-							$c->c(@pgdebug)->join($c->tag('br')))->join('')
-					) : '',
-					@pgwarning ? $c->tag(
-						'p',
-						$c->c($c->tag('h3', $c->maketext('PG warning messages')),
-							$c->c(@pgwarning)->join($c->tag('br')))->join('')
-					) : '',
-					@pginternalerrors ? $c->tag(
-						'p',
-						$c->c(
-							$c->tag('h3', $c->maketext('PG internal errors')),
-							$c->c(@pginternalerrors)->join($c->tag('br'))
-						)->join('')
-					) : ''
+					$c->tag('h2', $c->maketext('PG question processing error messages')),
+					@pgdebug ? $c->c(
+						$c->tag('h3', $c->maketext('PG debug messages')),
+						$c->tag('p',  $c->c(@pgdebug)->join($c->tag('br')))
+					)->join('') : '',
+					@pgwarning ? $c->c(
+						$c->tag('h3', $c->maketext('PG warning messages')),
+						$c->tag('p',  $c->c(@pgwarning)->join($c->tag('br')))
+					)->join('') : '',
+					@pginternalerrors ? $c->c(
+						$c->tag('h3', $c->maketext('PG internal errors')),
+						$c->tag('p',  $c->c(@pginternalerrors)->join($c->tag('br')))
+					)->join('') : ''
 				)->join('')
 			)
 		);
