@@ -254,12 +254,16 @@ sub formatAnswerRow ($self, $rh_answer, $ans_id, $answerNumber) {
 	);
 
 	return $c->c(
-		$self->showAnswerNumbers   ? $c->tag('td', $answerNumber)                                               : '',
-		$self->showAttemptAnswers  ? $c->tag('td', dir => 'auto', $self->nbsp($answerString))                   : '',
-		$self->showAttemptPreviews ? $self->formatToolTip($answerString, $answerPreview)                        : '',
-		$self->showAttemptResults  ? $attemptResults                                                            : '',
-		$self->showCorrectAnswers  ? $self->formatToolTip($correctAnswer, $correctAnswerPreview)                : '',
-		$self->showMessages        ? $c->tag('td', class => $feedbackMessageClass, $self->nbsp($answerMessage)) : ''
+		$self->showAnswerNumbers  ? $c->tag('td', $answerNumber)                             : '',
+		$self->showAttemptAnswers ? $c->tag('td', dir => 'auto', $self->nbsp($answerString)) : '',
+		$self->showAttemptPreviews
+		? ($answerPreview || $self->showAttemptAnswers
+			? $self->formatToolTip($answerString, $answerPreview)
+			: $c->tag('td', dir => 'auto', $self->nbsp($answerString)))
+		: '',
+		$self->showAttemptResults ? $attemptResults                                                            : '',
+		$self->showCorrectAnswers ? $self->formatToolTip($correctAnswer, $correctAnswerPreview)                : '',
+		$self->showMessages       ? $c->tag('td', class => $feedbackMessageClass, $self->nbsp($answerMessage)) : ''
 	)->join('');
 }
 
