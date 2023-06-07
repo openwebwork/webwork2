@@ -1,0 +1,53 @@
+############################################################
+##DESCRIPTION
+##  Arithemetic problem: give the value of pi
+##ENDDESCRIPTION
+
+##KEYWORDS('template', 'pi')
+
+## DBsubject('Algebra')
+## DBchapter('Fundamentals')
+## DBsection('Real Numbers')
+## Date('')
+## Author('')
+## Institution('')
+############################################################
+
+DOCUMENT();
+
+loadMacros(
+   "PGstandard.pl",   # Standard macros for PG language
+   "PGML.pl",         # PGML markup and Math Objects
+   "PGcourse.pl",     # Customization file for the course
+);
+
+# Show which answers are correct and which are incorrect
+$showPartialCorrectAnswers = 1;
+
+############################################################
+# Setup
+
+Context("Numeric");
+
+$pi = Real("pi");
+
+############################################################
+# Statement
+
+BEGIN_PGML
+Enter a value for [`\pi`].
+
+[_]{$pi}{5}
+
+END_PGML
+
+############################################################
+# Solution
+
+BEGIN_PGML_SOLUTION
+You could type [|pi|]* or [|3.14|]*, or [|22/7|]*,
+among other options.
+
+END_PGML_SOLUTION 
+
+ENDDOCUMENT();

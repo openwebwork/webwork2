@@ -248,16 +248,14 @@ sub initialize ($c) {
 		$c->addbadmessage($c->maketext('The file "[_1]" cannot be found.', $c->shortPath($c->{inputFilePath})));
 	} elsif (!-w $c->{inputFilePath} && $file_type ne 'blank_problem') {
 		$c->addbadmessage($c->maketext(
-			'The file "[_1]" is protected! '
-				. 'To edit this text you must first make a copy of this file using the "New Version" action below.',
+			'The file "[_1]" is protected. You may use "Save As" to create a new file.',
 			$c->shortPath($c->{inputFilePath})
 		));
 	}
 
 	if ($c->{inputFilePath} =~ /$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
 		$c->addbadmessage($c->maketext(
-			'The file "[_1]" is a blank problem!'
-				. 'To edit this text you must use the "New Version" action below to save it to another file.',
+			'The file "[_1]" is a template. You may use "Save As" to create a new file.',
 			$c->shortPath($c->{inputFilePath})
 		));
 	}
@@ -334,7 +332,7 @@ sub page_title ($c) {
 		}
 	}
 
-	return $c->maketext('Problem [_1]', $problemID);
+	return $c->maketext((defined $setID ? "$setID " : '') . 'Problem [_1]', $problemID);
 }
 
 #  Convert initial path component to [TMPL], [COURSE], or [WW].
@@ -384,7 +382,7 @@ sub determineLocalFilePath ($c, $path) {
 # $path should be an absolute path to the original file.
 sub determineTempEditFilePath ($c, $path) {
 	my $user  = $c->param('user');
-	my $setID = $c->{setID};
+	my $setID = $c->{setID} // 'undefined_Set';
 
 	my $templatesDirectory   = $c->ce->{courseDirs}{templates};
 	my $tmpEditFileDirectory = $c->getTempEditFileDirectory();
@@ -479,10 +477,6 @@ sub getFilePaths ($c) {
 		$editFilePath = "$ce->{courseDirs}{templates}/$ce->{courseFiles}{course_info}";
 	} elsif ($c->{file_type} eq 'blank_problem') {
 		$editFilePath = $ce->{webworkFiles}{screenSnippets}{blankProblem};
-		$c->addbadmessage($c->maketext(
-			'This is a blank problem template file and can not be edited directly. Use the "New Version" '
-				. 'action below to create a local copy of the file and add it to the current problem set.'
-		));
 	} elsif ($c->{file_type} eq 'set_header' || $c->{file_type} eq 'hardcopy_header') {
 		my $set_record = $db->getGlobalSet($c->{setID});
 
