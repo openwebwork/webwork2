@@ -14,7 +14,8 @@ loadMacros(
 # Use PGML markup
 
 $TeXonly = <<'PGML';
-This PDF is available for convenience. Assignments must be submitted within *WeBWorK* for credit.
+This PDF is available for convenience. Assignments must be submitted
+within *WeBWorK* for credit.
 PGML
 
 #####################################################################
@@ -32,8 +33,8 @@ PGML
 BEGIN_PGML
 [@ MODES(TeX => $TeXonly, HTML => $HTMLonly) @]**
 
-If all else fails, try answering with [`90^{\circ}`] because that is
-always right.
+[% You can replace this comment with information that
+   would appear in both screen and hardcopy set headers. %]
 END_PGML
 
 #####################################################################
