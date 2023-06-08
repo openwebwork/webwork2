@@ -356,27 +356,6 @@ sub getRelativeSourceFilePath ($c, $sourceFilePath) {
 	return $sourceFilePath;
 }
 
-# determineLocalFilePath constructs a local file path parallel to a library file path
-sub determineLocalFilePath ($c, $path) {
-	my $default_screen_header_path   = $c->ce->{webworkFiles}{hardcopySnippets}{setHeader};
-	my $default_hardcopy_header_path = $c->ce->{webworkFiles}{screenSnippets}{setHeader};
-	my $setID                        = $c->{setID} // int(rand(1000));
-
-	if ($path =~ /Library/) {
-		# Truncate the url up to a segment such as ...rochesterLibrary/ and prepend local.
-		$path =~ s|^.*?Library/|local/|;
-	} elsif ($path eq $default_screen_header_path) {
-		$path = "set$setID/setHeader.pg";
-	} elsif ($path eq $default_hardcopy_header_path) {
-		$path = "set$setID/hardcopyHeader.tex";
-	} else {
-		# If its not in a library we'll just save it locally.
-		# FIXME:  This should check to see if a file with the randomly generated name exists.
-		$path = 'new_problem_' . int(rand(1000)) . '.pg';
-	}
-	return $path;
-}
-
 # Determine the location of the temporary file.
 # This does not create the directories in the path to the file.
 # It returns an absolute path to the file.
