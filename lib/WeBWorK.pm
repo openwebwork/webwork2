@@ -208,66 +208,66 @@ async sub dispatch ($c) {
 		debug("(here's the DB handle: $db)\n");
 		$c->db($db);
 
-		# Don't check authentication if the user is logging out.
-		if ($displayModule ne 'WeBWorK::ContentGenerator::Logout') {
-			if ($authen->verify) {
-				# If this is the first phase of LTI 1.3 authentication, then return so its special content generator
-				# module will render and submit the login repost form.  This does not contain the neccessary information
-				# to continue here.
-				return 1 if $c->current_route eq 'ltiadvantage_login';
+		if ($authen->verify) {
+			# If this is the first phase of LTI 1.3 authentication, then return so its special content generator
+			# module will render and submit the login repost form.  This does not contain the neccessary information
+			# to continue here.
+			return 1 if $c->current_route eq 'ltiadvantage_login';
 
-				my $userID = $c->param('user');
-				debug("Hi, $userID, glad you made it.\n");
+			my $userID = $c->param('user');
+			debug("Hi, $userID, glad you made it.\n");
 
-				# Tell authorizer to cache this user's permission level
-				$authz->setCachedUser($userID);
+			# Tell authorizer to cache this user's permission level
+			$authz->setCachedUser($userID);
 
-				debug("Now we deal with the effective user:\n");
-				my $eUserID = $c->param('effectiveUser') || $userID;
-				debug("userID=$userID eUserID=$eUserID\n");
-				if ($userID ne $eUserID) {
-					debug("userID and eUserID differ... seeing if userID has 'become_student' permission.\n");
-					my $su_authorized = $authz->hasPermissions($userID, 'become_student');
-					if ($su_authorized) {
-						debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
-					} else {
-						debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
-						return (0,
-							"You do not have permission to act as another user.\n"
-								. 'Close down your browser (this clears temporary cookies), restart and try again.');
-					}
+			debug("Now we deal with the effective user:\n");
+			my $eUserID = $c->param('effectiveUser') || $userID;
+			debug("userID=$userID eUserID=$eUserID\n");
+			if ($userID ne $eUserID) {
+				debug("userID and eUserID differ... seeing if userID has 'become_student' permission.\n");
+				my $su_authorized = $authz->hasPermissions($userID, 'become_student');
+				if ($su_authorized) {
+					debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
+				} else {
+					debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
+					return (0,
+						"You do not have permission to act as another user.\n"
+							. 'Close down your browser (this clears temporary cookies), restart and try again.');
 				}
-
-				# Set effectiveUser in case it was changed or not set to begin with.
-				$c->param('effectiveUser' => $eUserID);
-
-				# If this is a proctored test, then after the user has been authenticated
-				# we need to also check on the proctor.  Note that in the gateway quiz
-				# module this is double checked to be sure that someone isn't taking a
-				# proctored quiz but calling the unproctored ContentGenerator.
-				if ($c->current_route =~ /^proctored_gateway_quiz|proctored_gateway_proctor_login$/) {
-					my $proctor_authen_module = WeBWorK::Authen::class($ce, 'proctor_module');
-					runtime_use $proctor_authen_module;
-					my $authenProctor = $proctor_authen_module->new($c);
-					debug("Using proctor_authen_module $proctor_authen_module: $authenProctor\n");
-					my $procAuthOK = $authenProctor->verify();
-
-					if (!$procAuthOK) {
-						await WeBWorK::ContentGenerator::LoginProctor->new($c)->go;
-						return 0;
-					}
-				}
-				return 1;
-			} else {
-				# For a remote procedure call continue on to the original display module.
-				# It will give the authentication failure response.
-				return 1 if $c->{rpc};
-
-				debug("Bad news: authentication failed!\n");
-				debug("Rendering WeBWorK::ContentGenerator::Login\n");
-				await WeBWorK::ContentGenerator::Login->new($c)->go();
-				return 0;
 			}
+
+			# Set effectiveUser in case it was changed or not set to begin with.
+			$c->param('effectiveUser' => $eUserID);
+
+			# If this is a proctored test, then after the user has been authenticated
+			# we need to also check on the proctor.  Note that in the gateway quiz
+			# module this is double checked to be sure that someone isn't taking a
+			# proctored quiz but calling the unproctored ContentGenerator.
+			if ($c->current_route =~ /^proctored_gateway_quiz|proctored_gateway_proctor_login$/) {
+				my $proctor_authen_module = WeBWorK::Authen::class($ce, 'proctor_module');
+				runtime_use $proctor_authen_module;
+				my $authenProctor = $proctor_authen_module->new($c);
+				debug("Using proctor_authen_module $proctor_authen_module: $authenProctor\n");
+				my $procAuthOK = $authenProctor->verify();
+
+				if (!$procAuthOK) {
+					await WeBWorK::ContentGenerator::LoginProctor->new($c)->go;
+					return 0;
+				}
+			}
+			return 1;
+		} else {
+			# For a remote procedure call continue on to the original display module.
+			# It will give the authentication failure response.
+			return 1 if $c->{rpc};
+
+			# If the user is logging out and authentication failed, still logout.
+			return 1 if $displayModule eq 'WeBWorK::ContentGenerator::Logout';
+
+			debug("Bad news: authentication failed!\n");
+			debug("Rendering WeBWorK::ContentGenerator::Login\n");
+			await WeBWorK::ContentGenerator::Login->new($c)->go();
+			return 0;
 		}
 	}
 
