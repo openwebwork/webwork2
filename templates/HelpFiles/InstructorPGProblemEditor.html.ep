@@ -21,9 +21,9 @@
 		. 'as set headers and other files.') =%>
 </p>
 <h2><%= maketext('Features:') %></h2>
-<dl>
+<dl class="list-group">
 	<dt><%= maketext('Links to pages that give information about writing problems:') %></dt>
-	<dd>
+	<dd class="list-group-item">
 		<dl>
 			<dt>
 				<a href="https://webwork.maa.org/wiki/Category:Problem_Techniques" target="techniques_window">
@@ -73,12 +73,12 @@
 		</dl>
 	</dd>
 	<dt><%= maketext('The large text window') %></dt>
-	<dd>
+	<dd class="list-group-item">
 		<%= maketext('This is where you edit the text of the problem template. Type Ctrl-Enter while this '
 			. 'window has focus to re-render the problem.') =%>
 	</dd>
 	<dt><%= maketext('Text Editor Options') %></dt>
-	<dd>
+	<dd class="list-group-item">
 		<dl>
 			<dt><%= maketext('Theme') %></dt>
 			<dd><%= maketext('Select your favorite theme for the large text window.') %></dd>
