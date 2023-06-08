@@ -179,8 +179,8 @@ sub pre_header_initialize ($c) {
 				$c->{file_type} = 'problem';
 			}
 		} else {
-			copy($ce->{webworkFiles}{screenSnippets}{blankProblem}, "$ce->{courseDirs}{templates}/$BLANKPROBLEM")
-				unless (-f "$ce->{courseDirs}{templates}/$BLANKPROBLEM");
+			copy($ce->{webworkFiles}{screenSnippets}{blankProblem}, "$ce->{courseDirs}{templates}/local/$BLANKPROBLEM")
+				unless (-f "$ce->{courseDirs}{templates}/local/$BLANKPROBLEM");
 			$c->{file_type} = 'blank_problem';
 		}
 	}
@@ -335,7 +335,7 @@ sub page_title ($c) {
 	}
 
 	return (defined $setID    ? $c->tag('span', dir => 'ltr', format_set_name_display($setID)) . ': ' : '')
-		. (defined $problemID ? $c->maketext('Problem [_1]', $problemID) : $c->maketext('Problem Editor'));
+		. (defined $problemID ? $c->maketext('Problem [_1]', $problemID) : $c->maketext('New Problem'));
 }
 
 #  Convert initial path component to [TMPL], [COURSE], or [WW].
@@ -458,7 +458,7 @@ sub getFilePaths ($c) {
 	if ($c->{file_type} eq 'course_info') {
 		$editFilePath = "$ce->{courseDirs}{templates}/$ce->{courseFiles}{course_info}";
 	} elsif ($c->{file_type} eq 'blank_problem') {
-		$editFilePath = "$ce->{courseDirs}{templates}/$BLANKPROBLEM";
+		$editFilePath = "$ce->{courseDirs}{templates}/local/$BLANKPROBLEM";
 	} elsif ($c->{file_type} eq 'set_header' || $c->{file_type} eq 'hardcopy_header') {
 		my $set_record = $db->getGlobalSet($c->{setID});
 
@@ -1035,7 +1035,11 @@ sub save_as_handler ($c) {
 		$do_not_save = 1;
 		$c->addbadmessage($c->maketext(
 			'File "[_1]" exists. File not saved. No changes have been made.  '
-				. 'You can change the file path for this problem manually from the "Hmwk Sets Editor" page',
+				. (
+					defined $c->{setID}
+					? 'You can change the file path for this problem manually from the "Hmwk Sets Editor" page'
+					: ''
+				),
 			$c->shortPath($outputFilePath)
 		));
 		$c->addgoodmessage($c->maketext(
