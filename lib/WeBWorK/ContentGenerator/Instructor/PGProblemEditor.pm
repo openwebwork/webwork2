@@ -95,7 +95,7 @@ the submit button pressed (the action).
         Add this problem to:       action = add_problem
         Make this set header for:  action = add_problem
         Revert:                    action = revert
-		Generate Hardcopy:         actoin = hardcopy
+        Generate Hardcopy:         action = hardcopy
 
 An undefined or invalid action is interpreted as an initial edit of the file.
 
