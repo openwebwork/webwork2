@@ -33,6 +33,7 @@ PGML
 BEGIN_PGML
 [@ MODES(TeX => $TeXonly, HTML => $HTMLonly) @]**
 
+[$setDescription]
 [% You can replace this comment with information that
    would appear in both screen and hardcopy set headers. %]
 END_PGML
