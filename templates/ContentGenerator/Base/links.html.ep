@@ -138,13 +138,17 @@
 
 			% # Problem Editor
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_problem_editor') %></li>
-			% if (defined $problemID) {
+			% if (defined $prettySetID && defined $problemID) {
 				<li class="nav-item">
 					<ul class="nav flex-column">
 						<li class="nav-item">
 							<%= $makelink->(
 								'instructor_problem_editor_withset_withproblem',
-								text     => maketext('[_1] #[_2]', $prettySetID, $prettyProblemID),
+								text => b(maketext(
+									'[_1]: Problem [_2]',
+									$c->tag('span', dir => 'ltr', $prettySetID),
+									$prettyProblemID
+								)),
 								captures => { setID => $setID, problemID => $problemID },
 								target   => 'WW_Editor'
 							) %>

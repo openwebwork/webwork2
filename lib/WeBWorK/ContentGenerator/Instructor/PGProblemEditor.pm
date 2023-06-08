@@ -109,7 +109,7 @@ not exist.  The path to the actual file being edited is stored in inputFilePath.
 use File::Copy;
 
 use WeBWorK::Utils qw(jitar_id_to_seq not_blank path_is_subdir seq_to_jitar_id x
-	surePathToFile readDirectory readFile max);
+	surePathToFile readDirectory readFile max format_set_name_display);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
 
 use constant DEFAULT_SEED => 123456;
@@ -332,7 +332,8 @@ sub page_title ($c) {
 		}
 	}
 
-	return $c->maketext((defined $setID ? "$setID " : '') . 'Problem [_1]', $problemID);
+	return (defined $setID    ? $c->tag('span', dir => 'ltr', format_set_name_display($setID)) . ': ' : '')
+		. (defined $problemID ? $c->maketext('Problem [_1]', $problemID) : $c->maketext('Problem Template'));
 }
 
 #  Convert initial path component to [TMPL], [COURSE], or [WW].
@@ -382,7 +383,7 @@ sub determineLocalFilePath ($c, $path) {
 # $path should be an absolute path to the original file.
 sub determineTempEditFilePath ($c, $path) {
 	my $user  = $c->param('user');
-	my $setID = $c->{setID} // 'undefined_Set';
+	my $setID = $c->{setID} // 'Undefined_Set';
 
 	my $templatesDirectory   = $c->ce->{courseDirs}{templates};
 	my $tmpEditFileDirectory = $c->getTempEditFileDirectory();
