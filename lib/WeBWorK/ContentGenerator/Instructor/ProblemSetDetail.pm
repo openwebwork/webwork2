@@ -84,7 +84,7 @@ use constant JITAR_SET_FIELD_ORDER => [qw(restrict_prob_progression email_instru
 #     },
 #     convertby => 60,              # divide incoming database field values by this, and multiply when saving
 
-use constant BLANKPROBLEM => 'blankProblem.pg';
+use constant BLANKPROBLEM => 'newProblem.pg';
 
 # Use the x function to mark strings for localizaton.
 use constant FIELD_PROPERTIES => {
