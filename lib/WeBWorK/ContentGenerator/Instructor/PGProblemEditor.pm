@@ -614,7 +614,7 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 	}
 
 	unless (path_is_subdir($outputFilePath, $ce->{courseDirs}{templates}, 1)) {
-		$c->addbadmessage($c->maktext(
+		$c->addbadmessage($c->maketext(
 			'The file [_1] is not contained in the course templates directory and can not be modified.',
 			$outputFilePath
 		));

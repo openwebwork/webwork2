@@ -10,7 +10,7 @@
 % }
 %
 % unless (defined $c->{pwd}) {
-	<em><%= maktext('You have specified an illegal working directory!') %></em>
+	<em><%= maketext('You have specified an illegal working directory!') %></em>
 	% last;
 % }
 %
