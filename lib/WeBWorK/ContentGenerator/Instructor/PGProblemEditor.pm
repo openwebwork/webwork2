@@ -125,7 +125,7 @@ use constant ACTION_FORM_TITLES => {
 	revert      => x('Revert'),
 };
 
-my $BLANKPROBLEM = 'blankProblem.pg';
+my $BLANKPROBLEM = 'newProblem.pg';
 
 sub pre_header_initialize ($c) {
 	my $ce    = $c->ce;

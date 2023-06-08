@@ -151,7 +151,7 @@
 				. '"local".') =%>
 		</p>
 		<p class="mb-0">
-			<%= maketext('A new problem whose path ends in blankProblem.pg should be given a new name, for example, '
+			<%= maketext('A new problem whose path ends in newProblem.pg should be given a new name, for example, '
 				. '"myNewProblem.pg".') =%>
 		</p>
 	</dd>
