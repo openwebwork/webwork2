@@ -333,7 +333,7 @@ sub page_title ($c) {
 	}
 
 	return (defined $setID    ? $c->tag('span', dir => 'ltr', format_set_name_display($setID)) . ': ' : '')
-		. (defined $problemID ? $c->maketext('Problem [_1]', $problemID) : $c->maketext('Problem Template'));
+		. (defined $problemID ? $c->maketext('Problem [_1]', $problemID) : $c->maketext('Problem Editor'));
 }
 
 #  Convert initial path component to [TMPL], [COURSE], or [WW].
