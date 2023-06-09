@@ -283,7 +283,8 @@
 			showFooter: 0,
 			displayMode: document.getElementById('action_view_displayMode_id')?.value ?? 'MathJax',
 			language: document.querySelector('input[name="hidden_language"]')?.value ?? 'en',
-			send_pg_flags: 1
+			send_pg_flags: 1,
+			view_problem_debugging_info: 1
 		})).then(() => resolve());
 	});
 
