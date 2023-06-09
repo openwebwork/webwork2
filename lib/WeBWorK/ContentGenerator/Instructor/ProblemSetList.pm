@@ -478,7 +478,7 @@ sub create_handler ($c) {
 		class => 'alert alert-danger p-1 mb-0',
 		$c->maketext(
 			'Failed to create new set: Invalid characters in set name "[_1]". '
-				. 'A set name may only contain letters, numbers, hyphens, and spaces.',
+				. 'A set name may only contain letters, numbers, hyphens, periods, and spaces.',
 			$newSetID =~ s/_/ /gr
 		)
 	) unless $newSetID =~ m/^[-a-zA-Z0-9_.]*$/;
