@@ -1,6 +1,6 @@
 % content_for js => begin
-	<%= javascript getAssetURL($ce, 'js/apps/RenderProblem/renderproblem.js'), defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/apps/Stats/stats.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/RenderProblem/renderproblem.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/Stats/stats.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
 % end
 %

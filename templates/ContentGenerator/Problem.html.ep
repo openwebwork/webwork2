@@ -34,17 +34,17 @@
 	%
 	% # This is for tagging menus (if allowed)
 	% if ($authz->hasPermissions(param('user'), 'modify_tags')) {
-		<%= javascript getAssetURL($ce, 'js/apps/TagWidget/tagwidget.js'), id => 'tag-widget-script', defer => undef,
+		<%= javascript getAssetURL($ce, 'js/TagWidget/tagwidget.js'), id => 'tag-widget-script', defer => undef,
 			data => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
 	% }
 	%
 	% # This is for the problem grader
 	% if ($c->{will}{showProblemGrader}) {
-		<%= javascript getAssetURL($ce, 'js/apps/ProblemGrader/problemgrader.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/ProblemGrader/problemgrader.js'), defer => undef =%>
 	%}
 	%
 	% # This is for any page specific js.  Right now its just used for achievement popups
-	<%= javascript getAssetURL($ce, 'js/apps/Problem/problem.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/Problem/problem.js'), defer => undef =%>
 	%
 	% # Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	% if (ref($c->{pg}{flags}{extra_js_files}) eq 'ARRAY') {

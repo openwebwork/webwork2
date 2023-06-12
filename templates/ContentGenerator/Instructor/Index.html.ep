@@ -2,7 +2,7 @@
 % use WeBWorK::HTML::ScrollingRecordList qw(scrollingRecordList);
 %
 % content_for js => begin
-	<%= javascript getAssetURL($ce, 'js/apps/InstructorTools/instructortools.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/InstructorTools/instructortools.js'), defer => undef =%>
 % end
 %
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {

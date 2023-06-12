@@ -2,27 +2,27 @@
 % use WeBWorK::PG;
 %
 % content_for js => begin
-	<%= javascript getAssetURL($ce, 'js/apps/SelectAll/selectall.js'), defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/apps/RenderProblem/renderproblem.js'), defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/apps/ProblemGrader/problemgrader.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/RenderProblem/renderproblem.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/ProblemGrader/problemgrader.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
-	<%= javascript getAssetURL($ce, 'js/apps/Essay/essay.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/Essay/essay.js'), defer => undef =%>
 	% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
 		<%= javascript getAssetURL($ce, 'node_modules/mathquill/dist/mathquill.js'), defer => undef =%>
-		<%= javascript getAssetURL($ce, 'js/apps/MathQuill/mqeditor.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/MathQuill/mqeditor.js'), defer => undef =%>
 	% } elsif ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView') {
-		<%= javascript getAssetURL($ce, "js/apps/MathView/$ce->{pg}{options}{mathViewLocale}"), defer => undef =%>
-		<%= javascript getAssetURL($ce, 'js/apps/MathView/mathview.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, "js/MathView/$ce->{pg}{options}{mathViewLocale}"), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/MathView/mathview.js'), defer => undef =%>
 	% }
 % end
 %
 % content_for css => begin
-	<%= stylesheet getAssetURL($ce, 'js/apps/Problem/problem.css') =%>
+	<%= stylesheet getAssetURL($ce, 'js/Problem/problem.css') =%>
 	% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
 		<%= stylesheet getAssetURL($ce, 'node_modules/mathquill/dist/mathquill.css') =%>
-		<%= stylesheet getAssetURL($ce, 'js/apps/MathQuill/mqeditor.css') =%>
+		<%= stylesheet getAssetURL($ce, 'js/MathQuill/mqeditor.css') =%>
 	% } elsif ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView') {
-		<%= stylesheet getAssetURL($ce, 'js/apps/MathView/mathview.css') =%>
+		<%= stylesheet getAssetURL($ce, 'js/MathView/mathview.css') =%>
 	% }
 % end
 %

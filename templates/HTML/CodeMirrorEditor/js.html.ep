@@ -7,7 +7,7 @@
 		% for my $addon (@$codemirrorAddonsCSS) {
 			<%= stylesheet getAssetURL($ce, "node_modules/codemirror/addon/$addon") =%>
 		% }
-		<%= stylesheet getAssetURL($ce, 'js/apps/PGCodeMirror/pgeditor.css') =%>
+		<%= stylesheet getAssetURL($ce, 'js/PGCodeMirror/pgeditor.css') =%>
 	% end
 	%
 	% content_for js => begin
@@ -19,15 +19,15 @@
 		% for my $mode (@$codemirrorModesJS) {
 			<%= javascript getAssetURL(
 					$ce,
-					$mode eq 'PG' ? 'js/apps/PGCodeMirror/PG.js' : "node_modules/codemirror/mode/$mode/$mode.js"
+					$mode eq 'PG' ? 'js/PGCodeMirror/PG.js' : "node_modules/codemirror/mode/$mode/$mode.js"
 				), defer => undef =%>
 		% }
 		%
-		<%= javascript getAssetURL($ce, 'js/apps/PGCodeMirror/pgeditor.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/PGCodeMirror/pgeditor.js'), defer => undef =%>
 	% end
 % }
 %
 % # The textarea styles in this file are still needed if CodeMirror is disabled.
 % content_for css => begin
-	<%= stylesheet getAssetURL($ce, 'js/apps/PGCodeMirror/pgeditor.css') =%>
+	<%= stylesheet getAssetURL($ce, 'js/PGCodeMirror/pgeditor.css') =%>
 % end

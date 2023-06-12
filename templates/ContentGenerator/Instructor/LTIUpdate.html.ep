@@ -3,7 +3,7 @@
 % # Only use javascript to update menus if using homework grade mode.
 % if ($ce->{LTIGradeMode} eq 'homework') {
 	% content_for js => begin
-		<%= javascript getAssetURL($ce, 'js/apps/LTIUpdate/ltiupdate.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/LTIUpdate/ltiupdate.js'), defer => undef =%>
 	% end
 % }
 %

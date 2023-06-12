@@ -1,7 +1,7 @@
 % use WeBWorK::Utils qw(x getAssetURL);
 %
 % content_for js => begin
-	<%= javascript getAssetURL($ce, 'js/apps/FileManager/filemanager.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/FileManager/filemanager.js'), defer => undef =%>
 % end
 %
 % unless ($authz->hasPermissions(param('user'), 'manage_course_files')) {

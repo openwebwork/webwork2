@@ -5,8 +5,8 @@
 % my $codemirrorMode = $c->{file_type} eq 'course_info' ? 'htmlmixed' : 'PG';
 % content_for js => begin
 	<%= output_codemirror_static_files($c, $codemirrorMode) =%>
-	<%= javascript getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'),           defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/apps/PGProblemEditor/pgproblemeditor.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'),           defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/PGProblemEditor/pgproblemeditor.js'), defer => undef =%>
 % end
 %
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {

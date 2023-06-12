@@ -38,7 +38,7 @@
 <script>const webworkConfig = { webwork_url: '<%= $c->webwork_url %>' };</script>
 %
 % # JS Loads
-<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/apps/MathJaxConfig/mathjax-config.js' }),
+<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/MathJaxConfig/mathjax-config.js' }),
 	defer => undef =%>
 <%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'node_modules/mathjax/es5/tex-svg.js' }),
 	id => 'MathJax-script', defer => undef =%>
