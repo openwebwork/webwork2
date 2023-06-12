@@ -163,6 +163,7 @@
 								'instructor_user_statistics',
 								text     => $urlUserID,
 								captures => { userID => $urlUserID },
+								link_attrs => { dir => 'ltr' }
 							) %>
 						</li>
 					% }
@@ -173,7 +174,8 @@
 								text     => $eUserID,
 								captures => { userID => $eUserID },
 								active   => current_route eq 'instructor_user_statistics'
-									&& !defined $urlUserID
+									&& !defined $urlUserID,
+								link_attrs => { dir => 'ltr' }
 							) %>
 						</li>
 					% }
@@ -216,6 +218,7 @@
 									'instructor_user_progress',
 									text     => $urlUserID,
 									captures => { userID => $urlUserID },
+									link_attrs => { dir => 'ltr' }
 								) %>
 							</li>
 						% }
@@ -226,7 +229,8 @@
 									text     => $eUserID,
 									captures => { userID => $eUserID },
 									active   => current_route eq 'instructor_user_progress'
-										&& !defined $urlUserID
+										&& !defined $urlUserID,
+									link_attrs => { dir => 'ltr' }
 								) %>
 							</li>
 						% }
