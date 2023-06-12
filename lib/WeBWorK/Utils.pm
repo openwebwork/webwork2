@@ -32,6 +32,7 @@ use Date::Parse;
 use Date::Format;
 use File::Copy;
 use File::Spec::Functions qw(canonpath);
+use Fcntl qw(:flock);
 use Time::Zone;
 use MIME::Base64 qw(encode_base64 decode_base64);
 use Errno;
@@ -828,43 +829,46 @@ sub between { my $t = (@_ == 3) ? $_[2] : time; return $t >= $_[0] && $t <= $_[1
 # Logging
 ################################################################################
 
-sub writeLog($$@) {
+sub writeLog {
 	my ($ce, $facility, @message) = @_;
-	unless ($ce->{webworkFiles}->{logs}->{$facility}) {
+	unless ($ce->{webworkFiles}{logs}{$facility}) {
 		warn "There is no log file for the $facility facility defined.\n";
 		return;
 	}
-	my $logFile = $ce->{webworkFiles}->{logs}->{$facility};
-	surePathToFile($ce->{webworkDirs}->{root}, $logFile);
-	local *LOG;
-	if (open LOG, ">>", $logFile) {
-		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
-		close LOG;
+	my $logFile = $ce->{webworkFiles}{logs}{$facility};
+	surePathToFile($ce->{webworkDirs}{root}, $logFile);
+	if (open my $LOG, '>>:encoding(UTF-8)', $logFile) {
+		flock $LOG, LOCK_EX;
+		print $LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
+		close $LOG;
 	} else {
 		warn "failed to open $logFile for writing: $!";
 	}
+	return;
 }
 
-sub writeCourseLog($$@) {
+sub writeCourseLog {
 	my ($ce, $facility, @message) = @_;
 	writeCourseLogGivenTime($ce, $facility, time, @message);
+	return;
 }
 
-sub writeCourseLogGivenTime($$@) {
+sub writeCourseLogGivenTime {
 	my ($ce, $facility, $myTime, @message) = @_;
-	unless ($ce->{courseFiles}->{logs}->{$facility}) {
+	unless ($ce->{courseFiles}{logs}{$facility}) {
 		warn "There is no course log file for the $facility facility defined.\n";
 		return;
 	}
-	my $logFile = $ce->{courseFiles}->{logs}->{$facility};
-	surePathToFile($ce->{courseDirs}->{root}, $logFile);
-	local *LOG;
-	if (open LOG, ">>:utf8", $logFile) {
-		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", $myTime), "] @message\n";
-		close LOG;
+	my $logFile = $ce->{courseFiles}{logs}{$facility};
+	surePathToFile($ce->{courseDirs}{root}, $logFile);
+	if (open my $LOG, '>>:encoding(UTF-8)', $logFile) {
+		flock $LOG, LOCK_EX;
+		print $LOG "[", time2str("%a %b %d %H:%M:%S %Y", $myTime), "] @message\n";
+		close $LOG;
 	} else {
 		warn "failed to open $logFile for writing: $!";
 	}
+	return;
 }
 
 # $ce - a WeBWork::CourseEnvironment object
@@ -875,10 +879,11 @@ sub writeCourseLogGivenTime($$@) {
 # use an empty string for $details when calling for END
 # Information printed in format:
 # [formatted date & time ] processID unixTime BeginEnd $function  $details
-sub writeTimingLogEntry($$$$) {
+sub writeTimingLogEntry {
 	my ($ce, $function, $details, $beginEnd) = @_;
 	$beginEnd = ($beginEnd eq "begin") ? ">" : ($beginEnd eq "end") ? "<" : "-";
 	writeLog($ce, "timing", "$$ " . time . " $beginEnd $function [$details]");
+	return;
 }
 
 ################################################################################
