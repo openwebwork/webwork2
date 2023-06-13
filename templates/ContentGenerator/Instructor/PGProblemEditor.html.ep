@@ -25,7 +25,7 @@
 % }
 %
 % my %titles = (
-	% blank_problem                => x('Editing <strong>blank problem</strong> in file "[_1]".'),
+	% blank_problem                => x('Editing <strong>blank problem</strong> template.'),
 	% set_header                   => x('Editing <strong>set header</strong> file "[_1]".'),
 	% hardcopy_header              => x('Editing <strong>hardcopy header</strong> file "[_1]".'),
 	% course_info                  => x('Editing <strong>course information</strong> file "[_1]".'),

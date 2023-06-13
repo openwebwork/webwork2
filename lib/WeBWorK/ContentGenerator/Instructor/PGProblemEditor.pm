@@ -179,8 +179,6 @@ sub pre_header_initialize ($c) {
 				$c->{file_type} = 'problem';
 			}
 		} else {
-			copy($ce->{webworkFiles}{screenSnippets}{blankProblem}, "$ce->{courseDirs}{templates}/local/$BLANKPROBLEM")
-				unless (-f "$ce->{courseDirs}{templates}/local/$BLANKPROBLEM");
 			$c->{file_type} = 'blank_problem';
 		}
 	}
@@ -255,7 +253,9 @@ sub initialize ($c) {
 		));
 	}
 
-	if ($c->{inputFilePath} =~ /$BLANKPROBLEM$/) {
+	if ($c->{file_type} eq 'blank_problem') {
+		$c->addbadmessage($c->maketext('This file is a template. You may use "Save As" to create a new file.'));
+	} elsif ($c->{inputFilePath} =~ /$BLANKPROBLEM$/) {
 		$c->addbadmessage($c->maketext(
 			'The file "[_1]" is a template. You may use "Save As" to create a new file.',
 			$c->shortPath($c->{inputFilePath})
@@ -458,7 +458,7 @@ sub getFilePaths ($c) {
 	if ($c->{file_type} eq 'course_info') {
 		$editFilePath = "$ce->{courseDirs}{templates}/$ce->{courseFiles}{course_info}";
 	} elsif ($c->{file_type} eq 'blank_problem') {
-		$editFilePath = "$ce->{courseDirs}{templates}/local/$BLANKPROBLEM";
+		$editFilePath = $ce->{webworkFiles}{screenSnippets}{blankProblem};
 	} elsif ($c->{file_type} eq 'set_header' || $c->{file_type} eq 'hardcopy_header') {
 		my $set_record = $db->getGlobalSet($c->{setID});
 
