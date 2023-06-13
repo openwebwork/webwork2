@@ -80,6 +80,11 @@
 			% } else {
 				% $stepSize = int(($grader->{problem_value} - 1) / 100) + 1;
 			% }
+			% # Round point score to the nearest $stepSize.
+			% param(
+				% 'grader-problem-points',
+				% wwRound(2, wwRound(0, $grader->{recorded_score} * $grader->{problem_value} / $stepSize) * $stepSize)
+			% );
 			<div class="row align-items-center mb-2">
 				<%= label_for "score_problem$grader->{problem_id}_points",
 					class => 'col-fixed col-form-label',
@@ -112,7 +117,6 @@
 					<% end =%>
 				<% end =%>
 				<div class="col-sm">
-					% param('grader-problem-points',  wwRound(1, $grader->{recorded_score} * $grader->{problem_value}));
 					<%= number_field 'grader-problem-points' => '',
 						min          => 0,
 						max          => $grader->{problem_value},
