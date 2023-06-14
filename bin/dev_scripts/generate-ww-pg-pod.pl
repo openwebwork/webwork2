@@ -64,11 +64,12 @@ $base_url = "/" if !$base_url;
 use IO::File;
 use File::Path qw(make_path remove_tree);
 use File::Basename qw(dirname);
+use Cwd qw(abs_path);
 
 use lib dirname(__FILE__);
 use PODtoHTML;
 
-my $webwork_root = dirname(dirname(dirname(__FILE__)));
+my $webwork_root = abs_path(dirname(dirname(dirname(__FILE__))));
 
 for my $dir ($webwork_root, $pg_root) {
 	next unless $dir && -d $dir;
