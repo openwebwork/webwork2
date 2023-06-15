@@ -26,7 +26,8 @@ loadMacros(
 $pi = Real("pi");
 
 BEGIN_PGML
-Enter a value for [`\pi`].  
+Enter a value for [`\pi`].
+
 [_]{$pi}{5}
 END_PGML
 
