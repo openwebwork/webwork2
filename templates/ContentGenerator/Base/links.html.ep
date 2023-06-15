@@ -89,6 +89,33 @@
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_tools') %></li>
 			% # Class list editor
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_user_list') %></li>
+			% # User Assignments
+			% if (defined $eUserID && $eUserID ne $userID || defined $urlUserID) {
+				<li class="list-group-item nav-item">
+					<ul class="nav flex-column">
+						% if (defined $urlUserID) {
+							<li class="nav-item">
+								<%= $makelink->(
+									'instructor_user_detail',
+									text       => $urlUserID,
+									captures   => { userID => $urlUserID },
+									link_attrs => { dir => 'ltr' }
+								); %>
+							</li>
+						% }
+						% if ($userID ne $eUserID && (!defined $urlUserID || $urlUserID ne $eUserID)) {
+							<li class="nav-item">
+								<%= $makelink->(
+									'instructor_user_detail',
+									text       => $eUserID,
+									captures   => { userID => $eUserID },
+									link_attrs => { dir => 'ltr' }
+								); %>
+							</li>
+						% }
+					</ul>
+				</li>
+			% }
 			% # Homework Set Editor
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_list') %></li>
 			% # Editor link.  Only shown for non-versioned sets
@@ -136,6 +163,7 @@
 								'instructor_user_statistics',
 								text     => $urlUserID,
 								captures => { userID => $urlUserID },
+								link_attrs => { dir => 'ltr' }
 							) %>
 						</li>
 					% }
@@ -146,7 +174,8 @@
 								text     => $eUserID,
 								captures => { userID => $eUserID },
 								active   => current_route eq 'instructor_user_statistics'
-									&& !defined $urlUserID
+									&& !defined $urlUserID,
+								link_attrs => { dir => 'ltr' }
 							) %>
 						</li>
 					% }
@@ -189,6 +218,7 @@
 									'instructor_user_progress',
 									text     => $urlUserID,
 									captures => { userID => $urlUserID },
+									link_attrs => { dir => 'ltr' }
 								) %>
 							</li>
 						% }
@@ -199,7 +229,8 @@
 									text     => $eUserID,
 									captures => { userID => $eUserID },
 									active   => current_route eq 'instructor_user_progress'
-										&& !defined $urlUserID
+										&& !defined $urlUserID,
+									link_attrs => { dir => 'ltr' }
 								) %>
 							</li>
 						% }
