@@ -257,7 +257,7 @@ sub formatAnswerRow ($self, $rh_answer, $ans_id, $answerNumber) {
 		$self->showAnswerNumbers  ? $c->tag('td', $answerNumber)                             : '',
 		$self->showAttemptAnswers ? $c->tag('td', dir => 'auto', $self->nbsp($answerString)) : '',
 		$self->showAttemptPreviews
-		? ($answerPreview || $self->showAttemptAnswers
+		? (((defined $answerPreview && $answerPreview ne '') || $self->showAttemptAnswers)
 			? $self->formatToolTip($answerString, $answerPreview)
 			: $c->tag('td', dir => 'auto', $self->nbsp($answerString)))
 		: '',
