@@ -236,8 +236,6 @@ sub initialize ($c) {
 		unless $authz->hasPermissions($user, 'access_instructor_tools')
 		&& $authz->hasPermissions($user, 'modify_problem_sets');
 
-	my $file_type = $c->param('file_type') || '';
-
 	# Record status messages carried over if this is a redirect
 	$c->addmessage($c->param('status_message') || '');
 
@@ -246,7 +244,7 @@ sub initialize ($c) {
 
 	if (!-e $c->{inputFilePath}) {
 		$c->addbadmessage($c->maketext('The file "[_1]" cannot be found.', $c->shortPath($c->{inputFilePath})));
-	} elsif (!-w $c->{inputFilePath} && $file_type ne 'blank_problem') {
+	} elsif (!-w $c->{inputFilePath} && $c->{file_type} ne 'blank_problem') {
 		$c->addbadmessage($c->maketext(
 			'The file "[_1]" is protected. You may use "Save As" to create a new file.',
 			$c->shortPath($c->{inputFilePath})
@@ -1034,14 +1032,12 @@ sub save_as_handler ($c) {
 	if (defined $outputFilePath && -e $outputFilePath) {
 		$do_not_save = 1;
 		$c->addbadmessage($c->maketext(
-			'File "[_1]" exists. File not saved. No changes have been made.  '
-				. (
-					defined $c->{setID}
-					? 'You can change the file path for this problem manually from the "Hmwk Sets Editor" page'
-					: ''
-				),
+			'File "[_1]" exists. File not saved. No changes have been made.',
 			$c->shortPath($outputFilePath)
 		));
+		$c->addbadmessage(
+			$c->maketext('You can change the file path for this problem manually from the "Hmwk Sets Editor" page'))
+			if defined $c->{setID};
 		$c->addgoodmessage($c->maketext(
 			'The text box now contains the source of the original problem. '
 				. 'You can recover lost edits by using the Back button on your browser.'
