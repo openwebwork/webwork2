@@ -62,6 +62,7 @@ pod2usage(2) unless $output_dir;
 $base_url = "/" if !$base_url;
 
 use IO::File;
+use File::Copy;
 use File::Path qw(make_path remove_tree);
 use File::Basename qw(dirname);
 use Cwd qw(abs_path);
@@ -77,9 +78,13 @@ for my $dir ($webwork_root, $pg_root) {
 	process_dir($dir);
 }
 
+make_path("$output_dir/css");
+copy("$webwork_root/bin/dev_scripts/pod.css", "$output_dir/css/pod.css");
+print "copying $webwork_root/bin/dev_scripts/pod.css to $output_dir/css/pod.css\n" if $verbose;
+
 my $index_fh = new IO::File("$output_dir/index.html", '>')
 	or die "failed to open '$output_dir/index.html' for writing: $!\n";
-write_index($index_fh);
+write_index($index_fh, $base_url);
 
 sub process_dir {
 	my $source_dir = shift;
@@ -92,7 +97,7 @@ sub process_dir {
 	remove_tree($dest_dir);
 	make_path($dest_dir);
 
-	my $htmldocs = new PODtoHTML(
+	my $htmldocs = PODtoHTML->new(
 		source_root => $source_dir,
 		dest_root   => $dest_dir,
 		dest_url    => $base_url,
@@ -102,13 +107,14 @@ sub process_dir {
 }
 
 sub write_index {
-	my $fh = shift;
+	my ($fh, $base_url) = @_;
 	print $fh <<EOF;
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
 <meta charset='UTF-8'>
 <link rel="shortcut icon" href="/favicon.ico">
+<link href="$base_url/css/pod.css" rel="stylesheet">
 <title>WeBWorK/PG POD</title>
 </head>
 <body>

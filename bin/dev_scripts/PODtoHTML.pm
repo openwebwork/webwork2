@@ -182,25 +182,25 @@ sub write_index {
 	my $date = strftime "%a %b %e %H:%M:%S %Z %Y", localtime;
 
 	my $fh = new IO::File($out_path, '>') or die "Failed to open index '$out_path' for writing: $!\n";
-	print $fh (get_header($title), $content_start, $content, "<p>Generated $date</p>", get_footer());
+	print $fh (get_header($title, $self->{dest_url}), $content_start, $content, "<p>Generated $date</p>", get_footer());
 }
 
 sub do_pod2html {
 	my $self = shift;
 	my %o    = @_;
-	my $psx  = new PODParser;
+	my $psx  = PODParser->new;
 	$psx->{source_root} = $self->{source_root};
 	$psx->{verbose}     = $self->{verbose};
 	$psx->{base_url}    = ($self->{dest_url} // "") . "/" . (($self->{source_root} // "") =~ s|^.*/||r);
 	$psx->output_string(\my $html);
-	$psx->html_header(get_header($o{pod_name}));
+	$psx->html_header(get_header($o{pod_name}, $psx->{base_url}));
 	$psx->html_footer(get_footer());
 	$psx->parse_file($o{pod_path});
 	return $html;
 }
 
 sub get_header {
-	my $title = shift;
+	my ($title, $base_url) = @_;
 	return <<EOF;
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -208,6 +208,7 @@ sub get_header {
 <meta charset='UTF-8'>
 <link rel="icon" href="/favicon.ico">
 <title>$title</title>
+<link href="$base_url/../css/pod.css" rel="stylesheet">
 </head>
 <body>
 <h1>$title</h1>
@@ -236,4 +237,3 @@ EOF
 }
 
 1;
-
