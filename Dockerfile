@@ -75,11 +75,11 @@ RUN apt-get update \
 	libarray-utils-perl \
 	libc6-dev \
 	libcapture-tiny-perl \
-	libcgi-pm-perl \
 	libclass-tiny-antlers-perl \
 	libclass-tiny-perl \
 	libcpanel-json-xs-perl \
-	libcrypt-ssleay-perl \
+	libcrypt-jwt-perl \
+	libcryptx-perl \
 	libdata-dump-perl \
 	libdata-structure-util-perl \
 	libdatetime-perl \
@@ -90,6 +90,9 @@ RUN apt-get update \
 	libemail-sender-perl \
 	libemail-stuffer-perl \
 	libexception-class-perl \
+	libextutils-config-perl \
+	libextutils-helpers-perl \
+	libextutils-installpaths-perl \
 	libextutils-xsbuilder-perl \
 	libfile-find-rule-perl-perl \
 	libfile-sharedir-install-perl \
@@ -107,6 +110,7 @@ RUN apt-get update \
 	libmail-sender-perl \
 	libmail-sender-perl \
 	libmariadb-dev \
+	libmath-random-secure-perl \
 	libmime-tools-perl \
 	libminion-backend-sqlite-perl \
 	libminion-perl \
@@ -178,7 +182,7 @@ RUN apt-get update \
 # ==================================================================
 # Phase 4 - Install additional Perl modules from CPAN that are not packaged for Ubuntu or are outdated in Ubuntu.
 
-RUN cpanm install Statistics::R::IO Mojolicious::Plugin::NotYAMLConfig DBD::MariaDB \
+RUN cpanm install Statistics::R::IO DBD::MariaDB Mojo::SQLite@3.002 \
 	&& rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # ==================================================================
