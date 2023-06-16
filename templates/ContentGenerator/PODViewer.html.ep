@@ -1,0 +1,47 @@
+% title maketext('PG POD');
+%
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+%
+<head>
+	<meta charset='UTF-8'>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= title %></title>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
+	<link rel="icon" type="x-image/icon"
+		href="<%= $c->url({ type => 'webwork', name => 'htdocs', file => 'images/favicon.ico' }) %>">
+</head>
+%
+% my %section_names = (
+	% doc    => 'Documentation',
+	% lib    => 'Libraries',
+	% macros => 'Macros'
+% );
+%
+<body>
+	<div class="container" id="_podtop_">
+		<h1 class="mt-3"><%= title %></h1>
+		<hr>
+		% for my $section (sort keys %$sections) {
+			% content_for toc => begin
+				<li><a href="#<%= $section %>"><%= $section_names{$section} %></a></li>
+			% end
+			% content_for subjects => begin
+				<h2><a href="#_podtop_" id="<%= $section %>"><%= $section_names{$section} %></a></h2>
+				<ul>
+					% for (@{ $sections->{$section} }) {
+						<li>
+							% my $link_name = $_;
+							% $link_name = $1 =~ s!/!::!gr if $link_name =~ m/^(.*)\.pm$/;
+							<%= link_to $link_name => url_for('pod_viewer', filePath => "$section/$_") =%>
+						</li>
+					% }
+				</ul>
+			% end
+		% }
+		<ul><%= content 'toc' %></ul>
+		<%= content 'subjects' =%>
+	</div>
+</body>
+%
+</html>
