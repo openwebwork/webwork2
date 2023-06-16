@@ -128,6 +128,8 @@ my @modulesList = qw(
 	PadWalker
 	Path::Class
 	PHP::Serialization
+	Pod::Simple::Search
+	Pod::Simple::XHTML
 	Pod::Usage
 	Pod::WSDL
 	Safe

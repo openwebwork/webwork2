@@ -36,6 +36,9 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  ltiadvantage_launch                 /ltiadvantage/launch
  ltiadvantage_keys                   /ltiadvantage/keys
 
+ pod_index                           /pod
+ pod_viewer                          /pod/$filePath
+
  set_list                            /$courseID
 
  logout                              /$courseID/logout
@@ -133,8 +136,16 @@ my %routeParameters = (
 	root => {
 		title => 'WeBWorK',
 		# 'course_admin' is also a child of 'root' but that is a special case that is setup separately.
-		children =>
-			[qw(render_rpc html2xml instructor_rpc ltiadvantage_login ltiadvantage_launch ltiadvantage_keys set_list)],
+		children => [ qw(
+			render_rpc
+			html2xml
+			instructor_rpc
+			ltiadvantage_login
+			ltiadvantage_launch
+			ltiadvantage_keys
+			pod_index
+			set_list
+		) ],
 		module => 'Home',
 		path   => '/'
 	},
@@ -183,6 +194,21 @@ my %routeParameters = (
 		module => 'LTIAdvantage',
 		path   => '/ltiadvantage/keys',
 		action => 'keys'
+	},
+
+	pod_index => {
+		title    => x('POD Index'),
+		children => [qw(pod_viewer)],
+		module   => 'PODViewer',
+		path     => '/pod',
+		action   => 'PODindex'
+	},
+
+	pod_viewer => {
+		title  => x('POD Viewer'),
+		module => 'PODViewer',
+		path   => '/*filePath',
+		action => 'renderPOD'
 	},
 
 	set_list => {

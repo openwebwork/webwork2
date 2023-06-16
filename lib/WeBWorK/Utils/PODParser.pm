@@ -13,14 +13,13 @@
 # Artistic License for more details.
 ################################################################################
 
+package WeBWorK::Utils::PODParser;
+use parent qw(Pod::Simple::XHTML);
+
 use strict;
 use warnings;
 
 use Pod::Simple::XHTML;
-
-package PODParser;
-our @ISA = qw(Pod::Simple::XHTML);
-
 use File::Find;
 
 sub new {
@@ -35,18 +34,24 @@ sub new {
 
 # Attempt to resolve links to local files.  If a local file is not found, then
 # let Pod::Simple::XHTML resolve to a cpan link.
+# Really this is a workaround for invalid `L<...>` usage in the PG POD.
 sub resolve_pod_page_link {
 	my ($self, $to, $section) = @_;
+
+	unless (defined $to) {
+		print "Using internal page link.\n" if $self->{verbose} > 2;
+		return $self->SUPER::resolve_pod_page_link($to, $section);
+	}
 
 	# This ignores $to if $section is set.  It would probably be better
 	# to check for "$to/$section" if both are set.
 	$self->{pod_search} = $section // $to;
 	find({ wanted => $self->pod_wanted }, $self->{source_root});
-	undef $self->{pod_search};
+	delete $self->{pod_search};
 
 	if ($self->{pod_found}) {
 		my $pod_url = $self->{pod_found} =~ s/^$self->{source_root}/$self->{base_url}/r;
-		undef $self->{pod_found};
+		delete $self->{pod_found};
 		print "Resolved local pod link $to" . ($section ? "/$section" : "") . " to $pod_url\n" if $self->{verbose} > 2;
 		return $self->encode_entities($pod_url);
 	}
@@ -63,7 +68,10 @@ sub pod_wanted {
 		my $path     = $File::Find::name;
 		my $dir      = $File::Find::dir;
 
-		$File::Find::prune = 1, return if ($self->{pod_found});
+		if ($self->{pod_found}) {
+			$File::Find::prune = 1;
+			return;
+		}
 
 		if (-d $path && $filename =~ /^(\.git|\.github|t|htdocs)$/) {
 			$File::Find::prune = 1;
@@ -71,22 +79,22 @@ sub pod_wanted {
 		}
 
 		if ($filename eq $self->{pod_search}) {
-			$self->{pod_found} = $path =~ s/\.(pm|pl)$/.html/r;
+			$self->{pod_found} = $self->{assert_html_ext} ? ($path =~ s/\.(pm|pl)$/.html/r) : $path;
 			$File::Find::prune = 1;
 			return;
 		}
 	};
 }
 
-# Don't output anything for a malformed =head[1-4] with no header text.
-# This is done in pg/lib/Matrix.pm, for example.
-sub _end_head {
-	my $self = shift;
-	if ($self->{scratch}) {
-		return $self->SUPER::_end_head(@_);
-	}
-	delete $self->{in_head};
-	return "";
+# Trim spaces from the beginning of each line in code blocks.  This attempts to
+# trim spaces from all lines in the code block in the same amount as there are
+# spaces at the beginning of the first line. Note that Pod::Simple::XHTML has
+# already converted tab characters into 8 spaces.
+sub handle_code {
+	my ($self, $code) = @_;
+	my $start_spaces = length(($code =~ /^( *)/)[0]) || '';
+	$self->SUPER::handle_code($code =~ s/^( {1,$start_spaces})//gmr);
+	return;
 }
 
 1;
