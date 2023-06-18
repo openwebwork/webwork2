@@ -32,18 +32,17 @@
 % WeBWorK used Control+_ = ^_ for verbatim... so we change its charcode
 \catcode`\=12
 
-% This is used to signal PG that we are not using multicols
-\newcommand{\nocolumns}{}
-
 % This removes the margin for questions from the exam class.  At this point we only use questions and not parts or
-% supparts, but if those are used a similar thing will be needed for those as well.
+% subparts, but if those are used a similar thing will be needed for those as well.
 \renewcommand{\questionshook}{\leftmargin=0pt\labelwidth=-\labelsep}
 
 \makeatletter
-\qformat{{\bf Problem \thequestiontitle.} \if@placepoints{\bf\footnotesize(\thepoints)}\fi \hfill}
+\qformat{{\bfseries Problem \thequestiontitle.} \if@placepoints{\bfseries\footnotesize(\thepoints)}\fi \hfill}
 \makeatother
 
 \input{CAPA.tex}
 \input{PGML.tex}
+
+\input{headandfoot.tex}
 
 \begin{document}
