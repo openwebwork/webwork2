@@ -133,6 +133,7 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{sectionNumber}    = $options{sectionName};
 	$options{recitationName}   = $user->recitation;
 	$options{recitationNumber} = $options{recitationName};
+	$options{setDescription}   = $set->description;
 	$options{setNumber}        = $set->set_id;
 	$options{studentLogin}     = $user->user_id;
 	$options{studentName}      = $user->first_name . ' ' . $user->last_name;
