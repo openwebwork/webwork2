@@ -669,8 +669,8 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 	}
 
 	# If the file is being saved as a new file in a new location, and the file is accompanied by auxiliary files
-	# transfer them as well.  If the file is a pg file, then assume there are auxiliary files.  Copy all files not
-	# ending in .pg from the original directory to the new one.
+	# transfer them as well.  Auxiliary files are identified as any file in the same directory that doesn't end
+	# in .pg and is mentioned inside the .pg file's contents.  Copy over any auxiliary files found.
 	if ($c->{action} eq 'save_as' && $outputFilePath =~ /\.pg/) {
 		my $sourceDirectory = $c->{sourceFilePath} || '';
 		my $outputDirectory = $outputFilePath;
@@ -679,9 +679,11 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 
 		# Only perform the copy if the output directory is an actual new location.
 		if ($sourceDirectory ne $outputDirectory) {
+			my $problemContents = ${ $c->{r_problemContents} } // '';
 			for my $file (-d $sourceDirectory ? readDirectory($sourceDirectory) : ()) {
 				# The .pg file being edited has already been transferred. Ignore any others in the directory.
-				next if $file =~ /\.pg$/;
+				# Only copy over files that are referenced in the .pg file.
+				next unless $file !~ /\.pg$/ && $problemContents =~ /$file/;
 				my $fromPath = "$sourceDirectory/$file";
 				my $toPath   = "$outputDirectory/$file";
 				# Don't copy directories and don't copy files that have already been copied.
