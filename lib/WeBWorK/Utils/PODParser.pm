@@ -20,70 +20,51 @@ use strict;
 use warnings;
 
 use Pod::Simple::XHTML;
-use File::Find;
+use File::Basename qw(basename);
 
+# $podFiles must be provided in order for pod links to local files to work.  It should be the
+# first return value of the POD::Simple::Search survey method.
 sub new {
-	my $invocant = shift;
-	my $class    = ref $invocant || $invocant;
-	my $self     = $class->SUPER::new(@_);
+	my ($invocant, $podFiles) = @_;
+	my $class = ref $invocant || $invocant;
+	my $self  = $class->SUPER::new(@_);
 	$self->perldoc_url_prefix("https://metacpan.org/pod/");
 	$self->index(1);
 	$self->backlink(1);
+	$self->html_charset('UTF-8');
+	$self->{podFiles} = $podFiles // {};
 	return bless $self, $class;
 }
 
 # Attempt to resolve links to local files.  If a local file is not found, then
 # let Pod::Simple::XHTML resolve to a cpan link.
-# Really this is a workaround for invalid `L<...>` usage in the PG POD.
 sub resolve_pod_page_link {
-	my ($self, $to, $section) = @_;
+	my ($self, $target, $section) = @_;
 
-	unless (defined $to) {
+	unless (defined $target) {
 		print "Using internal page link.\n" if $self->{verbose} > 2;
-		return $self->SUPER::resolve_pod_page_link($to, $section);
+		return $self->SUPER::resolve_pod_page_link($target, $section);
 	}
 
-	# This ignores $to if $section is set.  It would probably be better
-	# to check for "$to/$section" if both are set.
-	$self->{pod_search} = $section // $to;
-	find({ wanted => $self->pod_wanted }, $self->{source_root});
-	delete $self->{pod_search};
-
-	if ($self->{pod_found}) {
-		my $pod_url = $self->{pod_found} =~ s/^$self->{source_root}/$self->{base_url}/r;
-		delete $self->{pod_found};
-		print "Resolved local pod link $to" . ($section ? "/$section" : "") . " to $pod_url\n" if $self->{verbose} > 2;
-		return $self->encode_entities($pod_url);
+	my $podFound;
+	for (keys %{ $self->{podFiles} }) {
+		if ($target eq $_ =~ s/lib:://r || $target eq basename($self->{podFiles}{$_}) =~ s/\.pod$//r) {
+			$podFound =
+				$self->{assert_html_ext} ? ($self->{podFiles}{$_} =~ s/\.(pm|pl|pod)$/.html/r) : $self->{podFiles}{$_};
+			last;
+		}
 	}
 
-	print "Using cpan pod link for $to" . ($section ? "/$section" : "") . "\n" if $self->{verbose} > 2;
-	return $self->SUPER::resolve_pod_page_link($to, $section);
-}
+	if ($podFound) {
+		my $pod_url = $self->encode_entities($podFound =~ s/^$self->{source_root}/$self->{base_url}/r)
+			. ($section ? '#' . $self->idify($self->encode_entities($section), 1) : '');
+		print "Resolved local pod link for $target" . ($section ? "/$section" : '') . " to $pod_url\n"
+			if $self->{verbose} > 2;
+		return $pod_url;
+	}
 
-# This takes the first file found that matches.
-sub pod_wanted {
-	my $self = shift;
-	return sub {
-		my $filename = $_;
-		my $path     = $File::Find::name;
-		my $dir      = $File::Find::dir;
-
-		if ($self->{pod_found}) {
-			$File::Find::prune = 1;
-			return;
-		}
-
-		if (-d $path && $filename =~ /^(\.git|\.github|t|htdocs)$/) {
-			$File::Find::prune = 1;
-			return;
-		}
-
-		if ($filename eq $self->{pod_search}) {
-			$self->{pod_found} = $self->{assert_html_ext} ? ($path =~ s/\.(pm|pl)$/.html/r) : $path;
-			$File::Find::prune = 1;
-			return;
-		}
-	};
+	print "Using cpan pod link for $target" . ($section ? "/$section" : '') . "\n" if $self->{verbose} > 2;
+	return $self->SUPER::resolve_pod_page_link($target, $section);
 }
 
 # Trim spaces from the beginning of each line in code blocks.  This attempts to

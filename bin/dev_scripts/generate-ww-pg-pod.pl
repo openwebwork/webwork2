@@ -62,6 +62,7 @@ pod2usage(2) unless $output_dir;
 
 $base_url = "/" if !$base_url;
 
+use Mojo::Template;
 use IO::File;
 use File::Copy;
 use File::Path qw(make_path remove_tree);
@@ -83,11 +84,13 @@ for my $dir ($webwork_root, $pg_root) {
 
 my $index_fh = IO::File->new("$output_dir/index.html", '>')
 	or die "failed to open '$output_dir/index.html' for writing: $!\n";
-write_index($index_fh, $base_url);
+write_index($index_fh);
 
-make_path("$output_dir/css");
-copy("$webwork_root/htdocs/js/PODViewer/podviewer.css", "$output_dir/css/pod.css");
-print "copying $webwork_root/htdocs/js/PODViewer/podviewer.css to $output_dir/css/pod.css\n" if $verbose;
+make_path("$output_dir/assets");
+copy("$webwork_root/htdocs/js/PODViewer/podviewer.css", "$output_dir/assets/podviewer.css");
+print "copying $webwork_root/htdocs/js/PODViewer/podviewer.css to $output_dir/assets/podviewer.css\n" if $verbose;
+copy("$webwork_root/htdocs/js/PODViewer/podviewer.js", "$output_dir/assets/podviewer.js");
+print "copying $webwork_root/htdocs/js/PODViewer/podviewer.css to $output_dir/assets/podviewer.js\n" if $verbose;
 
 sub process_dir {
 	my $source_dir = shift;
@@ -101,10 +104,11 @@ sub process_dir {
 	make_path($dest_dir);
 
 	my $htmldocs = PODtoHTML->new(
-		source_root => $source_dir,
-		dest_root   => $dest_dir,
-		dest_url    => $base_url,
-		verbose     => $verbose
+		source_root  => $source_dir,
+		dest_root    => $dest_dir,
+		template_dir => "$webwork_root/bin/dev_scripts/pod-templates",
+		dest_url     => $base_url,
+		verbose      => $verbose
 	);
 	$htmldocs->convert_pods;
 
@@ -112,29 +116,10 @@ sub process_dir {
 }
 
 sub write_index {
-	my ($fh, $base_url) = @_;
-	print $fh <<"EOF";
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-<meta charset='UTF-8'>
-<link rel="shortcut icon" href="/favicon.ico">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap\@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="$base_url/css/pod.css" rel="stylesheet">
-<title>WeBWorK/PG POD</title>
-</head>
-<body>
-<div class="container mt-3">
-<h1>WeBWorK/PG POD</h1>
-<h2>(Plain Old Documentation)</h2>
-<div>
-<ul>
-EOF
+	my $fh = shift;
 
-	print $fh q{<li><a href="pg">PG</a></li>}            if $pg_root;
-	print $fh q{<li><a href="webwork2">WeBWorK</a></li>} if $webwork_root;
-
-	print $fh "</ul></div></div></body></html>";
+	print $fh Mojo::Template->new(vars => 1)->render_file("$webwork_root/bin/dev_scripts/pod-templates/main-index.mt",
+		{ base_url => $base_url, webwork_root => $webwork_root, pg_root => $pg_root });
 
 	return;
 }

@@ -23,6 +23,7 @@ WeBWorK::ContentGenerator::PODViewer - display POD for PG macros.
 =cut
 
 use Pod::Simple::Search;
+use Mojo::DOM;
 
 use WeBWorK::Utils::PODParser;
 
@@ -37,14 +38,15 @@ sub PODindex ($c) {
 		push(@{ $sections->{$section} }, $podFiles->{$_} =~ s!^$pgRoot/$section/!!r);
 	}
 
-	return $c->render('ContentGenerator/PODViewer', sections => $sections);
+	return $c->render('ContentGenerator/PODViewer', sections => $sections, sidebar_title => $c->maketext('Categories'));
 }
 
 sub renderPOD ($c) {
 	my $macroFile = $c->ce->{pg_dir} . '/' . $c->stash->{filePath};
 
 	if (-e $macroFile) {
-		my $parser = WeBWorK::Utils::PODParser->new;
+		my $parser = WeBWorK::Utils::PODParser->new(
+			Pod::Simple::Search->new->inc(0)->limit_re(qr/^doc|^lib|^macros/)->survey($c->ce->{pg_dir}));
 		$parser->{verbose}     = 0;
 		$parser->{source_root} = $c->ce->{pg_dir};
 		$parser->{base_url}    = $c->url_for('pod_index')->to_string;
@@ -56,11 +58,25 @@ sub renderPOD ($c) {
 		if ($@) {
 			$c->stash->{podError} = $@;
 		} else {
-			$c->stash->{podHTML} = $html;
+			my $dom      = Mojo::DOM->new($html);
+			my $podIndex = $dom->at('ul[id="index"]');
+			$c->stash->{podIndex} = $podIndex ? $podIndex->find('ul[id="index"] > li') : $c->c;
+			for (@{ $c->stash->{podIndex} }) {
+				$_->attr({ class => 'nav-item' });
+				$_->at('a')->attr({ class => 'nav-link p-0' });
+				for (@{ $_->find('ul') }) {
+					$_->attr({ class => 'nav flex-column w-100' });
+				}
+				for (@{ $_->find('li') }) {
+					$_->attr({ class => 'nav-item' });
+					$_->at('a')->attr({ class => 'nav-link p-0' });
+				}
+			}
+			$c->stash->{podHTML} = $podIndex ? $podIndex->remove : $html;
 		}
 	}
 
-	return $c->render('ContentGenerator/PODViewer/POD');
+	return $c->render('ContentGenerator/PODViewer/POD', sidebar_title => $c->maketext('Index'));
 }
 
 1;
