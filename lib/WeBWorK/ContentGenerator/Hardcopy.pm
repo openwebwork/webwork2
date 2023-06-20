@@ -30,7 +30,7 @@ use Archive::Zip qw(:ERROR_CODES);
 
 use WeBWorK::DB::Utils qw/user2global/;
 use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after x format_set_name_display/;
+use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after x/;
 use WeBWorK::Utils::Rendering qw(renderPG);
 use PGrandom;
 
@@ -656,7 +656,7 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 
 	# Copy the common tex files into the bundle directory
 	my $ce = $c->ce;
-	for (qw{packages.tex CAPA.tex PGML.tex}) {
+	for (qw{packages.tex CAPA.tex PGML.tex headandfoot.tex copyright.tex webwork_logo.png}) {
 		my $cp_cmd =
 			"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{webworkDirs}{texinputs_common}/$_", $bundle_path);
 		my $cp_out = readpipe $cp_cmd;
@@ -813,13 +813,17 @@ async sub write_multiuser_tex ($c, $FH, $userIDsRef, $setIDsRef) {
 
 	# get snippets
 	my $theme     = $c->param('hardcopy_theme') // $ce->{hardcopyTheme};
-	my $themeDir  = $ce->{webworkDirs}->{conf} . '/snippets/hardcopyThemes/' . $theme;
-	my $preamble  = $ce->{webworkFiles}->{hardcopySnippets}->{preamble}    // "$themeDir/hardcopyPreamble.tex";
-	my $postamble = $ce->{webworkFiles}->{hardcopySnippets}->{postamble}   // "$themeDir/hardcopyPostamble.tex";
-	my $divider   = $ce->{webworkFiles}->{hardcopySnippets}->{userDivider} // "$themeDir/hardcopyUserDivider.tex";
+	my $themeDir  = $ce->{webworkDirs}{conf} . '/snippets/hardcopyThemes/' . $theme;
+	my $preamble  = $ce->{webworkFiles}{hardcopySnippets}{preamble}    // "$themeDir/hardcopyPreamble.tex";
+	my $postamble = $ce->{webworkFiles}{hardcopySnippets}{postamble}   // "$themeDir/hardcopyPostamble.tex";
+	my $divider   = $ce->{webworkFiles}{hardcopySnippets}{userDivider} // "$themeDir/hardcopyUserDivider.tex";
 
 	# write preamble
 	$c->write_tex_file($FH, $preamble);
+	print $FH '\\def\\webworkCourseName{' . handle_underbar($ce->{courseName}) . "}\n";
+	print $FH '\\def\\webworkCourseTitle{' . handle_underbar($c->db->getSettingValue('courseTitle')) . "}\n";
+	print $FH '\\def\\webworkCourseURL{'
+		. handle_underbar($ce->{server_root_url} . $ce->{webwork_url} . '/' . $ce->{courseName}) . "}\n";
 
 	# write section for each user
 	while (defined(my $userID = shift @userIDs)) {
@@ -924,14 +928,13 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 
 	# get snippets
 	my $theme    = $c->param('hardcopy_theme') // $ce->{hardcopyTheme};
-	my $themeDir = $ce->{webworkDirs}->{conf} . '/snippets/hardcopyThemes/' . $theme;
+	my $themeDir = $ce->{webworkDirs}{conf} . '/snippets/hardcopyThemes/' . $theme;
 	my $header =
-		$MergedSet->hardcopy_header
-		? $MergedSet->hardcopy_header
-		: $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
-	if ($header eq 'defaultHeader') { $header = $ce->{webworkFiles}->{hardcopySnippets}->{setHeader}; }
-	my $footer  = $ce->{webworkFiles}->{hardcopySnippets}->{setFooter}      // "$themeDir/hardcopySetFooter.pg";
-	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{problemDivider} // "$themeDir/hardcopyProblemDivider.tex";
+		$MergedSet->hardcopy_header ? $MergedSet->hardcopy_header : $ce->{webworkFiles}{hardcopySnippets}{setHeader};
+	if ($header eq 'defaultHeader') { $header = $ce->{webworkFiles}{hardcopySnippets}{setHeader}; }
+	my $texheader = $ce->{webworkFiles}{hardcopySnippets}{setTexHeader}   // "$themeDir/hardcopySetHeader.tex";
+	my $footer    = $ce->{webworkFiles}{hardcopySnippets}{setFooter}      // "$themeDir/hardcopySetFooter.tex";
+	my $divider   = $ce->{webworkFiles}{hardcopySnippets}{problemDivider} // "$themeDir/hardcopyProblemDivider.tex";
 
 	# get list of problem IDs
 	my @problemIDs = map { $_->[2] }
@@ -957,8 +960,28 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 		@problemIDs = @newOrder;
 	}
 
+	# write environment variables as LaTeX macros
+	for (qw(user_id student_id first_name last_name email_address section recitation)) {
+		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($TargetUser->{$_}) . "}\n";
+	}
+	for (qw(set_id description)) {
+		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($MergedSet->{$_}) . "}\n";
+	}
+	print $FH '\\def\\webworkPrettySetId{' . handle_underbar($MergedSet->{set_id}, 1) . "}\n";
+	for (qw(open_date reduced_scoring_date due_date answer_date)) {
+		if (!ref($MergedSet->{$_}) && $MergedSet->{$_} =~ /^\d{10}$/) {
+			print $FH '\\def\\webwork'
+				. underscore_to_camel($_) . '{'
+				. WeBWorK::Utils::formatDateTime($MergedSet->{$_}, $ce->{siteDefaults}{timezone}) . "}\n";
+		} else {
+			print $FH '\\def\\webwork' . underscore_to_camel($_) . "{}\n";
+		}
+	}
+
 	# write set header
 	await $c->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header);    # 0 => pg file specified directly
+
+	$c->write_tex_file($FH, $texheader);
 
 	print $FH "\\medskip\\hrule\\nobreak\\smallskip\n\\begin{questions}\n";
 
@@ -976,9 +999,27 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 	print $FH "\\end{questions}\n";
 
 	# write footer
-	await $c->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $footer);    # 0 => pg file specified directly
+	$c->write_tex_file($FH, $footer);
 
 	return;
+}
+
+sub underscore_to_camel {
+	my $key = shift;
+	$key = ucfirst($key);
+	$key =~ s/_(\w)/uc($1)/ge;
+	return $key;
+}
+
+sub handle_underbar {
+	my $string     = shift;
+	my $make_space = shift // 0;
+	if ($make_space) {
+		$string =~ s/_/~/g;
+	} else {
+		$string =~ s/_/\\_/g;
+	}
+	return $string;
 }
 
 async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $problemID = 0, $pgFile = undef) {
