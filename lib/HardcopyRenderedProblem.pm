@@ -128,7 +128,7 @@ sub generate_hardcopy_tex {
 	# Copy the common tex files into the working directory
 	my $ce         = $ws->c->ce;
 	my $common_dir = path($ce->{webworkDirs}{texinputs_common});
-	for (qw{packages.tex CAPA.tex PGML.tex}) {
+	for (qw{packages.tex CAPA.tex PGML.tex headandfoot.tex copyright.tex webwork_logo.png}) {
 		eval { $common_dir->child($_)->copy_to($working_dir) };
 		push(@$errors, qq{Failed to copy "$ce->{webworkDirs}{texinputs_common}/$_" into directory "$working_dir": $@})
 			if $@;
@@ -210,7 +210,37 @@ sub write_tex {
 		. ($ws->{inputs_ref}{hardcopy_theme} // $ce->{hardcopyTheme});
 
 	write_tex_file($FH, $ce->{webworkFiles}{hardcopySnippets}{preamble} // "$themeDir/hardcopyPreamble.tex", $errors);
+
+	# Write dummy LaTeX macros to pacify any usage of these in the theme tex files.
+	for (qw(
+		CourseName
+		CourseTitle
+		CourseURL
+		UserId
+		StudentId
+		FirstName
+		LastName
+		EmailAddress
+		Section
+		Recitation
+		SetId
+		Description
+		OpenDate
+		ReducedScoringDate
+		DueDate
+		AnswerDate
+		PrettySetId
+	))
+	{
+		print $FH "\\def\\webwork${_}{}\n";
+	}
+
+	print $FH "\\firstpageheader{}{}{}\\footer{}{}{}";
+
+	write_tex_file($FH, $ce->{webworkFiles}{hardcopySnippets}{setTexHeader} // "$themeDir/hardcopySetHeader.tex",
+		$errors);
 	write_problem_tex($ws, $FH);
+	write_tex_file($FH, $ce->{webworkFiles}{hardcopySnippets}{setFooter} // "$themeDir/hardcopySetFooter.tex", $errors);
 	write_tex_file($FH, $ce->{webworkFiles}{hardcopySnippets}{postamble} // "$themeDir/hardcopyPostamble.tex", $errors);
 
 	return;
