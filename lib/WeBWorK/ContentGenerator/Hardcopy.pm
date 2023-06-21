@@ -656,7 +656,7 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 
 	# Copy the common tex files into the bundle directory
 	my $ce = $c->ce;
-	for (qw{packages.tex CAPA.tex PGML.tex headandfoot.tex copyright.tex webwork_logo.png}) {
+	for (qw{packages.tex webwork.sty CAPA.tex PGML.tex copyright.tex webwork_logo.png}) {
 		my $cp_cmd =
 			"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{webworkDirs}{texinputs_common}/$_", $bundle_path);
 		my $cp_out = readpipe $cp_cmd;
