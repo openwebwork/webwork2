@@ -41,7 +41,17 @@
 \input{CAPA.tex}
 \input{PGML.tex}
 
-% This needs a Hebrew specific replacement
-\input{headandfoot.tex}
+% This needs a Hebrew localizations for
+\def\webworkLocalizeAssignment{Assignment}
+\def\webworkLocalizeFullCreditBy{full credit by}
+\def\webworkLocalizeCloses{closes}
+\def\webworkLocalizeSection{Section}
+\def\webworkLocalizeRecitation{Recitation}
+\def\webworkLocalizePage{Page}
+
+\pagestyle{headandfoot}
+\firstpageheader{\webworkAssignmentCourseInfo}{}{\webworkUserInfo}
+\runningheader{}{}{}
+\footer{}{}{\webworkPageNumber}
 
 \begin{document}
