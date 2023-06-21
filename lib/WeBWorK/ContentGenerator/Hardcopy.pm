@@ -1111,7 +1111,7 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $problemID = 0, $
 	if ($showCorrectAnswers || $printStudentAnswers) {
 		my %oldAnswers = decodeAnswers($MergedProblem->last_answer);
 		$formFields->{$_} = $oldAnswers{$_} foreach (keys %oldAnswers);
-		print $FH "%% decoded old answers, saved. (keys = " . join(',', keys(%oldAnswers)) . "\n";
+		print $FH "%% decoded old answers, saved. (keys = " . join(',', keys(%oldAnswers)) . ")\n" if %oldAnswers;
 	}
 
 	my $pg = await renderPG(
