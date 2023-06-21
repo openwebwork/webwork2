@@ -455,7 +455,7 @@ sub authenticate {
 
 	# We need to provide the request URL when verifying the OAuth request.
 	# We use the url request by default, but also allow it to be overriden
-	my $path = $ce->{LTI}{v1p1}{BasicToThisSiteURL} || ($c->url_for->to_abs =~ s|/?$|/|r);
+	my $path = $ce->{LTI}{v1p1}{OverrideSiteURL} || ($c->url_for->to_abs =~ s|/?$|/|r);
 
 	if ($ce->{debug_lti_parameters}) {
 		warn "The following path was reconstructed by WeBWorK.  It should match the path in the LMS:\n";
