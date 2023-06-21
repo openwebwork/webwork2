@@ -128,7 +128,7 @@ sub generate_hardcopy_tex {
 	# Copy the common tex files into the working directory
 	my $ce         = $ws->c->ce;
 	my $common_dir = path($ce->{webworkDirs}{texinputs_common});
-	for (qw{packages.tex webwork.sty CAPA.tex PGML.tex copyright.tex webwork_logo.png}) {
+	for (qw{packages.tex webwork2.sty CAPA.tex PGML.tex copyright.tex webwork_logo.png}) {
 		eval { $common_dir->child($_)->copy_to($working_dir) };
 		push(@$errors, qq{Failed to copy "$ce->{webworkDirs}{texinputs_common}/$_" into directory "$working_dir": $@})
 			if $@;
