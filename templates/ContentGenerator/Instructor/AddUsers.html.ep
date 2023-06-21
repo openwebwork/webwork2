@@ -50,33 +50,41 @@
 			% for (1 .. $numberOfStudents) {
 				<tr>
 					<td>
+						% param("last_name_$_", undef);
 						<%= text_field "last_name_$_" => '', size => '10',
 							class => 'form-control form-control-sm w-auto' =%>
 					</td>
 					<td>
+						% param("first_name_$_", undef);
 						<%= text_field "first_name_$_" => '', size => '10',
 							class => 'form-control form-control-sm w-auto' =%>
 					</td>
 					<td>
+						% param("student_id_$_", undef);
 						<%= text_field "student_id_$_" => '', size => '16',
 							class => 'form-control form-control-sm w-auto' =%>
 					</td>
 					<td>
+						% param("new_user_id_$_", undef);
 						<%= text_field "new_user_id_$_" => '', size => '10',
 							class => 'form-control form-control-sm w-auto' =%>
 					</td>
 					<td>
+						% param("email_address_$_", undef);
 						<%= text_field "email_address_$_" => '', class => 'form-control form-control-sm w-auto' =%>
 					</td>
 					<td>
+						% param("section_$_", undef);
 						<%= text_field "section_$_" => '', size => '4',
 							class => 'form-control form-control-sm w-auto' =%>
 					</td>
 					<td>
+						% param("recitation_$_", undef);
 						<%= text_field "recitation_$_" => '', size => '4',
 							class => 'form-control form-control-sm w-auto' =%>
 					</td>
 					<td>
+						% param("comment_$_", undef);
 						<%= text_field "comment_$_" => '', class => 'form-control form-control-sm w-auto' =%>
 					</td>
 				</tr>
@@ -84,6 +92,7 @@
 		</table>
 	</div>
 	<p class="my-2"><%= maketext('Select sets below to assign them to the newly-created users.') %></p>
+	% param('assignSets', undef);
 	<%= select_field assignSets => [ map { [ format_set_name_display($_) => $_ ] } $db->listGlobalSets ],
 		size => 10, multiple => undef, class => 'form-select w-auto mb-2' =%>
 	<p><%= submit_button maketext('Add Students'), name => 'addStudents', class => 'btn btn-primary' =%></p>
