@@ -107,9 +107,9 @@
 
 	<dt><%= maketext('Add n blank problem template(s) to the end of homework set.') %></dt>
 	<dd>
-		<%= maketext('Adds new, essentially blank, problems to the set when the set is saved. You can modify this '
-			. 'problem to create your own problem, by clicking on the "Edit Problem" link and saving the '
-			. '"blankProblem.pg" to some new file, e.g. "myNewProblem.pg".') =%>
+		<%= maketext('Adds new template problems to the set when the set is saved. You can modify the template '
+			. 'to create your own problem, by clicking on the "Edit Problem" link and saving to some new '
+			. 'file, e.g. "myNewProblem.pg".') =%>
 	</dd>
 </dl>
 

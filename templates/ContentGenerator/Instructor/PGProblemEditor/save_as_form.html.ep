@@ -5,11 +5,12 @@
 % # Don't show the save as form when editing an existing course info file.
 % last if $c->{file_type} eq 'course_info' && -e $c->{editFilePath};
 %
+% my $isBlank       = $c->{file_type} eq 'blank_problem';
 % my $templatesDir  = $ce->{courseDirs}{templates};
-% my $shortFilePath = $c->{editFilePath} =~ s|^$templatesDir/||r;
+% my $shortFilePath = $isBlank ? 'newProblem.pg' : $c->{editFilePath} =~ s|^$templatesDir/||r;
 %
 % # Suggest that modifications be saved to the "local" subdirectory if its not in a writeable directory
-% $shortFilePath = "local/$shortFilePath" if !-w dirname($c->{editFilePath});
+% $shortFilePath = "local/$shortFilePath" unless $isBlank || -w dirname($c->{editFilePath});
 %
 % # If it is an absolute path make it relative.
 % $shortFilePath =~ s|^/*|| if $shortFilePath =~ m|^/|;

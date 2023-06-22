@@ -95,7 +95,7 @@ the submit button pressed (the action).
         Add this problem to:       action = add_problem
         Make this set header for:  action = add_problem
         Revert:                    action = revert
-		Generate Hardcopy:         actoin = hardcopy
+        Generate Hardcopy:         action = hardcopy
 
 An undefined or invalid action is interpreted as an initial edit of the file.
 
@@ -109,7 +109,7 @@ not exist.  The path to the actual file being edited is stored in inputFilePath.
 use File::Copy;
 
 use WeBWorK::Utils qw(jitar_id_to_seq not_blank path_is_subdir seq_to_jitar_id x
-	surePathToFile readDirectory readFile max);
+	surePathToFile readDirectory readFile max format_set_name_display);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
 
 use constant DEFAULT_SEED => 123456;
@@ -125,7 +125,7 @@ use constant ACTION_FORM_TITLES => {
 	revert      => x('Revert'),
 };
 
-my $BLANKPROBLEM = 'blankProblem.pg';
+my $BLANKPROBLEM = 'newProblem.pg';
 
 sub pre_header_initialize ($c) {
 	my $ce    = $c->ce;
@@ -236,8 +236,6 @@ sub initialize ($c) {
 		unless $authz->hasPermissions($user, 'access_instructor_tools')
 		&& $authz->hasPermissions($user, 'modify_problem_sets');
 
-	my $file_type = $c->param('file_type') || '';
-
 	# Record status messages carried over if this is a redirect
 	$c->addmessage($c->param('status_message') || '');
 
@@ -246,18 +244,18 @@ sub initialize ($c) {
 
 	if (!-e $c->{inputFilePath}) {
 		$c->addbadmessage($c->maketext('The file "[_1]" cannot be found.', $c->shortPath($c->{inputFilePath})));
-	} elsif (!-w $c->{inputFilePath} && $file_type ne 'blank_problem') {
+	} elsif (!-w $c->{inputFilePath} && $c->{file_type} ne 'blank_problem') {
 		$c->addbadmessage($c->maketext(
-			'The file "[_1]" is protected! '
-				. 'To edit this text you must first make a copy of this file using the "New Version" action below.',
+			'The file "[_1]" is protected. You may use "Save As" to create a new file.',
 			$c->shortPath($c->{inputFilePath})
 		));
 	}
 
-	if ($c->{inputFilePath} =~ /$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
+	if ($c->{file_type} eq 'blank_problem') {
+		$c->addbadmessage($c->maketext('This file is a template. You may use "Save As" to create a new file.'));
+	} elsif ($c->{inputFilePath} =~ /$BLANKPROBLEM$/) {
 		$c->addbadmessage($c->maketext(
-			'The file "[_1]" is a blank problem!'
-				. 'To edit this text you must use the "New Version" action below to save it to another file.',
+			'The file "[_1]" is a template. You may use "Save As" to create a new file.',
 			$c->shortPath($c->{inputFilePath})
 		));
 	}
@@ -334,7 +332,8 @@ sub page_title ($c) {
 		}
 	}
 
-	return $c->maketext('Problem [_1]', $problemID);
+	return (defined $setID    ? $c->tag('span', dir => 'ltr', format_set_name_display($setID)) . ': ' : '')
+		. (defined $problemID ? $c->maketext('Problem [_1]', $problemID) : $c->maketext('New Problem'));
 }
 
 #  Convert initial path component to [TMPL], [COURSE], or [WW].
@@ -357,34 +356,13 @@ sub getRelativeSourceFilePath ($c, $sourceFilePath) {
 	return $sourceFilePath;
 }
 
-# determineLocalFilePath constructs a local file path parallel to a library file path
-sub determineLocalFilePath ($c, $path) {
-	my $default_screen_header_path   = $c->ce->{webworkFiles}{hardcopySnippets}{setHeader};
-	my $default_hardcopy_header_path = $c->ce->{webworkFiles}{screenSnippets}{setHeader};
-	my $setID                        = $c->{setID} // int(rand(1000));
-
-	if ($path =~ /Library/) {
-		# Truncate the url up to a segment such as ...rochesterLibrary/ and prepend local.
-		$path =~ s|^.*?Library/|local/|;
-	} elsif ($path eq $default_screen_header_path) {
-		$path = "set$setID/setHeader.pg";
-	} elsif ($path eq $default_hardcopy_header_path) {
-		$path = "set$setID/hardcopyHeader.tex";
-	} else {
-		# If its not in a library we'll just save it locally.
-		# FIXME:  This should check to see if a file with the randomly generated name exists.
-		$path = 'new_problem_' . int(rand(1000)) . '.pg';
-	}
-	return $path;
-}
-
 # Determine the location of the temporary file.
 # This does not create the directories in the path to the file.
 # It returns an absolute path to the file.
 # $path should be an absolute path to the original file.
 sub determineTempEditFilePath ($c, $path) {
 	my $user  = $c->param('user');
-	my $setID = $c->{setID};
+	my $setID = $c->{setID} // 'Undefined_Set';
 
 	my $templatesDirectory   = $c->ce->{courseDirs}{templates};
 	my $tmpEditFileDirectory = $c->getTempEditFileDirectory();
@@ -479,10 +457,6 @@ sub getFilePaths ($c) {
 		$editFilePath = "$ce->{courseDirs}{templates}/$ce->{courseFiles}{course_info}";
 	} elsif ($c->{file_type} eq 'blank_problem') {
 		$editFilePath = $ce->{webworkFiles}{screenSnippets}{blankProblem};
-		$c->addbadmessage($c->maketext(
-			'This is a blank problem template file and can not be edited directly. Use the "New Version" '
-				. 'action below to create a local copy of the file and add it to the current problem set.'
-		));
 	} elsif ($c->{file_type} eq 'set_header' || $c->{file_type} eq 'hardcopy_header') {
 		my $set_record = $db->getGlobalSet($c->{setID});
 
@@ -1058,10 +1032,12 @@ sub save_as_handler ($c) {
 	if (defined $outputFilePath && -e $outputFilePath) {
 		$do_not_save = 1;
 		$c->addbadmessage($c->maketext(
-			'File "[_1]" exists. File not saved. No changes have been made.  '
-				. 'You can change the file path for this problem manually from the "Hmwk Sets Editor" page',
+			'File "[_1]" exists. File not saved. No changes have been made.',
 			$c->shortPath($outputFilePath)
 		));
+		$c->addbadmessage(
+			$c->maketext('You can change the file path for this problem manually from the "Hmwk Sets Editor" page'))
+			if defined $c->{setID};
 		$c->addgoodmessage($c->maketext(
 			'The text box now contains the source of the original problem. '
 				. 'You can recover lost edits by using the Back button on your browser.'
