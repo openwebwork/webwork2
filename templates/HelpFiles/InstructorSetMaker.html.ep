@@ -38,9 +38,9 @@
 			. q{haven't been vetted as thoroughly as OPL problems. If you want hints or solutions included while }
 			. 'browsing select the appropriate box.') =%>
 	</dd>
-	<dt><%= maketext('Local Problems') %></dt>
+	<dt><%= maketext('File Manager') %></dt>
 	<dd><%= maketext('This option shows all pg problems in the course directory structure.')%></dd>
-	<dt><%= maketext('From This Course') %></dt>
+	<dt><%= maketext('Course Sets') %></dt>
 	<dd><%= maketext('This option shows all problems in sets that have been created in the course.') %></dd>
 	<dt><%= maketext('Set Definition Files') %></dt>
 	<dd>

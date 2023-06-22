@@ -8,7 +8,7 @@
 		<%= select_field library_sets => [
 				@$local_sets == 0 ? [ maketext('No sets in this course yet') => '' ]
 				: (
-					$selected_library eq '' ? [ maketext('Select a Homework Set') => '', selected => undef ] : (),
+					$selected_library eq '' ? [ maketext('Select a Homework Set') => '', selected => undef, disabled => 'disabled' ] : (),
 					map { [ format_set_name_display($_) => $_, $_ eq $selected_library ? (selected => undef) : () ] }
 					@$local_sets
 				)
