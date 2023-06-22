@@ -13,26 +13,24 @@
 # Artistic License for more details.
 ################################################################################
 
+package PODtoHTML;
+
 use strict;
 use warnings;
 
-package PODtoHTML;
-
-use File::Find qw(find);
+use Pod::Simple::Search;
 use File::Path qw(make_path);
 use IO::File;
-use Pod::Find qw(contains_pod);
 use POSIX qw(strftime);
-use PODParser;
+
+use WeBWorK::Utils::PODParser;
 
 our @sections = (
-	'/'     => "(root)",
-	bin     => "Scripts",
-	conf    => "Config Files",
-	doc     => "Documentation",
-	lib     => "Libraries",
-	macros  => "Macros",
-	clients => "Clients"
+	bin    => "Scripts",
+	conf   => "Config Files",
+	doc    => "Documentation",
+	lib    => "Libraries",
+	macros => "Macros"
 );
 
 sub new {
@@ -58,38 +56,17 @@ sub convert_pods {
 	my $source_root = $self->{source_root};
 	my $dest_root   = $self->{dest_root};
 
-	find({ wanted => $self->gen_pod_wanted, no_chdir => 1 }, $source_root);
+	my $regex = join('|', map {"^$_"} @{ $self->{section_order} });
+
+	(undef, my $podFiles) = Pod::Simple::Search->new->inc(0)->limit_re(qr!$regex!)->survey($self->{source_root});
+	for (keys %$podFiles) {
+		print "Processing file: $_\n" if $self->{verbose} > 1;
+		$self->process_pod($_);
+	}
+
 	$self->write_index("$dest_root/index.html");
-}
 
-sub gen_pod_wanted {
-	my $self = shift;
-	return sub {
-		my $path   = $File::Find::name;
-		my $dir    = $File::Find::dir;
-		my ($name) = $path =~ m|^$dir(?:/(.*))?$|;
-		$name = '' unless defined $name;
-
-		if ($name =~ /^\./) {
-			$File::Find::prune = 1;
-			return;
-		}
-		unless (-f $path or -d $path) {
-			$File::Find::prune = 1;
-			return;
-		}
-		if (-d _ and $name =~ /^(\.git|\.github|t|htdocs)$/) {
-			$File::Find::prune = 1;
-			return;
-		}
-
-		return if -d _;
-		return unless contains_pod($path);
-
-		print "Processing file: $path\n" if $self->{verbose} > 1;
-
-		$self->process_pod($path);
-	};
+	return;
 }
 
 sub process_pod {
@@ -135,13 +112,16 @@ sub process_pod {
 		pod_path => $pod_path,
 		pod_name => $pod_name
 	);
-	my $fh = new IO::File($html_path, '>')
+	my $fh = IO::File->new($html_path, '>')
 		or die "Failed to open file '$html_path' for writing: $!\n";
 	print $fh $html;
+
+	return;
 }
 
 sub update_index {
 	my ($self, $subdir, $html_rel_path, $pod_name) = @_;
+
 	$subdir =~ s|/.*$||;
 	my $idx      = $self->{idx};
 	my $sections = $self->{section_hash};
@@ -150,75 +130,76 @@ sub update_index {
 	} else {
 		warn "no section for subdir '$subdir'\n";
 	}
+
+	return;
 }
 
 sub write_index {
 	my ($self, $out_path) = @_;
-	my $idx           = $self->{idx};
-	my $sections      = $self->{section_hash};
-	my $section_order = $self->{section_order};
-	my $source_root   = $self->{source_root};
-	$source_root =~ s|^.*/||;
 
-	my $title         = "Index for $source_root";
-	my $content_start = "<ul>";
-	my $content       = "";
+	my $source_root = $self->{source_root} =~ s|^.*/||r;
+	my $title       = "Index for $source_root";
 
-	for my $section (@$section_order) {
-		next unless defined $idx->{$section};
-		my $section_name = $sections->{$section};
-		$content_start .= qq{<li><a href="#$section">$section_name</a></li>};
-		my @files = sort @{ $idx->{$section} };
-		$content .= qq{<a name="$section"></a>};
-		$content .= qq{<h2><a href="#_podtop_">$section_name</a></h2><ul>};
-		for my $file (sort { $a->[1] cmp $b->[1] } @files) {
-			my ($path, $name) = @$file;
-			$content .= qq{<li><a href="$path">$name</a></li>};
+	my $content_start = '<ul>';
+	my $content       = '';
+
+	for my $section (@{ $self->{section_order} }) {
+		next unless defined $self->{idx}{$section};
+		$content_start .= qq{<li><a href="#$section">$self->{section_hash}{$section}</a></li>};
+		$content       .= qq{<h2><a href="#_podtop_" id="$section">$self->{section_hash}{$section}</a></h2><ul>};
+		for my $file (sort { $a->[1] cmp $b->[1] } @{ $self->{idx}{$section} }) {
+			$content .= qq{<li><a href="$file->[0]">$file->[1]</a></li>};
 		}
-		$content .= "</ul>";
+		$content .= '</ul>';
 	}
 
-	$content_start .= "</ul>";
-	my $date = strftime "%a %b %e %H:%M:%S %Z %Y", localtime;
+	$content_start .= '</ul>';
+	my $date = strftime '%a %b %e %H:%M:%S %Z %Y', localtime;
 
-	my $fh = new IO::File($out_path, '>') or die "Failed to open index '$out_path' for writing: $!\n";
-	print $fh (get_header($title), $content_start, $content, "<p>Generated $date</p>", get_footer());
+	my $fh = IO::File->new($out_path, '>') or die "Failed to open index '$out_path' for writing: $!\n";
+	print $fh (get_header($title, $self->{dest_url}), $content_start, $content, "<p>Generated $date</p>", get_footer());
+
+	return;
 }
 
 sub do_pod2html {
-	my $self = shift;
-	my %o    = @_;
-	my $psx  = new PODParser;
-	$psx->{source_root} = $self->{source_root};
-	$psx->{verbose}     = $self->{verbose};
-	$psx->{base_url}    = ($self->{dest_url} // "") . "/" . (($self->{source_root} // "") =~ s|^.*/||r);
+	my ($self, %o) = @_;
+	my $psx = WeBWorK::Utils::PODParser->new;
+	$psx->{source_root}     = $self->{source_root};
+	$psx->{verbose}         = $self->{verbose};
+	$psx->{assert_html_ext} = 1;
+	$psx->{base_url}        = ($self->{dest_url} // "") . "/" . (($self->{source_root} // "") =~ s|^.*/||r);
 	$psx->output_string(\my $html);
-	$psx->html_header(get_header($o{pod_name}));
+	$psx->html_header(get_header($o{pod_name}, "$psx->{base_url}/.."));
 	$psx->html_footer(get_footer());
 	$psx->parse_file($o{pod_path});
 	return $html;
 }
 
 sub get_header {
-	my $title = shift;
-	return <<EOF;
+	my ($title, $base_url) = @_;
+	return << "EOF";
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
 <meta charset='UTF-8'>
 <link rel="icon" href="/favicon.ico">
 <title>$title</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap\@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="$base_url/css/pod.css" rel="stylesheet">
 </head>
 <body>
+<div class="container mt-3">
 <h1>$title</h1>
-<div style="margin-left:20px">Jump to: <a href="#column-one">Site Navigation</a></div>
+<hr>
+<div>Jump to: <a href="#column-one">Site Navigation</a></div>
 <hr>
 <div id="_podtop_">
 EOF
 }
 
 sub get_footer {
-	return <<'EOF';
+	return << 'EOF';
 </div>
 <hr>
 <div id="column-one">
@@ -230,10 +211,10 @@ sub get_footer {
 </ul>
 </div>
 </div>
+</div>
 </body>
 </html>
 EOF
 }
 
 1;
-

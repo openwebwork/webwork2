@@ -87,12 +87,10 @@
 			title  => maketext('Wiki summary page for MathObjects'),
 			class  => 'reference-link btn btn-sm btn-info',
 			data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
-		% # http://webwork.maa.org/pod/pg_TRUNK/
-		<%= link_to maketext('POD') => $ce->{webworkURLs}{PODHelpURL},
+		% # PG POD served locally
+		<%= link_to maketext('POD') => url_for('pod_index'),
 			target => 'pod_docs',
-			title  => maketext(
-				'Documentation from source code for PG modules and macro files. Often the most up-to-date information.'
-			),
+			title  => maketext('Documentation from source code for PG modules and macro files.'),
 			class  => 'reference-link btn btn-sm btn-info',
 			data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 		% # PGML lab problem rendered as an unattached problem in a new window.

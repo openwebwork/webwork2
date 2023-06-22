@@ -1,0 +1,6 @@
+#_podtop_ pre {
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	background: #f6f6f6;
+	padding: 0.75rem;
+}
