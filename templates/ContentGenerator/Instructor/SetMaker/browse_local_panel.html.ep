@@ -16,7 +16,7 @@
 						map { [ $_ =~ s/^$lib\/(.*)$/$1/r => $_, $_ eq $selected_library ? (selected => undef) : () ] }
 						@$prob_dirs
 					) : (
-						map { [ $_ =~ s/^My Problems$/[TMPL]/r => $_, $_ eq $selected_library ? (selected => undef) : () ] }
+						map { [ $_ =~ s/^My Problems$/[templates folder]/r => $_, $_ eq $selected_library ? (selected => undef) : () ] }
 						@$prob_dirs
 					)
 				)
