@@ -36,7 +36,7 @@ BEGIN_PGML
 END_PGML
 
 # The hardcopy theme defines headers and footers. If you would like to customize
-# those without changing the theme, they can be overrided here by following the
+# those without changing the theme, they can be overridden here by following the
 # documentation for the LaTeX exam class. However the footer on the last page
 # displays a copyright claim that cannot be overridden here.
 # http://mirrors.ctan.org/macros/latex/contrib/exam/examdoc.pdf
