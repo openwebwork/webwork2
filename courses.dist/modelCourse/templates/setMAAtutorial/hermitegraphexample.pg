@@ -5,7 +5,6 @@ loadMacros("PGbasicmacros.pl",
            "PGnumericalmacros.pl",
            "PGgraphmacros.pl"
 );
-TEXT($BEGIN_ONE_COLUMN);
 TEXT(beginproblem(), $BR,$BBOLD, "Hermite polynomial graph example", $EBOLD, $BR,$BR); 
 $showPartialAnswers = 1;
 
@@ -122,5 +121,4 @@ $PAR
 END_TEXT
 ANS(num_cmp([ @minimum_points ], tol => .3));
 
-TEXT($END_ONE_COLUMN);
 ENDDOCUMENT();

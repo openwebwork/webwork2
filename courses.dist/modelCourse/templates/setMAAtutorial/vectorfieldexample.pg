@@ -37,7 +37,6 @@ sub{my ($x,$y) = @_; $y + 2 ;},
 
 $tf ->choose($numberOfQuestions);
 BEGIN_TEXT
-$BEGIN_ONE_COLUMN
 
 Match the following equations with their direction field. 
 Clicking on each picture will give you an
@@ -86,7 +85,6 @@ $PAR
                       [@ALPHABET[$numberOfQuestions/2..$numberOfQuestions-1]],
                              height => 200, width => 200,tex_size=>300 )  \}
        
-$END_ONE_COLUMN
 END_TEXT
 
 ANS( str_cmp( $tf->ra_correct_ans )   ) ;

@@ -86,7 +86,6 @@ $CHOOSE = MODES(TeX => '\#', HTML => '#');
 #  The problem text
 #
 BEGIN_TEXT
-$BEGIN_ONE_COLUMN
 
 In this problem, we have added a new operator to the Parser: ${BTT}n $CHOOSE r${ETT}, 
 which returns \(n\choose r\).
@@ -105,7 +104,6 @@ $PAR
     'Formula("1 # <x,3>")',
   )\}
 
-$END_ONE_COLUMN
 END_TEXT
 
 ###########################################################
