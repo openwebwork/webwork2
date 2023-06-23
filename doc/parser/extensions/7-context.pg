@@ -12,8 +12,6 @@ loadMacros(
   "parserTables.pl",
 );
 
-TEXT(beginproblem());
-
 BEGIN_TEXT
 
 In this problem, we compare formulas in complex and vector contexts.

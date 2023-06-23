@@ -4,7 +4,7 @@ loadMacros("PGbasicmacros.pl",
            "PGanswermacros.pl",
 
 );
-TEXT(beginproblem(), $BR,$BBOLD, "True False Example", $EBOLD, $BR,$BR);
+TEXT($BBOLD, "True False Example", $EBOLD, $BR,$BR);
 
 # Since this is a true questions, we do not usually wish to tell students which
 # parts of the matching question have been answered correctly and which are

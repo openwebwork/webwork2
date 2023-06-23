@@ -23,9 +23,6 @@ loadMacros(
    "PGcourse.pl",      # Customization file for the course
 );
 
-# Print problem number and point value (weight) for the problem
-TEXT(beginproblem());
-
 # Show which answers are correct and which ones are incorrect
 $showPartialCorrectAnswers = 1;
 
