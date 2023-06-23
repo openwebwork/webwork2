@@ -7,8 +7,6 @@ loadMacros("PG.pl",
            "PGgraphmacros.pl",        
 );
 
-TEXT(beginproblem()); # standard preamble to each problem.
-
 # Since this is a true questions, we do not usually wish to tell students which
 # parts of the matching question have been answered correctly and which are
 # incorrect.  That is too easy.  To accomplish this we set the following flag to zero.

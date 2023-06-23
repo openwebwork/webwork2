@@ -3,7 +3,7 @@ loadMacros("PGbasicmacros.pl",
            "PGchoicemacros.pl",
            "PGanswermacros.pl"
 );
-TEXT(beginproblem(), $BR,$BBOLD, "Static graphics Example", $EBOLD, $BR,$BR);
+TEXT($BBOLD, "Static graphics Example", $EBOLD, $BR,$BR);
 
 $showPartialCorrectAnswers = 0;
 # Define which of the three sets of pictures to use

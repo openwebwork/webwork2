@@ -5,7 +5,7 @@ loadMacros("PGbasicmacros.pl",
            "PGauxiliaryFunctions.pl"    
 );     
 
-TEXT(beginproblem(), $BR,$BBOLD, "Standard Example", $EBOLD, $BR,$BR);
+TEXT($BBOLD, "Standard Example", $EBOLD, $BR,$BR);
 
 # A question requiring a string answer.
 $str = 'world'; 
@@ -44,4 +44,3 @@ $new_exponent = $b-1;
 $ans2 = "$b*x^($new_exponent)";
 ANS( fun_cmp( $ans2 ) );
 ENDDOCUMENT();
- 

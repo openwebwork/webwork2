@@ -12,8 +12,6 @@ loadMacros(
   "parserTables.pl",
 );
 
-TEXT(beginproblem());
-
 ###########################################################
 #
 #   Use  standard numeric mode

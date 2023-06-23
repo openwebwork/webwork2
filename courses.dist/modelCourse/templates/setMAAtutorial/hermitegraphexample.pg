@@ -5,7 +5,7 @@ loadMacros("PGbasicmacros.pl",
            "PGnumericalmacros.pl",
            "PGgraphmacros.pl"
 );
-TEXT(beginproblem(), $BR,$BBOLD, "Hermite polynomial graph example", $EBOLD, $BR,$BR); 
+TEXT($BBOLD, "Hermite polynomial graph example", $EBOLD, $BR,$BR);
 $showPartialAnswers = 1;
 
 $graph = init_graph(-5,-5,5,5,'axes'=>[0,0],'grid'=>[10,10]);

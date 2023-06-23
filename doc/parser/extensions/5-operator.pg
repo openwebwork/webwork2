@@ -12,8 +12,6 @@ loadMacros(
   "parserTables.pl",
 );
 
-TEXT(beginproblem());
-
 ##########################################################
 #
 #  Define our own operator for equality

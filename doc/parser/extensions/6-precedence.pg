@@ -13,8 +13,6 @@ loadMacros(
   "parserTables.pl",
 );
 
-TEXT(beginproblem());
-
 ##########################################################
 #
 #  Use standard precedences for multiplication
