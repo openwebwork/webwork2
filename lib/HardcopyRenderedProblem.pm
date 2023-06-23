@@ -133,6 +133,10 @@ sub generate_hardcopy_tex {
 		push(@$errors, qq{Failed to copy "$ce->{webworkDirs}{texinputs_common}/$_" into directory "$working_dir": $@})
 			if $@;
 	}
+	my $pgsty = path("$ce->{pg}{directories}{assets}/tex/pg.sty");
+	eval { $pgsty->copy_to($working_dir) };
+	push(@$errors, qq{Failed to copy "$ce->{pg}{directories}{assets}/tex/pg.sty" into directory "$working_dir": $@})
+		if $@;
 
 	# Attempt to copy image files used into the working directory.
 	my $resource_list = $ws->return_object->{resource_list};
@@ -181,7 +185,8 @@ sub generate_hardcopy_pdf {
 	# Call pdflatex
 	my $pdflatex_cmd =
 		'TEXINPUTS=.:'
-		. shell_quote($ws->c->ce->{webworkDirs}{texinputs_common}) . ': '
+		. shell_quote($ws->c->ce->{webworkDirs}{texinputs_common}) . ':'
+		. shell_quote($ws->c->ce->{pg}{directories}{assets} . '/tex/') . ': '
 		. $ws->c->ce->{externalPrograms}{pdflatex}
 		. ' > pdflatex.stdout 2> pdflatex.stderr hardcopy';
 
