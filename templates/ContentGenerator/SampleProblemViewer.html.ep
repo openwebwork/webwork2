@@ -1,0 +1,48 @@
+% title maketext('Sample Problem Home');
+%
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+%
+<head>
+	<meta charset='UTF-8'>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= title %></title>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
+	<link rel="icon" type="x-image/icon"
+		href="<%= $c->url({ type => 'webwork', name => 'htdocs', file => 'images/favicon.ico' }) %>">
+</head>
+
+<body>
+	<div class="container" id="_sample_prob_top_">
+		<h1 class="mt-3"><%= title %></h1>
+		<hr>
+		<div class="list-group">
+			<a href="sampleproblems/categories.html" class="list-group-item list-group-item-action" aria-current="true">
+				<div class="w-100">
+					<span class="h4">Sample Problems by Categories</span>
+				</div>
+				<p class="mb-1">A list of most sample problems by category.</p>
+			</a>
+			<a href="sampleproblems/subjects.html" class="list-group-item list-group-item-action" aria-current="true">
+				<div class="w-100">
+					<span class="h4">Sample Problems by Subject Area</span>
+				</div>
+				<p class="mb-1">A list of most sample problems by subject area.</p>
+			</a>
+			<a href="sampleproblems/techniques.html" class="list-group-item list-group-item-action" aria-current="true">
+				<div class="w-100">
+					<span class="h4">Problem Techniques</span>
+				</div>
+				<p class="mb-1">A list of most sample problems by problem technique.</p>
+			</a>
+			<a href="sampleproblems/macros.html" class="list-group-item list-group-item-action" aria-current="true">
+				<div class="w-100">
+					<span class="h4">Sample Problems by Macro</span>
+				</div>
+				<p class="mb-1">For many macros, this lists all sample problems used by the macro.</p>
+			</a>
+		</div>
+	</div>
+</body>
+%
+</html>
