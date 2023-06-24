@@ -119,6 +119,7 @@ my @modulesList = qw(
 	Minion::Backend::SQLite
 	Mojolicious
 	Mojolicious::Plugin::NotYAMLConfig
+	Mojolicious::Plugin::RenderFile
 	Net::IP
 	Net::LDAPS
 	Net::OAuth
