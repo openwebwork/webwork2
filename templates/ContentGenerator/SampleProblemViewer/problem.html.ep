@@ -1,3 +1,4 @@
+% use WeBWorK::Utils qw(getAssetURL);
 % my $title = $filePath =~ s!^[^/]*/!!r;
 % $title = $1 =~ s!/!::!gr if $title =~ m/^(.*)\.pm$/;
 %
@@ -10,10 +11,7 @@
 	<title><%= $title %></title>
 	<%= stylesheet $c->url({ type => 'webwork', name => 'theme',  file => 'bootstrap.css' }) =%>
 	<%= stylesheet $c->url({ type => 'webwork', name => 'htdocs', file => 'js/SampleProblemViewer/sample-problem.css' }) =%>
-
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.11/lib/codemirror.min.css">
-	<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.11/addon/runmode/runmode-standalone.min.js" defer>
-	</script>
+	<%= stylesheet getAssetURL($ce, 'node_modules/codemirror/lib/codemirror.css') =%>
 </head>
 
 % # Default explanations
@@ -33,7 +31,7 @@
 				<p><%= $description %></p>
 			</div>
 			<div class="col text-end">
-				<a href="<%=$pg_doc_home=%>/../index.html">Return to the PG docs home</a>
+				<a href="<%=$pg_doc_home=%>">Return to the PG docs home</a>
 			</div>
 		</div>
 		<div class="row">
@@ -97,17 +95,10 @@
 		% }
 	</div>
 
-	<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/PGCodeMirror/PG.js' }),
-	defer => undef =%>
-	<script type="module">
-		for (const pre of document.body.querySelectorAll('pre.CodeMirror')) {
-			CodeMirror.runMode(pre.textContent, 'PG', pre);
-		}
-
-		for (const btn of document.querySelectorAll('.clipboard-btn')) {
-			btn.addEventListener('click', () => navigator.clipboard.writeText(btn.dataset.code));
-		}
-	</script>
+	<%= javascript getAssetURL($ce, 'node_modules/codemirror/addon/runmode/runmode-standalone.js'), defer => undef =%>
+	<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/PGCodeMirror/PG.js' }),	defer => undef =%>
+	<%= javascript $c->url({ type => 'webwork', name => 'htdocs',
+		file => 'js/SampleProblemViewer/sample-problem-viewer.js' }),	defer => undef =%>
 </body>
 
 </html>
