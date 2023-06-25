@@ -53,6 +53,7 @@ my @applicationsList = qw(
 	git
 	gzip
 	latex
+	pandoc
 	pdf2svg
 	pdflatex
 	dvipng
@@ -127,6 +128,7 @@ my @modulesList = qw(
 	Net::SSLeay
 	Opcode
 	PadWalker
+	Pandoc
 	Path::Class
 	Perl::Tidy
 	PHP::Serialization

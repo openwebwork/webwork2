@@ -40,7 +40,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  pod_viewer                          /pod/$filePath
 
  sample_problem_index                /sampleproblems
- sample_problem_view                 /sampleproblems/$filePath
+ sample_problem_viewer               /sampleproblems/$filePath
 
  set_list                            /$courseID
 

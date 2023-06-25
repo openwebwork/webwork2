@@ -1,0 +1,22 @@
+.navbar {
+	height: 70px;
+}
+
+.main-content {
+	margin-top: 70px;
+}
+
+#sidebar {
+	--bs-offcanvas-width: 320px;
+}
+
+@media only screen and (min-width: 768px) {
+	#sidebar {
+		width: 320px;
+		height: calc(100vh - 70px);
+	}
+
+	.main-content {
+		margin-left: 320px;
+	}
+}

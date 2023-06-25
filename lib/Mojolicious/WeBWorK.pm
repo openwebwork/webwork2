@@ -89,7 +89,7 @@ sub startup ($app) {
 	$app->minion->add_task(lti_mass_update       => 'Mojolicious::WeBWorK::Tasks::LTIMassUpdate');
 	$app->minion->add_task(send_instructor_email => 'Mojolicious::WeBWorK::Tasks::SendInstructorEmail');
 
-	# Provide the ability to have a download link
+	# Provide the ability to serve data as a file download.
 	$app->plugin('RenderFile');
 
 	# Helpers

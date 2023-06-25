@@ -16,10 +16,10 @@
 package WeBWorK::ContentGenerator::SampleProblemViewer;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
-use File::Basename;
-use YAML::XS qw(LoadFile);
+use File::Basename qw(basename);
+use Pod::Simple::Search;
 
-use SampleProblemParser qw(buildIndex parseSampleProblem);
+use SampleProblemParser qw(parseSampleProblem generateMetadata);
 
 =head1 NAME
 
@@ -44,33 +44,78 @@ Render the requestedSampleProblem or one of the indexes.
 sub renderSampleProblem ($c) {
 	my $pg_root = $c->ce->{pg_dir};
 
-	my $metadata = LoadFile("$pg_root/doc/sample-problems/sample_prob_meta.yaml");
+	(undef, my $macro_files) = Pod::Simple::Search->new->inc(0)->survey("$pg_root/macros");
+	$c->log->info($c->dumper($macro_files));
+	my %macro_locations = map { basename($_) => $_ =~ s!$pg_root/macros/!!r } keys %$macro_files;
+	my $metadata        = generateMetadata("$pg_root/doc/sample-problems", macro_locations => \%macro_locations);
 
-	# Render one of the four indexes.
-	if (grep { $c->stash->{filePath} eq "$_.html" } (qw/categories techniques subjects macros/)) {
-		my $type   = $c->stash->{filePath} =~ s/.html$//r;
-		my $params = buildIndex($type, metadata => $metadata);
-		return $c->render('ContentGenerator/SampleProblemViewer/viewer', %$params);
-	} elsif ($c->stash->{filePath} =~ /\.html$/) {
-		# Render a problem (as linked as a html file). This will generate the help documentation.
-		my $macro_locations = LoadFile("$pg_root/doc/sample-problems/macro_pod.yaml");
-		my $probFile        = "$pg_root/doc/sample-problems/" . $c->stash->{filePath} =~ s/\.html/.pg/r;
-		my ($filename)      = fileparse($probFile);
-		my $sample_problem  = parseSampleProblem($probFile, metadata => $metadata);
+	if (grep { $c->stash->{filePath} eq $_ } qw(categories techniques subjects macros)) {
+		my %labels = (
+			categories => $c->maketext('Categories'),
+			subjects   => $c->maketext('Subject Areas'),
+			macros     => $c->maketext('Problems by Macro'),
+			techniques => $c->maketext('Problem Techniques')
+		);
+
+		my $list = {};
+		if ($c->stash->{filePath} =~ /^(categories|subjects|macros)$/) {
+			for my $sample_file (keys %$metadata) {
+				for my $category (@{ $metadata->{$sample_file}{ $c->stash->{filePath} } }) {
+					$list->{$category}{ $metadata->{$sample_file}{name} } =
+						"$metadata->{$sample_file}{dir}/" . ($sample_file =~ s/\.pg$//r);
+				}
+			}
+		} elsif ($c->stash->{filePath} eq 'techniques') {
+			for my $sample_file (keys %$metadata) {
+				if (grep { $_ eq 'technique' } @{ $metadata->{$sample_file}{types} }) {
+					$list->{ $metadata->{$sample_file}{name} } =
+						"$metadata->{$sample_file}{dir}/" . ($sample_file =~ s/\.pg$//r);
+				}
+			}
+		}
+
+		# Render one of the four indexes.
 		return $c->render(
-			'ContentGenerator/SampleProblemViewer/problem',
-			%$sample_problem,
-			metadata        => $metadata,
-			filename        => $filename,
-			macro_locations => $macro_locations,
-			pod_root        => '/webwork2/pod/macros',
-			pg_doc_home     => '/webwork2/sampleproblems'
+			template => 'ContentGenerator/SampleProblemViewer/viewer',
+			label    => $labels{ $c->stash->{filePath} },
+			list     => $list
 		);
 	} elsif ($c->stash->{filePath} =~ /\.pg$/) {
-		# Render the .pg file as downloadable file.
-		my $probFile       = "$pg_root/doc/sample-problems/" . $c->stash->{filePath};
-		my $sample_problem = parseSampleProblem($probFile, metadata => $metadata);
-		return $c->render_file(data => $sample_problem->{code});
+		unless ($metadata->{ basename($c->stash->{filePath}) }) {
+			return $c->render(data => $c->maketext('File not found.'));
+		}
+
+		# Render the .pg file as a downloadable file.
+		return $c->render_file(
+			data => parseSampleProblem(
+				"$pg_root/doc/sample-problems/" . $c->stash->{filePath},
+				metadata    => $metadata,
+				pod_root    => $c->url_for('pod_index'),
+				pg_doc_home => $c->url_for('sample_problem_index')
+			)->{code}
+		);
+	} else {
+		unless ($metadata->{ basename($c->stash->{filePath}) . '.pg' }) {
+			$c->render(data => $c->maketext('Sample problem not found.'));
+		}
+
+		# Render a problem with its documentation.
+		my $problemFile = "$pg_root/doc/sample-problems/" . $c->stash->{filePath} . '.pg';
+		return $c->render(
+			'ContentGenerator/SampleProblemViewer/sample_problem',
+			%{
+				parseSampleProblem(
+					$problemFile,
+					metadata        => $metadata,
+					pod_root        => $c->url_for('pod_viewer', filePath => 'macros'),
+					pg_doc_home     => $c->url_for('sample_problem_index'),
+					macro_locations => \%macro_locations,
+				)
+			},
+			metadata        => $metadata,
+			filename        => basename($problemFile),
+			macro_locations => \%macro_locations,
+		);
 	}
 }
 

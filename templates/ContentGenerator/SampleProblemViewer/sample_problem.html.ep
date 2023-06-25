@@ -1,0 +1,115 @@
+% title $name;
+%
+<!DOCTYPE html>
+<html lang="en">
+%
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= title %></title>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme',  file => 'bootstrap.css' }) =%>
+	<%= stylesheet $c->url({
+		type => 'webwork', name => 'htdocs',
+		file => 'node_modules/@fortawesome/fontawesome-free/css/all.min.css'
+	}) =%>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'htdocs',
+		file => 'node_modules/codemirror/lib/codemirror.css' }) =%>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'htdocs',
+		file => 'js/SampleProblemViewer/sample-problem.css' }) =%>
+	<%= javascript $c->url({ type => 'webwork', name => 'htdocs',
+		file => 'node_modules/codemirror/addon/runmode/runmode-standalone.js' }), defer => undef =%>
+	<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/PGCodeMirror/PG.js' }), defer => undef =%>
+	<%= javascript $c->url({ type => 'webwork', name => 'htdocs',
+		file => 'js/SampleProblemViewer/sample-problem.js' }), defer => undef =%>
+</head>
+%
+% # Default explanations
+% my $default = {
+	% preamble  => maketext('These standard macros need to be loaded.'),
+	% setup     => maketext('This perl code sets up the problem.'),
+	% statement => maketext('This is the problem statement in PGML.'),
+	% answer    => maketext('This is used for answer checking.'),
+	% solution  => maketext('A solution should be provided here.')
+% };
+%
+<body>
+	<div class="container-fluid p-3">
+		<div class="row">
+			<div class="col">
+				<h1><%= title %></h1>
+				<p><%= $description %></p>
+			</div>
+			<div class="col text-end">
+				<%= link_to maketext('Return to PG Sample Problem home') => 'sample_problem_index' =%>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<h2><%= maketext('Complete Code') %></h2>
+				<p>
+					<%== maketext('Download file: [_1]',
+						link_to($filename => 'sample_problem_viewer', { filePath => "$filePath.pg" })) =%>
+				</p>
+			</div>
+			% if (scalar(@{ $metadata->{$filename}{macros} }) > 0 ) {
+				<div class="col">
+					<h2><%= maketext('POD for Macro Files') %></h2>
+					<ul>
+						% for my $macro (@{ $metadata->{$filename}{macros} }) {
+							% if ($macro_locations->{$macro}) {
+								<li>
+									<%= link_to $macro => 'pod_viewer', {
+										filePath => 'macros/' . ($macro_locations->{$macro} =~ s/\.html/.pl/r)
+									} =%>
+								</li>
+							% } else {
+								<li class="text-danger"><%= $macro %></li>
+							% }
+						% }
+					</ul>
+				</div>
+				%}
+			% if ($metadata->{$filename}{related} && scalar(@{ $metadata->{$filename}{related} }) > 0) {
+				<div class="col">
+					<h2><%= maketext('See Also') %></h2>
+					<ul>
+						% for (@{$metadata->{$filename}{related}}) {
+							<li>
+								<%= link_to $metadata->{$_}{name} => 'sample_problem_viewer',
+									{ filePath => "$metadata->{$_}{dir}/" . ($_ =~ s/.pg$//r) } =%>
+							</li>
+						% }
+					</ul>
+				</div>
+			% }
+		</div>
+		<div class="row">
+			<div class="col text-center"><h2 class="fw-bold fs-3"><%= maketext('PG problem file') %></h2></div>
+			<div class="col text-center"><h2 class="fw-bold fs-3"><%= maketext('Explanation') %></h2></div>
+		</div>
+		% for (@$blocks) {
+			<div class="row">
+				<div class="col-sm-12 col-md-6 order-md-first order-last p-0 position-relative overflow-hidden">
+					<button class="clipboard-btn btn btn-sm btn-secondary position-absolute top-0 end-0 me-1 mt-1"
+						type="button" data-code="<%= $_->{code} %>" aria-label="<%= maketext('copy to clipboard') %>">
+						<i class="fa-regular fa-clipboard fa-xl"></i>
+					</button>
+					<pre class="CodeMirror cm-s-default m-0 h-100 p-3 border border-secondary overflow-scroll"><% =%>\
+						<%= $_->{code} =%>\
+					</pre><% =%>\
+				</div>
+				<div class="explanation <%= $_->{section}
+					%> col-sm-12 col-md-6 order-md-last p-3 order-first border border-dark">
+					<p><b><%= ucfirst($_->{section}) %></b></p>
+					% if ($_->{doc}) {
+						<%== $_->{doc} %>
+					%} else {
+						<%= $default->{$_->{section}} %>
+					%}
+				</div>
+			</div>
+		% }
+	</div>
+</body>
+%
+</html>
