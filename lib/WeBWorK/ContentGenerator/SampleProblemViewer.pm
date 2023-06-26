@@ -48,16 +48,9 @@ sub renderSampleProblem ($c) {
 
 	# Render one of the four indexes.
 	if (grep { $c->stash->{filePath} eq "$_.html" } (qw/categories techniques subjects macros/)) {
-		my $type = $c->stash->{filePath} =~ s/.html$//r;
-		warn 'here';
+		my $type   = $c->stash->{filePath} =~ s/.html$//r;
 		my $params = buildIndex($type, metadata => $metadata);
-		$c->app->log->debug($c->dumper($params));
-		return $c->render(
-			template => 'ContentGenerator/SampleProblemViewer/index_main',
-			layout   => 'SampleProblemIndexLayout',
-			sidebar  => $c->render_to_string('ContentGenerator/SampleProblemViewer/index_sidebar', %$params),
-			%$params
-		);
+		return $c->render('ContentGenerator/SampleProblemViewer/viewer', %$params);
 	} elsif ($c->stash->{filePath} =~ /\.html$/) {
 		# Render a problem (as linked as a html file). This will generate the help documentation.
 		my $macro_locations = LoadFile("$pg_root/doc/sample-problems/macro_pod.yaml");
@@ -75,8 +68,7 @@ sub renderSampleProblem ($c) {
 		);
 	} elsif ($c->stash->{filePath} =~ /\.pg$/) {
 		# Render the .pg file as downloadable file.
-		my $probFile = "$pg_root/doc/sample-problems/" . $c->stash->{filePath};
-		$c->app->log->debug($probFile);
+		my $probFile       = "$pg_root/doc/sample-problems/" . $c->stash->{filePath};
 		my $sample_problem = parseSampleProblem($probFile, metadata => $metadata);
 		return $c->render_file(data => $sample_problem->{code});
 	}

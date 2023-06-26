@@ -117,6 +117,7 @@ RUN apt-get update \
 	libmodule-build-perl \
 	libmodule-pluggable-perl \
 	libmojolicious-perl \
+	libmojolicious-plugin-renderfile-perl \
 	libnet-https-nb-perl \
 	libnet-ip-perl \
 	libnet-ldap-perl \
