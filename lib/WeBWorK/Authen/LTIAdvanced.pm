@@ -28,7 +28,7 @@ use warnings;
 
 use Carp;
 use DBI;
-use URI;
+use Mojo::URL;
 use URI::Escape;
 use Net::OAuth;
 
@@ -455,12 +455,12 @@ sub authenticate {
 	my $requestHash = \%request_hash;
 
 	# We need to provide the request URL when verifying the OAuth request.
-	# We use the url request by default, but also allow it to be overriden
-	my $url = URI->new($c->url_for->to_abs);
+	# We use the url request by default, but also allow it to be overridden
+	my $url = $c->url_for->to_abs;
 	if ($ce->{LTI}{v1p1}{OverrideSiteProtocolDomain}) {
-		my $override = URI->new($ce->{LTI}{v1p1}{OverrideSiteProtocolDomain});
-		$url->scheme($override->scheme());
-		$url->host($override->host());
+		my $override = Mojo::URL->new($ce->{LTI}{v1p1}{OverrideSiteProtocolDomain});
+		$url->scheme($override->scheme);
+		$url->host($override->host);
 	}
 	my $path = $ce->{LTI}{v1p1}{OverrideSiteURL} || ($url =~ s|/?$|/|r);
 
