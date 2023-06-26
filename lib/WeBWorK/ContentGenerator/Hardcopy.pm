@@ -671,12 +671,12 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 		}
 	}
 	my $cp_cmd =
-		"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{pg}{directories}{assets}/tex/pg.sty", $bundle_path);
+		"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{pg}{directories}{assetsTex}/pg.sty", $bundle_path);
 	my $cp_out = readpipe $cp_cmd;
 	if ($?) {
 		$c->add_error(
 			'Failed to copy "',
-			$c->tag('code', "$ce->{pg}{directories}{assets}/tex/pg.sty"),
+			$c->tag('code', "$ce->{pg}{directories}{assetsTex}/pg.sty"),
 			'" into directory "',
 			$c->tag('code', $bundle_path),
 			'":', $c->tag('br'), $c->tag('pre', $cp_out)
@@ -753,7 +753,7 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 		. shell_quote($temp_dir_path) . " && "
 		. "TEXINPUTS=.:"
 		. shell_quote($c->ce->{webworkDirs}{texinputs_common}) . ':'
-		. shell_quote($c->ce->{pg}{directories}{assets} . '/tex/') . ': '
+		. shell_quote($c->ce->{pg}{directories}{assetsTex}) . ': '
 		. $c->ce->{externalPrograms}{pdflatex}
 		. " >pdflatex.stdout 2>pdflatex.stderr hardcopy";
 	if (my $rawexit = system $pdflatex_cmd) {
