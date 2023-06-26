@@ -41,7 +41,11 @@
 				<%= form_for $FORM_ACTION_URL, id => 'problemMainForm', class => 'problem-main-form',
 					name => 'problemMainForm', method => 'POST', begin %>
 					<div id="problem_body" class="problem-content" <%== $PROBLEM_LANG_AND_DIR %>>
-						%== $problemText
+						% if ($displayMode eq 'PTX') {
+							<textarea readonly style="width:100%;" rows="25"><%= "\n$problemText\n"%></textarea>
+						% } else {
+							%== $problemText
+						% }
 					</div>
 					% if ($showScoreSummary) {
 						<p><%= $lh->maketext('You received a score of [_1] for this attempt.',
