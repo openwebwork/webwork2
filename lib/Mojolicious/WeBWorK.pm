@@ -91,8 +91,8 @@ sub startup ($app) {
 
 	# Helpers
 
-	# This replaces the previous Apache2::RequestUtil method that was overriden in the WeBWorK::Request module to return
-	# the empty string for '/'.
+	# This replaces the previous Apache2::RequestUtil method that was overridden in
+	# the WeBWorK::Request module to return the empty string for '/'.
 	$app->helper(location => sub ($) { return $webwork_url eq '/' ? '' : $webwork_url });
 
 	$app->helper(server_root_url => sub ($) { return $server_root_url; });

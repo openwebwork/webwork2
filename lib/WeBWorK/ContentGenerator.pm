@@ -283,7 +283,7 @@ sub addbadmessage ($c, $message) {
 =item prepare_activity_entry()
 
 Prepare a string to be sent to the activity log, if it is turned on.
-This can be overriden by different modules.
+This can be overridden by different modules.
 
 =cut
 
@@ -787,7 +787,7 @@ sub url ($c, $args) {
 =head2 Template conditions
 
 Template condition methods are called in the template. If a method is defined
-here or overriden in the instantiated subclass, it is invoked.
+here or overridden in the instantiated subclass, it is invoked.
 
 The following conditions are currently defined:
 
