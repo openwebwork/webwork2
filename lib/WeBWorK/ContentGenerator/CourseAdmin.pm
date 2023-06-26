@@ -1587,7 +1587,6 @@ sub do_upgrade_course ($c) {
 			method => 'POST',
 			$c->c(
 				$c->hidden_authen_fields,
-				$c->hidden_fields('subDisplay'),
 				$c->tag(
 					'p',
 					class => 'text-center',
