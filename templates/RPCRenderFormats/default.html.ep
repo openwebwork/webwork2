@@ -42,7 +42,7 @@
 					name => 'problemMainForm', method => 'POST', begin %>
 					<div id="problem_body" class="problem-content" <%== $PROBLEM_LANG_AND_DIR %>>
 						% if ($displayMode eq 'PTX') {
-							<textarea readonly style="width:100%;" rows="25"><%= "\n$problemText\n"%></textarea>
+							<pre><%= "$problemText"%></pre>
 						% } else {
 							%== $problemText
 						% }
@@ -97,21 +97,23 @@
 						%= hidden_field clientDebug => $ws->{inputs_ref}{clientDebug}
 					% }
 					%
-					<div class="submit-buttons-container col-12 mb-2">
-						% # Submit buttons (all are shown by default)
-						% if ($showPreviewButton ne '0') {
-							<%= submit_button $lh->maketext('Preview My Answers'),
-								name => 'preview', id => 'previewAnswers_id', class => 'btn btn-primary mb-1' %>
-						% }
-						% if ($showCheckAnswersButton ne '0') {
-							<%= submit_button $lh->maketext('Check Answers'),
-								name => 'WWsubmit', class => 'btn btn-primary mb-1' %>
-						% }
-						% if ($showCorrectAnswersButton ne '0') {
-							<%= submit_button $lh->maketext('Show Correct Answers'),
-								name => 'WWcorrectAns', class => 'btn btn-primary mb-1' %>
-						% }
-					</div>
+					% if ($displayMode ne 'PTX') {
+						<div class="submit-buttons-container col-12 mb-2">
+							% # Submit buttons (all are shown by default)
+							% if ($showPreviewButton ne '0') {
+								<%= submit_button $lh->maketext('Preview My Answers'),
+									name => 'preview', id => 'previewAnswers_id', class => 'btn btn-primary mb-1' %>
+							% }
+							% if ($showCheckAnswersButton ne '0') {
+								<%= submit_button $lh->maketext('Check Answers'),
+									name => 'WWsubmit', class => 'btn btn-primary mb-1' %>
+							% }
+							% if ($showCorrectAnswersButton ne '0') {
+								<%= submit_button $lh->maketext('Show Correct Answers'),
+									name => 'WWcorrectAns', class => 'btn btn-primary mb-1' %>
+							% }
+						</div>
+					% }
 				% end
 			</div>
 		</div>
