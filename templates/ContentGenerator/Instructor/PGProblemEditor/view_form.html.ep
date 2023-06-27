@@ -19,7 +19,8 @@
 			class => 'col-form-label col-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.view.displayMode' => [
-				map { [ $_ => $_, $_ eq $c->{displayMode} ? (selected => undef) : () ] } @{ $ce->{pg}{displayModes}}, 'PTX'
+				map { [ $_ => $_, $_ eq $c->{displayMode} ? (selected => undef) : () ] }
+					@{ $ce->{pg}{displayModes}}, 'PTX'
 			], id => 'action_view_displayMode_id', class => 'form-select form-select-sm d-inline w-auto' =%>
 		</div>
 	</div>
