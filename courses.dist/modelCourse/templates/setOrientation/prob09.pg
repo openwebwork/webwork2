@@ -10,7 +10,6 @@ loadMacros(
 
 $showPartialCorrectAnswers = 1;
 
-TEXT(beginproblem());
 Title("Non-Numeric Answers");
 
 ##############################################

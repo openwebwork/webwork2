@@ -4,7 +4,7 @@ loadMacros("PGbasicmacros.pl",
         "PGanswermacros.pl",
 
 );
-TEXT(beginproblem(), $BR,$BBOLD, "Multiple choice example", $EBOLD, $BR,$BR);
+TEXT($BBOLD, "Multiple choice example", $EBOLD, $BR,$BR);
 
 $showPartialCorrectAnswers = 0;
 # Make a new multiple choice object.
@@ -42,4 +42,4 @@ END_TEXT
 # Enter the correct answers to be checked against the answers to the students.
 ANS( str_cmp( $mc->correct_ans )   ) ;
 
-ENDDOCUMENT();     
+ENDDOCUMENT();

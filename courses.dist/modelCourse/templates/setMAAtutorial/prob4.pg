@@ -12,7 +12,6 @@ loadMacros("PGbasicmacros.pl",
            "PGnumericalmacros.pl"
            );
  
-TEXT(&beginproblem);
 $showPartialCorrectAnswers = 0;
 
 
