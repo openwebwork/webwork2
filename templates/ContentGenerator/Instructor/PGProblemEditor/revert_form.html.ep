@@ -1,6 +1,3 @@
-% # Don't show the revert form when editing an existing course info file.
-% next if $c->{file_type} eq 'course_info';
-%
 % if (!-r $c->{editFilePath}) {
 	<%== maketext(
 		'Error: The original file [_1] cannot be read.',

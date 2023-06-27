@@ -1211,7 +1211,7 @@ sub revert_handler ($c) {
 	}
 
 	# Determine revert action
-	my $revertType = $c->param('action.revert.type') || 'do_not_revert';
+	my $revertType = $c->param('action.revert.type') // '';
 
 	if ($revertType eq 'revert') {
 		$c->{inputFilePath} = $c->{editFilePath};

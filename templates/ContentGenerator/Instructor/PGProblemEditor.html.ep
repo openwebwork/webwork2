@@ -25,7 +25,7 @@
 % }
 %
 % my %titles = (
-	% blank_problem                => x('Editing <strong>new problem</strong> template.'),
+	% blank_problem                => x('Editing <strong>new problem</strong> template "[_1]".'),
 	% set_header                   => x('Editing <strong>set header</strong> file "[_1]".'),
 	% hardcopy_header              => x('Editing <strong>hardcopy header</strong> file "[_1]".'),
 	% course_info                  => x('Editing <strong>course information</strong> file "[_1]".'),
@@ -36,23 +36,32 @@
 % my $setName     = stash('setID')  // '';
 % my $fullSetName = $c->{fullSetID} // $setName;
 %
-% my $header = begin
-	<i>
-		<%== $c->{file_type} eq 'problem'
-			? maketext(
-				'Editing <strong>problem [_1] of set [_2]</strong> in file "[_3]".',
-				$c->{prettyProblemNumber},
-				tag('span', dir => 'ltr', format_set_name_display($fullSetName)),
-				tag('span', dir => 'ltr', $c->shortPath($c->{inputFilePath}))
-				)
-			: maketext($titles{ $c->{file_type} }, $c->shortPath($c->{inputFilePath})) =%>
-	</i>
+% my $fileInfo = begin
+	<div class="mb-2">
+		<%= tag 'div', class => 'set-file-info' . ($c->isTempEditFilePath($c->{inputFilePath}) ? ' temporaryFile' : ''),
+			begin =%>
+			<i>
+				<%== $c->{file_type} eq 'problem'
+					? maketext(
+						'Editing <strong>problem [_1] of set [_2]</strong> in file "[_3]".',
+						$c->{prettyProblemNumber},
+						tag('span', dir => 'ltr', format_set_name_display($fullSetName)),
+						tag('span', dir => 'ltr', class => 'current-file',
+							data => { tmp_file => $c->shortPath($c->{tempFilePath}) },
+							$c->shortPath($c->{inputFilePath}))
+						)
+					: maketext(
+						$titles{ $c->{file_type} },
+						tag('span', dir => 'ltr', class => 'current-file',
+							data => { tmp_file => $c->shortPath($c->{tempFilePath}) },
+							$c->shortPath($c->{inputFilePath}))
+					) =%>
+			</i>
+		<% end =%>
+	</div>
 % end
-% $header = $c->isTempEditFilePath($c->{inputFilePath})
-	% ? tag('div', class => 'temporaryFile', $header)    # Use colors if this is a temporary file.
-	% : $header->();
+<%= $fileInfo->() %>
 %
-<div class="mb-2"><%= $header %></div>
 <%= form_for current_route, method => 'POST', id => 'editor', name => 'editor',
    	enctype => 'application/x-www-form-urlencoded', class => 'col-12', begin =%>
 	<%= $c->hidden_authen_fields =%>
@@ -148,6 +157,7 @@
 		</div>
 	</div>
 	<%= generate_codemirror_controls_html($c) =%>
+	<%= $fileInfo->() %>
 	%
 	% # Output action forms
 	% my $default_choice;

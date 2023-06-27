@@ -164,6 +164,9 @@
 		% }
 		% if ($c->can('message')) {
 			<div id="message_bottom" class="message"><%= $c->message %></div>
+			<button type="button" id="dismiss-messages-btn" class="btn btn-primary d-none">
+				<%= maketext('Dismiss All Messages') %>
+			</button>
 		% }
 		%
 		% # Footer
