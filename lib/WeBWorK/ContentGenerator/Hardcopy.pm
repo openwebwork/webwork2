@@ -962,25 +962,25 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 
 	# write environment variables as LaTeX macros
 	for (qw(user_id student_id first_name last_name email_address section recitation)) {
-		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($TargetUser->{$_}) . "}\n";
+		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($TargetUser->{$_}) . "}\n"
+			if $TargetUser->{$_};
 	}
 	for (qw(set_id description)) {
-		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($MergedSet->{$_}) . "}\n";
+		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($MergedSet->{$_}) . "}\n"
+			if $MergedSet->{$_};
 	}
 	print $FH '\\def\\webworkPrettySetId{' . handle_underbar($MergedSet->{set_id}, 1) . "}\n";
 	for (qw(open_date due_date answer_date)) {
-		if (!ref($MergedSet->{$_}) && $MergedSet->{$_} =~ /^\d{10}$/) {
+		if ($MergedSet->{$_}) {
 			print $FH '\\def\\webwork'
 				. underscore_to_camel($_) . '{'
 				. WeBWorK::Utils::formatDateTime($MergedSet->{$_}, $ce->{siteDefaults}{timezone}) . "}\n";
-		} else {
-			print $FH '\\def\\webwork' . underscore_to_camel($_) . "{}\n";
 		}
 	}
 	# Leave reduced scoring date blank if it is disabled, or enabled but on (or somehow later) than the close date
-	if ($MergedSet->{enable_reduced_scoring}
-		&& !ref($MergedSet->{reduced_scoring_date})
-		&& $MergedSet->{reduced_scoring_date} =~ /^\d{10}$/
+	if ($MergedSet->{reduced_scoring_date}
+		&& $ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+		&& $MergedSet->{enable_reduced_scoring}
 		&& $MergedSet->{reduced_scoring_date} < $MergedSet->{due_date})
 	{
 		print $FH '\\def\\webworkReducedScoringDate{'
