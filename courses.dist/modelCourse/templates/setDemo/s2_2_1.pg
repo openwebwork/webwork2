@@ -11,7 +11,6 @@ loadMacros(
 	"PGauxiliaryFunctions.pl"
 );
 
-TEXT(&beginproblem);
 $showPartialCorrectAnswers = 1;
 
 $a1 = random(2,7,1);

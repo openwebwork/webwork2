@@ -7,8 +7,6 @@ loadMacros("PG.pl",
            "PGgraphmacros.pl",        
 );
 
-TEXT(beginproblem()); # standard preamble to each problem.
-
 # Since this is a true questions, we do not usually wish to tell students which
 # parts of the matching question have been answered correctly and which are
 # incorrect.  That is too easy.  To accomplish this we set the following flag to zero.
@@ -37,7 +35,6 @@ sub{my ($x,$y) = @_; $y + 2 ;},
 
 $tf ->choose($numberOfQuestions);
 BEGIN_TEXT
-$BEGIN_ONE_COLUMN
 
 Match the following equations with their direction field. 
 Clicking on each picture will give you an
@@ -86,7 +83,6 @@ $PAR
                       [@ALPHABET[$numberOfQuestions/2..$numberOfQuestions-1]],
                              height => 200, width => 200,tex_size=>300 )  \}
        
-$END_ONE_COLUMN
 END_TEXT
 
 ANS( str_cmp( $tf->ra_correct_ans )   ) ;

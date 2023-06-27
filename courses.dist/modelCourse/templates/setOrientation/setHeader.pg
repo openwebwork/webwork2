@@ -10,7 +10,7 @@ $WW = "WeBWorK";
 
 if ($displayMode eq 'TeX') {
 
-TEXT($BEGIN_ONE_COLUMN,
+TEXT(
     '\noindent{\large\bf '.$studentName.'}\hfill{\large\bf '.$course.'}',
     '\par\noindent',
 "
@@ -24,7 +24,6 @@ entries.
 
 ",
      "WeBWorK assignment $setNumber closes on $formattedDueDate.",
-     $END_ONE_COLUMN
 );
 
 } else {
