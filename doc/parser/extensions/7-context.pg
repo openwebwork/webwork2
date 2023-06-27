@@ -12,10 +12,7 @@ loadMacros(
   "parserTables.pl",
 );
 
-TEXT(beginproblem());
-
 BEGIN_TEXT
-$BEGIN_ONE_COLUMN
 
 In this problem, we compare formulas in complex and vector contexts.
 Note the difference between how ${BTT}i${ETT} is treated in the two
@@ -78,7 +75,6 @@ $PAR
    '3*i + 4*j - k',
 )\}
 
-$END_ONE_COLUMN
 END_TEXT
 
 ###########################################################

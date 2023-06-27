@@ -4,7 +4,7 @@ loadMacros(
                     "PGchoicemacros.pl", 
                     "PGanswermacros.pl",
 );
-TEXT(beginproblem(), $BR,$BBOLD, "Multiple choice example", $EBOLD, $BR,$BR);
+TEXT($BBOLD, "Multiple choice example", $EBOLD, $BR,$BR);
 
    
 $showPartialCorrectAnswers = 0;
@@ -30,4 +30,4 @@ $PAR Enter the letter corresponding to the correct answer: \{ ans_rule(10) \}
 END_TEXT
 ANS( str_cmp( $inverted_alphabet[0] )   ) ;
 
-ENDDOCUMENT(); 
+ENDDOCUMENT();

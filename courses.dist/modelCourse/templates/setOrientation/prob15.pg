@@ -8,8 +8,6 @@ loadMacros(
 );
 
 
-TEXT(beginproblem());
-
 Title("When You're Stuck...");
 
 ##############################################

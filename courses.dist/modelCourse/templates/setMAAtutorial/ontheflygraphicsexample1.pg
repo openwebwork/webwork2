@@ -6,7 +6,7 @@ loadMacros(
            "PGgraphmacros.pl"
 );
           
-TEXT(beginproblem(), $BR,$BBOLD, "On-the-fly Graphics Example1", $EBOLD, $BR,$BR);
+TEXT($BBOLD, "On-the-fly Graphics Example1", $EBOLD, $BR,$BR);
 $showPartialCorrectAnswers = 0;
 
 # First we define a graph with x and y in the range -4 to 4, axes (strong lines) 

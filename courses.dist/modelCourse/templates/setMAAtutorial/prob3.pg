@@ -19,14 +19,6 @@ loadMacros("PGbasicmacros.pl",
 # Is the simplest way of printing text, each string in the input is immediately printed.
 # It does not do any of the simplifying and evaluating tricks performed by the BEGIN_TEXT/END_TEXT construction.
 
-# beginproblem() is a macro which outputs the string 
-# which contains the number
-# of points the problem is worth.
-
-# Putting these two ideas together prints the standard opening line of a problem.
-# We will use this construction routinely at the beginning of all subsequent problems.
-TEXT(beginproblem());
-
 # Since this is a matching questions, we do not usually wish to tell students which
 # parts of the matching question have been answered correctly and which are
 # incorrect.  That is too easy.  To accomplish this we set the following flag to zero.

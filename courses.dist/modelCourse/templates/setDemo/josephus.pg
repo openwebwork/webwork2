@@ -146,8 +146,6 @@ parent.gameStatus.document.close()
 
 EOF
 
-
-TEXT(beginproblem());
 TEXT(MODES(
 TeX	 		=>	'',
 Latex2HTML	=> "\begin{rawhtml} <NOSCRIPT> This problem requires that Java
