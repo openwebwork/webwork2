@@ -987,7 +987,7 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 		if ($MergedSet->{$_}) {
 			print $FH '\\def\\webwork'
 				. underscore_to_camel($_) . '{'
-				. WeBWorK::Utils::formatDateTime($MergedSet->{$_}, $ce->{siteDefaults}{timezone}) . "}\n";
+				. $c->formatDateTime($MergedSet->{$_}, $ce->{siteDefaults}{timezone}) . "}\n";
 		}
 	}
 	# Leave reduced scoring date blank if it is disabled, or enabled but on (or somehow later) than the close date
@@ -997,7 +997,7 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 		&& $MergedSet->{reduced_scoring_date} < $MergedSet->{due_date})
 	{
 		print $FH '\\def\\webworkReducedScoringDate{'
-			. WeBWorK::Utils::formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{siteDefaults}{timezone}) . "}\n";
+			. $c->formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{siteDefaults}{timezone}) . "}\n";
 	}
 
 	# write set header
