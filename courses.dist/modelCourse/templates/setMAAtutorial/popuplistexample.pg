@@ -5,7 +5,7 @@ loadMacros("PGbasicmacros.pl",
            "PGanswermacros.pl",
 );
 
-TEXT(beginproblem(), $BR,$BBOLD, "True False Pop-up Example", $EBOLD, $BR,$BR);
+TEXT($BBOLD, "True False Pop-up Example", $EBOLD, $BR,$BR);
 $showPartialCorrectAnswers = 0;
 
 # Make a new select list

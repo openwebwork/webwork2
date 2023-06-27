@@ -12,7 +12,6 @@ loadMacros(
 $dateTime = $formatedDueDate;
 
 TEXT(EV2(<<EOT));
-$BEGIN_ONE_COLUMN
 \noindent {\large \bf $studentName}
 \hfill
 \noindent {\large \bf MAA Minicourse San Diego January 2002}
@@ -25,7 +24,6 @@ that can be asked using WeBWorK.
 \par
 \noindent You may need to give 4 or 5 significant digits for some (floating point) 
 numerical answers in order to have them accepted by the computer.
-$END_ONE_COLUMN
 EOT
 
 &ENDDOCUMENT;

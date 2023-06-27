@@ -11,8 +11,6 @@ loadMacros(
   "Parser.pl",
 );
 
-TEXT(beginproblem());
-
 ##########################################################
 #
 #  The setup

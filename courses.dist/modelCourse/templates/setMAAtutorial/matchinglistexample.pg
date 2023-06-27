@@ -7,7 +7,7 @@ loadMacros(
  );
 
 
-TEXT(beginproblem(), $BR,$BBOLD, "Matching list example", $EBOLD, $BR,$BR);
+TEXT($BBOLD, "Matching list example", $EBOLD, $BR,$BR);
 
 
 # Since this is a matching question, we do not usually wish to tell students
@@ -126,4 +126,4 @@ END_TEXT
 # Enter the correct answers to be checked against the answers to the students.
 ANS( str_cmp( $ml->ra_correct_ans )   ) ;
 
-ENDDOCUMENT();      
+ENDDOCUMENT();
