@@ -135,9 +135,11 @@
 					</ul>
 				</li>
 			% }
-
 			% # Problem Editor
-			<li class="list-group-item nav-item"><%= $makelink->('instructor_problem_editor') %></li>
+			<li class="list-group-item nav-item">
+				<%= $makelink->('instructor_problem_editor',
+					param('file_type') && param('file_type') eq 'course_info' ? (active => 0) : ()) %>
+			</li>
 			% if (defined $prettySetID && defined $problemID) {
 				<li class="nav-item">
 					<ul class="nav flex-column">
@@ -151,6 +153,36 @@
 								)),
 								captures => { setID => $setID, problemID => $problemID },
 								target   => 'WW_Editor'
+							) %>
+						</li>
+					</ul>
+				</li>
+			% } elsif (defined $prettySetID && param('file_type') && param('file_type') =~ /^(set|hardcopy)_header$/) {
+				<li class="nav-item">
+					<ul class="nav flex-column">
+						<li class="nav-item">
+							<%= $makelink->(
+								'instructor_problem_editor_withset_withproblem',
+								text => param('file_type') eq 'set_header'
+									? b(maketext('[_1]: Set Header',      $c->tag('span', dir => 'ltr', $prettySetID)))
+									: b(maketext('[_1]: Hardcopy Header', $c->tag('span', dir => 'ltr', $prettySetID))),
+								captures          => { setID => $setID, problemID => 0 },
+								systemlink_params => { file_type => param('file_type') },
+								target            => 'WW_Editor'
+							) %>
+						</li>
+					</ul>
+				</li>
+			% } elsif (param('file_type') && param('file_type') eq 'course_info') {
+				<li class="nav-item">
+					<ul class="nav flex-column">
+						<li class="nav-item">
+							<%= $makelink->(
+								'instructor_problem_editor',
+								text              => maketext('Course Information'),
+								systemlink_params => { file_type => 'course_info' },
+								active            => 1,
+								target            => 'WW_Editor'
 							) %>
 						</li>
 					</ul>

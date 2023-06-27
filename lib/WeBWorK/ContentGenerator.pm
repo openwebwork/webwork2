@@ -264,7 +264,20 @@ message() template escape handler.
 =cut
 
 sub addgoodmessage ($c, $message) {
-	$c->addmessage($c->tag('p', class => 'alert alert-success p-1 my-2', $c->b($message)));
+	$c->addmessage($c->tag(
+		'p',
+		class => 'alert alert-success alert-dismissible ps-1 py-1 my-2',
+		$c->c(
+			$message,
+			$c->tag(
+				'button',
+				type         => 'button',
+				class        => 'btn-close p-2',
+				data         => { bs_dismiss => 'alert' },
+				'aria-label' => $c->maketext('Dismiss')
+			)
+		)->join('')
+	));
 	return;
 }
 
@@ -276,7 +289,20 @@ message() template escape handler.
 =cut
 
 sub addbadmessage ($c, $message) {
-	$c->addmessage($c->tag('p', class => 'alert alert-danger p-1 my-2', $c->b($message)));
+	$c->addmessage($c->tag(
+		'p',
+		class => 'alert alert-danger alert-dismissible ps-1 py-1 my-2',
+		$c->c(
+			$message,
+			$c->tag(
+				'button',
+				type         => 'button',
+				class        => 'btn-close p-2',
+				data         => { bs_dismiss => 'alert' },
+				'aria-label' => $c->maketext('Dismiss')
+			)
+		)->join('')
+	));
 	return;
 }
 
