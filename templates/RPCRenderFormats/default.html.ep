@@ -41,7 +41,7 @@
 				<%= form_for $FORM_ACTION_URL, id => 'problemMainForm', class => 'problem-main-form',
 					name => 'problemMainForm', method => 'POST', begin %>
 					<div id="problem_body" class="problem-content" <%== $PROBLEM_LANG_AND_DIR %>>
-						% if ($displayMode eq 'PTX') {
+						% if ($displayMode eq 'PTX' || $displayMode eq 'tex') {
 							<pre><%= "$problemText"%></pre>
 						% } else {
 							%== $problemText
@@ -97,7 +97,7 @@
 						%= hidden_field clientDebug => $ws->{inputs_ref}{clientDebug}
 					% }
 					%
-					% if ($displayMode ne 'PTX') {
+					% if ($displayMode ne 'PTX' && $displayMode ne 'tex') {
 						<div class="submit-buttons-container col-12 mb-2">
 							% # Submit buttons (all are shown by default)
 							% if ($showPreviewButton ne '0') {
