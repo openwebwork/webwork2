@@ -981,7 +981,7 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($MergedSet->{$_}) . "}\n";
 	}
 	print $FH '\\def\\webworkPrettySetId{' . handle_underbar($MergedSet->{set_id}, 1) . "}\n";
-	for (qw(open_date reduced_scoring_date due_date answer_date)) {
+	for (qw(open_date due_date answer_date)) {
 		if (!ref($MergedSet->{$_}) && $MergedSet->{$_} =~ /^\d{10}$/) {
 			print $FH '\\def\\webwork'
 				. underscore_to_camel($_) . '{'
@@ -989,6 +989,15 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 		} else {
 			print $FH '\\def\\webwork' . underscore_to_camel($_) . "{}\n";
 		}
+	}
+	# Leave reduced scoring date blank if it is disabled, or enabled but on (or somehow later) than the close date
+	if ($MergedSet->{enable_reduced_scoring}
+		&& !ref($MergedSet->{reduced_scoring_date})
+		&& $MergedSet->{reduced_scoring_date} =~ /^\d{10}$/
+		&& $MergedSet->{reduced_scoring_date} < $MergedSet->{due_date})
+	{
+		print $FH '\\def\\webworkReducedScoringDate{'
+			. WeBWorK::Utils::formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{siteDefaults}{timezone}) . "}\n";
 	}
 
 	# write set header
