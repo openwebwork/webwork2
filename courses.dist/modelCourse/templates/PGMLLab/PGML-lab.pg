@@ -680,7 +680,7 @@ END_SCRIPT
 						'[@ perl-command @]** (parse results)',
 						'[% comment %]',
 						'[&lt;url&gt;] (not implemented)',
-						'[!image!] (not implemented)',
+						'[!image!]{source}{width}{height}',
 					),
 					Menu(
 						'- Formatting -',
