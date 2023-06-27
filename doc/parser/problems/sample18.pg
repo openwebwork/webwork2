@@ -13,8 +13,6 @@ loadMacros(
   "Differentiation.pl",
 );
 
-TEXT(beginproblem());
-
 ###########################################################
 #
 #   The setup
