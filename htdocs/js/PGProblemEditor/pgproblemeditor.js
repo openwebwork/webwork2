@@ -228,7 +228,8 @@
 
 		// Scroll to the top of the render window if the current scroll position is below that.
 		const renderAreaRect = renderArea.getBoundingClientRect();
-		if (renderAreaRect.top < 0) window.scrollBy(0, renderAreaRect.top);
+		const topBarHeight = document.querySelector('.webwork-logo')?.getBoundingClientRect().height ?? 0;
+		if (renderAreaRect.top < topBarHeight) window.scrollBy(0, renderAreaRect.top - topBarHeight);
 	});
 
 	const render = () => new Promise((resolve) => {

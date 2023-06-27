@@ -247,6 +247,10 @@ $site-nav-width: 250px !default;
 	margin-top: $masthead-height;
 	width: calc(100% - $site-nav-width);
 
+	*[id] {
+		scroll-margin-top: $masthead-height;
+	}
+
 	&.toggle-width {
 		width: 100%;
 		margin-left: 0;
@@ -256,6 +260,10 @@ $site-nav-width: 250px !default;
 		width: 100%;
 		margin-top: 0;
 		margin-left: auto;
+
+		*[id] {
+			scroll-margin-top: 0.75 * $masthead-height;
+		}
 	}
 }
 
