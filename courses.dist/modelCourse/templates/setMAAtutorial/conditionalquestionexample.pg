@@ -4,7 +4,7 @@ loadMacros(
         "PGchoicemacros.pl",
         "PGanswermacros.pl"
 );
-TEXT(beginproblem(), $BR,$BBOLD, "Conditional questions example", $EBOLD, $BR,$BR);
+TEXT($BBOLD, "Conditional questions example", $EBOLD, $BR,$BR);
 $showPartialCorrectAnswers = 1;
 
 $a1 = random(3,25,1);

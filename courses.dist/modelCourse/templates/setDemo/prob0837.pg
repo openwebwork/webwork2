@@ -8,8 +8,6 @@ loadMacros( "PGbasicmacros.pl",
 	             "PG_CAPAmacros.pl"
 );
 	 
-TEXT(beginproblem());
-	
 # machine translated from CAPA.  
 # This is probaly not a good model for elegant PG code.	
 ## **************************************

@@ -12,8 +12,6 @@ loadMacros(
   "parserTables.pl",
 );
 
-TEXT(beginproblem());
-
 ##########################################################
 #
 #  Define our own [n,r] notation for n choose r
@@ -80,7 +78,6 @@ Context()->parens->replace('[' => {close => ']', type => 'Choose'});
 #  The problem text
 #
 BEGIN_TEXT
-$BEGIN_ONE_COLUMN
 
 In this problem, we have added a new list to the Parser: ${BTT}[n,r]${ETT}, 
 which returns \(n\choose r\).
@@ -98,7 +95,6 @@ $PAR
     'Formula("[x,<1,2>]")',
   )\}
 
-$END_ONE_COLUMN
 END_TEXT
 
 ###########################################################

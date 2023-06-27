@@ -12,8 +12,6 @@ loadMacros(
   "parserTables.pl",
 );
 
-TEXT(beginproblem());
-
 ###########################################################
 #
 #   Use  standard numeric mode
@@ -55,7 +53,6 @@ $x = Formula('x');
 #  The problem text
 #
 BEGIN_TEXT
-$BEGIN_ONE_COLUMN
 
 In this problem, we have added a new function to the Parser: ${BTT}log2(x)${ETT}.
 (Edit the code to see how this is done.)
@@ -75,7 +72,6 @@ $PAR
      'log2(1,3)',
   )\}
 
-$END_ONE_COLUMN
 END_TEXT
 
 ###########################################################
