@@ -4,6 +4,10 @@
 
 \usepackage[text={7.5in,9in},centering]{geometry}
 
+% If the "pdflatex" external program is set to xelatex in site.conf,
+% this is needed for bold, small caps, etc variants of Compute Modern
+\usepackage{fontspec}
+
 % This removes the margin for questions from the exam class.  At this point we only use questions and not parts or
 % subparts, but if those are used a similar thing will be needed for those as well.
 \renewcommand{\questionshook}{\leftmargin=0pt\labelwidth=-\labelsep}
