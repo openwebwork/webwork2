@@ -75,8 +75,7 @@
 					<span class="input-group-text"><b><%= maketext('Show:') %></b></span>
 					<div class="input-group-text">
 						<label class="form-check-label">
-							<%= check_box printStudentAnswers => 1, checked => undef,
-								class => 'form-check-input me-2' =%>
+							<%= check_box printStudentAnswers => 1, class => 'form-check-input me-2' =%>
 							<%= maketext('Student answers') =%>
 						</label>
 					</div>
