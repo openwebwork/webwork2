@@ -1005,7 +1005,7 @@
 						newPrevState.mode = "tex";
 						return tokenPGMLSubBlock(stream,state,endstring,style,newPrevState);
 					}
-				} else if (stream.match(/^\[\|+/)) { // Verbatim 
+				} else if (stream.match(/^\[\|+/)) { // Verbatim
 					style = "tag";
 					const endstring = stream.current().substring(1) + "\\]";
 					state.tokenize = function(stream,state) {
@@ -1418,16 +1418,36 @@
 			lineComment: '#'
 		};
 	});
-	
+
 	CodeMirror.registerHelper("wordChars", "perl", /[\w$]/);
-	
+
+	CodeMirror.registerHelper('fold','PG', function(cm,start) {
+		var line = start.line, lineText = cm.getLine(line);
+		var lastLineInFold = line;
+		var m1 = /^\s*BEGIN\_(PGML|PGML\_SOLUTION|PGML_HINT)\s*$/.exec(lineText);
+		var m2 = /^\s*(Section|Scaffold)::Begin/.exec(lineText);
+		if(m1 || m2 ){
+			for (var current_line = line +1;current_line <= cm.lineCount();current_line++){
+				const end_re = m1 ? RegExp(`END_${m1[1]}`) : RegExp(`${m2[1]}::End`);
+				if(end_re.test(cm.getLine(current_line))) {
+					return {
+						from: CodeMirror.Pos(start.line, cm.getLine(start.line).length),
+						to: CodeMirror.Pos(current_line, cm.getLine(current_line).length)
+					};
+				}
+			}
+		}
+		return;
+	});
+
+
 	CodeMirror.defineMIME("text/x-perl", "perl");
-	
+
 	// it's like "peek", but need for look-ahead or look-behind if index < 0
 	function look(stream, c){
 		return stream.string.charAt(stream.pos+(c||0));
 	}
-	
+
 	// return a part of prefix of current stream from current position
 	function prefix(stream, c){
 		if(c){
@@ -1437,14 +1457,14 @@
 			return stream.string.substr(0,stream.pos-1);
 		}
 	}
-	
+
 	// return a part of suffix of current stream from current position
 	function suffix(stream, c){
 		var y=stream.string.length;
 		var x=y-stream.pos+1;
 		return stream.string.substr(stream.pos,(c&&c<y?c:x));
 	}
-	
+
 	// eating and vomiting a part of stream from current position
 	function eatSuffix(stream, c){
 		var x=stream.pos+c;
@@ -1456,5 +1476,5 @@
 		else
 			stream.pos=x;
 	}
-	
+
 })();
