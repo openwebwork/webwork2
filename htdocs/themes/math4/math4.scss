@@ -447,7 +447,7 @@ h2.page-title {
 
 /* Message section */
 .message:not(:empty) {
-	margin-bottom: 0.5rem;
+	display: inline-block;
 }
 
 .font-visible { font-weight: bold; }
