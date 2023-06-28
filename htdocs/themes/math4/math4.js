@@ -124,10 +124,18 @@
 	if (messages.length) {
 		const dismissBtn = document.getElementById('dismiss-messages-btn');
 		dismissBtn?.classList.remove('d-none');
-		dismissBtn?.addEventListener('click', () => {
-			messages.forEach((message) => message.remove());
-			dismissBtn.classList.add('d-none');
-		});
+
+		// Hide the dismiss button when the last alert is dismissed.
+		for (const message of messages) {
+			message.addEventListener('closed.bs.alert', () => {
+				if (!document.querySelector('#message .alert-dismissible, #message_bottom .alert-dismissible'))
+					dismissBtn.remove();
+			}, { once: true });
+		}
+
+		dismissBtn?.addEventListener('click', () =>
+			messages.forEach((message) => bootstrap.Alert.getOrCreateInstance(message)?.close())
+		);
 	}
 
 	// Accessibility
