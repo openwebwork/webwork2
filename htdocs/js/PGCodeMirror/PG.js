@@ -1438,7 +1438,6 @@
 		return;
 	});
 
-
 	CodeMirror.defineMIME("text/x-perl", "perl");
 
 	// it's like "peek", but need for look-ahead or look-behind if index < 0
