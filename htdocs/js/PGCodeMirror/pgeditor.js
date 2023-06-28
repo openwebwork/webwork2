@@ -76,20 +76,18 @@
 		lineNumbers: true,
 		lineWrapping: true,
 		extraKeys: {
-			Tab: (cm) => cm.execCommand('insertSoftTab'),
-			'Ctrl-/': (cm) => cm.execCommand('toggleComment'),
-			'Cmd-/': (cm) => cm.execCommand('toggleComment'),
-			"Ctrl-R": (cm) => cm.foldCode(cm.getCursor())
+			Tab:            (cm) => cm.execCommand('insertSoftTab'),
+			'Ctrl-/':       (cm) => cm.execCommand('toggleComment'),
+			'Cmd-/':        (cm) => cm.execCommand('toggleComment'),
+			'Shift-Ctrl-F': (cm) => cm.foldCode(cm.getCursor(), { scanUp : true })
 		},
 		highlightSelectionMatches: { annotateScrollbar: true },
 		matchBrackets: true,
 		inputStyle: 'contenteditable',
 		spellcheck: localStorage.getItem('WW_PGEditor_spellcheck') === 'true',
 		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-		foldGutter: {
-			rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.PG)
-		},
-		fold: "PG"
+		foldGutter: { rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.PG) },
+		fold: 'PG'
 	});
 	cm.setSize('100%', '550px');
 

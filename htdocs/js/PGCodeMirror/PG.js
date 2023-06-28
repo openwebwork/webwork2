@@ -1421,13 +1421,11 @@
 
 	CodeMirror.registerHelper("wordChars", "perl", /[\w$]/);
 
-	CodeMirror.registerHelper('fold','PG', function(cm,start) {
-		var line = start.line, lineText = cm.getLine(line);
-		var lastLineInFold = line;
-		var m1 = /^\s*BEGIN\_(PGML|PGML\_SOLUTION|PGML_HINT)\s*$/.exec(lineText);
-		var m2 = /^\s*(Section|Scaffold)::Begin/.exec(lineText);
+	CodeMirror.registerHelper('fold','PG', (cm,start) => {
+		const m1 = /BEGIN_(PGML|PGML_SOLUTION|PGML_HINT|TEXT|TIKZ|LATEX_IMAGE)\s*$/.exec(cm.getLine(start.line));
+		const m2 = /^\s*(Section|Scaffold)::Begin/.exec(cm.getLine(start.line));
 		if(m1 || m2 ){
-			for (var current_line = line +1;current_line <= cm.lineCount();current_line++){
+			for (let current_line = start.line +1; current_line <= cm.lineCount(); current_line++){
 				const end_re = m1 ? RegExp(`END_${m1[1]}`) : RegExp(`${m2[1]}::End`);
 				if(end_re.test(cm.getLine(current_line))) {
 					return {
