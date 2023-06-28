@@ -79,7 +79,9 @@
 			Tab:            (cm) => cm.execCommand('insertSoftTab'),
 			'Ctrl-/':       (cm) => cm.execCommand('toggleComment'),
 			'Cmd-/':        (cm) => cm.execCommand('toggleComment'),
-			'Shift-Ctrl-F': (cm) => cm.foldCode(cm.getCursor(), { scanUp : true })
+			'Shift-Ctrl-F': (cm) => cm.foldCode(cm.getCursor(), { scanUp : true }),
+			'Shift-Ctrl-A': (cm) => CodeMirror.commands.foldAll(cm),
+			'Shift-Ctrl-U': (cm) => CodeMirror.commands.unfoldAll(cm),
 		},
 		highlightSelectionMatches: { annotateScrollbar: true },
 		matchBrackets: true,
