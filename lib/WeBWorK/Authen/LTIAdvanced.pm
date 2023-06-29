@@ -28,6 +28,7 @@ use warnings;
 
 use Carp;
 use DBI;
+use Mojo::URL;
 use URI::Escape;
 use Net::OAuth;
 
@@ -454,8 +455,14 @@ sub authenticate {
 	my $requestHash = \%request_hash;
 
 	# We need to provide the request URL when verifying the OAuth request.
-	# We use the url request by default, but also allow it to be overriden
-	my $path = $ce->{LTI}{v1p1}{OverrideSiteURL} || ($c->url_for->to_abs =~ s|/?$|/|r);
+	# We use the url request by default, but also allow it to be overridden
+	my $url = $c->url_for->to_abs;
+	if ($ce->{LTI}{v1p1}{OverrideSiteProtocolDomain}) {
+		my $override = Mojo::URL->new($ce->{LTI}{v1p1}{OverrideSiteProtocolDomain});
+		$url->scheme($override->scheme);
+		$url->host($override->host);
+	}
+	my $path = $ce->{LTI}{v1p1}{OverrideSiteURL} || ($url =~ s|/?$|/|r);
 
 	if ($ce->{debug_lti_parameters}) {
 		warn "The following path was reconstructed by WeBWorK.  It should match the path in the LMS:\n";

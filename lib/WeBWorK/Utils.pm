@@ -619,7 +619,7 @@ sub parseDateTime($;$) {
 		} else {
 #warn "\t\$zone=$zone is invalid according to DateTime::TimeZone, so we will attempt to treat the date/time as UTC and then apply an offset for the zone $zone.\n";
 			$tz_to_use = "UTC";
-			# When the offset approach fails, we will overriden again and use $display_tz instead
+			# When the offset approach fails, we will override again and use $display_tz instead
 		}
 	} else {
 		#warn "\t\$zone not supplied, using \$display_tz\n";

@@ -1,35 +1,24 @@
+% layout 'pod_viewer';
 % my $title = $filePath =~ s!^[^/]*/!!r;
 % $title = $1 =~ s!/!::!gr if $title =~ m/^(.*)\.pm$/;
+% title $title;
 %
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-%
-<head>
-	<meta charset='UTF-8'>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title><%= $title %></title>
-	<%= stylesheet $c->url({ type => 'webwork', name => 'theme',  file => 'bootstrap.css' }) =%>
-	<%= stylesheet $c->url({ type => 'webwork', name => 'htdocs', file => 'js/PODViewer/podviewer.css' }) =%>
-	<link rel="icon" type="x-image/icon"
-		href="<%= $c->url({ type => 'webwork', name => 'htdocs', file => 'images/favicon.ico' }) %>">
-</head>
-%
-<body>
-	<div class="container">
-		<h1 class="mt-3"><%= $title %></h1>
-		<hr>
-		<div><%= link_to "PG POD Home" => 'pod_index' %></div>
-		<hr>
-		<div id="_podtop_">
-			% if (stash('podHTML')) {
-				<%== stash('podHTML') =%>
-			% } elsif (stash('podError')) {
-				<%= maketext('Error generating POD for file [_1]: [_2]', $filePath, stash('podError')) =%>
-			% } else {
-				<%= maketext('Macro file [_1] not found.', $filePath) =%>
+% content_for sidebar => begin
+	<nav>
+		<ul class="nav flex-column w-100">
+			<li class="nav-item"><%= link_to "PG POD Home" => 'pod_index', class => 'nav-link p-0' %></li>
+			<li class="nav-item"><hr></li>
+			% for (@{ $c->stash->{podIndex} }) {
+				<%== $_ =%>
 			% }
-		</div>
-	</div>
-</body>
+		</ul>
+	</nav>
+% end
 %
-</html>
+% if (stash('podHTML')) {
+	<%== stash('podHTML') =%>
+% } elsif (stash('podError')) {
+	<%= maketext('Error generating POD for file [_1]: [_2]', $filePath, stash('podError')) =%>
+% } else {
+	<%= maketext('Macro file [_1] not found.', $filePath) =%>
+% }
