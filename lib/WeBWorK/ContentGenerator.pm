@@ -266,7 +266,7 @@ message() template escape handler.
 sub addgoodmessage ($c, $message) {
 	$c->addmessage($c->tag(
 		'p',
-		class => 'alert alert-success alert-dismissible fade show ps-1 py-1 my-2',
+		class => 'alert alert-success alert-dismissible fade show ps-1 py-1',
 		$c->c(
 			$message,
 			$c->tag(
@@ -291,7 +291,7 @@ message() template escape handler.
 sub addbadmessage ($c, $message) {
 	$c->addmessage($c->tag(
 		'p',
-		class => 'alert alert-danger alert-dismissible fade show ps-1 py-1 my-2',
+		class => 'alert alert-danger alert-dismissible fade show ps-1 py-1',
 		$c->c(
 			$message,
 			$c->tag(

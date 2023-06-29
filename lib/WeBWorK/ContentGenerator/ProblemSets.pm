@@ -60,7 +60,7 @@ sub initialize ($c) {
 
 	if ($authz->hasPermissions($user, 'access_instructor_tools')) {
 		my $status_message = $c->param('status_message');
-		$c->addmessage($c->tag('p', class => 'my-2', $c->b($status_message))) if $status_message;
+		$c->addmessage($c->tag('p', $c->b($status_message))) if $status_message;
 	}
 
 	if ($authz->hasPermissions($user, 'navigation_allowed')) {
@@ -105,7 +105,7 @@ sub initialize ($c) {
 
 			$c->addmessage($c->tag(
 				'p',
-				class => 'temporaryFile my-2',
+				class => 'temporaryFile',
 				$c->maketext('Viewing temporary file: [_1]', $course_info_path)
 			));
 		}

@@ -109,11 +109,7 @@ async sub initialize ($c) {
 
 	# Update grades if saving.
 	if ($c->param('assignGrades')) {
-		$c->addmessage($c->tag(
-			'p',
-			class => 'alert alert-success p-1 my-2',
-			$c->maketext('Grades have been saved for all current users.')
-		));
+		$c->addgoodmessage($c->maketext('Grades have been saved for all current users.'));
 
 		for my $user (@{ $c->stash->{users} }) {
 			my $userID = $user->user_id;

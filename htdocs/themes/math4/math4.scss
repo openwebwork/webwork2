@@ -447,7 +447,14 @@ h2.page-title {
 
 /* Message section */
 .message:not(:empty) {
-	display: inline-block;
+	display: inline-flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin: 0 0 0.5rem;
+
+	p {
+		margin: 0;
+	}
 }
 
 .font-visible { font-weight: bold; }

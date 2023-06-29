@@ -50,13 +50,13 @@ async sub initialize ($c) {
 	$c->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
 
 	# Display status messages.
-	$c->addmessage($c->tag('p', class => 'my-2', $c->b($c->param('status_message')))) if $c->param('status_message');
+	$c->addmessage($c->tag('p', $c->b($c->param('status_message')))) if $c->param('status_message');
 
 	if ($authz->hasPermissions($userID, 'view_hidden_sets')) {
 		if ($c->{set}->visible) {
-			$c->addmessage($c->tag('span', class => 'font-visible', $c->maketext('This set is visible to students.')));
+			$c->addmessage($c->tag('p', class => 'font-visible', $c->maketext('This set is visible to students.')));
 		} else {
-			$c->addmessage($c->tag('span', class => 'font-hidden', $c->maketext('This set is hidden from students.')));
+			$c->addmessage($c->tag('p', class => 'font-hidden', $c->maketext('This set is hidden from students.')));
 		}
 	}
 
@@ -76,7 +76,7 @@ async sub initialize ($c) {
 			$screenSetHeader = "$ce->{courseDirs}{templates}/$screenSetHeader" unless $screenSetHeader =~ m!^/!;
 			die 'sourceFilePath is unsafe!' unless path_is_subdir($screenSetHeader, $ce->{courseDirs}{templates});
 			$c->addmessage($c->tag(
-				'div',
+				'p',
 				class => 'temporaryFile',
 				$c->maketext('Viewing temporary file: [_1]', $screenSetHeader)
 			));
