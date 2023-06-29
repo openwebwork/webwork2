@@ -134,6 +134,12 @@ $LTI{v1p1}{NonceLifeTime} = 60;    # in seconds
 # does not match the path that ends up in the webwork page.
 $LTI{v1p1}{OverrideSiteURL} = '';
 
+# This is like $LTI{v1p1}{OverrideSiteURL}, except that you only declare the protocol and domain
+# to replace and leave the rest of a URL alone. If somehow both are set in the config chain,
+# $LTI{v1p1}{OverrideSiteURL} is used, without being modified by the below.
+$LTI{v1p1}{OverrideSiteProtocolDomain} = '';
+#$LTI{v1p1}{OverrideSiteProtocolDomain} = 'https://vmwebwork42.myschool.edu';
+
 ################################################################################################
 # LTI 1.1 LMS Roles Mapped to WeBWorK Roles
 ################################################################################################
