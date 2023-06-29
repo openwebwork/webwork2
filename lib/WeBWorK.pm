@@ -95,7 +95,6 @@ async sub dispatch ($c) {
 		if ($c->current_route eq 'html2xml') {
 			for (
 				[ 'userID',          'user' ],
-				[ 'courseName',      'courseID' ],
 				[ 'course_password', 'passwd' ],
 				[ 'session_key',     'key' ]
 				)
