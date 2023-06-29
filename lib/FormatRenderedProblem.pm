@@ -186,6 +186,9 @@ sub formatRenderedProblem {
 		}
 		$dom->wrap_content('<answerhashes></answerhashes>');
 		$answerhashXML = $dom->to_string;
+
+		$ws->c->res->headers->content_type('text/xml; charset=utf-8')
+			if $ws->c->current_route eq 'render_rpc' && ($ws->c->param('displayMode') // '') eq 'PTX';
 	}
 
 	# Make sure this is defined and is an array reference as saveGradeToLTI might add to it.
