@@ -122,18 +122,6 @@ sub startup ($app) {
 		);
 	}
 
-	# Always add Content-Type: text/xml; charset=utf-8 header for static PTX
-	$app->hook(
-		before_dispatch => sub ($c) {
-			if ($c->req->url->path =~ /^\/webwork2\/render_rpc/
-				&& $c->req->url->query->param('outputformat') eq 'ptx'
-				&& $c->req->url->query->param('displayMode') eq 'PTX')
-			{
-				$c->res->headers->header('Content-Type' => 'text/xml; charset=utf-8');
-			}
-		}
-	);
-
 	# Add a hook that redirects http to https if configured to do so.
 	if ($config->{redirect_http_to_https}) {
 		$app->hook(
