@@ -87,7 +87,7 @@
 		matchBrackets: true,
 		inputStyle: 'contenteditable',
 		spellcheck: localStorage.getItem('WW_PGEditor_spellcheck') === 'true',
-		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+		gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
 		foldGutter: { rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.PG) },
 		fold: 'PG'
 	});
