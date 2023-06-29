@@ -41,7 +41,11 @@
 				<%= form_for $FORM_ACTION_URL, id => 'problemMainForm', class => 'problem-main-form',
 					name => 'problemMainForm', method => 'POST', begin %>
 					<div id="problem_body" class="problem-content" <%== $PROBLEM_LANG_AND_DIR %>>
-						%== $problemText
+						% if ($displayMode eq 'PTX' || $displayMode eq 'tex') {
+							<pre><%= "$problemText"%></pre>
+						% } else {
+							%== $problemText
+						% }
 					</div>
 					% if ($showScoreSummary) {
 						<p><%= $lh->maketext('You received a score of [_1] for this attempt.',
@@ -93,21 +97,23 @@
 						%= hidden_field clientDebug => $ws->{inputs_ref}{clientDebug}
 					% }
 					%
-					<div class="submit-buttons-container col-12 mb-2">
-						% # Submit buttons (all are shown by default)
-						% if ($showPreviewButton ne '0') {
-							<%= submit_button $lh->maketext('Preview My Answers'),
-								name => 'preview', id => 'previewAnswers_id', class => 'btn btn-primary mb-1' %>
-						% }
-						% if ($showCheckAnswersButton ne '0') {
-							<%= submit_button $lh->maketext('Check Answers'),
-								name => 'WWsubmit', class => 'btn btn-primary mb-1' %>
-						% }
-						% if ($showCorrectAnswersButton ne '0') {
-							<%= submit_button $lh->maketext('Show Correct Answers'),
-								name => 'WWcorrectAns', class => 'btn btn-primary mb-1' %>
-						% }
-					</div>
+					% if ($displayMode ne 'PTX' && $displayMode ne 'tex') {
+						<div class="submit-buttons-container col-12 mb-2">
+							% # Submit buttons (all are shown by default)
+							% if ($showPreviewButton ne '0') {
+								<%= submit_button $lh->maketext('Preview My Answers'),
+									name => 'preview', id => 'previewAnswers_id', class => 'btn btn-primary mb-1' %>
+							% }
+							% if ($showCheckAnswersButton ne '0') {
+								<%= submit_button $lh->maketext('Check Answers'),
+									name => 'WWsubmit', class => 'btn btn-primary mb-1' %>
+							% }
+							% if ($showCorrectAnswersButton ne '0') {
+								<%= submit_button $lh->maketext('Show Correct Answers'),
+									name => 'WWcorrectAns', class => 'btn btn-primary mb-1' %>
+							% }
+						</div>
+					% }
 				% end
 			</div>
 		</div>

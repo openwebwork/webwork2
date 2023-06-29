@@ -670,6 +670,18 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 			);
 		}
 	}
+	my $cp_cmd =
+		"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{pg}{directories}{assetsTex}/pg.sty", $bundle_path);
+	my $cp_out = readpipe $cp_cmd;
+	if ($?) {
+		$c->add_error(
+			'Failed to copy "',
+			$c->tag('code', "$ce->{pg}{directories}{assetsTex}/pg.sty"),
+			'" into directory "',
+			$c->tag('code', $bundle_path),
+			'":', $c->tag('br'), $c->tag('pre', $cp_out)
+		);
+	}
 
 	# Attempt to copy image files used into the working directory.
 	my $resource_list = $c->{resource_list};
@@ -740,7 +752,8 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 	my $pdflatex_cmd = "cd "
 		. shell_quote($temp_dir_path) . " && "
 		. "TEXINPUTS=.:"
-		. shell_quote($c->ce->{webworkDirs}{texinputs_common}) . ": "
+		. shell_quote($c->ce->{webworkDirs}{texinputs_common}) . ':'
+		. shell_quote($c->ce->{pg}{directories}{assetsTex}) . ': '
 		. $c->ce->{externalPrograms}{pdflatex}
 		. " >pdflatex.stdout 2>pdflatex.stderr hardcopy";
 	if (my $rawexit = system $pdflatex_cmd) {
@@ -962,20 +975,29 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 
 	# write environment variables as LaTeX macros
 	for (qw(user_id student_id first_name last_name email_address section recitation)) {
-		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($TargetUser->{$_}) . "}\n";
+		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($TargetUser->{$_}) . "}\n"
+			if $TargetUser->{$_};
 	}
 	for (qw(set_id description)) {
-		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($MergedSet->{$_}) . "}\n";
+		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($MergedSet->{$_}) . "}\n"
+			if $MergedSet->{$_};
 	}
 	print $FH '\\def\\webworkPrettySetId{' . handle_underbar($MergedSet->{set_id}, 1) . "}\n";
-	for (qw(open_date reduced_scoring_date due_date answer_date)) {
-		if (!ref($MergedSet->{$_}) && $MergedSet->{$_} =~ /^\d{10}$/) {
+	for (qw(open_date due_date answer_date)) {
+		if ($MergedSet->{$_}) {
 			print $FH '\\def\\webwork'
 				. underscore_to_camel($_) . '{'
-				. WeBWorK::Utils::formatDateTime($MergedSet->{$_}, $ce->{siteDefaults}{timezone}) . "}\n";
-		} else {
-			print $FH '\\def\\webwork' . underscore_to_camel($_) . "{}\n";
+				. $c->formatDateTime($MergedSet->{$_}, $ce->{siteDefaults}{timezone}) . "}\n";
 		}
+	}
+	# Leave reduced scoring date blank if it is disabled, or enabled but on (or somehow later) than the close date
+	if ($MergedSet->{reduced_scoring_date}
+		&& $ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+		&& $MergedSet->{enable_reduced_scoring}
+		&& $MergedSet->{reduced_scoring_date} < $MergedSet->{due_date})
+	{
+		print $FH '\\def\\webworkReducedScoringDate{'
+			. $c->formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{siteDefaults}{timezone}) . "}\n";
 	}
 
 	# write set header
