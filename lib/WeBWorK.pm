@@ -87,7 +87,7 @@ async sub dispatch ($c) {
 	my $displayModule = ref $c;
 	my %routeCaptures = %{ $c->stash->{'mojo.captures'} };
 
-	if ($c->current_route =~ /^render_rpc|instructor_rpc|html2xml$/) {
+	if ($c->current_route =~ /^(render_rpc|instructor_rpc|html2xml)$/) {
 		$c->{rpc} = 1;
 
 		# This provides compatibility for legacy html2xml parameters.

@@ -41,12 +41,12 @@ JSON_ERROR_LOG: 0
 # origins without an explicit directive from the server that it is safe.
 # Uncomment the extra_headers setting as is to set the header to enable
 # Cross-Origin Resource Sharing (CORS) for url responses to requests to urls
-# that start with /webwork2/webwork_rpc, /webwork2/html2xml, and
-# /webwork2_files.  This may be needed to use the client formats if they are
-# accessed from a *remote* server.
+# that start with /webwork2/render_rpc, /webwork2/html2xml, and /webwork2_files.
+# This may be needed to use the client formats if they are accessed from a
+# *remote* server.
 #
 # Note that the /webwork2/html2xml url is deprecated, and code should be adapted
-# to use the /webwork2/webwork_rpc path instead.  They both do the same thing
+# to use the /webwork2/render_rpc path instead.  They both do the same thing
 # that the /webwork2/html2xml endpoint did before, but they no longer pass
 # through the XMLRPC middle man.
 #
@@ -55,7 +55,7 @@ JSON_ERROR_LOG: 0
 # given.
 
 #extra_headers:
-#  /webwork2/webwork_rpc:
+#  /webwork2/render_rpc:
 #    Access-Control-Allow-Origin: '*'
 #  /webwork2/html2xml:
 #    Access-Control-Allow-Origin: '*'
