@@ -164,7 +164,7 @@
 		% }
 		% if ($c->can('message')) {
 			<div id="message_bottom" class="message"><%= $c->message %></div>
-			<div class="mt-2">
+			<div>
 				<button type="button" id="dismiss-messages-btn" class="btn btn-primary d-none">
 					<%= maketext('Dismiss All Messages') %>
 				</button>
