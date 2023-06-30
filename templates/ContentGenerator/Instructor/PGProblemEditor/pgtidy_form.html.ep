@@ -1,0 +1,6 @@
+% # Hardcopy headers are previewed from the hardcopy generation tab.
+% last if $c->{file_type} eq 'course_info';
+%
+<div class="row">
+	<p><%= maketext('Reformat the code using perltidy.') =%></p>
+</div>
