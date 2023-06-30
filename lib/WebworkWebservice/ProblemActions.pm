@@ -22,6 +22,7 @@ use warnings;
 use Data::Structure::Util qw(unbless);
 
 use WeBWorK::Debug;
+use WeBWorK::PG::Tidy qw(pgtidy);
 
 sub getUserProblem {
 	my ($invocant, $self, $params) = @_;
@@ -130,6 +131,25 @@ sub putPastAnswer {
 			"Updated answer $params->{answer_id} for problem $pastAnswer->{problem_id} of $pastAnswer->{set_id} "
 			. "for user $pastAnswer->{user_id} in course "
 			. $self->ce->{courseName} . '.'
+	};
+}
+
+sub tidyPGCode {
+	my ($invocant, $self, $params) = @_;
+
+	debug('in tidyPGCode');
+
+	local @ARGV = ();
+
+	my $code = $params->{pgCode};
+	my $tidiedPGCode;
+	my $errors;
+
+	my $result = pgtidy(source => \$code, destination => \$tidiedPGCode, errorfile => \$errors);
+
+	return {
+		ra_out => { tidiedPGCode => $tidiedPGCode, status => $result, errors => $errors },
+		text   => 'Tidied code'
 	};
 }
 
