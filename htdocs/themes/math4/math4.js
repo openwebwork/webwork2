@@ -120,6 +120,24 @@
 	const codeshards = document.querySelectorAll('.codeshard');
 	if (codeshards.length == 1) codeshards[0].setAttribute('aria-label', 'answer');
 
+	const messages = document.querySelectorAll('#message .alert-dismissible, #message_bottom .alert-dismissible');
+	if (messages.length) {
+		const dismissBtn = document.getElementById('dismiss-messages-btn');
+		dismissBtn?.classList.remove('d-none');
+
+		// Hide the dismiss button when the last alert is dismissed.
+		for (const message of messages) {
+			message.addEventListener('closed.bs.alert', () => {
+				if (!document.querySelector('#message .alert-dismissible, #message_bottom .alert-dismissible'))
+					dismissBtn.remove();
+			}, { once: true });
+		}
+
+		dismissBtn?.addEventListener('click', () =>
+			messages.forEach((message) => bootstrap.Alert.getOrCreateInstance(message)?.close())
+		);
+	}
+
 	// Accessibility
 	// Present the contents of the data-alt attribute as alternative content for screen reader users.
 	// The icon should be formatted as <i class="icon fas fa-close" data-alt="close"></i>

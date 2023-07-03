@@ -42,11 +42,7 @@ sub initialize ($c) {
 
 	#Check and see if we need to assign or unassign things
 	if (defined $c->param('assignToAll')) {
-		$c->addmessage($c->tag(
-			'p',
-			class => 'alert alert-success p-1 mb-0',
-			$c->maketext('Achievement has been assigned to all users.')
-		));
+		$c->addgoodmessage($c->maketext('Achievement has been assigned to all users.'));
 		%selectedUsers      = map { $_ => 1 } @all_users;
 		$doAssignToSelected = 1;
 	} elsif (defined $c->param('unassignFromAll')
@@ -54,22 +50,14 @@ sub initialize ($c) {
 		&& $c->param('unassignFromAllSafety') == 1)
 	{
 		%selectedUsers = ();
-		$c->addmessage($c->tag(
-			'p',
-			class => 'alert alert-danger p-1 mb-0',
-			$c->maketext('Achievement has been unassigned to all students.')
-		));
+		$c->addbadmessage($c->maketext('Achievement has been unassigned to all students.'));
 		$doAssignToSelected = 1;
 	} elsif (defined $c->param('assignToSelected')) {
-		$c->addmessage($c->tag(
-			'p',
-			class => 'alert alert-success p-1 mb-0',
-			$c->maketext('Achievement has been assigned to selected users.')
-		));
+		$c->addgoodmessage($c->maketext('Achievement has been assigned to selected users.'));
 		$doAssignToSelected = 1;
 	} elsif (defined $c->param('unassignFromAll')) {
 		# no action taken
-		$c->addmessage($c->tag('p', class => 'alert alert-danger p-1 mb-0', $c->maketext('No action taken')));
+		$c->addbadmessage($c->maketext('No action taken'));
 	}
 
 	#do actual assignment and unassignment

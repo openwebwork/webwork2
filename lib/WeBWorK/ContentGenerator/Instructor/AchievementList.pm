@@ -122,8 +122,12 @@ sub initialize ($c) {
 		}
 
 		my $actionHandler = "${actionID}_handler";
-		$c->addmessage($c->tag('p', class => 'mb-1', $c->maketext('Results of last action performed: ')));
-		$c->addmessage($c->$actionHandler);
+		my ($success, $action_result) = $c->$actionHandler;
+		if ($success) {
+			$c->addgoodmessage($c->b($c->maketext('Result of last action performed: [_1]', $action_result)));
+		} else {
+			$c->addbadmessage($c->b($c->maketext('Result of last action performed: [_1]', $action_result)));
+		}
 	} else {
 		$c->addgoodmessage($c->maketext('Please select action to be performed.'));
 	}
@@ -155,7 +159,7 @@ sub edit_handler ($c) {
 	}
 	$c->{editMode} = 1;
 
-	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $result);
+	return (1, $result);
 }
 
 # Handler for assigning achievements to users
@@ -215,7 +219,7 @@ sub assign_handler ($c) {
 		}
 	}
 
-	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $c->maketext('Assigned achievements to users'));
+	return (1, $c->maketext('Assigned achievements to users'));
 }
 
 # Handler for scoring
@@ -249,11 +253,7 @@ sub score_handler ($c) {
 	$scoreFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{scoring}, $scoreFilePath);
 
 	my $SCORE = Mojo::File->new($scoreFilePath)->open('>:encoding(UTF-8)')
-		or return $c->tag(
-			'div',
-			class => 'alert alert-danger p-1 mb-0',
-			$c->maketext("Failed to open [_1]", $scoreFilePath)
-		);
+		or return (0, $c->maketext("Failed to open [_1]", $scoreFilePath));
 
 	# Print out header info
 	print $SCORE $c->maketext("username, last name, first name, section, achievement level, achievement score,");
@@ -308,9 +308,8 @@ sub score_handler ($c) {
 	$SCORE->close;
 
 	# Include a download link
-	return $c->tag(
-		'div',
-		class => 'alert alert-success p-1 mb-0',
+	return (
+		1,
 		$c->b($c->maketext(
 			'Achievement scores saved to [_1]',
 			$c->link_to(
@@ -352,11 +351,7 @@ sub delete_handler ($c) {
 	$c->{selectedAchievementIDs} = [ keys %selectedAchievementIDs ];
 
 	my $num = @achievementIDsToDelete;
-	return $c->tag(
-		'div',
-		class => 'alert alert-success p-1 mb-0',
-		$c->maketext('Deleted [quant,_1,achievement]', $num)
-	);
+	return (1, $c->maketext('Deleted [quant,_1,achievement]', $num));
 }
 
 # Handler for creating an ahcievement
@@ -367,16 +362,10 @@ sub create_handler ($c) {
 
 	# Create achievement
 	my $newAchievementID = $c->param('action.create.id');
-	return $c->tag(
-		'div',
-		class => 'alert alert-danger p-1 mb-0',
-		$c->maketext("Failed to create new achievement: no achievement ID specified!")
-	) unless $newAchievementID =~ /\S/;
-	return $c->tag(
-		'div',
-		class => 'alert alert-danger p-1 mb-0',
-		$c->maketext("Achievement [_1] exists.  No achievement created", $newAchievementID)
-	) if $db->existsAchievement($newAchievementID);
+	return (0, $c->maketext("Failed to create new achievement: no achievement ID specified!"))
+		unless $newAchievementID =~ /\S/;
+	return (0, $c->maketext("Achievement [_1] exists.  No achievement created", $newAchievementID))
+		if $db->existsAchievement($newAchievementID);
 	my $newAchievementRecord = $db->newAchievement;
 	my $oldAchievementID     = $c->{selectedAchievementIDs}->[0];
 
@@ -390,11 +379,8 @@ sub create_handler ($c) {
 		$newAchievementRecord->test('blankachievement.at');
 		$db->addAchievement($newAchievementRecord);
 	} elsif ($type eq "copy") {
-		return $c->tag(
-			'div',
-			class => 'alert alert-danger p-1 mb-0',
-			$c->maketext("Failed to duplicate achievement: no achievement selected for duplication!")
-		) unless $oldAchievementID =~ /\S/;
+		return (0, $c->maketext("Failed to duplicate achievement: no achievement selected for duplication!"))
+			unless $oldAchievementID =~ /\S/;
 		$newAchievementRecord = $db->getAchievement($oldAchievementID);
 		$newAchievementRecord->achievement_id($newAchievementID);
 		$db->addAchievement($newAchievementRecord);
@@ -410,17 +396,9 @@ sub create_handler ($c) {
 	# Add to local list of achievements
 	push @{ $c->{allAchievementIDs} }, $newAchievementID;
 
-	return $c->tag(
-		'div',
-		class => 'alert alert-danger p-1 mb-0',
-		$c->maketext("Failed to create new achievement: [_1]", $@)
-	) if $@;
+	return (0, $c->maketext("Failed to create new achievement: [_1]", $@)) if $@;
 
-	return $c->tag(
-		'div',
-		class => 'alert alert-success p-1 mb-0',
-		$c->maketext('Successfully created new achievement [_1]', $newAchievementID)
-	);
+	return (1, $c->maketext('Successfully created new achievement [_1]', $newAchievementID));
 }
 
 # Handler for importing achievements
@@ -436,8 +414,7 @@ sub import_handler ($c) {
 
 	# Open file name
 	my $fh = Mojo::File->new($filePath)->open('<:encoding(UTF-8)')
-		or
-		return $c->tag('div', class => 'alert alert-danger p-1 mb-0', $c->maketext("Failed to open [_1]", $filePath));
+		or return (0, $c->maketext("Failed to open [_1]", $filePath));
 
 	# Read in lines from file
 	my $count = 0;
@@ -510,11 +487,7 @@ sub import_handler ($c) {
 
 	$c->{allAchievementIDs} = [ keys %allAchievementIDs ];
 
-	return $c->tag(
-		'div',
-		class => 'alert alert-success p-1 mb-0',
-		$c->maketext('Imported [quant,_1,achievement]', $count)
-	);
+	return (1, $c->maketext('Imported [quant,_1,achievement]', $count));
 }
 
 # Export handler
@@ -532,14 +505,14 @@ sub export_handler ($c) {
 	}
 	$c->{exportMode} = 1;
 
-	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $result);
+	return (1, $result);
 }
 
 # Handler for leaving the export page.
 sub cancel_export_handler ($c) {
 	$c->{exportMode} = 0;
 
-	return $c->tag('div', class => 'alert alert-danger p-1 mb-0', $c->maketext('export abandoned'));
+	return (0, $c->maketext('export abandoned'));
 }
 
 # Handler actually exporting achievements.
@@ -563,8 +536,7 @@ sub save_export_handler ($c) {
 	$FilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}{achievements}, $FilePath);
 
 	my $fh = Mojo::File->new($FilePath)->open('>:encoding(UTF-8)')
-		or
-		return $c->tag('div', class => 'alert alert-danger p-1 mb-0', $c->maketext('Failed to open [_1]', $FilePath));
+		or return (0, $c->maketext('Failed to open [_1]', $FilePath));
 
 	my $csv = Text::CSV->new({ eol => "\n" });
 
@@ -585,17 +557,13 @@ sub save_export_handler ($c) {
 
 	$c->{exportMode} = 0;
 
-	return $c->tag(
-		'div',
-		class => 'alert alert-success p-1 mb-0',
-		$c->maketext('Exported achievements to [_1]', $FileName)
-	);
+	return (1, $c->maketext('Exported achievements to [_1]', $FileName));
 }
 
 # Handler for cancelling edits.
 sub cancel_edit_handler ($c) {
 	$c->{editMode} = 0;
-	return $c->tag('div', class => 'alert alert-danger p-1 mb-0', $c->maketext('changes abandoned'));
+	return (1, $c->maketext('changes abandoned'));
 }
 
 # Handler for saving edits.
@@ -630,7 +598,7 @@ sub save_edit_handler ($c) {
 
 	$c->{editMode} = 0;
 
-	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $c->maketext('changes saved'));
+	return (1, $c->maketext('changes saved'));
 }
 
 # Get list of files that can be imported.

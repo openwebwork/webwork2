@@ -54,7 +54,16 @@
 
 		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
 			.then((response) => response.json())
-			.then((data) => showMessage(data.server_response, data.result_data))
+			.then((data) => {
+				showMessage(data.server_response, data.result_data);
+				if (data.result_data) {
+					// Add the temporary file coloring and change the current file to the saved file.
+					document.querySelectorAll('.set-file-info').forEach((nfo) => nfo.classList.add('temporaryFile'));
+					for (const currentFile of document.querySelectorAll('.current-file')) {
+						currentFile.textContent = currentFile.dataset.tmpFile;
+					}
+				}
+			})
 			.catch((err) => showMessage(`Error saving temporary file: ${err?.message ?? err}`));
 	};
 
@@ -104,6 +113,12 @@
 				if (revertRadio && revertRadio.disabled) {
 					revertRadio.disabled = false;
 					revertRadio.checked = true;
+				}
+
+				// Add the temporary file coloring and change the current file to the saved file.
+				document.querySelectorAll('.set-file-info').forEach((nfo) => nfo.classList.add('temporaryFile'));
+				for (const currentFile of document.querySelectorAll('.current-file')) {
+					currentFile.textContent = currentFile.dataset.tmpFile;
 				}
 
 				if (editorForm) editorForm.target = 'WW_View';

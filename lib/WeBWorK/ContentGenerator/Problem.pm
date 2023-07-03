@@ -407,8 +407,8 @@ async sub pre_header_initialize ($c) {
 		}
 
 		$c->addmessage($c->{set}->visible
-			? $c->tag('span', class => 'font-visible', $c->maketext('This set is visible to students.'))
-			: $c->tag('span', class => 'font-hidden',  $c->maketext('This set is hidden from students.')));
+			? $c->tag('p', class => 'font-visible', $c->maketext('This set is visible to students.'))
+			: $c->tag('p', class => 'font-hidden',  $c->maketext('This set is hidden from students.')));
 
 	} else {
 		# Test for additional problem validity if it's not already invalid.
@@ -460,7 +460,7 @@ async sub pre_header_initialize ($c) {
 	$c->{formFields}     = $formFields;
 
 	# Get the status message and add it to the messages.
-	$c->addmessage($c->tag('p', class => 'my-2', $c->b($c->param('status_message')))) if $c->param('status_message');
+	$c->addmessage($c->tag('p', $c->b($c->param('status_message')))) if $c->param('status_message');
 
 	# Now that the necessary variables are set, return if the set or problem is invalid.
 	return if $c->{invalidSet} || $c->{invalidProblem};
