@@ -126,10 +126,14 @@
 					showMessage('Errors occurred perltidying code.', false);
 					return;
 				}
-				if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.setValue(data.result_data.tidiedPGCode);
-				else document.getElementById('problemContents').value = data.result_data.tidiedPGCode;
-				saveTempFile();
-				showMessage('Successfuly perltidied code.', true);
+				if (request_object.pgCode === data.result_data.tidiedPGCode) {
+					showMessage('There were no changes to the code.', true);
+				} else {
+					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.setValue(data.result_data.tidiedPGCode);
+					else document.getElementById('problemContents').value = data.result_data.tidiedPGCode;
+					saveTempFile();
+					showMessage('Successfuly perltidied code.', true);
+				}
 			})
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
 	};
