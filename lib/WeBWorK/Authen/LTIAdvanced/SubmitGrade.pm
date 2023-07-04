@@ -126,7 +126,7 @@ async sub submit_course_grade ($self, $userID) {
 	$self->warning("lis_source_did is not available for user: $userID")
 		if !$user->lis_source_did && $ce->{debug_lti_grade_passback};
 
-	return await $self->submit_grade($user->lis_source_did, grade_all_sets($db, $userID));
+	return await $self->submit_grade($user->lis_source_did, scalar(grade_all_sets($db, $userID)));
 }
 
 # Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.
