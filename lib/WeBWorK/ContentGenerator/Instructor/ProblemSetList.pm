@@ -156,7 +156,7 @@ sub pre_header_initialize ($c) {
 		my @setsToScore;
 
 		if ($scope eq 'none') {
-			return $c->maketext('No sets selected for scoring');
+			return;
 		} elsif ($scope eq 'all') {
 			@setsToScore = @{ $c->{allSetIDs} };
 		} elsif ($scope eq 'visible') {
@@ -164,6 +164,8 @@ sub pre_header_initialize ($c) {
 		} elsif ($scope eq 'selected') {
 			@setsToScore = $c->param('selected_sets');
 		}
+
+		return unless @setsToScore;
 
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('instructor_scoring'),
@@ -233,8 +235,12 @@ sub initialize ($c) {
 		# Check permissions
 		if (not FORM_PERMS()->{$actionID} or $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
 			my $actionHandler = "${actionID}_handler";
-			$c->addmessage($c->tag('p', class => 'mb-1', $c->maketext("Results of last action performed") . ": "));
-			$c->addmessage($c->$actionHandler);
+			my ($success, $action_result) = $c->$actionHandler;
+			if ($success) {
+				$c->addgoodmessage($c->b($c->maketext('Result of last action performed: [_1]', $action_result)));
+			} else {
+				$c->addbadmessage($c->b($c->maketext('Result of last action performed: [_1]', $action_result)));
+			}
 		} else {
 			$c->addbadmessage($c->maketext('You are not authorized to perform this action.'));
 		}
@@ -300,7 +306,7 @@ sub filter_handler ($c) {
 		$c->{visibleSetIDs} = [ map { $_->[0] } $db->listGlobalSetsWhere({ visible => 0 }) ];
 	}
 
-	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $result);
+	return (1, $result);
 }
 
 sub sort_handler ($c) {
@@ -318,11 +324,7 @@ sub sort_handler ($c) {
 		visible     => $c->maketext("Visibility"),
 	);
 
-	return $c->tag(
-		'div',
-		class => 'alert alert-success p-1 mb-0',
-		$c->maketext("Sort by [_1] and then by [_2]", $names{$primary}, $names{$secondary})
-	);
+	return (1, $c->maketext("Sort by [_1] and then by [_2]", $names{$primary}, $names{$secondary}));
 }
 
 sub edit_handler ($c) {
@@ -341,91 +343,53 @@ sub edit_handler ($c) {
 	}
 	$c->{editMode} = 1;
 
-	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $result);
+	return (1, $result);
 }
 
 sub publish_handler ($c) {
 	my $db = $c->db;
 
-	my $result = "";
+	my @result;
 
 	my $scope = $c->param('action.publish.scope');
 	my $value = $c->param('action.publish.value');
-
-	my $verb = $value ? $c->maketext("made visible for") : $c->maketext("hidden from");
 
 	my @setIDs;
 
 	if ($scope eq "none") {
 		@setIDs = ();
-		$result = $c->tag('div', class => 'alert alert-danger p-1 mb-0', $c->maketext("No change made to any set"));
+		@result = (0, $c->maketext("No change made to any set"));
 	} elsif ($scope eq "all") {
 		@setIDs = @{ $c->{allSetIDs} };
-		$result = $value
-			? $c->tag(
-				'div',
-				class => 'alert alert-success p-1 mb-0',
-				$c->maketext("All sets made visible for all students")
-			)
-			: $c->tag(
-				'div',
-				class => 'alert alert-success p-1 mb-0',
-				$c->maketext("All sets hidden from all students")
-			);
+		@result =
+			$value
+			? (1, $c->maketext("All sets made visible for all students"))
+			: (1, $c->maketext("All sets hidden from all students"));
 	} elsif ($scope eq "visible") {
 		@setIDs = @{ $c->{visibleSetIDs} };
-		$result = $value
-			? $c->tag(
-				'div',
-				class => 'alert alert-success p-1 mb-0',
-				$c->maketext("All listed sets were made visible for all the students")
-			)
-			: $c->tag(
-				'div',
-				class => 'alert alert-success p-1 mb-0',
-				$c->maketext("All listed sets were hidden from all the students")
-			);
+		@result =
+			$value
+			? (1, $c->maketext("All listed sets were made visible for all the students"))
+			: (1, $c->maketext("All listed sets were hidden from all the students"));
 	} elsif ($scope eq "selected") {
 		@setIDs = $c->param('selected_sets');
-		$result = $value
-			? $c->tag(
-				'div',
-				class => 'alert alert-success p-1 mb-0',
-				$c->maketext("All selected sets made visible for all students")
-			)
-			: $c->tag(
-				'div',
-				class => 'alert alert-success p-1 mb-0',
-				$c->maketext("All selected sets hidden from all students")
-			);
+		@result =
+			$value
+			? (1, $c->maketext("All selected sets made visible for all students"))
+			: (1, $c->maketext("All selected sets hidden from all students"));
 	}
 
 	# Can we use UPDATE here, instead of fetch/change/store?
 	my @sets = $db->getGlobalSets(@setIDs);
 	map { $_->visible($value); $db->putGlobalSet($_); } @sets;
 
-	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $result);
+	return @result;
 }
 
 sub score_handler ($c) {
-	my $courseName = $c->stash('courseID');
-
-	my $scope = $c->param('action.score.scope');
-	my @setsToScore;
-
-	if ($scope eq 'none') {
-		@setsToScore = ();
-		return $c->maketext('No sets selected for scoring');
-	} elsif ($scope eq 'all') {
-		@setsToScore = @{ $c->{allSetIDs} };
-	} elsif ($scope eq 'visible') {
-		@setsToScore = @{ $c->{visibleSetIDs} };
-	} elsif ($scope eq 'selected') {
-		@setsToScore = $c->param('selected_sets');
-	}
-
-	return $c->systemLink($c->url_for('instructor_scoring'),
-		params => { scoreSelected => 'Score Selected', selectedSet => \@setsToScore });
+	# The only time this is called is if "no sets" is selected (do we really need that option),
+	# or one of the other options was selected but there were no sets to score.
+	return (0, $c->maketext('No sets selected for scoring.'));
 }
 
 sub delete_handler ($c) {
@@ -455,7 +419,7 @@ sub delete_handler ($c) {
 	$c->{selectedSetIDs} = [ keys %selectedSetIDs ];
 
 	my $num = @setIDsToDelete;
-	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $c->maketext('deleted [_1] sets', $num));
+	return (1, $c->maketext('deleted [_1] sets', $num));
 }
 
 sub create_handler ($c) {
@@ -463,28 +427,19 @@ sub create_handler ($c) {
 	my $ce = $c->ce;
 
 	my $newSetID = format_set_name_internal($c->param('action.create.name') // '');
-	return $c->tag(
-		'div',
-		class => 'alert alert-danger p-1 mb-0',
-		$c->maketext("Failed to create new set: Set name cannot exceed 100 characters.")
-	) if (length($newSetID) > 100);
-	return $c->tag(
-		'div',
-		class => 'alert alert-danger p-1 mb-0',
-		$c->maketext("Failed to create new set: No set name specified.")
-	) unless $newSetID =~ /\S/;
-	return $c->tag(
-		'div',
-		class => 'alert alert-danger p-1 mb-0',
+	return (0, $c->maketext("Failed to create new set: Set name cannot exceed 100 characters."))
+		if (length($newSetID) > 100);
+	return (0, $c->maketext("Failed to create new set: No set name specified.")) unless $newSetID =~ /\S/;
+	return (
+		0,
 		$c->maketext(
 			'Failed to create new set: Invalid characters in set name "[_1]". '
 				. 'A set name may only contain letters, numbers, hyphens, periods, and spaces.',
 			$newSetID =~ s/_/ /gr
 		)
 	) unless $newSetID =~ m/^[-a-zA-Z0-9_.]*$/;
-	return $c->tag(
-		'div',
-		class => 'alert alert-danger p-1 mb-0',
+	return (
+		0,
 		$c->maketext(
 			'The set name "[_1]" is already in use. Pick a different name if you would like to start a new set. '
 				. 'No set created.',
@@ -524,11 +479,7 @@ sub create_handler ($c) {
 		$newSetRecord->assignment_type('default');
 		$db->addGlobalSet($newSetRecord);
 	} elsif ($type eq "copy") {
-		return $c->tag(
-			'div',
-			class => 'alert alert-danger p-1 mb-0',
-			$c->maketext('Failed to duplicate set: no set selected for duplication!')
-		) unless $oldSetID =~ /\S/;
+		return (0, $c->maketext('Failed to duplicate set: no set selected for duplication!')) unless $oldSetID =~ /\S/;
 		$newSetRecord = $db->getGlobalSet($oldSetID);
 		$newSetRecord->set_id($newSetID);
 		$db->addGlobalSet($newSetRecord);
@@ -570,12 +521,10 @@ sub create_handler ($c) {
 	push @{ $c->{visibleSetIDs} }, $newSetID;
 	push @{ $c->{allSetIds} },     $newSetID;
 
-	return $c->tag('div', class => 'alert alert-danger p-1 mb-0', $c->maketext('Failed to create new set: [_1]', $@))
-		if $@;
+	return (0, $c->maketext('Failed to create new set: [_1]', $@)) if $@;
 
-	return $c->tag(
-		'div',
-		class => 'alert alert-success p-1 mb-0',
+	return (
+		1,
 		$c->b($c->maketext(
 			'Successfully created new set [_1]',
 			$c->tag('span', dir => 'ltr', format_set_name_display($newSetID))
@@ -600,9 +549,8 @@ sub import_handler ($c) {
 	my $numAdded   = @$added;
 	my $numSkipped = @$skipped;
 
-	return $c->tag(
-		'div',
-		class => 'alert alert-success p-1 mb-0',
+	return (
+		1,
 		$c->maketext(
 			'[_1] sets added, [_2] sets skipped. Skipped sets: ([_3])', $numAdded,
 			$numSkipped,                                                join(', ', @$skipped)
@@ -627,7 +575,7 @@ sub export_handler ($c) {
 	}
 	$c->{exportMode} = 1;
 
-	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $result);
+	return (1, $result);
 }
 
 sub cancel_export_handler ($c) {
@@ -640,7 +588,7 @@ sub cancel_export_handler ($c) {
 	}
 	$c->{exportMode} = 0;
 
-	return $c->tag('div', class => 'alert alert-danger p-1 mb-0', $c->maketext('export abandoned'));
+	return (0, $c->maketext('export abandoned'));
 }
 
 sub save_export_handler ($c) {
@@ -660,13 +608,11 @@ sub save_export_handler ($c) {
 
 	my $numExported = @$exported;
 	my $numSkipped  = @$skipped;
-	my $resultFont  = $numSkipped ? 'alert-danger' : 'alert-success';
 
 	my @reasons = map { "set $_ - " . $reason->{$_} } keys %$reason;
 
-	return $c->tag(
-		'div',
-		class => "alert $resultFont p-1 mb-0",
+	return (
+		!$numSkipped,
 		$c->b($c->maketext(
 			'[_1] sets exported, [_2] sets skipped. Skipped sets: ([_3])',
 			$numExported, $numSkipped,
@@ -685,7 +631,7 @@ sub cancel_edit_handler ($c) {
 	}
 	$c->{editMode} = 0;
 
-	return $c->tag('div', class => 'alert alert-danger p-1 mb-0', $c->maketext('changes abandoned'));
+	return (0, $c->maketext('changes abandoned'));
 }
 
 sub save_edit_handler ($c) {
@@ -722,37 +668,20 @@ sub save_edit_handler ($c) {
 		my $curr_time        = time;
 		my $seconds_per_year = 31_556_926;
 		my $cutoff           = $curr_time + $seconds_per_year * 10;
-		return $c->tag(
-			'div',
-			class => 'alert alert-danger p-1 mb-0',
-			$c->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID)
-		) if $Set->open_date > $cutoff;
-		return $c->tag(
-			'div',
-			class => 'alert alert-danger p-1 mb-0',
-			$c->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID)
-		) if $Set->due_date > $cutoff;
-		return $c->tag(
-			'div',
-			class => 'alert alert-danger p-1 mb-0',
-			$c->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID)
-		) if $Set->answer_date > $cutoff;
+		return (0, $c->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID))
+			if $Set->open_date > $cutoff;
+		return (0, $c->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID))
+			if $Set->due_date > $cutoff;
+		return (0, $c->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID))
+			if $Set->answer_date > $cutoff;
 
 		# Check that the open, due and answer dates are in increasing order.
 		# Bail if this is not correct.
 		if ($Set->open_date > $Set->due_date) {
-			return $c->tag(
-				'div',
-				class => 'alert alert-danger p-1 mb-0',
-				$c->maketext("Error: Close date must come after open date in set [_1]", $setID)
-			);
+			return (0, $c->maketext("Error: Close date must come after open date in set [_1]", $setID));
 		}
 		if ($Set->due_date > $Set->answer_date) {
-			return $c->tag(
-				'div',
-				class => 'alert alert-danger p-1 mb-0',
-				$c->maketext("Error: Answer date must come after close date in set [_1]", $setID)
-			);
+			return (0, $c->maketext("Error: Answer date must come after close date in set [_1]", $setID));
 		}
 
 		# check that the reduced scoring date is in the right place
@@ -769,9 +698,8 @@ sub save_edit_handler ($c) {
 				|| $Set->reduced_scoring_date < $Set->open_date)
 			)
 		{
-			return $c->tag(
-				'div',
-				class => 'alert alert-danger p-1 mb-0',
+			return (
+				0,
 				$c->maketext(
 					"Error: Reduced scoring date must come between the open date and close date in set [_1]",
 					$setID
@@ -792,7 +720,7 @@ sub save_edit_handler ($c) {
 
 	$c->{editMode} = 0;
 
-	return $c->tag('div', class => 'alert alert-success p-1 mb-0', $c->maketext("changes saved"));
+	return (1, $c->maketext("changes saved"));
 }
 
 # Utilities
