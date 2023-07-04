@@ -61,6 +61,8 @@ JSON_ERROR_LOG: 0
 #    Access-Control-Allow-Origin: '*'
 #  /webwork2_files:
 #    Access-Control-Allow-Origin: '*'
+#  /pg_files:
+#    Access-Control-Allow-Origin: '*'
 
 # The user and group to run the server as.  These are only used when the
 # webwork2 app is in production mode and run as the root user.  This means that
