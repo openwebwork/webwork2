@@ -50,7 +50,7 @@
 	}
 
 	const md_section = RegExp('DESCRIPTION|KEYWORDS|DBsubject|DBchapter|DBsection|Date|Author|Institution ' +
-		'|MO|Static|TitleText|EditionText|AuthorText|Section|Problem|Language|Level';
+		'|MO|Static|TitleText|EditionText|AuthorText|Section|Problem|Language|Level');
 
 	// Custom version of getMode for PG files.
 	function getMode(cm, pos) {
@@ -183,29 +183,23 @@
 	});
 
 	CodeMirror.defineExtension("uncomment", function(from, to, options) {
-		console.log('uncommenting');
 		if (!options) options = noOptions;
 		var self = this, mode = getMode(self, from);
-		console.log(mode);
 		var end = Math.min(to.ch != 0 || to.line == from.line ? to.line : to.line - 1, self.lastLine()), start = Math.min(from.line, end);
 
 		// Try finding line comments
 		var lineString = options.lineComment || mode.lineComment, lines = [];
 		var pad = options.padding == null ? " " : options.padding, didSomething;
 		lineComment: {
-			console.log(lineString);
 			if (!lineString) break lineComment;
 			for (var i = start; i <= end; ++i) {
 				var line = self.getLine(i);
 				var found = line.indexOf(lineString);
-				console.log(found);
-				console.log(self.getTokenTypeAt(Pos(i, found + 1)));
 				if (found > -1 && !/comment/.test(self.getTokenTypeAt(Pos(i, found + 1)))) found = -1;
 				if (found == -1 && nonWS.test(line)) break lineComment;
 				if (found > -1 && nonWS.test(line.slice(0, found))) break lineComment;
 				lines.push(line);
 			}
-			console.log(lines);
 			self.operation(function() {
 				for (var i = start; i <= end; ++i) {
 					var line = lines[i - start];
