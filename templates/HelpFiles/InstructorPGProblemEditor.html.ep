@@ -120,6 +120,14 @@
 			. 'generating the PDF file using pdflatex.') =%>
 	</dd>
 
+	<dt><%= maketext('Tidy Code') %></dt>
+	<dd>
+		<%= maketext('Reformat the code using perltidy. This will change the code in the editor window, and save '
+			. 'changes to the temporary file. In some cases (if the code contains backslashes or double tildes) this '
+			. 'can result in odd spacing in the code. So make sure to inspect the formatted code, and edit further or '
+			. 'revert if needed.') =%>
+	</dd>
+
 	<dt><%= maketext('Save') %></dt>
 	<dd>
 		<%= maketext('Save the contents of the editor window to the file on disk and re-render the problem. If '

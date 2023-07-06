@@ -127,6 +127,7 @@ my @modulesList = qw(
 	Opcode
 	PadWalker
 	Path::Class
+	Perl::Tidy
 	PHP::Serialization
 	Pod::Simple::Search
 	Pod::Simple::XHTML
@@ -160,6 +161,7 @@ my %moduleVersion = (
 	'LWP::Protocol::https' => 6.06,
 	'Mojolicious'          => 9.22,
 	'Net::SSLeay'          => 1.46,
+	'Perl::Tidy'           => 20220613
 );
 
 my ($test_programs, $test_modules, $show_help);
