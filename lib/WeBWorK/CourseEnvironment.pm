@@ -101,6 +101,11 @@ sub new {
 	my %ORIG_SIG;
 	$ORIG_SIG{$_} = $SIG{$_} for keys %SIG;
 
+	# The following line is a work around for a bug that occurs on some systems.  See
+	# https://rt.cpan.org/Public/Bug/Display.html?id=77916 and
+	# https://github.com/openwebwork/webwork2/pull/2098#issuecomment-1619812699.
+	%+;
+
 	my $safe = Safe->new;
 	$safe->permit('rand');
 	# seed course environment with initial values
