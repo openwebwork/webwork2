@@ -61,8 +61,7 @@ use constant CODEMIRROR_ADDONS_JS => [
 	'search/searchcursor.js',      'search/matchesonscrollbar.js',
 	'search/match-highlighter.js', 'search/match-highlighter.js',
 	'scroll/annotatescrollbar.js', 'edit/matchbrackets.js',
-	'comment/comment.js',          'fold/foldcode.js',
-	'fold/foldgutter.js'
+	'fold/foldcode.js',            'fold/foldgutter.js'
 ];
 
 sub generate_codemirror_html ($c, $name, $contents = '', $mode = 'PG') {
