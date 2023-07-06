@@ -130,4 +130,5 @@
 	forceRTL.addEventListener('change', () => {
 		cm.setOption('direction', forceRTL.checked ? 'rtl' : 'ltr');
 	});
+
 })();

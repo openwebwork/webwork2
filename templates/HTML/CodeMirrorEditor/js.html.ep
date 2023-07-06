@@ -24,6 +24,7 @@
 		% }
 		%
 		<%= javascript getAssetURL($ce, 'js/PGCodeMirror/pgeditor.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/PGCodeMirror/comment.js'), defer => undef =%>
 	% end
 % }
 %

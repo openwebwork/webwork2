@@ -1017,7 +1017,7 @@
 						return tokenPGMLComment(stream,state,"```",style,newPrevState);
 					}
 				} else if (stream.match(/^\[%/)) { // Comment
-					style = "bracket";
+					style = "comment";
 					state.tokenize = function(stream,state) {
 						return tokenPGMLComment(stream,state,"%\\]",style,newPrevState);
 					}
