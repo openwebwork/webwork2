@@ -21,13 +21,10 @@ use warnings;
 
 use Data::Structure::Util qw(unbless);
 
-use WeBWorK::Debug;
 use WeBWorK::PG::Tidy qw(pgtidy);
 
 sub getUserProblem {
 	my ($invocant, $self, $params) = @_;
-
-	debug('in getUserProblem');
 
 	my $db = $self->db;
 
@@ -43,8 +40,6 @@ sub getUserProblem {
 
 sub putUserProblem {
 	my ($invocant, $self, $params) = @_;
-
-	debug('in putUserProblem');
 
 	my $db = $self->db;
 
@@ -75,8 +70,6 @@ sub putUserProblem {
 
 sub putProblemVersion {
 	my ($invocant, $self, $params) = @_;
-
-	debug('in putProblemVersion');
 
 	my $db = $self->db;
 
@@ -109,8 +102,6 @@ sub putProblemVersion {
 sub putPastAnswer {
 	my ($invocant, $self, $params) = @_;
 
-	debug('in putPastAnswer');
-
 	my $db = $self->db;
 
 	my $pastAnswer = $db->getPastAnswer($params->{answer_id});
@@ -136,8 +127,6 @@ sub putPastAnswer {
 
 sub tidyPGCode {
 	my ($invocant, $self, $params) = @_;
-
-	debug('in tidyPGCode');
 
 	local @ARGV = ();
 
