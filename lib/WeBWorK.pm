@@ -87,19 +87,13 @@ async sub dispatch ($c) {
 	my $displayModule = ref $c;
 	my %routeCaptures = %{ $c->stash->{'mojo.captures'} };
 
-	if ($c->current_route =~ /^render_rpc|instructor_rpc|html2xml$/) {
+	if ($c->current_route =~ /^(render_rpc|instructor_rpc|html2xml)$/) {
 		$c->{rpc} = 1;
 
 		# This provides compatibility for legacy html2xml parameters.
 		# This should be deleted when the html2xml endpoint is removed.
 		if ($c->current_route eq 'html2xml') {
-			for (
-				[ 'userID',          'user' ],
-				[ 'courseName',      'courseID' ],
-				[ 'course_password', 'passwd' ],
-				[ 'session_key',     'key' ]
-				)
-			{
+			for ([ 'userID', 'user' ], [ 'course_password', 'passwd' ], [ 'session_key', 'key' ]) {
 				$c->param($_->[1], $c->param($_->[0])) if defined $c->param($_->[0]) && !defined $c->param($_->[1]);
 			}
 		}
