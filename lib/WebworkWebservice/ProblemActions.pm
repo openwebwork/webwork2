@@ -21,12 +21,10 @@ use warnings;
 
 use Data::Structure::Util qw(unbless);
 
-use WeBWorK::Debug;
+use WeBWorK::PG::Tidy qw(pgtidy);
 
 sub getUserProblem {
 	my ($invocant, $self, $params) = @_;
-
-	debug('in getUserProblem');
 
 	my $db = $self->db;
 
@@ -42,8 +40,6 @@ sub getUserProblem {
 
 sub putUserProblem {
 	my ($invocant, $self, $params) = @_;
-
-	debug('in putUserProblem');
 
 	my $db = $self->db;
 
@@ -74,8 +70,6 @@ sub putUserProblem {
 
 sub putProblemVersion {
 	my ($invocant, $self, $params) = @_;
-
-	debug('in putProblemVersion');
 
 	my $db = $self->db;
 
@@ -108,8 +102,6 @@ sub putProblemVersion {
 sub putPastAnswer {
 	my ($invocant, $self, $params) = @_;
 
-	debug('in putPastAnswer');
-
 	my $db = $self->db;
 
 	my $pastAnswer = $db->getPastAnswer($params->{answer_id});
@@ -130,6 +122,23 @@ sub putPastAnswer {
 			"Updated answer $params->{answer_id} for problem $pastAnswer->{problem_id} of $pastAnswer->{set_id} "
 			. "for user $pastAnswer->{user_id} in course "
 			. $self->ce->{courseName} . '.'
+	};
+}
+
+sub tidyPGCode {
+	my ($invocant, $self, $params) = @_;
+
+	local @ARGV = ();
+
+	my $code = $params->{pgCode};
+	my $tidiedPGCode;
+	my $errors;
+
+	my $result = pgtidy(source => \$code, destination => \$tidiedPGCode, errorfile => \$errors);
+
+	return {
+		ra_out => { tidiedPGCode => $tidiedPGCode, status => $result, errors => $errors },
+		text   => 'Tidied code'
 	};
 }
 

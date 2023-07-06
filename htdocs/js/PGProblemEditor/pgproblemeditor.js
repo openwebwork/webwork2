@@ -98,7 +98,53 @@
 			?.addEventListener('change', () => deleteBackupCheck.checked = true);
 	}
 
+	// Send a request to the server to perltidy the current PG code in the CodeMirror editor.
+	const tidyPGCode = () => {
+		const request_object = {
+			user: document.getElementById('hidden_user')?.value,
+			courseID: document.getElementsByName('courseID')[0]?.value,
+			key: document.getElementById('hidden_key')?.value
+		};
+
+		request_object.rpc_command = 'tidyPGCode';
+		request_object.pgCode = webworkConfig?.pgCodeMirror?.getValue()
+			?? document.getElementById('problemContents')?.value ?? '';
+
+		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
+			.then((response) => response.json())
+			.then((data) => {
+				if (data.result_data.status) {
+					if (data.result_data.errors) {
+						renderArea.innerHTML = '<div class="alert alert-danger p-1 m-2">' +
+							'<p class="fw-bold">PG perltidy errors:</p>' +
+							'<pre><code>' +
+							data.result_data.errors
+							.replace(/^[\s\S]*Begin Error Output Stream\n\n/, '')
+							.replace(/\n\d*: To save a full \.LOG file rerun with -g/, '') +
+							'</code></pre>';
+					}
+					showMessage('Errors occurred perltidying code.', false);
+					return;
+				}
+				if (request_object.pgCode === data.result_data.tidiedPGCode) {
+					showMessage('There were no changes to the code.', true);
+				} else {
+					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.setValue(data.result_data.tidiedPGCode);
+					else document.getElementById('problemContents').value = data.result_data.tidiedPGCode;
+					saveTempFile();
+					showMessage('Successfuly perltidied code.', true);
+				}
+			})
+			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
+	};
+
 	document.getElementById('take_action')?.addEventListener('click', async (e) => {
+		if (document.getElementById('current_action')?.value === 'pgtidy') {
+			e.preventDefault();
+			tidyPGCode();
+			return;
+		}
+
 		const actionView = document.getElementById('view');
 		const editorForm = document.getElementById('editor');
 
