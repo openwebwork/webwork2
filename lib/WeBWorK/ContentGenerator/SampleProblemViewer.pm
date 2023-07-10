@@ -47,7 +47,7 @@ sub renderSampleProblem ($c) {
 	(undef, my $macro_files) = Pod::Simple::Search->new->inc(0)->survey("$pg_root/macros");
 	$c->log->info($c->dumper($macro_files));
 	my %macro_locations = map { basename($_) => $_ =~ s!$pg_root/macros/!!r } keys %$macro_files;
-	my $metadata        = generateMetadata("$pg_root/doc/sample-problems", macro_locations => \%macro_locations);
+	my $metadata        = generateMetadata("$pg_root/tutorial/sample-problems", macro_locations => \%macro_locations);
 
 	if (grep { $c->stash->{filePath} eq $_ } qw(categories techniques subjects macros)) {
 		my %labels = (
@@ -88,7 +88,7 @@ sub renderSampleProblem ($c) {
 		# Render the .pg file as a downloadable file.
 		return $c->render_file(
 			data => parseSampleProblem(
-				"$pg_root/doc/sample-problems/" . $c->stash->{filePath},
+				"$pg_root/tutorial/sample-problems/" . $c->stash->{filePath},
 				metadata    => $metadata,
 				pod_root    => $c->url_for('pod_index'),
 				pg_doc_home => $c->url_for('sample_problem_index')
@@ -100,7 +100,7 @@ sub renderSampleProblem ($c) {
 		}
 
 		# Render a problem with its documentation.
-		my $problemFile = "$pg_root/doc/sample-problems/" . $c->stash->{filePath} . '.pg';
+		my $problemFile = "$pg_root/tutorial/sample-problems/" . $c->stash->{filePath} . '.pg';
 		return $c->render(
 			'ContentGenerator/SampleProblemViewer/sample_problem',
 			%{

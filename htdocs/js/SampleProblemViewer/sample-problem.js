@@ -3,5 +3,5 @@ for (const pre of document.body.querySelectorAll('pre.CodeMirror')) {
 }
 
 for (const btn of document.querySelectorAll('.clipboard-btn')) {
-	btn.addEventListener('click', () => navigator.clipboard.writeText(btn.dataset.code));
+	if (navigator.clipboard) btn.addEventListener('click', () => navigator.clipboard.writeText(btn.dataset.code));
 }
