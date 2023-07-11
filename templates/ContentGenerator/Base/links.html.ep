@@ -289,6 +289,10 @@
 			% if ($authz->hasPermissions($userID, 'score_sets')) {
 				<li class="list-group-item nav-item"><%= $makelink->('instructor_scoring') %></li>
 			% }
+			% # LTI Grade Update
+			% if ($ce->{LTIGradeMode} && $authz->hasPermissions($userID, 'score_sets')) {
+				<li class="list-group-item nav-item"><%= $makelink->('instructor_lti_update') %></li>
+			% }
 			% # Achievment Editor
 			% if ($ce->{achievementsEnabled} && $authz->hasPermissions($userID, 'edit_achievements')) {
 				<li class="list-group-item nav-item"><%= $makelink->('instructor_achievement_list') %></li>
@@ -313,10 +317,6 @@
 			% # File Manager
 			% if ($authz->hasPermissions($userID, 'manage_course_files')) {
 				<li class="list-group-item nav-item"><%= $makelink->('instructor_file_manager') %></li>
-			% }
-			% # LTI Grade Update
-			% if ($ce->{LTIGradeMode} && $authz->hasPermissions($userID, 'score_sets')) {
-				<li class="list-group-item nav-item"><%= $makelink->('instructor_lti_update') %></li>
 			% }
 			% # Course Configuration
 			% if ($authz->hasPermissions($userID, "manage_course_files")) {
