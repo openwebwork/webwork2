@@ -1,4 +1,4 @@
-% last if $c->{file_type} eq 'course_info';
+% last unless $c->{is_pg};
 %
 % my $allSetNames = [ map { $_->[0] =~ s/^set|\.def$//gr } $db->listGlobalSetsWhere({}, 'set_id') ];
 %
