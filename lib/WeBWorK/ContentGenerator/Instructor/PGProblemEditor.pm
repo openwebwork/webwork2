@@ -739,6 +739,18 @@ sub view_handler ($c) {
 				status_message => $c->{status_message}->join('')
 			}
 		));
+	} elsif ($c->{file_type} eq 'blank_problem') {
+		# Redirect to Problem.pm.pm.
+		$c->reply_with_redirect($c->systemLink(
+			$c->url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
+			params => {
+				displayMode    => $displayMode,
+				problemSeed    => $problemSeed,
+				editMode       => 'temporaryFile',
+				sourceFilePath => $relativeTempFilePath,
+				status_message => $c->{status_message}->join('')
+			}
+		));
 	} elsif ($c->{file_type} eq 'set_header') {
 		# Redirect to ProblemSet
 		$c->reply_with_redirect($c->systemLink(
