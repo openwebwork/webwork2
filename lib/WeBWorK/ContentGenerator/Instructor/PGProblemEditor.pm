@@ -89,14 +89,13 @@ The behavior on submit is defined by the value of $file_type and the value of
 the submit button pressed (the action).
 
     Requested actions and aliases
-        Save:                      action = save
-        Save as:                   action = save_as
-        View Problem:              action = view
-        Add this problem to:       action = add_problem
-        Make this set header for:  action = add_problem
-        Revert:                    action = revert
+        View/Reload                action = view
         Generate Hardcopy:         action = hardcopy
         Tidy Code:                 action = pgtidy
+        Save:                      action = save
+        Save as:                   action = save_as
+        Append:                    action = add_problem
+        Revert:                    action = revert
 
 An undefined or invalid action is interpreted as an initial edit of the file.
 
@@ -157,7 +156,7 @@ sub pre_header_initialize ($c) {
 	$c->{problemSeed} = (($c->param('problemSeed') // '') =~ s/^\s*|\s*$//gr) || DEFAULT_SEED();
 
 	# Save file to permanent or temporary file, then redirect for viewing if it was requested to view in a new window.
-	# Any file "saved as" should be assigned to "Undefined_Set" and redirected to be viewed again in the editor.
+	# Any problem file "saved as" should be assigned to "Undefined_Set" and redirected to be viewed again in the editor.
 	# Problems "saved" or 'refreshed' are to be redirected to the Problem.pm module
 	# Set headers which are "saved" are to be redirected to the ProblemSet.pm page
 	# Hardcopy headers which are "saved" are also to be redirected to the ProblemSet.pm page
@@ -175,8 +174,8 @@ sub pre_header_initialize ($c) {
 			$c->{file_type} =
 				$c->param('sourceFilePath') =~ m!/headers/|Header\.pg$! ? 'set_header' : 'source_path_for_problem_file';
 		} elsif (defined $c->{problemID}) {
-			if ($c->{problemID} =~ /^\d+$/ && $c->{problemID} == 0) {
-				$c->{file_type} = 'set_header' unless $c->{file_type} eq 'hardcopy_header';
+			if ($c->{problemID} == 0) {
+				$c->{file_type} = 'set_header';
 			} else {
 				$c->{file_type} = 'problem';
 			}
@@ -185,12 +184,9 @@ sub pre_header_initialize ($c) {
 		}
 	}
 
-	# Clean up sourceFilePath and check that sourceFilePath is relative to the templates file
+	# Clean up sourceFilePath and check that sourceFilePath is relative to the templates folder
 	if ($c->{file_type} eq 'source_path_for_problem_file') {
-		my $sourceFilePath = $c->param('sourceFilePath');
-		$sourceFilePath =~ s/$ce->{courseDirs}{templates}//;
-		$sourceFilePath =~ s|^/||;
-		$c->{sourceFilePath} = $sourceFilePath;
+		$c->{sourceFilePath} = $c->getRelativeSourceFilePath($c->param('sourceFilePath'));
 	}
 
 	# Initialize these values in case of failure in the getFilePaths method.
@@ -262,7 +258,7 @@ sub initialize ($c) {
 		));
 	}
 
-	# Find the text for the problem, either in the temporary file if it exists, in the original file in the template
+	# Find the text for the editor, either in the temporary file if it exists, in the original file in the template
 	# directory, or in the problem contents gathered in the initialization phase.
 
 	my $problemContents = ${ $c->{r_problemContents} };
@@ -376,8 +372,7 @@ sub determineTempEditFilePath ($c, $path) {
 		$c->addbadmessage($c->maketext('The path can not be the temporary edit directory.'));
 	} else {
 		if ($path =~ /^$templatesDirectory/) {
-			$path =~ s|^$templatesDirectory||;
-			$path =~ s|^/||;                     # remove the initial slash if any
+			$path = $c->getRelativeSourceFilePath($path);
 			$path = "$tmpEditFileDirectory/$path.$user.tmp";
 		} elsif ($path eq $c->ce->{webworkFiles}{screenSnippets}{blankProblem}) {
 			# Handle the case of the blank problem in snippets.
