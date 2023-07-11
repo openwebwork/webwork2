@@ -149,6 +149,7 @@ my @modulesList = qw(
 	Types::Serialiser
 	URI::Escape
 	UUID::Tiny
+	XML::LibXML
 	XML::Parser
 	XML::Parser::EasyTree
 	XML::Writer

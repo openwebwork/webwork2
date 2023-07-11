@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<theme label="Empty">
+
+<description>
+This theme is meant for rendering problems with no metadata or styling beyond
+the LaTeX defaults for the article class. Each problem gets its own page,
+including the PG header.
+</description>
+
+<preamble>
+\documentclass{article}
+\usepackage{webwork2}
+\pagestyle{empty}
+\parindent=0pt
+\begin{document}
+</preamble>
+
+<presetheader></presetheader>
+
+<postsetheader></postsetheader>
+
+<problemheader>
+\newpage
+</problemheader>
+
+<problemfooter></problemfooter>
+
+<problemdivider></problemdivider>
+
+<setfooter></setfooter>
+
+<setdivider>
+\newpage
+</setdivider>
+
+<userdivider>
+\newpage
+</userdivider>
+
+<postamble>
+\end{document}
+</postamble>
+
+</theme>

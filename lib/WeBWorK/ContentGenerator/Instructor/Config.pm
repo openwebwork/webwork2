@@ -93,6 +93,20 @@ sub getConfigValues ($c, $ce) {
 	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
 	my $themes = [ grep { !/^\.{1,2}$/ && $_ ne 'layouts' } sort readdir($dh) ];
 
+	# Get the list of all hardcopy theme files
+	my $hardcopyThemeDirSite   = $ce->{webworkDirs}{hardcopyThemes};
+	my $hardcopyThemeDirCourse = $ce->{courseDirs}{hardcopyThemes};
+	opendir(my $dhS, $hardcopyThemeDirSite)   || die "can't opendir $hardcopyThemeDirSite: $!";
+	opendir(my $dhC, $hardcopyThemeDirCourse) || die "can't opendir $hardcopyThemeDirCourse: $!";
+	my $hardcopyThemes = [ grep {/\.xml$/} (sort readdir($dhS), sort readdir($dhC)) ];
+	# get unique file names
+	$hardcopyThemes = [
+		sort(do {
+			my %seen;
+			grep { !$seen{$_}++ } @$hardcopyThemes;
+		})
+	];
+
 	# get list of localization dictionaries
 	my $localizeDir = $ce->{webworkDirs}{localize};
 	opendir(my $dh2, $localizeDir) || die "can't opendir $localizeDir: $!";
@@ -104,13 +118,18 @@ sub getConfigValues ($c, $ce) {
 
 	];
 
-	# insert the anonymous array of theme folder names into configValues
+	# insert the anonymous array of theme names into configValues
 	# FIXME?  Is there a reason this is an array? Couldn't we replace this
 	# with a hash and conceptually simplify this routine? MEG
 	my $modifyThemes = sub {
 		my $item = shift;
-		if (ref($item) =~ /HASH/ and $item->{var} eq 'defaultTheme') {
-			$item->{values} = $themes;
+		if (ref($item) =~ /HASH/
+			&& ($item->{var} =~ /^(defaultTheme|hardcopyThemes|hardcopyTheme|hardcopyThemePGEditor)$/))
+		{
+			$item->{values} = $themes if ($item->{var} eq 'defaultTheme');
+			$item->{values} = $ce->{hardcopyThemes}
+				if ($item->{var} eq 'hardcopyTheme' || $item->{var} eq 'hardcopyThemePGEditor');
+			$item->{values} = $hardcopyThemes if ($item->{var} eq 'hardcopyThemes');
 		}
 	};
 	my $modifyLanguages = sub {

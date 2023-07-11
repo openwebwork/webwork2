@@ -9,7 +9,6 @@ logs/*
 conf/*
 !conf/*.dist*
 !conf/*.config
-!conf/snippets
 
 node_modules
 

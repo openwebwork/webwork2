@@ -108,6 +108,7 @@ not exist.  The path to the actual file being edited is stored in inputFilePath.
 =cut
 
 use File::Copy;
+use XML::LibXML;
 
 use WeBWorK::Utils qw(jitar_id_to_seq not_blank path_is_subdir seq_to_jitar_id x
 	surePathToFile readDirectory readFile max format_set_name_display);
@@ -297,6 +298,23 @@ sub initialize ($c) {
 
 	$c->stash->{problemContents} = $problemContents;
 
+	# Get labels for the hardcopy themes, so the templates can use them.
+	my %hardcopyLabels;
+	my $hardcopyThemeDirSite = $ce->{webworkDirs}{hardcopyThemes};
+	opendir(my $dhS, $hardcopyThemeDirSite) || die "can't opendir $hardcopyThemeDirSite: $!";
+	for my $hardcopyTheme (grep {/\.xml$/} sort readdir($dhS)) {
+		my $themeTree = XML::LibXML->load_xml(location => "$hardcopyThemeDirSite/$hardcopyTheme");
+		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label');
+	}
+	my $hardcopyThemeDirCourse = $ce->{courseDirs}{hardcopyThemes};
+	opendir(my $dhC, $hardcopyThemeDirCourse) || die "can't opendir $hardcopyThemeDirCourse: $!";
+	for my $hardcopyTheme (grep {/\.xml$/} sort readdir($dhC)) {
+		my $themeTree = XML::LibXML->load_xml(location => "$hardcopyThemeDirCourse/$hardcopyTheme");
+		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label');
+	}
+	$c->stash->{hardcopyLabels} = \%hardcopyLabels;
+	$c->stash->{hardcopyThemes} = $ce->{hardcopyThemes};
+
 	$c->{prettyProblemNumber} = $c->{problemID} // '';
 	$c->{set}                 = $c->db->getGlobalSet($c->{setID}) if $c->{setID};
 	$c->{prettyProblemNumber} = join('.', jitar_id_to_seq($c->{prettyProblemNumber}))
@@ -473,7 +491,7 @@ sub getFilePaths ($c) {
 				}
 			} else {
 				# If the set record doesn't specify the filename for a header or it specifies the defaultHeader,
-				# then the set uses the default from snippets.
+				# then the set uses the default from assets/pg.
 				$editFilePath = $ce->{webworkFiles}{screenSnippets}{setHeader}
 					if $c->{file_type} eq 'set_header';
 				$editFilePath = $ce->{webworkFiles}{hardcopySnippets}{setHeader}
