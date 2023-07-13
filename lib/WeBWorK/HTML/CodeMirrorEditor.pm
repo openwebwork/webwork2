@@ -53,14 +53,15 @@ use constant CODEMIRROR_THEMES => [
 use constant CODEMIRROR_KEYMAPS => [ 'emacs', 'sublime', 'vim' ];
 
 # Javascript for addons used by the PG editor (relative to the node_modules/codemirror/addon directory).
-use constant CODEMIRROR_ADDONS_CSS => [ 'dialog/dialog.css', 'search/matchesonscrollbar.css' ];
+use constant CODEMIRROR_ADDONS_CSS => [ 'dialog/dialog.css', 'search/matchesonscrollbar.css', 'fold/foldgutter.css' ];
 
 # Javascript for addons used by the PG editor (relative to the node_modules/codemirror/addon directory).
 use constant CODEMIRROR_ADDONS_JS => [
 	'dialog/dialog.js',            'search/search.js',
 	'search/searchcursor.js',      'search/matchesonscrollbar.js',
 	'search/match-highlighter.js', 'search/match-highlighter.js',
-	'scroll/annotatescrollbar.js', 'edit/matchbrackets.js'
+	'scroll/annotatescrollbar.js', 'edit/matchbrackets.js',
+	'fold/foldcode.js',            'fold/foldgutter.js'
 ];
 
 sub generate_codemirror_html ($c, $name, $contents = '', $mode = 'PG') {

@@ -75,11 +75,24 @@
 		tabMode: 'spaces',
 		lineNumbers: true,
 		lineWrapping: true,
-		extraKeys: { Tab: (cm) => cm.execCommand('insertSoftTab') },
+		extraKeys: {
+			Tab:            (cm) => cm.execCommand('insertSoftTab'),
+			'Ctrl-/':       (cm) => cm.execCommand('toggleComment'),
+			'Cmd-/':        (cm) => cm.execCommand('toggleComment'),
+			'Shift-Ctrl-F': (cm) => cm.foldCode(cm.getCursor(), { scanUp : true }),
+			'Shift-Cmd-F':  (cm) => cm.foldCode(cm.getCursor(), { scanUp : true }),
+			'Shift-Ctrl-A': (cm) => CodeMirror.commands.foldAll(cm),
+			'Shift-Cmd-A':  (cm) => CodeMirror.commands.foldAll(cm),
+			'Shift-Ctrl-G': (cm) => CodeMirror.commands.unfoldAll(cm),
+			'Shift-Cmd-G':  (cm) => CodeMirror.commands.unfoldAll(cm),
+		},
 		highlightSelectionMatches: { annotateScrollbar: true },
 		matchBrackets: true,
 		inputStyle: 'contenteditable',
 		spellcheck: localStorage.getItem('WW_PGEditor_spellcheck') === 'true',
+		gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+		foldGutter: { rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.PG) },
+		fold: 'PG'
 	});
 	cm.setSize('100%', '550px');
 
@@ -120,4 +133,5 @@
 	forceRTL.addEventListener('change', () => {
 		cm.setOption('direction', forceRTL.checked ? 'rtl' : 'ltr');
 	});
+
 })();
