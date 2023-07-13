@@ -1,4 +1,4 @@
-% last if $c->{file_type} eq 'course_info';
+% last unless $c->{is_pg};
 %
 <div>
 	<div class="row align-items-center">

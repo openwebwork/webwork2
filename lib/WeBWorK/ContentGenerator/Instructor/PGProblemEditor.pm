@@ -233,6 +233,9 @@ sub initialize ($c) {
 	$c->stash->{formsToShow}      = ACTION_FORMS();
 	$c->stash->{actionFormTitles} = ACTION_FORM_TITLES();
 
+	# Tell the templates if we are working on a PG file
+	$c->{is_pg} = ($c->{file_type} eq 'course_info') ? 0 : 1;
+
 	# Check permissions
 	return
 		unless $authz->hasPermissions($user, 'access_instructor_tools')
