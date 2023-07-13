@@ -93,17 +93,25 @@ sub getConfigValues ($c, $ce) {
 	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
 	my $themes = [ grep { !/^\.{1,2}$/ && $_ ne 'layouts' } sort readdir($dh) ];
 
-	# Get the list of all hardcopy theme files
-	my $hardcopyThemeDirSite   = $ce->{webworkDirs}{hardcopyThemes};
+	# Get the list of all site hardcopy theme files
+	my $hardcopyThemeDirSite = $ce->{webworkDirs}{hardcopyThemes};
+	opendir(my $dhS, $hardcopyThemeDirSite) || die "can't opendir $hardcopyThemeDirSite: $!";
+	my $hardcopyThemesSite     = [ grep {/\.xml$/} (sort readdir($dhS)) ];
 	my $hardcopyThemeDirCourse = $ce->{courseDirs}{hardcopyThemes};
-	opendir(my $dhS, $hardcopyThemeDirSite)   || die "can't opendir $hardcopyThemeDirSite: $!";
 	opendir(my $dhC, $hardcopyThemeDirCourse) || die "can't opendir $hardcopyThemeDirCourse: $!";
-	my $hardcopyThemes = [ grep {/\.xml$/} (sort readdir($dhS), sort readdir($dhC)) ];
-	# get unique file names
-	$hardcopyThemes = [
+	my $hardcopyThemesCourse = [ grep {/\.xml$/} (sort readdir($dhC)) ];
+	# get unique file names, merging lists from site and course folders
+	my $hardcopyThemes = [
 		sort(do {
 			my %seen;
-			grep { !$seen{$_}++ } @$hardcopyThemes;
+			grep { !$seen{$_}++ } (@$hardcopyThemesSite, @$hardcopyThemesCourse);
+		})
+	];
+	# get enabled site themes plus all course themes
+	my $hardcopyThemesAvailable = [
+		sort(do {
+			my %seen;
+			grep { !$seen{$_}++ } (@{ $ce->{hardcopyThemes} }, @$hardcopyThemesCourse);
 		})
 	];
 
@@ -123,13 +131,16 @@ sub getConfigValues ($c, $ce) {
 	# with a hash and conceptually simplify this routine? MEG
 	my $modifyThemes = sub {
 		my $item = shift;
-		if (ref($item) =~ /HASH/
-			&& ($item->{var} =~ /^(defaultTheme|hardcopyThemes|hardcopyTheme|hardcopyThemePGEditor)$/))
+		if (
+			ref($item) =~ /HASH/
+			&& ($item->{var} =~
+				/^(defaultTheme|hardcopyThemesSite|hardcopyThemes|hardcopyTheme|hardcopyThemePGEditor)$/)
+			)
 		{
 			$item->{values} = $themes if ($item->{var} eq 'defaultTheme');
-			$item->{values} = $ce->{hardcopyThemes}
+			$item->{values} = $hardcopyThemesAvailable
 				if ($item->{var} eq 'hardcopyTheme' || $item->{var} eq 'hardcopyThemePGEditor');
-			$item->{values} = $hardcopyThemes if ($item->{var} eq 'hardcopyThemes');
+			$item->{values} = $hardcopyThemesSite if ($item->{var} eq 'hardcopyThemes');
 		}
 	};
 	my $modifyLanguages = sub {

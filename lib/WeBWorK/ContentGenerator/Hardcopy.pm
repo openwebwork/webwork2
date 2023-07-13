@@ -448,27 +448,35 @@ sub display_form ($c) {
 	}
 	my $hardcopyThemeDirCourse = $ce->{courseDirs}{hardcopyThemes};
 	opendir(my $dhC, $hardcopyThemeDirCourse) || die "can't opendir $hardcopyThemeDirCourse: $!";
-	for my $hardcopyTheme (grep {/\.xml$/} sort readdir($dhC)) {
+	my @hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
+	for my $hardcopyTheme (@hardcopyThemesCourse) {
 		my $themeTree = XML::LibXML->load_xml(location => "$hardcopyThemeDirCourse/$hardcopyTheme");
-		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label');
+		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
 	}
+	my $hardcopyThemesAvailable = [
+		sort(do {
+			my %seen;
+			grep { !$seen{$_}++ } (@{ $ce->{hardcopyThemes} }, @hardcopyThemesCourse);
+		})
+	];
 
 	return $c->include(
 		'ContentGenerator/Hardcopy/form',
-		canShowCorrectAnswers => $canShowCorrectAnswers,
-		multiuser             => $perm_multiuser && $perm_multiset,
-		can_change_theme      => $perm_change_theme,
-		users                 => \@users,
-		wantedSets            => \@wantedSets,
-		setVersions           => \@setVersions,
-		user                  => $user,
-		user_id               => $user_id,
-		selected_set_id       => $selected_set_id,
-		formats               => \@formats,
-		default_format        => $HC_DEFAULT_FORMAT,
-		format_labels         => \%format_labels,
-		hardcopyLabels        => \%hardcopyLabels,
-		can_change_theme      => $perm_change_theme,
+		canShowCorrectAnswers   => $canShowCorrectAnswers,
+		multiuser               => $perm_multiuser && $perm_multiset,
+		can_change_theme        => $perm_change_theme,
+		users                   => \@users,
+		wantedSets              => \@wantedSets,
+		setVersions             => \@setVersions,
+		user                    => $user,
+		user_id                 => $user_id,
+		selected_set_id         => $selected_set_id,
+		formats                 => \@formats,
+		default_format          => $HC_DEFAULT_FORMAT,
+		format_labels           => \%format_labels,
+		hardcopyLabels          => \%hardcopyLabels,
+		hardcopyThemesAvailable => $hardcopyThemesAvailable,
+		can_change_theme        => $perm_change_theme,
 	);
 }
 

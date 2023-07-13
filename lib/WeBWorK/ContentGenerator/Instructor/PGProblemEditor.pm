@@ -303,16 +303,24 @@ sub initialize ($c) {
 	opendir(my $dhS, $hardcopyThemeDirSite) || die "can't opendir $hardcopyThemeDirSite: $!";
 	for my $hardcopyTheme (grep {/\.xml$/} sort readdir($dhS)) {
 		my $themeTree = XML::LibXML->load_xml(location => "$hardcopyThemeDirSite/$hardcopyTheme");
-		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label');
+		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
 	}
 	my $hardcopyThemeDirCourse = $ce->{courseDirs}{hardcopyThemes};
 	opendir(my $dhC, $hardcopyThemeDirCourse) || die "can't opendir $hardcopyThemeDirCourse: $!";
-	for my $hardcopyTheme (grep {/\.xml$/} sort readdir($dhC)) {
+	my @hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
+	for my $hardcopyTheme (@hardcopyThemesCourse) {
 		my $themeTree = XML::LibXML->load_xml(location => "$hardcopyThemeDirCourse/$hardcopyTheme");
-		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label');
+		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
 	}
-	$c->stash->{hardcopyLabels} = \%hardcopyLabels;
-	$c->stash->{hardcopyThemes} = $ce->{hardcopyThemes};
+	my $hardcopyThemesAvailable = [
+		sort(do {
+			my %seen;
+			grep { !$seen{$_}++ } (@{ $ce->{hardcopyThemes} }, @hardcopyThemesCourse);
+		})
+	];
+
+	$c->stash->{hardcopyLabels}          = \%hardcopyLabels;
+	$c->stash->{hardcopyThemesAvailable} = $hardcopyThemesAvailable;
 
 	$c->{prettyProblemNumber} = $c->{problemID} // '';
 	$c->{set}                 = $c->db->getGlobalSet($c->{setID}) if $c->{setID};

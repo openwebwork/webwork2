@@ -150,9 +150,9 @@
 				<div class="col-md-8">
 					<div class="input-group input-group-sm mb-2">
 						<span class="input-group-text"><b><%= maketext('Hardcopy Theme:') %></b></span>
-						% if (@{ $ce->{hardcopyThemes} } <= 3) {
+						% if (@{ $hardcopyThemesAvailable } <= 3) {
 							<div class="input-group-text">
-								% for (@{ $ce->{hardcopyThemes} }) {
+								% for (@{ $hardcopyThemesAvailable }) {
 									<label class="form-check-label me-3">
 										<%= radio_button hardcopy_theme => $_, class => 'form-check-input me-2',
 											$_ eq $ce->{hardcopyTheme} ? (checked => undef) : () =%>
@@ -166,7 +166,7 @@
 										map { [
 											$hardcopyLabels->{$_} => $_,
 											$_ eq $ce->{hardcopyTheme} ? (selected => undef) : ()
-										] } @{ $ce->{hardcopyThemes} }
+										] } @{ $hardcopyThemesAvailable }
 									],
 									id    => 'action_hardcopy_theme_id',
 									class => 'form-select form-select-sm d-inline w-auto' =%>

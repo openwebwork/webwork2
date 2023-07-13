@@ -218,7 +218,7 @@ sub write_tex {
 	my $ce = $c->ce;
 
 	# get theme
-	my $theme = $c->param('hardcopy_theme') // $ce->{hardcopyTheme};
+	my $theme = $c->param('hardcopy_theme') // $ce->{hardcopyThemePGEditor};
 	my $themeFile;
 	if (-e "$ce->{courseDirs}{hardcopyThemes}/$theme") {
 		$themeFile = "$ce->{courseDirs}{hardcopyThemes}/$theme";
