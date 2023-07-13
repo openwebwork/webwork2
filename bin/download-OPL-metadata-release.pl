@@ -9,6 +9,7 @@ use warnings;
 use File::Fetch;
 use File::Copy;
 use File::Path;
+use Mojo::File;
 use JSON;
 
 BEGIN {
@@ -26,11 +27,16 @@ use Helper 'runScript';
 
 my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
 
-my $rawData;
+# Make sure the webwork temporary directory exists and is writable before proceeding.
+die "The WeBWorK temporary directory $ce->{webworkDirs}{tmp} does not exist or is not writable."
+	if (!-d $ce->{webworkDirs}{tmp} || !-w $ce->{webworkDirs}{tmp});
+
 my $releaseDataFF =
 	File::Fetch->new(uri => 'https://api.github.com/repos/openwebwork/webwork-open-problem-library/releases/latest');
-my $file        = $releaseDataFF->fetch(to => \$rawData) or die $releaseDataFF->error;
-my $releaseData = JSON->new->utf8->decode($rawData);
+my $file        = $releaseDataFF->fetch(to => $ce->{webworkDirs}{tmp}) or die $releaseDataFF->error;
+my $path        = Mojo::File->new($file);
+my $releaseData = JSON->new->utf8->decode($path->slurp);
+$path->remove;
 
 my $releaseTag = $releaseData->{tag_name};
 say "Found OPL METADATA release $releaseTag.";
@@ -41,10 +47,6 @@ for (@{ $releaseData->{assets} }) {
 }
 
 die 'Unable to determine download url for OPL metadata release.' if !$downloadURL;
-
-# Make sure the webwork temporary directory exists and is writable before proceeding.
-die "The WeBWorK temporary directory $ce->{webworkDirs}{tmp} does not exist or is not writable."
-	if (!-d $ce->{webworkDirs}{tmp} || !-w $ce->{webworkDirs}{tmp});
 
 # Download and extract the OPL metadata release.
 my $releaseDownloadFF = File::Fetch->new(uri => $downloadURL);

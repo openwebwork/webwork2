@@ -35,24 +35,21 @@ $debug_lti_grade_passback = 0;
 # Authentication settings
 ################################################################################################
 
-# This section enables LTI authentication.  If your site only uses LTI 1.1, then leave the
-# LTIAdvantage module commented out.  If your site only uses LTI 1.3, then comment out the
-# LTIAdvanced module and uncomment the LTIAdvantage module.  Both modules can enabled
-# (uncommented) for the site, but only one module can be used per course.  Make sure that the
-# matching configuration files are included below.  Failover to Basic_TheLastOption is necessary
-# to authenticate with cookie keys.
+# This section enables LTI authentication.  If a course uses LTI 1.1 (see $LTIVersion below),
+# then the LTIAdvanced module will be used.  If a course uses LTI 1.3 (see $LTIVersion below),
+# the LTIAdvantage will be used.  If you know a site will not use one or the other, it can be
+# commented out. Failover to Basic_TheLastOption is necessary to authenticate with cookie keys.
 $authen{user_module} = [
-	{ '*' => 'WeBWorK::Authen::LTIAdvanced' },           # preferred authorization method
-	#{ '*' => 'WeBWorK::Authen::LTIAdvantage' },          # secondary authorization method
+	{ '*' => 'WeBWorK::Authen::LTIAdvantage' },          # first try LTI 1.3
+	{ '*' => 'WeBWorK::Authen::LTIAdvanced' },           # next try LTI 1.1
 	{ '*' => 'WeBWorK::Authen::Basic_TheLastOption' }    # fallback authorization method
 ];
 
-# Include configurations.  Comment out or uncomment either of the following lines to match the
-# selected modules above.  You will have to copy the file authen_LTI_1_1.conf.dist to
-# authen_LTI_1_1.conf, and then edit that file to fill in the settings for LTI 1.1.  You will
-# have to copy the file authen_LTI_1_3.conf.dist to authen_LTI_1_3.conf, and then edit that file
-# to fill in the settings for LTI 1.3.
-include('conf/authen_LTI_1_1.conf');
+# Include configurations.  You must uncomment at least one of the following. You may uncomment
+# both if the site may be using both LTI 1.1 and 1.3 in different courses. After uncommenting
+# the LTI_1_x line, you must copy the file authen_LTI_1_x.conf.dist to authen_LTI_1_x.conf and
+# then edit that file to fill in the settings for LTI_1_x.
+#include('conf/authen_LTI_1_1.conf');
 #include('conf/authen_LTI_1_3.conf');
 
 # This is the default LTI version that will be used for the site.  This must be 'v1p1' for LTI
