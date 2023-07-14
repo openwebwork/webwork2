@@ -349,7 +349,7 @@ sub page_title ($c) {
 	my $setID     = $c->stash('setID');
 	my $problemID = $c->stash('problemID');
 
-	return 'Editor' unless $c->{file_type};
+	return $c->maketext('Editor') unless $c->{file_type};
 
 	return $c->maketext('Set Header for set [_1]',            $setID) if $c->{file_type} eq 'set_header';
 	return $c->maketext('Hardcopy Header for set [_1]',       $setID) if $c->{file_type} eq 'hardcopy_header';
