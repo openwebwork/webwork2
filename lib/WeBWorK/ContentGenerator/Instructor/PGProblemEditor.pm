@@ -229,6 +229,7 @@ sub initialize ($c) {
 	$c->stash->{problemContents}  = '';
 	$c->stash->{formsToShow}      = ACTION_FORMS();
 	$c->stash->{actionFormTitles} = ACTION_FORM_TITLES();
+	$c->stash->{hardcopyLabels}   = [];
 
 	# Tell the templates if we are working on a PG file
 	$c->{is_pg} = ($c->{file_type} eq 'course_info') ? 0 : 1;
