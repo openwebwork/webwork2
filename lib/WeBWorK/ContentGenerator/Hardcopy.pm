@@ -875,7 +875,7 @@ async sub write_multiuser_tex ($c, $FH, $userIDsRef, $setIDsRef) {
 	# write section for each user
 	while (defined(my $userID = shift @userIDs)) {
 		await $c->write_multiset_tex($FH, $userID, $themeTree, @setIDs);
-		print $FH $themeTree->findvalue('/theme/userdivider');
+		print $FH $themeTree->findvalue('/theme/userdivider') if @userIDs;   # divide users, but not after the last user
 	}
 
 	# write postamble
@@ -902,7 +902,7 @@ async sub write_multiset_tex ($c, $FH, $targetUserID, $themeTree, @setIDs) {
 	# write each set
 	while (defined(my $setID = shift @setIDs)) {
 		await $c->write_set_tex($FH, $TargetUser, $themeTree, $setID);
-		print $FH $themeTree->findvalue('/theme/setdivider');    # divide sets, but not after the last set
+		print $FH $themeTree->findvalue('/theme/setdivider') if @setIDs;    # divide sets, but not after the last set
 	}
 
 	return;

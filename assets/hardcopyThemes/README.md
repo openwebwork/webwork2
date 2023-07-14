@@ -67,9 +67,12 @@ with appropriate values as the `.tex` file is built. So you can use these when b
 * `\webworkProblemNumber` (the number of the problem in the set)
 * `\webworkProblemId` (may differ from the problem number for a versioned test with randomized order)
 * `\webworkProblemWeight`
-* `\webworkLeftHeader` (a multiline expression with the set name, dates, and course name)
+* `\webworkLeftHeader` (a multiline expression with the set name and due date(s))
 * `\webworkCenterHeader` (empty by default)
-* `\webworkRightHeader`  (a multiline expression with the user's name, ID, section, and recitation)
+* `\webworkRightHeader` (a multiline expression with the user's name, ID, section, and recitation)
+* `\webworkLeftFooter` (a hyperlink to the course with text the course title)
+* `\webworkCenterFooter` (empty by default)
+* `\webworkRightFooter` (localized "Page" followed by the page number)
 
 Words and phrases might be localized automatically by `webwork2` in the future, but a theme can override these.
 

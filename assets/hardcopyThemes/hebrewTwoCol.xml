@@ -51,7 +51,7 @@ Hebrew script. This theme should only be used if xelatex is the latex engine.
 \def\webworkLocalizePage{Page}
 \firstpageheader{\webworkLeftHeader}{\webworkCenterHeader}{\webworkRightHeader}
 \runningheader{}{}{}
-\footer{}{\webworkLocalizePage~\thepage}{}
+\footer{\webworkLeftFooter}{\webworkCenterFooter}{\webworkRightFooter}
 </presetheader>
 
 <postsetheader>

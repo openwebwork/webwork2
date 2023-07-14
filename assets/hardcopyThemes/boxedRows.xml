@@ -33,8 +33,9 @@ suited for sets with short exercises.
 \fancyhead[L]{\webworkLeftHeader}
 \fancyhead[C]{\webworkCenterHeader}
 \fancyhead[R]{\webworkRightHeader}
-\fancyfoot{}
-\fancyfoot[C]{\webworkLocalizePage~\thepage}
+\fancyfoot[L]{\webworkLeftFooter}
+\fancyfoot[C]{\webworkCenterFooter}
+\fancyfoot[R]{\webworkRightFooter}
 </presetheader>
 
 <presetheader>

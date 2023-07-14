@@ -31,8 +31,9 @@ This theme uses the tcolorbox package to put each exercisee in a box.
 \fancyhead[L]{\webworkLeftHeader}
 \fancyhead[C]{\webworkCenterHeader}
 \fancyhead[R]{\webworkRightHeader}
-\fancyfoot{}
-\fancyfoot[C]{\webworkLocalizePage~\thepage}
+\fancyfoot[L]{\webworkLeftFooter}
+\fancyfoot[C]{\webworkCenterFooter}
+\fancyfoot[R]{\webworkRightFooter}
 </presetheader>
 
 <postsetheader>

@@ -27,8 +27,9 @@ title and useername, and minimal problem numbering.
 \fancyhead[L]{\webworkLeftHeader}
 \fancyhead[C]{\webworkCenterHeader}
 \fancyhead[R]{\webworkRightHeader}
-\fancyfoot{}
-\fancyfoot[C]{\webworkLocalizePage~\thepage}
+\fancyfoot[L]{\webworkLeftFooter}
+\fancyfoot[C]{\webworkCenterFooter}
+\fancyfoot[R]{\webworkRightFooter}
 </presetheader>
 
 <postsetheader>
