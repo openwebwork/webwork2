@@ -70,7 +70,6 @@ with appropriate values as the `.tex` file is built. So you can use these when b
 * `\webworkLeftHeader` (a multiline expression with the set name, dates, and course name)
 * `\webworkCenterHeader` (empty by default)
 * `\webworkRightHeader`  (a multiline expression with the user's name, ID, section, and recitation)
-* `webworkPageNumber` (this just displays the page number, preceded by "Page" which can be localized)
 
 Words and phrases might be localized automatically by `webwork2` in the future, but a theme can override these.
 

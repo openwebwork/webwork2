@@ -25,7 +25,7 @@ title and useername, and minimal problem numbering. With two columns.
 \ifthenelse{\equal{\webworkPrettySetId}{}}{}{\fancyhead[L]{\ifthenelse{\thepage=1}{\large\scshape\webworkLocalizeSet: \webworkPrettySetId}{}}}
 \ifthenelse{\equal{\webworkUserId}{}}{}{\fancyhead[R]{\ifthenelse{\thepage=1}{\bfseries\webworkLocalizeUsername: \webworkUserId}{}}}
 \fancyfoot{}
-\fancyfoot[C]{\webworkPageNumber}
+\fancyfoot[C]{\webworkLocalizePage~\thepage}
 </presetheader>
 
 <postsetheader>

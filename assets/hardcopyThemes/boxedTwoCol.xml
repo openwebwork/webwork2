@@ -35,7 +35,7 @@ With two columns.
 \ifthenelse{\equal{\webworkPrettySetId}{}}{}{\fancyhead[L]{\ifthenelse{\thepage=1}{\webworkLeftHeader}{}}}
 \ifthenelse{\equal{\webworkUserId}{}}{}{\fancyhead[R]{\ifthenelse{\thepage=1}{\webworkRightHeader}{}}}
 \fancyfoot{}
-\fancyfoot[C]{\webworkPageNumber}
+\fancyfoot[C]{\webworkLocalizePage~\thepage}
 </presetheader>
 
 <postsetheader>

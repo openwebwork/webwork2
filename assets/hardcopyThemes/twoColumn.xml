@@ -27,7 +27,7 @@ question enumeration. With two columns.
 <presetheader>
 \firstpageheader{\webworkLeftHeader}{}{\webworkRightHeader}
 \runningheader{}{}{}
-\footer{}{\webworkPageNumber}{}
+\footer{}{\webworkLocalizePage~\thepage}{}
 </presetheader>
 
 <postsetheader>

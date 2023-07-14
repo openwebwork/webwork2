@@ -24,7 +24,7 @@ question enumeration.
 <presetheader>
 \firstpageheader{\webworkLeftHeader}{}{\webworkRightHeader}
 \runningheader{}{}{}
-\footer{}{\webworkPageNumber}{}
+\footer{}{\webworkLocalizePage~\thepage}{}
 </presetheader>
 
 <postsetheader>

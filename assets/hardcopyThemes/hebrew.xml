@@ -47,7 +47,7 @@ Hebrew script. This theme should only be used if xelatex is the latex engine.
 \def\webworkLocalizePage{Page}
 \firstpageheader{\webworkLeftHeader}{}{\webworkRightHeader}
 \runningheader{}{}{}
-\footer{}{\webworkPageNumber}{}
+\footer{}{\webworkLocalizePage~\thepage}{}
 </presetheader>
 
 <postsetheader>
