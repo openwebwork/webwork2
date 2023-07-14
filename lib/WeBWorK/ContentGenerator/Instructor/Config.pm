@@ -95,7 +95,7 @@ sub getConfigValues ($c, $ce) {
 
 	# Get the list of all site hardcopy theme files
 	opendir(my $dhS, $ce->{webworkDirs}{hardcopyThemes}) || die "can't opendir $ce->{webworkDirs}{hardcopyThemes}: $!";
-	my $hardcopyThemesSite     = [ grep {/\.xml$/} (sort readdir($dhS)) ];
+	my $hardcopyThemesSite = [ grep {/\.xml$/} (sort readdir($dhS)) ];
 	my @hardcopyThemesCourse;
 	if (opendir(my $dhC, $ce->{courseDirs}{hardcopyThemes})) {
 		@hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
