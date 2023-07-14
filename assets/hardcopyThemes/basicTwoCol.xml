@@ -14,16 +14,22 @@ title and useername, and minimal problem numbering. With two columns.
 \setlength{\columnsep}{.25in}
 \setlength{\columnseprule}{.4pt}
 \usepackage{fancyhdr}
+\renewcommand{\webworkLeftHeader}{%
+\ifthenelse{\equal{\webworkPrettySetId}{}}{}{\ifthenelse{\thepage=1}{\large\scshape\webworkLocalizeSet: \webworkPrettySetId}{}}%
+}
+\renewcommand{\webworkRightHeader}{%
+\ifthenelse{\equal{\webworkUserId}{}}{}{\ifthenelse{\thepage=1}{\bfseries\webworkLocalizeUsername: \webworkUserId}{}}%
+}
 \parindent=0pt
 \pagestyle{fancy}
 \begin{document}
 </preamble>
 
 <presetheader>
-\fancyhead{}
 \renewcommand{\headrulewidth}{0pt}
-\ifthenelse{\equal{\webworkPrettySetId}{}}{}{\fancyhead[L]{\ifthenelse{\thepage=1}{\large\scshape\webworkLocalizeSet: \webworkPrettySetId}{}}}
-\ifthenelse{\equal{\webworkUserId}{}}{}{\fancyhead[R]{\ifthenelse{\thepage=1}{\bfseries\webworkLocalizeUsername: \webworkUserId}{}}}
+\fancyhead[L]{\webworkLeftHeader}
+\fancyhead[C]{\webworkCenterHeader}
+\fancyhead[R]{\webworkRightHeader}
 \fancyfoot{}
 \fancyfoot[C]{\webworkLocalizePage~\thepage}
 </presetheader>
@@ -34,8 +40,7 @@ title and useername, and minimal problem numbering. With two columns.
 </postsetheader>
 
 <problemheader>
-{\bfseries\webworkLocalizeProblem~\ifx\webworkProblemNumber\empty{1}\else{\webworkProblemNumber}\fi}
-\ifx\webworkProblemWeight\empty\else{(\webworkProblemWeight~\webworkLocalizePoint)}\fi
+{\bfseries\webworkLocalizeProblem~\ifthenelse{\equal{\webworkProblemNumber}{}}{\#}{\webworkProblemNumber}}
 \nobreak
 \smallskip
 </problemheader>

@@ -60,20 +60,24 @@
 % These can be used in a header or footer and their content can be overrided.
 \newcommand{\webworkLeftHeader}
 {%
+\ifthenelse{\thepage=1}{%
 \ifx\webworkSetId\empty\else{%
 {\large\bfseries \webworkLocalizeAssignment~\href{\webworkCourseURL/\webworkSetId}{\webworkPrettySetId}\\}%
 \ifx\webworkReducedScoringDate\empty\else{\webworkLocalizeFullCreditBy~\webworkReducedScoringDate, }\fi\webworkLocalizeCloses~\webworkDueDate\\}\fi%
 \ifx\webworkCourseTitle\empty\else{\href{\webworkCourseURL}{\scshape\webworkCourseTitle}}\fi%
+}{}%
 }
 
 \newcommand{\webworkCenterHeader}{}
 
 \newcommand{\webworkRightHeader}
 {%
+\ifthenelse{\thepage=1}{%
 \ifx\webworkUserId\empty\else{%
 {\large\bfseries\webworkFirstName{} \webworkLastName{} (\webworkUserId)\\}}\fi%
 \ifx\webworkSection\empty{\ \\}\else{\webworkLocalizeSection: \webworkSection\\}\fi%
 \ifx\webworkRecitation\empty{\ }\else{\webworkLocalizeRecitation: \webworkRecitation}\fi%
+}{}%
 }
 
 % These macros declare copyright in the footer of the last page.

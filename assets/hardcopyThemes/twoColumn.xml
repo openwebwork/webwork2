@@ -25,7 +25,7 @@ question enumeration. With two columns.
 </preamble>
 
 <presetheader>
-\firstpageheader{\webworkLeftHeader}{}{\webworkRightHeader}
+\firstpageheader{\webworkLeftHeader}{\webworkCenterHeader}{\webworkRightHeader}
 \runningheader{}{}{}
 \footer{}{\webworkLocalizePage~\thepage}{}
 </presetheader>
@@ -38,7 +38,7 @@ question enumeration. With two columns.
 </postsetheader>
 
 <problemheader>
-\ifthenelse{\equal{\webworkProblemNumber}{}}{\question}{\titledquestion{\webworkProblemNumber}[\webworkProblemWeight]}
+\titledquestion{\ifx\webworkProblemNumber\empty\#\else\webworkProblemNumber\fi}[\ifx\webworkProblemWeight\empty\#\else\webworkProblemWeight\fi]
 </problemheader>
 
 <problemfooter></problemfooter>

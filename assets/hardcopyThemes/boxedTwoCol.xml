@@ -16,8 +16,8 @@ With two columns.
 	breakable,
 	enhanced jigsaw,
 	title={
-		{\bfseries\webworkLocalizeProblem~\ifthenelse{\equal{#1}{}}{}{~#1}}\hfill
-		\ifthenelse{\equal{#2}{}}{}{(#2~\webworkLocalizePoint)}
+                {\bfseries\webworkLocalizeProblem~\ifthenelse{\equal{#1}{}}{\#}{#1}}\hfill
+                (\ifthenelse{\equal{#2}{}}{\#}{#2}~\webworkLocalizePoint)
 	}
 }
 \usepackage{multicol}
@@ -30,10 +30,10 @@ With two columns.
 </preamble>
 
 <presetheader>
-\fancyhead{}
 \renewcommand{\headrulewidth}{0pt}
-\ifthenelse{\equal{\webworkPrettySetId}{}}{}{\fancyhead[L]{\ifthenelse{\thepage=1}{\webworkLeftHeader}{}}}
-\ifthenelse{\equal{\webworkUserId}{}}{}{\fancyhead[R]{\ifthenelse{\thepage=1}{\webworkRightHeader}{}}}
+\fancyhead[L]{\webworkLeftHeader}
+\fancyhead[C]{\webworkCenterHeader}
+\fancyhead[R]{\webworkRightHeader}
 \fancyfoot{}
 \fancyfoot[C]{\webworkLocalizePage~\thepage}
 </presetheader>

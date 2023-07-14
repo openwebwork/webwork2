@@ -27,8 +27,8 @@ This theme produces hardcopies styled as hardcopies were prior to version 2.18.
 </postsetheader>
 
 <problemheader>
-{\bfseries\webworkLocalizeProblem~\ifx\webworkProblemNumber\empty{1}\else{\webworkProblemNumber}\fi.}
-\ifx\webworkProblemWeight\empty\else{\bfseries\footnotesize(\webworkProblemWeight~\webworkLocalizePoint)}\fi
+{\bfseries\webworkLocalizeProblem~\ifthenelse{\equal{\webworkProblemNumber}{}}{\#}{\webworkProblemNumber}.}
+{\bfseries\footnotesize(\ifthenelse{\equal{\webworkProblemWeight}{}}{\#}{\webworkProblemWeight}~\webworkLocalizePoint)}
 \nobreak
 \smallskip
 </problemheader>
