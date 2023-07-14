@@ -309,7 +309,7 @@ sub initialize ($c) {
 		@hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
 	}
 	for my $hardcopyTheme (@hardcopyThemesCourse) {
-		my $themeTree = XML::LibXML->load_xml(location => "/$ce->{courseDirs}{hardcopyThemes}$hardcopyTheme");
+		my $themeTree = XML::LibXML->load_xml(location => "$ce->{courseDirs}{hardcopyThemes}/$hardcopyTheme");
 		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
 	}
 	my $hardcopyThemesAvailable = [
