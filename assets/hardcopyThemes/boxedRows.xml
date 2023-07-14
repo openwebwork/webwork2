@@ -30,8 +30,8 @@ suited for sets with short exercises.
 
 <presetheader>
 \fancyhead{}
-\ifthenelse{\equal{\webworkPrettySetId}{}}{}{\fancyhead[L]{\ifthenelse{\thepage=1}{\webworkAssignmentCourseInfo}{}}}
-\ifthenelse{\equal{\webworkUserId}{}}{}{\fancyhead[R]{\ifthenelse{\thepage=1}{\webworkUserInfo}{}}}
+\ifthenelse{\equal{\webworkPrettySetId}{}}{}{\fancyhead[L]{\ifthenelse{\thepage=1}{\webworkLeftHeader}{}}}
+\ifthenelse{\equal{\webworkUserId}{}}{}{\fancyhead[R]{\ifthenelse{\thepage=1}{\webworkRightHeader}{}}}
 \fancyfoot{}
 \fancyfoot[C]{\webworkPageNumber}
 </presetheader>

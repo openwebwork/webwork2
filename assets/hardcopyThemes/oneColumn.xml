@@ -22,7 +22,7 @@ question enumeration.
 </preamble>
 
 <presetheader>
-\firstpageheader{\webworkAssignmentCourseInfo}{}{\webworkUserInfo}
+\firstpageheader{\webworkLeftHeader}{}{\webworkRightHeader}
 \runningheader{}{}{}
 \footer{}{\webworkPageNumber}{}
 </presetheader>

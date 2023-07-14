@@ -57,8 +57,8 @@
 \def\webworkLocalizePage{Page}
 \def\webworkLocalizePoint{point}
 
-% These conveniences could be used in a header or footer
-\newcommand{\webworkAssignmentCourseInfo}
+% These can be used in a header or footer and their content can be overrided.
+\newcommand{\webworkLeftHeader}
 {%
 \ifx\webworkSetId\empty\else{%
 {\large\bfseries \webworkLocalizeAssignment~\href{\webworkCourseURL/\webworkSetId}{\webworkPrettySetId}\\}%
@@ -66,7 +66,9 @@
 \ifx\webworkCourseTitle\empty\else{\href{\webworkCourseURL}{\scshape\webworkCourseTitle}}\fi%
 }
 
-\newcommand{\webworkUserInfo}
+\newcommand{\webworkCenterHeader}{}
+
+\newcommand{\webworkRightHeader}
 {%
 \ifx\webworkUserId\empty\else{%
 {\large\bfseries\webworkFirstName{} \webworkLastName{} (\webworkUserId)\\}}\fi%

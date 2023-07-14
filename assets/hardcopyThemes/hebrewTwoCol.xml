@@ -49,7 +49,7 @@ Hebrew script. This theme should only be used if xelatex is the latex engine.
 \def\webworkLocalizeSection{Section}
 \def\webworkLocalizeRecitation{Recitation}
 \def\webworkLocalizePage{Page}
-\firstpageheader{\webworkAssignmentCourseInfo}{}{\webworkUserInfo}
+\firstpageheader{\webworkLeftHeader}{}{\webworkRightHeader}
 \runningheader{}{}{}
 \footer{}{\webworkPageNumber}{}
 </presetheader>
