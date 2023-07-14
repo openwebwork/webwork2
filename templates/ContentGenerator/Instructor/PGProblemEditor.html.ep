@@ -2,7 +2,7 @@
 % use WeBWorK::HTML::CodeMirrorEditor
 	% qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
 %
-% my $codemirrorMode = $c->{file_type} eq 'course_info' ? 'htmlmixed' : 'PG';
+% my $codemirrorMode = $c->{file_type} && $c->{file_type} eq 'course_info' ? 'htmlmixed' : 'PG';
 % content_for js => begin
 	<%= output_codemirror_static_files($c, $codemirrorMode) =%>
 	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'),           defer => undef =%>
