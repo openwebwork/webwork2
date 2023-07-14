@@ -94,24 +94,24 @@ sub getConfigValues ($c, $ce) {
 	my $themes = [ grep { !/^\.{1,2}$/ && $_ ne 'layouts' } sort readdir($dh) ];
 
 	# Get the list of all site hardcopy theme files
-	my $hardcopyThemeDirSite = $ce->{webworkDirs}{hardcopyThemes};
-	opendir(my $dhS, $hardcopyThemeDirSite) || die "can't opendir $hardcopyThemeDirSite: $!";
+	opendir(my $dhS, $ce->{webworkDirs}{hardcopyThemes}) || die "can't opendir $ce->{webworkDirs}{hardcopyThemes}: $!";
 	my $hardcopyThemesSite     = [ grep {/\.xml$/} (sort readdir($dhS)) ];
-	my $hardcopyThemeDirCourse = $ce->{courseDirs}{hardcopyThemes};
-	opendir(my $dhC, $hardcopyThemeDirCourse) || die "can't opendir $hardcopyThemeDirCourse: $!";
-	my $hardcopyThemesCourse = [ grep {/\.xml$/} (sort readdir($dhC)) ];
+	my @hardcopyThemesCourse;
+	if (opendir(my $dhC, $ce->{courseDirs}{hardcopyThemes})) {
+		@hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
+	}
 	# get unique file names, merging lists from site and course folders
 	my $hardcopyThemes = [
 		sort(do {
 			my %seen;
-			grep { !$seen{$_}++ } (@$hardcopyThemesSite, @$hardcopyThemesCourse);
+			grep { !$seen{$_}++ } (@$hardcopyThemesSite, @hardcopyThemesCourse);
 		})
 	];
 	# get enabled site themes plus all course themes
 	my $hardcopyThemesAvailable = [
 		sort(do {
 			my %seen;
-			grep { !$seen{$_}++ } (@{ $ce->{hardcopyThemes} }, @$hardcopyThemesCourse);
+			grep { !$seen{$_}++ } (@{ $ce->{hardcopyThemes} }, @hardcopyThemesCourse);
 		})
 	];
 

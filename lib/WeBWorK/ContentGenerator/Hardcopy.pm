@@ -440,17 +440,17 @@ sub display_form ($c) {
 
 	# Get labels for the hardcopy themes, which are attributes in the theme xml file
 	my %hardcopyLabels;
-	my $hardcopyThemeDirSite = $ce->{webworkDirs}{hardcopyThemes};
-	opendir(my $dhS, $hardcopyThemeDirSite) || die "can't opendir $hardcopyThemeDirSite: $!";
+	opendir(my $dhS, $ce->{webworkDirs}{hardcopyThemes}) || die "can't opendir $ce->{webworkDirs}{hardcopyThemes}: $!";
 	for my $hardcopyTheme (grep {/\.xml$/} sort readdir($dhS)) {
-		my $themeTree = XML::LibXML->load_xml(location => "$hardcopyThemeDirSite/$hardcopyTheme");
+		my $themeTree = XML::LibXML->load_xml(location => "$ce->{webworkDirs}{hardcopyThemes}/$hardcopyTheme");
 		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label');
 	}
-	my $hardcopyThemeDirCourse = $ce->{courseDirs}{hardcopyThemes};
-	opendir(my $dhC, $hardcopyThemeDirCourse) || die "can't opendir $hardcopyThemeDirCourse: $!";
-	my @hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
+	my @hardcopyThemesCourse;
+	if (opendir(my $dhC, $ce->{courseDirs}{hardcopyThemes})) {
+		@hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
+	}
 	for my $hardcopyTheme (@hardcopyThemesCourse) {
-		my $themeTree = XML::LibXML->load_xml(location => "$hardcopyThemeDirCourse/$hardcopyTheme");
+		my $themeTree = XML::LibXML->load_xml(location => "$ce->{courseDirs}{hardcopyThemes}/$hardcopyTheme");
 		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
 	}
 	my $hardcopyThemesAvailable = [
