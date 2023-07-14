@@ -232,7 +232,7 @@ sub initialize ($c) {
 	$c->stash->{hardcopyLabels}   = [];
 
 	# Tell the templates if we are working on a PG file
-	$c->{is_pg} = ($c->{file_type} eq 'course_info') ? 0 : 1;
+	$c->{is_pg} = $c->{file_type} && $c->{file_type} eq 'course_info' ? 0 : 1;
 
 	# Check permissions
 	return
@@ -336,17 +336,20 @@ sub path ($c, $args) {
 	# page.  The bread crumb path leads back to the problem being edited, not to the Instructor tool.
 	return $c->pathMacro(
 		$args,
-		'WeBWorK'                  => $c->url_for('root'),
-		$c->stash('courseID')      => $c->url_for('set_list'),
-		($c->stash('setID') // '') => $c->url_for('problem_list'),
-		$c->{prettyProblemNumber}  => $c->url_for('problem_detail', problemID => $c->stash('problemID') || ''),
-		$c->maketext('Editor')     => ''
+		'WeBWorK'                         => $c->url_for('root'),
+		$c->stash('courseID')             => $c->url_for('set_list'),
+		($c->stash('setID') // '')        => $c->url_for('problem_list'),
+		($c->{prettyProblemNumber} // '') =>
+			$c->url_for('problem_detail', problemID => $c->stash('problemID') || ''),
+		$c->maketext('Editor') => ''
 	);
 }
 
 sub page_title ($c) {
 	my $setID     = $c->stash('setID');
 	my $problemID = $c->stash('problemID');
+
+	return 'Editor' unless $c->{file_type};
 
 	return $c->maketext('Set Header for set [_1]',            $setID) if $c->{file_type} eq 'set_header';
 	return $c->maketext('Hardcopy Header for set [_1]',       $setID) if $c->{file_type} eq 'hardcopy_header';
