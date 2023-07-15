@@ -42,7 +42,10 @@
 	<dd><%= maketext('If selected, the file path of the problem source will be printed in the output.') %></dd>
 
 	<dt><%= maketext('Hardcopy Theme') %></dt>
-	<dd><%= maketext('Choose from the available hardcopy layout themes.') %> </dd>
+	<dd>
+		<%= maketext('Choose from the available hardcopy layout themes. '
+			. 'To create a new hardcopy theme, visit the Problem Editor, Generate Hardcopy tab. '
+			. 'New hardcopy themes will be stored in the templates/hardcopyThemes/ folder.') %> </dd>
 </dl>
 <p>
 	<%== maketext('Once "Generate Hardcopy for selected sets and selected users" is clicked a file in the selected '

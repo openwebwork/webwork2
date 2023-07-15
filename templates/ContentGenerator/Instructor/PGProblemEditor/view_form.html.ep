@@ -26,10 +26,12 @@
 			</div>
 		</div>
 	% }
-	<div class="row g-0 mb-2">
-		<div class="form-check mb-2">
-			<%= check_box 'newWindowView' => 1, id => 'newWindowView', class => 'form-check-input' =%>
-			<%= label_for newWindowView => maketext('Open in new window'), class => 'form-check-label' =%>
+	% unless ($c->{file_type} eq 'hardcopy_theme') {
+		<div class="row g-0 mb-2">
+			<div class="form-check mb-2">
+				<%= check_box 'newWindowView' => 1, id => 'newWindowView', class => 'form-check-input' =%>
+				<%= label_for newWindowView => maketext('Open in new window'), class => 'form-check-label' =%>
+			</div>
 		</div>
-	</div>
+	% }
 </div>

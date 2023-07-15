@@ -5,11 +5,13 @@
 	<div class="mb-2">
 		<%== maketext('Save to [_1] and View', tag('b', dir => 'ltr', $c->shortPath($c->{editFilePath}))) =%>
 	</div>
-	<div class="form-check mb-2">
-		<%= check_box newWindowSave => 1, id => 'newWindowSave', class => 'form-check-input',
-			$c->{file_type} eq 'hardcopy_header' ? (checked => undef) : () =%>
-		<%= label_for newWindowSave => maketext('Open in new window'), class => 'form-check-label' =%>
-	</div>
+	% unless ($c->{file_type} eq 'hardcopy_theme') {
+		<div class="form-check mb-2">
+			<%= check_box newWindowSave => 1, id => 'newWindowSave', class => 'form-check-input',
+				$c->{file_type} eq 'hardcopy_header' ? (checked => undef) : () =%>
+			<%= label_for newWindowSave => maketext('Open in new window'), class => 'form-check-label' =%>
+		</div>
+	% }
 	<%= hidden_field 'action.save.source_file' => $c->{editFilePath} =%>
 
 	% # Backup options
