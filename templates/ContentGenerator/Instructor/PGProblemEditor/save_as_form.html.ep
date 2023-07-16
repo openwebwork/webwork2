@@ -47,9 +47,6 @@
 		</div>
 		<%= hidden_field 'action.save_as.source_file' => $c->{editFilePath} =%>
 		<%= hidden_field 'action.save_as.file_type' => $c->{file_type} =%>
-		% if ($c->{file_type} eq 'hardcopy_theme') {
-			<%= hidden_field 'action.save_as.saveMode' => 'new_hardcopy_theme' =%>
-		% }
 	</div>
 	% if ($can_add_problem_to_set) {
 		<div class="form-check">

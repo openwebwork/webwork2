@@ -241,7 +241,7 @@ sub initialize ($c) {
 	$c->stash->{hardcopyLabels}   = [];
 
 	# Tell the templates if we are working on a PG file
-	$c->{is_pg} = !$c->{file_type} || $c->{file_type} ne 'course_info' && $c->{file_type} ne 'hardcopy_theme';
+	$c->{is_pg} = !$c->{file_type} || ($c->{file_type} ne 'course_info' && $c->{file_type} ne 'hardcopy_theme');
 
 	# Check permissions
 	return
