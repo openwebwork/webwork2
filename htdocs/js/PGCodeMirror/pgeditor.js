@@ -69,16 +69,15 @@
 		return configName;
 	};
 
-	const cm = webworkConfig.pgCodeMirror = CodeMirror.fromTextArea(document.querySelector('.codeMirrorEditor'), {
-		mode: document.querySelector('.codeMirrorEditor')?.dataset.mode ?? 'PG',
+	const mode = document.querySelector('.codeMirrorEditor')?.dataset.mode ?? 'PG';
+	const options = {
+		mode,
 		indentUnit: 4,
 		tabMode: 'spaces',
 		lineNumbers: true,
 		lineWrapping: true,
 		extraKeys: {
 			Tab:            (cm) => cm.execCommand('insertSoftTab'),
-			'Ctrl-/':       (cm) => cm.execCommand('toggleComment'),
-			'Cmd-/':        (cm) => cm.execCommand('toggleComment'),
 			'Shift-Ctrl-F': (cm) => cm.foldCode(cm.getCursor(), { scanUp : true }),
 			'Shift-Cmd-F':  (cm) => cm.foldCode(cm.getCursor(), { scanUp : true }),
 			'Shift-Ctrl-A': (cm) => CodeMirror.commands.foldAll(cm),
@@ -90,10 +89,20 @@
 		matchBrackets: true,
 		inputStyle: 'contenteditable',
 		spellcheck: localStorage.getItem('WW_PGEditor_spellcheck') === 'true',
-		gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
-		foldGutter: { rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.PG) },
-		fold: 'PG'
-	});
+		gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter']
+	};
+
+	if (mode === 'PG') {
+		options.extraKeys['Ctrl-/'] = (cm) => cm.execCommand('toggleComment');
+		options.extraKeys['Cmd-/'] = (cm) => cm.execCommand('toggleComment');
+		options.foldGutter = { rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.PG) }
+		options.fold = 'PG'
+	} else {
+		options.foldGutter = true;
+	}
+
+	const cm = webworkConfig.pgCodeMirror
+		= CodeMirror.fromTextArea(document.querySelector('.codeMirrorEditor'), options);
 	cm.setSize('100%', '550px');
 
 	const currentThemeFile = localStorage.getItem('WW_PGEditor_selected_theme') ?? 'default';
