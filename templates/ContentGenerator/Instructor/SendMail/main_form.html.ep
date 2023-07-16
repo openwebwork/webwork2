@@ -111,7 +111,7 @@
 										<tr><td>$STATUS</td><td><%= maketext('Enrolled, Drop, etc.') %></td></tr>
 										<tr><td>$EMAIL</td><td><%= maketext('Email address') %></td></tr>
 										<tr><td>$LOGIN</td><td><%= maketext('Login') %></td></tr>
-										<tr><td>$COL[n]</td><td><%= maketext('nth colum of merge file') %></td></tr>
+										<tr><td>$COL[n]</td><td><%= maketext('nth column of merge file') %></td></tr>
 										<tr><td>$COL[-1]</td><td><%= maketext('Last column of merge file') %></td></tr>
 									</tbody>
 								</table>
