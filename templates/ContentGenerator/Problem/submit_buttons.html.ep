@@ -4,6 +4,8 @@
 % my %will           = %{ $c->{will} };
 % my $effectiveUser  = param('effectiveUser');
 % if ($will{requestNewSeed}) {
+	<%= submit_button maketext('Request New Version'), id => 'enter_key_submit', name => 'requestNewSeed',
+		formtarget => '_self', class => 'visually-hidden-unfocusable' =%>
 	<%= submit_button maketext('Request New Version'), id => 'submitAnswers_id', name => 'requestNewSeed',
 		formtarget => '_self', class => 'btn btn-primary mb-1' =%>
 % } else {

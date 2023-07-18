@@ -312,7 +312,7 @@ $mail{feedbackRecipients}    = [
 # A third option is "conservative". In this case, the enter key behaves like "preview"
 # when the "Submit" button is available and there are only finitely many
 # attempts allowed. Otherise the enter key behaves like "submit".
-#$enterKey = 'conservative';
+#$pg{options}{enterKey} = 'conservative';
 
 ################################################################################
 # Periodic re-randomization
