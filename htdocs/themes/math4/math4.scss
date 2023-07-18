@@ -744,6 +744,7 @@ input.changed[type=text] { /* orange */
 }
 
 .visually-hidden-unfocusable {
+	visibility: hidden;
 	position: absolute;
 	left: -9999px;
 }
