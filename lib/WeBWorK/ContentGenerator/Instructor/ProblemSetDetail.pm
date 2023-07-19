@@ -112,10 +112,10 @@ use constant FIELD_PROPERTIES => {
 		default  => '',
 	},
 	open_date => {
-		name     => x('Opens'),
-		type     => 'edit',
-		size     => '25',
-		override => 'any',
+		name      => x('Opens'),
+		type      => 'edit',
+		size      => '25',
+		override  => 'any',
 		help_text => x(
 			'This is generally the date when students can begin visiting the set and submitting answers. '
 				. 'Prior to this date, if the set is assigned to a user and it is flagged "visible", '
@@ -126,10 +126,10 @@ use constant FIELD_PROPERTIES => {
 		)
 	},
 	due_date => {
-		name     => x('Closes'),
-		type     => 'edit',
-		size     => '25',
-		override => 'any',
+		name      => x('Closes'),
+		type      => 'edit',
+		size      => '25',
+		override  => 'any',
 		help_text => x(
 			'This is generally the date when students can no longer use the "Submit" button to submit an '
 				. 'answer and have it assessed for credit.  However students can still visit the set, '
@@ -139,10 +139,10 @@ use constant FIELD_PROPERTIES => {
 		)
 	},
 	answer_date => {
-		name     => x('Answers Available'),
-		type     => 'edit',
-		size     => '25',
-		override => 'any',
+		name      => x('Answers Available'),
+		type      => 'edit',
+		size      => '25',
+		override  => 'any',
 		help_text => x(
 			'This is generally the date when students can click a checkbox to see the expected correct answers '
 				. 'to problems in the set.  If a problem has a coded solution, this is also when thy can click '
@@ -159,7 +159,8 @@ use constant FIELD_PROPERTIES => {
 			1 => x('Yes'),
 			0 => x('No'),
 		},
-		help_text => x('Use this to hide the existence of this set from students, even when it is assigned to them.'),
+		help_text =>
+			x('Use this to hide the existence of this set from students, even when it is assigned to them.'),
 	},
 	enable_reduced_scoring => {
 		name     => x('Reduced Scoring Enabled'),
@@ -173,10 +174,10 @@ use constant FIELD_PROPERTIES => {
 		help_text => x('See "Reduced Scoring Date".'),
 	},
 	reduced_scoring_date => {
-		name     => x('Reduced Scoring Date'),
-		type     => 'edit',
-		size     => '25',
-		override => 'any',
+		name      => x('Reduced Scoring Date'),
+		type      => 'edit',
+		size      => '25',
+		override  => 'any',
 		help_text => x(
 			'This date should be on or after the open date, and earlier or equal to the close date. '
 				. 'Answers submitted between the reduced scoring date and the close date are scaled down '
@@ -291,11 +292,11 @@ use constant FIELD_PROPERTIES => {
 		)
 	},
 	attempts_per_version => {
-		name     => x("Graded Submissions per Version"),
-		type     => 'edit',
-		size     => '3',
-		override => 'any',
-		default  => '0',
+		name      => x("Graded Submissions per Version"),
+		type      => 'edit',
+		size      => '3',
+		override  => 'any',
+		default   => '0',
 		help_text => x(
 			'A test may be configured to allow students one or more versions.  For each version, this is the number of '
 				. 'times you will allow them to click to have that version graded.  Depending on other settings, '
@@ -321,12 +322,12 @@ use constant FIELD_PROPERTIES => {
 		)
 	},
 	versions_per_interval => {
-		name     => x('Number of Versions per Interval'),
-		type     => 'edit',
-		size     => '3',
-		override => 'any',
-		default  => '0',
-		format   => '[0-9]+',                                           # an integer, possibly zero
+		name      => x('Number of Versions per Interval'),
+		type      => 'edit',
+		size      => '3',
+		override  => 'any',
+		default   => '0',
+		format    => '[0-9]+',                                     # an integer, possibly zero
 		help_text => x('See "Time Interval for New Versions".'),
 	},
 	problem_randorder => {
@@ -344,11 +345,11 @@ use constant FIELD_PROPERTIES => {
 		)
 	},
 	problems_per_page => {
-		name     => x('Number of Problems per Page'),
-		type     => 'edit',
-		size     => '3',
-		override => 'any',
-		default  => '1',
+		name      => x('Number of Problems per Page'),
+		type      => 'edit',
+		size      => '3',
+		override  => 'any',
+		default   => '1',
 		help_text => x(
 			'A test is broken up into pages with this many problems on each page.  Students can move from page to page '
 				. 'without clicking to grade the test, and their temporary answers will be saved.  Use "0" to indicate '
@@ -371,7 +372,7 @@ use constant FIELD_PROPERTIES => {
 			'N:Y'                => x('Totals only (not problem scores)'),
 			'BeforeAnswerDate:Y' => x('Totals only, only after answer date')
 		},
-		default => 'N:N',
+		default   => 'N:N',
 		help_text => x(
 			'After a test version either has no more allowed graded submissions or has its time limit expired, you may '
 				. 'configure whether or not to allow students to see their scores on that version.'
@@ -387,7 +388,7 @@ use constant FIELD_PROPERTIES => {
 			'Y'                => x('No'),
 			'BeforeAnswerDate' => x('Only after set answer date')
 		},
-		default => 'N',
+		default   => 'N',
 		help_text => x(
 			'After a test version either has no more allowed graded submissions or has its time limit expired, you may '
 				. 'configure whether or not to allow students to see the questions and the responses they gave.'
