@@ -116,18 +116,39 @@ use constant FIELD_PROPERTIES => {
 		type     => 'edit',
 		size     => '25',
 		override => 'any',
+		help_text => x(
+			'This is generally the date when students can begin visiting the set and submitting answers. '
+				. 'Prior to this date, if the set is assigned to a user and it is flagged "visible", '
+				. 'they can see that it exists and when it will open, but cannot view the problems.'
+				. 'If using "course" grade passback to an LMS, only those sets that are past their open date '
+				. "are factored in to the overall course grade that is passed back.  Note that certain "
+				. 'permissions can be changed so that the details explained here are no longer true.'
+		)
 	},
 	due_date => {
 		name     => x('Closes'),
 		type     => 'edit',
 		size     => '25',
 		override => 'any',
+		help_text => x(
+			'This is generally the date when students can no longer use the "Submit" button to submit an '
+				. 'answer and have it assessed for credit.  However students can still visit the set, '
+				. 'type or select answers, and use the "Check" button to be assessed without credit. '
+				. 'Note that certain permissions can be changed so that the details explained here are '
+				. 'no longer true. This date must come on or after the open date.'
+		)
 	},
 	answer_date => {
 		name     => x('Answers Available'),
 		type     => 'edit',
 		size     => '25',
 		override => 'any',
+		help_text => x(
+			'This is generally the date when students can click a checkbox to see the expected correct answers '
+				. 'to problems in the set.  If a problem has a coded solution, this is also when thy can click '
+				. 'to see that solution.  Note that certain permissions can be changed so that the details '
+				. 'explained here are no longer true.  This date must come on or after the close date.'
+		)
 	},
 	visible => {
 		name     => x('Visible to Students'),
@@ -138,6 +159,7 @@ use constant FIELD_PROPERTIES => {
 			1 => x('Yes'),
 			0 => x('No'),
 		},
+		help_text => x('Use this to hide the existence of this set from students, even when it is assigned to them.'),
 	},
 	enable_reduced_scoring => {
 		name     => x('Reduced Scoring Enabled'),
@@ -148,12 +170,20 @@ use constant FIELD_PROPERTIES => {
 			1 => x('Yes'),
 			0 => x('No'),
 		},
+		help_text => x('See "Reduced Scoring Date".'),
 	},
 	reduced_scoring_date => {
 		name     => x('Reduced Scoring Date'),
 		type     => 'edit',
 		size     => '25',
 		override => 'any',
+		help_text => x(
+			'This date should be on or after the open date, and earlier or equal to the close date. '
+				. 'Answers submitted between the reduced scoring date and the close date are scaled down '
+				. 'by a factor that you can set in the Course Config page.  If reduced scoring is being '
+				. 'used, note that students will consider the reduced scoring date to be the "due date", '
+				. 'since that is the date when they can no longer earn 100% for problems.'
+		)
 	},
 	restricted_release => {
 		name      => x('Restrict release by set(s)'),
@@ -219,14 +249,32 @@ use constant FIELD_PROPERTIES => {
 			proctored_gateway => x('proctored test'),
 			jitar             => x('just-in-time')
 		},
+		help_text => x(
+			'With "homework", students visit each problem one at a time.  They submit answers for one problem at a '
+				. 'time and immediately receive feedback.  With "test", students will submit all answers for all '
+				. 'problems at once.  They may or may not receive feedback right away depending upon other '
+				. 'settings.  Also a "test" can have a time limit, where the student needs to start between the '
+				. 'open date and the close date, but once started has only so much time.  Also a "test" can '
+				. 'be configured to allow taking new, re-randomized versions.  A "proctored test" is the same as '
+				. 'a "test", but in order to begin, either a classwide password specific to this test is needed, '
+				. 'or a higher level user must enter their username and password on the student \'s screen. '
+				. 'A "just-in-time" set is like a "homework" set, but can be configured to introduce more exercises '
+				. 'when a student answers a given exercise incorrectly so many times.'
+		)
 	},
 	version_time_limit => {
-		name      => x('Test Time Limit (min; 0=Close Date)'),
+		name      => x('Test Time Limit (minutes)'),
 		type      => 'edit',
 		size      => '4',
 		override  => 'any',
 		default   => '0',
 		convertby => 60,
+		help_text => x(
+			'This sets a number of minutes for each version of a test, once it is started.  Use "0" to indicate no '
+				. 'time limit.  If there is a time limit, then there will be an indication that this is a timed '
+				. 'test on the main "Homework Sets" page.  Additionally the student will be sent to a confirmation '
+				. 'page beefore they can begin.'
+		)
 	},
 	time_limit_cap => {
 		name     => x('Cap Test Time at Set Close Date'),
@@ -237,29 +285,49 @@ use constant FIELD_PROPERTIES => {
 			'0' => x('No'),
 			'1' => x('Yes')
 		},
+		help_text => x(
+			'A student might start a timed test close to the close date.  This setting allows to either cut them off '
+				. 'at the close date or allow them the full time limit.'
+		)
 	},
 	attempts_per_version => {
-		name     => x('Number of Graded Submissions per Test (0=infty)'),
+		name     => x("Graded Submissions per Version"),
 		type     => 'edit',
 		size     => '3',
 		override => 'any',
 		default  => '0',
+		help_text => x(
+			'A test may be configured to allow students one or more versions.  For each version, this is the number of '
+				. 'times you will allow them to click to have that version graded.  Depending on other settings, '
+				. 'they may or may not be able to see scores and feedback following each grading. '
+				. 'Use "0" to indicate there is no cap on the number of graded submissions.'
+		)
 	},
 	time_interval => {
-		name      => x('Time Interval for New Test Versions (min; 0=infty)'),
+		name      => x('Time Interval for New Versions (minutes)'),
 		type      => 'edit',
 		size      => '5',
 		override  => 'any',
 		default   => '0',
 		convertby => 60,
+		help_text => x(
+			'You may set a time interval, for example 720 minutes.  Within this time interval, students may start new '
+				. 'randomized versions of the test.  However they may only start as many new versions as you set for '
+				. '"Number of Versions per Interval".  When the time interval ends, the cap is reset.  This feature '
+				. 'is intended to allow students an immediate retake, but require them to take a break (and perhaps '
+				. 'study more) after too many low scoring attempts in close succession.  Use "0" to indicate an '
+				. 'infinite time interval, which is what you want for an absolute cap on the number of new versions '
+				. 'overall.'
+		)
 	},
 	versions_per_interval => {
-		name     => x('Number of Tests per Time Interval (0=infty)'),
+		name     => x('Number of Versions per Interval'),
 		type     => 'edit',
 		size     => '3',
 		override => 'any',
 		default  => '0',
 		format   => '[0-9]+',                                           # an integer, possibly zero
+		help_text => x('See "Time Interval for New Versions".'),
 	},
 	problem_randorder => {
 		name     => x('Order Problems Randomly'),
@@ -270,16 +338,29 @@ use constant FIELD_PROPERTIES => {
 			0 => x('No'),
 			1 => x('Yes')
 		},
+		help_text => x(
+			'Order problems randomly or not.  If you will be manually reviewing student answers, you might not want to '
+				. 'order problems randomly to facilitate assembly line grading.'
+		)
 	},
 	problems_per_page => {
-		name     => x('Number of Problems per Page (0=all)'),
+		name     => x('Number of Problems per Page'),
 		type     => 'edit',
 		size     => '3',
 		override => 'any',
 		default  => '1',
+		help_text => x(
+			'A test is broken up into pages with this many problems on each page.  Students can move from page to page '
+				. 'without clicking to grade the test, and their temporary answers will be saved.  Use "0" to indicate '
+				. '"all problems on one page".  For tests with many problems, either extreme (1 per page or "all on one '
+				. 'page") has drawbacks.  With 1 per page, the student has many pages and may be frustrated trying to go '
+				. 'back and find a particular problem.  With "all on one page", the student may spend a lot of time on '
+				. 'that one page without clicking anything that lets WeBWorK know they are still active, and their '
+				. 'session might expire for inactivity before they get around to clicking the grade button.'
+		)
 	},
 	'hide_score:hide_score_by_problem' => {
-		name     => x('Show Scores on Finished Tests'),
+		name     => x('Show Scores on Finished Versions'),
 		type     => 'choose',
 		choices  => [qw(N:N Y:Y BeforeAnswerDate:N N:Y BeforeAnswerDate:Y)],
 		override => 'any',
@@ -291,9 +372,13 @@ use constant FIELD_PROPERTIES => {
 			'BeforeAnswerDate:Y' => x('Totals only, only after answer date')
 		},
 		default => 'N:N',
+		help_text => x(
+			'After a test version either has no more allowed graded submissions or has its time limit expired, you may '
+				. 'configure whether or not to allow students to see their scores on that version.'
+		)
 	},
 	hide_work => {
-		name     => x('Show Problems on Finished Tests'),
+		name     => x('Show Problems on Finished Versions'),
 		type     => 'choose',
 		choices  => [qw(N Y BeforeAnswerDate)],
 		override => 'any',
@@ -303,6 +388,10 @@ use constant FIELD_PROPERTIES => {
 			'BeforeAnswerDate' => x('Only after set answer date')
 		},
 		default => 'N',
+		help_text => x(
+			'After a test version either has no more allowed graded submissions or has its time limit expired, you may '
+				. 'configure whether or not to allow students to see the questions and the responses they gave.'
+		)
 	},
 	use_grade_auth_proctor => {
 		name     => x('Require Proctor Authorization to'),
@@ -316,8 +405,9 @@ use constant FIELD_PROPERTIES => {
 		default   => 'Yes',
 		help_text => x(
 			'Proctored tests always require authorization to start the test. "Both Start and Grade" will require '
-				. 'login proctor authorization to start and grade proctor authorization to grade. "Only Start" '
-				. 'requires grade proctor authorization to start and no authorization to grade.'
+				. 'either login proctor authorization or a password specific to this set to start the test, '
+				. 'and grade proctor authorization to grade the test. "Only Start" requires either grade proctor '
+				. 'authorization or a password specific to this set to start and no authorization to grade.'
 		),
 	},
 	restrict_prob_progression => {
@@ -482,6 +572,11 @@ use constant FIELD_PROPERTIES => {
 			1 => x('Yes'),
 			0 => x('No'),
 		},
+		help_text => x(
+			'Problem files may have hints included in their code.  Use this option to suppress showing students these '
+				. 'hints. Note that even if hints are not suppressed, there is a threshold number of attempts '
+				. 'that a student must make before they have the option to view a hint.'
+		)
 	},
 	att_to_open_children => {
 		name     => x('Att. to Open Children'),
