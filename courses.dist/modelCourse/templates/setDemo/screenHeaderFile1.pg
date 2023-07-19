@@ -46,7 +46,7 @@ $HR
 Use this box  to give information about this problem
 set.  Typical information might include some of these facts:
 $PAR
-WeBWorK assignment number $setNumber closes on : $formatedDueDate.
+WeBWorK assignment number $setNumber closes on : $formattedDueDate.
 
 
 $PAR

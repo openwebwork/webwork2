@@ -9,7 +9,7 @@ loadMacros(
 "PGanswermacros.pl"
 );
 
-$dateTime = $formatedDueDate;
+$dateTime = $formattedDueDate;
 
 TEXT(EV2(<<EOT));
 \noindent {\large \bf $studentName}

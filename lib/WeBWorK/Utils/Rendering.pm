@@ -74,8 +74,6 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 		my $db_date = $date =~ s/D/_d/r;
 		$options{$date} = $set->$db_date;
 		$options{ 'formatted' . ucfirst($date) } = formatDateTime($options{$date}, $ce->{siteDefaults}{timezone});
-		# This is provided due to a typo in many header files.
-		$options{ 'formated' . ucfirst($date) } = $options{ 'formatted' . ucfirst($date) };
 		my $uc_date = ucfirst($date);
 		for (
 			[ 'DayOfWeek',       '%A' ],
