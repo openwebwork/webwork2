@@ -29,6 +29,7 @@ use WeBWorK::ConfigObject::time;
 use WeBWorK::ConfigObject::number;
 use WeBWorK::ConfigObject::boolean;
 use WeBWorK::ConfigObject::permission;
+use WeBWorK::ConfigObject::permission_checkboxlist;
 use WeBWorK::ConfigObject::list;
 use WeBWorK::ConfigObject::checkboxlist;
 use WeBWorK::ConfigObject::popuplist;
