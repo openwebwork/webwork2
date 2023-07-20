@@ -317,6 +317,18 @@
 			return;
 		}
 
+		if (fileType === 'hardcopy_theme') {
+			const contents = webworkConfig?.pgCodeMirror?.getValue();
+			if (contents) {
+				renderArea.innerHTML = '<pre>' + contents.replace(/&/g, "&amp;").replace(/</g, "&lt;") + '</pre>';
+			}
+			else
+				renderArea.innerHTML = '<div class="alert alert-danger p-1 m-2 fw-bold">The file has no content.</div>';
+
+			resolve();
+			return;
+		}
+
 		const isProblem = fileType && /problem/.test(fileType) ? 1 : 0;
 
 		renderProblem(new URLSearchParams({

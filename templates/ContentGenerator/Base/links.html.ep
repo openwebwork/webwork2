@@ -138,7 +138,7 @@
 			% # Problem Editor
 			<li class="list-group-item nav-item">
 				<%= $makelink->('instructor_problem_editor',
-					param('file_type') && param('file_type') eq 'course_info' ? (active => 0) : ()) %>
+					param('file_type') && (param('file_type') eq 'course_info' || param('file_type') eq 'hardcopy_theme') ? (active => 0) : ()) %>
 			</li>
 			% if (defined $prettySetID && defined $problemID) {
 				<li class="nav-item">
@@ -181,6 +181,23 @@
 								'instructor_problem_editor',
 								text              => maketext('Course Information'),
 								systemlink_params => { file_type => 'course_info' },
+								active            => 1,
+								target            => 'WW_Editor'
+							) %>
+						</li>
+					</ul>
+				</li>
+			% } elsif (param('file_type') && param('file_type') eq 'hardcopy_theme') {
+				<li class="nav-item">
+					<ul class="nav flex-column">
+						<li class="nav-item">
+							<%= $makelink->(
+								'instructor_problem_editor',
+								text              => maketext('Hardcopy Theme'),
+								systemlink_params => {
+									file_type      => 'hardcopy_theme',
+									hardcopy_theme => param('hardcopy_theme')
+								},
 								active            => 1,
 								target            => 'WW_Editor'
 							) %>
