@@ -198,7 +198,7 @@
 	% # General set information
 	<div class="card mb-2 border border-dark" style="width:fit-content">
 		<div class="card-body p-2">
-			<div class="card-title fw-bold"><%= maketext('General Information') %></div>
+			<div class="card-title fw-bold"><%= maketext('Set Parameters') %></div>
 			<div class="card-text">
 				<%= $c->fieldTable($userToShow, $setID, undef, $setRecord,
 				   	$editingSetVersion
