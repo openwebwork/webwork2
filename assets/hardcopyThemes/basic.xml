@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<theme label="Basic">
+
+<description>
+This theme produces hardcopies with minimal page headers displaying the set
+title and useername, and minimal problem numbering.
+</description>
+
+<preamble>
+\documentclass{article}
+\usepackage{webwork2}
+\usepackage[text={6in,9in},centering]{geometry}
+\usepackage{fancyhdr}
+\renewcommand{\webworkLeftHeader}{%
+\ifthenelse{\equal{\webworkPrettySetId}{}}{}{\ifthenelse{\thepage=1}{\large\scshape\webworkLocalizeSet: \webworkPrettySetId}{}}%
+}
+\renewcommand{\webworkRightHeader}{%
+\ifthenelse{\equal{\webworkUserId}{}}{}{\ifthenelse{\thepage=1}{\bfseries\webworkLocalizeUsername: \webworkUserId}{}}%
+}
+\parindent=0pt
+\pagestyle{fancy}
+\begin{document}
+</preamble>
+
+<presetheader>
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[L]{\webworkLeftHeader}
+\fancyhead[C]{\webworkCenterHeader}
+\fancyhead[R]{\webworkRightHeader}
+\fancyfoot[L]{\webworkLeftFooter}
+\fancyfoot[C]{\webworkCenterFooter}
+\fancyfoot[R]{\webworkRightFooter}
+</presetheader>
+
+<postsetheader>
+\bigskip
+</postsetheader>
+
+<problemheader>
+{\bfseries\webworkLocalizeProblem~\ifthenelse{\equal{\webworkProblemNumber}{}}{\#}{\webworkProblemNumber}}
+\nobreak
+\smallskip
+</problemheader>
+
+<problemfooter></problemfooter>
+
+<problemdivider>
+\vspace{2pc+6pc-1pc}
+\goodbreak
+</problemdivider>
+
+<setfooter>
+</setfooter>
+
+<setdivider>
+\newpage
+\setcounter{page}{1}
+</setdivider>
+
+<userdivider>
+\newpage
+\setcounter{page}{1}
+</userdivider>
+
+<postamble>
+\end{document}
+</postamble>
+
+</theme>

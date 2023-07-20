@@ -623,7 +623,7 @@ sub set_params {
 	# A2 - params are not non-modifiable, with no explanation or workaround given in docs. WTF!
 	$c->param("user",   $self->{user_id});
 	$c->param("key",    $self->{session_key});
-	$c->param("passwd", "");
+	$c->param("passwd", "") unless $c->{rpc};
 
 	debug("params user='", $c->param("user"), "' key='", $c->param("key"), "'");
 }

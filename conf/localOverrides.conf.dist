@@ -106,7 +106,7 @@ $mail{feedbackRecipients}    = [
 # rather than a centrally-stored file shared by all courses.
 
 #$webworkFiles{hardcopySnippets}{setHeader} = "$courseDirs{templates}/defaultSetHeader.pg";
-#$webworkFiles{hardcopySnippets}{setHeader} = "$courseDirs{templates}/myHardCopyHeaderFile.pg";
+#$webworkFiles{hardcopySnippets}{setHeader} = "$courseDirs{templates}/myHardcopyHeaderFile.pg";
 
 # The set header is displayed on the problem set page. It is a PG file.
 # One of these default files which is used if a specific files is not selected
@@ -518,53 +518,42 @@ $mail{feedbackRecipients}    = [
 #$permissionLevels{modify_tags}                      = "admin";
 
 ################################################################################
-
-# Available Hardcopy themes (located in snippets) - adds four XeLaTeX themes
-# using polyglossia for multilingual support and fontspec.
-# The "oneColumn" and "twoColumn" options require pdflatex be installed on the server
-# For using any of the XeLaTeX options, xelatex must be installed on the server
-# (on Ubuntu this is in the texlive-xetex package).
-# Note: restrict options to only pdflatex options, or only xelatex options,
-# and not both types.
-# Set $externalPrograms{pdflatex} to use either pdflatex or xelatex,
-# depending on which flavor of themes you are enabling.
-# Using --no-shell-escape is important for security reasons.
-#$externalPrograms{pdflatex} ="/usr/bin/xelatex --no-shell-escape";
-
-# Available Hardcopy themes (located in snippets)
-# (their "internal" name and their pretty name for end users)
-#$hardcopyThemeNames = {
-	#oneColumn => 'One Column',
-	#twoColumn => 'Two Columns',
-	#'XeLaTeX-oneColumn' => 'English - one Column',
-	#'XeLaTeX-twoColumn' => 'English - two Columns',
-	#'XeLaTeX-Hebrew-oneColumn' => 'Hebrew/English - one Column',
-	#'XeLaTeX-Hebrew-twoColumn' => 'Hebrew/English - two Columns',
-#};
-
-# This is needed to enforce an order that the options are presented when making a hardcopy
-#$hardcopyThemes = [
-	#'oneColumn',
-	#'twoColumn',
-	#'XeLaTeX-oneColumn',
-	#'XeLaTeX-twoColumn',
-	#'XeLaTeX-Hebrew-oneColumn',
-	#'XeLaTeX-Hebrew-twoColumn',
-#];
-
-
-# Change default Hardcopy theme
-# Be sure to choose one that is enabled!
-#$hardcopyTheme = "XeLaTeX-twoColumn";
-
-# Location of the common tex input files packages.tex, CAPA.tex, and PGML.tex
-# used for hardcopy generation.  Uncomment the following line and adjust the
-# path as needed to customize the TeX input files used for all themes in
-# hardcopy generation.  This location must contain the three files named above.
-#$webworkDirs{texinputs_common} = "$webworkDirs{root}/conf/snippets/hardcopyThemes/common";
-
+# Hardcopy Theme
 ################################################################################
 
+# Hardcopy themes are .xml files.  See assets/hardcopThemes/README.md for details
+# about their structure.  The site themes are files in $webworkDirs{hardcopyThemes}.
+# $hardcopyThemes identifies which site themes are enabled.
+#$hardcopyThemes = [
+#	'empty.xml',
+#	'basic.xml',
+#	'basicTwoCol.xml',
+#	'classic.xml',
+#	'classicTwoCol.xml',
+#	'oneColumn.xml',
+#	'twoColumn.xml',
+#	'boxed.xml',
+#	'boxedTwoCol.xml',
+#	'boxedRows.xml',
+#	'hebrew.xml',
+#	'hebrewTwoCol.xml',
+#];
+
+# The Hebrew themes need to use xelatex. Uncomment the following for xelatex
+#$externalPrograms{pdflatex} ="/usr/bin/xelatex --no-shell-escape";
+
+# A course may have additional themes in $courseDirs{hardcopyThemes}.  All such
+# "course" hardcopy themes are effectively enabled and offered for use when
+# selecting a hardcopy theme.  You can move such files or rename them to not
+# have a .xml extension if you don't want them to be offered for use.
+
+# If a course hardcopy theme has the same name as a site hardcopy theme, the
+# course hardcopy theme is the one that is used.
+
+# Default hardcopy themes (should either be an enabled site theme or a theme in
+# the course hardcopyThemes folder
+#$hardcopyTheme = 'twoColumn.xml';
+#$hardcopyThemePGEditor = 'empty.xml';
 
 ################################################################################
 # Webwork Caliper

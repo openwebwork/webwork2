@@ -124,11 +124,11 @@
 				<div class="col-12">
 					<h1 id="page-title" class="page-title">
 						<%== $c->page_title %>
-						% if ($authen->{was_verified}
-							% && $authz->hasPermissions(param('user'), 'access_instructor_tools')) {
-							<%= $c->help({ label_size => 'fa-xs' }) %>
-						% }
 					</h1>
+					% if ($authen->{was_verified}
+						% && $authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+						<%= $c->help({ label_size => 'fa-xs' }) %>
+					% }
 				</div>
 			</div>
 		% }

@@ -380,6 +380,13 @@ div.showMeAnotherBox {
 h1.page-title {
 	font-size: 31.5px;
 	line-height: 35px;
+	display: inline-block;
+
+	& + a {
+		font-size: 31.5px;
+		line-height: 35px;
+		margin-left: 0.5rem;
+	}
 }
 
 h2.page-title {

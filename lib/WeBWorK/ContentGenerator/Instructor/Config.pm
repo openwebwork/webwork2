@@ -93,6 +93,28 @@ sub getConfigValues ($c, $ce) {
 	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
 	my $themes = [ grep { !/^\.{1,2}$/ && $_ ne 'layouts' } sort readdir($dh) ];
 
+	# Get the list of all site hardcopy theme files
+	opendir(my $dhS, $ce->{webworkDirs}{hardcopyThemes}) || die "can't opendir $ce->{webworkDirs}{hardcopyThemes}: $!";
+	my $hardcopyThemesSite = [ grep {/\.xml$/} (sort readdir($dhS)) ];
+	my @hardcopyThemesCourse;
+	if (opendir(my $dhC, $ce->{courseDirs}{hardcopyThemes})) {
+		@hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
+	}
+	# get unique file names, merging lists from site and course folders
+	my $hardcopyThemes = [
+		sort(do {
+			my %seen;
+			grep { !$seen{$_}++ } (@$hardcopyThemesSite, @hardcopyThemesCourse);
+		})
+	];
+	# get enabled site themes plus all course themes
+	my $hardcopyThemesAvailable = [
+		sort(do {
+			my %seen;
+			grep { !$seen{$_}++ } (@{ $ce->{hardcopyThemes} }, @hardcopyThemesCourse);
+		})
+	];
+
 	# get list of localization dictionaries
 	my $localizeDir = $ce->{webworkDirs}{localize};
 	opendir(my $dh2, $localizeDir) || die "can't opendir $localizeDir: $!";
@@ -104,13 +126,21 @@ sub getConfigValues ($c, $ce) {
 
 	];
 
-	# insert the anonymous array of theme folder names into configValues
+	# insert the anonymous array of theme names into configValues
 	# FIXME?  Is there a reason this is an array? Couldn't we replace this
 	# with a hash and conceptually simplify this routine? MEG
 	my $modifyThemes = sub {
 		my $item = shift;
-		if (ref($item) =~ /HASH/ and $item->{var} eq 'defaultTheme') {
-			$item->{values} = $themes;
+		if (
+			ref($item) =~ /HASH/
+			&& ($item->{var} =~
+				/^(defaultTheme|hardcopyThemesSite|hardcopyThemes|hardcopyTheme|hardcopyThemePGEditor)$/)
+			)
+		{
+			$item->{values} = $themes if ($item->{var} eq 'defaultTheme');
+			$item->{values} = $hardcopyThemesAvailable
+				if ($item->{var} eq 'hardcopyTheme' || $item->{var} eq 'hardcopyThemePGEditor');
+			$item->{values} = $hardcopyThemesSite if ($item->{var} eq 'hardcopyThemes');
 		}
 	};
 	my $modifyLanguages = sub {
