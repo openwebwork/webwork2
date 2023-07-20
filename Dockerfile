@@ -126,6 +126,7 @@ RUN apt-get update \
 	libpadwalker-perl \
 	libpath-class-perl \
 	libpath-tiny-perl \
+	libpandoc-wrapper-perl \
 	libphp-serialization-perl \
 	libpod-wsdl-perl \
 	libsoap-lite-perl \

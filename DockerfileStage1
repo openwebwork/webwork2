@@ -86,6 +86,7 @@ RUN apt-get update \
 	libnet-oauth-perl \
 	libossp-uuid-perl \
 	libpadwalker-perl \
+	libpandoc-wrapper-perl \
 	libpath-class-perl \
 	libpath-tiny-perl \
 	libphp-serialization-perl \

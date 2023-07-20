@@ -45,7 +45,6 @@ sub renderSampleProblem ($c) {
 	my $pg_root = $c->ce->{pg_dir};
 
 	(undef, my $macro_files) = Pod::Simple::Search->new->inc(0)->survey("$pg_root/macros");
-	$c->log->info($c->dumper($macro_files));
 	my %macro_locations = map { basename($_) => $_ =~ s!$pg_root/macros/!!r } keys %$macro_files;
 	my $metadata        = generateMetadata("$pg_root/tutorial/sample-problems", macro_locations => \%macro_locations);
 
