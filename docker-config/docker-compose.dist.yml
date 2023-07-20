@@ -86,13 +86,13 @@ services:
         # should be commented out.
 
         # main branches:
-        #- WEBWORK2_BRANCH=main
-        #- PG_BRANCH=main
+        - WEBWORK2_BRANCH=main
+        - PG_BRANCH=main
 
         # WeBWorK/PG develop branches
         #    (other valid branches can also be used in a similar manner)
-        - WEBWORK2_BRANCH=develop
-        - PG_BRANCH=develop
+        #- WEBWORK2_BRANCH=develop
+        #- PG_BRANCH=develop
 
       # If you would like a 1 stage build process comment out the next line, and just run "docker-compose build".
       dockerfile: DockerfileStage2

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -20,11 +20,14 @@ use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 WeBWorK::ContentGenerator::Instructor::PGProblemEditor - Edit a pg file
 
-This editor will edit problem files, set header files, or files such as
-course_info whose name is defined in the defaults.config file.
+This editor will edit problem files, set header files, hardcopy theme files,
+or files such as course_info whose name is defined in the defaults.config file.
 
 Only files under the template directory (or linked to this location) can be
 edited.
+
+Editable hardcopy themes are in the directory defined by
+$ce->{courseDirs}{hardcopyThemes}
 
 The course information and problems are located in the course templates
 directory.  Course information has the name defined by
@@ -48,7 +51,7 @@ The suffix for a temporary file is "user_name.tmp" by default.
 =item problem
 
 This is the most common type. This editor can be called by an instructor when
-viewing any problem.  the information for retrieving the source file is found
+viewing any problem.  The information for retrieving the source file is found
 using the problemID in order to look look up the source file path.
 
 =item source_path_for_problem_file
@@ -69,6 +72,12 @@ listed as problem 0 in the set's list of problems.  But it is used instead of
 set_header when producing a hardcopy of the problem set in the TeX format,
 instead of producing HTML formatted version for use on the computer screen.
 
+=item hardcopy_theme
+
+This allows editing of a hardcopy theme file, which defines snippets of tex
+code to be inserted before and after problems in a hardcopy.  It can be called
+from this module when using the Hardcopy tab.
+
 =item course_info
 
 This allows editing of the course_info.txt file which gives general information
@@ -77,8 +86,8 @@ about the course.  It is called from the ProblemSets.pm module.
 =item blank_problem
 
 This is a special case which allows one to create and edit a new PG problem.
-The "stationary" source for this problem is stored in the conf/snippets
-directory and defined in defaults.config as
+The "stationary" source for this problem is stored in the assets/pg directory
+and defined in defaults.config as
 $webworkFiles{screenSnippets}{blankProblem}
 
 =back
@@ -107,6 +116,7 @@ not exist.  The path to the actual file being edited is stored in inputFilePath.
 =cut
 
 use File::Copy;
+use XML::LibXML;
 
 use WeBWorK::Utils qw(jitar_id_to_seq not_blank path_is_subdir seq_to_jitar_id x
 	surePathToFile readDirectory readFile max format_set_name_display);
@@ -228,9 +238,10 @@ sub initialize ($c) {
 	$c->stash->{problemContents}  = '';
 	$c->stash->{formsToShow}      = ACTION_FORMS();
 	$c->stash->{actionFormTitles} = ACTION_FORM_TITLES();
+	$c->stash->{hardcopyLabels}   = [];
 
 	# Tell the templates if we are working on a PG file
-	$c->{is_pg} = ($c->{file_type} eq 'course_info') ? 0 : 1;
+	$c->{is_pg} = !$c->{file_type} || ($c->{file_type} ne 'course_info' && $c->{file_type} ne 'hardcopy_theme');
 
 	# Check permissions
 	return
@@ -279,7 +290,8 @@ sub initialize ($c) {
 			if (path_is_subdir($c->{editFilePath}, $ce->{courseDirs}{templates}, 1)
 				|| $c->{editFilePath} eq $ce->{webworkFiles}{screenSnippets}{setHeader}
 				|| $c->{editFilePath} eq $ce->{webworkFiles}{hardcopySnippets}{setHeader}
-				|| $c->{editFilePath} eq $ce->{webworkFiles}{screenSnippets}{blankProblem})
+				|| $c->{editFilePath} eq $ce->{webworkFiles}{screenSnippets}{blankProblem}
+				|| $c->{editFilePath} =~ m|^$ce->{webworkDirs}{hardcopyThemes}/[^/]*\.xml$|)
 			{
 				eval { $problemContents = readFile($c->{editFilePath}) };
 				$problemContents = $@ if $@;
@@ -296,6 +308,31 @@ sub initialize ($c) {
 
 	$c->stash->{problemContents} = $problemContents;
 
+	# Get labels for the hardcopy themes, so the templates can use them.
+	my %hardcopyLabels;
+	opendir(my $dhS, $ce->{webworkDirs}{hardcopyThemes}) || die "can't opendir $ce->{webworkDirs}{hardcopyThemes}: $!";
+	for my $hardcopyTheme (grep {/\.xml$/} sort readdir($dhS)) {
+		my $themeTree = XML::LibXML->load_xml(location => "$ce->{webworkDirs}{hardcopyThemes}/$hardcopyTheme");
+		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
+	}
+	my @hardcopyThemesCourse;
+	if (opendir(my $dhC, $ce->{courseDirs}{hardcopyThemes})) {
+		@hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
+	}
+	for my $hardcopyTheme (@hardcopyThemesCourse) {
+		my $themeTree = XML::LibXML->load_xml(location => "$ce->{courseDirs}{hardcopyThemes}/$hardcopyTheme");
+		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
+	}
+	my $hardcopyThemesAvailable = [
+		sort(do {
+			my %seen;
+			grep { !$seen{$_}++ } (@{ $ce->{hardcopyThemes} }, @hardcopyThemesCourse);
+		})
+	];
+
+	$c->stash->{hardcopyLabels}          = \%hardcopyLabels;
+	$c->stash->{hardcopyThemesAvailable} = $hardcopyThemesAvailable;
+
 	$c->{prettyProblemNumber} = $c->{problemID} // '';
 	$c->{set}                 = $c->db->getGlobalSet($c->{setID}) if $c->{setID};
 	$c->{prettyProblemNumber} = join('.', jitar_id_to_seq($c->{prettyProblemNumber}))
@@ -309,11 +346,12 @@ sub path ($c, $args) {
 	# page.  The bread crumb path leads back to the problem being edited, not to the Instructor tool.
 	return $c->pathMacro(
 		$args,
-		'WeBWorK'                  => $c->url_for('root'),
-		$c->stash('courseID')      => $c->url_for('set_list'),
-		($c->stash('setID') // '') => $c->url_for('problem_list'),
-		$c->{prettyProblemNumber}  => $c->url_for('problem_detail', problemID => $c->stash('problemID') || ''),
-		$c->maketext('Editor')     => ''
+		'WeBWorK'                         => $c->url_for('root'),
+		$c->stash('courseID')             => $c->url_for('set_list'),
+		($c->stash('setID') // '')        => $c->url_for('problem_list'),
+		($c->{prettyProblemNumber} // '') =>
+			$c->url_for('problem_detail', problemID => $c->stash('problemID') || ''),
+		$c->maketext('Editor') => ''
 	);
 }
 
@@ -321,8 +359,11 @@ sub page_title ($c) {
 	my $setID     = $c->stash('setID');
 	my $problemID = $c->stash('problemID');
 
-	return $c->maketext('Set Header for set [_1]',            $setID) if $c->{file_type} eq 'set_header';
-	return $c->maketext('Hardcopy Header for set [_1]',       $setID) if $c->{file_type} eq 'hardcopy_header';
+	return $c->maketext('Editor') unless $c->{file_type};
+
+	return $c->maketext('Set Header for set [_1]',      $setID) if $c->{file_type} eq 'set_header';
+	return $c->maketext('Hardcopy Header for set [_1]', $setID) if $c->{file_type} eq 'hardcopy_header';
+	return $c->maketext('Hardcopy Theme') if $c->{file_type} eq 'hardcopy_theme';
 	return $c->maketext('Course Information for course [_1]', $c->stash('courseID'))
 		if $c->{file_type} eq 'course_info';
 
@@ -367,6 +408,7 @@ sub determineTempEditFilePath ($c, $path) {
 
 	my $templatesDirectory   = $c->ce->{courseDirs}{templates};
 	my $tmpEditFileDirectory = $c->getTempEditFileDirectory();
+	my $hardcopyThemesDir    = $c->ce->{webworkDirs}{hardcopyThemes};
 
 	$c->addbadmessage($c->maketext('The path to the original file should be absolute.'))
 		unless $path =~ m|^/|;
@@ -386,6 +428,9 @@ sub determineTempEditFilePath ($c, $path) {
 		} elsif ($path eq $c->ce->{webworkFiles}{screenSnippets}{setHeader}) {
 			# Handle the case of the hardcopy header in snippets.
 			$path = "$tmpEditFileDirectory/hardcopyHeader.$setID.$user.tmp";
+		} elsif ($path =~ m|$hardcopyThemesDir/([^/]*\.xml)$|) {
+			# Handle the case of the hardcopy themes in assets/hardcopyThemes.
+			$path = "$tmpEditFileDirectory/hardcopyTheme.$1.$user.tmp";
 		} else {
 			# If all else fails, just use a failsafe filename.  This is reused in all of these cases.
 			# This shouldn't be possible in any case.
@@ -415,6 +460,8 @@ sub determineOriginalEditFilePath ($c, $path) {
 			$newpath = $ce->{webworkFiles}{hardcopySnippets}{setHeader};
 		} elsif (($newpath =~ m|screenHeader\.[^/]*$|)) {
 			$newpath = $ce->{webworkFiles}{screenSnippets}{setHeader};
+		} elsif (($newpath =~ m|hardcopyTheme\.([^/]*\.xml)\.[^/]*$|)) {
+			$newpath = "$ce->{courseDirs}{hardcopyThemes}/$1";
 		} else {
 			my $user = $c->param('user');
 			$newpath =~ s|\.$user\.tmp$||;
@@ -457,6 +504,11 @@ sub getFilePaths ($c) {
 		$editFilePath = "$ce->{courseDirs}{templates}/$ce->{courseFiles}{course_info}";
 	} elsif ($c->{file_type} eq 'blank_problem') {
 		$editFilePath = $ce->{webworkFiles}{screenSnippets}{blankProblem};
+	} elsif ($c->{file_type} eq 'hardcopy_theme') {
+		$editFilePath = "$ce->{courseDirs}{hardcopyThemes}/" . $c->param('hardcopy_theme');
+		if (!-e $editFilePath) {
+			$editFilePath = "$ce->{webworkDirs}{hardcopyThemes}/" . $c->param('hardcopy_theme');
+		}
 	} elsif ($c->{file_type} eq 'set_header' || $c->{file_type} eq 'hardcopy_header') {
 		my $set_record = $db->getGlobalSet($c->{setID});
 
@@ -471,7 +523,7 @@ sub getFilePaths ($c) {
 				}
 			} else {
 				# If the set record doesn't specify the filename for a header or it specifies the defaultHeader,
-				# then the set uses the default from snippets.
+				# then the set uses the default from assets/pg.
 				$editFilePath = $ce->{webworkFiles}{screenSnippets}{setHeader}
 					if $c->{file_type} eq 'set_header';
 				$editFilePath = $ce->{webworkFiles}{hardcopySnippets}{setHeader}
@@ -795,6 +847,17 @@ sub view_handler ($c) {
 sub hardcopy_action { }
 sub pgtidy_action   { }
 
+sub hardcopy_handler ($c) {
+	# Redirect to problem editor page.
+	$c->reply_with_redirect($c->systemLink(
+		$c->url_for('instructor_problem_editor',),
+		params => {
+			file_type      => 'hardcopy_theme',
+			hardcopy_theme => $c->param('action.hardcopy.theme')
+		}
+	));
+}
+
 sub add_problem_handler ($c) {
 	my $db = $c->db;
 
@@ -980,6 +1043,18 @@ sub save_handler ($c) {
 				status_message => $c->{status_message}->join('')
 			}
 		));
+	} elsif ($c->{file_type} eq 'hardcopy_theme') {
+		# Redirect to PGProblemEditor.pm
+		$c->reply_with_redirect($c->systemLink(
+			$c->url_for('instructor_problem_editor'),
+			params => {
+				editMode       => 'savedFile',
+				hardcopy_theme => $c->{hardcopy_theme},
+				file_type      => 'hardcopy_theme',
+				status_message => $c->{status_message}->join(''),
+				sourceFilePath => $c->getRelativeSourceFilePath($c->{editFilePath}),
+			}
+		));
 	} elsif ($c->{file_type} eq 'course_info') {
 		# Redirect to ProblemSets.pm
 		$c->reply_with_redirect($c->systemLink(
@@ -1029,11 +1104,11 @@ sub save_as_handler ($c) {
 		$c->addbadmessage($c->maketext('Please specify a file to save to.'));
 	}
 
-	# Rescue the user in case they forgot to end the file name with the pg extension.
-	if (($file_type eq 'problem' || $file_type eq 'blank_problem' || $file_type eq 'set_header')
-		&& $new_file_name !~ /\.pg$/)
-	{
+	# Rescue the user in case they forgot to end the file name with the right extension.
+	if ($c->{is_pg} && $new_file_name !~ /\.pg$/) {
 		$new_file_name .= '.pg';
+	} elsif ($file_type eq 'hardcopy_theme' && $new_file_name !~ /\.xml$/) {
+		$new_file_name .= '.xml';
 	}
 
 	# Grab the problemContents from the form in order to save it to a new permanent file.
@@ -1064,10 +1139,10 @@ sub save_as_handler ($c) {
 		$c->saveFileChanges($outputFilePath);
 		my $targetProblemNumber;
 
-		if ($file_type eq 'course_info') {
-			# The saveMode is not set for course_info files as there are no such options presented in the form.
-			# So set that here so that the correct redirect is chosen below.
-			$saveMode = 'new_course_info';
+		if ($file_type eq 'course_info' || $file_type eq 'hardcopy_theme') {
+			# The saveMode is not set for course_info files or hardcopy_theme file as there are no such options
+			# presented in the form.  So set that here so that the correct redirect is chosen below.
+			$saveMode = "new_$file_type";
 		} elsif ($saveMode eq 'rename' && -r $outputFilePath) {
 			# Modify source file path in problem.
 			if ($file_type eq 'set_header') {
@@ -1169,6 +1244,7 @@ sub save_as_handler ($c) {
 	# Set up redirect.
 	my $problemPage;
 	my $new_file_type;
+	my %extra_params;
 
 	if ($saveMode eq 'new_course_info') {
 		$problemPage   = $c->url_for('instructor_problem_editor');
@@ -1177,6 +1253,10 @@ sub save_as_handler ($c) {
 		$problemPage =
 			$c->url_for('instructor_problem_editor_withset_withproblem', setID => 'Undefined_Set', problemID => 1);
 		$new_file_type = 'source_path_for_problem_file';
+	} elsif ($saveMode eq 'new_hardcopy_theme') {
+		$problemPage                  = $c->url_for('instructor_problem_editor');
+		$new_file_type                = 'hardcopy_theme';
+		$extra_params{hardcopy_theme} = $new_file_name =~ s|^.*\/([^/]*\.xml)|$1|r;
 	} elsif ($saveMode eq 'rename') {
 		$problemPage = $c->url_for(
 			'instructor_problem_editor_withset_withproblem',
@@ -1205,7 +1285,8 @@ sub save_as_handler ($c) {
 			sourceFilePath => $c->getRelativeSourceFilePath($outputFilePath),
 			problemSeed    => $c->{problemSeed},
 			file_type      => $new_file_type,
-			status_message => $c->{status_message}->join('')
+			status_message => $c->{status_message}->join(''),
+			%extra_params
 		}
 	));
 	return;

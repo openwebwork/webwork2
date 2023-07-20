@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -88,6 +88,9 @@ sub startup ($app) {
 	$app->plugin(Minion => { $ce->{job_queue}{backend} => $ce->{job_queue}{database_dsn} });
 	$app->minion->add_task(lti_mass_update       => 'Mojolicious::WeBWorK::Tasks::LTIMassUpdate');
 	$app->minion->add_task(send_instructor_email => 'Mojolicious::WeBWorK::Tasks::SendInstructorEmail');
+
+	# Provide the ability to serve data as a file download.
+	$app->plugin('RenderFile');
 
 	# Helpers
 

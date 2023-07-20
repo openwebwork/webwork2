@@ -179,7 +179,7 @@
 	% # Show the footer unless it is explicity disabled.
 	% if ($showFooter ne '0') {
 		<div id="footer">
-			WeBWorK &copy; 2000-2022 |
+			WeBWorK &copy; 2000-2023 |
 			host: <%= $SITE_URL %> |
 			course: <%= $courseID %> |
 			format: <%= $formatName %> |

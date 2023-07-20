@@ -32,7 +32,7 @@ sub convert_newval_source ($self, $use_current) {
 sub save_string ($self, $oldval, $use_current = 0) {
 	my @newvals = $self->convert_newval_source($use_current);
 	if ($self->{min} && scalar(@newvals) < $self->{min}) {
-		$self->{c}->addbadmessage("You need to select at least $self->{min} display mode.");
+		$self->{c}->addbadmessage(qq!You need to select at least $self->{min} option for "$self->{doc}".!);
 		return '' if $use_current;
 		return $self->save_string($oldval, 1);
 	}

@@ -3,7 +3,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,6 +53,7 @@ my @applicationsList = qw(
 	git
 	gzip
 	latex
+	pandoc
 	pdf2svg
 	pdflatex
 	dvipng
@@ -119,6 +120,7 @@ my @modulesList = qw(
 	Minion::Backend::SQLite
 	Mojolicious
 	Mojolicious::Plugin::NotYAMLConfig
+	Mojolicious::Plugin::RenderFile
 	Net::IP
 	Net::LDAPS
 	Net::OAuth
@@ -126,6 +128,7 @@ my @modulesList = qw(
 	Net::SSLeay
 	Opcode
 	PadWalker
+	Pandoc
 	Path::Class
 	Perl::Tidy
 	PHP::Serialization
@@ -149,6 +152,7 @@ my @modulesList = qw(
 	Types::Serialiser
 	URI::Escape
 	UUID::Tiny
+	XML::LibXML
 	XML::Parser
 	XML::Parser::EasyTree
 	XML::Writer
