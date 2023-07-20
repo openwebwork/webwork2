@@ -42,7 +42,7 @@
 	<dd><%= maketext('If selected, the file path of the problem source will be printed in the output.') %></dd>
 
 	<dt><%= maketext('Hardcopy Theme') %></dt>
-	<dd><%= maketext('This will determine if the output is in one or two columns.') %> </dd>
+	<dd><%= maketext('Choose from the available hardcopy layout themes.') %> </dd>
 </dl>
 <p>
 	<%== maketext('Once "Generate Hardcopy for selected sets and selected users" is clicked a file in the selected '

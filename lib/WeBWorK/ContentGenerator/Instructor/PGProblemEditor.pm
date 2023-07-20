@@ -107,6 +107,7 @@ not exist.  The path to the actual file being edited is stored in inputFilePath.
 =cut
 
 use File::Copy;
+use XML::LibXML;
 
 use WeBWorK::Utils qw(jitar_id_to_seq not_blank path_is_subdir seq_to_jitar_id x
 	surePathToFile readDirectory readFile max format_set_name_display);
@@ -228,9 +229,10 @@ sub initialize ($c) {
 	$c->stash->{problemContents}  = '';
 	$c->stash->{formsToShow}      = ACTION_FORMS();
 	$c->stash->{actionFormTitles} = ACTION_FORM_TITLES();
+	$c->stash->{hardcopyLabels}   = [];
 
 	# Tell the templates if we are working on a PG file
-	$c->{is_pg} = ($c->{file_type} eq 'course_info') ? 0 : 1;
+	$c->{is_pg} = $c->{file_type} && $c->{file_type} eq 'course_info' ? 0 : 1;
 
 	# Check permissions
 	return
@@ -296,6 +298,31 @@ sub initialize ($c) {
 
 	$c->stash->{problemContents} = $problemContents;
 
+	# Get labels for the hardcopy themes, so the templates can use them.
+	my %hardcopyLabels;
+	opendir(my $dhS, $ce->{webworkDirs}{hardcopyThemes}) || die "can't opendir $ce->{webworkDirs}{hardcopyThemes}: $!";
+	for my $hardcopyTheme (grep {/\.xml$/} sort readdir($dhS)) {
+		my $themeTree = XML::LibXML->load_xml(location => "$ce->{webworkDirs}{hardcopyThemes}/$hardcopyTheme");
+		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
+	}
+	my @hardcopyThemesCourse;
+	if (opendir(my $dhC, $ce->{courseDirs}{hardcopyThemes})) {
+		@hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
+	}
+	for my $hardcopyTheme (@hardcopyThemesCourse) {
+		my $themeTree = XML::LibXML->load_xml(location => "$ce->{courseDirs}{hardcopyThemes}/$hardcopyTheme");
+		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
+	}
+	my $hardcopyThemesAvailable = [
+		sort(do {
+			my %seen;
+			grep { !$seen{$_}++ } (@{ $ce->{hardcopyThemes} }, @hardcopyThemesCourse);
+		})
+	];
+
+	$c->stash->{hardcopyLabels}          = \%hardcopyLabels;
+	$c->stash->{hardcopyThemesAvailable} = $hardcopyThemesAvailable;
+
 	$c->{prettyProblemNumber} = $c->{problemID} // '';
 	$c->{set}                 = $c->db->getGlobalSet($c->{setID}) if $c->{setID};
 	$c->{prettyProblemNumber} = join('.', jitar_id_to_seq($c->{prettyProblemNumber}))
@@ -309,17 +336,20 @@ sub path ($c, $args) {
 	# page.  The bread crumb path leads back to the problem being edited, not to the Instructor tool.
 	return $c->pathMacro(
 		$args,
-		'WeBWorK'                  => $c->url_for('root'),
-		$c->stash('courseID')      => $c->url_for('set_list'),
-		($c->stash('setID') // '') => $c->url_for('problem_list'),
-		$c->{prettyProblemNumber}  => $c->url_for('problem_detail', problemID => $c->stash('problemID') || ''),
-		$c->maketext('Editor')     => ''
+		'WeBWorK'                         => $c->url_for('root'),
+		$c->stash('courseID')             => $c->url_for('set_list'),
+		($c->stash('setID') // '')        => $c->url_for('problem_list'),
+		($c->{prettyProblemNumber} // '') =>
+			$c->url_for('problem_detail', problemID => $c->stash('problemID') || ''),
+		$c->maketext('Editor') => ''
 	);
 }
 
 sub page_title ($c) {
 	my $setID     = $c->stash('setID');
 	my $problemID = $c->stash('problemID');
+
+	return $c->maketext('Editor') unless $c->{file_type};
 
 	return $c->maketext('Set Header for set [_1]',            $setID) if $c->{file_type} eq 'set_header';
 	return $c->maketext('Hardcopy Header for set [_1]',       $setID) if $c->{file_type} eq 'hardcopy_header';
@@ -471,7 +501,7 @@ sub getFilePaths ($c) {
 				}
 			} else {
 				# If the set record doesn't specify the filename for a header or it specifies the defaultHeader,
-				# then the set uses the default from snippets.
+				# then the set uses the default from assets/pg.
 				$editFilePath = $ce->{webworkFiles}{screenSnippets}{setHeader}
 					if $c->{file_type} eq 'set_header';
 				$editFilePath = $ce->{webworkFiles}{hardcopySnippets}{setHeader}

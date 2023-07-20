@@ -51,9 +51,9 @@
 		<div class="col-auto">
 			<%= select_field 'action.hardcopy.theme' => [
 					map { [
-						$ce->{hardcopyThemeNames}{$_} => $_,
-						$_ eq $ce->{hardcopyTheme} ? (selected => undef) : ()
-					] } @{ $ce->{hardcopyThemes} }
+						$hardcopyLabels->{$_} => $_,
+						$_ eq $c->ce->{hardcopyThemePGEditor} ? (selected => undef) : ()
+					] } @$hardcopyThemesAvailable
 				],
 				id    => 'action_hardcopy_theme_id',
 				class => 'form-select form-select-sm d-inline w-auto' =%>

@@ -49,10 +49,15 @@ die $@ if $@;
 my $pdflatex_cmd =
 	"cd $temp_dir && "
 	. "TEXINPUTS=$ENV{WEBWORK_ROOT}/bin:"
-	. shell_quote($ce->{webworkDirs}{texinputs_common}) . ':'
+	. shell_quote($ce->{webworkDirs}{assetsTex}) . ':'
 	. shell_quote("$ce->{pg}{directories}{assetsTex}") . ': '
 	. $ce->{externalPrograms}{pdflatex}
-	. ' -interaction nonstopmode check_latex.tex > check_latex.nfo 2>&1';
+	. ' -interaction nonstopmode check_latex_article.tex > check_latex.nfo 2>&1 &&'
+	. "TEXINPUTS=$ENV{WEBWORK_ROOT}/bin:"
+	. shell_quote($ce->{webworkDirs}{assetsTex}) . ':'
+	. shell_quote("$ce->{pg}{directories}{assetsTex}") . ': '
+	. $ce->{externalPrograms}{pdflatex}
+	. ' -interaction nonstopmode check_latex_exam.tex >> check_latex.nfo 2>&1';
 
 if ((system $pdflatex_cmd) >> 8) {
 	if (open(my $fh, '<', "$temp_dir/check_latex.nfo")) {
