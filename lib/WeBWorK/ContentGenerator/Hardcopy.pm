@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,7 @@ use File::Path;
 use File::Temp qw/tempdir/;
 use String::ShellQuote;
 use Archive::Zip qw(:ERROR_CODES);
+use XML::LibXML;
 
 use WeBWorK::DB::Utils qw/user2global/;
 use WeBWorK::PG;
@@ -437,21 +438,45 @@ sub display_form ($c) {
 		}
 	}
 
+	# Get labels for the hardcopy themes, which are attributes in the theme xml file
+	my %hardcopyLabels;
+	opendir(my $dhS, $ce->{webworkDirs}{hardcopyThemes}) || die "can't opendir $ce->{webworkDirs}{hardcopyThemes}: $!";
+	for my $hardcopyTheme (grep {/\.xml$/} sort readdir($dhS)) {
+		my $themeTree = XML::LibXML->load_xml(location => "$ce->{webworkDirs}{hardcopyThemes}/$hardcopyTheme");
+		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label');
+	}
+	my @hardcopyThemesCourse;
+	if (opendir(my $dhC, $ce->{courseDirs}{hardcopyThemes})) {
+		@hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
+	}
+	for my $hardcopyTheme (@hardcopyThemesCourse) {
+		my $themeTree = XML::LibXML->load_xml(location => "$ce->{courseDirs}{hardcopyThemes}/$hardcopyTheme");
+		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
+	}
+	my $hardcopyThemesAvailable = [
+		sort(do {
+			my %seen;
+			grep { !$seen{$_}++ } (@{ $ce->{hardcopyThemes} }, @hardcopyThemesCourse);
+		})
+	];
+
 	return $c->include(
 		'ContentGenerator/Hardcopy/form',
-		canShowCorrectAnswers => $canShowCorrectAnswers,
-		multiuser             => $perm_multiuser && $perm_multiset,
-		can_change_theme      => $perm_change_theme,
-		users                 => \@users,
-		wantedSets            => \@wantedSets,
-		setVersions           => \@setVersions,
-		user                  => $user,
-		user_id               => $user_id,
-		selected_set_id       => $selected_set_id,
-		formats               => \@formats,
-		default_format        => $HC_DEFAULT_FORMAT,
-		format_labels         => \%format_labels,
-		can_change_theme      => $perm_change_theme
+		canShowCorrectAnswers   => $canShowCorrectAnswers,
+		multiuser               => $perm_multiuser && $perm_multiset,
+		can_change_theme        => $perm_change_theme,
+		users                   => \@users,
+		wantedSets              => \@wantedSets,
+		setVersions             => \@setVersions,
+		user                    => $user,
+		user_id                 => $user_id,
+		selected_set_id         => $selected_set_id,
+		formats                 => \@formats,
+		default_format          => $HC_DEFAULT_FORMAT,
+		format_labels           => \%format_labels,
+		hardcopyLabels          => \%hardcopyLabels,
+		hardcopyThemesAvailable => $hardcopyThemesAvailable,
+		can_change_theme        => $perm_change_theme,
 	);
 }
 
@@ -656,31 +681,33 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 
 	# Copy the common tex files into the bundle directory
 	my $ce = $c->ce;
-	for (qw{packages.tex webwork2.sty CAPA.tex PGML.tex copyright.tex webwork_logo.png}) {
+	for (qw{webwork2.sty webwork_logo.png}) {
 		my $cp_cmd =
-			"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{webworkDirs}{texinputs_common}/$_", $bundle_path);
+			"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{webworkDirs}{assetsTex}/$_", $bundle_path);
 		my $cp_out = readpipe $cp_cmd;
 		if ($?) {
 			$c->add_error(
 				'Failed to copy "',
-				$c->tag('code', "$ce->{webworkDirs}{texinputs_common}/$_"),
+				$c->tag('code', "$ce->{webworkDirs}{assetsTex}/$_"),
 				'" into directory "',
 				$c->tag('code', $bundle_path),
 				'":', $c->tag('br'), $c->tag('pre', $cp_out)
 			);
 		}
 	}
-	my $cp_cmd =
-		"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{pg}{directories}{assetsTex}/pg.sty", $bundle_path);
-	my $cp_out = readpipe $cp_cmd;
-	if ($?) {
-		$c->add_error(
-			'Failed to copy "',
-			$c->tag('code', "$ce->{pg}{directories}{assetsTex}/pg.sty"),
-			'" into directory "',
-			$c->tag('code', $bundle_path),
-			'":', $c->tag('br'), $c->tag('pre', $cp_out)
-		);
+	for (qw{pg.sty PGML.tex CAPA.tex}) {
+		my $cp_cmd =
+			"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{pg}{directories}{assetsTex}/$_", $bundle_path);
+		my $cp_out = readpipe $cp_cmd;
+		if ($?) {
+			$c->add_error(
+				'Failed to copy "',
+				$c->tag('code', "$ce->{pg}{directories}{assetsTex}/$_"),
+				'" into directory "',
+				$c->tag('code', $bundle_path),
+				'":', $c->tag('br'), $c->tag('pre', $cp_out)
+			);
+		}
 	}
 
 	# Attempt to copy image files used into the working directory.
@@ -752,7 +779,7 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 	my $pdflatex_cmd = "cd "
 		. shell_quote($temp_dir_path) . " && "
 		. "TEXINPUTS=.:"
-		. shell_quote($c->ce->{webworkDirs}{texinputs_common}) . ':'
+		. shell_quote($c->ce->{webworkDirs}{assetsTex}) . ':'
 		. shell_quote($c->ce->{pg}{directories}{assetsTex}) . ': '
 		. $c->ce->{externalPrograms}{pdflatex}
 		. " >pdflatex.stdout 2>pdflatex.stderr hardcopy";
@@ -824,33 +851,40 @@ async sub write_multiuser_tex ($c, $FH, $userIDsRef, $setIDsRef) {
 	my @userIDs = @$userIDsRef;
 	my @setIDs  = @$setIDsRef;
 
-	# get snippets
-	my $theme     = $c->param('hardcopy_theme') // $ce->{hardcopyTheme};
-	my $themeDir  = $ce->{webworkDirs}{conf} . '/snippets/hardcopyThemes/' . $theme;
-	my $preamble  = $ce->{webworkFiles}{hardcopySnippets}{preamble}    // "$themeDir/hardcopyPreamble.tex";
-	my $postamble = $ce->{webworkFiles}{hardcopySnippets}{postamble}   // "$themeDir/hardcopyPostamble.tex";
-	my $divider   = $ce->{webworkFiles}{hardcopySnippets}{userDivider} // "$themeDir/hardcopyUserDivider.tex";
+	# get theme
+	my $theme = $c->param('hardcopy_theme') // $ce->{hardcopyTheme};
+	my $themeFile;
+	if (-e "$ce->{courseDirs}{hardcopyThemes}/$theme") {
+		$themeFile = "$ce->{courseDirs}{hardcopyThemes}/$theme";
+	} elsif (-e "$ce->{webworkDirs}{hardcopyThemes}/$theme") {
+		$themeFile = "$ce->{webworkDirs}{hardcopyThemes}/$theme";
+	} else {
+		$c->add_error("Couldn't locate file for theme $theme.");
+		return;
+	}
+	my $themeTree = XML::LibXML->load_xml(location => $themeFile);
 
 	# write preamble
-	$c->write_tex_file($FH, $preamble);
-	print $FH '\\def\\webworkCourseName{' . handle_underbar($ce->{courseName}) . "}\n";
-	print $FH '\\def\\webworkCourseTitle{' . handle_underbar($c->db->getSettingValue('courseTitle')) . "}\n";
+	print $FH "\\batchmode\n";
+	print $FH $themeTree->findvalue('/theme/preamble');
+	print $FH '\\def\\webworkCourseName{' . handle_underbar($ce->{courseName}) . "}%\n";
+	print $FH '\\def\\webworkCourseTitle{' . handle_underbar($c->db->getSettingValue('courseTitle')) . "}%\n";
 	print $FH '\\def\\webworkCourseURL{'
-		. handle_underbar($ce->{server_root_url} . $ce->{webwork_url} . '/' . $ce->{courseName}) . "}\n";
+		. handle_underbar($ce->{server_root_url} . $ce->{webwork_url} . '/' . $ce->{courseName}) . "}%\n";
 
 	# write section for each user
 	while (defined(my $userID = shift @userIDs)) {
-		await $c->write_multiset_tex($FH, $userID, @setIDs);
-		$c->write_tex_file($FH, $divider) if @userIDs;    # divide users, but not after the last user
+		await $c->write_multiset_tex($FH, $userID, $themeTree, @setIDs);
+		print $FH $themeTree->findvalue('/theme/userdivider') if @userIDs;   # divide users, but not after the last user
 	}
 
 	# write postamble
-	$c->write_tex_file($FH, $postamble);
+	print $FH $themeTree->findvalue('/theme/postamble');
 
 	return;
 }
 
-async sub write_multiset_tex ($c, $FH, $targetUserID, @setIDs) {
+async sub write_multiset_tex ($c, $FH, $targetUserID, $themeTree, @setIDs) {
 	my $ce = $c->ce;
 	my $db = $c->db;
 
@@ -865,21 +899,16 @@ async sub write_multiset_tex ($c, $FH, $targetUserID, @setIDs) {
 		return;
 	}
 
-	# get set divider
-	my $theme    = $c->param('hardcopy_theme') // $ce->{hardcopyTheme};
-	my $themeDir = $ce->{webworkDirs}->{conf} . '/snippets/hardcopyThemes/' . $theme;
-	my $divider  = $ce->{webworkFiles}->{hardcopySnippets}->{setDivider} // "$themeDir/hardcopySetDivider.tex";
-
 	# write each set
 	while (defined(my $setID = shift @setIDs)) {
-		await $c->write_set_tex($FH, $TargetUser, $setID);
-		$c->write_tex_file($FH, $divider) if @setIDs;    # divide sets, but not after the last set
+		await $c->write_set_tex($FH, $TargetUser, $themeTree, $setID);
+		print $FH $themeTree->findvalue('/theme/setdivider') if @setIDs;    # divide sets, but not after the last set
 	}
 
 	return;
 }
 
-async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
+async sub write_set_tex ($c, $FH, $TargetUser, $themeTree, $setID) {
 	my $ce     = $c->ce;
 	my $db     = $c->db;
 	my $authz  = $c->authz;
@@ -939,15 +968,10 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 		return;
 	}
 
-	# get snippets
-	my $theme    = $c->param('hardcopy_theme') // $ce->{hardcopyTheme};
-	my $themeDir = $ce->{webworkDirs}{conf} . '/snippets/hardcopyThemes/' . $theme;
+	# get PG header
 	my $header =
 		$MergedSet->hardcopy_header ? $MergedSet->hardcopy_header : $ce->{webworkFiles}{hardcopySnippets}{setHeader};
 	if ($header eq 'defaultHeader') { $header = $ce->{webworkFiles}{hardcopySnippets}{setHeader}; }
-	my $texheader = $ce->{webworkFiles}{hardcopySnippets}{setTexHeader}   // "$themeDir/hardcopySetHeader.tex";
-	my $footer    = $ce->{webworkFiles}{hardcopySnippets}{setFooter}      // "$themeDir/hardcopySetFooter.tex";
-	my $divider   = $ce->{webworkFiles}{hardcopySnippets}{problemDivider} // "$themeDir/hardcopyProblemDivider.tex";
 
 	# get list of problem IDs
 	my @problemIDs = map { $_->[2] }
@@ -975,19 +999,19 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 
 	# write environment variables as LaTeX macros
 	for (qw(user_id student_id first_name last_name email_address section recitation)) {
-		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($TargetUser->{$_}) . "}\n"
+		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($TargetUser->{$_}) . "}%\n"
 			if $TargetUser->{$_};
 	}
 	for (qw(set_id description)) {
-		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($MergedSet->{$_}) . "}\n"
+		print $FH '\\def\\webwork' . underscore_to_camel($_) . '{' . handle_underbar($MergedSet->{$_}) . "}%\n"
 			if $MergedSet->{$_};
 	}
-	print $FH '\\def\\webworkPrettySetId{' . handle_underbar($MergedSet->{set_id}, 1) . "}\n";
+	print $FH '\\def\\webworkPrettySetId{' . handle_underbar($MergedSet->{set_id}, 1) . "}%\n";
 	for (qw(open_date due_date answer_date)) {
 		if ($MergedSet->{$_}) {
 			print $FH '\\def\\webwork'
 				. underscore_to_camel($_) . '{'
-				. $c->formatDateTime($MergedSet->{$_}, $ce->{siteDefaults}{timezone}) . "}\n";
+				. $c->formatDateTime($MergedSet->{$_}, $ce->{siteDefaults}{timezone}) . "}%\n";
 		}
 	}
 	# Leave reduced scoring date blank if it is disabled, or enabled but on (or somehow later) than the close date
@@ -997,31 +1021,30 @@ async sub write_set_tex ($c, $FH, $TargetUser, $setID) {
 		&& $MergedSet->{reduced_scoring_date} < $MergedSet->{due_date})
 	{
 		print $FH '\\def\\webworkReducedScoringDate{'
-			. $c->formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{siteDefaults}{timezone}) . "}\n";
+			. $c->formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{siteDefaults}{timezone}) . "}%\n";
 	}
 
-	# write set header
-	await $c->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header);    # 0 => pg file specified directly
-
-	$c->write_tex_file($FH, $texheader);
-
-	print $FH "\\medskip\\hrule\\nobreak\\smallskip\n\\begin{questions}\n";
+	# write set header (theme presetheader, then PG header, then theme postsetheader)
+	print $FH $themeTree->findvalue('/theme/presetheader');
+	await $c->write_problem_tex($FH, $TargetUser, $MergedSet, $themeTree, 0, $header); # 0 => pg file specified directly
+	print $FH $themeTree->findvalue('/theme/postsetheader');
 
 	# write each problem
 	# for versioned problem sets (gateway tests) we like to include
 	#   problem numbers
 	my $i = 1;
 	while (my $problemID = shift @problemIDs) {
-		$c->write_tex_file($FH, $divider) if $i > 1;
-		$c->{versioned} = $i              if $versioned;
-		await $c->write_problem_tex($FH, $TargetUser, $MergedSet, $problemID);
+		$c->{versioned} = $i                                     if $versioned;
+		print $FH $themeTree->findvalue('/theme/problemdivider') if $i > 1;
+		await $c->write_problem_tex($FH, $TargetUser, $MergedSet, $themeTree, $problemID);
 		$i++;
 	}
 
-	print $FH "\\end{questions}\n";
+	# attempt to claim copyright
+	print $FH '\\webworkSetCopyrightFooter';
 
 	# write footer
-	$c->write_tex_file($FH, $footer);
+	print $FH $themeTree->findvalue('/theme/setfooter');
 
 	return;
 }
@@ -1044,7 +1067,7 @@ sub handle_underbar {
 	return $string;
 }
 
-async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $problemID = 0, $pgFile = undef) {
+async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $themeTree, $problemID = 0, $pgFile = undef) {
 	my $ce           = $c->ce;
 	my $db           = $c->db;
 	my $authz        = $c->authz;
@@ -1129,11 +1152,9 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $problemID = 0, $
 	# why does it only occur with hardcopy?
 
 	# Include old answers if answers were requested.
-	my $formFields = {};
-	if ($showCorrectAnswers || $printStudentAnswers) {
-		my %oldAnswers = decodeAnswers($MergedProblem->last_answer);
-		$formFields->{$_} = $oldAnswers{$_} foreach (keys %oldAnswers);
-		print $FH "%% decoded old answers, saved. (keys = " . join(',', keys(%oldAnswers)) . ")\n" if %oldAnswers;
+	my $oldAnswers = {};
+	if ($printStudentAnswers) {
+		%{$oldAnswers} = decodeAnswers($MergedProblem->last_answer);
 	}
 
 	my $pg = await renderPG(
@@ -1142,7 +1163,7 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $problemID = 0, $
 		$MergedSet,
 		$MergedProblem,
 		$MergedSet->psvn,
-		$formFields,
+		$oldAnswers,
 		{    # translation options
 			displayMode              => 'tex',
 			showHints                => $showHints,
@@ -1250,18 +1271,23 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $problemID = 0, $
 			$id = $versioned;    # this cannot be right?
 		}
 
+		print $FH "\\def\\webworkProblemId{$id}%\n";
+		print $FH "\\def\\webworkProblemNumber{" . ($versioned ? $versioned : $id) . "}%\n";
+
 		my $problemValue = $MergedProblem->value;
-		if (defined($problemValue)) {
-			print $FH "\\titledquestion{$id}[$problemValue]\n";
-		} else {
-			print $FH "\\titledquestion{$id}\n";
-		}
+		print $FH "\\def\\webworkProblemWeight{$problemValue}%\n" if defined($problemValue);
+
+		print $FH $themeTree->findvalue('/theme/problemheader');
 
 		if ($c->{can_show_source_file} && $c->param("show_source_file") eq "Yes") {
 			print $FH "{\\footnotesize\\path|" . $MergedProblem->source_file . "|}\n";
 		}
-
 		print $FH "\\smallskip\n\n";
+	}
+
+	# Include old answers if answers were requested.
+	if ($printStudentAnswers) {
+		print $FH "%% decoded old answers, saved. (keys = " . join(',', keys(%{$oldAnswers})) . ")\n" if %{$oldAnswers};
 	}
 
 	print $FH $body_text;
@@ -1332,7 +1358,7 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $problemID = 0, $
 		print $FH $commentMsg if $comment;
 	}
 
-	# write the list of correct answers is appropriate; ANSWER_ENTRY_ORDER
+	# write the list of correct answers if appropriate; ANSWER_ENTRY_ORDER
 	#   isn't defined for versioned sets?  this seems odd FIXME  GWCHANGE
 	if ($showCorrectAnswers && $MergedProblem->problem_id != 0 && @ans_entry_order) {
 		my $correctTeX =
@@ -1349,16 +1375,11 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $problemID = 0, $
 		print $FH $correctTeX;
 	}
 
-	return;
-}
-
-sub write_tex_file ($c, $FH, $file) {
-	my $tex = eval { readFile($file) };
-	if ($@) {
-		$c->add_error('Failed to include TeX file "', $c->tag('code', $file), '": ', $c->tag('pre', $@));
-	} else {
-		print $FH $tex;
+	if ($problemID) {
+		print $FH $themeTree->findvalue('/theme/problemfooter');
 	}
+
+	return;
 }
 
 ################################################################################

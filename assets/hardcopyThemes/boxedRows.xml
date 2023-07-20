@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<theme label="Boxed&#x2014;Rows">
+
+<description>
+This theme uses the tcolorbox package to put each exercisee in a box.
+Exercises progress row-major instead of the usual column-major, in two columns.
+Exerecises in this theme will not break across pages, so this theme is better
+suited for sets with short exercises.
+</description>
+
+<preamble>
+\documentclass[10pt]{article}
+\usepackage{webwork2}
+\usepackage[text={7.5in,9in},centering]{geometry}
+\usepackage{tcolorbox}
+\tcbuselibrary{raster}
+\newtcolorbox{webworkexercise}[2]{
+        title={
+                {\bfseries\webworkLocalizeProblem~\ifthenelse{\equal{#1}{}}{\#}{#1}}\hfill
+                (\ifthenelse{\equal{#2}{}}{\#}{#2}~\webworkLocalizePoint)
+        },
+}
+
+\usepackage{fancyhdr}
+\parindent=0pt
+\setlength{\parskip}{1pc}
+\pagestyle{fancy}
+\begin{document}
+</preamble>
+
+<presetheader>
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[L]{\webworkLeftHeader}
+\fancyhead[C]{\webworkCenterHeader}
+\fancyhead[R]{\webworkRightHeader}
+\fancyfoot[L]{\webworkLeftFooter}
+\fancyfoot[C]{\webworkCenterFooter}
+\fancyfoot[R]{\webworkRightFooter}
+</presetheader>
+
+<presetheader>
+\bigskip
+\begin{tcbraster}[raster columns=2, raster valign=top]
+</presetheader>
+
+<problemheader>\begin{webworkexercise}{\webworkProblemNumber}{\webworkProblemWeight}%</problemheader>
+
+<problemfooter>\end{webworkexercise}</problemfooter>
+
+<problemdivider></problemdivider>
+
+<setfooter>\end{tcbraster}</setfooter>
+
+<setdivider>
+\newpage%
+\setcounter{page}{1}%
+</setdivider>
+
+<userdivider>
+\newpage%
+\setcounter{page}{1}%
+</userdivider>
+
+<postamble>
+\end{document}
+</postamble>
+
+</theme>

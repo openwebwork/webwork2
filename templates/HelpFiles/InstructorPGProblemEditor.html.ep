@@ -115,12 +115,18 @@
 
 	<dt><%= maketext('Generate Hardcopy') %></dt>
 	<dd>
+		<p>
 		<%= maketext('Generate a hardcopy of the problem being edited. This does not change the permanent file on the '
 			. 'disk. You can generate a hardcopy for different versions of the same problem by changing the seed. You '
 			. 'can also change the format to "PDF" or "TeX Source". If "PDF" is selected, then a PDF file will be '
 			. 'generated for download, unless there are errors. If errors occur or "TeX Source" is selected, then a '
 			. 'zip file will be generated for download that contains the TeX source file and resources needed for '
 			. 'generating the PDF file using pdflatex.') =%>
+		</p>
+		<p>
+		<%= maketext('You can also click "Edit Selected Theme" to edit a hardcopy theme.  The new theme will be saved to '
+			. 'the templates/hardcopyThemes folder.') =%>
+		</p>
 	</dd>
 
 	<dt><%= maketext('Tidy Code') %></dt>

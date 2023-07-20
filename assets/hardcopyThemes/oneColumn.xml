@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<theme label="One Column">
+
+<description>
+This theme uses the LaTeX exam class to manage page headers and footers, and
+question enumeration.
+</description>
+
+<preamble>
+\documentclass[11pt]{exam}
+\usepackage{webwork2}
+\usepackage[text={6.5in,9in},centering]{geometry}
+\extraheadheight[2pc]{0pt}
+% This removes the margin for questions from the exam class.
+\renewcommand{\questionshook}{\leftmargin=0pt\labelwidth=-\labelsep}
+\makeatletter
+\qformat{{\bfseries \webworkLocalizeProblem~\thequestiontitle.} \if@placepoints{\bfseries\footnotesize(\thepoints)}\fi \hfill}
+\makeatother
+\parindent=0pt
+\pagestyle{headandfoot}
+\begin{document}
+</preamble>
+
+<presetheader>
+\firstpageheader{\webworkLeftHeader}{\webworkCenterHeader}{\webworkRightHeader}
+\runningheader{}{}{}
+\footer{\webworkLeftFooter}{\webworkCenterFooter}{\webworkRightFooter}
+</presetheader>
+
+<postsetheader>
+\smallskip
+\hrule
+\begin{questions}
+</postsetheader>
+
+<problemheader>
+\titledquestion{\ifx\webworkProblemNumber\empty\#\else\webworkProblemNumber\fi}[\ifx\webworkProblemWeight\empty\#\else\webworkProblemWeight\fi]
+</problemheader>
+
+<problemfooter></problemfooter>
+
+<problemdivider>
+\vfill
+\goodbreak
+\hrule
+\nobreak
+\smallskip
+</problemdivider>
+
+<setfooter>
+\end{questions}
+</setfooter>
+
+<setdivider>
+\newpage%
+\setcounter{page}{1}%
+</setdivider>
+
+<userdivider>
+\newpage%
+\setcounter{page}{1}%
+</userdivider>
+
+<postamble>
+\end{document}
+</postamble>
+
+</theme>

@@ -381,10 +381,12 @@ h1.page-title {
 	font-size: 31.5px;
 	line-height: 35px;
 	display: inline-block;
-}
-h1.page-title + a {
-	font-size: 31.5px;
-	margin-left: 0.5rem;
+
+	& + a {
+		font-size: 31.5px;
+		line-height: 35px;
+		margin-left: 0.5rem;
+	}
 }
 
 h2.page-title {
@@ -746,6 +748,12 @@ input.changed[type=text] { /* orange */
 	flex-wrap: wrap;
 	column-gap: 0.25rem;
 	row-gap: 0.25rem;
+}
+
+.visually-hidden-unfocusable {
+	visibility: hidden;
+	position: absolute;
+	left: -9999px;
 }
 
 /* Styles used when editing a temporary file */

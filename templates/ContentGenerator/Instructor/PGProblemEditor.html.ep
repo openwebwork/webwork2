@@ -2,7 +2,11 @@
 % use WeBWorK::HTML::CodeMirrorEditor
 	% qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
 %
-% my $codemirrorMode = $c->{file_type} eq 'course_info' ? 'htmlmixed' : 'PG';
+% my $codemirrorMode = 'PG';
+% if ($c->{file_type}) {
+%	$codemirrorMode = 'htmlmixed' if ($c->{file_type} eq 'course_info');
+%	$codemirrorMode = 'xml'       if ($c->{file_type} eq 'hardcopy_theme');
+% }
 % content_for js => begin
 	<%= output_codemirror_static_files($c, $codemirrorMode) =%>
 	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'),           defer => undef =%>
@@ -28,6 +32,7 @@
 	% blank_problem                => x('Editing <strong>new problem</strong> template "[_1]".'),
 	% set_header                   => x('Editing <strong>set header</strong> file "[_1]".'),
 	% hardcopy_header              => x('Editing <strong>hardcopy header</strong> file "[_1]".'),
+	% hardcopy_theme               => x('Editing <strong>hardcopy theme</strong> file "[_1]".'),
 	% course_info                  => x('Editing <strong>course information</strong> file "[_1]".'),
 	% ''                           => x('Editing <strong>unknown file type</strong> in file "[_1]".'),
 	% source_path_for_problem_file => x('Editing <strong>unassigned problem</strong> file "[_1]".')
@@ -81,47 +86,47 @@
 	% if (not_blank($c->{tempFilePath})) {
 		<%= hidden_field temp_file_path => $c->{tempFilePath} =%>
 	% }
+	% if ($c->{file_type} eq 'hardcopy_theme') {
+		<%= hidden_field hardcopy_theme => param('hardcopy_theme') =%>
+	% }
 	%
 	% # PG problem authoring resource links
-	% if ($c->{is_pg}) {
-		<div class="mb-2">
-			% # http://webwork.maa.org/wiki/Category:Problem_Techniques
-			<%= link_to maketext('Problem Techniques') => $ce->{webworkURLs}{problemTechniquesHelpURL},
-				target => 'techniques_window',
-				title  => maketext('Snippets of PG code illustrating specific techniques'),
+	<div class="mb-2">
+		<%= link_to maketext('Sample Problems') => url_for('sample_problem_index'),
+			target => 'techniques_window',
+			title  => maketext('POD for macros and sample problem code and snippets'),
+			class  => 'reference-link btn btn-sm btn-info',
+			data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
+		% # http://webwork.maa.org/wiki/Category:MathObjects
+		<%= link_to maketext('Math Objects') => $ce->{webworkURLs}{MathObjectsHelpURL},
+			target => 'math_objects',
+			title  => maketext('Wiki summary page for MathObjects'),
+			class  => 'reference-link btn btn-sm btn-info',
+			data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
+		% # PG POD served locally
+		<%= link_to maketext('POD') => url_for('pod_index'),
+			target => 'pod_docs',
+			title  => maketext('Documentation from source code for PG modules and macro files.'),
+			class  => 'reference-link btn btn-sm btn-info',
+			data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
+		% # PGML lab problem rendered as an unattached problem in a new window.
+		% if (-e "$ce->{courseDirs}{templates}/PGMLLab/PGML-lab.pg") {
+			<%= link_to maketext('PGML') => $c->systemLink(
+					url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
+					params => {
+						displayMode    => $ce->{pg}{options}{displayMode},
+						problemSeed    => 1234,
+						editMode       => 'temporaryFile',
+						sourceFilePath => 'PGMLLab/PGML-lab.pg'
+					}
+				),
+				target => 'PGML',
+				title  => maketext(
+					'PG markdown syntax used to format WeBWorK questions. '
+					. 'This interactive lab can help you to learn the techniques.'
+				),
 				class  => 'reference-link btn btn-sm btn-info',
 				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
-			% # http://webwork.maa.org/wiki/Category:MathObjects
-			<%= link_to maketext('Math Objects') => $ce->{webworkURLs}{MathObjectsHelpURL},
-				target => 'math_objects',
-				title  => maketext('Wiki summary page for MathObjects'),
-				class  => 'reference-link btn btn-sm btn-info',
-				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
-			% # PG POD served locally
-			<%= link_to maketext('POD') => url_for('pod_index'),
-				target => 'pod_docs',
-				title  => maketext('Documentation from source code for PG modules and macro files.'),
-				class  => 'reference-link btn btn-sm btn-info',
-				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
-			% # PGML lab problem rendered as an unattached problem in a new window.
-			% if (-e "$ce->{courseDirs}{templates}/PGMLLab/PGML-lab.pg") {
-				<%= link_to maketext('PGML') => $c->systemLink(
-						url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
-						params => {
-							displayMode    => $ce->{pg}{options}{displayMode},
-							problemSeed    => 1234,
-							editMode       => 'temporaryFile',
-							sourceFilePath => 'PGMLLab/PGML-lab.pg'
-						}
-					),
-					target => 'PGML',
-					title  => maketext(
-						'PG markdown syntax used to format WeBWorK questions. '
-						. 'This interactive lab can help you to learn the techniques.'
-					),
-					class  => 'reference-link btn btn-sm btn-info',
-					data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
-			% }
 			% # http://webwork.maa.org/wiki/Category:Authors
 			<%= link_to maketext('Author Info') => $ce->{webworkURLs}{AuthorHelpURL},
 				target => 'author_info',

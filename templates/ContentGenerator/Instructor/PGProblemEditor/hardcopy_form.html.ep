@@ -51,12 +51,17 @@
 		<div class="col-auto">
 			<%= select_field 'action.hardcopy.theme' => [
 					map { [
-						$ce->{hardcopyThemeNames}{$_} => $_,
-						$_ eq $ce->{hardcopyTheme} ? (selected => undef) : ()
-					] } @{ $ce->{hardcopyThemes} }
+						$hardcopyLabels->{$_} => $_,
+						$_ eq $c->ce->{hardcopyThemePGEditor} ? (selected => undef) : ()
+					] } @$hardcopyThemesAvailable
 				],
 				id    => 'action_hardcopy_theme_id',
 				class => 'form-select form-select-sm d-inline w-auto' =%>
+		</div>
+		<div class="col-auto">
+			<button id="edit_hardcopy_theme" class="btn btn-secondary p-1" type="submit">
+				<%= maketext('Edit Selected Theme') =%>
+			</button>
 		</div>
 	</div>
 </div>

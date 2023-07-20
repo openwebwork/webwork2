@@ -1,0 +1,39 @@
+pre.CodeMirror {
+	background-color: #fcfaf1;
+}
+
+.explanation {
+	--bs-code-color: #971556;
+}
+
+.preamble {
+	background-color: lightblue;
+}
+
+.setup {
+	background-color: #ddffdd;
+}
+
+.statement {
+	background-color: #eeb08199;
+}
+
+.answer {
+	background-color: #ffffdd;
+}
+
+.solution {
+	background-color: #ffb6c199;
+}
+
+.hint {
+	background-color: rgb(239, 207, 251);
+}
+
+.perl {
+	color: darkred;
+}
+
+.clipboard-btn {
+	z-index: 1;
+}

@@ -5,12 +5,14 @@
 % # Don't show the save as form when editing an existing course info file.
 % last if $c->{file_type} eq 'course_info' && -e $c->{editFilePath};
 %
-% my $isBlank       = $c->{file_type} eq 'blank_problem';
-% my $templatesDir  = $ce->{courseDirs}{templates};
-% my $shortFilePath = $isBlank ? 'newProblem.pg' : $c->{editFilePath} =~ s|^$templatesDir/||r;
+% my $isBlank         = $c->{file_type} eq 'blank_problem';
+% my $isHardcopyTheme = $c->{file_type} eq 'hardcopy_theme';
+% my $templatesDir    = $ce->{courseDirs}{templates};
+% my $shortFilePath   = $isBlank         ? 'newProblem.pg' : $c->{editFilePath} =~ s|^$templatesDir/||r;
+% $shortFilePath      = $isHardcopyTheme ? 'hardcopyThemes/' . ($c->{editFilePath} =~ s|^.*\/||r) : $shortFilePath;
 %
 % # Suggest that modifications be saved to the "local" subdirectory if its not in a writeable directory
-% $shortFilePath = "local/$shortFilePath" unless $isBlank || -w dirname($c->{editFilePath});
+% $shortFilePath = "local/$shortFilePath" unless $isBlank || $isHardcopyTheme || -w dirname($c->{editFilePath});
 %
 % # If it is an absolute path make it relative.
 % $shortFilePath =~ s|^/*|| if $shortFilePath =~ m|^/|;
@@ -73,7 +75,7 @@
 			<% end =%>
 		</div>
 	% }
-	% if ($c->{file_type} ne 'course_info') {
+	% if ($c->{is_pg}) {
 		<div class="form-check">
 			<%= radio_button 'action.save_as.saveMode' => 'new_independent_problem',
 				id => 'action_save_as_saveMode_independent_problem_id', class => 'form-check-input',

@@ -41,7 +41,7 @@
 		% '</p>'),
 	% body_part999 => '</form></div></div></div>'
 		% . ($showFooter eq '0' ? ''
-			% : qq{<div id="footer">WeBWorK &copy; 2000-2022 |host: $SITE_URL }
+			% : qq{<div id="footer">WeBWorK &copy; 2000-2023 |host: $SITE_URL }
 			% . "| course: $courseID | format: $formatName | theme: $theme></div>")
 		% . '</body></html>}',
 	%

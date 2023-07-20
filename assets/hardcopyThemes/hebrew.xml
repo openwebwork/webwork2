@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<theme label="Hebrew">
+
+<description>
+This theme is like "One Column" but with the necessary components to include
+Hebrew script. This theme should only be used if xelatex is the latex engine.
+</description>
+
+<preamble>
+\documentclass[11pt]{exam}
+\usepackage{webwork2}
+\usepackage[text={7.5in,9in},centering]{geometry}
+
+% bidi needs to be loaded AFTER caption, xcolor, and geometry.
+\usepackage{bidi}
+
+\setdefaultlanguage{hebrew}
+\setotherlanguage{english}
+\setmainfont{Frank Ruehl CLM}
+\setmonofont{Miriam Mono CLM}
+\setsansfont{Simple CLM}
+
+% When using default English
+% Use \begin{hebrew} block of text \end{hebrew} for paragraphs.
+%
+% When using default Hebrew
+% Use \begin{hebrew} block of text \end{hebrew} for paragraphs.
+
+% This removes the margin for questions from the exam class.
+\renewcommand{\questionshook}{\leftmargin=0pt\labelwidth=-\labelsep}
+\makeatletter
+\qformat{{\bfseries \webworkLocalizeProblem~\thequestiontitle.} \if@placepoints{\bfseries\footnotesize(\thepoints)}\fi \hfill}
+\makeatother
+\parindent=0pt
+\pagestyle{headandfoot}
+\begin{document}
+</preamble>
+
+<presetheader>
+\def\webworkLocalizeProblem{שאלה}
+% This needs a Hebrew localizations for
+\def\webworkLocalizeAssignment{Assignment}
+\def\webworkLocalizeFullCreditBy{full credit by}
+\def\webworkLocalizeCloses{closes}
+\def\webworkLocalizeSection{Section}
+\def\webworkLocalizeRecitation{Recitation}
+\def\webworkLocalizePage{Page}
+\firstpageheader{\webworkLeftHeader}{\webworkCenterHeader}{\webworkRightHeader}
+\runningheader{}{}{}
+\footer{\webworkLeftFooter}{\webworkCenterFooter}{\webworkRightFooter}
+</presetheader>
+
+<postsetheader>
+\smallskip
+\hrule
+\begin{questions}
+</postsetheader>
+
+<problemheader>
+\ifthenelse{\equal{\webworkProblemNumber}{}}{\question}{\titledquestion{\webworkProblemNumber}[\webworkProblemWeight]}
+</problemheader>
+
+<problemfooter></problemfooter>
+
+<problemdivider>
+\vfill
+\goodbreak
+\hrule
+\nobreak
+\smallskip
+</problemdivider>
+
+<setfooter>
+\end{questions}
+</setfooter>
+
+<setdivider>
+\newpage%
+\setcounter{page}{1}%
+</setdivider>
+
+<userdivider>
+\newpage%
+\setcounter{page}{1}%
+</userdivider>
+
+<postamble>
+\end{document}
+</postamble>
+
+</theme>

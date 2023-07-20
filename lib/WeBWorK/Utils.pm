@@ -1,7 +1,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -119,6 +119,7 @@ our @EXPORT_OK = qw(
 	is_jitar_problem_closed
 	jitar_problem_adjusted_status
 	jitar_problem_finished
+	role_and_above
 	fetchEmailRecipients
 	processEmailMessage
 	createEmailSenderTransportSMTP
@@ -1840,6 +1841,16 @@ ID: foreach my $id (@problemIDs) {
 	return 1;
 }
 
+# Get the array of all permission levels at or above a given level
+sub role_and_above {
+	my ($userRoles, $role) = @_;
+	my $role_array = [$role];
+	for my $userRole (keys %$userRoles) {
+		push @$role_array, $userRole if ($userRoles->{$userRole} > $userRoles->{$role});
+	}
+	return $role_array;
+}
+
 # Requires a ContentGenerator object, and a permission type.
 # If the optional sender argument is provided, then filter on the section of the given sender.
 sub fetchEmailRecipients {
@@ -1848,18 +1859,20 @@ sub fetchEmailRecipients {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 
-	return
-		unless $permissionType
-		&& defined $ce->{permissionLevels}{$permissionType}
-		&& defined $ce->{userRoles}{ $ce->{permissionLevels}{$permissionType} };
+	return unless $permissionType && defined $ce->{permissionLevels}{$permissionType};
+
+	my $roles =
+		ref $ce->{permissionLevels}{$permissionType} eq 'ARRAY'
+		? $ce->{permissionLevels}{$permissionType}
+		: role_and_above($ce->{userRoles}, $ce->{permissionLevels}{$permissionType});
+	my @rolePermissionLevels = map { $ce->{userRoles}{$_} } grep { defined $ce->{userRoles}{$_} } @$roles;
+	return unless @rolePermissionLevels;
+
+	my $user_ids = [ map { $_->user_id } $db->getPermissionLevelsWhere({ permission => \@rolePermissionLevels }) ];
 
 	my @recipients =
 		map { $_->rfc822_mailbox } $db->getUsersWhere({
-			user_id => [
-				map { $_->user_id } $db->getPermissionLevelsWhere(
-					{ permission => { '>=' => $ce->{userRoles}{ $ce->{permissionLevels}{$permissionType} } } }
-				)
-			],
+			user_id       => $user_ids,
 			email_address => { '!=', undef },
 			$ce->{feedback_by_section}
 			&& defined $sender

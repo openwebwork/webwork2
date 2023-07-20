@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,6 +30,7 @@ use File::Path;
 use String::ShellQuote;
 use Archive::Zip qw(:ERROR_CODES);
 use Mojo::File qw(path tempdir);
+use XML::LibXML;
 
 sub hardcopyRenderedProblem {
 	my $ws = shift;     # $ws is a WebworkWebservice object.
@@ -126,11 +127,17 @@ sub generate_hardcopy_tex {
 	my $src_file = $working_dir->child('hardcopy.tex');
 
 	# Copy the common tex files into the working directory
-	my $ce         = $ws->c->ce;
-	my $common_dir = path($ce->{webworkDirs}{texinputs_common});
-	for (qw{packages.tex webwork2.sty CAPA.tex PGML.tex copyright.tex webwork_logo.png}) {
-		eval { $common_dir->child($_)->copy_to($working_dir) };
-		push(@$errors, qq{Failed to copy "$ce->{webworkDirs}{texinputs_common}/$_" into directory "$working_dir": $@})
+	my $ce            = $ws->c->ce;
+	my $assetsTex_dir = path($ce->{webworkDirs}{assetsTex});
+	for (qw{webwork2.sty webwork_logo.png}) {
+		eval { $assetsTex_dir->child($_)->copy_to($working_dir) };
+		push(@$errors, qq{Failed to copy "$ce->{webworkDirs}{assetsTex}/$_" into directory "$working_dir": $@})
+			if $@;
+	}
+	my $pgAssetsTex_dir = path($ce->{pg}{directories}{assetsTex});
+	for (qw{pg.sty PGML.tex CAPA.tex}) {
+		eval { $pgAssetsTex_dir->child($_)->copy_to($working_dir) };
+		push(@$errors, qq{Failed to copy "$ce->{pg}{directories}{assetsTex}/$_" into directory "$working_dir": $@})
 			if $@;
 	}
 	my $pgsty = path("$ce->{pg}{directories}{assetsTex}/pg.sty");
@@ -185,7 +192,7 @@ sub generate_hardcopy_pdf {
 	# Call pdflatex
 	my $pdflatex_cmd =
 		'TEXINPUTS=.:'
-		. shell_quote($ws->c->ce->{webworkDirs}{texinputs_common}) . ':'
+		. shell_quote($ws->c->ce->{webworkDirs}{assetsTex}) . ':'
 		. shell_quote($ws->c->ce->{pg}{directories}{assetsTex}) . ': '
 		. $ws->c->ce->{externalPrograms}{pdflatex}
 		. ' > pdflatex.stdout 2> pdflatex.stderr hardcopy';
@@ -210,16 +217,28 @@ sub write_tex {
 	my $c  = $ws->c;
 	my $ce = $c->ce;
 
-	# Determine snippets theme directory.
-	my $themeDir = "$ce->{webworkDirs}{conf}/snippets/hardcopyThemes/"
-		. ($ws->{inputs_ref}{hardcopy_theme} // $ce->{hardcopyTheme});
+	# get theme
+	my $theme = $c->param('hardcopy_theme') // $ce->{hardcopyThemePGEditor};
+	my $themeFile;
+	if (-e "$ce->{courseDirs}{hardcopyThemes}/$theme") {
+		$themeFile = "$ce->{courseDirs}{hardcopyThemes}/$theme";
+	} elsif (-e "$ce->{webworkDirs}{hardcopyThemes}/$theme") {
+		$themeFile = "$ce->{webworkDirs}{hardcopyThemes}/$theme";
+	} else {
+		push(@$errors, "Couldn't locate file for theme $theme.");
+		return join("\n", @$errors);
+	}
+	my $themeTree = XML::LibXML->load_xml(location => $themeFile);
 
-	write_tex_file($FH, $ce->{webworkFiles}{hardcopySnippets}{preamble} // "$themeDir/hardcopyPreamble.tex", $errors);
-	write_tex_file($FH, $ce->{webworkFiles}{hardcopySnippets}{setTexHeader} // "$themeDir/hardcopySetHeader.tex",
-		$errors);
+	print $FH '\\batchmode';
+	print $FH $themeTree->findvalue('/theme/preamble');
+	print $FH $themeTree->findvalue('/theme/presetheader');
+	print $FH $themeTree->findvalue('/theme/postsetheader');
+	print $FH $themeTree->findvalue('/theme/problemheader');
 	write_problem_tex($ws, $FH);
-	write_tex_file($FH, $ce->{webworkFiles}{hardcopySnippets}{setFooter} // "$themeDir/hardcopySetFooter.tex", $errors);
-	write_tex_file($FH, $ce->{webworkFiles}{hardcopySnippets}{postamble} // "$themeDir/hardcopyPostamble.tex", $errors);
+	print $FH $themeTree->findvalue('/theme/problemfooter');
+	print $FH $themeTree->findvalue('/theme/setfooter');
+	print $FH $themeTree->findvalue('/theme/postamble');
 
 	return;
 }
@@ -267,15 +286,6 @@ sub write_problem_tex {
 		}
 		print $FH "\\end{itemize}\n";
 	}
-
-	return;
-}
-
-sub write_tex_file {
-	my ($FH, $file, $errors) = @_;
-
-	eval { print $FH path($file)->slurp };
-	push(@$errors, qq{Failed to include TeX file "$file": $@}) if $@;
 
 	return;
 }
