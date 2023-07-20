@@ -3,7 +3,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,6 +53,7 @@ my @applicationsList = qw(
 	git
 	gzip
 	latex
+	pandoc
 	pdf2svg
 	pdflatex
 	dvipng
@@ -63,22 +64,17 @@ my @applicationsList = qw(
 	pngtopnm
 );
 
-my @apache2ModulesList = qw(
-	Apache2::Request
-	Apache2::ServerRec
-	Apache2::ServerUtil
-);
-
 my @modulesList = qw(
 	Archive::Zip
 	Array::Utils
 	Benchmark
 	Carp
-	CGI
-	CGI::Cookie
 	Class::Accessor
+	Crypt::JWT
+	Crypt::PK::RSA
 	Data::Dump
 	Data::Dumper
+	Data::Structure::Util
 	Data::UUID
 	Date::Format
 	Date::Parse
@@ -101,11 +97,11 @@ my @modulesList = qw(
 	File::Spec
 	File::stat
 	File::Temp
+	Future::AsyncAwait
 	GD
 	Getopt::Long
 	Getopt::Std
 	HTML::Entities
-	HTML::Scrubber
 	HTML::Tagset
 	HTML::Template
 	HTTP::Async
@@ -119,6 +115,12 @@ my @modulesList = qw(
 	Locale::Maketext::Simple
 	LWP::Protocol::https
 	MIME::Base64
+	Math::Random::Secure
+	Minion
+	Minion::Backend::SQLite
+	Mojolicious
+	Mojolicious::Plugin::NotYAMLConfig
+	Mojolicious::Plugin::RenderFile
 	Net::IP
 	Net::LDAPS
 	Net::OAuth
@@ -126,8 +128,12 @@ my @modulesList = qw(
 	Net::SSLeay
 	Opcode
 	PadWalker
+	Pandoc
 	Path::Class
+	Perl::Tidy
 	PHP::Serialization
+	Pod::Simple::Search
+	Pod::Simple::XHTML
 	Pod::Usage
 	Pod::WSDL
 	Safe
@@ -136,6 +142,7 @@ my @modulesList = qw(
 	Socket
 	Statistics::R::IO
 	String::ShellQuote
+	SVG
 	Template
 	Text::CSV
 	Text::Wrap
@@ -145,18 +152,20 @@ my @modulesList = qw(
 	Types::Serialiser
 	URI::Escape
 	UUID::Tiny
+	XML::LibXML
 	XML::Parser
 	XML::Parser::EasyTree
-	XML::Simple
 	XML::Writer
-	XMLRPC::Lite
 	YAML::XS
 );
 
 my %moduleVersion = (
+	'Future::AsyncAwait'   => 0.52,
+	'IO::Socket::SSL'      => 2.007,
 	'LWP::Protocol::https' => 6.06,
+	'Mojolicious'          => 9.22,
 	'Net::SSLeay'          => 1.46,
-	'IO::Socket::SSL'      => 2.007
+	'Perl::Tidy'           => 20220613
 );
 
 my ($test_programs, $test_modules, $show_help);
@@ -169,8 +178,6 @@ GetOptions(
 	'h|help'     => \$show_help,
 );
 pod2usage(2) if $show_help;
-
-push @modulesList, @apache2ModulesList;
 
 my @PATH = split(/:/, $ENV{PATH});
 

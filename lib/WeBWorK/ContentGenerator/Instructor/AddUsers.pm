@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::AddUsers;
-use base qw(WeBWorK::ContentGenerator::Instructor);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -22,247 +22,84 @@ WeBWorK::ContentGenerator::Instructor::AddUsers - Menu interface for adding user
 
 =cut
 
-use strict;
-use warnings;
-use WeBWorK::CGI;
 use WeBWorK::Utils qw/cryptPassword trim_spaces/;
+use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
-sub initialize {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $ce     = $r->ce;
-	my $authz  = $r->authz;
+sub initialize ($c) {
+	my $db    = $c->db;
+	my $ce    = $c->ce;
+	my $authz = $c->authz;
 
-	my $user = $r->param('user');
+	my $user = $c->param('user');
 
 	# Check permissions
-	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
-	return unless ($authz->hasPermissions($user, "modify_student_data"));
+	return unless $authz->hasPermissions($user, 'access_instructor_tools');
+	return unless $authz->hasPermissions($user, 'modify_student_data');
 
-	if (defined($r->param('addStudents'))) {
+	if (defined $c->param('addStudents')) {
+		$c->{studentEntryReport} = $c->c;
+
 		my @userIDs;
-		my $numberOfStudents = $r->param('number_of_students');
-		warn "Internal error -- the number of students to be added has not been included" unless defined $numberOfStudents;
-		foreach my $i (1 .. $numberOfStudents) {
-			my $new_user_id  = trim_spaces($r->param("new_user_id_$i"));
-			my $new_password = cryptPassword($r->param("student_id_$i"));
-			next unless defined($new_user_id) and $new_user_id;
-			push @userIDs, $new_user_id;
+		my $numberOfStudents = $c->param('number_of_students') // 0;
 
-			my $newUser            = $db->newUser;
-			my $newPermissionLevel = $db->newPermissionLevel;
-			my $newPassword        = $db->newPassword;
+		# FIXME: Handle errors if user already exists as well as all other errors that could occur (including errors
+		# when adding the permission, adding the password, and assigning sets to the users).
+		for my $i (1 .. $numberOfStudents) {
+			my $new_user_id  = trim_spaces($c->param("new_user_id_$i"));
+			my $new_password = cryptPassword($c->param("student_id_$i"));
+			next unless $new_user_id;
+
+			my $newUser = $db->newUser;
 			$newUser->user_id($new_user_id);
-			$newPermissionLevel->user_id($new_user_id);
-			$newPassword->user_id($new_user_id);
-			$newPassword->password($new_password);
-			$newUser->last_name(trim_spaces($r->param("last_name_$i")));
-			$newUser->first_name(trim_spaces($r->param("first_name_$i")));
-			$newUser->student_id(trim_spaces($r->param("student_id_$i")));
-			$newUser->email_address(trim_spaces($r->param("email_address_$i")));
-			$newUser->section(trim_spaces($r->param("section_$i")));
-			$newUser->recitation(trim_spaces($r->param("recitation_$i")));
-			$newUser->comment(trim_spaces($r->param("comment_$i")));
+			$newUser->last_name(trim_spaces($c->param("last_name_$i")));
+			$newUser->first_name(trim_spaces($c->param("first_name_$i")));
+			$newUser->student_id(trim_spaces($c->param("student_id_$i")));
+			$newUser->email_address(trim_spaces($c->param("email_address_$i")));
+			$newUser->section(trim_spaces($c->param("section_$i")));
+			$newUser->recitation(trim_spaces($c->param("recitation_$i")));
+			$newUser->comment(trim_spaces($c->param("comment_$i")));
 			$newUser->status($ce->status_name_to_abbrevs($ce->{default_status}));
-			$newPermissionLevel->permission(0);
-			#FIXME  handle errors if user exists already
+
 			eval { $db->addUser($newUser) };
 			if ($@) {
-				my $addError = $@;
-				$self->{studentEntryReport} .= join("",
-					CGI::b($r->maketext("Failed to enter student:")), ' ', $newUser->last_name, ", ",$newUser->first_name,
-					CGI::b(", ".$r->maketext("login/studentID:")),' ', $newUser->user_id, "/",$newUser->student_id,
-					CGI::b(", ".$r->maketext("email:")),' ', $newUser->email_address,
-					CGI::b(", ".$r->maketext("section:")),' ', $newUser->section,
-					CGI::br(), CGI::b($r->maketext("Error message:")), ' ', $addError,
-					CGI::hr(),CGI::br(),
+				push(
+					@{ $c->{studentEntryReport} },
+					$c->include(
+						'ContentGenerator/Instructor/AddUsers/student_entry_report',
+						newUser  => $newUser,
+						addError => $@
+					)
 				);
 			} else {
-				$db->addPermissionLevel($newPermissionLevel);
-				$db->addPassword($newPassword);
-				$self->{studentEntryReport} .= join("",
-					CGI::b($r->maketext("Entered student:")), ' ', $newUser->last_name, ", ",$newUser->first_name,
-					CGI::b(", ",$r->maketext("login/studentID:")),' ', $newUser->user_id, "/",$newUser->student_id,
-					CGI::b(", ",$r->maketext("email:")),' ', $newUser->email_address,
-					CGI::b(", ",$r->maketext("section:")),' ', $newUser->section,CGI::hr(),CGI::br(),
+				push @userIDs, $new_user_id;
 
+				my $newPermissionLevel = $db->newPermissionLevel;
+				$newPermissionLevel->user_id($new_user_id);
+				$newPermissionLevel->permission(0);
+				$db->addPermissionLevel($newPermissionLevel);
+
+				my $newPassword = $db->newPassword;
+				$newPassword->user_id($new_user_id);
+				$newPassword->password($new_password);
+				$db->addPassword($newPassword);
+
+				push(
+					@{ $c->{studentEntryReport} },
+					$c->include(
+						'ContentGenerator/Instructor/AddUsers/student_entry_report',
+						newUser  => $newUser,
+						addError => ''
+					)
 				);
 			}
 		}
-		if (defined $r->param("assignSets")) {
-			my @setIDs = $r->param("assignSets");
-			if (@setIDs) {
-				$self->assignSetsToUsers(\@setIDs, \@userIDs);
-			}
+		if (defined $c->param('assignSets')) {
+			my @setIDs = $c->param('assignSets');
+			assignSetsToUsers($db, $ce, \@setIDs, \@userIDs);
 		}
 	}
-}
 
-sub body {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $ce     = $r->ce;
-	my $db     = $r->db;
-	my $authz  = $r->authz;
-
-	my $courseName  = $r->urlpath->arg("courseID");
-	my $authen_args = $self->url_authen_args();
-	my $user        = $r->param('user');
-
-	# Check permissions
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to access the Instructor tools.")
-		unless $authz->hasPermissions($user, "access_instructor_tools");
-
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to modify student data.")
-		unless $authz->hasPermissions($user, "modify_student_data");
-
-	return join(
-		"",
-
-		CGI::hr(),
-		CGI::p(defined($self->{studentEntryReport}) ? $self->{studentEntryReport} : ''),
-		CGI::p(
-			$r->maketext(
-				"Enter information below for students you wish to add. Each student's password will initially be set to their student ID."
-			)
-		),
-		$self->addStudentForm,
-	);
-}
-
-sub addStudentForm {
-	my $self             = shift;
-	my $r                = $self->r;
-	my $db               = $r->db;
-	my $ce               = $r->ce;
-	my $numberOfStudents = $r->param("number_of_students") || 5;
-
-	# Add a student form
-
-	my @entryLines = ();
-	foreach my $i (1 .. $numberOfStudents) {
-		push(
-			@entryLines,
-			CGI::Tr(CGI::td([
-				CGI::input({
-					type  => 'text',
-					class => "last-name-input",
-					name  => "last_name_$i",
-					size  => '10',
-					class => 'form-control form-control-sm w-auto'
-				}),
-				CGI::input({
-					type  => 'text',
-					class => "first-name-input",
-					name  => "first_name_$i",
-					size  => '10',
-					class => 'form-control form-control-sm w-auto'
-				}),
-				CGI::input({
-					type          => 'text',
-					class         => "student-id-input",
-					name          => "student_id_$i",
-					size          => "16",
-					class         => 'form-control form-control-sm w-auto'
-				}),
-				CGI::input({
-					type          => 'text',
-					class         => "user-id-input",
-					name          => "new_user_id_$i",
-					size          => "10",
-					aria_required => 'true',
-					class         => 'form-control form-control-sm w-auto',
-				}),
-				CGI::input({
-					type  => 'text',
-					class => "email-input",
-					name  => "email_address_$i",
-					class => 'form-control form-control-sm w-auto'
-				}),
-				CGI::input({
-					type  => 'text',
-					class => "section-input",
-					name  => "section_$i",
-					size  => "4",
-					class => 'form-control form-control-sm w-auto'
-				}),
-				CGI::input({
-					type  => 'text',
-					class => "recitation-input",
-					name  => "recitation_$i",
-					size  => "4",
-					class => 'form-control form-control-sm w-auto'
-				}),
-				CGI::input({
-					type  => 'text',
-					class => "comment-input",
-					name  => "comment_$i",
-					class => 'form-control form-control-sm w-auto'
-				}),
-			]))
-		);
-	}
-
-	return join(
-		"",
-		CGI::start_form({ method => "post", action => $r->uri(), name => "add_users" }),
-		$self->hidden_authen_fields(),
-		CGI::div(
-			{ class => 'input-group d-inline-flex w-auto' },
-			CGI::submit({ name => "Create", value => $r->maketext("Create"), class => 'btn btn-primary' }),
-			CGI::textfield({
-				name  => 'number_of_students',
-				value => $numberOfStudents,
-				size  => 3,
-				class => 'form-control'
-			}),
-			CGI::span({ class => 'input-group-text' }, $r->maketext("entry rows.")),
-		),
-		CGI::end_form(),
-		CGI::hr(),
-
-		CGI::start_form({ method => "post", action => $r->uri(), name => "new-users-form", id => "new-users-form" }),
-		$self->hidden_authen_fields(),
-		CGI::input({ type => 'hidden', name => "number_of_students", value => $numberOfStudents }),
-		CGI::start_div({ class => 'table-responsive' }),
-		CGI::start_table({ class => 'table table-sm table-bordered' }),
-		CGI::Tr(CGI::th([
-			$r->maketext('Last Name'),
-			$r->maketext('First Name'),
-			$r->maketext('Student ID'),
-			$r->maketext('Login Name') . CGI::span({ class => "required-field" }, '*'),
-			$r->maketext('Email Address'),
-			$r->maketext('Section'),
-			$r->maketext('Recitation'),
-			$r->maketext('Comment')
-		])),
-		@entryLines,
-		CGI::end_table(),
-		CGI::end_div(),
-
-		CGI::p($r->maketext("Select sets below to assign them to the newly-created users.")),
-		CGI::scrolling_list({
-			name     => "assignSets",
-			values   => [ $db->listGlobalSets ],
-			size     => 10,
-			multiple => "1",
-			class    => 'form-select w-auto mb-2'
-		}),
-		CGI::p(
-			CGI::submit({ name => "addStudents", value => $r->maketext("Add Students"), class => 'btn btn-primary' }),
-		),
-		CGI::end_form(),
-
-	);
+	return;
 }
 
 1;
-
-__END__
-
-=head1 AUTHOR
-
-Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu
-
-=cut

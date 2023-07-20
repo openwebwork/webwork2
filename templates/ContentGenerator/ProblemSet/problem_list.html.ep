@@ -1,0 +1,58 @@
+% my $set = $c->{set};
+%
+% if (@$problems) {
+	% my $isJitarSet = $set->assignment_type eq 'jitar';
+	%
+	% # This table contains a summary, a caption, and scope variables for the columns.
+	<div class="table-responsive">
+		<table class="problem_set_table table caption-top font-sm">
+			<caption><%= maketext('Problems') %></caption>
+			<thead class="table-group-divider">
+				<tr>
+					<th><%= maketext('Name') %></th>
+					<th><%= maketext('Attempts') %></th>
+					<th><%= maketext('Remaining') %></th>
+					<th><%= maketext('Worth') %></th>
+					<th><%= maketext('Status') %></th>
+					% if ($isJitarSet) {
+						<th>
+							<%= maketext('Adjusted Status') =%>
+							&nbsp;
+							<%= link_to '#', class => 'help-popup', tabindex => 0, role => 'button',
+								data => {
+									bs_placement => 'top',
+									bs_toggle    => 'popover',
+									bs_content   => maketext(
+										q{The adjusted status of a problem is the larger of the problem's status and}
+											. 'the weighted average of the status of those problems which count '
+											. 'towards the parent grade.'
+									)
+								},
+								begin =%>
+								<i class="icon fas fa-question-circle" aria-hidden="true" data-alt="Help Icon"></i>
+							<% end =%>
+						</th>
+						<th><%= maketext('Counts for Parent') %></th>
+					% }
+					% if ($c->{canScoreProblems}) {
+						<th><%= maketext('Grader') %></th>
+					% }
+				</tr>
+			</thead>
+			<tbody class="table-group-divider">
+				% for my $problem (@$problems) {
+					<%= include 'ContentGenerator/ProblemSet/problem_list_row',
+						problem => $problem, isJitarSet => $isJitarSet =%>
+				% }
+			</tbody>
+		</table>
+	</div>
+% } else {
+	<p><%= maketext('This homework set contains no problems.') %></p>
+% }
+%
+<div class="mb-3">
+	<%= link_to
+		maketext('Download PDF or TeX Hardcopy for Current Set') => $c->systemLink(url_for 'hardcopy_preselect_set'),
+		class => 'btn btn-primary' =%>
+</div>

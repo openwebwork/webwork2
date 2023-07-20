@@ -1,0 +1,87 @@
+% use File::Basename qw(dirname);
+%
+% use WeBWorK::Utils qw(jitar_id_to_seq not_blank format_set_name_display);
+%
+% # Don't show the save as form when editing an existing course info file.
+% last if $c->{file_type} eq 'course_info' && -e $c->{editFilePath};
+%
+% my $isBlank         = $c->{file_type} eq 'blank_problem';
+% my $isHardcopyTheme = $c->{file_type} eq 'hardcopy_theme';
+% my $templatesDir    = $ce->{courseDirs}{templates};
+% my $shortFilePath   = $isBlank         ? 'newProblem.pg' : $c->{editFilePath} =~ s|^$templatesDir/||r;
+% $shortFilePath      = $isHardcopyTheme ? 'hardcopyThemes/' . ($c->{editFilePath} =~ s|^.*\/||r) : $shortFilePath;
+%
+% # Suggest that modifications be saved to the "local" subdirectory if its not in a writeable directory
+% $shortFilePath = "local/$shortFilePath" unless $isBlank || $isHardcopyTheme || -w dirname($c->{editFilePath});
+%
+% # If it is an absolute path make it relative.
+% $shortFilePath =~ s|^/*|| if $shortFilePath =~ m|^/|;
+%
+% my $probNum = $c->{file_type} eq 'problem' ? $c->{problemID} : 'header';
+%
+% # Don't add or replace problems to sets if the set is the Undefined_Set or if the problem is the blank_problem.
+% my $can_add_problem_to_set =
+	% not_blank($c->{setID}) && $c->{setID} ne 'Undefined_Set' && $c->{file_type} ne 'blank_problem';
+%
+% my $prettyProbNum = $probNum;
+% if ($c->{setID}) {
+	% my $set = $db->getGlobalSet($c->{setID});
+	% $prettyProbNum = join('.', jitar_id_to_seq($probNum))
+		% if ($c->{file_type} eq 'problem' && $set && $set->assignment_type eq 'jitar');
+% }
+%
+<div>
+	<div class="row align-items-center mb-2">
+		<%= label_for action_save_as_target_file_id => maketext('Save file to:'),
+			class => 'col-form-label col-auto' =%>
+		<div class="col-auto d-inline-flex" dir="ltr">
+			<div class="editor-save-path input-group input-group-sm">
+				<%= label_for action_save_as_target_file_id => '[TMPL]/', class => 'input-group-text' =%>
+				<%= text_field 'action.save_as.target_file' => $shortFilePath,
+					id => 'action_save_as_target_file_id', class => 'form-control form-control-sm',
+					size => 60, dir  => 'ltr',
+					# Don't allow changing the file name for course info files.
+					# The filename needs to be what is set in the course environment.
+					$c->{file_type} eq 'course_info' ? (readonly => undef) : () =%>
+			</div>
+		</div>
+		<%= hidden_field 'action.save_as.source_file' => $c->{editFilePath} =%>
+		<%= hidden_field 'action.save_as.file_type' => $c->{file_type} =%>
+	</div>
+	% if ($can_add_problem_to_set) {
+		<div class="form-check">
+			<%= radio_button 'action.save_as.saveMode' => 'rename', id => 'action_save_as_saveMode_rename_id',
+				checked => undef, class   => 'form-check-input' =%>
+			<%= label_for 'action_save_as_saveMode_rename_id', class => 'form-check-label', begin =%>
+				<%== maketext('Replace current problem: [_1]',
+					tag(
+						'strong',
+						c(
+							tag('span', dir => 'ltr', format_set_name_display($c->{fullSetID})),
+							"/$prettyProbNum"
+						)->join('')
+					)
+				) =%>
+			<% end =%>
+		</div>
+		<div class="form-check">
+			<%= radio_button 'action.save_as.saveMode' => 'add_to_set_as_new_problem',
+				id => 'action_save_as_saveMode_new_problem_id', class => 'form-check-input' =%>
+			<%= label_for 'action_save_as_saveMode_new_problem_id', class => 'form-check-label', begin =%>
+				<%== maketext(
+					'Append to end of [_1] set',
+					tag('strong', dir => 'ltr', format_set_name_display($c->{fullSetID}))
+				) =%>
+			<% end =%>
+		</div>
+	% }
+	% if ($c->{is_pg}) {
+		<div class="form-check">
+			<%= radio_button 'action.save_as.saveMode' => 'new_independent_problem',
+				id => 'action_save_as_saveMode_independent_problem_id', class => 'form-check-input',
+				$can_add_problem_to_set ? () : (checked => undef) =%>
+			<%= label_for action_save_as_saveMode_independent_problem_id => maketext('Create unattached problem'),
+				class => 'form-check-label' =%>
+		</div>
+	% }
+</div>

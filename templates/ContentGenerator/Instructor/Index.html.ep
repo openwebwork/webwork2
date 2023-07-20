@@ -1,0 +1,245 @@
+% use WeBWorK::Utils qw(getAssetURL);
+% use WeBWorK::HTML::ScrollingRecordList qw(scrollingRecordList);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/InstructorTools/instructortools.js'), defer => undef =%>
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to access instructor tools.') %></div>
+	% last;
+% }
+%
+<p>
+	<%= maketext(
+		'Use the interface below to quickly access commonly-used instructor tools, '
+			. 'or select a tool from the list to the left.'
+	) =%>
+	<br>
+	<%= maketext('Select user(s) and/or set(s) below and click the action button of your choice.') =%>
+</p>
+%
+<%= form_for current_route, method => 'POST', id => 'instructor-tools-form', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	%
+	<div class="row gx-3">
+		<div class="col-xl-5 col-md-6 mb-2">
+			<div class="fw-bold text-center"><%= label_for selected_users => maketext('Users') %></div>
+			<%= scrollingRecordList(
+				{
+					name            => 'selected_users',
+					controller      => $c,
+					default_sort    => 'lnfn',
+					default_format  => 'lnfn_uid',
+					default_filters => ['all'],
+					attrs           => {
+						size     => 10,
+						multiple => undef
+					}
+				},
+				@$users
+			) =%>
+		</div>
+		<div class="col-xl-5 col-md-6 mb-2">
+			<div class="fw-bold text-center"><%= label_for selected_sets => maketext('Sets') %></div>
+			<%= scrollingRecordList(
+				{
+					name            => 'selected_sets',
+					controller      => $c,
+					default_sort    => 'set_id',
+					default_format  => 'sid',
+					default_filters => ['all'],
+					attrs           => {
+						size     => 10,
+						multiple => undef,
+						dir      => 'ltr'
+					}
+				},
+				@$globalSets
+			) =%>
+		</div>
+	</div>
+	<div class="row gx-3">
+		<div class="col-xl-5 col-md-6 mb-2">
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('View/Edit'),
+					name  => 'sets_assigned_to_user',
+					class => 'btn btn-sm btn-secondary',
+					data  => { users_needed => 'exactly one', error_users  => maketext($E_ONE_USER) } =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%== maketext('all set dates for one <b>user</b>') =%>\
+				</span>
+			</div>
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('Edit'),
+					name       => 'edit_users',
+					class      => 'btn btn-sm btn-secondary',
+					formaction => $c->systemLink(url_for 'instructor_user_list'),
+					data => { users_needed => 'at least one', error_users => maketext($E_MIN_ONE_USER) } =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%== maketext('class list data for selected <b>users</b>') =%>\
+				</span>
+			</div>
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('Statistics'),
+					name  => 'user_stats',
+					class => 'btn btn-sm btn-secondary',
+					data  => { users_needed => 'exactly one', error_users => maketext($E_ONE_USER) } =%>
+				<span class="input-group-text"><%= maketext('or') %></span>
+				<%= submit_button maketext('progress'),
+					name  => 'user_progress',
+					class => 'btn btn-sm btn-secondary',
+					data  => { users_needed => 'exactly one', error_users => maketext($E_ONE_USER) } =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%== maketext('for one <b>user</b>') =%>\
+				</span>
+			</div>
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('Change Password'),
+					name  => 'user_options',
+					class => 'btn btn-sm btn-secondary',
+					data  => { users_needed => 'exactly one', error_users => maketext($E_ONE_USER) } =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%== maketext('for one <b>user</b>') =%>\
+				</span>
+			</div>
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('Add'), name => 'add_users', class => 'btn btn-sm btn-secondary' =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%= maketext('new users') =%>\
+				</span>
+			</div>
+		</div>
+		<div class="col-xl-5 col-md-6 mb-2 font-sm">
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('View/Edit'),
+					name  => 'users_assigned_to_set',
+					class => 'btn btn-sm btn-secondary',
+					data  => { sets_needed => 'exactly one', error_sets => maketext($E_ONE_SET) } =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%== maketext('all users for one <b>set</b>') =%>
+				</span>
+			</div>
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('Edit'),
+					name  => 'edit_sets',
+					class => 'btn btn-sm btn-secondary',
+					data  => { sets_needed => 'exactly one', error_sets => maketext($E_ONE_SET) } =%>
+				<span class="input-group-text" style="white-space:pre;"><%== maketext('one <b>set</b>') =%></span>
+				<span class="input-group-text"><%= maketext('or') %></span>
+				<%= submit_button maketext('add problems'),
+					name  => 'prob_lib',
+					class => 'btn btn-sm btn-secondary',
+					data  => { sets_needed => 'exactly one', error_sets => maketext($E_ONE_SET) } =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%== maketext('to one <b>set</b>') =%>\
+				</span>
+			</div>
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('Statistics'),
+					name  => 'set_stats',
+					class => 'btn btn-sm btn-secondary',
+					data  => { sets_needed => 'exactly one', error_sets => maketext($E_ONE_SET) } =%>
+				<span class="input-group-text"><%= maketext('or') %></span>
+				<%= submit_button maketext('progress'),
+					name  => 'set_progress',
+					class => 'btn btn-sm btn-secondary',
+					data  => { sets_needed => 'exactly one', error_sets => maketext($E_ONE_SET) } =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%== maketext('for one <b>set</b>') =%>\
+				</span>
+			</div>
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('Score'),
+					name       => 'score_sets',
+					class      => 'btn btn-sm btn-secondary',
+					formaction => $c->systemLink(url_for 'instructor_scoring'),
+					data => { sets_needed => 'at least one', error_sets => maketext($E_MIN_ONE_SET) } =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%== maketext('selected <b>sets</b>') =%>\
+				</span>
+			</div>
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('Create'),
+					name  => 'create_set',
+					class => 'btn btn-sm btn-secondary',
+					data  => {
+						set_name_needed        => 'true',
+						error_set_name         => maketext($E_SET_NAME),
+						error_invalid_set_name => maketext($E_BAD_NAME)
+				   	} =%>
+				<%= label_for new_set_name => maketext('new set:'), class => 'input-group-text' =%>
+				<%= text_field new_set_name => '',
+					id          => 'new_set_name',
+					placeholder => maketext('Name for new set here'),
+					size        => 20,
+					class       => 'form-control form-control-sm',
+					dir         => 'ltr' =%>
+			</div>
+		</div>
+	</div>
+	<div class="row gx-3">
+		<div class="col-xl-4 col-md-6 offset-md-3">
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('Assign'),
+					# This name is the same as the name of the submit button in Assigner.pm and the form is
+					# directly submitted to that module without modification.
+					name       => 'assign',
+					class      => 'btn btn-sm btn-secondary',
+					formaction => $c->systemLink(url_for 'instructor_set_assigner'),
+					data => {
+						users_needed => 'at least one',
+						error_users  => maketext($E_MIN_ONE_USER),
+						sets_needed  => 'at least one',
+						error_sets   => maketext($E_MIN_ONE_SET)
+					} =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%== maketext('selected <b>users</b> to selected <b>sets</b>') =%>\
+				</span>
+			</div>
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('Act as'),
+					name  => 'act_as_user',
+					class => 'btn btn-sm btn-secondary',
+					data  => {
+						users_needed => 'exactly one',
+						error_users  => maketext($E_ONE_USER),
+						sets_needed  => 'at most one',
+						error_sets   => maketext($E_MAX_ONE_SET)
+					} =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%== maketext('one <b>user</b> (on one <b>set</b>)') =%>\
+				</span>
+			</div>
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('Edit'),
+					name  => 'edit_set_for_users',
+					class => 'btn btn-sm btn-secondary',
+					data  => {
+						users_needed => 'at least one',
+						error_users  => maketext($E_MIN_ONE_USER),
+						sets_needed  => 'exactly one',
+						error_sets   => maketext($E_ONE_SET)
+					} =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%== maketext('one <b>set</b> for <b>users</b>') =%>\
+				</span>
+			</div>
+			<div class="input-group input-group-sm mb-2">
+				<%= submit_button maketext('Email'), name => 'email_users', class => 'btn btn-sm btn-secondary' =%>
+				<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+					<%= maketext('your students') =%>\
+				</span>
+			</div>
+			% if ($authz->hasPermissions(param('user'), 'manage_course_files')) {
+				<div class="input-group input-group-sm mb-2">
+					<%= submit_button maketext('Transfer'), name => 'transfer_files',
+						class => 'btn btn-sm btn-secondary' =%>
+					<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+						<%= maketext('course files') =%>\
+					</span>
+				</div>
+			% }
+		</div>
+	</div>
+<% end =%>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<theme label="Boxed">
+
+<description>
+This theme uses the tcolorbox package to put each exercisee in a box.
+</description>
+
+<preamble>
+\documentclass[11pt]{article}
+\usepackage{webwork2}
+\usepackage[text={7in,9in},centering]{geometry}
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable, skins}
+\newtcolorbox{webworkexercise}[2]{
+	breakable,
+	enhanced jigsaw,
+	title={
+	        {\bfseries\webworkLocalizeProblem~\ifthenelse{\equal{#1}{}}{\#}{#1}}\hfill
+		(\ifthenelse{\equal{#2}{}}{\#}{#2}~\webworkLocalizePoint)
+	}
+}
+\usepackage{fancyhdr}
+\parindent=0pt
+\setlength{\parskip}{1pc}
+\pagestyle{fancy}
+\begin{document}
+</preamble>
+
+<presetheader>
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[L]{\webworkLeftHeader}
+\fancyhead[C]{\webworkCenterHeader}
+\fancyhead[R]{\webworkRightHeader}
+\fancyfoot[L]{\webworkLeftFooter}
+\fancyfoot[C]{\webworkCenterFooter}
+\fancyfoot[R]{\webworkRightFooter}
+</presetheader>
+
+<postsetheader>
+\medskip
+</postsetheader>
+
+<problemheader>%
+\begin{webworkexercise}{\webworkProblemNumber}{\webworkProblemWeight}%
+</problemheader>
+
+<problemfooter>%
+\end{webworkexercise}%
+</problemfooter>
+
+<problemdivider>
+\smallskip
+\goodbreak
+</problemdivider>
+
+<setfooter></setfooter>
+
+<setdivider>
+\newpage%
+\setcounter{page}{1}%
+</setdivider>
+
+<userdivider>
+\newpage%
+\setcounter{page}{1}%
+</userdivider>
+
+<postamble>
+\end{document}
+</postamble>
+
+</theme>

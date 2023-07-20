@@ -1,0 +1,213 @@
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/Stats/stats.js'), defer => undef =%>
+% end
+%
+% # Filter and problem selectors.
+<div class="d-flex align-items-center mt-1 mb-3">
+	<%= maketext('Showing statistics for:') =%>
+	<%= include 'ContentGenerator/Instructor/Stats/student_filter_menu', filters => $filters =%>
+	<%= include 'ContentGenerator/Instructor/Stats/problem_menu', problems => $problems =%>
+</div>
+% # Set information
+<div class="table-responsive">
+	<table class="table table-bordered w-auto">
+		<tr>
+			<th>
+				<%= maketext('Status') =%>
+				<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
+					data-bs-content="<%= maketext(
+						'This gives the status and dates of the main set. '
+							. 'Indvidual students may have different settings.'
+					) %>">
+					<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') %>" aria-hidden="true">
+					</i>
+				</a>
+			</th>
+			<td>
+				% if (time < $c->{setRecord}->open_date) {
+					<%= maketext('Before Open Date') =%>
+				% } elsif ($c->{setRecord}->enable_reduced_scoring
+					% && time > $c->{setRecord}->reduced_scoring_date
+					% && time < $c->{setRecord}->due_date)
+				% {
+					<%= maketext('Reduced Scoring Period') =%>
+				% } elsif (time > $c->{setRecord}->due_date && time < $c->{setRecord}->answer_date) {
+					<%= maketext('Closed') =%>
+				% } elsif (time > $c->{setRecord}->answer_date) {
+					<%= maketext('Answers Available') =%>
+				% } else {
+					<%= maketext('Open') =%>
+				% }
+				% if (!$c->{setRecord}->visible) {
+					(<%= maketext('Hidden') =%>)
+				% }
+				% if ($c->{setRecord}->assignment_type =~ /gateway/ && time > $c->{setRecord}->answer_date) {
+					<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top"
+						data-bs-toggle="popover"
+						data-bs-content="<%= maketext(
+							'Answer availability for tests depends on multiple settings.  This only indicates the '
+								. 'template answer date has passed.  See set editor for actual availability.'
+						) =%>">
+						<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') =%>"
+							aria-hidden="true">
+						</i>
+					</a>
+				% }
+			</td>
+		</tr>
+		<tr>
+			<th><%= maketext('Number of Students') %></th>
+			<td><%= scalar(@$score_list) %></td></tr>
+		<tr>
+			<th><%= maketext('Open Date') %></th>
+			<td><%= $c->formatDateTime($c->{setRecord}->open_date, undef, $ce->{studentDateDisplayFormat}) %></td>
+		</tr>
+		% if ($c->{setRecord}->enable_reduced_scoring) {
+			<tr>
+				<th><%= maketext('Reduced Scoring Date') %></th>
+				<td>
+					<%= $c->formatDateTime($c->{setRecord}->reduced_scoring_date,
+						undef, $ce->{studentDateDisplayFormat}) %>
+				</td>
+			</tr>
+		% }
+		<tr>
+			<th><%= maketext('Close Date') %></th>
+			<td><%= $c->formatDateTime($c->{setRecord}->due_date, undef, $ce->{studentDateDisplayFormat}) %></td>
+		</tr>
+		<tr>
+			<th><%= maketext('Answer Date') %></th>
+			<td><%= $c->formatDateTime($c->{setRecord}->answer_date, undef, $ce->{studentDateDisplayFormat}) %></td>
+		</tr>
+	</table>
+</div>
+%
+<h2><%= maketext('Overall Results') %></h2>
+%
+% # Histogram of total scores.
+<%= $c->build_bar_chart(
+	$buckets,
+	xAxisLabels => [ '90-100', '80-89', '70-79', '60-69', '50-59', '40-49', '30-39', '20-29', '10-19', '0-9' ],
+	yMax        => 5 * $maxCount,
+	yAxisLabels => [ map { $_ * $maxCount } 0 .. 5 ],
+	mainTitle   => maketext('Overall Set Grades'),
+	xTitle      => maketext('Percent Ranges'),
+	yTitle      => maketext('Number of Students'),
+	barWidth    => 35,
+	barSep      => 5,
+	isPercent   => 0,
+	leftMargin  => 40 + 5 * length(5 * $maxCount),
+) =%>
+%
+% # Success index help icon.
+% my $successHelp = begin
+	<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
+		data-bs-content="<%= maketext(
+			'Success index is the square of the average score divided by the average number of attempts.') %>">
+		<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') %>" aria-hidden="true"></i>
+	</a>
+% end
+%
+% # Display the overall average
+<div class="table-responsive">
+	<table class="table table-bordered w-auto">
+		<tr><th><%= maketext('Total Points') %></th><td><%= $totalValue %></td></tr>
+		<tr><th><%= maketext('Average Percent') %></th><td><%= sprintf('%0.1f', 100 * $mean) %></td></tr>
+		<tr><th><%= maketext('Standard Deviation') %></th><td><%= sprintf('%0.1f', 100 * $stddev) %></td></tr>
+		<tr>
+			<th><%= maketext('Average Attempts Per Problem') %></th>
+			<td><%= sprintf('%0.1f', $overallAvgAttempts) %></td>
+		</tr>
+		<tr>
+			<th><%= maketext('Overall Success Index') =%><%= $successHelp->() %></th>
+			<td><%= sprintf('%0.1f', 100 * $overallSuccess) %></td>
+		</tr>
+	</table>
+</div>
+%
+% # Table showing percentile statistics for scores and success indices.
+<p>
+	<%= maketext(
+		'The percentage of students receiving at least these scores. The median score is in the 50% column.') =%>
+</p>
+<%= $c->bracket_table(
+	[ 90, 80, 70, 60, 50, 40, 30, 20, 10 ],
+	[ $score_list, $index_list ],
+	[ maketext('Percent Score'), b(maketext('Success Index') . $successHelp->()) ],
+	showMax => 1,
+) =%>
+%
+% # Individual problem stats.
+<h2><%= maketext('Individual Problem Results') %></h2>
+%
+% # SVG bar graph showing the percentage of students with correct answers for each problem.
+<%= $c->build_bar_chart(
+	$svgProblemData,
+	yAxisLabels => [ '0%', '20%', '40%', '60%', '80%', '100%' ],
+	xAxisLabels => $svgProblemLabels,
+	mainTitle   => maketext('Grade of Active Students'),
+	xTitle      => maketext('Problem Number'),
+	isJitarSet  => $isJitarSet,
+	jitarBars   => $isJitarSet ? $jitarBars : [],
+	barLinks    => [ map { $_->{statsLink} } @$problems ],
+) =%>
+%
+% # Table showing indvidual problem stats.
+<div class="table-responsive">
+	<table class="table table-bordered">
+		<tr>
+			<th><%= maketext('Problem Number') %></th>
+			% for (@$problems) {
+				<td class="text-center"><%= link_to $_->{prettyID} => $_->{statsLink} =%></td>
+			% }
+		</tr>
+		<tr>
+			<th><%= maketext('Point Value') %></th>
+			<% for (@$problems) { %><td class="text-center"><%= $_->value %></td><% } =%>
+		</tr>
+		<tr>
+			<th><%= maketext('Point Value') %></th>
+			<% for (@$avgScore) { %><td class="text-center"><%= $_ %></td><% } =%>
+		</tr>
+		% if ($isJitarSet) {
+			<tr>
+				<th><%= maketext('% Average with Review') %></th>
+				<% for (@$adjScore) { %><td class="text-center"><%= $_ %></td><% } =%>
+			</tr>
+		% }
+		<tr>
+			<th><%= maketext('Average Attempts') %></th>
+			<% for (@$avgAttempts) { %><td class="text-center"><%= $_ %></td><% } =%>
+		</tr>
+		<tr>
+			<th><%= maketext('Success Index') %><%= $successHelp->() %></th>
+			<% for (@$successList) { %><td class="text-center"><%= $_ %></td><% } =%>
+		</tr>
+		<tr>
+			<th><%= maketext('# of Active Students') %></th>
+			<% for (@$numActive) { %><td class="text-center"><%= $_ %></td><% } =%>
+		</tr>
+		% if ($authz->hasPermissions(param('user'), 'score_sets')) {
+			<tr>
+				<th><%= maketext('Manual Grader') %></th>
+				% for (@$problems) {
+					<td class="text-center">
+						<%= link_to $_->{prettyID} =>
+							$c->systemLink(url_for('instructor_problem_grader', problemID => $_->problem_id)) %>
+					</td>
+				% }
+			</tr>
+		% }
+	</table>
+</div>
+%
+% # Table showing percentile statistics for scores and success indices.
+<p>
+	<%= maketext('Percentile cutoffs for number of attempts. The 50% column shows the median number of attempts.') =%>
+</p>
+<%= $c->bracket_table(
+	[ 95, 75, 50, 25, 5, 1 ],
+	$attemptsList,
+	[ map { link_to maketext('Problem [_1]', $_->{prettyID}) => $_->{statsLink} } @$problems ],
+   	reverse => 1
+) =%>

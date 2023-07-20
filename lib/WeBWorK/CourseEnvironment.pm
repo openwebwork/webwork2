@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -51,73 +51,65 @@ safe compartment into a hash. This hash becomes the course environment.
 
 use strict;
 use warnings;
+
 use Carp;
-use WWSafe;
+use Opcode qw(empty_opset);
+
+use Safe;
 use WeBWorK::Utils qw(readFile);
 use WeBWorK::Debug;
-use Opcode qw(empty_opset);
 
 =head1 CONSTRUCTION
 
 =over
 
-=item new(HASHREF)
+=item new($seedVars)
 
-HASHREF is a reference to a hash containing scalar variables with which to seed
-the course environment. It must contain at least a value for the key
-C<webworkRoot>.
+C<$seedVars> is an optional argument.  If provided it must be a reference to a
+hash containing scalar variables with which to seed the course environment. It
+may contain values for the keys C<webwork_dir>, C<pg_dir>, C<courseName>, and
+C<web_config_filename>.
 
-The C<new> method finds the file F<conf/defaults.config> relative to the given
+If C<webwork_dir> or C<pg_dir> are not given in C<$seedVars> they will be taken
+from the C<%WeBWorK::SeedCE> hash.  If they are still not found in that hash,
+then they will be taken from the system environment variables C<WEBWORK_ROOT>
+and C<PG_ROOT>.
+
+The C<new> method finds the file F<conf/defaults.config> relative to the
 C<webwork_dir> directory. After reading this file, it uses the
 C<$courseFiles{environment}> variable, if present, to locate the course
 environment file. If found, the file is read and added to the environment.
 
-=item new(ROOT URLROOT PGROOT COURSENAME)
-
-A deprecated form of the constructor in which four seed variables are given
-explicitly: C<webwork_dir>, C<webwork_url>, C<pg_dir>, and C<courseName>.
-
 =cut
 
-# NEW SYNTAX
-#
-# new($invocant, $seedVarsRef)
-#   $invocant       implicitly set by caller
-#   $seedVarsRef    reference to hash containing scalar variables with which to
-#                   seed the course environment
-#
-# OLD SYNTAX
-#
-# new($invocant, $webworkRoot, $webworkURLRoot, $pgRoot, $courseName)
-#   $invocant          implicitly set by caller
-#   $webworkRoot       directory that contains the WeBWorK distribution
-#   $webworkURLRoot    URL that points to the WeBWorK system
-#   $pgRoot            directory that contains the PG distribution
-#   $courseName        name of the course being used
 sub new {
-	my ($invocant, @rest) = @_;
+	my ($invocant, $seedVars) = @_;
 	my $class = ref($invocant) || $invocant;
 
-	# contains scalar symbols/values with which to seed course environment
-	my %seedVars;
+	$seedVars //= {};
+	croak __PACKAGE__ . ": The only argument for new must be a hash reference.\n" unless ref($seedVars) eq 'HASH';
 
-	# where do we get the seed variables?
-	if (ref $rest[0] eq "HASH") {
-		%seedVars = %{$rest[0]};
-	} else {
-		debug __PACKAGE__, ": deprecated four-argument form of new() used.", caller(1),"\n", caller(2),"\n";
-		$seedVars{webwork_dir}    = $rest[0];
-		$seedVars{webwork_url}    = $rest[1];
-		$seedVars{pg_dir}         = $rest[2];
-		$seedVars{courseName}     = $rest[3];
-	}
-	$seedVars{courseName} = $seedVars{courseName}||"___"; # prevents extraneous error messages
-	my $safe = WWSafe->new;
+	# Get the webwork_dir and pg_dir from the SeedCE or the environment if not set.
+	$seedVars->{webwork_dir} //= $WeBWorK::SeedCE{webwork_dir} // $ENV{WEBWORK_ROOT};
+	$seedVars->{pg_dir}      //= $WeBWorK::SeedCE{pg_dir}      // $ENV{PG_ROOT};
+
+	$seedVars->{courseName} ||= '___';    # prevents extraneous error messages
+
+	# Mojolicious sets the INT and TERM signal handlers, and perl Safe overrides those (as those signals can be used to
+	# break out of Safe) which causes an error later when the Mojolicious signals handlers are not called as they should
+	# be.  So the current signal handlers are cached here and restored after the Safe reval is completed.
+	my %ORIG_SIG;
+	$ORIG_SIG{$_} = $SIG{$_} for keys %SIG;
+
+	# The following line is a work around for a bug that occurs on some systems.  See
+	# https://rt.cpan.org/Public/Bug/Display.html?id=77916 and
+	# https://github.com/openwebwork/webwork2/pull/2098#issuecomment-1619812699.
+	my %dummy = %+;
+
+	my $safe = Safe->new;
 	$safe->permit('rand');
-	# to avoid error messages make sure that courseName is defined
-	$seedVars{courseName} = $seedVars{courseName}//"foobar_course";
 	# seed course environment with initial values
-	while (my ($var, $val) = each %seedVars) {
+	while (my ($var, $val) = each %$seedVars) {
 		$val = "" if not defined $val;
 		$safe->reval("\$$var = '$val';");
 	}
@@ -125,7 +117,7 @@ sub new {
 	# Compile the "include" function with all opcodes available.
 	my $include = q[ sub include {
 		my ($file) = @_;
-		my $fullPath = "].$seedVars{webwork_dir}.q[/$file";
+		my $fullPath = "] . $seedVars->{webwork_dir} . q[/$file";
 		# This regex matches any string that begins with "../",
 		# ends with "/..", contains "/../", or is "..".
 		if ($fullPath =~ m!(?:^|/)\.\.(?:/|$)!) {
@@ -151,22 +143,17 @@ sub new {
 
 	# determine location of globalEnvironmentFile
 	my $globalEnvironmentFile;
-	if (-r "$seedVars{webwork_dir}/conf/defaults.config") {
-		$globalEnvironmentFile = "$seedVars{webwork_dir}/conf/defaults.config";
+	if (-r "$seedVars->{webwork_dir}/conf/defaults.config") {
+		$globalEnvironmentFile = "$seedVars->{webwork_dir}/conf/defaults.config";
 	} else {
 		croak "Cannot read global environment file $globalEnvironmentFile";
 	}
 
 	# read and evaluate the global environment file
 	my $globalFileContents = readFile($globalEnvironmentFile);
-	# warn "about to evaluate defaults.conf $seedVars{courseName}\n";
-	# warn  join(" | ", (caller(1))[0,1,2,3,4] ), "\n";
 	$safe->share_from('main', [qw(%ENV)]);
 	$safe->reval($globalFileContents);
 	# warn "end the evaluation\n";
-
-
-
 
 	# if that evaluation failed, we can't really go on...
 	# we need a global environment!
@@ -176,25 +163,25 @@ sub new {
 	# pull it out of $safe's symbol table ad hoc
 	# (we don't want to do the hash conversion yet)
 	no strict 'refs';
-	my $courseEnvironmentFile = ${*{${$safe->root."::"}{courseFiles}}}{environment};
-	my $courseWebConfigFile = $seedVars{web_config_filename} ||
-		${*{${$safe->root."::"}{courseFiles}}}{simpleConfig};
+	my $courseEnvironmentFile = ${ *{ ${ $safe->root . "::" }{courseFiles} } }{environment};
+	my $courseWebConfigFile   = $seedVars->{web_config_filename}
+		|| ${ *{ ${ $safe->root . "::" }{courseFiles} } }{simpleConfig};
 	use strict 'refs';
 
 	# make sure the course environment file actually exists (it might not if we don't have a real course)
 	# before we try to read it
-	if(-r $courseEnvironmentFile){
+	if (-r $courseEnvironmentFile) {
 		# read and evaluate the course environment file
 		# if readFile failed, we don't bother trying to reval
-		my $courseFileContents = eval { readFile($courseEnvironmentFile) }; # catch exceptions
+		my $courseFileContents = eval { readFile($courseEnvironmentFile) };       # catch exceptions
 		$@ or $safe->reval($courseFileContents);
-		my $courseWebConfigContents = eval { readFile($courseWebConfigFile) }; # catch exceptions
+		my $courseWebConfigContents = eval { readFile($courseWebConfigFile) };    # catch exceptions
 		$@ or $safe->reval($courseWebConfigContents);
 	}
 
 	# get the safe compartment's namespace as a hash
 	no strict 'refs';
-	my %symbolHash = %{$safe->root."::"};
+	my %symbolHash = %{ $safe->root . "::" };
 	use strict 'refs';
 
 	# convert the symbol hash into a hash of regular variables.
@@ -203,9 +190,9 @@ sub new {
 		# weed out internal symbols
 		next if $name =~ /^(INC|_.*|__ANON__|main::|include)$/;
 		# pull scalar, array, and hash values for this symbol
-		my $scalar = ${*{$symbolHash{$name}}};
-		my @array = @{*{$symbolHash{$name}}};
-		my %hash = %{*{$symbolHash{$name}}};
+		my $scalar = ${ *{ $symbolHash{$name} } };
+		my @array  = @{ *{ $symbolHash{$name} } };
+		my %hash   = %{ *{ $symbolHash{$name} } };
 		# for multiple variables sharing a symbol, scalar takes precedence
 		# over array, which takes precedence over hash.
 		if (defined $scalar) {
@@ -217,30 +204,32 @@ sub new {
 		}
 	}
 	# now that we know the name of the pg_dir we can get the pg VERSION file
-	my $PG_version_file = $self->{'pg_dir'}."/VERSION";
+	my $PG_version_file = $self->{'pg_dir'} . "/VERSION";
 
 	# Try a fallback location
-	if ( !-r $PG_version_file ) {
-	  $PG_version_file = $self->{'webwork_dir'}."/../pg/VERSION";
+	if (!-r $PG_version_file) {
+		$PG_version_file = $self->{'webwork_dir'} . "/../pg/VERSION";
 	}
 	# #	We'll get the pg version here and read it into the safe symbol table
-	if (-r $PG_version_file){
-			#print STDERR ( "\n\nread PG_version file $PG_version_file\n\n");
-		my $PG_version_file_contents = readFile($PG_version_file)//'';
+	if (-r $PG_version_file) {
+		#print STDERR ( "\n\nread PG_version file $PG_version_file\n\n");
+		my $PG_version_file_contents = readFile($PG_version_file) // '';
 		$safe->reval($PG_version_file_contents);
-			#print STDERR ("\n contents: $PG_version_file_contents");
+		#print STDERR ("\n contents: $PG_version_file_contents");
 
 		no strict 'refs';
-		my %symbolHash2 = %{$safe->root."::"};
+		my %symbolHash2 = %{ $safe->root . "::" };
 		#print STDERR "symbolHash".join(' ', keys %symbolHash2);
 		use strict 'refs';
-		$self->{PG_VERSION}=${*{$symbolHash2{PG_VERSION}}};
+		$self->{PG_VERSION} = ${ *{ $symbolHash2{PG_VERSION} } };
 	} else {
-		$self->{PG_VERSION}="unknown";
+		$self->{PG_VERSION} = "unknown";
 		#croak "Cannot read PG version file $PG_version_file";
 		warn "Cannot read PG version file $PG_version_file";
 	}
 
+	# Restore the original signal handlers.
+	local $SIG{$_} = $ORIG_SIG{$_} for keys %ORIG_SIG;
 
 	bless $self, $class;
 
@@ -250,15 +239,21 @@ sub new {
 
 	# create reverse-lookup hash mapping status abbreviations to real names
 	$self->{_status_abbrev_to_name} = {
-		map { my $name = $_; map { $_ => $name } @{$self->{statuses}{$name}{abbrevs}} }
-			keys %{$self->{statuses}}
+		map {
+			my $name = $_;
+			map { $_ => $name } @{ $self->{statuses}{$name}{abbrevs} }
+		}
+			keys %{ $self->{statuses} }
 	};
+
+	# Make sure that this is set in case it is not defined in site.conf.
+	$self->{pg_htdocs_url} //= '/pg_files';
 
 	# Fixup for courses that still have an underscore, 'heb', 'zh_hk', or 'en_us' saved in their settings files.
 	$self->{language} =~ s/_/-/g;
 	$self->{language} = 'he-IL' if $self->{language} eq 'heb';
 	$self->{language} = 'zh-HK' if $self->{language} eq 'zh-hk';
-	$self->{language} = 'en' if $self->{language} eq 'en-us';
+	$self->{language} = 'en'    if $self->{language} eq 'en-us';
 
 	# now that we're done, we can go ahead and return...
 	return $self;
@@ -321,7 +316,7 @@ sub status_name_to_abbrevs {
 	}
 
 	return unless exists $ce->{statuses}{$status_name};
-	return @{$ce->{statuses}{$status_name}{abbrevs}};
+	return @{ $ce->{statuses}{$status_name}{abbrevs} };
 }
 
 =item status_has_behavior($status_name, $behavior)
@@ -343,10 +338,10 @@ sub status_has_behavior {
 
 	if (exists $ce->{statuses}{$status_name}) {
 		if (exists $ce->{statuses}{$status_name}{behaviors}) {
-			my $num_matches = grep { $_ eq $behavior } @{$ce->{statuses}{$status_name}{behaviors}};
+			my $num_matches = grep { $_ eq $behavior } @{ $ce->{statuses}{$status_name}{behaviors} };
 			return $num_matches > 0;
 		} else {
-			return 0; # no behaviors
+			return 0;    # no behaviors
 		}
 	} else {
 		warn "status '$status_name' not found in \%statuses -- assuming no behaviors.\n";

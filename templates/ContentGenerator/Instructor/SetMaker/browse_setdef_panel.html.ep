@@ -1,0 +1,24 @@
+% use WeBWorK::Utils::Instructor qw(getDefList);
+%
+% my @list_of_set_defs = getDefList($ce);
+%
+% if (!@list_of_set_defs) {
+	<div class="InfoPanel">
+		<label class="col-form-label-sm">
+			<%= maketext('There are no set definition files in this course to look at.') =%>
+		</label>
+	</div>
+	% last;
+% }
+%
+<div class="InfoPanel">
+	<div class="mb-2">
+		<label class="col-form-label-sm"><%= maketext('Browse from:') %></label>
+		<%= select_field library_sets => [
+				$selected_library eq '' ? [ maketext('Select a Set Definition File') => '', selected => undef, disabled => 'disabled' ] : (),
+				@list_of_set_defs
+			],
+			class => 'form-select form-select-sm d-inline w-auto' =%>
+	</div>
+	<%= include 'ContentGenerator/Instructor/SetMaker/view_problems_line', internal_name => 'view_setdef_set' =%>
+</div>

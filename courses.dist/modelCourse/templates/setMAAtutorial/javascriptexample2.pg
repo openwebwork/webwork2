@@ -5,7 +5,7 @@ loadMacros("PGbasicmacros.pl",
            "PGanswermacros.pl",
            "PGnumericalmacros.pl",  # needed for the javaScript spline code
            ); 
-TEXT(beginproblem(), $BR,$BBOLD, "JavaScript Example 2", $EBOLD, $BR,$BR);
+TEXT($BBOLD, "JavaScript Example 2", $EBOLD, $BR,$BR);
 
 # define function to be evaluated
 $a= random(1,3,1);
@@ -49,7 +49,6 @@ $javascript= javaScript_cubic_spline(~~@x, ~~@y, name =>'func');
 HEADER_TEXT( javaScript_cubic_spline(~~@x, ~~@y, name =>'func')  );  
 
 
-TEXT(beginproblem());
 TEXT(MODES( TeX => "",
 	        Latex2HTML => "\begin{rawhtml}
                          <NOSCRIPT> This problem requires that Java Script be 

@@ -1,0 +1,152 @@
+<h2><%= maketext('Manage Locations') %> <%= $c->helpMacro('AdminManageLocations') %></h2>
+<p><strong><%= maketext('Currently defined locations are listed below.') %></strong></p>
+<%= form_for current_route, method => 'POST', begin =%>
+	% my @locationIDs = map  { $_->location_id } @$locations;
+	%
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
+	%
+	<div class="col-lg-8 col-md-9">
+		<div class="mb-2 fw-bold"><%= maketext('Select an action to perform:') =%></div>
+		% # Edit action
+		<div class="row align-items-center mb-2">
+			<div class="col-sm-4">
+				<div class="form-check">
+					<label class="form-check-label">
+						<%= radio_button manage_location_action => 'edit_location_form',
+							class => 'form-check-input' %>
+						<%= maketext('Edit Location:') %>
+					</label>
+				</div>
+			</div>
+			<div class="col-sm-8"><%= select_field edit_location => [@locationIDs], class => 'form-select' =%></div>
+		</div>
+		% # Create action
+		<div class="row align-items-center mb-2">
+			<div class="col-auto">
+				<div class="form-check">
+					<label class="form-check-label">
+						<%= radio_button manage_location_action => 'add_location_handler',
+							class => 'form-check-input' %>
+						<%= maketext('Create Location:') %>
+					</label>
+				</div>
+			</div>
+		</div>
+		<div class="row ms-sm-3 mb-2">
+			<%= label_for new_location_name => maketext('Location name:'), class => 'col-sm-4 col-form-label' =%>
+			<div class="col-sm-8">
+				<%= text_field new_location_name => '', id => 'new_location_name', class => 'form-control' =%>
+			</div>
+		</div>
+		<div class="row ms-sm-3 mb-2">
+			<%= label_for new_location_description => maketext('Location description:'),
+				class => 'col-sm-4 col-form-label' =%>
+			<div class="col-sm-8">
+				<%= text_field new_location_description => '',
+					id => 'new_location_description', class => 'form-control' =%>
+			</div>
+		</div>
+		<div class="row ms-sm-3 mb-2">
+			<div class="col">
+				<%= label_for new_location_addresses => maketext(
+					'Addresses for new location.  Enter one per line, as single IP addresses (e.g., 192.168.1.101), '
+						. 'address masks (e.g., 192.168.1.0/24), or IP ranges (e.g., 192.168.1.101-192.168.1.150):'
+				) =%>
+			</div>
+		</div>
+		<div class="row ms-sm-3 mb-2">
+			<div class="col-7 col-xs-12">
+				<%= text_area new_location_addresses => '', id => 'new_location_addresses',
+					columns => 40, class => 'form-control' =%>
+			</div>
+		</div>
+		% # Delete action
+		<div class="row mb-2">
+			<div class="text-danger">
+				<em>
+					<%= maketext('Deletion deletes all location data and related addresses, and is not undoable!') %>
+				</em>
+			</div>
+		</div>
+		<div class="row align-items-center mb-2">
+			<div class="col-sm-4">
+				<div class="form-check">
+					<label class="form-check-label">
+						<%= radio_button manage_location_action => 'delete_location_handler',
+							class => 'form-check-input' %>
+						<%= maketext('Delete location:') %>
+					</label>
+				</div>
+			</div>
+			<div class="col-sm-8">
+				<div class="row mb-1">
+					<div class="col-auto">
+						<%= select_field delete_location => [
+								[ maketext('no location') => '' ],
+								[ maketext('locations selected below') => 'selected_locations' ],
+								@locationIDs
+							], class => 'form-select' =%>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-auto">
+						<div class="form-check">
+							<label class="form-check-label">
+								<%= check_box delete_confirm => 'true', class => 'form-check-input' %>
+								<%= maketext('Confirm') %>
+							</label>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	%
+	<div><%= submit_button maketext('Take Action!'), name => 'manage_locations', class => 'btn btn-primary' =%></div>
+	%
+	% # Existing location table
+	% if (@$locations) {
+		<div class="table-responsive mt-3">
+			<table class="table table-sm font-sm table-bordered table-striped">
+				<thead>
+					<tr>
+						<th><%= maketext('Select') %></th>
+						<th><%= maketext('Location') %></th>
+						<th><%= maketext('Description') %></th>
+						<th><%= maketext('Addresses') %></th>
+					</tr>
+				</thead>
+				<tbody class="table-group-divider">
+					% for (@$locations) {
+						<tr>
+							<td>
+								<%= check_box delete_selected => $_->location_id,
+									name  => 'delete_selected',
+									id    => $_->location_id . '_id',
+									class => 'form-check-input' =%>
+							</td>
+							<td>
+								<%= label_for $_->location_id . '_id' =>
+									link_to $_->location_id => $c->systemLink(
+										url_for,
+										params => {
+											subDisplay             => 'manage_locations',
+											manage_location_action => 'edit_location_form',
+											edit_location          => $_->location_id
+										}
+									) =%>
+							</td>
+							<td><%= $_->description %></td>
+							<td><%= join(', ', @{ $locAddr->{ $_->location_id } }) %></td>
+						</tr>
+					% }
+				</tbody>
+			</table>
+		</div>
+	% } else {
+		<div class="row mt-3">
+			<div class="col-lg-8 col-md-9 fw-bold"><%= maketext('No locations are currently defined.') %></div>
+		</div>
+	% }
+<% end =%>

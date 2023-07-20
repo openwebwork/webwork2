@@ -1,0 +1,61 @@
+<h2><%= maketext('Editing location [_1]', $locationID) %> <%= $c->helpMacro('AdminManageLocations') %></h2>
+<p>
+	<%= maketext(
+		'Edit the current value of the location description, if desired, then add and select addresses to delete, '
+			. q{and then click the "Take Action" button to make all of your changes.  Or, click }
+			. q{"Manage Locations" above to make no changes and return to the Manage Locations page.}
+	) =%>
+</p>
+%
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
+	<%= hidden_field edit_location => $locationID =%>
+	<%= hidden_field manage_location_action => 'edit_location_handler' =%>
+	%
+	<div class="row mb-2">
+		<%= label_for location_description => maketext('Location description:'), class => 'col-auto col-form-label' =%>
+		<div class="col-auto">
+			<%= text_field location_description => $location->description,
+				id => 'location_description', class => 'form-control', size => '50' =%>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-6">
+			<div class="mb-2">
+				<%= label_for new_location_addresses => maketext(
+					'Addresses to add to the location.  Enter one per line, as single IP addresses '
+						. '(e.g., 192.168.1.101), address masks (e.g., 192.168.1.0/24), or IP ranges '
+						. '(e.g., 192.168.1.101-192.168.1.150):') =%>
+			</div>
+			<div class="mb-2">
+				<textarea name="new_location_addresses" id="new_location_addresses" class="form-control"
+				   	rows="5" columns="28"></textarea>
+			</div>
+		</div>
+		<div class="col-md-6">
+			<div class="mb-2">
+				<%= label_for delete_location_addresses => maketext(
+					'Existing addresses for the location are given in the scrolling list below.  '
+						. 'Select addresses from the list to delete them:'
+				) =%>
+			</div>
+			<div class="mb-2">
+				<%= select_field delete_location_addresses => $locAddresses,
+					id => 'delete_location_addresses', size => 8, multiple => undef, class => 'form-select' =%>
+			</div>
+			<div class="mb-2"><%= maketext('or') %></div>
+			<div class="mb-2">
+				<div class="form-check">
+					<label class="form-check-label">
+						<%= check_box delete_all_addresses => 'true', class => 'form-check-input' %>
+						<%= maketext('Delete all existing addresses') %>
+					</label>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div>
+		<%= submit_button maketext('Take Action!'), class => 'btn btn-primary' =%>
+	</div>
+<% end =%>

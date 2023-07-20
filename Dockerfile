@@ -1,43 +1,9 @@
-# Optional things to change/configure below:
-#
-# 1. Which branch of webwork2/ and pg/ to install.
-#
-# 2. Installing the OPL in the Docker image itself.
-#    (almost 850MB: 290+MB for the main OPL, 90+MB for Pending, 460+MB for Contrib)
-#
-#    By default this is NOT done, and it will instead be installed in
-#    a named Docker storage volume when the container is first started.
-#
-#    Note: For typical use, we recommend that the OPL be either mounted from
-#    a local directory on the source or from a separate named data volume.
-#    That approach precludes needing to download the OPL for each update to
-#    the Docker image, and allows it to be easily upgraded using git in its
-#    persistent location.
-#
-# 3. Some things should be handled by setting environment variables which
-#    take effect at container startup. They can usually be set in
-#    docker-compose.yml.
-#
-#        SSL=1
-#          will turn on SSL at startup
-#        ADD_LOCALES="locale1,locale2,locale3"
-#          will build these locales at startup
-#        PAPERSIZE=a4
-#          will set the system papersize to A4
-#        SYSTEM_TIMEZONE=zone/city
-#          will set the system timezone to zone/city
-#          Make sure to use a valid setting.
-#          "/usr/bin/timedatectl list-timezones" on Ubuntu will find valid values
-#        ADD_APT_PACKAGES="package1 package2 package3"
-#          will have these additional Ubuntu packages installed at startup.
-
 # ==================================================================
-# Phase 1 - download some Git repos for later use:
-# as suggested by Nelson Moller in https://gist.github.com/nmoller/81bd8e149e6aa2a7cf051e0bf248b2e2
+# Phase 1 - Download webwork and pg git repositories.
 
 FROM alpine/git AS base
 
-# build args specifying the branches for webwork2 and pg used to build the image
+# Build args specifying the branches for webwork2 and pg used to build the image.
 ARG WEBWORK2_GIT_URL
 ARG WEBWORK2_BRANCH
 ARG PG_GIT_URL
@@ -62,27 +28,18 @@ RUN echo Cloning branch $PG_BRANCH branch from $PG_GIT_URL \
 # ==================================================================
 # Phase 2 - set ENV variables
 
-# we need to change FROM before setting the ENV variables
+# We need to change FROM before setting the ENV variables.
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV WEBWORK_URL=/webwork2 \
-	WEBWORK_ROOT_URL=http://localhost \
+	WEBWORK_ROOT_URL=http://localhost::8080 \
 	WEBWORK_SMTP_SERVER=localhost \
 	WEBWORK_SMTP_SENDER=webwork@example.com \
 	WEBWORK_TIMEZONE=America/New_York \
-	APACHE_RUN_USER=www-data \
-	APACHE_RUN_GROUP=www-data \
-	# temporary state file location. This might be changed to /run in Wheezy+1 \
-	APACHE_PID_FILE=/var/run/apache2/apache2.pid \
-	APACHE_RUN_DIR=/var/run/apache2 \
-	APACHE_LOCK_DIR=/var/lock/apache2 \
-	# Only /var/log/apache2 is handled by /etc/logrotate.d/apache2.
-	APACHE_LOG_DIR=/var/log/apache2 \
 	APP_ROOT=/opt/webwork \
 	DEBIAN_FRONTEND=noninteractive \
-	DEBCONF_NONINTERACTIVE_SEEN=true \
-	DEV=0
+	DEBCONF_NONINTERACTIVE_SEEN=true
 
 ARG ADDITIONAL_BASE_IMAGE_PACKAGES
 
@@ -93,130 +50,146 @@ ENV WEBWORK_ROOT=$APP_ROOT/webwork2 \
 	PATH=$PATH:$APP_ROOT/webwork2/bin
 
 # ==================================================================
-# Phase 3 - Ubuntu 20.04 base image + required packages
+# Phase 3 - Install required packages
 
 # Do NOT include "apt-get -y upgrade"
 # see: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
 
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends --no-install-suggests \
-	apache2 \
+	apt-utils \
+	ca-certificates \
+	cpanminus \
+	culmus \
 	curl \
+	debconf-utils \
 	dvipng \
 	dvisvgm \
+	fonts-linuxlibertine \
 	gcc \
-	libapache2-request-perl \
+	git \
+	imagemagick \
+	iputils-ping \
+	jq \
 	libarchive-zip-perl \
-	libcgi-pm-perl \
-	libcrypt-ssleay-perl \
+	libarray-utils-perl \
+	libc6-dev \
+	libcapture-tiny-perl \
+	libclass-tiny-antlers-perl \
+	libclass-tiny-perl \
+	libcpanel-json-xs-perl \
+	libcrypt-jwt-perl \
+	libcryptx-perl \
+	libdata-dump-perl \
+	libdata-structure-util-perl \
 	libdatetime-perl \
 	libdbd-mysql-perl \
-	libdbd-mariadb-perl \
+	libdevel-checklib-perl \
 	libemail-address-xs-perl \
+	libemail-date-format-perl \
+	libemail-sender-perl \
+	libemail-stuffer-perl \
 	libexception-class-perl \
+	libextutils-config-perl \
+	libextutils-helpers-perl \
+	libextutils-installpaths-perl \
 	libextutils-xsbuilder-perl \
 	libfile-find-rule-perl-perl \
+	libfile-sharedir-install-perl \
+	libfuture-asyncawait-perl \
 	libgd-perl \
 	libhtml-scrubber-perl \
+	libhtml-template-perl \
+	libhttp-async-perl \
+	libiterator-perl \
+	libiterator-util-perl \
+	libjson-maybexs-perl \
 	libjson-perl \
+	libjson-xs-perl \
 	liblocale-maketext-lexicon-perl \
 	libmail-sender-perl \
+	libmail-sender-perl \
+	libmariadb-dev \
+	libmath-random-secure-perl \
 	libmime-tools-perl \
+	libminion-backend-sqlite-perl \
+	libminion-perl \
+	libmodule-build-perl \
+	libmodule-pluggable-perl \
+	libmojolicious-perl \
+	libmojolicious-plugin-renderfile-perl \
+	libnet-https-nb-perl \
 	libnet-ip-perl \
 	libnet-ldap-perl \
 	libnet-oauth-perl \
 	libossp-uuid-perl \
 	libpadwalker-perl \
 	libpath-class-perl \
+	libpath-tiny-perl \
+	libpandoc-wrapper-perl \
 	libphp-serialization-perl \
-	libxml-simple-perl \
-	libnet-https-nb-perl \
-	libhttp-async-perl \
+	libpod-wsdl-perl \
 	libsoap-lite-perl \
+	libsql-abstract-classic-perl \
 	libsql-abstract-perl \
 	libstring-shellquote-perl \
-	libtemplate-perl \
-	libtext-csv-perl \
-	libtimedate-perl \
-	libuuid-tiny-perl \
-	libxml-parser-perl \
-	libxml-writer-perl \
-	libxmlrpc-lite-perl \
-	libapache2-reload-perl \
-	cpanminus \
-	libxml-parser-easytree-perl \
-	libiterator-perl \
-	libiterator-util-perl \
-	libpod-wsdl-perl \
-	libtest-xml-perl \
-	libmodule-build-perl \
-	libxml-semanticdiff-perl \
-	libxml-xpath-perl \
-	libpath-tiny-perl \
-	libarray-utils-perl \
-	libhtml-template-perl \
-	libtest-pod-perl \
-	libemail-sender-perl \
-	libmail-sender-perl \
-	libmodule-pluggable-perl \
-	libemail-date-format-perl \
-	libcapture-tiny-perl \
-	libthrowable-perl \
-	libdata-dump-perl \
-	libfile-sharedir-install-perl \
-	libclass-tiny-perl \
-	libtest-requires-perl \
-	libtest-mockobject-perl \
-	libtest-warn-perl \
 	libsub-uplevel-perl \
+	libsvg-perl \
+	libtemplate-perl \
+	libtest-deep-perl \
 	libtest-exception-perl \
+	libtest-fatal-perl \
+	libtest-mockobject-perl \
+	libtest-pod-perl \
+	libtest-requires-perl \
+	libtest-warn-perl \
+	libtest-xml-perl \
+	libtext-csv-perl \
+	libthrowable-perl \
+	libtimedate-perl \
 	libuniversal-can-perl \
 	libuniversal-isa-perl \
-	libtest-fatal-perl \
-	libjson-xs-perl \
-	libjson-maybexs-perl \
-	libcpanel-json-xs-perl \
+	libuuid-tiny-perl \
+	libxml-parser-easytree-perl \
+	libxml-parser-perl \
+	libxml-semanticdiff-perl \
+	libxml-simple-perl \
+	libxml-writer-perl \
+	libxml-xpath-perl \
 	libyaml-libyaml-perl \
-	libemail-stuffer-perl \
+	lmodern \
+	locales \
 	make \
+	mariadb-client \
 	netpbm \
 	patch \
 	pdf2svg \
 	preview-latex-style \
+	ssl-cert \
+	sudo \
 	texlive \
+	texlive-lang-arabic \
+	texlive-lang-other \
 	texlive-latex-extra \
+	texlive-latex-recommended \
 	texlive-plain-generic \
 	texlive-xetex \
-	texlive-latex-recommended \
-	texlive-lang-other \
-	texlive-lang-arabic \
-	libc6-dev \
-	git \
-	mysql-client \
 	tzdata \
-	apt-utils \
-	locales \
-	debconf-utils \
-	ssl-cert \
-	ca-certificates \
-	culmus \
-	fonts-linuxlibertine \
-	lmodern \
-	zip \
-	iputils-ping \
-	imagemagick \
-	jq $ADDITIONAL_BASE_IMAGE_PACKAGES \
+	zip $ADDITIONAL_BASE_IMAGE_PACKAGES \
 	&& curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
 	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
 	&& apt-get clean \
 	&& rm -fr /var/lib/apt/lists/* /tmp/*
 
-# Developers may want to add additional packages inside the image
-# such as: telnet vim mc file
+# ==================================================================
+# Phase 4 - Install additional Perl modules from CPAN that are not packaged for Ubuntu or are outdated in Ubuntu.
+
+RUN cpanm install Statistics::R::IO DBD::MariaDB Mojo::SQLite@3.002 Perl::Tidy@20220613 \
+	&& rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # ==================================================================
-# Phase 4 - Install webwork2 and pg which were downloaded to /opt/base/ in phase 1
-#   Option: Install the OPL in the image also (about 850 MB)
+# Phase 5 - Install webwork2 and pg which were downloaded to /opt/base/ in phase 1
+# Option: Install the OPL in the image also (about 850 MB)
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/libraries/webwork-open-problem-library $APP_ROOT/webwork2 /www/www/html
 
@@ -224,113 +197,53 @@ COPY --from=base /opt/base/webwork2 $APP_ROOT/webwork2
 COPY --from=base /opt/base/pg $APP_ROOT/pg
 
 # Optional - include OPL (also need to uncomment above to clone from GitHub when needed):
-# ??? could/should this include the main OPL = /opt/base/webwork-open-problem-library/OpenProblemLibrary and not Contrib and Pending ???
 #COPY --from=base /opt/base/webwork-open-problem-library $APP_ROOT/libraries/webwork-open-problem-library
 
 # ==================================================================
-
-# Phase 5 - some configuration work
+# Phase 6 - System configuration
 
 # 1. Setup PATH.
-# 2. Compiles color.c in the copy INSIDE the image, will also be done in docker-entrypoint.sh for externally mounted locations.
-# 3. Some chown/chmod for material INSIDE the image.
-# 4. Build some standard locales.
+# 2. Create the webwork2 PID directory and the /etc/ssl/local directory in case it is needed.
+# 3. Perform initial permissions setup for material INSIDE the image.
+# 4. Build standard locales.
 # 5. Set the default system timezone to be UTC.
 # 6. Install third party javascript files.
+# 7. Apply patches
+
+# Patch files that are applied below
+COPY docker-config/imagemagick-allow-pdf-read.patch /tmp
 
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
-	&& cd $APP_ROOT/pg/lib/chromatic && gcc color.c -o color  \
+	&& mkdir /run/webwork2 /etc/ssl/local \
 	&& cd $APP_ROOT/webwork2/ \
-		&& chown www-data DATA ../courses logs tmp $APP_ROOT/pg/lib/chromatic \
-		&& chmod -R u+w DATA ../courses logs tmp $APP_ROOT/pg/lib/chromatic   \
+		&& chown www-data DATA ../courses logs tmp /etc/ssl/local /run/webwork2 \
+		&& chmod -R u+w DATA ../courses logs tmp /run/webwork2 /etc/ssl/local \
 	&& echo "en_US ISO-8859-1\nen_US.UTF-8 UTF-8" > /etc/locale.gen \
 		&& /usr/sbin/locale-gen \
 		&& echo "locales locales/default_environment_locale select en_US.UTF-8\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt \
 		&& debconf-set-selections /tmp/preseed.txt \
 	&& rm /etc/localtime /etc/timezone && echo "Etc/UTC" > /etc/timezone \
-		&&   dpkg-reconfigure -f noninteractive tzdata \
+		&& dpkg-reconfigure -f noninteractive tzdata \
 	&& cd $WEBWORK_ROOT/htdocs \
 		&& npm install \
 	&& cd $PG_ROOT/htdocs \
-		&& npm install
-
-# These lines were moved into docker-entrypoint.sh so the bind mount of courses will be available
-#RUN cd $APP_ROOT/webwork2/courses.dist \
-#    && cp *.lst $APP_ROOT/courses/ \
-#    && cp -R modelCourse $APP_ROOT/courses/
-
-# ==================================================================
-# Phase 6 - install additional Perl modules from CPAN (not packaged for Ubuntu or outdated in Ubuntu)
-
-RUN cpanm install Statistics::R::IO \
-	&& rm -fr ./cpanm /root/.cpanm /tmp/*
-
-# ==================================================================
-# Phase 7 - setup apache
-
-# Note we always create the /etc/ssl/local directory in case it will be needed, as
-# the SSL config can also be done via a modified docker-entrypoint.sh script.
-
-# Always provide the dummy default-ssl.conf file:
-COPY docker-config/ssl/default-ssl.conf /etc/apache2/sites-available/default-ssl.conf
-
-# Patch files that are applied below
-COPY docker-config/xmlrpc-lite-utf8-fix.patch /tmp
-COPY docker-config/imagemagick-allow-pdf-read.patch /tmp
-
-# However SSL will only be enabled at container startup via docker-entrypoint.sh.
-
-RUN cd $APP_ROOT/webwork2/conf \
-	&& cp webwork.apache2.4-config.dist webwork.apache2.4-config \
-	&& cp $APP_ROOT/webwork2/conf/webwork.apache2.4-config /etc/apache2/conf-enabled/webwork.conf \
-	&& a2dismod mpm_event \
-	&& a2enmod mpm_prefork rewrite \
-	&& sed -i -e 's/Timeout 300/Timeout 1200/' /etc/apache2/apache2.conf \
-	&& sed -i -e 's/MaxRequestWorkers     150/MaxRequestWorkers     20/' \
-		-e 's/MaxConnectionsPerChild   0/MaxConnectionsPerChild   100/' \
-		/etc/apache2/mods-available/mpm_prefork.conf \
-	&& cp $APP_ROOT/webwork2/htdocs/favicon.ico /var/www/html \
-	&& mkdir -p $APACHE_RUN_DIR $APACHE_LOCK_DIR $APACHE_LOG_DIR \
-	&& mkdir /etc/ssl/local  \
-	&& sed -i -e 's/^<Perl>$/\
-	PerlPassEnv WEBWORK_URL\n\
-	PerlPassEnv WEBWORK_ROOT_URL\n\
-	PerlPassEnv WEBWORK_DB_DRIVER\n\
-	PerlPassEnv WEBWORK_DB_NAME\n\
-	PerlPassEnv WEBWORK_DB_HOST\n\
-	PerlPassEnv WEBWORK_DB_PORT\n\
-	PerlPassEnv WEBWORK_DB_USER\n\
-	PerlPassEnv WEBWORK_DB_PASSWORD\n\
-	PerlPassEnv WEBWORK_SMTP_SERVER\n\
-	PerlPassEnv WEBWORK_SMTP_SENDER\n\
-	PerlPassEnv WEBWORK_TIMEZONE\n\
-	\n<Perl>/' /etc/apache2/conf-enabled/webwork.conf \
-	&& patch -p1 -d / < /tmp/xmlrpc-lite-utf8-fix.patch \
-	&& rm /tmp/xmlrpc-lite-utf8-fix.patch \
+		&& npm install \
 	&& patch -p1 -d / < /tmp/imagemagick-allow-pdf-read.patch \
 	&& rm /tmp/imagemagick-allow-pdf-read.patch
 
-EXPOSE 80
-WORKDIR $APP_ROOT
-
-# Enabling SSL is NOT done here.
-# Instead it is done by docker-entrypoint.sh at container startup when SSL=1
-#     is set in the environment, for example by docker-compose.yml.
-#RUN a2enmod ssl && a2ensite default-ssl
-#EXPOSE 443
-
 # ==================================================================
-# Phase 8 - prepare docker-entrypoint.sh
+# Phase 7 - Final setup and prepare docker-entrypoint.sh
 # Done near the end, so that an update to docker-entrypoint.sh can be
 # done without rebuilding the earlier layers of the Docker image.
+
+EXPOSE 8080
+WORKDIR $WEBWORK_ROOT
 
 COPY docker-config/docker-entrypoint.sh /usr/local/bin/
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-# ==================================================================
 # Add enviroment variables to control some things during container startup
-
 ENV SSL=0 \
 	PAPERSIZE=letter \
 	SYSTEM_TIMEZONE=UTC \
@@ -339,4 +252,4 @@ ENV SSL=0 \
 
 # ================================================
 
-CMD ["apache2", "-DFOREGROUND"]
+CMD ["sudo", "-E", "-u", "www-data", "hypnotoad", "-f", "bin/webwork2"]

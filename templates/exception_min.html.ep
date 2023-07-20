@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en-US">
+%
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" type="x-image/icon" href="/images/favicon.ico">
+	<title>WeBWorK error</title>
+</head>
+%
+<body>
+	<!-- Request ID: <%= $c->req->request_id %> -->
+	<div style="text-align:left">
+		<h1>WeBWorK error</h1>
+		<p>An error occured while processing your request.</p>
+		<p>
+			For help, please send mail to this site's webmaster\
+			% # $ENV{WEBWORK_SERVER_ADMIN} is set from $webwork_server_admin_email in site.conf.
+			<% if ($ENV{WEBWORK_SERVER_ADMIN}) { =%>
+				<%= link_to $ENV{WEBWORK_SERVER_ADMIN} => "mailto:$ENV{WEBWORK_SERVER_ADMIN}" %>\
+			<% } =%>\
+			, including the following information as well as what what you were doing when the error occured.
+		</p>
+		<h2>Error record identifier</h2>
+		<p style="margin-left:5em;color:#dc2a2a"><code><%= $uuid %></code></p>
+		<h2>Time generated:</h2>
+		<p style="margin-left:5em;"><%= $time %></p>
+	</div>
+</body>
+%
+</html>

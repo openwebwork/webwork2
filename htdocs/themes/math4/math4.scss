@@ -37,27 +37,6 @@ table caption {
 }
 
 /* Screen Reader */
-.sr-only {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	padding: 0;
-	margin: -1px;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	border: 0;
-}
-
-.sr-only-focusable:active,
-.sr-only-focusable:focus {
-	position: static;
-	width: auto;
-	height: auto;
-	margin: 0;
-	overflow: visible;
-	clip: auto;
-}
-
 .sr-only-glyphicon {
 	position: absolute;
 	width: 1em;
@@ -70,11 +49,34 @@ table caption {
 	border: 0 none;
 }
 
+.visually-hidden-focusable:active,
+.visually-hidden-focusable:focus {
+	z-index: 21;
+}
+
+$masthead-height: 70px !default;
+$layout-divider-color: #aaa !default;
+$site-nav-width: 250px !default;
+
 /* Banner */
-#masthead {
+.masthead {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	display: flex;
+	height: $masthead-height;
 	background-color: var(--bs-primary, #038);
+	border-bottom: 1px solid $layout-divider-color;
 	margin: 0;
 	padding: 0;
+	z-index: 20;
+
+	@media only screen and (max-width: 768px) {
+		position: static;
+		flex-direction: column;
+		height: unset;
+	}
 
 	a {
 		color: var(--ww-primary-foreground-color, white);
@@ -83,114 +85,119 @@ table caption {
 			text-decoration: none;
 		}
 	}
-}
 
-.webwork_logo {
-	display: flex;
-	align-items: center;
-	padding: 5px 0;
-	background-color: var(--ww-logo-background-color, #104aad);
+	.webwork-logo {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 5px 0;
+		background-color: var(--ww-logo-background-color, #104aad);
+		z-index: 20;
+		width: $site-nav-width;
 
-	img {
-		max-height: 57px;
-		max-width: 100%;
+		img {
+			max-height: $masthead-height - 15px;
+			max-width: 100%;
+		}
+
+		@media only screen and (max-width: 768px) {
+			height: 0.75 * $masthead-height;
+			position: fixed;
+			width: 100%;
+
+			img {
+				max-height: 0.75 * $masthead-height - 11px;
+			}
+		}
+
+		a, span {
+			display: inline-block;
+			margin-right: 0.5rem;
+		}
 	}
 
-	a, span {
-		display: block;
-		margin-left: 0.5rem;
-		margin-right: 0.5rem;
+	.institution-logo {
+		display: flex;
+		flex-grow: 1;
+		align-items: center;
+		padding: 8px 0;
+		max-height: $masthead-height - 1px;
+
+		@media only screen and (max-width: 768px) {
+			margin-top: 0.75 * $masthead-height;
+		}
+
+		img {
+			max-height: $masthead-height - 15px;
+			max-width: 100%;
+		}
+
+		a {
+			display: block;
+			margin-left: 0.5rem;
+			margin-right: 0.5rem;
+		}
 	}
-}
 
-.institution_logo {
-	display: flex;
-	align-items: center;
-	padding: 8px 0;
-	max-height: 67px;
+	.login-status {
+		flex-shrink: 1;
+		height: $masthead-height - 1px;
+		padding: 4px 10px 4px 0;
+		color: var(--ww-primary-foreground-color, white);
+		text-align: right;
+		font-size: 0.85em;
+		font-weight: normal;
 
-	img {
-		max-height: 51px;
-		max-width: 100%;
-	}
+		a {
+			color: black;
 
-	a {
-		display: block;
-		margin-left: 0.5rem;
-		margin-right: 0.5rem;
-	}
-}
-
-#loginstatus {
-	padding: 5px 5px 5px 0;
-	color: var(--ww-primary-foreground-color, white);
-	text-align: right;
-	font-size: 0.85em;
-	font-weight: normal;
-
-	a {
-		color: black;
-
-		&:first-child {
-			margin-bottom: 5px;
+			&:first-child {
+				margin-bottom: 5px;
+			}
 		}
 	}
 }
 
 /* Site Navigation */
 #site-navigation {
+	position: fixed;
 	line-height: 1.2rem;
-	width: 20%;
-	min-width: 20%;
-	flex: 0 0 auto;
-	margin-right: 1rem;
+	width: $site-nav-width;
+	left: 0;
+	margin-top: $masthead-height;
+	height: calc(100% - $masthead-height);
 	overflow-x: hidden;
-	transition-property: width, min-width, padding;
+	overflow-y: auto;
+	transition-property: left, border-right-width;
 	transition-duration: 0.3s;
-
-	@media only screen and (max-width: 992px) {
-		min-width: 180px;
-	}
+	border-right: 1px solid $layout-divider-color;
 
 	&.toggle-width {
-		width: 0;
-		min-width: 0;
-		margin-right: 0;
+		left: -20%;
+		border-right-width: 0px;
 	}
 
 	@media only screen and (max-width: 768px) {
-		position: fixed;
 		top: 0;
-		left: 0;
+		width: 40%;
+		left: -40%;
 		height: 100%;
 		z-index: 100;
 		background-color: white;
-		width: 0;
-		min-width: 0;
+		margin-top: 0;
+		margin-bottom: 0;
 		margin-right: 0;
-		transition: none;
-		overflow-y: hidden;
 
 		&.toggle-width {
-			padding: 0.5rem 0.25rem;
+			left: 0;
 			box-shadow: 4px 0 4px 2px rgba(0, 0, 0, 0.2);
-			width: 40%;
-			min-width: 200px;
-			overflow-y: auto;
 		}
 	}
 
-	.navbar-brand {
-		text-transform: uppercase;
-		padding-left: 1rem;
-		color: black;
-		font-weight: bold;
-		font-size: 0.9rem;
-		opacity: 0.6;
-	}
-
 	.info-box {
-		margin-top: 0.5rem;
+		border-radius: 0;
+		border: none;
+		border-top: 1px solid $layout-divider-color;
 	}
 
 	.nav {
@@ -210,11 +217,13 @@ table caption {
 					color: var(--ww-primary-foreground-color, white);
 				}
 			}
+			&.list-group-item {
+				.nav-link:focus {
+					position: relative;
+					z-index: 2;
+				}
+			}
 		}
-	}
-
-	#site-links {
-		border: 1px solid #e6e6e6;
 	}
 
 	ul.nav {
@@ -232,20 +241,29 @@ table caption {
 }
 
 #content {
-	max-width: calc(80% - 1rem);
-	transition-property: max-width;
+	margin-left: $site-nav-width;
+	transition-property: margin;
 	transition-duration: 0.3s;
+	margin-top: $masthead-height;
+	width: calc(100% - $site-nav-width);
 
-	@media only screen and (max-width: 992px) {
-		max-width: calc(100% - 180px - 1rem);
+	*[id] {
+		scroll-margin-top: $masthead-height;
 	}
 
 	&.toggle-width {
-		max-width: 100%;
+		width: 100%;
+		margin-left: 0;
 	}
 
 	@media only screen and (max-width: 768px) {
-		max-width: 100%;
+		width: 100%;
+		margin-top: 0;
+		margin-left: auto;
+
+		*[id] {
+			scroll-margin-top: 0.75 * $masthead-height;
+		}
 	}
 }
 
@@ -266,19 +284,20 @@ table caption {
 	background-color: rgba(0, 0, 0, 0.4);
 }
 
-#toggle-sidebar-icon i {
-	transition: 0.3s;
+#toggle-sidebar {
+	#toggle-sidebar-icon i {
+		padding: 0.25rem;
+		border-radius: 5px;
+		color: rgba(255, 255, 255, 0.85);
+		transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out;
 
-	&.toggle-icon {
-		transform: rotate(180deg);
+		&:hover {
+			color: #fff;
+		}
 	}
 
-	@media only screen and (max-width: 768px) {
-		transform: rotate(180deg);
-
-		&.toggle-icon {
-			transform: none;
-		}
+	&:focus #toggle-sidebar-icon i {
+		outline: 1px solid var(--bs-link-hover-color);
 	}
 }
 
@@ -350,7 +369,6 @@ div.showMeAnotherBox {
 		display: flex;
 		margin-bottom: 0;
 		padding-left: 0.5rem;
-		background-color: #f5f5f5;
 		min-height: 38px;
 		align-items: center;
 		border: 1px solid #e6e6e6;
@@ -358,16 +376,17 @@ div.showMeAnotherBox {
 	}
 }
 
-#toggle-sidebar {
-	margin-right: 5px;
-	width: 35px;
-	height: 38px;
-}
-
 /* Main Content */
 h1.page-title {
 	font-size: 31.5px;
 	line-height: 35px;
+	display: inline-block;
+
+	& + a {
+		font-size: 31.5px;
+		line-height: 35px;
+		margin-left: 0.5rem;
+	}
 }
 
 h2.page-title {
@@ -375,6 +394,7 @@ h2.page-title {
 }
 
 .problem-sub-header {
+	margin-top: 0.25rem;
 	font-weight: bold;
 	font-size: 14px;
 	line-height: 1.4;
@@ -387,6 +407,15 @@ h2.page-title {
 	}
 }
 
+.error-output {
+	word-wrap: break-word;
+	color: #d63384;
+	font-size: 0.875rem;
+	direction: ltr;
+	font-family: monospace;
+	font-size: 9pt;
+}
+
 /* Question nav section */
 .sticky-nav {
 	display: flex;
@@ -394,9 +423,9 @@ h2.page-title {
 	gap: 0.5rem;
 	align-content: space-between;
 	justify-content: space-between;
-	z-index: 1;
+	z-index: 20;
 	position: sticky;
-	top: 0;
+	top: $masthead-height;
 	background-color: white;
 	margin-bottom: 1rem;
 	padding: 0.25rem;
@@ -405,6 +434,10 @@ h2.page-title {
 	border-radius: 0 0 4px 4px;
 	box-shadow: 0 0.1rem 0.2rem 1px gray;
 	box-sizing: border-box;
+
+	@media only screen and (max-width: 768px) {
+		top: 0.75 * $masthead-height;
+	}
 
 	& > div {
 		flex-shrink: 1;
@@ -420,9 +453,15 @@ h2.page-title {
 }
 
 /* Message section */
-.Message:not(:empty) {
-	display: inline-block;
-	margin-bottom: 0.5rem;
+.message:not(:empty) {
+	display: inline-flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin: 0 0 0.5rem;
+
+	p {
+		margin: 0;
+	}
 }
 
 .font-visible { font-weight: bold; }
@@ -552,7 +591,6 @@ ul.courses-list {
 	padding: 0.5em;
 	border-radius: 8px;
 	border: 1px solid #e6e6e6;
-	background: #f6f6f6;
 
 	h2, h3, h4, h5, h6 {
 		background: var(--bs-primary, #038);
@@ -609,6 +647,15 @@ ul.courses-list {
 	#library_sets {
 		max-width: 50%
 	}
+
+	.browse-lib-btn,
+	.library-action-btn {
+		width: 9.3rem;
+	}
+
+	.library-panel-btn {
+		max-width: 9rem;
+	}
 }
 
 .lb-problem-row div.card {
@@ -653,16 +700,15 @@ div.AuthorComment {
 
 /* Footer */
 #footer {
-	display: block;
 	font-size: 0.8em;
 	color: #767676;
 	text-align: center;
 	padding: 1em;
 	margin-top: 1em;
 
-	p {
-		/* Overrides bootstrap default so there's no weird space */
-		margin-bottom: 0;
+	div {
+		margin-left: auto;
+		margin-right: auto;
 	}
 
 	a {
@@ -704,6 +750,12 @@ input.changed[type=text] { /* orange */
 	row-gap: 0.25rem;
 }
 
+.visually-hidden-unfocusable {
+	visibility: hidden;
+	position: absolute;
+	left: -9999px;
+}
+
 /* Styles used when editing a temporary file */
 .temporaryFile { font-style: italic; color: #ca5000; background-color: inherit; }
 
@@ -711,6 +763,7 @@ input.changed[type=text] { /* orange */
 .Audit { font-style: normal; color: purple; background-color: inherit; }
 .Enrolled { font-weight: normal; color: black; background-color: inherit; }
 .Drop { font-style: italic; color: #555; background-color: inherit; }
+.Observer { font-style: normal; color: green; background-color: inherit; }
 
 /* Styles for the PGProblemEditor Page */
 
@@ -720,28 +773,24 @@ input.changed[type=text] { /* orange */
 	}
 }
 
-#render-modal {
-	.modal-dialog {
-		width: 90vw;
-		max-width: unset;
-		height: 86vh;
+#pgedit-render-area {
+	border: 1px solid #ddd;
+	min-height: 400px;
+	height: 550px;
+	resize: vertical;
+	display: flex;
+	flex-direction: column;
+
+	@media only screen and (max-width: 992px) {
+		min-height: 200px;
+		height: 300px;
 	}
 
-	.modal-content {
-		height: 100%;
+	#pgedit-render-iframe {
+		flex-grow: 1;
+		border: none;
+		width: 100%;
 	}
-
-	.modal-body {
-		overflow: hidden;
-		padding: 0;
-	}
-}
-
-#pg_editor_frame_id {
-	overflow: auto;
-	border: none;
-	width: 100%;
-	height: 100%;
 }
 
 // Fix the style of the save file path input group.
@@ -762,32 +811,6 @@ input.changed[type=text] { /* orange */
 	border-top-right-radius: 0.2rem;
 }
 */
-
-/* Page loading busy indicator */
-/* Currently only used on the problem editor page. */
-.page-loading-busy-indicator {
-	position: absolute;
-	width: 100%;
-	height: 100%;
-	left: 0;
-	top: 0;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	gap: 1rem;
-	background: rgba(0, 0, 0, .5);
-	z-index: 105;
-
-	.busy-text {
-		color: white;
-		font-size: 1.4em;
-	}
-
-	i {
-		color: white;
-	}
-}
 
 /* Problem Set Detail */
 #problem_set_form {
@@ -860,7 +883,11 @@ input.changed[type=text] { /* orange */
 	}
 }
 
-.psr_render_area iframe {
+.rpc_render_area_container {
+	background-color: #f5f5f5;
+}
+
+.rpc_render_area iframe {
 	width: 100%;
 	border-radius: 5px;
 }
@@ -938,14 +965,33 @@ span {
 
 /* Problem graders */
 
-.NeedsGrading { font-weight: bold; }
+span.needs-grading,
+td.needs-grading {
+	background-color: #fff3cd;
+
+	div {
+		font-weight: bold;
+	}
+}
+
+span.alt-source,
+td.alt-source {
+	background-color: #e6e7e9;
+}
 
 #problem-grader-form {
-	.graded-answer:not(:last-child),
-	.essay-answer:not(:last-child) {
+	.past-answer:not(:last-child) {
 		border-bottom: 1px solid #d5d5d5;
 		margin-bottom: 2px;
 		padding-bottom: 5px;
+	}
+
+	.restricted-width-col {
+		width: 0.1%;
+	}
+
+	.grader-comment-col {
+		min-width: 300px;
 	}
 }
 
@@ -965,16 +1011,22 @@ span {
 		&.alert-success, &.alert-danger {
 			transition: none;
 			border-radius: 3px;
+			color: var(--bs-alert-color);
+			background-color: var(--bs-alert-bg);
 		}
+	}
+
+	.problem-score,
+	.problem-points,
+	.answer-part-score {
+		width: 5.5rem;
 	}
 }
 
-/* Equation editor bugfixes */
-#eqEditorDiv {
-	overflow: visible;
-}
-
-#openEqEditor {
-	min-height: 35px;
-	min-width: 43px;
+#problem-grader-form,
+.problem-grader-table {
+	.mv-container .mv-inner-container,
+	.mq-latex-editor-container .mq-latex-editor-inner-container {
+		width: 100%;
+	}
 }

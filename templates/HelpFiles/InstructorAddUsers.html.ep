@@ -1,0 +1,28 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Add Users Help');
+%
+<p>
+	<%= maketext('Add users to the course.  Select the number of students/users to add and '
+		. 'then add any desired information.  The only mandatory information is the "Login Name". '
+		. 'Any other fields may be left blank.  The "Student ID" will be the initial password for '
+		. 'the user if provided.') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('Multiple sets may be assigned to the users by holding down the shift key or the ctrl key while '
+		. 'selecting from the list.') =%>
+</p>

@@ -1,0 +1,13 @@
+<div class="row mb-2">
+	<%= label_for score_select => maketext('Score which achievements?'),
+		class => 'col-form-label col-form-label-sm col-auto' =%>
+	<div class="col-auto">
+		<%= select_field 'action.score.scope' => [
+				[ maketext('no achievements')       => 'none', selected => undef ],
+				[ maketext('all achievements')      => 'all' ],
+				[ maketext('selected achievements') => 'selected' ],
+			],
+			id    => 'score_select',
+			class => 'form-select form-select-sm d-inline w-auto' =%>
+	</div>
+</div>

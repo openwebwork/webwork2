@@ -1,0 +1,111 @@
+<h2><%= maketext('Archive Course') %> <%= $c->helpMacro('AdminArchiveCourse') %></h2>
+% # Report on databases
+<h3 class="my-3"><%= maketext('Report on database structure for course [_1]:', $archive_courseID) %></h3>
+% if (@$upgrade_report) {
+	% for (@$upgrade_report) {
+		<p class="<%= $_->[1] ? 'text-success' : 'text-danger' %> fw-bold my-0"><%= $_->[0] %></p>
+	% }
+% }
+% my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $db_report) =
+	% $c->formatReportOnDatabaseTables($dbStatus);
+<%= $db_report %>
+% if ($extra_database_tables) {
+	<p class="text-danger fw-bold">
+		<%= maketext(
+			'There are extra database tables which are not defined in the schema.  '
+				. 'These can be deleted when upgrading the course.'
+		) =%>
+	</p>
+% }
+% if ($extra_database_fields) {
+	<p class="text-danger fw-bold">
+		<%= maketext(
+			'There are extra database fields which are not defined in the schema for at least one table.  '
+				. 'They can be removed when upgrading the course.'
+		) =%>
+	</p>
+% }
+% if (!$all_tables_ok) {
+	<p class="text-danger fw-bold">
+		<%= maketext('The course database must be upgraded before archiving this course.') =%>
+	</p>
+% }
+% # Report on directories
+<h3>Directory structure</h3>
+<ul>
+	% for (@$directory_report) {
+		<li><%= $_->[0] %>: <span class="<%= $_->[2] ? 'text-success' : 'text-danger' %>"><%= $_->[1] %></span></li>
+	% }
+</ul>
+<ul>
+	% for (@$dir_update_messages) {
+		<li><span class="<%= $_->[2] ? 'text-success' : 'text-danger' %>"><%= $_->[1] %></span></li>
+	% }
+</ul>
+% if ($directories_ok) {
+	<p class="text-success"><%= maketext('Directory structure is ok') %></p>
+% } else {
+	<p class="text-danger fw-bold">
+		<%= maketext('Directory structure is missing directories or the webserver lacks sufficient privileges.') =%>
+	</p>
+% }
+<hr>
+% if ($all_tables_ok && param('delete_course')) {
+	<p class="text-danger fw-bold">
+		<%== maketext(
+			'Are you sure that you want to delete the course [_1] after archiving? This cannot be undone!',
+			tag('b', $archive_courseID)
+		) =%>
+	</p>
+% }
+% # Print form for choosing next action.
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields(qw(subDisplay delete_course)) =%>
+	<%= hidden_field archive_courseID => $archive_courseID =%>
+	% for (@$archive_courseIDs) {
+		<%= hidden_field archive_courseIDs => $_ =%>
+	% }
+	%
+	% if ($all_tables_ok && $directories_ok) {
+		% # No missing tables, missing fields, or directories
+		% # Warn about overwriting an existing archive
+		% my $archive_path = "$ce2->{webworkDirs}{courses}/admin/archives/$archive_courseID.tar.gz";
+		% if (-e $archive_path && -w $archive_path) {
+			<p class="text-danger fw-bold">
+				<%= maketext(
+					'The course "[_1]" has already been archived at "[_2]". '
+						. 'This earlier archive will be erased.  This cannot be undone.',
+					$archive_courseID,
+					$archive_path
+				) =%>
+			</p>
+		% }
+		<div class="d-flex justify-content-center gap-2">
+			<%= submit_button maketext('Stop Archiving'),
+				name => 'decline_archive_course', class => 'btn btn-primary' =%>
+			% if (scalar(@$archive_courseIDs) > 1) {
+				<%= submit_button maketext('Skip archiving this course'),
+					name => 'skip_archive_course', class => 'btn btn-primary' =%>
+			% }
+			<%= submit_button maketext('Archive'), name => 'confirm_archive_course', class => 'btn btn-primary' =%>
+		</div>
+	% } elsif ($directories_ok) {
+		<div class="d-flex justify-content-center gap-2">
+			<%= submit_button maketext(q{Don't Archive}),
+				name => 'decline_archive_course', class => 'btn btn-primary' =%>
+			<%= submit_button maketext('Upgrade Course Tables'),
+				name => 'upgrade_course_tables', class => 'btn btn-primary' =%>
+		</div>
+	% } else {
+		<div class="text-center alert alert-danger p-1 mb-2">
+			<%= maketext('Directory structure needs to be repaired manually before archiving.') =%>
+		</div>
+		<div class="d-flex justify-content-center gap-2">
+			<%= submit_button maketext(q{Don't Archive}),
+				name => 'decline_archive_course', class => 'btn btn-primary' =%>
+			<%= submit_button maketext('Attempt to upgrade directories'),
+				name => 'upgrade_course_tables', class => 'btn btn-primary' =%>
+		</div>
+	% }
+<% end =%>

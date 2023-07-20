@@ -1,0 +1,54 @@
+% use WeBWorK::HTML::ScrollingRecordList qw(scrollingRecordList);
+% use WeBWorK::Utils qw(format_set_name_display);
+%
+<%= form_for current_route, target => 'WW_Info', id => 'past-answer-form', method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	%
+	<div class="row gx-3">
+		<div class="col-sm-5 mb-2">
+			<div class="fw-bold text-center"><%= label_for selected_users => maketext('Users') %></div>
+			<%= scrollingRecordList(
+				{
+					name            => 'selected_users',
+					id              => 'selected_users',
+					controller      => $c,
+					default_sort    => 'lnfn',
+					default_format  => 'lnfn_uid',
+					default_filters => ['all'],
+					attrs           => { size => 10, multiple => undef }
+				},
+				@$users
+			) =%>
+		</div>
+		<div class="col-sm-4 mb-2">
+			<div class="fw-bold text-center"><%= label_for selected_sets => maketext('Sets') %></div>
+			<%= select_field selected_sets => [ map { [ format_set_name_display($_) => $_ ] } @$expandedGlobalSetIDs ],
+				id => 'selected_sets', size => 23, multiple => undef, class => 'form-select form-select-sm',
+				dir => 'ltr' =%>
+		</div>
+		<div class="col-sm-2 mb-2">
+			<div class="fw-bold text-center"><%= label_for selected_problems => maketext('Problems') %></div>
+			<%= select_field selected_problems => $globalProblemIDs, id => 'selected_problems', size => 23,
+				multiple => undef, class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	%
+	<div class="d-flex flex-wrap justify-content-start align-items-center">
+		<%= submit_button maketext('Display Past Answers'), name => 'action', class => 'btn btn-primary mb-2' =%>
+		<div class="form-check form-check-inline ms-2 mb-2">
+			<label class="form-check-label">
+				<%= check_box createCSV => 'on', id => 'createCSV', class => 'form-check-input' =%>
+				<%= maketext('Create CSV') =%>
+			</label>
+		</div>
+		% if (param('createCSV') && -e "$ce->{courseDirs}{scoring}/$filename") {
+			<span class="fw-bold fs-5 mb-2">
+				<%= maketext('Download:') =%>
+				<%= link_to $filename => $c->systemLink(
+					url_for('instructor_scoring_download'),
+					params => { getFile => $filename }
+				) =%>
+			</span>
+		% }
+	</div>
+<% end =%>

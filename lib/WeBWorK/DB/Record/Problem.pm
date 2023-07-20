@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,8 +27,8 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		set_id               => { type => "TINYBLOB NOT NULL", key => 1 },
-		problem_id           => { type => "INT NOT NULL",      key => 1 },
+		set_id               => { type => "VARCHAR(100) NOT NULL", key => 1 },
+		problem_id           => { type => "INT NOT NULL",          key => 1 },
 		source_file          => { type => "TEXT" },
 		value                => { type => "INT" },
 		max_attempts         => { type => "INT" },
@@ -36,6 +36,7 @@ BEGIN {
 		counts_parent_grade  => { type => "INT" },
 		showMeAnother        => { type => "INT" },
 		showMeAnotherCount   => { type => "INT" },
+		showHintsAfter       => { type => "INT NOT NULL DEFAULT -2" },
 		# periodic re-randomization period
 		prPeriod => { type => "INT" },
 		# periodic re-randomization number of attempts for the current seed

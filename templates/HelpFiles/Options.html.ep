@@ -1,0 +1,67 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('User Settings Help');
+%
+<p>
+	<%= maketext('This page allows users to change their password, email address, and display settings used in '
+		. 'problems. Note that you can hide this page entirely for students by setting permission levels to '
+		. 'login_proctor or higher for the permissions to change password, change e-mail address, and change display '
+		. 'settings used in pg problems.') =%>
+</p>
+<h2><%= maketext('Password') %></h2>
+<p>
+	<%= maketext('The password can be any combination of letters, numbers and special symbols. Students are encouraged '
+		. 'to use all three, and stay away from dictionary words. The password should not be the same as any password '
+		. 'used elsewhere, such as for an email account. The password will only be present on the page if the user '
+		. 'has permission to change the password.') =%>
+</p>
+<h2><%= maketext('Email Address') %></h2>
+<p>
+	<%= maketext('It is important that students enter an email address or they will not recieve any of the important '
+		. 'emails sent by the instructor. The email address will only be present on the page if the user has '
+		. 'permission to change the email address.') =%>
+</p>
+<h2><%= maketext('Problem Display Settings') %></h2>
+<p>
+	<%= maketext('These options will only be shown if the user has the permission to change display settings used in '
+		. 'pg problems.') =%>
+</p>
+<dl class="mb-0">
+	<dt><%= maketext('Display mode for equations') %></dt>
+	<dd>
+		<%= maketext('This may be Mathjax, images, or plainText. Only the options that are enabled for the course '
+			. 'will be available to select. This option is only visible if there is more than one display mode '
+			. 'enabled for the course.') %>
+	</dd>
+	<dt><%= maketext('Saved answers') %></dt>
+	<dd>
+		<%= maketext('This determines whether or not saved past answers are automatically filled in to the problem '
+			. 'form when a student returns to a problem after having left the problem. This option is only visible '
+			. 'if the user has the permission to show old answers.') %>
+	</dd>
+	<dt><%= maketext('Live equation rendering') %></dt>
+	<dd>
+		<%= maketext('This determines if MathQuill answer blanks are enable for the user. This option is only '
+			. 'present if MathQuill is enabled for the course.') %>
+	</dd>
+	<dt><%= maketext('Equation Editor') %></dt>
+	<dd>
+		<%= maketext('This determines if the MathView equation editor button will be appended to text answer blanks. '
+			. 'his option is only present if MathView is enabled for the course.') %>
+	</dd>
+
+</dl>

@@ -1,0 +1,62 @@
+% use Text::Wrap qw(wrap);
+%
+% unless ($authz->hasPermissions(param('user'), 'submit_feedback')) {
+	<p><%= maketext('You are not allowed to send e-mail.') %></p>
+	<p><%= link_to maketext('Cancel E-Mail') => $returnURL %></p>
+	% last;
+% }
+%
+% unless ($numRecipients) {
+	<p><%= maketext('No e-mail recipients are listed for this course.') %></p>
+	<p><%= link_to maketext('Cancel E-Mail') => $returnURL %></p>
+	% last;
+% }
+%
+% if (defined param('sendFeedback') && !stash('send_error')) {
+	<p><%= maketext('Your message was sent successfully.') %></p>
+	<p><%= link_to maketext('Return to your work') => $returnURL =%></p>
+	<pre><%= wrap('', '', param('feedback')) =%></pre>
+% } else {
+	<%= form_for current_route, method => 'POST', enctype => 'multipart/form-data', begin =%>
+		<%= $c->hidden_authen_fields =%>
+		<%= $c->hidden_fields(qw(route set problem displayMode showOldAnswers
+			showCorrectAnswers showHints showSolutions)) =%>
+		%
+		<div class="mb-3">
+			<%= maketext(
+				'Use this form to ask your instructor a question, to report a problem with the WeBWorK system, or '
+					. 'to report an error in a problem you are attempting. Along with your message, additional '
+					. 'information about the state of the system will be included.'
+			) =%>
+		</div>
+		<div class="row mb-3">
+			<%= label_for 'from', class => 'col-form-label col-auto', begin =%><b><%= maketext('From:') %></b><% end =%>
+			<div class="col-auto">
+				<%= text_field from => $user_email_address, class => 'form-control', size => 40, id => 'from',
+					$user_email_address ? (disabled => undef, readonly => undef) : (required => undef) =%>
+			</div>
+		</div>
+		% if (stash 'send_error') {
+			<div class="alert alert-danger mb-3"><%= stash 'send_error' %></div>
+		% }
+		<div class="mb-3">
+			<%= label_for 'feedback', class => 'form-label', begin =%><b><%= maketext('E-mail:') %></b><% end =%>
+			<%= text_area feedback => '', id => 'feedback', rows => '20', class => 'form-control',
+				placeholder => maketext('Compose Email Message'), required => undef =%>
+		</div>
+		% # Attachment
+		<div class="row mb-3">
+			<%= label_for 'attachment', class => 'col-form-label col-auto', begin =%>
+				<b><%= maketext('Attachment:') %></b>
+			<%= end %>
+			<div class="col-auto">
+				<%= file_field 'attachment', id => 'attachment', class => 'form-control',
+					accept => 'image/*,application/pdf,application/zip,text/plain,text/csv' =%>
+			</div>
+		</div>
+		<%= submit_button maketext('Send E-mail'), name => 'sendFeedback', class => 'btn btn-primary mb-1' =%>
+	<% end =%>
+	% if ($returnURL) {
+		<div><%= link_to maketext('Cancel E-mail') => $returnURL, class => 'btn btn-primary mt-2' =%></div>
+	% }
+% }

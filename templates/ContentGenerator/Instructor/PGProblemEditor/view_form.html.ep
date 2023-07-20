@@ -1,0 +1,37 @@
+% # Hardcopy headers are previewed from the hardcopy generation tab.
+% last if $c->{file_type} eq 'hardcopy_header';
+%
+<div>
+	% if ($c->{is_pg}) {
+		<div class="row align-items-center">
+			<%= label_for action_view_seed_id => maketext('Using what seed?'), class => 'col-form-label col-auto mb-2' =%>
+			<div class="col-auto mb-2">
+				<%= text_field 'action.view.seed' => $c->{problemSeed},
+					id => 'action_view_seed_id', class => 'form-control form-control-sm' =%>
+			</div>
+			<div class="col-auto mb-2">
+				<button id="randomize_view_seed_id" class="btn btn-info btn-sm" type="button">
+					<%= maketext('Randomize Seed') =%>
+				</button>
+			</div>
+		</div>
+		<div class="row align-items-center mb-2">
+			<%= label_for action_view_displayMode_id => maketext('Using what display mode?'),
+				class => 'col-form-label col-auto' =%>
+			<div class="col-auto">
+				<%= select_field 'action.view.displayMode' => [
+					map { [ $_ => $_, $_ eq $c->{displayMode} ? (selected => undef) : () ] }
+						@{ $ce->{pg}{displayModes}}, @{ $ce->{pg}{additionalPGEditorDisplayModes}}
+				], id => 'action_view_displayMode_id', class => 'form-select form-select-sm d-inline w-auto' =%>
+			</div>
+		</div>
+	% }
+	% unless ($c->{file_type} eq 'hardcopy_theme') {
+		<div class="row g-0 mb-2">
+			<div class="form-check mb-2">
+				<%= check_box 'newWindowView' => 1, id => 'newWindowView', class => 'form-check-input' =%>
+				<%= label_for newWindowView => maketext('Open in new window'), class => 'form-check-label' =%>
+			</div>
+		</div>
+	% }
+</div>

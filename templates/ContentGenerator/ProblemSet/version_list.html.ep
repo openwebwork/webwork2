@@ -1,0 +1,242 @@
+% use WeBWorK::Utils qw(is_restricted);
+%
+% my $courseID    = stash('courseID');
+% my $set         = $c->{set};
+% my $user        = param('user');
+% my $multiSet    = $authz->hasPermissions($user, 'view_multiple_sets');
+% my $maxVersions = $set->versions_per_interval || 0;
+%
+% my $routeName = $set->assignment_type =~ /proctored/ ? 'proctored_gateway_quiz' : 'gateway_quiz';
+%
+% if ($c->{invalidSet}) {
+	% # If this is an invalidSet it is because the IP address is not allowed to access the set.
+	% # Display that message here.  Note that the set is valid so the set versions can still be displayed,
+	% # but the "Start New Test" or "Continue Test" buttons should not be.
+	<div class="alert alert-warning"><%= $c->{invalidSet} %></div>
+% } elsif ($continueVersion) {
+	% # Display information about the current test and a continue open test button.
+	% if ($timeLimit > 0) {
+		% if ($timeNow >= $continueVersion->due_date) {
+			% # If the currently open test is in the grace period, display a mesage stating this.
+			<div class="alert alert-danger">
+				<%= maketext(
+					'There is no time remaining on the currently open test. '
+						. 'Click continue below and then click "Grade Test" within [_1] seconds '
+						. 'to submit the test for a grade.',
+					$continueTimeLeft
+				) =%>
+			</div>
+		% } else {
+			% my $seconds = $continueTimeLeft;
+			% my $hours   = int($seconds / 3600);
+			% $seconds %= 3600;
+			% my $minutes = int($seconds / 60);
+			% $seconds %= 60;
+			% my $timeText = '';
+			%
+			% # Several cases are needed to format time to work well with translation.
+			% if ($hours && $minutes) {
+				<div class="alert alert-warning">
+					<%= maketext(
+						'You have [quant,_1,hour] and [quant,_2,minute] remaining to complete the currently open test.',
+						$hours,
+						$minutes
+					) =%>
+				</div>
+			% } elsif ($hours || ($minutes && (!$seconds || $seconds > 299))) {
+				% # Translation Note: In this case only one of hours or minutes is non-zero,
+				% # so the zero case of the "quant" will be used for the other one.
+				<div class="alert alert-warning">
+					<%= maketext(
+						'You have [quant,_1,hour,hours,][quant,_2,minute,minutes,] '
+							. 'remaining to complete the currently open test.',
+						$hours,
+						$minutes
+					) =%>
+				</div>
+			% } else {
+				% if ($minutes) {
+					<div class="alert alert-warning">
+						<%= maketext(
+							'You have [quant,_1,minute] and [quant,_2,second] '
+								. 'remaining to complete the currently open test.',
+							$minutes,
+							$seconds
+						) =%>
+					</div>
+				% } else {
+					<div class="alert alert-warning">
+						<%= maketext(
+							'You have [quant,_1,second] remaining to complete the currently open test.',
+							$seconds
+						) =%>
+					</div>
+				% }
+			% }
+		% }
+	% }
+	%
+	% if ($set->assignment_type =~ /proctor/) {
+		<div class="alert alert-warning">
+			<%= maketext('This test requires a proctor password to continue.') =%>
+		</div>
+	% }
+	%
+	<div class="mb-3">
+		<%= link_to maketext('Continue Open Test') =>
+				$c->systemLink(url_for($routeName, setID => $set->set_id . ',v' . $continueVersion->version_id)),
+			class => 'btn btn-primary' =%>
+	</div>
+% } elsif (($timeNow >= $set->open_date || $authz->hasPermissions($user, 'view_hidden_sets'))
+	% && $timeNow <= $set->due_date
+	% && !($ce->{options}{enableConditionalRelease} && is_restricted($db, $set, param('effectiveUser')))
+	% && ($maxVersions <= 0 || $currentVersions < $maxVersions))
+% {
+	% # Display information about a new test and a start new test button.
+	% # Print time limit for timed tests
+	% if ($timeLimit > 0) {
+		% my $hours    = int($timeLimit / 3600);
+		% my $minutes  = int(($timeLimit % 3600) / 60);
+		% my $timeText = '';
+		%
+		% # Two cases to format time to work well with translation.
+		% if ($hours && $minutes) {
+			<div class="alert alert-warning">
+				<%= maketext(
+					'This is a timed test. You will have [quant,_1,hour] and [quant,_2,minute] to complete the test.',
+					$hours,
+					$minutes
+				) =%>
+			</div>
+		% } else {
+			<div class="alert alert-warning">
+				% # Translation Note: In this case only one of hours or minutes is non-zero,
+				% # so the zero case of the "quant" will be used for the other one.
+				<%= maketext(
+					'This is a timed test. You will have [quant,_1,hour,hours,]'
+						. '[quant,_2,minute,minutes,] to complete the test.',
+					$hours,
+					$minutes
+				) =%>
+			</div>
+		% }
+	% }
+	%
+	% if ($set->assignment_type =~ /proctor/) {
+		<div class="alert alert-warning"><%= maketext('This test requires a proctor password to start.') %></div>
+	% }
+	%
+	<div class="mb-3">
+		<%= link_to maketext('Start New Test') => $c->systemLink(url_for($routeName, setID => $set->set_id)),
+			class => 'btn btn-primary' =%>
+	</div>
+% } else {
+	% # Message about if/when next version will be available.
+	% my $msg = maketext('No more tests available.');
+	%
+	% # Can they open a test in the future?
+	% if ($timeInterval > 0) {
+		% my $nextTime = ($currentVersions == $maxVersions) ? $lastTime + $timeInterval : $timeNow + $timeInterval;
+		% if ($nextTime < $set->due_date) {
+			% $msg = maketext('Next test will be available by [_1].',
+				% $c->formatDateTime($nextTime, 0, $ce->{studentDateDisplayFormat}));
+		% }
+	% }
+	%
+	% # Only print status message if the set is open.
+	% if ($timeNow < $set->due_date) {
+		<div class="alert alert-dark"><strong><%= $msg %></strong></div>
+	% }
+% }
+%
+% if (@$setVersions) {
+	<% my $version_list = begin =%>
+		<div class="table-responsive">
+			<table class="problem_set_table table table-sm caption-top font-sm">
+				<caption><%= maketext('Test Versions') %></caption>
+				<thead class="table-group-divider">
+					<tr>
+						<th scope="col"><%= maketext('Versions') %></th>
+						<th scope="col"><%= maketext('Status') %></th>
+						<th scope="col"><%= maketext('Score') %></th>
+						<th scope="col"><%= maketext('Start') %></th>
+						<th scope="col"><%= maketext('End') %></th>
+						<th scope="col" class="hardcopy">
+							<i class="icon far fa-lg fa-arrow-alt-circle-down" aria-hidden="true"
+								title="<%= maketext('Generate Hardcopy') %>"
+								data-alt="<%= maketext('Generate Hardcopy') %>"></i>
+						</th>
+					</tr>
+				</thead>
+				<tbody class="table-group-divider">
+					% for my $ver (@$versionData) {
+						% my $interactive = maketext('Version [_1]', $ver->{version});
+						% if ($authz->hasPermissions($user, 'view_hidden_work') || $ver->{show_link}) {
+							<% $interactive = link_to $interactive => $c->systemLink(url_for(
+									$ver->{proctored} ? 'proctored_gateway_quiz' : 'gateway_quiz',
+									setID    => $ver->{id}
+								)),
+								class             => 'set-id-tooltip text-nowrap',
+								data => {
+									bs_toggle    => 'tooltip',
+								   	bs_placement => 'right',
+									bs_title     => $set->description
+								} =%>
+						% }
+						%
+						% # Download hardcopy.
+						% my $control = '';
+						% if ($multiSet) {
+							<% $control = check_box selected_sets => $ver->{id},
+								id => $ver->{id}, class => 'form-check-input'; =%>
+							% # Make interactive the label for the control.
+							% $interactive = label_for $ver->{id} => $interactive;
+						% } elsif ($ver->{show_download}) {
+							% # Only display download option if answers are available.
+							<% $control = link_to $c->systemLink(
+									url_for('hardcopy_preselect_set', setID => $ver->{id}),
+									params => { selected_sets => $ver->{id} }
+								),
+								class => 'hardcopy-link',
+								begin =%>
+								<i class="icon far fa-arrow-alt-circle-down fa-lg" aria-hidden="true"
+									title="<%= maketext('Download [_1]', $ver->{id} =~ s/_/ /gr) %>"
+									data-alt="<%= maketext('Download [_1]', $ver->{id} =~ s/_/ /gr) %>"></i>
+							<% end =%>
+						% }
+						%
+						<tr>
+							<td><%= $interactive %></td>
+							<td><strong><%= $ver->{status} %></strong></td>
+							<td><%= $ver->{score} %></td>
+							<td><%= $ver->{start} %></td>
+							<td><%= $ver->{end} %></td>
+							<td class="hardcopy"><%= $control %></td>
+						</tr>
+					% }
+				</tbody>
+			</table>
+		</div>
+	<% end =%>
+	%
+	% if ($multiSet) {
+		% # Show form for generating hardcopies of test versions.
+		<%= form_for 'hardcopy_preselect_set', method => 'POST', name => 'problem-sets-form', id => 'problem-sets-form',
+			begin =%>
+			<%= $c->hidden_authen_fields =%>
+			<%= $version_list->() =%>
+			<div class="mb-3">
+				<%= input_tag reset => maketext('Deselect All Test Versions'),
+					id => 'clear', type => 'reset', class => 'btn btn-primary' =%>
+			</div>
+			<div class="mb-3">
+				<%= submit_button maketext('Download PDF or TeX Hardcopy for Selected Tests'),
+					id => 'hardcopy', name => 'hardcopy', class => 'btn btn-primary' =%>
+			</div>
+		<% end =%>
+	% } else {
+		<%= $version_list->() =%>
+	% }
+% } else {
+	<div><p><%= maketext('No versions of this test have been taken.') %></p></div>
+% }

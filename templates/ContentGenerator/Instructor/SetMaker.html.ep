@@ -1,0 +1,90 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
+	<%= javascript getAssetURL($ce, 'js/RenderProblem/renderproblem.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/SetMaker/setmaker.js'), defer => undef =%>
+	%
+	% if ($authz->hasPermissions(scalar(param('user')), 'modify_tags')) {
+		<%= javascript "$ce->{webworkURLs}{htdocs}/js/TagWidget/tagwidget.js", id => 'tag-widget-script',
+			defer => undef, data => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
+	% }
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to access instructor tools.') %></div>
+	% last;
+% }
+%
+<%= form_for current_route, method => 'POST', name => 'library_browser_form', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= hidden_field hidden_course_id => $courseID =%>
+	<%= hidden_field hidden_language => $ce->{language} =%>
+	<%= hidden_field browse_which => $c->{browse_which} =%>
+	<%= hidden_field problem_seed => $c->{problem_seed} =%>
+	% for (my $i = 0; $i < @$pg_files; ++$i) {
+		<%= hidden_field "all_past_list$i" => $pg_files->[$i]{filepath} =%>
+		<%= hidden_field "all_past_mlt$i", => $pg_files->[$i]{morelt} || 0 =%>
+	% }
+	<%= hidden_field first_shown => $c->{first_shown} =%>
+	<%= hidden_field last_shown => $c->{last_shown} =%>
+	<%= hidden_field first_index => $c->{first_index} =%>
+	<%= hidden_field last_index => $c->{last_index} =%>
+	<%= hidden_field total_probs => $c->{total_probs} =%>
+	%
+	<div class="library-browser-table">
+		<%= include('ContentGenerator/Instructor/SetMaker/top_row',
+			local_sets => $c->{all_db_sets}, browse_which => $c->{browse_which}) =%>
+	</div>
+	%
+	% # Show problems
+	% for (my $i = 0; $i < @$plist; ++$i) {
+		% $pg_files->[ $i + $c->{first_index} ]{filepath} =~ s|^$ce->{courseDirs}{templates}/?||;
+		% my $sourceFileData = $pg_files->[ $i + $c->{first_index} ];
+		% if ($sourceFileData->{children}) {
+			% # If this problem has children, then show the problem and all children.
+			<div id="mlt-table<%= $i + 1 %>" class="lb-mlt-group">
+				<%= include 'ContentGenerator/Instructor/SetMaker/problem_row',
+					sourceFileData => $sourceFileData, pg_file => $plist->[$i], cnt => $i + 1 =%>
+				% for (@{ $sourceFileData->{children} }) {
+					% ++$i;
+					% last if $i == @$plist;    # Protection in case of malformed data.
+					% $pg_files->[ $i + $c->{first_index} ]{filepath} =~ s|^$ce->{courseDirs}{templates}/?||;
+					<%= include 'ContentGenerator/Instructor/SetMaker/problem_row',
+						sourceFileData => $pg_files->[ $i + $c->{first_index} ],
+						pg_file => $plist->[$i], cnt => $i + 1 =%>
+				% }
+			</div>
+		% } else {
+			<%= include 'ContentGenerator/Instructor/SetMaker/problem_row',
+				sourceFileData => $sourceFileData, pg_file => $plist->[$i], cnt => $i + 1 =%>
+		% }
+	% }
+	%
+	% if (@$pg_files) {
+		<div class="my-2">
+			<span id="what_shown">
+				<span id="firstshown"><%= $c->{first_shown} + 1 %></span>-<span id="lastshown"><%=
+					$c->{last_shown} + 1 %></span>
+			</span>
+			<%= maketext('of') %>
+			<span id="totalshown"><%= $c->{total_probs} %></span>
+			<%= maketext('shown') %>
+			% if ($c->{first_index} > 0) {
+				<%= submit_button maketext('Previous page'), name => 'prev_page',
+					class => 'btn btn-secondary btn-sm' =%>
+			% }
+			% if (1 + $c->{last_index} < @$pg_files) {
+				<%= submit_button maketext('Next page'), name => 'next_page', class => 'btn btn-secondary btn-sm' =%>
+			% }
+		</div>
+		<p>
+			<%= maketext(
+				'Some problems shown above represent multiple similar problems from the database.  If the (top) '
+					. 'information line for a problem has a letter M for "More", hover your mouse over the M  to '
+					. 'see how many similar problems are hidden, or click on the M to see the problems.  If you click '
+					. 'to view these problems, the M becomes an L, which can be clicked on to hide the problems again.'
+			) =%>
+		</p>
+	% }
+<% end =%>

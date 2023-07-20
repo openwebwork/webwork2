@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,7 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		set_id                    => { type => "TINYBLOB NOT NULL", key => 1 },
+		set_id                    => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		set_header                => { type => "TEXT" },
 		hardcopy_header           => { type => "TEXT" },
 		open_date                 => { type => "BIGINT" },
@@ -55,9 +55,11 @@ BEGIN {
 		restrict_ip               => { type => "ENUM('No','RestrictTo','DenyFrom') DEFAULT 'No'" },
 		relax_restrict_ip         => { type => "ENUM('No','AfterAnswerDate','AfterVersionAnswerDate') DEFAULT 'No'" },
 		restricted_login_proctor  => { type => "ENUM('No','Yes')" },
+		use_grade_auth_proctor    => { type => "ENUM('No','Yes') DEFAULT 'Yes'" },
 		hide_hint                 => { type => "INT" },
 		restrict_prob_progression => { type => "INT" },
 		email_instructor          => { type => "INT" },
+		lis_source_did            => { type => "TEXT" },
 	);
 }
 

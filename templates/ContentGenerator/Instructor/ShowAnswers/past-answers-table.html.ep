@@ -1,0 +1,64 @@
+% use WeBWorK::Utils qw(format_set_name_display);
+%
+% my $records      = stash->{records};
+% my $foundMatches = 0;
+%
+% for my $studentUser (sort keys %$records) {
+	% for my $setName (sort keys %{ $records->{$studentUser} }) {
+		% for my $problemNumber (sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName} }) {
+			% my @pastAnswerIDs = sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName}{$problemNumber} };
+			% my $prettyProblemNumber = stash->{prettyProblemNumbers}{$setName}{$problemNumber};
+			<h3>
+				<%== maketext('Past Answers for [_1], set [_2], problem [_3]',
+					$studentUser, tag('span', dir => 'ltr', format_set_name_display($setName)), $prettyProblemNumber
+				) =%>
+			</h3>
+			<div class="table-responsive">
+				<table class="past-answer-table table table-striped" dir="ltr">
+					% my $previousTime = -1;
+					% for my $answerID (@pastAnswerIDs) {
+						% $foundMatches = 1;
+						%
+						% my %record  = %{ $records->{$studentUser}{$setName}{$problemNumber}{$answerID} };
+						% my @answers = @{ $record{answers} };
+						% my @scores  = @{ $record{scores} };
+						% $previousTime = $record{time} if $previousTime < 0;
+						% my $upper_limit = $#scores > $#answers ? $#scores : $#answers;
+						%
+						<tr <%== $record{time} - $previousTime > $ce->{sessionKeyTimeout}
+							? 'class="table-rule"' : '' %>>
+							<td class="px-3"><small><%= $c->formatDateTime($record{time}) %></small></td>
+							% for (my $i = 0; $i <= $upper_limit; $i++) {
+								% my $answer     = $answers[$i]             // '';
+								% my $answerType = $record{answerTypes}[$i] // '';
+								% my $score      = shift(@scores);
+								%
+								% # Color the answer if the user is an instructor, there is an answer,
+								% # there is a score, and it is not an essay question.
+								<td <%== $isInstructor && $answer ne '' && defined $score && $answerType ne 'essay'
+									? ($score ? 'style="color:#006600"' : 'style="color:#660000"')
+									: '' %> class="px-3 <%== $answerType eq 'essay' ? 'essay' : '' %>">
+									% if ($answer eq '') {
+										<small><i><%= maketext('empty') %></i></small>
+									% } else {
+										<%== $answer =%>
+									% }
+								</td>
+							% }
+							% if ($record{comment}) {
+								<td class="comment px-3"><%= maketext('Comment') . ': ' . $record{comment} %></td>
+							% } else {
+								<td class="comment px-3"></td>
+							% }
+						</tr>
+						% $previousTime = $record{time};
+					% }
+				</table>
+			</div>
+		% }
+	% }
+% }
+%
+% unless ($foundMatches) {
+	<h2><%= maketext('No problems matched the given parameters.') %></h2>
+% }

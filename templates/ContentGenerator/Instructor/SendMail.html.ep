@@ -1,0 +1,36 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/SendMail/sendmail.js'), defer => undef =%>
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to access instructor tools') %></div>
+	% last;
+% }
+%
+% unless ($authz->hasPermissions(param('user'), 'send_mail')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to send mail to students') %></div>
+	% last;
+% }
+%
+% my $response = $c->{response} // '';
+%
+% if ($response eq 'preview') {
+	<%= $c->print_preview =%>
+% } else {
+	% if ($response eq 'send_email' && $c->{ra_send_to} && @{ $c->{ra_send_to} }) {
+		% my $message = begin
+			<i>
+				<%= maketext(
+					'Email is being sent to [quant,_1,recipient]. You will be notified by email '
+						. 'when the task is completed.  This may take several minutes if the class is large.',
+					scalar(@{ $c->{ra_send_to} })
+				) =%>
+			</i>
+		% end
+		% $c->addgoodmessage($message->());
+	% }
+	%
+	<%= include('ContentGenerator/Instructor/SendMail/main_form') =%>
+% }

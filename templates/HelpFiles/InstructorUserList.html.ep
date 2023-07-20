@@ -1,0 +1,204 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Class List Editor Help');
+%
+<p>
+	<%== maketext('From this page you can <strong>add new students</strong>, <strong>edit</strong> class list data '
+		. '(name, email address, recitation, section, permission level, and enrollment status), '
+		. '<strong>change passwords</strong>, and <strong>export</strong> (save) class lists for back-up or use in '
+		. 'another course. You can also delete students from the class roster, but this cannot be undone.') =%>
+</p>
+<p>
+	<%= maketext('This page gives access to information about the student, independent of the homework sets '
+		. 'assigned to them.') =%>
+</p>
+<p><%= maketext('To perform an action select the desired action tab and click the submit button.') %></p>
+
+<h2><%= maketext('How to:') %></h2>
+<dl>
+	<dt><%= maketext('Restrict or sort the students displayed') %></dt>
+	<dd>
+		<%= maketext('When the class is very large not all students will be displayed. Using the first action on this '
+			. 'page you can show only the students from a given recitation or from a given section, or only students '
+			. 'whose login or last name fits a pattern match. The second action will sort the students currently being '
+			. 'displayed. You can also sort the displayed students by clicking on the active links at the top of '
+			. 'each column.') =%>
+	</dd>
+
+	<dt><%= maketext('Edit class list data') %></dt>
+	<dd>
+		<%= maketext('You can edit the class list data for a single student by clicking on the pencil icon next to '
+			. 'their login name. To edit several students at once click on the "Select" checkbox next to their names, '
+			. 'click on the radio button for editing selected users and then click the "Edit" button. You can also '
+			. 'edit all visible users (those students currently being displayed) or even all users in the course '
+			. 'although this last option might take a long time to load for a large class.') =%>
+	</dd>
+
+	<dd>
+		<%= maketext(q{The login name cannot be changed. (It is the primary key for the student's data.) If you make }
+			. 'a mistake in the login name at the beginning of the course (before any work has been done) then it is '
+			. 'best to simply add a new student with the correct entry and drop the student with the bad login name. '
+			. '(See drop and delete students below.) If the login name must be changed after a user has started '
+			. 'working assignments, then contact your system administrator, who can use the webwork2 '
+			. '"bin/change_user_id" script to change the user id.') =%>
+	</dd>
+
+	<dt><%= maketext('Add a few students to the course.') %></dt>
+	<dd>
+		<%= maketext('Click the "Add x student(s)" radio button and then click "Take action". This will take you to a '
+			. 'new page where the data can be entered for one or more students. It is also possible to assign the '
+			. 'student to one or more problem sets as they are being entered: simply select the homework sets from the '
+			. 'list below the data entry table. Use "command" or "control" click to select more than one '
+			. 'homework set.') =%>
+	</dd>
+
+	<dt><%= maketext('Add many students to a course from a class list.') %></dt>
+	<dd>
+		<%== maketext('This is most easily done by importing a class list. The class list can be uploaded from your '
+			. 'workstation to the server using the File Manager page. The class list must be a file ending in .lst and '
+			. 'must have a specific <a href="http://webwork.maa.org/wiki/Classlist_Files#Format_of_classlist_files">'
+			. 'format</a>. Once the file has been uploaded to the server the file will appear in the import action '
+			. 'pop-up list (5th action). demoCourse.lst is available for most courses and adds the "practice users" '
+			. 'which activate guest logins to the class list.') =%>
+	</dd>
+
+	<dt><%= maketext('Add a TA or an instructor (change permission level of user)') %></dt>
+	<dd>
+		<%= maketext('This is done by first entering the user as a student and then changing the permission level of '
+			. 'the user. First edit the user by clicking on the pencil next to their name (or using the technique '
+			. 'above for several users), then change their permssion level -- an entry blank at the far right of the '
+			. 'screen, you may have to scroll to see it. The permission levels are') =%>
+		<ul>
+			<li><%= maketext('Guest:') %> -5</li>
+			<li><%= maketext('Student:') %> 0</li>
+			<li><%= maketext('Proctor:') %> 2</li>
+			<li><%= maketext('TA:') %> 5</li>
+			<li><%= maketext('Instructor:') %> 10</li>
+		</ul>
+	</dd>
+		<%= maketext('Note that if you set the permission level of a user to something other than "Student", you may '
+			. 'also want to set the status of the user to "Observer".  Users with the "Observer" status are not '
+			. 'included in statistics, scoring, or instructor emails.') =%>
+	<dd>
+
+	</dd>
+
+	<dt><%= maketext('Drop student from the course') %></dt>
+	<dd>
+		<%= maketext('To drop a student or students, select them for editing as described above and then set the '
+			. 'pop-up list to enrolled,drop, or audit. Dropped students cannot log in to the course, are not assigned '
+			. 'new homework sets and are not sent e-mail. They can be re-enrolled simply by changing their status back '
+			. 'to enrolled. No data is lost, any homework sets assigned before they were dropped are restored '
+			. 'unchanged.') =%>
+	</dd>
+
+	<dt><%= maketext('Delete a student from a course') %></dt>
+	<dd>
+		<%= maketext('This should be done cautiously. Once a student is deleted from a course their data is lost '
+			. 'forever and cannot be recovered. They can be added to the course as a new student, but all of their '
+			. 'homework set assignments and homework has been permanently deleted.') =%>
+	</dd>
+
+	<dt><%= maketext('Assign sets to one student') %></dt>
+	<dd>
+		<%= maketext('To assign one or more sets to an individual student click in the column "Assigned Sets" in the '
+			. q{student's row. This will take you to a page where you can assign and unassign homework sets and }
+			. 'change the due dates for homework on an individual basis.') =%>
+	</dd>
+
+	<dt><%= maketext('Change the due date for one student') %></dt>
+	<dd>
+		<%= maketext(q{Click on the column "Assigned Sets" in the student's row. This will take you to a page where }
+			. 'you can assign and unassign homework sets and change the due dates for homework on an '
+			. 'individual basis.') =%>
+	</dd>
+
+	<dt><%= maketext('"Act as" a student') %></dt>
+	<dd>
+		<%= maketext(q{Clicking on the login name link in a student's row allows you to view the student's version of }
+			. 'the homework (rather than your own) so that you can more easily answer student questions about homework '
+			. 'problems. (A "acting as xxx" alert will appear in the upper right corner of each window while you are '
+			. 'acting as a student.) You can submit the answers (which will NOT be recorded) to check that the '
+			. 'computer is grading the problem correctly. You will also be able to view past answers submitted by the '
+			. q{student for each problem. To stop acting in the student's role click the "Stop acting" link in the }
+			. 'upper right corner of the window.') =%>
+	</dd>
+
+	<dt><%= maketext('Change the grades on a homework set for one student.') %></dt>
+	<dd>
+		<%= maketext(q{Click first in the "Assigned Sets" column in the student's row. This will take you to a new }
+			. 'page where you will click on the link to the homework set where the grade change is to be made. (The '
+			. 'grade for each problem is listed as "status" on this third page).') =%>
+	</dd>
+
+	<dt><%= maketext('Extend the number of attempts allowed a student on a given problem.') %></dt>
+	<dd>
+		<%= maketext(q{Click first in the "Assigned Sets" column in the student's row. This will take you to a new }
+			. 'page where you will click on the link to the homework set where the grade change is to be made.') =%>
+	</dd>
+
+	<dt><%= maketext('Assign sets to many students') %></dt>
+	<dd>
+		<%= maketext('This is done from the "Hmwk Sets Editor" or from the "Instructor Tools" page if you wish to '
+			. 'assign a homework set to all students or a large group of students (e.g. a section).') =%>
+	</dd>
+
+	<dt><%= maketext('Change dates for a homework set for the whole class.') %></dt>
+	<dd><%= maketext('This is done from the "Hmwk Sets Editor" or from the "Instructor Tools" page.') %></dd>
+
+	<dt><%= maketext('Change the grading on a homework set for an entire class.') %></dt>
+	<dd>
+		<%= maketext('You might want to do this if you want to give full credit to everyone on a particular problem '
+			. q{that was not worded correctly, or wasn't working properly. This is done from the "Hmwk Sets Editor" }
+			. 'page or the "Instructor Tools" page.') =%>
+	</dd>
+
+	<dt><%= maketext('Change the number of atttempts allowed on a problem.') %></dt>
+	<dd><%= maketext('This is done from the "Hmwk Sets Editor" page or the "Instructor tools" page.') %></dd>
+</dl>
+
+<p>
+	<%= maketext('Many of these editing activities can also be done more quickly from the "Instructor Tools" page '
+		. 'where students and homework sets can be selected simultaneously. The "Instructor Tools" page is useful for '
+		. 'quick editing of one or two students. The initial setup of the class can be done best from this page. '
+		. 'Importing and exporting class lists can only be done from this page. Deleting students can only be '
+		. 'done from this page.') =%>
+</p>
+
+<h2><%= maketext('Review of column functions:') %></h2>
+<ul>
+	<li>
+		<%= maketext('Clicking on any active link at the top of the column sorts the page by that column. You can do '
+			. 'lexigraphic sorts: click on "First name" then "Last name" to sort by last name, sorting those with the '
+			. 'same last name by their first name.') =%>
+	</li>
+	<li><%== maketext('The <strong>login name</strong> column links allow you to "act as" a student.') %></li>
+	<li>
+		<%== maketext(q{The <strong>pencil</strong> in the login column allows you to edit that student's data.}) =%>
+	</li>
+	<li>
+		<%== maketext('The <strong>Assigned sets</strong> column (x/y) indicates that x sets out of y sets avaiable '
+			. 'have been assigned to this student. Click this link to assign or unassign sets to this student, to '
+			. 'adjust due dates, or to adjust the grades on a homework set for a student.') =%>
+	</li>
+	<li>
+		<%== maketext('Clicking the <strong>e-mail address</strong> link will bring up your standard email application '
+			. 'so that you can send email to the student. This works even if the student has been dropped from the '
+			. 'course. To send email to an entire class or to merge grades with the email message use the "Email" page '
+			. 'link in the left margin.') =%>
+	</li>
+</ul>

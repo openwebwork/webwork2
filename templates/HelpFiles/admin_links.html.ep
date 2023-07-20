@@ -1,0 +1,57 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Course Administration Help');
+%
+<%== maketext('Click the icon [_1] for page and item specific help.',
+	'<a href="#"><i class="fas fa-question-circle"></i></a>') =%>
+<hr>
+<p>
+	<%= maketext('This is the administration course which is used to manage courses on this server.  Use the '
+		. '"Admin Menu" to select the desired action.') =%>
+</p>
+
+<dl>
+	<dt><%= maketext('User Settings') %></dt>
+	<dd><%= maketext('Use this page to change your password.') =%></dd>
+	<dt><%= maketext('Course Listings') %></dt>
+	<dd><%= maketext('View/access current and archived courses.') =%></dd>
+	<dt><%= maketext('Add Course') %></dt>
+	<dd><%= maketext('Create a new course on this server.') =%></dd>
+	<dt><%= maketext('Rename Course') %></dt>
+	<dd><%= maketext(q{Change a course's ID, Title, or Institution.}) =%></dd>
+	<dt><%= maketext('Delete Course') %></dt>
+	<dd><%= maketext('Delete a course and all associated data.') =%></dd>
+	<dt><%= maketext('Archive Course') %></dt>
+	<dd><%= maketext(q{Create a .tar.gz archive which includes the course's database and all course files.}) =%></dd>
+	<dt><%= maketext('Unarchive Course') %></dt>
+	<dd><%= maketext(q{Restore a .tar.gz archive.}) =%></dd>
+	<dt><%= maketext('Upgrade Courses') %></dt>
+	<dd><%= maketext('Upgrade courses from a previous version of WeBWorK.') =%></dd>
+	<dt><%= maketext('Hide Courses') %></dt>
+	<dd><%= maketext('Configure which course links appear on the site landing page.') =%></dd>
+	<dt><%= maketext('Manage Locations') %></dt>
+	<dd><%= maketext('Configure ip ranges (locations) that can be used to restrict set access.') =%></dd>
+	<dt><%= maketext('Classlist Editor') %></dt>
+	<dd>
+		<%= maketext('Manage instructors.  When instructors are added to a newly created course, they are also '
+			. 'added to the admin course with username "userID_courseID".') =%>
+	</dd>
+	<dt><%= maketext('Email') %></dt>
+	<dd><%= maketext('Send emails to selected instructors.') %></dd>
+	<dt><%= maketext('File Manager') %></dt>
+	<dd><%= maketext('Manage administration course files.') %></dd>
+</dl>

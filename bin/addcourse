@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -63,70 +63,43 @@ The name of the course to create.
 
 use strict;
 use warnings;
+
 use Getopt::Long;
 
-my $webwork_dir;
-my $pg_dir;
-
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n"
-		unless exists $ENV{WEBWORK_ROOT};
-	$webwork_dir = $ENV{WEBWORK_ROOT};
+	use Mojo::File qw(curfile);
+	use Env qw(WEBWORK_ROOT);
 
-	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
-	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
 
 # link to WeBWorK and pg code libraries
-use lib "$webwork_dir/lib";
-use lib "$pg_dir/lib";
+use lib "$ENV{WEBWORK_ROOT}/lib";
 
 use WeBWorK::CourseEnvironment;
 
 # Grab course environment (by reading webwork2/conf/defaults.config)
-my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
+my $ce = WeBWorK::CourseEnvironment->new;
 
 use WeBWorK::DB;
 use WeBWorK::File::Classlist;
-use WeBWorK::Utils qw(runtime_use readFile cryptPassword);
-use WeBWorK::Utils::CourseManagement qw(addCourse deleteCourse listCourses);
+use WeBWorK::Utils qw(runtime_use cryptPassword);
+use WeBWorK::Utils::CourseManagement qw(addCourse);
 
-sub usage {
-	print STDERR "usage: $0 [options] COURSEID\n";
-	print STDERR "Options:\n";
-	print STDERR "  [--db-layout=LAYOUT]\n";
-	print STDERR "  [--users=FILE [--professors=USERID[,USERID]...] ]\n";
+sub usage_error {
+	warn "@_\n";
+	warn "usage: $0 [options] COURSEID\n";
+	warn "Options:\n";
+	warn "  [--db-layout=LAYOUT]\n";
+	warn "  [--users=FILE [--professors=USERID[,USERID]...] ]\n";
 	exit;
 }
 
-sub usage_error {
-	print STDERR "$0: @_\n";
-	usage();
-}
-
-my $dbLayout       = "";
-my $sql_host       = "";
-my $sql_port       = "";
-my $sql_user       = "";
-my $sql_pass       = "";
-my $sql_db         = "";
-my $sql_wwhost     = "";
-my $globalUserID   = "";
-my $users          = "";
-my @professors     = ();
-my $templates_from = "";
-
-##### get command-line options #####
+my ($dbLayout, $users, $templates_from) = ('', '', '');
+my @professors;
 
 GetOptions(
 	"db-layout=s"      => \$dbLayout,
-	"sql-host=s"       => \$sql_host,
-	"sql-port=s"       => \$sql_port,
-	"sql-user=s"       => \$sql_user,
-	"sql-pass=s"       => \$sql_pass,
-	"sql-db=s"         => \$sql_db,
-	"sql-wwhost=s"     => \$sql_wwhost,
-	"global-user=s"    => \$globalUserID,
 	"users=s"          => \$users,
 	"professors=s"     => \@professors,
 	"templates-from=s" => \$templates_from,
@@ -134,110 +107,76 @@ GetOptions(
 my %professors = map { $_ => 1 } map { split /,/ } @professors;
 my $courseID   = shift;
 
-##### perform sanity checks #####
+usage_error('The COURSEID must be provided.') unless $courseID;
 
-usage_error("must specify COURSEID.") unless $courseID;
+$ce = WeBWorK::CourseEnvironment->new({ courseName => $courseID });
 
-# bring up a minimal course environment
-$ce = WeBWorK::CourseEnvironment->new({
-	webwork_dir => $ENV{WEBWORK_ROOT},
-	courseName  => $courseID
-});
-
-# Do not attempt to create a course whose name is too long.
-if (length($courseID) > $ce->{maxCourseIdLength}) {
-	die "Aborting addcourse: Course ID cannot exceed " . $ce->{maxCourseIdLength} . " characters.";
-}
+die "Aborting addcourse: Course ID cannot exceed $ce->{maxCourseIdLength} characters."
+	if length($courseID) > $ce->{maxCourseIdLength};
 
 if ($dbLayout) {
 	die "Database layout $dbLayout does not exist in the course environment.",
 		" (It must be defined in defaults.config.)\n"
-		unless exists $ce->{dbLayouts}->{$dbLayout};
+		unless exists $ce->{dbLayouts}{$dbLayout};
 } else {
-	# use default value
 	$dbLayout = $ce->{dbLayoutName};
 }
 
-usage_error("can't specify --professors without also specifying --users.")
-	if @professors and not $users;
-
-##### set up parameters to pass to addCourse() #####
-
-my %courseOptions = (dbLayoutName => $dbLayout);
-
-# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
-# below this line, we would grab values from getopt and put them in this hash
-# but for now the hash can remain empty
-my %dbOptions;
+usage_error("Can't specify --professors without also specifying --users.")
+	if @professors && !$users;
 
 my @users;
 if ($users) {
-	# this is a hack to create records without bringing up a DB object
-	#my $db = WeBWorK::DB->new($ce->{dbLayouts}->{$dbLayout});
-	my $userClass       = $ce->{dbLayouts}->{$dbLayout}->{user}->{record};
-	my $passwordClass   = $ce->{dbLayouts}->{$dbLayout}->{password}->{record};
-	my $permissionClass = $ce->{dbLayouts}->{$dbLayout}->{permission}->{record};
+	# This is a hack to create records without bringing up a DB object
+	my $userClass       = $ce->{dbLayouts}{$dbLayout}{user}{record};
+	my $passwordClass   = $ce->{dbLayouts}{$dbLayout}{password}{record};
+	my $permissionClass = $ce->{dbLayouts}{$dbLayout}{permission}{record};
 
 	runtime_use($userClass);
 	runtime_use($passwordClass);
 	runtime_use($permissionClass);
 
-	# Default status is enrolled -- fetch abbreviation for enrolled
-	my $default_status_abbrev = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
-
-	# default permission level
-	my $default_permission_level = $ce->{default_permission_level};
-
 	my @classlist = parse_classlist($users);
-	foreach my $record (@classlist) {
+	for my $record (@classlist) {
 		my %record  = %$record;
 		my $user_id = $record{user_id};
 
-		# set default status is status field is "empty"
-		$record{status} = $default_status_abbrev
-			unless defined $record{status} and $record{status} ne "";
+		# Set the default status if the status field is not set.
+		$record{status} = $ce->{statuses}{Enrolled}{abbrevs}[0] unless $record{status};
 
-		# set password from student ID if password field is "empty"
-		if (not defined $record{password} or $record{password} eq "") {
-			if (defined $record{student_id} and $record{student_id} ne "") {
-				# crypt the student ID and use that
+		# Set the password if the password field is empty.
+		if (!defined $record{password} || $record{password} !~ /\S/) {
+			if (defined $record{student_id} && $record{student_id} !~ /\S/) {
+				# Use the student ID if it is non-empty.
 				$record{password} = cryptPassword($record{student_id});
 			} else {
-				# an empty password field in the database disables password login
-				$record{password} = "";
+				# An empty password field in the database disables password login.
+				$record{password} = '';
 			}
 		}
 
-		# set permission
-		if (not defined $record{status} and $record{status} ne "") {
-			if (exists $professors{$user_id}) {
-				$record{permission} = $ce->{userRoles}{professor};
-			} else {
-				$record{permission} = $default_permission_level;
-			}
+		# Set permission
+		if (!$record{status} && defined $professors{$user_id}) {
+			$record{permission} = $ce->{userRoles}{professor};
 		}
 
-		my $User            = $userClass->new(%record);
-		my $PermissionLevel = $permissionClass->new(user_id => $user_id, permission => $record{permission});
-		my $Password        = $passwordClass->new(user_id => $user_id, password => $record{password});
+		delete $professors{$user_id};
 
-		if (exists $record{permission}) {
-			$PermissionLevel->permission($record{permission});
-			delete $professors{$user_id};
-		} elsif (exists $professors{$user_id}) {
-			$PermissionLevel->permission(10);
-			delete $professors{$user_id};
-		}
-
-		if (exists $record{password}) {
-			$Password->password($record{password});
-		}
-
-		push @users, [ $User, $Password, $PermissionLevel ];
+		push @users,
+			[
+				$userClass->new(%record),
+				$passwordClass->new(user_id => $user_id, password => $record{password}),
+				$permissionClass->new(
+					user_id    => $user_id,
+					permission => defined $professors{$user_id}
+					? $ce->{userRoles}{professor}
+					: ($record{permission} // $ce->{default_permission_level})
+				)
+			];
 	}
 
 	if (my @ids = keys %professors) {
-		print STDERR "warning: @ids not in imported user list.\n";
+		warn "Warning: The following users were not in the imported list:\n" . join("\n", @ids) . "\n";
 	}
 }
 
@@ -246,29 +185,16 @@ if ($templates_from ne "") {
 	$optional_arguments{templatesFrom} = $templates_from;
 }
 
-##### call addCourse(), handle errors #####
-
 eval {
 	addCourse(
 		courseID      => $courseID,
 		ce            => $ce,
-		courseOptions => \%courseOptions,
-		dbOptions     => \%dbOptions,
+		courseOptions => { dbLayoutName => $dbLayout },
 		users         => \@users,
 		%optional_arguments,
 	);
 };
 
-if ($@) {
-	my $error = $@;
-	print STDERR "$error\n";
-	exit;
-} else {
-	print "Successfully added '$courseID' course.\n";
-}
+die "$@\n" if $@;
 
-=head1 AUTHOR
-
-Written by Sam Hathaway, hathaway at users.sourceforge.net.
-
-=cut
+print qq{Successfully added "$courseID" course.\n};

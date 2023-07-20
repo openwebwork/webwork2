@@ -1,0 +1,31 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('LTI Grade Update Help');
+%
+<p class="m-0">
+	<%= maketext('This page gives information about mass LTI grade updates '
+		. 'and allows you to trigger a grade update. ') =%>
+	% if ($ce->{LTIGradeMode} eq 'course') {
+		<%= maketext('You may trigger a grade update for all users or just one user.') =%>
+	% } elsif ($ce->{LTIGradeMode} eq 'homework') {
+		<%= maketext('You may trigger a grade update for all users or just one user, '
+			. 'for all sets or just one set. When a user is selected, the menu '
+			. 'for sets is updated to only allow selecting sets assigned to the '
+			. 'selected user. Similarly when a set is selected, the user menu '
+			. 'is updated to only allow selecting valid users.') =%>
+	% }
+</p>

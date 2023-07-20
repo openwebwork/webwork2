@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -94,15 +94,17 @@ record class currently defined for that table in C<%dbLayout>.
 
 use strict;
 use warnings;
+
 use Carp;
 use Data::Dumper;
 use Scalar::Util qw/blessed/;
+use HTML::Entities qw( encode_entities );
+
 use WeBWorK::DB::Schema;
 use WeBWorK::DB::Utils qw/make_vsetID grok_vsetID grok_setID_from_vsetID_sql
 	grok_versionID_from_vsetID_sql/;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use);
-use HTML::Entities qw( encode_entities );
 
 =for comment
 
@@ -143,21 +145,21 @@ use Exception::Class (
 		description => 'unknown database error',
 	},
 	'WeBWorK::DB::Ex::RecordExists' => {
-		isa => 'WeBWorK::DB::Ex',
-		fields => ['type', 'key'],
-		description =>"record exists"
+		isa         => 'WeBWorK::DB::Ex',
+		fields      => [ 'type', 'key' ],
+		description => "record exists"
 	},
 	'WeBWorK::DB::Ex::RecordNotFound' => {
-		isa => 'WeBWorK::DB::Ex',
-		fields => ['type', 'key'],
-		description =>"record not found"
+		isa         => 'WeBWorK::DB::Ex',
+		fields      => [ 'type', 'key' ],
+		description => "record not found"
 	},
 	'WeBWorK::DB::Ex::DependencyNotFound' => {
 		isa => 'WeBWorK::DB::Ex::RecordNotFound',
 	},
 	'WeBWorK::DB::Ex::TableMissing' => {
-    	isa => 'WeBWorK::DB::Ex',
-    	description =>"missing table",
+		isa         => 'WeBWorK::DB::Ex',
+		description => "missing table",
 	},
 );
 
@@ -219,8 +221,8 @@ thrown.
 sub new {
 	my ($invocant, $dbLayout) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $self = {};
-	bless $self, $class; # bless this here so we can pass it to the schema
+	my $self  = {};
+	bless $self, $class;    # bless this here so we can pass it to the schema
 
 	# load the modules required to handle each table, and create driver
 	foreach my $table (keys %$dbLayout) {
@@ -241,15 +243,15 @@ sub init_table {
 		}
 	}
 
-	my $layout = $dbLayout->{$table};
-	my $record = $layout->{record};
-	my $schema = $layout->{schema};
-	my $driver = $layout->{driver};
-	my $source = $layout->{source};
-	my $depend = $layout->{depend};
-	my $params = $layout->{params};
-  	my $engine = $layout->{engine};
-  	my $character_set = $layout->{character_set};
+	my $layout        = $dbLayout->{$table};
+	my $record        = $layout->{record};
+	my $schema        = $layout->{schema};
+	my $driver        = $layout->{driver};
+	my $source        = $layout->{source};
+	my $depend        = $layout->{depend};
+	my $params        = $layout->{params};
+	my $engine        = $layout->{engine};
+	my $character_set = $layout->{character_set};
 
 	# add a key for this table to the self hash, but don't define it yet
 	# this for loop detection
@@ -269,8 +271,7 @@ sub init_table {
 		if $@;
 
 	runtime_use($schema);
-	my $schemaObject = eval { $schema->new(
-		$self, $driverObject, $table, $record, $params, $engine, $character_set) };
+	my $schemaObject = eval { $schema->new($self, $driverObject, $table, $record, $params, $engine, $character_set) };
 	croak "error instantiating DB schema $schema for table $table: $@"
 		if $@;
 
@@ -371,8 +372,8 @@ sub create_tables {
 	my ($self) = @_;
 
 	foreach my $table (keys %$self) {
-		next if $table =~ /^_/; # skip non-table self fields (none yet)
-		next if $self->{$table}{params}{non_native}; # skip non-native tables
+		next if $table =~ /^_/;                         # skip non-table self fields (none yet)
+		next if $self->{$table}{params}{non_native};    # skip non-native tables
 		my $schema_obj = $self->{$table};
 		if ($schema_obj->can("create_table")) {
 			$schema_obj->create_table;
@@ -388,13 +389,14 @@ sub rename_tables {
 	my ($self, $new_dblayout) = @_;
 
 	foreach my $table (keys %$self) {
-		next if $table =~ /^_/; # skip non-table self fields (none yet)
-		next if $self->{$table}{params}{non_native}; # skip non-native tables
+		next if $table =~ /^_/;                         # skip non-table self fields (none yet)
+		next if $self->{$table}{params}{non_native};    # skip non-native tables
 		my $schema_obj = $self->{$table};
 		if (exists $new_dblayout->{$table}) {
 			if ($schema_obj->can("rename_table")) {
 				# we look into the new dblayout to determine the new table names
-				my $new_sql_table_name = defined $new_dblayout->{$table}{params}{tableOverride}
+				my $new_sql_table_name =
+					defined $new_dblayout->{$table}{params}{tableOverride}
 					? $new_dblayout->{$table}{params}{tableOverride}
 					: $table;
 				$schema_obj->rename_table($new_sql_table_name);
@@ -413,8 +415,8 @@ sub delete_tables {
 	my ($self) = @_;
 
 	foreach my $table (keys %$self) {
-		next if $table =~ /^_/; # skip non-table self fields (none yet)
-		next if $self->{$table}{params}{non_native}; # skip non-native tables
+		next if $table =~ /^_/;                         # skip non-table self fields (none yet)
+		next if $self->{$table}{params}{non_native};    # skip non-native tables
 		my $schema_obj = $self->{$table};
 		if ($schema_obj->can("delete_table")) {
 			$schema_obj->delete_table;
@@ -430,8 +432,8 @@ sub dump_tables {
 	my ($self, $dump_dir) = @_;
 
 	foreach my $table (keys %$self) {
-		next if $table =~ /^_/; # skip non-table self fields (none yet)
-		next if $self->{$table}{params}{non_native}; # skip non-native tables
+		next if $table =~ /^_/;                         # skip non-table self fields (none yet)
+		next if $self->{$table}{params}{non_native};    # skip non-native tables
 		my $schema_obj = $self->{$table};
 		if ($schema_obj->can("dump_table")) {
 			my $dump_file = "$dump_dir/$table.sql";
@@ -448,8 +450,8 @@ sub restore_tables {
 	my ($self, $dump_dir) = @_;
 
 	foreach my $table (keys %$self) {
-		next if $table =~ /^_/; # skip non-table self fields (none yet)
-		next if $self->{$table}{params}{non_native}; # skip non-native tables
+		next if $table =~ /^_/;                         # skip non-table self fields (none yet)
+		next if $self->{$table}{params}{non_native};    # skip non-native tables
 		my $schema_obj = $self->{$table};
 		if ($schema_obj->can("restore_table")) {
 			my $dump_file = "$dump_dir/$table.sql";
@@ -463,16 +465,58 @@ sub restore_tables {
 }
 
 ################################################################################
+# transaction support
+################################################################################
+
+# Any course will have the user table, so that allows getting the database
+# handle.
+
+sub start_transaction {
+	my $self = shift;
+	eval { $self->{user}->dbh->begin_work; };
+	if ($@) {
+		my $msg = "Error in start_transaction: $@";
+		if ($msg =~ /Already in a transaction/) {
+			warn "Aborting active transaction.";
+			$self->{user}->dbh->rollback;
+		}
+		croak $msg;
+	}
+}
+
+sub end_transaction {
+	my $self = shift;
+	eval { $self->{user}->dbh->commit; };
+	if ($@) {
+		my $msg = "Error in end_transaction: $@";
+		$self->abort_transaction;
+		croak $msg;
+	}
+}
+
+sub abort_transaction {
+	my $self = shift;
+	eval {
+		$self->{user}->dbh->{AutoCommit} = 0;
+		$self->{user}->dbh->rollback;
+	};
+	if ($@) {
+		my $msg = "Error in abort_transaction: $@";
+		croak $msg;
+	}
+}
+
+################################################################################
 # user functions
 ################################################################################
 
 BEGIN {
-	*User = gen_schema_accessor("user");
-	*newUser = gen_new("user");
+	*User            = gen_schema_accessor("user");
+	*newUser         = gen_new("user");
 	*countUsersWhere = gen_count_where("user");
 	*existsUserWhere = gen_exists_where("user");
-	*listUsersWhere = gen_list_where("user");
-	*getUsersWhere = gen_get_records_where("user");
+	*listUsersWhere  = gen_list_where("user");
+	*getUsersWhere   = gen_get_records_where("user");
 }
 
 sub countUsers { return scalar shift->listUsers(@_) }
@@ -494,7 +538,7 @@ sub existsUser {
 
 sub getUser {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	return ( $self->getUsers($userID) )[0];
+	return ($self->getUsers($userID))[0];
 }
 
 sub getUsers {
@@ -504,9 +548,7 @@ sub getUsers {
 
 sub addUser {
 	my ($self, $User) = shift->checkArgs(\@_, qw/REC:user/);
-	eval {
-		return $self->{user}->add($User);
-	};
+	eval { return $self->{user}->add($User); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addUser: user exists (perhaps you meant to use putUser?)";
 	} elsif ($@) {
@@ -525,7 +567,7 @@ sub addUser {
 
 sub putUser {
 	my ($self, $User) = shift->checkArgs(\@_, qw/REC:user/);
-	my $rows = $self->{user}->put($User); # DBI returns 0E0 for 0.
+	my $rows = $self->{user}->put($User);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putUser: user not found (perhaps you meant to use addUser?)";
 	} else {
@@ -548,12 +590,12 @@ sub deleteUser {
 ################################################################################
 
 BEGIN {
-	*Password = gen_schema_accessor("password");
-	*newPassword = gen_new("password");
+	*Password            = gen_schema_accessor("password");
+	*newPassword         = gen_new("password");
 	*countPasswordsWhere = gen_count_where("password");
 	*existsPasswordWhere = gen_exists_where("password");
-	*listPasswordsWhere = gen_list_where("password");
-	*getPasswordsWhere = gen_get_records_where("password");
+	*listPasswordsWhere  = gen_list_where("password");
+	*getPasswordsWhere   = gen_get_records_where("password");
 }
 
 sub countPasswords { return scalar shift->countPasswords(@_) }
@@ -561,7 +603,7 @@ sub countPasswords { return scalar shift->countPasswords(@_) }
 sub listPasswords {
 	my ($self) = shift->checkArgs(\@_);
 	if (wantarray) {
-		return map { @$_ } $self->{password}->get_fields_where(["user_id"]);
+		return map {@$_} $self->{password}->get_fields_where(["user_id"]);
 	} else {
 		return $self->{password}->count_where;
 	}
@@ -576,7 +618,7 @@ sub existsPassword {
 
 sub getPassword {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	return ( $self->getPasswords($userID) )[0];
+	return ($self->getPasswords($userID))[0];
 }
 
 sub getPasswords {
@@ -588,7 +630,7 @@ sub getPasswords {
 	# (this code is duplicated in getPermissionLevels, below)
 	for (my $i = 0; $i < @Passwords; $i++) {
 		my $Password = $Passwords[$i];
-		my $userID = $userIDs[$i];
+		my $userID   = $userIDs[$i];
 		if (not defined $Password) {
 			if ($self->{user}->exists($userID)) {
 				$Password = $self->newPassword(user_id => $userID);
@@ -610,9 +652,7 @@ sub addPassword {
 	croak "addPassword: user ", $Password->user_id, " not found"
 		unless $self->{user}->exists($Password->user_id);
 
-	eval {
-		return $self->{password}->add($Password);
-	};
+	eval { return $self->{password}->add($Password); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addPassword: password exists (perhaps you meant to use putPassword?)";
 	} elsif ($@) {
@@ -622,7 +662,7 @@ sub addPassword {
 
 sub putPassword {
 	my ($self, $Password) = shift->checkArgs(\@_, qw/REC:password/);
-	my $rows = $self->{password}->put($Password); # DBI returns 0E0 for 0.
+	my $rows = $self->{password}->put($Password);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		# AUTO-CREATE permission level records
 		return $self->addPassword($Password);
@@ -641,12 +681,12 @@ sub deletePassword {
 ################################################################################
 
 BEGIN {
-	*PermissionLevel = gen_schema_accessor("permission");
-	*newPermissionLevel = gen_new("permission");
+	*PermissionLevel            = gen_schema_accessor("permission");
+	*newPermissionLevel         = gen_new("permission");
 	*countPermissionLevelsWhere = gen_count_where("permission");
 	*existsPermissionLevelWhere = gen_exists_where("permission");
-	*listPermissionLevelsWhere = gen_list_where("permission");
-	*getPermissionLevelsWhere = gen_get_records_where("permission");
+	*listPermissionLevelsWhere  = gen_list_where("permission");
+	*getPermissionLevelsWhere   = gen_get_records_where("permission");
 }
 
 sub countPermissionLevels { return scalar shift->listPermissionLevels(@_) }
@@ -654,7 +694,7 @@ sub countPermissionLevels { return scalar shift->listPermissionLevels(@_) }
 sub listPermissionLevels {
 	my ($self) = shift->checkArgs(\@_);
 	if (wantarray) {
-		return map { @$_ } $self->{permission}->get_fields_where(["user_id"]);
+		return map {@$_} $self->{permission}->get_fields_where(["user_id"]);
 	} else {
 		return $self->{permission}->count_where;
 	}
@@ -669,7 +709,7 @@ sub existsPermissionLevel {
 
 sub getPermissionLevel {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	return ( $self->getPermissionLevels($userID) )[0];
+	return ($self->getPermissionLevels($userID))[0];
 }
 
 sub getPermissionLevels {
@@ -681,7 +721,7 @@ sub getPermissionLevels {
 	# (this code is duplicated in getPasswords, above)
 	for (my $i = 0; $i < @PermissionLevels; $i++) {
 		my $PermissionLevel = $PermissionLevels[$i];
-		my $userID = $userIDs[$i];
+		my $userID          = $userIDs[$i];
 		if (not defined $PermissionLevel) {
 			if ($self->{user}->exists($userID)) {
 				$PermissionLevel = $self->newPermissionLevel(user_id => $userID);
@@ -703,9 +743,7 @@ sub addPermissionLevel {
 	croak "addPermissionLevel: user ", $PermissionLevel->user_id, " not found"
 		unless $self->{user}->exists($PermissionLevel->user_id);
 
-	eval {
-		return $self->{permission}->add($PermissionLevel);
-	};
+	eval { return $self->{permission}->add($PermissionLevel); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addPermissionLevel: permission level exists (perhaps you meant to use putPermissionLevel?)";
 	} elsif ($@) {
@@ -715,7 +753,7 @@ sub addPermissionLevel {
 
 sub putPermissionLevel {
 	my ($self, $PermissionLevel) = shift->checkArgs(\@_, qw/REC:permission/);
-	my $rows = $self->{permission}->put($PermissionLevel); # DBI returns 0E0 for 0.
+	my $rows = $self->{permission}->put($PermissionLevel);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		# AUTO-CREATE permission level records
 		return $self->addPermissionLevel($PermissionLevel);
@@ -734,12 +772,12 @@ sub deletePermissionLevel {
 ################################################################################
 
 BEGIN {
-	*Key = gen_schema_accessor("key");
-	*newKey = gen_new("key");
+	*Key            = gen_schema_accessor("key");
+	*newKey         = gen_new("key");
 	*countKeysWhere = gen_count_where("key");
 	*existsKeyWhere = gen_exists_where("key");
-	*listKeysWhere = gen_list_where("key");
-	*getKeysWhere = gen_get_records_where("key");
+	*listKeysWhere  = gen_list_where("key");
+	*getKeysWhere   = gen_get_records_where("key");
 }
 
 sub countKeys { return scalar shift->listKeys(@_) }
@@ -747,7 +785,7 @@ sub countKeys { return scalar shift->listKeys(@_) }
 sub listKeys {
 	my ($self) = shift->checkArgs(\@_);
 	if (wantarray) {
-		return map { @$_ } $self->{key}->get_fields_where(["user_id"]);
+		return map {@$_} $self->{key}->get_fields_where(["user_id"]);
 	} else {
 		return $self->{key}->count_where;
 	}
@@ -760,7 +798,7 @@ sub existsKey {
 
 sub getKey {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	return ( $self->getKeys($userID) )[0];
+	return ($self->getKeys($userID))[0];
 }
 
 sub getKeys {
@@ -781,20 +819,18 @@ sub addKey {
 	if ($Key->user_id =~ /([^,]+)(?:,([^,]*))?(,g)?/) {
 		my ($userID, $proctorID) = ($1, $2);
 		croak "addKey: user $userID not found"
-#			unless $self->{user}->exists($userID);
-			unless $Key -> key eq "nonce" or $self->{user}->exists($userID);
+			#			unless $self->{user}->exists($userID);
+			unless $Key->key eq "nonce" or $self->{user}->exists($userID);
 		croak "addKey: proctor $proctorID not found"
-#			unless $self->{user}->exists($proctorID);
-			unless $Key -> key eq "nonce" or $self->{user}->exists($proctorID);
+			#			unless $self->{user}->exists($proctorID);
+			unless $Key->key eq "nonce" or $self->{user}->exists($proctorID);
 	} else {
 		croak "addKey: user ", $Key->user_id, " not found"
-#			unless $self->{user}->exists($Key->user_id);
-			unless $Key -> key eq "nonce" or $self->{user}->exists($Key->user_id);
+			#			unless $self->{user}->exists($Key->user_id);
+			unless $Key->key eq "nonce" or $self->{user}->exists($Key->user_id);
 	}
 
-	eval {
-		return $self->{key}->add($Key);
-	};
+	eval { return $self->{key}->add($Key); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addKey: key exists (perhaps you meant to use putKey?)";
 	} elsif ($@) {
@@ -805,7 +841,7 @@ sub addKey {
 sub putKey {
 	# PROCTORING - allow comma in keyfields
 	my ($self, $Key) = shift->checkArgs(\@_, qw/VREC:key/);
-	my $rows = $self->{key}->put($Key); # DBI returns 0E0 for 0.
+	my $rows = $self->{key}->put($Key);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putKey: key not found (perhaps you meant to use addKey?)";
 	} else {
@@ -820,7 +856,7 @@ sub deleteKey {
 
 sub deleteAllProctorKeys {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	my $where = [user_id_like => "$userID,%"];
+	my $where = [ user_id_like => "$userID,%" ];
 
 	return $self->{key}->delete_where($where);
 }
@@ -830,14 +866,14 @@ sub deleteAllProctorKeys {
 ################################################################################
 
 BEGIN {
-	*Setting = gen_schema_accessor("setting");
-	*newSetting = gen_new("setting");
-	*countSettingsWhere = gen_count_where("setting");
-	*existsSettingWhere = gen_exists_where("setting");
-	*listSettingsWhere = gen_list_where("setting");
-	*getSettingsWhere = gen_get_records_where("setting");
-	*addSettings = gen_insert_records("setting");
-	*putSettings = gen_update_records("setting");
+	*Setting             = gen_schema_accessor("setting");
+	*newSetting          = gen_new("setting");
+	*countSettingsWhere  = gen_count_where("setting");
+	*existsSettingWhere  = gen_exists_where("setting");
+	*listSettingsWhere   = gen_list_where("setting");
+	*getSettingsWhere    = gen_get_records_where("setting");
+	*addSettings         = gen_insert_records("setting");
+	*putSettings         = gen_update_records("setting");
 	*deleteSettingsWhere = gen_delete_where("setting");
 }
 
@@ -847,13 +883,13 @@ BEGIN {
 
 sub settingExists {
 	my ($self, $name) = @_;
-	return $self->{setting}->exists_where([name_eq=>$name]);
+	return $self->{setting}->exists_where([ name_eq => $name ]);
 }
 
 sub getSettingValue {
 	my ($self, $name) = @_;
 
-	return (map { @$_ } $self->{setting}->get_fields_where(['value'], [name_eq=>$name]))[0];
+	return (map {@$_} $self->{setting}->get_fields_where(['value'], [ name_eq => $name ]))[0];
 }
 
 # we totally don't care if a setting already exists (and in fact i find that
@@ -864,15 +900,15 @@ sub getSettingValue {
 sub setSettingValue {
 	my ($self, $name, $value) = @_;
 	if ($self->settingExists($name)) {
-		return $self->{setting}->update_where({value=>$value}, [name_eq=>$name]);
+		return $self->{setting}->update_where({ value => $value }, [ name_eq => $name ]);
 	} else {
-		return $self->{setting}->insert_fields(['name','value'], [[$name,$value]]);
+		return $self->{setting}->insert_fields([ 'name', 'value' ], [ [ $name, $value ] ]);
 	}
 }
 
 sub deleteSetting {
 	my ($self, $name) = shift->checkArgs(\@_, qw/name/);
-	return $self->{setting}->delete_where([name_eq=>$name]);
+	return $self->{setting}->delete_where([ name_eq => $name ]);
 }
 
 ################################################################################
@@ -884,52 +920,50 @@ sub deleteSetting {
 #    to which assignments can be restricted to or denied from.
 
 BEGIN {
-	*Location = gen_schema_accessor("locations");
-	*newLocation = gen_new("locations");
+	*Location            = gen_schema_accessor("locations");
+	*newLocation         = gen_new("locations");
 	*countLocationsWhere = gen_count_where("locations");
 	*existsLocationWhere = gen_exists_where("locations");
-	*listLocationsWhere = gen_list_where("locations");
-	*getLocationsWhere = gen_get_records_where("locations");
+	*listLocationsWhere  = gen_list_where("locations");
+	*getLocationsWhere   = gen_get_records_where("locations");
 }
 
 sub countLocations { return scalar shift->listLocations(@_) }
 
 sub listLocations {
-	my ( $self ) = shift->checkArgs(\@_);
-	if ( wantarray ) {
-	    return map {@$_} $self->{locations}->get_fields_where(["location_id"]);
+	my ($self) = shift->checkArgs(\@_);
+	if (wantarray) {
+		return map {@$_} $self->{locations}->get_fields_where(["location_id"]);
 	} else {
 		return $self->{locations}->count_where;
 	}
 }
 
 sub existsLocation {
-	my ( $self, $locationID ) = shift->checkArgs(\@_, qw/location_id/);
+	my ($self, $locationID) = shift->checkArgs(\@_, qw/location_id/);
 	return $self->{locations}->exists($locationID);
 }
 
 sub getLocation {
-	my ( $self, $locationID ) = shift->checkArgs(\@_, qw/location_id/);
-	return ( $self->getLocations($locationID) )[0];
+	my ($self, $locationID) = shift->checkArgs(\@_, qw/location_id/);
+	return ($self->getLocations($locationID))[0];
 }
 
 sub getLocations {
-	my ( $self, @locationIDs ) = shift->checkArgs(\@_, qw/location_id*/);
-	return $self->{locations}->gets(map {[$_]} @locationIDs);
+	my ($self, @locationIDs) = shift->checkArgs(\@_, qw/location_id*/);
+	return $self->{locations}->gets(map { [$_] } @locationIDs);
 }
 
 sub getAllLocations {
-	my ( $self ) = shift->checkArgs(\@_);
+	my ($self) = shift->checkArgs(\@_);
 	return $self->{locations}->get_records_where();
 }
 
 sub addLocation {
-	my ( $self, $Location ) = shift->checkArgs(\@_, qw/REC:locations/);
+	my ($self, $Location) = shift->checkArgs(\@_, qw/REC:locations/);
 
-	eval {
-		return $self->{locations}->add($Location);
-	};
-	if ( my $ex = caught WeBWorK::DB::Ex::RecordExists ) {
+	eval { return $self->{locations}->add($Location); };
+	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addLocation: location exists (perhaps you meant to use putLocation?)";
 	} elsif ($@) {
 		die $@;
@@ -939,7 +973,7 @@ sub addLocation {
 sub putLocation {
 	my ($self, $Location) = shift->checkArgs(\@_, qw/REC:locations/);
 	my $rows = $self->{locations}->put($Location);
-	if ( $rows == 0 ) {
+	if ($rows == 0) {
 		croak "putLocation: location not found (perhaps you meant to use addLocation?)";
 	} else {
 		return $rows;
@@ -951,7 +985,7 @@ sub deleteLocation {
 	#    any case where that would happen, but we include it for other
 	#    deletions, so I'll keep it here.
 	my $U = caller eq __PACKAGE__ ? "!" : "";
-	my ( $self, $locationID ) = shift->checkArgs(\@_, "location_id$U");
+	my ($self, $locationID) = shift->checkArgs(\@_, "location_id$U");
 	$self->deleteGlobalSetLocation(undef, $locationID);
 	$self->deleteUserSetLocation(undef, undef, $locationID);
 
@@ -977,21 +1011,21 @@ sub deleteLocation {
 #    with the locations that are used for restrictions.
 
 BEGIN {
-	*LocationAddress = gen_schema_accessor("location_addresses");
-	*newLocationAddress = gen_new("location_addresses");
+	*LocationAddress             = gen_schema_accessor("location_addresses");
+	*newLocationAddress          = gen_new("location_addresses");
 	*countLocationAddressesWhere = gen_count_where("location_addresses");
-	*existsLocationAddressWhere = gen_exists_where("location_addresses");
-	*listLocationAddressesWhere = gen_list_where("location_addresses");
-	*getLocationAddressesWhere = gen_get_records_where("location_addresses");
+	*existsLocationAddressWhere  = gen_exists_where("location_addresses");
+	*listLocationAddressesWhere  = gen_list_where("location_addresses");
+	*getLocationAddressesWhere   = gen_get_records_where("location_addresses");
 }
 
 sub countAddressLocations { return scalar shift->listAddressLocations(@_) }
 
 sub listAddressLocations {
 	my ($self, $ipmask) = shift->checkArgs(\@_, qw/ip_mask/);
-	my $where = [ip_mask_eq => $ipmask];
-	if ( wantarray ) {
-		return map {@$_} $self->{location_addresses}->get_fields_where(["location_id"],$where);
+	my $where = [ ip_mask_eq => $ipmask ];
+	if (wantarray) {
+		return map {@$_} $self->{location_addresses}->get_fields_where(["location_id"], $where);
 	} else {
 		return $self->{location_addresses}->count_where($where);
 	}
@@ -1001,9 +1035,9 @@ sub countLocationAddresses { return scalar shift->listLocationAddresses(@_) }
 
 sub listLocationAddresses {
 	my ($self, $locationID) = shift->checkArgs(\@_, qw/location_id/);
-	my $where = [location_id_eq => $locationID];
-	if ( wantarray ) {
-		return map {@$_} $self->{location_addresses}->get_fields_where(["ip_mask"],$where);
+	my $where = [ location_id_eq => $locationID ];
+	if (wantarray) {
+		return map {@$_} $self->{location_addresses}->get_fields_where(["ip_mask"], $where);
 	} else {
 		return $self->{location_addresses}->count_where($where);
 	}
@@ -1019,7 +1053,7 @@ sub existsLocationAddress {
 
 sub getAllLocationAddresses {
 	my ($self, $locationID) = shift->checkArgs(\@_, qw/location_id/);
-	my $where = [location_id_eq => $locationID];
+	my $where = [ location_id_eq => $locationID ];
 	return $self->{location_addresses}->get_records_where($where);
 }
 
@@ -1027,9 +1061,7 @@ sub addLocationAddress {
 	my ($self, $LocationAddress) = shift->checkArgs(\@_, qw/REC:location_addresses/);
 	croak "addLocationAddress: location ", $LocationAddress->location_id, " not found"
 		unless $self->{locations}->exists($LocationAddress->location_id);
-	eval {
-		return $self->{location_addresses}->add($LocationAddress);
-	};
+	eval { return $self->{location_addresses}->add($LocationAddress); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addLocationAddress: location address exists (perhaps you meant to use putLocationAddress?)";
 	} elsif ($@) {
@@ -1040,7 +1072,7 @@ sub addLocationAddress {
 sub putLocationAddress {
 	my ($self, $LocationAddress) = shift->checkArgs(\@_, qw/REC:location_addresses/);
 	my $rows = $self->{location_addresses}->put($LocationAddress);
-	if ( $rows == 0 ) {
+	if ($rows == 0) {
 		croak "putLocationAddress: location address not found (perhaps you meant to use addLocationAddress?)";
 	} else {
 		return $rows;
@@ -1054,24 +1086,23 @@ sub deleteLocationAddress {
 	return $self->{location_addresses}->delete($locationID, $ipmask);
 }
 
-
 ################################################################################
 # past_answers functions
 ################################################################################
 
 BEGIN {
-	*PastAnswer = gen_schema_accessor("past_answer");
-	*newPastAnswer = gen_new("past_answer");
-	*countPastAnswersWhere = gen_count_where("past_answer");
+	*PastAnswer             = gen_schema_accessor("past_answer");
+	*newPastAnswer          = gen_new("past_answer");
+	*countPastAnswersWhere  = gen_count_where("past_answer");
 	*existsPastAnswersWhere = gen_exists_where("past_answer");
-	*listPastAnswersWhere = gen_list_where("past_answer");
-	*getPastAnswersWhere = gen_get_records_where("past_answer");
+	*listPastAnswersWhere   = gen_list_where("past_answer");
+	*getPastAnswersWhere    = gen_get_records_where("past_answer");
 }
 
 sub countProblemPastAnswers { return scalar shift->listPastAnswers(@_) }
 
 sub listProblemPastAnswers {
-        my ($self, $courseID, $userID, $setID, $problemID);
+	my ($self, $courseID, $userID, $setID, $problemID);
 	$self = shift;
 	$self->checkArgs(\@_, qw/course_id? user_id set_id problem_id/);
 
@@ -1079,26 +1110,25 @@ sub listProblemPastAnswers {
 	#id.  This is ok becaus the table is course specific.
 	my $where;
 	if ($#_ == 3) {
-	    ($courseID, $userID, $setID, $problemID) = @_;
-	    $where = [course_id_eq_user_id_eq_set_id_eq_problem_id_eq => $courseID,$userID,$setID,$problemID];
+		($courseID, $userID, $setID, $problemID) = @_;
+		$where = [ course_id_eq_user_id_eq_set_id_eq_problem_id_eq => $courseID, $userID, $setID, $problemID ];
 
 	} else {
-	    ($userID, $setID, $problemID) = @_;
-	    $where = [user_id_eq_set_id_eq_problem_id_eq => $userID,$setID,$problemID];
+		($userID, $setID, $problemID) = @_;
+		$where = [ user_id_eq_set_id_eq_problem_id_eq => $userID, $setID, $problemID ];
 	}
 
-        my $order = [ 'answer_id' ];
+	my $order = ['answer_id'];
 
 	if (wantarray) {
-		return map { @$_ } $self->{past_answer}->get_fields_where(["answer_id"], $where, $order);
+		return map {@$_} $self->{past_answer}->get_fields_where(["answer_id"], $where, $order);
 	} else {
 		return $self->{past_answer}->count_where($where);
 	}
 }
 
-
 sub latestProblemPastAnswer {
-        my ($self, $courseID, $userID, $setID, $problemID);
+	my ($self, $courseID, $userID, $setID, $problemID);
 	$self = shift;
 	$self->checkArgs(\@_, qw/course_id? user_id set_id problem_id/);
 
@@ -1106,18 +1136,17 @@ sub latestProblemPastAnswer {
 	#id.  This is ok becaus the table is course specific.
 	my @answerIDs;
 	if ($#_ == 3) {
-	    ($courseID, $userID, $setID, $problemID) = @_;
-	    @answerIDs = $self->listProblemPastAnswers($courseID,$userID,$setID,$problemID);
+		($courseID, $userID, $setID, $problemID) = @_;
+		@answerIDs = $self->listProblemPastAnswers($courseID, $userID, $setID, $problemID);
 
 	} else {
-	    ($userID, $setID, $problemID) = @_;
-	    @answerIDs = $self->listProblemPastAnswers($userID,$setID,$problemID);
+		($userID, $setID, $problemID) = @_;
+		@answerIDs = $self->listProblemPastAnswers($userID, $setID, $problemID);
 	}
 
 	#array should already be returned from lowest id to greatest.  Latest answer is greatest
 	return $answerIDs[$#answerIDs];
 }
-
 
 sub existsPastAnswer {
 	my ($self, $answerID) = shift->checkArgs(\@_, qw/answer_id/);
@@ -1126,7 +1155,7 @@ sub existsPastAnswer {
 
 sub getPastAnswer {
 	my ($self, $answerID) = shift->checkArgs(\@_, qw/answer_id/);
-	return ( $self->getPastAnswers([$answerID]) )[0];
+	return ($self->getPastAnswers([$answerID]))[0];
 }
 
 sub getPastAnswers {
@@ -1137,20 +1166,16 @@ sub getPastAnswers {
 sub addPastAnswer {
 	my ($self, $pastAnswer) = shift->checkArgs(\@_, qw/REC:past_answer/);
 
-#       we dont have a course table yet but when we do we should check this
+	#       we dont have a course table yet but when we do we should check this
 
-#	croak "addPastAnswert: course ", $pastAnswer->course_id, " not found"
-#		unless $self->{course}->exists($pastAnswer->course_id);
+	#	croak "addPastAnswert: course ", $pastAnswer->course_id, " not found"
+	#		unless $self->{course}->exists($pastAnswer->course_id);
 
 	croak "addPastAnswert: user problem ", $pastAnswer->user_id, " ",
-              $pastAnswer->set_id, " ", $pastAnswer->problem_id, " not found"
-		unless 	$self->{problem_user}->exists($pastAnswer->user_id,
-						      $pastAnswer->set_id,
-						      $pastAnswer->problem_id);
+		$pastAnswer->set_id, " ", $pastAnswer->problem_id, " not found"
+		unless $self->{problem_user}->exists($pastAnswer->user_id, $pastAnswer->set_id, $pastAnswer->problem_id);
 
-	eval {
-		return $self->{past_answer}->add($pastAnswer);
-	};
+	eval { return $self->{past_answer}->add($pastAnswer); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addPastAnswer: past answer exists (perhaps you meant to use putPastAnswer?)";
 	} elsif ($@) {
@@ -1160,7 +1185,7 @@ sub addPastAnswer {
 
 sub putPastAnswer {
 	my ($self, $pastAnswer) = shift->checkArgs(\@_, qw/REC:past_answer/);
-	my $rows = $self->{past_answer}->put($pastAnswer); # DBI returns 0E0 for 0.
+	my $rows = $self->{past_answer}->put($pastAnswer);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putPastAnswer: past answer not found (perhaps you meant to use addPastAnswer?)";
 	} else {
@@ -1175,18 +1200,17 @@ sub deletePastAnswer {
 	return $self->{past_answer}->delete($answer_id);
 }
 
-
 ################################################################################
 # set functions
 ################################################################################
 
 BEGIN {
-	*GlobalSet = gen_schema_accessor("set");
-	*newGlobalSet = gen_new("set");
+	*GlobalSet            = gen_schema_accessor("set");
+	*newGlobalSet         = gen_new("set");
 	*countGlobalSetsWhere = gen_count_where("set");
 	*existsGlobalSetWhere = gen_exists_where("set");
-	*listGlobalSetsWhere = gen_list_where("set");
-	*getGlobalSetsWhere = gen_get_records_where("set");
+	*listGlobalSetsWhere  = gen_list_where("set");
+	*getGlobalSetsWhere   = gen_get_records_where("set");
 }
 
 sub countGlobalSets { return scalar shift->listGlobalSets(@_) }
@@ -1194,7 +1218,7 @@ sub countGlobalSets { return scalar shift->listGlobalSets(@_) }
 sub listGlobalSets {
 	my ($self) = shift->checkArgs(\@_);
 	if (wantarray) {
-		return map { @$_ } $self->{set}->get_fields_where(["set_id"]);
+		return map {@$_} $self->{set}->get_fields_where(["set_id"]);
 	} else {
 		return $self->{set}->count_where;
 	}
@@ -1207,7 +1231,7 @@ sub existsGlobalSet {
 
 sub getGlobalSet {
 	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
-	return ( $self->getGlobalSets($setID) )[0];
+	return ($self->getGlobalSets($setID))[0];
 }
 
 sub getGlobalSets {
@@ -1231,7 +1255,7 @@ sub addGlobalSet {
 
 sub putGlobalSet {
 	my ($self, $GlobalSet) = shift->checkArgs(\@_, qw/REC:set/);
-	my $rows = $self->{set}->put($GlobalSet); # DBI returns 0E0 for 0.
+	my $rows = $self->{set}->put($GlobalSet);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putGlobalSet: global set not found (perhaps you meant to use addGlobalSet?)";
 	} else {
@@ -1254,12 +1278,12 @@ sub deleteGlobalSet {
 ###############################################################
 
 BEGIN {
-	*Achievement = gen_schema_accessor("achievement");
-	*newAchievement = gen_new("achievement");
+	*Achievement            = gen_schema_accessor("achievement");
+	*newAchievement         = gen_new("achievement");
 	*countAchievementsWhere = gen_count_where("achievement");
 	*existsAchievementWhere = gen_exists_where("achievement");
-	*listAchievementsWhere = gen_list_where("achievement");
-	*getAchievementsWhere = gen_get_records_where("achievement");
+	*listAchievementsWhere  = gen_list_where("achievement");
+	*getAchievementsWhere   = gen_get_records_where("achievement");
 }
 
 sub countAchievements { return scalar shift->listAchievements(@_) }
@@ -1267,7 +1291,7 @@ sub countAchievements { return scalar shift->listAchievements(@_) }
 sub listAchievements {
 	my ($self) = shift->checkArgs(\@_);
 	if (wantarray) {
-		return map { @$_ } $self->{achievement}->get_fields_where(["achievement_id"]);
+		return map {@$_} $self->{achievement}->get_fields_where(["achievement_id"]);
 	} else {
 		return $self->{achievement}->count_where;
 	}
@@ -1280,7 +1304,7 @@ sub existsAchievement {
 
 sub getAchievement {
 	my ($self, $achievementID) = shift->checkArgs(\@_, qw/achievement_id/);
-	return ( $self->getAchievements($achievementID) )[0];
+	return ($self->getAchievements($achievementID))[0];
 }
 
 sub getAchievements {
@@ -1304,7 +1328,7 @@ sub addAchievement {
 
 sub putAchievement {
 	my ($self, $Achievement) = shift->checkArgs(\@_, qw/REC:achievement/);
-	my $rows = $self->{achievement}->put($Achievement); # DBI returns 0E0 for 0.
+	my $rows = $self->{achievement}->put($Achievement);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putAchievement: achievement not found (perhaps you meant to use addAchievement?)";
 	} else {
@@ -1325,12 +1349,12 @@ sub deleteAchievement {
 ###############################################################
 
 BEGIN {
-	*GlobalUserAchievement = gen_schema_accessor("global_user_achievement");
-	*newGlobalUserAchievement = gen_new("global_user_achievement");
+	*GlobalUserAchievement            = gen_schema_accessor("global_user_achievement");
+	*newGlobalUserAchievement         = gen_new("global_user_achievement");
 	*countGlobalUserAchievementsWhere = gen_count_where("global_user_achievement");
 	*existsGlobalUserAchievementWhere = gen_exists_where("global_user_achievement");
-	*listGlobalUserAchievementsWhere = gen_list_where("global_user_achievement");
-	*getGlobalUserAchievementsWhere = gen_get_records_where("global_user_achievement");
+	*listGlobalUserAchievementsWhere  = gen_list_where("global_user_achievement");
+	*getGlobalUserAchievementsWhere   = gen_get_records_where("global_user_achievement");
 }
 
 sub countGlobalUserAchievements { return scalar shift->listGlobalUserAchievements(@_) }
@@ -1338,7 +1362,7 @@ sub countGlobalUserAchievements { return scalar shift->listGlobalUserAchievement
 sub listGlobalUserAchievements {
 	my ($self) = shift->checkArgs(\@_);
 	if (wantarray) {
-		return map { @$_ } $self->{global_user_achievement}->get_fields_where(["user_id"]);
+		return map {@$_} $self->{global_user_achievement}->get_fields_where(["user_id"]);
 	} else {
 		return $self->{global_user_achievement}->count_where;
 	}
@@ -1351,7 +1375,7 @@ sub existsGlobalUserAchievement {
 
 sub getGlobalUserAchievement {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	return ( $self->getGlobalUserAchievements($userID) )[0];
+	return ($self->getGlobalUserAchievements($userID))[0];
 }
 
 sub getGlobalUserAchievements {
@@ -1364,7 +1388,7 @@ sub addGlobalUserAchievement {
 
 	eval {
 
-	    return $self->{global_user_achievement}->add($globalUserAchievement);
+		return $self->{global_user_achievement}->add($globalUserAchievement);
 	};
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addGlobalUserAchievement: user achievement exists (perhaps you meant to use putGlobalUserAchievement?)";
@@ -1375,9 +1399,10 @@ sub addGlobalUserAchievement {
 
 sub putGlobalUserAchievement {
 	my ($self, $globalUserAchievement) = shift->checkArgs(\@_, qw/REC:global_user_achievement/);
-	my $rows = $self->{global_user_achievement}->put($globalUserAchievement); # DBI returns 0E0 for 0.
+	my $rows = $self->{global_user_achievement}->put($globalUserAchievement);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
-		croak "putGlobalUserAchievement: user achievement not found (perhaps you meant to use addGlobalUserAchievement?)";
+		croak
+			"putGlobalUserAchievement: user achievement not found (perhaps you meant to use addGlobalUserAchievement?)";
 	} else {
 		return $rows;
 	}
@@ -1390,37 +1415,36 @@ sub deleteGlobalUserAchievement {
 
 	my @achievements = $self->listUserAchievements($userID);
 	foreach my $achievement (@achievements) {
-	    $self->deleteUserAchievement($userID,$achievement);
+		$self->deleteUserAchievement($userID, $achievement);
 	}
 
-	if ($self->{global_user_achievement}){
+	if ($self->{global_user_achievement}) {
 		return $self->{global_user_achievement}->delete($userID);
 	} else {
 		return 0;
 	}
 }
 
-
 ################################################################################
 # achievement_user functions
 ################################################################################
 
 BEGIN {
-	*UserAchievement = gen_schema_accessor("achievement_user");
-	*newUserAchievement = gen_new("achievement_user");
+	*UserAchievement            = gen_schema_accessor("achievement_user");
+	*newUserAchievement         = gen_new("achievement_user");
 	*countUserAchievementsWhere = gen_count_where("achievement_user");
 	*existsUserAchievementWhere = gen_exists_where("achievement_user");
-	*listUserAchievementsWhere = gen_list_where("achievement_user");
-	*getUserAchievementsWhere = gen_get_records_where("achievement_user");
+	*listUserAchievementsWhere  = gen_list_where("achievement_user");
+	*getUserAchievementsWhere   = gen_get_records_where("achievement_user");
 }
 
 sub countAchievementUsers { return scalar shift->listAchievementUsers(@_) }
 
 sub listAchievementUsers {
 	my ($self, $achievementID) = shift->checkArgs(\@_, qw/achievement_id/);
-	my $where = [achievement_id_eq => $achievementID];
+	my $where = [ achievement_id_eq => $achievementID ];
 	if (wantarray) {
-		return map { @$_ } $self->{achievement_user}->get_fields_where(["user_id"], $where);
+		return map {@$_} $self->{achievement_user}->get_fields_where(["user_id"], $where);
 	} else {
 		return $self->{achievement_user}->count_where($where);
 	}
@@ -1430,9 +1454,9 @@ sub countUserAchievements { return scalar shift->listUserAchievements(@_) }
 
 sub listUserAchievements {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	my $where = [user_id_eq => $userID];
+	my $where = [ user_id_eq => $userID ];
 	if (wantarray) {
-		return map { @$_ } $self->{achievement_user}->get_fields_where(["achievement_id"], $where);
+		return map {@$_} $self->{achievement_user}->get_fields_where(["achievement_id"], $where);
 	} else {
 		return $self->{achievement_user}->count_where($where);
 	}
@@ -1445,7 +1469,7 @@ sub existsUserAchievement {
 
 sub getUserAchievement {
 	my ($self, $userID, $achievementID) = shift->checkArgs(\@_, qw/user_id achievement_id/);
-	return ( $self->getUserAchievements([$userID, $achievementID]) )[0];
+	return ($self->getUserAchievements([ $userID, $achievementID ]))[0];
 }
 
 sub getUserAchievements {
@@ -1461,9 +1485,7 @@ sub addUserAchievement {
 	croak "addUserAchievement: achievement ", $UserAchievement->achievement_id, " not found"
 		unless $self->{achievement}->exists($UserAchievement->achievement_id);
 
-	eval {
-		return $self->{achievement_user}->add($UserAchievement);
-	};
+	eval { return $self->{achievement_user}->add($UserAchievement); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addUserAchievement: user achievement exists (perhaps you meant to use putUserAchievement?)";
 	} elsif ($@) {
@@ -1473,7 +1495,7 @@ sub addUserAchievement {
 
 sub putUserAchievement {
 	my ($self, $UserAchievement) = shift->checkArgs(\@_, qw/REC:achievement_user/);
-	my $rows = $self->{achievement_user}->put($UserAchievement); # DBI returns 0E0 for 0.
+	my $rows = $self->{achievement_user}->put($UserAchievement);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putUserAchievement: user achievement not found (perhaps you meant to use addUserAchievement?)";
 	} else {
@@ -1493,21 +1515,21 @@ sub deleteUserAchievement {
 ################################################################################
 
 BEGIN {
-	*UserSet = gen_schema_accessor("set_user");
-	*newUserSet = gen_new("set_user");
+	*UserSet            = gen_schema_accessor("set_user");
+	*newUserSet         = gen_new("set_user");
 	*countUserSetsWhere = gen_count_where("set_user");
 	*existsUserSetWhere = gen_exists_where("set_user");
-	*listUserSetsWhere = gen_list_where("set_user");
-	*getUserSetsWhere = gen_get_records_where("set_user");
+	*listUserSetsWhere  = gen_list_where("set_user");
+	*getUserSetsWhere   = gen_get_records_where("set_user");
 }
 
 sub countSetUsers { return scalar shift->listSetUsers(@_) }
 
 sub listSetUsers {
 	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
-	my $where = [set_id_eq => $setID];
+	my $where = [ set_id_eq => $setID ];
 	if (wantarray) {
-		return map { @$_ } $self->{set_user}->get_fields_where(["user_id"], $where);
+		return map {@$_} $self->{set_user}->get_fields_where(["user_id"], $where);
 	} else {
 		return $self->{set_user}->count_where($where);
 	}
@@ -1517,9 +1539,9 @@ sub countUserSets { return scalar shift->listUserSets(@_) }
 
 sub listUserSets {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	my $where = [user_id_eq => $userID];
+	my $where = [ user_id_eq => $userID ];
 	if (wantarray) {
-		return map { @$_ } $self->{set_user}->get_fields_where(["set_id"], $where);
+		return map {@$_} $self->{set_user}->get_fields_where(["set_id"], $where);
 	} else {
 		return $self->{set_user}->count_where($where);
 	}
@@ -1532,7 +1554,7 @@ sub existsUserSet {
 
 sub getUserSet {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	return ( $self->getUserSets([$userID, $setID]) )[0];
+	return ($self->getUserSets([ $userID, $setID ]))[0];
 }
 
 sub getUserSets {
@@ -1549,9 +1571,7 @@ sub addUserSet {
 		unless $self->{user}->exists($UserSet->user_id);
 	croak "addUserSet: set ", $UserSet->set_id, " not found"
 		unless $self->{set}->exists($UserSet->set_id);
-	eval {
-		return $self->{set_user}->add($UserSet);
-	};
+	eval { return $self->{set_user}->add($UserSet); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addUserSet: user set exists (perhaps you meant to use putUserSet?)";
 	} elsif ($@) {
@@ -1559,11 +1579,46 @@ sub addUserSet {
 	}
 }
 
+# Used to add a list of UserSet records to the DB in less DB calls.
+sub addMultipleUserSets {
+	my ($self, @userSetList) = @_;
+
+	# Do a single checkArgs call, all records in the list were made in the same manner
+	$self->checkArgs([ $userSetList[0] ], qw/REC:set_user/);
+
+	my @badUserIDs;
+	my %badSetIDs;
+	my @toInsert;
+	for my $userSet (@userSetList) {
+		if ($self->{user}->exists($userSet->user_id)) {
+			if ($self->{set}->exists($userSet->set_id)) {
+				# This record is OK
+				push(@toInsert, $userSet);
+			} else {
+				$badSetIDs{ $userSet->set_id } = 1;
+			}
+		} else {
+			push(@badUserIDs, join("", 'user ', $userSet->user_id, " not found, cannot add set ", $userSet->set_id));
+		}
+	}
+	my $badSetIDerrorMsg =
+		keys(%badSetIDs) ? join(" ", 'bad set IDs seen:', keys(%badSetIDs)) : "";
+
+	eval { return $self->{set_user}->insert_records([@toInsert]); };
+	if ($@) {
+		croak join("\n", "addMultipleUserSets errors:\nDB call error: $@", $badSetIDerrorMsg, @badUserIDs);
+	}
+
+	if (@badUserIDs || keys(@badUserIDs)) {
+		croak join("\n", "addMultipleUserSets errors:\n", $badSetIDerrorMsg, @badUserIDs);
+	}
+}
+
 # the code from putUserSet() is duplicated in large part in the following
 # putVersionedUserSet; c.f. that routine
 sub putUserSet {
 	my ($self, $UserSet) = shift->checkArgs(\@_, qw/REC:set_user/);
-	my $rows = $self->{set_user}->put($UserSet); # DBI returns 0E0 for 0.
+	my $rows = $self->{set_user}->put($UserSet);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putUserSet: user set not found (perhaps you meant to use addUserSet?)";
 	} else {
@@ -1600,7 +1655,7 @@ sub existsMergedSet {
 
 sub getMergedSet {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	return ( $self->getMergedSets([$userID, $setID]) )[0];
+	return ($self->getMergedSets([ $userID, $setID ]))[0];
 }
 
 sub getMergedSets {
@@ -1613,12 +1668,12 @@ sub getMergedSets {
 ################################################################################
 
 BEGIN {
-	*SetVersion = gen_schema_accessor("set_version");
-	*newSetVersion = gen_new("set_version");
+	*SetVersion            = gen_schema_accessor("set_version");
+	*newSetVersion         = gen_new("set_version");
 	*countSetVersionsWhere = gen_count_where("set_version");
 	*existsSetVersionWhere = gen_exists_where("set_version");
-	*listSetVersionsWhere = gen_list_where("set_version");
-	*getSetVersionsWhere = gen_get_records_where("set_version");
+	*listSetVersionsWhere  = gen_list_where("set_version");
+	*getSetVersionsWhere   = gen_get_records_where("set_version");
 }
 
 # versioned analog of countUserSets
@@ -1627,10 +1682,10 @@ sub countSetVersions { return scalar shift->listSetVersions(@_) }
 # versioned analog of listUserSets
 sub listSetVersions {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	my $where = [user_id_eq_set_id_eq => $userID,$setID];
-	my $order = [ 'version_id' ];
+	my $where = [ user_id_eq_set_id_eq => $userID, $setID ];
+	my $order = ['version_id'];
 	if (wantarray) {
-		return map { @$_ } $self->{set_version}->get_fields_where(["version_id"], $where, $order);
+		return map {@$_} $self->{set_version}->get_fields_where(["version_id"], $where, $order);
 	} else {
 		return $self->{set_version}->count_where($where);
 	}
@@ -1645,7 +1700,7 @@ sub existsSetVersion {
 # versioned analog of getUserSet
 sub getSetVersion {
 	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
-	return ( $self->getSetVersions([$userID, $setID, $versionID]) )[0];
+	return ($self->getSetVersions([ $userID, $setID, $versionID ]))[0];
 }
 
 # versioned analog of getUserSets
@@ -1661,9 +1716,7 @@ sub addSetVersion {
 	croak "addSetVersion: set ", $SetVersion->set_id, " not found for user ", $SetVersion->user_id
 		unless $self->{set_user}->exists($SetVersion->user_id, $SetVersion->set_id);
 
-	eval {
-		return $self->{set_version}->add($SetVersion);
-	};
+	eval { return $self->{set_version}->add($SetVersion); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addSetVersion: set version exists (perhaps you meant to use putSetVersion?)";
 	} elsif ($@) {
@@ -1674,7 +1727,7 @@ sub addSetVersion {
 # versioned analog of putUserSet
 sub putSetVersion {
 	my ($self, $SetVersion) = shift->checkArgs(\@_, qw/REC:set_version/);
-	my $rows = $self->{set_version}->put($SetVersion); # DBI returns 0E0 for 0.
+	my $rows = $self->{set_version}->put($SetVersion);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putSetVersion: set version not found (perhaps you meant to use addSetVersion?)";
 	} else {
@@ -1711,7 +1764,7 @@ sub existsMergedSetVersion {
 
 sub getMergedSetVersion {
 	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
-	return ( $self->getMergedSetVersions([$userID, $setID, $versionID]) )[0];
+	return ($self->getMergedSetVersions([ $userID, $setID, $versionID ]))[0];
 }
 
 sub getMergedSetVersions {
@@ -1728,56 +1781,54 @@ sub getMergedSetVersions {
 #    restricted or denied.
 
 BEGIN {
-	*GlobalSetLocation = gen_schema_accessor("set_locations");
-	*newGlobalSetLocation = gen_new("set_locations");
+	*GlobalSetLocation            = gen_schema_accessor("set_locations");
+	*newGlobalSetLocation         = gen_new("set_locations");
 	*countGlobalSetLocationsWhere = gen_count_where("set_locations");
 	*existsGlobalSetLocationWhere = gen_exists_where("set_locations");
-	*listGlobalSetLocationsWhere = gen_list_where("set_locations");
-	*getGlobalSetLocationsWhere = gen_get_records_where("set_locations");
+	*listGlobalSetLocationsWhere  = gen_list_where("set_locations");
+	*getGlobalSetLocationsWhere   = gen_get_records_where("set_locations");
 }
 
 sub countGlobalSetLocations { return scalar shift->listGlobalSetLocations(@_) }
 
 sub listGlobalSetLocations {
-	my ( $self, $setID ) = shift->checkArgs(\@_, qw/set_id/);
-	my $where = [set_id_eq => $setID];
-	if ( wantarray ) {
+	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
+	my $where = [ set_id_eq => $setID ];
+	if (wantarray) {
 		my $order = ['location_id'];
-		return map { @$_ } $self->{set_locations}->get_fields_where(["location_id"], $where, $order);
+		return map {@$_} $self->{set_locations}->get_fields_where(["location_id"], $where, $order);
 	} else {
-		return $self->{set_user}->count_where( $where );
+		return $self->{set_user}->count_where($where);
 	}
 }
 
 sub existsGlobalSetLocation {
-	my ( $self, $setID, $locationID ) = shift->checkArgs(\@_, qw/set_id location_id/);
-	return $self->{set_locations}->exists( $setID, $locationID );
+	my ($self, $setID, $locationID) = shift->checkArgs(\@_, qw/set_id location_id/);
+	return $self->{set_locations}->exists($setID, $locationID);
 }
 
 sub getGlobalSetLocation {
-	my ( $self, $setID, $locationID ) = shift->checkArgs(\@_, qw/set_id location_id/);
-	return ( $self->getGlobalSetLocations([$setID, $locationID]) )[0];
+	my ($self, $setID, $locationID) = shift->checkArgs(\@_, qw/set_id location_id/);
+	return ($self->getGlobalSetLocations([ $setID, $locationID ]))[0];
 }
 
 sub getGlobalSetLocations {
-	my ( $self, @locationIDs ) = shift->checkArgsRefList(\@_, qw/set_id location_id/);
+	my ($self, @locationIDs) = shift->checkArgsRefList(\@_, qw/set_id location_id/);
 	return $self->{set_locations}->gets(@locationIDs);
 }
 
 sub getAllGlobalSetLocations {
-	my ( $self, $setID ) = shift->checkArgs(\@_, qw/set_id/);
-	my $where = [set_id_eq => $setID];
-	return $self->{set_locations}->get_records_where( $where );
+	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
+	my $where = [ set_id_eq => $setID ];
+	return $self->{set_locations}->get_records_where($where);
 }
 
 sub addGlobalSetLocation {
-	my ( $self, $GlobalSetLocation ) = shift->checkArgs(\@_, qw/REC:set_locations/);
+	my ($self, $GlobalSetLocation) = shift->checkArgs(\@_, qw/REC:set_locations/);
 	croak "addGlobalSetLocation: set ", $GlobalSetLocation->set_id, " not found"
 		unless $self->{set}->exists($GlobalSetLocation->set_id);
 
-	eval {
-		return $self->{set_locations}->add($GlobalSetLocation);
-	};
+	eval { return $self->{set_locations}->add($GlobalSetLocation); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addGlobalSetLocation: global set_location exists (perhaps you meant to use putGlobalSetLocation?)";
 	} elsif ($@) {
@@ -1787,7 +1838,7 @@ sub addGlobalSetLocation {
 
 sub putGlobalSetLocation {
 	my ($self, $GlobalSetLocation) = shift->checkArgs(\@_, qw/REC:set_locations/);
-	my $rows = $self->{set_locations}->put($GlobalSetLocation); # DBI returns 0E0 for 0.
+	my $rows = $self->{set_locations}->put($GlobalSetLocation);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putGlobalSetLocation: global problem not found (perhaps you meant to use addGlobalSetLocation?)";
 	} else {
@@ -1812,21 +1863,21 @@ sub deleteGlobalSetLocation {
 #    global set
 
 BEGIN {
-	*UserSetLocation = gen_schema_accessor("set_locations_user");
-	*newUserSetLocation = gen_new("set_locations_user");
-	*countUserSetLocationWhere = gen_count_where("set_locations_user");
+	*UserSetLocation            = gen_schema_accessor("set_locations_user");
+	*newUserSetLocation         = gen_new("set_locations_user");
+	*countUserSetLocationWhere  = gen_count_where("set_locations_user");
 	*existsUserSetLocationWhere = gen_exists_where("set_locations_user");
-	*listUserSetLocationsWhere = gen_list_where("set_locations_user");
-	*getUserSetLocationsWhere = gen_get_records_where("set_locations_user");
+	*listUserSetLocationsWhere  = gen_list_where("set_locations_user");
+	*getUserSetLocationsWhere   = gen_get_records_where("set_locations_user");
 }
 
 sub countSetLocationUsers { return scalar shift->listSetLocationUsers(@_) }
 
 sub listSetLocationUsers {
 	my ($self, $setID, $locationID) = shift->checkArgs(\@_, qw/set_id location_id/);
-	my $where = [set_id_eq_location_id_eq => $setID,$locationID];
+	my $where = [ set_id_eq_location_id_eq => $setID, $locationID ];
 	if (wantarray) {
-		return map { @$_ } $self->{set_locations_user}->get_fields_where(["user_id"], $where);
+		return map {@$_} $self->{set_locations_user}->get_fields_where(["user_id"], $where);
 	} else {
 		return $self->{set_locations_user}->count_where($where);
 	}
@@ -1836,9 +1887,9 @@ sub countUserSetLocations { return scalar shift->listUserSetLocations(@_) }
 
 sub listUserSetLocations {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	my $where = [user_id_eq_set_id_eq => $userID,$setID];
+	my $where = [ user_id_eq_set_id_eq => $userID, $setID ];
 	if (wantarray) {
-		return map { @$_ } $self->{set_locations_user}->get_fields_where(["location_id"], $where);
+		return map {@$_} $self->{set_locations_user}->get_fields_where(["location_id"], $where);
 	} else {
 		return $self->{set_locations_user}->count_where($where);
 	}
@@ -1846,13 +1897,13 @@ sub listUserSetLocations {
 
 sub existsUserSetLocation {
 	my ($self, $userID, $setID, $locationID) = shift->checkArgs(\@_, qw/user_id set_id location_id/);
-	return $self->{set_locations_user}->exists($userID,$setID,$locationID);
+	return $self->{set_locations_user}->exists($userID, $setID, $locationID);
 }
 
 # FIXME: we won't ever use this because all fields are key fields
 sub getUserSetLocation {
 	my ($self, $userID, $setID, $locationID) = shift->checkArgs(\@_, qw/user_id set_id location_id/);
-	return( $self->getUserSetLocations([$userID, $setID, $locationID]) )[0];
+	return ($self->getUserSetLocations([ $userID, $setID, $locationID ]))[0];
 }
 
 # FIXME: we won't ever use this because all fields are key fields
@@ -1863,7 +1914,7 @@ sub getUserSetLocations {
 
 sub getAllUserSetLocations {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	my $where = [user_id_eq_set_id_eq => $userID,$setID];
+	my $where = [ user_id_eq_set_id_eq => $userID, $setID ];
 	return $self->{set_locations_user}->get_records_where($where);
 }
 
@@ -1871,12 +1922,11 @@ sub addUserSetLocation {
 	# VERSIONING - accept versioned ID fields
 	my ($self, $UserSetLocation) = shift->checkArgs(\@_, qw/VREC:set_locations_user/);
 
-	croak "addUserSetLocation: user set ", $UserSetLocation->set_id, " for user ", $UserSetLocation->user_id, " not found"
+	croak "addUserSetLocation: user set ", $UserSetLocation->set_id, " for user ", $UserSetLocation->user_id,
+		" not found"
 		unless $self->{set_user}->exists($UserSetLocation->user_id, $UserSetLocation->set_id);
 
-	eval {
-		return $self->{set_locations_user}->add($UserSetLocation);
-	};
+	eval { return $self->{set_locations_user}->add($UserSetLocation); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addUserSetLocation: user set_location exists (perhaps you meant to use putUserSetLocation?)";
 	} elsif ($@) {
@@ -1890,7 +1940,7 @@ sub putUserSetLocation {
 	my $V = $_[2] ? "V" : "";
 	my ($self, $UserSetLocation, undef) = shift->checkArgs(\@_, "${V}REC:set_locations_user", "versioned_ok!?");
 
-	my $rows = $self->{set_locations_user}->put($UserSetLocation); # DBI returns 0E0 for 0.
+	my $rows = $self->{set_locations_user}->put($UserSetLocation);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putUserSetLocation: user set location not found (perhaps you meant to use addUserSetLocation?)";
 	} else {
@@ -1902,7 +1952,7 @@ sub deleteUserSetLocation {
 	# userID, setID, and locationID can be undefined if being called from this package
 	my $U = caller eq __PACKAGE__ ? "!" : "";
 	my ($self, $userID, $setID, $locationID) = shift->checkArgs(\@_, "user_id$U", "set_id$U", "set_locations_id$U");
-	return $self->{set_locations_user}->delete($userID,$setID,$locationID);
+	return $self->{set_locations_user}->delete($userID, $setID, $locationID);
 }
 
 ################################################################################
@@ -1917,34 +1967,33 @@ sub deleteUserSetLocation {
 sub getAllMergedSetLocations {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
 
-	if ( $self->countUserSetLocations($userID, $setID) ) {
-		return $self->getAllUserSetLocations( $userID, $setID );
+	if ($self->countUserSetLocations($userID, $setID)) {
+		return $self->getAllUserSetLocations($userID, $setID);
 	} else {
-		return $self->getAllGlobalSetLocations( $setID );
+		return $self->getAllGlobalSetLocations($setID);
 	}
 }
-
 
 ################################################################################
 # problem functions
 ################################################################################
 
 BEGIN {
-	*GlobalProblem = gen_schema_accessor("problem");
-	*newGlobalProblem = gen_new("problem");
+	*GlobalProblem            = gen_schema_accessor("problem");
+	*newGlobalProblem         = gen_new("problem");
 	*countGlobalProblemsWhere = gen_count_where("problem");
 	*existsGlobalProblemWhere = gen_exists_where("problem");
-	*listGlobalProblemsWhere = gen_list_where("problem");
-	*getGlobalProblemsWhere = gen_get_records_where("problem");
+	*listGlobalProblemsWhere  = gen_list_where("problem");
+	*getGlobalProblemsWhere   = gen_get_records_where("problem");
 }
 
 sub countGlobalProblems { return scalar shift->listGlobalProblems(@_) }
 
 sub listGlobalProblems {
 	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
-	my $where = [set_id_eq => $setID];
+	my $where = [ set_id_eq => $setID ];
 	if (wantarray) {
-		return map { @$_ } $self->{problem}->get_fields_where(["problem_id"], $where);
+		return map {@$_} $self->{problem}->get_fields_where(["problem_id"], $where);
 	} else {
 		return $self->{problem}->count_where($where);
 	}
@@ -1957,7 +2006,7 @@ sub existsGlobalProblem {
 
 sub getGlobalProblem {
 	my ($self, $setID, $problemID) = shift->checkArgs(\@_, qw/set_id problem_id/);
-	return ( $self->getGlobalProblems([$setID, $problemID]) )[0];
+	return ($self->getGlobalProblems([ $setID, $problemID ]))[0];
 }
 
 sub getGlobalProblems {
@@ -1967,18 +2016,17 @@ sub getGlobalProblems {
 
 sub getAllGlobalProblems {
 	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
-	my $where = [set_id_eq => $setID];
+	my $where = [ set_id_eq => $setID ];
 	return $self->{problem}->get_records_where($where);
 }
 
-sub addGlobalProblem {	my ($self, $GlobalProblem) = shift->checkArgs(\@_, qw/REC:problem/);
+sub addGlobalProblem {
+	my ($self, $GlobalProblem) = shift->checkArgs(\@_, qw/REC:problem/);
 
 	croak "addGlobalProblem: set ", $GlobalProblem->set_id, " not found"
 		unless $self->{set}->exists($GlobalProblem->set_id);
 
-	eval {
-		return $self->{problem}->add($GlobalProblem);
-	};
+	eval { return $self->{problem}->add($GlobalProblem); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addGlobalProblem: global problem exists (perhaps you meant to use putGlobalProblem?)";
 	} elsif ($@) {
@@ -1988,7 +2036,7 @@ sub addGlobalProblem {	my ($self, $GlobalProblem) = shift->checkArgs(\@_, qw/REC
 
 sub putGlobalProblem {
 	my ($self, $GlobalProblem) = shift->checkArgs(\@_, qw/REC:problem/);
-	my $rows = $self->{problem}->put($GlobalProblem); # DBI returns 0E0 for 0.
+	my $rows = $self->{problem}->put($GlobalProblem);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putGlobalProblem: global problem not found (perhaps you meant to use addGlobalProblem?)";
 	} else {
@@ -2009,21 +2057,21 @@ sub deleteGlobalProblem {
 ################################################################################
 
 BEGIN {
-	*UserProblem = gen_schema_accessor("problem_user");
-	*newUserProblem = gen_new("problem_user");
+	*UserProblem            = gen_schema_accessor("problem_user");
+	*newUserProblem         = gen_new("problem_user");
 	*countUserProblemsWhere = gen_count_where("problem_user");
 	*existsUserProblemWhere = gen_exists_where("problem_user");
-	*listUserProblemsWhere = gen_list_where("problem_user");
-	*getUserProblemsWhere = gen_get_records_where("problem_user");
+	*listUserProblemsWhere  = gen_list_where("problem_user");
+	*getUserProblemsWhere   = gen_get_records_where("problem_user");
 }
 
 sub countProblemUsers { return scalar shift->listProblemUsers(@_) }
 
 sub listProblemUsers {
 	my ($self, $setID, $problemID) = shift->checkArgs(\@_, qw/set_id problem_id/);
-	my $where = [set_id_eq_problem_id_eq => $setID,$problemID];
+	my $where = [ set_id_eq_problem_id_eq => $setID, $problemID ];
 	if (wantarray) {
-		return map { @$_ } $self->{problem_user}->get_fields_where(["user_id"], $where);
+		return map {@$_} $self->{problem_user}->get_fields_where(["user_id"], $where);
 	} else {
 		return $self->{problem_user}->count_where($where);
 	}
@@ -2033,9 +2081,9 @@ sub countUserProblems { return scalar shift->listUserProblems(@_) }
 
 sub listUserProblems {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	my $where = [user_id_eq_set_id_eq => $userID,$setID];
+	my $where = [ user_id_eq_set_id_eq => $userID, $setID ];
 	if (wantarray) {
-		return map { @$_ } $self->{problem_user}->get_fields_where(["problem_id"], $where);
+		return map {@$_} $self->{problem_user}->get_fields_where(["problem_id"], $where);
 	} else {
 		return $self->{problem_user}->count_where($where);
 	}
@@ -2048,7 +2096,7 @@ sub existsUserProblem {
 
 sub getUserProblem {
 	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
-	return ( $self->getUserProblems([$userID, $setID, $problemID]) )[0];
+	return ($self->getUserProblems([ $userID, $setID, $problemID ]))[0];
 }
 
 sub getUserProblems {
@@ -2058,7 +2106,7 @@ sub getUserProblems {
 
 sub getAllUserProblems {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	my $where = [user_id_eq_set_id_eq => $userID,$setID];
+	my $where = [ user_id_eq_set_id_eq => $userID, $setID ];
 	return $self->{problem_user}->get_records_where($where);
 }
 
@@ -2069,18 +2117,56 @@ sub addUserProblem {
 	croak "addUserProblem: user set ", $UserProblem->set_id, " for user ", $UserProblem->user_id, " not found"
 		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id);
 
-	my ( $nv_set_id, $versionNum ) = grok_vsetID( $UserProblem->set_id );
+	my ($nv_set_id, $versionNum) = grok_vsetID($UserProblem->set_id);
 
 	croak "addUserProblem: problem ", $UserProblem->problem_id, " in set $nv_set_id not found"
 		unless $self->{problem}->exists($nv_set_id, $UserProblem->problem_id);
 
-	eval {
-		return $self->{problem_user}->add($UserProblem);
-	};
+	eval { return $self->{problem_user}->add($UserProblem); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addUserProblem: user problem exists (perhaps you meant to use putUserProblem?)";
 	} elsif ($@) {
 		die $@;
+	}
+}
+
+# Used to add multiple problems to a SINGLE set with less DB calls.
+# Not for use by versioned sets
+# This expects @problemLists to be a 2 dimensional array, each
+# entry being the problemList array for one user.
+sub addUserMultipleProblems {
+	my ($self, @problemLists) = @_;
+
+	croak "Error in request to addUserMultipleProblems" if ref($problemLists[0]) ne 'ARRAY';
+
+	# Do a single checkArgs call, all records in the list were made in the same manner
+	$self->checkArgs([ $problemLists[0][0] ], qw/REC:problem_user/);
+
+	my $set_id = $problemLists[0][0]->set_id;
+
+	# Array in which all records to add are collected
+	my @collectedProblemList;
+
+	for my $problemListRef (@problemLists) {
+		my $user_id    = $problemListRef->[0]->user_id;
+		my $problem_id = $problemListRef->[0]->problem_id;
+		croak "addMultipleUserProblems: user set $set_id for user $user_id not found"
+			unless $self->{set_user}->exists($user_id, $set_id);
+
+		# Test whether there are already problem records for this user in this set, as in that case
+		# inserting multiple records at once would trigger an error.
+		my $where = [ user_id_eq_set_id_eq_problem_id_eq => $user_id, $set_id, $problem_id ];
+
+		croak
+			"addMultipleUserProblems cannot be run as set $set_id already contains one of the requested problems for user $user_id"
+			if $self->{problem_user}->count_where($where);
+		# If we got here, we can add this list of problems to those to insert into the database
+		push(@collectedProblemList, @{$problemListRef});
+	}
+
+	eval { $self->{problem_user}->insert_records([@collectedProblemList]); };
+	if ($@) {
+		croak "addUserMultipleProblems: $@";
 	}
 }
 
@@ -2089,7 +2175,7 @@ sub putUserProblem {
 	my $V = $_[2] ? "V" : "";
 	my ($self, $UserProblem, undef) = shift->checkArgs(\@_, "${V}REC:problem_user", "versioned_ok!?");
 
-	my $rows = $self->{problem_user}->put($UserProblem); # DBI returns 0E0 for 0.
+	my $rows = $self->{problem_user}->put($UserProblem);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putUserProblem: user problem not found (perhaps you meant to use addUserProblem?)";
 	} else {
@@ -2124,7 +2210,7 @@ sub existsMergedProblem {
 
 sub getMergedProblem {
 	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
-	return ( $self->getMergedProblems([$userID, $setID, $problemID]) )[0];
+	return ($self->getMergedProblems([ $userID, $setID, $problemID ]))[0];
 }
 
 sub getMergedProblems {
@@ -2134,7 +2220,7 @@ sub getMergedProblems {
 
 sub getAllMergedUserProblems {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	my $where = [user_id_eq_set_id_eq => $userID,$setID];
+	my $where = [ user_id_eq_set_id_eq => $userID, $setID ];
 	return $self->{problem_merged}->get_records_where($where);
 }
 
@@ -2143,12 +2229,12 @@ sub getAllMergedUserProblems {
 ################################################################################
 
 BEGIN {
-	*ProblemVersion = gen_schema_accessor("problem_version");
-	*newProblemVersion = gen_new("problem_version");
+	*ProblemVersion            = gen_schema_accessor("problem_version");
+	*newProblemVersion         = gen_new("problem_version");
 	*countProblemVersionsWhere = gen_count_where("problem_version");
 	*existsProblemVersionWhere = gen_exists_where("problem_version");
-	*listProblemVersionsWhere = gen_list_where("problem_version");
-	*getProblemVersionsWhere = gen_get_records_where("problem_version");
+	*listProblemVersionsWhere  = gen_list_where("problem_version");
+	*getProblemVersionsWhere   = gen_get_records_where("problem_version");
 }
 
 # versioned analog of countUserProblems
@@ -2157,9 +2243,9 @@ sub countProblemVersions { return scalar shift->listProblemVersions(@_) }
 # versioned analog of listUserProblems
 sub listProblemVersions {
 	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
-	my $where = [user_id_eq_set_id_eq_version_id_eq => $userID,$setID,$versionID];
+	my $where = [ user_id_eq_set_id_eq_version_id_eq => $userID, $setID, $versionID ];
 	if (wantarray) {
-		return map { @$_ } $self->{problem_version}->get_fields_where(["problem_id"], $where);
+		return map {@$_} $self->{problem_version}->get_fields_where(["problem_id"], $where);
 	} else {
 		return $self->{problem_version}->count_where($where);
 	}
@@ -2180,14 +2266,16 @@ sub listProblemVersions {
 
 # versioned analog of existsUserProblem
 sub existsProblemVersion {
-	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
+	my ($self, $userID, $setID, $versionID, $problemID) =
+		shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
 	return $self->{problem_version}->exists($userID, $setID, $versionID, $problemID);
 }
 
 # versioned analog of getUserProblem
 sub getProblemVersion {
-	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
-	return ( $self->getProblemVersions([$userID, $setID, $versionID, $problemID]) )[0];
+	my ($self, $userID, $setID, $versionID, $problemID) =
+		shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
+	return ($self->getProblemVersions([ $userID, $setID, $versionID, $problemID ]))[0];
 }
 
 # versioned analog of getUserProblems
@@ -2198,25 +2286,26 @@ sub getProblemVersions {
 
 # versioned analog of getAllUserProblems
 sub getAllProblemVersions {
-	my ( $self, $userID, $setID, $versionID ) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
-	my $where = [user_id_eq_set_id_eq_version_id_eq => $userID,$setID,$versionID];
+	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
+	my $where = [ user_id_eq_set_id_eq_version_id_eq => $userID, $setID, $versionID ];
 	my $order = ["problem_id"];
-	return $self->{problem_version_merged}->get_records_where($where,$order);
+	return $self->{problem_version_merged}->get_records_where($where, $order);
 }
-
 
 # versioned analog of addUserProblem
 sub addProblemVersion {
 	my ($self, $ProblemVersion) = shift->checkArgs(\@_, qw/REC:problem_version/);
 
-	croak "addProblemVersion: set version ", $ProblemVersion->version_id, " of set ", $ProblemVersion->set_id, " not found for user ", $ProblemVersion->user_id
-		unless $self->{set_version}->exists($ProblemVersion->user_id, $ProblemVersion->set_id, $ProblemVersion->version_id);
-	croak "addProblemVersion: problem ", $ProblemVersion->problem_id, " of set ", $ProblemVersion->set_id, " not found for user ", $ProblemVersion->user_id
-		unless $self->{problem_user}->exists($ProblemVersion->user_id, $ProblemVersion->set_id, $ProblemVersion->problem_id);
+	croak "addProblemVersion: set version ", $ProblemVersion->version_id, " of set ", $ProblemVersion->set_id,
+		" not found for user ", $ProblemVersion->user_id
+		unless $self->{set_version}
+		->exists($ProblemVersion->user_id, $ProblemVersion->set_id, $ProblemVersion->version_id);
+	croak "addProblemVersion: problem ", $ProblemVersion->problem_id, " of set ", $ProblemVersion->set_id,
+		" not found for user ", $ProblemVersion->user_id
+		unless $self->{problem_user}
+		->exists($ProblemVersion->user_id, $ProblemVersion->set_id, $ProblemVersion->problem_id);
 
-	eval {
-		return $self->{problem_version}->add($ProblemVersion);
-	};
+	eval { return $self->{problem_version}->add($ProblemVersion); };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addProblemVersion: problem version exists (perhaps you meant to use putProblemVersion?)";
 	} elsif ($@) {
@@ -2227,7 +2316,7 @@ sub addProblemVersion {
 # versioned analog of putUserProblem
 sub putProblemVersion {
 	my ($self, $ProblemVersion) = shift->checkArgs(\@_, qw/REC:problem_version/);
-	my $rows = $self->{problem_version}->put($ProblemVersion); # DBI returns 0E0 for 0.
+	my $rows = $self->{problem_version}->put($ProblemVersion);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putProblemVersion: problem version not found (perhaps you meant to use addProblemVersion?)";
 	} else {
@@ -2239,7 +2328,8 @@ sub putProblemVersion {
 sub deleteProblemVersion {
 	# userID, setID, versionID, and problemID can be undefined if being called from this package
 	my $U = caller eq __PACKAGE__ ? "!" : "";
-	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, "user_id$U", "set_id$U", "version_id$U", "problem_id$U");
+	my ($self, $userID, $setID, $versionID, $problemID) =
+		shift->checkArgs(\@_, "user_id$U", "set_id$U", "version_id$U", "problem_id$U");
 	return $self->{problem_version}->delete($userID, $setID, $versionID, $problemID);
 }
 
@@ -2257,13 +2347,15 @@ BEGIN {
 }
 
 sub existsMergedProblemVersion {
-	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
+	my ($self, $userID, $setID, $versionID, $problemID) =
+		shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
 	return $self->{problem_version_merged}->exists($userID, $setID, $versionID, $problemID);
 }
 
 sub getMergedProblemVersion {
-	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
-	return ( $self->getMergedProblemVersions([$userID, $setID, $versionID, $problemID]) )[0];
+	my ($self, $userID, $setID, $versionID, $problemID) =
+		shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
+	return ($self->getMergedProblemVersions([ $userID, $setID, $versionID, $problemID ]))[0];
 }
 
 sub getMergedProblemVersions {
@@ -2273,18 +2365,18 @@ sub getMergedProblemVersions {
 
 sub getAllMergedProblemVersions {
 	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
-	my $where = [user_id_eq_set_id_eq_version_id_eq => $userID,$setID,$versionID];
+	my $where = [ user_id_eq_set_id_eq_version_id_eq => $userID, $setID, $versionID ];
 	my $order = ["problem_id"];
-	return $self->{problem_version_merged}->get_records_where($where,$order);
+	return $self->{problem_version_merged}->get_records_where($where, $order);
 }
 
 ################################################################################
 # utilities
 ################################################################################
 
-sub check_user_id { #  (valid characters are [-a-zA-Z0-9_.,@])
+sub check_user_id {    #  (valid characters are [-a-zA-Z0-9_.,@])
 	my $value = shift;
-	if ($value =~ m/^[-a-zA-Z0-9_.@]*,?(set_id:)?[-a-zA-Z0-9_.@]*(,g)?$/ ) {
+	if ($value =~ m/^[-a-zA-Z0-9_.@]*,?(set_id:)?[-a-zA-Z0-9_.@]*(,g)?$/) {
 		return 1;
 	} else {
 		croak "invalid characters in user_id field: '$value' (valid characters are [-a-zA-Z0-9_.,@])";
@@ -2299,42 +2391,53 @@ sub check_user_id { #  (valid characters are [-a-zA-Z0-9_.,@])
 sub checkKeyfields($;$) {
 	my ($Record, $versioned) = @_;
 	foreach my $keyfield ($Record->KEYFIELDS) {
-		my $value = $Record->$keyfield;
+		my $value     = $Record->$keyfield;
 		my $fielddata = $Record->FIELD_DATA;
-		return if ($fielddata->{$keyfield}{type}=~/AUTO_INCREMENT/);
+		return if ($fielddata->{$keyfield}{type} =~ /AUTO_INCREMENT/);
 
 		croak "undefined '$keyfield' field"
 			unless defined $value;
 		croak "empty '$keyfield' field"
 			unless $value ne "";
 
-		validateKeyfieldValue($keyfield,$value,$versioned);
+		validateKeyfieldValue($keyfield, $value, $versioned);
 
 	}
 }
 
-
 sub validateKeyfieldValue {
 
-    my ($keyfield,$value,$versioned) = @_;
+	my ($keyfield, $value, $versioned) = @_;
 
-    if ($keyfield eq "problem_id" || $keyfield eq 'problemID') {
-	croak "invalid characters in '".encode_entities($keyfield)."' field: '".encode_entities($value)."' (valid characters are [0-9])"
-	    unless $value =~ m/^[0-9]*$/;
-    } elsif ($versioned and $keyfield eq "set_id" || $keyfield eq 'setID') {
-	croak "invalid characters in '".encode_entities($keyfield)."' field: '".encode_entities($value)."' (valid characters are [-a-zA-Z0-9_.,])"
-	    unless $value =~ m/^[-a-zA-Z0-9_.,]*$/;
-	# } elsif ($versioned and $keyfield eq "user_id") {
-    } elsif ($keyfield eq "user_id" || $keyfield eq 'userID') {
-	check_user_id($value); #  (valid characters are [-a-zA-Z0-9_.,]) see above.
-    } elsif ($keyfield eq "ip_mask") {
-	croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.,])"
-	    unless $value =~ m/^[-a-fA-F0-9_.:\/]*$/;
+	if ($keyfield eq "problem_id" || $keyfield eq 'problemID') {
+		croak "invalid characters in '"
+			. encode_entities($keyfield)
+			. "' field: '"
+			. encode_entities($value)
+			. "' (valid characters are [0-9])"
+			unless $value =~ m/^[0-9]*$/;
+	} elsif ($versioned and $keyfield eq "set_id" || $keyfield eq 'setID') {
+		croak "invalid characters in '"
+			. encode_entities($keyfield)
+			. "' field: '"
+			. encode_entities($value)
+			. "' (valid characters are [-a-zA-Z0-9_.,])"
+			unless $value =~ m/^[-a-zA-Z0-9_.,]*$/;
+		# } elsif ($versioned and $keyfield eq "user_id") {
+	} elsif ($keyfield eq "user_id" || $keyfield eq 'userID') {
+		check_user_id($value);    #  (valid characters are [-a-zA-Z0-9_.,]) see above.
+	} elsif ($keyfield eq "ip_mask") {
+		croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.,])"
+			unless $value =~ m/^[-a-fA-F0-9_.:\/]*$/;
 
-    } else {
-	croak "invalid characters in '".encode_entities($keyfield)."' field: '".encode_entities($value)."' (valid characters are [-a-zA-Z0-9_.])"
-	    unless $value =~ m/^[-a-zA-Z0-9_.]*$/;
-    }
+	} else {
+		croak "invalid characters in '"
+			. encode_entities($keyfield)
+			. "' field: '"
+			. encode_entities($value)
+			. "' (valid characters are [-a-zA-Z0-9_.])"
+			unless $value =~ m/^[-a-zA-Z0-9_.]*$/;
+	}
 
 }
 
@@ -2362,7 +2465,7 @@ sub checkArgs {
 	if ($is_list) {
 		$min_args = 0;
 	} else {
-		foreach my $i (0..$#spec) {
+		foreach my $i (0 .. $#spec) {
 			#print "$i - $spec[$i]\n";
 			if ($spec[$i] =~ s/\?$//) {
 				#print "$i - matched\n";
@@ -2391,9 +2494,9 @@ sub checkArgs {
 		($versioned, $table) = $name =~ /^(V?)REC:(.*)/;
 	}
 
-	foreach my $i (0..@$args-1) {
+	foreach my $i (0 .. @$args - 1) {
 		my $arg = $args->[$i];
-		my $pos = $i+1;
+		my $pos = $i + 1;
 
 		unless ($is_list) {
 			$name = $spec[$i];
@@ -2404,7 +2507,9 @@ sub checkArgs {
 			my $class = $self->{$table}{record};
 			#print "arg=$arg class=$class\n";
 			croak "argument $pos must be of type $class"
-				unless defined $arg and ref $arg and $arg->isa($class);
+				unless defined $arg
+				and ref $arg
+				and $arg->isa($class);
 			eval { checkKeyfields($arg, $versioned) };
 			croak "argument $pos contains $@" if $@;
 		} else {
@@ -2420,9 +2525,9 @@ sub checkArgs {
 
 sub checkArgsRefList {
 	my ($self, $items, @spec) = @_;
-	foreach my $i (0..@$items-1) {
+	foreach my $i (0 .. @$items - 1) {
 		my $item = $items->[$i];
-		my $pos = $i+1;
+		my $pos  = $i + 1;
 		croak "item $pos must be a reference to an array"
 			unless UNIVERSAL::isa($item, "ARRAY");
 		eval { $self->checkArgs($item, @spec) };

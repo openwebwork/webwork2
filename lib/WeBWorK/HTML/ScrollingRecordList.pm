@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::HTML::ScrollingRecordList;
-use base qw(Exporter);
+use Mojo::Base 'Exporter', -signatures;
 
 =head1 NAME
 
@@ -23,159 +23,66 @@ records.
 
 =cut
 
-use strict;
-use warnings;
 use Carp;
-use WeBWorK::Utils::FormatRecords qw/getFormatsForClass formatRecords/;
-use WeBWorK::Utils::SortRecords qw/getSortsForClass sortRecords/;
-use WeBWorK::Utils::FilterRecords qw/getFiltersForClass filterRecords/;
 
-our @EXPORT    = ();
+use WeBWorK::Utils::FormatRecords qw(getFormatsForClass formatRecords);
+use WeBWorK::Utils::SortRecords qw(getSortsForClass sortRecords);
+use WeBWorK::Utils::FilterRecords qw(getFiltersForClass filterRecords);
+
 our @EXPORT_OK = qw(scrollingRecordList);
 
-sub scrollingRecordList {
-	my ($options, @Records) = @_;
-
-	my %options = (default_filters => [], default_sort => "", default_format => "", %$options);
+sub scrollingRecordList ($options, @records) {
+	my %options = (default_filters => [], default_sort => '', %$options);
 	# %options must contain:
-	#  name - name of scrolling list
-	#  request - the WeBWorK::Request object for the current request
+	#  name       - name of scrolling list
+	#  controller - the WeBWorK::Controller object for the current route
 	# may contain:
 	#  default_sort - name of sort to use by default
 	#  default_format - name of format to use by default
-	#  default_filter - listref, names of filters to apply by default (unimpl.)
-	#  allowed_filters - hashref, mapping field name to list of allowed values (unimpl.)
+	#  default_filters - a reference to a list of names of filters to apply by default
 	#  size - number of rows shown in scrolling list
 	#  multiple - are multiple selections allowed?
 
-	croak "name not found in options"    unless exists $options{name};
-	croak "request not found in options" unless exists $options{request};
 	my $name = $options{name};
-	my $r    = $options{request};
+	my $c    = $options{controller};
 
-	my ($sorts,   $sort_labels,   $selected_sort)   = ([], {}, "");
-	my ($formats, $format_labels, $selected_format) = ([], {}, "");
-	my ($filters, $filter_labels, @selected_filters) = ([], {});
+	croak 'name not found in options'       unless defined $name;
+	croak 'controller not found in options' unless defined $c;
 
-	my @ids;
-	my %labels;
+	my ($sorts, $formats, $filters, $formattedRecords) = ([], [], [], []);
 
-	my $refresh_button_name =
-		defined($options{refresh_button_name})
-		? $options{refresh_button_name}
-		: $r->maketext("Change Display Settings");
+	if (@records) {
+		my $class = (ref $records[0]) =~ s/Version$//r;
 
-	my @selected_records = $r->param($name);
+		$sorts   = getSortsForClass($class, $options{default_sort});
+		$formats = getFormatsForClass($class, $options{default_format});
+		$filters = getFiltersForClass(@records);
 
-	if (@Records) {
-		my $class = ref $Records[0];
-		$class = $1 if $class =~ /(.*)Version$/;
-
-		($filters, $filter_labels) = getFiltersForClass(@Records);
-		if (defined $r->param("$name!filter")) {
-			@selected_filters = $r->param("$name!filter");
+		my @selected_filters;
+		if (defined $c->param("$name!filter")) {
+			@selected_filters = $c->param("$name!filter");
 			@selected_filters = ("all") unless @selected_filters;
 		} else {
 			@selected_filters = @{ $options{default_filters} };
 		}
 
-		($sorts, $sort_labels) = getSortsForClass($class);
-		$selected_sort =
-			$r->param("$name!sort")
-			|| $options{default_sort}
-			|| (@$sorts ? $sorts->[0] : "");
-
-		($formats, $format_labels) = getFormatsForClass($class);
-		$selected_format =
-			$r->param("$name!format")
-			|| $options{default_format}
-			|| (@$formats ? $formats->[0] : "");
-
-		@Records = filterRecords({ filter => \@selected_filters }, @Records);
-
-		@Records = sortRecords({ preset => $selected_sort }, @Records);
-
-		# Generate IDs from keyfields
-		my @keyfields = $class->KEYFIELDS;
-		foreach my $Record (@Records) {
-			push @ids, join("!", map { $Record->$_ } @keyfields);
-		}
-
-		# Generate labels hash
-		@labels{@ids} = @Records;
-		%labels = formatRecords({ preset => $selected_format }, %labels);
+		$formattedRecords = formatRecords(
+			$c->param("$name!format") || $options{default_format},
+			sortRecords(
+				$c->param("$name!sort") || $options{default_sort} || (@$sorts ? $sorts->[0][1] : ''),
+				filterRecords(\@selected_filters, @records)
+			)
+		);
 	}
 
-	return CGI::div(
-		{ class => "card p-2" },
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => "$name!sort", class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' },
-				$r->maketext('Sort:')
-			),
-			CGI::div(
-				{ class => 'col-10' },
-				CGI::popup_menu({
-					name    => "$name!sort",
-					id      => "$name!sort",
-					values  => $sorts,
-					default => $selected_sort,
-					labels  => $sort_labels,
-					class   => 'form-select form-select-sm'
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => "$name!format", class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' },
-				$r->maketext('Format:')
-			),
-			CGI::div(
-				{ class => 'col-10' },
-				CGI::popup_menu({
-					name    => "$name!format",
-					id      => "$name!format",
-					values  => $formats,
-					default => $selected_format,
-					labels  => $format_labels,
-					class   => 'form-select form-select-sm'
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => "$name!filter", class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' },
-				$r->maketext("Filter:")
-			),
-			CGI::div(
-				{ class => 'col-10' },
-				CGI::scrolling_list({
-					name     => "$name!filter",
-					id       => "$name!filter",
-					values   => $filters,
-					default  => \@selected_filters,
-					labels   => $filter_labels,
-					size     => 5,
-					multiple => 1,
-					class    => 'form-select form-select-sm'
-				})
-			)
-		),
-		CGI::div(CGI::submit(
-			{ name => "$name!refresh", label => $refresh_button_name, class => 'btn btn-secondary btn-sm mb-2' }
-		)),
-		CGI::scrolling_list({
-			name    => $name,
-			id      => $name,
-			values  => \@ids,
-			default => \@selected_records,
-			labels  => \%labels,
-			class   => 'form-select form-select-sm',
-			$options{attrs} ? %{ $options{attrs} } : ()
-		}),
+	return $c->include(
+		'HTML/ScrollingRecordList/scrollingRecordList',
+		name             => $name,
+		options          => \%options,
+		sorts            => $sorts,
+		formats          => $formats,
+		filters          => $filters,
+		formattedRecords => $formattedRecords
 	);
 }
 

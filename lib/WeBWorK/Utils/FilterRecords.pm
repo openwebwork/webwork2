@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,61 +14,48 @@
 ################################################################################
 
 package WeBWorK::Utils::FilterRecords;
-use base qw(Exporter);
-
-use WeBWorK::Utils qw(sortByName);
+use parent qw(Exporter);
 
 =head1 NAME
 
-WeBWorK::Utils::FilterRecords - utilities for sorting database records.
+WeBWorK::Utils::FilterRecords - utilities for filtering database records.
 
 =head1 SYNOPSIS
 
- use WeBWorK::Utils::FilterRecords qw/getFiltersForClass/;
- 
- # get a list of sorts
- my ($FiltersRef, $FilterLabelsRef) = getFiltersForClass(@Users);
- my @filters      = @$filtersRef;      # filter names
- my %FilterLabels = %$FilterLabelsRef; # suitable for CGI's "-labels" parameter
+    use WeBWorK::Utils::FilterRecords qw/getFiltersForClass/;
 
- use WeBWorK::Utils::FilterRecords qw/FilterRecords/;
- 
- # start with a list of records
- my @Users = $db->getUsers($db->listUsers);
- 
- # sort the records using a preset
- @FilteredUsers = FilterRecords({preset=>"none"}, @Users);
- 
- # or provide a custom sort
- @FilteredUsers = FilterRecords({fields=>[qw/section /]}, @Users);
+    # Get a list of filters
+    my $filters = getFiltersForClass(@users);
+
+    use WeBWorK::Utils::FilterRecords qw/filterRecords/;
+
+    # Start with a list of records
+    my @users = $db->getUsers($db->listUsers);
+
+    # Filter the records using a list of provided filters.
+    @filteredUsers = filterRecords([ 'section:1', 'recitation:2' ], @nsers);
+
+	# Get all records (This isn't useful and just returns the passed in
+	# array of records.  So don't actually do this.)
+    @filteredUsers = filterRecords(undef, @users);
 
 =head1 DESCRIPTION
 
-This module provides record filtering functions, and a collection of preset filters
-for the standard WeBWorK record classes. Filters are specified by a list
-of field names. Records that match the current user in the specified field will be 
-allowed through
+This module provides functions for filtering records from the database.
 
 =cut
 
 use strict;
 use warnings;
+
 use Carp;
-our @EXPORT    = ();
+
+use WeBWorK::Utils qw(sortByName);
+
 our @EXPORT_OK = qw(
 	getFiltersForClass
 	filterRecords
 );
-
-#use constant PRESET_FILTERS => {
-#	"WeBWorK::DB::Record::User" => {
-#		"all" => {
-#			name => "List all available students",
-#			fields => [ qw// ],
-#		},
-#	},
-#};
-
 
 =head1 FUNCTIONS
 
@@ -76,124 +63,81 @@ our @EXPORT_OK = qw(
 
 =item getFiltersForClass($class)
 
-Given the name of a record class, returns the preset filters available for that
-class.
+Given a list of database records, returns the filters available for those
+records.  For all database records from the WeBWorK::DB::Record::User class
+the filters are by section or recitation or no filter at all.  For all other
+classes the only filter is no filter at all.
 
-The return value consists of a two-element list. The first element is a
-reference to a list of filter names. The second element is a reference to a hash
-mapping filter names to string descriptions.
-
-Together, these two lists are suitable for passing to the C<-values> and
-C<-labels> parameters of several CGI module methods, i.e. popup_menu(),
-scrolling_list(), checkbox_group(), and radio_group().
+The return value is a reference to a list of two element lists. The first
+element in each list is a a string description of the filter and the second
+element is the filter name.  The return value is suitable for passing as the
+second value argument to the Mojolicious select_field tag helper method.
 
 =cut
 
 sub getFiltersForClass {
-	my (@Records) = @_;
+	my (@records) = @_;
 
-	my (%sections, %recitations);
-	my (@names,%labels);
-	push @names, "all";
-	$labels{all} = "Display all possible records";
-	
-	if (ref $Records[0] eq "WeBWorK::DB::Record::User"){
-		foreach my $user (@Records){
-			$sections{$user->section}++;
-			$recitations{$user->recitation}++;
-		}
-	
-		if (scalar(keys %sections) > 1) {
-		  foreach my $sec (sortByName(undef, keys %sections)){
-			push @names, "section:$sec";
-			if ($sec ne ""){
-				$labels{"section:$sec"} = "Display section $sec";
-			} else {
-				$labels{"section:$sec"} = "Display section <blank>";
-			}
-		  }
+	my @filters;
+	push @filters, [ 'Display all possible records' => 'all', selected => undef ];
+
+	if (ref $records[0] eq 'WeBWorK::DB::Record::User') {
+		my (%sections, %recitations);
+
+		for my $user (@records) {
+			++$sections{ $user->section };
+			++$recitations{ $user->recitation };
 		}
 
-		if (scalar(keys %recitations) > 1) {
-		  foreach my $rec (sortByName(undef, keys %recitations)){
-			push @names, "recitation:$rec";
-			if ($rec ne ""){
-				$labels{"recitation:$rec"} = "Display recitation $rec";
-			} else {
-			        $labels{"recitation:$rec"} = "Display recitation <blank>";
+		if (keys %sections > 1) {
+			for my $sec (sortByName(undef, keys %sections)) {
+				push @filters, [ ($sec ne '' ? "Display section $sec" : 'Display section <blank>') => "section:$sec" ];
 			}
-		  }
+		}
+
+		if (keys %recitations > 1) {
+			for my $rec (sortByName(undef, keys %recitations)) {
+				push @filters,
+					[ ($rec ne '' ? "Display recitation $rec" : 'Display recitation <blank>') => "recitation:$rec" ];
+			}
 		}
 	}
-	return ( \@names, \%labels );
+	return \@filters;
 }
 
-=item sortRecords(\%options, @Records)
+=item filterRecords($filters, @records)
 
-Given a sort specification (or the name of a preset format) and a list of
-records, returns a list of the same records in order according to the sort.
+Given a list of filters and a list of records, returns a list of the records
+after the selected filters are applied.
 
-%options can consist of either:
-
- preset => the name of a preset format listed by getFormatsForClass()
-
-or:
-
- fields => a reference to a list of fields in the records' class
-
-If C<preset> is given, and its value does not match any known preset but I<is>
-the name of a field in the record class, the records will be sorted by that
-field.
-
-If C<fields> is given, the records are sorted according to the specified fields.
-If multiple fields are specified, the second field is is consulted if two
-records are found to have identical first fields, and so on.
-
-=cut
-
-# DBFIXME filtering should happen in the database (WHERE clauses)
-sub filterRecords {
-	my ($options, @Records) = @_;
-	
-	# nothing to do
-	return () unless @Records;
-	
-	# get class info (we assume that the records are all of the same type)
-	
-	my %options = %$options;
-	
-	my @filtersToUse = @{$options{filter}};
-
-	if (grep {$_ eq "all"} @filtersToUse) {return @Records;}
-	
-	my @GoodRecords = ();
-	foreach my $record (@Records){
-	foreach my $fil (@filtersToUse){
-		my ($name, $value) = split(/:/, $fil);
-		#warn "filter = $fil";
-		#warn "name = $name";
-		#warn "value = $value";
-		#warn "section = $record->section";
-#		my @data = split(/::/, $record);
-		if ($record->$name eq $value) {push @GoodRecords, $record}
-	}
-	}
-	return @GoodRecords;
-}
+C<$filters> should be a reference to an array of filters or be undefined.
 
 =back
 
-=head1 BUGS
-
-No provision for case-insensitive, descending, or numeric sorting.
-
-No provision for programmatic sorts. While a one-time programmatic sort can be
-done easily without using this module, programmatic preset sorts would be
-useful, i.e. for intelligent sorting of set IDs.
-
-The fields being compared cannot contain nulls, because of the way packed keys
-are being generated.
-
 =cut
+
+sub filterRecords {
+	my ($filters, @records) = @_;
+
+	return unless @records;
+
+	my @filtersToUse = @{ $filters // ['all'] };
+
+	if (grep { $_ eq 'all' } @filtersToUse) {
+		return @records;
+	}
+
+	my @filteredRecords;
+	for my $record (@records) {
+		for my $filter (@filtersToUse) {
+			my ($name, $value) = split(/:/, $filter);
+			if ($record->$name eq $value) {
+				push @filteredRecords, $record;
+				last;    # Only add a record once.
+			}
+		}
+	}
+	return @filteredRecords;
+}
 
 1;

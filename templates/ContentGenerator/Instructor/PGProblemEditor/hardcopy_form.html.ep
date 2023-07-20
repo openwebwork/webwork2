@@ -1,0 +1,67 @@
+% last unless $c->{is_pg};
+%
+<div>
+	<div class="row align-items-center">
+		<%= label_for action_hardcopy_seed_id => maketext('Using what seed?'),
+			class => 'col-form-label col-auto mb-2' =%>
+		<div class="col-auto mb-2">
+			<%= text_field 'action.hardcopy.seed' => value => $c->{problemSeed},
+				id => 'action_hardcopy_seed_id', class => 'form-control form-control-sm' =%>
+		</div>
+		<div class="col-auto mb-2">
+			<button id="randomize_hardcopy_seed_id" class="btn btn-info btn-sm" type="button">
+				<%= maketext('Randomize Seed') =%>
+			</button>
+		</div>
+	</div>
+	<div class="row align-items-center mb-2">
+		<%= label_for 'action_hardcopy_format_id' , class => 'col-form-label col-auto', begin =%>
+			<%= maketext('Using which hardcopy format?') =%>
+			<%= link_to '#',
+				class => 'help-popup',
+				data  => {
+					bs_content => maketext(
+						'If "PDF" is selected, then a PDF file will be generated for download, unless there are '
+							. 'errors.  If errors occur generating a PDF file or "TeX Source" is selected then a '
+							. 'zip file will be generated for download that contains the TeX source file and '
+							. 'resources needed for generating the PDF file using pdflatex.'
+					),
+					bs_placement => 'top',
+					bs_toggle    => 'popover'
+				},
+				role     => 'button',
+				tabindex => 0,
+				begin =%>
+				<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') %>" aria-hidden="true">
+				</i>
+			<% end =%>
+		<% end =%>
+		<div class="col-auto">
+			<%= select_field 'action.hardcopy.format' => [
+					[ maketext('PDF') => 'pdf', selected => undef ],
+					[ maketext('TeX Source') => 'tex' ]
+				],
+				id    => 'action_hardcopy_format_id',
+				class => 'form-select form-select-sm d-inline w-auto' =%>
+		</div>
+	</div>
+	<div class="row align-items-center mb-2">
+		<%= label_for action_hardcopy_theme_id => maketext('Using which hardcopy theme?'),
+			class => 'col-form-label col-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.hardcopy.theme' => [
+					map { [
+						$hardcopyLabels->{$_} => $_,
+						$_ eq $c->ce->{hardcopyThemePGEditor} ? (selected => undef) : ()
+					] } @$hardcopyThemesAvailable
+				],
+				id    => 'action_hardcopy_theme_id',
+				class => 'form-select form-select-sm d-inline w-auto' =%>
+		</div>
+		<div class="col-auto">
+			<button id="edit_hardcopy_theme" class="btn btn-secondary p-1" type="submit">
+				<%= maketext('Edit Selected Theme') =%>
+			</button>
+		</div>
+	</div>
+</div>

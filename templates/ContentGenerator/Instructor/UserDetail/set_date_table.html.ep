@@ -1,0 +1,74 @@
+% my $setID = $globalRecord->set_id;
+%
+% # Modify set id to include the version if this is a versioned set.
+% my $isVersioned = 0;
+% if (defined $mergedRecord && $mergedRecord->assignment_type =~ /gateway/ && $mergedRecord->can('version_id')) {
+	% $setID .= ',v' . $mergedRecord->version_id;
+	% $isVersioned = 1;
+% }
+%
+<table>
+	<tr>
+		<th scope="col" colspan="3">
+			<%= maketext("User overrides") =%>
+		</th>
+		<th scope="col">
+			<%= maketext("Set values") =%>
+		</th>
+	</tr>
+	% for my $field (@$fields) {
+		% # Skip reduced credit dates for sets which don't have them.
+		% next
+			% if $field eq 'reduced_scoring_date'
+			% && (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring} || !$globalRecord->enable_reduced_scoring);
+		%
+		<tr>
+			% my $globalValue = $globalRecord->$field;
+			%
+			<td class="px-1 text-nowrap">
+				% if (defined $userRecord) {
+					<%= label_for "set.$setID.$field.override_id" => maketext($fieldLabels->{$field}),
+						class => 'form-check-label' =%>
+				% } else {
+					<%= maketext($fieldLabels->{$field}) =%>
+				% }
+			</td>
+			<td class="px-1 text-nowrap">
+				% if (defined $userRecord) {
+					<%= check_box "set.$setID.$field.override" => $field,
+						id => "set.$setID.$field.override_id", class => 'form-check-input',
+						(defined $mergedRecord ? $mergedRecord->$field : $globalValue) ne $globalValue
+						|| ($isVersioned && $field ne 'reduced_scoring_date')
+						? (checked => undef)
+						: () =%>
+				% }
+			</td>
+			<td class="px-1 text-nowrap">
+				% if (defined $userRecord) {
+					<div class="input-group input-group-sm flex-nowrap flatpickr">
+						<%= text_field "set.$setID.$field" =>
+								defined $userRecord ? $userRecord->$field : $globalValue,
+							id          => "set.$setID.${field}_id",
+							placeholder => maketext('None Specified'),
+							class       => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+							data => {
+								override  => "set.$setID.$field.override_id",
+								input      => undef,
+								done_text  => maketext('Done'),
+								today_text => maketext('Today'),
+								now_text   => maketext('Now'),
+								locale     => $ce->{language},
+								timezone   => $ce->{siteDefaults}{timezone}
+							} =%>
+						<a class="btn btn-secondary btn-sm" data-toggle><i class="fas fa-calendar-alt"></i></a>
+					</div>
+				% }
+			</td>
+			<td class="px-1 text-nowrap">
+				<span dir="ltr">
+					<%= $c->formatDateTime($globalValue, '', 'datetime_format_short', $ce->{language}) =%>
+				</span>
+			</td>
+		</tr>
+	% }
+</table>

@@ -20,3 +20,4 @@
 -nlop   # No logical padding (this causes mixed tabs and spaces)
 -wn     # Weld nested containers
 -xci    # Extended continuation indentation
+-vxl='q' # No vertical alignment of qw quotes

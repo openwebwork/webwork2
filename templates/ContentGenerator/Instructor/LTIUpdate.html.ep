@@ -1,0 +1,86 @@
+% use WeBWorK::Utils(qw(format_set_name_display getAssetURL));
+%
+% # Only use javascript to update menus if using homework grade mode.
+% if ($ce->{LTIGradeMode} eq 'homework') {
+	% content_for js => begin
+		<%= javascript getAssetURL($ce, 'js/LTIUpdate/ltiupdate.js'), defer => undef =%>
+	% end
+% }
+%
+% unless ($authz->hasPermissions(param('user'), 'score_sets')) {
+	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to update lti scores') %></div>
+	% last;
+% }
+%
+% unless ($ce->{LTIGradeMode}) {
+	<div class="alert alert-danger p-1"><%= maketext('LTI grade passback is not enabled for this course') %></div>
+	% last;
+% }
+%
+% my $updateInterval = $ce->{LTIMassUpdateInterval} // -1;
+%
+% # Status table
+<div class="table-responsive">
+	<table class="table table-bordered w-auto">
+		<tr><th><%= maketext('LTI Grade Mode') %></th><td><%= $ce->{LTIGradeMode} %></td></tr>
+		<tr>
+			<th><%= maketext('Update Interval') %></th>
+			<td><%= $updateInterval > -1 ? $c->format_interval($updateInterval) : maketext('Never') %></td>
+		</tr>
+		<tr>
+			<th><%= maketext('Last Full Update') %></th>
+			<td>
+				<%= $lastUpdate
+					? $c->formatDateTime($lastUpdate, 0, $ce->{studentDateDisplayFormat})
+					: maketext('Never') =%>
+			</td>
+		</tr>
+		% if ($updateInterval > -1) {
+			<tr>
+				<th><%= maketext('Next Update') %></th>
+				<td><%= $c->formatDateTime($lastUpdate + $updateInterval, 0, $ce->{studentDateDisplayFormat}) =%></td>
+			</tr>
+		% }
+	</table>
+</div>
+%
+<h2><%= maketext('Start LTI Grade Update') %></h2>
+<%= form_for current_route, method => 'POST', id => 'updateLTIForm', name => 'updateLTIForm', begin =%>
+	<div class="row mb-3">
+		<%= label_for updateUserID => maketext('Update user:'), class => 'col-auto col-form-label fw-bold' =%>
+		<div class="col-auto">
+			<%= select_field updateUserID => [
+					[
+						maketext('All Users') => '',
+						selected             => undef,
+						$ce->{LTIGradeMode} eq 'homework' ? (data => { sets => join(':', @$sets) }) : (),
+					],
+					$ce->{LTIGradeMode} eq 'homework'
+					? (map { [ $_ => $_, data => { sets => join(':', sort $db->listUserSets($_)) } ] } @$users)
+					: (@$users)
+				],
+				id => 'updateUserID', class => 'form-select' =%>
+		</div>
+	</div>
+	% if ($ce->{LTIGradeMode} eq 'homework') {
+		<div class="row mb-3">
+			<%= label_for updateSetID => maketext('Update set:'), class => 'col-auto col-form-label fw-bold' =%>
+			<div class="col-auto">
+				<%= select_field updateSetID => [
+						[
+							maketext('All Sets') => '',
+							selected             => undef,
+							data                 => { users => join(':', @$users) }
+						],
+						map { [
+							format_set_name_display($_) => $_,
+							data => { users => join(':', sort $db->listSetUsers($_)) }
+						] } @$sets
+					],
+					id => 'updateSetID', class => 'form-select' =%>
+			</div>
+		</div>
+	% }
+	<%= submit_button maketext('Update Grades'), id => 'updateLTI', name => 'updateLTI',
+		class => 'btn btn-primary mb-3' =%>
+<% end =%>

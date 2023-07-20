@@ -1,0 +1,39 @@
+<h2 class="my-3"><%= maketext('Badges') %></h2>
+%
+% if (@$achievements) {
+	% my $previousCategory = $achievements->[0]->category;
+	% for my $achievement (@$achievements) {
+		% # Separate categories with whitespace.
+		% if ($achievement->category ne $previousCategory) {
+			<br>
+		% }
+		% $previousCategory = $achievement->category;
+		%
+		% my $userAchievement = $userAchievements->{$achievement->achievement_id};
+		<div class="cheevoouterbox d-flex justify-content-start align-items-center mb-3 <%=
+			$userAchievement->earned ? 'unlocked' : 'locked' %>">
+			<div>
+				<%= image $achievement->{icon}
+					? "$ce->{courseURLs}{achievements}/$achievement->{icon}"
+					: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png",
+					alt => $userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned' =%>
+			</div>
+			<div class="ms-3">
+				<h3 class="fs-5 mb-1 fw-bold"><%= $achievement->name %></h3>
+				<div>
+					<i><%= maketext('[_1] Points:', $achievement->{points}) %></i> <%= $achievement->{description} %>
+				</div>
+				% if ($achievement->max_counter && !$userAchievement->earned) {
+					% my $percentage = int(100 * ($userAchievement->counter || 0) / $achievement->max_counter);
+					% $percentage = 100 if $percentage > 100;
+					<div class="cheevoouterbar mt-1" title="<%= maketext('[_1]% Complete', $percentage) %>"
+						aria-label="<%= maketext('[_1]% Complete', $percentage) %>" role="figure" =%>
+						<div class="cheevoinnerbar" style="width:<%= $percentage %>%;"></div>
+					</div>
+				% }
+			</div>
+		</div>
+	% }
+% } else {
+	<p><%= maketext('No achievement badges have been assigned yet.') %></p>
+% }

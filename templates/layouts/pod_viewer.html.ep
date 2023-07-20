@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+%
+<head>
+	<meta charset='UTF-8'>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= title %></title>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme',  file => 'bootstrap.css' }) =%>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'htdocs', file => 'js/PODViewer/podviewer.css' }) =%>
+	<%= javascript $c->url({
+		type => 'webwork', name => 'htdocs',
+		file => 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'
+		}), defer => undef =%>
+	<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/PODViewer/podviewer.js' }),
+		defer => undef =%>
+	<link rel="icon" type="x-image/icon"
+		href="<%= $c->url({ type => 'webwork', name => 'htdocs', file => 'images/favicon.ico' }) %>">
+</head>
+%
+<body>
+	<div class="pod-header navbar navbar-dark bg-primary px-3 position-fixed border-bottom border-dark">
+		<div class="container-fluid d-flex flex-column d-md-block">
+			<h1 class="navbar-brand fw-bold fs-5 me-auto me-md-0 mb-2 mb-md-0"><%= title %></h1>
+			<button class="navbar-toggler d-md-none me-auto" type="button" data-bs-toggle="offcanvas"
+				data-bs-target="#sidebar" aria-controls="sidebar" aria-label="<%= maketext('Toggle Sidebar') %>">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+		</div>
+	</div>
+	<aside class="offcanvas-md offcanvas-start border-end border-dark position-fixed" tabindex="-1"
+		id="sidebar" aria-labelledby="sidebar-label">
+		<div class="offcanvas-header">
+			<h2 class="offcanvas-title" id="sidebar-label"><%= $sidebar_title %></h2>
+			<button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"
+			   	aria-label="Close">
+			</button>
+		</div>
+		<div class="offcanvas-body p-md-3 w-100">
+			<%= content 'sidebar' %>
+		</div>
+	</aside>
+	<div class="pod-page-container d-flex">
+		<div class="container-fluid p-3 h-100" id="_podtop_">
+			<%= content =%>
+		</div>
+	</div>
+</body>
+%
+</html>

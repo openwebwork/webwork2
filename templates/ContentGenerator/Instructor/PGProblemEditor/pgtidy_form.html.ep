@@ -1,0 +1,5 @@
+% last unless $c->{is_pg};
+%
+<div class="row">
+	<p><%= maketext('Reformat the code using perltidy.') =%></p>
+</div>

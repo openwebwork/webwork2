@@ -13,7 +13,6 @@ loadMacros(
 	"PGgraphmacros.pl"
 );
 
-TEXT(beginproblem());
 $showPartialCorrectAnswers = 0;
 
 $a=random(0, 6.3, .1);

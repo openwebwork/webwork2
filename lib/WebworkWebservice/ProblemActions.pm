@@ -1,8 +1,6 @@
-#!/usr/local/bin/perl -w
-
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -15,135 +13,132 @@
 # Artistic License for more details.
 ################################################################################
 
-
-###############################################################################
 # Web service which manipulates problems and user problems.
-###############################################################################
-
 package WebworkWebservice::ProblemActions;
-use WebworkWebservice;
-use base qw(WebworkWebservice);
 
 use strict;
 use warnings;
-use sigtrap;
 
-use WeBWorK::Utils qw(encode_utf8_base64);
-use WeBWorK::Debug qw(debug);
-use WeBWorK::CourseEnvironment;
+use Data::Structure::Util qw(unbless);
 
-###############################################################################
-# Obtain basic information about directories, course name and host
-###############################################################################
-our $WW_DIRECTORY = $WebworkWebservice::WW_DIRECTORY;
-our $PG_DIRECTORY = $WebworkWebservice::PG_DIRECTORY;
-our $COURSENAME   = $WebworkWebservice::COURSENAME;
-our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
-our $PASSWORD     = $WebworkWebservice::PASSWORD;
-our $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $WW_DIRECTORY, courseName => $COURSENAME });
-
-our $UNIT_TESTS_ON = 0;
+use WeBWorK::PG::Tidy qw(pgtidy);
 
 sub getUserProblem {
-	debug("in getUserProblem");
-	my ($self, $params) = @_;
+	my ($invocant, $self, $params) = @_;
+
 	my $db = $self->db;
 
-	my $userID = $params->{id};
-	my $setID = $params->{set_id};
-	my $problemID = $params->{problem_id};
-
-	my $userProblem = $db->getUserProblem($userID, $setID, $problemID);
+	my $userProblem = $db->getUserProblem($params->{user_id}, $params->{set_id}, $params->{problem_id});
 
 	return {
-		ra_out => $userProblem,
-		text => encode_utf8_base64(
-			"Loaded problem $problemID of set $setID for user $userID in course $self->{courseName}.")
+		ra_out => unbless($userProblem),
+		text   => "Loaded problem $params->{problem_id} of set $params->{set_id} for "
+			. "user $params->{user_id} in course "
+			. $self->ce->{courseName} . '.'
 	};
 }
 
 sub putUserProblem {
-	debug("in putUserProblem");
-	my ($self, $params) = @_;
+	my ($invocant, $self, $params) = @_;
+
 	my $db = $self->db;
 
-	my $userID = $params->{id};
-	my $setID = $params->{set_id};
-	my $problemID = $params->{problem_id};
+	my $userProblem = $db->getUserProblem($params->{user_id}, $params->{set_id}, $params->{problem_id});
+	if (!$userProblem) { return { text => 'User problem not found.' }; }
 
-	my $userProblem;
-	$userProblem = $db->getUserProblem($userID, $setID, $problemID);
-	if (!$userProblem) { return { text => encode_utf8_base64("User problem not found.") }; }
-
-	for ('source_file', 'value', 'max_attempts', 'showMeAnother', 'showMeAnotherCount', 'prPeriod',
-		'prCount', 'problem_seed', 'status', 'attempted', 'last_answer', 'num_correct', 'num_incorrect',
-		'att_to_open_children', 'counts_parent_grade', 'sub_status', 'flags') {
+	for (
+		'source_file',        'value',                'max_attempts',        'showMeAnother',
+		'showMeAnotherCount', 'prPeriod',             'prCount',             'problem_seed',
+		'status',             'attempted',            'last_answer',         'num_correct',
+		'num_incorrect',      'att_to_open_children', 'counts_parent_grade', 'sub_status',
+		'flags'
+		)
+	{
 		$userProblem->{$_} = $params->{$_} if defined($params->{$_});
 	}
 
 	eval { $db->putUserProblem($userProblem) };
-	if ($@) { return { text => encode_utf8_base64("putUserProblem: " . $@) }; }
+	if ($@) { return { text => "putUserProblem: $@" }; }
 
 	return {
-		ra_out => $userProblem,
-		text => encode_utf8_base64(
-			"Updated problem $problemID of $setID for user $userID in course $self->{courseName}.")
+		ra_out => unbless($userProblem),
+		text   => "Updated problem $params->{problem_id} of $params->{set_id} for "
+			. "user $params->{user_id} in course "
+			. $self->ce->{courseName} . '.'
 	};
 }
 
 sub putProblemVersion {
-	debug("in putProblemVersion");
-	my ($self, $params) = @_;
+	my ($invocant, $self, $params) = @_;
+
 	my $db = $self->db;
 
-	my $userID = $params->{id};
-	my $setID = $params->{set_id};
-	my $versionID = $params->{version_id};
-	my $problemID = $params->{problem_id};
+	my $problemVersion =
+		$db->getProblemVersion($params->{user_id}, $params->{set_id}, $params->{version_id}, $params->{problem_id});
+	if (!$problemVersion) { return { text => 'Problem version not found.' }; }
 
-	my $problemVersion = $db->getProblemVersion($userID, $setID, $versionID, $problemID);
-	if (!$problemVersion) { return { text => encode_utf8_base64("Problem version not found.") }; }
-
-	for ('source_file', 'value', 'max_attempts', 'showMeAnother', 'showMeAnotherCount', 'prPeriod',
-		'prCount', 'problem_seed', 'status', 'attempted', 'last_answer', 'num_correct', 'num_incorrect',
-		'att_to_open_children', 'counts_parent_grade', 'sub_status', 'flags') {
+	for (
+		'source_file',        'value',                'max_attempts',        'showMeAnother',
+		'showMeAnotherCount', 'prPeriod',             'prCount',             'problem_seed',
+		'status',             'attempted',            'last_answer',         'num_correct',
+		'num_incorrect',      'att_to_open_children', 'counts_parent_grade', 'sub_status',
+		'flags'
+		)
+	{
 		$problemVersion->{$_} = $params->{$_} if defined($params->{$_});
 	}
 
 	eval { $db->putProblemVersion($problemVersion) };
-	if ($@) { return { text => encode_utf8_base64("putProblemVersion: " . $@) }; }
+	if ($@) { return { text => "putProblemVersion: $@" }; }
 
 	return {
-		ra_out => $problemVersion,
-		text => encode_utf8_base64(
-			"Updated problem $problemID of $setID,v$versionID for user $userID in course $self->{courseName}.")
+		ra_out => unbless($problemVersion),
+		text   => "Updated problem $params->{problem_id} of $params->{set_id},v$params->{version_id} "
+			. "for user $params->{user_id} in course "
+			. $self->ce->{courseName} . '.'
 	};
 }
 
 sub putPastAnswer {
-	debug("in putPastAnswer");
-	my ($self, $params) = @_;
+	my ($invocant, $self, $params) = @_;
+
 	my $db = $self->db;
 
-	my $answerID = $params->{answer_id};
+	my $pastAnswer = $db->getPastAnswer($params->{answer_id});
+	if (!$pastAnswer) { return { text => 'Past answer not found.' }; }
 
-	my $pastAnswer = $db->getPastAnswer($answerID);
-	if (!$pastAnswer) { return { text => encode_utf8_base64("Past answer not found.") }; }
-
-	$pastAnswer->{user_id} = $params->{id} if $params->{id};
+	$pastAnswer->{user_id} = $params->{user_id} if $params->{user_id};
 
 	for ('set_id', 'problem_id', 'source_file', 'timestamp', 'scores', 'answer_string', 'comment_string') {
 		$pastAnswer->{$_} = $params->{$_} if defined($params->{$_});
 	}
 
 	eval { $db->putPastAnswer($pastAnswer) };
-	if ($@) { return { text => encode_utf8_base64("putPastAnswer " . $@) }; }
+	if ($@) { return { text => "putPastAnswer $@" }; }
 
 	return {
-		ra_out => $pastAnswer,
-		text => encode_utf8_base64(
-			"Updated answer $answerID for problem $pastAnswer->{problem_id} of $pastAnswer->{set_id} " .
-			"for user $pastAnswer->{user_id} in course $self->{courseName}.")
+		ra_out => unbless($pastAnswer),
+		text   =>
+			"Updated answer $params->{answer_id} for problem $pastAnswer->{problem_id} of $pastAnswer->{set_id} "
+			. "for user $pastAnswer->{user_id} in course "
+			. $self->ce->{courseName} . '.'
+	};
+}
+
+sub tidyPGCode {
+	my ($invocant, $self, $params) = @_;
+
+	local @ARGV = ();
+
+	my $code = $params->{pgCode};
+	my $tidiedPGCode;
+	my $errors;
+
+	my $result = pgtidy(source => \$code, destination => \$tidiedPGCode, errorfile => \$errors);
+
+	return {
+		ra_out => { tidiedPGCode => $tidiedPGCode, status => $result, errors => $errors },
+		text   => 'Tidied code'
 	};
 }
 

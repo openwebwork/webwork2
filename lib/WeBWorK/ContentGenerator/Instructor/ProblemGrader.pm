@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -13,414 +13,196 @@
 # Artistic License for more details.
 ################################################################################
 
-#This is a page for manually grading webwork problems.
-
 package WeBWorK::ContentGenerator::Instructor::ProblemGrader;
-use base qw(WeBWorK::ContentGenerator);
-use WeBWorK::Utils qw(sortByName getAssetURL);
-use WeBWorK::PG;
-use HTML::Entities;
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
 =head1 NAME
 
+WeBWorK::ContentGenerator::Instructor::ProblemGrader - This is a page for
+manually grading webwork problems.
+
 =cut
 
-use strict;
-use warnings;
+use HTML::Entities;
 
-sub pre_header_initialize {
+use WeBWorK::Utils qw(sortByName wwRound format_set_name_display jitar_id_to_seq getTestProblemPosition);
+use WeBWorK::Utils::Rendering qw(renderPG);
 
-	my ($self)  = @_;
-	my $r       = $self->r;
-	my $ce      = $r->ce;
-	my $db      = $r->db;
-	my $authz   = $r->authz;
-	my $urlpath = $r->urlpath;
+async sub initialize ($c) {
+	my $authz      = $c->authz;
+	my $db         = $c->db;
+	my $ce         = $c->ce;
+	my $courseName = $c->stash('courseID');
+	my $setID      = $c->stash('setID');
+	my $problemID  = $c->stash('problemID');
+	my $userID     = $c->param('user');
 
-	my $setName           = $urlpath->arg("setID");
-	my $problemNumber     = $r->urlpath->arg("problemID");
-	my $userName          = $r->param('user');
-	my $effectiveUserName = $r->param('effectiveUser');
-	my $key               = $r->param('key');
-	my $editMode          = $r->param("editMode");
+	# Make sure these are defined for the template.
+	$c->stash->{set}          = $db->getGlobalSet($setID);
+	$c->stash->{problem}      = $db->getGlobalProblem($setID, $problemID);
+	$c->stash->{users}        = [];
+	$c->stash->{haveSections} = 0;
 
-	# Check permissions
-	return unless $authz->hasPermissions($userName, "access_instructor_tools");
-	return unless $authz->hasPermissions($userName, "score_sets");
+	return
+		unless $c->stash->{set}
+		&& $c->stash->{problem}
+		&& $authz->hasPermissions($userID, 'access_instructor_tools')
+		&& $authz->hasPermissions($userID, 'score_sets');
 
-	my $user = $db->getUser($userName);
-	die "Couldn't find user $user" unless $user;
-
-	my $displayMode = $user->displayMode ? $user->displayMode : $ce->{pg}->{options}->{displayMode};
-	$self->{displayMode} = $displayMode;
-}
-
-sub head {
-	my $self = shift;
-	my $r    = $self->r;
-	my $ce   = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-	print CGI::script({ src => "$site_url/js/apps/ProblemGrader/problemgrader.js", defer => undef }, '');
-
-	return "";
-
-}
-
-sub initialize {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $authz      = $r->authz;
-	my $db         = $r->db;
-	my $ce         = $r->ce;
-	my $courseName = $urlpath->arg("courseID");
-	my $setID      = $urlpath->arg("setID");
-	my $problemID  = $urlpath->arg("problemID");
-	my $user       = $r->param('user');
-
-	# Check permissions
-	return unless $authz->hasPermissions($user, "access_instructor_tools");
-	return unless $authz->hasPermissions($user, "score_sets");
-
-	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
-	# user if such restrictions are defined.  The users are sorted first by section, then by last name.
-	$self->{users} = [
+	# Get all users of the set, and restrict to the sections or recitations that are allowed for the user if such
+	# restrictions are defined.  For gateway sets only get users for which versions exist.  The users are sorted by
+	# section, last name, first name, and then user_id.
+	$c->stash->{users} = [
 		$db->getUsersWhere(
 			{
-				user_id => { not_like => 'set_id:%' },
-				$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+				user_id => [
+					map { $_->[0] } (
+						$c->stash->{set}->assignment_type =~ /gateway/
+						? $db->listSetVersionsWhere({ set_id => { like => "$setID,v\%" } })
+						: $db->listUserSetsWhere({ set_id => $setID })
+					)
+				],
+				$ce->{viewable_sections}{$userID} || $ce->{viewable_recitations}{$userID}
 				? (
 					-or => [
-						$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
-						$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+						$ce->{viewable_sections}{$userID} ? (section => $ce->{viewable_sections}{$userID}) : (),
+						$ce->{viewable_recitations}{$userID}
+						? (recitation => $ce->{viewable_recitations}{$userID})
+						: ()
 					]
 					)
 				: ()
 			},
-			[qw/section last_name/]
+			[qw/section last_name first_name user_id/]
 		)
 	];
 
-	# if we need to gothrough and update grades
-	if ($r->param('assignGrades')) {
-		$self->addmessage(CGI::div(
-			{ class => 'alert alert-success p-1 mb-0' },
-			$r->maketext("Grades have been saved for all current users.")
-		));
+	# First process student problems and answers and cache relevant data used both for
+	# saving grades and displaying the grader table.
+	for my $user (@{ $c->stash->{users} }) {
+		$user->{displayName} =
+			$user->last_name || $user->first_name ? $user->last_name . ', ' . $user->first_name : $user->user_id;
+		$c->stash->{haveSections} = 1 if $user->section;
 
-		for my $user (@{ $self->{users} }) {
-			my $userID      = $user->user_id;
-			my $userProblem = $db->getUserProblem($userID, $setID, $problemID);
-			next unless $userProblem && defined($r->param("$userID.score"));
-			#update grades and set flags
-			$userProblem->{flags} =~ s/needs_grading/graded/;
-			if ($r->param("$userID.mark_correct")) {
-				$userProblem->status(1);
-			} else {
-				my $newscore = $r->param("$userID.score") / 100;
-				if ($newscore != $userProblem->status) {
-					$userProblem->status($newscore);
+		if ($c->stash->{set}->assignment_type =~ /gateway/) {
+			$user->{data} = [
+				map { { problem => $_ } } $db->getProblemVersionsWhere(
+					{ user_id => $user->user_id, problem_id => $problemID, set_id => { like => "$setID,v\%" } }
+				)
+			];
+		} else {
+			$user->{data} =
+				[ map { { problem => $_ } } $db->getUserProblem($user->user_id, $setID, $problemID) ];
+		}
+
+		for (@{ $user->{data} }) {
+			next unless defined $_->{problem};
+			my $versionID = ref($_->{problem}) =~ /::ProblemVersion/ ? $_->{problem}->version_id : 0;
+			my $userPastAnswerID =
+				$db->latestProblemPastAnswer($courseName, $user->user_id, $setID . ($versionID ? ",v$versionID" : ''),
+					$problemID);
+			$_->{past_answer} = $db->getPastAnswer($userPastAnswerID) if ($userPastAnswerID);
+			($_->{problemNumber}, $_->{pageNumber}) = getTestProblemPosition($db, $_->{problem}) if $versionID;
+
+		}
+	}
+
+	# Update grades if saving.
+	if ($c->param('assignGrades')) {
+		$c->addgoodmessage($c->maketext('Grades have been saved for all current users.'));
+
+		for my $user (@{ $c->stash->{users} }) {
+			my $userID = $user->user_id;
+			for (@{ $user->{data} }) {
+				next unless defined $_->{problem};
+
+				my $versionID = ref($_->{problem}) =~ /::ProblemVersion/ ? $_->{problem}->version_id : 0;
+
+				# Only save if there is a change made.  This prevents the "needs_grading" flag from being removed until
+				# the instructor explicitly grades the problem for this student.
+				next
+					unless (defined $c->param("$userID.$versionID.score")
+						&& $c->param("$userID.$versionID.score") / 100 != $_->{problem}->status)
+					|| $c->param("$userID.$versionID.mark_correct")
+					|| ($c->param("$userID.$versionID.comment") && defined $_->{past_answer});
+
+				# Update grades and set flags.
+				$_->{problem}{flags} =~ s/:needs_grading$//;
+				if ($c->param("$userID.$versionID.mark_correct")) {
+					$_->{problem}->status(1);
+				} elsif (defined $c->param("$userID.$versionID.score")) {
+					my $newscore = $c->param("$userID.$versionID.score") / 100;
+					if ($newscore != $_->{problem}->status) { $_->{problem}->status($newscore); }
 				}
-			}
 
-			$db->putUserProblem($userProblem);
+				if   ($versionID) { $db->putProblemVersion($_->{problem}); }
+				else              { $db->putUserProblem($_->{problem}); }
 
-			#if the instructor added a comment we should save that to the latest answer
-			if ($r->param("$userID.comment")) {
-				my $comment          = $r->param("$userID.comment");
-				my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID);
-
-				if ($userPastAnswerID) {
-					my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
-					$userPastAnswer->comment_string($comment);
-					warn "Couldn't save comment" unless $db->putPastAnswer($userPastAnswer);
+				# Save the instructor comment to the latest past answer.
+				if ($c->param("$userID.$versionID.comment") && defined $_->{past_answer}) {
+					$_->{past_answer}->comment_string($c->param("$userID.$versionID.comment"));
+					$db->putPastAnswer($_->{past_answer});
 				}
 			}
 		}
 	}
-}
 
-sub body {
-	my ($self)      = @_;
-	my $r           = $self->r;
-	my $urlpath     = $r->urlpath;
-	my $db          = $r->db;
-	my $ce          = $r->ce;
-	my $authz       = $r->authz;
-	my $webworkRoot = $ce->{webworkURLs}->{root};
-	my $courseName  = $urlpath->arg("courseID");
-	my $setID       = $urlpath->arg("setID");
-	my $problemID   = $urlpath->arg("problemID");
-	my $userID      = $r->param('user');
-	my $key         = $r->param('key');
-	my $displayMode = $self->{displayMode};
-	my $formFields  = { WeBWorK::Form->new_from_paramable($r)->Vars };
+	return
+		unless @{ $c->stash->{users} }
+		&& @{ $c->stash->{users}[0]{data} }
+		&& defined $c->stash->{users}[0]{data}[0]{problem};
 
-	# to make grabbing these options easier, we'll pull them out now...
-	my %imagesModeOptions = %{ $ce->{pg}->{displayModeOptions}->{images} };
+	# Render the first student's problem.
+	my ($set, $problem);
+	if ($c->stash->{set}->assignment_type =~ /gateway/) {
+		$set = $db->getMergedSetVersion($c->stash->{users}[0]->user_id,
+			$setID, $c->stash->{users}[0]{data}[0]{problem}->version_id);
+		$problem = $db->getMergedProblemVersion($c->stash->{users}[0]->user_id,
+			$setID, $c->stash->{users}[0]{data}[0]{problem}->version_id, $problemID);
+	} else {
+		$set     = $db->getMergedSet($c->stash->{users}[0]->user_id, $setID);
+		$problem = $db->getMergedProblem($c->stash->{users}[0]->user_id, $setID, $problemID);
+	}
 
-	# set up some display stuff
-	my $imgGen = WeBWorK::PG::ImageGenerator->new(
-		tempDir         => $ce->{webworkDirs}->{tmp},
-		latex           => $ce->{externalPrograms}->{latex},
-		dvipng          => $ce->{externalPrograms}->{dvipng},
-		useCache        => 1,
-		cacheDir        => $ce->{webworkDirs}->{equationCache},
-		cacheURL        => $ce->{webworkURLs}->{equationCache},
-		cacheDB         => $ce->{webworkFiles}->{equationCacheDB},
-		dvipng_align    => $imagesModeOptions{dvipng_align},
-		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
-	);
+	# These should always be defined except for some odd edge cases.
+	return unless $set && $problem;
 
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		CGI::p("You are not authorized to acces the Instructor tools."))
-		unless $authz->hasPermissions($userID, "access_instructor_tools");
+	# Get the current user for the displayMode.
+	my $user = $db->getUser($userID);
 
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		CGI::p("You are not authorized to grade homework sets."))
-		unless $authz->hasPermissions($userID, "score_sets");
-
-	my $set     = $db->getMergedSet($userID, $setID);                    # checked
-	my $problem = $db->getMergedProblem($userID, $setID, $problemID);    # checked
-	my $user    = $db->getUser($userID);
-
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		CGI::p($r->maketext("This set needs to be assigned to you before you can grade it.")))
-		unless $set && $problem;
-
-	#set up a silly problem to render the problem text
-	my $pg = WeBWorK::PG->new(
-		$ce,
-		$user,
-		$key,
-		$set,
-		$problem,
-		$set->psvn,    # FIXME: this field should be removed
-		$formFields,
-		{              # translation options
-			displayMode              => $displayMode,
+	# Render the problem text.
+	$c->stash->{pg} = await renderPG(
+		$c,
+		$c->stash->{users}[0],
+		$set, $problem,
+		$set->psvn,
+		{},
+		{
+			displayMode              => $user->displayMode || $c->ce->{pg}{options}{displayMode},
 			showHints                => 0,
 			showSolutions            => 0,
 			refreshMath2img          => 0,
 			processAnswers           => 1,
 			permissionLevel          => $db->getPermissionLevel($userID)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($userID)->permission,
+			isInstructor             => 1
 		},
 	);
 
-	# check to see what type the answers are.  right now it only checks for essay but could do more
-	my %answerHash = %{ $pg->{answers} };
-	my @answerTypes;
-
-	foreach (sortByName(undef, keys %answerHash)) {
-		push(@answerTypes, $answerHash{$_}->{type});
-	}
-
-	print CGI::div({ class => 'problem-content col-md-12 col-lg-10' }, $pg->{body_text});
-
-	print CGI::start_form({
-		method => "post",
-		action => $self->systemLink($urlpath, authen => 0),
-		id     => "problem-grader-form",
-		name   => "problem-grader-form"
-	});
-
-	my $selectAll = CGI::input({
-		type  => 'button',
-		id    => 'check_all_mark_corrects',
-		value => $r->maketext('Mark All'),
-		class => 'btn btn-secondary btn-sm'
-	});
-
-	print CGI::start_div({ class => 'table-responsive' }), CGI::start_table({ width => '1020px' });
-	print CGI::Tr(
-		{ -valign => "top" },
-		CGI::th([
-			$r->maketext("Section"), $r->maketext("Name"),
-			"&nbsp;",                $r->maketext("Latest Answers"),
-			"&nbsp;",                $r->maketext("Mark Correct") . "<br>" . $selectAll,
-			"&nbsp;",                $r->maketext("Score (%)"),
-			"&nbsp;",                $r->maketext("Comment")
-		])
-	);
-	print CGI::Tr(
-		CGI::td([ CGI::hr(), CGI::hr(), "", CGI::hr(), "", CGI::hr(), "", CGI::hr(), "", CGI::hr(), "&nbsp;" ]));
-
-	my $viewProblemPage = $urlpath->new(
-		type => 'problem_detail',
-		args => { courseID => $courseName, setID => $setID, problemID => $problemID }
-	);
-
-	my %dropDown;
-	my $delta = $ce->{options}{problemGraderScoreDelta};
-	#construct the drop down.
-	for (my $i = int(100 / $delta); $i >= 0; $i--) {
-		$dropDown{ $i * $delta } = $i * $delta;
-	}
-
-	my @scores = sort { $b <=> $a } keys %dropDown;
-
-	#for each user get their latest answer from the past answer db
-	foreach my $userRecord (@{ $self->{users} }) {
-
-		my $statusClass = $ce->status_abbrev_to_name($userRecord->status) || "";
-
-		my $userID           = $userRecord->user_id;
-		my $viewProblemLink  = $self->systemLink($viewProblemPage, params => { effectiveUser => $userID });
-		my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID);
-		my $userAnswerString;
-		my $comment        = "";
-		my $userProblem    = $db->getUserProblem($userID, $setID, $problemID);
-		my $noCommentField = 0;
-
-		next unless $userProblem;
-
-		if ($userPastAnswerID && $userProblem) {
-
-			my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
-			my @scores         = split(//,   $userPastAnswer->scores);
-			my @answers        = split(/\t/, $userPastAnswer->answer_string);
-			$comment = $userPastAnswer->comment_string;
-
-			#Skip this answer if the pg file doesn't match the current pg file
-			if (defined($userPastAnswer->source_file)
-				&& $userPastAnswer->source_file ne $problem->source_file)
-			{
-				next;
-			}
-
-			for (my $i = 0; $i <= $#answers; $i++) {
-
-				my $answer = $answers[$i];
-
-				#generate answer text.  Need to process it if its an essay answer
-				# if the answwer Type is undefined then just print the result and hope for the best.
-
-				if (!defined($answerTypes[$i])) {
-					$userAnswerString .= CGI::p(HTML::Entities::encode_entities($answer));
-
-				} elsif ($answerTypes[$i] eq 'essay') {
-
-					$answer = HTML::Entities::encode_entities($answer);
-					$answer =~ s/\n/<br>/g;
-					$userAnswerString .= CGI::div({ class => 'essay-answer' }, $answer);
-
-				} elsif ($answerTypes[$i] eq 'Value (Formula)') {
-					#if its a formula then render it and color it
-					$userAnswerString .= CGI::div(
-						{
-							class => 'graded-answer',
-							style => $scores[$i] ? "color:#006600" : "color:#660000"
-						},
-						'`' . HTML::Entities::encode_entities($answer) . '`'
-					);
-
-				} else {
-					# if it isnt an essay then don't render it but color it
-					$userAnswerString .= CGI::div(
-						{
-							class => 'graded-answer',
-							style => $scores[$i] ? "color:#006600" : "color:#660000"
-						},
-						HTML::Entities::encode_entities($answer)
-					);
-				}
-			}
-
-		} else {
-			$noCommentField   = 1;
-			$userAnswerString = "There are no answers for this student.";
-		}
-
-		my $score = int(100 * $userProblem->status);
-
-		my $prettyName = $userRecord->last_name . ", " . $userRecord->first_name;
-
-		#create form for scoring
-
-		my $commentBox = '';
-		$commentBox = CGI::textarea({
-			name  => "$userID.comment",
-			value => "$comment",
-			rows  => 3,
-			class => 'form-control'
-		})
-			. CGI::br()
-			. CGI::input({
-				class => 'preview btn btn-secondary btn-sm',
-				type  => 'button',
-				name  => "$userID.preview",
-				value => "Preview"
-			})
-			unless $noCommentField;
-
-		# this selects the score available in the drop down that is just above the student score
-		my $selectedScore = 0;
-		foreach my $item (@scores) {
-			if ($score <= $item) {
-				$selectedScore = $item;
-			}
-		}
-
-		print CGI::Tr(
-			{ valign => "top" },
-			CGI::td([
-				$userRecord->section,
-				CGI::div(
-					{
-						class => $userProblem->flags =~ /needs_grading/
-						? "NeedsGrading $statusClass"
-						: $statusClass
-					},
-					CGI::a({ href => $viewProblemLink, target => "WW_View" }, $prettyName)
-				),
-				" ",
-				$userAnswerString,
-				" ",
-				CGI::checkbox({
-					type  => "checkbox",
-					class => "mark_correct form-check-input",
-					name  => "$userID.mark_correct",
-					value => "1",
-					label => "",
-
-				}),
-				" ",
-				CGI::popup_menu({
-					name    => "$userID.score",
-					class   => "score-selector form-select form-select-sm",
-					values  => \@scores,
-					default => $selectedScore,
-					labels  => \%dropDown
-				}),
-				" ",
-				$commentBox
-			])
-		);
-		print CGI::Tr(
-			CGI::td([ CGI::hr(), CGI::hr(), "", CGI::hr(), "", CGI::hr(), "", CGI::hr(), "", CGI::hr(), "&nbsp;" ])
-		);
-	}
-
-	print CGI::end_table(), CGI::end_div();
-	print $self->hidden_authen_fields;
-	print CGI::submit({ name => "assignGrades", value => $r->maketext("Save"), class => 'btn btn-primary' });
-
-	print CGI::end_form();
-
-	return "";
+	return;
 }
 
-sub output_CSS {
-	my $self = shift;
-	my $ce   = $self->r->ce;
+sub page_title ($c) {
+	my $problemID = $c->stash('problemID');
+	if ($c->stash->{set} && $c->stash->{set}->assignment_type eq 'jitar') {
+		$problemID = join('.', jitar_id_to_seq($problemID));
+	}
+	return $c->maketext('Manual Grader for [_1]: Problem [_2]',
+		$c->tag('span', dir => 'ltr', format_set_name_display($c->stash->{set}->set_id)), $problemID);
+}
 
-	# PG styles
-	print CGI::Link({ rel => 'stylesheet', href => getAssetURL($ce, 'js/apps/Problem/problem.css') });
-
-	return '';
+sub siblings ($c) {
+	return $c->include('ContentGenerator/Instructor/ProblemGrader/siblings');
 }
 
 1;

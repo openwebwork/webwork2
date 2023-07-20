@@ -13,15 +13,9 @@ const autoprefixer = require('autoprefixer');
 const postcss = require('postcss');
 const rtlcss = require('rtlcss');
 const cssMinify = require('cssnano');
-const thirdPartyAssets = require('./third-party-assets.json');
 
 const argv = yargs
 	.usage('$0 Options').version(false).alias('help', 'h').wrap(100)
-	.option('useCDN', {
-		alias: 'c',
-		description: 'Use third party assets from a CDN rather than serving them locally.',
-		type: 'boolean'
-	})
 	.option('enable-sourcemaps', {
 		alias: 's',
 		description: 'Generate source maps. (Not for use in production!)',
@@ -65,7 +59,7 @@ const processFile = async (file, _details) => {
 
 		if (/(?<!\.min)\.js$/.test(baseName)) {
 			// Process javascript
-			if (!ready) console.log(`\x1b[32mProccessing ${file}\x1b[0m`);
+			if (!ready) console.log(`\x1b[32mProcessing ${file}\x1b[0m`);
 
 			const filePath = path.resolve(__dirname, file);
 
@@ -106,7 +100,7 @@ const processFile = async (file, _details) => {
 			assets[file] = newVersion;
 		} else if (/^(?!_).*(?<!\.min)\.s?css$/.test(baseName)) {
 			// Process scss or css.
-			if (!ready) console.log(`\x1b[32mProccessing ${file}\x1b[0m`);
+			if (!ready) console.log(`\x1b[32mProcessing ${file}\x1b[0m`);
 
 			const filePath = path.resolve(__dirname, file);
 
@@ -195,7 +189,7 @@ const processFile = async (file, _details) => {
 };
 
 const themesDir = path.resolve(__dirname, 'themes');
-const jsDir = path.resolve(__dirname, 'js/apps');
+const jsDir = path.resolve(__dirname, 'js');
 
 // Remove generated files from previous builds.
 cleanDir(themesDir);
@@ -213,23 +207,10 @@ for (const file of fs.readdirSync(themesDir, { withFileTypes: true })) {
 		fs.closeSync(fs.openSync(path.resolve(themesDir, file.name, 'math4-overrides.css'), 'w'));
 }
 
-// Add third party assets to the assets list.
-if (argv.useCDN || process.env.USE_CDN) {
-	// If using a cdn, the values are the cdn location for the file.
-	console.log('\x1b[32mAdding third party assets from CDN.\x1b[0m');
-	Object.assign(assets, thirdPartyAssets);
-} else {
-	// If not using a cdn, the values are the same as the request file.
-	console.log('\x1b[32mAdding third party assets served locally from htdocs/node_modules.\x1b[0m');
-	Object.assign(assets,
-		Object.entries(thirdPartyAssets).reduce(
-			(accumulator, [file]) => { accumulator[file] = file; return accumulator; }, {}));
-}
-
 // Set up the watcher.
 if (argv.watchFiles) console.log('\x1b[32mEstablishing watches and performing initial build.\x1b[0m');
-chokidar.watch(['js/apps', 'themes'], {
-	ignored: /\.min\.(js|css)$/,
+chokidar.watch(['js', 'themes'], {
+	ignored: /layouts|\.min\.(js|css)$/,
 	cwd: __dirname, // Make sure all paths are given relative to the htdocs directory.
 	usePolling: true, // Needed to get changes to symlinks.
 	interval: 500,

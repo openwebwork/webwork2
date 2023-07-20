@@ -1,0 +1,73 @@
+% use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses);
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'create_and_delete_courses')) {
+	<div class="alert alert-danger p-1 mb-0">
+		<%= maketext('You are not authorized to create or delete courses.') %>
+	</div>
+	% last;
+% }
+%
+<%= include 'ContentGenerator/CourseAdmin/registration_form' %>
+%
+% if (@{ $c->{errors} }) {
+	<div class="alert alert-danger p-1 mb-2">
+		<div class="mb-1"><%= maketext('Please correct the following errors and try again:') %></div>
+		<ul class="mb-1">
+			% for (@{ $c->{errors} }) {
+				<li><%= $_ %></li>
+			% }
+		</ul>
+	</div>
+% }
+%
+% if ($c->{method_to_call}) {
+	% my $method_to_call = $c->{method_to_call};
+	<%= $c->$method_to_call =%>
+% } else {
+	% unless (-w $ce->{webworkDirs}{logs} && -w $ce->{webworkDirs}{tmp} && -w $ce->{webworkDirs}{DATA}) {
+		<h2><%= maketext('Directory permission errors') %></h2>
+		<p>
+			<%= maketext(
+				'The webwork server must be able to write to these directories. Please correct the permssion errors.'
+			) =%>
+		</p>
+		<ul>
+			% unless (-w $ce->{webworkDirs}{logs}) {
+				<li><%= maketext('unable to write to directory [_1]', $ce->{webworkDirs}{logs}) %></li>
+			% }
+			% unless (-w $ce->{webworkDirs}{tmp}) {
+				<li><%= maketext('unable to write to directory [_1]', $ce->{webworkDirs}{tmp}) %></li>
+			% }
+			% unless (-w $ce->{webworkDirs}{DATA}) {
+				<li><%= maketext('unable to write to directory [_1]', $ce->{webworkDirs}{DATA}) %></li>
+			% }
+		</ul>
+	% }
+	%
+	<h2><%= maketext('Courses') %></h2>
+	% my @courseIDs = listCourses($ce);
+	<ol>
+		% for (sort { lc($a) cmp lc($b) } listCourses($ce)) {
+			% next if $_ eq 'admin' || $_ eq 'modelCourse';
+			<li><%= link_to $_ => 'set_list' => { courseID => $_ } =%></li>
+		% }
+	</ol>
+	%
+	<h2><%= maketext('Archived Courses') =%></h2>
+	<p>
+		<%= link_to maketext('Download/upload archived courses') => $c->systemLink(
+			url_for('instructor_file_manager'),
+			params => { pwd => 'archives', unpack => 0, autodelete => 0 },
+		) =%>
+	</p>
+	<ol>
+		% for (sort { lc($a) cmp lc($b) } listArchivedCourses($ce)) {
+			<li><%= $_ %></li>
+		% }
+	</ol>
+% }

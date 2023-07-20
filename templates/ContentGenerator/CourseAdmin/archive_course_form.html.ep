@@ -1,0 +1,68 @@
+<h2><%= maketext('Archive Course') %> <%= $c->helpMacro('AdminArchiveCourse') %></h2>
+%
+% if (@$courseIDs) {
+	<p>
+		<%= maketext(
+			'Courses are listed either alphabetically or in order by the time of most recent login activity, oldest '
+				. 'first. To change the listing order check the mode you want and click "Refresh Listing".  The '
+				. 'listing format is: Course_Name (status :: date/time of most recent login) where status is "hidden" '
+				. 'or "visible".'
+		) =%>
+	</p>
+	<%= form_for current_route, method => 'POST', begin =%>
+		<div class="mb-3">
+			<div class="mb-2"><%= maketext('Select a listing format:') %></div>
+			% for (
+				% [ alphabetically => maketext('alphabetically') ],
+				% [ last_login     => maketext('by last login date') ]
+			% )
+			% {
+				<div class="form-check">
+					<%= radio_button archive_listing_format => $_->[0],
+						id    => "archive_listing_format_$_->[0]",
+						class => 'form-check-input',
+						$_->[0] eq 'alphabetically' ? (checked => undef) : () =%>
+					<%= label_for "archive_listing_format_$_->[0]" => $_->[1], class => 'form-check-label' =%>
+				</div>
+			% }
+		</div>
+		<div class="d-flex justify-content-start gap-2">
+			<%= submit_button maketext('Refresh Listing'),
+				name => 'archive_course_refresh', class => 'btn btn-primary' =%>
+			<%= submit_button maketext('Archive Courses'), name => 'archive_course', class => 'btn btn-primary' =%>
+		</div>
+		<%= $c->hidden_authen_fields =%>
+		<%= $c->hidden_fields('subDisplay') =%>
+		<div class="mb-2"><%= maketext('Select course(s) to archive.') %></div>
+		<div class="row mb-2">
+			<%= label_for archive_courseIDs => maketext('Course Name:'), class => 'col-auto col-form-label fw-bold' =%>
+			<div class="col-auto">
+				<%= select_field archive_courseIDs => [ map { [ $courseLabels->{$_} => $_ ] } @$courseIDs ],
+					id       => 'archive_courseIDs',
+					class    => 'form-select',
+					multiple => undef,
+					size     => 15 =%>
+			</div>
+		</div>
+		%
+		<div class="row align-items-center mb-2">
+			<div class="col-auto fw-bold"><%= maketext('Delete course:') %></div>
+			<div class="col-auto">
+				<div class="form-check mb-0">
+					<label class="form-check-label alert alert-danger py-0 px-1 mb-0">
+						<%= check_box delete_course => 1, class => 'form-check-input' =%>
+						<%= maketext('Delete course after archiving. Caution there is no undo!') %>
+					</label>
+				</div>
+			</div>
+		</div>
+		%
+		<div class="d-flex justify-content-start gap-2">
+			<%= submit_button maketext('Refresh Listing'),
+				name => 'archive_course_refresh', class => 'btn btn-primary' =%>
+			<%= submit_button maketext('Archive Courses'), name => 'archive_course', class => 'btn btn-primary' =%>
+		</div>
+	<%= end =%>
+% } else {
+	<p><%= maketext('No courses found') %></p>
+% }

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -167,31 +167,34 @@ sub unarchiveCourseHelper {
 
 # TOTALLY STOLEN FROM NewSQL::Std.
 sub unarchiveCourseHelper {
-	my ($courseID, $ce,  $dbLayoutName, %options) = @_;
+	my ($courseID, $ce, $dbLayoutName, %options) = @_;
 	my $dumpfile_path = $options{unarchiveDatabasePath};
-	
+
 	my ($my_cnf, $database) = _get_db_info($ce);
 	my $mysql = $ce->{externalPrograms}{mysql};
-	
-	my $restore_cmd = "2>&1 " . shell_quote($mysql)
-		. " --defaults-extra-file=" . shell_quote($my_cnf->filename)
-		. " " . shell_quote($database)
-		. " < " . shell_quote($dumpfile_path);
+
+	my $restore_cmd = "2>&1 "
+		. shell_quote($mysql)
+		. " --defaults-extra-file="
+		. shell_quote($my_cnf->filename) . " "
+		. shell_quote($database) . " < "
+		. shell_quote($dumpfile_path);
 	my $restore_out = readpipe $restore_cmd;
 	if ($?) {
-		my $exit = $? >> 8;
+		my $exit   = $? >> 8;
 		my $signal = $? & 127;
-		my $core = $? & 128;
-		die "Failed to restore database for course '$courseID' with command '$restore_cmd' (exit=$exit signal=$signal core=$core): $restore_out\n";
+		my $core   = $? & 128;
+		die
+			"Failed to restore database for course '$courseID' with command '$restore_cmd' (exit=$exit signal=$signal core=$core): $restore_out\n";
 	}
-	
+
 	return 1;
 }
 
 # TOTALLY STOLEN FROM NewSQL::Std.
 sub _get_db_info {
-	my ($ce) = @_;
-	my $dsn = $ce->{database_dsn};
+	my ($ce)     = @_;
+	my $dsn      = $ce->{database_dsn};
 	my $username = $ce->{database_username};
 	my $password = $ce->{database_password};
 
@@ -214,17 +217,17 @@ sub _get_db_info {
 	} else {
 		die "Can't call dump_table or restore_table on a table with a non-MySQL/MariaDB source";
 	}
-	
+
 	die "no database specified in DSN!" unless defined $dsn{database};
 
 	my $mysqldump = $self->{params}{mysqldump_path};
-	# Conditionally add column-statistics=0 as MariaDB databases do not support it
-	# see: https://serverfault.com/questions/912162/mysqldump-throws-unknown-table-column-statistics-in-information-schema-1109
-	#      https://github.com/drush-ops/drush/issues/4410
+# Conditionally add column-statistics=0 as MariaDB databases do not support it
+# see: https://serverfault.com/questions/912162/mysqldump-throws-unknown-table-column-statistics-in-information-schema-1109
+#      https://github.com/drush-ops/drush/issues/4410
 
-	my $column_statistics_off = "";
+	my $column_statistics_off      = "";
 	my $test_for_column_statistics = `$mysqldump_command --help | grep 'column-statistics'`;
-	if ( $test_for_column_statistics ) {
+	if ($test_for_column_statistics) {
 		$column_statistics_off = "[mysqldump]\ncolumn-statistics=0\n";
 		#warn "Setting in the temporary mysql config file for table dump/restore:\n$column_statistics_off\n\n";
 	}
@@ -232,12 +235,12 @@ sub _get_db_info {
 	# doing this securely is kind of a hassle...
 	my $my_cnf = new File::Temp;
 	$my_cnf->unlink_on_destroy(1);
-	chmod 0600, $my_cnf or die "failed to chmod 0600 $my_cnf: $!"; # File::Temp objects stringify with ->filename
+	chmod 0600, $my_cnf or die "failed to chmod 0600 $my_cnf: $!";    # File::Temp objects stringify with ->filename
 	print $my_cnf "[client]\n";
-	print $my_cnf "user=$username\n" if defined $username and length($username) > 0;
-	print $my_cnf "password=$password\n" if defined $password and length($password) > 0;
-	print $my_cnf "host=$dsn{host}\n" if defined $dsn{host} and length($dsn{host}) > 0;
-	print $my_cnf "port=$dsn{port}\n" if defined $dsn{port} and length($dsn{port}) > 0;
+	print $my_cnf "user=$username\n"       if defined $username  and length($username) > 0;
+	print $my_cnf "password=$password\n"   if defined $password  and length($password) > 0;
+	print $my_cnf "host=$dsn{host}\n"      if defined $dsn{host} and length($dsn{host}) > 0;
+	print $my_cnf "port=$dsn{port}\n"      if defined $dsn{port} and length($dsn{port}) > 0;
 	print $my_cnf "$column_statistics_off" if $test_for_column_statistics;
 
 	return ($my_cnf, $dsn{database});

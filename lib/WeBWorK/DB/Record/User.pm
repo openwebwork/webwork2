@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,7 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		user_id        => { type => "TINYBLOB NOT NULL", key => 1 },
+		user_id        => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		first_name     => { type => "TEXT" },
 		last_name      => { type => "TEXT" },
 		email_address  => { type => "TEXT" },
@@ -39,9 +39,8 @@ BEGIN {
 		displayMode    => { type => "TEXT" },
 		showOldAnswers => { type => "INT" },
 		useMathView    => { type => "INT" },
-		useWirisEditor => { type => "INT" },
 		useMathQuill   => { type => "INT" },
-		lis_source_did => { type => "BLOB" },
+		lis_source_did => { type => "TEXT" },
 	);
 }
 

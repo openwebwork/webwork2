@@ -1,0 +1,31 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Manual Grader Help');
+%
+<p>
+	<%= maketext('This page is for manually grading a problem for all assigned students.  The table of students '
+		. 'shows their last answers, percent score, and feedback comment.  The "Save" button is located below the '
+		. q(table to save any changes.  Each student's name links to that student's problem and opens up the )
+		. 'single problem grader, which grades a single student at a time.') =%>
+</p>
+<p class="m-0">
+	<%= maketext('The problem is shown at the top with the seed and answers of the selected student.  Use the drop '
+		. q(down menu to change which student's seed and answers are shown.  Use the "Mark Correct" checkbox to set )
+		. 'the score to 100%.  The feedback comment can contain LaTeX formulas using the deliminator "\\\\( ... \\)" '
+		. q(for math mode, and is placed above the student's problem.  Students can access the feedback comments by )
+		. 'going to the page for the associated set and problem number.') =%>
+</p>

@@ -1,0 +1,31 @@
+% layout 'pod_viewer';
+% title maketext('PG POD');
+%
+% my %section_names = (
+	% doc    => maketext('Documentation'),
+	% lib    => maketext('Libraries'),
+	% macros => maketext('Macros')
+% );
+%
+% for my $section (sort keys %$sections) {
+	% content_for toc => begin
+		<%= link_to $section_names{$section} => "#$section", class => 'nav-link' %>
+	% end
+	% content_for subjects => begin
+		<h2><a href="#_podtop_" id="<%= $section %>"><%= $section_names{$section} %></a></h2>
+		<div class="list-group mb-2">
+			% for (@{ $sections->{$section} }) {
+				% my $link_name = $_;
+				% $link_name = $1 =~ s!/!::!gr if $link_name =~ m/^(.*)\.pm$/;
+				<%= link_to $link_name, 'pod_viewer', { filePath => "$section/$_" },
+					class => 'list-group-item list-group-item-action' =%>
+			% }
+		</div>
+	% end
+% }
+% content_for sidebar => begin
+	<nav class="nav flex-column w-100">
+		<%= content 'toc' %>
+	</nav>
+% end
+<%= content 'subjects' %>

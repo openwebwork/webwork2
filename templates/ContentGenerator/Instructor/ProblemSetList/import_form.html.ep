@@ -1,0 +1,73 @@
+% use WeBWorK::Utils::Instructor qw(getDefList);
+%
+<div>
+	<div class="row mb-2">
+		<%= label_for import_amt_select => maketext('Import how many sets?'),
+			class => 'col-form-label col-form-label-sm col-md-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.import.number' => [
+					[ maketext('a single set') => 1, selected => undef ],
+					[maketext('multiple sets') => 8 ]
+				],
+				id => 'import_amt_select', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div class="row align-items-center mb-2">
+		<%= label_for import_source_select => maketext('Import from where?'),
+			class => 'col-form-label col-form-label-sm col-md-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.import.source' => [
+					[ maketext('Enter filenames below') => '', selected => undef ],
+					getDefList($ce)
+				],
+				id => 'import_source_select', class => 'form-select form-select-sm', dir => 'ltr',
+				size => param('action.import.number') || 1,
+				defined param('action.import.number') && param('action.import.number') ne '1'
+				? (multiple => undef)
+				: () =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for import_text => maketext('Import sets with names') . ':',
+			class => 'col-form-label col-form-label-sm col-md-auto' =%>
+		<div class="col-auto">
+			<%= text_field 'action.import.name' => '', id => 'import_text', class => 'form-control form-control-sm',
+				dir => 'ltr' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for import_date_shift => maketext('Shift dates so that the earliest is') . ':',
+			class => 'col-form-label col-form-label-sm col-md-auto' =%>
+		<div class="col-auto">
+			<div class="input-group input-group-sm flatpickr">
+				<%= text_field 'action.import.start.date' => '',
+					id => 'import_date_shift', size => '27', class => 'form-control',
+					data => {
+						input => undef,
+					   	done_text  => maketext('Done'),
+						today_text => maketext('Today'),
+						now_text   => maketext('Now'),
+						locale     => $ce->{language},
+						timezone   => $ce->{siteDefaults}{timezone}
+					} =%>
+				<a class="btn btn-secondary btn-sm" data-toggle role="button" tabindex="0"
+					aria-label="<%= maketext('Pick date and time') =%>">
+					<i class="fas fa-calendar-alt"></i>
+				</a>
+			</div>
+		</div>
+	</div>
+	% if ($authz->hasPermissions(param('user'), 'assign_problem_sets')) {
+		<div class="row mb-2">
+			<%= label_for import_users_select => maketext('Assign this set to which users?'),
+				class => 'col-form-label col-form-label-sm col-md-auto' =%>
+			<div class="col-auto">
+				<%= select_field 'action.import.assign' => [
+						[ maketext('all current users')          => 'all' ],
+						[ maketext('only') . ' ' . param('user') => 'user', selected => undef ]
+					],
+					id => 'import_users_select', class => 'form-select form-select-sm' =%>
+			</div>
+		</div>
+	% }
+</div>

@@ -1,0 +1,119 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for css => begin
+	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') =%>
+	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css') =%>
+% end
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'node_modules/luxon/build/global/luxon.min.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.js'), defer => undef =%>
+	% if ($ce->{language} !~ /^en/) {
+		<%= javascript
+			getAssetURL($ce, 'node_modules/flatpickr/dist/l10n/' . ($ce->{language} =~ s/^(..).*/$1/gr) . '.js'),
+			defer => undef =%>
+	% }
+	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
+		defer => undef =%>
+	<%= javascript getAssetURL($ce, 'node_modules/shortcut-buttons-flatpickr/dist/shortcut-buttons-flatpickr.min.js'),
+		defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/DatePicker/datepicker.js'),         defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'),         defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/ProblemSetList/problemsetlist.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/ShowHide/show_hide.js'),            defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'),           defer => undef =%>
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to access instructor tools.') %></div>
+	% last;
+% }
+%
+% if ($c->{editMode} && !$authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to modify homework sets.') %></div>
+	% last;
+% }
+%
+% if ($c->{exportMode} && !$authz->hasPermissions(param('user'), 'modify_set_def_files')) {
+	<div class="alert alert-danger p-1 mb-0">
+		<%= maketext('You are not authorized to modify set definition files.') =%>
+	</div>
+	% last;
+% }
+%
+<%= form_for current_route, method => 'post', id => 'problemsetlist', name => 'problemsetlist', class  => 'font-sm',
+	begin =%>
+	<%= $c->hidden_authen_fields =%>
+	%
+	% # Show state data
+	% if (@{ $c->{visibleSetIDs} }) {
+		% for (@{ $c->{visibleSetIDs} }) {
+			<%= hidden_field visible_sets => $_ =%>
+		% }
+	% } else {
+		<%= hidden_field no_visible_sets => '1' =%>
+	% }
+	% if (@{ $c->{prevVisibleSetIDs} }) {
+		% for (@{ $c->{prevVisibleSetIDs} }) {
+			<%= hidden_field prev_visible_sets => $_ =%>
+		% }
+	% } else {
+		<%= hidden_field no_prev_visible_sets => '1' =%>
+	% }
+	<%= hidden_field editMode => $c->{editMode} =%>
+	<%= hidden_field exportMode => $c->{exportMode} =%>
+	<%= hidden_field primarySortField => $c->{primarySortField} =%>
+	<%= hidden_field secondarySortField => $c->{secondarySortField} =%>
+	%
+	% if ($c->{editMode}) {
+		<p><b><%= maketext('Any changes made below will be reflected in the set for ALL students.') =%></b></p>
+	% }
+	%
+	% # Output action forms
+	% my $default_choice;
+	%
+	% for my $actionID (@$formsToShow) {
+		% # Check permissions
+		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
+		%
+		% my $active        = '';
+		% unless ($default_choice) { $active = ' active'; $default_choice = $actionID; }
+		%
+		% content_for 'tab-list' => begin
+			<li class="nav-item" role="presentation">
+				<%= link_to maketext($formTitles->{$actionID}) => "#$actionID",
+					class           => "nav-link action-link$active",
+					id              => "$actionID-tab",
+					role            => 'tab',
+					data            => { action => $actionID, bs_toggle => 'tab', bs_target => "#$actionID" },
+					'aria-controls' => $actionID,
+					'aria-selected' => $active ? 'true' : 'false' =%>
+			</li>
+		% end
+		% content_for 'tab-content' => begin
+			<div class="tab-pane fade mb-2 <%= $active ? " show$active" : '' %>" id="<%= $actionID %>"
+				role="tabpanel" aria-labelledby="<%= $actionID %>-tab">
+				<%= include "ContentGenerator/Instructor/ProblemSetList/${actionID}_form" =%>
+			</div>
+		% end
+	% }
+	%
+	<%= hidden_field action => $default_choice, id => 'current_action' =%>
+	<div>
+		<ul class="nav nav-tabs mb-2" role="tablist"><%= content 'tab-list' =%></ul>
+		<div class="tab-content"><%= content 'tab-content' %></div>
+	</div>
+	<div>
+		<%= submit_button maketext($formTitles->{$default_choice}),
+			id => 'take_action', class => 'btn btn-primary mb-3' =%>
+	</div>
+	%
+	<p class="mb-2">
+		<%= maketext('Showing [_1] out of [_2] sets.',
+			scalar @{ $c->{visibleSetIDs} },
+			scalar @{ $c->{allSetIDs} }
+		) =%>
+	</p>
+	%
+	<%= include 'ContentGenerator/Instructor/ProblemSetList/set_list_table' =%>
+<% end =%>

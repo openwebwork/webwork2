@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,9 +36,8 @@ data, change permission level, add user, delete user. Run this for a rough estim
 use strict;
 use warnings;
 use Digest::MD5 qw/md5_hex/;
-use WeBWorK::Cookie;
 use WeBWorK::Debug;
-use Date::Parse; # for moodle 1.7 date parsing
+use Date::Parse;    # for moodle 1.7 date parsing
 
 sub new {
 	my $self = shift->SUPER::new(@_);
@@ -53,7 +52,7 @@ sub new {
 # (this is similar to what happens when a guest user is selected.)
 sub get_credentials {
 	my $self = shift;
-	my $r = $self->{r};
+	my $c    = $self->{c};
 
 	my $super_result = $self->SUPER::get_credentials;
 	if ($super_result) {
@@ -62,22 +61,24 @@ sub get_credentials {
 	}
 
 	my ($moodle_user_id, $moodle_expiration_time) = $self->fetch_moodle_session;
-	#debug("fetch_moodle_session returned: moodle_user_id='$moodle_user_id' moodle_expiration_time='$moodle_expiration_time'.\n"); # causes errors when undefined
+#debug("fetch_moodle_session returned: moodle_user_id='$moodle_user_id' moodle_expiration_time='$moodle_expiration_time'.\n"); # causes errors when undefined
 
 	if (defined $moodle_user_id and defined $moodle_expiration_time and time <= $moodle_expiration_time) {
 		my $newKey = $self->create_session($moodle_user_id);
 		debug("Unexpired moodle session found. Created new WeBWorK session with newKey='$newKey'.\n");
 
-		$self->{user_id} = $moodle_user_id;
-		$self->{session_key} = $newKey;
-		$self->{login_type} = "normal";
+		$self->{user_id}           = $moodle_user_id;
+		$self->{session_key}       = $newKey;
+		$self->{login_type}        = "normal";
 		$self->{credential_source} = "moodle";
 		return 1;
 	} else {
 		debug("No moodle session found or moodle session expired. No credentials to be had.\n");
-		warn("No moodle session found or moodle sessioin expired.  If this happens repeatedly and you are constantly being asked
+		warn(
+			"No moodle session found or moodle sessioin expired.  If this happens repeatedly and you are constantly being asked
 		      to log back in ask your moodle admin to check that the Moodle item:
-		      Server -> Session Handling -> dbsessions (Use database for session information) has been checked.");
+		      Server -> Session Handling -> dbsessions (Use database for session information) has been checked."
+		);
 	}
 
 	return 0;
@@ -97,11 +98,11 @@ sub site_fixup {
 # this is overridden to accommodate this.
 sub checkPassword {
 	my ($self, $userID, $possibleClearPassword) = @_;
-	my $db = $self->{r}->db;
+	my $db = $self->{c}->db;
 
 	debug("Moodle module is doing the password checking.\n");
 
-	my $Password = $db->getPassword($userID); # checked
+	my $Password = $db->getPassword($userID);    # checked
 	if (defined $Password) {
 		# check against Moodle password database
 		my $possibleMD5Password = md5_hex($possibleClearPassword);
@@ -126,15 +127,26 @@ sub checkPassword {
 sub check_session {
 	my ($self, $user_id, $session_key, $update_timestamp) = @_;
 
-	my ($sessionExists, $keyMatches, $timestampValid) = $self->SUPER::check_session($user_id, $session_key, $update_timestamp);
-	debug("SUPER::check_session returned: sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
+	my ($sessionExists, $keyMatches, $timestampValid) =
+		$self->SUPER::check_session($user_id, $session_key, $update_timestamp);
+	debug(
+		"SUPER::check_session returned: sessionExists='",
+		$sessionExists,  "' keyMatches='",
+		$keyMatches,     "' timestampValid='",
+		$timestampValid, "'"
+	);
 
 	if ($update_timestamp and $sessionExists and $keyMatches and not $timestampValid) {
 		debug("special case: webwork key matches an expired session (check for a unexpired moodle session)");
 		my ($moodle_user_id, $moodle_expiration_time) = $self->fetch_moodle_session;
-		debug("fetch_moodle_session returned: moodle_user_id='$moodle_user_id' moodle_expiration_time='$moodle_expiration_time'.\n");
-		if (defined $moodle_user_id and $moodle_user_id eq $user_id
-				and defined $moodle_expiration_time and time <= $moodle_expiration_time) {
+		debug(
+			"fetch_moodle_session returned: moodle_user_id='$moodle_user_id' moodle_expiration_time='$moodle_expiration_time'.\n"
+		);
+		if (defined $moodle_user_id
+			and $moodle_user_id eq $user_id
+			and defined $moodle_expiration_time
+			and time <= $moodle_expiration_time)
+		{
 			$self->{session_key} = $self->create_session($moodle_user_id);
 			$timestampValid = 1;
 		}
@@ -154,14 +166,14 @@ sub init_mdl_session {
 	my $self = shift;
 
 	# version-specific stuff
-	$self->{moodle17} = $self->{r}->ce->{authen}{moodle_options}{moodle17};
+	$self->{moodle17}          = $self->{c}->ce->{authen}{moodle_options}{moodle17};
 	$self->{sql_session_table} = $self->{moodle17} ? "sessions2" : "sessions";
-	$self->{sql_data_field} = $self->{moodle17} ? "sessdata" : "data";
+	$self->{sql_data_field}    = $self->{moodle17} ? "sessdata"  : "data";
 
 	$self->{mdl_dbh} = DBI->connect_cached(
-		$self->{r}->ce->{authen}{moodle_options}{dsn},
-		$self->{r}->ce->{authen}{moodle_options}{username},
-		$self->{r}->ce->{authen}{moodle_options}{password},
+		$self->{c}->ce->{authen}{moodle_options}{dsn},
+		$self->{c}->ce->{authen}{moodle_options}{username},
+		$self->{c}->ce->{authen}{moodle_options}{password},
 		{
 			PrintError => 0,
 			RaiseError => 1,
@@ -176,19 +188,18 @@ sub fetch_moodle_session {
 	# Note that we don't worry about the user being in this course at this point.
 	# That is taken care of in Schema::Moodle::User.
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $db = $r->db;
+	my $c      = $self->{c};
+	my $db     = $c->db;
 
-	my %cookies = WeBWorK::Cookie->fetch($r);
-	my $cookie = $cookies{"MoodleSession"};
+	my $cookie = $c->req->cookie('MoodleSession');
 	return unless $cookie;
 
 	my $session_table = $self->prefix_table($self->{sql_session_table});
-	my $data_field = $self->{sql_data_field};
-	my $stmt = "SELECT `expiry`,`$data_field` FROM `$session_table` WHERE `sesskey`=?";
-	my @bind_vals = $cookie->value;
+	my $data_field    = $self->{sql_data_field};
+	my $stmt          = "SELECT `expiry`,`$data_field` FROM `$session_table` WHERE `sesskey`=?";
+	my @bind_vals     = $cookie->value;
 
-	my $sth = $self->{mdl_dbh}->prepare_cached($stmt, undef, 3); # 3: see DBI docs
+	my $sth = $self->{mdl_dbh}->prepare_cached($stmt, undef, 3);    # 3: see DBI docs
 	$sth->execute(@bind_vals);
 	my $row = $sth->fetchrow_arrayref;
 	$sth->finish;
@@ -199,7 +210,7 @@ sub fetch_moodle_session {
 	# Moodle 1.7 stores expiry as a DATETIME, but WeBWorK wants a UNIX timestamp.
 	$expires = str2time($expires) if $self->{moodle17};
 
-	my $data = unserialize_session($data_string);
+	my $data     = unserialize_session($data_string);
 	my $username = $data->{"USER"}{"username"};
 
 	return $username, $expires;
@@ -208,24 +219,23 @@ sub fetch_moodle_session {
 sub update_moodle_session {
 	# extend the timeout of the current moodle session, if one exists.
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $db = $r->db;
+	my $c      = $self->{c};
+	my $db     = $c->db;
 
-	my %cookies = WeBWorK::Cookie->fetch($r);
-	my $cookie = $cookies{"MoodleSession"};
+	my $cookie = $c->req->cookie('MoodleSession');
 	return unless $cookie;
 
 	my $config_table = $self->prefix_table("config");
-	my $value = "IFNULL((SELECT `value` FROM `$config_table` WHERE `name`=?),?)+?";
+	my $value        = "IFNULL((SELECT `value` FROM `$config_table` WHERE `name`=?),?)+?";
 
 	# Moodle 1.7 stores expiry as a DATETIME, but WeBWorK supplies a UNIX timestamp.
 	$value = "FROM_UNIXTIME($value)" if $self->{moodle17};
 
 	my $session_table = $self->prefix_table($self->{sql_session_table});
-	my $stmt = "UPDATE `$session_table` SET `expiry`=$value WHERE `sesskey`=?";
-	my @bind_vals = ("sessiontimeout", DEFAULT_EXPIRY, time, $cookie->value);
+	my $stmt          = "UPDATE `$session_table` SET `expiry`=$value WHERE `sesskey`=?";
+	my @bind_vals     = ("sessiontimeout", DEFAULT_EXPIRY, time, $cookie->value);
 
-	my $sth = $self->{mdl_dbh}->prepare_cached($stmt, undef, 3); # 3: see DBI docs
+	my $sth    = $self->{mdl_dbh}->prepare_cached($stmt, undef, 3);    # 3: see DBI docs
 	my $result = $sth->execute(@bind_vals);
 	$sth->finish;
 
@@ -234,8 +244,8 @@ sub update_moodle_session {
 
 sub prefix_table {
 	my ($self, $base) = @_;
-	if (defined $self->{r}->ce->{authen}{moodle_options}{table_prefix}) {
-		return $self->{r}->ce->{authen}{moodle_options}{table_prefix} . $base;
+	if (defined $self->{c}->ce->{authen}{moodle_options}{table_prefix}) {
+		return $self->{c}->ce->{authen}{moodle_options}{table_prefix} . $base;
 	} else {
 		return $base;
 	}
@@ -249,8 +259,8 @@ sub unserialize_session {
 	my @serialArray = split(/(\w+)\|/, $serialData);
 	my %variables;
 	# finally, actually deserialize it:
-	for( my $i = 1; $i < $#serialArray; $i += 2 ) {
-		$variables{$serialArray[$i]} = unserialize($serialArray[$i+1]);
+	for (my $i = 1; $i < $#serialArray; $i += 2) {
+		$variables{ $serialArray[$i] } = unserialize($serialArray[ $i + 1 ]);
 	}
 	return \%variables;
 }

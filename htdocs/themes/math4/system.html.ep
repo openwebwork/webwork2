@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html <%== $c->output_course_lang_and_dir %>>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+%
+% ################################################################################
+% # WeBWorK Online Homework Delivery System
+% # Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+% #
+% # This program is free software; you can redistribute it and/or modify it under
+% # the terms of either: (a) the GNU General Public License as published by the
+% # Free Software Foundation; either version 2, or (at your option) any later
+% # version, or (b) the "Artistic License" which comes with this package.
+% #
+% # This program is distributed in the hope that it will be useful, but WITHOUT
+% # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+% # Artistic License for more details.
+% ################################################################################
+%
+<link rel="icon" type="x-image/icon"
+	href="<%= $c->url({ type => 'webwork', name => 'htdocs', file => 'images/favicon.ico' }) %>">
+%
+% # CSS Loads
+<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
+<%= stylesheet $c->url({
+	type => 'webwork', name => 'htdocs',
+	file => 'node_modules/@fortawesome/fontawesome-free/css/all.min.css'
+}) =%>
+<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'math4.css' }) =%>
+<%= content 'css' =%>
+% if ($c->exists_theme_file('math4-overrides.css')) {
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'math4-overrides.css' }) =%>
+% }
+%
+% # Webwork configuration for javascript
+<script>const webworkConfig = { webwork_url: '<%= $c->webwork_url %>' };</script>
+%
+% # JS Loads
+<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/MathJaxConfig/mathjax-config.js' }),
+	defer => undef =%>
+<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'node_modules/mathjax/es5/tex-svg.js' }),
+	id => 'MathJax-script', defer => undef =%>
+<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'node_modules/jquery/dist/jquery.min.js' }) %>
+<%= javascript $c->url({
+	type => 'webwork', name => 'htdocs',
+	file => 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'
+	}), defer => undef =%>
+<%= javascript $c->url({ type => 'webwork', name => 'theme', file => 'math4.js' }), defer => undef =%>
+<%= content 'js' =%>
+% if ($c->exists_theme_file('math4-overrides.js')) {
+	<%= javascript $c->url({ type => 'webwork', name => 'theme', file => 'math4-overrides.js' }), defer => undef =%>
+% }
+%
+% if ($c->can('head')) {
+	<%== $c->head =%>
+% }
+%
+<title><%= $c->path({ style => 'text', text => ' : ', textonly => '1' }) %></title>
+</head>
+%
+<body>
+<%= link_to 'Skip to main content' => '#page-title',
+	class => 'visually-hidden-focusable bg-white p-2 m-3 position-absolute' =%>
+%
+% # Header
+<div class="masthead" role="banner">
+	<div class="webwork-logo">
+		% if ($c->can('links') || $c->can('siblings') || $c->can('options')) {
+			<button type="button" class="navbar-toggler ms-3 me-2 p-0 fa-2x" id="toggle-sidebar"
+				aria-controls="site-navigation">
+				<span id="toggle-sidebar-icon">
+					<i class="fa-solid fa-bars" aria-hidden="true"></i>
+					<span class="visually-hidden">close sidebar</span>
+				</span>
+			</button>
+		% }
+		<%= $c->webwork_logo %>
+	</div>
+	<div class="institution-logo"><%= $c->institution_logo %></div>
+	<div class="login-status"><%= include 'ContentGenerator/Base/login_status' %></div>
+</div>
+% # Navigation
+% if ($c->can('links') || $c->can('siblings') || $c->can('options')) {
+	<nav id="site-navigation" class="d-flex flex-column bg-light" aria-label="main navigation">
+		% if ($c->can('links')) {
+			<div id="site-links"><%= $c->links %></div>
+		% }
+		% if ($c->can('siblings')) {
+			<div id="siblings"><%= $c->siblings %></div>
+		% }
+		% if ($c->can('options')) {
+			<div id="options" class="info-box"><%= $c->options %></div>
+		% }
+	</nav>
+% }
+%
+<div class="d-flex">
+	% # Main Content Area
+	<div id="content" class="container-fluid <%=
+		$c->can('links') || $c->can('siblings') || $c->can('options')
+			? 'flex-grow-1'
+			: 'flex-grow-1 toggle-width' %>">
+		%
+		% # Breadcrumb
+		<div id="breadcrumb-row" class="row my-2">
+			<div class="col-12 d-flex align-items-center">
+				<nav id="breadcrumb-navigation" aria-label="breadcrumb navigation" class="w-100 bg-light">
+					<ol class="breadcrumb">
+						<%= $c->path({ style => 'bootstrap', text => '' }) =%>
+					</ol>
+				</nav>
+			</div>
+		</div>
+		% # Navigation, e.g.: Prev, Up, Next for homeworks
+		% if ($c->can('nav')) {
+			<%= $c->nav({ style => 'buttons', separator => '' }) =%>
+		% }
+		%
+		% # Page Title
+		% if ($c->can('page_title')) {
+			<div class="row">
+				<div class="col-12">
+					<h1 id="page-title" class="page-title">
+						<%== $c->page_title %>
+					</h1>
+					% if ($authen->{was_verified}
+						% && $authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+						<%= $c->help({ label_size => 'fa-xs' }) %>
+					% }
+				</div>
+			</div>
+		% }
+		%
+		% # Message for the user
+		% if ($c->can('message')) {
+			<div id="message" class="message"><%= $c->message %></div>
+		% }
+		%
+		% # Indicate presence of perl warnings
+		% if ($c->have_warnings) {
+			<div class="row g-0">
+				<div id="alert-error" class="col-12 alert alert-danger"><%== $c->warningMessage %></div>
+			</div>
+		% }
+		%
+		% # Display the page body.
+		<div class="row">
+			<div class="body <%= $c->can('info') ? 'col-md-8' : 'col-12' %>">
+				<%= content =%>
+			</div>
+			% if ($c->can('info')) {
+				<div id="info-panel-right" class="col-md-4 mb-md-0 mb-2 order-md-last order-first">
+					<div class="info-box bg-light">
+						<%= $c->info =%>
+					</div>
+				</div>
+			% }
+		</div>
+		%
+		% if ($c->have_warnings) {
+			<div id="warnings" class="Warnings alert alert-danger mt-2"><%= $c->warnings %></div>
+		% }
+		% if ($c->can('message')) {
+			<div id="message_bottom" class="message"><%= $c->message %></div>
+			<div>
+				<button type="button" id="dismiss-messages-btn" class="btn btn-primary d-none">
+					<%= maketext('Dismiss All Messages') %>
+				</button>
+			</div>
+		% }
+		%
+		% # Footer
+		<div id="footer" role="contentinfo"><%= include 'ContentGenerator/Base/footer' %></div>
+	</div>
+</div>
+%
+% # This is a place that modal dialog html markup can be safely placed if needed by a page.
+<%= content 'modal-dialog-area' =%>
+%
+</body>
+</html>

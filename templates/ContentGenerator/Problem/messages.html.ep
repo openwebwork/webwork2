@@ -1,0 +1,50 @@
+% use WeBWorK::Utils qw(before after);
+%
+% if ($c->{pg}{result}{msg}) {
+	<p><b><%= maketext('Note') %>:</b> <i><%== $c->{pg}{result}{msg} %></i></p>
+% }
+%
+% if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+	% && $c->{set}->enable_reduced_scoring
+	% && after($c->{set}->reduced_scoring_date, $c->submitTime)
+	% && before($c->{set}->due_date, $c->submitTime))
+% {
+	<p>
+		<b><%= maketext('Note') %>:</b>
+		<i>
+			<%= maketext(
+				'You are in the Reduced Scoring Period.  All work counts for [_1]% of the original.',
+				$ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100
+			) =%>
+		</i>
+	</p>
+% }
+%
+% if ($c->{pg}{flags}{hintExists} && $authz->hasPermissions($c->{userID}, 'always_show_hint')) {
+	% my $showHintsAfter =
+		% $c->{set}->hide_hint                 ? -1
+		% : $c->{problem}->showHintsAfter > -2 ? $c->{problem}->showHintsAfter
+		% :                                      $ce->{pg}{options}{showHintsAfter};
+	<p>
+		<b><%= maketext('Note') %>:</b>
+		<i>
+			<%= $showHintsAfter == -1
+				? maketext('The hint shown is an instructor preview and will not be shown to students.')
+				: maketext(
+					'The hint shown is an instructor preview and will be shown to students after [quant,_1,attempt].',
+					$showHintsAfter
+				) =%>
+		</i>
+	</p>
+% }
+%
+% if ($c->{pg}{flags}{solutionExists} && $authz->hasPermissions($c->{userID}, 'always_show_solution')) {
+	<p>
+		<b><%= maketext('Note') %>:</b>
+		<i>
+			<%= maketext('The solution shown is an instructor preview and '
+				. 'will only be shown to students after the due date.'
+			) =%>
+		</i>
+	</p>
+% }

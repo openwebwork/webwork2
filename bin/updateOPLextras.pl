@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -50,14 +50,14 @@ use warnings;
 use DBI;
 use Getopt::Long;
 use Pod::Usage;
-Getopt::Long::Configure ("bundling");
+Getopt::Long::Configure("bundling");
 
 my ($textbooks, $directories, $subjects, $verbose, $all);
-GetOptions (
-  't|textbooks'   => \$textbooks,
-  'd|directories' => \$directories,
-  's|subjects'    => \$subjects,
-  'a|all'         => \$all,
+GetOptions(
+	't|textbooks'   => \$textbooks,
+	'd|directories' => \$directories,
+	's|subjects'    => \$subjects,
+	'a|all'         => \$all,
 	'v|verbose'     => \$verbose
 );
 pod2usage(2) unless ($textbooks || $directories || $subjects || $all);
@@ -69,35 +69,35 @@ pod2usage(2) unless ($textbooks || $directories || $subjects || $all);
 #
 ####
 
-my $pg_dir;
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
-	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
-	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+	use Mojo::File qw(curfile);
+	use Env qw(WEBWORK_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
 
 use lib "$ENV{WEBWORK_ROOT}/bin";
 use lib "$ENV{WEBWORK_ROOT}/lib";
-use lib "$pg_dir/lib";
+
 use WeBWorK::CourseEnvironment;
 use OPLUtils qw/build_library_directory_tree build_library_subject_tree build_library_textbook_tree/;
 
-my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
 
 # decide whether the mysql installation can handle
 # utf8mb4 and that should be used for the OPL
 
-my $ENABLE_UTF8MB4 = ($ce->{ENABLE_UTF8MB4})?1:0;
-print  "using utf8mb4 \n\n" if $ENABLE_UTF8MB4;
+my $ENABLE_UTF8MB4 = ($ce->{ENABLE_UTF8MB4}) ? 1 : 0;
+print "using utf8mb4 \n\n" if $ENABLE_UTF8MB4;
 
 # The DBD::MariaDB driver should not get the
 #    mysql_enable_utf8mb4 or mysql_enable_utf8 settings,
 # but DBD::mysql should.
 my %utf8_parameters = ();
 
-if ( $ce->{database_driver} =~ /^mysql$/i ) {
+if ($ce->{database_driver} =~ /^mysql$/i) {
 	# Only needed for older DBI:mysql driver
-	if ( $ENABLE_UTF8MB4 ) {
+	if ($ENABLE_UTF8MB4) {
 		$utf8_parameters{mysql_enable_utf8mb4} = 1;
 	} else {
 		$utf8_parameters{mysql_enable_utf8} = 1;
@@ -115,8 +115,8 @@ my $dbh = DBI->connect(
 	},
 );
 
-build_library_textbook_tree($ce,$dbh,$verbose) if ($all || $textbooks);
-build_library_directory_tree($ce,$verbose) if ($all || $directories);
-build_library_subject_tree($ce,$dbh,$verbose) if ($all || $subjects);
+build_library_textbook_tree($ce, $dbh, $verbose) if ($all || $textbooks);
+build_library_directory_tree($ce, $verbose)      if ($all || $directories);
+build_library_subject_tree($ce, $dbh, $verbose)  if ($all || $subjects);
 
 1;

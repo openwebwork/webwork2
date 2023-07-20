@@ -1,0 +1,33 @@
+% use WeBWorK::Utils qw(format_set_name_display);
+%
+% # my ($set, $userSet, $mergedSet, $version) = @_;
+% my $setID   = $set->set_id;
+% my $version = stash 'version';
+<tr>
+	<td class="text-center">
+		<label class="form-check-label">
+			<%= check_box $version ? "set.$setID,v$version.assignment" : "set.$setID.assignment" => 'assigned',
+				class => 'form-check-input', defined $mergedSet ? (checked => undef) : () =%>
+		</label>
+	</td>
+	<td class="text-center">
+		% if (defined $mergedSet) {
+			<b dir="ltr">
+				<%= link_to format_set_name_display($version ? "$setID (version $version)" : $setID) =>
+					$c->systemLink(
+						url_for('instructor_set_detail', setID => $setID . ($version ? ",v$version" : '')),
+						params => { editForUser => $userID }
+					) =%>
+			</b>
+			% if ($version) {
+				<%= hidden_field "set.$setID,v$version.assignment" => 'delete' =%>
+			% }
+		% } else {
+			<b dir="ltr"><%= format_set_name_display($setID) %></b>
+		% }
+	</td>
+	<td class="text-center">
+		<%= include 'ContentGenerator/Instructor/UserDetail/set_date_table',
+			globalRecord => $set, userRecord => $userSet, mergedRecord => $mergedSet =%>
+	</td>
+</tr>

@@ -6,8 +6,6 @@ loadMacros("PGbasicmacros.pl",
 ); 
 
 $showPartialCorrectAnswers = 1;
-TEXT(beginproblem());
-
 
 BEGIN_TEXT
 This is  a lite applet designed by Frank Wattenberg.

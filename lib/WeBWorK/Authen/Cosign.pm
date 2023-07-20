@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,7 @@ to use: include in localOverrides.conf or course.conf
 and add /webwork2 or /webwork2/courseName as a CosignProtected
 Location
 
-if $r->ce->{cosignoff} is set for a course, authentication reverts
+if $c->ce->{cosignoff} is set for a course, authentication reverts
 to standard WeBWorK authentication.
 
 =cut
@@ -34,23 +34,23 @@ use strict;
 use warnings;
 use WeBWorK::Debug;
 
-# this is similar to the method in the base class, except that cosign 
+# this is similar to the method in the base class, except that cosign
 # ensures that we don't get to the address without a login.  this means
 # that we can't allow guest logins, but don't have to do any password
 # checking or cookie management.
 
 sub get_credentials {
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $ce = $r->ce;
-	my $db = $r->db;
-	
-	if ( $ce->{cosignoff} ) {
-		return $self->SUPER::get_credentials( );
+	my $c      = $self->{c};
+	my $ce     = $c->ce;
+	my $db     = $c->db;
+
+	if ($ce->{cosignoff}) {
+		return $self->SUPER::get_credentials();
 	} else {
-		if ( defined( $ENV{'REMOTE_USER'} ) ) {
+		if (defined($ENV{'REMOTE_USER'})) {
 			$self->{'user_id'} = $ENV{'REMOTE_USER'};
-			$self->{r}->param("user", $ENV{'REMOTE_USER'});
+			$self->{c}->param("user", $ENV{'REMOTE_USER'});
 		} else {
 			return 0;
 		}
@@ -59,23 +59,23 @@ sub get_credentials {
 		#    failure.
 		$self->{external_auth} = 1;
 
-		# the session key isn't used (cosign is managing this 
-		#    for us), and we want to force checking against the 
+		# the session key isn't used (cosign is managing this
+		#    for us), and we want to force checking against the
 		#    site_checkPassword
-		$self->{'session_key'} = undef;
-		$self->{'password'} = 1;
+		$self->{'session_key'}       = undef;
+		$self->{'password'}          = 1;
 		$self->{'credential_source'} = "params";
-		$self->{login_type} = "cosign";
-		
+		$self->{login_type}          = "cosign";
+
 		return 1;
 	}
 }
 
-sub site_checkPassword { 
-	my ( $self, $userID, $clearTextPassword ) = @_;
+sub site_checkPassword {
+	my ($self, $userID, $clearTextPassword) = @_;
 
-	if ( $self->{r}->ce->{cosignoff} ) {
-	    return 0;
+	if ($self->{c}->ce->{cosignoff}) {
+		return 0;
 		#return $self->SUPER::checkPassword( $userID, $clearTextPassword );
 	} else {
 		# this is easy; if we're here at all, we've authenticated
@@ -87,32 +87,35 @@ sub site_checkPassword {
 # disable cookie functionality
 sub maybe_send_cookie {
 	my ($self, @args) = @_;
-	if ( $self->{r}->ce->{cosignoff} ) {
-		return $self->SUPER::maybe_send_cookie( @args );
+	if ($self->{c}->ce->{cosignoff}) {
+		return $self->SUPER::maybe_send_cookie(@args);
 	} else {
 		# nothing to do here
 	}
 }
+
 sub fetchCookie {
 	my ($self, @args) = @_;
-	if ( $self->{r}->ce->{cosignoff} ) {
-		return $self->SUPER::fetchCookie( @args );
+	if ($self->{c}->ce->{cosignoff}) {
+		return $self->SUPER::fetchCookie(@args);
 	} else {
 		# nothing to do here
 	}
 }
+
 sub sendCookie {
 	my ($self, @args) = @_;
-	if ( $self->{r}->ce->{cosignoff} ) {
-		return $self->SUPER::sendCookie( @args);
+	if ($self->{c}->ce->{cosignoff}) {
+		return $self->SUPER::sendCookie(@args);
 	} else {
 		# nothing to do here
 	}
 }
+
 sub killCookie {
 	my ($self, @args) = @_;
-	if ( $self->{r}->ce->{cosignoff} ) {
-		return $self->SUPER::killCookie( @args );
+	if ($self->{c}->ce->{cosignoff}) {
+		return $self->SUPER::killCookie(@args);
 	} else {
 		# nothing to do here
 	}
@@ -120,18 +123,18 @@ sub killCookie {
 
 # this is a bit of a cheat, because it does the redirect away from the
 #   logout script or what have you, but I don't see a way around that.
-sub forget_verification { 
+sub forget_verification {
 	my ($self, @args) = @_;
-	my $r = $self->{r};
+	my $c = $self->{c};
 
-	if ( $r->ce->{cosignoff} ) {
-		return $self->SUPER::forget_verification( @args);
+	if ($c->ce->{cosignoff}) {
+		return $self->SUPER::forget_verification(@args);
 	} else {
 		$self->{was_verified} = 0;
-#		$r->headers_out->{"Location"} = $r->ce->{cosign_logout_script};
-#		$r->send_http_header;
-#		return;
-		$self->{redirect} = $r->ce->{cosign_logout_script};
+		#		$c->headers_out->{"Location"} = $c->ce->{cosign_logout_script};
+		#		$c->send_http_header;
+		#		return;
+		$self->{redirect} = $c->ce->{cosign_logout_script};
 	}
 }
 

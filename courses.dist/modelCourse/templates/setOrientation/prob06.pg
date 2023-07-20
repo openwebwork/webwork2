@@ -15,7 +15,6 @@ Context("Numeric")->variables->are(y=>'Real'); $y = Formula('y');
 Context("Numeric")->variables->are(x=>'Real'); $x = Formula('x');
 Context()->flags->set(limits=>[0,2]);
 
-TEXT(beginproblem());
 Title("Using Parentheses Effectively");
 
 ##############################################

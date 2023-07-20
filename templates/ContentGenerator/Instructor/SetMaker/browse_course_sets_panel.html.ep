@@ -1,0 +1,19 @@
+% use WeBWorK::Utils qw(format_set_name_display);
+%
+% $selected_library //= '';
+%
+<div class="InfoPanel">
+	<div class="mb-2">
+		<%= label_for library_sets => maketext('Browse from:'), class => 'col-form-label-sm' =%>
+		<%= select_field library_sets => [
+				@$local_sets == 0 ? [ maketext('No sets in this course yet') => '' ]
+				: (
+					$selected_library eq '' ? [ maketext('Select a Homework Set') => '', selected => undef, disabled => 'disabled' ] : (),
+					map { [ format_set_name_display($_) => $_, $_ eq $selected_library ? (selected => undef) : () ] }
+					@$local_sets
+				)
+			],
+			id => 'library_sets', class => 'form-select form-select-sm d-inline w-auto', dir => 'ltr' =%>
+	</div>
+	<%= include 'ContentGenerator/Instructor/SetMaker/view_problems_line', internal_name => 'view_course_set' =%>
+</div>

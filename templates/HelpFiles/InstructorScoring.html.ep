@@ -1,0 +1,84 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Scoring Tools Help');
+%
+<p>
+	<%= maketext('WeBWorK does not have a full featured scoring ability. We leave that to your favorite spreadsheet '
+		. 'application.') =%>
+</p>
+<p>
+	<%= maketext('What WeBWorK does have is good support for summarizing the scores on WeBWorK homework sets and '
+		. 'tests and exporting them in a form (.csv) which any spreadsheet can use. WeBWorK reports all of the '
+		. 'homework grades with options shown below.') =%>
+</p>
+<p>
+	<%== maketext('Select the sets you want scored, choose the name of the export file you want to use '
+		. '(by default: [_1]), and then click the "Score Selected Set(s) and save to" button.',
+			'<code>courseName_totals.csv</code>') =%>
+</p>
+<p>
+	<%= maketext('The following describes how the checkboxes alter the scoring output') =%>
+	<dl>
+		<dt><b><%= maketext('Pad Fields') %></b></dt>
+		<dd>
+			<%= maketext('If selected, this adds spaces between the fields to align the commas, which makes the '
+				. 'columns easy to read when in text form but it can confuse some spreadsheet applications since the '
+				. 'extra spaces violate the csv standard (although Excel handles them with no problem). This will give '
+				. 'a visual form of the CSV file that is easy to read on the page. If you want a reliable .csv file '
+				. 'for use in any spreadsheet application unclick the "Pad Fields" option. You can download the .csv '
+				. 'file immediately by clicking on the link with the filename chosen above, or you can download it '
+				. 'using the "File Manager" from the scoring directory.') =%>
+		</dd>
+		<dt><b><%= maketext('Record Scores for Single Sets') %></b></dt>
+		<dd>
+			<%== maketext('Select this if you want to save the scores for each set in a separate file in addition to '
+				. 'saving all scores to a cumulative file. After clicking the "Score Selected Set(s) and save to" '
+				. 'button, you will get a pair of links for each selected set. The file that ends with [_1] contains '
+				. 'the number of correct and incorrect tries about each individual problem for each student. The file '
+				. 'that ends with [_2] is a summary of each problem.',
+				'<code>ful.csv</code>','<code>scr.csv</code>') =%>
+		</dd>
+		<dt><b><%= maketext('Include Success Index') %></b></dt>
+		<dd>
+			<%= maketext('If this is selected, a success index is listed in each csv file. The success '
+				. 'index is a number assigned on the basis of the number of incorrect attempts (roughly equivalent '
+				. 'to 1/the number of attempts) which seems to correlate with the relative difficulty the student had '
+				. 'with the problem.') =%>
+		</dd>
+		<dt><b><%= maketext('Include percentage grades columns for all sets') %></b></dt>
+		<dd>
+			<%= maketext('As the checkbox says, this includes a percentage grade column for each set.') =%>
+		</dd>
+	</dl>
+</p>
+<p>
+	<%= maketext('To use the Email merge feature, upload a CSV with calculated grades to the scoring directory using '
+		. 'the "File Manager".') =%>
+</p>
+<p>
+	<%== maketext('Do NOT use the file name [_1], since you might accidentally overwrite that if you '
+		. 'again export your WeBWorK homework scores. (Actually the earlier file is moved to [_2]'
+		. ' -- so you can recover using the File Manager.)',
+		'<code>COURSENAME_totals.csv</code>', '<code>COURSENAME_totals_bak1.csv</code>') =%>
+</p>
+<p class="mb-0">
+	<%== maketext('If you upload your file on the web with the name: [_1] and also create an email message with the '
+		. 'name [_2] with the approriate [_3] variables then not only can you email the message with the embedded '
+		. 'grades to the students, but files with those exact names are automatically appended to the "Grades" page '
+		. 'seen by the students.',
+		'<code>report_grades_data.csv</code>', '<code>report_grade.msg</code>', '<code>$COL</code>') =%>
+</p>

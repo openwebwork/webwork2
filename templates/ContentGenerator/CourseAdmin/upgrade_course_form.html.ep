@@ -1,0 +1,60 @@
+% use WeBWorK::Utils::CourseManagement qw(listCourses);
+% use WeBWorK::Utils::CourseIntegrityCheck;
+% use WeBWorK::CourseEnvironment;
+%
+% my @courseIDs = sort { lc($a) cmp lc($b) } listCourses($ce);
+%
+<h2><%= maketext('Upgrade Courses') %> <%= $c->helpMacro('AdminUpgradeCourses') %></h2>
+<div class="mb-2"><%= maketext('Update the checked directories?') %></div>
+<%= form_for current_route, method => 'POST', id => 'courselist', name => 'courselist', begin =%>
+	<div class="mb-2">
+		<button type="button" class="select-all btn btn-sm btn-secondary" data-select-group="upgrade_courseIDs">
+			<%= maketext('Select all eligible courses') =%>
+		</button>
+		<button type="button" class="select-none btn btn-sm btn-secondary" data-select-group="upgrade_courseIDs">
+			<%= maketext('Unselect all courses') =%>
+		</button>
+	</div>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
+	%
+	<ul>
+		% for my $courseID (@courseIDs) {
+			% next if $courseID eq 'modelCourse';    # modelCourse isn't a real course so it can't be upgraded.
+			% next unless $courseID =~ /\S/;         # Skip empty courseIDs (there shouldn't be any)
+			%
+			% my $tempCE = eval { WeBWorK::CourseEnvironment->new({ courseName => $courseID }) };
+			% if ($@) {
+				<%= maketext(q{Can't create course environment for [_1] because [_2]}, $courseID, $@) =%>
+			% }
+			% my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $tempCE);
+			% my ($tables_ok)      = $CIchecker->checkCourseTables($courseID);
+			% my ($directories_ok) = $CIchecker->checkCourseDirectories();
+			%
+			<li class="align-items-center">
+				% if (!$tables_ok || !$directories_ok) {
+					<div class="form-check form-check-inline me-1">
+						<label class="form-check-label">
+							<%= check_box upgrade_courseIDs => $courseID,
+								name => 'upgrade_courseIDs', checked => undef, class => 'form-check-input' %>
+							<%= maketext('Upgrade') %>
+						</label>
+					</div>
+				% }
+				<%= link_to $courseID => 'set_list' => { courseID => $courseID } =%>
+				<code><%= $tempCE->{dbLayoutName} %></code>
+				% if (!$directories_ok) {
+					<span class="alert alert-danger p-1 mb-0">
+						<%= maketext('Directory structure or permissions need to be repaired.') =%>
+					</span>
+				% }
+				% if ($tables_ok) {
+					<span class="text-success"><%= maketext('Database tables ok') %></span>
+				% } else {
+					<span class="text-danger"><%= maketext('Database tables need updating.') %></span>
+				% }
+			</li>
+		% }
+	</ul>
+	<%= submit_button maketext('Upgrade Courses'), name => 'upgrade_course', class => 'btn btn-primary' =%>
+<% end =%>

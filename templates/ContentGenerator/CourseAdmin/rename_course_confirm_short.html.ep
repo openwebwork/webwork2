@@ -1,0 +1,30 @@
+<h2><%= maketext('Rename Course') %> <%= $c->helpMacro('AdminRenameCourse') %></h2>
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
+	<%= $c->hidden_fields(
+		qw/rename_oldCourseID rename_newCourseID rename_newCourseTitle rename_newCourseInstitution
+			rename_newCourseID_checkbox rename_newCourseInstitution_checkbox rename_newCourseTitle_checkbox/
+	) =%>
+	<%= hidden_field rename_oldCourseTitle => $rename_oldCourseTitle, id => 'hidden_rename_oldCourseTitle' =%>
+	<%= hidden_field rename_oldCourseInstitution => $rename_oldCourseInstitution,
+		id => 'hidden_rename_oldCourseInstitution' =%>
+	%
+	<div class="text-start">
+		<hr>
+		<h3 class="mb-3"><%= maketext('Make these changes in course: [_1]', $rename_oldCourseID) %></h3>
+		% if ($change_course_title_str) {
+			<p><%= $change_course_title_str %></p>
+		% }
+		% if ($change_course_institution_str) {
+			<p><%= $change_course_institution_str %></p>
+		% }
+		<hr>
+		<div class="d-flex justify-content-center gap-2">
+			<%= submit_button maketext(q{Don't make changes}),
+					name  => 'decline_retitle_course',
+					class => 'btn btn-primary' =%>
+			<%= submit_button maketext('Make changes'), name => 'confirm_retitle_course', class => 'btn btn-primary' =%>
+		</div>
+	</div>
+<% end =%>

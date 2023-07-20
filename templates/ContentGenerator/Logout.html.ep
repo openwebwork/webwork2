@@ -1,0 +1,20 @@
+<p><%= maketext('You have been logged out of WeBWorK.') =%></p>
+%
+% # This should be set in the course environment when a sequence of authentication modules is used.
+% if ($ce->{external_auth} || $authen->{external_auth}) {
+	<p>
+		<%== maketext(
+			'The course [_1] uses an external authentication system ([_2]). Please go there to log in again.',
+			tag('strong', stash('courseID')),
+			$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
+				? link_to(tag('strong', $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name}) =>
+					$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
+				: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name}
+		) =%>
+	</p>
+% } else {
+	<%= form_for 'set_list', method => 'POST', begin =%>
+		<%= hidden_field force_passwd_authen => 1 =%>
+		<p><%= submit_button maketext('Log In Again'), name  => 'submit', class => 'btn btn-primary' =%></p>
+	<% end =%>
+% }

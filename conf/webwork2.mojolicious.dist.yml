@@ -1,0 +1,207 @@
+---
+secrets:
+  - 607280d0b2c621220b554a1c6ed123aa1a96f2de
+
+# Set to the location of the pg root directory.
+pg_dir: /opt/webwork/pg
+
+# Setting MIN_HTML_ERRORS to 1 will minimize the data provided on HTML error
+# pages, which some security reviews request, as in particular the older output
+# provided backtrace information which could help idenfify the code and version
+# of the code being used on the server.  The useful information will be in the
+# Mojolicious webwork2.log file, with a UID displayed also in the HTML error
+# page to help match up records.
+#
+# Warning: The Mojolicious webwork2.log is available to system administrators
+# but not to users with staff level accounts in the courses, so using the more
+# secure settings requires more cooperation from the system administrators when
+# debugging data is needed.
+MIN_HTML_ERRORS: 0
+
+# Setting JSON_ERROR_LOG to 1 will change the output format in the Mojolicious
+# webwork2.log file to be JSON based, which will make programmatic processing of
+# the error reports easier, but can break the functionality of existing scripts
+# which parse error.log.
+JSON_ERROR_LOG: 0
+
+# Uncomment the line below and change the setting to your desired site in order
+# for the server root location to be redirected to your site.  Note that this
+# will not have effect if hypnotoad is proxied by another server, and the proxy
+# does not forward the server root location.
+#server_root_url_redirect: https://mysite.edu/mypage.html
+
+# Uncomment the line below to use the WebworkSOAP handlers.  Make sure that you
+# change the value to something more secure.  Note that it must consist entirely
+# of digits.
+#soap_authen_key: 123456789123456789
+
+# If a remote site is using this WW server to process WW problems and embed them
+# into web pages, the web browser might not permit the WW problems to be
+# displayed, as it violates security policy to mix content from different
+# origins without an explicit directive from the server that it is safe.
+# Uncomment the extra_headers setting as is to set the header to enable
+# Cross-Origin Resource Sharing (CORS) for url responses to requests to urls
+# that start with /webwork2/render_rpc, /webwork2/html2xml, and /webwork2_files.
+# This may be needed to use the client formats if they are accessed from a
+# *remote* server.
+#
+# Note that the /webwork2/html2xml url is deprecated, and code should be adapted
+# to use the /webwork2/render_rpc path instead.  They both do the same thing
+# that the /webwork2/html2xml endpoint did before, but they no longer pass
+# through the XMLRPC middle man.
+#
+# Additional urls may also be added, and multiple headers may be set per url.
+# The headers will be added to all responses to urls that start with the url
+# given.
+
+#extra_headers:
+#  /webwork2/render_rpc:
+#    Access-Control-Allow-Origin: '*'
+#  /webwork2/html2xml:
+#    Access-Control-Allow-Origin: '*'
+#  /webwork2_files:
+#    Access-Control-Allow-Origin: '*'
+#  /pg_files:
+#    Access-Control-Allow-Origin: '*'
+
+# The user and group to run the server as.  These are only used when the
+# webwork2 app is in production mode and run as the root user.  This means that
+# these settings are not used when proxying via another web server like apache2
+# or nginx.  In that case hypnotoad should directly be run as the correct
+# non-root user.
+server_user: www-data
+server_group: www-data
+
+# Change redirect_http_to_https to 1 to have all http requests redirected to
+# https.  You will also need to add "- http://*:80" as well as "- http://*:443"
+# to the hypnotoad listen values below for this to work.  This should only be
+# used when serving the webwork2 app directly.
+redirect_http_to_https: 0
+
+# hypnotoad server configuration
+# See https://docs.mojolicious.org/Mojo/Server/Daemon
+# Any of the attributes listed there can be set in this section.
+# Make sure to convert the Perl notation there to YAML.
+hypnotoad:
+  listen:
+    - http://*:8080
+    # Below is an example of how to use ssl certificates when serving directly via hypnotoad.
+    #- https://*:443?cert=/etc/ssl/local/fullchain.pem&key=/etc/ssl/local/privkey.pem
+    # Below is an example of how to use ssl certificates when using the docker build.
+    #- https://*:8080?cert=/etc/ssl/local/fullchain.pem&key=/etc/ssl/local/privkey.pem
+
+  # Documentation about the settings being provided below can be found at
+  # https://docs.mojolicious.org/Mojo/Server/Hypnotoad#SETTINGS
+
+  # WeBWorK is essentially all blocking code, so allowing hypnotoad to allow
+  # a worker to accept additional requests when a request is being processed
+  # can cause severe latency/delays when a new request is waiting for a "slow"
+  # request to be completed. Thus, in accordance with the recommendations for
+  # such settings, for example in https://github.com/mojolicious/mojo/wiki/Benchmarking
+  # set clients to 1, and set workers to a larger number.
+
+  # Critical tuning for a production server is to increase workers based on the
+  # system resources available (primarily RAM) and the expected concurrent load.
+  #    workers is the number of hypnotoad processing which are created and
+  #            run at all times to be available to server requests.
+  #    spare is the number of additional workers which can be started as
+  #            replacements for workers which have been signaled to stop
+  #            themselves (gracefully) in order to be replaced by a new worker.
+  # Since spare allows additional workers to be started before old ones have
+  # stopped, the value of workers+spare needs to take into account the
+  # available memory of the system.
+  #
+  # The majority of RAM available for workers should probably be dedicated to
+  # making workers as high as possible, to allow connections from many end
+  # users to be accepted and processed in parallel. However, due to the extensive
+  # amount of time (heartbeat_timeout+graceful_timeout) a worker can remain busy
+  # before being forcefully killed, reserving some RAM to allow a moderate value
+  # of spare is recommended.
+  #
+  # We recommend setting spare to at least 5 on a server with under 8GB of RAM,
+  # and at least 8-10 on a server with over 8GB of RAM. As possible, consider
+  # increasing spare to about 10% of the value of workers on your server, should that
+  # be larger than the setting suggested above.
+  #
+  # Recommendations for tuning of workers and spare based on RAM available:
+  #    Consider using 10-12 workers and one spare for each GB of RAM
+  #    (after setting aside 2-4 GB of RAM for the OS and all other software needed).
+  # On a machine with less than 8GB of RAM, decrease workers and raise spare to make
+  # sure that spare is at least 5.
+  # These are provisional recommendations based on some testing, but without
+  # experience with the Mojolicious webwork system in a production environment.
+  #
+  # It is recommended to monitor memory usage under load to determine what further
+  # tuning of the settings may be appropriate.
+
+  clients: 1
+  workers: 25
+  spare: 8
+
+  # WeBWorK apparently has some memory leaks which lead to workers using up more memory
+  # over time as additional requests are processed.
+  # Requests which process many problem renders in a single call will
+  # trigger faster accumulation of "lost memory". The "accepts" parameter
+  # should be kept relatively low to avoid the "lost memory" from causing
+  # significant problems.
+  accepts: 100
+
+  # Keep-alive related settings. These limit how long an inactive connection
+  # (one with no active request) can remain open, and how many requests (ex.
+  # for additional files) can be sent over the same connection.
+  # In order to prevent a worker from being kept waiting for additional requests
+  # from a browser which in not active, keep_alive_timeout is set relatively low,
+  # but an attempt is made to allow a bit of time before connections will be
+  # closed, to reduce the need for a new connection to be opened if a user
+  # is actively navigating on the site.
+  # To allow all dependencies of a WeBWorK page to be served over a single
+  # connection the value of requests was set to 50.
+  keep_alive_timeout: 15
+  requests: 50
+
+  # The graceful_timeout determines how long hypnotoad will wait before hard
+  # killing a worker which was marked as failing to send heartbeats due to
+  # failing or having "blocked" while doing a very slow operation.
+  # After the graceful_timeout passes, the worker will be killed and whatever
+  # it was doing will get stopped without completing. Potentially, this could
+  # cause inconsistencies in the database or other less than ideal outcomes.
+  # Try to set to provide enough spare time to avoid such problems!
+  graceful_timeout: 120
+
+  # The following timeout settings will be sufficient in most cases.  However, if you have large class sizes they may
+  # not be enough.  If you are seeing long requests fail then increase these.  This may happen, for example, if you have
+  # a class with thousands of users and try to assign a set to all users.  In that case you may need much larger values.
+  # Note that if you are serving via a proxy, you may also need to increase the timeouts for the proxy server.
+  inactivity_timeout: 60
+  heartbeat_timeout: 60
+
+  # Make sure that the user the server is being run as has access to this file.
+  pid_file: /run/webwork2/webwork2.pid
+
+  # Comment out the line below if serving directly.
+  proxy: 1
+
+# The remainder of the settings in this file are primarily for developers,
+# and you usually do not need to change anything below here.
+
+debug:
+  # If set to 1, WeBWorK::Debug will print extensive debugging output.
+  enabled: 0
+
+  # If set, debugging output will be sent to the file named rather than STDERR.
+  # Note that the server must have write access to this file's location.
+  #logfile: /opt/webwork/webwork2/logs/debug.log
+
+  # Prevent subroutines matching the given regular expression from logging.
+  # For example to remove all messages from subroutines in a WeBWorK::Authen
+  # module uncomment the following example.
+  #deny_subroutine_output: ^WeBWorK::Authen::.*$
+
+  # Allow only subroutines matching the following regular expression to log.
+  # For example to only allow messages from subroutines in a WeBWorK::Authen
+  # module uncomment the following example.
+  #allow_subroutine_output: ^WeBWorK::Authen::.*$
+
+hardcopy:
+  # If 1, don't delete temporary files created when a hardcopy is generated.
+  preserve_temp_files: 0

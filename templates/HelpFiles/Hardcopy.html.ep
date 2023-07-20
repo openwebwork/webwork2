@@ -1,0 +1,62 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Hardcopy Help');
+%
+<p>
+	<%= maketext('Generate hardcopies of assignments in PDF or latex format. To produce a '
+		. 'hardcopy, one selects the users on the left and the sets on the right. '
+		. 'All users and sets are listed.') =%>
+</p>
+<p>
+	<%= maketext('In both cases, one can select the sort field, the format of the display list, and the filter. '
+		. '"Change Display Settings" must be clicked to update the list.') =%>
+</p>
+<p>
+	<%= maketext('There are many options available at the bottom:') =%>
+</p>
+<dl>
+	<dt><%= maketext('Show') %></dt>
+	<dd><%= maketext('Toggle each of the options to include or not include in the output.') %> </dd>
+
+	<dt><%= maketext('Hardcopy Format') %></dt>
+	<dd>
+		<%= maketext('If "TeX Source" is selected, a zip file containing a TeX file and other files needed to generate '
+			. 'a PDF hardcopy will be produced. If "Adobe PDF" is selected then only a PDF file will be produced.') =%>
+	</dd>
+
+	<dt><%= maketext('Show Problem Source File') %></dt>
+	<dd><%= maketext('If selected, the file path of the problem source will be printed in the output.') %></dd>
+
+	<dt><%= maketext('Hardcopy Theme') %></dt>
+	<dd>
+		<%= maketext('Choose from the available hardcopy layout themes. '
+			. 'To create a new hardcopy theme, visit the Problem Editor, Generate Hardcopy tab. '
+			. 'New hardcopy themes will be stored in the templates/hardcopyThemes/ folder.') %> </dd>
+</dl>
+<p>
+	<%== maketext('Once "Generate Hardcopy for selected sets and selected users" is clicked a file in the selected '
+		. 'hardcopy format will be generated and offered for download. If PDF output was selected, a single PDF file '
+		. 'is generated. If TeX output is selected, a zip file is generated that contains all files needed to '
+		. 'generated the hardcopy PDF file via [_1]. The main TeX file is called [_2].',
+		'<code>pdflatex</code>', '<code>hardcopy.tex</code>') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('Note that if there are errors, they will be shown at the top of the page. '
+		. 'In some cases, a hard copy is still generated and a link called "Download Hardcopy" '
+		. 'appears. In addition, the latex file, log and error files are generated which can '
+		. 'be used in troubleshooting.') =%>
+</p>

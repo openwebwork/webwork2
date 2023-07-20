@@ -1,0 +1,96 @@
+% unless (defined $userSet) {
+	<div class="alert alert-danger p-1 mb-2">
+		<%= maketext('Proctor authorization requested for a nonexistent set.') =%>
+	</div>
+	% last;
+% }
+%
+<div class="my-2"><strong><%= maketext('Proctor authorization required.') %></strong></div>
+%
+% # WeBWorK::Authen::verifyProctor will set the "authen_error" stash value if authentication is not valid.
+% # In that case, show the error.
+% if (stash('authen_error')) {
+	<div class="alert alert-danger"><%= stash('authen_error') %></div>
+% }
+%
+% # Print a message about submission times if we're submitting an answer.
+% if (param('submitAnswers')) {
+	% my $dueTime = $userSet->due_date;
+	% my ($color, $msg) = ('#ddddff', '');
+	% if ($dueTime + $ce->{gatewayGracePeriod} < $submitTime) {
+		% $color = '#ffffaa';
+		% $msg = maketext('The time limit on this assignment was exceeded. The assignment may be checked, '
+			% . 'but the result will not be counted.');
+	% }
+	%
+	<div class="card mb-2" style="background-color:<%= $color %>;">
+		<div class="card-body p-2">
+			<div class="card-title"><strong><%= maketext('Grading Assignment') %></strong></div>
+			<div class="card-text">
+				<strong><%= maketext('Submission time:') %></strong> <%= scalar(localtime($submitTime)) %>
+			</div>
+			<div class="card-text">
+				<strong><%= maketext('Closes:') %></strong> <%= scalar(localtime($dueTime)) %>
+			</div>
+			% if ($msg) {
+				<div class="mt-2"><%= $msg %></div>
+			% }
+		</div>
+	</div>
+% }
+%
+%= form_for current_route, method => 'POST', begin
+	% # Add the form data posted to the requested URI in hidden fields.
+	% my @fields_to_print =
+		% grep { !/^(user|effectiveUser|passwd|key|force_password_authen|proctor_user|proctor_key|proctor_passwd)$/ }
+			% param;
+	% if (@fields_to_print) {
+		<%= $c->hidden_fields(@fields_to_print) %>
+	% }
+	<%= $c->hidden_authen_fields =%>
+	%
+	<%= hidden_field past_proctor_user => param('past_proctor_user') || param('proctor_user') =%>
+	<%= hidden_field past_proctor_key  => param('past_proctor_key')  || param('proctor_key') =%>
+	%
+	% if (param('submitAnswers')
+		% || ($userSet->restricted_login_proctor eq '' || $userSet->restricted_login_proctor eq 'No'))
+	% {
+		% # The user info and username field for the proctor.
+		<div class="card p-2 mb-2" style="background-color:#ddddff;">
+			<div><%= maketext(q{User's username is:}) %> <strong><%= param('effectiveUser') // '' %></strong></div>
+			<div>
+				<%= maketext(q{User's name is:}) %>
+				<strong><%= $c->{effectiveUser}->first_name %> <%= $c->{effectiveUser}->last_name %></strong>
+			</div>
+		</div>
+		<div class="col-xl-5 col-lg-6 col-md-7 col-sm-8 form-floating mb-2">
+			% # Prevent the proctor_user field from being filled with the parameter value.
+			% param('proctor_user', undef);
+			<%= text_field proctor_user => '', id => 'proctor_user', class => 'form-control', placeholder => '',
+				autocapitalize => 'none', spellcheck => 'false', autocomplete => 'new-password' =%>
+			<%= label_for proctor_user => maketext('Proctor Username') =%>
+		</div>
+	% } else {
+		% # Restricted set login
+		<div class="card p-2 mb-2" style="background-color:#ddddff;">
+			<em>
+				<%= maketext(
+					'This set has a set-level proctor password to authorize logins. Enter the password below.') =%>
+			</em>
+		</div>
+		<%= hidden_field proctor_user => "set_id:$setID" =%>
+	% }
+	%
+	% # The password field for the proctor.
+	<div class="col-xl-5 col-lg-6 col-md-7 col-sm-8 form-floating mb-2">
+		<%= password_field 'proctor_passwd',
+		 		id           => 'proctor_passwd',
+		 		class        => 'form-control',
+				placeholder  => '',
+				autocomplete => 'new-password'
+			=%>
+		<%=	label_for proctor_passwd => maketext('Proctor Password') =%>
+	</div>
+	%
+	<%= submit_button maketext('Continue'), class => 'btn btn-primary' =%>
+% end

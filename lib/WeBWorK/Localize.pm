@@ -6,7 +6,7 @@ use Locale::Maketext::Lexicon;
 
 use WeBWorK::Utils qw(x);
 
-my $path     = "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize";
+my $path     = "$ENV{WEBWORK_ROOT}/lib/WeBWorK/Localize";
 my $pattern  = File::Spec->catfile($path, '*.[pm]o');
 my $decode   = 1;
 my $encoding = undef;

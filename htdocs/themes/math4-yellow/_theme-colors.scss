@@ -32,3 +32,13 @@ $ww-logo-background-color: $info;
 
 // Achievment level bar
 $ww-achievement-level-color: darken($primary, 15%);
+
+// Make accordion buttons darker.
+$accordion-button-active-color: shade-color($primary, 50%);
+
+// Make the navbar colors dark.
+$navbar-dark-color:                 rgba(#000, .55);
+$navbar-dark-hover-color:           rgba(#000, .75);
+$navbar-dark-active-color:          #000;
+$navbar-dark-disabled-color:        rgba(#000, .25);
+$navbar-dark-toggler-border-color:  rgba(#000, .1);

@@ -5,7 +5,7 @@ loadMacros(
            "PGchoicemacros.pl",
            "PGanswermacros.pl",
 ); 
-TEXT(beginproblem(), $BR,$BBOLD, "JavaScript Example 1", $EBOLD, $BR,$BR);
+TEXT($BBOLD, "JavaScript Example 1", $EBOLD, $BR,$BR);
 # define function to be evaluated
 $a= random(1,3,1);
 $b= random(-4,4,.1);
@@ -43,7 +43,6 @@ return( $a*Math.pow(x,2) + $b*x +$c );}
 
 EOF
 
-TEXT(beginproblem());
 TEXT(MODES( TeX => "",
 	        Latex2HTML => "\begin{rawhtml}
                          <NOSCRIPT> This problem requires that Java Script be 

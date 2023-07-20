@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,8 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::AchievementList;
-use base qw(WeBWorK);
-use base qw(WeBWorK::ContentGenerator::Instructor);
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -45,137 +44,49 @@ links to edit the evaluator and the individual user data.
 
 =cut
 
-use strict;
-use warnings;
-#use CGI qw(-nosticky );
-use WeBWorK::CGI;
-use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive sortAchievements x getAssetURL);
-use DateTime;
+use Mojo::File;
 use Text::CSV;
-use Encode;
-use open IO => ':encoding(UTF-8)';
 
-#constants for forms and the various handlers
-use constant BLANK_ACHIEVEMENT => "blankachievement.at";
-use constant DEFAULT_ENABLED_STATE => 0;
+use WeBWorK::Utils qw(sortAchievements x);
+use WeBWorK::Utils::Instructor qw(read_dir);
 
-use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
-use constant VIEW_FORMS => [qw(edit assign import export score create delete)];
-use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
+# Forms
+use constant EDIT_FORMS   => [qw(save_edit cancel_edit)];
+use constant VIEW_FORMS   => [qw(edit assign import export score create delete)];
+use constant EXPORT_FORMS => [qw(save_export cancel_export)];
 
 # Prepare the tab titles for translation by maketext
 use constant FORM_TITLES => {
-	saveEdit       => x("Save Edit"),
-	cancelEdit     => x("Cancel Edit"),
-	edit           => x("Edit"),
-	assign         => x("Assign"),
-	import         => x("Import"),
-	export         => x("Export"),
-	score          => x("Score"),
-	create         => x("Create"),
-	delete         => x("Delete"),
-	saveExport     => x("Save Export"),
-	cancelExport   => x("Cancel Export")
+	save_edit     => x('Save Edit'),
+	cancel_edit   => x('Cancel Edit'),
+	edit          => x('Edit'),
+	assign        => x('Assign'),
+	import        => x('Import'),
+	export        => x('Export'),
+	score         => x('Score'),
+	create        => x('Create'),
+	delete        => x('Delete'),
+	save_export   => x('Save Export'),
+	cancel_export => x('Cancel Export')
 };
 
-use constant VIEW_FIELD_ORDER => [ qw( achievement_id enabled name number category ) ];
-use constant EDIT_FIELD_ORDER => [ qw( icon achievement_id name number assignment_type category enabled points max_counter description icon_file test_file) ];
-use constant EXPORT_FIELD_ORDER => [ qw( select achievement_id name) ];
+sub initialize ($c) {
+	my $db            = $c->db;
+	my $ce            = $c->ce;
+	my $authz         = $c->authz;
+	my $courseName    = $c->stash('courseID');
+	my $achievementID = $c->stash('achievementID');
+	my $user          = $c->param('user');
 
-use constant STATE_PARAMS => [qw(user effectiveUser key editMode exportMode)];
+	# Make sure these are available in the templates.
+	$c->stash->{formsToShow}  = VIEW_FORMS();
+	$c->stash->{formTitles}   = FORM_TITLES();
+	$c->stash->{achievements} = [];
 
-use constant ASSIGNMENT_TYPES => [qw(default gateway jitar)];
+	# Check permissions
+	return unless $authz->hasPermissions($user, 'edit_achievements');
 
-use constant ASSIGNMENT_NAMES => {
-    default => 'homework',
-    gateway => 'gateways',
-    jitar => 'just-in-time',
-};
-
-#properites for the fields shown in the tables
-use constant  FIELD_PROPERTIES => {
-	achievement_id => {
-		type => "text",
-		size => 8,
-		access => "readonly",
-	},
-	name => {
-		type => "text",
-		size => 30,
-		access => "readwrite",
-	},
-	assignment_type => {
-		type => "assignment_type",
-		size => 30,
-		access => "readwrite",
-	},
-	category => {
-		type => "text",
-		size => 30,
-		access => "readwrite",
-	},
-	number => {
-		type => "text",
-		size => 8,
-		access => "readwrite",
-	},
-	icon => {
-		type => "text",
-		size => 85,
-		access => "readwrite",
-	},
-	test => {
-		type => "text",
-		size => 85,
-		access => "readwrite",
-	},
-
-	description => {
-		type => "text",
-		size => 85,
-		access => "readwrite",
-	},
-
-	enabled => {
-		type => "checked",
-		size => 8,
-		access => "readwrite",
-	},
-
-	points => {
-		type => "text",
-		size => 8,
-		access => "readwrite",
-	},
-
-	max_counter => {
-	        type => "text",
-		size => 8,
-		access => "readwrite",
-	},
-};
-
-sub initialize {
-
-	my ($self)       = @_;
-	my $r            = $self->r;
-	my $urlpath      = $r->urlpath;
-	my $db           = $r->db;
-	my $ce           = $r->ce;
-	my $authz        = $r->authz;
-	my $courseName   = $urlpath->arg("courseID");
-	my $achievementID= $urlpath->arg("achievementID");
-	my $user         = $r->param('user');
-
-
-	my $root = $ce->{webworkURLs}->{root};
-
-	#check permissions
-	return CGI::div({ class => 'alert alert-danger p-1' }, "You are not authorized to edit achievements.")
-		unless $authz->hasPermissions($user, "edit_achievements");
-
-	########## set initial values for state fields
+	# Set initial values for state fields
 	my @allAchievementIDs = $db->listAchievements;
 
 	#### Temporary Transition Code ####
@@ -185,682 +96,290 @@ sub initialize {
 	# This whole block of code can be removed once people have had time
 	# to transition over.  (I.E. around 2017)
 
-	foreach my $achievementID (@allAchievementIDs) {
-	    my $achievement = $db->getAchievement($achievementID);
-	    unless ($achievement->assignment_type || $achievement->number) {
-		$achievement->assignment_type('default');
-		$db->putAchievement($achievement);
-	    }
+	for my $achievementID (@allAchievementIDs) {
+		my $achievement = $db->getAchievement($achievementID);
+		unless ($achievement->assignment_type || $achievement->number) {
+			$achievement->assignment_type('default');
+			$db->putAchievement($achievement);
+		}
 	}
 	### End Transition Code.  ###
 
-
 	my @users = $db->listUsers;
-	$self->{allAchievementIDs} = \@allAchievementIDs;
-	$self->{totalUsers} = scalar @users;
+	$c->{allAchievementIDs} = \@allAchievementIDs;
+	$c->{totalUsers}        = scalar @users;
 
+	$c->{selectedAchievementIDs} = [ $c->param('selected_achievements') ];
 
-	if (defined $r->param("selected_achievements")) {
-		$self->{selectedAchievementIDs} = [ $r->param("selected_achievements") ];
-	} else {
-		$self->{selectedAchievementIDs} = [];
-	}
+	$c->{editMode} = $c->param('editMode') || 0;
 
-	$self->{editMode} = $r->param("editMode") || 0;
-
-	#########################################
-	#  call action handler
-	#########################################
-
-	my $actionID = $r->param("action");
-	$self->{actionID} = $actionID;
+	# Call action handler
+	my $actionID = $c->param('action');
+	$c->{actionID} = $actionID;
 	if ($actionID) {
 		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }, @{ EXPORT_FORMS() }) {
 			die "Action $actionID not found";
 		}
 
 		my $actionHandler = "${actionID}_handler";
-		my %genericParams;
-		foreach my $param (qw(selected_achievements)) {
-		    $genericParams{$param} = [ $r->param($param) ];
+		my ($success, $action_result) = $c->$actionHandler;
+		if ($success) {
+			$c->addgoodmessage($c->b($c->maketext('Result of last action performed: [_1]', $action_result)));
+		} else {
+			$c->addbadmessage($c->b($c->maketext('Result of last action performed: [_1]', $action_result)));
 		}
-		my %actionParams = $self->getActionParams($actionID);
-		my %tableParams = $self->getTableParams();
-		$self->addmessage(CGI::div({ class => 'mb-1' }, $r->maketext("Results of last action performed: ")));
-		$self->addmessage($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams));
 	} else {
-	    $self->addgoodmessage($r->maketext("Please select action to be performed."));
+		$c->addgoodmessage($c->maketext('Please select action to be performed.'));
 	}
+
+	$c->stash->{formsToShow} = $c->{editMode} ? EDIT_FORMS() : $c->{exportMode} ? EXPORT_FORMS() : VIEW_FORMS();
+
+	# Get and sort achievements. Achievements are sorted by in the order they are evaluated.
+	$c->stash->{achievements} = [ sortAchievements($c->db->getAchievements(@{ $c->{allAchievementIDs} })) ];
+
+	return;
 }
 
-sub body {
-	my ($self)       = @_;
-	my $r            = $self->r;
-	my $urlpath      = $r->urlpath;
-	my $db           = $r->db;
-	my $ce           = $r->ce;
-	my $authz        = $r->authz;
-	my $courseName   = $urlpath->arg("courseID");
-	my $achievementID= $urlpath->arg("achievementID");
-	my $user         = $r->param('user');
-
-	my $root = $ce->{webworkURLs}->{root};
-
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to edit achievements.")
-		unless $authz->hasPermissions($user, "edit_achievements");
-
-	my $actionID = $self->{actionID};
-
-	########## retrieve possibly changed values for member fields
-
-	my @allAchievementIDs = @{ $self->{allAchievementIDs} }; # do we need this one? YES, deleting or importing a achievement will change this.
-	my @selectedAchievementIDs = @{ $self->{selectedAchievementIDs} };
-	my $editMode = $self->{editMode};
-	my $exportMode = $self->{exportMode};
-
-	########## get achievements
-
-	my @Achievements = $db->getAchievements(@allAchievementIDs);
-
-	# sort Achievments.  Achievements are always sorted by in the order they are evaluated
-	if (@Achievements) {
-	    @Achievements = sortAchievements(@Achievements);
-	}
-
-	########## print site identifying information
-
-	print CGI::input({
-		type => "button",
-		id => "show_hide",
-		value => $r->maketext("Show/Hide Site Description"),
-		class => "btn btn-info mb-2"
-	});
-	print CGI::p(
-		{
-			id    => "site_description",
-			style => "display:none"
-		},
-		CGI::em($r->maketext(
-			'This is the Achievement Editor.  It is used to edit the achievements available to students.  Please keep '
-				. 'in mind the following facts: Achievments are displayed, and evaluated, in the order they are '
-				. 'listed. The "secret" category creates achievements which are not visible to students until they are '
-				. 'earned.  The "level" category is used for the achievements associated to a users level.'
-		))
-	);
-
-	########## print beginning of form
-
-	print CGI::start_form({
-		method => 'post',
-		action => $self->systemLink($urlpath, authen => 0),
-		id     => 'achievement-list',
-		name   => 'achievementlist',
-		class  => 'font-sm'
-	});
-	print $self->hidden_authen_fields();
-
-	########## print state data
-
-	print "\n<!-- state data here -->\n";
-
-	print CGI::hidden(-name=>"editMode", -value=>$editMode);
-	print CGI::hidden(-name=>"exportMode", -value=>$exportMode);
-
-	print "\n<!-- state data here -->\n";
-
-	########## print action forms
-
-	print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the achievement for ALL students."))) if $editMode;
-
-	print CGI::p($r->maketext("Select an action to perform").":");
-
-	my @formsToShow;
-	if ($editMode) {
-		@formsToShow = @{ EDIT_FORMS() };
-	} elsif ($exportMode) {
-		@formsToShow = @{ EXPORT_FORMS() };
-	} else {
-		@formsToShow = @{ VIEW_FORMS() };
-	}
-	my %formTitles = %{ FORM_TITLES() };
-
-	my @tabArr;
-	my @contentArr;
-
-	for my $actionID (@formsToShow) {
-		my $actionForm = "${actionID}_form";
-
-		push(@tabArr, CGI::li({ class => 'nav-item', role => 'presentation' },
-			CGI::a({
-					href => "#$actionID",
-					class => 'nav-link action-link' . ($actionID eq $formsToShow[0] ? ' active' : ''),
-					id => "$actionID-tab",
-					data_action => $actionID,
-					data_bs_toggle => 'tab',
-					data_bs_target => "#$actionID",
-					role => 'tab',
-					aria_controls => $actionID,
-					aria_selected => $actionID eq $formsToShow[0] ? 'true' : 'false'
-				},
-				$r->maketext($formTitles{$actionID}))));
-		push(@contentArr, CGI::div({
-				class => 'tab-pane fade mb-2' . ($actionID eq $formsToShow[0] ? ' show active' : ''),
-				id => $actionID,
-				role => 'tabpanel',
-				aria_labelledby => "$actionID-tab"
-			},
-			$self->$actionForm($self->getActionParams($actionID))));
-	}
-
-	print CGI::hidden(-name => 'action', -id => 'current_action', -value => $formsToShow[0]);
-	print CGI::div(
-		CGI::ul({ class => 'nav nav-tabs mb-2', role => 'tablist' }, @tabArr),
-		CGI::div({ class => 'tab-content' }, @contentArr)
-	);
-
-	print CGI::submit({
-			id => "take_action",
-			value => $r->maketext("Take Action!"),
-			class => 'btn btn-primary mb-3'
-		});
-
-	########## print table
-
-	$self->printTableHTML(\@Achievements,
-		editMode => $editMode,
-		exportMode => $exportMode,
-		selectedAchievementIDs => \@selectedAchievementIDs,
-	);
-
-
-	########## print end of form
-
- 	print CGI::end_form();
-
-	return "";
-}
-
-################################################################################
-# extract particular params and put them in a hash (values are ARRAYREFs!)
-################################################################################
-
-sub getActionParams {
-	my ($self, $actionID) = @_;
-	my $r = $self->{r};
-
-	my %actionParams;
-	foreach my $param ($r->param) {
-		next unless $param =~ m/^action\.$actionID\./;
-		$actionParams{$param} = [ $r->param($param) ];
-	}
-	return %actionParams;
-}
-
-sub getTableParams {
-	my ($self) = @_;
-	my $r = $self->{r};
-
-	my %tableParams;
-	foreach my $param ($r->param) {
-		next unless $param =~ m/^(?:achievement)\./;
-		$tableParams{$param} = [ $r->param($param) ];
-	}
-	return %tableParams;
-}
-
-################################################################################
-# actions and action triggers
-################################################################################
-
-# edit, cancelEdit, and saveEdit should stay with the display module and
+# Actions handlers.
+# The forms for all of the actions are templates.
+# edit, cancel_edit, and save_edit should stay with the display module and
 # not be real "actions". that way, all actions are shown in view mode and no
 # actions are shown in edit mode.
 
-
-# Form for editing achievements.
-sub edit_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-
-	return CGI::div(
-		{ class => 'row mb-2' },
-		CGI::label(
-			{ for => 'edit_select', class => 'col-form-label col-form-label-sm col-auto' },
-			$r->maketext('Edit which achievements?')
-		),
-		CGI::div(
-			{ class => 'col-auto' },
-			CGI::popup_menu({
-				name    => 'action.edit.scope',
-				id      => 'edit_select',
-				values  => [qw(all selected)],
-				default => $actionParams{'action.edit.scope'}[0] || 'selected',
-				class   => 'form-select form-select-sm',
-				labels  => {
-					all      => $r->maketext('all achievements'),
-					selected => $r->maketext('selected achievements'),
-				},
-			})
-		)
-	);
-}
-
-#handler for editing achievements.  Just changes the view mode
-sub edit_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r = $self->r;
+# Handler for editing achievements.  Just changes the view mode.
+sub edit_handler ($c) {
 	my $result;
 
-	my $scope = $actionParams->{"action.edit.scope"}->[0];
+	my $scope = $c->param('action.edit.scope');
 	if ($scope eq "all") {
-	        $self->{selectedAchievementIDs} = $self->{allAchievementIDs};
-		$result = $r->maketext("editing all achievements");
+		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
+		$result = $c->maketext("editing all achievements");
 	} elsif ($scope eq "selected") {
-		$result = $r->maketext("editing selected achievements");
+		$result = $c->maketext("editing selected achievements");
 	}
-	$self->{editMode} = 1;
+	$c->{editMode} = 1;
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
+	return (1, $result);
 }
 
-# Form for assigning achievements to users.
-sub assign_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
+# Handler for assigning achievements to users
+sub assign_handler ($c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
 
-	return CGI::div(
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'assign_select', class => 'col-form-label col-form-label-sm col-sm-auto' },
-				$r->maketext('Assign which achievements?',)
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					name    => 'action.assign.scope',
-					id      => 'assign_select',
-					values  => [qw(all selected)],
-					default => $actionParams{'action.assign.scope'}[0] || 'selected',
-					class   => 'form-select form-select-sm',
-					labels  => {
-						all      => $r->maketext('all achievements'),
-						selected => $r->maketext('selected achievements'),
-					},
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'assign_data_select', class => 'col-form-label col-form-label-sm col-sm-auto' },
-				$r->maketext('Choose what to do with existing data:')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					name    => 'action.assign.overwrite',
-					id      => 'assign_data_select',
-					values  => [qw(everything new_only)],
-					default => $actionParams{'action.assign.overwrite'}[0] || 'new_only',
-					class   => 'form-select form-select-sm',
-					labels  => {
-						everything => $r->maketext('overwrite'),
-						new_only   => $r->maketext('preserve'),
-					},
-				})
-			)
-		)
-	);
-}
-
-#handler for assigning achievements to users
-sub assign_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $ce     = $r->ce;
-
-	my $scope = $actionParams->{"action.assign.scope"}->[0];
-	my $overwrite = (($actionParams->{"action.assign.overwrite"}->[0] eq 'everything') ? 1 : 0);
+	my $scope     = $c->param('action.assign.scope');
+	my $overwrite = $c->param('action.assign.overwrite') eq 'everything';
 
 	my @achievementIDs;
 	my @users = $db->listUsers;
 
-
 	if ($scope eq "all") {
-	        @achievementIDs = @{$self->{allAchievementIDs}};
+		@achievementIDs = @{ $c->{allAchievementIDs} };
 	} else {
-	    	@achievementIDs = @{$self->{selectedAchievementIDs}};
+		@achievementIDs = @{ $c->{selectedAchievementIDs} };
 	}
 
-	#Enable all achievements
+	# Enable all achievements
 	my @achievements = $db->getAchievements(@achievementIDs);
 
-	foreach my $achievement (@achievements) {
-	    $achievement->enabled(1);
-	    $db->putAchievement($achievement);
+	for my $achievement (@achievements) {
+		$achievement->enabled(1);
+		$db->putAchievement($achievement);
 	}
 
-	#Assign globalUserAchievement data, overwriting if necc
+	# Assign globalUserAchievement data, overwriting if necc
 
-	foreach my $user (@users) {
-	    if (not $db->existsGlobalUserAchievement($user)) {
-		my $globalUserAchievement = $db->newGlobalUserAchievement();
-		$globalUserAchievement->user_id($user);
-		$db->addGlobalUserAchievement($globalUserAchievement);
-	    } elsif ($overwrite) {
-		my $globalUserAchievement = $db->newGlobalUserAchievement();
-		$globalUserAchievement->user_id($user);
-		$db->putGlobalUserAchievement($globalUserAchievement);
-	    }
-	}
-
-
-	#Assign userAchievement data, overwriting if necc
-
-	foreach my $achievementID (@achievementIDs) {
-	    foreach my $user (@users) {
-		if (not $db->existsUserAchievement($user,$achievementID)) {
-		    my $userAchievement = $db->newUserAchievement();
-		    $userAchievement->user_id($user);
-		    $userAchievement->achievement_id($achievementID);
-		    $db->addUserAchievement($userAchievement);
+	for my $user (@users) {
+		if (not $db->existsGlobalUserAchievement($user)) {
+			my $globalUserAchievement = $db->newGlobalUserAchievement();
+			$globalUserAchievement->user_id($user);
+			$db->addGlobalUserAchievement($globalUserAchievement);
 		} elsif ($overwrite) {
-		    my $userAchievement = $db->newUserAchievement();
-		    $userAchievement->user_id($user);
-		    $userAchievement->achievement_id($achievementID);
-		    $db->putUserAchievement($userAchievement);
+			my $globalUserAchievement = $db->newGlobalUserAchievement();
+			$globalUserAchievement->user_id($user);
+			$db->putGlobalUserAchievement($globalUserAchievement);
 		}
-	    }
 	}
 
+	# Assign userAchievement data, overwriting if necc
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext('Assigned achievements to users'));
+	for my $achievementID (@achievementIDs) {
+		for my $user (@users) {
+			if (not $db->existsUserAchievement($user, $achievementID)) {
+				my $userAchievement = $db->newUserAchievement();
+				$userAchievement->user_id($user);
+				$userAchievement->achievement_id($achievementID);
+				$db->addUserAchievement($userAchievement);
+			} elsif ($overwrite) {
+				my $userAchievement = $db->newUserAchievement();
+				$userAchievement->user_id($user);
+				$userAchievement->achievement_id($achievementID);
+				$db->putUserAchievement($userAchievement);
+			}
+		}
+	}
+
+	return (1, $c->maketext('Assigned achievements to users'));
 }
 
-# Form for scoring achievements.
-sub score_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
+# Handler for scoring
+sub score_handler ($c) {
+	my $ce         = $c->ce;
+	my $db         = $c->db;
+	my $courseName = $c->stash('courseID');
 
-	return CGI::div(
-		{ class => 'row mb-2' },
-		CGI::label(
-			{ for => 'score_select', class => 'col-form-label col-form-label-sm col-auto' },
-			$r->maketext('Score which achievements?')
-		),
-		CGI::div(
-			{ class => 'col-auto' },
-			CGI::popup_menu({
-				name    => 'action.score.scope',
-				id      => 'score_select',
-				values  => [qw(none all selected)],
-				default => $actionParams{'action.score.scope'}[0] || 'none',
-				class   => 'form-select form-select-sm d-inline w-auto',
-				labels  => {
-					none     => $r->maketext('no achievements'),
-					all      => $r->maketext('all achievements'),
-					selected => $r->maketext('selected achievements'),
-				},
-			})
-		),
-	);
-}
-
-#handler for scoring
-sub score_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-
-	my $r      = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $urlpath = $r->urlpath;
-	my $courseName = $urlpath->arg("courseID");
-
-	my $scope = $actionParams->{"action.score.scope"}->[0];
+	my $scope = $c->param('action.score.scope');
 	my @achievementsToScore;
 
 	if ($scope eq "none") {
 		@achievementsToScore = ();
 	} elsif ($scope eq "all") {
-		@achievementsToScore = @{ $self->{allAchievementIDs} };
+		@achievementsToScore = @{ $c->{allAchievementIDs} };
 	} elsif ($scope eq "selected") {
-		@achievementsToScore = @{ $genericParams->{selected_achievements} };
+		@achievementsToScore = $c->param('selected_achievements');
 	}
 
-	#define file name
-	my $scoreFileName = $courseName."_achievement_scores.csv";
-	my $scoreFilePath = $ce->{courseDirs}->{scoring}.'/'.$scoreFileName;
+	# Define file name
+	my $scoreFileName = $courseName . "_achievement_scores.csv";
+	my $scoreFilePath = $ce->{courseDirs}->{scoring} . '/' . $scoreFileName;
 
-	# back up existing file
-	if(-e $scoreFilePath) {
-	    rename($scoreFilePath, "$scoreFilePath.bak") or
-		warn "Existing file $scoreFilePath could not be backed up and was lost.";
+	# Back up existing file
+	if (-e $scoreFilePath) {
+		rename($scoreFilePath, "$scoreFilePath.bak")
+			or warn "Existing file $scoreFilePath could not be backed up and was lost.";
 	}
 
-	# check path and open the file
+	# Check path and open the file
 	$scoreFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{scoring}, $scoreFilePath);
 
-	local *SCORE;
-	open SCORE, ">$scoreFilePath"
-		or return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-			$r->maketext("Failed to open [_1]", $scoreFilePath));
+	my $SCORE = Mojo::File->new($scoreFilePath)->open('>:encoding(UTF-8)')
+		or return (0, $c->maketext("Failed to open [_1]", $scoreFilePath));
 
-	#print out header info
-	print SCORE $r->maketext("username, last name, first name, section, achievement level, achievement score,");
+	# Print out header info
+	print $SCORE $c->maketext("username, last name, first name, section, achievement level, achievement score,");
 
 	my @achievements = $db->getAchievements(@achievementsToScore);
 	@achievements = sortAchievements(@achievements);
 
-	foreach my $achievement (@achievements) {
-	    print SCORE $achievement->achievement_id.", ";
+	for my $achievement (@achievements) {
+		print $SCORE $achievement->achievement_id . ", ";
 	}
-	print SCORE "\n";
+	print $SCORE "\n";
 
 	my @users = $db->listUsers;
 
-	# get user records
-	my @userRecords  = ();
-	foreach my $currentUser ( @users) {
-		my $userObj = $db->getUser($currentUser); #checked
+	# Get user records
+	my @userRecords = ();
+	for my $currentUser (@users) {
+		my $userObj = $db->getUser($currentUser);
 		die "Unable to find user object for $currentUser. " unless $userObj;
-		push (@userRecords, $userObj );
+		push(@userRecords, $userObj);
 	}
 
-	@userRecords = sort { ( lc($a->section) cmp lc($b->section) ) ||
-	                     ( lc($a->last_name) cmp lc($b->last_name )) } @userRecords;
+	@userRecords =
+		sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @userRecords;
 
+	# Print out achievement information for each user
+	for my $userRecord (@userRecords) {
+		my $user_id = $userRecord->user_id;
+		next unless $db->existsGlobalUserAchievement($user_id);
+		next if ($userRecord->{status} eq 'D' || $userRecord->{status} eq 'A');
+		print $SCORE "$user_id, $userRecord->{last_name}, $userRecord->{first_name}, $userRecord->{section}, ";
+		my $globalUserAchievement = $db->getGlobalUserAchievement($user_id);
+		my $level_id              = $globalUserAchievement->level_achievement_id;
+		$level_id = ' ' unless $level_id;
+		my $points = $globalUserAchievement->achievement_points;
+		$points = 0 unless $points;
+		print $SCORE "$level_id, $points, ";
 
-	#print out achievement information for each user
-	foreach my $userRecord (@userRecords) {
-	    my $user_id = $userRecord->user_id;
-	    next unless $db->existsGlobalUserAchievement($user_id);
-	    next if ($userRecord->{status} eq 'D' || $userRecord->{status} eq 'A');
-	    print SCORE "$user_id, $userRecord->{last_name}, $userRecord->{first_name}, $userRecord->{section}, ";
-	    my $globalUserAchievement = $db->getGlobalUserAchievement($user_id);
-	    my $level_id = $globalUserAchievement->level_achievement_id;
-	    $level_id = ' ' unless $level_id;
-	    my $points = $globalUserAchievement->achievement_points;
-	    $points = 0 unless $points;
-	    print SCORE "$level_id, $points, ";
-
-	    foreach my $achievement (@achievements) {
-		my $achievement_id = $achievement->achievement_id;
-		if ($db->existsUserAchievement($user_id,$achievement_id)) {
-		    my $userAchievement = $db->getUserAchievement($user_id,$achievement_id);
-		    print SCORE $userAchievement->earned ? "1, ": "0, ";
-		} else {
-		    print SCORE ", ";
+		for my $achievement (@achievements) {
+			my $achievement_id = $achievement->achievement_id;
+			if ($db->existsUserAchievement($user_id, $achievement_id)) {
+				my $userAchievement = $db->getUserAchievement($user_id, $achievement_id);
+				print $SCORE $userAchievement->earned ? "1, " : "0, ";
+			} else {
+				print $SCORE ", ";
+			}
 		}
-	    }
 
-	    print SCORE "\n";
+		print $SCORE "\n";
 	}
 
-	close SCORE;
+	$SCORE->close;
 
 	# Include a download link
-	#
-	my $fileManagerPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::FileManager", $r, courseID => $courseName);
-	my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {action=>"View", files => "${courseName}_achievement_scores.csv", pwd=>"scoring"});
-
-
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
-		$r->maketext('Achievement scores saved to [_1]', CGI::a({ href => $fileManagerURL }, $scoreFileName)));
-}
-
-
-# Form for deleting achievements.
-sub delete_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-
-	return CGI::div(
-		CGI::div(
-			{ class => 'd-inline-block alert alert-danger p-1 mb-2' },
-			CGI::em($r->maketext('Deletion destroys all achievement-related data and is not undoable!'))
-		),
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'delete_select', class => 'col-form-label col-form-label-sm col-auto' },
-				$r->maketext('Delete which achievements?')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					name    => 'action.delete.scope',
-					id      => 'delete_select',
-					values  => [qw(none selected)],
-					default => $actionParams{'action.delete.scope'}[0] || 'none',
-					class   => 'form-select form-select-sm d-inline w-auto me-3',
-					labels  => {
-						none     => $r->maketext('no achievements.'),
-						selected => $r->maketext('selected achievements.'),
-					},
-				})
+	return (
+		1,
+		$c->b($c->maketext(
+			'Achievement scores saved to [_1]',
+			$c->link_to(
+				$scoreFileName => $c->systemLink(
+					$c->url_for('instructor_file_manager'),
+					params =>
+						{ action => 'View', files => "${courseName}_achievement_scores.csv", pwd => 'scoring' }
+				)
 			)
-		)
+		))
 	);
 }
 
-#handler for delete action
-sub delete_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+# Handler for delete action
+sub delete_handler ($c) {
+	my $db = $c->db;
 
-	my $r      = $self->r;
-	my $db     = $r->db;
-
-	my $scope = $actionParams->{"action.delete.scope"}->[0];
-
+	my $scope = $c->param('action.delete.scope');
 
 	my @achievementIDsToDelete = ();
 
 	if ($scope eq "selected") {
-		@achievementIDsToDelete = @{ $self->{selectedAchievementIDs} };
+		@achievementIDsToDelete = @{ $c->{selectedAchievementIDs} };
 	}
 
-	my %allAchievementIDs = map { $_ => 1 } @{ $self->{allAchievementIDs} };
-	my %selectedAchievementIDs = map { $_ => 1 } @{ $self->{selectedAchievementIDs} };
+	my %allAchievementIDs      = map { $_ => 1 } @{ $c->{allAchievementIDs} };
+	my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
 
-	#run through selected achievements and delete
-	foreach my $achievementID (@achievementIDsToDelete) {
+	# Iterate over selected achievements and delete.
+	for my $achievementID (@achievementIDsToDelete) {
 		delete $allAchievementIDs{$achievementID};
 		delete $selectedAchievementIDs{$achievementID};
 
 		$db->deleteAchievement($achievementID);
 	}
 
-	#update local fields
-	$self->{allAchievementIDs} = [ keys %allAchievementIDs ];
-	$self->{selectedAchievementIDs} = [ keys %selectedAchievementIDs ];
+	# Update local fields
+	$c->{allAchievementIDs}      = [ keys %allAchievementIDs ];
+	$c->{selectedAchievementIDs} = [ keys %selectedAchievementIDs ];
 
 	my $num = @achievementIDsToDelete;
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext('Deleted [quant,_1,achievement]', $num));
+	return (1, $c->maketext('Deleted [quant,_1,achievement]', $num));
 }
 
-# Form for creating achievements.
-sub create_form {
-	my ($self, %actionParams) = @_;
+# Handler for creating an ahcievement
+sub create_handler ($c) {
+	my $db   = $c->db;
+	my $ce   = $c->ce;
+	my $user = $c->param('user');
 
-	my $r = $self->r;
-
-	return CGI::div(
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'create_text', class => 'col-form-label col-form-label-sm col-auto' },
-				$r->maketext('Create a new achievement with ID')
-					. CGI::span({ class => 'required-field' }, '*') . ': '
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::textfield({
-					name  => 'action.create.id',
-					id    => 'create_text',
-					value => $actionParams{'action.create.name'}[0] || '',
-					class => 'form-control form-control-sm d-inline w-auto'
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'create_select', class => 'col-form-label col-form-label-sm col-auto' },
-				$r->maketext("Create as what type of achievement?")
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					name    => 'action.create.type',
-					id      => 'create_select',
-					values  => [qw(empty copy)],
-					default => $actionParams{'action.create.type'}[0] || 'empty',
-					class   => 'form-select form-select-sm d-inline w-auto',
-					labels  => {
-						empty => $r->maketext('a new empty achievement.'),
-						copy  => $r->maketext('a duplicate of the first selected achievement.'),
-					},
-				})
-			)
-		)
-	);
-}
-
-#handler for creating an ahcievement
-sub create_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $ce     = $r->ce;
-	my $user         = $r->param('user');
-
-	#create achievement
-	my $newAchievementID = $actionParams->{"action.create.id"}->[0];
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		$r->maketext("Failed to create new achievement: no achievement ID specified!"))
+	# Create achievement
+	my $newAchievementID = $c->param('action.create.id');
+	return (0, $c->maketext("Failed to create new achievement: no achievement ID specified!"))
 		unless $newAchievementID =~ /\S/;
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		$r->maketext("Achievement [_1] exists.  No achievement created", $newAchievementID))
+	return (0, $c->maketext("Achievement [_1] exists.  No achievement created", $newAchievementID))
 		if $db->existsAchievement($newAchievementID);
 	my $newAchievementRecord = $db->newAchievement;
-	my $oldAchievementID = $self->{selectedAchievementIDs}->[0];
+	my $oldAchievementID     = $c->{selectedAchievementIDs}->[0];
 
-	my $type = $actionParams->{"action.create.type"}->[0];
+	my $type = $c->param('action.create.type');
 
-	#either assign empty data or copy over existing data
+	# Either assign empty data or copy over existing data
 	if ($type eq "empty") {
 		$newAchievementRecord->achievement_id($newAchievementID);
 		$newAchievementRecord->enabled(0);
 		$newAchievementRecord->assignment_type('default');
-		$newAchievementRecord->test(BLANK_ACHIEVEMENT());
+		$newAchievementRecord->test('blankachievement.at');
 		$db->addAchievement($newAchievementRecord);
 	} elsif ($type eq "copy") {
-		return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-			$r->maketext("Failed to duplicate achievement: no achievement selected for duplication!"))
+		return (0, $c->maketext("Failed to duplicate achievement: no achievement selected for duplication!"))
 			unless $oldAchievementID =~ /\S/;
 		$newAchievementRecord = $db->getAchievement($oldAchievementID);
 		$newAchievementRecord->achievement_id($newAchievementID);
@@ -868,683 +387,223 @@ sub create_handler {
 
 	}
 
-	# assign achievement to current user
+	# Assign achievement to current user
 	my $userAchievement = $db->newUserAchievement();
 	$userAchievement->user_id($user);
 	$userAchievement->achievement_id($newAchievementID);
 	$db->addUserAchievement($userAchievement);
 
-	#add to local list of achievements
-	push @{ $self->{allAchievementIDs} }, $newAchievementID;
+	# Add to local list of achievements
+	push @{ $c->{allAchievementIDs} }, $newAchievementID;
 
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		$r->maketext("Failed to create new achievement: [_1]", $@))
-		if $@;
+	return (0, $c->maketext("Failed to create new achievement: [_1]", $@)) if $@;
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
-		$r->maketext('Successfully created new achievement [_1]', $newAchievementID));
+	return (1, $c->maketext('Successfully created new achievement [_1]', $newAchievementID));
 }
 
-# Form for importing achievements.
-sub import_form {
-	my ($self, %actionParams) = @_;
+# Handler for importing achievements
+sub import_handler ($c) {
+	my $ce = $c->ce;
+	my $db = $c->db;
 
-	my $r     = $self->r;
-	my $authz = $r->authz;
-	my $user  = $r->param('user');
+	my $fileName          = $c->param('action.import.source');
+	my $assign            = $c->param('action.import.assign');
+	my @users             = $db->listUsers;
+	my %allAchievementIDs = map { $_ => 1 } @{ $c->{allAchievementIDs} };
+	my $filePath          = $ce->{courseDirs}->{achievements} . '/' . $fileName;
 
-	return CGI::div(
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'import_file_select', class => 'col-form-label col-form-label-sm col-sm-auto' },
-				$r->maketext('Import from where?')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					name    => 'action.import.source',
-					id      => 'import_file_select',
-					values  => [ '', $self->getAxpList() ],
-					labels  => { '' => $r->maketext('Select import file') },
-					default => $actionParams{'action.import.source'}[0] || '',
-					class   => 'form-select form-select-sm d-inline w-auto'
-				})
-			)
-		),
-		CGI::div(
-			{ class => 'row mb-2' },
-			CGI::label(
-				{ for => 'import_users_select', class => 'col-form-label col-form-label-sm col-sm-auto' },
-				$r->maketext('Assign this achievement to which users?')
-			),
-			CGI::div(
-				{ class => 'col-auto' },
-				CGI::popup_menu({
-					name    => 'action.import.assign',
-					id      => 'import_users_select',
-					value   => [qw(none all)],
-					default => $actionParams{'action.import.assign'}[0] || 'none',
-					class   => 'form-select form-select-sm d-inline w-auto',
-					labels  => {
-						all  => $r->maketext('all current users'),
-						none => $r->maketext('no users'),
-					},
-				})
-			)
-		)
-	);
-}
+	# Open file name
+	my $fh = Mojo::File->new($filePath)->open('<:encoding(UTF-8)')
+		or return (0, $c->maketext("Failed to open [_1]", $filePath));
 
-# handler for importing achievements
-sub import_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r           = $self->r;
-	my $ce          = $r->ce;
-	my $db          = $r->db;
-
-	my $fileName = $actionParams->{"action.import.source"}->[0];
-	my $assign = $actionParams->{"action.import.assign"}->[0];
-	my @users = $db->listUsers;
-	my %allAchievementIDs = map { $_ => 1 } @{ $self->{allAchievementIDs} };
-	my $filePath = $ce->{courseDirs}->{achievements}.'/'.$fileName;
-
-	#open file name
-	my $fh;
-	open $fh, "$filePath"
-		or return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext("Failed to open [_1]", $filePath));
-
-	#read in lines from file
+	# Read in lines from file
 	my $count = 0;
-	my $csv = Text::CSV->new();
+	my $csv   = Text::CSV->new();
 	while (my $data = $csv->getline($fh)) {
 
-	    my $achievement_id = $$data[0];
-	    #skip achievements that already exist
-	    next if $db->existsAchievement($achievement_id);
+		my $achievement_id = $$data[0];
+		# Skip achievements that already exist
+		next if $db->existsAchievement($achievement_id);
 
-	    #write achievement data.  The "format" for this isn't written down anywhere (!)
-	    my $achievement = $db->newAchievement();
+		# Write achievement data.  The "format" for this isn't written down anywhere (!)
+		my $achievement = $db->newAchievement();
 
-	    $achievement->achievement_id($achievement_id);
+		$achievement->achievement_id($achievement_id);
 
-	    # fall back for importing an old list without the number
-	    # or assignment_type fields
-	    if (scalar(@$data) == 9) {
-		# old lists tend to have an extraneous space at the front.
-		for (my $i=1; $i<=7; $i++) {
-		    $$data[$i] =~ s/^\s+//;
+		# Fall back for importing an old list without the number or assignment_type fields
+		if (scalar(@$data) == 9) {
+			# Old lists tend to have an extraneous space at the front.
+			for (my $i = 1; $i <= 7; $i++) {
+				$$data[$i] =~ s/^\s+//;
+			}
+
+			$$data[1] =~ s/\;/,/;
+			$achievement->name($$data[1]);
+			$achievement->category($$data[2]);
+			$$data[3] =~ s/\;/,/;
+			$achievement->description($$data[3]);
+			$achievement->points($$data[4]);
+			$achievement->max_counter($$data[5]);
+			$achievement->test($$data[6]);
+			$achievement->icon($$data[7]);
+			$achievement->assignment_type('default');
+			$achievement->number($count + 1);
+		} else {
+			$achievement->name($$data[1]);
+			$achievement->number($$data[2]);
+			$achievement->category($$data[3]);
+			$achievement->assignment_type($$data[4]);
+			$achievement->description($$data[5]);
+			$achievement->points($$data[6]);
+			$achievement->max_counter($$data[7]);
+			$achievement->test($$data[8]);
+			$achievement->icon($$data[9]);
 		}
 
-		$$data[1] =~ s/\;/,/;
-		$achievement->name($$data[1]);
-		$achievement->category($$data[2]);
-		$$data[3] =~ s/\;/,/;
-		$achievement->description($$data[3]);
-		$achievement->points($$data[4]);
-		$achievement->max_counter($$data[5]);
-		$achievement->test($$data[6]);
-		$achievement->icon($$data[7]);
-		$achievement->assignment_type('default');
-		$achievement->number($count+1);
-	    } else {
-		$achievement->name($$data[1]);
-		$achievement->number($$data[2]);
-		$achievement->category($$data[3]);
-		$achievement->assignment_type($$data[4]);
-		$achievement->description($$data[5]);
-		$achievement->points($$data[6]);
-		$achievement->max_counter($$data[7]);
-		$achievement->test($$data[8]);
-		$achievement->icon($$data[9]);
-	    }
+		$achievement->enabled($assign eq "all" ? 1 : 0);
 
-	    $achievement->enabled($assign eq "all"?1:0);
+		# Add achievement
+		$db->addAchievement($achievement);
+		$count++;
+		$allAchievementIDs{$achievement_id} = 1;
 
-	    #add achievement
-	    $db->addAchievement($achievement);
-	    $count++;
-	    $allAchievementIDs{$achievement_id} = 1;
-
-	    #assign to usesrs if necc
-	    if ($assign eq "all") {
-		foreach my $user (@users) {
-		    if (not $db->existsGlobalUserAchievement($user)) {
-			my $globalUserAchievement = $db->newGlobalUserAchievement();
-			$globalUserAchievement->user_id($user);
-			$db->addGlobalUserAchievement($globalUserAchievement);
-		    }
-		    my $userAchievement = $db->newUserAchievement();
-		    $userAchievement->user_id($user);
-		    $userAchievement->achievement_id($achievement_id);
-		    $db->addUserAchievement($userAchievement);
+		# Assign to usesrs if neccessary
+		if ($assign eq "all") {
+			for my $user (@users) {
+				if (not $db->existsGlobalUserAchievement($user)) {
+					my $globalUserAchievement = $db->newGlobalUserAchievement();
+					$globalUserAchievement->user_id($user);
+					$db->addGlobalUserAchievement($globalUserAchievement);
+				}
+				my $userAchievement = $db->newUserAchievement();
+				$userAchievement->user_id($user);
+				$userAchievement->achievement_id($achievement_id);
+				$db->addUserAchievement($userAchievement);
+			}
 		}
-	    }
 	}
 
-	$self->{allAchievementIDs} = [ keys %allAchievementIDs ];
+	$fh->close;
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
-		$r->maketext('Imported [quant,_1,achievement]', $count));
+	$c->{allAchievementIDs} = [ keys %allAchievementIDs ];
+
+	return (1, $c->maketext('Imported [quant,_1,achievement]', $count));
 }
 
-# Form for exporting achievements.
-sub export_form {
-	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-
-	return CGI::div(
-		{ class => 'row mb-2' },
-		CGI::label(
-			{ for => 'export_select', class => 'col-form-label col-form-label-sm col-auto' },
-			$r->maketext('Export which achievements?')
-		),
-		CGI::div(
-			{ class => 'col-auto' },
-			CGI::popup_menu({
-				name    => 'action.export.scope',
-				id      => 'export_select',
-				values  => [qw(all selected)],
-				default => $actionParams{'action.export.scope'}[0] || 'selected',
-				class   => 'form-select form-select-sm d-inline w-auto',
-				labels  => {
-					all      => $r->maketext('all achievements'),
-					selected => $r->maketext('selected achievements'),
-				},
-			})
-		),
-	);
-}
-
-# export handler
-# this does not actually export any files, rather it sends us to a new page in order to export the files
-sub export_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r = $self->r;
+# Export handler
+# This does not actually export any files, rather it sends us to a new page in order to export the files.
+sub export_handler ($c) {
 	my $result;
 
-	my $scope = $actionParams->{"action.export.scope"}->[0];
+	my $scope = $c->param('action.export.scope');
 	if ($scope eq "all") {
-		$result = $r->maketext("exporting all achievements");
-		$self->{selectedAchievementIDs} = $self->{allAchievementIDs};
+		$result = $c->maketext("exporting all achievements");
+		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
 	} elsif ($scope eq "selected") {
-		$result = $r->maketext("exporting selected achievements");
-		$self->{selectedAchievementIDs} = $genericParams->{selected_achievements}; # an arrayref
+		$result = $c->maketext("exporting selected achievements");
+		$c->{selectedAchievementIDs} = [ $c->param('selected_achievements') ];
 	}
-	$self->{exportMode} = 1;
+	$c->{exportMode} = 1;
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
+	return (1, $result);
 }
 
+# Handler for leaving the export page.
+sub cancel_export_handler ($c) {
+	$c->{exportMode} = 0;
 
-# Form and handler for leaving the export page.
-sub cancelExport_form {
-	my ($self, %actionParams) = @_;
-	return CGI::span($self->r->maketext('Abandon export'));
+	return (0, $c->maketext('export abandoned'));
 }
 
-sub cancelExport_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r      = $self->r;
+# Handler actually exporting achievements.
+sub save_export_handler ($c) {
+	my $ce         = $c->ce;
+	my $db         = $c->db;
+	my $courseName = $c->stash('courseID');
 
-	$self->{exportMode} = 0;
+	my @achievementIDsToExport = @{ $c->{selectedAchievementIDs} };
 
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext('export abandoned'));
-}
+	# Get file path
+	my $FileName = "${courseName}_achievements.axp";
+	my $FilePath = "$ce->{courseDirs}{achievements}/$FileName";
 
-# Handler and form for actually exporting achievements.
-sub saveExport_form {
-	my ($self, %actionParams) = @_;
-	return CGI::span($self->r->maketext('Export selected achievements.'));
-}
-
-sub saveExport_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r           = $self->r;
-	my $ce          = $r->ce;
-	my $db          = $r->db;
-	my $urlpath = $r->urlpath;
-	my $courseName = $urlpath->arg("courseID");
-
-	my @achievementIDsToExport = $r->param("selected_export") ;
-
-	#get file path
-	my $FileName = $courseName."_achievements.axp";
-	my $FilePath = $ce->{courseDirs}->{achievements}.'/'.$FileName;
-
-	# back up existing file
-	if(-e $FilePath) {
-	    rename($FilePath, "$FilePath.bak") or
-		warn "Existing file $FilePath could not be backed up and was lost.";
+	# Back up existing file
+	if (-e $FilePath) {
+		rename($FilePath, "$FilePath.bak")
+			or warn "Existing file $FilePath could not be backed up and was lost.";
 	}
 
-	$FilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{achievements}, $FilePath);
-	#open file
-	my $fh;
-	open $fh, ">$FilePath"
-		or return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext("Failed to open [_1]", $FilePath));
+	$FilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}{achievements}, $FilePath);
 
-	my $csv = Text::CSV->new({eol=>"\n"});
-	my @achievements = $db->getAchievements(@achievementIDsToExport);
-	#run through achievements outputing data as csv list.  This format is not documented anywhere
-	foreach my $achievement (@achievements) {
-	    my $line = [$achievement->achievement_id,
-			$achievement->name,
-			$achievement->number,
-			$achievement->category,
-			$achievement->assignment_type,
-			$achievement->description,
-			$achievement->points,
-			$achievement->max_counter,
-			$achievement->test,
-			$achievement->icon,];
+	my $fh = Mojo::File->new($FilePath)->open('>:encoding(UTF-8)')
+		or return (0, $c->maketext('Failed to open [_1]', $FilePath));
 
-	    warn("Error Exporting Achievement ".$achievement->achievement_id)
-		unless $csv->print($fh, $line);
+	my $csv = Text::CSV->new({ eol => "\n" });
+
+	# Iterate over achievements outputing data as csv list.  This format is not documented anywhere.
+	for my $achievement ($db->getAchievements(@achievementIDsToExport)) {
+		my $line = [
+			$achievement->achievement_id, $achievement->name,            $achievement->number,
+			$achievement->category,       $achievement->assignment_type, $achievement->description,
+			$achievement->points,         $achievement->max_counter,     $achievement->test,
+			$achievement->icon,
+		];
+
+		warn('Error Exporting Achievement ' . $achievement->achievement_id)
+			unless $csv->print($fh, $line);
 	}
 
-	close EXPORT;
+	$fh->close;
 
-	$self->{exportMode} = 0;
+	$c->{exportMode} = 0;
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
-		$r->maketext('Exported achievements to [_1]', $FileName));
+	return (1, $c->maketext('Exported achievements to [_1]', $FileName));
 }
 
-# Form and handler for cancelling edits.
-sub cancelEdit_form {
-	my ($self, %actionParams) = @_;
-	return CGI::span($self->r->maketext('Abandon changes'));
+# Handler for cancelling edits.
+sub cancel_edit_handler ($c) {
+	$c->{editMode} = 0;
+	return (1, $c->maketext('changes abandoned'));
 }
 
-sub cancelEdit_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r      = $self->r;
+# Handler for saving edits.
+sub save_edit_handler ($c) {
+	my $db = $c->db;
 
-	$self->{editMode} = 0;
+	my @selectedAchievementIDs = @{ $c->{selectedAchievementIDs} };
 
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext('changes abandoned'));
-}
+	for my $achievementID (@selectedAchievementIDs) {
+		my $Achievement = $db->getAchievement($achievementID);
 
-# Form and handler for saving edits.
-sub saveEdit_form {
-	my ($self, %actionParams) = @_;
-	return CGI::span($self->r->maketext('Save changes'));
-}
-
-sub saveEdit_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r           = $self->r;
-	my $db          = $r->db;
-
-	my @selectedAchievementIDs = @{ $self->{selectedAchievementIDs} };
-
-	#run through selected achievements
-	foreach my $achievementID (@selectedAchievementIDs) {
-		my $Achievement = $db->getAchievement($achievementID); # checked
-		# FIXME: we may not want to die on bad sets, they're not as bad as bad users
+		# FIXME: we may not want to die on bad achievements, they're not as bad as bad users
 		die "record for achievement $achievementID not found" unless $Achievement;
 
-		#update fields
-		foreach my $field ($Achievement->NONKEYFIELDS()) {
+		# Update fields
+		for my $field ($Achievement->NONKEYFIELDS()) {
 			my $param = "achievement.${achievementID}.${field}";
 
 			if ($field eq 'assignment_type') {
-			    my @types = ();
-			    my $i = 0;
-
-			    while (defined ($tableParams->{$param}->[$i])) {
-				push @types,  $tableParams->{$param}->[$i];
-				$i++;
-			    }
-
-			    $Achievement->assignment_type(join(',',@types));
-
+				my @types = $c->param($param);
+				$Achievement->assignment_type(join(',', @types));
 			} else {
 
-			    if (defined $tableParams->{$param}->[0]) {
-				$Achievement->$field($tableParams->{$param}->[0]);
-			    }
+				if (defined $c->param($param)) {
+					$Achievement->$field($c->param($param));
+				}
 			}
 		}
 
 		$db->putAchievement($Achievement);
 	}
 
-	$self->{editMode} = 0;
+	$c->{editMode} = 0;
 
-	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext('changes saved'));
+	return (1, $c->maketext('changes saved'));
 }
 
-################################################################################
-# "display" methods
-################################################################################
-
-#write out a particular field
-sub fieldEditHTML {
-	my ($self, $fieldName, $value, $properties) = @_;
-	my $size = $properties->{size};
-	my $type = $properties->{type};
-	my $access = $properties->{access};
-	my $items = $properties->{items};
-	my $synonyms = $properties->{synonyms};
-	my $headerFiles = $self->{headerFiles};
-
-	return $value if ($access eq 'readonly');
-
-	if ($type eq 'number' || $type eq 'text') {
-		return CGI::input({
-			type            => 'text',
-			name            => $fieldName,
-			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
-			value           => $value,
-			size            => $size,
-			class           => 'form-control form-control-sm'
-		});
-	}
-
-	if ($type eq 'checked') {
-		# If the checkbox is checked it returns a 1, if it is unchecked it returns nothing
-		# in which case the hidden field overrides the parameter with a 0.
-		return CGI::input({
-			type            => 'checkbox',
-			name            => $fieldName,
-			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
-			value           => 1,
-			class           => 'form-check-input',
-			$value ? (checked => undef) : (),
-		})
-			. CGI::hidden({
-				name  => $fieldName,
-				value => 0
-			});
-	}
-
-	if ($type eq 'assignment_type') {
-		my @allowedTypes = split(',', $value);
-
-		return CGI::checkbox_group({
-			name            => $fieldName,
-			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
-			values          => ASSIGNMENT_TYPES,
-			labels          => ASSIGNMENT_NAMES,
-			default         => \@allowedTypes,
-			class           => 'form-check-input me-1',
-			labelattributes => { class => 'form-check-label me-1' }
-		});
-	}
-}
-
-#write out a row of the table
-sub recordEditHTML {
-	my ($self, $Achievement, %options) = @_;
-	my $r           = $self->r;
-	my $urlpath     = $r->urlpath;
-	my $ce          = $r->ce;
-	my $db		= $r->db;
-	my $authz	= $r->authz;
-	my $user	= $r->param('user');
-	my $root        = $ce->{webworkURLs}->{root};
-	my $courseName  = $urlpath->arg("courseID");
-
-	my $editMode = $options{editMode};
-	my $exportMode = $options{exportMode};
-	my $achievementSelected = $options{achievementSelected};
-
-	my $users = $db->countAchievementUsers($Achievement->achievement_id);
-	my $totalUsers = $self->{totalUsers};
-
-	my @tableCells;
-	my $achievement_id = $Achievement->achievement_id;
-	my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::AchievementEditor",  $r, courseID => $courseName, achievementID => $achievement_id);
-	my $editorURL = $self->systemLink($editorPage, params => {
-	    sourceFilePath => $ce->{courseDirs}->{achievements}."/".$Achievement->test});
-
-	my $userEditorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::AchievementUserEditor", $r, courseID=>$courseName, achievementID =>$achievement_id);
-	my $userEditorURL = $self->systemLink($userEditorPage, params => {});
-
-	# The formats are "hard coded" below.  Making them more modular would be good.
-	if ($exportMode) {
-		# Format for export row
-		# Select all checkbox
-		push @tableCells,
-			CGI::input({
-				type  => 'checkbox',
-				name  => 'selected_export',
-				value => $achievement_id,
-				id    => "${achievement_id}_id",
-				class => 'form-check-input',
-				$achievementSelected ? (checked => undef) : (),
-			});
-
-		my @fields = ('achievement_id', 'name');
-
-		for my $field (@fields) {
-			my $fieldName  = 'achievement.' . $achievement_id . '.' . $field;
-			my $fieldValue = $Achievement->$field;
-			my %properties = %{ FIELD_PROPERTIES()->{$field} };
-			$properties{access} = 'readonly';
-			push @tableCells,
-				$field eq 'achievement_id'
-				? CGI::label({ for => "${achievement_id}_id" },
-					$self->fieldEditHTML($fieldName, $fieldValue, \%properties))
-				: $self->fieldEditHTML($fieldName, $fieldValue, \%properties);
-		}
-	} elsif ($editMode) {
-		# Format for edit mode
-		return unless $achievementSelected;
-
-		push @tableCells,
-			CGI::hidden({ name => 'selected_achievements', value => $achievement_id })
-			. CGI::img({
-				src    => "$ce->{courseURLs}{achievements}/" . ($Achievement->{icon} // 'defaulticon.png'),
-				alt    => 'Achievement Icon',
-				height => 60,
-				class  => 'm-1'
-			});
-
-		for (
-			[ 'achievement_id', 'name',    'category' ],
-			[ 'number',         'enabled', 'points', 'max_counter' ],
-			[ 'description',    'test',    'icon',   'assignment_type' ]
-			)
-		{
-			my $tableCell = '';
-
-			for my $field (@$_) {
-				$tableCell .= CGI::span(
-					{ class => 'text-nowrap', style => 'height:28px' },
-					$self->fieldEditHTML(
-						"achievement.$achievement_id.$field", $Achievement->$field,
-						\%{ FIELD_PROPERTIES()->{$field} }
-					)
-				);
-			}
-
-			push @tableCells, CGI::div({ class => 'd-flex flex-column gap-1' }, $tableCell);
-		}
-	} else {
-		# Format for regular viewing mode
-		# Select all checkbox
-		push @tableCells,
-			CGI::input({
-				type  => 'checkbox',
-				name  => "selected_achievements",
-				value => $achievement_id,
-				id    => "${achievement_id}_id",
-				class => 'form-check-input',
-				$achievementSelected ? (checked => undef) : (),
-			});
-
-		for my $field (@{ VIEW_FIELD_ORDER() }) {
-			my $fieldName  = "achievement." . $achievement_id . "." . $field;
-			my $fieldValue = $Achievement->$field;
-			my %properties = %{ FIELD_PROPERTIES()->{$field} };
-			$properties{access} = "readonly";
-			$fieldValue =~ s/ /&nbsp;/g;
-			$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enabled/;
-			if ($field =~ /achievement_id/) {
-				$fieldValue .= " "
-					. CGI::a(
-						{
-							href => $self->systemLink($urlpath->new(
-								type => 'instructor_achievement_list',
-								args => { courseID => $courseName }
-							))
-							. "&editMode=1&selected_achievements="
-							. $achievement_id
-						},
-						CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, '')
-					);
-				$fieldValue = CGI::div({ class => 'label-with-edit-icon' },
-					CGI::label({ for => "${achievement_id}_id" }, $fieldValue));
-			}
-			push @tableCells, $self->fieldEditHTML($fieldName, $fieldValue, \%properties);
-		}
-
-		push @tableCells, CGI::a({ href => $userEditorURL }, "$users/$totalUsers");
-
-		push @tableCells, CGI::a({ href => $editorURL }, $r->maketext("Edit Evaluator"));
-	}
-
-	return CGI::Tr(CGI::td(\@tableCells));
-}
-
-#this prints out the whole table
-sub printTableHTML {
-	my ($self, $AchievementsRef, %options) = @_;
-	my $r                       = $self->r;
-	my $authz                   = $r->authz;
-	my $user                    = $r->param('user');
-	my @Achievements                    = @$AchievementsRef;
-
-
-	my $editMode                = $options{editMode};
-	my $exportMode              = $options{exportMode};
-	my %selectedAchievementIDs          = map { $_ => 1 } @{ $options{selectedAchievementIDs} };
-
-	# names of headings:
-
-	if ($editMode and not %selectedAchievementIDs) {
-	    print CGI::p(
-		CGI::i("No achievements shown.  Select an achievement to edit!"));
-	    return;
-	}
-
-	my @tableHeadings;
-
-	# Hardcoded headings.  Making this more modular would be good.
-	if ($exportMode) {
-		@tableHeadings = (
-			CGI::input({
-				type              => 'checkbox',
-				id                => 'select-all',
-				aria_label        => $r->maketext('Select all achievements'),
-				data_select_group => 'selected_export',
-				class             => 'select-all form-check-input'
-			}),
-			CGI::label({ for => 'select-all' }, $r->maketext('Achievement ID')),
-			$r->maketext('Name')
-		);
-	} elsif ($editMode) {
-		@tableHeadings = (
-			$r->maketext('Icon'),
-			CGI::div(
-				{ class => 'd-flex flex-column' },
-				$r->maketext('Achievement ID'),
-				CGI::span({ id => 'name_header' },     $r->maketext('Name')),
-				CGI::span({ id => 'category_header' }, $r->maketext('Category'))
-			),
-			CGI::div(
-				{ class => 'd-flex flex-column' },
-				CGI::span({ id => 'number_header' },      $r->maketext('Number')),
-				CGI::span({ id => 'enabled_header' },     $r->maketext('Enabled')),
-				CGI::span({ id => 'points_header' },      $r->maketext('Points')),
-				CGI::span({ id => 'max_counter_header' }, $r->maketext('Counter'))
-			),
-			CGI::div(
-				{ class => 'd-flex flex-column' },
-				CGI::span({ id => 'description_header' }, $r->maketext('Description')),
-				CGI::span({ id => 'test_header' },        $r->maketext('Evaluator File')),
-				CGI::span({ id => 'icon_header' },        $r->maketext('Icon File')),
-				$r->maketext('Type')
-			)
-		);
-	} else {
-		@tableHeadings = (
-			CGI::input({
-				type              => 'checkbox',
-				id                => 'select-all',
-				aria_label        => $r->maketext('Select all achievements'),
-				data_select_group => 'selected_achievements',
-				class             => 'select-all form-check-input'
-			}),
-			CGI::label({ for => 'select-all' }, $r->maketext('Achievement ID')),
-			$r->maketext('Enabled'),
-			$r->maketext('Name'),
-			$r->maketext('Number'),
-			$r->maketext('Category'),
-			$r->maketext('Edit Users'),
-			$r->maketext('Edit Evaluator')
-		);
-	}
-
-	# print the table
-	print CGI::start_div({ class => 'table-responsive' });
-	print CGI::start_table({
-		class => "table table-sm table-bordered font-sm",
-		id    => "achievement-table"
-	});
-
-	print CGI::thead(CGI::Tr(CGI::th({ class => 'align-top' }, \@tableHeadings)));
-
-	print CGI::start_tbody();
-	for (my $i = 0; $i < @Achievements; $i++) {
-		my $Achievement = $Achievements[$i];
-
-		print $self->recordEditHTML(
-			$Achievement,
-			editMode            => $editMode,
-			exportMode          => $exportMode,
-			achievementSelected => exists $selectedAchievementIDs{ $Achievement->achievement_id }
-		);
-	}
-	print CGI::end_tbody();
-
-	print CGI::end_table(), CGI::end_div();
-	#########################################
-	# if there are no users shown print message
-	#
-	##########################################
-
-	print CGI::p(
-                      CGI::i($r->maketext("No achievements shown.  Create an achievement!"))
-	    ) unless @Achievements;
-}
-
-#get list of files that can be imported.
-sub getAxpList {
-	my ($self) = @_;
-	my $ce = $self->{ce};
-	my $dir = $ce->{courseDirs}->{achievements};
-	return $self->read_dir($dir, qr/.*\.axp/);
-}
-
-sub output_JS {
-	my $self = shift;
-	my $ce   = $self->r->ce;
-
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/ShowHide/show_hide.js'),    defer => undef }, '');
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/ActionTabs/actiontabs.js'), defer => undef }, '');
-	print CGI::script({ src => getAssetURL($ce, 'js/apps/SelectAll/selectall.js'),   defer => undef }, '');
-
-	return '';
+# Get list of files that can be imported.
+sub getAxpList ($c) {
+	return read_dir($c->ce->{courseDirs}{achievements}, qr/.*\.axp/);
 }
 
 1;
-
-=head1 AUTHOR
-
-Written by Robert Van Dam, toenail (at) cif.rochester.edu
-
-=cut

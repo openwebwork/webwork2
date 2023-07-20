@@ -1,0 +1,329 @@
+<%= include 'ContentGenerator/Base/set_status', set => $c->{setRecord} =%>
+%
+% # In the case of gateway tests, add a form with checkboxes that allow customization of what is included in the
+% # display.
+% if ($setIsVersioned) {
+	<div class="card bg-light mb-3">
+		<%= form_for current_route, method => 'post',
+			id => 'sp-gateway-form', name => 'StudentProgress', begin =%>
+			<%= $c->hidden_authen_fields =%>
+			<%= hidden_field returning => 1 =%>
+			<div class="card-body">
+				<h5 class="card-title"><%= maketext("Display options: Show") %></h5>
+				<div class="mb-2">
+					<div class="form-check form-check-inline">
+						<label class="form-check-label">
+							<%= check_box show_best_only => 1, class => 'form-check-input' =%>
+							<%= maketext('only best scores') =%>
+						</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<label class="form-check-label">
+							<%= check_box show_date => 1, class => 'form-check-input' =%>
+							<%= maketext('test date') =%>
+						</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<label class="form-check-label">
+							<%= check_box show_testtime => 1, class => 'form-check-input' =%>
+							<%= maketext('test time') =%>
+						</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<label class="form-check-label">
+							<%= check_box show_timeleft => 1, class => 'form-check-input' =%>
+							<%= maketext('time remaining') =%>
+						</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<label class="form-check-label">
+							<%= check_box show_problems => 1, class => 'form-check-input' =%>
+							<%= maketext('problems') =%>
+						</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<label class="form-check-label">
+							<%= check_box show_section => '1', class => 'form-check-input' =%>
+							<%= maketext('section #') =%>
+						</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<label class="form-check-label">
+							<%= check_box show_recitation => '1', class => 'form-check-input' =%>
+							<%= maketext('recitation #') =%>
+						</label>
+					</div>
+					<div class="form-check form-check-inline">
+						<label class="form-check-label">
+							<%= check_box show_login => '1', class => 'form-check-input' =%>
+							<%= maketext('login') =%>
+						</label>
+					</div>
+				</div>
+				<%= submit_button maketext('Update Display'), class => 'btn btn-primary' =%>
+			</div>
+		<% end =%>
+	</div>
+% }
+%
+% # Table description. Only show the problem description if the problems column is shown.
+<div>
+	% if ($setIsVersioned) {
+		<p>
+			<%= maketext(
+				q{Click a student's name to see the student's test summary page. }
+					. q{Click a test's version number to see the corresponding test version. }
+					. 'Click a heading to sort the table.'
+			) =%>
+		</p>
+	% } else {
+		<p>
+			<%= maketext(
+				q{Click a student's name to see the student's homework set. Click a heading to sort the table.}
+			) =%>
+		</p>
+	% }
+	%
+	% my %display_sort_method_name = (
+		% last_name     => maketext('last name'),
+		% first_name    => maketext('first name'),
+		% email_address => maketext('email address'),
+		% score         => maketext('score'),
+		% section       => maketext('section'),
+		% recitation    => maketext('recitation'),
+		% user_id       => maketext('login name'),
+	% );
+	% if (defined $primary_sort_method) {
+		<p>
+			<%= maketext('Entries are sorted by [_1]', $display_sort_method_name{$primary_sort_method}) =%>
+			% if (defined $secondary_sort_method) {
+				<%= maketext(', then by [_1]', $display_sort_method_name{$secondary_sort_method}) =%>
+			% }
+			% if (defined $ternary_sort_method) {
+				<%= maketext(', then by [_1]', $display_sort_method_name{$ternary_sort_method}) =%>
+			% }
+		</p>
+	% }
+</div>
+%
+% my %params = (
+	% # Shift past sort methods down in priority.
+	% defined $primary_sort_method ? (secondary_sort => $primary_sort_method) : (),
+	% defined $secondary_sort_method ? (ternary_sort => $secondary_sort_method) : (),
+	% # Preserve display options when the sort headers are clicked for gateway quizzes.
+	% $setIsVersioned
+	% ? (
+		% show_best_only  => $showBestOnly,
+		% show_date       => $showColumns->{date},
+		% show_testtime   => $showColumns->{testtime},
+		% show_timeleft   => $showColumns->{timeleft},
+		% show_problems   => $showColumns->{problems},
+		% show_section    => $showColumns->{section},
+		% show_recitation => $showColumns->{recit},
+		% show_login      => $showColumns->{login},
+		% )
+	% : ()
+% );
+%
+% # Start table output
+<div class="table-responsive">
+	<table class="grade-table table table-bordered table-sm font-xs">
+		<thead>
+			% my $rowspan = $showColumns->{problems} ? 'rowspan="2"' : '';
+			<tr>
+				<th <%== $rowspan %>>
+					<%= maketext('Name') %>
+					<br>
+					<%= link_to maketext('First') =>
+						$c->systemLink(url_for, params => { primary_sort => 'first_name', %params }) =%>
+					&nbsp;&nbsp;&nbsp;
+					<%= link_to maketext('Last') =>
+						$c->systemLink(url_for, params => { primary_sort => 'last_name', %params }) =%>
+					<br>
+					<%= link_to maketext('Email') =>
+						$c->systemLink(url_for, params => { primary_sort => 'email_address', %params }) =%>
+				</th>
+				<th <%== $rowspan %>>
+					<%= link_to maketext('Score') =>
+						$c->systemLink(url_for, params => { primary_sort => 'score', %params }) =%>
+				</th>
+				<th <%== $rowspan %>><%= maketext('Out Of') %></th>
+				% # Additional columns that may be shown depending on if showing a gateway quiz and user selection.
+				% if ($showColumns->{date}) {
+					<th <%== $rowspan %>><%= maketext('Date') %></th>
+				% }
+				% if ($showColumns->{testtime}) {
+					<th <%== $rowspan %>><%= maketext('Test Time') %></th>
+				% }
+				% if ($showColumns->{timeleft}) {
+					<th <%== $rowspan %>><%= maketext('Time Remaining') %></th>
+				% }
+				% if ($showColumns->{problems}) {
+					<th colspan="<%= scalar(@$problems) %>">
+						<%= maketext('Problems') =%>
+						<a class="help-popup" role="button" tabindex="0" data-bs-placement="top"
+							data-bs-toggle="popover"
+							data-bs-content="<%= maketext(
+								'The top number is the percent score on the problem.  A period (.) indicates a problem '
+								. 'has not been attempted. The bottom number is the number of incorrect attempts.'
+							) =%>">
+							<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') =%>"
+								aria-hidden="true">
+							</i>
+						</a>
+					</th>
+				% }
+				% if ($showColumns->{section}) {
+					<th <%== $rowspan %>>
+						<%= link_to maketext('Section') =>
+							$c->systemLink(url_for, params => { primary_sort => 'section', %params }) =%>
+					</th>
+				% }
+				% if ($showColumns->{recit}) {
+					<th <%== $rowspan %>>
+						<%= link_to maketext('Recitation') =>
+							$c->systemLink(url_for, params => { primary_sort => 'recitation', %params }) =%>
+					</th>
+				% }
+				% if ($showColumns->{login}) {
+					<th <%== $rowspan %>>
+						<%= link_to maketext('Login Name') =>
+							$c->systemLink(url_for, params => { primary_sort => 'user_id', %params }) =%>
+					</th>
+				% }
+			</tr>
+			% if ($showColumns->{problems}) {
+				<tr>
+					% for (@$problems) {
+						<th class="problem-data"><%= $_ %></th>
+					% }
+				</tr>
+			% }
+		</thead>
+		<tbody class="table-group-divider">
+			% # This is used to determine when all gateway versions for one user have been displayed and the next user
+			% # is being switched to.
+			% my $prevUserID = '';
+			%
+			% for my $rec (@$user_set_list) {
+				% my $fullName = join('', $rec->{record}{first_name}, " ", $rec->{record}{last_name});
+				% my $email    = $rec->{record}{email_address};
+				%
+				% if ($setIsVersioned) {
+					% my $interactiveURL = $c->systemLink(
+						% url_for('problem_list'),
+						% params => { effectiveUser => $rec->{record}{user_id} }
+					% );
+					%
+					<tr>
+						% # If total is -1, then this is a user that hasn't taken any tests.
+						% if ($rec->{total} != -1) {
+							% # Make a versioned set name format nicer and link to the test version.
+							% my $versionLink = link_to "version $rec->{version}" => $c->systemLink(
+								% url_for('gateway_quiz', setID => "$setID,v$rec->{version}"),
+								% params => { effectiveUser => $rec->{record}{user_id} }
+							% );
+							%
+							<td>
+							% if ($rec->{record}{user_id} eq $prevUserID) {
+								<div class="ms-4">(<%= $versionLink %>)</div>
+							% } else {
+								<div>
+									<%= link_to $fullName => $interactiveURL =%>
+									% if ($setIsVersioned && !$showBestOnly) {
+										(<%= $versionLink %>)
+									% }
+								</div>
+								% if ($email) {
+									<div><%= link_to $email => "mailto:$email" =%></div>
+								% }
+								% $prevUserID = $rec->{record}{user_id};
+							% }
+							</td>
+							<td><%= $rec->{score} %></td>
+							<td><%= $rec->{total} %></td>
+							% if ($showColumns->{date}) {
+								<td><%= $rec->{date} =%></td>
+							% }
+							% if ($showColumns->{testtime}) {
+								<td><%= $rec->{testtime} %></td>
+							% }
+							% if ($showColumns->{timeleft}) {
+								<td><%= $rec->{timeleft} %></td>
+							% }
+							% if ($showColumns->{problems}) {
+								% if (@{ $rec->{problem_scores} }) {
+									% for (0 .. $#{ $rec->{problem_scores} }) {
+										<td class="problem-data">
+											<span class="<%=
+												$rec->{problem_scores}[$_] eq '100'             ? 'correct'
+												: $rec->{problem_scores}[$_] eq '&nbsp;.&nbsp;' ? 'unattempted'
+												:                                                 '' =%>">
+												<%== $rec->{problem_scores}[$_] =%>
+											</span>
+											<br>
+											<%== $rec->{problem_incorrect_attempts}[$_] // '&nbsp;' =%>
+										</td>
+									% }
+								% } else {
+									<td class="problem-data">&nbsp;</td>
+								% }
+							% }
+						% } else {
+							<td>
+								<div><%= link_to $fullName => $interactiveURL =%></div>
+								<div><%= link_to $email => "mailto:$email" =%></div>
+							</td>
+							<td><%= $rec->{score} %></td>
+							<td colspan="<%= $numCols %>"><em><%= maketext('No tests taken.') %></em></td>
+						% }
+						% if ($showColumns->{section}) {
+							<td><%= $rec->{record}{section} %></td>
+						% }
+						% if ($showColumns->{recit}) {
+							<td><%= $rec->{record}{recitation} %></td>
+						% }
+						% if ($showColumns->{login}) {
+							<td><%= $rec->{record}{user_id} %></td>
+						% }
+					</tr>
+				% } else {
+					<tr>
+						<td>
+							<div>
+								<%= link_to $fullName => $c->systemLink(
+									url_for('problem_list'),
+									params => { effectiveUser => $rec->{record}{user_id} }
+								) =%>
+							</div>
+							% if ($email) {
+								<div><%= link_to $email => "mailto:$email" %></div>
+							% }
+						</td>
+						<td><%= $rec->{score} %></td>
+						<td><%= $rec->{total} %></td>
+						% if (@{ $rec->{problem_scores} }) {
+							% for (0 .. $#{ $rec->{problem_scores} }) {
+								<td class="problem-data">
+									<span class="<%=
+										$rec->{problem_scores}[$_] eq '100'             ? 'correct'
+										: $rec->{problem_scores}[$_] eq '&nbsp;.&nbsp;' ? 'unattempted'
+										:                                                 '' =%>">
+										<%== $rec->{problem_scores}[$_] =%>
+									</span>
+									<br>
+									<%== $rec->{problem_incorrect_attempts}[$_] // '&nbsp;' =%>
+								</td>
+							% }
+						% } else {
+							<td class="problem-data">&nbsp;</td>
+						% }
+						<td><%= $rec->{record}{section} %></td>
+						<td><%= $rec->{record}{recitation} %></td>
+						<td><%= $rec->{record}{user_id} %></td>
+					</tr>
+				% }
+			% }
+		</tbody>
+	</table>
+</div>

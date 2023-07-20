@@ -1,0 +1,54 @@
+<h2><%= maketext('Delete Course') %> <%= $c->helpMacro('AdminDeleteCourse') %></h2>
+%
+% if (@$courseIDs) {
+	<%= form_for current_route, method => 'POST', begin =%>
+		<p>
+			<%= maketext(
+				'Courses are listed either alphabetically or in order by the time of most recent login activity, '
+					. 'oldest first. To change the listing order check the mode you want and click "Refresh Listing". '
+					. 'The listing format is: Course_Name (status :: date/time of most recent login) where status is '
+					. '"hidden" or "visible".'
+			) =%>
+		</p>
+		<div class="mb-3">
+			<div class="mb-2"><%= maketext('Select a listing format:')=%></div>
+			% for (
+				% [ alphabetically => maketext('alphabetically') ],
+				% [ last_login     => maketext('by last login date') ]
+			% )
+			% {
+				<div class="form-check">
+					<%= radio_button delete_listing_format => $_->[0],
+						id    => "delete_listing_format_$_->[0]",
+						class => 'form-check-input',
+						$_->[0] eq 'alphabetically' ? (checked => undef) : () =%>
+					<%= label_for "delete_listing_format_$_->[0]" => $_->[1], class => 'form-check-label' =%>
+				</div>
+			% }
+		</div>
+		<div class="d-flex gap-2 mb-2">
+			<%= submit_button maketext('Refresh Listing'),
+				name  => 'delete_course_refresh', class => 'btn btn-primary' =%>
+			<%= submit_button maketext('Delete Course'), name => 'delete_course', class => 'btn btn-primary' =%>
+		</div>
+		<%= $c->hidden_authen_fields =%>
+		<%= $c->hidden_fields('subDisplay') =%>
+		<div class="mb-2"><%= maketext('Select a course to delete.') %></div>
+		<div class="row mb-2">
+			<%= label_for delete_courseID => maketext('Course Name:'), class => 'col-auto col-form-label fw-bold' =%>
+			<div class="col-auto">
+				<%= select_field delete_courseID => [ map { [ $courseLabels->{$_} => $_ ] } @$courseIDs ],
+					id       => 'delete_courseID',
+					size     => 15,
+					class    => 'form-select' =%>
+			</div>
+		</div>
+		<div class="d-flex gap-2">
+			<%= submit_button maketext('Refresh Listing'),
+				name => 'delete_course_refresh', class => 'btn btn-primary' =%>
+			<%= submit_button maketext('Delete Course'), name => 'delete_course', class => 'btn btn-primary' =%>
+		</div>
+	<%= end =%>
+% } else {
+	<p><%= maketext('No courses found') %></p>
+% }

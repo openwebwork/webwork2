@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::AchievementEvaluator;
-use base qw(WeBWorK);
+use Mojo::Base 'Exporter', -signatures;
 
 =head1 NAME
 
@@ -22,35 +22,26 @@ use base qw(WeBWorK);
 
 =cut
 
-use strict;
-use warnings;
-use WeBWorK::CGI;
-use WeBWorK::Utils qw(before after readFile sortAchievements nfreeze_base64 thaw_base64);
-use WeBWorK::Utils::Tags;
 use DateTime;
 
-use WWSafe;
+use WeBWorK::Utils qw(sortAchievements nfreeze_base64 thaw_base64);
+use WeBWorK::Utils::Tags;
+use Safe;
 
-sub checkForAchievements {
+our @EXPORT_OK = qw(checkForAchievements);
 
-	our $problem = shift;
-	my $pg      = shift;
-	my $r       = shift;
-	my %options = @_;
-	my $db      = $r->db;
-	my $ce      = $r->ce;
-
-	my $course_display_tz = $ce->{siteDefaults}{timezone};
-	# the following line from Utils.pm
-	$course_display_tz ||= "local";    # do our best to provide default vaules
+sub checkForAchievements ($problem_in, $pg, $c, %options) {
+	our $problem = $problem_in;
+	my $db = $c->db;
+	my $ce = $c->ce;
 
 	# Date and time for course timezone (may differ from the server timezone)
 	# Saved into separate array
 	# https://metacpan.org/pod/DateTime
-	my $dtCourseTime = DateTime->from_epoch(epoch => time(), time_zone => $course_display_tz);
+	my $dtCourseTime = DateTime->from_epoch(epoch => time(), time_zone => $ce->{siteDefaults}{timezone} || 'local');
 
-	#set up variables and get achievements
-	my $cheevoMessage = '';
+	# Set up variables and get achievements
+	my $cheevoMessage = $c->c;
 	my $user_id       = $problem->user_id;
 	my $set_id        = $problem->set_id;
 
@@ -79,19 +70,9 @@ sub checkForAchievements {
 		$db->addGlobalUserAchievement($globalUserAchievement);
 	}
 
-	#update the problem with stuff from the pg.
-	# this is kind of a hack.  The achievement checking happens *before* the system has
-	# updated $problem with the new results from $pg.  So we cheat and update the
-	# important bits here.  The only thing that gets left behind is last_answer, which is
-	# still the previous last answer.
-
-	# $pg->{result} reflects the current submission, $pg->{state} holds the best result
-	# close the unlimited achievement points loophole by only using the current result!
-	$problem->status($pg->{result}->{score});
-	$problem->sub_status($pg->{state}->{sub_recorded_score});
-	$problem->attempted(1);
-	$problem->num_correct($pg->{state}->{num_of_correct_ans});
-	$problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
+	# Do not update the problem with stuff from the pg.  The achievement checking happens
+	# *after* the system has already updated $problem with the new results from $pg.
+	# The code here has no right to modify the problem in any case.
 
 	#These need to be "our" so that they can share to the safe container
 	our $counter;
@@ -108,7 +89,13 @@ sub checkForAchievements {
 		$dtCourseTime->month, $dtCourseTime->year, $dtCourseTime->day_of_week
 	);
 
-	my $compartment = new WWSafe;
+	# Mojolicious sets the INT and TERM signal handlers, and perl Safe overrides those (as those signals can be used to
+	# break out of Safe) which causes an error later when the Mojolicious signals handlers are not called as they should
+	# be.  So the current signal handlers are cached here and restored after the Safe reval is completed.
+	my %ORIG_SIG;
+	$ORIG_SIG{$_} = $SIG{$_} for keys %SIG;
+
+	my $compartment = Safe->new;
 
 	#initialize things that are ""
 	if (not $achievementPoints) {
@@ -128,7 +115,7 @@ sub checkForAchievements {
 	foreach my $achievement (@achievements) {
 		next unless $achievement->enabled;
 		my $userAchievement = $db->getUserAchievement($user_id, $achievement->achievement_id);
-		$userAchievements->{$achievement->achievement_id} = $userAchievement->earned if $userAchievement;
+		$userAchievements->{ $achievement->achievement_id } = $userAchievement->earned if $userAchievement;
 	}
 
 	#Update a couple of "standard" variables in globalData hash.
@@ -180,7 +167,7 @@ sub checkForAchievements {
 	if ($isGatewaySet) {
 		$problem = undef;
 	} else {
-		my $templateDir = $ce->{courseDirs}->{templates};
+		my $templateDir = $ce->{courseDirs}{templates};
 		$tags = WeBWorK::Utils::Tags->new($templateDir . '/' . $problem->source_file());
 	}
 
@@ -203,14 +190,13 @@ sub checkForAchievements {
 		$globalData $counter $nextLevelPoints $set $achievementPoints $tags @courseDateTime));
 
 	#load any preamble code
-	# this line causes the whole file to be read into one string
-	local $/;
 	my $preamble = '';
 	my $source;
-	if (-e "$ce->{courseDirs}->{achievements}/$ce->{achievementPreambleFile}") {
-		open(PREAMB, '<', "$ce->{courseDirs}->{achievements}/$ce->{achievementPreambleFile}");
-		$preamble = <PREAMB>;
-		close(PREAMB);
+	if (-e "$ce->{courseDirs}{achievements}/$ce->{achievementPreambleFile}") {
+		local $/;
+		open(my $PREAMB, '<', "$ce->{courseDirs}{achievements}/$ce->{achievementPreambleFile}");
+		$preamble = <$PREAMB>;
+		close($PREAMB);
 	}
 	#loop through the various achievements, see if they have been obtained,
 	foreach my $achievement (@achievements) {
@@ -233,11 +219,12 @@ sub checkForAchievements {
 		$maxCounter = $achievement->max_counter;
 
 		#check the achievement using Safe
-		my $sourceFilePath = $ce->{courseDirs}->{achievements} . '/' . $achievement->test;
+		my $sourceFilePath = $ce->{courseDirs}{achievements} . '/' . $achievement->test;
 		if (-e $sourceFilePath) {
-			open(SOURCE, '<', $sourceFilePath);
-			$source = <SOURCE>;
-			close(SOURCE);
+			local $/ = undef;
+			open(my $SOURCE, '<', $sourceFilePath);
+			$source = <$SOURCE>;
+			close($SOURCE);
 		} else {
 			warn('Couldnt find achievement evaluator $sourceFilePath');
 			next;
@@ -260,41 +247,8 @@ sub checkForAchievements {
 				$globalUserAchievement->next_level_points($nextLevelPoints);
 			}
 
-			#build the cheevo message. New level messages are slightly different
-			my $imgSrc = $ce->{server_root_url};
-			if ($achievement->{icon}) {
-				$imgSrc .= $ce->{courseURLs}->{achievements} . "/" . $achievement->{icon};
-			} else {
-				$imgSrc .= $ce->{webworkURLs}->{htdocs} . "/images/defaulticon.png";
-			}
-
-			$cheevoMessage .= CGI::start_div({
-				class       => 'cheevo-toast toast hide',
-				role        => 'alert',
-				aria_live   => 'polite',
-				aria_atomic => 'true'
-			});
-			$cheevoMessage .= CGI::start_div({ class => 'toast-body d-flex align-items-center' });
-
-			$cheevoMessage .= CGI::img({ src => $imgSrc, alt => 'Achievement Icon' });
-
-			$cheevoMessage .= CGI::start_div({ class => 'cheevopopuptext' });
-			if ($achievement->category eq 'level') {
-				$cheevoMessage = $cheevoMessage . CGI::h2("$achievement->{name}");
-				# Print the description as part of the message if we are using items.
-				$cheevoMessage .=
-					CGI::div($ce->{achievementItemsEnabled}
-						? $achievement->{description}
-						: $r->maketext("Congratulations, you earned a new level!"));
-			} else {
-				$cheevoMessage .= CGI::h2("$achievement->{name}");
-				$cheevoMessage .= CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
-			}
-			$cheevoMessage .= CGI::end_div();
-
-			$cheevoMessage .= q{<button type="button" class="btn-close me-2 m-auto"
-								data-bs-dismiss="toast" aria-label="Close"></button>};
-			$cheevoMessage .= CGI::end_div() . CGI::end_div();
+			# Construct the cheevo message using the cheevoMessage template.
+			push(@$cheevoMessage, $c->include('AchievementEvaluator/cheevoMessage', achievement => $achievement));
 
 			my $points = $achievement->points;
 			#just in case points is an ininitialzied variable
@@ -312,21 +266,23 @@ sub checkForAchievements {
 
 	}    #end for loop
 
+	# Restore the original signal handlers.
+	local $SIG{$_} = $ORIG_SIG{$_} for keys %ORIG_SIG;
+
 	#nfreeze_base64 globalData and store
 	$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
 	$db->putGlobalUserAchievement($globalUserAchievement);
 
-	if ($cheevoMessage) {
-		$cheevoMessage = CGI::div(
-			{
-				class => "cheevo-toast-container toast-container "
-					. "position-absolute top-0 start-50 translate-middle-x p-3"
-			},
-			$cheevoMessage
+	if (@$cheevoMessage) {
+		return $c->tag(
+			'div',
+			class =>
+				'cheevo-toast-container toast-container position-absolute top-0 start-50 translate-middle-x p-3',
+			$cheevoMessage->join('')
 		);
 	}
 
-	return $cheevoMessage;
+	return '';
 }
 
 1;

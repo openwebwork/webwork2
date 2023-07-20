@@ -1,8 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -15,20 +15,18 @@
 # Artistic License for more details.
 ################################################################################
 
-# This script loads the OPL global statistics, which is often done by bin/update-OPL-statistics but may need to be done outside of that setting.
+# This script loads the OPL global statistics, which is often done by bin/update-OPL-statistics but may need to be done
+# outside of that setting.
 use strict;
 
-# Get the necessary packages, including adding webwork to our path.
-
-my $pg_dir;
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
-	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
-	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+	use Mojo::File qw(curfile);
+	use Env qw(WEBWORK_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
-use lib "$pg_dir/lib";
 
 use WeBWorK::CourseEnvironment;
 
@@ -37,46 +35,46 @@ use DBI;
 
 # get course environment and configured OPL path
 
-my $ce = new WeBWorK::CourseEnvironment({
+my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
-	});
+});
 
 my $dbh = DBI->connect(
-        $ce->{problemLibrary_db}->{dbsource},
-        $ce->{problemLibrary_db}->{user},
-        $ce->{problemLibrary_db}->{passwd},
-        {
+	$ce->{problemLibrary_db}->{dbsource},
+	$ce->{problemLibrary_db}->{user},
+	$ce->{problemLibrary_db}->{passwd},
+	{
 		AutoCommit => 0,
-                PrintError => 0,
-                RaiseError => 1,
-        },
+		PrintError => 0,
+		RaiseError => 1,
+	},
 );
 
 # check to see if the global statistics file exists and if it does, upload it.
 
-my $global_sql_file = $ce->{problemLibrary}{root}.'/OPL_global_statistics.sql';
+my $global_sql_file = $ce->{problemLibrary}{root} . '/OPL_global_statistics.sql';
 
 if (-e $global_sql_file) {
 
-  my $db     = $ce->{database_name};
-  my $host   = $ce->{database_host};
-  my $port   = $ce->{database_port};
-  my $dbuser = $ce->{database_username};
-  my $dbpass = $ce->{database_password};
+	my $db     = $ce->{database_name};
+	my $host   = $ce->{database_host};
+	my $port   = $ce->{database_port};
+	my $dbuser = $ce->{database_username};
+	my $dbpass = $ce->{database_password};
 
-  $dbh->do(<<EOS);
+	$dbh->do(<<EOS);
 DROP TABLE IF EXISTS OPL_global_statistics;
 EOS
-  $dbh->commit();
+	$dbh->commit();
 
-  $dbuser = shell_quote($dbuser);
-  $db = shell_quote($db);
+	$dbuser = shell_quote($dbuser);
+	$db     = shell_quote($db);
 
-  $ENV{'MYSQL_PWD'}=$dbpass;
+	$ENV{'MYSQL_PWD'} = $dbpass;
 
-  my $mysql_command = $ce->{externalPrograms}->{mysql};
+	my $mysql_command = $ce->{externalPrograms}->{mysql};
 
-  `$mysql_command --host=$host --port=$port --user=$dbuser $db < $global_sql_file`;
+	`$mysql_command --host=$host --port=$port --user=$dbuser $db < $global_sql_file`;
 
 }
 

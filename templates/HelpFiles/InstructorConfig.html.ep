@@ -1,0 +1,30 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Course Configuration Help');
+%
+<p>
+	<%= maketext('This page allows you to configure course settings such as permission levels, display modes '
+		. 'allowed, default display mode, email feedback behavior, and much more.') =%>
+</p>
+<p>
+	<%= maketext('Click on each of the tabs to view the configuration items. The question mark icon provides access '
+		. 'to information about the behavior of the configuration settings.') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('Note that some settings require an additional page load after "Save Changes" is clicked in order '
+		. 'to take effect.  This is true for a theme change for example.') =%>
+</p>

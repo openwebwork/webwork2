@@ -5,7 +5,7 @@ loadMacros("PGbasicmacros.pl",
 );
 $showPartialCorrectAnswers = 0;
 
-TEXT(beginproblem(), $BR,$BBOLD, "HTML links example", $EBOLD, $BR,$BR); 
+TEXT($BBOLD, "HTML links example", $EBOLD, $BR,$BR)
 
 BEGIN_TEXT
 This example shows how to link to resources outside the problem itself.

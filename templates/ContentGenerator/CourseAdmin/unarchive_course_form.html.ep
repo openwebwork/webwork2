@@ -1,0 +1,51 @@
+% use WeBWorK::Utils::CourseManagement qw(listArchivedCourses);
+%
+<h2><%= maketext('Unarchive Course') %> <%= $c->helpMacro('AdminUnarchiveCourse') %></h2>
+%
+% # Find courses which have been archived.
+% my @courseIDs = sort { lc($a) cmp lc($b) } listArchivedCourses($ce);
+%
+% if (@courseIDs) {
+	<%= form_for current_route, method => 'POST', begin =%>
+		<%= $c->hidden_authen_fields =%>
+		<%= $c->hidden_fields('subDisplay') =%>
+		%
+		<div class="mb-2"><%= maketext('Select a course to unarchive.') =%></div>
+		%
+		<div class="col-lg-7 col-md-8">
+			<div class="row mb-2">
+				<%= label_for 'unarchive_courseID' => maketext('Course Name:'), class => 'col-sm-4 col-form-label' =%>
+				<div class="col-sm-8">
+					<%= select_field unarchive_courseID => \@courseIDs,
+						id       => 'unarchive_courseID',
+						class    => 'form-select',
+						size     => 10
+					=%>
+				</div>
+			</div>
+			<div class="row mb-2 align-items-center">
+				<div class="col-sm-4">
+					<div class="form-check">
+						<label class="form-check-label" id="create_newCourseID_label">
+							<%= maketext('New Name:') %>
+							<%= check_box create_newCourseID => 1, class => 'form-check-input' %>
+						</label>
+					</div>
+				</div>
+				<div class="col-sm-8">
+					<%= text_field new_courseID => '',
+						size              => 25,
+						maxlength         => $ce->{maxCourseIdLength},
+						class             => 'form-control',
+						'aria-labelledby' => 'create_newCourseID_label'
+					=%>
+				</div>
+			</div>
+		</div>
+		<div>
+			<%= submit_button maketext('Unarchive Course'), name => 'unarchive_course', class => 'btn btn-primary' =%>
+		</div>
+	<% end =%>
+% } else {
+	<p><%= maketext('No course archives found.') %></p>
+% }

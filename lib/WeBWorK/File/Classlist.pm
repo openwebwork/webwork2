@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,22 +31,21 @@ our $MIN_FIELDS = 9;
 our $MAX_FIELDS = 11;
 
 our @FIELD_ORDER = qw/student_id last_name first_name status comment
-section recitation email_address user_id password permission/;
+	section recitation email_address user_id password permission/;
 
 our @EXPORT = qw/parse_classlist write_classlist/;
 
 sub parse_classlist($) {
 	my ($file) = @_;
 
-	use open qw( :encoding(UTF-8) :std ); # assume classlist is utf8 encoded
-	my $fh = new IO::File($file, "<")
+	# assume classlist is utf8 encoded
+	my $fh = IO::File->new($file, '<:encoding(UTF-8)')
 		or die "Failed to open classlist '$file' for reading: $!\n";
 
 	my (@records);
 
-  my $csv = Text::CSV->new({ binary => 1, allow_whitespace => 1 });
-	   # binary for utf8 compat, allow_whitespace to strip all whitespace from start and end of each field
-
+	my $csv = Text::CSV->new({ binary => 1, allow_whitespace => 1 });
+	# binary for utf8 compat, allow_whitespace to strip all whitespace from start and end of each field
 
 	while (<$fh>) {
 		chomp;
@@ -68,7 +67,8 @@ sub parse_classlist($) {
 
 		my $fields = @fields;
 		if ($fields < $MIN_FIELDS) {
-			warn "Skipped invalid line $. of classlist '$file': expected at least $MIN_FIELDS fields, got $fields fields.\n";
+			warn
+				"Skipped invalid line $. of classlist '$file': expected at least $MIN_FIELDS fields, got $fields fields.\n";
 			next;
 		}
 
@@ -78,8 +78,8 @@ sub parse_classlist($) {
 			$fields = $MAX_FIELDS;
 		}
 
-		my @fields_in_this_record = @FIELD_ORDER[0 .. $fields-1];
-		my @data_in_this_record = @fields[0 .. $fields-1];
+		my @fields_in_this_record = @FIELD_ORDER[ 0 .. $fields - 1 ];
+		my @data_in_this_record   = @fields[ 0 .. $fields - 1 ];
 
 		my %record;
 		@record{@fields_in_this_record} = @data_in_this_record;
@@ -95,10 +95,10 @@ sub parse_classlist($) {
 sub write_classlist($@) {
 	my ($file, @records) = @_;
 
-	my $fh = new IO::File($file, '>:encoding(UTF-8)')
+	my $fh = IO::File->new($file, '>:encoding(UTF-8)')
 		or die "Failed to open classist '$file' for writing: $!\n";
 
-	my $csv = Text::CSV->new({ binary => 1});
+	my $csv = Text::CSV->new({ binary => 1 });
 	# binary for utf8 compat
 
 	print $fh "# Field order: ", join(",", @FIELD_ORDER), "\n";
@@ -113,8 +113,8 @@ sub write_classlist($@) {
 		my %record = %$record;
 		my @fields = @record{@FIELD_ORDER};
 
-		warn "Couldn't form CSV line for user ".$record{user_id}
-		    unless ($csv->combine(@fields));
+		warn "Couldn't form CSV line for user " . $record{user_id}
+			unless ($csv->combine(@fields));
 
 		my $string = $csv->string();
 

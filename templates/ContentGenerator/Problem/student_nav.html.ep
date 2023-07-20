@@ -1,0 +1,103 @@
+% # Cap the number of students shown to at most 200.
+% my $numAfter        = $#$userRecords - $currentUserIndex;
+% my $numBefore       = 200 - ($numAfter < 100 ? $numAfter : 100);
+% my $minStudentIndex = $currentUserIndex < $numBefore ? 0 : $currentUserIndex - $numBefore;
+% my $maxStudentIndex = $minStudentIndex + 200 < $#$userRecords ? $minStudentIndex + 200 : $#$userRecords;
+%
+<div class="user-nav d-flex submit-buttons-container">
+	<div class="btn-group" role="group" aria-label="student selector">
+		% if ($prevUser) {
+			<%= link_to $c->systemLink(
+					$problemPage,
+					params => {
+						effectiveUser     => $prevUser->user_id,
+						showProblemGrader => $c->{will}{showProblemGrader},
+						$filter ? (studentNavFilter => $filter) : ()
+					}
+				),
+				data  => { bs_toggle => 'tooltip', bs_placement => 'top' },
+				title => $prevUser->{displayName},
+				class => 'btn btn-primary student-nav-button',
+				begin =%>
+				<i class="fas fa-chevron-left"></i>
+			<% end =%>
+		% } else {
+			<span class="btn btn-primary disabled"><i class="fas fa-chevron-left"></i></span>
+		% }
+		<div class="btn-group student-nav-selector">
+			<%= link_to $userRecords->[$currentUserIndex]{displayName} => '#',
+				id => 'studentSelector', class => 'btn btn-primary dropdown-toggle', role => 'button',
+				data => { bs_toggle => 'dropdown' }, 'aria-expanded' => 'false' =%>
+			<ul class="dropdown-menu" role="menu" aria-labelledby="studentSelector">
+				% for (@$userRecords[ $minStudentIndex .. $maxStudentIndex ]) {
+					<li>
+						<%= link_to $_->{displayName} => $c->systemLink(
+								$problemPage,
+								params => {
+									effectiveUser     => $_->user_id,
+									showProblemGrader => $c->{will}{showProblemGrader},
+									$filter ? (studentNavFilter => $filter) : ()
+								}
+							),
+							$_->{currentUser} ? (style => 'background-color:#8F8') : (),
+							class => 'dropdown-item' =%>
+					</li>
+				% }
+			</ul>
+		</div>
+		% if ($nextUser) {
+			<%= link_to $c->systemLink(
+					$problemPage,
+					params => {
+						effectiveUser     => $nextUser->user_id,
+						showProblemGrader => $c->{will}{showProblemGrader},
+						$filter ? (studentNavFilter => $filter) : ()
+					}
+				),
+				data  => { bs_toggle    => 'tooltip', bs_placement => 'top' },
+				title => $nextUser->{displayName},
+				class => 'btn btn-primary student-nav-button',
+				begin =%>
+				<i class="fas fa-chevron-right"></i>
+			<%= end %>
+		% } else {
+			<span class="btn btn-primary disabled"><i class="fas fa-chevron-right"></i></span>
+		% }
+	</div>
+	% # Create a section/recitation "filter by" dropdown if there are sections or recitations.
+	% if (keys %$filters) {
+		<div class="btn-group student-nav-filter-selector">
+			<%= link_to $filter ? $filters->{$filter}[0] : maketext('Showing all students') => '#',
+				id => 'studentSelectorFilter', class => 'btn btn-primary dropdown-toggle', role => 'button',
+				data => { bs_toggle => 'dropdown' }, 'aria-expanded' => 'false' =%>
+			<ul class="dropdown-menu" role="menu" aria-labelledby="studentSelectorFilter">
+				% # If a filter is currently in use, then add an item that will remove that filter.
+				% if ($filter) {
+					<li>
+						<%= link_to maketext('Show all students') => $c->systemLink(
+								$problemPage,
+								params => {
+									effectiveUser     => $eUserID,
+									showProblemGrader => $c->{will}{showProblemGrader}
+								}
+							), class => 'dropdown-item' =%>
+					</li>
+				% }
+				% for (sort keys %$filters) {
+					<li>
+						<%= link_to $filters->{$_}[0] => $c->systemLink(
+								$problemPage,
+								params => {
+									effectiveUser     => $filters->{$_}[1],
+									showProblemGrader => $c->{will}{showProblemGrader},
+									studentNavFilter  => $_
+								}
+							),
+							($filter || '') eq $_ ? (style => 'background-color:#8F8') : (),
+							class => 'dropdown-item' =%>
+					</li>
+				% }
+			</ul>
+		</div>
+	% }
+</div>

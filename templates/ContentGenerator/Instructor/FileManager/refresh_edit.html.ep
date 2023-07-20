@@ -1,0 +1,27 @@
+% my $name   = "$c->{pwd}/$file" =~ s!^\./?!!r;
+% my %button = (name => 'action', class => 'btn btn-sm btn-secondary w-100');
+%
+<div class="d-flex">
+	<div align="center" class="col-12 bg-dark text-white"><b><%= $name %></b></div>
+</div>
+<div class="d-flex">
+	<div class="col-12">
+		% param('data', $contents);
+		<%= text_area data => '', rows => 30, columns => 80, dir => 'auto',
+			class => 'file-manager-editor form-control' =%>
+	</div>
+</div>
+<div class="row">
+	<div class="col-md-2 col-4 my-2"><%= submit_button maketext('Cancel'), %button %></div>
+	<div class="col-md-2 col-4 my-2"><%= submit_button maketext('Revert'), %button %></div>
+	<div class="col-md-2 col-4 my-2"><%= submit_button maketext('Save'), %button %></div>
+	<div class="col-md-6 col-12 my-2">
+		<div class="input-group">
+			<%= submit_button maketext('Save As'), name => 'action', class => 'btn btn-sm btn-secondary' =%>
+			<%= text_field name => '', size => 20, class => 'form-control form-control-sm' =%>
+		</div>
+	</div>
+</div>
+%
+<%= hidden_field files => $file =%>
+<%= $c->HiddenFlags =%>

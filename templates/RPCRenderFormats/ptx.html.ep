@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Static PreTeXt rendering of WeBWorK problem using host: <%= $SITE_URL %>, course: <%= $courseID %> -->
+<webwork>
+%== $problemText
+%== $answerhashXML
+</webwork>

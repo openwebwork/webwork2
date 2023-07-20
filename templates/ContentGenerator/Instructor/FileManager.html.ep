@@ -1,0 +1,63 @@
+% use WeBWorK::Utils qw(x getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/FileManager/filemanager.js'), defer => undef =%>
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'manage_course_files')) {
+	<em><%= maketext('You are not authorized to manage course files') %></em>
+	% last;
+% }
+%
+% unless (defined $c->{pwd}) {
+	<em><%= maketext('You have specified an illegal working directory!') %></em>
+	% last;
+% }
+%
+<%= form_for current_route, method => 'POST', enctype => 'multipart/form-data',
+	id => 'FileManager', name => 'FileManager', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	%
+	% my $action = param('action') || param('formAction') || param('confirmed') || 'Init';
+	%
+	% # Map of actions to methods.
+	% my %methods = (
+		% x('Refresh')        => 'Refresh',
+		% x('Cancel')         => 'Refresh',
+		% x('Directory')      => 'Go',
+		% x('Go')             => 'Go',
+		% x('View')           => 'View',
+		% x('Edit')           => 'Edit',
+		% x('Download')       => 'Refresh',
+		% x('Copy')           => 'Copy',
+		% x('Rename')         => 'Rename',
+		% x('Delete')         => 'Delete',
+		% x('New Folder')     => 'NewFolder',
+		% x('New File')       => 'NewFile',
+		% x('Upload')         => 'Upload',
+		% x('Revert')         => 'Edit',
+		% x('Save As')        => 'SaveAs',
+		% x('Save')           => 'Save',
+		% x('Init')           => 'Init',
+		% '^'                 => 'ParentDir',
+		% "\\"                => 'ParentDir',
+		% x('Make Archive')   => 'MakeArchive',
+		% x('Unpack Archive') => 'UnpackArchive',
+		% x('Archive Course') => 'Refresh',
+	% );
+	%
+	% # Add translated action names to the method map.
+	% $methods{ maketext($_) } = $methods{$_} for keys %methods;
+	%
+	% # Look up the current action and perform it.
+	% my $method = $methods{$action};
+	% if ($method) {
+		<%= $c->$method =%>
+	% } else {
+		% $c->addbadmessage('Unknown action');
+		<%= $c->Refresh =%>
+	% }
+	%
+	<%= hidden_field pwd => $c->{pwd} =%>
+	<%= hidden_field formAction => '' =%>
+<% end =%>

@@ -1,0 +1,88 @@
+% if (!-r $c->{editFilePath}) {
+	<%== maketext(
+		'Error: The original file [_1] cannot be read.',
+		tag('span', dir => 'ltr', $c->shortPath($c->{editFilePath}))
+	) =%>
+	% next;
+% }
+%
+% # Build list of backup files.
+% my $foundTempFile = defined($c->{tempFilePath}) && -e $c->{tempFilePath};
+% my @backupTimes   = $c->getBackupTimes;
+% if (@backupTimes) {
+	<div>
+		<div class="mb-2">
+			<%= maketext('Select action:') %>
+		</div>
+
+		<div class="form-check mb-2<%= $foundTempFile ? '' : ' d-none' %>" id="revert-to-tmp-container">
+			<%= radio_button 'action.revert.type' => 'revert', id => 'action_revert_type_revert_id',
+				checked => undef, class => 'form-check-input', $foundTempFile ? () : (disabled => undef) =%>
+			<%= label_for 'action_revert_type_revert_id', class => 'form-check-label', begin =%>
+				<%== maketext('Revert to [_1]', tag('span', dir => 'ltr', $c->shortPath($c->{editFilePath}))) =%>
+			<% end =%>
+		</div>
+
+		<div class="row align-items-center mb-2">
+			<div class="col-auto">
+				% param('action.revert.type', 'backup')
+					% if !$foundTempFile && (!param('action.revert.type') || param('action.revert.type') eq 'revert');
+				<%= radio_button 'action.revert.type' => 'backup', id => 'action_revert_type_backup_id',
+					class => 'form-check-input' =%>
+				<%= label_for 'action_revert_type_backup_id', class => 'form-check-label ms-2', begin =%>
+					<%= scalar(@backupTimes) == 1
+						? maketext(
+							'Restore backup from [_1]',
+							$c->formatDateTime($backupTimes[0], undef, $ce->{studentDateDisplayFormat})
+						) : maketext('Restore backup from') =%>
+				<% end =%>
+			</div>
+			% if (scalar(@backupTimes) == 1) {
+				<%= hidden_field 'action.revert.backup.time' => $backupTimes[0] =%>
+			% } else {
+				<div class="col-auto">
+					<%= select_field 'action.revert.backup.time' => [
+						map { [ $c->formatDateTime($_, undef, $ce->{studentDateDisplayFormat}) => $_ ] } @backupTimes
+					],
+					id    => 'action_revert_backup_time_id',
+					class => 'form-select form-select-sm d-inline w-auto' =%>
+				</div>
+			% }
+		</div>
+
+		<div class="row align-items-center mb-2">
+			<div class="col-auto">
+				<%= radio_button 'action.revert.type' => 'delete', id => 'action_revert_type_delete_id',
+					class => 'form-check-input' =%>
+				<%= label_for "action_revert_type_delete_id", class => 'form-check-label ms-2', begin =%>
+					<%= scalar(@backupTimes) == 1
+						? maketext(
+							'Delete backup from [_1]',
+							$c->formatDateTime($backupTimes[0], undef, $ce->{studentDateDisplayFormat})
+						) : maketext('Delete backup from') =%>
+				<% end =%>
+			</div>
+			% if (scalar(@backupTimes) == 1) {
+				<%= hidden_field 'action.revert.delete.time' => $backupTimes[0] =%>
+			% } else {
+				<div class="col-auto">
+					<%= select_field 'action.revert.delete.time' => [
+						map { [ $c->formatDateTime($_, undef, $ce->{studentDateDisplayFormat}) => $_ ] } @backupTimes
+					],
+					id    => 'action_revert_delete_number_id',
+					class => 'form-select form-select-sm d-inline w-auto' =%>
+				</div>
+			% }
+		</div>
+	</div>
+% } else {
+	<div class="mb-2<%= $foundTempFile ? '' : ' d-none' %>" id="revert-to-tmp-container">
+		<%== maketext('Revert to [_1]', tag('span', dir => 'ltr', $c->shortPath($c->{editFilePath}))) =%>
+		<%= hidden_field 'action.revert.type' => 'revert', id => 'action_revert_type_revert_id',
+			$foundTempFile ? () : (disabled => undef) =%>
+	</div>
+	<div class="mb-2 d-none" id="show-backups-comment">
+		<%== maketext('Reload the page to see backup files that have been made.') =%>
+	</div>
+
+% }

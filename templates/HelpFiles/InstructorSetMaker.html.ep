@@ -1,0 +1,60 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Library Broswer Help');
+%
+<p>
+	<%= maketext('This page is used to browse problems that will be used to fill problem sets. '
+		. 'The first step is to choose which set you are working on. If you need to create a new problem set '
+		. 'fill in the blank next to the "Create a New Set in This Course" button and then press the button. '
+		. 'Then choose which set you want to work on in the drop down menu.') =%>
+</p>
+<p>
+	<%= maketext('Use the options in the second box to pick a collection of problems decribed below. In each '
+		. 'case, clicking "View Problems" will render a fixed number of problems (default of 20). After '
+		. 'problems are shown, there will be options to show the next/previous batch of problems, add all problems '
+		. 'to the target set (set at the top of the page) or clear the curent batch of problems.') =%>
+</p>
+<dl>
+	<dt><%= maketext('Open Problem Library') %></dt>
+	<dd>
+		<%= maketext('This browses the Open Problem Library (OPL) in category (Subject/Chapter/Section) form. '
+			. 'Select the desired categories (all three do not need to be selected) and click "View Problems". '
+			. 'If the "Include Contrib" box is selected then those problems in the Contrib section of '
+			. 'the OPL that have the categories defined are also included. Contrib problems are problem that '
+			. q{haven't been vetted as thoroughly as OPL problems. If you want hints or solutions included while }
+			. 'browsing select the appropriate box.') =%>
+	</dd>
+	<dt><%= maketext('File Manager') %></dt>
+	<dd><%= maketext('This option shows all pg problems in the course directory structure.')%></dd>
+	<dt><%= maketext('Course Sets') %></dt>
+	<dd><%= maketext('This option shows all problems in sets that have been created in the course.') %></dd>
+	<dt><%= maketext('Set Definition Files') %></dt>
+	<dd>
+		<%= maketext('This option shows all problems in set definition files that are located in the course '
+			. 'directory.') =%>
+	</dd>
+	<dt><%= maketext('Other Options') %></dt>
+	<dd>
+		<%= maketext('The second row of the problem collection area is for browsing directories. The OPL '
+			. 'will be there as well as any other directories that you may set up (for example Contrib). If '
+			. 'this is selected, all subdirectories containing problems will be listed.') =%>
+	</dd>
+</dl>
+<p class="mb-0">
+	<%= maketext('The "Edit Target Set" button at the top of the page will take you to the Problem Set Editor '
+		. 'which will allow you to edit dates, assign users and other information about the problem set.') =%>
+</p>

@@ -1,0 +1,26 @@
+<div>
+	<div class="row mb-2">
+		<%= label_for assign_select => maketext('Assign which achievements?'),
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.assign.scope' => [
+					[ maketext('all achievements')      => 'all' ],
+					[ maketext('selected achievements') => 'selected', selected => undef ]
+				],
+				id    => 'assign_select',
+				class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for 'assign_data_select' => maketext('Choose what to do with existing data:'),
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.assign.overwrite' => [
+					[ maketext('overwrite') => 'everything' ],
+					[ maketext('preserve')  => 'new_only', selected => undef ]
+				],
+				id    => 'assign_data_select',
+				class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+</div>

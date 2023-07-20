@@ -1,0 +1,101 @@
+% use WeBWorK::Utils qw(format_set_name_display);
+%
+% my $selected_set = param('local_sets') // '';
+%
+<hr class="mt-0 mb-2">
+<div class="d-flex flex-wrap justify-content-center">
+	<div class="d-flex flex-wrap justify-content-center mb-2">
+		<%= label_for 'local_sets', class => 'col-form-label-sm', begin =%>
+			<%= maketext('Add problems to') %> <b><%= maketext('Target Set:') %></b>
+		<% end =%>
+		<%= select_field local_sets => [
+				@$local_sets == 0 ? [ maketext('No sets in this course yet') => '' ]
+				: (
+					$selected_set eq '' ? [ maketext('Select a Set from this Course') => '', selected => undef ] : (),
+					map { [ format_set_name_display($_) => $_, $_ eq $selected_set ? (selected => undef) : () ] }
+					@$local_sets
+				)
+			],
+			id    => 'local_sets',
+			class => 'form-select form-select-sm d-inline w-auto mx-2',
+			dir   => 'ltr',
+			data  => {
+				no_set_selected => maketext('No Target Set Selected'),
+				pick_target_set => maketext('Pick a target set above to add this problem to.'),
+				problems_added  => maketext('Problems Added'),
+				added_to_single => maketext('Added one problem to set [_1].',   '{set}'),
+				added_to_plural => maketext('Added [_1] problems to set [_2].', '{number}', '{set}')
+			} =%>
+	</div>
+	<%= submit_button maketext('Edit Target Set'), name => 'edit_local', class => 'btn btn-primary btn-sm mb-2' =%>
+</div>
+<div class="d-flex flex-wrap justify-content-center">
+	<%= submit_button maketext('Create a New Set in This Course:'), name => 'new_local_set', id => 'new_local_set',
+		class => 'btn btn-primary btn-sm mb-2 mx-2' =%>
+	<%= text_field new_set_name => '', class => 'form-control form-control-sm d-inline w-auto mb-2',
+		'aria-labelledby' => 'new_local_set', placeholder => maketext('New set name'), size => 30, dir => 'ltr' =%>
+</div>
+<hr class="mt-0 mb-2">
+<div class="d-flex justify-content-center">
+	<label class="col-form-label-sm mb-2 me-1"><%= maketext('Browse') %></label>
+	<div class="d-flex flex-wrap justify-content-center">
+		<%= submit_button maketext('Open Problem Library'), name => 'browse_npl_library',
+			class => 'browse-lib-btn btn btn-secondary btn-sm mb-2 mx-1',
+			$browse_which eq 'browse_npl_library' ? (disabled => undef) : () =%>
+		<%= submit_button maketext('File Manager'), name => 'browse_local',
+			class => 'browse-lib-btn btn btn-secondary btn-sm mb-2 mx-1',
+			$browse_which eq 'browse_local' ? (disabled => undef) : () =%>
+		<%= submit_button maketext('Course Sets'), name => 'browse_course_sets',
+			class => 'browse-lib-btn btn btn-secondary btn-sm mb-2 mx-1',
+			$browse_which eq 'browse_course_sets' ? (disabled => undef) : () =%>
+		<%= submit_button maketext('Set Definition Files'), name => 'browse_setdefs',
+			class => 'browse-lib-btn btn btn-secondary btn-sm mb-2 mx-1',
+			$browse_which eq 'browse_setdefs' ? (disabled => undef) : () =%>
+	</div>
+</div>
+% # Add buttons for additional problem libraries
+% if (%{ $c->{problibs} }) {
+	<div class="d-flex justify-content-center">
+		<label class="col-form-label-sm mb-2"><%= maketext('or Problems from') %></label>
+		<div class="d-flex flex-wrap justify-content-center">
+			% for (sort grep { -d "$ce->{courseDirs}{templates}/$_" } keys %{ $c->{problibs} }) {
+				<%= submit_button $c->{problibs}{$_},
+					name => "browse_$_", class => 'btn btn-secondary btn-sm ms-2 mb-2',
+					($browse_which eq "browse_$_") ? (disabled => undef) : () =%>
+			% }
+		</div>
+	</div>
+% }
+<hr class="mt-0 mb-2">
+% if ($browse_which eq 'browse_local') {
+	<%= include 'ContentGenerator/Instructor/SetMaker/browse_local_panel',
+		selected_library => $c->{current_library_set} =%>
+% } elsif ($browse_which eq 'browse_course_sets') {
+	<%= include 'ContentGenerator/Instructor/SetMaker/browse_course_sets_panel',
+		selected_library => $c->{current_library_set} =%>
+% } elsif ($browse_which eq 'browse_npl_library') {
+	<%= include 'ContentGenerator/Instructor/SetMaker/browse_library_panel' =%>
+% } elsif ($browse_which eq 'browse_setdefs') {
+	<%= include 'ContentGenerator/Instructor/SetMaker/browse_setdef_panel',
+		selected_library => $c->{current_library_set} =%>
+% } else {
+	% # Other problem libraries
+	<%= include 'ContentGenerator/Instructor/SetMaker/browse_local_panel',
+		selected_library => $c->{current_library_set}, lib => $browse_which =%>
+% }
+<hr class="mt-0 mb-2">
+<div class="d-flex flex-wrap justify-content-center">
+	<button class="library-action-btn add-all-btn btn btn-primary btn-sm mx-1 mb-2" type="button">
+		<%= maketext('Add All') =%>
+	</button>
+	<%= submit_button maketext('Clear Problem Display'), name => 'cleardisplay',
+		class => 'library-action-btn btn btn-secondary btn-sm mx-1 mb-2' =%>
+	% if ($c->{first_index} > 0) {
+		<%= submit_button maketext('Previous page'), name => 'prev_page',
+			class => 'library-action-btn btn btn-secondary btn-sm mx-1 mb-2' =%>
+	% }
+	% if (1 + $c->{last_index} < @$pg_files) {
+		<%= submit_button maketext('Next page'), name => 'next_page',
+			class => 'library-action-btn btn btn-secondary btn-sm mx-1 mb-2' =%>
+	% }
+</div>

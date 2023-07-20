@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,8 +14,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::ScoringDownload;
-use base qw(WeBWorK::ContentGenerator::Instructor);
-use WeBWorK::ContentGenerator::Instructor::FileManager;
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
@@ -23,75 +22,35 @@ WeBWorK::ContentGenerator::Instructor::ScoringDownload - Download scoring data f
 
 =cut
 
-use strict;
-use warnings;
+# FIXME: This should be integrated into scoring.pm, and this file deleted.
 
-sub pre_header_initialize {
-	my ($self) = @_;
-	my $r          = $self->r;
-	my $ce         = $r->ce;
-	my $authz      = $r->authz;
+use WeBWorK::ContentGenerator::Instructor::FileManager;
+
+sub pre_header_initialize ($c) {
+	my $ce         = $c->ce;
+	my $authz      = $c->authz;
 	my $scoringDir = $ce->{courseDirs}->{scoring};
-	my $file       = $r->param('getFile');
-	my $user       = $r->param('user');
+	my $file       = $c->param('getFile');
+	my $user       = $c->param('user');
 
-
- # the parameter 'getFile" needs to be sanitized. (see bug #3793 )
- # See checkName in FileManager.pm for a more complete sanitization.
-  	if ($authz->hasPermissions($user, "score_sets")) {
- 		unless ( $file eq  WeBWorK::ContentGenerator::Instructor::FileManager::checkName($file) ) {  #
-			$self->addbadmessage($r->maketext("Your file name is not valid! "));
-		    $self->addbadmessage($r->maketext("A file name cannot begin with a dot, it cannot be empty, it cannot contain a " .
-				 "directory path component and only the characters -_.a-zA-Z0-9 and space are allowed.")
-			);
- 		} else {
- 			$self->reply_with_file("text/comma-separated-values", "$scoringDir/$file", $file, 0);
- 			# 0==don't delete file after downloading
- 		}
- 	} else {
-		$self->addbadmessage("You do not have permission to access scoring data.");
-	}
-}
-
-1;
-
-__END__
-
-# FIXME replace all crap with a call to reply_with_file
-# FIXME and then maybe merge that functionality into Scoring.pm
-sub header {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $ce         = $r->ce;
-	my $scoringDir = $ce->{courseDirs}->{scoring};
-	my $file       = $r->param('getFile');
-	if (-f "$scoringDir/$file") {
-		$r->content_type('text/comma-separated-values');
-		$r->header_out("Content-Disposition" => "attachment; filename=$file;");
-		$r->send_http_header();
-		return OK;
+	# the parameter 'getFile" needs to be sanitized. (see bug #3793 )
+	# See checkName in FileManager.pm for a more complete sanitization.
+	if ($authz->hasPermissions($user, "score_sets")) {
+		unless ($file eq WeBWorK::ContentGenerator::Instructor::FileManager::checkName($file)) {    #
+			$c->addbadmessage($c->maketext("Your file name is not valid! "));
+			$c->addbadmessage($c->maketext(
+				"A file name cannot begin with a dot, it cannot be empty, it cannot contain a "
+					. "directory path component and only the characters -_.a-zA-Z0-9 and space are allowed."
+			));
+		} else {
+			$c->reply_with_file("text/comma-separated-values", "$scoringDir/$file", $file, 0);
+			# 0==don't delete file after downloading
+		}
 	} else {
-		$self->{noContent} = 1;
-		return NOT_FOUND;
+		$c->addbadmessage("You do not have permission to access scoring data.");
 	}
-}
 
-sub content {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $ce         = $r->ce;
-	my $authz      = $r->authz;
-	my $scoringDir = $ce->{courseDirs}->{scoring};
-	my $user       = $r->param('user');
-
-	if (!$authz->hasPermissions($user, "score_sets")) {
-		print "You do not have permission to access scoring data";
-	} else {
-		my $file = $r->param('getFile');
-		open my $fh, "<:utf8", "$scoringDir/$file";
-		print while (<$fh>);
-		close $fh;
-	}
+	return;
 }
 
 1;

@@ -1,0 +1,29 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Statistics Help');
+%
+<p>
+	<%= maketext('The main page allows access to set and student statistics.  When selecting a student, their grades '
+		. 'page is shown, which lists set totals and per problem grades for each set assigned to the student.  When '
+		. 'selecting a set, various statistics and histograms are shown for the overall grades of students who are '
+		. 'currently enrolled or auditing the course.') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('When viewing set statistics, the drop down menus can be used to show stats for individual sections, '
+		. 'recitations, or problems.  The overall results include all students who are assigned to the set, while the '
+		. 'individual problem results only include active (have attempted the problem) students.') =%>
+</p>

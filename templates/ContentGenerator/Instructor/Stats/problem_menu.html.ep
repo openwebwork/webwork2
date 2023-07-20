@@ -1,0 +1,30 @@
+% use WeBWorK::Utils qw(jitar_id_to_seq);
+%
+<div class="btn-group student-nav-filter-selector mx-2">
+	<%= link_to $c->{prettyID} ? maketext('Problem [_1]', $c->{prettyID}) : maketext('All problems') => '#',
+		id => 'problemMenu', class => 'btn btn-primary dropdown-toggle', role => 'button', 'aria-expanded' => 'false',
+		data => { bs_toggle => 'dropdown' } =%>
+	<ul class="dropdown-menu" role="menu" aria-labelledby="problemMenu">
+		<li>
+			<%= link_to maketext('All problems') => $c->systemLink(
+					url_for('instructor_set_statistics'),
+					params => param('filter') ? { filter => param('filter') } : {}
+				),
+				class => 'dropdown-item', $c->{prettyID} ? () : (style => 'background-color: #8F8') =%>
+		</li>
+		% for (@$problems) {
+			% my $probID =
+				% $c->{setRecord}->assignment_type eq 'jitar'
+				% ? join('.', jitar_id_to_seq($_->problem_id))
+				% : $_->problem_id;
+			<li>
+				<%= link_to maketext('Problem [_1]', $probID) => $c->systemLink(
+						url_for('instructor_problem_statistics', problemID => $_->problem_id),
+						params => param('filter') ? { filter => param('filter') } : {}
+					),
+					class => 'dropdown-item',
+					$probID eq ($c->{prettyID} // '') ? (style => 'background-color: #8F8') : () =%>
+			</li>
+		% }
+	</ul>
+</div>\

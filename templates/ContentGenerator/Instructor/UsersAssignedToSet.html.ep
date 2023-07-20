@@ -1,0 +1,110 @@
+% use WeBWorK::Utils qw(format_set_name_display);
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to access instructor tools.') %></div>
+	% last;
+% }
+%
+% unless ($authz->hasPermissions(param('user'), 'assign_problem_sets')) {
+	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to assign homework sets.') %></div>
+	% last;
+% }
+%
+<%= form_for current_route, method => 'post', begin =%>
+	<div class="my-2">
+		<%= submit_button maketext('Assign to All Current Users'), name  => 'assignToAll',
+			class => 'btn btn-primary' =%>
+		<i><%= maketext('This action can take a long time if there are many students.') %></i>
+	</div>
+	<div class="alert alert-danger p-1 mb-2">
+		<p class="mb-1"><%= maketext('Do not uncheck students, unless you know what you are doing.') %></p>
+		<p class="mb-0"><%= maketext('There is NO undo for unassigning students.') %></p>
+	</div>
+	<div class="mb-2">
+		<%== maketext(
+			"When you unassign by unchecking a student's name, you destroy all of the data for homework set [_1] "
+				. 'for this student. You will then need to reassign the set to these students and they will receive '
+				. 'new versions of the problems. Make sure this is what you want to do before unchecking students.',
+			tag('b', dir => 'ltr', format_set_name_display($setID))
+		) =%>
+	</div>
+	<div class="table-responsive">
+		<table class="table table-bordered table-sm font-sm text-nowrap w-auto">
+			<thead>
+				<tr>
+					<th class="text-center"><%= maketext('Assigned') %></th>
+					<th><%= maketext('Login Name') %></th>
+					<th><%= maketext('Student Name') %></th>
+					<th class="text-center"><%= maketext('Section') %></th>
+					<th><%= maketext('Close Date') %></th>
+					<th><%= maketext('Edit Data') %></th>
+				</tr>
+			</thead>
+			<tbody class="table-group-divider">
+				% for my $user (@{ $c->{user_records} }) {
+					% my $userID  = $user->user_id;
+					% my $userSet = $db->getUserSet($userID, $setID);
+					%
+					<tr>
+						<td class="text-center">
+							<input type="checkbox" name="selected" id="selected_<%= $userID %>" value="<%= $userID %>"
+								class="form-check-input" <%= defined $userSet ? 'checked' : '' %>>
+						</td>
+						<td>
+							<div class="<%= $ce->status_abbrev_to_name($user->status) || '' %>">
+								<%= label_for "selected_$userID" => $userID =%>
+							</div>
+						</td>
+						<td>
+							<%= $user->last_name . ', ' . $user->first_name =%>
+						</td>
+						<td class="text-center"><%= $user->section %></td>
+						% if (defined $userSet) {
+							<td>
+								% if ($userSet->due_date) {
+									<%= $c->formatDateTime($userSet->due_date, '',
+										'datetime_format_short', $ce->{language}) =%>
+								% }
+							</td>
+							<td>
+								<%= link_to maketext('Edit data for [_1]', $userID) => $c->systemLink(
+									url_for('instructor_set_detail'),
+									params => { editForUser => $userID }
+								) =%>
+							</td>
+						% } else {
+							<td></td>
+							<td></td>
+						% }
+					</tr>
+				% }
+			</tbody>
+		</table>
+	</div>
+	<%= $c->hidden_authen_fields =%>
+	<%= submit_button maketext('Save'), name => 'assignToSelected', class => 'btn btn-primary' =%>
+	<hr>
+	<div>
+		<div class="alert alert-danger p-1 mb-3">
+			<%== maketext(
+				'There is NO undo for this function.  Do not use it unless you know what you are doing!  '
+					. 'When you unassign a student using this button, or by unchecking their name, you destroy all '
+					. 'of the data for homework set [_1] for this student.',
+				tag('span', dir => 'ltr', format_set_name_display($setID))
+			) =%>
+		</div>
+		<div class="d-flex flex-wrap align-items-center">
+			<%= submit_button maketext('Unassign from All Users'), name => 'unassignFromAll',
+				class => 'btn btn-primary' =%>
+			<label class="form-check-label text-nowrap">
+				<%= radio_button unassignFromAllSafety => 0, checked => undef, class => 'form-check-input mx-1' =%>
+				<%= maketext('Read only') =%>
+			</label>
+			<label class="form-check-label text-nowrap">
+				<%= radio_button unassignFromAllSafety => 1, class => 'form-check-input mx-1' =%>
+				<%= maketext('Allow unassign') =%>
+			</label>
+		</div>
+	</div>
+	<hr>
+<% end =%>

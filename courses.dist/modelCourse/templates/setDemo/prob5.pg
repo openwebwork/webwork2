@@ -49,8 +49,6 @@ return( $a*Math.pow(x,2) + $b*x +$c );}
 
 EOF
 
-
-TEXT(beginproblem());
 TEXT(MODES(
 TeX	 		=>	'',
 Latex2HTML	=> "\begin{rawhtml} <NOSCRIPT> This problem requires that Java

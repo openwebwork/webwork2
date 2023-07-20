@@ -1,0 +1,190 @@
+% use WeBWorK::Utils qw(getAssetURL wwRound);
+%
+<!DOCTYPE html>
+<html <%== $COURSE_LANG_AND_DIR %>>
+<head>
+	<meta charset='utf-8'>
+	<base href="<%= $SITE_URL %>">
+	<title>
+		WeBWorK using host: <%= $SITE_URL %>,
+		format: <%= $formatName %>,
+		seed: <%= $problemSeed %>,
+		course: <%= $courseID %>
+	</title>
+	<link href="<%= "$ce->{webworkURLs}{htdocs}/images/favicon.ico" %>" rel="shortcut icon">
+	% # Add third party css and javascript as well as css and javascript requested by the problem.
+	% for (@$third_party_css) {
+		%= stylesheet $_
+	% }
+	% for (@$extra_css_files) {
+		%= stylesheet $_->{file}
+	% }
+	% for (@$third_party_js) {
+		%= javascript $_->[0], %{ $_->[1] // {} }
+	% }
+	% # Add the local storage javascript for the sticky format.
+	% if ($formatName eq 'sticky') {
+		%= javascript getAssetURL($ce, 'js/LocalStorage/localstorage.js'), defer => undef
+	% }
+	% for (@$extra_js_files) {
+		%= javascript $_->{file}, %{ $_->{attributes} }
+	% }
+	%== $rh_result->{header_text} // ''
+	%== $rh_result->{post_header_text} // ''
+	%== $extra_header_text
+</head>
+<body>
+	<div class="container-fluid">
+		<div class="row g-0">
+			<div class="col-12 problem">
+				%== $answerTemplate
+				<%= form_for $FORM_ACTION_URL, id => 'problemMainForm', class => 'problem-main-form',
+					name => 'problemMainForm', method => 'POST', begin %>
+					<div id="problem_body" class="problem-content" <%== $PROBLEM_LANG_AND_DIR %>>
+						% if ($displayMode eq 'PTX' || $displayMode eq 'tex') {
+							<pre><%= "$problemText"%></pre>
+						% } else {
+							%== $problemText
+						% }
+					</div>
+					% if ($showScoreSummary) {
+						<p><%= $lh->maketext('You received a score of [_1] for this attempt.',
+							wwRound(0, $rh_result->{problem_result}{score} * 100) . '%') %></p>
+						% if ($rh_result->{problem_result}{msg}) {
+							<p><%= $rh_result->{problem_result}{msg} %></p>
+						% }
+						% unless ($ce->{hideWasNotRecordedMessage}) {
+							<p><%= $lh->maketext('Your score was not recorded.') %></p>
+						% }
+						<%= hidden_field 'problem-result-score' => $rh_result->{problem_result}{score},
+							id => 'problem-result-score' %>
+					% }
+					% if ($formatName eq 'sticky') {
+						<div id="local-storage-messages">
+							<p>Your overall score for this problem is <span id="problem-overall-score"></span>.</p>
+						</div>
+					% }
+					%== $LTIGradeMessage
+					%
+					%= hidden_field answersSubmitted         => 1
+					%= hidden_field sourceFilePath           => $sourceFilePath
+					%= hidden_field problemSource            => $problemSource
+					%= hidden_field uriEncodedProblemSource  => $uriEncodedProblemSource
+					%= hidden_field problemSeed              => $problemSeed
+					%= hidden_field problemUUID              => $problemUUID
+					%= hidden_field psvn                     => $psvn
+					%= hidden_field pathToProblemFile        => $fileName
+					%= hidden_field courseID                 => $courseID
+					%= hidden_field user                     => $user
+					%= hidden_field passwd                   => $passwd
+					%= hidden_field displayMode              => $displayMode
+					%= hidden_field key                      => $key
+					%= hidden_field outputformat             => $formatName
+					%= hidden_field theme                    => $theme
+					%= hidden_field language                 => $formLanguage
+					%= hidden_field isInstructor             => $isInstructor
+					%= hidden_field forceScaffoldsOpen       => $forceScaffoldsOpen
+					%= hidden_field showSummary              => $showSummary
+					%= hidden_field showHints                => $showHints
+					%= hidden_field showSolutions            => $showSolutions
+					%= hidden_field showAnswerNumbers        => $showAnswerNumbers
+					%= hidden_field showPreviewButton        => $showPreviewButton
+					%= hidden_field showCheckAnswersButton   => $showCheckAnswersButton
+					%= hidden_field showCorrectAnswersButton => $showCorrectAnswersButton
+					%= hidden_field showFooter               => $showFooter
+					%= hidden_field extra_header_text        => $extra_header_text
+					% if ($formatName eq 'debug' && $ws->{inputs_ref}{clientDebug}) {
+						%= hidden_field clientDebug => $ws->{inputs_ref}{clientDebug}
+					% }
+					%
+					% if ($displayMode ne 'PTX' && $displayMode ne 'tex') {
+						<div class="submit-buttons-container col-12 mb-2">
+							% # Submit buttons (all are shown by default)
+							% if ($showPreviewButton ne '0') {
+								<%= submit_button $lh->maketext('Preview My Answers'),
+									name => 'preview', id => 'previewAnswers_id', class => 'btn btn-primary mb-1' %>
+							% }
+							% if ($showCheckAnswersButton ne '0') {
+								<%= submit_button $lh->maketext('Check Answers'),
+									name => 'WWsubmit', class => 'btn btn-primary mb-1' %>
+							% }
+							% if ($showCorrectAnswersButton ne '0') {
+								<%= submit_button $lh->maketext('Show Correct Answers'),
+									name => 'WWcorrectAns', class => 'btn btn-primary mb-1' %>
+							% }
+						</div>
+					% }
+				% end
+			</div>
+		</div>
+		% # PG warning messages (this includes translator warnings but not translator errors).
+		% if ($rh_result->{pg_warnings}) {
+			<div class="Warnings alert alert-danger p-1">
+				<h3><%= $lh->maketext('Warning messages') %></h3>
+				<ul>
+					% for (split("\n", $rh_result->{pg_warnings})) {
+						<li><code><%== $_ %></code></li>
+					% }
+				</ul>
+			</div>
+		% }
+		% # PG warning messages generated with WARN_message.
+		% if (ref $rh_result->{warning_messages} eq 'ARRAY' && @{ $rh_result->{warning_messages} }) {
+			<div class="Warnings alert alert-danger p-1">
+				<h3><%= $lh->maketext('PG warning messages') %></h3>
+				<ul>
+					% for (@{ $rh_result->{warning_messages} }) {
+						<li><code><%== $_ %></code></li>
+					% }
+				</ul>
+			</div>
+		% }
+		% # Translator errors.
+		% if ($rh_result->{flags}{error_flag}) {
+			<div class="Warnings alert alert-danger p-1">
+				<h3>Translator errors</h3>
+				<code><%== $rh_result->{errors} %></code>
+			</div>
+		% }
+		% # Additional information output only for the debug format.
+		% if ($formatName eq 'debug') {
+			% # PG debug messages generated with DEBUG_message.
+			% if (@{ $rh_result->{debug_messages} }) {
+				<div class="Warnings alert alert-danger p-1">
+					<h3>PG debug messages</h3>
+					<ul>
+						% for (@{ $rh_result->{debug_messages} }) {
+							<li><code><%== $_ %></code></li>
+						% }
+					</ul>
+				</div>
+			% }
+			% # Internal debug messages generated within PGcore.
+			% if (ref $rh_result->{internal_debug_messages} eq 'ARRAY' && @{ $rh_result->{internal_debug_messages} }) {
+				<div class="Warnings alert alert-danger p-1">
+					<h3>Internal errors</h3>
+					<ul>
+						% for (@{ $rh_result->{internal_debug_messages} }) {
+							<li><code><%== $_ %></code></li>
+						% }
+					</ul>
+				</div>
+			% }
+			% if ($ws->{inputs_ref}{clientDebug}) {
+				<h3>Webwork client data</h3>
+				%== $pretty_print->($ws)
+			% }
+		% }
+	</div>
+	% # Show the footer unless it is explicity disabled.
+	% if ($showFooter ne '0') {
+		<div id="footer">
+			WeBWorK &copy; 2000-2023 |
+			host: <%= $SITE_URL %> |
+			course: <%= $courseID %> |
+			format: <%= $formatName %> |
+			theme: <%= $theme %>
+		</div>
+	% }
+</body>
+</html>

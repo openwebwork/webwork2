@@ -1,0 +1,129 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for css => begin
+	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') =%>
+	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css') =%>
+% end
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'node_modules/luxon/build/global/luxon.min.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.js'), defer => undef =%>
+	% if ($ce->{language} !~ /^en/) {
+		<%= javascript
+			getAssetURL($ce, 'node_modules/flatpickr/dist/l10n/' . ($ce->{language} =~ s/^(..).*/$1/gr) . '.js'),
+			defer => undef =%>
+	% }
+	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
+		defer => undef =%>
+	<%= javascript getAssetURL($ce, 'node_modules/shortcut-buttons-flatpickr/dist/shortcut-buttons-flatpickr.min.js'),
+		defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/DatePicker/datepicker.js'), defer => undef =%>
+	%
+	% # Add javascript specifically for this module.
+	<%= javascript getAssetURL($ce, 'js/UserDetail/userdetail.js'), defer => undef =%>
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1">
+		<%= maketext('You are not authorized to edit user specific information.') =%>
+	</div>
+	% last;
+% }
+%
+% unless ($c->{userRecord}) {
+	<div class="alert alert-danger p-1"><%= maketext('User [_1] not found.', $userID) %></div>
+	% last;
+% }
+%
+% my @editForSets = param('editForSets');
+%
+% my $userName = $c->{userRecord}->first_name . ' ' . $c->{userRecord}->last_name;
+%
+% # Display a message about how many sets have been assigned to this user.
+<div class="text-center my-3">
+	<h2 class="fs-6">
+		<%== maketext(
+			'Edit [_1] for [_2] ([_3]) who has been assigned [_4] sets.',
+			link_to(maketext('class list data') => $c->systemLink(
+				url_for('instructor_user_list'),
+				params => { visible_users => $userID, editMode => 1 }
+			)),
+			$userName,
+			$userID,
+			scalar(keys %{ $c->{userSetRecords} })
+		) =%>
+	</h2>
+</div>
+%
+<%= form_for current_route, method => 'post', name => 'UserDetail', id => 'UserDetail', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	%
+	<div class="mb-2">
+		<%= submit_button maketext('Assign All Sets to Current User'),
+			name => 'assignAll', class => 'btn btn-primary' =%>
+	</div>
+	% # Print warning
+	<div class="alert alert-danger p-1 mb-2">
+		<div class="mb-1"><%= maketext('Do not uncheck a set unless you know what you are doing.') %></div>
+		<div><%= maketext('There is NO undo for unassigning a set.') %></div>
+	</div>
+	<div class="alert alert-danger p-1 fs-6 mb-2">
+		<%= maketext(
+			'When you uncheck a homework set (and save the changes), you destroy all of the data for that set for '
+				. 'this student.   If you reassign the set, the student will receive a new version of each problem. '
+				. 'Make sure this is what you want to do before unchecking sets.'
+		) =%>
+	</div>
+	<div class="fs-6 mb-2">
+		<%= maketext(
+			'To change status (scores or grades) for this student for one set, click on the individual set link.') =%>
+	</div>
+	%
+	<div class="mb-2">
+		<%= submit_button maketext('Save changes'), name => 'save_button', class => 'btn btn-primary' =%>
+	</div>
+	%
+	<div class="table-responsive">
+		<table class="table table-bordered table-sm font-sm align-middle">
+			<tr>
+				<th class="text-center" colspan="3">
+					<%= maketext("Sets assigned to [_1] ([_2])", $userName, $userID) =%>
+				</th>
+			</tr>
+			<tr>
+				<th class="text-center"><%= maketext('Assigned') %></th>
+				<th><%= maketext("Edit set for [_1]", $userID) %></th>
+				<th><%= maketext('Dates') %></th>
+			</tr>
+			% for my $set (@{ $c->{setRecords} }) {
+				% my $setID = $set->set_id;
+				%
+				<%= include 'ContentGenerator/Instructor/UserDetail/set_row',
+					set       => $set,
+				   	userSet   => $c->{userSetRecords}{$setID},
+				   	mergedSet => $c->{mergedSetRecords}{$setID} =%>
+				%
+				% if ($set->assignment_type =~ /gateway/) {
+					% for (0 .. $#{ $c->{setVersions}{$setID} }) {
+						<%= include 'ContentGenerator/Instructor/UserDetail/set_row',
+							set       => $set,
+							userSet   => $c->{setVersions}{$setID}[$_],
+							mergedSet => $c->{mergedVersions}{$setID}[$_],
+							version   => $c->{setVersions}{$setID}[$_]->version_id =%>
+					% }
+				% }
+			% }
+		</table>
+	</div>
+	%
+	<%= submit_button maketext('Save changes'), name => 'save_button', class => 'btn btn-primary' =%>
+<% end =%>
+%
+% # Print warning
+<div class="alert alert-danger p-1 mt-3">
+	<%= maketext(
+		'There is NO undo for unassigning sets. Do not do so unless you know what you are doing!  When you unassign '
+			. 'sets by unchecking set names and clicking save, you destroy all of the data for those sets for '
+			. 'this student.'
+	) =%>
+</div>

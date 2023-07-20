@@ -1,0 +1,33 @@
+<div class="d-flex justify-content-between align-items-center">
+	<div>
+		% if (ref $configObject eq 'WeBWorK::ConfigObject::checkboxlist') {
+			<%== maketext($configObject->{doc}) =%>
+		% } else {
+			<%= label_for $configObject->{name}, begin =%><%== maketext($configObject->{doc}) =%><% end =%>
+		% }
+	</div>
+	<div>
+		<%= link_to '#', data => { bs_toggle => 'modal', bs_target => "#$configObject->{name}_help_modal" }, begin =%>
+			<i class="icon fas fa-question-circle" aria-hidden="true" data-alt="help"></i>
+		<% end =%>
+		<% content_for 'modal-dialog-area', begin =%>
+			<div class="modal fade" id="<%= "$configObject->{name}_help_modal" %>" tabindex="-1"
+				aria-labelledby="<%= "$configObject->{name}_help_title" %>" aria-hidden="true">
+				<div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h1 class="modal-title fs-4" id="<%= "$configObject->{name}_help_title" %>">
+								<%= maketext('Variable Documentation') %>
+							</h1>
+							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+						</div>
+						<div class="modal-body">
+							<h2 class="fs-4"><code>$<%= $configObject->{var} %></code></h2>
+							<div><%== $configObject->{doc2} || $configObject->{doc} %></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		<% end =%>
+	</div>
+</div>

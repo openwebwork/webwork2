@@ -1,0 +1,195 @@
+% use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
+%
+<%= form_for current_route, id => 'mail-main-form', method => 'post', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	%
+	% # Email settings
+	<div class="card mb-3">
+		<div class="card-body p-2">
+			<div class="row">
+				<div class="col-md-6 mb-2">
+					<div class="input-group input-group-sm mb-2">
+						<%= label_for 'openfilename', class => 'input-group-text', begin =%>
+							<strong><%= maketext('Message file:') %></strong>
+						<% end =%>
+						<%= select_field openfilename => [
+								[ None => '' ],
+								map { [ $_ => $_, $_ eq $c->{input_file} ? (selected => undef) : () ] }
+								$c->get_message_file_names
+							],
+							id => 'openfilename', class => 'form-select form-select-sm' =%>
+					</div>
+					<div class="input-group input-group-sm mb-2">
+						<%= label_for 'merge_file', class => 'input-group-text', begin =%>
+							<strong><%= maketext('Merge file:') %></strong>
+						<% end =%>
+						<%= select_field merge_file => [
+								[ None => '' ],
+								map { [ $_ => $_, $_ eq $c->{merge_file} ? (selected => undef) : () ] }
+								$c->get_merge_file_names
+							],
+							id => 'merge_file', class => 'form-select form-select-sm' =%>
+					</div>
+					<div class="row mb-1">
+						<%= label_for from => maketext('From:'),
+							class => 'col-sm-3 col-form-label col-form-label-sm' =%>
+						<div class="col-sm-9">
+							<%= text_field from => $c->{from}, id => 'from',
+								class => 'form-control form-control-sm' =%>
+						</div>
+					</div>
+					<div class="row mb-1">
+						<%= label_for replyTo => maketext('Reply-To:'),
+							class => 'col-sm-3 col-form-label col-form-label-sm' =%>
+						<div class="col-sm-9">
+							<%= text_field replyTo => $c->{replyTo}, id => 'replyTo',
+								class => 'form-control form-control-sm' =%>
+						</div>
+					</div>
+					<div class="row mb-2">
+						<%= label_for subject => maketext('Subject:'),
+							class => 'col-sm-3 col-form-label col-form-label-sm' =%>
+						<div class="col-sm-9">
+							<%= text_field subject => $c->{subject}, id => 'subject',
+								class => 'form-control form-control-sm' =%>
+						</div>
+					</div>
+					<div class="form-check">
+						<%= radio_button send_to => 'all_students', id => 'send_to_all', class => 'form-check-input' =%>
+						<%= label_for send_to_all => maketext('Send to all students'), class => 'form-check-label' =%>
+					</div>
+					<div class="form-check mb-2">
+						<%= radio_button send_to => 'studentID', id => 'send_to_selected', class => 'form-check-input',
+							checked => undef =%>
+							<%= label_for send_to_selected => maketext('Send to selected students'),
+								class => 'form-check-label' =%>
+					</div>
+					% if ($c->{preview_user}) {
+						<div class="input-group input-group-sm mb-2">
+							<%= submit_button maketext('Preview Message'),
+								name => 'previewMessage', class => 'btn btn-secondary btn-sm' =%>
+							<span class="input-group-text text-nowrap">
+								<strong><%= maketext('for') %></strong>&nbsp;
+								<span id="preview-user" data-default="<%=
+									$c->{defaultPreviewUser}->last_name . ', ' . $c->{defaultPreviewUser}->first_name
+									. ' (' . $c->{defaultPreviewUser}->user_id . ')' %>">
+									<%= $c->{preview_user}->last_name . ', ' . $c->{preview_user}->first_name
+										. ' (' . $c->{preview_user}->user_id . ')' =%>
+								</span>
+							</span>
+						</div>
+					% }
+					<div class="mb-2">
+						<%= submit_button maketext('Send Email'), name => 'sendEmail',
+							class => 'btn btn-secondary btn-sm d-inline w-auto' =%>
+					</div>
+					% # Insert a toast containing a list of available macros.
+					<div class="mb-0">
+						<button id="insertable-macros-btn" class="btn btn-secondary btn-sm" type="button">
+							<%= maketext('List of insertable macros') =%>
+						</button>
+					</div>
+					<div class="position-fixed top-0 end-0 p-3" style="z-index: 21">
+						<div id="insertable-macros" class="toast bg-white" role="alert" aria-live="polite"
+								aria-atomic="true">
+							<div class="toast-header">
+								<strong class="me-auto"><%= maketext('List of insertable macros') %></strong>
+								<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close">
+								</button>
+							</div>
+							<div class="toast-body">
+								<table class="table table-bordered table-sm align-middle w-auto mb-0 mx-auto">
+									<thead>
+										<tr><th><%= maketext('Macro') %></th><th><%= maketext('Value') %></th></tr>
+									</thead>
+									<tbody class="table-group-divider">
+										<tr><td>$SID</td><td><%= maketext('Student ID') %></td></tr>
+										<tr><td>$FN</td><td><%= maketext('First name') %></td></tr>
+										<tr><td>$LN</td><td><%= maketext('Last name') %></td></tr>
+										<tr><td>$SECTION</td><td><%= maketext('Section') %></td></tr>
+										<tr><td>$RECITATION</td><td><%= maketext('Recitation') %></td></tr>
+										<tr><td>$STATUS</td><td><%= maketext('Enrolled, Drop, etc.') %></td></tr>
+										<tr><td>$EMAIL</td><td><%= maketext('Email address') %></td></tr>
+										<tr><td>$LOGIN</td><td><%= maketext('Login') %></td></tr>
+										<tr><td>$COL[n]</td><td><%= maketext('nth column of merge file') %></td></tr>
+										<tr><td>$COL[-1]</td><td><%= maketext('Last column of merge file') %></td></tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-6 mb-0">
+					<div class="mb-2">
+						<strong><%= maketext('Students') %></strong>
+					</div>
+					<div class="mb-2">
+						<%= scrollingRecordList(
+							{
+								name                => 'classList',
+								controller          => $c,
+								default_sort        => 'lnfn',
+								default_format      => 'lnfn_uid',
+								default_filters     => ['all'],
+								refresh_button_name => maketext('Change Display Settings'),
+								attrs               => { size => 5, multiple => undef }
+							},
+							@{ $c->{ra_user_records} }
+						) =%>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	%
+	% # Show valid rows of selected merge file.
+	% if ($c->{merge_file}) {
+		<div class="mb-2"><%= maketext('Showing data from merge file: [_1]', $c->{merge_file}) =%></div>
+		% my $rh_merge_data = $c->read_scoring_file($c->{merge_file});
+		% my @rows;
+		% my $cols = 0;
+		% for my $user (@{ $c->{ra_user_records} }) {
+			% if ($rh_merge_data->{$user->student_id}) {
+				% my $this_row = $rh_merge_data->{$user->student_id};
+				% push(@rows, $this_row);
+				% $cols = scalar(@$this_row) if scalar(@$this_row) > $cols;
+			% }
+		% }
+		% if (@rows) {
+			<pre class="overflow-scroll" style="max-height: 100px;"><% =%>\
+				<%== join('', ' ', $c->data_format(1 .. $cols)) =%><br><% =%>\
+				<%== join('<br>', map { join('', ' ', $c->data_format2(@$_)) } @rows) =%>\
+			</pre>
+		% } else {
+			<div class="mb-3"><%= maketext('No merge data found.') =%></div>
+		% }
+	% }
+	%
+	<div class="mb-2">
+		<%= label_for 'email-body', class => 'form-label', begin =%>
+			<%= maketext("Email Body:") %><span class="required-field">*</span>
+		<% end =%>
+		<%= text_area body => $c->{r_text},
+			id => 'email-body', rows => $ce->{mail}{editor_window_rows}, class => 'form-control' %>
+	</div>
+	%
+	% # Save buttons
+	<div class="card">
+		<div class="card-body p-1 d-md-flex flex-wrap justify-content-evenly">
+			% if ($c->{input_file}) {
+				<div class="input-group input-group-sm w-auto m-1">
+					<%= submit_button maketext('Save'), name => 'saveMessage', class => 'btn btn-secondary btn-sm' =%>
+					<span class="input-group-text">
+						<strong><%= maketext('to') %></strong>&nbsp;<%= $c->{output_file} %>
+					</span>
+				</div>
+			% }
+			<div class="input-group input-group-sm w-auto m-1">
+				<%= submit_button maketext('Save as') . ':', name => 'saveAs', id => 'saveAs',
+					class => 'btn btn-secondary btn-sm' =%>
+				<%= text_field savefilename => $c->{output_file} ? $c->{output_file} : 'default.msg',
+					size => 20, class => 'form-control form-control-sm', 'aria-labelledby' => 'saveAs' =%>
+			</div>
+		</div>
+	</div>
+<% end =%>

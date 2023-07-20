@@ -1,0 +1,19 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for css => begin
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'achievements.css' }) =%>
+% end
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/AchievementItems/achievementitems.js'), defer => undef =%>
+% end
+%
+% # Exit if there is no global achievement data for this user.
+% unless (defined $c->{globalData}) {
+	<p><%= maketext(q{You don't have any Achievement data associated to you!}) =%></p>
+	% last;
+% }
+%
+<%= include 'ContentGenerator/Achievements/cheevobigbox', $c->getAchievementLevelData =%>
+<%= include 'ContentGenerator/Achievements/achievement_items', $c->getAchievementItemsData =%>
+<%= include 'ContentGenerator/Achievements/achievement_badges', $c->getAchievementsData =%>

@@ -27,8 +27,6 @@ END_TEXT
 $p = random(2,9,1);  # multiplier
 $p2 = ( $p % 2 == 0) ? 2*$p : $p;
 
-TEXT(beginproblem());
-
 # The link to the java applet is hard wired to use the java applet
 # served from the University of Rochester WeBWorK machine.
 # It is possible to set this up so that the java applet is served

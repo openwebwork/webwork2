@@ -1,0 +1,133 @@
+% use WeBWorK::Utils::CourseManagement qw(listCourses);
+%
+<h2><%= maketext('Add Course') %> <%= $c->helpMacro('AdminAddCourse') %></h2>
+%
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
+	%
+	<p><%= maketext(
+		'Specify an ID, title, and institution for the new course. The course ID may contain only letters, '
+			. 'numbers, hyphens, and underscores, and may have at most [_1] characters.',
+		$ce->{maxCourseIdLength}) %>
+	</p>
+	<div class="row mb-2">
+		<div class="col-lg-8 col-md-10">
+			<div class="form-floating mb-1">
+				<%= text_field add_courseID => '',
+					id          => 'add_courseID',
+					placeholder => '',
+					class       => 'form-control' =%>
+				<%= label_for add_courseID => maketext('Course ID') =%>
+			</div>
+			<div class="form-floating mb-1">
+				<%= text_field add_courseTitle => '',
+					id          => 'add_courseTitle',
+					placeholder => '',
+					class       => 'form-control' =%>
+				<%= label_for add_courseTitle => maketext('Course Title') =%>
+			</div>
+			<div class="form-floating mb-1">
+				<%= text_field add_courseInstitution => '',
+					id          => 'add_courseInstitution',
+					placeholder => '',
+					class       => 'form-control' =%>
+				<%= label_for add_courseInstitution => maketext('Institution') =%>
+			</div>
+		</div>
+	</div>
+	<div class="mb-3">
+		<div class="mb-1">
+			<%= maketext(
+				'To add the WeBWorK administrators to the new course (as administrators) check the box below.') =%>
+		</div>
+		<div class="form-check mb-2">
+			<label class="form-check-label">
+				<%= check_box 'add_admin_users' => 1, class => 'form-check-input' =%>
+				<%= maketext('Add WeBWorK administrators to new course') =%>
+			</label>
+		</div>
+	</div>
+	<div class="mb-2">
+		<%= maketext(
+			'To add an additional instructor to the new course, specify user information below. '
+				. 'The user ID may contain only numbers, letters, hyphens, periods (dots), commas,and underscores.'
+		) =%>
+	</div>
+	<div class="row mb-2">
+		<div class="col-lg-4 col-md-5 col-sm-6">
+			<div class="form-floating mb-1">
+				<%= text_field add_initial_userID => '',
+					id          => 'add_initial_userID',
+					placeholder => '',
+					class       => 'form-control' =%>
+				<%= label_for add_initial_userID => maketext('User ID') =%>
+			</div>
+			<div class="form-floating mb-1">
+				<%= password_field 'add_initial_password',
+					id          => 'add_initial_password',
+					placeholder => '',
+					class       => 'form-control' =%>
+				<%= label_for add_initial_password => maketext('Password') =%>
+			</div>
+			<div class="form-floating mb-1">
+				<%= password_field 'add_initial_confirmPassword',
+					id          => 'add_initial_confirmPassword',
+					placeholder => '',
+					class       => 'form-control' =%>
+				<%= label_for add_initial_confirmPassword => maketext('Confirm Password') =%>
+			</div>
+		</div>
+		<div class="col-lg-4 col-md-5 col-sm-6">
+			<div class="form-floating mb-1">
+				<%= text_field add_initial_firstName => '',
+					id          => 'add_initial_firstName',
+					placeholder => '',
+					class       => 'form-control' =%>
+				<%= label_for add_initial_firstName => maketext('First Name') =%>
+			</div>
+			<div class="form-floating mb-1">
+				<%= text_field add_initial_lastName => '',
+					id          => 'add_initial_lastName',
+					placeholder => '',
+					class       => 'form-control' =%>
+				<%= label_for add_initial_lastName => maketext('Last Name') %>
+			</div>
+			<div class="form-floating mb-1">
+				<%= text_field add_initial_email => '',
+					id          => 'add_initial_email',
+					placeholder => '',
+					class       => 'form-control' =%>
+				<%= label_for add_initial_email => maketext('Email Address') =%>
+			</div>
+		</div>
+	</div>
+	<div class="mb-1">
+		<%= maketext('To copy the templates and html folders from an existing course, select the course below.') =%>
+	</div>
+	<div class="row mb-3">
+		% my @existingCourses = sort { lc($a) cmp lc($b) } grep { $_ ne stash('courseID') } listCourses($ce);
+		% unshift(@existingCourses, sort { lc($a) cmp lc($b) } @{ $ce->{modelCoursesForCopy} });
+		%
+		<%= label_for add_templates_course => maketext('Copy from:'),
+			class => 'col-auto col-form-label fw-bold' =%>
+		<div class="col-auto">
+			<%= select_field add_templates_course => [
+					[ maketext('No Course') => '' ],
+					map { [ $_ => $_] } @existingCourses
+				],
+				id      => 'add_templates_course',
+				class   => 'form-select' =%>
+		</div>
+		<div class="mb-3">
+			<div class="form-check">
+				<label class="form-check-label">
+					<%= check_box 'add_config_file' => 1, class => 'form-check-input' =%>
+					<%= maketext('Also copy simple configuration file') =%>
+				</label>
+			</div>
+		</div>
+	</div>
+	<%= hidden_field add_dbLayout => 'sql_single' =%>
+	<%= submit_button maketext('Add Course'), name => 'add_course', class => 'btn btn-primary' =%>
+<% end =%>

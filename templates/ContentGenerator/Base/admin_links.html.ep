@@ -1,0 +1,55 @@
+<ul class="nav flex-column">
+	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('options') %></li>
+	% if ($authz->hasPermissions($userID, 'create_and_delete_courses')) {
+		<li class="list-group-item nav-item">
+			<%= $makelink->(
+				'set_list',
+				text   => maketext('Course Listings'),
+				active => !param('subDisplay') && $c->url_for =~ /admin$/ ? 1 : 0
+			) %>
+		</li>
+		% for (
+			% [
+			% 	'add_course',
+			% 	maketext('Add Courses'),
+			% 	{
+			% 		add_admin_users      => 1,
+			% 		add_config_file      => 1,
+			% 		add_dbLayout         => 'sql_single',
+			% 		add_templates_course => $ce->{siteDefaults}{default_templates_course} || ''
+			% 	}
+			% ],
+			% [ 'rename_course',        maketext('Rename Courses') ],
+			% [ 'delete_course',        maketext('Delete Courses') ],
+			% [ 'archive_course',       maketext('Archive Courses') ],
+			% [ 'unarchive_course',     maketext('Unarchive Courses') ],
+			% [ 'upgrade_course',       maketext('Upgrade Courses') ],
+			% [ 'hide_inactive_course', maketext('Hide Courses') ],
+			% [ 'manage_locations',     maketext('Manage Locations') ],
+		% )
+		% {
+			<li class="list-group-item nav-item">
+				<%= $makelink->(
+					'set_list',
+					text              => $_->[1],
+					systemlink_params => { subDisplay => $_->[0], %{ $_->[2] // {} } },
+					active            => (param('subDisplay') // '') eq $_->[0],
+				) %>
+			</li>
+		% }
+		<li class="list-group-item nav-item"><%= $makelink->('instructor_user_list') %></li>
+		<li class="list-group-item nav-item"><%= $makelink->('instructor_mail_merge') %></li>
+		<li class="list-group-item nav-item">
+			<%= $makelink->(
+				'instructor_file_manager',
+				systemlink_params => { pwd => '.', unpack => 0, autodelete => 0 }
+			) %>
+		</li>
+		<li class="list-group-item nav-item">
+			<%= $c->helpMacro('admin_links', { label => maketext('Help'), class => 'nav-link' }) =%>
+		</li>
+		<li class="list-group-item nav-item">
+			<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' =%>
+		</li>
+	% }
+</ul>

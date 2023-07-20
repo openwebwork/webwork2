@@ -1,0 +1,30 @@
+% last unless $c->{is_pg};
+%
+% my $allSetNames = [ map { $_->[0] =~ s/^set|\.def$//gr } $db->listGlobalSetsWhere({}, 'set_id') ];
+%
+<div>
+	<div class="row align-items-center mb-2">
+		<%= label_for action_add_problem_target_set_id => maketext('Add to what set?'),
+			class => 'col-form-label col-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.add_problem.target_set' => [
+					map { [
+						format_set_name_display($_) => $_, $_ eq ($c->{setID} // '') ? (selected => undef) : ()
+					] } @$allSetNames
+				],
+				id => 'action_add_problem_target_set_id', class => 'form-select form-select-sm d-inline w-auto',
+				dir => 'ltr' =%>
+		</div>
+	</div>
+	<div class="row align-items-center mb-2">
+		<%= label_for action_add_problem_file_type_id => maketext('Add as what filetype?'),
+			class => 'col-form-label col-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.add_problem.file_type' => [
+					map { [ $_ =~ s/_/ /gr => $_, $c->{file_type} eq $_ ? (selected => undef) : () ] }
+					('problem', 'set_header', 'hardcopy_header')
+				],
+				id => 'action_add_problem_file_type_id', class => 'form-select form-select-sm d-inline w-auto' =%>
+		</div>
+	</div>
+</div>

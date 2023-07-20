@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,8 @@ use strict;
 use warnings;
 use Carp;
 use XML::Parser;
-use XML::Parser::EasyTree; $XML::Parser::EasyTree::Noempty = 1;
+use XML::Parser::EasyTree;
+$XML::Parser::EasyTree::Noempty = 1;
 use XML::Writer;
 use WeBWorK::Utils qw();
 
@@ -145,9 +146,9 @@ sub dbExport {
 	my (%options) = @_;
 
 	croak "options: 'xml' required.\n" unless exists $options{xml};
-	croak "options: 'db' required.\n" unless exists $options{db};
+	croak "options: 'db' required.\n"  unless exists $options{db};
 
-	my @tables = exists $options{tables} ? @{$options{tables}} : ();
+	my @tables = exists $options{tables} ? @{ $options{tables} } : ();
 	@tables = @TABLE_ORDER unless @tables;
 	my %tables;
 	@tables{@tables} = ();
@@ -182,10 +183,10 @@ sub dbExport {
 			foreach my $field ($Record->FIELDS) {
 				$writer->dataElement($field, $Record->$field);
 			}
-			$writer->endTag; # user
+			$writer->endTag;    # user
 		}
-		$writer->endTag; # users
-		delete $tables{user}; # finished with that table
+		$writer->endTag;         # users
+		delete $tables{user};    # finished with that table
 	}
 
 	if (exists $tables{password}) {
@@ -198,10 +199,10 @@ sub dbExport {
 			foreach my $field ($Record->FIELDS) {
 				$writer->dataElement($field, $Record->$field);
 			}
-			$writer->endTag; # password
+			$writer->endTag;    # password
 		}
-		$writer->endTag; # passwords
-		delete $tables{password}; # finished with that table
+		$writer->endTag;             # passwords
+		delete $tables{password};    # finished with that table
 	}
 
 	if (exists $tables{permission}) {
@@ -214,10 +215,10 @@ sub dbExport {
 			foreach my $field ($Record->FIELDS) {
 				$writer->dataElement($field, $Record->$field);
 			}
-			$writer->endTag; # permission
+			$writer->endTag;    # permission
 		}
-		$writer->endTag; # permissions
-		delete $tables{permission}; # finished with that table
+		$writer->endTag;               # permissions
+		delete $tables{permission};    # finished with that table
 	}
 
 	if (exists $tables{key}) {
@@ -230,10 +231,10 @@ sub dbExport {
 			foreach my $field ($Record->FIELDS) {
 				$writer->dataElement($field, $Record->$field);
 			}
-			$writer->endTag; # key
+			$writer->endTag;    # key
 		}
-		$writer->endTag; # keys
-		delete $tables{key}; # finished with that table
+		$writer->endTag;        # keys
+		delete $tables{key};    # finished with that table
 	}
 
 	if (exists $tables{set}) {
@@ -246,10 +247,10 @@ sub dbExport {
 			foreach my $field ($Record->FIELDS) {
 				$writer->dataElement($field, $Record->$field);
 			}
-			$writer->endTag; # set
+			$writer->endTag;    # set
 		}
-		$writer->endTag; # sets
-		delete $tables{set}; # finished with that table
+		$writer->endTag;        # sets
+		delete $tables{set};    # finished with that table
 	}
 
 	if (exists $tables{problem}) {
@@ -264,17 +265,17 @@ sub dbExport {
 			# BEGIN new
 			my @Problems = $db->getAllGlobalProblems($setID);
 			foreach my $Record (@Problems) {
-			# END new
+				# END new
 				next unless $Record;
 				$writer->startTag("problem");
 				foreach my $field ($Record->FIELDS) {
 					$writer->dataElement($field, $Record->$field);
 				}
-				$writer->endTag; # problem
+				$writer->endTag;    # problem
 			}
 		}
-		$writer->endTag; # problems
-		delete $tables{problem}; # finished with that table
+		$writer->endTag;            # problems
+		delete $tables{problem};    # finished with that table
 	}
 
 	if (exists $tables{set_user}) {
@@ -289,11 +290,11 @@ sub dbExport {
 				foreach my $field ($Record->FIELDS) {
 					$writer->dataElement($field, $Record->$field);
 				}
-				$writer->endTag; # set_user
+				$writer->endTag;    # set_user
 			}
 		}
-		$writer->endTag; # set_users
-		delete $tables{set_user}; # finished with that table
+		$writer->endTag;             # set_users
+		delete $tables{set_user};    # finished with that table
 	}
 
 	if (exists $tables{problem_user}) {
@@ -310,24 +311,24 @@ sub dbExport {
 				# BEGIN new
 				my @Problems = $db->getAllUserProblems($userID, $setID);
 				foreach my $Record (@Problems) {
-				# END new
+					# END new
 					next unless $Record;
 					$writer->startTag("problem_user");
 					foreach my $field ($Record->FIELDS) {
-                        # filter out the characters xml don't like
-                        my $t = $Record->$field;
-                        $t =~ s/([\x00-\x08\x0B-\x0C\x0E-\x1F])//g;
+						# filter out the characters xml don't like
+						my $t = $Record->$field;
+						$t =~ s/([\x00-\x08\x0B-\x0C\x0E-\x1F])//g;
 						$writer->dataElement($field, $t);
 					}
-					$writer->endTag; # problem_user
+					$writer->endTag;    # problem_user
 				}
 			}
 		}
-		$writer->endTag; # problem_users
-		delete $tables{problem_user}; # finished with that table
+		$writer->endTag;                 # problem_users
+		delete $tables{problem_user};    # finished with that table
 	}
 
-	$writer->endTag; # webwork
+	$writer->endTag;                     # webwork
 	$writer->end;
 
 	foreach my $table (keys %tables) {
@@ -379,11 +380,11 @@ sub dbImport {
 	my (%options) = @_;
 
 	croak "options: 'xml' required.\n" unless exists $options{xml};
-	croak "options: 'db' required.\n" unless exists $options{db};
+	croak "options: 'db' required.\n"  unless exists $options{db};
 
 	my $replace = exists $options{conflict} && $options{conflict} eq "replace";
 
-	my @tables = exists $options{tables} ? @{$options{tables}} : ();
+	my @tables = exists $options{tables} ? @{ $options{tables} } : ();
 	@tables = @TABLE_ORDER unless @tables;
 	my %tables;
 	@tables{@tables} = ();
@@ -391,7 +392,7 @@ sub dbImport {
 	my ($parser, $tree);
 	eval {
 		$parser = new XML::Parser(Style => "EasyTree");
-		$tree = $parser->parse($options{xml});
+		$tree   = $parser->parse($options{xml});
 	};
 	if ($@) {
 		return "Failed to parse XML document: $@";
@@ -408,16 +409,18 @@ sub dbImport {
 		return "Version mismatch: XML document has no version attribute.";
 	}
 	unless ($root_element->{attrib}->{version} eq $DB_VERSION) {
-		return "Version mismatch: XML document has version \""
-			. $root_element->{attrib}->{version} . "\" (expected $DB_VERSION).";
+		return
+			"Version mismatch: XML document has version \""
+			. $root_element->{attrib}->{version}
+			. "\" (expected $DB_VERSION).";
 	}
 
 	my @nonfatal_errors;
 
-	TABLE: foreach my $table (@TABLE_ORDER) {
-		next TABLE unless exists $tables{$table}; # skip unrequested tables
+TABLE: foreach my $table (@TABLE_ORDER) {
+		next TABLE unless exists $tables{$table};    # skip unrequested tables
 
-		my ($table_element) = findNodes($root_element->{content}, "e", $table."s");
+		my ($table_element) = findNodes($root_element->{content}, "e", $table . "s");
 		unless ($table_element) {
 			push @nonfatal_errors, "Format error: '${table}s' element not found.";
 			next TABLE;
@@ -437,7 +440,8 @@ sub dbImport {
 					if ($replace) {
 						eval { $options{db}->$put_sub($Record) };
 						if ($@) {
-							push @nonfatal_errors, "$table record with @{[$Record->idsToString]} exists, failed to replace: $@";
+							push @nonfatal_errors,
+								"$table record with @{[$Record->idsToString]} exists, failed to replace: $@";
 						}
 					} else {
 						push @nonfatal_errors, "$table record with @{[$Record->idsToString]} exists, skipping";
@@ -457,7 +461,8 @@ sub findNodes {
 	my @found;
 	foreach my $node (@$tree) {
 		if ((not defined $type or $node->{type} eq $type)
-				and (not defined $name or $node->{name} eq $name)) {
+			and (not defined $name or $node->{name} eq $name))
+		{
 			push @found, $node;
 		}
 	}
@@ -467,9 +472,9 @@ sub findNodes {
 sub element2record {
 	my ($element, $Record) = @_;
 	my %fields;
-	@fields{$Record->FIELDS} = ();
+	@fields{ $Record->FIELDS } = ();
 
-	foreach my $field_element (@{$element->{content}}) {
+	foreach my $field_element (@{ $element->{content} }) {
 		my $type = $field_element->{type};
 		my $name = $field_element->{name};
 		unless ($type eq "e") {

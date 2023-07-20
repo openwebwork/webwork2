@@ -6,16 +6,15 @@
 #
 ######################################################################
 
-
 #loadMacros("PGcourse.pl");
 
 #
 #  Special use of CARET to have it work in non-math mode
 #
 $CARET = MODES(
-  TeX => '\hbox{\texttt{\char94}}',
-  Latex2HTML => '^',
-  HTML => '^'
+	TeX        => '\hbox{\texttt{\char94}}',
+	Latex2HTML => '^',
+	HTML       => '^'
 );
 
 #
@@ -24,36 +23,33 @@ $CARET = MODES(
 #  recoding the problems themselves).
 #
 sub student {
-  my $message = shift;
-  MODES(
-    TeX => '\leavevmode\hbox{\texttt{'.$message.'}}',
-    Latex2HTML =>
-       $bHTML.'<NOBR><TT>'.$eHTML.$message.$bHTML.'</TT></NOBR>'.$eHTML,
-    HTML => '<NOBR><TT>'.$message.'</TT></NOBR>'
-  );
+	my $message = shift;
+	MODES(
+		TeX        => '\leavevmode\hbox{\texttt{' . $message . '}}',
+		Latex2HTML => $bHTML . '<NOBR><TT>' . $eHTML . $message . $bHTML . '</TT></NOBR>' . $eHTML,
+		HTML       => '<NOBR><TT>' . $message . '</TT></NOBR>'
+	);
 }
 
 sub computer {
-  my $message = shift;
-  MODES(
-    TeX => '\hbox{\texttt{'.$message.'}}',
-    Latex2HTML =>
-       $bHTML.'<NOBR><TT>'.$eHTML.$message.$bHTML.'</TT></NOBR>'.$eHTML,
-    HTML => '<NOBR><TT>'.$message.'</TT></NOBR>'
-  );
+	my $message = shift;
+	MODES(
+		TeX        => '\hbox{\texttt{' . $message . '}}',
+		Latex2HTML => $bHTML . '<NOBR><TT>' . $eHTML . $message . $bHTML . '</TT></NOBR>' . $eHTML,
+		HTML       => '<NOBR><TT>' . $message . '</TT></NOBR>'
+	);
 }
 
 #
 #  This prints things we need to fill in yet in red
 #
 sub moreWork {
-  my $message = shift;
-  MODES(
-    TeX => '{\sl ' . $message . '}',
-    Latex2HTML => $bHTML . '<FONT COLOR="#A00000">' . $eHTML .
-      $message . $bHTML . '</FONT>' . $eHTML,
-    HTML => '<FONT COLOR="#A00000">' . $message . '</FONT>'
-  );
+	my $message = shift;
+	MODES(
+		TeX        => '{\sl ' . $message . '}',
+		Latex2HTML => $bHTML . '<FONT COLOR="#A00000">' . $eHTML . $message . $bHTML . '</FONT>' . $eHTML,
+		HTML       => '<FONT COLOR="#A00000">' . $message . '</FONT>'
+	);
 }
 
 #
@@ -61,15 +57,15 @@ sub moreWork {
 #  working on.
 #
 $BCOMMENT = MODES(
-  TeX => '{\footnotesize\it',
-  Latex2HTML => $bHTML.'<BLOCKQUOTE><SMALL><I><FONT COLOR="#A00000">'.$eHTML,
-  HTML => '<BLOCKQUOTE><SMALL><I><FONT COLOR="#A00000">'
+	TeX        => '{\footnotesize\it',
+	Latex2HTML => $bHTML . '<BLOCKQUOTE><SMALL><I><FONT COLOR="#A00000">' . $eHTML,
+	HTML       => '<BLOCKQUOTE><SMALL><I><FONT COLOR="#A00000">'
 );
 
 $ECOMMENT = MODES(
-  TeX => '}',
-  Latex2HTML => $bHTML.'</FONT></I></SMALL></BLOCKQUOTE>'.$eHTML,
-  HTML => '</FONT></I></SMALL></BLOCKQUOTE>'
+	TeX        => '}',
+	Latex2HTML => $bHTML . '</FONT></I></SMALL></BLOCKQUOTE>' . $eHTML,
+	HTML       => '</FONT></I></SMALL></BLOCKQUOTE>'
 );
 
 # $BCOMMENT = MODES(
@@ -77,102 +73,114 @@ $ECOMMENT = MODES(
 #     Latex2HTML => $bHTML.'<!-- '.$eHTML,
 #     HTML => '<!-- '
 # );
-# 
+#
 # $ECOMMENT = MODES(
 #     TeX => '\fi',
 #     Latex2HTML => $bHTML.' -->'.$eHTML,
 #     HTML => ' -->'
 # );
 
-
 #
 #  Hack to get better spacing in HTML_tth math mode but without
 #  messing up the spacing in other modes.
 #
 $SP = MODES(
-   TeX => ' ', Latex2HTML => ' ',
-   HTML => ' ', HTML_tth => '\ ',
-   HTML_jsMath => ' ', HTML_dpng => ' ',
+	TeX         => ' ',
+	Latex2HTML  => ' ',
+	HTML        => ' ',
+	HTML_tth    => '\ ',
+	HTML_jsMath => ' ',
+	HTML_dpng   => ' ',
 );
 
-
 #
-#  Special table macros for questions that have 
+#  Special table macros for questions that have
 #  displayed math expressions equal to an answer rule,
 #  with an accompanying explanation on a separate line.
 #
 
 sub BeginExamples {
-  return "" if ($displayMode eq "TeX");
-  BeginTable(@_);
+	return "" if ($displayMode eq "TeX");
+	BeginTable(@_);
 }
 
 sub EndExamples {
-  return "" if ($displayMode eq "TeX");
-  EndTable();
+	return "" if ($displayMode eq "TeX");
+	EndTable();
 }
 
 @ExampleDefaults = (ans_rule_len => 40, ans_rule_height => 1);
 
 sub BeginExample {
-  my $math = shift;
-  my $ans = shift;
-  my %options = (@ExampleDefaults, @_);
-  my ($cols,$rows) = ($options{ans_rule_len},$options{ans_rule_height});
-  my $rule;
+	my $math    = shift;
+	my $ans     = shift;
+	my %options = (@ExampleDefaults, @_);
+	my ($cols, $rows) = ($options{ans_rule_len}, $options{ans_rule_height});
+	my $rule;
 
-  if ($rows == 1) {$rule = ans_rule($cols)}
-    else {$rule = ans_box($rows,$cols)}
-  ANS($ans);
+	if   ($rows == 1) { $rule = ans_rule($cols) }
+	else              { $rule = ans_box($rows, $cols) }
+	ANS($ans);
 
-  #
-  #  HTML_tth puts an unwanted <BR> at the beginning,
-  #  and uses a centered table.  Remove the <BR> and
-  #  align the table to the right.
-  #
-  if ($displayMode eq "HTML_tth") {
-    $math = trimString(EV2('\['.$math.'\]'));
-    $math =~ s!<br clear="all" />!!;
-    $math =~ s!table align="center"!table align="right"!;
-  } elsif ($displayMode eq "HTML") {
-    $math = '\('.$math.'\)'
-  } elsif ($displayMode =~ m/^HTML/) {
-    $math = '\(\displaystyle '.$math.'\)'
-  }
+	#
+	#  HTML_tth puts an unwanted <BR> at the beginning,
+	#  and uses a centered table.  Remove the <BR> and
+	#  align the table to the right.
+	#
+	if ($displayMode eq "HTML_tth") {
+		$math = trimString(EV2('\[' . $math . '\]'));
+		$math =~ s!<br clear="all" />!!;
+		$math =~ s!table align="center"!table align="right"!;
+	} elsif ($displayMode eq "HTML") {
+		$math = '\(' . $math . '\)';
+	} elsif ($displayMode =~ m/^HTML/) {
+		$math = '\(\displaystyle ' . $math . '\)';
+	}
 
-  MODES(
-    TeX => "\n".'\['.$math.'=\hbox to 8em{'.$rule.'}\]',
-    Latex2HTML => $bHTML.'<TR><TD ALIGN="RIGHT">'.$eHTML.
-      '\(\displaystyle '.$math.'\)'.$bHTML.'</TD><TD>&nbsp;=&nbsp;&nbsp;</TD>'.
-      '<TD>'.$eHTML.$rule.$bHTML.'</TD></TR>'.
-      '<TR><TD></TD><TD></TD><TD>'.$eHTML,
-    HTML => 
-      '<TR><TD ALIGN="RIGHT">'.$math.'</TD><TD>&nbsp;=&nbsp;&nbsp;</TD>'.
-      '<TD>'.$rule.'</TD></TR><TR><TD COLSPAN="2"></TD><TD>'
-  );
+	MODES(
+		TeX        => "\n" . '\[' . $math . '=\hbox to 8em{' . $rule . '}\]',
+		Latex2HTML => $bHTML
+			. '<TR><TD ALIGN="RIGHT">'
+			. $eHTML
+			. '\(\displaystyle '
+			. $math . '\)'
+			. $bHTML
+			. '</TD><TD>&nbsp;=&nbsp;&nbsp;</TD>' . '<TD>'
+			. $eHTML
+			. $rule
+			. $bHTML
+			. '</TD></TR>'
+			. '<TR><TD></TD><TD></TD><TD>'
+			. $eHTML,
+		HTML => '<TR><TD ALIGN="RIGHT">'
+			. $math
+			. '</TD><TD>&nbsp;=&nbsp;&nbsp;</TD>' . '<TD>'
+			. $rule
+			. '</TD></TR><TR><TD COLSPAN="2"></TD><TD>'
+	);
 }
 
 sub EndExample {
-  MODES(
-    TeX => "\n",
-    Latex2HTML => $bHTML.'<BR><BR></TD></TR>'.$eHTML,
-    HTML => '<BR><BR></TD></TR>'
-  );
+	MODES(
+		TeX        => "\n",
+		Latex2HTML => $bHTML . '<BR><BR></TD></TR>' . $eHTML,
+		HTML       => '<BR><BR></TD></TR>'
+	);
 }
 
 sub ExampleRule {
-  MODES(
-    TeX => '\par',
-    Latex2HTML => $bHTML.'<TR><TD COLSPAN="3"><HR></TD></TR>'.$eHTML,
-    HTML => '<TR><TD COLSPAN="3"><HR></TD></TR>'
-  );
+	MODES(
+		TeX        => '\par',
+		Latex2HTML => $bHTML . '<TR><TD COLSPAN="3"><HR></TD></TR>' . $eHTML,
+		HTML       => '<TR><TD COLSPAN="3"><HR></TD></TR>'
+	);
 }
 
 #
 #  Produce a TeX version and an answer checker for the formula
 #
-sub DisplayQA {my $f = shift; return (DMATH($f->TeX),$f->cmp)}
-sub QA {my $f = shift; return ($f->TeX,$f->cmp)}
+sub DisplayQA { my $f = shift; return (DMATH($f->TeX), $f->cmp) }
+sub QA        { my $f = shift; return ($f->TeX,        $f->cmp) }
 
 ##################################################
 #
@@ -181,13 +189,12 @@ sub QA {my $f = shift; return ($f->TeX,$f->cmp)}
 #
 
 sub MathIMG {
-  my ($img,$text,$tex) = @_;
-  my $useTeX = MODES(TeX => 1, Latex2HTML => 0, HTML => 0, HTML_tth => 0, HTML_dpng => 1);
-  return '\('.$tex.'\)' if $useTeX;
-  $img = alias($img);
-  return qq{<IMG SRC="$img" BORDER="0" ALIGN="MIDDLE" ALT="$text">};
+	my ($img, $text, $tex) = @_;
+	my $useTeX = MODES(TeX => 1, Latex2HTML => 0, HTML => 0, HTML_tth => 0, HTML_dpng => 1);
+	return '\(' . $tex . '\)' if $useTeX;
+	$img = alias($img);
+	return qq{<IMG SRC="$img" BORDER="0" ALIGN="MIDDLE" ALT="$text">};
 }
-
 
 ##################################################
 #
@@ -195,35 +202,34 @@ sub MathIMG {
 #  This is used in the tutorial to give students
 #  credit for reading a problem (even if it doesn't
 #  ask any questions).
-#  
+#
 sub forgiving_grader {
-    my $rh_evaluated_answers = shift;
-    my $rh_problem_state = shift;
-    my %form_options = @_;
-    my %evaluated_answers = %{$rh_evaluated_answers};
-    my %problem_state =	%{$rh_problem_state};
-    
-    my %problem_result = (
-       score  => 1,   # always return 1
-       errors => '',
-       type   => 'forgiving_grader',
-       msg    => '',
-    );
-    
-    return(\%problem_result,\%problem_state)
-      if (!$form_options{answers_submitted});
-    
-    $problem_state{recorded_score} = $problem_result{score};
-    $problem_state{num_of_correct_ans}++;
-    
-    (\%problem_result, \%problem_state);
+	my $rh_evaluated_answers = shift;
+	my $rh_problem_state     = shift;
+	my %form_options         = @_;
+	my %evaluated_answers    = %{$rh_evaluated_answers};
+	my %problem_state        = %{$rh_problem_state};
+
+	my %problem_result = (
+		score  => 1,                    # always return 1
+		errors => '',
+		type   => 'forgiving_grader',
+		msg    => '',
+	);
+
+	return (\%problem_result, \%problem_state)
+		if (!$form_options{answers_submitted});
+
+	$problem_state{recorded_score} = $problem_result{score};
+	$problem_state{num_of_correct_ans}++;
+
+	(\%problem_result, \%problem_state);
 }
 
 ##################################################
 #
 #  Syntactic sugar to avoid ugly ~~& construct in PG.
 #
-sub install_forgiving_grader {install_problem_grader(\&forgiving_grader)}
-
+sub install_forgiving_grader { install_problem_grader(\&forgiving_grader) }
 
 1;

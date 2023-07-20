@@ -6,14 +6,11 @@
 	CAPA_Graphics_URL
 	CAPA_MCTools
 	CAPA_Tools
-	cgiDirectory
-	cgiURL
-	classDirectory
 	courseName
 	courseScriptsDirectory
--	displayHintsQ
+-	showHints
 	displayMode
--	displaySolutionsQ
+-	showSolutions
 	dueDate
 -	externalDvipngPath
 	externalGif2EpsPath
@@ -22,7 +19,6 @@
 	externalPng2EpsPath
 	externalTTHPath
 	fileName
-	formatedDueDate
 	formattedAnswerDate
 	formattedDueDate
 	formattedOpenDate
@@ -57,12 +53,10 @@
 -	PROBLEM_GRADER_TO_USE
 	probNum
 	psvn
-	psvnNumber
 	questionNumber
 -	QUIZ_PREFIX
 -	recitationName
 -	recitationNumber
-	scriptDirectory
 	sectionName
 	sectionNumber
 	sessionKey
@@ -73,5 +67,4 @@
 	tempDirectory
 	templateDirectory
 	tempURL
--	texDisposition
 	webworkDocsURL

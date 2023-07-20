@@ -1,0 +1,105 @@
+% unless ($authz->hasPermissions(param('user'), 'edit_achievements')) {
+	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to edit achievements.') %></div>
+	% last;
+% }
+%
+% my $achievementID = stash('achievementID');
+%
+<%= form_for current_route, method => 'post', name => 'user-achievement-form', id => 'user-achievement-form', begin =%>
+	% # Assign to everyone message
+	<div class="my-2">
+		<%= submit_button maketext('Assign to All Current Users'), name => 'assignToAll', class => 'btn btn-primary' =%>
+		<i><%= maketext('This action will not overwrite existing users.') %></i>
+	</div>
+	<div class="alert alert-danger p-1 mb-2">
+		<div class="mb-1"><%= maketext('Do not uncheck students, unless you know what you are doing.') =%></div>
+		<div><%= maketext('There is NO undo for unassigning students.') %></div>
+	</div>
+	<p>
+		<%== maketext(
+			q{When you unassign by unchecking a student's name, you destroy all of the data for achievement [_1] }
+				. 'for this student. Make sure this is what you want to do.',
+			tag('b', $achievementID)
+		) =%>
+	</p>
+	%
+	% # Output table
+	<div class="table-responsive">
+		<table class="table table-sm table-bordered font-sm align-middle w-auto">
+			<thead>
+				<tr>
+					<th class="text-center"><%= maketext('Assigned') %></th>
+					<th><%= maketext('Login Name') %></th>
+					<th><%= maketext('Student Name') %></th>
+					<th class="text-center"><%= maketext('Section') %></th>
+					<th class="text-center" id="earned_header"><%= maketext('Earned') %></th>
+					<th class="text-center" id="counter_header"><%= maketext('Counter') %></th>
+				</tr>
+			</thead>
+			<tbody class="table-group-divider">
+				% # Output row for user
+				% for my $userRecord (@$userRecords) {
+					% my $statusClass     = $ce->status_abbrev_to_name($userRecord->status) || '';
+					% my $user            = $userRecord->user_id;
+					% my $userAchievement = $db->getUserAchievement($user, $achievementID);
+					% my $prettyName      = $userRecord->last_name . ', ' . $userRecord->first_name;
+					%
+					<tr>
+						<td class="text-center">
+							<input type="checkbox" name="selected" id="<%= $user %>.assigned" value="<%= $user %>"
+								class="form-check-input" <%= defined $userAchievement ? 'checked' : '' %>>
+						</td>
+						<td><%= label_for "$user.assigned" => $user %></td>
+						<td><%= $prettyName %></td>
+						<td class="text-center"><%= $userRecord->section %></td>
+						% if (defined $userAchievement) {
+							<td class="text-center">
+								<%= check_box "$user.earned" => '1',
+									'aria-labelledby' => 'earned_header',
+									class             => 'form-check-input',
+									(ref $userAchievement ? $userAchievement->earned : 0) ? (checked => undef) : () =%>
+							</td>
+							<td class="text-center">
+								<%= text_field "$user.counter" => ref $userAchievement ? $userAchievement->counter : 0,
+										'aria-labelledby' => 'counter_header',
+										size              => 6,
+										class             => 'form-control form-control-sm' =%>
+							</td>
+						% } else {
+							<td></td><td></td>
+						% }
+					</tr>
+				% }
+			</tbody>
+		</table>
+	</div>
+	%
+	<%= $c->hidden_authen_fields =%>
+	<%= submit_button maketext('Save'), name => 'assignToSelected', class => 'btn btn-primary' =%>
+	%
+	% # Output unassign from all button.
+	<hr>
+	<div>
+		<div class="alert alert-danger p-1 mb-3">
+			<%= maketext(
+				'There is NO undo for this function.  Do not use it unless you know what you are doing!  '
+					. 'When you unassign a student using this button, or by unchecking their name, you destroy all '
+					. 'of the data for achievement [_1] for this student.',
+				$achievementID
+			) =%>
+		</div>
+		<div class="d-flex align-items-center">
+			<%= submit_button maketext('Unassign from All Users'),
+				name => 'unassignFromAll', class => 'btn btn-primary' =%>
+			<label class="form-check-label">
+				<%= radio_button unassignFromAllSafety => 0, checked => undef, class => 'form-check-input mx-1' =%>
+				<%= maketext('Read only') =%>
+			</label>
+			<label class="form-check-label">
+				<%= radio_button unassignFromAllSafety => 1, class => 'form-check-input mx-1' =%>
+				<%= maketext('Allow unassign') =%>
+			</label>
+		</div>
+	</div>
+	<hr>
+<% end =%>

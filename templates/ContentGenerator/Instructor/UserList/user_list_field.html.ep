@@ -1,0 +1,56 @@
+% my $fieldName = 'user.' . $user->user_id . '.' . $field;
+% my $properties = $fieldProperties->{$field};
+%
+% if ($properties->{type} eq 'text') {
+	% my $value = $user->$field;
+	% if ($c->{editMode}) {
+		<%= text_field $fieldName => $value, id => $fieldName . '_id', size => $properties->{size},
+			class => 'form-control form-control-sm d-inline w-auto',
+			'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header' =%>
+	% } else {
+		% if (!$c->{passwordMode} && $field eq 'email_address') {
+			% if ($value =~ /\S/) {
+				<%= link_to maketext('Email') => "mailto:$value" =%>
+			% }
+		% } else {
+			<%= $value =%>
+		% }
+	% }
+% } elsif ($properties->{type} eq 'status') {
+	% my $value = $user->$field;
+	% my $status_name = $ce->status_abbrev_to_name($value);
+	% if ($c->{editMode}) {
+		% if (defined $status_name) {
+			% $value = ($ce->status_name_to_abbrevs($status_name))[0];
+		% }
+		<%= select_field $fieldName => [
+				map { [
+					maketext($_) => $ce->{statuses}{$_}{abbrevs}[0],
+					$ce->{statuses}{$_}{abbrevs}[0] eq $value ? (selected => undef) : ()
+				] } keys %{ $ce->{statuses} }
+			],
+			id => $fieldName . '_id', class => 'form-select form-select-sm w-auto flex-grow-0',
+			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header' =%>
+	% } else {
+		<%= $status_name ? maketext($status_name) : $value =%>
+	% }
+% } elsif ($properties->{type} eq 'permission') {
+	% # Use the permission that was saved in the user record in pre_header_initialize.
+	% my $value = $user->{permission};
+	% if ($c->{editMode}) {
+		% my @values;
+		% for my $role (sort { $ce->{userRoles}{$a} <=> $ce->{userRoles}{$b} } keys %{ $ce->{userRoles} }) {
+			% next unless $ce->{userRoles}{$role} <= $db->getPermissionLevel(param('user'))->permission;
+			% push(@values, [
+				% maketext($role) => $ce->{userRoles}{$role},
+				% $value eq $ce->{userRoles}{$role} ? (selected => undef) : ()
+			% ]);
+		% }
+		%
+		<%= select_field $fieldName => \@values,
+			id => $fieldName . '_id', class => 'form-select form-select-sm w-auto flex-grow-0',
+			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header' =%>
+	% } else {
+		<%= maketext((grep { $ce->{userRoles}{$_} eq $value } keys %{ $ce->{userRoles} })[0]) %>
+	% }
+% }

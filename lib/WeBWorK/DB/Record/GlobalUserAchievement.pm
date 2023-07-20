@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,14 +27,11 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		user_id              => { type => "TINYBLOB NOT NULL", key => 1 },
+		user_id              => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		achievement_points   => { type => "INT" },
 		next_level_points    => { type => "INT" },
 		level_achievement_id => { type => "VARCHAR(100)" },
-		# VARCHAR(1024) is only supported by MySQL version 5.0.3 and
-		# later, but it makes freezing and thawing safer to have
-		# more available characters
-		frozen_hash => { type => "VARCHAR(1024)" },
+		frozen_hash          => { type => "MEDIUMBLOB" },
 	);
 }
 

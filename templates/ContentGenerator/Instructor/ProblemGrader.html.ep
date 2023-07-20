@@ -1,0 +1,244 @@
+% use WeBWorK::Utils qw(sortByName wwRound getAssetURL);
+% use WeBWorK::PG;
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/RenderProblem/renderproblem.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/ProblemGrader/problemgrader.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
+	<%= javascript getAssetURL($ce, 'js/Essay/essay.js'), defer => undef =%>
+	% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
+		<%= javascript getAssetURL($ce, 'node_modules/mathquill/dist/mathquill.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/MathQuill/mqeditor.js'), defer => undef =%>
+	% } elsif ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView') {
+		<%= javascript getAssetURL($ce, "js/MathView/$ce->{pg}{options}{mathViewLocale}"), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/MathView/mathview.js'), defer => undef =%>
+	% }
+% end
+%
+% content_for css => begin
+	<%= stylesheet getAssetURL($ce, 'js/Problem/problem.css') =%>
+	% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
+		<%= stylesheet getAssetURL($ce, 'node_modules/mathquill/dist/mathquill.css') =%>
+		<%= stylesheet getAssetURL($ce, 'js/MathQuill/mqeditor.css') =%>
+	% } elsif ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView') {
+		<%= stylesheet getAssetURL($ce, 'js/MathView/mathview.css') =%>
+	% }
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1 mb-0">
+		<%= maketext('You are not authorized to access instructor tools.') =%>
+	</div>
+	% last;
+% }
+%
+% unless ($authz->hasPermissions(param('user'), 'score_sets')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to grade homework sets.') %></div>
+	% last;
+% }
+%
+% unless ($set && $problem) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('This set or problem is not valid.') =%></div>
+	% last;
+% }
+%
+% unless (@$users) {
+	<div class="alert alert-danger p-1 mb-0">
+		% if ($set->assignment_type =~ /gateway/) {
+			<%= maketext('There are no completed versions of this test.') =%>
+		% } else {
+			<%= maketext('This set is not assigned to any students.') =%>
+		% }
+	</div>
+	% last;
+% }
+%
+<div class="rpc_render_area_container my-3 p-2 border rounded">
+	<div id="problem_render_area" class="rpc_render_area"></div>
+	<div class="col-12 flex-wrap">
+		<div class="input-group d-inline-flex flex-nowrap w-auto py-1 me-sm-3">
+			<%= label_for selected_student => maketext('Showing problem for:'), class => 'input-group-text' =%>
+			<%= select_field student_selector => [
+					map {
+						my $user = $_;
+						map { [
+							($user->{displayName}
+								. (
+									ref($_->{problem}) =~ /::ProblemVersion/
+									? maketext(' (version [_1])', $_->{problem}->version_id)
+									: ''
+								)
+							) => $user->user_id,
+							data => {
+								source_file  => $_->{problem}->source_file || $problem->source_file,
+								problem_seed => $_->{problem}->problem_seed,
+								last_answer  => $_->{problem}->last_answer,
+								ref($_->{problem}) =~ /::ProblemVersion/
+									? (
+										version_id    => $_->{problem}->version_id,
+										answer_prefix => sprintf('Q%04d_', $_->{problemNumber} + 1)
+									)
+									: (),
+							}
+						] } @{ $user->{data} }
+					} @$users
+				],
+				id => 'student_selector', class => 'form-select' =%>
+		</div>
+		<div class="input-group d-inline-flex flex-nowrap w-auto py-1">
+			<%= label_for problem_displaymode => maketext('Display Mode:'), class => 'input-group-text' =%>
+			<%= select_field 'problem_displaymode' => [
+					grep { exists WeBWorK::PG::DISPLAY_MODES()->{$_} } @{ $ce->{pg}{displayModes} }
+				],
+				id => 'problem_displaymode', class => 'form-select' =%>
+		</div>
+	</div>
+</div>
+%
+<%= form_for current_route, method => 'POST', id => 'problem-grader-form', name => 'problem-grader-form', begin =%>
+	<%= hidden_field hidden_course_id => $courseID =%>
+	<%= hidden_field hidden_set_id => $set->set_id =%>
+	<%= hidden_field hidden_problem_id => $problem->problem_id =%>
+	<%= hidden_field hidden_language => $ce->{language} =%>
+	<div class="table-responsive">
+		% my $problemNeedsGrading = 0;
+		<table class="table table-sm table-bordered caption-top">
+			<thead>
+				<tr>
+					% if ($haveSections) {
+						<th><%= maketext('Section') %></th>
+					% }
+					<th>
+						<div><%= maketext('Name') %></div>
+						% if ($set->assignment_type =~ /gateway/) {
+							<div><%= maketext('Version') %></div>
+						% }
+					</th>
+					<th><%= maketext('Latest Answers') %></th>
+					<th id="mark-all-correct-header" class="text-center">
+						<%= label_for 'select-all' => maketext('Mark Correct') =%>
+						<br>
+						<%= check_box 'select-all' => 'on', id => 'select-all', class => 'select-all form-check-input',
+							data => { select_group => 'mark_correct' } =%>
+					</th>
+					<th id="score-header"><%= maketext('Score (%)') %></th>
+					<th id="comment-header"><%= maketext('Comment') %></th>
+				</tr>
+			</thead>
+			<tbody>
+				% for my $user (@$users) {
+					% my $userID = $user->user_id;
+					%
+					% for (@{ $user->{data} }) {
+						% next unless defined $_->{problem};
+						% my $versionID = ref($_->{problem}) =~ /::ProblemVersion/ ? $_->{problem}->version_id : 0;
+						% my @answerTypes = split(',', $_->{problem}->flags =~ s/:needs_grading$//r);
+						% my $problemLink;
+						% if ($versionID) {
+							% $problemLink = $c->systemLink(
+								% url_for('gateway_quiz', setID => "$setID,v$versionID"),
+								% params => {
+									% effectiveUser     => $userID,
+									% currentPage       => $_->{pageNumber},
+									% showProblemGrader => 1
+								% }
+							% )->fragment("prob$_->{problemNumber}");
+						% } else {
+							% $problemLink = $c->systemLink(
+								% url_for('problem_detail'),
+								% params => { effectiveUser => $userID, showProblemGrader => 1 }
+							% )->fragment('problem_body');
+						% }
+						<tr>
+							% if ($haveSections) {
+								<td class="text-center restricted-width-col"><%= $user->section %></td>
+							% }
+							% $problemNeedsGrading = 1 if $_->{problem}->flags =~ /:needs_grading$/;
+							<td class="<%= $_->{problem}->flags =~ /:needs_grading$/ ? 'needs-grading' : ''%>">
+								<%= link_to $problemLink, target => 'WW_View', begin =%>
+									<div class="<%= $ce->status_abbrev_to_name($user->status) || '' %>">
+										<%= $user->{displayName} =%>
+									</div>
+									% if ($versionID) {
+										<div><%= maketext('(version [_1])', $versionID) =%></div>
+									% }
+								<% end =%>
+							</td>
+							<td class="problem-answers"
+								data-source-file="<%= $_->{problem}->source_file || $problem->source_file %>">
+								% if (defined $_->{past_answer} ) {
+									% my @scores  = split(//,   $_->{past_answer}->scores);
+									% my @answers = split(/\t/, $_->{past_answer}->answer_string);
+									%
+									% for (my $i = 0; $i <= $#answers; $i++) {
+										% # Color the answer if it is not an essay answer.
+										<div class="past-answer"
+											 style="<%= $answerTypes[$i] && $answerTypes[$i] eq 'essay'
+													? ''
+													: $scores[$i] ? 'color:#060' : 'color:#600' %>">
+											% if ($answerTypes[$i] && $answerTypes[$i] eq 'essay') {
+												% # If the answer is an essay answer then display it line by line.
+												<div class="past-answer">
+													<%= c(split /\n/, $answers[$i])->join('<br>') =%>
+												</div>
+											% } elsif ($answerTypes[$i] && $answerTypes[$i] eq 'Value (Formula)') {
+												% # If its a formula then mark it as tex for MathJax.
+												`<%= $answers[$i] %>`
+												</div>
+											% } else {
+												% # If it isn't an essay or a formula then show it as text.
+												<%= $answers[$i] %>
+											% }
+										</div>
+									% }
+								% } else {
+									<%= 'There are no answers for this student.' =%>
+								% }
+							</td>
+							<td class="text-center restricted-width-col">
+								% param("$userID.$versionID.mark_correct", undef);
+								<%= check_box "$userID.$versionID.mark_correct" => '1',
+									class             => 'mark_correct form-check-input',
+									'aria-labelledby' => 'mark-all-correct-header' =%>
+							</td>
+							<td class="restricted-width-col">
+								% param("$userID.$versionID.score", undef);
+								<%= number_field "$userID.$versionID.score" =>
+										wwRound(0, $_->{problem}->status * 100),
+									class => 'score-selector form-control form-control-sm restricted-width-col',
+									style => 'width:6.5rem;', min => 0, max => 100, autocomplete => 'off',
+									'aria-labelledby' => 'score-header' =%>
+							</td>
+							<td class="grader-comment-column">
+								% if (defined $_->{past_answer}) {
+									<%= text_area "$userID.$versionID.comment" => $_->{past_answer}->comment_string,
+										id => "${userID}_${versionID}_comment",
+										rows  => 3, class => 'form-control latexentryfield',
+										'aria-labelledby' => 'comment-header' =%>
+									<%= hidden_field "MaThQuIlL_${userID}_${versionID}_comment" => '',
+										id => "MaThQuIlL_${userID}_${versionID}_comment",
+										data => { eqn_editor_btn_after => 'true' } =%>
+								% }
+							</td>
+						</tr>
+					% }
+				% }
+			</tbody>
+		</table>
+		% if ($problemNeedsGrading) {
+			<div class='mb-3'>
+				<span class='needs-grading fw-bold p-2'><%= maketext('Name') %></span>
+				\( = \)
+				<%= maketext('Problem has an essay answer that needs to be graded.') =%>
+			</div>
+		% }
+		<div id="alt-source-key" class='mb-3 d-none'>
+			<span class='alt-source p-2'><%= maketext('Latest Answers') %></span>
+			\( = \)
+			<%= maketext('Problem has a different source file than the currently rendered problem.') =%>
+		</div>
+	</div>
+	<%= $c->hidden_authen_fields =%>
+	<%= submit_button maketext('Save'), name => 'assignGrades', class => 'btn btn-primary mb-2' =%>
+<% end =%>

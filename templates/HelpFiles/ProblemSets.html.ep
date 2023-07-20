@@ -1,0 +1,31 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Course Home Help');
+%
+<p><%= maketext('This is the standard entry point for the course.') %></p>
+<p><%= maketext('It lists the homework problem sets available for the students.') %></p>
+<p>
+	<%= maketext('The information box on the right displays information about the course. This is useful for leaving '
+		. 'course wide messages for students. It contains text from the file templates/course_info.txt. Instructors '
+		. 'can edit this file from the web (click on the "Edit" link).') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('You can check the boxes to the right of the sets and click "Generate Hardcopy for Selected Sets" to '
+		. 'generate a PDF hardcopy of the selected sets. You can generate hardcopies for multiple users including '
+		. 'their answers as well. Note that students will only be able to generate hardcopies of a single set at a '
+		. 'time. Students will only be able to include answers in the hardcopy after the answer date.') =%>
+</p>

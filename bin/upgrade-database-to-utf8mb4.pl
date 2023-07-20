@@ -1,7 +1,7 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -125,8 +125,10 @@ use strict;
 use warnings;
 
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n" unless $ENV{WEBWORK_ROOT};
-	die "PG_ROOT not found in environment.\n" unless $ENV{PG_ROOT};
+	use Mojo::File qw(curfile);
+	use Env qw(WEBWORK_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
 
 use Getopt::Long qw(:config bundling);
@@ -134,8 +136,7 @@ use Pod::Usage;
 use DBI;
 use String::ShellQuote;
 
-my (@courses, $all, $second_pass, $upgrade_non_native, $no_backup, $dump_file,
-	$verbose, $show_help);
+my (@courses, $all, $second_pass, $upgrade_non_native, $no_backup, $dump_file, $verbose, $show_help);
 GetOptions(
 	'c|course-id=s@'       => \@courses,
 	'a|all'                => \$all,
@@ -149,13 +150,13 @@ GetOptions(
 pod2usage(-verbose => $show_help ? 2 : 0) if $show_help || !(@courses || $all || $upgrade_non_native);
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
-use lib "$ENV{PG_ROOT}/lib";
+
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Utils::CourseManagement qw{listCourses};
 
 # Load a minimal course environment.
-my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $ENV{WEBWORK_ROOT} });
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
 
 # Get DB connection settings.
 my $dbname = $ce->{database_name};
@@ -177,7 +178,7 @@ if (!$no_backup) {
 		$replace = <>;
 		chomp($replace);
 		print "Overwriting '$dump_file' with new database dump.\n" if $replace eq 'Y';
-		print "Not creating new database dump.\n" if $replace ne 'Y';
+		print "Not creating new database dump.\n"                  if $replace ne 'Y';
 
 		if ($replace ne 'Y') {
 			my $proceed = 'n';
@@ -191,8 +192,9 @@ if (!$no_backup) {
 	if ($replace eq 'Y') {
 		print "Backing up database to '$dump_file'.\n" if $verbose;
 		`$ce->{externalPrograms}{mysqldump} --host=$host --port=$port --user=$dbuser $dbname > $dump_file`;
-		die("There was an error creating a database backup.\n" .
-			"Please make a manual backup if needed before proceeding.") if $?;
+		die("There was an error creating a database backup.\n"
+				. "Please make a manual backup if needed before proceeding.")
+			if $?;
 	}
 }
 
@@ -210,45 +212,47 @@ my $dbh = DBI->connect(
 	},
 );
 
-my $db = new WeBWorK::DB($ce->{dbLayouts}{$ce->{dbLayoutName}});
+my $db          = new WeBWorK::DB($ce->{dbLayouts}{ $ce->{dbLayoutName} });
 my @table_types = sort(grep { !$db->{$_}{params}{non_native} } keys %$db);
 
 sub checkAndUpdateTableColumnTypes {
-	my $table = shift;
+	my $table      = shift;
 	my $table_type = shift;
-	my $pass = shift // 1;
+	my $pass       = shift // 1;
 
 	print "\tChecking '$table' (pass $pass)\n" if $verbose;
 	my $schema_field_data = $db->{$table_type}{record}->FIELD_DATA;
 	for my $field (keys %$schema_field_data) {
 		my $field_name = $db->{$table_type}{params}{fieldOverride}{$field} || $field;
-		my @name_type = @{$dbh->selectall_arrayref("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS " .
-			"WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$table' AND COLUMN_NAME='$field_name';")};
+		my @name_type  = @{
+			$dbh->selectall_arrayref(
+				"SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS "
+					. "WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$table' AND COLUMN_NAME='$field_name';"
+			)
+		};
 
-		print("\t\tThe '$field_name' column is missing from '$table'.\n" .
-			"\t\tYou should upgrade the course via course administration to fix this.\n" .
-			"\t\tYou may need to run this script again after doing that.\n"),
-		next if !exists($name_type[0][0]);
+		print("\t\tThe '$field_name' column is missing from '$table'.\n"
+				. "\t\tYou should upgrade the course via course administration to fix this.\n"
+				. "\t\tYou may need to run this script again after doing that.\n"), next
+			if !exists($name_type[0][0]);
 
 		my $data_type = $name_type[0][0];
-		next if !$data_type;
+		next                       if !$data_type;
 		$data_type =~ s/\(\d*\)$// if $data_type =~ /^(big|small)?int\(\d*\)$/;
 		$data_type = lc($data_type);
 		my $schema_data_type = lc($schema_field_data->{$field}{type} =~ s/ .*$//r);
 		if ($data_type ne $schema_data_type) {
 			print "\t\tUpdating data type for column '$field_name' in table '$table'\n" if $verbose;
-			print "\t\t\t$data_type -> $schema_data_type\n" if $verbose;
-			eval {
-				$dbh->do("ALTER TABLE `$table` MODIFY $field_name $schema_field_data->{$field}{type};");
-			};
+			print "\t\t\t$data_type -> $schema_data_type\n"                             if $verbose;
+			eval { $dbh->do("ALTER TABLE `$table` MODIFY $field_name $schema_field_data->{$field}{type};"); };
 			my $indent = $verbose ? "\t\t" : "";
-			die("${indent}Failed to modify '$field_name' in '$table' from '$data_type' to '$schema_data_type.\n" .
-				"${indent}It is recommended that you restore a database backup.  Make note of the\n" .
-				"${indent}error output below as it may help in diagnosing the problem.  Note that\n" .
-				"${indent}the most common reason for this error is the existence of a data value\n" .
-				"${indent}in a column that does not fit into the smaller size data type that was\n" .
-				"${indent}needed for the utf8mb4 change.\n$@")
-			if $@;
+			die("${indent}Failed to modify '$field_name' in '$table' from '$data_type' to '$schema_data_type.\n"
+					. "${indent}It is recommended that you restore a database backup.  Make note of the\n"
+					. "${indent}error output below as it may help in diagnosing the problem.  Note that\n"
+					. "${indent}the most common reason for this error is the existence of a data value\n"
+					. "${indent}in a column that does not fit into the smaller size data type that was\n"
+					. "${indent}needed for the utf8mb4 change.\n$@")
+				if $@;
 		}
 	}
 	return 0;
@@ -258,19 +262,22 @@ sub checkAndChangeTableCharacterSet {
 	my $table = shift;
 
 	print "\tChecking character set for '$table'\n" if $verbose;
-	my @table_data = @{$dbh->selectall_arrayref("SELECT CCSA.character_set_name FROM information_schema.TABLES T, " .
-		"information_schema.COLLATION_CHARACTER_SET_APPLICABILITY CCSA " .
-		"WHERE CCSA.collation_name = T.table_collation AND T.table_schema = '$dbname' AND T.table_name = '$table'")};
+	my @table_data = @{
+		$dbh->selectall_arrayref(
+			"SELECT CCSA.character_set_name FROM information_schema.TABLES T, "
+				. "information_schema.COLLATION_CHARACTER_SET_APPLICABILITY CCSA "
+				. "WHERE CCSA.collation_name = T.table_collation AND T.table_schema = '$dbname' AND T.table_name = '$table'"
+		)
+	};
 	for (@table_data) {
 		if ($_->[0] ne 'utf8mb4') {
 			print "\t\tConverting '$table' character set to utf8mb4\n" if $verbose;
-			eval {
-				$dbh->do("ALTER TABLE `$table` CONVERT TO CHARACTER SET utf8mb4;");
-			};
+			eval { $dbh->do("ALTER TABLE `$table` CONVERT TO CHARACTER SET utf8mb4;"); };
 			my $indent = $verbose ? "\t\t" : "";
-			die("${indent}Failed to alter charset of '$table' to utf8mb4:\n" .
-				"${indent}It is recommended that you restore a database backup.  Make note of the\n" .
-				"${indent}error output below as it may help in diagnosing the problem.\n$@") if $@;
+			die("${indent}Failed to alter charset of '$table' to utf8mb4:\n"
+					. "${indent}It is recommended that you restore a database backup.  Make note of the\n"
+					. "${indent}error output below as it may help in diagnosing the problem.\n$@")
+				if $@;
 		}
 	}
 	return 0;
@@ -280,15 +287,20 @@ my $error = 0;
 
 for my $course (@courses) {
 	print("The course '$course' does not exist on the server\n"), next
-   	if !grep($course eq $_, @server_courses);
+		if !grep($course eq $_, @server_courses);
 
 	print "Checking tables for '$course'\n" if $verbose;
 	for my $table_type (@table_types) {
 		my $table = "${course}_$table_type";
-		next unless @{$dbh->selectall_arrayref("SELECT * FROM INFORMATION_SCHEMA.TABLES " .
-			"WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME='$table';")};
+		next
+			unless @{
+				$dbh->selectall_arrayref(
+					"SELECT * FROM INFORMATION_SCHEMA.TABLES "
+					. "WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME='$table';"
+				)
+			};
 
-	   	checkAndUpdateTableColumnTypes($table, $table_type);
+		checkAndUpdateTableColumnTypes($table, $table_type);
 		checkAndChangeTableCharacterSet($table);
 		checkAndUpdateTableColumnTypes($table, $table_type, 2) if ($second_pass);
 	}
@@ -300,8 +312,13 @@ if ($upgrade_non_native) {
 	my @native_tables = grep { $db->{$_}{params}{non_native} } keys %$db;
 	for my $native_table (@native_tables) {
 		# Skip the fake tables
-		next unless @{$dbh->selectall_arrayref("SELECT * FROM INFORMATION_SCHEMA.TABLES " .
-			"WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME='$native_table';")};
+		next
+			unless @{
+				$dbh->selectall_arrayref(
+					"SELECT * FROM INFORMATION_SCHEMA.TABLES "
+					. "WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME='$native_table';"
+				)
+			};
 
 		checkAndUpdateTableColumnTypes($native_table, $native_table);
 		checkAndChangeTableCharacterSet($native_table);

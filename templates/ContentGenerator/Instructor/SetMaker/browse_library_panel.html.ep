@@ -1,0 +1,32 @@
+% # See if the problem library is installed.
+% my $libraryRoot = $ce->{problemLibrary}{root};
+% unless ($libraryRoot) {
+	<div class="alert alert-danger p-1 mb-2 text-center">The problem library has not been installed.</div>
+	% last;
+% }
+% # Test if the Library directory link exists.  If not, try to make it.
+% unless (-d "$ce->{courseDirs}{templates}/Library"
+	% || symlink($libraryRoot, "$ce->{courseDirs}{templates}/Library"))
+% {
+	% my $msg = begin
+	You are missing the directory <code>templates/Library</code>, which is needed for the Problem Library to function.
+	It should be a link pointing to <code><%= $libraryRoot %></code>, which you set in <code>conf/site.conf</code>.  An
+	attempt was made to create the link, but that failed. Check the permissions in your <code>templates</code>
+	directory.
+	% end
+	% $c->addbadmessage($msg->());
+% }
+%
+% # Now check which version to use.
+% my $libraryVersion = $ce->{problemLibrary}{version} || 2;
+% if ($libraryVersion == 1) {
+ 	<div class="alert alert-danger p-1 mb-2 text-center">Problem library version 1 is no longer supported.</div>
+% } elsif ($libraryVersion >= 2) {
+	% if ($c->{library_basic} == 1) {
+		<%= include 'ContentGenerator/Instructor/SetMaker/browse_library_panel_simple' =%>
+	% } else {
+		<%= include 'ContentGenerator/Instructor/SetMaker/browse_library_panel_advanced' =%>
+	% }
+% } else {
+	<div class="alert alert-danger p-1 mb-2 text-center">The problem library version is set to an illegal value.</div>
+% }

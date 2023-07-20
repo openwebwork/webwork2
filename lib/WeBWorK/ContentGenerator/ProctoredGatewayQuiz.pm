@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,14 +14,13 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::ProctoredGatewayQuiz;
-use base qw(WeBWorK::ContentGenerator::GatewayQuiz);
+use Mojo::Base 'WeBWorK::ContentGenerator::GatewayQuiz', -signatures;
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::ProctoredGatewayQuiz - 
+WeBWorK::ContentGenerator::ProctoredGatewayQuiz -
 this is a wrapper for GatewayQuiz.pm and has no content
 
 =cut
-
 
 1;

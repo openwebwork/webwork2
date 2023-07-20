@@ -8,11 +8,6 @@ generate-OPL-set-def-list - find all set definition files in the OPL and Contrib
 
 generate-OPL-set-def-list
 
-The environment variable $WEBWORK_ROOT must be set with the location of
-webwork2, and either the environment variable $PG_ROOT must be set with the
-location of pg, or pg must be located in the parent directory of the webwork2
-location.
-
 =head1 DESCRIPTION
 
 This script will find all set definition files in the OpenProblemLibrary and
@@ -20,35 +15,33 @@ Contrib subdirectories of the webwork-open-problem-library and list them in the
 files $WEBWORK_ROOT/htdocs/DATA/library-set-defs.json and
 $WEBWORK_ROOT/htdocs/DATA/contrib-set-defs.json.
 
+Note that the webwork2 root directory is automatically detected.
+
 =cut
 
 use strict;
 use warnings;
 
-use Pod::Usage;
 use File::Find;
 
-my $pg_root;
-
 BEGIN {
-	pod2usage(2) unless exists $ENV{WEBWORK_ROOT};
-	$pg_root = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
-	pod2usage(2) unless (-e $pg_root);
+	use Mojo::File qw(curfile);
+	use Env qw(WEBWORK_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
-use lib "$pg_root/lib";
 use lib "$ENV{WEBWORK_ROOT}/bin";
 
 use OPLUtils qw/writeJSONtoFile/;
 use WeBWorK::CourseEnvironment;
 
-my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $ENV{WEBWORK_ROOT} });
+my $ce          = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
 my $libraryRoot = $ce->{problemLibrary}{root};
 my $contribRoot = $ce->{contribLibrary}{root};
 
 print "Using WeBWorK root: $ENV{WEBWORK_ROOT}\n";
-print "Using PG root: $pg_root\n";
 print "Using library root: $libraryRoot\n";
 print "Using contrib root: $contribRoot\n";
 

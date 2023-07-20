@@ -6,7 +6,6 @@ loadMacros("PGbasicmacros.pl",
 ); 
 
 $showPartialCorrectAnswers = 1;
-TEXT(beginproblem());
 
 # The link to the java applet is hard wired to use the java applet
 # served from the University of Rochester WeBWorK machine.

@@ -1,0 +1,25 @@
+% if ($fieldName =~ /\.enabled$/) {
+	% # If the "enabled" checkbox is checked it returns a 1, if it is unchecked it returns nothing
+	% # in which case the hidden field overrides the parameter with a 0.
+	<%= check_box $fieldName => 1,
+		'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+		class             => 'form-check-input',
+		$value ? (checked => undef) : () =%>
+	<%= hidden_field $fieldName => 0 =%>
+% } elsif ($fieldName =~ /\.assignment_type$/) {
+	% my @allowedTypes = split(',', $value);
+	% for my $type ([ default => 'homework' ], [ gateway => 'tests' ], [ jitar => 'just-in-time' ]) {
+		<label class="form-check-label me-1">
+			<%= $type->[1] =%>
+			<%= check_box $fieldName => $type->[0], class => 'form-check-input me-1',
+				(grep { $type->[0] eq $_ } @allowedTypes) ? (checked => undef) : () =%>
+		</label>
+	% }
+% } elsif ($fieldName =~ /\.achievement_id$/) {
+	<%= $value =%>
+% } else {
+	<%= text_field $fieldName => $value,
+		'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+		size              => $size,
+		class             => 'form-control form-control-sm' =%>
+% }

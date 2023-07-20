@@ -1,21 +1,75 @@
-#!/bin/bash
+#!/usr/bin/env perl
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
+=head1 NAME
 
-TEMP_DIR=$(mktemp -d -t check_latex_XXXXXXXX)
+check_latex - Test the LaTeX installation to see that it contains the necessary
+packages for webwork2 hardcopy generation.
 
-cd $TEMP_DIR
+=cut
 
-TEXINPUTS=$SCRIPT_DIR:$SCRIPT_DIR/../conf/snippets/hardcopyThemes/common: \
-	pdflatex -interaction nonstopmode check_latex.tex > check_latex.nfo 2>&1
+use strict;
+use warnings;
+use feature 'say';
 
-if [ $? == 0 ]
-then
-	echo "Compilation Success!"
-	rm -r $TEMP_DIR
-else
-	cat check_latex.nfo
-	echo
-	echo "Compilation Failure: Examine the latex output above to see what went wrong."
-	echo "You may also examine $PWD/check_latex.log and $PWD/check_latex.aux."
-fi
+BEGIN {
+	use Mojo::File qw(curfile);
+	use Env qw(WEBWORK_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
+}
+
+use File::Temp qw(tempdir);
+use File::Path qw(rmtree);
+use String::ShellQuote;
+
+use lib "$ENV{WEBWORK_ROOT}/lib";
+
+use WeBWorK::CourseEnvironment;
+
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
+
+my $temp_dir = eval { tempdir('check_latex_XXXXXXXX') };
+
+die $@ if $@;
+
+my $pdflatex_cmd =
+	"cd $temp_dir && "
+	. "TEXINPUTS=$ENV{WEBWORK_ROOT}/bin:"
+	. shell_quote($ce->{webworkDirs}{assetsTex}) . ':'
+	. shell_quote("$ce->{pg}{directories}{assetsTex}") . ': '
+	. $ce->{externalPrograms}{pdflatex}
+	. ' -interaction nonstopmode check_latex_article.tex > check_latex.nfo 2>&1 &&'
+	. "TEXINPUTS=$ENV{WEBWORK_ROOT}/bin:"
+	. shell_quote($ce->{webworkDirs}{assetsTex}) . ':'
+	. shell_quote("$ce->{pg}{directories}{assetsTex}") . ': '
+	. $ce->{externalPrograms}{pdflatex}
+	. ' -interaction nonstopmode check_latex_exam.tex >> check_latex.nfo 2>&1';
+
+if ((system $pdflatex_cmd) >> 8) {
+	if (open(my $fh, '<', "$temp_dir/check_latex.nfo")) {
+		local $/;
+		my $nfo = <$fh>;
+		close($fh);
+
+		say $nfo;
+	}
+	say 'Compilation Failure: Examine the latex output above to see what went wrong.';
+	say "You may also examine $temp_dir/check_latex.log and $temp_dir/check_latex.aux.";
+} else {
+	say 'Compilation Success!';
+	rmtree $temp_dir;
+}

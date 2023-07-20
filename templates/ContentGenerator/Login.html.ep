@@ -1,0 +1,79 @@
+% # WeBWorK::Authen::verify will set the note "authen_error" if invalid authentication is found.  If this is done,
+% # it's a signal to us to yell at the user for doing that, since Authen isn't a content-generating module.
+% if (stash('authen_error')) {
+	<div class="alert alert-danger" tabindex="0"><%= stash('authen_error') =%></div>
+% }
+%
+% my $course = (stash('courseID') // '') =~ s/_/ /gr;
+%
+% if ($externalAuth) {
+	% my $LMS = $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
+		% ? link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
+		% : $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
+	%
+	% if (!stash('authen_error')) {
+		<p>
+			<%== maketext('The course [_1] uses an external authentication system ([_2]). '
+				. 'Please return to that system to access this course.',
+				tag('strong', $course), $LMS) =%>
+		</p>
+	% } else {
+		<p>
+			<%== maketext('The course [_1] uses an external authentication system ([_2]). You\'ve authenticated '
+				. 'through that system, but aren\'t allowed to log in to this course.',
+				tag('strong', $course), $LMS) =%>
+		</p>
+	% }
+% } else {
+	<p><%== maketext('Please enter your username and password for [_1] below:', tag('b', $course)) %></p>
+	%
+	% if ($ce->{session_management_via} ne 'session_cookie') {
+		<p>
+			<%== maketext('If you check [_1] your login information will be remembered by the browser you are using, '
+				. 'allowing you to visit WeBWorK pages without typing your user name and password (until your session '
+				. 'expires). This feature is not safe for public workstations, untrusted machines, and machines '
+				. 'over which you do not have direct control.',
+				tag('strong', maketext('Remember Me'))
+			) =%>
+		</p>
+	% }
+	%
+	<%= form_for current_route, method => 'POST', id => 'login_form', begin =%>
+		<%= $hidden_fields =%>
+		%
+		<div class="col-xl-5 col-lg-6 col-md-7 col-sm-8 my-3">
+			<div class="form-floating mb-2">
+				% # Prevent user from being filled in for practice users (they should use the "Guest Login" button).
+				% param('user', undef) if param('user') && param('user') =~ m/^$ce->{practiceUserPrefix}/;
+				%
+				<%= text_field user => '', id => 'uname', 'aria-required' => 'true', class => 'form-control',
+					placeholder => '', autocapitalize => 'none', spellcheck => 'false' =%>
+				<%= label_for uname => maketext('Username') =%>
+			</div>
+			<div class="form-floating mb-2">
+				<%= password_field 'passwd', id => 'pswd', 'aria-required' => 'true', class => 'form-control',
+					placeholder => '' =%>
+				<%= label_for pswd => maketext('Password') =%>
+			</div>
+			% if ($ce->{session_management_via} ne 'session_cookie') {
+				<div class="form-check form-control-lg mb-2">
+					<%= check_box(send_cookie => 'on', id => 'rememberme', class => 'form-check-input') =%>
+					<%= label_for rememberme => maketext('Remember Me') =%>
+				</div>
+			% }
+			<%= submit_button(maketext('Continue'), class => 'btn btn-primary') =%>
+		</div>
+		%
+		% # Guest login
+		% if (@$allowedGuestUsers) {
+			<div class="my-3">
+				<p>
+					<%== maketext('This course supports guest logins. Click [_1] to log into this course as a guest.',
+						tag('b', maketext('Guest Login'))) =%>
+				</p>
+				<%= submit_button maketext('Guest Login'),
+					name  => 'login_practice_user', class => 'btn btn-primary' =%>
+			</div>
+		% }
+	<% end =%>
+% }

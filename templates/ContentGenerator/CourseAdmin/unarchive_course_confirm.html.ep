@@ -1,0 +1,17 @@
+<h2><%= maketext('Unarchive Course') %> <%= $c->helpMacro('AdminUnarchiveCourse') %></h2>
+<%= form_for current_route, method => 'POST', begin =%>
+	<div class="row mb-2">
+		<%= label_for new_courseID => maketext('Unarchive [_1] to course:', $unarchive_courseID),
+			class => 'col-auto col-form-label' =%>
+		<div class="col-auto">
+			<input type="text" name="new_courseID" id="new_courseID" value="<%= $courseID %>" class="form-control">
+		</div>
+	</div>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields(qw(subDisplay unarchive_courseID create_newCourseID)) =%>
+	<div class="d-flex justify-content-center gap-2">
+		<%= submit_button maketext(q{Don't Unarchive}),
+			name => 'decline_unarchive_course', class => 'btn btn-primary' =%>
+		<%= submit_button maketext('Unarchive'), name => 'confirm_unarchive_course', class => 'btn btn-primary' =%>
+	</div>
+<% end =%>

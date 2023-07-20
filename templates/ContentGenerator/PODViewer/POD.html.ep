@@ -1,0 +1,24 @@
+% layout 'pod_viewer';
+% my $title = $filePath =~ s!^[^/]*/!!r;
+% $title = $1 =~ s!/!::!gr if $title =~ m/^(.*)\.pm$/;
+% title $title;
+%
+% content_for sidebar => begin
+	<nav>
+		<ul class="nav flex-column w-100">
+			<li class="nav-item"><%= link_to "PG POD Home" => 'pod_index', class => 'nav-link p-0' %></li>
+			<li class="nav-item"><hr></li>
+			% for (@{ $c->stash->{podIndex} }) {
+				<%== $_ =%>
+			% }
+		</ul>
+	</nav>
+% end
+%
+% if (stash('podHTML')) {
+	<%== stash('podHTML') =%>
+% } elsif (stash('podError')) {
+	<%= maketext('Error generating POD for file [_1]: [_2]', $filePath, stash('podError')) =%>
+% } else {
+	<%= maketext('Macro file [_1] not found.', $filePath) =%>
+% }

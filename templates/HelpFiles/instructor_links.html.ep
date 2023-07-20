@@ -1,0 +1,88 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Instructor Links Help');
+%
+<%== maketext('Click the [_1] icon for page and item specific help.',
+	'<i class="fas fa-question-circle"></i>') =%>
+<hr>
+<%== maketext('The main page for WeBWorK documentation is the <a [_1]>webwork wiki</a> while specific help for '
+	. q{instructors setting up a course are in the <a [_2]>instructors' section</a>.},
+	'href="http://webwork.maa.org/wiki" target="ww_wiki"',
+	'href="http://webwork.maa.org/wiki/Instructors" target="ww_wiki"') =%>
+<hr>
+
+<dl>
+	<dt><%= maketext('Instructor Tools') %></dt>
+	<dd>
+		<%== maketext('Quick access to many instructor tools, including '
+			. '<strong>Reset passwords</strong>, '
+			. '<strong>Act as student</strong>, '
+			. '<strong>Assign individual sets</strong> '
+			. 'and <strong>Edit individual due dates</strong>.') =%>
+	</dd>
+	<dt><%= maketext('Classlist Editor') %></dt>
+	<dd>
+		<%= maketext('Edit class roster data. Add students, edit student data, drop students from class, import '
+			. 'students from a classlist, and give user professor privileges. Access to individual homework sets.') =%>
+	</dd>
+	<dt><%= maketext('Set Assigner') %></dt>
+	<dd><%= maketext('Assign and unassign selected exercise sets to selected users.') %></dd>
+	<dt><%= maketext('Hmwk Sets Editor') %></dt>
+	<dd>
+		<%= maketext('Edit homework sets for entire class. Change homework set due dates, create new sets from a set '
+			. 'definition file, create new homework sets, make sets visible/invisible, score homework sets. Assign '
+			. 'homework sets to the class.') =%>
+	</dd>
+	<dt><%= maketext('Problem Editor') %></dt>
+	<dd><%= maketext('Write a new PG problem file or edit an existing one.') %></dd>
+	<dt><%= maketext('Library Browser') %></dt>
+	<dd><%= maketext('Choose problems from a library and add them to a homework set.') %></dd>
+	<dt><%= maketext('Statistics') %></dt>
+	<dd><%= maketext(q{View statistics of students' performance on homework either by individual or by set.}) %></dd>
+	<dt><%= maketext('Student Progress') %></dt>
+	<dd><%= maketext('View details of student perofrmance either by individual or by set.') %></dd>
+	<dt><%= maketext('Scoring Tools') %></dt>
+	<dd>
+		<%= maketext('Score one or more sets. This can also be done from the "Hmwk Sets Editor" or from the '
+			. '"Instructor Tools", but the "Scoring Tools" page allows control over parameters.') =%>
+	</dd>
+	<dt><%= maketext('Achievement Editor') %></dt>
+	<dd>
+		<%= maketext('Edit achivements for the course. This link is only present if achievements '
+			. 'are enabled for the course.') =%>
+	</dd>
+	<dt><%= maketext('Email') %></dt>
+	<dd><%= maketext('Send email to students.') %></dd>
+	<dt><%= maketext('File Manager') %></dt>
+	<dd>
+		<%= maketext('Upload, download and delete text files, including scoring spread sheets, set definition files, '
+			. 'class list spread sheets, and "PG" problems.') =%>
+	</dd>
+	<dt><%= maketext('LTI Grade Update') %></dt>
+	<dd>
+		<%= maketext('Manually initiate an LTI grade passback for selected sets or users. This link is only visible '
+			. 'if LTI grade passback is enabled for the course.') =%>
+	</dd>
+	<dt><%= maketext('Course Configuration') %></dt>
+	<dd>
+		<%= maketext('Allows configuration of certain parameters, such as permission levels, default display mode for '
+			. 'equations, and email feedback behavior, on a course by course basis.') =%>
+	</dd>
+</dl>
+
+<%== maketext('Click the [_1] icon for page and item specific help.',
+	'<i class="fas fa-question-circle"></i>') %>

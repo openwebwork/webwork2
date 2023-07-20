@@ -1,0 +1,27 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Archive Course Help');
+%
+<p>
+	<%= maketext('Select a course to create a .tar.gz archive of, which contains a dump of the database and all '
+		. 'course files (templates, configuration files, etc).  Each course can only have a single archive.  '
+		. 'Creating an archive of a previously archived course will delete the old archive.') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('Archived courses are located inside the "archives" directory of the "admin" course.  Use the '
+		. '"File Manager" to access the .tar.gz files.') =%>
+</p>

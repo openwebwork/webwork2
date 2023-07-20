@@ -1,0 +1,16 @@
+<div>
+	<div class="d-inline-block alert alert-danger p-1 mb-2">
+		<em><%= maketext('Warning: Deletion destroys all user-related data and is not undoable!') =%></em>
+	</div>
+	<div class="row mb-2">
+		<%= label_for delete_select => maketext('Delete which users?'),
+			class => 'col-form-label col-form-label-sm col-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.delete.scope' => [
+					[ maketext('no users')       => 'none', selected => undef ],
+					[ maketext('selected users') => 'selected' ]
+				],
+				id => 'delete_select', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+</div>

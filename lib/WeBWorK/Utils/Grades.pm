@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,52 +14,40 @@
 ################################################################################
 
 package WeBWorK::Utils::Grades;
-use base qw(Exporter);
+use parent qw(Exporter);
 
 use strict;
 use warnings;
+
 use Carp;
 
-our @EXPORT    = ();
-our @EXPORT_OK = qw(
-	list_set_versions
-);
+our @EXPORT_OK = qw(list_set_versions);
 
-###########################
-# Utils::Grades
-#
-# Provides common grading methods for grading a set  or a versioned set
-###########################
+# FIXME: This module is misnamed.  It doesn't actually do anything related to grades.  The grading methods in
+# WeBWorK::Utils should be moved here.
 
-######################################################
-# build list of versioned sets for this student user
-# inputs:  $studentID, $setID
-# returns;    ref to array of names of set versions OR (if not versioned) the $setID
-#              notAssignedSet
-######################################################
-
+# Construct a list of versioned sets for this student user.  This returns a reference to an array of names of set
+# versions and whether or not the user is assigned to the set.  The list of names will be a list of set versions if the
+# set is versioned, and a list containing only the original set id otherwise.
 sub list_set_versions {
 	my ($db, $studentName, $setName, $setIsVersioned) = @_;
-	return ("list_set_versions requires a database reference as the first element") unless ref($db)=~/DB/;
-	my @allSetNames = ();
+	croak 'list_set_versions requires a database reference as the first element' unless ref($db) =~ /DB/;
+
+	my @allSetNames;
 	my $notAssignedSet = 0;
-	if ( $setIsVersioned ) {
+
+	if ($setIsVersioned) {
 		my @setVersions = $db->listSetVersions($studentName, $setName);
-		@allSetNames = map { "$setName,v$_" } @setVersions;
-		# if there aren't any set versions, is it because
-		#    the user isn't assigned the set (e.g., is a 
-		#    proctor), or because the user hasn't completed
-		#    any versions?
-		if ( ! @setVersions ) {
-			$notAssignedSet = 1 if (! $db->existsUserSet($studentName,$setName));
-		}
-
+		@allSetNames = map {"$setName,v$_"} @setVersions;
+		# If there are not any set versions, it may be because the user is not assigned the set,
+		# or because the user hasn't completed any versions.
+		$notAssignedSet = 1 if !@setVersions && !$db->existsUserSet($studentName, $setName);
 	} else {
-		@allSetNames = ( "$setName" );
+		@allSetNames    = ($setName);
+		$notAssignedSet = 1 if !$db->existsUserSet($studentName, $setName);
 	}
-	(\@allSetNames, $notAssignedSet);
+
+	return (\@allSetNames, $notAssignedSet);
 }
-
-
 
 1;

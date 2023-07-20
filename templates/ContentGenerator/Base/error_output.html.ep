@@ -1,0 +1,46 @@
+% use Date::Format;
+%
+<h2><%= maketext('WeBWorK Error') %></h2>
+<p>
+	<%= maketext(
+		'WeBWorK has encountered a software error while attempting to process this problem. It is likely that '
+		. 'there is an error in the problem itself. If you are a student, report this error message to your '
+		. 'professor to have it corrected. If you are a professor, please consult the error output below for '
+		. 'more information.'
+		) %>
+</p>
+<h3><%= maketext('Error messages') %></h3>
+<div class="error-output"><%== $error %></div>
+<h3 class="mt-2"><%= maketext('Error details') %></h3>
+<div class="error-output">
+	<%== ref $details =~ /SCALAR/i ? $$details : ref $details =~ /ARRAY/i ? join('', @$details) : $details %>
+</div>
+<h3><%= maketext('Request information') %></h3>
+<table class="table-bordered mb-2">
+	<tr>
+		<td class="p-1"><%= maketext('Time') %></td>
+		<td class="p-1"><%= time2str('%a %b %d %H:%M:%S %Y', time) %></td>
+	</tr>
+	<tr>
+		<td class="p-1"><%= maketext('Method') %></td>
+		<td class="p-1"><%= $c->req->method %></td>
+	</tr>
+	<tr>
+		<td class="p-1"><%= maketext('URI') %></td>
+		<td class="p-1"><%= url_for %></td>
+	</tr>
+	<tr>
+		<td class="p-1"><%= maketext('HTTP Headers') %></td>
+		<td class="p-0">
+			<table>
+				% my %headers = %{ $c->req->headers->to_hash };
+				% for (keys %headers) {
+					<tr>
+						<td class="p-1 border"><small><%= $_ %></small></td>
+						<td class="p-1 border"><small><%= $headers{$_} %></small></td>
+					</tr>
+				% }
+			</table>
+		</td>
+	</tr>
+</table>

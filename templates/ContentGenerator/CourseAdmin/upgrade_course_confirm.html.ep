@@ -1,0 +1,49 @@
+<h2><%= maketext('Upgrade Courses') %> <%= $c->helpMacro('AdminUpgradeCourses') %></h2>
+<%= form_for current_route, method => 'POST', begin =%>
+	<% my $checkALLs = begin =%>
+		% if ($extra_database_tables_exist) {
+			<div class="form-check">
+				<label class="form-check-label">
+					<input type="checkbox" value="on" class="select-all form-check-input"
+						data-select-group="delete_tableIDs">
+					<%= maketext('Select/unselect all tables missing in schema for deletion.') %>
+				</label>
+			</div>
+		% }
+		% if ($extra_database_fields_exist) {
+			<div class="form-check">
+				<label class="form-check-label">
+					<input type="checkbox" value="on" class="select-all form-check-input"
+						data-select-group="delete_fieldIDs">
+					<%= maketext('Select/unselect all fields missing in schema for deletion.') %>
+				</label>
+			</div>
+		% }
+	<% end =%>
+	%
+	<div class="my-3">
+		<%= $checkALLs->() %>
+	</div>
+	%
+	<%= $status_output %>
+	%
+	% # Print form for choosing next action.
+	% unless (@$upgrade_courseIDs) {
+		<h3><%= maketext('No course id defined') %></h3>
+	% }
+	%
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
+	%
+	<div class="mb-3">
+		<%= $checkALLs->() %>
+	</div>
+	%
+	% # Submit buttons.
+	% # After presenting a detailed summary of status of selected courses the choice is made to upgrade the selected
+	% # courses (confirm_upgrade_course is set or return to the beginning (decline_upgrade_course is set)
+	<div class="submit-buttons-container">
+		<%= submit_button maketext(q{Don't Upgrade}), name => 'decline_upgrade_course', class => 'btn btn-primary' =%>
+		<%= submit_button maketext('Upgrade'), name => 'confirm_upgrade_course', class => 'btn btn-primary' =%>
+	</div>
+<% end =%>

@@ -1,0 +1,104 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for css => begin
+	% # Output css for jquery-ui for problems to use.
+	<%= stylesheet getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.css') =%>
+	%
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'achievements.css' }) =%>
+	%
+	% # Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
+	% # or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
+	% # which can be set in course.conf (the value should be an anonomous array).
+	% my @cssFiles;
+	% if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq 'ARRAY') {
+		% push(@cssFiles, { file => $_, external => 0 }) for @{ $ce->{pg}{specialPGEnvironmentVars}{extra_css_files} };
+	% }
+	% if (ref($c->{pg}{flags}{extra_css_files}) eq 'ARRAY') {
+		% push @cssFiles, @{ $c->{pg}{flags}{extra_css_files} };
+	% }
+	% my %cssFilesAdded;    # Used to avoid duplicates
+	% for (@cssFiles) {
+		% next if $cssFilesAdded{ $_->{file} };
+		% $cssFilesAdded{ $_->{file} } = 1;
+		% if ($_->{external}) {
+			<%= stylesheet $_->{file} =%>
+		% } else {
+			<%= stylesheet getAssetURL($ce, $_->{file}) =%>
+		% }
+	% }
+% end
+%
+% content_for js => begin
+	% # Output javascript for jquery-ui for problems to use.
+	<%= javascript getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.js') =%>
+	%
+	% # This is for tagging menus (if allowed)
+	% if ($authz->hasPermissions(param('user'), 'modify_tags')) {
+		<%= javascript getAssetURL($ce, 'js/TagWidget/tagwidget.js'), id => 'tag-widget-script', defer => undef,
+			data => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
+	% }
+	%
+	% # This is for the problem grader
+	% if ($c->{will}{showProblemGrader}) {
+		<%= javascript getAssetURL($ce, 'js/ProblemGrader/problemgrader.js'), defer => undef =%>
+	%}
+	%
+	% # This is for any page specific js.  Right now its just used for achievement popups
+	<%= javascript getAssetURL($ce, 'js/Problem/problem.js'), defer => undef =%>
+	%
+	% # Add JS files requested by problems via ADD_JS_FILE() in the PG file.
+	% if (ref($c->{pg}{flags}{extra_js_files}) eq 'ARRAY') {
+		% my %jsFiles;
+		% for (@{ $c->{pg}{flags}{extra_js_files} }) {
+			% next if $jsFiles{ $_->{file} };
+			% $jsFiles{ $_->{file} } = 1;
+			% my %attributes = ref($_->{attributes}) eq 'HASH' ? %{ $_->{attributes} } : ();
+			% if ($_->{external}) {
+				<%= javascript $_->{file}, %attributes =%>
+			% } else {
+				<%= javascript getAssetURL($ce, $_->{file}), %attributes =%>
+			% }
+		% }
+	% }
+% end
+%
+% if ($c->{invalidProblem} || !$c->{set}) {
+	<div class="alert alert-danger p-1 my-3"><%= maketext('This problem is not valid.') %></div>
+	% last;
+% }
+%
+<%== $c->post_header_text =%>
+<div id="custom_edit_message" class="row"><div class="col-lg-10"><%= $c->output_custom_edit_message %></div></div>
+<div class="row"><div id="output_summary" class="col-lg-10"><%= $c->output_summary %></div></div>
+<div class="row">
+	<div id="output_achievement_message" class="col-lg-10"><%= $c->output_achievement_message %></div>
+</div>
+<div class="row"><div id="output_comments" class="col-lg-10"><%= $c->output_comments %></div></div>
+<div class="row"><div id="output_grader" class="col-lg-10"><%= $c->output_grader %></div></div>
+<div class="row">
+	<div class="col-lg-10">
+		<%= form_for current_route, method => 'POST', name => 'problemMainForm',
+			id => 'problemMainForm', class => 'problem-main-form', begin =%>
+			<%= $c->hidden_authen_fields =%>
+			<%= hidden_field(startTime => param('startTime') || time) =%>
+			<% if ($c->can('output_hidden_info')) {
+				<%= $c->output_hidden_info =%>
+			% }
+			<div class="problem">
+				<div id="problem_body" class="problem-content"
+					<%== $c->output_problem_lang_and_dir %>>
+					<%= $c->output_problem_body =%>
+				</div>
+				<%= $c->output_message =%>
+			</div>
+			<div class="checkboxes-container col-12 my-2"><%= $c->output_checkboxes %></div>
+			<div class="submit-buttons-container col-12 my-2"><%= $c->output_submit_buttons %></div>
+			<div id="score_summary" class="scoreSummary"><%= $c->output_score_summary %></div>
+			<%= $c->output_misc =%>
+		<% end =%>
+	</div>
+</div>
+<div id="problemFooter" class="problemFooter">
+	<%= $c->output_past_answer_button =%>
+	<%= $c->output_email_instructor =%>
+</div>

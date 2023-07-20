@@ -5,18 +5,15 @@ Subject: online homework for Math 123
 Message:
     Hi $FN,
 
-Your course is at
-	http://somewhere.edu/webwork2/JT_123
+Our WeBWorK course is at:
+https://somewhere.edu/webwork2/JT_123
 
-Your login name is $LOGIN and your initial password is $SID
+Your username/password is:
+$LOGIN/$SID
 
-You should change your password, once you have logged in, by clicking on the
-User Settings link in the upper left.  
+You should change your password once you have logged in by visiting
+User Settings in the sidebar navigation.
 
-Some help pages about WeBWorK are at URL
-	http://webwork.maa.org/wiki/Category:Students
+Have fun,
+Jan
 
-Have fun.
-
-Take care,
-TJ

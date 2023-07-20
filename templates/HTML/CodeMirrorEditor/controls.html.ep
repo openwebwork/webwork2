@@ -1,0 +1,33 @@
+% # Output the html elements for setting the CodeMirror options.
+<div class="row align-items-center">
+	<div class="col-sm-auto mb-2">
+		<div class="row align-items-center">
+			<%= label_for selectTheme => maketext('Theme:'), class => 'col-form-label col-auto' =%>
+			<div class="col-auto">
+				<%= select_field selectTheme => $themeValues,
+					id => 'selectTheme', class => 'form-select form-select-sm d-inline w-auto' =%>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-auto mb-2">
+		<div class="row align-items-center">
+			<%= label_for selectKeymap => maketext('Key Map:'), class => 'col-form-label col-auto' =%>
+			<div class="col-auto">
+				<%= select_field selectKeymap => $keymapValues,
+					id => 'selectKeymap', class => 'form-select form-select-sm d-inline w-auto' =%>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-auto mb-2">
+		<div class="form-check mb-0">
+			<%= check_box 'enableSpell', id => 'enableSpell', class => 'form-check-input' =%>
+			<%= label_for enableSpell => maketext('Enable Spell Checking'), class => 'form-check-label' =%>
+		</div>
+	</div>
+	<div class="col-sm-auto mb-2">
+		<div class="form-check mb-0">
+			<%= check_box 'forceRTL', id => 'forceRTL', class => 'form-check-input' =%>
+			<%= label_for forceRTL => maketext('Force editor to RTL'), class => 'form-check-label' =%>
+		</div>
+	</div>
+</div>

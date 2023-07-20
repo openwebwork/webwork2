@@ -1,0 +1,15 @@
+<div class="card w-75 mx-auto">
+	<div class="card-body">
+		<%= $message =%>
+		<%= text_field name => $value, size => 50, class => 'form-control mt-3' =%>
+		<div class="d-flex justify-content-evenly mt-3">
+			<%= submit_button maketext('Cancel'), name => 'formAction', class => 'btn btn-sm btn-secondary' =%>
+			<%= submit_button $button, name => 'formAction', class => 'btn btn-sm btn-secondary' =%>
+			% if ($button2) {
+				<%= submit_button $button2, name => 'formAction', class => 'btn btn-sm btn-secondary' =%>
+			% }
+		</div>
+	</div>
+</div>
+<%= hidden_field confirmed => $button =%>
+<%= $c->HiddenFlags =%>

@@ -1,0 +1,165 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Set Detail Help');
+%
+<h2><%= maketext('Editing Modes') %></h2>
+<p><%== maketext('The <strong>Set Detail</strong> page can be viewed in one of two distinct modes:') %></p>
+<ul>
+	<li><%= maketext('Editing for all students') %></li>
+	<li><%= maketext('Editing for one student or a proper subset of all students') %></li>
+</ul>
+
+<%= maketext('The current mode should be made clear by the information at the top of the page.') =%>
+
+<h2><%= maketext('Page Contents') %></h2>
+<ul>
+	<li><%= maketext('General Information') %></li>
+	<li><%= maketext('Headers') %></li>
+	<li><%= maketext('Problems') %></li>
+</ul>
+
+<h2><%= maketext('Form Elements Present on the Page') %></h2>
+<dl>
+	<dt><%= maketext('Save Changes') %></dt>
+	<dd>
+		<%== maketext('This button is present both at top and the bottom of the page. Any and all changes made to any '
+			. 'part of the set will be saved with one important exception: When editing the set for one or more '
+			. 'students, you can choose to override the default value (defined for the set in general) by clicking on '
+			. 'the checkbox and providing a value (or possibly leaving blank) and checking the override checkbox. If '
+			. 'you do <strong>NOT</strong> check the checkbox, the override value will be discarded and the default '
+			. 'value for the set will be used for the users currently being edited.') =%>
+	</dd>
+
+	<dt><%= maketext('Reset Form') %></dt>
+	<dd>
+		<%= maketext('This button is also present both at top and the bottom of the page. Discards all changes, '
+			. 'reloading the page by re-reading the database information for this set.') =%>
+	</dd>
+
+	<dt><%= maketext('Renumber Problems') %></dt>
+	<dd>
+		<%= maketext('Renumber problems consecutively starting from 1. This renumbering is not saved until '
+			. '"Save Changes" is clicked.') =%>
+	</dd>
+
+	<dt><%= maketext('Render All') %></dt>
+	<dd><%= maketext('Render all problems on the page. This does not reload the page or save or reset changes.') %></dd>
+
+	<dt><%= maketext('Hide All') %></dt>
+	<dd><%= maketext('Hide all rendered problems on the page.') %></dd>
+
+	<dt><%= maketext('Expand All Details') %></dt>
+	<dd>
+		<%= maketext('Expand problem details that have been collapsed. Note that the details of a single problem can '
+			. 'be expanded by clicking on the down arrow to the right of the problem source file.') =%>
+	</dd>
+
+	<dt><%= maketext('Collapse All Details') %></dt>
+	<dd>
+		<%= maketext('Collapse problem details to the top row of information about a problem. Note that the details '
+			. 'of a single problem can be collapsed by clicking on the up arrow to the right of the problem source '
+			. 'file.') =%>
+	</dd>
+
+	<dt><%= maketext('Expand All Nesting') %></dt>
+	<dd>
+		<%= maketext('Only present for JITAR sets. Expand JITAR nested problem groups that have been collapsed. Note '
+			. 'that the nesting of a single problem group can be expanded by clicking on the right arrow to the right '
+			. 'of the problem number.') =%>
+	</dd>
+
+	<dt><%= maketext('Collapse All Nesting') %></dt>
+	<dd>
+		<%= maketext('Only present for JITAR sets. Collapse JITAR nesting problem groups to the top row of information '
+			. 'about a problem. Note that the nesting of a single problem group can be collapsed by clicking on the '
+			. 'down arrow to the right of the problem number.') =%>
+	</dd>
+
+	<dt><%= maketext('Display Mode') %></dt>
+	<dd><%= maketext('Select the display mode used to render the problems on this page.') %></dd>
+
+	<dt><%= maketext('Automatically render problems on page load.') %></dt>
+	<dd>
+		<%= maketext('Automatically render all problems in the set on this page when "Save Changes" or "Reset Form" '
+			. 'is clicked.') =%>
+	</dd>
+
+	<dt><%= maketext('Force problems to be numbered consecutively from one') %></dt>
+	<dd>
+		<%= maketext('Renumber problems in the set consecutively starting from one. In the process of deleting '
+			. 'problems, the numbering can be made non-consecutive. This is useful to clean up the problem '
+			. 'numbering.') =%>
+	</dd>
+
+	<dt><%= maketext('Add n blank problem template(s) to the end of homework set.') %></dt>
+	<dd>
+		<%= maketext('Adds new template problems to the set when the set is saved. You can modify the template '
+			. 'to create your own problem, by clicking on the "Edit Problem" link and saving to some new '
+			. 'file, e.g. "myNewProblem.pg".') =%>
+	</dd>
+</dl>
+
+<h2><%= maketext('General Page Information') %></h2>
+<dl>
+	<dt><%= maketext('Reordering Problems') %></dt>
+	<dd>
+		<%= maketext('You can reorder problems by clicking on the arrow icon and dragging the problem. You will see a '
+			. 'box showing you where the problem will be placed. When problems are reordered any holes in the '
+			. 'numbering will be filled in.') =%>
+	</dd>
+
+	<dt><%= maketext('Deleting Problems') %></dt>
+	<dd>
+		<%= maketext('You can delete problems by clicking the "Delete it?" check box and saving. If the set is already '
+			. 'active it is recommended that you instead use the "Mark Correct?" problem to mark a particular problem '
+			. 'correct for all students.') =%>
+	</dd>
+
+	<dt><%= maketext('Rendering Problems') %></dt>
+	<dd>
+		<%= maketext('You can render a problem by clicking the "Render Problem" icon to the right of the problem '
+		. 'number. The display mode used to render the problem is chosen using the drop down menu. You can render all '
+		. 'problems using the "Render All" button. "Hide All" will hide all rendered problems. It is also useful to '
+		. 'collapse problem details when doing this, as it makes it easier to drag problems around.') =%>
+	</dd>
+
+	<dt><%= maketext('Editing Problems') %></dt>
+	<dd>
+		<%= maketext('You can edit a problem by clicking the "Edit Problem" icon to the right of the problem number. '
+			. 'This will open the problem in the PG problem editor in a new tab or window.') =%>
+	</dd>
+
+	<dt><%= maketext('Viewing Problems in a New Window') %></dt>
+	<dd>
+		<%= maketext('If you click on the "Open in New Window" icon to the right of the problem number, then the '
+			. 'problem will open in the actual homework set in a new tab or window.') =%>
+	</dd>
+
+	<dt><%= maketext('Grading Problems') %></dt>
+	<dd>
+		<%= maketext('If you click on the "Grade Problem" icon to the right of the problem number, then the problem '
+			. 'will open in the manual problem grader. This page shows the rendered problem and lists all students '
+			. 'assigned to the set and the last answer the students entered for the problem. You can then change the '
+			. 'recorded scores for students on this problem and provide instructor feedback comments.') =%>
+	</dd>
+
+	<dt><%= maketext('Problem Paths') =%></dt>
+	<dd>
+		<%= maketext('All of the paths for problem files are relative to the templates directory of the current '
+			. 'course. You can access this directory "directly" using the File Manager page.') =%>
+	</dd>
+</dl>

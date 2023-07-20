@@ -1,0 +1,132 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Achievement Editor Help');
+%
+<p>
+	<%= maketext('Manage achievements for the course.  The actions allow one to edit, assign, import, export, score, '
+		. 'create, or delete achievements.  The action form is at the top to select the desired action and options to '
+		. 'perform when the submit button is pressed.  Below the action form is the list of all the '
+		. 'achievements, ordered by their achievement "Number".') =%>
+</p>
+<p>
+	<%= maketext('Achievements are evaluated in the order shown below, with the exception of "level" achievements.  '
+		. 'Achievements in the "level" category are evaluated first and control the XP thresholds and rewards '
+		. '(achievement items) for reaching each level. Achievements in the "secret" category are not shown to '
+		. 'students until they earn the achievement, and is used for fun/surprise achievements.') =%>
+</p>
+<p>
+	<%= maketext('Achievements in the same category, with sequential numbers, and whose ID starts with the same '
+		. '"prefix_" (up to the last underscore), are treated as achievement chains.  Achievement chains are a '
+		. 'sequence of achievements which build upon themselves, such as complete one problem, complete 10 problems, '
+		. 'complete 25 problems, and so on. Students will only see the achievements in the chain they have completed '
+		. 'or are currently working on.') =%>
+</p>
+<h2><%= maketext('Achievement options') %></h2>
+<ul>
+	<li>
+		<strong><%= maketext('Achievement ID:') %></strong>
+		<%= maketext('A unique key identifying the achievement.') =%>
+	</li>
+	<li>
+		<strong><%= maketext('Name:') %></strong>
+		<%= maketext('The visible name/title of the achievement.') =%>
+	</li>
+	<li>
+		<strong><%= maketext('Category:') %></strong>
+		<%= maketext('Groups types of achievements. The "level" and "secret" categories are special (described '
+			. 'above), and categories can be used to create achievement chains.') =%>
+	</li>
+	<li>
+		<strong><%= maketext('Number:') %></strong>
+		<%= maketext('Sets the order in which achievements are listed and evaluated.') =%>
+	</li>
+	<li>
+		<strong><%= maketext('Enabled:') %></strong>
+		<%= maketext('Controls if an achievement is evaluated or not.') =%>
+	</li>
+	<li>
+		<strong><%= maketext('Points:') %></strong>
+		<%= maketext('The number of points earned for earning the achievement.') =%>
+	</li>
+	<li>
+		<strong><%= maketext('Counter:') %></strong>
+		<%= maketext('Used for "counting" achievements, which sets the value a counter must reach in order to earn '
+			. 'the achievement. For example this is used counting the number of completed problems.') =%>
+	</li>
+	<li>
+		<strong><%= maketext('Description:') %></strong>
+		<%= maketext(
+			'The description shown to students which states what action is needed to earn the achievement.') =%>
+	</li>
+	<li>
+		<strong><%= maketext('Evaluator File:') %></strong>
+		<%= maketext('Name of the evaluator file used to evaluate the achievement.') =%>
+	</li>
+	<li>
+		<strong><%= maketext('Icon File:') %></strong>
+		<%= maketext('Name of the image used for the achievement icon.') =%>
+	</li>
+	<li>
+		<strong><%= maketext('Type:') %></strong>
+		<%= maketext('Select which assignment types (homework, tests, just-in-time) the achievement is evaluated.') =%>
+	</li>
+</ul>
+<h2><%= maketext('How to:') %></h2>
+<dl>
+	<dt><%= maketext('Edit achievement information') %></dt>
+	<dd>
+		<%= maketext('You can edit a single achievement by clicking on the pencil icon next to the achievement ID.  '
+			. 'You can edit multiple achievements by selecting which achievements to edit, then click the '
+			. '"Edit" button. You can edit all of the achievements by changing which achievements to edit form '
+			. '"selected achievements" to "all achievements", or click the checkbox next to the Achievement ID to '
+			. 'select all achievements.') =%>
+	</dd>
+
+	<dt><%= maketext('Import/export achievements') %></dt>
+	<dd>
+		<%= maketext('You can import/export from their respective action tab.  Exporting saves information about the '
+			. 'achievement as a .axp file which is a CSV that lists each achievements information.  You can import '
+			. '.axp files that have been previously exported.') =%>
+	<dd>
+
+	<dt><%= maketext('Assign achievements') %></dt>
+	<dd>
+		<%= maketext('You can assign selected achievements to all users by using the "Assign" action action and '
+			. 'selecting which achievements to assign.  You can select which users to assign/unassign to an '
+			. 'achievement by clicking on the link in the "Edit Users" column.') =%>
+	</dd>
+
+	<dt><%= maketext('Export achievement data') %></dt>
+	<dd>
+		<%= maketext('The "Score" tab will export achievement data to a CSV file that can be downloaded.  The export '
+			. 'contains the global data including number of achievement points and current level of each student.  '
+			. 'In addition for each selected achievement, a column for if the achievement was earned (1) or not earned '
+			. '(0) will be added to the CSV.') =%>
+	</dd>
+
+	<dt><%= maketext('Create/Delete achievements') %></dt>
+	<dd>
+		<%= maketext('Use the "Create" and "Delete" actions to create or delete achievements. Note that deleting an '
+			. 'achievement will delete all data associated to the achievement and cannot be undone.') =%>
+	</dd>
+
+	<dt><%= maketext('Edit achievement evaluator') %></dt>
+	<dd>
+		<%= maketext('The achievement evaluator is the perl code that is run after each submit to determine if an '
+			. 'achievement is earned or not.  Click on the "Edit Evaluator" link to edit the evaluator.') =%>
+	</dd>
+</dl>

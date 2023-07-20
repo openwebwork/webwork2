@@ -13,7 +13,6 @@ loadMacros(
 
 $showPartialCorrectAnswers = 1;
 
-TEXT(beginproblem());
 Title("Constants and Functions in $WW");
 
 ##############################################

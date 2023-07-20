@@ -1,0 +1,76 @@
+% if (
+	% -e "$ce->{courseDirs}{root}/registered_$ce->{WW_VERSION}"
+	% || param('register_site')
+	% || (defined param('subDisplay') && param('subDisplay') eq 'registration')
+% )
+% {
+	% # Show registered note.
+	<div class="d-flex justify-content-center mb-2">REGISTERED for WeBWorK <%= $ce->{WW_VERSION} %></div>
+% } else {
+	% # Otherwise show the registration form.
+	<div class="d-flex justify-content-center mb-2">
+		<div class="admin-messagebox">
+			<p>
+				<strong>Please consider registering for the WW-security-announce Google group / mailing list</strong>
+				using the join group link on the
+				<%= link_to 'group page' => $ce->{webworkURLs}{wwSecurityAnnounce}, target => '_blank' %>
+				which appears when you are logged in to a Google account <strong>or</strong> by sending an email using
+				<%= link_to 'this mailto link' =>
+						join('',
+							"mailto:$ce->{webworkSecListManagers}?subject=",
+							'Joining ww-security-announce',
+							'&body=',
+							"Server URL: $ce->{server_root_url}\n",
+							"WeBWorK version: $ce->{WW_VERSION}\n",
+							"Institution name: \n") %>
+				This list will help us keep you updated about security issues and patches, and important related
+				announcements.
+			</p>
+			<hr>
+			<p>
+				Please consider contributing to WeBWorK development either with a one time contribution or monthly
+				support. The WeBWorK Project is a registered 501(c)(3) organization and contributions are tax deductible
+				in the United States.
+			</p>
+			<div class="text-center">
+				<%= link_to 'https://github.com/sponsors/openwebwork',
+					class  => 'btn btn-secondary', target => '_blank', begin =%>
+					<i class="fa-regular fa-heart"></i> Sponsor
+				<%= end =%>
+			</div>
+			<hr>
+			<p>This site is not registered for WeBWorK version <%= $ce->{WW_VERSION} %>.</p>
+			<p>
+				We are often asked how many institutions are using WeBWorK and how many students are using WeBWorK.
+				Since WeBWorK is open source and can be freely downloaded from
+				<%= link_to $ce->{webworkURLs}{GitHub} => $ce->{webworkURLs}{GitHub}, target => '_blank' %>,
+				it is frequently difficult for us to give a reasonable answer to this question.
+			</p>
+			<p>
+				You can help by
+				<%= link_to 'registering your current version of WeBWorK' => $ce->{webworkURLs}{serverRegForm},
+					target => '_blank' %>.
+				Please complete the Google form as best you can and submit your answers to the WeBWorK Project team. It
+				takes just 2-3 minutes.  Thank you! The WeBWorK Project
+			</p>
+			<p>
+				Eventually your site will be listed along with all of the others on the
+				<%= link_to 'site map' => $ce->{webworkURLs}{SiteMap}, target => '_blank' %>
+				on the main
+				<%= link_to 'WeBWorK Wiki' => $ce->{webworkURLs}{WikiMain}, target => '_blank' %>.
+			</p>
+			<hr>
+			<p>You can hide this "registration" banner for the future by clicking the button below.</p>
+			<%= form_for current_route, method => 'POST', id => 'return_to_main_page', begin =%>
+				<%= $c->hidden_authen_fields =%>
+				<%= hidden_field subDisplay => 'registration' =%>
+				<div class="text-center">
+					<%= submit_button 'Hide the banner.',
+						id    => 'register_site',
+						name  => 'register_site',
+						class => 'btn btn-primary' =%>
+				</div>
+			<%= end =%>
+		</div>
+	</div>
+% }

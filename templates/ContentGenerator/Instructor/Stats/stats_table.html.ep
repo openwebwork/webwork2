@@ -1,0 +1,12 @@
+<div class="table-responsive">
+	<table class="table table-bordered">
+		% while (@$tableHeaders && @$tableData) {
+			<tr>
+				<th><%= shift @$tableHeaders %></th>
+				% for (@{ shift @$tableData }) {
+					<td class="text-center"><%= $_ %></td>
+				% }
+			</tr>
+		% }
+	</table>
+</div>

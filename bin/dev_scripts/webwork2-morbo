@@ -1,0 +1,97 @@
+#!/usr/bin/env perl
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+
+=encoding utf8
+
+=head1 NAME
+
+webwork2-morbo - Webwork2 Morbo HTTP and WebSocket development server
+
+=head1 SYNOPSIS
+
+    Usage: webwork2-morbo [OPTIONS] [APPLICATION]
+
+        webwork2-morbo
+        webwork2-morbo -m production -l https://*:443 -l http://[::]:3000
+        webwork2-morbo -l 'https://*:443?cert=./server.crt&key=./server.key'
+        webwork2-morbo -w /usr/local/lib -w public -w conf/webwork2.mojolicious.yml
+
+    Options:
+        -b, --backend <name>           Morbo backend to use for reloading, defaults
+                                       to "Poll"
+        -h, --help                     Show this message
+        -l, --listen <location>        One or more locations you want to listen on,
+                                       defaults to the value of MOJO_LISTEN or
+                                       "http://*:3000"
+        -m, --mode <name>              Operating mode for your application,
+                                       defaults to the value of
+                                       MOJO_MODE/PLACK_ENV or "development"
+        -v, --verbose                  Print details about what files changed to
+                                       STDOUT
+        -w, --watch <directory/file>   One or more directories and files to watch
+                                       for changes in addition to the bin/webwork2
+                                       script as well as the webwork2/lib, webwork2/conf,
+                                       webwork2/htdocs/js, pg/lib, and pg/htdocs
+                                       directories.
+
+=head1 DESCRIPTION
+
+Start L<webwork2> with the L<Mojo::Server::Morbo> web server.
+
+=cut
+
+use Mojo::Base -strict;
+use Mojo::Server::Morbo;
+use Mojo::Util qw(extract_usage getopt);
+use Mojo::File qw(curfile);
+use YAML::XS qw(LoadFile);
+
+getopt
+	'b|backend=s' => \$ENV{MOJO_MORBO_BACKEND},
+	'h|help'      => \my $help,
+	'l|listen=s'  => \my @listen,
+	'm|mode=s'    => \$ENV{MOJO_MODE},
+	'v|verbose'   => \my $verbose,
+	'w|watch=s'   => \my @watch;
+
+die extract_usage if $help;
+
+my $webwork_root = curfile->dirname->dirname->dirname->to_string;
+
+# Load the configuration file to obtain the PG root directory.
+my $config_file = "$webwork_root/conf/webwork2.mojolicious.yml";
+$config_file = "$webwork_root/conf/webwork2.mojolicious.dist.yml" unless -e $config_file;
+my $config = LoadFile($config_file);
+
+# Add directories to the watch list that might change frequently while developing for webwork2 and that need the server
+# to be reloaded for those changes to take effect.
+
+# The webwork2 lib directory is not detected for some reason, so it must be added.
+# Note: Don't watch all of the webwork htdocs directory.  If the htdocs/tmp directory is watched, then any time a file
+# is written in htdocs/tmp by a request the server will reload.  This would cause that request to fail.
+# Also watch the webwork/conf directory.
+push(@watch,
+	"$webwork_root/lib",           "$webwork_root/templates", "$webwork_root/htdocs/js",
+	"$webwork_root/htdocs/themes", "$webwork_root/conf");
+
+# Add the pg lib and pg htdocs directory if they are readable.
+push(@watch, "$config->{pg_dir}/lib")    if -r "$config->{pg_dir}/lib";
+push(@watch, "$config->{pg_dir}/htdocs") if -r "$config->{pg_dir}/htdocs";
+
+my $morbo = Mojo::Server::Morbo->new(silent => !$verbose);
+$morbo->daemon->listen(\@listen) if @listen;
+$morbo->backend->watch(\@watch)  if @watch;
+$morbo->run("$webwork_root/bin/webwork2");

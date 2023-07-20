@@ -1,0 +1,33 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Student Progress Help');
+%
+<p>
+	<%= maketext('This page is useful for monitoring student progress on assignments. Student progress '
+		. 'can either be viewed for a single set or for a single student.') =%>
+</p>
+<p>
+	<%= maketext('When viewing student progress for a set, the score for the set and the status for problems in the '
+		. 'set are listed for all students.  The table can be sorted by clicking the links in the table header.  '
+		. q{Click the student's name to access the student's set.  When viewing progress for a test, additional }
+		. 'columns can be shown/hidden by updating the display at the top') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('When viewing progress for a single student, their grades page is shown which lists set totals and '
+		. 'per problem grades for each set assigned to the student.  This shows the same information as the '
+		. 'statistics page for the student.') =%>
+</p>

@@ -1,0 +1,9 @@
+<div class="my-3">Copy the location of this image (or drag and drop) into your editing area:</div>
+<p><%= $typesetStr %></p>
+<p><%== $typesetStr %></p>
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= text_area eq => '', class => 'form-control mb-3', placeholder => 'Enter equation here',
+		cols => 40, rows => 5 =%>
+	<%= submit_button 'typeset', class => 'btn btn-primary' =%>
+<% end =%>

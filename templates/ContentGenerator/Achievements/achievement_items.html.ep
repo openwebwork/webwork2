@@ -1,0 +1,52 @@
+% last unless $ce->{achievementItemsEnabled} && $c->{achievementItems};
+%
+% # Show any items the user may have.
+<h2 class="my-3"><%= maketext('Rewards') %></h2>
+% if (@$items) {
+	% my $itemNumber = 0;
+	% for my $item (@$items) {
+		<div class="achievement-item">
+			% # Show each item's name, count, and description
+			% if ($itemCounts->{ $item->id } > 1) {
+				<h3><%= maketext($item->name)
+					. ' (' . maketext('[_1] remaining', $itemCounts->{ $item->id }) . ')' %></h3>
+			% } elsif ($itemCounts->{ $item->id } < 0) {
+				<h3><%= maketext($item->name) . ' (' . maketext('unlimited reusability') . ')' %></h3>
+			% } else {
+				<h3><%= maketext($item->name) %></h3>
+			% }
+			<p><%= maketext($item->description) %></p>
+			% # Print a modal popup for each item which contains the form necessary to get the data to use the item.
+			<%= link_to maketext('Use Reward') => '#modal_' . $item->id,
+					role  => 'button',
+					class => 'btn btn-secondary',
+					id    => 'popup_' . $item->id,
+					data  => { bs_toggle => 'modal' } =%>
+			<div id="<%= 'modal_' . $item->id %>" class="modal hide fade" tabindex="-1">
+				<div class="modal-dialog modal-dialog-centered">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h4 class="modal-title"><%= maketext($item->name) %></h4>
+							<button type="button" class="btn-close" data-bs-dismiss="modal"
+								aria-label="<%= maketext('close') %>"></button>
+						</div>
+						<%= form_for current_route, method => 'POST', name => "itemform_$itemNumber",
+							class => 'achievementitemform', begin =%>
+							<div class="modal-body">
+								<%= $item->print_form($sets, $setProblemCount, $c) =%>
+								<%= hidden_field useditem => $itemNumber =%>
+								<%= $c->hidden_authen_fields("achievement_${itemNumber}_") =%>
+							</div>
+							<div class="modal-footer">
+								<%= submit_button maketext('Submit'), class => 'btn btn-primary' =%>
+							</div>
+						<%= end =%>
+					</div>
+				</div>
+			</div>
+		</div>
+		% $itemNumber++;
+	% }
+% } else {
+	<p><%= maketext(q{You don't have any rewards!}) %></p>
+% }

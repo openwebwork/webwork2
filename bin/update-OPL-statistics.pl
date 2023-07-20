@@ -1,8 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -17,16 +17,15 @@
 
 use strict;
 
-# Get the necessary packages, including adding
-# webwork and pg library to our path.
-my $pg_dir;
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
-	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
-	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+	use Mojo::File qw(curfile);
+	use Env qw(WEBWORK_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
+
 use lib "$ENV{WEBWORK_ROOT}/lib";
-use lib "$pg_dir/lib";
+
 use WeBWorK::CourseEnvironment;
 use String::ShellQuote;
 
@@ -37,15 +36,12 @@ use WeBWorK::Utils::CourseManagement qw/listCourses/;
 my $time = time();
 
 # get course environment and open up database
-my $ce = new WeBWorK::CourseEnvironment({
-    webwork_dir => $ENV{WEBWORK_ROOT},
-	});
+my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
 
 # decide whether the mysql installation can handle
 # utf8mb4 and that should be used for the OPL
 
-my $ENABLE_UTF8MB4 = $ce->{ENABLE_UTF8MB4}?1:0;
-
+my $ENABLE_UTF8MB4 = $ce->{ENABLE_UTF8MB4} ? 1 : 0;
 
 my $dbh = DBI->connect(
 	$ce->{problemLibrary_db}->{dbsource},
@@ -63,7 +59,7 @@ my @courses = listCourses($ce);
 
 # create tables.  We always redo the statistics table.
 
-my $character_set =  ($ENABLE_UTF8MB4)? "utf8mb4":"utf8";
+my $character_set = ($ENABLE_UTF8MB4) ? "utf8mb4" : "utf8";
 
 $dbh->do(<<EOS);
 CREATE TABLE IF NOT EXISTS `OPL_problem_user` (
@@ -104,25 +100,25 @@ $dbh->commit();
 # for each course get the data from the user problem table into the
 # opl user problem table.
 
-print "Importing statistics for ".scalar(@courses)." courses.\n";
+print "Importing statistics for " . scalar(@courses) . " courses.\n";
 
 my $counter = 0;
 
 foreach my $courseID (@courses) {
-    $counter++;
-    print sprintf("%*d",4,$counter);
-    if ($counter % 10 == 0) {
-	print "\n";
-    }
+	$counter++;
+	print sprintf("%*d", 4, $counter);
+	if ($counter % 10 == 0) {
+		print "\n";
+	}
 
-    next if $courseID eq 'admin' || $courseID eq 'modelCourse';
+	next if $courseID eq 'admin' || $courseID eq 'modelCourse';
 
-    # we extract the identifying information of the problem,
-    # the status, attempted flag, number of attempts.
-    # and the source_file
-    # we strip of the local in front of the source file
-    # (assuming that these are mostly the same as their library counterparts
-    $dbh->do(<<EOS);
+	# we extract the identifying information of the problem,
+	# the status, attempted flag, number of attempts.
+	# and the source_file
+	# we strip of the local in front of the source file
+	# (assuming that these are mostly the same as their library counterparts
+	$dbh->do(<<EOS);
 INSERT IGNORE INTO OPL_problem_user
   (course_id,
   user_id,
@@ -184,7 +180,7 @@ EOS
 $dbh->commit();
 
 # We no longer automatically load the global statistics data here.
-print( "You may want to run load-OPL-global-statistics.pl to update the global statistics data.\n",
+print("You may want to run load-OPL-global-statistics.pl to update the global statistics data.\n",
 	"If this is being run by OPL-update, that will be done automatically.\n");
 
 1;

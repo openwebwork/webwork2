@@ -1,0 +1,71 @@
+<div class="table-responsive">
+	<table class="table table-sm table-bordered font-sm caption-top" id="achievement-table">
+		<caption><%= maketext('Achievement List') %></caption>
+		<thead class="table-group-divider">
+			<tr>
+				<th>
+					<%= check_box select_all => '',
+						id           => 'select-all',
+						class        => 'select-all form-check-input',
+						'aria-label' => maketext('Select all achievements'),
+						data         => { select_group => 'selected_achievements' } =%>
+				</th>
+				<th><%= label_for 'select-all' => maketext('Achievement ID') %></th>
+				<th><%= maketext('Enabled') %></th>
+				<th><%= maketext('Name') %></th>
+				<th><%= maketext('Number') %></th>
+				<th><%= maketext('Category') %></th>
+				<th class="text-nowrap"><%= maketext('Edit Users') %></th>
+				<th class="text-nowrap"><%= maketext('Edit Evaluator') %></th>
+			</tr>
+		</thead>
+		<tbody class="table-group-divider">
+			% my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
+			% for (@$achievements) {
+				% my $achievement_id = $_->achievement_id;
+				<tr>
+					<td>
+						<%= check_box selected_achievements => $achievement_id,
+							id    => "${achievement_id}_id",
+							class => 'form-check-input',
+							$selectedAchievementIDs{ $_->achievement_id } ? (checked => undef) : () =%>
+					</td>
+					<td>
+						<div class="label-with-edit-icon">
+							<%= label_for "${achievement_id}_id", begin =%>
+								<%= $_->achievement_id %>
+								<%= link_to $c->systemLink(
+										url_for('instructor_achievement_list'),
+										params => { editMode => 1, selected_achievements => $achievement_id }
+									),
+									begin %>
+									<i class="icon fas fa-pencil-alt" data-alt="edit" aria-hidden="true"></i>
+								<% end %>
+							<% end =%>
+						</div>
+					</td>
+					<td><%= $_->enabled ? maketext('Yes') : maketext('No') %></td>
+					<td class="text-nowrap"><%= $_->name %></td>
+					<td><%= $_->number %></td>
+					<td><%= $_->category %></td>
+					<td>
+						% my $num_users = $db->countAchievementUsers($_->achievement_id);
+						<%= link_to "$num_users/$c->{totalUsers}" => $c->systemLink(
+							url_for('instructor_achievement_user_editor', achievementID => $achievement_id)
+						) =%>
+					</td>
+					<td class="text-nowrap">
+						<%= link_to maketext('Edit Evaluator') => $c->systemLink(
+							url_for('instructor_achievement_editor', achievementID => $achievement_id),
+							params => { sourceFilePath => $ce->{courseDirs}{achievements}. '/' . $_->test }
+						) =%>
+					</td>
+				</tr>
+			% }
+		</tbody>
+	</table>
+</div>
+%
+% unless (@$achievements) {
+	<p><i><%= maketext('No achievements shown.  Create an achievement!') %></i></p>
+% }

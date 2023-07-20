@@ -1,0 +1,99 @@
+% use WeBWorK::Utils qw(format_set_name_display);
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1 mb-0">
+		<%= maketext('You are not authorized to access instructor tools.') =%>
+	</div>
+	% last;
+% }
+%
+% unless ($authz->hasPermissions(param('user'), 'modify_student_data')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to modify student data.') =%></div>
+	% last;
+% }
+%
+<hr>
+<p><%= defined $c->{studentEntryReport} ? $c->{studentEntryReport}->join('') : '' %></p>
+<p>
+	<%= maketext(
+		'Enter information below for students you wish to add. '
+			. q{Each student's password will initially be set to their student ID.}
+	) =%>
+</p>
+%
+% my $numberOfStudents = param('number_of_students') // 5;
+%
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields('create_') =%>
+	<div class="input-group d-inline-flex w-auto">
+		<%= submit_button maketext('Create'), class => 'btn btn-primary' =%>
+		<%= text_field number_of_students => $numberOfStudents, size => 3, class => 'form-control' =%>
+		<span class="input-group-text"><%= maketext('entry rows.') %></span>
+	</div>
+<% end =%>
+<hr>
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= hidden_field number_of_students => $numberOfStudents =%>
+	<div class="table-responsive">
+		<table class="table table-sm table-bordered">
+			<tr>
+				<th><%= maketext('Last Name') %></th>
+				<th><%= maketext('First Name') %></th>
+				<th><%= maketext('Student ID') %></th>
+				<th><%= maketext('Login Name') %><span class="required-field">*</span></th>
+				<th><%= maketext('Email Address') %></th>
+				<th><%= maketext('Section') %></th>
+				<th><%= maketext('Recitation') %></th>
+				<th><%= maketext('Comment') %></th>
+			</tr>
+			% for (1 .. $numberOfStudents) {
+				<tr>
+					<td>
+						% param("last_name_$_", undef);
+						<%= text_field "last_name_$_" => '', size => '10',
+							class => 'form-control form-control-sm w-auto' =%>
+					</td>
+					<td>
+						% param("first_name_$_", undef);
+						<%= text_field "first_name_$_" => '', size => '10',
+							class => 'form-control form-control-sm w-auto' =%>
+					</td>
+					<td>
+						% param("student_id_$_", undef);
+						<%= text_field "student_id_$_" => '', size => '16',
+							class => 'form-control form-control-sm w-auto' =%>
+					</td>
+					<td>
+						% param("new_user_id_$_", undef);
+						<%= text_field "new_user_id_$_" => '', size => '10',
+							class => 'form-control form-control-sm w-auto' =%>
+					</td>
+					<td>
+						% param("email_address_$_", undef);
+						<%= text_field "email_address_$_" => '', class => 'form-control form-control-sm w-auto' =%>
+					</td>
+					<td>
+						% param("section_$_", undef);
+						<%= text_field "section_$_" => '', size => '4',
+							class => 'form-control form-control-sm w-auto' =%>
+					</td>
+					<td>
+						% param("recitation_$_", undef);
+						<%= text_field "recitation_$_" => '', size => '4',
+							class => 'form-control form-control-sm w-auto' =%>
+					</td>
+					<td>
+						% param("comment_$_", undef);
+						<%= text_field "comment_$_" => '', class => 'form-control form-control-sm w-auto' =%>
+					</td>
+				</tr>
+			% }
+		</table>
+	</div>
+	<p class="my-2"><%= maketext('Select sets below to assign them to the newly-created users.') %></p>
+	% param('assignSets', undef);
+	<%= select_field assignSets => [ map { [ format_set_name_display($_) => $_ ] } $db->listGlobalSets ],
+		size => 10, multiple => undef, class => 'form-select w-auto mb-2' =%>
+	<p><%= submit_button maketext('Add Students'), name => 'addStudents', class => 'btn btn-primary' =%></p>
+<% end =%>

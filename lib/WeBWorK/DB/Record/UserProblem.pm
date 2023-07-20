@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,15 +28,16 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		user_id     => { type => "TINYBLOB NOT NULL", key => 1 },
-		set_id      => { type => "TINYBLOB NOT NULL", key => 1 },
-		problem_id  => { type => "INT NOT NULL",      key => 1 },
+		user_id     => { type => "VARCHAR(100) NOT NULL", key => 1 },
+		set_id      => { type => "VARCHAR(100) NOT NULL", key => 1 },
+		problem_id  => { type => "INT NOT NULL",          key => 1 },
 		source_file => { type => "TEXT" },
 		# FIXME i think value should be able to hold decimal values...
 		value              => { type => "INT" },
 		max_attempts       => { type => "INT" },
 		showMeAnother      => { type => "INT" },
 		showMeAnotherCount => { type => "INT" },
+		showHintsAfter     => { type => "INT" },
 		# periodic re-randomization period
 		prPeriod => { type => "INT" },
 		# periodic re-randomization number of attempts for the current seed
@@ -49,9 +50,12 @@ BEGIN {
 		num_incorrect        => { type => "INT" },
 		att_to_open_children => { type => "INT" },
 		counts_parent_grade  => { type => "INT" },
-		sub_status           => { type => "FLOAT" },  # A subsidiary status used to implement the reduced scoring period
-													  # a field for flags which need to be set
-		flags                => { type => "TEXT" },
+		# A subsidiary status used to implement the reduced scoring period
+		sub_status => { type => "FLOAT" },
+		# a field for flags which need to be set
+		flags => { type => "TEXT" },
+		# additional stored data for this problem, internally uses JSON:
+		problem_data => { type => "MEDIUMTEXT" },
 	);
 }
 

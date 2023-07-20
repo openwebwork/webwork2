@@ -1,0 +1,79 @@
+% if (!@{ $c->{selectedAchievementIDs} }) {
+	<p><i><%= maketext('No achievements shown.  Select an achievement to edit!') =%></i></p>
+% } else {
+	<div class="table-responsive">
+		<table class="table table-sm table-bordered font-sm caption-top" id="achievement-table">
+			<caption><%= maketext('Achievement List') %></caption>
+			<thead class="table-group-divider">
+				<tr>
+					<th class="align-top"><%= maketext('Icon') %></th>
+					<th class="align-top">
+						<div class="d-flex flex-column">
+							<%= maketext('Achievement ID') =%>
+							<span id="name_header"><%= maketext('Name') %></span>
+							<span id="category_header"><%= maketext('Category') %></span>
+						</div>
+					</th>
+					<th class="align-top">
+						<div class="d-flex flex-column">
+							<span id="number_header"><%= maketext('Number') %></span>
+							<span id="enabled_header"><%= maketext('Enabled') %></span>
+							<span id="points_header"><%= maketext('Points') %></span>
+							<span id="max_counter_header"><%= maketext('Counter') %></span>
+						</div>
+					</th>
+					<th class="align-top">
+						<div class="d-flex flex-column">
+							<span id="description_header"><%= maketext('Description') %></span>
+							<span id="test_header"><%= maketext('Evaluator File') %></span>
+							<span id="icon_header"><%= maketext('Icon File') %></span>
+							<%= maketext('Type') =%>
+						</div>
+					</th>
+				</tr>
+			</thead>
+			<tbody class="table-group-divider">
+				% my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
+				% for my $achievement (@$achievements) {
+					% my $achievement_id = $achievement->achievement_id;
+					% if ($selectedAchievementIDs{$achievement_id}) {
+						<tr>
+							<td>
+								<%= hidden_field selected_achievements => $achievement_id =%>
+								<%= image
+									$ce->{courseURLs}{achievements}
+										. '/'
+										. ($achievement->icon // 'defaulticon.png'),
+									alt => 'Achievement Icon', height => 60, class => 'm-1' =%>
+							</td>
+							% for (
+								% { size => 30, fields => [ 'achievement_id', 'name',    'category' ] },
+								% { size => 8,  fields => [ 'number',         'enabled', 'points', 'max_counter' ] },
+								% { size => 85, fields => [ 'description',    'test',    'icon',   'assignment_type' ] }
+								% )
+							% {
+								<td>
+									<div class="d-flex flex-column gap-1">
+										% for my $field (@{ $_->{fields} }) {
+											<span class="text-nowrap" style="height:28px">
+												<%= include
+													'ContentGenerator/Instructor/AchievementList/edit_table_row',
+													fieldName => "achievement.$achievement_id.$field",
+													value => $achievement->$field,
+													size => $_->{size} =%>
+											</span>
+										% }
+									</div>
+								</td>
+							% }
+						</tr>
+					% }
+				% }
+			</tbody>
+		</table>
+	</div>
+	%
+	% unless (@$achievements) {
+		<p><i><%= maketext('No achievements shown.  Create an achievement!') %></i></p>
+	% }
+% }

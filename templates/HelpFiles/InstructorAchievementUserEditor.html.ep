@@ -1,0 +1,26 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Achievement User Editor Help');
+%
+<p class="mb-0">
+	<%= maketext('This form can assign, unassign, and edit user data for a single achievement.  You can assign the '
+		. 'achievement to all current users or select which users to assign the achievement to and click Save.  You '
+		. 'can unassign the achievement by unchecking a student\'s name (note all data will be deleted).  To unassign '
+		. 'the achievement from all users, first select "Allow unassign" and then click the "Unassign from All Users" '
+		. 'button. You can also toggle the earned status with the checkbox in the "Earned" column and edit the '
+		. 'achievement counter for counting achievements.') =%>
+</p>

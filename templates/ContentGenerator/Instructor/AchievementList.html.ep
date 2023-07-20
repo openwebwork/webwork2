@@ -1,0 +1,57 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/ShowHide/show_hide.js'),    defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'),   defer => undef =%>
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'edit_achievements')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to edit achievements.') %></div>
+	% last;
+% }
+%
+<%= form_for current_route, method => 'post', id => 'achievement-list', name => 'achievementlist', class => 'font-sm',
+	begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= hidden_field editMode => $c->{editMode} =%>
+	<%= hidden_field exportMode => $c->{exportMode} =%>
+	%
+	% if ($c->{editMode}) {
+		<p><b><%= maketext('Any changes made below will be reflected in the achievement for ALL students.') %></b></p>
+	% }
+	%
+	<%= hidden_field action => $formsToShow->[0], id => 'current_action' =%>
+	<div>
+		<ul class="nav nav-tabs mb-2" role="tablist">
+			% for my $actionID (@$formsToShow) {
+				<li class="nav-item" role="presentation">
+					<%= link_to maketext($formTitles->{$actionID}) => "#$actionID",
+						class           => 'nav-link action-link' . ($actionID eq $formsToShow->[0] ? ' active' : ''),
+						id              => "$actionID-tab",
+						data            => { action => $actionID, bs_toggle => 'tab', bs_target => "#$actionID" },
+						role            => 'tab',
+						'aria-controls' => $actionID,
+						'aria-selected' => $actionID eq $formsToShow->[0] ? 'true' : 'false' =%>
+				</li>
+			% }
+		</ul>
+		<div class="tab-content">
+			% for my $actionID (@$formsToShow) {
+				<div class="tab-pane fade mb-2 <%= $actionID eq $formsToShow->[0] ? 'show active' : '' %>"
+					id="<%= $actionID %>" role="tabpanel" aria-labelledby="<%= $actionID %>-tab">
+					<%= include "ContentGenerator/Instructor/AchievementList/${actionID}_form" =%>
+				</div>
+			% }
+		</div>
+	</div>
+	<%= submit_button maketext($formTitles->{ $formsToShow->[0] }),
+		id => 'take_action', class => 'btn btn-primary mb-3' =%>
+	% if ($c->{exportMode}) {
+		<%= include 'ContentGenerator/Instructor/AchievementList/export_table' =%>
+	% } elsif ($c->{editMode}) {
+		<%= include 'ContentGenerator/Instructor/AchievementList/edit_table' =%>
+	% } else {
+		<%= include 'ContentGenerator/Instructor/AchievementList/default_table' =%>
+	% }
+<% end =%>

@@ -1,0 +1,47 @@
+% my %fieldHeaders = (
+	% set_id                 => $c->{editMode}
+								% ? maketext('Edit Set')
+								% : label_for('select-all' => maketext('Edit Set Data')),
+	% problems               => maketext('Edit Problems'),
+	% users                  => maketext('Edit Assigned Users'),
+	% visible                => maketext('Visible'),
+	% enable_reduced_scoring => $c->{editMode} ? maketext('Enable Reduced Scoring') : maketext('Reduced Scoring'),
+	% open_date              => maketext('Open Date'),
+	% reduced_scoring_date   => maketext('Reduced Scoring Date'),
+	% due_date               => maketext('Close Date'),
+	% answer_date            => maketext('Answer Date')
+% );
+%
+<div class="table-responsive">
+	<table id="set_table_id" class="set_table table table-sm table-bordered caption-top font-sm <%=
+		$c->{editMode} ? 'align-middle' : '' %>">
+		%
+		<caption><%= maketext('Set List') %></caption>
+		%
+		<thead class="table-group-divider">
+			<tr>
+				% if (!$c->{editMode}) {
+					<th>
+						<%= check_box 'select-all' => '', id => 'select-all', class => 'select-all form-check-input',
+							'aria-label' => maketext('Select all sets'), data => { select_group => 'selected_sets' } =%>
+					</th>
+				% }
+				% for (@$fieldNames) {
+					<th id="<%= $_ %>_header"><%= $fieldHeaders{$_} =%></th>
+				% }
+			</tr>
+		</thead>
+		%
+		<tbody class="table-group-divider">
+			% my %selectedSetIDs = (map { $_ => 1 } @{ $c->{selectedSetIDs} });
+			% for (@$sets) {
+				<%= include 'ContentGenerator/Instructor/ProblemSetList/set_list_row',
+					set => $_, setSelected => $selectedSetIDs{ $_->set_id } =%>
+			% }
+		</tbody>
+	</table>
+</div>
+% # If there are no sets shown, print message.
+% unless (@$sets) {
+	<p><i><%= maketext('No sets shown.  Choose one of the options above to list the sets in the course.') %></i></p>
+% }

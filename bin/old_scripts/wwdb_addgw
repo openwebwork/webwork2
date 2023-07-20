@@ -1,7 +1,7 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -13,7 +13,7 @@
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
 # Artistic License for more details.
 ################################################################################
-# 
+#
 # wwdb_addgw
 #   update webwork database tables to add fields for the gateway module
 #
@@ -29,15 +29,15 @@ wwdb_addgw - convert SQL databases for WeBWorK 2 to add gateway fields.
 
 =head1 DESCRIPTION
 
-Adds fields to the set and set_user tables in the WeBWorK mysql databases 
-that are required for the gateway module.  The script prompts for which 
-courses to modify.  Adding gateway database fields to existing courses 
+Adds fields to the set and set_user tables in the WeBWorK mysql databases
+that are required for the gateway module.  The script prompts for which
+courses to modify.  Adding gateway database fields to existing courses
 should have no effect on those courses, even if they are running under a
 non-gateway aware version of the WeBWorK system.
 
 If C<-h> is provided, the script hides the mysql admin password.
 
-C<sql> or C<sql_single> gives the default WeBWorK database format.  If 
+C<sql> or C<sql_single> gives the default WeBWorK database format.  If
 omitted, the script assumes sql_single and prompts to be sure.
 
 =cut
@@ -86,7 +86,7 @@ my ( $admin, $adminpw );
 
 # connect to database, if we're in sql_single mode; this lets us easily
 # get a list of courses to work with.  in sql mode, it's harder b/c I can't
-# get DBI->data_sources('mysql') to work on my system, so we prompt for 
+# get DBI->data_sources('mysql') to work on my system, so we prompt for
 # those separately.  if we're in sql single mode, $dbh is a place holder,
 # because we have to do the database connects in the subroutines to connect
 # to each different database
@@ -102,7 +102,7 @@ my @courses = getCourses( $dbtype, $dbh );
 # now $course{coursename} = format (sql or sql_single)
 
 # do update
-my ( $doneRef, $skipRef ) = updateCourses( $dbtype, $dbh, \@courses, 
+my ( $doneRef, $skipRef ) = updateCourses( $dbtype, $dbh, \@courses,
 					   $admin, $adminpw );
 $dbh->disconnect() if ( $dbh );
 
@@ -113,10 +113,10 @@ confirmUpdate( $dbtype, $doneRef, $skipRef );
 #-------------------------------------------------------------------------------
 # subroutines
 
-sub printHdr { 
+sub printHdr {
     print <<eoh;
 ---------------------------------------------------------------------------
-wwdb_addgw: update WeBWorK SQL databases to include fields required for a 
+wwdb_addgw: update WeBWorK SQL databases to include fields required for a
             Gateway aware WeBWorK installation.
 
 set default WeBWorK database type to $dbtype.
@@ -201,7 +201,7 @@ sub getCourses {
 	%nummap = orderedList( %courses );
 	print "Current list of courses to update:\n";
 	printclist( sort keys( %courses ) );
-	print "Enter #, d# or [cr] > ";  
+	print "Enter #, d# or [cr] > ";
         chomp( $resp = <STDIN> );
     }
 
@@ -266,7 +266,7 @@ sub updateCourses {
 	    $dbh = DBI->connect("$source:webwork_$crs", $admin, $adminpw) or
 		die( $DBI::errstr );
 
-    # now get a list of columns from the set table to check to see if 
+    # now get a list of columns from the set table to check to see if
     # we need an update
 	    my $cmd = "show columns from set_not_a_keyword";
 	    my $st = $dbh->prepare( $cmd ) or die( $dbh->errstr() );
@@ -308,14 +308,14 @@ sub updateCourses {
 
 	    foreach my $f ( keys %addFields ) {
 	    print "$cmd1 $f $addFields{$f}\n";
-		my $st = $dbh->prepare( "$cmd1 $f $addFields{$f}" ) or 
+		my $st = $dbh->prepare( "$cmd1 $f $addFields{$f}" ) or
                     die( $dbh->errstr() );
 		$st->execute() or die( $st->errstr() );
 	    }
 
 	    foreach my $f ( keys %addFields ) {
 	    print "$cmd2 $f $addFields{$f}\n";
-		my $st = $dbh->prepare( "$cmd2 $f $addFields{$f}" ) or 
+		my $st = $dbh->prepare( "$cmd2 $f $addFields{$f}" ) or
 		    die( $dbh->errstr() );
 		$st->execute() or die( $st->errstr() );
 	    }
@@ -347,9 +347,9 @@ sub confirmUpdate {
 
     my $crsList= (@$doneRef) ? join(', ', @$doneRef) : '';
     my $skpList= (@$skipRef) ? join(', ', @$skipRef) : '';
-    my $crsString = ( $crsList ) ? 
+    my $crsString = ( $crsList ) ?
 	$s1 . hangIndent( $l1, 75, $l1, "$crsList.") . "\n" : '';
-    my $skpString = ( $skpList ) ? 
+    my $skpString = ( $skpList ) ?
 	$s2 . hangIndent( $l1, 75, $l2, "$skpList." ) : '';
 
     print <<eot;

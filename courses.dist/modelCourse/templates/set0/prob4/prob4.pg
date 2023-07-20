@@ -16,7 +16,6 @@ loadMacros(
 "PGauxiliaryFunctions.pl"
 );
 
-TEXT(beginproblem());
 $showPartialCorrectAnswers = 0;
 
 

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,7 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		location_id => { type => "TINYBLOB NOT NULL", key => 1 },
+		location_id => { type => "VARCHAR(40) NOT NULL", key => 1 },
 		description => { type => "TEXT" },
 	);
 }

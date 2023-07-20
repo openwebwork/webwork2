@@ -1,0 +1,24 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Upgrade Courses Help');
+%
+<p class="mb-0">
+	<%= maketext('Select which courses to upgrade from a previous version of WeBWorK.  The upgrade process can add '
+		. 'missing database columns, delete unused database columns, and check the course file structure.  Be sure '
+		. 'to read over the changes before confirming the upgrade.  You may want to create an archive of the course '
+		. 'before upgrading.  Only courses that need upgraded will be selectable.') =%>
+</p>

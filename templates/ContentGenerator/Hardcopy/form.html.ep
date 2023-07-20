@@ -1,0 +1,187 @@
+% use WeBWorK::Utils qw(format_set_name_display);
+% use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
+%
+%= form_for current_route, name => 'hardcopy-form', id => 'hardcopy-form', method => 'POST', begin
+	<%= $c->hidden_authen_fields =%>
+	<%= hidden_field in_hc_form => 1 =%>
+	%
+	% if ($multiuser) {
+		<p>
+			<%= maketext(
+				'Select the homework sets for which to generate hardcopy versions. You may'
+					. ' also select multiple users from the users list. You will receive hardcopy'
+					. ' for each (set, user) pair.') =%>
+		</p>
+		<div class="row gx-3">
+			<div class="col-xl-5 col-md-6 mb-2">
+				<div class="fw-bold text-center">
+					<%= label_for selected_users => maketext('Users') =%>
+				</div>
+				<%= scrollingRecordList(
+					{
+						name            => 'selected_users',
+						id              => 'selected_users',
+						controller      => $c,
+						default_sort    => 'lnfn',
+						default_format  => 'lnfn_uid',
+						default_filters => ['all'],
+						attrs           => { size => 20, multiple => undef }
+					},
+					@$users
+				) =%>
+			</div>
+			<div class="col-xl-5 col-md-6 mb-2">
+				<div class="fw-bold text-center">
+					<%= label_for selected_sets => maketext('Sets') =%>
+				</div>
+				<%= scrollingRecordList(
+					{
+						name            => 'selected_sets',
+						id              => 'selected_sets',
+						controller      => $c,
+						default_sort    => 'set_id',
+						default_format  => 'sid',
+						default_filters => ['all'],
+						attrs           => { size => 20, multiple => undef, dir => 'ltr' }
+					},
+					@$wantedSets,
+					@$setVersions
+				) =%>
+			</div>
+		</div>
+	% } else {
+		<%= hidden_field selected_sets => $selected_set_id =%>
+		<%= hidden_field selected_users => $user_id =%>
+		<p>
+			<%== maketext(
+				'Download hardcopy of set [_1] for [_2]?',
+				tag('span', dir => 'ltr', format_set_name_display($selected_set_id =~ s/,v(\d+)$/ (version $1)/r)),
+				join(' ', $user->first_name, $user->last_name)
+			) =%>
+		</p>
+	% }
+	%
+	<div class="row">
+		<div class="col-md-8 font-sm mb-2">
+			<%= maketext(
+				'You may choose to show any of the following data. Correct answers, hints, and solutions '
+					. 'are only available [_1] after the answer date of the homework set.',
+				$multiuser ? 'to privileged users or' : ''
+			) =%>
+		</div>
+		<div class="row">
+			<div class="col-md-8">
+				<div class="input-group input-group-sm mb-2">
+					<span class="input-group-text"><b><%= maketext('Show:') %></b></span>
+					<div class="input-group-text">
+						<label class="form-check-label">
+							<%= check_box printStudentAnswers => 1, class => 'form-check-input me-2' =%>
+							<%= maketext('Student answers') =%>
+						</label>
+					</div>
+					<div class="input-group-text">
+						<label class="form-check-label">
+							<%= check_box showComments => 1, class => 'form-check-input me-2' =%>
+							<%= maketext('Comments') =%>
+						</label>
+					</div>
+					% if ($canShowCorrectAnswers) {
+						<div class="input-group-text">
+							<label class="form-check-label">
+								<%= check_box showCorrectAnswers => 1, class => 'form-check-input me-2' =%>
+								<%= maketext('Correct answers') =%>
+							</label>
+						</div>
+						<div class="input-group-text">
+							<label class="form-check-label">
+								<%= check_box showHints => 1, class => 'form-check-input me-2' =%>
+								<%= maketext('Hints') =%>
+							</label>
+						</div>
+						<div class="input-group-text">
+							<label class="form-check-label">
+								<%= check_box showSolutions => 1, class => 'form-check-input me-2' =%>
+								<%= maketext('Solutions') =%>
+							</label>
+						</div>
+					% }
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-8">
+				<div class="input-group input-group-sm mb-2">
+					<span class="input-group-text"><b><%= maketext('Hardcopy Format:') %></b></span>
+					<div class="input-group-text">
+						% for (@$formats) {
+							<label class="form-check-label me-3">
+								<%= radio_button hardcopy_format => $_, class => 'form-check-input me-2',
+									$_ eq $default_format ? (checked => undef) : () =%>
+								<%= $format_labels->{$_} =%>
+							</label>
+						% }
+					</div>
+				</div>
+			</div>
+		</div>
+		% if ($c->{can_show_source_file}) {
+			<div class="row">
+				<div class="col-md-8">
+					<div class="input-group input-group-sm mb-2">
+						<span class="input-group-text"><b><%= maketext('Show Problem Source File:') %></b></span>
+						<div class="input-group-text">
+							<label class="form-check-label me-3">
+								<%= radio_button show_source_file => 'Yes', class => 'form-check-input me-2',
+									checked => undef =%>
+								<%= maketext('Yes') =%>
+							</label>
+							<label class="form-check-label me-3">
+								<%= radio_button show_source_file => 'No', class => 'form-check-input me-2',
+									checked => undef =%>
+								<%= maketext('No') =%>
+							</label>
+						</div>
+					</div>
+				</div>
+			</div>
+		% }
+		% if ($can_change_theme) {
+			<div class="row">
+				<div class="col-md-8">
+					<div class="input-group input-group-sm mb-2">
+						<span class="input-group-text"><b><%= maketext('Hardcopy Theme:') %></b></span>
+						% if (@{ $hardcopyThemesAvailable } <= 3) {
+							<div class="input-group-text">
+								% for (@{ $hardcopyThemesAvailable }) {
+									<label class="form-check-label me-3">
+										<%= radio_button hardcopy_theme => $_, class => 'form-check-input me-2',
+											$_ eq $ce->{hardcopyTheme} ? (checked => undef) : () =%>
+										<%= $hardcopyLabels->{$_} =%>
+									</label>
+								% }
+							</div>
+						% } else {
+							<div class="input-group-text p-0">
+								<%= select_field 'hardcopy_theme' => [
+										map { [
+											$hardcopyLabels->{$_} => $_,
+											$_ eq $ce->{hardcopyTheme} ? (selected => undef) : ()
+										] } @{ $hardcopyThemesAvailable }
+									],
+									id    => 'action_hardcopy_theme_id',
+									class => 'form-select form-select-sm d-inline w-auto' =%>
+							</div>
+						% }
+					</div>
+				</div>
+			</div>
+		% }
+		<div>
+			<%= submit_button
+				$multiuser
+				? maketext('Generate hardcopy for selected sets and selected users')
+				: maketext('Generate Hardcopy'),
+				name => 'generate_hardcopy', class => 'btn btn-primary' =%>
+		</div>
+	</div>
+% end

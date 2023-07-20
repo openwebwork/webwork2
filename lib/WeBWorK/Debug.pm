@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,8 +14,15 @@
 ################################################################################
 
 package WeBWorK::Debug;
-use base qw(Exporter);
+use parent qw(Exporter);
+
+use strict;
+use warnings;
+
 use Date::Format;
+use Time::HiRes qw/gettimeofday/;
+use WeBWorK::Utils qw/undefstr/;
+
 our @EXPORT = qw(debug);
 
 =head1 NAME
@@ -25,25 +32,15 @@ WeBWorK::Debug - Print (or don't print) debugging output.
 head1 SYNOPSIS
 
  use WeBWorK::Debug;
- 
+
  # Enable debugging
  $WeBWorK::Debug::Enabled = 1;
- 
+
  # Log to a file instead of STDERR
  $WeBWorK::Debug::Logfile = "/path/to/debug.log";
- 
+
  # log some debugging output
  debug("Generated 5 widgets.");
-
-=cut
-
-use strict;
-use warnings;
-use Time::HiRes qw/gettimeofday/;
-use WeBWorK::Constants;
-use WeBWorK::Utils qw/undefstr/;
-
-################################################################################
 
 =head1 CONFIGURATION VARIABLES
 
@@ -55,7 +52,7 @@ If true, debugging messages will be output. If false, they will be ignored.
 
 =cut
 
-our $Enabled = 0 unless defined $Enabled;
+our $Enabled = $Enabled // 0;
 
 =item $Logfile
 
@@ -63,7 +60,7 @@ If non-empty, debugging output will be sent to the file named rather than STDERR
 
 =cut
 
-our $Logfile = "" unless defined $Logfile;
+our $Logfile = $Logfile // '';
 
 =item $DenySubroutineOutput
 
@@ -85,10 +82,6 @@ our $AllowSubroutineOutput;
 
 =back
 
-=cut
-
-################################################################################
-
 =head1 FUNCTIONS
 
 =over
@@ -100,24 +93,21 @@ Write @messages to the debugging log.
 =cut
 
 sub debug {
-	my (@message) = undefstr("###UNDEF###", @_);
+	my @message = @_;
+	@message = undefstr('###UNDEF###', @message);
 
-	#print STDERR "in ww::debug\n";
-	#print STDERR $WeBWorK::Constants::WEBWORK_DIRECTORY . "\n";
-	#print STDERR $Logfile . "\n";
-	
 	if ($Enabled) {
 		my ($package, $filename, $line, $subroutine) = caller(1);
 		return if defined $AllowSubroutineOutput and not $subroutine =~ m/$AllowSubroutineOutput/;
-		return if defined $DenySubroutineOutput and $subroutine =~ m/$DenySubroutineOutput/;
-		
+		return if defined $DenySubroutineOutput  and $subroutine     =~ m/$DenySubroutineOutput/;
+
 		my ($sec, $msec) = gettimeofday;
-		my $date = time2str("%a %b %d %H:%M:%S.$msec %Y", $sec);
-		my $finalMessage = "[$date] $subroutine: " . join("", @message);
+		my $date         = time2str("%a %b %d %H:%M:%S.$msec %Y", $sec);
+		my $finalMessage = "[$date] $subroutine: " . join('', @message);
 		$finalMessage .= "\n" unless $finalMessage =~ m/\n$/;
 
-		if ($WeBWorK::Debug::Logfile ne "") {
-			if (open my $fh, ">>:encoding(UTF-8)", $Logfile) {
+		if ($WeBWorK::Debug::Logfile ne '') {
+			if (open my $fh, '>>:encoding(UTF-8)', $Logfile) {
 				print $fh $finalMessage;
 				close $fh;
 			} else {
@@ -128,13 +118,11 @@ sub debug {
 			print STDERR $finalMessage;
 		}
 	}
+
+	return;
 }
 
 =back
-
-=cut
-
-################################################################################
 
 =head1 AUTHOR
 

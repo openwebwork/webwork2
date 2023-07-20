@@ -1,7 +1,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,22 +25,23 @@ WeBWorK::Utils - useful utilities used by other WeBWorK modules.
 
 use strict;
 use warnings;
-#use Apache::DB;
+
 use DateTime;
 use DateTime::TimeZone;
 use Date::Parse;
 use Date::Format;
 use File::Copy;
 use File::Spec::Functions qw(canonpath);
+use Fcntl qw(:flock);
 use Time::Zone;
 use MIME::Base64 qw(encode_base64 decode_base64);
 use Errno;
 use File::Path qw(rmtree);
 use Storable;
 use Carp;
-#use Mail::Sender;
 use Storable qw(nfreeze thaw);
 use JSON;
+use Email::Sender::Transport::SMTP;
 
 use open IO => ':encoding(UTF-8)';
 
@@ -58,11 +59,9 @@ use constant MKDIR_ATTEMPTS => 10;
 #     %Z = timezone name
 use constant DATE_FORMAT => "%m/%d/%Y at %I:%M%P %Z";
 
-use constant JITAR_MASK => [hex 'FF000000', hex '00FC0000',
-			   hex '0003F000', hex '00000F00',
-			   hex '000000F0', hex '0000000F'];
-use constant JITAR_SHIFT => [24,18,12,8,4,0];
-
+use constant JITAR_MASK =>
+	[ hex 'FF000000', hex '00FC0000', hex '0003F000', hex '00000F00', hex '000000F0', hex '0000000F' ];
+use constant JITAR_SHIFT => [ 24, 18, 12, 8, 4, 0 ];
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
@@ -78,7 +77,6 @@ our @EXPORT_OK = qw(
 	encode_utf8_base64
 	fisher_yates_shuffle
 	formatDateTime
-	has_aux_files
 	intDateTime
 	list2hash
 	listFilesRecursive
@@ -90,6 +88,7 @@ our @EXPORT_OK = qw(
 	path_is_subdir
 	pretty_print_rh
 	readDirectory
+	createDirectory
 	readFile
 	ref2string
 	removeTempDirectory
@@ -105,9 +104,11 @@ our @EXPORT_OK = qw(
 	thaw_base64
 	undefstr
 	writeCourseLog
+	writeCourseLogGivenTime
 	writeLog
 	writeTimingLogEntry
 	wwRound
+	getTestProblemPosition
 	is_restricted
 	grade_set
 	grade_gateway
@@ -118,7 +119,10 @@ our @EXPORT_OK = qw(
 	is_jitar_problem_closed
 	jitar_problem_adjusted_status
 	jitar_problem_finished
+	role_and_above
 	fetchEmailRecipients
+	processEmailMessage
+	createEmailSenderTransportSMTP
 	generateURLs
 	getAssetURL
 	x
@@ -142,14 +146,14 @@ our @EXPORT_OK = qw(
 
 sub runtime_use($;@) {
 	my ($module, @import_list) = @_;
-	my $package = (caller)[0]; # import into caller's namespace
+	my $package = (caller)[0];    # import into caller's namespace
 
 	my $import_string;
-	if (@import_list == 1 and ref $import_list[0] eq "ARRAY" and @{$import_list[0]} == 0) {
+	if (@import_list == 1 and ref $import_list[0] eq "ARRAY" and @{ $import_list[0] } == 0) {
 		$import_string = "";
 	} else {
 		# \Q = quote metachars \E = end quoting
-		$import_string = "import $module " . join(",", map { qq|"\Q$_\E"| } @import_list);
+		$import_string = "import $module " . join(",", map {qq|"\Q$_\E"|} @import_list);
 	}
 	eval "package $package; require $module; $import_string";
 	die $@ if $@;
@@ -185,7 +189,7 @@ sub runtime_use($;@) {
 # Windows uses CRLF, Mac uses CR, UNIX uses LF. (CR is ASCII 15, LF if ASCII 12)
 sub force_eoln($) {
 	my ($string) = @_;
-	$string = $string//'';
+	$string = $string // '';
 	$string =~ s/\015\012?/\012/g;
 	return $string;
 }
@@ -193,34 +197,35 @@ sub force_eoln($) {
 sub readFile($) {
 	my $fileName = shift;
 	# debugging code: found error in CourseEnvironment.pm with this
-# 	if ($fileName =~ /___/ or $fileName =~ /the-course-should-be-determined-at-run-time/) {
-# 		print STDERR "File $fileName not found.\n Usually an unnecessary call to readFile from\n",
-# 		join("\t ", caller()), "\n";
-# 		return();
-# 	}
-	local $/ = undef; # slurp the whole thing into one string
-	my $result='';  # need this initialized because the file (e.g. simple.conf) may not exist
+	# 	if ($fileName =~ /___/ or $fileName =~ /the-course-should-be-determined-at-run-time/) {
+	# 		print STDERR "File $fileName not found.\n Usually an unnecessary call to readFile from\n",
+	# 		join("\t ", caller()), "\n";
+	# 		return();
+	# 	}
+	local $/ = undef;    # slurp the whole thing into one string
+	my $result = '';     # need this initialized because the file (e.g. simple.conf) may not exist
 	if (-r $fileName) {
-		eval{
+		eval {
 			# CODING WARNING:
 			# if (open my $dh, "<", $fileName){
 			# will cause a utf8 "\xA9" does not map to Unicode warning if © is in latin-1 file
 			# use the following instead
-			if (open my $dh, "<:raw", $fileName){
+			if (open my $dh, "<:raw", $fileName) {
 				$result = <$dh>;
-				Encode::decode("UTF-8",$result) or die "failed to decode $fileName";
+				Encode::decode("UTF-8", $result) or die "failed to decode $fileName";
 				close $dh;
 			} else {
-				print STDERR "File $fileName cannot be read."; # this is not a fatal error.
+				print STDERR "File $fileName cannot be read.";    # this is not a fatal error.
 			}
 		};
 		if ($@) {
 			print STDERR "reading $fileName:  error in Utils::readFile: $@\n";
 		}
-		my $prevent_error_message = utf8::decode($result) or warn join("",
-			"Non-fatal warning: file $fileName contains at least one character code which ",
-			"is not valid in UTF-8. (The copyright sign is often a culprit -- use '&amp;copy;' instead.)\n",
-			"While this is not fatal you should fix it\n");
+		my $prevent_error_message = utf8::decode($result)
+			or warn join("",
+				"Non-fatal warning: file $fileName contains at least one character code which ",
+				"is not valid in UTF-8. (The copyright sign is often a culprit -- use '&amp;copy;' instead.)\n",
+				"While this is not fatal you should fix it\n");
 		# FIXME
 		# utf8::decode($result) raises an error about the copyright sign
 		# decode_utf8 and Encode::decode_utf8 do not -- which is doing the right thing?
@@ -238,6 +243,33 @@ sub readDirectory($) {
 	return @result;
 }
 
+=item createDirectory($dirName, $permission, $numgid)
+
+Creates a directory with the given name, permission bits, and group ID.
+
+=cut
+
+sub createDirectory {
+	my ($dirName, $permission, $numgid) = @_;
+
+	$permission = (defined($permission)) ? $permission : '0770';
+	my $errors = '';
+	mkdir($dirName, $permission)
+		or $errors .= "Can't do mkdir($dirName, $permission): $!\n" . caller(3);
+	chmod($permission, $dirName)
+		or $errors .= "Can't do chmod($permission, $dirName): $!\n" . caller(3);
+	unless ($numgid == -1) {
+		chown(-1, $numgid, $dirName)
+			or $errors .= "Can't do chown(-1,$numgid,$dirName): $!\n" . caller(3);
+	}
+	if ($errors) {
+		warn $errors;
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
 =item @matches = listFilesRecusive($dir, $match_qr, $prune_qr, $match_full, $prune_full)
 
 Traverses the directory tree rooted at $dir, returning a list of files, named
@@ -253,6 +285,7 @@ and $prune_qr, respectively, should be applied to the bare directory entry
 =cut
 
 sub listFilesRecursiveHelper($$$$$$);
+
 sub listFilesRecursive($;$$$$) {
 	my ($dir, $match_qr, $prune_qr, $match_full, $prune_full) = @_;
 	return listFilesRecursiveHelper($dir, "", $match_qr, $prune_qr, $match_full, $prune_full);
@@ -276,13 +309,13 @@ sub listFilesRecursiveHelper($$$$$$) {
 		if (-l $full_path) {
 			my $link_target = "$full_dir/" . readlink $full_path;
 			if ($link_target) {
-				$is_dir = -d $link_target;
+				$is_dir  = -d $link_target;
 				$is_file = !$is_dir && -f $link_target || -p $link_target || -S $link_target;
 			} else {
 				warn "Couldn't resolve symlink $full_path: $!";
 			}
 		} else {
-			$is_dir = -d $full_path;
+			$is_dir  = -d $full_path;
 			$is_file = !$is_dir && -f $full_path || -p $full_path || -S $full_path;
 		}
 
@@ -307,8 +340,8 @@ sub listFilesRecursiveHelper($$$$$$) {
 			# everything looks good, time to recurse!
 			push @matches, listFilesRecursiveHelper($base_dir, $subdir, $match_qr, $prune_qr, $match_full, $prune_full);
 		} elsif ($is_file) {
-			my $file = ($curr_dir eq "") ? $dir_entry : "$curr_dir/$dir_entry";
-			my $match_string = $match_full ? $file : $dir_entry;
+			my $file         = ($curr_dir eq "") ? $dir_entry : "$curr_dir/$dir_entry";
+			my $match_string = $match_full       ? $file      : $dir_entry;
 			if (not defined $match_string or $match_string =~ m/$match_qr/) {
 				push @matches, $file;
 			}
@@ -327,29 +360,28 @@ sub surePathToFile($$) {
 	# constructs intermediate directories enroute to the file
 	# the input path must be the path relative to this starting directory
 	my $start_directory = shift;
-	my $path = shift;
-	my $delim = "/";
-	unless ($start_directory and $path ) {
+	my $path            = shift;
+	my $delim           = "/";
+	unless ($start_directory and $path) {
 		warn "missing directory<br> surePathToFile  start_directory   path ";
 		return '';
 	}
 	# use the permissions/group on the start directory itself as a template
-	my ($perms, $groupID) = (stat $start_directory)[2,5];
+	my ($perms, $groupID) = (stat $start_directory)[ 2, 5 ];
 	# warn "&urePathToTmpFile: perms=$perms groupID=$groupID\n";
 
 	# if the path starts with $start_directory (which is permitted but optional) remove this initial segment
 	$path =~ s|^$start_directory|| if $path =~ m|^$start_directory|;
 
-
 	# find the nodes on the given path
-        my @nodes = split("$delim",$path);
+	my @nodes = split("$delim", $path);
 
 	# create new path
-	$path = $start_directory; #convertPath("$tmpDirectory");
+	$path = $start_directory;    #convertPath("$tmpDirectory");
 
-	while (@nodes>1) {  # the last node is the file name
-		$path = $path . shift (@nodes) . "/"; #convertPath($path . shift (@nodes) . "/");
-		#FIXME  this make directory command may not be fool proof.
+	while (@nodes > 1) {         # the last node is the file name
+		$path = $path . shift(@nodes) . "/";    #convertPath($path . shift (@nodes) . "/");
+												#FIXME  this make directory command may not be fool proof.
 		unless (-e $path) {
 			mkdir($path, $perms)
 				or warn "Failed to create directory $path with start directory $start_directory ";
@@ -357,7 +389,7 @@ sub surePathToFile($$) {
 
 	}
 
-	$path = $path . shift(@nodes); #convertPath($path . shift(@nodes));
+	$path = $path . shift(@nodes);    #convertPath($path . shift(@nodes));
 	return $path;
 }
 
@@ -368,9 +400,9 @@ sub makeTempDirectory($$) {
 	my $triesRemaining = MKDIR_ATTEMPTS;
 	my ($fullPath, $success);
 	do {
-		my $suffix = join "", map { ('A'..'Z','a'..'z','0'..'9')[int rand 62] } 1 .. 8;
+		my $suffix = join "", map { ('A' .. 'Z', 'a' .. 'z', '0' .. '9')[ int rand 62 ] } 1 .. 8;
 		$fullPath = "$parent/$basename.$suffix";
-		$success = mkdir $fullPath;
+		$success  = mkdir $fullPath;
 	} until ($success or not $!{EEXIST});
 	die "Failed to create directory $fullPath: $!"
 		unless $success;
@@ -459,10 +491,10 @@ sub unformatDateAndTime {
 
 	$string =~ s|^\s+||;
 	$string =~ s|\s+$||;
-	$string =~ s|at| at |i; ## OK if forget to enter spaces or use wrong case
-	$string =~ s|AM| AM|i;	## OK if forget to enter spaces or use wrong case
-	$string =~ s|PM| PM|i;	## OK if forget to enter spaces or use wrong case
-	$string =~ s|,| at |;	## start translating old form of date/time to new form
+	$string =~ s|at| at |i;    ## OK if forget to enter spaces or use wrong case
+	$string =~ s|AM| AM|i;     ## OK if forget to enter spaces or use wrong case
+	$string =~ s|PM| PM|i;     ## OK if forget to enter spaces or use wrong case
+	$string =~ s|,| at |;      ## start translating old form of date/time to new form
 
 	# case where the at is missing: MM/DD/YYYY at HH:MM AMPM ZONE
 	unformatDateAndTime_error($orgString, "The 'at' appears to be missing.")
@@ -471,23 +503,25 @@ sub unformatDateAndTime {
 	my ($date, $at, $time, $AMPM, $TZ) = split /\s+/, $string;
 
 	unformatDateAndTime_error($orgString, "The date and/or time appear to be missing.", $date, $time, $AMPM, $TZ)
-		unless defined $date and defined $at and defined $time;
+		unless defined $date
+		and defined $at
+		and defined $time;
 
 	# deal with military time
 	unless ($time =~ /:/) {
-		{  ##bare block for 'case" structure
+		{    ##bare block for 'case" structure
 			$time =~ /(\d\d)(\d\d)/;
 			my $tmp_hour = $1;
-			my $tmp_min = $2;
-			if ($tmp_hour eq '00') {$time = "12:$tmp_min"; $AMPM = 'AM';last;}
-			if ($tmp_hour eq '12') {$time = "12:$tmp_min"; $AMPM = 'PM';last;}
-			if ($tmp_hour < 12) {$time = "$tmp_hour:$tmp_min"; $AMPM = 'AM';last;}
+			my $tmp_min  = $2;
+			if ($tmp_hour eq '00') { $time = "12:$tmp_min";        $AMPM = 'AM'; last; }
+			if ($tmp_hour eq '12') { $time = "12:$tmp_min";        $AMPM = 'PM'; last; }
+			if ($tmp_hour < 12)    { $time = "$tmp_hour:$tmp_min"; $AMPM = 'AM'; last; }
 			if ($tmp_hour < 24) {
 				$tmp_hour = $tmp_hour - 12;
-				$time = "$tmp_hour:$tmp_min";
-				$AMPM = 'PM';
+				$time     = "$tmp_hour:$tmp_min";
+				$AMPM     = 'PM';
 			}
-		}  ##end of bare block for 'case" structure
+		}    ##end of bare block for 'case" structure
 
 	}
 
@@ -495,28 +529,28 @@ sub unformatDateAndTime {
 	$AMPM = "AM" unless defined $AMPM;
 
 	my ($mday, $mon, $year, $wday, $yday, $sec, $pm, $min, $hour);
-	$sec=0;
+	$sec = 0;
 	$time =~ /^([0-9]+)\s*\:\s*([0-9]*)/;
-	$min=$2;
+	$min  = $2;
 	$hour = $1;
 	unformatDateAndTime_error($orgString, "Hour must be in the range [1,12].", $date, $time, $AMPM, $TZ)
 		if $hour < 1 or $hour > 12;
 	unformatDateAndTime_error($orgString, "Minute must be in the range [0-59].", $date, $time, $AMPM, $TZ)
 		if $min < 0 or $min > 59;
 	$pm = 0;
-	$pm = 12 if ($AMPM =~/PM/ and $hour < 12);
+	$pm = 12 if ($AMPM =~ /PM/ and $hour < 12);
 	$hour += $pm;
-	$hour = 0 if ($AMPM =~/AM/ and $hour == 12);
-	$date =~  m|([0-9]+)\s*/\s*([0-9]+)/\s*([0-9]+)|;
-	$mday =$2;
-	$mon=($1-1);
+	$hour = 0 if ($AMPM =~ /AM/ and $hour == 12);
+	$date =~ m|([0-9]+)\s*/\s*([0-9]+)/\s*([0-9]+)|;
+	$mday = $2;
+	$mon  = ($1 - 1);
 	unformatDateAndTime_error($orgString, "Day must be in the range [1,31].", $date, $time, $AMPM, $TZ)
 		if $mday < 1 or $mday > 31;
 	unformatDateAndTime_error($orgString, "Month must be in the range [1,12].", $date, $time, $AMPM, $TZ)
 		if $mon < 0 or $mon > 11;
-	$year=$3;
-	$wday="";
-	$yday="";
+	$year = $3;
+	$wday = "";
+	$yday = "";
 	return ($sec, $min, $hour, $mday, $mon, $year, $TZ);
 }
 
@@ -536,17 +570,15 @@ sub unformatDateAndTime_error {
 			"\tzone = $TZ\n";
 	} else {
 		my ($orgString, $error) = @_;
-		die "Incorrect date/time format \"$orgString\": $error\n",
-			"Correct format is MM/DD/YY at HH:MM AMPM ZONE\n";
+		die "Incorrect date/time format \"$orgString\": $error\n", "Correct format is MM/DD/YY at HH:MM AMPM ZONE\n";
 	}
 }
 
 sub parseDateTime($;$) {
 	my ($string, $display_tz) = @_;
-	warn "time zone not defined".caller() unless defined($display_tz);
+	warn "time zone not defined" . caller() unless defined($display_tz);
 	$display_tz ||= "local";
 	$display_tz = verify_timezone($display_tz);
-
 
 	# use WeBWorK 1 date parsing routine
 	my ($second, $minute, $hour, $day, $month, $year, $zone) = unformatDateAndTime($string);
@@ -558,12 +590,12 @@ sub parseDateTime($;$) {
 
 	# Do what Time::Local does to ambiguous years
 	{
-		my $ThisYear     = (localtime())[5]; # FIXME: should be relative to $string's timezone
-		my $Breakpoint   = ($ThisYear + 50) % 100;
-		my $NextCentury  = $ThisYear - $ThisYear % 100;
-		   $NextCentury += 100 if $Breakpoint < 50;
-		my $Century      = $NextCentury - 100;
-		my $SecOff       = 0;
+		my $ThisYear    = (localtime())[5];              # FIXME: should be relative to $string's timezone
+		my $Breakpoint  = ($ThisYear + 50) % 100;
+		my $NextCentury = $ThisYear - $ThisYear % 100;
+		$NextCentury += 100 if $Breakpoint < 50;
+		my $Century = $NextCentury - 100;
+		my $SecOff  = 0;
 
 		if ($year >= 1000) {
 			# leave alone
@@ -575,20 +607,20 @@ sub parseDateTime($;$) {
 		}
 	}
 
-	my $epoch; # The value we need to calculate and return
+	my $epoch;    # The value we need to calculate and return
 
 	# Determine the best possible time-zone string to use in the (first) call to DateTime()
-	my $tz_to_use = $display_tz;
-	my $is_valid_zone_name = 1; # when later set to 0, we will try the "offset" approach
+	my $tz_to_use          = $display_tz;
+	my $is_valid_zone_name = 1;             # when later set to 0, we will try the "offset" approach
 	if (defined $zone and $zone ne "") {
 		$is_valid_zone_name = DateTime::TimeZone->is_valid_name($zone);
-		if ( $is_valid_zone_name ) {
+		if ($is_valid_zone_name) {
 			#warn "\t\$zone=$zone is valid according to DateTime::TimeZone\n";
 			$tz_to_use = $zone;
 		} else {
-			#warn "\t\$zone=$zone is invalid according to DateTime::TimeZone, so we will attempt to treat the date/time as UTC and then apply an offset for the zone $zone.\n";
+#warn "\t\$zone=$zone is invalid according to DateTime::TimeZone, so we will attempt to treat the date/time as UTC and then apply an offset for the zone $zone.\n";
 			$tz_to_use = "UTC";
-			# When the offset approach fails, we will overriden again and use $display_tz instead
+			# When the offset approach fails, we will override again and use $display_tz instead
 		}
 	} else {
 		#warn "\t\$zone not supplied, using \$display_tz\n";
@@ -604,29 +636,30 @@ sub parseDateTime($;$) {
 		second    => $second,
 		time_zone => $tz_to_use,
 	);
-	my @offset_approach_msg = (); # Will be non-empty and collect parts for warn message when needed
-	if ( ! $is_valid_zone_name ) {
+	my @offset_approach_msg = ();    # Will be non-empty and collect parts for warn message when needed
+	if (!$is_valid_zone_name) {
 		# We used "UTC" and need to do an offset, or fail to a different approach
 
 		# convert to an epoch value
 		my $utc_epoch = $dt->epoch
 			or die "Date/time '$string' not representable as an epoch. Get more bits!\n";
-		push( @offset_approach_msg, "\t\$utc_epoch = $utc_epoch\n" );
+		push(@offset_approach_msg, "\t\$utc_epoch = $utc_epoch\n");
 
 		# get offset for supplied timezone and utc_epoch
 		# fall back to $display_tz if that fails
 		my $offset;
-		if( $offset = tz_offset($zone, $utc_epoch) ) {
-			push( @offset_approach_msg, "\t\$zone is valid according to Time::Zone (\$offset = $offset)\n");
+		if ($offset = tz_offset($zone, $utc_epoch)) {
+			push(@offset_approach_msg, "\t\$zone is valid according to Time::Zone (\$offset = $offset)\n");
 
 			$epoch = $utc_epoch + $offset;
-			push( @offset_approach_msg, "\t\$epoch = \$utc_epoch + \$offset = $epoch\n");
+			push(@offset_approach_msg, "\t\$epoch = \$utc_epoch + \$offset = $epoch\n");
 
 			$dt->subtract(seconds => $offset);
-			push( @offset_approach_msg, "\t\$dt - \$offset = " . $dt->strftime(DATE_FORMAT) . "\n");
+			push(@offset_approach_msg, "\t\$dt - \$offset = " . $dt->strftime(DATE_FORMAT) . "\n");
 		} else {
-			@offset_approach_msg = (); # Offset approach failed
-			warn "Time zone '$zone' not recognized, falling back to parsing using $display_tz instead of applying an offset from UTC.\n";
+			@offset_approach_msg = ();    # Offset approach failed
+			warn
+				"Time zone '$zone' not recognized, falling back to parsing using $display_tz instead of applying an offset from UTC.\n";
 			$dt = new DateTime(
 				year      => $year,
 				month     => $month,
@@ -640,7 +673,7 @@ sub parseDateTime($;$) {
 	}
 	$epoch = $dt->epoch;
 
-	if ( @offset_approach_msg ) {
+	if (@offset_approach_msg) {
 		#warn join("", @offset_approach_msg);
 	} else {
 		#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n\t\$dt->epoch = $epoch\n";
@@ -648,7 +681,6 @@ sub parseDateTime($;$) {
 
 	return $epoch;
 }
-
 
 =item $string = formatDateTime($dateTime, $display_tz, $format_string, $locale)
 
@@ -676,8 +708,8 @@ sub formatDateTime {
 		if ref($dateTime);    # catch bad calls to Utils::formatDateTime
 	warn "not defined formatDateTime('$dateTime', '$display_tz') ", join(" ", caller(2)) unless $display_tz;
 
-	$dateTime = $dateTime || 0;    # do our best to provide default values
-	$display_tz ||= "local";       # do our best to provide default vaules
+	$dateTime = $dateTime || 0;        # do our best to provide default values
+	$display_tz ||= "local";           # do our best to provide default vaules
 	$display_tz = verify_timezone($display_tz);
 	$format_string ||= DATE_FORMAT;    # If a format is not provided, use the default WeBWorK date format
 
@@ -691,7 +723,6 @@ sub formatDateTime {
 		return $dt->strftime($format_string);
 	}
 }
-
 
 =item $string = textDateTime($string_or_dateTime)
 
@@ -710,7 +741,7 @@ Accepts a UNIX datetime or a formatted string, returns a UNIX datetime.
 =cut
 
 sub intDateTime($) {
-	return ($_[0] =~ m/^\d*$/) ?  $_[0] : parseDateTime($_[0]);
+	return ($_[0] =~ m/^\d*$/) ? $_[0] : parseDateTime($_[0]);
 }
 
 =item verify_timezone($display_tz)
@@ -722,13 +753,12 @@ If $display_tz is not a legal time zone then replace it with America/New_York an
 =cut
 
 sub verify_timezone($) {
-		my $display_tz = shift;
-	    return $display_tz if (DateTime::TimeZone->is_valid_name($display_tz) );
-	    warn qq! $display_tz is not a legal time zone name. Fix it on the Course Configuration page.
+	my $display_tz = shift;
+	return $display_tz if (DateTime::TimeZone->is_valid_name($display_tz));
+	warn qq! $display_tz is not a legal time zone name. Fix it on the Course Configuration page.
 	      <a href="http://en.wikipedia.org/wiki/List_of_zoneinfo_time_zones">View list of time zones.</a> \n!;
-	    return "America/New_York";
+	return "America/New_York";
 }
-
 
 =item $timeinsec = timeToSec($time)
 
@@ -738,31 +768,31 @@ seconds.
 =cut
 
 sub timeToSec($) {
-    my $t = shift();
-    if ( $t =~ /^(\d+)\s+(\S+)\s*$/ ) {
-	my ( $val, $unit ) = ( $1, $2 );
-	if ( $unit =~ /month/i || $unit =~ /mon/i ) {
-	    $val *= 18144000;  # this assumes 30 days/month
-	} elsif ( $unit =~ /week/i || $unit =~ /wk/i ) {
-	    $val *= 604800;
-	} elsif ( $unit =~ /day/i || $unit =~ /dy/i ) {
-	    $val *= 86400;
-	} elsif ( $unit =~ /hour/i || $unit =~ /hr/i ) {
-	    $val *= 3600;
-	} elsif ( $unit =~ /minute/i || $unit =~ /min/i ) {
-	    $val *= 60;
-	} elsif ( $unit =~ /second/i || $unit =~ /sec/i || $unit =~ /^s$/i ) {
-	    # do nothing
+	my $t = shift();
+	if ($t =~ /^(\d+)\s+(\S+)\s*$/) {
+		my ($val, $unit) = ($1, $2);
+		if ($unit =~ /month/i || $unit =~ /mon/i) {
+			$val *= 18144000;    # this assumes 30 days/month
+		} elsif ($unit =~ /week/i || $unit =~ /wk/i) {
+			$val *= 604800;
+		} elsif ($unit =~ /day/i || $unit =~ /dy/i) {
+			$val *= 86400;
+		} elsif ($unit =~ /hour/i || $unit =~ /hr/i) {
+			$val *= 3600;
+		} elsif ($unit =~ /minute/i || $unit =~ /min/i) {
+			$val *= 60;
+		} elsif ($unit =~ /second/i || $unit =~ /sec/i || $unit =~ /^s$/i) {
+			# do nothing
+		} else {
+			warn("Unrecognized time unit $unit.\nAssuming seconds.\n");
+		}
+		return $val;
+	} elsif ($t =~ /^(\d+)$/) {
+		return $t;
 	} else {
-	    warn("Unrecognized time unit $unit.\nAssuming seconds.\n");
+		warn("Unrecognized time interval: $t\n");
+		return 0;
 	}
-	return $val;
-    } elsif ( $t =~ /^(\d+)$/ ) {
-	return $t;
-    } else {
-	warn("Unrecognized time interval: $t\n");
-	return 0;
-    }
 }
 
 =item before($time, $now)
@@ -772,7 +802,7 @@ is used.
 
 =cut
 
-sub before  { return (@_==2) ? $_[1] < $_[0] : time < $_[0] }
+sub before { return (@_ == 2) ? $_[1] < $_[0] : time < $_[0] }
 
 =item after($time, $now)
 
@@ -781,7 +811,7 @@ is used.
 
 =cut
 
-sub after   { return (@_==2) ? $_[1] > $_[0] : time > $_[0] }
+sub after { return (@_ == 2) ? $_[1] > $_[0] : time > $_[0] }
 
 =item between($start, $end, $now)
 
@@ -790,7 +820,7 @@ If $now is not specified, the value of time() is used.
 
 =cut
 
-sub between { my $t = (@_==3) ? $_[2] : time; return $t >= $_[0] && $t <= $_[1] }
+sub between { my $t = (@_ == 3) ? $_[2] : time; return $t >= $_[0] && $t <= $_[1] }
 
 =back
 
@@ -800,38 +830,46 @@ sub between { my $t = (@_==3) ? $_[2] : time; return $t >= $_[0] && $t <= $_[1] 
 # Logging
 ################################################################################
 
-sub writeLog($$@) {
+sub writeLog {
 	my ($ce, $facility, @message) = @_;
-	unless ($ce->{webworkFiles}->{logs}->{$facility}) {
+	unless ($ce->{webworkFiles}{logs}{$facility}) {
 		warn "There is no log file for the $facility facility defined.\n";
 		return;
 	}
-	my $logFile = $ce->{webworkFiles}->{logs}->{$facility};
-	surePathToFile($ce->{webworkDirs}->{root}, $logFile);
-	local *LOG;
-	if (open LOG, ">>", $logFile) {
-		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
-		close LOG;
+	my $logFile = $ce->{webworkFiles}{logs}{$facility};
+	surePathToFile($ce->{webworkDirs}{root}, $logFile);
+	if (open my $LOG, '>>:encoding(UTF-8)', $logFile) {
+		flock $LOG, LOCK_EX;
+		print $LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
+		close $LOG;
 	} else {
 		warn "failed to open $logFile for writing: $!";
 	}
+	return;
 }
 
-sub writeCourseLog($$@) {
+sub writeCourseLog {
 	my ($ce, $facility, @message) = @_;
-	unless ($ce->{courseFiles}->{logs}->{$facility}) {
+	writeCourseLogGivenTime($ce, $facility, time, @message);
+	return;
+}
+
+sub writeCourseLogGivenTime {
+	my ($ce, $facility, $myTime, @message) = @_;
+	unless ($ce->{courseFiles}{logs}{$facility}) {
 		warn "There is no course log file for the $facility facility defined.\n";
 		return;
 	}
-	my $logFile = $ce->{courseFiles}->{logs}->{$facility};
-	surePathToFile($ce->{courseDirs}->{root}, $logFile);
-	local *LOG;
-	if (open LOG, ">>:utf8", $logFile) {
-		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
-		close LOG;
+	my $logFile = $ce->{courseFiles}{logs}{$facility};
+	surePathToFile($ce->{courseDirs}{root}, $logFile);
+	if (open my $LOG, '>>:encoding(UTF-8)', $logFile) {
+		flock $LOG, LOCK_EX;
+		print $LOG "[", time2str("%a %b %d %H:%M:%S %Y", $myTime), "] @message\n";
+		close $LOG;
 	} else {
 		warn "failed to open $logFile for writing: $!";
 	}
+	return;
 }
 
 # $ce - a WeBWork::CourseEnvironment object
@@ -842,10 +880,11 @@ sub writeCourseLog($$@) {
 # use an empty string for $details when calling for END
 # Information printed in format:
 # [formatted date & time ] processID unixTime BeginEnd $function  $details
-sub writeTimingLogEntry($$$$) {
+sub writeTimingLogEntry {
 	my ($ce, $function, $details, $beginEnd) = @_;
 	$beginEnd = ($beginEnd eq "begin") ? ">" : ($beginEnd eq "end") ? "<" : "-";
-	writeLog($ce, "timing", "$$ ".time." $beginEnd $function [$details]");
+	writeLog($ce, "timing", "$$ " . time . " $beginEnd $function [$details]");
+	return;
 }
 
 ################################################################################
@@ -854,9 +893,9 @@ sub writeTimingLogEntry($$$$) {
 ## Utility function to trim whitespace off the start and end of its input
 sub trim_spaces {
 	my $in = shift;
-	return '' unless $in;  # skip blank spaces
+	return '' unless $in;    # skip blank spaces
 	$in =~ s/^\s*|\s*$//g;
-	return($in);
+	return ($in);
 }
 
 # This is for formatting set names input via text inputs in the user interface for internal use.  Set names are allowed
@@ -871,20 +910,21 @@ sub format_set_name_display {
 }
 
 sub list2hash(@) {
-	map {$_ => "0"} @_;
+	map { $_ => "0" } @_;
 }
 
 sub refBaseType($) {
 	my $ref = shift;
-	$ref =~ m/(\w+)\(/; # this might not be robust...
+	$ref =~ m/(\w+)\(/;    # this might not be robust...
 	return $1;
 }
 
 sub ref2string($;$);
+
 sub ref2string($;$) {
-	my $ref = shift;
+	my $ref        = shift;
 	my $dontExpand = shift || {};
-	my $refType = ref $ref;
+	my $refType    = ref $ref;
 	my $result;
 	if ($refType and not $dontExpand->{$refType}) {
 		my $baseType = refBaseType($ref);
@@ -905,13 +945,13 @@ sub ref2string($;$) {
 			# special case for Problem, Set, and User objects, which are defined
 			# using lists and contain a @FIELDS package variable:
 			no strict 'refs';
-			my @FIELDS = eval { @{$refType."::FIELDS"} };
+			my @FIELDS = eval { @{ $refType . "::FIELDS" } };
 			use strict 'refs';
 			undef @FIELDS unless scalar @FIELDS == scalar @array and not $@;
 			foreach (0 .. $#array) {
 				$result .= '<tr valign="top">';
 				$result .= "<td>$_</td>";
-				$result .= "<td>".$FIELDS[$_]."</td>" if @FIELDS;
+				$result .= "<td>" . $FIELDS[$_] . "</td>" if @FIELDS;
 				$result .= "<td>" . ref2string($array[$_], $dontExpand) . "</td>";
 				$result .= "</tr>";
 			}
@@ -926,7 +966,7 @@ sub ref2string($;$) {
 			$result .= "<td>$ref</td>";
 			$result .= "</tr>";
 		}
-		$result .= "</table>"
+		$result .= "</table>";
 	} else {
 		$result .= defined $ref ? $ref : '<font color="red">undef</font>';
 	}
@@ -936,25 +976,25 @@ our $BASE64_ENCODED = 'base64_encoded:';
 #  was not evaluated in the matching and substitution
 #  statements
 
-
 sub OLDdecodeAnswers($) {
 	my $serialized = shift;
 	return unless defined $serialized and $serialized;
-	my $array_ref = eval{ Storable::thaw($serialized) };
+	my $array_ref = eval { Storable::thaw($serialized) };
 	if ($@ or !defined $array_ref) {
-		# My hope is that this next warning is no longer needed since there are few legacy base64 days and the fix seems transparent.
-		# warn "problem fetching answers -- possibly left over from base64 days. Not to worry -- press preview or submit and this will go away  permanently for this question.   $@";
+# My hope is that this next warning is no longer needed since there are few legacy base64 days and the fix seems transparent.
+# warn "problem fetching answers -- possibly left over from base64 days. Not to worry -- press preview or submit and this will go away  permanently for this question.   $@";
 		return ();
 	} else {
 		return @{$array_ref};
 	}
 }
+
 sub decodeAnswers($) {
 	my $serialized = shift;
 	return unless defined $serialized and $serialized;
-	if ( $serialized =~ /^\[/ && $serialized =~ /\]$/) {
+	if ($serialized =~ /^\[/ && $serialized =~ /\]$/) {
 		# Assuming this is JSON encoded
-		my @array_data = @{from_json($serialized)};
+		my @array_data = @{ from_json($serialized) };
 		return @array_data;
 	} else {
 		# Fall back to old Storable::thaw based code
@@ -963,21 +1003,22 @@ sub decodeAnswers($) {
 }
 
 sub decode_utf8_base64 {
-    return Encode::decode("UTF-8",decode_base64(shift));
+	return Encode::decode("UTF-8", decode_base64(shift));
 }
 
 sub OLD_encodeAnswers(\%\@) {
-	my %hash = %{shift()};
-	my @order = @{shift()};
+	my %hash         = %{ shift() };
+	my @order        = @{ shift() };
 	my @ordered_hash = ();
 	foreach my $key (@order) {
 		push @ordered_hash, $key, $hash{$key};
 	}
-	return Storable::nfreeze( \@ordered_hash);
+	return Storable::nfreeze(\@ordered_hash);
 }
+
 sub encodeAnswers(\%\@) {
-	my %hash = %{shift()};
-	my @order = @{shift()};
+	my %hash         = %{ shift() };
+	my @order        = @{ shift() };
 	my @ordered_hash = ();
 	foreach my $key (@order) {
 		push @ordered_hash, $key, $hash{$key};
@@ -986,29 +1027,28 @@ sub encodeAnswers(\%\@) {
 }
 
 sub encode_utf8_base64 {
-    return encode_base64(Encode::encode("UTF-8",shift));
+	return encode_base64(Encode::encode("UTF-8", shift));
 }
 
 sub nfreeze_base64 {
-    return encode_base64(nfreeze(shift));
+	return encode_base64(nfreeze(shift));
 }
 
 sub thaw_base64 {
-    my $string = shift;
-    my $result;
+	my $string = shift;
+	my $result;
 
-    eval {
-	$result = thaw(decode_base64($string));
-    };
+	eval { $result = thaw(decode_base64($string)); };
 
-    if ($@) {
-	warn("Deleting corrupted achievement data.");
-	return {};
-    } else {
-	return $result;
-    }
+	if ($@) {
+		warn("Deleting corrupted achievement data.");
+		return {};
+	} else {
+		return $result;
+	}
 
 }
+
 sub max(@) {
 	my $soFar;
 	foreach my $item (@_) {
@@ -1021,18 +1061,18 @@ sub max(@) {
 }
 
 sub wwRound(@) {
-# usage wwRound($places,$float)
-# return $float rounded up to number of decimal places given by $places
+	# usage wwRound($places,$float)
+	# return $float rounded up to number of decimal places given by $places
 	my $places = shift;
-	my $float = shift;
+	my $float  = shift;
 	my $factor = 10**$places;
-	return int($float*$factor+0.5)/$factor;
+	return int($float * $factor + 0.5) / $factor;
 }
 
 sub pretty_print_rh($) {
 	my $rh = shift;
-	foreach my $key (sort keys %{$rh})  {
-		warn "  $key => ",$rh->{$key},"\n";
+	foreach my $key (sort keys %{$rh}) {
+		warn "  $key => ", $rh->{$key}, "\n";
 	}
 }
 
@@ -1044,8 +1084,8 @@ sub cryptPassword($) {
 	my ($clearPassword) = @_;
 	#Use an SHA512 salt with 16 digits
 	my $salt = '$6$';
-	for (my $i=0; $i<16; $i++) {
-	    $salt .= ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64];
+	for (my $i = 0; $i < 16; $i++) {
+		$salt .= ('.', '/', '0' .. '9', 'A' .. 'Z', 'a' .. 'z')[ rand 64 ];
 	}
 
 	my $cryptPassword = crypt(trim_spaces($clearPassword), $salt);
@@ -1055,7 +1095,7 @@ sub cryptPassword($) {
 # from the Perl Cookbook, first edition, page 25:
 sub dequote($) {
 	local $_ = shift;
-	my ($white, $leader); # common whitespace and common leading string
+	my ($white, $leader);    # common whitespace and common leading string
 	if (/^\s*(?:([^\w\s]+)(\s*).*\n)(?:\s*\1\2?.*\n)+$/) {
 		($white, $leader) = ($2, quotemeta($1));
 	} else {
@@ -1066,19 +1106,18 @@ sub dequote($) {
 }
 
 sub undefstr($@) {
-	map { defined $_ ? $_ : $_[0] } @_[1..$#_];
+	map { defined $_ ? $_ : $_[0] } @_[ 1 .. $#_ ];
 }
-
 
 # shuffle an array in place
 # Perl Cookbook, Recipe 4.17. Randomizing an Array
 sub fisher_yates_shuffle {
 	my $array = shift;
 	my $i;
-	for ($i = @$array; --$i; ) {
-		my $j = int rand ($i+1);
+	for ($i = @$array; --$i;) {
+		my $j = int rand($i + 1);
 		next if $i == $j;
-		@$array[$i,$j] = @$array[$j,$i];
+		@$array[ $i, $j ] = @$array[ $j, $i ];
 	}
 }
 
@@ -1133,16 +1172,16 @@ sub sortByName($@) {
 	my ($field, @items) = @_;
 
 	my %itemsByIndex = ();
-	if ( ref( $field ) eq 'ARRAY' ) {
-		foreach my $item ( @items ) {
+	if (ref($field) eq 'ARRAY') {
+		foreach my $item (@items) {
 			my $key = '';
-			foreach ( @$field ) {
-		    		$key .= $item->$_;  # in this case we assume
-			}                           #    all entries in @$field
-			$itemsByIndex{$key} = $item;  #  are defined.
-	    	}
+			foreach (@$field) {
+				$key .= $item->$_;    # in this case we assume
+			}    #    all entries in @$field
+			$itemsByIndex{$key} = $item;    #  are defined.
+		}
 	} else {
-	    %itemsByIndex = map {(defined $field)?$_->$field:$_ => $_} @items;
+		%itemsByIndex = map { (defined $field) ? $_->$field : $_ => $_ } @items;
 	}
 
 	my @sKeys = sort {
@@ -1150,61 +1189,60 @@ sub sortByName($@) {
 		my @bParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, $b;
 
 		while (@aParts and @bParts) {
-			my $aPart = shift @aParts;
-			my $bPart = shift @bParts;
+			my $aPart    = shift @aParts;
+			my $bPart    = shift @bParts;
 			my $aNumeric = $aPart =~ m/^\d*$/;
 			my $bNumeric = $bPart =~ m/^\d*$/;
 
 			# numbers should come before words
-			return -1 if     $aNumeric and not $bNumeric;
-			return +1 if not $aNumeric and     $bNumeric;
+			return -1 if $aNumeric     and not $bNumeric;
+			return +1 if not $aNumeric and $bNumeric;
 
 			# both have the same type
 			if ($aNumeric and $bNumeric) {
-				next if $aPart == $bPart; # check next pair
-				return $aPart <=> $bPart; # compare numerically
+				next if $aPart == $bPart;    # check next pair
+				return $aPart <=> $bPart;    # compare numerically
 			} else {
-				next if $aPart eq $bPart; # check next pair
-				return $aPart cmp $bPart; # compare lexicographically
+				next if $aPart eq $bPart;    # check next pair
+				return $aPart cmp $bPart;    # compare lexicographically
 			}
 		}
-		return +1 if @aParts; # a has more sections, should go second
-		return -1 if @bParts; # a had fewer sections, should go first
+		return +1 if @aParts;    # a has more sections, should go second
+		return -1 if @bParts;    # a had fewer sections, should go first
 	} (keys %itemsByIndex);
 
-	return map{$itemsByIndex{$_}} @sKeys;
+	return map { $itemsByIndex{$_} } @sKeys;
 }
-
 
 ################################################################################
 # Sort Achievements by number and then by id
 ################################################################################
-
 
 sub sortAchievements {
 	my @Achievements = @_;
 
 	# First sort by achievement id
 
-	@Achievements = sort {uc($a->{achievement_id}) cmp uc($b->{achievement_id})}  @Achievements;
+	@Achievements = sort { uc($a->{achievement_id}) cmp uc($b->{achievement_id}) } @Achievements;
 
 	# Next sort by number if there are numbers, otherwise sort by
 	# category.
 
-	@Achievements = sort {($a->number || 0) <=> ($b->number || 0)} @Achievements;
+	@Achievements = sort { ($a->number || 0) <=> ($b->number || 0) } @Achievements;
 
 	@Achievements = sort {
-	  if ($a->number && $b->number) {
-	    return $a->number <=> $b->number;
-	  } elsif ($a->{category} eq $b->{category}) {
-	    return 0;
-	  } elsif ($a->{category} eq "secret" or $b->{category} eq "level") {
-	    return -1;
-	  } elsif ($a->{category} eq "level" or $b->{category} eq "secret") {
-	    return 1;
-	  } else {
-	    return $a->{category} cmp $b->{category};
-	  } } @Achievements;
+		if ($a->number && $b->number) {
+			return $a->number <=> $b->number;
+		} elsif ($a->{category} eq $b->{category}) {
+			return 0;
+		} elsif ($a->{category} eq "secret" or $b->{category} eq "level") {
+			return -1;
+		} elsif ($a->{category} eq "level" or $b->{category} eq "secret") {
+			return 1;
+		} else {
+			return $a->{category} cmp $b->{category};
+		}
+	} @Achievements;
 
 	return @Achievements;
 
@@ -1214,26 +1252,50 @@ sub sortAchievements {
 # Validate strings and labels
 ################################################################################
 
-sub not_blank ($) {     # check that a string exists and is not blank
+sub not_blank ($) {    # check that a string exists and is not blank
 	my $str = shift;
-	return( defined($str) and $str =~/\S/ );
+	return (defined($str) and $str =~ /\S/);
 }
 
-###########################################################
-    # If things have worked so far determine if the file might be accompanied by auxiliary files
+# Given $problem which should be a problem version, getTestProblemPosition returns the 0 based problem number for the
+# problem on the test, and the 1 based page number for the page on the test that the problem is on.
+sub getTestProblemPosition {
+	my ($db, $problem) = @_;
 
-    #
-sub has_aux_files ($) { #  determine whether a question has auxiliary files
-                        # a path ending in    foo/foo.pg  is assumed to contain auxilliary files
-    my $path = shift;
-    if ( not_blank($path) ) {
-    	    my ($dir, $prob) = $path =~ m|([^/]+)/([^/]+)\.pg$|;  # must be a problem file ending in .pg
-			return 1 if (defined($dir) and defined ($prob) and $dir eq $prob);
-    } else {
-    	warn "This subroutine cannot handle empty paths: |$path|",caller();
-    }
-    return 0;    # no aux files with this .pg file
+	my $set            = $db->getMergedSetVersion($problem->user_id, $problem->set_id, $problem->version_id);
+	my @problemNumbers = $db->listProblemVersions($set->user_id, $set->set_id, $set->version_id);
 
+	my $problemNumber = 0;
+
+	if ($set->problem_randorder) {
+		# Find the test problem order using the set psvn for the seed in the same way that the GatewayQuiz module does.
+		my @problemOrder = (0 .. $#problemNumbers);
+		my $pgrand       = PGrandom->new;
+		$pgrand->srand($set->psvn);
+		my $count = 0;
+		while (@problemOrder) {
+			my $index = splice(@problemOrder, int($pgrand->rand(scalar(@problemOrder))), 1);
+			if ($problemNumbers[$index] == $problem->problem_id) {
+				$problemNumber = $count;
+				last;
+			}
+			++$count;
+		}
+	} else {
+		($problemNumber) = grep { $problemNumbers[$_] == $problem->problem_id } 0 .. $#problemNumbers;
+	}
+
+	my $pageNumber;
+
+	# Update startProb and endProb for multipage tests
+	if ($set->problems_per_page) {
+		$pageNumber = ($problemNumber + 1) / $set->problems_per_page;
+		$pageNumber = int($pageNumber) + 1 if int($pageNumber) != $pageNumber;
+	} else {
+		$pageNumber = 1;
+	}
+
+	return ($problemNumber, $pageNumber);
 }
 
 sub is_restricted {
@@ -1245,17 +1307,17 @@ sub is_restricted {
 	my $setID = $set->set_id();
 	my @needed;
 
-	if ($set->restricted_release ) {
-		my @proposed_sets  = split(/\s*,\s*/,$set->restricted_release);
+	if ($set->restricted_release) {
+		my @proposed_sets  = split(/\s*,\s*/, $set->restricted_release);
 		my $required_score = sprintf("%.2f", $set->restricted_status || 0);
 
 		my @good_sets;
-		foreach(@proposed_sets) {
-			push @good_sets,$_ if $db->existsGlobalSet($_);
+		foreach (@proposed_sets) {
+			push @good_sets, $_ if $db->existsGlobalSet($_);
 		}
 
 		foreach my $restrictor (@good_sets) {
-			my $r_score = 0;
+			my $r_score        = 0;
 			my $restrictor_set = $db->getGlobalSet($restrictor);
 
 			if ($restrictor_set->assignment_type =~ /gateway/) {
@@ -1272,7 +1334,7 @@ sub is_restricted {
 
 			# round to evade machine rounding error
 			$r_score = sprintf("%.2f", $r_score);
-			if($r_score < $required_score) {
+			if ($r_score < $required_score) {
 				push @needed, $restrictor;
 			}
 		}
@@ -1345,7 +1407,7 @@ sub grade_set {
 		$status = 1 if $status > 1;
 
 		if ($wantProblemDetails) {
-			push(@$problem_scores, $problemRecord->attempted ? 100 * wwRound(2, $status) : '&nbsp;.&nbsp;');
+			push(@$problem_scores,             $problemRecord->attempted ? 100 * wwRound(2, $status) : '&nbsp;.&nbsp;');
 			push(@$problem_incorrect_attempts, $problemRecord->num_incorrect || 0);
 		}
 
@@ -1367,31 +1429,31 @@ sub grade_set {
 # for the highest scoring gateway
 
 sub grade_gateway {
-  my ($db,$set,$setName,$studentName) = @_;
+	my ($db, $set, $setName, $studentName) = @_;
 
-  my @versionNums = $db->listSetVersions($studentName,$setName);
+	my @versionNums = $db->listSetVersions($studentName, $setName);
 
-  my $bestTotalRight = 0;
-  my $bestTotal = 0;
+	my $bestTotalRight = 0;
+	my $bestTotal      = 0;
 
-  if ( @versionNums ) {
-    for my $i ( @versionNums ) {
-      my $versionedSet = $db->getSetVersion($studentName,$setName,$i);
+	if (@versionNums) {
+		for my $i (@versionNums) {
+			my $versionedSet = $db->getSetVersion($studentName, $setName, $i);
 
-      my ($totalRight, $total) = grade_set($db, $versionedSet, $studentName, 1);
-      if ($totalRight > $bestTotalRight) {
-	$bestTotalRight = $totalRight;
-	$bestTotal = $total;
-      }
-    }
-  }
+			my ($totalRight, $total) = grade_set($db, $versionedSet, $studentName, 1);
+			if ($totalRight > $bestTotalRight) {
+				$bestTotalRight = $totalRight;
+				$bestTotal      = $total;
+			}
+		}
+	}
 
-  if (wantarray) {
-    return ($bestTotalRight,$bestTotal);
-  } else {
-    return 0 unless $bestTotal;
-    return $bestTotalRight/$bestTotal;
-  }
+	if (wantarray) {
+		return ($bestTotalRight, $bestTotal);
+	} else {
+		return 0 unless $bestTotal;
+		return $bestTotalRight / $bestTotal;
+	}
 }
 
 # Takes in $db, $studentName,
@@ -1399,40 +1461,38 @@ sub grade_gateway {
 # for all sets in the course
 
 sub grade_all_sets {
-  my ($db, $studentName) = @_;
+	my ($db, $studentName) = @_;
 
-  my @setIDs = $db->listUserSets($studentName);
-  my @userSetIDs = map {[$studentName,$_]} @setIDs;
-  my @userSets = $db->getMergedSets(@userSetIDs);
+	my @setIDs     = $db->listUserSets($studentName);
+	my @userSetIDs = map { [ $studentName, $_ ] } @setIDs;
+	my @userSets   = $db->getMergedSets(@userSetIDs);
 
-  my $courseTotal = 0;
-  my $courseTotalRight = 0;
+	my $courseTotal      = 0;
+	my $courseTotalRight = 0;
 
-  foreach my $userSet (@userSets) {
-    next unless (after ($userSet->open_date()));
-    if ($userSet->assignment_type() =~ /gateway/) {
+	foreach my $userSet (@userSets) {
+		next unless (after($userSet->open_date()));
+		if ($userSet->assignment_type() =~ /gateway/) {
 
-      my ($totalRight,$total) = grade_gateway($db,$userSet,$userSet->set_id,$studentName);
-      $courseTotalRight += $totalRight;
-      $courseTotal += $total;
-    } else {
-      my ($totalRight, $total) = grade_set($db, $userSet, $studentName, 0);
+			my ($totalRight, $total) = grade_gateway($db, $userSet, $userSet->set_id, $studentName);
+			$courseTotalRight += $totalRight;
+			$courseTotal      += $total;
+		} else {
+			my ($totalRight, $total) = grade_set($db, $userSet, $studentName, 0);
 
-      $courseTotalRight += $totalRight;
-      $courseTotal += $total;
-    }
-  }
+			$courseTotalRight += $totalRight;
+			$courseTotal      += $total;
+		}
+	}
 
-  if (wantarray) {
-    return ($courseTotalRight,$courseTotal);
-  } else {
-    return 0 unless $courseTotal;
-    return $courseTotalRight/$courseTotal;
-  }
+	if (wantarray) {
+		return ($courseTotalRight, $courseTotal);
+	} else {
+		return 0 unless $courseTotal;
+		return $courseTotalRight / $courseTotal;
+	}
 
 }
-
-
 
 #takes a tree sequence and returns the jitar id
 #  This id is specially crafted signed 32 bit integer of the form, in binary
@@ -1445,72 +1505,72 @@ sub grade_all_sets {
 #         six you are limited to 15.
 
 sub seq_to_jitar_id {
-    my @seq = @_;
+	my @seq = @_;
 
-    die("Jitar index 1 must be between 1 and 125") unless
-	(defined($seq[0]) && $seq[0] < 126);
+	die("Jitar index 1 must be between 1 and 125")
+		unless (defined($seq[0]) && $seq[0] < 126);
 
-    my $id = $seq[0];
-    my $ind;
+	my $id = $seq[0];
+	my $ind;
 
-    my @JITAR_SHIFT = @{JITAR_SHIFT()};
+	my @JITAR_SHIFT = @{ JITAR_SHIFT() };
 
-    #shift first index to first two bytes
-    $id = $id << $JITAR_SHIFT[0];
+	#shift first index to first two bytes
+	$id = $id << $JITAR_SHIFT[0];
 
-    #look for second and third index
-    for (my $i=1; $i<3; $i++) {
-	if (defined($seq[$i])) {
-	    $ind = $seq[$i];
-	    die("Jitar index ".($i+1)." must be less than 63")
-		unless $ind < 63;
+	#look for second and third index
+	for (my $i = 1; $i < 3; $i++) {
+		if (defined($seq[$i])) {
+			$ind = $seq[$i];
+			die("Jitar index " . ($i + 1) . " must be less than 63")
+				unless $ind < 63;
 
-	    #shift index and or it with id to put it in right place
-	    $ind = $ind << $JITAR_SHIFT[$i];
-	    $id = $id | $ind;
+			#shift index and or it with id to put it in right place
+			$ind = $ind << $JITAR_SHIFT[$i];
+			$id  = $id | $ind;
+		}
 	}
-    }
 
-    #look for remaining 3 index's
-    for (my $i=3; $i<6; $i++) {
-	if (defined($seq[$i])) {
-	    $ind = $seq[$i];
-	    die("Jitar index ".($i+1)." must be less than 16")
-		unless $ind < 16;
+	#look for remaining 3 index's
+	for (my $i = 3; $i < 6; $i++) {
+		if (defined($seq[$i])) {
+			$ind = $seq[$i];
+			die("Jitar index " . ($i + 1) . " must be less than 16")
+				unless $ind < 16;
 
-	    #shift index and or it with id to put it in right place
-	    $ind = $ind << $JITAR_SHIFT[$i];
-	    $id = $id | $ind;
+			#shift index and or it with id to put it in right place
+			$ind = $ind << $JITAR_SHIFT[$i];
+			$id  = $id | $ind;
+		}
 	}
-    }
 
-    return $id;
+	return $id;
 }
 
 # Takes a jitar_id and returns the tree sequence
 #  Jitar id's have the format described above.
 sub jitar_id_to_seq {
-    my $id = shift;
-    my $ind;
-    my @seq;
+	my $id = shift;
+	my $ind;
+	my @seq;
 
-    my @JITAR_SHIFT = @{JITAR_SHIFT()};
-    my @JITAR_MASK = @{JITAR_MASK()};
+	my @JITAR_SHIFT = @{ JITAR_SHIFT() };
+	my @JITAR_MASK  = @{ JITAR_MASK() };
 
-    for (my $i=0; $i<6; $i++) {
-	$ind = $id;
-	#use a mask to isolate only the bits we want for this index
-	# and shift them to get the index
-	$ind = $ind & $JITAR_MASK[$i];
-	$ind = $ind >> $JITAR_SHIFT[$i];
+	for (my $i = 0; $i < 6; $i++) {
+		$ind = $id;
+		#use a mask to isolate only the bits we want for this index
+		# and shift them to get the index
+		$ind = $ind & $JITAR_MASK[$i];
+		$ind = $ind >> $JITAR_SHIFT[$i];
 
-	#quit if we dont have a nonzero index
-	last unless $ind;
+		#quit if we dont have a nonzero index
+		last unless $ind;
 
-	$seq[$i] = $ind;
-    }
+		$seq[$i] = $ind;
+	}
 
-    return @seq;
+	return @seq;
 }
 
 # Takes in ($db, $userID, $setID, $problemID) and returns 1 if the
@@ -1519,59 +1579,65 @@ sub jitar_id_to_seq {
 # has run out of attempts.  Everything is opened up after the due date
 
 sub is_jitar_problem_hidden {
-    my ($db, $userID, $setID, $problemID) = @_;
+	my ($db, $userID, $setID, $problemID) = @_;
 
-    die "Not enough arguments.  Use is_jitar_problem_hidden(db,userID,setID,problemID)" unless ($db && $userID && $setID && $problemID);
+	die "Not enough arguments.  Use is_jitar_problem_hidden(db,userID,setID,problemID)"
+		unless ($db && $userID && $setID && $problemID);
 
-    my $mergedSet = $db->getMergedSet($userID,$setID);
+	my $mergedSet = $db->getMergedSet($userID, $setID);
 
-    unless ($mergedSet) {
-	warn "Couldn't get set $setID for user $userID from the database";
-	return 0;
-    }
-
-    # only makes sense for jitar sets
-    return 0 unless ($mergedSet->assignment_type eq 'jitar');
-
-    # the set opens everything up after the due date.
-    return 0 if (after($mergedSet->due_date));
-
-    my @idSeq = jitar_id_to_seq($problemID);
-    my @parentIDSeq = @idSeq;
-
-    unless( $#parentIDSeq != 0 ) {
-	#this means we are at a top level problem and this check doesnt make sense
-	return 0;
-    }
-
-    pop @parentIDSeq;
-    while (@parentIDSeq) {
-
-	my $parentProbID = seq_to_jitar_id(@parentIDSeq);
-
-	my $userParentProb = $db->getMergedProblem($userID,$setID,$parentProbID);
-
-	unless ($userParentProb) {
-	    warn "Couldn't get problem $parentProbID for user $userID and set $setID from the database";
-	    return 0;
+	unless ($mergedSet) {
+		warn "Couldn't get set $setID for user $userID from the database";
+		return 0;
 	}
 
-	# the child problems are closed unless the number of incorrect attempts is above the
-	# attempts to open children, or if they have exausted their max_attempts
-	# if att_to_open_children is -1 we just use max attempts
-	# if max_attempts is -1 then they are always less than max attempts
-	if (($userParentProb->att_to_open_children == -1 ||
-	      $userParentProb->num_incorrect() < $userParentProb->att_to_open_children()) &&
-	    ($userParentProb->max_attempts == -1 || $userParentProb->num_incorrect() < $userParentProb->max_attempts())) {
-	    return 1;
+	# only makes sense for jitar sets
+	return 0 unless ($mergedSet->assignment_type eq 'jitar');
+
+	# the set opens everything up after the due date.
+	return 0 if (after($mergedSet->due_date));
+
+	my @idSeq       = jitar_id_to_seq($problemID);
+	my @parentIDSeq = @idSeq;
+
+	unless ($#parentIDSeq != 0) {
+		#this means we are at a top level problem and this check doesnt make sense
+		return 0;
 	}
+
 	pop @parentIDSeq;
-    }
+	while (@parentIDSeq) {
 
-    # if we get here then all of the parents are open so the problem is open.
-    return 0;
+		my $parentProbID = seq_to_jitar_id(@parentIDSeq);
+
+		my $userParentProb = $db->getMergedProblem($userID, $setID, $parentProbID);
+
+		unless ($userParentProb) {
+			warn "Couldn't get problem $parentProbID for user $userID and set $setID from the database";
+			return 0;
+		}
+
+		# the child problems are closed unless the number of incorrect attempts is above the
+		# attempts to open children, or if they have exausted their max_attempts
+		# if att_to_open_children is -1 we just use max attempts
+		# if max_attempts is -1 then they are always less than max attempts
+		if (
+			(
+				$userParentProb->att_to_open_children == -1
+				|| $userParentProb->num_incorrect() < $userParentProb->att_to_open_children()
+			)
+			&& ($userParentProb->max_attempts == -1
+				|| $userParentProb->num_incorrect() < $userParentProb->max_attempts())
+			)
+		{
+			return 1;
+		}
+		pop @parentIDSeq;
+	}
+
+	# if we get here then all of the parents are open so the problem is open.
+	return 0;
 }
-
 
 # takes in ($db, $ce, $userID, $setID, $problemID) and returns 1 if the jitar problem is closed
 # jitar problems are closed if the restrict_prob_progression variable is set on the set
@@ -1579,78 +1645,79 @@ sub is_jitar_problem_hidden {
 # The first problem in a level is always open.
 
 sub is_jitar_problem_closed {
-    my ($db, $ce, $userID, $setID, $problemID) = @_;
+	my ($db, $ce, $userID, $setID, $problemID) = @_;
 
-    die "Not enough arguments.  Use is_jitar_problem_closed(db,userID,setID,problemID)" unless ($db && $ce && $userID && $setID && $problemID);
+	die "Not enough arguments.  Use is_jitar_problem_closed(db,userID,setID,problemID)"
+		unless ($db && $ce && $userID && $setID && $problemID);
 
-    my $mergedSet = $db->getMergedSet($userID,$setID);
+	my $mergedSet = $db->getMergedSet($userID, $setID);
 
-    unless ($mergedSet) {
-	warn "Couldn't get set $setID for user $userID from the database";
-	return 0;
-    }
-
-    # return 0 unless we are a restricted jitar set
-    return 0 unless ($mergedSet->assignment_type eq 'jitar' && $
-		     mergedSet->restrict_prob_progression());
-
-    # the set opens everything up after the due date.
-    return 0 if (after($mergedSet->due_date));
-
-
-    my $prob;
-    my $id;
-    my @idSeq = jitar_id_to_seq($problemID);
-    my @parentSeq = @idSeq;
-
-    # problems are automatically closed if their parents are closed
-    #this means we cant find a previous problem to test against so we are open as long as the parent is open
-    pop(@parentSeq);
-
-    #if we can't get a parent problem then this is a top level problem and we
-    # we just check the previous.
-    if (@parentSeq) {
-	$id = seq_to_jitar_id(@parentSeq);
-	if (is_jitar_problem_closed($db,$ce,$userID,$setID,$id)) {
-	    return 1;
-	}
-    }
-
-    # if the parent is open then we are open if the previous
-    # problem has been "completed" or, if we are the first problem in this level
-
-    do {
-	$idSeq[$#idSeq]--;
-
-	# in this case we are the first problem in the level
-	if ($idSeq[$#idSeq] == 0) {
-	    return 0;
+	unless ($mergedSet) {
+		warn "Couldn't get set $setID for user $userID from the database";
+		return 0;
 	}
 
-	$id = seq_to_jitar_id(@idSeq);
-    } until ($db->existsUserProblem($userID,$setID,$id));
+	# return 0 unless we are a restricted jitar set
+	return 0 unless ($mergedSet->assignment_type eq 'jitar' && $mergedSet->restrict_prob_progression());
 
-    $prob = $db->getMergedProblem($userID,$setID,$id);
+	# the set opens everything up after the due date.
+	return 0 if (after($mergedSet->due_date));
 
-    # we have to test against the target status in case the student
-    # is working in the reduced scoring period
-    my $targetStatus = 1;
-    if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
-	$mergedSet->enable_reduced_scoring &&
-	after($mergedSet->reduced_scoring_date)) {
-	$targetStatus = $ce->{pg}{ansEvalDefaults}{reducedScoringValue};
-    }
+	my $prob;
+	my $id;
+	my @idSeq     = jitar_id_to_seq($problemID);
+	my @parentSeq = @idSeq;
 
-    if (abs(jitar_problem_adjusted_status($prob,$db) - $targetStatus) < .001 ||
-	jitar_problem_finished($prob,$db)) {
+	# problems are automatically closed if their parents are closed
+	#this means we cant find a previous problem to test against so we are open as long as the parent is open
+	pop(@parentSeq);
 
-	# either the previous problem is 100% or is finished
-	return 0;
-    } else {
+	#if we can't get a parent problem then this is a top level problem and we
+	# we just check the previous.
+	if (@parentSeq) {
+		$id = seq_to_jitar_id(@parentSeq);
+		if (is_jitar_problem_closed($db, $ce, $userID, $setID, $id)) {
+			return 1;
+		}
+	}
 
-	#in this case the previous problem is hidden
-	return 1
-    }
+	# if the parent is open then we are open if the previous
+	# problem has been "completed" or, if we are the first problem in this level
+
+	do {
+		$idSeq[$#idSeq]--;
+
+		# in this case we are the first problem in the level
+		if ($idSeq[$#idSeq] == 0) {
+			return 0;
+		}
+
+		$id = seq_to_jitar_id(@idSeq);
+	} until ($db->existsUserProblem($userID, $setID, $id));
+
+	$prob = $db->getMergedProblem($userID, $setID, $id);
+
+	# we have to test against the target status in case the student
+	# is working in the reduced scoring period
+	my $targetStatus = 1;
+	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+		&& $mergedSet->enable_reduced_scoring
+		&& after($mergedSet->reduced_scoring_date))
+	{
+		$targetStatus = $ce->{pg}{ansEvalDefaults}{reducedScoringValue};
+	}
+
+	if (abs(jitar_problem_adjusted_status($prob, $db) - $targetStatus) < .001
+		|| jitar_problem_finished($prob, $db))
+	{
+
+		# either the previous problem is 100% or is finished
+		return 0;
+	} else {
+
+		#in this case the previous problem is hidden
+		return 1;
+	}
 
 }
 
@@ -1660,128 +1727,220 @@ sub is_jitar_problem_closed {
 # child problems that have the "counts_parent_grade" flag set
 
 sub jitar_problem_adjusted_status {
-    my ($userProblem,  $db) = @_;
+	my ($userProblem, $db) = @_;
 
-    #this is goign to happen often enough that the check saves time
-    return 1 if $userProblem->status == 1;
+	#this is goign to happen often enough that the check saves time
+	return 1 if $userProblem->status == 1;
 
-    my @problemSeq = jitar_id_to_seq($userProblem->problem_id);
+	my @problemSeq = jitar_id_to_seq($userProblem->problem_id);
 
-    my @problemIDs = $db->listUserProblems($userProblem->user_id,$userProblem->set_id);
+	my @problemIDs = $db->listUserProblems($userProblem->user_id, $userProblem->set_id);
 
-    my @weights;
-    my @scores;
+	my @weights;
+	my @scores;
 
-    ID: foreach my $id (@problemIDs) {
-	my @seq = jitar_id_to_seq($id);
+ID: foreach my $id (@problemIDs) {
+		my @seq = jitar_id_to_seq($id);
 
-	#check and see if this is a child
-	# it has to be one level deper
-	next unless $#seq == $#problemSeq+1;
+		#check and see if this is a child
+		# it has to be one level deper
+		next unless $#seq == $#problemSeq + 1;
 
-	# and it has to equal @seq up to the penultimate index
-	for (my $i = 0; $i<=$#problemSeq; $i++) {
-	    next ID unless $seq[$i] == $problemSeq[$i];
+		# and it has to equal @seq up to the penultimate index
+		for (my $i = 0; $i <= $#problemSeq; $i++) {
+			next ID unless $seq[$i] == $problemSeq[$i];
+		}
+
+		#check to see if this counts towards the parent grade
+		my $problem = $db->getMergedProblem($userProblem->user_id, $userProblem->set_id, $id);
+
+		die "Couldn't get problem $id for user "
+			. $userProblem->user_id
+			. " and set "
+			. $userProblem->set_id
+			. " from the database"
+			unless $problem;
+
+		# skip if it doesnt
+		next unless $problem->counts_parent_grade();
+
+		# if it does count then add its adjusted status to the grading array
+		push @weights, $problem->value;
+		push @scores,  jitar_problem_adjusted_status($problem, $db);
 	}
 
-	#check to see if this counts towards the parent grade
-	my $problem = $db->getMergedProblem($userProblem->user_id, $userProblem->set_id, $id);
+	# if no children count towards the problem grade return status
+	return $userProblem->status unless (@weights && @scores);
 
-	die "Couldn't get problem $id for user ". $userProblem->user_id." and set ".$userProblem->set_id." from the database" unless $problem;
+	# if children do count then return the larger of the two (?)
+	my $childScore  = 0;
+	my $totalWeight = 0;
+	for (my $i = 0; $i <= $#scores; $i++) {
+		$childScore  += $scores[$i] * $weights[$i];
+		$totalWeight += $weights[$i];
+	}
 
-	# skip if it doesnt
-	next unless $problem->counts_parent_grade();
+	$childScore = $childScore / $totalWeight;
 
-	# if it does count then add its adjusted status to the grading array
-	push @weights, $problem->value;
-	push @scores, jitar_problem_adjusted_status($problem,$db);
-    }
-
-    # if no children count towards the problem grade return status
-    return $userProblem->status unless (@weights && @scores);
-
-    # if children do count then return the larger of the two (?)
-    my $childScore = 0;
-    my $totalWeight = 0;
-    for (my $i=0; $i<=$#scores; $i++) {
-	$childScore += $scores[$i]*$weights[$i];
-	$totalWeight += $weights[$i];
-    }
-
-    $childScore = $childScore/$totalWeight;
-
-    if ($childScore > $userProblem->status) {
-	return $childScore;
-    } else {
-	return $userProblem->status;
-    }
+	if ($childScore > $userProblem->status) {
+		return $childScore;
+	} else {
+		return $userProblem->status;
+	}
 }
-
 
 # returns 1 if the given problem is "finished"  This happens when the problem attempts have
 # been maxed out, and the attempts of any children with the "counts_to_parent_grade" also
 # have their attemtps maxed out.  (In other words if the grade can't be raised any more)
 
 sub jitar_problem_finished {
-    my ($userProblem,  $db) = @_;
+	my ($userProblem, $db) = @_;
 
-    # the problem is open if you can still make attempts and you dont have a 100%
-    return 0 if ($userProblem->status < 1 &&
-		 ($userProblem->max_attempts == -1 ||
-	$userProblem->max_attempts > ($userProblem->num_correct +
-				      $userProblem->num_incorrect)));
+	# the problem is open if you can still make attempts and you dont have a 100%
+	return 0
+		if (
+			$userProblem->status < 1
+			&& ($userProblem->max_attempts == -1
+				|| $userProblem->max_attempts > ($userProblem->num_correct + $userProblem->num_incorrect))
+		);
 
-    # find children
-    my @problemSeq = jitar_id_to_seq($userProblem->problem_id);
+	# find children
+	my @problemSeq = jitar_id_to_seq($userProblem->problem_id);
 
-    my @problemIDs = $db->listUserProblems($userProblem->user_id,$userProblem->set_id);
+	my @problemIDs = $db->listUserProblems($userProblem->user_id, $userProblem->set_id);
 
-    ID: foreach my $id (@problemIDs) {
-	my @seq = jitar_id_to_seq($id);
+ID: foreach my $id (@problemIDs) {
+		my @seq = jitar_id_to_seq($id);
 
-	#check and see if this is a child
-	next unless $#seq == $#problemSeq+1;
-	for (my $i = 0; $i<=$#problemSeq; $i++) {
-	    next ID unless $seq[$i] == $problemSeq[$i];
+		#check and see if this is a child
+		next unless $#seq == $#problemSeq + 1;
+		for (my $i = 0; $i <= $#problemSeq; $i++) {
+			next ID unless $seq[$i] == $problemSeq[$i];
+		}
+
+		#check to see if this counts towards the parent grade
+		my $problem = $db->getMergedProblem($userProblem->user_id, $userProblem->set_id, $id);
+
+		die "Couldn't get problem $id for user "
+			. $userProblem->user_id
+			. " and set "
+			. $userProblem->set_id
+			. " from the database"
+			unless $problem;
+
+		# if this doesn't count then we dont need to worry about it
+		next unless $problem->counts_parent_grade();
+
+		#if it does then see if the problem is finished
+		# if it isn't then the parent isnt finished either.
+		return 0 unless jitar_problem_finished($problem, $db);
+
 	}
 
-	#check to see if this counts towards the parent grade
-	my $problem = $db->getMergedProblem($userProblem->user_id, $userProblem->set_id, $id);
-
-	die "Couldn't get problem $id for user ".$userProblem->user_id." and set ".$userProblem->set_id." from the database" unless $problem;
-
-	# if this doesn't count then we dont need to worry about it
-	next unless $problem->counts_parent_grade();
-
-	#if it does then see if the problem is finished
-	# if it isn't then the parent isnt finished either.
-	return 0 unless jitar_problem_finished($problem,$db);
-
-    }
-
-    # if we got here then the problem is finished
-    return 1;
+	# if we got here then the problem is finished
+	return 1;
 }
 
-# requires a CG object, and a permission type
-# a user may also be submitted, in case we need to filter by section
+# Get the array of all permission levels at or above a given level
+sub role_and_above {
+	my ($userRoles, $role) = @_;
+	my $role_array = [$role];
+	for my $userRole (keys %$userRoles) {
+		push @$role_array, $userRole if ($userRoles->{$userRole} > $userRoles->{$role});
+	}
+	return $role_array;
+}
 
+# Requires a ContentGenerator object, and a permission type.
+# If the optional sender argument is provided, then filter on the section of the given sender.
 sub fetchEmailRecipients {
-	my ($self, $permissionType, $sender) = @_;    # sender argument is optional
-	my $r     = $self->r;
-	my $db    = $r->db;
-	my $ce    = $r->ce;
-	my $authz = $r->authz;
+	my ($c, $permissionType, $sender) = @_;
+	my $db    = $c->db;
+	my $ce    = $c->ce;
+	my $authz = $c->authz;
 
-	return unless $permissionType;
+	return unless $permissionType && defined $ce->{permissionLevels}{$permissionType};
 
-	return
-		map { $_->rfc822_mailbox } grep { $authz->hasPermissions($_->user_id, $permissionType) } $db->getUsersWhere({
+	my $roles =
+		ref $ce->{permissionLevels}{$permissionType} eq 'ARRAY'
+		? $ce->{permissionLevels}{$permissionType}
+		: role_and_above($ce->{userRoles}, $ce->{permissionLevels}{$permissionType});
+	my @rolePermissionLevels = map { $ce->{userRoles}{$_} } grep { defined $ce->{userRoles}{$_} } @$roles;
+	return unless @rolePermissionLevels;
+
+	my $user_ids = [ map { $_->user_id } $db->getPermissionLevelsWhere({ permission => \@rolePermissionLevels }) ];
+
+	my @recipients =
+		map { $_->rfc822_mailbox } $db->getUsersWhere({
+			user_id       => $user_ids,
 			email_address => { '!=', undef },
 			$ce->{feedback_by_section}
 			&& defined $sender
 			&& defined $sender->section ? (section => $sender->section) : (),
 		});
+
+	push @recipients, @{ $ce->{mail}{feedbackRecipients} } if ref($ce->{mail}{feedbackRecipients}) eq 'ARRAY';
+
+	return @recipients;
+}
+
+sub processEmailMessage {
+	my ($text, $user_record, $STATUS, $merge_data, $for_preview) = @_;
+
+	# User macros that can be used in the email message
+	my $SID        = $user_record->student_id;
+	my $FN         = $user_record->first_name;
+	my $LN         = $user_record->last_name;
+	my $SECTION    = $user_record->section;
+	my $RECITATION = $user_record->recitation;
+	my $EMAIL      = $user_record->email_address;
+	my $LOGIN      = $user_record->user_id;
+
+	# Get record from merge data.
+	my @COL = defined($merge_data->{$SID}) ? @{ $merge_data->{$SID} } : ();
+	unshift(@COL, '');    # This makes COL[1] the first column.
+
+	# For safety, only evaluate special variables.
+	my $msg = $text;
+	$msg =~ s/\$SID/$SID/g;
+	$msg =~ s/\$LN/$LN/g;
+	$msg =~ s/\$FN/$FN/g;
+	$msg =~ s/\$STATUS/$STATUS/g;
+	$msg =~ s/\$SECTION/$SECTION/g;
+	$msg =~ s/\$RECITATION/$RECITATION/g;
+	$msg =~ s/\$EMAIL/$EMAIL/g;
+	$msg =~ s/\$LOGIN/$LOGIN/g;
+
+	if (defined $COL[1]) {
+		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/g;
+	} else {
+		$msg =~ s/\$COL\[(\-?\d+)\]//g;
+	}
+
+	$msg =~ s/\r//g;
+
+	if ($for_preview) {
+		my @preview_COL = @COL;
+		shift @preview_COL;    # Shift of the added empty string for preview.
+		return $msg,
+			join(' ',
+				'', (map { "COL[$_]" . '&nbsp;' x (3 - length $_) } 1 .. $#COL),
+				'<br>', (map { $_ =~ s/\s/&nbsp;/gr } map { sprintf('%-8.8s', $_); } @preview_COL));
+	} else {
+		return $msg;
+	}
+}
+
+# This function abstracts the process of creating a transport layer for SendMail.
+# It is used in Feedback.pm, SendMail.pm and Utils/ProblemProcessing.pm (for JITAR messages).
+sub createEmailSenderTransportSMTP {
+	my $ce = shift;
+	return Email::Sender::Transport::SMTP->new({
+		host => $ce->{mail}{smtpServer},
+		ssl  => $ce->{mail}{tls_allowed} // 0,
+		defined $ce->{mail}->{smtpPort} ? (port => $ce->{mail}{smtpPort}) : (),
+		timeout => $ce->{mail}{smtpTimeout},
+	});
 }
 
 # Requires a CG object.
@@ -1793,157 +1952,183 @@ sub fetchEmailRecipients {
 # this subroutine could be expanded to.
 
 sub generateURLs {
-	my $self = shift;
-	my %params = @_;
-	my $r = $self->r;
-	my $db = $r->db;
-	my $urlpath = $r->urlpath;
-	my $userName = $r->param("user");
+	my $c        = shift;
+	my %params   = @_;
+	my $db       = $c->db;
+	my $userName = $c->param('user');
 
 	# generate context URLs
 	my $emailableURL;
 	my $returnURL;
 	if ($userName) {
-		my $modulePath;
+		my $routePath;
 		my @args;
-		if (defined $params{set_id} && $params{set_id} ne "") {
+		if (defined $params{set_id} && $params{set_id} ne '') {
 			if ($params{problem_id}) {
-				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
-					courseID => $r->urlpath->arg("courseID"),
-					setID => $params{set_id},
-					problemID => $params{problem_id},
-				);
-				@args = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
+				$routePath = $c->url_for('problem_detail', setID => $params{set_id}, problemID => $params{problem_id});
+				@args      = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
 			} else {
-				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r,
-					courseID => $r->urlpath->arg("courseID"),
-					setID => $params{set_id},
-				);
-				@args = ();
+				$routePath = $c->url_for('problem_list', setID => $params{set_id});
 			}
 		} else {
-			$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
-				courseID => $r->urlpath->arg("courseID"),
-			);
-			@args = ();
+			$routePath = $c->url_for('set_list');
 		}
-		$emailableURL = $self->systemLink($modulePath,
-			authen => 0,
-			params => [ "effectiveUser", @args ],
+		$emailableURL = $c->systemLink(
+			$routePath,
+			authen      => 0,
+			params      => [ 'effectiveUser', @args ],
 			use_abs_url => 1,
 		);
-		$returnURL = $self->systemLink($modulePath,
-			authen => 1,
-			params => [ @args ],
-		);
+		$returnURL = $c->systemLink($routePath, params => [@args]);
 	} else {
-		$emailableURL = "(not available)";
-		$returnURL = "";
+		$emailableURL = '(not available)';
+		$returnURL    = '';
 	}
 	if ($params{url_type}) {
 		if ($params{url_type} eq 'relative') {
 			return $returnURL;
 		} else {
-			return $emailableURL; # could include other types of URL here...
+			return $emailableURL;    # could include other types of URL here...
 		}
 	} else {
 		return ($emailableURL, $returnURL);
 	}
-	return;
 }
 
 my $staticWWAssets;
 my $staticPGAssets;
+my $thirdPartyWWDependencies;
+my $thirdPartyPGDependencies;
 
-# Get the url for static assets.
+sub readJSON {
+	my $fileName = shift;
+
+	return unless -r $fileName;
+
+	open(my $fh, "<:encoding(UTF-8)", $fileName) or die "FATAL: Unable to open '$fileName'!";
+	local $/;
+	my $data = <$fh>;
+	close $fh;
+
+	return JSON->new->decode($data);
+}
+
+sub getThirdPartyAssetURL {
+	my ($file, $dependencies, $baseURL, $useCDN) = @_;
+
+	for (keys %$dependencies) {
+		if ($file =~ /^node_modules\/$_\/(.*)$/) {
+			if ($useCDN && $1 !~ /mathquill/) {
+				return
+					"https://cdn.jsdelivr.net/npm/$_\@"
+					. substr($dependencies->{$_}, 1) . '/'
+					. ($1 =~ s/(?:\.min)?\.(js|css)$/.min.$1/gr);
+			} else {
+				return "$baseURL/$file?version=" . ($dependencies->{$_} =~ s/#/@/gr);
+			}
+		}
+	}
+	return;
+}
+
+# Get the URL for static assets.
 sub getAssetURL {
 	my ($ce, $file, $isThemeFile) = @_;
 
 	# Load the static files list generated by `npm install` the first time this method is called.
-	if (!$staticWWAssets) {
+	unless ($staticWWAssets) {
 		my $staticAssetsList = "$ce->{webworkDirs}{htdocs}/static-assets.json";
-		if (-r $staticAssetsList) {
-			my $data = do {
-				open(my $fh, "<:encoding(UTF-8)", $staticAssetsList)
-					or die "FATAL: Unable to open '$staticAssetsList'!";
-				local $/;
-				<$fh>;
-			};
-
-			$staticWWAssets = JSON->new->decode($data);
-		} else {
-			warn "ERROR: '$staticAssetsList' not found!\n"
+		$staticWWAssets = readJSON($staticAssetsList);
+		unless ($staticWWAssets) {
+			warn "ERROR: '$staticAssetsList' not found or not readable!\n"
 				. "You may need to run 'npm install' from '$ce->{webworkDirs}{htdocs}'.";
+			$staticWWAssets = {};
 		}
 	}
 
-	if (!$staticPGAssets) {
-		my $staticAssetsList = "$WeBWorK::Constants::PG_DIRECTORY/htdocs/static-assets.json";
-		if (-r $staticAssetsList) {
-			my $data = do {
-				open(my $fh, "<:encoding(UTF-8)", $staticAssetsList)
-					or die "FATAL: Unable to open '$staticAssetsList'!";
-				local $/;
-				<$fh>;
-			};
-
-			$staticPGAssets = JSON->new->decode($data);
-		} else {
-			warn "ERROR: '$staticAssetsList' not found!\n"
-				. "You may need to run 'npm install' from '$WeBWorK::Constants::PG_DIRECTORY/htdocs'.";
+	unless ($staticPGAssets) {
+		my $staticAssetsList = "$ce->{pg_dir}/htdocs/static-assets.json";
+		$staticPGAssets = readJSON($staticAssetsList);
+		unless ($staticPGAssets) {
+			warn "ERROR: '$staticAssetsList' not found or not readable!\n"
+				. "You may need to run 'npm install' from '$ce->{pg_dir}/htdocs'.";
+			$staticPGAssets = {};
 		}
+	}
+
+	# Load the package.json files the first time this method is called.
+	unless ($thirdPartyWWDependencies) {
+		my $packageJSON = "$ce->{webworkDirs}{htdocs}/package.json";
+		my $data        = readJSON($packageJSON);
+		warn "ERROR: '$packageJSON' not found or not readable!\n" unless $data && defined $data->{dependencies};
+		$thirdPartyWWDependencies = $data->{dependencies} // {};
+	}
+
+	unless ($thirdPartyPGDependencies) {
+		my $packageJSON = "$ce->{pg_dir}/htdocs/package.json";
+		my $data        = readJSON($packageJSON);
+		warn "ERROR: '$packageJSON' not found or not readable!\n" unless $data && defined $data->{dependencies};
+		$thirdPartyPGDependencies = $data->{dependencies} // {};
+	}
+
+	# Check to see if this is a third party asset file in node_modules (either in webwork2/htdocs or pg/htdocs).
+	# If so, then either serve it from a CDN if requested, or serve it directly with the library version
+	# appended as a URL parameter.
+	if ($file =~ /^node_modules/) {
+		my $wwFile = getThirdPartyAssetURL(
+			$file, $thirdPartyWWDependencies,
+			$ce->{webworkURLs}{htdocs},
+			$ce->{options}{thirdPartyAssetsUseCDN}
+		);
+		return $wwFile if $wwFile;
+
+		my $pgFile =
+			getThirdPartyAssetURL($file, $thirdPartyPGDependencies, $ce->{pg_htdocs_url},
+				$ce->{options}{thirdPartyAssetsUseCDN});
+		return $pgFile if $pgFile;
 	}
 
 	# If a right-to-left language is enabled (Hebrew or Arabic) and this is a css file that is not a third party asset,
-	# then determine the rtl varaint file name.  This will be looked for first in the asset lists.
-	my $rtlfile = $file =~ s/\.css$/.rtl.css/r
-		if ($ce->{language} =~ /^(he|ar)/ && $file !~ /node_modules/ && $file =~ /\.css$/);
+	# then determine the rtl variant file name.  This will be looked for first in the asset lists.
+	my $rtlfile =
+		($ce->{language} =~ /^(he|ar)/ && $file !~ /node_modules/ && $file =~ /\.css$/)
+		? $file =~ s/\.css$/.rtl.css/r
+		: undef;
 
 	if ($isThemeFile) {
 		# If the theme directory is the default location, then the file is in the static assets list.
 		# Otherwise just use the given file name.
 		if ($ce->{webworkDirs}{themes} =~ /^$ce->{webworkDirs}{htdocs}\/themes$/) {
 			$rtlfile = "themes/$ce->{defaultTheme}/$rtlfile" if defined $rtlfile;
-			$file = "themes/$ce->{defaultTheme}/$file";
+			$file    = "themes/$ce->{defaultTheme}/$file";
 		} else {
 			return "$ce->{webworkURLs}{themes}/$ce->{defaultTheme}/$file";
 		}
 	}
 
 	# First check to see if this is a file in the webwork htdocs location with a rtl variant.
-	# These can only be local files.
 	return "$ce->{webworkURLs}{htdocs}/$staticWWAssets->{$rtlfile}"
 		if defined $rtlfile && defined $staticWWAssets->{$rtlfile};
 
 	# Next check to see if this is a file in the webwork htdocs location.
-	if (defined $staticWWAssets->{$file}) {
-		# File served by cdn.
-		return $staticWWAssets->{$file} if $staticWWAssets->{$file} =~ /^https?:\/\//;
-		# File served locally.
-		return "$ce->{webworkURLs}{htdocs}/$staticWWAssets->{$file}";
-	}
+	return "$ce->{webworkURLs}{htdocs}/$staticWWAssets->{$file}" if defined $staticWWAssets->{$file};
 
 	# Now check to see if this is a file in the pg htdocs location with a rtl variant.
-	# These also can only be local files.
-	return "/pg_files/$staticPGAssets->{$rtlfile}" if defined $rtlfile && defined $staticPGAssets->{$rtlfile};
+	return "$ce->{pg_htdocs_url}/$staticPGAssets->{$rtlfile}"
+		if defined $rtlfile && defined $staticPGAssets->{$rtlfile};
 
 	# Next check to see if this is a file in the pg htdocs location.
-	if (defined $staticPGAssets->{$file}) {
-		# File served by cdn.
-		return $staticPGAssets->{$file} if $staticPGAssets->{$file} =~ /^https?:\/\//;
-		# File served locally.
-		return "/pg_files/$staticPGAssets->{$file}";
-	}
+	return "$ce->{pg_htdocs_url}/$staticPGAssets->{$file}" if defined $staticPGAssets->{$file};
 
 	# If the file was not found in the lists, then assume it is in the webwork htdocs location, and use the given file
-	# name.  If it is actually in the pg htdocs location, then the apache rewrite will send it there.
+	# name.  If it is actually in the pg htdocs location, then the Mojolicious rewrite will send it there.
 	return "$ce->{webworkURLs}{htdocs}/$file";
 }
 
 # This is a dummy function used to mark strings for localization
 
 sub x {
-  return @_;
+	return @_;
 }
 
 1;

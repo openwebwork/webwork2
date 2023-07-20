@@ -1,0 +1,60 @@
+<h2><%= maketext('Hide Courses') %> <%= $c->helpMacro('AdminHideCourses') %></h2>
+<p>
+	<%= maketext(
+		'Select the course(s) you want to hide (or unhide) and then click "Hide Courses" (or "Unhide Courses"). '
+			. 'Hiding a course that is already hidden does no harm (the action is skipped). Likewise unhiding a '
+			. 'course that is already visible does no harm (the action is skipped).  Hidden courses are still active '
+			. 'but are not listed in the list of WeBWorK courses on the opening page.  To access the course, an '
+			. 'instructor or student must know the full URL address for the course.'
+	) =%>
+</p>
+<p>
+	<%= maketext(
+		'Courses are listed either alphabetically or in order by the time of most recent login activity, '
+			. 'oldest first. To change the listing order check the mode you want and click "Refresh Listing".  '
+			. 'The listing format is: Course_Name (status :: date/time of most recent login) where status is "hidden" '
+			. 'or "visible".'
+	) =%>
+</p>
+<%= form_for current_route, method => 'POST', begin =%>
+	<div class="mb-3">
+		<div class="mb-2"><%= maketext('Select a listing format:') =%></div>
+		% for (
+			% [ alphabetically => maketext('alphabetically') ],
+			% [ last_login     => maketext('by last login date') ]
+		% )
+		% {
+			<div class="form-check">
+				<%= radio_button hide_listing_format => $_->[0],
+					id    => "hide_listing_format_$_->[0]",
+					class => 'form-check-input',
+					$_->[0] eq 'alphabetically' ? (checked => undef) : () =%>
+				<%= label_for "hide_listing_format_$_->[0]" => $_->[1], class => 'form-check-label' =%>
+			</div>
+		% }
+	</div>
+	<div class="d-flex gap-2 mb-2">
+		<%= submit_button maketext('Refresh Listing'), name => 'hide_course_refresh', class => 'btn btn-primary' =%>
+		<%= submit_button maketext('Hide Courses'), name => 'hide_course', class => 'btn btn-primary' =%>
+		<%= submit_button maketext('Unhide Courses'), name => 'unhide_course', class => 'btn btn-primary' =%>
+	</div>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
+	%
+	<div class="mb-2"><%= maketext('Select course(s) to hide or unhide.') %></div>
+	<div class="row mb-2">
+		<%= label_for hide_courseIDs => maketext('Course Name:'), class => 'col-auto col-form-label fw-bold' =%>
+		<div class="col-auto">
+			<%= select_field hide_courseIDs => [ map { [ $courseLabels->{$_} => $_ ] } @$hideCourseIDs ],
+				id       => 'hide_courseIDs',
+				class    => 'form-select',
+				multiple => undef,
+				size     => 15 =%>
+		</div>
+	</div>
+	<div class="d-flex gap-2">
+		<%= submit_button maketext('Refresh Listing'), name => 'hide_course_refresh', class => 'btn btn-primary' =%>
+		<%= submit_button maketext('Hide Courses'), name => 'hide_course', class => 'btn btn-primary' =%>
+		<%= submit_button maketext('Unhide Courses'), name => 'unhide_course', class => 'btn btn-primary' =%>
+	</div>
+<% end =%>

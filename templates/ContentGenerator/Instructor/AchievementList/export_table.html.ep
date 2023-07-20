@@ -1,0 +1,38 @@
+<div class="table-responsive">
+	<table class="table table-sm table-bordered font-sm caption-top" id="achievement-table">
+		<caption><%= maketext('Achievement List') %></caption>
+		<thead class="table-group-divider">
+			<tr>
+				<th>
+					<%= check_box select_all => '',
+						id           => 'select-all',
+						class        => 'select-all form-check-input',
+						'aria-label' => maketext('Select all achievements'),
+						data         => { select_group => 'selected_achievements' } =%>
+				</th>
+				<th class="text-nowrap"><%= label_for 'select-all' => maketext('Achievement ID') %></th>
+				<th><%= maketext('Name') %></th>
+			</tr>
+		</thead>
+		<tbody class="table-group-divider">
+			% my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
+			% for (@$achievements) {
+				% my $achievement_id = $_->achievement_id;
+				<tr>
+					<td>
+						<%= check_box selected_achievements => $_->achievement_id,
+							id    => "${achievement_id}_id",
+							class => 'form-check-input',
+							$selectedAchievementIDs{ $_->achievement_id } ? (checked => undef) : () =%>
+					</td>
+					<td><%= label_for "${achievement_id}_id" => $_->achievement_id %></td>
+					<td class="text-nowrap"><%= $_->name %></td>
+				</tr>
+			% }
+		</tbody>
+	</table>
+</div>
+%
+% unless (@$achievements) {
+	<p><i><%= maketext('No achievements shown.  Create an achievement!') %></i></p>
+% }

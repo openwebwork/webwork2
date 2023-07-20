@@ -1,0 +1,19 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/ShowHide/show_hide.js'), defer => undef =%>
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'view_answers')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to view past answers') %></div>
+	% last;
+% }
+%
+% # Only instructors should be able to veiw other people's answers.
+% my $isInstructor = $authz->hasPermissions(param('user'), 'access_instructor_tools');
+%
+% if ($isInstructor) {
+	<%= include 'ContentGenerator/Instructor/ShowAnswers/instructor-selectors', $c->getInstructorData =%>
+% }
+%
+<%= include 'ContentGenerator/Instructor/ShowAnswers/past-answers-table', isInstructor => $isInstructor =%>

@@ -1,0 +1,93 @@
+% use WeBWorK::Utils qw(before);
+%
+% my %can            = %{ $c->{can} };
+% my %will           = %{ $c->{will} };
+% my $effectiveUser  = param('effectiveUser');
+% if ($will{requestNewSeed}) {
+	<%= submit_button maketext('Request New Version'), id => 'enter_key_submit', name => 'requestNewSeed',
+		formtarget => '_self', class => 'visually-hidden-unfocusable' =%>
+	<%= submit_button maketext('Request New Version'), id => 'submitAnswers_id', name => 'requestNewSeed',
+		formtarget => '_self', class => 'btn btn-primary mb-1' =%>
+% } else {
+	% my $enter_key_name  = 'previewAnswers';
+	% my $enter_key_value = maketext('Preview My Answers');
+	% if (
+		% $c->ce->{pg}{options}{enterKey} eq 'submit'
+		% || ($c->ce->{pg}{options}{enterKey} eq 'conservative' && $c->{problem}{max_attempts} < 0)
+	% ) {
+		% if ($can{getSubmitButton}) {
+			% $enter_key_name  = 'submitAnswers';
+			% $enter_key_value = (param('user') ne $effectiveUser)
+				% ? maketext('Submit Answers for [_1]', $effectiveUser)
+				% : maketext('Submit Answers');
+		% } elsif ($can{checkAnswers}) {
+			% $enter_key_name  = 'checkAnswers';
+			% $enter_key_value = maketext('Check Answers');
+		% }
+	% }
+	<%= submit_button $enter_key_value, id => 'enter_key_submit', formtarget => '_self', name => $enter_key_name,
+		class => 'visually-hidden-unfocusable' =%>
+	<%= submit_button maketext('Preview My Answers'), id => 'previewAnswers_id', formtarget => '_self',
+		name => 'previewAnswers', class => 'btn btn-primary mb-1' =%>
+	%
+	% if ($can{checkAnswers}) {
+		<%= submit_button maketext('Check Answers'), id => 'checkAnswers_id', formtarget => '_self',
+			name => 'checkAnswers', class => 'btn btn-primary mb-1' =%>
+	% }
+	%
+	% if ($can{getSubmitButton}) {
+		% if (param('user') ne $effectiveUser) {
+			% # If acting as a student, make it clear that answer submissions will
+			% # apply to the student's records, not the instructor's.
+			<%= submit_button maketext('Submit Answers for [_1]', $effectiveUser), id => 'submitAnswers_id',
+				name => 'submitAnswers', class => 'btn btn-primary mb-1' =%>
+		% } else {
+			<%= submit_button maketext('Submit Answers'), id => 'submitAnswers_id', name => 'submitAnswers',
+				formtarget => '_self', class => 'btn btn-primary mb-1' =%>
+		% }
+	% }
+	%
+	% my %showMeAnother = %{ $c->{showMeAnother} };
+	% if ($can{showMeAnother}) {
+		% # only output showMeAnother button if we're not on the showMeAnother page
+		<%= link_to maketext('Show Me Another') => $c->systemLink(url_for('show_me_another')),
+				class  => 'set-id-tooltip btn btn-primary mb-1',
+				id     => 'SMA_button',
+				target => 'WW_Show_Me_Another',
+				data   => {
+					bs_toggle    => 'tooltip',
+					bs_placement => 'right',
+					bs_title     => maketext(
+						'You can use this feature [quant,_1,more time,more times,as many times as you want] '
+							. 'on this problem',
+						$showMeAnother{MaxReps} >= $showMeAnother{Count}
+						? ($showMeAnother{MaxReps} - $showMeAnother{Count})
+						: ''
+					)
+				} =%>
+	% } else {
+		% # If showMeAnother is available for the course, and for the current problem (but not yet
+		% # because the student hasn't tried enough times) then gray it out. Otherwise display nothing.
+		% # If $showMeAnother{TriesNeeded} is somehow not an integer or is -2, use the default value.
+		% $showMeAnother{TriesNeeded} = $ce->{pg}{options}{showMeAnotherDefault}
+			% if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
+		% if ($ce->{pg}{options}{enableShowMeAnother} && $showMeAnother{TriesNeeded} > -1) {
+			% my $exhausted =
+				% ($showMeAnother{Count} >= $showMeAnother{MaxReps} && $showMeAnother{MaxReps} > -1) ? 'exhausted' : '';
+			<span class="set-id-tooltip d-inline-block" tabindex="0" data-bs-toggle="tooltip"
+				data-bs-placement="right"
+				data-bs-title="<%=
+					before($db->getGlobalSet($c->{set}->set_id)->open_date, $c->submitTime)
+					? maketext('The problem set is not yet open')
+					: $exhausted eq 'exhausted' ? maketext('Feature exhausted for this problem')
+					: maketext(
+						'You must attempt this problem [quant,_1,time] before this feature is available',
+						$showMeAnother{TriesNeeded}
+					) =%>">
+				<button class="btn btn-primary mb-1" type="button" disabled>
+					<%= maketext('Show Me Another [_1]', $exhausted) =%>
+				</button>
+			</span>
+		% }
+	% }
+% }

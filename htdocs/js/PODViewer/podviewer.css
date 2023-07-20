@@ -1,0 +1,66 @@
+.main-index-header,
+.pod-header {
+	height: 65px;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 2;
+}
+
+#sidebar {
+	--bs-offcanvas-width: 300px;
+	overflow-y: auto;
+}
+
+#sidebar ul.nav ul.nav li {
+	border-left: 1px solid #e1e4e8;
+	padding-left: 10px;
+}
+
+#sidebar ul.nav ul.nav li:hover {
+	border-left: 6px solid #e1e4e8;
+	padding-left: 5px;
+}
+
+.main-index-container,
+.pod-page-container {
+	margin-top: 65px;
+}
+
+@media only screen and (min-width: 768px) {
+	#sidebar {
+		height: calc(100vh - 65px);
+		width: 300px;
+	}
+
+	.pod-page-container {
+		margin-left: 300px;
+	}
+}
+
+#_podtop_ pre {
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	background: #f6f6f6;
+	padding: 0.75rem;
+}
+
+#_podtop_,
+#_podtop_ *[id] {
+	scroll-margin-top: calc(65px + 1rem);
+}
+
+@media only screen and (max-width: 768px) {
+	.pod-header {
+		height: 100px;
+	}
+
+	.pod-page-container {
+		margin-top: 100px;
+	}
+
+	#_podtop_,
+	#_podtop_ *[id] {
+		scroll-margin-top: calc(100px + 1rem);
+	}
+}

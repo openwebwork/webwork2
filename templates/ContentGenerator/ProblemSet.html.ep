@@ -1,0 +1,39 @@
+% use WeBWorK::Utils qw(before between);
+%
+% if (
+	% $c->{invalidSet}
+	% && ($c->{invalidSet} !~ /^Client ip address .* is not in the list of addresses/
+		% || $authz->{merged_set}->assignment_type !~ /gateway/)
+	% )
+% {
+	<div class="alert alert-danger">
+		<p class="mb-3">
+			<%= maketext(
+				'The selected problem set ([_1]) is not a valid set for [_2].',
+				stash('setID'), param('effectiveUser')
+			) =%>
+		</p>
+		<p class="mb-0"><%== $c->{invalidSet} %></p>
+	</div>
+	% last;
+% }
+%
+% my $set = $c->{set};
+% 
+% # Stats message displays the current status of the set and states the next important date.
+<%= include 'ContentGenerator/Base/set_status', set => $set =%>
+%
+<%= $set->assignment_type =~ /gateway/ ? $c->gateway_body : $c->problem_list =%>
+%
+<div class="mb-3">
+	<%= $c->feedbackMacro(
+		route              => current_route,
+		set                => $set->set_id,
+		problem            => '',
+		displayMode        => $c->{displayMode},
+		showOldAnswers     => '',
+		showCorrectAnswers => '',
+		showHints          => '',
+		showSolutions      => '',
+	) =%>
+</div>

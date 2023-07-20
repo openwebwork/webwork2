@@ -1,0 +1,88 @@
+% use Mojo::JSON qw(to_json);
+% use WeBWorK::Utils qw(wwRound);
+%
+% my $json_output = {
+	% head_part001 => "<!DOCTYPE html><html $COURSE_LANG_AND_DIR>",
+	% head_part010 => q{<head><meta charset="utf-8"><base href="TO_SET_LATER_SITE_URL">}
+		% . qq{<link href="$ce->{webworkURLs}{htdocs}/images/favicon.ico" rel="shortcut icon">},
+	% head_part300 => join('',
+		% (map { stylesheet($_) } @$third_party_css),
+		% (map { stylesheet($_->{file}) } @$extra_css_files),
+		% (map { javascript($_->[0], %{ $_->[1] // {} }) } @$third_party_js),
+		% (map { javascript($_->{file}, %{ $_->{attributes} }) } @$extra_js_files),
+		% $rh_result->{header_text} // '',
+		% $rh_result->{post_header_text} // '',
+		% $extra_header_text
+	% ),
+	% head_part400 => '<title>WeBWorK problem</title>',
+	% head_part999 => '</head>',
+	%
+	% body_part001 => '<body>',
+	% body_part100 => '<div class="container-fluid"><div class="row"><div class="col-12 problem">',
+	% body_part300 => $answerTemplate,
+	% body_part500 => '<form id="problemMainForm" class="problem-main-form" name="problemMainForm" '
+		% . 'action="TO_SET_LATER_FORM_ACTION_URL" method="post">',
+	% body_part530 => qq{<div id="problem_body" class="problem-content" $PROBLEM_LANG_AND_DIR>},
+	% body_part550 => $problemText,
+	% body_part590 => '</div>',
+	% body_part650 => '<p>' . $lh->maketext('You received a score of [_1] for this attempt.',
+		% wwRound(0, $rh_result->{problem_result}{score} * 100) . '%') . '</p>'
+		% . ($rh_result->{problem_result}{msg} ? ('<p>' . $rh_result->{problem_result}{msg} . '</p>') : '')
+		% . ($ce->{hideWasNotRecordedMessage} ? '' : '<p>' . $lh->maketext('Your score was not recorded.') . '</p>')
+		% . hidden_field('problem-result-score' => $rh_result->{problem_result}{score},
+			% id => 'problem-result-score'),
+	% body_part700 => join('', '<p>',
+		% $showPreviewButton eq '0' ? '' : submit_button($lh->maketext('Preview My Answers'),
+			% name => 'preview', id => 'previewAnswers_id', class => 'btn btn-primary mb-1'),
+		% $showCheckAnswersButton eq '0' ? '' : submit_button($lh->maketext('Check Answers'),
+			% name => 'WWsubmit', class => 'btn btn-primary mb-1'),
+		% $showCorrectAnswersButton eq '0' ? '' : submit_button($lh->maketext('Show Correct Answers'),
+			% name => 'WWcorrectAns', class => 'btn btn-primary mb-1'),
+		% '</p>'),
+	% body_part999 => '</form></div></div></div>'
+		% . ($showFooter eq '0' ? ''
+			% : qq{<div id="footer">WeBWorK &copy; 2000-2023 |host: $SITE_URL }
+			% . "| course: $courseID | format: $formatName | theme: $theme></div>")
+		% . '</body></html>}',
+	%
+	% hidden_input_field => {
+		% answersSubmitted         => '1',
+		% sourceFilePath           => $sourceFilePath,
+		% problemSource            => $problemSource,
+		% problemSeed              => $problemSeed,
+		% problemUUID              => $problemUUID,
+		% psvn                     => $psvn,
+		% pathToProblemFile        => $fileName,
+		% courseID                 => $courseID,
+		% user                     => $user,
+		% passwd                   => $passwd,
+		% displayMode              => $displayMode,
+		% key                      => $key,
+		% outputformat             => 'json',
+		% theme                    => $theme,
+		% language                 => $formLanguage,
+		% showSummary              => $showSummary,
+		% showHints                => $showHints,
+		% showSolutions            => $showSolutions,
+		% showAnswerNumbers        => $showAnswerNumbers,
+		% showPreviewButton        => $showPreviewButton,
+		% showCheckAnswersButton   => $showCheckAnswersButton,
+		% showCorrectAnswersButton => $showCorrectAnswersButton,
+		% showFooter               => $showFooter,
+		% extraHeaderText          => $extra_header_text
+	% },
+	%
+	% # Add the current score to the json output
+	% score => $ws->{inputs_ref}{WWsubmit} && $rh_result->{problem_result}
+		% ? wwRound(0, $rh_result->{problem_result}{score} * 100)
+		% : 0,
+	%
+	% # These are the real WeBWorK server URLs which the intermediate needs to use
+	% # to communicate with WW, while the distant client must use URLs of the
+	% # intermediate server (the man in the middle).
+	% real_webwork_SITE_URL         => $SITE_URL,
+	% real_webwork_FORM_ACTION_URL  => $FORM_ACTION_URL,
+	% internal_problem_lang_and_dir => $PROBLEM_LANG_AND_DIR
+% };
+%
+%== to_json($json_output)

@@ -1,0 +1,54 @@
+<div class="info-box bg-light">
+	<h2><%= maketext('Problems') %></h2>
+	% if ($num_of_problems > 0 && $ce->{pg}{options}{enableProgressBar}) {
+		% my $unattempted                    = $num_of_problems - $total_correct - $total_incorrect - $total_inprogress;
+		% my $progress_bar_correct_width     = $total_correct * 100 / $num_of_problems;
+		% my $progress_bar_incorrect_width   = $total_incorrect * 100 / $num_of_problems;
+		% my $progress_bar_inprogress_width  = $total_inprogress * 100 / $num_of_problems;
+		% my $progress_bar_unattempted_width = $unattempted * 100 / $num_of_problems;
+		%
+		<div class="progress set-id-tooltip" aria-label="progress bar for current problem set" role="figure">
+			% if ($total_correct > 0) {
+				<div class="progress-bar correct-progress set-id-tooltip"
+					style="width:<%= $progress_bar_correct_width %>%"
+					aria-label="correct progress bar for current problem set" role="figure"
+					data-bs-toggle="tooltip" data-bs-placement="bottom"
+					data-bs-title="<%= maketext('Correct: [_1]/[_2]', $total_correct, $num_of_problems) %>">
+					% # Perfect scores deserve some stars (&#9733;)!
+					% if ($total_correct == $num_of_problems) {
+						&#9733;Perfect&#9733;
+					% }
+				</div>
+			% }
+			% if ($total_inprogress > 0) {
+				<div class="progress-bar inprogress-progress set-id-tooltip"
+					style="width:<%= $progress_bar_inprogress_width %>%"
+					aria-label="in progress bar for current problem set" role="figure"
+					data-bs-toggle="tooltip" data-bs-placement="bottom"
+					data-bs-title="<%= maketext('In progress: [_1]/[_2]', $total_inprogress, $num_of_problems) %>">
+				</div>
+			% }
+			% if ($total_incorrect > 0) {
+				<div class="progress-bar incorrect-progress set-id-tooltip"
+					style="width:<%= $progress_bar_incorrect_width %>%"
+					aria-label="incorrect progress bar for current problem set" role="figure"
+					data-bs-toggle="tooltip" data-bs-placement="bottom"
+					data-bs-title="<%= maketext('Incorrect: [_1]/[_2]', $total_incorrect, $num_of_problems) %>">
+				</div>
+			% }
+			% if ($unattempted > 0) {
+				<div class="progress-bar unattempted-progress set-id-tooltip"
+					style="width:<%= $progress_bar_unattempted_width %>%"
+					aria-label="unattempted progress bar for current problem set" role="figure"
+					data-bs-toggle="tooltip" data-bs-placement="bottom"
+					data-bs-title="<%= maketext('Unattempted: [_1]/[_2]', $unattempted, $num_of_problems) %>">
+				</div>
+			% }
+		</div>
+	% }
+	<ul class="nav flex-column problem-list">
+		% for (@$items) {
+			<li class="nav-item"><%= $_ %></li>
+		% }
+	</ul>
+</div>

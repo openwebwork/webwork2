@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -21,7 +21,7 @@ WeBWorK::Upload - store uploads securely across requests.
 
 =head1 SYNOPSIS
 
-Given C<$u>, an Apache::Upload object
+Given C<$u>, an Mojo::Upload object
 
  my $upload = WeBWorK::Upload->store($u,
  	dir => $ce->{webworkDirs}->{DATA}
@@ -36,10 +36,10 @@ Later...
  );
  my $fh = $upload->fileHandle;
  my $path = $upload->filePath;
- 
+
  # get rid of the upload -- $upload is useless after this!
  $upload->dispose;
- 
+
  # ...or move it somewhere before disposal
  $upload->disposeTo($path);
 
@@ -59,15 +59,17 @@ file.
 use strict;
 use warnings;
 use Carp qw(croak);
-use Data::UUID; # this is probably overkill ;)
+use Data::UUID;    # this is probably overkill ;)
 use Digest::MD5 qw(md5_hex);
 use File::Copy qw(copy move);
 
 =head1 STORING UPLOADS
 
-Uploads represented as Apache::Uploads objects can be stored in an upload cache
+Uploads can be stored in an upload cache
 and later retrieved, given the proper ID and hash. The hash is used to confirm
 the authenticity of the ID.
+
+Uploads are Mojo::Upload objects under.
 
 =head2 CONSTRUCTOR
 
@@ -75,7 +77,7 @@ the authenticity of the ID.
 
 =item store($u, %options)
 
-Stores the Apache::Upload C<$u> securely. The following keys must be defined in
+Stores the Mojo::Upload C<$u> securely. The following keys must be defined in
 %options:
 
  dir => the directory in which to store the uploaded file
@@ -83,45 +85,45 @@ Stores the Apache::Upload C<$u> securely. The following keys must be defined in
 =cut
 
 sub store {
-	my ($invocant, $apacheUpload, %options) = @_;
-	
-	croak "no Apache::Upload specified" unless $apacheUpload;
-	
+	my ($invocant, $upload, %options) = @_;
+
+	croak "no upload specified" unless $upload;
+
 	# generate UUID
-	my $ug = new Data::UUID;
+	my $ug   = new Data::UUID;
 	my $uuid = $ug->create_str;
-	
+
 	# generate one-time secret
-	my $secret = sprintf("%X"x4, map { int rand 2**32 } 1..4);
-	
+	my $secret = sprintf("%X" x 4, map { int rand 2**32 } 1 .. 4);
+
 	# generate hash from $uuid and $secret
 	my $hash = md5_hex($uuid, $secret);
-	
-	# get information about uploaded file
-	my $realFileName = $apacheUpload->filename;
-	my $fh = $apacheUpload->fh;
-	
+
 	my $infoName = "$uuid.info";
 	my $infoPath = "$options{dir}/$infoName";
-	
+
 	my $fileName = "$uuid.file";
 	my $filePath = "$options{dir}/$fileName";
-	
+
+	# get information about uploaded file
+	my $realFileName = $upload->filename;
+
+	# Copy uploaded file
+	$upload->move_to($filePath);
+
 	# write info file
 	open my $infoFH, ">", $infoPath
 		or die "failed to write upload info file $infoPath: $!";
 	print $infoFH "$realFileName\n$secret\n";
 	close $infoFH;
-	
-	# copy uploaded file
-	copy($fh, $filePath); # the file name is a secret!
-	
+
 	return bless {
-		uuid => $uuid,
-		dir  => $options{dir},
-		hash => $hash,
+		uuid         => $uuid,
+		dir          => $options{dir},
+		hash         => $hash,
 		realFileName => $realFileName,
-	}, ref($invocant) || $invocant;
+		},
+		ref($invocant) || $invocant;
 }
 
 =item id
@@ -132,15 +134,15 @@ Return the upload's unique ID, or an undefiend value if the upload is not valid.
 
 sub id {
 	my ($self) = @_;
-	my $uuid = $self->{uuid};
-	my $dir = $self->{dir};
-	
+	my $uuid   = $self->{uuid};
+	my $dir    = $self->{dir};
+
 	my $infoName = "$uuid.info";
 	my $infoPath = "$dir/$infoName";
-	
+
 	# make sure info file still exists (i.e. the file hasn't been disposed of)
 	return unless -e $infoPath;
-	
+
 	return $uuid;
 }
 
@@ -152,16 +154,16 @@ Return the upload's hash, or an undefiend value if the upload is not valid.
 
 sub hash {
 	my ($self) = @_;
-	my $uuid = $self->{uuid};
-	my $dir = $self->{dir};
-	my $hash = $self->{hash};
-	
+	my $uuid   = $self->{uuid};
+	my $dir    = $self->{dir};
+	my $hash   = $self->{hash};
+
 	my $infoName = "$uuid.info";
 	my $infoPath = "$dir/$infoName";
-	
+
 	# make sure info file still exists (i.e. the file hasn't been disposed of)
 	return unless -e $infoPath;
-	
+
 	return $hash;
 }
 
@@ -179,7 +181,7 @@ can then be accessed by name or file handle, moved, and disposed of.
 
 =item retrieve($id, $hash, %options)
 
-Retrieves the Apache::Upload referenced by C<$id> and C<$hash>. The following
+Retrieves the Mojo::Upload referenced by C<$id> and C<$hash>. The following
 keys must be defined in %options:
 
  dir => the directory in which to store the uploaded file
@@ -188,44 +190,45 @@ keys must be defined in %options:
 
 sub retrieve {
 	my ($invocant, $uuid, $hash, %options) = @_;
-	
-	croak "no upload ID specified" unless $uuid;
+
+	croak "no upload ID specified"   unless $uuid;
 	croak "no upload hash specified" unless $hash;
-	
+
 	my $infoName = "$uuid.info";
 	my $infoPath = "$options{dir}/$infoName";
-	
+
 	my $fileName = "$uuid.file";
 	my $filePath = "$options{dir}/$fileName";
-	
+
 	croak "no upload matches the ID specified" unless -e $infoPath;
-	
+
 	# get real file name and secret from info file
 	open my $infoFH, "<", $infoPath
 		or die "failed to read upload info file $infoPath: $!";
 	my ($realFileName, $secret) = <$infoFH>;
 	close $infoFH;
-	
+
 	# jesus christ
 	chomp $realFileName;
 	chomp $secret;
-	
+
 	# generate correct hash from $uuid and $secret
 	my $correctHash = md5_hex($uuid, $secret);
-	
+
 	#warn __PACKAGE__, ": secret is $secret\n";
 	#warn __PACKAGE__, ": correctHash is $correctHash\n";
-	
+
 	croak "upload hash incorrect!" unless $hash eq $correctHash;
-	
+
 	# -- you passed the test... --
-	
+
 	return bless {
-		uuid => $uuid,
-		dir => $options{dir},
-		hash => $hash,
+		uuid         => $uuid,
+		dir          => $options{dir},
+		hash         => $hash,
 		realFileName => $realFileName,
-	}, ref($invocant) || $invocant;
+		},
+		ref($invocant) || $invocant;
 }
 
 =back
@@ -241,20 +244,20 @@ Returns the original name of the uploaded file.
 =cut
 
 sub filename {
-	my ($self) = @_;
-	my $uuid = $self->{uuid};
-	my $dir = $self->{dir};
+	my ($self)       = @_;
+	my $uuid         = $self->{uuid};
+	my $dir          = $self->{dir};
 	my $realFileName = $self->{realFileName};
-	
+
 	my $infoName = "$uuid.info";
 	my $infoPath = "$dir/$infoName";
-	
+
 	my $fileName = "$uuid.file";
 	my $filePath = "$dir/$fileName";
-	
+
 	# make sure info file still exists (i.e. the file hasn't been disposed of)
 	return unless -e $infoPath;
-	
+
 	return $realFileName;
 }
 
@@ -267,18 +270,18 @@ upload is not valid. Suitable for reading.
 
 sub fileHandle {
 	my ($self) = @_;
-	my $uuid = $self->{uuid};
-	my $dir = $self->{dir};
-	
+	my $uuid   = $self->{uuid};
+	my $dir    = $self->{dir};
+
 	my $infoName = "$uuid.info";
 	my $infoPath = "$dir/$infoName";
-	
+
 	my $fileName = "$uuid.file";
 	my $filePath = "$dir/$fileName";
-	
+
 	# make sure info file still exists (i.e. the file hasn't been disposed of)
 	return unless -e $infoPath;
-	
+
 	open my $fh, "<", $filePath
 		or die "failed to open upload $filePath for reading: $!";
 	return $fh;
@@ -297,18 +300,18 @@ wish to move the file, use the C<disposeTo> method instead.
 
 sub filePath {
 	my ($self) = @_;
-	my $uuid = $self->{uuid};
-	my $dir = $self->{dir};
-	
+	my $uuid   = $self->{uuid};
+	my $dir    = $self->{dir};
+
 	my $infoName = "$uuid.info";
 	my $infoPath = "$dir/$infoName";
-	
+
 	my $fileName = "$uuid.file";
 	my $filePath = "$dir/$fileName";
-	
+
 	# make sure info file still exists (i.e. the file hasn't been disposed of)
 	return unless -e $infoPath;
-	
+
 	return $filePath;
 }
 
@@ -321,21 +324,21 @@ successfully destroyed, or an undefiend value if the upload is not valid.
 
 sub dispose {
 	my ($self) = @_;
-	my $uuid = $self->{uuid};
-	my $dir = $self->{dir};
-	
+	my $uuid   = $self->{uuid};
+	my $dir    = $self->{dir};
+
 	my $infoName = "$uuid.info";
 	my $infoPath = "$dir/$infoName";
-	
+
 	my $fileName = "$uuid.file";
 	my $filePath = "$dir/$fileName";
-	
+
 	# make sure info file still exists (i.e. the file hasn't been disposed of)
 	return unless -e $infoPath;
-	
+
 	unlink $infoPath;
 	unlink $filePath;
-	
+
 	return 1;
 }
 
@@ -350,19 +353,19 @@ valid.
 sub disposeTo {
 	my ($self, $newPath) = @_;
 	my $uuid = $self->{uuid};
-	my $dir = $self->{dir};
-	
+	my $dir  = $self->{dir};
+
 	croak "no path specified" unless $newPath;
-	
+
 	my $infoName = "$uuid.info";
 	my $infoPath = "$dir/$infoName";
-	
+
 	my $fileName = "$uuid.file";
 	my $filePath = "$dir/$fileName";
-	
+
 	# make sure info file still exists (i.e. the file hasn't been disposed of)
 	return unless -e $infoPath;
-	
+
 	unlink $infoPath;
 	move($filePath, $newPath);
 }

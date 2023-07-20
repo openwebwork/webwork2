@@ -1,382 +1,164 @@
 #!perl
 
-#############################################################################
-# authen_LTI.conf
+################################################################################################
 # Configuration for using LTI authentication.
 # To enable this file, uncomment the appropriate lines in localOverrides.conf
-#############################################################################
+# The settings in this file apply to both LTI 1.1 and LTI 1.3 authentication.
+# The settings specific to the LTI 1.1 authenticatio are in authen_LTI_1_1.conf.
+# The settings specific to the LTI 1.3 authenticatio are in authen_LTI_1_3.conf.
+################################################################################################
 
-# This is a string that is used to name the LMS for end users,
-# for example in a message telling users to sign in through their LMS.
-$LMS_name = 'e.g., Blackboard, Canvas, Moodle, etc.';
-#$LMS_name = 'Desire2Learn';
-
-# This is a URL that should take users to a place they can log in to their LMS.
-# It will use the text from $LMS_name, but use $LMS_url as the href.
-# If $LMS_url is empty or undefined, the text from $LMS_name is used with no link.
-$LMS_url = '';
-#$LMS_url = 'https://myschool.edu/lms/';
-
-# Set debug_lti_parameters  to 1 to have LTI calling parameters printed to HTML page for
-# debugging.  This is useful when setting things up for the first time because
-# different LMS systems have different parameters
-$debug_lti_parameters = 1;
+# Set debug_lti_parameters to 1 to have LTI calling parameters printed to HTML page for
+# debugging.  This is useful when setting things up for the first time because different LMS
+# systems have different parameters
+$debug_lti_parameters = 0;
 
 # To get more information on passing grades back to the LMS enmass set debug_lti_grade_passback
 # to one.  And set the LTIMassUpdateInterval to 60 (seconds).
 $debug_lti_grade_passback = 0;
 
-# This will print into the apache log the success or failure of updating each user/set.
-# If the set has "no lis_source_did" then that set hasn't been assigned, or the user is an instructor
-# and not a student.
+# This will print into the webwork2 app log the success or failure of updating each user/set.
 
 # Setting both debug_lti_parameters and debug_lti_grade_passback will cause the full request and
-# response between the LMS and WW to be printed into apache error log file for each
-# user/set  update of the grade.
+# response between the LMS and WW to be printed into webwork2 app log file for each user/set
+# update of the grade.
 
 # The switches above can be set in course.conf to enable debugging for just one course.
 
-# If you want even more information enable the debug facility for SubmitGrade.pm in
-# the WeBWorK::Constants file.
-# This will print extensive debug messages for all courses.
+# If you want even more information enable the debug facility in the webwork2.mojolicious.yml
+# file.  This will print extensive debugging messages for all courses.
 
-#############################################################################
+# Note that for LTI 1.3 not all debug message will make it back to the HTML page due to the
+# nature of how LTI 1.3 authentication works with automatic form submissions and redirects.
+
+################################################################################################
 # Authentication settings
-#############################################################################
+################################################################################################
 
-# This first section enables LTI authentication.
-# Failover to Basic_TheLastOption is necessary to authenticate with
-# cookie keys.
+# This section enables LTI authentication.  If a course uses LTI 1.1 (see $LTIVersion below),
+# then the LTIAdvanced module will be used.  If a course uses LTI 1.3 (see $LTIVersion below),
+# the LTIAdvantage will be used.  If you know a site will not use one or the other, it can be
+# commented out. Failover to Basic_TheLastOption is necessary to authenticate with cookie keys.
 $authen{user_module} = [
-	{ "*" => "WeBWorK::Authen::LTIAdvanced", },           #preferred authorization method
-	{ "*" => "WeBWorK::Authen::Basic_TheLastOption", }    #fallback authorization method
+	{ '*' => 'WeBWorK::Authen::LTIAdvantage' },          # first try LTI 1.3
+	{ '*' => 'WeBWorK::Authen::LTIAdvanced' },           # next try LTI 1.1
+	{ '*' => 'WeBWorK::Authen::Basic_TheLastOption' }    # fallback authorization method
 ];
 
-# If the preferred module is an external authentication
-# module but the sequence includes an internal authentication
-# system, e.g., Basic_TheLastOption, then $external_auth (below)
-# must be set to 1 (or true). If the value is 1,
-# then, if the authentication sequence reaches
-# Basic_TheLastOption, then WeBWorK::Login
-# will display a screen directing the user
-# back to an external authentication system.
-# This prevents you from attempting to login in to WeBWorK directly.
-$external_auth = 0;
+# Include configurations.  You must uncomment at least one of the following. You may uncomment
+# both if the site may be using both LTI 1.1 and 1.3 in different courses. After uncommenting
+# the LTI_1_x line, you must copy the file authen_LTI_1_x.conf.dist to authen_LTI_1_x.conf and
+# then edit that file to fill in the settings for LTI_1_x.
+#include('conf/authen_LTI_1_1.conf');
+#include('conf/authen_LTI_1_3.conf');
 
-# NOTE:  If external authentication is disabled
-# then you should probably also prevent students
-# from changing their passwords (because they can't use them).
-# To do this uncomment the following
-#$permissionLevels{change_password} = "ta";
+# This is the default LTI version that will be used for the site.  This must be 'v1p1' for LTI
+# 1.1 authentication, 'v1p3' for LTI 1.3 authentication, or '' to disable LTI authentication.
+# A course may override this setting to use the other version of LTI authentication or to
+# disable LTI authentication for the course.
+$LTIVersion = 'v1p1';
 
-################################################################################
-# LTI preferred and fallback source of WW user_id
-################################################################################
+# WeBWorK will automatically create users when logging in via the LMS for the first time as long
+# as the permission level is less than or equal to the permission level of this setting.  For
+# security reasons accounts with high permissions should not be auto created via LTI requests.
+# Set this variable to 'professor' if you want professor accounts to be created automatically.
+$LTIAccountCreationCutoff = 'ta';
 
-# You MUST set what LTI field is used to set the WeBWorK user_id.
-#
-# The lis_person_sourcedid (or one of its variants) is formally an OPTIONAL field
-#    https://www.imsglobal.org/specs/ltiv1p1/implementation-guide
-# but is relatively consistently available.
-# However, some LMS systems, Blackboard in particular, do not send lis_person_sourcedid.
-#
-# The email address lis_person_contact_email_primary is often a more understandable
-# value but may not exist.
-#
-# The LTI standard recommends providing a "user_id" value, which needs to be a unique
-# identifier for each student in the LMS. The value is not expected to be people
-# friendly by may be available when neither of the others are.
-#
-# You need to make sure to use a setting such that
-#    (1) usernames are unique and
-#    (2) the setting is as compatible as possible with the practices
-#        of the institutions that are being served in a site.
-#
-# If each course is only being used be students from a single institution
-# and the value  lis_person_sourcedid is unique across that population
-# and matches the logon username at that institution, then lis_person_sourcedid
-# is probably the better choice.
-#
-# On the other hand, if a site is serving a population from several institutions
-# or if the lis_person_sourcedid is not necessarily unique across the population,
-# then lis_person_contact_email_primary is the better choice.
-#
-# NOTE: As of WeBWorK 2.16 some setting MUST be made.
-#
-#       If no setting is made, all LTI logins will fail and an error will be reported.
-#
-#       See the comment further down on how to get WeBWorK 2.16 to behave similarly to
-#       the prior behavior.
-
-# NOTE: Even if a course management system sends one of the common misspellings of
-# "lis_person_sourcedid", i.e.,
-# lis_person_sourced_id, lis_person_source_id, and lis_person_sourceid,
-# one must nevertheless use the correct spelling "lis_person_sourcedid" here.
-$preferred_source_of_username = "lis_person_contact_email_primary";
-#$preferred_source_of_username = "lis_person_sourcedid";
-
-# You can use any parameter the LMS will provide for the
-# $preferred_source_of_username, ex:
-#$preferred_source_of_username = "user_id";
-
-# You can also optionally provide a $fallback_source_of_username
-# which will only be used if WW is unable to determine a user_id
-# using $preferred_source_of_username.
-
-# Warning: This can be dangerous, e.g. if the fallback were used
-# for some student, and then on a later connection by that student
-# the LMS provided a value for the $preferred_source_of_username
-# field, then the student will get a new WeBWorK account and lose
-# access to their prior account and the prior scores will not be
-# associated with their account any longer. Thus, this feature
-# should be used carefully!
-$fallback_source_of_username = '';
-#$fallback_source_of_username = "lis_person_sourcedid";
-
-# Stripping the domain when creating user_id from an email address:
-# If you set either $preferred_source_of_username or $fallback_source_of_username
-# to lis_person_contact_email_primary, and the email is being used as the WeBWorK
-# user_id, then if the following setting is enabled, then WeBWorK will strip off
-# the domain portion of the email (after the '@') and just use the username.
-$strip_address_from_email = 0;
-
-# This feature should not be used if emails could collide after the domain is removed.
-
-# To get WeBWorK 2.16 to handle LTI authentication using an approach
-# roughly the same as was used until WeBWorK 2.15, you can set one of the 2 pairs of
-# settings:
-#
-# Option 1: Primary choice is lis_person_contact_email_primary, fallback to lis_person_sourcedid:
-#$preferred_source_of_username = "lis_person_contact_email_primary";
-#$fallback_source_of_username = "lis_person_sourcedid";
-#
-# Option 2: Primary choice is lis_person_sourcedid, fallback to lis_person_contact_email_primary:
-#$preferred_source_of_username = "lis_person_sourcedid";
-#$fallback_source_of_username = "lis_person_contact_email_primary";
-
-# Depending on the username source, capitalization may vary between students,
-# such as when using an email address to get the username. Turning this option
-# on will make all usernames lowercase. Default is 0 (off).
-#$lti_lowercase_username = 1;
-
-################################################################################
-# LTI Preferred source of Student Id
-################################################################################
-
-# If preferred_source_of_student_id is not set, WeBWorK will set student_id
-# to be an empty string. You should use debug_lti_parameters in order to determine
-# the value to use for your LMS.
-
-# For example, in D2L, student_id is stored in OrgDefinedId and
-# the corresponding LTI parameter is called ext_d2l_orgdefinedid.
-$preferred_source_of_student_id = "";
-#$preferred_source_of_student_id = "ext_d2l_orgdefinedid";
-
-################################################################################
-# LTI Basic Authentication Parameters
-################################################################################
-
-# This "shared secret" is entered in the LMS request form and needs to be
-# match the entry here.  This is used to validate all requests between the
-# LMS and WeBWorK
-
-# You should choose your own secret word for security and should treat it
-# like a password.
-$LTIBasicConsumerSecret = "";    #This must be set
-
-# The purpose of the LTI nonces is to prevent man-in-the-middle attacks.
-# The NonceLifeTime (in seconds) must be short enough to prevent
-# at least casual man-in-the-middle attacks but
-# long enough to accommodate normal server and networking delays
-# (and perhaps non-synchronization of server time clocks).
-$NonceLifeTime = 60;    # in seconds
-
-# WeBWorK will automatically create users when logging in via the LMS for the
-# first time.  If the following flag is enabled then it will also keep the
-# user demographic data up to date with the LMS.  If a users information change
-# in the LMS then it will change in WeBWorK. However, any changes to the
-# student data via WeBWorK will be overwritten the next time the student
-# logs in.
+# If the following flag is enabled then the user demographic data will be kept up to date with
+# the data from the LMS.  If a user's information changes in the LMS then it will change in
+# WeBWorK. This means that any changes to the student data via WeBWorK will be overwritten the
+# next time the student logs in.
 $LMSManageUserData = 1;
 
-# NOTE:  If mange user data is enabled  then you should probably also
-# prevent students from changing their email because the changes
-# will be overwritten.  To do this ucomment the following
-#$permissionLevels{change_email} = "ta";
+# If the preferred module is an external authentication module but the sequence includes an
+# internal authentication system, e.g., Basic_TheLastOption, then $external_auth (below) must be
+# set to 1 (or true). If the value is 1, then, if the authentication sequence reaches
+# Basic_TheLastOption, then WeBWorK::Login will display a screen directing the user back to an
+# external authentication system.  This prevents you from attempting to login in to WeBWorK
+# directly.
+$external_auth = 0;
 
-# This allows you to override the URL that Oauth will use to validate the
-# authentication.  This is important if you have some sort of setup (e.g. load
-# distributing) where the path in the LMS does not match the path that ends up
-# in the webwork page
-$LTIBasicToThisSiteURL = "";
+# NOTE:  If external authentication is disabled then you should probably also prevent students
+# from changing their passwords (because they can't use them).  To do this uncomment the
+# following.
+#$permissionLevels{change_password} = 'ta';
 
-################################################################################
-# Authorization system   LTI:  LMS Grade Passback
-################################################################################
+################################################################################################
+# Authorization system LTI:  LMS Grade Passback
+################################################################################################
 
-# WeBWorK can automatically report grades back to your LMS.  However the
-# system is reasonably restrictive.  When you create an LTI link in your
-# LMS you can choose to have that LTI link have a grade associated to it.
-# WeBWorK can report back a single percentage as the "grade" for that link.
-# There are two modes under which this can occur.
+# WeBWorK can automatically report grades back to your LMS.  However the system is reasonably
+# restrictive.  When you create an LTI link in your LMS you can choose to have that LTI link
+# have a grade associated to it.  WeBWorK can report back a single percentage as the "grade" for
+# that link.  There are two modes under which this can occur.
 
-# Single Course Grade Mode:  $LTIGradeMode = "course";
-#
-# In this mode you create a single Link/Assignment which points to your
-# WeBWorK Course address.  E.G. In Blackboard
-# Name: WeBWorK
-# URL: https://webwork.university.edu/webwork2/CourseName
-# Check Yes:  This link is to a Tool Provider
-# Enable Evaluation: Yes
-# Points Possible: 100
-#   Students will receive a LMS grade associated to the Link/Assignment
-# which is determined by their percentage total homework grade in WeBWorK.
-# This total homework grade is the same as the grade that is reported on the
-# grades page.  You can change the weight of sets by altering the weight of
-# the problems in the set.
+# Single Course Grade Mode:  $LTIGradeMode = 'course';
+# In this mode you create a single Link/Assignment which points to your WeBWorK Course address.
+# Students will receive a LMS grade associated to the Link/Assignment which is determined by
+# their percentage total homework grade in WeBWorK.  This total homework grade is the same as
+# the grade that is reported on the grades page.  You can change the weight of sets by altering
+# the weight of the problems in the set.
 
-# Individual Homework Grade Mode:  $LTIGradeMode = "homework";
-#
-# In this mode you create a single Link/Assignment for *every* homework set in
-# the course.  The address should be the address of that set in the Course.
-# E.G. in Blackboard
-# Name: Set Name
-# URL: https://webwork.university.edu/webwork2/CourseName/SetName
-# Check Yes:  This link is to a Tool Provider
-# Enable Evaluation: Yes
-# Points Possible: 100
-#   Students will receive a grade for each Link/Assignment which is determined
-# by their percentage homework grade on the Set which the Link/Assignment
-# points to.  Students need to use the Link/Assignment in the LMS at least once
-# to enable grade passback.  In particular when working in this mode it is
-# recommended that you only allow students to log in via the LMS.
+# Individual Homework Grade Mode:  $LTIGradeMode = 'homework';
+# In this mode you create a single Link/Assignment for *every* homework set in the course.  The
+# address should be the address of that set in the Course.  Students will receive a grade for
+# each Link/Assignment which is determined by their percentage homework grade on the Set which
+# the Link/Assignment points to.  Students need to use the Link/Assignment in the LMS at least
+# once to enable grade passback.  In particular when working in this mode it is recommended that
+# you only allow students to log in via the LMS.
 
-# Note: For both of these modes only the grades are passed back.  In
-# particular nothing else about the Link/Assignment in the LMS and the
-# homework set in WeBWorK is synchronized.  In particular the total number of
-# points/problems, the due dates, the open dates are not kept in sync
-# automatically.
+# Note: For both of these modes only the grades are passed back.  In particular nothing else
+# about the Link/Assignment in the LMS and the homework set in WeBWorK is synchronized.  In
+# particular the total number of points/problems, the due dates, the open dates are not kept in
+# sync automatically (yet).
+
+# Site Administrator Note for LTI 1.3:  This uses OAuth2 RSA private/public keys.  These keys
+# are automatically generated the first time that they are needed.  It is recommended that new
+# keys are generated on a regular basis.  At this point, key rotation is not automatic for
+# webwork2.  Howevever, it is simple.  Delete the files $webwork2_dir/DATA/lti_private_key.json
+# and $webwork2_dir/DATA/lti_public_key.json.  New keys will then be automatically generated the
+# next time they are needed.  Probably a good rule of thumb (for now) is to do this at the
+# beginning of every term.
 
 $LTIGradeMode = '';
-#$LTIGradeMode = "course";
-#$LTIGradeMode = "homework";
+#$LTIGradeMode = 'course';
+#$LTIGradeMode = 'homework';
 
-# When set this variable sends grades back to the LMS every time a user
-# submits an answer.  This keeps students grades up to date but can be
-# a drain on the server.
+# When set this variable sends grades back to the LMS every time a user submits an answer.  This
+# keeps students grades up to date but can be a drain on the server.
 $LTIGradeOnSubmit = 1;
 
-# Should WW try to check the current LMS grade before sending a grade update.
-# This is intended to reduce LMS records when no real grade change occurred.
-# It requires a 2 round process, first querying the current grade from the LMS
-# and then when needed making the grade submission.
-$lti_check_prior = 0;    # default is off - old setting - always update with no check
+# If CheckPrior is set to 1 then the current LMS grade will be checked first, and if the grade
+# has not changed then the grade will not be updated.  This is intended to reduce changes to LMS
+# records when no real grade change occurred.  It requires a 2 round process, first querying the
+# current grade from the LMS and then when needed making the grade submission.
+$LTICheckPrior = 0;
 
-# The system periodically updates student grades on the LMS.  This
-# variable controls how often that happens.  Set to -1 to disable.
+# The system periodically updates student grades on the LMS.  This variable controls how often
+# that happens.  Set to -1 to disable.
 $LTIMassUpdateInterval = 86400;    #in seconds
 
-################################################################################
-# Authorization system   LTI:  LMS Roles Mapped to WeBWorK Roles
-################################################################################
-
-# You may need to customize this hash to take into account the roles
-# that are used in your LMS.  Set the debug_lti_parameters flag to see
-# what roles are being reported to WeBWorK by your LMS
-%LMSrolesToWeBWorKroles = (
-	"librarian"               => "guest",
-	"observer"                => "guest",
-	"visitor"                 => "guest",
-	"Guest"                   => "guest",
-	"Designer"                => "professor",
-	"instructor"              => "professor",
-	"Instructor"              => "professor",
-	"Faculty"                 => "professor",
-	"Teacher"                 => "professor",
-	"Student"                 => "student",
-	"Learner"                 => "student",
-	"student"                 => "student",
-	"AI/TA"                   => "ta",
-	"TA"                      => "ta",
-	"Teaching Assistant"      => "ta",
-	"Teaching Assistant (TA)" => "ta",
-	"Non-editing teacher"     => "ta",
-	"Grader"                  => "ta",
-);
-
-# For security reasons accounts with high permissions should not be auto
-# created via LTI requests.  Set this variable to "professor" if you want
-# professor accounts to be created automatically
-$LTIAccountCreationCutoff = "ta";
-
-################################################################################
-# Local routine to modify users
-################################################################################
-
-# When users are added to the system WeBWorK will do its best to fill out
-# user information.  However, institutions can add code to the following
-# routine to set fields not normally set by WeBWorK.  E.G.  The student ID
-# field.
-
-#$LTI_modify_user = sub {
-#  # The self object from LTIAdvanced.pm
-#  my $self = shift;
-#  # The user object to be modified
-#  my $user = shift;
-#
-#  # Parse context_id for additional information.  E.G.
-#  my @course_id=split /-/, $self -> {"context_id"};
-#  $user->{"section"} = $course_id[4];
-#};
-
-################################################################################
-# Local routine to modify user sets
-################################################################################
-
-# When users are added to the system they are also assigned all visible sets
-# This routine can be used to modify the sets before they are assigned.  E.G.
-# extend due dates based off the number of problems students have to do
-
-#$LTI_modify_user_set = sub {
-#  # The self object from LTIAdvanced.pm
-#  my $self = shift;
-#  my $globalSet = shift;
-#  # The userSet object to be modified
-#  my $userSet = shift;
-
-#  my $numberOfSetsAssigned = $self->{numberOfSetsAssigned};
-#  my $daysPerSetMakeup = 2;
-#  my $reasonableNumberOfDays = $numberOfSetsAssigned*$daysPerSetMakeup +1;
-#  if ($reasonableNumberOfDays < 2) {$reasonableNumberOfDays = 2;}
-#  my $niceDueTime = $globalSet->due_date + $reasonableNumberOfDays*86400;
-#  my $niceAnswerTime = $niceDueTime + 600;
-
-#  $userSet->due_date($niceDueTime);
-#  $userSet->answer_date($niceAnswerTime);
-#};
-
-################################################################################
+################################################################################################
 # Add an 'LTI' tab to the Course Configuration page
-################################################################################
+################################################################################################
 
-# Uncomment any of the variables listed in the @LTIConfigVariables array below
-# if you would like the Course Configuration page to have an LTI tab, granting
-# the course instructor easy access to some of the LTI settings. You may leave
-# some of the variables commented out if you would like to omit them from the
-# options in this tab.  If all variables are left commented out, then the tab
-# will not be shown.  Note that the default values for the variables that will
-# be shown in the LTI tab are the values that are set above.  Further note that
-# only the variables listed in LTIConfigValues.config may be added to the LTI
-# config tab.
+# Uncomment any of the variables listed in the @LTIConfigVariables array below if you would like
+# the Course Configuration page to have an LTI tab, granting the course instructor easy access
+# to some of the LTI settings. You may leave some of the variables commented out if you would
+# like to omit them from the options in this tab.  If all variables are left commented out, then
+# the tab will not be shown.  Note that the default values for the variables that will be shown
+# in the LTI tab are the values that are set above.  Further note that only the variables listed
+# in LTIConfigValues.config may be added to the LTI config tab.  In addition, only the variables
+# that pertain to the active LTI version will be shown in the tab.
 @LTIConfigVariables = (
-	#'LMS_name',
-	#'LMS_url',
+	#'LTI{v1p1}{LMS_name}',
+	#'LTI{v1p3}{LMS_name}',
+	#'LTI{v1p1}{LMS_url}',
+	#'LTI{v1p3}{LMS_url}',
 	#'external_auth',
 	#'LTIGradeMode',
 	#'LMSManageUserData',
 	#'debug_lti_parameters'
 );
 
-include('conf/LTIConfigValues.config');
-
-1;    #final line of the file to reassure perl that it was read properly.
+1;    # final line of the file to reassure perl that it was read properly.

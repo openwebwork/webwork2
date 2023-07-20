@@ -1,0 +1,21 @@
+% use WeBWorK::Utils qw(readFile);
+%
+% my $fileManagerURL = $c->systemLink(url_for, params => { download => $filename, pwd => $c->{pwd} } );
+%
+% # Include a download link
+<div class="d-flex justify-content-between">
+	<b><%= $name %></b>
+	<%= link_to maketext('Download') => $fileManagerURL =%>
+</div>
+<hr>
+%
+% # For files display the file, if possible.  If the file is an image, display it as an image.
+% if (-T $file) {    # Check that it is a text file
+	<div dir="auto"><pre><%= readFile($file) =%></pre></div>
+% } elsif ($file =~ m/\.(gif|jpg|png)$/i) {
+	<%= image $fileManagerURL, style => 'border:0;', alt => $name =%>
+% } else {
+	<div class="alert alert-danger p-1 mb-0">
+		<%= maketext('The file $file does not appear to be a text or image file.') =%>
+	</div>
+% }

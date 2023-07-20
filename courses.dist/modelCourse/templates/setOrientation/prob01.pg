@@ -8,8 +8,6 @@ loadMacros(
 );
 
 
-TEXT(beginproblem());
-
 Title("Understanding $WW Problem Pages");
 
 ##############################################

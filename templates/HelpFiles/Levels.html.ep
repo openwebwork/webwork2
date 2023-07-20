@@ -1,0 +1,52 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('OPL Problem Levels Help');
+%
+<p>
+	<%= maketext('Some OPL problems have been rated for difficulty/educational objective. The levels are loosely '
+		. q{inspired by Bloom's taxonomy. They are assigned numbers from 1 to 6 as follows.}) =%>
+</p>
+<ol>
+	<li>
+		<%= maketext('Problems with this rating should only require direct memory of a fact. Examples might be a '
+			. 'specific value of a function, or the statement of a definition. Very few WeBWorK problems fall into '
+			. 'this category.') =%>
+	</li>
+
+	<li>
+		<%= maketext('Usually means students must demonstrate understanding of facts. This is more than regurgitating '
+			. 'the fact. We use this category for simple and direct applications of algorithms the student has '
+			. 'studied. There should be no judgement involved in choosing the method. This would include a simple '
+			. 'application of a rule for differentiation (e.g., can combine rules for sums and constant multiples with '
+			. 'one more advanced rule) or for integrals.') =%>
+	</li>
+
+	<li>
+		<%= maketext('We use this for carrying out more complicated algorithms, such as derivatives using both the '
+			. 'product and chain rule or integrals which involve say both a substitution and parts.') =%>
+	</li>
+
+	<li>
+		<%= maketext('These problems require some application of algorithms, but do not rise to the level of a full '
+			. 'word problem. For example, "Identify the local extrema for f(x) = ...". One has to apply algorithms '
+			. 'and interpret results.') =%>
+	</li>
+
+	<li><%= maketext('Word problems') %></li>
+
+	<li><%= maketext('Applying definitions theoretically and proof writing') %></li>
+</ol>

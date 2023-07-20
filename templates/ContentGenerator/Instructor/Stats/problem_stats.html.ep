@@ -1,0 +1,117 @@
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/RenderProblem/renderproblem.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/Stats/stats.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
+% end
+%
+<div class="mb-3">
+	<%= maketext('Showing statistics for:') =%>
+	<%= include 'ContentGenerator/Instructor/Stats/student_filter_menu', filters => $filters =%>
+	<%= include 'ContentGenerator/Instructor/Stats/problem_menu', problems => $problems =%>
+</div>
+%
+% # Histogram of total scores.
+<%= $c->build_bar_chart(
+	[ @$buckets ],
+	xAxisLabels => [ '90-100', '80-89', '70-79', '60-69', '50-59', '40-49', '30-39', '20-29', '10-19', '0-9' ],
+	yMax        => 5 * $maxCount,
+	yAxisLabels => [ map { $_ * $maxCount } 0 .. 5 ],
+	mainTitle   => maketext('Active Students Problem [_1] Grades', $c->{prettyID}),
+	xTitle      => maketext('Percent Ranges'),
+	yTitle      => maketext('Number of Students'),
+	barWidth    => 35,
+	barSep      => 5,
+	isPercent   => 0,
+	leftMargin  => 40 + 5 * length(5 * $maxCount),
+	isJitarSet  => ($isJitarSet && $topLevelJitar),
+	jitarBars   => [ reverse(@$jitarBars) ],
+) =%>
+%
+% # Display overall statistics
+<div class="table-responsive">
+	<table class="table table-bordered w-auto">
+		<tr><th><%= maketext('Point Value') %></th><td><%= $c->{problemRecord}->value =%></tr>
+		<tr><th><%= maketext('Average Percent') %></th><td><%= sprintf('%0.1f', 100 * $mean) %></tr>
+		<tr><th><%= maketext('Standard Deviation') %></th><td><%= sprintf('%0.1f', 100 * $stddev) %></td></tr>
+		<tr><th><%= maketext('Average Attempts') %></th><td><%= sprintf('%0.1f', $mean2) %></td></tr>
+		<tr>
+			<th>
+				<%= maketext('Success Index') =%>
+				<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
+					data-bs-content="<%= maketext(
+						'Success index is the square of the average score divided by the average number of attempts.'
+					) %>">
+					<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') %>" aria-hidden="true">
+					</i>
+				</a>
+			</th>
+			<td><%= sprintf('%0.1f', 100 * $successIndex) %></td>
+		</tr>
+		<tr><th><%= maketext('Active Students') %></th><td><%= $activeStudents %></td></tr>
+		<tr><th><%= maketext('Inactive Students') %></th><td><%= $inactiveStudents %></tr>
+	</table>
+</div>
+%
+% # Table showing percentile statistics for scores.
+<p>
+	<%= maketext(
+		'Percentile cutoffs for student\'s score and success index. '
+		. 'The 50% column shows the median number of attempts.'
+	) =%>
+</p>
+%
+% my @tableHeaders = (maketext('Percent Score'));
+% my @tableData    = ($problemScores);
+% if ($isJitarSet && $topLevelJitar) {
+	% push(@tableHeaders, maketext('% Score with Review'));
+	% push(@tableData,    [ map { sprintf('%0.0f', 100 * $_) } @$adjustedScores ]);
+% }
+% my $successIndexHeader = begin
+	<%= maketext('Success Index') =%>
+	<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
+		data-bs-content="<%=
+			maketext('Success index is the square of the score divided by the number of attempts.') =%>">
+		<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') %>" aria-hidden="true"></i>
+	</a>
+% end
+% push @tableHeaders, $successIndexHeader->();
+% push(@tableData, [ map { sprintf('%0.0f', 100 * $_) } @$successList ]);
+<%= $c->bracket_table([ 90, 80, 70, 60, 50, 40, 30, 20, 10 ], \@tableData, \@tableHeaders, showMax => 1) =%>
+%
+% # Table showing attempts percentiles
+<p>
+	<%= maketext('Percentile cutoffs for number of attempts. The 50% column shows the median number of attempts.') =%>
+</p>
+<%= $c->bracket_table([ 95, 75, 50, 25, 5, 1 ], [ $problemAttempts ], [ maketext('# of attempts') ], reverse => 1) =%>
+%
+% if ($c->{problemRecord}->source_file =~ /^group:/) {
+	<div class="alert alert-info">
+		<%= maketext('Problem source is drawn from a grouping set and can not be directly rendered or edited.') %>
+	</div>
+	% last;
+% }
+%
+% # Render Problem
+<div class="rpc_render_area_container mt-2 p-2 border rounded">
+	<%= $c->hidden_authen_fields =%>
+	<%= hidden_field hidden_course_id => $courseID =%>
+	<%= hidden_field hidden_language => $ce->{language} =%>
+	<%= hidden_field setID => $setID, id => 'hidden_set_id' =%>
+	<%= hidden_field problemID => $problemID, id => 'hidden_problem_id' =%>
+	<%= hidden_field sourceFilePath => $c->{problemRecord}->source_file, id => 'hidden_source_file' =%>
+	<div class="btn-toolbar gap-3">
+		<div class="input-group pt-1">
+			<%= label_for problem_displaymode => maketext('Display Mode:'), class => 'input-group-text' =%>
+			<%= select_field 'problem_displaymode' => [
+					grep { exists WeBWorK::PG::DISPLAY_MODES()->{$_} } @{ $ce->{pg}{displayModes} }
+				],
+				id => 'problem_displaymode', class => 'form-select' =%>
+		</div>
+		<div class="btn-group pt-1">
+			<%= link_to maketext('Edit Problem') =>
+					$c->systemLink(url_for('instructor_problem_editor_withset_withproblem')),
+				class => 'btn btn-primary', target => 'WW_Editor' =%>
+		</div>
+	</div>
+	<div id="problem_render_area" class="rpc_render_area mt-2"></div>
+</div>

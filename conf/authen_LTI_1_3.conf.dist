@@ -1,0 +1,191 @@
+#!perl
+
+################################################################################################
+# Configuration for using LTI 1.3 authentication.
+# To enable this file, uncomment the appropriate lines in authen_LTI.conf
+################################################################################################
+
+# This is a string that is used to name the LMS for end users, for example in a message telling
+# users to sign in through their LMS.
+$LTI{v1p3}{LMS_name} = 'e.g., Blackboard, Canvas, Moodle, etc.';
+#$LTI{v1p3}{LMS_name} = 'Desire2Learn';
+
+# This is a URL that should take users to a place they can log in to their LMS.  It will use the
+# text from LMS_name, but use LMS_url as the href.  If LMS_url is empty or undefined, the
+# text from LMS_name is used with no link.
+$LTI{v1p3}{LMS_url} = '';
+#$LTI{v1p3}{LMS_url} = 'https://myschool.edu/lms/';
+
+################################################################################################
+# LTI 1.3 preferred and fallback source of WW user_id
+################################################################################################
+
+# You MUST set what LTI claim sent in the JWT is used to set the WeBWorK user_id.
+
+# Note that the decoded JWT is a JSON object that is converted to a nested perl hash.  To use
+# elements of a nested hash separate the keys with #.  For example, if the decoded JWT contains:
+
+# "https://purl.imsglobal.org/spec/lti/claim/ext" => { "user_username" => "studentID" },
+
+# Then use 'https://purl.imsglobal.org/spec/lti/claim/ext#user_username' in the settings below.
+
+# The https://purl.imsglobal.org/spec/lti/claim/lis#person_sourcedid is formally an OPTIONAL
+# claim.  See https://www.imsglobal.org/spec/lti/v1p3.  Some LMS systems may not send this value
+# and some may set it to the empty string.
+
+# The email address in the 'email' key of the JWT is often a more understandable value.  This
+# may not exist, but that is unlikely.
+
+# The LTI standard requires providing a 'sub' value, which needs to be a unique identifier for
+# each student in the LMS. The value is not expected to be people friendly but will be
+# available.  Note that this is the only required user claim in the JWT.
+
+# You need to make sure to use a setting such that
+#    (1) usernames are unique and
+#    (2) the setting is as compatible as possible with the practices of the institutions that
+#        are being served in a site.
+
+# If a value is available and is unique for the students in the course and matches the logon
+# username at that institution, then that is probably the better choice.
+
+# On the other hand, if a site is serving a population from several institutions or if the
+# lis#person_sourcedid is not necessarily unique across the population, then email is the better
+# choice.
+
+$LTI{v1p3}{preferred_source_of_username} = 'email';
+
+# You can use any parameter the LMS will provide for the preferred_source_of_username, ex:
+#$LTI{v1p3}{preferred_source_of_username} = 'https://purl.imsglobal.org/spec/lti/claim/ext#user_username';
+
+# You can also optionally provide a fallback_source_of_username which will only be used if
+# a user_id can not be determined using preferred_source_of_username.
+
+# Warning: This can be dangerous. For example, if the fallback were used for some student, and
+# then on a later connection by that student the LMS provided a value for the
+# preferred_source_of_username variable, then the student will get a new WeBWorK account and
+# lose access to their prior account.  The prior scores will not be associated with their
+# account any longer.  Thus, this feature should be used carefully!
+$LTI{v1p3}{fallback_source_of_username} = '';
+#$LTI{v1p3}{fallback_source_of_username} = https://purl.imsglobal.org/spec/lti/claim/lis#person_sourcedid;
+
+# Strip the domain when creating user_id from an email address.  If you set either
+# preferred_source_of_username or fallback_source_of_username to 'email', and the following
+# setting is enabled, then WeBWorK will strip off the domain portion of the email (after the
+# '@') and just use the username in the case that the email is used.  This feature should not be
+# used if emails could collide after the domain is removed.
+$LTI{v1p3}{strip_domain_from_email} = 0;
+
+# Depending on the username source, capitalization may vary between students, such as when using
+# an email address to get the username. Turning this option on will make all usernames
+# lowercase.
+$LTI{v1p3}{lowercase_username} = 0;
+
+################################################################################################
+# LTI 1.3 Preferred source of Student Id
+################################################################################################
+
+# If preferred_source_of_student_id is not set, WeBWorK will set the student_id to be an empty
+# string. You should use debug_lti_parameters in order to determine the value to use for your
+# LMS.  There may be no claim value that provides this.
+$LTI{v1p3}{preferred_source_of_student_id} = '';
+
+################################################################################################
+# LTI 1.3 Basic Authentication Parameters
+################################################################################################
+
+# The following values are provided by the LMS with the external tool.  They are used to
+# validate requests, and all of them must be set.
+$LTI{v1p3}{PlatformID}      = '';
+$LTI{v1p3}{ClientID}        = '';
+$LTI{v1p3}{DeploymentID}    = '';
+$LTI{v1p3}{PublicKeysetURL} = '';
+$LTI{v1p3}{AccessTokenURL}  = '';
+$LTI{v1p3}{AuthReqURL}      = '';
+
+# In the process of LTI 1.3 authentication a request is sent to the LMS in response to its
+# request.  State and nonce values are sent with this request, and those values must be verified
+# in the next response from the LMS.  These values are saved in the database so that they will
+# be available on that next request.  The StateKeyLifetime is how long in seconds these will be
+# stored before deletion.  This must be long enough to accommodate normal server and networking
+# delays.  Note that if authentication is successful this will be deleted before this lifetime
+# expires in any case.  This is only to ensure that keys from failed authentication attempts
+# don't pile up in the database.
+$LTI{v1p3}{StateKeyLifetime} = 60;    # in seconds
+
+################################################################################################
+# LTI 1.3 LMS Roles Mapped to WeBWorK Roles
+################################################################################################
+
+# You may need to customize this hash to take into account the roles that are used in your LMS.
+# Set the debug_lti_parameters flag to see what roles are being reported to WeBWorK by your LMS.
+$LTI{v1p3}{LMSrolesToWeBWorKroles} = {
+	'librarian'               => 'guest',
+	'observer'                => 'guest',
+	'visitor'                 => 'guest',
+	'Guest'                   => 'guest',
+	'Administrator'           => 'professor',
+	'Designer'                => 'professor',
+	'instructor'              => 'professor',
+	'Instructor'              => 'professor',
+	'Faculty'                 => 'professor',
+	'Teacher'                 => 'professor',
+	'Student'                 => 'student',
+	'Learner'                 => 'student',
+	'student'                 => 'student',
+	'AI/TA'                   => 'ta',
+	'TA'                      => 'ta',
+	'Teaching Assistant'      => 'ta',
+	'Teaching Assistant (TA)' => 'ta',
+	'Non-editing teacher'     => 'ta',
+	'Grader'                  => 'ta',
+};
+
+################################################################################################
+# Local routine to modify users
+################################################################################################
+
+# When users are added to the system WeBWorK will do its best to fill out user information.
+# However, institutions can add code to the following routine to set fields not normally set by
+# WeBWorK.  E.G.  The student ID field.
+
+#$LTI{v1p3}{modify_user} = sub {
+#  # The self object from LTIAdvantange.pm
+#  my $self = shift;
+#  # The user object to be modified
+#  my $user = shift;
+#
+#  # Parse context_id for additional information.  E.G.
+#  my @course_id = split /-/, $self->{context_id};
+#  $user->{section} = $course_id[4];
+#};
+
+################################################################################################
+# Local routine to modify user sets
+################################################################################################
+
+# When users are added to the system they are also assigned all visible sets This routine can be
+# used to modify the sets before they are assigned.  E.g. extend due dates based off the number
+# of problems students have to do.
+
+#$LTI{v1p3}{modify_user_set} = sub {
+#  # The self object from LTIAdvantange.pm
+#  my $self      = shift;
+#  my $globalSet = shift;
+#  # The userSet object to be modified
+#  my $userSet = shift;
+#
+#  my $numberOfSetsAssigned   = $self->{numberOfSetsAssigned};
+#  my $daysPerSetMakeup       = 2;
+#  my $reasonableNumberOfDays = $numberOfSetsAssigned * $daysPerSetMakeup + 1;
+#  if ($reasonableNumberOfDays < 2) { $reasonableNumberOfDays = 2; }
+#  my $niceDueTime    = $globalSet->due_date + $reasonableNumberOfDays * 86400;
+#  my $niceAnswerTime = $niceDueTime + 600;
+#
+#  $userSet->due_date($niceDueTime);
+#  $userSet->answer_date($niceAnswerTime);
+#};
+
+# Do not change this.
+$LTI{v1p3}{grader} = 'WeBWorK::Authen::LTIAdvantage::SubmitGrade';
+
+1;    # final line of the file to reassure perl that it was read properly.

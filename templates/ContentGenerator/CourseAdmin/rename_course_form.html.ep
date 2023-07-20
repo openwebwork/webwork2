@@ -1,0 +1,77 @@
+% use WeBWorK::Utils::CourseManagement qw(listCourses);
+%
+<h2><%= maketext('Rename Course') %> <%= $c->helpMacro('AdminRenameCourse') %></h2>
+%
+% my @courseIDs = sort { lc($a) cmp lc($b) } grep { $_ ne stash('courseID') } listCourses($ce);
+%
+% if (@courseIDs) {
+	<%= form_for current_route, method => 'POST', begin =%>
+		<%= $c->hidden_authen_fields =%>
+		<%= $c->hidden_fields('subDisplay') =%>
+		%
+		<p>
+			<%= maketext(
+				'Select a course to rename.  The courseID is used in the url and can only contain alphanumeric '
+					. 'characters and underscores. The course title appears on the course home page and can be any '
+					. 'string.'
+			) =%>
+		</p>
+		<div class="col-lg-7 col-md-8">
+			<div class="row mb-2">
+				<%= label_for rename_oldCourseID => maketext('Course ID:'),
+					class => 'col-sm-6 col-form-label fw-bold' =%>
+				<div class="col-sm-6">
+					<%= select_field rename_oldCourseID => [ map { [ $_ => $_ ] } @courseIDs ],
+						class    => 'form-select',
+						size     => 10,
+						id       => 'rename_oldCourseID' =%>
+				</div>
+			</div>
+			<div class="row mb-2 align-items-center">
+				<div class="col-sm-6">
+					<div class="form-check">
+						<label class="form-check-label" id="rename_newCourseID_label">
+							<%= maketext('Change CourseID to:') %>
+							<%= check_box rename_newCourseID_checkbox => 'on', class => 'form-check-input' %>
+						</label>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<%= text_field rename_newCourseID => '',
+						class => 'form-control', 'aria-labelledby' => 'rename_newCourseID_label' =%>
+				</div>
+			</div>
+			<div class="row mb-2 align-items-center">
+				<div class="col-sm-6">
+					<div class="form-check">
+						<label class="form-check-label" id="rename_newCourseTitle_label">
+							<%= maketext('Change Course Title to:') %>
+							<%= check_box rename_newCourseTitle_checkbox => 'on', class => 'form-check-input' %>
+						</label>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<%= text_field rename_newCourseTitle => '',
+						class => 'form-control', 'aria-labelledby' => 'rename_newCourseTitle_label' =%>
+				</div>
+			</div>
+			<div class="row mb-2 align-items-center">
+				<div class="col-sm-6">
+					<div class="form-check">
+						<label class="form-check-label" id="rename_newCourseInstitution_label">
+							<%= maketext('Change Institution to:') %>
+							<%= check_box rename_newCourseInstitution_checkbox => 'on', class => 'form-check-input' %>
+						</label>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<%= text_field rename_newCourseInstitution => '',
+						class => 'form-control', 'aria-labelledby' => 'rename_newCourseInstitution_label' =%>
+				</div>
+			</div>
+		</div>
+		<%= submit_button maketext('Rename Course'), name => 'rename_course', class => 'btn btn-primary' =%>
+	<% end =%>
+% } else {
+	<p><%= maketext('No courses found') %></p>
+% }

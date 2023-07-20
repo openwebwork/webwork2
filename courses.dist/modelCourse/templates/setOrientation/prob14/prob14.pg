@@ -17,8 +17,6 @@ loadMacros(
 $htmlWebworkURL = "http://omega.math.union.edu/webwork2_files/local";
 $hintURL = "${htmlWebworkURL}/parserOrientation/prob14-hint.html";
 
-TEXT(beginproblem);
-
 Title("Matching Graphs in $WW");
 
 ##############################################

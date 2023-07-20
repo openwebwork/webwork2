@@ -1,0 +1,27 @@
+<h2 class="fs-3"><%= maketext('This sample mail would be sent to [_1]', $ur->email_address) %></h2>
+<div class="mb-3" dir="ltr"><pre><%= $msg %></pre></div>
+% if ($c->{merge_file}) {
+	<h2 class="fs-3"><%= maketext('Merge file data:') %></h2>
+	<p><%= maketext('Showing data from merge file [_1] for user [_2]:', $c->{merge_file}, $ur->user_id) %></p>
+	<div class="mb-3" dir="ltr"><pre><%== $preview_header %></pre></div>
+% } else {
+	<h2 class="fs-3"><%= maketext('No merge file selected.') %></h2>
+% }
+% if (@{ $c->{ra_send_to} }) {
+	<h2 class="fs-3"><%= maketext('Emails to be sent to the following:') %></h2>
+	<div class="mb-3">
+		<ul>
+			% for (@{ $c->{ra_send_to} }) {
+				<li>
+					<%= $_ %>
+					% if ($c->{merge_file} && !$merge_data->{$student_ids->{$_}}) {
+						<span class="text-danger">(<%= maketext('No merge data found') %>)</span>
+					% }
+				</li>
+			% }
+		</ul>
+	</div>
+% } else {
+	<h2 class="fs-3"><%= maketext('No recipients selected.') %></h2>
+% }
+<div class="alert alert-info p-1 mt-3"><%= maketext('Use browser back button to return from preview mode.') %></div>

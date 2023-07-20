@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,11 +38,21 @@
 # Additional mail settings in defaults.config can be overridden here
 ################################################################################
 
-# This setting is only used if you need to send email from within a PG problem
-# (e.g. surveys, essay questions).  It is not necessary for using the email
-# tools in WeBWorK.  You can set email addresses here for users who need to
-# receive email from problems in all courses, or in course.conf for professors
-# who will receive email from problems in a single course.
+# By default, feedback is sent to all users who have permission to
+# receive_feedback in a course. If this list is non-empty, feedback is also sent
+# to the addresses specified here.
+#
+# * If you want to disable feedback altogether, leave this empty and set
+#   $permissionLevels{submit_feedback} = 'nobody'. This will cause the
+#   feedback button to go away as well.
+#
+# * If you want to send email ONLY to addresses in this list, set
+#   $permissionLevels{receive_feedback} = 'nobody'.
+#
+# Items in this list may be bare addresses, or RFC822 mailboxes, like:
+#   'Joe User <joe.user@example.com>'
+# The advantage of this form is that the resulting email will include the name
+# of the recipient in the "To" field of the email.
 
 $mail{feedbackRecipients}    = [
 	#'prof1@yourserver.yourdomain.edu',
@@ -59,29 +69,6 @@ $mail{feedbackRecipients}    = [
 ### additional mail overrides
 # Use this to customize the text of the feedback button.
 #$feedback_button_name = "Email Instructor";
-
-
-
-################################################################################
-# Repository Information
-###############################################################################
-# This is where you put your custom remote and branch for your WeBWorK, PG and OPL
-# github repositories.
-# To disable checking for a particular repository, set the remote and branch
-# variables to be empty strings.
-
-# Note:  This process uses git ls-remote which can be very slow on some
-# systems, so it is disabled by default.  Enabling this may make the course
-# list page in the admin course very slow.
-
-#$enableGitUpgradeNotifier = 1;
-
-#$gitWeBWorKRemoteName = "origin";
-#$gitWeBWorKBranchName = "main";
-#$gitPGRemoteName = "origin";
-#$gitPGBranchName = "main";
-#$gitLibraryRemoteName = "origin";
-#$gitLibraryBranchName = "main";
 
 ################################################################################
 # Theme
@@ -118,16 +105,16 @@ $mail{feedbackRecipients}    = [
 # Uncomment one of these to use a file from within the course templates directory
 # rather than a centrally-stored file shared by all courses.
 
-#$webworkFiles{hardcopySnippets}{setHeader} = "$courseDirs{templates}/ASimpleCombinedHeaderFile.pg";
-#$webworkFiles{hardcopySnippets}{setHeader} = "$courseDirs{templates}/ASimpleHardCopyHeaderFile.pg";
+#$webworkFiles{hardcopySnippets}{setHeader} = "$courseDirs{templates}/defaultSetHeader.pg";
+#$webworkFiles{hardcopySnippets}{setHeader} = "$courseDirs{templates}/myHardcopyHeaderFile.pg";
 
 # The set header is displayed on the problem set page. It is a PG file.
 # One of these default files which is used if a specific files is not selected
 # Uncomment one of these to use a file from within the course templates directory
 # rather than a centrally-stored file shared by all courses.
 
-#$webworkFiles{screenSnippets}{setHeader} = "$courseDirs{templates}/ASimpleCombinedHeaderFile.pg";
-#$webworkFiles{screenSnippets}{setHeader} = "$courseDirs{templates}/ASimpleScreenHeaderFile.pg";
+#$webworkFiles{screenSnippets}{setHeader} = "$courseDirs{templates}/defaultSetHeader.pg";
+#$webworkFiles{screenSnippets}{setHeader} = "$courseDirs{templates}/myScreenHeaderFile.pg";
 
 ################################################################################
 # Settings for the admin course
@@ -238,8 +225,6 @@ $mail{feedbackRecipients}    = [
 
 # This sets if mathview is available on the PG editor for use as a minimal latex equation editor
 #$options{PGMathView} = 1;
-# This sets if WirisEditor is available on the PG editor for use as a minimal latex equation editor
-#$options{PGWirisEditor}= 1;
 # This sets if MathQuill is available on the PG editor for use as a minimal latex equation editor
 #$options{PGMathQuill}= 1;
 
@@ -280,22 +265,6 @@ $mail{feedbackRecipients}    = [
 # precedence over all other locations.
 
 ################################################################################
-# Adding to the applet search path.
-################################################################################
-
-# If a full URL is given, it is used unmodified. If an
-# absolute path is given, the URL of the local server is prepended to it.
-#
-# For example, if an item is "/math/applets",
-# and the local server is  "https://math.yourschool.edu",
-# then the URL "https://math.yourschool.edu/math/applets" will be used.
-#
-# If your new applets location is a subdirectory of the webwork htdocs directory, you may
-# use notation such as "$webworkURLs{htdocs}/newsubdir"
-
-#$pg{directories}{appletPath} = [ @{$pg{directories}{appletPath}} , "new/url" ];
-
-################################################################################
 # Problem creation defaults
 ################################################################################
 
@@ -325,6 +294,25 @@ $mail{feedbackRecipients}    = [
 # Setting this to a positive value will override the course-wide setting
 #$problemDefaults{prPeriod} = -1;
 
+# The default number of attempts after which to show hints for newly created problems.
+# It is suggested to use the value of -2, which means that the course-wide setting would be used
+# Setting this to -2 defaults to the use of course-wide settings (suggested)
+# Setting this to -1 disables hints in problems.
+# Setting this to 0 or more will show hints after that number of attempts.
+#$problemDefaults{showHintsAfter} = 2;
+
+################################################################################
+# Enter key behavior
+################################################################################
+# If this is set to "preview", hitting the enter key on a problem page activates
+# the "Preview My Answers" button. If this is set to "submit", then the enter
+# key activates the "Submit Answers" button instead. Or if that button is not
+# present, it will activate the "Check Answers" button. Or if that button is
+# also not present, it will just activate the "Preview My Answers" button.
+# A third option is "conservative". In this case, the enter key behaves like "preview"
+# when the "Submit" button is available and there are only finitely many
+# attempts allowed. Otherise the enter key behaves like "submit".
+#$pg{options}{enterKey} = 'conservative';
 
 ################################################################################
 # Periodic re-randomization
@@ -368,7 +356,6 @@ $mail{feedbackRecipients}    = [
 
 #$pg{specialPGEnvironmentVars}{entryAssist} = 'MathQuill';
 #$pg{specialPGEnvironmentVars}{entryAssist} = 'MathView';
-#$pg{specialPGEnvironmentVars}{entryAssist} = 'WIRIS';
 
 ################################################################################
 # Directory for temporary files
@@ -382,15 +369,17 @@ $mail{feedbackRecipients}    = [
 # that is not backed up and is the recommended set up for most installations.
 # See http://webwork.maa.org/wiki/Store_WeBWorK%27s_temporary_files_in_a_separate_directory_or_partition
 # for more information.   Note that the wwtmp directory (or partition) should be
-# created under Apache's main server document root which is usually /var/www. If this
-# is in a different location on your system, edit the lines below accordingly.
+# created under Apache's main server document root which is usually
+# /var/www/html. If this is in a different location on your system, edit the
+# lines below accordingly.  Note that you will also need to ensure server user
+# has read and write permission for the directory.
 # To implement, uncomment the following 6 lines:
-#$webworkDirs{htdocs_temp}  =  '/var/www/wwtmp';
+#$webworkDirs{htdocs_temp}   = '/var/www/html/wwtmp';
 #$webworkURLs{htdocs_temp}   = '/wwtmp';
 #$webworkDirs{equationCache} = "$webworkDirs{htdocs_temp}/equations";
 #$webworkURLs{equationCache} = "$webworkURLs{htdocs_temp}/equations";
-#$courseDirs{html_temp}  =  "/var/www/wwtmp/$courseName";
-#$courseURLs{html_temp}   = "/wwtmp/$courseName";
+#$courseDirs{html_temp}      = "/var/www/html/wwtmp/$courseName";
+#$courseURLs{html_temp}      = "/wwtmp/$courseName";
 
 #####################
 # Additional PG modules
@@ -454,34 +443,11 @@ $mail{feedbackRecipients}    = [
 # Uncomment the following line to enable authentication via IMS LTI.
 # You will have to copy the file authen_LTI.conf.dist to authen_LTI.conf,
 # and then edit that file to fill in the settings for your installation.
+# You will also need to copy and edit authen_LTI_1_1.conf.dist to
+# authen_LTI_1_1.conf, or authen_LTI_1_3.conf.dist to authen_LTI_1_3.conf
+# depending on which is enabled in authen_LTI.conf (both can be enabled).
 
 #include("conf/authen_LTI.conf");
-# default settings
-#$debug_lti_parameters = 0;
-#$debug_lti_grade_passback = 0;
-
-# Set debug_lti_parameters  to 1 to have LTI calling parameters printed to HTML page for
-# debugging.  This is useful when setting things up for the first time because
-# different LMS systems have different parameters
-
-# To get more information on passing grades back to the LMS enmass set debug_lti_grade_passback
-# to one.  And set the LTIMassUpdateInterval to 60 (seconds).
-
-# This will print into the apache log the success or failure of updating each user/set.
-# If the set has "no lis_source_did" then that set hasn't been assigned, or the user is an instructor
-# and not a student.
-
-# Setting both debug_lti_parameters and debug_lti_grade_passback will cause the full request and
-# response between the LMS and WW to be printed into apache error log file for each
-# user/set  update of the grade.
-
-# The switches above can be set in course.conf to enable debugging for just one course.
-
-# If you want even more information enable the debug facility for SubmitGrade.pm in
-# the WeBWorK::Constants file.
-# This will print extensive debug messages for all courses.
-
-
 
 ################################################################################
 # LDAP Authentication
@@ -506,6 +472,11 @@ $mail{feedbackRecipients}    = [
 
 #$session_management_via = "key";
 
+## This is the length of time (in seconds) after which a user's session becomes
+## invalid if they have no activity. The default is 30 minutes (60*30 seconds).
+
+#$sessionKeyTimeout = 60*60*2;
+
 ################################################################################
 # Cookie control settings
 ################################################################################
@@ -513,32 +484,31 @@ $mail{feedbackRecipients}    = [
 # The following variables can be set to control cookie behavior.
 
 # Set the value of the samesite attribute of the WeBWorK cookie:
-#    See: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
-#         https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
-#         https://tools.ietf.org/html/draft-west-cookie-incrementalism-00
+# See: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
+#      https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+#      https://tools.ietf.org/html/draft-west-cookie-incrementalism-00
 
 # Notes about the $CookieSameSite options:
-#   The "None" setting should only be used with HTTPS and when $CookieSecure = 1; is set below. The "None" setting is also less secure and can allow certain types of cross-site attacks.
-#   The "Strict" setting can break the links in the system generated feedback emails when read in a web mail client.
-#   Due to those factors, the "Lax" setting is probably the optimal choice for typical WeBWorK servers.
+# The "None" setting should only be used with HTTPS and when $CookieSecure = 1; is set below. The "None" setting is
+# also less secure and can allow certain types of cross-site attacks.
+# The "Strict" setting can break the links in the system generated feedback emails when read in a web mail client.
+# Due to those factors, the "Lax" setting is probably the optimal choice for typical WeBWorK servers.
 
 #$CookieSameSite = "None";
 #$CookieSameSite = "Strict";
 #$CookieSameSite = "Lax";
 
 # Set the value of the secure cookie attribute:
+# Default is 0 here, as 1 will not work without https
 #$CookieSecure = 1;
 
-# At present the CookieLifeTime setting only effect how long the
-# browser is to supposed to retain the cookie.
-#     https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
-#$CookieLifeTime = "+7d";
+# The CookieLifeTime setting determines how long the browser should retain the cookie.
+# See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
+# The CookieLifeTime value should be numeric and in seconds, or should be set to "session", in which case
+# the Cookie will expire when the browser session ends (a "session cookie").
+# The default value is 7 days.
+#$CookieLifeTime = 604800;
 #$CookieLifeTime = "session";
-
-# NOTE: In general the cookie lifespan settings use the CGI.pm relative time settings.
-# Search for "30 seconds from now" at https://metacpan.org/pod/CGI to see the various options.
-# A WW option is to set it to "session", in which case the Cookie will expire when the
-# browser session ends (a "session cookie").
 
 ################################################################################
 # Searching for set.def files to import
@@ -555,59 +525,48 @@ $mail{feedbackRecipients}    = [
 ################################################################################
 
 #$permissionLevels{show_resource_info}               = "admin";
-#$permissionLevels{show_pg_info_checkbox}            = "admin";
-#$permissionLevels{show_answer_hash_info_checkbox}   = "admin";
-#$permissionLevels{show_answer_group_info_checkbox}  = "admin";
+#$permissionLevels{show_pg_info}                     = "admin";
+#$permissionLevels{show_answer_hash_info}            = "admin";
+#$permissionLevels{show_answer_group_info}           = "admin";
 #$permissionLevels{modify_tags}                      = "admin";
 
 ################################################################################
-
-# Available Hardcopy themes (located in snippets) - adds four XeLaTeX themes
-# using polyglossia for multilingual support and fontspec.
-# The "oneColumn" and "twoColumn" options require pdflatex be installed on the server
-# For using any of the XeLaTeX options, xelatex must be installed on the server
-# (on Ubuntu this is in the texlive-xetex package).
-# Note: restrict options to only pdflatex options, or only xelatex options,
-# and not both types.
-# Set $externalPrograms{pdflatex} to use either pdflatex or xelatex,
-# depending on which flavor of themes you are enabling.
-# Using --no-shell-escape is important for security reasons.
-#$externalPrograms{pdflatex} ="/usr/bin/xelatex --no-shell-escape";
-
-# Available Hardcopy themes (located in snippets)
-# (their "internal" name and their pretty name for end users)
-#$hardcopyThemeNames = {
-	#oneColumn => 'One Column',
-	#twoColumn => 'Two Columns',
-	#XeLaTeX-oneColumn => 'English - one Column',
-	#XeLaTeX-twoColumn => 'English - two Columns',
-	#XeLaTeX-Hebrew-oneColumn => 'Hebrew/English - one Column',
-	#XeLaTeX-Hebrew-twoColumn => 'Hebrew/English - two Columns',
-#};
-
-# This is needed to enforce an order that the options are presented when making a hardcopy
-#$hardcopyThemes = [
-	#'oneColumn',
-	#'twoColumn',
-	#'XeLaTeX-oneColumn',
-	#'XeLaTeX-twoColumn',
-	#'XeLaTeX-Hebrew-oneColumn',
-	#'XeLaTeX-Hebrew-twoColumn',
-#];
-
-
-# Change default Hardcopy theme
-# Be sure to choose one that is enabled!
-#$hardcopyTheme = "XeLaTeX-twoColumn";
-
-# Location of the common tex input files packages.tex, CAPA.tex, and PGML.tex
-# used for hardcopy generation.  Uncomment the following line and adjust the
-# path as needed to customize the TeX input files used for all themes in
-# hardcopy generation.  This location must contain the three files named above.
-#$webworkDirs{texinputs_common} = "$webworkDirs{root}/conf/snippets/hardcopyThemes/common";
-
+# Hardcopy Theme
 ################################################################################
 
+# Hardcopy themes are .xml files.  See assets/hardcopThemes/README.md for details
+# about their structure.  The site themes are files in $webworkDirs{hardcopyThemes}.
+# $hardcopyThemes identifies which site themes are enabled.
+#$hardcopyThemes = [
+#	'empty.xml',
+#	'basic.xml',
+#	'basicTwoCol.xml',
+#	'classic.xml',
+#	'classicTwoCol.xml',
+#	'oneColumn.xml',
+#	'twoColumn.xml',
+#	'boxed.xml',
+#	'boxedTwoCol.xml',
+#	'boxedRows.xml',
+#	'hebrew.xml',
+#	'hebrewTwoCol.xml',
+#];
+
+# The Hebrew themes need to use xelatex. Uncomment the following for xelatex
+#$externalPrograms{pdflatex} ="/usr/bin/xelatex --no-shell-escape";
+
+# A course may have additional themes in $courseDirs{hardcopyThemes}.  All such
+# "course" hardcopy themes are effectively enabled and offered for use when
+# selecting a hardcopy theme.  You can move such files or rename them to not
+# have a .xml extension if you don't want them to be offered for use.
+
+# If a course hardcopy theme has the same name as a site hardcopy theme, the
+# course hardcopy theme is the one that is used.
+
+# Default hardcopy themes (should either be an enabled site theme or a theme in
+# the course hardcopyThemes folder
+#$hardcopyTheme = 'twoColumn.xml';
+#$hardcopyThemePGEditor = 'empty.xml';
 
 ################################################################################
 # Webwork Caliper

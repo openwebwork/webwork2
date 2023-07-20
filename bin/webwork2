@@ -1,0 +1,44 @@
+#!/usr/bin/env perl
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+
+use strict;
+use warnings;
+
+BEGIN {
+	use Mojo::File qw(curfile);
+	use YAML::XS qw(LoadFile);
+	use Env qw(WEBWORK_ROOT PG_ROOT);
+
+	$WEBWORK_ROOT = curfile->dirname->dirname->to_string;
+
+	# Load the configuration file to obtain the PG root directory.
+	my $config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.yml";
+	$config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.dist.yml" unless -e $config_file;
+	my $config = LoadFile($config_file);
+
+	$PG_ROOT = $config->{pg_dir};
+
+	$WeBWorK::SeedCE{webwork_dir} = $ENV{WEBWORK_ROOT};
+	$WeBWorK::SeedCE{pg_dir}      = $ENV{PG_ROOT};
+}
+
+use Mojolicious::Commands;
+
+use lib "$WEBWORK_ROOT/lib";
+use lib "$PG_ROOT/lib";
+
+# Start command line interface for application
+Mojolicious::Commands->start_app('Mojolicious::WeBWorK');

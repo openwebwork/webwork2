@@ -1,0 +1,218 @@
+#!perl
+
+################################################################################################
+# Configuration for using LTI 1.1 authentication.
+# To enable this file, uncomment the appropriate lines in authen_LTI.conf
+################################################################################################
+
+# This is a string that is used to name the LMS for end users, for example in a message telling
+# users to sign in through their LMS.
+$LTI{v1p1}{LMS_name} = 'e.g., Blackboard, Canvas, Moodle, etc.';
+#$LTI{v1p1}{LMS_name} = 'Desire2Learn';
+
+# This is a URL that should take users to a place they can log in to their LMS.  It will use the
+# text from LMS_name, but use LMS_url as the href.  If LMS_url is empty or undefined, the
+# text from LMS_name is used with no link.
+$LTI{v1p1}{LMS_url} = '';
+#$LTI{v1p1}{LMS_url} = 'https://myschool.edu/lms/';
+
+################################################################################################
+# LTI 1.1 preferred and fallback source of WW user_id
+################################################################################################
+
+# You MUST set what LTI field is used to set the WeBWorK user_id.
+#
+# The lis_person_sourcedid (or one of its variants) is formally an OPTIONAL field
+#    https://www.imsglobal.org/specs/ltiv1p1/implementation-guide
+# but is relatively consistently available.
+# However, some LMS systems, Blackboard in particular, do not send lis_person_sourcedid.
+#
+# The email address lis_person_contact_email_primary is often a more understandable value but
+# may not exist.
+#
+# The LTI standard recommends providing a "user_id" value, which needs to be a unique identifier
+# for each student in the LMS. The value is not expected to be people friendly by may be
+# available when neither of the others are.
+#
+# You need to make sure to use a setting such that
+#    (1) usernames are unique and
+#    (2) the setting is as compatible as possible with the practices of the institutions that
+#        are being served in a site.
+#
+# If each course is only being used by students from a single institution and the value
+# lis_person_sourcedid is unique across that population and matches the logon username at that
+# institution, then lis_person_sourcedid is probably the better choice.
+#
+# On the other hand, if a site is serving a population from several institutions or if the
+# lis_person_sourcedid is not necessarily unique across the population, then
+# lis_person_contact_email_primary is the better choice.
+#
+# NOTE: As of WeBWorK 2.16 some setting MUST be made.
+#
+#       If no setting is made, all LTI logins will fail and an error will be reported.
+#
+#       See the comment further down on how to get WeBWorK 2.16 to behave similarly to
+#       the prior behavior.
+
+# NOTE: Even if a course management system sends one of the common misspellings of
+# "lis_person_sourcedid", i.e.,
+# lis_person_sourced_id, lis_person_source_id, and lis_person_sourceid,
+# one must nevertheless use the correct spelling "lis_person_sourcedid" here.
+$LTI{v1p1}{preferred_source_of_username} = 'lis_person_contact_email_primary';
+#$LTI{v1p1}{preferred_source_of_username} = 'lis_person_sourcedid';
+
+# You can use any parameter the LMS will provide for the preferred_source_of_username, ex:
+#$LTI{v1p1}{preferred_source_of_username} = 'user_id';
+
+# You can also optionally provide a fallback_source_of_username which will only be used if WW is
+# unable to determine a user_id using preferred_source_of_username.
+
+# Warning: This can be dangerous, e.g. if the fallback were used for some student, and then on a
+# later connection by that student the LMS provided a value for the preferred_source_of_username
+# field, then the student will get a new WeBWorK account and lose access to their prior account
+# and the prior scores will not be associated with their account any longer. Thus, this feature
+# should be used carefully!
+$LTI{v1p1}{fallback_source_of_username} = '';
+#$LTI{v1p1}{fallback_source_of_username} = 'lis_person_sourcedid';
+
+# Stripping the domain when creating user_id from an email address:
+# If you set either preferred_source_of_username or fallback_source_of_username to
+# lis_person_contact_email_primary, and the email is being used as the WeBWorK user_id, then if
+# the following setting is enabled, then WeBWorK will strip off the domain portion of the email
+# (after the '@') and just use the username.
+$LTI{v1p1}{strip_domain_from_email} = 0;
+
+# This feature should not be used if emails could collide after the domain is removed.
+
+# To get WeBWorK 2.16 to handle LTI authentication using an approach roughly the same as was
+# used until WeBWorK 2.15, you can set one of the 2 pairs of settings:
+#
+# Option 1: Primary choice is lis_person_contact_email_primary, fallback to lis_person_sourcedid:
+#$LTI{v1p1}{preferred_source_of_username} = 'lis_person_contact_email_primary';
+#$LTI{v1p1}{fallback_source_of_username} = 'lis_person_sourcedid';
+#
+# Option 2: Primary choice is lis_person_sourcedid, fallback to lis_person_contact_email_primary:
+#$LTI{v1p1}{preferred_source_of_username} = 'lis_person_sourcedid';
+#$LTI{v1p1}{fallback_source_of_username} = 'lis_person_contact_email_primary';
+
+# Depending on the username source, capitalization may vary between students, such as when using
+# an email address to get the username. Turning this option on will make all usernames
+# lowercase. Default is 0 (off).
+$LTI{v1p1}{lowercase_username} = 0;
+
+################################################################################################
+# LTI 1.1 Preferred source of Student Id
+################################################################################################
+
+# If preferred_source_of_student_id is not set, WeBWorK will set student_id to be an empty
+# string. You should use debug_lti_parameters in order to determine the value to use for your
+# LMS.
+
+# For example, in D2L, student_id is stored in OrgDefinedId and the corresponding LTI parameter
+# is called ext_d2l_orgdefinedid.
+$LTI{v1p1}{preferred_source_of_student_id} = '';
+#$LTI{v1p1}{preferred_source_of_student_id} = 'ext_d2l_orgdefinedid';
+
+################################################################################################
+# LTI 1.1 Basic Authentication Parameters
+################################################################################################
+
+# This "shared secret" is entered in the LMS request form and needs to be match the entry here.
+# This is used to validate all requests between the LMS and WeBWorK.
+
+# You should choose your own secret word for security and should treat it like a password.
+$LTI{v1p1}{BasicConsumerSecret} = '';
+
+# The purpose of the LTI nonces is to prevent man-in-the-middle attacks.  The NonceLifeTime (in
+# seconds) must be short enough to prevent at least casual man-in-the-middle attacks but long
+# enough to accommodate normal server and networking delays (and perhaps non-synchronization of
+# server time clocks).
+$LTI{v1p1}{NonceLifeTime} = 60;    # in seconds
+
+# This allows you to override the URL that Oauth will use to validate the authentication.  This
+# is important if you have some sort of setup (e.g. load distributing) where the path in the LMS
+# does not match the path that ends up in the webwork page.
+$LTI{v1p1}{OverrideSiteURL} = '';
+
+# This is like $LTI{v1p1}{OverrideSiteURL}, except that you only declare the protocol and domain
+# to replace and leave the rest of a URL alone. If somehow both are set in the config chain,
+# $LTI{v1p1}{OverrideSiteURL} is used, without being modified by the below.
+$LTI{v1p1}{OverrideSiteProtocolDomain} = '';
+#$LTI{v1p1}{OverrideSiteProtocolDomain} = 'https://vmwebwork42.myschool.edu';
+
+################################################################################################
+# LTI 1.1 LMS Roles Mapped to WeBWorK Roles
+################################################################################################
+
+# You may need to customize this hash to take into account the roles that are used in your LMS.
+# Set the debug_lti_parameters flag to see what roles are being reported to WeBWorK by your LMS.
+$LTI{v1p1}{LMSrolesToWeBWorKroles} = {
+	'librarian'               => 'guest',
+	'observer'                => 'guest',
+	'visitor'                 => 'guest',
+	'Guest'                   => 'guest',
+	'Designer'                => 'professor',
+	'instructor'              => 'professor',
+	'Instructor'              => 'professor',
+	'Faculty'                 => 'professor',
+	'Teacher'                 => 'professor',
+	'Student'                 => 'student',
+	'Learner'                 => 'student',
+	'student'                 => 'student',
+	'AI/TA'                   => 'ta',
+	'TA'                      => 'ta',
+	'Teaching Assistant'      => 'ta',
+	'Teaching Assistant (TA)' => 'ta',
+	'Non-editing teacher'     => 'ta',
+	'Grader'                  => 'ta',
+};
+
+################################################################################################
+# Local routine to modify users
+################################################################################################
+
+# When users are added to the system WeBWorK will do its best to fill out user information.
+# However, institutions can add code to the following routine to set fields not normally set by
+# WeBWorK.  E.G.  The student ID field.
+
+#$LTI{v1p1}{modify_user} = sub {
+#  # The self object from LTIAdvanced.pm
+#  my $self = shift;
+#  # The user object to be modified
+#  my $user = shift;
+#
+#  # Parse context_id for additional information.  E.G.
+#  my @course_id = split /-/, $self->{context_id};
+#  $user->{section} = $course_id[4];
+#};
+
+################################################################################################
+# Local routine to modify user sets
+################################################################################################
+
+# When users are added to the system they are also assigned all visible sets This routine can be
+# used to modify the sets before they are assigned.  E.G.  extend due dates based off the number
+# of problems students have to do
+
+#$LTI{v1p1}{modify_user_set} = sub {
+#  # The self object from LTIAdvanced.pm
+#  my $self      = shift;
+#  my $globalSet = shift;
+#  # The userSet object to be modified
+#  my $userSet = shift;
+#
+#  my $numberOfSetsAssigned   = $self->{numberOfSetsAssigned};
+#  my $daysPerSetMakeup       = 2;
+#  my $reasonableNumberOfDays = $numberOfSetsAssigned*$daysPerSetMakeup + 1;
+#  if ($reasonableNumberOfDays < 2) { $reasonableNumberOfDays = 2; }
+#  my $niceDueTime    = $globalSet->due_date + $reasonableNumberOfDays * 86400;
+#  my $niceAnswerTime = $niceDueTime + 600;
+#
+#  $userSet->due_date($niceDueTime);
+#  $userSet->answer_date($niceAnswerTime);
+#};
+
+# Do not change this.
+$LTI{v1p1}{grader} = 'WeBWorK::Authen::LTIAdvanced::SubmitGrade';
+
+1;    # final line of the file to reassure perl that it was read properly.

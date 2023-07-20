@@ -1,0 +1,27 @@
+% $selected_library //= '';
+% my $lib = (stash('lib') || '') =~ s/^browse_//r;
+%
+% my $prob_dirs = $c->get_problem_directories($lib);
+%
+<div class="InfoPanel">
+	<div class="mb-2">
+		<%= label_for library_sets =>
+				maketext('[_1] Problems:', $lib eq '' ? maketext('File Manager') : $c->{problibs}{$lib}),
+			class => 'col-form-label-sm' =%>
+		<%= select_field library_sets => [
+				@$prob_dirs == 0 ? [ maketext('Found no directories containing problems') => '' ]
+				: (
+					$selected_library eq '' ? [ maketext('Select a Folder') => '', selected => undef, disabled => 'disabled' ] : (),
+					$lib ? (
+						map { [ $_ =~ s/^$lib\/(.*)$/$1/r => $_, $_ eq $selected_library ? (selected => undef) : () ] }
+						@$prob_dirs
+					) : (
+						map { [ $_ =~ s/^My Problems$/[templates folder]/r => $_, $_ eq $selected_library ? (selected => undef) : () ] }
+						@$prob_dirs
+					)
+				)
+			],
+			id => 'library_sets', class => 'form-select form-select-sm d-inline w-auto' =%>
+	</div>
+	<%= include 'ContentGenerator/Instructor/SetMaker/view_problems_line', internal_name => 'view_local_set' =%>
+</div>

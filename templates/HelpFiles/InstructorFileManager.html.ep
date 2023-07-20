@@ -1,0 +1,99 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('File Manager Help');
+%
+<p>
+	<%= maketext('This allows for the viewing, downloading, uploading and other management '
+		. 'of files in the course.  Select a file or set of files (using CTRL or SHIFT) and click '
+		. 'the desired button on the right.  Many actions can only be done with a single file (like '
+		. 'view). Selecting a directory or set of files and clicking "Make Archive" creates a compressed '
+		. 'tar file with the name COURSE_NAME.tgz' ) =%>
+</p>
+<p>
+	<%= maketext('The list of files include regular files, directories (ending in a "/") '
+		. 'and links (ending in a "@").') =%>
+</p>
+<p>
+	<%= maketext('Below the file list is a button and options for uploading files. Click the "Choose File" '
+		. 'button, select the file, then click "Upload". '
+		. 'A single file or a compressed tar (.tgz) file can be uploaded and if the option is selected, '
+		. 'the archive is automatically unpacked and deleted.  Generally the "automatic" option on Format '
+		. 'will correctly pick the correct type of file.') =%>
+</p>
+<p>
+	<%= maketext('WeBWorK expects many files to be in certain locations.  The following describe this. '
+	. 'Note that by default the File Manager shows the "templates" directory.  Other directories mentioned '
+	. 'below are at the same level and need to be accessed by going up a directory by clicking the "^" button '
+	. 'above the file list.') =%>
+</p>
+<h2><%= maketext('Locations of files:') %></h2>
+<dl>
+	<dt><%= maketext('Set definition (".def") files') %></dt>
+	<dd>
+		<%== maketext('These are stored in the templates directory. The format of '
+			. '<strong>Set Definition files</strong> is described in the <a [_1]>Set Definition specification</a>. '
+			. 'Set definition files are mainly useful for '
+			. 'transferring set assignments from one course to another and are created when exporting a problem '
+			. 'set from the "Hmwk Sets Editor".  Each set defintion file contains a list of problems used and the '
+			. 'dates and times. These definitions can be imported into the current course.',
+			'href="https://webwork.maa.org/wiki/Set_Definition_Files" target="Webworkdocs"') =%>
+	</dd>
+	<dt><%= maketext('Class list (".lst") files') %></dt>
+	<dd>
+		<%== maketext('The classlist files are stored in the templates directory and provide a convenient way to enter '
+			. 'a large number of students into your class. To view the format for <strong>ClassList files</strong> see '
+			. 'the <a [_1]>ClassList specification</a> or download the [_2] file and use it as a model. '
+			. 'ClassList files can be prepared using a spreadsheet and then saved as [_3] (comma separated values) '
+			. 'text files.  However, to access as a classlist file, the file suffix needs to be changed to [_4], '
+			. 'which can be done with the "Rename" button.',
+			'href="http://webwork.maa.org/wiki/Classlist_Files#Format_of_classlist_files" target="Webworkdocs"',
+			'<code>demoCourse.lst</code>','<code>.csv</code>','<code>.lst</code>') =%>
+	</dd>
+	<dt><%= maketext('Scoring (".csv") files') %></dt>
+	<dd>
+		<%== maketext('The scoring files are stored in the scoring directory and are produced using the "Scoring Tools" '
+			. 'page or the scoring command in the "Instructor Tools" module. These files can be downloaded, modified '
+			. 'in a spreadsheet (for example, to add midterm scores) and then uploaded again to the scoring directory '
+			. 'to be merged with email messages. (Use a new file name, other than [_1], when '
+			. 'uploading to prevent the scoring module from overwriting an uploaded file.)',
+			'<code>courseName_totals.csv</code>') =%>
+	</dd>
+	<dt><%= maketext('Problem (".pg") files') %></dt>
+	<dd>
+		<%= maketext('These are the files from which problems are generated and are located in the templates '
+			. 'directory or in subdirectories. They can be edited directly using the "Edit" link on each problem '
+			. 'page or from the "Hmwk Sets Editor". The File Manager allows you to upload or download these files. 	'
+			. 'Directories that start with "set" contain pg files and are generated when exporting a problem set in '
+			. 'which there are local versions of a problem.') =%>
+	</dd>
+	<dt><%= maketext('html directory') %></dt>
+	<dd>
+		<%= maketext('This directory is accessible from the web. You can use it to store html documents or image '
+			. 'documents that are used by the course. Do not store private information in this directory or in any '
+			. 'subdirectory thereof. These documents can be linked to from within problems using the htmlLink '
+			. 'macro.') =%>
+	</dd>
+	<dt><%= maketext('templates/email directory') %></dt>
+	<dd>
+		<%= maketext('This is where email messages and templates are saved. You can upload or download files '
+			. 'in this directory if you wish to save the files for later.') =%>
+	</dd>
+	<dt><%= maketext('templates/macros directory') %></dt>
+	<dd>
+		<%= maketext('Macro (".pl") files containing additional functionality for your course can be stored here.') =%>
+	</dd>
+</dl>

@@ -12,8 +12,6 @@ loadMacros(
   "Parser.pl",
 );
 
-TEXT(beginproblem());
-
 ###########################################################
 #
 #   Use  standard numeric mode

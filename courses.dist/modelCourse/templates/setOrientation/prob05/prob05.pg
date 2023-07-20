@@ -12,8 +12,6 @@ loadMacros(
 
 $showPartialCorrectAnswers = 1;
 
-TEXT(beginproblem);
-
 Title("Common Errors to Avoid");
 
 ##############################################

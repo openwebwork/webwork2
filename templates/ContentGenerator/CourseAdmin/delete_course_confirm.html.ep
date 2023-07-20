@@ -1,0 +1,18 @@
+<h2><%= maketext('Delete Course') %> <%= $c->helpMacro('AdminDeleteCourse') %></h2>
+<p>
+	<%== maketext(
+		'Are you sure you want to delete the course [_1]? All course files and data will be destroyed. '
+			. 'There is no undo available.',
+		tag('b', param('delete_courseID') || '')
+	) =%>
+</p>
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
+	<%= $c->hidden_fields('delete_courseID') =%>
+	%
+	<div class="d-flex justify-content-center gap-2">
+		<%= submit_button maketext("Don't delete"), name => 'decline_delete_course', class => 'btn btn-primary' =%>
+		<%= submit_button maketext('Delete'), name => 'confirm_delete_course', class => 'btn btn-primary' =%>
+	</div>
+<% end =%>
