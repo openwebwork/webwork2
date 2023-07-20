@@ -112,22 +112,43 @@ use constant FIELD_PROPERTIES => {
 		default  => '',
 	},
 	open_date => {
-		name     => x('Opens'),
-		type     => 'edit',
-		size     => '25',
-		override => 'any',
+		name      => x('Open Date'),
+		type      => 'edit',
+		size      => '25',
+		override  => 'any',
+		help_text => x(
+			'This is generally the date when students can begin visiting the set and submitting answers. '
+				. 'Prior to this date, if the set is assigned to a user and it is flagged "visible", '
+				. 'they can see that it exists and when it will open, but cannot view the problems. '
+				. 'If using "course" grade passback to an LMS, only those sets that are past their open date '
+				. 'are factored in to the overall course grade that is passed back.  Note that certain '
+				. 'permissions can be changed so that the details explained here are no longer true.'
+		)
 	},
 	due_date => {
-		name     => x('Closes'),
-		type     => 'edit',
-		size     => '25',
-		override => 'any',
+		name      => x('Close Date'),
+		type      => 'edit',
+		size      => '25',
+		override  => 'any',
+		help_text => x(
+			'This is generally the date when students can no longer use the "Submit" button to submit an answer and '
+				. 'have it assessed for credit.  However students can still visit the set, type or select answers, '
+				. 'and use the "Check Answers" button to be assessed without credit.  Note that certain permissions '
+				. 'can be changed so that the details explained here are no longer true. This date must come on or '
+				. 'after the open date.'
+		)
 	},
 	answer_date => {
-		name     => x('Answers Available'),
-		type     => 'edit',
-		size     => '25',
-		override => 'any',
+		name      => x('Answers Available Date'),
+		type      => 'edit',
+		size      => '25',
+		override  => 'any',
+		help_text => x(
+			'This is generally the date when students can click a checkbox to see the expected correct answers '
+				. 'to problems in the set.  If a problem has a coded solution, this is also when thy can click '
+				. 'to see that solution.  Note that certain permissions can be changed so that the details '
+				. 'explained here are no longer true.  This date must come on or after the close date.'
+		)
 	},
 	visible => {
 		name     => x('Visible to Students'),
@@ -138,6 +159,8 @@ use constant FIELD_PROPERTIES => {
 			1 => x('Yes'),
 			0 => x('No'),
 		},
+		help_text =>
+			x('Use this to hide the existence of this set from students, even when it is assigned to them.'),
 	},
 	enable_reduced_scoring => {
 		name     => x('Reduced Scoring Enabled'),
@@ -148,26 +171,33 @@ use constant FIELD_PROPERTIES => {
 			1 => x('Yes'),
 			0 => x('No'),
 		},
+		help_text => x('See "Reduced Scoring Date".'),
 	},
 	reduced_scoring_date => {
-		name     => x('Reduced Scoring Date'),
-		type     => 'edit',
-		size     => '25',
-		override => 'any',
+		name      => x('Reduced Scoring Date'),
+		type      => 'edit',
+		size      => '25',
+		override  => 'any',
+		help_text => x(
+			'This date should be on or after the open date, and earlier or equal to the close date. '
+				. 'Answers submitted between the reduced scoring date and the close date are scaled down '
+				. 'by a factor that you can set in the Course Config page.  If reduced scoring is being '
+				. 'used, note that students will consider the reduced scoring date to be the "due date", '
+				. 'since that is the date when they can no longer earn 100% for problems.'
+		)
 	},
 	restricted_release => {
-		name      => x('Restrict release by set(s)'),
+		name      => x('Restrict Release by Set(s)'),
 		type      => 'edit',
 		size      => '30',
 		override  => 'any',
 		help_text => x(
-			'This set will be unavailable to students until they have earned a certain score on the sets '
-				. 'specified in this field. The sets should be written as a comma separated list. '
-				. 'The minimum score required on the sets is specified in the following field.'
+			'This set will be unavailable to students until they have earned the "Score Required for Release" on the '
+				. 'sets specified in this field.  The sets should be written as a comma separated list.'
 		)
 	},
 	restricted_status => {
-		name     => x('Score required for release'),
+		name     => x('Score Required for Release'),
 		type     => 'choose',
 		override => 'any',
 		choices  => [qw(1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1)],
@@ -183,9 +213,10 @@ use constant FIELD_PROPERTIES => {
 			'0.9' => '90%',
 			'1'   => '100%',
 		},
+		help_text => x('See "Restrict Release by Set(s)".'),
 	},
 	restrict_ip => {
-		name     => x('Restrict Access by IP'),
+		name     => x('Restrict Access by Location'),
 		type     => 'choose',
 		override => 'any',
 		choices  => [qw(No RestrictTo DenyFrom)],
@@ -194,42 +225,72 @@ use constant FIELD_PROPERTIES => {
 			RestrictTo => x('Restrict To'),
 			DenyFrom   => x('Deny From'),
 		},
-		default => 'No',
+		default   => 'No',
+		help_text => x(
+			'You may choose to restrict student access to this set to specified locations.  Alternatively, you may '
+				. 'choose to block access from specified locations.  Locations are defined by the WeBWorK '
+				. 'administrator by IP address or address range.  The list of defined locations will appear after '
+				. 'saving this option with "Restrict To" or "Deny From".'
+		)
 	},
 	relax_restrict_ip => {
-		name     => x('Relax IP restrictions when?'),
+		name     => x('Relax Location Restrictions'),
 		type     => 'choose',
 		override => 'any',
 		choices  => [qw(No AfterAnswerDate AfterVersionAnswerDate)],
 		labels   => {
 			No                     => x('Never'),
-			AfterAnswerDate        => x('After set answer date'),
-			AfterVersionAnswerDate => x('(test) After version answer date'),
+			AfterAnswerDate        => x('After Answer Date'),
+			AfterVersionAnswerDate => x('After Test Version Answer Date'),
 		},
-		default => 'No',
+		default   => 'No',
+		help_text => x(
+			'When location restrictions are applied (see "Restrict Access by Location") you may choose to relax those '
+				. 'restrictions after the answer date.  In the case of a test, the set\'s answer date and the date of '
+				. 'an individual version may differ, and you can choose which answer date to use.  For a set that is '
+				. 'not a test, both options are interpreted as the regular set answer date.'
+		)
 	},
 	assignment_type => {
-		name     => x('Assignment type'),
+		name     => x('Assignment Type'),
 		type     => 'choose',
 		override => 'all',
 		choices  => [qw(default gateway proctored_gateway jitar)],
 		labels   => {
-			default           => x('homework'),
-			gateway           => x('test'),
-			proctored_gateway => x('proctored test'),
-			jitar             => x('just-in-time')
+			default           => x('Homework'),
+			gateway           => x('Test'),
+			proctored_gateway => x('Proctored Test'),
+			jitar             => x('Just in Time Assessment and Review')
 		},
+		help_text => x(
+			'With "Homework", students visit each problem one at a time.  They submit answers for one problem at a '
+				. 'time and immediately receive feedback.  With "Test", students will submit all answers for all '
+				. 'problems at once.  They may or may not receive feedback right away depending upon other '
+				. 'settings.  Also a "Test" can have a time limit, where the student needs to start between the '
+				. 'open date and the close date, but once started has only so much time.  Also a "Test" can '
+				. 'be configured to allow taking new, re-randomized versions.  A "Proctored Test" is the same as '
+				. 'a "Test", but in order to begin, either a classwide password specific to this set is needed, '
+				. 'or a higher level user must enter their username and password on the student\'s screen. '
+				. 'A "Just in Time Assessment and Review" set is like a "Homework" set, but can be configured '
+				. 'to introduce more exercises when a student answers a given exercise incorrectly so many times.'
+		)
 	},
 	version_time_limit => {
-		name      => x('Test Time Limit (min; 0=Close Date)'),
+		name      => x('Test Time Limit'),
 		type      => 'edit',
 		size      => '4',
 		override  => 'any',
 		default   => '0',
 		convertby => 60,
+		help_text => x(
+			'This sets a number of minutes for each version of a test, once it is started.  Use "0" to indicate no '
+				. 'time limit.  If there is a time limit, then there will be an indication that this is a timed '
+				. 'test on the main "Homework Sets" page.  Additionally the student will be sent to a confirmation '
+				. 'page beefore they can begin.'
+		)
 	},
 	time_limit_cap => {
-		name     => x('Cap Test Time at Set Close Date'),
+		name     => x('Cap Test Time at Close Date'),
 		type     => 'choose',
 		override => 'all',
 		choices  => [qw(0 1)],
@@ -237,29 +298,48 @@ use constant FIELD_PROPERTIES => {
 			'0' => x('No'),
 			'1' => x('Yes')
 		},
+		help_text => x(
+			'A student might start a timed test close to the close date.  This setting allows to either cut them off '
+				. 'at the close date or allow them the full time limit.'
+		)
 	},
 	attempts_per_version => {
-		name     => x('Number of Graded Submissions per Test (0=infty)'),
-		type     => 'edit',
-		size     => '3',
-		override => 'any',
-		default  => '0',
+		name      => x("Graded Submissions per Version"),
+		type      => 'edit',
+		size      => '3',
+		override  => 'any',
+		default   => '0',
+		help_text => x(
+			'A test may be configured to allow students one or more versions.  For each version, this is the number of '
+				. 'times you will allow them to click to have that version graded.  Depending on other settings, '
+				. 'they may or may not be able to see scores and feedback following each grading. '
+				. 'Use "0" to indicate there is no cap on the number of graded submissions.'
+		)
 	},
 	time_interval => {
-		name      => x('Time Interval for New Test Versions (min; 0=infty)'),
+		name      => x('Time Interval for New Versions'),
 		type      => 'edit',
 		size      => '5',
 		override  => 'any',
 		default   => '0',
 		convertby => 60,
+		help_text => x(
+			'You may set a time interval in minutes.  Within this time interval, students may start new randomized '
+				. 'versions of the test.  However they may only start as many new versions as you set for "Versions '
+				. 'per Interval".  When the time interval ends, the cap is reset.  This feature is intended to allow '
+				. 'students an immediate retake, but require them to take a break (and perhaps study more) after too '
+				. 'many low scoring attempts in close succession.  Use "0" to indicate an infinite time interval, '
+				. 'which is what you want for an absolute cap on the number of new versions overall.'
+		)
 	},
 	versions_per_interval => {
-		name     => x('Number of Tests per Time Interval (0=infty)'),
-		type     => 'edit',
-		size     => '3',
-		override => 'any',
-		default  => '0',
-		format   => '[0-9]+',                                           # an integer, possibly zero
+		name      => x('Versions per Interval'),
+		type      => 'edit',
+		size      => '3',
+		override  => 'any',
+		default   => '0',
+		format    => '[0-9]+',                                     # an integer, possibly zero
+		help_text => x('See "Time Interval for New Versions".'),
 	},
 	problem_randorder => {
 		name     => x('Order Problems Randomly'),
@@ -270,16 +350,33 @@ use constant FIELD_PROPERTIES => {
 			0 => x('No'),
 			1 => x('Yes')
 		},
+		help_text => x(
+			'Order problems randomly or not.  If you will be manually reviewing student answers, you might not want to '
+				. 'order problems randomly to facilitate assembly line grading.'
+		)
 	},
 	problems_per_page => {
-		name     => x('Number of Problems per Page (0=all)'),
-		type     => 'edit',
-		size     => '3',
-		override => 'any',
-		default  => '1',
+		name      => x('Problems per Page'),
+		type      => 'edit',
+		size      => '3',
+		override  => 'any',
+		default   => '1',
+		help_text => x(
+			'A test is broken up into pages with this many problems on each page.  Students can move from page to page '
+				. 'without clicking to grade the test, and their temporary answers will be saved.  Use "0" to indicate '
+				. '"all problems on one page".  For tests with many problems, either extreme (1 per page or "all on '
+				. 'one page") has drawbacks.  With 1 per page, the student has many pages and may be frustrated trying '
+				. 'to go back and find a particular problem.  With "all on one page", the student may spend a lot of '
+				. 'time on that one page without clicking anything that lets WeBWorK know they are still active, and '
+				. 'their session might expire for inactivity before they get around to clicking the grade button. '
+				. 'This situation can lead to their typed answers being lost and unrecoverable.  Additionally, having '
+				. 'many problems load at the same time on one page can put a strain on the server.  This is especially '
+				. 'worth considering if the test has many dynamically generated images, which can slow things down '
+				. 'significantly.'
+		)
 	},
 	'hide_score:hide_score_by_problem' => {
-		name     => x('Show Scores on Finished Tests'),
+		name     => x('Show Scores on Finished Versions'),
 		type     => 'choose',
 		choices  => [qw(N:N Y:Y BeforeAnswerDate:N N:Y BeforeAnswerDate:Y)],
 		override => 'any',
@@ -290,10 +387,14 @@ use constant FIELD_PROPERTIES => {
 			'N:Y'                => x('Totals only (not problem scores)'),
 			'BeforeAnswerDate:Y' => x('Totals only, only after answer date')
 		},
-		default => 'N:N',
+		default   => 'N:N',
+		help_text => x(
+			'After a test version either has no more allowed graded submissions or has its time limit expired, you may '
+				. 'configure whether or not to allow students to see their scores on that version.'
+		)
 	},
 	hide_work => {
-		name     => x('Show Problems on Finished Tests'),
+		name     => x('Show Problems on Finished Versions'),
 		type     => 'choose',
 		choices  => [qw(N Y BeforeAnswerDate)],
 		override => 'any',
@@ -302,10 +403,14 @@ use constant FIELD_PROPERTIES => {
 			'Y'                => x('No'),
 			'BeforeAnswerDate' => x('Only after set answer date')
 		},
-		default => 'N',
+		default   => 'N',
+		help_text => x(
+			'After a test version either has no more allowed graded submissions or has its time limit expired, you may '
+				. 'configure whether or not to allow students to see the questions and the responses they gave.'
+		)
 	},
 	use_grade_auth_proctor => {
-		name     => x('Require Proctor Authorization to'),
+		name     => x('Proctor Authorization Type'),
 		type     => 'choose',
 		override => 'any',
 		choices  => [qw(Yes No)],
@@ -316,8 +421,9 @@ use constant FIELD_PROPERTIES => {
 		default   => 'Yes',
 		help_text => x(
 			'Proctored tests always require authorization to start the test. "Both Start and Grade" will require '
-				. 'login proctor authorization to start and grade proctor authorization to grade. "Only Start" '
-				. 'requires grade proctor authorization to start and no authorization to grade.'
+				. 'either login proctor authorization or a password specific to this set to start the test, '
+				. 'and grade proctor authorization to grade the test. "Only Start" requires either grade proctor '
+				. 'authorization or a password specific to this set to start and no authorization to grade.'
 		),
 	},
 	restrict_prob_progression => {
@@ -332,7 +438,7 @@ use constant FIELD_PROPERTIES => {
 		},
 		help_text => x(
 			'If this is enabled then students will be unable to attempt a problem until they have '
-				. 'completed all of the previous problems, and their child problems if necessary.'
+				. 'completed all of the previous problems and their child problems if necessary.'
 		),
 	},
 	email_instructor => {
@@ -348,7 +454,7 @@ use constant FIELD_PROPERTIES => {
 		help_text => x(
 			'If this is enabled then instructors with the ability to receive feedback emails will be '
 				. 'notified whenever a student runs out of attempts on a problem and its children '
-				. ' without receiving an adjusted status of 100%.'
+				. 'without receiving an adjusted status of 100%.'
 		),
 	},
 
@@ -367,14 +473,18 @@ use constant FIELD_PROPERTIES => {
 		default  => '',
 	},
 	value => {
-		name     => x('Weight'),
-		type     => 'edit',
-		size     => 6,
-		override => 'any',
-		default  => '1',
+		name      => x('Weight'),
+		type      => 'edit',
+		size      => 6,
+		override  => 'any',
+		default   => '1',
+		help_text => x(
+			'This is a relative weight to be attached to the problem, either in the context of scoring the set, '
+				. 'or in the context of calculating a score for a collection of sets.'
+		)
 	},
 	max_attempts => {
-		name     => x('Max attempts'),
+		name     => x('Max Attempts'),
 		type     => 'edit',
 		size     => 6,
 		override => 'any',
@@ -382,9 +492,12 @@ use constant FIELD_PROPERTIES => {
 		labels   => {
 			'-1' => x('unlimited'),
 		},
+		help_text => x(
+			'You may cap the number of attempts a student can use for the problem. Use -1 to indicate unlimited attempts.'
+		)
 	},
 	showMeAnother => {
-		name     => x('Show me another'),
+		name     => x('Show Me Another'),
 		type     => 'edit',
 		size     => '6',
 		override => 'any',
@@ -400,7 +513,7 @@ use constant FIELD_PROPERTIES => {
 		)
 	},
 	showHintsAfter => {
-		name     => x('Show hints after'),
+		name     => x('Show Hints After'),
 		type     => 'edit',
 		size     => '6',
 		override => 'any',
@@ -417,7 +530,7 @@ use constant FIELD_PROPERTIES => {
 		),
 	},
 	prPeriod => {
-		name     => x('Rerandomize after'),
+		name     => x('Rerandomize After'),
 		type     => 'edit',
 		size     => '6',
 		override => 'any',
@@ -433,17 +546,25 @@ use constant FIELD_PROPERTIES => {
 		),
 	},
 	problem_seed => {
-		name     => x('Seed'),
-		type     => 'edit',
-		size     => 6,
-		override => 'one',
+		name      => x('Seed'),
+		type      => 'edit',
+		size      => 6,
+		override  => 'one',
+		help_text => x(
+			'This number is used to control how the random elements of the problem will be generated. '
+				. 'Change this number to rerandomize a student\'s version.'
+		)
 	},
 	status => {
-		name     => x('Status'),
-		type     => 'edit',
-		size     => 6,
-		override => 'one',
-		default  => '0',
+		name      => x('Status'),
+		type      => 'edit',
+		size      => 6,
+		override  => 'one',
+		default   => '0',
+		help_text => x(
+			'This is a number between 0 and 1 indicating the student\'s score for the problem.  Change this '
+				. 'to 1 to manually award full credit on this problem.'
+		)
 	},
 	attempted => {
 		name     => x('Attempted'),
@@ -482,9 +603,14 @@ use constant FIELD_PROPERTIES => {
 			1 => x('Yes'),
 			0 => x('No'),
 		},
+		help_text => x(
+			'Problem files may have hints included in their code.  Use this option to suppress showing students these '
+				. 'hints. Note that even if hints are not suppressed, there is a threshold number of attempts '
+				. 'that a student must make before they have the option to view a hint.'
+		)
 	},
 	att_to_open_children => {
-		name     => x('Att. to Open Children'),
+		name     => x('Attempt Threshold for Children'),
 		type     => 'edit',
 		size     => 6,
 		override => 'any',
@@ -495,7 +621,7 @@ use constant FIELD_PROPERTIES => {
 		help_text => x(
 			'The child problems for this problem will become visible to the student when they either have more '
 				. 'incorrect attempts than is specified here, or when they run out of attempts, whichever comes '
-				. 'first.  If "max" is specified here then child problems will only be available after a student '
+				. 'first.  Use -1 to indicate that child problems should only be available after a student '
 				. 'runs out of attempts.'
 		),
 	},
@@ -511,7 +637,7 @@ use constant FIELD_PROPERTIES => {
 		},
 		help_text => x(
 			'If this flag is set then this problem will count towards the grade of its parent problem.  In '
-				. q{general the adjusted status on a problem is the larger of the problem's status and the weighted }
+				. 'general the adjusted status on a problem is the larger of the problem\'s status and the weighted '
 				. 'average of the status of its child problems which have this flag enabled.'
 		),
 	},
@@ -571,14 +697,37 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 			@$rows,
 			$c->tag(
 				'tr',
+				$problemID ? () : (class => 'table-primary'),
 				$c->c(
-					$c->tag('td', colspan => '3', ''),
-					$c->tag('th', $c->maketext('User overrides')),
-					$c->tag('th', $c->maketext('Set values'))
+					$c->tag(
+						'th',
+						class   => 'p-2',
+						scope   => 'colgroup',
+						colspan => 3,
+						$problemID ? '' : $c->maketext('General Parameters')
+					),
+					$c->tag('th', class => 'p-2', scope => 'col', $c->maketext('User Overrides')),
+					$c->tag('th', class => 'p-2', scope => 'col', $c->maketext('Set Values'))
 				)->join('')
 			)
 		);
+	} elsif (!$problemID) {
+		push(
+			@$rows,
+			$c->tag(
+				'tr',
+				class => 'table-primary',
+				$c->tag(
+					'th',
+					class   => 'p-2',
+					scope   => 'colgroup',
+					colspan => 4,
+					$c->maketext('General Parameters')
+				)
+			)
+		);
 	}
+
 	for my $field (@fieldOrder) {
 		my %properties;
 
@@ -641,7 +790,7 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 		# Finally, put in extra fields that are exceptions to the usual display mechanism.
 		push(@$rows, $ipFields) if $field eq 'restrict_ip' && $ipFields;
 
-		push(@$rows, $procFields, $extraFields) if $field eq 'assignment_type';
+		push(@$rows, $extraFields, $procFields) if $field eq 'assignment_type';
 	}
 
 	if (defined $problemID && $forOneUser) {
@@ -658,7 +807,7 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 
 	return $c->tag(
 		'table',
-		class => 'table table-sm table-borderless align-middle font-sm w-auto mb-0',
+		class => 'table table-sm table-borderless align-middle font-sm mb-0',
 		$rows->join('')
 	);
 }
@@ -896,11 +1045,11 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 	my $db = $c->{db};
 
 	my $extraFields = '';
+	my $num_columns = 0;
 
 	if ($globalRecord->assignment_type() =~ /gateway/) {
 		# If this is a gateway set, set up a table of gateway fields.
 		my @gwFields;
-		my $num_columns = 0;
 
 		for my $gwfield (@{ GATEWAY_SET_FIELD_ORDER() }) {
 			# Don't show template gateway fields when editing set versions.
@@ -917,14 +1066,23 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 
 		$extraFields = $c->c(
 			$num_columns
-			? $c->tag('tr', $c->tag('td', colspan => $num_columns, $c->tag('em', $c->maketext('Test parameters'))))
+			? $c->tag(
+				'tr',
+				class => 'table-primary',
+				$c->tag(
+					'th',
+					class   => 'p-2',
+					scope   => 'colgroup',
+					colspan => $num_columns,
+					$c->maketext('Test Parameters')
+				)
+				)
 			: '',
 			@gwFields
 		)->join('');
 	} elsif ($globalRecord->assignment_type eq 'jitar') {
 		# If this is a jitar set, set up a table of jitar fields.
-		my $num_columns = 0;
-		my $jthdr       = '';
+		my $jthdr = '';
 		my @jtFields;
 		for my $jtfield (@{ JITAR_SET_FIELD_ORDER() }) {
 			my @fieldData = $c->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, $jtfield);
@@ -935,8 +1093,17 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 		}
 		$extraFields = $c->c(
 			$num_columns
-			? $c->tag('tr',
-				$c->tag('td', colspan => $num_columns, $c->tag('em', $c->maketext('Just-In-Time parameters'))))
+			? $c->tag(
+				'tr',
+				class => 'table-primary',
+				$c->tag(
+					'th',
+					class   => 'p-2',
+					scope   => 'colgroup',
+					colspan => $num_columns,
+					$c->maketext('Just-In-Time Parameters')
+				)
+				)
 			: '',
 			@jtFields
 		)->join('');
@@ -948,6 +1115,17 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 	# and a proctored set password input.
 	if ($globalRecord->assignment_type eq 'proctored_gateway') {
 		$procFields = $c->c(
+			$c->tag(
+				'tr',
+				class => 'table-primary',
+				$c->tag(
+					'th',
+					class   => 'p-2',
+					scope   => 'colgroup',
+					colspan => $num_columns,
+					$c->maketext('Proctoring Parameters')
+				)
+			),
 			# Dropdown menu to configure using a grade proctor.
 			$c->tag(
 				'tr',
