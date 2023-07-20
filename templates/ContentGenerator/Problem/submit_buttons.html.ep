@@ -1,13 +1,32 @@
 % use WeBWorK::Utils qw(before);
 %
-% my %can           = %{ $c->{can} };
-% my %will          = %{ $c->{will} };
-% my $effectiveUser = param('effectiveUser');
-%
+% my %can            = %{ $c->{can} };
+% my %will           = %{ $c->{will} };
+% my $effectiveUser  = param('effectiveUser');
 % if ($will{requestNewSeed}) {
+	<%= submit_button maketext('Request New Version'), id => 'enter_key_submit', name => 'requestNewSeed',
+		formtarget => '_self', class => 'visually-hidden-unfocusable' =%>
 	<%= submit_button maketext('Request New Version'), id => 'submitAnswers_id', name => 'requestNewSeed',
 		formtarget => '_self', class => 'btn btn-primary mb-1' =%>
 % } else {
+	% my $enter_key_name  = 'previewAnswers';
+	% my $enter_key_value = maketext('Preview My Answers');
+	% if (
+		% $c->ce->{pg}{options}{enterKey} eq 'submit'
+		% || ($c->ce->{pg}{options}{enterKey} eq 'conservative' && $c->{problem}{max_attempts} < 0)
+	% ) {
+		% if ($can{getSubmitButton}) {
+			% $enter_key_name  = 'submitAnswers';
+			% $enter_key_value = (param('user') ne $effectiveUser)
+				% ? maketext('Submit Answers for [_1]', $effectiveUser)
+				% : maketext('Submit Answers');
+		% } elsif ($can{checkAnswers}) {
+			% $enter_key_name  = 'checkAnswers';
+			% $enter_key_value = maketext('Check Answers');
+		% }
+	% }
+	<%= submit_button $enter_key_value, id => 'enter_key_submit', formtarget => '_self', name => $enter_key_name,
+		class => 'visually-hidden-unfocusable' =%>
 	<%= submit_button maketext('Preview My Answers'), id => 'previewAnswers_id', formtarget => '_self',
 		name => 'previewAnswers', class => 'btn btn-primary mb-1' =%>
 	%

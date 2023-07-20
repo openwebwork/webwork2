@@ -750,6 +750,12 @@ input.changed[type=text] { /* orange */
 	row-gap: 0.25rem;
 }
 
+.visually-hidden-unfocusable {
+	visibility: hidden;
+	position: absolute;
+	left: -9999px;
+}
+
 /* Styles used when editing a temporary file */
 .temporaryFile { font-style: italic; color: #ca5000; background-color: inherit; }
 

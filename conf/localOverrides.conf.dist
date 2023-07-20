@@ -302,6 +302,19 @@ $mail{feedbackRecipients}    = [
 #$problemDefaults{showHintsAfter} = 2;
 
 ################################################################################
+# Enter key behavior
+################################################################################
+# If this is set to "preview", hitting the enter key on a problem page activates
+# the "Preview My Answers" button. If this is set to "submit", then the enter
+# key activates the "Submit Answers" button instead. Or if that button is not
+# present, it will activate the "Check Answers" button. Or if that button is
+# also not present, it will just activate the "Preview My Answers" button.
+# A third option is "conservative". In this case, the enter key behaves like "preview"
+# when the "Submit" button is available and there are only finitely many
+# attempts allowed. Otherise the enter key behaves like "submit".
+#$pg{options}{enterKey} = 'conservative';
+
+################################################################################
 # Periodic re-randomization
 ################################################################################
 # switch to enable periodic re-randomization
