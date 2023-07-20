@@ -16,6 +16,6 @@
 	<%= image $fileManagerURL, style => 'border:0;', alt => $name =%>
 % } else {
 	<div class="alert alert-danger p-1 mb-0">
-		<%= maketext('The file $file does not appear to be a text or image file.') =%>
+		<%= maketext('The file "[_1]" does not appear to be a text or image file.', $file) =%>
 	</div>
 % }
