@@ -15,29 +15,10 @@
 
 package WeBWorK::ConfigObject::permission_checkboxlist;
 use Mojo::Base 'WeBWorK::ConfigObject', -signatures;
-
-my %userRoles = (
-	guest         => -5,
-	student       => 0,
-	login_proctor => 2,
-	grade_proctor => 3,
-	ta            => 5,
-	professor     => 10,
-	admin         => 20,
-	nobody        => 99999999,    # insure that nobody comes at the end
-);
-
-sub role_and_above {
-	my $role       = shift;
-	my $role_array = [$role];
-	for my $userRole (keys %userRoles) {
-		push @$role_array, $userRole if ($userRoles{$userRole} > $userRoles{$role});
-	}
-	return $role_array;
-}
+use WeBWorK::Utils 'role_and_above';
 
 sub display_value ($self, $val) {
-	$val = role_and_above($val) unless ref($val) eq 'ARRAY';
+	$val = role_and_above($self->{c}->ce->{userRoles}, $val) unless ref($val) eq 'ARRAY';
 	return $self->{c}->c(@{ $val // [] })->join($self->{c}->tag('br'));
 }
 
@@ -62,13 +43,13 @@ sub save_string ($self, $oldval, $use_current = 0) {
 }
 
 sub comparison_value ($self, $val) {
-	$val = role_and_above($val) unless ref($val) eq 'ARRAY';
+	$val = role_and_above($self->{c}->ce->{userRoles}, $val) unless ref($val) eq 'ARRAY';
 	return join(',', @{ $val // [] });
 }
 
 sub entry_widget ($self, $default) {
 	my $c = $self->{c};
-	$default = role_and_above($default) unless ref($default) eq 'ARRAY';
+	$default = role_and_above($self->{c}->ce->{userRoles}, $default) unless ref($default) eq 'ARRAY';
 	return $c->c(
 		map {
 			$c->tag(

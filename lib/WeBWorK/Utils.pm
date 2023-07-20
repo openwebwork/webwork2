@@ -1843,10 +1843,10 @@ ID: foreach my $id (@problemIDs) {
 
 # Get the array of all permission levels at or above a given level
 sub role_and_above {
-	my ($c, $role) = @_;
+	my ($userRoles, $role) = @_;
 	my $role_array = [$role];
-	for my $userRole (keys %{ $c->ce->{userRoles} }) {
-		push @$role_array, $userRole if ($c->ce->{userRoles}{$userRole} > $c->ce->{userRoles}{$role});
+	for my $userRole (keys %$userRoles) {
+		push @$role_array, $userRole if ($userRoles->{$userRole} > $userRoles->{$role});
 	}
 	return $role_array;
 }
@@ -1864,16 +1864,11 @@ sub fetchEmailRecipients {
 	my $roles =
 		ref $ce->{permissionLevels}{$permissionType} eq 'ARRAY'
 		? $ce->{permissionLevels}{$permissionType}
-		: $c->role_and_above($ce->{permissionLevels}{$permissionType});
-	@$roles = grep { defined $ce->{userRoles}{$_} } @$roles;
-	return unless $roles;
+		: role_and_above($ce->{userRoles}, $ce->{permissionLevels}{$permissionType});
+	my @rolePermissionLevels = map { $ce->{userRoles}{$_} } grep { defined $ce->{userRoles}{$_} } @$roles;
+	return unless @rolePermissionLevels;
 
-	my $user_ids = [];
-	for my $role (@$roles) {
-		push(@$user_ids,
-			map { $_->user_id }
-				$db->getPermissionLevelsWhere({ permission => { '=' => $ce->{userRoles}{$role} } }));
-	}
+	my $user_ids = [ map { $_->user_id } $db->getPermissionLevelsWhere({ permission => \@rolePermissionLevels }) ];
 
 	my @recipients =
 		map { $_->rfc822_mailbox } $db->getUsersWhere({

@@ -28,7 +28,7 @@ use Try::Tiny;
 use Text::Wrap qw(wrap);
 
 use WeBWorK::Upload;
-use WeBWorK::Utils qw(decodeAnswers createEmailSenderTransportSMTP role_and_above fetchEmailRecipients);
+use WeBWorK::Utils qw(decodeAnswers createEmailSenderTransportSMTP fetchEmailRecipients);
 
 # request paramaters used
 #
