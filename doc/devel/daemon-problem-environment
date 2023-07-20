@@ -19,7 +19,6 @@
 	externalPng2EpsPath
 	externalTTHPath
 	fileName
-	formatedDueDate
 	formattedAnswerDate
 	formattedDueDate
 	formattedOpenDate

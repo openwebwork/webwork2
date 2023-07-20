@@ -12,7 +12,7 @@ loadMacros(
 
 
 BEGIN_TEXT;
-WeBWorK assignment number $setNumber is closes $formatedDueDate.
+WeBWorK assignment number $setNumber is closes $formattedDueDate.
  
 $PAR
 This first problem set (set 0) is designed to acquaint you with using WeBWorK.
