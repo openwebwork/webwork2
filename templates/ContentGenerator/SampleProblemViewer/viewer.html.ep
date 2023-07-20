@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= maketext('PG Sample Problems') %></title>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
+	<%= stylesheet $c->url({
+		type => 'webwork',
+		name => 'htdocs',
+		file => 'js/SampleProblemViewer/viewer.css'
+	}) =%>
+	<%= javascript $c->url({
+			type => 'webwork', name => 'htdocs',
+			file => 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'
+		}), defer => undef =%>
+	<%= javascript $c->url({
+			type => 'webwork',
+			name => 'htdocs',
+			file => 'js/SampleProblemViewer/viewer.js'
+		}), defer => undef =%>
+</head>
+
+<body>
+	<nav class="navbar fixed-top bg-primary border-bottom border-dark" data-bs-theme="dark">
+		<div class="container-fluid">
+			<ul class="nav nav-pills">
+				<li class="nav-item dropdown">
+					<a class="nav-link fs-3 dropdown-toggle active" href="#" role="button"
+						data-bs-toggle="dropdown" aria-expanded="false">
+						<%= $filePath eq 'categories' ? maketext('Sample Problems')
+							: $filePath eq 'techniques' ? maketext('Problem Techniques')
+							: $filePath eq 'subjects' ? maketext('Subject Area Problems')
+							: maketext('Problems by Macro') =%>
+					</a>
+					<ul class="dropdown-menu">
+						<li>
+							<%= link_to maketext('Sample Problems') => 'sample_problem_viewer',
+								{ filePath => 'categories' },
+								class => 'dropdown-item' . ($filePath eq 'categories' ? ' active' : ''),
+								$filePath eq 'categories' ? ('aria-current' => 'page') : () =%>
+						</li>
+						<li>
+							<%= link_to maketext('Problem Techniques') => 'sample_problem_viewer',
+								{ filePath => 'techniques' },
+								class => 'dropdown-item' . ($filePath eq 'techniques' ? ' active' : ''),
+								$filePath eq 'techniques' ? ('aria-current' => 'page') : () =%>
+						</li>
+						<li>
+							<%= link_to maketext('Subject Area Problems') => 'sample_problem_viewer',
+								{ filePath => 'subjects' },
+								class => 'dropdown-item' . ($filePath eq 'subjects' ? ' active' : ''),
+								$filePath eq 'subjects' ? ('aria-current' => 'page') : () =%>
+						</li>
+						<li>
+							<%= link_to maketext('Problems by Macro') => 'sample_problem_viewer',
+								{ filePath => 'macros' },
+								class => 'dropdown-item' . ($filePath eq 'macros' ? ' active' : ''),
+								$filePath eq 'macros' ? ('aria-current' => 'page') : () =%>
+						</li>
+					</ul>
+				</li>
+			</ul>
+			<button class="navbar-toggler d-md-none" type="button" data-bs-toggle="offcanvas"
+				data-bs-target="#sidebar" aria-controls="sidebar" aria-label="<%= maketext('Toggle Sidebar') %>">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+		</div>
+	</nav>
+	<aside class="offcanvas-md offcanvas-start overflow-auto position-fixed border-end border-dark flex-shrink-0"
+		tabindex="-1" id="sidebar" aria-labelledby="sidebar-label">
+		<div class="offcanvas-header">
+			<h2 class="offcanvas-title fs-3" id="sidebar-label"><%= $label =%></h2>
+			<button type="button" class="btn-close" data-bs-dismiss="offcanvas"
+				data-bs-target="#sidebar" aria-label="Close">
+			</button>
+		</div>
+		<h2 class="fs-3 d-none d-md-block px-3 pt-3"><%= $label =%></h2>
+		<div class="offcanvas-body px-md-3 pb-md-3 w-100">
+			<nav class="list-group w-100" role="tablist" id="sidebar-list">
+				% if ($filePath eq 'techniques') {
+					% for (['A' .. 'C'], ['D' .. 'F'], ['G' .. 'N'], ['O' .. 'Z']) {
+						<a class="list-group-item list-group-item-action" id="<%= $_->[0] %>-tab" href="#<%= $_->[0] %>"
+							data-bs-toggle="list" role="tab" aria-controls="<%= $_->[0] %>">
+							<%= $_->[0] %> .. <%= $_->[-1] %>
+						</a>
+					% }
+				% } else {
+					% for (sort(keys %$list)) {
+						% my $id = ($_ =~ s/\s/_/gr) =~ s/\./_/gr;
+						<a class="list-group-item list-group-item-action" id="<%= $id %>-tab" href="#<%= $id %>"
+							data-bs-toggle="list" role="tab" aria-controls="<%= $id %>">
+							<%= $_ %>
+						</a>
+					% }
+				% }
+			</nav>
+		</div>
+	</aside>
+	<div class="main-content">
+		<div class="tab-content p-3">
+			% if ($filePath eq 'techniques') {
+				% for (['A' .. 'C'], ['D' .. 'F'], ['G' .. 'N'], ['O' .. 'Z']) {
+					<div class="tab-pane fade" id="<%= $_->[0] %>" role="tabpanel"
+						aria-labelledby="<%= $_->[0] %>-tab" tabindex="0">
+						<h1 class="fs-3">
+							<%= maketext('Sample Problems for Techniques: [_1]', "$_->[0] .. $_->[-1]") =%>
+						</h1>
+						<ul>
+							% my $b = join('', @$_);
+							% for (sort grep { substr($_, 0, 1 ) =~ qr/^[$b]/i } keys(%$list)) {
+								<li><%= link_to $_ => 'sample_problem_viewer', { filePath => $list->{$_} } %></li>
+							% }
+						</ul>
+					</div>
+				% }
+			% } else {
+				% my %topics = (
+					% categories => maketext('Catetory'),
+					% subjects   => maketext('Subject'),
+					% macros     => maketext('Macro')
+				% );
+				% for (sort(keys %$list)) {
+					% my $id = ($_ =~ s/\s/_/gr) =~ s/\./_/gr;
+					<div class="tab-pane fade" id="<%= $id %>" role="tabpanel" aria-labelledby="<%= $id %>-tab"
+						tabindex="0">
+						<h1 class="fs-3"><%= maketext('Sample Problems for [_1]: [_2]', $topics{$filePath}, $_) %></h1>
+						<ul>
+							% for my $link (sort (keys %{ $list->{$_} })) {
+								<li>
+									<%= link_to $link => 'sample_problem_viewer', { filePath => $list->{$_}{$link} } %>
+								</li>
+							% }
+						</ul>
+					</div>
+				% }
+			% }
+		</div>
+	</div>
+</body>
+
+</html>

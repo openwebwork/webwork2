@@ -53,6 +53,7 @@ my @applicationsList = qw(
 	git
 	gzip
 	latex
+	pandoc
 	pdf2svg
 	pdflatex
 	dvipng
@@ -119,6 +120,7 @@ my @modulesList = qw(
 	Minion::Backend::SQLite
 	Mojolicious
 	Mojolicious::Plugin::NotYAMLConfig
+	Mojolicious::Plugin::RenderFile
 	Net::IP
 	Net::LDAPS
 	Net::OAuth
@@ -126,6 +128,7 @@ my @modulesList = qw(
 	Net::SSLeay
 	Opcode
 	PadWalker
+	Pandoc
 	Path::Class
 	Perl::Tidy
 	PHP::Serialization

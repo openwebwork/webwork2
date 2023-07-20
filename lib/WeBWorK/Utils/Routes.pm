@@ -39,6 +39,9 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  pod_index                           /pod
  pod_viewer                          /pod/$filePath
 
+ sample_problem_index                /sampleproblems
+ sample_problem_viewer               /sampleproblems/$filePath
+
  set_list                            /$courseID
 
  logout                              /$courseID/logout
@@ -144,6 +147,7 @@ my %routeParameters = (
 			ltiadvantage_launch
 			ltiadvantage_keys
 			pod_index
+			sample_problem_index
 			set_list
 		) ],
 		module => 'Home',
@@ -209,6 +213,21 @@ my %routeParameters = (
 		module => 'PODViewer',
 		path   => '/*filePath',
 		action => 'renderPOD'
+	},
+
+	sample_problem_index => {
+		title    => x('Sample Problem Index'),
+		children => [qw(sample_problem_viewer)],
+		module   => 'SampleProblemViewer',
+		path     => '/sampleproblems',
+		action   => 'sampleProblemIndex'
+	},
+
+	sample_problem_viewer => {
+		title  => x('Sample Problem Viewer'),
+		module => 'SampleProblemViewer',
+		path   => '/*filePath',
+		action => 'renderSampleProblem'
 	},
 
 	set_list => {

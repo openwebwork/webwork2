@@ -89,6 +89,9 @@ sub startup ($app) {
 	$app->minion->add_task(lti_mass_update       => 'Mojolicious::WeBWorK::Tasks::LTIMassUpdate');
 	$app->minion->add_task(send_instructor_email => 'Mojolicious::WeBWorK::Tasks::SendInstructorEmail');
 
+	# Provide the ability to serve data as a file download.
+	$app->plugin('RenderFile');
+
 	# Helpers
 
 	# This replaces the previous Apache2::RequestUtil method that was overridden in

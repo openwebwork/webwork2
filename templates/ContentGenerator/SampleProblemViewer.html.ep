@@ -1,0 +1,43 @@
+% title maketext('Sample Problem Home');
+%
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+%
+<head>
+	<meta charset='UTF-8'>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= title %></title>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
+	<link rel="icon" type="x-image/icon"
+		href="<%= $c->url({ type => 'webwork', name => 'htdocs', file => 'images/favicon.ico' }) %>">
+</head>
+
+<body>
+	<div class="container">
+		<h1 class="my-3"><%= title %></h1>
+		<div class="list-group">
+			<%= link_to 'sample_problem_viewer', { filePath => 'categories' },
+				class => 'list-group-item list-group-item-action', begin =%>
+				<span class="h4"><%= maketext('Sample Problems by Category') %></span>
+				<div><%= maketext('A list of sample problems by category.') %></div>
+			% end
+			<%= link_to 'sample_problem_viewer', { filePath => 'subjects' },
+				class => 'list-group-item list-group-item-action', begin =%>
+				<span class="h4"><%= maketext('Sample Problems by Subject Area') %></span>
+				<div><%= maketext('A list of sample problems by subject area.') %></div>
+			% end
+			<%= link_to 'sample_problem_viewer', { filePath => 'techniques' },
+				class => 'list-group-item list-group-item-action', begin =%>
+				<span class="h4"><%= maketext('Problem Techniques') %></span>
+				<div><%= maketext('A list of sample problems by problem technique.') %></div>
+			% end
+			<%= link_to 'sample_problem_viewer', { filePath => 'macros' },
+				class => 'list-group-item list-group-item-action', begin =%>
+				<span class="h4"><%= maketext('Sample Problems by Macro') %></span>
+				<div><%= maketext('For many macros, this lists all sample problems used by the macro.') %></div>
+			% end
+		</div>
+	</div>
+</body>
+%
+</html>

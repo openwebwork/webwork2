@@ -117,6 +117,7 @@ RUN apt-get update \
 	libmodule-build-perl \
 	libmodule-pluggable-perl \
 	libmojolicious-perl \
+	libmojolicious-plugin-renderfile-perl \
 	libnet-https-nb-perl \
 	libnet-ip-perl \
 	libnet-ldap-perl \
@@ -125,6 +126,7 @@ RUN apt-get update \
 	libpadwalker-perl \
 	libpath-class-perl \
 	libpath-tiny-perl \
+	libpandoc-wrapper-perl \
 	libphp-serialization-perl \
 	libpod-wsdl-perl \
 	libsoap-lite-perl \
