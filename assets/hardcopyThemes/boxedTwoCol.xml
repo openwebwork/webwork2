@@ -20,7 +20,6 @@ With two columns.
                 (\ifthenelse{\equal{#2}{}}{\#}{#2}~\webworkLocalizePoint)
 	}
 }
-\usepackage{multicol}
 \setlength{\columnsep}{.2in}
 \usepackage{fancyhdr}
 \parindent=0pt

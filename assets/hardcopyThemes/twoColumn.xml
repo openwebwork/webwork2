@@ -10,7 +10,6 @@ question enumeration. With two columns.
 \documentclass[10pt]{exam}
 \usepackage{webwork2}
 \usepackage[text={7in,9in},centering]{geometry}
-\usepackage{multicol}
 \setlength{\columnsep}{.25in}
 \setlength{\columnseprule}{.4pt}
 \extraheadheight[2pc]{0pt}

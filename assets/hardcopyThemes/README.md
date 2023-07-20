@@ -39,8 +39,8 @@ A theme preamble can load packages, but as soon as it loads `webwork2`, it is al
 `hyperref`, and `ifthen`.  So you can use tools from these packages without loading them in your theme.
 
 Also `webwork2` loads `pg.sty` from the `pg` distribution.  This loads `amsmath`, `amsfonts`, `amssymb`, `booktabs`,
-`tabularx`, `colortbl`, `caption`, `xcolor`, `mhchem`, and `graphicx`.  So again you can use tools from these packages
-without loading them in your theme.
+`tabularx`, `colortbl`, `caption`, `xcolor`, `multicol`, `mhchem`, and `graphicx`.  So again you can use tools from
+these packages without loading them in your theme.
 
 ## Macros
 

@@ -10,7 +10,6 @@ This theme produces hardcopies styled as hardcopies were prior to version 2.18.
 \usepackage{webwork2}
 \usepackage{pslatex}
 \usepackage{fullpage}
-\usepackage{multicol}
 \setlength{\columnsep}{.25in}
 \setlength{\columnseprule}{.4pt}
 \parindent=0pt

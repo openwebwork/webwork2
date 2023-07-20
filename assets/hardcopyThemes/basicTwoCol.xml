@@ -10,7 +10,6 @@ title and useername, and minimal problem numbering. With two columns.
 \documentclass{article}
 \usepackage{webwork2}
 \usepackage[text={6in,9in},centering]{geometry}
-\usepackage{multicol}
 \setlength{\columnsep}{.25in}
 \setlength{\columnseprule}{.4pt}
 \usepackage{fancyhdr}

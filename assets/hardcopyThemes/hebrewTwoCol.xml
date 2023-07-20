@@ -11,7 +11,6 @@ Hebrew script. This theme should only be used if xelatex is the latex engine.
 \documentclass[11pt]{exam}
 \usepackage{webwork2}
 \usepackage[text={7.5in,9in},centering]{geometry}
-\usepackage{multicol}
 \setlength{\columnsep}{.25in}
 \setlength{\columnseprule}{.4pt}
 
