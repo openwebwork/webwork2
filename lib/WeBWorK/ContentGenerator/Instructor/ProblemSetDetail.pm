@@ -697,14 +697,14 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 			@$rows,
 			$c->tag(
 				'tr',
-				class => 'table-primary',
+				$problemID ? () : (class => 'table-primary'),
 				$c->c(
 					$c->tag(
 						'th',
 						class   => 'p-2',
 						scope   => 'colgroup',
 						colspan => 3,
-						$c->maketext('General Parameters')
+						$problemID ? '' : $c->maketext('General Parameters')
 					),
 					$c->tag('th', class => 'p-2', scope => 'col', $c->maketext('User Overrides')),
 					$c->tag('th', class => 'p-2', scope => 'col', $c->maketext('Set Values'))
