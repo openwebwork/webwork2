@@ -1605,18 +1605,20 @@ sub initialize ($c) {
 				# is pretty careful to be sure that there's a one-to-one correspondence between the existence of the
 				# user and the setting of the set restricted_login_proctor field, so we assume that just checking the
 				# latter here is sufficient.
-				if ($setRecord->restricted_login_proctor eq 'Yes' && $pass ne '********') {
-					# A new password was submitted. So save it.
-					my $dbPass = eval { $db->getPassword($procID) };
-					if ($@) {
-						$c->addbadmessage($c->maketext(
-							'Error getting old set-proctor password from the database: [_1].  '
-								. 'No update to the password was done.',
-							$@
-						));
-					} else {
-						$dbPass->password(cryptPassword($pass));
-						$db->putPassword($dbPass);
+				if ($setRecord->restricted_login_proctor eq 'Yes') {
+					if ($pass ne '********') {
+						# A new password was submitted. So save it.
+						my $dbPass = eval { $db->getPassword($procID) };
+						if ($@) {
+							$c->addbadmessage($c->maketext(
+								'Error getting old set-proctor password from the database: [_1].  '
+									. 'No update to the password was done.',
+								$@
+							));
+						} else {
+							$dbPass->password(cryptPassword($pass));
+							$db->putPassword($dbPass);
+						}
 					}
 				} else {
 					$setRecord->restricted_login_proctor('Yes');
