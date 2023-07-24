@@ -124,6 +124,6 @@ if ($command eq "export") {
 }
 
 if (@errors) {
-	warn "The following errors occured:\n", map { "* $_\n" } @errors;
+	warn "The following errors occurred:\n", map { "* $_\n" } @errors;
 	exit 1;
 }

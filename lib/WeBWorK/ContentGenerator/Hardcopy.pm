@@ -647,7 +647,7 @@ sub delete_temp_dir ($c, $temp_dir_path) {
 # subroutines return a list whose first entry is the generated file name in $temp_dir_path, and
 # whose remaining elements are names of temporary files that may be of interest in the case of an
 # error (also located in $temp_dir_path).  These are returned whether or not an error actually
-# occured.
+# occurred.
 
 sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	my $src_name    = "hardcopy.tex";

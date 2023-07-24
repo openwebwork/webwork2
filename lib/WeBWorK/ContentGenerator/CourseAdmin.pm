@@ -394,7 +394,7 @@ sub do_add_course ($c) {
 			$c->tag(
 				'div',
 				class => 'alert alert-danger p-1 mb-2',
-				$c->c($c->tag('p', "An error occured while creating the course $add_courseID:"),
+				$c->c($c->tag('p', "An error occurred while creating the course $add_courseID:"),
 					$c->tag('div', class => 'font-monospace', $error))->join('')
 			)
 		);
@@ -655,7 +655,7 @@ sub do_retitle_course ($c) {
 				$c->tag(
 					'p',
 					$c->maketext(
-						'An error occured while changing the title of the course [_1].',
+						'An error occurred while changing the title of the course [_1].',
 						$rename_oldCourseID
 					)
 				),
@@ -748,7 +748,7 @@ sub do_rename_course ($c) {
 				$c->tag(
 					'p',
 					$c->maketext(
-						'An error occured while renaming the course [_1] to [_2]:', $rename_oldCourseID,
+						'An error occurred while renaming the course [_1] to [_2]:', $rename_oldCourseID,
 						$rename_newCourseID
 					)
 				),
@@ -877,7 +877,7 @@ sub do_delete_course ($c) {
 		return $c->tag(
 			'div',
 			class => 'alert alert-danger p-1 my-2',
-			$c->c($c->tag('p', $c->maketext('An error occured while deleting the course [_1]:', $delete_courseID)),
+			$c->c($c->tag('p', $c->maketext('An error occurred while deleting the course [_1]:', $delete_courseID)),
 				$c->tag('div', class => 'font-monospace', $error))->join('')
 		);
 	} else {
@@ -1073,7 +1073,7 @@ sub do_archive_course ($c) {
 			'div',
 			class => 'alert alert-danger p-1 mb-2',
 			$c->c(
-				$c->tag('p',   $c->maketext('An error occured while archiving the course [_1]:', $archive_courseID)),
+				$c->tag('p',   $c->maketext('An error occurred while archiving the course [_1]:', $archive_courseID)),
 				$c->tag('div', class => 'font-monospace', $error)
 			)->join('')
 		);
@@ -1103,7 +1103,9 @@ sub do_archive_course ($c) {
 						$c->c(
 							$c->tag(
 								'p',
-								$c->maketext('An error occured while deleting the course [_1]:', $archive_courseID)
+								$c->maketext(
+									'An error occurred while deleting the course [_1]:', $archive_courseID
+								)
 							),
 							$c->tag('div', class => 'font-monospace', $error)
 						)->join('')
@@ -1273,7 +1275,7 @@ sub do_unarchive_course ($c) {
 			class => 'alert alert-danger p-1 mb-2',
 			$c->c(
 				$c->tag(
-					'p', $c->maketext('An error occured while archiving the course [_1]:', $unarchive_courseID)
+					'p', $c->maketext('An error occurred while archiving the course [_1]:', $unarchive_courseID)
 				),
 				$c->tag('div', class => 'font-monospace', $error)
 			)->join('')
@@ -2124,7 +2126,7 @@ sub do_hide_inactive_course ($c) {
 					$c->tag(
 						'p',
 						$c->maketext(
-							'Errors occured while hiding the courses listed below when attempting to create the '
+							'Errors occurred while hiding the courses listed below when attempting to create the '
 								. q{file hide_directory in the course's directory. Check the ownership and permissions }
 								. q{of the course's directory, e.g "[_1]".},
 							"$ce->{webworkDirs}{courses}/$failed_courses[0]/"
@@ -2193,7 +2195,7 @@ sub do_unhide_inactive_course ($c) {
 					$c->tag(
 						'p',
 						$c->maketext(
-							'Errors occured while unhiding the courses listed below when attempting delete the file '
+							'Errors occurred while unhiding the courses listed below when attempting delete the file '
 								. q{hide_directory in the course's directory. Check the ownership and permissions of }
 								. q{the course's directory, e.g "[_1]".},
 							"$ce->{webworkDirs}{courses}/$failed_courses[0]/"

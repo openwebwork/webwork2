@@ -170,7 +170,7 @@ sub upgrade_to_version {
 	if (exists $info{global_code}) {
 		eval { $info{global_code}->() };
 		if ($@) {
-			print "\nAn error occured while running the system upgrade code for version $vers:\n";
+			print "\nAn error occurred while running the system upgrade code for version $vers:\n";
 			print "$@";
 			return 0 unless ask_permission("Ignore this error and keep going?", 0);
 		}

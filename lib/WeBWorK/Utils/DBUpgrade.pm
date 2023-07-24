@@ -629,7 +629,7 @@ sub upgrade_to_version {
 			$info{global_code}->();
 		};
 		if ($@) {
-			print "\nAn error occured while running the system upgrade code for version $vers:\n";
+			print "\nAn error occurred while running the system upgrade code for version $vers:\n";
 			print "$@";
 			return 0 unless $self->ask_permission("Ignore this error and keep going?", 0);
 		}
@@ -702,7 +702,7 @@ sub upgrade_course_to_version {
 		$info{course_code}->($course);
 	};
 	if ($@) {
-		print "\nAn error occured while running the course upgrade code for version $vers on course $course:\n";
+		print "\nAn error occurred while running the course upgrade code for version $vers on course $course:\n";
 		print "$@";
 		return ERROR;
 	} else {

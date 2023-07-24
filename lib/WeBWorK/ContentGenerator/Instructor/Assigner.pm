@@ -62,7 +62,7 @@ sub pre_header_initialize ($c) {
 
 			if (@results) {    # Can't get here?
 				$c->addbadmessage(
-					$c->c('The following error(s) occured while assigning:',
+					$c->c('The following error(s) occurred while assigning:',
 						$c->tag('ul', $c->c(map { $c->tag('li', $_) } @results)->join('')))->join('')
 				);
 			}
