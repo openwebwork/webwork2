@@ -115,7 +115,7 @@ sub get_credentials {
 		#    CAFile => $cas_certs);
 		my $cas = new AuthCAS(%{ $ce->{authen}{cas_options}{AuthCAS_opts} });
 
-		my $service = $c->unparsed_uri();
+		my $service = $c->req->url->to_string;
 		# Remove the "ticket=..." parameter that the CAS server added
 		# (Not sure if the second test is really needed.)
 		$service =~ s/[?&]ticket=[^&]*$//
