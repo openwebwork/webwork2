@@ -94,6 +94,6 @@ foreach my $user_id (@listKeys) {
 
 
 if (@errors) {
-	warn "The following errors occured:\n", map { "* $_\n" } @errors;
+	warn "The following errors occurred:\n", map { "* $_\n" } @errors;
 	exit 1;
 }

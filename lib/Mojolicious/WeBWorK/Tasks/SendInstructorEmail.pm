@@ -44,7 +44,7 @@ sub run ($job, $mail_data) {
 
 	eval { $job->email_notification($ce, $mail_data, $result_message) };
 	if ($@) {
-		$job->app->log->error("An error occured while trying to send the email notification: $@\n");
+		$job->app->log->error("An error occurred while trying to send the email notification: $@\n");
 		return $job->fail("FAILURE: Unable to send email notifation to instructor.");
 	}
 

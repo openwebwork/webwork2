@@ -384,7 +384,7 @@
 				// If the error is set, show that.
 				if (data.error) throw data.error;
 				// This generally shouldn't happen.
-				if (!data.html) throw 'A server error occured.  The response had no content';
+				if (!data.html) throw 'A server error occurred.  The response had no content';
 
 				renderArea.replaceChildren(iframe);
 				iframe.srcdoc = data.html;
