@@ -100,6 +100,7 @@
 					%= hidden_field showCorrectAnswersOnlyButton => $showCorrectAnswersOnlyButton
 					%= hidden_field showFooter                   => $showFooter
 					%= hidden_field extra_header_text            => $extra_header_text
+					%= hidden_field problem_data                 => $problem_data
 					% if ($formatName eq 'debug' && $ws->{inputs_ref}{clientDebug}) {
 						%= hidden_field clientDebug => $ws->{inputs_ref}{clientDebug}
 					% }

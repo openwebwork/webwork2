@@ -602,7 +602,9 @@ async sub pre_header_initialize ($c) {
 				: !$c->{previewAnswers} && $will{showCorrectAnswers} ? 1
 				: 0
 			),
-			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID)
+			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID),
+			$can{checkAnswers}
+				&& defined $formFields->{problem_data} ? (problemData => $formFields->{problem_data}) : ()
 		}
 	);
 
@@ -1412,6 +1414,11 @@ sub output_misc ($c) {
 	# Make sure the student nav filter setting is preserved when the problem form is submitted.
 	push(@$output, $c->hidden_field(studentNavFilter => $c->param('studentNavFilter')))
 		if $c->param('studentNavFilter');
+
+	# If the user can check answers and a problem_data form parameter for
+	# this problem has been set then add a hidden input with that data.
+	push(@$output, $c->hidden_field(problem_data => $c->param('problem_data')))
+		if $c->{can}{checkAnswers} && defined $c->param('problem_data');
 
 	return $output->join('');
 }

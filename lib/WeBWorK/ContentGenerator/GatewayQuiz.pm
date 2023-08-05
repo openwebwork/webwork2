@@ -932,7 +932,6 @@ async sub pre_header_initialize ($c) {
 	if ($c->{submitAnswers} || (($c->{previewAnswers} || $c->param('newPage')) && $can{recordAnswers})) {
 		# If answers are being submitted, then save the problems to the database.  If this is a preview or page change
 		# and answers can be recorded, then save the last answer for future reference.
-		# Also save the persistent data to the database even when the last answer is not saved.
 
 		# Deal with answers being submitted for a proctored exam.  If there are no attempts left, then delete the
 		# proctor session key so that it isn't possible to start another proctored test without being reauthorized.
@@ -958,28 +957,6 @@ async sub pre_header_initialize ($c) {
 				($past_answers_string, $encoded_last_answer_string, $scores, $answer_types_string) =
 					create_ans_str_from_responses($c->{formFields}, $pg_result,
 						$pureProblem->flags =~ /:needs_grading/);
-
-				# Transfer persistent problem data from the PERSISTENCE_HASH:
-				# - Get keys to update first, to avoid extra work when no updated ar
-				#   are needed. When none, we avoid the need to decode/encode JSON,
-				#   to save the pureProblem when it would not otherwise be saved.
-				# - We are assuming that there is no need to DELETE old
-				#   persistent data if the hash is empty, even if in
-				#   potential there may be some data already in the database.
-				my @persistent_data_keys = keys %{ $pg_result->{PERSISTENCE_HASH_UPDATED} };
-				if (@persistent_data_keys) {
-					my $json_data = decode_json($pureProblem->{problem_data} || '{}');
-					for my $key (@persistent_data_keys) {
-						$json_data->{$key} = $pg_result->{PERSISTENCE_HASH}{$key};
-					}
-					$pureProblem->problem_data(encode_json($json_data));
-
-					# If the pureProblem will not be saved below, we should save the
-					# persistent data here before any other changes are made to it.
-					if (($c->{submitAnswers} && !$will{recordAnswers})) {
-						$c->db->putProblemVersion($pureProblem);
-					}
-				}
 			} else {
 				my $prefix         = sprintf('Q%04d_', $problemNumbers[$i]);
 				my @fields         = sort grep {/^(?!previous).*$prefix/} (keys %{ $c->{formFields} });
@@ -1012,6 +989,7 @@ async sub pre_header_initialize ($c) {
 				$pureProblem->attempted(1);
 				$pureProblem->num_correct($pg_result->{state}{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg_result->{state}{num_of_incorrect_ans});
+				$pureProblem->problem_data(encode_json($pg_result->{PERSISTENCE_HASH} || '{}'));
 
 				# Add flags which are really a comma separated list of answer types.
 				$pureProblem->flags($answer_types_string);
@@ -1181,45 +1159,6 @@ async sub pre_header_initialize ($c) {
 
 			# Reset start time
 			$c->param('startTime', '');
-		}
-	} else {
-		# This 'else' case includes initial load of the first page of the
-		# quiz and checkAnswers calls, as well as when $can{recordAnswers}
-		# is false.
-
-		# Save persistent data to database even in this case, when answers
-		# would not or cannot be recorded.
-		my @pureProblems = $db->getAllProblemVersions($effectiveUserID, $setID, $versionID);
-		for my $i (0 .. $#problems) {
-			# Process each problem.
-			my $pureProblem = $pureProblems[ $probOrder[$i] ];
-			my $pg_result   = $pg_results[ $probOrder[$i] ];
-
-			if (ref $pg_result) {
-				# Transfer persistent problem data from the PERSISTENCE_HASH:
-				# - Get keys to update first, to avoid extra work when no updates
-				#   are needed. When none, we avoid the need to decode/encode JSON,
-				#   or to save the pureProblem.
-				# - We are assuming that there is no need to DELETE old
-				#   persistent data if the hash is empty, even if in
-				#   potential there may be some data already in the database.
-				my @persistent_data_keys = keys %{ $pg_result->{PERSISTENCE_HASH_UPDATED} };
-				next unless (@persistent_data_keys);    # stop now if nothing to do
-				if ($isFakeSet) {
-					warn join("",
-						"This problem stores persistent data and this cannot be done in a fake set. ",
-						"Some functionality may not work properly when testing this problem in this setting.");
-					next;
-				}
-
-				my $json_data = decode_json($pureProblem->{problem_data} || '{}');
-				for my $key (@persistent_data_keys) {
-					$json_data->{$key} = $pg_result->{PERSISTENCE_HASH}{$key};
-				}
-				$pureProblem->problem_data(encode_json($json_data));
-
-				$c->db->putProblemVersion($pureProblem);
-			}
 		}
 	}
 	debug('end answer processing');
@@ -1524,7 +1463,10 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 				: !$c->{previewAnswers} && $c->{will}{showCorrectAnswers} ? 1
 				: 0
 			),
-			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID})
+			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID}),
+			$c->{can}{checkAnswers} && defined $formFields->{ 'problem_data_' . $mergedProblem->problem_id }
+			? (problemData => $formFields->{ 'problem_data_' . $mergedProblem->problem_id })
+			: ()
 		},
 	);
 
@@ -1542,6 +1484,12 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 			};
 		$pg->{body_text} = undef;
 	}
+
+	# If the user can check answers and either this is not an answer submission or the problem_data form
+	# parameter was previously set, then set or update the problem_data form parameter.
+	$c->param('problem_data_' . $mergedProblem->problem_id => encode_json($pg->{PERSISTENCE_HASH} || '{}'))
+		if $c->{can}{checkAnswers}
+		&& (!$c->{submitAnswers} || defined $c->param('problem_data_' . $mergedProblem->problem_id));
 
 	return $pg;
 }
