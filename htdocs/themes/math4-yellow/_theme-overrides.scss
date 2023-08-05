@@ -20,3 +20,8 @@
 .text-primary {
 	color: $link-color !important;
 }
+
+:root {
+	--ww-site-nav-link-active-background-color: #{$primary};
+	--ww-site-nav-link-active-color: #{color-contrast($primary)};
+}

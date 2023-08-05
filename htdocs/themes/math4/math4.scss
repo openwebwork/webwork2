@@ -213,8 +213,8 @@ $site-nav-width: 250px !default;
 				padding-bottom: 0.2rem;
 
 				&.active {
-					background-color: var(--bs-primary, #038);
-					color: var(--ww-primary-foreground-color, white);
+					background-color: var(--ww-site-nav-link-active-background-color, #038);
+					color: var(--ww-site-nav-link-active-color, white);
 				}
 			}
 			&.list-group-item {
