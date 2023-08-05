@@ -87,6 +87,8 @@ $breadcrumb-active-color: #495057;
 	--ww-logo-background-color: #{$ww-logo-background-color};
 	--ww-primary-foreground-color: #{color-contrast($primary)};
 	--ww-achievement-level-color: #{$ww-achievement-level-color};
+	--ww-site-nav-link-active-background-color: #{lighten($primary, 55%)};
+	--ww-site-nav-link-active-color: #{$primary};
 }
 
 // Overrides
