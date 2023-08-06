@@ -301,6 +301,11 @@ $site-nav-width: 250px !default;
 	}
 }
 
+hr.hr {
+	margin: 3pt 7pt;
+	border: 1pt solid;
+}
+
 /* Progress Bar */
 .progress.set-progress {
 	height: 25px;
