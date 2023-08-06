@@ -21,7 +21,6 @@
 	color: $link-color !important;
 }
 
-:root {
-	--ww-site-nav-link-active-background-color: #{$primary};
-	--ww-site-nav-link-active-color: #{color-contrast($primary)};
+a:not(.btn):focus {
+        outline-color: $link-hover-color;
 }

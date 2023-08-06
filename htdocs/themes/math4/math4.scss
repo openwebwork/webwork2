@@ -171,6 +171,7 @@ $site-nav-width: 250px !default;
 	transition-property: left, border-right-width;
 	transition-duration: 0.3s;
 	border-right: 1px solid $layout-divider-color;
+	padding: 3px;
 
 	&.toggle-width {
 		left: -20%;
@@ -214,7 +215,8 @@ $site-nav-width: 250px !default;
 
 				&.active {
 					background-color: var(--ww-site-nav-link-active-background-color, #038);
-					color: var(--ww-site-nav-link-active-color, white);
+					color: var(--ww-primary-foreground-color, white);
+
 				}
 			}
 			&.list-group-item {
