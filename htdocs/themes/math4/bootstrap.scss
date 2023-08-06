@@ -87,16 +87,15 @@ $breadcrumb-active-color: #495057;
 	--ww-logo-background-color: #{$ww-logo-background-color};
 	--ww-primary-foreground-color: #{color-contrast($primary)};
 	--ww-achievement-level-color: #{$ww-achievement-level-color};
-	--ww-site-nav-link-active-background-color: #{lighten($primary, 55%)};
-	--ww-site-nav-link-active-color: #{$primary};
+	--ww-site-nav-link-active-background-color: #{$primary};
 }
 
 // Overrides
 a:not(.btn):focus {
 	color: $link-hover-color;
 	outline-style: solid;
-	outline-color: $link-hover-color;
-	outline-width: 1px;
+	outline-color: #{lighten($link-hover-color, 30%)};
+	outline-width: 3px;
 }
 
 @import "theme-overrides";
