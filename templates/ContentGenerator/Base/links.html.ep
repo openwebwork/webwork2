@@ -86,7 +86,7 @@
 		% }
 		%
 		% if ($authz->hasPermissions($userID, 'access_instructor_tools')) {
-			<hr class="hr hr-blurry"/>
+			<hr class="site-nav-separator"/>
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_tools') %></li>
 			% # Class list editor
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_user_list') %></li>

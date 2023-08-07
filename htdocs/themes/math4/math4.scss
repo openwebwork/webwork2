@@ -240,6 +240,11 @@ $site-nav-width: 250px !default;
 			padding-right: 0.5rem;
 		}
 	}
+
+	hr.site-nav-separator {
+		margin: 3pt 7pt;
+		border: 1pt solid;
+	}
 }
 
 #content {
@@ -301,11 +306,6 @@ $site-nav-width: 250px !default;
 	&:focus #toggle-sidebar-icon i {
 		outline: 1px solid var(--bs-link-hover-color);
 	}
-}
-
-hr.hr {
-	margin: 3pt 7pt;
-	border: 1pt solid;
 }
 
 /* Progress Bar */
