@@ -95,7 +95,11 @@ a:not(.btn):focus {
 	color: $link-hover-color;
 	outline-style: solid;
 	outline-color: #{lighten($link-hover-color, 8%)};
-	outline-width: 3px;
+	outline-width: 1px;
+}
+
+#site-links a:not(.btn):focus {
+	outline-width: 2px;
 }
 
 @import "theme-overrides";
