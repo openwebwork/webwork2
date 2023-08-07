@@ -22,5 +22,10 @@
 }
 
 a:not(.btn):focus {
-        outline-color: $link-hover-color;
+	outline-color: #{darken($link-hover-color, 1%)};
+}
+
+:root {
+	--ww-site-nav-link-active-background-color: #{$primary};
+	--ww-site-nav-link-active-color: #{color-contrast($primary)};
 }
