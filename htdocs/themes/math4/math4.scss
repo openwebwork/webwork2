@@ -195,6 +195,10 @@ $site-nav-width: 250px !default;
 		}
 	}
 
+	a:not(.btn):focus {
+		outline-width: 2px;
+	}
+
 	.info-box {
 		border-radius: 0;
 		border: none;
@@ -219,11 +223,10 @@ $site-nav-width: 250px !default;
 
 				}
 			}
-			&.list-group-item {
-				.nav-link:focus {
-					position: relative;
-					z-index: 2;
-				}
+
+			.nav-link:focus {
+				position: relative;
+				z-index: 2;
 			}
 		}
 	}

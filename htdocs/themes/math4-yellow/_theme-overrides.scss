@@ -27,5 +27,4 @@ a:not(.btn):focus {
 
 :root {
 	--ww-site-nav-link-active-background-color: #{$primary};
-	--ww-site-nav-link-active-color: #{color-contrast($primary)};
 }
