@@ -28,7 +28,7 @@ sub convert_newval_source ($self, $use_current) {
 		if (ref $self->get_value($self->{c}->ce) eq 'ARRAY') {
 			return @{ $self->get_value($self->{c}->ce) };
 		} else {
-			return $self->get_value($self->{c}->ce);
+			return @{ role_and_above($self->{c}->ce->{userRoles}, $self->get_value($self->{c}->ce)) };
 		}
 	} else {
 		return $self->{c}->param($self->{name});
