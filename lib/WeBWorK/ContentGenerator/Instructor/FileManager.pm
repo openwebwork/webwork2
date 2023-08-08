@@ -370,8 +370,8 @@ sub MakeArchive ($c) {
 sub UnpackArchive ($c) {
 	my $archive = $c->getFile('unpack');
 	return '' unless $archive;
-	if ($archive !~ m/\.(tar|tar\.gz|tgz)$/) {
-		$c->addbadmessage($c->maketext('You can only unpack files ending in ".tgz", ".tar" or ".tar.gz"'));
+	if ($archive !~ m/\.(tar|tar\.gz|tgz|zip)$/) {
+		$c->addbadmessage($c->maketext('You can only unpack files ending in ".zip", ".tgz", ".tar" or ".tar.gz"'));
 	} else {
 		$c->unpack_archive($archive);
 	}
@@ -379,10 +379,16 @@ sub UnpackArchive ($c) {
 }
 
 sub unpack_archive ($c, $archive) {
-	my $z     = $archive =~ m/\.tar$/ ? '' : 'z';
-	my $dir   = "$c->{courseRoot}/$c->{pwd}";
-	my $tar   = 'cd ' . shell_quote($dir) . " && $c->{ce}{externalPrograms}{tar} -vx${z}f " . shell_quote($archive);
-	my @files = readpipe "$tar 2>&1";
+	my $dir = "$c->{courseRoot}/$c->{pwd}";
+	my @files;
+	if ($archive =~ m/\.zip$/) {
+		my $unzip = 'cd ' . shell_quote($dir) . " && $c->{ce}{externalPrograms}{unzip} -u " . shell_quote($archive);
+		@files = readpipe "$unzip";
+	} else {
+		my $z   = $archive =~ m/\.tar$/ ? '' : 'z';
+		my $tar = 'cd ' . shell_quote($dir) . " && $c->{ce}{externalPrograms}{tar} -vx${z}f " . shell_quote($archive);
+		@files = readpipe "$tar 2>&1";
+	}
 
 	if ($? == 0) {
 		my $n = scalar(@files);
@@ -520,7 +526,7 @@ sub Upload ($c) {
 
 	if (-e $file) {
 		$c->addgoodmessage($c->maketext('File "[_1]" uploaded successfully', $name));
-		if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $c->getFlag('unpack')) {
+		if ($name =~ m/\.(tar|tar\.gz|tgz|zip)$/ && $c->getFlag('unpack')) {
 			if ($c->unpack_archive($name) && $c->getFlag('autodelete')) {
 				if (unlink($file)) { $c->addgoodmessage($c->maketext('Archive "[_1]" deleted', $name)) }
 				else               { $c->addbadmessage($c->maketext(q{Can't delete archive "[_1]": [_2]}, $name, $!)) }

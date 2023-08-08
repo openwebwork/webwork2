@@ -35,7 +35,7 @@
 			if (
 				numSelected === 0 ||
 				numSelected > 1 ||
-				!/\.(tar|tar\.gz|tgz)$/.test(files.children[files.selectedIndex].value)
+				!/\.(tar|tar\.gz|tgz|zip)$/.test(files.children[files.selectedIndex].value)
 			)
 				archiveButton.value = archiveButton.dataset.archiveText;
 			else archiveButton.value = archiveButton.dataset.unarchiveText;
