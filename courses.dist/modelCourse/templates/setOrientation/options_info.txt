@@ -12,16 +12,16 @@ then press the "Change User Options" button.
 Your password should be at least 6 characters long, and should include
 something other than just letters.  Don't make it something that is
 easily guessed, and don't make it the same as the password for your
-e-mail account!
+email account!
 
 <p align="justify">
 
-If you prefer to receive your e-mail at a location other than your
-Union College account, you should change your e-mail address in the box
+If you prefer to receive your email at a location other than your
+Union College account, you should change your email address in the box
 at the left.  Be aware, however, that your professor (and others on
 the Union campus) may still send mail to your Union College address,
 so you should check that account regularly anyway.  Note that you can
-have your Union college e-mail forwarded to another address
+have your Union college email forwarded to another address
 automatically if you wish.
 
 <p align="justify">

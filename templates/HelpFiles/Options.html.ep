@@ -19,7 +19,7 @@
 <p>
 	<%= maketext('This page allows users to change their password, email address, and display settings used in '
 		. 'problems. Note that you can hide this page entirely for students by setting permission levels to '
-		. 'login_proctor or higher for the permissions to change password, change e-mail address, and change display '
+		. 'login_proctor or higher for the permissions to change password, change email address, and change display '
 		. 'settings used in pg problems.') =%>
 </p>
 <h2><%= maketext('Password') %></h2>
