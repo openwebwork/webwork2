@@ -302,55 +302,42 @@ $site-nav-width: 250px !default;
 }
 
 /* Progress Bar */
-div {
-	&.progress {
-		height: 20px;
-		max-width: 100%;
-		border: 1px solid #B6B6B4;
-		background-color: #DDDDDD;
-		border-radius: 5px;
-		margin-bottom: 10px;
-		position: relative;
-		align-items: center;
-	}
+.progress.set-progress {
+	height: 25px;
+	max-width: 100%;
+	box-shadow: inset 0 0 3px 2px #000;
+	background-color: #ddd;
+	border-radius: 5px;
+	margin-bottom: 10px;
+	align-items: center;
 
-	&.correct-progress {
-		color: black;
-		background-color: #8F8; /* same color used as 'correct' */
-		box-shadow: inset 0 0 2px 1px #00FF00;
-		border-radius: 4px;
-		display: inline-block;
-		box-sizing: border-box;
-		text-align: center;
+	.progress-bar {
+		box-shadow: inset 0 0 3px 2px #000;
 		height: 100%;
-	}
+		color: black;
 
-	&.incorrect-progress {
-		color: black;
-		background-color: #FF9494; /* same color used as 'incorrect' */
-		box-shadow: inset 0 0 2px 1px #FF0000;
-		border-radius: 4px;
-		display: inline-block;
-		box-sizing: border-box;
-		height: 100%;
-	}
+		&.correct-progress {
+			background-color: #8f8; /* same color used as 'correct' */
+		}
 
-	&.inprogress-progress {
-		color: black;
-		background-color: #FFFF00; /* yellow */
-		box-shadow: inset 0 0 2px 1px #FBB117; /* beer border*/
-		border-radius: 4px;
-		display: inline-block;
-		box-sizing: border-box;
-		height: 100%;
-	}
+		&.incorrect-progress {
+			background-color: #ff9494; /* same color used as 'incorrect' */
+		}
 
-	&.unattempted-progress {
-		color: black;
-		background-color: transparent;
-		display: inline-block;
-		box-sizing: border-box;
-		height: 100%;
+		&.inprogress-progress {
+			background-color: #ff0; /* yellow */
+		}
+
+		&.unattempted-progress {
+			background-color: transparent;
+		}
+
+		&:focus {
+			outline: 0;
+			box-shadow: inset 0 0 3px 2px #333;
+			border: 3px solid black;
+			z-index: 2;
+		}
 	}
 }
 
