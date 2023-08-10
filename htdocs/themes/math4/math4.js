@@ -97,9 +97,9 @@
 	// Homework sets editor config
 	// FIXME: These are really general purpose tooltips and not just in the homework sets editor.  So the class name
 	// should be chosen to better reflect this.
-	document.querySelectorAll('.set-id-tooltip').forEach(
-		(el) => {if (el.dataset.bsTitle) new bootstrap.Tooltip(el, {trigger: 'hover', fallbackPlacements: []});}
-	);
+	document.querySelectorAll('.set-id-tooltip').forEach((el) => {
+		if (el.dataset.bsTitle) new bootstrap.Tooltip(el, { fallbackPlacements: [] });
+	});
 
 	// Hardcopy tooltips shown on the Problem Sets page.
 	document.querySelectorAll('.hardcopy-tooltip').forEach(
