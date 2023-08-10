@@ -71,6 +71,7 @@ RUN apt-get update \
 	imagemagick \
 	iputils-ping \
 	jq \
+	libarchive-extract-perl \
 	libarchive-zip-perl \
 	libarray-utils-perl \
 	libc6-dev \

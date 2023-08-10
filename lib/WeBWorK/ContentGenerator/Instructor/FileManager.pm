@@ -354,32 +354,40 @@ sub MakeArchive ($c) {
 		$c->addbadmessage($c->maketext('You must select at least one file for the archive'));
 		return $c->Refresh;
 	}
+
 	my $dir = "$c->{courseRoot}/$c->{pwd}";
-	chdir $dir;
-	my @files_to_compress;
+	if ($c->param('confirmed')) {
+		chdir($dir);
+		# remove any directories
+		my @files_to_compress = grep { -f $_ } @files;
 
-	for my $f (@files) {
-		push(@files_to_compress, glob("$f/**")) if -d $f;
-		push(@files_to_compress, $f)            if -f $f;
-	}
+		unless ($c->param('archive_filename') && scalar(@files_to_compress) > 0) {
+			$c->addbadmessage($c->maketext('The filename cannot be empty.'))      unless $c->param('archive_filename');
+			$c->addbadmessage($c->maketext('At least one file must be selected')) unless scalar(@files_to_compress) > 0;
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
 
-	my ($archive, $error, $ok);
-	if ($c->param('archive_type') eq 'zip') {
-		$archive = uniqueName('', scalar(@files) == 1 ? $files[0] . '.zip' : "$c->{courseName}.zip");
-		$ok      = zip [@files_to_compress] => $archive;
-		$error   = $ZipError unless $ok;
+		my $archive = $c->param('archive_filename');
+		my ($error, $ok);
+		if ($c->param('archive_type') eq 'zip') {
+			$archive .= '.zip';
+			$ok    = zip \@files_to_compress => $archive;
+			$error = $ZipError unless $ok;
+		} else {
+			$archive .= '.tgz';
+			$ok    = Archive::Tar->create_archive($archive, COMPRESS_GZIP, @files_to_compress);
+			$error = $Archive::Tar::error unless $ok;
+		}
+		if ($ok) {
+			my $n = scalar(@files);
+			$c->addgoodmessage($c->maketext('Archive "[_1]" created successfully ([quant,_2,file])', $archive, $n));
+		} else {
+			$c->addbadmessage($c->maketext(q{Can't create archive "[_1]": command returned [_2]}, $archive, $error));
+		}
+		return $c->Refresh;
 	} else {
-		$archive = uniqueName('', (scalar(@files) == 1) ? $files[0] . '.tgz' : "$c->{courseName}.tgz");
-		$ok      = Archive::Tar->create_archive($archive, COMPRESS_GZIP, @files_to_compress);
-		$error   = $Archive::Tar::error unless $ok;
+		return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
 	}
-	if ($ok) {
-		my $n = scalar(@files_to_compress);
-		$c->addgoodmessage($c->maketext('Archive "[_1]" created successfully ([quant, _2, file])', $archive, $n));
-	} else {
-		$c->addbadmessage($c->maketext(q{Can't create archive "[_1]": command returned [_2]}, $archive, $error));
-	}
-	return $c->Refresh;
 }
 
 # Unpack a gzipped tar archive

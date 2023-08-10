@@ -42,6 +42,23 @@
 		}
 	};
 
+	// Used for the archive subpage to highlight all in the Select
+	const selectAllButton = document.getElementById('select-all-files-button');
+	selectAllButton?.addEventListener('click', () => {
+		const n = document.getElementById('archive-files').options.length;
+		for (const opt of document.getElementById('archive-files').options) {
+			opt.selected = 'selected';
+		}
+	});
+
+
+	for (const r of document.querySelectorAll('input[name="archive_type"]')) {
+		r.addEventListener('click', () => {
+			const suffix = document.querySelector('input[name="archive_type"]:checked').value;
+			document.getElementById('filename_suffix').innerText = '.' + suffix;
+		});
+	}
+
 	files?.addEventListener('change', checkFiles);
 	if (files) checkFiles();
 

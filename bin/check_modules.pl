@@ -65,6 +65,7 @@ my @applicationsList = qw(
 );
 
 my @modulesList = qw(
+	Archive::Extract
 	Archive::Zip
 	Array::Utils
 	Benchmark
