@@ -101,7 +101,7 @@
 	<dd>
 		<%= maketext('To drop a student or students, select them for editing as described above and then set the '
 			. 'pop-up list to enrolled,drop, or audit. Dropped students cannot log in to the course, are not assigned '
-			. 'new homework sets and are not sent e-mail. They can be re-enrolled simply by changing their status back '
+			. 'new homework sets and are not sent email. They can be re-enrolled simply by changing their status back '
 			. 'to enrolled. No data is lost, any homework sets assigned before they were dropped are restored '
 			. 'unchanged.') =%>
 	</dd>
@@ -196,7 +196,7 @@
 			. 'adjust due dates, or to adjust the grades on a homework set for a student.') =%>
 	</li>
 	<li>
-		<%== maketext('Clicking the <strong>e-mail address</strong> link will bring up your standard email application '
+		<%== maketext('Clicking the <strong>email address</strong> link will bring up your standard email application '
 			. 'so that you can send email to the student. This works even if the student has been dropped from the '
 			. 'course. To send email to an entire class or to merge grades with the email message use the "Email" page '
 			. 'link in the left margin.') =%>
