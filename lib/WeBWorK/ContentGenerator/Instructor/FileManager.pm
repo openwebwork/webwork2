@@ -26,6 +26,9 @@ use File::Path;
 use File::Copy;
 use File::Spec;
 use String::ShellQuote;
+use Archive::Extract;
+use IO::Compress::Zip qw(zip $ZipError);
+use Archive::Tar;
 
 use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
 use WeBWorK::Upload;
@@ -344,24 +347,37 @@ sub Delete ($c) {
 	}
 }
 
-# Make a gzipped tar archive
+# Make a gzipped tar or zip archive
 sub MakeArchive ($c) {
 	my @files = $c->param('files');
 	if (scalar(@files) == 0) {
 		$c->addbadmessage($c->maketext('You must select at least one file for the archive'));
 		return $c->Refresh;
 	}
+	my $dir = "$c->{courseRoot}/$c->{pwd}";
+	chdir $dir;
+	my @files_to_compress;
 
-	my $dir     = "$c->{courseRoot}/$c->{pwd}";
-	my $archive = uniqueName($dir, (scalar(@files) == 1) ? $files[0] . '.tgz' : "$c->{courseName}.tgz");
-	my $tar = 'cd ' . shell_quote($dir) . " && $c->{ce}{externalPrograms}{tar} -cvzf " . shell_quote($archive, @files);
-	@files = readpipe $tar . ' 2>&1';
-	if ($? == 0) {
-		my $n = scalar(@files);
-		$c->addgoodmessage($c->maketext('Archive "[_1]" created successfully ([quant,_2,file])', $archive, $n));
+	for my $f (@files) {
+		push(@files_to_compress, glob("$f/**")) if -d $f;
+		push(@files_to_compress, $f)            if -f $f;
+	}
+
+	my ($archive, $error, $ok);
+	if ($c->param('archive_type') eq 'zip') {
+		$archive = uniqueName('', scalar(@files) == 1 ? $files[0] . '.zip' : "$c->{courseName}.zip");
+		$ok      = zip [@files_to_compress] => $archive;
+		$error   = $ZipError unless $ok;
 	} else {
-		$c->addbadmessage(
-			$c->maketext(q{Can't create archive "[_1]": command returned [_2]}, $archive, systemError($?)));
+		$archive = uniqueName('', (scalar(@files) == 1) ? $files[0] . '.tgz' : "$c->{courseName}.tgz");
+		$ok      = Archive::Tar->create_archive($archive, COMPRESS_GZIP, @files_to_compress);
+		$error   = $Archive::Tar::error unless $ok;
+	}
+	if ($ok) {
+		my $n = scalar(@files_to_compress);
+		$c->addgoodmessage($c->maketext('Archive "[_1]" created successfully ([quant, _2, file])', $archive, $n));
+	} else {
+		$c->addbadmessage($c->maketext(q{Can't create archive "[_1]": command returned [_2]}, $archive, $error));
 	}
 	return $c->Refresh;
 }
@@ -379,23 +395,16 @@ sub UnpackArchive ($c) {
 }
 
 sub unpack_archive ($c, $archive) {
-	my $dir = "$c->{courseRoot}/$c->{pwd}";
-	my @files;
-	if ($archive =~ m/\.zip$/) {
-		my $unzip = 'cd ' . shell_quote($dir) . " && $c->{ce}{externalPrograms}{unzip} -u " . shell_quote($archive);
-		@files = readpipe "$unzip";
-	} else {
-		my $z   = $archive =~ m/\.tar$/ ? '' : 'z';
-		my $tar = 'cd ' . shell_quote($dir) . " && $c->{ce}{externalPrograms}{tar} -vx${z}f " . shell_quote($archive);
-		@files = readpipe "$tar 2>&1";
-	}
+	my $dir  = "$c->{courseRoot}/$c->{pwd}";
+	my $arch = Archive::Extract->new(archive => "$dir/$archive");
+	my $ok   = $arch->extract(to => $dir);
 
-	if ($? == 0) {
-		my $n = scalar(@files);
+	if ($ok) {
+		my $n = scalar(@{ $arch->files });
 		$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $n));
 		return 1;
 	} else {
-		$c->addbadmessage($c->maketext(q{Can't unpack "[_1]": command returned [_2]}, $archive, systemError($?)));
+		$c->addbadmessage($c->maketext(q{Can't unpack "[_1]": command returned [_2]}, $archive, $arch->error));
 		return 0;
 	}
 }
