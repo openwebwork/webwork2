@@ -7,7 +7,7 @@
 <ul class="nav flex-column">
 	% if (defined $courseID && $authen->was_verified) {
 		% # Homework Sets or Course Administration
-		<li class="list-group-item list-group-item-primary nav-item">
+		<li class="list-group-item nav-item">
 			% if ($restricted_navigation) {
 				<span class="nav-link disabled"><%= maketext('Homework Sets') %></span>
 			% } else {
@@ -16,7 +16,7 @@
 		</li>
 		%
 		% if (defined $setID) {
-			<li class="list-group-item list-group-item-primary nav-item">
+			<li class="list-group-item nav-item">
 				<ul class="nav flex-column">
 					% # Set link. The set record is needed to determine the assignment type.
 					% my $setRecord = $db->getGlobalSet($setID =~ s/,v\d+$//r);
@@ -74,18 +74,19 @@
 			% || $authz->hasPermissions($userID, 'change_email_address')
 			% || $authz->hasPermissions($userID, 'change_pg_display_settings'))
 		% {
-			<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('options') %></li>
+			<li class="list-group-item nav-item"><%= $makelink->('options') %></li>
 		% }
 		%
 		% unless ($restricted_navigation || $courseID eq 'admin') {
-			<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('grades') %></li>
+			<li class="list-group-item nav-item"><%= $makelink->('grades') %></li>
 		% }
 		%
 		% if ($ce->{achievementsEnabled}) {
-			<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('achievements') %></li>
+			<li class="list-group-item nav-item"><%= $makelink->('achievements') %></li>
 		% }
 		%
 		% if ($authz->hasPermissions($userID, 'access_instructor_tools')) {
+			<hr class="site-nav-separator"/>
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_tools') %></li>
 			% # Class list editor
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_user_list') %></li>

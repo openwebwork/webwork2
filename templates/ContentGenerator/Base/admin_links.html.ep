@@ -1,5 +1,6 @@
 <ul class="nav flex-column">
-	<li class="list-group-item list-group-item-primary nav-item"><%= $makelink->('options') %></li>
+	<li class="list-group-item nav-item"><%= $makelink->('options') %></li>
+	<hr class="site-nav-separator"/>
 	% if ($authz->hasPermissions($userID, 'create_and_delete_courses')) {
 		<li class="list-group-item nav-item">
 			<%= $makelink->(

@@ -171,6 +171,7 @@ $site-nav-width: 250px !default;
 	transition-property: left, border-right-width;
 	transition-duration: 0.3s;
 	border-right: 1px solid $layout-divider-color;
+	padding: 2px;
 
 	&.toggle-width {
 		left: -20%;
@@ -194,6 +195,10 @@ $site-nav-width: 250px !default;
 		}
 	}
 
+	a:not(.btn):focus {
+		outline-width: 2px;
+	}
+
 	.info-box {
 		border-radius: 0;
 		border: none;
@@ -213,15 +218,15 @@ $site-nav-width: 250px !default;
 				padding-bottom: 0.2rem;
 
 				&.active {
-					background-color: var(--bs-primary, #038);
+					background-color: var(--ww-site-nav-link-active-background-color, #038);
 					color: var(--ww-primary-foreground-color, white);
+
 				}
 			}
-			&.list-group-item {
-				.nav-link:focus {
-					position: relative;
-					z-index: 2;
-				}
+
+			.nav-link:focus {
+				position: relative;
+				z-index: 2;
 			}
 		}
 	}
@@ -237,6 +242,11 @@ $site-nav-width: 250px !default;
 			padding-left: 0.5rem;
 			padding-right: 0.5rem;
 		}
+	}
+
+	hr.site-nav-separator {
+		margin: 3pt 7pt;
+		border: 1pt solid;
 	}
 }
 
