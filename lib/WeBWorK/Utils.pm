@@ -1859,27 +1859,30 @@ sub fetchEmailRecipients {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 
-	return unless $permissionType && defined $ce->{permissionLevels}{$permissionType};
+	my @recipients;
+	push(@recipients, @{ $ce->{mail}{feedbackRecipients} }) if ref($ce->{mail}{feedbackRecipients}) eq 'ARRAY';
+
+	return @recipients unless $permissionType && defined $ce->{permissionLevels}{$permissionType};
 
 	my $roles =
 		ref $ce->{permissionLevels}{$permissionType} eq 'ARRAY'
 		? $ce->{permissionLevels}{$permissionType}
 		: role_and_above($ce->{userRoles}, $ce->{permissionLevels}{$permissionType});
 	my @rolePermissionLevels = map { $ce->{userRoles}{$_} } grep { defined $ce->{userRoles}{$_} } @$roles;
-	return unless @rolePermissionLevels;
+	return @recipients unless @rolePermissionLevels;
 
 	my $user_ids = [ map { $_->user_id } $db->getPermissionLevelsWhere({ permission => \@rolePermissionLevels }) ];
 
-	my @recipients =
+	push(
+		@recipients,
 		map { $_->rfc822_mailbox } $db->getUsersWhere({
 			user_id       => $user_ids,
 			email_address => { '!=', undef },
 			$ce->{feedback_by_section}
-			&& defined $sender
-			&& defined $sender->section ? (section => $sender->section) : (),
-		});
-
-	push @recipients, @{ $ce->{mail}{feedbackRecipients} } if ref($ce->{mail}{feedbackRecipients}) eq 'ARRAY';
+				&& defined $sender
+				&& defined $sender->section ? (section => $sender->section) : (),
+		})
+	);
 
 	return @recipients;
 }
