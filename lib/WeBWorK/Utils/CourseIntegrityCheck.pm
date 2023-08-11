@@ -338,7 +338,7 @@ sub updateCourseDirectories {
 	my @courseDirectories = keys %{ $ce->{courseDirs} };
 
 	#FIXME this is hardwired for the time being.
-	my %updateable_directories = (html_temp => 1, mailmerge => 1, tmpEditFileDir => 1);
+	my %updateable_directories = (html_temp => 1, mailmerge => 1, tmpEditFileDir => 1, hardcopyThemes => 1);
 
 	my @messages;
 
