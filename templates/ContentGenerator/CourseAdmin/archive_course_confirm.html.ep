@@ -39,7 +39,7 @@
 </ul>
 <ul>
 	% for (@$dir_update_messages) {
-		<li><span class="<%= $_->[2] ? 'text-success' : 'text-danger' %>"><%= $_->[1] %></span></li>
+		<li><span class="<%= $_->[1] ? 'text-success' : 'text-danger' %>"><%= $_->[0] %></span></li>
 	% }
 </ul>
 % if ($directories_ok) {
