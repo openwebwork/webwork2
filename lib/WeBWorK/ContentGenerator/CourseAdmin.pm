@@ -886,7 +886,8 @@ sub do_delete_course ($c) {
 		# Find the contact person for the course by searching the admin classlist.
 		my @contacts = grep {/_$delete_courseID$/} $db->listUsers;
 		if (@contacts) {
-			die 'Incorrect number of contacts for the course $delete_courseID' . join(' ', @contacts) if @contacts != 1;
+			die "Incorrect number of contacts for the course $delete_courseID: " . join(' ', @contacts)
+				if @contacts != 1;
 
 			# Mark the contact person as dropped.
 			my $User = $db->getUser($contacts[0]);

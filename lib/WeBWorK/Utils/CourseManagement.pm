@@ -33,7 +33,11 @@ use UUID::Tiny qw(create_uuid_as_string);
 use WeBWorK::Debug;
 use File::Path qw(rmtree);
 use File::Copy qw(move);
+use File::Copy::Recursive qw(dircopy);
 use File::Spec;
+use File::Find;
+use Archive::Tar;
+use Archive::Extract;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Debug;
@@ -274,8 +278,8 @@ sub addCourse {
 		pop @courseDirElements;
 		my $courseDirParent = File::Spec->catdir(@courseDirElements);
 		unless (-w $courseDirParent) {
-			warn
-				"Can't create $courseDirName directory '$courseDir', since the parent directory is not writeable. You will have to create this directory manually.\n";
+			warn "Can't create $courseDirName directory '$courseDir', since the parent directory is not writeable. "
+				. "You will have to create this directory manually.\n";
 			next;
 		}
 
@@ -335,18 +339,8 @@ sub addCourse {
 		## copy templates ##
 		if (-d $sourceDir) {
 			my $destDir = $ce->{courseDirs}{templates};
-			my $cp_cmd  = "2>&1 "
-				. $ce->{externalPrograms}{cp} . " -R "
-				. shell_quote($sourceDir) . "/* "
-				. shell_quote($destDir);
-			my $cp_out = readpipe $cp_cmd;
-			if ($?) {
-				my $exit   = $? >> 8;
-				my $signal = $? & 127;
-				my $core   = $? & 128;
-				warn
-					"Failed to copy templates from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
-			}
+			my $copy_ok = dircopy("$sourceDir", $destDir);
+			warn "Failed to copy templates from course '$sourceCourse': $! " if $!;
 		} else {
 			warn
 				"Failed to copy templates from course '$sourceCourse': templates directory '$sourceDir' does not exist.\n";
@@ -356,18 +350,8 @@ sub addCourse {
 		$sourceDir = $sourceCE->{courseDirs}->{html};
 		if (-d $sourceDir) {
 			my $destDir = $ce->{courseDirs}{html};
-			my $cp_cmd  = "2>&1 "
-				. $ce->{externalPrograms}{cp} . " -R "
-				. shell_quote($sourceDir) . "/* "
-				. shell_quote($destDir);
-			my $cp_out = readpipe $cp_cmd;
-			if ($?) {
-				my $exit   = $? >> 8;
-				my $signal = $? & 127;
-				my $core   = $? & 128;
-				warn
-					"Failed to copy html from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
-			}
+			dircopy($sourceDir, $destDir);
+			warn "Failed to copy html from course '$sourceCourse': $!" if ($!);
 		} else {
 			warn "Failed to copy html from course '$sourceCourse': html directory '$sourceDir' does not exist.\n";
 		}
@@ -376,17 +360,8 @@ sub addCourse {
 		if (exists $options{copySimpleConfig}) {
 			my $sourceFile = $sourceCE->{courseFiles}->{simpleConfig};
 			if (-e $sourceFile) {
-				my $destFile = $ce->{courseFiles}{simpleConfig};
-				my $cp_cmd =
-					join(" ", ("2>&1", $ce->{externalPrograms}{cp}, shell_quote($sourceFile), shell_quote($destFile)));
-				my $cp_out = readpipe $cp_cmd;
-				if ($?) {
-					my $exit   = $? >> 8;
-					my $signal = $? & 127;
-					my $core   = $? & 128;
-					warn
-						"Failed to copy simple.conf from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
-				}
+				my $copy_ok = copy($sourceFile, $ce->{courseFiles}{simpleConfig});
+				warn "Failed to copy simple.conf from course '$sourceCourse': $!" unless $copy_ok;
 			}
 		}
 
@@ -471,19 +446,10 @@ sub renameCourse {
 	##### step 1: move course directory #####
 
 	# move top-level course directory
-	my $mv_cmd =
-		"2>&1" . " "
-		. $oldCE->{externalPrograms}{mv} . " "
-		. shell_quote($oldCourseDir) . " "
-		. shell_quote($newCourseDir);
-	debug("moving course dir: $mv_cmd");
-	my $mv_out = readpipe $mv_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
-		die "Failed to move course directory with command '$mv_cmd' (exit=$exit signal=$signal core=$core): $mv_out\n";
-	}
+	my $mv_ok = move($oldCourseDir, $newCourseDir);
+	debug("moving course dir from $oldCourseDir to $newCourseDir");
+
+	die "Failed to move course directory:  $!\n" unless ($mv_ok);
 
 	# get new course environment
 	my $newCE = $oldCE->new({ courseName => $newCourseID });
@@ -503,16 +469,16 @@ sub renameCourse {
 
 			# is the source really a directory
 			unless (-d $oldDir) {
-				warn
-					"$courseDirName: Can't move '$oldDir' to '$newDir', since the source is not a directory. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the source is not a directory. "
+					. "You will have to move this directory manually.\n";
 				next;
 			}
 
 		# does the destination already exist?
 		# (this should only happen on extra-coursedir directories, since we make sure the root dir doesn't exist above.)
 			if (-e $newDir) {
-				warn
-					"$courseDirName: Can't move '$oldDir' to '$newDir', since the target already exists. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the target already exists. "
+					. "You will have to move this directory manually.\n";
 				next;
 			}
 
@@ -521,8 +487,8 @@ sub renameCourse {
 			pop @oldDirElements;
 			my $oldDirParent = File::Spec->catdir(@oldDirElements);
 			unless (-w $oldDirParent) {
-				warn
-					"$courseDirName: Can't move '$oldDir' to '$newDir', since the source parent directory is not writeable. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the source parent directory is not "
+					. "writeable. You will have to move this directory manually.\n";
 				next;
 			}
 
@@ -531,23 +497,15 @@ sub renameCourse {
 			pop @newDirElements;
 			my $newDirParent = File::Spec->catdir(@newDirElements);
 			unless (-w $newDirParent) {
-				warn
-					"$courseDirName: Can't move '$oldDir' to '$newDir', since the destination parent directory is not writeable. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the destination parent directory is "
+					. "not writeable. You will have to move this directory manually.\n";
 				next;
 			}
 
 			# try to move the directory
 			debug("Going to move $oldDir to $newDir...\n");
-			my $mv_cmd =
-				"2>&1" . " " . $oldCE->{externalPrograms}{mv} . " " . shell_quote($oldDir) . " " . shell_quote($newDir);
-			my $mv_out = readpipe $mv_cmd;
-			if ($?) {
-				my $exit   = $? >> 8;
-				my $signal = $? & 127;
-				my $core   = $? & 128;
-				warn
-					"Failed to move directory with command '$mv_cmd' (exit=$exit signal=$signal core=$core): $mv_out\n";
-			}
+			my $mv_ok = move($oldDir, $newDir);
+			warn "Failed to move directory from $oldDir to $newDir" unless $mv_ok;
 		} else {
 			debug("oldDir $oldDir was already moved.\n");
 		}
@@ -802,22 +760,15 @@ sub archiveCourse {
 	##### step 2: tar and gzip course directory (including dumped database) #####
 
 	# we want tar to run from the parent directory of the course directory
-	my $chdir_to = "$course_dir/..";
+	chdir("$course_dir/..");
+	my @files;
+	my $parent_dir = $ce->{webworkDirs}{courses};
+	finddepth(sub { push(@files, $File::Find::name =~ s/$parent_dir\///r) }, $course_dir);
+	my $ok = Archive::Tar->create_archive($tmp_archive_path, COMPRESS_GZIP, @files);
 
-	my $tar_cmd = "2>&1 "
-		. $ce->{externalPrograms}{tar} . " -C "
-		. shell_quote($chdir_to)
-		. " -czf "
-		. shell_quote($tmp_archive_path) . " "
-		. shell_quote($courseID);
-	my $tar_out = readpipe $tar_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
+	unless ($ok) {
 		_archiveCourse_remove_dump_dir($ce, $dump_dir);
-		croak
-			"Failed to archive course directory '$course_dir' with command '$tar_cmd' (exit=$exit signal=$signal core=$core): $tar_out\n";
+		croak "Failed to archive course directory '$course_dir': $!";
 	}
 
 	##### step 3: cleanup -- remove database dump files from course directory #####
@@ -838,15 +789,15 @@ sub archiveCourse {
 
 sub _archiveCourse_remove_dump_dir {
 	my ($ce, $dump_dir) = @_;
-	my $rm_cmd = "2>&1 " . $ce->{externalPrograms}{rm} . " -rf " . shell_quote($dump_dir);
-	my $rm_out = readpipe $rm_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
-		carp
-			"Failed to remove course database dump directory '$dump_dir' with command '$rm_cmd' (exit=$exit signal=$signal core=$core): $rm_out\n";
+	rmtree($dump_dir, { error => \my $err });
+
+	if ($err && @$err) {
+		for my $diag (@$err) {
+			my ($file, $message) = %$diag;
+			warn "Failed to remove course database dump directory: $file with message: $message ";
+		}
 	}
+	return;
 }
 
 ################################################################################
@@ -904,19 +855,11 @@ sub unarchiveCourse {
 
 	##### step 2: crack open the tarball #####
 
-	my $tar_cmd = "2>&1 "
-		. $ce->{externalPrograms}{tar} . " -C "
-		. shell_quote($coursesDir)
-		. " -xzf "
-		. shell_quote($archivePath);
-	my $tar_out = readpipe $tar_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
+	my $arch    = Archive::Extract->new(archive => $archivePath);
+	my $extr_ok = $arch->extract(to => $coursesDir);
+	unless ($extr_ok) {
 		_unarchiveCourse_move_back($restoreCourseData);
-		die
-			"Failed to unarchive course directory with command '$tar_cmd' (exit=$exit signal=$signal core=$core): $tar_out\n";
+		die "Failed to unarchive course directory for course $newCourseID: $!";
 	}
 
 	##### step 3: read the course environment for this course #####

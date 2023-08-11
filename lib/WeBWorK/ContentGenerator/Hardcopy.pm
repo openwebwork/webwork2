@@ -24,6 +24,7 @@ problem sets.
 =cut
 
 use File::Path;
+use File::Copy qw(move copy);
 use File::Temp qw/tempdir/;
 use String::ShellQuote;
 use Archive::Zip qw(:ERROR_CODES);
@@ -596,19 +597,14 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 
 	# Try to move the hardcopy file out of the temp directory.
 	my $final_file_final_path = "$temp_dir_parent_path/$final_file_name";
-	my $mv_cmd = '2>&1 ' . $ce->{externalPrograms}{mv} . ' ' . shell_quote($final_file_path, $final_file_final_path);
-	my $mv_out = readpipe $mv_cmd;
-	if ($?) {
+	my $mv_ok                 = move($final_file_path, $final_file_final_path);
+	unless ($mv_ok) {
 		$c->add_error(
 			'Failed to move hardcopy file "',
 			$c->tag('code', $final_file_name),
-			'" from "',
-			$c->tag('code', $temp_dir_path),
-			'" to "',
-			$c->tag('code', $temp_dir_parent_path),
-			'":',
-			$c->tag('br'),
-			$c->tag('pre', $mv_out)
+			'" from "', $c->tag('code', $temp_dir_path),
+			'" to "',   $c->tag('code', $temp_dir_parent_path),
+			'":',       $c->tag('br'), $c->tag('pre', $!)
 		);
 		$final_file_final_path = "$temp_dir_rel_path/$final_file_name";
 	}
@@ -633,16 +629,15 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 
 # helper function to remove temp dirs
 sub delete_temp_dir ($c, $temp_dir_path) {
-	my $rm_cmd = '2>&1 ' . $c->ce->{externalPrograms}{rm} . ' -rf ' . shell_quote($temp_dir_path);
-	my $rm_out = readpipe $rm_cmd;
-	if ($?) {
-		$c->add_error(
-			'Failed to remove temporary directory "',
-			$c->tag('code', $temp_dir_path),
-			'":', $c->tag('br'), $c->tag('pre', $rm_out)
-		);
-	}
+	rmtree($temp_dir_path), { error => \my $err };
 
+	if ($err && @$err) {
+		for my $diag (@$err) {
+			my ($file, $message) = %$diag;
+			$c->add_error('Failed to remove temporary directory "',
+				$c->tag('code', $file, '":', $c->tag('br'), $c->tag('pre', $message)));
+		}
+	}
 	return;
 }
 
@@ -669,17 +664,15 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	}
 
 	# Move the tex file into the bundle directory
-	my $mv_cmd =
-		"2>&1 " . $c->ce->{externalPrograms}{mv} . " " . shell_quote("$temp_dir_path/$src_name", $bundle_path);
-	my $mv_out = readpipe $mv_cmd;
+	my $mv_ok = move("$temp_dir_path/$src_name", $bundle_path);
 
-	if ($?) {
+	unless ($mv_ok) {
 		$c->add_error(
 			'Failed to move "',
 			$c->tag('code', $src_name),
 			'" into directory "',
 			$c->tag('code', $bundle_path),
-			'":', $c->tag('br'), $c->tag('pre', $mv_out)
+			'":', $c->tag('br'), $c->tag('pre', $!)
 		);
 		return $src_name;
 	}
@@ -687,30 +680,26 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	# Copy the common tex files into the bundle directory
 	my $ce = $c->ce;
 	for (qw{webwork2.sty webwork_logo.png}) {
-		my $cp_cmd =
-			"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{webworkDirs}{assetsTex}/$_", $bundle_path);
-		my $cp_out = readpipe $cp_cmd;
-		if ($?) {
+		my $copy_ok = copy("$ce->{webworkDirs}{assetsTex}/$_", $bundle_path);
+		unless ($copy_ok) {
 			$c->add_error(
 				'Failed to copy "',
 				$c->tag('code', "$ce->{webworkDirs}{assetsTex}/$_"),
 				'" into directory "',
 				$c->tag('code', $bundle_path),
-				'":', $c->tag('br'), $c->tag('pre', $cp_out)
+				'":', $c->tag('br'), $c->tag('pre', $!)
 			);
 		}
 	}
 	for (qw{pg.sty PGML.tex CAPA.tex}) {
-		my $cp_cmd =
-			"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{pg}{directories}{assetsTex}/$_", $bundle_path);
-		my $cp_out = readpipe $cp_cmd;
-		if ($?) {
+		my $copy_ok = copy("$ce->{pg}{directories}{assetsTex}/$_", $bundle_path);
+		unless ($copy_ok) {
 			$c->add_error(
 				'Failed to copy "',
 				$c->tag('code', "$ce->{pg}{directories}{assetsTex}/$_"),
 				'" into directory "',
 				$c->tag('code', $bundle_path),
-				'":', $c->tag('br'), $c->tag('pre', $cp_out)
+				'":', $c->tag('br'), $c->tag('pre', $!)
 			);
 		}
 	}
@@ -728,15 +717,14 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 				$data =~ s{$resource}{$basename}g;
 
 				# Copy the image file into the bundle directory.
-				my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote($resource, $bundle_path);
-				my $cp_out = readpipe $cp_cmd;
-				if ($?) {
+				my $copy_ok = copy($resource, $bundle_path);
+				unless ($copy_ok) {
 					$c->add_error(
 						'Failed to copy image "',
 						$c->tag('code', $resource),
 						'" into directory "',
 						$c->tag('code', $bundle_path),
-						'":', $c->tag('br'), $c->tag('pre', $cp_out)
+						'":', $c->tag('br'), $c->tag('pre', $!)
 					);
 				}
 			}
@@ -822,11 +810,9 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 	# try rename the pdf file
 	my $src_name  = "hardcopy.pdf";
 	my $dest_name = "$final_file_basename.pdf";
-	my $mv_cmd    = "2>&1 "
-		. $c->ce->{externalPrograms}{mv} . " "
-		. shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
-	my $mv_out = readpipe $mv_cmd;
-	if ($?) {
+
+	my $mv_ok = move("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
+	unless ($mv_ok) {
 		$c->add_error(
 			'Failed to rename "',
 			$c->tag('code', $src_name),
@@ -836,7 +822,7 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 			$c->tag('code', $temp_dir_path),
 			'":',
 			$c->tag('br'),
-			$c->tag('pre', $mv_out)
+			$c->tag('pre', $!)
 		);
 		$final_file_name = $src_name;
 	} else {
