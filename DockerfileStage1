@@ -133,8 +133,8 @@ RUN apt-get update \
 	texlive-lang-arabic \
 	texlive-lang-other \
 	texlive-latex-extra \
-	texlive-latex-recommended \
 	texlive-plain-generic \
+	texlive-science \
 	texlive-xetex \
 	tzdata \
 	zip $ADDITIONAL_BASE_IMAGE_PACKAGES \
