@@ -43,19 +43,17 @@
 	};
 
 	// Used for the archive subpage to highlight all in the Select
-	const selectAllButton = document.getElementById('select-all-files-button');
-	selectAllButton?.addEventListener('click', () => {
-		const n = document.getElementById('archive-files').options.length;
-		for (const opt of document.getElementById('archive-files').options) {
-			opt.selected = 'selected';
+	document.getElementById('select-all-files-button')?.addEventListener('click', () => {
+		for (const option of document.getElementById('archive-files').options) {
+			option.selected = 'selected';
 		}
 	});
 
-
-	for (const r of document.querySelectorAll('input[name="archive_type"]')) {
-		r.addEventListener('click', () => {
-			const suffix = document.querySelector('input[name="archive_type"]:checked').value;
-			document.getElementById('filename_suffix').innerText = '.' + suffix;
+	for (const archiveTypeInput of document.querySelectorAll('input[name="archive_type"]')) {
+		archiveTypeInput.addEventListener('click', () => {
+			document.getElementById('filename_suffix').innerText = `.${
+				document.querySelector('input[name="archive_type"]:checked').value
+			}`;
 		});
 	}
 

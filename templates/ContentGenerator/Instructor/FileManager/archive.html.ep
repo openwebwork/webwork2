@@ -1,12 +1,13 @@
-% # template for the archive subpage.
-<div class="card w-75 mx-auto">
+% use Mojo::File qw(path);
+%
+<div class="card mx-auto" style="max-width:700px">
 	<div class="card-body">
 		<div class="mb-3">
 			<b><%= maketext('The following files have been selected for archiving.  Select the type '
-				. 'of archive and any subset of the requested files.') =%> </b>
+				. 'of archive and any subset of the requested files.') =%></b>
 		</div>
 		<div class="row">
-		  <div class="col-4">
+			<div class="col-12">
 				<div class="input-group input-group-sm mb-2">
 					<span class="input-group-text"><%= maketext('Archive Filename') %>:</span>
 					<%= text_field archive_filename => '',
@@ -20,38 +21,38 @@
 			<div class="input-group input-group-sm mb-2">
 				<span class="input-group-text"><%= maketext('Archive Type') %>:</span>
 				<div class="input-group-text flex-grow-1">
-					<label class="form-check-label me-4">
+					<label class="form-check-label me-2">
 						<%= radio_button archive_type => 'zip', checked => undef, class => 'form-check-input mx-1' =%>
 						<%= maketext('Zip File') =%>
 					</label>
-					<label class="form-check-label me-4">
+					<label class="form-check-label">
 						<%= radio_button archive_type => 'tgz', class => 'form-check-input mx-1' =%>
 						<%= maketext('Compressed Tar') =%>
 					</label>
-					<button type="button" class="btn btn-sm btn-secondary" id="select-all-files-button">
-						<%= maketext('Select All Files') =%>
-					</button>
 				</div>
 			</div>
 		</div>
-
-
+		<div class="row mb-2">
+			<div class="col-12">
+				<button type="button" class="btn btn-sm btn-secondary" id="select-all-files-button">
+					<%= maketext('Select All Files') =%>
+				</button>
+			</div>
+		</div>
+		%
 		% my @files_to_compress;
-		% chdir($dir);
-		% for my $f (@$files) {
-		% 	push(@files_to_compress, glob("$f/**")) if -d $f;
-		% 	push(@files_to_compress, $f)            if -f $f;
+		% for my $file (@$files) {
+			% push(@files_to_compress, $file);
+			% my $path = path("$dir/$file");
+			% push(@files_to_compress, @{ $path->list_tree({ hidden => 1 })->map('to_rel', $dir) })
+				% if (-d $path && !-l $path);
 		% }
-		% # remove any directories
-		% @files_to_compress = grep { -f $_ } @files_to_compress;
-
-		<%= select_field files => \@files_to_compress,
-					id    => 'archive-files',
-					class => 'form-select',
-					size => 20,
-					multiple => undef
-				=%>
-
+		%
+		% # Select all files initially. Even those that are in previously selected directories or subdirectories.
+		% param('files', \@files_to_compress);
+		<%= select_field files => \@files_to_compress, id => 'archive-files', class => 'form-select mb-2',
+			size => 20, multiple => undef =%>
+		%
 		<p><%= maketext('Create the archive of the select files?') %></p>
 		<div class="d-flex justify-content-evenly">
 			<%= submit_button maketext('Cancel'), name => 'action', class => 'btn btn-sm btn-secondary' =%>
@@ -59,4 +60,5 @@
 		</div>
 	</div>
 </div>
+<%= hidden_field confirmed => 'MakeArchive' =%>
 <%= $c->HiddenFlags =%>

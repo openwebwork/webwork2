@@ -27,8 +27,8 @@ use File::Copy;
 use File::Spec;
 use String::ShellQuote;
 use Archive::Extract;
-use IO::Compress::Zip qw(zip $ZipError);
 use Archive::Tar;
+use Archive::Zip qw(:ERROR_CODES);
 
 use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
 use WeBWorK::Upload;
@@ -356,14 +356,18 @@ sub MakeArchive ($c) {
 	}
 
 	my $dir = "$c->{courseRoot}/$c->{pwd}";
-	if ($c->param('confirmed')) {
-		chdir($dir);
-		# remove any directories
-		my @files_to_compress = grep { -f $_ } @files;
 
-		unless ($c->param('archive_filename') && scalar(@files_to_compress) > 0) {
-			$c->addbadmessage($c->maketext('The filename cannot be empty.'))      unless $c->param('archive_filename');
-			$c->addbadmessage($c->maketext('At least one file must be selected')) unless scalar(@files_to_compress) > 0;
+	if ($c->param('confirmed')) {
+		my $action = $c->param('action')          || 'Cancel';
+		return $c->Refresh if $action eq 'Cancel' || $action eq $c->maketext('Cancel');
+
+		unless ($c->param('archive_filename')) {
+			$c->addbadmessage($c->maketext('The filename cannot be empty.'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		unless (@files > 0) {
+			$c->addbadmessage($c->maketext('At least one file must be selected'));
 			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
 		}
 
@@ -371,18 +375,39 @@ sub MakeArchive ($c) {
 		my ($error, $ok);
 		if ($c->param('archive_type') eq 'zip') {
 			$archive .= '.zip';
-			$ok    = zip \@files_to_compress => $archive;
-			$error = $ZipError unless $ok;
+			my $zip = Archive::Zip->new();
+			for (@files) {
+				my $fullFile = "$dir/$_";
+
+				# Skip symbolic links for now. As of yet, I have not found a perl module that can add symbolic links to
+				# zip files correctly.  Archive::Zip should be able to do this, but has permissions issues doing so.
+				next if -l $fullFile;
+
+				if (-d $fullFile) {
+					$zip->addDirectory($fullFile => $_);
+				} else {
+					$zip->addFile($fullFile => $_);
+				}
+			}
+			$ok = $zip->writeToFileNamed("$dir/$archive") == AZ_OK;
+			# FIXME: This should check the error code, and give a more specific error message.
+			$error = 'Unable to create zip archive.' unless $ok;
 		} else {
 			$archive .= '.tgz';
-			$ok    = Archive::Tar->create_archive($archive, COMPRESS_GZIP, @files_to_compress);
-			$error = $Archive::Tar::error unless $ok;
+			my $tar = Archive::Tar->new;
+			$tar->add_files(map {"$dir/$_"} @files);
+			# Make file names in the archive relative to the current working directory.
+			for ($tar->get_files) {
+				$tar->rename($_->full_path, $_->full_path =~ s!^$dir/!!r);
+			}
+			$ok    = $tar->write("$dir/$archive", COMPRESS_GZIP);
+			$error = $tar->error unless $ok;
 		}
 		if ($ok) {
-			my $n = scalar(@files);
-			$c->addgoodmessage($c->maketext('Archive "[_1]" created successfully ([quant,_2,file])', $archive, $n));
+			$c->addgoodmessage(
+				$c->maketext('Archive "[_1]" created successfully ([quant,_2,file])', $archive, scalar(@files)));
 		} else {
-			$c->addbadmessage($c->maketext(q{Can't create archive "[_1]": command returned [_2]}, $archive, $error));
+			$c->addbadmessage($c->maketext(q{Can't create archive "[_1]": [_2]}, $archive, $error));
 		}
 		return $c->Refresh;
 	} else {

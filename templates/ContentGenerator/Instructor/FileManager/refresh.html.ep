@@ -34,7 +34,7 @@
 			dir => 'ltr', size => 17, multiple => undef =%>
 	</div>
 	<div class="col-md-4 mb-2">
-		<div class="d-md-flex flex-column justify-content-evenly">
+		<div class="d-flex flex-md-column flex-wrap flex-md-nowrap justify-content-evenly gap-1 gap-md-0">
 			<%= submit_button maketext('View'), id => 'View', %button =%>
 			<%= submit_button maketext('Edit'), id => 'Edit', %button =%>
 			<%= submit_button maketext('Download'), id => 'Download', %button =%>
@@ -50,7 +50,7 @@
 			% unless ($c->{courseName} eq 'admin') {
 				<%= submit_button maketext('Archive Course'), id => 'ArchiveCourse', %button =%>
 			% }
-			<div style="height: 10px"></div>
+			<div class="d-none d-md-block" style="height: 10px"></div>
 			<%= submit_button maketext('New File'), id => 'NewFile', %button =%>
 			<%= submit_button maketext('New Folder'), id => 'NewFolder', %button =%>
 			<%= submit_button maketext('Refresh'), id => 'Refresh', %button =%>
