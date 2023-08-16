@@ -762,7 +762,7 @@ sub archiveCourse {
 	my $data_dir         = $ce->{courseDirs}{DATA};
 	my $dump_dir         = "$data_dir/mysqldump";
 	my $archive_path;
-	if (defined $options{archive_path} && $options{archive_path} =~ /S/) {
+	if (defined $options{archive_path} && $options{archive_path} =~ /\S/) {
 		$archive_path = $options{archive_path};
 	} else {
 		$archive_path = "$ce->{webworkDirs}{courses}/admin/archives/$courseID.tar.gz";
