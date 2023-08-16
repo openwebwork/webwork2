@@ -44,7 +44,6 @@
 		% x('Make Archive')   => 'MakeArchive',
 		% x('Unpack Archive') => 'UnpackArchive',
 		% x('Archive Course') => 'Refresh',
-		% x('Create Archive') => 'CreateArchive'
 	% );
 	%
 	% # Add translated action names to the method map.

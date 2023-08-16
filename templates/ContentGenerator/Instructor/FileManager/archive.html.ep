@@ -56,7 +56,7 @@
 		<p><%= maketext('Create the archive of the select files?') %></p>
 		<div class="d-flex justify-content-evenly">
 			<%= submit_button maketext('Cancel'), name => 'action', class => 'btn btn-sm btn-secondary' =%>
-			<%= submit_button maketext('Create Archive'), name => 'action', class => 'btn btn-sm btn-primary' =%>
+			<%= submit_button maketext('Make Archive'), name => 'action', class => 'btn btn-sm btn-primary' =%>
 		</div>
 	</div>
 </div>
