@@ -9,6 +9,7 @@ use warnings;
 use File::Fetch;
 use File::Copy;
 use File::Path;
+use Archive::Extract;
 use Mojo::File;
 use JSON;
 
@@ -53,8 +54,9 @@ my $releaseDownloadFF = File::Fetch->new(uri => $downloadURL);
 my $releaseFile       = $releaseDownloadFF->fetch(to => $ce->{webworkDirs}{tmp}) or die $releaseDownloadFF->error;
 say 'Downloaded release archive, now extracting.';
 
-`$ce->{externalPrograms}{tar} xzf $releaseFile -C $ce->{webworkDirs}{tmp}`;
-die "There was an error extracting the release: $!" if $?;
+my $arch = Archive::Extract->new(archive => "$releaseFile");
+my $ok   = $arch->extract(to => $ce->{webworkDirs}{tmp});
+die "There was an error extracting the release: $arch->error" unless $ok;
 
 # Copy the json files into htdocs.
 for (glob("$ce->{webworkDirs}{tmp}/webwork-open-problem-library/JSON-SAVED/*.json")) {
