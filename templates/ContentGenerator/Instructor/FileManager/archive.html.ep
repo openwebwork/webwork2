@@ -44,7 +44,7 @@
 		% for my $file (@$files) {
 			% push(@files_to_compress, $file);
 			% my $path = path("$dir/$file");
-			% push(@files_to_compress, @{ $path->list_tree({ hidden => 1 })->map('to_rel', $dir) })
+			% push(@files_to_compress, @{ $path->list_tree({ dir => 1, hidden => 1 })->map('to_rel', $dir) })
 				% if (-d $path && !-l $path);
 		% }
 		%

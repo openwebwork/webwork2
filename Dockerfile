@@ -185,7 +185,7 @@ RUN apt-get update \
 # ==================================================================
 # Phase 4 - Install additional Perl modules from CPAN that are not packaged for Ubuntu or are outdated in Ubuntu.
 
-RUN cpanm install Statistics::R::IO DBD::MariaDB Mojo::SQLite@3.002 Perl::Tidy@20220613 \
+RUN cpanm install Statistics::R::IO DBD::MariaDB Mojo::SQLite@3.002 Perl::Tidy@20220613 Archive::Zip::SimpleZip \
 	&& rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # ==================================================================

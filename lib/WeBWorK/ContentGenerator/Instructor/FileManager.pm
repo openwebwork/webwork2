@@ -28,7 +28,7 @@ use File::Spec;
 use String::ShellQuote;
 use Archive::Extract;
 use Archive::Tar;
-use Archive::Zip qw(:ERROR_CODES);
+use Archive::Zip::SimpleZip qw($SimpleZipError);
 
 use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
 use WeBWorK::Upload;
@@ -355,7 +355,7 @@ sub MakeArchive ($c) {
 		return $c->Refresh;
 	}
 
-	my $dir = "$c->{courseRoot}/$c->{pwd}";
+	my $dir = $c->{pwd} eq '.' ? $c->{courseRoot} : "$c->{courseRoot}/$c->{pwd}";
 
 	if ($c->param('confirmed')) {
 		my $action = $c->param('action')          || 'Cancel';
@@ -375,23 +375,13 @@ sub MakeArchive ($c) {
 		my ($error, $ok);
 		if ($c->param('archive_type') eq 'zip') {
 			$archive .= '.zip';
-			my $zip = Archive::Zip->new();
-			for (@files) {
-				my $fullFile = "$dir/$_";
-
-				# Skip symbolic links for now. As of yet, I have not found a perl module that can add symbolic links to
-				# zip files correctly.  Archive::Zip should be able to do this, but has permissions issues doing so.
-				next if -l $fullFile;
-
-				if (-d $fullFile) {
-					$zip->addDirectory($fullFile => $_);
-				} else {
-					$zip->addFile($fullFile => $_);
+			if (my $zip = Archive::Zip::SimpleZip->new("$dir/$archive")) {
+				for (@files) {
+					$zip->add("$dir/$_", Name => $_, storelinks => 1);
 				}
+				$ok = $zip->close;
 			}
-			$ok = $zip->writeToFileNamed("$dir/$archive") == AZ_OK;
-			# FIXME: This should check the error code, and give a more specific error message.
-			$error = 'Unable to create zip archive.' unless $ok;
+			$error = $SimpleZipError unless $ok;
 		} else {
 			$archive .= '.tgz';
 			my $tar = Archive::Tar->new;
@@ -430,11 +420,9 @@ sub UnpackArchive ($c) {
 sub unpack_archive ($c, $archive) {
 	my $dir  = "$c->{courseRoot}/$c->{pwd}";
 	my $arch = Archive::Extract->new(archive => "$dir/$archive");
-	my $ok   = $arch->extract(to => $dir);
 
-	if ($ok) {
-		my $n = scalar(@{ $arch->files });
-		$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $n));
+	if ($arch->extract(to => $dir)) {
+		$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', scalar(@{ $arch->files })));
 		return 1;
 	} else {
 		$c->addbadmessage($c->maketext(q{Can't unpack "[_1]": command returned [_2]}, $archive, $arch->error));
