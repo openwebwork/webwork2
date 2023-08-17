@@ -20,3 +20,11 @@
 .text-primary {
 	color: $link-color !important;
 }
+
+a:not(.btn):focus {
+	outline-color: #{darken($link-hover-color, 1%)};
+}
+
+:root {
+	--ww-site-nav-link-active-background-color: #{$primary};
+}
