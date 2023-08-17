@@ -701,7 +701,7 @@ sub maybe_update_user ($self) {
 		$tempUser->student_id($self->{student_id} // '');
 
 		# Allow sites to customize the temp user
-		$ce->{LTI}{v1p1}{modify_user}($self, $tempUser) if ref($ce->{LTI}{v1p1}{modify_user}) eq 'CODE';
+		$ce->{LTI}{v1p3}{modify_user}($self, $tempUser) if ref($ce->{LTI}{v1p3}{modify_user}) eq 'CODE';
 
 		my $change_made = 0;
 		for my $element (qw(last_name first_name email_address status section recitation student_id)) {
