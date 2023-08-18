@@ -445,19 +445,17 @@ sub display_form ($c) {
 		my $themeTree = XML::LibXML->load_xml(location => "$ce->{webworkDirs}{hardcopyThemes}/$hardcopyTheme");
 		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label');
 	}
-	my @hardcopyThemesCourseAll;
+	my @files;
 	if (opendir(my $dhC, $ce->{courseDirs}{hardcopyThemes})) {
-		@hardcopyThemesCourseAll = grep {/\.xml$/} sort readdir($dhC);
+		@files = grep { /\.xml$/ && !/^\./ } sort readdir($dhC);
 	}
-	my @hardcopyThemesCourse = @hardcopyThemesCourseAll;
-	for my $hardcopyTheme (@hardcopyThemesCourseAll) {
+	my @hardcopyThemesCourse;
+	for my $hardcopyTheme (@files) {
 		eval {
 			my $themeTree = XML::LibXML->load_xml(location => "$ce->{courseDirs}{hardcopyThemes}/$hardcopyTheme");
 			$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
+			push(@hardcopyThemesCourse, $hardcopyTheme);
 		};
-		if ($@) {
-			@hardcopyThemesCourse = grep { $_ ne $hardcopyTheme } @hardcopyThemesCourse;
-		}
 	}
 	my $hardcopyThemesAvailable = [
 		sort(do {
