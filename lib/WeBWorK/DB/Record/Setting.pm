@@ -25,8 +25,6 @@ WeBWorK::DB::Record::Setting - represent a record from the setting table.
 use strict;
 use warnings;
 
-use WeBWorK::Utils::DBUpgrade;
-
 BEGIN {
 	__PACKAGE__->_fields(
 		name  => { type => "VARCHAR(240) NOT NULL", key => 1 },
@@ -35,10 +33,9 @@ BEGIN {
 	__PACKAGE__->_initial_records(
 		{
 			name  => "db_version",
-			value => 3.1415926       # $WeBWorK::Utils::DBUpgrade::THIS_DB_VERSION
+			value => 3.1415926
 		},
 	);
 }
 
 1;
-
