@@ -27,7 +27,7 @@ use File::Path;
 use File::Copy qw(move copy);
 use File::Temp qw/tempdir/;
 use String::ShellQuote;
-use Archive::Zip qw(:ERROR_CODES);
+use Archive::Zip::SimpleZip qw($SimpleZipError);
 use XML::LibXML;
 
 use WeBWorK::DB::Utils qw/user2global/;
@@ -740,12 +740,16 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	}
 
 	# Create a zip archive of the bundle directory
-	my $zip = Archive::Zip->new();
-	$zip->addTree($temp_dir_path);
+	my $zip_file = "$temp_dir_path/$final_file_basename.zip";
+	my $zip      = Archive::Zip::SimpleZip->new($zip_file);
+	$zip->add($temp_dir_path, Name => "hardcopy_files", StoreLink => 1);
 
-	my $zip_file = "$final_file_basename.zip";
-	unless ($zip->writeToFileNamed("$temp_dir_path/$zip_file") == AZ_OK) {
-		$c->add_error('Failed to create zip archive of directory "', $c->tag('code', $bundle_path), '"');
+	unless ($zip->close) {
+		$c->add_error(
+			'Failed to create zip archive of directory "',
+			$c->tag('code', $bundle_path),
+			': $SimpleZipError"'
+		);
 		return "$bundle_path/$src_name";
 	}
 

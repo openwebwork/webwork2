@@ -35,7 +35,7 @@ use File::Path qw(rmtree);
 use File::Copy qw(move);
 use File::Copy::Recursive qw(dircopy);
 use File::Spec;
-use File::Find;
+use Mojo::File;
 use Archive::Tar;
 use Archive::Extract;
 use WeBWorK::CourseEnvironment;
@@ -759,12 +759,14 @@ sub archiveCourse {
 
 	##### step 2: tar and gzip course directory (including dumped database) #####
 
-	# we want tar to run from the parent directory of the course directory
-	chdir("$course_dir/..");
-	my @files;
 	my $parent_dir = $ce->{webworkDirs}{courses};
-	finddepth(sub { push(@files, $File::Find::name =~ s/$parent_dir\///r) }, $course_dir);
-	my $ok = Archive::Tar->create_archive($tmp_archive_path, COMPRESS_GZIP, @files);
+	my $files      = Mojo::File->new($course_dir)->list_tree({ dir => 1, hidden => 1 })->map('to_abs');
+	my $tar        = Archive::Tar->new;
+	$tar->add_files(@$files);
+	for ($tar->get_files) {
+		$tar->rename($_->full_path, $_->full_path =~ s!^$parent_dir/!!r);
+	}
+	my $ok = $tar->write($tmp_archive_path, COMPRESS_GZIP);
 
 	unless ($ok) {
 		_archiveCourse_remove_dump_dir($ce, $dump_dir);

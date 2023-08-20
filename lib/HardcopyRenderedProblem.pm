@@ -28,7 +28,7 @@ use warnings;
 
 use File::Path;
 use String::ShellQuote;
-use Archive::Zip qw(:ERROR_CODES);
+use Archive::Zip::SimpleZip qw($SimpleZipError);
 use Mojo::File qw(path tempdir);
 use XML::LibXML;
 
@@ -172,11 +172,10 @@ sub generate_hardcopy_tex {
 	push(@$errors, "Failed to generate error log file: $@")                                     if $@;
 
 	# Create a zip archive of the bundle directory
-	my $zip = Archive::Zip->new;
-	$zip->addTree($working_dir->dirname->to_string);
+	my $zip = Archive::Zip::SimpleZip->new($working_dir->dirname->child('hardcopy.zip')->to_string);
+	$zip->add($working_dir->dirname->to_string, storelinks => 1);
 
-	push(@$errors, qq{Failed to create zip archive of directory "$working_dir"})
-		unless ($zip->writeToFileNamed($working_dir->dirname->child('hardcopy.zip')->to_string) == AZ_OK);
+	push(@$errors, qq{Failed to create zip archive of directory "$working_dir": $SimpleZipError}) unless ($zip->close);
 
 	return;
 }
