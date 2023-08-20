@@ -22,6 +22,8 @@ WeBWorK::ContentGenerator::Instructor::Config - Config
 
 =cut
 
+use XML::LibXML;
+
 use WeBWorK::CourseEnvironment;
 use WeBWorK::ConfigObject::text;
 use WeBWorK::ConfigObject::timezone;
@@ -97,9 +99,17 @@ sub getConfigValues ($c, $ce) {
 	# Get the list of all site hardcopy theme files
 	opendir(my $dhS, $ce->{webworkDirs}{hardcopyThemes}) || die "can't opendir $ce->{webworkDirs}{hardcopyThemes}: $!";
 	my $hardcopyThemesSite = [ grep {/\.xml$/} (sort readdir($dhS)) ];
-	my @hardcopyThemesCourse;
+	my @files;
 	if (opendir(my $dhC, $ce->{courseDirs}{hardcopyThemes})) {
-		@hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
+		@files = grep { /\.xml$/ && !/^\./ } sort readdir($dhC);
+	}
+	my @hardcopyThemesCourse;
+	for my $hardcopyTheme (@files) {
+		eval {
+			# check that file is valid XML
+			my $themeTree = XML::LibXML->load_xml(location => "$ce->{courseDirs}{hardcopyThemes}/$hardcopyTheme");
+			push(@hardcopyThemesCourse, $hardcopyTheme);
+		};
 	}
 	# get unique file names, merging lists from site and course folders
 	my $hardcopyThemes = [
