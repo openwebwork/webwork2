@@ -315,13 +315,17 @@ sub initialize ($c) {
 		my $themeTree = XML::LibXML->load_xml(location => "$ce->{webworkDirs}{hardcopyThemes}/$hardcopyTheme");
 		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
 	}
-	my @hardcopyThemesCourse;
+	my @files;
 	if (opendir(my $dhC, $ce->{courseDirs}{hardcopyThemes})) {
-		@hardcopyThemesCourse = grep {/\.xml$/} sort readdir($dhC);
+		@files = grep { /\.xml$/ && !/^\./ } sort readdir($dhC);
 	}
-	for my $hardcopyTheme (@hardcopyThemesCourse) {
-		my $themeTree = XML::LibXML->load_xml(location => "$ce->{courseDirs}{hardcopyThemes}/$hardcopyTheme");
-		$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
+	my @hardcopyThemesCourse;
+	for my $hardcopyTheme (@files) {
+		eval {
+			my $themeTree = XML::LibXML->load_xml(location => "$ce->{courseDirs}{hardcopyThemes}/$hardcopyTheme");
+			$hardcopyLabels{$hardcopyTheme} = $themeTree->findvalue('/theme/@label') || $hardcopyTheme;
+			push(@hardcopyThemesCourse, $hardcopyTheme);
+		};
 	}
 	my $hardcopyThemesAvailable = [
 		sort(do {
