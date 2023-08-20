@@ -26,6 +26,7 @@ problem sets.
 use File::Path;
 use File::Copy qw(move copy);
 use File::Temp qw/tempdir/;
+use Mojo::File;
 use String::ShellQuote;
 use Archive::Zip::SimpleZip qw($SimpleZipError);
 use XML::LibXML;
@@ -629,14 +630,11 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 
 # helper function to remove temp dirs
 sub delete_temp_dir ($c, $temp_dir_path) {
-	rmtree($temp_dir_path), { error => \my $err };
+	Mojo::File->new($temp_dir_path)->remove_tree;
 
-	if ($err && @$err) {
-		for my $diag (@$err) {
-			my ($file, $message) = %$diag;
-			$c->add_error('Failed to remove temporary directory "',
-				$c->tag('code', $file, '":', $c->tag('br'), $c->tag('pre', $message)));
-		}
+	if ($!) {
+		$c->add_error('Failed to remove temporary directory "',
+			$c->tag('code', $file, '":', $c->tag('br'), $c->tag('pre', $!)));
 	}
 	return;
 }
