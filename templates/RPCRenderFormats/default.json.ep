@@ -11,7 +11,6 @@
 		% (map { javascript($_->[0], %{ $_->[1] // {} }) } @$third_party_js),
 		% (map { javascript($_->{file}, %{ $_->{attributes} }) } @$extra_js_files),
 		% $rh_result->{header_text} // '',
-		% $rh_result->{post_header_text} // '',
 		% $extra_header_text
 	% ),
 	% head_part400 => '<title>WeBWorK problem</title>',

@@ -337,7 +337,6 @@ async sub renderProblem ($c) {
 	return {
 		text             => $pg->{body_text},
 		header_text      => $pg->{head_text},
-		post_header_text => $pg->{post_header_text},
 		answers          => $pg->{answers},
 		errors           => $pg->{errors},
 		pg_warnings      => $pg->{warnings},

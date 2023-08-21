@@ -41,7 +41,6 @@
 			%= javascript $_->{file}, %{ $_->{attributes} }
 		% }
 		%== $rh_result->{header_text} // ''
-		%== $rh_result->{post_header_text} // ''
 		%== $extra_header_text
 	</head>
 	<body>
