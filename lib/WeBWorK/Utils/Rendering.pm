@@ -239,15 +239,14 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 			$c->ce, $effectiveUser, $set, $problem, $psvn, $formFields, $translationOptions));
 
 		my $ret = {
-			body_text        => $pg->{body_text},
-			head_text        => $pg->{head_text},
-			post_header_text => $pg->{post_header_text},
-			answers          => unbless($pg->{answers}),
-			errors           => $pg->{errors},
-			warnings         => $pg->{warnings},
-			result           => $pg->{result},
-			state            => $pg->{state},
-			flags            => $pg->{flags},
+			body_text => $pg->{body_text},
+			head_text => $pg->{head_text},
+			answers   => unbless($pg->{answers}),
+			errors    => $pg->{errors},
+			warnings  => $pg->{warnings},
+			result    => $pg->{result},
+			state     => $pg->{state},
+			flags     => $pg->{flags},
 		};
 
 		if (ref($pg->{pgcore}) eq 'PGcore') {
