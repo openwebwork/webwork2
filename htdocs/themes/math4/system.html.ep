@@ -146,7 +146,7 @@
 		% }
 		%
 		% # Display the page body.
-		<div class="row">
+		<div class="row mb-2">
 			<div class="body <%= $c->can('info') ? 'col-md-8' : 'col-12' %>">
 				<%= content =%>
 			</div>
@@ -160,12 +160,12 @@
 		</div>
 		%
 		% if ($c->have_warnings) {
-			<div id="warnings" class="Warnings alert alert-danger mt-2"><%= $c->warnings %></div>
+			<div id="warnings" class="Warnings alert alert-danger mb-2"><%= $c->warnings %></div>
 		% }
 		% if ($c->can('message')) {
 			<div id="message_bottom" class="message"><%= $c->message %></div>
 			<div>
-				<button type="button" id="dismiss-messages-btn" class="btn btn-primary d-none">
+				<button type="button" id="dismiss-messages-btn" class="btn btn-secondary d-none">
 					<%= maketext('Dismiss All Messages') %>
 				</button>
 			</div>
