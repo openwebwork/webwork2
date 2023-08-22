@@ -358,7 +358,7 @@ sub MakeArchive ($c) {
 	@files = readpipe $tar . ' 2>&1';
 	if ($? == 0) {
 		my $n = scalar(@files);
-		$c->addgoodmessage($c->maketext('Archive "[_1]" created successfully ([quant, _2, file])', $archive, $n));
+		$c->addgoodmessage($c->maketext('Archive "[_1]" created successfully ([quant,_2,file])', $archive, $n));
 	} else {
 		$c->addbadmessage(
 			$c->maketext(q{Can't create archive "[_1]": command returned [_2]}, $archive, systemError($?)));
