@@ -355,17 +355,59 @@ sub MakeArchive ($c) {
 		return $c->Refresh;
 	}
 
-# Create either a gzipped tar or zip archive.
-sub CreateArchive ($c) {
-	my @files = $c->param('files');
-	my $dir   = "$c->{courseRoot}/$c->{pwd}";
+	my $dir = $c->{pwd} eq '.' ? $c->{courseRoot} : "$c->{courseRoot}/$c->{pwd}";
 
-	# Save the current working directory and change to the $path directory.
-	my $cwd = Mojo::File->new;
-	chdir($dir);
-	unless ($c->param('archive_filename') && scalar(@files) > 0) {
-		$c->addbadmessage($c->maketext('The filename cannot be empty.'))      unless $c->param('archive_filename');
-		$c->addbadmessage($c->maketext('At least one file must be selected')) unless scalar(@files) > 0;
+	if ($c->param('confirmed')) {
+		my $action = $c->param('action')          || 'Cancel';
+		return $c->Refresh if $action eq 'Cancel' || $action eq $c->maketext('Cancel');
+
+		unless ($c->param('archive_filename')) {
+			$c->addbadmessage($c->maketext('The filename cannot be empty.'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		unless (@files > 0) {
+			$c->addbadmessage($c->maketext('At least one file must be selected'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		my $archive = $c->param('archive_filename') . '.' . $c->param('archive_type');
+
+		if (-e "$dir/$archive" && !$c->param('overwrite')) {
+			$c->addbadmessage($c->maketext(
+				'The file [_1] exists. Check "Overwrite existing archive" to force this file to be replaced.',
+				$archive
+			));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		my ($error, $ok);
+		if ($c->param('archive_type') eq 'zip') {
+			if (my $zip = Archive::Zip::SimpleZip->new("$dir/$archive")) {
+				for (@files) {
+					$zip->add("$dir/$_", Name => $_, storelinks => 1);
+				}
+				$ok = $zip->close;
+			}
+			$error = $SimpleZipError unless $ok;
+		} else {
+			my $tar = Archive::Tar->new;
+			$tar->add_files(map {"$dir/$_"} @files);
+			# Make file names in the archive relative to the current working directory.
+			for ($tar->get_files) {
+				$tar->rename($_->full_path, $_->full_path =~ s!^$dir/!!r);
+			}
+			$ok    = $tar->write("$dir/$archive", COMPRESS_GZIP);
+			$error = $tar->error unless $ok;
+		}
+		if ($ok) {
+			$c->addgoodmessage(
+				$c->maketext('Archive "[_1]" created successfully ([quant,_2,file])', $archive, scalar(@files)));
+		} else {
+			$c->addbadmessage($c->maketext(q{Can't create archive "[_1]": [_2]}, $archive, $error));
+		}
+		return $c->Refresh;
+	} else {
 		return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
 	}
 }

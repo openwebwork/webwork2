@@ -1,6 +1,6 @@
 % use Mojo::File qw(path);
 %
-<div class="card mx-auto" style="max-width:700px">
+<div class="card mx-auto mb-2" style="max-width:700px">
 	<div class="card-body">
 		<div class="mb-3">
 			<b><%= maketext('The following files have been selected for archiving.  Select the type '
@@ -10,7 +10,7 @@
 			<div class="col-12">
 				<div class="input-group input-group-sm mb-2">
 					<span class="input-group-text"><%= maketext('Archive Filename') %>:</span>
-					<%= text_field archive_filename => '',
+					<%= text_field archive_filename => @$files == 1 ? $files->[0] =~ s/\..*$//r : '',
 						'aria-labelledby' => 'archive_filename', placeholder => maketext('Archive Filename'),
 						class => 'form-control', size => 30 =%>
 					<span class="input-group-text" id="filename_suffix">.zip</span>
@@ -32,6 +32,18 @@
 				</div>
 			</div>
 		</div>
+		<div class="row">
+			<div class="col-md-12">
+				<div class="input-group input-group-sm mb-2">
+					<div class="input-group-text flex-grow-1">
+						<label class="form-check-label">
+							<%= check_box overwrite => 1, class => 'form-check-input me-2' =%>
+							<%= maketext('Overwrite existing archive') =%>
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
 		<div class="row mb-2">
 			<div class="col-12">
 				<button type="button" class="btn btn-sm btn-secondary" id="select-all-files-button">
@@ -49,7 +61,7 @@
 		% }
 		%
 		% # Select all files initially. Even those that are in previously selected directories or subdirectories.
-		% param('files', \@files_to_compress);
+		% param('files', \@files_to_compress) unless param('confirmed');
 		<%= select_field files => \@files_to_compress, id => 'archive-files', class => 'form-select mb-2',
 			size => 20, multiple => undef =%>
 		%
