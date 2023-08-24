@@ -146,7 +146,7 @@ if ($users) {
 
 		# Set the password if the password field is empty.
 		if (!defined $record{password} || $record{password} !~ /\S/) {
-			if (defined $record{student_id} && $record{student_id} !~ /\S/) {
+			if (defined $record{student_id} && $record{student_id} =~ /\S/) {
 				# Use the student ID if it is non-empty.
 				$record{password} = cryptPassword($record{student_id});
 			} else {
