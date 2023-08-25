@@ -20,8 +20,8 @@
 	<%= maketext('This allows for the viewing, downloading, uploading and other management '
 		. 'of files in the course.  Select a file or set of files (using CTRL or SHIFT) and click '
 		. 'the desired button on the right.  Many actions can only be done with a single file (like '
-		. 'view). Selecting a directory or set of files and clicking "Make Archive" creates a compressed '
-		. 'tar file with the name COURSE_NAME.tgz' ) =%>
+		. 'view). Selecting a directory or set of files and clicking "Make Archive" allows the creation '
+		. 'of a compressed tar or zip file.') =%>
 </p>
 <p>
 	<%= maketext('The list of files include regular files, directories (ending in a "/") '

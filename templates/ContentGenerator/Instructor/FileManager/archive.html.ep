@@ -1,16 +1,16 @@
 % use Mojo::File qw(path);
 %
-<div class="card mx-auto mb-2" style="max-width:700px">
+<div class="card mb-2" style="max-width:700px">
 	<div class="card-body">
 		<div class="mb-3">
-			<b><%= maketext('The following files have been selected for archiving.  Select the type '
-				. 'of archive and any subset of the requested files.') =%></b>
+			<%= maketext('The following files have been selected for archiving.  Select the type '
+				. 'of archive and any subset of the requested files.') =%>
 		</div>
 		<div class="row">
 			<div class="col-12">
 				<div class="input-group input-group-sm mb-2">
 					<span class="input-group-text"><%= maketext('Archive Filename') %>:</span>
-					<%= text_field archive_filename => @$files == 1 ? $files->[0] =~ s/\..*$//r : '',
+					<%= text_field archive_filename => @$files == 1 ? $files->[0] =~ s/\..*$//r : 'webwork_files',
 						'aria-labelledby' => 'archive_filename', placeholder => maketext('Archive Filename'),
 						class => 'form-control', size => 30 =%>
 					<span class="input-group-text" id="filename_suffix">.zip</span>
@@ -42,13 +42,6 @@
 						</label>
 					</div>
 				</div>
-			</div>
-		</div>
-		<div class="row mb-2">
-			<div class="col-12">
-				<button type="button" class="btn btn-sm btn-secondary" id="select-all-files-button">
-					<%= maketext('Select All Files') =%>
-				</button>
 			</div>
 		</div>
 		%
