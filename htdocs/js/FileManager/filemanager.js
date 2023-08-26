@@ -18,25 +18,37 @@
 		form.querySelector('input[name="name"]')?.focus();
 	}
 
-	const fileActionButtons = ['View', 'Edit', 'Download', 'Rename', 'Copy', 'Delete', 'MakeArchive'].map((buttonId) =>
-		document.getElementById(buttonId)
-	);
+	// The bits for types from least to most significant digit are set in the directoryListing method of
+	// lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm to mean a file is a
+	// link, directory, regular file, text file, or image file.
+	const fileActionButtons = [
+		{ id: 'View', types: 0b11010, multiple: 0 },
+		{ id: 'Edit', types: 0b01000, multiple: 0 },
+		{ id: 'Download', types: 0b100, multiple: 0 },
+		{ id: 'Rename', types: 0b111, multiple: 0 },
+		{ id: 'Copy', types: 0b100, multiple: 0 },
+		{ id: 'Delete', types: 0b111, multiple: 1 },
+		{ id: 'MakeArchive', types: 0b111, multiple: 1 }
+	];
+	fileActionButtons.map((button) => (button.elt = document.getElementById(button.id)));
 	const archiveButton = document.getElementById('MakeArchive');
 
 	const checkFiles = () => {
-		const state = files.selectedIndex < 0;
+		const selectedFiles = files.selectedOptions;
 
 		for (const button of fileActionButtons) {
-			if (button) button.disabled = state;
+			if (!button.elt) continue;
+			if (selectedFiles.length) {
+				if (selectedFiles.length == 1 && !button.multiple)
+					button.elt.disabled = !(button.types & selectedFiles[0].dataset.type);
+				else button.elt.disabled = !button.multiple;
+			} else {
+				button.elt.disabled = true;
+			}
 		}
 
-		if (archiveButton && !state) {
-			const numSelected = files.querySelectorAll('option:checked').length;
-			if (
-				numSelected === 0 ||
-				numSelected > 1 ||
-				!/\.(tar|tar\.gz|tgz|zip)$/.test(files.children[files.selectedIndex].value)
-			)
+		if (archiveButton && selectedFiles.length) {
+			if (selectedFiles.length > 1 || !/\.(tar|tar\.gz|tgz|zip)$/.test(selectedFiles[0].value))
 				archiveButton.value = archiveButton.dataset.archiveText;
 			else archiveButton.value = archiveButton.dataset.unarchiveText;
 		}

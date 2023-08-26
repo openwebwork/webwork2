@@ -777,12 +777,22 @@ sub directoryListing ($c, $pwd) {
 	my @names = sortByName(undef, grep {/^[^.]/} readDirectory($dir));
 	for my $name (@names) {
 		unless ($name eq 'DATA') {    #FIXME don't view the DATA directory
-			my $file  = "$dir/$name";
+			my $file = "$dir/$name";
+
+			my $type = 0;
+			$type |= 1  if -l $file;                         # Symbolic link
+			$type |= 2  if !-l $file && -d $file;            # Directory
+			$type |= 4  if -f $file;                         # Regular file
+			$type |= 8  if -T $file;                         # Text file
+			$type |= 16 if $file =~ m/\.(gif|jpg|png)$/i;    # Image file
+
 			my $label = $name;
-			$label .= '@' if (-l $file);
-			$label .= '/' if (-d $file && !-l $file);
+			$label .= '@' if $type & 1;
+			$label .= '/' if $type & 2;
+
 			$len = length($label) if length($label) > $len;
-			push(@values, [ $label => $name ]);
+
+			push(@values, [ $label => $name, data => { type => $type } ]);
 		}
 	}
 	if ($c->getFlag('dates')) {
