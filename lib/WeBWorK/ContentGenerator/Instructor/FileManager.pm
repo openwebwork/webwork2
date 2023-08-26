@@ -79,6 +79,22 @@ sub pre_header_initialize ($c) {
 	$c->{courseRoot} = $c->ce->{courseDirs}{root};
 	$c->{courseName} = $c->stash('courseID');
 
+	if ($c->{pwd} && $action && $action eq 'Edit') {
+		my @files = $c->param('files');
+		if (@files == 1 && $files[0] =~ /\.pg$/) {
+			my $file = "$c->{courseRoot}/$c->{pwd}/$files[0]";
+			if (-f $file && -T $file) {
+				return $c->reply_with_redirect($c->systemLink(
+					$c->url_for('instructor_problem_editor'),
+					params => {
+						file_type      => 'source_path_for_problem_file',
+						sourceFilePath => $file
+					}
+				));
+			}
+		}
+	}
+
 	return;
 }
 
@@ -176,16 +192,13 @@ sub View ($c) {
 # Edit a file
 sub Edit ($c) {
 	my $filename = $c->getFile('edit');
-	return '' unless $filename;
-	my $file   = "$c->{courseRoot}/$c->{pwd}/$filename";
-	my $userID = $c->param('user');
-	my $ce     = $c->ce;
-	my $authz  = $c->authz;
+	return $c->Refresh unless $filename;
+	my $file = "$c->{courseRoot}/$c->{pwd}/$filename";
 
 	# If its a restricted file, dont allow the web editor to edit it unless that option has been set for the course.
-	for my $restrictedFile (@{ $ce->{uneditableCourseFiles} }) {
+	for my $restrictedFile (@{ $c->ce->{uneditableCourseFiles} }) {
 		if (File::Spec->canonpath($file) eq File::Spec->canonpath("$c->{courseRoot}/$restrictedFile")
-			&& !$authz->hasPermissions($userID, 'edit_restricted_files'))
+			&& !$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files'))
 		{
 			$c->addbadmessage($c->maketext('You do not have permission to edit this file.'));
 			return $c->Refresh;
