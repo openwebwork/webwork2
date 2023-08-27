@@ -31,7 +31,12 @@
 <div class="row">
 	<div class="col-md-8 mb-2">
 		<%= select_field files => $files, id => 'files', class => 'form-select font-monospace h-100',
-			dir => 'ltr', size => 17, multiple => undef =%>
+			dir => 'ltr', size => 17, multiple => undef,
+			data => {
+				link_message         => maketext('Symbolic links can not be followed.'),
+				non_viewable_message => maketext('This is not a viewable file type.'),
+				close_title          => maketext('Close')
+			} =%>
 	</div>
 	<div class="col-md-4 mb-2">
 		<div class="d-flex flex-md-column flex-wrap flex-md-nowrap justify-content-evenly gap-1 gap-md-0">
