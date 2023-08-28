@@ -12,9 +12,9 @@
 					<label class="input-group-text" for="archive-filename"><%= maketext('Archive Filename') %>:</label>
 					<%= text_field archive_filename => @$files == 1 ? $files->[0] =~ s/\..*$//r : 'webwork_files',
 						id => 'archive-filename', placeholder => maketext('Archive Filename'),
-						class => 'form-control', size => 30 =%>
+						class => 'form-control text-end', size => 30 =%>
 					<%= select_field archive_type => [
-							[ 'File Type' => '', disabled => undef, id => 'archive-type-label' ],
+							[ maketext('Archive Type') => '', disabled => undef, id => 'archive-type-label' ],
 							[ '.zip' => 'zip', selected => undef ],
 							[ '.tgz' => 'tgz' ]
 						],
