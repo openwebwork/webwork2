@@ -10,20 +10,26 @@
 			<div class="col-12">
 				<div class="input-group input-group-sm mb-2">
 					<label class="input-group-text" for="archive-filename"><%= maketext('Archive Filename') %>:</label>
-					<%= text_field archive_filename => @$files == 1 ? $files->[0] =~ s/\..*$//r : 'webwork_files',
+					<%= text_field archive_filename =>
+							@$files == 1 ? $files->[0] =~ s/\..*$/.zip/r : 'webwork_files.zip',
 						id => 'archive-filename', placeholder => maketext('Archive Filename'),
-						class => 'form-control text-end', size => 30 =%>
-					<%= select_field archive_type => [
-							[ maketext('Archive Type') => '', disabled => undef, id => 'archive-type-label' ],
-							[ '.zip' => 'zip', selected => undef ],
-							[ '.tgz' => 'tgz' ]
-						],
-						class => 'form-select', style => 'max-width: 7em', 'aria-labelledby' => 'archive-type-label' =%>
+						class => 'form-control', size => 30, dir => 'ltr' =%>
 				</div>
 			</div>
 		</div>
 		<div class="row">
-			<div class="col-md-12">
+			<div class="col-12 col-lg-6">
+				<div class="input-group input-group-sm mb-2">
+					<label class="input-group-text" for="archive-type"><%= maketext('Archive Type') %>:</label>
+					<%= select_field archive_type => [
+							[ maketext('By extension') => '', selected => undef ],
+							[ 'zip'                    => 'zip' ],
+							[ 'tar'                    => 'tgz' ]
+						],
+						class => 'form-select', id => 'archive-type' =%>
+				</div>
+			</div>
+			<div class="col-12 col-lg-6">
 				<div class="input-group input-group-sm mb-2">
 					<div class="input-group-text flex-grow-1">
 						<label class="form-check-label">
@@ -46,9 +52,8 @@
 		% # Select all files initially. Even those that are in previously selected directories or subdirectories.
 		% param('files', \@files_to_compress) unless param('confirmed');
 		<%= select_field files => \@files_to_compress, id => 'archive-files', class => 'form-select mb-2',
-			'arialabelled-by' => 'files-label', size => 20, multiple => undef =%>
+			'arialabelled-by' => 'files-label', size => 20, multiple => undef, dir => 'ltr' =%>
 		%
-		<p><%= maketext('Create archive of the selected files?') %></p>
 		<div class="d-flex justify-content-evenly">
 			<%= submit_button maketext('Cancel'), name => 'action', class => 'btn btn-sm btn-secondary' =%>
 			<%= submit_button maketext('Make Archive'), name => 'action', class => 'btn btn-sm btn-primary' =%>

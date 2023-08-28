@@ -371,7 +371,18 @@ sub MakeArchive ($c) {
 			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
 		}
 
-		my $archive = $c->param('archive_filename') . '.' . $c->param('archive_type');
+		my $archive_type =
+			$c->param('archive_type') || ($c->param('archive_filename') =~ /\.(zip|tgz|tar.gz)$/ ? $1 : 'zip');
+
+		my $archive = $c->param('archive_filename');
+
+		# Add the correct extension to the archive filename unless it already has it. If the extension for
+		# the other archive type is given, then change it to the extension for this archive type.
+		if ($archive_type eq 'zip') {
+			$archive =~ s/(\.(tgz|tar.gz))?$/.zip/ unless $archive =~ /\.zip$/;
+		} else {
+			$archive =~ s/(\.zip)?$/.tgz/ unless $archive =~ /\.(tgz|tar.gz)$/;
+		}
 
 		if (-e "$dir/$archive" && !$c->param('overwrite')) {
 			$c->addbadmessage($c->maketext(
@@ -382,7 +393,7 @@ sub MakeArchive ($c) {
 		}
 
 		my ($error, $ok);
-		if ($c->param('archive_type') eq 'zip') {
+		if ($archive_type eq 'zip') {
 			if (my $zip = Archive::Zip::SimpleZip->new("$dir/$archive")) {
 				for (@files) {
 					$zip->add("$dir/$_", Name => $_, storelinks => 1);
