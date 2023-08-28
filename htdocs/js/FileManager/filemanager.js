@@ -42,14 +42,6 @@
 		}
 	};
 
-	for (const archiveTypeInput of document.querySelectorAll('input[name="archive_type"]')) {
-		archiveTypeInput.addEventListener('click', () => {
-			document.getElementById('filename_suffix').innerText = `.${
-				document.querySelector('input[name="archive_type"]:checked').value
-			}`;
-		});
-	}
-
 	files?.addEventListener('change', checkFiles);
 	if (files) checkFiles();
 
