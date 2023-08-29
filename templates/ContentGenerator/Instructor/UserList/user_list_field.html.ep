@@ -27,7 +27,7 @@
 				map { [
 					maketext($_) => $ce->{statuses}{$_}{abbrevs}[0],
 					$ce->{statuses}{$_}{abbrevs}[0] eq $value ? (selected => undef) : ()
-				] } keys %{ $ce->{statuses} }
+				] } sort(keys %{ $ce->{statuses} })
 			],
 			id => $fieldName . '_id', class => 'form-select form-select-sm w-auto flex-grow-0',
 			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header' =%>
