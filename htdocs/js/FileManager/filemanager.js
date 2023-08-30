@@ -45,6 +45,19 @@
 	files?.addEventListener('change', checkFiles);
 	if (files) checkFiles();
 
+	const archiveFilenameInput = document.getElementById('archive-filename');
+	const archiveTypeSelect = document.getElementById('archive-type');
+	if (archiveFilenameInput && archiveTypeSelect) {
+		archiveTypeSelect.addEventListener('change', () => {
+			if (archiveTypeSelect.value) {
+				archiveFilenameInput.value = archiveFilenameInput.value.replace(
+					/\.(zip|tgz|tar.gz)$/,
+					`.${archiveTypeSelect.value}`
+				);
+			}
+		});
+	}
+
 	const file = document.getElementById('file');
 	const uploadButton = document.getElementById('Upload');
 	const checkFile = () => (uploadButton.disabled = file.value === '');
