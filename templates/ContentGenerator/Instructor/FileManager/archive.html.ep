@@ -52,7 +52,7 @@
 		% # Select all files initially. Even those that are in previously selected directories or subdirectories.
 		% param('files', \@files_to_compress) unless param('confirmed');
 		<%= select_field files => \@files_to_compress, id => 'archive-files', class => 'form-select mb-2',
-			'arialabelled-by' => 'files-label', size => 20, multiple => undef, dir => 'ltr' =%>
+			'aria-labelledby' => 'files-label', size => 20, multiple => undef, dir => 'ltr' =%>
 		%
 		<div class="d-flex justify-content-evenly">
 			<%= submit_button maketext('Cancel'), name => 'action', class => 'btn btn-sm btn-secondary' =%>

@@ -362,12 +362,7 @@ sub MakeArchive ($c) {
 		return $c->Refresh if $action eq 'Cancel' || $action eq $c->maketext('Cancel');
 
 		unless ($c->param('archive_filename')) {
-			$c->addbadmessage($c->maketext('The filename cannot be empty.'));
-			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
-		}
-
-		unless (@files > 0) {
-			$c->addbadmessage($c->maketext('At least one file must be selected'));
+			$c->addbadmessage($c->maketext('The archive filename cannot be empty.'));
 			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
 		}
 
@@ -384,11 +379,26 @@ sub MakeArchive ($c) {
 			$archive =~ s/(\.zip)?$/.tgz/ unless $archive =~ /\.(tgz|tar.gz)$/;
 		}
 
+		# Check filename validity.
+		if ($archive =~ m!/!) {
+			$c->addbadmessage($c->maketext('The archive filename may not contain a path component'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+		if ($archive =~ m!^\.! || $archive =~ m![^-_.a-zA-Z0-9 ]!) {
+			$c->addbadmessage($c->maketext('The archive filename contains illegal characters'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
 		if (-e "$dir/$archive" && !$c->param('overwrite')) {
 			$c->addbadmessage($c->maketext(
 				'The file [_1] exists. Check "Overwrite existing archive" to force this file to be replaced.',
 				$archive
 			));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		unless (@files > 0) {
+			$c->addbadmessage($c->maketext('At least one file must be selected'));
 			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
 		}
 
