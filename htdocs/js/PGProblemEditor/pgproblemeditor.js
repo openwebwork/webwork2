@@ -108,9 +108,13 @@
 			?.addEventListener('change', () => (deleteBackupCheck.checked = true));
 	}
 
-	// Send a request to the server to perltidy the current PG code in the CodeMirror editor.
-	const tidyPGCode = () => {
-		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
+	// Send a request to the server to either perltidy or convert_to_PGML the current PG code in the CodeMirror editor.
+	const cleanPGCode = () => {
+		const request_object = {
+			user: document.getElementById('hidden_user')?.value,
+			courseID: document.getElementsByName('courseID')[0]?.value,
+			key: document.getElementById('hidden_key')?.value
+		};
 
 		const user = document.getElementsByName('user')[0];
 		if (user) request_object.user = user.value;
@@ -144,16 +148,17 @@
 					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.setValue(data.result_data.tidiedPGCode);
 					else document.getElementById('problemContents').value = data.result_data.tidiedPGCode;
 					saveTempFile();
-					showMessage('Successfuly perltidied code.', true);
+					showMessage('Successfully '
+						+ (request_object.rpc_command == 'tidyPGCode' ? 'perltidied code.' : 'converted code to PGML'), true);
 				}
 			})
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
 	};
 
 	document.getElementById('take_action')?.addEventListener('click', async (e) => {
-		if (document.getElementById('current_action')?.value === 'pgtidy') {
+		if (document.getElementById('current_action')?.value === 'clean_code') {
 			e.preventDefault();
-			tidyPGCode();
+			cleanPGCode();
 			return;
 		}
 

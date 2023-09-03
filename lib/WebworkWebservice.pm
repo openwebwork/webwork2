@@ -265,6 +265,7 @@ sub command_permission {
 		putProblemVersion => 'modify_student_data',
 		putPastAnswer     => 'modify_student_data',
 		tidyPGCode        => 'access_instructor_tools',
+		convertCodeToPGML => 'access_instructor_tools',
 
 		# WebworkWebservice::RenderProblem
 		renderProblem => 'proctor_quiz_login',

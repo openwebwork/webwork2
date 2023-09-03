@@ -100,7 +100,7 @@ the submit button pressed (the action).
     Requested actions and aliases
         View/Reload                action = view
         Generate Hardcopy:         action = hardcopy
-        Tidy Code:                 action = pgtidy
+        Clean Code:                action = clean_code
         Save:                      action = save
         Save as:                   action = save_as
         Append:                    action = add_problem
@@ -127,11 +127,11 @@ use WeBWorK::Utils::Sets qw(format_set_name_display);
 use constant DEFAULT_SEED => 123456;
 
 # Editor tabs
-use constant ACTION_FORMS => [qw(view hardcopy pgtidy save save_as add_problem revert)];
+use constant ACTION_FORMS => [qw(view hardcopy clean_code save save_as add_problem revert)];
 use constant ACTION_FORM_TITLES => {
 	view        => x('View/Reload'),
 	hardcopy    => x('Generate Hardcopy'),
-	pgtidy      => x('Tidy Code'),
+	clean_code  => x('Clean Code'),
 	save        => x('Save'),
 	save_as     => x('Save As'),
 	add_problem => x('Append'),
@@ -845,8 +845,8 @@ sub view_handler ($c) {
 
 # The hardcopy and pgtidy actions are handled by javascript.  These are provided just in case
 # something goes wrong and the actions are called.
-sub hardcopy_action { }
-sub pgtidy_action   { }
+sub hardcopy_action   { }
+sub clean_code_action { }
 
 sub hardcopy_handler ($c) {
 	# Redirect to problem editor page.
