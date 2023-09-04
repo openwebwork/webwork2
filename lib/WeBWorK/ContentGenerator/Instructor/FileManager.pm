@@ -22,12 +22,13 @@ WeBWorK::ContentGenerator::Instructor::FileManager.pm -- simple directory manage
 
 =cut
 
+use Mojo::File;
 use File::Path;
 use File::Copy;
 use File::Spec;
 use String::ShellQuote;
-use Archive::Extract;
 use Archive::Tar;
+use Archive::Zip qw(:ERROR_CODES);
 use Archive::Zip::SimpleZip qw($SimpleZipError);
 
 use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
@@ -446,14 +447,80 @@ sub UnpackArchive ($c) {
 }
 
 sub unpack_archive ($c, $archive) {
-	my $dir  = "$c->{courseRoot}/$c->{pwd}";
-	my $arch = Archive::Extract->new(archive => "$dir/$archive");
+	my $dir = Mojo::File->new($c->{courseRoot}, $c->{pwd});
 
-	if ($arch->extract(to => $dir)) {
-		$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', scalar(@{ $arch->files })));
-		return 1;
+	if ($archive =~ m/\.zip$/) {
+		my $zip = Archive::Zip->new($dir->child($archive)->to_string);
+		unless ($zip) {
+			$c->addbadmessage($c->maketext(q{Unable to read zip archive file "[_1]".}, $dir->child($archive)));
+			return 0;
+		}
+
+		Archive::Zip::setErrorHandler(sub ($error) {
+			chomp $error;
+			$c->addbadmessage($error);
+		});
+
+		my $num_extracted = 0;
+		my @members       = $zip->members;
+		for (@members) {
+			my $out_file = $dir->child($_->fileName)->realpath;
+			if ($out_file !~ /^$dir/) {
+				$c->addbadmessage($c->maketext(
+					'The file "[_1]" can not be safely unpacked as it is outside the current working directory.',
+					$_->fileName
+				));
+				next;
+			}
+
+			if (!$c->param('overwrite') && -e $out_file) {
+				$c->addbadmessage($c->maketext(
+					'The file "[_1]" already exists. '
+						. 'Check "Overwrite existing files silently" to unpack this file.',
+					$_->fileName
+				));
+				next;
+			}
+			++$num_extracted if $zip->extractMember($_ => $out_file->to_string) == AZ_OK;
+		}
+
+		Archive::Zip::setErrorHandler();
+
+		$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $num_extracted)) if $num_extracted;
+		return $num_extracted == @members;
+	} elsif ($archive =~ m/\.(tar(\.gz)?|tgz)$/) {
+		local $Archive::Tar::WARN = 0;
+
+		my $tar = Archive::Tar->new($dir->child($archive)->to_string);
+		unless ($tar) {
+			$c->addbadmessage($c->maketext(q{Unable to read tar archive file "[_1]".}, $dir->child($archive)));
+			return 0;
+		}
+
+		$tar->setcwd($dir->to_string);
+
+		my $num_extracted = 0;
+		my @members       = $tar->list_files;
+		for (@members) {
+			if (!$c->param('overwrite') && -e $dir->child($_)) {
+				$c->addbadmessage($c->maketext(
+					'The file "[_1]" already exists. '
+						. 'Check "Overwrite existing files silently" to unpack this file.',
+					$_
+				));
+				next;
+			}
+			unless ($tar->extract_file($_)) {
+				$c->addbadmessage($tar->error);
+				next;
+			}
+			++$num_extracted;
+		}
+
+		$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $num_extracted)) if $num_extracted;
+		return $num_extracted == @members;
 	} else {
-		$c->addbadmessage($c->maketext(q{Can't unpack "[_1]": command returned [_2]}, $archive, $arch->error));
+		$c->addbadmessage($c->maketext('Unsupported archive type in file "[_1]"', $archive));
 		return 0;
 	}
 }
