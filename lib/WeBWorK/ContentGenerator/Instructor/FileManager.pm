@@ -449,6 +449,10 @@ sub UnpackArchive ($c) {
 sub unpack_archive ($c, $archive) {
 	my $dir = Mojo::File->new($c->{courseRoot}, $c->{pwd});
 
+	# Used for determining non-existing and existing files.
+	my (@members, @existing_files);
+	my $num_extracted = 0;
+
 	if ($archive =~ m/\.zip$/) {
 		my $zip = Archive::Zip->new($dir->child($archive)->to_string);
 		unless ($zip) {
@@ -461,33 +465,42 @@ sub unpack_archive ($c, $archive) {
 			$c->addbadmessage($error);
 		});
 
-		my $num_extracted = 0;
-		my @members       = $zip->members;
+		my @members = $zip->members;
+		my @outside_files;
 		for (@members) {
 			my $out_file = $dir->child($_->fileName)->realpath;
 			if ($out_file !~ /^$dir/) {
-				$c->addbadmessage($c->maketext(
-					'The file "[_1]" can not be safely unpacked as it is outside the current working directory.',
-					$_->fileName
-				));
+				push(@outside_files, $_->fileName);
 				next;
 			}
 
 			if (!$c->param('overwrite') && -e $out_file) {
-				$c->addbadmessage($c->maketext(
-					'The file "[_1]" already exists. '
-						. 'Check "Overwrite existing files silently" to unpack this file.',
-					$_->fileName
-				));
+				push(@existing_files, $_->fileName);
 				next;
 			}
 			++$num_extracted if $zip->extractMember($_ => $out_file->to_string) == AZ_OK;
 		}
 
+		if (@outside_files) {
+			if (scalar(@outside_files) == 1) {
+				$c->addbadmessage($c->maketext(
+					'The file "[_1]" can not be safely unpacked as it is outside the current working directory.',
+					$outside_files[0]
+				));
+			} else {
+				$c->addbadmessage($c->maketext(
+					'There are [_1] files that already exist including [_2] and [_3]. '
+						. 'Check "Overwrite existing files silently" to unpack these files',
+					scalar(@outside_files),
+					$outside_files[0],
+					$outside_files[1]
+				));
+			}
+		}
+
 		Archive::Zip::setErrorHandler();
 
 		$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $num_extracted)) if $num_extracted;
-		return $num_extracted == @members;
 	} elsif ($archive =~ m/\.(tar(\.gz)?|tgz)$/) {
 		local $Archive::Tar::WARN = 0;
 
@@ -499,15 +512,10 @@ sub unpack_archive ($c, $archive) {
 
 		$tar->setcwd($dir->to_string);
 
-		my $num_extracted = 0;
-		my @members       = $tar->list_files;
+		my @members = $tar->list_files;
 		for (@members) {
 			if (!$c->param('overwrite') && -e $dir->child($_)) {
-				$c->addbadmessage($c->maketext(
-					'The file "[_1]" already exists. '
-						. 'Check "Overwrite existing files silently" to unpack this file.',
-					$_
-				));
+				push(@existing_files, $_);
 				next;
 			}
 			unless ($tar->extract_file($_)) {
@@ -518,11 +526,30 @@ sub unpack_archive ($c, $archive) {
 		}
 
 		$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $num_extracted)) if $num_extracted;
-		return $num_extracted == @members;
 	} else {
 		$c->addbadmessage($c->maketext('Unsupported archive type in file "[_1]"', $archive));
 		return 0;
 	}
+
+	if (@existing_files) {
+		if (scalar(@existing_files) == 1) {
+			$c->addbadmessage($c->maketext(
+				'The file "[_1]" already exists. '
+					. 'Check "Overwrite existing files silently" to unpack this file.',
+				$existing_files[0]
+			));
+		} else {
+			$c->addbadmessage($c->maketext(
+				'There are [_1] files that already exist including [_2] and [_3]. '
+					. 'Check "Overwrite existing files silently" to unpack these files',
+				scalar(@existing_files),
+				$existing_files[0],
+				$existing_files[1]
+			));
+		}
+	}
+
+	return $num_extracted == @members;
 }
 
 # Make a new file and edit it
