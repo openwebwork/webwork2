@@ -31,7 +31,7 @@ use Archive::Tar;
 use Archive::Zip qw(:ERROR_CODES);
 use Archive::Zip::SimpleZip qw($SimpleZipError);
 
-use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
+use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive min);
 use WeBWorK::Upload;
 use WeBWorK::Utils::CourseManagement qw(archiveCourse);
 
@@ -449,8 +449,7 @@ sub UnpackArchive ($c) {
 sub unpack_archive ($c, $archive) {
 	my $dir = Mojo::File->new($c->{courseRoot}, $c->{pwd});
 
-	# Used for determining non-existing and existing files.
-	my (@members, @existing_files);
+	my (@members, @existing_files, @outside_files);
 	my $num_extracted = 0;
 
 	if ($archive =~ m/\.zip$/) {
@@ -465,8 +464,7 @@ sub unpack_archive ($c, $archive) {
 			$c->addbadmessage($error);
 		});
 
-		my @members = $zip->members;
-		my @outside_files;
+		@members = $zip->members;
 		for (@members) {
 			my $out_file = $dir->child($_->fileName)->realpath;
 			if ($out_file !~ /^$dir/) {
@@ -481,26 +479,7 @@ sub unpack_archive ($c, $archive) {
 			++$num_extracted if $zip->extractMember($_ => $out_file->to_string) == AZ_OK;
 		}
 
-		if (@outside_files) {
-			if (scalar(@outside_files) == 1) {
-				$c->addbadmessage($c->maketext(
-					'The file "[_1]" can not be safely unpacked as it is outside the current working directory.',
-					$outside_files[0]
-				));
-			} else {
-				$c->addbadmessage($c->maketext(
-					'There are [_1] files that already exist including [_2] and [_3]. '
-						. 'Check "Overwrite existing files silently" to unpack these files',
-					scalar(@outside_files),
-					$outside_files[0],
-					$outside_files[1]
-				));
-			}
-		}
-
 		Archive::Zip::setErrorHandler();
-
-		$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $num_extracted)) if $num_extracted;
 	} elsif ($archive =~ m/\.(tar(\.gz)?|tgz)$/) {
 		local $Archive::Tar::WARN = 0;
 
@@ -512,43 +491,87 @@ sub unpack_archive ($c, $archive) {
 
 		$tar->setcwd($dir->to_string);
 
-		my @members = $tar->list_files;
+		@members = $tar->list_files;
 		for (@members) {
+			my $out_file = $dir->child($_)->realpath;
+			if ($out_file !~ /^$dir/) {
+				push(@outside_files, $_);
+				next;
+			}
+
 			if (!$c->param('overwrite') && -e $dir->child($_)) {
 				push(@existing_files, $_);
 				next;
 			}
+
 			unless ($tar->extract_file($_)) {
 				$c->addbadmessage($tar->error);
 				next;
 			}
 			++$num_extracted;
 		}
-
-		$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $num_extracted)) if $num_extracted;
 	} else {
 		$c->addbadmessage($c->maketext('Unsupported archive type in file "[_1]"', $archive));
 		return 0;
 	}
 
-	if (@existing_files) {
-		if (scalar(@existing_files) == 1) {
-			$c->addbadmessage($c->maketext(
-				'The file "[_1]" already exists. '
-					. 'Check "Overwrite existing files silently" to unpack this file.',
-				$existing_files[0]
-			));
-		} else {
-			$c->addbadmessage($c->maketext(
-				'There are [_1] files that already exist including [_2] and [_3]. '
-					. 'Check "Overwrite existing files silently" to unpack these files',
-				scalar(@existing_files),
-				$existing_files[0],
-				$existing_files[1]
-			));
-		}
+	if (@outside_files) {
+		$c->addbadmessage(
+			$c->tag(
+				'p',
+				$c->maketext(
+					'The following [plural,_1,file is,files are] outside the current working directory '
+						. 'and can not be safely unpacked.',
+					scalar(@outside_files),
+				)
+				)
+				. $c->tag(
+					'div',
+					$c->tag(
+						'ul',
+						$c->c(
+							(map { $c->tag('li', $_) } @outside_files[ 0 .. min(29, $#outside_files) ]),
+							(
+								@outside_files > 30
+								? $c->tag('li',
+									$c->maketext('[quant,_1,more file,more files] not shown', @outside_files - 30))
+								: ()
+							)
+					)->join('')
+					)
+				)
+		);
 	}
 
+	if (@existing_files) {
+		$c->addbadmessage(
+			$c->tag(
+				'p',
+				$c->maketext(
+					'The following [plural,_1,file already exists,files already exist]. '
+						. 'Check "Overwrite existing files silently" to unpack [plural,_1,this file,these files].',
+					scalar(@existing_files),
+				)
+				)
+				. $c->tag(
+					'div',
+					$c->tag(
+						'ul',
+						$c->c(
+							(map { $c->tag('li', $_) } @existing_files[ 0 .. min(29, $#existing_files) ]),
+							(
+								@existing_files > 30
+								? $c->tag('li',
+									$c->maketext('[quant,_1,more file,more files] not shown', @existing_files - 30))
+								: ()
+							)
+					)->join('')
+					)
+				)
+		);
+	}
+
+	$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $num_extracted)) if $num_extracted;
 	return $num_extracted == @members;
 }
 
@@ -630,9 +653,8 @@ sub Upload ($c) {
 				$c->Confirm(
 					$c->tag(
 						'p',
-						$c->b(
-							$c->maketext('File <b>[_1]</b> already exists. Overwrite it, or rename it as:', $name)
-						)
+						$c->b($c->maketext(
+							'File <b>[_1]</b> already exists. Overwrite it, or rename it as:', $name))
 					),
 					uniqueName($dir, $name),
 					$c->maketext('Rename'),
@@ -768,9 +790,8 @@ sub directoryListing ($c, $pwd) {
 		for my $name (@values) {
 			my $file = "$dir/$name->[1]";
 			my ($size, $date) = (lstat($file))[ 7, 9 ];
-			$name->[0] =
-				$c->b(
-					sprintf("%-${len}s%-16s%10s", $name->[0], -d $file ? ('', '') : (getDate($date), getSize($size)))
+			$name->[0] = $c->b(
+				sprintf("%-${len}s%-16s%10s", $name->[0], -d $file ? ('', '') : (getDate($date), getSize($size)))
 					=~ s/\s/&nbsp;/gr);
 		}
 	}
