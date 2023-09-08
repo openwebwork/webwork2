@@ -105,10 +105,10 @@ sub getTables {
 
 sub getDB {
 	my $ce  = shift;
-	my $dbh = DBI->connect(
-		$ce->{problemLibrary_db}->{dbsource},
-		$ce->{problemLibrary_db}->{user},
-		$ce->{problemLibrary_db}->{passwd},
+	my $dbh = DBI->connect_cached(
+		$ce->{problemLibrary_db}{dbsource},
+		$ce->{problemLibrary_db}{user},
+		$ce->{problemLibrary_db}{passwd},
 		{
 			PrintError => 0,
 			RaiseError => 1,
