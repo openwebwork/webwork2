@@ -212,8 +212,6 @@ if (argv.watchFiles) console.log('\x1b[32mEstablishing watches and performing in
 chokidar.watch(['js', 'themes'], {
 	ignored: /layouts|\.min\.(js|css)$/,
 	cwd: __dirname, // Make sure all paths are given relative to the htdocs directory.
-	usePolling: true, // Needed to get changes to symlinks.
-	interval: 500,
 	awaitWriteFinish: { stabilityThreshold: 500 },
 	persistent: argv.watchFiles ? true : false
 })
