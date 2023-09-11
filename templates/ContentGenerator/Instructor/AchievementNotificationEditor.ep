@@ -1,0 +1,68 @@
+% use WeBWorK::Utils qw(not_blank getAssetURL);
+% use WeBWorK::HTML::CodeMirrorEditor
+	% qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
+%
+% content_for js => begin
+	<%= output_codemirror_static_files($c, 'perl') =%>
+	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'edit_achievements')) {
+	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to edit achievements.') %></div>
+	% last;
+% }
+%
+<div class="mb-2">
+	<i><%= maketext('Editing achievement notification in file "[_1]"', $c->shortPath($c->{sourceFilePath})) =%></i>
+</div>
+<%= form_for current_route, method => 'POST', id => 'editor', name => 'editor',
+	enctype => 'application/x-www-form-urlencoded',
+	begin =%>
+	<%= $c->hidden_authen_fields =%>
+	% if (not_blank($c->{sourceFilePath})) {
+		<%= hidden_field sourceFilePath => $c->{sourceFilePath} =%>
+	% }
+	%
+	<div class="mb-2"><%= generate_codemirror_html($c, 'achievementNotification', $achievementNotification, 'perl') =%></div>
+	<%= generate_codemirror_controls_html($c) =%>
+	%
+	% # Output action forms
+	% my $default_choice;
+	%
+	% for my $actionID (@$formsToShow) {
+		% my $line_contents = include("ContentGenerator/Instructor/AchievementEditor/${actionID}_form");
+		% my $active        = '';
+		%
+		% if ($line_contents ne '') {
+			% unless ($default_choice) { $active = ' active'; $default_choice = $actionID; }
+			%
+			% content_for 'tab-list' => begin
+				<li class="nav-item" role="presentation">
+					<%= link_to maketext($actionFormTitles->{$actionID}) => "#$actionID",
+						class           => "nav-link action-link$active",
+						id              => "$actionID-tab",
+						data            => { action => $actionID, bs_toggle => 'tab', bs_target => "#$actionID" },
+						role            => 'tab',
+						'aria-controls' => $actionID,
+						'aria-selected' => $active ? 'true' : 'false' =%>
+				</li>
+			% end
+			% content_for 'tab-content' => begin
+				<div class="tab-pane fade mb-2 <%= $active ? "show$active" : '' %>" id="<%= $actionID %>"
+					role="tabpanel" aria-labelledby="<%= $actionID %>-tab">
+					<%= $line_contents =%>
+				</div>
+			% end
+		% }
+	% }
+	%
+	<%= hidden_field action => $default_choice, id => 'current_action' =%>
+	<div>
+		<ul class="nav nav-tabs mb-2" role="tablist"><%= content 'tab-list' =%></ul>
+		<div class="tab-content"><%= content 'tab-content' %></div>
+	</div>
+	<div>
+		<%= submit_button maketext($actionFormTitles->{$default_choice}),
+			name => 'submit', id => 'take_action', class => 'btn btn-primary' %>
+	</div>
+<% end =%>

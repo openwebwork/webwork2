@@ -50,7 +50,7 @@ sub checkForAchievements ($problem_in, $pg, $c, %options) {
 		return '' if $set_id eq $excludedSet;
 	}
 
-	our $set = $db->getMergedSet($user_id, $problem->set_id);
+	our $set = $db->getMergedSet($user_id, $set_id);
 	my @achievements          = sortAchievements($db->getAchievementsWhere());
 	my $globalUserAchievement = $db->getGlobalUserAchievement($user_id);
 
@@ -243,6 +243,19 @@ sub checkForAchievements ($problem_in, $pg, $c, %options) {
 
 			# Construct the cheevo message using the cheevoMessage template.
 			push(@$cheevoMessage, $c->include('AchievementEvaluator/cheevoMessage', achievement => $achievement));
+
+			# if email_template is defined, send an email to the user
+			$c->minion->enqueue(
+				sendAchievementEmail => [ {
+					from			=> $ce->{mail}{defaultFrom},
+					recipient       => $user_id,
+					subject		    => 'Congratulations on earning a new achievement!',
+					template        => $achievement->email_template,
+					achievementID   => $achievement_id,
+					setID           => $set_id,
+					nextLevelPoints => $nextLevelPoints,
+				} ]
+			) if ($achievement->email_template);
 
 			my $points = $achievement->points;
 			#just in case points is an ininitialzied variable

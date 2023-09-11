@@ -1,0 +1,2 @@
+% last unless ($c->{achievement}->email_template);
+<%== maketext('Disable email notifications for [_1]', tag('b', $c->{achievementID})) %>

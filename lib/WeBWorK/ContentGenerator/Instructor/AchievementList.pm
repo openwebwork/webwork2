@@ -431,7 +431,7 @@ sub import_handler ($c) {
 		$achievement->achievement_id($achievement_id);
 
 		# Fall back for importing an old list without the number or assignment_type fields
-		if (scalar(@$data) == 9) {
+		if (scalar(@$data) >= 9) {
 			# Old lists tend to have an extraneous space at the front.
 			for (my $i = 1; $i <= 7; $i++) {
 				$$data[$i] =~ s/^\s+//;
@@ -448,6 +448,7 @@ sub import_handler ($c) {
 			$achievement->icon($$data[7]);
 			$achievement->assignment_type('default');
 			$achievement->number($count + 1);
+			$achievement->email_template('');
 		} else {
 			$achievement->name($$data[1]);
 			$achievement->number($$data[2]);
@@ -458,6 +459,7 @@ sub import_handler ($c) {
 			$achievement->max_counter($$data[7]);
 			$achievement->test($$data[8]);
 			$achievement->icon($$data[9]);
+			$achievement->email_template($$data[10] // '');
 		}
 
 		$achievement->enabled($assign eq "all" ? 1 : 0);

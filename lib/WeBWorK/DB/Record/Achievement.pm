@@ -38,6 +38,7 @@ BEGIN {
 		max_counter     => { type => "INT" },
 		number          => { type => "INT" },
 		assignment_type => { type => "TEXT" },
+		email_template  => { type => "TEXT" },
 	);
 }
 
