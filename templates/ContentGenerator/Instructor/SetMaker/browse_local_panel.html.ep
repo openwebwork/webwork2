@@ -6,7 +6,7 @@
 <div class="InfoPanel">
 	<div class="mb-2">
 		<%= label_for library_sets =>
-				maketext('[_1] Problems:', $lib eq '' ? maketext('File Manager') : $c->{problibs}{$lib}),
+				maketext('[_1] Problems:', $lib eq '' ? maketext('Course Files') : $c->{problibs}{$lib}),
 			class => 'col-form-label-sm' =%>
 		<%= select_field library_sets => [
 				@$prob_dirs == 0 ? [ maketext('Found no directories containing problems') => '' ]

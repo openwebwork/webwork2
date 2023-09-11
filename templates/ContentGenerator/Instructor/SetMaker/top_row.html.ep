@@ -42,7 +42,7 @@
 		<%= submit_button maketext('Open Problem Library'), name => 'browse_npl_library',
 			class => 'browse-lib-btn btn btn-secondary btn-sm mb-2 mx-1',
 			$browse_which eq 'browse_npl_library' ? (disabled => undef) : () =%>
-		<%= submit_button maketext('File Manager'), name => 'browse_local',
+		<%= submit_button maketext('Course Files'), name => 'browse_local',
 			class => 'browse-lib-btn btn btn-secondary btn-sm mb-2 mx-1',
 			$browse_which eq 'browse_local' ? (disabled => undef) : () =%>
 		<%= submit_button maketext('Course Sets'), name => 'browse_course_sets',
