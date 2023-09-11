@@ -79,8 +79,7 @@ sub confirm { my ($self, @args) = @_; my $sub = $self->{confirm_sub}; return &$s
 
 sub DESTROY {
 	my ($self) = @_;
-	$self->unlock_database;
-	$self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+	$self->unlock_database if $self->{db_locked};
 	return;
 }
 
@@ -412,29 +411,28 @@ sub updateCourseDirectories {
 # Database utilities -- borrowed from DBUpgrade.pm ??use or modify??? --MEG
 ##############################################################################
 
-sub lock_database {    # lock named 'webwork.dbugrade' times out after 10 seconds
-	my $self          = shift;
-	my $dbh           = $self->dbh;
-	my ($lock_status) = $dbh->selectrow_array("SELECT GET_LOCK('webwork.dbupgrade', 10)");
-	if (not defined $lock_status) {
-		die "Couldn't obtain lock because an error occurred.\n";
-	}
-	if (!$lock_status) {
+# Create a lock named 'webwork.dbugrade' that times out after 10 seconds.
+sub lock_database {
+	my $self = shift;
+	my ($lock_status) = $self->dbh->selectrow_array("SELECT GET_LOCK('webwork.dbupgrade', 10)");
+	if (!defined $lock_status) {
+		die "Couldn't obtain lock because a database error occurred.\n";
+	} elsif (!$lock_status) {
 		die "Timed out while waiting for lock.\n";
 	}
+	$self->{db_locked} = 1;
 	return;
 }
 
 sub unlock_database {
-	my $self          = shift;
-	my $dbh           = $self->dbh;
-	my ($lock_status) = $dbh->selectrow_array("SELECT RELEASE_LOCK('webwork.dbupgrade')");
-	if (not defined $lock_status) {
-		# die "Couldn't release lock because the lock does not exist.\n";
-	} elsif ($lock_status) {
-		return;
+	my $self = shift;
+	my ($lock_status) = $self->dbh->selectrow_array("SELECT RELEASE_LOCK('webwork.dbupgrade')");
+	if ($lock_status) {
+		delete $self->{db_locked};
+	} elsif (defined $lock_status) {
+		warn "Couldn't release lock because the lock is not held by this thread.\n";
 	} else {
-		die "Couldn't release lock because the lock is not held by this thread.\n";
+		warn "Unable to release lock because a database error occurred.\n";
 	}
 	return;
 }
