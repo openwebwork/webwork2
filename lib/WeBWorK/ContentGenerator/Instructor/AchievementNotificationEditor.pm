@@ -61,7 +61,7 @@ sub pre_header_initialize ($c) {
 	}
 
 	$c->{achievement}    = $achievement;
-	my $template_filename = $achievement->email_template || "default.ep";
+	my $template_filename = $achievement->email_template || "default.html.ep";
 	$c->{sourceFilePath} = $ce->{courseDirs}{achievements} . "/$template_filename";
 
 	my $actionID = $c->param('action');
@@ -102,7 +102,7 @@ sub initialize ($c) {
 		}
 
 		eval { $c->stash->{achievementNotification} = WeBWorK::Utils::readFile($sourceFilePath) };
-		$c->stash->{achievementNotification} = $@ if $@;
+    $c->stash->{achievementNotification} = $@ if $@;
 	}
 
 	return;
@@ -319,7 +319,7 @@ sub existing_handler($c) {
 	my $ce = $c->ce;
 	
 	# get the desired file name from formdata
-	my $sourceFile = $c->param('action.existing.source_file') || '';
+	my $sourceFile = $c->param('action.existing.target_file') || '';
 
 	if (-e $ce->{courseDirs}{achievements} . "/$sourceFile") {
 		# if it exists, update the achievement to use the existing email template
@@ -342,12 +342,11 @@ sub existing_handler($c) {
 	$c->reply_with_redirect($c->systemLink(
 		$c->url_for(
 			'instructor_achievement_notification',
-			achievementID => $achievement->achievement_id
+			achievementID => $c->{achievementID}
 		),
-		params => {
-			sourceFilePath => $c->$sourceFile,
-			status_message => $c->{status_message}->join('')
-		}
+    params => {
+      status_message => $c->{status_message}->join(''),
+    }
 	));
 	return;
 }

@@ -56,9 +56,9 @@
 						) =%>
 					</td>
 					<td class="text-nowrap">
-						<%= link_to ( $_->email_template ? maketext('Edit Email Template') : maketext('Enable Email Notification') )=> $c->systemLink(
+            % my $templateText = $_->email_template ? maketext('Edit Email Template') : maketext('Enable Email Notification');
+						<%= link_to $templateText => $c->systemLink(
 							url_for('instructor_achievement_notification', achievementID => $achievement_id),
-							params => { sourceFilePath => $ce->{courseDirs}{achievements} . '/' . ($_->email_template ? $_->email_template : 'default.ep') }
 						) =%>
 					<td class="text-nowrap">
 						<%= link_to maketext('Edit Evaluator') => $c->systemLink(

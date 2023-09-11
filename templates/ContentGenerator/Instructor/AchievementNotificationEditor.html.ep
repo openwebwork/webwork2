@@ -13,7 +13,7 @@
 % }
 %
 <div class="mb-2">
-	<i><%= maketext('Editing achievement notification in file "[_1]"', $c->shortPath($c->{sourceFilePath})) =%></i>
+	<i><%= maketext('Editing achievement in file "[_1]"', $c->shortPath($c->{sourceFilePath})) =%></i>
 </div>
 <%= form_for current_route, method => 'POST', id => 'editor', name => 'editor',
 	enctype => 'application/x-www-form-urlencoded',
@@ -30,7 +30,7 @@
 	% my $default_choice;
 	%
 	% for my $actionID (@$formsToShow) {
-		% my $line_contents = include("ContentGenerator/Instructor/AchievementEditor/${actionID}_form");
+		% my $line_contents = include("ContentGenerator/Instructor/AchievementNotificationEditor/${actionID}_form");
 		% my $active        = '';
 		%
 		% if ($line_contents ne '') {

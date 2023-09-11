@@ -431,7 +431,7 @@ sub import_handler ($c) {
 		$achievement->achievement_id($achievement_id);
 
 		# Fall back for importing an old list without the number or assignment_type fields
-		if (scalar(@$data) >= 9) {
+		if (scalar(@$data) == 7) {
 			# Old lists tend to have an extraneous space at the front.
 			for (my $i = 1; $i <= 7; $i++) {
 				$$data[$i] =~ s/^\s+//;
