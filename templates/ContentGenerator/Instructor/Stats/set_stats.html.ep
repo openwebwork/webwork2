@@ -166,7 +166,7 @@
 			<% for (@$problems) { %><td class="text-center"><%= $_->value %></td><% } =%>
 		</tr>
 		<tr>
-			<th><%= maketext('Point Value') %></th>
+			<th><%= maketext('Average Percent') %></th>
 			<% for (@$avgScore) { %><td class="text-center"><%= $_ %></td><% } =%>
 		</tr>
 		% if ($isJitarSet) {
