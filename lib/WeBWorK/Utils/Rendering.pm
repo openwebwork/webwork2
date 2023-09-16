@@ -122,8 +122,7 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{PERSISTENCE_HASH} = decode_json($problem->problem_data || '{}');
 
 	# Language
-	$options{language}            = $ce->{language};
-	$options{language_subroutine} = WeBWorK::Localize::getLoc($options{language});
+	$options{language} = $ce->{language};
 
 	# Student and course Information
 	$options{courseName}       = $ce->{courseName};
