@@ -1,21 +1,10 @@
-<div class="toast-body d-flex align-items-center">
-    <%= image $ce->{server_root_url} . (
-            $achievement->{icon}
-            ? "$ce->{courseURLs}{achievements}/$achievement->{icon}"
-            : "$ce->{webworkURLs}{htdocs}/images/defaulticon.png"
-        ),
-        alt => 'Achievement Icon' =%>
-    <div class="cheevopopuptext">
-        % if ($achievement->category eq 'level') {
-            <h2><%= $achievement->{name} %></h2>
-            <div>
-                <%= $ce->{achievementItemsEnabled}
-                    ? $achievement->{description}
-                    : maketext('Congratulations, you earned a new level!') =%>
-            </div>
-        % } else {
-            <h2><%= $achievement->{name} %></h2>
-            <div><i><%= $achievement->{points} %> Points</i>: <%= $achievement->{description} %></div>
-        % }
-    </div>
-</div>
+$FN
+
+Congratulations, you just earned the "<%= $achievement->{name} %>" achievement!
+
+<%= $achievement->{description} %>
+
+You have <%= $nextLevelPoints - $pointsEarned %> points remaining until your next level-up.
+
+Great job!
+--Prof. X
