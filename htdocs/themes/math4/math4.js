@@ -80,11 +80,6 @@
 		(el) => new bootstrap.Tooltip(el, {trigger: 'hover', fallbackPlacements: []})
 	);
 
-	// Set up popovers in the attemptResults table.
-	document.querySelectorAll('table.attemptResults td div.answer-preview').forEach((popover) => {
-		if (popover.dataset.bsContent) new bootstrap.Popover(popover, {trigger: 'click', html: true, sanitize: false});
-	});
-
 	// Sets up problems to rescale the image accoring to attr height width and not native height width.
 	const rescaleImage = (_index, element) => {
 		if (element.height != element.naturalHeight || element.width != element.naturalWidth) {

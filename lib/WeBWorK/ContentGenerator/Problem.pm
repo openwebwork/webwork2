@@ -36,7 +36,6 @@ use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::Utils::LanguageAndDirection qw(get_problem_lang_and_dir);
 use WeBWorK::AchievementEvaluator;
-use WeBWorK::HTML::AttemptsTable;
 
 # GET/POST Parameters for this module
 #
@@ -246,42 +245,11 @@ sub can_showMeAnother ($c, $user, $effectiveUser, $set, $problem, $submitAnswers
 	return 0;
 }
 
-sub attemptResults ($c, $pg, $showCorrectAnswers, $showAttemptResults, $showSummary) {
-	my $ce = $c->ce;
-
-	# Create AttemptsTable object
-	my $tbl = WeBWorK::HTML::AttemptsTable->new(
-		$pg->{answers},
-		$c,
-		answersSubmitted    => 1,
-		answerOrder         => $pg->{flags}{ANSWER_ENTRY_ORDER},
-		displayMode         => $c->{displayMode},
-		showAnswerNumbers   => 0,
-		showAttemptAnswers  => $ce->{pg}{options}{showEvaluatedAnswers},
-		showAttemptPreviews => 1,
-		showAttemptResults  => $showAttemptResults,
-		showCorrectAnswers  => $showCorrectAnswers,
-		showMessages        => 1,
-		showSummary         => $showSummary,
-		imgGen              => WeBWorK::PG::ImageGenerator->new(
-			tempDir         => $ce->{webworkDirs}{tmp},
-			latex           => $ce->{externalPrograms}{latex},
-			dvipng          => $ce->{externalPrograms}{dvipng},
-			useCache        => 1,
-			cacheDir        => $ce->{webworkDirs}{equationCache},
-			cacheURL        => $ce->{webworkURLs}{equationCache},
-			cacheDB         => $ce->{webworkFiles}{equationCacheDB},
-			useMarkers      => 1,
-			dvipng_align    => $ce->{pg}{displayModeOptions}{images}{dvipng_align},
-			dvipng_depth_db => $ce->{pg}{displayModeOptions}{images}{dvipng_depth_db},
-		),
-	);
-
-	# Render equation images
-	my $answerTemplate = $tbl->answerTemplate;
-	$tbl->imgGen->render(body_text => \$answerTemplate) if $tbl->displayMode eq 'images';
-
-	return $answerTemplate;
+sub attemptResults ($c, $pg) {
+	return $pg->{result}{summary}
+		? $c->c($c->tag('h2', class => 'fs-3 mb-2', $c->maketext('Results for this submission'))
+			. $c->tag('div', role => 'alert', $c->b($pg->{result}{summary})))->join('')
+		: '';
 }
 
 async sub pre_header_initialize ($c) {
@@ -407,8 +375,8 @@ async sub pre_header_initialize ($c) {
 		}
 
 		$c->addmessage($c->{set}->visible
-			? $c->tag('p', class => 'font-visible', $c->maketext('This set is visible to students.'))
-			: $c->tag('p', class => 'font-hidden',  $c->maketext('This set is hidden from students.')));
+			? $c->tag('p', class => 'font-visible m-0', $c->maketext('This set is visible to students.'))
+			: $c->tag('p', class => 'font-hidden m-0',  $c->maketext('This set is hidden from students.')));
 
 	} else {
 		# Test for additional problem validity if it's not already invalid.
@@ -451,6 +419,7 @@ async sub pre_header_initialize ($c) {
 	{
 		$c->{submitAnswers}    = 0;
 		$c->{resubmitDetected} = 1;
+		delete $formFields->{submitAnswers};
 	}
 
 	$c->{displayMode}    = $displayMode;
@@ -581,6 +550,24 @@ async sub pre_header_initialize ($c) {
 	# Final values for options
 	my %will = map { $_ => $can{$_} && ($want{$_} || $must{$_}) } keys %must;
 
+	if ($prEnabled && $problem->{prCount} >= $rerandomizePeriod && !after($c->{set}->due_date, $c->submitTime)) {
+		$showMeAnother{active}       = 0;
+		$must{requestNewSeed}        = 1;
+		$can{requestNewSeed}         = 1;
+		$want{requestNewSeed}        = 1;
+		$will{requestNewSeed}        = 1;
+		$c->{showCorrectOnRandomize} = $ce->{pg}{options}{showCorrectOnRandomize};
+		# If this happens, it means that the page was refreshed.  So prevent the answers from
+		# being recorded and the number of attempts from being increased.
+		if ($problem->{prCount} > $rerandomizePeriod) {
+			$c->{resubmitDetected} = 1;
+			$must{recordAnswers}   = 0;
+			$can{recordAnswers}    = 0;
+			$want{recordAnswers}   = 0;
+			$will{recordAnswers}   = 0;
+		}
+	}
+
 	# Sticky answers
 	if (!($c->{submitAnswers} || $previewAnswers || $checkAnswers) && $will{showOldAnswers}) {
 		my %oldAnswers = decodeAnswers($problem->last_answer);
@@ -615,7 +602,16 @@ async sub pre_header_initialize ($c) {
 			useMathView              => $will{useMathView},
 			forceScaffoldsOpen       => 0,
 			isInstructor             => $authz->hasPermissions($userID, 'view_answers'),
-			debuggingOptions         => getTranslatorDebuggingOptions($authz, $userID)
+			showFeedback             => $c->{submitAnswers} || $c->{previewAnswers},
+			showAttemptAnswers       => $ce->{pg}{options}{showEvaluatedAnswers},
+			showAttemptPreviews      => 1,
+			showAttemptResults       => $c->{submitAnswers},
+			forceShowAttemptResults  => $will{checkAnswers} || $will{showProblemGrader},
+			showMessages             => 1,
+			showCorrectAnswers => $c->{submitAnswers} ? ($c->{showCorrectOnRandomize} // $will{showCorrectAnswers})
+			: $will{checkAnswers} || $will{showProblemGrader} ? $will{showCorrectAnswers}
+			: 0,
+			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID)
 		}
 	);
 
@@ -629,24 +625,6 @@ async sub pre_header_initialize ($c) {
 		num_attempts => $problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} ? 1 : 0),
 		id           => 'num_attempts'
 	);
-
-	if ($prEnabled && $problem->{prCount} >= $rerandomizePeriod && !after($c->{set}->due_date, $c->submitTime)) {
-		$showMeAnother{active}       = 0;
-		$must{requestNewSeed}        = 1;
-		$can{requestNewSeed}         = 1;
-		$want{requestNewSeed}        = 1;
-		$will{requestNewSeed}        = 1;
-		$c->{showCorrectOnRandomize} = $ce->{pg}{options}{showCorrectOnRandomize};
-		# If this happens, it means that the page was refreshed.  So prevent the answers from
-		# being recorded and the number of attempts from being increased.
-		if ($problem->{prCount} > $rerandomizePeriod) {
-			$c->{resubmitDetected} = 1;
-			$must{recordAnswers}   = 0;
-			$can{recordAnswers}    = 0;
-			$want{recordAnswers}   = 0;
-			$will{recordAnswers}   = 0;
-		}
-	}
 
 	# Update and fix hint/solution options after PG processing
 	$can{showHints}     &&= $pg->{flags}{hintExists};
@@ -1484,37 +1462,26 @@ sub output_summary ($c) {
 	my $output = $c->c;
 
 	# Attempt summary
-	if (defined $pg->{flags}{showPartialCorrectAnswers}
-		&& $pg->{flags}{showPartialCorrectAnswers} >= 0
-		&& $c->{submitAnswers})
-	{
-		push(
-			@$output,
-			$c->attemptResults(
-				$pg,
-				$c->{showCorrectOnRandomize} // $will{showCorrectAnswers},
-				$pg->{flags}{showPartialCorrectAnswers}, 1
-			)
-		);
+	if ($c->{submitAnswers}) {
+		push(@$output, $c->attemptResults($pg));
 	} elsif ($will{checkAnswers} || $c->{will}{showProblemGrader}) {
 		push(
 			@$output,
 			$c->tag(
 				'div',
-				class => 'ResultsWithError d-inline-block mb-3',
+				class => 'ResultsWithError d-inline-block mb-2',
 				$c->maketext('ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED')
 			),
-			$c->attemptResults($pg, $will{showCorrectAnswers}, 1, 1)
+			$c->attemptResults($pg)
 		);
 	} elsif ($c->{previewAnswers}) {
 		push(
 			@$output,
 			$c->tag(
 				'div',
-				class => 'ResultsWithError d-inline-block mb-3',
+				class => 'ResultsWithError d-inline-block mb-2',
 				$c->maketext('PREVIEW ONLY -- ANSWERS NOT RECORDED')
 			),
-			$c->attemptResults($pg, 0, 0, 0)
 		);
 	}
 
@@ -1522,7 +1489,7 @@ sub output_summary ($c) {
 		@$output,
 		$c->tag(
 			'div',
-			class => 'ResultsWithError d-inline-block mb-3',
+			class => 'ResultsWithError d-inline-block mb-2',
 			$c->maketext(
 				'ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if neccessary).')
 		)

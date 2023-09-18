@@ -490,7 +490,6 @@
 		<%= $jumpLinks->() =%>
 		%
 		% # Print out problems and attempt results, as appropriate.
-		% # Note: Usage is $c->attemptResults($pg, $showCorrectAnswers, $showAttemptResults, $showSummary)
 		% for my $i (0 .. $#$pg_results) {
 			% my $pg = $pg_results->[ $probOrder->[$i] ];
 			%
@@ -498,34 +497,23 @@
 				% my $recordMessage = '';
 				% my $resultsTable  = '';
 				%
-				% if ($pg->{flags}{showPartialCorrectAnswers} >= 0 && $c->{submitAnswers}) {
+				% if ($c->{submitAnswers}) {
 					% if ($c->{scoreRecordedMessage}[ $probOrder->[$i] ] ne 'recorded') {
 						% $recordMessage = tag('div', class => 'ResultsWithError d-inline-block mb-2',
 							% maketext('ANSWERS NOT RECORDED -- [_1]', $c->{scoreRecordedMessage}[ $probOrder->[$i] ])
 						% );
 					% }
-					% $resultsTable = $c->attemptResults(
-						% $pg,
-						% $c->{will}{showCorrectAnswers},
-						% $pg->{flags}{showPartialCorrectAnswers} && $c->{can}{showProblemScores},
-						% $c->{can}{showProblemScores}
-					% );
+					% $resultsTable = $c->attemptResults($pg);
 				% } elsif ($c->{will}{checkAnswers} || $c->{will}{showProblemGrader}) {
 					% $recordMessage = tag('div', class => 'ResultsWithError d-inline-block mb-2',
 						% maketext('ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED')
 					% );
 					%
-					% $resultsTable = $c->attemptResults(
-						% $pg,
-						% $c->{will}{showCorrectAnswers},
-						% $pg->{flags}{showPartialCorrectAnswers} && $c->{can}{showProblemScores},
-						% $c->{can}{showProblemScores}
-					% );
+					% $resultsTable = $c->attemptResults($pg);
 				% } elsif ($c->{previewAnswers}) {
 					% $recordMessage = tag('div', class => 'ResultsWithError d-inline-block mb-2',
 						% maketext('PREVIEW ONLY -- ANSWERS NOT RECORDED')
 					% );
-					% $resultsTable = $c->attemptResults($pg, 0, 0, 0);
 				% }
 				%
 				<div class="gwProblem">

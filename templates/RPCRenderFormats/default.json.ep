@@ -19,7 +19,7 @@
 	%
 	% body_part001 => '<body>',
 	% body_part100 => '<div class="container-fluid"><div class="row"><div class="col-12 problem">',
-	% body_part300 => $answerTemplate,
+	% body_part300 => $resultSummary,
 	% body_part500 => '<form id="problemMainForm" class="problem-main-form" name="problemMainForm" '
 		% . 'action="TO_SET_LATER_FORM_ACTION_URL" method="post">',
 	% body_part530 => qq{<div id="problem_body" class="problem-content" $PROBLEM_LANG_AND_DIR>},
@@ -46,7 +46,6 @@
 		% . '</body></html>}',
 	%
 	% hidden_input_field => {
-		% answersSubmitted         => '1',
 		% sourceFilePath           => $sourceFilePath,
 		% problemSource            => $problemSource,
 		% problemSeed              => $problemSeed,
@@ -64,7 +63,6 @@
 		% showSummary              => $showSummary,
 		% showHints                => $showHints,
 		% showSolutions            => $showSolutions,
-		% showAnswerNumbers        => $showAnswerNumbers,
 		% showPreviewButton        => $showPreviewButton,
 		% showCheckAnswersButton   => $showCheckAnswersButton,
 		% showCorrectAnswersButton => $showCorrectAnswersButton,

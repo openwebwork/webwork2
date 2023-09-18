@@ -299,12 +299,18 @@ async sub pre_header_initialize ($c) {
 			processAnswers           => 1,
 			permissionLevel          => $db->getPermissionLevel($userName)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
-			useMathQuill             => $c->{will}{useMathQuill},
-			useMathView              => $c->{will}{useMathView},
+			useMathQuill             => $will->{useMathQuill},
+			useMathView              => $will->{useMathView},
 			forceScaffoldsOpen       => 0,
 			isInstructor             => $authz->hasPermissions($userName, 'view_answers'),
+			showFeedback             => $c->{checkAnswers} || $c->{previewAnswers},
+			showAttemptAnswers       => $ce->{pg}{options}{showEvaluatedAnswers},
+			showAttemptPreviews      => 1,
+			showAttemptResults       => $c->{checkAnswers},
+			showMessages             => 1,
+			showCorrectAnswers       => $will->{checkAnswers} ? $will->{showCorrectAnswers} : 0,
 			debuggingOptions         => getTranslatorDebuggingOptions($authz, $userName)
-		},
+		}
 	);
 
 	# Warnings in the renderPG subprocess will not be caught by the global warning handler of this process.
