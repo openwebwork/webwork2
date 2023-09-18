@@ -244,26 +244,26 @@ sub checkForAchievements ($problem_in, $pg, $c, %options) {
 			# Construct the cheevo message using the cheevoMessage template.
 			push(@$cheevoMessage, $c->include('AchievementEvaluator/cheevoMessage', achievement => $achievement));
 
-			# if email_template is defined, send an email to the user
-			$c->minion->enqueue(
-				sendAchievementEmail => [ {
-					from			=> $ce->{mail}{defaultFrom},
-					recipient       => $user_id,
-					subject		    => 'Congratulations on earning a new achievement!',
-					template        => $achievement->email_template,
-					achievementID   => $achievement_id,
-					setID           => $set_id,
-					nextLevelPoints => $nextLevelPoints,
-				} ]
-			) if ($achievement->email_template);
-
 			my $points = $achievement->points;
-			#just in case points is an ininitialzied variable
+			#just in case points is an uninitialized variable
 			$points = 0 unless $points;
 
 			$globalUserAchievement->achievement_points($globalUserAchievement->achievement_points + $points);
 			#this variable is shared and should be considered iffy
 			$achievementPoints += $points;
+
+			# if email_template is defined, send an email to the user
+			$c->minion->enqueue(
+				send_achievement_email => [ {
+					recipient       => $user_id,
+					subject         => 'Congratulations on earning a new achievement!',
+					courseName      => $ce->{courseName},
+					achievementID   => $achievement_id,
+					setID           => $set_id,
+					nextLevelPoints => $nextLevelPoints,
+					pointsEarned    => $achievementPoints,
+				} ]
+			) if ($achievement->email_template);
 		}
 
 		#update counter, nfreeze_base64 localData and store

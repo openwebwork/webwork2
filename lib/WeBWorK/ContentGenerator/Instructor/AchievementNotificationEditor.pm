@@ -45,8 +45,8 @@ sub pre_header_initialize ($c) {
 	$c->{achievementID} = $c->stash('achievementID');
 
 	# Make sure that are defined for the templates.
-	$c->stash->{formsToShow}         = ACTION_FORMS();
-	$c->stash->{actionFormTitles}    = ACTION_FORM_TITLES();
+	$c->stash->{formsToShow}             = ACTION_FORMS();
+	$c->stash->{actionFormTitles}        = ACTION_FORM_TITLES();
 	$c->stash->{achievementNotification} = '';
 
 	# Check permissions
@@ -60,9 +60,10 @@ sub pre_header_initialize ($c) {
 		return;
 	}
 
-	$c->{achievement}    = $achievement;
+	$c->{achievement} = $achievement;
 	my $template_filename = $achievement->email_template || "default.html.ep";
-	$c->{sourceFilePath} = $ce->{courseDirs}{achievements} . "/$template_filename";
+	$c->{sourceFilePath} =
+		$ce->{courseDirs}{achievements} . "/$template_filename";
 
 	my $actionID = $c->param('action');
 
@@ -101,8 +102,8 @@ sub initialize ($c) {
 			return;
 		}
 
-		eval { $c->stash->{achievementNotification} = WeBWorK::Utils::readFile($sourceFilePath) };
-    $c->stash->{achievementNotification} = $@ if $@;
+		eval { $c->stash->{achievementNotification} = WeBWorK::Utils::readFile($sourceFilePath); };
+		$c->stash->{achievementNotification} = $@ if $@;
 	}
 
 	return;
@@ -141,7 +142,7 @@ sub saveFileChanges ($c, $outputFilePath, $achievementNotification = undef) {
 		$c->addbadmessage($c->maketext('You must specify an file name in order to save a new file.'));
 		return '';
 	}
-	my $do_not_save = 0;                            # flag to prevent saving of file
+	my $do_not_save = 0;                                # flag to prevent saving of file
 	my $editErrors  = '';
 
 	# write changes to the approriate files
@@ -157,7 +158,8 @@ sub saveFileChanges ($c, $outputFilePath, $achievementNotification = undef) {
 			unless path_is_subdir($outputFilePath, $ce->{courseDirs}->{achievements}, 1);
 
 		eval {
-			open my $OUTPUTFILE, '>', $outputFilePath or die "Failed to open $outputFilePath";
+			open my $OUTPUTFILE, '>', $outputFilePath
+				or die "Failed to open $outputFilePath";
 			print $OUTPUTFILE $achievementNotification;
 			close $OUTPUTFILE;
 		};
@@ -170,11 +172,13 @@ sub saveFileChanges ($c, $outputFilePath, $achievementNotification = undef) {
 									   # Don't unlink files or send success messages
 
 	if ($writeFileErrors) {
+
 		# Get the current directory from the outputFilePath
 		$outputFilePath =~ m|^(/.*?/)[^/]+$|;
 		my $currentDirectory = $1;
 
 		my $errorMessage;
+
 		# Check why we failed to give better error messages
 		if (not -w $ce->{courseDirs}->{achievements}) {
 			$errorMessage = $c->maketext(
@@ -200,7 +204,11 @@ sub saveFileChanges ($c, $outputFilePath, $achievementNotification = undef) {
 		$c->addbadmessage($errorMessage);
 	}
 
-	if (!$writeFileErrors && !$do_not_save && defined $outputFilePath && !$c->{failure}) {
+	if (!$writeFileErrors
+		&& !$do_not_save
+		&& defined $outputFilePath
+		&& !$c->{failure})
+	{
 		$c->addgoodmessage($c->maketext('Saved to file "[_1]"', $c->shortPath($outputFilePath)));
 	}
 
@@ -212,7 +220,8 @@ sub save_handler ($c) {
 	my $achievementName = $c->{achievementID};
 
 	# Grab the achievementNotification from the form in order to save it to the source path
-	$c->stash->{achievementNotification} = fix_newlines($c->param('achievementNotification'));
+	$c->stash->{achievementNotification} =
+		fix_newlines($c->param('achievementNotification'));
 
 	# Construct the output file path
 	$c->saveFileChanges($c->{sourceFilePath});
@@ -243,8 +252,10 @@ sub save_as_handler ($c) {
 	}
 
 	# Grab the achievementNotification from the form in order to save it to a new permanent file
-	$c->stash->{achievementNotification} = fix_newlines($c->param('achievementNotification'));
-	warn 'achievement contents is empty' unless $c->stash->{achievementNotification};
+	$c->stash->{achievementNotification} =
+		fix_newlines($c->param('achievementNotification'));
+	warn 'achievement contents is empty'
+		unless $c->stash->{achievementNotification};
 
 	# Rescue the user in case they forgot to end the file name with .ep
 	$new_file_name =~ s/\.ep$//;    # remove it if it is there
@@ -253,6 +264,7 @@ sub save_as_handler ($c) {
 	# Construct the output file path
 	my $outputFilePath = $c->ce->{courseDirs}->{achievements} . '/' . $new_file_name;
 	if (defined $outputFilePath and -e $outputFilePath) {
+
 		# setting $do_not_save stops saving and any redirects
 		$do_not_save = 1;
 		$c->addbadmessage($c->maketext(
@@ -264,7 +276,9 @@ sub save_as_handler ($c) {
 			$c->maketext('No new Achievement ID specified.  No new achievement created.  File not saved.'));
 		$do_not_save = 1;
 
-	} elsif ($saveMode eq 'use_in_new' && $db->existsAchievement($targetAchievementID)) {
+	} elsif ($saveMode eq 'use_in_new'
+		&& $db->existsAchievement($targetAchievementID))
+	{
 		$c->addbadmessage($c->maketext('Achievement ID exists!  No new achievement created.  File not saved.'));
 		$do_not_save = 1;
 	} else {
@@ -278,6 +292,7 @@ sub save_as_handler ($c) {
 	$c->saveFileChanges($outputFilePath);
 
 	if ($saveMode eq 'use_in_current' and -r $outputFilePath) {
+
 		# Modify evaluator path in current achievement
 		my $achievement = $c->db->getAchievement($achievementName);
 		$achievement->email_template($new_file_name);
@@ -287,11 +302,12 @@ sub save_as_handler ($c) {
 				$c->shortPath($outputFilePath)
 			));
 		} else {
-			$c->addbadmessage(
-				$c->maketext('Unable to change the evaluator for set [_1]. Unknown error.', $achievementName));
+			$c->addbadmessage($c->maketext(
+				'Unable to change the evaluator for set [_1]. Unknown error.', $achievementName));
 		}
 
 	} elsif ($saveMode eq 'dont_use') {
+
 		# Don't change any achievements - just report
 		$c->addgoodmessage($c->maketext('A new file has been created at "[_1]"', $c->shortPath($outputFilePath)));
 	} else {
@@ -302,8 +318,7 @@ sub save_as_handler ($c) {
 	# The redirect gives the server time to detect that the new file exists.
 	$c->reply_with_redirect($c->systemLink(
 		$c->url_for(
-			'instructor_achievement_notification',
-			achievementID => $achievementName
+			'instructor_achievement_notification', achievementID => $achievementName
 		),
 		params => {
 			sourceFilePath => $c->getRelativeSourceFilePath($outputFilePath),
@@ -314,20 +329,22 @@ sub save_as_handler ($c) {
 }
 
 # use an existing template file
-sub existing_handler($c) {
+sub existing_handler ($c) {
 	my $db = $c->db;
 	my $ce = $c->ce;
-	
+
 	# get the desired file name from formdata
 	my $sourceFile = $c->param('action.existing.target_file') || '';
 
 	if (-e $ce->{courseDirs}{achievements} . "/$sourceFile") {
+
 		# if it exists, update the achievement to use the existing email template
 		my $achievement = $db->getAchievement($c->{achievementID});
 		$achievement->email_template($sourceFile);
 		if ($db->putAchievement($achievement)) {
 			$c->addgoodmessage($c->maketext(
-				'The notification for [_1] has been changed to "[_2]".', $c->{achievementID}, $sourceFile
+				'The notification for [_1] has been changed to "[_2]".',
+				$c->{achievementID}, $sourceFile
 			));
 		} else {
 			$c->addbadmessage($c->maketext(
@@ -341,17 +358,16 @@ sub existing_handler($c) {
 	# is this necessary? the achievement DID update...
 	$c->reply_with_redirect($c->systemLink(
 		$c->url_for(
-			'instructor_achievement_notification',
-			achievementID => $c->{achievementID}
+			'instructor_achievement_notification', achievementID => $c->{achievementID}
 		),
-    params => {
-      status_message => $c->{status_message}->join(''),
-    }
+		params => {
+			status_message => $c->{status_message}->join(''),
+		}
 	));
 	return;
 }
 
-sub disable_handler($c) {
+sub disable_handler ($c) {
 	my $db = $c->db;
 	my $ce = $c->ce;
 
@@ -360,7 +376,8 @@ sub disable_handler($c) {
 
 	if ($c->db->putAchievement($achievement)) {
 		$c->addgoodmessage($c->maketext('The evaluator for [_1] has been disabled.', $c->{achievementID}));
-		# redirect to the instructor_achievement_list 
+
+		# redirect to the instructor_achievement_list
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('instructor_achievement_list'),
 			params => {
@@ -368,9 +385,9 @@ sub disable_handler($c) {
 			}
 		));
 	} else {
-		$c->addbadmessage($c->maketext('Unable to disable the evaluator for [_1]. Unknown error.', $c->{achievementID}));
+		$c->addbadmessage($c->maketext(
+			'Unable to disable the evaluator for [_1]. Unknown error.', $c->{achievementID}));
 	}
-
 
 }
 

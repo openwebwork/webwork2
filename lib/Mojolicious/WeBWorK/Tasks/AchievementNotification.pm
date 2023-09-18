@@ -27,44 +27,57 @@ use WeBWorK::Utils qw/processEmailMessage createEmailSenderTransportSMTP/;
 
 # send student notification that they have earned an achievement
 sub run ($job, $mail_data) {
-	my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $mail_data->{courseName} }) };
-	return $job->fail("Could not construct course environment for $mail_data->{courseName}.") unless $ce;
+	my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $mail_data->{courseName} }); };
+	return $job->fail("Could not construct course environment for $mail_data->{courseName}.")
+		unless $ce;
 
 	my $db = WeBWorK::DB->new($ce->{dbLayout});
-	return $job->fail("Could not obtain database connection for $mail_data->{courseName}.") unless $db;
+	return $job->fail("Could not obtain database connection for $mail_data->{courseName}.")
+		unless $db;
 
-	return $job->fail("Cannot notify student without an achievement.") unless $mail_data->{achievementID};
-	$mail_data->{achievement} = $db->getAchievement($mail_data->{achievementID});
-	return $job->fail("Could not find achievement $mail_data->{achievementID}.") unless $mail_data->{achievement};
+	return $job->fail("Cannot notify student without an achievement.")
+		unless $mail_data->{achievementID};
+	$mail_data->{achievement} =
+		$db->getAchievement($mail_data->{achievementID});
+	return $job->fail("Could not find achievement $mail_data->{achievementID}.")
+		unless $mail_data->{achievement};
 
-	$job->{language_handle} = WeBWorK::Localize::getLoc($ce->{language} || 'en');
+	$job->{language_handle} =
+		WeBWorK::Localize::getLoc($ce->{language} || 'en');
 
 	my $result_message = eval { $job->send_achievement_notification($ce, $db, $mail_data) };
 	if ($@) {
-		$job->app->log->error("An error occurred while trying to send email: $@\n");
-		return $job->fail(); # fail silently
+		$job->app->log->error("An error occurred while trying to send email: $@");
+		return $job->fail();    # fail silently
 	}
-
-	return $job->finish(); # succeed silently
+	$job->app->log->info("Message sent to $mail_data->{recipient}");
+	return $job->finish();      # succeed silently
 }
 
 sub send_achievement_notification ($job, $ce, $db, $mail_data) {
-	# default From: is default smtpSender from site.conf
-	unless ($mail_data->{from} || $ce->{mail}{set_return_path}) {
-		die "Cannot send system email without one of: mail{set_return_path} or mail{smtpSender}\n";
+	if ($ce->{mail}{smtpSender} || $ce->{mail}{set_return_path}) {
+		$mail_data->{from} =
+			$ce->{mail}{smtpSender} || $ce->{mail}{set_return_path};
+	} else {
+		die "Cannot send system email without one of: mail{set_return_path} or mail{smtpSender}";
 	}
 
 	my $recipient = $mail_data->{recipient};
-	my $template  = $ce->{courseDirs}{achievements} . '/' . $mail_data->{template};
-	my $renderer  = Mojo::Template->new;
+	my $template  = $ce->{courseDirs}{achievements} . '/' . $mail_data->{achievement}{email_template};
+	my $renderer  = Mojo::Template->new(vars => 1);
+
 	# what other data might need to be passed to the template?
-	$mail_data->{body} = $renderer->render_file($template, {
-		ce              => $ce,                        # holds achievement URLs
-		maketext        => sub { maketext($job, @_) }, # for maketext() in templates
-		achievement     => $mail_data->{achievement},  # full db record
-		setID           => $mail_data->{set_id},
-		nextLevelPoints => $mail_data->{nextLevelPoints},
-	});
+	$mail_data->{body} = $renderer->render_file(
+		$template,
+		{
+			ce              => $ce,                             # holds achievement URLs
+			maketext        => sub { maketext($job, @_) },
+			achievement     => $mail_data->{achievement},       # full db record
+			setID           => $mail_data->{set_id},
+			nextLevelPoints => $mail_data->{nextLevelPoints},
+			pointsEarned    => $mail_data->{pointsEarned},
+		}
+	);
 
 	my $user_record = $db->getUser($recipient);
 	unless ($user_record) {
@@ -91,7 +104,7 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 	});
 	debug 'email sent successfully to ' . $user_record->email_address;
 
-	return $job->maketext('Message sent to [_1] at [_2].', $recipient, $user_record->email_address) . "\n"
+	return $job->maketext('Message sent to [_1] at [_2].', $recipient, $user_record->email_address) . "\n";
 }
 
 sub maketext ($job, @args) {
