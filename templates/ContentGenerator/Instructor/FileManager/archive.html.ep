@@ -11,7 +11,7 @@
 				<div class="input-group input-group-sm mb-2">
 					<label class="input-group-text" for="archive-filename"><%= maketext('Archive Filename') %>:</label>
 					<%= text_field archive_filename =>
-							@$files == 1 ? $files->[0] =~ s/\..*$/.zip/r : 'webwork_files.zip',
+							@$files == 1 ? $files->[0] =~ s/(\..*)?$/.zip/r : 'webwork_files.zip',
 						id => 'archive-filename', placeholder => maketext('Archive Filename'),
 						class => 'form-control', size => 30, dir => 'ltr' =%>
 				</div>
