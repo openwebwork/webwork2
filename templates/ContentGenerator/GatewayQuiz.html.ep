@@ -589,7 +589,8 @@
 					% }
 				</div>
 				% # Store the problem status for continued attempts recording.
-				<%= hidden_field 'probstatus' . ($probOrder->[$i] + 1) => $c->{probStatus}[ $probOrder->[$i] ] =%>
+				<%= hidden_field 'probstatus' . $problems->[ $probOrder->[$i] ]{problem_id}
+					=> $c->{probStatus}[ $probOrder->[$i] ] =%>
 				%
 				<div class="gwDivider"></div>
 			% } else {
@@ -605,7 +606,8 @@
 					% }
 				% }
 				% # Store the problem status for continued attempts recording.
-				<%= hidden_field 'probstatus' . ($probOrder->[$i] + 1) => $c->{probStatus}[ $probOrder->[$i] ] %>
+				<%= hidden_field 'probstatus' . $problems->[ $probOrder->[$i] ]{problem_id}
+					=> $c->{probStatus}[ $probOrder->[$i] ] %>
 			% }
 		% }
 		%
