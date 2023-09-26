@@ -99,14 +99,14 @@
 	}
 
 	// Send a request to the server to either perltidy or convert_to_PGML the current PG code in the CodeMirror editor.
-	const cleanPGCode = () => {
+	const formatPGCode = () => {
 		const request_object = {
 			user: document.getElementById('hidden_user')?.value,
 			courseID: document.getElementsByName('courseID')[0]?.value,
 			key: document.getElementById('hidden_key')?.value
 		};
 
-		request_object.rpc_command = document.querySelector('input[name="action.clean_code"]:checked').value;
+		request_object.rpc_command = document.querySelector('input[name="action.format_code"]:checked').value;
 		request_object.pgCode = webworkConfig?.pgCodeMirror?.getValue()
 			?? document.getElementById('problemContents')?.value ?? '';
 
@@ -140,9 +140,9 @@
 	};
 
 	document.getElementById('take_action')?.addEventListener('click', async (e) => {
-		if (document.getElementById('current_action')?.value === 'clean_code') {
+		if (document.getElementById('current_action')?.value === 'format_code') {
 			e.preventDefault();
-			cleanPGCode();
+			formatPGCode();
 			return;
 		}
 

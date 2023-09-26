@@ -129,12 +129,12 @@
 		</p>
 	</dd>
 
-	<dt><%= maketext('Clean Code') %></dt>
+	<dt><%= maketext('Format Code') %></dt>
 	<dd>
 		<%= maketext('Reformat the code using perltidy or a conversion to PGML>. Using perltidy will change the code '
-			. ' in the editor window, and save changes to the temporary file. In some cases (if the code contains '
-			. 'backslashes or double tildes) this can result in odd spacing in the code.   The convert to PGML '
-			. 'feature changes the code in text blocks in the code to use PGML features.  Generally the conversion of '
+			. 'in the editor window, and save changes to the temporary file. In some cases (if the code contains '
+			. 'backslashes or double tildes) this can result in odd spacing in the code. The convert to PGML '
+			. 'feature changes the code in text blocks in the code to use PGML features. Generally the conversion of '
 			. 'many of the formatting and LaTeX is performed correctly, however answer blanks need attention. In '
 			. 'either case, make sure to inspect the formatted code, and edit further or revert if needed.') =%>
 	</dd>
