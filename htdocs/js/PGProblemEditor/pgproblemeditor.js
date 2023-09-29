@@ -108,8 +108,8 @@
 			?.addEventListener('change', () => (deleteBackupCheck.checked = true));
 	}
 
-	// Send a request to the server to either perltidy or convert_to_PGML the current PG code in the CodeMirror editor.
-	const formatPGCode = () => {
+	// Send a request to the server to perltidy the current PG code in the CodeMirror editor.
+	const tidyPGCode = () => {
 		const request_object = {
 			user: document.getElementById('hidden_user')?.value,
 			courseID: document.getElementsByName('courseID')[0]?.value,
@@ -148,8 +148,34 @@
 					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.setValue(data.result_data.tidiedPGCode);
 					else document.getElementById('problemContents').value = data.result_data.tidiedPGCode;
 					saveTempFile();
-					showMessage('Successfully '
-						+ (request_object.rpc_command == 'tidyPGCode' ? 'perltidied code.' : 'converted code to PGML'), true);
+					showMessage('Successfuly perltidied code.', true);
+				}
+			})
+			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
+	};
+
+	// Send a request to the server to convert_to_PGML the current PG code in the CodeMirror editor.
+	const convertCodeToPGML = () => {
+		const request_object = {
+			user: document.getElementById('hidden_user')?.value,
+			courseID: document.getElementsByName('courseID')[0]?.value,
+			key: document.getElementById('hidden_key')?.value
+		};
+
+		request_object.rpc_command = 'convertCodeToPGML';
+		request_object.pgCode = webworkConfig?.pgCodeMirror?.getValue()
+			?? document.getElementById('problemContents')?.value ?? '';
+
+		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
+			.then((response) => response.json())
+			.then((data) => {
+				if (request_object.pgCode === data.result_data.pgmlCode) {
+					showMessage('There were no changes to the code.', true);
+				} else {
+					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.setValue(data.result_data.pgmlCode);
+					else document.getElementById('problemContents').value = data.result_data.pgmlCode;
+					saveTempFile();
+					showMessage('Successfully converted code to PGML', true);
 				}
 			})
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
@@ -158,7 +184,11 @@
 	document.getElementById('take_action')?.addEventListener('click', async (e) => {
 		if (document.getElementById('current_action')?.value === 'format_code') {
 			e.preventDefault();
-			formatPGCode();
+			if (document.querySelector('input[name="action.format_code"]:checked').value == "tidyPGCode") {
+				tidyPGCode();
+			} else if (document.querySelector('input[name="action.format_code"]:checked').value == "convertCodeToPGML") {
+				convertCodeToPGML();
+			}
 			return;
 		}
 
