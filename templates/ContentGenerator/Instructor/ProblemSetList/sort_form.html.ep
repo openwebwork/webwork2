@@ -6,6 +6,10 @@
 			<%= select_field 'action.sort.primary' => [
 					[ maketext('Set Name')    => 'set_id' ],
 					[ maketext('Open Date')   => 'open_date' ],
+					($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+						? [ maketext('Reduced Scoring Date') => 'reduced_scoring_date' ]
+						: ()
+					),
 					[ maketext('Close Date')  => 'due_date', selected => undef ],
 					[ maketext('Answer Date') => 'answer_date' ],
 					[ maketext('Visibility')  => 'visible' ]
@@ -20,6 +24,10 @@
 			<%= select_field 'action.sort.secondary' => [
 					[ maketext('Set Name')    => 'set_id' ],
 					[ maketext('Open Date')   => 'open_date', selected => undef],
+					($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+						? [ maketext('Reduced Scoring Date') => 'reduced_scoring_date' ]
+						: ()
+					),
 					[ maketext('Close Date')  => 'due_date' ],
 					[ maketext('Answer Date') => 'answer_date' ],
 					[ maketext('Visibility')  => 'visible' ]
