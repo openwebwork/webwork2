@@ -1,3 +1,4 @@
+% last unless $c->{is_pg};
 <div>
 	<div class="form-check">
 		<%= radio_button 'action.format_code' => 'tidyPGCode',

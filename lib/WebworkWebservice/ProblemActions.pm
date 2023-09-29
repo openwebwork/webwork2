@@ -157,10 +157,8 @@ sub convertCodeToPGML {
 	my ($invocant, $self, $params) = @_;
 	my $code = $params->{pgCode};
 
-	my $converted_code = convertToPGML($code);
-
 	return {
-		ra_out => { tidiedPGCode => $converted_code },
+		ra_out => { pgmlCode => convertToPGML($code) },
 		text   => 'Converted to PGML'
 	};
 
