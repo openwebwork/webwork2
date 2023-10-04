@@ -1469,7 +1469,7 @@ sub output_summary ($c) {
 			@$output,
 			$c->tag(
 				'div',
-				class => 'ResultsWithError d-inline-block mb-2',
+				class => 'alert alert-danger d-inline-block mb-2 p-1',
 				$c->maketext('ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED')
 			),
 			$c->attemptResults($pg)
@@ -1479,7 +1479,7 @@ sub output_summary ($c) {
 			@$output,
 			$c->tag(
 				'div',
-				class => 'ResultsWithError d-inline-block mb-2',
+				class => 'alert alert-danger d-inline-block mb-2 p-1',
 				$c->maketext('PREVIEW ONLY -- ANSWERS NOT RECORDED')
 			),
 		);
@@ -1489,7 +1489,7 @@ sub output_summary ($c) {
 		@$output,
 		$c->tag(
 			'div',
-			class => 'ResultsWithError d-inline-block mb-2',
+			class => 'alert alert-danger d-inline-block mb-2 p-1',
 			$c->maketext(
 				'ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if neccessary).')
 		)

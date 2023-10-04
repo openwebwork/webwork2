@@ -518,7 +518,7 @@ sub output_summary ($c) {
 			),
 			$c->tag(
 				'div',
-				class => 'ResultsAlert',
+				class => 'alert alert-warning mb-2 p-1',
 				$c->maketext(q{Remember to return to your original problem when you're finished here!})
 			)
 		);
@@ -532,7 +532,7 @@ sub output_summary ($c) {
 				@$output,
 				$c->tag(
 					'div',
-					class => 'ResultsAlert',
+					class => 'alert alert-warning mb-2 p-1',
 					$c->maketext(
 						'You are only allowed to click on Show Me Another [quant,_1,time,times] per problem. '
 							. '[_2] Close this tab, and return to the original problem.',
@@ -546,7 +546,7 @@ sub output_summary ($c) {
 				@$output,
 				$c->tag(
 					'div',
-					class => 'ResultsAlert',
+					class => 'alert alert-warning mb-2 p-1',
 					$c->maketext(
 						'You must attempt this problem [quant,_1,time,times] before Show Me Another is available.',
 						$showMeAnother{TriesNeeded}
@@ -561,7 +561,7 @@ sub output_summary ($c) {
 			@$output,
 			$c->tag(
 				'div',
-				class => 'ResultsAlert',
+				class => 'alert alert-warning mb-2 p-1',
 				$c->maketext(
 					'WeBWorK was unable to generate a different version of this problem.  '
 						. 'Close this tab, and return to the original problem.'
