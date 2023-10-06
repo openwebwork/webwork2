@@ -24,7 +24,7 @@ sub new ($class) {
 	return bless {
 		id          => 'ResurrectHW',
 		name        => x('Scroll of Resurrection'),
-		description => x('Opens any homework set for 24 hours.')
+		description => x("Reopens one closed homework set for 24 hours and rerandomizes all problems."),
 	}, $class;
 }
 
