@@ -39,8 +39,6 @@ sub pre_header_initialize ($c) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 	my $user  = $c->param('user');
-	$c->{courseID}      = $c->stash('courseID');
-	$c->{achievementID} = $c->stash('achievementID');
 
 	# Make sure that are defined for the templates.
 	$c->stash->{formsToShow}         = ACTION_FORMS();
@@ -51,10 +49,10 @@ sub pre_header_initialize ($c) {
 	return unless ($authz->hasPermissions($user, 'edit_achievements'));
 
 	# Get the achievement
-	my $Achievement = $c->db->getAchievement($c->{achievementID});
+	my $Achievement = $c->db->getAchievement($c->stash('achievementID'));
 
 	if (!$Achievement) {
-		$c->addbadmessage("Achievement $c->{achievementID} not found!");
+		$c->addbadmessage("Achievement $c->stash('achievementID') not found!");
 		return;
 	}
 
@@ -117,7 +115,7 @@ sub shortPath ($c, $file) {
 }
 
 sub getRelativeSourceFilePath ($c, $sourceFilePath) {
-	my $achievementsDir = $c->ce->{courseDirs}->{achievements};
+	my $achievementsDir = $c->ce->{courseDirs}{achievements};
 	$sourceFilePath =~ s|^${achievementsDir}/*||;    # remove templates path and any slashes that follow
 	return $sourceFilePath;
 }
@@ -149,9 +147,9 @@ sub saveFileChanges ($c, $outputFilePath, $achievementContents = undef) {
 	if (not_blank($outputFilePath)) {    # save file
 
 		# make sure any missing directories are created
-		WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{achievements}, $outputFilePath);
+		WeBWorK::Utils::surePathToFile($ce->{courseDirs}{achievements}, $outputFilePath);
 		die 'outputFilePath is unsafe!'
-			unless path_is_subdir($outputFilePath, $ce->{courseDirs}->{achievements}, 1);
+			unless path_is_subdir($outputFilePath, $ce->{courseDirs}{achievements}, 1);
 
 		eval {
 			open my $OUTPUTFILE, '>', $outputFilePath or die "Failed to open $outputFilePath";
@@ -173,7 +171,7 @@ sub saveFileChanges ($c, $outputFilePath, $achievementContents = undef) {
 
 		my $errorMessage;
 		# Check why we failed to give better error messages
-		if (not -w $ce->{courseDirs}->{achievements}) {
+		if (not -w $ce->{courseDirs}{achievements}) {
 			$errorMessage = $c->maketext(
 				'Write permissions have not been enabled in the templates directory.  No changes can be made.');
 		} elsif (not -w $currentDirectory) {
@@ -205,8 +203,8 @@ sub saveFileChanges ($c, $outputFilePath, $achievementContents = undef) {
 }
 
 sub save_handler ($c) {
-	my $courseName      = $c->{courseID};
-	my $achievementName = $c->{achievementID};
+	my $courseName      = $c->stash('courseID');
+	my $achievementName = $c->stash('achievementID');
 
 	# Grab the achievementContents from the form in order to save it to the source path
 	$c->stash->{achievementContents} = fix_newlines($c->param('achievementContents'));
@@ -220,8 +218,8 @@ sub save_handler ($c) {
 sub save_as_handler ($c) {
 	my $db = $c->db;
 	$c->{status_message} = $c->c;    ## DPVC -- remove bogus old messages
-	my $courseName        = $c->{courseID};
-	my $achievementName   = $c->{achievementID};
+	my $courseName        = $c->stash('courseID');
+	my $achievementName   = $c->stash('achievementID');
 	my $effectiveUserName = $c->param('effectiveUser');
 
 	my $do_not_save         = 0;
@@ -248,7 +246,7 @@ sub save_as_handler ($c) {
 	$new_file_name .= '.at';        # put it there
 
 	# Construct the output file path
-	my $outputFilePath = $c->ce->{courseDirs}->{achievements} . '/' . $new_file_name;
+	my $outputFilePath = $c->ce->{courseDirs}{achievements} . '/' . $new_file_name;
 	if (defined $outputFilePath and -e $outputFilePath) {
 		# setting $do_not_save stops saving and any redirects
 		$do_not_save = 1;

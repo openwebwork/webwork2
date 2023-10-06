@@ -478,7 +478,7 @@ my %routeParameters = (
 		path   => '/#achievementID/users'
 	},
 	instructor_achievement_notification => {
-		title  => x('Achievement Email Notification Editor'),
+		title  => x('Achievement Notification for [_5]'),
 		module => 'Instructor::AchievementNotificationEditor',
 		path   => '/#achievementID/email'
 	},

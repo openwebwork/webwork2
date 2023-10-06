@@ -901,7 +901,7 @@ sub trim_spaces {
 
 # fix non-unix line endings
 sub fix_newlines {
-	return shift =~ s/\r\n/\n/gr;
+	return shift =~ s/\r\n?/\n/gr;
 }
 
 # This is for formatting set names input via text inputs in the user interface for internal use.  Set names are allowed

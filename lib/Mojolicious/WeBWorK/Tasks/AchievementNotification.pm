@@ -71,7 +71,6 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 		$template,
 		{
 			ce              => $ce,                             # holds achievement URLs
-			maketext        => sub { maketext($job, @_) },
 			achievement     => $mail_data->{achievement},       # full db record
 			setID           => $mail_data->{set_id},
 			nextLevelPoints => $mail_data->{nextLevelPoints},
