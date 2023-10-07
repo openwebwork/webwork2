@@ -27,7 +27,7 @@
         "autoprefixer": "^10.4.13",
         "chokidar": "^3.5.3",
         "cssnano": "^6.0.0",
-        "postcss": "^8.4.21",
+        "postcss": "^8.4.31",
         "rtlcss": "^4.0.0",
         "sass": "^1.57.1",
         "terser": "^5.16.1",
