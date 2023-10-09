@@ -403,20 +403,28 @@ EOS
 # Nice output for debugging
 sub pretty_print {
 	my ($r_input, $level) = @_;
+	return 'undef' unless defined $r_input;
+
 	$level //= 4;
 	$level--;
-	return '' unless $level > 0;    # Only print three levels of hashes (safety feature)
-	my $out = '';
-	if (!ref $r_input) {
-		$out = $r_input if defined $r_input;
-		$out =~ s/</&lt;/g;         # protect for HTML output
-	} elsif (eval { %$r_input && 1 }) {
-		# eval { %$r_input && 1 } will pick up all objectes that can be accessed like a hash and so works better than
-		# "ref $r_input".  Do not use "$r_input" =~ /hash/i" because that will pick up strings containing the word hash,
-		# and that will cause an error below.
-		local $^W = 0;
-		$out .= qq{$r_input <table border="2" cellpadding="3" bgcolor="#FFFFFF">};
+	return 'too deep' unless $level > 0;
 
+	my $ref = ref($r_input);
+
+	if (!$ref) {
+		return xml_escape($r_input);
+	} elsif (eval { %$r_input || 1 }) {
+		# `eval { %$r_input || 1 }` will pick up all objectes that can be accessed like a hash and so works better than
+		# `ref $r_input`.  Do not use `"$r_input" =~ /hash/i` because that will pick up strings containing the word
+		# hash, and that will cause an error below.
+		my $out =
+			'<div style="display:table;border:1px solid black;background-color:#fff;">'
+			. ($ref eq 'HASH'
+				? ''
+				: '<div style="'
+				. 'display:table-caption;padding:3px;border:1px solid black;background-color:#fff;text-align:center;">'
+				. "$ref</div>")
+			. '<div style="display:table-row-group">';
 		for my $key (sort keys %$r_input) {
 			# Safety feature - we do not want to display the contents of %seed_ce which
 			# contains the database password and lots of other things, and explicitly hide
@@ -429,24 +437,24 @@ sub pretty_print {
 					|| ($key eq "externalPrograms")
 					|| ($key eq "permissionLevels")
 					|| ($key eq "seed_ce"));
-			$out .= "<tr><td>$key</td><td>=&gt;</td><td>&nbsp;" . pretty_print($r_input->{$key}, $level) . "</td></tr>";
+			$out .=
+				'<div style="display:table-row"><div style="display:table-cell;vertical-align:middle;padding:3px">'
+				. xml_escape($key)
+				. '</div>'
+				. qq{<div style="display:table-cell;vertical-align:middle;padding:3px">=&gt;</div>}
+				. qq{<div style="display:table-cell;vertical-align:middle;padding:3px">}
+				. pretty_print($r_input->{$key}, $level)
+				. '</div></div>';
 		}
-		$out .= '</table>';
-	} elsif (ref $r_input eq 'ARRAY') {
-		my @array = @$r_input;
-		$out .= '( ';
-		while (@array) {
-			$out .= pretty_print(shift @array, $level) . ' , ';
-		}
-		$out .= ' )';
-	} elsif (ref $r_input eq 'CODE') {
-		$out = "$r_input";
+		$out .= '</div></div>';
+		return $out;
+	} elsif ($ref eq 'ARRAY') {
+		return '[ ' . join(', ', map { pretty_print($_, $level) } @$r_input) . ' ]';
+	} elsif ($ref eq 'CODE') {
+		return 'CODE';
 	} else {
-		$out = $r_input;
-		$out =~ s/</&lt;/g;    # Protect for HTML output
+		return xml_escape($r_input);
 	}
-
-	return $out . ' ';
 }
 
 1;
