@@ -137,7 +137,7 @@ async sub pre_header_initialize ($c) {
 			showHints                => 0,
 			showSolutions            => 0,
 			refreshMath2img          => 0,
-			processAnswers           => 0,
+			processAnswers           => 1,
 			permissionLevel          => $db->getPermissionLevel($userName)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
 			useMathQuill             => $c->{will}{useMathQuill},
@@ -173,7 +173,7 @@ async sub pre_header_initialize ($c) {
 					showHints                => 0,
 					showSolutions            => 0,
 					refreshMath2img          => 0,
-					processAnswers           => 0,
+					processAnswers           => 1,
 					permissionLevel          => $db->getPermissionLevel($userName)->permission,
 					effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
 					useMathQuill             => $c->{will}{useMathQuill},
@@ -188,7 +188,9 @@ async sub pre_header_initialize ($c) {
 			}
 
 			# check to see if we've found a new version
-			if ($new_body_text ne $orig_body_text) {
+			if ($new_body_text ne $orig_body_text
+				|| have_different_answers($showMeAnotherNewPG, $showMeAnotherOriginalPG))
+			{
 				# if we've found a new version, then
 				# increment the counter detailing the number of times showMeAnother has been used
 				# unless we're trying to check answers from the showMeAnother screen
@@ -232,7 +234,7 @@ async sub pre_header_initialize ($c) {
 				showHints                => 0,
 				showSolutions            => 0,
 				refreshMath2img          => 0,
-				processAnswers           => 0,
+				processAnswers           => 1,
 				permissionLevel          => $db->getPermissionLevel($userName)->permission,
 				effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
 				useMathQuill             => $c->{will}{useMathQuill},
@@ -592,6 +594,14 @@ sub output_hidden_info ($c) {
 	}
 
 	return '';
+}
+
+# Checks the PG object for two different seeds of the same pg file
+sub have_different_answers ($pg1, $pg2) {
+	for (keys %{ $pg1->{answers} }) {
+		return 1 if ($pg1->{answers}{$_}{correct_ans} ne $pg2->{answers}{$_}{correct_ans});
+	}
+	return 0;
 }
 
 1;
