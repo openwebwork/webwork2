@@ -35,7 +35,7 @@
 			if (
 				numSelected === 0 ||
 				numSelected > 1 ||
-				!/\.(tar|tar\.gz|tgz)$/.test(files.children[files.selectedIndex].value)
+				!/\.(tar|tar\.gz|tgz|zip)$/.test(files.children[files.selectedIndex].value)
 			)
 				archiveButton.value = archiveButton.dataset.archiveText;
 			else archiveButton.value = archiveButton.dataset.unarchiveText;
@@ -44,6 +44,19 @@
 
 	files?.addEventListener('change', checkFiles);
 	if (files) checkFiles();
+
+	const archiveFilenameInput = document.getElementById('archive-filename');
+	const archiveTypeSelect = document.getElementById('archive-type');
+	if (archiveFilenameInput && archiveTypeSelect) {
+		archiveTypeSelect.addEventListener('change', () => {
+			if (archiveTypeSelect.value) {
+				archiveFilenameInput.value = archiveFilenameInput.value.replace(
+					/\.(zip|tgz|tar.gz)$/,
+					`.${archiveTypeSelect.value}`
+				);
+			}
+		});
+	}
 
 	const file = document.getElementById('file');
 	const uploadButton = document.getElementById('Upload');

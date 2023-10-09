@@ -22,12 +22,16 @@ WeBWorK::ContentGenerator::Instructor::FileManager.pm -- simple directory manage
 
 =cut
 
+use Mojo::File;
 use File::Path;
 use File::Copy;
 use File::Spec;
 use String::ShellQuote;
+use Archive::Tar;
+use Archive::Zip qw(:ERROR_CODES);
+use Archive::Zip::SimpleZip qw($SimpleZipError);
 
-use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
+use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive min);
 use WeBWorK::Upload;
 use WeBWorK::Utils::CourseManagement qw(archiveCourse);
 
@@ -344,7 +348,7 @@ sub Delete ($c) {
 	}
 }
 
-# Make a gzipped tar archive
+# Make a gzipped tar or zip archive
 sub MakeArchive ($c) {
 	my @files = $c->param('files');
 	if (scalar(@files) == 0) {
@@ -352,26 +356,90 @@ sub MakeArchive ($c) {
 		return $c->Refresh;
 	}
 
-	my $dir     = "$c->{courseRoot}/$c->{pwd}";
-	my $archive = uniqueName($dir, (scalar(@files) == 1) ? $files[0] . '.tgz' : "$c->{courseName}.tgz");
-	my $tar = 'cd ' . shell_quote($dir) . " && $c->{ce}{externalPrograms}{tar} -cvzf " . shell_quote($archive, @files);
-	@files = readpipe $tar . ' 2>&1';
-	if ($? == 0) {
-		my $n = scalar(@files);
-		$c->addgoodmessage($c->maketext('Archive "[_1]" created successfully ([quant,_2,file])', $archive, $n));
+	my $dir = $c->{pwd} eq '.' ? $c->{courseRoot} : "$c->{courseRoot}/$c->{pwd}";
+
+	if ($c->param('confirmed')) {
+		my $action = $c->param('action')          || 'Cancel';
+		return $c->Refresh if $action eq 'Cancel' || $action eq $c->maketext('Cancel');
+
+		unless ($c->param('archive_filename')) {
+			$c->addbadmessage($c->maketext('The archive filename cannot be empty.'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		my $archive_type =
+			$c->param('archive_type') || ($c->param('archive_filename') =~ /\.(zip|tgz|tar.gz)$/ ? $1 : 'zip');
+
+		my $archive = $c->param('archive_filename');
+
+		# Add the correct extension to the archive filename unless it already has it. If the extension for
+		# the other archive type is given, then change it to the extension for this archive type.
+		if ($archive_type eq 'zip') {
+			$archive =~ s/(\.(tgz|tar.gz))?$/.zip/ unless $archive =~ /\.zip$/;
+		} else {
+			$archive =~ s/(\.zip)?$/.tgz/ unless $archive =~ /\.(tgz|tar.gz)$/;
+		}
+
+		# Check filename validity.
+		if ($archive =~ m!/!) {
+			$c->addbadmessage($c->maketext('The archive filename may not contain a path component'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+		if ($archive =~ m!^\.! || $archive =~ m![^-_.a-zA-Z0-9 ]!) {
+			$c->addbadmessage($c->maketext('The archive filename contains illegal characters'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		if (-e "$dir/$archive" && !$c->param('overwrite')) {
+			$c->addbadmessage($c->maketext(
+				'The file [_1] exists. Check "Overwrite existing archive" to force this file to be replaced.',
+				$archive
+			));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		unless (@files > 0) {
+			$c->addbadmessage($c->maketext('At least one file must be selected'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		my ($error, $ok);
+		if ($archive_type eq 'zip') {
+			if (my $zip = Archive::Zip::SimpleZip->new("$dir/$archive")) {
+				for (@files) {
+					$zip->add("$dir/$_", Name => $_, storelinks => 1);
+				}
+				$ok = $zip->close;
+			}
+			$error = $SimpleZipError unless $ok;
+		} else {
+			my $tar = Archive::Tar->new;
+			$tar->add_files(map {"$dir/$_"} @files);
+			# Make file names in the archive relative to the current working directory.
+			for ($tar->get_files) {
+				$tar->rename($_->full_path, $_->full_path =~ s!^$dir/!!r);
+			}
+			$ok    = $tar->write("$dir/$archive", COMPRESS_GZIP);
+			$error = $tar->error unless $ok;
+		}
+		if ($ok) {
+			$c->addgoodmessage(
+				$c->maketext('Archive "[_1]" created successfully ([quant,_2,file])', $archive, scalar(@files)));
+		} else {
+			$c->addbadmessage($c->maketext(q{Can't create archive "[_1]": [_2]}, $archive, $error));
+		}
+		return $c->Refresh;
 	} else {
-		$c->addbadmessage(
-			$c->maketext(q{Can't create archive "[_1]": command returned [_2]}, $archive, systemError($?)));
+		return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
 	}
-	return $c->Refresh;
 }
 
 # Unpack a gzipped tar archive
 sub UnpackArchive ($c) {
 	my $archive = $c->getFile('unpack');
 	return '' unless $archive;
-	if ($archive !~ m/\.(tar|tar\.gz|tgz)$/) {
-		$c->addbadmessage($c->maketext('You can only unpack files ending in ".tgz", ".tar" or ".tar.gz"'));
+	if ($archive !~ m/\.(tar|tar\.gz|tgz|zip)$/) {
+		$c->addbadmessage($c->maketext('You can only unpack files ending in ".zip", ".tgz", ".tar" or ".tar.gz"'));
 	} else {
 		$c->unpack_archive($archive);
 	}
@@ -379,19 +447,132 @@ sub UnpackArchive ($c) {
 }
 
 sub unpack_archive ($c, $archive) {
-	my $z     = $archive =~ m/\.tar$/ ? '' : 'z';
-	my $dir   = "$c->{courseRoot}/$c->{pwd}";
-	my $tar   = 'cd ' . shell_quote($dir) . " && $c->{ce}{externalPrograms}{tar} -vx${z}f " . shell_quote($archive);
-	my @files = readpipe "$tar 2>&1";
+	my $dir = Mojo::File->new($c->{courseRoot}, $c->{pwd});
 
-	if ($? == 0) {
-		my $n = scalar(@files);
-		$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $n));
-		return 1;
+	my (@members, @existing_files, @outside_files);
+	my $num_extracted = 0;
+
+	if ($archive =~ m/\.zip$/) {
+		my $zip = Archive::Zip->new($dir->child($archive)->to_string);
+		unless ($zip) {
+			$c->addbadmessage($c->maketext(q{Unable to read zip archive file "[_1]".}, $dir->child($archive)));
+			return 0;
+		}
+
+		Archive::Zip::setErrorHandler(sub ($error) {
+			chomp $error;
+			$c->addbadmessage($error);
+		});
+
+		@members = $zip->members;
+		for (@members) {
+			my $out_file = $dir->child($_->fileName)->realpath;
+			if ($out_file !~ /^$dir/) {
+				push(@outside_files, $_->fileName);
+				next;
+			}
+
+			if (!$c->param('overwrite') && -e $out_file) {
+				push(@existing_files, $_->fileName);
+				next;
+			}
+			++$num_extracted if $zip->extractMember($_ => $out_file->to_string) == AZ_OK;
+		}
+
+		Archive::Zip::setErrorHandler();
+	} elsif ($archive =~ m/\.(tar(\.gz)?|tgz)$/) {
+		local $Archive::Tar::WARN = 0;
+
+		my $tar = Archive::Tar->new($dir->child($archive)->to_string);
+		unless ($tar) {
+			$c->addbadmessage($c->maketext(q{Unable to read tar archive file "[_1]".}, $dir->child($archive)));
+			return 0;
+		}
+
+		$tar->setcwd($dir->to_string);
+
+		@members = $tar->list_files;
+		for (@members) {
+			my $out_file = $dir->child($_)->realpath;
+			if ($out_file !~ /^$dir/) {
+				push(@outside_files, $_);
+				next;
+			}
+
+			if (!$c->param('overwrite') && -e $dir->child($_)) {
+				push(@existing_files, $_);
+				next;
+			}
+
+			unless ($tar->extract_file($_)) {
+				$c->addbadmessage($tar->error);
+				next;
+			}
+			++$num_extracted;
+		}
 	} else {
-		$c->addbadmessage($c->maketext(q{Can't unpack "[_1]": command returned [_2]}, $archive, systemError($?)));
+		$c->addbadmessage($c->maketext('Unsupported archive type in file "[_1]"', $archive));
 		return 0;
 	}
+
+	if (@outside_files) {
+		$c->addbadmessage(
+			$c->tag(
+				'p',
+				$c->maketext(
+					'The following [plural,_1,file is,files are] outside the current working directory '
+						. 'and can not be safely unpacked.',
+					scalar(@outside_files),
+				)
+				)
+				. $c->tag(
+					'div',
+					$c->tag(
+						'ul',
+						$c->c(
+							(map { $c->tag('li', $_) } @outside_files[ 0 .. min(29, $#outside_files) ]),
+							(
+								@outside_files > 30
+								? $c->tag('li',
+									$c->maketext('[quant,_1,more file,more files] not shown', @outside_files - 30))
+								: ()
+							)
+					)->join('')
+					)
+				)
+		);
+	}
+
+	if (@existing_files) {
+		$c->addbadmessage(
+			$c->tag(
+				'p',
+				$c->maketext(
+					'The following [plural,_1,file already exists,files already exist]. '
+						. 'Check "Overwrite existing files silently" to unpack [plural,_1,this file,these files].',
+					scalar(@existing_files),
+				)
+				)
+				. $c->tag(
+					'div',
+					$c->tag(
+						'ul',
+						$c->c(
+							(map { $c->tag('li', $_) } @existing_files[ 0 .. min(29, $#existing_files) ]),
+							(
+								@existing_files > 30
+								? $c->tag('li',
+									$c->maketext('[quant,_1,more file,more files] not shown', @existing_files - 30))
+								: ()
+							)
+					)->join('')
+					)
+				)
+		);
+	}
+
+	$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $num_extracted)) if $num_extracted;
+	return $num_extracted == @members;
 }
 
 # Make a new file and edit it
@@ -472,9 +653,8 @@ sub Upload ($c) {
 				$c->Confirm(
 					$c->tag(
 						'p',
-						$c->b(
-							$c->maketext('File <b>[_1]</b> already exists. Overwrite it, or rename it as:', $name)
-						)
+						$c->b($c->maketext(
+							'File <b>[_1]</b> already exists. Overwrite it, or rename it as:', $name))
 					),
 					uniqueName($dir, $name),
 					$c->maketext('Rename'),
@@ -520,7 +700,7 @@ sub Upload ($c) {
 
 	if (-e $file) {
 		$c->addgoodmessage($c->maketext('File "[_1]" uploaded successfully', $name));
-		if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $c->getFlag('unpack')) {
+		if ($name =~ m/\.(tar|tar\.gz|tgz|zip)$/ && $c->getFlag('unpack')) {
 			if ($c->unpack_archive($name) && $c->getFlag('autodelete')) {
 				if (unlink($file)) { $c->addgoodmessage($c->maketext('Archive "[_1]" deleted', $name)) }
 				else               { $c->addbadmessage($c->maketext(q{Can't delete archive "[_1]": [_2]}, $name, $!)) }
@@ -610,9 +790,8 @@ sub directoryListing ($c, $pwd) {
 		for my $name (@values) {
 			my $file = "$dir/$name->[1]";
 			my ($size, $date) = (lstat($file))[ 7, 9 ];
-			$name->[0] =
-				$c->b(
-					sprintf("%-${len}s%-16s%10s", $name->[0], -d $file ? ('', '') : (getDate($date), getSize($size)))
+			$name->[0] = $c->b(
+				sprintf("%-${len}s%-16s%10s", $name->[0], -d $file ? ('', '') : (getDate($date), getSize($size)))
 					=~ s/\s/&nbsp;/gr);
 		}
 	}

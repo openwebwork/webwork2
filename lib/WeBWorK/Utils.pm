@@ -81,6 +81,7 @@ our @EXPORT_OK = qw(
 	list2hash
 	listFilesRecursive
 	makeTempDirectory
+	min
 	max
 	nfreeze_base64
 	not_blank
@@ -1049,15 +1050,22 @@ sub thaw_base64 {
 
 }
 
-sub max(@) {
-	my $soFar;
-	foreach my $item (@_) {
-		$soFar = $item unless defined $soFar;
-		if ($item > $soFar) {
-			$soFar = $item;
-		}
+sub min {
+	my @items = @_;
+	my $min   = (shift @items) // 0;
+	for my $item (@items) {
+		$min = $item if ($item < $min);
 	}
-	return defined $soFar ? $soFar : 0;
+	return $min;
+}
+
+sub max {
+	my @items = @_;
+	my $max   = (shift @items) // 0;
+	for my $item (@items) {
+		$max = $item if ($item > $max);
+	}
+	return $max;
 }
 
 sub wwRound(@) {
