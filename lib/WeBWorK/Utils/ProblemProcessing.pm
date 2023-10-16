@@ -458,7 +458,7 @@ Comment:    $comment
 		});
 		debug('Successfully sent JITAR alert message');
 	} catch {
-		$c->log->error("Failed to send JITAR alert message: $_");
+		$c->log->error('Failed to send JITAR alert message: ' . (ref($_) ? $_->message : $_));
 	};
 
 	return '';

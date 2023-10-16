@@ -250,7 +250,7 @@ $emailableURL
 				$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
 			});
 		} catch {
-			$c->stash->{send_error} = $c->maketext('Failed to send message: [_1]', $_);
+			$c->stash->{send_error} = $c->maketext('Failed to send message: [_1]', ref($_) ? $_->message : $_);
 		};
 	}
 

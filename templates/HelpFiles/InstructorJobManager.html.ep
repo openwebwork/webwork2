@@ -1,0 +1,80 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Job Manager Help');
+%
+<p>
+	<%= maketext('This page allows one to view and manage jobs in job queue. Note that completed jobs are '
+		. 'automatically removed from the job queue after two days. So there is no real need to delete jobs. '
+		. 'The importance of this page is to see the status of recently completed or in progress jobs.') =%>
+</p>
+<h2><%= maketext('Job Table Column Descriptions:') %></h2>
+<dl>
+	<dt><%= maketext('Id') %></dt>
+	<dd>
+		<%= maketext('The job id is an automatically incremented integer.  It is used internally to uniquely identify '
+			. 'jobs.  It is also used to reference jobs in messages on this page.') =%>
+	</dd>
+	<dt><%= maketext('Task') %></dt>
+	<dd>
+		<%= maketext('The name of the task.') =%>
+	</dd>
+	<dt><%= maketext('Created') %></dt>
+	<dd>
+		<%= maketext('The time that the job was added to the queue.') =%>
+	</dd>
+	<dt><%= maketext('Started') %></dt>
+	<dd>
+		<%= maketext('The time that execution of the job begins. If execution of the job has not started, '
+			. 'then this will be empty.') =%>
+	</dd>
+	<dt><%= maketext('Finished') %></dt>
+	<dd>
+		<%= maketext('The time that execution of the job completes. If execution of the job has not yet completed, '
+			. 'then this will be empty.') =%>
+	</dd>
+	<dt><%= maketext('State') %></dt>
+	<dd>
+		<%= maketext('The current state of the job.  This will be one of "inactive", "active", "finished", or '
+			. '"failed". If a job is "inactive" it means that the job has been added to the queue, but execution '
+			. 'of the job has not yet started. If a job is "active" it means that the job is currently being '
+			. 'executed. If a job is "finished" it means that the execution of the job has successfully '
+			. 'completed. If a job is "failed" it means that the execution of job has completed, but there were '
+			. 'errors in the execution of the job. If the job is in the "finished" or "failed" state, then there '
+			. 'will also be a popover containing information about what happened when the job was executed.') =%>
+	</dd>
+</dl>
+%
+<h2><%= maketext('Actions:') %></h2>
+<dl>
+	<dt><%= maketext('Filter') %></dt>
+	<dd>
+		<%= maketext('Filter jobs that are shown in the job table. Jobs can be filtered by Id, Task, or State, '
+			. 'or by selection.') =%>
+	</dd>
+	<dt><%= maketext('Sort') %></dt>
+	<dd>
+		<%= maketext('Sort jobs in the table by fields. The jobs in the table can also be sorted by clicking on '
+			. 'column headers in the table.') =%>
+	</dd>
+	<dt><%= maketext('Delete') %></dt>
+	<dd>
+		<%= maketext('Delete selected jobs.  Note that jobs that are in the "active" state can not be deleted. '
+			. 'Jobs that are in the "inactive" state can be deleted, but it is possible that by the time the request '
+			. 'to delete the job occurs the job may have transitioned into the "active" state.  In that case the job '
+			. 'will not be deleted. Jobs that are in the "finished" or "failed" states can always be deleted.') =%>
+	</dd>
+</dl>

@@ -11,14 +11,14 @@
 		</li>
 		% for (
 			% [
-			% 	'add_course',
-			% 	maketext('Add Courses'),
-			% 	{
-			% 		add_admin_users      => 1,
-			% 		add_config_file      => 1,
-			% 		add_dbLayout         => 'sql_single',
-			% 		add_templates_course => $ce->{siteDefaults}{default_templates_course} || ''
-			% 	}
+				% 'add_course',
+				% maketext('Add Courses'),
+				% {
+					% add_admin_users      => 1,
+					% add_config_file      => 1,
+					% add_dbLayout         => 'sql_single',
+					% add_templates_course => $ce->{siteDefaults}{default_templates_course} || ''
+				% }
 			% ],
 			% [ 'rename_course',        maketext('Rename Courses') ],
 			% [ 'delete_course',        maketext('Delete Courses') ],
@@ -27,8 +27,7 @@
 			% [ 'upgrade_course',       maketext('Upgrade Courses') ],
 			% [ 'hide_inactive_course', maketext('Hide Courses') ],
 			% [ 'manage_locations',     maketext('Manage Locations') ],
-		% )
-		% {
+		% ) {
 			<li class="list-group-item nav-item">
 				<%= $makelink->(
 					'set_list',
@@ -42,6 +41,7 @@
 		% if ($authz->hasPermissions($userID, 'send_mail')) {
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_mail_merge') %></li>
 		% }
+		<li class="list-group-item nav-item"><%= $makelink->('instructor_job_manager') %></li>
 		<li class="list-group-item nav-item">
 			<%= $makelink->(
 				'instructor_file_manager',

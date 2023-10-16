@@ -1,0 +1,13 @@
+<div>
+	<div class="row mb-2">
+		<%= label_for delete_select => maketext('Delete which jobs?'),
+			class => 'col-form-label col-form-label-sm col-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.delete.scope' => [
+					[ maketext('no jobs')       => 'none', selected => undef ],
+					[ maketext('selected jobs') => 'selected' ]
+				],
+				id => 'delete_select', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+</div>

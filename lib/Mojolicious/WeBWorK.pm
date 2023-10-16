@@ -26,7 +26,7 @@ use Env qw(WEBWORK_SERVER_ADMIN);
 
 use WeBWorK;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Utils qw(x writeTimingLogEntry);
+use WeBWorK::Utils qw(writeTimingLogEntry);
 use WeBWorK::Utils::Routes qw(setup_content_generator_routes);
 
 sub startup ($app) {
@@ -84,7 +84,8 @@ sub startup ($app) {
 	# Add the themes directory to the template search paths.
 	push(@{ $app->renderer->paths }, $ce->{webworkDirs}{themes});
 
-	# Setup the Minion job queue.
+	# Setup the Minion job queue. Make sure that any task added here is represented in the TASK_NAMES hash in
+	# WeBWorK::ContentGenerator::Instructor::JobManager.
 	$app->plugin(Minion => { $ce->{job_queue}{backend} => $ce->{job_queue}{database_dsn} });
 	$app->minion->add_task(lti_mass_update        => 'Mojolicious::WeBWorK::Tasks::LTIMassUpdate');
 	$app->minion->add_task(send_instructor_email  => 'Mojolicious::WeBWorK::Tasks::SendInstructorEmail');
