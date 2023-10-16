@@ -1,9 +1,3 @@
-% use WeBWorK::Utils qw(getAssetURL);
-%
-% content_for js => begin
-	<%= javascript getAssetURL($ce, 'js/ShowHide/show_hide.js'), defer => undef =%>
-% end
-%
 % unless ($authz->hasPermissions(param('user'), 'view_answers')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to view past answers') %></div>
 	% last;
