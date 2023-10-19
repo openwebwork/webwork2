@@ -89,12 +89,9 @@
 			<li><%= maketext('TA:') %> 5</li>
 			<li><%= maketext('Instructor:') %> 10</li>
 		</ul>
-	</dd>
 		<%= maketext('Note that if you set the permission level of a user to something other than "Student", you may '
 			. 'also want to set the status of the user to "Observer".  Users with the "Observer" status are not '
 			. 'included in statistics, scoring, or instructor emails.') =%>
-	<dd>
-
 	</dd>
 
 	<dt><%= maketext('Drop student from the course') %></dt>

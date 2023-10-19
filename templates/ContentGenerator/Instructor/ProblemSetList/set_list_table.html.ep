@@ -1,16 +1,17 @@
 % my %fieldHeaders = (
-	% set_id                 => $c->{editMode}
-								% ? maketext('Edit Set')
-								% : label_for('select-all' => maketext('Edit Set Data')),
-	% problems               => maketext('Edit Problems'),
-	% users                  => maketext('Edit Assigned Users'),
+	% set_id                 => maketext('Set Name'),
+	% problems               => maketext('Problems'),
+	% users                  => maketext('Assigned Users'),
 	% visible                => maketext('Visible'),
-	% enable_reduced_scoring => $c->{editMode} ? maketext('Enable Reduced Scoring') : maketext('Reduced Scoring'),
+	% enable_reduced_scoring => maketext('Reduced Scoring'),
 	% open_date              => maketext('Open Date'),
 	% reduced_scoring_date   => maketext('Reduced Scoring Date'),
 	% due_date               => maketext('Close Date'),
 	% answer_date            => maketext('Answer Date')
 % );
+%
+% my %sortableFields =
+	% (set_id => 1, open_date => 1, reduced_scoring_date => 1, due_date => 1, answer_date => 1, visible => 1);
 %
 <div class="table-responsive">
 	<table id="set_table_id" class="set_table table table-sm table-bordered caption-top font-sm <%=
@@ -22,12 +23,29 @@
 			<tr>
 				% if (!$c->{editMode}) {
 					<th>
-						<%= check_box 'select-all' => '', id => 'select-all', class => 'select-all form-check-input',
-							'aria-label' => maketext('Select all sets'), data => { select_group => 'selected_sets' } =%>
+						<%= label_for 'select-all', begin =%>
+							<%= check_box 'select-all' => '', id => 'select-all',
+								class => 'select-all form-check-input set-id-tooltip',
+								'aria-label' => maketext('Select all sets'),
+								data => {
+									select_group => 'selected_sets',
+									bs_toggle => 'tooltip',
+									bs_placement => 'right',
+									bs_title => maketext('Select all sets')
+								} =%>
+								<i class="fa-solid fa-check-double" aria-hidden="true"></i>
+							<% end =%>
 					</th>
 				% }
 				% for (@$fieldNames) {
-					<th id="<%= $_ %>_header"><%= $fieldHeaders{$_} =%></th>
+					<th id="<%= $_ %>_header">
+						% if (!$c->{editMode} && $sortableFields{$_}) {
+							<%= link_to $fieldHeaders{$_} => '#', class => 'sort-header',
+								data => { sort_field => $_ } =%>
+						% } else {
+							<%= $fieldHeaders{$_} =%>
+						% }
+					</th>
 				% }
 			</tr>
 		</thead>

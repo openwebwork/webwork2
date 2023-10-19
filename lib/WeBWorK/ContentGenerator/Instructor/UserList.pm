@@ -207,15 +207,9 @@ sub pre_header_initialize ($c) {
 		{ map { $allUsers{$_}{permission} > $c->{userPermission} ? () : ($_ => 1) } (keys %allUsers) };
 
 	# Always have a definite sort order.
-	if (defined $c->param('labelSortMethod')) {
-		$c->{primarySortField}   = $c->param('labelSortMethod');
-		$c->{secondarySortField} = $c->param('primarySortField')   || 'last_name';
-		$c->{ternarySortField}   = $c->param('secondarySortField') || 'first_name';
-	} else {
-		$c->{primarySortField}   = $c->param('primarySortField')   || 'last_name';
-		$c->{secondarySortField} = $c->param('secondarySortField') || 'first_name';
-		$c->{ternarySortField}   = $c->param('ternarySortField')   || 'student_id';
-	}
+	$c->{primarySortField}   = $c->param('primarySortField')   || 'last_name';
+	$c->{secondarySortField} = $c->param('secondarySortField') || 'first_name';
+	$c->{ternarySortField}   = $c->param('ternarySortField')   || 'student_id';
 
 	my $actionID = $c->param('action');
 	if ($actionID) {
@@ -225,12 +219,10 @@ sub pre_header_initialize ($c) {
 		if (!FORM_PERMS()->{$actionID} || $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
 			# Call the action handler
 			my $actionHandler = "${actionID}_handler";
-			$c->addgoodmessage($c->maketext('Result of last action performed: [_1]', $c->tag('i', $c->$actionHandler)));
+			$c->addgoodmessage($c->$actionHandler);
 		} else {
 			$c->addbadmessage($c->maketext('You are not authorized to perform this action.'));
 		}
-	} else {
-		$c->addgoodmessage($c->maketext("Please select action to be performed."));
 	}
 
 	# Sort all users
@@ -274,16 +266,16 @@ sub filter_handler ($c) {
 
 	my $scope = $c->param('action.filter.scope');
 	if ($scope eq 'all') {
-		$result = $c->maketext('showing all users');
+		$result = $c->maketext('Showing all users.');
 		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->{allUserIDs} } };
 	} elsif ($scope eq 'none') {
-		$result = $c->maketext('showing no users');
+		$result = $c->maketext('Showing no users.');
 		$c->{visibleUserIDs} = {};
 	} elsif ($scope eq 'selected') {
-		$result = $c->maketext('showing selected users');
+		$result = $c->maketext('Showing selected users.');
 		$c->{visibleUserIDs} = $c->{selectedUserIDs};
 	} elsif ($scope eq 'match_regex') {
-		$result = $c->maketext('showing matching users');
+		$result = $c->maketext('Showing matching users.');
 		my $regex    = $c->param('action.filter.user_ids');
 		my $field    = $c->param('action.filter.field');
 		my %allUsers = %{ $c->{allUsers} };
@@ -307,12 +299,21 @@ sub filter_handler ($c) {
 }
 
 sub sort_handler ($c) {
-	$c->{primarySortField}   = $c->param('action.sort.primary');
-	$c->{secondarySortField} = $c->param('action.sort.secondary');
-	$c->{ternarySortField}   = $c->param('action.sort.ternary');
+	if (defined $c->param('labelSortMethod')) {
+		$c->{ternarySortField}   = $c->{secondarySortField};
+		$c->{secondarySortField} = $c->{primarySortField};
+		$c->{primarySortField}   = $c->param('labelSortMethod');
+		$c->param('action.sort.primary',   $c->{primarySortField});
+		$c->param('action.sort.secondary', $c->{secondarySortField});
+		$c->param('action.sort.ternary',   $c->{ternarySortField});
+	} else {
+		$c->{primarySortField}   = $c->param('action.sort.primary');
+		$c->{secondarySortField} = $c->param('action.sort.secondary');
+		$c->{ternarySortField}   = $c->param('action.sort.ternary');
+	}
 
 	return $c->maketext(
-		'Users sorted by [_1], then by [_2], then by [_3]',
+		'Users sorted by [_1], then by [_2], then by [_3].',
 		$c->maketext(FIELD_PROPERTIES()->{ $c->{primarySortField} }{name}),
 		$c->maketext(FIELD_PROPERTIES()->{ $c->{secondarySortField} }{name}),
 		$c->maketext(FIELD_PROPERTIES()->{ $c->{ternarySortField} }{name})
@@ -325,13 +326,13 @@ sub edit_handler ($c) {
 
 	my $scope = $c->param('action.edit.scope');
 	if ($scope eq 'all') {
-		$result      = $c->maketext('editing all users');
+		$result      = $c->maketext('Editing all users.');
 		@usersToEdit = grep { $c->{userIsEditable}{$_} } @{ $c->{allUserIDs} };
 	} elsif ($scope eq 'visible') {
-		$result      = $c->maketext('editing visible users');
+		$result      = $c->maketext('Editing visible users.');
 		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{visibleUserIDs} });
 	} elsif ($scope eq 'selected') {
-		$result      = $c->maketext('editing selected users');
+		$result      = $c->maketext('Editing selected users.');
 		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
 	}
 	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
@@ -346,13 +347,13 @@ sub password_handler ($c) {
 
 	my $scope = $c->param('action.password.scope');
 	if ($scope eq 'all') {
-		$result      = $c->maketext('giving new passwords to all users');
+		$result      = $c->maketext('Giving new passwords to all users.');
 		@usersToEdit = grep { $c->{userIsEditable}{$_} } @{ $c->{allUserIDs} };
 	} elsif ($scope eq 'visible') {
-		$result      = $c->maketext('giving new passwords to visible users');
+		$result      = $c->maketext('Giving new passwords to visible users.');
 		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{visibleUserIDs} });
 	} elsif ($scope eq 'selected') {
-		$result      = $c->maketext('giving new passwords to selected users');
+		$result      = $c->maketext('Giving new passwords to selected users.');
 		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
 	}
 	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
@@ -485,7 +486,7 @@ sub cancel_edit_handler ($c) {
 	}
 	$c->{editMode} = 0;
 
-	return $c->maketext('Changes abandoned');
+	return $c->maketext('Changes abandoned.');
 }
 
 sub save_edit_handler ($c) {
@@ -526,7 +527,7 @@ sub save_edit_handler ($c) {
 
 	$c->{editMode} = 0;
 
-	return $c->maketext('Changes saved');
+	return $c->maketext('Changes saved.');
 }
 
 sub cancel_password_handler ($c) {
@@ -537,7 +538,7 @@ sub cancel_password_handler ($c) {
 	}
 	$c->{passwordMode} = 0;
 
-	return $c->maketext('Changes abandoned');
+	return $c->maketext('Changes abandoned.');
 }
 
 sub save_password_handler ($c) {
@@ -574,7 +575,7 @@ sub save_password_handler ($c) {
 
 	$c->{passwordMode} = 0;
 
-	return $c->maketext('New passwords saved');
+	return $c->maketext('New passwords saved.');
 }
 
 # Sort methods

@@ -7,12 +7,21 @@
 % unless ($c->{editMode} || $c->{passwordMode}) {
 	% content_for 'user-list-table-headings' => begin
 		<th>
-			<%= check_box 'select-all' => 'on', id => 'select-all', 'aria-label' => maketext('Select all users'),
-				data => { select_group => 'selected_users' }, class => 'select-all form-check-input' =%>
+			<%= label_for 'select-all', begin =%>
+				<%= check_box 'select-all' => 'on', id => 'select-all',
+					class => 'select-all form-check-input set-id-tooltip',
+					'aria-label' => maketext('Select all users'),
+					data => {
+						select_group => 'selected_users',
+						bs_toggle => 'tooltip',
+						bs_placement => 'right',
+						bs_title => maketext('Select all users')
+					} =%>
+					<i class="fa-solid fa-check-double" aria-hidden="true"></i>
+				<% end =%>
 		</th>
 		<th>
-			<%= label_for 'select-all' =>
-				link_to maketext('Login Name') => '#', class => 'sort-header',
+			<%= link_to maketext('Login Name') => '#', class => 'sort-header',
 					data => { sort_field => 'user_id' } =%>
 		</th>
 		<th><%= maketext('Login Status') %></th>

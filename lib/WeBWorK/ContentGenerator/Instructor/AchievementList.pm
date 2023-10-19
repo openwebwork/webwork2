@@ -124,12 +124,10 @@ sub initialize ($c) {
 		my $actionHandler = "${actionID}_handler";
 		my ($success, $action_result) = $c->$actionHandler;
 		if ($success) {
-			$c->addgoodmessage($c->b($c->maketext('Result of last action performed: [_1]', $action_result)));
+			$c->addgoodmessage($c->b($action_result));
 		} else {
-			$c->addbadmessage($c->b($c->maketext('Result of last action performed: [_1]', $action_result)));
+			$c->addbadmessage($c->b($action_result));
 		}
-	} else {
-		$c->addgoodmessage($c->maketext('Please select action to be performed.'));
 	}
 
 	$c->stash->{formsToShow} = $c->{editMode} ? EDIT_FORMS() : $c->{exportMode} ? EXPORT_FORMS() : VIEW_FORMS();
@@ -153,9 +151,9 @@ sub edit_handler ($c) {
 	my $scope = $c->param('action.edit.scope');
 	if ($scope eq "all") {
 		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
-		$result = $c->maketext("editing all achievements");
+		$result = $c->maketext('Editing all achievements.');
 	} elsif ($scope eq "selected") {
-		$result = $c->maketext("editing selected achievements");
+		$result = $c->maketext('Editing selected achievements.');
 	}
 	$c->{editMode} = 1;
 
@@ -219,7 +217,7 @@ sub assign_handler ($c) {
 		}
 	}
 
-	return (1, $c->maketext('Assigned achievements to users'));
+	return (1, $c->maketext('Assigned achievements to users.'));
 }
 
 # Handler for scoring
@@ -311,7 +309,7 @@ sub score_handler ($c) {
 	return (
 		1,
 		$c->b($c->maketext(
-			'Achievement scores saved to [_1]',
+			'Achievement scores saved to [_1].',
 			$c->link_to(
 				$scoreFileName => $c->systemLink(
 					$c->url_for('instructor_file_manager'),
@@ -351,7 +349,7 @@ sub delete_handler ($c) {
 	$c->{selectedAchievementIDs} = [ keys %selectedAchievementIDs ];
 
 	my $num = @achievementIDsToDelete;
-	return (1, $c->maketext('Deleted [quant,_1,achievement]', $num));
+	return (1, $c->maketext('Deleted [quant,_1,achievement].', $num));
 }
 
 # Handler for creating an ahcievement
@@ -364,7 +362,7 @@ sub create_handler ($c) {
 	my $newAchievementID = $c->param('action.create.id');
 	return (0, $c->maketext("Failed to create new achievement: no achievement ID specified!"))
 		unless $newAchievementID =~ /\S/;
-	return (0, $c->maketext("Achievement [_1] exists.  No achievement created", $newAchievementID))
+	return (0, $c->maketext("Achievement [_1] exists.  No achievement created.", $newAchievementID))
 		if $db->existsAchievement($newAchievementID);
 	my $newAchievementRecord = $db->newAchievement;
 	my $oldAchievementID     = $c->{selectedAchievementIDs}->[0];
@@ -487,7 +485,7 @@ sub import_handler ($c) {
 
 	$c->{allAchievementIDs} = [ keys %allAchievementIDs ];
 
-	return (1, $c->maketext('Imported [quant,_1,achievement]', $count));
+	return (1, $c->maketext('Imported [quant,_1,achievement].', $count));
 }
 
 # Export handler
@@ -497,10 +495,10 @@ sub export_handler ($c) {
 
 	my $scope = $c->param('action.export.scope');
 	if ($scope eq "all") {
-		$result = $c->maketext("exporting all achievements");
+		$result = $c->maketext('Exporting all achievements.');
 		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
 	} elsif ($scope eq "selected") {
-		$result = $c->maketext("exporting selected achievements");
+		$result = $c->maketext('Exporting selected achievements.');
 		$c->{selectedAchievementIDs} = [ $c->param('selected_achievements') ];
 	}
 	$c->{exportMode} = 1;
@@ -512,7 +510,7 @@ sub export_handler ($c) {
 sub cancel_export_handler ($c) {
 	$c->{exportMode} = 0;
 
-	return (0, $c->maketext('export abandoned'));
+	return (0, $c->maketext('Export abandoned.'));
 }
 
 # Handler actually exporting achievements.
@@ -536,7 +534,7 @@ sub save_export_handler ($c) {
 	$FilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}{achievements}, $FilePath);
 
 	my $fh = Mojo::File->new($FilePath)->open('>:encoding(UTF-8)')
-		or return (0, $c->maketext('Failed to open [_1]', $FilePath));
+		or return (0, $c->maketext('Failed to open [_1].', $FilePath));
 
 	my $csv = Text::CSV->new({ eol => "\n" });
 
@@ -557,13 +555,13 @@ sub save_export_handler ($c) {
 
 	$c->{exportMode} = 0;
 
-	return (1, $c->maketext('Exported achievements to [_1]', $FileName));
+	return (1, $c->maketext('Exported achievements to [_1].', $FileName));
 }
 
 # Handler for cancelling edits.
 sub cancel_edit_handler ($c) {
 	$c->{editMode} = 0;
-	return (1, $c->maketext('changes abandoned'));
+	return (1, $c->maketext('Changes abandoned.'));
 }
 
 # Handler for saving edits.
@@ -598,7 +596,7 @@ sub save_edit_handler ($c) {
 
 	$c->{editMode} = 0;
 
-	return (1, $c->maketext('changes saved'));
+	return (1, $c->maketext('Changes saved.'));
 }
 
 # Get list of files that can be imported.

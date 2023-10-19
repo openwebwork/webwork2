@@ -235,15 +235,13 @@ sub initialize ($c) {
 			my $actionHandler = "${actionID}_handler";
 			my ($success, $action_result) = $c->$actionHandler;
 			if ($success) {
-				$c->addgoodmessage($c->b($c->maketext('Result of last action performed: [_1]', $action_result)));
+				$c->addgoodmessage($c->b($action_result));
 			} else {
-				$c->addbadmessage($c->b($c->maketext('Result of last action performed: [_1]', $action_result)));
+				$c->addbadmessage($c->b($action_result));
 			}
 		} else {
 			$c->addbadmessage($c->maketext('You are not authorized to perform this action.'));
 		}
-	} else {
-		$c->addgoodmessage($c->maketext("Please select action to be performed."));
 	}
 
 	$c->stash->{fieldNames} =
@@ -282,16 +280,16 @@ sub filter_handler ($c) {
 	my $scope = $c->param('action.filter.scope');
 
 	if ($scope eq "all") {
-		$result = $c->maketext("showing all sets");
+		$result = $c->maketext('Showing all sets.');
 		$c->{visibleSetIDs} = $c->{allSetIDs};
 	} elsif ($scope eq "none") {
-		$result = $c->maketext("showing no sets");
+		$result = $c->maketext('Showing no sets.');
 		$c->{visibleSetIDs} = [];
 	} elsif ($scope eq "selected") {
-		$result = $c->maketext("showing selected sets");
+		$result = $c->maketext('Showing selected sets.');
 		$c->{visibleSetIDs} = [ $c->param('selected_sets') ];
 	} elsif ($scope eq "match_ids") {
-		$result = $c->maketext("showing matching sets");
+		$result = $c->maketext('Showing matching sets.');
 		my @searchTerms = map { format_set_name_internal($_) } split /\s*,\s*/, $c->param('action.filter.set_ids');
 		my $regexTerms  = join('|', @searchTerms);
 		my @setIDs      = grep {/$regexTerms/i} @{ $c->{allSetIDs} };
@@ -308,21 +306,33 @@ sub filter_handler ($c) {
 }
 
 sub sort_handler ($c) {
-	my $primary   = $c->param('action.sort.primary');
-	my $secondary = $c->param('action.sort.secondary');
-
-	$c->{primarySortField}   = $primary;
-	$c->{secondarySortField} = $secondary;
+	if (defined $c->param('labelSortMethod')) {
+		$c->{secondarySortField} = $c->{primarySortField};
+		$c->{primarySortField}   = $c->param('labelSortMethod');
+		$c->param('action.sort.primary',   $c->{primarySortField});
+		$c->param('action.sort.secondary', $c->{secondarySortField});
+	} else {
+		$c->{primarySortField}   = $c->param('action.sort.primary');
+		$c->{secondarySortField} = $c->param('action.sort.secondary');
+	}
 
 	my %names = (
-		set_id      => $c->maketext("Set Name"),
-		open_date   => $c->maketext("Open Date"),
-		due_date    => $c->maketext("Close Date"),
-		answer_date => $c->maketext("Answer Date"),
-		visible     => $c->maketext("Visibility"),
+		set_id               => $c->maketext("Set Name"),
+		open_date            => $c->maketext("Open Date"),
+		reduced_scoring_date => $c->maketext("Reduced Scoring Date"),
+		due_date             => $c->maketext("Close Date"),
+		answer_date          => $c->maketext("Answer Date"),
+		visible              => $c->maketext("Visibility"),
 	);
 
-	return (1, $c->maketext("Sort by [_1] and then by [_2]", $names{$primary}, $names{$secondary}));
+	return (
+		1,
+		$c->maketext(
+			'Sets sorted by [_1] and then by [_2].',
+			$names{ $c->{primarySortField} },
+			$names{ $c->{secondarySortField} }
+		)
+	);
 }
 
 sub edit_handler ($c) {
@@ -330,13 +340,13 @@ sub edit_handler ($c) {
 
 	my $scope = $c->param('action.edit.scope');
 	if ($scope eq "all") {
-		$result = $c->maketext("editing all sets");
+		$result = $c->maketext('Editing all sets.');
 		$c->{visibleSetIDs} = $c->{allSetIDs};
 	} elsif ($scope eq "visible") {
-		$result = $c->maketext("editing listed sets");
+		$result = $c->maketext('Editing listed sets.');
 		# leave visibleSetIDs alone
 	} elsif ($scope eq "selected") {
-		$result = $c->maketext("editing selected sets");
+		$result = $c->maketext('Editing selected sets.');
 		$c->{visibleSetIDs} = [ $c->param('selected_sets') ];
 	}
 	$c->{editMode} = 1;
@@ -356,25 +366,25 @@ sub publish_handler ($c) {
 
 	if ($scope eq "none") {
 		@setIDs = ();
-		@result = (0, $c->maketext("No change made to any set"));
+		@result = (0, $c->maketext('No change made to any set.'));
 	} elsif ($scope eq "all") {
 		@setIDs = @{ $c->{allSetIDs} };
 		@result =
 			$value
-			? (1, $c->maketext("All sets made visible for all students"))
-			: (1, $c->maketext("All sets hidden from all students"));
+			? (1, $c->maketext('All sets made visible for all students.'))
+			: (1, $c->maketext('All sets hidden from all students.'));
 	} elsif ($scope eq "visible") {
 		@setIDs = @{ $c->{visibleSetIDs} };
 		@result =
 			$value
-			? (1, $c->maketext("All listed sets were made visible for all the students"))
-			: (1, $c->maketext("All listed sets were hidden from all the students"));
+			? (1, $c->maketext('All listed sets were made visible for all the students.'))
+			: (1, $c->maketext('All listed sets were hidden from all the students.'));
 	} elsif ($scope eq "selected") {
 		@setIDs = $c->param('selected_sets');
 		@result =
 			$value
-			? (1, $c->maketext("All selected sets made visible for all students"))
-			: (1, $c->maketext("All selected sets hidden from all students"));
+			? (1, $c->maketext('All selected sets made visible for all students.'))
+			: (1, $c->maketext('All selected sets hidden from all students.'));
 	}
 
 	# Can we use UPDATE here, instead of fetch/change/store?
@@ -417,7 +427,7 @@ sub delete_handler ($c) {
 	$c->{selectedSetIDs} = [ keys %selectedSetIDs ];
 
 	my $num = @setIDsToDelete;
-	return (1, $c->maketext('deleted [_1] sets', $num));
+	return (1, $c->maketext('Deleted [_1] sets.', $num));
 }
 
 sub create_handler ($c) {
@@ -587,7 +597,7 @@ sub cancel_export_handler ($c) {
 	}
 	$c->{exportMode} = 0;
 
-	return (0, $c->maketext('export abandoned'));
+	return (0, $c->maketext('Export abandoned.'));
 }
 
 sub save_export_handler ($c) {
@@ -625,7 +635,7 @@ sub cancel_edit_handler ($c) {
 	}
 	$c->{editMode} = 0;
 
-	return (0, $c->maketext('changes abandoned'));
+	return (0, $c->maketext('Changes abandoned.'));
 }
 
 sub save_edit_handler ($c) {
@@ -662,20 +672,20 @@ sub save_edit_handler ($c) {
 		my $curr_time        = time;
 		my $seconds_per_year = 31_556_926;
 		my $cutoff           = $curr_time + $seconds_per_year * 10;
-		return (0, $c->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID))
+		return (0, $c->maketext('Error: Open date cannot be more than 10 years from now in set [_1].', $setID))
 			if $Set->open_date > $cutoff;
-		return (0, $c->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID))
+		return (0, $c->maketext('Error: Close date cannot be more than 10 years from now in set [_1].', $setID))
 			if $Set->due_date > $cutoff;
-		return (0, $c->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID))
+		return (0, $c->maketext('Error: Answer date cannot be more than 10 years from now in set [_1].', $setID))
 			if $Set->answer_date > $cutoff;
 
 		# Check that the open, due and answer dates are in increasing order.
 		# Bail if this is not correct.
 		if ($Set->open_date > $Set->due_date) {
-			return (0, $c->maketext("Error: Close date must come after open date in set [_1]", $setID));
+			return (0, $c->maketext('Error: Close date must come after open date in set [_1].', $setID));
 		}
 		if ($Set->due_date > $Set->answer_date) {
-			return (0, $c->maketext("Error: Answer date must come after close date in set [_1]", $setID));
+			return (0, $c->maketext('Error: Answer date must come after close date in set [_1].', $setID));
 		}
 
 		# check that the reduced scoring date is in the right place
@@ -695,7 +705,7 @@ sub save_edit_handler ($c) {
 			return (
 				0,
 				$c->maketext(
-					"Error: Reduced scoring date must come between the open date and close date in set [_1]",
+					'Error: Reduced scoring date must come between the open date and close date in set [_1].',
 					$setID
 				)
 			);
@@ -714,7 +724,7 @@ sub save_edit_handler ($c) {
 
 	$c->{editMode} = 0;
 
-	return (1, $c->maketext("changes saved"));
+	return (1, $c->maketext('Changes saved.'));
 }
 
 1;
