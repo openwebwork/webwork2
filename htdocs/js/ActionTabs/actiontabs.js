@@ -30,6 +30,19 @@
 			header.addEventListener('keydown', (e) => {
 				if (e.key === ' ' || e.key === 'Enter') submitSortMethod(e);
 			});
+
+			const orderToggleButton = header.parentElement.querySelector('button.sort-order');
+			orderToggleButton?.addEventListener('click', () => {
+				currentAction.value = 'sort';
+
+				const sortOrderInput = document.createElement('input');
+				sortOrderInput.name = 'labelSortOrder';
+				sortOrderInput.value = orderToggleButton.dataset.sortPriority;
+				sortOrderInput.type = 'hidden';
+				currentAction.form.append(sortOrderInput);
+
+				currentAction.form.submit();
+			});
 		}
 	}
 })();

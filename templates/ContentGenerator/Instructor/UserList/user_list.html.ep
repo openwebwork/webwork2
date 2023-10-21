@@ -23,41 +23,50 @@
 		<th>
 			<%= link_to maketext('Login Name') => '#', class => 'sort-header',
 					data => { sort_field => 'user_id' } =%>
+			<%= include 'ContentGenerator/Instructor/UserList/sort_button', field => 'user_id' =%>
 		</th>
 		<th><%= maketext('Login Status') %></th>
 		<th><%= maketext('Assigned Sets') %></th>
 		<th>
 			<%= link_to maketext('First Name') => '#', class => 'sort-header',
 				data => { sort_field => 'first_name' } %>
+			<%= include 'ContentGenerator/Instructor/UserList/sort_button', field => 'first_name' =%>
 		</th>
 		<th>
 			<%= link_to maketext('Last Name') => '#', class => 'sort-header',
 				data => { sort_field => 'last_name' } =%>
+			<%= include 'ContentGenerator/Instructor/UserList/sort_button', field => 'last_name' =%>
 		</th>
 		<th><%= maketext('Email Link') %></th>
 		<th>
 			<%= link_to maketext('Student ID') => '#', class => 'sort-header',
 				data => { sort_field => 'student_id' } =%>
+			<%= include 'ContentGenerator/Instructor/UserList/sort_button', field => 'student_id' =%>
 		</th>
 		<th>
 			<%= link_to maketext('Status') => '#', class => 'sort-header',
 				data => { sort_field => 'status' } =%>
+			<%= include 'ContentGenerator/Instructor/UserList/sort_button', field => 'status' =%>
 		</th>
 		<th>
 			<%= link_to maketext('Section') => '#', class => 'sort-header',
 				data => { sort_field => 'section' } =%>
+			<%= include 'ContentGenerator/Instructor/UserList/sort_button', field => 'section' =%>
 		</th>
 		<th>
 			<%= link_to maketext('Recitation') => '#', class => 'sort-header',
 				data => { sort_field => 'recitation' } =%>
+			<%= include 'ContentGenerator/Instructor/UserList/sort_button', field => 'recitation' =%>
 		</th>
 		<th>
 			<%= link_to maketext('Comment') => '#', class => 'sort-header',
 				data => { sort_field => 'comment' } =%>
+			<%= include 'ContentGenerator/Instructor/UserList/sort_button', field => 'comment' =%>
 		</th>
 		<th>
 			<%= link_to maketext('Permission Level') => '#', class => 'sort-header',
 				data => { sort_field => 'permission' } =%>
+			<%= include 'ContentGenerator/Instructor/UserList/sort_button', field => 'permission' =%>
 		</th>
 	% end
 % } else {

@@ -10,9 +10,6 @@
 	% answer_date            => maketext('Answer Date')
 % );
 %
-% my %sortableFields =
-	% (set_id => 1, open_date => 1, reduced_scoring_date => 1, due_date => 1, answer_date => 1, visible => 1);
-%
 <div class="table-responsive">
 	<table id="set_table_id" class="set_table table table-sm table-bordered caption-top font-sm <%=
 		$c->{editMode} ? 'align-middle' : '' %>">
@@ -39,9 +36,10 @@
 				% }
 				% for (@$fieldNames) {
 					<th id="<%= $_ %>_header">
-						% if (!$c->{editMode} && $sortableFields{$_}) {
+						% if (!$c->{editMode} && $sortableFields->{$_}) {
 							<%= link_to $fieldHeaders{$_} => '#', class => 'sort-header',
 								data => { sort_field => $_ } =%>
+							<%= include 'ContentGenerator/Instructor/ProblemSetList/sort_button', field => $_ =%>
 						% } else {
 							<%= $fieldHeaders{$_} =%>
 						% }

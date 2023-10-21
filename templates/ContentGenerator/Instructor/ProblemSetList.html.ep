@@ -62,7 +62,9 @@
 	<%= hidden_field editMode => $c->{editMode} =%>
 	<%= hidden_field exportMode => $c->{exportMode} =%>
 	<%= hidden_field primarySortField => $c->{primarySortField} =%>
+	<%= hidden_field primarySortOrder => $c->{primarySortOrder} =%>
 	<%= hidden_field secondarySortField => $c->{secondarySortField} =%>
+	<%= hidden_field secondarySortOrder => $c->{secondarySortOrder} =%>
 	%
 	% if ($c->{editMode}) {
 		<p><b><%= maketext('Any changes made below will be reflected in the set for ALL students.') =%></b></p>

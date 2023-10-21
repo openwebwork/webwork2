@@ -136,6 +136,15 @@ use constant FIELD_TYPES => {
 	enable_reduced_scoring => 'check'
 };
 
+use constant SORTABLE_FIELDS => {
+	set_id               => 1,
+	open_date            => 1,
+	reduced_scoring_date => 1,
+	due_date             => 1,
+	answer_date          => 1,
+	visible              => 1
+};
+
 sub pre_header_initialize ($c) {
 	my $db         = $c->db;
 	my $authz      = $c->authz;
@@ -183,12 +192,13 @@ sub initialize ($c) {
 	my $user       = $c->param('user');
 
 	# Make sure these are defined for the templats.
-	$c->stash->{fieldNames}  = VIEW_FIELD_ORDER();
-	$c->stash->{formsToShow} = VIEW_FORMS();
-	$c->stash->{formTitles}  = FORM_TITLES();
-	$c->stash->{formPerms}   = FORM_PERMS();
-	$c->stash->{fieldTypes}  = FIELD_TYPES();
-	$c->stash->{sets}        = [];
+	$c->stash->{fieldNames}     = VIEW_FIELD_ORDER();
+	$c->stash->{formsToShow}    = VIEW_FORMS();
+	$c->stash->{formTitles}     = FORM_TITLES();
+	$c->stash->{formPerms}      = FORM_PERMS();
+	$c->stash->{fieldTypes}     = FIELD_TYPES();
+	$c->stash->{sortableFields} = SORTABLE_FIELDS();
+	$c->stash->{sets}           = [];
 
 	# Determine if the user has permisson to do anything here.
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
@@ -220,8 +230,10 @@ sub initialize ($c) {
 		$c->{selectedSetIDs} = [];
 	}
 
-	$c->{primarySortField}   = $c->param("primarySortField")   || "due_date";
-	$c->{secondarySortField} = $c->param("secondarySortField") || "open_date";
+	$c->{primarySortField}   = $c->param('primarySortField')   || 'due_date';
+	$c->{primarySortOrder}   = $c->param('primarySortOrder')   || 'ASC';
+	$c->{secondarySortField} = $c->param('secondarySortField') || 'open_date';
+	$c->{secondarySortOrder} = $c->param('secondarySortOrder') || 'ASC';
 
 	# Call action handler
 	my $actionID = $c->param("action");
@@ -251,12 +263,21 @@ sub initialize ($c) {
 			[ grep { !/enable_reduced_scoring|reduced_scoring_date/ } @{ $c->stash->{fieldNames} } ];
 	}
 
+	# A scalar reference must be used for the order by clause in getGlobalSetsWhere due to a very limited override of
+	# the SQL::Abstract _order_by method in WeBWorK::DB::Utils::SQLAbstractIdentTrans. Since scalar references bypass
+	# the SQL::Abstract injection guard, care must be taken to ensure that only the allowed values are used.
+	die 'Possible SQL injection attempt detected.'
+		unless SORTABLE_FIELDS()->{ $c->{primarySortField} }
+		&& SORTABLE_FIELDS()->{ $c->{secondarySortField} }
+		&& ($c->{primarySortOrder} eq 'ASC'   || $c->{primarySortOrder} eq 'DESC')
+		&& ($c->{secondarySortOrder} eq 'ASC' || $c->{secondarySortOrder} eq 'DESC');
+
 	$c->stash->{formsToShow} = $c->{editMode} ? EDIT_FORMS() : $c->{exportMode} ? EXPORT_FORMS() : VIEW_FORMS();
 	# Get requested sets in the requested order.
 	$c->stash->{sets} = [
 		@{ $c->{visibleSetIDs} }
 		? $db->getGlobalSetsWhere({ set_id => $c->{visibleSetIDs} },
-			[ $c->{primarySortField}, $c->{secondarySortField} ])
+			\("$c->{primarySortField} $c->{primarySortOrder}, $c->{secondarySortField} $c->{secondarySortOrder}"))
 		: ()
 	];
 
@@ -306,14 +327,28 @@ sub filter_handler ($c) {
 }
 
 sub sort_handler ($c) {
-	if (defined $c->param('labelSortMethod')) {
-		$c->{secondarySortField} = $c->{primarySortField};
-		$c->{primarySortField}   = $c->param('labelSortMethod');
-		$c->param('action.sort.primary',   $c->{primarySortField});
-		$c->param('action.sort.secondary', $c->{secondarySortField});
+	if (defined $c->param('labelSortMethod') || defined $c->param('labelSortOrder')) {
+		if (defined $c->param('labelSortOrder')) {
+			$c->{ $c->param('labelSortOrder') . 'SortOrder' } =
+				$c->{ $c->param('labelSortOrder') . 'SortOrder' } eq 'ASC' ? 'DESC' : 'ASC';
+		} elsif ($c->param('labelSortMethod') eq $c->{primarySortField}) {
+			$c->{primarySortOrder} = $c->{primarySortOrder} eq 'ASC' ? 'DESC' : 'ASC';
+		} else {
+			$c->{secondarySortField} = $c->{primarySortField};
+			$c->{secondarySortOrder} = $c->{primarySortOrder};
+			$c->{primarySortField}   = $c->param('labelSortMethod');
+			$c->{primarySortOrder}   = 'ASC';
+		}
+
+		$c->param('action.sort.primary',         $c->{primarySortField});
+		$c->param('action.sort.primary.order',   $c->{primarySortOrder});
+		$c->param('action.sort.secondary',       $c->{secondarySortField});
+		$c->param('action.sort.secondary.order', $c->{secondarySortOrder});
 	} else {
 		$c->{primarySortField}   = $c->param('action.sort.primary');
+		$c->{primarySortOrder}   = $c->param('action.sort.primary.order');
 		$c->{secondarySortField} = $c->param('action.sort.secondary');
+		$c->{secondarySortOrder} = $c->param('action.sort.secondary.order');
 	}
 
 	my %names = (
@@ -328,9 +363,12 @@ sub sort_handler ($c) {
 	return (
 		1,
 		$c->maketext(
-			'Sets sorted by [_1] and then by [_2].',
+			'Sets sorted by [_1] in [plural,_2,ascending,descending] order, '
+				. 'and then by [_3] in [plural,_4,ascending,descending] order.',
 			$names{ $c->{primarySortField} },
-			$names{ $c->{secondarySortField} }
+			$c->{primarySortOrder} eq 'ASC' ? 1 : 2,
+			$names{ $c->{secondarySortField} },
+			$c->{secondarySortOrder} eq 'ASC' ? 1 : 2
 		)
 	);
 }
