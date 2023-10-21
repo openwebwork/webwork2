@@ -38,17 +38,15 @@
 							$selectedAchievementIDs{ $_->achievement_id } ? (checked => undef) : () =%>
 					</td>
 					<td>
-						<div class="label-with-edit-icon">
-							<%= label_for "${achievement_id}_id", begin =%>
-								<%= $_->achievement_id %>
-								<%= link_to $c->systemLink(
-										url_for('instructor_achievement_list'),
-										params => { editMode => 1, selected_achievements => $achievement_id }
-									),
-									begin %>
-									<i class="icon fas fa-pencil-alt" data-alt="edit" aria-hidden="true"></i>
-								<% end %>
-							<% end =%>
+						<div class="d-flex justify-content-between gap-1">
+							<%= label_for "${achievement_id}_id" => $_->achievement_id =%>
+							<%= link_to $c->systemLink(
+									url_for('instructor_achievement_list'),
+									params => { editMode => 1, selected_achievements => $achievement_id }
+								),
+								begin %>
+								<i class="icon fas fa-pencil-alt" data-alt="edit" aria-hidden="true"></i>
+							<% end %>
 						</div>
 					</td>
 					<td><%= $_->enabled ? maketext('Yes') : maketext('No') %></td>

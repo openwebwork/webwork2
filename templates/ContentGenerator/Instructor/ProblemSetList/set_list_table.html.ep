@@ -37,9 +37,11 @@
 				% for (@$fieldNames) {
 					<th id="<%= $_ %>_header">
 						% if (!$c->{editMode} && $sortableFields->{$_}) {
-							<%= link_to $fieldHeaders{$_} => '#', class => 'sort-header',
-								data => { sort_field => $_ } =%>
-							<%= include 'ContentGenerator/Instructor/ProblemSetList/sort_button', field => $_ =%>
+							<div class="d-flex justify-content-between align-items-end gap-1">
+								<%= link_to $fieldHeaders{$_} => '#', class => 'sort-header',
+									data => { sort_field => $_ } =%>
+								<%= include 'ContentGenerator/Instructor/ProblemSetList/sort_button', field => $_ =%>
+							</div>
 						% } else {
 							<%= $fieldHeaders{$_} =%>
 						% }

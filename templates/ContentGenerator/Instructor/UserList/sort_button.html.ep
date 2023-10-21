@@ -1,6 +1,6 @@
 % if ($c->{primarySortField} eq $field) {
-	<button type="button" data-sort-priority="primary" style="font-size:0.75em"
-		class="sort-order btn btn-secondary rounded-pill btn-sm py-0 fw-bold">
+	<button type="button" data-sort-priority="primary"
+		class="sort-order btn btn-secondary rounded-pill btn-sm py-0 fw-bold text-nowrap font-xs">
 		1
 		% if ($c->{primarySortOrder} eq 'ASC') {
 			<i class="fa-solid fa-chevron-down"></i>
@@ -11,8 +11,8 @@
 		% }
 	</button>
 % } elsif ($c->{secondarySortField} eq $field) {
-	<button type="button" data-sort-priority="secondary" style="font-size:0.75em"
-		class="sort-order btn btn-secondary rounded-pill btn-sm py-0 fw-bold">
+	<button type="button" data-sort-priority="secondary"
+		class="sort-order btn btn-secondary rounded-pill btn-sm py-0 fw-bold text-nowrap font-xs">
 		2
 		% if ($c->{secondarySortOrder} eq 'ASC') {
 			<i class="fa-solid fa-chevron-down"></i>
@@ -23,8 +23,8 @@
 		% }
 	</button>
 % } elsif ($c->{ternarySortField} eq $field) {
-	<button type="button" data-sort-priority="ternary" style="font-size:0.75em"
-		class="sort-order btn btn-secondary rounded-pill btn-sm py-0 fw-bold">
+	<button type="button" data-sort-priority="ternary"
+		class="sort-order btn btn-secondary rounded-pill btn-sm py-0 fw-bold text-nowrap font-xs">
 		3
 		% if ($c->{ternarySortOrder} eq 'ASC') {
 			<i class="fa-solid fa-chevron-down"></i>

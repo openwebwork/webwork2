@@ -11,7 +11,7 @@
 		</td>
 		% # User id
 		<td>
-			<div class="label-with-edit-icon">
+			<div class="d-flex justify-content-between gap-1">
 				% # Make the user id the label for the select user checkbox.
 				<%= label_for $user->user_id . '_checkbox', begin =%>
 					% if (!$authz->hasPermissions(param('user'), 'become_student')) {

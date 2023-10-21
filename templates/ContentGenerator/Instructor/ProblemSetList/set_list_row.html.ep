@@ -16,29 +16,29 @@
 		<%= check_box selected_sets => $set_id, id => "${set_id}_id", class => 'form-check-input' =%>
 	</td>
 	<td>
-		<div class="label-with-edit-icon" dir="ltr">
+		<div class="d-flex justify-content-between gap-1" dir="ltr">
 			<%= label_for "${set_id}_id", begin =%>
 				<span class="set-label set-id-tooltip <%= $visibleClass %>" data-bs-toggle="tooltip"
 					data-bs-placement="right" data-bs-title="<%= $set->description %>">
 					<%= $prettySetID =%>
 				</span>
-				% if ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
-					<%= link_to $c->systemLink(
-							url_for('instructor_set_list', setID => $set_id),
-							params => { editMode => 1, visible_sets => $set_id }
-						),
-						class => 'set-id-tooltip',
-						'aria-label' => maketext('Edit Set Data'),
-						data  => {
-							bs_toggle => 'tooltip',
-							bs_placement => 'right',
-							bs_title => maketext('Edit Set Data')
-						},
-						begin =%>
-						<i class="fas fa-pencil-alt" aria-hidden="true"></i>
-					<% end =%>
-				% }
 			<% end =%>
+			% if ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+				<%= link_to $c->systemLink(
+						url_for('instructor_set_list', setID => $set_id),
+						params => { editMode => 1, visible_sets => $set_id }
+					),
+					class => 'set-id-tooltip',
+					'aria-label' => maketext('Edit Set Data'),
+					data  => {
+						bs_toggle => 'tooltip',
+						bs_placement => 'right',
+						bs_title => maketext('Edit Set Data')
+					},
+					begin =%>
+					<i class="fas fa-pencil-alt" aria-hidden="true"></i>
+				<% end =%>
+			% }
 		</div>
 	</td>
 	%# Problems link
