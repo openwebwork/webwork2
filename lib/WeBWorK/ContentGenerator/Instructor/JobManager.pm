@@ -46,13 +46,13 @@ use constant FIELDS => [
 ];
 
 use constant SORT_SUBS => {
-	id       => \&byJobID,
-	courseID => \&byCourseID,
-	task     => \&byTask,
-	created  => \&byCreatedTime,
-	started  => \&byStartedTime,
-	finished => \&byFinishedTime,
-	state    => \&byState
+	id       => { ASC => \&byJobID,        DESC => \&byDescJobID },
+	courseID => { ASC => \&byCourseID,     DESC => \&byDescCourseID },
+	task     => { ASC => \&byTask,         DESC => \&byDescTask },
+	created  => { ASC => \&byCreatedTime,  DESC => \&byDescCreatedTime },
+	started  => { ASC => \&byStartedTime,  DESC => \&byDescStartedTime },
+	finished => { ASC => \&byFinishedTime, DESC => \&byDescFinishedTime },
+	state    => { ASC => \&byState,        DESC => \&byDescState }
 };
 
 sub initialize ($c) {
@@ -64,8 +64,11 @@ sub initialize ($c) {
 	$c->stash->{selectedJobs}       = {};
 	$c->stash->{sortedJobs}         = [];
 	$c->stash->{primarySortField}   = $c->param('primarySortField')   || 'created';
+	$c->stash->{primarySortOrder}   = $c->param('primarySortOrder')   || 'ASC';
 	$c->stash->{secondarySortField} = $c->param('secondarySortField') || 'task';
+	$c->stash->{secondarySortOrder} = $c->param('secondarySortOrder') || 'ASC';
 	$c->stash->{ternarySortField}   = $c->param('ternarySortField')   || 'state';
+	$c->stash->{ternarySortOrder}   = $c->param('ternarySortOrder')   || 'ASC';
 
 	return unless $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools');
 
@@ -108,9 +111,9 @@ sub initialize ($c) {
 	}
 
 	# Sort jobs
-	my $primarySortSub   = SORT_SUBS()->{ $c->stash->{primarySortField} };
-	my $secondarySortSub = SORT_SUBS()->{ $c->stash->{secondarySortField} };
-	my $ternarySortSub   = SORT_SUBS()->{ $c->stash->{ternarySortField} };
+	my $primarySortSub   = SORT_SUBS()->{ $c->stash->{primarySortField} }{ $c->stash->{primarySortOrder} };
+	my $secondarySortSub = SORT_SUBS()->{ $c->stash->{secondarySortField} }{ $c->stash->{secondarySortOrder} };
+	my $ternarySortSub   = SORT_SUBS()->{ $c->stash->{ternarySortField} }{ $c->stash->{ternarySortOrder} };
 
 	# byJobID is included to ensure a definite sort order in case the
 	# first three sorts do not determine a proper order.
@@ -148,26 +151,47 @@ sub filter_handler ($c) {
 }
 
 sub sort_handler ($c) {
-	if (defined $c->param('labelSortMethod')) {
-		$c->stash->{ternarySortField}   = $c->stash->{secondarySortField};
-		$c->stash->{secondarySortField} = $c->stash->{primarySortField};
-		$c->stash->{primarySortField}   = $c->param('labelSortMethod');
-		$c->param('action.sort.primary',   $c->stash->{primarySortField});
-		$c->param('action.sort.secondary', $c->stash->{secondarySortField});
-		$c->param('action.sort.ternary',   $c->stash->{ternarySortField});
+	if (defined $c->param('labelSortMethod') || defined $c->param('labelSortOrder')) {
+		if (defined $c->param('labelSortOrder')) {
+			$c->stash->{ $c->param('labelSortOrder') . 'SortOrder' } =
+				$c->stash->{ $c->param('labelSortOrder') . 'SortOrder' } eq 'ASC' ? 'DESC' : 'ASC';
+		} elsif ($c->param('labelSortMethod') eq $c->stash->{primarySortField}) {
+			$c->stash->{primarySortOrder} = $c->stash->{primarySortOrder} eq 'ASC' ? 'DESC' : 'ASC';
+		} else {
+			$c->stash->{ternarySortField}   = $c->stash->{secondarySortField};
+			$c->stash->{ternarySortOrder}   = $c->stash->{secondarySortOrder};
+			$c->stash->{secondarySortField} = $c->stash->{primarySortField};
+			$c->stash->{secondarySortOrder} = $c->stash->{primarySortOrder};
+			$c->stash->{primarySortField}   = $c->param('labelSortMethod');
+			$c->stash->{primarySortOrder}   = 'ASC';
+		}
+
+		$c->param('action.sort.primary',         $c->stash->{primarySortField});
+		$c->param('action.sort.primary.order',   $c->stash->{primarySortOrder});
+		$c->param('action.sort.secondary',       $c->stash->{secondarySortField});
+		$c->param('action.sort.secondary.order', $c->stash->{secondarySortOrder});
+		$c->param('action.sort.ternary',         $c->stash->{ternarySortField});
+		$c->param('action.sort.ternary.order',   $c->stash->{ternarySortOrder});
 	} else {
 		$c->stash->{primarySortField}   = $c->param('action.sort.primary');
+		$c->stash->{primarySortOrder}   = $c->param('action.sort.primary.order');
 		$c->stash->{secondarySortField} = $c->param('action.sort.secondary');
+		$c->stash->{secondarySortOrder} = $c->param('action.sort.secondary.order');
 		$c->stash->{ternarySortField}   = $c->param('action.sort.ternary');
+		$c->stash->{ternarySortOrder}   = $c->param('action.sort.ternary.order');
 	}
 
 	return $c->maketext(
-		'Users sorted by [_1], then by [_2], then by [_3]',
+		'Jobs sorted by [_1] in [plural,_2,ascending,descending] order, '
+			. 'then by [_3] in [plural,_4,ascending,descending] order,'
+			. 'and then by [_5] in [plural,_6,ascending,descending] order.',
 		$c->maketext((grep { $_->[0] eq $c->stash->{primarySortField} } @{ FIELDS() })[0][1]),
+		$c->stash->{primarySortOrder} eq 'ASC' ? 1 : 2,
 		$c->maketext((grep { $_->[0] eq $c->stash->{secondarySortField} } @{ FIELDS() })[0][1]),
-		$c->maketext((grep { $_->[0] eq $c->stash->{ternarySortField} } @{ FIELDS() })[0][1])
+		$c->stash->{secondarySortOrder} eq 'ASC' ? 1 : 2,
+		$c->maketext((grep { $_->[0] eq $c->stash->{ternarySortField} } @{ FIELDS() })[0][1]),
+		$c->stash->{ternarySortOrder} eq 'ASC' ? 1 : 2
 	);
-
 }
 
 sub delete_handler ($c) {
@@ -201,5 +225,13 @@ sub byCreatedTime  { return $a->{created} <=> $b->{created} }
 sub byStartedTime  { return ($a->{started}  || 0) <=> ($b->{started}  || 0) }
 sub byFinishedTime { return ($a->{finished} || 0) <=> ($b->{finished} || 0) }
 sub byState        { return $a->{state} cmp $b->{state} }
+
+sub byDescJobID        { local ($b, $a) = ($a, $b); return byJobID(); }
+sub byDescCourseID     { local ($b, $a) = ($a, $b); return byCourseID(); }
+sub byDescTask         { local ($b, $a) = ($a, $b); return byTask(); }
+sub byDescCreatedTime  { local ($b, $a) = ($a, $b); return byCreatedTime(); }
+sub byDescStartedTime  { local ($b, $a) = ($a, $b); return byStartedTime(); }
+sub byDescFinishedTime { local ($b, $a) = ($a, $b); return byFinishedTime(); }
+sub byDescState        { local ($b, $a) = ($a, $b); return byState(); }
 
 1;

@@ -11,31 +11,6 @@
 		toggle_filter_elements();
 	}
 
-	// Submit the job list form when a sort header is clicked or enter or space is pressed when it has focus.
-	const currentAction = document.getElementById('current_action');
-	if (currentAction) {
-		for (const header of document.querySelectorAll('.sort-header')) {
-			const submitSortMethod = (e) => {
-				e.preventDefault();
-
-				currentAction.value = 'sort';
-
-				const sortInput = document.createElement('input');
-				sortInput.name = 'labelSortMethod';
-				sortInput.value = header.dataset.sortField;
-				sortInput.type = 'hidden';
-				currentAction.form.append(sortInput);
-
-				currentAction.form.submit();
-			};
-
-			header.addEventListener('click', submitSortMethod);
-			header.addEventListener('keydown', (e) => {
-				if (e.key === ' ' || e.key === 'Enter') submitSortMethod(e);
-			});
-		}
-	}
-
 	// Activate the results popovers.
 	document.querySelectorAll('.result-popover-btn').forEach((popoverBtn) => {
 		new bootstrap.Popover(popoverBtn, {
