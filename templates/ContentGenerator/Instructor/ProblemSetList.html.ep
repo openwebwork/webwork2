@@ -20,7 +20,6 @@
 	<%= javascript getAssetURL($ce, 'js/DatePicker/datepicker.js'),         defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'),         defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/ProblemSetList/problemsetlist.js'), defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/ShowHide/show_hide.js'),            defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'),           defer => undef =%>
 % end
 %

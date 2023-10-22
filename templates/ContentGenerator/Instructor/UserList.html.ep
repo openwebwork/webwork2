@@ -1,7 +1,6 @@
 % use WeBWorK::Utils qw(getAssetURL);
 %
 % content_for js => begin
-	<%= javascript getAssetURL($ce, 'js/ShowHide/show_hide.js'),    defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/UserList/userlist.js'),     defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'),   defer => undef =%>
