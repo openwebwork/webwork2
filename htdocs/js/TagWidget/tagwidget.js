@@ -317,7 +317,7 @@
 			if (!response.ok) return showMessage('Unable to save problem tags.');
 			const data = await response.json();
 			if (data.error) return showMessage(data.error);
-			showMessage(data.server_response);
+			showMessage(data.server_response, true);
 		}
 	}
 
