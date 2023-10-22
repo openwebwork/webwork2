@@ -343,7 +343,7 @@ my %routeParameters = (
 		path   => '/#userID'
 	},
 	instructor_set_list => {
-		title    => x('Assignment Manager'),
+		title    => x('Set Manager'),
 		children => [qw(instructor_set_detail)],
 		module   => 'Instructor::ProblemSetList',
 		path     => '/sets'

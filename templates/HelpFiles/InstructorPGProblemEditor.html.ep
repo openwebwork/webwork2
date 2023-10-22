@@ -159,7 +159,7 @@
 		<p>
 			<%= maketext('You may want to create an unattached problem if you are using the current problem as a model '
 				. 'for a new problem. You can add the new file to a homework set from the Library Browser or via the '
-				. 'set detail page of the "Assigment Manager".') =%>
+				. 'set detail page of the "Set Manager".') =%>
 		</p>
 		<p>
 			<%= maketext('If the original problem can not be edited than the path name must be changed in order to be '
@@ -177,7 +177,7 @@
 	<dd>
 		<%= maketext('Add this problem as the last problem of an existing set, either as a problem or as the set '
 			. 'header (the text that appears on the home page of a homework set). You can rearrange the order of the '
-			. 'problems later using the "Assigment Manager".') =%>
+			. 'problems later using the "Set Manager".') =%>
 	</dd>
 
 	<dt><%= maketext('Revert') %></dt>

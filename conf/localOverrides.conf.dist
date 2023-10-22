@@ -269,20 +269,20 @@ $mail{feedbackRecipients}    = [
 ################################################################################
 
 # The default weight (also called value) of a problem to use when using the
-# Library Browser, Problem Editor or Assigment Manager to add problems to a set
+# Library Browser, Problem Editor or Set Manager to add problems to a set
 # or when this value is left blank in an imported set definition file.
 
 #$problemDefaults{value} = 1;
 
 # The default max_attempts for a problem to use when using the
-# Library Browser, Problem Editor or Assigment Manager to add problems to a set
+# Library Browser, Problem Editor or Set Manager to add problems to a set
 # or when this value is left blank in an imported set definition file.  Note that
 # setting this to -1 gives students unlimited attempts.
 
 #$problemDefaults{max_attempts} = -1;
 
 # The default showMeAnother for a problem to use when using the
-# Library Browser, Problem Editor or Assigment Manager to add problems to a set
+# Library Browser, Problem Editor or Set Manager to add problems to a set
 # or when this value is left blank in an imported set definition file.  Note that
 # setting this to -1 disables the showMeAnother button
 #$problemDefaults{showMeAnother} = -1;

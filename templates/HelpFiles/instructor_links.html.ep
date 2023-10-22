@@ -41,7 +41,7 @@
 	</dd>
 	<dt><%= maketext('Set Assigner') %></dt>
 	<dd><%= maketext('Assign and unassign selected exercise sets to selected users.') %></dd>
-	<dt><%= maketext('Assigment Manager') %></dt>
+	<dt><%= maketext('Set Manager') %></dt>
 	<dd>
 		<%= maketext('Edit homework sets for entire class. Change homework set due dates, create new sets from a set '
 			. 'definition file, create new homework sets, make sets visible/invisible, score homework sets. Assign '
@@ -57,7 +57,7 @@
 	<dd><%= maketext('View details of student perofrmance either by individual or by set.') %></dd>
 	<dt><%= maketext('Scoring Tools') %></dt>
 	<dd>
-		<%= maketext('Score one or more sets. This can also be done from the "Assigment Manager" or from the '
+		<%= maketext('Score one or more sets. This can also be done from the "Set Manager" or from the '
 			. '"Instructor Tools", but the "Scoring Tools" page allows control over parameters.') =%>
 	</dd>
 	<dt><%= maketext('Achievement Editor') %></dt>
