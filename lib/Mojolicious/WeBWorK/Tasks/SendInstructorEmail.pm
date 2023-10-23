@@ -43,11 +43,13 @@ sub run ($job, $mail_data) {
 	if ($@) {
 		push(@result_messages,
 			$job->maketext('An error occurred while trying to send email.'),
-			$job->maketext('The error message is:'),
-			ref($@) ? $@->message : $@);
+			$job->maketext('The error message is: [_1]', ref($@) ? $@->message : $@),
+		);
+		$job->app->log->error($_) for @result_messages;
 		return $job->fail(\@result_messages);
 	}
 
+	$job->app->log->error($_) for @result_messages;
 	return $job->finish(\@result_messages);
 }
 

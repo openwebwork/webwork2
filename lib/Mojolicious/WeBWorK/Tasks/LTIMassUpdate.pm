@@ -39,6 +39,13 @@ sub run ($job, $userID = '', $setID = '') {
 	my $db = WeBWorK::DB->new($ce->{dbLayout});
 	return $job->fail($job->maketext('Could not obtain database connection.')) unless $db;
 
+	my @messages;
+	my $job_logger = sub {
+		my ($log, $level, @lines) = @_;
+		push @messages, $lines[-1];
+	};
+	$job->app->log->on(message => $job_logger);
+
 	# Pass a fake controller object that will work for the grader.
 	my $grader =
 		$ce->{LTIVersion} eq 'v1p1'
@@ -72,14 +79,19 @@ sub run ($job, $userID = '', $setID = '') {
 	}
 
 	if ($setID && $userID && $ce->{LTIGradeMode} eq 'homework') {
-		return $job->finish($job->maketext('Updated grades via LTI for user [_1] and set [_2].', $userID, $setID));
+		unshift(@messages, $job->maketext('Updated grades via LTI for user [_1] and set [_2].', $userID, $setID));
 	} elsif ($setID && $ce->{LTIGradeMode} eq 'homework') {
-		return $job->finish($job->maketext('Updated grades via LTI all users assigned to set [_1].', $setID));
+		unshift(@messages, $job->maketext('Updated grades via LTI all users assigned to set [_1].', $setID));
 	} elsif ($userID) {
-		return $job->finish($job->maketext('Updated grades via LTI of all sets assigned to user [_1].', $userID));
+		unshift(@messages, $job->maketext('Updated grades via LTI of all sets assigned to user [_1].', $userID));
 	} else {
-		return $job->finish($job->maketext('Updated grades via LTI for all sets and users.'));
+		unshift(@messages, $job->maketext('Updated grades via LTI for all sets and users.'));
 	}
+
+	$job->app->log->unsubscribe(message => $job_logger);
+
+	$job->app->log->info($messages[0]);
+	return $job->finish(@messages > 1 ? \@messages : $messages[0]);
 }
 
 sub maketext ($job, @args) {
