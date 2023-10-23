@@ -253,7 +253,7 @@ Creates a directory with the given name, permission bits, and group ID.
 sub createDirectory {
 	my ($dirName, $permission, $numgid) = @_;
 
-	$permission = (defined($permission)) ? $permission : '0770';
+	$permission //= 0770;
 	my $errors = '';
 	mkdir($dirName, $permission)
 		or $errors .= "Can't do mkdir($dirName, $permission): $!\n" . caller(3);

@@ -25,8 +25,9 @@ with database schema and that course directory structure is correct.
 use strict;
 use warnings;
 
+use Mojo::File qw(path);
+
 use WeBWorK::Debug;
-use WeBWorK::Utils qw/createDirectory/;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
 
 # Developer note:  This file should not format messages in html.  Instead return an array of tuples.  Each tuple should
@@ -323,85 +324,100 @@ sub checkCourseDirectories {
 
 =item $CIchecker->updateCourseDirectories($courseName);
 
-Creates some course directories automatically.
+Check to see if all course directories exist and have the correct permissions.
+
+If a directory does not exist, then it is copied from the model course if the
+corresponding directory exists in the model course, and is created otherwise.
+
+If the permissions are not correct, then an attempt is made to correct the
+permissions.  The permissions are expected to match the course root directory.
+If the permissions of the course root directory are not correct, then that will
+need to be manually fixed.  This method does not check that.
 
 =cut
-
-# FIXME: This method needs work.  It should give better messages, and should at least attempt to fix permissions if
-# possible.  It also should deal with some of the other course directories that it skips.
 
 sub updateCourseDirectories {
 	my $self = shift;
 	my $ce   = $self->{ce};
 
-	my @courseDirectories = keys %{ $ce->{courseDirs} };
-
-	#FIXME this is hardwired for the time being.
-	my %updateable_directories = (html_temp => 1, mailmerge => 1, tmpEditFileDir => 1, hardcopyThemes => 1);
-
 	my @messages;
 
-	for my $dir (sort @courseDirectories) {
-		# Hack for upgrading the achievements directory.
-		if ($dir eq 'achievements') {
-			my $modelCourseAchievementsDir     = "$ce->{webworkDirs}{courses}/modelCourse/templates/achievements";
-			my $modelCourseAchievementsHtmlDir = "$ce->{webworkDirs}{courses}/modelCourse/html/achievements";
-			my $courseAchievementsDir          = $ce->{courseDirs}{achievements};
-			my $courseAchievementsHtmlDir      = $ce->{courseDirs}{achievements_html};
-			my $courseTemplatesDir             = $ce->{courseDirs}{templates};
-			my $courseHtmlDir                  = $ce->{courseDirs}{html};
-			unless (-e $modelCourseAchievementsDir && -e $modelCourseAchievementsHtmlDir) {
+	# Sort courseDirs by path.  The important thing for the order is that a directory that is a subdirectory of
+	# another is listed after the directory containing it.
+	my @course_dirs =
+		grep { $_ ne 'root' } sort { $ce->{courseDirs}{$a} =~ /^$ce->{courseDirs}{$b}/ } keys %{ $ce->{courseDirs} };
+
+	# These are the directories in the model course that can be copied if not found in this course.
+	my %model_course_dirs = (
+		templates         => 'templates',
+		html              => 'html',
+		achievements      => 'templates/achievements',
+		email             => 'templates/email',
+		achievements_html => 'html/achievements'
+	);
+
+	my $permissions = path($ce->{courseDirs}{root})->stat->mode & 0777;
+
+	for my $dir (@course_dirs) {
+		my $path = path($ce->{courseDirs}{$dir});
+		next if -r $path && -w $path && -x $path;
+
+		my $path_exists_initially = -e $path;
+
+		# Create the directory if it doesn't exist.
+		if (!$path_exists_initially) {
+			eval {
+				$path->make_path({ mode => $permissions });
+				push(@messages, [ "Created directory $path.", 1 ]);
+			};
+			if ($@) {
+				push(@messages, [ "Failed to create directory $path.", 0 ]);
+				next;
+			}
+		}
+
+		# Fix permissions if those are not correct.
+		if (($path->stat->mode & 0777) != $permissions) {
+			eval {
+				$path->chmod($permissions);
+				push(@messages, [ "Changed permissions for directory $path.", 1 ]);
+			};
+			push(@messages, [ "Failed to change permissions for directory $path.", 0 ]) if $@;
+		}
+
+		# If the path did not exist to begin with and there is a corresponding model course directory,
+		# then copy the contents of the model course directory.
+		if (!$path_exists_initially && $model_course_dirs{$dir}) {
+			my $modelCoursePath = "$ce->{webworkDirs}{courses}/modelCourse/$model_course_dirs{$dir}";
+			if (!-r $modelCoursePath) {
 				push(
 					@messages,
 					[
 						'Your modelCourse in the "courses" directory is out of date or missing. Please update it from '
-							. 'webwork/webwork2/courses.dist directory before upgrading the other courses. Cannot find '
-							. "MathAchievements directory $modelCourseAchievementsDir nor MathAchievements picture "
-							. "directory $modelCourseAchievementsHtmlDir",
+							. "the webwork2/courses.dist directory. Cannot find directory $modelCoursePath. The "
+							. "directory $path has been created, but may be missing the files it should contain.",
 						0
 					]
 				);
-			} else {
-				unless (-e $courseAchievementsDir && -e $courseAchievementsHtmlDir) {
-					push(@messages,
-						[ "Attempting to update the achievements directory for $ce->{courseDirs}{root}", 1 ]);
-					if (-e $courseAchievementsDir) {
-						push(@messages, [ 'Achievements directory is already present', 1 ]);
+				next;
+			}
+
+			eval {
+				for (path($modelCoursePath)->list_tree({ dir => 1 })->each) {
+					my $destPath = $_ =~ s!$modelCoursePath!$path!r;
+					if (-l $_) {
+						symlink(readlink $_, $destPath);
+					} elsif (-d $_) {
+						path($destPath)->make_path({ mode => $permissions });
 					} else {
-						system "cp -RPpi $modelCourseAchievementsDir $courseTemplatesDir";
-						push(@messages, [ 'Achievements directory created', 1 ]);
-					}
-					if (-e $courseAchievementsHtmlDir) {
-						push(@messages, [ 'Achievements html directory is already present', 1 ]);
-					} else {
-						system "cp -RPpi $modelCourseAchievementsHtmlDir $courseHtmlDir ";
-						push(@messages, [ 'Achievements html directory created', 1 ]);
+						$_->copy_to($destPath);
 					}
 				}
-			}
+				push(@messages, [ "Copied model course directory $modelCoursePath to $path.", 1 ]);
+			};
+			push(@messages, [ "Failed to copy model course directory $modelCoursePath to $path: $@.", 0 ]) if $@;
 		}
 
-		next unless exists $updateable_directories{$dir};
-		my $path = $ce->{courseDirs}->{$dir};
-		unless (-e $path) {    # If the directory does not exist, create it.
-			my $parentDirectory = $path;
-			$parentDirectory =~ s|/$||;         # Remove a trailing forward slash
-			$parentDirectory =~ s|/[^/]*$||;    # Remove last node
-			my ($perms, $groupID) = (stat $parentDirectory)[ 2, 5 ];
-			if (-w $parentDirectory) {
-				createDirectory($path, $perms, $groupID)
-					or push(@messages, [ "Failed to create directory at $path.", 0 ]);
-			} else {
-				push(
-					@messages,
-					[
-						"Permissions error. Can't create directory at $path. "
-							. "Lack write permission on $parentDirectory.",
-						0
-					]
-				);
-			}
-		}
 	}
 
 	return \@messages;
