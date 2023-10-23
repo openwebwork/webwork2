@@ -34,8 +34,11 @@
 	<%= hidden_field editMode => $c->{editMode} =%>
 	<%= hidden_field passwordMode => $c->{passwordMode} =%>
 	<%= hidden_field primarySortField => $c->{primarySortField} =%>
+	<%= hidden_field primarySortOrder => $c->{primarySortOrder} =%>
 	<%= hidden_field secondarySortField => $c->{secondarySortField} =%>
+	<%= hidden_field secondarySortOrder => $c->{secondarySortOrder} =%>
 	<%= hidden_field ternarySortField => $c->{ternarySortField} =%>
+	<%= hidden_field ternarySortOrder => $c->{ternarySortOrder} =%>
 	%
 	% # Output action forms
 	% my $default_choice;
