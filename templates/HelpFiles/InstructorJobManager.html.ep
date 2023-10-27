@@ -54,7 +54,8 @@
 			. 'executed. If a job is "finished" it means that the execution of the job has successfully '
 			. 'completed. If a job is "failed" it means that the execution of job has completed, but there were '
 			. 'errors in the execution of the job. If the job is in the "finished" or "failed" state, then there '
-			. 'will also be a popover containing information about what happened when the job was executed.') =%>
+			. 'will also be a button which when clicked will show a dialog containing information about what happened '
+			. 'when the job was executed.') =%>
 	</dd>
 </dl>
 %

@@ -10,13 +10,4 @@
 		filter_select.addEventListener('change', toggle_filter_elements);
 		toggle_filter_elements();
 	}
-
-	// Activate the results popovers.
-	document.querySelectorAll('.result-popover-btn').forEach((popoverBtn) => {
-		new bootstrap.Popover(popoverBtn, {
-			trigger: 'hover focus',
-			customClass: 'job-queue-result-popover',
-			html: true
-		});
-	});
 })();

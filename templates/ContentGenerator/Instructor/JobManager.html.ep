@@ -1,9 +1,5 @@
 % use WeBWorK::Utils qw(getAssetURL);
 %
-% content_for css => begin
-	<%= stylesheet getAssetURL($ce, 'js/JobManager/jobmanager.css') =%>
-% end
-%
 % content_for js => begin
 	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'),   defer => undef =%>
@@ -187,25 +183,39 @@
 							<div class="d-flex justify-content-between gap-1">
 								<%= maketext($jobs->{$jobID}{state}) =%>
 								% if (defined $jobs->{$jobID}{result}) {
-									% content_for "result_$jobID", begin
-										% if (ref($jobs->{$jobID}{result}) eq 'ARRAY') {
-											<ul class="m-0">
-												% for (@{ $jobs->{$jobID}{result} } ) {
-													<li><%= $_ %></li>
-												% }
-											</ul>
-										% } else {
-											<%= $jobs->{$jobID}{result} =%>
-										% }
-									% end
-									<a role="button" class="result-popover-btn" tabindex="0" data-bs-toggle="popover"
-										data-bs-title="<%= maketext('Result for job [_1]', $jobID) %>"
-										data-bs-content="<%= content("result_$jobID")->xml_escape %>">
+									<a role="button" class="result-btn" tabindex="0" data-bs-toggle="modal" href="#"
+										data-bs-target="<%= "#result-$jobID" %>">
 										<i class="fa-solid fa-circle-info fa-xl" aria-hidden="true"></i>
 										<span class="visually-hidden">
 											<%= maketext('Result for job [_1]', $jobID) %>
 										</span>
 									</a>
+									<div class="result-modal modal fade" id="<%= "result-$jobID" %>" tabindex="-1"
+										aria-labelledby="<%= "result-$jobID-label" %>" aria-hidden="true">
+										<div class="modal-dialog modal-dialog-centered modal-lg">
+											<div class="modal-content">
+												<div class="modal-header">
+													<h1 class="modal-title fs-5" id="<%= "result-$jobID-label" %>">
+														<%= maketext('Result for job [_1]', $jobID) %>
+													</h1>
+													<button type="button" class="btn-close" data-bs-dismiss="modal"
+														aria-label="<%= maketext("Close") %>">
+													</button>
+												</div>
+												<div class="modal-body">
+													% if (ref($jobs->{$jobID}{result}) eq 'ARRAY') {
+														<ul class="list-group list-group-flush">
+															% for (@{ $jobs->{$jobID}{result} } ) {
+																<li class="list-group-item py-1"><%= $_ %></li>
+															% }
+														</ul>
+													% } else {
+														<%= $jobs->{$jobID}{result} =%>
+													% }
+												</div>
+											</div>
+										</div>
+									</div>
 								% }
 							</div>
 						</td>
