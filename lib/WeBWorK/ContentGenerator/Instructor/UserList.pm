@@ -100,16 +100,16 @@ use constant FORM_PERMS => {
 };
 
 use constant SORT_SUBS => {
-	user_id       => \&byUserID,
-	first_name    => \&byFirstName,
-	last_name     => \&byLastName,
-	email_address => \&byEmailAddress,
-	student_id    => \&byStudentID,
-	status        => \&byStatus,
-	section       => \&bySection,
-	recitation    => \&byRecitation,
-	comment       => \&byComment,
-	permission    => \&byPermission,
+	user_id       => { ASC => \&byUserID,       DESC => \&byDescUserID },
+	first_name    => { ASC => \&byFirstName,    DESC => \&byDescFirstName },
+	last_name     => { ASC => \&byLastName,     DESC => \&byDescLastName },
+	email_address => { ASC => \&byEmailAddress, DESC => \&byDescEmailAddress },
+	student_id    => { ASC => \&byStudentID,    DESC => \&byDescStudentID },
+	status        => { ASC => \&byStatus,       DESC => \&byDescStatus },
+	section       => { ASC => \&bySection,      DESC => \&byDescSection },
+	recitation    => { ASC => \&byRecitation,   DESC => \&byDescRecitation },
+	comment       => { ASC => \&byComment,      DESC => \&byDescComment },
+	permission    => { ASC => \&byPermission,   DESC => \&byDescPermission }
 };
 
 use constant FIELDS => [
@@ -207,15 +207,12 @@ sub pre_header_initialize ($c) {
 		{ map { $allUsers{$_}{permission} > $c->{userPermission} ? () : ($_ => 1) } (keys %allUsers) };
 
 	# Always have a definite sort order.
-	if (defined $c->param('labelSortMethod')) {
-		$c->{primarySortField}   = $c->param('labelSortMethod');
-		$c->{secondarySortField} = $c->param('primarySortField')   || 'last_name';
-		$c->{ternarySortField}   = $c->param('secondarySortField') || 'first_name';
-	} else {
-		$c->{primarySortField}   = $c->param('primarySortField')   || 'last_name';
-		$c->{secondarySortField} = $c->param('secondarySortField') || 'first_name';
-		$c->{ternarySortField}   = $c->param('ternarySortField')   || 'student_id';
-	}
+	$c->{primarySortField}   = $c->param('primarySortField')   || 'last_name';
+	$c->{primarySortOrder}   = $c->param('primarySortOrder')   || 'ASC';
+	$c->{secondarySortField} = $c->param('secondarySortField') || 'first_name';
+	$c->{secondarySortOrder} = $c->param('secondarySortOrder') || 'ASC';
+	$c->{ternarySortField}   = $c->param('ternarySortField')   || 'student_id';
+	$c->{ternarySortOrder}   = $c->param('ternarySortOrder')   || 'ASC';
 
 	my $actionID = $c->param('action');
 	if ($actionID) {
@@ -225,18 +222,16 @@ sub pre_header_initialize ($c) {
 		if (!FORM_PERMS()->{$actionID} || $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
 			# Call the action handler
 			my $actionHandler = "${actionID}_handler";
-			$c->addgoodmessage($c->maketext('Result of last action performed: [_1]', $c->tag('i', $c->$actionHandler)));
+			$c->addgoodmessage($c->$actionHandler);
 		} else {
 			$c->addbadmessage($c->maketext('You are not authorized to perform this action.'));
 		}
-	} else {
-		$c->addgoodmessage($c->maketext("Please select action to be performed."));
 	}
 
 	# Sort all users
-	my $primarySortSub   = SORT_SUBS()->{ $c->{primarySortField} };
-	my $secondarySortSub = SORT_SUBS()->{ $c->{secondarySortField} };
-	my $ternarySortSub   = SORT_SUBS()->{ $c->{ternarySortField} };
+	my $primarySortSub   = SORT_SUBS()->{ $c->{primarySortField} }{ $c->{primarySortOrder} };
+	my $secondarySortSub = SORT_SUBS()->{ $c->{secondarySortField} }{ $c->{secondarySortOrder} };
+	my $ternarySortSub   = SORT_SUBS()->{ $c->{ternarySortField} }{ $c->{ternarySortOrder} };
 
 	$c->{allUserIDs} = [ keys %allUsers ];
 
@@ -274,16 +269,16 @@ sub filter_handler ($c) {
 
 	my $scope = $c->param('action.filter.scope');
 	if ($scope eq 'all') {
-		$result = $c->maketext('showing all users');
+		$result = $c->maketext('Showing all users.');
 		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->{allUserIDs} } };
 	} elsif ($scope eq 'none') {
-		$result = $c->maketext('showing no users');
+		$result = $c->maketext('Showing no users.');
 		$c->{visibleUserIDs} = {};
 	} elsif ($scope eq 'selected') {
-		$result = $c->maketext('showing selected users');
+		$result = $c->maketext('Showing selected users.');
 		$c->{visibleUserIDs} = $c->{selectedUserIDs};
 	} elsif ($scope eq 'match_regex') {
-		$result = $c->maketext('showing matching users');
+		$result = $c->maketext('Showing matching users.');
 		my $regex    = $c->param('action.filter.user_ids');
 		my $field    = $c->param('action.filter.field');
 		my %allUsers = %{ $c->{allUsers} };
@@ -307,15 +302,46 @@ sub filter_handler ($c) {
 }
 
 sub sort_handler ($c) {
-	$c->{primarySortField}   = $c->param('action.sort.primary');
-	$c->{secondarySortField} = $c->param('action.sort.secondary');
-	$c->{ternarySortField}   = $c->param('action.sort.ternary');
+	if (defined $c->param('labelSortMethod') || defined $c->param('labelSortOrder')) {
+		if (defined $c->param('labelSortOrder')) {
+			$c->{ $c->param('labelSortOrder') . 'SortOrder' } =
+				$c->{ $c->param('labelSortOrder') . 'SortOrder' } eq 'ASC' ? 'DESC' : 'ASC';
+		} elsif ($c->param('labelSortMethod') eq $c->{primarySortField}) {
+			$c->{primarySortOrder} = $c->{primarySortOrder} eq 'ASC' ? 'DESC' : 'ASC';
+		} else {
+			$c->{ternarySortField}   = $c->{secondarySortField};
+			$c->{ternarySortOrder}   = $c->{secondarySortOrder};
+			$c->{secondarySortField} = $c->{primarySortField};
+			$c->{secondarySortOrder} = $c->{primarySortOrder};
+			$c->{primarySortField}   = $c->param('labelSortMethod');
+			$c->{primarySortOrder}   = 'ASC';
+		}
+
+		$c->param('action.sort.primary',         $c->{primarySortField});
+		$c->param('action.sort.primary.order',   $c->{primarySortOrder});
+		$c->param('action.sort.secondary',       $c->{secondarySortField});
+		$c->param('action.sort.secondary.order', $c->{secondarySortOrder});
+		$c->param('action.sort.ternary',         $c->{ternarySortField});
+		$c->param('action.sort.ternary.order',   $c->{ternarySortOrder});
+	} else {
+		$c->{primarySortField}   = $c->param('action.sort.primary');
+		$c->{primarySortOrder}   = $c->param('action.sort.primary.order');
+		$c->{secondarySortField} = $c->param('action.sort.secondary');
+		$c->{secondarySortOrder} = $c->param('action.sort.secondary.order');
+		$c->{ternarySortField}   = $c->param('action.sort.ternary');
+		$c->{ternarySortOrder}   = $c->param('action.sort.ternary.order');
+	}
 
 	return $c->maketext(
-		'Users sorted by [_1], then by [_2], then by [_3]',
+		'Sets sorted by [_1] in [plural,_2,ascending,descending] order, '
+			. 'then by [_3] in [plural,_4,ascending,descending] order,'
+			. 'and then by [_5] in [plural,_6,ascending,descending] order.',
 		$c->maketext(FIELD_PROPERTIES()->{ $c->{primarySortField} }{name}),
+		$c->{primarySortOrder} eq 'ASC' ? 1 : 2,
 		$c->maketext(FIELD_PROPERTIES()->{ $c->{secondarySortField} }{name}),
-		$c->maketext(FIELD_PROPERTIES()->{ $c->{ternarySortField} }{name})
+		$c->{secondarySortOrder} eq 'ASC' ? 1 : 2,
+		$c->maketext(FIELD_PROPERTIES()->{ $c->{ternarySortField} }{name}),
+		$c->{ternarySortOrder} eq 'ASC' ? 1 : 2
 	);
 }
 
@@ -325,13 +351,13 @@ sub edit_handler ($c) {
 
 	my $scope = $c->param('action.edit.scope');
 	if ($scope eq 'all') {
-		$result      = $c->maketext('editing all users');
+		$result      = $c->maketext('Editing all users.');
 		@usersToEdit = grep { $c->{userIsEditable}{$_} } @{ $c->{allUserIDs} };
 	} elsif ($scope eq 'visible') {
-		$result      = $c->maketext('editing visible users');
+		$result      = $c->maketext('Editing visible users.');
 		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{visibleUserIDs} });
 	} elsif ($scope eq 'selected') {
-		$result      = $c->maketext('editing selected users');
+		$result      = $c->maketext('Editing selected users.');
 		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
 	}
 	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
@@ -346,13 +372,13 @@ sub password_handler ($c) {
 
 	my $scope = $c->param('action.password.scope');
 	if ($scope eq 'all') {
-		$result      = $c->maketext('giving new passwords to all users');
+		$result      = $c->maketext('Giving new passwords to all users.');
 		@usersToEdit = grep { $c->{userIsEditable}{$_} } @{ $c->{allUserIDs} };
 	} elsif ($scope eq 'visible') {
-		$result      = $c->maketext('giving new passwords to visible users');
+		$result      = $c->maketext('Giving new passwords to visible users.');
 		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{visibleUserIDs} });
 	} elsif ($scope eq 'selected') {
-		$result      = $c->maketext('giving new passwords to selected users');
+		$result      = $c->maketext('Giving new passwords to selected users.');
 		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
 	}
 	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
@@ -485,7 +511,7 @@ sub cancel_edit_handler ($c) {
 	}
 	$c->{editMode} = 0;
 
-	return $c->maketext('Changes abandoned');
+	return $c->maketext('Changes abandoned.');
 }
 
 sub save_edit_handler ($c) {
@@ -526,7 +552,7 @@ sub save_edit_handler ($c) {
 
 	$c->{editMode} = 0;
 
-	return $c->maketext('Changes saved');
+	return $c->maketext('Changes saved.');
 }
 
 sub cancel_password_handler ($c) {
@@ -537,7 +563,7 @@ sub cancel_password_handler ($c) {
 	}
 	$c->{passwordMode} = 0;
 
-	return $c->maketext('Changes abandoned');
+	return $c->maketext('Changes abandoned.');
 }
 
 sub save_password_handler ($c) {
@@ -574,16 +600,17 @@ sub save_password_handler ($c) {
 
 	$c->{passwordMode} = 0;
 
-	return $c->maketext('New passwords saved');
+	return $c->maketext('New passwords saved.');
 }
 
-# Sort methods
+# Sort methods (ascending)
 
 sub byUserID { return lc $a->user_id cmp lc $b->user_id }
 
 sub byFirstName {
 	return (defined $a->first_name && defined $b->first_name) ? lc $a->first_name cmp lc $b->first_name : 0;
 }
+
 sub byLastName { return (defined $a->last_name && defined $b->last_name) ? lc $a->last_name cmp lc $b->last_name : 0; }
 sub byEmailAddress { return lc $a->email_address cmp lc $b->email_address }
 sub byStudentID    { return lc $a->student_id cmp lc $b->student_id }
@@ -594,6 +621,18 @@ sub byComment      { return lc $a->comment cmp lc $b->comment }
 
 # Permission level is added to the user record hash so we can sort by it if necessary.
 sub byPermission { return $a->{permission} <=> $b->{permission}; }
+
+# Sort methods (descending)
+sub byDescUserID       { local ($b, $a) = ($a, $b); return byUserID() }
+sub byDescFirstName    { local ($b, $a) = ($a, $b); return byFirstName() }
+sub byDescLastName     { local ($b, $a) = ($a, $b); return byLastName() }
+sub byDescEmailAddress { local ($b, $a) = ($a, $b); return byEmailAddress() }
+sub byDescStudentID    { local ($b, $a) = ($a, $b); return byStudentID() }
+sub byDescStatus       { local ($b, $a) = ($a, $b); return byStatus() }
+sub byDescSection      { local ($b, $a) = ($a, $b); return bySection() }
+sub byDescRecitation   { local ($b, $a) = ($a, $b); return byRecitation() }
+sub byDescComment      { local ($b, $a) = ($a, $b); return byC mment() }
+sub byDescPermission   { local ($b, $a) = ($a, $b); return byPermission() }
 
 # Utilities
 

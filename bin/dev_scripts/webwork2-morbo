@@ -87,9 +87,10 @@ push(@watch,
 	"$webwork_root/lib",           "$webwork_root/templates", "$webwork_root/htdocs/js",
 	"$webwork_root/htdocs/themes", "$webwork_root/conf");
 
-# Add the pg lib and pg htdocs directory if they are readable.
-push(@watch, "$config->{pg_dir}/lib")    if -r "$config->{pg_dir}/lib";
-push(@watch, "$config->{pg_dir}/htdocs") if -r "$config->{pg_dir}/htdocs";
+# Add the pg lib and pg htdocs directory and the PG.pl macro if they are readable.
+push(@watch, "$config->{pg_dir}/lib")          if -r "$config->{pg_dir}/lib";
+push(@watch, "$config->{pg_dir}/htdocs")       if -r "$config->{pg_dir}/htdocs";
+push(@watch, "$config->{pg_dir}/macros/PG.pl") if -r "$config->{pg_dir}/macros/PG.pl";
 
 my $morbo = Mojo::Server::Morbo->new(silent => !$verbose);
 $morbo->daemon->listen(\@listen) if @listen;

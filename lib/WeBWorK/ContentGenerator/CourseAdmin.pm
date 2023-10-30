@@ -1563,8 +1563,8 @@ sub do_upgrade_course ($c) {
 							'li',
 							$c->tag(
 								'span',
-								class => $_->[2] ? 'text-success' : 'text-danger',
-								$_->[1]
+								class => $_->[1] ? 'text-success' : 'text-danger',
+								$_->[0]
 							)
 						)
 					} @$dir_update_messages

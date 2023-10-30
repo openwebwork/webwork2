@@ -64,7 +64,7 @@
 			<div class="col-auto">
 				<%= select_field 'action.import.assign' => [
 						[ maketext('all current users')          => 'all' ],
-						[ maketext('only') . ' ' . param('user') => 'user', selected => undef ]
+						[ maketext('only') . ' ' . param('user') => param('user'), selected => undef ]
 					],
 					id => 'import_users_select', class => 'form-select form-select-sm' =%>
 			</div>

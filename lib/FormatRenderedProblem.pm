@@ -29,7 +29,6 @@ use Digest::SHA qw(sha1_base64);
 use Mojo::Util qw(xml_escape);
 use Mojo::DOM;
 
-use WeBWorK::HTML::AttemptsTable;
 use WeBWorK::Utils qw(getAssetURL);
 use WeBWorK::Utils::LanguageAndDirection;
 
@@ -145,33 +144,30 @@ sub formatRenderedProblem {
 	my $showCorrectMode = defined($ws->{inputs_ref}{WWcorrectAns}) || 0;
 	# A problemUUID should be added to the request as a parameter.  It is used by PG to create a proper UUID for use in
 	# aliases for resources.  It should be unique for a course, user, set, problem, and version.
-	my $problemUUID       = $ws->{inputs_ref}{problemUUID}       // '';
-	my $problemResult     = $rh_result->{problem_result}         // {};
-	my $showSummary       = $ws->{inputs_ref}{showSummary}       // 1;
-	my $showAnswerNumbers = $ws->{inputs_ref}{showAnswerNumbers} // 1;
+	my $problemUUID   = $ws->{inputs_ref}{problemUUID} // '';
+	my $problemResult = $rh_result->{problem_result}   // {};
+	my $showSummary   = $ws->{inputs_ref}{showSummary} // 1;
 
-	# Attempts table
-	my $answerTemplate = '';
+	# Result summary
+	my $resultSummary = '';
 
-	# Do not produce an AttemptsTable when we had a rendering error.
-	if (!$renderErrorOccurred) {
-		my $tbl = WeBWorK::HTML::AttemptsTable->new(
-			$rh_result->{answers} // {}, $ws->c,
-			answersSubmitted    => $ws->{inputs_ref}{answersSubmitted}     // 0,
-			answerOrder         => $rh_result->{flags}{ANSWER_ENTRY_ORDER} // [],
-			displayMode         => $displayMode,
-			showAnswerNumbers   => $showAnswerNumbers,
-			ce                  => $ce,
-			showAttemptPreviews => $previewMode || $submitMode || $showCorrectMode,
-			showAttemptResults  => $submitMode  || $showCorrectMode,
-			showCorrectAnswers  => $showCorrectMode,
-			showMessages        => $previewMode || $submitMode || $showCorrectMode,
-			showSummary         => (($showSummary && ($submitMode || $showCorrectMode)) // 0) ? 1 : 0,
-			maketext            => WeBWorK::Localize::getLoc($formLanguage),
-			summary             => $problemResult->{summary} // '',    # can be set by problem grader
-		);
-		$answerTemplate = $tbl->answerTemplate;
-		$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+	my $lh = WeBWorK::Localize::getLangHandle($formLanguage);
+
+	# Do not produce a result summary when we had a rendering error.
+	if (!$renderErrorOccurred
+		&& $showSummary
+		&& !$previewMode
+		&& ($submitMode || $showCorrectMode)
+		&& $problemResult->{summary})
+	{
+		$resultSummary = $ws->c->c(
+			$ws->c->tag(
+				'h2',
+				class => 'fs-3 mb-2',
+				$ws->c->maketext('Results for this submission')
+				)
+				. $ws->c->tag('div', role => 'alert', $ws->c->b($problemResult->{summary}))
+		)->join('');
 	}
 
 	# Answer hash in XML format used by the PTX format.
@@ -214,7 +210,7 @@ sub formatRenderedProblem {
 		$output->{input}      = $ws->{input};
 
 		# The following could be constructed from the above, but this is a convenience
-		$output->{answerTemplate}  = $answerTemplate->to_string if $answerTemplate;
+		$output->{resultSummary}   = $resultSummary->to_string if $resultSummary;
 		$output->{lang}            = $PROBLEM_LANG_AND_DIR{lang};
 		$output->{dir}             = $PROBLEM_LANG_AND_DIR{dir};
 		$output->{extra_css_files} = \@extra_css_files;
@@ -242,7 +238,7 @@ sub formatRenderedProblem {
 		formatName               => $formatName,
 		ws                       => $ws,
 		ce                       => $ce,
-		lh                       => WeBWorK::Localize::getLangHandle($ws->{inputs_ref}{language} // 'en'),
+		lh                       => $lh,
 		rh_result                => $rh_result,
 		SITE_URL                 => $SITE_URL,
 		FORM_ACTION_URL          => $SITE_URL . $ws->c->webwork_url . '/render_rpc',
@@ -263,7 +259,7 @@ sub formatRenderedProblem {
 		extra_js_files           => \@extra_js_files,
 		problemText              => $problemText,
 		extra_header_text        => $ws->{inputs_ref}{extra_header_text} // '',
-		answerTemplate           => $answerTemplate,
+		resultSummary            => $resultSummary,
 		showScoreSummary         => $submitMode && !$renderErrorOccurred && $problemResult,
 		answerhashXML            => $answerhashXML,
 		LTIGradeMessage          => $LTIGradeMessage,
@@ -275,9 +271,8 @@ sub formatRenderedProblem {
 		isInstructor             => $ws->{inputs_ref}{isInstructor}       // '',
 		forceScaffoldsOpen       => $ws->{inputs_ref}{forceScaffoldsOpen} // '',
 		showSummary              => $showSummary,
-		showHints                => $ws->{inputs_ref}{showHints}     // '',
-		showSolutions            => $ws->{inputs_ref}{showSolutions} // '',
-		showAnswerNumbers        => $showAnswerNumbers,
+		showHints                => $ws->{inputs_ref}{showHints}                // '',
+		showSolutions            => $ws->{inputs_ref}{showSolutions}            // '',
 		showPreviewButton        => $ws->{inputs_ref}{showPreviewButton}        // '',
 		showCheckAnswersButton   => $ws->{inputs_ref}{showCheckAnswersButton}   // '',
 		showCorrectAnswersButton => $ws->{inputs_ref}{showCorrectAnswersButton} // '',
@@ -403,20 +398,28 @@ EOS
 # Nice output for debugging
 sub pretty_print {
 	my ($r_input, $level) = @_;
+	return 'undef' unless defined $r_input;
+
 	$level //= 4;
 	$level--;
-	return '' unless $level > 0;    # Only print three levels of hashes (safety feature)
-	my $out = '';
-	if (!ref $r_input) {
-		$out = $r_input if defined $r_input;
-		$out =~ s/</&lt;/g;         # protect for HTML output
-	} elsif (eval { %$r_input && 1 }) {
-		# eval { %$r_input && 1 } will pick up all objectes that can be accessed like a hash and so works better than
-		# "ref $r_input".  Do not use "$r_input" =~ /hash/i" because that will pick up strings containing the word hash,
-		# and that will cause an error below.
-		local $^W = 0;
-		$out .= qq{$r_input <table border="2" cellpadding="3" bgcolor="#FFFFFF">};
+	return 'too deep' unless $level > 0;
 
+	my $ref = ref($r_input);
+
+	if (!$ref) {
+		return xml_escape($r_input);
+	} elsif (eval { %$r_input || 1 }) {
+		# `eval { %$r_input || 1 }` will pick up all objectes that can be accessed like a hash and so works better than
+		# `ref $r_input`.  Do not use `"$r_input" =~ /hash/i` because that will pick up strings containing the word
+		# hash, and that will cause an error below.
+		my $out =
+			'<div style="display:table;border:1px solid black;background-color:#fff;">'
+			. ($ref eq 'HASH'
+				? ''
+				: '<div style="'
+				. 'display:table-caption;padding:3px;border:1px solid black;background-color:#fff;text-align:center;">'
+				. "$ref</div>")
+			. '<div style="display:table-row-group">';
 		for my $key (sort keys %$r_input) {
 			# Safety feature - we do not want to display the contents of %seed_ce which
 			# contains the database password and lots of other things, and explicitly hide
@@ -429,24 +432,24 @@ sub pretty_print {
 					|| ($key eq "externalPrograms")
 					|| ($key eq "permissionLevels")
 					|| ($key eq "seed_ce"));
-			$out .= "<tr><td>$key</td><td>=&gt;</td><td>&nbsp;" . pretty_print($r_input->{$key}, $level) . "</td></tr>";
+			$out .=
+				'<div style="display:table-row"><div style="display:table-cell;vertical-align:middle;padding:3px">'
+				. xml_escape($key)
+				. '</div>'
+				. qq{<div style="display:table-cell;vertical-align:middle;padding:3px">=&gt;</div>}
+				. qq{<div style="display:table-cell;vertical-align:middle;padding:3px">}
+				. pretty_print($r_input->{$key}, $level)
+				. '</div></div>';
 		}
-		$out .= '</table>';
-	} elsif (ref $r_input eq 'ARRAY') {
-		my @array = @$r_input;
-		$out .= '( ';
-		while (@array) {
-			$out .= pretty_print(shift @array, $level) . ' , ';
-		}
-		$out .= ' )';
-	} elsif (ref $r_input eq 'CODE') {
-		$out = "$r_input";
+		$out .= '</div></div>';
+		return $out;
+	} elsif ($ref eq 'ARRAY') {
+		return '[ ' . join(', ', map { pretty_print($_, $level) } @$r_input) . ' ]';
+	} elsif ($ref eq 'CODE') {
+		return 'CODE';
 	} else {
-		$out = $r_input;
-		$out =~ s/</&lt;/g;    # Protect for HTML output
+		return xml_escape($r_input);
 	}
-
-	return $out . ' ';
 }
 
 1;

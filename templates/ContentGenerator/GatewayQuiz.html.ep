@@ -115,17 +115,17 @@
 % my $numProbPerPage = $c->{set}->problems_per_page;
 %
 % if ($c->{will}{recordAnswers}) {
-	% my $divClass = 'ResultsWithoutError';
+	% my $divClass = 'alert-success';
 	% my $recdMsg  = '';
 	% for (@{ $c->{scoreRecordedMessage} }) {
 		% if ($_ ne 'recorded') {
 			% $recdMsg  = $_;
-			% $divClass = 'ResultsWithError';
+			% $divClass = 'alert-danger';
 			% last;
 		% }
 	% }
 	%
-	<div class="<%= $divClass . ' mb-3' %>">
+	<div class="<%= "alert $divClass mb-3 p-1" %>">
 		% # A handy noun for when referring to a test.
 		% my $testNoun = ($c->{set}->attempts_per_version || 0) > 1 ? maketext('submission') : maketext('test');
 		% my $testNounNum =
@@ -256,11 +256,11 @@
 	% }
 	%
 	% if ($timeLeft < 60 && $timeLeft > 0 && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
-		<div class="ResultsWithError d-inline-block mb-2">
+		<div class="alert alert-danger d-inline-block mb-2 p-1">
 			<strong><%= maketext('You have less than 1 minute to complete this test.') %></strong>
 		</div>
 	% } elsif ($timeLeft <= 0 && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
-		<div class="ResultsWithError d-inline-block mb-2">
+		<div class="alert alert-danger d-inline-block mb-2 p-1">
 			<strong>
 				<%= maketext('You are out of time!')
 					. (
@@ -490,7 +490,6 @@
 		<%= $jumpLinks->() =%>
 		%
 		% # Print out problems and attempt results, as appropriate.
-		% # Note: Usage is $c->attemptResults($pg, $showCorrectAnswers, $showAttemptResults, $showSummary)
 		% for my $i (0 .. $#$pg_results) {
 			% my $pg = $pg_results->[ $probOrder->[$i] ];
 			%
@@ -498,34 +497,23 @@
 				% my $recordMessage = '';
 				% my $resultsTable  = '';
 				%
-				% if ($pg->{flags}{showPartialCorrectAnswers} >= 0 && $c->{submitAnswers}) {
+				% if ($c->{submitAnswers}) {
 					% if ($c->{scoreRecordedMessage}[ $probOrder->[$i] ] ne 'recorded') {
-						% $recordMessage = tag('div', class => 'ResultsWithError d-inline-block mb-2',
+						% $recordMessage = tag('div', class => 'alert alert-dangeer d-inline-block mb-2 p-1',
 							% maketext('ANSWERS NOT RECORDED -- [_1]', $c->{scoreRecordedMessage}[ $probOrder->[$i] ])
 						% );
 					% }
-					% $resultsTable = $c->attemptResults(
-						% $pg,
-						% $c->{will}{showCorrectAnswers},
-						% $pg->{flags}{showPartialCorrectAnswers} && $c->{can}{showProblemScores},
-						% $c->{can}{showProblemScores}
-					% );
+					% $resultsTable = $c->attemptResults($pg);
 				% } elsif ($c->{will}{checkAnswers} || $c->{will}{showProblemGrader}) {
-					% $recordMessage = tag('div', class => 'ResultsWithError d-inline-block mb-2',
+					% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
 						% maketext('ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED')
 					% );
 					%
-					% $resultsTable = $c->attemptResults(
-						% $pg,
-						% $c->{will}{showCorrectAnswers},
-						% $pg->{flags}{showPartialCorrectAnswers} && $c->{can}{showProblemScores},
-						% $c->{can}{showProblemScores}
-					% );
+					% $resultsTable = $c->attemptResults($pg);
 				% } elsif ($c->{previewAnswers}) {
-					% $recordMessage = tag('div', class => 'ResultsWithError d-inline-block mb-2',
+					% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
 						% maketext('PREVIEW ONLY -- ANSWERS NOT RECORDED')
 					% );
-					% $resultsTable = $c->attemptResults($pg, 0, 0, 0);
 				% }
 				%
 				<div class="gwProblem">
@@ -589,7 +577,8 @@
 					% }
 				</div>
 				% # Store the problem status for continued attempts recording.
-				<%= hidden_field 'probstatus' . ($probOrder->[$i] + 1) => $c->{probStatus}[ $probOrder->[$i] ] =%>
+				<%= hidden_field 'probstatus' . $problems->[ $probOrder->[$i] ]{problem_id}
+					=> $c->{probStatus}[ $probOrder->[$i] ] =%>
 				%
 				<div class="gwDivider"></div>
 			% } else {
@@ -605,7 +594,8 @@
 					% }
 				% }
 				% # Store the problem status for continued attempts recording.
-				<%= hidden_field 'probstatus' . ($probOrder->[$i] + 1) => $c->{probStatus}[ $probOrder->[$i] ] %>
+				<%= hidden_field 'probstatus' . $problems->[ $probOrder->[$i] ]{problem_id}
+					=> $c->{probStatus}[ $probOrder->[$i] ] %>
 			% }
 		% }
 		%

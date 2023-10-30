@@ -88,7 +88,7 @@ $externalPrograms{rm}    = "/bin/rm";
 $externalPrograms{mkdir} = "/bin/mkdir";
 $externalPrograms{tar}   = "/bin/tar";
 $externalPrograms{gzip}  = "/bin/gzip";
-$externalPrograms{git} = "/usr/bin/git";
+$externalPrograms{git}   = "/usr/bin/git";
 
 ####################################################
 # equation rendering/hardcopy utiltiies

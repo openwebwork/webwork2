@@ -37,7 +37,7 @@
 	<div class="container-fluid">
 		<div class="row g-0">
 			<div class="col-12 problem">
-				%== $answerTemplate
+				%== $resultSummary
 				<%= form_for $FORM_ACTION_URL, id => 'problemMainForm', class => 'problem-main-form',
 					name => 'problemMainForm', method => 'POST', begin %>
 					<div id="problem_body" class="problem-content" <%== $PROBLEM_LANG_AND_DIR %>>
@@ -66,7 +66,6 @@
 					% }
 					%== $LTIGradeMessage
 					%
-					%= hidden_field answersSubmitted         => 1
 					%= hidden_field sourceFilePath           => $sourceFilePath
 					%= hidden_field problemSource            => $problemSource
 					%= hidden_field uriEncodedProblemSource  => $uriEncodedProblemSource
@@ -87,7 +86,6 @@
 					%= hidden_field showSummary              => $showSummary
 					%= hidden_field showHints                => $showHints
 					%= hidden_field showSolutions            => $showSolutions
-					%= hidden_field showAnswerNumbers        => $showAnswerNumbers
 					%= hidden_field showPreviewButton        => $showPreviewButton
 					%= hidden_field showCheckAnswersButton   => $showCheckAnswersButton
 					%= hidden_field showCorrectAnswersButton => $showCorrectAnswersButton

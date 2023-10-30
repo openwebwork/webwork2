@@ -105,6 +105,10 @@
 		= CodeMirror.fromTextArea(document.querySelector('.codeMirrorEditor'), options);
 	cm.setSize('100%', '550px');
 
+	// Refresh the CodeMirror instance anytime the containing div resizes so that if line wrapping changes,
+	// the mouse cursor will still go to the correct place when the user clicks on the CodeMirror window.
+	new ResizeObserver(() => cm.refresh()).observe(document.querySelector('.CodeMirror'));
+
 	const currentThemeFile = localStorage.getItem('WW_PGEditor_selected_theme') ?? 'default';
 	const currentThemeName = await loadConfig(currentThemeFile);
 	cm.setOption('theme', currentThemeName);

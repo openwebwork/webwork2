@@ -120,15 +120,16 @@
 					} else {
 						// Update the hidden problem status fields and score table for gateway quizzes
 						if (saveData.versionId !== '0') {
-							document.gwquiz.elements['probstatus' + saveData.problemId].value =
-								parseInt(scoreInput.value) / 100;
+							const probStatus = document.gwquiz.elements[`probstatus${saveData.problemId}`];
+							if (probStatus) probStatus.value = parseInt(scoreInput.value) / 100;
 							let testValue = 0;
 							for (const scoreCell of document.querySelectorAll('table.gwNavigation td.score')) {
 								if (scoreCell.dataset.problemId == saveData.problemId) {
 									scoreCell.textContent = scoreInput.value == '100' ? '\u{1F4AF}' : scoreInput.value;
 								}
-								testValue += document.gwquiz.elements['probstatus'
-									+ scoreCell.dataset.problemId].value * scoreCell.dataset.problemValue;
+								testValue +=
+									(document.gwquiz.elements[`probstatus${scoreCell.dataset.problemId}`]?.value ?? 0) *
+									scoreCell.dataset.problemValue;
 							}
 							const recordedScore = document.getElementById('test-recorded-score');
 							if (recordedScore) {

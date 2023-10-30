@@ -4,13 +4,20 @@
 		<thead class="table-group-divider">
 			<tr>
 				<th>
-					<%= check_box select_all => '',
-						id           => 'select-all',
-						class        => 'select-all form-check-input',
-						'aria-label' => maketext('Select all achievements'),
-						data         => { select_group => 'selected_achievements' } =%>
+					<%= label_for 'select-all', begin =%>
+						<%= check_box 'select-all' => '', id => 'select-all',
+							class => 'select-all form-check-input set-id-tooltip',
+							'aria-label' => maketext('Select all achievements'),
+							data => {
+								select_group => 'selected_achievements',
+								bs_toggle => 'tooltip',
+								bs_placement => 'right',
+								bs_title => maketext('Select all achievements')
+							} =%>
+						<i class="fa-solid fa-check-double" aria-hidden="true"></i>
+					<% end =%>
 				</th>
-				<th class="text-nowrap"><%= label_for 'select-all' => maketext('Achievement ID') %></th>
+				<th class="text-nowrap"><%= maketext('Achievement ID') %></th>
 				<th><%= maketext('Name') %></th>
 			</tr>
 		</thead>
