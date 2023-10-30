@@ -687,14 +687,6 @@ ul.courses-list {
 	}
 }
 
-div.AuthorComment {
-	background-color: #00e0e0;
-	color: black;
-	padding: 0.25rem;
-	border: 1px solid transparent;
-	border-radius: 0.25rem;
-}
-
 /* Footer */
 #footer {
 	font-size: 0.8em;
@@ -901,22 +893,22 @@ input.changed[type=text] { /* orange */
 		min-width: 2.5em;
 		text-align: center;
 	}
-}
 
-span {
-	&.correct {
-		color: inherit; /* green */
-		background-color: #8f8;
-	}
+	span {
+		&.correct {
+			color: inherit;
+			background-color: #8f8;
+		}
 
-	&.incorrect {
-		color: #bf5454; /* red */
-		background-color: inherit;
-	}
+		&.incorrect {
+			color: #bf5454; /* red */
+			background-color: inherit;
+		}
 
-	&.unattempted {
-		color: inherit;
-		background-color: #88ecff;
+		&.unattempted {
+			color: inherit;
+			background-color: #88ecff;
+		}
 	}
 }
 

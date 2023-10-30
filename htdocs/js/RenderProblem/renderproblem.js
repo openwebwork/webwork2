@@ -28,7 +28,7 @@
 			send_pg_flags: 1,
 			extra_header_text:
 				'<style>' +
-				'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
+				'html{overflow-y:auto;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
 				'</style>',
 			...renderOptions
 		};

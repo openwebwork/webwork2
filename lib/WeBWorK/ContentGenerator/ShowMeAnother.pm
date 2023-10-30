@@ -299,12 +299,18 @@ async sub pre_header_initialize ($c) {
 			processAnswers           => 1,
 			permissionLevel          => $db->getPermissionLevel($userName)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
-			useMathQuill             => $c->{will}{useMathQuill},
-			useMathView              => $c->{will}{useMathView},
+			useMathQuill             => $will->{useMathQuill},
+			useMathView              => $will->{useMathView},
 			forceScaffoldsOpen       => 0,
 			isInstructor             => $authz->hasPermissions($userName, 'view_answers'),
+			showFeedback             => $c->{checkAnswers} || $c->{previewAnswers},
+			showAttemptAnswers       => $ce->{pg}{options}{showEvaluatedAnswers},
+			showAttemptPreviews      => 1,
+			showAttemptResults       => $c->{checkAnswers},
+			showMessages             => 1,
+			showCorrectAnswers       => $will->{checkAnswers} ? $will->{showCorrectAnswers} : 0,
 			debuggingOptions         => getTranslatorDebuggingOptions($authz, $userName)
-		},
+		}
 	);
 
 	# Warnings in the renderPG subprocess will not be caught by the global warning handler of this process.
@@ -512,7 +518,7 @@ sub output_summary ($c) {
 			),
 			$c->tag(
 				'div',
-				class => 'ResultsAlert',
+				class => 'alert alert-warning mb-2 p-1',
 				$c->maketext(q{Remember to return to your original problem when you're finished here!})
 			)
 		);
@@ -526,7 +532,7 @@ sub output_summary ($c) {
 				@$output,
 				$c->tag(
 					'div',
-					class => 'ResultsAlert',
+					class => 'alert alert-warning mb-2 p-1',
 					$c->maketext(
 						'You are only allowed to click on Show Me Another [quant,_1,time,times] per problem. '
 							. '[_2] Close this tab, and return to the original problem.',
@@ -540,7 +546,7 @@ sub output_summary ($c) {
 				@$output,
 				$c->tag(
 					'div',
-					class => 'ResultsAlert',
+					class => 'alert alert-warning mb-2 p-1',
 					$c->maketext(
 						'You must attempt this problem [quant,_1,time,times] before Show Me Another is available.',
 						$showMeAnother{TriesNeeded}
@@ -555,7 +561,7 @@ sub output_summary ($c) {
 			@$output,
 			$c->tag(
 				'div',
-				class => 'ResultsAlert',
+				class => 'alert alert-warning mb-2 p-1',
 				$c->maketext(
 					'WeBWorK was unable to generate a different version of this problem.  '
 						. 'Close this tab, and return to the original problem.'

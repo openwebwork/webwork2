@@ -38,7 +38,6 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
-use WeBWorK::HTML::AttemptsTable;
 use PGrandom;
 use Caliper::Sensor;
 use Caliper::Entity;
@@ -238,42 +237,10 @@ sub can_useMathQuill ($c) {
 }
 
 # Output utility
-sub attemptResults ($c, $pg, $showCorrectAnswers, $showAttemptResults, $showSummary) {
-	my $ce = $c->ce;
-
-	# Create AttemptsTable object
-	my $tbl = WeBWorK::HTML::AttemptsTable->new(
-		$pg->{answers},
-		$c,
-		answersSubmitted    => 1,
-		answerOrder         => $pg->{flags}{ANSWER_ENTRY_ORDER},
-		displayMode         => $c->{displayMode},
-		showHeadline        => 0,
-		showAnswerNumbers   => 0,
-		showAttemptAnswers  => $ce->{pg}{options}{showEvaluatedAnswers},
-		showAttemptPreviews => 1,
-		showAttemptResults  => $showAttemptResults,
-		showCorrectAnswers  => $showCorrectAnswers,
-		showMessages        => 1,
-		showSummary         => $showSummary,
-		imgGen              => WeBWorK::PG::ImageGenerator->new(
-			tempDir         => $ce->{webworkDirs}{tmp},
-			latex           => $ce->{externalPrograms}{latex},
-			dvipng          => $ce->{externalPrograms}{dvipng},
-			useCache        => 1,
-			cacheDir        => $ce->{webworkDirs}{equationCache},
-			cacheURL        => $ce->{webworkURLs}{equationCache},
-			cacheDB         => $ce->{webworkFiles}{equationCacheDB},
-			useMarkers      => 1,
-			dvipng_align    => $ce->{pg}{displayModeOptions}{images}{dvipng_align},
-			dvipng_depth_db => $ce->{pg}{displayModeOptions}{images}{dvipng_depth_db},
-		),
-	);
-
-	my $answerTemplate = $tbl->answerTemplate;
-	$tbl->imgGen->render(body_text => $answerTemplate) if $tbl->displayMode eq 'images';
-
-	return $answerTemplate;
+sub attemptResults ($c, $pg) {
+	return ($c->{can}{showProblemScores} && $pg->{result}{summary})
+		? $c->tag('div', role => 'alert', $c->b($pg->{result}{summary}))
+		: '';
 }
 
 sub get_instructor_comment ($c, $problem) {
@@ -1482,18 +1449,6 @@ sub warningMessage ($c) {
 # hash of parameters from the input form that need to be passed to the translator, and $mergedProblem
 # is what we'd expect.
 async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem) {
-	my $setID            = $set->set_id;
-	my $setVersionNumber = $set->version_id;
-
-	# Figure out solutions are allowed and call renderPG accordingly.
-	my $showCorrectAnswers = $c->{will}{showCorrectAnswers};
-	my $showHints          = $c->{will}{showHints};
-	my $showSolutions      = $c->{will}{showSolutions};
-	my $processAnswers     = $c->{will}{checkAnswers};
-
-	# FIXME: I'm not sure that problem_id is what we want here.
-	my $problemNumber = $mergedProblem->problem_id;
-
 	my $pg = await renderPG(
 		$c,
 		$effectiveUser,
@@ -1502,17 +1457,26 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 		$set->psvn,
 		$formFields,
 		{
-			displayMode        => $c->{displayMode},
-			showHints          => $showHints,
-			showSolutions      => $showSolutions,
-			refreshMath2img    => $showHints || $showSolutions,
-			processAnswers     => 1,
-			QUIZ_PREFIX        => 'Q' . sprintf('%04d', $problemNumber) . '_',
-			useMathQuill       => $c->{will}{useMathQuill},
-			useMathView        => $c->{will}{useMathView},
-			forceScaffoldsOpen => 1,
-			isInstructor       => $c->authz->hasPermissions($c->{userID}, 'view_answers'),
-			debuggingOptions   => getTranslatorDebuggingOptions($c->authz, $c->{userID})
+			displayMode             => $c->{displayMode},
+			showHints               => $c->{will}{showHints},
+			showSolutions           => $c->{will}{showSolutions},
+			refreshMath2img         => $c->{will}{showHints} || $c->{will}{showSolutions},
+			processAnswers          => 1,
+			QUIZ_PREFIX             => 'Q' . sprintf('%04d', $mergedProblem->problem_id) . '_',
+			useMathQuill            => $c->{will}{useMathQuill},
+			useMathView             => $c->{will}{useMathView},
+			forceScaffoldsOpen      => 1,
+			isInstructor            => $c->authz->hasPermissions($c->{userID}, 'view_answers'),
+			showFeedback            => $c->{submitAnswers} || $c->{previewAnswers} || $c->{will}{checkAnswers},
+			showAttemptAnswers      => $c->ce->{pg}{options}{showEvaluatedAnswers},
+			showAttemptPreviews     => 1,
+			showAttemptResults      => !$c->{previewAnswers} && $c->{can}{showProblemScores},
+			forceShowAttemptResults => $c->{will}{showProblemGrader},
+			showMessages            => 1,
+			showCorrectAnswers => ($c->{submitAnswers} || $c->{will}{checkAnswers} || $c->{will}{showProblemGrader})
+			? $c->{will}{showCorrectAnswers}
+			: 0,
+			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID})
 		},
 	);
 
@@ -1523,7 +1487,7 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 	if ($pg->{flags}{error_flag}) {
 		push @{ $c->{errors} },
 			{
-				set     => "$setID,v$setVersionNumber",
+				set     => $set->set_id . ',v' . $set->version_id,
 				problem => $mergedProblem->problem_id,
 				message => $pg->{errors},
 				context => $pg->{body_text},

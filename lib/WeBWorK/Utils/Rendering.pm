@@ -151,6 +151,15 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{inputs_ref}     = $formFields;
 	$options{processAnswers} = $translationOptions->{processAnswers};
 
+	# Attempt Results
+	$options{showFeedback}            = $translationOptions->{showFeedback};
+	$options{showAttemptAnswers}      = $translationOptions->{showAttemptAnswers};
+	$options{showAttemptPreviews}     = $translationOptions->{showAttemptPreviews};
+	$options{forceShowAttemptResults} = $translationOptions->{forceShowAttemptResults};
+	$options{showAttemptResults}      = $translationOptions->{showAttemptResults};
+	$options{showMessages}            = $translationOptions->{showMessages};
+	$options{showCorrectAnswers}      = $translationOptions->{showCorrectAnswers};
+
 	# External Data
 	$options{external_data} = decode_json($set->{external_data} || '{}');
 
@@ -244,7 +253,7 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 			flags            => $pg->{flags},
 		};
 
-		if (ref $pg->{pgcore}) {
+		if (ref($pg->{pgcore}) eq 'PGcore') {
 			$ret->{internal_debug_messages} = $pg->{pgcore}->get_internal_debug_messages;
 			$ret->{warning_messages}        = $pg->{pgcore}->get_warning_messages();
 			$ret->{debug_messages}          = $pg->{pgcore}->get_debug_messages();
