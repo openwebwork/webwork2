@@ -52,7 +52,7 @@ sub pre_header_initialize ($c) {
 	my $Achievement = $c->db->getAchievement($c->stash('achievementID'));
 
 	if (!$Achievement) {
-		$c->addbadmessage("Achievement $c->stash('achievementID') not found!");
+		$c->addbadmessage($c->maketext("Achievement [_1] not found!", $c->stash('achievementID')));
 		return;
 	}
 

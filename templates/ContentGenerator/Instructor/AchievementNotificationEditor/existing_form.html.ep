@@ -1,5 +1,6 @@
 <div class="row align-items-center mb-2">
-	<%= label_for 'action.existing.target_file_id' => maketext('Use existing template:'), class => 'col-form-label col-auto' =%>
+	<%= label_for 'action.existing.target_file_id' => maketext('Use existing template:'),
+		class => 'col-form-label col-auto' =%>
 	<div class="col-auto">
 		<%= text_field 'action.existing.target_file' => $c->getRelativeSourceFilePath($c->{sourceFilePath}),
 			id => 'action.existing.target_file_id', size => 40, class => 'form-control form-control-sm' =%>

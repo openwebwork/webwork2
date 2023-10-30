@@ -31,27 +31,26 @@ sub run ($job, $mail_data) {
 	return $job->fail("Could not construct course environment for $mail_data->{courseName}.")
 		unless $ce;
 
-	my $db = WeBWorK::DB->new($ce->{dbLayout});
-	return $job->fail("Could not obtain database connection for $mail_data->{courseName}.")
-		unless $db;
-
-	return $job->fail("Cannot notify student without an achievement.")
-		unless $mail_data->{achievementID};
-	$mail_data->{achievement} =
-		$db->getAchievement($mail_data->{achievementID});
-	return $job->fail("Could not find achievement $mail_data->{achievementID}.")
-		unless $mail_data->{achievement};
-
 	$job->{language_handle} =
 		WeBWorK::Localize::getLoc($ce->{language} || 'en');
 
+	my $db = WeBWorK::DB->new($ce->{dbLayout});
+	return $job->fail($job->maketext("Could not obtain database connection for [_1].", $mail_data->{courseName}))
+		unless $db;
+
+	return $job->fail($job->maketext("Cannot notify student without an achievement."))
+		unless $mail_data->{achievementID};
+	$mail_data->{achievement} = $db->getAchievement($mail_data->{achievementID});
+	return $job->fail($job->maketext("Could not find achievement [_1].", $mail_data->{achievementID}))
+		unless $mail_data->{achievement};
+
 	my $result_message = eval { $job->send_achievement_notification($ce, $db, $mail_data) };
 	if ($@) {
-		$job->app->log->error("An error occurred while trying to send email: $@");
-		return $job->fail();    # fail silently
+		$job->app->log->error($job->maketext("An error occurred while trying to send email: $@"));
+		return $job->fail($job->maketext("An error occurred while trying to send email: [_1]", $@));    # fail silently
 	}
 	$job->app->log->info("Message sent to $mail_data->{recipient}");
-	return $job->finish();      # succeed silently
+	return $job->finish($job->maketext("Message sent to [_1]", $mail_data->{recipient}));    # succeed silently
 }
 
 sub send_achievement_notification ($job, $ce, $db, $mail_data) {

@@ -15,9 +15,9 @@
 				<th><%= maketext('Name') %></th>
 				<th><%= maketext('Number') %></th>
 				<th><%= maketext('Category') %></th>
-				<th class="text-nowrap"><%= maketext('Edit Users') %></th>
-				<th class="text-nowrap"><%= maketext('Edit Email Template') %></th>
-				<th class="text-nowrap"><%= maketext('Edit Evaluator') %></th>
+				<th><%= maketext('Users') %></th>
+				<th><%= maketext('Notifications') %></th>
+				<th><%= maketext('Evaluator') %></th>
 			</tr>
 		</thead>
 		<tbody class="table-group-divider">

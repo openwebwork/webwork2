@@ -260,7 +260,7 @@ sub checkForAchievements ($problem_in, $pg, $c, %options) {
 					courseName      => $ce->{courseName},
 					achievementID   => $achievement_id,
 					setID           => $set_id,
-					nextLevelPoints => $nextLevelPoints,
+					nextLevelPoints => $nextLevelPoints || 0,
 					pointsEarned    => $achievementPoints,
 				} ]
 			) if ($achievement->email_template);
