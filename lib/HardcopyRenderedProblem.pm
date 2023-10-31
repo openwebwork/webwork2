@@ -172,9 +172,12 @@ sub generate_hardcopy_tex {
 	push(@$errors, "Failed to generate error log file: $@")                                     if $@;
 
 	# Create a zip archive of the bundle directory
-	my $zip = Archive::Zip::SimpleZip->new($working_dir->dirname->child('hardcopy.zip')->to_string);
-	$zip->add($working_dir->dirname->to_string, storelinks => 1);
-
+	my $zip;
+	eval {
+		$zip = Archive::Zip::SimpleZip->new($working_dir->dirname->child('hardcopy.zip')->to_string);
+		$zip->add($working_dir->dirname->to_string, storelinks => 1);
+	};
+	push(@$errors, $@) if $@;
 	push(@$errors, qq{Failed to create zip archive of directory "$working_dir": $SimpleZipError}) unless ($zip->close);
 
 	return;

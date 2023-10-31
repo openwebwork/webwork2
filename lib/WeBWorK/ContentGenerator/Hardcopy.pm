@@ -23,8 +23,6 @@ problem sets.
 
 =cut
 
-use File::Path;
-use File::Copy qw(move copy);
 use File::Temp qw/tempdir/;
 use Mojo::File;
 use String::ShellQuote;
@@ -500,8 +498,8 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 	my $userID   = $c->param('user');
 
 	# Create the temporary directory.  Use mkpath to ensure it exists (mkpath is pretty much `mkdir -p`).
-	my $temp_dir_parent_path = "$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID";
-	eval { mkpath($temp_dir_parent_path) };
+	my $temp_dir_parent_path = Mojo::File->new("$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID");
+	eval { $temp_dir_parent_path->make_path };
 	if ($@) {
 		$c->add_error("Couldn't create hardcopy directory $temp_dir_parent_path: ", $c->tag('code', $@));
 		return;
@@ -598,14 +596,14 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 
 	# Try to move the hardcopy file out of the temp directory.
 	my $final_file_final_path = "$temp_dir_parent_path/$final_file_name";
-	my $mv_ok                 = move($final_file_path, $final_file_final_path);
-	unless ($mv_ok) {
+	eval { Mojo::File->new($final_file_path)->move_to($final_file_final_path) };
+	if ($@) {
 		$c->add_error(
 			'Failed to move hardcopy file "',
 			$c->tag('code', $final_file_name),
 			'" from "', $c->tag('code', $temp_dir_path),
 			'" to "',   $c->tag('code', $temp_dir_parent_path),
-			'":',       $c->tag('br'), $c->tag('pre', $!)
+			'":',       $c->tag('br'), $c->tag('pre', $@)
 		);
 		$final_file_final_path = "$temp_dir_rel_path/$final_file_name";
 	}
@@ -630,11 +628,10 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 
 # helper function to remove temp dirs
 sub delete_temp_dir ($c, $temp_dir_path) {
-	Mojo::File->new($temp_dir_path)->remove_tree;
-
-	if ($!) {
+	eval { Mojo::File->new($temp_dir_path)->remove_tree };
+	if ($@) {
 		$c->add_error('Failed to remove temporary directory "',
-			$c->tag('code', $file, '":', $c->tag('br'), $c->tag('pre', $!)));
+			$c->tag('code', $temp_dir_path, '":', $c->tag('br'), $c->tag('pre', $@)));
 	}
 	return;
 }
@@ -649,28 +646,28 @@ sub delete_temp_dir ($c, $temp_dir_path) {
 
 sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	my $src_name    = "hardcopy.tex";
-	my $bundle_path = "$temp_dir_path/$final_file_basename";
+	my $bundle_path = Mojo::File->new("$temp_dir_path/$final_file_basename");
 
 	# Create directory for the tex bundle
-	if (!mkdir $bundle_path) {
+	eval { $bundle_path->mkdir };
+	if ($@) {
 		$c->add_error(
 			'Failed to create directory "',
 			$c->tag('code', $bundle_path),
-			'": ', $c->tag('br'), $c->tag('pre', $!)
+			'": ', $c->tag('br'), $c->tag('pre', $@)
 		);
 		return $src_name;
 	}
 
 	# Move the tex file into the bundle directory
-	my $mv_ok = move("$temp_dir_path/$src_name", $bundle_path);
-
-	unless ($mv_ok) {
+	eval { Mojo::File->new("$temp_dir_path/$src_name")->move_to($bundle_path) };
+	if ($@) {
 		$c->add_error(
 			'Failed to move "',
 			$c->tag('code', $src_name),
 			'" into directory "',
 			$c->tag('code', $bundle_path),
-			'":', $c->tag('br'), $c->tag('pre', $!)
+			'":', $c->tag('br'), $c->tag('pre', $@)
 		);
 		return $src_name;
 	}
@@ -678,26 +675,26 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	# Copy the common tex files into the bundle directory
 	my $ce = $c->ce;
 	for (qw{webwork2.sty webwork_logo.png}) {
-		my $copy_ok = copy("$ce->{webworkDirs}{assetsTex}/$_", $bundle_path);
-		unless ($copy_ok) {
+		eval { Mojo::File("$ce->{webworkDirs}{assetsTex}/$_")->copy_to($bundle_path) };
+		if ($@) {
 			$c->add_error(
 				'Failed to copy "',
 				$c->tag('code', "$ce->{webworkDirs}{assetsTex}/$_"),
 				'" into directory "',
 				$c->tag('code', $bundle_path),
-				'":', $c->tag('br'), $c->tag('pre', $!)
+				'":', $c->tag('br'), $c->tag('pre', $@)
 			);
 		}
 	}
 	for (qw{pg.sty PGML.tex CAPA.tex}) {
-		my $copy_ok = copy("$ce->{pg}{directories}{assetsTex}/$_", $bundle_path);
-		unless ($copy_ok) {
+		eval { Mojo::File->new("$ce->{pg}{directories}{assetsTex}/$_")->copy_to($bundle_path) };
+		if ($@) {
 			$c->add_error(
 				'Failed to copy "',
 				$c->tag('code', "$ce->{pg}{directories}{assetsTex}/$_"),
 				'" into directory "',
 				$c->tag('code', $bundle_path),
-				'":', $c->tag('br'), $c->tag('pre', $!)
+				'":', $c->tag('br'), $c->tag('pre', $@)
 			);
 		}
 	}
@@ -715,14 +712,15 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 				$data =~ s{$resource}{$basename}g;
 
 				# Copy the image file into the bundle directory.
-				my $copy_ok = copy($resource, $bundle_path);
-				unless ($copy_ok) {
+				eval { Mojo::File->new($resource)->copy_to($bundle_path) };
+
+				if ($@) {
 					$c->add_error(
 						'Failed to copy image "',
 						$c->tag('code', $resource),
 						'" into directory "',
 						$c->tag('code', $bundle_path),
-						'":', $c->tag('br'), $c->tag('pre', $!)
+						'":', $c->tag('br'), $c->tag('pre', $@)
 					);
 				}
 			}
@@ -739,17 +737,16 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 
 	# Create a zip archive of the bundle directory
 	my $zip_file = "$temp_dir_path/$final_file_basename.zip";
-	my $zip      = Archive::Zip::SimpleZip->new($zip_file);
-	$zip->add($temp_dir_path, Name => "hardcopy_files", StoreLink => 1);
+	my $zip;
+	eval {
+		$zip = Archive::Zip::SimpleZip->new($zip_file);
+		$zip->add($temp_dir_path, Name => "hardcopy_files", StoreLink => 1);
+	};
 
-	unless ($zip->close) {
-		$c->add_error(
-			'Failed to create zip archive of directory "',
-			$c->tag('code', $bundle_path),
-			': $SimpleZipError"'
-		);
-		return "$bundle_path/$src_name";
-	}
+	$c->add_error('Failed to create zip archive of directory "', $c->tag('code', $bundle_path), '": $SimpleZipError"')
+		unless $zip->close;
+	$c->add_error('Failed to create zip archive of directory "', $c->tag('code', $bundle_path), '": $@') if $@;
+	return "$bundle_path/$src_name" if (!$zip->close || $@);
 
 	return $zip_file;
 }
@@ -813,8 +810,8 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 	my $src_name  = "hardcopy.pdf";
 	my $dest_name = "$final_file_basename.pdf";
 
-	my $mv_ok = move("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
-	unless ($mv_ok) {
+	eval { Mojo::File->new("$temp_dir_path/$src_name")->move_to("$temp_dir_path/$dest_name") };
+	if ($@) {
 		$c->add_error(
 			'Failed to rename "',
 			$c->tag('code', $src_name),
@@ -824,7 +821,7 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 			$c->tag('code', $temp_dir_path),
 			'":',
 			$c->tag('br'),
-			$c->tag('pre', $!)
+			$c->tag('pre', $@)
 		);
 		$final_file_name = $src_name;
 	} else {

@@ -93,6 +93,7 @@ $admin_course_id = 'admin';
 # system utilities
 ####################################################
 $externalPrograms{git} = "/usr/bin/git";
+$externalPrograms{tar}   = "/bin/tar";
 
 ####################################################
 # equation rendering/hardcopy utiltiies
