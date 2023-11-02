@@ -820,6 +820,10 @@ input.changed[type=text] { /* orange */
 			padding: 0 0 0 0.5rem;
 		}
 	}
+
+	.table {
+		--bs-table-bg: #f5f5f5;
+	}
 }
 
 .pdr_placeholder {
