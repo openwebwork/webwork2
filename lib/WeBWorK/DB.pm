@@ -582,6 +582,7 @@ sub deleteUser {
 	$self->deleteGlobalUserAchievement($userID);
 	$self->deletePermissionLevel($userID);
 	$self->deleteKey($userID);
+	$self->{past_answer}->delete_where({ user_id => $userID });
 	return $self->{user}->delete($userID);
 }
 
