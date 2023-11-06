@@ -332,7 +332,7 @@ my %routeParameters = (
 		path   => '/instructor'
 	},
 	instructor_user_list => {
-		title    => x('Classlist Editor'),
+		title    => x('User Manager'),
 		children => [qw(instructor_user_detail)],
 		module   => 'Instructor::UserList',
 		path     => '/users'
@@ -343,7 +343,7 @@ my %routeParameters = (
 		path   => '/#userID'
 	},
 	instructor_set_list => {
-		title    => x('Hmwk Sets Editor'),
+		title    => x('Set Manager'),
 		children => [qw(instructor_set_detail)],
 		module   => 'Instructor::ProblemSetList',
 		path     => '/sets'
