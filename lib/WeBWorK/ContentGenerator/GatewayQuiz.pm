@@ -930,8 +930,8 @@ async sub pre_header_initialize ($c) {
 				# In this case there may be a past login proctor key that can be kept so that another login to continue
 				# working the test is not needed.
 				if ($c->param('past_proctor_user') && $c->param('past_proctor_key')) {
-					$c->param('proctor_user', $c->param('past_proctor_user'));
-					$c->param('proctor_key',  $c->param('past_proctor_key'));
+					$c->param('proctor_user', scalar $c->param('past_proctor_user'));
+					$c->param('proctor_key',  scalar $c->param('past_proctor_key'));
 				}
 			}
 			# This is unsubtle, but we'd rather not have bogus keys sitting around.
