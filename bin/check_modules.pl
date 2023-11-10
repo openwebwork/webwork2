@@ -65,6 +65,7 @@ my @applicationsList = qw(
 );
 
 my @modulesList = qw(
+	Archive::Tar
 	Archive::Zip
 	Archive::Zip::SimpleZip
 	Array::Utils

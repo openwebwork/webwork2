@@ -737,16 +737,25 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 
 	# Create a zip archive of the bundle directory
 	my $zip_file = "$temp_dir_path/$final_file_basename.zip";
-	my $zip;
-	eval {
-		$zip = Archive::Zip::SimpleZip->new($zip_file);
-		$zip->add($temp_dir_path, Name => "hardcopy_files", StoreLink => 1);
-	};
+	$zip = Archive::Zip::SimpleZip->new($zip_file);
+	unless ($zip) {
+		$c->add_error(
+			'Failed to create zip archive of directory "',
+			$c->tag('code', $bundle_path),
+			'": $SimpleZipError"'
+		);
+		return;
+	}
 
-	$c->add_error('Failed to create zip archive of directory "', $c->tag('code', $bundle_path), '": $SimpleZipError"')
-		unless $zip->close;
-	$c->add_error('Failed to create zip archive of directory "', $c->tag('code', $bundle_path), '": $@') if $@;
-	return "$bundle_path/$src_name" if (!$zip->close || $@);
+	my $ok = $zip->add($temp_dir_path, Name => "hardcopy_files", StoreLink => 1);
+	unless ($ok) {
+		$c->add_error(
+			'Failed to create zip archive of directory "',
+			$c->tag('code', $bundle_path),
+			'": $SimpleZipError"'
+		);
+		return;
+	}
 
 	return $zip_file;
 }

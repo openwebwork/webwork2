@@ -35,7 +35,6 @@ use File::Copy::Recursive qw(dircopy);
 use File::Spec;
 use Mojo::File;
 use Archive::Tar;
-use Archive::Extract;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Debug;
@@ -357,8 +356,8 @@ sub addCourse {
 		if (exists $options{copySimpleConfig}) {
 			my $sourceFile = $sourceCE->{courseFiles}->{simpleConfig};
 			if (-e $sourceFile) {
-				my $copy_ok = copy($sourceFile, $ce->{courseFiles}{simpleConfig});
-				warn "Failed to copy simple.conf from course '$sourceCourse': $!" unless $copy_ok;
+				eval { Mojo::File->new($sourceFile)->copy_to($ce->{courseFiles}) };
+				warn "Failed to copy simple.conf from course '$sourceCourse': $@" if $@;
 			}
 		}
 
@@ -443,9 +442,8 @@ sub renameCourse {
 	##### step 1: move course directory #####
 
 	# move top-level course directory
-	eval { Mojo::File->new($oldCourseDir)->move_to($newCourseDir) };
 	debug("moving course dir from $oldCourseDir to $newCourseDir");
-
+	eval { Mojo::File->new($oldCourseDir)->move_to($newCourseDir) };
 	die "Failed to move course directory:  $@" if ($@);
 
 	# get new course environment
@@ -857,11 +855,14 @@ sub unarchiveCourse {
 
 	##### step 2: crack open the tarball #####
 
-	my $arch    = Archive::Extract->new(archive => $archivePath);
-	my $extr_ok = $arch->extract(to => $coursesDir);
-	unless ($extr_ok) {
+	my $arch = Archive::Tar->new($archivePath);
+	die "The tar file $archivePath is not valid." unless $arch;
+	$arch->setcwd($coursesDir);
+	$arch->extract();
+
+	if ($arch->error) {
 		_unarchiveCourse_move_back($restoreCourseData);
-		die "Failed to unarchive course directory for course $newCourseID: $!";
+		die "Failed to unarchive course directory for course $newCourseID: $arch->error";
 	}
 
 	##### step 3: read the course environment for this course #####
