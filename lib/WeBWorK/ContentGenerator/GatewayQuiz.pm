@@ -879,7 +879,7 @@ async sub pre_header_initialize ($c) {
 
 	# Save results to database as appropriate
 	if ($c->{submitAnswers} || (($c->{previewAnswers} || $c->param('newPage')) && $can{recordAnswers})) {
-		# If answers are being submitted, then save the problems to the database.  If this is a preview or pages change
+		# If answers are being submitted, then save the problems to the database.  If this is a preview or page change
 		# and answers can be recorded, then save the last answer for future reference.
 		# Also save the persistent data to the database even when the last answer is not saved.
 
@@ -889,7 +889,9 @@ async sub pre_header_initialize ($c) {
 			my $proctorID = $c->param('proctor_user');
 
 			# If there are no attempts left, delete all proctor keys for this user.
-			if ($set->attempts_per_version - 1 - $problem->num_correct - $problem->num_incorrect <= 0) {
+			if ($set->attempts_per_version > 0
+				&& $set->attempts_per_version - 1 - $problem->num_correct - $problem->num_incorrect <= 0)
+			{
 				eval { $db->deleteAllProctorKeys($effectiveUserID); };
 			} else {
 				# Otherwise, delete only the grading key.
