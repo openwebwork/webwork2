@@ -71,7 +71,10 @@ async sub initialize ($c) {
 				$db->getPermissionLevel($userID),
 				$c->{effectiveUser},
 				$c->stash->{userSet},
-				$db->getMergedProblemVersion($effectiveUserID, $c->stash->{setID}, $versionNum, 1)
+				$db->getMergedProblemVersion(
+					$effectiveUserID, $c->stash->{setID},
+					$versionNum, ($db->listUserProblems($effectiveUserID, $c->stash->{setID}))[0]
+				)
 			))
 			{
 				$c->stash->{userSet}->version_last_attempt_time(int($c->submitTime));
