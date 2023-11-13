@@ -59,6 +59,28 @@ sub param ($c, $name = undef, $val = undef) {
 	return wantarray ? @{ $c->{paramcache}{$name} } : $c->{paramcache}{$name}[0];
 }
 
+# Override the Mojolicious::Controller session method to set the cookie parameters
+# from the course environment the first time it is called.
+sub session ($c, @args) {
+	# Initialize the cookie session the first time this is called.
+	unless ($c->stash->{'webwork2.cookie_session_initialized'}) {
+		$c->stash->{'webwork2.cookie_session_initialized'} = 1;
+
+		$c->app->sessions->cookie_name(
+			$c->stash('courseID') ? 'WeBWorKCourseSession.' . $c->stash('courseID') : 'WeBWorKGeneralSession');
+
+		# If the hostname is 'localhost' or '127.0.0.1', then the cookie domain must be omitted.
+		my $hostname = $c->req->url->to_abs->host;
+		$c->app->sessions->cookie_domain($hostname) if $hostname ne 'localhost' && $hostname ne '127.0.0.1';
+
+		$c->app->sessions->cookie_path($c->ce->{webworkURLRoot});
+		$c->app->sessions->samesite($c->ce->{CookieSameSite});
+		$c->app->sessions->secure($c->ce->{CookieSecure});
+	}
+
+	return $c->SUPER::session(@args);
+}
+
 =head1 METHODS
 
 =over

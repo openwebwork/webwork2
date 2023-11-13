@@ -470,18 +470,29 @@ $mail{feedbackRecipients}    = [
 # Session Management
 ################################################################################
 
-## For a discussion of session_management_via session_cookies or the
-## Key database, see the   Session Management section
-## of defaults.config.dist
+# Session management can be handled either using the key database, the
+# traditional method, or by using signed session cookies.
 
-## For session management using the key database table, uncomment the following line,
-## which will override the setting  $session_management_via = "session_cookie"
-## set in defaults.config.
+# Setting $session_management_via="key" uses the key database for session
+# management. If password authentication is used, then a user can opt to use a
+# session cookie with a duration determined by the $CookieLifeTime setting below
+# by checking the "Remember Me" checkbox on the login page.
+
+# Setting $session_management_via="session_cookies" uses a session cookie to
+# manage the session. Note that even in this case a key is stored in the
+# database which is compared to the key stored in the session cookie.
+
+# Note that the key database method is less secure as the key must be embeded in
+# the page and added as a url parameter in order to maintain the session. These
+# things can be accessed by malicious javascript. The session cookies are http
+# only cookies which can not be accessed via javascript.
+
+# The default value for $session_management_via is "session_cookie".
 
 #$session_management_via = "key";
 
-## This is the length of time (in seconds) after which a user's session becomes
-## invalid if they have no activity. The default is 30 minutes (60*30 seconds).
+# This is the length of time (in seconds) after which a user's session becomes
+# invalid if they have no activity. The default is 30 minutes (60*30 seconds).
 
 #$sessionKeyTimeout = 60*60*2;
 
@@ -489,32 +500,29 @@ $mail{feedbackRecipients}    = [
 # Cookie control settings
 ################################################################################
 
-# The following variables can be set to control cookie behavior.
-
-# Set the value of the samesite attribute of the WeBWorK cookie:
-# See: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
-#      https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
-#      https://tools.ietf.org/html/draft-west-cookie-incrementalism-00
-
+# Set the value of the samesite attribute of the session cookie:
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 # Notes about the $CookieSameSite options:
-# The "None" setting should only be used with HTTPS and when $CookieSecure = 1; is set below. The "None" setting is
-# also less secure and can allow certain types of cross-site attacks.
-# The "Strict" setting can break the links in the system generated feedback emails when read in a web mail client.
-# Due to those factors, the "Lax" setting is probably the optimal choice for typical WeBWorK servers.
-
+# The CookieLifeTime setting determines how long the browser should retain the
+# cookie. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie.
+# The CookieLifeTime value should be numeric and in seconds, or should be set to
+# "session", in which case the cookie will expire when the browser session ends
+# (a "session cookie"). Note that a value of 0 also means the cookie will expire
+# when the browser session ends. The default value is 7 days.
 #$CookieSameSite = "None";
 #$CookieSameSite = "Strict";
 #$CookieSameSite = "Lax";
 
-# Set the value of the secure cookie attribute:
-# Default is 0 here, as 1 will not work without https
+# Set the value of the secure cookie attribute.
+# The default is 0, as 1 will not work without https.
 #$CookieSecure = 1;
 
-# The CookieLifeTime setting determines how long the browser should retain the cookie.
-# See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
-# The CookieLifeTime value should be numeric and in seconds, or should be set to "session", in which case
-# the Cookie will expire when the browser session ends (a "session cookie").
-# The default value is 7 days.
+# The CookieLifeTime setting determines how long the browser should retain the
+# cookie. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie.
+# The CookieLifeTime value should be numeric and in seconds, or should be set to
+# "session", in which case the cookie will expire when the browser session ends
+# (a "session cookie"). Note that a value of 0 also means the cookie will expire
+# when the browser session ends. The default value is 7 days.
 #$CookieLifeTime = 604800;
 #$CookieLifeTime = "session";
 
