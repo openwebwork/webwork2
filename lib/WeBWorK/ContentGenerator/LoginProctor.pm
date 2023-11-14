@@ -73,7 +73,7 @@ async sub initialize ($c) {
 				$c->stash->{userSet},
 				$db->getMergedProblemVersion(
 					$effectiveUserID, $c->stash->{setID},
-					$versionNum, ($db->listUserProblems($effectiveUserID, $c->stash->{setID}))[0]
+					$versionNum, ($db->listProblemVersions($effectiveUserID, $c->stash->{setID}, $versionNum))[0]
 				)
 			))
 			{
