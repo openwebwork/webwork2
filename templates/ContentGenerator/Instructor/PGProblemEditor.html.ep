@@ -18,7 +18,7 @@
 	% last;
 % }
 %
-% unless ($authz->hasPermissions(param('user'), 'modify_student_data')) {
+% unless ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to modify problems.') %></div>
 	% last;
 % }
