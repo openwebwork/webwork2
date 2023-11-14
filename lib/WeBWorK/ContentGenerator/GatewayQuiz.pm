@@ -847,6 +847,11 @@ async sub pre_header_initialize ($c) {
 		push(@pg_results, $pg);
 	}
 
+	# Show the template problem ID if the problems are in random order
+	# or the template problem IDs are not in order starting at 1.
+	$c->{can}{showTemplateIds} = $c->{can}{showProblemGrader}
+		&& ($set->problem_randorder || $problems[-1]->problem_id != scalar(@problems));
+
 	# Wait for all problems to be rendered and replace the undefined entries
 	# in the pg_results array with the rendered result.
 	my @renderedPG = await Mojo::Promise->all(@renderPromises);
