@@ -194,13 +194,13 @@ sub importSetsFromDef ($ce, $db, $setDefFiles, $existingSets = undef, $assign = 
 
 		debug("$set_definition_file: adding problems to database");
 		# Add problems
-		my $freeProblemID = WeBWorK::Utils::max($db->listGlobalProblems($setData->{setID})) + 1;
+		my $freeProblemID = WeBWorK::Utils::max(grep {$_} map { $_->{problem_id} } @{ $setData->{problemData} }) + 1;
 		for my $rh_problem (@{ $setData->{problemData} }) {
 			addProblemToSet(
 				$db, $ce->{problemDefaults},
 				setName           => $setData->{setID},
 				sourceFile        => $rh_problem->{source_file},
-				problemID         => $rh_problem->{problem_id} ? $rh_problem->{problem_id} : $freeProblemID++,
+				problemID         => $rh_problem->{problem_id} || $freeProblemID++,
 				value             => $rh_problem->{value},
 				maxAttempts       => $rh_problem->{max_attempts},
 				showMeAnother     => $rh_problem->{showMeAnother},
