@@ -200,7 +200,7 @@ sub importSetsFromDef ($ce, $db, $setDefFiles, $existingSets = undef, $assign = 
 				$db, $ce->{problemDefaults},
 				setName           => $setData->{setID},
 				sourceFile        => $rh_problem->{source_file},
-				problemID         => $rh_problem->{problemID} ? $rh_problem->{problemID} : $freeProblemID++,
+				problemID         => $rh_problem->{problem_id} ? $rh_problem->{problem_id} : $freeProblemID++,
 				value             => $rh_problem->{value},
 				maxAttempts       => $rh_problem->{max_attempts},
 				showMeAnother     => $rh_problem->{showMeAnother},
