@@ -522,6 +522,10 @@
 					% # Output the problem header.
 					<h2><%= maketext('Problem [_1].', $i + 1) %></h2>
 					<span class="problem-sub-header">
+						% if ($c->{can}{showTemplateIds}) {
+							<%= '('
+								. maketext('Template ID: [_1]', $problems->[ $probOrder->[$i] ]->problem_id) . ')' %>
+						% }
 						% my $problemValue = $problems->[ $probOrder->[$i] ]->value;
 						% if (defined $problemValue) {
 							% my $points = $problemValue == 1 ? maketext('point') : maketext('points');
