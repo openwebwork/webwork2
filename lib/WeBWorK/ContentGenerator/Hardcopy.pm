@@ -407,7 +407,8 @@ sub display_form ($c) {
 			my $the_set_id      = $1;
 			my $the_set_version = $2;
 			$mergedSet = $db->getMergedSetVersion($user_id, $the_set_id, $the_set_version);
-			my $mergedProblem = $db->getMergedProblemVersion($user_id, $the_set_id, $the_set_version, 1);
+			my $mergedProblem = $db->getMergedProblemVersion($user_id, $the_set_id, $the_set_version,
+				($db->listProblemVersions($user_id, $the_set_id, $the_set_version))[0]);
 
 			# Get the parameters needed to determine if correct answers may be shown.
 			my $maxAttempts  = $mergedSet->attempts_per_version()                          || 0;
