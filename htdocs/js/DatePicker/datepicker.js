@@ -120,7 +120,7 @@
 
 					// Next attempt to parse the datestr with the current format.  This should not be adjusted.  It is
 					// for display only.
-					const date = luxon.DateTime.fromFormat(datestr.trim(), format);
+					const date = luxon.DateTime.fromFormat(datestr.replaceAll(/\u202F/g, ' ').trim(), format);
 					if (date.isValid) return date.toJSDate();
 
 					// Finally, fall back to the previous value in the original input if that failed.  This is the case
