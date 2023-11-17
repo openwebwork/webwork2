@@ -7,7 +7,7 @@
 		'en-US': 'L/d/yy, h:mm a',
 		'cs-CZ': 'dd.LL.yy H:mm',
 		de: 'dd.LL.yy, HH:mm',
-		es: 'd/L/yy H:mm',
+		es: 'd/L/yy, H:mm',
 		'fr-CA': "yyyy-LL-dd HH 'h' mm",
 		fr: 'dd/LL/yyyy HH:mm',
 		'he-IL': 'd.L.yyyy, H:mm',
