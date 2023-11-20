@@ -213,9 +213,9 @@
 % {
 	<div class="gwMessage">
 		<strong>
-			<%== maketext('Note: [_1]',
-				tag('i', maketext('You are in the Reduced Scoring Period.  All work counts for [_1]% of the original.',
-					$ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100))) =%>
+			% my $text = maketext('You are in the Reduced Scoring Period.  All work counts for [_1]% of the original.',
+				% $ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100);
+			<%== maketext('Note: [_1]', tag('i', $text)) =%>
 		</strong>
 	</div>
 % }

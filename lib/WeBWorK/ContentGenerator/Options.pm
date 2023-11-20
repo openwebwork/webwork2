@@ -77,24 +77,22 @@ sub initialize ($c) {
 						}
 					}
 				} else {
+					my $newPasswordText        = $c->maketext("[_1]'s New Password",         $e_user_name);
+					my $confirmNewPasswordText = $c->maketext("Confirm [_1]'s New Password", $e_user_name);
 					$c->addbadmessage($c->maketext(
 						"The passwords you entered in the [_1] and [_2] fields don't match. "
 							. 'Please retype your new password and try again.',
-						$c->tag('b', $c->maketext("[_1]'s New Password",         $e_user_name)),
-						$c->tag('b', $c->maketext("Confirm [_1]'s New Password", $e_user_name))
+						$c->tag('b', $newPasswordText),
+						$c->tag('b', $confirmNewPasswordText)
 					));
 				}
 			} else {
+				my $fieldText =
+					$c->maketext("[_1]'s Current Password", $c->{user}->first_name . ' ' . $c->{user}->last_name);
 				$c->addbadmessage($c->maketext(
 					'The password you entered in the [_1] field does not match your current password. '
 						. 'Please retype your current password and try again.',
-					$c->tag(
-						'b',
-						$c->maketext(
-							"[_1]'s Current Password",
-							$c->{user}->first_name . ' ' . $c->{user}->last_name
-						)
-					)
+					$c->tag('b', $fieldText)
 				));
 			}
 		}
