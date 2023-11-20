@@ -737,7 +737,7 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 
 	# Create a zip archive of the bundle directory
 	my $zip_file = "$temp_dir_path/$final_file_basename.zip";
-	$zip = Archive::Zip::SimpleZip->new($zip_file);
+	my $zip      = Archive::Zip::SimpleZip->new($zip_file);
 	unless ($zip) {
 		$c->add_error(
 			'Failed to create zip archive of directory "',
