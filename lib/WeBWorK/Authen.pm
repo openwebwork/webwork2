@@ -63,17 +63,7 @@ use WeBWorK::Localize;
 use Caliper::Sensor;
 use Caliper::Entity;
 
-#####################
-## WeBWorK-tr modification
-## If GENERIC_ERROR_MESSAGE is constant, we can't translate it
-
-#use vars qw($GENERIC_ERROR_MESSAGE);
-our $GENERIC_ERROR_MESSAGE = "";    # define in new
-
-## WeBWorK-tr end modification
-#####################
-
-#use constant GENERIC_ERROR_MESSAGE => "Invalid user ID or password.";
+our $GENERIC_ERROR_MESSAGE = "";                # define in new
 
 ################################################################################
 # Public API
@@ -451,18 +441,6 @@ sub check_user {
 
 	# FIXME "fix invalid status values" used to be here, but it needs to move to $db->getUser
 
-	unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
-		$self->{log_error} = "user not allowed course access";
-		$self->{error}     = $GENERIC_ERROR_MESSAGE;
-		return 0;
-	}
-
-	unless ($authz->hasPermissions($user_id, "login")) {
-		$self->{log_error} = "user not permitted to login";
-		$self->{error}     = $GENERIC_ERROR_MESSAGE;
-		return 0;
-	}
-
 	return 1;
 }
 
@@ -529,6 +507,18 @@ sub verify_normal_user {
 		if ($auth_result > 0) {
 			$self->{session_key}   = $self->create_session($user_id);
 			$self->{initial_login} = 1;
+			# deny certain roles (dropped students, proctor roles)
+			unless ($c->ce->status_abbrev_has_behavior($c->db->getUser($user_id)->status, "allow_course_access")) {
+				$self->{log_error} = "user not allowed course access";
+				$self->{error}     = "This user is not allowed to log in to this course";
+				return 0;
+			}
+			# deny permission levels below "login" permission level
+			unless ($c->authz->hasPermissions($user_id, "login")) {
+				$self->{log_error} = "user not permitted to login";
+				$self->{error}     = "This user is not allowed to log in to this course";
+				return 0;
+			}
 			return 1;
 		} elsif ($auth_result == 0) {
 			$self->{log_error} = "authentication failed";
