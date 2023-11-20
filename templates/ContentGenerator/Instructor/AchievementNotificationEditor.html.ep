@@ -23,7 +23,8 @@
 		<%= hidden_field sourceFilePath => $c->{sourceFilePath} =%>
 	% }
 	%
-	<div class="mb-2"><%= generate_codemirror_html($c, 'achievementNotification', $achievementNotification, 'perl') =%></div>
+	<div class="mb-2">
+    <%= generate_codemirror_html($c, 'achievementNotification', $achievementNotification, 'perl') =%></div>
 	<%= generate_codemirror_controls_html($c) =%>
 	%
 	% # Output action forms

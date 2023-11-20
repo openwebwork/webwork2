@@ -209,7 +209,6 @@ sub save_as_handler ($c) {
 	$new_file_name =~ s/^\s*//;                #remove initial and final white space
 	$new_file_name =~ s/\s*$//;
 	if ($new_file_name !~ /\S/) {              # need a non-blank file name
-											   # setting $c->{failure} stops saving and any redirects
 		$do_not_save = 1;
 		$c->addbadmessage($c->maketext('Please specify a file to save to.'));
 	}
@@ -221,8 +220,8 @@ sub save_as_handler ($c) {
 		unless $c->stash->{achievementNotification};
 
 	# Rescue the user in case they forgot to end the file name with .ep
-	$new_file_name =~ s/\.ep$//;    # remove it if it is there
-	$new_file_name .= '.ep';        # put it there
+	$new_file_name =~ s/\.ep$//;               # remove it if it is there
+	$new_file_name .= '.ep';                   # put it there
 
 	# Construct the output file path
 	my $outputFilePath = $c->ce->{courseDirs}{achievements} . '/' . $new_file_name;

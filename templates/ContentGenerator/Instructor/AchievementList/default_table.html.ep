@@ -64,10 +64,11 @@
 						<%= link_to $c->systemLink(
 							url_for('instructor_achievement_notification', achievementID => $achievement_id),
 						), begin =%>
-							<%= $_->email_template 
-								? maketext('Edit Email Template') 
+							<%= $_->email_template
+								? maketext('Edit Email Template')
 								: maketext('Enable Email Notification') =%>
 						<% end =%>
+          </td>
 					<td class="text-nowrap">
 						<%= link_to maketext('Edit Evaluator') => $c->systemLink(
 							url_for('instructor_achievement_editor', achievementID => $achievement_id),

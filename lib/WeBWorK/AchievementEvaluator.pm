@@ -262,6 +262,7 @@ sub checkForAchievements ($problem_in, $pg, $c, %options) {
 					setID           => $set_id,
 					nextLevelPoints => $nextLevelPoints || 0,
 					pointsEarned    => $achievementPoints,
+					remote_host     => $c->tx->remote_host || "UNKNOWN",
 				} ]
 			) if ($achievement->email_template);
 		}

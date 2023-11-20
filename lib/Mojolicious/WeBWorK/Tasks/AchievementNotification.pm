@@ -54,9 +54,9 @@ sub run ($job, $mail_data) {
 }
 
 sub send_achievement_notification ($job, $ce, $db, $mail_data) {
-	if ($ce->{mail}{smtpSender} || $ce->{mail}{set_return_path}) {
+	if ($ce->{mail}{achievementEmailSender} || $ce->{mail}{smtpSender} || $ce->{mail}{set_return_path}) {
 		$mail_data->{from} =
-			$ce->{mail}{smtpSender} || $ce->{mail}{set_return_path};
+			$ce->{mail}{achievementEmailSender} || $ce->{mail}{smtpSender} || $ce->{mail}{set_return_path};
 	} else {
 		die "Cannot send system email without one of: mail{set_return_path} or mail{smtpSender}";
 	}
