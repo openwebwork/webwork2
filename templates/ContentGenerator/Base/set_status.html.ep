@@ -6,16 +6,19 @@
 	% && $set->reduced_scoring_date
 	% && $set->reduced_scoring_date != $set->due_date
 % );
-% 
+%
 <div class="alert alert-info mb-3">
-	<%== $useReducedScoring ? '<p>' : '<p class="mb-0">' =%> 
+	<%== $useReducedScoring ? '<p>' : '<p class="mb-0">' =%>
 		<strong>
 			% if (before($set->open_date)) {
-				<%= maketext('Set opens on [_1].', $c->formatDateTime($set->open_date)) %>
+				<%= maketext('Set opens on [_1].',
+					$c->formatDateTime($set->open_date, undef, $ce->{studentDateDisplayFormat})) %>
 			% } elsif ($useReducedScoring && before($set->reduced_scoring_date)) {
-				<%= maketext('Set is due on [_1].', $c->formatDateTime($set->reduced_scoring_date)) %>
+				<%= maketext('Set is due on [_1].',
+					$c->formatDateTime($set->reduced_scoring_date, undef, $ce->{studentDateDisplayFormat})) %>
 			% } elsif (before($set->due_date)) {
-				<%= maketext('Set closes on [_1].', $c->formatDateTime($set->due_date)) %>
+				<%= maketext('Set closes on [_1].',
+					$c->formatDateTime($set->due_date, undef, $ce->{studentDateDisplayFormat})) %>
 			% } else {
 				<%= maketext('Set is closed.') %>
 			% }
@@ -31,7 +34,7 @@
 				<%= maketext(
 					'After the due date this set enters a reduced scoring period until it closes on [_1].  All work '
 						. 'completed during the reduced scoring period counts for [_2]% of its value.',
-					$c->formatDateTime($set->due_date), $reducedScoringPerCent
+					$c->formatDateTime($set->due_date, undef, $ce->{studentDateDisplayFormat}), $reducedScoringPerCent
 				) =%>
 			% } elsif (between($reduced_scoring_date, $set->due_date)) {
 				<%= maketext(
@@ -42,8 +45,8 @@
 				<%= maketext(
 					'This set had a reduced scoring period that started on [_1] and ended on [_2].  '
 						. 'During that period all work counted for [_3]% of its value.',
-					$c->formatDateTime($reduced_scoring_date),
-					$c->formatDateTime($set->due_date),
+					$c->formatDateTime($reduced_scoring_date, undef, $ce->{studentDateDisplayFormat}),
+					$c->formatDateTime($set->due_date, undef, $ce->{studentDateDisplayFormat}),
 					$reducedScoringPerCent
 				) =%>
 			% }
