@@ -303,7 +303,7 @@
 
 		if (fileType === 'course_info') {
 			const contents = webworkConfig?.pgCodeMirror?.getValue();
-			if (contents) renderArea.innerHTML = contents;
+			if (contents) renderArea.innerHTML = `<div class="overflow-auto p-2 bg-light h-100">${contents}</div>`;
 			else
 				renderArea.innerHTML = '<div class="alert alert-danger p-1 m-2 fw-bold">The file has no content.</div>';
 
