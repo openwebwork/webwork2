@@ -25,10 +25,13 @@ WeBWorK::File::SetDef - utilities for dealing with set definition files.
 use Carp;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec x parseDateTime formatDateTime format_set_name_display seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils qw(timeToSec x parseDateTime formatDateTime getDefaultSetDueDate format_set_name_display
+	seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Utils::Instructor qw(assignSetToUser assignSetToAllUsers addProblemToSet);
 
 our @EXPORT_OK = qw(importSetsFromDef readSetDef exportSetsToDef);
+
+use constant DATE_FORMAT => '%m/%d/%Y at %I:%M%P %Z';
 
 =head2 importSetsFromDef
 
@@ -321,9 +324,10 @@ sub readSetDef ($ce, $fileName) {
 		$data{description} =~ s/<n>/\n/g;
 
 		# Check and format dates
-		($data{openDate}, $data{dueDate}, $data{answerDate}) =
-			map { parseDateTime($_, $ce->{siteDefaults}{timezone}) }
-			($data{openDate}, $data{dueDate}, $data{answerDate});
+		for (qw(openDate dueDate answerDate)) {
+			$data{$_} = eval { parseDateTime($data{$_}, $ce->{siteDefaults}{timezone}) };
+			push(@errors, [ x('Invalid [_1] in file: [_2]', $_, $@) ]) if $@;
+		}
 
 		unless (defined $data{openDate}
 			&& defined $data{dueDate}
@@ -331,7 +335,7 @@ sub readSetDef ($ce, $fileName) {
 			&& $data{openDate} <= $data{dueDate}
 			&& $data{dueDate} <= $data{answerDate})
 		{
-			$data{dueDate}  = time + 2 * 60 * 60 * 24 * 7 unless defined $data{dueDate};
+			$data{dueDate}  = getDefaultSetDueDate($ce) unless defined $data{dueDate};
 			$data{openDate} = $data{dueDate} - 60 * $ce->{pg}{assignOpenPriorToDue}
 				if !defined $data{openDate} || $data{openDate} > $data{dueDate};
 			$data{answerDate} = $data{dueDate} + 60 * $ce->{pg}{answersOpenAfterDueDate}
@@ -341,7 +345,7 @@ sub readSetDef ($ce, $fileName) {
 				@errors,
 				[
 					x(
-						'The open date, due date, and answer date in "[_1]" are not in chronological order.'
+						'The open date, due date, and answer date in "[_1]" are not in chronological order. '
 							. 'Default values will be used for dates that are out of order.'
 					),
 					$fileName
@@ -372,7 +376,9 @@ sub readSetDef ($ce, $fileName) {
 				# Set the reduced scoring date to 0 for values which seem to roughly correspond to epoch 0.
 				$data{reducedScoringDate} = 0;
 			} else {
-				$data{reducedScoringDate} = parseDateTime($data{reducedScoringDate}, $ce->{siteDefaults}{timezone});
+				$data{reducedScoringDate} =
+					eval { parseDateTime($data{reducedScoringDate}, $ce->{siteDefaults}{timezone}) };
+				push(@errors, [ x('Invalid date format for set [_1] in file: [_2]', 'reducedScoringDate', $@) ]) if $@;
 			}
 		}
 
@@ -653,17 +659,15 @@ SET: for my $set (@sets) {
 				};
 		}
 
-		my $openDate =
-			formatDateTime($setRecord->open_date, $ce->{siteDefaults}{timezone}, undef, $ce->{siteDefaults}{locale});
-		my $dueDate =
-			formatDateTime($setRecord->due_date, $ce->{siteDefaults}{timezone}, undef, $ce->{siteDefaults}{locale});
-		my $answerDate =
-			formatDateTime($setRecord->answer_date, $ce->{siteDefaults}{timezone}, undef, $ce->{siteDefaults}{locale});
-		my $reducedScoringDate = formatDateTime(
-			$setRecord->reduced_scoring_date,
-			$ce->{siteDefaults}{timezone},
-			undef, $ce->{siteDefaults}{locale}
-		);
+		# These dates can not be created in locale of the course language and need to be in the specified format.  The
+		# set import method uses the WeBWorK::Utils::parseDateTime method which does not know how to parse dates in
+		# other locales than the hard coded old format.  Furthermore, even modern libraries that parse date/time strings
+		# claim not to be able to do so reliably when they are localized.
+		my $openDate   = formatDateTime($setRecord->open_date,   DATE_FORMAT(), $ce->{siteDefaults}{timezone}, 'en-US');
+		my $dueDate    = formatDateTime($setRecord->due_date,    DATE_FORMAT(), $ce->{siteDefaults}{timezone}, 'en-US');
+		my $answerDate = formatDateTime($setRecord->answer_date, DATE_FORMAT(), $ce->{siteDefaults}{timezone}, 'en-US');
+		my $reducedScoringDate =
+			formatDateTime($setRecord->reduced_scoring_date, DATE_FORMAT(), $ce->{siteDefaults}{timezone}, 'en-US');
 
 		my $description = ($setRecord->description // '') =~ s/\r?\n/<n>/gr;
 
@@ -773,7 +777,7 @@ SET: for my $set (@sets) {
 			. $problemList;
 
 		$filePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates}, $filePath);
-		if (open(my $setDefFH, '>', $filePath)) {
+		if (open(my $setDefFH, '>:encoding(UTF-8)', $filePath)) {
 			print $setDefFH $fileContents;
 			close $setDefFH;
 			push @exported, $set;

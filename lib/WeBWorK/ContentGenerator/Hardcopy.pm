@@ -1016,7 +1016,7 @@ async sub write_set_tex ($c, $FH, $TargetUser, $themeTree, $setID) {
 		if ($MergedSet->{$_}) {
 			print $FH '\\def\\webwork'
 				. underscore_to_camel($_) . '{'
-				. $c->formatDateTime($MergedSet->{$_}, $ce->{siteDefaults}{timezone}) . "}%\n";
+				. $c->formatDateTime($MergedSet->{$_}, $ce->{studentDateDisplayFormat}) . "}%\n";
 		}
 	}
 	# Leave reduced scoring date blank if it is disabled, or enabled but on (or somehow later) than the close date
@@ -1026,7 +1026,7 @@ async sub write_set_tex ($c, $FH, $TargetUser, $themeTree, $setID) {
 		&& $MergedSet->{reduced_scoring_date} < $MergedSet->{due_date})
 	{
 		print $FH '\\def\\webworkReducedScoringDate{'
-			. $c->formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{siteDefaults}{timezone}) . "}%\n";
+			. $c->formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{studentDateDisplayFormat}) . "}%\n";
 	}
 
 	# write set header (theme presetheader, then PG header, then theme postsetheader)

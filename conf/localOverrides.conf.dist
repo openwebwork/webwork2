@@ -86,9 +86,27 @@ $mail{feedbackRecipients}    = [
 # Language
 ################################################################################
 
+# This must be a language code for a language that is supported by webwork.
+# Note that this is also used for the locale for date/time formats.
+# Check the directory lib/WeBWorK/Localize to see which languages are
+# currently supported (e.g. en, es, fr, he-IL, tr, zh-HK).
+# This can be set per course in course.conf or via the course configuration.
 #$language = "en";
-# Check the directory .../webwork2/lib/WeBWorK/Localize to what languages are
-# currently supported (e.g. en, es,. fr, heb, tr, zk_hk).
+
+################################################################################
+# Student Date Format
+################################################################################
+
+# This is the format of the dates displayed for students.  This can be created
+# from the strftime patterns documented at https://metacpan.org/pod/DateTime#strftime-Patterns,
+# or can be one of the localizable DateTime::Locale::FromData formats
+# 'datetime_format_short', 'datetime_format_medium', 'datetime_format_long', or
+# 'datetime_format_full'.  See https://metacpan.org/pod/DateTime::Locale::FromData.
+# The default is 'datetime_format_long' which will display (for the English
+# language): June 27, 2023 at 10:39:00 AM EST
+# The commented out line that is demonstrated below will display (for the English
+# language): Wed Jun 27 at 10:30am
+#$studentDateDisplayFormat = "%a %b %d at %l:%M%P";
 
 ################################################################################
 # Default screen header files
@@ -386,16 +404,6 @@ $mail{feedbackRecipients}    = [
 #####################
 
 #push (@{${pg}{modules}}, [qw(LaTeXImage)]);
-################################################################################
-# Student Date Format
-################################################################################
-
-# Uncomment the following line to customize the format of the dates displayed to
-# students.  As it is written, the line below will display open, due and answer
-# dates in the following format: Wed Jun 27 at 10:30am
-# For all available options, consult the documentation for perl DateTime under
-# "strftime patterns".
-#$studentDateDisplayFormat="%a %b %d at %l:%M%P";
 
 ################################################################################
 # Using R with WeBWorK

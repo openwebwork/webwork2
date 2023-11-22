@@ -292,10 +292,9 @@ sub format_userset ($c, $set) {
 	$result .= "Set header file:           " . $set->set_header . "\n";
 	$result .= "Hardcopy header file:      " . $set->hardcopy_header . "\n";
 
-	my $tz = $ce->{siteDefaults}{timezone};
-	$result .= "Open date:                 " . $c->formatDateTime($set->open_date,   $tz) . "\n";
-	$result .= "Due date:                  " . $c->formatDateTime($set->due_date,    $tz) . "\n";
-	$result .= "Answer date:               " . $c->formatDateTime($set->answer_date, $tz) . "\n";
+	$result .= "Open date:                 " . $c->formatDateTime($set->open_date) . "\n";
+	$result .= "Due date:                  " . $c->formatDateTime($set->due_date) . "\n";
+	$result .= "Answer date:               " . $c->formatDateTime($set->answer_date) . "\n";
 	$result .= "Visible:                   " . ($set->visible ? "yes" : "no") . "\n";
 	$result .= "Assignment type:           " . $set->assignment_type . "\n";
 	if ($set->assignment_type =~ /gateway/) {
@@ -303,7 +302,7 @@ sub format_userset ($c, $set) {
 		$result .= "Time interval:             " . $set->time_interval . "\n";
 		$result .= "Versions per interval:     " . $set->versions_per_interval . "\n";
 		$result .= "Version time limit:        " . $set->version_time_limit . "\n";
-		$result .= "Version creation time:     " . $c->formatDateTime($set->version_creation_time, $tz) . "\n";
+		$result .= "Version creation time:     " . $c->formatDateTime($set->version_creation_time) . "\n";
 		$result .= "Problem randorder:         " . $set->problem_randorder . "\n";
 		$result .= "Version last attempt time: " . $set->version_last_attempt_time . "\n";
 	}

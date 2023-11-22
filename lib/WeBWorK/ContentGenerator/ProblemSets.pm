@@ -164,8 +164,8 @@ sub setListRow ($c, $set) {
 	# Determine set status.
 	my $status = '';
 	if (time < $set->open_date) {
-		$status = $c->maketext('Will open on [_1].',
-			$c->formatDateTime($set->open_date, undef, $ce->{studentDateDisplayFormat}));
+		$status =
+			$c->maketext('Will open on [_1].', $c->formatDateTime($set->open_date, $ce->{studentDateDisplayFormat}));
 
 		if (@restricted) {
 			$status =
@@ -202,7 +202,7 @@ sub setListRow ($c, $set) {
 		}
 	} elsif (time < $set->answer_date) {
 		$status = $c->maketext('Closed, answers on [_1].',
-			$c->formatDateTime($set->answer_date, undef, $ce->{studentDateDisplayFormat}));
+			$c->formatDateTime($set->answer_date, $ce->{studentDateDisplayFormat}));
 	} elsif ($set->answer_date <= time and time < $set->answer_date + RECENT) {
 		$status = $c->maketext('Closed, answers recently available.');
 	} else {
@@ -292,7 +292,7 @@ sub set_due_msg ($c, $set) {
 		&& $set->reduced_scoring_date
 		&& $set->reduced_scoring_date < $set->due_date;
 	my $reduced_scoring_date      = $set->reduced_scoring_date;
-	my $beginReducedScoringPeriod = $c->formatDateTime($reduced_scoring_date, undef, $ce->{studentDateDisplayFormat});
+	my $beginReducedScoringPeriod = $c->formatDateTime($reduced_scoring_date, $ce->{studentDateDisplayFormat});
 
 	my $t = time;
 
@@ -302,7 +302,7 @@ sub set_due_msg ($c, $set) {
 			$c->tag('br'),
 			$c->maketext(
 				'Afterward reduced credit can be earned until [_1].',
-				$c->formatDateTime($set->due_date(), undef, $ce->{studentDateDisplayFormat})
+				$c->formatDateTime($set->due_date(), $ce->{studentDateDisplayFormat})
 			)
 		)->join('');
 	} else {
@@ -312,13 +312,13 @@ sub set_due_msg ($c, $set) {
 				$c->tag('br'),
 				$c->maketext(
 					'Reduced credit can still be earned until [_1].',
-					$c->formatDateTime($set->due_date(), undef, $ce->{studentDateDisplayFormat})
+					$c->formatDateTime($set->due_date(), $ce->{studentDateDisplayFormat})
 				)
 			)->join('');
 		}
 
 		return $c->maketext('Open, closes [_1].',
-			$c->formatDateTime($set->due_date(), undef, $ce->{studentDateDisplayFormat}));
+			$c->formatDateTime($set->due_date(), $ce->{studentDateDisplayFormat}));
 	}
 }
 

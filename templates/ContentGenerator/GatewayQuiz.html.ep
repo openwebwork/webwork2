@@ -150,7 +150,7 @@
 			% } else {
 				% if ($c->{set}->hide_score eq 'BeforeAnswerDate') {
 					<%= maketext('(Your score on this [_1] is not available until [_2].)',
-						$testNoun, $c->formatDateTime($c->{set}->answer_date)) =%>
+						$testNoun, $c->formatDateTime($c->{set}->answer_date, $ce->{studentDateDisplayFormat})) =%>
 				% } else {
 					<%= maketext('(Your score on this [_1] is not available.)', $testNoun) =%>
 				% }
@@ -376,7 +376,7 @@
 		% if ($c->{set}->hide_work eq 'BeforeAnswerDate') {
 			<strong>
 				<%= maketext('Completed results for this assignment are not available until [_1].',
-					$c->formatDateTime($c->{set}->answer_date)) %>
+					$c->formatDateTime($c->{set}->answer_date, $ce->{studentDateDisplayFormat})) %>
 			</strong>
 		% } else {
 			<strong><%= maketext('Completed results for this assignment are not available.') %></strong>

@@ -608,7 +608,7 @@ sub create_user ($self) {
 	$newUser->status('C');
 	$newUser->section($self->{section}       // '');
 	$newUser->recitation($self->{recitation} // '');
-	$newUser->comment(formatDateTime(time, 'local'));
+	$newUser->comment(formatDateTime(time, 0, $ce->{siteDefaults}{timezone}, $ce->{language}));
 	$newUser->student_id($self->{student_id} // '');
 
 	# Allow sites to customize the user.
@@ -716,7 +716,7 @@ sub maybe_update_user ($self) {
 		}
 
 		if ($change_made) {
-			$tempUser->comment(formatDateTime(time, 'local'));
+			$tempUser->comment(formatDateTime(time, 0, $ce->{siteDefaults}{timezone}, $ce->{language}));
 			eval { $db->putUser($tempUser) };
 			if ($@) {
 				$self->write_log_entry("Failed to update user $userID in LTIAdvantange login: $@");

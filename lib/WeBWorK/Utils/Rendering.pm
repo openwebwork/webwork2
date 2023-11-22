@@ -73,7 +73,12 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	for my $date (qw(openDate dueDate answerDate)) {
 		my $db_date = $date =~ s/D/_d/r;
 		$options{$date} = $set->$db_date;
-		$options{ 'formatted' . ucfirst($date) } = formatDateTime($options{$date}, $ce->{siteDefaults}{timezone});
+		$options{ 'formatted' . ucfirst($date) } = formatDateTime(
+			$options{$date},
+			$ce->{studentDateDisplayFormat},
+			$ce->{siteDefaults}{timezone},
+			$ce->{language}
+		);
 		my $uc_date = ucfirst($date);
 		for (
 			[ 'DayOfWeek',       '%A' ],
@@ -94,11 +99,14 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 			)
 		{
 			$options{"$uc_date$_->[0]"} =
-				formatDateTime($options{$date}, $ce->{siteDefaults}{timezone}, $_->[1], $ce->{siteDefaults}{locale});
+				formatDateTime($options{$date}, $_->[1], $ce->{siteDefaults}{timezone}, $ce->{language});
 		}
 	}
 	$options{reducedScoringDate}          = $set->reduced_scoring_date;
-	$options{formattedReducedScoringDate} = formatDateTime($options{reducedScoringDate}, $ce->{siteDefaults}{timezone});
+	$options{formattedReducedScoringDate} = formatDateTime(
+		$options{reducedScoringDate},  $ce->{studentDateDisplayFormat},
+		$ce->{siteDefaults}{timezone}, $ce->{language}
+	);
 
 	# State Information
 	$options{numOfAttempts} =

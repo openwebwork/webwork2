@@ -31,14 +31,14 @@
 			<th><%= maketext('Last Full Update') %></th>
 			<td>
 				<%= $lastUpdate
-					? $c->formatDateTime($lastUpdate, 0, $ce->{studentDateDisplayFormat})
+					? $c->formatDateTime($lastUpdate, $ce->{studentDateDisplayFormat})
 					: maketext('Never') =%>
 			</td>
 		</tr>
 		% if ($updateInterval > -1) {
 			<tr>
 				<th><%= maketext('Next Update') %></th>
-				<td><%= $c->formatDateTime($lastUpdate + $updateInterval, 0, $ce->{studentDateDisplayFormat}) =%></td>
+				<td><%= $c->formatDateTime($lastUpdate + $updateInterval, $ce->{studentDateDisplayFormat}) =%></td>
 			</tr>
 		% }
 	</table>

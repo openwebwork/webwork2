@@ -60,24 +60,23 @@
 			<td><%= scalar(@$score_list) %></td></tr>
 		<tr>
 			<th><%= maketext('Open Date') %></th>
-			<td><%= $c->formatDateTime($c->{setRecord}->open_date, undef, $ce->{studentDateDisplayFormat}) %></td>
+			<td><%= $c->formatDateTime($c->{setRecord}->open_date, $ce->{studentDateDisplayFormat}) %></td>
 		</tr>
 		% if ($c->{setRecord}->enable_reduced_scoring) {
 			<tr>
 				<th><%= maketext('Reduced Scoring Date') %></th>
 				<td>
-					<%= $c->formatDateTime($c->{setRecord}->reduced_scoring_date,
-						undef, $ce->{studentDateDisplayFormat}) %>
+					<%= $c->formatDateTime($c->{setRecord}->reduced_scoring_date, $ce->{studentDateDisplayFormat}) %>
 				</td>
 			</tr>
 		% }
 		<tr>
 			<th><%= maketext('Close Date') %></th>
-			<td><%= $c->formatDateTime($c->{setRecord}->due_date, undef, $ce->{studentDateDisplayFormat}) %></td>
+			<td><%= $c->formatDateTime($c->{setRecord}->due_date, $ce->{studentDateDisplayFormat}) %></td>
 		</tr>
 		<tr>
 			<th><%= maketext('Answer Date') %></th>
-			<td><%= $c->formatDateTime($c->{setRecord}->answer_date, undef, $ce->{studentDateDisplayFormat}) %></td>
+			<td><%= $c->formatDateTime($c->{setRecord}->answer_date, $ce->{studentDateDisplayFormat}) %></td>
 		</tr>
 	</table>
 </div>

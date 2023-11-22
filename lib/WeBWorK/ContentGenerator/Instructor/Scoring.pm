@@ -291,8 +291,8 @@ sub scoreSet ($c, $setID, $format, $showIndex, $UsersRef, $sortedUserIDsRef) {
 	debug("done pre-fetching user problems for set $setID");
 
 	# Write the problem data
-	my $dueDateString = $c->formatDateTime($setRecord->due_date);
-	my ($dueDate, $dueTime) = $dueDateString =~ /^(.*) at (.*)$/;
+	my $dueDate          = $c->formatDateTime($setRecord->due_date, 'date_format_short');
+	my $dueTime          = $c->formatDateTime($setRecord->due_date, 'time_format_short');
 	my $valueTotal       = 0;
 	my %userStatusTotals = ();
 	my %userSuccessIndex = ();

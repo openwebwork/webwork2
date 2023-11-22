@@ -26,7 +26,7 @@ use File::Find;
 use Mojo::File;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readDirectory sortByName x format_set_name_internal);
+use WeBWorK::Utils qw(readDirectory sortByName x format_set_name_internal getDefaultSetDueDate);
 use WeBWorK::Utils::Tags;
 use WeBWorK::Utils::LibraryStats;
 use WeBWorK::Utils::ListingDB qw(getSectionListings);
@@ -570,46 +570,33 @@ sub pre_header_initialize ($c) {
 				$c->param('new_set_name')
 			));
 		} else {
-			# If we want to munge the input set name, do it here.
 			my $newSetName = format_set_name_internal($c->param('new_set_name'));
 			debug("local_sets was ", $c->param('local_sets'));
-			$c->param('local_sets', $newSetName);    ## use of two parameter param
+			$c->param('local_sets', $newSetName);
 			debug("new value of local_sets is ", $c->param('local_sets'));
+
 			if (!$newSetName) {
-				$c->addbadmessage($c->maketext("You did not specify a new set name."));
+				$c->addbadmessage($c->maketext('Please specify a new set name.'));
 			} elsif (defined $db->getGlobalSet($newSetName)) {
-				$c->addbadmessage($c->maketext(
-					"The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",
-					$newSetName
-				));
-			} else {                                 # Do it!
+				$c->addbadmessage($c->maketext('The set "[_1]" already exists.', $newSetName));
+			} else {
+				my $dueDate = getDefaultSetDueDate($ce);
+
 				my $newSetRecord = $db->newGlobalSet();
 				$newSetRecord->set_id($newSetName);
-				$newSetRecord->set_header("defaultHeader");
-				$newSetRecord->hardcopy_header("defaultHeader");
-				# It's convenient to set the due date two weeks from now so that it is
-				# not accidentally available to students.
-
-				my $dueDate    = time + 2 * 60 * 60 * 24 * 7;
-				my $display_tz = $ce->{siteDefaults}{timezone};
-				my $fDueDate   = $c->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
-				my $dueTime    = $ce->{pg}{timeAssignDue};
-
-				# We replace the due time by the one from the config variable
-				# and try to bring it back to unix time if possible
-				$fDueDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
-
-				$dueDate = $c->parseDateTime($fDueDate, $display_tz);
+				$newSetRecord->set_header('defaultHeader');
+				$newSetRecord->hardcopy_header('defaultHeader');
 				$newSetRecord->open_date($dueDate - 60 * $ce->{pg}{assignOpenPriorToDue});
+				$newSetRecord->reduced_scoring_date($dueDate - 60 * $ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
 				$newSetRecord->due_date($dueDate);
 				$newSetRecord->answer_date($dueDate + 60 * $ce->{pg}{answersOpenAfterDueDate});
-
 				$newSetRecord->visible(1);
 				$newSetRecord->enable_reduced_scoring(0);
 				$newSetRecord->assignment_type('default');
+
 				eval { $db->addGlobalSet($newSetRecord) };
 				if ($@) {
-					$c->addbadmessage("Problem creating set $newSetName<br> $@");
+					$c->addbadmessage($c->maketext('Problem creating set "[_1]": [_2]', $newSetName, $@));
 				} else {
 					$c->addgoodmessage($c->maketext("Set [_1] has been created.", $newSetName));
 					assignSetToUser($db, $userName, $newSetRecord);
