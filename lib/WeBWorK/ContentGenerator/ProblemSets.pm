@@ -139,18 +139,20 @@ sub setListRow ($c, $set) {
 
 	my $display_name = format_set_name_display($set->set_id);
 
-	# Add clock icon if timed gateway
+	# Add icons for sets that are not "Homework"
+	my $iconClass;
+	my $iconTitle;
 	if ($gwtype && $set->{version_time_limit} > 0 && time < $set->due_date) {
-		$display_name = $c->c(
-			$c->tag(
-				'i',
-				class => 'icon far fa-clock',
-				title => $c->maketext('Test/quiz with time limit.'),
-				data  => { alt => $c->maketext('Test/quiz with time limit.') }
-			),
-			' ',
-			$c->tag('span', $display_name)
-		)->join('');
+		$iconClass = 'icon far fa-clock';
+		$iconTitle = $c->maketext('Test/Quiz with time limit.');
+	} elsif ($gwtype) {
+		$iconClass = 'icon fa-solid fa-list-check';
+		$iconTitle = $c->maketext('Test/Quiz.');
+	}
+
+	if ($iconClass) {
+		$display_name = $c->c($c->tag('i', class => $iconClass, title => $iconTitle, data => { alt => $iconTitle }),
+			' ', $c->tag('span', $display_name))->join('');
 	}
 
 	# This is the link to the set, it has tooltip with the set description.
