@@ -14,7 +14,7 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('Achievement Editor Help');
+% title maketext('Achievements Manager Help');
 %
 <p>
 	<%= maketext('Manage achievements for the course.  The actions allow one to edit, assign, import, export, score, '

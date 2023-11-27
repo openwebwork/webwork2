@@ -50,12 +50,12 @@ menu, click the three bars to make it reappear.
 
 $PAR
 On the left, in the sidebar navigation, you have already
-seen the ${LQ}Homework Sets${RQ} page,
+seen the ${LQ}Assignments${RQ} page,
 which lists all the homework assignments that have
 been assigned to you.  Links allow you to go to any assignment
 you want to work on.
 $PAR
-The ${LQ}User Settings${RQ} page lets you change your password,
+The ${LQ}Account Settings${RQ} page lets you change your password,
 email address and display options. Display Options gives you control
 over how you want math equations displayed.  For example with
 ${LQ}MathJax${RQ} you can control the size of equations, have access

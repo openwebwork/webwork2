@@ -14,7 +14,7 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('User Settings Help');
+% title maketext('Account Settings Help');
 %
 <p>
 	<%= maketext('This page allows users to change their password, email address, and display settings used in '

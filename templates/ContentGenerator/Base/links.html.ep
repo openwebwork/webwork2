@@ -6,12 +6,12 @@
 % }
 <ul class="nav flex-column">
 	% if (defined $courseID && $authen->was_verified) {
-		% # Homework Sets or Course Administration
+		% # Assignments or Course Administration
 		<li class="list-group-item nav-item">
 			% if ($restricted_navigation) {
-				<span class="nav-link disabled"><%= maketext('Homework Sets') %></span>
+				<span class="nav-link disabled"><%= maketext('Assignments') %></span>
 			% } else {
-				<%= $makelink->('set_list', text => maketext('Homework Sets')) %>
+				<%= $makelink->('set_list', text => maketext('Assignments')) %>
 			% }
 		</li>
 		%
@@ -88,7 +88,9 @@
 		% if ($authz->hasPermissions($userID, 'access_instructor_tools')) {
 			<li><hr class="site-nav-separator"></li>
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_tools') %></li>
-			% # Class list editor
+			% # Assigner Tool
+			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_assigner') %></li>
+			% # Accounts Manager
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_user_list') %></li>
 			% # User Assignments
 			% if (defined $eUserID && $eUserID ne $userID || defined $urlUserID) {
@@ -117,9 +119,7 @@
 					</ul>
 				</li>
 			% }
-			% # Set assigner
-			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_assigner') %></li>
-			% # Homework Set Editor
+			% # Sets Manager
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_list') %></li>
 			% # Editor link.  Only shown for non-versioned sets
 			% if (defined $setID && $setID !~ /,v\d+$/) {

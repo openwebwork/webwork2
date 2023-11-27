@@ -5,7 +5,7 @@
 If you haven't already changed your password, you should do so now.
 To do this, type your OLD password in the top box at the left and
 your NEW password in the two lower boxes at the left,
-then press the "Change User Options" button.
+then press the "Change Account Settings" button.
 
 <p align="justify">
 
@@ -27,5 +27,5 @@ automatically if you wish.
 <p align="justify">
 
 Finally, when you have made the changes that you want to make, select
-the "Homework Sets" link at the top of the red panel at the far left
+the "Assignments" link at the top of the red panel at the far left
 to get back to the list of homework sets.

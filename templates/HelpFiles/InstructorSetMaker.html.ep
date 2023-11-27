@@ -55,6 +55,6 @@
 	</dd>
 </dl>
 <p class="mb-0">
-	<%= maketext('The "Edit Target Set" button at the top of the page will take you to the Problem Set Editor '
+	<%= maketext('The "Edit Target Set" button at the top of the page will take you to the Set Detail page '
 		. 'which will allow you to edit dates, assign users and other information about the problem set.') =%>
 </p>
