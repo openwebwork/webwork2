@@ -88,8 +88,6 @@
 		% if ($authz->hasPermissions($userID, 'access_instructor_tools')) {
 			<li><hr class="site-nav-separator"></li>
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_tools') %></li>
-			% # Assigner Tool
-			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_assigner') %></li>
 			% # Accounts Manager
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_user_list') %></li>
 			% # User Assignments
@@ -136,6 +134,8 @@
 					</ul>
 				</li>
 			% }
+			% # Assigner Tool
+			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_assigner') %></li>
 			% # Problem Editor
 			<li class="list-group-item nav-item">
 				<%= $makelink->(
