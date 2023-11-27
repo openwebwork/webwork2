@@ -11,9 +11,12 @@
 	<%= javascript getAssetURL($ce, 'node_modules/luxon/build/global/luxon.min.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.js'), defer => undef =%>
 	% if ($ce->{language} !~ /^en/) {
-		<%= javascript
-			getAssetURL($ce, 'node_modules/flatpickr/dist/l10n/' . ($ce->{language} =~ s/^(..).*/$1/gr) . '.js'),
-			defer => undef =%>
+		<%= javascript getAssetURL(
+			$ce,
+			'node_modules/flatpickr/dist/l10n/'
+		   	. ($ce->{language} =~ /^el/ ? 'gr' : ($ce->{language} =~ s/^(..).*/$1/gr))
+		   	. '.js'
+		), defer => undef =%>
 	% }
 	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
 		defer => undef =%>
