@@ -1348,8 +1348,8 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $themeTree, $prob
 	}
 
 	if ($showComments) {
-		my $userPastAnswerID = $db->latestProblemPastAnswer($c->stash('courseID'),
-			$MergedProblem->user_id, $versionName, $MergedProblem->problem_id);
+		my $userPastAnswerID =
+			$db->latestProblemPastAnswer($MergedProblem->user_id, $versionName, $MergedProblem->problem_id);
 
 		my $pastAnswer = $userPastAnswerID                          ? $db->getPastAnswer($userPastAnswerID) : 0;
 		my $comment    = $pastAnswer && $pastAnswer->comment_string ? $pastAnswer->comment_string           : "";

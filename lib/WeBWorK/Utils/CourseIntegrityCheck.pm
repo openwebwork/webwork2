@@ -238,17 +238,16 @@ sub checkTableFields {
 	}
 
 	# Fetch corresponding tables in the database and search for corresponding schema entries.
-	my $dbh  = $self->dbh;                           # Get a database handle
-	my $stmt = "SHOW COLUMNS FROM `$table_name`";    # mysql request
-
 	# result is array:  Field | Type | Null | Key | Default | Extra
-	my $result               = $dbh->selectall_arrayref($stmt);
-	my %database_field_names = map { ${$_}[0] => [$_] } @$result;    # Drill down in the result to the field name level
+	my $result          = $self->dbh->selectall_arrayref("SHOW COLUMNS FROM `$table_name`");
+	my %database_fields = map { ${$_}[0] => $_ } @$result;    # Construct a hash of field names to field data.
 
-	foreach my $field_name (sort keys %database_field_names) {
-		my $exists = exists($schema_override_field_names{$field_name});
-		$fields_ok                = 0           unless $exists;
-		$fieldStatus{$field_name} = [ONLY_IN_B] unless $exists;
+	for my $field_name (keys %database_fields) {
+		unless (exists($schema_override_field_names{$field_name})) {
+			$fields_ok = 0;
+			$fieldStatus{$field_name} = [ONLY_IN_B];
+			push(@{ $fieldStatus{$field_name} }, 1) if $database_fields{$field_name}[3];
+		}
 	}
 
 	return ($fields_ok, \%fieldStatus);
@@ -271,20 +270,32 @@ sub updateTableFields {
 	warn "$table_name is a non native table" if $db->{$table}{params}{non_native};    # skip non-native tables
 	my ($fields_ok, $fieldStatus) = $self->checkTableFields($courseName, $table);
 
+	my $schema_obj = $db->{$table};
+
 	# Add fields
 	for my $field_name (keys %$fieldStatus) {
 		if ($fieldStatus->{$field_name}[0] == ONLY_IN_A) {
-			my $schema_obj = $db->{$table};
 			if ($schema_obj->can('add_column_field') && $schema_obj->add_column_field($field_name)) {
 				push(@messages, [ "Added column '$field_name' to table '$table'", 1 ]);
 			}
 		}
 	}
 
+	# Rebuild indexes for the table if a previous key field column is going to be dropped.
+	if ($schema_obj->can('rebuild_indexes')
+		&& (grep { $fieldStatus->{$_} && $fieldStatus->{$_}[1] } @$delete_field_names))
+	{
+		my $result = eval { $schema_obj->rebuild_indexes };
+		if ($@ || !$result) {
+			push(@messages, [ "There was an error rebuilding indexes for table '$table'", 0 ]);
+		} else {
+			push(@messages, [ "Rebuilt indexes for table '$table'", 1 ]);
+		}
+	}
+
 	# Drop fields if listed in $delete_field_names.
 	for my $field_name (@$delete_field_names) {
 		if ($fieldStatus->{$field_name} && $fieldStatus->{$field_name}[0] == ONLY_IN_B) {
-			my $schema_obj = $db->{$table};
 			if ($schema_obj->can('drop_column_field') && $schema_obj->drop_column_field($field_name)) {
 				push(@messages, [ "Dropped column '$field_name' from table '$table'", 1 ]);
 			}

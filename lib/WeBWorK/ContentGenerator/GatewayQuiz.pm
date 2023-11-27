@@ -246,12 +246,10 @@ sub attemptResults ($c, $pg) {
 sub get_instructor_comment ($c, $problem) {
 	return unless ref($problem) =~ /ProblemVersion/;
 
-	my $db               = $c->db;
-	my $userPastAnswerID = $db->latestProblemPastAnswer(
-		$c->ce->{courseName},
-		$problem->user_id, $problem->set_id . ',v' . $problem->version_id,
-		$problem->problem_id
-	);
+	my $db = $c->db;
+	my $userPastAnswerID =
+		$db->latestProblemPastAnswer($problem->user_id, $problem->set_id . ',v' . $problem->version_id,
+			$problem->problem_id);
 
 	if ($userPastAnswerID) {
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
@@ -1087,7 +1085,6 @@ async sub pre_header_initialize ($c) {
 
 				# Add to PastAnswer db
 				my $pastAnswer = $db->newPastAnswer();
-				$pastAnswer->course_id($c->stash('courseID'));
 				$pastAnswer->user_id($problem->user_id);
 				$pastAnswer->set_id($setVName);
 				$pastAnswer->problem_id($problem->problem_id);
