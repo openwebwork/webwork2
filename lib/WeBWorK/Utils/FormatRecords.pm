@@ -55,7 +55,8 @@ use warnings;
 
 use Carp;
 
-use WeBWorK::Utils qw/format_set_name_display/;
+use WeBWorK::Utils qw/format_set_name_display formatDateTime/;
+use WeBWorK::ContentGenerator::Instructor::ProblemSetDetail qw/FIELD_PROPERTIES/;
 
 our @EXPORT_OK = qw(
 	getFormatsForClass
@@ -65,23 +66,9 @@ our @EXPORT_OK = qw(
 use constant PRESET_FORMATS => {
 	'WeBWorK::DB::Record::User' => [
 		[
-			'uid_lnfn' => {
-				name          => 'user_id - last_name, first_name',
-				field_order   => [qw/user_id last_name first_name/],
-				format_string => '%s - %s, %s',
-			}
-		],
-		[
-			'lnfn_uid' => {
-				name          => 'last_name, first_name (user_id)',
-				field_order   => [qw/last_name first_name user_id/],
-				format_string => '%s, %s (%s)',
-			}
-		],
-		[
-			'lnfn_section' => {
-				name          => 'last_name, first_name (section)',
-				field_order   => [qw/last_name first_name section/],
+			'lnfn_email' => {
+				name          => 'last_name, first_name (email_address)',
+				field_order   => [qw/last_name first_name email_address/],
 				format_string => '%s, %s (%s)',
 			}
 		],
@@ -93,6 +80,13 @@ use constant PRESET_FORMATS => {
 			}
 		],
 		[
+			'lnfn_section' => {
+				name          => 'last_name, first_name (section)',
+				field_order   => [qw/last_name first_name section/],
+				format_string => '%s, %s (%s)',
+			}
+		],
+		[
 			'lnfn_secrec' => {
 				name          => 'last_name, first_name (section/recitation)',
 				field_order   => [qw/last_name first_name section recitation/],
@@ -100,14 +94,42 @@ use constant PRESET_FORMATS => {
 			}
 		],
 		[
-			'lnfn_email' => {
-				name          => 'last_name, first_name (email_address)',
-				field_order   => [qw/last_name first_name email_address/],
+			'lnfn_uid' => {
+				name          => 'last_name, first_name (user_id)',
+				field_order   => [qw/last_name first_name user_id/],
 				format_string => '%s, %s (%s)',
+			}
+		],
+		[
+			'uid_lnfn' => {
+				name          => 'user_id - last_name, first_name',
+				field_order   => [qw/user_id last_name first_name/],
+				format_string => '%s - %s, %s',
 			}
 		],
 	],
 	'WeBWorK::DB::Record::Set' => [
+		[
+			'type_sid_due' => {
+				name            => 'assignment_type: set_id, due_date',
+				field_order     => [qw/assignment_type set_id due_date/],
+				format_function => sub {
+					join('',
+						FIELD_PROPERTIES()->{assignment_type}{labels}{ $_[0] },
+						': ', format_set_name_display($_[1]),
+						', ', formatDateTime($_[2]));
+				}
+			}
+		],
+		[
+			'due_sid' => {
+				name            => 'due_date: set_id',
+				field_order     => [qw/due_date set_id/],
+				format_function => sub {
+					join('', formatDateTime($_[0]), ': ', format_set_name_display($_[1]));
+				}
+			}
+		],
 		[
 			'sid' => {
 				name            => 'set_id',

@@ -56,6 +56,14 @@ sub scrollingRecordList ($options, @records) {
 
 		$sorts   = getSortsForClass($class, $options{default_sort});
 		$formats = getFormatsForClass($class, $options{default_format});
+		# Remove sorts that are irrelevant for our formats
+		my @format_keywords;
+		for my $format (@$formats) {
+			push(@format_keywords, (split /\W+/, $format->[0]));
+		}
+		my $format_keywords = join('|', @format_keywords);
+		@$sorts = grep { $_->[0] =~ /$format_keywords/ } @$sorts;
+
 		$filters = getFiltersForClass(@records);
 
 		my @selected_filters;

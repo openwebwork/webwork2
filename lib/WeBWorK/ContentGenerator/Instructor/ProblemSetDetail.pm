@@ -16,6 +16,8 @@
 package WeBWorK::ContentGenerator::Instructor::ProblemSetDetail;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
+use Exporter qw(import);
+
 =head1 NAME
 
 WeBWorK::ContentGenerator::Instructor::ProblemSetDetail - Edit general set and
@@ -25,6 +27,8 @@ specific user/set information as well as problem information
 
 use WeBWorK::Utils qw(cryptPassword jitar_id_to_seq seq_to_jitar_id x format_set_name_internal format_set_name_display);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
+
+our @EXPORT_OK = ('FIELD_PROPERTIES');
 
 # These constants determine which fields belong to what type of record.
 use constant SET_FIELDS => [

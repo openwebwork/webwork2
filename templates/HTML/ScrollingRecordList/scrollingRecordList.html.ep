@@ -1,6 +1,6 @@
 <div class="card p-2">
 	<div class="row mb-2">
-		<%= label_for "$name!sort" => maketext('Sort:'),
+		<%= label_for "$name!sort" => maketext('Sort By:'),
 			class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' =%>
 		<div class="col-10">
 			<%= select_field "$name!sort" => $sorts, id => "$name!sort", class => 'form-select form-select-sm' =%>
@@ -22,7 +22,7 @@
 		</div>
 	</div>
 	<div>
-		<%= submit_button $options->{refresh_button_name} // maketext('Change Display Settings'),
+		<%= submit_button $options->{refresh_button_name} // maketext('Refresh List'),
 			name => "$name!refresh", class => 'btn btn-secondary btn-sm mb-2' =%>
 	</div>
 	<%= select_field $name => $formattedRecords, id => $name, class => 'form-select form-select-sm',

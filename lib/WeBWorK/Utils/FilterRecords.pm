@@ -51,6 +51,7 @@ use warnings;
 use Carp;
 
 use WeBWorK::Utils qw(sortByName);
+use WeBWorK::ContentGenerator::Instructor::ProblemSetDetail qw/FIELD_PROPERTIES/;
 
 our @EXPORT_OK = qw(
 	getFiltersForClass
@@ -79,7 +80,7 @@ sub getFiltersForClass {
 	my (@records) = @_;
 
 	my @filters;
-	push @filters, [ 'Display all possible records' => 'all', selected => undef ];
+	push @filters, [ "\x{27E8}Display all possible records\x{27E9}" => 'all', selected => undef ];
 
 	if (ref $records[0] eq 'WeBWorK::DB::Record::User') {
 		my (%sections, %recitations);
@@ -91,14 +92,33 @@ sub getFiltersForClass {
 
 		if (keys %sections > 1) {
 			for my $sec (sortByName(undef, keys %sections)) {
-				push @filters, [ ($sec ne '' ? "Display section $sec" : 'Display section <blank>') => "section:$sec" ];
+				push @filters, [ ($sec ne '' ? "Section: $sec" : 'No Section') => "section:$sec" ];
 			}
 		}
 
 		if (keys %recitations > 1) {
 			for my $rec (sortByName(undef, keys %recitations)) {
-				push @filters,
-					[ ($rec ne '' ? "Display recitation $rec" : 'Display recitation <blank>') => "recitation:$rec" ];
+				push @filters, [ ($rec ne '' ? "Recitation: $rec" : 'No Recitation') => "recitation:$rec" ];
+			}
+		}
+	} elsif (ref $records[0] eq 'WeBWorK::DB::Record::Set') {
+		my (%assignment_types, %visibles);
+
+		for my $set (@records) {
+			++$assignment_types{ $set->assignment_type };
+			++$visibles{ $set->visible }
+				unless (defined $visibles{0} && $set->visible eq '' || defined $visibles{''} && $set->visible eq '0');
+		}
+
+		if (keys %assignment_types > 1) {
+			for my $type (sortByName(undef, keys %assignment_types)) {
+				push @filters, [ FIELD_PROPERTIES()->{assignment_type}{labels}{$type} => "assignment_type:$type" ];
+			}
+		}
+
+		if (keys %visibles > 1) {
+			for my $vis (sortByName(undef, keys %visibles)) {
+				push @filters, [ ($vis ? 'Visible' : "Not Visible") => "visible:$vis" ];
 			}
 		}
 	}
