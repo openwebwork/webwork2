@@ -8,10 +8,10 @@
 % my $iconTitle;
 % if ($gwtype) {
 	% $iconClass = 'icon fa-solid fa-list-check';
-	% $iconTitle = maketext('Test/Quiz.');
+	% $iconTitle = maketext('Test/Quiz');
 % } elsif ($set->assignment_type() eq 'jitar') {
 	% $iconClass = 'icon fa-solid fa-layer-group';
-	% $iconTitle = maketext('Assignment with just-in-time assessment and review.');
+	% $iconTitle = maketext('JITAR Set');
 % }
 %
 <tr>

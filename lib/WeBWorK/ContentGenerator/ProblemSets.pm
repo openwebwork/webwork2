@@ -144,7 +144,7 @@ sub setListRow ($c, $set) {
 	my $iconTitle;
 	if ($gwtype) {
 		$iconClass = 'icon fa-solid fa-list-check';
-		$iconTitle = $c->maketext('Test/Quiz.');
+		$iconTitle = $c->maketext('Test/Quiz');
 	}
 
 	if ($iconClass) {
