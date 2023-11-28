@@ -142,10 +142,7 @@ sub setListRow ($c, $set) {
 	# Add icons for sets that are not "Homework"
 	my $iconClass;
 	my $iconTitle;
-	if ($gwtype && $set->{version_time_limit} > 0 && time < $set->due_date) {
-		$iconClass = 'icon far fa-clock';
-		$iconTitle = $c->maketext('Test/Quiz with time limit.');
-	} elsif ($gwtype) {
+	if ($gwtype) {
 		$iconClass = 'icon fa-solid fa-list-check';
 		$iconTitle = $c->maketext('Test/Quiz.');
 	}

@@ -6,10 +6,7 @@
 % my $gwtype         = $set->assignment_type() =~ /gateway/;
 % my $iconClass;
 % my $iconTitle;
-% if ($gwtype && $set->{version_time_limit}) {
-	% $iconClass = 'icon far fa-clock';
-	% $iconTitle = maketext('Test/Quiz with time limit.');
-% } elsif ($gwtype) {
+% if ($gwtype) {
 	% $iconClass = 'icon fa-solid fa-list-check';
 	% $iconTitle = maketext('Test/Quiz.');
 % } elsif ($set->assignment_type() eq 'jitar') {
