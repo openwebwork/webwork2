@@ -140,17 +140,20 @@ sub setListRow ($c, $set) {
 	my $display_name = format_set_name_display($set->set_id);
 
 	# Add icons for sets that are not "Homework"
-	my $iconClass;
-	my $iconTitle;
 	if ($gwtype) {
-		$iconClass = 'icon fa-solid fa-list-check';
-		$iconTitle = $c->maketext('Test/Quiz');
+		my $iconTitle = $c->maketext('Test/Quiz');
+		$display_name = $c->c(
+			$c->tag(
+				'i',
+				class => 'icon fa-solid fa-list-check',
+				title => $iconTitle,
+				data  => { alt => $iconTitle }
+			),
+			' ',
+			$c->tag('span', $display_name)
+		)->join('');
 	}
 
-	if ($iconClass) {
-		$display_name = $c->c($c->tag('i', class => $iconClass, title => $iconTitle, data => { alt => $iconTitle }),
-			' ', $c->tag('span', $display_name))->join('');
-	}
 
 	# This is the link to the set, it has tooltip with the set description.
 	my $interactive = $c->link_to(
