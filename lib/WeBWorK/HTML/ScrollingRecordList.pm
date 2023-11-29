@@ -75,6 +75,7 @@ sub scrollingRecordList ($options, @records) {
 		}
 
 		$formattedRecords = formatRecords(
+			$c,
 			$c->param("$name!format") || $options{default_format},
 			sortRecords(
 				$c->param("$name!sort") || $options{default_sort} || (@$sorts ? $sorts->[0][1] : ''),

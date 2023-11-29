@@ -23,7 +23,7 @@
 </p>
 <p>
 	<%= maketext('In both cases, one can select the sort field, the format of the display list, and the filter. '
-		. '"Change Display Settings" must be clicked to update the list.') =%>
+		. '"Refresh List" must be clicked to update the list.') =%>
 </p>
 <p>
 	<%= maketext('There are many options available at the bottom:') =%>

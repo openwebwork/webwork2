@@ -51,7 +51,7 @@ use warnings;
 use Carp;
 
 use WeBWorK::Utils qw(sortByName);
-use WeBWorK::ContentGenerator::Instructor::ProblemSetDetail qw/FIELD_PROPERTIES/;
+use WeBWorK::ContentGenerator::Instructor::ProblemSetDetail qw(FIELD_PROPERTIES);
 
 our @EXPORT_OK = qw(
 	getFiltersForClass
@@ -118,7 +118,7 @@ sub getFiltersForClass {
 
 		if (keys %visibles > 1) {
 			for my $vis (sortByName(undef, keys %visibles)) {
-				push @filters, [ ($vis ? 'Visible' : "Not Visible") => "visible:$vis" ];
+				push @filters, [ ($vis ? 'Visible' : 'Not Visible') => "visible:$vis" ];
 			}
 		}
 	}

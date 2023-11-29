@@ -21,14 +21,14 @@
 		. 'common actions that allow selecting multiple users or sets to act on at once.  Because multiple users '
 		. 'and sets can be acted on at the same time, it is often more efficient to use this page when modifying '
 		. 'multiple items.  For example, after selecting several users and a set you can change the close date for '
-		. 'all selected users for that set.  This page also gives access to "Edit Assignments and Dates for one user", '
+		. 'all selected users for that set.  This page also gives access to "Edit assignments and dates for one user", '
 		. 'which can be used to access settings for all sets including test versions for that user.') =%>
 </p>
 <p class="mb-0">
 	<%= maketext('Use the "Users" and "Sets" forms to select which users and sets to act on.  Multiple items can be '
 		. 'selected using ctrl-click or shift-click.  The action buttons are grouped into three categories.  The '
-		. 'first is a set of actions that act on the selected users, the last is a set of actions that act on the '
-		. 'selected sets, and the middle is a set of actions for acting on a combination of sets and users.  If an '
+		. 'first is a set of actions that act on the selected users, the second is a set of actions for acting on a '
+		. 'combination of sets and users, and the third is a set of actions that act on the selected sets.  If an '
 		. 'invalid number of users or sets are selected, the action will not be preformed, and an error message '
 		. 'will be placed on the page.') =%>
 </p>

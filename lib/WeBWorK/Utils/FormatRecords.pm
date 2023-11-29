@@ -55,7 +55,7 @@ use warnings;
 
 use Carp;
 
-use WeBWorK::Utils qw/format_set_name_display formatDateTime/;
+use WeBWorK::Utils qw/format_set_name_display/;
 use WeBWorK::ContentGenerator::Instructor::ProblemSetDetail qw/FIELD_PROPERTIES/;
 
 our @EXPORT_OK = qw(
@@ -115,9 +115,9 @@ use constant PRESET_FORMATS => {
 				field_order     => [qw/assignment_type set_id due_date/],
 				format_function => sub {
 					join('',
-						FIELD_PROPERTIES()->{assignment_type}{labels}{ $_[0] },
-						': ', format_set_name_display($_[1]),
-						', ', formatDateTime($_[2]));
+						FIELD_PROPERTIES()->{assignment_type}{labels}{ $_[1] },
+						': ', format_set_name_display($_[2]),
+						', ', $_[0]->formatDateTime($_[3]));
 				}
 			}
 		],
@@ -126,7 +126,7 @@ use constant PRESET_FORMATS => {
 				name            => 'due_date: set_id',
 				field_order     => [qw/due_date set_id/],
 				format_function => sub {
-					join('', formatDateTime($_[0]), ': ', format_set_name_display($_[1]));
+					join('', $_[0]->formatDateTime($_[1]), ': ', format_set_name_display($_[2]));
 				}
 			}
 		],
@@ -134,7 +134,9 @@ use constant PRESET_FORMATS => {
 			'sid' => {
 				name            => 'set_id',
 				field_order     => [qw/set_id/],
-				format_function => \&format_set_name_display
+				format_function => sub {
+					return format_set_name_display($_[1]);
+				}
 			}
 		],
 	],
@@ -173,7 +175,7 @@ sub getFormatsForClass {
 	return \@presets;
 }
 
-=item formatRecords($preset_format, @records)
+=item formatRecords($c, $preset_format, @records)
 
 Given the name of a preset format and an array of database records, returns a
 reference to a list of two element lists. The first element in each list is a
@@ -181,15 +183,16 @@ formatted string representing the record, and the second element is a string
 that is obtained by joining the key fields of the database record with
 exclamation marks.
 
-The C<$preset_format> must be provided.  It must either be one of the presets
-defined above, or the name of a field in the database record class.
+The arguments C<$c> and C<$preset_format> must be provided. C<$c> must be a
+C<WeBWorK::Controller> object, and C<$preset_format> must either be one of the
+presets defined above, or the name of a field in the database record class.
 
 =back
 
 =cut
 
 sub formatRecords {
-	my ($preset_format, @records) = @_;
+	my ($c, $preset_format, @records) = @_;
 
 	return unless @records;
 
@@ -233,8 +236,13 @@ sub formatRecords {
 	if ($format_function) {
 		# If a format_function was passed, then call it on each record.
 		for my $value (@records) {
-			push(@formattedRecords,
-				[ $format_function->(map { $value->$_ } @field_order), join('!', map { $value->$_ } @keyfields) ]);
+			push(
+				@formattedRecords,
+				[
+					$format_function->($c, map { $value->$_ } @field_order),
+					join('!', map { $value->$_ } @keyfields)
+				]
+			);
 		}
 	} else {
 		# Otherwise, use sprintf and format_string.
