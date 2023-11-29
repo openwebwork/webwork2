@@ -19,7 +19,7 @@
 <p>
 	<%= maketext('Use this page to send emails to active (enrolled or auditing) students.  Emails can be sent to '
 		. 'all active students or selected students.  Use the "Students" form to sort, filter, or format how '
-		. 'the user name is displayed.  Click "Change Display Settings" to apply any changes.  Use control-click '
+		. 'the user name is displayed.  Click "Refresh List" to apply any changes.  Use control-click '
 		. 'or shift-click to select multiple students to email.') =%>
 </p>
 <p>

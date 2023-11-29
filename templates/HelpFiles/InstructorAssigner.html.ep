@@ -21,7 +21,7 @@
 		. 'unassign the given sets. The list of users or the list of sets can be reordered under the "sort" '
 		. 'option or the format of the user or set list.  Additionally, the set lists can be filtered '
 		. '(by section number or recitation).  The displayed user and set lists will only be updated '
-		. 'upon clicking "Change Display Settings".') =%>
+		. 'upon clicking "Refresh List".') =%>
 </p>
 <p class="mb-0">
 	<%= maketext('Multiple users or sets may be selected by holding down the shift key or the ctrl key while '
