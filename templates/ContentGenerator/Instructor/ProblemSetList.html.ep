@@ -32,7 +32,7 @@
 % }
 %
 % if ($c->{editMode} && !$authz->hasPermissions(param('user'), 'modify_problem_sets')) {
-	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to modify homework sets.') %></div>
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to modify sets.') %></div>
 	% last;
 % }
 %
