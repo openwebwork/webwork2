@@ -154,7 +154,6 @@ sub setListRow ($c, $set) {
 		)->join('');
 	}
 
-
 	# This is the link to the set, it has tooltip with the set description.
 	my $interactive = $c->link_to(
 		$display_name => $c->systemLink($c->url_for('problem_list', setID => $set->set_id)),
