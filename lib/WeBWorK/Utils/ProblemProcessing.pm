@@ -122,6 +122,7 @@ async sub process_and_log_answer ($c) {
 			$pastAnswer->scores($scores2);
 			$pastAnswer->answer_string($past_answers_string);
 			$pastAnswer->source_file($problem->source_file);
+			$pastAnswer->problem_seed($problem->problem_seed);
 			$db->addPastAnswer($pastAnswer);
 		}
 	}

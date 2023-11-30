@@ -109,7 +109,11 @@ sub putPastAnswer {
 
 	$pastAnswer->{user_id} = $params->{user_id} if $params->{user_id};
 
-	for ('set_id', 'problem_id', 'source_file', 'timestamp', 'scores', 'answer_string', 'comment_string') {
+	for (
+		'set_id', 'problem_id',    'source_file',    'timestamp',
+		'scores', 'answer_string', 'comment_string', 'problem_seed'
+		)
+	{
 		$pastAnswer->{$_} = $params->{$_} if defined($params->{$_});
 	}
 
