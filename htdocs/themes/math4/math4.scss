@@ -493,6 +493,21 @@ ul.courses-list {
 	}
 }
 
+/* Instructor Tools page */
+#instructor-tools-nav {
+	input[name="number_of_students"] {
+		max-width: 7em;
+	}
+
+	#pills-tabContent input.btn {
+		min-width: 7em;
+	}
+
+	span.input-group-text {
+		white-space: pre;
+	}
+}
+
 /* past answers page */
 .past-answer-table {
 	td {
