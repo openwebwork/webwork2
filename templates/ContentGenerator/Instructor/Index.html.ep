@@ -69,7 +69,7 @@
 					data-bs-toggle="pill"
 					data-bs-target="#user-actions"
 					type="button"
-					"role="tab"
+					role="tab"
 					aria-controls="pills-user-actions"
 					aria-selected="true">\
 					<%== maketext('User Actions') =%>\
@@ -82,7 +82,7 @@
 					data-bs-toggle="pill"
 					data-bs-target="#user-set-actions"
 					type="button"
-					"role="tab"
+					role="tab"
 					aria-controls="pills-user-set-actions"
 					aria-selected="false">\
 					<%== maketext('User-Set Actions') =%>\
@@ -95,7 +95,7 @@
 					data-bs-toggle="pill"
 					data-bs-target="#set-actions"
 					type="button"
-					"role="tab"
+					role="tab"
 					aria-controls="pills-set-actions"
 					aria-selected="false">\
 					<%== maketext('Set Actions') =%>\
@@ -105,7 +105,7 @@
 
 		<div class="tab-content row" id="pills-tabContent">
 			<div id="user-actions" class="tab-pane fade show active col-6" role="tabpanel"
-				aria-labelledby="pills-user-actions-tab" tabindex="0" >
+				aria-labelledby="pills-user-actions-tab" >
 				<div class="input-group input-group-sm mb-2">
 					<%= submit_button maketext('Edit'),
 						name  => 'sets_assigned_to_user',
@@ -162,7 +162,7 @@
 				</div>
 			</div>
 			<div class="tab-pane fade show offset-md-3 col-6" id="user-set-actions" role="tabpanel"
-				aria-labelledby="pills-user-set-actions-tab" tabindex="0">
+				aria-labelledby="pills-user-set-actions-tab" >
 				<div class="input-group input-group-sm mb-2">
 					<%= submit_button maketext('Assign'),
 						# This name is the same as the name of the submit button in Assigner.pm and the form is
@@ -225,7 +225,7 @@
 				</div>
 			</div>
 			<div class="tab-pane fade show row offset-md-6 col-6" id="set-actions" role="tabpanel"
-				aria-labelledby="pills-set-actions-tab" tabindex="0">
+				aria-labelledby="pills-set-actions-tab" >
 				<div class="input-group input-group-sm mb-2">
 					<%= submit_button maketext('Edit'),
 						name  => 'users_assigned_to_set',
