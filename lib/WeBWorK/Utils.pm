@@ -96,6 +96,7 @@ our @EXPORT_OK = qw(
 	runtime_use
 	sortAchievements
 	sortByName
+	prob_id_sort
 	surePathToFile
 	textDateTime
 	timeToSec
@@ -1254,6 +1255,43 @@ sub sortAchievements {
 
 	return @Achievements;
 
+}
+
+################################################################################
+# Sorts problem ID's so that all just-in-time like ids are at the bottom
+# of the list in order and other problems
+################################################################################
+sub prob_id_sort_comparator {
+
+	my @seqa = split(/\./, $a);
+	my @seqb = split(/\./, $b);
+
+	# go through problem number sequence
+	for (my $i = 0; $i <= $#seqa; $i++) {
+		# if at some point two numbers are different return the comparison.
+		# e.g. 2.1.3 vs 1.2.6
+		if ($seqa[$i] != $seqb[$i]) {
+			return $seqa[$i] <=> $seqb[$i];
+		}
+
+		# if all of the values are equal but b is shorter then it comes first
+		# i.e. 2.1.3 vs 2.1
+		if ($i == $#seqb) {
+			return 1;
+		}
+	}
+
+	# if all of the values are equal and a and b are the same length then equal
+	# otherwise a was shorter than b so a comes first.
+	if ($#seqa == $#seqb) {
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+sub prob_id_sort {
+	return sort prob_id_sort_comparator @_;
 }
 
 ################################################################################

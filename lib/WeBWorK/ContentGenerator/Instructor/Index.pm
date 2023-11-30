@@ -23,7 +23,7 @@ pages
 
 =cut
 
-use WeBWorK::Utils qw(x format_set_name_internal);
+use WeBWorK::Utils qw(x format_set_name_internal jitar_id_to_seq prob_id_sort);
 
 use constant E_MAX_ONE_SET  => x('Please select at most one set.');
 use constant E_ONE_USER     => x('Please select exactly one user.');
@@ -152,6 +152,19 @@ sub pre_header_initialize ($c) {
 		} else {
 			push @error, E_ONE_SET unless $nsets == 1;
 		}
+	} elsif (defined $c->param('show_answers')) {
+		my %all_problems;
+		for my $setID (@selectedSetIDs) {
+			my @problems = $db->listGlobalProblems($setID);
+			if ($db->getGlobalSet($setID)->assignment_type && $db->getGlobalSet($setID)->assignment_type eq 'jitar') {
+				@problems = map { join('.', jitar_id_to_seq($_)) } @problems;
+			}
+			@all_problems{@problems} = (1) x @problems;
+		}
+		$route                     = 'answer_log';
+		$params{selected_users}    = \@selectedUserIDs;
+		$params{selected_sets}     = \@selectedSetIDs;
+		$params{selected_problems} = [ prob_id_sort keys %all_problems ];
 	} elsif (defined $c->param('create_set')) {
 		my $setname = format_set_name_internal($c->param('new_set_name') // '');
 		if ($setname) {
@@ -169,10 +182,6 @@ sub pre_header_initialize ($c) {
 	} elsif (defined $c->param('add_users')) {
 		$route = 'instructor_add_users';
 		$params{number_of_students} = $c->param('number_of_students') // 1;
-	} elsif (defined $c->param('email_users')) {
-		$route = 'instructor_mail_merge';
-	} elsif (defined $c->param('transfer_files')) {
-		$route = 'instructor_file_manager';
 	}
 
 	push @error, x('You are not allowed to act as a student.')

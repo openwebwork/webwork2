@@ -96,7 +96,7 @@ sub initialize ($c) {
 	$c->{defaultSubject}     = $c->stash('courseID') . ' notice';
 	$c->{merge_file}         = $mergefile // '';
 
-	my @classList = $c->param('classList') // ($user);
+	my @classList = $c->param('selected_users') // ($user);
 	$c->{preview_user} = $c->db->getUser($classList[0] || $user);
 
 	# Gather database data
@@ -129,7 +129,7 @@ sub initialize ($c) {
 	if ($recipients eq 'all_students') {
 		@send_to = map { $_->user_id } @Users;
 	} elsif ($recipients eq 'studentID') {
-		@send_to = $c->param('classList');
+		@send_to = $c->param('selected_users');
 	}
 
 	$c->{ra_send_to} = \@send_to;

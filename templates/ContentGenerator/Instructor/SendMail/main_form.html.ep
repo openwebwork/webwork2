@@ -126,7 +126,7 @@
 					<div class="mb-2">
 						<%= scrollingRecordList(
 							{
-								name            => 'classList',
+								name            => 'selected_users',
 								controller      => $c,
 								default_sort    => 'lnfn',
 								default_format  => 'lnfn_uid',

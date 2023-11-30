@@ -62,7 +62,7 @@
 	<div class="row">
 		% # TODO: When bootstrap is upgraded to 5.3 switch the "column-gap" style to the "column-gap-3" class.
 		<div class="col-xl-10 col-md-12 d-flex justify-content-around flex-wrap" style="column-gap:1rem">
-			<div style="min-width:350px">
+			<div style="min-width:370px">
 				<hr class="divider pb-1 bg-dark mt-0 mb-2">
 				<div class="input-group input-group-sm mb-2">
 					<%= submit_button maketext('Edit'),
@@ -80,7 +80,7 @@
 						formaction => $c->systemLink(url_for 'instructor_user_list'),
 						data => { users_needed => 'at least one', error_users => maketext($E_MIN_ONE_USER) } =%>
 					<span class="input-group-text flex-grow-1" style="white-space:pre;">\
-						<%== maketext('account data for <b>all selected</b> users') =%>\
+						<%== maketext('account data for <b>selected</b> users') =%>\
 					</span>
 				</div>
 				<div class="input-group input-group-sm mb-2">
@@ -102,6 +102,15 @@
 					</span>
 				</div>
 				<div class="input-group input-group-sm mb-2">
+					<%= submit_button maketext('Email'),
+						name  => 'email_users',
+						class => 'btn btn-sm btn-secondary w-25',
+						formaction => $c->systemLink(url_for 'instructor_mail_merge') =%>
+					<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+						<%== maketext('<strong>selected</strong> users') =%>\
+					</span>
+				</div>
+				<div class="input-group input-group-sm mb-2">
 					<%= submit_button maketext('Add'), name => 'add_users', class => 'btn btn-sm btn-secondary w-25' =%>
 					<%= number_field number_of_students => 1, min => 1, max => 100,
 						class => 'form-control form-control-sm text-center' =%>
@@ -110,7 +119,7 @@
 					</span>
 				</div>
 			</div>
-			<div style="min-width:350px">
+			<div style="min-width:370px">
 				<hr class="divider pb-1 bg-dark mt-0 mb-2">
 				<div class="input-group input-group-sm mb-2">
 					<%= submit_button maketext('Assign'),
@@ -126,7 +135,7 @@
 							error_sets   => maketext($E_MIN_ONE_SET)
 						} =%>
 					<span class="input-group-text flex-grow-1" style="white-space:pre;">\
-						<%== maketext('<strong>all selected</strong> users to <strong>all selected</strong> sets') =%>\
+						<%== maketext('<strong>selected</strong> users to <strong>selected</strong> sets') =%>\
 					</span>
 				</div>
 				<div class="input-group input-group-sm mb-2">
@@ -156,17 +165,34 @@
 					</span>
 				</div>
 				<div class="input-group input-group-sm mb-2">
+					<%= submit_button maketext('View'),
+						name       => 'show_answers',
+						class      => 'btn btn-sm btn-secondary w-25' =%>
+					<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+						<%== maketext('answers for <strong>selected</strong> users, for <strong>selected</strong> sets') =%>\
+					</span>
+				</div>
+				<div class="input-group input-group-sm mb-2">
+					<%= submit_button maketext('Generate'),
+						name       => 'hardcopy',
+						class      => 'btn btn-sm btn-secondary w-25',
+						formaction => $c->systemLink(url_for 'hardcopy') =%>
+					<span class="input-group-text flex-grow-1" style="white-space:pre;">\
+						<%== maketext('PDF for <strong>selected</strong> users, for <strong>selected</strong> sets') =%>\
+					</span>
+				</div>
+				<div class="input-group input-group-sm mb-2">
 					<%= submit_button maketext('Score'),
 						name       => 'score_sets',
 						class      => 'btn btn-sm btn-secondary w-25',
 						formaction => $c->systemLink(url_for 'instructor_scoring'),
 						data => { sets_needed => 'at least one', error_sets => maketext($E_MIN_ONE_SET) } =%>
 					<span class="input-group-text flex-grow-1" style="white-space:pre;">\
-						<%== maketext('<strong>all selected</strong> sets for <strong>all</strong> users') =%>\
+						<%== maketext('<strong>selected</strong> sets for <strong>all</strong> users') =%>\
 					</span>
 				</div>
 			</div>
-			<div style="min-width:350px">
+			<div style="min-width:370px">
 				<hr class="divider pb-1 bg-dark mt-0 mb-2">
 				<div class="input-group input-group-sm mb-2">
 					<%= submit_button maketext('Edit'),
