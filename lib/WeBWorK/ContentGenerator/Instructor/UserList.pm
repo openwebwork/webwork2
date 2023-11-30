@@ -287,10 +287,12 @@ sub filter_handler ($c) {
 		for my $userID (@{ $c->{allUserIDs} }) {
 			if ($field eq 'permission') {
 				push @matchingUserIDs, $userID
-					if ($permissionLabels{ $allUsers{$userID}{permission} } =~ /^$regex/i);
+					if $permissionLabels{ $allUsers{$userID}{permission} } =~ /^$regex/i
+					|| $c->maketext($permissionLabels{ $allUsers{$userID}{permission} }) =~ /^$regex/i;
 			} elsif ($field eq 'status') {
 				push @matchingUserIDs, $userID
-					if ($ce->status_abbrev_to_name($allUsers{$userID}{status}) =~ /^$regex/i);
+					if $ce->status_abbrev_to_name($allUsers{$userID}{status}) =~ /^$regex/i
+					|| $c->maketext($ce->status_abbrev_to_name($allUsers{$userID}{status})) =~ /^$regex/i;
 			} else {
 				push @matchingUserIDs, $userID if $allUsers{$userID}{$field} =~ /^$regex/i;
 			}
