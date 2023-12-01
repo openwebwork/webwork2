@@ -62,12 +62,14 @@ our @EXPORT_OK = qw(
 
 =over
 
-=item getFiltersForClass($class)
+=item getFiltersForClass($c, @records)
 
 Given a list of database records, returns the filters available for those
 records.  For all database records from the WeBWorK::DB::Record::User class
-the filters are by section or recitation or no filter at all.  For all other
-classes the only filter is no filter at all.
+the filters are by section or recitation or by that user's permission level
+in the permissionLevel table. For all database records from the
+WeBWorK::DB::Record::Set class the filters are by assignment type and by
+visibility. For other classes the only filter is no filter at all.
 
 The return value is a reference to a list of two element lists. The first
 element in each list is a a string description of the filter and the second
@@ -77,28 +79,46 @@ second value argument to the Mojolicious select_field tag helper method.
 =cut
 
 sub getFiltersForClass {
-	my (@records) = @_;
+	my ($c, @records) = @_;
 
 	my @filters;
 	push @filters, [ "\x{27E8}Display all possible records\x{27E9}" => 'all', selected => undef ];
 
 	if (ref $records[0] eq 'WeBWorK::DB::Record::User') {
-		my (%sections, %recitations);
+		my (%sections, %recitations, %permissions, %roles);
 
+		my %permissionName = reverse %{ $c->ce->{userRoles} };
 		for my $user (@records) {
 			++$sections{ $user->section };
 			++$recitations{ $user->recitation };
+			++$roles{ $user->status };
+			++$permissions{ $permissionName{ $c->db->getPermissionLevel($user->user_id)->permission } };
 		}
 
 		if (keys %sections > 1) {
 			for my $sec (sortByName(undef, keys %sections)) {
-				push @filters, [ ($sec ne '' ? "Section: $sec" : 'No Section') => "section:$sec" ];
+				push @filters, [ 'Section: ' . ($sec ne '' ? $sec : "\x{27E8}blank\x{27E9}") => "section:$sec" ];
 			}
 		}
 
 		if (keys %recitations > 1) {
 			for my $rec (sortByName(undef, keys %recitations)) {
-				push @filters, [ ($rec ne '' ? "Recitation: $rec" : 'No Recitation') => "recitation:$rec" ];
+				push @filters, [ 'Recitation: ' . ($rec ne '' ? $rec : "\x{27E8}blank\x{27E9}") => "recitation:$rec" ];
+			}
+		}
+
+		if (keys %roles > 1) {
+			for my $role (sortByName(undef, keys %roles)) {
+				my @statuses = keys %{ $c->ce->{statuses} };
+				for (@statuses) {
+					push @filters, [ "Role: $_" => "status:$role" ] if ($c->ce->{statuses}{$_}{abbrevs}[0] eq $role);
+				}
+			}
+		}
+
+		if (keys %permissions > 1) {
+			for my $perm (sortByName(undef, keys %permissions)) {
+				push @filters, [ "Permission Level: $perm" => "permission:$perm" ];
 			}
 		}
 	} elsif (ref $records[0] eq 'WeBWorK::DB::Record::Set') {
@@ -125,7 +145,7 @@ sub getFiltersForClass {
 	return \@filters;
 }
 
-=item filterRecords($filters, @records)
+=item filterRecords($c, $filters, @records)
 
 Given a list of filters and a list of records, returns a list of the records
 after the selected filters are applied.
@@ -137,7 +157,7 @@ C<$filters> should be a reference to an array of filters or be undefined.
 =cut
 
 sub filterRecords {
-	my ($filters, @records) = @_;
+	my ($c, $filters, @records) = @_;
 
 	return unless @records;
 
@@ -151,9 +171,18 @@ sub filterRecords {
 	for my $record (@records) {
 		for my $filter (@filtersToUse) {
 			my ($name, $value) = split(/:/, $filter);
-			if ($record->$name eq $value) {
-				push @filteredRecords, $record;
-				last;    # Only add a record once.
+			# permission level is handled differently
+			if ($name eq 'permission') {
+				my %permissionName = reverse %{ $c->ce->{userRoles} };
+				if ($permissionName{ $c->db->getPermissionLevel($record->user_id)->permission } eq $value) {
+					push @filteredRecords, $record;
+					last;    # Only add a record once.
+				}
+			} else {
+				if ($record->$name eq $value) {
+					push @filteredRecords, $record;
+					last;    # Only add a record once.
+				}
 			}
 		}
 	}
