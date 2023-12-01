@@ -26,12 +26,12 @@
 			<div class="form-check form-check-inline">
 				<%= radio_button "$name!filter_combine" => 1, id => "$name!intersect_check", checked => undef,
 					class => 'form-check-input' =%>
-				<%= label_for "$name!intersect_check" => maketext('Intersect'), class => 'form-check-label' =%>
+				<%= label_for "$name!intersect_check" => maketext('Intersect'), class => 'form-check-label font-sm' =%>
 			</div>
 			<div class="form-check form-check-inline">
 				<%= radio_button "$name!filter_combine" => 0, id => "$name!union_check",
 					class => 'form-check-input' =%>
-				<%= label_for "$name!union_check" => maketext('Union'), class => 'form-check-label' =%>
+				<%= label_for "$name!union_check" => maketext('Union'), class => 'form-check-label font-sm' =%>
 			</div>
 		</div>
 	</div>
