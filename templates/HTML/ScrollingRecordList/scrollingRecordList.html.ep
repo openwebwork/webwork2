@@ -14,21 +14,25 @@
 		</div>
 	</div>
 	<div class="row mb-2">
-		<div class="col-2">
-			<%= label_for "$name!filter" => maketext('Filter(s):'),
-				class => 'col-form-label col-form-label-sm pe-1 text-nowrap' =%>
-			<div class="form-check p-0">
-				<%= radio_button "$name!filter_combine" => 'intersect', id => "$name!intersect_check", checked => undef =%>
-				<%= label_for "$name!intersect_check" => maketext('Intersect'), class => 'col-form-label-sm p-1 pt-0' =%>
-			</div>
-			<div class="form-check p-0">
-				<%= radio_button "$name!filter_combine" => 'union', id => "$name!union_check" =%>
-				<%= label_for "$name!union_check" => maketext('Union'), class => 'col-form-label-sm p-1 pt-0' =%>
-			</div>
-		</div>
+		<%= label_for "$name!filter" => maketext('Filter(s):'),
+			class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' =%>
 		<div class="col-10">
 			<%= select_field "$name!filter" => $filters, id => "$name!filter", class => 'form-select form-select-sm',
 				multiple => undef, size => 5 =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<div class="offset-2 col-10">
+			<div class="form-check form-check-inline">
+				<%= radio_button "$name!filter_combine" => 1, id => "$name!intersect_check", checked => undef,
+					class => 'form-check-input' =%>
+				<%= label_for "$name!intersect_check" => maketext('Intersect'), class => 'form-check-label' =%>
+			</div>
+			<div class="form-check form-check-inline">
+				<%= radio_button "$name!filter_combine" => 0, id => "$name!union_check",
+					class => 'form-check-input' =%>
+				<%= label_for "$name!union_check" => maketext('Union'), class => 'form-check-label' =%>
+			</div>
 		</div>
 	</div>
 	<div>

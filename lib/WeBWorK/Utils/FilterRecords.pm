@@ -148,11 +148,12 @@ sub getFiltersForClass {
 	return \@filters;
 }
 
-=item filterRecords($c, $filter_combine, $filters, @records)
+=item filterRecords($c, $intersect, $filters, @records)
 
 Given a list of filters and a list of records, returns a list of the records
-after the selected filters are applied. C<$filter_combine> should be 'union'
-or 'intersect'.
+after the selected filters are applied. If C<$intersect> is true then the
+intersection of the records that match the filters is returned.  Otherwise the
+union of the records that match the filters is returned.
 
 C<$filters> should be a reference to an array of filters or be undefined.
 
@@ -161,7 +162,7 @@ C<$filters> should be a reference to an array of filters or be undefined.
 =cut
 
 sub filterRecords {
-	my ($c, $filter_combine, $filters, @records) = @_;
+	my ($c, $intersect, $filters, @records) = @_;
 
 	return unless @records;
 
@@ -180,7 +181,6 @@ sub filterRecords {
 			$c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } }))
 		: ();
 
-	my $intersect       = ($filter_combine eq 'intersect');
 	my @filteredRecords = $intersect ? @records : ();
 	if ($intersect) {
 		for my $filter (@filtersToUse) {
