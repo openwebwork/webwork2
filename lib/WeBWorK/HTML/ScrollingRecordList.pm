@@ -79,7 +79,7 @@ sub scrollingRecordList ($options, @records) {
 			$c->param("$name!format") || $options{default_format},
 			sortRecords(
 				$c->param("$name!sort") || $options{default_sort} || (@$sorts ? $sorts->[0][1] : ''),
-				filterRecords($c, \@selected_filters, @records)
+				filterRecords($c, $c->param("$name!filter_combine") // 'intersect', \@selected_filters, @records)
 			)
 		);
 	}

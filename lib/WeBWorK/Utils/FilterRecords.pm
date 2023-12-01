@@ -148,10 +148,11 @@ sub getFiltersForClass {
 	return \@filters;
 }
 
-=item filterRecords($c, $filters, @records)
+=item filterRecords($c, $filter_combine, $filters, @records)
 
 Given a list of filters and a list of records, returns a list of the records
-after the selected filters are applied.
+after the selected filters are applied. C<$filter_combine> should be 'union'
+or 'intersect'.
 
 C<$filters> should be a reference to an array of filters or be undefined.
 
@@ -160,7 +161,7 @@ C<$filters> should be a reference to an array of filters or be undefined.
 =cut
 
 sub filterRecords {
-	my ($c, $filters, @records) = @_;
+	my ($c, $filter_combine, $filters, @records) = @_;
 
 	return unless @records;
 
@@ -179,18 +180,28 @@ sub filterRecords {
 			$c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } }))
 		: ();
 
-	my @filteredRecords;
-	for my $record (@records) {
+	my $intersect       = ($filter_combine eq 'intersect');
+	my @filteredRecords = $intersect ? @records : ();
+	if ($intersect) {
 		for my $filter (@filtersToUse) {
 			my ($name, $value) = split(/:/, $filter);
 			# permission level is handled differently
 			if ($name eq 'permission') {
-				if ($permissionName{ $permissionLevels{ $record->user_id } } eq $value) {
+				@filteredRecords =
+					grep { $permissionName{ $permissionLevels{ $_->user_id } } eq $value } @filteredRecords;
+			} else {
+				@filteredRecords = grep { $_->$name eq $value } @filteredRecords;
+			}
+		}
+	} else {
+		for my $record (@records) {
+			for my $filter (@filtersToUse) {
+				my ($name, $value) = split(/:/, $filter);
+				# permission level is handled differently
+				if ($name eq 'permission' && $permissionName{ $permissionLevels{ $record->user_id } } eq $value) {
 					push @filteredRecords, $record;
 					last;    # Only add a record once.
-				}
-			} else {
-				if ($record->$name eq $value) {
+				} elsif ($name ne 'permission' && $record->$name eq $value) {
 					push @filteredRecords, $record;
 					last;    # Only add a record once.
 				}
