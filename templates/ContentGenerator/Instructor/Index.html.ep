@@ -11,12 +11,9 @@
 % }
 %
 <p>
-	<%= maketext(
-		'Use the interface below to quickly access commonly-used instructor tools, '
-			. 'or select a tool from the list to the left.'
-	) =%>
+	<%= maketext('Use the interface below to quickly access commonly-used instructor tools.') =%>
 	<br>
-	<%= maketext('Select user(s) and/or set(s) below and click the action button of your choice.') =%>
+	<%= maketext('Select user(s) and/or set(s), and click the action button of your choice below.') =%>
 </p>
 %
 <%= form_for current_route, method => 'POST', id => 'instructor-tools-form', begin =%>
@@ -211,7 +208,7 @@
 						name       => 'show_answers',
 						class      => 'btn btn-sm btn-secondary col-2' =%>
 					<span class="input-group-text flex-grow-1">\
-						<%== maketext('answers for <strong>selected</strong> users, for <strong>selected</strong> sets') =%>\
+						<%== maketext('answer log for <strong>selected</strong> users, for <strong>selected</strong> sets') =%>\
 					</span>
 				</div>
 				<div class="input-group input-group-sm mb-2">
@@ -220,7 +217,7 @@
 						class      => 'btn btn-sm btn-secondary col-2',
 						formaction => $c->systemLink(url_for 'hardcopy') =%>
 					<span class="input-group-text flex-grow-1">\
-						<%== maketext('PDF for <strong>selected</strong> users, for <strong>selected</strong> sets') =%>\
+						<%== maketext('PDF hardcopy for <strong>selected</strong> users, for <strong>selected</strong> sets') =%>\
 					</span>
 				</div>
 			</div>

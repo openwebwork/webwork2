@@ -29,6 +29,6 @@
 		. 'selected using ctrl-click or shift-click.  The action buttons are grouped into three categories.  The '
 		. 'first is a set of actions that act on the selected users, the second is a set of actions for acting on a '
 		. 'combination of sets and users, and the third is a set of actions that act on the selected sets.  If an '
-		. 'invalid number of users or sets are selected, the action will not be preformed, and an error message '
+		. 'invalid number of users or sets are selected, the action will not be performed, and an error message '
 		. 'will be placed on the page.') =%>
 </p>
