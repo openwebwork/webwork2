@@ -113,7 +113,8 @@ sub getFiltersForClass {
 			for my $role (sortByName(undef, keys %roles)) {
 				my @statuses = keys %{ $c->ce->{statuses} };
 				for (@statuses) {
-					push @filters, [ "Enrollment Status: $_" => "status:$role" ] if ($c->ce->{statuses}{$_}{abbrevs}[0] eq $role);
+					push @filters, [ "Enrollment Status: $_" => "status:$role" ]
+						if ($c->ce->{statuses}{$_}{abbrevs}[0] eq $role);
 				}
 			}
 		}
