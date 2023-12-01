@@ -468,12 +468,12 @@ my %routeParameters = (
 		path   => '/achievement_list'
 	},
 	instructor_achievement_editor => {
-		title  => '[_5]',
+		title  => 'Achievement Evaluator for achievement [_5]',
 		module => 'Instructor::AchievementEditor',
 		path   => '/#achievementID/editor'
 	},
 	instructor_achievement_user_editor => {
-		title  => x('Achievement User Editor'),
+		title  => x('Achievement Users for [_5]'),
 		module => 'Instructor::AchievementUserEditor',
 		path   => '/#achievementID/users'
 	},

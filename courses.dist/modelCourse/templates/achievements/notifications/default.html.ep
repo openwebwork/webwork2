@@ -1,10 +1,12 @@
-$FN
+<%= $user->first_name %>
 
 Congratulations, you just earned the "<%= $achievement->{name} %>" achievement!
 
 <%= $achievement->{description} %>
 
+% if ($nextLevelPoints) {
 You have <%= $nextLevelPoints - $pointsEarned %> points remaining until your next level-up.
 
+% }
 Great job!
 --Prof. X

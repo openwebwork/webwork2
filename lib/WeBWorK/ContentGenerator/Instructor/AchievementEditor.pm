@@ -103,10 +103,6 @@ sub initialize ($c) {
 	return;
 }
 
-sub page_title ($c) {
-	return $c->maketext('Achievement Evaluator for achievement [_1]', $c->stash('achievementID'));
-}
-
 # Convert long paths to [ACHEVDIR]
 sub shortPath ($c, $file) {
 	my $ache = $c->ce->{courseDirs}{achievements};

@@ -264,7 +264,7 @@ sub checkForAchievements ($problem_in, $pg, $c, %options) {
 					pointsEarned    => $achievementPoints,
 					remote_host     => $c->tx->remote_address || "UNKNOWN",
 				} ]
-			) if ($achievement->email_template);
+			) if ($ce->{mail}{achievementEmailFrom} && $achievement->email_template);
 		}
 
 		#update counter, nfreeze_base64 localData and store

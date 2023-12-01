@@ -45,16 +45,16 @@ sub pre_header_initialize ($c) {
 	return unless ($c->authz->hasPermissions($c->param('user'), 'edit_achievements'));
 
 	# Get the achievement
-	my $achievement = $c->db->getAchievement($achievementID);
+	$c->{achievement} = $c->db->getAchievement($achievementID);
 
-	if (!$achievement) {
-		$c->addbadmessage($c->maketext("Achievement [_1] not found!", $achievementID));
+	if (!$c->{achievement}) {
+		$c->addbadmessage($c->maketext('Achievement [_1] not found!', $achievementID));
 		return;
 	}
 
-	$c->{achievement} = $achievement;
-	my $template_filename = $achievement->email_template || "default.html.ep";
-	$c->{sourceFilePath} = $c->ce->{courseDirs}{achievements} . "/$template_filename";
+	$c->{sourceFilePath} =
+		$c->ce->{courseDirs}{achievement_notifications} . '/'
+		. ($c->{achievement}->email_template || 'default.html.ep');
 
 	my $actionID = $c->param('action');
 
@@ -79,14 +79,14 @@ sub initialize ($c) {
 	$c->addmessage($c->param('status_message') || '');    # Record status messages carried over from a redirect
 
 	# Check source file path
-	if (not(-e $sourceFilePath)) {
+	if (!-e $sourceFilePath) {
 		$c->addbadmessage($c->maketext('The file [_1] cannot be found.', $sourceFilePath));
 		return;
 	}
 
 	# Find the text for the achievement.
 	unless ($c->stash('achievementNotification') =~ /\S/) {
-		unless (path_is_subdir($sourceFilePath, $c->ce->{courseDirs}{achievements}, 1)) {
+		unless (path_is_subdir($sourceFilePath, $c->ce->{courseDirs}{achievement_notifications}, 1)) {
 			$c->addbadmessage('Path is Unsafe!');
 			return;
 		}
@@ -98,49 +98,37 @@ sub initialize ($c) {
 	return;
 }
 
-# Convert long paths to [ACHEVDIR]
+# Convert long paths to [ACHEVNOTIFYDIR]
 sub shortPath ($c, $file) {
-	my $ache = $c->ce->{courseDirs}{achievements};
-	$file =~ s|^$ache|[ACHEVDIR]|;
-	return $file;
+	my $achievementsDir = $c->ce->{courseDirs}{achievement_notifications};
+	return $file =~ s|^$achievementsDir|[ACHEVNOTIFYDIR]|r;
 }
 
 sub getRelativeSourceFilePath ($c, $sourceFilePath) {
-	my $achievementsDir = $c->ce->{courseDirs}{achievements};
-	$sourceFilePath =~ s|^${achievementsDir}/*||;    # remove templates path and any slashes that follow
-	return $sourceFilePath;
+	my $achievementsDir = $c->ce->{courseDirs}{achievement_notifications};
+	return $sourceFilePath =~ s|^$achievementsDir/*||r;    # remove templates path and any slashes that follow
 }
 
 # saveFileChanges does most of the work. It is a separate method so that it can
 # be called from either pre_header_initialize or initilize, depending on
 # whether a redirect is needed or not.
-sub saveFileChanges ($c, $outputFilePath, $achievementNotification = undef) {
+sub saveFileChanges ($c, $outputFilePath) {
 	my $ce = $c->ce;
-
-	if (ref($achievementNotification)) {
-		$achievementNotification = ${$achievementNotification};
-	} elsif (!not_blank($achievementNotification)) {    # if the achievementNotification is undefined or empty
-		$achievementNotification = $c->stash('achievementNotification');
-	}
 
 	unless (not_blank($outputFilePath)) {
 		$c->addbadmessage($c->maketext('You must specify an file name in order to save a new file.'));
 		return;
 	}
 
-	# write changes to the approriate files
-	# FIXME  make sure that the permissions are set correctly!!!
-	# Make sure that the warning is being transmitted properly.
-
 	# make sure any missing directories are created
-	WeBWorK::Utils::surePathToFile($ce->{courseDirs}{achievements}, $outputFilePath);
+	WeBWorK::Utils::surePathToFile($ce->{courseDirs}{achievement_notifications}, $outputFilePath);
 	die 'outputFilePath is unsafe!'
-		unless path_is_subdir($outputFilePath, $ce->{courseDirs}{achievements}, 1);
-
+		unless path_is_subdir($outputFilePath, $ce->{courseDirs}{achievement_notifications}, 1);
 	eval {
+		# Write changes to the file.
 		open my $OUTPUTFILE, '>', $outputFilePath
 			or die "Failed to open $outputFilePath";
-		print $OUTPUTFILE $achievementNotification;
+		print $OUTPUTFILE $c->stash('achievementNotification');
 		close $OUTPUTFILE;
 	};
 	my $writeFileErrors = $@ if $@;
@@ -154,16 +142,16 @@ sub saveFileChanges ($c, $outputFilePath, $achievementNotification = undef) {
 		my $errorMessage;
 
 		# Check why we failed to give better error messages
-		if (not -w $ce->{courseDirs}{achievements}) {
+		if (!-w $ce->{courseDirs}{achievement_notifications}) {
 			$errorMessage = $c->maketext(
 				'Write permissions have not been enabled in the templates directory.  No changes can be made.');
-		} elsif (not -w $currentDirectory) {
+		} elsif (!-w $currentDirectory) {
 			$errorMessage = $c->maketext(
 				'Write permissions have not been enabled in "[_1]".  '
 					. 'Changes must be saved to a different directory for viewing.',
 				$c->shortPath($currentDirectory)
 			);
-		} elsif (-e $outputFilePath and not -w $outputFilePath) {
+		} elsif (-e $outputFilePath && !-w $outputFilePath) {
 			$errorMessage = $c->maketext(
 				'Write permissions have not been enabled for "[_1]".  '
 					. 'Changes must be saved to another file for viewing.',
@@ -184,8 +172,7 @@ sub saveFileChanges ($c, $outputFilePath, $achievementNotification = undef) {
 
 sub save_handler ($c) {
 	# Grab the achievementNotification from the form in order to save it to the source path
-	$c->stash->{achievementNotification} =
-		fix_newlines($c->param('achievementNotification'));
+	$c->stash->{achievementNotification} = fix_newlines($c->param('achievementNotification'));
 
 	# Construct the output file path
 	$c->saveFileChanges($c->{sourceFilePath});
@@ -193,117 +180,77 @@ sub save_handler ($c) {
 }
 
 sub save_as_handler ($c) {
-	my $db = $c->db;
-	$c->{status_message} = $c->c;    ## DPVC -- remove bogus old messages
+	$c->{status_message} = $c->c;
 	my $courseName        = $c->stash('courseID');
 	my $achievementName   = $c->stash('achievementID');
 	my $effectiveUserName = $c->param('effectiveUser');
 
-	my $do_not_save         = 0;
-	my $saveMode            = $c->param('action.save_as.saveMode')    || 'no_save_mode_selected';
 	my $new_file_name       = $c->param('action.save_as.target_file') || '';
-	my $sourceFilePath      = $c->param('action.save_as.source_file') || '';
 	my $targetAchievementID = $c->param('action.save_as.id')          || '';
 
-	$c->{sourceFilePath} = $sourceFilePath;    # store for use in saveFileChanges
-	$new_file_name =~ s/^\s*//;                #remove initial and final white space
-	$new_file_name =~ s/\s*$//;
-	if ($new_file_name !~ /\S/) {              # need a non-blank file name
-		$do_not_save = 1;
+	$new_file_name =~ s/^\s*|\s*$//g;    # remove initial and final white space
+	if ($new_file_name !~ /\S/) {        # need a non-blank file name
 		$c->addbadmessage($c->maketext('Please specify a file to save to.'));
+		return;
 	}
 
 	# Grab the achievementNotification from the form in order to save it to a new permanent file
-	$c->stash->{achievementNotification} =
-		fix_newlines($c->param('achievementNotification'));
-	warn 'achievement contents is empty'
+	$c->stash->{achievementNotification} = fix_newlines($c->param('achievementNotification'));
+	$c->addbadmessage($c->maketext('Achievement notification contents is empty.'))
 		unless $c->stash->{achievementNotification};
 
-	# Rescue the user in case they forgot to end the file name with .ep
-	$new_file_name =~ s/\.ep$//;               # remove it if it is there
-	$new_file_name .= '.ep';                   # put it there
+	# Rescue the user in case they forgot to end the file name with .html.ep
+	$new_file_name =~ s/(\.html)?(\.ep)?$/.html.ep/;
 
-	# Construct the output file path
-	my $outputFilePath = $c->ce->{courseDirs}{achievements} . '/' . $new_file_name;
-	if (defined $outputFilePath and -e $outputFilePath) {
-
-		# setting $do_not_save stops saving and any redirects
-		$do_not_save = 1;
+	# Construct the output file path.
+	my $outputFilePath = $c->ce->{courseDirs}{achievement_notifications} . '/' . $new_file_name;
+	if (defined $outputFilePath && -e $outputFilePath) {
 		$c->addbadmessage($c->maketext(
 			'File "[_1]" exists.  File not saved.  No changes have been made.',
 			$c->shortPath($outputFilePath)
 		));
-	} elsif ($saveMode eq 'use_in_new' && !$targetAchievementID) {
-		$c->addbadmessage(
-			$c->maketext('No new Achievement ID specified.  No new achievement created.  File not saved.'));
-		$do_not_save = 1;
-
-	} elsif ($saveMode eq 'use_in_new'
-		&& $db->existsAchievement($targetAchievementID))
-	{
-		$c->addbadmessage($c->maketext('Achievement ID exists!  No new achievement created.  File not saved.'));
-		$do_not_save = 1;
+		return;
 	} else {
 		$c->{editFilePath}  = $outputFilePath;
 		$c->{inputFilePath} = '';
 	}
 
-	return '' if $do_not_save;
-
-	#Save changes
 	$c->saveFileChanges($outputFilePath);
 
-	if ($saveMode eq 'use_in_current' and -r $outputFilePath) {
-
-		# Modify evaluator path in current achievement
-		my $achievement = $c->db->getAchievement($achievementName);
-		$achievement->email_template($new_file_name);
-		if ($c->db->putAchievement($achievement)) {
-			$c->addgoodmessage($c->maketext(
-				'The evaluator for [_1] has been renamed to "[_2]".', $achievementName,
-				$c->shortPath($outputFilePath)
-			));
-		} else {
-			$c->addbadmessage($c->maketext(
-				'Unable to change the evaluator for set [_1]. Unknown error.', $achievementName));
-		}
-
-	} elsif ($saveMode eq 'dont_use') {
-		# Don't change any achievements - just report
-		$c->addgoodmessage($c->maketext('A new file has been created at "[_1]"', $c->shortPath($outputFilePath)));
+	# Modify achievement notification template path for the current achievement
+	$c->{achievement}->email_template($new_file_name);
+	if ($c->db->putAchievement($c->{achievement})) {
+		$c->addgoodmessage($c->maketext(
+			'The achievement notification template for [_1] has been renamed to "[_2]".', $achievementName,
+			$c->shortPath($outputFilePath)
+		));
 	} else {
-		$c->addbadmessage($c->maketext(q{Don't recognize saveMode: |[_1]|. Unknown error.}, $saveMode));
+		$c->addbadmessage($c->maketext(
+			'Unable to change the achievement notification template for achivement [_1]. Unknown error.',
+			$achievementName
+		));
 	}
 
-	# Set up redirect
-	# The redirect gives the server time to detect that the new file exists.
+	# A redirect is needed to ensure that all data and parameters for page display are updated correctly.
+	# FIXME: This could be done without a redirect if the data and parameters were updated here instead.
 	$c->reply_with_redirect($c->systemLink(
-		$c->url_for(
-			'instructor_achievement_notification', achievementID => $achievementName
-		),
-		params => {
-			sourceFilePath => $c->getRelativeSourceFilePath($outputFilePath),
-			status_message => $c->{status_message}->join('')
-		}
+		$c->url_for('instructor_achievement_notification', achievementID => $achievementName),
+		params => { status_message => $c->{status_message}->join('') }
 	));
 	return;
 }
 
 # use an existing template file
 sub existing_handler ($c) {
-	my $db            = $c->db;
-	my $ce            = $c->ce;
 	my $achievementID = $c->stash('achievementID');
 
-	# get the desired file name from formdata
+	# Get the desired file name from form data.
 	my $sourceFile = $c->param('action.existing.target_file') || '';
 
-	if (-e $ce->{courseDirs}{achievements} . "/$sourceFile") {
-
-		# if it exists, update the achievement to use the existing email template
-		my $achievement = $db->getAchievement($achievementID);
-		$achievement->email_template($sourceFile);
-		if ($db->putAchievement($achievement)) {
+	if (-e $c->ce->{courseDirs}{achievement_notifications} . "/$sourceFile") {
+		# If it exists, update the achievement to use the existing email template.
+		$c->{achievement}->email_template($sourceFile);
+		if ($c->db->putAchievement($c->{achievement})) {
 			$c->addgoodmessage($c->maketext(
 				'The notification for [_1] has been changed to "[_2]".', $achievementID, $sourceFile));
 		} else {
@@ -312,43 +259,37 @@ sub existing_handler ($c) {
 		}
 	} else {
 		$c->addbadmessage($c->maketext('The file "[_1]" cannot be found.', $sourceFile));
-		return;
 	}
 
-	# is this necessary? the achievement DID update...
+	# A redirect is needed to ensure that all data and parameters for page display are updated correctly.
+	# FIXME: This could be done without a redirect if the data and parameters were updated here instead.
 	$c->reply_with_redirect($c->systemLink(
-		$c->url_for(
-			'instructor_achievement_notification', achievementID => $achievementID
-		),
-		params => {
-			status_message => $c->{status_message}->join(''),
-		}
+		$c->url_for('instructor_achievement_notification', achievementID => $achievementID),
+		params => { status_message => $c->{status_message}->join('') }
 	));
 	return;
 }
 
 sub disable_handler ($c) {
-	my $db            = $c->db;
-	my $ce            = $c->ce;
-	my $achievementID = $c->stash('achievementID');
+	$c->{achievement}->email_template('');
 
-	my $achievement = $c->db->getAchievement($achievementID);
-	$achievement->email_template('');
+	if ($c->db->putAchievement($c->{achievement})) {
+		$c->addgoodmessage($c->maketext(
+			'The achievement notification template for achievement [_1] has been disabled.',
+			$c->stash('achievementID')
+		));
 
-	if ($c->db->putAchievement($achievement)) {
-		$c->addgoodmessage($c->maketext('The evaluator for [_1] has been disabled.', $achievementID));
-
-		# redirect to the instructor_achievement_list
+		# Redirect to the instructor_achievement_list.
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('instructor_achievement_list'),
-			params => {
-				status_message => $c->{status_message}->join('')
-			}
+			params => { status_message => $c->{status_message}->join('') }
 		));
 	} else {
-		$c->addbadmessage($c->maketext('Unable to disable the evaluator for [_1]. Unknown error.', $achievementID));
+		$c->addbadmessage($c->maketext(
+			'Unable to disable the achievement notification template for achievement [_1]. Unknown error.',
+			$c->stash('achievementID')
+		));
 	}
-
 }
 
 1;
