@@ -1,28 +1,28 @@
 <div class="card p-2">
 	<div class="row mb-2">
 		<%= label_for "$name!sort" => maketext('Sort By:'),
-			class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' =%>
-		<div class="col-10">
+			class => 'col-form-label col-form-label-sm col-2 col-lg-2 col-md-12 pe-1 text-nowrap' =%>
+		<div class="col-10 col-lg-10 col-md-12">
 			<%= select_field "$name!sort" => $sorts, id => "$name!sort", class => 'form-select form-select-sm' =%>
 		</div>
 	</div>
 	<div class="row mb-2">
 		<%= label_for "$name!format" => maketext('Format:'),
-			class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' =%>
-		<div class="col-10">
+			class => 'col-form-label col-form-label-sm col-2 col-lg-2 col-md-12 pe-1 text-nowrap' =%>
+		<div class="col-10 col-lg-10 col-md-12">
 			<%= select_field "$name!format" => $formats, id => "$name!format", class => 'form-select form-select-sm' =%>
 		</div>
 	</div>
 	<div class="row mb-2">
 		<%= label_for "$name!filter" => maketext('Filter(s):'),
-			class => 'col-form-label col-form-label-sm col-2 pe-1 text-nowrap' =%>
-		<div class="col-10">
+			class => 'col-form-label col-form-label-sm col-2 col-lg-2 col-md-12 pe-1 text-nowrap' =%>
+		<div class="col-10 col-lg-10 col-md-12">
 			<%= select_field "$name!filter" => $filters, id => "$name!filter", class => 'form-select form-select-sm',
 				multiple => undef, size => 5 =%>
 		</div>
 	</div>
 	<div class="row mb-2">
-		<div class="offset-2 col-10">
+		<div class="offset-lg-2 col-10 col-lg-10 col-md-12">
 			<div class="form-check form-check-inline">
 				<%= radio_button "$name!filter_combine" => 1, id => "$name!intersect_check", checked => undef,
 					class => 'form-check-input' =%>
