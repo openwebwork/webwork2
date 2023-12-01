@@ -87,13 +87,15 @@ sub getFiltersForClass {
 	if (ref $records[0] eq 'WeBWorK::DB::Record::User') {
 		my (%sections, %recitations, %permissions, %roles);
 
-		my %permissionName = reverse %{ $c->ce->{userRoles} };
 		for my $user (@records) {
 			++$sections{ $user->section };
 			++$recitations{ $user->recitation };
 			++$roles{ $user->status };
-			++$permissions{ $permissionName{ $c->db->getPermissionLevel($user->user_id)->permission } };
 		}
+
+		my %permissionName = reverse %{ $c->ce->{userRoles} };
+		++$permissions{ $permissionName{$_} }
+			for map { $_->permission } $c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
 
 		if (keys %sections > 1) {
 			for my $sec (sortByName(undef, keys %sections)) {
@@ -167,14 +169,22 @@ sub filterRecords {
 		return @records;
 	}
 
+	my %permissionName = reverse %{ $c->ce->{userRoles} };
+
+	# Only query the database for permission levels if a permission level filter is in use.
+	my %permissionLevels =
+		(grep {/^permission:/} @filtersToUse)
+		? (map { $_->user_id => $_->permission }
+			$c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } }))
+		: ();
+
 	my @filteredRecords;
 	for my $record (@records) {
 		for my $filter (@filtersToUse) {
 			my ($name, $value) = split(/:/, $filter);
 			# permission level is handled differently
 			if ($name eq 'permission') {
-				my %permissionName = reverse %{ $c->ce->{userRoles} };
-				if ($permissionName{ $c->db->getPermissionLevel($record->user_id)->permission } eq $value) {
+				if ($permissionName{ $permissionLevels{ $record->user_id } } eq $value) {
 					push @filteredRecords, $record;
 					last;    # Only add a record once.
 				}
