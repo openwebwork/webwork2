@@ -209,5 +209,5 @@
 	[ 95, 75, 50, 25, 5, 1 ],
 	$attemptsList,
 	[ map { link_to maketext('Problem [_1]', $_->{prettyID}) => $_->{statsLink} } @$problems ],
-   	reverse => 1
+	reverse => 1
 ) =%>

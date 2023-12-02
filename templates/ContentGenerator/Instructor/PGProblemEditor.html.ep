@@ -68,7 +68,7 @@
 <%= $fileInfo->() %>
 %
 <%= form_for current_route, method => 'POST', id => 'editor', name => 'editor',
-   	enctype => 'application/x-www-form-urlencoded', class => 'col-12', begin =%>
+	enctype => 'application/x-www-form-urlencoded', class => 'col-12', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	<%= hidden_field file_type => $c->{file_type} =%>
 	<%= hidden_field courseID => $c->{courseID} =%>

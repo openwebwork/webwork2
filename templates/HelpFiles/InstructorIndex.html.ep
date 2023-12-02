@@ -27,9 +27,9 @@
 <p>
 	<%= maketext('Use the "Users" and "Sets" forms to select which users and sets to act on. '
 		. 'In both cases, one can select the sort field, the format of the display list, and the filter. '
-                . 'If multiple filters are selected and the "Intersection" radio button is used, the filters will '
-                . 'be applied in sequence, narrowing the results list.  If the "Union" button is used, the updated '
-                . 'list will be the union of all results lists from the multiple filters.') =%>
+		. 'If multiple filters are selected and the "Intersection" radio button is used, the filters will '
+		. 'be applied in sequence, narrowing the results list.  If the "Union" button is used, the updated '
+		. 'list will be the union of all results lists from the multiple filters.') =%>
 </p>
 <p class="mb-0">
 	<%= maketext('Multiple users and sets can be selected using ctrl-click or shift-click.  The action buttons are '

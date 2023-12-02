@@ -1,7 +1,7 @@
 % use WeBWorK::Utils::Instructor qw(getCSVList);
 %
 <div>
-   	<div class="row mb-2">
+	<div class="row mb-2">
 		<%= label_for export_select_scope => maketext('Export which users?'),
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">

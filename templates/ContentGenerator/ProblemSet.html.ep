@@ -19,7 +19,7 @@
 % }
 %
 % my $set = $c->{set};
-% 
+%
 % # Stats message displays the current status of the set and states the next important date.
 <%= include 'ContentGenerator/Base/set_status', set => $set =%>
 %
