@@ -18,12 +18,16 @@ use Mojo::Base 'Minion::Job', -signatures;
 
 use Email::Stuffer;
 use Email::Sender::Transport::SMTP;
+use Mojo::Template;
+use Mojo::File;
 
 use WeBWorK::Debug qw(debug);
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Localize;
 use WeBWorK::Utils qw(createEmailSenderTransportSMTP);
+use WeBWorK::WWSafe;
+use WeBWorK::SafeTemplate;
 
 # send student notification that they have earned an achievement
 sub run ($job, $mail_data) {
@@ -62,22 +66,37 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 	die "User $mail_data->{recipient} does not have an email address -- skipping\n"
 		unless ($user_record->email_address =~ /\S/);
 
-	my $template = "$ce->{courseDirs}{achievement_notifications}/$mail_data->{achievement}{email_template}";
-	my $renderer = Mojo::Template->new(vars => 1);
+	my $compartment = WeBWorK::WWSafe->new;
+	$compartment->share_from('main',
+		[qw(%Encode:: %Mojo::Base:: %Mojo::Exception:: %Mojo::Template:: %WeBWorK::SafeTemplate::)]);
 
-	# what other data might need to be passed to the template?
-	my $body = $renderer->render_file(
-		$template,
-		{
-			ce              => $ce,                                               # holds achievement URLs
-			achievement     => $mail_data->{achievement},                         # full db record
-			setID           => $mail_data->{set_id},
-			nextLevelPoints => $mail_data->{nextLevelPoints},
-			pointsEarned    => $mail_data->{pointsEarned},
-			user            => $user_record,
-			user_status     => $ce->status_abbrev_to_name($user_record->status)
-		}
-	);
+	# Since the WeBWorK::SafeTemplate module can not add "no warnings 'ambiguous'", those warnings must be prevented
+	# with the following $SIG{__WARN__} handler.
+	local $SIG{__WARN__} = sub {
+		my $warning = shift;
+		return if $warning =~ /Warning: Use of "scalar" without parentheses is ambiguous/;
+		warn $warning;
+	};
+
+	our $template_vars = {
+		ce              => $ce,
+		user            => $user_record,
+		user_status     => $ce->status_abbrev_to_name($user_record->status),
+		achievement     => $mail_data->{achievement},
+		setID           => $mail_data->{set_id},
+		nextLevelPoints => $mail_data->{nextLevelPoints},
+		pointsEarned    => $mail_data->{pointsEarned}
+	};
+
+	our $template =
+		Mojo::File->new("$ce->{courseDirs}{achievement_notifications}/$mail_data->{achievement}{email_template}")
+		->slurp;
+	$compartment->share(qw($template $template_vars));
+
+	my $body = $compartment->reval(
+		'my $renderer = WeBWorK::SafeTemplate->new(vars => 1); $renderer->render($template, $template_vars);', 1);
+
+	die $@ if $@;
 
 	my $email =
 		Email::Stuffer->to($user_record->email_address)->from($from)->subject($mail_data->{subject})->text_body($body)
