@@ -17,11 +17,13 @@
 % title maketext('Set Assigner Help');
 %
 <p>
-	<%= maketext('Select Users from the left column and sets from the right column and assign or '
-		. 'unassign the given sets. The list of users or the list of sets can be reordered under the "sort" '
-		. 'option or the format of the user or set list.  Additionally, the set lists can be filtered '
-		. '(by section number or recitation).  The displayed user and set lists will only be updated '
-		. 'upon clicking "Refresh List".') =%>
+	<%= maketext('Select users from the left column and sets from the right column and assign or '
+		. 'unassign the given sets. The list of users or the list of sets can be reordered using the "Sort By" '
+		. 'option, and presented using a chosen "Format".  Additionally, the user and set lists can be filtered. '
+                . 'If multiple filters are selected and the "Intersection" radio button is used, the filters will '
+                . 'be applied in sequence, narrowing the results list.  If the "Union" button is used, the updated '
+                . 'list will be the union of all results lists from the multiple filters.'
+		. 'The displayed user and set lists will only be updated upon clicking "Refresh List".') =%>
 </p>
 <p class="mb-0">
 	<%= maketext('Multiple users or sets may be selected by holding down the shift key or the ctrl key while '
