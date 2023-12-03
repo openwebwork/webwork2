@@ -51,7 +51,7 @@ sub hardcopyRenderedProblem {
 	my $userID   = $ws->{inputs_ref}{user};
 
 	# Create the parent directory for the temporary working directory.
-	my $temp_dir_parent_path = path("$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID");
+	my $temp_dir_parent_path = Mojo::File->new("$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID");
 	eval { $temp_dir_parent_path->make_path };
 	if ($@) {
 		push(@errors, "Couldn't create hardcopy directory $temp_dir_parent_path: $@");
@@ -124,24 +124,23 @@ sub hardcopyRenderedProblem {
 # This subroutine assumes that the TeX source file is located at $working_dir/hardcopy.tex.
 sub generate_hardcopy_tex {
 	my ($ws, $working_dir, $errors) = @_;
-
 	my $src_file = $working_dir->child('hardcopy.tex');
 
 	# Copy the common tex files into the working directory
 	my $ce            = $ws->c->ce;
-	my $assetsTex_dir = path($ce->{webworkDirs}{assetsTex});
+	my $assetsTex_dir = Mojo::File->new($ce->{webworkDirs}{assetsTex});
 	for (qw{webwork2.sty webwork_logo.png}) {
 		eval { $assetsTex_dir->child($_)->copy_to($working_dir) };
 		push(@$errors, qq{Failed to copy "$ce->{webworkDirs}{assetsTex}/$_" into directory "$working_dir": $@})
 			if $@;
 	}
-	my $pgAssetsTex_dir = path($ce->{pg}{directories}{assetsTex});
+	my $pgAssetsTex_dir = Mojo::File->new($ce->{pg}{directories}{assetsTex});
 	for (qw{pg.sty PGML.tex CAPA.tex}) {
 		eval { $pgAssetsTex_dir->child($_)->copy_to($working_dir) };
 		push(@$errors, qq{Failed to copy "$ce->{pg}{directories}{assetsTex}/$_" into directory "$working_dir": $@})
 			if $@;
 	}
-	my $pgsty = path("$ce->{pg}{directories}{assetsTex}/pg.sty");
+	my $pgsty = Mojo::File->new("$ce->{pg}{directories}{assetsTex}/pg.sty");
 	eval { $pgsty->copy_to($working_dir) };
 	push(@$errors, qq{Failed to copy "$ce->{pg}{directories}{assetsTex}/pg.sty" into directory "$working_dir": $@})
 		if $@;
@@ -152,12 +151,11 @@ sub generate_hardcopy_tex {
 		my $data = eval { $src_file->slurp };
 		unless ($@) {
 			for my $resource (keys %$resource_list) {
-				my $file_path = path($resource_list->{$resource});
+				my $file_path = Mojo::File->new($resource_list->{$resource});
 				$data =~ s{$file_path}{$file_path->basename}ge;
 
 				eval { $file_path->copy_to($working_dir) };
-				push(@$errors, qq{Failed to copy image "$file_path" into directory "$working_dir": $@})
-					if $@;
+				push(@$errors, qq{Failed to copy image "$file_path" into directory "$working_dir": $@}) if $@;
 			}
 
 			# Rewrite the tex file with the image paths stripped.
@@ -173,13 +171,12 @@ sub generate_hardcopy_tex {
 	push(@$errors, "Failed to generate error log file: $@")                                     if $@;
 
 	# Create a zip archive of the bundle directory
-	my $zip = Archive::Zip::SimpleZip->new($working_dir->child('hardcopy.zip')->to_string);
+	my $zip = Archive::Zip::SimpleZip->new($working_dir->dirname->child('hardcopy.zip')->to_string);
 	unless ($zip) {
-		push(@$errors, "Failed to make a zip file at " . $working_dir->child('hardcopy.zip')->to_string);
+		push(@$errors, "Failed to make a zip file at " . $working_dir->dirname->child('hardcopy.zip')->to_string);
 		return;
 	}
-
-	$zip->add($working_dir->dirname->to_string, storelinks => 1);
+	$working_dir->list->each(sub { $zip->add($_, Name => 'hardcopy/' . $_->basename); });
 	unless ($zip->close) {
 		push(@$errors, "Failed to create zip archive of directory '$working_dir': $SimpleZipError");
 		return;

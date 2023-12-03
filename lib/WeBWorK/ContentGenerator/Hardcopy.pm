@@ -485,10 +485,7 @@ sub display_form ($c) {
 	);
 }
 
-################################################################################
-# harddcopy generating subroutines
-################################################################################
-
+# Generate a hardcopy for a given user(s) and set(s).
 async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 	my $ce    = $c->ce;
 	my $db    = $c->db;
@@ -497,7 +494,7 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 	my $courseID = $c->stash('courseID');
 	my $userID   = $c->param('user');
 
-	# Create the temporary directory.  Use mkpath to ensure it exists (mkpath is pretty much `mkdir -p`).
+	# Create the temporary directory.
 	my $temp_dir_parent_path = Mojo::File->new("$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID");
 	eval { $temp_dir_parent_path->make_path };
 	if ($@) {
@@ -539,7 +536,6 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 		$c->add_error('Failed to open file "', $c->tag('code', $tex_file_path), '" for writing: ', $c->tag('code', $!));
 		$c->delete_temp_dir($temp_dir_path);
 		return;
-
 	}
 
 	# If no problems were successfully rendered, we can't continue.
@@ -649,7 +645,7 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	my $bundle_path = Mojo::File->new("$temp_dir_path/$final_file_basename");
 
 	# Create directory for the tex bundle
-	eval { $bundle_path->mkdir };
+	eval { $bundle_path->make_path };
 	if ($@) {
 		$c->add_error(
 			'Failed to create directory "',
@@ -675,7 +671,7 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	# Copy the common tex files into the bundle directory
 	my $ce = $c->ce;
 	for (qw{webwork2.sty webwork_logo.png}) {
-		eval { Mojo::File("$ce->{webworkDirs}{assetsTex}/$_")->copy_to($bundle_path) };
+		eval { Mojo::File->new("$ce->{webworkDirs}{assetsTex}/$_")->copy_to($bundle_path) };
 		if ($@) {
 			$c->add_error(
 				'Failed to copy "',
@@ -726,8 +722,7 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 			}
 
 			# Rewrite the tex file with the image paths stripped.
-			open(my $out_fh, ">", "$bundle_path/$src_name")
-				or warn "Can't open $bundle_path/$src_name for writing.";
+			open(my $out_fh, ">", "$bundle_path/$src_name") or warn "Can't open $bundle_path/$src_name for writing.";
 			print $out_fh $data;
 			close $out_fh;
 		} else {
@@ -736,8 +731,8 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	}
 
 	# Create a zip archive of the bundle directory
-	my $zip_file = "$temp_dir_path/$final_file_basename.zip";
-	my $zip      = Archive::Zip::SimpleZip->new($zip_file);
+	my $zip_file_name = "$final_file_basename.zip";
+	my $zip           = Archive::Zip::SimpleZip->new("$temp_dir_path/$zip_file_name");
 	unless ($zip) {
 		$c->add_error(
 			'Failed to create zip archive of directory "',
@@ -747,7 +742,11 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 		return;
 	}
 
-	my $ok = $zip->add($temp_dir_path, Name => "hardcopy_files", StoreLink => 1);
+	Mojo::File->new("$temp_dir_path/$final_file_basename")->list->each(sub {
+		$zip->add($_, Name => "$final_file_basename/" . $_->basename);
+	});
+	my $ok = $zip->close();
+
 	unless ($ok) {
 		$c->add_error(
 			'Failed to create zip archive of directory "',
@@ -756,8 +755,7 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 		);
 		return;
 	}
-
-	return $zip_file;
+	return $zip_file_name;
 }
 
 sub find_log_first_error ($log) {
