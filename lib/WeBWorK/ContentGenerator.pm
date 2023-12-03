@@ -122,6 +122,8 @@ async sub go ($c) {
 
 	my $tx = $c->render_later->tx;
 
+	$c->stash->{footerWidthClass} = 'col-12';
+
 	if ($c->can('pre_header_initialize')) {
 		my $pre_header_initialize = $c->pre_header_initialize;
 		await $pre_header_initialize

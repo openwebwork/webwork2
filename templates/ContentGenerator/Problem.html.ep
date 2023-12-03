@@ -67,6 +67,8 @@
 	% last;
 % }
 %
+% stash->{footerWidthClass} = 'col-lg-10';
+%
 <%== $c->post_header_text =%>
 <div id="custom_edit_message" class="row"><div class="col-lg-10"><%= $c->output_custom_edit_message %></div></div>
 <div class="row"><div id="output_summary" class="col-lg-10"><%= $c->output_summary %></div></div>

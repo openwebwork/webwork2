@@ -16,6 +16,8 @@
 	<%= maketext('Select user(s) and/or set(s), and click the action button of your choice below.') =%>
 </p>
 %
+% stash->{footerWidthClass} = 'col-xl-10';
+%
 <%= form_for current_route, method => 'POST', id => 'instructor-tools-form', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	%
