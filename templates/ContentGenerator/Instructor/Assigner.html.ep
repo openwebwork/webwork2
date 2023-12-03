@@ -14,6 +14,9 @@
 	<%= maketext('Select one or more sets and one or more users below to assign/unassign '
 		. 'each selected set to/from all selected users.') =%>
 </p>
+%
+% $c->stash->{footerWidthClass} = 'col-xl-10 col-md-12';
+%
 <%= form_for current_route, method => 'post', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	%
@@ -50,32 +53,37 @@
 				) =%>
 			</div>
 		</div>
-		<div>
-			<%= submit_button maketext('Assign selected sets to selected users'),
-				name => 'assign', class => 'btn btn-primary mb-2' =%>
-			<div class="alert alert-danger p-1 mb-2">
-				<div class="mb-1"><%= maketext('Do not unassign students unless you know what you are doing.') =%></div>
-				<div><%= maketext('There is NO undo for unassigning students.') =%></div>
-			</div>
-			<div class="d-flex align-items-center">
-				<%= submit_button maketext('Unassign selected sets from selected users'),
-					name => 'unassign', class => 'btn btn-primary me-2' =%>
-				<label class="form-check-label">
-					<%= maketext('Read only') =%>
-					<%= radio_button unassignFromAllSafety => 0, checked => undef, class => 'form-check-input mx-1' =%>
-				</label>
-				<label class="form-check-label">
-					<%= maketext('Allow unassign') =%>
-					<%= radio_button unassignFromAllSafety => 1, class => 'form-check-input mx-1' =%>
-				</label>
-			</div>
-			<div class="mt-2">
-				<%= maketext(
-					'When you unassign a set from students, you destroy all of the data for the set for those '
-						. 'students. If the set is re-assigned to these students, then they will receive new versions '
-						. 'of problems in the set.  Make sure this is what you want to do before unassigning sets '
-						. 'from students.'
-				) =%>
+		<div class="row">
+			<div class="col-xl-10 col-md-12">
+				<%= submit_button maketext('Assign selected sets to selected users'),
+					name => 'assign', class => 'btn btn-primary mb-2' =%>
+				<div class="alert alert-danger p-1 mb-2">
+					<div class="mb-1">
+						<%= maketext('Do not unassign students unless you know what you are doing.') =%>
+					</div>
+					<div><%= maketext('There is NO undo for unassigning students.') =%></div>
+				</div>
+				<div class="d-flex align-items-center">
+					<%= submit_button maketext('Unassign selected sets from selected users'),
+						name => 'unassign', class => 'btn btn-primary me-2' =%>
+					<label class="form-check-label">
+						<%= maketext('Read only') =%>
+						<%= radio_button unassignFromAllSafety => 0, checked => undef,
+							class => 'form-check-input mx-1' =%>
+					</label>
+					<label class="form-check-label">
+						<%= maketext('Allow unassign') =%>
+						<%= radio_button unassignFromAllSafety => 1, class => 'form-check-input mx-1' =%>
+					</label>
+				</div>
+				<div class="mt-2">
+					<%= maketext(
+						'When you unassign a set from students, you destroy all of the data for the set for those '
+							. 'students. If the set is re-assigned to these students, then they will receive new '
+							. 'versions of problems in the set.  Make sure this is what you want to do before '
+							. 'unassigning sets from students.'
+					) =%>
+				</div>
 			</div>
 		</div>
 	</div>
