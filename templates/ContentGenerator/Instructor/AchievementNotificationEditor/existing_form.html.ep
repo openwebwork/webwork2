@@ -1,8 +1,16 @@
+% use Mojo::File qw(path);
+%
 <div class="row align-items-center mb-2">
 	<%= label_for 'action.existing.target_file_id' => maketext('Use existing template:'),
 		class => 'col-form-label col-auto' =%>
 	<div class="col-auto">
-		<%= text_field 'action.existing.target_file' => $c->getRelativeSourceFilePath($c->{sourceFilePath}),
-			id => 'action.existing.target_file_id', size => 40, class => 'form-control form-control-sm' =%>
+		% my $relativeSourceFilePath = $c->getRelativeSourceFilePath($c->{sourceFilePath});
+		<%= select_field 'action.existing.target_file' => [
+				map { [ $_ =~ s/(\.html)?\.ep//r => $_, $_ eq $relativeSourceFilePath ? (selected => undef) : () ] }
+				@{ path($ce->{courseDirs}{achievement_notifications})->list->grep(qr/\.ep$/)
+					->map(sub { $c->getRelativeSourceFilePath($_) })->to_array }
+			],
+			id => 'action.existing.target_file_id', class => 'form-select form-select-sm d-inline w-auto',
+			dir => 'ltr' =%>
 	</div>
 </div>

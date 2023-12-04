@@ -360,11 +360,12 @@ sub updateCourseDirectories {
 
 	# These are the directories in the model course that can be copied if not found in this course.
 	my %model_course_dirs = (
-		templates         => 'templates',
-		html              => 'html',
-		achievements      => 'templates/achievements',
-		email             => 'templates/email',
-		achievements_html => 'html/achievements'
+		templates                 => 'templates',
+		html                      => 'html',
+		achievements              => 'templates/achievements',
+		achievement_notifications => 'templates/achievements/notifications',
+		email                     => 'templates/email',
+		achievements_html         => 'html/achievements'
 	);
 
 	my $permissions = path($ce->{courseDirs}{root})->stat->mode & 0777;

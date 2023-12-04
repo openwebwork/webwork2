@@ -18,12 +18,16 @@ use Mojo::Base 'Minion::Job', -signatures;
 
 use Email::Stuffer;
 use Email::Sender::Transport::SMTP;
+use Mojo::Template;
+use Mojo::File;
 
 use WeBWorK::Debug qw(debug);
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Localize;
-use WeBWorK::Utils qw/processEmailMessage createEmailSenderTransportSMTP/;
+use WeBWorK::Utils qw(createEmailSenderTransportSMTP);
+use WeBWorK::WWSafe;
+use WeBWorK::SafeTemplate;
 
 # send student notification that they have earned an achievement
 sub run ($job, $mail_data) {
@@ -47,54 +51,56 @@ sub run ($job, $mail_data) {
 	my $result_message = eval { $job->send_achievement_notification($ce, $db, $mail_data) };
 	if ($@) {
 		$job->app->log->error($job->maketext("An error occurred while trying to send email: $@"));
-		return $job->fail($job->maketext("An error occurred while trying to send email: [_1]", $@));    # fail silently
+		return $job->fail($job->maketext("An error occurred while trying to send email: [_1]", $@));
 	}
 	$job->app->log->info("Message sent to $mail_data->{recipient}");
-	return $job->finish($job->maketext("Message sent to [_1]", $mail_data->{recipient}));    # succeed silently
+	return $job->finish($job->maketext("Message sent to [_1]", $mail_data->{recipient}));
 }
 
 sub send_achievement_notification ($job, $ce, $db, $mail_data) {
-	if ($ce->{mail}{achievementEmailSender} || $ce->{mail}{smtpSender} || $ce->{mail}{set_return_path}) {
-		$mail_data->{from} =
-			$ce->{mail}{achievementEmailSender} || $ce->{mail}{smtpSender} || $ce->{mail}{set_return_path};
-	} else {
-		die "Cannot send system email without one of: mail{set_return_path} or mail{smtpSender}";
-	}
+	my $from = $ce->{mail}{achievementEmailFrom};
+	die 'Cannot send achievement email notification without mail{achievementEmailFrom}.' unless $from;
 
-	my $recipient = $mail_data->{recipient};
-	my $template  = $ce->{courseDirs}{achievements} . '/' . $mail_data->{achievement}{email_template};
-	my $renderer  = Mojo::Template->new(vars => 1);
+	my $user_record = $db->getUser($mail_data->{recipient});
+	die "Record for user $mail_data->{recipient} not found\n" unless ($user_record);
+	die "User $mail_data->{recipient} does not have an email address -- skipping\n"
+		unless ($user_record->email_address =~ /\S/);
 
-	# what other data might need to be passed to the template?
-	$mail_data->{body} = $renderer->render_file(
-		$template,
-		{
-			ce              => $ce,                             # holds achievement URLs
-			achievement     => $mail_data->{achievement},       # full db record
-			setID           => $mail_data->{set_id},
-			nextLevelPoints => $mail_data->{nextLevelPoints},
-			pointsEarned    => $mail_data->{pointsEarned},
-		}
-	);
+	my $compartment = WeBWorK::WWSafe->new;
+	$compartment->share_from('main',
+		[qw(%Encode:: %Mojo::Base:: %Mojo::Exception:: %Mojo::Template:: %WeBWorK::SafeTemplate::)]);
 
-	my $user_record = $db->getUser($recipient);
-	unless ($user_record) {
-		die "Record for user $recipient not found\n";
-	}
-	unless ($user_record->email_address =~ /\S/) {
-		die "User $recipient does not have an email address -- skipping\n";
-	}
+	# Since the WeBWorK::SafeTemplate module can not add "no warnings 'ambiguous'", those warnings must be prevented
+	# with the following $SIG{__WARN__} handler.
+	local $SIG{__WARN__} = sub {
+		my $warning = shift;
+		return if $warning =~ /Warning: Use of "scalar" without parentheses is ambiguous/;
+		warn $warning;
+	};
 
-	# parse email template similar to how it is done in SendMail.pm
-	my $msg = processEmailMessage(
-		$mail_data->{body}, $user_record,
-		$ce->status_abbrev_to_name($user_record->status),
-		$mail_data->{merge_data}
-	);
+	our $template_vars = {
+		ce              => $ce,
+		user            => $user_record,
+		user_status     => $ce->status_abbrev_to_name($user_record->status),
+		achievement     => $mail_data->{achievement},
+		setID           => $mail_data->{set_id},
+		nextLevelPoints => $mail_data->{nextLevelPoints},
+		pointsEarned    => $mail_data->{pointsEarned}
+	};
+
+	our $template =
+		Mojo::File->new("$ce->{courseDirs}{achievement_notifications}/$mail_data->{achievement}{email_template}")
+		->slurp;
+	$compartment->share(qw($template $template_vars));
+
+	my $body = $compartment->reval(
+		'my $renderer = WeBWorK::SafeTemplate->new(vars => 1); $renderer->render($template, $template_vars);', 1);
+
+	die $@ if $@;
 
 	my $email =
-		Email::Stuffer->to($user_record->email_address)->from($mail_data->{from})->subject($mail_data->{subject})
-		->text_body($msg)->header('X-Remote-Host' => $mail_data->{remote_host});
+		Email::Stuffer->to($user_record->email_address)->from($from)->subject($mail_data->{subject})->text_body($body)
+		->header('X-Remote-Host' => $mail_data->{remote_host});
 
 	$email->send_or_die({
 		transport => createEmailSenderTransportSMTP($ce),
@@ -102,7 +108,7 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 	});
 	debug 'email sent successfully to ' . $user_record->email_address;
 
-	return $job->maketext('Message sent to [_1] at [_2].', $recipient, $user_record->email_address) . "\n";
+	return $job->maketext('Message sent to [_1] at [_2].', $mail_data->{recipient}, $user_record->email_address) . "\n";
 }
 
 sub maketext ($job, @args) {
