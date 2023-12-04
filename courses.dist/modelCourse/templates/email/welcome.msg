@@ -12,7 +12,7 @@ Your username/password is:
 $LOGIN/$SID
 
 You should change your password once you have logged in by visiting
-User Settings in the sidebar navigation.
+Account Settings in the sidebar navigation.
 
 Have fun,
 Jan

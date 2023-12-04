@@ -25,7 +25,7 @@
 </p>
 
 <dl>
-	<dt><%= maketext('User Settings') %></dt>
+	<dt><%= maketext('Account Settings') %></dt>
 	<dd><%= maketext('Use this page to change your password.') =%></dd>
 	<dt><%= maketext('Course Listings') %></dt>
 	<dd><%= maketext('View/access current and archived courses.') =%></dd>
@@ -45,7 +45,7 @@
 	<dd><%= maketext('Configure which course links appear on the site landing page.') =%></dd>
 	<dt><%= maketext('Manage Locations') %></dt>
 	<dd><%= maketext('Configure ip ranges (locations) that can be used to restrict set access.') =%></dd>
-	<dt><%= maketext('User Manager') %></dt>
+	<dt><%= maketext('Accounts Manager') %></dt>
 	<dd>
 		<%= maketext('Manage instructors.  When instructors are added to a newly created course, they are also '
 			. 'added to the admin course with username "userID_courseID".') =%>

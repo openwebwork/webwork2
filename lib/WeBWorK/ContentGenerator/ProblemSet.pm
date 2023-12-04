@@ -103,9 +103,9 @@ sub nav ($c, $args) {
 	return '' unless $c->authz->hasPermissions($c->param('user'), 'navigation_allowed');
 
 	my @links = (
-		$c->maketext('Homework Sets'),
+		$c->maketext('Assignments'),
 		$c->url_for($c->app->routes->lookup($c->current_route)->parent->name),
-		$c->maketext('Homework Sets')
+		$c->maketext('Assignments')
 	);
 	return $c->tag(
 		'div',

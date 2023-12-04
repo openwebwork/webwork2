@@ -1129,7 +1129,7 @@ sub save_as_handler ($c) {
 			$c->shortPath($outputFilePath)
 		));
 		$c->addbadmessage(
-			$c->maketext('You can change the file path for this problem manually from the "Set Manager" page'))
+			$c->maketext('You can change the file path for this problem manually from the "Sets Manager" page'))
 			if defined $c->{setID};
 		$c->addgoodmessage($c->maketext(
 			'The text box now contains the source of the original problem. '

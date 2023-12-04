@@ -6,7 +6,7 @@
 % }
 %
 % unless ($authz->hasPermissions(param('user'), 'assign_problem_sets')) {
-	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to assign homework sets.') %></div>
+	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to assign sets.') %></div>
 	% last;
 % }
 %
@@ -22,7 +22,7 @@
 	</div>
 	<div class="mb-2">
 		<%== maketext(
-			"When you unassign by unchecking a student's name, you destroy all of the data for homework set [_1] "
+			"When you unassign by unchecking a student's name, you destroy all of the data for assignment [_1] "
 				. 'for this student. You will then need to reassign the set to these students and they will receive '
 				. 'new versions of the problems. Make sure this is what you want to do before unchecking students.',
 			tag('b', dir => 'ltr', format_set_name_display($setID))
@@ -89,7 +89,7 @@
 			<%== maketext(
 				'There is NO undo for this function.  Do not use it unless you know what you are doing!  '
 					. 'When you unassign a student using this button, or by unchecking their name, you destroy all '
-					. 'of the data for homework set [_1] for this student.',
+					. 'of the data for assignment [_1] for this student.',
 				tag('span', dir => 'ltr', format_set_name_display($setID))
 			) =%>
 		</div>

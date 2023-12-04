@@ -14,7 +14,7 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('User Manager Help');
+% title maketext('Accounts Manager Help');
 %
 <p>
 	<%== maketext('From this page you can <strong>add new students</strong>, <strong>edit</strong> user data '
@@ -23,7 +23,7 @@
 		. 'another course. You can also delete students from the class roster, but this cannot be undone.') =%>
 </p>
 <p>
-	<%= maketext('This page gives access to information about the student, independent of the homework sets '
+	<%= maketext('This page gives access to information about the student, independent of the assignments '
 		. 'assigned to them.') =%>
 </p>
 <p><%= maketext('To perform an action select the desired action tab and click the submit button.') %></p>
@@ -59,11 +59,11 @@
 
 	<dt><%= maketext('Add a few students to the course.') %></dt>
 	<dd>
-		<%= maketext('Click the "Add x student(s)" radio button and then click "Take action". This will take you to a '
+		<%= maketext('Enter a number of students to add, and then click "Add". This will take you to a '
 			. 'new page where the data can be entered for one or more students. It is also possible to assign the '
-			. 'student to one or more problem sets as they are being entered: simply select the homework sets from the '
+			. 'student(s) to one or more sets as they are being entered: simply select the sets from the '
 			. 'list below the data entry table. Use "command" or "control" click to select more than one '
-			. 'homework set.') =%>
+			. 'set.') =%>
 	</dd>
 
 	<dt><%= maketext('Add many students to a course from a class list.') %></dt>
@@ -98,8 +98,8 @@
 	<dd>
 		<%= maketext('To drop a student or students, select them for editing as described above and then set the '
 			. 'pop-up list to enrolled,drop, or audit. Dropped students cannot log in to the course, are not assigned '
-			. 'new homework sets and are not sent email. They can be re-enrolled simply by changing their status back '
-			. 'to enrolled. No data is lost, any homework sets assigned before they were dropped are restored '
+			. 'new sets and are not sent email. They can be re-enrolled simply by changing their status back '
+			. 'to enrolled. No data is lost, any assignments assigned before they were dropped are restored '
 			. 'unchanged.') =%>
 	</dd>
 
@@ -107,20 +107,20 @@
 	<dd>
 		<%= maketext('This should be done cautiously. Once a student is deleted from a course their data is lost '
 			. 'forever and cannot be recovered. They can be added to the course as a new student, but all of their '
-			. 'homework set assignments and homework has been permanently deleted.') =%>
+			. 'assignment data has been permanently deleted.') =%>
 	</dd>
 
 	<dt><%= maketext('Assign sets to one student') %></dt>
 	<dd>
 		<%= maketext('To assign one or more sets to an individual student click in the column "Assigned Sets" in the '
-			. q{student's row. This will take you to a page where you can assign and unassign homework sets and }
+			. q{student's row. This will take you to a page where you can assign and unassign sets and }
 			. 'change the due dates for homework on an individual basis.') =%>
 	</dd>
 
 	<dt><%= maketext('Change the due date for one student') %></dt>
 	<dd>
 		<%= maketext(q{Click on the column "Assigned Sets" in the student's row. This will take you to a page where }
-			. 'you can assign and unassign homework sets and change the due dates for homework on an '
+			. 'you can assign and unassign sets and change the due dates for homework on an '
 			. 'individual basis.') =%>
 	</dd>
 
@@ -135,42 +135,42 @@
 			. 'upper right corner of the window.') =%>
 	</dd>
 
-	<dt><%= maketext('Change the grades on a homework set for one student.') %></dt>
+	<dt><%= maketext('Change the grades on an assignment for one student.') %></dt>
 	<dd>
 		<%= maketext(q{Click first in the "Assigned Sets" column in the student's row. This will take you to a new }
-			. 'page where you will click on the link to the homework set where the grade change is to be made. (The '
+			. 'page where you will click on the link to the assignment where the grade change is to be made. (The '
 			. 'grade for each problem is listed as "status" on this third page).') =%>
 	</dd>
 
 	<dt><%= maketext('Extend the number of attempts allowed a student on a given problem.') %></dt>
 	<dd>
 		<%= maketext(q{Click first in the "Assigned Sets" column in the student's row. This will take you to a new }
-			. 'page where you will click on the link to the homework set where the grade change is to be made.') =%>
+			. 'page where you will click on the link to the assignment where the grade change is to be made.') =%>
 	</dd>
 
 	<dt><%= maketext('Assign sets to many students') %></dt>
 	<dd>
-		<%= maketext('This is done from the "Set Manager" or from the "Instructor Tools" page if you wish to '
-			. 'assign a homework set to all students or a large group of students (e.g. a section).') =%>
+		<%= maketext('This is done from the "Sets Manager" or from the "Instructor Tools" page if you wish to '
+			. 'assign a set to all students or a large group of students (e.g. a section).') =%>
 	</dd>
 
-	<dt><%= maketext('Change dates for a homework set for the whole class.') %></dt>
-	<dd><%= maketext('This is done from the "Set Manager" or from the "Instructor Tools" page.') %></dd>
+	<dt><%= maketext('Change dates for a set for the whole class.') %></dt>
+	<dd><%= maketext('This is done from the "Sets Manager" or from the "Instructor Tools" page.') %></dd>
 
-	<dt><%= maketext('Change the grading on a homework set for an entire class.') %></dt>
+	<dt><%= maketext('Change the grading on a set for an entire class.') %></dt>
 	<dd>
 		<%= maketext('You might want to do this if you want to give full credit to everyone on a particular problem '
-			. q{that was not worded correctly, or wasn't working properly. This is done from the "Set Manager" }
+			. q{that was not worded correctly, or wasn't working properly. This is done from the "Sets Manager" }
 			. 'page or the "Instructor Tools" page.') =%>
 	</dd>
 
 	<dt><%= maketext('Change the number of atttempts allowed on a problem.') %></dt>
-	<dd><%= maketext('This is done from the "Set Manager" page or the "Instructor tools" page.') %></dd>
+	<dd><%= maketext('This is done from the "Sets Manager" page or the "Instructor tools" page.') %></dd>
 </dl>
 
 <p>
 	<%= maketext('Many of these editing activities can also be done more quickly from the "Instructor Tools" page '
-		. 'where students and homework sets can be selected simultaneously. The "Instructor Tools" page is useful for '
+		. 'where students and sets can be selected simultaneously. The "Instructor Tools" page is useful for '
 		. 'quick editing of one or two students. The initial setup of the class can be done best from this page. '
 		. 'Importing and exporting class lists can only be done from this page. Deleting students can only be '
 		. 'done from this page.') =%>
@@ -190,7 +190,7 @@
 	<li>
 		<%== maketext('The <strong>Assigned sets</strong> column (x/y) indicates that x sets out of y sets avaiable '
 			. 'have been assigned to this student. Click this link to assign or unassign sets to this student, to '
-			. 'adjust due dates, or to adjust the grades on a homework set for a student.') =%>
+			. 'adjust due dates, or to adjust the grades on an assignment for a student.') =%>
 	</li>
 	<li>
 		<%== maketext('Clicking the <strong>email address</strong> link will bring up your standard email application '

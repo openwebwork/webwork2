@@ -246,7 +246,7 @@ my %routeParameters = (
 		path   => '/logout'
 	},
 	options => {
-		title        => x('User Settings'),
+		title        => x('Account Settings'),
 		module       => 'Options',
 		path         => '/options',
 		unrestricted => 1
@@ -332,7 +332,7 @@ my %routeParameters = (
 		path   => '/instructor'
 	},
 	instructor_user_list => {
-		title    => x('User Manager'),
+		title    => x('Accounts Manager'),
 		children => [qw(instructor_user_detail)],
 		module   => 'Instructor::UserList',
 		path     => '/users'
@@ -343,7 +343,7 @@ my %routeParameters = (
 		path   => '/#userID'
 	},
 	instructor_set_list => {
-		title    => x('Set Manager'),
+		title    => x('Sets Manager'),
 		children => [qw(instructor_set_detail)],
 		module   => 'Instructor::ProblemSetList',
 		path     => '/sets'
@@ -370,7 +370,7 @@ my %routeParameters = (
 		path   => '/add_users'
 	},
 	instructor_set_assigner => {
-		title  => x('Set Assigner'),
+		title  => x('Assigner Tool'),
 		module => 'Instructor::Assigner',
 		path   => '/assigner'
 	},
@@ -460,7 +460,7 @@ my %routeParameters = (
 		path   => '/student/#userID'
 	},
 	instructor_achievement_list => {
-		title    => x('Achievement Editor'),
+		title    => x('Achievements Manager'),
 		children => [qw(instructor_achievement_editor instructor_achievement_user_editor)],
 		module   => 'Instructor::AchievementList',
 		path     => '/achievement_list'

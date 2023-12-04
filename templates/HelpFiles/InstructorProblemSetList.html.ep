@@ -14,7 +14,7 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('Set Manager Help');
+% title maketext('Sets Manager Help');
 %
 <p>
 	<%= maketext('This page manages all problem sets (including quizzes/tests). '

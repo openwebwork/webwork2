@@ -14,7 +14,7 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('Set Assigner Help');
+% title maketext('Assigner Tool Help');
 %
 <p>
 	<%= maketext('Select Users from the left column and sets from the right column and assign or '

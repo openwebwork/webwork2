@@ -34,33 +34,33 @@
 			. '<strong>Assign individual sets</strong> '
 			. 'and <strong>Edit individual due dates</strong>.') =%>
 	</dd>
-	<dt><%= maketext('User Manager') %></dt>
+	<dt><%= maketext('Accounts Manager') %></dt>
 	<dd>
 		<%= maketext('Edit class roster data. Add students, edit student data, drop students from class, import '
-			. 'students from a classlist, and give user professor privileges. Access to individual homework sets.') =%>
+			. 'students from a classlist, and give user professor privileges. Access to individual assignments.') =%>
 	</dd>
-	<dt><%= maketext('Set Assigner') %></dt>
+	<dt><%= maketext('Assigner Tool') %></dt>
 	<dd><%= maketext('Assign and unassign selected exercise sets to selected users.') %></dd>
-	<dt><%= maketext('Set Manager') %></dt>
+	<dt><%= maketext('Sets Manager') %></dt>
 	<dd>
-		<%= maketext('Edit homework sets for entire class. Change homework set due dates, create new sets from a set '
-			. 'definition file, create new homework sets, make sets visible/invisible, score homework sets. Assign '
-			. 'homework sets to the class.') =%>
+		<%= maketext('Edit sets for the entire class. Change set due dates, create new sets from a set '
+			. 'definition file, create new sets, make sets visible/invisible, score assignments. Assign '
+			. 'sets to the class.') =%>
 	</dd>
 	<dt><%= maketext('Problem Editor') %></dt>
 	<dd><%= maketext('Write a new PG problem file or edit an existing one.') %></dd>
 	<dt><%= maketext('Library Browser') %></dt>
-	<dd><%= maketext('Choose problems from a library and add them to a homework set.') %></dd>
+	<dd><%= maketext('Choose problems from a library and add them to a set.') %></dd>
 	<dt><%= maketext('Statistics') %></dt>
 	<dd><%= maketext(q{View statistics of students' performance on homework either by individual or by set.}) %></dd>
 	<dt><%= maketext('Student Progress') %></dt>
 	<dd><%= maketext('View details of student perofrmance either by individual or by set.') %></dd>
 	<dt><%= maketext('Scoring Tools') %></dt>
 	<dd>
-		<%= maketext('Score one or more sets. This can also be done from the "Set Manager" or from the '
+		<%= maketext('Score one or more sets. This can also be done from the "Sets Manager" or from the '
 			. '"Instructor Tools", but the "Scoring Tools" page allows control over parameters.') =%>
 	</dd>
-	<dt><%= maketext('Achievement Editor') %></dt>
+	<dt><%= maketext('Achievements Manager') %></dt>
 	<dd>
 		<%= maketext('Edit achivements for the course. This link is only present if achievements '
 			. 'are enabled for the course.') =%>

@@ -285,7 +285,7 @@ use constant FIELD_PROPERTIES => {
 		help_text => x(
 			'This sets a number of minutes for each version of a test, once it is started.  Use "0" to indicate no '
 				. 'time limit.  If there is a time limit, then there will be an indication that this is a timed '
-				. 'test on the main "Homework Sets" page.  Additionally the student will be sent to a confirmation '
+				. 'test on the main "Assignments" page.  Additionally the student will be sent to a confirmation '
 				. 'page beefore they can begin.'
 		)
 	},
