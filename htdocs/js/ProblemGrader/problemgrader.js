@@ -104,7 +104,8 @@
 						set_id: saveData.setId,
 						version_id: saveData.versionId,
 						problem_id: saveData.problemId,
-						status: parseInt(scoreInput.value) / 100
+						status: parseInt(scoreInput.value) / 100,
+						mark_graded: true
 					}),
 					signal: controller.signal
 				});
