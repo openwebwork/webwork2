@@ -461,7 +461,7 @@ my %routeParameters = (
 		path   => '/student/#userID'
 	},
 	instructor_achievement_list => {
-		title    => x('Achievement Manager'),
+		title    => x('Achievements Manager'),
 		children =>
 			[qw(instructor_achievement_editor instructor_achievement_user_editor instructor_achievement_notification)],
 		module => 'Instructor::AchievementList',
