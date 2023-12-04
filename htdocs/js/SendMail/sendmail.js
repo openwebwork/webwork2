@@ -1,6 +1,6 @@
 (() => {
 	const previewUserNameSpan = document.getElementById('preview-user');
-	const classListSelect = document.getElementById('classList');
+	const classListSelect = document.getElementById('selected_users');
 	if (previewUserNameSpan && classListSelect) {
 		const setPreviewUser = () => {
 			if (classListSelect.selectedIndex !== -1)

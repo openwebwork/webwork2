@@ -17,18 +17,24 @@
 % title maketext('Instructor Tools Help');
 %
 <p>
-	<%= maketext('This page is a collection of tools to modify users and sets.  These tools are short cuts for '
+	<%= maketext('This page is a collection of tools to modify users and sets.  These tools are shortcuts for '
 		. 'common actions that allow selecting multiple users or sets to act on at once.  Because multiple users '
 		. 'and sets can be acted on at the same time, it is often more efficient to use this page when modifying '
-		. 'multiple items.  For example, after selecting several users and a set you can change the close date for '
-		. 'all selected users for that set.  This page also gives access to "View/Edit all sets for one user", '
+		. 'multiple items.  For example, you can change the close date for several users for an assignment. '
+		. 'This page also gives access to "Edit assignments and dates for one user", '
 		. 'which can be used to access settings for all sets including test versions for that user.') =%>
 </p>
+<p>
+	<%= maketext('Use the "Users" and "Sets" forms to select which users and sets to act on. '
+		. 'In both cases, one can select the sort field, the format of the display list, and the filter. '
+		. 'If multiple filters are selected and the "Intersection" radio button is used, the filters will '
+		. 'be applied in sequence, narrowing the results list.  If the "Union" button is used, the updated '
+		. 'list will be the union of all results lists from the multiple filters.') =%>
+</p>
 <p class="mb-0">
-	<%= maketext('Use the "Users" and "Sets" forms to select which users and sets to act on.  Multiple items can be '
-		. 'selected using ctrl-click or shift-click.  The action buttons are grouped into three categories.  The '
-		. 'first is a set of actions that act on the selected users, the second is a set of actions that act on the '
-		. 'selected sets, and the third is a set of actions for acting on a combination of sets and users.  If an '
-		. 'invalid number of users or sets are selected, the action will not be preformed, and an error message '
-		. 'will be placed on the page.') =%>
+	<%= maketext('Multiple users and sets can be selected using ctrl-click or shift-click.  The action buttons are '
+		. 'grouped into three categories.  The first is a set of actions that act on the selected users, the second is '
+		. 'a set of actions for acting on a combination of sets and users, and the third is a set of actions that act '
+		. 'on the selected sets.  If an invalid number of users or sets are selected, the action will not be '
+		. 'performed, and an error message will be placed on the page.') =%>
 </p>

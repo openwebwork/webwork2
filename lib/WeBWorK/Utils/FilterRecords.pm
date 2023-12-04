@@ -51,6 +51,7 @@ use warnings;
 use Carp;
 
 use WeBWorK::Utils qw(sortByName);
+use WeBWorK::ContentGenerator::Instructor::ProblemSetDetail qw(FIELD_PROPERTIES);
 
 our @EXPORT_OK = qw(
 	getFiltersForClass
@@ -61,12 +62,14 @@ our @EXPORT_OK = qw(
 
 =over
 
-=item getFiltersForClass($class)
+=item getFiltersForClass($c, @records)
 
 Given a list of database records, returns the filters available for those
 records.  For all database records from the WeBWorK::DB::Record::User class
-the filters are by section or recitation or no filter at all.  For all other
-classes the only filter is no filter at all.
+the filters are by section or recitation or by that user's permission level
+in the permissionLevel table. For all database records from the
+WeBWorK::DB::Record::Set class the filters are by assignment type and by
+visibility. For other classes the only filter is no filter at all.
 
 The return value is a reference to a list of two element lists. The first
 element in each list is a a string description of the filter and the second
@@ -76,39 +79,81 @@ second value argument to the Mojolicious select_field tag helper method.
 =cut
 
 sub getFiltersForClass {
-	my (@records) = @_;
+	my ($c, @records) = @_;
 
 	my @filters;
-	push @filters, [ 'Display all possible records' => 'all', selected => undef ];
+	push @filters, [ "\x{27E8}Display all possible records\x{27E9}" => 'all', selected => undef ];
 
 	if (ref $records[0] eq 'WeBWorK::DB::Record::User') {
-		my (%sections, %recitations);
+		my (%sections, %recitations, %permissions, %roles);
 
 		for my $user (@records) {
 			++$sections{ $user->section };
 			++$recitations{ $user->recitation };
+			++$roles{ $user->status };
 		}
+
+		my %permissionName = reverse %{ $c->ce->{userRoles} };
+		++$permissions{ $permissionName{$_} }
+			for map { $_->permission } $c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
 
 		if (keys %sections > 1) {
 			for my $sec (sortByName(undef, keys %sections)) {
-				push @filters, [ ($sec ne '' ? "Display section $sec" : 'Display section <blank>') => "section:$sec" ];
+				push @filters, [ 'Section: ' . ($sec ne '' ? $sec : "\x{27E8}blank\x{27E9}") => "section:$sec" ];
 			}
 		}
 
 		if (keys %recitations > 1) {
 			for my $rec (sortByName(undef, keys %recitations)) {
-				push @filters,
-					[ ($rec ne '' ? "Display recitation $rec" : 'Display recitation <blank>') => "recitation:$rec" ];
+				push @filters, [ 'Recitation: ' . ($rec ne '' ? $rec : "\x{27E8}blank\x{27E9}") => "recitation:$rec" ];
+			}
+		}
+
+		if (keys %roles > 1) {
+			for my $role (sortByName(undef, keys %roles)) {
+				my @statuses = keys %{ $c->ce->{statuses} };
+				for (@statuses) {
+					push @filters, [ "Enrollment Status: $_" => "status:$role" ]
+						if ($c->ce->{statuses}{$_}{abbrevs}[0] eq $role);
+				}
+			}
+		}
+
+		if (keys %permissions > 1) {
+			for my $perm (sortByName(undef, keys %permissions)) {
+				push @filters, [ "Permission Level: $perm" => "permission:$perm" ];
+			}
+		}
+	} elsif (ref $records[0] eq 'WeBWorK::DB::Record::Set') {
+		my (%assignment_types, %visibles);
+
+		for my $set (@records) {
+			++$assignment_types{ $set->assignment_type };
+			++$visibles{ $set->visible }
+				unless (defined $visibles{0} && $set->visible eq '' || defined $visibles{''} && $set->visible eq '0');
+		}
+
+		if (keys %assignment_types > 1) {
+			for my $type (sortByName(undef, keys %assignment_types)) {
+				push @filters, [ FIELD_PROPERTIES()->{assignment_type}{labels}{$type} => "assignment_type:$type" ];
+			}
+		}
+
+		if (keys %visibles > 1) {
+			for my $vis (sortByName(undef, keys %visibles)) {
+				push @filters, [ ($vis ? 'Visible' : 'Not Visible') => "visible:$vis" ];
 			}
 		}
 	}
 	return \@filters;
 }
 
-=item filterRecords($filters, @records)
+=item filterRecords($c, $intersect, $filters, @records)
 
 Given a list of filters and a list of records, returns a list of the records
-after the selected filters are applied.
+after the selected filters are applied. If C<$intersect> is true then the
+intersection of the records that match the filters is returned.  Otherwise the
+union of the records that match the filters is returned.
 
 C<$filters> should be a reference to an array of filters or be undefined.
 
@@ -117,7 +162,7 @@ C<$filters> should be a reference to an array of filters or be undefined.
 =cut
 
 sub filterRecords {
-	my ($filters, @records) = @_;
+	my ($c, $intersect, $filters, @records) = @_;
 
 	return unless @records;
 
@@ -127,13 +172,39 @@ sub filterRecords {
 		return @records;
 	}
 
-	my @filteredRecords;
-	for my $record (@records) {
+	my %permissionName = reverse %{ $c->ce->{userRoles} };
+
+	# Only query the database for permission levels if a permission level filter is in use.
+	my %permissionLevels =
+		(grep {/^permission:/} @filtersToUse)
+		? (map { $_->user_id => $_->permission }
+			$c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } }))
+		: ();
+
+	my @filteredRecords = $intersect ? @records : ();
+	if ($intersect) {
 		for my $filter (@filtersToUse) {
 			my ($name, $value) = split(/:/, $filter);
-			if ($record->$name eq $value) {
-				push @filteredRecords, $record;
-				last;    # Only add a record once.
+			# permission level is handled differently
+			if ($name eq 'permission') {
+				@filteredRecords =
+					grep { $permissionName{ $permissionLevels{ $_->user_id } } eq $value } @filteredRecords;
+			} else {
+				@filteredRecords = grep { $_->$name eq $value } @filteredRecords;
+			}
+		}
+	} else {
+		for my $record (@records) {
+			for my $filter (@filtersToUse) {
+				my ($name, $value) = split(/:/, $filter);
+				# permission level is handled differently
+				if ($name eq 'permission' && $permissionName{ $permissionLevels{ $record->user_id } } eq $value) {
+					push @filteredRecords, $record;
+					last;    # Only add a record once.
+				} elsif ($name ne 'permission' && $record->$name eq $value) {
+					push @filteredRecords, $record;
+					last;    # Only add a record once.
+				}
 			}
 		}
 	}

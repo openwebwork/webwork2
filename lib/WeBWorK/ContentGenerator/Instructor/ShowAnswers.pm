@@ -25,7 +25,7 @@ WeBWorK::ContentGenerator::Instructor::ShowAnswers.pm  -- display past answers o
 use Text::CSV;
 use Mojo::File;
 
-use WeBWorK::Utils qw(sortByName jitar_id_to_seq);
+use WeBWorK::Utils qw(sortByName jitar_id_to_seq prob_id_sort);
 use WeBWorK::Utils::Rendering qw(renderPG);
 
 use constant PAST_ANSWERS_FILENAME => 'past_answers';
@@ -312,47 +312,9 @@ sub getInstructorData ($c) {
 	return (
 		users                => \@users,
 		expandedGlobalSetIDs => \@expandedGlobalSetIDs,
-		globalProblemIDs     => [ sort prob_id_sort keys %all_problems ],
+		globalProblemIDs     => [ prob_id_sort keys %all_problems ],
 		filename             => PAST_ANSWERS_FILENAME . '.csv'
 	);
-}
-
-sub byData {
-	my ($A, $B) = ($a, $b);
-	$A =~ s/\|[01]*\t([^\t]+)\t.*/|$1/;    # remove answers and correct/incorrect status
-	$B =~ s/\|[01]*\t([^\t]+)\t.*/|$1/;
-	return $A cmp $B;
-}
-
-# Sorts problem ID's so that all just-in-time like ids are at the bottom
-# of the list in order and other problems
-sub prob_id_sort {
-
-	my @seqa = split(/\./, $a);
-	my @seqb = split(/\./, $b);
-
-	# go through problem number sequence
-	for (my $i = 0; $i <= $#seqa; $i++) {
-		# if at some point two numbers are different return the comparison.
-		# e.g. 2.1.3 vs 1.2.6
-		if ($seqa[$i] != $seqb[$i]) {
-			return $seqa[$i] <=> $seqb[$i];
-		}
-
-		# if all of the values are equal but b is shorter then it comes first
-		# i.e. 2.1.3 vs 2.1
-		if ($i == $#seqb) {
-			return 1;
-		}
-	}
-
-	# if all of the values are equal and a and b are the same length then equal
-	# otherwise a was shorter than b so a comes first.
-	if ($#seqa == $#seqb) {
-		return 0;
-	} else {
-		return -1;
-	}
 }
 
 1;

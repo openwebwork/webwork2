@@ -23,7 +23,10 @@
 </p>
 <p>
 	<%= maketext('In both cases, one can select the sort field, the format of the display list, and the filter. '
-		. '"Change Display Settings" must be clicked to update the list.') =%>
+		. 'If multiple filters are selected and the "Intersection" radio button is used, the filters will '
+		. 'be applied in sequence, narrowing the results list. If the "Union" button is used, the updated '
+		. 'list will be the union of all results lists from the multiple filters. '
+		. '"Refresh List" must be clicked to update the list.') =%>
 </p>
 <p>
 	<%= maketext('There are many options available at the bottom:') =%>

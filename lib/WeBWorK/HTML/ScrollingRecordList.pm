@@ -56,7 +56,15 @@ sub scrollingRecordList ($options, @records) {
 
 		$sorts   = getSortsForClass($class, $options{default_sort});
 		$formats = getFormatsForClass($class, $options{default_format});
-		$filters = getFiltersForClass(@records);
+		# Remove sorts that are irrelevant for our formats
+		my @format_keywords;
+		for my $format (@$formats) {
+			push(@format_keywords, (split /\W+/, $format->[0]));
+		}
+		my $format_keywords = join('|', @format_keywords);
+		@$sorts = grep { $_->[0] =~ /$format_keywords/ } @$sorts;
+
+		$filters = getFiltersForClass($c, @records);
 
 		my @selected_filters;
 		if (defined $c->param("$name!filter")) {
@@ -67,10 +75,11 @@ sub scrollingRecordList ($options, @records) {
 		}
 
 		$formattedRecords = formatRecords(
+			$c,
 			$c->param("$name!format") || $options{default_format},
 			sortRecords(
 				$c->param("$name!sort") || $options{default_sort} || (@$sorts ? $sorts->[0][1] : ''),
-				filterRecords(\@selected_filters, @records)
+				filterRecords($c, $c->param("$name!filter_combine") // 0, \@selected_filters, @records)
 			)
 		);
 	}

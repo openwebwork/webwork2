@@ -23,12 +23,12 @@
 		<div class="col-sm-4 mb-2">
 			<div class="fw-bold text-center"><%= label_for selected_sets => maketext('Sets') %></div>
 			<%= select_field selected_sets => [ map { [ format_set_name_display($_) => $_ ] } @$expandedGlobalSetIDs ],
-				id => 'selected_sets', size => 23, multiple => undef, class => 'form-select form-select-sm',
+				id => 'selected_sets', size => 24, multiple => undef, class => 'form-select form-select-sm',
 				dir => 'ltr' =%>
 		</div>
 		<div class="col-sm-2 mb-2">
 			<div class="fw-bold text-center"><%= label_for selected_problems => maketext('Problems') %></div>
-			<%= select_field selected_problems => $globalProblemIDs, id => 'selected_problems', size => 23,
+			<%= select_field selected_problems => $globalProblemIDs, id => 'selected_problems', size => 24,
 				multiple => undef, class => 'form-select form-select-sm' =%>
 		</div>
 	</div>
