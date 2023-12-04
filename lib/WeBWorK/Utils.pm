@@ -75,6 +75,7 @@ our @EXPORT_OK = qw(
 	dequote
 	encodeAnswers
 	encode_utf8_base64
+	fix_newlines
 	fisher_yates_shuffle
 	formatDateTime
 	intDateTime
@@ -897,6 +898,11 @@ sub trim_spaces {
 	return '' unless $in;    # skip blank spaces
 	$in =~ s/^\s*|\s*$//g;
 	return ($in);
+}
+
+# fix non-unix line endings
+sub fix_newlines {
+	return shift =~ s/\r\n?/\n/gr;
 }
 
 # This is for formatting set names input via text inputs in the user interface for internal use.  Set names are allowed

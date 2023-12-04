@@ -25,7 +25,7 @@ WeBWorK::ContentGenerator::Instructor::AchievementEditor - edit an achevement ev
 use HTML::Entities;
 use File::Copy;
 
-use WeBWorK::Utils qw(not_blank path_is_subdir x);
+use WeBWorK::Utils qw(fix_newlines not_blank path_is_subdir x);
 
 use constant ACTION_FORMS => [qw(save save_as)];
 use constant ACTION_FORM_TITLES => {
@@ -39,8 +39,6 @@ sub pre_header_initialize ($c) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 	my $user  = $c->param('user');
-	$c->{courseID}      = $c->stash('courseID');
-	$c->{achievementID} = $c->stash('achievementID');
 
 	# Make sure that are defined for the templates.
 	$c->stash->{formsToShow}         = ACTION_FORMS();
@@ -51,10 +49,10 @@ sub pre_header_initialize ($c) {
 	return unless ($authz->hasPermissions($user, 'edit_achievements'));
 
 	# Get the achievement
-	my $Achievement = $c->db->getAchievement($c->{achievementID});
+	my $Achievement = $c->db->getAchievement($c->stash('achievementID'));
 
 	if (!$Achievement) {
-		$c->addbadmessage("Achievement $c->{achievementID} not found!");
+		$c->addbadmessage($c->maketext("Achievement [_1] not found!", $c->stash('achievementID')));
 		return;
 	}
 
@@ -105,10 +103,6 @@ sub initialize ($c) {
 	return;
 }
 
-sub page_title ($c) {
-	return $c->maketext('Achievement Evaluator for achievement [_1]', $c->stash('achievementID'));
-}
-
 # Convert long paths to [ACHEVDIR]
 sub shortPath ($c, $file) {
 	my $ache = $c->ce->{courseDirs}{achievements};
@@ -117,7 +111,7 @@ sub shortPath ($c, $file) {
 }
 
 sub getRelativeSourceFilePath ($c, $sourceFilePath) {
-	my $achievementsDir = $c->ce->{courseDirs}->{achievements};
+	my $achievementsDir = $c->ce->{courseDirs}{achievements};
 	$sourceFilePath =~ s|^${achievementsDir}/*||;    # remove templates path and any slashes that follow
 	return $sourceFilePath;
 }
@@ -149,9 +143,9 @@ sub saveFileChanges ($c, $outputFilePath, $achievementContents = undef) {
 	if (not_blank($outputFilePath)) {    # save file
 
 		# make sure any missing directories are created
-		WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{achievements}, $outputFilePath);
+		WeBWorK::Utils::surePathToFile($ce->{courseDirs}{achievements}, $outputFilePath);
 		die 'outputFilePath is unsafe!'
-			unless path_is_subdir($outputFilePath, $ce->{courseDirs}->{achievements}, 1);
+			unless path_is_subdir($outputFilePath, $ce->{courseDirs}{achievements}, 1);
 
 		eval {
 			open my $OUTPUTFILE, '>', $outputFilePath or die "Failed to open $outputFilePath";
@@ -173,7 +167,7 @@ sub saveFileChanges ($c, $outputFilePath, $achievementContents = undef) {
 
 		my $errorMessage;
 		# Check why we failed to give better error messages
-		if (not -w $ce->{courseDirs}->{achievements}) {
+		if (not -w $ce->{courseDirs}{achievements}) {
 			$errorMessage = $c->maketext(
 				'Write permissions have not been enabled in the templates directory.  No changes can be made.');
 		} elsif (not -w $currentDirectory) {
@@ -204,21 +198,12 @@ sub saveFileChanges ($c, $outputFilePath, $achievementContents = undef) {
 	return;
 }
 
-sub fixAchievementContents ($achievementContents) {
-	# Handle the problem of line endings.
-	# Make sure that all of the line endings are of unix type.
-	# Convert \r\n to \n
-	$achievementContents =~ s/\r\n/\n/g;
-	$achievementContents =~ s/\r/\n/g;
-	return $achievementContents;
-}
-
 sub save_handler ($c) {
-	my $courseName      = $c->{courseID};
-	my $achievementName = $c->{achievementID};
+	my $courseName      = $c->stash('courseID');
+	my $achievementName = $c->stash('achievementID');
 
 	# Grab the achievementContents from the form in order to save it to the source path
-	$c->stash->{achievementContents} = fixAchievementContents($c->param('achievementContents'));
+	$c->stash->{achievementContents} = fix_newlines($c->param('achievementContents'));
 
 	# Construct the output file path
 	$c->saveFileChanges($c->{sourceFilePath});
@@ -229,8 +214,8 @@ sub save_handler ($c) {
 sub save_as_handler ($c) {
 	my $db = $c->db;
 	$c->{status_message} = $c->c;    ## DPVC -- remove bogus old messages
-	my $courseName        = $c->{courseID};
-	my $achievementName   = $c->{achievementID};
+	my $courseName        = $c->stash('courseID');
+	my $achievementName   = $c->stash('achievementID');
 	my $effectiveUserName = $c->param('effectiveUser');
 
 	my $do_not_save         = 0;
@@ -249,7 +234,7 @@ sub save_as_handler ($c) {
 	}
 
 	# Grab the achievementContents from the form in order to save it to a new permanent file
-	$c->stash->{achievementContents} = fixAchievementContents($c->param('achievementContents'));
+	$c->stash->{achievementContents} = fix_newlines($c->param('achievementContents'));
 	warn 'achievement contents is empty' unless $c->stash->{achievementContents};
 
 	# Rescue the user in case they forgot to end the file name with .at
@@ -257,7 +242,7 @@ sub save_as_handler ($c) {
 	$new_file_name .= '.at';        # put it there
 
 	# Construct the output file path
-	my $outputFilePath = $c->ce->{courseDirs}->{achievements} . '/' . $new_file_name;
+	my $outputFilePath = $c->ce->{courseDirs}{achievements} . '/' . $new_file_name;
 	if (defined $outputFilePath and -e $outputFilePath) {
 		# setting $do_not_save stops saving and any redirects
 		$do_not_save = 1;

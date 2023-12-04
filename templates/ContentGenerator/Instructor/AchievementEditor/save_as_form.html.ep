@@ -13,7 +13,7 @@
 		<%= radio_button 'action.save_as.saveMode' => 'use_in_current',
 			id => 'action.save_as.saveMode.use_in_current', class => 'form-check-input' =%>
 		<%= label_for 'action.save_as.saveMode.use_in_current', class => 'form-check-label', begin =%>
-			<%== maketext('Use in achievement [_1]', tag('b', $c->{achievementID})) =%>
+			<%== maketext('Use in achievement [_1]', tag('b', $achievementID)) =%>
 		<% end =%>
 	</div>
 	<div class="mb-2">

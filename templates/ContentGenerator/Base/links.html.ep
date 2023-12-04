@@ -316,7 +316,7 @@
 			% if ($ce->{LTIGradeMode} && $authz->hasPermissions($userID, 'score_sets')) {
 				<li class="list-group-item nav-item"><%= $makelink->('instructor_lti_update') %></li>
 			% }
-			% # Achievment Editor
+			% # Achievement Editor
 			% if ($ce->{achievementsEnabled} && $authz->hasPermissions($userID, 'edit_achievements')) {
 				<li class="list-group-item nav-item"><%= $makelink->('instructor_achievement_list') %></li>
 				% if (defined $achievementID) {
@@ -325,7 +325,21 @@
 							<li class="nav-item">
 								<%= $makelink->(
 									'instructor_achievement_editor',
-									text     => $achievementID =~ s/_/ /gr,
+									text     => maketext('[_1] evaluator', $achievementID =~ s/_/ /gr),
+									captures => { achievementID => $achievementID },
+								) %>
+							</li>
+							<li class="nav-item">
+								<%= $makelink->(
+									'instructor_achievement_notification',
+									text     => maketext('[_1] notifications', $achievementID =~ s/_/ /gr),
+									captures => { achievementID => $achievementID },
+								) %>
+							</li>
+							<li class="nav-item">
+								<%= $makelink->(
+									'instructor_achievement_user_editor',
+									text     => maketext('[_1] users', $achievementID =~ s/_/ /gr),
 									captures => { achievementID => $achievementID },
 								) %>
 							</li>

@@ -23,6 +23,7 @@
 				<th><%= maketext('Number') %></th>
 				<th><%= maketext('Category') %></th>
 				<th><%= maketext('Users') %></th>
+				<th><%= maketext('Notifications') %></th>
 				<th><%= maketext('Evaluator') %></th>
 			</tr>
 		</thead>
@@ -58,6 +59,15 @@
 						<%= link_to "$num_users/$c->{totalUsers}" => $c->systemLink(
 							url_for('instructor_achievement_user_editor', achievementID => $achievement_id)
 						) =%>
+					</td>
+					<td class="text-nowrap">
+						<%= link_to $c->systemLink(
+							url_for('instructor_achievement_notification', achievementID => $achievement_id),
+						), begin =%>
+							<%= $_->email_template
+								? maketext('Edit Email Template')
+								: maketext('Enable Email Notification') =%>
+						<% end =%>
 					</td>
 					<td class="text-nowrap">
 						<%= link_to maketext('Edit Evaluator') => $c->systemLink(

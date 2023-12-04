@@ -100,6 +100,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  instructor_achievement_list         /$courseID/instructor/achievement_list
  instructor_achievement_editor       /$courseID/instructor/achievement_list/$achievementID/editor
  instructor_achievement_user_editor  /$courseID/instructor/achievement_list/$achievementID/users
+ instructor_achievement_notification /$courseID/instructor/achievement_list/$achievementID/email
 
  instructor_lti_update               /$courseID/instructor/lti_update
 
@@ -461,19 +462,25 @@ my %routeParameters = (
 	},
 	instructor_achievement_list => {
 		title    => x('Achievements Manager'),
-		children => [qw(instructor_achievement_editor instructor_achievement_user_editor)],
-		module   => 'Instructor::AchievementList',
-		path     => '/achievement_list'
+		children =>
+			[qw(instructor_achievement_editor instructor_achievement_user_editor instructor_achievement_notification)],
+		module => 'Instructor::AchievementList',
+		path   => '/achievement_list'
 	},
 	instructor_achievement_editor => {
-		title  => '[_5]',
+		title  => 'Achievement Evaluator for achievement [_5]',
 		module => 'Instructor::AchievementEditor',
 		path   => '/#achievementID/editor'
 	},
 	instructor_achievement_user_editor => {
-		title  => x('Achievement User Editor'),
+		title  => x('Achievement Users for [_5]'),
 		module => 'Instructor::AchievementUserEditor',
 		path   => '/#achievementID/users'
+	},
+	instructor_achievement_notification => {
+		title  => x('Achievement Notification for [_5]'),
+		module => 'Instructor::AchievementNotificationEditor',
+		path   => '/#achievementID/email'
 	},
 	instructor_lti_update => {
 		title  => x('LTI Grade Update'),

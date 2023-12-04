@@ -239,7 +239,7 @@ sub score_handler ($c) {
 
 	# Define file name
 	my $scoreFileName = $courseName . "_achievement_scores.csv";
-	my $scoreFilePath = $ce->{courseDirs}->{scoring} . '/' . $scoreFileName;
+	my $scoreFilePath = $ce->{courseDirs}{scoring} . '/' . $scoreFileName;
 
 	# Back up existing file
 	if (-e $scoreFilePath) {
@@ -248,7 +248,7 @@ sub score_handler ($c) {
 	}
 
 	# Check path and open the file
-	$scoreFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{scoring}, $scoreFilePath);
+	$scoreFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}{scoring}, $scoreFilePath);
 
 	my $SCORE = Mojo::File->new($scoreFilePath)->open('>:encoding(UTF-8)')
 		or return (0, $c->maketext("Failed to open [_1]", $scoreFilePath));
@@ -408,7 +408,7 @@ sub import_handler ($c) {
 	my $assign            = $c->param('action.import.assign');
 	my @users             = $db->listUsers;
 	my %allAchievementIDs = map { $_ => 1 } @{ $c->{allAchievementIDs} };
-	my $filePath          = $ce->{courseDirs}->{achievements} . '/' . $fileName;
+	my $filePath          = $ce->{courseDirs}{achievements} . '/' . $fileName;
 
 	# Open file name
 	my $fh = Mojo::File->new($filePath)->open('<:encoding(UTF-8)')
@@ -428,35 +428,16 @@ sub import_handler ($c) {
 
 		$achievement->achievement_id($achievement_id);
 
-		# Fall back for importing an old list without the number or assignment_type fields
-		if (scalar(@$data) == 9) {
-			# Old lists tend to have an extraneous space at the front.
-			for (my $i = 1; $i <= 7; $i++) {
-				$$data[$i] =~ s/^\s+//;
-			}
-
-			$$data[1] =~ s/\;/,/;
-			$achievement->name($$data[1]);
-			$achievement->category($$data[2]);
-			$$data[3] =~ s/\;/,/;
-			$achievement->description($$data[3]);
-			$achievement->points($$data[4]);
-			$achievement->max_counter($$data[5]);
-			$achievement->test($$data[6]);
-			$achievement->icon($$data[7]);
-			$achievement->assignment_type('default');
-			$achievement->number($count + 1);
-		} else {
-			$achievement->name($$data[1]);
-			$achievement->number($$data[2]);
-			$achievement->category($$data[3]);
-			$achievement->assignment_type($$data[4]);
-			$achievement->description($$data[5]);
-			$achievement->points($$data[6]);
-			$achievement->max_counter($$data[7]);
-			$achievement->test($$data[8]);
-			$achievement->icon($$data[9]);
-		}
+		$achievement->name($$data[1]);
+		$achievement->number($$data[2]);
+		$achievement->category($$data[3]);
+		$achievement->assignment_type($$data[4]);
+		$achievement->description($$data[5]);
+		$achievement->points($$data[6]);
+		$achievement->max_counter($$data[7]);
+		$achievement->test($$data[8]);
+		$achievement->icon($$data[9]);
+		$achievement->email_template($$data[10] // '');
 
 		$achievement->enabled($assign eq "all" ? 1 : 0);
 
