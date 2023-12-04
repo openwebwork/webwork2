@@ -209,9 +209,8 @@ sub check_apps {
 	my $node_version_str = qx/node -v/;
 	my ($node_version) = $node_version_str =~ m/v(\d+)\./;
 
-	if ($node_version != 16) {
-		print "\n\n**The version of node should be 16.  You have version $node_version";
-	}
+	print "\n\n**The version of node should be at least 16.  You have version $node_version"
+		if ($node_version < 16);
 }
 
 sub which {

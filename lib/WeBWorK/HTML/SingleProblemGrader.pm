@@ -44,7 +44,7 @@ sub new ($class, $c, $pg, $userProblem) {
 
 	# Retrieve the latest past answer and comment (if any).
 	my $userPastAnswerID =
-		$db->latestProblemPastAnswer($courseID, $studentID, $setID . ($versionID ? ",v$versionID" : ''), $problemID);
+		$db->latestProblemPastAnswer($studentID, $setID . ($versionID ? ",v$versionID" : ''), $problemID);
 	my $pastAnswer = $userPastAnswerID ? $db->getPastAnswer($userPastAnswerID) : 0;
 	my $comment    = $pastAnswer       ? $pastAnswer->comment_string           : '';
 

@@ -512,7 +512,7 @@ ul.courses-list {
 	}
 }
 
-/* Homework Sets */
+/* Assignments page */
 .problem_set_table {
 	td a {
 		font-weight: bold;
@@ -819,6 +819,10 @@ input.changed[type=text] { /* orange */
 			background-color: unset;
 			padding: 0 0 0 0.5rem;
 		}
+	}
+
+	.table {
+		--bs-table-bg: #f5f5f5;
 	}
 }
 

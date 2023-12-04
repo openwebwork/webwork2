@@ -6,7 +6,7 @@
 % }
 %
 % unless ($authz->hasPermissions(param('user'), 'assign_problem_sets')) {
-	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to assign homework sets.') %></div>
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to assign sets.') %></div>
 	% last;
 % }
 %

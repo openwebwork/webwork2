@@ -49,7 +49,8 @@
 		'en-US': 'L/d/yy, h:mm a',
 		'cs-CZ': 'dd.LL.yy H:mm',
 		de: 'dd.LL.yy, HH:mm',
-		es: 'd/L/yy H:mm',
+		el: 'd/L/yy, h:mm a',
+		es: 'd/L/yy, H:mm',
 		'fr-CA': "yyyy-LL-dd HH 'h' mm",
 		fr: 'dd/LL/yyyy HH:mm',
 		'he-IL': 'd.L.yyyy, H:mm',
@@ -85,7 +86,10 @@
 			altFormat: datetimeFormats[luxon.Settings.defaultLocale],
 			ariaDateFormat: datetimeFormats[luxon.Settings.defaultLocale],
 			defaultHour: 0,
-			locale: importDateShift.dataset.locale ? importDateShift.dataset.locale.substring(0, 2) : 'en',
+			locale:
+				luxon.Settings.defaultLocale.substring(0, 2) === 'el'
+					? 'gr'
+					: luxon.Settings.defaultLocale.substring(0, 2),
 			clickOpens: false,
 			disableMobile: true,
 			wrap: true,
@@ -107,8 +111,8 @@
 							const today = new Date();
 							// If there isn't a selected date, then use 12:00 am on the current date.
 							const selectedDate = fp.selectedDates[0] ?? new Date(new Date().toDateString());
-							selectedDate.setFullYear(today.getFullYear())
-							selectedDate.setMonth(today.getMonth())
+							selectedDate.setFullYear(today.getFullYear());
+							selectedDate.setMonth(today.getMonth());
 							selectedDate.setDate(today.getDate());
 							fp.setDate(selectedDate);
 						} else if (index === 1) {
@@ -133,7 +137,7 @@
 
 				// Next attempt to parse the datestr with the current format.  This should not be adjusted.  It is
 				// for display only.
-				const date = luxon.DateTime.fromFormat(datestr, format);
+				const date = luxon.DateTime.fromFormat(datestr.replaceAll(/\u202F/g, ' ').trim(), format);
 				if (date.isValid) return date.toJSDate();
 
 				// Finally, fall back to the previous value in the original input if that failed.  This is the case
@@ -149,8 +153,9 @@
 				// timezone of the course.
 				if (format === 'U') return (date.getTime() + timezoneAdjustment) / 1000;
 
-				return luxon.DateTime.fromMillis(date.getTime())
-					.toFormat(datetimeFormats[luxon.Settings.defaultLocale]);
+				return luxon.DateTime.fromMillis(date.getTime()).toFormat(
+					datetimeFormats[luxon.Settings.defaultLocale]
+				);
 			}
 		});
 

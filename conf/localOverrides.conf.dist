@@ -235,7 +235,7 @@ $mail{feedbackRecipients}    = [
 # List of enabled display modes. Comment out any modes you don't wish to make
 # available for use.
 # The first uncommented option is the default for instructors rendering problems
-# in the homework sets editor.
+# in the Library Browser and Set Detail page.
 #$pg{displayModes} = [
 	#"MathJax",     # render TeX math expressions on the client side using MathJax
 	                # we strongly recommend people install and use MathJax, and it is required if you want to use mathview
@@ -269,20 +269,20 @@ $mail{feedbackRecipients}    = [
 ################################################################################
 
 # The default weight (also called value) of a problem to use when using the
-# Library Browser, Problem Editor or Hmwk Sets Editor to add problems to a set
+# Library Browser, Problem Editor, or Sets Manager to add problems to a set
 # or when this value is left blank in an imported set definition file.
 
 #$problemDefaults{value} = 1;
 
 # The default max_attempts for a problem to use when using the
-# Library Browser, Problem Editor or Hmwk Sets Editor to add problems to a set
+# Library Browser, Problem Editor, or Sets Manager to add problems to a set
 # or when this value is left blank in an imported set definition file.  Note that
 # setting this to -1 gives students unlimited attempts.
 
 #$problemDefaults{max_attempts} = -1;
 
 # The default showMeAnother for a problem to use when using the
-# Library Browser, Problem Editor or Hmwk Sets Editor to add problems to a set
+# Library Browser, Problem Editor, or Sets Manager to add problems to a set
 # or when this value is left blank in an imported set definition file.  Note that
 # setting this to -1 disables the showMeAnother button
 #$problemDefaults{showMeAnother} = -1;
@@ -513,7 +513,7 @@ $mail{feedbackRecipients}    = [
 ################################################################################
 # Searching for set.def files to import
 ################################################################################
-## Uncomment below so that when the homework sets editor searches for set def
+## Uncomment below so that when the Library Browser searches for set def
 ## files, it searches beyond templates; it can search deeper subfolders of
 ## templates, and optionally also descend into Library
 

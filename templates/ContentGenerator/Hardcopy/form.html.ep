@@ -8,7 +8,7 @@
 	% if ($multiuser) {
 		<p>
 			<%= maketext(
-				'Select the homework sets for which to generate hardcopy versions. You may'
+				'Select the assignments for which to generate hardcopy versions. You may'
 					. ' also select multiple users from the users list. You will receive hardcopy'
 					. ' for each (set, user) pair.') =%>
 		</p>
@@ -65,7 +65,7 @@
 		<div class="col-md-8 font-sm mb-2">
 			<%= maketext(
 				'You may choose to show any of the following data. Correct answers, hints, and solutions '
-					. 'are only available [_1] after the answer date of the homework set.',
+					. 'are only available [_1] after the answer date of the assignment.',
 				$multiuser ? 'to privileged users or' : ''
 			) =%>
 		</div>

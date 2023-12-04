@@ -180,7 +180,7 @@
 								messageArea.innerHTML =
 									'<div>The score was saved, but there was an error saving the comment.</div>' +
 									`<div>${e}</div>`;
-								setTimeout(() => messageArea.classList.remove('alert-danger', 100));
+								setTimeout(() => messageArea.classList.remove('alert-danger'), 100);
 							}
 						} else {
 							messageArea.classList.add('alert-success');
@@ -192,7 +192,7 @@
 			} catch (e) {
 				messageArea.classList.add('alert-danger');
 				messageArea.innerHTML = `<div>Error saving score.</div><div>${e?.message ?? e}</div>`;
-				setTimeout(() => messageArea.classList.remove('alert-danger', 100));
+				setTimeout(() => messageArea.classList.remove('alert-danger'), 100);
 			}
 		});
 	})

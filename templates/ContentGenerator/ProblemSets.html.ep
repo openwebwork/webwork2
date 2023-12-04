@@ -16,7 +16,7 @@
 	% # Create the set table.
 	<div class="table-responsive">
 		<table class="problem_set_table table table-sm caption-top font-sm">
-			<caption><%= maketext('Homework Sets') %></caption>
+			<caption><%= maketext('Assignments') %></caption>
 			%
 			% # Setlist table headers
 			% my $sort = param('sort') || 'status';

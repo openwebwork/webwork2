@@ -29,11 +29,12 @@
 	%
 	% if ($ce->{session_management_via} ne 'session_cookie') {
 		<p>
+			% my $rememberMeText = maketext('Remember Me');
 			<%== maketext('If you check [_1] your login information will be remembered by the browser you are using, '
 				. 'allowing you to visit WeBWorK pages without typing your user name and password (until your session '
 				. 'expires). This feature is not safe for public workstations, untrusted machines, and machines '
 				. 'over which you do not have direct control.',
-				tag('strong', maketext('Remember Me'))
+				tag('strong', $rememberMeText)
 			) =%>
 		</p>
 	% }
@@ -68,8 +69,9 @@
 		% if (@$allowedGuestUsers) {
 			<div class="my-3">
 				<p>
+					% my $guestLoginText = maketext('Guest Login');
 					<%== maketext('This course supports guest logins. Click [_1] to log into this course as a guest.',
-						tag('b', maketext('Guest Login'))) =%>
+						tag('b', $guestLoginText)) =%>
 				</p>
 				<%= submit_button maketext('Guest Login'),
 					name  => 'login_practice_user', class => 'btn btn-primary' =%>

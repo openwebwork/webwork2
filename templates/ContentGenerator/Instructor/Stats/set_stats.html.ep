@@ -46,7 +46,7 @@
 						data-bs-toggle="popover"
 						data-bs-content="<%= maketext(
 							'Answer availability for tests depends on multiple settings.  This only indicates the '
-								. 'template answer date has passed.  See set editor for actual availability.'
+								. 'template answer date has passed.  See Set Detail page for actual availability.'
 						) =%>">
 						<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') =%>"
 							aria-hidden="true">

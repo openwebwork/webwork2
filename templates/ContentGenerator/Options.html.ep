@@ -166,5 +166,5 @@
 		% }
 	% }
 	%
-	<%= submit_button maketext('Change User Settings'), name => 'changeOptions', class => 'btn btn-primary' =%>
+	<%= submit_button maketext('Change Account Settings'), name => 'changeOptions', class => 'btn btn-primary' =%>
 % end

@@ -3,11 +3,23 @@
 % my $visibleClass   = $set->visible ? 'font-visible' : 'font-hidden';
 % my $set_id         = $set->set_id;
 % my $prettySetID    = format_set_name_display($set_id);
+% my $iconClass;
+% my $iconTitle;
+% if ($set->assignment_type() =~ /gateway/) {
+	% $iconClass = 'icon fa-solid fa-list-check';
+	% $iconTitle = maketext('Test/Quiz');
+% } elsif ($set->assignment_type() eq 'jitar') {
+	% $iconClass = 'icon fa-solid fa-layer-group';
+	% $iconTitle = maketext('JITAR Set');
+% }
 %
 <tr>
 %
 % if ($c->{editMode}) {
 	<td dir="ltr">
+		% if ($iconClass) {
+			<i class="<%= $iconClass =%>" title="<%= $iconTitle =%>" alt="<%= $iconTitle =%>"></i>
+		% }
 		<%= link_to $prettySetID => $c->systemLink(url_for('instructor_set_detail', setID => $set_id)) %>
 	</td>
 % } else {
@@ -20,6 +32,9 @@
 			<%= label_for "${set_id}_id", begin =%>
 				<span class="set-label set-id-tooltip <%= $visibleClass %>" data-bs-toggle="tooltip"
 					data-bs-placement="right" data-bs-title="<%= $set->description %>">
+					% if ($iconClass) {
+						<i class="<%= $iconClass =%>" title="<%= $iconTitle =%>" alt="<%= $iconTitle =%>"></i>
+					% }
 					<%= $prettySetID =%>
 				</span>
 			<% end =%>

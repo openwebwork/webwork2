@@ -1429,11 +1429,8 @@ sub output_misc ($c) {
 sub output_comments ($c) {
 	my $db = $c->db;
 
-	my $userPastAnswerID = $db->latestProblemPastAnswer(
-		$c->stash('courseID'),
-		$c->param('effectiveUser'),
-		$c->stash('setID'), $c->stash('problemID')
-	);
+	my $userPastAnswerID =
+		$db->latestProblemPastAnswer($c->param('effectiveUser'), $c->stash('setID'), $c->stash('problemID'));
 
 	# If there is a comment then display it.
 	if ($userPastAnswerID) {

@@ -1354,7 +1354,7 @@ sub upgrade_course_confirm ($c) {
 
 		# Report on database status
 		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
-		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $db_report) =
+		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
 			$c->formatReportOnDatabaseTables($dbStatus, $upgrade_courseID);
 
 		my $course_output = $c->c;
@@ -1408,6 +1408,21 @@ sub upgrade_course_confirm ($c) {
 						'There are extra database fields which are not defined in the schema for at least one table. '
 							. 'Check the checkbox by the field to delete it when upgrading the course. '
 							. 'Warning: Deletion destroys all data contained in the field and is not undoable!'
+					)
+				)
+			);
+		}
+
+		if ($rebuild_table_indexes) {
+			push(
+				@$course_output,
+				$c->tag(
+					'p',
+					class => 'text-danger fw-bold',
+					$c->maketext(
+						'There are extra database fields which are not defined in the schema and were part of the key '
+							. 'for at least one table. These fields must be deleted and the table indexes rebuilt. '
+							. 'Warning: This will destroy all data contained in the field and is not undoable!'
 					)
 				)
 			);
@@ -1496,7 +1511,7 @@ sub do_upgrade_course ($c) {
 		# Analyze database status and prepare status report
 		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
 
-		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $db_report) =
+		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
 			$c->formatReportOnDatabaseTables($dbStatus);
 
 		# Prepend course name
@@ -2299,6 +2314,7 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 	my $all_tables_ok         = 1;
 	my $extra_database_tables = 0;
 	my $extra_database_fields = 0;
+	my $rebuild_table_indexes = 0;
 
 	my $db_report = $c->c;
 
@@ -2334,25 +2350,35 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 				my $field_report = $c->c("$key: $field_status_message{$field_status}");
 
 				if ($field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B) {
-					$extra_database_fields = 1;
-					push(
-						@$field_report,
-						$c->tag(
-							'span',
-							class => 'form-check d-inline-block',
-							$c->tag(
-								'label',
-								class => 'form-check-label',
-								$c->c(
-									$c->check_box(
-										"$courseID.$table.delete_fieldIDs" => $key,
-										class                              => 'form-check-input'
-									),
-									$c->maketext('Delete field when upgrading')
-								)->join('')
-							)
-						)
-					) if defined $courseID;
+					if ($fieldInfo{$key}[1]) {
+						$rebuild_table_indexes = 1;
+					} else {
+						$extra_database_fields = 1;
+					}
+					if (defined $courseID) {
+						if ($fieldInfo{$key}[1]) {
+							push(@$field_report, $c->hidden_field("$courseID.$table.delete_fieldIDs" => $key));
+						} else {
+							push(
+								@$field_report,
+								$c->tag(
+									'span',
+									class => 'form-check d-inline-block',
+									$c->tag(
+										'label',
+										class => 'form-check-label',
+										$c->c(
+											$c->check_box(
+												"$courseID.$table.delete_fieldIDs" => $key,
+												class                              => 'form-check-input'
+											),
+											$c->maketext('Delete field when upgrading')
+										)->join('')
+									)
+								)
+							);
+						}
+					}
 				} elsif ($field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A) {
 					$all_tables_ok = 0;
 				}
@@ -2367,7 +2393,10 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 
 	push(@$db_report, $c->tag('p', class => 'text-success', $c->maketext('Database tables are ok'))) if $all_tables_ok;
 
-	return ($all_tables_ok, $extra_database_tables, $extra_database_fields, $db_report->join(''));
+	return (
+		$all_tables_ok,         $extra_database_tables, $extra_database_fields,
+		$rebuild_table_indexes, $db_report->join('')
+	);
 }
 
 1;

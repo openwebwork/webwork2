@@ -1,11 +1,11 @@
 DOCUMENT();
 
-loadMacros('PGstandard.pl', 'PGML.pl', 'parserMultiAnswer.pl', 'PGcourse.pl');
+loadMacros('PGstandard.pl', 'PGML.pl', 'PGcourse.pl');
 
-# Hide the score summary and show past answers and email instructor buttons.
-HEADER_TEXT(MODES(
-	HTML => tag('style', '.problemFooter, #score_summary {display: none}'),
-	TeX  => ''
+# Hide things that are appropriate for regular problem use
+HEADER_TEXT(tag(
+	'style',
+	'#page-title, #message, #message_bottom, #custom_edit_message, #breadcrumb-navigation, #score_summary, #problemFooter {display: none}'
 ));
 
 sub EscapeHTML {
@@ -22,8 +22,10 @@ sub Menu {
 	return tag(
 		'select',
 		aria_labelledby => 'reference-label',
-		style           => 'width:15em',
-		join('', map { tag('option', $_) } @_)
+		style           => 'width:11em',
+		join('',
+			tag('option', selected => undef, shift),
+			map { tag('option', disabled => undef, value => $_, $_) } @_)
 	);
 }
 
@@ -34,10 +36,10 @@ sub Examples {
 	return tag(
 		'select',
 		class           => 'example-selector',
-		id              => $title,
+		id              => $title =~ s/ /_/gr,
 		aria_labelledby => 'examples-label',
-		style           => 'width:15em',
-		tag('option', value => '', $title) . join(
+		style           => 'width:11em',
+		tag('option', value => '', selected => undef, $title) . join(
 			'',
 			map {
 				tag(
@@ -52,10 +54,7 @@ sub Examples {
 	);
 }
 
-TEXT(MODES(
-	HTML => tag('div', style => 'text-align:center', tag('b', 'Interactive PGML Lab:')),
-	TeX  => $BCENTER . $BBOLD . 'Interactive PGML Lab:' . $EBOLD . $ECENTER
-));
+TEXT(tag('div', style => 'text-align:center', tag('h2', 'Interactive PGML Lab')));
 
 $vars   = $inputs_ref->{vars} // '';
 $pgml   = ($inputs_ref->{pgml} // '') =~ s/~~r?~~n/~~n/gr;
@@ -95,140 +94,39 @@ if ($pgml ne '') {
 		PG_restricted_eval($vars) if $vars ne '';
 
 		($tex, $error) = PG_restricted_eval('PGML::Format($pgml)');
-		if ($error) {
-			$result = $error;
-			$result =~ s/ at ~~(eval ~~d+~~) line ~~d+//;
-			$result = EscapeHTML($result);
-			$result =~ s/~~n/<br>/g;
-			$result = tag('span', style => 'color:#c00', 'TeX Error: ' . tag('i', $result));
-		}
 		$displayMode = $oldDisplay;
 	}
-	$pgml  = EscapeHTML($pgml);
-} else {
-	$pgml = '';
+	if ($inputs_ref->{showPTX}) {
+		$oldDisplay  = $displayMode;
+		$displayMode = 'PTX';
+
+		# The variables need to be processed again before processing the problem.  This redefines all of the variables
+		# as new objects.  If this is not done, then errors occur for many of the examples with MathObjects because the
+		# the problem has already been processed above.  Ignore the errors this time.  Those have already been caught
+		# above.
+		PG_restricted_eval($vars) if $vars ne '';
+
+		($ptx, $error) = PG_restricted_eval('PGML::Format($pgml)');
+		$displayMode = $oldDisplay;
+	}
+	$pgml = EscapeHTML($pgml);
 }
 
 $prows = scalar(split(/~~n/, $pgml));
-$prows = 8 unless $prows >= 8;
+$prows = 10 unless $prows >= 10;
 $vrows = scalar(split(/~~n/, $vars));
-$vrows = 2 unless $vrows >= 2;
+$vrows = 3 unless $vrows >= 3;
 
 RECORD_FORM_LABEL('vars');
 RECORD_FORM_LABEL('pgml');
 RECORD_FORM_LABEL('showHTML');
 RECORD_FORM_LABEL('showTeX');
+RECORD_FORM_LABEL('showPTX');
 
-TEXT(MODES(HTML => '<div id="resultsBox">', TeX => ''));
-TEXT($HR . $verror . $HR) if $verror;
-TEXT(MODES(
-	HTML => tag(
-		'div',
-		style => 'margin:1rem auto;width:fit-content;padding:1rem;'
-			. 'border:1px solid black;border-radius:4px;background-color:#e8e8e8;',
-		$result
-	),
-	TeX => $result
-))
-	if defined $result && $result ne '';
-
-if ($inputs_ref->{showHTML}) {
-	$result = EscapeHTML($result);
-	$result =~ s!~~n!<br>!g;
-	TEXT(tag('hr') . tag('small', tag('pre', $result)) . tag('hr'));
-}
-if ($inputs_ref->{showTeX}) {
-	$tex = EscapeHTML($tex);
-	$tex =~ s!~~n!<br>!g;
-	TEXT(tag('hr') . tag('small', tag('pre', $tex)) . tag('hr'));
-}
-TEXT(MODES(HTML => '</div>', TeX => ''));
-
-TEXT(MODES(
-	HTML => tag(
-		'div',
-		style => 'width:fit-content;max-width:100%;text-align:left;margin:auto',
-		tag('label', for => 'vars', tag('small', tag('i', style => 'color:#555', 'Variable definitions:')))
-			. tag('textarea', name => 'vars', id => 'vars', rows => $vrows, cols => 60, style => 'display:block', $vars)
-			. tag('label',    for  => 'pgml', tag('small', tag('i', style => 'color:#555', 'Text of problem:')))
-			. tag('textarea', name => 'pgml', id => 'pgml', rows => $prows, cols => 60, style => 'display:block', $pgml)
-			. tag(
-				'div',
-				style => 'margin-top:0.25rem;display:flex;justify-content:space-between;align-items:center',
-				tag(
-					'div',
-					tag(
-						'div',
-						tag(
-							'label',
-							tag(
-								'input',
-								type  => 'checkbox',
-								name  => 'showHTML',
-								value => 1,
-								$inputs_ref->{showHTML} ? (checked => undef) : ()
-							)
-							. ' Show HTML code '
-						)
-					)
-					. tag(
-						'div',
-						tag(
-							'label',
-							tag(
-								'input',
-								type  => 'checkbox',
-								name  => 'showTeX',
-								value => 1,
-								$inputs_ref->{showTeX} ? (checked => undef) : ()
-							)
-							. ' Show TeX code'
-						)
-					)
-				)
-				. tag('div', tag('input', type => 'submit', name => 'action', value => 'Process this Text'))
-			)
-	),
-	TeX => "Variable definitions:$BR"
-		. qq!\hbox to .8\hsize{\hrulefill}$BR!
-		. "Text of problem:$BR"
-		. qq!\hbox to .8\hsize{\hrulefill}$BR$SPACE!
-		. "Show HTML code$BR$SPACE"
-		. "Show TeX code$BR"
-		. '[Process this Text]'
-));
-
-if ($displayMode ne 'TeX') {
-	$SP = "&#x2423;";
-	TEXT(tag('script', << 'END_SCRIPT'));
-window.addEventListener('DOMContentLoaded', () => {
-	const unescapeHTML = (html) => {
-		return html
-			.replace(/&gt;/g, '>')
-			.replace(/&lt;/g, '<')
-			.replace(/&amp;/g, '&')
-			.replace(/&quot;/g, '"')
-			.replace(/\n/g, '~~n')
-			.replace(/\\/g, '\');
-	};
-	for (const select of document.querySelectorAll('.example-selector')) {
-		select.addEventListener('change', () => {
-			if (select.value === '') return;
-			const selectedExample = select.options[select.selectedIndex];
-			const dataType = { vars: 2, pgml: 8 };
-			for (const id in dataType) {
-				const el = document.getElementById(id);
-				el.value = unescapeHTML(selectedExample.dataset[id]);
-				el.rows = Math.max(dataType[id], selectedExample.dataset[id].split(/\n/).length);
-			}
-			document.getElementById('resultsBox').style.display = 'none';
-			window.scrollTo(0, 0);
-		});
-	}
-});
-END_SCRIPT
-
-	TEXT(tag(
+TEXT(tag(
+	'div',
+	style => 'display:flex; flex-wrap:wrap; gap:1rem;',
+	tag(
 		'div',
 		style => 'margin:1rem auto 0;width:fit-content;'
 			. 'display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;',
@@ -238,135 +136,256 @@ END_SCRIPT
 				. 'display:flex;flex-direction:column;gap:0.25rem',
 			join(
 				'',
-				tag('legend', id => 'examples-label', style => 'font-size:20px', 'Examples:'),
+				tag('legend', id => 'examples-label', style => 'font-size:20px', tag('h3', 'Examples')),
 				Examples(
 					'Math',
 					[
-						'TeX math' => [
+						'LaTeX syntax' => [
 							'',
-							'In-line math: [`\\frac{x+1}{x-1}`], display math: [``\\frac{x+1}{x-1}``]'
-								. "\n\n"
-								. '    [``\\frac{x+1}{x-1}``] (indented)'
-								. "\n\n"
-								. '>>[``\\frac{x+1}{x-1}``] (centered)<<'
+							<<~'ENDPGML'
+								Inline math with LaTeX syntax like [`\frac{1}{6}+\frac{1}{3}=\frac{1}{2}`].
+								
+								This can use display style like [``\frac{1}{6}+\frac{1}{3}=\frac{1}{2}``].
+								
+								Or you can have actual display math like: [```\frac{1}{6}+\frac{1}{3}=\frac{1}{2}```]
+								ENDPGML
 						]
 					],
 					[
-						'Parsed math' => [
+						'Math Object syntax' => [
 							'',
-							'In-line math: [:(x+1)/(x-1):], display math: [::(x+1)/(x-1)::]'
-								. "\n\n"
-								. '    [::(x+1)/(x-1)::] (indented)'
-								. "\n\n"
-								. '>>[::(x+1)/(x-1)::] (centered)<<'
+							<<~'ENDPGML'
+								Inline math that is parsed using the Typeset context like [:1/6+1/3=1/2:].
+								
+								This can use display style like [::1/6+1/3=1/2::].
+								
+								Or you can have actual display math like: [:::1/6+1/3=1/2:::]
+								ENDPGML
 						]
 					],
 					[
 						'Specify context' => [
-							'$context = Context("Vector");',
-							'Use vector context: [:<1,2x>:]{"Vector"}  '
-								. "\n"
-								. 'Use context object: [:<1,2x>:]{$context}  '
-								. "\n"
-								. 'Use current context: [:<1,2x>:]*'
+							q!$context = Context('Vector');!,
+							<<~'ENDPGML'
+								Inline math that is parsed using a specified context like [:<1,2x>:]{'Vector'}.
+								
+								Or using a context object: [:<1,2x>:]{$context}.
+								
+								Or use the active context [:<1,2x>:]*.
+								
+								These all have display style and display mode variants.
+								ENDPGML
 						]
 					],
 				),
 				Examples(
 					'Answers',
-					[ Numeric => [ '', 'The number twelve is [_______]{12}' ] ],
-					[ Formula => [ '', 'The formula is [__________]{"1+x"}' ] ],
 					[
-						'From variable' => [
-							'$f=Formula("1+x^2"); $Df = $f->D;',
-							q!Suppose [`f(x) = [$f]`].  Then [`f'(x) =`] [____________]{$Df}!
+						'Fixed number' => [
+							'',
+							<<~'ENDPGML'
+								The number twelve is [_______]{12} where width
+								is specified by how many underscores,
+								or it is [_]{12}{7} where width is specified directly.
+								
+								(Width is not relevant when MathQuill input is in use.)
+								ENDPGML
 						]
 					],
-					[ MathObject     => [ '', 'Twelve is [______]{Real(12)}' ] ],
-					[ 'MathObject 2' => [ '', '2 mod 10 is [______]{Real(2)->with(period=>10)}' ] ],
 					[
-						'MathObject 3' =>
-							[ '$f = Formula("sqrt(x^2-1)")->with(limits=>[1,2]);', 'The answer is: [_____]{$f}' ]
-					],
-					[ Traditional => [ '', 'Twelve is [______]{num_cmp(12)}' ] ],
-					[
-						'Checker Options' =>
-							[ '', '[::Int(x,2x)::] = [________]{Formula("x^2")->cmp(upToConstant=>1)} [`+C`]' ]
-					],
-					[
-						'Checker Options 1' => [
-							'$cmp = Formula("x^2")->cmp(upToConstant=>1);',
-							'[::Int(x,2x)::] = [________]{$cmp} [`+C`]'
+						'Formula string' => [
+							'',
+							<<~'ENDPGML'
+								The formula is [_]{'1+x'}{16}.
+								
+								The argument should be a string that is understood by Compute() in the current context.
+								ENDPGML
 						]
 					],
-					[ 'Answer Array' => [ '$M = Matrix([1,2],[3,4])', '[`[$M] =`] [___]*{$M}' ] ],
+					[
+						'PG variable' => [
+							<<~'ENDPG',
+								$f = Formula('1+x^2');
+								$Df = $f->D;
+								Context()->functions->disable('Trig');
+								$g = Formula('sqrt(x^2-1)')->with(limits => [1,2]);
+								ENDPG
+							<<~'ENDPGML'
+								Suppose [`f(x) = [$f]`].  Then [`f'(x) =`] [_]{$Df}{16}.
+								
+								[`\arctan\sec(x) =`] [_]{$g}{16}
+								
+								The argument can be a variable representing a number, a string, a Math Object, or a cmp() routine.
+								ENDPGML
+						]
+					],
+					[
+						'Math Object' => [
+							'',
+							<<~'ENDPGML'
+								Twelve is [_]{Real(12)}{16}.
+								
+								Something that is equivalent to [`2`] mod [`10`] is [_]{Real(2)->with(period => 10)}{16}.
+								
+								The argument can be a Math Object constructor.
+								ENDPGML
+						]
+					],
+					[
+						'Checker options' => [
+							q!$cmp = Formula('x^2')->cmp(upToConstant => 1);!,
+							<<~'ENDPGML'
+								[::Int(x,2x)::] = [_]{Formula('x^2')->cmp(upToConstant => 1)}{16} [`+C`]
+								
+								[::Int(x,2x)::] = [_]{$cmp}{16} [`+C`]
+								
+								The argument can be a Math Object's cmp() method with options passed.
+								ENDPGML
+						]
+					],
+					[
+						'Answer array' => [
+							<<~'ENDPG',
+								$M = Matrix([1, 2], [3, 4]);
+								Context('Vector');
+								ENDPG
+							<<~'ENDPGML'
+								[`[$M] =`] [___]*{$M}
+								
+								[`\langle1, 2\rangle =`] [_]*{'<1, 2>'}{5}
+								
+								[`\begin{bmatrix}1\\ 2\end{bmatrix} =`] [_]*{ColumnVector(1, 2)}{5}
+								
+								[`(1, 2) =`] [_]*{Point(1, 2)}{5}
+								
+								For an answer array, use an asterisk.
+								This is appropriate for Math Object Matrix, Vector, ColumnVector, or Point objects.
+								The answer blank size applies to each input field.
+								ENDPGML
+						]
+					],
 					[
 						'MultiAnswer' => [
-							'$mp = MultiAnswer(12,6)->with(checker=>sub {1}, singleResult=>1)',
-							'[_____]{$mp} and [_____]{$mp}'
+							<<~'ENDPG',
+								loadMacros('parserMultiAnswer.pl');
+								$mp = MultiAnswer(12, 6)->with(checker => sub {1}, singleResult => 1);
+								ENDPG
+							<<~'ENDPGML'
+								Twelve and six are [_____]{$mp} and [_____]{$mp}.
+								(This MultiAnswer object returns correct no matter what you enter.)
+								
+								For a MultiAnswer object, use the object as the argument repeatedly.
+								ENDPGML
 						]
 					],
-					[ 'Option Form' => [ '', 'The number 12 is [____]{answer=>12,width=>10}' ] ],
+					[
+						'Options format' => [
+							'',
+							<<~'ENDPGML'
+								The number twelve is [____]{answer => 12, width => 10}.
+								
+								The answer and width may be declared as a key-value hash.
+								ENDPGML
+						]
+					],
 					[
 						'External ANS' => [
-							'Context("Vector"); ANS(Vector(1,2,3)->cmp(showCoodinateHints=>0));',
-							"[:<1,2,3>:]* = [__________]"
+							<<~'ENDPG',
+								Context('Vector');
+								ANS(Vector(1, 2, 3)->cmp(showCoodinateHints => 0));
+								ENDPG
+							<<~'ENDPGML'
+								[:<1,2,3>:]* = [__________]
+								
+								The answer may be declared outside of the PGML markup, by passing ANS() a cmp() routine.
+								ENDPGML
 						]
 					],
 				),
 				Examples(
 					'Lists',
 					[
-						Numeric => [
+						Enumerated => [
 							'',
-							"Here is a list:\n"
-								. "1.  This is the first list item\n"
-								. "    continued on the next line.\n"
-								. "2.  Additional items are easy to add.\n"
-								. "3.  Continuation need not be indented,\n"
-								. "such as this line.\n\n"
-								. "A paragraph break ends the list...\n"
-								. "1.  Unless you indent the paragraph...\n\n"
-								. "    ...in which case it is part of the list item.\n"
-								. "2.  See?"
+							<<~'ENDPGML'
+								Enumerated lists can use arabic, alphabetic, Alphabetic, roman, or Roman enumeration.
+								1. This is the first item.
+								2. This is the second item.
+								
+								A dot or right parenthesis can be used.
+								a) This is the first item.
+								b) This is the second item.
+								
+								The actual number/letter used does not matter.
+								A) This is the first item.
+								A) This is the second item.
+								
+								And we have roman:
+								i. This is the first item.
+								i. This is the second item.
+								
+								And we have Roman:
+								I) This is the first item.
+								II) This is the second item.
+								ENDPGML
 						]
 					],
 					[
-						Alphabetic => [
+						Bulleted => [
 							'',
-							"A list with alphabetic markers:\n"
-								. "a)  You can use dots\n"
-								. "b)  or parens to indicate the items\n\n"
-								. "A paragraph break ends the list.\n\n"
-								. "A list with roman numeral markers:\n"
-								. "i.  Item 1\n"
-								. "ii. Item 2   \n"
-								. "Ending with three spaces also ends the list"
+							<<~'ENDPGML'
+								Bullet items can be indicated with a star:
+								* Apple
+								* Banana
+								
+								Or with a plus:
+								+ Apple
+								+ Banana
+								
+								Or with an o:
+								o Apple
+								o Banana
+								
+								Or with an dash:
+								- Apple
+								- Banana
+								ENDPGML
 						]
 					],
 					[
-						'Bullet lists' => [
+						Sublists => [
 							'',
-							"A list can be with stars:\n"
-								. "* Item 1\n"
-								. "* Item 1\n\n"
-								. "Or with plus or minus:\n"
-								. "+ Item 1\n"
-								. "+ Item 2\n\n"
-								. "Paragraphs can be used between items:\n\n"
-								. "o Item 1\n\n"
-								. "o Item 2\n\n"
-								. "End of lists."
+							<<~'ENDPGML'
+								1. A list
+								    a. with a sublist
+								    a. of three items
+								        i. deep
+								        i. nesting
+								    a. (indent sublist items with four spaces)
+								2. Back to the main list
+								    * it works with
+								    * bullets too
+								ENDPGML
 						]
 					],
 					[
-						'Sub-lists' => [
+						'Finer points' => [
 							'',
-							"1.  A list\n"
-								. "    -  with a sub-list\n"
-								. "    -  of three items\n"
-								. "    -  (indent the sub list)\n"
-								. "2.  Back to the main list\n"
+							<<~'ENDPGML'
+								1. A list item can continue
+								onto a new line of markup,
+								    even with indentation,
+								1. but it's still the same line of output.
+								
+								A new paragraph ends the enumeration...
+								1. And if another item comes, it starts a new list.
+								1. However if you indent that next paragraph,
+								
+								    then it is part of the previous list item
+								1. and the next item continues the enumeration.
+								1. If you end a line with three spaces as this line   
+								1. that ends the enumeration so any more items start over
+								ENDPGML
 						]
 					],
 				),
@@ -374,177 +393,467 @@ END_SCRIPT
 					'Substitutions',
 					[
 						Variables => [
-							'$a = 1; $f = Formula("(x+1)/(x-1)");',
-							'a = [$a], f = [$f].  In math: [`f = [$f]`] (TeX inserted automatically),' . "\n"
-								. 'parsed: [:f = [$f]:] (string inserted automatically).'
+							<<~'ENDPG',
+								$a = 1;
+								$y = Formula('(x + 1)/(x - 1)');
+								ENDPG
+							<<~'ENDPGML'
+								Here we substitute variables into the body: a = [$a], y = [$y]
+								
+								Inside math: [`y = [$y]`] (TeX inserted automatically),
+								
+								Or parsed: [:y = [$y]:] (string inserted automatically).
+								ENDPGML
 						]
 					],
-					[ Commands => [ 'sub F {return (shift)+1}; $x = 5;', 'Add one to five: [@ F($x) @]' ] ],
+					[
+						'Variable-like' => [
+							<<~'ENDPG',
+								@b = (1,2);
+								%c = (taco => 3, pizza => 4);
+								$f = Formula('x^2');
+								ENDPG
+							<<~'ENDPGML'
+								The first entry of @b is [$b[0]].
+								
+								And %c's value for 'taco' is [$c{taco}].
+								
+								We can apply a method: [`[$f->substitute(x => 'x + 1')]`].
+								ENDPGML
+						]
+					],
+					[
+						Commands => [
+							<<~'ENDPG',
+								sub F {return (shift)+1};
+								$x = 5;
+								$g = Compute('x^2');
+								ENDPG
+							<<~'ENDPGML'
+								Here we execute perl/PG commands inside the body.
+								
+								Add one to five: [@ F($x) @]
+								
+								Add one to five: [@ 1 + 5 @]
+								
+								The derivative of [`[$g]`] is [`[@ $g->D->TeX @]`].
+								ENDPGML
+						]
+					],
 					[
 						Comments => [
 							'',
-							"This [% text %] is removed.  \n"
-								. "So are these [% partial [@ and incomplete %] commands.  \n"
-								. "Comments can be nested: [% one [% and two %] and three %]\n"
+							<<~'ENDPGML'
+								This [% text %] is removed.
+								
+								So are these [% partial [@ and incomplete %] commands.
+								
+								Comments can be nested: [% one [% and two %] and three %]
+								ENDPGML
 						]
 					],
 					[
-						'No Escape' => [
-							'$x = "has math: [:x+1:] and ${BBOLD}bold${EBOLD}";',
-							"Contents of substitutions will be escaped, unless\n"
-								. "followed by a star:  \n"
-								. 'Escaped: [$BSMALL] not small [$ESMALL]  ' . "\n"
-								. 'Verbatim: [$BSMALL]* small [$ESMALL]*'
-								. "\n\n"
-								. "Two stars forces the contents to be processed further:  \n"
-								. 'Escaped: [$x]  ' . "\n"
-								. 'Verbatim: [$x]*  ' . "\n"
-								. 'Processed: [$x]**' . "\n"
+						'Processing control' => [
+							'$x = "has PGML markup [:x+1:] and ${BBOLD}bold${EBOLD}";',
+							<<~'ENDPGML'
+								Contents of substitutions may have HTML control characters, and will be escaped:  
+								[$x]
+								
+								Unless followed by a star:  
+								[$x]*
+								
+								Two stars will further cause any PGML to be processed:  
+								[$x]**
+								ENDPGML
 						]
 					],
 				),
 				Examples(
-					'Formatting',
-					[
-						'Line breaks' => [
-							'',
-							"Force line break by  \n"
-								. "ending a line with two spaces\n\n"
-								. "## even in a header ##  \n"
-								. "## that runs over two lines ##\n"
-						]
-					],
-					[
-						'Par break' => [
-							'',
-							'A blank line is a paragraph break\n    \nEven if it just contains white space\n'
-						]
-					],
-					[
-						Indentation => [
-							'',
-							"Indent a section by using four spaces or a tab\n"
-								. "    This is indented,\n"
-								. "    and continues on a second line.\n"
-								. "        Another four spaces indents again.\n"
-								. "    Go back to four to end the inner indenting.\n"
-								. "Note, however, that you only need to indent\n"
-								. "the first line of a paragraph to have all of it\n"
-								. "be indented.  (That may need to be changed.)\n\n"
-								. "End the paragraph to go back to no indenting\n"
-								. "    or use _three_ spaces to end the line   \n"
-								. "and that will end the indenting"
-						]
-					],
-					[
-						Centering => [
-							'',
-							"Use angle brackets to center a phrase:\n\n"
-								. ">> This is centered <<\n\n"
-								. "You can center several lines as a paragraph:\n"
-								. ">> These lines will <<\n"
-								. ">> be combined <<\n\n"
-								. "Or you can force line breaks with two spaced at the end:\n"
-								. ">> These lines will <<  \n"
-								. ">> be centered separately <<\n\n"
-								. "A whole paragraph can be centered:\n"
-								. ">> This is a paragraph\n"
-								. "that will be centered <<\n"
-						]
-					],
-					[
-						'Right justify' => [
-							'',
-							"Use right angle brackets to force a line or paragraph\n"
-								. "to be right-justified:\n"
-								. ">> At the right\n\n"
-								. ">> Several lines combined\n"
-								. ">> right justfied\n\n"
-								. ">> Or a whole paragaph\n"
-								. "that is pushed to the right\n\n"
-								. ">> Or two lines  \n"
-								. ">> justified separately."
-						]
-					],
-					[
-						Headings => [
-							'',
-							"# Heading size 1 #\n"
-								. "## Heading size 2 ##\n"
-								. "### Heading size 3 ###\n"
-								. "#### Heading size 4 ####\n"
-								. "##### Heading size 5 #####\n"
-								. "###### Heading size 6 ######\n\n"
-								. "### Two separate lines ###\n"
-								. "### are combined ###\n\n"
-								. "### A whole paragraph\n"
-								. "can be a heading ###\n\n"
-								. "### End with two spaces ###  \n"
-								. "### for two lines separately ###\n\n"
-								. "### The trailing hashes are optional.\n\n"
-								. ">> ## centered heading ## <<\n"
-								. ">> ## right-justified ##"
-						]
-					],
-					[
-						Rules => [
-							'',
-							"Three or more dashes or equals on a line by itself forms a rule\n\n"
-								. "-----\n"
-								. "You can specify the width and size if you want:\n"
-								. "----{200}\n----{'50%'}\n===={200}{5}\n===={size=>5}\n\n"
-								. "You can center and right-justify rules:\n>> ----{100} <<\n>> ----{100}\n"
-						]
-					],
+					'Inline formatting',
 					[
 						Emphasis => [
 							'',
-							"These words are in *bold* or _italic_.\n\n"
-								. "Stars can be used in*side* a word,\n"
-								. "but underlines_don't_work_that_way."
+							<<~'ENDPGML'
+								These words are in *bold* or _italic_.
+								
+								Stars can be used in*side* a word,
+								but underlines_don't_work_that_way.
+								ENDPGML
 						]
 					],
 					[
 						'Smart Quotes' => [
 							'',
-							"Quotes are ~~"smart~~" (~~"even here~~"), and don't forget about 'other' quotes.\n\n"
-								. "You can quote a quote: ~~\\"dumb quotes~~\\"."
-						]
-					],
-					[
-						Preformatted => [
-							'',
-							"Preformatted text starts with a colon and three spaces:\n"
-								. ":   This is preformatted,\n"
-								. ":       and can include any text, e.g., <, >, ~~$, etc.,\n"
-								. ":       but [@ ~~"commands~~" @] and other *mark up* are performed normally.\n"
-								. ":   Use [|verbatim mode|] if you want to include commands literally,\n"
-								. ":   or use a slash to escape them:  \\[~~$x].\n\n"
-								. "The formatting can be indented, too:\n"
-								. "    Here is some indenting\n"
-								. "    :   with preformatting\n"
-								. "    :   on several lines.\n"
-								. "    Now back to normal, but indented.\n"
+							<<~'ENDPGML'
+								Quotes are "smart" ("even here"), and don't worry about other 'quotes' like apostrophes.
+								
+								If you need a plain quote, escape with a backslash: \"dumb quotes\".
+								ENDPGML
 						]
 					],
 					[
 						Verbatim => [
 							'',
-							"Text that includes commands can be enclosed\n"
-								. "to prevent interpretation:  \n"
-								. "[|This is not math [`x+1`] in here.|]\n\n"
-								. "You can use more vertical bars to make verbatim verbatims:  \n"
-								. "[||This is [|verbatim|].||]\n\n"
-								. "Use backslashes to escape command characters if you need to:  \n"
-								. "This occurred in the year\n"
-								. "1\\.  (Prevent accidental list).\n\n"
-								. "Don't do comment: \\[% you will see this %]."
+							<<~'ENDPGML'
+								Text that includes commands can be enclosed to prevent interpretation:  
+								[|This math markup [:x+1:] is not processed.|]
+								
+								You can use more vertical bars if you have need to make the verbatim markup unprocessed.  
+								[||This is [|verbatim|].||]
+								
+								With a star, [|verbatim content|]* will have code formatting.
+								ENDPGML
 						]
 					],
 					[
-						'Other Chars' =>
-							[ '', 'Other characters quote themselves on their own: <, >, &, %, $, ^, etc.' ]
+						Escaping => [
+							'',
+							<<~'ENDPGML'
+								Use backslashes to escape command characters if you need to:  
+								For example, something occurred in the year
+								1\.  (Prevent accidental list).
+								
+								Or don't make this a comment: \[% you will see this %].
+								ENDPGML
+						]
 					],
+				),
+				Examples(
+					'Block formatting',
+					[
+						Headings => [
+							'',
+							<<~'ENDPGML'
+								# Heading level 1 #
+								## Heading level 2 ##
+								### Heading level 3 ###
+								#### Heading level 4 ####
+								##### Heading level 5 #####
+								###### Heading level 6 ######
+								### Two separate lines ###
+								### are combined ###
+								
+								### A whole paragraph
+								can be a heading ###
+								
+								### End with two spaces ###  
+								### for two lines separately ###
+								
+								### The trailing hashes are optional.
+								>> ## centered heading ## <<
+								>> ## right-justified ##
+								ENDPGML
+						]
+					],
+					[
+						'Breaks' => [
+							'',
+							<<~'ENDPGML'
+								A blank line is a paragraph break
+								    
+								Even if it contains nonempty white space
+								
+								Force a line break by  
+								ending a line with two spaces
+								
+								## even in a heading ##  
+								## that runs over two lines
+								ENDPGML
+						]
+					],
+					[
+						Indentation => [
+							'',
+							<<~'ENDPGML'
+								Indent a section by using four spaces or a tab
+								    This is indented,
+								    and continues on a second line.
+								        Another four spaces indents again.
+								    Go back to four to end the inner indenting.
+								Note, however, that you only need to indent
+								the first line of a paragraph to have all of it
+								be indented.  (That may need to be changed.)
+								
+								End the paragraph to go back to no indenting
+								    or use _three_ spaces to end the line   
+								and that will end the indenting
+								ENDPGML
+						]
+					],
+					[
+						Rules => [
+							'',
+							<<~'ENDPGML'
+								Three or more dashes or equals on a line by itself forms a rule.
+								
+								-----
+								You can specify the width and height if you want:
+								----{200}
+								===={'50%'}
+								----{'3in'}{5}
+								===={height => 5}
+								
+								You can center and right-justify rules:
+								>> ----{100} <<
+								>> ----{100}
+								ENDPGML
+						]
+					],
+					[
+						Centering => [
+							'',
+							<<~'ENDPGML'
+								Use angle brackets to center a phrase:
+								
+								>> This is centered <<
+								
+								You can center several lines as a paragraph:
+								>> These lines will <<
+								>> be combined <<
+								
+								Or you can force line breaks with two spaced at the end:
+								>> These lines will <<  
+								>> be centered separately <<
+								
+								A whole paragraph can be centered:
+								>> This is a paragraph
+								that will be centered <<
+								ENDPGML
+						]
+					],
+					[
+						'Right justify' => [
+							'',
+							<<~'ENDPGML'
+								Use right angle brackets to force a line or paragraph
+								to be right-justified:
+								>> At the right
+								
+								>> Several lines combined.
+								>> right justfied
+								
+								>> Or a whole paragaph
+								that is pushed to the right
+								
+								>> Or two lines  
+								>> justified separately.
+								ENDPGML
+						]
+					],
+					[
+						Preformatted => [
+							q!$s = 'substitutions'!,
+							<<~'ENDPGML'
+								Preformatted text starts with a colon and three spaces:
+								:   This is preformatted,
+								:       and can include any text, e.g., <, >, $, etc.,
+								:       but [@ "commands" @], [$s], and other *markup* are performed normally.
+								:   Use verbatim mode like [|[@ "commands" @]|] if you want to include commands/substitutions literally,
+								:   or use a slash to escape them: \[$s].
+								Preformatted text can be indented, too:
+								    Here is some indenting
+								    :   with preformatting
+								    :   on several lines.
+								    Now back to normal, but indented.
+								ENDPGML
+						]
+					],
+				),
+				Examples(
+					'Images',
+					[
+						'Image file' => [
+							'',
+							<<~'ENDPGML'
+								The image file should have a path relative to the location of the PG file.
+								
+								[!The WeBWorK logo (this is the alt text)!]{'webwork_logo.png'}
+								
+								You can specify width and height as pixel counts. If only one is provided, aspect ratio is preserved.
+								
+								[!The WeBWorK logo!]{'webwork_logo.png'}{300}
+								
+								[!The WeBWorK logo!]{'webwork_logo.png'}{300}{200}
+								
+								[!The WeBWorK logo!]{'webwork_logo.png'}{height => 200}
+								ENDPGML
+						],
+					],
+					[
+						'Tikz image' => [
+							<<~'ENDPG',
+								loadMacros('PGtikz.pl');
+								$circle = createTikZImage();
+								$circle->tex('\draw (0,0) circle[radius=1.5];');
+								ENDPG
+							<<~'ENDPGML'
+								[!A circle!]{$circle}
+								
+								[!A circle!]{$circle}{100}
+								ENDPGML
+						],
+					],
+					[
+						'LaTeX image' => [
+							<<~'ENDPG',
+								loadMacros('PGlateximage.pl');
+								$diagram = createLaTeXImage();
+								$diagram->texPackages([['xy','all']]);
+								$diagram->tex('\xymatrix{ A \ar[r] & B \ar[d] \\\\\ D \ar[u] & C \ar[l] }');
+								ENDPG
+							<<~'ENDPGML'
+								[!A diagram!]{$diagram}
+								
+								[!A diagram!]{$diagram}{100}
+								ENDPGML
+						],
+					],
+					[
+						'PGgraphmacros image' => [
+							<<~'ENDPG',
+								loadMacros('PGgraphmacros.pl');
+								$graph = init_graph(-1, -1, 4, 4,
+									axes => [0,0],
+									grid => [5,5],
+									size=>[200, 200]
+								);
+								add_functions($graph, "x^2 for x in <-1,2> using color:blue and weight:2");
+								ENDPG
+							<<~'ENDPGML'
+								[!A graph!]{$graph}
+								
+								[!A graph!]{$graph}{100}
+								ENDPGML
+						],
+					]
+				),
+				Examples(
+					'Tables',
+					[
+						'Data table' => [
+							'',
+							<<~'ENDPGML'
+								Tables use bracket-hash delimiters for the entire table, and bracket-dot delimiters for each cell.
+								A cell that is starred indicates the end of a row. (A star on the last cell is optional.)
+								
+								[#
+									[. A .]
+									[. B .]*
+									[. C .]
+									[. D .]*
+									[. E .]
+									[. F .]
+								#]
+								
+								Cells can have PGML markup.
+								
+								[#
+									[. [`x`] .]
+									[. [`x^2`] .]*
+									[. [`2`] .]
+									[. [_]{4} .]*
+									[. [_]{3} .]
+									[. [`9`] .]
+								#]
+								ENDPGML
+						]
+					],
+					[
+						'Table options' => [
+							'',
+							<<~'ENDPGML'
+								There are many options for cells and the table as a whole. Here are just a few examples.
+								
+								[#
+									[. A .]
+									[. B .]*{headerrow => 1}
+									[. C .]
+									[. D .]*
+									[. E .]
+									[. F .]
+								#]{padding => [0,1]}
+								
+								These are all the options. For details about how they work, see the niceTables.pl documentation.
+								[#
+								[.[#
+									[.Option         .] [.Default  .] [.General  .]*{headerrow => 1}
+									[.caption        .] [.         .] [.string   .]*
+									[.horizontalrules.] [.0        .] [.boolean  .]*
+									[.texalignment   .] [.         .] [.string   .]*
+									[.align          .] [.         .] [.string   .]*
+									[.Xratio         .] [.0.97     .] [.number   .]*
+									[.encase         .] [.\[,\]    .] [.array ref.]*
+									[.rowheaders     .] [.0        .] [.boolean  .]*
+									[.headerrules    .] [.1        .] [.boolean  .]*
+									[.valign         .] [.\'top\'  .] [.string   .]*
+									[.padding        .] [.\[0,0.5\].] [.array ref.]*
+									[.tablecss       .] [.         .] [.string   .]*
+									[.captioncss     .] [.         .] [.string   .]*
+									[.columnscss     .] [.         .] [.string   .]*
+									[.datacss        .] [.         .] [.string   .]*
+									[.headercss      .] [.         .] [.string   .]*
+									[.allcellcss     .] [.         .] [.string   .]*
+									[.booktabs       .] [.1        .] [.boolean  .]*
+								#]{caption => 'Options for the whole table', horizontalrules => 1, align => 'lcl'}.]
+								
+								[.[#
+									[.Option         .] [.Default  .] [.General  .]*{headerrow => 1}
+									[.halign         .] [.         .] [.string   .]*
+									[.header         .] [.         .] [.string   .]*
+									[.color          .] [.         .] [.string   .]*
+									[.bgcolor        .] [.         .] [.string   .]*
+									[.b              .] [.0        .] [.boolean  .]*
+									[.i              .] [.0        .] [.boolean  .]*
+									[.m              .] [.0        .] [.boolean  .]*
+									[.noencase       .] [.0        .] [.boolean  .]*
+									[.colspan        .] [.         .] [.number   .]*
+									[.top            .] [.         .] [.string   .]*
+									[.bottom         .] [.         .] [.string   .]*
+									[.cellcss        .] [.         .] [.string   .]*
+									[.texpre         .] [.         .] [.string   .]*
+									[.texencase      .] [.\[,\]    .] [.array ref.]*
+								#]{caption => 'Options for a cell', horizontalrules => 1, align => 'lcl'}.]
+								
+								[.[#
+									[.Option         .] [.Default  .] [.General  .]*{headerrow => 1}
+									[.rowcolor       .] [.         .] [.string   .]*
+									[.rowcss         .] [.         .] [.string   .]*
+									[.color          .] [.         .] [.string   .]*
+									[.headerrow      .] [.0        .] [.boolean  .]*
+									[.rowtop         .] [.         .] [.string   .]*
+									[.rowbottom      .] [.         .] [.string   .]*
+									[.valign         .] [.\'top\'  .] [.string   .]*
+								#]{caption => 'Options for a cell that affect a row', horizontalrules => 1, align => 'lcl'}.]
+								#]*
+								ENDPGML
+						]
+					],
+					[
+						'Layout table' => [
+							'',
+							<<~'ENDPGML'
+								A layout table has mostly the same markup as a data table, but it is starred.
+								Layout tables are for laying out content visually when it's not important
+								for a reader to know what component is in which row and which column.
+								
+								[#
+									[. Some text .]
+									[. [!The WeBWorK logo!]{'webwork_logo.png'} .]*
+								
+									[.
+										[#
+											[. [`x`] .]
+											[. [`x^2`] .]*{headerrow => 1}
+											[. [`2`] .]
+											[. [_]{4} .]*
+											[. [_]{3} .]
+											[. [`9`] .]
+										#]
+									.]
+								#]*
+								ENDPGML
+						]
+					]
 				),
 				Examples(
 					'Problems',
@@ -552,8 +861,7 @@ END_SCRIPT
 						Algebra => [
 							'Context("Interval"); $a = random(1,8,1); $b = random(8,15,1); $min = $a-$b; $max = $a+$b;',
 							"Solve the following inequality and enter your answer using interval notation:\n\n"
-								. '    [``|x-[$a]| > [$b]``]'
-								. "\n\n"
+								. '    [``|x-[$a]| > [$b]``]' . "\n\n"
 								. 'Answer: [`x`] must be in [____________________________]{"(-inf,$min)U($max,inf)"}'
 						]
 					],
@@ -562,77 +870,65 @@ END_SCRIPT
 							'$b=non_zero_random(-3,1,1)+1; # b=1 makes answers equal' . "\n"
 								. '$f = Formula("x+$b"); $g = Formula("(x-2)^2");' . "\n"
 								. '$F = "$f for x in [-1,5] using color:blue and weight:2";' . "\n"
-								. '$G = "$g for x in [0,4] using color:red and weight:2";'
-								. "\n\n"
+								. '$G = "$g for x in [0,4] using color:red and weight:2";' . "\n\n"
 								. 'loadMacros("PGgraphmacros.pl");' . "\n"
-								. '$graph = init_graph(-2,-4,6,8,axes=>[0,0],grid=>[8,12],size=>[200,200]);' . "\n"
+								. '$graph = init_graph(-2,-4,6,8,axes => [0,0],grid => [8,12],size => [200,200]);'
+								. "\n"
 								. 'plot_functions($graph,$F,$G);' . "\n"
-								. '$lf = new Label (5.3,$f->eval(x=>5)+.3,"f","blue","left","bottom");' . "\n"
-								. '$lg = new Label (.3,$g->eval(x=>0)+.3,"g","red","left","bottom");' . "\n"
+								. '$lf = new Label (5.3,$f->eval(x => 5)+.3,"f","blue","left","bottom");' . "\n"
+								. '$lg = new Label (.3,$g->eval(x => 0)+.3,"g","red","left","bottom");' . "\n"
 								. '$graph->lb($lf,$lg);',
 							"Let [`f`] be the linear function (in blue) and let [`g`] be the\n"
 								. "parabolic function (in red) below.\n\n"
 								. '    [@ image(insertGraph($graph),' . "\n"
-								. '             width=>200,height=>200,tex_size=>480) @]*'
-								. "\n\n"
+								. '             width => 200,height => 200,tex_size => 480) @]*' . "\n\n"
 								. '    1.  [:(f o g)(2):] = [____]{$b}' . "\n"
 								. '    2.  [:(g o f)(2):] = [____]{$b**2}' . "\n"
 								. '    3.  [:(f o f)(2):] = [____]{2+2*$b}' . "\n"
-								. '    4.  [:(g o g)(2):] = [____]{4}'
-								. "\n\n"
+								. '    4.  [:(g o g)(2):] = [____]{4}' . "\n\n"
 						]
 					],
 					[
 						Derivative => [
 							'$aa = random(3,8,1);' . "\n"
 								. '$f = Formula("atan(sqrt(${aa}x^2-1))");' . "\n"
-								. '$Df = $f->D->with(limits=>[1/sqrt($aa),1]);',
-							q!Let [`f(x) = [$f]`]. Find [`f'(x)`].!
-								. "\n\n"
+								. '$Df = $f->D->with(limits => [1/sqrt($aa),1]);',
+							q!Let [`f(x) = [$f]`]. Find [`f'(x)`].! . "\n\n"
 								. q![`f'(x)`] = [____________________________________]{$Df}!
 						]
 					],
 					[
 						Logarithm => [
 							'$a = random(3,5,1); $b = random(2,20,1); $c = random(2,20,1);',
-							'Use the laws of logarithms to rewrite the expression'
-								. "\n\n"
-								. '    [::ln(root [$a] of xy)::]'
-								. "\n\n"
+							'Use the laws of logarithms to rewrite the expression' . "\n\n"
+								. '    [::ln(root [$a] of xy)::]' . "\n\n"
 								. 'in a form that does not contain any logarithm of a product,' . "\n"
-								. 'quotient or power.'
-								. "\n\n"
-								. 'After rewriting, we have'
-								. "\n\n"
-								. '    [::ln(root [$a] of xy) = A ln x + B ln y::]'
-								. "\n\n"
-								. 'with constants'
-								. "\n\n"
+								. 'quotient or power.' . "\n\n"
+								. 'After rewriting, we have' . "\n\n"
+								. '    [::ln(root [$a] of xy) = A ln x + B ln y::]' . "\n\n"
+								. 'with constants' . "\n\n"
 								. '    [`A`] = [_______________]{1/$a} and  ' . "\n"
-								. '    [`B`] = [_______________]{1/$b}.'
-								. "\n\n"
+								. '    [`B`] = [_______________]{1/$b}.' . "\n\n"
 						]
 					],
 					[
 						Optimization => [
-							'$a = random(200, 320, 10); $b = random(3, 6, 1); $c = random(12, 16, 1);'
+							'loadMacros("parserMultiAnswer.pl"); $a = random(200, 320, 10); $b = random(3, 6, 1); $c = random(12, 16, 1);'
 								. "\n\n"
-								. '$length = sqrt($a*($b+$c)/(2*$b)); $width = sqrt(2*$b*$a/($b+$c));'
-								. "\n\n"
+								. '$length = sqrt($a*($b+$c)/(2*$b)); $width = sqrt(2*$b*$a/($b+$c));' . "\n\n"
 								. '$mp = MultiAnswer(Real($length), Real($width))->with(' . "\n"
-								. '  singleResult => 1, separator => " x ", tex_separator => "\\\\times",'
-								. "\n"
+								. '  singleResult => 1, separator => " x ", tex_separator => "\\\\times",' . "\n"
 								. '  checker => sub {' . "\n"
 								. '    my ($correct, $student) = @_;' . "\n"
 								. '    my ($a,$b) = @$correct; my ($A,$B) = @$student;' . "\n"
 								. '    return ($a == $A && $b == $B) || ($a == $B && $b == $A);' . "\n" . '  }'
-								. "\n" . ');',
+								. "\n"
+								. ');',
 							'A fence is to be built to enclose a rectangular area of [$a] square' . "\n"
 								. 'feet.  The fence along three sides is to be made of material that' . "\n"
 								. 'costs [$b] dollars per foot, and the material for the fourth side' . "\n"
 								. 'costs [$c] dollars per foot.  Find the dimensions of the enclosure' . "\n"
-								. 'that is most economical to construct.'
-								. "\n\n"
+								. 'that is most economical to construct.' . "\n\n"
 								. 'Dimensions: [___________]{$mp} x [___________]{$mp} feet'
 						]
 					],
@@ -645,17 +941,23 @@ END_SCRIPT
 				. 'display:flex;flex-direction:column;gap:0.25rem',
 				join(
 					'',
-					tag('legend', id => 'reference-label', style => 'font-size:20px', 'For reference only:'),
+					tag('legend', id => 'reference-label', style => 'font-size:20px', tag('h3', 'Reference')),
 					Menu(
-						'- Math -',                  '[`tex`]',
-						'[``display-tex``]',         '[:parsed-math:]',
-						'[::parsed-display-math::]', '[:parsed-math:]{context}',
+						'- Math -',
+						'[`tex`]',
+						'[``display-tex``]',
+						'[:parsed-math:]',
+						'[::parsed-display-math::]',
+						'[:parsed-math:]{context}',
 						'[:parsed-math:]*  (uses current context)',
 					),
 					Menu(
-						'- Answers -',                '[______] (# of _ is width)',
-						'[___]{answer}',              '[___]{answer}{width}',
-						'[___]{answer}{width}{name}', '[___]{answer=>...,width=>...,name=>...}',
+						'- Answers -',
+						'[______] (# of _ is width)',
+						'[___]{answer}',
+						'[___]{answer}{width}',
+						'[___]{answer}{width}{name}',
+						'[___]{answer => ...,width => ...,name => ...}',
 						'[___]*   (ans_array not ans_rule)',
 					),
 					Menu(
@@ -710,7 +1012,145 @@ END_SCRIPT
 					)
 				)
 			)
-	));
-}
+		)
+
+		# Input textareas
+		. tag(
+			'div',
+			style => 'width:fit-content;max-width:100%;text-align:left;margin:auto',
+			tag('label', for => 'vars', tag('small', tag('i', style => 'color:#555', 'PG setup code')))
+			. tag(
+				'textarea',
+				name  => 'vars',
+				id    => 'vars',
+				rows  => $vrows,
+				cols  => 75,
+				style => 'display:block;font-family:DejaVu Sans Mono,Courier New,monospace;',
+				$vars
+			)
+			. tag('label', for => 'pgml', tag('small', tag('i', style => 'color:#555', 'PGML body markup')))
+			. tag(
+				'textarea',
+				name  => 'pgml',
+				id    => 'pgml',
+				rows  => $prows,
+				cols  => 75,
+				style => 'display:block;font-family:DejaVu Sans Mono,Courier New,monospace;',
+				$pgml
+			)
+			. tag(
+				'div',
+				style => 'margin-top:0.25rem;display:flex;justify-content:space-between;align-items:center',
+				tag(
+					'div',
+					tag(
+						'div',
+						tag(
+							'label',
+							tag(
+								'input',
+								type  => 'checkbox',
+								name  => 'showHTML',
+								value => 1,
+								$inputs_ref->{showHTML} ? (checked => undef) : ()
+							)
+							. ' Show HTML code '
+						)
+					)
+					. tag(
+						'div',
+						tag(
+							'label',
+							tag(
+								'input',
+								type  => 'checkbox',
+								name  => 'showTeX',
+								value => 1,
+								$inputs_ref->{showTeX} ? (checked => undef) : ()
+							)
+							. ' Show TeX code'
+						)
+					)
+					. tag(
+						'div',
+						tag(
+							'label',
+							tag(
+								'input',
+								type  => 'checkbox',
+								name  => 'showPTX',
+								value => 1,
+								$inputs_ref->{showPTX} ? (checked => undef) : ()
+							)
+							. ' Show PTX code'
+						)
+					)
+				)
+				. tag('div', tag('input', type => 'submit', name => 'action', value => 'Process this Text'))
+			)
+		)
+));
+
+$SP = "&#x2423;";
+TEXT(tag('script', <<~'ENDSCRIPT'));
+	window.addEventListener('DOMContentLoaded', () => {
+		const unescapeHTML = (html) => {
+			return html
+				.replace(/&gt;/g, '>')
+				.replace(/&lt;/g, '<')
+				.replace(/&amp;/g, '&')
+				.replace(/&quot;/g, '"')
+				.replace(/\n/g, '~~n')
+				.replace(/\\/g, '\');
+		};
+		for (const select of document.querySelectorAll('.example-selector')) {
+			select.addEventListener('change', () => {
+				if (select.value === '') return;
+				const selectedExample = select.options[select.selectedIndex];
+				const dataType = { vars: 3, pgml: 10 };
+				for (const id in dataType) {
+					const el = document.getElementById(id);
+					el.value = unescapeHTML(selectedExample.dataset[id]);
+					el.rows = Math.max(dataType[id], selectedExample.dataset[id].split(/~~n/).length);
+				}
+				for (const otherselect of document.querySelectorAll('.example-selector')) {
+					if (otherselect != select) {
+						otherselect.value = otherselect.firstChild.value;
+					}
+				}
+				document.getElementById('resultsBox').style.display = 'none';
+			});
+		}
+	});
+	ENDSCRIPT
+
+TEXT(tag(
+	'div',
+	id => 'resultsBox',
+	($verror ? $HR . $verror . $HR : '')
+		. (
+			(defined $result && $result ne '') ? tag(
+				'div',
+				style =>
+				'margin:1rem auto; padding:1rem; border:1px solid black; border-radius:4px; background-color:#e8e8e8;',
+				$result
+			) : ''
+		)
+		. (
+			($inputs_ref->{showHTML})
+			? (tag('hr') . tag('small', tag('pre', EscapeHTML($result) =~ s!~~n!<br>!gr)) . tag('hr'))
+			: ''
+		)
+		. (
+			($inputs_ref->{showTeX})
+			? (tag('hr') . tag('small', tag('pre', EscapeHTML($tex) =~ s!~~n!<br>!gr)) . tag('hr'))
+			: ''
+		)
+		. (
+			($inputs_ref->{showPTX})
+			? (tag('hr') . tag('small', tag('pre', EscapeHTML($ptx) =~ s!~~n!<br>!gr)) . tag('hr'))
+			: ''
+		)
+));
 
 ENDDOCUMENT();

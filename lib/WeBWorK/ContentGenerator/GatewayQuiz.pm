@@ -246,12 +246,10 @@ sub attemptResults ($c, $pg) {
 sub get_instructor_comment ($c, $problem) {
 	return unless ref($problem) =~ /ProblemVersion/;
 
-	my $db               = $c->db;
-	my $userPastAnswerID = $db->latestProblemPastAnswer(
-		$c->ce->{courseName},
-		$problem->user_id, $problem->set_id . ',v' . $problem->version_id,
-		$problem->problem_id
-	);
+	my $db = $c->db;
+	my $userPastAnswerID =
+		$db->latestProblemPastAnswer($problem->user_id, $problem->set_id . ',v' . $problem->version_id,
+			$problem->problem_id);
 
 	if ($userPastAnswerID) {
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
@@ -847,6 +845,11 @@ async sub pre_header_initialize ($c) {
 		push(@pg_results, $pg);
 	}
 
+	# Show the template problem ID if the problems are in random order
+	# or the template problem IDs are not in order starting at 1.
+	$c->{can}{showTemplateIds} = $c->{can}{showProblemGrader}
+		&& ($set->problem_randorder || $problems[-1]->problem_id != scalar(@problems));
+
 	# Wait for all problems to be rendered and replace the undefined entries
 	# in the pg_results array with the rendered result.
 	my @renderedPG = await Mojo::Promise->all(@renderPromises);
@@ -879,7 +882,7 @@ async sub pre_header_initialize ($c) {
 
 	# Save results to database as appropriate
 	if ($c->{submitAnswers} || (($c->{previewAnswers} || $c->param('newPage')) && $can{recordAnswers})) {
-		# If answers are being submitted, then save the problems to the database.  If this is a preview or pages change
+		# If answers are being submitted, then save the problems to the database.  If this is a preview or page change
 		# and answers can be recorded, then save the last answer for future reference.
 		# Also save the persistent data to the database even when the last answer is not saved.
 
@@ -889,7 +892,9 @@ async sub pre_header_initialize ($c) {
 			my $proctorID = $c->param('proctor_user');
 
 			# If there are no attempts left, delete all proctor keys for this user.
-			if ($set->attempts_per_version - 1 - $problem->num_correct - $problem->num_incorrect <= 0) {
+			if ($set->attempts_per_version > 0
+				&& $set->attempts_per_version - 1 - $problem->num_correct - $problem->num_incorrect <= 0)
+			{
 				eval { $db->deleteAllProctorKeys($effectiveUserID); };
 			} else {
 				# Otherwise, delete only the grading key.
@@ -897,8 +902,8 @@ async sub pre_header_initialize ($c) {
 				# In this case there may be a past login proctor key that can be kept so that another login to continue
 				# working the test is not needed.
 				if ($c->param('past_proctor_user') && $c->param('past_proctor_key')) {
-					$c->param('proctor_user', $c->param('past_proctor_user'));
-					$c->param('proctor_key',  $c->param('past_proctor_key'));
+					$c->param('proctor_user', scalar $c->param('past_proctor_user'));
+					$c->param('proctor_key',  scalar $c->param('past_proctor_key'));
 				}
 			}
 			# This is unsubtle, but we'd rather not have bogus keys sitting around.
@@ -1080,7 +1085,6 @@ async sub pre_header_initialize ($c) {
 
 				# Add to PastAnswer db
 				my $pastAnswer = $db->newPastAnswer();
-				$pastAnswer->course_id($c->stash('courseID'));
 				$pastAnswer->user_id($problem->user_id);
 				$pastAnswer->set_id($setVName);
 				$pastAnswer->problem_id($problem->problem_id);

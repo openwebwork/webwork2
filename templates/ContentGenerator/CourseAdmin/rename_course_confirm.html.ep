@@ -6,7 +6,7 @@
 		<p class="<%= $_->[1] ? 'text-success' : 'text-danger' %> fw-bold my-0"><%= $_->[0] %></p>
 	% }
 % }
-% my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $db_report) =
+% my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
 	% $c->formatReportOnDatabaseTables($dbStatus);
 <%= $db_report =%>
 % if ($extra_database_tables) {
@@ -22,6 +22,15 @@
 		<%= maketext(
 			'There are extra database fields which are not defined in the schema for at least one table.  '
 				. 'They can be removed when upgrading the course.'
+		) =%>
+	</p>
+% }
+% if ($rebuild_table_indexes) {
+	<p class="text-danger fw-bold">
+		<%= maketext(
+			'There are extra database fields which are not defined in the schema and were part of the key '
+				. 'for at least one table. These fields need to be deleted and the table indexes need to be rebuilt. '
+				. 'This will be done when upgrading the course.'
 		) =%>
 	</p>
 % }

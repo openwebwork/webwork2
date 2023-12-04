@@ -14,10 +14,10 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('Homwork Sets Editor Help');
+% title maketext('Sets Manager Help');
 %
 <p>
-	<%= maketext('This page manages all of the homework sets (including quizzes/tests). '
+	<%= maketext('This page manages all problem sets (including quizzes/tests). '
 		. 'The following allow editing directly of a single problem set.') =%>
 </p>
 <dl>

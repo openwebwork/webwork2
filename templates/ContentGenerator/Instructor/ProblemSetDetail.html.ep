@@ -11,9 +11,12 @@
 	<%= javascript getAssetURL($ce, 'node_modules/luxon/build/global/luxon.min.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.js'), defer => undef =%>
 	% if ($ce->{language} !~ /^en/) {
-		<%= javascript
-			getAssetURL($ce, 'node_modules/flatpickr/dist/l10n/' . ($ce->{language} =~ s/^(..).*/$1/gr) . '.js'),
-			defer => undef =%>
+		<%= javascript getAssetURL(
+			$ce,
+			'node_modules/flatpickr/dist/l10n/'
+		   	. ($ce->{language} =~ /^el/ ? 'gr' : ($ce->{language} =~ s/^(..).*/$1/gr))
+		   	. '.js'
+		), defer => undef =%>
 	% }
 	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
 		defer => undef =%>
@@ -157,12 +160,10 @@
 				) =%>
 			</div>
 			<div class="col-md-6 mt-md-0 mt-2">
-				<%== maketext(
-					'Edit [_1] for set [_2].',
-					link_to(maketext('individual user settings') =>
-						$c->systemLink(url_for 'instructor_users_assigned_to_set')),
-					tag('span', dir => 'ltr', format_set_name_display($setID))
-				) =%>
+				% my $link = link_to(maketext('individual user settings') =>
+					% $c->systemLink(url_for 'instructor_users_assigned_to_set'));
+				<%== maketext('Edit [_1] for set [_2].',
+					$link, tag('span', dir => 'ltr', format_set_name_display($setID))) =%>
 			</div>
 		</div>
 	</div>

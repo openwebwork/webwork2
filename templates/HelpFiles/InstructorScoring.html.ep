@@ -21,8 +21,8 @@
 		. 'application.') =%>
 </p>
 <p>
-	<%= maketext('What WeBWorK does have is good support for summarizing the scores on WeBWorK homework sets and '
-		. 'tests and exporting them in a form (.csv) which any spreadsheet can use. WeBWorK reports all of the '
+	<%= maketext('What WeBWorK does have is good support for summarizing the scores on WeBWorK assignments '
+		. 'and exporting them in a form (.csv) which any spreadsheet can use. WeBWorK reports all of the '
 		. 'homework grades with options shown below.') =%>
 </p>
 <p>
