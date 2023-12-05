@@ -13,56 +13,58 @@
 % }
 %
 % my $scoringDir = $ce->{courseDirs}{scoring};
-% $c->stash->{footerWidthClass} = 'col-md-10 col-lg-8';
+% $c->stash->{footerWidthClass} = 'col-md-12 col-lg-10 col-xl-8';
 %
 <div class="row">
-	<div class="col-md-10 col-lg-8 border border-dark p-2">
-		<%= form_for current_route, name => 'scoring-form', id => 'scoring-form', method => 'POST', begin =%>
-			<%= $c->hidden_authen_fields =%>
-			<%= hidden_field returning => 1 =%>
-			<div class="row">
-				<div class="mb-2 col-6">
-					<%= label_for selectedSet => maketext('Selected sets:'), class => 'form-label' =%>
-					<%= select_field selectedSet =>
-							[ map { [ format_set_name_display($_) => $_ ] } @{ $c->{ra_set_ids} } ],
-						id => 'selectedSet', class => 'form-select', size => 10, multiple => undef, dir => 'ltr' =%>
+	<div class="col-md-12 col-lg-10 col-xl-8">
+		<div class="border border-dark p-2">
+			<%= form_for current_route, name => 'scoring-form', id => 'scoring-form', method => 'POST', begin =%>
+				<%= $c->hidden_authen_fields =%>
+				<%= hidden_field returning => 1 =%>
+				<div class="row">
+					<div class="col-sm-6 mb-2">
+						<%= label_for selectedSet => maketext('Selected sets:'), class => 'form-label' =%>
+						<%= select_field selectedSet =>
+								[ map { [ format_set_name_display($_) => $_ ] } @{ $c->{ra_set_ids} } ],
+							id => 'selectedSet', class => 'form-select', size => 10, multiple => undef, dir => 'ltr' =%>
+					</div>
+					<div class="col-sm-6 mt-sm-5">
+						<div class="form-check">
+							<label class="form-check-label">
+								% param('padFields', 1) unless param('returning');
+								<%= check_box padFields => 1, class => 'form-check-input' =%>
+								<%= maketext('Pad fields') =%>
+							</label>
+						</div>
+						<div class="form-check">
+							<label class="form-check-label">
+								% param('includePercentEachSet', 1) unless param('returning');
+								<%= check_box includePercentEachSet => 1, class => 'form-check-input' =%>
+								<%= maketext('Include percentage columns') =%>
+							</label>
+						</div>
+						<div class="form-check">
+							<label class="form-check-label">
+								<%= check_box includeIndex => 1, class => 'form-check-input' =%>
+								<%= maketext('Include success index columns') =%>
+							</label>
+						</div>
+						<div class="form-check">
+							<label class="form-check-label">
+								<%= check_box recordSingleSetScores => 1, class => 'form-check-input' =%>
+								<%= maketext('Record scores for each set') =%>
+							</label>
+						</div>
+					</div>
 				</div>
-				<div class="col-6 mt-5">
-					<div class="form-check">
-						<label class="form-check-label">
-							% param('padFields', 1) unless param('returning');
-							<%= check_box padFields => 1, class => 'form-check-input' =%>
-							<%= maketext('Pad fields') =%>
-						</label>
-					</div>
-					<div class="form-check">
-						<label class="form-check-label">
-							% param('includePercentEachSet', 1) unless param('returning');
-							<%= check_box includePercentEachSet => 1, class => 'form-check-input' =%>
-							<%= maketext('Include percentage columns') =%>
-						</label>
-					</div>
-					<div class="form-check">
-						<label class="form-check-label">
-							<%= check_box includeIndex => 1, class => 'form-check-input' =%>
-							<%= maketext('Include success index columns') =%>
-						</label>
-					</div>
-					<div class="form-check">
-						<label class="form-check-label">
-							<%= check_box recordSingleSetScores => 1, class => 'form-check-input' =%>
-							<%= maketext('Record scores for each set') =%>
-						</label>
-					</div>
+				<div class="d-flex flex-sm-nowrap flex-wrap">
+					<%= submit_button maketext('Score selected set(s) and save to:'), name => 'score-sets',
+						id => 'score-sets', class => 'btn btn-primary btn-sm me-2 mb-sm-0 mb-2' =%>
+					<%= text_field scoringFileName => $c->{scoringFileName}, class => 'form-control form-control-sm',
+						size => '40', 'aria-labelledby' => 'score-sets' =%>
 				</div>
-			</div>
-			<div class="d-flex flex-sm-nowrap flex-wrap">
-				<%= submit_button maketext('Score selected set(s) and save to:'), name => 'score-sets',
-					id => 'score-sets', class => 'btn btn-primary btn-sm me-2 mb-sm-0 mb-2' =%>
-				<%= text_field scoringFileName => $c->{scoringFileName}, class => 'form-control form-control-sm',
-					size => '40', 'aria-labelledby' => 'score-sets' =%>
-			</div>
-		<% end =%>
+			<% end =%>
+		</div>
 	</div>
 </div>
 %
