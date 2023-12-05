@@ -958,7 +958,10 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 							type  => 'button',
 							class => 'randomize-seed-btn btn btn-sm btn-secondary',
 							title => 'randomize',
-							data  => { seed_input => "$recordType.$recordID.${field}_id" },
+							data  => {
+								seed_input   => "$recordType.$recordID.problem_seed_id",
+								status_input => "$recordType.$recordID.status_id"
+							},
 							$c->tag('i', class => 'fa-solid fa-shuffle')
 						)
 					)->join('')

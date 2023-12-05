@@ -416,8 +416,25 @@
 	});
 
 	// Set up seed randomization buttons.
-	for (const btn of document.querySelectorAll('.randomize-seed-btn')) {
+	const randomize_seeds_button = document.getElementById('randomize_seeds');
+	const randomize_seed_buttons = document.querySelectorAll('.randomize-seed-btn');
+	if (randomize_seeds_button) {
+		randomize_seeds_button.addEventListener('click',
+			() => (randomize_seed_buttons.forEach((btn) => {
+				const exclude_correct = document.getElementById('excludeCorrect').checked;
+				const input = document.getElementById(btn.dataset.seedInput);
+				const stat  = document.getElementById(btn.dataset.statusInput).value || 0;
+				if (input) {
+					if (!exclude_correct || (exclude_correct && stat < 1)) {
+						input.value = Math.floor(Math.random() * 10000);
+					}
+				}
+			}))
+		)
+	}
+	for (const btn of randomize_seed_buttons) {
 		const input = document.getElementById(btn.dataset.seedInput);
 		if (input) btn.addEventListener('click', () => (input.value = Math.floor(Math.random() * 10000)));
 	}
+
 })();

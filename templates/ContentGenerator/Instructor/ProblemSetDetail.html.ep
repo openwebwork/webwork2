@@ -348,6 +348,17 @@
 						<%= maketext('Hide All') =%>
 					</button>
 				</div>
+			% } else {
+				<div class="input-group d-inline-flex flex-nowrap w-auto py-1 me-3">
+					<button id="randomize_seeds" type="button" class="btn btn-secondary">
+						<%= maketext('Randomize Seeds') =%>
+					</button>
+					<label class="form-check-label input-group-text ps-0">
+						<%= check_box excludeCorrect => 0,
+							id => 'excludeCorrect', class => 'form-check-input mx-2' =%>
+						<%= maketext('if status less than 1') =%>
+					</label>
+				</div>
 			% }
 			% if (!@editForUser) {
 				<div class="btn-group w-auto me-3 py-1">
