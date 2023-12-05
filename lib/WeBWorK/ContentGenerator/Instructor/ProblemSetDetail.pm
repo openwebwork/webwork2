@@ -937,7 +937,7 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 			my $value = $forUsers ? $userValue : $globalValue;
 			$value = format_set_name_display($value =~ s/\s*,\s*/,/gr) if $field eq 'restricted_release';
 
-			$inputType = $c->text_field(
+			my @field_args = (
 				"$recordType.$recordID.$field", $value,
 				id    => "$recordType.$recordID.${field}_id",
 				data  => { override => "$recordType.$recordID.$field.override_id" },
@@ -945,6 +945,27 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 				$forUsers && $check ? (aria_labelledby => "$recordType.$recordID.$field.label") : (),
 				$field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr')      : ()
 			);
+			if ($field eq 'problem_seed') {
+				# Insert a randomization button
+				$inputType = Mojo::ByteStream->new($c->tag(
+					'div',
+					class => 'input-group input-group-sm',
+					style => 'min-width: 7rem',
+					$c->number_field(@field_args, min => 0)->to_string
+						. $c->tag(
+							'button',
+							type    => 'button',
+							class   => 'btn btn-sm btn-secondary',
+							title   => 'randomize',
+							onclick =>
+							"(function() {document.getElementById('$recordType.$recordID.${field}_id').value = Math.floor(Math.random() * 10000);})();",
+							$c->tag('i', class => 'fa-solid fa-shuffle')
+						)
+				))->html_unescape;
+				warn(ref($inputType));
+			} else {
+				$inputType = $c->text_field(@field_args);
+			}
 		}
 	} elsif ($choose) {
 		# If $field matches /:/, then multiple fields are used.
