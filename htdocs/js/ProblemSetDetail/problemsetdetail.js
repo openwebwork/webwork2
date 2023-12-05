@@ -414,4 +414,10 @@
 		comboBoxSelect.addEventListener('change',
 			() => comboBoxText.value = comboBoxSelect.options[comboBoxSelect.selectedIndex].value);
 	});
+
+	// Set up seed randomization buttons.
+	for (const btn of document.querySelectorAll('.randomize-seed-btn')) {
+		const input = document.getElementById(btn.dataset.seedInput);
+		if (input) btn.addEventListener('click', () => (input.value = Math.floor(Math.random() * 10000)));
+	}
 })();

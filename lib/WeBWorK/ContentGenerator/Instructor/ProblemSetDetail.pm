@@ -947,22 +947,22 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 			);
 			if ($field eq 'problem_seed') {
 				# Insert a randomization button
-				$inputType = Mojo::ByteStream->new($c->tag(
+				$inputType = $c->tag(
 					'div',
 					class => 'input-group input-group-sm',
 					style => 'min-width: 7rem',
-					$c->number_field(@field_args, min => 0)->to_string
-						. $c->tag(
+					$c->c(
+						$c->number_field(@field_args, min => 0),
+						$c->tag(
 							'button',
-							type    => 'button',
-							class   => 'btn btn-sm btn-secondary',
-							title   => 'randomize',
-							onclick =>
-							"(function() {document.getElementById('$recordType.$recordID.${field}_id').value = Math.floor(Math.random() * 10000);})();",
+							type  => 'button',
+							class => 'randomize-seed-btn btn btn-sm btn-secondary',
+							title => 'randomize',
+							data  => { seed_input => "$recordType.$recordID.${field}_id" },
 							$c->tag('i', class => 'fa-solid fa-shuffle')
 						)
-				))->html_unescape;
-				warn(ref($inputType));
+					)->join('')
+				);
 			} else {
 				$inputType = $c->text_field(@field_args);
 			}
