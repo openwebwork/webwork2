@@ -131,7 +131,7 @@ sub saveFileChanges ($c, $outputFilePath) {
 		print $OUTPUTFILE $c->stash('achievementNotification');
 		close $OUTPUTFILE;
 	};
-	my $writeFileErrors = $@ if $@;
+	my $writeFileErrors = $@;
 
 	# Catch errors in saving files,
 	if ($writeFileErrors) {
@@ -290,6 +290,8 @@ sub disable_handler ($c) {
 			$c->stash('achievementID')
 		));
 	}
+
+	return;
 }
 
 1;

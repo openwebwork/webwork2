@@ -28,8 +28,9 @@ use constant ACTION_FORMS => [ [ filter => x('Filter') ], [ sort => x('Sort') ],
 
 # All tasks added in the Mojolicious::WeBWorK module need to be listed here.
 use constant TASK_NAMES => {
-	lti_mass_update       => x('LTI Mass Update'),
-	send_instructor_email => x('Send Instructor Email')
+	lti_mass_update        => x('LTI Mass Update'),
+	send_instructor_email  => x('Send Instructor Email'),
+	send_achievement_email => x('Send Achiement Email')
 };
 
 # This constant is not used.  It is here so that gettext adds these strings to the translation files.
