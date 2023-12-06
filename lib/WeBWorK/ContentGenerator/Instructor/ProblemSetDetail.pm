@@ -852,11 +852,8 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 		my @uVals;
 		my @bVals;
 		for my $f (split(/:/, $field)) {
-			# Hmm.  This directly references the data in the record rather than calling the access method, thereby
-			# avoiding errors if the access method is undefined.  That seems a bit suspect, but it's used below so we'll
-			# leave it here.
-			push(@gVals, $globalRecord->{$f});
-			push(@uVals, $userRecord ? $userRecord->{$f} : '');
+			push(@gVals, $globalRecord->can($f)              ? $globalRecord->$f : undef);
+			push(@uVals, $userRecord && $userRecord->can($f) ? $userRecord->$f   : undef);
 			push(@bVals, '');
 		}
 		# I don't like this, but combining multiple values is a bit messy
@@ -864,8 +861,8 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 		$userValue   = (grep {defined} @uVals) ? join(':', (map { defined ? $_ : '' } @uVals)) : undef;
 		$blankfield  = join(':', @bVals);
 	} else {
-		$globalValue = $globalRecord->{$field};
-		$userValue   = $userRecord ? $userRecord->{$field} : '';
+		$globalValue = $globalRecord->can($field)              ? $globalRecord->$field : undef;
+		$userValue   = $userRecord && $userRecord->can($field) ? $userRecord->$field   : undef;
 	}
 
 	# Use defined instead of value in order to allow 0 to printed, e.g. for the 'value' field.
@@ -957,12 +954,16 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 			my @part_values;
 			for (@fields) {
 				push(@part_values,
-					$forUsers && $userRecord && $userRecord->$_ ne '' ? $userRecord->$_ : $globalRecord->$_);
+					($forUsers && $userRecord && $userRecord->can($_) && $userRecord->$_ ne '')
+					? $userRecord->$_
+					: $globalRecord->$_);
 			}
 			$value = join(':', @part_values);
 		} elsif (!$value) {
 			$value =
-				$forUsers && $userRecord && $userRecord->$field ne '' ? $userRecord->$field : $globalRecord->$field;
+				($forUsers && $userRecord && $userRecord->can($field) && $userRecord->$field ne '')
+				? $userRecord->$field
+				: $globalRecord->$field;
 		}
 
 		$inputType = $c->select_field(
