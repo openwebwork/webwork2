@@ -856,7 +856,7 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 			# avoiding errors if the access method is undefined.  That seems a bit suspect, but it's used below so we'll
 			# leave it here.
 			push(@gVals, $globalRecord->{$f});
-			push(@uVals, $userRecord->{$f});
+			push(@uVals, $userRecord ? $userRecord->{$f} : '');
 			push(@bVals, '');
 		}
 		# I don't like this, but combining multiple values is a bit messy
@@ -865,7 +865,7 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 		$blankfield  = join(':', @bVals);
 	} else {
 		$globalValue = $globalRecord->{$field};
-		$userValue   = $userRecord->{$field};
+		$userValue   = $userRecord ? $userRecord->{$field} : '';
 	}
 
 	# Use defined instead of value in order to allow 0 to printed, e.g. for the 'value' field.
@@ -956,11 +956,13 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 			my @fields = split(/:/, $field);
 			my @part_values;
 			for (@fields) {
-				push(@part_values, $forUsers && $userRecord->$_ ne '' ? $userRecord->$_ : $globalRecord->$_);
+				push(@part_values,
+					$forUsers && $userRecord && $userRecord->$_ ne '' ? $userRecord->$_ : $globalRecord->$_);
 			}
 			$value = join(':', @part_values);
 		} elsif (!$value) {
-			$value = ($forUsers && $userRecord->$field ne '' ? $userRecord->$field : $globalRecord->$field);
+			$value =
+				$forUsers && $userRecord && $userRecord->$field ne '' ? $userRecord->$field : $globalRecord->$field;
 		}
 
 		$inputType = $c->select_field(
