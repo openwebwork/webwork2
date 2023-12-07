@@ -692,10 +692,8 @@ async sub pre_header_initialize ($c) {
 		showProblemGrader => $c->param('showProblemGrader')
 			|| 0,
 		# Hints are not yet implemented in gateway quzzes.
-		showHints => 0,
-		# showProblemGrader implies showSolutions.  Another convenience for grading.
-		showSolutions => $c->param('showProblemGrader')
-			|| ($c->param('showSolutions') && ($c->{submitAnswers} || $c->{checkAnswers})),
+		showHints     => 0,
+		showSolutions => 1,
 		recordAnswers => $c->{submitAnswers} && !$authz->hasPermissions($userID, 'avoid_recording_answers'),
 		# we also want to check answers if we were checking answers and are switching between pages
 		checkAnswers => $c->{checkAnswers},

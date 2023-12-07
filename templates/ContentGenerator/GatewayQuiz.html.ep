@@ -564,6 +564,17 @@
 						<div class="mb-2"><b><%== maketext('Note: [_1]', tag('i', $pg->{result}{msg})) %></b></div>
 					% }
 					%
+					% if ($pg->{flags}{solutionExists} && $authz->hasPermissions($userID, 'always_show_solution')) {
+						<p>
+							<b><%= maketext('Note') %>:</b>
+							<i>
+								<%= maketext('The solution shown is an instructor preview and '
+									. 'will only be shown to students when answers are available.'
+								) =%>
+							</i>
+						</p>
+					% }
+					%
 					<div class="text-end mb-2">
 						<%= link_to maketext('preview answers') => '#',
 							class => 'gateway-preview-btn btn btn-secondary',
@@ -613,15 +624,6 @@
 						<input name="showCorrectAnswers" type="checkbox" class="form-check-input"
 							<%= $c->{want}{showCorrectAnswers} || $c->{want}{showProblemGrader} ? 'checked' : '' %>>
 						<%= maketext('Show correct answers') %>
-					</label>
-				</div>
-			% }
-			% if ($c->{can}{showSolutions}) {
-				<div class="form-check">
-					<label class="form-check-label">
-						<input name="showSolutions" type="checkbox" class="form-check-input"
-							<%= $c->{will}{showSolutions} || $c->{want}{showProblemGrader} ? 'checked' : '' %>>
-						<%= maketext('Show Solutions') %>
 					</label>
 				</div>
 			% }
