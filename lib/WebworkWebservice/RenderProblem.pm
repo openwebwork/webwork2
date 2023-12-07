@@ -235,7 +235,7 @@ async sub renderProblem {
 		showAttemptResults      => $rh->{showAttemptResults} // ($rh->{WWsubmit} || $rh->{WWcorrectAns}),
 		forceShowAttemptResults => $rh->{forceShowAttemptResults},
 		showMessages       => $rh->{showMessages}       // ($rh->{preview} || $rh->{WWsubmit} || $rh->{WWcorrectAns}),
-		showCorrectAnswers => $rh->{showCorrectAnswers} // $rh->{WWcorrectAns},
+		showCorrectAnswers => $rh->{showCorrectAnswers} // ($rh->{WWcorrectAns} ? 2 : 0),
 		debuggingOptions   => {
 			show_resource_info          => $rh->{show_resource_info}          // 0,
 			view_problem_debugging_info => $rh->{view_problem_debugging_info} // 0,

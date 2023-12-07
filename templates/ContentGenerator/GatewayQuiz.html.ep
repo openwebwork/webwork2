@@ -345,7 +345,7 @@
 		<div class="row">
 			<div class="col-md-10 mb-1">
 				<div class="alert alert-info p-1 mb-0">
-					<%= maketext('The test (which is version [_1]) may  no longer be submitted for a grade.',
+					<%= maketext('The test (which is version [_1]) may no longer be submitted for a grade.',
 							$setVersionID)
 						. ($c->{can}{showScore} ? (' ' . maketext('You may still check your answers.')) : '') %>
 				</div>
@@ -618,15 +618,6 @@
 		<div class="gwDivider"></div>
 		%
 		<div class="checkboxes-container col-12 my-2">
-			% if ($c->{can}{showCorrectAnswers}) {
-				<div class="form-check">
-					<label class="form-check-label">
-						<input name="showCorrectAnswers" type="checkbox" class="form-check-input"
-							<%= $c->{want}{showCorrectAnswers} || $c->{want}{showProblemGrader} ? 'checked' : '' %>>
-						<%= maketext('Show correct answers') %>
-					</label>
-				</div>
-			% }
 			% if ($c->{can}{showProblemGrader}) {
 				<div class="form-check">
 					<label class="form-check-label">

@@ -449,47 +449,27 @@ async sub pre_header_initialize ($c) {
 	$showMeAnother{Count} = 0 unless $showMeAnother{Count} =~ /^[+-]?\d+$/;
 
 	# Store the showMeAnother hash for the check to see if the button can be used
-	# (this hash is updated and re-stored after the can, must, will hashes)
+	# (this hash is updated and re-stored after the can and will hashes)
 	$c->{showMeAnother} = \%showMeAnother;
 
 	# Permissions
 
 	# What does the user want to do?
 	my %want = (
-		showOldAnswers => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
-		# showProblemGrader implies showCorrectAnswers.  This is a convenience for grading.
-		showCorrectAnswers => $c->param('showCorrectAnswers') || $c->param('showProblemGrader') || 0,
-		showProblemGrader  => $c->param('showProblemGrader')  || 0,
-		showAnsGroupInfo   => $c->param('showAnsGroupInfo')   || $ce->{pg}{options}{showAnsGroupInfo},
-		showAnsHashInfo    => $c->param('showAnsHashInfo')    || $ce->{pg}{options}{showAnsHashInfo},
-		showPGInfo         => $c->param('showPGInfo')         || $ce->{pg}{options}{showPGInfo},
-		showResourceInfo   => $c->param('showResourceInfo')   || $ce->{pg}{options}{showResourceInfo},
+		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
+		showCorrectAnswers => 1,
+		showProblemGrader  => $c->param('showProblemGrader') || 0,
+		showAnsGroupInfo   => $c->param('showAnsGroupInfo')  || $ce->{pg}{options}{showAnsGroupInfo},
+		showAnsHashInfo    => $c->param('showAnsHashInfo')   || $ce->{pg}{options}{showAnsHashInfo},
+		showPGInfo         => $c->param('showPGInfo')        || $ce->{pg}{options}{showPGInfo},
+		showResourceInfo   => $c->param('showResourceInfo')  || $ce->{pg}{options}{showResourceInfo},
 		showHints          => 1,
 		showSolutions      => 1,
 		useMathView        => $user->useMathView ne ''  ? $user->useMathView  : $ce->{pg}{options}{useMathView},
 		useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}{options}{useMathQuill},
-		recordAnswers      => $c->{submitAnswers},
+		recordAnswers      => $c->{submitAnswers} && !$authz->hasPermissions($userID, 'avoid_recording_answers'),
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
-	);
-
-	# Are certain options enforced?
-	my %must = (
-		showOldAnswers     => 0,
-		showCorrectAnswers => 0,
-		showProblemGrader  => 0,
-		showAnsGroupInfo   => 0,
-		showAnsHashInfo    => 0,
-		showPGInfo         => 0,
-		showResourceInfo   => 0,
-		showHints          => 0,
-		showSolutions      => 0,
-		recordAnswers      => !$authz->hasPermissions($userID, 'avoid_recording_answers'),
-		checkAnswers       => 0,
-		showMeAnother      => 0,
-		getSubmitButton    => 0,
-		useMathView        => 0,
-		useMathQuill       => 0,
 	);
 
 	# Does the user have permission to use certain options?
@@ -548,11 +528,10 @@ async sub pre_header_initialize ($c) {
 	}
 
 	# Final values for options
-	my %will = map { $_ => $can{$_} && ($want{$_} || $must{$_}) } keys %must;
+	my %will = map { $_ => $can{$_} && $want{$_} } keys %can;
 
 	if ($prEnabled && $problem->{prCount} >= $rerandomizePeriod && !after($c->{set}->due_date, $c->submitTime)) {
 		$showMeAnother{active}       = 0;
-		$must{requestNewSeed}        = 1;
 		$can{requestNewSeed}         = 1;
 		$want{requestNewSeed}        = 1;
 		$will{requestNewSeed}        = 1;
@@ -561,7 +540,6 @@ async sub pre_header_initialize ($c) {
 		# being recorded and the number of attempts from being increased.
 		if ($problem->{prCount} > $rerandomizePeriod) {
 			$c->{resubmitDetected} = 1;
-			$must{recordAnswers}   = 0;
 			$can{recordAnswers}    = 0;
 			$want{recordAnswers}   = 0;
 			$will{recordAnswers}   = 0;
@@ -606,11 +584,19 @@ async sub pre_header_initialize ($c) {
 			showAttemptAnswers       => $ce->{pg}{options}{showEvaluatedAnswers},
 			showAttemptPreviews      => 1,
 			showAttemptResults       => $c->{submitAnswers},
-			forceShowAttemptResults  => $will{checkAnswers} || $will{showProblemGrader},
-			showMessages             => 1,
-			showCorrectAnswers => $c->{submitAnswers} ? ($c->{showCorrectOnRandomize} // $will{showCorrectAnswers})
-			: $will{checkAnswers} || $will{showProblemGrader} ? $will{showCorrectAnswers}
-			: 0,
+			forceShowAttemptResults  => $will{checkAnswers}
+				|| $will{showProblemGrader}
+				|| ($ce->{pg}{options}{automaticAnswerFeedback}
+					&& !$c->{previewAnswers}
+					&& after($c->{set}->answer_date, $c->submitTime)),
+			showMessages       => 1,
+			showCorrectAnswers => (
+				$will{showProblemGrader}
+					|| (!$c->{previewAnswers} && after($c->{set}->answer_date, $c->submitTime))
+					|| ($c->{submitAnswers}   && $c->{showCorrectOnRandomize}) ? 2
+				: (($c->{submitAnswers} || $will{checkAnswers}) && $will{showCorrectAnswers}) ? 1
+				: 0
+			),
 			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID)
 		}
 	);
@@ -646,7 +632,6 @@ async sub pre_header_initialize ($c) {
 
 	# Store fields
 	$c->{want} = \%want;
-	$c->{must} = \%must;
 	$c->{can}  = \%can;
 	$c->{will} = \%will;
 	$c->{pg}   = $pg;
