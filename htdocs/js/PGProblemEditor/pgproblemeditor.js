@@ -278,6 +278,7 @@
 				requestData.set('send_pg_flags', 1);
 				requestData.set(button.name, button.value);
 				requestData.set('set_id', document.getElementsByName('hidden_set_id')[0]?.value ?? 'Unknown Set');
+				requestData.set('refreshCachedImages', 1);
 
 				renderProblem(requestData);
 
@@ -357,6 +358,7 @@
 			showFooter: 0,
 			displayMode: document.getElementById('action_view_displayMode_id')?.value ?? 'MathJax',
 			language: document.querySelector('input[name="hidden_language"]')?.value ?? 'en',
+			refreshCachedImages: 1,
 			send_pg_flags: 1,
 			view_problem_debugging_info: 1
 		})).then(() => resolve());
@@ -444,6 +446,7 @@
 					noprepostambles: 1,
 					processAnswers: 1,
 					displayMode: 'tex',
+					refreshCachedImages: 1,
 					view_problem_debugging_info: 1
 				})
 			});
