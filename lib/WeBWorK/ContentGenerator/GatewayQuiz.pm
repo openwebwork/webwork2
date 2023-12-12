@@ -1446,6 +1446,13 @@ sub warningMessage ($c) {
 # hash of parameters from the input form that need to be passed to the translator, and $mergedProblem
 # is what we'd expect.
 async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem) {
+	my $showReturningFeedback =
+		!($c->{submitAnswers} || $c->{previewAnswers} || $c->{checkAnswers})
+		&& $c->{will}{showOldAnswers}
+		&& $c->ce->{pg}{options}{automaticAnswerFeedback}
+		&& $c->{can}{showProblemScores}
+		&& $mergedProblem->num_correct + $mergedProblem->num_incorrect > 0;
+
 	my $pg = await renderPG(
 		$c,
 		$effectiveUser,
@@ -1454,17 +1461,20 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 		$set->psvn,
 		$formFields,
 		{
-			displayMode             => $c->{displayMode},
-			showHints               => $c->{will}{showHints},
-			showSolutions           => $c->{will}{showSolutions},
-			refreshMath2img         => $c->{will}{showHints} || $c->{will}{showSolutions},
-			processAnswers          => 1,
-			QUIZ_PREFIX             => 'Q' . sprintf('%04d', $mergedProblem->problem_id) . '_',
-			useMathQuill            => $c->{will}{useMathQuill},
-			useMathView             => $c->{will}{useMathView},
-			forceScaffoldsOpen      => 1,
-			isInstructor            => $c->authz->hasPermissions($c->{userID}, 'view_answers'),
-			showFeedback            => $c->{submitAnswers} || $c->{previewAnswers} || $c->{will}{checkAnswers},
+			displayMode        => $c->{displayMode},
+			showHints          => $c->{will}{showHints},
+			showSolutions      => $c->{will}{showSolutions},
+			refreshMath2img    => $c->{will}{showHints} || $c->{will}{showSolutions},
+			processAnswers     => 1,
+			QUIZ_PREFIX        => 'Q' . sprintf('%04d', $mergedProblem->problem_id) . '_',
+			useMathQuill       => $c->{will}{useMathQuill},
+			useMathView        => $c->{will}{useMathView},
+			forceScaffoldsOpen => 1,
+			isInstructor       => $c->authz->hasPermissions($c->{userID}, 'view_answers'),
+			showFeedback       => $c->{submitAnswers}
+				|| $c->{previewAnswers}
+				|| $c->{will}{checkAnswers}
+				|| $showReturningFeedback,
 			showAttemptAnswers      => $c->ce->{pg}{options}{showEvaluatedAnswers},
 			showAttemptPreviews     => 1,
 			showAttemptResults      => !$c->{previewAnswers} && $c->{can}{showProblemScores},

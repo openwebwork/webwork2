@@ -546,6 +546,10 @@ async sub pre_header_initialize ($c) {
 		}
 	}
 
+	# If this is set to 1 below, then feedback is shown when a student returns to a previously worked problem without
+	# requiring another answer submission.
+	my $showReturningFeedback = 0;
+
 	# Sticky answers
 	if (!($c->{submitAnswers} || $previewAnswers || $checkAnswers) && $will{showOldAnswers}) {
 		my %oldAnswers = decodeAnswers($problem->last_answer);
@@ -554,7 +558,9 @@ async sub pre_header_initialize ($c) {
 			# Clear answers if this is a new problem version
 			delete $formFields->{$_} for keys %oldAnswers;
 		} else {
-			$formFields->{$_} = $oldAnswers{$_} for keys %oldAnswers;
+			$formFields->{$_} = $oldAnswers{$_} for (keys %oldAnswers);
+			$showReturningFeedback = 1
+				if $ce->{pg}{options}{automaticAnswerFeedback} && $problem->num_correct + $problem->num_incorrect > 0;
 		}
 	}
 
@@ -580,10 +586,10 @@ async sub pre_header_initialize ($c) {
 			useMathView              => $will{useMathView},
 			forceScaffoldsOpen       => 0,
 			isInstructor             => $authz->hasPermissions($userID, 'view_answers'),
-			showFeedback             => $c->{submitAnswers} || $c->{previewAnswers},
+			showFeedback             => $c->{submitAnswers} || $c->{previewAnswers} || $showReturningFeedback,
 			showAttemptAnswers       => $ce->{pg}{options}{showEvaluatedAnswers},
 			showAttemptPreviews      => 1,
-			showAttemptResults       => $c->{submitAnswers},
+			showAttemptResults       => $c->{submitAnswers} || $showReturningFeedback,
 			forceShowAttemptResults  => $will{checkAnswers}
 				|| $will{showProblemGrader}
 				|| ($ce->{pg}{options}{automaticAnswerFeedback}
