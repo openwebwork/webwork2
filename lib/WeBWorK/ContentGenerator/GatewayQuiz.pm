@@ -1484,9 +1484,9 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 					&& $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet})),
 			showMessages       => 1,
 			showCorrectAnswers => (
-				$c->{will}{showProblemGrader}
-					|| (!$c->{previewAnswers} && $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet}))
-				? 2
+				$c->{will}{showProblemGrader} ? 2
+				: !$c->{previewAnswers} && $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet})
+				? ($c->ce->{pg}{options}{correctRevealBtnAlways} ? 1 : 2)
 				: ($c->{submitAnswers} || $c->{will}{checkAnswers}) && $c->{will}{showCorrectAnswers} ? 1
 				: 0
 			),

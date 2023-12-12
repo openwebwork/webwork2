@@ -597,9 +597,9 @@ async sub pre_header_initialize ($c) {
 					&& after($c->{set}->answer_date, $c->submitTime)),
 			showMessages       => 1,
 			showCorrectAnswers => (
-				$will{showProblemGrader}
-					|| (!$c->{previewAnswers} && after($c->{set}->answer_date, $c->submitTime))
-					|| ($c->{submitAnswers}   && $c->{showCorrectOnRandomize}) ? 2
+				$will{showProblemGrader} || ($c->{submitAnswers} && $c->{showCorrectOnRandomize}) ? 2
+				: !$c->{previewAnswers} && after($c->{set}->answer_date, $c->submitTime)
+				? ($ce->{pg}{options}{correctRevealBtnAlways} ? 1 : 2)
 				: (($c->{submitAnswers} || $will{checkAnswers}) && $will{showCorrectAnswers}) ? 1
 				: 0
 			),
