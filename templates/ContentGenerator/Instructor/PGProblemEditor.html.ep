@@ -1,3 +1,5 @@
+% use Mojo::URL;
+%
 % use WeBWorK::Utils qw(not_blank x format_set_name_display getAssetURL);
 % use WeBWorK::HTML::CodeMirrorEditor
 	% qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
@@ -136,11 +138,16 @@
 				class  => 'reference-link btn btn-sm btn-info',
 				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% # Only show the report bugs in problem button if editing an OPL or Contrib problem.
-			% if ($c->{editFilePath} =~ m|^$ce->{courseDirs}{templates}/([^/]*)/|
-				% && ($1 eq 'Library' || $1 eq 'Contrib')) {
+			% if ($ce->{webworkURLs}{OPLBugReporter}
+				% && $c->{editFilePath} =~ m|^$ce->{courseDirs}{templates}/([^/]*)/|
+				% && ($1 eq 'Library' || $1 eq 'Contrib'))
+			% {
 				<%= link_to maketext('Report Bugs in this Problem') =>
-						"$ce->{webworkURLs}{bugReporter}?product=Problem%20libraries"
-						. "&component=$1&bug_file_loc=$c->{editFilePath}_with_problemSeed=$c->{problemSeed}",
+						Mojo::URL->new($ce->{webworkURLs}{OPLBugReporter})
+							->query(
+								title => $c->getRelativeSourceFilePath($c->{editFilePath}),
+								body  => "Problem Seed: " . (param('action.view.seed') // $c->{problemSeed})
+							),
 					target => 'bug_report',
 					title  => maketext(
 						'Report bugs in a WeBWorK question/problem using this link. '

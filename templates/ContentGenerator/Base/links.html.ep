@@ -2,8 +2,9 @@
 %
 % if ($ce->{courseName} eq 'admin') {
 	<%= include 'ContentGenerator/Base/admin_links' =%>
-	% next;
+	% last;
 % }
+%
 <ul class="nav flex-column">
 	% if (defined $courseID && $authen->was_verified) {
 		% # Assignments or Course Administration
@@ -366,12 +367,10 @@
 			</li>
 		% }
 		%
-		% if (exists $ce->{webworkURLs}{bugReporter}
-			% && $ce->{webworkURLs}{bugReporter} ne ''
-			% && $authz->hasPermissions($userID, 'report_bugs'))
-		% {
+		% if ($ce->{webworkURLs}{webwork2BugReporter} && $authz->hasPermissions($userID, 'report_bugs')) {
 			<li class="list-group-item nav-item">
-				<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' =%>
+				<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{webwork2BugReporter},
+					target => 'bug_report', class => 'nav-link' =%>
 			</li>
 		% }
 	% }
