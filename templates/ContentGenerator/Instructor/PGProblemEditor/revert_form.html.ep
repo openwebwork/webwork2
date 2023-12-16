@@ -33,7 +33,7 @@
 					<%= scalar(@backupTimes) == 1
 						? maketext(
 							'Restore backup from [_1]',
-							$c->formatDateTime($backupTimes[0], undef, $ce->{studentDateDisplayFormat})
+							$c->formatDateTime($backupTimes[0], $ce->{studentDateDisplayFormat})
 						) : maketext('Restore backup from') =%>
 				<% end =%>
 			</div>
@@ -42,7 +42,7 @@
 			% } else {
 				<div class="col-auto">
 					<%= select_field 'action.revert.backup.time' => [
-						map { [ $c->formatDateTime($_, undef, $ce->{studentDateDisplayFormat}) => $_ ] } @backupTimes
+						map { [ $c->formatDateTime($_, $ce->{studentDateDisplayFormat}) => $_ ] } @backupTimes
 					],
 					id    => 'action_revert_backup_time_id',
 					class => 'form-select form-select-sm d-inline w-auto' =%>
@@ -58,7 +58,7 @@
 					<%= scalar(@backupTimes) == 1
 						? maketext(
 							'Delete backup from [_1]',
-							$c->formatDateTime($backupTimes[0], undef, $ce->{studentDateDisplayFormat})
+							$c->formatDateTime($backupTimes[0], $ce->{studentDateDisplayFormat})
 						) : maketext('Delete backup from') =%>
 				<% end =%>
 			</div>
@@ -67,7 +67,7 @@
 			% } else {
 				<div class="col-auto">
 					<%= select_field 'action.revert.delete.time' => [
-						map { [ $c->formatDateTime($_, undef, $ce->{studentDateDisplayFormat}) => $_ ] } @backupTimes
+						map { [ $c->formatDateTime($_, $ce->{studentDateDisplayFormat}) => $_ ] } @backupTimes
 					],
 					id    => 'action_revert_delete_number_id',
 					class => 'form-select form-select-sm d-inline w-auto' =%>

@@ -1,4 +1,4 @@
-<div id="last-modified"><%= maketext('Page generated at [_1]', $c->timestamp) %></div>
+<div id="last-modified"><%= maketext('Page generated [_1]', $c->timestamp) %></div>
 <div id="copyright">
 	<%== maketext(
 		'WeBWorK &copy; [_1] | theme: [_2] | ww_version: [_3] | pg_version [_4]',

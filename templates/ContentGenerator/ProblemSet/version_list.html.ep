@@ -139,7 +139,7 @@
 		% my $nextTime = ($currentVersions == $maxVersions) ? $lastTime + $timeInterval : $timeNow + $timeInterval;
 		% if ($nextTime < $set->due_date) {
 			% $msg = maketext('Next test will be available by [_1].',
-				% $c->formatDateTime($nextTime, 0, $ce->{studentDateDisplayFormat}));
+				% $c->formatDateTime($nextTime, $ce->{studentDateDisplayFormat}));
 		% }
 	% }
 	%

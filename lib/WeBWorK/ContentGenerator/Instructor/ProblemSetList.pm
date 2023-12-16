@@ -78,12 +78,11 @@ Delete sets:
 use Mojo::File;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(x format_set_name_internal format_set_name_display);
+use WeBWorK::Utils qw(x format_set_name_internal format_set_name_display getDefaultSetDueDate);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
 use WeBWorK::File::SetDef qw(importSetsFromDef exportSetsToDef);
 
 use constant HIDE_SETS_THRESHOLD => 500;
-use constant ONE_WEEK            => 60 * 60 * 24 * 7;
 
 use constant EDIT_FORMS   => [qw(save_edit cancel_edit)];
 use constant VIEW_FORMS   => [qw(filter sort edit publish import export score create delete)];
@@ -494,37 +493,25 @@ sub create_handler ($c) {
 	) if $db->existsGlobalSet($newSetID);
 
 	my $newSetRecord = $db->newGlobalSet;
-	my $oldSetID     = $c->{selectedSetIDs}->[0];
 
 	my $type = $c->param('action.create.type');
-	# It's convenient to set the due date two weeks from now so that it is
-	# not accidentally available to students.
-
-	my $dueDate    = time + 2 * ONE_WEEK();
-	my $display_tz = $ce->{siteDefaults}{timezone};
-	my $fDueDate   = $c->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
-	my $dueTime    = $ce->{pg}{timeAssignDue};
-
-	# We replace the due time by the one from the config variable
-	# and try to bring it back to unix time if possible
-	$fDueDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
-
-	$dueDate = $c->parseDateTime($fDueDate, $display_tz);
 
 	if ($type eq "empty") {
+		my $dueDate = getDefaultSetDueDate($ce);
+
 		$newSetRecord->set_id($newSetID);
 		$newSetRecord->set_header("defaultHeader");
 		$newSetRecord->hardcopy_header("defaultHeader");
-		#Rest of the dates are set according to to course configuration
 		$newSetRecord->open_date($dueDate - 60 * $ce->{pg}{assignOpenPriorToDue});
 		$newSetRecord->reduced_scoring_date($dueDate - 60 * $ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
 		$newSetRecord->due_date($dueDate);
 		$newSetRecord->answer_date($dueDate + 60 * $ce->{pg}{answersOpenAfterDueDate});
-		$newSetRecord->visible(1);    # don't want students to see an empty set
+		$newSetRecord->visible(1);
 		$newSetRecord->enable_reduced_scoring(0);
 		$newSetRecord->assignment_type('default');
 		$db->addGlobalSet($newSetRecord);
 	} elsif ($type eq "copy") {
+		my $oldSetID = $c->{selectedSetIDs}[0];
 		return (0, $c->maketext('Failed to duplicate set: no set selected for duplication!')) unless $oldSetID =~ /\S/;
 		$newSetRecord = $db->getGlobalSet($oldSetID);
 		$newSetRecord->set_id($newSetID);
@@ -556,6 +543,7 @@ sub create_handler ($c) {
 			}
 		}
 	}
+
 	# Assign set to current active user.
 	my $userName = $c->param('user');
 	assignSetToUser($db, $userName, $newSetRecord);    # Cures weird date error when no-one assigned to set.

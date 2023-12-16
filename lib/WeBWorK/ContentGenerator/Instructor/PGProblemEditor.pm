@@ -611,16 +611,14 @@ sub backupFile ($c, $outputFilePath) {
 	surePathToFile($ce->{courseDirs}{templates}, $backupFilePath);
 	copy($outputFilePath, $backupFilePath);
 	$c->addgoodmessage($c->maketext(
-		'Backup created on [_1]',
-		$c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat})
-	));
+		'Backup created on [_1]', $c->formatDateTime($backupTime, $ce->{studentDateDisplayFormat})));
 
 	# Delete oldest backup if option is present.
 	if ($c->param('deleteBackup')) {
 		my @backupTimes      = $c->getBackupTimes;
 		my $backupTime       = $backupTimes[-1];
 		my $backupFilePath   = $c->{backupBasePath} . $backupTime;
-		my $formatBackupTime = $c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat});
+		my $formatBackupTime = $c->formatDateTime($backupTime, $ce->{studentDateDisplayFormat});
 		if (-e $backupFilePath) {
 			unlink($backupFilePath);
 			$c->addgoodmessage($c->maketext('Deleted backup from [_1].', $formatBackupTime));
@@ -1326,7 +1324,7 @@ sub revert_handler ($c) {
 			copy($backupFilePath, $c->{tempFilePath});
 			$c->addgoodmessage($c->maketext(
 				'Restored backup from [_1].',
-				$c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat})
+				$c->formatDateTime($backupTime, $ce->{studentDateDisplayFormat})
 			));
 		} else {
 			$c->addbadmessage($c->maketext('Unable to read backup file "[_1]".', $c->shortPath($backupFilePath)));
@@ -1339,7 +1337,7 @@ sub revert_handler ($c) {
 			unlink($delFilePath);
 			$c->addgoodmessage($c->maketext(
 				'Deleted backup from [_1].',
-				$c->formatDateTime($delTime, undef, $ce->{studentDateDisplayFormat})
+				$c->formatDateTime($delTime, $ce->{studentDateDisplayFormat})
 			));
 		} else {
 			$c->addbadmessage($c->maketext('Unable to delete backup file "[_1]".', $c->shortPath($delFilePath)));

@@ -62,8 +62,7 @@
 						% if (defined $userSet) {
 							<td>
 								% if ($userSet->due_date) {
-									<%= $c->formatDateTime($userSet->due_date, '',
-										'datetime_format_short', $ce->{language}) =%>
+									<%= $c->formatDateTime($userSet->due_date, 'datetime_format_short') =%>
 								% }
 							</td>
 							<td>

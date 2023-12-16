@@ -217,14 +217,14 @@ sub gateway_body ($c) {
 		my $data = {};
 		$data->{id}        = $set->set_id . ',v' . $verSet->version_id;
 		$data->{version}   = $verSet->version_id;
-		$data->{start}     = $c->formatDateTime($verSet->version_creation_time, undef, $ce->{studentDateDisplayFormat});
+		$data->{start}     = $c->formatDateTime($verSet->version_creation_time, $ce->{studentDateDisplayFormat});
 		$data->{proctored} = $verSet->assignment_type =~ /proctored/;
 
 		# Display close date if this is not a timed test.
 		my $closeText = '';
 		if (!$timeLimit) {
-			$closeText = $c->maketext('Closes on [_1]',
-				$c->formatDateTime($verSet->due_date, undef, $ce->{studentDateDisplayFormat}));
+			$closeText =
+				$c->maketext('Closes on [_1]', $c->formatDateTime($verSet->due_date, $ce->{studentDateDisplayFormat}));
 		}
 
 		if (defined $verSet->version_last_attempt_time && $verSet->version_last_attempt_time > 0) {
@@ -238,7 +238,7 @@ sub gateway_body ($c) {
 				}
 			} else {
 				$data->{end} =
-					$c->formatDateTime($verSet->version_last_attempt_time, undef, $ce->{studentDateDisplayFormat});
+					$c->formatDateTime($verSet->version_last_attempt_time, $ce->{studentDateDisplayFormat});
 			}
 		} elsif ($timeNow < $verSet->due_date) {
 			$data->{end} = $c->maketext('Test not yet submitted.') . " $closeText";

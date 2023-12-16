@@ -15,11 +15,11 @@
 ################################################################################
 
 package WeBWorK::Utils;
-use base qw(Exporter);
+use parent qw(Exporter);
 
 =head1 NAME
 
-WeBWorK::Utils - useful utilities used by other WeBWorK modules.
+WeBWorK::Utils - Utility methods used by other WeBWorK modules.
 
 =cut
 
@@ -47,23 +47,10 @@ use open IO => ':encoding(UTF-8)';
 
 use constant MKDIR_ATTEMPTS => 10;
 
-# "standard" WeBWorK date/time format (for set definition files):
-#     %m/%d/%y at %I:%M%P %Z
-# where:
-#     %m = month number, starting with 01
-#     %d = numeric day of the month, with leading zeros (eg 01..31)
-#     %Y = year (4 digits)
-#     %I = hour, 12 hour clock, leading 0's)
-#     %M = minute, leading 0's
-#     %P = am or pm (Yes %p and %P are backwards :)
-#     %Z = timezone name
-use constant DATE_FORMAT => "%m/%d/%Y at %I:%M%P %Z";
-
 use constant JITAR_MASK =>
 	[ hex 'FF000000', hex '00FC0000', hex '0003F000', hex '00000F00', hex '000000F0', hex '0000000F' ];
 use constant JITAR_SHIFT => [ 24, 18, 12, 8, 4, 0 ];
 
-our @EXPORT    = ();
 our @EXPORT_OK = qw(
 	after
 	before
@@ -78,7 +65,7 @@ our @EXPORT_OK = qw(
 	fix_newlines
 	fisher_yates_shuffle
 	formatDateTime
-	intDateTime
+	getDefaultSetDueDate
 	list2hash
 	listFilesRecursive
 	makeTempDirectory
@@ -98,7 +85,6 @@ our @EXPORT_OK = qw(
 	sortAchievements
 	sortByName
 	surePathToFile
-	textDateTime
 	timeToSec
 	trim_spaces
 	format_set_name_internal
@@ -131,7 +117,7 @@ our @EXPORT_OK = qw(
 	x
 );
 
-=head1 FUNCTIONS
+=head1 METHODS
 
 =cut
 
@@ -183,8 +169,6 @@ sub runtime_use($;@) {
 ################################################################################
 
 =head2 Filesystem interaction
-
-=over
 
 =cut
 
@@ -246,7 +230,9 @@ sub readDirectory($) {
 	return @result;
 }
 
-=item createDirectory($dirName, $permission, $numgid)
+=head3 createDirectory
+
+    createDirectory($dirName, $permission, $numgid)
 
 Creates a directory with the given name, permission bits, and group ID.
 
@@ -273,17 +259,20 @@ sub createDirectory {
 	}
 }
 
-=item @matches = listFilesRecusive($dir, $match_qr, $prune_qr, $match_full, $prune_full)
+=head3 listFilesRecusive
 
-Traverses the directory tree rooted at $dir, returning a list of files, named
-pipes, and sockets matching the regular expression $match_qr. Directories
-matching the regular expression $prune_qr are not visited.
+    listFilesRecusive($dir, $match_qr, $prune_qr, $match_full, $prune_full)
 
-$match_full and $prune_full are boolean values that indicate whether $match_qr
-and $prune_qr, respectively, should be applied to the bare directory entry
-(false) or to the path to the directory entry relative to $dir.
+Traverses the directory tree rooted at C<$dir>, returning a list of files, named
+pipes, and sockets matching the regular expression C<$match_qr>. Directories
+matching the regular expression C<$prune_qr> are not visited.
 
-@matches is a list of paths relative to $dir.
+C<$match_full> and C<$prune_full> are boolean values that indicate whether
+C<$match_qr> and C<$prune_qr>, respectively, should be applied to the bare
+directory entry (false) or to the path to the directory entry relative to
+C<$dir>.
+
+The method returns a list of paths relative to C<$dir>.
 
 =cut
 
@@ -417,14 +406,17 @@ sub removeTempDirectory($) {
 	rmtree($dir, 0, 0);
 }
 
-=item path_is_subdir($path, $dir, $allow_relative)
+=head3 path_is_subdir
 
-Ensures that $path refers to a location "inside" $dir. If $allow_relative is
-true and $path is not absoulte, it is assumed to be relative to $dir.
+    path_is_subdir($path, $dir, $allow_relative)
+
+Ensures that C<$path> refers to a location "inside" C<$dir>. If
+C<$allow_relative> is true and C<$path> is not absolute, it is assumed to be
+relative to C<$dir>.
 
 The method of checking is rather rudimentary at the moment. First, upreferences
-("..") are disallowed, in $path, then it is checked to make sure that some
-prefix of it matches $dir.
+("..") are disallowed in C<$path>, then it is checked to make sure that some
+prefix of it matches C<$dir>.
 
 If either of these checks fails, a false value is returned. Otherwise, a true
 value is returned.
@@ -453,30 +445,32 @@ sub path_is_subdir($$;$) {
 	return 1;
 }
 
-=back
-
-=cut
-
 ################################################################################
 # Date/time processing
 ################################################################################
 
 =head2 Date/time processing
 
-=over
+=head3 parseDateTime
 
-=item $dateTime = parseDateTime($string, $display_tz)
+    parseDateTime($string, $display_tz)
 
-Parses $string as a datetime. If $display_tz is given, $string is assumed to be
-in that timezone. Otherwise, the server's timezone is used. The result,
-$dateTime, is an integer UNIX datetime (epoch) in the server's timezone.
+Parses C<$string> into an epoch. The format of C<$string> must be
+C<MM/DD/YYYY at HH:MM AMPM ZONE>. There is some forgiveness for spaces, and a
+comma is allowed in place of "at".  If C<$display_tz> is given, C<$string> is
+assumed to be in that timezone. Otherwise, the server's local timezone is used.
+
+Note that this method is only used for parsing dates when set definition files
+are imported, and should NEVER be used for anything else ever again.  If it is
+desired to use a human readable string to save a date then use the ISO date time
+format that can be reliably parsed, and do NOT use this method.
 
 =cut
 
 # This is a modified version of the subroutine of the same name from WeBWorK
 # 1.9.05's scripts/FILE.pl (v1.13). It has been modified to understand time
 # zones. The time zone specification must appear at the end of the string and be
-# preceded by whitespace. The return value is a list consisting of the following
+# preceded by white space. The return value is a list consisting of the following
 # elements:
 #
 #     ($second, $minute, $hour, $day, $month, $year, $zone)
@@ -484,112 +478,69 @@ $dateTime, is an integer UNIX datetime (epoch) in the server's timezone.
 # $second, $minute, $hour, $day, and $month are zero-indexed. $year is the
 # number of years since 1900. $zone is a string (hopefully) representing the
 # time zone.
-#
-# Error handling has also been improved. Exceptions are now thrown for errors,
-# and more information is given about the nature of errors.
-#
 sub unformatDateAndTime {
 	my ($string) = @_;
-	my $orgString = $string;
+	my $origString = $string;
 
-	$string =~ s|^\s+||;
-	$string =~ s|\s+$||;
-	$string =~ s|at| at |i;    ## OK if forget to enter spaces or use wrong case
-	$string =~ s|AM| AM|i;     ## OK if forget to enter spaces or use wrong case
-	$string =~ s|PM| PM|i;     ## OK if forget to enter spaces or use wrong case
-	$string =~ s|,| at |;      ## start translating old form of date/time to new form
+	$string =~ s/^\s*|\s*$//g;
+	$string =~ s/\s*at\s*/ at /i;
+	$string =~ s/\s*AM/ AM/i;
+	$string =~ s/\s*PM/ PM/i;
+	$string =~ s/\s*,\s*/ at /;
 
-	# case where the at is missing: MM/DD/YYYY at HH:MM AMPM ZONE
-	unformatDateAndTime_error($orgString, "The 'at' appears to be missing.")
-		if $string =~ m|^\s*[\/\d]+\s+[:\d]+|;
+	# Case where "at" is missing
+	die qq{The "at" appears to be missing in "$origString".\n} unless $string =~ m/at/;
 
 	my ($date, $at, $time, $AMPM, $TZ) = split /\s+/, $string;
 
-	unformatDateAndTime_error($orgString, "The date and/or time appear to be missing.", $date, $time, $AMPM, $TZ)
-		unless defined $date
-		and defined $at
-		and defined $time;
+	die qq{The date or time appears to be missing in "$origString".\n}
+		unless defined $date && defined $at && defined $time;
 
-	# deal with military time
+	# Deal with military time
 	unless ($time =~ /:/) {
-		{    ##bare block for 'case" structure
-			$time =~ /(\d\d)(\d\d)/;
-			my $tmp_hour = $1;
-			my $tmp_min  = $2;
-			if ($tmp_hour eq '00') { $time = "12:$tmp_min";        $AMPM = 'AM'; last; }
-			if ($tmp_hour eq '12') { $time = "12:$tmp_min";        $AMPM = 'PM'; last; }
-			if ($tmp_hour < 12)    { $time = "$tmp_hour:$tmp_min"; $AMPM = 'AM'; last; }
-			if ($tmp_hour < 24) {
-				$tmp_hour = $tmp_hour - 12;
-				$time     = "$tmp_hour:$tmp_min";
-				$AMPM     = 'PM';
-			}
-		}    ##end of bare block for 'case" structure
-
+		$time =~ /(\d\d)(\d\d)/;
+		my $tmp_hour = $1;
+		my $tmp_min  = $2;
+		if    ($tmp_hour eq '00') { $time     = "12:$tmp_min";        $AMPM = 'AM'; }
+		elsif ($tmp_hour eq '12') { $time     = "12:$tmp_min";        $AMPM = 'PM'; }
+		elsif ($tmp_hour < 12)    { $time     = "$tmp_hour:$tmp_min"; $AMPM = 'AM'; }
+		elsif ($tmp_hour < 24)    { $tmp_hour = $tmp_hour - 12;       $time = "$tmp_hour:$tmp_min"; $AMPM = 'PM'; }
 	}
 
-	# default value for $AMPM
-	$AMPM = "AM" unless defined $AMPM;
+	# Default value for $AMPM
+	$AMPM //= 'AM';
 
-	my ($mday, $mon, $year, $wday, $yday, $sec, $pm, $min, $hour);
-	$sec = 0;
+	my $sec = 0;
+
 	$time =~ /^([0-9]+)\s*\:\s*([0-9]*)/;
-	$min  = $2;
-	$hour = $1;
-	unformatDateAndTime_error($orgString, "Hour must be in the range [1,12].", $date, $time, $AMPM, $TZ)
-		if $hour < 1 or $hour > 12;
-	unformatDateAndTime_error($orgString, "Minute must be in the range [0-59].", $date, $time, $AMPM, $TZ)
-		if $min < 0 or $min > 59;
-	$pm = 0;
-	$pm = 12 if ($AMPM =~ /PM/ and $hour < 12);
-	$hour += $pm;
-	$hour = 0 if ($AMPM =~ /AM/ and $hour == 12);
+	my $min  = $2;
+	my $hour = $1;
+	die qq{The hour in "$origString" must be in the range from 1 to 12.\n}   if $hour < 1 || $hour > 12;
+	die qq{The minute in "$origString" must be in the range from 0 to 59.\n} if $min < 0  || $min > 59;
+
+	$hour += $AMPM =~ /PM/ && $hour < 12 ? 12 : 0;
+	$hour = 0 if ($AMPM =~ /AM/ && $hour == 12);
+
 	$date =~ m|([0-9]+)\s*/\s*([0-9]+)/\s*([0-9]+)|;
-	$mday = $2;
-	$mon  = ($1 - 1);
-	unformatDateAndTime_error($orgString, "Day must be in the range [1,31].", $date, $time, $AMPM, $TZ)
-		if $mday < 1 or $mday > 31;
-	unformatDateAndTime_error($orgString, "Month must be in the range [1,12].", $date, $time, $AMPM, $TZ)
-		if $mon < 0 or $mon > 11;
-	$year = $3;
-	$wday = "";
-	$yday = "";
+	my $mday = $2;
+	my $mon  = $1 - 1;
+	my $year = $3;
+	die qq{The day in "$origString" must be in the range from 1 to 31.\n}   if $mday < 1 || $mday > 31;
+	die qq{The month in "$origString" must be in the range from 1 to 12.\n} if $mon < 0  || $mon > 11;
+
 	return ($sec, $min, $hour, $mday, $mon, $year, $TZ);
 }
 
-sub unformatDateAndTime_error {
-
-	if (@_ > 2) {
-		my ($orgString, $error, $date, $time, $AMPM, $TZ) = @_;
-		$date = "(undefined)" unless defined $date;
-		$time = "(undefined)" unless defined $time;
-		$AMPM = "(undefined)" unless defined $AMPM;
-		$TZ   = "(undefined)" unless defined $TZ;
-		die "Incorrect date/time format \"$orgString\": $error\n",
-			"Correct format is MM/DD/YY at HH:MM AMPM ZONE\n",
-			"\tdate = $date\n",
-			"\ttime = $time\n",
-			"\tampm = $AMPM\n",
-			"\tzone = $TZ\n";
-	} else {
-		my ($orgString, $error) = @_;
-		die "Incorrect date/time format \"$orgString\": $error\n", "Correct format is MM/DD/YY at HH:MM AMPM ZONE\n";
-	}
-}
-
-sub parseDateTime($;$) {
+sub parseDateTime {
 	my ($string, $display_tz) = @_;
-	warn "time zone not defined" . caller() unless defined($display_tz);
-	$display_tz ||= "local";
+
+	$display_tz ||= 'local';
 	$display_tz = verify_timezone($display_tz);
 
-	# use WeBWorK 1 date parsing routine
 	my ($second, $minute, $hour, $day, $month, $year, $zone) = unformatDateAndTime($string);
-	my $zone_str = defined $zone ? $zone : "UNDEF";
-	#warn "\tunformatDateAndTime: $second $minute $hour $day $month $year $zone_str\n";
 
-	# DateTime expects month 1-12, not 0-11
-	$month++;
+	# DateTime expects the month to be in the range from 1 to 12, not from 0 to 11.
+	++$month;
 
 	# Do what Time::Local does to ambiguous years
 	{
@@ -602,7 +553,7 @@ sub parseDateTime($;$) {
 
 		if ($year >= 1000) {
 			# leave alone
-		} elsif ($year < 100 and $year >= 0) {
+		} elsif ($year < 100 && $year >= 0) {
 			$year += ($year > $Breakpoint) ? $Century : $NextCentury;
 			$year += 1900;
 		} else {
@@ -610,24 +561,13 @@ sub parseDateTime($;$) {
 		}
 	}
 
-	my $epoch;    # The value we need to calculate and return
-
 	# Determine the best possible time-zone string to use in the (first) call to DateTime()
-	my $tz_to_use          = $display_tz;
-	my $is_valid_zone_name = 1;             # when later set to 0, we will try the "offset" approach
-	if (defined $zone and $zone ne "") {
+	my $tz_to_use = $display_tz;
+
+	my $is_valid_zone_name = 1;    # If later set to 0, then try the "offset" approach.
+	if (defined $zone && $zone ne '') {
 		$is_valid_zone_name = DateTime::TimeZone->is_valid_name($zone);
-		if ($is_valid_zone_name) {
-			#warn "\t\$zone=$zone is valid according to DateTime::TimeZone\n";
-			$tz_to_use = $zone;
-		} else {
-#warn "\t\$zone=$zone is invalid according to DateTime::TimeZone, so we will attempt to treat the date/time as UTC and then apply an offset for the zone $zone.\n";
-			$tz_to_use = "UTC";
-			# When the offset approach fails, we will override again and use $display_tz instead
-		}
-	} else {
-		#warn "\t\$zone not supplied, using \$display_tz\n";
-		$tz_to_use = $display_tz;
+		$tz_to_use          = $is_valid_zone_name ? $zone : 'UTC';
 	}
 
 	my $dt = new DateTime(
@@ -639,30 +579,14 @@ sub parseDateTime($;$) {
 		second    => $second,
 		time_zone => $tz_to_use,
 	);
-	my @offset_approach_msg = ();    # Will be non-empty and collect parts for warn message when needed
+
 	if (!$is_valid_zone_name) {
-		# We used "UTC" and need to do an offset, or fail to a different approach
-
-		# convert to an epoch value
-		my $utc_epoch = $dt->epoch
-			or die "Date/time '$string' not representable as an epoch. Get more bits!\n";
-		push(@offset_approach_msg, "\t\$utc_epoch = $utc_epoch\n");
-
-		# get offset for supplied timezone and utc_epoch
-		# fall back to $display_tz if that fails
-		my $offset;
-		if ($offset = tz_offset($zone, $utc_epoch)) {
-			push(@offset_approach_msg, "\t\$zone is valid according to Time::Zone (\$offset = $offset)\n");
-
-			$epoch = $utc_epoch + $offset;
-			push(@offset_approach_msg, "\t\$epoch = \$utc_epoch + \$offset = $epoch\n");
-
+		# "UTC" was used and so attempt to apply a timezone offset, or fall back to using the display timezone.
+		if (my $offset = tz_offset($zone, $dt->epoch)) {
 			$dt->subtract(seconds => $offset);
-			push(@offset_approach_msg, "\t\$dt - \$offset = " . $dt->strftime(DATE_FORMAT) . "\n");
 		} else {
-			@offset_approach_msg = ();    # Offset approach failed
-			warn
-				"Time zone '$zone' not recognized, falling back to parsing using $display_tz instead of applying an offset from UTC.\n";
+			warn "Time zone '$zone' not recognized. Falling back to parsing "
+				. "using $display_tz instead of applying an offset from UTC.\n";
 			$dt = new DateTime(
 				year      => $year,
 				month     => $month,
@@ -674,51 +598,44 @@ sub parseDateTime($;$) {
 			);
 		}
 	}
-	$epoch = $dt->epoch;
 
-	if (@offset_approach_msg) {
-		#warn join("", @offset_approach_msg);
-	} else {
-		#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n\t\$dt->epoch = $epoch\n";
-	}
-
-	return $epoch;
+	return $dt->epoch;
 }
 
-=item $string = formatDateTime($dateTime, $display_tz, $format_string, $locale)
+=head3 formatDateTime
 
-Formats the UNIX datetime $dateTime in the custom format provided by $format_string.
-If $format_string is not provided, the standard WeBWorK datetime format is used.
-$dateTime is assumed to be in the server's time zone. If $display_tz is given,
-the datetime is converted from the server's timezone to the timezone specified.
-If $format_string is a method of the $dt->locale instance, then format_cldr
-is used, and otherwise strftime is used.  The available patterns for
-$format_string can be found in the documentation for the perl DateTime package
-under the heading of strftime Patterns.  The available methods for the $dt->locale
-instance are documented at L<https://metacpan.org/pod/DateTime::Locale::FromData>.
-$dateTime is assumed to be in the server's time zone. If $display_tz is given,
-the datetime is converted from the server's timezone to the timezone specified.
-If $locale is provided, the string returned will be in the format of that locale,
-which is useful for automatically translating things like days of the week and
-month names.  If $locale is not provided, perl defaults to en_US.
+    formatDateTime($date_time, $format_string, $timezone, $locale)
+
+Formats a C<$date_time> epoch into a string in the format defined by
+C<$format_string>. If C<$format_string> is not provided, the default WeBWorK
+date/time format is used.  If C<$format_string> is a method of the
+C<< $dt->locale >> instance, then C<format_cldr> is used, and otherwise
+C<strftime> is used. The available patterns for $format_string can be found at
+L<DateTime/strftime Patterns>. The available methods for the C<< $dt->locale >>
+instance are documented at L<DateTime::Locale::FromData>. If C<$timezone> is
+given, then the formatted string that is returned is in the specified timezone.
+If C<$locale> is provided, the string returned will be in the format of that
+locale. If C<$locale> is not provided, Perl defaults to using C<en-US>.
+
+If this method is used directly, then the C<$timezone> and C<$locale> should
+generally be set from the course environment, and the defaults set in this
+method not used.
 
 =cut
 
 sub formatDateTime {
-	my ($dateTime, $display_tz, $format_string, $locale) = @_;
+	my ($date_time, $format_string, $timezone, $locale) = @_;
 
-	warn "Utils::formatDateTime is not a method. ", join(" ", caller(2))
-		if ref($dateTime);    # catch bad calls to Utils::formatDateTime
-	warn "not defined formatDateTime('$dateTime', '$display_tz') ", join(" ", caller(2)) unless $display_tz;
+	# Set defaults.
+	$format_string ||= 'datetime_format_short';
+	$date_time     ||= 0;
+	$timezone      ||= 'local';
 
-	$dateTime = $dateTime || 0;        # do our best to provide default values
-	$display_tz ||= "local";           # do our best to provide default vaules
-	$display_tz = verify_timezone($display_tz);
-	$format_string ||= DATE_FORMAT;    # If a format is not provided, use the default WeBWorK date format
+	$timezone = verify_timezone($timezone);
 
-	my $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz, $locale ? (locale => $locale) : ());
+	my $dt = DateTime->from_epoch(epoch => $date_time, time_zone => $timezone, $locale ? (locale => $locale) : ());
 
-	# If $format_string is a method of $dt->locale then use call format_cldr on its return value.
+	# If $format_string is a method of $dt->locale then call format_cldr on its return value.
 	# Otherwise assume it is a locale string meant for strftime.
 	if ($dt->locale->can($format_string)) {
 		return $dt->format_cldr($dt->locale->$format_string);
@@ -727,43 +644,56 @@ sub formatDateTime {
 	}
 }
 
-=item $string = textDateTime($string_or_dateTime)
+=head3 getDefaultSetDueDate
 
-Accepts a UNIX datetime or a formatted string, returns a formatted string.
+This returns the default due date for a set which is two weeks from the current
+time with the time of day set to be C<$pg{timeAssignDue}>, and is in the course
+timezone set by C<$siteDefaults{timezone}>. A valid course environment object is
+the only required parameter.
 
 =cut
 
-sub textDateTime($) {
-	return ($_[0] =~ m/^\d*$/) ? formatDateTime($_[0]) : $_[0];
+sub getDefaultSetDueDate {
+	my $ce = shift;
+
+	my ($hour, $minute, $ampm) = $ce->{pg}{timeAssignDue} =~ m/\s*(\d+)\s*:\s*(\d+)\s*(am|pm|AM|PM)?\s*/;
+	$hour   //= 0;
+	$minute //= 0;
+	$hour += 12 if $ampm && $ampm =~ m/pm|PM/;
+
+	my $dt = DateTime->from_epoch(epoch => time + 2 * 60 * 60 * 24 * 7);
+
+	return DateTime->new(
+		year      => $dt->year,
+		month     => $dt->month,
+		day       => $dt->day,
+		hour      => $hour,
+		minute    => $minute,
+		second    => 0,
+		time_zone => $ce->{siteDefaults}{timezone}
+	)->epoch;
 }
 
-=item $dateTIme = intDateTime($string_or_dateTime)
+=head3 verify_timezone
 
-Accepts a UNIX datetime or a formatted string, returns a UNIX datetime.
+    verify_timezone($display_tz)
 
-=cut
-
-sub intDateTime($) {
-	return ($_[0] =~ m/^\d*$/) ? $_[0] : parseDateTime($_[0]);
-}
-
-=item verify_timezone($display_tz)
-
-If $display_tz is not a legal time zone then replace it with America/New_York and issue warning.
-
-
+If C<$display_tz> is not a legal time zone then replace it with America/New_York
+and issue warning.
 
 =cut
 
-sub verify_timezone($) {
+sub verify_timezone {
 	my $display_tz = shift;
-	return $display_tz if (DateTime::TimeZone->is_valid_name($display_tz));
-	warn qq! $display_tz is not a legal time zone name. Fix it on the Course Configuration page.
-	      <a href="http://en.wikipedia.org/wiki/List_of_zoneinfo_time_zones">View list of time zones.</a> \n!;
-	return "America/New_York";
+	return $display_tz if DateTime::TimeZone->is_valid_name($display_tz);
+	warn qq!$display_tz is not a legal time zone name. Fix it on the Course Configuration page. !
+		. qq!<a href="http://en.wikipedia.org/wiki/List_of_zoneinfo_time_zones">View list of time zones.</a>!;
+	return 'America/New_York';
 }
 
-=item $timeinsec = timeToSec($time)
+=head3 timeToSec
+
+    timeToSec($time)
 
 Makes a stab at converting a time (with a possible unit) into a number of
 seconds.
@@ -798,36 +728,38 @@ sub timeToSec($) {
 	}
 }
 
-=item before($time, $now)
+=head3 before
 
-True if $now is less than $time. If $now is not specified, the value of time()
-is used.
+    before($time, $now)
+
+True if C<$now> is less than C<$time>. If C<$now> is not specified, the current
+time is used.
 
 =cut
 
 sub before { return (@_ == 2) ? $_[1] < $_[0] : time < $_[0] }
 
-=item after($time, $now)
+=head3 after
 
-True if $now is greater than $time. If $now is not specified, the value of time()
-is used.
+    after($time, $now)
+
+True if C<$now> is greater than C<$time>. If C<$now> is not specified, the
+current time is used.
 
 =cut
 
 sub after { return (@_ == 2) ? $_[1] > $_[0] : time > $_[0] }
 
-=item between($start, $end, $now)
+=head3 between
 
-True if $now is greater than or equal to $start and less than or equal to $end.
-If $now is not specified, the value of time() is used.
+    between($start, $end, $now)
+
+True if C<$now> is greater than or equal to C<$start> and less than or equal to
+C<$end>.  If C<$now> is not specified, the current time is used.
 
 =cut
 
 sub between { my $t = (@_ == 3) ? $_[2] : time; return $t >= $_[0] && $t <= $_[1] }
-
-=back
-
-=cut
 
 ################################################################################
 # Logging

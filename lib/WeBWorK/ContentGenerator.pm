@@ -668,19 +668,15 @@ Print links to siblings of the current object.
 
 Defined in this package.
 
-Display the current time and date using default format "3:37pm on Jan 7, 2004".
-The display format can be adjusted by giving a style in the template.
-For example,
+Display the current time and date in the 'datetime_format_long' format.  For
+example, for the 'en' language this will give "January 4, 2023 at 8:54:33 PM EST".
+Note that the "at" is replaced with a comma for the latest version of
+DateTime::Locale::FromData.
 
-  <!--#timestamp style="%m/%d/%y at %I:%M%P"-->
-
-will give standard WeBWorK time format.  Wording and other formatting
-can be done in the template itself.
 =cut
 
 sub timestamp ($c) {
-	# Need to use the formatDateTime in this file (some subclasses access Util's version).
-	return $c->formatDateTime(time);
+	return $c->formatDateTime(time, 'datetime_format_long');
 }
 
 =item message()
@@ -1265,34 +1261,29 @@ sub warningMessage ($c) {
 			. 'Please inform your instructor including the warning messages below.');
 }
 
-=item $dateTime = parseDateTime($string, $display_tz)
+=item $string = formatDateTime($date_time, $format_string, $timezone, $locale)
 
-Parses $string as a datetime. If $display_tz is given, $string is assumed to be
-in that timezone. Otherwise, the timezone defined in the course environment
-variable $siteDefaults{timezone} is used. The result, $dateTime, is an integer
-UNIX datetime (epoch) in the server's timezone.
+Formats a C<$date_time> epoch into a string in the format defined by
+C<$format_string>. If C<$format_string> is not provided, the default WeBWorK
+date/time format is used.  If C<$format_string> is a method of the
+C<< $dt->locale >> instance, then C<format_cldr> is used, and otherwise
+C<strftime> is used. The available patterns for $format_string can be found at
+L<DateTime/strftime Patterns>. The available methods for the C<< $dt->locale >>
+instance are documented at L<DateTime::Locale::FromData>. If C<$timezone> is
+given, then the formatted string that is returned is in the specified timezone.
+If C<$locale> is provided, the string returned will be in the format of that
+locale. If C<$locale> is not provided, Perl defaults to using C<en-US>.
 
-=cut
-
-sub parseDateTime ($c, $string, $display_tz = undef) {
-	return WeBWorK::Utils::parseDateTime($string, $display_tz || $c->ce->{siteDefaults}{timezone});
-}
-
-=item $string = formatDateTime($dateTime, $display_tz)
-
-Formats the UNIX datetime $dateTime in the standard WeBWorK datetime format.
-$dateTime is assumed to be in the server's time zone. If $display_tz is given,
-the datetime is converted from the server's timezone to the timezone specified.
-Otherwise, the timezone defined in the course environment variable
-$siteDefaults{timezone} is used.
+Note that the defaults for C<$timezone> and C<$locale> should almost never be
+overriden when this method is used.
 
 =cut
 
-sub formatDateTime ($c, $dateTime, $display_tz = undef, $formatString = undef, $locale = undef) {
+sub formatDateTime ($c, $date_time, $format_string = undef, $timezone = undef, $locale = undef) {
 	my $ce = $c->ce;
-	$display_tz ||= $ce->{siteDefaults}{timezone};
-	$locale     ||= $ce->{siteDefaults}{locale};
-	return WeBWorK::Utils::formatDateTime($dateTime, $display_tz, $formatString, $locale);
+	$timezone ||= $ce->{siteDefaults}{timezone};
+	$locale   ||= $ce->{language};
+	return WeBWorK::Utils::formatDateTime($date_time, $format_string, $timezone, $locale);
 }
 
 =item read_scoring_file($fileName)

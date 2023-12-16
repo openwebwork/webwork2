@@ -873,7 +873,7 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 	$userValue   = defined $userValue   ? ($labels{$userValue}   || $userValue)   : $blankfield;
 
 	if ($field =~ /_date/) {
-		$globalValue = $c->formatDateTime($globalValue, '', 'datetime_format_short', $c->ce->{language})
+		$globalValue = $c->formatDateTime($globalValue, 'datetime_format_short')
 			if $forUsers && defined $globalValue && $globalValue ne '';
 	}
 

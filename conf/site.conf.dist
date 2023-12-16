@@ -371,22 +371,8 @@ $job_queue{database_dsn} = "sqlite:$webwork_dir/DATA/webwork2_job_queue.db";
 #
 #     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::links'
 #
-# If left blank, the system timezone will be used. This is usually what you
-# want. You might want to set this if your server is NOT in the same timezone as
-# your school. If just a few courses are in a different timezone, set this in
-# course.conf for the affected courses instead.
-#
+# This can be set per course either in course.conf or via the course configuration.
 $siteDefaults{timezone} = "America/New_York";
-
-# Locale for time format localization
-# Set the following variable to localize the format of things like days
-# of the week and month names (i.e. translate them)
-# This variable must match one of the locales available on your system
-# To show the current locale in use on the system, type 'locale' at the
-# command prompt.  For a list of installed locales, type 'locale -a' and
-# enter one of the listed values here.
-# If you do not fill this in, the system will default to "en_US"
-$siteDefaults{locale}="";
 
 ################################################################################
 # Search Engine Indexing Enable/Disable

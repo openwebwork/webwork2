@@ -27,7 +27,6 @@ use Mojo::Promise;
 use Mojo::JSON qw(encode_json decode_json);
 
 use WeBWorK::PG::ImageGenerator;
-# Use the ContentGenerator formatDateTime, not the version in Utils.
 use WeBWorK::Utils qw(writeLog writeCourseLogGivenTime encodeAnswers decodeAnswers
 	path_is_subdir before after between wwRound is_restricted);
 use WeBWorK::Utils::Instructor qw(assignSetVersionToUser);

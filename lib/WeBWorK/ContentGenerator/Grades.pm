@@ -263,7 +263,7 @@ sub displayStudentStats ($c, $studentID) {
 								after($set->open_date) ? $c->maketext('No versions of this test have been taken.')
 								: $c->maketext(
 									'Will open on [_1].',
-									$c->formatDateTime($set->open_date, undef, $ce->{studentDateDisplayFormat})
+									$c->formatDateTime($set->open_date, $ce->{studentDateDisplayFormat})
 								)
 							)
 						)
@@ -441,7 +441,7 @@ sub displayStudentStats ($c, $studentID) {
 								'em',
 								$c->maketext(
 									'Will open on [_1].',
-									$c->formatDateTime($set->open_date, undef, $ce->{studentDateDisplayFormat})
+									$c->formatDateTime($set->open_date, $ce->{studentDateDisplayFormat})
 								)
 							)
 						)
