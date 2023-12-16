@@ -68,7 +68,7 @@ our %Lexicon = (
 		x('ta'),    x('professor'), x('admin'),         x('nobody')
 	],
 
-	'_STATUS' => [ x('Enrolled'), x('Audit'), x('Drop'), x('Proctor') ],
+	'_STATUS' => [ x('Enrolled'), x('Audit'), x('Drop'), x('Proctor'), x('Observer') ],
 );
 
 1;
