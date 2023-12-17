@@ -1291,26 +1291,42 @@ sub do_unarchive_course ($c) {
 			),
 			$c->tag(
 				'div',
-				class => 'text-center',
-				$c->link_to(
-					$c->maketext('Log into [_1]', $new_courseID) => 'set_list' => { courseID => $new_courseID }
-				),
-			),
-			$c->form_for(
-				$c->current_route,
-				method => 'POST',
+				class => 'row',
 				$c->c(
-					$c->hidden_authen_fields,
-					$c->hidden_fields('subDisplay'),
-					$c->hidden_field(unarchive_courseID => $unarchive_courseID),
-					$c->tag(
-						'div',
-						class => 'd-flex justify-content-center mt-2',
-						$c->submit_button(
-							$c->maketext('Unarchive Next Course'),
-							name  => 'decline_unarchive_course',
-							class => 'btn btn-primary'
-						)
+					$c->form_for(
+						$c->current_route,
+						method => 'POST',
+						class  => 'col-4',
+						$c->c(
+							$c->hidden_authen_fields,
+							$c->hidden_field(subDisplay        => 'upgrade_course'),
+							$c->hidden_field(upgrade_course    => 1),
+							$c->hidden_field(upgrade_courseIDs => $new_courseID),
+							$c->submit_button(
+								$c->maketext('Upgrade Course'),
+								name  => 'upgrade_course_confirm',
+								class => 'btn btn-primary'
+							)
+						)->join('')
+					),
+					$c->link_to(
+						$c->maketext('Log into Course') => 'set_list' => { courseID => $new_courseID },
+						class                           => 'btn btn-primary col-4'
+					),
+					$c->form_for(
+						$c->current_route,
+						method => 'POST',
+						class  => 'col-4 text-end',
+						$c->c(
+							$c->hidden_authen_fields,
+							$c->hidden_fields('subDisplay'),
+							$c->hidden_field(unarchive_courseID => $unarchive_courseID),
+							$c->submit_button(
+								$c->maketext('Unarchive More'),
+								name  => 'unarchive_more',
+								class => 'btn btn-primary'
+							)
+						)->join('')
 					)
 				)->join('')
 			)
