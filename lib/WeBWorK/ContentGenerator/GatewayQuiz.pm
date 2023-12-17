@@ -1487,7 +1487,7 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 				$c->{will}{showProblemGrader} ? 2
 				: !$c->{previewAnswers} && $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet})
 				? ($c->ce->{pg}{options}{correctRevealBtnAlways} ? 1 : 2)
-				: ($c->{submitAnswers} || $c->{will}{checkAnswers}) && $c->{will}{showCorrectAnswers} ? 1
+				: !$c->{previewAnswers} && $c->{will}{showCorrectAnswers} ? 1
 				: 0
 			),
 			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID})

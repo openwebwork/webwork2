@@ -600,7 +600,7 @@ async sub pre_header_initialize ($c) {
 				$will{showProblemGrader} || ($c->{submitAnswers} && $c->{showCorrectOnRandomize}) ? 2
 				: !$c->{previewAnswers} && after($c->{set}->answer_date, $c->submitTime)
 				? ($ce->{pg}{options}{correctRevealBtnAlways} ? 1 : 2)
-				: (($c->{submitAnswers} || $will{checkAnswers}) && $will{showCorrectAnswers}) ? 1
+				: !$c->{previewAnswers} && $will{showCorrectAnswers} ? 1
 				: 0
 			),
 			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID)
