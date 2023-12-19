@@ -309,15 +309,6 @@ sub do_add_course ($c) {
 
 	my $copy_from_course = trim_spaces($c->param('copy_from_course')) // '';
 
-	my $copy_templates_html     = $c->param('copy_templates_html')     || '';
-	my $copy_simple_config_file = $c->param('copy_simple_config_file') || '';
-	my $copy_config_file        = $c->param('copy_config_file')        || '';
-	my $copy_non_students       = $c->param('copy_non_students')       || '';
-	my $copy_sets               = $c->param('copy_sets')               || '';
-	my $copy_achievements       = $c->param('copy_achievements')       || '';
-	my $copy_title              = $c->param('copy_title')              || '';
-	my $copy_institution        = $c->param('copy_institution')        || '';
-
 	my $add_dbLayout = trim_spaces($c->param('add_dbLayout')) || '';
 
 	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $add_courseID });
@@ -374,15 +365,9 @@ sub do_add_course ($c) {
 	# Include any optional arguments, including a template course and the course title and course institution.
 	my %optional_arguments;
 	if ($copy_from_course ne '') {
-		$optional_arguments{copyFrom}          = $copy_from_course;
-		$optional_arguments{copyTemplatesHtml} = $copy_templates_html;
-		$optional_arguments{copySimpleConfig}  = $copy_simple_config_file;
-		$optional_arguments{copyConfig}        = $copy_config_file;
-		$optional_arguments{copyNonStudents}   = $copy_non_students;
-		$optional_arguments{copySets}          = $copy_sets;
-		$optional_arguments{copyAchievements}  = $copy_achievements;
-		$optional_arguments{copyTitle}         = $copy_title;
-		$optional_arguments{copyInstitution}   = $copy_institution;
+		%optional_arguments             = map { $_ => 1 } ($c->param('copy_component'));
+		$optional_arguments{copyFrom}   = $copy_from_course;
+		$optional_arguments{copyConfig} = $c->param('copy_config_file') || '';
 	}
 	if ($add_courseTitle ne '') {
 		$optional_arguments{courseTitle} = $add_courseTitle;

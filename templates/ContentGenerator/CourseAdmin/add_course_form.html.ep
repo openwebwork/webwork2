@@ -125,49 +125,56 @@
 			</div>
 			<div class="form-check">
 				<label class="form-check-label">
-					<%= check_box 'copy_templates_html' => 1, class => 'form-check-input' =%>
+					<%= check_box select_all => 1, class => 'select-all form-check-input',
+						'data-select-group' => 'copy_component'=%>
+					<%= maketext('select all', 'templates', 'html') =%>
+				</label>
+			</div>
+			<div class="form-check">
+				<label class="form-check-label">
+					<%= check_box copy_component => 'copyTemplatesHtml', class => 'form-check-input' =%>
 					<%= maketext('[_1] and [_2] folders', 'templates', 'html') =%>
 				</label>
 			</div>
 			<div class="form-check">
 				<label class="form-check-label">
-					<%= check_box 'copy_simple_config_file' => 1, class => 'form-check-input' =%>
+					<%= check_box copy_component => 'copySimpleConfig', class => 'form-check-input' =%>
 					<%= maketext('simple configuration file') =%>
 				</label>
 			</div>
 			<div class="form-check">
 				<label class="form-check-label">
-					<%= check_box 'copy_config_file' => 1, class => 'form-check-input' =%>
+					<%= check_box copy_config_file => 1, class => 'form-check-input' =%>
 					<%= maketext('course configuration file') =%>
 				</label>
 			</div>
 			<div class="form-check">
 				<label class="form-check-label">
-					<%= check_box 'copy_non_students' => 1, class => 'form-check-input' =%>
+					<%= check_box copy_component => 'copyNonStudents', class => 'form-check-input' =%>
 					<%= maketext('non-student users') =%>
 				</label>
 			</div>
 			<div class="form-check">
 				<label class="form-check-label">
-					<%= check_box 'copy_sets' => 1, class => 'form-check-input' =%>
+					<%= check_box copy_component => 'copySets', class => 'form-check-input' =%>
 					<%= maketext('assignments/sets') =%>
 				</label>
 			</div>
 			<div class="form-check">
 				<label class="form-check-label">
-					<%= check_box 'copy_achievements' => 1, class => 'form-check-input' =%>
+					<%= check_box copy_component => 'copyAchievements', class => 'form-check-input' =%>
 					<%= maketext('achievements') =%>
 				</label>
 			</div>
 			<div class="form-check">
 				<label class="form-check-label">
-					<%= check_box 'copy_title' => 1, class => 'form-check-input' =%>
+					<%= check_box copy_component => 'copyTitle', class => 'form-check-input' =%>
 					<%= maketext('course title (will override "Course Title" input above)') =%>
 				</label>
 			</div>
 			<div class="form-check">
 				<label class="form-check-label">
-					<%= check_box 'copy_institution' => 1, class => 'form-check-input' =%>
+					<%= check_box copy_component => 'copyInstitution', class => 'form-check-input' =%>
 					<%= maketext('course institution (will override "Institution" input above)') =%>
 				</label>
 			</div>

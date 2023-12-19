@@ -15,16 +15,10 @@
 				% 'add_course',
 				% maketext('Add Courses'),
 				% {
-					% add_admin_users      => 1,
-					% copy_from_course     => $ce->{siteDefaults}{default_copy_from_course} || '',
-					% copy_templates_html     => 1,
-					% copy_simple_config_file => 1,
-					% copy_non_students       => 1,
-					% copy_sets               => 1,
-					% copy_achievements       => 1,
-					% copy_title              => 1,
-					% copy_institution        => 1,
-					% add_dbLayout         => 'sql_single',
+					% add_admin_users  => 1,
+					% copy_from_course => $ce->{siteDefaults}{default_copy_from_course} || '',
+					% copy_component   => 'copyTemplatesHtml',
+					% add_dbLayout     => 'sql_single'
 				% }
 			% ],
 			% [ 'rename_course',        maketext('Rename Courses') ],
