@@ -294,21 +294,29 @@ sub do_add_course ($c) {
 	my $db    = $c->db;
 	my $authz = $c->authz;
 
-	my $add_courseID          = trim_spaces($c->param('new_courseID'))          || '';
-	my $add_courseTitle       = trim_spaces($c->param('add_courseTitle'))       || '';
-	my $add_courseInstitution = trim_spaces($c->param('add_courseInstitution')) || '';
+	my $add_courseID          = trim_spaces($c->param('new_courseID'))          // '';
+	my $add_courseTitle       = trim_spaces($c->param('add_courseTitle'))       // '';
+	my $add_courseInstitution = trim_spaces($c->param('add_courseInstitution')) // '';
 
-	my $add_admin_users = trim_spaces($c->param('add_admin_users')) || '';
+	my $add_admin_users = $c->param('add_admin_users') || '';
 
-	my $add_initial_userID          = trim_spaces($c->param('add_initial_userID'))          || '';
-	my $add_initial_password        = trim_spaces($c->param('add_initial_password'))        || '';
-	my $add_initial_confirmPassword = trim_spaces($c->param('add_initial_confirmPassword')) || '';
-	my $add_initial_firstName       = trim_spaces($c->param('add_initial_firstName'))       || '';
-	my $add_initial_lastName        = trim_spaces($c->param('add_initial_lastName'))        || '';
-	my $add_initial_email           = trim_spaces($c->param('add_initial_email'))           || '';
+	my $add_initial_userID          = trim_spaces($c->param('add_initial_userID'))          // '';
+	my $add_initial_password        = trim_spaces($c->param('add_initial_password'))        // '';
+	my $add_initial_confirmPassword = trim_spaces($c->param('add_initial_confirmPassword')) // '';
+	my $add_initial_firstName       = trim_spaces($c->param('add_initial_firstName'))       // '';
+	my $add_initial_lastName        = trim_spaces($c->param('add_initial_lastName'))        // '';
+	my $add_initial_email           = trim_spaces($c->param('add_initial_email'))           // '';
 
-	my $add_templates_course = trim_spaces($c->param('add_templates_course')) || '';
-	my $add_config_file      = trim_spaces($c->param('add_config_file'))      || '';
+	my $copy_from_course = trim_spaces($c->param('copy_from_course')) // '';
+
+	my $copy_templates_html     = $c->param('copy_templates_html')     || '';
+	my $copy_simple_config_file = $c->param('copy_simple_config_file') || '';
+	my $copy_config_file        = $c->param('copy_config_file')        || '';
+	my $copy_non_students       = $c->param('copy_non_students')       || '';
+	my $copy_sets               = $c->param('copy_sets')               || '';
+	my $copy_achievements       = $c->param('copy_achievements')       || '';
+	my $copy_title              = $c->param('copy_title')              || '';
+	my $copy_institution        = $c->param('copy_institution')        || '';
 
 	my $add_dbLayout = trim_spaces($c->param('add_dbLayout')) || '';
 
@@ -365,11 +373,16 @@ sub do_add_course ($c) {
 
 	# Include any optional arguments, including a template course and the course title and course institution.
 	my %optional_arguments;
-	if ($add_templates_course ne '') {
-		$optional_arguments{templatesFrom} = $add_templates_course;
-	}
-	if ($add_config_file ne '') {
-		$optional_arguments{copySimpleConfig} = $add_config_file;
+	if ($copy_from_course ne '') {
+		$optional_arguments{copyFrom}          = $copy_from_course;
+		$optional_arguments{copyTemplatesHtml} = $copy_templates_html;
+		$optional_arguments{copySimpleConfig}  = $copy_simple_config_file;
+		$optional_arguments{copyConfig}        = $copy_config_file;
+		$optional_arguments{copyNonStudents}   = $copy_non_students;
+		$optional_arguments{copySets}          = $copy_sets;
+		$optional_arguments{copyAchievements}  = $copy_achievements;
+		$optional_arguments{copyTitle}         = $copy_title;
+		$optional_arguments{copyInstitution}   = $copy_institution;
 	}
 	if ($add_courseTitle ne '') {
 		$optional_arguments{courseTitle} = $add_courseTitle;

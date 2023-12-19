@@ -103,27 +103,72 @@
 		</div>
 	</div>
 	<div class="mb-1">
-		<%= maketext('To copy the templates and html folders from an existing course, select the course below.') =%>
+		<%= maketext('To copy components from an existing course, select the course and check which components to copy.') =%>
 	</div>
 	<div class="row mb-3">
 		% my @existingCourses = sort { lc($a) cmp lc($b) } listCourses($ce);
 		% unshift(@existingCourses, sort { lc($a) cmp lc($b) } @{ $ce->{modelCoursesForCopy} });
 		%
-		<%= label_for add_templates_course => maketext('Copy from:'),
+		<%= label_for copy_from_course => maketext('Copy Components From:'),
 			class => 'col-auto col-form-label fw-bold' =%>
 		<div class="col-auto">
-			<%= select_field add_templates_course => [
+			<%= select_field copy_from_course => [
 					[ maketext('No Course') => '' ],
 					map { [ $_ => $_] } @existingCourses
 				],
-				id      => 'add_templates_course',
+				id      => 'copy_from_course',
 				class   => 'form-select' =%>
 		</div>
 		<div class="mb-3">
+			<div class="col-form-label fw-bold">
+				Copy These Components:
+			</div>
 			<div class="form-check">
 				<label class="form-check-label">
-					<%= check_box 'add_config_file' => 1, class => 'form-check-input' =%>
-					<%= maketext('Also copy simple configuration file') =%>
+					<%= check_box 'copy_templates_html' => 1, class => 'form-check-input' =%>
+					<%= maketext('[_1] and [_2] folders', 'templates', 'html') =%>
+				</label>
+			</div>
+			<div class="form-check">
+				<label class="form-check-label">
+					<%= check_box 'copy_simple_config_file' => 1, class => 'form-check-input' =%>
+					<%= maketext('simple configuration file') =%>
+				</label>
+			</div>
+			<div class="form-check">
+				<label class="form-check-label">
+					<%= check_box 'copy_config_file' => 1, class => 'form-check-input' =%>
+					<%= maketext('course configuration file') =%>
+				</label>
+			</div>
+			<div class="form-check">
+				<label class="form-check-label">
+					<%= check_box 'copy_non_students' => 1, class => 'form-check-input' =%>
+					<%= maketext('non-student users') =%>
+				</label>
+			</div>
+			<div class="form-check">
+				<label class="form-check-label">
+					<%= check_box 'copy_sets' => 1, class => 'form-check-input' =%>
+					<%= maketext('assignments/sets') =%>
+				</label>
+			</div>
+			<div class="form-check">
+				<label class="form-check-label">
+					<%= check_box 'copy_achievements' => 1, class => 'form-check-input' =%>
+					<%= maketext('achievements') =%>
+				</label>
+			</div>
+			<div class="form-check">
+				<label class="form-check-label">
+					<%= check_box 'copy_title' => 1, class => 'form-check-input' =%>
+					<%= maketext('course title (will override "Course Title" input above)') =%>
+				</label>
+			</div>
+			<div class="form-check">
+				<label class="form-check-label">
+					<%= check_box 'copy_institution' => 1, class => 'form-check-input' =%>
+					<%= maketext('course institution (will override "Institution" input above)') =%>
 				</label>
 			</div>
 		</div>
