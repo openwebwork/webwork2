@@ -575,6 +575,23 @@
 						</p>
 					% }
 					%
+					% if (
+						% (
+							% $authz->hasPermissions($userID, 'show_correct_answers_before_answer_date')
+							% || $authz->hasPermissions($userID, 'view_hidden_work')
+						% )
+						% && !$c->can_showCorrectAnswersForAll($c->{set}, $c->{problem}, $c->{tmplSet})
+						% )
+					% {
+						<p>
+							<b><%= maketext('Note') %>:</b>
+							<i>
+								<%= maketext('The correct answers shown in feedback are instructor previews and '
+									. 'will only be shown to students when answers are available.') =%>
+							</i>
+						</p>
+					% }
+					%
 					<div class="text-end mb-2">
 						<%= link_to maketext('preview answers') => '#',
 							class => 'gateway-preview-btn btn btn-secondary',
