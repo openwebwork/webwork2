@@ -26,6 +26,7 @@ use Net::IP;    # needed for location management
 use File::Path 'remove_tree';
 use File::stat;
 use Time::localtime;
+use String::ShellQuote;
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
@@ -1208,7 +1209,7 @@ sub unarchive_course_validate ($c) {
 	my $new_courseID       = $c->param('new_courseID')       || '';
 
 	# Use the archive name for the course unless a course id was provided.
-	my $courseID = ($c->param('create_newCourseID') ? $new_courseID : $unarchive_courseID) =~ s/\.tar\.gz$//r;
+	my $courseID = ($new_courseID =~ /\S/ ? $new_courseID : $unarchive_courseID) =~ s/\.tar\.gz$//r;
 
 	debug(" unarchive_courseID $unarchive_courseID new_courseID $new_courseID ");
 
@@ -1241,7 +1242,7 @@ sub unarchive_course_confirm ($c) {
 	my $unarchive_courseID = $c->param('unarchive_courseID') || '';
 	my $new_courseID       = $c->param('new_courseID')       || '';
 
-	my $courseID = ($c->param('create_newCourseID') ? $new_courseID : $unarchive_courseID) =~ s/\.tar\.gz//r;
+	my $courseID = ($new_courseID =~ /\S/ ? $new_courseID : $unarchive_courseID) =~ s/\.tar\.gz//r;
 
 	debug(" unarchive_courseID $unarchive_courseID new_courseID $new_courseID ");
 
@@ -1276,13 +1277,54 @@ sub do_unarchive_course ($c) {
 			class => 'alert alert-danger p-1 mb-2',
 			$c->c(
 				$c->tag(
-					'p', $c->maketext('An error occurred while archiving the course [_1]:', $unarchive_courseID)
+					'p', $c->maketext('An error occurred while unarchiving the course [_1]:', $unarchive_courseID)
 				),
 				$c->tag('div', class => 'font-monospace', $error)
 			)->join('')
 		);
 	} else {
 		writeLog($ce, 'hosted_courses', join("\t", "\tunarchived", '', '', "$unarchive_courseID to $new_courseID",));
+
+		if ($c->param('clean_up_course')) {
+			my $ce_new = WeBWorK::CourseEnvironment->new({ courseName => $new_courseID });
+			my $db_new = WeBWorK::DB->new($ce_new->{dbLayout});
+
+			for my $student_id ($db_new->listPermissionLevelsWhere({ permission => 0 })) {
+				$db_new->deleteUser($student_id->[0]);
+			}
+
+			my @log_files = (values %{ $ce_new->{courseFiles}{logs} });
+			for my $file (@log_files) {
+				if (-e $file) {
+					my $rm_cmd = "2>&1 $ce_new->{externalPrograms}{rm} " . shell_quote($file);
+					my $rm_out = readpipe $rm_cmd;
+					if ($?) {
+						return $c->tag(
+							'div',
+							class => 'alert alert-danger p-1 mb-2',
+							$c->c($c->tag('p', $c->maketext('Failed to remove file  [_1]:', $file)),
+								$c->tag('div', class => 'font-monospace', $rm_out))->join('')
+						);
+					}
+				}
+			}
+
+			if (-d "$ce_new->{courseDirs}{scoring}") {
+				my $rm_cmd =
+					"2>&1 $ce_new->{externalPrograms}{rm} -f " . shell_quote($ce_new->{courseDirs}{scoring}) . "/*";
+				my $rm_out = readpipe $rm_cmd;
+				if ($?) {
+					return $c->tag(
+						'div',
+						class => 'alert alert-danger p-1 mb-2',
+						$c->c(
+							$c->tag('p',   $c->maketext('Failed to remove scoring files:')),
+							$c->tag('div', class => 'font-monospace', $rm_out)
+						)->join('')
+					);
+				}
+			}
+		}
 
 		return $c->c(
 			$c->tag(
