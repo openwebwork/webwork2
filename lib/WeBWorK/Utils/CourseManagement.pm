@@ -163,7 +163,6 @@ sub listArchivedCourses {
  copyTitle         => boolean
  copyInstitution   => boolean
 
-
 Create a new course with ID $courseID.
 
 $ce is a WeBWorK::CourseEnvironment object that describes the new course's
@@ -349,10 +348,10 @@ sub addCourse {
 		if ($db0 && $options{copyNonStudents}) {
 			my @non_student_ids =
 				map {@$_} ($db0->listPermissionLevelsWhere({ permission => { not_like => '0' } }, 'user_id'));
-			my %original_users = map { $_->[0]{user_id} => 1 } (@users);
+			my %user_args = map { $_->[0]{user_id} => 1 } (@users);
 
 			for my $user_id (@non_student_ids) {
-				next if $original_users{$user_id};
+				next if $user_args{$user_id};
 				my @User            = $db0->getUsersWhere({ user_id => $user_id });
 				my @Password        = $db0->getPasswordsWhere({ user_id => $user_id });
 				my @PermissionLevel = $db0->getPermissionLevelsWhere({ user_id => $user_id });
@@ -373,54 +372,42 @@ sub addCourse {
 
 	# add sets
 	if ($db0 && $options{copySets}) {
-		if ($ce->{dbLayouts}{$dbLayoutName}{set}{params}{non_native}) {
-			debug("not adding sets to the course database: 'set' table is non-native.\n");
-		} else {
-			my @set_ids = $db0->listGlobalSets;
-			for my $set_id (@set_ids) {
-				eval { $db->addGlobalSet($db0->getGlobalSet($set_id)) };
+		my @set_ids = $db0->listGlobalSets;
+		for my $set_id (@set_ids) {
+			eval { $db->addGlobalSet($db0->getGlobalSet($set_id)) };
+			warn $@ if $@;
+
+			my @Problem = $db0->getGlobalProblemsWhere({ set_id => $set_id });
+			for my $problem (@Problem) {
+				eval { $db->addGlobalProblem($problem) };
 				warn $@ if $@;
+			}
 
-				my @Problem = $db0->getGlobalProblemsWhere({ set_id => $set_id });
-				for my $problem (@Problem) {
-					eval { $db->addGlobalProblem($problem) };
-					warn $@ if $@;
-				}
-
-				my @Location = $db0->getGlobalSetLocationsWhere({ set_id => $set_id });
-				for my $location (@Location) {
-					eval { $db->addGlobalSetLocation($location) };
-					warn $@ if $@;
-				}
+			my @Location = $db0->getGlobalSetLocationsWhere({ set_id => $set_id });
+			for my $location (@Location) {
+				eval { $db->addGlobalSetLocation($location) };
+				warn $@ if $@;
 			}
 		}
 	}
 
 	# add achievements
 	if ($db0 && $options{copyAchievements}) {
-		if ($ce->{dbLayouts}{$dbLayoutName}{achievement}{params}{non_native}) {
-			debug("not adding achievements to the course database: 'achievement' table is non-native.\n");
-		} else {
-			my @achievement_ids = $db0->listAchievements;
-			for my $achievement_id (@achievement_ids) {
-				eval { $db->addAchievement($db0->getAchievement($achievement_id)) };
-				warn $@ if $@;
-			}
+		my @achievement_ids = $db0->listAchievements;
+		for my $achievement_id (@achievement_ids) {
+			eval { $db->addAchievement($db0->getAchievement($achievement_id)) };
+			warn $@ if $@;
 		}
 	}
 
 	# copy title and/or institution if requested
-	if ($db0 && ($options{copyTitle} || $options{copyInstitution})) {
-		if ($ce->{dbLayouts}{$dbLayoutName}{setting}{params}{non_native}) {
-			debug("not copying settings to the course database: 'setting' table is non-native.\n");
+	for my $setting ('Title', 'Institution') {
+		if ($db0 && $options{"copy$setting"}) {
+			$db->setSettingValue("course$setting", $db0->getSettingValue("course$setting"))
+				if ($options{"copy$setting"});
 		} else {
-			$db->setSettingValue('courseTitle',       $db0->getSettingValue('courseTitle')) if ($options{copyTitle});
-			$db->setSettingValue('courseInstitution', $db0->getSettingValue('{courseInstitution'))
-				if ($options{copyInstitution});
+			$db->setSettingValue("course$setting", $options{"course$setting"}) if (exists $options{"course$setting"});
 		}
-	} else {
-		$db->setSettingValue('courseTitle',       $options{courseTitle})       if (exists $options{courseTitle});
-		$db->setSettingValue('courseInstitution', $options{courseInstitution}) if (exists $options{courseInstitution});
 	}
 
 	##### step 4: write course.conf file #####
