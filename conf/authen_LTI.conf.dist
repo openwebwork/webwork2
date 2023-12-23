@@ -45,6 +45,26 @@ $authen{user_module} = [
 	{ '*' => 'WeBWorK::Authen::Basic_TheLastOption' }    # fallback authorization method
 ];
 
+# List of authentication modules that may be used to enter the admin course.
+# This should be a non-empty sublist of whatever is in $authen{user_module}.
+# Since the admin course provides overall power to add/delete courses, access
+# to this course should be protected by the best possible authentication you
+# have available to you.  The current default is
+# WeBWorK::Authen::Basic_TheLastOption which is simple password based
+# authentication for a password locally stored in your WeBWorK server's
+# database.  On one hand, this is necessary as the initial setting, as it is the
+# only option available when a new server is being installed.  However, since
+# this option does not make use of multi-factor authentication or provide any
+# capabilities to prevent dictionary attacks, etc.  At the very least you should
+# use a very strong password.  If you have the option to use a more secure
+# authentication approach to the admin course (one which you are confident
+# cannot be spoofed) that is preferable.
+$authen{admin_module} = [
+	'WeBWorK::Authen::LTIAdvantage',
+	'WeBWorK::Authen::LTIAdvanced',
+	'WeBWorK::Authen::Basic_TheLastOption'
+];
+
 # Include configurations.  You must uncomment at least one of the following. You may uncomment
 # both if the site may be using both LTI 1.1 and 1.3 in different courses. After uncommenting
 # the LTI_1_x line, you must copy the file authen_LTI_1_x.conf.dist to authen_LTI_1_x.conf and
