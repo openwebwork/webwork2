@@ -36,4 +36,7 @@
 			</div>
 		</div>
 	</div>
+	<div id="filter_err_msg" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">
+		<%= maketext('Please enter in a value to match in the filter field.') =%>
+	</div>
 </div>

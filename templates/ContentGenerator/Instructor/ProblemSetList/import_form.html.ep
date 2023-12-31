@@ -1,5 +1,3 @@
-% use WeBWorK::Utils::Instructor qw(getDefList);
-%
 <div>
 	<div class="row mb-2">
 		<%= label_for import_amt_select => maketext('Import how many sets?'),
@@ -7,7 +5,7 @@
 		<div class="col-auto">
 			<%= select_field 'action.import.number' => [
 					[ maketext('a single set') => 1, selected => undef ],
-					[maketext('multiple sets') => 8 ]
+					[ maketext('multiple sets') => 8 ]
 				],
 				id => 'import_amt_select', class => 'form-select form-select-sm' =%>
 		</div>
@@ -18,7 +16,7 @@
 		<div class="col-auto">
 			<%= select_field 'action.import.source' => [
 					[ maketext('Enter filenames below') => '', selected => undef ],
-					getDefList($ce)
+					@$setDefList
 				],
 				id => 'import_source_select', class => 'form-select form-select-sm', dir => 'ltr',
 				size => param('action.import.number') || 1,
@@ -44,7 +42,7 @@
 					id => 'import_date_shift', size => '27', class => 'form-control',
 					data => {
 						input => undef,
-					   	done_text  => maketext('Done'),
+						done_text  => maketext('Done'),
 						today_text => maketext('Today'),
 						now_text   => maketext('Now'),
 						locale     => $ce->{language},
@@ -70,4 +68,7 @@
 			</div>
 		</div>
 	% }
+	<div id="import_file_err_msg" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">
+		<%= maketext('Please select a set definition file to import.') %>
+	</div>
 </div>

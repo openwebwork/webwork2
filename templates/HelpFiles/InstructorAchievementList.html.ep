@@ -91,9 +91,8 @@
 	<dd>
 		<%= maketext('You can edit a single achievement by clicking on the pencil icon next to the achievement ID.  '
 			. 'You can edit multiple achievements by selecting which achievements to edit, then click the '
-			. '"Edit" button. You can edit all of the achievements by changing which achievements to edit form '
-			. '"selected achievements" to "all achievements", or click the checkbox next to the Achievement ID to '
-			. 'select all achievements.') =%>
+			. '"Edit" button. You can edit all of the achievements by first selecting them all using the checkbox '
+			. 'next to "Achievement ID", then editing them with the "Edit" button.') =%>
 	</dd>
 
 	<dt><%= maketext('Import/export achievements') %></dt>

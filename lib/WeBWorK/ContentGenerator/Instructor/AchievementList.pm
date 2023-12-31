@@ -82,6 +82,7 @@ sub initialize ($c) {
 	$c->stash->{formsToShow}  = VIEW_FORMS();
 	$c->stash->{formTitles}   = FORM_TITLES();
 	$c->stash->{achievements} = [];
+	$c->stash->{axpList}      = [ $c->getAxpList ];
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, 'edit_achievements');
@@ -146,36 +147,17 @@ sub initialize ($c) {
 
 # Handler for editing achievements.  Just changes the view mode.
 sub edit_handler ($c) {
-	my $result;
-
-	my $scope = $c->param('action.edit.scope');
-	if ($scope eq "all") {
-		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
-		$result = $c->maketext('Editing all achievements.');
-	} elsif ($scope eq "selected") {
-		$result = $c->maketext('Editing selected achievements.');
-	}
 	$c->{editMode} = 1;
 
-	return (1, $result);
+	return (1, $c->maketext('Editing selected achievements.'));
 }
 
 # Handler for assigning achievements to users
 sub assign_handler ($c) {
-	my $db = $c->db;
-	my $ce = $c->ce;
-
-	my $scope     = $c->param('action.assign.scope');
-	my $overwrite = $c->param('action.assign.overwrite') eq 'everything';
-
-	my @achievementIDs;
-	my @users = $db->listUsers;
-
-	if ($scope eq "all") {
-		@achievementIDs = @{ $c->{allAchievementIDs} };
-	} else {
-		@achievementIDs = @{ $c->{selectedAchievementIDs} };
-	}
+	my $db             = $c->db;
+	my $overwrite      = $c->param('action.assign.overwrite') eq 'everything';
+	my @achievementIDs = @{ $c->{selectedAchievementIDs} };
+	my @users          = $db->listUsers;
 
 	# Enable all achievements
 	my @achievements = $db->getAchievements(@achievementIDs);
@@ -222,20 +204,10 @@ sub assign_handler ($c) {
 
 # Handler for scoring
 sub score_handler ($c) {
-	my $ce         = $c->ce;
-	my $db         = $c->db;
-	my $courseName = $c->stash('courseID');
-
-	my $scope = $c->param('action.score.scope');
-	my @achievementsToScore;
-
-	if ($scope eq "none") {
-		@achievementsToScore = ();
-	} elsif ($scope eq "all") {
-		@achievementsToScore = @{ $c->{allAchievementIDs} };
-	} elsif ($scope eq "selected") {
-		@achievementsToScore = $c->param('selected_achievements');
-	}
+	my $ce                  = $c->ce;
+	my $db                  = $c->db;
+	my $courseName          = $c->stash('courseID');
+	my @achievementsToScore = $c->param('selected_achievements');
 
 	# Define file name
 	my $scoreFileName = $courseName . "_achievement_scores.csv";
@@ -323,16 +295,12 @@ sub score_handler ($c) {
 
 # Handler for delete action
 sub delete_handler ($c) {
-	my $db = $c->db;
+	my $db      = $c->db;
+	my $confirm = $c->param('action.delete.confirm');
 
-	my $scope = $c->param('action.delete.scope');
+	return (1, $c->maketext('Deleted [quant,_1,achievement].', 0)) unless ($confirm eq 'yes');
 
-	my @achievementIDsToDelete = ();
-
-	if ($scope eq "selected") {
-		@achievementIDsToDelete = @{ $c->{selectedAchievementIDs} };
-	}
-
+	my @achievementIDsToDelete = @{ $c->{selectedAchievementIDs} };
 	my %allAchievementIDs      = map { $_ => 1 } @{ $c->{allAchievementIDs} };
 	my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
 
@@ -348,8 +316,7 @@ sub delete_handler ($c) {
 	$c->{allAchievementIDs}      = [ keys %allAchievementIDs ];
 	$c->{selectedAchievementIDs} = [ keys %selectedAchievementIDs ];
 
-	my $num = @achievementIDsToDelete;
-	return (1, $c->maketext('Deleted [quant,_1,achievement].', $num));
+	return (1, $c->maketext('Deleted [quant,_1,achievement].', scalar @achievementIDsToDelete));
 }
 
 # Handler for creating an ahcievement
@@ -472,19 +439,10 @@ sub import_handler ($c) {
 # Export handler
 # This does not actually export any files, rather it sends us to a new page in order to export the files.
 sub export_handler ($c) {
-	my $result;
+	$c->{selectedAchievementIDs} = [ $c->param('selected_achievements') ];
+	$c->{exportMode}             = 1;
 
-	my $scope = $c->param('action.export.scope');
-	if ($scope eq "all") {
-		$result = $c->maketext('Exporting all achievements.');
-		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
-	} elsif ($scope eq "selected") {
-		$result = $c->maketext('Exporting selected achievements.');
-		$c->{selectedAchievementIDs} = [ $c->param('selected_achievements') ];
-	}
-	$c->{exportMode} = 1;
-
-	return (1, $result);
+	return (1, $c->maketext('Exporting selected achievements.'));
 }
 
 # Handler for leaving the export page.

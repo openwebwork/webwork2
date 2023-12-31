@@ -1,12 +1,3 @@
 <div class="row mb-2">
-	<%= label_for export_select => maketext('Export which achievements?'),
-		class => 'col-form-label col-form-label-sm col-auto' =%>
-	<div class="col-auto">
-		<%= select_field 'action.export.scope' => [
-				[ maketext('all achievements')      => 'all' ],
-				[ maketext('selected achievements') => 'selected', selected => undef ],
-			],
-			id    => 'export_select',
-			class => 'form-select form-select-sm d-inline w-auto' =%>
-	</div>
+	<p><%= maketext('Select achievements to export.') =%></p>
 </div>

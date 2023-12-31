@@ -1,8 +1,9 @@
 % use WeBWorK::Utils qw(getAssetURL);
 %
 % content_for js => begin
-	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'),   defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'),           defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/AchievementList/achievementlist.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'),             defer => undef =%>
 % end
 %
 % unless ($authz->hasPermissions(param('user'), 'edit_achievements')) {
@@ -26,7 +27,9 @@
 			% for my $actionID (@$formsToShow) {
 				<li class="nav-item" role="presentation">
 					<%= link_to maketext($formTitles->{$actionID}) => "#$actionID",
-						class           => 'nav-link action-link' . ($actionID eq $formsToShow->[0] ? ' active' : ''),
+						class           => 'nav-link action-link'
+							. ($actionID eq $formsToShow->[0] ? ' active' : '')
+							. ($actionID eq 'import' && !@$axpList ? ' disabled' : ''),
 						id              => "$actionID-tab",
 						data            => { action => $actionID, bs_toggle => 'tab', bs_target => "#$actionID" },
 						role            => 'tab',
@@ -44,8 +47,10 @@
 			% }
 		</div>
 	</div>
-	<%= submit_button maketext($formTitles->{ $formsToShow->[0] }),
-		id => 'take_action', class => 'btn btn-primary mb-3' =%>
+	<div>
+		<%= submit_button maketext($formTitles->{ $formsToShow->[0] }),
+			id => 'take_action', class => 'btn btn-primary mb-3' =%>
+	</div>
 	% if ($c->{exportMode}) {
 		<%= include 'ContentGenerator/Instructor/AchievementList/export_table' =%>
 	% } elsif ($c->{editMode}) {

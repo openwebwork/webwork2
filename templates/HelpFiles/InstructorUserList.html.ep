@@ -43,9 +43,8 @@
 	<dd>
 		<%= maketext('You can edit the class list data for a single student by clicking on the pencil icon next to '
 			. 'their login name. To edit several students at once click on the "Select" checkbox next to their names, '
-			. 'click on the radio button for editing selected users and then click the "Edit" button. You can also '
-			. 'edit all visible users (those students currently being displayed) or even all users in the course '
-			. 'although this last option might take a long time to load for a large class.') =%>
+			. 'click on the radio button for editing selected users and then click the "Edit" button. This might '
+			. 'take a long time load if editing a large number of users.') =%>
 	</dd>
 
 	<dd>
@@ -97,7 +96,7 @@
 	<dt><%= maketext('Drop student from the course') %></dt>
 	<dd>
 		<%= maketext('To drop a student or students, select them for editing as described above and then set the '
-			. 'pop-up list to enrolled,drop, or audit. Dropped students cannot log in to the course, are not assigned '
+			. 'pop-up list to enrolled, drop, or audit. Dropped students cannot log in to the course, are not assigned '
 			. 'new sets and are not sent email. They can be re-enrolled simply by changing their status back '
 			. 'to enrolled. No data is lost, any assignments assigned before they were dropped are restored '
 			. 'unchanged.') =%>

@@ -1,11 +1,9 @@
-% use WeBWorK::Utils::Instructor qw(getCSVList);
-%
 <div>
 	<div class="row mb-2">
 		<%= label_for import_select_source => maketext('Import users from what file?'),
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
-			<%= select_field 'action.import.source' => [ getCSVList($ce) ],
+			<%= select_field 'action.import.source' => [ @$CSVList ],
 				id => 'import_select_source', class => 'form-select form-select-sm', dir => 'ltr' =%>
 		</div>
 	</div>

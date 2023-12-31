@@ -1,12 +1,3 @@
 <div class="row mb-2">
-	<%= label_for edit_select => maketext('Edit which achievements?'),
-		class => 'col-form-label col-form-label-sm col-auto' =%>
-	<div class="col-auto">
-		<%= select_field 'action.edit.scope' => [
-				[ maketext('all achievements')      => 'all' ],
-				[ maketext('selected achievements') => 'selected', selected => undef ],
-			],
-			id    => 'edit_select',
-			class => 'form-select form-select-sm' =%>
-	</div>
+	<p><%= maketext('Select achievements to edit.') =%></p>
 </div>

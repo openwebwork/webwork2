@@ -46,13 +46,14 @@
 	% for my $actionID (@$formsToShow) {
 		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
 		%
-		% my $active = '';
+		% my $disabled = $actionID eq 'import' && !@$CSVList ? ' disabled' : '';
+		% my $active   = '';
 		% unless ($default_choice) { $active = ' active'; $default_choice = $actionID; }
 		%
 		% content_for 'tab-list' => begin
 			<li class="nav-item" role="presentation">
 				<%= link_to maketext($formTitles->{$actionID}) => "#$actionID",
-					class            => "nav-link action-link$active",
+					class            => "nav-link action-link$active$disabled",
 					id               => "$actionID-tab",
 					data             => { action => $actionID, bs_toggle => 'tab', bs_target => "#$actionID" },
 					role             => 'tab',
