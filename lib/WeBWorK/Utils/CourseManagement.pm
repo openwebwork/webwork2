@@ -39,6 +39,7 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use readDirectory surePathToFile);
+use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
 our @EXPORT_OK = qw(
 	listCourses
@@ -347,7 +348,9 @@ sub addCourse {
 	} else {
 		if ($db0 && $options{copyNonStudents}) {
 			my @non_student_ids =
-				map {@$_} ($db0->listPermissionLevelsWhere({ permission => { not_like => '0' } }, 'user_id'));
+				map {@$_} ($db0->listPermissionLevelsWhere(
+					{ permission => { not_like => '0' }, user_id => { not_like => 'set_id:%' } }, 'user_id'
+				));
 			my %user_args = map { $_->[0]{user_id} => 1 } (@users);
 
 			for my $user_id (@non_student_ids) {
@@ -389,6 +392,13 @@ sub addCourse {
 				warn $@ if $@;
 			}
 		}
+		if ($options{copyNonStudents}) {
+			foreach my $userTriple (@users) {
+				my $user_id   = $userTriple->[0]{user_id};
+				my @user_sets = $db0->listUserSets($user_id);
+				assignSetsToUsers($db, $ce, \@user_sets, [$user_id]);
+			}
+		}
 	}
 
 	# add achievements
@@ -397,6 +407,18 @@ sub addCourse {
 		for my $achievement_id (@achievement_ids) {
 			eval { $db->addAchievement($db0->getAchievement($achievement_id)) };
 			warn $@ if $@;
+		}
+		if ($options{copyNonStudents}) {
+			foreach my $userTriple (@users) {
+				my $user_id           = $userTriple->[0]{user_id};
+				my @user_achievements = $db0->listUserAchievements($user_id);
+				for my $achievement_id (@user_achievements) {
+					my $userAchievement = $db->newUserAchievement();
+					$userAchievement->user_id($user_id);
+					$userAchievement->achievement_id($achievement_id);
+					$db->addUserAchievement($userAchievement);
+				}
+			}
 		}
 	}
 
@@ -470,7 +492,6 @@ sub addCourse {
 		}
 
 	}
-
 }
 
 ################################################################################
