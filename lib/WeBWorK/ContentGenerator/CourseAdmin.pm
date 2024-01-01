@@ -322,7 +322,8 @@ sub do_add_course ($c) {
 		for my $userID ($db->listUsers) {
 			if ($userID eq $add_initial_userID) {
 				$c->addbadmessage($c->maketext(
-					'User "[_1]" will not be copied from admin course as it is the initial instructor.', $userID
+					'User "[_1]" will not be copied from [_2] course as it is the initial instructor.', $userID,
+					$ce->{admin_course_id}
 				));
 				next;
 			}
@@ -1264,7 +1265,7 @@ sub do_unarchive_course ($c) {
 	unarchiveCourse(
 		newCourseID => $new_courseID,
 		oldCourseID => $unarchive_courseID =~ s/\.tar\.gz$//r,
-		archivePath => "$ce->{webworkDirs}{courses}/admin/archives/$unarchive_courseID",
+		archivePath => "$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives/$unarchive_courseID",
 		ce          => $ce,
 	);
 

@@ -132,7 +132,7 @@ Lists the courses which have been archived (end in .tar.gz).
 
 sub listArchivedCourses {
 	my ($ce) = @_;
-	my $archivesDir = "$ce->{webworkDirs}{courses}/admin/archives";
+	my $archivesDir = "$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives";
 	surePathToFile($ce->{webworkDirs}{courses}, "$archivesDir/test");    # Ensure archives directory exists.
 	return grep {m/\.tar\.gz$/} readDirectory($archivesDir);
 }
@@ -754,7 +754,7 @@ sub archiveCourse {
 
 	# tmp_archive_path is used as the target of the tar.gz operation.
 	# After this is done the final tar.gz file is moved either to the admin course archives directory
-	# course/admin/archives or the supplied archive_path option if it is present.
+	# course/$ce->{admin_course_id}/archives or the supplied archive_path option if it is present.
 	# This prevents us from tarring a directory to which we have just added a file
 	# see bug #2022 -- for error messages on some operating systems
 	my $uuidStub         = create_uuid_as_string();
@@ -765,7 +765,7 @@ sub archiveCourse {
 	if (defined $options{archive_path} && $options{archive_path} =~ /\S/) {
 		$archive_path = $options{archive_path};
 	} else {
-		$archive_path = "$ce->{webworkDirs}{courses}/admin/archives/$courseID.tar.gz";
+		$archive_path = "$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives/$courseID.tar.gz";
 		surePathToFile($ce->{webworkDirs}{courses}, $archive_path);
 	}
 

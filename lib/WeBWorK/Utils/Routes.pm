@@ -26,7 +26,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
 
  root                                /
 
- course_admin                        /admin -> logout, options, instructor_tools
+ course_admin                        /$ce->{admin_course_id} -> logout, options, instructor_tools
 
  render_rpc                          /render_rpc
  instructor_rpc                      /instructor_rpc
@@ -160,7 +160,7 @@ my %routeParameters = (
 	course_admin => {
 		title  => x('Course Administration'),
 		module => 'CourseAdmin',
-		path   => '/admin'
+		path   => '/$ce->{admin_course_id}'
 	},
 
 	render_rpc => {
