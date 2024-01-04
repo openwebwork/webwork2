@@ -16,7 +16,7 @@
 package WeBWorK::AchievementItems::ExtendDueDateGW;
 use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
-# Item to extend the due date on a gateway
+# Item to extend the close date on a test
 
 use WeBWorK::Utils qw(between x nfreeze_base64 thaw_base64 format_set_name_display);
 
@@ -36,7 +36,7 @@ sub print_form ($self, $sets, $setProblemCount, $c) {
 	my @unfilteredsets = $db->getMergedSets(map { [ $effectiveUserName, $_ ] } $db->listUserSets($effectiveUserName));
 	my @openGateways;
 
-	# Find the template sets of open gateway quizzes.
+	# Find the template sets for open tests.
 	for my $set (@unfilteredsets) {
 		push(@openGateways, [ format_set_name_display($set->set_id) => $set->set_id ])
 			if $set->assignment_type =~ /gateway/

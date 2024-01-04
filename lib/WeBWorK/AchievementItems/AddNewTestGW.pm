@@ -16,7 +16,7 @@
 package WeBWorK::AchievementItems::AddNewTestGW;
 use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
-# Item to allow students to take an addition test
+# Item to allow students to take an additional version of a test within its test version interval
 
 use WeBWorK::Utils qw(before between x nfreeze_base64 thaw_base64 format_set_name_display);
 
