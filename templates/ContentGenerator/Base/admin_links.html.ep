@@ -39,7 +39,9 @@
 			</li>
 		% }
 		<li class="list-group-item nav-item"><%= $makelink->('instructor_user_list') %></li>
-		<li class="list-group-item nav-item"><%= $makelink->('instructor_mail_merge') %></li>
+		% if ($authz->hasPermissions($userID, 'send_mail')) {
+			<li class="list-group-item nav-item"><%= $makelink->('instructor_mail_merge') %></li>
+		% }
 		<li class="list-group-item nav-item">
 			<%= $makelink->(
 				'instructor_file_manager',
@@ -49,8 +51,11 @@
 		<li class="list-group-item nav-item">
 			<%= $c->helpMacro('admin_links', { label => maketext('Help'), class => 'nav-link' }) =%>
 		</li>
-		<li class="list-group-item nav-item">
-			<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' =%>
-		</li>
+		% if ($ce->{webworkURLs}{webwork2BugReporter} && $authz->hasPermissions($userID, 'report_bugs')) {
+			<li class="list-group-item nav-item">
+				<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{webwork2BugReporter},
+					target => 'bug_report', class => 'nav-link' =%>
+			</li>
+		% }
 	% }
 </ul>
