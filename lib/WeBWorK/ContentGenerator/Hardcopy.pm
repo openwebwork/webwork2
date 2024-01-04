@@ -26,7 +26,7 @@ problem sets.
 use File::Temp qw/tempdir/;
 use Mojo::File;
 use String::ShellQuote;
-use Archive::Zip::SimpleZip qw($SimpleZipError);
+use Archive::Zip qw(:ERROR_CODES);
 use XML::LibXML;
 
 use WeBWorK::DB::Utils qw/user2global/;
@@ -731,31 +731,15 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	}
 
 	# Create a zip archive of the bundle directory
-	my $zip_file_name = "$final_file_basename.zip";
-	my $zip           = Archive::Zip::SimpleZip->new("$temp_dir_path/$zip_file_name");
-	unless ($zip) {
-		$c->add_error(
-			'Failed to create zip archive of directory "',
-			$c->tag('code', $bundle_path),
-			'": $SimpleZipError"'
-		);
-		return;
-	}
+	my $zip = Archive::Zip->new();
+	$zip->addTree($temp_dir_path);
 
-	Mojo::File->new("$temp_dir_path/$final_file_basename")->list->each(sub {
-		$zip->add($_, Name => "$final_file_basename/" . $_->basename);
-	});
-	my $ok = $zip->close();
-
-	unless ($ok) {
-		$c->add_error(
-			'Failed to create zip archive of directory "',
-			$c->tag('code', $bundle_path),
-			'": $SimpleZipError"'
-		);
-		return;
+	my $zip_file = "$final_file_basename.zip";
+	unless ($zip->writeToFileNamed("$temp_dir_path/$zip_file") == AZ_OK) {
+		$c->add_error('Failed to create zip archive of directory "', $c->tag('code', $bundle_path), '"');
+		return "$bundle_path/$src_name";
 	}
-	return $zip_file_name;
+	return $zip_file;
 }
 
 sub find_log_first_error ($log) {
