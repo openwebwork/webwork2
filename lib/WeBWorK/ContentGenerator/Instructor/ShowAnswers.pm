@@ -173,18 +173,12 @@ async sub initialize ($c) {
 				}
 
 				for my $pastAnswer (@pastAnswers) {
-					my $answerID = $pastAnswer->answer_id;
-					my $answers  = $pastAnswer->answer_string;
-					my $scores   = $pastAnswer->scores;
-					my $time     = $pastAnswer->timestamp;
-					my @scores   = split(//,   $scores);
-					my @answers  = split(/\t/, $answers);
-
-					$records{$studentUser}{$setName}{$problemNumber}{$answerID} = {
-						time        => $time,
-						answers     => [@answers],
+					$records{$studentUser}{$setName}{$problemNumber}{ $pastAnswer->answer_id } = {
+						time        => $pastAnswer->timestamp,
+						seed        => $pastAnswer->problem_seed,
+						answers     => [ split(/\t/, $pastAnswer->answer_string) ],
 						answerTypes => \@answerTypes,
-						scores      => [@scores],
+						scores      => [ split(//, $pastAnswer->scores) ],
 						comment     => $pastAnswer->comment_string // ''
 					};
 				}

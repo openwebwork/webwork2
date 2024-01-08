@@ -30,7 +30,6 @@ BEGIN {
 	__PACKAGE__->_fields(
 		user_id    => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		permission => { type => "INT" },
-
 	);
 }
 

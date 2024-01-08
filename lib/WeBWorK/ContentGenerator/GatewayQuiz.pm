@@ -1091,6 +1091,7 @@ async sub pre_header_initialize ($c) {
 				$pastAnswer->scores($scores);
 				$pastAnswer->answer_string($past_answers_string);
 				$pastAnswer->source_file($problem->source_file);
+				$pastAnswer->problem_seed($problem->problem_seed);
 				$db->addPastAnswer($pastAnswer);
 			}
 		}

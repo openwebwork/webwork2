@@ -8,11 +8,11 @@
 		% for my $problemNumber (sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName} }) {
 			% my @pastAnswerIDs = sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName}{$problemNumber} };
 			% my $prettyProblemNumber = stash->{prettyProblemNumbers}{$setName}{$problemNumber};
-			<h3>
+			<h2 class="fs-3">
 				<%== maketext('Past Answers for [_1], set [_2], problem [_3]',
 					$studentUser, tag('span', dir => 'ltr', format_set_name_display($setName)), $prettyProblemNumber
 				) =%>
-			</h3>
+			</h2>
 			<div class="table-responsive">
 				<table class="past-answer-table table table-striped" dir="ltr">
 					% my $previousTime = -1;
@@ -27,8 +27,20 @@
 						%
 						<tr <%== $record{time} - $previousTime > $ce->{sessionKeyTimeout}
 							? 'class="table-rule"' : '' %>>
+							% # Show the problem seed for instructors.
+							% if ($isInstructor) {
+								<td class="px-3">
+									<small>
+										<%= maketext(
+											'Seed: [_1]',
+											defined $record{seed} && $record{seed} ne ''
+												?  $record{seed} : maketext('unknown')
+										) %>
+									</small>
+								</td>
+							% }
 							<td class="px-3"><small><%= $c->formatDateTime($record{time}) %></small></td>
-							% for (my $i = 0; $i <= $upper_limit; $i++) {
+							% for (my $i = 0; $i <= $upper_limit; ++$i) {
 								% my $answer     = $answers[$i]             // '';
 								% my $answerType = $record{answerTypes}[$i] // '';
 								% my $score      = shift(@scores);
