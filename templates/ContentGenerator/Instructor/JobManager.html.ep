@@ -165,18 +165,18 @@
 						</td>
 						<td class="text-nowrap">
 							<%= $c->formatDateTime(
-								$jobs->{$jobID}{created}, '', 'datetime_format_medium', $ce->{language}) =%>
+								$jobs->{$jobID}{created}, 'datetime_format_medium', '', $ce->{language}) =%>
 						</td>
 						<td class="text-nowrap">
 							% if ($jobs->{$jobID}{started}) {
 								<%= $c->formatDateTime(
-									$jobs->{$jobID}{started}, '', 'datetime_format_medium', $ce->{language}) =%>
+									$jobs->{$jobID}{started}, 'datetime_format_medium', '', $ce->{language}) =%>
 							% }
 						</td>
 						<td class="text-nowrap">
 							% if ($jobs->{$jobID}{finished}) {
 								<%= $c->formatDateTime(
-									$jobs->{$jobID}{finished}, '', 'datetime_format_medium', $ce->{language}) =%>
+									$jobs->{$jobID}{finished}, 'datetime_format_medium', '', $ce->{language}) =%>
 							% }
 						</td>
 						<td>
