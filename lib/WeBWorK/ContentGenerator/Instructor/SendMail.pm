@@ -348,11 +348,10 @@ sub initialize ($c) {
 		# we don't set the response until we're sure that email can be sent
 		$c->{response} = 'send_email';
 
-		# Do actual mailing in the after the response is sent, since it could take a long time
-		# FIXME we need to do a better job providing status notifications for long-running email jobs
+		# The emails are actually sent in the job queue, since it could take a long time.
+		# Note that the instructor can check the job manager page to see the status of the job.
 		$c->minion->enqueue(
 			send_instructor_email => [ {
-				courseName  => $c->stash('courseID'),
 				recipients  => $c->{ra_send_to},
 				subject     => $c->{subject},
 				text        => ${ $c->{r_text} // \'' },
@@ -360,7 +359,8 @@ sub initialize ($c) {
 				from        => $c->{from},
 				defaultFrom => $c->{defaultFrom},
 				remote_host => $c->{remote_host},
-			} ]
+			} ],
+			{ notes => { courseID => $c->stash('courseID') } }
 		);
 	} else {
 		$c->addbadmessage($c->maketext(q{Didn't recognize action}));

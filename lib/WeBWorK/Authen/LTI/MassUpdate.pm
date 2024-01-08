@@ -63,7 +63,7 @@ sub mass_update ($c, $manual_update = 0, $userID = undef, $setID = undef) {
 		}
 	}
 
-	$c->minion->enqueue(lti_mass_update => [ $ce->{courseName}, $userID, $setID ]);
+	$c->minion->enqueue(lti_mass_update => [ $userID, $setID ], { notes => { courseID => $ce->{courseName} } });
 
 	return;
 }

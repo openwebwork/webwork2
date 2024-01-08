@@ -31,30 +31,31 @@ use WeBWorK::SafeTemplate;
 
 # send student notification that they have earned an achievement
 sub run ($job, $mail_data) {
-	my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $mail_data->{courseName} }); };
-	return $job->fail("Could not construct course environment for $mail_data->{courseName}.")
+	my $courseID = $job->info->{notes}{courseID};
+
+	my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $courseID }); };
+	return $job->fail("Could not construct course environment for $courseID.")
 		unless $ce;
 
-	$job->{language_handle} =
-		WeBWorK::Localize::getLoc($ce->{language} || 'en');
+	$job->{language_handle} = WeBWorK::Localize::getLoc($ce->{language} || 'en');
 
 	my $db = WeBWorK::DB->new($ce->{dbLayout});
-	return $job->fail($job->maketext("Could not obtain database connection for [_1].", $mail_data->{courseName}))
+	return $job->fail($job->maketext('Could not obtain database connection for [_1].', $courseID))
 		unless $db;
 
-	return $job->fail($job->maketext("Cannot notify student without an achievement."))
+	return $job->fail($job->maketext('Cannot notify student without an achievement.'))
 		unless $mail_data->{achievementID};
 	$mail_data->{achievement} = $db->getAchievement($mail_data->{achievementID});
-	return $job->fail($job->maketext("Could not find achievement [_1].", $mail_data->{achievementID}))
+	return $job->fail($job->maketext('Could not find achievement [_1].', $mail_data->{achievementID}))
 		unless $mail_data->{achievement};
 
 	my $result_message = eval { $job->send_achievement_notification($ce, $db, $mail_data) };
 	if ($@) {
-		$job->app->log->error($job->maketext("An error occurred while trying to send email: $@"));
-		return $job->fail($job->maketext("An error occurred while trying to send email: [_1]", $@));
+		$job->app->log->error("An error occurred while trying to send email: $@");
+		return $job->fail($job->maketext('An error occurred while trying to send email: [_1]', $@));
 	}
 	$job->app->log->info("Message sent to $mail_data->{recipient}");
-	return $job->finish($job->maketext("Message sent to [_1]", $mail_data->{recipient}));
+	return $job->finish($result_message);
 }
 
 sub send_achievement_notification ($job, $ce, $db, $mail_data) {

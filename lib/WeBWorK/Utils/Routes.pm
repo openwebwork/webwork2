@@ -104,6 +104,8 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
 
  instructor_lti_update               /$courseID/instructor/lti_update
 
+ instructor_job_manager              /$courseID/instructor/job_manager
+
  problem_list                        /$courseID/$setID
  problem_detail                      /$courseID/$setID/$problemID
  show_me_another                     /$courseID/$setID/$problemID/show_me_another
@@ -328,6 +330,7 @@ my %routeParameters = (
 			instructor_progress
 			instructor_problem_grader
 			instructor_lti_update
+			instructor_job_manager
 		) ],
 		module => 'Instructor::Index',
 		path   => '/instructor'
@@ -486,6 +489,11 @@ my %routeParameters = (
 		title  => x('LTI Grade Update'),
 		module => 'Instructor::LTIUpdate',
 		path   => '/lti_update'
+	},
+	instructor_job_manager => {
+		title  => x('Job Manager'),
+		module => 'Instructor::JobManager',
+		path   => '/job_manager'
 	},
 
 	problem_list => {

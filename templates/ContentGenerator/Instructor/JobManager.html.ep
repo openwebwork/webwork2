@@ -1,0 +1,227 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'),   defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/JobManager/jobmanager.js'), defer => undef =%>
+% end
+%
+% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to access instructor tools.') =%></div>
+	% last;
+% }
+%
+% unless (keys %$jobs) {
+	<div><%= maketext('No jobs in queue.') %></div>
+	% last;
+% }
+%
+<%= form_for current_route, method => 'POST', name => 'joblist', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	%
+	% if (keys %$visibleJobs) {
+		% for (keys %$visibleJobs) {
+			<%= hidden_field visible_jobs => $_ =%>
+		% }
+	% } else {
+		<%= hidden_field no_visible_jobs => '1' =%>
+	% }
+	%
+	<%= hidden_field primarySortField   => $primarySortField =%>
+	<%= hidden_field primarySortOrder   => $primarySortOrder =%>
+	<%= hidden_field secondarySortField => $secondarySortField =%>
+	<%= hidden_field secondarySortOrder => $secondarySortOrder =%>
+	<%= hidden_field ternarySortField   => $ternarySortField =%>
+	<%= hidden_field ternarySortOrder   => $ternarySortOrder =%>
+	%
+	% # Output action forms
+	% for my $form (@$actionForms) {
+		% my $active = $form->[0] eq 'filter' ? ' active' : '';
+		%
+		% content_for 'tab-list' => begin
+			<li class="nav-item" role="presentation">
+				<%= link_to maketext($form->[1]) => "#$form->[0]",
+					class            => "nav-link action-link$active",
+					id               => "$form->[0]-tab",
+					data             => { action => $form->[0], bs_toggle => 'tab', bs_target => "#$form->[0]" },
+					role             => 'tab',
+					'aria-controls'  => $form->[0],
+					'aria-selected'  => $active ? 'true' : 'false' =%>
+			</li>
+		% end
+		%
+		% content_for 'tab-content' => begin
+			<div class="tab-pane fade mb-2 <%= $active ? " show$active" : '' %>" id="<%= $form->[0] %>"
+				role="tabpanel" aria-labelledby="<%= $form->[0] %>-tab">
+				<%= include "ContentGenerator/Instructor/JobManager/$form->[0]_form" =%>
+			</div>
+		% end
+	% }
+	%
+	<%= hidden_field action => $actionForms->[0][0], id => 'current_action' =%>
+	<div>
+		<ul class="nav nav-tabs mb-2" role="tablist"><%= content 'tab-list' =%></ul>
+		<div class="tab-content"><%= content 'tab-content' %></div>
+	</div>
+	%
+	<div class="mb-3">
+		<%= submit_button maketext($actionForms->[0][1]), id => 'take_action', class => 'btn btn-primary' =%>
+	</div>
+	%
+	% # Show the jobs table
+	<div class="table-responsive">
+		<table class="table table-sm table-bordered caption-top font-sm">
+			<thead class="table-group-divider">
+				<tr>
+					<th class="text-nowrap">
+						<%= label_for 'select-all', begin =%>
+							<%= check_box 'select-all' => 'on', id => 'select-all',
+								class => 'select-all form-check-input set-id-tooltip',
+								'aria-label' => maketext('Select all jobs'),
+								data => {
+									select_group => 'selected_jobs',
+									bs_toggle => 'tooltip',
+									bs_placement => 'right',
+									bs_title => maketext('Select all jobs')
+							} =%>
+							<i class="fa-solid fa-check-double" aria-hidden="true"></i>
+						<% end =%>
+					</th>
+					<th>
+						<div class="d-flex justify-content-between align-items-end gap-1">
+							<%= link_to maketext('Id') => '#', class => 'sort-header',
+								data => { sort_field => 'id' } =%>
+							<%= include 'ContentGenerator/Instructor/JobManager/sort_button', field => 'id' =%>
+						</div>
+					</th>
+					% if ($courseID eq 'admin') {
+						<th>
+							<div class="d-flex justify-content-between align-items-end gap-1">
+								<%= link_to maketext('Course Id') => '#', class => 'sort-header',
+									data => { sort_field => 'courseID' } =%>
+								<%= include 'ContentGenerator/Instructor/JobManager/sort_button',
+									field => 'course_id' =%>
+							</div>
+						</th>
+					% }
+					<th>
+						<div class="d-flex justify-content-between align-items-end gap-1">
+							<%= link_to maketext('Task') => '#', class => 'sort-header',
+								data => { sort_field => 'task' } =%>
+							<%= include 'ContentGenerator/Instructor/JobManager/sort_button', field => 'task' =%>
+						</div>
+					</th>
+					<th>
+						<div class="d-flex justify-content-between align-items-end gap-1">
+							<%= link_to maketext('Created') => '#', class => 'sort-header',
+								data => { sort_field => 'created' } =%>
+							<%= include 'ContentGenerator/Instructor/JobManager/sort_button', field => 'created' =%>
+						</div>
+					</th>
+					<th>
+						<div class="d-flex justify-content-between align-items-end gap-1">
+							<%= link_to maketext('Started') => '#', class => 'sort-header',
+								data => { sort_field => 'started' } =%>
+							<%= include 'ContentGenerator/Instructor/JobManager/sort_button', field => 'started' =%>
+						</div>
+					</th>
+					<th>
+						<div class="d-flex justify-content-between align-items-end gap-1">
+							<%= link_to maketext('Finished') => '#', class => 'sort-header',
+								data => { sort_field => 'finished' } =%>
+							<%= include 'ContentGenerator/Instructor/JobManager/sort_button', field => 'finished' =%>
+						</div>
+					</th>
+					<th>
+						<div class="d-flex justify-content-between align-items-end gap-1">
+							<%= link_to maketext('State') => '#', class => 'sort-header',
+								data => { sort_field => 'state' } =%>
+							<%= include 'ContentGenerator/Instructor/JobManager/sort_button', field => 'state' =%>
+						</div>
+					</th>
+				</tr>
+			</thead>
+			<tbody class="table-group-divider">
+				% for my $jobID (@$sortedJobs) {
+					<tr>
+						% if ($jobs->{$jobID}{state} eq 'active') {
+							% # Active jobs can not be deleted, and so a checkbox is not provided to select them.
+							<td></td>
+							<td><%= $jobID =%></td>
+						% } else {
+							<td>
+								<%= check_box selected_jobs => $jobID, id => "job_${jobID}_checkbox",
+									class => 'form-check-input', $selectedJobs->{$jobID} ? (checked => undef) : () =%>
+							</td>
+							<td><%= label_for "job_${jobID}_checkbox" => $jobID =%></td>
+						% }
+						% if ($courseID eq 'admin') {
+							<td class="text-nowrap"><%= $jobs->{$jobID}{courseID} =~ s/_/ /gr =%></td>
+						% }
+						<td class="text-nowrap">
+							<%= $taskNames->{ $jobs->{$jobID}{task} }
+								? maketext($taskNames->{ $jobs->{$jobID}{task} })
+								: $jobs->{$jobID}{task} =%>
+						</td>
+						<td class="text-nowrap">
+							<%= $c->formatDateTime(
+								$jobs->{$jobID}{created}, '', 'datetime_format_medium', $ce->{language}) =%>
+						</td>
+						<td class="text-nowrap">
+							% if ($jobs->{$jobID}{started}) {
+								<%= $c->formatDateTime(
+									$jobs->{$jobID}{started}, '', 'datetime_format_medium', $ce->{language}) =%>
+							% }
+						</td>
+						<td class="text-nowrap">
+							% if ($jobs->{$jobID}{finished}) {
+								<%= $c->formatDateTime(
+									$jobs->{$jobID}{finished}, '', 'datetime_format_medium', $ce->{language}) =%>
+							% }
+						</td>
+						<td>
+							<div class="d-flex justify-content-between gap-1">
+								<%= maketext($jobs->{$jobID}{state}) =%>
+								% if (defined $jobs->{$jobID}{result}) {
+									<a role="button" class="result-btn" tabindex="0" data-bs-toggle="modal" href="#"
+										data-bs-target="<%= "#result-$jobID" %>">
+										<i class="fa-solid fa-circle-info fa-xl" aria-hidden="true"></i>
+										<span class="visually-hidden">
+											<%= maketext('Result for job [_1]', $jobID) %>
+										</span>
+									</a>
+									<div class="result-modal modal fade" id="<%= "result-$jobID" %>" tabindex="-1"
+										aria-labelledby="<%= "result-$jobID-label" %>" aria-hidden="true">
+										<div class="modal-dialog modal-dialog-centered modal-lg">
+											<div class="modal-content">
+												<div class="modal-header">
+													<h1 class="modal-title fs-5" id="<%= "result-$jobID-label" %>">
+														<%= maketext('Result for job [_1]', $jobID) %>
+													</h1>
+													<button type="button" class="btn-close" data-bs-dismiss="modal"
+														aria-label="<%= maketext("Close") %>">
+													</button>
+												</div>
+												<div class="modal-body">
+													% if (ref($jobs->{$jobID}{result}) eq 'ARRAY') {
+														<ul class="list-group list-group-flush">
+															% for (@{ $jobs->{$jobID}{result} } ) {
+																<li class="list-group-item py-1"><%= $_ %></li>
+															% }
+														</ul>
+													% } else {
+														<%= $jobs->{$jobID}{result} =%>
+													% }
+												</div>
+											</div>
+										</div>
+									</div>
+								% }
+							</div>
+						</td>
+					</tr>
+				% }
+			</tbody>
+		</table>
+	</div>
+% end

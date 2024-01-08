@@ -122,9 +122,10 @@ async sub submit_course_grade ($self, $userID) {
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
-	$self->warning("submitting all grades for user: $userID") if $ce->{debug_lti_grade_passback};
+	$self->warning("submitting all grades for user: $userID")
+		if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
 	$self->warning("lis_source_did is not available for user: $userID")
-		if !$user->lis_source_did && $ce->{debug_lti_grade_passback};
+		if !$user->lis_source_did && ($ce->{debug_lti_grade_passback} || $self->{post_processing_mode});
 
 	return await $self->submit_grade($user->lis_source_did, scalar(grade_all_sets($db, $userID)));
 }
@@ -140,9 +141,10 @@ async sub submit_set_grade ($self, $userID, $setID) {
 
 	my $userSet = $db->getMergedSet($userID, $setID);
 
-	$self->warning("Submitting grade for user $userID and set $setID.") if $ce->{debug_lti_grade_passback};
+	$self->warning("Submitting grade for user $userID and set $setID.")
+		if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
 	$self->warning('lis_source_did is not available for this set.')
-		if !$userSet->lis_source_did && $ce->{debug_lti_grade_passback};
+		if !$userSet->lis_source_did && ($ce->{debug_lti_grade_passback} || $self->{post_processing_mode});
 
 	return await $self->submit_grade(
 		$userSet->lis_source_did,
@@ -229,7 +231,8 @@ EOS
 			$bodyhash .= '=';
 		}
 
-		$self->warning("Retrieving prior grade using sourcedid: $sourcedid") if $ce->{debug_lti_parameters};
+		$self->warning("Retrieving prior grade using sourcedid: $sourcedid")
+			if $ce->{debug_lti_parameters} || $self->{post_processing_mode};
 
 		my $requestGen = Net::OAuth->request('consumer');
 
@@ -303,7 +306,7 @@ EOS
 						if $ce->{debug_lti_grade_passback};
 					$self->warning('LMS grade will NOT be updated - grade unchanged. '
 							. "Old score: $oldScore; New score: $score")
-						if ($ce->{debug_lti_grade_passback});
+						if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
 					return 1;
 				} else {
 					debug("LMS grade will be updated. sourcedid: $sourcedid; Old score: $oldScore; New score: $score")
@@ -314,7 +317,7 @@ EOS
 			$self->warning('Unable to retrieve prior grade from LMS. Note that if your server time is not correct, '
 					. 'this may fail for reasons which are less than obvious from the error messages. Error: '
 					. $response->message)
-				if ($ce->{debug_lti_grade_passback});
+				if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
 			debug('Unable to retrieve prior grade from LMS. Note that if your server time is not correct, '
 					. 'this may fail for reasons which are less than obvious from the error messages. Error: '
 					. $response->message);
@@ -412,17 +415,23 @@ EOS
 		my $message = $1;
 		$self->warning("result is: $message") if $ce->{debug_lti_grade_passback};
 		if ($message ne 'success') {
-			debug("Unable to update LMS grade $sourcedid . LMS responded with message: $message");
+			$self->warning("Unable to update LMS grade $sourcedid. LMS responded with message: $message")
+				if $self->{post_processing_mode};
+			debug("Unable to update LMS grade $sourcedid. LMS responded with message: $message");
 			return 0;
 		} else {
 			# If we got here, we got successes from both the post and the lms.
 			debug("Successfully updated LMS grade $sourcedid. LMS responded with message: $message");
 		}
 	} else {
+		$self->warning("Unable to update LMS grade $sourcedid. Error: " . $response->message)
+			if $self->{post_processing_mode};
 		debug("Unable to update LMS grade $sourcedid. Error: " . $response->message);
 		debug($response->body);
 		return 0;
 	}
+	$self->warning("Success submitting grade using sourcedid: $sourcedid and score: $score")
+		if $self->{post_processing_mode};
 	debug("Success submitting grade using sourcedid: $sourcedid and score: $score");
 
 	return 1;

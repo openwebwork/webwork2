@@ -50,7 +50,7 @@ sub new ($invocant, $c, $post_processing_mode = 0) {
 # is set, but these warnings are always sent to the debug log if debugging is enabled.
 sub warning ($self, $warning) {
 	debug($warning);
-	return unless $self->{c}{ce}{debug_lti_grade_passback};
+	return unless $self->{c}{ce}{debug_lti_grade_passback} || $self->{post_processing_mode};
 
 	if ($self->{post_processing_mode}) {
 		$self->{c}{app}->log->info($warning);

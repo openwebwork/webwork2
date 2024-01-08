@@ -352,6 +352,8 @@
 			% if ($authz->hasPermissions($userID, 'send_mail')) {
 				<li class="list-group-item nav-item"><%= $makelink->('instructor_mail_merge') %></li>
 			% }
+			% # Job Manager
+			<li class="list-group-item nav-item"><%= $makelink->('instructor_job_manager') %></li>
 			% # File Manager
 			% if ($authz->hasPermissions($userID, 'manage_course_files')) {
 				<li class="list-group-item nav-item"><%= $makelink->('instructor_file_manager') %></li>

@@ -257,13 +257,13 @@ sub checkForAchievements ($problem_in, $pg, $c, %options) {
 				send_achievement_email => [ {
 					recipient       => $user_id,
 					subject         => 'Congratulations on earning a new achievement!',
-					courseName      => $ce->{courseName},
 					achievementID   => $achievement_id,
 					setID           => $set_id,
 					nextLevelPoints => $nextLevelPoints || 0,
 					pointsEarned    => $achievementPoints,
 					remote_host     => $c->tx->remote_address || "UNKNOWN",
-				} ]
+				} ],
+				{ notes => { courseID => $ce->{courseName} } }
 			) if ($ce->{mail}{achievementEmailFrom} && $achievement->email_template);
 		}
 
