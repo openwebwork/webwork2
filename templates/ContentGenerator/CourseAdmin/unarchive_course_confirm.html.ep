@@ -6,15 +6,14 @@
 		<div class="col-auto">
 			<input type="text" name="new_courseID" id="new_courseID" value="<%= $courseID %>" class="form-control">
 		</div>
-		<div class="row mb-2">
-			<div class="col-12">
-				<div class="form-check">
-					<label class="form-check-label" id="clean_up_course">
-						<%= maketext('Clean course after unarchiving '
-							. '(remove student users, scoring files, log files)') %>
-						<%= check_box clean_up_course => 1, class => 'form-check-input' %>
-					</label>
-				</div>
+	</div>
+	<div class="row mb-2">
+		<div class="col-12">
+			<div class="form-check">
+				<label class="form-check-label" id="clean_up_course">
+					<%= maketext('Clean course after unarchiving (remove student users, scoring files, log files)') =%>
+					<%= check_box clean_up_course => 1, class => 'form-check-input' =%>
+				</label>
 			</div>
 		</div>
 	</div>

@@ -24,6 +24,7 @@ WeBWorK::ContentGenerator::CourseAdmin - Add, rename, and delete courses.
 
 use Net::IP;    # needed for location management
 use File::Path 'remove_tree';
+use Mojo::File;
 use File::stat;
 use Time::localtime;
 use String::ShellQuote;
@@ -1293,36 +1294,14 @@ sub do_unarchive_course ($c) {
 				$db_new->deleteUser($student_id->[0]);
 			}
 
-			my @log_files = (values %{ $ce_new->{courseFiles}{logs} });
-			for my $file (@log_files) {
-				if (-e $file) {
-					my $rm_cmd = "2>&1 $ce_new->{externalPrograms}{rm} " . shell_quote($file);
-					my $rm_out = readpipe $rm_cmd;
-					if ($?) {
-						return $c->tag(
-							'div',
-							class => 'alert alert-danger p-1 mb-2',
-							$c->c($c->tag('p', $c->maketext('Failed to remove file  [_1]:', $file)),
-								$c->tag('div', class => 'font-monospace', $rm_out))->join('')
-						);
-					}
-				}
+			for my $file (values %{ $ce_new->{courseFiles}{logs} }) {
+				eval { Mojo::File->new($file)->remove };
+				$c->addbadmessage($c->maketext('Failed to remove file [_1]: [_2]', $file, $@)) if $@;
 			}
 
-			if (-d "$ce_new->{courseDirs}{scoring}") {
-				my $rm_cmd =
-					"2>&1 $ce_new->{externalPrograms}{rm} -f " . shell_quote($ce_new->{courseDirs}{scoring}) . "/*";
-				my $rm_out = readpipe $rm_cmd;
-				if ($?) {
-					return $c->tag(
-						'div',
-						class => 'alert alert-danger p-1 mb-2',
-						$c->c(
-							$c->tag('p',   $c->maketext('Failed to remove scoring files:')),
-							$c->tag('div', class => 'font-monospace', $rm_out)
-						)->join('')
-					);
-				}
+			if (-d $ce_new->{courseDirs}{scoring}) {
+				eval { Mojo::File->new($ce_new->{courseDirs}{scoring})->remove_tree({ keep_root => 1 }) };
+				$c->addbadmessage($c->maketext('Failed to remove scoring files: [_1]', $@)) if $@;
 			}
 		}
 
