@@ -347,19 +347,25 @@ sub sort_handler ($c) {
 }
 
 sub edit_handler ($c) {
-	my @usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
+	my $scope = $c->param('action.edit.scope');
+	my @usersToEdit =
+		grep { $c->{userIsEditable}{$_} } ($scope eq 'all' ? @{ $c->{allUserIDs} } : (keys %{ $c->{selectedUserIDs} }));
 	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
 	$c->{editMode}       = 1;
 
-	return $c->maketext('Editing selected users.');
+	return $scope eq 'all' ? $c->maketext('Editing all users.') : $c->maketext('Editing selected users.');
 }
 
 sub password_handler ($c) {
-	my @usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
+	my $scope = $c->param('action.password.scope');
+	my @usersToEdit =
+		grep { $c->{userIsEditable}{$_} } ($scope eq 'all' ? @{ $c->{allUserIDs} } : (keys %{ $c->{selectedUserIDs} }));
 	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
 	$c->{passwordMode}   = 1;
 
-	return $c->maketext('Giving new passwords to selected users.');
+	return $scope eq 'all'
+		? $c->maketext('Giving new passwords to all users.')
+		: $c->maketext('Giving new passwords to selected users.');
 }
 
 sub delete_handler ($c) {
@@ -451,6 +457,7 @@ sub export_handler ($c) {
 	my $ce  = $c->ce;
 	my $dir = $ce->{courseDirs}{templates};
 
+	my $scope  = $c->param('action.export.scope');
 	my $target = $c->param('action.export.target');
 	my $new    = $c->param('action.export.new');
 
@@ -466,7 +473,7 @@ sub export_handler ($c) {
 
 	$fileName .= '.lst' unless $fileName =~ m/\.lst$/;
 
-	my @userIDsToExport = keys %{ $c->{selectedUserIDs} };
+	my @userIDsToExport = $scope eq 'all' ? @{ $c->{allUserIDs} } : keys %{ $c->{selectedUserIDs} };
 	$c->exportUsersToCSV($fileName, @userIDsToExport);
 
 	return $c->maketext('[_1] users exported to file [_2]', scalar @userIDsToExport, "$dir/$fileName");

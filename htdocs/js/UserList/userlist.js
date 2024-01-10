@@ -63,16 +63,45 @@
 					{ once: true }
 				);
 			}
-		} else if (action === 'edit' || action === 'password') {
-			if (!is_user_selected()) {
+		} else if (action === 'edit') {
+			const edit_select = document.getElementById('edit_select');
+			if (edit_select.value === 'selected' && !is_user_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
+				edit_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_user_err_msg')?.classList.add('d-none');
+					},
+					{ once: true }
+				);
+			}
+		} else if (action === 'password') {
+			const password_select = document.getElementById('password_select');
+			if (password_select.value === 'selected' && !is_user_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+				password_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_user_err_msg')?.classList.add('d-none');
+					},
+					{ once: true }
+				);
 			}
 		} else if (action == 'export') {
 			const export_filename = document.getElementById('export_filename');
-			if (!is_user_selected()) {
+			const export_select = document.getElementById('export_select_scope');
+			if (export_select.value === 'selected' && !is_user_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
+				export_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_user_err_msg')?.classList.add('d-none');
+					},
+					{ once: true }
+				);
 			} else if (
 				document.getElementById('export_select_target')?.value === 'new' &&
 				export_filename.value === ''

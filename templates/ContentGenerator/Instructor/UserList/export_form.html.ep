@@ -1,5 +1,16 @@
 <div>
 	<div class="row mb-2">
+		<%= label_for export_select_scope => maketext('Export which users?'),
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.export.scope' => [
+					[ maketext('all users')      => 'all' ],
+					[ maketext('selected users') => 'selected', selected => undef ],
+				],
+				id => 'export_select_scope', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
 		<%= label_for export_select_target => maketext('Export to what kind of file?'),
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
