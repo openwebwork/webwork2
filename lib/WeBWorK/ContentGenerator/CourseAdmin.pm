@@ -27,7 +27,6 @@ use File::Path 'remove_tree';
 use Mojo::File;
 use File::stat;
 use Time::localtime;
-use String::ShellQuote;
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
@@ -1290,7 +1289,7 @@ sub do_unarchive_course ($c) {
 			my $ce_new = WeBWorK::CourseEnvironment->new({ courseName => $new_courseID });
 			my $db_new = WeBWorK::DB->new($ce_new->{dbLayout});
 
-			for my $student_id ($db_new->listPermissionLevelsWhere({ permission => 0 })) {
+			for my $student_id ($db_new->listPermissionLevelsWhere({ permission => $ce->{userRoles}{student} })) {
 				$db_new->deleteUser($student_id->[0]);
 			}
 
