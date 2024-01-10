@@ -326,8 +326,8 @@ sub addCourse {
 
 	##### step 3: populate course database #####
 
-	# db object for course to copy things from
-	my $db0;
+	# database and course environment objects for the course to copy things from.
+	my ($db0, $ce0);
 	if (
 		$sourceCourse ne ''
 		&& !(grep { $sourceCourse eq $_ } @{ $ce->{modelCoursesForCopy} })
@@ -338,7 +338,7 @@ sub addCourse {
 			|| $options{copyInstitution})
 		)
 	{
-		my $ce0 = WeBWorK::CourseEnvironment->new({ courseName => $sourceCourse });
+		$ce0 = WeBWorK::CourseEnvironment->new({ courseName => $sourceCourse });
 		$db0 = WeBWorK::DB->new($ce0->{dbLayouts}{$dbLayoutName});
 	}
 
@@ -347,11 +347,15 @@ sub addCourse {
 		debug("not adding users to the course database: 'user' table is non-native.\n");
 	} else {
 		if ($db0 && $options{copyNonStudents}) {
+			# If the course.conf file is being copied, then the student role from the source course needs to be used,
+			# as the role might be customized in that file.
 			my @non_student_ids =
-				map {@$_} ($db0->listPermissionLevelsWhere(
-					{ permission => { not_like => '0' }, user_id => { not_like => 'set_id:%' } }, 'user_id'
-				));
-			my %user_args = map { $_->[0]{user_id} => 1 } (@users);
+				map {@$_} ($db0->listPermissionLevelsWhere({
+					permission =>
+					{ '!=' => $options{copyConfig} ? $ce0->{userRoles}{student} : $ce->{userRoles}{student} },
+					user_id => { not_like => 'set_id:%' }
+				}));
+			my %user_args = map { $_->[0]{user_id} => 1 } @users;
 
 			for my $user_id (@non_student_ids) {
 				next if $user_args{$user_id};
@@ -432,20 +436,24 @@ sub addCourse {
 		}
 	}
 
-	##### step 4: write course.conf file #####
+	##### step 4: write course.conf file (unless that is going to be copied from a source course) #####
 
-	my $courseEnvFile = $ce->{courseFiles}->{environment};
-	open my $fh, ">:utf8", $courseEnvFile
-		or die "failed to open $courseEnvFile for writing.\n";
-	writeCourseConf($fh, $ce, %courseOptions);
-	close $fh;
+	unless ($sourceCourse ne '' && $options{copyConfig}) {
+		my $courseEnvFile = $ce->{courseFiles}{environment};
+		open my $fh, ">:utf8", $courseEnvFile
+			or die "failed to open $courseEnvFile for writing.\n";
+		writeCourseConf($fh, $ce, %courseOptions);
+		close $fh;
+	}
 
 	##### step 5: copy templates, html, simple.conf, course.conf if desired #####
 
 	if ($sourceCourse ne '') {
-		my $sourceCE  = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $sourceCourse });
-		my $sourceDir = $sourceCE->{courseDirs}{templates};
+		my $sourceCE = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $sourceCourse });
+
 		if ($options{copyTemplatesHtml}) {
+			my $sourceDir = $sourceCE->{courseDirs}{templates};
+
 			## copy templates ##
 			if (-d $sourceDir) {
 				my $destDir = $ce->{courseDirs}{templates};
@@ -454,8 +462,8 @@ sub addCourse {
 				warn
 					"Failed to copy templates from course '$sourceCourse': templates directory '$sourceDir' does not exist.\n";
 			}
+
 			## copy html ##
-			## this copies the html/tmp directory as well which is not optimal
 			$sourceDir = $sourceCE->{courseDirs}{html};
 			if (-d $sourceDir) {
 				warn "Failed to copy html from course '$sourceCourse': $!"
@@ -464,8 +472,10 @@ sub addCourse {
 				warn "Failed to copy html from course '$sourceCourse': html directory '$sourceDir' does not exist.\n";
 			}
 		}
+
 		## copy config files ##
-		#  this copies the simple.conf file if desired
+
+		# this copies the simple.conf file if desired
 		if ($options{copySimpleConfig}) {
 			my $sourceFile = $sourceCE->{courseFiles}{simpleConfig};
 			if (-e $sourceFile) {
@@ -473,7 +483,8 @@ sub addCourse {
 				warn "Failed to copy simple.conf from course '$sourceCourse': $@" if $@;
 			}
 		}
-		#  this copies the course.conf file if desired
+
+		# this copies the course.conf file if desired
 		if ($options{copyConfig}) {
 			my $sourceFile = $sourceCE->{courseFiles}{environment};
 			if (-e $sourceFile) {
@@ -490,7 +501,6 @@ sub addCourse {
 				}
 			}
 		}
-
 	}
 }
 

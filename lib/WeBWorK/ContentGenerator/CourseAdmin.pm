@@ -298,8 +298,6 @@ sub do_add_course ($c) {
 	my $add_courseTitle       = trim_spaces($c->param('add_courseTitle'))       // '';
 	my $add_courseInstitution = trim_spaces($c->param('add_courseInstitution')) // '';
 
-	my $add_admin_users = $c->param('add_admin_users') || '';
-
 	my $add_initial_userID          = trim_spaces($c->param('add_initial_userID'))          // '';
 	my $add_initial_password        = trim_spaces($c->param('add_initial_password'))        // '';
 	my $add_initial_confirmPassword = trim_spaces($c->param('add_initial_confirmPassword')) // '';
@@ -318,7 +316,7 @@ sub do_add_course ($c) {
 	my @users;
 
 	# copy users from current (admin) course if desired
-	if ($add_admin_users ne '') {
+	if ($c->param('add_admin_users')) {
 		for my $userID ($db->listUsers) {
 			if ($userID eq $add_initial_userID) {
 				$c->addbadmessage($c->maketext(
@@ -365,9 +363,8 @@ sub do_add_course ($c) {
 	# Include any optional arguments, including a template course and the course title and course institution.
 	my %optional_arguments;
 	if ($copy_from_course ne '') {
-		%optional_arguments             = map { $_ => 1 } ($c->param('copy_component'));
-		$optional_arguments{copyFrom}   = $copy_from_course;
-		$optional_arguments{copyConfig} = $c->param('copy_config_file') || '';
+		%optional_arguments = map { $_ => 1 } $c->param('copy_component');
+		$optional_arguments{copyFrom} = $copy_from_course;
 	}
 	if ($add_courseTitle ne '') {
 		$optional_arguments{courseTitle} = $add_courseTitle;
