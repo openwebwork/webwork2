@@ -5,7 +5,6 @@
 		<div class="col-auto">
 			<%= select_field 'action.filter.scope' => [
 					[ maketext('all users')                         => 'all' ],
-					[ maketext('no users')                          => 'none' ],
 					[ maketext('selected users')                    => 'selected' ],
 					[ maketext('users who match on selected field') => 'match_regex', selected => undef ]
 				],

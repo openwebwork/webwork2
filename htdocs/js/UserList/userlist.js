@@ -46,10 +46,10 @@
 		if (action === 'filter') {
 			const filter = document.getElementById('filter_select')?.selectedIndex || 0;
 			const filter_text = document.getElementById('filter_text');
-			if (filter === 2 && !is_user_selected()) {
+			if (filter === 1 && !is_user_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
-			} else if (filter === 3 && filter_text.value === '') {
+			} else if (filter === 2 && filter_text.value === '') {
 				e.preventDefault();
 				e.stopPropagation();
 				document.getElementById('filter_err_msg')?.classList.remove('d-none');

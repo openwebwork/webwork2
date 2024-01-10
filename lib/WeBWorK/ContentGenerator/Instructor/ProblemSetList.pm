@@ -31,7 +31,7 @@ What do we want to be able to do here?
 filter sort edit publish import create delete
 
 Filter what sets are shown:
-	- none, all, selected
+	- all, selected
 	- matching set_id, visible to students, hidden from students
 
 Sort sets by:
@@ -293,9 +293,6 @@ sub filter_handler ($c) {
 	if ($scope eq "all") {
 		$result = $c->maketext('Showing all sets.');
 		$c->{visibleSetIDs} = $c->{allSetIDs};
-	} elsif ($scope eq "none") {
-		$result = $c->maketext('Showing no sets.');
-		$c->{visibleSetIDs} = [];
 	} elsif ($scope eq "selected") {
 		$result = $c->maketext('Showing selected sets.');
 		$c->{visibleSetIDs} = [ $c->param('selected_sets') ];

@@ -28,7 +28,7 @@ data editing
 What do we want to be able to do here?
 
 Filter what users are shown:
-	- none, all, selected
+	- all, selected
 	- matching user_id, matching section, matching recitation
 Switch from view mode to edit mode:
 	- showing visible users
@@ -273,9 +273,6 @@ sub filter_handler ($c) {
 	if ($scope eq 'all') {
 		$result = $c->maketext('Showing all users.');
 		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->{allUserIDs} } };
-	} elsif ($scope eq 'none') {
-		$result = $c->maketext('Showing no users.');
-		$c->{visibleUserIDs} = {};
 	} elsif ($scope eq 'selected') {
 		$result = $c->maketext('Showing selected users.');
 		$c->{visibleUserIDs} = $c->{selectedUserIDs};
