@@ -1291,14 +1291,13 @@ sub do_unarchive_course ($c) {
 			),
 			$c->tag(
 				'div',
-				class => 'row',
+				class => 'd-flex justify-content-between',
 				$c->c(
 					$c->form_for(
 						$c->current_route,
 						method => 'POST',
-						class  => 'col-4',
 						$c->c(
-							$c->hidden_authen_fields,
+							$c->hidden_authen_fields('upgrade_course_'),
 							$c->hidden_field(subDisplay        => 'upgrade_course'),
 							$c->hidden_field(upgrade_course    => 1),
 							$c->hidden_field(upgrade_courseIDs => $new_courseID),
@@ -1311,14 +1310,13 @@ sub do_unarchive_course ($c) {
 					),
 					$c->link_to(
 						$c->maketext('Log into Course') => 'set_list' => { courseID => $new_courseID },
-						class                           => 'btn btn-primary col-4'
+						class                           => 'btn btn-primary'
 					),
 					$c->form_for(
 						$c->current_route,
 						method => 'POST',
-						class  => 'col-4 text-end',
 						$c->c(
-							$c->hidden_authen_fields,
+							$c->hidden_authen_fields('unarchive_more_'),
 							$c->hidden_fields('subDisplay'),
 							$c->hidden_field(unarchive_courseID => $unarchive_courseID),
 							$c->submit_button(
