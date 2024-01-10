@@ -99,10 +99,16 @@
 		}
 	});
 
-	// Remove select error message when changing tabs.
+	// Remove all error messages when changing tabs.
 	for (const tab of document.querySelectorAll('a[data-bs-toggle="tab"]')) {
 		tab.addEventListener('shown.bs.tab', () => {
-			document.getElementById('select_set_err_msg')?.classList.add('d-none');
+			const actionForm = document.getElementById('problemsetlist');
+			for (const err_msg of actionForm.querySelectorAll('div[id$=_err_msg]')) {
+				err_msg.classList.add('d-none');
+			}
+			for (const invalid of actionForm.querySelectorAll('.is-invalid')) {
+				invalid.classList.remove('is-invalid');
+			}
 		});
 	}
 
