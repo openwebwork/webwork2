@@ -254,7 +254,7 @@ sub addCourse {
 			"Can't create the course '$courseID' because the courses directory '$rootParent' is not writeable.";
 		# try to create it
 		eval { Mojo::File->new($root)->make_path };
-		croak "Can't create the course '$courseID' becasue the root directory '$root' could not be created: $@." if $@;
+		croak "Can't create the course '$courseID' because the root directory '$root' could not be created: $@." if $@;
 	}
 
 	# deal with the rest of the directories

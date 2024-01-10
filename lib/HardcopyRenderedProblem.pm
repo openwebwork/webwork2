@@ -50,7 +50,7 @@ sub hardcopyRenderedProblem {
 	my $userID   = $ws->{inputs_ref}{user};
 
 	# Create the parent directory for the temporary working directory.
-	my $temp_dir_parent_path = Mojo::File->new("$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID");
+	my $temp_dir_parent_path = path("$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID");
 	eval { $temp_dir_parent_path->make_path };
 	if ($@) {
 		push(@errors, "Couldn't create hardcopy directory $temp_dir_parent_path: $@");
@@ -127,19 +127,19 @@ sub generate_hardcopy_tex {
 
 	# Copy the common tex files into the working directory
 	my $ce            = $ws->c->ce;
-	my $assetsTex_dir = Mojo::File->new($ce->{webworkDirs}{assetsTex});
+	my $assetsTex_dir = path($ce->{webworkDirs}{assetsTex});
 	for (qw{webwork2.sty webwork_logo.png}) {
 		eval { $assetsTex_dir->child($_)->copy_to($working_dir) };
 		push(@$errors, qq{Failed to copy "$ce->{webworkDirs}{assetsTex}/$_" into directory "$working_dir": $@})
 			if $@;
 	}
-	my $pgAssetsTex_dir = Mojo::File->new($ce->{pg}{directories}{assetsTex});
+	my $pgAssetsTex_dir = path($ce->{pg}{directories}{assetsTex});
 	for (qw{pg.sty PGML.tex CAPA.tex}) {
 		eval { $pgAssetsTex_dir->child($_)->copy_to($working_dir) };
 		push(@$errors, qq{Failed to copy "$ce->{pg}{directories}{assetsTex}/$_" into directory "$working_dir": $@})
 			if $@;
 	}
-	my $pgsty = Mojo::File->new("$ce->{pg}{directories}{assetsTex}/pg.sty");
+	my $pgsty = path("$ce->{pg}{directories}{assetsTex}/pg.sty");
 	eval { $pgsty->copy_to($working_dir) };
 	push(@$errors, qq{Failed to copy "$ce->{pg}{directories}{assetsTex}/pg.sty" into directory "$working_dir": $@})
 		if $@;
@@ -150,7 +150,7 @@ sub generate_hardcopy_tex {
 		my $data = eval { $src_file->slurp };
 		unless ($@) {
 			for my $resource (keys %$resource_list) {
-				my $file_path = Mojo::File->new($resource_list->{$resource});
+				my $file_path = path($resource_list->{$resource});
 				$data =~ s{$file_path}{$file_path->basename}ge;
 
 				eval { $file_path->copy_to($working_dir) };
