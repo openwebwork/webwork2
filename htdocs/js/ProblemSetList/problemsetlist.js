@@ -5,13 +5,17 @@
 			if (set.checked) return true;
 		}
 		document.getElementById('select_set_err_msg')?.classList.remove('d-none');
-		document.getElementById('set_table_id')?.addEventListener('change', e => {
-			document.getElementById('select_set_err_msg')?.classList.add('d-none');
-		}, { once : true });
+		document.getElementById('set_table_id')?.addEventListener(
+			'change',
+			() => {
+				document.getElementById('select_set_err_msg')?.classList.add('d-none');
+			},
+			{ once: true }
+		);
 		return false;
 	};
 
-	document.getElementById('problemsetlist')?.addEventListener('submit', e => {
+	document.getElementById('problemsetlist')?.addEventListener('submit', (e) => {
 		const action = document.getElementById('current_action')?.value || '';
 		if (action === 'filter') {
 			const filter = document.getElementById('filter_select')?.selectedIndex || 0;
@@ -24,10 +28,14 @@
 				e.stopPropagation();
 				document.getElementById('filter_err_msg')?.classList.remove('d-none');
 				filter_text.classList.add('is-invalid');
-				filter_text.addEventListener('change', e => {
-					document.getElementById('filter_err_msg')?.classList.add('d-none');
-					document.getElementById('filter_text')?.classList.remove('is-invalid');
-				}, { once : true });
+				filter_text.addEventListener(
+					'change',
+					() => {
+						document.getElementById('filter_err_msg')?.classList.add('d-none');
+						document.getElementById('filter_text')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
 			}
 		} else if (['edit', 'publish', 'export', 'save_export', 'score'].includes(action)) {
 			if (!is_set_selected()) {
@@ -41,10 +49,14 @@
 				e.stopPropagation();
 				document.getElementById('import_file_err_msg')?.classList.remove('d-none');
 				import_select.classList.add('is-invalid');
-				import_select.addEventListener('change', e => {
-					document.getElementById('import_source_select')?.classList.remove('is-invalid');
-					document.getElementById('import_file_err_msg')?.classList.add('d-none');
-				}, { once : true });
+				import_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('import_source_select')?.classList.remove('is-invalid');
+						document.getElementById('import_file_err_msg')?.classList.add('d-none');
+					},
+					{ once: true }
+				);
 			}
 		} else if (action === 'create') {
 			const create_text = document.getElementById('create_text');
@@ -53,10 +65,14 @@
 				e.stopPropagation();
 				document.getElementById('create_file_err_msg')?.classList.remove('d-none');
 				create_text.classList.add('is-invalid');
-				create_text.addEventListener('change', e => {
-					document.getElementById('create_file_err_msg')?.classList.add('d-none');
-					document.getElementById('create_text')?.classList.remove('is-invalid');
-				}, { once : true });
+				create_text.addEventListener(
+					'change',
+					() => {
+						document.getElementById('create_file_err_msg')?.classList.add('d-none');
+						document.getElementById('create_text')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
 			} else if (document.getElementById('create_select')?.selectedIndex == 1 && !is_set_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
@@ -71,17 +87,21 @@
 				e.stopPropagation();
 				document.getElementById('delete_confirm_err_msg')?.classList.remove('d-none');
 				delete_confirm.classList.add('is-invalid');
-				delete_confirm.addEventListener('change', e => {
-					document.getElementById('delete_select')?.classList.remove('is-invalid');
-					document.getElementById('delete_confirm_err_msg')?.classList.add('d-none');
-				}, { once : true });
+				delete_confirm.addEventListener(
+					'change',
+					() => {
+						document.getElementById('delete_select')?.classList.remove('is-invalid');
+						document.getElementById('delete_confirm_err_msg')?.classList.add('d-none');
+					},
+					{ once: true }
+				);
 			}
 		}
 	});
 
 	// Remove select error message when changing tabs.
 	for (const tab of document.querySelectorAll('a[data-bs-toggle="tab"]')) {
-		tab.addEventListener('shown.bs.tab', e => {
+		tab.addEventListener('shown.bs.tab', () => {
 			document.getElementById('select_set_err_msg')?.classList.add('d-none');
 		});
 	}
@@ -135,17 +155,16 @@
 	// Initialize the date/time picker for the import form.
 	const importDateShift = document.getElementById('import_date_shift');
 	if (importDateShift) {
-
 		luxon.Settings.defaultLocale = importDateShift.dataset.locale ?? 'en';
 
 		// Compute the time difference between the current browser timezone and the course timezone.
 		// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
 		// Note that this is in seconds.
-		const timezoneAdjustment = (
-			(new Date((new Date).toLocaleString('en-US'))).getTime() -
-			(new Date((new Date).toLocaleString('en-US',
-				{ timeZone: importDateShift.dataset.timezone ?? 'America/New_York' }))).getTime()
-		);
+		const timezoneAdjustment =
+			new Date(new Date().toLocaleString('en-US')).getTime() -
+			new Date(
+				new Date().toLocaleString('en-US', { timeZone: importDateShift.dataset.timezone ?? 'America/New_York' })
+			).getTime();
 
 		const fp = flatpickr(importDateShift.parentNode, {
 			allowInput: true,

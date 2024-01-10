@@ -31,13 +31,17 @@
 			if (user.checked) return true;
 		}
 		document.getElementById('select_user_err_msg')?.classList.remove('d-none');
-		document.getElementById('classlist-table')?.addEventListener('change', e => {
-			document.getElementById('select_user_err_msg')?.classList.add('d-none');
-		}, { once : true });
+		document.getElementById('classlist-table')?.addEventListener(
+			'change',
+			() => {
+				document.getElementById('select_user_err_msg')?.classList.add('d-none');
+			},
+			{ once: true }
+		);
 		return false;
 	};
 
-	document.getElementById('user-list-form')?.addEventListener('submit', e => {
+	document.getElementById('user-list-form')?.addEventListener('submit', (e) => {
 		const action = document.getElementById('current_action')?.value || '';
 		if (action === 'filter') {
 			const filter = document.getElementById('filter_select')?.selectedIndex || 0;
@@ -50,10 +54,14 @@
 				e.stopPropagation();
 				document.getElementById('filter_err_msg')?.classList.remove('d-none');
 				filter_text.classList.add('is-invalid');
-				filter_text.addEventListener('change', e => {
-					document.getElementById('filter_text')?.classList.remove('is-invalid');
-					document.getElementById('filter_err_msg')?.classList.add('d-none');
-				}, { once : true });
+				filter_text.addEventListener(
+					'change',
+					() => {
+						document.getElementById('filter_text')?.classList.remove('is-invalid');
+						document.getElementById('filter_err_msg')?.classList.add('d-none');
+					},
+					{ once: true }
+				);
 			}
 		} else if (action === 'edit' || action === 'password') {
 			if (!is_user_selected()) {
@@ -65,16 +73,22 @@
 			if (!is_user_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
-			} else if (document.getElementById('export_select_target')?.value === 'new' &&
-						export_filename.value === '') {
+			} else if (
+				document.getElementById('export_select_target')?.value === 'new' &&
+				export_filename.value === ''
+			) {
 				e.preventDefault();
 				e.stopPropagation();
 				document.getElementById('export_file_err_msg')?.classList.remove('d-none');
 				export_filename.classList.add('is-invalid');
-				export_filename.addEventListener('change', e => {
-					document.getElementById('export_filename')?.classList.remove('is-invalid');
-					document.getElementById('export_file_err_msg')?.classList.add('d-none');
-				}, { once : true });
+				export_filename.addEventListener(
+					'change',
+					() => {
+						document.getElementById('export_filename')?.classList.remove('is-invalid');
+						document.getElementById('export_file_err_msg')?.classList.add('d-none');
+					},
+					{ once: true }
+				);
 			}
 		} else if (action === 'delete') {
 			const delete_confirm = document.getElementById('delete_select');
@@ -86,17 +100,21 @@
 				e.stopPropagation();
 				document.getElementById('delete_confirm_err_msg')?.classList.remove('d-none');
 				delete_confirm.classList.add('is-invalid');
-				delete_confirm.addEventListener('change', e => {
-					document.getElementById('delete_select')?.classList.remove('is-invalid');
-					document.getElementById('delete_confirm_err_msg')?.classList.add('d-none');
-				}, { once : true });
+				delete_confirm.addEventListener(
+					'change',
+					() => {
+						document.getElementById('delete_select')?.classList.remove('is-invalid');
+						document.getElementById('delete_confirm_err_msg')?.classList.add('d-none');
+					},
+					{ once: true }
+				);
 			}
 		}
 	});
 
 	// Remove select error message when changing tabs.
 	for (const tab of document.querySelectorAll('a[data-bs-toggle="tab"]')) {
-		tab.addEventListener('shown.bs.tab', e => {
+		tab.addEventListener('shown.bs.tab', () => {
 			document.getElementById('select_user_err_msg')?.classList.add('d-none');
 		});
 	}

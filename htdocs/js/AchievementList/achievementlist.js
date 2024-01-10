@@ -5,13 +5,17 @@
 			if (achievement.checked) return true;
 		}
 		document.getElementById('select_achievement_err_msg')?.classList.remove('d-none');
-		document.getElementById('achievement-table')?.addEventListener('change', e => {
-			document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
-		}, { once : true });
+		document.getElementById('achievement-table')?.addEventListener(
+			'change',
+			() => {
+				document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
+			},
+			{ once: true }
+		);
 		return false;
 	};
 
-	document.getElementById('achievement-list')?.addEventListener('submit', e => {
+	document.getElementById('achievement-list')?.addEventListener('submit', (e) => {
 		const action = document.getElementById('current_action')?.value || '';
 		if (['edit', 'assign', 'export', 'score'].includes(action)) {
 			if (!is_achievement_selected()) {
@@ -41,10 +45,14 @@
 				e.stopPropagation();
 				document.getElementById('create_file_err_msg')?.classList.remove('d-none');
 				create_text.classList.add('is-invalid');
-				create_text.addEventListener('change', e => {
-					document.getElementById('create_file_err_msg')?.classList.add('d-none');
-					document.getElementById('create_text')?.classList.remove('is-invalid');
-				}, { once : true });
+				create_text.addEventListener(
+					'change',
+					() => {
+						document.getElementById('create_file_err_msg')?.classList.add('d-none');
+						document.getElementById('create_text')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
 			} else if (document.getElementById('create_select')?.selectedIndex == 1 && !is_achievement_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
@@ -59,18 +67,26 @@
 				e.stopPropagation();
 				document.getElementById('delete_confirm_err_msg')?.classList.remove('d-none');
 				delete_confirm.classList.add('is-invalid');
-				delete_confirm.addEventListener('change', e => {
-					document.getElementById('delete_select')?.classList.remove('is-invalid');
-					document.getElementById('delete_confirm_err_msg')?.classList.add('d-none');
-				}, { once : true });
+				delete_confirm.addEventListener(
+					'change',
+					() => {
+						document.getElementById('delete_select')?.classList.remove('is-invalid');
+						document.getElementById('delete_confirm_err_msg')?.classList.add('d-none');
+					},
+					{ once: true }
+				);
 			}
 		}
 	});
 
 	// Remove select error message when changing tabs.
 	for (const tab of document.querySelectorAll('a[data-bs-toggle="tab"]')) {
-		tab.addEventListener('shown.bs.tab', e => {
-			document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
-		}, { once : true });
+		tab.addEventListener(
+			'shown.bs.tab',
+			() => {
+				document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
+			},
+			{ once: true }
+		);
 	}
 })();
