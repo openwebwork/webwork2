@@ -6,9 +6,9 @@ if (!window.MathJax) {
 		loader: { load: ['input/asciimath', '[tex]/noerrors'] },
 		startup: {
 			ready: function() {
-				var AM = MathJax.InputJax.AsciiMath.AM;
+				const AM = MathJax.InputJax.AsciiMath.AM;
 				// modify existing AsciiMath triggers
-				var i = AM.names.indexOf('**');
+				let i = AM.names.indexOf('**');
 				AM.symbols[i] = { input: "**", tag: "msup", output: "^", tex: null, ttype: AM.TOKEN.INFIX };
 
 				i = AM.names.indexOf('infty');
@@ -16,7 +16,7 @@ if (!window.MathJax) {
 				AM.symbols[i] = { input:"infinity", tag:"mo", output:"\u221E", tex:"infty", ttype:AM.TOKEN.CONST };
 
 				// add AsciiMath triggers for consistency with MathObjects
-				var newTriggers = {
+				const newTriggers = {
 					inf:     {precedes:'infinity',   symbols:{tag:"mo",    output:"\u221E",          tex:"infty",    ttype:AM.TOKEN.CONST}},
 					Infinity:{precedes:'Lambda',     symbols:{tag:"mo",    output:"\u221E",          tex:"infty",    ttype:AM.TOKEN.CONST}},
 					Inf:     {precedes:'Infinity',   symbols:{tag:"mo",    output:"\u221E",          tex:"infty",    ttype:AM.TOKEN.CONST}},
@@ -35,7 +35,7 @@ if (!window.MathJax) {
 					'><':    {precedes:'><|',        symbols:{tag:"mo",    output:"\u00D7",          tex:"times",    ttype:AM.TOKEN.CONST}},
 				};
 				for (const trigger in newTriggers) {
-					var i = AM.names.indexOf(newTriggers[trigger].precedes);
+					const i = AM.names.indexOf(newTriggers[trigger].precedes);
 					AM.names.splice(i, 0, trigger);
 					AM.symbols.splice(i, 0, {input:trigger, ...newTriggers[trigger].symbols});
 				}
