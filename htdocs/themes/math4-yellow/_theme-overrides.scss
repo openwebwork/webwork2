@@ -2,18 +2,30 @@
 // Only the foreground colors are changed.
 .btn-info {
 	@include button-variant(
-		$info, // background color
-		$info, // border color
-		$primary, // foreground color
-		tint-color($info, $btn-hover-bg-tint-amount), // hover background color
-		tint-color($info, $btn-hover-border-tint-amount), // hover border color
-		$primary, // hover foreground color
-		tint-color($info, $btn-active-bg-tint-amount), // active background color
-		tint-color($info, $btn-active-border-tint-amount), // active border color
-		$primary, // active foreground color
-		$info, // disabled background color
-		$info, // disabled border color
-		color-contrast($info) // disabled foreground color
+		// background color
+		$info,
+		// border color
+		$info,
+		// foreground color
+		$primary,
+		// hover background color
+		tint-color($info, $btn-hover-bg-tint-amount),
+		// hover border color
+		tint-color($info, $btn-hover-border-tint-amount),
+		// hover foreground color
+		$primary,
+		// active background color
+		tint-color($info, $btn-active-bg-tint-amount),
+		// active border color
+		tint-color($info, $btn-active-border-tint-amount),
+		// active foreground color
+		$primary,
+		// disabled background color
+		$info,
+		// disabled border color
+		$info,
+		// disabled foreground color
+		color-contrast($info)
 	);
 }
 

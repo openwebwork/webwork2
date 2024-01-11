@@ -12,9 +12,10 @@
 	const timerDiv = document.getElementById('gwTimer'); // The timer div element
 	let actuallySubmit = false; // This needs to be set to true to allow an actual submission.
 	// The 'Grade Test' submit button.
-	const submitAnswers = document.gwquiz.elements.submitAnswers instanceof NodeList
-		? document.gwquiz.elements.submitAnswers[document.gwquiz.elements.submitAnswers.length - 1]
-		: document.gwquiz.elements.submitAnswers;
+	const submitAnswers =
+		document.gwquiz.elements.submitAnswers instanceof NodeList
+			? document.gwquiz.elements.submitAnswers[document.gwquiz.elements.submitAnswers.length - 1]
+			: document.gwquiz.elements.submitAnswers;
 	let timeDelta; // The difference between the browser time and the server time
 	let serverDueTime; // The time the test is due
 	let gracePeriod; // The grace period
@@ -32,7 +33,14 @@
 	const alertToast = (message, delay = 5000) => {
 		const toastContainer = document.createElement('div');
 		toastContainer.classList.add(
-			'gwAlert', 'toast-container', 'position-fixed', 'top-0', 'start-50',  'translate-middle-x', 'p-3');
+			'gwAlert',
+			'toast-container',
+			'position-fixed',
+			'top-0',
+			'start-50',
+			'translate-middle-x',
+			'p-3'
+		);
 		toastContainer.innerHTML =
 			'<div class="toast bg-white" role="alert" aria-live="assertive" aria-atomic="true">' +
 			'<div class="toast-header">' +
@@ -43,7 +51,10 @@
 			'</div>';
 		document.body.prepend(toastContainer);
 		const bsToast = new bootstrap.Toast(toastContainer.firstElementChild, { delay });
-		toastContainer.addEventListener('hidden.bs.toast', () => { bsToast.dispose(); toastContainer.remove(); })
+		toastContainer.addEventListener('hidden.bs.toast', () => {
+			bsToast.dispose();
+			toastContainer.remove();
+		});
 		bsToast.show();
 	};
 
@@ -72,23 +83,29 @@
 				submitAnswers.click();
 			} else if (remainingTime > 10 - gracePeriod && remainingTime <= 0) {
 				if (alertStatus !== '1') {
-					alertToast(timerDiv.dataset.alertOne ??
-						'<div>You are out of time!</div><div>Press "Grade Test" now!</div>',
-						(remainingTime + gracePeriod) * 1000);
+					alertToast(
+						timerDiv.dataset.alertOne ??
+							'<div>You are out of time!</div><div>Press "Grade Test" now!</div>',
+						(remainingTime + gracePeriod) * 1000
+					);
 					sessionStorage.setItem('gatewayAlertStatus', '1');
 				}
 			} else if (remainingTime > 0 && remainingTime <= 45) {
 				if (alertStatus !== '2') {
-					alertToast(timerDiv.dataset.alertTwo ??
-						'<div>You have less than 45 seconds left!</div><div>Press "Grade Test" soon!</div>',
-						remainingTime * 1000);
+					alertToast(
+						timerDiv.dataset.alertTwo ??
+							'<div>You have less than 45 seconds left!</div><div>Press "Grade Test" soon!</div>',
+						remainingTime * 1000
+					);
 					sessionStorage.setItem('gatewayAlertStatus', '2');
 				}
 			} else if (remainingTime > 45 && remainingTime <= 90) {
 				if (alertStatus !== '3') {
-					alertToast(timerDiv.dataset.alertThree ??
-						'You have less than 90 seconds left to complete this assignment. You should finish it soon!',
-						(remainingTime - 45) * 1000);
+					alertToast(
+						timerDiv.dataset.alertThree ??
+							'You have less than 90 seconds left to complete this assignment. You should finish it soon!',
+						(remainingTime - 45) * 1000
+					);
 					sessionStorage.setItem('gatewayAlertStatus', '3');
 				}
 			}
@@ -122,15 +139,17 @@
 				setInterval(updateTimer, 1000);
 			}
 		}
-	};
+	}
 
 	// Show a confirmation dialog when a student clicks 'Grade Test'.
 	if (typeof submitAnswers?.dataset?.confirmDialogMessage !== 'undefined') {
 		submitAnswers.addEventListener('click', (evt) => {
 			// Don't show the dialog if the test is timed and in the last 90 seconds.
 			// The alerts above are now being shown telling the student to submit the test.
-			if (typeof serverDueTime !== 'undefined' &&
-				serverDueTime - Math.round(new Date().getTime() / 1000) + timeDelta < 90)
+			if (
+				typeof serverDueTime !== 'undefined' &&
+				serverDueTime - Math.round(new Date().getTime() / 1000) + timeDelta < 90
+			)
 				return;
 
 			if (actuallySubmit) return;
@@ -196,7 +215,10 @@
 
 			const bsModal = new bootstrap.Modal(modal);
 			bsModal.show();
-			modal.addEventListener('hidden.bs.modal', () => { bsModal.dispose(); modal.remove(); });
+			modal.addEventListener('hidden.bs.modal', () => {
+				bsModal.dispose();
+				modal.remove();
+			});
 		});
 	}
 
@@ -214,7 +236,7 @@
 	document.querySelectorAll('.problem-jump-link').forEach((jumpLink) => {
 		jumpLink.addEventListener('click', (evt) => {
 			// Prevent the link from being followed.
-			evt.preventDefault()
+			evt.preventDefault();
 			if (jumpLink.dataset.problemNumber) {
 				// Note that the anchor indexing starts at 0, not 1.
 				const problem = document.getElementById(`prob${parseInt(jumpLink.dataset.problemNumber) - 1}`);

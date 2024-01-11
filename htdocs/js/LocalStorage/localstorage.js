@@ -2,7 +2,8 @@
 	const container = document.getElementById('problemMainForm');
 	const storeId = 'wwStickyAnswers';
 
-	const identifier = (document.querySelector("input[name='problemUUID']")?.value ?? '') +
+	const identifier =
+		(document.querySelector("input[name='problemUUID']")?.value ?? '') +
 		(document.querySelector("input[name='sourceFilePath']")?.value ?? '') +
 		(document.querySelector("input[name='problemSource']")?.value ?? '') +
 		(document.querySelector("input[name='problemSeed']")?.value ?? '');
@@ -26,7 +27,7 @@
 
 		store[identifier] = problemData;
 		localStorage.setItem(storeId, JSON.stringify(store));
-	}
+	};
 
 	container.addEventListener('submit', storeData);
 

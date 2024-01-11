@@ -13,7 +13,7 @@
  */
 
 // Include bootstrap scss functions (so you can manipulate colors, SVGs, calc, etc)
-@import "../../node_modules/bootstrap/scss/functions";
+@import '../../node_modules/bootstrap/scss/functions';
 
 // Theme colors
 $primary: #ffc700;
@@ -37,8 +37,8 @@ $ww-achievement-level-color: darken($primary, 15%);
 $accordion-button-active-color: shade-color($primary, 50%);
 
 // Make the navbar colors dark.
-$navbar-dark-color:                 rgba(#000, .55);
-$navbar-dark-hover-color:           rgba(#000, .75);
-$navbar-dark-active-color:          #000;
-$navbar-dark-disabled-color:        rgba(#000, .25);
-$navbar-dark-toggler-border-color:  rgba(#000, .1);
+$navbar-dark-color: rgba(#000, 0.55);
+$navbar-dark-hover-color: rgba(#000, 0.75);
+$navbar-dark-active-color: #000;
+$navbar-dark-disabled-color: rgba(#000, 0.25);
+$navbar-dark-toggler-border-color: rgba(#000, 0.1);
