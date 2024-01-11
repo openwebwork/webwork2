@@ -363,8 +363,9 @@ sub do_add_course ($c) {
 	# Include any optional arguments, including a template course and the course title and course institution.
 	my %optional_arguments;
 	if ($copy_from_course ne '') {
-		%optional_arguments = map { $_ => 1 } $c->param('copy_component');
-		$optional_arguments{copyFrom} = $copy_from_course;
+		%optional_arguments             = map { $_ => 1 } $c->param('copy_component');
+		$optional_arguments{copyFrom}   = $copy_from_course;
+		$optional_arguments{copyConfig} = $c->param('copy_config_file');
 	}
 	if ($add_courseTitle ne '') {
 		$optional_arguments{courseTitle} = $add_courseTitle;
