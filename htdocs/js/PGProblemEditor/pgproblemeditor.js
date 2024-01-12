@@ -138,7 +138,7 @@
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
 	};
 
-	// Send a request to the server to convert_to_PGML the current PG code in the CodeMirror editor.
+	// Send a request to the server to convert the current PG code in the CodeMirror editor.
 	const convertCodeToPGML = () => {
 		const request_object = {
 			user: document.getElementById('hidden_user')?.value,
