@@ -40,6 +40,8 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 				|| ($sets->[$i]->reduced_scoring_date && after($sets->[$i]->reduced_scoring_date)));
 	}
 
+	return unless @closedSets;
+
 	return $c->c(
 		$c->tag('p', $c->maketext('Choose the set which you would like to resurrect.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(

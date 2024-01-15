@@ -40,6 +40,8 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 			if (between($sets->[$i]->open_date, $sets->[$i]->due_date) && $sets->[$i]->assignment_type eq 'default');
 	}
 
+	return unless @openSets;
+
 	return $c->c(
 		$c->tag('p', $c->maketext('Choose the set which you would like to enable partial credit for.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(

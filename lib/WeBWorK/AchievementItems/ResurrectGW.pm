@@ -45,6 +45,8 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 				|| ($set->reduced_scoring_date && after($set->reduced_scoring_date)));
 	}
 
+	return unless @closed_gateway_sets;
+
 	return $c->c(
 		$c->tag('p', $c->maketext('Resurrect which test?')),
 		WeBWorK::AchievementItems::form_popup_menu_row(

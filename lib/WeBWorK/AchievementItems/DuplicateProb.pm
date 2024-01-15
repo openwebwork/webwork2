@@ -52,6 +52,8 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 		}
 	}
 
+	return unless @openSets;
+
 	return $c->c(
 		$c->tag(
 			'p',

@@ -36,6 +36,8 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 			if (between($sets->[$i]->open_date, $sets->[$i]->due_date) && $sets->[$i]->assignment_type eq 'default');
 	}
 
+	return unless @openSets;
+
 	return $c->c(
 		$c->tag('p', $c->maketext('Please choose the set for which all problems should be given full credit.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(

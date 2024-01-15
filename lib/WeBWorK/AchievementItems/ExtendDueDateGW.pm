@@ -42,6 +42,8 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 			&& between($set->open_date, $set->due_date);
 	}
 
+	return unless @openGateways;
+
 	return $c->c(
 		$c->tag('p', $c->maketext('Extend the close date for which test?')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
