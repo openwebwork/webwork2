@@ -937,7 +937,7 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 			my $value = $forUsers ? $userValue : $globalValue;
 			$value = format_set_name_display($value =~ s/\s*,\s*/,/gr) if $field eq 'restricted_release';
 
-			$inputType = $c->text_field(
+			my @field_args = (
 				"$recordType.$recordID.$field", $value,
 				id    => "$recordType.$recordID.${field}_id",
 				data  => { override => "$recordType.$recordID.$field.override_id" },
@@ -945,6 +945,30 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 				$forUsers && $check ? (aria_labelledby => "$recordType.$recordID.$field.label") : (),
 				$field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr')      : ()
 			);
+			if ($field eq 'problem_seed') {
+				# Insert a randomization button
+				$inputType = $c->tag(
+					'div',
+					class => 'input-group input-group-sm',
+					style => 'min-width: 7rem',
+					$c->c(
+						$c->number_field(@field_args, min => 0),
+						$c->tag(
+							'button',
+							type  => 'button',
+							class => 'randomize-seed-btn btn btn-sm btn-secondary',
+							title => 'randomize',
+							data  => {
+								seed_input   => "$recordType.$recordID.problem_seed_id",
+								status_input => "$recordType.$recordID.status_id"
+							},
+							$c->tag('i', class => 'fa-solid fa-shuffle')
+						)
+					)->join('')
+				);
+			} else {
+				$inputType = $c->text_field(@field_args);
+			}
 		}
 	} elsif ($choose) {
 		# If $field matches /:/, then multiple fields are used.
