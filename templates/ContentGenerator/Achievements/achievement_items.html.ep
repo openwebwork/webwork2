@@ -33,7 +33,7 @@
 						<%= form_for current_route, method => 'POST', name => "itemform_$itemNumber",
 							class => 'achievementitemform', begin =%>
 							<div class="modal-body">
-								<%= $item->print_form($sets, $setProblemCount, $c) =%>
+								<%= $item->print_form($sets, $setProblemIds, $c) =%>
 								<%= hidden_field useditem => $itemNumber =%>
 								<%= $c->hidden_authen_fields("achievement_${itemNumber}_") =%>
 							</div>

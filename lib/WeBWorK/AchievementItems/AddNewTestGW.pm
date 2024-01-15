@@ -31,15 +31,13 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemCount, $c) {
+sub print_form ($self, $sets, $setProblemIds, $c) {
 	my $db = $c->db;
 
-	my $effectiveUserName = $c->param('effectiveUser') // $c->param('user');
-	my @unfilteredsets = $db->getMergedSets(map { [ $effectiveUserName, $_ ] } $db->listUserSets($effectiveUserName));
 	my @openGateways;
 
 	# Find the template sets of open gateway quizzes.
-	for my $set (@unfilteredsets) {
+	for my $set (@$sets) {
 		push(@openGateways, [ format_set_name_display($set->set_id) => $set->set_id ])
 			if $set->assignment_type =~ /gateway/
 			&& $set->set_id !~ /,v\d+$/

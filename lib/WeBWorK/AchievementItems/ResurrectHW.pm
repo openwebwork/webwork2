@@ -28,7 +28,7 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemCount, $c) {
+sub print_form ($self, $sets, $setProblemIds, $c) {
 	# List all of the sets that are closed or past their reduced scoring date.
 
 	my @closedSets;
@@ -37,7 +37,7 @@ sub print_form ($self, $sets, $setProblemCount, $c) {
 		push(@closedSets, [ format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id ])
 			if $sets->[$i]->assignment_type eq 'default'
 			&& (after($sets->[$i]->due_date)
-				|| ($sets->[$i]->reduced_scoring_date && after($$sets[$i]->reduced_scoring_date)));
+				|| ($sets->[$i]->reduced_scoring_date && after($sets->[$i]->reduced_scoring_date)));
 	}
 
 	return $c->c(

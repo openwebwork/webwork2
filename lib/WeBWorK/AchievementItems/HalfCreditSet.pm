@@ -28,7 +28,7 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemCount, $c) {
+sub print_form ($self, $sets, $setProblemIds, $c) {
 	my @openSets;
 
 	for my $i (0 .. $#$sets) {

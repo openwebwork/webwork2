@@ -93,31 +93,27 @@ sub getAchievementItemsData ($c) {
 
 	my $userID = $c->{studentName};
 
-	my (@items, %itemCounts, @sets, @setProblemCount);
+	my (@items, %itemCounts, @sets, %setProblemIds);
 
 	if ($c->ce->{achievementItemsEnabled} && $c->{achievementItems}) {
 		# Remove count data so @items is structured as originally designed.
 		for my $item (@{ $c->{achievementItems} }) {
 			push(@items, $item->[0]);
-			$itemCounts{ $item->[0]->id() } = $item->[1];
+			$itemCounts{ $item->[0]->id } = $item->[1];
 		}
 
-		# Achievement items only make sense for regular homeworks.  So filter gateways out.
 		for my $set ($db->getMergedSets(map { [ $userID, $_ ] } $db->listUserSets($userID))) {
-			push(@sets, $set) if ($set->assignment_type() eq 'default');
-		}
-
-		# Generate an array of problem counts.
-		for (my $i = 0; $i <= $#sets; $i++) {
-			$setProblemCount[$i] = WeBWorK::Utils::max($db->listUserProblems($userID, $sets[$i]->set_id));
+			push(@sets, $set);
+			$setProblemIds{ $set->set_id } = [ map { $_->[2] }
+					$db->listUserProblemsWhere({ user_id => $userID, set_id => $set->set_id }, 'problem_id') ];
 		}
 	}
 
 	return (
-		items           => \@items,
-		itemCounts      => \%itemCounts,
-		sets            => \@sets,
-		setProblemCount => \@setProblemCount
+		items         => \@items,
+		itemCounts    => \%itemCounts,
+		sets          => \@sets,
+		setProblemIds => \%setProblemIds
 	);
 }
 

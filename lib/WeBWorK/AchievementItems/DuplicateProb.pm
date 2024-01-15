@@ -18,6 +18,8 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to turn one problem into another problem
 
+use Mojo::JSON qw(encode_json);
+
 use WeBWorK::Utils qw(between x nfreeze_base64 thaw_base64 format_set_name_display);
 
 sub new ($class) {
@@ -28,29 +30,26 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemCount, $c) {
+sub print_form ($self, $sets, $setProblemIds, $c) {
 	# Show open sets and allow for a choice of two problems from the set.
+	# Javascript ensures the appropriate problems are shown for the selected set.
 
-	my @openSets;
-	my $maxProblems = 0;
+	my (@openSets, @initialProblemIDs);
 
 	for my $i (0 .. $#$sets) {
-		if (between($sets->[$i]->open_date, $sets->[$i]->due_date) && $sets->[$i]->assignment_type eq 'default') {
+		if (between($sets->[$i]->open_date, $sets->[$i]->due_date)
+			&& $sets->[$i]->assignment_type eq 'default'
+			&& @{ $setProblemIds->{ $sets->[$i]->set_id } })
+		{
 			push(
 				@openSets,
 				[
 					format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id,
-					data                                         => { max => $setProblemCount->[$i] }
+					data => { problem_ids => encode_json($setProblemIds->{ $sets->[$i]->set_id }) }
 				]
 			);
-			$maxProblems = $setProblemCount->[$i] if $setProblemCount->[$i] > $maxProblems;
+			@initialProblemIDs = @{ $setProblemIds->{ $sets->[$i]->set_id } } unless @initialProblemIDs;
 		}
-	}
-
-	my @problemIDs;
-
-	for my $i (1 .. $maxProblems) {
-		push(@problemIDs, [ $i => $i, $i > $openSets[0][3]{max} ? (style => 'display:none') : () ]);
 	}
 
 	return $c->c(
@@ -78,7 +77,7 @@ sub print_form ($self, $sets, $setProblemCount, $c) {
 				WeBWorK::AchievementItems::form_popup_menu_row(
 					$c,
 					id                  => 'tran_problem_id',
-					values              => \@problemIDs,
+					values              => \@initialProblemIDs,
 					label_text          => $c->maketext('Copy this Problem'),
 					menu_container_attr => { class => 'col-2 ps-0' },
 					add_container       => 0
@@ -86,7 +85,7 @@ sub print_form ($self, $sets, $setProblemCount, $c) {
 				WeBWorK::AchievementItems::form_popup_menu_row(
 					$c,
 					id                  => 'tran_problem_id2',
-					values              => \@problemIDs,
+					values              => \@initialProblemIDs,
 					label_text          => $c->maketext('To this Problem'),
 					menu_container_attr => { class => 'col-2 ps-0' },
 					add_container       => 0
