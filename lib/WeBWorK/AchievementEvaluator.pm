@@ -25,15 +25,18 @@ use Mojo::Base 'Exporter', -signatures;
 use DateTime;
 
 use WeBWorK::Utils qw(sortAchievements nfreeze_base64 thaw_base64);
+use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 use WeBWorK::Utils::Tags;
 use WeBWorK::WWSafe;
 
 our @EXPORT_OK = qw(checkForAchievements);
 
 sub checkForAchievements ($problem_in, $pg, $c, %options) {
-	our $problem = $problem_in;
 	my $db = $c->db;
 	my $ce = $c->ce;
+
+	# Make a copy of the problem so that local modifications do not persist.
+	our $problem = $db->newUserProblem($problem_in);
 
 	# Date and time for course timezone (may differ from the server timezone)
 	# Saved into separate array
@@ -69,10 +72,6 @@ sub checkForAchievements ($problem_in, $pg, $c, %options) {
 		$globalUserAchievement->achievement_points(0);
 		$db->addGlobalUserAchievement($globalUserAchievement);
 	}
-
-	# Do not update the problem with stuff from the pg.  The achievement checking happens
-	# *after* the system has already updated $problem with the new results from $pg.
-	# The code here has no right to modify the problem in any case.
 
 	#These need to be "our" so that they can share to the safe container
 	our $counter;
@@ -112,49 +111,40 @@ sub checkForAchievements ($problem_in, $pg, $c, %options) {
 		$userAchievements->{ $achievement->achievement_id } = $userAchievement->earned if $userAchievement;
 	}
 
-	#Update a couple of "standard" variables in globalData hash.
-	my $allcorrect = 0;
+	@setProblems =
+		$isGatewaySet
+		? $db->getAllMergedProblemVersions($user_id, $set_id, $options{setVersion})
+		: $db->getAllUserProblems($user_id, $set_id);
 
-	if ($isGatewaySet) {
-		@setProblems = $db->getAllMergedProblemVersions($user_id, $set_id, $options{setVersion});
-	} else {
-		@setProblems = $db->getAllUserProblems($user_id, $set_id);
+	# Compute the unreduced score for all problems and transfer that to the status.
+	# The reduced score is saved in case an achievement needs that.
+	# Also check and see of all problems are correct.
+	my $allcorrect = 1;
+	for (@setProblems) {
+		$_->{reduced_score} = $_->status if defined $_->sub_status && $_->sub_status < $_->status;
+		$_->status(compute_unreduced_score($ce, $_, $set));
+		$allcorrect = 0 if $_->status < 1;
+
+		# Update the data for this problem when it is found.
+		if ($_->problem_id == $problem->problem_id) {
+			$problem->{reduced_score} = $_->{reduced_score};
+			$problem->status($_->status);
+		}
 	}
 
-	# for gateway sets we have to do check all of the problems to see
-	# if we need to reward points since we submit all at once
-	# otherwise we only do the main problem.
-	my @problemsToCheck = ($problem);
-
-	if ($isGatewaySet) {
-		@problemsToCheck = @setProblems;
-	}
-
-	foreach my $thisProblem (@problemsToCheck) {
-
-		if ($thisProblem->status == 1 && $thisProblem->num_correct == 1) {
+	# Check all problems for gateway sets since all are submitted at once.
+	# Otherwise only check the current problem.
+	for ($isGatewaySet ? @setProblems : $problem) {
+		if ($_->status >= 1 && $_->num_correct == 1) {
 			$globalUserAchievement->achievement_points(
 				$globalUserAchievement->achievement_points + $ce->{achievementPointsPerProblem});
-			#this variable is shared and should be considered iffy
+			# This variable is shared and should be considered iffy. (What does this mean? What is iffy?)
 			$achievementPoints += $ce->{achievementPointsPerProblem};
-			$globalData->{'completeProblems'} += 1;
-			$allcorrect = 1;
+			$globalData->{completeProblems} += 1;
 		}
 	}
 
-	#check and see of all problems are correct.  (also update the current
-	# problem in setProblems, since the database might be out of date)
-	my $index = 0;
-	foreach my $thisProblem (@setProblems) {
-		if ($thisProblem->problem_id eq $problem->problem_id) {
-			$setProblems[$index] = $problem;
-		} elsif ($thisProblem->status != 1) {
-			$allcorrect = 0;
-		}
-		$index++;
-	}
-
-	$globalData->{'completeSets'}++ if ($allcorrect);
+	$globalData->{completeSets}++ if ($allcorrect);
 
 	# get the problem tags if its not a gatway
 	# if it is a gateway get rid of $problem since it doensn't make sense

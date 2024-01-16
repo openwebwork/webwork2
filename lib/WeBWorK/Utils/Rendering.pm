@@ -29,6 +29,7 @@ use Digest::MD5 qw(md5_hex);
 use Encode qw(encode_utf8);
 
 use WeBWorK::Utils qw(formatDateTime);
+use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 
 our @EXPORT_OK = qw(constructPGOptions getTranslatorDebuggingOptions renderPG);
 
@@ -120,18 +121,8 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	# State Information
 	$options{numOfAttempts} =
 		($problem->num_correct || 0) + ($problem->num_incorrect || 0) + ($formFields->{submitAnswers} ? 1 : 0);
-	$options{problemValue} = $problem->value;
-	# If reduced scoring is enabled for the set and the sub_status is less than the status, then the status is the
-	# reduced score.  In that case compute the unreduced score that resulted in that reduced score to submit as the
-	# currently recorded score.
-	$options{recorded_score} =
-		($set->enable_reduced_scoring
-			&& $ce->{pg}{ansEvalDefaults}{reducedScoringValue}
-			&& defined $problem->sub_status
-			&& $problem->sub_status < $problem->status)
-		? (($problem->status - $problem->sub_status) / $ce->{pg}{ansEvalDefaults}{reducedScoringValue} +
-			$problem->sub_status)
-		: $problem->status;
+	$options{problemValue}         = $problem->value;
+	$options{recorded_score}       = compute_unreduced_score($ce, $problem, $set);
 	$options{num_of_correct_ans}   = $problem->num_correct;
 	$options{num_of_incorrect_ans} = $problem->num_incorrect;
 

@@ -40,6 +40,7 @@ use Caliper::Entity;
 our @EXPORT_OK = qw(
 	process_and_log_answer
 	compute_reduced_score
+	compute_unreduced_score
 	create_ans_str_from_responses
 	jitar_send_warning_email
 );
@@ -304,6 +305,19 @@ sub compute_reduced_score ($ce, $problem, $set, $score, $submitTime) {
 
 	# Return the reduced score.
 	return $problem->sub_status + $ce->{pg}{ansEvalDefaults}{reducedScoringValue} * ($score - $problem->sub_status);
+}
+
+# Compute the "unreduced" score for a problem.
+# If reduced scoring is enabled for the set and the sub_status is less than the status, then the status is the
+# reduced score.  In that case compute and return the unreduced score that resulted in that reduced score.
+sub compute_unreduced_score ($ce, $problem, $set) {
+	return
+		$set->enable_reduced_scoring
+		&& $ce->{pg}{ansEvalDefaults}{reducedScoringValue}
+		&& defined $problem->sub_status && $problem->sub_status < $problem->status
+		? (($problem->status - $problem->sub_status) / $ce->{pg}{ansEvalDefaults}{reducedScoringValue} +
+			$problem->sub_status)
+		: $problem->status;
 }
 
 # create answer string from responses hash
