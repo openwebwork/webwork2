@@ -15,9 +15,14 @@
 					aria-label="correct progress bar for current problem set" role="figure"
 					data-bs-toggle="tooltip" data-bs-placement="bottom" tabindex="0"
 					data-bs-title="<%= maketext('Correct: [_1]/[_2]', $total_correct, $num_of_problems) %>">
-					% # Perfect scores deserve some stars (&#9733;)!
 					% if ($total_correct == $num_of_problems) {
-						&#9733;Perfect&#9733;
+						% if ($is_reduced) {
+							% # If any of the scores are reduced the set is not perfect. It is merely complete.
+							<%= maketext('Complete') %>
+						% } else {
+							% # Perfect scores deserve some stars (&#9733;)!
+							&#9733;<%= maketext('Perfect') %>&#9733;
+						% }
 					% }
 				</div>
 			% }
