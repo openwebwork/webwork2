@@ -4,7 +4,7 @@
 	% # Output css for jquery-ui for problems to use.
 	<%= stylesheet getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.css') =%>
 	%
-	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'achievements.css' }) =%>
+	<%= stylesheet getAssetURL($ce, 'js/Achievements/achievements.css') =%>
 	%
 	% # Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	% # or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}

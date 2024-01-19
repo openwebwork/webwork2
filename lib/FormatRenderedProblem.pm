@@ -71,7 +71,7 @@ sub formatRenderedProblem {
 		[ 'bootstrap.css',                                              1 ],
 		[ 'node_modules/jquery-ui-dist/jquery-ui.min.css',              0 ],
 		[ 'node_modules/@fortawesome/fontawesome-free/css/all.min.css', 0 ],
-		[ 'math4.css',                                                  1 ],
+		[ 'js/System/system.css',                                       0 ],
 		[ 'math4-overrides.css',                                        1 ],
 	);
 
@@ -108,7 +108,7 @@ sub formatRenderedProblem {
 		[ 'node_modules/mathjax/es5/tex-svg.js',                    0, { defer => undef, id => 'MathJax-script' } ],
 		[ 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js', 0, { defer => undef } ],
 		[ 'js/Problem/problem.js',                                  0, { defer => undef } ],
-		[ 'math4.js',                                               1, { defer => undef } ],
+		[ 'js/System/system.js',                                    0, { defer => undef } ],
 		[ 'math4-overrides.js',                                     1, { defer => undef } ]
 	);
 
