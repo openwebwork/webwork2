@@ -437,43 +437,13 @@ Defined in this package.
 
 Print the content of the generated page.
 
-This renders a Mojo::Template.
-
-The defaultThemeTemplate in the course environment is used for the page layout.
-If that is not defined, the default "system" template, is used. The location of
-the template is looked up in the course environment.
+This renders the Mojo::Template corresponding to the called ContentGenerator sub-package.
 
 =cut
 
 sub content ($c) {
 	my $ce = $c->ce;
-
-	my $theme = $c->param('theme') || $ce->{defaultTheme};
-	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
-
-	my $layout = $ce->{defaultThemeTemplate} // 'system';
-
-	my $layoutName = "$theme/$layout";
-
-	# Attempt to prevent disaster when the theme layout file is missing.
-	unless (-r "$ce->{webworkDirs}{themes}/$theme/$layout.html.ep") {
-		if (-r "$ce->{webworkDirs}{themes}/math4/$layout.html.ep") {
-			$layoutName = "math4/$layout";
-			$theme      = HTML::Entities::encode_entities($theme);
-			warn "Theme $theme is not one of the available themes. "
-				. 'Please check the theme configuration '
-				. 'in the files localOverrides.conf, course.conf and '
-				. "simple.conf and on the course configuration page.\n";
-		} else {
-			$theme = HTML::Entities::encode_entities($theme);
-			die "Neither the theme $theme nor the defaultTheme math4 are available.  "
-				. 'Please notify your site administrator that the structure of the '
-				. 'themes directory needs attention.';
-
-		}
-	}
-
-	return $c->render(template => ((ref($c) =~ s/^WeBWorK:://r) =~ s/::/\//gr), layout => $layoutName);
+	return $c->render(template => ((ref($c) =~ s/^WeBWorK:://r) =~ s/::/\//gr), layout => 'system');
 }
 
 =back

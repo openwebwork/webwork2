@@ -75,7 +75,6 @@ $mail{feedbackRecipients}    = [
 ################################################################################
 
 #$defaultTheme = "math4";
-#$defaultThemeTemplate = "system";
 
 # The institution logo should be an image file in the theme's images folder
 #$institutionLogo = 'my_school_logo.png';

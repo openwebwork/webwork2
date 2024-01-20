@@ -81,9 +81,6 @@ sub startup ($app) {
 	# url_for_asset controller method.
 	unshift(@{ $app->static->paths }, $webwork_htdocs_dir);
 
-	# Add the themes directory to the template search paths.
-	push(@{ $app->renderer->paths }, $ce->{webworkDirs}{themes});
-
 	# Setup the Minion job queue. Make sure that any task added here is represented in the TASK_NAMES hash in
 	# WeBWorK::ContentGenerator::Instructor::JobManager.
 	$app->plugin(Minion => { $ce->{job_queue}{backend} => $ce->{job_queue}{database_dsn} });
