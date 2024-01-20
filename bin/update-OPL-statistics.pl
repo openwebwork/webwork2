@@ -111,7 +111,7 @@ foreach my $courseID (@courses) {
 		print "\n";
 	}
 
-	next if $courseID eq 'admin' || $courseID eq 'modelCourse';
+	next if $courseID eq $ce->{admin_course_id} || $courseID eq 'modelCourse';
 
 	# we extract the identifying information of the problem,
 	# the status, attempted flag, number of attempts.
