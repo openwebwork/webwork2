@@ -120,7 +120,8 @@ GetOptions('c|course=s' => \@courses, 'f|output-file=s' => \$output_file, 'h|hel
 
 pod2usage(2) if $show_help;
 
-@courses = listCourses(WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} })) unless @courses;
+my $minimal_ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
+@courses = listCourses($minimal_ce) unless @courses;
 
 sub write_past_answers_csv {
 	my $outFH = shift;
@@ -132,7 +133,7 @@ sub write_past_answers_csv {
 	my %OPL_tag_data;
 
 	for my $courseID (@courses) {
-		next if $courseID eq 'admin' || $courseID eq 'modelCourse';
+		next if $courseID eq ($minimal_ce->{admin_course_id} // 'admin') || $courseID eq 'modelCourse';
 
 		my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, courseName => $courseID });
 		my $db = WeBWorK::DB->new($ce->{dbLayout});
