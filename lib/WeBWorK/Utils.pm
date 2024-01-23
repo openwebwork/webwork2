@@ -894,7 +894,7 @@ sub writeTimingLogEntry {
 sub trim_spaces {
 	my $in = shift;
 	return '' unless $in;    # skip blank spaces
-        $in =~ s/^\x{FEFF}//;    #fix UTF-8 without BOM
+	$in =~ s/^\x{FEFF}//;    #fix UTF-8 without BOM
 	$in =~ s/^\s*|\s*$//g;
 	return ($in);
 }
