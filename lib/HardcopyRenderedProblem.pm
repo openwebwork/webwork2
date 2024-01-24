@@ -175,6 +175,7 @@ sub generate_hardcopy_tex {
 
 	push(@$errors, qq{Failed to create zip archive of directory "$working_dir"})
 		unless ($zip->writeToFileNamed($working_dir->dirname->child('hardcopy.zip')->to_string) == AZ_OK);
+
 	return;
 }
 

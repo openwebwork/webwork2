@@ -282,7 +282,7 @@ sub addCourse {
 
 		# try to create it
 		eval { Mojo::File($courseDir)->make_path };
-		warn "Failed to create $courseDirName directory '$courseDir': $!. "
+		warn "Failed to create $courseDirName directory '$courseDir': $@. "
 			. "You will have to create this directory manually."
 			if $@;
 	}
@@ -659,7 +659,7 @@ sub deleteCourse {
 			# try to delete the directory
 			debug("Going to delete $courseDir...\n");
 			eval { Mojo::File->new($courseDir)->remove_tree };
-			warn "A error occurred when deleting $courseDir" if $@;
+			warn "An error occurred when deleting $courseDir" if $@;
 		} else {
 			debug("courseDir $courseDir was already deleted.\n");
 		}

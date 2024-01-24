@@ -739,6 +739,7 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 		$c->add_error('Failed to create zip archive of directory "', $c->tag('code', $bundle_path), '"');
 		return "$bundle_path/$src_name";
 	}
+
 	return $zip_file;
 }
 
