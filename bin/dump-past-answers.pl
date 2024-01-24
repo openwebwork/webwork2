@@ -56,35 +56,36 @@ Set Info
 
     7 - Set type
     8 - Open Date (unix time)
-    9 - Due Date (unix time)
-    10 - Answer Date (unix time)
-    11 - Final Set Grade (percentage)
+    9 - Reduced Scoring Date (unix time)
+	10 - Due Date (unix time)
+    11 - Answer Date (unix time)
+    12 - Final Set Grade (percentage)
 
 Problem Info
 
-    12 - Problem Path
-    13 - Problem Value
-    14 - Problem Max Attempts
-    15 - Problem Seed
-    16 - Attempted
-    17 - Final Incorrect Attempts
-    18 - Final Correct Attempts
-    19 - Final Status
+    13 - Problem Path
+    14 - Problem Value
+    15 - Problem Max Attempts
+    16 - Problem Seed
+    17 - Attempted
+    18 - Final Incorrect Attempts
+    19 - Final Correct Attempts
+    20 - Final Status
 
 OPL Info
 
-    20 - Subject
-    21 - Chapter
-    22 - Section
-    23 - Keywords
+    21 - Subject
+    22 - Chapter
+    23 - Section
+    24 - Keywords
 
 Answer Info
 
-    24 - Answer timestamp (unix time)
-    25 - Attempt Number
-    26 - Raw status of attempt (percentage of correct blanks)
-    27 - Number of Answer Blanks
-    28/29 etc... - The following columns will come in pairs.  The first will be
+    25 - Answer timestamp (unix time)
+    26 - Attempt Number
+    27 - Raw status of attempt (percentage of correct blanks)
+    28 - Number of Answer Blanks
+    29/30 etc... - The following columns will come in pairs.  The first will be
                    the text of the answer contained in the answer blank
                    and the second will be the binary 0/1 status of the answer
                    blank.  There will be as many pairs as answer blanks.
@@ -185,8 +186,9 @@ sub write_past_answers_csv {
 				$row[3]  = $setID;
 				$row[7]  = $set->assignment_type;
 				$row[8]  = $set->open_date;
-				$row[9]  = $set->due_date;
-				$row[10] = $set->answer_date;
+				$row[9]  = $set->reduced_scoring_date;
+				$row[10] = $set->due_date;
+				$row[11] = $set->answer_date;
 
 				my @problems =
 					$set->assignment_type =~ /gateway/
@@ -200,31 +202,31 @@ sub write_past_answers_csv {
 					$total   += $problem->value;
 					$correct += $problem->value * $problem->status;
 				}
-				$row[11] = $total ? $correct / $total : 0;
+				$row[12] = $total ? $correct / $total : 0;
 
 				for my $problem (@problems) {
 					my $problemID = $problem->problem_id;
 
 					$row[4]  = $problemID;
-					$row[12] = $problem->source_file;
-					$row[13] = $problem->value;
-					$row[14] = $problem->max_attempts;
-					$row[15] = $problem->problem_seed;
-					$row[16] = $problem->attempted;
-					$row[17] = $problem->num_incorrect;
-					$row[18] = $problem->num_correct;
-					$row[19] = $problem->status;
+					$row[13] = $problem->source_file;
+					$row[14] = $problem->value;
+					$row[15] = $problem->max_attempts;
+					$row[16] = $problem->problem_seed;
+					$row[17] = $problem->attempted;
+					$row[18] = $problem->num_incorrect;
+					$row[19] = $problem->num_correct;
+					$row[20] = $problem->status;
 
 					# Get OPL tag data.
-					if ($row[12]) {
-						my $file = "$ce->{courseDirs}{templates}/$row[12]";
+					if ($row[13]) {
+						my $file = "$ce->{courseDirs}{templates}/$row[13]";
 						$OPL_tag_data{$file} = WeBWorK::Utils::Tags->new($file)
 							if !defined $OPL_tag_data{$file} && -e $file;
 						if (defined $OPL_tag_data{$file}) {
-							$row[20] = $OPL_tag_data{$file}{DBsubject};
-							$row[21] = $OPL_tag_data{$file}{DBchapter};
-							$row[22] = $OPL_tag_data{$file}{DBsection};
-							$row[23] =
+							$row[21] = $OPL_tag_data{$file}{DBsubject};
+							$row[22] = $OPL_tag_data{$file}{DBchapter};
+							$row[23] = $OPL_tag_data{$file}{DBsection};
+							$row[24] =
 								defined($OPL_tag_data{$file}{keywords})
 								? join(',', @{ $OPL_tag_data{$file}{keywords} })
 								: '';
@@ -238,17 +240,17 @@ sub write_past_answers_csv {
 
 						# If the source file for this answer is different from that of the merged user set,
 						# then update the row and get the OPL tag data for this file.
-						if ($row[12] ne $answer->source_file) {
-							$row[12] = $answer->source_file;
-							if ($row[12]) {
-								my $file = "$ce->{courseDirs}{templates}/$row[12]";
+						if ($row[13] ne $answer->source_file) {
+							$row[13] = $answer->source_file;
+							if ($row[13]) {
+								my $file = "$ce->{courseDirs}{templates}/$row[13]";
 								$OPL_tag_data{$file} = WeBWorK::Utils::Tags->new($file)
 									if !defined $OPL_tag_data{$file} && -e $file;
 								if (defined $OPL_tag_data{$file}) {
-									$row[20] = $OPL_tag_data{$file}{DBsubject};
-									$row[21] = $OPL_tag_data{$file}{DBchapter};
-									$row[22] = $OPL_tag_data{$file}{DBsection};
-									$row[23] =
+									$row[21] = $OPL_tag_data{$file}{DBsubject};
+									$row[22] = $OPL_tag_data{$file}{DBchapter};
+									$row[23] = $OPL_tag_data{$file}{DBsection};
+									$row[24] =
 										defined($OPL_tag_data{$file}{keywords})
 										? join(',', @{ $OPL_tag_data{$file}{keywords} })
 										: '';
@@ -258,10 +260,10 @@ sub write_past_answers_csv {
 
 						# Input answer specific info
 						$row[0]  = $answerID;
-						$row[15] = $answer->problem_seed
+						$row[16] = $answer->problem_seed
 							if defined $answer->problem_seed && $answer->problem_seed ne '';
-						$row[24] = $answer->timestamp;
-						$row[25] = $attempt_number;
+						$row[25] = $answer->timestamp;
+						$row[26] = $attempt_number;
 
 						my @scores  = split('',   $answer->scores);
 						my @answers = split("\t", $answer->answer_string, -1);
@@ -274,13 +276,13 @@ sub write_past_answers_csv {
 						# Compute the raw status
 						my $score = 0;
 						for (@scores) { $score += $_ }
-						$row[26] = $num_blanks ? $score / $num_blanks : 0;
+						$row[27] = $num_blanks ? $score / $num_blanks : 0;
 
-						$row[27] = $num_blanks;
+						$row[28] = $num_blanks;
 
 						for (my $i = 0; $i < $num_blanks; $i++) {
-							$row[ 28 + 2 * $i ] = $answers[$i];
-							$row[ 29 + 2 * $i ] = $scores[$i];
+							$row[ 29 + 2 * $i ] = $answers[$i];
+							$row[ 30 + 2 * $i ] = $scores[$i];
 						}
 
 						$csv->print($outFH, \@row) or warn "Couldn't print row";
