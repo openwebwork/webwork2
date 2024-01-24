@@ -25,6 +25,8 @@ WeBWorK::Utils::Rendering - utilities for rendering problems.
 use Mojo::IOLoop;
 use Mojo::JSON qw(decode_json);
 use Data::Structure::Util qw(unbless);
+use Digest::MD5 qw(md5_hex);
+use Encode qw(encode_utf8);
 
 use WeBWorK::Utils qw(formatDateTime);
 
@@ -48,7 +50,14 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	# If a problemUUID is provided in the form fields, then that is used.  Otherwise we create one that depends on
 	# the course, user, set, and problem.  Note that it is not a true UUID, but will be converted into one by PG.
 	$options{problemUUID} = $formFields->{problemUUID}
-		|| join('-', $user->user_id, $ce->{courseName}, 'set' . $set->set_id, 'prob' . $problem->problem_id);
+		|| join('-',
+			$user->user_id,
+			$ce->{courseName},
+			'set' . $set->set_id,
+			'prob' . $problem->problem_id,
+			defined $translationOptions->{r_source} && ${ $translationOptions->{r_source} }
+			? 'sourcehash' . md5_hex(encode_utf8(${ $translationOptions->{r_source} }))
+			: ());
 
 	$options{probNum}        = $problem->problem_id;
 	$options{questionNumber} = $options{probNum};
