@@ -68,6 +68,16 @@ $server_root_url   = '';
 # Be sure to use single quotes for the address or the @ sign will be interpreted as an array.
 $webwork_server_admin_email = '';
 
+# The following is the name of the admin course where admin level users can  create
+# courses, delete courses, and more. It is named 'admin' by default but for security,
+# you may want to change to something that cannot be guessed. While installing WeBWorK,
+# leave this as 'admin'. Once everything is running well, use the 'admin' course to
+# create a new course to serve as the admin course. You may need to copy all archives
+# from the 'admin' course into this new course. Then change $admin_course_id to the ID
+# of the new course and restart webwork2. You may then also want to archive and delete
+# the original 'admin' course.
+$admin_course_id = 'admin';
+
 # password strings (or any other string allowing special characters) should be specified inside single quotes
 # otherwise a string such as "someone@nowhere" will interpolate the contents of the array @nowhere -- which is probably
 # empty, but still not what you want.  Similar things happen with % and $

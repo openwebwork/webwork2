@@ -106,7 +106,7 @@
 		<%= maketext('To copy the templates and html folders from an existing course, select the course below.') =%>
 	</div>
 	<div class="row mb-3">
-		% my @existingCourses = sort { lc($a) cmp lc($b) } grep { $_ ne stash('courseID') } listCourses($ce);
+		% my @existingCourses = sort { lc($a) cmp lc($b) } listCourses($ce);
 		% unshift(@existingCourses, sort { lc($a) cmp lc($b) } @{ $ce->{modelCoursesForCopy} });
 		%
 		<%= label_for add_templates_course => maketext('Copy from:'),

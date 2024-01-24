@@ -1,6 +1,6 @@
 % use WeBWorK::Utils qw(jitar_id_to_seq);
 %
-% if ($ce->{courseName} eq 'admin') {
+% if ($ce->{courseName} eq $ce->{admin_course_id}) {
 	<%= include 'ContentGenerator/Base/admin_links' =%>
 	% last;
 % }
@@ -78,7 +78,7 @@
 			<li class="list-group-item nav-item"><%= $makelink->('options') %></li>
 		% }
 		%
-		% unless ($restricted_navigation || $courseID eq 'admin') {
+		% unless ($restricted_navigation || $courseID eq $ce->{admin_course_id}) {
 			<li class="list-group-item nav-item"><%= $makelink->('grades') %></li>
 		% }
 		%

@@ -52,7 +52,7 @@
 					unarchive_text => maketext('Unpack Archive')
 				},
 				%button =%>
-			% unless ($c->{courseName} eq 'admin') {
+			% unless ($c->{courseName} eq $c->ce->{admin_course_id}) {
 				<%= submit_button maketext('Archive Course'), id => 'ArchiveCourse', %button =%>
 			% }
 			<div class="d-none d-md-block" style="height: 10px"></div>

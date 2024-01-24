@@ -197,7 +197,7 @@ async sub dispatch ($c) {
 
 		return (0, 'This course does not exist.')
 			unless (-e $ce->{courseDirs}{root}
-				|| -e "$ce->{webwork_courses_dir}/admin/archives/$routeCaptures{courseID}.tar.gz");
+				|| -e "$ce->{webwork_courses_dir}/$ce->{admin_course_id}/archives/$routeCaptures{courseID}.tar.gz");
 		return (0, 'This course has been archived and closed.') unless -e $ce->{courseDirs}{root};
 
 		debug("...we can create a database object...\n");

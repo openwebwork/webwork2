@@ -40,7 +40,8 @@ sub createCourse {
 	die "Course actions disabled by configuration.\n" unless $admin_ce->{webservices}{enableCourseActions};
 
 	# Only users from the admin course with appropriate permissions are allowed to create a course.
-	die "Course creation allowed only for admin course users.\n" unless $admin_ce->{courseName} eq 'admin';
+	die "Course creation allowed only for admin course users.\n"
+		unless $admin_ce->{courseName} eq $admin_ce->{admin_course_id};
 
 	die "Course ID cannot exceed $admin_ce->{maxCourseIdLength} characters.\n"
 		if length($params->{name}) > $admin_ce->{maxCourseIdLength};

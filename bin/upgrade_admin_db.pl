@@ -31,9 +31,9 @@ use WeBWorK::Utils::CourseIntegrityCheck;
 ##########################
 # update admin course
 ##########################
-my $upgrade_courseID = 'admin';
-
-my $ce = WeBWorK::CourseEnvironment->new({
+my $ce               = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
+my $upgrade_courseID = $ce->{admin_course_id};
+$ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
 	courseName  => $upgrade_courseID,
 });

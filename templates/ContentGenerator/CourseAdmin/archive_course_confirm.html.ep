@@ -79,7 +79,7 @@
 	% if ($all_tables_ok && $directories_ok) {
 		% # No missing tables, missing fields, or directories
 		% # Warn about overwriting an existing archive
-		% my $archive_path = "$ce2->{webworkDirs}{courses}/admin/archives/$archive_courseID.tar.gz";
+		% my $archive_path = "$ce2->{webworkDirs}{courses}/$ce2->{admin_course_id}/archives/$archive_courseID.tar.gz";
 		% if (-e $archive_path && -w $archive_path) {
 			<p class="text-danger fw-bold">
 				<%= maketext(

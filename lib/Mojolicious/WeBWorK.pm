@@ -249,7 +249,8 @@ sub startup ($app) {
 	$cg_r->get('/')->to('Home#go')->name('root');
 
 	# The course admin route is set up here because of its special stash value.
-	$cg_r->any('/admin')->to('CourseAdmin#go', courseID => 'admin')->name('course_admin');
+	$cg_r->any("/$ce->{admin_course_id}")->to('CourseAdmin#go', courseID => $ce->{admin_course_id})
+		->name('course_admin');
 
 	setup_content_generator_routes($cg_r);
 
