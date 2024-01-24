@@ -172,7 +172,7 @@
 		% }
 		%
 		% # Footer
-		<div id="footer" role="contentinfo"><%= include 'ContentGenerator/Base/footer' %></div>
+		<%= include 'ContentGenerator/Base/footer' =%>
 	</div>
 </div>
 %

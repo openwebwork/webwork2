@@ -6,6 +6,8 @@
 	% $files = [];
 % }
 %
+% $c->stash->{footerWidthClass} = 'col-md-8';
+%
 % # Directory menu and date/size checkbox
 <div class="row">
 	<div class="col-md-8 mb-2">

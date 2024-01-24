@@ -11,6 +11,8 @@
 % my $userID    = $c->{user}->user_id;
 % my $eUserName = $c->{effectiveUser}->first_name . ' ' . $c->{effectiveUser}->last_name;
 %
+% $c->stash->{footerWidthClass} = 'col-lg-8 col-md-10';
+%
 %= form_for current_route, method => 'POST', begin
 	<%= $c->hidden_authen_fields =%>
 	%
