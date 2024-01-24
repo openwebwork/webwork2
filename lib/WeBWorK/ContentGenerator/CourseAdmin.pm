@@ -229,7 +229,7 @@ sub add_course_form ($c) {
 sub add_course_validate ($c) {
 	my $ce = $c->ce;
 
-	my $add_courseID                = trim_spaces($c->param('add_courseID'))                || '';
+	my $add_courseID                = trim_spaces($c->param('new_courseID'))                || '';
 	my $add_initial_userID          = trim_spaces($c->param('add_initial_userID'))          || '';
 	my $add_initial_password        = trim_spaces($c->param('add_initial_password'))        || '';
 	my $add_initial_confirmPassword = trim_spaces($c->param('add_initial_confirmPassword')) || '';
@@ -293,7 +293,7 @@ sub do_add_course ($c) {
 	my $db    = $c->db;
 	my $authz = $c->authz;
 
-	my $add_courseID          = trim_spaces($c->param('add_courseID'))          || '';
+	my $add_courseID          = trim_spaces($c->param('new_courseID'))          || '';
 	my $add_courseTitle       = trim_spaces($c->param('add_courseTitle'))       || '';
 	my $add_courseInstitution = trim_spaces($c->param('add_courseInstitution')) || '';
 

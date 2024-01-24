@@ -14,11 +14,11 @@
 	<div class="row mb-2">
 		<div class="col-lg-8 col-md-10">
 			<div class="form-floating mb-1">
-				<%= text_field add_courseID => '',
-					id          => 'add_courseID',
+				<%= text_field new_courseID => '',
+					id          => 'new_courseID',
 					placeholder => '',
 					class       => 'form-control' =%>
-				<%= label_for add_courseID => maketext('Course ID') =%>
+				<%= label_for new_courseID => maketext('Course ID') =%>
 			</div>
 			<div class="form-floating mb-1">
 				<%= text_field add_courseTitle => '',
