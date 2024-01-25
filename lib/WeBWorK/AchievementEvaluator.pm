@@ -136,10 +136,13 @@ sub checkForAchievements ($problem_in, $pg, $c, %options) {
 	# Otherwise only check the current problem.
 	for ($isGatewaySet ? @setProblems : $problem) {
 		if ($_->status >= 1 && $_->num_correct == 1) {
-			$globalUserAchievement->achievement_points(
-				$globalUserAchievement->achievement_points + $ce->{achievementPointsPerProblem});
-			# This variable is shared and should be considered iffy. (What does this mean? What is iffy?)
-			$achievementPoints += $ce->{achievementPointsPerProblem};
+			my $pointsEarned =
+				defined $_->{reduced_score} && $_->{reduced_score} < 1
+				? $ce->{achievementPointsPerProblemReduced}
+				: $ce->{achievementPointsPerProblem};
+			$globalUserAchievement->achievement_points($globalUserAchievement->achievement_points + $pointsEarned);
+			# This variable is shared and should be considered iffy.
+			$achievementPoints += $pointsEarned;
 			$globalData->{completeProblems} += 1;
 		}
 	}
