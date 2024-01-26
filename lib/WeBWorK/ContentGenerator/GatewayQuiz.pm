@@ -926,7 +926,8 @@ async sub pre_header_initialize ($c) {
 			if (ref $pg_result) {
 				my ($past_answers_string, $scores);    # Not used here
 				($past_answers_string, $encoded_last_answer_string, $scores, $answer_types_string) =
-					create_ans_str_from_responses($c->{formFields}, $pg_result);
+					create_ans_str_from_responses($c->{formFields}, $pg_result,
+						$pureProblem->flags =~ /:needs_grading/);
 
 				# Transfer persistent problem data from the PERSISTENCE_HASH:
 				# - Get keys to update first, to avoid extra work when no updated ar

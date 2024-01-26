@@ -93,7 +93,7 @@ async sub process_and_log_answer ($c) {
 	if (defined($answer_log) && defined($pureProblem) && $submitAnswers) {
 		my $past_answers_string;
 		($past_answers_string, $encoded_last_answer_string, $scores2, $answer_types_string) =
-			create_ans_str_from_responses($c->{formFields}, $pg);
+			create_ans_str_from_responses($c->{formFields}, $pg, $pureProblem->flags =~ /:needs_grading/);
 
 		if (!$authz->hasPermissions($effectiveUser, 'dont_log_past_answers')) {
 			# Use the time the submission processing began, but must convert the
@@ -308,14 +308,16 @@ sub compute_reduced_score ($ce, $problem, $set, $score, $submitTime) {
 # ($past_answers_string, $encoded_last_answer_string, $scores_string, $answer_types_string)
 #     = create_ans_str_from_responses($formFields, $pg)
 #
-# input: $formFields - a hash containing the form field input data for the submission.
-#        $pg         - a 'WeBWorK::PG' object.
+# input: $formFields     - a hash containing the form field input data for the submission.
+#        $pg             - a 'WeBWorK::PG' object.
+#        $needed_grading - a boolean value that indicates that this problem previously needed grading
+#                          (only matters for problems with essay questions).
 # output: (str, str, str, str)
 #
 # The extra persistence objects do need to be included in problem->last_answer
 # in order to keep those objects persistent -- as long as RECORD_FORM_ANSWER
 # is used to preserve objects by piggy backing on the persistence mechanism for answers.
-sub create_ans_str_from_responses ($formFields, $pg) {
+sub create_ans_str_from_responses ($formFields, $pg, $needed_grading = 0) {
 	my $scores_string = '';
 	my @answerTypes;
 	my $needsGrading = '';
@@ -332,8 +334,19 @@ sub create_ans_str_from_responses ($formFields, $pg) {
 			push @past_answers_order, $response_id;
 			push @last_answer_order,  $response_id;
 
-			# Determine if this is an essay answer and thus needs to be graded.
-			$needsGrading = ':needs_grading' if $answerTypes[-1] eq 'essay';
+			# Determine if this is an essay answer that needs to be graded.
+			if (
+				$answerTypes[-1] eq 'essay'
+				&& (defined $formFields->{$response_id} && $formFields->{$response_id} ne '')
+				&& (
+					$needed_grading
+					|| (!defined $formFields->{"previous_${response_id}"}
+						|| $formFields->{"previous_${response_id}"} ne $formFields->{$response_id})
+				)
+				)
+			{
+				$needsGrading = ':needs_grading';
+			}
 		}
 	}
 
