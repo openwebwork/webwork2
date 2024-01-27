@@ -88,46 +88,6 @@ async sub dispatch ($c) {
 	my $displayModule = ref $c;
 	my %routeCaptures = %{ $c->stash->{'mojo.captures'} };
 
-	if ($c->current_route =~ /^(render_rpc|instructor_rpc|html2xml)$/) {
-		$c->{rpc} = 1;
-
-		$c->stash(disable_cookies => 1)
-			if $c->current_route eq 'render_rpc' && $c->param('disableCookies') && $c->config('allow_unsecured_rpc');
-
-		# This provides compatibility for legacy html2xml parameters.
-		# This should be deleted when the html2xml endpoint is removed.
-		if ($c->current_route eq 'html2xml') {
-			$c->stash(disable_cookies => 1) if $c->config('allow_unsecured_rpc');
-			for ([ 'userID', 'user' ], [ 'course_password', 'passwd' ], [ 'session_key', 'key' ]) {
-				$c->param($_->[1], $c->param($_->[0])) if defined $c->param($_->[0]) && !defined $c->param($_->[1]);
-			}
-		}
-
-		# Get the courseID from the parameters for a remote procedure call.
-		$routeCaptures{courseID} = $c->stash->{courseID} = $c->param('courseID') if $c->param('courseID');
-	}
-
-	# If this is the login phase of an LTI 1.3 login, then extract the courseID from the target_link_uri.
-	if ($c->current_route eq 'ltiadvantage_login') {
-		my $target = $c->param('target_link_uri') ? $c->url_for($c->param('target_link_uri'))->path : '';
-		$c->stash->{courseID} = $1 if $target =~ m|$location/([^/]*)|;
-		$routeCaptures{courseID} = $c->stash->{courseID} || '___';
-	}
-
-	# If this is the launch phase of an LTI 1.3 login, then get the courseID from the state.  Note that this data can
-	# not be trusted.  It will be verified once the JWT is decrypted.  Also see the comments about the hacks involved
-	# here in the WeBWorK::Authen::LTIAdvantage::verify method.
-	if ($c->current_route eq 'ltiadvantage_launch') {
-		$c->stash->{LTIState} = $c->param('state') || ',set_id:';
-		($c->stash->{lti_lms_user_id}, $c->stash->{courseID}) = split ',set_id:', $c->stash->{LTIState};
-		if ($c->stash->{courseID} && $c->stash->{lti_lms_user_id}) {
-			$c->stash->{courseID} =~ s/@/-/g;
-			$routeCaptures{courseID} = $c->stash->{courseID};
-		} else {
-			$routeCaptures{courseID} = '___';
-		}
-	}
-
 	debug("The display module for this route is $displayModule\n");
 	debug("This route has the following captures:\n");
 	for my $key (keys %routeCaptures) {
@@ -157,6 +117,9 @@ async sub dispatch ($c) {
 	}
 
 	debug(('-' x 80) . "\n");
+
+	# A controller can customize route captures, parameters, and stash values if it provides an initializeRoute method.
+	$c->initializeRoute(\%routeCaptures) if $c->can('initializeRoute');
 
 	# Create Course Environment
 	debug("We need to get a course environment (with or without a courseID!)\n");
@@ -201,9 +164,11 @@ async sub dispatch ($c) {
 		debug("We got a courseID from the route, now we can do some stuff:\n");
 
 		return (0, 'This course does not exist.')
-			unless (-e $ce->{courseDirs}{root}
+			unless ($routeCaptures{courseID} eq '___'
+				|| -e $ce->{courseDirs}{root}
 				|| -e "$ce->{webwork_courses_dir}/$ce->{admin_course_id}/archives/$routeCaptures{courseID}.tar.gz");
-		return (0, 'This course has been archived and closed.') unless -e $ce->{courseDirs}{root};
+		return (0, 'This course has been archived and closed.')
+			unless $routeCaptures{courseID} eq '___' || -e $ce->{courseDirs}{root};
 
 		debug("...we can create a database object...\n");
 		my $db = WeBWorK::DB->new($ce->{dbLayout});
@@ -281,6 +246,11 @@ async sub dispatch ($c) {
 			}
 			return 0;
 		}
+	} else {
+		return (0,
+			'No WeBWorK course was found associated to this LMS course. '
+				. 'If this is an error, please contact the WeBWorK system administrator.')
+			if $c->current_route eq 'ltiadvantage_login';
 	}
 
 	return 1;

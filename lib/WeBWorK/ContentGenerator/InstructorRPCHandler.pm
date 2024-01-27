@@ -39,6 +39,15 @@ use JSON;
 
 use WebworkWebservice;
 
+sub initializeRoute ($c, $routeCaptures) {
+	$c->{rpc} = 1;
+
+	# Get the courseID from the parameters.
+	$routeCaptures->{courseID} = $c->param('courseID') if $c->param('courseID');
+
+	return;
+}
+
 async sub pre_header_initialize ($c) {
 	unless ($c->authen->was_verified) {
 		$c->{output} = $c->maketext('Authentication failed. Log in again to continue.');

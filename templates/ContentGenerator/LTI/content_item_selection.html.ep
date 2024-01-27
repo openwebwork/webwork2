@@ -1,0 +1,61 @@
+% use WeBWorK::Utils qw(format_set_name_display getAssetURL);
+%
+<!DOCTYPE html>
+<html <%== $c->output_course_lang_and_dir %>>
+%
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= maketext('Available Content') %></title>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
+	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
+</head>
+%
+<body class="m-3">
+	<div class="container-fluid">
+		<h1><%== maketext('Available Content') %></h1>
+		<%= form_for current_route, method => 'POST', name => 'lti_content_selection', begin =%>
+			<%= $c->hidden_authen_fields =%>
+			<%= hidden_field courseID => $courseID =%>
+			% for (keys %$forwardParams) {
+				<%= hidden_field $_ => $forwardParams->{$_} =%>
+			% }
+			% if ($c->ce->{LTIGradeMode} ne 'homework') {
+				<div class="form-check mb-3">
+					<%= check_box course_home_link => 1, id => 'course_home_link', class => 'form-check-input' =%>
+					<%= label_for course_home_link => maketext('Assignments (Course Home)'),
+						class => 'form-check-label' =%>
+				</div>
+			% }
+			<fieldset class="mb-3">
+				<legend><%= maketext('Visible Sets') %></legend>
+				% if ($acceptMultiple) {
+					<div class="form-check mb-2">
+						<%= check_box 'select-all' => '', id => 'select-all',
+							class => 'select-all form-check-input',
+							'aria-label' => maketext('Select all available sets'),
+							data => { select_group => 'selected_sets' } =%>
+						<%= label_for 'select-all' => maketext('Select all sets'), class => 'form-check-label' =%>
+					</div>
+				% }
+				% for (@$visibleSets) {
+					% my $set_id = $_->set_id;
+					<div class="form-check">
+						% if ($acceptMultiple) {
+							<%= check_box selected_sets => $set_id, id => "${set_id}_id",
+								class => 'form-check-input' =%>
+						% } else {
+							<%= radio_button selected_sets => $set_id, id => "${set_id}_id",
+								class => 'form-check-input' =%>
+						% }
+						<%= label_for "${set_id}_id" => format_set_name_display($set_id),
+							class => 'form-check-label' =%>
+					</div>
+				% }
+			</fieldset>
+			<%= submit_button maketext('Submit Choices'), class => 'btn btn-primary' =%>
+		<% end =%>
+	</div>
+</body>
+%
+</html>
