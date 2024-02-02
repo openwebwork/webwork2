@@ -32,8 +32,16 @@
 		<div class="row mb-3">
 			<%= label_for 'from', class => 'col-form-label col-auto', begin =%><b><%= maketext('From:') %></b><% end =%>
 			<div class="col-auto">
-				<%= text_field from => $user_email_address, class => 'form-control', size => 40, id => 'from',
-					$user_email_address ? (disabled => undef, readonly => undef) : (required => undef) =%>
+				<%= email_field from => $user_email_address, class => 'form-control', size => 40, id => 'from',
+					$user_email_address
+						? (disabled => undef, readonly => undef)
+						: (
+							required       => undef,
+							placeholder    => 'Email address',
+							autocorrect    => 'off',
+							autocapitalize => 'off',
+							pattern        => '^[a-zA-Z0-9.!#$%&\'*+\\/=?^_`~\\-]+@[a-zA-Z0-9\\-]+\\.[a-zA-Z0-9.\\-]+$'
+						) =%>
 			</div>
 		</div>
 		% if (stash 'send_error') {
