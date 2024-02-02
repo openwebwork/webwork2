@@ -99,27 +99,29 @@ sub initialize ($c) {
 
 		# Determine the sender of the email.
 		my $sender;
-		if ($user) {
-			if ($user->email_address) {
-				$sender = $user->rfc822_mailbox;
-			} else {
-				if ($user->full_name) {
-					$sender = $user->full_name . " <$from>";
-				} else {
-					$sender = $from;
-				}
-			}
-		} else {
-			$sender = $from;
+		if ($user && $user->email_address) {
+			$from   = $user->email_address;
+			$sender = $user->rfc822_mailbox;
 		}
 
-		unless ($sender) {
+		unless ($from) {
 			$c->stash->{send_error} = $c->maketext('No Sender specified.');
+			return;
+		}
+		unless ($from =~ /^[a-zA-Z0-9.!#$%&\'*+\/=?^_`~\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9.\-]+$/) {
+			$c->stash->{send_error} = $c->maketext('Sender is not a valid email address.');
 			return;
 		}
 		unless ($feedback) {
 			$c->stash->{send_error} = $c->maketext('Message was blank.');
 			return;
+		}
+		unless ($sender) {
+			if ($user && $user->full_name) {
+				$sender = $user->full_name . " <$from>";
+			} else {
+				$sender = $from;
+			}
 		}
 
 		my %subject_map = (
