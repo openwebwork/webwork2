@@ -192,7 +192,7 @@ sub generate_hardcopy_pdf {
 		'TEXINPUTS=.:'
 		. shell_quote($ws->c->ce->{webworkDirs}{assetsTex}) . ':'
 		. shell_quote($ws->c->ce->{pg}{directories}{assetsTex}) . ': '
-		. $ws->c->ce->{externalPrograms}{pdflatex}
+		. $ws->c->externalPrograms->{pdflatex}
 		. ' > pdflatex.stdout 2> pdflatex.stderr hardcopy';
 
 	if (my $rawexit = system $pdflatex_cmd) {

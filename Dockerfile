@@ -244,7 +244,7 @@ COPY docker-config/docker-entrypoint.sh /usr/local/bin/
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-# Add enviroment variables to control some things during container startup
+# Add environment variables to control some things during container startup
 ENV SSL=0 \
 	PAPERSIZE=letter \
 	SYSTEM_TIMEZONE=UTC \

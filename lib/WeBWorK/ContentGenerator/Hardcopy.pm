@@ -765,7 +765,7 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 		. "TEXINPUTS=.:"
 		. shell_quote($c->ce->{webworkDirs}{assetsTex}) . ':'
 		. shell_quote($c->ce->{pg}{directories}{assetsTex}) . ': '
-		. $c->ce->{externalPrograms}{pdflatex}
+		. $c->externalPrograms->{pdflatex}
 		. " >pdflatex.stdout 2>pdflatex.stderr hardcopy";
 	if (my $rawexit = system $pdflatex_cmd) {
 		my $exit   = $rawexit >> 8;
@@ -1176,10 +1176,10 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $themeTree, $prob
 				problemID => $MergedProblem->problem_id,
 			),
 			$MergedProblem->problem_id == 0
-				# link for a fake problem (like a header file)
+			# link for a fake problem (like a header file)
 			? (params =>
 					{ sourceFilePath => $MergedProblem->source_file, problemSeed => $MergedProblem->problem_seed })
-				# link for a real problem
+			# link for a real problem
 			: (),
 		);
 
