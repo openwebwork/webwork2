@@ -131,9 +131,9 @@ sub getConfigValues ($c, $ce) {
 	opendir(my $dh2, $localizeDir) || die "can't opendir $localizeDir: $!";
 	my %seen      = ();    # find the languages in the localize direction
 	my $languages = [
-		grep { !$seen{$_}++ }                      # remove duplicate items
-		map  { $_ =~ s/\.[pm]o$//r }               # get rid of suffix
-		grep {/\.mo$|\.po$/} sort readdir($dh2)    #look at only .mo and .po files
+		grep     { !$seen{$_}++ }                      # remove duplicate items
+			map  { $_ =~ s/\.[pm]o$//r }               # get rid of suffix
+			grep {/\.mo$|\.po$/} sort readdir($dh2)    #look at only .mo and .po files
 
 	];
 
