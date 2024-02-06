@@ -92,6 +92,7 @@ my @modulesList = qw(
 	Errno
 	Exception::Class
 	File::Copy
+	File::Copy::Recursive
 	File::Fetch
 	File::Find
 	File::Find::Rule
