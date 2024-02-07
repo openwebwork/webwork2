@@ -24,6 +24,7 @@ WeBWorK::ContentGenerator::CourseAdmin - Add, rename, and delete courses.
 
 use Net::IP;    # needed for location management
 use File::Path 'remove_tree';
+use Mojo::File;
 use File::stat;
 use Time::localtime;
 
@@ -1209,7 +1210,7 @@ sub unarchive_course_validate ($c) {
 	my $new_courseID       = $c->param('new_courseID')       || '';
 
 	# Use the archive name for the course unless a course id was provided.
-	my $courseID = ($c->param('create_newCourseID') ? $new_courseID : $unarchive_courseID) =~ s/\.tar\.gz$//r;
+	my $courseID = ($new_courseID =~ /\S/ ? $new_courseID : $unarchive_courseID) =~ s/\.tar\.gz$//r;
 
 	debug(" unarchive_courseID $unarchive_courseID new_courseID $new_courseID ");
 
@@ -1242,7 +1243,7 @@ sub unarchive_course_confirm ($c) {
 	my $unarchive_courseID = $c->param('unarchive_courseID') || '';
 	my $new_courseID       = $c->param('new_courseID')       || '';
 
-	my $courseID = ($c->param('create_newCourseID') ? $new_courseID : $unarchive_courseID) =~ s/\.tar\.gz//r;
+	my $courseID = ($new_courseID =~ /\S/ ? $new_courseID : $unarchive_courseID) =~ s/\.tar\.gz//r;
 
 	debug(" unarchive_courseID $unarchive_courseID new_courseID $new_courseID ");
 
@@ -1277,13 +1278,32 @@ sub do_unarchive_course ($c) {
 			class => 'alert alert-danger p-1 mb-2',
 			$c->c(
 				$c->tag(
-					'p', $c->maketext('An error occurred while archiving the course [_1]:', $unarchive_courseID)
+					'p', $c->maketext('An error occurred while unarchiving the course [_1]:', $unarchive_courseID)
 				),
 				$c->tag('div', class => 'font-monospace', $error)
 			)->join('')
 		);
 	} else {
 		writeLog($ce, 'hosted_courses', join("\t", "\tunarchived", '', '', "$unarchive_courseID to $new_courseID",));
+
+		if ($c->param('clean_up_course')) {
+			my $ce_new = WeBWorK::CourseEnvironment->new({ courseName => $new_courseID });
+			my $db_new = WeBWorK::DB->new($ce_new->{dbLayout});
+
+			for my $student_id ($db_new->listPermissionLevelsWhere({ permission => $ce->{userRoles}{student} })) {
+				$db_new->deleteUser($student_id->[0]);
+			}
+
+			for my $file (values %{ $ce_new->{courseFiles}{logs} }) {
+				eval { Mojo::File->new($file)->remove };
+				$c->addbadmessage($c->maketext('Failed to remove file [_1]: [_2]', $file, $@)) if $@;
+			}
+
+			if (-d $ce_new->{courseDirs}{scoring}) {
+				eval { Mojo::File->new($ce_new->{courseDirs}{scoring})->remove_tree({ keep_root => 1 }) };
+				$c->addbadmessage($c->maketext('Failed to remove scoring files: [_1]', $@)) if $@;
+			}
+		}
 
 		return $c->c(
 			$c->tag(

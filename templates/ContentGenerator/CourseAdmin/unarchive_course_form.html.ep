@@ -24,21 +24,25 @@
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
-				<div class="col-sm-4">
-					<div class="form-check">
-						<label class="form-check-label" id="create_newCourseID_label">
-							<%= maketext('New Name:') %>
-							<%= check_box create_newCourseID => 1, class => 'form-check-input' %>
-						</label>
-					</div>
-				</div>
+				<%= label_for new_courseID => maketext('New Name:'), class => 'col-sm-4 col-form-label' =%>
 				<div class="col-sm-8">
 					<%= text_field new_courseID => '',
-						size              => 25,
-						maxlength         => $ce->{maxCourseIdLength},
-						class             => 'form-control',
-						'aria-labelledby' => 'create_newCourseID_label'
+						id        => 'new_courseID',
+						size      => 25,
+						maxlength => $ce->{maxCourseIdLength},
+						class     => 'col-sm-8 form-control'
 					=%>
+				</div>
+			</div>
+			<div class="row mb-2">
+				<div class="col-12">
+					<div class="form-check">
+						<%= check_box clean_up_course => 1, class => 'form-check-input', id => 'clean_up_course' %>
+						<label for="clean_up_course" class="form-check-label" id="clean_up_course">
+							<%= maketext('Clean course after unarchiving '
+								. '(remove student users, scoring files, log files)') %>
+						</label>
+					</div>
 				</div>
 			</div>
 		</div>
