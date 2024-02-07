@@ -285,6 +285,17 @@ sub addCourse {
 			"Failed to create $courseDirName directory '$courseDir': $!. You will have to create this directory manually.\n";
 	}
 
+	# hide the new course?
+
+	if (defined $ce->{new_courses_hidden_status} && $ce->{new_courses_hidden_status} eq 'hidden') {
+		my $hideDirFile = "$ce->{webworkDirs}{courses}/$courseID/hide_directory";
+		open(my $HIDEFILE, '>', $hideDirFile);
+		print $HIDEFILE 'Place a file named "hide_directory" in a course or other directory and it will not show up '
+			. 'in the courses list on the WeBWorK home page. It will still appear in the '
+			. 'Course Administration listing.';
+		close $HIDEFILE;
+	}
+
 	##### step 2: create course database #####
 
 	my $db               = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
@@ -979,9 +990,28 @@ sub unarchiveCourse {
 			"Failed to create html_temp directory '$tmpDir': $!. You will have to create this directory manually.\n";
 	}
 
+	# If the course was given a new name, honor $ce->{new_courses_hidden_status}
+	if (defined $newCourseID
+		&& $newCourseID ne $currCourseID
+		&& defined $ce->{new_courses_hidden_status}
+		&& $ce->{new_courses_hidden_status} =~ /^(hidden|visible)$/)
+	{
+		my $hideDirFile = "$ce->{webworkDirs}{courses}/$currCourseID/hide_directory";
+		if ($ce->{new_courses_hidden_status} eq 'hidden' && !(-f $hideDirFile)) {
+			open(my $HIDEFILE, '>', $hideDirFile);
+			print $HIDEFILE
+				'Place a file named "hide_directory" in a course or other directory and it will not show up '
+				. 'in the courses list on the WeBWorK home page. It will still appear in the '
+				. 'Course Administration listing.';
+			close $HIDEFILE;
+		} elsif ($ce->{new_courses_hidden_status} eq 'visible' && -f $hideDirFile) {
+			unlink $hideDirFile;
+		}
+	}
+
 	##### step 6: rename course #####
 
-	if (defined $newCourseID and $newCourseID ne $currCourseID) {
+	if (defined $newCourseID && $newCourseID ne $currCourseID) {
 		renameCourse(
 			courseID     => $currCourseID,
 			ce           => $ce2,

@@ -78,6 +78,21 @@ $webwork_server_admin_email = '';
 # the original 'admin' course.
 $admin_course_id = 'admin';
 
+# When new courses are created using the admin course, this setting controls
+# whether or not they will be hidden.  Setting this to anything other than
+# "hidden" or "visible" (or leaving it unset) means that courses created using
+# "Add Courses" are not hidden, and all unarchived courses have whatever hidden
+# status they had when archived.
+# Setting this to "hidden" means that courses created using "Add Courses" and
+# courses created using "Unarchive Courses" with a new course ID will be hidden.
+# Unarchived courses that keep their original name will keep their hidden
+# status.
+# Setting this to "visible" means that courses created using "Add Courses" and
+# courses created using "Unarchive Courses" with a new course ID will be visible.
+# Unarchived courses that keep their original name will keep their hidden
+# status.
+#$new_courses_hidden_status = 'hidden';
+
 # password strings (or any other string allowing special characters) should be specified inside single quotes
 # otherwise a string such as "someone@nowhere" will interpolate the contents of the array @nowhere -- which is probably
 # empty, but still not what you want.  Similar things happen with % and $
