@@ -702,6 +702,17 @@ ul.courses-list {
 	}
 }
 
+// Do not delete this.  Although it is a duplicate of the rule in PG's problem.scss file, webwork2 adds these author
+// comments to the page (in the PG problem editor and the library browser) when the PG problems are in iframes and the
+// comments are outside of the iframes.  Thus the styles in the problem.scss file do not apply.
+div.AuthorComment {
+	background-color: #00e0e0;
+	color: black;
+	padding: 0.25rem;
+	border: 1px solid transparent;
+	border-radius: 0.25rem;
+}
+
 /* Footer */
 #footer {
 	font-size: 0.8em;
