@@ -29,7 +29,8 @@ use WeBWorK::Utils qw(decodeAnswers is_restricted path_is_subdir before after be
 	wwRound is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status
 	jitar_id_to_seq seq_to_jitar_id jitar_problem_finished format_set_name_display);
 use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
-use WeBWorK::Utils::ProblemProcessing qw/process_and_log_answer jitar_send_warning_email compute_reduced_score/;
+use WeBWorK::Utils::ProblemProcessing qw(process_and_log_answer jitar_send_warning_email compute_reduced_score
+	compute_unreduced_score);
 use WeBWorK::AchievementEvaluator qw(checkForAchievements);
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Localize;
@@ -729,6 +730,7 @@ sub siblings ($c) {
 	my $total_correct    = 0;
 	my $total_incorrect  = 0;
 	my $total_inprogress = 0;
+	my $is_reduced       = 0;
 	my $currentProblemID = $c->{invalidProblem} ? 0 : $c->{problem}->problem_id;
 
 	my $progressBarEnabled = $c->ce->{pg}{options}{enableProgressBar};
@@ -753,7 +755,8 @@ sub siblings ($c) {
 			$num_of_problems++;
 			my $total_attempts = $problemRecord->num_correct + $problemRecord->num_incorrect;
 
-			my $status = $problemRecord->status;
+			my $status = compute_unreduced_score($ce, $problemRecord, $c->{set});
+			$is_reduced = 1 if $status > $problemRecord->status;
 			if ($isJitarSet) {
 				$status = jitar_problem_adjusted_status($problemRecord, $db);
 			}
@@ -832,6 +835,7 @@ sub siblings ($c) {
 		total_correct    => $total_correct,
 		total_incorrect  => $total_incorrect,
 		total_inprogress => $total_inprogress,
+		is_reduced       => $is_reduced
 	);
 }
 
