@@ -123,7 +123,6 @@ sub hardcopyRenderedProblem {
 # This subroutine assumes that the TeX source file is located at $working_dir/hardcopy.tex.
 sub generate_hardcopy_tex {
 	my ($ws, $working_dir, $errors) = @_;
-
 	my $src_file = $working_dir->child('hardcopy.tex');
 
 	# Copy the common tex files into the working directory
@@ -155,8 +154,7 @@ sub generate_hardcopy_tex {
 				$data =~ s{$file_path}{$file_path->basename}ge;
 
 				eval { $file_path->copy_to($working_dir) };
-				push(@$errors, qq{Failed to copy image "$file_path" into directory "$working_dir": $@})
-					if $@;
+				push(@$errors, qq{Failed to copy image "$file_path" into directory "$working_dir": $@}) if $@;
 			}
 
 			# Rewrite the tex file with the image paths stripped.

@@ -23,8 +23,8 @@ problem sets.
 
 =cut
 
-use File::Path;
 use File::Temp qw/tempdir/;
+use Mojo::File;
 use String::ShellQuote;
 use Archive::Zip qw(:ERROR_CODES);
 use XML::LibXML;
@@ -485,10 +485,7 @@ sub display_form ($c) {
 	);
 }
 
-################################################################################
-# harddcopy generating subroutines
-################################################################################
-
+# Generate a hardcopy for a given user(s) and set(s).
 async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 	my $ce    = $c->ce;
 	my $db    = $c->db;
@@ -497,9 +494,9 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 	my $courseID = $c->stash('courseID');
 	my $userID   = $c->param('user');
 
-	# Create the temporary directory.  Use mkpath to ensure it exists (mkpath is pretty much `mkdir -p`).
-	my $temp_dir_parent_path = "$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID";
-	eval { mkpath($temp_dir_parent_path) };
+	# Create the temporary directory.
+	my $temp_dir_parent_path = Mojo::File->new("$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID");
+	eval { $temp_dir_parent_path->make_path };
 	if ($@) {
 		$c->add_error("Couldn't create hardcopy directory $temp_dir_parent_path: ", $c->tag('code', $@));
 		return;
@@ -539,7 +536,6 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 		$c->add_error('Failed to open file "', $c->tag('code', $tex_file_path), '" for writing: ', $c->tag('code', $!));
 		$c->delete_temp_dir($temp_dir_path);
 		return;
-
 	}
 
 	# If no problems were successfully rendered, we can't continue.
@@ -596,19 +592,14 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 
 	# Try to move the hardcopy file out of the temp directory.
 	my $final_file_final_path = "$temp_dir_parent_path/$final_file_name";
-	my $mv_cmd = '2>&1 ' . $ce->{externalPrograms}{mv} . ' ' . shell_quote($final_file_path, $final_file_final_path);
-	my $mv_out = readpipe $mv_cmd;
-	if ($?) {
+	eval { Mojo::File->new($final_file_path)->move_to($final_file_final_path) };
+	if ($@) {
 		$c->add_error(
 			'Failed to move hardcopy file "',
 			$c->tag('code', $final_file_name),
-			'" from "',
-			$c->tag('code', $temp_dir_path),
-			'" to "',
-			$c->tag('code', $temp_dir_parent_path),
-			'":',
-			$c->tag('br'),
-			$c->tag('pre', $mv_out)
+			'" from "', $c->tag('code', $temp_dir_path),
+			'" to "',   $c->tag('code', $temp_dir_parent_path),
+			'":',       $c->tag('br'), $c->tag('pre', $@)
 		);
 		$final_file_final_path = "$temp_dir_rel_path/$final_file_name";
 	}
@@ -633,16 +624,11 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 
 # helper function to remove temp dirs
 sub delete_temp_dir ($c, $temp_dir_path) {
-	my $rm_cmd = '2>&1 ' . $c->ce->{externalPrograms}{rm} . ' -rf ' . shell_quote($temp_dir_path);
-	my $rm_out = readpipe $rm_cmd;
-	if ($?) {
-		$c->add_error(
-			'Failed to remove temporary directory "',
-			$c->tag('code', $temp_dir_path),
-			'":', $c->tag('br'), $c->tag('pre', $rm_out)
-		);
+	eval { Mojo::File->new($temp_dir_path)->remove_tree };
+	if ($@) {
+		$c->add_error('Failed to remove temporary directory "',
+			$c->tag('code', $temp_dir_path, '":', $c->tag('br'), $c->tag('pre', $@)));
 	}
-
 	return;
 }
 
@@ -656,30 +642,28 @@ sub delete_temp_dir ($c, $temp_dir_path) {
 
 sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	my $src_name    = "hardcopy.tex";
-	my $bundle_path = "$temp_dir_path/$final_file_basename";
+	my $bundle_path = Mojo::File->new("$temp_dir_path/$final_file_basename");
 
 	# Create directory for the tex bundle
-	if (!mkdir $bundle_path) {
+	eval { $bundle_path->make_path };
+	if ($@) {
 		$c->add_error(
 			'Failed to create directory "',
 			$c->tag('code', $bundle_path),
-			'": ', $c->tag('br'), $c->tag('pre', $!)
+			'": ', $c->tag('br'), $c->tag('pre', $@)
 		);
 		return $src_name;
 	}
 
 	# Move the tex file into the bundle directory
-	my $mv_cmd =
-		"2>&1 " . $c->ce->{externalPrograms}{mv} . " " . shell_quote("$temp_dir_path/$src_name", $bundle_path);
-	my $mv_out = readpipe $mv_cmd;
-
-	if ($?) {
+	eval { Mojo::File->new("$temp_dir_path/$src_name")->move_to($bundle_path) };
+	if ($@) {
 		$c->add_error(
 			'Failed to move "',
 			$c->tag('code', $src_name),
 			'" into directory "',
 			$c->tag('code', $bundle_path),
-			'":', $c->tag('br'), $c->tag('pre', $mv_out)
+			'":', $c->tag('br'), $c->tag('pre', $@)
 		);
 		return $src_name;
 	}
@@ -687,30 +671,26 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	# Copy the common tex files into the bundle directory
 	my $ce = $c->ce;
 	for (qw{webwork2.sty webwork_logo.png}) {
-		my $cp_cmd =
-			"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{webworkDirs}{assetsTex}/$_", $bundle_path);
-		my $cp_out = readpipe $cp_cmd;
-		if ($?) {
+		eval { Mojo::File->new("$ce->{webworkDirs}{assetsTex}/$_")->copy_to($bundle_path) };
+		if ($@) {
 			$c->add_error(
 				'Failed to copy "',
 				$c->tag('code', "$ce->{webworkDirs}{assetsTex}/$_"),
 				'" into directory "',
 				$c->tag('code', $bundle_path),
-				'":', $c->tag('br'), $c->tag('pre', $cp_out)
+				'":', $c->tag('br'), $c->tag('pre', $@)
 			);
 		}
 	}
 	for (qw{pg.sty PGML.tex CAPA.tex}) {
-		my $cp_cmd =
-			"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{pg}{directories}{assetsTex}/$_", $bundle_path);
-		my $cp_out = readpipe $cp_cmd;
-		if ($?) {
+		eval { Mojo::File->new("$ce->{pg}{directories}{assetsTex}/$_")->copy_to($bundle_path) };
+		if ($@) {
 			$c->add_error(
 				'Failed to copy "',
 				$c->tag('code', "$ce->{pg}{directories}{assetsTex}/$_"),
 				'" into directory "',
 				$c->tag('code', $bundle_path),
-				'":', $c->tag('br'), $c->tag('pre', $cp_out)
+				'":', $c->tag('br'), $c->tag('pre', $@)
 			);
 		}
 	}
@@ -728,22 +708,21 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 				$data =~ s{$resource}{$basename}g;
 
 				# Copy the image file into the bundle directory.
-				my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote($resource, $bundle_path);
-				my $cp_out = readpipe $cp_cmd;
-				if ($?) {
+				eval { Mojo::File->new($resource)->copy_to($bundle_path) };
+
+				if ($@) {
 					$c->add_error(
 						'Failed to copy image "',
 						$c->tag('code', $resource),
 						'" into directory "',
 						$c->tag('code', $bundle_path),
-						'":', $c->tag('br'), $c->tag('pre', $cp_out)
+						'":', $c->tag('br'), $c->tag('pre', $@)
 					);
 				}
 			}
 
 			# Rewrite the tex file with the image paths stripped.
-			open(my $out_fh, ">", "$bundle_path/$src_name")
-				or warn "Can't open $bundle_path/$src_name for writing.";
+			open(my $out_fh, ">", "$bundle_path/$src_name") or warn "Can't open $bundle_path/$src_name for writing.";
 			print $out_fh $data;
 			close $out_fh;
 		} else {
@@ -822,11 +801,9 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 	# try rename the pdf file
 	my $src_name  = "hardcopy.pdf";
 	my $dest_name = "$final_file_basename.pdf";
-	my $mv_cmd    = "2>&1 "
-		. $c->ce->{externalPrograms}{mv} . " "
-		. shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
-	my $mv_out = readpipe $mv_cmd;
-	if ($?) {
+
+	eval { Mojo::File->new("$temp_dir_path/$src_name")->move_to("$temp_dir_path/$dest_name") };
+	if ($@) {
 		$c->add_error(
 			'Failed to rename "',
 			$c->tag('code', $src_name),
@@ -836,7 +813,7 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 			$c->tag('code', $temp_dir_path),
 			'":',
 			$c->tag('br'),
-			$c->tag('pre', $mv_out)
+			$c->tag('pre', $@)
 		);
 		$final_file_name = $src_name;
 	} else {

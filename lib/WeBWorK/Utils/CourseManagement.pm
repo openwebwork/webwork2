@@ -31,9 +31,10 @@ use String::ShellQuote;
 use UUID::Tiny qw(create_uuid_as_string);
 
 use WeBWorK::Debug;
-use File::Path qw(rmtree);
-use File::Copy qw(move);
+use File::Copy::Recursive qw(dircopy);
 use File::Spec;
+use Mojo::File;
+use Archive::Tar;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Debug;
@@ -252,8 +253,8 @@ sub addCourse {
 			or croak
 			"Can't create the course '$courseID' because the courses directory '$rootParent' is not writeable.";
 		# try to create it
-		mkdir $root
-			or croak "Can't create the course '$courseID' becasue the root directory '$root' could not be created: $!.";
+		eval { Mojo::File->new($root)->make_path };
+		croak "Can't create the course '$courseID' because the root directory '$root' could not be created: $@." if $@;
 	}
 
 	# deal with the rest of the directories
@@ -274,15 +275,16 @@ sub addCourse {
 		pop @courseDirElements;
 		my $courseDirParent = File::Spec->catdir(@courseDirElements);
 		unless (-w $courseDirParent) {
-			warn
-				"Can't create $courseDirName directory '$courseDir', since the parent directory is not writeable. You will have to create this directory manually.\n";
+			warn "Can't create $courseDirName directory '$courseDir', since the parent directory is not writeable. "
+				. "You will have to create this directory manually.\n";
 			next;
 		}
 
 		# try to create it
-		mkdir $courseDir
-			or warn
-			"Failed to create $courseDirName directory '$courseDir': $!. You will have to create this directory manually.\n";
+		eval { Mojo::File($courseDir)->make_path };
+		warn "Failed to create $courseDirName directory '$courseDir': $@. "
+			. "You will have to create this directory manually."
+			if $@;
 	}
 
 	# hide the new course?
@@ -346,18 +348,7 @@ sub addCourse {
 		## copy templates ##
 		if (-d $sourceDir) {
 			my $destDir = $ce->{courseDirs}{templates};
-			my $cp_cmd  = "2>&1 "
-				. $ce->{externalPrograms}{cp} . " -R "
-				. shell_quote($sourceDir) . "/* "
-				. shell_quote($destDir);
-			my $cp_out = readpipe $cp_cmd;
-			if ($?) {
-				my $exit   = $? >> 8;
-				my $signal = $? & 127;
-				my $core   = $? & 128;
-				warn
-					"Failed to copy templates from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
-			}
+			warn "Failed to copy templates from course '$sourceCourse': $! " unless dircopy("$sourceDir", $destDir);
 		} else {
 			warn
 				"Failed to copy templates from course '$sourceCourse': templates directory '$sourceDir' does not exist.\n";
@@ -366,19 +357,8 @@ sub addCourse {
 		## this copies the html/tmp directory as well which is not optimal
 		$sourceDir = $sourceCE->{courseDirs}->{html};
 		if (-d $sourceDir) {
-			my $destDir = $ce->{courseDirs}{html};
-			my $cp_cmd  = "2>&1 "
-				. $ce->{externalPrograms}{cp} . " -R "
-				. shell_quote($sourceDir) . "/* "
-				. shell_quote($destDir);
-			my $cp_out = readpipe $cp_cmd;
-			if ($?) {
-				my $exit   = $? >> 8;
-				my $signal = $? & 127;
-				my $core   = $? & 128;
-				warn
-					"Failed to copy html from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
-			}
+			warn "Failed to copy html from course '$sourceCourse': $!"
+				unless dircopy($sourceDir, $ce->{courseDirs}{html});
 		} else {
 			warn "Failed to copy html from course '$sourceCourse': html directory '$sourceDir' does not exist.\n";
 		}
@@ -387,17 +367,8 @@ sub addCourse {
 		if (exists $options{copySimpleConfig}) {
 			my $sourceFile = $sourceCE->{courseFiles}->{simpleConfig};
 			if (-e $sourceFile) {
-				my $destFile = $ce->{courseFiles}{simpleConfig};
-				my $cp_cmd =
-					join(" ", ("2>&1", $ce->{externalPrograms}{cp}, shell_quote($sourceFile), shell_quote($destFile)));
-				my $cp_out = readpipe $cp_cmd;
-				if ($?) {
-					my $exit   = $? >> 8;
-					my $signal = $? & 127;
-					my $core   = $? & 128;
-					warn
-						"Failed to copy simple.conf from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
-				}
+				eval { Mojo::File->new($sourceFile)->copy_to($ce->{courseFiles}) };
+				warn "Failed to copy simple.conf from course '$sourceCourse': $@" if $@;
 			}
 		}
 
@@ -482,19 +453,9 @@ sub renameCourse {
 	##### step 1: move course directory #####
 
 	# move top-level course directory
-	my $mv_cmd =
-		"2>&1" . " "
-		. $oldCE->{externalPrograms}{mv} . " "
-		. shell_quote($oldCourseDir) . " "
-		. shell_quote($newCourseDir);
-	debug("moving course dir: $mv_cmd");
-	my $mv_out = readpipe $mv_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
-		die "Failed to move course directory with command '$mv_cmd' (exit=$exit signal=$signal core=$core): $mv_out\n";
-	}
+	debug("moving course dir from $oldCourseDir to $newCourseDir");
+	eval { Mojo::File->new($oldCourseDir)->move_to($newCourseDir) };
+	die "Failed to move course directory:  $@" if ($@);
 
 	# get new course environment
 	my $newCE = $oldCE->new({ courseName => $newCourseID });
@@ -514,16 +475,16 @@ sub renameCourse {
 
 			# is the source really a directory
 			unless (-d $oldDir) {
-				warn
-					"$courseDirName: Can't move '$oldDir' to '$newDir', since the source is not a directory. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the source is not a directory. "
+					. "You will have to move this directory manually.\n";
 				next;
 			}
 
 		# does the destination already exist?
 		# (this should only happen on extra-coursedir directories, since we make sure the root dir doesn't exist above.)
 			if (-e $newDir) {
-				warn
-					"$courseDirName: Can't move '$oldDir' to '$newDir', since the target already exists. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the target already exists. "
+					. "You will have to move this directory manually.\n";
 				next;
 			}
 
@@ -532,8 +493,8 @@ sub renameCourse {
 			pop @oldDirElements;
 			my $oldDirParent = File::Spec->catdir(@oldDirElements);
 			unless (-w $oldDirParent) {
-				warn
-					"$courseDirName: Can't move '$oldDir' to '$newDir', since the source parent directory is not writeable. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the source parent directory is not "
+					. "writeable. You will have to move this directory manually.\n";
 				next;
 			}
 
@@ -542,23 +503,15 @@ sub renameCourse {
 			pop @newDirElements;
 			my $newDirParent = File::Spec->catdir(@newDirElements);
 			unless (-w $newDirParent) {
-				warn
-					"$courseDirName: Can't move '$oldDir' to '$newDir', since the destination parent directory is not writeable. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the destination parent directory is "
+					. "not writeable. You will have to move this directory manually.\n";
 				next;
 			}
 
 			# try to move the directory
 			debug("Going to move $oldDir to $newDir...\n");
-			my $mv_cmd =
-				"2>&1" . " " . $oldCE->{externalPrograms}{mv} . " " . shell_quote($oldDir) . " " . shell_quote($newDir);
-			my $mv_out = readpipe $mv_cmd;
-			if ($?) {
-				my $exit   = $? >> 8;
-				my $signal = $? & 127;
-				my $core   = $? & 128;
-				warn
-					"Failed to move directory with command '$mv_cmd' (exit=$exit signal=$signal core=$core): $mv_out\n";
-			}
+			eval { Mojo::File->new($oldDir)->move_to($newDir) };
+			warn "Failed to move directory from $oldDir to $newDir with error: $@" if $@;
 		} else {
 			debug("oldDir $oldDir was already moved.\n");
 		}
@@ -716,7 +669,8 @@ sub deleteCourse {
 
 			# try to delete the directory
 			debug("Going to delete $courseDir...\n");
-			rmtree($courseDir, 0, 1);
+			eval { Mojo::File->new($courseDir)->remove_tree };
+			warn "An error occurred when deleting $courseDir" if $@;
 		} else {
 			debug("courseDir $courseDir was already deleted.\n");
 		}
@@ -800,7 +754,8 @@ sub archiveCourse {
 	#### step 1: dump tables #####
 
 	unless (-e $dump_dir) {
-		mkdir $dump_dir or croak "Failed to create course database dump directory '$dump_dir': $!";
+		eval { Mojo::File->new($dump_dir)->make_path };
+		croak "Failed to create course database dump directory '$dump_dir': $@" if $@;
 	}
 
 	my $db             = new WeBWorK::DB($ce->{dbLayout});
@@ -812,34 +767,30 @@ sub archiveCourse {
 
 	##### step 2: tar and gzip course directory (including dumped database) #####
 
-	# we want tar to run from the parent directory of the course directory
-	my $chdir_to = "$course_dir/..";
+	my $parent_dir = $ce->{webworkDirs}{courses};
+	my $files      = Mojo::File->new($course_dir)->list_tree({ dir => 1, hidden => 1 })->map('to_abs');
+	my $tar        = Archive::Tar->new;
+	$tar->add_files(@$files);
+	for ($tar->get_files) {
+		$tar->rename($_->full_path, $_->full_path =~ s!^$parent_dir/!!r);
+	}
+	my $ok = $tar->write($tmp_archive_path, COMPRESS_GZIP);
 
-	my $tar_cmd = "2>&1 "
-		. $ce->{externalPrograms}{tar} . " -C "
-		. shell_quote($chdir_to)
-		. " -czf "
-		. shell_quote($tmp_archive_path) . " "
-		. shell_quote($courseID);
-	my $tar_out = readpipe $tar_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
+	unless ($ok) {
 		_archiveCourse_remove_dump_dir($ce, $dump_dir);
-		croak
-			"Failed to archive course directory '$course_dir' with command '$tar_cmd' (exit=$exit signal=$signal core=$core): $tar_out\n";
+		croak "Failed to archive course directory '$course_dir': $!";
 	}
 
 	##### step 3: cleanup -- remove database dump files from course directory #####
 
 	unless (-e $archive_path) {
-		unless (move($tmp_archive_path, $archive_path)) {
-			unlink($tmp_archive_path);    #clean up
-			croak "Failed to rename archived file to '$archive_path': $!";
+		eval { Mojo::File->new($tmp_archive_path)->move_to($archive_path) };
+		if ($@) {
+			eval { Mojo::File->new($tmp_archive_path)->remove };
+			croak "Failed to rename archived file to '$archive_path': $@";
 		}
 	} else {
-		unlink($tmp_archive_path);        #clean up
+		eval { Mojo::File->new($tmp_archive_path)->remove };
 		croak "Failed to create archived file at '$archive_path'. File already exists.";
 	}
 	_archiveCourse_remove_dump_dir($ce, $dump_dir);
@@ -849,15 +800,15 @@ sub archiveCourse {
 
 sub _archiveCourse_remove_dump_dir {
 	my ($ce, $dump_dir) = @_;
-	my $rm_cmd = "2>&1 " . $ce->{externalPrograms}{rm} . " -rf " . shell_quote($dump_dir);
-	my $rm_out = readpipe $rm_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
-		carp
-			"Failed to remove course database dump directory '$dump_dir' with command '$rm_cmd' (exit=$exit signal=$signal core=$core): $rm_out\n";
+	Mojo::File->new($dump_dir)->remove_tree({ error => \my $err });
+
+	if ($err && @$err) {
+		for my $diag (@$err) {
+			my ($file, $message) = %$diag;
+			warn "Failed to remove course database dump directory: $file with message: $message ";
+		}
 	}
+	return;
 }
 
 ################################################################################
@@ -915,19 +866,14 @@ sub unarchiveCourse {
 
 	##### step 2: crack open the tarball #####
 
-	my $tar_cmd = "2>&1 "
-		. $ce->{externalPrograms}{tar} . " -C "
-		. shell_quote($coursesDir)
-		. " -xzf "
-		. shell_quote($archivePath);
-	my $tar_out = readpipe $tar_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
+	my $arch = Archive::Tar->new($archivePath);
+	die "The tar file $archivePath is not valid." unless $arch;
+	$arch->setcwd($coursesDir);
+	$arch->extract();
+
+	if ($arch->error) {
 		_unarchiveCourse_move_back($restoreCourseData);
-		die
-			"Failed to unarchive course directory with command '$tar_cmd' (exit=$exit signal=$signal core=$core): $tar_out\n";
+		die "Failed to unarchive course directory for course $newCourseID: $arch->error";
 	}
 
 	##### step 3: read the course environment for this course #####
@@ -978,16 +924,17 @@ sub unarchiveCourse {
 		_archiveCourse_remove_dump_dir($ce, $dump_dir);
 	}
 	if (-e $old_dump_file) {
-		unlink $old_dump_file or carp "Failed to unlink course database dump file '$old_dump_file: $_\n";
+		eval { Mojo::File->new($old_dump_file)->remove };
+		warn "Failed to unlink course database dump file '$old_dump_file: $@" if $@;
 	}
 
 	# Create the html_temp folder (since it isn't included in the
 	# tarball
 	my $tmpDir = $ce2->{courseDirs}->{html_temp};
 	if (!-e $tmpDir) {
-		mkdir $tmpDir
-			or warn
-			"Failed to create html_temp directory '$tmpDir': $!. You will have to create this directory manually.\n";
+		eval { Mojo::File->new($tmpDir)->make_path };
+		warn "Failed to create html_temp directory '$tmpDir': $@. You will have to create this directory manually."
+			if $@;
 	}
 
 	# If the course was given a new name, honor $ce->{new_courses_hidden_status}
