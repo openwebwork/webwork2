@@ -488,17 +488,8 @@ sub addCourse {
 		if ($options{copyConfig}) {
 			my $sourceFile = $sourceCE->{courseFiles}{environment};
 			if (-e $sourceFile) {
-				my $destFile = $ce->{courseFiles}{environment};
-				my $cp_cmd =
-					join(" ", ("2>&1", $ce->{externalPrograms}{cp}, shell_quote($sourceFile), shell_quote($destFile)));
-				my $cp_out = readpipe $cp_cmd;
-				if ($?) {
-					my $exit   = $? >> 8;
-					my $signal = $? & 127;
-					my $core   = $? & 128;
-					warn "Failed to copy course.conf from course '$sourceCourse' "
-						. "with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
-				}
+				eval { Mojo::File->new($sourceFile)->copy_to($ce->{courseFiles}) };
+				warn "Failed to copy course.conf from course '$sourceCourse': $@" if $@;
 			}
 		}
 	}
