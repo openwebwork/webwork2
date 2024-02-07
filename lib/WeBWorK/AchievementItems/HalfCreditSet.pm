@@ -28,13 +28,15 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemCount, $c) {
+sub print_form ($self, $sets, $setProblemIds, $c) {
 	my @openSets;
 
 	for my $i (0 .. $#$sets) {
 		push(@openSets, [ format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id ])
 			if (between($sets->[$i]->open_date, $sets->[$i]->due_date) && $sets->[$i]->assignment_type eq 'default');
 	}
+
+	return unless @openSets;
 
 	return $c->c(
 		$c->tag('p', $c->maketext('Please choose the set for which all problems should have half credit added.')),

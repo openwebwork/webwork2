@@ -29,20 +29,20 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemCount, $c) {
+sub print_form ($self, $sets, $setProblemIds, $c) {
 	my $db = $c->db;
 
-	my $effectiveUserName = $c->param('effectiveUser') // $c->param('user');
-	my @unfilteredsets = $db->getMergedSets(map { [ $effectiveUserName, $_ ] } $db->listUserSets($effectiveUserName));
 	my @openGateways;
 
 	# Find the template sets for open tests.
-	for my $set (@unfilteredsets) {
+	for my $set (@$sets) {
 		push(@openGateways, [ format_set_name_display($set->set_id) => $set->set_id ])
 			if $set->assignment_type =~ /gateway/
 			&& $set->set_id !~ /,v\d+$/
 			&& between($set->open_date, $set->due_date);
 	}
+
+	return unless @openGateways;
 
 	return $c->c(
 		$c->tag('p', $c->maketext('Extend the close date for which test?')),
