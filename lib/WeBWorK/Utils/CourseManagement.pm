@@ -301,7 +301,7 @@ sub addCourse {
 		}
 
 		# try to create it
-		eval { Mojo::File($courseDir)->make_path };
+		eval { Mojo::File->new($courseDir)->make_path };
 		warn "Failed to create $courseDirName directory '$courseDir': $@. "
 			. "You will have to create this directory manually."
 			if $@;
@@ -479,7 +479,7 @@ sub addCourse {
 		if ($options{copySimpleConfig}) {
 			my $sourceFile = $sourceCE->{courseFiles}{simpleConfig};
 			if (-e $sourceFile) {
-				eval { Mojo::File->new($sourceFile)->copy_to($ce->{courseFiles}) };
+				eval { Mojo::File->new($sourceFile)->copy_to($ce->{courseDirs}{root}) };
 				warn "Failed to copy simple.conf from course '$sourceCourse': $@" if $@;
 			}
 		}
@@ -488,7 +488,7 @@ sub addCourse {
 		if ($options{copyConfig}) {
 			my $sourceFile = $sourceCE->{courseFiles}{environment};
 			if (-e $sourceFile) {
-				eval { Mojo::File->new($sourceFile)->copy_to($ce->{courseFiles}) };
+				eval { Mojo::File->new($sourceFile)->copy_to($ce->{courseDirs}{root}) };
 				warn "Failed to copy course.conf from course '$sourceCourse': $@" if $@;
 			}
 		}
