@@ -14,26 +14,12 @@
 ################################################################################
 
 package WeBWorK::DB::Utils::SQLAbstractIdentTrans;
-my $BASE;
-
-BEGIN {
-	my $sql_abstract = eval {
-		require SQL::Abstract;
-		if ($SQL::Abstract::VERSION > 1.87) {
-			0;
-		} else {
-			1;
-		}
-	};
-	$BASE = qw(SQL::Abstract) if $sql_abstract;
-	$BASE = qw(SQL::Abstract::Classic) unless $sql_abstract;
-}
-use base $BASE;
+use parent qw(SQL::Abstract);
 
 =head1 NAME
 
 WeBWorK::DB::Utils::SQLAbstractIdentTrans - subclass of SQL::Abstract::Classic that
-allows custom hooks to transform identifiers.
+allows custom hooks to transform table names.
 
 =cut
 
@@ -41,68 +27,51 @@ use strict;
 use warnings;
 
 sub _table {
-	my $self = shift;
-	my $tab  = shift;
-	if (ref $tab eq 'ARRAY') {
-		return join ', ', map { $self->_quote_table($_) } @$tab;
-	} else {
-		return $self->_quote_table($tab);
+	my ($self, $from) = @_;
+	if (ref($from) eq 'ARRAY') {
+		return $self->SUPER::_table([ map { $self->_transform_table($_) } @$from ]);
+	} elsif (!ref($from)) {
+		return $self->SUPER::_table($self->_transform_table($from));
 	}
+	return $self->SUPER::_table($from);
 }
 
 sub _quote {
-	my $self  = shift;
-	my $label = shift;
+	my ($self, $label) = @_;
 
 	return $label if $label eq '*';
 
-	return $self->_quote_field($label)
-		if !defined $self->{name_sep};
+	return join($self->{name_sep} || '', map { $self->_quote($_) } @$label) if ref($label) eq 'ARRAY';
 
-	if (defined $self->{transform_all}) {
+	return $self->SUPER::_quote($label) unless defined $self->{name_sep};
+
+	if (ref($self->{transform_all}) eq 'CODE') {
 		return $self->{transform_all}->($label);
 	} elsif ($label =~ /(.+)\.(.+)/) {
-		return $self->_quote_table($1) . $self->{name_sep} . $self->_quote_field($2);
+		return $self->SUPER::_quote($self->_transform_table($1)) . $self->{name_sep} . $self->SUPER::_quote($2);
 	} else {
-		return $self->_quote_field($label);
+		return $self->SUPER::_quote($label);
 	}
 }
 
-sub _quote_table {
-	my $self  = shift;
-	my $label = shift;
-
-	# if the table name is a scalar reference, leave it alone (but dereference it)
-	return $$label if ref $label eq "SCALAR";
-
-	# call custom transform function
-	$label = $self->{transform_table}->($label)
-		if defined $self->{transform_table};
-
-	return $self->{quote_char} . $label . $self->{quote_char};
+sub _transform_table {
+	my ($self, $table) = @_;
+	return ref($self->{transform_table}) eq 'CODE' ? $self->{transform_table}->($table) : $table;
 }
 
-sub _quote_field {
-	my $self  = shift;
-	my $label = shift;
-
-	# call custom transform function
-	$label = $self->{transform_field}->($label)
-		if defined $self->{transform_field};
-
-	return $self->{quote_char} . $label . $self->{quote_char};
+sub insert {
+	my ($self, $table, $data, $options) = @_;
+	return $self->SUPER::insert($self->_transform_table($table), $data, $options);
 }
 
-sub _order_by {
-	my $self = shift;
-	my $ref  = ref $_[0];
+sub update {
+	my ($self, $table, $set, $where, $options) = @_;
+	return $self->SUPER::update($self->_transform_table($table), $set, $where, $options);
+}
 
-	my @vals = $ref eq 'ARRAY' ? @{ $_[0] } : $ref eq 'SCALAR' ? $_[0] :   # modification: don't dereference scalar refs
-		$ref eq '' ? $_[0] : $self->SUPER::puke("Unsupported data struct $ref for ORDER BY");
-
-	# modification: if an item is a scalar ref, don't quote it, only dereference it
-	my $val = join ', ', map { ref $_ eq "SCALAR" ? $$_ : $self->_quote($_) } @vals;
-	return $val ? $self->_sqlcase(' order by') . " $val" : '';
+sub delete {
+	my ($self, $table, $where, $options) = @_;
+	return $self->SUPER::delete($self->_transform_table($table), $where, $options);
 }
 
 1;

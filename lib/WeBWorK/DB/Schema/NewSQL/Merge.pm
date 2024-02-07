@@ -122,11 +122,8 @@ sub merge_init {
 sub sql_init {
 	my $self = shift;
 
-	# transformation functions for table and field names: these allow us to pass
-	# the WeBWorK table/field names to SQL::Abstract::Classic, and have it translate them
-	# to the SQL table/field names from tableOverride and fieldOverride.
-	# (Without this, it would be hard to translate field names in WHERE
-	# structures, since they're so convoluted.)
+	# Transformation function for table names. This allows us to pass the WeBWorK table names to
+	# SQL::Abstract, and have it translate them to the SQL table names from tableOverride.
 	my $transform_table = sub {
 		my $label = shift;
 		if (exists $self->{sql_table_aliases}{$label}) {
@@ -152,7 +149,6 @@ sub sql_init {
 		return "`$table`.`$field`";
 	};
 
-	# add SQL statement generation object
 	$self->{sql} = new WeBWorK::DB::Utils::SQLAbstractIdentTrans(
 		quote_char      => "`",
 		name_sep        => ".",

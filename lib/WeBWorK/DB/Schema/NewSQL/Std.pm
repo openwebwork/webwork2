@@ -42,11 +42,6 @@ This schema pays attention to the following items in the C<params> entry.
 
 Alternate name for this table, to satisfy SQL naming requirements.
 
-=item fieldOverride
-
-A reference to a hash mapping field names to alternate names, to satisfy SQL
-naming requirements.
-
 =back
 
 =cut
@@ -70,36 +65,24 @@ sub new {
 sub sql_init {
 	my $self = shift;
 
-	# transformation functions for table and field names: these allow us to pass
-	# the WeBWorK table/field names to SQL::Abstract::Classic, and have it translate them
-	# to the SQL table/field names from tableOverride and fieldOverride.
-	# (Without this, it would be hard to translate field names in WHERE
-	# structures, since they're so convoluted.)
-	my ($transform_table, $transform_field);
+	# Transformation function for table names.  This allows us to pass the WeBWorK table names to
+	# SQL::Abstract, and have it translate them to the SQL table names from tableOverride.
+	my $transform_table;
 	if (defined $self->{params}{tableOverride}) {
 		$transform_table = sub {
 			my $label = shift;
 			if ($label eq $self->{table}) {
 				return $self->{params}{tableOverride};
 			} else {
-				#warn "can't transform unrecognized table name '$label'";
 				return $label;
 			}
 		};
 	}
-	if (defined $self->{params}{fieldOverride}) {
-		$transform_field = sub {
-			my $label = shift;
-			return defined $self->{params}{fieldOverride}{$label} ? $self->{params}{fieldOverride}{$label} : $label;
-		};
-	}
 
-	# add SQL statement generation object
 	$self->{sql} = new WeBWorK::DB::Utils::SQLAbstractIdentTrans(
 		quote_char      => "`",
 		name_sep        => ".",
-		transform_table => $transform_table,
-		transform_field => $transform_field,
+		transform_table => $transform_table
 	);
 }
 
@@ -902,10 +885,11 @@ sub character_set {
 	my $self = shift;
 	return (defined $self->{character_set} and $self->{character_set}) ? $self->{character_set} : 'latin1';
 }
+
 # returns non-quoted SQL name of given field
 sub sql_field_name {
 	my ($self, $field) = @_;
-	return defined $self->{params}{fieldOverride}{$field} ? $self->{params}{fieldOverride}{$field} : $field;
+	return $field;
 }
 
 # returns fully quoted expression refering to the specified field

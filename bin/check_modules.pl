@@ -143,6 +143,7 @@ my @modulesList = qw(
 	Scalar::Util
 	SOAP::Lite
 	Socket
+	SQL::Abstract
 	Statistics::R::IO
 	String::ShellQuote
 	SVG
@@ -168,7 +169,8 @@ my %moduleVersion = (
 	'LWP::Protocol::https' => 6.06,
 	'Mojolicious'          => 9.22,
 	'Net::SSLeay'          => 1.46,
-	'Perl::Tidy'           => 20220613
+	'Perl::Tidy'           => 20220613,
+	'SQL::Abstract'        => 2.000000
 );
 
 my ($test_programs, $test_modules, $show_help);
@@ -250,29 +252,6 @@ sub check_modules {
 		} else {
 			print "   $module found and loaded\n";
 		}
-	}
-	checkSQLabstract();
-}
-
-## this is specialized code to check for either SQL::Abstract or SQL::Abstract::Classic
-
-sub checkSQLabstract {
-	print "\n checking for SQL::Abstract\n\n";
-	eval "use SQL::Abstract";
-	my $sql_abstract         = not($@);
-	my $sql_abstract_version = $SQL::Abstract::VERSION if $sql_abstract;
-
-	eval "use SQL::Abstract::Classic";
-	my $sql_abstract_classic = not($@);
-
-	if ($sql_abstract_classic) {
-		print qq/ You have SQL::Abstract::Classic installed. This package will be used if either
- the installed version of SQL::Abstract is version > 1.87 or if that package is not installed.\n/;
-	} elsif ($sql_abstract && $sql_abstract_version <= 1.87) {
-		print "You have version $sql_abstract_version of SQL::Abstract installed.  This will be used\n";
-	} else {
-		print qq/You need either SQL::Abstract version <= 1.87 or need to install SQL::Abstract::Classic.
- If you are using cpan or cpanm, it is recommended to install SQL::Abstract::Classic.\n/;
 	}
 }
 
