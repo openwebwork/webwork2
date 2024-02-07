@@ -233,7 +233,8 @@ async sub renderProblem {
 		showAttemptPreviews      => $rh->{showAttemptPreviews}
 			// ($rh->{preview} || $rh->{WWsubmit} || $rh->{WWcorrectAns}),
 		showAttemptResults      => $rh->{showAttemptResults} // ($rh->{WWsubmit} || $rh->{WWcorrectAns}),
-		forceShowAttemptResults => $rh->{forceShowAttemptResults},
+		forceShowAttemptResults => $rh->{forceShowAttemptResults} || ($rh->{isInstructor}
+			&& ($rh->{showAttemptResults} // ($rh->{WWsubmit} || $rh->{WWcorrectAns}))),
 		showMessages       => $rh->{showMessages}       // ($rh->{preview} || $rh->{WWsubmit} || $rh->{WWcorrectAns}),
 		showCorrectAnswers => $rh->{showCorrectAnswers} // ($rh->{WWcorrectAns} ? 2 : 0),
 		debuggingOptions   => {
