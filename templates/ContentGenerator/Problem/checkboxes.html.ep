@@ -1,24 +1,13 @@
 % my %can  = %{ $c->{can} };
 % my %will = %{ $c->{will} };
 %
-% if ($can{showCorrectAnswers}
-	% || $can{showProblemGrader}
+% if ($can{showProblemGrader}
 	% || $can{showAnsGroupInfo}
 	% || $can{showAnsHashInfo}
 	% || $can{showPGInfo}
 	% || $can{showResourceInfo})
 % {
 	<span class="me-2"><%= maketext('Show:') %></span>
-% }
-%
-% if ($can{showCorrectAnswers}) {
-	<div class="form-check form-check-inline">
-		<label class="form-check-label">
-			<%= check_box showCorrectAnswers => 1, id => 'showCorrectAnswers_id', class => 'form-check-input',
-				$will{showCorrectAnswers} ? (checked => undef) : () =%>
-			<%= maketext('Correct Answers') =%>
-		</label>
-	</div>
 % }
 %
 % if ($can{showProblemGrader} && !$will{showMeAnother}) {

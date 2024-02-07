@@ -294,8 +294,6 @@
 	}, { passive: true });
 
 	// Send a request to the webwork webservice and render a problem.
-	const basicWebserviceURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/render_rpc`;
-
 	const render = (id) => new Promise((resolve) => {
 		const renderArea = document.getElementById(`psr_render_area_${id}`);
 

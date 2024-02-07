@@ -345,7 +345,7 @@
 		<div class="row">
 			<div class="col-md-10 mb-1">
 				<div class="alert alert-info p-1 mb-0">
-					<%= maketext('The test (which is version [_1]) may  no longer be submitted for a grade.',
+					<%= maketext('The test (which is version [_1]) may no longer be submitted for a grade.',
 							$setVersionID)
 						. ($c->{can}{showScore} ? (' ' . maketext('You may still check your answers.')) : '') %>
 				</div>
@@ -564,6 +564,34 @@
 						<div class="mb-2"><b><%== maketext('Note: [_1]', tag('i', $pg->{result}{msg})) %></b></div>
 					% }
 					%
+					% if ($pg->{flags}{solutionExists} && $authz->hasPermissions($userID, 'always_show_solution')) {
+						<p>
+							<b><%= maketext('Note') %>:</b>
+							<i>
+								<%= maketext('The solution shown is an instructor preview and '
+									. 'will only be shown to students when answers are available.'
+								) =%>
+							</i>
+						</p>
+					% }
+					%
+					% if (
+						% (
+							% $authz->hasPermissions($userID, 'show_correct_answers_before_answer_date')
+							% || $authz->hasPermissions($userID, 'view_hidden_work')
+						% )
+						% && !$c->can_showCorrectAnswersForAll($c->{set}, $c->{problem}, $c->{tmplSet})
+						% )
+					% {
+						<p>
+							<b><%= maketext('Note') %>:</b>
+							<i>
+								<%= maketext('The correct answers shown in feedback are instructor previews and '
+									. 'will only be shown to students when answers are available.') =%>
+							</i>
+						</p>
+					% }
+					%
 					<div class="text-end mb-2">
 						<%= link_to maketext('preview answers') => '#',
 							class => 'gateway-preview-btn btn btn-secondary',
@@ -607,24 +635,6 @@
 		<div class="gwDivider"></div>
 		%
 		<div class="checkboxes-container col-12 my-2">
-			% if ($c->{can}{showCorrectAnswers}) {
-				<div class="form-check">
-					<label class="form-check-label">
-						<input name="showCorrectAnswers" type="checkbox" class="form-check-input"
-							<%= $c->{want}{showCorrectAnswers} || $c->{want}{showProblemGrader} ? 'checked' : '' %>>
-						<%= maketext('Show correct answers') %>
-					</label>
-				</div>
-			% }
-			% if ($c->{can}{showSolutions}) {
-				<div class="form-check">
-					<label class="form-check-label">
-						<input name="showSolutions" type="checkbox" class="form-check-input"
-							<%= $c->{will}{showSolutions} || $c->{want}{showProblemGrader} ? 'checked' : '' %>>
-						<%= maketext('Show Solutions') %>
-					</label>
-				</div>
-			% }
 			% if ($c->{can}{showProblemGrader}) {
 				<div class="form-check">
 					<label class="form-check-label">

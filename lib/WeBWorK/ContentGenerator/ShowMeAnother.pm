@@ -104,7 +104,7 @@ async sub pre_header_initialize ($c) {
 		if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
 
 	# store the showMeAnother hash for the check to see if the button can be used
-	# (this hash is updated and re-stored after the can, must, will hashes)
+	# (this hash is updated and re-stored after the can and will hashes)
 	$c->{showMeAnother} = \%showMeAnother;
 
 	# Show a message if we aren't allowed to show me another here.
@@ -116,14 +116,8 @@ async sub pre_header_initialize ($c) {
 	my $want = $c->{want};
 	$want->{showMeAnother} = 1;
 
-	my $must = $c->{must};
-	$must->{showMeAnother} = 0;
-
-	# does the user have permission to use certain options?
-	my @args = ($user, $effectiveUser, $set, $problem);
-
 	my $can = $c->{can};
-	$can->{showMeAnother} = $c->can_showMeAnother(@args, $submitAnswers);
+	$can->{showMeAnother} = $c->can_showMeAnother($user, $effectiveUser, $set, $problem, $submitAnswers);
 
 	# store text of original problem for later comparison with text from problem with new seed
 	my $showMeAnotherOriginalPG = await renderPG(
@@ -256,9 +250,10 @@ async sub pre_header_initialize ($c) {
 
 	# if showMeAnother is active, then disable all other options
 	if (($showMeAnother{active} || $showMeAnother{CheckAnswers} || $showMeAnother{Preview}) && $can->{showMeAnother}) {
-		$can->{recordAnswers}   = 0;
-		$can->{checkAnswers}    = 0;    # turned on if showMeAnother conditions met below
-		$can->{getSubmitButton} = 0;
+		$can->{recordAnswers}     = 0;
+		$can->{checkAnswers}      = 0;    # turned on if showMeAnother conditions met below
+		$can->{getSubmitButton}   = 0;
+		$can->{showProblemGrader} = 0;
 
 		# only show solution if showMeAnother has been clicked (or refreshed)
 		# less than the maximum amount allowed specified in Course Configuration,
@@ -277,9 +272,7 @@ async sub pre_header_initialize ($c) {
 
 	# final values for options
 	my $will = $c->{will};
-	foreach (keys %$must) {
-		$will->{$_} = $can->{$_} && ($want->{$_} || $must->{$_});
-	}
+	$will->{$_} = $can->{$_} && $want->{$_} for keys %$can;
 
 	# PG problem translation
 	# Unfortunately we have to do this over because we potentially picked a new problem seed.
@@ -308,7 +301,7 @@ async sub pre_header_initialize ($c) {
 			showAttemptPreviews      => 1,
 			showAttemptResults       => $c->{checkAnswers},
 			showMessages             => 1,
-			showCorrectAnswers       => $will->{checkAnswers} ? $will->{showCorrectAnswers} : 0,
+			showCorrectAnswers       => $will->{checkAnswers} && $will->{showCorrectAnswers} ? 1 : 0,
 			debuggingOptions         => getTranslatorDebuggingOptions($authz, $userName)
 		}
 	);

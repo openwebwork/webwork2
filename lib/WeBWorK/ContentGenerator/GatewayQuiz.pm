@@ -74,23 +74,41 @@ sub can_showCorrectAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $
 	my $attemptsPerVersion = $set->attempts_per_version || 0;
 	my $attemptsUsed       = $problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} ? 1 : 0);
 
-	# This is complicated by trying to address hiding scores by problem.  That is, if $set->hide_score_by_problem and
-	# $set->hide_score are both set, then we should allow scores to be shown, but not show the score on any individual
-	# problem.  To deal with this, we make can_showCorrectAnswers give the least restrictive view of hiding, and then
-	# filter scores for the problems themselves later.
 	return (
 		(
-			(
-				after($set->answer_date, $c->submitTime) || ($attemptsUsed >= $attemptsPerVersion
-					&& $attemptsPerVersion != 0
-					&& $set->due_date == $set->answer_date)
-			)
-				|| $authz->hasPermissions($user->user_id, 'show_correct_answers_before_answer_date')
+			$authz->hasPermissions($user->user_id, 'show_correct_answers_before_answer_date')
+				|| (
+					after($set->answer_date, $c->submitTime)
+					|| ($attemptsUsed >= $attemptsPerVersion
+						&& $attemptsPerVersion != 0
+						&& $set->due_date == $set->answer_date)
+				)
+		)
+			&& $c->can_showProblemScores($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet)
+	);
+}
+
+# This version is the same as the above version except that it ignores elevated permisions. So it will be true if this
+# set is in the state that anyone can show correct answers regardless of if they have the
+# show_correct_answers_before_answer_date or view_hidden_work permissions.  In this case, feedback is shown even without
+# a form submission, and correct answers are shown in the feedback, if the $pg{options}{automaticAnswerFeedback} option
+# is set in the course configuration.
+sub can_showCorrectAnswersForAll ($c, $set, $problem, $tmplSet) {
+	my $attemptsPerVersion = $set->attempts_per_version || 0;
+	my $attemptsUsed       = $problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} ? 1 : 0);
+
+	return (
+		(
+			after($set->answer_date, $c->submitTime) || ($attemptsUsed >= $attemptsPerVersion
+				&& $attemptsPerVersion != 0
+				&& $set->due_date == $set->answer_date)
 		)
 			&& (
-				$authz->hasPermissions($user->user_id, 'view_hidden_work')
-				|| $set->hide_score_by_problem eq 'N' && ($set->hide_score eq 'N'
-					|| ($set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $c->submitTime)))
+				(
+					$set->hide_score eq 'N'
+					|| ($set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $c->submitTime))
+				)
+				&& $set->hide_score_by_problem eq 'N'
 			)
 	);
 }
@@ -108,10 +126,7 @@ sub can_showHints ($c) { return 1; }
 
 sub can_showSolutions ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
 	my $authz = $c->authz;
-
 	return 1 if $authz->hasPermissions($user->user_id, 'always_show_solution');
-
-	# This is the same as can_showCorrectAnswers.
 	return $c->can_showCorrectAnswers($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet);
 }
 
@@ -684,36 +699,15 @@ async sub pre_header_initialize ($c) {
 
 	# What does the user want to do?
 	my %want = (
-		showOldAnswers => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
-		# showProblemGrader implies showCorrectAnswers.  This is a convenience for grading.
-		showCorrectAnswers => ($c->param('showProblemGrader') || 0)
-			|| ($c->param('showCorrectAnswers') && ($c->{submitAnswers} || $c->{checkAnswers}))
-			|| 0,
-		showProblemGrader => $c->param('showProblemGrader')
-			|| 0,
-		# Hints are not yet implemented in gateway quzzes.
-		showHints => 0,
-		# showProblemGrader implies showSolutions.  Another convenience for grading.
-		showSolutions => $c->param('showProblemGrader')
-			|| ($c->param('showSolutions') && ($c->{submitAnswers} || $c->{checkAnswers})),
-		recordAnswers => $c->{submitAnswers} && !$authz->hasPermissions($userID, 'avoid_recording_answers'),
-		# we also want to check answers if we were checking answers and are switching between pages
-		checkAnswers => $c->{checkAnswers},
-		useMathView  => $user->useMathView ne ''  ? $user->useMathView  : $ce->{pg}{options}{useMathView},
-		useMathQuill => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}{options}{useMathQuill},
-	);
-
-	# Are certain options enforced?
-	my %must = (
-		showOldAnswers     => 0,
-		showCorrectAnswers => 0,
-		showProblemGrader  => 0,
-		showHints          => 0,
-		showSolutions      => 0,
-		recordAnswers      => 0,
-		checkAnswers       => 0,
-		useMathView        => 0,
-		useMathQuill       => 0,
+		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
+		showCorrectAnswers => 1,
+		showProblemGrader  => $c->param('showProblemGrader') || 0,
+		showHints          => 0,    # Hints are not yet implemented in gateway quzzes.
+		showSolutions      => 1,
+		recordAnswers      => $c->{submitAnswers} && !$authz->hasPermissions($userID, 'avoid_recording_answers'),
+		checkAnswers       => $c->{checkAnswers},
+		useMathView        => $user->useMathView ne ''  ? $user->useMathView  : $ce->{pg}{options}{useMathView},
+		useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}{options}{useMathQuill},
 	);
 
 	# Does the user have permission to use certain options?
@@ -736,10 +730,9 @@ async sub pre_header_initialize ($c) {
 	);
 
 	# Final values for options
-	my %will = map { $_ => $can{$_} && ($must{$_} || $want{$_}) } keys %must;
+	my %will = map { $_ => $can{$_} && $want{$_} } keys %can;
 
 	$c->{want} = \%want;
-	$c->{must} = \%must;
 	$c->{can}  = \%can;
 	$c->{will} = \%will;
 
@@ -1453,6 +1446,13 @@ sub warningMessage ($c) {
 # hash of parameters from the input form that need to be passed to the translator, and $mergedProblem
 # is what we'd expect.
 async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem) {
+	my $showReturningFeedback =
+		!($c->{submitAnswers} || $c->{previewAnswers} || $c->{checkAnswers})
+		&& $c->{will}{showOldAnswers}
+		&& $c->ce->{pg}{options}{automaticAnswerFeedback}
+		&& $c->{can}{showProblemScores}
+		&& $mergedProblem->num_correct + $mergedProblem->num_incorrect > 0;
+
 	my $pg = await renderPG(
 		$c,
 		$effectiveUser,
@@ -1461,25 +1461,35 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 		$set->psvn,
 		$formFields,
 		{
-			displayMode             => $c->{displayMode},
-			showHints               => $c->{will}{showHints},
-			showSolutions           => $c->{will}{showSolutions},
-			refreshMath2img         => $c->{will}{showHints} || $c->{will}{showSolutions},
-			processAnswers          => 1,
-			QUIZ_PREFIX             => 'Q' . sprintf('%04d', $mergedProblem->problem_id) . '_',
-			useMathQuill            => $c->{will}{useMathQuill},
-			useMathView             => $c->{will}{useMathView},
-			forceScaffoldsOpen      => 1,
-			isInstructor            => $c->authz->hasPermissions($c->{userID}, 'view_answers'),
-			showFeedback            => $c->{submitAnswers} || $c->{previewAnswers} || $c->{will}{checkAnswers},
+			displayMode        => $c->{displayMode},
+			showHints          => $c->{will}{showHints},
+			showSolutions      => $c->{will}{showSolutions},
+			refreshMath2img    => $c->{will}{showHints} || $c->{will}{showSolutions},
+			processAnswers     => 1,
+			QUIZ_PREFIX        => 'Q' . sprintf('%04d', $mergedProblem->problem_id) . '_',
+			useMathQuill       => $c->{will}{useMathQuill},
+			useMathView        => $c->{will}{useMathView},
+			forceScaffoldsOpen => 1,
+			isInstructor       => $c->authz->hasPermissions($c->{userID}, 'view_answers'),
+			showFeedback       => $c->{submitAnswers}
+				|| $c->{previewAnswers}
+				|| $c->{will}{checkAnswers}
+				|| $showReturningFeedback,
 			showAttemptAnswers      => $c->ce->{pg}{options}{showEvaluatedAnswers},
 			showAttemptPreviews     => 1,
 			showAttemptResults      => !$c->{previewAnswers} && $c->{can}{showProblemScores},
-			forceShowAttemptResults => $c->{will}{showProblemGrader},
-			showMessages            => 1,
-			showCorrectAnswers => ($c->{submitAnswers} || $c->{will}{checkAnswers} || $c->{will}{showProblemGrader})
-			? $c->{will}{showCorrectAnswers}
-			: 0,
+			forceShowAttemptResults => $c->{will}{showProblemGrader}
+				|| ($c->ce->{pg}{options}{automaticAnswerFeedback}
+					&& !$c->{previewAnswers}
+					&& $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet})),
+			showMessages       => 1,
+			showCorrectAnswers => (
+				$c->{will}{showProblemGrader} ? 2
+				: !$c->{previewAnswers} && $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet})
+				? ($c->ce->{pg}{options}{correctRevealBtnAlways} ? 1 : 2)
+				: !$c->{previewAnswers} && $c->{will}{showCorrectAnswers} ? 1
+				: 0
+			),
 			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID})
 		},
 	);
