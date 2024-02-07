@@ -126,6 +126,9 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{num_of_correct_ans}   = $problem->num_correct;
 	$options{num_of_incorrect_ans} = $problem->num_incorrect;
 
+	# This means that there are essay questions in the problem that have not been graded.
+	$options{needs_grading} = $problem->flags =~ /:needs_grading$/;
+
 	# Persistent problem data
 	$options{PERSISTENCE_HASH} = decode_json($problem->problem_data || '{}');
 

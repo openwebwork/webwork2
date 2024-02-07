@@ -919,7 +919,8 @@ async sub pre_header_initialize ($c) {
 			if (ref $pg_result) {
 				my ($past_answers_string, $scores);    # Not used here
 				($past_answers_string, $encoded_last_answer_string, $scores, $answer_types_string) =
-					create_ans_str_from_responses($c, $pg_result);
+					create_ans_str_from_responses($c->{formFields}, $pg_result,
+						$pureProblem->flags =~ /:needs_grading/);
 
 				# Transfer persistent problem data from the PERSISTENCE_HASH:
 				# - Get keys to update first, to avoid extra work when no updated ar
@@ -975,13 +976,8 @@ async sub pre_header_initialize ($c) {
 				$pureProblem->num_correct($pg_result->{state}{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg_result->{state}{num_of_incorrect_ans});
 
-				if ($answer_types_string) {
-					# Add flags which are really a comma separated list of answer types.  If its an essay question and
-					# the user is submitting an answer then there could be potential changes. So the problem is also
-					# flagged as needing grading by appending ":needs_grading" to the answer types.
-					$pureProblem->flags(
-						$answer_types_string . ($answer_types_string =~ /essay/ ? ':needs_grading' : ''));
-				}
+				# Add flags which are really a comma separated list of answer types.
+				$pureProblem->flags($answer_types_string);
 
 				if ($db->putProblemVersion($pureProblem)) {
 					# Use a simple untranslated value here.  This message will never be shown, and will later be
@@ -1058,7 +1054,7 @@ async sub pre_header_initialize ($c) {
 				my $problem = $problems[ $probOrder[$i] ];
 
 				my ($past_answers_string, $encoded_last_answer_string, $scores, $answer_types_string) =
-					create_ans_str_from_responses($c, $pg_results[ $probOrder[$i] ]);
+					create_ans_str_from_responses($c->{formFields}, $pg_results[ $probOrder[$i] ]);
 				$past_answers_string =~ s/\t+$/\t/;
 
 				if (!$past_answers_string || $past_answers_string =~ /^\t$/) {

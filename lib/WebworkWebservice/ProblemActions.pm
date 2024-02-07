@@ -57,6 +57,9 @@ sub putUserProblem {
 		$userProblem->{$_} = $params->{$_} if defined($params->{$_});
 	}
 
+	# Remove the needs_grading flag if the mark_graded parameter is set.
+	$userProblem->{flags} =~ s/:needs_grading$// if $params->{mark_graded};
+
 	eval { $db->putUserProblem($userProblem) };
 	if ($@) { return { text => "putUserProblem: $@" }; }
 
@@ -87,6 +90,9 @@ sub putProblemVersion {
 	{
 		$problemVersion->{$_} = $params->{$_} if defined($params->{$_});
 	}
+
+	# Remove the needs_grading flag if the mark_graded parameter is set.
+	$problemVersion->{flags} =~ s/:needs_grading$// if $params->{mark_graded};
 
 	eval { $db->putProblemVersion($problemVersion) };
 	if ($@) { return { text => "putProblemVersion: $@" }; }

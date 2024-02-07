@@ -94,7 +94,7 @@ async sub process_and_log_answer ($c) {
 	if (defined($answer_log) && defined($pureProblem) && $submitAnswers) {
 		my $past_answers_string;
 		($past_answers_string, $encoded_last_answer_string, $scores2, $answer_types_string) =
-			create_ans_str_from_responses($c, $pg);
+			create_ans_str_from_responses($c->{formFields}, $pg, $pureProblem->flags =~ /:needs_grading/);
 
 		if (!$authz->hasPermissions($effectiveUser, 'dont_log_past_answers')) {
 			# Use the time the submission processing began, but must convert the
@@ -162,10 +162,8 @@ async sub process_and_log_answer ($c) {
 				$pureProblem->num_correct($pg->{state}{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg->{state}{num_of_incorrect_ans});
 
-				# Add flags which are really a comma separated list of answer types.  If its an essay question and the
-				# user is submitting an answer then there could be potential changes. So the problem is also flagged as
-				# needing grading by appending ":needs_grading" to the answer types.
-				$pureProblem->flags($answer_types_string . ($answer_types_string =~ /essay/ ? ':needs_grading' : ''));
+				# Add flags which are really a comma separated list of answer types.
+				$pureProblem->flags($answer_types_string);
 
 				if ($db->putUserProblem($pureProblem)) {
 					$scoreRecordedMessage = $c->maketext('Your score was recorded.');
@@ -321,40 +319,57 @@ sub compute_unreduced_score ($ce, $problem, $set) {
 }
 
 # create answer string from responses hash
-# ($past_answers_string, $encoded_last_answer_string, $scores, $answer_types_string)
-#     = create_ans_str_from_responses($problem, $pg)
+# ($past_answers_string, $encoded_last_answer_string, $scores_string, $answer_types_string)
+#     = create_ans_str_from_responses($formFields, $pg)
 #
-# input: $problem - a 'WeBWorK::ContentGenerator::Problem object that has $problem->{formFields} set to a hash
-#                   containing the appropriate data.
-#        $pg      - a 'WeBWorK::PG' object
-# output:  (str, str, str, bool)
+# input: $formFields     - a hash containing the form field input data for the submission.
+#        $pg             - a 'WeBWorK::PG' object.
+#        $needed_grading - a boolean value that indicates that this problem previously needed grading
+#                          (only matters for problems with essay questions).
+# output: (str, str, str, str)
 #
 # The extra persistence objects do need to be included in problem->last_answer
 # in order to keep those objects persistent -- as long as RECORD_FORM_ANSWER
 # is used to preserve objects by piggy backing on the persistence mechanism for answers.
-sub create_ans_str_from_responses ($problem, $pg) {
-	my $scores2 = '';
+sub create_ans_str_from_responses ($formFields, $pg, $needed_grading = 0) {
+	my $scores_string = '';
 	my @answerTypes;
+	my $needsGrading = '';
 	my %answers_to_store;
 	my @past_answers_order;
 	my @last_answer_order;
 
 	my %pg_answers_hash = %{ $pg->{PG_ANSWERS_HASH} };
-	foreach my $ans_id (@{ $pg->{flags}{ANSWER_ENTRY_ORDER} // [] }) {
-		$scores2 .= ($pg_answers_hash{$ans_id}{rh_ans}{score} // 0) >= 1 ? "1" : "0";
+	for my $ans_id (@{ $pg->{flags}{ANSWER_ENTRY_ORDER} // [] }) {
+		$scores_string .= ($pg_answers_hash{$ans_id}{rh_ans}{score} // 0) >= 1 ? '1' : '0';
 		push @answerTypes, $pg_answers_hash{$ans_id}{rh_ans}{type} // '';
-		foreach my $response_id (@{ $pg_answers_hash{$ans_id}{response_obj}{response_order} }) {
-			$answers_to_store{$response_id} = $problem->{formFields}{$response_id};
+		for my $response_id (@{ $pg_answers_hash{$ans_id}{response_obj}{response_order} }) {
+			$answers_to_store{$response_id} = $formFields->{$response_id};
 			push @past_answers_order, $response_id;
 			push @last_answer_order,  $response_id;
+
+			# Determine if this is an essay answer that needs to be graded.
+			if (
+				$answerTypes[-1] eq 'essay'
+				&& (defined $formFields->{$response_id} && $formFields->{$response_id} ne '')
+				&& (
+					$needed_grading
+					|| (!defined $formFields->{"previous_${response_id}"}
+						|| $formFields->{"previous_${response_id}"} ne $formFields->{$response_id})
+				)
+				)
+			{
+				$needsGrading = ':needs_grading';
+			}
 		}
 	}
+
 	# KEPT_EXTRA_ANSWERS needs to be stored in last_answer in order to preserve persistence items.
 	# The persistence items do not need to be stored in past_answers_string.
 	# Don't add _ext_data items.  Those are stored elsewhere.
-	foreach my $entry_id (@{ $pg->{flags}{KEPT_EXTRA_ANSWERS} }) {
+	for my $entry_id (@{ $pg->{flags}{KEPT_EXTRA_ANSWERS} }) {
 		next if exists($answers_to_store{$entry_id}) || $entry_id =~ /^_ext_data/;
-		$answers_to_store{$entry_id} = $problem->{formFields}{$entry_id};
+		$answers_to_store{$entry_id} = $formFields->{$entry_id};
 		push @last_answer_order, $entry_id;
 	}
 
@@ -370,7 +385,7 @@ sub create_ans_str_from_responses ($problem, $pg) {
 	my $encoded_last_answer_string = encodeAnswers(%answers_to_store, @last_answer_order);
 	# past_answers_string is stored in past_answer table.
 	# encoded_last_answer_string is used in `last_answer` entry of the problem_user table.
-	return ($past_answers_string, $encoded_last_answer_string, $scores2, join(',', @answerTypes));
+	return ($past_answers_string, $encoded_last_answer_string, $scores_string, join(',', @answerTypes) . $needsGrading);
 }
 
 # If you provide this subroutine with a userProblem it will notify the instructors of the course that the student has
