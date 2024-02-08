@@ -148,17 +148,27 @@ sub initialize ($c) {
 
 # Handler for editing achievements.  Just changes the view mode.
 sub edit_handler ($c) {
+	my $result;
+
+	my $scope = $c->param('action.edit.scope');
+	if ($scope eq "all") {
+		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
+		$result = $c->maketext('Editing all achievements.');
+	} elsif ($scope eq "selected") {
+		$result = $c->maketext('Editing selected achievements.');
+	}
 	$c->{editMode} = 1;
 
-	return (1, $c->maketext('Editing selected achievements.'));
+	return (1, $result);
 }
 
 # Handler for assigning achievements to users
 sub assign_handler ($c) {
 	my $db             = $c->db;
-	my $overwrite      = $c->param('action.assign.overwrite') eq 'everything';
-	my @achievementIDs = @{ $c->{selectedAchievementIDs} };
 	my @users          = $db->listUsers;
+	my $overwrite      = $c->param('action.assign.overwrite') eq 'everything';
+	my $scope          = $c->param('action.assign.scope');
+	my @achievementIDs = $scope eq 'all' ? @{ $c->{allAchievementIDs} } : @{ $c->{selectedAchievementIDs} };
 
 	# Enable all achievements
 	my @achievements = $db->getAchievements(@achievementIDs);
@@ -208,7 +218,8 @@ sub score_handler ($c) {
 	my $ce                  = $c->ce;
 	my $db                  = $c->db;
 	my $courseName          = $c->stash('courseID');
-	my @achievementsToScore = $c->param('selected_achievements');
+	my $scope               = $c->param('action.score.scope');
+	my @achievementsToScore = $scope eq 'all' ? @{ $c->{allAchievementIDs} } : $c->param('selected_achievements');
 
 	# Define file name
 	my $scoreFileName = $courseName . "_achievement_scores.csv";
@@ -440,10 +451,19 @@ sub import_handler ($c) {
 # Export handler
 # This does not actually export any files, rather it sends us to a new page in order to export the files.
 sub export_handler ($c) {
-	$c->{selectedAchievementIDs} = [ $c->param('selected_achievements') ];
-	$c->{exportMode}             = 1;
+	my $result;
 
-	return (1, $c->maketext('Exporting selected achievements.'));
+	my $scope = $c->param('action.export.scope');
+	if ($scope eq "all") {
+		$result = $c->maketext('Exporting all achievements.');
+		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
+	} else {
+		$result = $c->maketext('Exporting selected achievements.');
+		$c->{selectedAchievementIDs} = [ $c->param('selected_achievements') ];
+	}
+	$c->{exportMode} = 1;
+
+	return (1, $result);
 }
 
 # Handler for leaving the export page.

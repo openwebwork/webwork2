@@ -9,6 +9,9 @@
 			'change',
 			() => {
 				document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
+				for (const id of ['edit_select', 'assign_select', 'export_select', 'score_select']) {
+					document.getElementById(id)?.classList.remove('is-invalid');
+				}
 			},
 			{ once: true }
 		);
@@ -17,10 +20,35 @@
 
 	document.getElementById('achievement-list')?.addEventListener('submit', (e) => {
 		const action = document.getElementById('current_action')?.value || '';
-		if (['edit', 'assign', 'export', 'score'].includes(action)) {
-			if (!is_achievement_selected()) {
+		if (action === 'edit') {
+			const edit_select = document.getElementById('edit_select');
+			if (edit_select.value === 'selected' && !is_achievement_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
+				edit_select.classList.add('is-invalid');
+				edit_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
+						document.getElementById('edit_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
+			}
+		} else if (action === 'assign') {
+			const assign_select = document.getElementById('assign_select');
+			if (assign_select.value === 'selected' && !is_achievement_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+				assign_select.classList.add('is-invalid');
+				assign_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
+						document.getElementById('assign_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
 			}
 		} else if (action === 'import') {
 			const import_file = document.getElementById('import_file_select');
@@ -34,6 +62,36 @@
 					() => {
 						document.getElementById('import_file_err_msg')?.classList.add('d-none');
 						document.getElementById('import_file_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
+			}
+		} else if (action === 'export') {
+			const export_select = document.getElementById('export_select');
+			if (export_select.value === 'selected' && !is_achievement_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+				export_select.classList.add('is-invalid');
+				export_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
+						document.getElementById('export_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
+			}
+		} else if (action === 'score') {
+			const score_select = document.getElementById('score_select');
+			if (export_select.value === 'selected' && !is_achievement_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+				score_select.classList.add('is-invalid');
+				score_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
+						document.getElementById('score_select')?.classList.remove('is-invalid');
 					},
 					{ once: true }
 				);
