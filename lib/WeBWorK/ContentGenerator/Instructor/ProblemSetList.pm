@@ -159,7 +159,8 @@ sub pre_header_initialize ($c) {
 	$c->{totalUsers} = $db->countUsers;
 
 	if (defined $c->param('action') && $c->param('action') eq 'score' && $authz->hasPermissions($user, 'score_sets')) {
-		my @setsToScore = $c->param('selected_sets');
+		my $scope       = $c->param('action.score.scope');
+		my @setsToScore = $scope eq 'all' ? @{ $c->{allSetIDs} } : $c->param('selected_sets');
 
 		return unless @setsToScore;
 
@@ -361,20 +362,33 @@ sub sort_handler ($c) {
 }
 
 sub edit_handler ($c) {
-	$c->{visibleSetIDs} = [ $c->param('selected_sets') ];
-	$c->{editMode}      = 1;
+	my $scope = $c->param('action.edit.scope');
+	$c->{editMode} = 1;
 
+	if ($scope eq 'all') {
+		$c->{visibleSetIDs} = $c->{allSetIDs};
+		return (1, $c->maketext('Editing all sets.'));
+	}
+
+	$c->{visibleSetIDs} = [ $c->param('selected_sets') ];
 	return (1, $c->maketext('Editing selected sets.'));
 }
 
 sub publish_handler ($c) {
 	my $db     = $c->db;
 	my $value  = $c->param('action.publish.value');
-	my @setIDs = $c->param('selected_sets');
+	my $scope  = $c->param('action.publish.scope');
+	my @setIDs = $scope eq 'all' ? @{ $c->{allSetIDs} } : $c->param('selected_sets');
 
 	# Can we use UPDATE here, instead of fetch/change/store?
 	my @sets = $db->getGlobalSets(@setIDs);
 	map { $_->visible($value); $db->putGlobalSet($_); } @sets;
+
+	if ($scope eq 'all') {
+		return $value
+			? (1, $c->maketext('All sets made visible for all students.'))
+			: (1, $c->maketext('All sets hidden from all students.'));
+	}
 
 	return $value
 		? (1, $c->maketext('All selected sets made visible for all students.'))
@@ -540,10 +554,14 @@ sub import_handler ($c) {
 
 # this does not actually export any files, rather it sends us to a new page in order to export the files
 sub export_handler ($c) {
-	$c->{selectedSetIDs} = $c->{visibleSetIDs} = [ $c->param('selected_sets') ];
+	my $scope = $c->param('action.export.scope');
+	$c->{selectedSetIDs} = $scope eq 'all' ? $c->{allSetIDs} : [ $c->param('selected_sets') ];
+	$c->{visibleSetIDs}  = $c->{selectedSetIDs};
 	$c->{exportMode}     = 1;
 
-	return (1, $c->maketext('Selected sets were exported.'));
+	return $scope eq 'all'
+		? (1, $c->maketext('All sets were exported.'))
+		: (1, $c->maketext('Selected sets were exported.'));
 }
 
 sub cancel_export_handler ($c) {

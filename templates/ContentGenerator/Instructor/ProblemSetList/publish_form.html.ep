@@ -1,6 +1,17 @@
 <div>
 	<div class="row mb-2">
-		<%= label_for publish_visibility_select => maketext('Choose visibility of the selected sets') . ':',
+		<%= label_for publish_filter_select => maketext('Choose which sets to be affected') . ':',
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.publish.scope' => [
+					[ maketext('all sets')      => 'all' ],
+					[ maketext('selected sets') => 'selected', selected => undef ]
+				],
+				id => 'publish_filter_select', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for publish_visibility_select => maketext('Choose visibility of the sets to be affected') . ':',
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.publish.value' => [
