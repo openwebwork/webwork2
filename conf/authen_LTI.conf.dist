@@ -60,8 +60,8 @@ $authen{user_module} = [
 # authentication approach to the admin course (one which you are confident
 # cannot be spoofed) that is preferable.
 $authen{admin_module} = [
-	'WeBWorK::Authen::LTIAdvantage',
-	'WeBWorK::Authen::LTIAdvanced',
+	#'WeBWorK::Authen::LTIAdvantage',
+	#'WeBWorK::Authen::LTIAdvanced',
 	'WeBWorK::Authen::Basic_TheLastOption'
 ];
 

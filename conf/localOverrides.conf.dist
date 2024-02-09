@@ -482,6 +482,10 @@ $mail{feedbackRecipients}    = [
 # use a very strong password.  If you have the option to use a more secure
 # authentication approach to the admin course (one which you are confident
 # cannot be spoofed) that is preferable.
+#
+# Note that if you include authentication module config files further down,
+# those may override the setting of $authen{admin_module} here.
+
 #$authen{admin_module} = [
 #	'WeBWorK::Authen::Moodle',
 #	'WeBWorK::Authen::LDAP',
