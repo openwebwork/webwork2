@@ -184,11 +184,7 @@ sub databaseParams {
 			source        => $db_params->{dsn},
 			engine        => $db_params->{storage_engine},
 			character_set => $db_params->{character_set},
-			params        => {
-				%sqlParams,
-				tableOverride => "${courseName}_key",
-				fieldOverride => { key => "key_not_a_keyword" },
-			},
+			params        => { %sqlParams, tableOverride => "${courseName}_key" },
 		},
 		user => {
 			record        => "WeBWorK::DB::Record::User",
@@ -206,11 +202,7 @@ sub databaseParams {
 			source        => $db_params->{dsn},
 			engine        => $db_params->{storage_engine},
 			character_set => $db_params->{character_set},
-			params        => {
-				%sqlParams,
-				tableOverride => "${courseName}_set",
-			#fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
-			},
+			params        => { %sqlParams, tableOverride => "${courseName}_set", },
 		},
 		set_user => {
 			record        => "WeBWorK::DB::Record::UserSet",
@@ -249,8 +241,6 @@ sub databaseParams {
 				%sqlParams,
 				non_native    => 1,
 				tableOverride => "${courseName}_set_user",
-			#fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
-
 			},
 		},
 		set_version_merged => {

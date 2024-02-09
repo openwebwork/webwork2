@@ -20,6 +20,16 @@
 # If you wish to make changes to an individual course, copy the entry into the
 # course.conf file in the respective course directory.
 
+# Since many server-related setting are now being set in webwor2.mojolicious.yml
+# and loaded after this file runs, making changes to those configuration variables
+# here will be overridden. For specific variables that are set, see that file
+# in general these include
+#   - URL settings (for both webwork and pg)
+#   - directory settings
+#   - external programs
+#   - database settings
+#   - server mail settings
+
 ################################################################################
 # localOverrides.conf  -- this file
 ################################################################################
@@ -560,8 +570,7 @@ $mail{feedbackRecipients}    = [
 #	'hebrewTwoCol.xml',
 #];
 
-# The Hebrew themes need to use xelatex. Uncomment the following for xelatex
-#$externalPrograms{pdflatex} ="/usr/bin/xelatex --no-shell-escape";
+# The Hebrew themes need to use xelatex. This will need to be done in webwork2.mojolicious.yml
 
 # A course may have additional themes in $courseDirs{hardcopyThemes}.  All such
 # "course" hardcopy themes are effectively enabled and offered for use when

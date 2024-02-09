@@ -262,6 +262,20 @@ environment:
   # the original 'admin' course.
   admin_course_id: admin
 
+  # When new courses are created using the admin course, this setting controls
+  # whether or not they will be hidden.  Setting this to anything other than
+  # "hidden" or "visible" (or leaving it unset) means that courses created using
+  # "Add Courses" are not hidden, and all unarchived courses have whatever hidden
+  # status they had when archived.
+  # Setting this to "hidden" means that courses created using "Add Courses" and
+  # courses created using "Unarchive Courses" with a new course ID will be hidden.
+  # Unarchived courses that keep their original name will keep their hidden
+  # status.
+  # Setting this to "visible" means that courses created using "Add Courses" and
+  # courses created using "Unarchive Courses" with a new course ID will be visible.
+  # Unarchived courses that keep their original name will keep their hidden status.
+  # new_courses_hidden_status: hidden
+
   # courseName
   courseName: $course_name
 
@@ -598,12 +612,7 @@ environment:
   # You can use "which tar"  for example to find out where the "tar" program is located
 
   externalPrograms:
-    mv: /bin/mv
-    cp: /bin/cp
-    rm: /bin/rm
-    mkdir: /bin/mkdir
     tar: /bin/tar
-    gzip: /bin/gzip
     git: /bin/git
     curl: /usr/bin/curl
     mysql: /usr/bin/mysql
@@ -616,7 +625,7 @@ environment:
     # Note that --no-shell-escape is important for security reasons.
     # Consider using xelatex instead of pdflatex for multilingual use, and
     # use polyglossia and fontspec packages (which require xelatex or lualatex).
-    #$externalPrograms{pdflatex} = "/usr/bin/xelatex --no-shell-escape";
+    #pdflatex: /usr/bin/xelatex --no-shell-escape
 
     dvipng: /usr/bin/dvipng
     convert: /usr/bin/convert
@@ -629,33 +638,12 @@ environment:
     pnmtopng: /usr/bin/pnmtopng
     pnmtopnm: /usr/bin/pnmtopnm
 
-  # How to handles lines 145-147 in site.conf.dist?
-
-
 # Database options
 
 database:
 
   # uncomment to allow database debug information
   # debug: 1
-
-  ################################################################################
-  # these variables are used by database.conf. we define them here so that editing
-  # database.conf isn't necessary.
-
-  # You must initialize the database and set the password for webworkWrite.
-  # Edit the $database_password line and replace 'passwordRW' by the actual password used in the GRANT command above
-  ################################################################################
-
-  # The database DSN is the path to the WeBWorK database which you have created.
-
-  # Modern database DSN format:
-  #    DBI:driver:database=$database;host=$hostname;port=$port  (when DB not on localhost)
-  # or DBI:driver:database=$database;host=127.0.0.1;port=$port  (when DB on localhost, using TCP)
-  #         See: https://metacpan.org/pod/DBD::MariaDB#port
-  #              "To connect to a MariaDB or MySQL server on localhost using TCP/IP,
-  # you must specify the host as 127.0.0.1 with the optional port, e.g. 3306."
-  # or DBI:driver:database=$database                            (when DB on localhost, using socket)
 
   # One thing on which it depends is the driver name, which you may want to modify.
   # It also depends on the database name, which may be non-standard in some settings,
