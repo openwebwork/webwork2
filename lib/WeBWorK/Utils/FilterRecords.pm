@@ -22,26 +22,23 @@ WeBWorK::Utils::FilterRecords - utilities for filtering database records.
 
 =head1 SYNOPSIS
 
-    use WeBWorK::Utils::FilterRecords qw/getFiltersForClass/;
-
-    # Get a list of filters
-    my $filters = getFiltersForClass(@users);
-
-    use WeBWorK::Utils::FilterRecords qw/filterRecords/;
+    use WeBWorK::Utils::FilterRecords qw/getFiltersForClass filterRecords/;
 
     # Start with a list of records
     my @users = $db->getUsers($db->listUsers);
 
-    # Filter the records using a list of provided filters.
-    @filteredUsers = filterRecords([ 'section:1', 'recitation:2' ], @nsers);
+    # Get a list of all filters
+    my $filters = getFiltersForClass($c, undef, @users);
 
-	# Get all records (This isn't useful and just returns the passed in
-	# array of records.  So don't actually do this.)
-    @filteredUsers = filterRecords(undef, @users);
+    # Alternative, get a list of section or recitation filters.
+    my $filters = getFiltersForClass($c, ['section', 'recitation'], @users);
+
+    # Filter the records using a list of provided filters.
+    my @filteredUsers = filterRecords($c, 1, [ 'section:1', 'recitation:2' ], @users);
 
 =head1 DESCRIPTION
 
-This module provides functions for filtering records from the database.
+This module provides functions for filtering user or set records from the database.
 
 =cut
 
@@ -62,27 +59,40 @@ our @EXPORT_OK = qw(
 
 =over
 
-=item getFiltersForClass($c, @records)
+=item getFiltersForClass($c, $include, @records)
 
-Given a list of database records, returns the filters available for those
-records.  For all database records from the WeBWorK::DB::Record::User class
-the filters are by section or recitation or by that user's permission level
-in the permissionLevel table. For all database records from the
-WeBWorK::DB::Record::Set class the filters are by assignment type and by
-visibility. For other classes the only filter is no filter at all.
+Given a list of database records, returns the filters available for those records.
+C<$include> is an array reference that lists the filters to include. If this is
+empty, all possible filters are returned.
+
+For user records (WeBWorK::DB::Record::User), filters can be by section,
+recitation, status, or permission level in the permissionLevel table. The
+possible C<$include> are: 'section', 'recitation', 'status', or 'permission'.
+
+For set records (WeBWorK::DB::Record::Set), filters can be assignment type,
+or visibility. The possible C<$include> are: 'assignment_type', or 'visibility'.
 
 The return value is a reference to a list of two element lists. The first
-element in each list is a a string description of the filter and the second
+element in each list is a string description of the filter and the second
 element is the filter name.  The return value is suitable for passing as the
 second value argument to the Mojolicious select_field tag helper method.
 
 =cut
 
 sub getFiltersForClass {
-	my ($c, @records) = @_;
+	my ($c, $include, @records) = @_;
+	my $blankName = "\x{27E8}" . $c->maketext('blank') . "\x{27E9}";
+
+	my %includes;
+	if (ref $include eq 'ARRAY') {
+		for (@$include) {
+			$includes{$_} = 1;
+		}
+	}
 
 	my @filters;
-	push @filters, [ "\x{27E8}Display all possible records\x{27E9}" => 'all', selected => undef ];
+	push @filters,
+		[ "\x{27E8}" . $c->maketext('Display all possible records') . "\x{27E9}" => 'all', selected => undef ];
 
 	if (ref $records[0] eq 'WeBWorK::DB::Record::User') {
 		my (%sections, %recitations, %permissions, %roles);
@@ -93,35 +103,38 @@ sub getFiltersForClass {
 			++$roles{ $user->status };
 		}
 
-		my %permissionName = reverse %{ $c->ce->{userRoles} };
-		++$permissions{ $permissionName{$_} }
-			for map { $_->permission } $c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
+		if (!%includes || $includes{permission}) {
+			my %permissionName = reverse %{ $c->ce->{userRoles} };
+			++$permissions{ $permissionName{$_} }
+				for map { $_->permission } $c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
+		}
 
-		if (keys %sections > 1) {
+		if (keys %sections > 1 && (!%includes || $includes{section})) {
 			for my $sec (sortByName(undef, keys %sections)) {
-				push @filters, [ 'Section: ' . ($sec ne '' ? $sec : "\x{27E8}blank\x{27E9}") => "section:$sec" ];
+				push @filters, [ $c->maketext('Section: [_1]', $sec ne '' ? $sec : $blankName) => "section:$sec" ];
 			}
 		}
 
-		if (keys %recitations > 1) {
+		if (keys %recitations > 1 && (!%includes || $includes{recitation})) {
 			for my $rec (sortByName(undef, keys %recitations)) {
-				push @filters, [ 'Recitation: ' . ($rec ne '' ? $rec : "\x{27E8}blank\x{27E9}") => "recitation:$rec" ];
+				push @filters,
+					[ $c->maketext('Recitation: [_1]', $rec ne '' ? $rec : $blankName) => "recitation:$rec" ];
 			}
 		}
 
-		if (keys %roles > 1) {
+		if (keys %roles > 1 && (!%includes || $includes{status})) {
 			for my $role (sortByName(undef, keys %roles)) {
 				my @statuses = keys %{ $c->ce->{statuses} };
 				for (@statuses) {
-					push @filters, [ "Enrollment Status: $_" => "status:$role" ]
+					push @filters, [ $c->maketext('Enrollment Status: [_1]', $_) => "status:$role" ]
 						if ($c->ce->{statuses}{$_}{abbrevs}[0] eq $role);
 				}
 			}
 		}
 
-		if (keys %permissions > 1) {
+		if (keys %permissions > 1 && (!%includes || $includes{permission})) {
 			for my $perm (sortByName(undef, keys %permissions)) {
-				push @filters, [ "Permission Level: $perm" => "permission:$perm" ];
+				push @filters, [ $c->maketext('Permission Level: [_1]', $perm) => "permission:$perm" ];
 			}
 		}
 	} elsif (ref $records[0] eq 'WeBWorK::DB::Record::Set') {
@@ -133,15 +146,15 @@ sub getFiltersForClass {
 				unless (defined $visibles{0} && $set->visible eq '' || defined $visibles{''} && $set->visible eq '0');
 		}
 
-		if (keys %assignment_types > 1) {
+		if (keys %assignment_types > 1 && (!%includes || $includes{assignment_type})) {
 			for my $type (sortByName(undef, keys %assignment_types)) {
 				push @filters, [ FIELD_PROPERTIES()->{assignment_type}{labels}{$type} => "assignment_type:$type" ];
 			}
 		}
 
-		if (keys %visibles > 1) {
+		if (keys %visibles > 1 && (!%includes || $includes{visible})) {
 			for my $vis (sortByName(undef, keys %visibles)) {
-				push @filters, [ ($vis ? 'Visible' : 'Not Visible') => "visible:$vis" ];
+				push @filters, [ ($vis ? $c->maketext('Visible') : $c->maketext('Not Visible')) => "visible:$vis" ];
 			}
 		}
 	}

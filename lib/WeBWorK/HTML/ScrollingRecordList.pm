@@ -64,7 +64,7 @@ sub scrollingRecordList ($options, @records) {
 		my $format_keywords = join('|', @format_keywords);
 		@$sorts = grep { $_->[0] =~ /$format_keywords/ } @$sorts;
 
-		$filters = getFiltersForClass($c, @records);
+		$filters = getFiltersForClass($c, undef, @records);
 
 		my @selected_filters;
 		if (defined $c->param("$name!filter")) {
