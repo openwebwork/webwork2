@@ -170,7 +170,6 @@ sub set_stats ($c) {
 	# Only count top level problems for Jitar sets.
 	my $num_problems = $isJitarSet ? scalar(keys %topLevelProblems) : scalar(@problems);
 
-	my $filter = $c->param('filter');
 	my ($students, $filters) = $c->filter_students;
 	for my $studentRecord (@$students) {
 		my $student                    = $studentRecord->user_id;
@@ -362,7 +361,6 @@ sub problem_stats ($c) {
 	my $db        = $c->db;
 	my $ce        = $c->ce;
 	my $user      = $c->param('user');
-	my $filter    = $c->param('filter');
 	my $courseID  = $c->stash('courseID');
 	my $problemID = $c->stash('problemID');
 

@@ -89,8 +89,8 @@
 						</label>
 					</div>
 				</div>
-				% if (param('filter')) {
-					<%= hidden_field filter => param('filter') =%>
+				% if ($filter) {
+					<%= hidden_field filter => $filter =%>
 				% }
 				% if ($primary_sort_method) {
 					<%= hidden_field primary_sort => $primary_sort_method =%>
