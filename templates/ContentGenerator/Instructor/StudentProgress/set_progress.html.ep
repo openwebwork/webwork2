@@ -24,7 +24,8 @@
 % if (%$filters) {
 	<div class="d-flex align-items-center mt-1 mb-3">
 		<%= maketext('Showing progress for:') =%>
-		<%= include 'HTML/StudentFilterMenu/menu', filters => $filters, params => \%params =%>
+		<%= include 'ContentGenerator/Instructor/Stats/student_filter_menu',
+			filters => $filters, params => \%params =%>
 	</div>
 % }
 %
