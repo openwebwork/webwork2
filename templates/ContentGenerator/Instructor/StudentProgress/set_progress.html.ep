@@ -21,7 +21,7 @@
 % );
 %
 % # Filter selector.
-% if (%$filters) {
+% if (@$filters > 1) {
 	<div class="d-flex align-items-center mt-1 mb-3">
 		<%= maketext('Showing progress for:') =%>
 		<%= include 'ContentGenerator/Instructor/Stats/student_filter_menu',

@@ -116,14 +116,13 @@ sub displaySets ($c) {
 		: (date => 0, testtime => 0, timeleft => 0, problems => 1, section => 1, recit => 1, login => 1);
 	my $showBestOnly = $setIsVersioned ? $c->param('show_best_only') : 0;
 
-	my $filter = $c->param('filter');
+	my $filter = $c->param('filter') || 'all';
 	my @student_records =
-		$filter ? filterRecords($c, 0, [$filter], @{ $c->{student_records} }) : @{ $c->{student_records} };
+		$filter eq 'all' ? @{ $c->{student_records} } : filterRecords($c, 0, [$filter], @{ $c->{student_records} });
 
-	# convert the array from getFiltersForClass to a hash, after removing the first 'all' filter.
+	# Change visible name of the first 'all' filter.
 	my $filters = getFiltersForClass($c, [ 'section', 'recitation' ], @{ $c->{student_records} });
-	shift(@$filters);
-	$filters = { map { $_->[1] => $_->[0] } @$filters };
+	$filters->[0][0] = $c->maketext('All students');
 
 	my @score_list;
 	my @user_set_list;

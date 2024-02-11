@@ -1,20 +1,19 @@
-% last unless %$filters;
+% last unless @$filters > 1;
 %
 % # Create a section/recitation "filter by" dropdown if there are sections or recitations.
 <div class="btn-group student-nav-filter-selector mx-2">
-	<%= link_to param('filter') ? $filters->{param('filter')} : maketext('All students') => '#',
-		id => 'filter', class => 'btn btn-primary dropdown-toggle', role => 'button', 'aria-expanded' => 'false',
-		data => { bs_toggle => 'dropdown' } =%>
+	% my $filter         = param('filter') || 'all';
+	% my $current_filter = $filters->[0][0];
+	% for (@$filters) {
+		% $current_filter = $_->[0] if $_->[1] eq $filter;
+	% }
+	<%= link_to $current_filter => '#', id => 'filter', class => 'btn btn-primary dropdown-toggle',
+		role => 'button', 'aria-expanded' => 'false', data => { bs_toggle => 'dropdown' } =%>
 	<ul class="dropdown-menu" role="menu" aria-labelledby="filter">
-		<li>
-			<%= link_to maketext('All students') => $c->systemLink(url_for),
-				class => 'dropdown-item', param('filter') ? () : (style => 'background-color:#8F8') =%>
-		</li>
-		% for (sort keys %$filters) {
+		% for (@$filters) {
 			<li>
-				<%= link_to $filters->{$_} => $c->systemLink(url_for, params => { %$params, filter => $_ }),
-					(param('filter') || '') eq $_ ? (style => 'background-color: #8F8') : (),
-					class => 'dropdown-item' =%>
+				<%= link_to $_->[0] => $c->systemLink(url_for, params => { %$params, filter => $_->[1] }),
+					$_->[1] eq $filter ? (style => 'background-color: #8F8') : (), class => 'dropdown-item' =%>
 			</li>
 		% }
 	</ul>

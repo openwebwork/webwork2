@@ -102,15 +102,15 @@ sub siblings ($c) {
 }
 
 # Apply the currently selected filter to the student records, and return a reference to the
-# list of students and a reference to a hash of section/recitation filters.
+# list of students and a reference to the array of section/recitation filters.
 sub filter_students ($c) {
-	my $filter   = $c->param('filter');
-	my @students = $filter ? filterRecords($c, 0, [$filter], @{ $c->{student_records} }) : @{ $c->{student_records} };
+	my $filter = $c->param('filter') || 'all';
+	my @students =
+		$filter eq 'all' ? @{ $c->{student_records} } : filterRecords($c, 0, [$filter], @{ $c->{student_records} });
 
-	# convert the array from getFiltersForClass to a hash, after removing the first 'all' filter.
+	# Change visible name of the first 'all' filter.
 	my $filters = getFiltersForClass($c, [ 'section', 'recitation' ], @{ $c->{student_records} });
-	shift(@$filters);
-	$filters = { map { $_->[1] => $_->[0] } @$filters };
+	$filters->[0][0] = $c->maketext('All students');
 
 	return (\@students, $filters);
 }
