@@ -1,5 +1,33 @@
 <%= include 'ContentGenerator/Base/set_status', set => $c->{setRecord} =%>
 %
+% my %params = (
+	% defined $primary_sort_method   ? (primary_sort   => $primary_sort_method)   : (),
+	% defined $secondary_sort_method ? (secondary_sort => $secondary_sort_method) : (),
+	% defined $ternary_sort_method   ? (ternary_sort   => $ternary_sort_method)   : (),
+	% defined $filter                ? (filter => $filter)                        : (),
+	% # Preserve display options when the sort headers are clicked for gateway quizzes.
+	% $setIsVersioned
+	% ? (
+		% show_best_only  => $showBestOnly,
+		% show_date       => $showColumns->{date},
+		% show_testtime   => $showColumns->{testtime},
+		% show_timeleft   => $showColumns->{timeleft},
+		% show_problems   => $showColumns->{problems},
+		% show_section    => $showColumns->{section},
+		% show_recitation => $showColumns->{recit},
+		% show_login      => $showColumns->{login},
+		% )
+	% : ()
+% );
+%
+% # Filter selector.
+% if (%$filters) {
+	<div class="d-flex align-items-center mt-1 mb-3">
+		<%= maketext('Showing progress for:') =%>
+		<%= include 'HTML/StudentFilterMenu/menu', filters => $filters, params => \%params =%>
+	</div>
+% }
+%
 % # In the case of gateway tests, add a form with checkboxes that allow customization of what is included in the
 % # display.
 % if ($setIsVersioned) {
@@ -60,6 +88,18 @@
 						</label>
 					</div>
 				</div>
+				% if (param('filter')) {
+					<%= hidden_field filter => param('filter') =%>
+				% }
+				% if ($primary_sort_method) {
+					<%= hidden_field primary_sort => $primary_sort_method =%>
+				% }
+				% if ($secondary_sort_method) {
+					<%= hidden_field secondary_sort => $secondary_sort_method =%>
+				% }
+				% if ($ternary_sort_method) {
+					<%= hidden_field ternary_sort => $ternary_sort_method =%>
+				% }
 				<%= submit_button maketext('Update Display'), class => 'btn btn-primary' =%>
 			</div>
 		<% end =%>
@@ -106,23 +146,11 @@
 	% }
 </div>
 %
-% my %params = (
+% my %sort_params = (
+	% %params,
 	% # Shift past sort methods down in priority.
-	% defined $primary_sort_method ? (secondary_sort => $primary_sort_method) : (),
-	% defined $secondary_sort_method ? (ternary_sort => $secondary_sort_method) : (),
-	% # Preserve display options when the sort headers are clicked for gateway quizzes.
-	% $setIsVersioned
-	% ? (
-		% show_best_only  => $showBestOnly,
-		% show_date       => $showColumns->{date},
-		% show_testtime   => $showColumns->{testtime},
-		% show_timeleft   => $showColumns->{timeleft},
-		% show_problems   => $showColumns->{problems},
-		% show_section    => $showColumns->{section},
-		% show_recitation => $showColumns->{recit},
-		% show_login      => $showColumns->{login},
-		% )
-	% : ()
+	% defined $primary_sort_method   ? (secondary_sort => $primary_sort_method)   : (),
+	% defined $secondary_sort_method ? (ternary_sort   => $secondary_sort_method) : (),
 % );
 %
 % # Start table output
@@ -135,17 +163,17 @@
 					<%= maketext('Name') %>
 					<br>
 					<%= link_to maketext('First') =>
-						$c->systemLink(url_for, params => { primary_sort => 'first_name', %params }) =%>
+						$c->systemLink(url_for, params => { %sort_params, primary_sort => 'first_name' }) =%>
 					&nbsp;&nbsp;&nbsp;
 					<%= link_to maketext('Last') =>
-						$c->systemLink(url_for, params => { primary_sort => 'last_name', %params }) =%>
+						$c->systemLink(url_for, params => { %sort_params, primary_sort => 'last_name' }) =%>
 					<br>
 					<%= link_to maketext('Email') =>
-						$c->systemLink(url_for, params => { primary_sort => 'email_address', %params }) =%>
+						$c->systemLink(url_for, params => { %sort_params, primary_sort => 'email_address' }) =%>
 				</th>
 				<th <%== $rowspan %>>
 					<%= link_to maketext('Score') =>
-						$c->systemLink(url_for, params => { primary_sort => 'score', %params }) =%>
+						$c->systemLink(url_for, params => { %sort_params, primary_sort => 'score' }) =%>
 				</th>
 				<th <%== $rowspan %>><%= maketext('Out Of') %></th>
 				% # Additional columns that may be shown depending on if showing a gateway quiz and user selection.
@@ -176,19 +204,19 @@
 				% if ($showColumns->{section}) {
 					<th <%== $rowspan %>>
 						<%= link_to maketext('Section') =>
-							$c->systemLink(url_for, params => { primary_sort => 'section', %params }) =%>
+							$c->systemLink(url_for, params => { %sort_params, primary_sort => 'section' }) =%>
 					</th>
 				% }
 				% if ($showColumns->{recit}) {
 					<th <%== $rowspan %>>
 						<%= link_to maketext('Recitation') =>
-							$c->systemLink(url_for, params => { primary_sort => 'recitation', %params }) =%>
+							$c->systemLink(url_for, params => { %sort_params, primary_sort => 'recitation' }) =%>
 					</th>
 				% }
 				% if ($showColumns->{login}) {
 					<th <%== $rowspan %>>
 						<%= link_to maketext('Login Name') =>
-							$c->systemLink(url_for, params => { primary_sort => 'user_id', %params }) =%>
+							$c->systemLink(url_for, params => { %sort_params, primary_sort => 'user_id' }) =%>
 					</th>
 				% }
 			</tr>

@@ -24,6 +24,7 @@ WeBWorK::ContentGenerator::Instructor::StudentProgress - Display Student Progres
 
 use WeBWorK::Utils qw(jitar_id_to_seq wwRound grade_set format_set_name_display);
 use WeBWorK::Utils::Grades qw(list_set_versions);
+use WeBWorK::Utils::FilterRecords qw(getFiltersForClass filterRecords);
 
 sub initialize ($c) {
 	my $db   = $c->db;
@@ -36,9 +37,9 @@ sub initialize ($c) {
 	# Cache a list of all users except set level proctors and practice users, and restrict to the sections or
 	# recitations that are allowed for the user if such restrictions are defined.  This list is sorted by last_name,
 	# then first_name, then user_id.  This is used in multiple places in this module, and is guaranteed to be used at
-	# least once.  So it is done here to prevent extra database access.
+	# least once.  So it is done here to prevent extra database access.  Filter out users not included in stats.
 	$c->{student_records} = [
-		$db->getUsersWhere(
+		grep { $ce->status_abbrev_has_behavior($_->status, 'include_in_stats') } $db->getUsersWhere(
 			{
 				user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
 				$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
@@ -115,10 +116,19 @@ sub displaySets ($c) {
 		: (date => 0, testtime => 0, timeleft => 0, problems => 1, section => 1, recit => 1, login => 1);
 	my $showBestOnly = $setIsVersioned ? $c->param('show_best_only') : 0;
 
+	my $filter = $c->param('filter');
+	my @student_records =
+		$filter ? filterRecords($c, 0, [$filter], @{ $c->{student_records} }) : @{ $c->{student_records} };
+
+	# convert the array from getFiltersForClass to a hash, after removing the first 'all' filter.
+	my $filters = getFiltersForClass($c, [ 'section', 'recitation' ], @{ $c->{student_records} });
+	shift(@$filters);
+	$filters = { map { $_->[1] => $_->[0] } @$filters };
+
 	my @score_list;
 	my @user_set_list;
 
-	for my $studentRecord (@{ $c->{student_records} }) {
+	for my $studentRecord (@student_records) {
 		next unless $ce->status_abbrev_has_behavior($studentRecord->status, 'include_in_stats');
 
 		my $studentName = $studentRecord->user_id;
@@ -277,7 +287,9 @@ sub displaySets ($c) {
 		secondary_sort_method => $secondary_sort_method,
 		ternary_sort_method   => $ternary_sort_method,
 		problems              => \@problems,
-		user_set_list         => \@user_set_list
+		user_set_list         => \@user_set_list,
+		filters               => $filters,
+		filter                => $filter,
 	);
 }
 

@@ -6,7 +6,7 @@
 %
 <div class="mb-3">
 	<%= maketext('Showing statistics for:') =%>
-	<%= include 'ContentGenerator/Instructor/Stats/student_filter_menu', filters => $filters =%>
+	<%= include 'HTML/StudentFilterMenu/menu', filters => $filters, params => {} =%>
 	<%= include 'ContentGenerator/Instructor/Stats/problem_menu', problems => $problems =%>
 </div>
 %

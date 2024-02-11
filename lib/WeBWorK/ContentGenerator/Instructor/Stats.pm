@@ -26,6 +26,7 @@ homework set (including sv graphs).
 use SVG;
 
 use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status format_set_name_display grade_set);
+use WeBWorK::Utils::FilterRecords qw(getFiltersForClass filterRecords);
 
 sub initialize ($c) {
 	my $db   = $c->db;
@@ -38,9 +39,9 @@ sub initialize ($c) {
 	# Cache a list of all users except set level proctors and practice users, and restrict to the sections or
 	# recitations that are allowed for the user if such restrictions are defined.  This list is sorted by last_name,
 	# then first_name, then user_id.  This is used in multiple places in this module, and is guaranteed to be used at
-	# least once.  So it is done here to prevent extra database access.
+	# least once.  So it is done here to prevent extra database access.  Filter out users not included in stats.
 	$c->{student_records} = [
-		$db->getUsersWhere(
+		grep { $ce->status_abbrev_has_behavior($_->status, 'include_in_stats') } $db->getUsersWhere(
 			{
 				user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
 				$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
@@ -100,39 +101,18 @@ sub siblings ($c) {
 	return $c->include('ContentGenerator/Instructor/Stats/siblings', header => $c->maketext('Statistics'));
 }
 
-# Apply the currently selected filter to the the student records cached in initialize, and return a reference to the
+# Apply the currently selected filter to the student records, and return a reference to the
 # list of students and a reference to a hash of section/recitation filters.
 sub filter_students ($c) {
-	my $ce   = $c->ce;
-	my $db   = $c->db;
-	my $user = $c->param('user');
+	my $filter   = $c->param('filter');
+	my @students = $filter ? filterRecords($c, 0, [$filter], @{ $c->{student_records} }) : @{ $c->{student_records} };
 
-	# Create a hash of sections and recitations, if there are any for the course.
-	# Filter out all records except for current/auditing students for stats.
-	# Filter out students not in selected section/recitation.
-	my $filter = $c->param('filter');
-	my %filters;
-	my @outStudents;
-	for my $student (@{ $c->{student_records} }) {
-		# Only include current/auditing students in stats.
-		next
-			unless ($ce->status_abbrev_has_behavior($student->status, 'include_in_stats'));
+	# convert the array from getFiltersForClass to a hash, after removing the first 'all' filter.
+	my $filters = getFiltersForClass($c, [ 'section', 'recitation' ], @{ $c->{student_records} });
+	shift(@$filters);
+	$filters = { map { $_->[1] => $_->[0] } @$filters };
 
-		my $section = $student->section;
-		$filters{"section:$section"} = $c->maketext('Section [_1]', $section)
-			if $section && !$filters{"section:$section"};
-		my $recitation = $student->recitation;
-		$filters{"recitation:$recitation"} = $c->maketext('Recitation [_1]', $recitation)
-			if $recitation && !$filters{"recitation:$recitation"};
-
-		# Only add users who match the selected section/recitation.
-		push(@outStudents, $student)
-			if (!$filter
-				|| ($filter =~ /^section:(.*)$/    && $section eq $1)
-				|| ($filter =~ /^recitation:(.*)$/ && $recitation eq $1));
-	}
-
-	return (\@outStudents, \%filters);
+	return (\@students, $filters);
 }
 
 sub set_stats ($c) {
@@ -190,6 +170,7 @@ sub set_stats ($c) {
 	# Only count top level problems for Jitar sets.
 	my $num_problems = $isJitarSet ? scalar(keys %topLevelProblems) : scalar(@problems);
 
+	my $filter = $c->param('filter');
 	my ($students, $filters) = $c->filter_students;
 	for my $studentRecord (@$students) {
 		my $student                    = $studentRecord->user_id;
@@ -381,6 +362,7 @@ sub problem_stats ($c) {
 	my $db        = $c->db;
 	my $ce        = $c->ce;
 	my $user      = $c->param('user');
+	my $filter    = $c->param('filter');
 	my $courseID  = $c->stash('courseID');
 	my $problemID = $c->stash('problemID');
 
