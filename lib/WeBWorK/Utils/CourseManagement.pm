@@ -285,8 +285,8 @@ sub addCourse {
 
 		# does the directory already exist?
 		if (-e $courseDir) {
-			warn
-				"Can't create $courseDirName directory '$courseDir', since it already exists. Using existing directory.\n";
+			warn "Can't create $courseDirName directory '$courseDir', "
+				. "since it already exists. Using existing directory.\n";
 			next;
 		}
 
@@ -459,8 +459,8 @@ sub addCourse {
 				my $destDir = $ce->{courseDirs}{templates};
 				warn "Failed to copy templates from course '$sourceCourse': $! " unless dircopy("$sourceDir", $destDir);
 			} else {
-				warn
-					"Failed to copy templates from course '$sourceCourse': templates directory '$sourceDir' does not exist.\n";
+				warn "Failed to copy templates from course '$sourceCourse': "
+					. "templates directory '$sourceDir' does not exist.\n";
 			}
 
 			## copy html ##
@@ -749,8 +749,8 @@ sub deleteCourse {
 			or croak
 			"Can't delete the course '$courseID' because the courses directory '$rootParent' is not writeable.";
 	} else {
-		warn
-			"Warning: the course root directory '$root' does not exist. Attempting to delete the course database and other course directories...\n";
+		warn "Warning: the course root directory '$root' does not exist. "
+			. "Attempting to delete the course database and other course directories...\n";
 	}
 
 	##### step 1: delete course database (if necessary) #####
@@ -772,8 +772,8 @@ sub deleteCourse {
 
 			# is it really a directory
 			unless (-d $courseDir) {
-				warn
-					"Can't delete $courseDirName directory '$courseDir', since is not a directory. If it is not wanted, you will have to delete it manually.\n";
+				warn "Can't delete $courseDirName directory '$courseDir', since is not a directory. "
+					. "If it is not wanted, you will have to delete it manually.\n";
 				next;
 			}
 
@@ -782,8 +782,8 @@ sub deleteCourse {
 			pop @courseDirElements;
 			my $courseDirParent = File::Spec->catdir(@courseDirElements);
 			unless (-w $courseDirParent) {
-				warn
-					"Can't delete $courseDirName directory '$courseDir', since its parent directory is not writeable. If it is not wanted, you will have to delete it manually.\n";
+				warn "Can't delete $courseDirName directory '$courseDir', since its parent directory is not "
+					. "writeable. If it is not wanted, you will have to delete it manually.\n";
 				next;
 			}
 
@@ -1024,13 +1024,13 @@ sub unarchiveCourse {
 				warn "failed to unarchive course database from dump file '$old_dump_file: $@\n";
 			}
 		} else {
-			warn
-				"course '$currCourseID' uses dbLayout '$dbLayoutName', which doesn't support restoring database tables. database tables will not be restored.\n";
+			warn "course '$currCourseID' uses dbLayout '$dbLayoutName', which doesn't support "
+				. "restoring database tables. database tables will not be restored.\n";
 			$no_database = 1;
 		}
 	} else {
-		warn
-			"course '$currCourseID' has no database dump in its data directory (checked for $dump_dir and $old_dump_file). database tables will not be restored.\n";
+		warn "course '$currCourseID' has no database dump in its data directory "
+			. "(checked for $dump_dir and $old_dump_file). database tables will not be restored.\n";
 		$no_database = 1;
 	}
 
@@ -1259,12 +1259,13 @@ sub initNonNativeTables {
 
 	# Find the names of the non-native database tables
 	foreach my $table (sort keys %$db) {
-		next unless $db->{$table}{params}{non_native}; # only look at non-native tables
-													   # hack: these two tables are virtual and don't need to be created
-													   # for the admin course or in the database in general
-													   # if they were created in earlier versions for the admin course
-													   # you can use mysql to drop the field version_id manually
-													   # this will get rid of a spurious error
+		next unless $db->{$table}{params}{non_native};    # only look at non-native tables
+
+		# hack: these two tables are virtual and don't need to be created
+		# for the admin course or in the database in general
+		# if they were created in earlier versions for the admin course
+		# you can use mysql to drop the field version_id manually
+		# this will get rid of a spurious error
 		next if $table eq 'problem_version' or $table eq 'set_version';
 
 		my $database_table_name =
@@ -1296,8 +1297,8 @@ sub initNonNativeTables {
 				if (!$database_field_exists) {
 					$fields_ok = 0;
 					$fieldStatus{$field} = [ONLY_IN_A];
-					warn
-						"$field from $database_table_name (aka |$table|) is only in schema, not in database, so adding it ... ";
+					warn "$field from $database_table_name (aka |$table|) is only in schema, "
+						. "not in database, so adding it ... ";
 					if ($db->{$table}->can("add_column_field")) {
 						if ($db->{$table}->add_column_field($field_name)) {
 							warn "added column $field_name to table $database_table_name";
