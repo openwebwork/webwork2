@@ -39,9 +39,9 @@ sub initialize ($c) {
 	# Cache a list of all users except set level proctors and practice users, and restrict to the sections or
 	# recitations that are allowed for the user if such restrictions are defined.  This list is sorted by last_name,
 	# then first_name, then user_id.  This is used in multiple places in this module, and is guaranteed to be used at
-	# least once.  So it is done here to prevent extra database access.  Filter out users not included in stats.
+	# least once.  So it is done here to prevent extra database access.
 	$c->{student_records} = [
-		grep { $ce->status_abbrev_has_behavior($_->status, 'include_in_stats') } $db->getUsersWhere(
+		$db->getUsersWhere(
 			{
 				user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
 				$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
@@ -104,13 +104,15 @@ sub siblings ($c) {
 # Apply the currently selected filter to the student records, and return a reference to the
 # list of students and a reference to the array of section/recitation filters.
 sub filter_students ($c) {
-	my $filter = $c->param('filter') || 'all';
-	my @students =
-		$filter eq 'all' ? @{ $c->{student_records} } : filterRecords($c, 0, [$filter], @{ $c->{student_records} });
+	my $ce       = $c->ce;
+	my $filter   = $c->param('filter') || 'all';
+	my @students = grep { $ce->status_abbrev_has_behavior($_->status, 'include_in_stats') } @{ $c->{student_records} };
 
 	# Change visible name of the first 'all' filter.
-	my $filters = getFiltersForClass($c, [ 'section', 'recitation' ], @{ $c->{student_records} });
+	my $filters = getFiltersForClass($c, [ 'section', 'recitation' ], @students);
 	$filters->[0][0] = $c->maketext('All students');
+
+	@students = filterRecords($c, 0, [$filter], @students) unless $filter eq 'all';
 
 	return (\@students, $filters);
 }

@@ -37,9 +37,9 @@ sub initialize ($c) {
 	# Cache a list of all users except set level proctors and practice users, and restrict to the sections or
 	# recitations that are allowed for the user if such restrictions are defined.  This list is sorted by last_name,
 	# then first_name, then user_id.  This is used in multiple places in this module, and is guaranteed to be used at
-	# least once.  So it is done here to prevent extra database access.  Filter out users not included in stats.
+	# least once.  So it is done here to prevent extra database access.
 	$c->{student_records} = [
-		grep { $ce->status_abbrev_has_behavior($_->status, 'include_in_stats') } $db->getUsersWhere(
+		$db->getUsersWhere(
 			{
 				user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
 				$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
@@ -116,20 +116,21 @@ sub displaySets ($c) {
 		: (date => 0, testtime => 0, timeleft => 0, problems => 1, section => 1, recit => 1, login => 1);
 	my $showBestOnly = $setIsVersioned ? $c->param('show_best_only') : 0;
 
-	my $filter = $c->param('filter') || 'all';
+	# Only show students who are included in stats.
 	my @student_records =
-		$filter eq 'all' ? @{ $c->{student_records} } : filterRecords($c, 0, [$filter], @{ $c->{student_records} });
+		grep { $ce->status_abbrev_has_behavior($_->status, 'include_in_stats') } @{ $c->{student_records} };
 
 	# Change visible name of the first 'all' filter.
-	my $filters = getFiltersForClass($c, [ 'section', 'recitation' ], @{ $c->{student_records} });
+	my $filter  = $c->param('filter') || 'all';
+	my $filters = getFiltersForClass($c, [ 'section', 'recitation' ], @student_records);
 	$filters->[0][0] = $c->maketext('All students');
+
+	@student_records = filterRecords($c, 0, [$filter], @student_records) unless $filter eq 'all';
 
 	my @score_list;
 	my @user_set_list;
 
 	for my $studentRecord (@student_records) {
-		next unless $ce->status_abbrev_has_behavior($studentRecord->status, 'include_in_stats');
-
 		my $studentName = $studentRecord->user_id;
 		my ($allSetVersionNames, $notAssignedSet) =
 			list_set_versions($db, $studentName, $c->stash('setID'), $setIsVersioned);
