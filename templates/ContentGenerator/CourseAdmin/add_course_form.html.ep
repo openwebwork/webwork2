@@ -6,12 +6,12 @@
 	<%= $c->hidden_authen_fields =%>
 	<%= $c->hidden_fields('subDisplay') =%>
 	%
-	<p><%= maketext(
+	<div class="mb-2"><%= maketext(
 		'Specify an ID, title, and institution for the new course. The course ID may contain only letters, '
 			. 'numbers, hyphens, and underscores, and may have at most [_1] characters.',
 		$ce->{maxCourseIdLength}) %>
-	</p>
-	<div class="row mb-2">
+	</div>
+	<div class="row mb-3">
 		<div class="col-lg-8 col-md-10">
 			<div class="form-floating mb-1">
 				<%= text_field new_courseID => '',
@@ -27,7 +27,7 @@
 					class       => 'form-control' =%>
 				<%= label_for add_courseTitle => maketext('Course Title') =%>
 			</div>
-			<div class="form-floating mb-1">
+			<div class="form-floating">
 				<%= text_field add_courseInstitution => '',
 					id          => 'add_courseInstitution',
 					placeholder => '',
@@ -41,7 +41,7 @@
 			<%= maketext(
 				'To add the WeBWorK administrators to the new course (as administrators) check the box below.') =%>
 		</div>
-		<div class="form-check mb-2">
+		<div class="form-check">
 			<label class="form-check-label">
 				<%= check_box 'add_admin_users' => 1, class => 'form-check-input' =%>
 				<%= maketext('Add WeBWorK administrators to new course') =%>
@@ -54,7 +54,7 @@
 				. 'The user ID may contain only numbers, letters, hyphens, periods (dots), commas,and underscores.'
 		) =%>
 	</div>
-	<div class="row mb-2">
+	<div class="row mb-3">
 		<div class="col-lg-4 col-md-5 col-sm-6">
 			<div class="form-floating mb-1">
 				<%= text_field add_initial_userID => '',
@@ -103,31 +103,92 @@
 		</div>
 	</div>
 	<div class="mb-1">
-		<%= maketext('To copy the templates and html folders from an existing course, select the course below.') =%>
+		<%= maketext('To copy components from an existing course, '
+			. 'select the course and check which components to copy.') =%>
 	</div>
-	<div class="row mb-3">
-		% my @existingCourses = sort { lc($a) cmp lc($b) } listCourses($ce);
+	<div class="row mb-1">
+		% my @existingCourses = sort { lc($a) cmp lc($b) } grep { $_ ne stash('courseID') } listCourses($ce);
 		% unshift(@existingCourses, sort { lc($a) cmp lc($b) } @{ $ce->{modelCoursesForCopy} });
 		%
-		<%= label_for add_templates_course => maketext('Copy from:'),
+		<%= label_for copy_from_course => maketext('Copy Components From:'),
 			class => 'col-auto col-form-label fw-bold' =%>
 		<div class="col-auto">
-			<%= select_field add_templates_course => [
+			<%= select_field copy_from_course => [
 					[ maketext('No Course') => '' ],
 					map { [ $_ => $_] } @existingCourses
 				],
-				id      => 'add_templates_course',
+				id      => 'copy_from_course',
 				class   => 'form-select' =%>
 		</div>
-		<div class="mb-3">
-			<div class="form-check">
-				<label class="form-check-label">
-					<%= check_box 'add_config_file' => 1, class => 'form-check-input' =%>
-					<%= maketext('Also copy simple configuration file') =%>
-				</label>
-			</div>
-		</div>
 	</div>
+	<fieldset class="mb-3">
+		<legend class="fw-bold fs-6">Copy These Components:</legend>
+		<div class="form-check">
+			<label class="form-check-label">
+				<%= check_box select_all => 1, class => 'select-all form-check-input',
+					data => { select_group => 'copy_component' } =%>
+				<%= maketext('select all', 'templates', 'html') =%>
+			</label>
+		</div>
+		<div class="form-check">
+			<label class="form-check-label">
+				<%= check_box copy_component => 'copyTemplatesHtml', class => 'form-check-input' =%>
+				<%= maketext('[_1] and [_2] folders', 'templates', 'html') =%>
+			</label>
+		</div>
+		<div class="form-check">
+			<label class="form-check-label">
+				<%= check_box copy_component => 'copySimpleConfig', class => 'form-check-input' =%>
+				<%= maketext('simple configuration file') =%>
+			</label>
+		</div>
+		<div class="form-check">
+			<label class="form-check-label">
+				<%= check_box copy_component => 'copyNonStudents', class => 'form-check-input' =%>
+				<%= maketext('non-student users') =%>
+			</label>
+		</div>
+		<div class="form-check">
+			<label class="form-check-label">
+				<%= check_box copy_component => 'copySets', class => 'form-check-input' =%>
+				<%= maketext('assignments/sets') =%>
+			</label>
+		</div>
+		<div class="form-check">
+			<label class="form-check-label">
+				<%= check_box copy_component => 'copyAchievements', class => 'form-check-input' =%>
+				<%= maketext('achievements') =%>
+			</label>
+		</div>
+		<div class="form-check">
+			<label class="form-check-label">
+				<%= check_box copy_component => 'copyTitle', class => 'form-check-input' =%>
+				<%= maketext('course title (will override "Course Title" input above)') =%>
+			</label>
+		</div>
+		<div class="form-check">
+			<label class="form-check-label">
+				<%= check_box copy_component => 'copyInstitution', class => 'form-check-input' =%>
+				<%= maketext('course institution (will override "Institution" input above)') =%>
+			</label>
+		</div>
+		<div class="form-check mt-3 mb-2">
+			<label class="form-check-label">
+				<%= check_box copy_config_file => 1, class => 'form-check-input' =%>
+				<%= maketext('course configuration file') =%>
+				<a class="help-popup" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
+					 data-bs-content="<%= maketext('Copying the course configuration file may copy configuration '
+						. 'settings that are specific to the original course instructor. If this is a new course '
+						. 'for a new instructor, use the fields above to add the new instructor and do not copy '
+						. 'the course configuration file. Then if there is something in the course configuration '
+						. 'file that should be carried into the new course, the administrator can copy that manually. '
+						. 'Alternatively, do copy the course configuration file, but then the administrator should '
+						. 'inspect the new course configuration file and make adjustments for the new instructor.') =%>">
+					<i class="icon fas fa-question-circle" data="<%= maketext('Help Icon') =%>" aria-hidden="true"></i>
+				</a>
+			</label>
+		</div>
+	</fieldset>
 	<%= hidden_field add_dbLayout => 'sql_single' =%>
 	<%= submit_button maketext('Add Course'), name => 'add_course', class => 'btn btn-primary' =%>
 <% end =%>

@@ -15,10 +15,10 @@
 				% 'add_course',
 				% maketext('Add Courses'),
 				% {
-					% add_admin_users      => 1,
-					% add_config_file      => 1,
-					% add_dbLayout         => 'sql_single',
-					% add_templates_course => $ce->{siteDefaults}{default_templates_course} || ''
+					% add_admin_users  => 1,
+					% copy_from_course => $ce->{siteDefaults}{default_copy_from_course} || '',
+					% copy_component   => 'copyTemplatesHtml',
+					% add_dbLayout     => 'sql_single'
 				% }
 			% ],
 			% [ 'rename_course',        maketext('Rename Courses') ],

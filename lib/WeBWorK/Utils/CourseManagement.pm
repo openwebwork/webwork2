@@ -39,6 +39,7 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use readDirectory surePathToFile);
+use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
 our @EXPORT_OK = qw(
 	listCourses
@@ -144,18 +145,26 @@ sub listArchivedCourses {
 
 %options must contain:
 
- courseID      => $courseID,
- ce            => $ce,
- courseOptions => $courseOptions,
- users         => $users
+ courseID      => course ID for the new course,
+ ce            => a course environment for the new course,
+ courseOptions => hash ref explained below
+ users         => array ref explained below
 
 %options may contain:
 
- templatesFrom => $templatesCourseID,
- courseTitle => $courseTitle
- courseInstitution => $courseInstitution
+ copyFrom          => some course ID to copy things from,
+ courseTitle       => a title for the new course
+ courseInstitution => institution for the new course
+ copyTemplatesHtml => boolean
+ copySimpleConfig  => boolean
+ copyConfig        => boolean
+ copyNonStudents   => boolean
+ copySets          => boolean
+ copyAchievements  => boolean
+ copyTitle         => boolean
+ copyInstitution   => boolean
 
-Create a new course named $courseID.
+Create a new course with ID $courseID.
 
 $ce is a WeBWorK::CourseEnvironment object that describes the new course's
 environment.
@@ -174,8 +183,18 @@ PermissionLevel record for a single user:
 
 These users are added to the course.
 
-$templatesCourseID indicates the ID of a course from which the contents of the
-templates directory will be copied to the new course.
+C<copyFrom> indicates the ID of a course from which various things may be
+copied into the new course. Which things are copied are controlled by the
+boolean options:
+
+ * copyTemplatesHtml (contents of Templates and HTML folders)
+ * copySimpleConfig  (simple.conf file)
+ * copyConfig        (course.conf file)
+ * copyNonStudents   (all non-student users, their permission level, and password)
+ * copySets          (all global sets, global set locations, and global problems)
+ * copyAchievements  (all achievements)
+ * copyTitle         (the course title, which will override courseTitle)
+ * copyInstitution   (the course institution, which will override courseInstitution)
 
 =cut
 
@@ -189,6 +208,7 @@ sub addCourse {
 	}
 
 	my $courseID      = $options{courseID};
+	my $sourceCourse  = $options{copyFrom} // '';
 	my $ce            = $options{ce};
 	my %courseOptions = %{ $options{courseOptions} };
 	my @users         = exists $options{users} ? @{ $options{users} } : ();
@@ -265,8 +285,8 @@ sub addCourse {
 
 		# does the directory already exist?
 		if (-e $courseDir) {
-			warn
-				"Can't create $courseDirName directory '$courseDir', since it already exists. Using existing directory.\n";
+			warn "Can't create $courseDirName directory '$courseDir', "
+				. "since it already exists. Using existing directory.\n";
 			next;
 		}
 
@@ -281,7 +301,7 @@ sub addCourse {
 		}
 
 		# try to create it
-		eval { Mojo::File($courseDir)->make_path };
+		eval { Mojo::File->new($courseDir)->make_path };
 		warn "Failed to create $courseDirName directory '$courseDir': $@. "
 			. "You will have to create this directory manually."
 			if $@;
@@ -306,15 +326,48 @@ sub addCourse {
 
 	##### step 3: populate course database #####
 
+	# database and course environment objects for the course to copy things from.
+	my ($db0, $ce0);
+	if (
+		$sourceCourse ne ''
+		&& !(grep { $sourceCourse eq $_ } @{ $ce->{modelCoursesForCopy} })
+		&& ($options{copyNonStudents}
+			|| $options{copySets}
+			|| $options{copyAchievements}
+			|| $options{copyTitle}
+			|| $options{copyInstitution})
+		)
+	{
+		$ce0 = WeBWorK::CourseEnvironment->new({ courseName => $sourceCourse });
+		$db0 = WeBWorK::DB->new($ce0->{dbLayouts}{$dbLayoutName});
+	}
+
+	# add users (users that were directly passed to addCourse() as well as those copied from a source course)
 	if ($ce->{dbLayouts}{$dbLayoutName}{user}{params}{non_native}) {
 		debug("not adding users to the course database: 'user' table is non-native.\n");
 	} else {
-		# see above
-		#my $db = WeBWorK::DB->new($ce->{dbLayouts}->{$dbLayoutName});
+		if ($db0 && $options{copyNonStudents}) {
+			# If the course.conf file is being copied, then the student role from the source course needs to be used,
+			# as the role might be customized in that file.
+			my @non_student_ids =
+				map {@$_} ($db0->listPermissionLevelsWhere({
+					permission =>
+					{ '!=' => $options{copyConfig} ? $ce0->{userRoles}{student} : $ce->{userRoles}{student} },
+					user_id => { not_like => 'set_id:%' }
+				}));
+			my %user_args = map { $_->[0]{user_id} => 1 } @users;
+
+			for my $user_id (@non_student_ids) {
+				next if $user_args{$user_id};
+				my @User            = $db0->getUsersWhere({ user_id => $user_id });
+				my @Password        = $db0->getPasswordsWhere({ user_id => $user_id });
+				my @PermissionLevel = $db0->getPermissionLevelsWhere({ user_id => $user_id });
+				push @users, [ $User[0], $Password[0], $PermissionLevel[0] ];
+			}
+		}
 
 		foreach my $userTriple (@users) {
 			my ($User, $Password, $PermissionLevel) = @$userTriple;
-
 			eval { $db->addUser($User) };
 			warn $@ if $@;
 			eval { $db->addPassword($Password) };
@@ -324,54 +377,121 @@ sub addCourse {
 		}
 	}
 
-	if (exists $options{courseTitle}) {
-		$db->setSettingValue('courseTitle', $options{courseTitle});
-	}
-	if (exists $options{courseInstitution}) {
-		$db->setSettingValue('courseInstitution', $options{courseInstitution});
-	}
+	# add sets
+	if ($db0 && $options{copySets}) {
+		my @set_ids = $db0->listGlobalSets;
+		for my $set_id (@set_ids) {
+			eval { $db->addGlobalSet($db0->getGlobalSet($set_id)) };
+			warn $@ if $@;
 
-	##### step 4: write course.conf file #####
+			my @Problem = $db0->getGlobalProblemsWhere({ set_id => $set_id });
+			for my $problem (@Problem) {
+				eval { $db->addGlobalProblem($problem) };
+				warn $@ if $@;
+			}
 
-	my $courseEnvFile = $ce->{courseFiles}->{environment};
-	open my $fh, ">:utf8", $courseEnvFile
-		or die "failed to open $courseEnvFile for writing.\n";
-	writeCourseConf($fh, $ce, %courseOptions);
-	close $fh;
-
-	##### step 5: copy templates, html, and simple.conf if desired #####
-
-	if (exists $options{templatesFrom}) {
-		my $sourceCourse = $options{templatesFrom};
-		my $sourceCE     = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $sourceCourse });
-		my $sourceDir    = $sourceCE->{courseDirs}->{templates};
-		## copy templates ##
-		if (-d $sourceDir) {
-			my $destDir = $ce->{courseDirs}{templates};
-			warn "Failed to copy templates from course '$sourceCourse': $! " unless dircopy("$sourceDir", $destDir);
-		} else {
-			warn
-				"Failed to copy templates from course '$sourceCourse': templates directory '$sourceDir' does not exist.\n";
+			my @Location = $db0->getGlobalSetLocationsWhere({ set_id => $set_id });
+			for my $location (@Location) {
+				eval { $db->addGlobalSetLocation($location) };
+				warn $@ if $@;
+			}
 		}
-		## copy html ##
-		## this copies the html/tmp directory as well which is not optimal
-		$sourceDir = $sourceCE->{courseDirs}->{html};
-		if (-d $sourceDir) {
-			warn "Failed to copy html from course '$sourceCourse': $!"
-				unless dircopy($sourceDir, $ce->{courseDirs}{html});
-		} else {
-			warn "Failed to copy html from course '$sourceCourse': html directory '$sourceDir' does not exist.\n";
+		if ($options{copyNonStudents}) {
+			foreach my $userTriple (@users) {
+				my $user_id   = $userTriple->[0]{user_id};
+				my @user_sets = $db0->listUserSets($user_id);
+				assignSetsToUsers($db, $ce, \@user_sets, [$user_id]);
+			}
 		}
+	}
+
+	# add achievements
+	if ($db0 && $options{copyAchievements}) {
+		my @achievement_ids = $db0->listAchievements;
+		for my $achievement_id (@achievement_ids) {
+			eval { $db->addAchievement($db0->getAchievement($achievement_id)) };
+			warn $@ if $@;
+		}
+		if ($options{copyNonStudents}) {
+			foreach my $userTriple (@users) {
+				my $user_id           = $userTriple->[0]{user_id};
+				my @user_achievements = $db0->listUserAchievements($user_id);
+				for my $achievement_id (@user_achievements) {
+					my $userAchievement = $db->newUserAchievement();
+					$userAchievement->user_id($user_id);
+					$userAchievement->achievement_id($achievement_id);
+					$db->addUserAchievement($userAchievement);
+				}
+			}
+		}
+	}
+
+	# copy title and/or institution if requested
+	for my $setting ('Title', 'Institution') {
+		if ($db0 && $options{"copy$setting"}) {
+			$db->setSettingValue("course$setting", $db0->getSettingValue("course$setting"))
+				if ($options{"copy$setting"});
+		} else {
+			$db->setSettingValue("course$setting", $options{"course$setting"}) if (exists $options{"course$setting"});
+		}
+	}
+
+	##### step 4: write course.conf file (unless that is going to be copied from a source course) #####
+
+	unless ($sourceCourse ne '' && $options{copyConfig}) {
+		my $courseEnvFile = $ce->{courseFiles}{environment};
+		open my $fh, ">:utf8", $courseEnvFile
+			or die "failed to open $courseEnvFile for writing.\n";
+		writeCourseConf($fh, $ce, %courseOptions);
+		close $fh;
+	}
+
+	##### step 5: copy templates, html, simple.conf, course.conf if desired #####
+
+	if ($sourceCourse ne '') {
+		my $sourceCE = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $sourceCourse });
+
+		if ($options{copyTemplatesHtml}) {
+			my $sourceDir = $sourceCE->{courseDirs}{templates};
+
+			## copy templates ##
+			if (-d $sourceDir) {
+				my $destDir = $ce->{courseDirs}{templates};
+				warn "Failed to copy templates from course '$sourceCourse': $! " unless dircopy("$sourceDir", $destDir);
+			} else {
+				warn "Failed to copy templates from course '$sourceCourse': "
+					. "templates directory '$sourceDir' does not exist.\n";
+			}
+
+			## copy html ##
+			$sourceDir = $sourceCE->{courseDirs}{html};
+			if (-d $sourceDir) {
+				warn "Failed to copy html from course '$sourceCourse': $!"
+					unless dircopy($sourceDir, $ce->{courseDirs}{html});
+			} else {
+				warn "Failed to copy html from course '$sourceCourse': html directory '$sourceDir' does not exist.\n";
+			}
+		}
+
 		## copy config files ##
-		#  this copies the simple.conf file if desired
-		if (exists $options{copySimpleConfig}) {
-			my $sourceFile = $sourceCE->{courseFiles}->{simpleConfig};
+
+		# this copies the simple.conf file if desired
+		if ($options{copySimpleConfig}) {
+			my $sourceFile = $sourceCE->{courseFiles}{simpleConfig};
 			if (-e $sourceFile) {
-				eval { Mojo::File->new($sourceFile)->copy_to($ce->{courseFiles}) };
+				eval { Mojo::File->new($sourceFile)->copy_to($ce->{courseDirs}{root}) };
 				warn "Failed to copy simple.conf from course '$sourceCourse': $@" if $@;
 			}
 		}
 
+		# this copies the course.conf file if desired
+		if ($options{copyConfig}) {
+			my $sourceFile = $sourceCE->{courseFiles}{environment};
+			if (-e $sourceFile) {
+				eval { Mojo::File->new($sourceFile)->copy_to($ce->{courseDirs}{root}) };
+				warn "Failed to copy course.conf from course '$sourceCourse': $@" if $@;
+			}
+		}
 	}
 }
 
@@ -629,8 +749,8 @@ sub deleteCourse {
 			or croak
 			"Can't delete the course '$courseID' because the courses directory '$rootParent' is not writeable.";
 	} else {
-		warn
-			"Warning: the course root directory '$root' does not exist. Attempting to delete the course database and other course directories...\n";
+		warn "Warning: the course root directory '$root' does not exist. "
+			. "Attempting to delete the course database and other course directories...\n";
 	}
 
 	##### step 1: delete course database (if necessary) #####
@@ -652,8 +772,8 @@ sub deleteCourse {
 
 			# is it really a directory
 			unless (-d $courseDir) {
-				warn
-					"Can't delete $courseDirName directory '$courseDir', since is not a directory. If it is not wanted, you will have to delete it manually.\n";
+				warn "Can't delete $courseDirName directory '$courseDir', since is not a directory. "
+					. "If it is not wanted, you will have to delete it manually.\n";
 				next;
 			}
 
@@ -662,8 +782,8 @@ sub deleteCourse {
 			pop @courseDirElements;
 			my $courseDirParent = File::Spec->catdir(@courseDirElements);
 			unless (-w $courseDirParent) {
-				warn
-					"Can't delete $courseDirName directory '$courseDir', since its parent directory is not writeable. If it is not wanted, you will have to delete it manually.\n";
+				warn "Can't delete $courseDirName directory '$courseDir', since its parent directory is not "
+					. "writeable. If it is not wanted, you will have to delete it manually.\n";
 				next;
 			}
 
@@ -904,13 +1024,13 @@ sub unarchiveCourse {
 				warn "failed to unarchive course database from dump file '$old_dump_file: $@\n";
 			}
 		} else {
-			warn
-				"course '$currCourseID' uses dbLayout '$dbLayoutName', which doesn't support restoring database tables. database tables will not be restored.\n";
+			warn "course '$currCourseID' uses dbLayout '$dbLayoutName', which doesn't support "
+				. "restoring database tables. database tables will not be restored.\n";
 			$no_database = 1;
 		}
 	} else {
-		warn
-			"course '$currCourseID' has no database dump in its data directory (checked for $dump_dir and $old_dump_file). database tables will not be restored.\n";
+		warn "course '$currCourseID' has no database dump in its data directory "
+			. "(checked for $dump_dir and $old_dump_file). database tables will not be restored.\n";
 		$no_database = 1;
 	}
 
@@ -1139,12 +1259,13 @@ sub initNonNativeTables {
 
 	# Find the names of the non-native database tables
 	foreach my $table (sort keys %$db) {
-		next unless $db->{$table}{params}{non_native}; # only look at non-native tables
-													   # hack: these two tables are virtual and don't need to be created
-													   # for the admin course or in the database in general
-													   # if they were created in earlier versions for the admin course
-													   # you can use mysql to drop the field version_id manually
-													   # this will get rid of a spurious error
+		next unless $db->{$table}{params}{non_native};    # only look at non-native tables
+
+		# hack: these two tables are virtual and don't need to be created
+		# for the admin course or in the database in general
+		# if they were created in earlier versions for the admin course
+		# you can use mysql to drop the field version_id manually
+		# this will get rid of a spurious error
 		next if $table eq 'problem_version' or $table eq 'set_version';
 
 		my $database_table_name =
@@ -1176,8 +1297,8 @@ sub initNonNativeTables {
 				if (!$database_field_exists) {
 					$fields_ok = 0;
 					$fieldStatus{$field} = [ONLY_IN_A];
-					warn
-						"$field from $database_table_name (aka |$table|) is only in schema, not in database, so adding it ... ";
+					warn "$field from $database_table_name (aka |$table|) is only in schema, "
+						. "not in database, so adding it ... ";
 					if ($db->{$table}->can("add_column_field")) {
 						if ($db->{$table}->add_column_field($field_name)) {
 							warn "added column $field_name to table $database_table_name";

@@ -181,8 +181,9 @@ if ($users) {
 }
 
 my %optional_arguments;
-if ($templates_from ne "") {
-	$optional_arguments{templatesFrom} = $templates_from;
+if ($templates_from) {
+	$optional_arguments{copyFrom}          = $templates_from;
+	$optional_arguments{copyTemplatesHtml} = 1;
 }
 
 eval {

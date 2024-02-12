@@ -26,12 +26,14 @@
 		. 'Unchecking this option will make it so WeBWorK administrators cannot directly login to the course.') =%>
 </p>
 <p>
-	<%= maketext('The simple configuration file is the name of the configuration file created when using the "Course '
-		. 'Configuration" page to configure course options.  This option sets if this configuration file is copied '
-		. 'from the old course or not and instead use the server defaults.') =%>
-</p>
-<p class="mb-0">
 	<%= maketext('Enter the details of the course instructor to be added when the course is created.  This user '
 		. 'will also be added to the admin course with the username "userID_courseID" so you can manage and '
 		. 'email the instructors of the courses on the server.') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('You may choose a course to copy components from. Select the course and which components to copy.  '
+		. 'If the course is not a true course (like the modelCourse) then only the templates and html folders, '
+		. 'and the simple and course config files can be copied. The "simple config" file contains the settings '
+		. 'made in the "Course Config" page. The "course config" file should only be copied if you know what you '
+		. 'are doing.') =%>
 </p>
