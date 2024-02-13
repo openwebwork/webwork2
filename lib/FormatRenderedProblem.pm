@@ -139,9 +139,9 @@ sub formatRenderedProblem {
 		get_problem_lang_and_dir($rh_result->{flags}, $ce->{perProblemLangAndDirSettingMode}, $formLanguage);
 	my $PROBLEM_LANG_AND_DIR = join(' ', map {qq{$_="$PROBLEM_LANG_AND_DIR{$_}"}} keys %PROBLEM_LANG_AND_DIR);
 
-	my $previewMode     = defined($ws->{inputs_ref}{preview})      || 0;
-	my $submitMode      = defined($ws->{inputs_ref}{WWsubmit})     || 0;
-	my $showCorrectMode = defined($ws->{inputs_ref}{WWcorrectAns}) || 0;
+	my $previewMode     = defined($ws->{inputs_ref}{previewAnswers}) || 0;
+	my $submitMode      = defined($ws->{inputs_ref}{WWsubmit})       || 0;
+	my $showCorrectMode = defined($ws->{inputs_ref}{WWcorrectAns})   || 0;
 	# A problemUUID should be added to the request as a parameter.  It is used by PG to create a proper UUID for use in
 	# aliases for resources.  It should be unique for a course, user, set, problem, and version.
 	my $problemUUID   = $ws->{inputs_ref}{problemUUID} // '';

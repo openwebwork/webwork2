@@ -33,7 +33,7 @@
 			% id => 'problem-result-score'),
 	% body_part700 => join('', '<p>',
 		% $showPreviewButton eq '0' ? '' : submit_button($lh->maketext('Preview My Answers'),
-			% name => 'preview', id => 'previewAnswers_id', class => 'btn btn-primary mb-1'),
+			% name => 'previewAnswers', id => 'previewAnswers_id', class => 'btn btn-primary mb-1'),
 		% $showCheckAnswersButton eq '0' ? '' : submit_button($lh->maketext('Check Answers'),
 			% name => 'WWsubmit', class => 'btn btn-primary mb-1'),
 		% $showCorrectAnswersButton eq '0' ? '' : submit_button($lh->maketext('Show Correct Answers'),

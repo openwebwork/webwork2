@@ -100,7 +100,8 @@
 							% # Submit buttons (all are shown by default)
 							% if ($showPreviewButton ne '0') {
 								<%= submit_button $lh->maketext('Preview My Answers'),
-									name => 'preview', id => 'previewAnswers_id', class => 'btn btn-primary mb-1' %>
+									name => 'previewAnswers', id => 'previewAnswers_id',
+									class => 'btn btn-primary mb-1' %>
 							% }
 							% if ($showCheckAnswersButton ne '0') {
 								<%= submit_button $lh->maketext('Check Answers'),

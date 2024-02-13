@@ -228,14 +228,14 @@ async sub renderProblem {
 		isInstructor             => $rh->{isInstructor}       // 0,
 		forceScaffoldsOpen       => $rh->{forceScaffoldsOpen} // 0,
 		QUIZ_PREFIX              => $rh->{answerPrefix},
-		showFeedback             => $rh->{preview} || $rh->{WWsubmit} || $rh->{WWcorrectAns},
+		showFeedback             => $rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns},
 		showAttemptAnswers       => $rh->{showAttemptAnswers} // 1,
 		showAttemptPreviews      => $rh->{showAttemptPreviews}
-			// ($rh->{preview} || $rh->{WWsubmit} || $rh->{WWcorrectAns}),
+			// ($rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}),
 		showAttemptResults      => $rh->{showAttemptResults} // ($rh->{WWsubmit} || $rh->{WWcorrectAns}),
 		forceShowAttemptResults => $rh->{forceShowAttemptResults} || ($rh->{isInstructor}
 			&& ($rh->{showAttemptResults} // ($rh->{WWsubmit} || $rh->{WWcorrectAns}))),
-		showMessages       => $rh->{showMessages}       // ($rh->{preview} || $rh->{WWsubmit} || $rh->{WWcorrectAns}),
+		showMessages       => $rh->{showMessages} // ($rh->{previewAsnwers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}),
 		showCorrectAnswers => $rh->{showCorrectAnswers} // ($rh->{WWcorrectAns} ? 2 : 0),
 		debuggingOptions   => {
 			show_resource_info          => $rh->{show_resource_info}          // 0,
