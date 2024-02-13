@@ -4,7 +4,7 @@
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.filter.scope' => [
-					[ maketext('all users')                         => 'all' ],
+					[ maketext('all course users')                  => 'all' ],
 					[ maketext('selected users')                    => 'selected' ],
 					[ maketext('users who match on selected field') => 'match_regex', selected => undef ]
 				],

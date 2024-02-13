@@ -4,7 +4,7 @@
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.filter.scope' => [
-					[ maketext('all sets')                     => 'all' ],
+					[ maketext('all course sets')              => 'all' ],
 					[ maketext('selected sets')                => 'selected' ],
 					[ maketext('enter matching set IDs below') => 'match_ids', selected => undef ],
 					[ maketext('sets visible to students')     => 'visible' ],
