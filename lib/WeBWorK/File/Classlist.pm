@@ -54,7 +54,7 @@ sub parse_classlist($) {
 
 		# Remove a byte order mark from the beginning of the file if present.  Excel inserts this on some systems, and
 		# the presence of this multibyte character causes a classlist import to fail.
-		s/^\xEF\xBB\xBF//;
+		s/^\x{FEFF}//;
 
 		s/^\s*//;
 		s/\s*$//;
