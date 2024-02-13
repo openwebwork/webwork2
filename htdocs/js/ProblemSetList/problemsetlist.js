@@ -9,6 +9,15 @@
 			'change',
 			() => {
 				document.getElementById('select_set_err_msg')?.classList.add('d-none');
+				for (const id of [
+					'filter_select',
+					'edit_select',
+					'publish_filter_select',
+					'export_select',
+					'score_select'
+				]) {
+					document.getElementById(id)?.classList.remove('is-invalid');
+				}
 			},
 			{ once: true }
 		);
@@ -23,6 +32,13 @@
 			if (filter === 1 && !is_set_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
+				document.getElementById('filter_select')?.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_set_err_msg')?.classList.add('d-none');
+					},
+					{ once: true }
+				);
 			} else if (filter === 2 && filter_text.value === '') {
 				e.preventDefault();
 				e.stopPropagation();
@@ -37,10 +53,70 @@
 					{ once: true }
 				);
 			}
-		} else if (['edit', 'publish', 'export', 'save_export', 'score'].includes(action)) {
+		} else if (action === 'edit') {
+			const edit_select = document.getElementById('edit_select');
+			if (edit_select.value === 'selected' && !is_set_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+				edit_select.classList.add('is-invalid');
+				edit_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_set_err_msg')?.classList.add('d-none');
+						document.getElementById('edit_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
+			}
+		} else if (action === 'publish') {
+			const publish_select = document.getElementById('publish_filter_select');
+			if (publish_select.value === 'selected' && !is_set_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+				publish_select.classList.add('is-invalid');
+				publish_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_set_err_msg')?.classList.add('d-none');
+						document.getElementById('publish_filter_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
+			}
+		} else if (action === 'export') {
+			const export_select = document.getElementById('export_select');
+			if (export_select.value === 'selected' && !is_set_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+				export_select.classList.add('is-invalid');
+				export_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_set_err_msg')?.classList.add('d-none');
+						document.getElementById('export_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
+			}
+		} else if (action === 'save_export') {
 			if (!is_set_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
+			}
+		} else if (action === 'score') {
+			const score_select = document.getElementById('score_select');
+			if (score_select.value === 'selected' && !is_set_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+				score_select.classList.add('is-invalid');
+				score_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_set_err_msg')?.classList.add('d-none');
+						document.getElementById('score_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
 			}
 		} else if (action === 'import') {
 			const import_select = document.getElementById('import_source_select');

@@ -35,6 +35,9 @@
 			'change',
 			() => {
 				document.getElementById('select_user_err_msg')?.classList.add('d-none');
+				for (const id of ['filter_select', 'edit_select', 'password_select', 'export_select_scope']) {
+					document.getElementById(id)?.classList.remove('is-invalid');
+				}
 			},
 			{ once: true }
 		);
@@ -44,11 +47,21 @@
 	document.getElementById('user-list-form')?.addEventListener('submit', (e) => {
 		const action = document.getElementById('current_action')?.value || '';
 		if (action === 'filter') {
-			const filter = document.getElementById('filter_select')?.selectedIndex || 0;
+			const filter_select = document.getElementById('filter_select');
+			const filter = filter_select?.selectedIndex || 0;
 			const filter_text = document.getElementById('filter_text');
 			if (filter === 1 && !is_user_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
+				filter_select.classList.add('is-invalid');
+				filter_select.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_user_err_msg')?.classList.add('d-none');
+						document.getElementById('filter_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
 			} else if (filter === 2 && filter_text.value === '') {
 				e.preventDefault();
 				e.stopPropagation();
@@ -68,10 +81,12 @@
 			if (edit_select.value === 'selected' && !is_user_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
+				edit_select.classList.add('is-invalid');
 				edit_select.addEventListener(
 					'change',
 					() => {
 						document.getElementById('select_user_err_msg')?.classList.add('d-none');
+						document.getElementById('edit_select')?.classList.remove('is-invalid');
 					},
 					{ once: true }
 				);
@@ -81,10 +96,12 @@
 			if (password_select.value === 'selected' && !is_user_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
+				password_select.classList.add('is-invalid');
 				password_select.addEventListener(
 					'change',
 					() => {
 						document.getElementById('select_user_err_msg')?.classList.add('d-none');
+						document.getElementById('password_select')?.classList.remove('is-invalid');
 					},
 					{ once: true }
 				);
@@ -95,10 +112,12 @@
 			if (export_select.value === 'selected' && !is_user_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
+				export_select.classList.add('is-invalid');
 				export_select.addEventListener(
 					'change',
 					() => {
 						document.getElementById('select_user_err_msg')?.classList.add('d-none');
+						document.getElementById('export_select_scope')?.classList.remove('is-invalid');
 					},
 					{ once: true }
 				);
@@ -109,11 +128,22 @@
 				e.preventDefault();
 				e.stopPropagation();
 				document.getElementById('export_file_err_msg')?.classList.remove('d-none');
+				document.getElementById('export_select_target')?.classList.add('is-invalid');
 				export_filename.classList.add('is-invalid');
 				export_filename.addEventListener(
 					'change',
 					() => {
 						document.getElementById('export_filename')?.classList.remove('is-invalid');
+						document.getElementById('export_select_target')?.classList.remove('is-invalid');
+						document.getElementById('export_file_err_msg')?.classList.add('d-none');
+					},
+					{ once: true }
+				);
+				document.getElementById('export_select_target')?.addEventListener(
+					'change',
+					() => {
+						document.getElementById('export_filename')?.classList.remove('is-invalid');
+						document.getElementById('export_select_target')?.classList.remove('is-invalid');
 						document.getElementById('export_file_err_msg')?.classList.add('d-none');
 					},
 					{ once: true }
