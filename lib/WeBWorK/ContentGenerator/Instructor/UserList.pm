@@ -255,7 +255,7 @@ sub initialize ($c) {
 	$c->stash->{formPerms}       = FORM_PERMS();
 	$c->stash->{fields}          = FIELDS();
 	$c->stash->{fieldProperties} = FIELD_PROPERTIES();
-	$c->stash->{CSVList}         = [ getCSVList($c->ce) ];
+	$c->stash->{CSVList}         = $c->{editMode} || $c->{passwordMode} ? [] : [ getCSVList($c->ce) ];
 
 	return;
 }

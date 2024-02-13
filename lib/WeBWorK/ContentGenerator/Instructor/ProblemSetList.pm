@@ -189,7 +189,7 @@ sub initialize ($c) {
 	$c->stash->{fieldTypes}     = FIELD_TYPES();
 	$c->stash->{sortableFields} = SORTABLE_FIELDS();
 	$c->stash->{sets}           = [];
-	$c->stash->{setDefList}     = [ getDefList($ce) ];
+	$c->stash->{setDefList}     = [];
 
 	# Determine if the user has permisson to do anything here.
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
@@ -264,6 +264,7 @@ sub initialize ($c) {
 		&& ($c->{secondarySortOrder} eq 'ASC' || $c->{secondarySortOrder} eq 'DESC');
 
 	$c->stash->{formsToShow} = $c->{editMode} ? EDIT_FORMS() : $c->{exportMode} ? EXPORT_FORMS() : VIEW_FORMS();
+	$c->stash->{setDefList}  = [ getDefList($ce) ] unless $c->{editMode} || $c->{exportMode};
 	# Get requested sets in the requested order.
 	$c->stash->{sets} = [
 		@{ $c->{visibleSetIDs} }

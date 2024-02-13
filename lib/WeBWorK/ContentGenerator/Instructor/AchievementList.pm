@@ -82,7 +82,7 @@ sub initialize ($c) {
 	$c->stash->{formsToShow}  = VIEW_FORMS();
 	$c->stash->{formTitles}   = FORM_TITLES();
 	$c->stash->{achievements} = [];
-	$c->stash->{axpList}      = [ $c->getAxpList ];
+	$c->stash->{axpList}      = [];
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, 'edit_achievements');
@@ -132,6 +132,7 @@ sub initialize ($c) {
 	}
 
 	$c->stash->{formsToShow} = $c->{editMode} ? EDIT_FORMS() : $c->{exportMode} ? EXPORT_FORMS() : VIEW_FORMS();
+	$c->stash->{axpList}     = [ $c->getAxpList ] unless $c->{editMode} || $c->{exportMode};
 
 	# Get and sort achievements. Achievements are sorted by in the order they are evaluated.
 	$c->stash->{achievements} = [ sortAchievements($c->db->getAchievements(@{ $c->{allAchievementIDs} })) ];
