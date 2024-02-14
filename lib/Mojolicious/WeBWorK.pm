@@ -243,6 +243,17 @@ sub startup ($app) {
 		}
 	}
 
+	# Letsencrypt renewal route.
+	if ($config->{enable_certbot_webroot_routes}) {
+		$r->any(
+			"/.well-known/*static" => sub ($c) {
+				my $file = "$ce->{webworkDirs}{tmp}/.well-known/" . $c->stash('static');
+				return $c->reply->file($file) if -r $file;
+				return $c->render(data => 'File not found', status => 404);
+			}
+		);
+	}
+
 	# Note that these routes must come last to support the case that $webwork_url is '/'.
 
 	my $cg_r = $r->under($webwork_url)->name('root');
