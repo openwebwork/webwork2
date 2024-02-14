@@ -4,10 +4,8 @@
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.publish.scope' => [
-					[ maketext('no sets')       => 'none' ],
-					[ maketext('all sets')      => 'all' ],
-					[ maketext('listed sets')   => 'visible' ],
-					[ maketext('selected sets') => 'selected', selected => undef ]
+					[ maketext('all course sets') => 'all' ],
+					[ maketext('selected sets')   => 'selected', selected => undef ]
 				],
 				id => 'publish_filter_select', class => 'form-select form-select-sm' =%>
 		</div>

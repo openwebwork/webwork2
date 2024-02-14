@@ -28,7 +28,7 @@ data editing
 What do we want to be able to do here?
 
 Filter what users are shown:
-	- none, all, selected
+	- all, selected
 	- matching user_id, matching section, matching recitation
 Switch from view mode to edit mode:
 	- showing visible users
@@ -65,6 +65,7 @@ Export users:
 
 use WeBWorK::File::Classlist qw(parse_classlist write_classlist);
 use WeBWorK::Utils qw(cryptPassword x);
+use WeBWorK::Utils::Instructor qw(getCSVList);
 
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS            => [qw(save_edit cancel_edit)];
@@ -254,6 +255,7 @@ sub initialize ($c) {
 	$c->stash->{formPerms}       = FORM_PERMS();
 	$c->stash->{fields}          = FIELDS();
 	$c->stash->{fieldProperties} = FIELD_PROPERTIES();
+	$c->stash->{CSVList}         = $c->{editMode} || $c->{passwordMode} ? [] : [ getCSVList($c->ce) ];
 
 	return;
 }
@@ -271,9 +273,6 @@ sub filter_handler ($c) {
 	if ($scope eq 'all') {
 		$result = $c->maketext('Showing all users.');
 		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->{allUserIDs} } };
-	} elsif ($scope eq 'none') {
-		$result = $c->maketext('Showing no users.');
-		$c->{visibleUserIDs} = {};
 	} elsif ($scope eq 'selected') {
 		$result = $c->maketext('Showing selected users.');
 		$c->{visibleUserIDs} = $c->{selectedUserIDs};
@@ -348,54 +347,34 @@ sub sort_handler ($c) {
 }
 
 sub edit_handler ($c) {
-	my $result;
-	my @usersToEdit;
-
 	my $scope = $c->param('action.edit.scope');
-	if ($scope eq 'all') {
-		$result      = $c->maketext('Editing all users.');
-		@usersToEdit = grep { $c->{userIsEditable}{$_} } @{ $c->{allUserIDs} };
-	} elsif ($scope eq 'visible') {
-		$result      = $c->maketext('Editing visible users.');
-		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{visibleUserIDs} });
-	} elsif ($scope eq 'selected') {
-		$result      = $c->maketext('Editing selected users.');
-		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
-	}
+	my @usersToEdit =
+		grep { $c->{userIsEditable}{$_} } ($scope eq 'all' ? @{ $c->{allUserIDs} } : (keys %{ $c->{selectedUserIDs} }));
 	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
 	$c->{editMode}       = 1;
 
-	return $result;
+	return $scope eq 'all' ? $c->maketext('Editing all users.') : $c->maketext('Editing selected users.');
 }
 
 sub password_handler ($c) {
-	my $result;
-	my @usersToEdit;
-
 	my $scope = $c->param('action.password.scope');
-	if ($scope eq 'all') {
-		$result      = $c->maketext('Giving new passwords to all users.');
-		@usersToEdit = grep { $c->{userIsEditable}{$_} } @{ $c->{allUserIDs} };
-	} elsif ($scope eq 'visible') {
-		$result      = $c->maketext('Giving new passwords to visible users.');
-		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{visibleUserIDs} });
-	} elsif ($scope eq 'selected') {
-		$result      = $c->maketext('Giving new passwords to selected users.');
-		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
-	}
+	my @usersToEdit =
+		grep { $c->{userIsEditable}{$_} } ($scope eq 'all' ? @{ $c->{allUserIDs} } : (keys %{ $c->{selectedUserIDs} }));
 	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
 	$c->{passwordMode}   = 1;
 
-	return $result;
+	return $scope eq 'all'
+		? $c->maketext('Giving new passwords to all users.')
+		: $c->maketext('Giving new passwords to selected users.');
 }
 
 sub delete_handler ($c) {
-	my $db    = $c->db;
-	my $user  = $c->param('user');
-	my $scope = $c->param('action.delete.scope');
-	my $num   = 0;
+	my $db      = $c->db;
+	my $user    = $c->param('user');
+	my $confirm = $c->param('action.delete.confirm');
+	my $num     = 0;
 
-	return $c->maketext('Deleted [_1] users.', $num) if ($scope eq 'none');
+	return $c->maketext('Deleted [_1] users.', $num) unless ($confirm eq 'yes');
 
 	# grep on userIsEditable would still enforce permissions, but no UI feedback
 	my @userIDsToDelete = keys %{ $c->{selectedUserIDs} };
@@ -429,11 +408,14 @@ sub add_handler ($c) {
 }
 
 sub import_handler ($c) {
-	my $source  = $c->param('action.import.source');
-	my $add     = $c->param('action.import.add');
-	my $replace = $c->param('action.import.replace');
+	my $fileName = $c->param('action.import.source');
+	my $add      = $c->param('action.import.add');
+	my $replace  = $c->param('action.import.replace');
 
-	my $fileName  = $source;
+	unless (defined($fileName) and $fileName =~ /\.lst$/) {
+		$c->addbadmessage($c->maketext('No class list file provided.'));
+		return $c->maketext('No users added.');
+	}
 	my $createNew = $add eq 'any';
 	my $replaceExisting;
 	my @replaceList;
@@ -491,15 +473,7 @@ sub export_handler ($c) {
 
 	$fileName .= '.lst' unless $fileName =~ m/\.lst$/;
 
-	my @userIDsToExport;
-	if ($scope eq 'all') {
-		@userIDsToExport = @{ $c->{allUserIDs} };
-	} elsif ($scope eq 'visible') {
-		@userIDsToExport = keys %{ $c->{visibleUserIDs} };
-	} elsif ($scope eq 'selected') {
-		@userIDsToExport = keys %{ $c->{selectedUserIDs} };
-	}
-
+	my @userIDsToExport = $scope eq 'all' ? @{ $c->{allUserIDs} } : keys %{ $c->{selectedUserIDs} };
 	$c->exportUsersToCSV($fileName, @userIDsToExport);
 
 	return $c->maketext('[_1] users exported to file [_2]', scalar @userIDsToExport, "$dir/$fileName");

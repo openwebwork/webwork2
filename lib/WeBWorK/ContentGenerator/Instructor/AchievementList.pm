@@ -82,6 +82,7 @@ sub initialize ($c) {
 	$c->stash->{formsToShow}  = VIEW_FORMS();
 	$c->stash->{formTitles}   = FORM_TITLES();
 	$c->stash->{achievements} = [];
+	$c->stash->{axpList}      = [];
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, 'edit_achievements');
@@ -131,6 +132,7 @@ sub initialize ($c) {
 	}
 
 	$c->stash->{formsToShow} = $c->{editMode} ? EDIT_FORMS() : $c->{exportMode} ? EXPORT_FORMS() : VIEW_FORMS();
+	$c->stash->{axpList}     = [ $c->getAxpList ] unless $c->{editMode} || $c->{exportMode};
 
 	# Get and sort achievements. Achievements are sorted by in the order they are evaluated.
 	$c->stash->{achievements} = [ sortAchievements($c->db->getAchievements(@{ $c->{allAchievementIDs} })) ];
@@ -162,20 +164,11 @@ sub edit_handler ($c) {
 
 # Handler for assigning achievements to users
 sub assign_handler ($c) {
-	my $db = $c->db;
-	my $ce = $c->ce;
-
-	my $scope     = $c->param('action.assign.scope');
-	my $overwrite = $c->param('action.assign.overwrite') eq 'everything';
-
-	my @achievementIDs;
-	my @users = $db->listUsers;
-
-	if ($scope eq "all") {
-		@achievementIDs = @{ $c->{allAchievementIDs} };
-	} else {
-		@achievementIDs = @{ $c->{selectedAchievementIDs} };
-	}
+	my $db             = $c->db;
+	my @users          = $db->listUsers;
+	my $overwrite      = $c->param('action.assign.overwrite') eq 'everything';
+	my $scope          = $c->param('action.assign.scope');
+	my @achievementIDs = $scope eq 'all' ? @{ $c->{allAchievementIDs} } : @{ $c->{selectedAchievementIDs} };
 
 	# Enable all achievements
 	my @achievements = $db->getAchievements(@achievementIDs);
@@ -222,20 +215,11 @@ sub assign_handler ($c) {
 
 # Handler for scoring
 sub score_handler ($c) {
-	my $ce         = $c->ce;
-	my $db         = $c->db;
-	my $courseName = $c->stash('courseID');
-
-	my $scope = $c->param('action.score.scope');
-	my @achievementsToScore;
-
-	if ($scope eq "none") {
-		@achievementsToScore = ();
-	} elsif ($scope eq "all") {
-		@achievementsToScore = @{ $c->{allAchievementIDs} };
-	} elsif ($scope eq "selected") {
-		@achievementsToScore = $c->param('selected_achievements');
-	}
+	my $ce                  = $c->ce;
+	my $db                  = $c->db;
+	my $courseName          = $c->stash('courseID');
+	my $scope               = $c->param('action.score.scope');
+	my @achievementsToScore = $scope eq 'all' ? @{ $c->{allAchievementIDs} } : $c->param('selected_achievements');
 
 	# Define file name
 	my $scoreFileName = $courseName . "_achievement_scores.csv";
@@ -323,16 +307,12 @@ sub score_handler ($c) {
 
 # Handler for delete action
 sub delete_handler ($c) {
-	my $db = $c->db;
+	my $db      = $c->db;
+	my $confirm = $c->param('action.delete.confirm');
 
-	my $scope = $c->param('action.delete.scope');
+	return (1, $c->maketext('Deleted [quant,_1,achievement].', 0)) unless ($confirm eq 'yes');
 
-	my @achievementIDsToDelete = ();
-
-	if ($scope eq "selected") {
-		@achievementIDsToDelete = @{ $c->{selectedAchievementIDs} };
-	}
-
+	my @achievementIDsToDelete = @{ $c->{selectedAchievementIDs} };
 	my %allAchievementIDs      = map { $_ => 1 } @{ $c->{allAchievementIDs} };
 	my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
 
@@ -348,8 +328,7 @@ sub delete_handler ($c) {
 	$c->{allAchievementIDs}      = [ keys %allAchievementIDs ];
 	$c->{selectedAchievementIDs} = [ keys %selectedAchievementIDs ];
 
-	my $num = @achievementIDsToDelete;
-	return (1, $c->maketext('Deleted [quant,_1,achievement].', $num));
+	return (1, $c->maketext('Deleted [quant,_1,achievement].', scalar @achievementIDsToDelete));
 }
 
 # Handler for creating an ahcievement
@@ -478,7 +457,7 @@ sub export_handler ($c) {
 	if ($scope eq "all") {
 		$result = $c->maketext('Exporting all achievements.');
 		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
-	} elsif ($scope eq "selected") {
+	} else {
 		$result = $c->maketext('Exporting selected achievements.');
 		$c->{selectedAchievementIDs} = [ $c->param('selected_achievements') ];
 	}

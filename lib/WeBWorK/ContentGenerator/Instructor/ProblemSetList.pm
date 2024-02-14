@@ -15,6 +15,7 @@
 
 package WeBWorK::ContentGenerator::Instructor::ProblemSetList;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
+use WeBWorK::Utils::Instructor qw(getDefList);
 
 =head1 NAME
 
@@ -30,7 +31,7 @@ What do we want to be able to do here?
 filter sort edit publish import create delete
 
 Filter what sets are shown:
-	- none, all, selected
+	- all, selected
 	- matching set_id, visible to students, hidden from students
 
 Sort sets by:
@@ -158,18 +159,8 @@ sub pre_header_initialize ($c) {
 	$c->{totalUsers} = $db->countUsers;
 
 	if (defined $c->param('action') && $c->param('action') eq 'score' && $authz->hasPermissions($user, 'score_sets')) {
-		my $scope = $c->param('action.score.scope');
-		my @setsToScore;
-
-		if ($scope eq 'none') {
-			return;
-		} elsif ($scope eq 'all') {
-			@setsToScore = @{ $c->{allSetIDs} };
-		} elsif ($scope eq 'visible') {
-			@setsToScore = @{ $c->param('visibleSetIDs') };
-		} elsif ($scope eq 'selected') {
-			@setsToScore = $c->param('selected_sets');
-		}
+		my $scope       = $c->param('action.score.scope');
+		my @setsToScore = $scope eq 'all' ? @{ $c->{allSetIDs} } : $c->param('selected_sets');
 
 		return unless @setsToScore;
 
@@ -198,6 +189,7 @@ sub initialize ($c) {
 	$c->stash->{fieldTypes}     = FIELD_TYPES();
 	$c->stash->{sortableFields} = SORTABLE_FIELDS();
 	$c->stash->{sets}           = [];
+	$c->stash->{setDefList}     = [];
 
 	# Determine if the user has permisson to do anything here.
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
@@ -272,6 +264,7 @@ sub initialize ($c) {
 		&& ($c->{secondarySortOrder} eq 'ASC' || $c->{secondarySortOrder} eq 'DESC');
 
 	$c->stash->{formsToShow} = $c->{editMode} ? EDIT_FORMS() : $c->{exportMode} ? EXPORT_FORMS() : VIEW_FORMS();
+	$c->stash->{setDefList}  = [ getDefList($ce) ] unless $c->{editMode} || $c->{exportMode};
 	# Get requested sets in the requested order.
 	$c->stash->{sets} = [
 		@{ $c->{visibleSetIDs} }
@@ -302,9 +295,6 @@ sub filter_handler ($c) {
 	if ($scope eq "all") {
 		$result = $c->maketext('Showing all sets.');
 		$c->{visibleSetIDs} = $c->{allSetIDs};
-	} elsif ($scope eq "none") {
-		$result = $c->maketext('Showing no sets.');
-		$c->{visibleSetIDs} = [];
 	} elsif ($scope eq "selected") {
 		$result = $c->maketext('Showing selected sets.');
 		$c->{visibleSetIDs} = [ $c->param('selected_sets') ];
@@ -373,62 +363,37 @@ sub sort_handler ($c) {
 }
 
 sub edit_handler ($c) {
-	my $result;
-
 	my $scope = $c->param('action.edit.scope');
-	if ($scope eq "all") {
-		$result = $c->maketext('Editing all sets.');
-		$c->{visibleSetIDs} = $c->{allSetIDs};
-	} elsif ($scope eq "visible") {
-		$result = $c->maketext('Editing listed sets.');
-		# leave visibleSetIDs alone
-	} elsif ($scope eq "selected") {
-		$result = $c->maketext('Editing selected sets.');
-		$c->{visibleSetIDs} = [ $c->param('selected_sets') ];
-	}
 	$c->{editMode} = 1;
 
-	return (1, $result);
+	if ($scope eq 'all') {
+		$c->{visibleSetIDs} = $c->{allSetIDs};
+		return (1, $c->maketext('Editing all sets.'));
+	}
+
+	$c->{visibleSetIDs} = [ $c->param('selected_sets') ];
+	return (1, $c->maketext('Editing selected sets.'));
 }
 
 sub publish_handler ($c) {
-	my $db = $c->db;
-
-	my @result;
-
-	my $scope = $c->param('action.publish.scope');
-	my $value = $c->param('action.publish.value');
-
-	my @setIDs;
-
-	if ($scope eq "none") {
-		@setIDs = ();
-		@result = (0, $c->maketext('No change made to any set.'));
-	} elsif ($scope eq "all") {
-		@setIDs = @{ $c->{allSetIDs} };
-		@result =
-			$value
-			? (1, $c->maketext('All sets made visible for all students.'))
-			: (1, $c->maketext('All sets hidden from all students.'));
-	} elsif ($scope eq "visible") {
-		@setIDs = @{ $c->{visibleSetIDs} };
-		@result =
-			$value
-			? (1, $c->maketext('All listed sets were made visible for all the students.'))
-			: (1, $c->maketext('All listed sets were hidden from all the students.'));
-	} elsif ($scope eq "selected") {
-		@setIDs = $c->param('selected_sets');
-		@result =
-			$value
-			? (1, $c->maketext('All selected sets made visible for all students.'))
-			: (1, $c->maketext('All selected sets hidden from all students.'));
-	}
+	my $db     = $c->db;
+	my $value  = $c->param('action.publish.value');
+	my $scope  = $c->param('action.publish.scope');
+	my @setIDs = $scope eq 'all' ? @{ $c->{allSetIDs} } : $c->param('selected_sets');
 
 	# Can we use UPDATE here, instead of fetch/change/store?
 	my @sets = $db->getGlobalSets(@setIDs);
 	map { $_->visible($value); $db->putGlobalSet($_); } @sets;
 
-	return @result;
+	if ($scope eq 'all') {
+		return $value
+			? (1, $c->maketext('All sets made visible for all students.'))
+			: (1, $c->maketext('All sets hidden from all students.'));
+	}
+
+	return $value
+		? (1, $c->maketext('All selected sets made visible for all students.'))
+		: (1, $c->maketext('All selected sets hidden from all students.'));
 }
 
 sub score_handler ($c) {
@@ -438,16 +403,12 @@ sub score_handler ($c) {
 }
 
 sub delete_handler ($c) {
-	my $db = $c->db;
+	my $db      = $c->db;
+	my $confirm = $c->param('action.delete.confirm');
 
-	my $scope = $c->param('action.delete.scope');
+	return (1, $c->maketext('Deleted [_1] sets.', 0)) unless ($confirm eq 'yes');
 
-	my @setIDsToDelete = ();
-
-	if ($scope eq "selected") {
-		@setIDsToDelete = @{ $c->{selectedSetIDs} };
-	}
-
+	my @setIDsToDelete = @{ $c->{selectedSetIDs} };
 	my %allSetIDs      = map { $_ => 1 } @{ $c->{allSetIDs} };
 	my %visibleSetIDs  = map { $_ => 1 } @{ $c->{visibleSetIDs} };
 	my %selectedSetIDs = map { $_ => 1 } @{ $c->{selectedSetIDs} };
@@ -463,8 +424,7 @@ sub delete_handler ($c) {
 	$c->{visibleSetIDs}  = [ keys %visibleSetIDs ];
 	$c->{selectedSetIDs} = [ keys %selectedSetIDs ];
 
-	my $num = @setIDsToDelete;
-	return (1, $c->maketext('Deleted [_1] sets.', $num));
+	return (1, $c->maketext('Deleted [_1] sets.', scalar @setIDsToDelete));
 }
 
 sub create_handler ($c) {
@@ -595,22 +555,14 @@ sub import_handler ($c) {
 
 # this does not actually export any files, rather it sends us to a new page in order to export the files
 sub export_handler ($c) {
-	my $result;
-
 	my $scope = $c->param('action.export.scope');
-	if ($scope eq "all") {
-		$result = $c->maketext("All sets were selected for export.");
-		$c->{selectedSetIDs} = $c->{visibleSetIDs} = $c->{allSetIDs};
-	} elsif ($scope eq "visible") {
-		$result = $c->maketext("Visible sets were selected for export.");
-		$c->{selectedSetIDs} = $c->{visibleSetIDs};
-	} elsif ($scope eq "selected") {
-		$result = $c->maketext("Sets were selected for export.");
-		$c->{selectedSetIDs} = $c->{visibleSetIDs} = [ $c->param('selected_sets') ];
-	}
-	$c->{exportMode} = 1;
+	$c->{selectedSetIDs} = $scope eq 'all' ? $c->{allSetIDs} : [ $c->param('selected_sets') ];
+	$c->{visibleSetIDs}  = $c->{selectedSetIDs};
+	$c->{exportMode}     = 1;
 
-	return (1, $result);
+	return $scope eq 'all'
+		? (1, $c->maketext('All sets were exported.'))
+		: (1, $c->maketext('Selected sets were exported.'));
 }
 
 sub cancel_export_handler ($c) {
