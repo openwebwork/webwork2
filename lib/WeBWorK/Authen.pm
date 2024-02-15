@@ -505,10 +505,10 @@ sub verify_normal_user {
 		my $auth_result = $self->authenticate;
 
 		if ($auth_result > 0) {
-			$self->{session_key}   = $self->create_session($user_id);
-			$self->{initial_login} = 1;
 			# deny certain roles (dropped students, proctor roles)
-			unless ($c->ce->status_abbrev_has_behavior($c->db->getUser($user_id)->status, "allow_course_access")) {
+			unless ($self->{login_type} =~ /^proctor/
+				|| $c->ce->status_abbrev_has_behavior($c->db->getUser($user_id)->status, "allow_course_access"))
+			{
 				$self->{log_error} = "user not allowed course access";
 				$self->{error}     = "This user is not allowed to log in to this course";
 				return 0;
@@ -519,6 +519,8 @@ sub verify_normal_user {
 				$self->{error}     = "This user is not allowed to log in to this course";
 				return 0;
 			}
+			$self->{session_key}   = $self->create_session($user_id);
+			$self->{initial_login} = 1;
 			return 1;
 		} elsif ($auth_result == 0) {
 			$self->{log_error} = "authentication failed";
