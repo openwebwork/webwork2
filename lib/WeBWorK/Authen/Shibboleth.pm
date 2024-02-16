@@ -35,7 +35,6 @@ add the following to localOverrides.conf to setup the Shibboleth
 
 $shibboleth{login_script} = "/Shibboleth.sso/Login"; # login handler
 $shibboleth{logout_script} = "/Shibboleth.sso/Logout?return=".$server_root_url.$webwork_url; # return URL after logout
-$shibboleth{session_header} = "Shib-Session-ID"; # the header to identify if there is an existing shibboleth session
 $shibboleth{manage_session_timeout} = 1; # allow shib to manage session time instead of webwork
 $shibboleth{hash_user_id_method} = "MD5"; # possible values none, MD5. Use it when you want to hide real user_ids from showing in url.
 $shibboleth{hash_user_id_salt} = ""; # salt for hash function
@@ -77,9 +76,28 @@ sub get_credentials {
 		return $self->SUPER::get_credentials(@_);
 	}
 
-	if (defined($ENV{ $ce->{shibboleth}{session_header} }) && defined($ENV{ $ce->{shibboleth}{mapping}{user_id} })) {
-		debug('Got shib header and user_id');
-		my $user_id = $ENV{ $ce->{shibboleth}{mapping}{user_id} };
+	# This next part is necessary because some parts of webwork (e.g.,
+	# WebworkWebservice.pm) need to replace the get_credentials() routine,
+	# but only replace the one in the parent class (out of caution,
+	# presumably).  Therefore, we end up here even when authenticating
+	# for WebworkWebservice.pm.  This would cause authentication failures
+	# when authenticating javascript web service requests (e.g., the
+	# Library Browser).
+
+	if ($c->{rpc}) {
+		debug("falling back to superclass get_credentials (rpc call)");
+		return $self->SUPER::get_credentials(@_);
+	}
+
+	my $user_id     = "";
+	my $shib_header = $ce->{shibboleth}{mapping}{user_id};
+
+	if ($shib_header ne "") {
+		$user_id = $c->req->headers->header($shib_header);
+	}
+
+	if ($user_id ne "") {
+		debug("Got shib header ($shib_header) and user_id ($user_id)");
 		if (defined($ce->{shibboleth}{hash_user_id_method})
 			&& $ce->{shibboleth}{hash_user_id_method} ne "none"
 			&& $ce->{shibboleth}{hash_user_id_method} ne "")
