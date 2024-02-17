@@ -392,7 +392,7 @@ async sub pre_header_initialize ($c) {
 		$tmplSet = $db->getMergedSet($effectiveUserID, $setID);
 
 		# Now that is has been validated that this is a gateway test, save the assignment test for the processing of
-		# proctor keys for graded proctored tests.  If a set was not obtained from the database, store a fake value here
+		# graded proctored tests.  If a set was not obtained from the database, store a fake value here
 		# to be able to continue.
 		$c->{assignment_type} = $tmplSet->assignment_type || 'gateway';
 
@@ -500,7 +500,8 @@ async sub pre_header_initialize ($c) {
 		my @setVersions   = $db->getSetVersions(map { [ $effectiveUserID, $setID,, $_ ] } @setVersionIDs);
 		for (@setVersions) {
 			$totalNumVersions++;
-			$currentNumVersions++ if (!$timeInterval || $_->version_creation_time() > ($c->submitTime - $timeInterval));
+			$currentNumVersions++
+				if (!$timeInterval || $_->version_creation_time() > ($c->submitTime - $timeInterval));
 		}
 	}
 
@@ -644,14 +645,19 @@ async sub pre_header_initialize ($c) {
 		$c->{invalidSet} = 'This set is closed.  No new set versions may be taken.';
 	}
 
-	# If the set or problem is invalid, then delete any proctor keys if any and return.
+	# If the proctor session key does not have a set version id, then add it.  This occurs when a student
+	# initially enters a proctored test, since the version id is not determined until just above.
+	if ($c->authen->session('proctor_authorization_granted')
+		&& $c->authen->session('proctor_authorization_granted') !~ /,v\d+$/)
+	{
+		if ($setVersionNumber) { $c->authen->session(proctor_authorization_granted => "$setID,v$setVersionNumber"); }
+		else                   { delete $c->authen->session->{proctor_authorization_granted}; }
+	}
+
+	# If the set or problem is invalid, then delete any proctor session keys and return.
 	if ($c->{invalidSet} || $c->{invalidProblem}) {
 		if (defined $c->{assignment_type} && $c->{assignment_type} eq 'proctored_gateway') {
-			my $proctorID = $c->param('proctor_user');
-			if ($proctorID) {
-				eval { $db->deleteKey("$effectiveUserID,$proctorID"); };
-				eval { $db->deleteKey("$effectiveUserID,$proctorID,g"); };
-			}
+			delete $c->authen->session->{proctor_authorization_granted};
 		}
 		return;
 	}
@@ -878,32 +884,13 @@ async sub pre_header_initialize ($c) {
 		# and answers can be recorded, then save the last answer for future reference.
 		# Also save the persistent data to the database even when the last answer is not saved.
 
-		# First, deal with answers being submitted for a proctored exam.  Delete the proctor keys that authorized the
-		# grading, so that it isn't possible to log in and take another proctored test without being reauthorized.
-		if ($c->{submitAnswers} && $c->{assignment_type} eq 'proctored_gateway') {
-			my $proctorID = $c->param('proctor_user');
-
-			# If there are no attempts left, delete all proctor keys for this user.
-			if ($set->attempts_per_version > 0
-				&& $set->attempts_per_version - 1 - $problem->num_correct - $problem->num_incorrect <= 0)
-			{
-				eval { $db->deleteAllProctorKeys($effectiveUserID); };
-			} else {
-				# Otherwise, delete only the grading key.
-				eval { $db->deleteKey("$effectiveUserID,$proctorID,g"); };
-				# In this case there may be a past login proctor key that can be kept so that another login to continue
-				# working the test is not needed.
-				if ($c->param('past_proctor_user') && $c->param('past_proctor_key')) {
-					$c->param('proctor_user', scalar $c->param('past_proctor_user'));
-					$c->param('proctor_key',  scalar $c->param('past_proctor_key'));
-				}
-			}
-			# This is unsubtle, but we'd rather not have bogus keys sitting around.
-			if ($@) {
-				die "ERROR RESETTING PROCTOR GRADING KEY(S): $@\n";
-			}
-
-		}
+		# Deal with answers being submitted for a proctored exam.  If there are no attempts left, then delete the
+		# proctor session key so that it isn't possible to start another proctored test without being reauthorized.
+		delete $c->authen->session->{proctor_authorization_granted}
+			if ($c->{submitAnswers}
+				&& $c->{assignment_type} eq 'proctored_gateway'
+				&& $set->attempts_per_version > 0
+				&& $set->attempts_per_version - 1 - $problem->num_correct - $problem->num_incorrect <= 0);
 
 		my @pureProblems = $db->getAllProblemVersions($effectiveUserID, $setID, $versionID);
 		for my $i (0 .. $#problems) {
@@ -1204,7 +1191,8 @@ async sub pre_header_initialize ($c) {
 			$c->{submitAnswers}
 			&& (
 				$will{recordAnswers}
-				|| (!$set->version_last_attempt_time && $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
+				|| (!$set->version_last_attempt_time
+					&& $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
 			)
 		)
 		|| (
@@ -1228,7 +1216,8 @@ async sub pre_header_initialize ($c) {
 				$c->{submitAnswers}
 				&& (
 					$will{recordAnswers}
-					|| (!$set->version_last_attempt_time && $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
+					|| (!$set->version_last_attempt_time
+						&& $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
 				)
 			);
 
@@ -1280,7 +1269,8 @@ async sub pre_header_initialize ($c) {
 			my $pScore = 0;
 			if (ref $pg) {
 				# If a pg object is available, then use the pg recorded score and save it in the @probStatus array.
-				$pScore = compute_reduced_score($ce, $problems[$i], $set, $pg->{state}{recorded_score}, $c->submitTime);
+				$pScore =
+					compute_reduced_score($ce, $problems[$i], $set, $pg->{state}{recorded_score}, $c->submitTime);
 				$probStatus[$i] = $pScore if $pScore > $probStatus[$i];
 			} else {
 				# If a pg object is not available, then use the saved problem status.

@@ -30,7 +30,7 @@ BEGIN {
 		user_id   => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		key       => { type => "TEXT" },
 		timestamp => { type => "BIGINT" },
-		set_id    => { type => "TINYTEXT" },
+		session   => { type => "TEXT NOT NULL DEFAULT '{}'" },
 	);
 }
 

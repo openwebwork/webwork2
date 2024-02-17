@@ -240,7 +240,7 @@ async sub dispatch ($c) {
 			# we need to also check on the proctor.  Note that in the gateway quiz
 			# module this is double checked to be sure that someone isn't taking a
 			# proctored quiz but calling the unproctored ContentGenerator.
-			if ($c->current_route =~ /^proctored_gateway_quiz|proctored_gateway_proctor_login$/) {
+			if ($c->current_route =~ /^(proctored_gateway_quiz|proctored_gateway_proctor_login)$/) {
 				my $proctor_authen_module = WeBWorK::Authen::class($ce, 'proctor_module');
 				runtime_use $proctor_authen_module;
 				my $authenProctor = $proctor_authen_module->new($c);
@@ -251,6 +251,10 @@ async sub dispatch ($c) {
 					await WeBWorK::ContentGenerator::LoginProctor->new($c)->go;
 					return 0;
 				}
+			} else {
+				# If any other page is opened, then revoke proctor authorization if it has been granted.
+				# Otherwise the student will be able to re-enter the test without again obtaining proctor authorization.
+				delete $c->authen->session->{proctor_authorization_granted};
 			}
 			return 1;
 		} else {

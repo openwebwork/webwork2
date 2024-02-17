@@ -92,10 +92,9 @@ sub request_has_data_for_this_verification_module {
 	my $self = shift;
 	my $c    = $self->{c};
 
-	# See comment in get_credentials()
 	if ($c->{rpc}) {
-		debug("LTIAdvanced returning 1 because it is an rpc call");
-		return 1;
+		debug("LTIAdvanced returning 0 because it is an rpc call");
+		return 0;
 	}
 
 	# This module insists that the course is configured for LTI 1.3.
@@ -124,19 +123,6 @@ sub get_credentials {
 	my $ce   = $c->{ce};
 
 	debug("LTIAdvanced::get_credentials has been called\n");
-
-	# This next part is necessary because some parts of webwork (e.g.,
-	# WebworkWebservice.pm) need to replace the get_credentials() routine,
-	# but only replace the one in the parent class (out of caution,
-	# presumably).	Therefore, we end up here even when authenticating
-	# for WebworkWebservice.pm.  This would cause authentication failures
-	# when authenticating javascript web service requests (e.g., the
-	# Library Browser).
-	# Similar changes are needed in check_user() and verify_normal_user().
-	if ($c->{rpc}) {
-		debug("falling back to superclass get_credentials (rpc call)");
-		return $self->SUPER::get_credentials(@_);
-	}
 
 	## Printing parameters to main page can help people set things up
 	## so we dont use the debug channel here
@@ -307,12 +293,6 @@ sub check_user {
 
 	debug("LTIAdvanced::check_user has been called for user_id = |$user_id|");
 
-	# See comment in get_credentials()
-	if ($c->{rpc}) {
-		#debug("falling back to superclass check_user (rpc call)");
-		return $self->SUPER::check_user(@_);
-	}
-
 	if (!defined($user_id) || (defined $user_id && $user_id eq "")) {
 		$self->{log_error} .= "no user id specified";
 		$self->{error} = $c->maketext(
@@ -381,17 +361,6 @@ sub verify_normal_user {
 
 	debug("LTIAdvanced::verify_normal_user called for user |$user_id|");
 
-	# See comment in get_credentials()
-	if ($c->{rpc}) {
-		#debug("falling back to superclass verify_normal_user (rpc call)");
-		return $self->SUPER::verify_normal_user(@_);
-	}
-
-	# Call check_session in order to destroy any existing session cookies and Key table sessions
-	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 0);
-
-	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
-
 	my $auth_result = $self->authenticate;
 
 	debug("auth_result=|${auth_result}|");
@@ -419,12 +388,6 @@ sub verify_normal_user {
 sub authenticate {
 	my $self = shift;
 	my ($c, $user) = map { $self->{$_}; } ('c', 'user_id');
-
-	# See comment in get_credentials()
-	if ($c->{rpc}) {
-		#debug("falling back to superclass authenticate (rpc call)");
-		return $self->SUPER::authenticate(@_);
-	}
 
 	debug("LTIAdvanced::authenticate called for user |$user|");
 	debug "ref(c) = |" . ref($c) . "|";

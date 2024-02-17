@@ -500,8 +500,8 @@ sub links ($c) {
 	my $restricted_navigation = $authen->was_verified && !$authz->hasPermissions($userID, 'navigation_allowed');
 
 	# If navigation is restricted and the setID was not in the route stash,
-	# then get the setID this user is restricted to view from the authen cookie.
-	$setID = $authen->get_session_set_id if (!$setID && $restricted_navigation);
+	# then get the setID this user is restricted to view from the session.
+	$setID = $authen->session('set_id') if !$setID && $restricted_navigation;
 
 	my $prettyProblemID = $problemID;
 
@@ -1057,21 +1057,6 @@ sub hidden_authen_fields ($c, $id_prefix = undef) {
 	return $c->hidden_fields({ id_prefix => $id_prefix }, 'user', 'effectiveUser', 'key', 'theme')
 		if defined $id_prefix;
 	return $c->hidden_fields('user', 'effectiveUser', 'key', 'theme');
-}
-
-=item hidden_proctor_authen_fields()
-
-Use hidden_fields to return hidden <INPUT> tags for request fields used in
-proctor authentication.
-
-=cut
-
-sub hidden_proctor_authen_fields ($c) {
-	if ($c->param('proctor_user')) {
-		return $c->hidden_fields('proctor_user', 'proctor_key');
-	} else {
-		return '';
-	}
 }
 
 =item url_args(@fields)
