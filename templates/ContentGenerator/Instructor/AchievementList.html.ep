@@ -17,6 +17,13 @@
 	<%= hidden_field editMode => $c->{editMode} =%>
 	<%= hidden_field exportMode => $c->{exportMode} =%>
 	%
+	% if (@{ $c->{visibleAchievementIDs} }) {
+		% for (@{ $c->{visibleAchievementIDs} }) {
+			<%= hidden_field visible_achievements => $_ =%>
+		% }
+	% } else {
+		<%= hidden_field no_visible_achievements => '1' =%>
+	% }
 	% if ($c->{editMode}) {
 		<p><b><%= maketext('Any changes made below will be reflected in the achievement for ALL students.') %></b></p>
 	% }
@@ -51,6 +58,12 @@
 		<%= submit_button maketext($formTitles->{ $formsToShow->[0] }),
 			id => 'take_action', class => 'btn btn-primary mb-3' =%>
 	</div>
+	<p class="mb-2">
+		<%= maketext('Showing [_1] out of [_2] achievements.',
+			scalar @{ $c->{visibleAchievementIDs} },
+			scalar @{ $c->{allAchievementIDs} }
+		) =%>
+	</p>
 	% if ($c->{exportMode}) {
 		<%= include 'ContentGenerator/Instructor/AchievementList/export_table' =%>
 	% } elsif ($c->{editMode}) {

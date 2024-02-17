@@ -1,0 +1,43 @@
+<div>
+	<div class="row mb-2">
+		<%= label_for filter_select => maketext('Show which achievements?'),
+			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.filter.scope' => [
+					[ maketext('all course achievements')              => 'all' ],
+					[ maketext('selected achievements')                => 'selected' ],
+					[ maketext('enter matching achievement IDs below') => 'match_ids', selected => undef ],
+					[ maketext('enter matching category below')        => 'match_category' ],
+					[ maketext('enabled achievements')                 => 'enabled' ],
+					[ maketext('disabled achievements')                => 'disabled' ]
+				],
+				id => 'filter_select', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div id="filter_text_elements" class="row mb-2">
+		<%= label_for 'filter_text', class => 'col-form-label col-form-label-sm col-sm-auto', begin =%>
+			<%= maketext('Match on what? (separate multiple IDs with commas)') =%>
+			<span class="required-field">*</span>
+		<% end =%>
+		<div class="col-auto">
+			<%= text_field 'action.filter.achievement_ids' => '', id => 'filter_text', 'aria-required' => 'true',
+				class => 'form-control form-control-sm', dir => 'ltr' =%>
+		</div>
+	</div>
+	<div id="filter_text_err_msg" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">
+		<%= maketext('Please enter a list of IDs to match.') %>
+	</div>
+	<div id="filter_category_elements" class="row mb-2">
+		<%= label_for 'filter_category', class => 'col-form-label col-form-label-sm col-sm-auto', begin =%>
+			<%= maketext('Match on which category? (enter in exact match)') =%>
+			<span class="required-field">*</span>
+		<% end =%>
+		<div class="col-auto">
+			<%= text_field 'action.filter.category' => '', id => 'filter_category', 'aria-required' => 'true',
+				class => 'form-control form-control-sm', dir => 'ltr' =%>
+		</div>
+	</div>
+	<div id="filter_category_err_msg" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">
+		<%= maketext('Please enter a category to match.') %>
+	</div>
+</div>

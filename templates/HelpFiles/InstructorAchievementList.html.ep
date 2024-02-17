@@ -87,6 +87,12 @@
 </ul>
 <h2><%= maketext('How to:') %></h2>
 <dl>
+	<dt><%= maketext('Filter achievements') %></td>
+	<dd>
+		<%= maketext('You can filter which achievements are shown by clicking the "Filter" button.  Use the drop '
+			. 'down menu to select the filter criteria, which allows you to filter achievements by their ID, '
+			. 'category, or if they are enabled or disabled.') =%>
+	</dd>
 	<dt><%= maketext('Edit achievement information') %></dt>
 	<dd>
 		<%= maketext('You can edit a single achievement by clicking on the pencil icon next to the achievement ID.  '

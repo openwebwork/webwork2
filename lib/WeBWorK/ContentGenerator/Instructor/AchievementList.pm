@@ -52,13 +52,14 @@ use WeBWorK::Utils::Instructor qw(read_dir);
 
 # Forms
 use constant EDIT_FORMS   => [qw(save_edit cancel_edit)];
-use constant VIEW_FORMS   => [qw(edit assign import export score create delete)];
+use constant VIEW_FORMS   => [qw(filter edit assign import export score create delete)];
 use constant EXPORT_FORMS => [qw(save_export cancel_export)];
 
 # Prepare the tab titles for translation by maketext
 use constant FORM_TITLES => {
 	save_edit     => x('Save Edit'),
 	cancel_edit   => x('Cancel Edit'),
+	filter        => x('Filter'),
 	edit          => x('Edit'),
 	assign        => x('Assign'),
 	import        => x('Import'),
@@ -114,6 +115,14 @@ sub initialize ($c) {
 
 	$c->{editMode} = $c->param('editMode') || 0;
 
+	if (defined $c->param('visible_achievements')) {
+		$c->{visibleAchievementIDs} = [ $c->param('visible_achievements') ];
+	} elsif (defined $c->param('no_visible_achievements')) {
+		$c->{visibleAchievementIDs} = [];
+	} else {
+		$c->{visibleAchievementIDs} = $c->{allAchievementIDs};
+	}
+
 	# Call action handler
 	my $actionID = $c->param('action');
 	$c->{actionID} = $actionID;
@@ -135,16 +144,50 @@ sub initialize ($c) {
 	$c->stash->{axpList}     = [ $c->getAxpList ] unless $c->{editMode} || $c->{exportMode};
 
 	# Get and sort achievements. Achievements are sorted by in the order they are evaluated.
-	$c->stash->{achievements} = [ sortAchievements($c->db->getAchievements(@{ $c->{allAchievementIDs} })) ];
+	$c->stash->{achievements} = [ sortAchievements($c->db->getAchievements(@{ $c->{visibleAchievementIDs} })) ];
 
 	return;
 }
 
 # Actions handlers.
 # The forms for all of the actions are templates.
-# edit, cancel_edit, and save_edit should stay with the display module and
+# filter, edit, cancel_edit, and save_edit should stay with the display module and
 # not be real "actions". that way, all actions are shown in view mode and no
 # actions are shown in edit mode.
+
+sub filter_handler ($c) {
+	my $db    = $c->db;
+	my $scope = $c->param('action.filter.scope');
+	my $result;
+
+	if ($scope eq 'all') {
+		$result = $c->maketext('Showing all achievements.');
+		$c->{visibleAchievementIDs} = $c->{allAchievementIDs};
+	} elsif ($scope eq 'selected') {
+		$result = $c->maketext('Showing selected achievements.');
+		$c->{visibleAchievementIDs} = [ $c->param('selected_achievements') ];
+	} elsif ($scope eq 'match_ids') {
+		$result = $c->maketext('Showing matching achievements.');
+		my $terms = join('|', split(/\s*,\s*/, $c->param('action.filter.achievement_ids')));
+		$c->{visibleAchievementIDs} = [ grep {/$terms/i} @{ $c->{allAchievementIDs} } ];
+	} elsif ($scope eq 'match_category') {
+		my $category = $c->param('action.filter.category') // '';
+		$c->{visibleAchievementIDs} = [ map { $_->[0] } $db->listAchievementsWhere({ category => $category }) ];
+		if (@{ $c->{visibleAchievementIDs} }) {
+			$result = $c->maketext('Showing achievements in category [_1].', $category);
+		} else {
+			$result = $c->maketext('No achievements in category [_1].', $category);
+		}
+	} elsif ($scope eq 'enabled') {
+		$result = $c->maketext('Showing enabled achievements.');
+		$c->{visibleAchievementIDs} = [ map { $_->[0] } $db->listAchievementsWhere({ enabled => 1 }) ];
+	} elsif ($scope eq 'disabled') {
+		$result = $c->maketext('Showing enabled achievements.');
+		$c->{visibleAchievementIDs} = [ map { $_->[0] } $db->listAchievementsWhere({ enabled => 0 }) ];
+	}
+
+	return (1, $result);
+}
 
 # Handler for editing achievements.  Just changes the view mode.
 sub edit_handler ($c) {

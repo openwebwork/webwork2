@@ -9,7 +9,7 @@
 			'change',
 			() => {
 				document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
-				for (const id of ['edit_select', 'assign_select', 'export_select', 'score_select']) {
+				for (const id of ['filter_select', 'edit_select', 'assign_select', 'export_select', 'score_select']) {
 					document.getElementById(id)?.classList.remove('is-invalid');
 				}
 			},
@@ -20,7 +20,73 @@
 
 	document.getElementById('achievement-list')?.addEventListener('submit', (e) => {
 		const action = document.getElementById('current_action')?.value || '';
-		if (action === 'edit') {
+		if (action === 'filter') {
+			const filter_select = document.getElementById('filter_select');
+			const filter = filter_select?.selectedIndex || 0;
+			const filter_text = document.getElementById('filter_text');
+			const filter_category = document.getElementById('filter_category');
+			if (filter === 1 && !is_achievement_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+				filter_select?.classList.add('is-invalid');
+				filter_select?.addEventListener(
+					'change',
+					() => {
+						document.getElementById('select_achievement_err_msg').classList.add('d-none');
+						document.getElementById('filter_select').classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
+			} else if (filter === 2 && filter_text?.value === '') {
+				e.preventDefault();
+				e.stopPropagation();
+				document.getElementById('filter_text_err_msg')?.classList.remove('d-none');
+				filter_select?.classList.add('is-invalid');
+				filter_text?.classList.add('is-invalid');
+				filter_text?.addEventListener(
+					'change',
+					() => {
+						document.getElementById('filter_text_err_msg')?.classList.add('d-none');
+						document.getElementById('filter_text')?.classList.remove('is-invalid');
+						document.getElementById('filter_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
+				filter_select?.addEventListener(
+					'change',
+					() => {
+						document.getElementById('filter_text_err_msg')?.classList.add('d-none');
+						document.getElementById('filter_text')?.classList.remove('is-invalid');
+						document.getElementById('filter_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
+			} else if (filter === 3 && filter_category?.value === '') {
+				e.preventDefault();
+				e.stopPropagation();
+				document.getElementById('filter_category_err_msg')?.classList.remove('d-none');
+				filter_select?.classList.add('is-invalid');
+				filter_category?.classList.add('is-invalid');
+				filter_category?.addEventListener(
+					'change',
+					() => {
+						document.getElementById('filter_category_err_msg')?.classList.add('d-none');
+						document.getElementById('filter_category')?.classList.remove('is-invalid');
+						document.getElementById('filter_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
+				filter_select?.addEventListener(
+					'change',
+					() => {
+						document.getElementById('filter_category_err_msg')?.classList.add('d-none');
+						document.getElementById('filter_category')?.classList.remove('is-invalid');
+						document.getElementById('filter_select')?.classList.remove('is-invalid');
+					},
+					{ once: true }
+				);
+			}
+		} else if (action === 'edit') {
 			const edit_select = document.getElementById('edit_select');
 			if (edit_select.value === 'selected' && !is_achievement_selected()) {
 				e.preventDefault();
@@ -149,4 +215,18 @@
 			}
 		});
 	}
+
+	// Toggle the display of the filter elements as the filter select changes.
+	const filter_select = document.getElementById('filter_select');
+	const filter_text_elements = document.getElementById('filter_text_elements');
+	const filter_category_elements = document.getElementById('filter_category_elements');
+	const filterElementToggle = () => {
+		if (filter_select?.selectedIndex == 2) filter_text_elements.style.display = 'flex';
+		else filter_text_elements.style.display = 'none';
+		if (filter_select?.selectedIndex == 3) filter_category_elements.style.display = 'flex';
+		else filter_category_elements.style.display = 'none';
+	};
+
+	if (filter_select) filterElementToggle();
+	filter_select?.addEventListener('change', filterElementToggle);
 })();
