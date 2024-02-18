@@ -399,17 +399,22 @@ Create the link to the webwork installation landing page with a logo and alt tex
 =cut
 
 sub webwork_logo ($c) {
-	my $ce     = $c->ce;
-	my $theme  = $c->param('theme') || $ce->{defaultTheme};
-	my $htdocs = $ce->{webwork_htdocs_url};
+	my $ce = $c->ce;
 
 	if ($c->authen->was_verified && !$c->authz->hasPermissions($c->param('user'), 'navigation_allowed')) {
 		# If navigation is restricted for this user, then the webwork logo is not a link to the courses page.
-		return $c->tag('span', $c->image("$htdocs/themes/$theme/images/webwork_logo.svg", alt => 'WeBWorK'));
+		return $c->tag(
+			'span',
+			$c->image(
+				"$ce->{webwork_htdocs_url}/themes/$ce->{defaultTheme}/images/webwork_logo.svg",
+				alt => 'WeBWorK'
+			)
+		);
 	} else {
 		return $c->link_to(
-			$c->image("$htdocs/themes/$theme/images/webwork_logo.svg", alt => $c->maketext('to courses page')) =>
-				$ce->{webwork_url});
+			$c->image("$ce->{webwork_htdocs_url}/themes/$ce->{defaultTheme}/images/webwork_logo.svg",
+				alt => $c->maketext('to courses page')) => $ce->{webwork_url}
+		);
 	}
 }
 
@@ -420,12 +425,10 @@ Create the link to the host institution with a logo and alt text
 =cut
 
 sub institution_logo ($c) {
-	my $ce     = $c->ce;
-	my $theme  = $c->param("theme") || $ce->{defaultTheme};
-	my $htdocs = $ce->{webwork_htdocs_url};
+	my $ce = $c->ce;
 	return $c->link_to(
 		$c->image(
-			"$htdocs/themes/$theme/images/" . $ce->{institutionLogo},
+			"$ce->{webwork_htdocs_url}/themes/$ce->{defaultTheme}/images/$ce->{institutionLogo}",
 			alt => $c->maketext("to [_1] main web site", $ce->{institutionName})
 		) => $ce->{institutionURL}
 	);
@@ -1026,6 +1029,8 @@ inputs that are created.
 
 =cut
 
+# FIXME: Hidden fields have no need for an id attribute.  Fix the javascript that finds these in by using the id, and
+# remove the id here.  Then the id_prefix hack isn't needed.  The name does not need to be unique.
 sub hidden_fields ($c, @fields) {
 	my %options   = ref $fields[0] eq 'HASH' ? %{ shift @fields } : ();
 	my $id_prefix = $options{id_prefix} // '';
@@ -1051,12 +1056,19 @@ authentication.
 
 An optional $id_prefix may be passed as the first argument of this method.
 
+If session_management_via is "session_cookie" then the hidden authentication
+fields that are return are for the "user" and the "effectiveUser".  If
+session_management_via is "key" then the "key" is added.
+
 =cut
 
+# FIXME: The "user" also should not be added to forms when session_management_via is "session_cookie". However, the
+# user param is used everywhere to get the user id.  That should be changed.
 sub hidden_authen_fields ($c, $id_prefix = undef) {
-	return $c->hidden_fields({ id_prefix => $id_prefix }, 'user', 'effectiveUser', 'key', 'theme')
-		if defined $id_prefix;
-	return $c->hidden_fields('user', 'effectiveUser', 'key', 'theme');
+	my @fields = ('user', 'effectiveUser');
+	push(@fields, 'key') if $c->ce->{session_management_via} ne 'session_cookie';
+	return $c->hidden_fields({ id_prefix => $id_prefix }, @fields) if defined $id_prefix;
+	return $c->hidden_fields(@fields);
 }
 
 =item url_args(@fields)
@@ -1092,9 +1104,9 @@ sub url_authen_args ($c) {
 	# to reveal the user and key in the URL. Putting it there makes session
 	# hijacking easier, in particular should a student share such a URL.
 	if ($ce->{session_management_via} eq 'session_cookie') {
-		return $c->url_args('effectiveUser', 'theme');
+		return $c->url_args('effectiveUser');
 	} else {
-		return $c->url_args('user', 'effectiveUser', 'key', 'theme');
+		return $c->url_args('user', 'effectiveUser', 'key');
 	}
 }
 
@@ -1173,7 +1185,6 @@ sub systemLink ($c, $urlpath, %options) {
 		}
 
 		$params{effectiveUser} = undef unless exists $params{effectiveUser};
-		$params{theme}         = undef unless exists $params{theme};
 	}
 
 	my $url = $options{use_abs_url} ? $urlpath->to_abs : $urlpath;

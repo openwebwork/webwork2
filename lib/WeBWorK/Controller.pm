@@ -62,6 +62,8 @@ sub param ($c, $name = undef, $val = undef) {
 # Override the Mojolicious::Controller session method to set the cookie parameters
 # from the course environment the first time it is called.
 sub session ($c, @args) {
+	return if $c->stash('disable_cookies');
+
 	# Initialize the cookie session the first time this is called.
 	unless ($c->stash->{'webwork2.cookie_session_initialized'}) {
 		$c->stash->{'webwork2.cookie_session_initialized'} = 1;

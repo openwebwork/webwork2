@@ -2361,7 +2361,7 @@ sub check_user_id {    #  (valid characters are [-a-zA-Z0-9_.,@])
 
 # The (optional) second argument to checkKeyfields is to support versioned
 # (gateway) sets, which may include commas in certain fields (in particular,
-# set names (e.g., setDerivativeGateway,v1)
+# set names (e.g., setDerivativeGateway,v1)).
 sub checkKeyfields($;$) {
 	my ($Record, $versioned) = @_;
 	foreach my $keyfield ($Record->KEYFIELDS) {

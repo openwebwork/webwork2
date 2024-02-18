@@ -48,6 +48,8 @@ sub get_credentials {
 	if ($ce->{cosignoff}) {
 		return $self->SUPER::get_credentials();
 	} else {
+		$c->stash(disable_cookies => 1);
+
 		if (defined($ENV{'REMOTE_USER'})) {
 			$self->{'user_id'} = $ENV{'REMOTE_USER'};
 			$self->{c}->param("user", $ENV{'REMOTE_USER'});
@@ -76,48 +78,10 @@ sub site_checkPassword {
 
 	if ($self->{c}->ce->{cosignoff}) {
 		return 0;
-		#return $self->SUPER::checkPassword( $userID, $clearTextPassword );
 	} else {
 		# this is easy; if we're here at all, we've authenticated
 		# through cosign
 		return 1;
-	}
-}
-
-# disable cookie functionality
-sub maybe_send_cookie {
-	my ($self, @args) = @_;
-	if ($self->{c}->ce->{cosignoff}) {
-		return $self->SUPER::maybe_send_cookie(@args);
-	} else {
-		# nothing to do here
-	}
-}
-
-sub fetchCookie {
-	my ($self, @args) = @_;
-	if ($self->{c}->ce->{cosignoff}) {
-		return $self->SUPER::fetchCookie(@args);
-	} else {
-		# nothing to do here
-	}
-}
-
-sub sendCookie {
-	my ($self, @args) = @_;
-	if ($self->{c}->ce->{cosignoff}) {
-		return $self->SUPER::sendCookie(@args);
-	} else {
-		# nothing to do here
-	}
-}
-
-sub killCookie {
-	my ($self, @args) = @_;
-	if ($self->{c}->ce->{cosignoff}) {
-		return $self->SUPER::killCookie(@args);
-	} else {
-		# nothing to do here
 	}
 }
 

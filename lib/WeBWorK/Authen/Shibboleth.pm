@@ -64,6 +64,8 @@ sub get_credentials {
 		return $self->SUPER::get_credentials(@_);
 	}
 
+	$c->stash(disable_cookies => 1);
+
 	debug("Shib is on!");
 
 	# set external auth parameter so that Login.pm knows
@@ -119,43 +121,6 @@ sub site_checkPassword {
 		# this is easy; if we're here at all, we've authenticated
 		# through shib
 		return 1;
-	}
-}
-
-# disable cookie functionality
-sub maybe_send_cookie {
-	my ($self, @args) = @_;
-	if ($self->{c}->ce->{shiboff}) {
-		return $self->SUPER::maybe_send_cookie(@_);
-	} else {
-		# nothing to do here
-	}
-}
-
-sub fetchCookie {
-	my ($self, @args) = @_;
-	if ($self->{c}->ce->{shiboff}) {
-		return $self->SUPER::fetchCookie(@_);
-	} else {
-		# nothing to do here
-	}
-}
-
-sub sendCookie {
-	my ($self, @args) = @_;
-	if ($self->{c}->ce->{shiboff}) {
-		return $self->SUPER::sendCookie(@_);
-	} else {
-		# nothing to do here
-	}
-}
-
-sub killCookie {
-	my ($self, @args) = @_;
-	if ($self->{c}->ce->{shiboff}) {
-		return $self->SUPER::killCookie(@_);
-	} else {
-		# nothing to do here
 	}
 }
 

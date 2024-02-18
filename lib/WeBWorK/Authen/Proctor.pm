@@ -198,7 +198,9 @@ sub set_params {
 sub create_session { }
 sub check_session  { }
 
-# Disable cookie functionality for proctors.
+# Prevent this module from setting or using cookie authentication parameters. This does not disable cookies.
+# Don't set the disable_cookies stash value for this because cookie session values still need to be set and used,
+# just not the authentication parameters user_id, key, and timestamp.
 sub maybe_send_cookie { }
 sub maybe_kill_cookie { }
 sub fetchCookie       { }

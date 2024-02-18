@@ -329,7 +329,7 @@ sub get_credentials {
 	}
 
 	if (defined $cookieUser) {
-		$self->{user_id}           = trim($cookieUser);
+		$self->{user_id}           = $cookieUser;
 		$self->{session_key}       = $cookieKey;
 		$self->{cookie_timestamp}  = $cookieTimeStamp;
 		$self->{login_type}        = "normal";
@@ -468,7 +468,7 @@ sub maybe_send_cookie {
 	my $c    = $self->{c};
 	my $ce   = $c->{ce};
 
-	return if $c->{rpc};
+	return if $c->stash('disable_cookies');
 
 	my ($cookie_user, $cookie_key, $cookie_timestamp) = $self->fetchCookie;
 
@@ -511,7 +511,7 @@ sub maybe_send_cookie {
 
 sub maybe_kill_cookie {
 	my $self = shift;
-	return if $self->{c}{rpc};
+	return if $self->{c}->stash('disable_cookies');
 	$self->killCookie;
 	return;
 }
@@ -522,7 +522,7 @@ sub set_params {
 
 	$c->param('user',   $self->{user_id});
 	$c->param('key',    $self->{session_key});
-	$c->param('passwd', '') unless $c->{rpc};
+	$c->param('passwd', '') unless $c->{rpc} && $c->stash->{disable_cookies};
 
 	debug("params user='", $c->param("user"), "' key='", $c->param("key"), "'");
 
@@ -673,9 +673,8 @@ sub session {
 	my $c = $self->{c};
 
 	# If session_management_via is not "session_cookie" (so should be "key"), then use the database session.
-	if ($c->ce->{session_management_via} ne 'session_cookie') {
-		$c->stash->{'webwork2.database_session'} //= { user_id => $self->{user_id}, session => {} };
-		my $session = $c->stash->{'webwork2.database_session'}{session};
+	if ($c->ce->{session_management_via} ne 'session_cookie' || $c->stash('disable_cookies')) {
+		my $session = $c->stash->{'webwork2.database_session'} ? $c->stash->{'webwork2.database_session'}{session} : {};
 
 		# Note that the return values are the same as those returned by the
 		# Mojolicious::Controller::session method in the following cases.
@@ -726,7 +725,7 @@ sub store_session {
 		eval { $db->deleteKey($self->{user_id}) };
 	}
 
-	return if $self->{c}->ce->{session_management_via} ne 'session_cookie';
+	return if $self->{c}->ce->{session_management_via} ne 'session_cookie' || $self->{c}->stash('disable_cookies');
 
 	# The cookie will actually be sent by the next line of the Mojolcious::Controller::rendered method after the
 	# after_dispatch hook in which this method is called.
@@ -774,7 +773,7 @@ sub check_session {
 
 	if ($keyMatches && $timestampValid && $updateTimestamp) {
 		$Key->timestamp($currentTime);
-		$self->{c}->stash->{'webwork2.database_session'} = { $Key->toHash } if $keyMatches && $timestampValid;
+		$self->{c}->stash->{'webwork2.database_session'} = { $Key->toHash };
 	}
 
 	return (1, $keyMatches, $timestampValid);
@@ -814,7 +813,7 @@ sub fetchCookie {
 	my $c    = $self->{c};
 	my $ce   = $c->ce;
 
-	return if $c->{rpc};
+	return if $c->stash('disable_cookies');
 
 	my $userID    = $c->session->{user_id};
 	my $key       = $c->session->{key};
@@ -836,7 +835,7 @@ sub sendCookie {
 	my $c  = $self->{c};
 	my $ce = $c->ce;
 
-	return if $c->{rpc};
+	return if $c->stash('disable_cookies');
 
 	my $courseID = $c->stash('courseID');
 

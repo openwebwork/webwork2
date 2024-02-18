@@ -90,16 +90,19 @@ async sub dispatch ($c) {
 	if ($c->current_route =~ /^(render_rpc|instructor_rpc|html2xml)$/) {
 		$c->{rpc} = 1;
 
+		$c->stash(disable_cookies => 1) if $c->current_route eq 'render_rpc' && $c->param('disableCookies');
+
 		# This provides compatibility for legacy html2xml parameters.
 		# This should be deleted when the html2xml endpoint is removed.
 		if ($c->current_route eq 'html2xml') {
+			$c->stash(disable_cookies => 1);
 			for ([ 'userID', 'user' ], [ 'course_password', 'passwd' ], [ 'session_key', 'key' ]) {
 				$c->param($_->[1], $c->param($_->[0])) if defined $c->param($_->[0]) && !defined $c->param($_->[1]);
 			}
 		}
 
 		# Get the courseID from the parameters for a remote procedure call.
-		$routeCaptures{courseID} = $c->param('courseID') if $c->param('courseID');
+		$routeCaptures{courseID} = $c->stash->{courseID} = $c->param('courseID') if $c->param('courseID');
 	}
 
 	# If this is the login phase of an LTI 1.3 login, then extract the courseID from the target_link_uri.

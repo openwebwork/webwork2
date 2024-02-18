@@ -76,6 +76,7 @@
 					%= hidden_field courseID                 => $courseID
 					%= hidden_field user                     => $user
 					%= hidden_field passwd                   => $passwd
+					%= hidden_field disableCookies           => $disableCookies
 					%= hidden_field displayMode              => $displayMode
 					%= hidden_field key                      => $key
 					%= hidden_field outputformat             => $formatName
