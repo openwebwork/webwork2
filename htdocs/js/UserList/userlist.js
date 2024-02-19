@@ -17,7 +17,7 @@
 			const export_elements = document.getElementById('export_elements');
 			if (!export_elements) return;
 
-			if (export_select_target.selectedIndex === 0) export_elements.style.display = 'block';
+			if (export_select_target.value === 'new') export_elements.style.display = 'block';
 			else export_elements.style.display = 'none';
 		};
 
@@ -48,9 +48,9 @@
 		const action = document.getElementById('current_action')?.value || '';
 		if (action === 'filter') {
 			const filter_select = document.getElementById('filter_select');
-			const filter = filter_select?.selectedIndex || 0;
+			const filter = filter_select?.value || '';
 			const filter_text = document.getElementById('filter_text');
-			if (filter === 1 && !is_user_selected()) {
+			if (filter === 'selected' && !is_user_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
 				filter_select.classList.add('is-invalid');
@@ -62,7 +62,7 @@
 					},
 					{ once: true }
 				);
-			} else if (filter === 2 && filter_text.value === '') {
+			} else if (filter === 'match_regex' && filter_text.value === '') {
 				e.preventDefault();
 				e.stopPropagation();
 				document.getElementById('filter_err_msg')?.classList.remove('d-none');

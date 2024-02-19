@@ -27,9 +27,9 @@
 	document.getElementById('problemsetlist')?.addEventListener('submit', (e) => {
 		const action = document.getElementById('current_action')?.value || '';
 		if (action === 'filter') {
-			const filter = document.getElementById('filter_select')?.selectedIndex || 0;
+			const filter = document.getElementById('filter_select')?.value || '';
 			const filter_text = document.getElementById('filter_text');
-			if (filter === 1 && !is_set_selected()) {
+			if (filter === 'selected' && !is_set_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
 				document.getElementById('filter_select')?.addEventListener(
@@ -39,7 +39,7 @@
 					},
 					{ once: true }
 				);
-			} else if (filter === 2 && filter_text.value === '') {
+			} else if (filter === 'match_ids' && filter_text.value === '') {
 				e.preventDefault();
 				e.stopPropagation();
 				document.getElementById('filter_err_msg')?.classList.remove('d-none');
@@ -149,7 +149,7 @@
 					},
 					{ once: true }
 				);
-			} else if (document.getElementById('create_select')?.selectedIndex == 1 && !is_set_selected()) {
+			} else if (document.getElementById('create_select')?.value == 'copy' && !is_set_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
 			}
@@ -192,7 +192,7 @@
 	const filter_select = document.getElementById('filter_select');
 	const filter_elements = document.getElementById('filter_elements');
 	const filterElementToggle = () => {
-		if (filter_select?.selectedIndex == 2) filter_elements.style.display = 'flex';
+		if (filter_select?.value == 'match_ids') filter_elements.style.display = 'flex';
 		else filter_elements.style.display = 'none';
 	};
 

@@ -22,10 +22,10 @@
 		const action = document.getElementById('current_action')?.value || '';
 		if (action === 'filter') {
 			const filter_select = document.getElementById('filter_select');
-			const filter = filter_select?.selectedIndex || 0;
+			const filter = filter_select?.value || '';
 			const filter_text = document.getElementById('filter_text');
 			const filter_category = document.getElementById('filter_category');
-			if (filter === 1 && !is_achievement_selected()) {
+			if (filter === 'selected' && !is_achievement_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
 				filter_select?.classList.add('is-invalid');
@@ -37,7 +37,7 @@
 					},
 					{ once: true }
 				);
-			} else if (filter === 2 && filter_text?.value === '') {
+			} else if (filter === 'match_ids' && filter_text?.value === '') {
 				e.preventDefault();
 				e.stopPropagation();
 				document.getElementById('filter_text_err_msg')?.classList.remove('d-none');
@@ -61,7 +61,7 @@
 					},
 					{ once: true }
 				);
-			} else if (filter === 3 && filter_category?.value === '') {
+			} else if (filter === 'match_category' && filter_category?.value === '') {
 				e.preventDefault();
 				e.stopPropagation();
 				document.getElementById('filter_category_err_msg')?.classList.remove('d-none');
@@ -177,7 +177,7 @@
 					},
 					{ once: true }
 				);
-			} else if (document.getElementById('create_select')?.selectedIndex == 1 && !is_achievement_selected()) {
+			} else if (document.getElementById('create_select')?.value == 'copy' && !is_achievement_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
 			}
@@ -221,9 +221,9 @@
 	const filter_text_elements = document.getElementById('filter_text_elements');
 	const filter_category_elements = document.getElementById('filter_category_elements');
 	const filterElementToggle = () => {
-		if (filter_select?.selectedIndex == 2) filter_text_elements.style.display = 'flex';
+		if (filter_select?.value === 'match_ids') filter_text_elements.style.display = 'flex';
 		else filter_text_elements.style.display = 'none';
-		if (filter_select?.selectedIndex == 3) filter_category_elements.style.display = 'flex';
+		if (filter_select?.value === 'match_category' ) filter_category_elements.style.display = 'flex';
 		else filter_category_elements.style.display = 'none';
 	};
 
