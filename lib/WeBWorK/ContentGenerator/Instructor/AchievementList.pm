@@ -144,7 +144,10 @@ sub initialize ($c) {
 	$c->stash->{axpList}     = [ $c->getAxpList ] unless $c->{editMode} || $c->{exportMode};
 
 	# Get and sort achievements. Achievements are sorted by in the order they are evaluated.
-	$c->stash->{achievements} = [ sortAchievements($c->db->getAchievements(@{ $c->{visibleAchievementIDs} })) ];
+	$c->stash->{achievements} =
+		$c->{showAllAchievements}
+		? [ sortAchievements($c->db->getAchievements(@{ $c->{allAchievementIDs} })) ]
+		: [ sortAchievements($c->db->getAchievements(@{ $c->{visibleAchievementIDs} })) ];
 
 	return;
 }
@@ -182,7 +185,7 @@ sub filter_handler ($c) {
 		$result = $c->maketext('Showing enabled achievements.');
 		$c->{visibleAchievementIDs} = [ map { $_->[0] } $db->listAchievementsWhere({ enabled => 1 }) ];
 	} elsif ($scope eq 'disabled') {
-		$result = $c->maketext('Showing enabled achievements.');
+		$result = $c->maketext('Showing disabled achievements.');
 		$c->{visibleAchievementIDs} = [ map { $_->[0] } $db->listAchievementsWhere({ enabled => 0 }) ];
 	}
 
@@ -196,7 +199,8 @@ sub edit_handler ($c) {
 	my $scope = $c->param('action.edit.scope');
 	if ($scope eq "all") {
 		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
-		$result = $c->maketext('Editing all achievements.');
+		$result                      = $c->maketext('Editing all achievements.');
+		$c->{showAllAchievements}    = 1;
 	} elsif ($scope eq "selected") {
 		$result = $c->maketext('Editing selected achievements.');
 	}
@@ -498,8 +502,9 @@ sub export_handler ($c) {
 
 	my $scope = $c->param('action.export.scope');
 	if ($scope eq "all") {
-		$result = $c->maketext('Exporting all achievements.');
+		$result                      = $c->maketext('Exporting all achievements.');
 		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
+		$c->{showAllAchievements}    = 1;
 	} else {
 		$result = $c->maketext('Exporting selected achievements.');
 		$c->{selectedAchievementIDs} = [ $c->param('selected_achievements') ];
