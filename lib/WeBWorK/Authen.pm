@@ -55,6 +55,7 @@ use Scalar::Util qw(weaken);
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(x writeCourseLog runtime_use);
+use WeBWorK::Utils::TOTP;
 use WeBWorK::Localize;
 use Caliper::Sensor;
 use Caliper::Entity;
@@ -167,9 +168,19 @@ sub verify {
 
 	$self->{was_verified} = $self->do_verify;
 
-	$self->site_fixup if $self->can('site_fixup');
-
-	if ($self->{was_verified}) {
+	if ($self->{was_verified}
+		&& $self->{login_type} eq 'normal'
+		&& !$self->{external_auth}
+		&& (!$c->{rpc} || ($c->{rpc} && !$c->stash->{disable_cookies}))
+		&& $c->ce->two_factor_authentication_enabled
+		&& ($self->{initial_login} || $self->session->{two_factor_verification_needed}))
+	{
+		$self->{was_verified} = 0;
+		$self->session(two_factor_verification_needed => 1);
+		$self->maybe_send_cookie;
+		$self->set_params;
+	} elsif ($self->{was_verified}) {
+		$self->site_fixup                  if $self->can('site_fixup');
 		$self->write_log_entry("LOGIN OK") if $self->{initial_login};
 		$self->maybe_send_cookie;
 		$self->set_params;
@@ -431,9 +442,42 @@ sub verify_normal_user {
 	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
 
 	if ($sessionExists && $keyMatches && $timestampValid) {
+		if ($self->session->{two_factor_verification_needed}) {
+			if ($c->param('cancel_otp_verification') || !$c->param('verify_otp')) {
+				delete $self->session->{two_factor_verification_needed};
+				delete $c->stash->{'webwork2.database_session'};
+				return 0;
+			}
+			# All of the below falls through to below and returns 1.  That only lets the user into the course once
+			# two_factor_verification_needed is deleted from the session.
+			my $otp_code = trim($c->param('otp_code'));
+			if (defined $otp_code && $otp_code ne '') {
+				my $password = $c->db->getPassword($self->{user_id});
+				if (WeBWorK::Utils::TOTP->new(secret => $self->session->{otp_secret} // $password->otp_secret)
+					->validate_otp($otp_code))
+				{
+					delete $self->session->{two_factor_verification_needed};
+
+					# This is the case of initial setup. Save the secret from the session to the database.
+					if ($self->session->{otp_secret}) {
+						$password->otp_secret($self->session->{otp_secret});
+						$c->db->putPassword($password);
+						delete $self->session->{otp_secret};
+					}
+				} else {
+					$c->stash(authen_error => $c->maketext('Invalid security code.'));
+				}
+			} else {
+				$c->stash(authen_error => $c->maketext('The security code is required.'));
+			}
+		}
 		return 1;
 	} else {
 		my $auth_result = $self->authenticate;
+
+		# Don't try to obtain two factor verification in this case! Two factor authentication can only be done with an
+		# existing session.  This can still be set if a session times out, for example.
+		delete $self->session->{two_factor_verification_needed};
 
 		if ($auth_result > 0) {
 			# Deny certain roles (dropped students, proctor roles).

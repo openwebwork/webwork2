@@ -27,8 +27,9 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		user_id  => { type => "VARCHAR(100) NOT NULL", key => 1 },
-		password => { type => "TEXT" },
+		user_id    => { type => "VARCHAR(100) NOT NULL", key => 1 },
+		password   => { type => "TEXT" },
+		otp_secret => { type => "TEXT" }
 	);
 }
 

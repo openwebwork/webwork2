@@ -108,6 +108,8 @@ my @modulesList = qw(
 	HTML::Tagset
 	HTML::Template
 	HTTP::Async
+	Imager::Color
+	Imager::QRCode
 	IO::File
 	IO::Socket::SSL
 	Iterator
@@ -117,6 +119,7 @@ my @modulesList = qw(
 	Locale::Maketext::Lexicon
 	Locale::Maketext::Simple
 	LWP::Protocol::https
+	MIME::Base32
 	MIME::Base64
 	Math::Random::Secure
 	Minion

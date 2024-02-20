@@ -48,6 +48,7 @@ use WeBWorK::Debug;
 use WeBWorK::Upload;
 use WeBWorK::Utils qw(runtime_use);
 use WeBWorK::ContentGenerator::Login;
+use WeBWorK::ContentGenerator::TwoFactorAuthentication;
 use WeBWorK::ContentGenerator::LoginProctor;
 
 our %SeedCE;
@@ -268,9 +269,15 @@ async sub dispatch ($c) {
 			# If the user is logging out and authentication failed, still logout.
 			return 1 if $displayModule eq 'WeBWorK::ContentGenerator::Logout';
 
-			debug("Bad news: authentication failed!\n");
-			debug("Rendering WeBWorK::ContentGenerator::Login\n");
-			await WeBWorK::ContentGenerator::Login->new($c)->go();
+			if ($c->authen->session->{two_factor_verification_needed}) {
+				debug("Login succeeded but two factor authentication is needed.\n");
+				debug("Rendering WeBWorK::ContentGenerator::TwoFactorAuthentication\n");
+				await WeBWorK::ContentGenerator::TwoFactorAuthentication->new($c)->go();
+			} else {
+				debug("Bad news: authentication failed!\n");
+				debug("Rendering WeBWorK::ContentGenerator::Login\n");
+				await WeBWorK::ContentGenerator::Login->new($c)->go();
+			}
 			return 0;
 		}
 	}
