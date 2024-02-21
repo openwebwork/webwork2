@@ -3,7 +3,7 @@
 	const basicWebserviceURL = `${webworkURL}/instructor_rpc`;
 
 	let unloading = false;
-	window.addEventListener('beforeunload', () => unloading = true);
+	window.addEventListener('beforeunload', () => (unloading = true));
 
 	// Informational alerts/errors
 	const alertToast = (title, msg, good = false) => {
@@ -11,7 +11,13 @@
 
 		const toastContainer = document.createElement('div');
 		toastContainer.classList.add(
-			'toast-container', 'position-fixed', 'top-50', 'start-50',  'translate-middle', 'p-3');
+			'toast-container',
+			'position-fixed',
+			'top-50',
+			'start-50',
+			'translate-middle',
+			'p-3'
+		);
 		toastContainer.style.zIndex = 20;
 		toastContainer.innerHTML =
 			'<div class="toast bg-white" role="alert" aria-live="assertive" aria-atomic="true">' +
@@ -23,7 +29,10 @@
 			'</div>';
 		document.body.prepend(toastContainer);
 		const bsToast = new bootstrap.Toast(toastContainer.firstElementChild);
-		toastContainer.addEventListener('hidden.bs.toast', () => { bsToast.dispose(); toastContainer.remove(); })
+		toastContainer.addEventListener('hidden.bs.toast', () => {
+			bsToast.dispose();
+			toastContainer.remove();
+		});
 		bsToast.show();
 	};
 
@@ -73,8 +82,11 @@
 		requestObject.library_textbook = libraryTextbook?.value ?? '';
 		requestObject.library_textchapter = libraryChapter?.value ?? '';
 		requestObject.library_textsection = librarySection?.value ?? '';
-		requestObject.includeOPL = (includeOPL.type === 'checkbox' && includeOPL?.checked) ||
-			(includeOPL.type === 'hidden' && includeOPL.value) ? 1 : 0;
+		requestObject.includeOPL =
+			(includeOPL.type === 'checkbox' && includeOPL?.checked) ||
+			(includeOPL.type === 'hidden' && includeOPL.value)
+				? 1
+				: 0;
 		requestObject.includeContrib = includeContrib?.checked ? 1 : 0;
 
 		if (who == 'count') {
@@ -104,9 +116,10 @@
 						throw data.error;
 					} else {
 						const num = data.result_data[0];
-						countLine.firstElementChild.innerHTML = num === '1'
-							? 'There is 1 matching WeBWorK problem'
-							: `There are ${num} matching WeBWorK problems.`;
+						countLine.firstElementChild.innerHTML =
+							num === '1'
+								? 'There is 1 matching WeBWorK problem'
+								: `There are ${num} matching WeBWorK problems.`;
 					}
 				}
 			} catch (e) {
@@ -121,8 +134,14 @@
 			return;
 		}
 
-		if (who == 'chapters' && requestObject.library_subjects == '') { lib_update(who, 'clear'); return; }
-		if (who == 'sections' && requestObject.library_chapters == '') { lib_update(who, 'clear'); return; }
+		if (who == 'chapters' && requestObject.library_subjects == '') {
+			lib_update(who, 'clear');
+			return;
+		}
+		if (who == 'sections' && requestObject.library_chapters == '') {
+			lib_update(who, 'clear');
+			return;
+		}
 
 		requestObject.command = who == 'sections' ? 'getSectionListings' : 'getAllDBchapters';
 
@@ -174,8 +193,9 @@
 	libSections?.addEventListener('change', () => lib_update('count', 'clear'));
 	includeOPL?.addEventListener('change', () => lib_update('count', 'clear'));
 	includeContrib?.addEventListener('change', () => lib_update('count', 'clear'));
-	document.querySelectorAll('input[name="level"]').forEach(
-		(level) => level.addEventListener('change', () => lib_update('count', 'clear')));
+	document
+		.querySelectorAll('input[name="level"]')
+		.forEach((level) => level.addEventListener('change', () => lib_update('count', 'clear')));
 
 	// Set up the advanced view selects to submit the form when changed.
 	const libraryBrowserForm = document.forms['library_browser_form'];
@@ -190,8 +210,10 @@
 		const localSets = document.getElementById('local_sets');
 		const target = localSets?.value;
 		if (target === '') {
-			alertToast(localSets?.dataset.noSetSelected ?? 'No Target Set Selected',
-				localSets?.dataset.pickTargetSet ?? 'Pick a target set above to add this problem to.');
+			alertToast(
+				localSets?.dataset.noSetSelected ?? 'No Target Set Selected',
+				localSets?.dataset.pickTargetSet ?? 'Pick a target set above to add this problem to.'
+			);
 			return;
 		}
 
@@ -237,16 +259,22 @@
 		}
 
 		markinset();
-		alertToast(localSets?.dataset.problemsAdded ?? 'Problems Added',
+		alertToast(
+			localSets?.dataset.problemsAdded ?? 'Problems Added',
 			(pathlist.length === 1 ? localSets?.dataset.addedToSingle : localSets?.dataset.addedToPlural)
-			.replace(/{number}/, pathlist.length).replace(/{set}/, target.replaceAll('_', ' ')) ??
-			`Added ${pathlist.length} problem${pathlist.length == 1 ? '' : 's'} to set ${
-				target.replaceAll('_', ' ')}.`,
-			true);
+				.replace(/{number}/, pathlist.length)
+				.replace(/{set}/, target.replaceAll('_', ' ')) ??
+				`Added ${pathlist.length} problem${pathlist.length == 1 ? '' : 's'} to set ${target.replaceAll(
+					'_',
+					' '
+				)}.`,
+			true
+		);
 	};
 
 	document.querySelector('.library-action-btn.add-all-btn')?.addEventListener('click', () => addme('', 'all'));
-	document.querySelectorAll('button.add_me')
+	document
+		.querySelectorAll('button.add_me')
 		.forEach((btn) => btn.addEventListener('click', () => addme(btn.dataset.sourceFile, 'one')));
 
 	// Update the messages about which problems are in the current set.
@@ -264,7 +292,7 @@
 				mode: 'same-origin',
 				body: new URLSearchParams(ro),
 				signal: controller.signal
-			})
+			});
 
 			clearTimeout(timeoutId);
 
@@ -303,10 +331,12 @@
 	const delFromPGList = (path) => {
 		let j = findAPLindex(path) + 1;
 		while (document.querySelector(`[name="all_past_list${j}"]`)) {
-			document.querySelector(`[name="all_past_list${j - 1}"]`).value =
-				document.querySelector(`[name="all_past_list${j}"]`).value;
-			document.querySelector(`[name="all_past_mlt${j - 1}"]`).value =
-				document.querySelector(`[name="all_past_mlt${j}"]`).value;
+			document.querySelector(`[name="all_past_list${j - 1}"]`).value = document.querySelector(
+				`[name="all_past_list${j}"]`
+			).value;
+			document.querySelector(`[name="all_past_mlt${j - 1}"]`).value = document.querySelector(
+				`[name="all_past_mlt${j}"]`
+			).value;
 			++j;
 		}
 		--j;
@@ -385,7 +415,7 @@
 		const n2 = totalshown.textContent;
 
 		const mltIcon = document.getElementById(`mlt${cnt}`);
-		if(mltIcon.textContent == 'M') {
+		if (mltIcon.textContent == 'M') {
 			unshownAreas.forEach((area) => area.classList.remove('d-none'));
 			// Render any problems that were hidden that have not yet been rendered.
 			for (const area of unshownAreas) {
@@ -396,44 +426,53 @@
 			mltIcon.textContent = 'L';
 			mltIcon.dataset.bsTitle = mltIcon.dataset.lessText;
 			bootstrap.Tooltip.getInstance(mltIcon)?.dispose();
-			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] })
+			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] });
 			count = -count;
 		} else {
 			unshownAreas.forEach((area) => area.classList.add('d-none'));
 			mltIcon.textContent = 'M';
 			mltIcon.dataset.bsTitle = mltIcon.dataset.moreText;
 			bootstrap.Tooltip.getInstance(mltIcon)?.dispose();
-			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] })
+			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] });
 		}
 		lastshown.textContent = n1 - count;
 		totalshown.textContent = n2 - count;
 
 		const last_shown = document.querySelector('[name="last_shown"]');
 		last_shown.value = last_shown.value - count;
-	}
+	};
 
-	document.querySelectorAll('.lb-mlt-parent').forEach((button) =>
-		attachEventListeners(button, () => togglemlt(button.dataset.mltCnt, button.dataset.mltNoshowClass)));
+	document
+		.querySelectorAll('.lb-mlt-parent')
+		.forEach((button) =>
+			attachEventListeners(button, () => togglemlt(button.dataset.mltCnt, button.dataset.mltNoshowClass))
+		);
 
 	// Problem rendering
-	const render = (id) => new Promise((resolve) => {
-		const renderArea = document.getElementById(`problem_render_area_${id}`);
-		if (!renderArea) { resolve(); return; }
+	const render = (id) =>
+		new Promise((resolve) => {
+			const renderArea = document.getElementById(`problem_render_area_${id}`);
+			if (!renderArea) {
+				resolve();
+				return;
+			}
 
-		// Abort if the display mode is not set to None
-		if (document.getElementById('problem_displaymode')?.value === 'None') {
-			while (renderArea.firstChild) renderArea.firstChild.remove();
-			resolve();
-			return;
-		}
+			// Abort if the display mode is not set to None
+			if (document.getElementById('problem_displaymode')?.value === 'None') {
+				while (renderArea.firstChild) renderArea.firstChild.remove();
+				resolve();
+				return;
+			}
 
-		webworkConfig.renderProblem(renderArea, {
-			sourceFilePath: renderArea.dataset.pgFile,
-			problemSeed: Math.floor(Math.random() * 10000),
-			showHints: document.querySelector('input[name="showHints"]')?.checked ? 1 : 0,
-			showSolutions: document.querySelector('input[name="showSolutions"]')?.checked ? 1 : 0
-		}).then(resolve);
-	});
+			webworkConfig
+				.renderProblem(renderArea, {
+					sourceFilePath: renderArea.dataset.pgFile,
+					problemSeed: Math.floor(Math.random() * 10000),
+					showHints: document.querySelector('input[name="showHints"]')?.checked ? 1 : 0,
+					showSolutions: document.querySelector('input[name="showSolutions"]')?.checked ? 1 : 0
+				})
+				.then(resolve);
+		});
 
 	// Find all render areas
 	const renderAreas = document.querySelectorAll('.rpc_render_area');
@@ -453,11 +492,13 @@
 	})();
 
 	// Set up the problem rerandomization buttons.
-	document.querySelectorAll('.rerandomize_problem_button').forEach((button) =>
-		attachEventListeners(button, () => render(button.dataset.targetProblem)));
+	document
+		.querySelectorAll('.rerandomize_problem_button')
+		.forEach((button) => attachEventListeners(button, () => render(button.dataset.targetProblem)));
 
 	// Enable bootstrap popovers and tooltips.
 	document.querySelectorAll('.info-button').forEach((popover) => new bootstrap.Popover(popover));
-	document.querySelectorAll('.lb-problem-add [data-bs-toggle], .lb-problem-icons [data-bs-toggle=tooltip]')
+	document
+		.querySelectorAll('.lb-problem-add [data-bs-toggle], .lb-problem-icons [data-bs-toggle=tooltip]')
 		.forEach((el) => new bootstrap.Tooltip(el, { fallbackPlacements: [] }));
 })();

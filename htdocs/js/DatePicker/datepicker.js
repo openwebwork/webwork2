@@ -50,11 +50,11 @@
 			// Compute the time difference between the current browser timezone and the course timezone.
 			// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
 			// Note that this is in seconds.
-			const timezoneAdjustment = (
-				(new Date((new Date).toLocaleString('en-US'))).getTime() -
-				(new Date((new Date).toLocaleString('en-US',
-					{ timeZone: rule.dataset.timezone ?? 'America/New_York' }))).getTime()
-			);
+			const timezoneAdjustment =
+				new Date(new Date().toLocaleString('en-US')).getTime() -
+				new Date(
+					new Date().toLocaleString('en-US', { timeZone: rule.dataset.timezone ?? 'America/New_York' })
+				).getTime();
 
 			const fp = flatpickr(rule.parentNode, {
 				allowInput: true,

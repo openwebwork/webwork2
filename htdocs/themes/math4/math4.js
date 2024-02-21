@@ -16,7 +16,7 @@
 	// Enable site-navigation menu toggling if the page has a site-navigation element.
 	const navigation_element = document.getElementById('site-navigation');
 	if (navigation_element) {
-		const threshold = 768
+		const threshold = 768;
 		let currentWidth = window.innerWidth;
 		const content = document.getElementById('content');
 
@@ -56,15 +56,18 @@
 			if (!navigation_element.classList.contains('toggle-width') && window.innerWidth >= threshold)
 				navigation_element.classList.remove('invisible');
 
-			if ((navigation_element.classList.contains('toggle-width') &&
-				window.innerWidth < threshold && currentWidth >= threshold) ||
+			if (
 				(navigation_element.classList.contains('toggle-width') &&
-					window.innerWidth >= threshold && currentWidth < threshold))
-			{
+					window.innerWidth < threshold &&
+					currentWidth >= threshold) ||
+				(navigation_element.classList.contains('toggle-width') &&
+					window.innerWidth >= threshold &&
+					currentWidth < threshold)
+			) {
 				currentWidth = window.innerWidth;
 				toggleSidebar();
 				document.body.classList.remove('no-scroll');
-				document.querySelectorAll('.sidebar-backdrop').forEach(overlay => overlay.remove());
+				document.querySelectorAll('.sidebar-backdrop').forEach((overlay) => overlay.remove());
 			}
 			currentWidth = window.innerWidth;
 		});
@@ -72,20 +75,20 @@
 
 	// Turn help boxes into popovers
 	document.querySelectorAll('.help-popup').forEach((popover) => {
-		new bootstrap.Popover(popover, {trigger: 'hover focus'});
+		new bootstrap.Popover(popover, { trigger: 'hover focus' });
 	});
 
 	// Problem page popovers
-	document.querySelectorAll('.student-nav-button').forEach(
-		(el) => new bootstrap.Tooltip(el, {trigger: 'hover', fallbackPlacements: []})
-	);
+	document
+		.querySelectorAll('.student-nav-button')
+		.forEach((el) => new bootstrap.Tooltip(el, { trigger: 'hover', fallbackPlacements: [] }));
 
 	// Sets up problems to rescale the image accoring to attr height width and not native height width.
 	const rescaleImage = (_index, element) => {
 		if (element.height != element.naturalHeight || element.width != element.naturalWidth) {
-			element.height = element.getBoundingClientRect().width * element.height / element.width;
+			element.height = (element.getBoundingClientRect().width * element.height) / element.width;
 		}
-	}
+	};
 	document.querySelectorAll('.problem-content img').forEach(rescaleImage);
 	window.addEventListener('resize', () => document.querySelectorAll('.problem-content img').forEach(rescaleImage));
 
@@ -97,9 +100,9 @@
 	});
 
 	// Hardcopy tooltips shown on the Problem Sets page.
-	document.querySelectorAll('.hardcopy-tooltip').forEach(
-		(el) => new bootstrap.Tooltip(el, { trigger: 'hover', fallbackPlacements: [], html: true })
-	);
+	document
+		.querySelectorAll('.hardcopy-tooltip')
+		.forEach((el) => new bootstrap.Tooltip(el, { trigger: 'hover', fallbackPlacements: [], html: true }));
 
 	// PG Problem Editor
 	document.querySelectorAll('.reference-link').forEach((el) => new bootstrap.Tooltip(el));
@@ -122,10 +125,14 @@
 
 		// Hide the dismiss button when the last alert is dismissed.
 		for (const message of messages) {
-			message.addEventListener('closed.bs.alert', () => {
-				if (!document.querySelector('#message .alert-dismissible, #message_bottom .alert-dismissible'))
-					dismissBtn.remove();
-			}, { once: true });
+			message.addEventListener(
+				'closed.bs.alert',
+				() => {
+					if (!document.querySelector('#message .alert-dismissible, #message_bottom .alert-dismissible'))
+						dismissBtn.remove();
+				},
+				{ once: true }
+			);
 		}
 
 		dismissBtn?.addEventListener('click', () =>

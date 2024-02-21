@@ -2,7 +2,9 @@
 
 (() => {
 	const setPointInputValue = (pointInput, score) =>
-		pointInput.value = (Math.round(score * pointInput.max / 100 / pointInput.step) * pointInput.step).toFixed(2);
+		(pointInput.value = (Math.round((score * pointInput.max) / 100 / pointInput.step) * pointInput.step).toFixed(
+			2
+		));
 
 	// Compute the problem score from any answer sub scores, and update the problem score input.
 	document.querySelectorAll('.answer-part-score').forEach((part) => {
@@ -37,7 +39,7 @@
 				const scoreInput = document.getElementById(`score_problem${problemId}`);
 				pointInput.classList.remove('is-invalid');
 				scoreInput.classList.remove('is-invalid');
-				scoreInput.value = Math.round(100 * pointInput.value / pointInput.max);
+				scoreInput.value = Math.round((100 * pointInput.value) / pointInput.max);
 			} else {
 				pointInput.classList.add('is-invalid');
 			}
@@ -134,10 +136,10 @@
 							}
 							const recordedScore = document.getElementById('test-recorded-score');
 							if (recordedScore) {
-								recordedScore.textContent = Math.round(100 * testValue / 2) / 100;
-								document.getElementById('test-recorded-percent').textContent =
-									Math.round(100 * testValue /
-										(2 * document.getElementById('test-total-possible').textContent));
+								recordedScore.textContent = Math.round((100 * testValue) / 2) / 100;
+								document.getElementById('test-recorded-percent').textContent = Math.round(
+									(100 * testValue) / (2 * document.getElementById('test-total-possible').textContent)
+								);
 							}
 						}
 
@@ -196,7 +198,7 @@
 				setTimeout(() => messageArea.classList.remove('alert-danger'), 100);
 			}
 		});
-	})
+	});
 
 	// Problem rendering.
 

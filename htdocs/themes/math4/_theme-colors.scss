@@ -13,7 +13,7 @@
 */
 
 // Include bootstrap scss functions (so you can manipulate colors, SVGs, calc, etc)
-@import "../../node_modules/bootstrap/scss/functions";
+@import '../../node_modules/bootstrap/scss/functions';
 
 // Theme colors
 $primary: #038;
@@ -27,4 +27,4 @@ $link-hover-color: $info;
 $ww-logo-background-color: darken($info, 14%);
 
 // Achievment level bar
-$ww-achievement-level-color: #88D;
+$ww-achievement-level-color: #88d;

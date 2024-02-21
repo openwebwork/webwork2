@@ -37,10 +37,10 @@ div.gwMessage {
 }
 
 #gwScoreSummary {
-	background-color:#ffeeaa;
+	background-color: #ffeeaa;
 	color: black;
 	box-shadow: 3px 3px 0.5em darkgray;
-	font-family:Times serif;
+	font-family: Times serif;
 	z-index: 30;
 	font-size: 85%;
 	border-color: #ffeeaa;
@@ -55,15 +55,18 @@ div.gwMessage {
 	border-radius: 4px;
 
 	table {
-		border:0;
+		border: 0;
 
-		td, th {
-			margin-left:.2em;
+		td,
+		th {
+			margin-left: 0.2em;
 		}
 	}
 }
 
-table.attemptResults { width: unset; }
+table.attemptResults {
+	width: unset;
+}
 
 .gwProblem {
 	background-color: #fafafa;
@@ -84,12 +87,13 @@ table.attemptResults { width: unset; }
 	margin-bottom: 1rem;
 	text-align: center;
 
-	th, td {
+	th,
+	td {
 		padding: 0 0.5rem;
 	}
 
 	th {
-		text-align:right;
+		text-align: right;
 		font-weight: bold;
 		padding-right: 1rem;
 	}

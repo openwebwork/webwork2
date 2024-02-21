@@ -57,8 +57,8 @@
 	};
 
 	const loadConfig = async (file) => {
-		const configName = [...file.matchAll(/.*\/([^.]*?)(?:\.min)?\.(?:js|css)(?:\?[0-9a-zA-Z=^.]*)?$/g)][0]?.[1]
-			?? 'default';
+		const configName =
+			[...file.matchAll(/.*\/([^.]*?)(?:\.min)?\.(?:js|css)(?:\?[0-9a-zA-Z=^.]*)?$/g)][0]?.[1] ?? 'default';
 		if (configName !== 'default') {
 			try {
 				await loadResource(file);
@@ -77,13 +77,13 @@
 		lineNumbers: true,
 		lineWrapping: true,
 		extraKeys: {
-			Tab:            (cm) => cm.execCommand('insertSoftTab'),
-			'Shift-Ctrl-F': (cm) => cm.foldCode(cm.getCursor(), { scanUp : true }),
-			'Shift-Cmd-F':  (cm) => cm.foldCode(cm.getCursor(), { scanUp : true }),
+			Tab: (cm) => cm.execCommand('insertSoftTab'),
+			'Shift-Ctrl-F': (cm) => cm.foldCode(cm.getCursor(), { scanUp: true }),
+			'Shift-Cmd-F': (cm) => cm.foldCode(cm.getCursor(), { scanUp: true }),
 			'Shift-Ctrl-A': (cm) => CodeMirror.commands.foldAll(cm),
-			'Shift-Cmd-A':  (cm) => CodeMirror.commands.foldAll(cm),
+			'Shift-Cmd-A': (cm) => CodeMirror.commands.foldAll(cm),
 			'Shift-Ctrl-G': (cm) => CodeMirror.commands.unfoldAll(cm),
-			'Shift-Cmd-G':  (cm) => CodeMirror.commands.unfoldAll(cm),
+			'Shift-Cmd-G': (cm) => CodeMirror.commands.unfoldAll(cm)
 		},
 		highlightSelectionMatches: { annotateScrollbar: true },
 		matchBrackets: true,
@@ -95,14 +95,16 @@
 	if (mode === 'PG') {
 		options.extraKeys['Ctrl-/'] = (cm) => cm.execCommand('toggleComment');
 		options.extraKeys['Cmd-/'] = (cm) => cm.execCommand('toggleComment');
-		options.foldGutter = { rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.PG) }
-		options.fold = 'PG'
+		options.foldGutter = { rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.PG) };
+		options.fold = 'PG';
 	} else {
 		options.foldGutter = true;
 	}
 
-	const cm = webworkConfig.pgCodeMirror
-		= CodeMirror.fromTextArea(document.querySelector('.codeMirrorEditor'), options);
+	const cm = (webworkConfig.pgCodeMirror = CodeMirror.fromTextArea(
+		document.querySelector('.codeMirrorEditor'),
+		options
+	));
 	cm.setSize('100%', '550px');
 
 	// Refresh the CodeMirror instance anytime the containing div resizes so that if line wrapping changes,
@@ -130,8 +132,7 @@
 	selectKeymap.addEventListener('change', async () => {
 		const keymapName = await loadConfig(selectKeymap.value);
 		cm.setOption('keyMap', keymapName);
-		localStorage.setItem('WW_PGEditor_selected_keymap',
-			keymapName === 'default' ? 'default' : selectKeymap.value);
+		localStorage.setItem('WW_PGEditor_selected_keymap', keymapName === 'default' ? 'default' : selectKeymap.value);
 	});
 
 	const enableSpell = document.getElementById('enableSpell');
@@ -146,5 +147,4 @@
 	forceRTL.addEventListener('change', () => {
 		cm.setOption('direction', forceRTL.checked ? 'rtl' : 'ltr');
 	});
-
 })();

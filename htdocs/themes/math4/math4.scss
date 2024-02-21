@@ -110,7 +110,8 @@ $site-nav-width: 250px !default;
 			}
 		}
 
-		a, span {
+		a,
+		span {
 			display: inline-block;
 			margin-right: 0.5rem;
 		}
@@ -220,7 +221,6 @@ $site-nav-width: 250px !default;
 				&.active {
 					background-color: var(--ww-site-nav-link-active-background-color, #038);
 					color: var(--ww-primary-foreground-color, white);
-
 				}
 			}
 
@@ -299,7 +299,10 @@ $site-nav-width: 250px !default;
 		padding: 0.25rem;
 		border-radius: 5px;
 		color: rgba(255, 255, 255, 0.85);
-		transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out;
+		transition:
+			color 0.15s ease-in-out,
+			background-color 0.15s ease-in-out,
+			border-color 0.15s ease-in-out;
 
 		&:hover {
 			color: #fff;
@@ -353,9 +356,9 @@ $site-nav-width: 250px !default;
 
 /* Show me another */
 div.showMeAnotherBox {
-	background-color: #EDE275;
+	background-color: #ede275;
 	border-radius: 5px;
-	border: 2px solid #FDD017;
+	border: 2px solid #fdd017;
 	padding: 3px;
 	margin-bottom: 0.5rem;
 }
@@ -461,11 +464,15 @@ h2.page-title {
 	}
 }
 
-.font-visible { font-weight: bold; }
-.font-hidden { font-style: italic; }
+.font-visible {
+	font-weight: bold;
+}
+.font-hidden {
+	font-style: italic;
+}
 
 .admin-messagebox {
-	background-color: #FFFFCC;
+	background-color: #ffffcc;
 	width: 60%;
 	padding: 10px;
 	text-align: left;
@@ -495,7 +502,7 @@ ul.courses-list {
 
 /* Instructor Tools page */
 #instructor-tools-nav {
-	input[name="number_of_students"] {
+	input[name='number_of_students'] {
 		max-width: 7em;
 	}
 
@@ -541,7 +548,8 @@ ul.courses-list {
 		font-weight: normal;
 	}
 
-	.hardcopy, .hardcopy-link {
+	.hardcopy,
+	.hardcopy-link {
 		text-align: center;
 	}
 
@@ -604,7 +612,11 @@ ul.courses-list {
 	border-radius: 8px;
 	border: 1px solid #e6e6e6;
 
-	h2, h3, h4, h5, h6 {
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
 		background: var(--bs-primary, #038);
 		border-radius: 8px;
 		color: var(--ww-primary-foreground-color, white);
@@ -616,17 +628,18 @@ ul.courses-list {
 	}
 
 	dl {
-		margin: 1ex .5em 1ex 1ex;
+		margin: 1ex 0.5em 1ex 1ex;
 		padding: 0;
 		font-size: 80%;
 	}
 
-	li, dt {
+	li,
+	dt {
 		line-height: 1.2rem;
 	}
 
 	dt {
-		font-weight: bold
+		font-weight: bold;
 	}
 
 	dd {
@@ -642,7 +655,7 @@ ul.courses-list {
 		font-size: 80%;
 		font-style: italic;
 		margin-bottom: 1ex;
-		margin-right: .5em;
+		margin-right: 0.5em;
 	}
 
 	form {
@@ -657,7 +670,7 @@ ul.courses-list {
 	}
 
 	#library_sets {
-		max-width: 50%
+		max-width: 50%;
 	}
 
 	.browse-lib-btn,
@@ -726,11 +739,14 @@ div.AuthorComment {
 	}
 }
 
-input.changed[type=text] { /* orange */
+input.changed[type='text'] {
+	/* orange */
 	border-color: #ca5000;
 	outline: 0;
 	outline: thin dotted \9;
-	box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(202, 80, 0, 0.6);
+	box-shadow:
+		inset 0 1px 1px rgba(0, 0, 0, 0.075),
+		0 0 8px rgba(202, 80, 0, 0.6);
 	color: inherit;
 }
 
@@ -745,7 +761,7 @@ input.changed[type=text] { /* orange */
 	margin-bottom: 1em;
 	padding: 2px 5px 2px 5px;
 	max-width: 80%;
-	background-color: #E8E8E8;
+	background-color: #e8e8e8;
 	border-style: outset;
 	border-width: 1px;
 	border-spacing: 2px;
@@ -767,13 +783,33 @@ input.changed[type=text] { /* orange */
 }
 
 /* Styles used when editing a temporary file */
-.temporaryFile { font-style: italic; color: #ca5000; background-color: inherit; }
+.temporaryFile {
+	font-style: italic;
+	color: #ca5000;
+	background-color: inherit;
+}
 
 /* Text colors for Auditing, Current, and Dropped students */
-.Audit { font-style: normal; color: purple; background-color: inherit; }
-.Enrolled { font-weight: normal; color: black; background-color: inherit; }
-.Drop { font-style: italic; color: #555; background-color: inherit; }
-.Observer { font-style: normal; color: green; background-color: inherit; }
+.Audit {
+	font-style: normal;
+	color: purple;
+	background-color: inherit;
+}
+.Enrolled {
+	font-weight: normal;
+	color: black;
+	background-color: inherit;
+}
+.Drop {
+	font-style: italic;
+	color: #555;
+	background-color: inherit;
+}
+.Observer {
+	font-style: normal;
+	color: green;
+	background-color: inherit;
+}
 
 /* Styles for the PGProblemEditor Page */
 
@@ -824,7 +860,7 @@ input.changed[type=text] { /* orange */
 
 /* Problem Set Detail */
 #problem_set_form {
-	input[name=add_n_problems] {
+	input[name='add_n_problems'] {
 		flex-basis: 50px;
 	}
 }
@@ -939,7 +975,8 @@ input.changed[type=text] { /* orange */
 
 /* Course Configuration */
 .config-tabs {
-	a, span {
+	a,
+	span {
 		&.nav-link {
 			font-weight: bold;
 			color: inherit;
@@ -1022,7 +1059,8 @@ td.alt-source {
 		padding-left: 0.5rem;
 		padding-right: 0.5rem;
 
-		&.alert-success, &.alert-danger {
+		&.alert-success,
+		&.alert-danger {
 			transition: none;
 			border-radius: 3px;
 			color: var(--bs-alert-color);

@@ -2,21 +2,27 @@
 	const form = document.forms['instructor-tools-form'];
 
 	form?.addEventListener('submit', (e) => {
-		const selectedUsers = Array.from(document.querySelector('select[name=selected_users]')?.options ?? [])
-			.filter((option) => option.selected);
-		const selectedSets = Array.from(document.querySelector('select[name=selected_sets]')?.options ?? [])
-			.filter((option) => option.selected);
+		const selectedUsers = Array.from(document.querySelector('select[name=selected_users]')?.options ?? []).filter(
+			(option) => option.selected
+		);
+		const selectedSets = Array.from(document.querySelector('select[name=selected_sets]')?.options ?? []).filter(
+			(option) => option.selected
+		);
 
 		// Check for the neccessary data for the requested module.
 		// Show a message and prevent submission if it is missing.
 		const messages = [];
 
-		if ((e.submitter.dataset.usersNeeded === 'at least one' && !selectedUsers.length) ||
-			(e.submitter.dataset.usersNeeded === 'exactly one' && selectedUsers.length !== 1))
+		if (
+			(e.submitter.dataset.usersNeeded === 'at least one' && !selectedUsers.length) ||
+			(e.submitter.dataset.usersNeeded === 'exactly one' && selectedUsers.length !== 1)
+		)
 			messages.push(e.submitter.dataset.errorUsers);
-		if ((e.submitter.dataset.setsNeeded === 'at least one' && !selectedSets.length) ||
+		if (
+			(e.submitter.dataset.setsNeeded === 'at least one' && !selectedSets.length) ||
 			(e.submitter.dataset.setsNeeded === 'exactly one' && selectedSets.length !== 1) ||
-			(e.submitter.dataset.setsNeeded === 'at most one' && selectedSets.length > 1))
+			(e.submitter.dataset.setsNeeded === 'at most one' && selectedSets.length > 1)
+		)
 			messages.push(e.submitter.dataset.errorSets);
 		if (e.submitter.dataset.setNameNeeded) {
 			const newSetName = form.querySelector('input[name="new_set_name"]')?.value ?? '';
