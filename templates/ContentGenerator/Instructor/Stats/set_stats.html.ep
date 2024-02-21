@@ -5,7 +5,7 @@
 % # Filter and problem selectors.
 <div class="d-flex align-items-center mt-1 mb-3">
 	<%= maketext('Showing statistics for:') =%>
-	<%= include 'ContentGenerator/Instructor/Stats/student_filter_menu', filters => $filters =%>
+	<%= include 'ContentGenerator/Instructor/Stats/student_filter_menu', filters => $filters, params => {} =%>
 	<%= include 'ContentGenerator/Instructor/Stats/problem_menu', problems => $problems =%>
 </div>
 % # Set information

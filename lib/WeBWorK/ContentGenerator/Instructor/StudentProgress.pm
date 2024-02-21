@@ -24,6 +24,7 @@ WeBWorK::ContentGenerator::Instructor::StudentProgress - Display Student Progres
 
 use WeBWorK::Utils qw(jitar_id_to_seq wwRound grade_set format_set_name_display);
 use WeBWorK::Utils::Grades qw(list_set_versions);
+use WeBWorK::Utils::FilterRecords qw(getFiltersForClass filterRecords);
 
 sub initialize ($c) {
 	my $db   = $c->db;
@@ -115,12 +116,21 @@ sub displaySets ($c) {
 		: (date => 0, testtime => 0, timeleft => 0, problems => 1, section => 1, recit => 1, login => 1);
 	my $showBestOnly = $setIsVersioned ? $c->param('show_best_only') : 0;
 
+	# Only show students who are included in stats.
+	my @student_records =
+		grep { $ce->status_abbrev_has_behavior($_->status, 'include_in_stats') } @{ $c->{student_records} };
+
+	# Change visible name of the first 'all' filter.
+	my $filter  = $c->param('filter') || 'all';
+	my $filters = getFiltersForClass($c, [ 'section', 'recitation' ], @student_records);
+	$filters->[0][0] = $c->maketext('All students');
+
+	@student_records = filterRecords($c, 0, [$filter], @student_records) unless $filter eq 'all';
+
 	my @score_list;
 	my @user_set_list;
 
-	for my $studentRecord (@{ $c->{student_records} }) {
-		next unless $ce->status_abbrev_has_behavior($studentRecord->status, 'include_in_stats');
-
+	for my $studentRecord (@student_records) {
 		my $studentName = $studentRecord->user_id;
 		my ($allSetVersionNames, $notAssignedSet) =
 			list_set_versions($db, $studentName, $c->stash('setID'), $setIsVersioned);
@@ -277,7 +287,9 @@ sub displaySets ($c) {
 		secondary_sort_method => $secondary_sort_method,
 		ternary_sort_method   => $ternary_sort_method,
 		problems              => \@problems,
-		user_set_list         => \@user_set_list
+		user_set_list         => \@user_set_list,
+		filters               => $filters,
+		filter                => $filter,
 	);
 }
 
