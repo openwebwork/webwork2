@@ -27,7 +27,7 @@
 	<%= $c->hidden_authen_fields('create_') =%>
 	<div class="input-group d-inline-flex w-auto">
 		<%= submit_button maketext('Create'), class => 'btn btn-primary' =%>
-		<%= text_field number_of_students => $numberOfStudents, size => 3, class => 'form-control' =%>
+		<%= number_field number_of_students => $numberOfStudents, size => 5, min => 1, class => 'form-control' =%>
 		<span class="input-group-text"><%= maketext('entry rows.') %></span>
 	</div>
 <% end =%>
