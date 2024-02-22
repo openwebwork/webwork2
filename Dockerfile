@@ -213,6 +213,7 @@ COPY --from=base /opt/base/pg $APP_ROOT/pg
 
 # Patch files that are applied below
 COPY docker-config/imagemagick-allow-pdf-read.patch /tmp
+COPY docker-config/pgfsys-dvisvmg-bbox-fix.patch /tmp
 
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 	&& mkdir /run/webwork2 /etc/ssl/local \
@@ -230,7 +231,9 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 	&& cd $PG_ROOT/htdocs \
 		&& npm install \
 	&& patch -p1 -d / < /tmp/imagemagick-allow-pdf-read.patch \
-	&& rm /tmp/imagemagick-allow-pdf-read.patch
+	&& rm /tmp/imagemagick-allow-pdf-read.patch \
+	&& patch -p1 -d / < /tmp/pgfsys-dvisvmg-bbox-fix.patch \
+	&& rm /tmp/pgfsys-dvisvmg-bbox-fix.patch
 
 # ==================================================================
 # Phase 7 - Final setup and prepare docker-entrypoint.sh
