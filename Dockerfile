@@ -95,6 +95,7 @@ RUN apt-get update \
 	libextutils-helpers-perl \
 	libextutils-installpaths-perl \
 	libextutils-xsbuilder-perl \
+	libfile-copy-recursive-perl \
 	libfile-find-rule-perl-perl \
 	libfile-sharedir-install-perl \
 	libfuture-asyncawait-perl \
@@ -131,7 +132,6 @@ RUN apt-get update \
 	libphp-serialization-perl \
 	libpod-wsdl-perl \
 	libsoap-lite-perl \
-	libsql-abstract-classic-perl \
 	libsql-abstract-perl \
 	libstring-shellquote-perl \
 	libsub-uplevel-perl \
