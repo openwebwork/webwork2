@@ -95,6 +95,7 @@ RUN apt-get update \
 	libextutils-helpers-perl \
 	libextutils-installpaths-perl \
 	libextutils-xsbuilder-perl \
+	libfile-copy-recursive-perl \
 	libfile-find-rule-perl-perl \
 	libfile-sharedir-install-perl \
 	libfuture-asyncawait-perl \
@@ -131,7 +132,6 @@ RUN apt-get update \
 	libphp-serialization-perl \
 	libpod-wsdl-perl \
 	libsoap-lite-perl \
-	libsql-abstract-classic-perl \
 	libsql-abstract-perl \
 	libstring-shellquote-perl \
 	libsub-uplevel-perl \
@@ -213,6 +213,7 @@ COPY --from=base /opt/base/pg $APP_ROOT/pg
 
 # Patch files that are applied below
 COPY docker-config/imagemagick-allow-pdf-read.patch /tmp
+COPY docker-config/pgfsys-dvisvmg-bbox-fix.patch /tmp
 
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 	&& mkdir /run/webwork2 /etc/ssl/local \
@@ -230,7 +231,9 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 	&& cd $PG_ROOT/htdocs \
 		&& npm install \
 	&& patch -p1 -d / < /tmp/imagemagick-allow-pdf-read.patch \
-	&& rm /tmp/imagemagick-allow-pdf-read.patch
+	&& rm /tmp/imagemagick-allow-pdf-read.patch \
+	&& patch -p1 -d / < /tmp/pgfsys-dvisvmg-bbox-fix.patch \
+	&& rm /tmp/pgfsys-dvisvmg-bbox-fix.patch
 
 # ==================================================================
 # Phase 7 - Final setup and prepare docker-entrypoint.sh

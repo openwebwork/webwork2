@@ -57,6 +57,7 @@ RUN apt-get update \
 	libextutils-helpers-perl \
 	libextutils-installpaths-perl \
 	libextutils-xsbuilder-perl \
+	libfile-copy-recursive-perl \
 	libfile-find-rule-perl-perl \
 	libfile-sharedir-install-perl \
 	libfuture-asyncawait-perl \
@@ -93,7 +94,6 @@ RUN apt-get update \
 	libphp-serialization-perl \
 	libpod-wsdl-perl \
 	libsoap-lite-perl \
-	libsql-abstract-classic-perl \
 	libsql-abstract-perl \
 	libstring-shellquote-perl \
 	libsub-uplevel-perl \
@@ -139,7 +139,7 @@ RUN apt-get update \
 	texlive-xetex \
 	tzdata \
 	zip $ADDITIONAL_BASE_IMAGE_PACKAGES \
-	&& curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+	&& curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
 	&& apt-get clean \
 	&& rm -fr /var/lib/apt/lists/* /tmp/*
