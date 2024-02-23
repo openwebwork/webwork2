@@ -44,6 +44,7 @@
 	% my $default_choice;
 	%
 	% for my $actionID (@$formsToShow) {
+		% next if $actionID eq 'reset_2fa' && !$ce->two_factor_authentication_enabled;
 		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
 		%
 		% my $disabled = $actionID eq 'import' && !@$CSVList ? ' disabled' : '';

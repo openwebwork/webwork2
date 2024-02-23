@@ -118,15 +118,15 @@
 				e.stopPropagation();
 				show_errors(['export_file_err_msg'], [export_filename, export_select_target]);
 			}
-		} else if (action === 'delete') {
-			const delete_confirm = document.getElementById('delete_select');
+		} else if (action === 'delete' || action === 'reset_2fa') {
+			const action_confirm = document.getElementById(`${action}_select`);
 			if (!is_user_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
-			} else if (delete_confirm.value != 'yes') {
+			} else if (action_confirm.value != 'yes') {
 				e.preventDefault();
 				e.stopPropagation();
-				show_errors(['delete_confirm_err_msg'], [delete_confirm]);
+				show_errors([`${action}_confirm_err_msg`], [action_confirm]);
 			}
 		}
 	});
