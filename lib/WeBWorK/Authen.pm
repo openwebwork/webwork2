@@ -168,12 +168,38 @@ sub verify {
 
 	$self->{was_verified} = $self->do_verify;
 
+	my $remember_2fa = $c->signed_cookie('WeBWorK.2FA.' . $c->ce->{courseName});
+
+	if ($self->{was_verified}
+		&& $self->{login_type} eq 'normal'
+		&& !$self->{external_auth}
+		&& (!$c->{rpc} || ($c->{rpc} && !$c->stash->{disable_cookies}))
+		&& $remember_2fa
+		&& !$c->db->getPassword($self->{user_id})->otp_secret)
+	{
+		# If there is not a otp secret saved in the database, and there is a cookie saved to skip two factor
+		# authentication, then delete it.  The user needs to set up two factor authentication again.
+		$c->signed_cookie(
+			'WeBWorK.2FA.' . $c->ce->{courseName} => 1,
+			{
+				max_age  => 0,
+				expires  => 1,
+				path     => $c->ce->{webworkURLRoot},
+				samesite => $c->ce->{CookieSameSite},
+				secure   => $c->ce->{CookieSecure},
+				httponly => 1
+			}
+		);
+		$remember_2fa = 0;
+	}
+
 	if ($self->{was_verified}
 		&& $self->{login_type} eq 'normal'
 		&& !$self->{external_auth}
 		&& (!$c->{rpc} || ($c->{rpc} && !$c->stash->{disable_cookies}))
 		&& $c->ce->two_factor_authentication_enabled
-		&& ($self->{initial_login} || $self->session->{two_factor_verification_needed}))
+		&& ($self->{initial_login} || $self->session->{two_factor_verification_needed})
+		&& !$remember_2fa)
 	{
 		$self->{was_verified} = 0;
 		$self->session(two_factor_verification_needed => 1);
@@ -457,6 +483,20 @@ sub verify_normal_user {
 					->validate_otp($otp_code))
 				{
 					delete $self->session->{two_factor_verification_needed};
+
+					# Store a cookie that signifies this devices skips two factor
+					# authentication if the skip_2fa checkbox was checked.
+					$c->signed_cookie(
+						'WeBWorK.2FA.' . $c->ce->{courseName} => 1,
+						{
+							max_age  => 3600 * 24 * 365,            # This cookie is valid for one year.
+							expires  => time + 3600 * 24 * 365,
+							path     => $c->ce->{webworkURLRoot},
+							samesite => $c->ce->{CookieSameSite},
+							secure   => $c->ce->{CookieSecure},
+							httponly => 1
+						}
+					) if $c->param('skip_2fa');
 
 					# This is the case of initial setup. Save the secret from the session to the database.
 					if ($self->session->{otp_secret}) {
