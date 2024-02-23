@@ -249,7 +249,7 @@ sub initialize ($c) {
 		&& $authz->hasPermissions($user, 'modify_problem_sets');
 
 	# Record status messages carried over if this is a redirect
-	$c->addmessage($c->param('status_message') || '');
+	$c->addmessage($c->authen->flash('status_message') || '');
 
 	$c->addbadmessage($c->maketext('Changes in this file have not yet been permanently saved.'))
 		if $c->{inputFilePath} eq $c->{tempFilePath} && -r $c->{tempFilePath};
@@ -777,6 +777,7 @@ sub view_handler ($c) {
 		# We need to know if the set is a gateway set to determine the redirect.
 		my $globalSet = $c->db->getGlobalSet($c->{setID});
 
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			defined $globalSet && $globalSet->assignment_type =~ /gateway/
 			? $c->url_for('gateway_quiz',   setID => 'Undefined_Set')
@@ -785,24 +786,24 @@ sub view_handler ($c) {
 				displayMode    => $displayMode,
 				problemSeed    => $problemSeed,
 				editMode       => 'temporaryFile',
-				sourceFilePath => $relativeTempFilePath,
-				status_message => $c->{status_message}->join('')
+				sourceFilePath => $relativeTempFilePath
 			}
 		));
 	} elsif ($c->{file_type} eq 'blank_problem') {
 		# Redirect to Problem.pm.pm.
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
 			params => {
 				displayMode    => $displayMode,
 				problemSeed    => $problemSeed,
 				editMode       => 'temporaryFile',
-				sourceFilePath => $relativeTempFilePath,
-				status_message => $c->{status_message}->join('')
+				sourceFilePath => $relativeTempFilePath
 			}
 		));
 	} elsif ($c->{file_type} eq 'set_header') {
 		# Redirect to ProblemSet
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('problem_list', setID => $c->{setID}),
 			params => {
@@ -810,12 +811,12 @@ sub view_handler ($c) {
 				displayMode    => $displayMode,
 				problemSeed    => $problemSeed,
 				editMode       => 'temporaryFile',
-				sourceFilePath => $relativeTempFilePath,
-				status_message => $c->{status_message}->join('')
+				sourceFilePath => $relativeTempFilePath
 			}
 		));
 	} elsif ($c->{file_type} eq 'hardcopy_header') {
 		# Redirect to ProblemSet?? It's difficult to view temporary changes for hardcopy headers.
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('problem_list', setID => $c->{setID}),
 			params => {
@@ -823,19 +824,18 @@ sub view_handler ($c) {
 				displayMode    => $displayMode,
 				problemSeed    => $problemSeed,
 				editMode       => 'temporaryFile',
-				sourceFilePath => $relativeTempFilePath,
-				status_message => $c->{status_message}->join('')
+				sourceFilePath => $relativeTempFilePath
 			}
 		));
 	} elsif ($c->{file_type} eq 'course_info') {
 		# Redirect to ProblemSets.pm.
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('set_list'),
 			params => {
 				course_info    => $c->{tempFilePath},
 				editMode       => 'temporaryFile',
-				sourceFilePath => $relativeTempFilePath,
-				status_message => $c->{status_message}->join('')
+				sourceFilePath => $relativeTempFilePath
 			}
 		));
 	} else {
@@ -908,6 +908,7 @@ sub add_problem_handler ($c) {
 		$c->{file_type} = 'problem';    # Change file type to problem if it is not already that.
 
 		# Redirect to problem editor page.
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for(
 				'instructor_problem_editor_withset_withproblem',
@@ -919,7 +920,6 @@ sub add_problem_handler ($c) {
 				problemSeed    => $c->{problemSeed},
 				editMode       => 'savedFile',
 				sourceFilePath => $c->getRelativeSourceFilePath($sourceFilePath),
-				status_message => $c->{status_message}->join(''),
 				file_type      => 'problem',
 			}
 		));
@@ -944,13 +944,10 @@ sub add_problem_handler ($c) {
 		$c->{file_type} = 'set_header';    # Change file type to set_header if not already so.
 
 		# Redirect
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('problem_list', setID => $targetSetName),
-			params => {
-				displayMode    => $c->{displayMode},
-				editMode       => 'savedFile',
-				status_message => $c->{status_message}->join(''),
-			}
+			params => { displayMode => $c->{displayMode}, editMode => 'savedFile' }
 		));
 	} elsif ($targetFileType eq 'hardcopy_header') {
 		# Update set record
@@ -973,13 +970,10 @@ sub add_problem_handler ($c) {
 		$c->{file_type} = 'hardcopy_header';    # Change file type to set_header if not already so.
 
 		# Redirect
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('hardcopy_preselect_set', setID => $targetSetName),
-			params => {
-				displayMode    => $c->{displayMode},
-				editMode       => 'savedFile',
-				status_message => $c->{status_message}->join(''),
-			}
+			params => { displayMode => $c->{displayMode}, editMode => 'savedFile' }
 		));
 	} else {
 		die "Unsupported target file type $targetFileType";
@@ -1012,6 +1006,7 @@ sub save_handler ($c) {
 		# We need to know if the set is a gateway set to determine the redirect.
 		my $globalSet = $c->db->getGlobalSet($c->{setID});
 
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			defined $globalSet && $globalSet->assignment_type =~ /gateway/
 			? $c->url_for('gateway_quiz',   setID => 'Undefined_Set')
@@ -1020,52 +1015,50 @@ sub save_handler ($c) {
 				displayMode    => $c->{displayMode},
 				problemSeed    => $c->{problemSeed},
 				editMode       => 'savedFile',
-				sourceFilePath => $c->getRelativeSourceFilePath($c->{editFilePath}),
-				status_message => $c->{status_message}->join('')
+				sourceFilePath => $c->getRelativeSourceFilePath($c->{editFilePath})
 			}
 		));
 	} elsif ($c->{file_type} eq 'set_header') {
 		# Redirect to ProblemSet.pm
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('problem_list', setID => $c->{setID}),
 			params => {
-				displayMode    => $c->{displayMode},
-				problemSeed    => $c->{problemSeed},
-				editMode       => 'savedFile',
-				status_message => $c->{status_message}->join('')
+				displayMode => $c->{displayMode},
+				problemSeed => $c->{problemSeed},
+				editMode    => 'savedFile'
 			}
 		));
 	} elsif ($c->{file_type} eq 'hardcopy_header') {
 		# Redirect to Hardcopy.pm
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('hardcopy_preselect_set', setID => $c->{setID}),
 			params => {
-				displayMode    => $c->{displayMode},
-				problemSeed    => $c->{problemSeed},
-				editMode       => 'savedFile',
-				status_message => $c->{status_message}->join('')
+				displayMode => $c->{displayMode},
+				problemSeed => $c->{problemSeed},
+				editMode    => 'savedFile'
 			}
 		));
 	} elsif ($c->{file_type} eq 'hardcopy_theme') {
 		# Redirect to PGProblemEditor.pm
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('instructor_problem_editor'),
 			params => {
 				editMode       => 'savedFile',
 				hardcopy_theme => $c->{hardcopy_theme},
 				file_type      => 'hardcopy_theme',
-				status_message => $c->{status_message}->join(''),
 				sourceFilePath => $c->getRelativeSourceFilePath($c->{editFilePath}),
 			}
 		));
 	} elsif ($c->{file_type} eq 'course_info') {
 		# Redirect to ProblemSets.pm
-		$c->reply_with_redirect($c->systemLink(
-			$c->url_for('set_list'),
-			params => { editMode => 'savedFile', status_message => $c->{status_message}->join('') }
-		));
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
+		$c->reply_with_redirect($c->systemLink($c->url_for('set_list'), params => { editMode => 'savedFile' }));
 	} elsif ($c->{file_type} eq 'source_path_for_problem_file') {
 		# Redirect to PGProblemEditor.pm
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for(
 				'instructor_problem_editor_withset_withproblem',
@@ -1078,8 +1071,7 @@ sub save_handler ($c) {
 				editMode    => 'savedFile',
 				# The path relative to the templates directory is required.
 				sourceFilePath => $c->{editFilePath},
-				file_type      => 'source_path_for_problem_file',
-				status_message => $c->{status_message}->join('')
+				file_type      => 'source_path_for_problem_file'
 			}
 		));
 	} else {
@@ -1236,8 +1228,8 @@ sub save_as_handler ($c) {
 				'A new file has been created at "[_1]" with the contents below.',
 				$c->shortPath($outputFilePath)
 			));
-			$c->addgoodmessage($c->maketext(' No changes have been made to set [_1]', $c->{setID}))
-				if ($c->{setID} ne 'Undefined_Set');
+			$c->addgoodmessage($c->maketext('No changes have been made to set [_1]', $c->{setID}))
+				if $c->{setID} && $c->{setID} ne 'Undefined_Set';
 		} else {
 			$c->addbadmessage($c->maketext('Unkown saveMode: [_1].', $saveMode));
 			return;
@@ -1281,6 +1273,7 @@ sub save_as_handler ($c) {
 		return;
 	}
 
+	$c->authen->flash(status_message => $c->{status_message}->join(''));
 	$c->reply_with_redirect($c->systemLink(
 		$problemPage,
 		params => {
@@ -1288,7 +1281,6 @@ sub save_as_handler ($c) {
 			sourceFilePath => $c->getRelativeSourceFilePath($outputFilePath),
 			problemSeed    => $c->{problemSeed},
 			file_type      => $new_file_type,
-			status_message => $c->{status_message}->join(''),
 			%extra_params
 		}
 	));

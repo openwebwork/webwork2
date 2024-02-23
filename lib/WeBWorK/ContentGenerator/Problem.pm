@@ -430,7 +430,7 @@ async sub pre_header_initialize ($c) {
 	$c->{formFields}     = $formFields;
 
 	# Get the status message and add it to the messages.
-	$c->addmessage($c->tag('p', $c->b($c->param('status_message')))) if $c->param('status_message');
+	$c->addmessage($c->tag('p', $c->b($c->authen->flash('status_message')))) if $c->authen->flash('status_message');
 
 	# Now that the necessary variables are set, return if the set or problem is invalid.
 	return if $c->{invalidSet} || $c->{invalidProblem};

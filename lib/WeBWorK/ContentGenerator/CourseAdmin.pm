@@ -44,12 +44,6 @@ sub pre_header_initialize ($c) {
 
 	return unless $authz->hasPermissions($user, 'create_and_delete_courses');
 
-	# Get result and send to message
-	# FIXME: I am pretty sure this is not used anymore. All methods add their messages directly to the page except the
-	# table messages, and those are added below and not here.
-	my $status_message = $c->param('status_message');
-	$c->addmessage($c->tag('p', $c->b($status_message))) if $status_message;
-
 	# Check that the non-native tables are present in the database.
 	# These are the tables which are not course specific.
 	my @table_update_messages = initNonNativeTables($ce, $ce->{dbLayoutName});
