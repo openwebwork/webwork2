@@ -1,20 +1,48 @@
 (() => {
 	// Action form validation.
+	const show_errors = (ids, elements) => {
+		for (const id of ids) elements.push(document.getElementById(id));
+		for (const element of elements) {
+			if (element?.id.endsWith('_err_msg')) {
+				element?.classList.remove('d-none');
+			} else {
+				element?.classList.add('is-invalid');
+				element?.addEventListener('change', hide_errors([], elements));
+			}
+		}
+	};
+
+	const hide_errors = (ids, elements) => {
+		return () => {
+			for (const id of ids) elements.push(document.getElementById(id));
+			for (const element of elements) {
+				if (element?.id.endsWith('_err_msg')) {
+					element?.classList.add('d-none');
+					if (element.id === 'select_achievement_err_msg')
+						document.getElementById('achievement-table')?.removeEventListener('change', hide_errors);
+				} else {
+					element?.classList.remove('is-invalid');
+					element?.removeEventListener('change', hide_errors);
+				}
+			}
+		};
+	};
+
 	const is_achievement_selected = () => {
 		for (const achievement of document.getElementsByName('selected_achievements')) {
 			if (achievement.checked) return true;
 		}
-		document.getElementById('select_achievement_err_msg')?.classList.remove('d-none');
-		document.getElementById('achievement-table')?.addEventListener(
-			'change',
-			() => {
-				document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
-				for (const id of ['filter_select', 'edit_select', 'assign_select', 'export_select', 'score_select']) {
-					document.getElementById(id)?.classList.remove('is-invalid');
-				}
-			},
-			{ once: true }
-		);
+		const err_msg = document.getElementById('select_achievement_err_msg');
+		err_msg?.classList.remove('d-none');
+		document
+			.getElementById('achievement-table')
+			?.addEventListener(
+				'change',
+				hide_errors(
+					['filter_select', 'edit_select', 'assign_select', 'export_select', 'score_select'],
+					[err_msg]
+				)
+			);
 		return false;
 	};
 
@@ -28,158 +56,41 @@
 			if (filter === 'selected' && !is_achievement_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
-				filter_select?.classList.add('is-invalid');
-				filter_select?.addEventListener(
-					'change',
-					() => {
-						document.getElementById('select_achievement_err_msg').classList.add('d-none');
-						document.getElementById('filter_select').classList.remove('is-invalid');
-					},
-					{ once: true }
-				);
+				show_errors(['select_achievement_err_msg'], [filter_select]);
 			} else if (filter === 'match_ids' && filter_text?.value === '') {
 				e.preventDefault();
 				e.stopPropagation();
-				document.getElementById('filter_text_err_msg')?.classList.remove('d-none');
-				filter_select?.classList.add('is-invalid');
-				filter_text?.classList.add('is-invalid');
-				filter_text?.addEventListener(
-					'change',
-					() => {
-						document.getElementById('filter_text_err_msg')?.classList.add('d-none');
-						document.getElementById('filter_text')?.classList.remove('is-invalid');
-						document.getElementById('filter_select')?.classList.remove('is-invalid');
-					},
-					{ once: true }
-				);
-				filter_select?.addEventListener(
-					'change',
-					() => {
-						document.getElementById('filter_text_err_msg')?.classList.add('d-none');
-						document.getElementById('filter_text')?.classList.remove('is-invalid');
-						document.getElementById('filter_select')?.classList.remove('is-invalid');
-					},
-					{ once: true }
-				);
+				show_errors(['filter_text_err_msg'], [filter_select, filter_text]);
 			} else if (filter === 'match_category' && filter_category?.value === '') {
 				e.preventDefault();
 				e.stopPropagation();
-				document.getElementById('filter_category_err_msg')?.classList.remove('d-none');
-				filter_select?.classList.add('is-invalid');
-				filter_category?.classList.add('is-invalid');
-				filter_category?.addEventListener(
-					'change',
-					() => {
-						document.getElementById('filter_category_err_msg')?.classList.add('d-none');
-						document.getElementById('filter_category')?.classList.remove('is-invalid');
-						document.getElementById('filter_select')?.classList.remove('is-invalid');
-					},
-					{ once: true }
-				);
-				filter_select?.addEventListener(
-					'change',
-					() => {
-						document.getElementById('filter_category_err_msg')?.classList.add('d-none');
-						document.getElementById('filter_category')?.classList.remove('is-invalid');
-						document.getElementById('filter_select')?.classList.remove('is-invalid');
-					},
-					{ once: true }
-				);
+				show_errors(['filter_category_err_msg'], [filter_select, filter_category]);
 			}
-		} else if (action === 'edit') {
-			const edit_select = document.getElementById('edit_select');
-			if (edit_select.value === 'selected' && !is_achievement_selected()) {
+		} else if (['edit', 'assign', 'export', 'score'].includes(action)) {
+			const action_select = document.getElementById(`${action}_select`);
+			if (action_select.value === 'selected' && !is_achievement_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
-				edit_select.classList.add('is-invalid');
-				edit_select.addEventListener(
-					'change',
-					() => {
-						document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
-						document.getElementById('edit_select')?.classList.remove('is-invalid');
-					},
-					{ once: true }
-				);
-			}
-		} else if (action === 'assign') {
-			const assign_select = document.getElementById('assign_select');
-			if (assign_select.value === 'selected' && !is_achievement_selected()) {
-				e.preventDefault();
-				e.stopPropagation();
-				assign_select.classList.add('is-invalid');
-				assign_select.addEventListener(
-					'change',
-					() => {
-						document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
-						document.getElementById('assign_select')?.classList.remove('is-invalid');
-					},
-					{ once: true }
-				);
+				show_errors(['select_achievement_err_msg'], [action_select]);
 			}
 		} else if (action === 'import') {
 			const import_file = document.getElementById('import_file_select');
 			if (!import_file.value.endsWith('.axp')) {
 				e.preventDefault();
 				e.stopPropagation();
-				document.getElementById('import_file_err_msg')?.classList.remove('d-none');
-				import_file.classList.add('is-invalid');
-				import_file.addEventListener(
-					'change',
-					() => {
-						document.getElementById('import_file_err_msg')?.classList.add('d-none');
-						document.getElementById('import_file_select')?.classList.remove('is-invalid');
-					},
-					{ once: true }
-				);
-			}
-		} else if (action === 'export') {
-			const export_select = document.getElementById('export_select');
-			if (export_select.value === 'selected' && !is_achievement_selected()) {
-				e.preventDefault();
-				e.stopPropagation();
-				export_select.classList.add('is-invalid');
-				export_select.addEventListener(
-					'change',
-					() => {
-						document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
-						document.getElementById('export_select')?.classList.remove('is-invalid');
-					},
-					{ once: true }
-				);
-			}
-		} else if (action === 'score') {
-			const score_select = document.getElementById('score_select');
-			if (export_select.value === 'selected' && !is_achievement_selected()) {
-				e.preventDefault();
-				e.stopPropagation();
-				score_select.classList.add('is-invalid');
-				score_select.addEventListener(
-					'change',
-					() => {
-						document.getElementById('select_achievement_err_msg')?.classList.add('d-none');
-						document.getElementById('score_select')?.classList.remove('is-invalid');
-					},
-					{ once: true }
-				);
+				show_errors(['import_file_err_msg'], [import_file]);
 			}
 		} else if (action === 'create') {
 			const create_text = document.getElementById('create_text');
+			const create_select = document.getElementById('create_select');
 			if (create_text.value === '') {
 				e.preventDefault();
 				e.stopPropagation();
-				document.getElementById('create_file_err_msg')?.classList.remove('d-none');
-				create_text.classList.add('is-invalid');
-				create_text.addEventListener(
-					'change',
-					() => {
-						document.getElementById('create_file_err_msg')?.classList.add('d-none');
-						document.getElementById('create_text')?.classList.remove('is-invalid');
-					},
-					{ once: true }
-				);
-			} else if (document.getElementById('create_select')?.value == 'copy' && !is_achievement_selected()) {
+				show_errors(['create_file_err_msg'], [create_text]);
+			} else if (create_select?.value == 'copy' && !is_achievement_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
+				show_errors(['select_achievement_err_msg'], [create_select]);
 			}
 		} else if (action === 'delete') {
 			const delete_confirm = document.getElementById('delete_select');
@@ -189,16 +100,7 @@
 			} else if (delete_confirm.value != 'yes') {
 				e.preventDefault();
 				e.stopPropagation();
-				document.getElementById('delete_confirm_err_msg')?.classList.remove('d-none');
-				delete_confirm.classList.add('is-invalid');
-				delete_confirm.addEventListener(
-					'change',
-					() => {
-						document.getElementById('delete_select')?.classList.remove('is-invalid');
-						document.getElementById('delete_confirm_err_msg')?.classList.add('d-none');
-					},
-					{ once: true }
-				);
+				show_errors(['delete_confirm_err_msg'], [delete_confirm]);
 			}
 		}
 	});
@@ -206,13 +108,10 @@
 	// Remove all error messages when changing tabs.
 	for (const tab of document.querySelectorAll('a[data-bs-toggle="tab"]')) {
 		tab.addEventListener('shown.bs.tab', () => {
-			const actionForm = document.getElementById('achievement-list');
-			for (const err_msg of actionForm.querySelectorAll('div[id$=_err_msg]')) {
-				err_msg.classList.add('d-none');
-			}
-			for (const invalid of actionForm.querySelectorAll('.is-invalid')) {
-				invalid.classList.remove('is-invalid');
-			}
+			hide_errors(
+				[],
+				document.getElementById('achievement-list')?.querySelectorAll('div[id$=_err_msg], .is-invalid')
+			)();
 		});
 	}
 
@@ -223,7 +122,7 @@
 	const filterElementToggle = () => {
 		if (filter_select?.value === 'match_ids') filter_text_elements.style.display = 'flex';
 		else filter_text_elements.style.display = 'none';
-		if (filter_select?.value === 'match_category' ) filter_category_elements.style.display = 'flex';
+		if (filter_select?.value === 'match_category') filter_category_elements.style.display = 'flex';
 		else filter_category_elements.style.display = 'none';
 	};
 

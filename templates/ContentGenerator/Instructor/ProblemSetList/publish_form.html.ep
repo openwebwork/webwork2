@@ -1,13 +1,13 @@
 <div>
 	<div class="row mb-2">
-		<%= label_for publish_filter_select => maketext('Choose which sets to be affected') . ':',
+		<%= label_for publish_select => maketext('Choose which sets to be affected') . ':',
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.publish.scope' => [
 					[ maketext('all course sets') => 'all' ],
 					[ maketext('selected sets')   => 'selected', selected => undef ]
 				],
-				id => 'publish_filter_select', class => 'form-select form-select-sm' =%>
+				id => 'publish_select', class => 'form-select form-select-sm' =%>
 		</div>
 	</div>
 	<div class="row mb-2">
