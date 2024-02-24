@@ -240,6 +240,93 @@ hardcopy:
   # If 1, don't delete temporary files created when a hardcopy is generated.
   preserve_temp_files: 0
 
+# External Programs
+
+# These applications are often found in /bin, but sometimes in /usr/bin or even in /opt/local/bin.
+# You can use "which tar"  for example to find out where the "tar" program is located
+
+externalPrograms:
+  mv: /bin/mv
+  cp: /bin/cp
+  rm: /bin/rm
+  mkdir: /bin/mkdir
+  tar: /bin/tar
+  gzip: /bin/gzip
+  git: /bin/git
+  curl: /usr/bin/curl
+  mysql: /usr/bin/mysql
+  mysqldump: /usr/bin/mysqldump
+
+  # latex and related utilities
+  latex: /usr/bin/latex --no-shell-escape
+  pdflatex: /usr/bin/pdflatex --no-shell-escape
+
+  # Note that --no-shell-escape is important for security reasons.
+  # Consider using xelatex instead of pdflatex for multilingual use, and
+  # use polyglossia and fontspec packages (which require xelatex or lualatex).
+  # pdflatex: /usr/bin/xelatex --no-shell-escape
+
+  dvipng: /usr/bin/dvipng
+  convert: /usr/bin/convert
+  dvisvgm: /usr/bin/dvisvgm
+  pdf2svg: /usr/bin/pdf2svg
+
+  giftopnm: /usr/bin/giftopnm
+  ppmtopgm: /usr/bin/ppmtopgm
+  pnmtops: /usr/bin/pnmtops
+  pnmtopng: /usr/bin/pnmtopng
+  pnmtopnm: /usr/bin/pnmtopnm
+
+# Database options
+
+database:
+  # uncomment to allow database debug information
+  # debug: 1
+
+  # Select the desired DB driver: either 'mysql' or 'MariaDB'
+  # database_driver: mysql
+  driver: MariaDB
+
+  host: localhost
+  port: 3306
+
+  # name of the database
+  name: webwork
+
+  # Standard permissions command used to initialize the webwork database
+  # GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
+  # where webworkWrite and passwordRW must match the corresponding variables in the next section.
+  username: ''
+  password: ''
+
+  # For a DB on localhost - default to using Unix socket. Change to 0 to use a TCP connection to 127.0.0.1.
+  use_socket_if_localhost: 1
+
+  # Need to add the code in lines 209-217 to a perl file
+  # Add line 234 to same file
+
+  # The default storange engine to use is set here:
+  storage_engine: myisam
+
+  # MYSQL compatibility settings for handling international Unicode characters (utf8 and utf8mb)
+
+  # These set the way characters are encoded in mysql and will depend on the version of mysqld being used.
+  # the default is to use latin1.  With version 2.15 we will move to encoding utf8mb4 which allows
+  # the encoding of characters from many languages including chinese, arabic and hebrew.
+
+  # setting this to 1 enables utf8mb4 encoding, setting this to 0 sets this for older
+  # mysql (pre 5.3) which cannot handle utf8mb4 characters.
+
+  ENABLE_UTF8MB4: 1
+
+  # This sets the max course id length.  It might need to be changed depending
+  # on what database tables are present.  Mysql allows a max table length of 64
+  # characters.  With the ${course_id}_global_user_achievement table that means
+  # the max ${course_id} is exactly 40 characters.
+
+  # Reference:  https://dev.mysql.com/doc/refman/8.0/en/identifier-length.html
+  maxCourseIdLength: 40
+
 # Set this to 1 to allow the html2xml and render_rpc endpoints to disable
 # cookies and thus skip two factor authentication. This should never be enabled
 # for a typical webwork server.  This should only be enabled if you want to

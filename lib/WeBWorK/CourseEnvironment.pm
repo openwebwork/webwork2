@@ -54,10 +54,12 @@ use warnings;
 
 use Carp;
 use Opcode qw(empty_opset);
+use YAML::XS qw(LoadFile);
 
 use WeBWorK::WWSafe;
 use WeBWorK::Utils::Files qw(readFile);
 use WeBWorK::Debug;
+use WeBWorK::DB::Utils qw(databaseParams);
 
 =head1 CONSTRUCTION
 
@@ -246,6 +248,17 @@ sub new {
 	$self->{language} = 'zh-HK' if $self->{language} eq 'zh-hk';
 	$self->{language} = 'en'    if $self->{language} eq 'en-us';
 
+	# Load additional configuration variables.
+	my $defaults_file = "$seedVars->{webwork_dir}/conf/webwork2.mojolicious.dist.yml";
+	die "Cannot read the mojolicous defaults file: $defaults_file" unless -r $defaults_file;
+
+	# If this exists, load the overrides file (replacement for local overrides):
+	my $config_file = "$seedVars->{webwork_dir}/conf/webwork2.mojolicious.yml";
+	my $config      = -r $config_file ? LoadFile($config_file) : LoadFile($defaults_file);
+
+	# Set the database settings.
+	$self->set_server_settings($config);
+
 	# now that we're done, we can go ahead and return...
 	return $self;
 }
@@ -359,6 +372,49 @@ sub status_abbrev_has_behavior {
 	}
 }
 
+sub set_server_settings {
+	my ($ce, $config) = @_;
+
+	# set the database settings:
+	$ce->{database_name}     = $config->{database}{name};
+	$ce->{database_host}     = $config->{database}{host};
+	$ce->{database_username} = $config->{database}{username};
+	$ce->{database_password} = $config->{database}{password};
+	if ($config->{database}{host} eq "localhost") {
+		$ce->{database_dsn} =
+			$config->{database}{use_socket_if_localhost}
+			? "DBI:$config->{database}{driver}:database=$config->{database}{name}"
+			: "DBI:$config->{database}{driver}:database=$config->{database}{name};"
+			. "host=127.0.0.1;port=$config->{database}{port}";
+	} else {
+		$ce->{database_dsn} = "DBI:$config->{database}{driver}:database=$config->{database}{name};"
+			. "host=$config->{database}{host};port=$config->{database}{port}";
+	}
+	$ce->{dbLayoutName}                = 'sql_single';
+	$config->{database}{dsn}           = $ce->{database_dsn};
+	$config->{database}{character_set} = $config->{database}{ENABLE_UTF8MB4} ? 'utf8mb4' : 'utf8';
+	$ce->{dbLayout} = databaseParams($ce->{courseName}, $config->{database}, $config->{externalPrograms});
+
+	$ce->{maxCourseIdLength} = $config->{database}{maxCourseIdLength};
+
+	# ensure that the dvipng_depth_db information is defined:
+	$ce->{pg}{displayModeOptions}{images}{dvipng_depth_db}{user}     //= $config->{database}{username};
+	$ce->{pg}{displayModeOptions}{images}{dvipng_depth_db}{passwd}   //= $config->{database}{password};
+	$ce->{pg}{displayModeOptions}{images}{dvipng_depth_db}{dbsource} //= $ce->{database_dsn};
+
+	# Problem Library SQL database connection information
+	$c->{problemLibrary_db} = {
+		dbsource       => $ce->{database_dsn},
+		user           => $ce->{database_username},
+		passwd         => $ce->{database_password},
+		storage_engine => 'MYISAM',
+	};
+
+	$ce->{externalPrograms} = $config->{externalPrograms};
+	return;
+}
+
+=back
 =head2 two_factor_authentication_enabled
 
 Usage: C<< $ce->two_factor_authentication_enabled >>

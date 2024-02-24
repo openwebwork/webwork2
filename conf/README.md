@@ -16,8 +16,6 @@ Basic webwork2 configuration files.
 - `localOverrides.conf.dist` should be copied to `localOverrides.conf`. `localOverrides.conf` will be read after the
   `defaults.config` file is processed and will overwrite configurations in `defaults.config`. Use this file to make
   changes to the settings in `defaults.config`.
-- `database.conf.dist` contains database configuration parameters. It is included by `defaults.config`. This file
-  should not be copied or modified unless you really know what you are doing.
 
 Configuration extension files.
 
@@ -30,7 +28,7 @@ Configuration extension files.
 Server configuration files.
 
 - `webwork2.mojolicious.dist.yml` contains the webwork2 Mojolicious app configuration settings. Copy this file to
-  `webwork2.mojolicious.yml` if you need to change those settings. You usually will need to do this.
+  `webwork2.mojolicious.yml` if you need to change those settings. You usually will need to do this.  This file contains server settings, database settings and paths to external programs.
 - `webwork2.dist.service` is a systemd configuration file for linux systems that serves the webwork2 app via the
   Mojolicious hypnotoad server. If you need to change it, then copy it to `webwork2.service`.
 - `webwork2-job-queue.dist.service` is a systemd configuration file for linux systems that runs the webwork2 job queue
