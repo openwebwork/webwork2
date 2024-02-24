@@ -91,12 +91,13 @@ async sub dispatch ($c) {
 	if ($c->current_route =~ /^(render_rpc|instructor_rpc|html2xml)$/) {
 		$c->{rpc} = 1;
 
-		$c->stash(disable_cookies => 1) if $c->current_route eq 'render_rpc' && $c->param('disableCookies');
+		$c->stash(disable_cookies => 1)
+			if $c->current_route eq 'render_rpc' && $c->param('disableCookies') && $c->config('allow_unsecured_rpc');
 
 		# This provides compatibility for legacy html2xml parameters.
 		# This should be deleted when the html2xml endpoint is removed.
 		if ($c->current_route eq 'html2xml') {
-			$c->stash(disable_cookies => 1);
+			$c->stash(disable_cookies => 1) if $c->config('allow_unsecured_rpc');
 			for ([ 'userID', 'user' ], [ 'course_password', 'passwd' ], [ 'session_key', 'key' ]) {
 				$c->param($_->[1], $c->param($_->[0])) if defined $c->param($_->[0]) && !defined $c->param($_->[1]);
 			}
