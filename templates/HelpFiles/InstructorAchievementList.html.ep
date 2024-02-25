@@ -105,7 +105,8 @@
 	<dd>
 		<%= maketext('You can import/export from their respective action tab.  Exporting saves information about the '
 			. 'achievement as a .axp file which is a CSV that lists each achievements information.  You can import '
-			. '.axp files that have been previously exported.') =%>
+			. '.axp files that have been previously exported.  Use the "File Manager" to upload/download .axp files '
+			. 'to "achievements" directory (also upload/download any achievement evaluator .at files needed).') =%>
 	<dd>
 
 	<dt><%= maketext('Assign achievements') %></dt>
