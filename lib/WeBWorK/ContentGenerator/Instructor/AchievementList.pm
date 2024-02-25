@@ -91,22 +91,6 @@ sub initialize ($c) {
 	# Set initial values for state fields
 	my @allAchievementIDs = $db->listAchievements;
 
-	#### Temporary Transition Code ####
-	# If an achievement doesn't have either a number or an assignment_type
-	# then its probably an old achievement in which case we should
-	# update its assignment_type to include 'default'.
-	# This whole block of code can be removed once people have had time
-	# to transition over.  (I.E. around 2017)
-
-	for my $achievementID (@allAchievementIDs) {
-		my $achievement = $db->getAchievement($achievementID);
-		unless ($achievement->assignment_type || $achievement->number) {
-			$achievement->assignment_type('default');
-			$db->putAchievement($achievement);
-		}
-	}
-	### End Transition Code.  ###
-
 	my @users = $db->listUsers;
 	$c->{allAchievementIDs} = \@allAchievementIDs;
 	$c->{totalUsers}        = scalar @users;
