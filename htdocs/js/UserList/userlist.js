@@ -26,6 +26,9 @@
 	}
 
 	// Action form validation.
+	// Store event listeners so they can be removed.
+	const event_listeners = {};
+
 	const show_errors = (ids, elements) => {
 		for (const id of ids) elements.push(document.getElementById(id));
 		for (const element of elements) {
@@ -33,7 +36,10 @@
 				element?.classList.remove('d-none');
 			} else {
 				element?.classList.add('is-invalid');
-				element?.addEventListener('change', hide_errors([], elements));
+				if (!(element.id in event_listeners)) {
+					event_listeners[element.id] = hide_errors([], elements);
+					element?.addEventListener('change', event_listeners[element.id]);
+				}
 			}
 		}
 	};
@@ -44,11 +50,18 @@
 			for (const element of elements) {
 				if (element?.id.endsWith('_err_msg')) {
 					element?.classList.add('d-none');
-					if (element.id === 'select_user_err_msg')
-						document.getElementById('classlist-table')?.removeEventListener('change', hide_errors);
+					if (element.id === 'select_user_err_msg' && 'classlist_table' in event_listeners) {
+						document
+							.getElementById('classlist-table')
+							?.removeEventListener('change', event_listeners.classlist_table);
+						delete event_listeners.classlist_table;
+					}
 				} else {
 					element?.classList.remove('is-invalid');
-					element?.removeEventListener('change', hide_errors);
+					if (element.id in event_listeners) {
+						element?.removeEventListener('change', event_listeners[element.id]);
+						delete event_listeners[element.id];
+					}
 				}
 			}
 		};
@@ -60,12 +73,13 @@
 		}
 		const err_msg = document.getElementById('select_user_err_msg');
 		err_msg?.classList.remove('d-none');
-		document
-			.getElementById('classlist-table')
-			?.addEventListener(
-				'change',
-				hide_errors(['filter_select', 'edit_select', 'password_select', 'export_select_scope'], [err_msg])
+		if (!('classlist_table' in event_listeners)) {
+			event_listeners.classlist_table = hide_errors(
+				['filter_select', 'edit_select', 'password_select', 'export_select_scope'],
+				[err_msg]
 			);
+			document.getElementById('classlist-table')?.addEventListener('change', event_listeners.classlist_table);
+		}
 		return false;
 	};
 
@@ -120,10 +134,11 @@
 	// Remove all error messages when changing tabs.
 	for (const tab of document.querySelectorAll('a[data-bs-toggle="tab"]')) {
 		tab.addEventListener('shown.bs.tab', () => {
-			hide_errors(
-				[],
-				document.getElementById('user-list-form')?.querySelectorAll('div[id$=_err_msg], .is-invalid')
-			)();
+			if (Object.keys(event_listeners) != 0)
+				hide_errors(
+					[],
+					document.getElementById('user-list-form')?.querySelectorAll('div[id$=_err_msg], .is-invalid')
+				)();
 		});
 	}
 })();

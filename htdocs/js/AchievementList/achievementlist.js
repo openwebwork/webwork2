@@ -1,5 +1,8 @@
 (() => {
 	// Action form validation.
+	// Store event listeners so they can be removed.
+	const event_listeners = {};
+
 	const show_errors = (ids, elements) => {
 		for (const id of ids) elements.push(document.getElementById(id));
 		for (const element of elements) {
@@ -7,7 +10,10 @@
 				element?.classList.remove('d-none');
 			} else {
 				element?.classList.add('is-invalid');
-				element?.addEventListener('change', hide_errors([], elements));
+				if (!(element.id in event_listeners)) {
+					event_listeners[element.id] = hide_errors([], elements);
+					element?.addEventListener('change', event_listeners[element.id]);
+				}
 			}
 		}
 	};
@@ -18,11 +24,18 @@
 			for (const element of elements) {
 				if (element?.id.endsWith('_err_msg')) {
 					element?.classList.add('d-none');
-					if (element.id === 'select_achievement_err_msg')
-						document.getElementById('achievement-table')?.removeEventListener('change', hide_errors);
+					if (element.id === 'select_achievement_err_msg' && 'achievement_table' in event_listeners) {
+						document
+							.getElementById('achievement-table')
+							?.removeEventListener('change', event_listeners.achievement_table);
+						delete event_listeners.achievement_table;
+					}
 				} else {
 					element?.classList.remove('is-invalid');
-					element?.removeEventListener('change', hide_errors);
+					if (element.id in event_listeners) {
+						element?.removeEventListener('change', event_listeners[element.id]);
+						delete event_listeners[element.id];
+					}
 				}
 			}
 		};
@@ -34,15 +47,13 @@
 		}
 		const err_msg = document.getElementById('select_achievement_err_msg');
 		err_msg?.classList.remove('d-none');
-		document
-			.getElementById('achievement-table')
-			?.addEventListener(
-				'change',
-				hide_errors(
-					['filter_select', 'edit_select', 'assign_select', 'export_select', 'score_select'],
-					[err_msg]
-				)
+		if (!('achievement_table' in event_listeners)) {
+			event_listeners.achievement_table = hide_errors(
+				['filter_select', 'edit_select', 'assign_select', 'export_select', 'score_select'],
+				[err_msg]
 			);
+			document.getElementById('achievement-table')?.addEventListener('change', event_listeners.achievement_table);
+		}
 		return false;
 	};
 
@@ -108,10 +119,11 @@
 	// Remove all error messages when changing tabs.
 	for (const tab of document.querySelectorAll('a[data-bs-toggle="tab"]')) {
 		tab.addEventListener('shown.bs.tab', () => {
-			hide_errors(
-				[],
-				document.getElementById('achievement-list')?.querySelectorAll('div[id$=_err_msg], .is-invalid')
-			)();
+			if (Object.keys(event_listeners).length != 0)
+				hide_errors(
+					[],
+					document.getElementById('achievement-list')?.querySelectorAll('div[id$=_err_msg], .is-invalid')
+				)();
 		});
 	}
 
