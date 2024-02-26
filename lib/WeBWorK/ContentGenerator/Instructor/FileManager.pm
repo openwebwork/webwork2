@@ -588,20 +588,11 @@ sub unpack_archive ($c, $archive) {
 	return $num_extracted == @members;
 }
 
-# Make a new file and edit it
+# Open the edit page with no contents. This does not actually create a file.
+# That is done when the user clicks save on the edit page.
 sub NewFile ($c) {
-	if ($c->param('confirmed')) {
-		my $name = $c->param('name');
-		if (my $file = $c->verifyName($name, 'file')) {
-			if (open(my $NEWFILE, '>:encoding(UTF-8)', $file)) {
-				close $NEWFILE;
-				return $c->RefreshEdit('', $name);
-			} else {
-				$c->addbadmessage($c->maketext(q{Can't create file: [_1]}, $!));
-			}
-		}
-	}
-
+	return $c->RefreshEdit('', $c->param('name'))
+		if $c->param('confirmed') && $c->verifyName($c->param('name'), 'file');
 	return $c->Confirm($c->maketext('New file name:'), '', $c->maketext('New File'));
 }
 
