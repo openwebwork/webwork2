@@ -138,7 +138,7 @@ async sub get_access_token ($self) {
 	my $jwt = eval {
 		encode_jwt(
 			payload => {
-				aud => $ce->{LTI}{v1p3}{AccessTokenURL},
+				aud => $ce->{LTI}{v1p3}{AccessTokenAUD},
 				iss => $c->url_for('root')->to_abs->to_string,
 				sub => $ce->{LTI}{v1p3}{ClientID},
 				jti => $private_key->{kid}
