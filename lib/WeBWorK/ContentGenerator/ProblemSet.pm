@@ -26,6 +26,7 @@ problem set.
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(path_is_subdir is_restricted wwRound before between after grade_set format_set_name_display);
 use WeBWorK::Utils::Rendering qw(renderPG);
+use WeBWorK::DB::Utils qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Localize;
 
 async sub initialize ($c) {
@@ -195,9 +196,10 @@ sub gateway_body ($c) {
 	my $timeInterval     = $set->time_interval || 0;
 	my @versionData;
 
-	my @setVersions =
-		$db->getMergedSetVersionsWhere({ user_id => $effectiveUser, set_id => { like => $set->set_id . ',v%' } },
-			\q{(SUBSTRING(set_id,INSTR(set_id,',v')+2)+0)});
+	my @setVersions = $db->getMergedSetVersionsWhere(
+		{ user_id => $effectiveUser, set_id => { like => $set->set_id . ',v%' } },
+		\grok_versionID_from_vsetID_sql($db->{set_version_merged}->sql->_quote('set_id'))
+	);
 
 	for my $verSet (@setVersions) {
 		# Count number of versions in current timeInterval
