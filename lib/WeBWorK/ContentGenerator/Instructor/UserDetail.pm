@@ -90,10 +90,14 @@ sub initialize ($c) {
 				unless ($rh_dates->{error}) {
 					# If no error update database
 					for my $field (@{ DATE_FIELDS_ORDER() }) {
-						if (defined $c->param("set.$setID.$field.override")) {
+						if (defined $c->param("set.$setID.$field.override") && $c->param("set.$setID.$field") ne '') {
 							$userSetRecord->$field($rh_dates->{$field});
 						} else {
 							$userSetRecord->$field(undef);    #stop override
+
+							# Update the parameters so the user interface reflects the changes made.
+							$c->param("set.$setID.$field.override", undef);
+							$c->param("set.$setID.$field",          undef);
 						}
 					}
 					$db->putUserSet($userSetRecord);
@@ -110,17 +114,21 @@ sub initialize ($c) {
 						if (defined $action) {
 							if ($action eq 'assigned') {
 								# This version is not to be deleted.
-								# Check to see if we're resetting the dates for this version.
+								# Check to see if the dates have been changed for this version.
+								# Note that dates are never reset (set to NULL) for a set version.
 								my $rh_dates = $c->checkDates($setVersionRecord, "$setID,v$ver");
 								unless ($rh_dates->{error}) {
 									for my $field (@{ DATE_FIELDS_ORDER() }) {
-										if (defined($c->param("set.$setID,v$ver.$field.override"))) {
-											$setVersionRecord->$field($rh_dates->{$field});
-										} else {
-											$setVersionRecord->$field(undef);
-										}
+										$setVersionRecord->$field($rh_dates->{$field})
+											if defined $c->param("set.$setID,v$ver.$field.override")
+											&& $c->param("set.$setID,v$ver.$field") ne '';
 									}
 									$db->putSetVersion($setVersionRecord);
+								}
+								# Reset the date inputs to the date in the database if they were empty.
+								for my $field (@{ DATE_FIELDS_ORDER() }) {
+									$c->param("set.$setID,v$ver.$field", $setVersionRecord->$field)
+										unless $c->param("set.$setID,v$ver.$field");
 								}
 							} elsif ($action eq 'delete') {
 								# Delete this version.
@@ -168,24 +176,26 @@ sub initialize ($c) {
 }
 
 sub checkDates ($c, $setRecord, $setID) {
-	my $error = 0;
-
 	# For each of the dates, use the override date if set.  Otherwise use the value from the global set.
+	# Except in the case that this is a set version. In that case use 0 which will result in an error below.
+	# This will prevent the dates for the set version from being changed to invalid values in that case.
 	my %dates;
 	for my $field (@{ DATE_FIELDS_ORDER() }) {
 		$dates{$field} =
 			(defined $c->param("set.$setID.$field.override") && $c->param("set.$setID.$field") ne '')
 			? $c->param("set.$setID.$field")
-			: $setRecord->$field;
+			: ($setID =~ /,v\d+$/ ? 0 : $setRecord->$field);
 	}
 
 	my ($open_date, $reduced_scoring_date, $due_date, $answer_date) = map { $dates{$_} } @{ DATE_FIELDS_ORDER() };
 
 	unless ($answer_date && $due_date && $open_date) {
-		$c->addbadmessage("set $setID has errors in its dates: answer_date |$answer_date|, "
-				. "due date |$due_date|, open_date |$open_date|");
-		$error = 1;
+		$c->addbadmessage("Set $setID has errors in its dates: "
+				. "open_date |$open_date|, due date |$due_date|, answer_date |$answer_date|");
+		return { %dates, error => 1 };
 	}
+
+	my $error = 0;
 
 	if ($answer_date < $due_date || $answer_date < $open_date) {
 		$c->addbadmessage("Answers cannot be made available until on or after the due date in set $setID!");
@@ -205,22 +215,7 @@ sub checkDates ($c, $setRecord, $setID) {
 		$error = 1;
 	}
 
-	# Make sure the dates are not more than 10 years in the future.
-	my $cutoff = time + 31_556_926 * 10;
-	if ($open_date > $cutoff) {
-		$c->addbadmessage("Error: open date cannot be more than 10 years from now in set $setID");
-		$error = 1;
-	}
-	if ($due_date > $cutoff) {
-		$c->addbadmessage("Error: due date cannot be more than 10 years from now in set $setID");
-		$error = 1;
-	}
-	if ($answer_date > $cutoff) {
-		$c->addbadmessage("Error: answer date cannot be more than 10 years from now in set $setID");
-		$error = 1;
-	}
-
-	$c->addbadmessage('No date changes were saved!') if ($error);
+	$c->addbadmessage('No date changes were saved!') if $error;
 
 	return { %dates, error => $error };
 }

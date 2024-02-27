@@ -10,7 +10,9 @@
 <table>
 	<tr>
 		<th scope="col" colspan="3">
-			<%= maketext("User overrides") =%>
+			% if (defined $userRecord) {
+				<%= maketext("User overrides") =%>
+			% }
 		</th>
 		<th scope="col">
 			<%= maketext("Set values") =%>
