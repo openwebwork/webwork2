@@ -202,9 +202,9 @@ sub get_credentials ($self) {
 	}
 
 	# Get the target_link_uri from the claims.
-	$c->stash->{LTILauncRedirect} = $claims->{'https://purl.imsglobal.org/spec/lti/claim/target_link_uri'};
+	$c->stash->{LTILaunchRedirect} = $claims->{'https://purl.imsglobal.org/spec/lti/claim/target_link_uri'};
 
-	unless (defined $c->stash->{LTILauncRedirect}) {
+	unless (defined $c->stash->{LTILaunchRedirect}) {
 		$self->{error} = $c->maketext(
 			'There was an error during the login process.  Please speak to your instructor or system administrator.');
 		warn 'LTI is not properly configured (failed to obtain target_link_uri). '
@@ -215,7 +215,7 @@ sub get_credentials ($self) {
 
 	# Get the courseID from the target_link_uri and verify that it is the same as the one that was in the state.
 	my $location = $c->location;
-	my $target   = $c->url_for($c->stash->{LTILauncRedirect})->path;
+	my $target   = $c->url_for($c->stash->{LTILaunchRedirect})->path;
 	my $courseID;
 	$courseID = $1 if $target =~ m|$location/([^/]*)|;
 
