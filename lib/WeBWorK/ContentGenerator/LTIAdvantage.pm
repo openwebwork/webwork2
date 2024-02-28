@@ -24,7 +24,7 @@ sub login ($c) {
 }
 
 sub launch ($c) {
-	return $c->redirect_to($c->systemLink($c->url_for($c->stash->{LTILauncRedirect})));
+	return $c->redirect_to($c->systemLink($c->url_for($c->stash->{LTILaunchRedirect})));
 }
 
 sub keys ($c) {
