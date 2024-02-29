@@ -1,4 +1,12 @@
 ---
+# Make sure to change this to your own secret.  Any long random string of
+# characters will work.  Note that you can add new secrets to this list, and it
+# is recommended that you do so once in a while. Only add to the beginning of
+# the list (and move the old secrets down).  The first secret is the only one
+# that will be used for signing new cookies, but the old secrets will be used
+# for validating signatures on existing cookies. Eventually the old secrets
+# should be removed (roughly after the length of time set for $CookieLifeTime in
+# localOverrides.conf or defaults.config).
 secrets:
   - 607280d0b2c621220b554a1c6ed123aa1a96f2de
 
