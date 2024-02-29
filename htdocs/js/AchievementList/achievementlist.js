@@ -63,7 +63,6 @@
 			const filter_select = document.getElementById('filter_select');
 			const filter = filter_select?.value || '';
 			const filter_text = document.getElementById('filter_text');
-			const filter_category = document.getElementById('filter_category');
 			if (filter === 'selected' && !is_achievement_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
@@ -72,10 +71,6 @@
 				e.preventDefault();
 				e.stopPropagation();
 				show_errors(['filter_text_err_msg'], [filter_select, filter_text]);
-			} else if (filter === 'match_category' && filter_category?.value === '') {
-				e.preventDefault();
-				e.stopPropagation();
-				show_errors(['filter_category_err_msg'], [filter_select, filter_category]);
 			}
 		} else if (['edit', 'assign', 'export', 'score'].includes(action)) {
 			const action_select = document.getElementById(`${action}_select`);

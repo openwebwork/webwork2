@@ -27,17 +27,17 @@
 	<div id="filter_text_err_msg" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">
 		<%= maketext('Please enter a list of IDs to match.') %>
 	</div>
+	% my @categories = $c->db->getAchievementCategories;
+	% for (@categories) {
+		% $_ = [$_ => $_];
+	% }
 	<div id="filter_category_elements" class="row mb-2">
 		<%= label_for 'filter_category', class => 'col-form-label col-form-label-sm col-sm-auto', begin =%>
-			<%= maketext('Match on which category? (enter in exact match)') =%>
-			<span class="required-field">*</span>
+			<%= maketext('Match on which category?') =%>
 		<% end =%>
 		<div class="col-auto">
-			<%= text_field 'action.filter.category' => '', id => 'filter_category', 'aria-required' => 'true',
-				class => 'form-control form-control-sm', dir => 'ltr' =%>
+			<%= select_field 'action.filter.category' => \@categories,
+				id => 'filter_category', class => 'form-select form-select-sm' =%>
 		</div>
-	</div>
-	<div id="filter_category_err_msg" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">
-		<%= maketext('Please enter a category to match.') %>
 	</div>
 </div>

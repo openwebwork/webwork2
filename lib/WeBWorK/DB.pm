@@ -1290,6 +1290,11 @@ sub getAchievements {
 	return $self->{achievement}->gets(map { [$_] } @achievementIDs);
 }
 
+sub getAchievementCategories {
+	my ($self) = shift->checkArgs(\@_);
+	return map {@$_} $self->{achievement}->get_fields_where("DISTINCT category", undef, "category");
+}
+
 sub addAchievement {
 	my ($self, $Achievement) = shift->checkArgs(\@_, qw/REC:achievement/);
 
