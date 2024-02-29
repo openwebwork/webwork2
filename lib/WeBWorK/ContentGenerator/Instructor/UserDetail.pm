@@ -24,6 +24,7 @@ WeBWorK::ContentGenerator::Instructor::UserDetail - Detailed User specific infor
 
 use WeBWorK::Utils qw(x);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
+use WeBWorK::DB::Utils qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Debug;
 
 # We use the x function to mark strings for localizaton
@@ -158,7 +159,7 @@ sub initialize ($c) {
 		$c->{mergedVersions}{$setID} = [
 			$db->getMergedSetVersionsWhere(
 				{ user_id => $editForUserID, set_id => { like => "$setID,v\%" } },
-				\q{(SUBSTRING(set_id,INSTR(set_id,',v')+2)+0)}
+				\grok_versionID_from_vsetID_sql($db->{set_version_merged}->sql->_quote('set_id'))
 			)
 		];
 	}
