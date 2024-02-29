@@ -5,6 +5,9 @@
 	toastContainer.style.zIndex = 20;
 	document.body.append(toastContainer);
 
+	// Setup reference link tooltips.
+	document.querySelectorAll('.reference-link').forEach((el) => new bootstrap.Tooltip(el));
+
 	// Convenience method for showing messages in a Bootstrap toast.
 	const showMessage = (message, success = false) => {
 		if (!message) return;

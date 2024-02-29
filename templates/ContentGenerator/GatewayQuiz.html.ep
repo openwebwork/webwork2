@@ -4,8 +4,8 @@
 % use WeBWorK::AchievementEvaluator qw(checkForAchievements);
 %
 % content_for css => begin
-	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'achievements.css' }) =%>
-	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'gateway.css' }) =%>
+	<%= stylesheet getAssetURL($ce, 'js/Achievements/achievements.css') =%>
+	<%= stylesheet getAssetURL($ce, 'js/GatewayQuiz/gateway.css') =%>
 	% # Output css for jquery-ui for problems to use.
 	<%= stylesheet getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.css') =%>
 	%

@@ -29,4 +29,9 @@
 			submit.click();
 		});
 	}
+
+	// Insertable macro toast
+	document.getElementById('insertable-macros-btn')?.addEventListener('click', () => {
+		new bootstrap.Toast(document.getElementById('insertable-macros'), { autohide: false }).show();
+	});
 })();

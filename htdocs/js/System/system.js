@@ -83,15 +83,6 @@
 		.querySelectorAll('.student-nav-button')
 		.forEach((el) => new bootstrap.Tooltip(el, { trigger: 'hover', fallbackPlacements: [] }));
 
-	// Sets up problems to rescale the image accoring to attr height width and not native height width.
-	const rescaleImage = (_index, element) => {
-		if (element.height != element.naturalHeight || element.width != element.naturalWidth) {
-			element.height = (element.getBoundingClientRect().width * element.height) / element.width;
-		}
-	};
-	document.querySelectorAll('.problem-content img').forEach(rescaleImage);
-	window.addEventListener('resize', () => document.querySelectorAll('.problem-content img').forEach(rescaleImage));
-
 	// Homework sets editor config
 	// FIXME: These are really general purpose tooltips and not just in the homework sets editor.  So the class name
 	// should be chosen to better reflect this.
@@ -103,20 +94,6 @@
 	document
 		.querySelectorAll('.hardcopy-tooltip')
 		.forEach((el) => new bootstrap.Tooltip(el, { trigger: 'hover', fallbackPlacements: [], html: true }));
-
-	// PG Problem Editor
-	document.querySelectorAll('.reference-link').forEach((el) => new bootstrap.Tooltip(el));
-
-	// SendMail insertable macro toast
-	document.getElementById('insertable-macros-btn')?.addEventListener('click', () => {
-		new bootstrap.Toast(document.getElementById('insertable-macros'), { autohide: false }).show();
-	});
-
-	// For accessibility we need to change single answer aria labels to "answer" and not "answer 1"
-	// FIXME: The correct aria-label should be inserted by PG to begin with.  This hack will not work if there is more
-	// than one problem on the page.
-	const codeshards = document.querySelectorAll('.codeshard');
-	if (codeshards.length == 1) codeshards[0].setAttribute('aria-label', 'answer');
 
 	const messages = document.querySelectorAll('#message .alert-dismissible, #message_bottom .alert-dismissible');
 	if (messages.length) {

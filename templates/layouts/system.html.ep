@@ -28,7 +28,7 @@
 	type => 'webwork', name => 'htdocs',
 	file => 'node_modules/@fortawesome/fontawesome-free/css/all.min.css'
 }) =%>
-<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'math4.css' }) =%>
+<%= stylesheet $c->url({ type => 'webwork', name => 'htdocs', file => 'js/System/system.css' }) =%>
 <%= content 'css' =%>
 % if ($c->exists_theme_file('math4-overrides.css')) {
 	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'math4-overrides.css' }) =%>
@@ -47,7 +47,7 @@
 	type => 'webwork', name => 'htdocs',
 	file => 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'
 	}), defer => undef =%>
-<%= javascript $c->url({ type => 'webwork', name => 'theme', file => 'math4.js' }), defer => undef =%>
+<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/System/system.js' }), defer => undef =%>
 <%= content 'js' =%>
 % if ($c->exists_theme_file('math4-overrides.js')) {
 	<%= javascript $c->url({ type => 'webwork', name => 'theme', file => 'math4-overrides.js' }), defer => undef =%>
