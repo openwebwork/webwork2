@@ -5,7 +5,7 @@
 % my $isVersioned = $isGateway && defined $mergedRecord && $mergedRecord->can('version_id');
 % $setID .= ',v' . $mergedRecord->version_id if $isVersioned;
 %
-<table <%== $isVersioned ? ' class="ms-auto"' : '' %>>
+<table>
 	<tr>
 		% unless ($isVersioned) {
 			<th scope="col" colspan="2">
@@ -13,7 +13,16 @@
 			</th>
 		% }
 		% if (defined $userRecord) {
-			<th scope="col" <%== (defined $userRecord && !$isVersioned) ? '' : 'colspan="2"' %>>
+			<th scope="col" <%== defined $userRecord && !$isVersioned ? '' : 'colspan="2"' %>>
+				% if ($isVersioned) {
+					<a tabindex="0" class="help-popup" role="button" data-bs-toggle="popover" data-bs-trigger="focus"
+						data-bs-content="<%= maketext(
+							'If the test was timed, granting the user an additional version '
+							. 'may be preferred to changing its dates.' )%>">
+						<i class="icon fa-solid fa-question-circle fa-lg" aria-hidden="true"></i><% =%>\
+						<span class="visually-hidden"><%= maketext('Help Icon') %></span><% =%>\
+					</a>
+				% }
 				<%= $isVersioned ? maketext(q{User's Test Version Dates}) : maketext('User Overrides') =%>
 			</th>
 		% }
@@ -48,8 +57,7 @@
 						<%= text_field "set.$setID.$field" =>
 								defined $userRecord ? $userRecord->$field : $globalValue,
 							id          => "set.$setID.${field}_id",
-							class       => 'form-control w-auto'
-									. ($field eq 'open_date' ? ' datepicker-group' : ''),
+							class       => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
 							placeholder => $isGateway
 								? ($isVersioned && $field ne 'reduced_scoring_date'
 									? maketext('Required')
