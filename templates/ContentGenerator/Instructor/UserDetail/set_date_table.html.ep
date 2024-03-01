@@ -1,22 +1,22 @@
 % my $setID = $globalRecord->set_id;
 %
 % # Modify set id to include the version if this is a versioned set.
-% my $isVersioned = 0;
-% if (defined $mergedRecord && $mergedRecord->assignment_type =~ /gateway/ && $mergedRecord->can('version_id')) {
-	% $setID .= ',v' . $mergedRecord->version_id;
-	% $isVersioned = 1;
-% }
+% my $isGateway   = $globalRecord->assignment_type =~ /gateway/;
+% my $isVersioned = $isGateway && defined $mergedRecord && $mergedRecord->can('version_id');
+% $setID .= ',v' . $mergedRecord->version_id if $isVersioned;
 %
 <table>
 	<tr>
-		<th scope="col" colspan="3">
-			% if (defined $userRecord) {
-				<%= maketext("User overrides") =%>
-			% }
-		</th>
-		<th scope="col">
-			<%= maketext("Set values") =%>
-		</th>
+		% if (defined $userRecord) {
+			<th scope="col" colspan="2">
+				<%= $isVersioned ? maketext(q{User's Test Version Dates}) : maketext('User Overrides') =%>
+			</th>
+		% }
+		% unless ($isVersioned) {
+			<th scope="col" <%== defined $userRecord ? '' : 'colspan="2"' %>>
+				<%= $isGateway ? maketext('Test Dates') : maketext('Assignment Dates') =%>
+			</th>
+		% }
 	</tr>
 	% for my $field (@$fields) {
 		% # Skip reduced credit dates for sets which don't have them.
@@ -28,33 +28,24 @@
 			% my $globalValue = $globalRecord->$field;
 			%
 			<td class="px-1 text-nowrap">
-				% if (defined $userRecord) {
-					<%= label_for "set.$setID.$field.override_id" => maketext($fieldLabels->{$field}),
-						class => 'form-check-label' =%>
-				% } else {
-					<%= maketext($fieldLabels->{$field}) =%>
-				% }
+				<%= label_for "set.$setID.$field" . (defined $userRecord ? '_id' : '.class_value') =>
+						maketext($fieldLabels->{$field}),
+					class => 'form-label mb-0' =%>
 			</td>
-			<td class="px-1 text-nowrap">
-				% if (defined $userRecord) {
-					<%= check_box "set.$setID.$field.override" => $field,
-						id => "set.$setID.$field.override_id", class => 'form-check-input',
-						(defined $mergedRecord ? $mergedRecord->$field : $globalValue) ne $globalValue
-						|| ($isVersioned && $field ne 'reduced_scoring_date')
-						? (checked => undef)
-						: () =%>
-				% }
-			</td>
-			<td class="px-1 text-nowrap">
-				% if (defined $userRecord) {
+			% if (defined $userRecord) {
+				<td class="px-1 text-nowrap">
 					<div class="input-group input-group-sm flex-nowrap flatpickr">
 						<%= text_field "set.$setID.$field" =>
 								defined $userRecord ? $userRecord->$field : $globalValue,
 							id          => "set.$setID.${field}_id",
-							placeholder => maketext('None Specified'),
 							class       => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+							placeholder => $isGateway
+								? ($isVersioned && $field ne 'reduced_scoring_date'
+									? maketext('Required')
+								   	: maketext('Test Default'))
+								: maketext('Assignment Default'),
+							$isVersioned && $field ne 'reduced_scoring_date' ? (required => undef) : (),
 							data => {
-								override  => "set.$setID.$field.override_id",
 								input      => undef,
 								done_text  => maketext('Done'),
 								today_text => maketext('Today'),
@@ -62,15 +53,22 @@
 								locale     => $ce->{language},
 								timezone   => $ce->{siteDefaults}{timezone}
 							} =%>
-						<a class="btn btn-secondary btn-sm" data-toggle><i class="fas fa-calendar-alt"></i></a>
+						<a class="btn btn-secondary btn-sm" data-toggle tabindex="0" role="button"
+							aria-label="<%= $c->maketext('Pick date and time') %>">
+							<i class="fas fa-calendar-alt"></i>
+						</a>
 					</div>
-				% }
-			</td>
-			<td class="px-1 text-nowrap">
-				<span dir="ltr">
-					<%= $c->formatDateTime($globalValue, 'datetime_format_short') =%>
-				</span>
-			</td>
+				</td>
+			% }
+			% unless ($isVersioned) {
+				<td class="px-1 text-nowrap">
+					<%= text_field "set.$setID.$field.class_value" =>
+							$c->formatDateTime($globalValue, 'datetime_format_short'),
+						id => "set.$setID.$field.class_value", readonly => undef, dir => 'ltr',
+						class => 'form-control form-control-sm w-auto',
+						defined $userRecord ? ('aria-labelledby' => "set.$setID.${field}_id") : () =%>
+				</td>
+			% }
 		</tr>
 	% }
 </table>

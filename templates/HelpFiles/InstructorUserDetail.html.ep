@@ -27,7 +27,8 @@
 		. 'date in order to override the date. (You can copy the date format from the date in the right hand column '
 		. 'which indicates the date when the homework set is due for the whole class.) Note that you should ensure '
 		. 'that the close date is before the answer date. If the close date for a student is extended until after the '
-		. 'class answer date for the set, then the answer date for the student must also be set to a later date. ') =%>
+		. 'class answer date for the set, then the answer date for the student must also be set to a later date. '
+		. 'If a date is left empty, then the assignment default date will be used.') =%>
 </p>
 <p class="mb-0">
 	<%= maketext('Click on the homework set links to edit the grades for this individual student on the homework set. '

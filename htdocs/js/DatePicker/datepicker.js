@@ -112,6 +112,14 @@
 					// input to fix that.
 					this.altInput.after(this.input);
 
+					// Move the id of the now hidden input onto the added input so the labels still work.
+					this.altInput.id = this.input.id;
+
+					// Remove the placeholder from the hidden input.  Flatpickr has copied that to the added input, and
+					// that isn't valid on a hidden input.
+					this.input.removeAttribute('id');
+					this.input.removeAttribute('placeholder');
+
 					// Make the alternate input left-to-right even for right-to-left languages.
 					this.altInput.dir = 'ltr';
 

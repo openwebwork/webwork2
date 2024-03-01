@@ -31,7 +31,7 @@ use WeBWorK::Debug;
 use constant DATE_FIELDS => {
 	open_date            => x('Open:'),
 	reduced_scoring_date => x('Reduced:'),
-	due_date             => x('Closes:'),
+	due_date             => x('Close:'),
 	answer_date          => x('Answer:')
 };
 use constant DATE_FIELDS_ORDER => [qw(open_date reduced_scoring_date due_date answer_date )];
@@ -90,14 +90,11 @@ sub initialize ($c) {
 				unless ($rh_dates->{error}) {
 					# If no error update database
 					for my $field (@{ DATE_FIELDS_ORDER() }) {
-						if (defined $c->param("set.$setID.$field.override") && $c->param("set.$setID.$field") ne '') {
+						if ($c->param("set.$setID.$field") && $c->param("set.$setID.$field") ne '') {
 							$userSetRecord->$field($rh_dates->{$field});
 						} else {
-							$userSetRecord->$field(undef);    #stop override
-
-							# Update the parameters so the user interface reflects the changes made.
-							$c->param("set.$setID.$field.override", undef);
-							$c->param("set.$setID.$field",          undef);
+							# Stop override
+							$userSetRecord->$field(undef);
 						}
 					}
 					$db->putUserSet($userSetRecord);
@@ -120,8 +117,8 @@ sub initialize ($c) {
 								unless ($rh_dates->{error}) {
 									for my $field (@{ DATE_FIELDS_ORDER() }) {
 										$setVersionRecord->$field($rh_dates->{$field})
-											if defined $c->param("set.$setID,v$ver.$field.override")
-											&& $c->param("set.$setID,v$ver.$field") ne '';
+											if ($c->param("set.$setID,v$ver.$field")
+												&& $c->param("set.$setID,v$ver.$field") ne '');
 									}
 									$db->putSetVersion($setVersionRecord);
 								}
@@ -182,7 +179,7 @@ sub checkDates ($c, $setRecord, $setID) {
 	my %dates;
 	for my $field (@{ DATE_FIELDS_ORDER() }) {
 		$dates{$field} =
-			(defined $c->param("set.$setID.$field.override") && $c->param("set.$setID.$field") ne '')
+			($c->param("set.$setID.$field") && $c->param("set.$setID.$field") ne '')
 			? $c->param("set.$setID.$field")
 			: ($setID =~ /,v\d+$/ ? 0 : $setRecord->$field);
 	}
