@@ -1,6 +1,5 @@
 % use WeBWorK::Utils qw(format_set_name_display);
 %
-% # my ($set, $userSet, $mergedSet, $version) = @_;
 % my $setID   = $set->set_id;
 % my $isGateway = $set->assignment_type =~ /gateway/;
 % my $version = stash 'version';

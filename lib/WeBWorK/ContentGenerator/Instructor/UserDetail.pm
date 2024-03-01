@@ -187,32 +187,40 @@ sub checkDates ($c, $setRecord, $setID) {
 	my ($open_date, $reduced_scoring_date, $due_date, $answer_date) = map { $dates{$_} } @{ DATE_FIELDS_ORDER() };
 
 	unless ($answer_date && $due_date && $open_date) {
-		$c->addbadmessage("Set $setID has errors in its dates: "
-				. "open_date |$open_date|, due date |$due_date|, answer_date |$answer_date|");
+		$c->addbadmessage($c->maketext(
+			'Set [_1] has errors in its dates. Open Date: [_2] , Close Date: [_3], Answer Date: [_4]',
+			$setID,
+			map { $_ ? $c->formatDateTime($_, 'datetime_format_short') : $c->maketext('required') }
+				($open_date, $due_date, $answer_date)
+		));
 		return { %dates, error => 1 };
 	}
 
 	my $error = 0;
 
-	if ($answer_date < $due_date || $answer_date < $open_date) {
-		$c->addbadmessage("Answers cannot be made available until on or after the due date in set $setID!");
-		$error = 1;
-	}
-
-	if ($due_date < $open_date) {
-		$c->addbadmessage("Answers cannot be due until on or after the open date in set $setID!");
-		$error = 1;
-	}
-
 	if ($c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 		&& $setRecord->enable_reduced_scoring
 		&& ($reduced_scoring_date < $open_date || $reduced_scoring_date > $due_date))
 	{
-		$c->addbadmessage("The reduced scoring date should be between the open date and the due date in set $setID!");
+		$c->addbadmessage($c->maketext(
+			'The reduced scoring date must be between the open date and the close date for set [_1].', $setID
+		));
 		$error = 1;
 	}
 
-	$c->addbadmessage('No date changes were saved!') if $error;
+	if ($due_date < $open_date) {
+		$c->addbadmessage($c->maketext('The close date must be on or after the open date for set [_1].', $setID));
+		$error = 1;
+	}
+
+	if ($answer_date < $due_date) {
+		$c->addbadmessage(
+			$c->maketext('Answers cannot be made available until on or after the close date for set [_1].', $setID)
+		);
+		$error = 1;
+	}
+
+	$c->addbadmessage($c->maketext('Not saving dates for [_1]!', $setID)) if $error;
 
 	return { %dates, error => $error };
 }

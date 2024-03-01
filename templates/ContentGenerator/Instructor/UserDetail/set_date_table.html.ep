@@ -34,8 +34,6 @@
 			% && (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring} || !$globalRecord->enable_reduced_scoring);
 		%
 		<tr>
-			% my $globalValue = $globalRecord->$field;
-			%
 			<td class="px-1 text-nowrap">
 				<%= label_for "set.$setID.$field" . (defined $userRecord ? '_id' : '.class_value') =>
 						maketext($fieldLabels->{$field}),
@@ -44,7 +42,7 @@
 			% unless ($isVersioned) {
 				<td class="px-1 text-nowrap">
 					<%= text_field "set.$setID.$field.class_value" =>
-							$c->formatDateTime($globalValue, 'datetime_format_short'),
+							$c->formatDateTime($globalRecord->$field, 'datetime_format_short'),
 						id => "set.$setID.$field.class_value", readonly => undef, dir => 'ltr',
 						class => 'form-control-plaintext form-control-sm w-auto',
 						size => 16,
@@ -54,8 +52,7 @@
 			% if (defined $userRecord) {
 				<td class="px-1 text-nowrap">
 					<div class="input-group input-group-sm flex-nowrap flatpickr">
-						<%= text_field "set.$setID.$field" =>
-								defined $userRecord ? $userRecord->$field : $globalValue,
+						<%= text_field "set.$setID.$field" => $userRecord->$field,
 							id          => "set.$setID.${field}_id",
 							class       => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
 							placeholder => $isGateway
