@@ -2,29 +2,40 @@
 %
 % # my ($set, $userSet, $mergedSet, $version) = @_;
 % my $setID   = $set->set_id;
+% my $isGateway = $set->assignment_type =~ /gateway/;
 % my $version = stash 'version';
 <tr>
-	<td class="text-center">
-		<label class="form-check-label">
-			<%= check_box $version ? "set.$setID,v$version.assignment" : "set.$setID.assignment" => 'assigned',
-				class => 'form-check-input', defined $mergedSet ? (checked => undef) : () =%>
-		</label>
-	</td>
-	<td class="text-center">
+	<th class="text-center" scope="row">
 		% if (defined $mergedSet) {
-			<b dir="ltr">
+			<span dir="ltr">
+				% if ($isGateway) {
+					<i class="icon fa-solid fa-list-check" title="<%= maketext('Test/Quiz') %>"></i>
+					<span class="visually-hidden"><%= maketext('Test/Quiz') %></span>
+				% }
 				<%= link_to format_set_name_display($version ? "$setID (version $version)" : $setID) =>
 					$c->systemLink(
 						url_for('instructor_set_detail', setID => $setID . ($version ? ",v$version" : '')),
 						params => { editForUser => $userID }
 					) =%>
-			</b>
+			</span>
 			% if ($version) {
 				<%= hidden_field "set.$setID,v$version.assignment" => 'delete' =%>
 			% }
 		% } else {
-			<b dir="ltr"><%= format_set_name_display($setID) %></b>
+			<span dir="ltr">
+				% if ($isGateway) {
+					<i class="icon fa-solid fa-list-check" title="<%= maketext('Test/Quiz') %>"></i>
+					<span class="visually-hidden"><%= maketext('Test/Quiz') %></span>
+				% }
+				<%= format_set_name_display($setID) %>
+			</span>
 		% }
+	</th>
+	<td class="text-center">
+		<label class="form-check-label">
+			<%= check_box $version ? "set.$setID,v$version.assignment" : "set.$setID.assignment" => 'assigned',
+				class => 'form-check-input', defined $mergedSet ? (checked => undef) : () =%>
+		</label>
 	</td>
 	<td class="text-center">
 		<%= include 'ContentGenerator/Instructor/UserDetail/set_date_table',

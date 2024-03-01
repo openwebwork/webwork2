@@ -83,16 +83,12 @@
 	</div>
 	%
 	<div class="table-responsive">
-		<table class="table table-bordered table-sm font-sm align-middle">
+		<table class="table table-bordered table-sm font-sm align-middle w-auto caption-top">
+			<caption><%= maketext("Sets assigned to [_1] ([_2])", $userName, $userID) =%></caption>
 			<tr>
-				<th class="text-center" colspan="3">
-					<%= maketext("Sets assigned to [_1] ([_2])", $userName, $userID) =%>
-				</th>
-			</tr>
-			<tr>
+				<th class="text-center"><%= maketext('Assignment') %></th>
 				<th class="text-center"><%= maketext('Assigned') %></th>
-				<th><%= maketext("Edit set for [_1]", $userID) %></th>
-				<th><%= maketext('Dates') %></th>
+				<th class="text-center"><%= maketext('Dates') %></th>
 			</tr>
 			% for my $set (@{ $c->{setRecords} }) {
 				% my $setID = $set->set_id;

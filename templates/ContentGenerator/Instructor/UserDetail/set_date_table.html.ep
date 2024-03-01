@@ -5,16 +5,16 @@
 % my $isVersioned = $isGateway && defined $mergedRecord && $mergedRecord->can('version_id');
 % $setID .= ',v' . $mergedRecord->version_id if $isVersioned;
 %
-<table>
+<table <%== $isVersioned ? ' class="ms-auto"' : '' %>>
 	<tr>
-		% if (defined $userRecord) {
+		% unless ($isVersioned) {
 			<th scope="col" colspan="2">
-				<%= $isVersioned ? maketext(q{User's Test Version Dates}) : maketext('User Overrides') =%>
+				<%= maketext('Assignment Dates') =%>
 			</th>
 		% }
-		% unless ($isVersioned) {
-			<th scope="col" <%== defined $userRecord ? '' : 'colspan="2"' %>>
-				<%= $isGateway ? maketext('Test Dates') : maketext('Assignment Dates') =%>
+		% if (defined $userRecord) {
+			<th scope="col" <%== (defined $userRecord && !$isVersioned) ? '' : 'colspan="2"' %>>
+				<%= $isVersioned ? maketext(q{User's Test Version Dates}) : maketext('User Overrides') =%>
 			</th>
 		% }
 	</tr>
@@ -32,13 +32,24 @@
 						maketext($fieldLabels->{$field}),
 					class => 'form-label mb-0' =%>
 			</td>
+			% unless ($isVersioned) {
+				<td class="px-1 text-nowrap">
+					<%= text_field "set.$setID.$field.class_value" =>
+							$c->formatDateTime($globalValue, 'datetime_format_short'),
+						id => "set.$setID.$field.class_value", readonly => undef, dir => 'ltr',
+						class => 'form-control-plaintext form-control-sm w-auto',
+						size => 16,
+						defined $userRecord ? ('aria-labelledby' => "set.$setID.${field}_id") : () =%>
+				</td>
+			% }
 			% if (defined $userRecord) {
 				<td class="px-1 text-nowrap">
 					<div class="input-group input-group-sm flex-nowrap flatpickr">
 						<%= text_field "set.$setID.$field" =>
 								defined $userRecord ? $userRecord->$field : $globalValue,
 							id          => "set.$setID.${field}_id",
-							class       => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+							class       => 'form-control w-auto'
+									. ($field eq 'open_date' ? ' datepicker-group' : ''),
 							placeholder => $isGateway
 								? ($isVersioned && $field ne 'reduced_scoring_date'
 									? maketext('Required')
@@ -58,15 +69,6 @@
 							<i class="fas fa-calendar-alt"></i>
 						</a>
 					</div>
-				</td>
-			% }
-			% unless ($isVersioned) {
-				<td class="px-1 text-nowrap">
-					<%= text_field "set.$setID.$field.class_value" =>
-							$c->formatDateTime($globalValue, 'datetime_format_short'),
-						id => "set.$setID.$field.class_value", readonly => undef, dir => 'ltr',
-						class => 'form-control form-control-sm w-auto',
-						defined $userRecord ? ('aria-labelledby' => "set.$setID.${field}_id") : () =%>
 				</td>
 			% }
 		</tr>
