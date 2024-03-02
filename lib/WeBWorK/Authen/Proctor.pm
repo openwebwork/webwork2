@@ -175,9 +175,9 @@ sub set_params {
 # rewrite the userID to include both the proctor's and the student's user ID
 # and then call the default create_session method.
 sub create_session {
-	my ($self, $userID, $newKey) = @_;
+	my ($self, $userID) = @_;
 
-	return $self->SUPER::create_session($self->proctor_key_id($userID), $newKey, $userID);
+	return $self->SUPER::create_session($self->proctor_key_id($userID), $userID);
 }
 
 # rewrite the userID to include both the proctor's and the student's user ID
