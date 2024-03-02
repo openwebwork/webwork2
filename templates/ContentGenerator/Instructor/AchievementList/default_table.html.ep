@@ -85,5 +85,9 @@
 </div>
 %
 % unless (@$achievements) {
-	<p><i><%= maketext('No achievements shown.  Create an achievement!') %></i></p>
+	% if (@{ $c->{allAchievementIDs} }) {
+		<p><em><%= maketext('No achievements shown.  Use the filter above to list achievements.') %></em></p>
+	% } else {
+		<p><em><%= maketext('No course achievements.  Create or import achievements above.') %></em></p>
+	% }
 % }
