@@ -172,10 +172,9 @@ environment.
 
 $courseOptions is a reference to a hash containing the following options:
 
- dbLayoutName         => $dbLayoutName
- PRINT_FILE_NAMES_FOR => $pg{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}
+    PRINT_FILE_NAMES_FOR => $pg{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}
 
-C<dbLayoutName> is required. C<PRINT_FILE_NAMES_FOR> is a reference to an array.
+C<PRINT_FILE_NAMES_FOR> is a reference to an array.
 
 $users is a list of arrayrefs, each containing a User, Password, and
 PermissionLevel record for a single user:
@@ -216,9 +215,6 @@ sub addCourse {
 
 	debug \@users;
 
-	# get the database layout out of the options hash
-	my $dbLayoutName = $courseOptions{dbLayoutName};
-
 	# collect some data
 	my $coursesDir = $ce->{webworkDirs}->{courses};
 	my $courseDir  = "$coursesDir/$courseID";
@@ -241,16 +237,6 @@ sub addCourse {
 	# fail if requested course ID is too long
 	croak "Course ID cannot exceed " . $ce->{maxCourseIdLength} . " characters."
 		if (length($courseID) > $ce->{maxCourseIdLength});
-
-	# if we didn't get a database layout, use the default one
-	if (not defined $dbLayoutName) {
-		$dbLayoutName = $ce->{dbLayoutName};
-	}
-
-	# fail if the database layout is invalid
-	if (not exists $ce->{dbLayouts}->{$dbLayoutName}) {
-		croak "$dbLayoutName: not found in \%dbLayouts";
-	}
 
 	##### step 1: create course directory structure #####
 
@@ -321,7 +307,7 @@ sub addCourse {
 
 	##### step 2: create course database #####
 
-	my $db               = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
+	my $db               = new WeBWorK::DB($ce->{dbLayout});
 	my $create_db_result = $db->create_tables;
 	die "$courseID: course database creation failed.\n" unless $create_db_result;
 
@@ -340,11 +326,11 @@ sub addCourse {
 		)
 	{
 		$ce0 = WeBWorK::CourseEnvironment->new({ courseName => $sourceCourse });
-		$db0 = WeBWorK::DB->new($ce0->{dbLayouts}{$dbLayoutName});
+		$db0 = WeBWorK::DB->new($ce0->{dbLayout});
 	}
 
 	# add users (users that were directly passed to addCourse() as well as those copied from a source course)
-	if ($ce->{dbLayouts}{$dbLayoutName}{user}{params}{non_native}) {
+	if ($ce->{dbLayout}{user}{params}{non_native}) {
 		debug("not adding users to the course database: 'user' table is non-native.\n");
 	} else {
 		if ($db0 && $options{copyNonStudents}) {
@@ -542,15 +528,11 @@ sub renameCourse {
 	#    $fromCE ($oldCE)
 	#    $toCourseID ($newCourseID)
 	#    $toCE (construct from $oldCE)
-	#    $dbLayoutName ($oldCE->{dbLayoutName})
 
 	my $oldCourseID  = $options{courseID};
 	my $oldCE        = $options{ce};
 	my $newCourseID  = $options{newCourseID};
 	my $skipDBRename = $options{skipDBRename} || 0;
-
-	# get the database layout out of the options hash
-	my $dbLayoutName = $oldCE->{dbLayoutName};
 
 	# collect some data
 	my $coursesDir   = $oldCE->{webworkDirs}->{courses};
@@ -641,12 +623,12 @@ sub renameCourse {
 	##### step 2: rename database #####
 
 	unless ($skipDBRename) {
-		my $oldDB = new WeBWorK::DB($oldCE->{dbLayouts}{$dbLayoutName});
+		my $oldDB = new WeBWorK::DB($oldCE->{dbLayout});
 
-		my $rename_db_result = $oldDB->rename_tables($newCE->{dbLayouts}{$dbLayoutName});
+		my $rename_db_result = $oldDB->rename_tables($newCE->{dbLayout});
 		die "$oldCourseID: course database renaming failed.\n" unless $rename_db_result;
 		#update title and institution
-		my $newDB = new WeBWorK::DB($newCE->{dbLayouts}{$dbLayoutName});
+		my $newDB = new WeBWorK::DB($newCE->{dbLayout});
 		eval {
 			if (exists($options{courseTitle}) and $options{courseTitle}) {
 				$newDB->setSettingValue('courseTitle', $options{courseTitle});
@@ -681,15 +663,13 @@ sub retitleCourse {
 	# renameCourseHelper needs:
 	#    $courseID ($oldCourseID)
 	#    $ce ($oldCE)
-	#    $dbLayoutName ($ce->{dbLayoutName})
 	#    courseTitle
 	#    courseInstitution
 	my $courseID = $options{courseID};
 	my $ce       = $options{ce};
 
 	# get the database layout out of the options hash
-	my $dbLayoutName = $ce->{dbLayoutName};
-	my $db           = new WeBWorK::DB($ce->{dbLayouts}{$dbLayoutName});
+	my $db = new WeBWorK::DB($ce->{dbLayout});
 	eval {
 		if (exists($options{courseTitle}) and $options{courseTitle}) {
 			$db->setSettingValue('courseTitle', $options{courseTitle});
@@ -756,8 +736,7 @@ sub deleteCourse {
 
 	##### step 1: delete course database (if necessary) #####
 
-	my $dbLayoutName     = $ce->{dbLayoutName};
-	my $db               = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
+	my $db               = new WeBWorK::DB($ce->{dbLayout});
 	my $create_db_result = $db->delete_tables;
 	die "$courseID: course database deletion failed.\n" unless $create_db_result;
 
@@ -1002,10 +981,9 @@ sub unarchiveCourse {
 	my $ce2 = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $currCourseID });
 
 	# pull out some useful stuff
-	my $course_dir    = $ce2->{courseDirs}{root};
-	my $data_dir      = $ce2->{courseDirs}{DATA};
-	my $dump_dir      = "$data_dir/mysqldump";
-	my $old_dump_file = "$data_dir/${currCourseID}_mysql.database";
+	my $course_dir = $ce2->{courseDirs}{root};
+	my $data_dir   = $ce2->{courseDirs}{DATA};
+	my $dump_dir   = "$data_dir/mysqldump";
 
 	##### step 4: restore the database tables #####
 
@@ -1014,24 +992,9 @@ sub unarchiveCourse {
 	if (-e $dump_dir) {
 		my $db = new WeBWorK::DB($ce2->{dbLayout});
 		$restore_db_result = $db->restore_tables($dump_dir);
-	} elsif (-e $old_dump_file) {
-		my $dbLayoutName = $ce2->{dbLayoutName};
-		if (ref getHelperRef("unarchiveCourseHelper", $dbLayoutName)) {
-			eval {
-				$restore_db_result =
-					unarchiveCourseHelper($currCourseID, $ce2, $dbLayoutName, unarchiveDatabasePath => $old_dump_file);
-			};
-			if ($@) {
-				warn "failed to unarchive course database from dump file '$old_dump_file: $@\n";
-			}
-		} else {
-			warn "course '$currCourseID' uses dbLayout '$dbLayoutName', which doesn't support "
-				. "restoring database tables. database tables will not be restored.\n";
-			$no_database = 1;
-		}
 	} else {
 		warn "course '$currCourseID' has no database dump in its data directory "
-			. "(checked for $dump_dir and $old_dump_file). database tables will not be restored.\n";
+			. "(checked for $dump_dir). database tables will not be restored.\n";
 		$no_database = 1;
 	}
 
@@ -1041,16 +1004,9 @@ sub unarchiveCourse {
 
 	##### step 5: delete dump_dir and/or old_dump_file #####
 
-	if (-e $dump_dir) {
-		_archiveCourse_remove_dump_dir($ce, $dump_dir);
-	}
-	if (-e $old_dump_file) {
-		eval { path($old_dump_file)->remove };
-		warn "Failed to unlink course database dump file '$old_dump_file: $@" if $@;
-	}
+	_archiveCourse_remove_dump_dir($ce, $dump_dir) if -e $dump_dir;
 
-	# Create the html_temp folder (since it isn't included in the
-	# tarball
+	# Create the html_temp folder (since it isn't included in the tarball)
 	my $tmpDir = $ce2->{courseDirs}->{html_temp};
 	if (!-e $tmpDir) {
 		eval { path($tmpDir)->make_path };
@@ -1202,46 +1158,7 @@ sub dbLayoutSQLSources {
 
 =cut
 
-################################################################################
-# database helpers
-################################################################################
-
-=head1 DATABASE-LAYOUT SPECIFIC HELPER FUNCTIONS
-
-These functions are used to perform database-layout specific operations.
-
-The implementations in this class do nothing, but if an appropriate function
-exists in a class with the name
-WeBWorK::Utils::CourseManagement::I<$dbLayoutName>, it will be used instead.
-
-=over
-
-=item archiveCourseHelper($courseID, $ce, $dbLayoutName, %options)
-
-Perform database-layout specific operations for archiving the data in a course.
-
-=cut
-
-sub archiveCourseHelper {
-	my ($courseID, $ce, $dbLayoutName, %options) = @_;
-	my $result = callHelperIfExists("archiveCourseHelper", $dbLayoutName, @_);
-	return $result;
-}
-
-=item unarchiveCourseHelper($courseID, $ce, $dbLayoutName, %options)
-
-Perform database-layout specific operations for unarchiving the data in a course
-and placing it in the database.
-
-=cut
-
-sub unarchiveCourseHelper {
-	my ($courseID, $ce, $dbLayoutName, %options) = @_;
-	my $result = callHelperIfExists("unarchiveCourseHelper", $dbLayoutName, @_);
-	return $result;
-}
-
-=item initNonNativeTables($ce, $db, $dbLayoutName, %options)
+=item initNonNativeTables($ce, $db, %options)
 
 Perform database-layout specific operations for initializing non-native database tables
 that are not associated with a particular course
@@ -1251,10 +1168,10 @@ that are not associated with a particular course
 =cut
 
 sub initNonNativeTables {
-	my ($ce, $dbLayoutName, %options) = @_;
+	my ($ce, %options) = @_;
 	my @messages;
 	# Create a database handler
-	my $db = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
+	my $db = new WeBWorK::DB($ce->{dbLayout});
 
 	# lock database
 
@@ -1330,7 +1247,7 @@ called directly.
 
 =over
 
-=item callHelperIfExists($helperName, $dbLayoutName, @args)
+=item callHelperIfExists($helperName, @args)
 
 Call a database-specific helper function, if a database-layout specific helper
 class exists and contains a function named "${helperName}Helper".
@@ -1338,51 +1255,14 @@ class exists and contains a function named "${helperName}Helper".
 =cut
 
 sub callHelperIfExists {
-	my ($helperName, $dbLayoutName, @args) = @_;
+	my ($helperName, @args) = @_;
 
-	my $helperRef = getHelperRef($helperName, $dbLayoutName);
+	my $helperRef = getHelperRef($helperName);
 	if (ref $helperRef) {
 		return $helperRef->(@args);
 	} else {
 		return $helperRef;
 	}
-}
-
-=item getHelperRef($helperName, $dbLayoutName)
-
-Call a database-specific helper function, if a database-layout specific helper
-class exists and contains a function named "${helperName}Helper".
-
-=cut
-
-sub getHelperRef {
-	my ($helperName, $dbLayoutName) = @_;
-
-	my $result;
-
-	my $package = __PACKAGE__ . "::$dbLayoutName";
-
-	eval { runtime_use $package };
-	if ($@) {
-		if ($@ =~ /^Can't locate/) {
-			debug("No database-layout specific library for layout '$dbLayoutName'.\n");
-			$result = 1;
-		} else {
-			warn "Failed to load database-layout specific library: $@\n";
-			$result = 0;
-		}
-	} else {
-		my %syms = do { no strict 'refs'; %{ $package . "::" } };
-		if (exists $syms{$helperName}) {
-			$result = do { no strict 'refs'; \&{ $package . "::" . $helperName } };
-		} else {
-			debug("No helper defined for operation '$helperName'.\n");
-			$result = 1;
-		}
-	}
-
-	#warn "getHelperRef = '$result'\n";
-	return $result;
 }
 
 =item protectQString($string)
@@ -1410,33 +1290,12 @@ the pairs accepted in %courseOptions by addCourse(), above.
 sub writeCourseConf {
 	my ($fh, $ce, %options) = @_;
 
-	# several options should be defined no matter what
-	$options{dbLayoutName} = $ce->{dbLayoutName} unless defined $options{dbLayoutName};
-
 	print $fh <<'EOF';
 #!perl
 
 # This file is used to override the global WeBWorK course environment for this course.
 
 EOF
-
-	print $fh <<'EOF';
-# Database Layout (global value typically defined in defaults.config)
-# Several database are defined in the file conf/database.conf and stored in the
-# hash %dbLayouts.
-# The database layout is always set here, since one should be able to change the
-# default value in localOverrides.conf without disrupting existing courses.
-# defaults.config values:
-EOF
-
-	print $fh "# \t", '$dbLayoutName = \'', protectQString($ce->{dbLayoutName}), '\';', "\n";
-	print $fh "# \t", '*dbLayout = $dbLayouts{$dbLayoutName};', "\n";
-
-	if (defined $options{dbLayoutName}) {
-		print $fh '$dbLayoutName = \'', protectQString($options{dbLayoutName}), '\';', "\n";
-		print $fh '*dbLayout = $dbLayouts{$dbLayoutName};', "\n";
-	}
-	print $fh "\n";
 
 	print $fh <<'EOF';
 # Users for whom to label problems with the PG file name (global value typically "professor")

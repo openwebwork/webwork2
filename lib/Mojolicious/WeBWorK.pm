@@ -173,8 +173,7 @@ sub startup ($app) {
 				writeTimingLogEntry(
 					$c->ce,
 					'[' . $c->url_for . ']',
-					sprintf('runTime = %.3f sec', $c->timing->elapsed('content_generator_rendering')) . ' '
-						. $c->ce->{dbLayoutName}
+					sprintf('runTime = %.3f sec', $c->timing->elapsed('content_generator_rendering')), ''
 				);
 			}
 		}

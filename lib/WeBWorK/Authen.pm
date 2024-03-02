@@ -96,26 +96,22 @@ sub class {
 	if (exists $ce->{authen}{$type}) {
 		if (ref $ce->{authen}{$type} eq "ARRAY") {
 			my $authen_type = shift @{ $ce->{authen}{$type} };
+
+			#debug("ref of authen_type = |" . ref($authen_type) . "|");
 			if (ref($authen_type) eq "HASH") {
-				if (exists $authen_type->{ $ce->{dbLayoutName} }) {
-					return $authen_type->{ $ce->{dbLayoutName} };
-				} elsif (exists $authen_type->{"*"}) {
+				if (exists $authen_type->{"*"}) {
 					return $authen_type->{"*"};
 				} else {
-					die "authentication type '$type' in the course environment has no entry for db layout '",
-						$ce->{dbLayoutName}, "' and no default entry (*)";
+					die "authentication type '$type' in the course environment has no default entry (*)";
 				}
 			} else {
 				return $authen_type;
 			}
 		} elsif (ref $ce->{authen}{$type} eq "HASH") {
-			if (exists $ce->{authen}{$type}{ $ce->{dbLayoutName} }) {
-				return $ce->{authen}{$type}{ $ce->{dbLayoutName} };
-			} elsif (exists $ce->{authen}{$type}{"*"}) {
+			if (exists $ce->{authen}{$type}{"*"}) {
 				return $ce->{authen}{$type}{"*"};
 			} else {
-				die "authentication type '$type' in the course environment has no entry for db layout '",
-					$ce->{dbLayoutName}, "' and no default entry (*)";
+				die "authentication type '$type' in the course environment has no default entry (*)";
 			}
 		} else {
 			return $ce->{authen}{$type};

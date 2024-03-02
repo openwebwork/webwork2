@@ -189,6 +189,5 @@
 			</label>
 		</div>
 	</fieldset>
-	<%= hidden_field add_dbLayout => 'sql_single' =%>
 	<%= submit_button maketext('Add Course'), name => 'add_course', class => 'btn btn-primary' =%>
 <% end =%>

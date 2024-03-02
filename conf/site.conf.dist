@@ -93,8 +93,6 @@ $admin_course_id = 'admin';
 # status.
 #$new_courses_hidden_status = 'hidden';
 
-# External Programs and database settings are now defined in webwork2.mojolicious.yml
-
 #################################################################################
 # These variables describe the locations of various components of WeBWorK on your
 # server.  You may use the defaults unless you have things in different places.

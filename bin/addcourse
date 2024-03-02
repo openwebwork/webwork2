@@ -90,7 +90,6 @@ sub usage_error {
 	warn "@_\n";
 	warn "usage: $0 [options] COURSEID\n";
 	warn "Options:\n";
-	warn "  [--db-layout=LAYOUT]\n";
 	warn "  [--users=FILE [--professors=USERID[,USERID]...] ]\n";
 	exit;
 }
@@ -99,7 +98,6 @@ my ($dbLayout, $users, $templates_from) = ('', '', '');
 my @professors;
 
 GetOptions(
-	"db-layout=s"      => \$dbLayout,
 	"users=s"          => \$users,
 	"professors=s"     => \@professors,
 	"templates-from=s" => \$templates_from,
@@ -114,23 +112,15 @@ $ce = WeBWorK::CourseEnvironment->new({ courseName => $courseID });
 die "Aborting addcourse: Course ID cannot exceed $ce->{maxCourseIdLength} characters."
 	if length($courseID) > $ce->{maxCourseIdLength};
 
-if ($dbLayout) {
-	die "Database layout $dbLayout does not exist in the course environment.",
-		" (It must be defined in defaults.config.)\n"
-		unless exists $ce->{dbLayouts}{$dbLayout};
-} else {
-	$dbLayout = $ce->{dbLayoutName};
-}
-
 usage_error("Can't specify --professors without also specifying --users.")
 	if @professors && !$users;
 
 my @users;
 if ($users) {
 	# This is a hack to create records without bringing up a DB object
-	my $userClass       = $ce->{dbLayouts}{$dbLayout}{user}{record};
-	my $passwordClass   = $ce->{dbLayouts}{$dbLayout}{password}{record};
-	my $permissionClass = $ce->{dbLayouts}{$dbLayout}{permission}{record};
+	my $userClass       = $ce->{dbLayout}{user}{record};
+	my $passwordClass   = $ce->{dbLayout}{password}{record};
+	my $permissionClass = $ce->{dbLayout}{permission}{record};
 
 	runtime_use($userClass);
 	runtime_use($passwordClass);
@@ -190,7 +180,7 @@ eval {
 	addCourse(
 		courseID      => $courseID,
 		ce            => $ce,
-		courseOptions => { dbLayoutName => $dbLayout },
+		courseOptions => {},
 		users         => \@users,
 		%optional_arguments,
 	);

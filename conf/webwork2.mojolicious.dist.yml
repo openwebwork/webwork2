@@ -252,7 +252,7 @@ externalPrograms:
   mkdir: /bin/mkdir
   tar: /bin/tar
   gzip: /bin/gzip
-  git: /bin/git
+  git: /usr/bin/git
   curl: /usr/bin/curl
   mysql: /usr/bin/mysql
   mysqldump: /usr/bin/mysqldump
@@ -266,8 +266,12 @@ externalPrograms:
   # use polyglossia and fontspec packages (which require xelatex or lualatex).
   # pdflatex: /usr/bin/xelatex --no-shell-escape
 
-  dvipng: /usr/bin/dvipng
+  # In order to use imagemagick convert you need to change the rights for PDF files from
+  # "none" to "read" in the policy file /etc/ImageMagick-6/policy.xml.  This has possible
+  # security implications for the server.
   convert: /usr/bin/convert
+
+  dvipng: /usr/bin/dvipng
   dvisvgm: /usr/bin/dvisvgm
   pdf2svg: /usr/bin/pdf2svg
 
@@ -296,14 +300,11 @@ database:
   # Standard permissions command used to initialize the webwork database
   # GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
   # where webworkWrite and passwordRW must match the corresponding variables in the next section.
-  username: ''
-  password: ''
+  username: webworkWrite
+  password: passwordRW
 
   # For a DB on localhost - default to using Unix socket. Change to 0 to use a TCP connection to 127.0.0.1.
   use_socket_if_localhost: 1
-
-  # Need to add the code in lines 209-217 to a perl file
-  # Add line 234 to same file
 
   # The default storange engine to use is set here:
   storage_engine: myisam

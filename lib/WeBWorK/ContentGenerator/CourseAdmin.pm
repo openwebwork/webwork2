@@ -47,7 +47,7 @@ sub pre_header_initialize ($c) {
 
 	# Check that the non-native tables are present in the database.
 	# These are the tables which are not course specific.
-	my @table_update_messages = initNonNativeTables($ce, $ce->{dbLayoutName});
+	my @table_update_messages = initNonNativeTables($ce);
 	$c->addgoodmessage($c->c(@table_update_messages)->join($c->tag('br'))) if @table_update_messages;
 
 	my @errors;
@@ -232,7 +232,6 @@ sub add_course_validate ($c) {
 	my $add_initial_firstName       = trim_spaces($c->param('add_initial_firstName'))       || '';
 	my $add_initial_lastName        = trim_spaces($c->param('add_initial_lastName'))        || '';
 	my $add_initial_email           = trim_spaces($c->param('add_initial_email'))           || '';
-	my $add_dbLayout                = trim_spaces($c->param('add_dbLayout'))                || '';
 
 	my @errors;
 
@@ -270,17 +269,6 @@ sub add_course_validate ($c) {
 		}
 	}
 
-	if ($add_dbLayout eq '') {
-		push @errors, 'You must select a database layout.';
-	} else {
-		if (exists $ce->{dbLayouts}{$add_dbLayout}) {
-			# we used to check for layout-specific fields here, but there aren't any layouts that require them
-			# anymore. (in the future, we'll probably deal with this in layout-specific modules.)
-		} else {
-			push @errors, "The database layout $add_dbLayout doesn't exist.";
-		}
-	}
-
 	return @errors;
 }
 
@@ -302,11 +290,7 @@ sub do_add_course ($c) {
 
 	my $copy_from_course = trim_spaces($c->param('copy_from_course')) // '';
 
-	my $add_dbLayout = trim_spaces($c->param('add_dbLayout')) || '';
-
 	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $add_courseID });
-
-	my %courseOptions = (dbLayoutName => $add_dbLayout);
 
 	my @users;
 
@@ -352,7 +336,7 @@ sub do_add_course ($c) {
 		);
 		push @users, [ $User, $Password, $PermissionLevel ];
 	}
-
+	my %courseOptions = ();
 	push @{ $courseOptions{PRINT_FILE_NAMES_FOR} }, map { $_->[0]->user_id } @users;
 
 	# Include any optional arguments, including a template course and the course title and course institution.
@@ -491,9 +475,8 @@ sub rename_course_confirm ($c) {
 
 	# Create strings confirming title and institution change.
 	# Connect to the database to get old title and institution.
-	my $dbLayoutName                = $ce->{dbLayoutName};
-	my $db                          = WeBWorK::DB->new($ce->{dbLayouts}{$dbLayoutName});
-	my $oldDB                       = WeBWorK::DB->new($ce2->{dbLayouts}{$dbLayoutName});
+	my $db                          = WeBWorK::DB->new($ce->{dbLayout});
+	my $oldDB                       = WeBWorK::DB->new($ce2->{dbLayout});
 	my $rename_oldCourseTitle       = $oldDB->getSettingValue('courseTitle')       // '';
 	my $rename_oldCourseInstitution = $oldDB->getSettingValue('courseInstitution') // '';
 
@@ -517,49 +500,46 @@ sub rename_course_confirm ($c) {
 		rename_oldCourseID            => $rename_oldCourseID
 	) unless $c->param('rename_newCourseID_checkbox');
 
-	if ($ce2->{dbLayoutName}) {
-		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
+	my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
 
-		# Check database
-		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
+	# Check database
+	my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
 
-		# Upgrade the database if requested.
-		my @upgrade_report;
-		if ($c->param('upgrade_course_tables')) {
-			my @schema_table_names = keys %$dbStatus;
-			my @tables_to_create =
-				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A } @schema_table_names;
-			my @tables_to_alter =
-				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B }
-				@schema_table_names;
-			push(@upgrade_report, $CIchecker->updateCourseTables($rename_oldCourseID, [@tables_to_create]));
-			for my $table_name (@tables_to_alter) {
-				push(@upgrade_report, $CIchecker->updateTableFields($rename_oldCourseID, $table_name));
-			}
-
-			($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
+	# Upgrade the database if requested.
+	my @upgrade_report;
+	if ($c->param('upgrade_course_tables')) {
+		my @schema_table_names = keys %$dbStatus;
+		my @tables_to_create =
+			grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A } @schema_table_names;
+		my @tables_to_alter =
+			grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B }
+			@schema_table_names;
+		push(@upgrade_report, $CIchecker->updateCourseTables($rename_oldCourseID, [@tables_to_create]));
+		for my $table_name (@tables_to_alter) {
+			push(@upgrade_report, $CIchecker->updateTableFields($rename_oldCourseID, $table_name));
 		}
 
-		# Check directories
-		my ($directories_ok, $directory_report) = $CIchecker->checkCourseDirectories($ce2);
-
-		return $c->include(
-			'ContentGenerator/CourseAdmin/rename_course_confirm',
-			upgrade_report                => \@upgrade_report,
-			tables_ok                     => $tables_ok,
-			dbStatus                      => $dbStatus,
-			directory_report              => $directory_report,
-			directories_ok                => $directories_ok,
-			rename_oldCourseTitle         => $rename_oldCourseTitle,
-			change_course_title_str       => $change_course_title_str,
-			rename_oldCourseInstitution   => $rename_oldCourseInstitution,
-			change_course_institution_str => $change_course_institution_str,
-			rename_oldCourseID            => $rename_oldCourseID,
-			rename_newCourseID            => $rename_newCourseID
-		);
-	} else {
-		return $c->tag('p', class => 'text-danger fw-bold', "Unable to find database layout for $rename_oldCourseID");
+		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
 	}
+
+	# Check directories
+	my ($directories_ok, $directory_report) = $CIchecker->checkCourseDirectories($ce2);
+
+	return $c->include(
+		'ContentGenerator/CourseAdmin/rename_course_confirm',
+		upgrade_report                => \@upgrade_report,
+		tables_ok                     => $tables_ok,
+		dbStatus                      => $dbStatus,
+		directory_report              => $directory_report,
+		directories_ok                => $directories_ok,
+		rename_oldCourseTitle         => $rename_oldCourseTitle,
+		change_course_title_str       => $change_course_title_str,
+		rename_oldCourseInstitution   => $rename_oldCourseInstitution,
+		change_course_institution_str => $change_course_institution_str,
+		rename_oldCourseID            => $rename_oldCourseID,
+		rename_newCourseID            => $rename_newCourseID
+	);
+	return;
 }
 
 sub rename_course_validate ($c) {
@@ -997,48 +977,45 @@ sub archive_course_confirm ($c) {
 
 	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $archive_courseID });
 
-	if ($ce2->{dbLayoutName}) {
-		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
+	my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
 
-		# Check database
-		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
+	# Check database
+	my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
 
-		# Upgrade the database if requested.
-		my @upgrade_report;
-		if ($c->param('upgrade_course_tables')) {
-			my @schema_table_names = keys %$dbStatus;
-			my @tables_to_create =
-				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A } @schema_table_names;
-			my @tables_to_alter =
-				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B }
-				@schema_table_names;
-			push(@upgrade_report, $CIchecker->updateCourseTables($archive_courseID, [@tables_to_create]));
-			for my $table_name (@tables_to_alter) {
-				push(@upgrade_report, $CIchecker->updateTableFields($archive_courseID, $table_name));
-			}
-
-			($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
+	# Upgrade the database if requested.
+	my @upgrade_report;
+	if ($c->param('upgrade_course_tables')) {
+		my @schema_table_names = keys %$dbStatus;
+		my @tables_to_create =
+			grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A } @schema_table_names;
+		my @tables_to_alter =
+			grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B }
+			@schema_table_names;
+		push(@upgrade_report, $CIchecker->updateCourseTables($archive_courseID, [@tables_to_create]));
+		for my $table_name (@tables_to_alter) {
+			push(@upgrade_report, $CIchecker->updateTableFields($archive_courseID, $table_name));
 		}
 
-		# Update and check directories.
-		my $dir_update_messages = $c->param('upgrade_course_tables') ? $CIchecker->updateCourseDirectories : [];
-		my ($directories_ok, $directory_report) = $CIchecker->checkCourseDirectories($ce2);
-
-		return $c->include(
-			'ContentGenerator/CourseAdmin/archive_course_confirm',
-			ce2                 => $ce2,
-			upgrade_report      => \@upgrade_report,
-			tables_ok           => $tables_ok,
-			dbStatus            => $dbStatus,
-			dir_update_messages => $dir_update_messages,
-			directory_report    => $directory_report,
-			directories_ok      => $directories_ok,
-			archive_courseID    => $archive_courseID,
-			archive_courseIDs   => \@archive_courseIDs
-		);
-	} else {
-		return $c->tag('p', class => 'text-danger fw-bold', "Unable to find database layout for $archive_courseID");
+		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
 	}
+
+	# Update and check directories.
+	my $dir_update_messages = $c->param('upgrade_course_tables') ? $CIchecker->updateCourseDirectories : [];
+	my ($directories_ok, $directory_report) = $CIchecker->checkCourseDirectories($ce2);
+
+	return $c->include(
+		'ContentGenerator/CourseAdmin/archive_course_confirm',
+		ce2                 => $ce2,
+		upgrade_report      => \@upgrade_report,
+		tables_ok           => $tables_ok,
+		dbStatus            => $dbStatus,
+		dir_update_messages => $dir_update_messages,
+		directory_report    => $directory_report,
+		directories_ok      => $directories_ok,
+		archive_courseID    => $archive_courseID,
+		archive_courseIDs   => \@archive_courseIDs
+	);
+	return;
 }
 
 sub do_archive_course ($c) {

@@ -59,7 +59,7 @@ use YAML::XS qw(LoadFile);
 use WeBWorK::WWSafe;
 use WeBWorK::Utils::Files qw(readFile);
 use WeBWorK::Debug;
-use WeBWorK::DB::Utils qw(databaseParams);
+use WeBWorK::DB::Layout qw(layout);
 
 =head1 CONSTRUCTION
 
@@ -390,10 +390,9 @@ sub set_server_settings {
 		$ce->{database_dsn} = "DBI:$config->{database}{driver}:database=$config->{database}{name};"
 			. "host=$config->{database}{host};port=$config->{database}{port}";
 	}
-	$ce->{dbLayoutName}                = 'sql_single';
 	$config->{database}{dsn}           = $ce->{database_dsn};
 	$config->{database}{character_set} = $config->{database}{ENABLE_UTF8MB4} ? 'utf8mb4' : 'utf8';
-	$ce->{dbLayout} = databaseParams($ce->{courseName}, $config->{database}, $config->{externalPrograms});
+	$ce->{dbLayout}                    = layout($ce->{courseName}, $config->{database}, $config->{externalPrograms});
 
 	$ce->{maxCourseIdLength} = $config->{database}{maxCourseIdLength};
 
@@ -403,12 +402,20 @@ sub set_server_settings {
 	$ce->{pg}{displayModeOptions}{images}{dvipng_depth_db}{dbsource} //= $ce->{database_dsn};
 
 	# Problem Library SQL database connection information
-	$c->{problemLibrary_db} = {
-		dbsource       => $ce->{database_dsn},
-		user           => $ce->{database_username},
-		passwd         => $ce->{database_password},
-		storage_engine => 'MYISAM',
-	};
+	$ce->{problemLibrary_db}{dbsource}       //= $ce->{database_dsn};
+	$ce->{problemLibrary_db}{user}           //= $ce->{database_username};
+	$ce->{problemLibrary_db}{passwd}         //= $ce->{database_password};
+	$ce->{problemLibrary_db}{storage_engine} //= 'myisam';
+
+	# image conversions utiltiies
+	# the source file is given on stdin, and the output expected on stdout.
+
+	$config->{externalPrograms}{gif2eps} = $config->{externalPrograms}{giftopnm}
+		// $config->{externalPrograms}{ppmtopgm} // "$config->{externalPrograms}{pnmtops} -noturn 2 > /dev/null";
+	$config->{externalPrograms}{png2eps} = $config->{externalPrograms}{pngtopnm}
+		// $config->{externalPrograms}{ppmtopgm} // "$config->{externalPrograms}{pnmtops} -noturn 2 > /dev/null";
+	$config->{externalPrograms}{gif2png} = $config->{externalPrograms}{giftopnm}
+		// $config->{externalPrograms}{pnmtopng};
 
 	$ce->{externalPrograms} = $config->{externalPrograms};
 	return;

@@ -66,8 +66,7 @@ sub init {
 	$self->{verbose_sub} = $options{verbose_sub} || \&debug;
 	$self->{confirm_sub} = $options{confirm_sub} || \&ask_permission_stdio;
 	$self->{ce}          = $options{ce};
-	my $dbLayoutName = $self->{ce}->{dbLayoutName};
-	$self->{db} = WeBWorK::DB->new($self->{ce}{dbLayouts}->{$dbLayoutName});
+	$self->{db}          = WeBWorK::DB->new($self->{ce}{dbLayout});
 
 	return;
 }

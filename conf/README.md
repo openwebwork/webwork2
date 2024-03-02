@@ -28,7 +28,8 @@ Configuration extension files.
 Server configuration files.
 
 - `webwork2.mojolicious.dist.yml` contains the webwork2 Mojolicious app configuration settings. Copy this file to
-  `webwork2.mojolicious.yml` if you need to change those settings. You usually will need to do this.  This file contains server settings, database settings and paths to external programs.
+  `webwork2.mojolicious.yml` if you need to change those settings. You usually will need to do this.  This file
+  contains server settings, database settings and paths to external programs.
 - `webwork2.dist.service` is a systemd configuration file for linux systems that serves the webwork2 app via the
   Mojolicious hypnotoad server. If you need to change it, then copy it to `webwork2.service`.
 - `webwork2-job-queue.dist.service` is a systemd configuration file for linux systems that runs the webwork2 job queue
