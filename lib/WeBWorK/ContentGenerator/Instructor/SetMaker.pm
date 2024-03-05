@@ -85,7 +85,7 @@ sub get_library_sets ($c, $top, $dir) {
 	}
 	return (0) if grep {/^=library-ignore$/} @lis;
 
-	my @pgfiles = grep { m/\.pg$/ && (!m/(Header|-text)(File)?\.pg$/) && -f "$dir/$_" } @lis;
+	my @pgfiles = grep { m/^[^.].*\.pg$/ && (!m/(Header|-text)(File)?\.pg$/) && -f "$dir/$_" } @lis;
 	my $pgcount = scalar(@pgfiles);
 	my $pgname  = $dir;
 	$pgname =~ s!.*/!!;
@@ -94,6 +94,8 @@ sub get_library_sets ($c, $top, $dir) {
 
 	my @pgdirs;
 	my @dirs = grep { !$ignoredir{$_} && -d "$dir/$_" } @lis;
+	# Filter out hidden directories
+	@dirs = grep { $_ !~ /^\./ } @dirs;
 	if ($top == 1) {
 		@dirs = grep { !$c->{problibs}{$_} } @dirs;
 	}
