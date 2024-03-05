@@ -1015,7 +1015,8 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 				size              => $properties{size} || 5,
 				class             => 'form-control-plaintext form-control-sm',
 				'aria-labelledby' => "$recordType.$recordID.$field.label",
-				$field =~ /date/ || $field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr') : ()
+				$field =~ /date/ || $field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr') : (),
+				data => { class_value => $globalValue }
 			)
 			: ''
 		) if $forUsers;

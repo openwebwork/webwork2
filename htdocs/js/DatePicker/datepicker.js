@@ -25,17 +25,34 @@
 
 		const groupRules = [
 			open_rule,
-			document.querySelector('input[id="' + name + '.due_date_id"]'),
-			document.querySelector('input[id="' + name + '.answer_date_id"]')
+			document.getElementById(`${name}.due_date_id`),
+			document.getElementById(`${name}.answer_date_id`)
 		];
 
-		const reduced_rule = document.querySelector('input[id="' + name + '.reduced_scoring_date_id"]');
+		const reduced_rule = document.getElementById(`${name}.reduced_scoring_date_id`);
 		if (reduced_rule) groupRules.splice(1, 0, reduced_rule);
+
+		// Compute the time difference between the current browser timezone and the course timezone.
+		// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
+		// Note that this is in seconds.
+		const timezoneAdjustment =
+			new Date(new Date().toLocaleString('en-US')).getTime() -
+			new Date(
+				new Date().toLocaleString('en-US', { timeZone: open_rule.dataset.timezone ?? 'America/New_York' })
+			).getTime();
+
+		const classValues = groupRules.map(
+			(rule) =>
+				parseInt(document.getElementsByName(`${rule.name}.class_value`)[0]?.dataset.classValue || '0') * 1000 -
+				timezoneAdjustment
+		);
 
 		const update = () => {
 			for (let i = 1; i < groupRules.length; ++i) {
-				const prevFieldDate = groupRules[i - 1].parentNode._flatpickr.selectedDates[0];
-				const thisFieldDate = groupRules[i].parentNode._flatpickr.selectedDates[0];
+				const prevFieldDate =
+					groupRules[i - 1]?.parentNode._flatpickr.selectedDates[0]?.getTime() || classValues[i - 1];
+				const thisFieldDate =
+					groupRules[i]?.parentNode._flatpickr.selectedDates[0]?.getTime() || classValues[i];
 				if (prevFieldDate && thisFieldDate && prevFieldDate > thisFieldDate) {
 					groupRules[i].parentNode._flatpickr.setDate(prevFieldDate, true);
 				}
@@ -46,15 +63,6 @@
 			const orig_value = rule.value;
 
 			luxon.Settings.defaultLocale = rule.dataset.locale ?? 'en';
-
-			// Compute the time difference between the current browser timezone and the course timezone.
-			// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
-			// Note that this is in seconds.
-			const timezoneAdjustment =
-				new Date(new Date().toLocaleString('en-US')).getTime() -
-				new Date(
-					new Date().toLocaleString('en-US', { timeZone: rule.dataset.timezone ?? 'America/New_York' })
-				).getTime();
 
 			const fp = flatpickr(rule.parentNode, {
 				allowInput: true,
@@ -101,12 +109,12 @@
 						}
 					})
 				],
-				onChange(selectedDates) {
+				onChange() {
 					if (this.input.value === orig_value) this.altInput.classList.remove('changed');
 					else this.altInput.classList.add('changed');
 				},
 				onClose: update,
-				onReady(selectedDates) {
+				onReady() {
 					// Flatpickr hides the original input and adds the alternate input after it.  That messes up the
 					// bootstrap input group styling.  So move the now hidden original input after the created alternate
 					// input to fix that.
