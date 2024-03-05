@@ -107,7 +107,7 @@
 			. 'select the course and check which components to copy.') =%>
 	</div>
 	<div class="row mb-1">
-		% my @existingCourses = sort { lc($a) cmp lc($b) } grep { $_ ne stash('courseID') } listCourses($ce);
+		% my @existingCourses = sort { lc($a) cmp lc($b) } listCourses($ce);
 		% unshift(@existingCourses, sort { lc($a) cmp lc($b) } @{ $ce->{modelCoursesForCopy} });
 		%
 		<%= label_for copy_from_course => maketext('Copy Components From:'),

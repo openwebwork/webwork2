@@ -50,10 +50,9 @@
 	% }
 	%
 	<h2><%= maketext('Courses') %></h2>
-	% my @courseIDs = listCourses($ce);
 	<ol>
 		% for (sort { lc($a) cmp lc($b) } listCourses($ce)) {
-			% next if $_ eq 'modelCourse';
+			% next if $_ eq $ce->{admin_course_id} || $_ eq 'modelCourse';
 			<li><%= link_to $_ => 'set_list' => { courseID => $_ } =%></li>
 		% }
 	</ol>
