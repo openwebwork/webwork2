@@ -117,16 +117,17 @@ async sub get_access_token ($self) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 	my $db = $c->{db};
+	$c = $c->{app} if $self->{post_processing_mode};
 
 	my $current_token = decode_json($db->getSettingValue('LTIAdvantageAccessToken') // '{}');
 
-	# If the token is still valid (and not about to expire) then it can still be used.
+	# If the token has not expired and is not about to expire, then it can still be used.
 	if (%$current_token && $current_token->{timestamp} + $current_token->{expires_in} > time + 60) {
 		$self->warning('Using current access token from database.');
 		return $current_token;
 	}
 
-	# The token is about to expire, so get a new one.
+	# The token is expired or about to, so get a new one.
 
 	my ($private_key, $err) = get_site_key($ce, 1);
 	if (!$private_key) {
@@ -150,7 +151,7 @@ async sub get_access_token ($self) {
 		);
 	};
 	if ($@) {
-		$self->warning("Error encoding JWT: $@") if $@;
+		$self->warning("Error encoding JWT: $@");
 		return;
 	}
 
