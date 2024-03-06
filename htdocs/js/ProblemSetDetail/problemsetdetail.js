@@ -421,37 +421,6 @@
 	// Render all problems on page load if requested.
 	if (document.getElementById('auto_render')?.checked) renderAll();
 
-	// Make the override checkboxes for text type inputs checked or unchecked appropriately
-	// as determined by the value of the input when that value changes.
-	document
-		.querySelectorAll('input[type="text"][data-override],input[type="hidden"][data-override]')
-		.forEach((input) => {
-			const overrideCheck = document.getElementById(input.dataset.override);
-			if (!overrideCheck) return;
-			const changeHandler = () => (overrideCheck.checked = input.value != '');
-			input.addEventListener('change', changeHandler);
-			if (input.parentElement.classList.contains('flatpickr')) {
-				// Attach the keyup and blur handlers to the flatpickr alternate input.
-				input.previousElementSibling?.addEventListener('keyup', changeHandler);
-				input.previousElementSibling?.addEventListener('blur', () => {
-					if (input.previousElementSibling.value == '') overrideCheck.checked = false;
-				});
-			} else {
-				input.addEventListener('keyup', changeHandler);
-				input.addEventListener('blur', () => {
-					if (input.value == '') overrideCheck.checked = false;
-				});
-			}
-		});
-
-	// Make the override checkboxes for selects checked or unchecked appropriately
-	// as determined by the value of the select when that value changes.
-	document.querySelectorAll('select[data-override]').forEach((select) => {
-		const overrideCheck = document.getElementById(select.dataset.override);
-		if (!overrideCheck) return;
-		select.addEventListener('change', () => (overrideCheck.checked = select.value != ''));
-	});
-
 	// This changes the set header textbox text to the currently selected option in the select menu.
 	document.querySelectorAll('.combo-box').forEach((comboBox) => {
 		const comboBoxText = comboBox.querySelector('.combo-box-text');

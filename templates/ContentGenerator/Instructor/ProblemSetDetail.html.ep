@@ -105,7 +105,7 @@
 					'Edit set [_1] for this user.',
 					link_to(
 						$setID => $c->systemLink(
-							$setDetailPage, params => { effectiveUser => $user->user_id, editForUser => $user->user_id }
+							$setDetailPage, params => { editForUser => $user->user_id }
 						)
 					)
 				) =%>
@@ -348,16 +348,16 @@
 						<%= maketext('Hide All') =%>
 					</button>
 				</div>
-			% } else {
+			% } elsif (!$isGatewaySet || $editingSetVersion) {
 				<div class="input-group d-inline-flex flex-nowrap w-auto py-1 me-3">
 					<button id="randomize_seeds" type="button" class="btn btn-secondary">
 						<%= maketext('Randomize Seeds') =%>
 					</button>
-					<label class="form-check-label input-group-text ps-0">
-						<%= check_box excludeCorrect => 0,
-							id => 'excludeCorrect', class => 'form-check-input mx-2' =%>
-						<%= maketext('if status less than 1') =%>
-					</label>
+					<div class="input-group-text">
+						<%= check_box excludeCorrect => 0, id => 'excludeCorrect', class => 'form-check-input mt-0' =%>
+					</div>
+					<%= label_for excludeCorrect => maketext('if status less than 1'),
+						class => "form-check-label input-group-text mt-0" =%>
 				</div>
 			% }
 			% if (!@editForUser) {
@@ -395,14 +395,21 @@
 			% my @problemRows;
 			%
 			% for my $problemID (@$problemIDList) {
-				% my $problemRecord =
-					% @editForUser == 1
-					% ? $mergedProblems->{$problemID}
-					% : $globalProblems->{$problemID};
+				% # The version merge for the source file needs to be performed
+				% # with code since we don't have the merged problem version.
+				% my $sourceFile = @editForUser == 1
+					% ? (
+						% $userProblemVersions->{$problemID} && $userProblemVersions->{$problemID}->source_file
+						% ? $userProblemVersions->{$problemID}->source_file
+						% : (
+							% $userProblems->{$problemID} && $userProblems->{$problemID}->source_file
+							% ? $userProblems->{$problemID}->source_file : $globalProblems->{$problemID}->source_file
+						% )
+					% )
+					% : $globalProblems->{$problemID}->source_file;
 				%
 				% my $problemFile =
-					% ((param("problem.$problemID.source_file") || $problemRecord->source_file) =~ s|^/||r) =~
-					% s|\.\.||gr;
+					% ((param("problem.$problemID.source_file") || $sourceFile) =~ s|^/||r) =~ s|\.\.||gr;
 				%
 				% # Warn of repeat problems
 				% if (defined $shownYet{$problemFile}) {
@@ -439,7 +446,8 @@
 				%
 				% # When editing a set version, make sure to use the merged problem in the edit, as problem groups could
 				% # be in use for which the problem is generated and then stored in the problem version.
-				% my $problemToShow = $editingSetVersion ? $mergedProblems->{$problemID} : $userProblems->{$problemID};
+				% my $problemToShow =
+					% $editingSetVersion ? $userProblemVersions->{$problemID} : $userProblems->{$problemID};
 				%
 				% my @source_file_parts = $c->fieldHTML($userToShow, $setID, $problemID, $globalProblems->{$problemID},
 					% $problemToShow, 'source_file');
@@ -557,21 +565,11 @@
 									<% end =%>
 								% }
 							</div>
-							<div class="col-md-2 col-3 order-md-2 order-3">
-								% if (@editForUser) {
-									<div class="form-check form-check-inline col-form-label col-form-label-sm
-										text-nowrap">
-										<%= $source_file_parts[0] =%>
-										<%= $source_file_parts[1] =%>
-									</div>
-								% } else {
-									<div class="col-auto col-form-label col-form-label-sm text-nowrap">
-										<%= $source_file_parts[0] =%>
-									</div>
-								% }
+							<div class="col-md-2 col-3 col-form-label col-form-label-sm order-md-2 order-3 text-nowrap">
+								<%= $source_file_parts[0] =%>
 							</div>
 							<div class="<%= @editForUser ? 'col-md-6' : 'col-md-5' %> col-9 order-md-3 order-4">
-								<%= $source_file_parts[ @editForUser ? 3 : 2 ] =%>
+								<%= $source_file_parts[2] =%>
 								<%= hidden_field "problem_${problemID}_default_source_file" =>
 									$globalProblems->{$problemID}->source_file,
 									id => "problem_${problemID}_default_source_file" =%>
@@ -579,7 +577,7 @@
 							% if (!@editForUser) {
 								<div class="accordion col-md-1 col-2 d-flex align-items-center justify-content-end
 									order-md-last order-2">
-									<button href="#" class="accordion-button pdr_detail_collapse ps-0 w-auto"
+									<button class="accordion-button pdr_detail_collapse ps-0 w-auto"
 										type="button" aria-expanded="true" aria-controls="pdr_details_<%= $problemID %>"
 										aria-label="<%= maketext('Collapse Problem Details') %>"
 										data-bs-toggle="collapse" data-bs-target="#pdr_details_<%= $problemID %>"
@@ -594,35 +592,37 @@
 								<div class="col-md-6 d-flex flex-row order-md-first order-last">
 									% if (!@editForUser) {
 										<div class="form-check form-check-inline form-control-sm">
-											<label class="form-check-label">
-												<%= check_box deleteProblem => $problemID,
-													class => 'form-check-input' =%>
-												<%= maketext('Delete it?') =%>
-											</label>
+											<%= check_box deleteProblem => $problemID, id =>
+												"delete-problem-$problemID", class => 'form-check-input' =%>
+											<%= label_for "delete-problem-$problemID" => maketext('Delete it?'),
+												class => 'form-check-label' =%>
 										</div>
 									% }
 									% if (@editForUser != 1) {
 										<div class="form-check form-check-inline form-control-sm">
-											<label class="form-check-label">
-												<%= check_box markCorrect => $problemID,
-													id    => "problem.${problemID}.mark_correct",
-													class => 'form-check-input' =%>
-												<%= maketext('Mark Correct?') =%>
-											</label>
+											<%= check_box markCorrect => $problemID,
+												id    => "problem.${problemID}.mark_correct",
+												class => 'form-check-input' =%>
+											<%= label_for "problem.${problemID}.mark_correct" =>
+													maketext('Mark Correct?'),
+												class => 'form-check-label' =%>
 										</div>
 									% }
 								</div>
 								% if (@editForUser) {
-									<div class="col-md-6 offset-md-0 col-9 offset-3 font-sm order-md-last order-first">
-										<%= $source_file_parts[4] =%>
+									<div class="<%= @editForUser ? 'col-md-6' : 'col-md-5'
+										%> offset-md-0 col-9 offset-3 font-sm order-md-last order-first">
+										<%= $source_file_parts[3] =%>
 									</div>
 								% }
 							</div>
 							<div class="row">
 								<div class="col-md-5">
 									<%= $c->fieldTable(
-										$userToShow,                   $setID,         $problemID,
-										$globalProblems->{$problemID}, $problemToShow, $setRecord->assignment_type
+										$userToShow, $setID, $problemID,
+										$globalProblems->{$problemID},
+										$problemToShow,
+										$setRecord->assignment_type
 									) =%>
 								</div>
 								<div class="font-sm col-md-7">
