@@ -9,8 +9,6 @@ are made to `.dist` files, then the modifications will be lost or cause conflict
 
 Basic webwork2 configuration files.
 
-- `site.conf.dist` should be copied to `site.conf`, and contains global variables required for basic server
-  configuration. This file is read first in the initialization sequence.
 - `defaults.config` contains initial settings for many customizable options in WeBWorK. This file is read second in the
   initialization sequence. **This file should not be changed**
 - `localOverrides.conf.dist` should be copied to `localOverrides.conf`. `localOverrides.conf` will be read after the
@@ -29,8 +27,7 @@ Configuration extension files.
 
 Server configuration files.
 
-- `webwork2.mojolicious.dist.yml` contains the webwork2 Mojolicious app configuration settings. Copy this file to
-  `webwork2.mojolicious.yml` if you need to change those settings. You usually will need to do this.
+- `webwork2.mojolicious.dist.yml` contains the webwork2 Mojolicious app configuration settings.
 - `webwork2.dist.service` is a systemd configuration file for linux systems that serves the webwork2 app via the
   Mojolicious hypnotoad server. If you need to change it, then copy it to `webwork2.service`.
 - `webwork2-job-queue.dist.service` is a systemd configuration file for linux systems that runs the webwork2 job queue
@@ -42,8 +39,9 @@ Server configuration files.
 
 ## Initial configururation of webwork2
 
-- Copy `site.conf.dist` to `site.conf` and `localOverrides.conf.dist` to `localOverrides.conf`, and adjust the variables
-  in `site.conf` as needed. In particular you will need to set `$server_root_url` to the server name, and set
+- Copy `webwork2.mojolicious.dist.yml` to `webwork2.mojolicious.yml` and change appropriate settings.
+- Copy `localOverrides.conf.dist` to `localOverrides.conf`, and adjust the variables
+  as needed. In particular you will need to set `$server_root_url` to the server name, and set
   `$database_password` to the password for the database.
 - Adjust the variables in `localOverrides.conf` to customize your server for your needs.
 - Copy any of the other `.dist` files and adjust the variables in them as needed. Note that those files will need to be

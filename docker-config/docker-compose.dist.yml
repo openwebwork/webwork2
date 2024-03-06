@@ -132,7 +132,6 @@ services:
       # so the main contents of webwork2 can be shared by several hosts (ex. NFS)
       #- "/per_host_conf_path/conf/authen_LTI.conf:/opt/webwork/webwork2/conf/authen_LTI.conf"
       #- "/per_host_conf_path/conf/localOverrides.conf:/opt/webwork/webwork2/conf/localOverrides.conf"
-      #- "/per_host_conf_path/conf/site.conf:/opt/webwork/webwork2/conf/site.conf"
 
       # webwork2 misc LOCAL files - mount live (per host) so NOT in the main webwork2 location
       #- "/per_host_conf_path/htdocs/my_site_info.txt:/opt/webwork/webwork2/htdocs/my_site_info.txt"

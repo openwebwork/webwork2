@@ -695,7 +695,7 @@ sub page_title ($c) {
 
 Defined in this package.
 
-Outputs the $webwork_url defined in site.conf, unless $webwork_url is equal to
+Outputs the $webwork_url defined in webwork2.mojolicious.yml, unless $webwork_url is equal to
 "/", in which case this outputs the empty string.
 
 This is used to set a value in a global webworkConfig javascript variable,

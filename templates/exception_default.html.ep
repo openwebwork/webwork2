@@ -15,7 +15,7 @@
 		<p>An error occurred while processing your request.</p>
 		<p>
 			For help, please send mail to this site's webmaster\
-			% # $ENV{WEBWORK_SERVER_ADMIN} is set from $webwork_server_admin_email in site.conf.
+			% # $ENV{WEBWORK_SERVER_ADMIN} is set from $webwork_server_admin_email in webwork2.mojolicious.yml.
 			<% if ($ENV{WEBWORK_SERVER_ADMIN}) { =%>
 				<%= link_to $ENV{WEBWORK_SERVER_ADMIN} => "mailto:$ENV{WEBWORK_SERVER_ADMIN}" %>\
 			<% } =%>\

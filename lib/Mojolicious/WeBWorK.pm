@@ -56,14 +56,15 @@ sub startup ($app) {
 	# Load a minimal course environment
 	my $ce = WeBWorK::CourseEnvironment->new;
 
-	# Set important configuration variables
-	my $webwork_url         = $ce->{webwork_url};
-	my $webwork_htdocs_url  = $ce->{webwork_htdocs_url};
-	my $pg_htdocs_url       = $ce->{pg_htdocs_url} // '/pg_files';
-	my $webwork_htdocs_dir  = $ce->{webwork_htdocs_dir};
-	my $webwork_courses_url = $ce->{webwork_courses_url};
-	my $webwork_courses_dir = $ce->{webwork_courses_dir};
-	my $server_root_url     = $ce->{server_root_url};
+	# Set important server configuration variables
+	my $webwork_url         = $config->{environment}{webwork_url};
+	my $webwork_htdocs_url  = $config->{environment}{webwork_htdocs_url};
+	my $pg_htdocs_url       = $config->{environment}{pg_htdocs_url} // '/pg_files';
+	my $webwork_htdocs_dir  = $config->{environment}{webwork_htdocs_dir};
+	my $webwork_courses_url = $config->{environment}{webwork_courses_url};
+	my $webwork_courses_dir = $config->{environment}{webwork_courses_dir};
+	my $server_root_url     = $config->{environment}{server_root_url};
+	my $externalPrograms    = $config->{environment}{externalPrograms};
 
 	$app->log->info('WeBWorK server is starting');
 	$app->log->info("WeBWorK root directory set to $ENV{WEBWORK_ROOT}");
@@ -72,8 +73,8 @@ sub startup ($app) {
 
 	$WEBWORK_SERVER_ADMIN = $ce->{webwork_server_admin_email};
 	if ($WEBWORK_SERVER_ADMIN) {
-		$app->log->info(
-			"webwork_server_admin_email for reporting bugs has been set to $WEBWORK_SERVER_ADMIN in site.conf");
+		$app->log->info("webwork_server_admin_email for reporting bugs has been set to $WEBWORK_SERVER_ADMIN "
+				. "in webwork2.mojolicious.yml");
 	}
 
 	# Make the htdocs directory the first place to search for static files.  At this point this is only used by the
@@ -83,7 +84,7 @@ sub startup ($app) {
 
 	# Setup the Minion job queue. Make sure that any task added here is represented in the TASK_NAMES hash in
 	# WeBWorK::ContentGenerator::Instructor::JobManager.
-	$app->plugin(Minion => { $ce->{job_queue}{backend} => $ce->{job_queue}{database_dsn} });
+	$app->plugin(Minion => { $config->{job_queue}{backend} => $config->{job_queue}{database_dsn} });
 	$app->minion->add_task(lti_mass_update        => 'Mojolicious::WeBWorK::Tasks::LTIMassUpdate');
 	$app->minion->add_task(send_instructor_email  => 'Mojolicious::WeBWorK::Tasks::SendInstructorEmail');
 	$app->minion->add_task(send_achievement_email => 'Mojolicious::WeBWorK::Tasks::AchievementNotification');
@@ -97,8 +98,9 @@ sub startup ($app) {
 	# the WeBWorK::Request module to return the empty string for '/'.
 	$app->helper(location => sub ($) { return $webwork_url eq '/' ? '' : $webwork_url });
 
-	$app->helper(server_root_url => sub ($) { return $server_root_url; });
-	$app->helper(webwork_url     => sub ($) { return $webwork_url; });
+	$app->helper(server_root_url  => sub ($) { return $server_root_url; });
+	$app->helper(webwork_url      => sub ($) { return $webwork_url; });
+	$app->helper(externalPrograms => sub ($) { return $externalPrograms; });
 
 	$app->helper(
 		maketext => sub ($c, @args) {
@@ -257,8 +259,8 @@ sub startup ($app) {
 	$cg_r->get('/')->to('Home#go')->name('root');
 
 	# The course admin route is set up here because of its special stash value.
-	$cg_r->any("/$ce->{admin_course_id}")->to('CourseAdmin#go', courseID => $ce->{admin_course_id})
-		->name('course_admin');
+	$cg_r->any("/$config->{environment}{admin_course_id}")
+		->to('CourseAdmin#go', courseID => $config->{environment}{admin_course_id})->name('course_admin');
 
 	setup_content_generator_routes($cg_r);
 

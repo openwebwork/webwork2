@@ -54,9 +54,11 @@ use warnings;
 
 use Carp;
 use Opcode qw(empty_opset);
+use YAML::XS qw(LoadFile);
 
 use WeBWorK::WWSafe;
 use WeBWorK::Utils qw(readFile);
+use WeBWorK::DB::Utils qw(databaseParams);
 use WeBWorK::Debug;
 
 =head1 CONSTRUCTION
@@ -92,8 +94,10 @@ sub new {
 	# Get the webwork_dir and pg_dir from the SeedCE or the environment if not set.
 	$seedVars->{webwork_dir} //= $WeBWorK::SeedCE{webwork_dir} // $ENV{WEBWORK_ROOT};
 	$seedVars->{pg_dir}      //= $WeBWorK::SeedCE{pg_dir}      // $ENV{PG_ROOT};
-
 	$seedVars->{courseName} ||= '___';    # prevents extraneous error messages
+
+	# Load the webwork2.mojolcious.yml file which contains important configuration settings.
+	my $config = loadConfiguration($seedVars);
 
 	# The following line is a work around for a bug that occurs on some systems.  See
 	# https://rt.cpan.org/Public/Bug/Display.html?id=77916 and
@@ -157,9 +161,8 @@ sub new {
 	# pull it out of $safe's symbol table ad hoc
 	# (we don't want to do the hash conversion yet)
 	no strict 'refs';
-	my $courseEnvironmentFile = ${ *{ ${ $safe->root . "::" }{courseFiles} } }{environment};
-	my $courseWebConfigFile   = $seedVars->{web_config_filename}
-		|| ${ *{ ${ $safe->root . "::" }{courseFiles} } }{simpleConfig};
+	my $courseEnvironmentFile = $config->{environment}{courseFiles}{environment};
+	my $courseWebConfigFile   = $seedVars->{web_config_filename} || $config->{environment}{courseFiles}{simpleConfig};
 	use strict 'refs';
 
 	# make sure the course environment file actually exists (it might not if we don't have a real course)
@@ -222,6 +225,11 @@ sub new {
 		warn "Cannot read PG version file $PG_version_file";
 	}
 
+	# Load server settings from webwork2.mojolicious.yml
+	# This is done afterward loading defaults.config, localOverrides and course.conf
+	# in order to ensure that these aren't overridden.
+	set_server_settings($self, $config);
+
 	bless $self, $class;
 
 	# here is where we can do evil things to the course environment *sigh*
@@ -237,15 +245,6 @@ sub new {
 			keys %{ $self->{statuses} }
 	};
 
-	# Make sure that this is set in case it is not defined in site.conf.
-	$self->{pg_htdocs_url} //= '/pg_files';
-
-	# Fixup for courses that still have an underscore, 'heb', 'zh_hk', or 'en_us' saved in their settings files.
-	$self->{language} =~ s/_/-/g;
-	$self->{language} = 'he-IL' if $self->{language} eq 'heb';
-	$self->{language} = 'zh-HK' if $self->{language} eq 'zh-hk';
-	$self->{language} = 'en'    if $self->{language} eq 'en-us';
-
 	# now that we're done, we can go ahead and return...
 	return $self;
 }
@@ -254,7 +253,7 @@ sub new {
 
 =head1 ACCESS
 
-There are no formal accessor methods. However, since the course environemnt is
+There are no formal accessor methods. However, since the course environment is
 a hash of hashes and arrays, is exists as the self hash of an instance
 variable:
 
@@ -365,9 +364,125 @@ sub status_abbrev_has_behavior {
 	}
 }
 
-=back
+# This loads the configuration file (both defaults and overrides) and returns the
+# resulting hash to be included in the course environment.
 
-=cut
+sub loadConfiguration {
+	my ($seedVars) = @_;
+
+	my $defaults_file = "$seedVars->{webwork_dir}/conf/webwork2.mojolicious.dist.yml";
+	die "Cannot read the mojolicous defaults file: $defaults_file" unless -r $defaults_file;
+
+	# If this exists, load the overrides file (replacement for local overrides):
+	my $config_file = "$seedVars->{webwork_dir}/conf/webwork2.mojolicious.yml";
+	my $config      = -r $config_file ? LoadFile($config_file) : LoadFile($defaults_file);
+
+	# define some variables from the config file:
+	replacePlaceholders(
+		$config->{environment},
+		{
+			webwork_dir         => $seedVars->{webwork_dir},
+			webwork_url         => $config->{environment}->{webwork_url},
+			webwork_htdocs_dir  => $config->{environment}->{webwork_htdocs_dir},
+			webwork_htdocs_url  => $config->{environment}->{webwork_htdocs_url},
+			webwork_courses_dir => $config->{environment}->{webwork_courses_dir},
+			course_name         => $seedVars->{courseName},
+			courses_dir         => $config->{environment}->{webwork_courses_dir},
+			pg_root             => $seedVars->{pg_dir},
+			pg_root_url         => $config->{environment}->{pg}{URLs}{html}
+		}
+	);
+
+	return $config;
+}
+
+# This sets the directories in the course environment.  It is called after defaults.config
+# and course.conf are read to prevent being overridden in those files.
+
+# Note: these were set in the defaults.config before.
+
+sub set_server_settings {
+	my ($ce, $config) = @_;
+
+	# Copy everything from the environment section of webwork2.mojolicious.yml file into the CourseEnvironment
+	deepCopy($ce, $config->{environment});
+
+	# set the database settings:
+	$ce->{database_name}     = $config->{database}{name};
+	$ce->{database_host}     = $config->{database}{host};
+	$ce->{database_username} = $config->{database}{username};
+	$ce->{database_password} = $config->{database}{password};
+	if ($config->{database}{host} eq "localhost") {
+		if ($config->{database}{use_socket_if_localhost}) {
+			$ce->{database_dsn} = "DBI:$config->{database}{driver}:database=$config->{database}{name}";
+		} else {
+			$ce->{database_dsn} =
+				"DBI:$config->{database}{driver}:database=$config->{database}{name};"
+				. "host=127.0.0.1;port=$config->{database}{port}";
+		}
+	} else {
+		$ce->{database_dsn} =
+			"DBI:$config->{database}{driver}:database=$config->{database}{name};"
+			. "host=$config->{database}{host};port=$config->{database}{port}";
+	}
+	$ce->{dbLayoutName}                = 'sql_single';
+	$config->{database}{dsn}           = $ce->{database_dsn};
+	$config->{database}{character_set} = $config->{database}{ENABLE_UTF8MB4} ? 'utf8mb4' : 'utf8';
+	$ce->{dbLayout} = databaseParams($ce->{courseName}, $config->{database}, $config->{externalPrograms});
+
+	$ce->{maxCourseIdLength} = $config->{database}{maxCourseIdLength};
+
+	# ensure that the dvipng_depth_db information is defined:
+	$ce->{pg}{displayModeOptions}{images}{dvipng_depth_db}{user}     //= $config->{database}{username};
+	$ce->{pg}{displayModeOptions}{images}{dvipng_depth_db}{passwd}   //= $config->{database}{password};
+	$ce->{pg}{displayModeOptions}{images}{dvipng_depth_db}{dbsource} //= $ce->{database_dsn};
+
+	# Problem Library SQL database connection information
+	$ce->{problemLibrary_db} = {
+		dbsource       => $ce->{database_dsn},
+		user           => $ce->{database_username},
+		passwd         => $ce->{database_password},
+		storage_engine => 'MYISAM',
+	};
+
+	# Fixup for courses that still have an underscore, 'heb', 'zh_hk', or 'en_us' saved in their settings files.
+	$ce->{language} =~ s/_/-/g;
+	$ce->{language} = 'he-IL' if $ce->{language} eq 'heb';
+	$ce->{language} = 'zh-HK' if $ce->{language} eq 'zh-hk';
+	$ce->{language} = 'en'    if $ce->{language} eq 'en-us';
+
+	return;
+}
+
+# Recursively deplace variable placeholders in the $input object.
+sub replacePlaceholders {
+	my ($input, $values) = @_;
+	if (ref $input eq 'HASH') {
+		$input->{$_} = replacePlaceholders($input->{$_}, $values) for (keys %$input);
+	} elsif (ref $input eq 'ARRAY') {
+		$input->[$_] = replacePlaceholders($input->[$_], $values) for (0 .. $#$input);
+	} else {
+		$input =~ s/\$(\w+)/defined $values->{$1} ? $values->{$1} : ''/gex;
+	}
+
+	return $input;
+}
+
+# Recursively copy the source hash into the target hash, overriding key values in the target.  If a value in the source
+# has a ref that does not match that of the corresponding target value, then it is skipped and a warning is issued.
+# Anything not in the target is copied in.
+sub deepCopy {
+	my ($target, $source) = @_;
+	if (ref $target eq 'HASH' && ref $source eq 'HASH') {
+		$target->{$_} = deepCopy($target->{$_}, $source->{$_}) for (keys %$source);
+	} elsif (ref $target eq ref $source || !defined $target) {
+		$target = $source;
+	} else {
+		warn 'invalid source field detected -- skipping';
+	}
+
+	return $target;
+}
 
 1;
 

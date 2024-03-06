@@ -239,3 +239,516 @@ debug:
 hardcopy:
   # If 1, don't delete temporary files created when a hardcopy is generated.
   preserve_temp_files: 0
+
+
+# Seed/Server variables
+environment:
+
+  # Set these variables to correspond to your configuration.  It is not
+  # recommended to change any of the settings in this file once your
+  # web server has been initially configured.
+
+  # URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "". Note
+  # that using "" may not work so we suggest sticking with "/webwork2".
+  webwork_url: /webwork2
+
+  # The server protocol and domain name, e.g., 'https://webwork.yourschool.edu' or 'http://localhost'
+  # Note, if running a secure (ssl) server, you probably need 'https://...'.
+  # Also note that if you use a non-standard port, then that should also be included,
+  # e.g., 'http://localhost:8080'.
+  server_root_url: ''
+
+  # WeBWorK path variables.
+
+  # These variables describe the locations of various components of WeBWorK on your
+  # server.  You may use the defaults unless you have things in different places.
+
+  # This is the directory inside of webwork where web accessible files are.
+  # This will be available below as $webwork_htdocs_dir
+  webwork_htdocs_dir: /opt/webwork/webwork2/htdocs
+
+  # The main courses directory.  This is avaiable below as $courses_dir
+  webwork_courses_dir: /opt/webwork/courses
+
+  # URL of the courses and htdocs directory
+  webwork_courses_url: /webwork2_course_files
+  webwork_htdocs_url: /webwork_htdocs_url
+
+  # URL for the pg htdocs directory.
+  pg_htdocs_url: /pg_files
+
+  # The following variable is the address that will be listed in server error messages that come from WeBWorK:
+  #   "An error occurred while processing your request.
+  #   For help, please send mail to this site's webmaster
+  #   (mail link to <webwork_server_admin_email>), including all of the following
+  #   information as well as what what you were doing when the error occurred... etc..."
+  # If webwork_server_admin_email is not defined then the
+  # ServerAdmin address defined in httpd.conf is used.
+  webwork_server_admin_email: ''
+
+  # The following is the name of the admin course where admin level users can create
+  # courses, delete courses, and more. It is named 'admin' by default but for security,
+  # you may want to change to something that cannot be guessed. While installing WeBWorK,
+  # leave this as 'admin'. Once everything is running well, use the 'admin' course to
+  # create a new course to serve as the admin course. You may need to copy all archives
+  # from the 'admin' course into this new course. Then change $admin_course_id to the ID
+  # of the new course and restart webwork2. You may then also want to archive and delete
+  # the original 'admin' course.
+  admin_course_id: admin
+
+  # When new courses are created using the admin course, this setting controls
+  # whether or not they will be hidden.  Setting this to anything other than
+  # "hidden" or "visible" (or leaving it unset) means that courses created using
+  # "Add Courses" are not hidden, and all unarchived courses have whatever hidden
+  # status they had when archived.
+  # Setting this to "hidden" means that courses created using "Add Courses" and
+  # courses created using "Unarchive Courses" with a new course ID will be hidden.
+  # Unarchived courses that keep their original name will keep their hidden
+  # status.
+  # Setting this to "visible" means that courses created using "Add Courses" and
+  # courses created using "Unarchive Courses" with a new course ID will be visible.
+  # Unarchived courses that keep their original name will keep their hidden status.
+  # new_courses_hidden_status: hidden
+
+  # courseName
+  courseName: $course_name
+
+  webworkDirs:
+    root: $webwork_dir
+    htdocs: $webwork_htdocs_dir
+
+    # Location of system-wide data files.
+    DATA: $webwork_dir/DATA
+
+    # Used for temporary storage of uploaded files.
+    uploadCache: $webwork_dir/DATA/uploads
+
+    # Location of utility programs.
+    bin: $webwork_dir/bin
+
+    # Location of configuration/settings.
+    conf: $webwork_dir/conf
+
+    # Location of assets (tex, pg, themes)
+    assets: $webwork_dir/assets
+
+    # Location of the distribution hardcopy themes.
+    hardcopyThemes: $webwork_dir/assets/hardcopyThemes
+
+    # Location of the root directory for courses
+    courses: $webwork_courses_dir
+
+    # Location of log files.
+    logs: $webwork_dir/logs
+
+    # Contains non-web-accessible temporary files, such as TeX working directories.
+    tmp: $webwork_dir/tmp
+
+    # Location of web-accessible temporary files, such as equation images.
+    # This should be set in localOverrides.conf -- not here since this can be overwritten by new versions.
+    htdocs_temp: $webwork_htdocs_dir/tmp
+
+    # Location of cached equation images.
+    equationCache: $webwork_htdocs_dir/tmp/equations
+
+    # The (absolute) destinations of symbolic links that are OK for the FileManager to follow.
+    #   (any subdirectory of these is a valid target for a symbolic link.)
+    # For example: ["$courses_dir/modelCourse/templates","/opt/webwork/common/sets"]
+    valid_symlinks: []
+
+    # Location of the webwork2.sty and its dependencies used for hardcopy generation.
+    assetsTex: $webwork_dir/assets/tex
+
+    # Location of theme templates.
+    themes: $webwork_dir/htdocs/themes
+
+    # Location of localization directory.
+    localize:  $webwork_dir/lib/WeBWorK/Localize
+
+  # Set URLs for WeBWorK.  The variable $webwork_url, defined toward the top of this can be used.
+  webworkURLs:
+    # The root URL (usually /webwork2), set by <Location> in Apache configuration.
+    root: $webwork_url
+
+    # The URL for the htdocs directory.
+    htdocs: $webwork_htdocs_url
+
+    # The web-accesible tmp directory and related for equations
+    htdocs_temp: $webwork_htdocs_url/tmp
+    equationCache: $webwork_htdocs_url/tmp/equations
+
+  webworkFiles:
+
+    # Logs
+
+    logs:
+
+      # Logs data about how long it takes to process problems. (Do not confuse this with the /other/ timing
+      # log which can be set by WeBWorK::Timing and is used for benchmarking system performance in general.
+      # At some point, this timing mechanism will be deprecated in favor of the WeBWorK::Timing mechanism.)
+
+      timing: $webwork_dir/logs/timing.log
+
+      # Logs data about how long it takes to process problems. (Do not confuse this with the /other/ timing
+      # log which can be set by WeBWorK::Timing and is used for benchmarking system performance in general.
+      # At some point, this timing mechanism will be deprecated in favor of the WeBWorK::Timing mechanism.)
+      render_timing: $webwork_dir/logs/render_timing.log
+
+      # Logs courses created via the web-based Course Administration module.
+      hosted_courses: $webwork_dir/logs/hosted_courses.log
+
+      # The transaction log contains data from each recorded answer submission. This
+      # is useful if the database becomes corrupted.
+      transaction: $webwork_dir/logs/${courseName}_transaction.log
+
+    ################################################################################
+    # Hardcopy snippets are used in constructing a TeX file for hardcopy output.
+    # They should contain TeX code unless otherwise noted.
+    ################################################################################
+
+    # The setHeader precedes each set in hardcopy output. It is a PG file.
+    # This is the default file which is used if a specific files is not selected
+    hardcopySnippets:
+      setHeader: $webwork_dir/assets/pg/defaultSetHeader.pg
+
+    # The set header is displayed on the problem set page. It is a PG file.
+    # This is the default file which is used if a specific files is not selected
+    screenSnippets:
+      setHeader: $webwork_dir/assets/pg/defaultSetHeader.pg
+
+      # A PG template for creation of new problems.
+      blankProblem: $webwork_dir/assets/pg/newProblem.pg
+
+    # A site info "message of the day" file
+    site_info: $webwork_htdocs_dir/site_info.txt
+
+  courseFiles:
+    # The course configuration file.
+    environment: $courses_dir/$course_name/course.conf
+
+    # The course simple configuration file (holds web-based configuration).
+    simpleConfig: $courses_dir/$course_name/simple.conf
+
+
+    logs:
+      # The answer log stores a history of all users' submitted answers.
+      answer_log: $courses_dir/$course_name/logs/answer.log
+
+      # Log logins.
+      login_log: $courses_dir/$course_name/logs/login.log
+
+      # Log for almost every click.  By default it is the empty string, which turns this log off.
+      # If you want it turned on, we suggest $courses_dir/$course_name/logs/activity.log"
+      # When turned on, this log can get quite large.
+      # activity_log: $courses_dir/$course_name/logs/activity.log
+      activity_log: ''
+
+  # Set Course Directories. $courses_dir is available as the root of the courses directory
+  # and $course_name is the name of the current course.
+
+  courseDirs:
+    root: $courses_dir/$course_name
+
+    # Location of course-specific data files.
+    DATA: $courses_dir/$course_name/DATA
+
+    # Location of course HTML files, passed to PG.
+    html: $courses_dir/$course_name/html
+
+
+    # Location of course image files, passed to PG.
+    html_images: $courses_dir/$course_name/html/images
+
+    # Location of web-accessible, course-specific temporary files, like static and dynamically-generated PG graphics.
+    html_temp: $webwork_htdocs_dir/tmp/$course_name
+
+
+    # Location of course-specific logs, like the transaction log.
+    logs: $courses_dir/$course_name/logs
+
+    # Location of scoring files.
+    scoring: $courses_dir/$course_name/scoring
+
+    # Location of PG templates and set definition files.
+    templates: $courses_dir/$course_name/templates
+
+    # Location of hardcopy theme files.
+    hardcopyThemes: $courses_dir/$course_name/templates/hardcopyThemes
+
+    # Location of course-specific macro files.
+    macros: $courses_dir/$course_name/templates/macros
+
+    # Location of course achievement files.
+    achievements: $courses_dir/$course_name/templates/achievements
+    achievement_notifications: $courses_dir/$course_name/templates/achievement/notifications
+    achievements_html: $courses_dir/$course_name/html/achievements         #contains badge icons
+
+    # Location of mail-merge templates.
+    email: $courses_dir/$course_name/templates/email
+
+    # Location of temporary editing files.
+    tmpEditFileDir: $courses_dir/$course_name/templates/tmpEdit
+
+    # mail merge status directory
+    mailmerge: $courses_dir/$course_name/DATA/mailmerge
+
+  courseURLs:
+    html: $webwork_courses_dir/$course_name
+
+    # Location of web-accessible, course-specific temporary files, like static and dynamically-generated PG graphics.
+    html_temp: $webwork_htdocs_url/tmp/$course_name
+
+    # CHECK: The achievements URL should be inside of templates. (PS)
+    achievements: $webwork_url/$course_name/templates/achievements
+
+  # Define some configuration variables for pg
+
+  pg:
+    directories:
+      root: $pg_root
+      lib: $pg_root/lib
+      macros: $pg_root/macros
+      assets: $pg_root/assets
+      assetsTex: $pg_root/assets/tex
+
+      #  The macro file search path.  Each directory in this list is searched
+      #  (in this order) by loadMacros when it looks for a .pl macro file.
+      macrosPath:
+        - .
+        - $pg_root/macros
+        - $pg_root/macros/answers
+        - $pg_root/macros/capa
+        - $pg_root/macros/contexts
+        - $pg_root/macros/core
+        - $pg_root/macros/graph
+        - $pg_root/macros/math
+        - $pg_root/macros/misc
+        - $pg_root/macros/parsers
+        - $pg_root/macros/ui
+        - $pg_root/macros/deprecated
+
+      # Directories to search for auxiliary html files.
+      htmlPath:
+        - .
+        - $courses_dir/$course_name/html
+        - $webwork_htdocs_dir
+
+      # Directories to search for image files.
+      imagesPath:
+        - .
+        - $courses_dir/$course_name/html/images
+        - $webwork_htdocs_dir/images
+
+    URLs:
+      # The public URL of the html directory above. This is stored as $pg_root_url
+      html: /pg_files
+
+      # The public URL of the html_temp directory above.
+      tempURL: $pg_root_url/tmp
+
+      # The public URL of the PG help files.
+      localHelpURL: $pg_root_url/helpFiles
+
+      # URL of cached equation images.
+      equationCache: $pg_root_url/tmp/equations
+
+      # Paths to search for auxiliary html files (requires full url).
+      htmlPath:
+        - .
+        - $courses_dir/$course_name
+        - $webwork_htdocs_dir
+
+      # Paths to search for image files (requires full url).
+      imagesPath:
+        - .
+        - $courses_dir/$course_name/html
+        - $webwork_htdocs_dir/images
+
+# Mail settings
+  mail:
+    # The following directives need to be configured in order for your webwork
+    # server to be able to send mail.
+
+    # Mail sent by the PG system and the mail merge and feedback modules will be sent via this SMTP server.
+    # localhost may work if your server is capable of sending email, otherwise type the name of your School's
+    # outgoing email server.
+    # e.g. 'mail.yourschool.edu' or 'localhost'
+    smtpServer:
+
+    # When connecting to the above server, WeBWorK will send this address in the MAIL FROM command. This has
+    # nothing to do with the "From" address on the mail message. It can really be anything, but some mail
+    # servers require it containa valid mail domain, or at least be well-formed.
+    # e.g.  'webwork@yourserver.yourschool.edu'
+    smtpSender:
+
+    # Set the return_path to the From: field (sender's email address)
+    set_return_path: ""
+
+    # The return path is used to send error messages about bounced emails "noreply\@$mail{smtpServer}"
+    # discards error messages, using $mail{smtpSender} would deliver error messages to that address.
+    # The default setting should be adjusted for local domain.  Leaving the return path blank triggers
+    # the default which results in Return-Path  being set to the email of the sender.
+
+    # Seconds to wait before timing out when connecting to the SMTP server.  The default is 120 seconds.
+    # Change it by uncommenting the following line set it to 5 for testing, 30 or larger for production.
+    # smtpTimeout: 30
+
+    # TLS is a method for providing secure connections to the smtp server.
+    #  https://en.wikipedia.org/wiki/Transport_Layer_Security
+    # At some sites coordinating the certificates properly is tricky.
+    # Set this value to 0 to avoid checking certificates.
+    # Set it to 0 to trouble shoot an inability to verify certificates with the smtp server
+    tls_allowed: 0
+
+
+    # Errors of the form unable to establish SMTP connection to smtp-gw.rochester.edu port 465
+    # indicate that there is a mismatch between the port number and the use of ssl
+    # use port 25 when ssl is off and use port 465 when ssl is on (tls_allowed=1)
+
+
+    # Set the SMTP port manually.  Typically this does not need to be done it will use
+    # port 25 if no SSL is on and 465 if ssl is on
+
+    #smtpPort: 25
+
+    # Debugging tutorial for sending email using ssl/tls https://maulwuff.de/research/ssl-debugging.html
+
+    # Set maxAttachmentSize to the maximum number of megabytes to allow for the size of
+    # files attached to feedback emails.  Note that this should be set to match the
+    # limitations of the email server chosen above, and should be set to a value greater
+    # than zero or no attatchments will work.  This is not intended to be a configuration
+    # option to disable attachments.
+    maxAttachmentSize: 10
+
+  ################################################################################
+  # Search Engine Indexing Enable/Disable
+  ################################################################################
+  # sets the default meta robots content for individual course pages
+  # this will not stop your main course listing page from being indexed
+  # valid contents: index, noindex, follow, nofollow, noarchive, and
+  # unavailable_after (example: "index, unavailable_after: 23-Jul-2007 18:00:00 EST")
+  options:
+    metaRobotsContent: 'noindex, nofolow'
+
+
+    ################################################################################
+    # Third Party Assets CDN/Local
+    ################################################################################
+    # Set to 1 to serve third party assets files from a CDN.  Otherwise these
+    # asset files are served from the local node_modules directories.
+    thirdPartyAssetsUseCDN: 0
+
+
+  # External Programs
+
+  # These applications are often found in /bin, but sometimes in /usr/bin
+  # or even in /opt/local/bin.
+  # You can use "which tar"  for example to find out where the "tar" program is located
+
+  externalPrograms:
+    tar: /bin/tar
+    git: /bin/git
+    curl: /usr/bin/curl
+    mysql: /usr/bin/mysql
+    mysqldump: /usr/bin/mysqldump
+
+    # latex and related utilities
+    latex: /usr/bin/latex --no-shell-escape
+    pdflatex: /usr/bin/pdflatex --no-shell-escape
+
+    # Note that --no-shell-escape is important for security reasons.
+    # Consider using xelatex instead of pdflatex for multilingual use, and
+    # use polyglossia and fontspec packages (which require xelatex or lualatex).
+    #pdflatex: /usr/bin/xelatex --no-shell-escape
+
+    dvipng: /usr/bin/dvipng
+    convert: /usr/bin/convert
+    dvisvgm: /usr/bin/dvisvgm
+    pdf2svg: /usr/bin/pdf2svg
+
+    giftopnm: /usr/bin/giftopnm
+    ppmtopgm: /usr/bin/ppmtopgm
+    pnmtops: /usr/bin/pnmtops
+    pnmtopng: /usr/bin/pnmtopng
+    pnmtopnm: /usr/bin/pnmtopnm
+
+# Database options
+
+database:
+
+  # uncomment to allow database debug information
+  # debug: 1
+
+  # One thing on which it depends is the driver name, which you may want to modify.
+  # It also depends on the database name, which may be non-standard in some settings,
+  # as may be the hostname and port of the database server.
+
+  # driver should be one of: "mysql" or "MariaDB"
+
+  # Select the desired DB driver:
+  #database_driver: mysql
+  driver: MariaDB
+
+  host: localhost
+  port: 3306
+  name: webwork
+
+  # Standard permissions command used to initialize the webwork database
+  # GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
+  # where webworkWrite and passwordRW must match the corresponding variables in the next section.
+  username: ''
+  password: ''
+
+
+  # For a DB on localhost - default to using Unix socket. Change to 0 to use a TCP connection to 127.0.0.1.
+  use_socket_if_localhost: 1
+
+  # Need to add the code in lines 209-217 to a perl file
+  # Add line 234 to same file
+
+  # The default storange engine to use is set here:
+  storage_engine: myisam
+
+  # MYSQL compatibility settings for handling international Unicode characters (utf8 and utf8mb)
+
+  # These set the way characters are encoded in mysql and will depend on the version of mysqld being used.
+  # the default is to use latin1.  With version 2.15 we will move to encoding utf8mb4 which allows
+  # the encoding of characters from many languages including chinese, arabic and hebrew.
+
+  # setting this to 1 enables utf8mb4 encoding, setting this to 0 sets this for older
+  # mysql (pre 5.3) which cannot handle utf8mb4 characters.
+
+  ENABLE_UTF8MB4: 1
+
+  # This sets the max course id length.  It might need to be changed depending
+  # on what database tables are present.  Mysql allows a max table length of 64
+  # characters.  With the ${course_id}_global_user_achievement table that means
+  # the max ${course_id} is exactly 40 characters.
+
+  # Reference:  https://dev.mysql.com/doc/refman/8.0/en/identifier-length.html
+  maxCourseIdLength: 40
+
+
+
+
+# Minion job queue options
+job_queue:
+
+  # This is the Minion backend that will be used by the job queue.
+  # The corresponding perl package for this backend must be installed.
+  # Some availabled backends are:
+  # Minion::Backend::Pg (use 'Pg' below)
+  # Minion::Backend::mysql (use 'mysql' below)
+  # Minion::Backend::SQLite (use 'SQLite' below)
+  # The simplest to use is the SQLite backend as it requires no additional setup.
+  backend: SQLite
+
+  # Database dsn for the Minion job queue. Some examples of settings for the
+  # respective backends follow. The postgres and mysql examples will need to be
+  # modified to work. The default sqlite setting will work as is.
+  #database_dsn: "postgresql://dbuser@/webwork2_job_queue"
+  #database_dsn: "mysql://dbuser:dbpasswd@localhost/webwork2_job_queue"
+  database_dsn: "sqlite:/opt/webwork/webwork2/DATA/webwork2_job_queue.db"
+
+# Question: Problem Library on lines 351 -- 369.  Should we include this option
+# or in localOverrides?

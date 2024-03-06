@@ -29,8 +29,8 @@ sub display_equation ($c, $str) {
 
 	my $image_gen = WeBWorK::PG::ImageGenerator->new(
 		tempDir         => $ce->{webworkDirs}{tmp},
-		latex           => $ce->{externalPrograms}{latex},
-		dvipng          => $ce->{externalPrograms}{dvipng},
+		latex           => $c->externalPrograms->{latex},
+		dvipng          => $c->externalPrograms->{dvipng},
 		useCache        => 1,
 		cacheDir        => $ce->{webworkDirs}{equationCache},
 		cacheURL        => $ce->{webworkURLs}{equationCache},

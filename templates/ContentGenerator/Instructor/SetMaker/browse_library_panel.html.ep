@@ -10,9 +10,9 @@
 % {
 	% my $msg = begin
 	You are missing the directory <code>templates/Library</code>, which is needed for the Problem Library to function.
-	It should be a link pointing to <code><%= $libraryRoot %></code>, which you set in <code>conf/site.conf</code>.  An
-	attempt was made to create the link, but that failed. Check the permissions in your <code>templates</code>
-	directory.
+	It should be a link pointing to <code><%= $libraryRoot %></code>, which you set in
+	<code>conf/webwork2.mojolicious.yml</code>.  An	attempt was made to create the link, but that failed.
+	Check the permissions in your <code>templates</code> directory.
 	% end
 	% $c->addbadmessage($msg->());
 % }
