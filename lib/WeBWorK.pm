@@ -90,16 +90,19 @@ async sub dispatch ($c) {
 	if ($c->current_route =~ /^(render_rpc|instructor_rpc|html2xml)$/) {
 		$c->{rpc} = 1;
 
+		$c->stash(disable_cookies => 1) if $c->current_route eq 'render_rpc' && $c->param('disableCookies');
+
 		# This provides compatibility for legacy html2xml parameters.
 		# This should be deleted when the html2xml endpoint is removed.
 		if ($c->current_route eq 'html2xml') {
+			$c->stash(disable_cookies => 1);
 			for ([ 'userID', 'user' ], [ 'course_password', 'passwd' ], [ 'session_key', 'key' ]) {
 				$c->param($_->[1], $c->param($_->[0])) if defined $c->param($_->[0]) && !defined $c->param($_->[1]);
 			}
 		}
 
 		# Get the courseID from the parameters for a remote procedure call.
-		$routeCaptures{courseID} = $c->param('courseID') if $c->param('courseID');
+		$routeCaptures{courseID} = $c->stash->{courseID} = $c->param('courseID') if $c->param('courseID');
 	}
 
 	# If this is the login phase of an LTI 1.3 login, then extract the courseID from the target_link_uri.
@@ -240,7 +243,7 @@ async sub dispatch ($c) {
 			# we need to also check on the proctor.  Note that in the gateway quiz
 			# module this is double checked to be sure that someone isn't taking a
 			# proctored quiz but calling the unproctored ContentGenerator.
-			if ($c->current_route =~ /^proctored_gateway_quiz|proctored_gateway_proctor_login$/) {
+			if ($c->current_route =~ /^(proctored_gateway_quiz|proctored_gateway_proctor_login)$/) {
 				my $proctor_authen_module = WeBWorK::Authen::class($ce, 'proctor_module');
 				runtime_use $proctor_authen_module;
 				my $authenProctor = $proctor_authen_module->new($c);
@@ -251,6 +254,10 @@ async sub dispatch ($c) {
 					await WeBWorK::ContentGenerator::LoginProctor->new($c)->go;
 					return 0;
 				}
+			} else {
+				# If any other page is opened, then revoke proctor authorization if it has been granted.
+				# Otherwise the student will be able to re-enter the test without again obtaining proctor authorization.
+				delete $c->authen->session->{proctor_authorization_granted};
 			}
 			return 1;
 		} else {

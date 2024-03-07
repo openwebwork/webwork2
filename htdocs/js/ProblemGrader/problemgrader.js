@@ -73,8 +73,11 @@
 		saveButton.addEventListener('click', async () => {
 			const saveData = saveButton.dataset;
 
-			const user = document.getElementById('hidden_user').value;
-			const sessionKey = document.getElementById('hidden_key').value;
+			const authenParams = {};
+			const user = document.getElementsByName('user')[0];
+			if (user) authenParams.user = user.value;
+			const sessionKey = document.getElementsByName('key')[0];
+			if (sessionKey) authenParams.key = sessionKey.value;
 
 			const messageArea = document.getElementById(`grader_messages_problem${saveData.problemId}`);
 
@@ -98,8 +101,7 @@
 					method: 'post',
 					mode: 'same-origin',
 					body: new URLSearchParams({
-						user: user,
-						key: sessionKey,
+						...authenParams,
 						rpc_command: saveData.versionId !== '0' ? 'putProblemVersion' : 'putUserProblem',
 						courseID: saveData.courseId,
 						user_id: saveData.studentId,
@@ -154,8 +156,7 @@
 								const response = await fetch(basicWebserviceURL, {
 									method: 'post',
 									body: new URLSearchParams({
-										user: user,
-										key: sessionKey,
+										...authenParams,
 										rpc_command: 'putPastAnswer',
 										courseID: saveData.courseId,
 										answer_id: saveData.pastAnswerId,

@@ -94,9 +94,10 @@ Write @messages to the debugging log.
 
 sub debug {
 	my @message = @_;
-	@message = undefstr('###UNDEF###', @message);
 
 	if ($Enabled) {
+		@message = undefstr('###UNDEF###', @message);
+
 		my ($package, $filename, $line, $subroutine) = caller(1);
 		return if defined $AllowSubroutineOutput and not $subroutine =~ m/$AllowSubroutineOutput/;
 		return if defined $DenySubroutineOutput  and $subroutine     =~ m/$DenySubroutineOutput/;

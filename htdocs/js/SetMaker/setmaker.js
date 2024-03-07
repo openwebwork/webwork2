@@ -48,12 +48,17 @@
 	};
 
 	const init_webservice = (command) => {
+		const authenParams = {};
+		const user = document.getElementsByName('user')[0];
+		if (user) authenParams.user = user.value;
+		const sessionKey = document.getElementsByName('key')[0]?.value;
+		if (sessionKey) authenParams.key = sessionKey.value;
+
 		return {
 			rpc_command: 'listLib',
 			library_name: 'Library',
 			command: 'buildtree',
-			user: document.getElementById('hidden_user')?.value,
-			key: document.getElementById('hidden_key')?.value,
+			...authenParams,
 			courseID: document.getElementsByName('hidden_course_id')[0]?.value,
 			rpc_command: command
 		};

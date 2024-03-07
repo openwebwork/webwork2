@@ -35,7 +35,6 @@ async sub pre_header_initialize ($c) {
 	my $problemNumber     = $c->stash('problemID');
 	my $userName          = $c->param('user');
 	my $effectiveUserName = $c->param('effectiveUser');
-	my $key               = $c->param('key');
 	my $editMode          = $c->param('editMode');
 
 	# We want to run the existing pre_header_initialize with

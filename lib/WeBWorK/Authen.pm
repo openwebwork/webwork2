@@ -468,9 +468,9 @@ sub maybe_send_cookie {
 	my $c    = $self->{c};
 	my $ce   = $c->{ce};
 
-	return if $c->{rpc};
+	return if $c->stash('disable_cookies');
 
-	my ($cookie_user, $cookie_key, $cookie_timestamp, $setID) = $self->fetchCookie;
+	my ($cookie_user, $cookie_key, $cookie_timestamp) = $self->fetchCookie;
 
 	# Send a cookie if any of these conditions are met:
 
@@ -501,7 +501,7 @@ sub maybe_send_cookie {
 	);
 
 	if ($used_cookie || $unused_valid_cookie || $user_requests_cookie || $session_management_via_cookies) {
-		$self->sendCookie($self->{user_id}, $self->{session_key}, $setID);
+		$self->sendCookie($self->{user_id}, $self->{session_key});
 	} else {
 		$self->killCookie;
 	}
@@ -511,7 +511,7 @@ sub maybe_send_cookie {
 
 sub maybe_kill_cookie {
 	my $self = shift;
-	return if $self->{c}{rpc};
+	return if $self->{c}->stash('disable_cookies');
 	$self->killCookie;
 	return;
 }
@@ -522,7 +522,7 @@ sub set_params {
 
 	$c->param('user',   $self->{user_id});
 	$c->param('key',    $self->{session_key});
-	$c->param('passwd', '') unless $c->{rpc};
+	$c->param('passwd', '') unless $c->{rpc} && $c->stash->{disable_cookies};
 
 	debug("params user='", $c->param("user"), "' key='", $c->param("key"), "'");
 
@@ -613,35 +613,132 @@ sub unexpired_session_exists {
 	return defined $Key && time <= $Key->timestamp + $self->{c}->ce->{sessionKeyTimeout};
 }
 
-# Clobbers any existing session for this $userID.
-# A random key is generated, and that key is returned.
-# When this is called in Proctor.pm, the actual user id is passed in via $trueUserID.
-# The $userID is modified in that case and will not work in the hasPermissions call.
+# Uses an existing session and session key if a key was found previously with a valid timestamp. Otherwise a random key
+# is generated, and a new session and session key created. The key from the session is returned in any case.
 sub create_session {
-	my ($self, $userID, $trueUserID) = @_;
+	my ($self, $userID) = @_;
 	my $c  = $self->{c};
 	my $ce = $c->ce;
 	my $db = $c->db;
+	my $newKey;
 
-	my @chars = @{ $ce->{sessionKeyChars} };
-
-	srand;
-	my $newKey = join('', @chars[ map rand(@chars), 1 .. $ce->{sessionKeyLength} ]);
-
-	my $setID = !$c->authz->hasPermissions($trueUserID // $userID, 'navigation_allowed') ? $c->stash('setID') : '';
-
-	my $Key = $db->newKey(user_id => $userID, key => $newKey, timestamp => time, set_id => $setID);
-
-	# DBFIXME this should be a REPLACE
-	eval { $db->deleteKey($userID) };
-	eval { $db->addKey($Key) };
-	if ($@) {
-		warn "Difficulty adding key for userID $userID: $@";
-		eval { $db->putKey($Key) };
-		warn "Couldn't put key for userid $userID either: $@" if $@;
+	if (!$c->stash->{'webwork2.database_session'} || !$c->stash->{'webwork2.database_session'}{user_id}) {
+		my @chars = @{ $ce->{sessionKeyChars} };
+		srand;
+		$newKey = join('', @chars[ map rand(@chars), 1 .. $ce->{sessionKeyLength} ]);
+		$c->stash->{'webwork2.database_session'} =
+			{ user_id => $userID, key => $newKey, timestamp => time, session => {} };
+	} else {
+		$newKey = $c->stash->{'webwork2.database_session'}{key};
 	}
 
+	# If navigation is restricted, then set the set_id in the session.
+	$self->session(set_id => $c->stash->{setID})
+		if $c->stash->{setID} && !$c->authz->hasPermissions($userID, 'navigation_allowed');
+
 	return $newKey;
+}
+
+=head2 session
+
+This method can be used to get or set values in the session. Note that if
+C<session_management_via> is "session_cookie" then the Mojolicous cookie session
+is used. If C<session_management_via> is "key", then only the session in the
+database is used. Note that database session is really a hash stored in
+C<< $c->stash->{'webwork2.database_session} >> that has the following structure:
+
+    { user_id => $userID, key => $key, timestamp => $timestamp, session => {} }
+
+Only keys in the C<session> sub-hash can be set with this method. The
+C<user_id>, C<key>, and C<timestamp> should be set directly in the
+C<webwork2.database_session> hash.
+
+A single value from the session can be obtained as follows.
+
+    $authen->session('key1');
+
+Values can be set as in the following examples.
+
+    $authen->session(key1 => 'value 1', key2 => 'value 2');
+    $authen->session({ key1 => 'value 1', key2 => 'value 2' });
+
+The entire session can be obtained as a hash reference as follows.
+
+    my $session = $authen->session;
+
+=cut
+
+sub session {
+	my ($self, @params) = @_;
+	my $c = $self->{c};
+
+	# If session_management_via is not "session_cookie" (so should be "key"), then use the database session.
+	if ($c->ce->{session_management_via} ne 'session_cookie' || $c->stash('disable_cookies')) {
+		my $session = $c->stash->{'webwork2.database_session'} ? $c->stash->{'webwork2.database_session'}{session} : {};
+
+		# Note that the return values are the same as those returned by the
+		# Mojolicious::Controller::session method in the following cases.
+
+		# Return the session hash.
+		return $session unless @params;
+
+		# Get session values.
+		return $session->{ $params[0] } unless @params > 1 || ref $params[0];
+
+		# Set session values.
+		my $values = ref $params[0] ? $params[0] : {@params};
+		@$session{ keys %$values } = values %$values;
+
+		return $c;
+	}
+
+	# If session_management_via is "session_cookie", then use the Mojolicious cookie session.
+	return $c->session(@params);
+}
+
+=head2 store_session
+
+Store the database session. This is called after the current request has been
+dispatched (in the C<after_dispatch> hook). This allows database session values
+to be set or modified at any point before that is done.
+
+=cut
+
+sub store_session {
+	my $self = shift;
+	my $db   = $self->{c}->db;
+
+	if (my $session = $self->{c}->stash->{'webwork2.database_session'}) {
+		debug("Saving database session.  The database session contains\n", $self->{c}->dumper($session));
+
+		my $key = $db->newKey($session);
+		# DBFIXME:  This should be a REPLACE (but SQL::Abstract does not have REPLACE -- SQL::Abstract::mysql does!).
+		eval { $db->deleteKey($session->{user_id}) };
+		eval { $db->addKey($key) };
+		if ($@) {
+			warn "Difficulty adding key for userID $session->{user_id}: $@";
+			eval { $db->putKey($key) };
+			warn "Couldn't put key for userid $session->{user_id} either: $@" if $@;
+		}
+	} elsif ($self->{user_id}) {
+		debug('Deleting database session.');
+		eval { $db->deleteKey($self->{user_id}) };
+	}
+
+	return if $self->{c}->ce->{session_management_via} ne 'session_cookie' || $self->{c}->stash('disable_cookies');
+
+	# The cookie will actually be sent by the next line of the Mojolcious::Controller::rendered method after the
+	# after_dispatch hook in which this method is called.
+	my $cookieSession = $self->{c}->session;
+	if (keys %$cookieSession) {
+		if ($cookieSession->{expires} && $cookieSession->{expires} == 1) {
+			debug('The cookie session is expired.');
+		} else {
+			debug("The cookie session contains\n", $self->{c}->dumper($cookieSession));
+		}
+	}
+
+	return;
 }
 
 =head2 check_session
@@ -667,11 +764,16 @@ sub check_session {
 
 	my $keyMatches = defined $possibleKey && $possibleKey eq $Key->key;
 
-	my $timestampValid = time <= $Key->timestamp + $ce->{sessionKeyTimeout};
+	my $currentTime = time;
+
+	my $timestampValid =
+		$ce->{session_management_via} eq 'session_cookie' && defined $self->{cookie_timestamp}
+		? $currentTime <= $self->{cookie_timestamp} + $ce->{sessionKeyTimeout}
+		: $currentTime <= $Key->timestamp + $ce->{sessionKeyTimeout};
 
 	if ($keyMatches && $timestampValid && $updateTimestamp) {
-		$Key->timestamp(time);
-		$db->putKey($Key);
+		$Key->timestamp($currentTime);
+		$self->{c}->stash->{'webwork2.database_session'} = { $Key->toHash };
 	}
 
 	return (1, $keyMatches, $timestampValid);
@@ -696,8 +798,8 @@ sub killSession {
 	}
 
 	$self->forget_verification;
-	$self->killCookie                     if $ce->{session_management_via} eq 'session_cookie';
-	$c->{db}->deleteKey($self->{user_id}) if defined $self->{user_id};
+	$self->killCookie;
+	delete $c->stash->{'webwork2.database_session'};
 
 	return;
 }
@@ -705,22 +807,21 @@ sub killSession {
 # Cookie management
 
 # Note that this does not really "fetch" the session cookie. It just gets
-# the user_id, key, timestamp, and set_id from the cookie.
+# the user_id, key, and timestamp from the session cookie.
 sub fetchCookie {
 	my $self = shift;
 	my $c    = $self->{c};
 	my $ce   = $c->ce;
 
-	return if $c->{rpc};
+	return if $c->stash('disable_cookies');
 
 	my $userID    = $c->session->{user_id};
 	my $key       = $c->session->{key};
 	my $timestamp = $c->session->{timestamp};
-	my $setID     = $c->session->{set_id};
 
 	if ($userID && $key) {
 		debug(qq{fetchCookie: Returning userID="$userID", key="$key", timestamp="}, $timestamp, '"');
-		return ($userID, $key, $timestamp, $setID);
+		return ($userID, $key, $timestamp);
 	} else {
 		debug('fetchCookie: Session cookie does not contain valid information. Returning nothing.');
 		return;
@@ -730,23 +831,18 @@ sub fetchCookie {
 # Note that this does not actually "send" the cookie.  It merely sets the default session values in the cookie.
 # The session cookie is actually sent by Mojolicious when the response is rendered.
 sub sendCookie {
-	my ($self, $userID, $key, $setID) = @_;
+	my ($self, $userID, $key) = @_;
 	my $c  = $self->{c};
 	my $ce = $c->ce;
 
-	return if $c->{rpc};
+	return if $c->stash('disable_cookies');
 
 	my $courseID = $c->stash('courseID');
-
-	# This sets the setID in the cookie on initial login.
-	$setID = $c->stash('setID')
-		if !$setID && $c->authen->was_verified && !$c->authz->hasPermissions($userID, 'navigation_allowed');
 
 	$c->session(
 		user_id   => $userID,
 		key       => $key,
 		timestamp => time,
-		$setID ? (set_id => $setID) : (),
 		# Set how long the browser should retain the cookie.
 		expiration => $ce->{CookieLifeTime} eq 'session' ? 0 : $ce->{CookieLifeTime}
 	);
@@ -758,20 +854,6 @@ sub killCookie {
 	my ($self) = @_;
 	$self->{c}->session(expires => 1);
 	return;
-}
-
-# This method is only used for a user that does not have the navigation_allowed permission,
-# and is used to restrict that user to a specific set that the user is authenticated with.
-sub get_session_set_id {
-	my $self = shift;
-	my $setID;
-
-	if ($self->{c}->ce->{session_management_via} eq 'key') {
-		my $Key = $self->{c}->db->getKey($self->{c}->param('user'));
-		return $Key->set_id;
-	} else {
-		return $self->{c}->session->{set_id};
-	}
 }
 
 # Utilities

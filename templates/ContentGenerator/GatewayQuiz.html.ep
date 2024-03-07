@@ -388,7 +388,6 @@
 	%
 	<%= form_for $action, name => 'gwquiz', method => 'POST', class => 'problem-main-form', begin =%>
 		<%= $c->hidden_authen_fields =%>
-		<%= $c->hidden_proctor_authen_fields =%>
 		%
 		% # Hacks to use a javascript link to trigger previews and jump to subsequent pages of a multipage test.
 		<%= hidden_field pageChangeHack => '' =%>

@@ -11,8 +11,6 @@
 			if (iframe && iframe.iFrameResizer) iframe.contentDocument.location.replace('about:blank');
 
 			const ro = {
-				user: document.getElementById('hidden_user')?.value,
-				key: document.getElementById('hidden_key')?.value,
 				courseID: document.getElementsByName('hidden_course_id')[0]?.value,
 				language: document.getElementsByName('hidden_language')[0]?.value ?? 'en',
 				displayMode: document.getElementById('problem_displaymode').value ?? 'MathJax',
@@ -34,6 +32,11 @@
 					'</style>',
 				...renderOptions
 			};
+
+			const user = document.getElementsByName('user')[0];
+			if (user) ro.user = user.value;
+			const sessionKey = document.getElementsByName('key')[0];
+			if (sessionKey) ro.key = sessionKey.value;
 
 			const controller = new AbortController();
 			const timeoutId = setTimeout(() => controller.abort(), 10000);

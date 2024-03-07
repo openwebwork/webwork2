@@ -169,6 +169,7 @@ sub startup ($app) {
 			$SIG{__WARN__} = $c->stash->{orig_sig_warn} if defined $c->stash->{orig_sig_warn};
 
 			if ($c->isa('WeBWorK::ContentGenerator') && $c->ce) {
+				$c->authen->store_session if $c->authen;
 				writeTimingLogEntry(
 					$c->ce,
 					'[' . $c->url_for . ']',

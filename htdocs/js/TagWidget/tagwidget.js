@@ -73,13 +73,18 @@
 	};
 
 	const createWebServiceObject = (command, values = {}) => {
+		const authenParams = {};
+		const user = document.getElementsByName('user')[0];
+		if (user) authenParams.user = user.value;
+		const sessionKey = document.getElementsByName('key')[0]?.value;
+		if (sessionKey) authenParams.key = sessionKey.value;
+
 		return {
 			rpc_command: command,
 			library_name: 'Library',
 			command: 'searchLib',
-			user: document.getElementById('hidden_user')?.value,
 			courseID: document.getElementsByName('hidden_course_id')[0]?.value,
-			key: document.getElementById('hidden_key')?.value,
+			...authenParams,
 			...values
 		};
 	};

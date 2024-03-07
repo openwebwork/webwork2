@@ -38,11 +38,12 @@
 	// Send a request to the server to save the temporary file for the currently edited file.
 	// This temporary file could be used for recovery, and is displayed if the page is reloaded.
 	const saveTempFile = () => {
-		const request_object = {
-			user: document.getElementById('hidden_user')?.value,
-			courseID: document.getElementsByName('courseID')[0]?.value,
-			key: document.getElementById('hidden_key')?.value
-		};
+		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
+
+		const user = document.getElementsByName('user')[0];
+		if (user) request_object.user = user.value;
+		const sessionKey = document.getElementsByName('key')[0];
+		if (sessionKey) request_object.key = sessionKey.value;
 
 		request_object.rpc_command = 'saveFile';
 		request_object.outputFilePath = document.getElementsByName('temp_file_path')[0]?.value ?? '';
@@ -109,11 +110,12 @@
 
 	// Send a request to the server to perltidy the current PG code in the CodeMirror editor.
 	const tidyPGCode = () => {
-		const request_object = {
-			user: document.getElementById('hidden_user')?.value,
-			courseID: document.getElementsByName('courseID')[0]?.value,
-			key: document.getElementById('hidden_key')?.value
-		};
+		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
+
+		const user = document.getElementsByName('user')[0];
+		if (user) request_object.user = user.value;
+		const sessionKey = document.getElementsByName('key')[0];
+		if (sessionKey) request_object.key = sessionKey.value;
 
 		request_object.rpc_command = 'tidyPGCode';
 		request_object.pgCode =
@@ -345,13 +347,18 @@
 				return;
 			}
 
+			const authenParams = {};
+			const user = document.getElementsByName('user')[0];
+			if (user) authenParams.user = user.value;
+			const sessionKey = document.getElementsByName('key')[0];
+			if (sessionKey) authenParams.key = sessionKey.value;
+
 			const isProblem = fileType && /problem/.test(fileType) ? 1 : 0;
 
 			renderProblem(
 				new URLSearchParams({
-					user: document.getElementById('hidden_user')?.value,
+					...authenParams,
 					courseID: document.getElementsByName('courseID')[0]?.value,
-					key: document.getElementById('hidden_key')?.value,
 					problemSeed: document.getElementById('action_view_seed_id')?.value ?? 1,
 					sourceFilePath: document.getElementsByName('edit_file_path')[0]?.value,
 					rawProblemSource:
@@ -362,8 +369,8 @@
 					showAnswerNumbers: 0,
 					// The set id is really only needed by set headers to get the correct dates for the set.
 					set_id: document.getElementsByName('hidden_set_id')[0]?.value ?? 'Unknown Set',
-					// This should not be an actual problem number in the set.  If so the current user's seed for that problem
-					// will be used instead of the seed from the editor form.
+					// This should not be an actual problem number in the set.  If so the current user's seed for that
+					// problem will be used instead of the seed from the editor form.
 					probNum: 0,
 					showHints: 1,
 					showSolutions: 1,
@@ -449,15 +456,20 @@
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 30000);
 
+		const authenParams = {};
+		const user = document.getElementsByName('user')[0];
+		if (user) authenParams.user = user.value;
+		const sessionKey = document.getElementsByName('key')[0];
+		if (sessionKey) authenParams.key = sessionKey.value;
+
 		try {
 			const response = await fetch(renderURL, {
 				method: 'post',
 				mode: 'same-origin',
 				signal: controller.signal,
 				body: new URLSearchParams({
-					user: document.getElementById('hidden_user')?.value,
+					...authenParams,
 					courseID: document.getElementsByName('courseID')[0]?.value,
-					key: document.getElementById('hidden_key')?.value,
 					problemSeed: document.getElementById('action_hardcopy_seed_id')?.value ?? 1,
 					sourceFilePath: document.getElementsByName('edit_file_path')[0]?.value,
 					rawProblemSource:

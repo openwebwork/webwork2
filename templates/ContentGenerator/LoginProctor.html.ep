@@ -42,15 +42,11 @@
 %= form_for current_route, method => 'POST', begin
 	% # Add the form data posted to the requested URI in hidden fields.
 	% my @fields_to_print =
-		% grep { !/^(user|effectiveUser|passwd|key|force_password_authen|proctor_user|proctor_key|proctor_passwd)$/ }
-			% param;
+		% grep { !/^(user|effectiveUser|passwd|key|force_passwd_authen|proctor_user|proctor_passwd)$/ } param;
 	% if (@fields_to_print) {
 		<%= $c->hidden_fields(@fields_to_print) %>
 	% }
 	<%= $c->hidden_authen_fields =%>
-	%
-	<%= hidden_field past_proctor_user => param('past_proctor_user') || param('proctor_user') =%>
-	<%= hidden_field past_proctor_key  => param('past_proctor_key')  || param('proctor_key') =%>
 	%
 	% if (param('submitAnswers')
 		% || ($userSet->restricted_login_proctor eq '' || $userSet->restricted_login_proctor eq 'No'))

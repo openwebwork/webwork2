@@ -116,15 +116,13 @@ sub verify ($self) {
 		#
 		# To save this to the database a user_id value is needed that is unique for this request, satisfies the database
 		# constrains on user_id's, and won't collide with webwork user_id's.  So the login_hint (the LMS user id) and
-		# courseID are joined with ',set_id:' (hacking into the existing login proctor hack -- what an ugly hack to
-		# begin with).  That means the LMS user id will also be needed to get the information back from the database,
-		# and so this is included in the state as well.
+		# courseID are joined with ',set_id:'.  That means the LMS user id will also be needed to get the information
+		# back from the database, and so this is included in the state as well.
 		#
 		# To make matters worse, courseID's can contain hyphens, but user_id's can not.  Fortunately courseID's can not
 		# contain ampersats, while user_id's can.  So the hyphens in the courseID are replaced with ampersats.
 		#
-		# Finally, hack into the existing "nonce" key hack.  The actual state and nonce are joined with a tab
-		# character and saved in the set_id field.  Since the key value is "nonce", the database will not check
+		# Finally, hack into the existing "nonce" key hack. Since the key value is "nonce", the database will not check
 		# to see that the user_id exists in the user table.
 
 		my $key_id = join(',set_id:', $c->param('login_hint'), $c->stash->{courseID} =~ s/-/@/gr);
@@ -137,7 +135,7 @@ sub verify ($self) {
 			user_id   => $key_id,
 			key       => 'nonce',
 			timestamp => time,
-			set_id    => join("\t", $c->stash->{LTIState}, $c->stash->{LTINonce})
+			session   => { lti_state => $c->stash->{LTIState}, lti_nonce => $c->stash->{LTINonce} }
 		);
 		$c->db->addKey($key);
 
@@ -161,7 +159,7 @@ sub get_credentials ($self) {
 	# See the comments about the hacks involved here in the WeBWorK::Authen::LTIAdvantage::verify method above.
 	my $key_id = join(',set_id:', $c->stash->{lti_lms_user_id}, $c->stash->{courseID} =~ s/-/@/gr);
 	my $key    = $c->db->getKey($key_id);
-	($c->stash->{LTIState}, $c->stash->{LTINonce}) = split "\t", $key->set_id;
+	($c->stash->{LTIState}, $c->stash->{LTINonce}) = ($key->session->{lti_state}, $key->session->{lti_nonce});
 	$c->db->deleteKey($key_id);
 
 	$self->purge_old_state_keys;
@@ -196,7 +194,6 @@ sub get_credentials ($self) {
 	if (!defined $claims->{'https://purl.imsglobal.org/spec/lti/claim/deployment_id'}
 		|| $claims->{'https://purl.imsglobal.org/spec/lti/claim/deployment_id'} ne $ce->{LTI}{v1p3}{DeploymentID})
 	{
-		$c->log->info($claims->{'https://purl.imsglobal.org/spec/lti/claim/deployment_id'});
 		$self->{error} = $c->maketext(
 			'There was an error during the login process.  Please speak to your instructor or system administrator.');
 		warn "Incorrect deployment id received in response.\n" if $ce->{debug_lti_parameters};
@@ -414,7 +411,7 @@ sub purge_old_state_keys ($self) {
 	my $db   = $c->db;
 	my $time = time;
 
-	my @userIDs = $db->listKeys();
+	my @userIDs = $db->listKeys;
 	my @keys    = $db->getKeys(@userIDs);
 
 	my $modCourseID = $ce->{courseName} =~ s/-/@/gr;
@@ -478,10 +475,6 @@ sub verify_normal_user ($self) {
 	my ($c, $user_id, $session_key) = map { $self->{$_}; } ('c', 'user_id', 'session_key');
 
 	debug("LTIAdvantage::verify_normal_user called for user |$user_id|");
-
-	# Call check_session in order to destroy any existing session cookies and key table sessions.
-	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 0);
-	debug('sessionExists="', $sessionExists, '" keyMatches="', $keyMatches, '" timestampValid="', $timestampValid, '"');
 
 	my $auth_result = $self->authenticate;
 
