@@ -40,8 +40,8 @@ sub initializeRoute ($c, $routeCaptures) {
 				push(@matchingCourses, $ce)
 					if $ce->{LTIVersion}
 					&& $ce->{LTIVersion} eq 'v1p1'
-					&& $ce->{LMSCourseName}
-					&& $ce->{LMSCourseName} eq $c->param('context_title');
+					&& $ce->{LMSCourseID}
+					&& $ce->{LMSCourseID} eq $c->param('context_id');
 			}
 
 			if (@matchingCourses == 1) {

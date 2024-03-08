@@ -76,14 +76,14 @@ sub initializeRoute ($c, $routeCaptures) {
 					my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $_ }) };
 					if ($@) { $c->log->error("Failed to initialize course environment for $_: $@"); next; }
 					# This will now find the correct course for this request assuming the server administrator has
-					# correctly set the LMSCourseName in the course.conf file.
+					# correctly set the LMSCourseID in the course.conf file.
 					if (
 						($ce->{LTIVersion} // '') eq 'v1p3'
 						&& $ce->{LTI}{v1p3}{PlatformID} eq $c->stash->{LTILaunchData}->data->{PlatformID}
 						&& $ce->{LTI}{v1p3}{ClientID} eq $c->stash->{LTILaunchData}->data->{ClientID}
 						&& $ce->{LTI}{v1p3}{DeploymentID} eq $c->stash->{LTILaunchData}->data->{DeploymentID}
-						&& (($ce->{LMSCourseName} // '') eq
-							$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{title})
+						&& (($ce->{LMSCourseID} // '') eq
+							$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{id})
 						)
 					{
 						$c->stash->{courseID} = $_;
