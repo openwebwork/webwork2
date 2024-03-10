@@ -31,7 +31,7 @@ sub initializeRoute ($c, $routeCaptures) {
 	# get it from the form parameter.
 	if ($c->current_route eq 'ltiadvanced_content_selection') {
 		my $courseID = $c->param('courseID');
-		if (!$courseID && $c->param('context_title')) {
+		if (!$courseID && $c->param('context_id')) {
 			my @matchingCourses;
 
 			for (listCourses(WeBWorK::CourseEnvironment->new)) {
@@ -64,16 +64,24 @@ sub initializeRoute ($c, $routeCaptures) {
 
 sub content_selection ($c) {
 	return $c->render(
-		text => $c->maketext(
+		'ContentGenerator/LTI/content_item_selection_error',
+		errorMessage => $c->maketext(
 			'No WeBWorK course was found associated to this LMS course. '
 				. 'If this is an error, please contact the WeBWorK system administrator.'
-		)
+		),
+		contextData => [
+			[ $c->maketext('LTI Version'),   '1.1' ],
+			[ $c->maketext('Context Title'), $c->param('context_title') ],
+			[ $c->maketext('Context ID'),    $c->param('context_id') ]
+		]
 	) unless $c->stash->{courseID};
 
-	return $c->render(text => $c->maketext('You are not authorized to access instructor tools.'))
+	return $c->render('ContentGenerator/LTI/content_item_selection_error',
+		errorMessage => $c->maketext('You are not authorized to access instructor tools.'))
 		unless $c->authz->hasPermissions($c->authen->{user_id}, 'access_instructor_tools');
 
-	return $c->render(text => $c->maketext('You are not authorized to modify sets.'))
+	return $c->render('ContentGenerator/LTI/content_item_selection_error',
+		errorMessage => $c->maketext('You are not authorized to modify sets.'))
 		unless $c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets');
 
 	if (($c->param('lti_message_type') // '') eq 'ContentItemSelectionRequest') {

@@ -95,7 +95,7 @@ sub initializeRoute ($c, $routeCaptures) {
 					if $c->stash->{LTILaunchData} && $c->stash->{LTILaunchData}->data->{courseID};
 			}
 		}
-		$routeCaptures->{courseID} = $c->stash->{courseID} || '___';
+		$routeCaptures->{courseID} = $c->stash->{courseID} if $c->stash->{courseID};
 	}
 
 	$routeCaptures->{courseID} = $c->stash->{courseID} = $c->param('courseID')
@@ -151,6 +151,32 @@ sub login ($c) {
 }
 
 sub launch ($c) {
+	unless ($c->authen->{was_verified}) {
+		if ($c->stash->{lti_jwt_claims}
+			&& $c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/message_type'} eq
+			'LtiDeepLinkingRequest')
+		{
+			$c->stash->{contextData} = [
+				[ $c->maketext('LTI Version'), '1.3' ],
+				[
+					$c->maketext('Context Title'),
+					$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{title}
+				],
+				[
+					$c->maketext('Context ID'),
+					$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{id}
+				]
+			];
+		}
+		return $c->render(
+			'ContentGenerator/LTI/content_item_selection_error',
+			errorMessage => $c->maketext(
+				'No WeBWorK course was found associated to this LMS course. '
+					. 'If this is an error, please contact the WeBWorK system administrator.'
+			)
+		);
+	}
+
 	return $c->redirect_to($c->systemLink(
 		$c->url_for($c->stash->{LTILaunchRedirect}),
 		$c->stash->{lti_jwt_claims}
@@ -178,10 +204,12 @@ sub launch ($c) {
 }
 
 sub content_selection ($c) {
-	return $c->render(text => $c->maketext('You are not authorized to access instructor tools.'))
+	return $c->render('ContentGenerator/LTI/content_item_selection_error',
+		errorMessage => $c->maketext('You are not authorized to access instructor tools.'))
 		unless $c->authz->hasPermissions($c->authen->{user_id}, 'access_instructor_tools');
 
-	return $c->render(text => $c->maketext('You are not authorized to modify sets.'))
+	return $c->render('ContentGenerator/LTI/content_item_selection_error',
+		errorMessage => $c->maketext('You are not authorized to modify sets.'))
 		unless $c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets');
 
 	if ($c->param('initial_request')) {
@@ -198,9 +226,11 @@ sub content_selection ($c) {
 	}
 
 	my ($private_key, $err) = WeBWorK::Authen::LTIAdvantage::SubmitGrade::get_site_key($c->ce, 1);
-	return $c->render(text => $c->maketext('Error loading or generating site keys: [_1]', $err)) unless $private_key;
+	return $c->render(text => $c->maketext('Error loading or generating site keys: [_1]', $err))
+		unless $private_key;
 
-	my @selectedSets = $c->db->getGlobalSetsWhere({ set_id => [ $c->param('selected_sets') ] }, [qw(due_date set_id)]);
+	my @selectedSets =
+		$c->db->getGlobalSetsWhere({ set_id => [ $c->param('selected_sets') ] }, [qw(due_date set_id)]);
 
 	my $jwt = eval {
 		encode_jwt(
@@ -308,7 +338,8 @@ sub extract_jwt_claims ($c) {
 	# This occurs before the proper course environment for this request is set.  So get a course environment using the
 	# courseID in the data. Remember that this may not be the correct courseID if this is a deep linking request, but it
 	# will work at this point since this course has the same LTI 1.3 parameters as the correct course.
-	my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $c->stash->{LTILaunchData}->data->{courseID} }) };
+	my $ce =
+		eval { WeBWorK::CourseEnvironment->new({ courseName => $c->stash->{LTILaunchData}->data->{courseID} }) };
 	unless ($ce) {
 		$c->stash->{LTIAuthenError} =
 			'Failed to initialize course environment for ' . $c->stash->{LTILaunchData}->data->{courseID} . ": $@\n";
@@ -352,7 +383,7 @@ sub extract_jwt_claims ($c) {
 	# Verify the nonce.
 	if (!defined $claims->{nonce} || $claims->{nonce} ne $c->stash->{LTILaunchData}->nonce) {
 		$c->stash->{LTIAuthenError} = 'Incorrect nonce received in response.';
-		return 0;
+		return;
 	}
 
 	# Verify the deployment id.
@@ -360,7 +391,7 @@ sub extract_jwt_claims ($c) {
 		|| $claims->{'https://purl.imsglobal.org/spec/lti/claim/deployment_id'} ne $ce->{LTI}{v1p3}{DeploymentID})
 	{
 		$c->stash->{LTIAuthenError} = "Incorrect deployment id received in response.";
-		return 0;
+		return;
 	}
 
 	return $claims;
