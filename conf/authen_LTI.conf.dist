@@ -78,13 +78,6 @@ $authen{admin_module} = [
 # disable LTI authentication for the course.
 $LTIVersion = 'v1p1';
 
-# The $LMSCourseID is the context id of the course in the LMS that uses a particular webwork2
-# course as a tool provider.  This should never be set in this file, but rather should be set in
-# each webwork2 course's course.conf file.  This only needs to be set in the course.conf files
-# for each course if you want to allow the instructors of courses on this server to utilize
-# content item selection requests.
-#$LMSCourseID = 'LMS Course Context ID';
-
 # WeBWorK will automatically create users when logging in via the LMS for the first time as long
 # as the permission level is less than or equal to the permission level of this setting.  For
 # security reasons accounts with high permissions should not be auto created via LTI requests.

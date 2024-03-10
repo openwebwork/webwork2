@@ -22,6 +22,7 @@ use Mojo::JSON qw(encode_json);
 
 use WeBWorK::Utils qw(format_set_name_display);
 use WeBWorK::Utils::CourseManagement qw(listCourses);
+use WeBWorK::DB;
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
@@ -32,23 +33,20 @@ sub initializeRoute ($c, $routeCaptures) {
 	if ($c->current_route eq 'ltiadvanced_content_selection') {
 		my $courseID = $c->param('courseID');
 		if (!$courseID && $c->param('context_id')) {
-			my @matchingCourses;
-
-			for (listCourses(WeBWorK::CourseEnvironment->new)) {
-				my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $_ }) };
-				if ($@) { warn "Failed to initialize course environment for $_: $@\n"; next; }
-				push(@matchingCourses, $ce)
-					if $ce->{LTIVersion}
-					&& $ce->{LTIVersion} eq 'v1p1'
-					&& $ce->{LMSCourseID}
-					&& $ce->{LMSCourseID} eq $c->param('context_id');
-			}
+			# The database object used here is not associated to any course,
+			# and so the only has access to non-native tables.
+			my @matchingCourses = WeBWorK::DB->new(WeBWorK::CourseEnvironment->new->{dbLayout})
+				->getLTICourseMapsWhere({ lms_context_id => $c->param('context_id') });
 
 			if (@matchingCourses == 1) {
-				$courseID = $matchingCourses[0]{courseName};
+				$courseID = $matchingCourses[0]->course_id;
 			} elsif ($c->param('oauth_consumer_key')) {
 				for (@matchingCourses) {
-					if ($_->{LTI}{v1p1}{ConsumerKey} && $_->{LTI}{v1p1}{ConsumerKey} eq $c->param('oauth_consumer_key'))
+					my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $_->course_id }) };
+					if ($@) { warn "Failed to initialize course environment for $_: $@\n"; next; }
+					if (($ce->{LTIVersion} // '') eq 'v1p1'
+						&& $ce->{LTI}{v1p1}{ConsumerKey}
+						&& $ce->{LTI}{v1p1}{ConsumerKey} eq $c->param('oauth_consumer_key'))
 					{
 						$courseID = $_->course_id;
 						last;

@@ -1137,6 +1137,29 @@ sub deleteLTILaunchData {
 }
 
 ################################################################################
+# lti_course_map functions
+################################################################################
+# This database table contains LTI launch data for LTI 1.3 authentication.
+
+BEGIN {
+	*LTICourseMap            = gen_schema_accessor("lti_course_map");
+	*existsLTICourseMapWhere = gen_exists_where("lti_course_map");
+	*getLTICourseMapsWhere   = gen_get_records_where("lti_course_map");
+	*deleteLTICourseMapWhere = gen_delete_where("lti_course_map");
+}
+
+sub setLTICourseMap {
+	my ($self, $course_id, $lti_context_id) = shift->checkArgs(\@_, qw/course_id lti_context_id/);
+	if ($self->existsLTICourseMapWhere({ course_id => $course_id })) {
+		return $self->{lti_course_map}
+			->update_where({ lms_context_id => $lti_context_id }, { course_id => $course_id });
+	} else {
+		return $self->{lti_course_map}
+			->insert_fields([ 'course_id', 'lms_context_id' ], [ [ $course_id, $lti_context_id ] ]);
+	}
+}
+
+################################################################################
 # past_answers functions
 ################################################################################
 

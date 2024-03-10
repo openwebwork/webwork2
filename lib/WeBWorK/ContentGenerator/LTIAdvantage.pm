@@ -72,22 +72,31 @@ sub initializeRoute ($c, $routeCaptures) {
 			if ($c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/message_type'} eq
 				'LtiDeepLinkingRequest')
 			{
-				for (listCourses(WeBWorK::CourseEnvironment->new)) {
-					my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $_ }) };
-					if ($@) { $c->log->error("Failed to initialize course environment for $_: $@"); next; }
-					# This will now find the correct course for this request assuming the server administrator has
-					# correctly set the LMSCourseID in the course.conf file.
-					if (
-						($ce->{LTIVersion} // '') eq 'v1p3'
-						&& $ce->{LTI}{v1p3}{PlatformID} eq $c->stash->{LTILaunchData}->data->{PlatformID}
-						&& $ce->{LTI}{v1p3}{ClientID} eq $c->stash->{LTILaunchData}->data->{ClientID}
-						&& $ce->{LTI}{v1p3}{DeploymentID} eq $c->stash->{LTILaunchData}->data->{DeploymentID}
-						&& (($ce->{LMSCourseID} // '') eq
-							$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{id})
-						)
-					{
-						$c->stash->{courseID} = $_;
-						last;
+				# The database object used here is not associated to any course,
+				# and so the only has access to non-native tables.
+				my @matchingCourses =
+					WeBWorK::DB->new(WeBWorK::CourseEnvironment->new->{dbLayout})->getLTICourseMapsWhere({
+						lms_context_id =>
+						$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{id}
+					});
+
+				if (@matchingCourses == 1) {
+					$c->stash->{courseID} = $matchingCourses[0]->course_id;
+				} else {
+					for (@matchingCourses) {
+						my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $_->course_id }) };
+						if ($@) { warn "Failed to initialize course environment for $_: $@\n"; next; }
+						if (($ce->{LTIVersion} // '') eq 'v1p3'
+							&& $ce->{LTI}{v1p3}{PlatformID}
+							&& $ce->{LTI}{v1p3}{PlatformID} eq $c->stash->{LTILaunchData}->data->{PlatformID}
+							&& $ce->{LTI}{v1p3}{ClientID}
+							&& $ce->{LTI}{v1p3}{ClientID} eq $c->stash->{LTILaunchData}->data->{ClientID}
+							&& $ce->{LTI}{v1p3}{DeploymentID}
+							&& $ce->{LTI}{v1p3}{DeploymentID} eq $c->stash->{LTILaunchData}->data->{DeploymentID})
+						{
+							$c->stash->{courseID} = $_->course_id;
+							last;
+						}
 					}
 				}
 			} else {

@@ -203,6 +203,17 @@ sub pre_header_initialize ($c) {
 			} else {
 				$method_to_call = 'hide_inactive_course_form';
 			}
+		} elsif ($subDisplay eq 'manage_lti_course_map') {
+			if (defined $c->param('save_lti_course_map')) {
+				@errors = $c->save_lti_course_map_validate;
+				if (@errors) {
+					$method_to_call = 'manage_lti_course_map_form';
+				} else {
+					$method_to_call = 'do_save_lti_course_map';
+				}
+			} else {
+				$method_to_call = 'manage_lti_course_map_form';
+			}
 		} elsif ($subDisplay eq 'registration') {
 			if (defined($c->param('register_site'))) {
 				$method_to_call = 'do_registration';
@@ -2270,6 +2281,136 @@ sub do_unhide_inactive_course ($c) {
 	}
 
 	return $output->join('');
+}
+
+# LTI Course Map Management
+
+sub manage_lti_course_map_form ($c) {
+	my $ce        = $c->ce;
+	my @courseIDs = listCourses($ce);
+	my %courseMap = map { $_->course_id => $_->lms_context_id } $c->db->getLTICourseMapsWhere;
+	for (@courseIDs) { $courseMap{$_} = '' unless defined $courseMap{$_} }
+	return $c->include('ContentGenerator/CourseAdmin/manage_lti_course_map_form', courseMap => \%courseMap);
+}
+
+sub save_lti_course_map_validate ($c) {
+	my @errors;
+
+	my @courseIDs = listCourses($c->ce);
+	my %courseMap = map { $_->course_id => $_->lms_context_id } $c->db->getLTICourseMapsWhere;
+
+	# If a mapping is going to be removed, then delete it from the mapping so it is not considered below.
+	for (@courseIDs) {
+		delete $courseMap{$_} unless defined $c->param("$_-context-id") && $c->param("$_-context-id") ne '';
+	}
+
+	# Course environments are loaded as needed. Keep a cache to avoid needing to load any multiple times.
+	my %ces;
+
+COURSE:
+	for my $courseID (@courseIDs) {
+		my $lms_context_id = $c->param("$courseID-context-id");
+		next unless defined $lms_context_id && $lms_context_id ne '';
+
+		$ces{$courseID} = WeBWorK::CourseEnvironment->new({ courseName => $courseID })
+			unless defined $ces{$courseID};
+
+		if (!defined $courseMap{$courseID} && !$ces{$courseID}{LTIVersion}) {
+			push(
+				@errors,
+				$c->maketext(
+					'An LMS context id is requested to be assigned to [_1], '
+						. 'but that course is not configured to use LTI.',
+					$courseID
+				)
+			);
+			next;
+		}
+
+		if (
+			$ces{$courseID}{LTIVersion} eq 'v1p3'
+			&& !(
+				$ces{$courseID}{LTI}{v1p3}{PlatformID}
+				&& $ces{$courseID}{LTI}{v1p3}{ClientID}
+				&& $ces{$courseID}{LTI}{v1p3}{DeploymentID}
+			)
+			)
+		{
+			push(
+				@errors,
+				$c->maktext(
+					'An LMS context id is requested to be assigned to [_1] set to use LTI 1.3, '
+						. 'but that course is missing LTI 1.3 authentication parameters.',
+					$_
+				),
+			);
+			next;
+		}
+
+		for (grep { $_ ne $courseID && $courseMap{$_} eq $lms_context_id } keys %courseMap) {
+			$ces{$_} = WeBWorK::CourseEnvironment->new({ courseName => $_ }) unless defined $ces{$_};
+			if ($ces{$courseID}{LTIVersion} eq $ces{$_}{LTIVersion}) {
+				if (
+					$ces{$courseID}{LTIVersion} eq 'v1p1'
+					&& (!$ces{$courseID}{LTI}{v1p1}{ConsumerKey}
+						|| !$ces{$_}{LTI}{v1p1}{ConsumerKey}
+						|| $ces{$courseID}{LTI}{v1p1}{ConsumerKey} eq $ces{$_}{LTI}{v1p1}{ConsumerKey})
+					)
+				{
+					push(
+						@errors,
+						$c->maketext(
+							'The context id for [_1] is requested to be set to be the same as that of '
+								. '[_2], and both courses are configured to use LTI 1.1, but the consumer keys for '
+								. 'the two courses are either not both set or are the same.',
+							$courseID,
+							$_
+						)
+					);
+					next COURSE;
+				}
+
+				if ($ces{$courseID}{LTIVersion} eq 'v1p3'
+					&& $ces{$courseID}{LTI}{v1p3}{PlatformID} eq $ces{$_}{LTI}{v1p3}{PlatformID}
+					&& $ces{$courseID}{LTI}{v1p3}{ClientID} eq $ces{$_}{LTI}{v1p3}{ClientID}
+					&& $ces{$courseID}{LTI}{v1p3}{DeploymentID} eq $ces{$_}{LTI}{v1p3}{DeploymentID})
+				{
+					push(
+						@errors,
+						$c->maketext(
+							'The context id for [_1] is requested to be set to be the same as that of '
+								. '[_2], but the two courses are configured to use LTI 1.3 with the same LTI 1.3 '
+								. 'authentication parameters.',
+							$courseID,
+							$_,
+						)
+					);
+					next COURSE;
+				}
+			}
+		}
+
+		$courseMap{$courseID} = $lms_context_id;
+	}
+
+	return @errors;
+}
+
+sub do_save_lti_course_map ($c) {
+	my $db = $c->db;
+
+	for (listCourses($c->ce)) {
+		if (defined $c->param("$_-context-id") && $c->param("$_-context-id") ne '') {
+			eval { $db->setLTICourseMap($_, $c->param("$_-context-id")) };
+			$c->addbadmessage($c->maketext('An error occurred saving mapping for [_1]: [_2]', $_, $@)) if $@;
+		} else {
+			eval { $db->deleteLTICourseMapWhere({ course_id => $_ }) };
+			$c->addbadmessage($c->maketext('An error occurred deleting mapping for [_1]: [_2]', $_, $@)) if $@;
+		}
+	}
+
+	$c->addgoodmessage($c->maketext('Saved course map.'));
+	return $c->manage_lti_course_map_form;
 }
 
 sub do_registration ($c) {
