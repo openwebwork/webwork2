@@ -2223,11 +2223,38 @@ sub do_unhide_inactive_course ($c) {
 # LTI Course Map Management
 
 sub manage_lti_course_map_form ($c) {
-	my $ce        = $c->ce;
+	my $ce = $c->ce;
+
 	my @courseIDs = listCourses($ce);
 	my %courseMap = map { $_->course_id => $_->lms_context_id } $c->db->getLTICourseMapsWhere;
 	for (@courseIDs) { $courseMap{$_} = '' unless defined $courseMap{$_} }
-	return $c->include('ContentGenerator/CourseAdmin/manage_lti_course_map_form', courseMap => \%courseMap);
+
+	my %ltiConfigs = map {
+		my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $_ }) };
+		$_ => $@
+			? undef
+			: {
+				LTIVersion => $ce->{LTIVersion},
+				$ce->{LTIVersion}
+				? (
+					$ce->{LTIVersion} eq 'v1p1'
+					? (ConsumerKey => $ce->{LTI}{v1p1}{ConsumerKey})
+					: $ce->{LTIVersion} eq 'v1p3' ? (
+						PlatformID   => $ce->{LTI}{v1p3}{PlatformID},
+						ClientID     => $ce->{LTI}{v1p3}{ClientID},
+						DeploymentID => $ce->{LTI}{v1p3}{DeploymentID}
+					)
+					: ()
+				)
+				: ()
+			}
+	} @courseIDs;
+
+	return $c->include(
+		'ContentGenerator/CourseAdmin/manage_lti_course_map_form',
+		courseMap  => \%courseMap,
+		ltiConfigs => \%ltiConfigs
+	);
 }
 
 sub save_lti_course_map_validate ($c) {
