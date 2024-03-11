@@ -39,11 +39,15 @@
 				</tr>
 				% for my $con (@configSectionArray) {
 					% my $conobject = $c->objectify($con);
-					% my $name      = ($conobject->{var} =~ s/[{]/-/gr) =~ s/[}]//gr;
+					% my $name      = defined $conobject->{var}
+							% ? ($conobject->{var} =~ s/[{]/-/gr) =~ s/[}]//gr
+							% : $conobject->{setting};
 					<tr>
 						<td><%= $conobject->what_string %></td>
 						<td class="text-center">
-							<%= $conobject->display_value($con->get_value($c->{default_ce})) %>
+							% if (defined $conobject->{var}) {
+								<%= $conobject->display_value($con->get_value($c->{default_ce})) %>
+							% }
 						</td>
 						<td><%= $conobject->entry_widget($con->get_value($ce4)) =%></td>
 					</tr>
