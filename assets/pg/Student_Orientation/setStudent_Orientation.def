@@ -1,0 +1,101 @@
+assignmentType          = default
+openDate                = 01/01/2024 at 12:00am
+reducedScoringDate      = 12/31/2124 at 11:59pm
+dueDate                 = 12/31/2124 at 11:59pm
+answerDate              = 12/31/2124 at 11:59pm
+enableReducedScoring    = N
+paperHeaderFile         = defaultHeader
+screenHeaderFile        = defaultHeader
+description             = Student orientation assignment covering the basics of using WeBWorK
+restrictProbProgression = 0
+emailInstructor         = 0
+
+problemListV2
+problem_start
+problem_id           = 1
+source_file          = Student_Orientation/welcome.pg
+value                = 1
+max_attempts         = -1
+showMeAnother        = -1
+showHintsAfter       = -2
+prPeriod             = -1
+counts_parent_grade  = 0
+att_to_open_children = 0 
+problem_end
+problem_start
+problem_id           = 2
+source_file          = Student_Orientation/feedback.pg
+value                = 1
+max_attempts         = -1
+showMeAnother        = -1
+showHintsAfter       = -2
+prPeriod             = -1
+counts_parent_grade  = 0
+att_to_open_children = 0 
+problem_end
+problem_start
+problem_id           = 3
+source_file          = Student_Orientation/enteringMath.pg
+value                = 1
+max_attempts         = -1
+showMeAnother        = -1
+showHintsAfter       = -2
+prPeriod             = -1
+counts_parent_grade  = 0
+att_to_open_children = 0 
+problem_end
+problem_start
+problem_id           = 4
+source_file          = Student_Orientation/decimals.pg
+value                = 1
+max_attempts         = -1
+showMeAnother        = -1
+showHintsAfter       = -2
+prPeriod             = -1
+counts_parent_grade  = 0
+att_to_open_children = 0 
+problem_end
+problem_start
+problem_id           = 5
+source_file          = Student_Orientation/navigating.pg
+value                = 1
+max_attempts         = -1
+showMeAnother        = -1
+showHintsAfter       = -2
+prPeriod             = -1
+counts_parent_grade  = 0
+att_to_open_children = 0 
+problem_end
+problem_start
+problem_id           = 6
+source_file          = Student_Orientation/emailInstructor.pg
+value                = 1
+max_attempts         = -1
+showMeAnother        = -1
+showHintsAfter       = -2
+prPeriod             = -1
+counts_parent_grade  = 0
+att_to_open_children = 0 
+problem_end
+problem_start
+problem_id           = 7
+source_file          = Student_Orientation/hardcopy.pg
+value                = 1
+max_attempts         = -1
+showMeAnother        = -1
+showHintsAfter       = -2
+prPeriod             = -1
+counts_parent_grade  = 0
+att_to_open_children = 0 
+problem_end
+problem_start
+problem_id           = 8
+source_file          = Student_Orientation/miscellaneous.pg
+value                = 1
+max_attempts         = -1
+showMeAnother        = -1
+showHintsAfter       = -2
+prPeriod             = -1
+counts_parent_grade  = 0
+att_to_open_children = 0 
+problem_end

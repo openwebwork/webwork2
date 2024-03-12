@@ -1,0 +1,30 @@
+## DESCRIPTION
+## Welcome to WeBWorK; Purpose of this Orientation
+## ENDDESCRIPTION
+
+DOCUMENT();
+
+loadMacros(qw(
+    PGstandard.pl
+    PGML.pl
+    PGcourse.pl
+));
+
+$isOpen = time() > $envir{openDate} && time() < $envir{dueDate};
+$instruction = ($isOpen)
+    ? 'To get started, click in the answer blank, type the correct answer, and click the "Submit Answers" button.'
+    : 'This set is not currently open. You may want to ask your instructor to check if the open and close dates for this set are correctly set. In the meantime, you can click in the answer blank, type the correct answer, and click the "Check Answers" button to see if your answer is correct.';
+
+BEGIN_PGML
+## Welcome
+
+Welcome to the WeBWorK online homework platform. This orientation will familiarize you with basic features and usage of WeBWorK.
+
+[$instruction]**
+
+[`2+2={}`][_]{Context("LimitedNumeric"), 4}{4}
+
+[@ MODES(HTML => 'When you are ready, click "Next Problem".', TeX => '') @]
+END_PGML
+
+ENDDOCUMENT();

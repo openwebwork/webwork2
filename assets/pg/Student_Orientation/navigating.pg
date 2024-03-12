@@ -1,0 +1,65 @@
+## DESCRIPTION
+## Accessing Feedback
+## ENDDESCRIPTION
+
+DOCUMENT();
+
+loadMacros(qw(
+    PGstandard.pl
+    PGML.pl
+    PGcourse.pl
+));
+
+$a = random(5,10);
+
+BEGIN_PGML
+## Navigating WeBWorK ##
+By now you've had experience with the "Next Problem" button. The "Previous Problem" button takes you to the previous problem, and the "Problem List" button takes you back to the beginning of this problem set.
+
+At the bottom of a problem screen, you can see how many times you have attempted a problem, and how many attempts you have left. Sometimes you also see whether or not partial credit is possible, and if so how much do you have. This particular problem is lying about how many attempts you have used. How many attempts does it _say_ that you have used so far? [_]{$a}{4}
+
+To the left of the screen there are some panels. The top panel lets you find your way to 
+* *Assignments*: this is the "home" screen where you can see all of the assignments that have been assigned to you and when they are due.
+* *Account Settings*:
+    * If you would like to change your password, go here. (If you enter WeBWorK from an LMS like Canvas, D2L Brightspace, Moodle, Blackboard, etc. then you might not have a password to change in the first place.)
+    * Possibly you can change your email address here as well. The law requires that your instructor is only permitted to communicate with you about grades using your official school email address, so your email address might be locked.
+    * Choose whether math is rendered using MathJax (recommended) or images.
+    * Choose to see or not see your previously entered answers.
+    * Choose whether or not to enable the math editing tool (assuming the instructor has enabled it for the class as a whole).
+* *Grades*: Go here to see how you have performed in your assignments.
+* *Achievements*: If your instructor is using Achievements, then you can earn badges and level up as you complete homework problems. Go here to view your level and badges. Also, if you have earned any items that can be applied to your homework sets, you will see them here.
+
+[@ MODES(HTML => 'When you are ready, click "Next Problem".', TeX => '') @]
+END_PGML
+
+install_problem_grader(sub {
+      my ($result,$state) = std_problem_grader(@_);
+      my $time = time();
+      my $open = $time >= $openDate && $time <= $dueDate;
+      my $submit = $inputs_ref->{submitAnswers};
+      my $attempts = $state->{num_of_correct_ans} + $state->{num_of_incorrect_ans};
+      $attempts-- if $attempts && !$submit;
+
+      my @msg = ();
+      push(@msg,"Your score was ".($open ? "" : "not "). "recorded.") if $submit;
+      push(@msg,"You have attempted this problem $a time".($a== 1 ? "." : "s."));
+      push(@msg,"You have unlimited attempts remaining.");
+      if ($submit) {
+        if ($result->{score} == 1) {
+          push(@msg,"You received a score of 100% for this attempt.");
+          push(@msg,"Your overall recorded score is 100%.");
+        } else {
+          push(@msg,"Your answers are not yet fully correct.");
+        }
+      }
+      unless ($open) {
+        push(@msg,"The homework set is not yet open.") if $time  < $openDate;
+        push(@msg,"The homework set is closed.") if $time > $dueDate;
+      }
+
+      $state->{state_summary_msg} = join('<br>',@msg);
+      return ($result,$state);
+    });
+
+
+ENDDOCUMENT();
