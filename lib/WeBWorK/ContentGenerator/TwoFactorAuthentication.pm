@@ -22,8 +22,8 @@ WeBWorK::ContentGenerator::TwoFactorAuthentication - display the two factor auth
 
 =cut
 
-use Imager::QRCode;
-use Imager::Color;
+use GD::Image;    # Needed since GD::Barcode::QRcode calls GD::Image->new without loading GD::Image.
+use GD::Barcode::QRcode;
 use Email::Stuffer;
 use Mojo::Util qw(b64_encode);
 
@@ -55,14 +55,7 @@ sub pre_header_initialize ($c) {
 		$c->authen->session(otp_secret => $totp->secret);
 
 		my $otp_link = $totp->generate_otp($c->authen->{user_id}, $ce->{courseName});
-		Imager::QRCode->new(
-			size          => 4,
-			margin        => 3,
-			level         => 'L',
-			casesensitive => 1,
-			lightcolor    => Imager::Color->new(255, 255, 255, 0),
-			darkcolor     => Imager::Color->new(0,   0,   0),
-		)->plot($otp_link)->write(data => \(my $img_data), type => 'png');
+		my $img_data = GD::Barcode::QRcode->new($otp_link, { ModuleSize => 4, Version => 12 })->plot->png;
 
 		my $user = $c->db->getUser($c->authen->{user_id});
 
@@ -98,9 +91,8 @@ sub pre_header_initialize ($c) {
 							'p',
 							$c->maketext(
 								'Once the authenticator app is set up, return to the login page in WeBWorK and '
-								. 'enter the code it shows. Remember that the attached QR code and link above are '
-								. 'only valid as long as the page that you were visiting when this email was sent '
-								. 'is still open.'
+								. 'enter the code it shows. Remember that the attached QR code is only valid as '
+								. 'long as the page that you were visiting when this email was sent is still open.'
 							)
 						),
 						$c->tag(

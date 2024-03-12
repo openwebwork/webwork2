@@ -102,14 +102,13 @@ my @modulesList = qw(
 	File::Temp
 	Future::AsyncAwait
 	GD
+	GD::Barcode::QRcode
 	Getopt::Long
 	Getopt::Std
 	HTML::Entities
 	HTML::Tagset
 	HTML::Template
 	HTTP::Async
-	Imager::Color
-	Imager::QRCode
 	IO::File
 	IO::Socket::SSL
 	Iterator
