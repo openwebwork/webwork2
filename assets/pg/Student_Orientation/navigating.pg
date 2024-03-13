@@ -15,7 +15,7 @@ $a = random(5, 10);
 BEGIN_PGML
 ## Navigating WeBWorK ##
 By now you've had experience with the "Next Problem" button. The "Previous Problem" button takes you to the previous
-problem, and the "Problem List" button takes you back to the beginning of this problem set.
+problem, and the "Problem List" button takes you to a listing of all problems in the set.
 
 At the bottom of a problem screen, you can see how many times you have attempted a problem, and how many attempts you
 have left. Sometimes you also see whether or not partial credit is possible, and if so how much do you have. This

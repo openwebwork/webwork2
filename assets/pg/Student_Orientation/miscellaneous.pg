@@ -10,8 +10,6 @@ loadMacros(qw(
     PGcourse.pl
 ));
 
-$a = random(100, 900);
-
 BEGIN_PGML
 ## Miscellaneous ##
 
@@ -46,10 +44,10 @@ a problem, the numbers invloved are different. This encourages you to teach each
 problem without being able to simply share the answers.
 
 The collection of all of the numbers between [`0`] and [`\pi`] including the endpoints is represented as [`[0,\pi]`] in
-interval notation. Practice entering [`[0,\pi]`] in the answer blank: [_]{Context("Interval"), '[0,pi]'}{4}.
+interval notation. Practice entering [`[0,\pi]`] in the answer blank: [_]{Context("Interval"), Compute('[0,pi]')}{4}.
 
 What is the symbol that is used to represent a quantity that is conceptually larger than any number?
-[_]{Context("Numeric"), 'inf'}
+[_]{Context("Numeric"), Compute('inf')}
 
 The answer to the following is something like [`\pi AB`], but that's not accepted because the actual answer has
 lowercase variables. What should it be? [_]{Context("Numeric")->variables->are(a => 'Real', b => 'Real'), 'piab'}

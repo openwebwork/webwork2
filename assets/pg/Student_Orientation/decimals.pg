@@ -44,7 +44,8 @@ round to four significant digits. So you may simply enter [`20380`].
 
 Decimal tolerance settings may vary from problem to problem; the above is only describing default decimal tolerance.
 For example, if a problem has a monetary answer, it might expect you to answer correctly all the way to the hundredths
-place, even if it is a large amount in thousands of dollars.
+place, even if it is a large amount in thousands of dollars. Watch out for any specific instructions in each problem
+that tell you how precise you shoudl be.
 
 
 [@ MODES(HTML => 'When you are ready, click "Next Problem".', TeX => '') @]
