@@ -144,6 +144,7 @@ sub getConfigValues ($c, $ce) {
 		my $item = shift;
 		if (
 			ref($item) =~ /HASH/
+			&& defined $item->{var}
 			&& ($item->{var} =~
 				/^(defaultTheme|hardcopyThemesSite|hardcopyThemes|hardcopyTheme|hardcopyThemePGEditor)$/)
 			)
@@ -156,7 +157,7 @@ sub getConfigValues ($c, $ce) {
 	};
 	my $modifyLanguages = sub {
 		my $item = shift;
-		if (ref($item) =~ /HASH/ and $item->{var} eq 'language') {
+		if (ref($item) =~ /HASH/ && defined $item->{var} && $item->{var} eq 'language') {
 			$item->{values} = $languages;
 		}
 	};
@@ -220,7 +221,12 @@ sub pre_header_initialize ($c) {
 					$fileoutput .= $conobject->save_string($con->get_value($ce3), 1);
 				} else {
 					# We reached the tab with entry objects
-					$fileoutput .= $conobject->save_string($con->get_value($ce3));
+					if (defined $conobject->{var}) {
+						$fileoutput .= $conobject->save_string($con->get_value($ce3));
+					} else {
+						# this was something to set in the course's setting table
+						$c->db->setSettingValue($conobject->{setting}, $c->{paramcache}{ $conobject->{setting} }[0]);
+					}
 				}
 			}
 			$tab--;

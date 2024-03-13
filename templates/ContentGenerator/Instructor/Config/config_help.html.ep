@@ -17,12 +17,22 @@
 					<div class="modal-content">
 						<div class="modal-header">
 							<h1 class="modal-title fs-4" id="<%= "$configObject->{name}_help_title" %>">
-								<%= maketext('Variable Documentation') %>
+								% if (defined $configObject->{var}) {
+									<%= maketext('Variable Documentation') %>
+								% } else {
+									<%= maketext('Setting Documentation') %>
+								% }
 							</h1>
 							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 						</div>
 						<div class="modal-body">
-							<h2 class="fs-4"><code>$<%= $configObject->{var} %></code></h2>
+							<h2 class="fs-4"><code>
+								% if (defined $configObject->{var}) {
+									$<%= $configObject->{var} %>
+								% } else {
+									<%= $configObject->{setting} %> setting
+								% }
+							</code></h2>
 							<div><%== $configObject->{doc2} || $configObject->{doc} %></div>
 						</div>
 					</div>

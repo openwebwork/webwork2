@@ -6,7 +6,7 @@ use Mojo::Base -signatures;
 sub new ($class, $self, $c) {
 	# The current content generator controller object.
 	$self->{c}    = $c;
-	$self->{name} = ($self->{var} =~ s/[{]/_/gr) =~ s/[}]//gr;
+	$self->{name} = defined $self->{var} ? ($self->{var} =~ s/[{]/_/gr) =~ s/[}]//gr : $self->{setting};
 	return bless $self, $class;
 }
 
@@ -20,14 +20,19 @@ sub comparison_value ($self, $val) {
 	return $val;
 }
 
-# Get the value of the corresponding variable in the provided course environment.
+# Get the value of the corresponding variable in the provided course environment or setting table value.
 sub get_value ($self, $ce) {
-	my @keys = $self->{var} =~ m/([^{}]+)/g;
-	return '' unless @keys;
+	my $value;
+	if (defined $self->{var}) {
+		my @keys = $self->{var} =~ m/([^{}]+)/g;
+		return '' unless @keys;
 
-	my $value = $ce;
-	for (@keys) {
-		$value = $value->{$_};
+		$value = $ce;
+		for (@keys) {
+			$value = $value->{$_};
+		}
+	} else {
+		$value = $self->{c}->db->getSettingValue($self->{setting});
 	}
 	return $value;
 }
@@ -45,6 +50,7 @@ sub convert_newval_source ($self, $use_current) {
 # Bit of text to put in the configuration file.  The result should be an assignment which is executable by perl.  oldval
 # will be the value of the perl variable, and newval will be whatever an entry widget produces.
 sub save_string ($self, $oldval, $use_current = 0) {
+	return '' unless defined $self->{var};
 	my $newval = $self->convert_newval_source($use_current);
 	return '' if $self->comparison_value($oldval) eq $newval;
 
