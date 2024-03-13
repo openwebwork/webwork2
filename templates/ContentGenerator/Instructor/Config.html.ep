@@ -39,6 +39,10 @@
 				</tr>
 				% for my $con (@configSectionArray) {
 					% my $conobject = $c->objectify($con);
+					% next unless (
+						% defined $conobject->{var}
+						% || $authz->hasPermissions(param('user'), "setting_table_$conobject->{setting}")
+					% );
 					% my $name      = defined $conobject->{var}
 							% ? ($conobject->{var} =~ s/[{]/-/gr) =~ s/[}]//gr
 							% : $conobject->{setting};
