@@ -10,7 +10,7 @@ loadMacros(qw(
     PGcourse.pl
 ));
 
-$a = random(100,900);
+$a = random(100, 900);
 
 BEGIN_PGML
 ## Miscellaneous ##
@@ -56,6 +56,5 @@ lowercase variables. What should it be? [_]{Context("Numeric")->variables->are(a
 
 This concludes the WeBWorK student orientation.
 END_PGML
-
 
 ENDDOCUMENT();

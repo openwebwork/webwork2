@@ -10,11 +10,12 @@ loadMacros(qw(
     PGcourse.pl
 ));
 
-$random = random(100,900);
+$random = random(100, 900);
 $answer = Real($random)->cmp(
     checker => sub {
-        my ($c,$s,$a) = @_;
-        Value::Error("The correct answer is $random.") unless ($s == $random);
+        my ($c, $s, $a) = @_;
+        Value::Error("The correct answer is $random.")
+            unless ($s == $random);
         return 1;
     }
 );

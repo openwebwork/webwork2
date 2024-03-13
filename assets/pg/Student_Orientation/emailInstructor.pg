@@ -10,7 +10,7 @@ loadMacros(qw(
     PGcourse.pl
 ));
 
-$a = random(5,10);
+$a           = random(5, 10);
 $button_name = $envir{feedback_button_name};
 
 BEGIN_PGML

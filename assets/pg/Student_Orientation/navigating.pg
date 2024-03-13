@@ -10,7 +10,7 @@ loadMacros(qw(
     PGcourse.pl
 ));
 
-$a = random(5,10);
+$a = random(5, 10);
 
 BEGIN_PGML
 ## Navigating WeBWorK ##
@@ -39,33 +39,36 @@ your homework sets, you will see them here.
 END_PGML
 
 install_problem_grader(sub {
-      my ($result,$state) = std_problem_grader(@_);
-      my $time = time();
-      my $open = $time >= $openDate && $time <= $dueDate;
-      my $submit = $inputs_ref->{submitAnswers};
-      my $attempts = $state->{num_of_correct_ans} + $state->{num_of_incorrect_ans};
-      $attempts-- if $attempts && !$submit;
+    my ($result, $state) = std_problem_grader(@_);
+    my $time   = time();
+    my $open   = $time >= $openDate && $time <= $dueDate;
+    my $submit = $inputs_ref->{submitAnswers};
+    my $attempts =
+        $state->{num_of_correct_ans} + $state->{num_of_incorrect_ans};
+    $attempts-- if $attempts && !$submit;
 
-      my @msg = ();
-      push(@msg,"Your score was ".($open ? "" : "not "). "recorded.") if $submit;
-      push(@msg,"You have attempted this problem $a time".($a== 1 ? "." : "s."));
-      push(@msg,"You have unlimited attempts remaining.");
-      if ($submit) {
+    my @msg = ();
+    push(@msg, "Your score was " . ($open ? "" : "not ") . "recorded.")
+        if $submit;
+    push(@msg,
+        "You have attempted this problem $a time" . ($a == 1 ? "." : "s."));
+    push(@msg, "You have unlimited attempts remaining.");
+    if ($submit) {
         if ($result->{score} == 1) {
-          push(@msg,"You received a score of 100% for this attempt.");
-          push(@msg,"Your overall recorded score is 100%.");
+            push(@msg, "You received a score of 100% for this attempt.");
+            push(@msg, "Your overall recorded score is 100%.");
         } else {
-          push(@msg,"Your answers are not yet fully correct.");
+            push(@msg, "Your answers are not yet fully correct.");
         }
-      }
-      unless ($open) {
-        push(@msg,"The homework set is not yet open.") if $time  < $openDate;
-        push(@msg,"The homework set is closed.") if $time > $dueDate;
-      }
+    }
+    unless ($open) {
+        push(@msg, "The homework set is not yet open.")
+            if $time < $openDate;
+        push(@msg, "The homework set is closed.") if $time > $dueDate;
+    }
 
-      $state->{state_summary_msg} = join('<br>',@msg);
-      return ($result,$state);
-    });
-
+    $state->{state_summary_msg} = join('<br>', @msg);
+    return ($result, $state);
+});
 
 ENDDOCUMENT();

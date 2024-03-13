@@ -10,7 +10,7 @@ loadMacros(qw(
     PGcourse.pl
 ));
 
-$a = random(100,900);
+$a = random(100, 900);
 
 BEGIN_PGML
 ## PDF Hardcopy ##
