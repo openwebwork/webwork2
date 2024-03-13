@@ -48,7 +48,7 @@ Each of these buttons is something you can click to see more information about t
 
 For example, try answering the following with any answer. Almost certainly, you will be marked incorrect, but the feedback message will tell you the correct answer. What number am I thinking of?  [_]{$answer}{4}
 
-If you type an answer and click to "Preview my Answers", you will see a blue info button[@
+If you type an answer and click to "Preview my Answers", you will see an info button[@
     MODES(
         HTML => ': <button class="ww-feedback-btn btn btn-sm btn-info ms-1" disabled><i/></button>',
         TeX => ''

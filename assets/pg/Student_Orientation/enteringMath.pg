@@ -16,10 +16,10 @@ When you click into an answer blank, a math tool palette should appear off to th
 
 Almost everyting the palette tool can do can be done with typing alone. For the next asnwer blank, enter the same answer as before, but ignore the palette tool and type it all out. You can type characters [|pi/sqrtx+1|]* and watch as the expression automatically is converted to look like [::pi/sqrt(x+1)::]. [_]{Context("Numeric"), 'pi/sqrt(x+1)'}{16}
 
-Occasionally you will want to answer with raw text that should not be converted into a math expression. For example, if the answer is a word. For this kind of answer, you should enter "text mode". There is a "Tt" button on the palette  that enters and exits text mode. You can also use the [|"|]* character to enter and exit text mode. Try answering the following with and without using text mode. The answer is [|pirate|]*: [_]{Context("Numeric")->strings->add(pirate => {}), 'pirate'}{16}.
+Occasionally you will want to answer with raw text that should not be converted into a math expression. For example, if the answer is a word. For this kind of answer, you should enter "text mode". There is a "Tt" button on the palette  that enters and exits text mode. You can also use the [|"|]* character to enter text mode, and then exit with the [|tab|]* key or right arrow. Try answering the following with and without using text mode. The answer is [|pirate|]*: [_]{Context("Numeric")->strings->add(pirate => {}), 'pirate'}{16}.
 
 The palette tool might be a distraction, especially to keyboard-only using students. You can disable it by right-clicking (or control-clicking) in an answer blank. To "right click" without a mouse:
-* on Windows or Linux, use [|ctrl F10|]*.
+* on Windows or Linux, use [|shift F10|]*.
 * on a Mac, you must first enable Mouse Keys in System Settings, and then use [|control m|]*.
 
 Try to disable the palette tool now. Once the tool is diabled, your device and web browser should "remember" this setting when you visit a new problem or log in again. To bring the palette tool back, right-click (or control-click) again in an answer blank. Unless you are certain you do not want to use the palette tool, you should bring it back now.
@@ -33,9 +33,9 @@ When you want to enter an answer, you might want some assistance understanding h
         TeX => ''
     )
 @]* you can use to reveal a palette with tools for constructing math expressions as well as a preview of what the expression will look like. Try using the palette to help enter the expression [::pi/sqrt(x+1)::]. For this particular expression:
-1. You should start with the fraction building button. It will place [|()/()|]* into the answer blank.
+1. You should start with the fraction building button for [`\frac{a}{b}`]. It will insert [|()/()|]* into the answer blank.
 2. Now place the cursor inside the first set of parentheses. Use the "Operations" list to visit "Others", where you can click the [`\pi`] button. This will insert [|pi|]* and your answer blank should have [|(pi)/()|]*.
-3. Now place the cursor inside the second set of parentheses. Use the "Operations" list to visit "Exponents", where you can click the [`\sqrt{}`] button. Now your answer blank looks like [|(pi)/(sqrt())|]*.
+3. Now place the cursor inside the second set of parentheses. Use the "Operations" list to visit "Exponents", where you can click the [`\sqrt{a}`] button. Now your answer blank looks like [|(pi)/(sqrt())|]*.
 4. Finish by typing the [|x+1|]* in the appropriate place.
 
     [_]{Context("Numeric"), 'pi/sqrt(x+1)'}{16}

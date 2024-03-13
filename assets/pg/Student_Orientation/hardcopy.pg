@@ -15,12 +15,12 @@ $a = random(100,900);
 BEGIN_PGML
 ## PDF Hardcopy ##
 
-From the *Homework Sets* page, you may push a download button[@
+From the *Assignments* page (which you may or may not have permission to viist), you may push a download button[@
     MODES(
         HTML => ' <i class="hardcopy-tooltip icon far fa-arrow-alt-circle-down fa-lg"></i>',
         TeX => ''
     )
-@]* to download a PDF version.
+@]* to download a PDF version. Alternatively, when you are at the page listing all of one set's exercises, there is a "Download Hardcopy for Current Set" button.
 
 This file is something that you can read onscreen while you are offline. You can even print it off and take it to a tutoring center or somewhere comfortable to work on.
 

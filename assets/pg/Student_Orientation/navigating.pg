@@ -18,16 +18,11 @@ By now you've had experience with the "Next Problem" button. The "Previous Probl
 
 At the bottom of a problem screen, you can see how many times you have attempted a problem, and how many attempts you have left. Sometimes you also see whether or not partial credit is possible, and if so how much do you have. This particular problem is lying about how many attempts you have used. How many attempts does it _say_ that you have used so far? [_]{$a}{4}
 
-To the left of the screen there are some panels. The top panel lets you find your way to 
+To the left of the screen there are some panels. The top panel lets you find your way to the following, although depending on how your course is set up, any of these pages might not be avaliable.
 * *Assignments*: this is the "home" screen where you can see all of the assignments that have been assigned to you and when they are due.
-* *Account Settings*:
-    * If you would like to change your password, go here. (If you enter WeBWorK from an LMS like Canvas, D2L Brightspace, Moodle, Blackboard, etc. then you might not have a password to change in the first place.)
-    * Possibly you can change your email address here as well. The law requires that your instructor is only permitted to communicate with you about grades using your official school email address, so your email address might be locked.
-    * Choose whether math is rendered using MathJax (recommended) or images.
-    * Choose to see or not see your previously entered answers.
-    * Choose whether or not to enable the math editing tool (assuming the instructor has enabled it for the class as a whole).
-* *Grades*: Go here to see how you have performed in your assignments.
-* *Achievements*: If your instructor is using Achievements, then you can earn badges and level up as you complete homework problems. Go here to view your level and badges. Also, if you have earned any items that can be applied to your homework sets, you will see them here.
+* *Account Settings*: at this page you may (or may not) be able to change things like your password, your email address, how math is rendered for you, whether or not your previous answers will be visible to you, and whether or not you want to use the math editing tool. Some of these things may not be available depending on how your instructor or institution has configured WeBWorK.
+* *Grades*: go here to see how you have performed in your assignments.
+* *Achievements*: if your instructor is using Achievements, then you can earn badges and level up as you complete homework problems. Go here to view your level and badges. Also, if you have earned any items that can be applied to your homework sets, you will see them here.
 
 [@ MODES(HTML => 'When you are ready, click "Next Problem".', TeX => '') @]
 END_PGML

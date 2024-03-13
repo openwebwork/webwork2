@@ -11,15 +11,16 @@ loadMacros(qw(
 ));
 
 $a = random(5,10);
+$button_name = $envir{feedback_button_name};
 
 BEGIN_PGML
-## Email Instructor
+## [$button_name]
 
-If you feel stuck on a problem,do not understand what the problem asks for, suspect there is a bug with the problem, do not understand what syntax to use to enter the answer, or all of the above, there is an "Email Instructor" button below; use it.
+If you feel stuck on a problem, do not understand what the problem asks for, suspect there is a bug with the problem, do not understand what syntax to use to enter the answer, or all of the above, there is an "[$button_name]" button below the problem that you may use. This button appears on other pages in WeBWorK too.
 
 When you use this button, you should write a message to your instructor (or TA) explaining what you have tried. It will help a lot if you write down the steps of the math that you have worked out too. You can even attach a file, for example a picture of your hand-written work. Then the instructor gets your message along with a link to the problem from _your perspective_, and they can also see all of your previously attempted answers. This way your instructor can write you back with good help/hints.
 
-This answer blank is expecting a certain mystery answer: [_]{Real(112358)->cmp(tolType=>'absolute',tolerance=>0.1)}{4}. The only way to get the answer is to use the "Email Instructor" button and ask for the answer to this Orientation Problem [$envir{probNum}]. The instructor will reply to your email as soon as they are able to. (Instructors: you can Check/Submit an answer, then view the feedback to reveal the expected correct answer.)
+This answer blank is expecting a certain mystery answer: [_]{Real(112358)->cmp(tolType=>'absolute',tolerance=>0.1)}{4}. The only way to get the answer is to use the "[$button_name]" button and ask for the answer to this Orientation Problem [$envir{probNum}]. The instructor will reply to your email as soon as they are able to. (Instructors: you can Check/Submit an answer, then view the feedback to reveal the expected correct answer.)
 
 A reply will come in the form of an email. You must check your official email account to receive the reply. Then return to this problem to submit your answer.
 

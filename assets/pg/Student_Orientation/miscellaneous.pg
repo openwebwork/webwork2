@@ -26,8 +26,8 @@ Here are more WeBWorK features.
 *  Repeated guessing is not helpful.  If you have gotten a problem incorrect several times, you should ask for help.  That's what your instructor, TAs, and tutors are here for.
 * Make sure you read the feedback messages that WeBWorK gives you.
 * For decimal answers, get in the habit of using four significant digits.
-* If you want to enter [`\pi`], you could type [|pi|]*, paste the [`\pi`] character, press [|option-p|]* on a Mac, or use the palette tool.
-* If you want to enter [`\infty`], you could type [|inf|]*, type [|infinity|]*, paste the [`\infty`] character, press [|option-%|]* on a Mac, or use the palette tool.
+* If you want to enter [`\pi`], you could type [|pi|]*, use the palette tool, or directly enter the [`\pi`] character if you have a way to do that.
+* If you want to enter [`\infty`], you could type [|inf|]*, use the palette tool, or directly enter the [`\infty`] character if you have a way to do that.
 * All of your submissions are permanently recorded. That means you can log off at any time and all of your work will be saved. So you can do assignments in little bits at a time and work out of order if you like.
 * WeBWorK can be used on tablets and smartphones.
 * Most problems are coded with randomization. This means that while you and your classmate may have the same skeleton of a problem, the numbers invloved are different. This encourages you to teach each other the _process_ of answering a problem without being able to simply share the answers.

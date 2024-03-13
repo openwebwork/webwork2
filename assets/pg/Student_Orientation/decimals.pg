@@ -18,11 +18,9 @@ Sometimes, your instructor will require you to enter an answer _exactly_. In tha
 
 Sometimes, you will be allowed to use decimal _approximations_ to the real answer. So for instance, in the next answer blank we can get away with typing [|0.3333|]* even though that is slightly different from [:1/3:]. [`\frac13={}`][_]{Context("Numeric"),'1/3'}{4}  (Try [|1/3|]*, [|0.33|]*, [|0.3333|]*, [|2/6|]*, etc.)
 
-Why is [|0.3333|]* accepted and [|0.33|]* is not? _If_ a decimal approximation is acceptable at all, then you need to use enough significant digits tso your answer is "close enough" to the actual correct answer (which was [:1/3:] in this case). In general, using _four_ significant digits in your decimals will be enough. You will often be able to get away with fewer, but using four is recommended.
+Why is [|0.3333|]* accepted and [|0.33|]* is not? _If_ a decimal approximation is acceptable at all, then you need to use enough significant digits so your answer is "close enough" to the actual correct answer (which was [:1/3:] in this case). In general, using _four_ significant digits in your decimals will be enough. You will often be able to get away with fewer, but using four is recommended.
 
 Take out a calculator and enter decimal approximations for these values. At first, rounding your calculator's output to just two significant digits. Then move up to three. If that is still not enough, move up to four.
-
-    [`1/9 =0.11111111\ldots=`] [_]{1/9}{4} (Try [|0.11|]*, [|0.111|]*, [|0.111|]*, etc.)
 
     [`\sqrt{110} =10.4880885\ldots=`] [_]{sqrt(110)} (Try [|10|]*, [|10.4|]*, [|10.5|]*, [|10.48|]*, [|10.49|]*, etc.)
 
@@ -33,6 +31,9 @@ Take out a calculator and enter decimal approximations for these values. At firs
 With [`0.002038`], students sometimes feel they should be able to get away with [`0.002`], since that is only off by a tiny amount of [`0.000038`]. However, percentage-wise this would be off by over [`1.8%`], which is considered too much.
 
 With [`20380.2`], students mistakenly believe they must enter the entire number. While that's fine, it's also OK to round to four significant digits. So you may simply enter [`20380`].
+
+Decimal tolerance settings may vary from problem to problem; the above is only describing default decimal tolerance. For example, if a problem has a monetary answer, it might expect you to answer correctly all the way to the hundredths place, even if it is a large amount in thousands of dollars.
+
 
 [@ MODES(HTML => 'When you are ready, click "Next Problem".', TeX => '') @]
 END_PGML
