@@ -100,6 +100,7 @@ $LTI{v1p3}{ClientID}        = '';
 $LTI{v1p3}{DeploymentID}    = '';
 $LTI{v1p3}{PublicKeysetURL} = '';
 $LTI{v1p3}{AccessTokenURL}  = '';
+$LTI{v1p3}{AccessTokenAUD}  = '';
 $LTI{v1p3}{AuthReqURL}      = '';
 
 # In the process of LTI 1.3 authentication a request is sent to the LMS in response to its
