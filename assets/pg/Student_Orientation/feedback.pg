@@ -26,36 +26,40 @@ When you Submit an answer, a feedback button appears near the answer blank.
 
 * If you answer correctly, you see a green checkmark[@
     MODES(
-        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-success ms-1" disabled><i class="correct"></i></button>',
+        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-success" disabled><i class="correct"></i></button>',
         TeX => ''
     )@]*.
 * If you answer incorrectly, you see a red alert[@
     MODES(
-        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-danger ms-1" disabled><i class="incorrect"></i></button>',
+        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-danger" disabled><i class="incorrect"></i></button>',
         TeX => ''
     )@]*.
 * If you earn partial credit, you see a yellow warning[@
     MODES(
-        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-warning ms-1" disabled><i class="partially-correct"></i></button>',
+        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-warning" disabled><i class="partially-correct"></i></button>',
         TeX => ''
     )@]*.
 
-Each of these buttons is something you can click to see more information about the answer you tried. And if there is an actual feedback message, you will see a small circle in the upper right corner of the button[@
+Each of these buttons is something you can click to see more information about the answer you tried. And if there is an
+actual feedback message, you will see a small circle in the upper right corner of the button[@
     MODES(
-        HTML => ', like <button class="ww-feedback-btn btn btn-sm btn-danger ms-1 with-message" disabled><i class="incorrect"></i></button>',
+        HTML => ', like <button class="ww-feedback-btn btn btn-sm btn-danger with-message" disabled><i class="incorrect"></i></button>',
         TeX => ''
     )@]*.
 
-For example, try answering the following with any answer. Almost certainly, you will be marked incorrect, but the feedback message will tell you the correct answer. What number am I thinking of?  [_]{$answer}{4}
+For example, try answering the following with any answer. Almost certainly, you will be marked incorrect, but the
+feedback message will tell you the correct answer. What number am I thinking of?  [_]{$answer}{4}
 
 If you type an answer and click to "Preview my Answers", you will see an info button[@
     MODES(
-        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-info ms-1" disabled><i/></button>',
+        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-info" disabled><i/></button>',
         TeX => ''
     )
 @]* instead of the correct/incorrect buttons.
 
-In addition to automated feedback, your instructor can leave messages for you in WeBWorK. To see these messages, you must visit the problem for which a message has been left. The message will appear above the exercise. If your course uses essay questions, there is no automated feedback, and these messages from the instructor will be your only feedback.
+In addition to automated feedback, your instructor can leave messages for you in WeBWorK. To see these messages, you
+must visit the problem for which a message has been left. The message will appear above the exercise. If your course
+uses essay questions, there is no automated feedback, and these messages from the instructor will be your only feedback.
 
 [@ MODES(HTML => 'When you are ready, click "Next Problem".', TeX => '') @]
 END_PGML

@@ -12,13 +12,16 @@ loadMacros(qw(
 
 $isOpen = time() > $envir{openDate} && time() < $envir{dueDate};
 $instruction = ($isOpen)
-    ? 'To get started, click in the answer blank, type the correct answer, and click the "Submit Answers" button.'
-    : 'This set is not currently open. You may want to ask your instructor to check if the open and close dates for this set are correctly set. In the meantime, you can click in the answer blank, type the correct answer, and click the "Check Answers" button to see if your answer is correct.';
+	? 'To get started, click in the answer blank, type the correct answer, and click the "Submit Answers" button.'
+	: 'This set is not currently open. You may want to ask your instructor to check if the open and close dates for '
+		. 'this set are correctly set. In the meantime, you can click in the answer blank, type the correct answer, '
+		. 'and click the "Check Answers" button to see if your answer is correct.';
 
 BEGIN_PGML
 ## Welcome
 
-Welcome to the WeBWorK online homework platform. This orientation will familiarize you with basic features and usage of WeBWorK.
+Welcome to the WeBWorK online homework platform. This orientation will familiarize you with basic features and usage of
+WeBWorK.
 
 [$instruction]**
 

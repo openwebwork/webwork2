@@ -17,26 +17,42 @@ BEGIN_PGML
 
 Here are more WeBWorK features.
 
-* After an assignment is due, you are typically able to see the answers to all questions by visiting an exercise, checking an answer, and viewing the feedback. Also when downloading the hardcopy PDF, you have the option to show the expected correct answers.
-* Some problems have been coded with walk-through solutions. You will not be able to see these until it's also possible for you to see the answers.
-* Some problems have been coded with hints. You will not be able to see these until you've attempted the problem a certain number of times.
-* Once the due date has passed, you can still enter answers in the answer blanks and use the "Check" button, and WeBWorK will still give you the same feedback; just not for credit.
-* Captial letters are different than lowercase letters when it comes to variables. For exmaple, [`\pi r^2`] might be correct while [`\pi R^2`] is not.
-* When you click on a problem set, there is set-specific information in a panel to the right. Always read this before you begin the problems set. It may give you important hints.
-*  Repeated guessing is not helpful.  If you have gotten a problem incorrect several times, you should ask for help.  That's what your instructor, TAs, and tutors are here for.
+* After an assignment is due, you are typically able to see the answers to all questions by visiting an exercise,
+checking an answer, and viewing the feedback. Also when downloading the hardcopy PDF, you have the option to show the
+expected correct answers.
+* Some problems have been coded with walk-through solutions. You will not be able to see these until it's also possible
+for you to see the answers.
+* Some problems have been coded with hints. You will not be able to see these until you've attempted the problem a
+certain number of times.
+* Once the due date has passed, you can still enter answers in the answer blanks and use the "Check" button, and WeBWorK
+will still give you the same feedback; just not for credit.
+* Captial letters are different than lowercase letters when it comes to variables. For exmaple, [`\pi r^2`] might be
+correct while [`\pi R^2`] is not.
+* When you click on a problem set, there is set-specific information in a panel to the right. Always read this before
+you begin the problems set. It may give you important hints.
+*  Repeated guessing is not helpful.  If you have gotten a problem incorrect several times, you should ask for help.
+That's what your instructor, TAs, and tutors are here for.
 * Make sure you read the feedback messages that WeBWorK gives you.
 * For decimal answers, get in the habit of using four significant digits.
-* If you want to enter [`\pi`], you could type [|pi|]*, use the palette tool, or directly enter the [`\pi`] character if you have a way to do that.
-* If you want to enter [`\infty`], you could type [|inf|]*, use the palette tool, or directly enter the [`\infty`] character if you have a way to do that.
-* All of your submissions are permanently recorded. That means you can log off at any time and all of your work will be saved. So you can do assignments in little bits at a time and work out of order if you like.
+* If you want to enter [`\pi`], you could type [|pi|]*, use the palette tool, or directly enter the [`\pi`] character if
+you have a way to do that.
+* If you want to enter [`\infty`], you could type [|inf|]*, use the palette tool, or directly enter the [`\infty`]
+character if you have a way to do that.
+* All of your submissions are permanently recorded. That means you can log off at any time and all of your work will be
+saved. So you can do assignments in little bits at a time and work out of order if you like.
 * WeBWorK can be used on tablets and smartphones.
-* Most problems are coded with randomization. This means that while you and your classmate may have the same skeleton of a problem, the numbers invloved are different. This encourages you to teach each other the _process_ of answering a problem without being able to simply share the answers.
+* Most problems are coded with randomization. This means that while you and your classmate may have the same skeleton of
+a problem, the numbers invloved are different. This encourages you to teach each other the _process_ of answering a
+problem without being able to simply share the answers.
 
-The collection of all of the numbers between [`0`] and [`\pi`] including the endpoints is represented as [`[0,\pi]`] in interval notation. Practice entering [`[0,\pi]`] in the answer blank: [_]{Context("Interval"), '[0,pi]'}{4}.
+The collection of all of the numbers between [`0`] and [`\pi`] including the endpoints is represented as [`[0,\pi]`] in
+interval notation. Practice entering [`[0,\pi]`] in the answer blank: [_]{Context("Interval"), '[0,pi]'}{4}.
 
-What is the symbol that is used to represent a quantity that is conceptually larger than any number? [_]{Context("Numeric"), 'inf'}
+What is the symbol that is used to represent a quantity that is conceptually larger than any number?
+[_]{Context("Numeric"), 'inf'}
 
-The answer to the following is something like [`\pi AB`], but that's not accepted because the actual answer has lowercase variables. What should it be? [_]{Context("Numeric")->variables->are(a => 'Real', b => 'Real'), 'piab'}
+The answer to the following is something like [`\pi AB`], but that's not accepted because the actual answer has
+lowercase variables. What should it be? [_]{Context("Numeric")->variables->are(a => 'Real', b => 'Real'), 'piab'}
 
 This concludes the WeBWorK student orientation.
 END_PGML

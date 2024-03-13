@@ -10,42 +10,59 @@ loadMacros(qw(
     PGcourse.pl
 ));
 
-########
-if ($envir{entryAssist} eq 'MathQuill') {$body = <<END_BODY;
-When you click into an answer blank, a math tool palette should appear off to the right on your screen. Try clicking in the following answer blank and using buttons from the palette to help enter the expression [::pi/sqrt(x+1)::]. [_]{Context("Numeric"), 'pi/sqrt(x+1)'}{16}
+$MathQuill = <<END_BODY;
+When you click into an answer blank, a math tool palette should appear off to the right on your screen. Try clicking in
+the following answer blank and using buttons from the palette to help enter the expression [::pi/sqrt(x+1)::].
+[_]{Context("Numeric"), 'pi/sqrt(x+1)'}{16}
 
-Almost everyting the palette tool can do can be done with typing alone. For the next asnwer blank, enter the same answer as before, but ignore the palette tool and type it all out. You can type characters [|pi/sqrtx+1|]* and watch as the expression automatically is converted to look like [::pi/sqrt(x+1)::]. [_]{Context("Numeric"), 'pi/sqrt(x+1)'}{16}
+Almost everyting the palette tool can do can be done with typing alone. For the next asnwer blank, enter the same answer
+as before, but ignore the palette tool and type it all out. You can type characters [|pi/sqrtx+1|]* and watch as the
+expression automatically is converted to look like [::pi/sqrt(x+1)::]. [_]{Context("Numeric"), 'pi/sqrt(x+1)'}{16}
 
-Occasionally you will want to answer with raw text that should not be converted into a math expression. For example, if the answer is a word. For this kind of answer, you should enter "text mode". There is a "Tt" button on the palette  that enters and exits text mode. You can also use the [|"|]* character to enter text mode, and then exit with the [|tab|]* key or right arrow. Try answering the following with and without using text mode. The answer is [|pirate|]*: [_]{Context("Numeric")->strings->add(pirate => {}), 'pirate'}{16}.
+Occasionally you will want to answer with raw text that should not be converted into a math expression. For example, if
+the answer is a word. For this kind of answer, you should enter "text mode". There is a "Tt" button on the palette  that
+enters and exits text mode. You can also use the [|"|]* character to enter text mode, and then exit with the [|tab|]*
+key or right arrow. Try answering the following with and without using text mode. The answer is [|pirate|]*:
+[_]{Context("Numeric")->strings->add(pirate => {}), 'pirate'}{16}.
 
-The palette tool might be a distraction, especially to keyboard-only using students. You can disable it by right-clicking (or control-clicking) in an answer blank. To "right click" without a mouse:
+The palette tool might be a distraction, especially to keyboard-only using students. You can disable it by
+right-clicking (or control-clicking) in an answer blank. To "right click" without a mouse:
 * on Windows or Linux, use [|shift F10|]*.
 * on a Mac, you must first enable Mouse Keys in System Settings, and then use [|control m|]*.
 
-Try to disable the palette tool now. Once the tool is diabled, your device and web browser should "remember" this setting when you visit a new problem or log in again. To bring the palette tool back, right-click (or control-click) again in an answer blank. Unless you are certain you do not want to use the palette tool, you should bring it back now.
+Try to disable the palette tool now. Once the tool is diabled, your device and web browser should "remember" this
+setting when you visit a new problem or log in again. To bring the palette tool back, right-click (or control-click)
+again in an answer blank. Unless you are certain you do not want to use the palette tool, you should bring it back now.
 END_BODY
-}
-########
-elsif ($envir{entryAssist} eq 'MathView') {$body = <<END_BODY;
-When you want to enter an answer, you might want some assistance understanding how to type it and what your answer looks like after it is formatted as a math expression. To the right of each answer blank there is a button[@
+
+$MathView = <<END_BODY;
+When you want to enter an answer, you might want some assistance understanding how to type it and what your answer looks
+like after it is formatted as a math expression. To the right of each answer blank there is a button[@
     MODES(
         HTML => ' <button class="btn btn-sm btn-secondary codeshard-btn" disabled><i class="fa-solid fa-th"/></button>',
         TeX => ''
     )
-@]* you can use to reveal a palette with tools for constructing math expressions as well as a preview of what the expression will look like. Try using the palette to help enter the expression [::pi/sqrt(x+1)::]. For this particular expression:
-1. You should start with the fraction building button for [`\frac{a}{b}`]. It will insert [|()/()|]* into the answer blank.
-2. Now place the cursor inside the first set of parentheses. Use the "Operations" list to visit "Others", where you can click the [`\pi`] button. This will insert [|pi|]* and your answer blank should have [|(pi)/()|]*.
-3. Now place the cursor inside the second set of parentheses. Use the "Operations" list to visit "Exponents", where you can click the [`\sqrt{a}`] button. Now your answer blank looks like [|(pi)/(sqrt())|]*.
+@]* you can use to reveal a palette with tools for constructing math expressions as well as a preview of what the
+expression will look like. Try using the palette to help enter the expression [::pi/sqrt(x+1)::]. For this particular
+expression:
+1. You should start with the fraction building button for [`\frac{a}{b}`]. It will insert [|()/()|]* into the answer
+blank.
+2. Now place the cursor inside the first set of parentheses. Use the "Operations" list to visit "Others", where you can
+click the [`\pi`] button. This will insert [|pi|]* and your answer blank should have [|(pi)/()|]*.
+3. Now place the cursor inside the second set of parentheses. Use the "Operations" list to visit "Exponents", where you
+can click the [`\sqrt{a}`] button. Now your answer blank looks like [|(pi)/(sqrt())|]*.
 4. Finish by typing the [|x+1|]* in the appropriate place.
 
     [_]{Context("Numeric"), 'pi/sqrt(x+1)'}{16}
 
 Of course, you might be comfortable directly typing your answer and you do not need to use the palette button.
 END_BODY
-}
-########
-else {$body = <<END_BODY;
-The four basic arithmetic operations are: [`+, -, \times, \div`] and each of these has a corresponding character on the keyboard. The first two are found in the upper right area of most keyboards. For [`\times`], we use the asterisk character [|*|]*. This is the shift-8 key on most keyboards. For [`\div`], we use the slash character [|/|]*. This is in the lower right of most keyboards.
+
+$None = <<END_BODY;
+The four basic arithmetic operations are: [`+, -, \times, \div`] and each of these has a corresponding character on the
+keyboard. The first two are found in the upper right area of most keyboards. For [`\times`], we use the asterisk
+character [|*|]*. This is the shift-8 key on most keyboards. For [`\div`], we use the slash character [|/|]*. This is in
+the lower right of most keyboards.
 
 Try entering [`6\cdot5+2`] by typing it exactly as [|6*5 + 2|]*:
 
@@ -55,27 +72,31 @@ Of course you could also simplify this to [`32`]. Now try entering [:1/x:]:
 
     [_]{'1/x'}{16}
 
-Raising to a power is typed using the caret symbol [|^|]*, which is usually shift-6 on a keyboard. Try entering [:x^6:] :
+Raising to a power is typed using the caret symbol [|^|]*, which is usually shift-6 on a keyboard. Try entering [:x^6:]:
 
     [_]{'x^6'}{16}
 
-Another common operation is the square root, which is written [`\sqrt{\phantom{x}}`] on paper. There is no square root character on most keyboards, so we do something else with this operation. We use [|sqrt()|]* where the parentheses should surround the same content covered by the radical in [`\sqrt{\phantom{x}}`]. Try entering [:sqrt(x+1):]:
+Another common operation is the square root, which is written [`\sqrt{\phantom{x}}`] on paper. There is no square root
+character on most keyboards, so we do something else with this operation. We use [|sqrt()|]* where the parentheses
+should surround the same content covered by the radical in [`\sqrt{\phantom{x}}`]. Try entering [:sqrt(x+1):]:
 
     [_]{'sqrt(x+1)'}{16}
 
-Complex expressions will require you to understand the order of operations and use grouping symbols. Teaching the order of operations might be part of the course you are taking or it might be something you are expected to already know. Here is an example of a complex math expression: [::(x^(x+1)+2)/(x+3)::]. Naively, you might type this as [|x^x+1+2/x+3|]*, but the order of operations would make that come out as [::x^x+1+2/x+3::]. We need to use grouping symbols to (1) make sure all of the [:x+1:] is included in the exponent, and (2) group the entire numerator and denominator together. We would need something like [|(x^(x+1)+2)/(x+3)|]*. Try entering [::3^(x+1)/(2(x+2)^2)::].
+Complex expressions will require you to understand the order of operations and use grouping symbols. Teaching the order
+of operations might be part of the course you are taking or it might be something you are expected to already know. Here
+is an example of a complex math expression: [::(x^(x+1)+2)/(x+3)::]. Naively, you might type this as [|x^x+1+2/x+3|]*,
+but the order of operations would make that come out as [::x^x+1+2/x+3::]. We need to use grouping symbols to (1) make
+sure all of the [:x+1:] is included in the exponent, and (2) group the entire numerator and denominator together. We
+would need something like [|(x^(x+1)+2)/(x+3)|]*. Try entering [::3^(x+1)/(2(x+2)^2)::].
 
     [_]{'3^(x+1)/(2(x+2)^2)'}{16}
 
 END_BODY
-};
-########
-
 
 BEGIN_PGML
 ## Entering Math
 
-[$body]**
+[@ if ($envir{entryAssist} eq 'MathQuill') {$MathQuill} elsif ($envir{entryAssist} eq 'MathView') {$MathView} else {$None} @]**
 
 [@ MODES(HTML => 'When you are ready, click "Next Problem".', TeX => '') @]
 END_PGML
