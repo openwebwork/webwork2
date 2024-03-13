@@ -2338,10 +2338,10 @@ COURSE:
 		{
 			push(
 				@errors,
-				$c->maktext(
-					'An LMS context id is requested to be assigned to [_1] set to use LTI 1.3, '
+				$c->maketext(
+					'An LMS context id is requested to be assigned to [_1] which is set to use LTI 1.3, '
 						. 'but that course is missing LTI 1.3 authentication parameters.',
-					$_
+					$courseID
 				),
 			);
 			next;

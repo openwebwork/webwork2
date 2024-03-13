@@ -244,9 +244,10 @@ sub content_selection ($c) {
 	my $jwt = eval {
 		encode_jwt(
 			payload => {
-				aud                                                       => $c->ce->{LTI}{v1p3}{PlatformID},
-				iss                                                       => $c->ce->{LTI}{v1p3}{ClientID},
-				jti                                                       => $private_key->{kid},
+				aud   => $c->ce->{LTI}{v1p3}{PlatformID},
+				iss   => $c->ce->{LTI}{v1p3}{ClientID},
+				jti   => $private_key->{kid},
+				nonce => sha256_hex(join('', map { [ 0 .. 9, 'a' .. 'z' ]->[ irand(36) ] } 1 .. 20)),
 				'https://purl.imsglobal.org/spec/lti/claim/message_type'  => 'LtiDeepLinkingResponse',
 				'https://purl.imsglobal.org/spec/lti/claim/version'       => '1.3.0',
 				'https://purl.imsglobal.org/spec/lti/claim/deployment_id' => $c->ce->{LTI}{v1p3}{DeploymentID},
