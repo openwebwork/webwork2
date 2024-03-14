@@ -267,7 +267,8 @@ sub content_selection ($c) {
 							$_->description ? (text => $_->description) : (),
 							url =>
 								$c->url_for('problem_list', courseID => $c->stash->{courseID}, setID => $_->set_id)
-								->to_abs->to_string
+								->to_abs->to_string,
+							lineItem => { scoreMaximum => 100 }
 						} } @selectedSets
 					]
 					)
