@@ -76,8 +76,11 @@ sub session ($c, @args) {
 		$c->app->sessions->cookie_domain($hostname) if $hostname ne 'localhost' && $hostname ne '127.0.0.1';
 
 		$c->app->sessions->cookie_path($c->ce->{webworkURLRoot});
-		$c->app->sessions->samesite($c->ce->{CookieSameSite});
 		$c->app->sessions->secure($c->ce->{CookieSecure});
+
+		# If this is a session for LTI content selection, then always use SameSite None. Otherwise cookies will not be
+		# sent since this is in an iframe embedded in the LMS.
+		$c->app->sessions->samesite($c->stash->{isContentSelection} ? 'None' : $c->ce->{CookieSameSite});
 	}
 
 	return $c->SUPER::session(@args);

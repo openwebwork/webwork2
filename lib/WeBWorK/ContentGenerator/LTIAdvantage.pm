@@ -72,6 +72,8 @@ sub initializeRoute ($c, $routeCaptures) {
 			if ($c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/message_type'} eq
 				'LtiDeepLinkingRequest')
 			{
+				$c->stash->{isContentSelection} = 1;
+
 				# The database object used here is not associated to any course,
 				# and so the only has access to non-native tables.
 				my @matchingCourses =
@@ -107,8 +109,10 @@ sub initializeRoute ($c, $routeCaptures) {
 		$routeCaptures->{courseID} = $c->stash->{courseID} if $c->stash->{courseID};
 	}
 
-	$routeCaptures->{courseID} = $c->stash->{courseID} = $c->param('courseID')
-		if $c->param('courseID') && $c->current_route eq 'ltiadvantage_content_selection';
+	if ($c->param('courseID') && $c->current_route eq 'ltiadvantage_content_selection') {
+		$routeCaptures->{courseID} = $c->stash->{courseID} = $c->param('courseID');
+		$c->stash->{isContentSelection} = 1;
+	}
 
 	return;
 }
@@ -161,10 +165,7 @@ sub login ($c) {
 
 sub launch ($c) {
 	unless ($c->authen->{was_verified}) {
-		if ($c->stash->{lti_jwt_claims}
-			&& $c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/message_type'} eq
-			'LtiDeepLinkingRequest')
-		{
+		if ($c->stash->{isContentSelection}) {
 			$c->stash->{contextData} = [
 				[ $c->maketext('LTI Version'), '1.3' ],
 				[
@@ -188,9 +189,7 @@ sub launch ($c) {
 
 	return $c->redirect_to($c->systemLink(
 		$c->url_for($c->stash->{LTILaunchRedirect}),
-		$c->stash->{lti_jwt_claims}
-			&& $c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/message_type'} eq
-			'LtiDeepLinkingRequest'
+		$c->stash->{isContentSelection}
 		? (
 			params => {
 				courseID        => $c->stash->{courseID},

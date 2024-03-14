@@ -31,6 +31,8 @@ sub initializeRoute ($c, $routeCaptures) {
 	# this LMS course name set in its course environment.  If this is a submission of the content selection form, then
 	# get it from the form parameter.
 	if ($c->current_route eq 'ltiadvanced_content_selection') {
+		$c->stash->{isContentSelection} = 1;
+
 		my $courseID = $c->param('courseID');
 		if (!$courseID && $c->param('context_id')) {
 			# The database object used here is not associated to any course,
