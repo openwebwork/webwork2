@@ -187,6 +187,10 @@
 				new Date().toLocaleString('en-US', { timeZone: importDateShift.dataset.timezone ?? 'America/New_York' })
 			).getTime();
 
+		let fallbackDate = importDateShift.value
+			? new Date(parseInt(importDateShift.value) * 1000 - timezoneAdjustment)
+			: new Date();
+
 		const fp = flatpickr(importDateShift.parentNode, {
 			allowInput: true,
 			enableTime: true,
@@ -248,17 +252,14 @@
 				// Next attempt to parse the datestr with the current format.  This should not be adjusted.  It is
 				// for display only.
 				const date = luxon.DateTime.fromFormat(datestr.replaceAll(/\u202F/g, ' ').trim(), format);
-				if (date.isValid) return date.toJSDate();
+				if (date.isValid) fallbackDate = date.toJSDate();
 
 				// Finally, fall back to the previous value in the original input if that failed.  This is the case
 				// that the user typed a time that isn't in the valid format. So fallback to the last valid time
 				// that was displayed. This also should not be adjusted.
-				return new Date(this.lastFormattedDate.getTime());
+				return fallbackDate;
 			},
 			formatDate(date, format) {
-				// Save this date for the fallback in parseDate.
-				this.lastFormattedDate = date;
-
 				// In this case the date provided is in the browser's time zone.  So it needs to be adjusted to the
 				// timezone of the course.
 				if (format === 'U') return (date.getTime() + timezoneAdjustment) / 1000;
