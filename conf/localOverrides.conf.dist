@@ -220,7 +220,7 @@ $mail{feedbackRecipients}    = [
 # $permissionLevels{login} = "guest";
 
 # The above code would give the permission to login to any user with permission
-# level guest or higher.
+# level guest or higher (which is the default).
 
 # By default answers for all users are logged to the past_answers table in the database
 # and the myCourse/logs/answer_log file.  If you only want answers logged for users below
@@ -624,6 +624,14 @@ $mail{feedbackRecipients}    = [
 # addresses may be blocked by the email server or marked as spam. So it may be
 # better to find a valid email address to use for this.
 #$twoFA{email_sender} = 'noreply@your.school.edu';
+
+# By default all users with the role of "student" or higher are required to use
+# two factor authentication when signing in with a username and password.  If
+# you want to disable two factor authentication for students, but require it for
+# instructors then set the permission level below to "login_proctor" (or
+# higher).
+
+#$permissionLevels{use_two_factor_auth} = "login_proctor";
 
 ################################################################################
 # Searching for set.def files to import

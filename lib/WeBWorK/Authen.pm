@@ -198,6 +198,7 @@ sub verify {
 		&& !$self->{external_auth}
 		&& (!$c->{rpc} || ($c->{rpc} && !$c->stash->{disable_cookies}))
 		&& $c->ce->two_factor_authentication_enabled
+		&& $c->authz->hasPermissions($self->{user_id}, 'use_two_factor_auth')
 		&& ($self->{initial_login} || $self->session->{two_factor_verification_needed})
 		&& !$remember_2fa)
 	{
