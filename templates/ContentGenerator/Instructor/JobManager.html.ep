@@ -94,7 +94,7 @@
 							<%= include 'ContentGenerator/Instructor/JobManager/sort_button', field => 'id' =%>
 						</div>
 					</th>
-					% if ($courseID eq 'admin') {
+					% if ($courseID eq $ce->{admin_course_id}) {
 						<th>
 							<div class="d-flex justify-content-between align-items-end gap-1">
 								<%= link_to maketext('Course Id') => '#', class => 'sort-header',
@@ -155,7 +155,7 @@
 							</td>
 							<td><%= label_for "job_${jobID}_checkbox" => $jobID =%></td>
 						% }
-						% if ($courseID eq 'admin') {
+						% if ($courseID eq $ce->{admin_course_id}) {
 							<td class="text-nowrap"><%= $jobs->{$jobID}{courseID} =~ s/_/ /gr =%></td>
 						% }
 						<td class="text-nowrap">

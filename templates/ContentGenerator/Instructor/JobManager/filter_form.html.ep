@@ -18,7 +18,7 @@
 			<div class="col-auto">
 				<%= select_field 'action.filter.field' => [
 						[ maketext('Id')    => 'id', selected => undef ],
-						$courseID eq 'admin' ? [ maketext('Course Id')    => 'courseID' ] : (),
+						$courseID eq $ce->{admin_course_id} ? [ maketext('Course Id')    => 'courseID' ] : (),
 						[ maketext('Task')  => 'task' ],
 						[ maketext('State') => 'state' ]
 					],

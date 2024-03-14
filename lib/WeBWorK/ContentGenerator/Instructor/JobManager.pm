@@ -59,8 +59,9 @@ use constant SORT_SUBS => {
 sub initialize ($c) {
 	$c->stash->{taskNames}   = TASK_NAMES();
 	$c->stash->{actionForms} = ACTION_FORMS();
-	$c->stash->{fields} = $c->stash->{courseID} eq 'admin' ? FIELDS() : [ grep { $_ ne 'courseID' } @{ FIELDS() } ];
-	$c->stash->{jobs}   = {};
+	$c->stash->{fields} =
+		$c->stash->{courseID} eq $c->ce->{admin_course_id} ? FIELDS() : [ grep { $_ ne 'courseID' } @{ FIELDS() } ];
+	$c->stash->{jobs}               = {};
 	$c->stash->{visibleJobs}        = {};
 	$c->stash->{selectedJobs}       = {};
 	$c->stash->{sortedJobs}         = [];
@@ -91,7 +92,7 @@ sub initialize ($c) {
 		$job->{courseID} = $job->{notes}{courseID};
 
 		$c->stash->{jobs}{ $job->{id} } = $job
-			if $c->stash->{courseID} eq 'admin' || $job->{courseID} eq $c->stash->{courseID};
+			if $c->stash->{courseID} eq $c->ce->{admin_course_id} || $job->{courseID} eq $c->stash->{courseID};
 	}
 
 	if (defined $c->param('visible_jobs')) {
