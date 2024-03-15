@@ -52,6 +52,7 @@ use warnings;
 
 use Date::Format;
 use Scalar::Util qw(weaken);
+use Mojo::Util qw(b64_encode b64_decode);
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(x writeCourseLog runtime_use);
@@ -175,12 +176,13 @@ sub verify {
 		&& !$self->{external_auth}
 		&& (!$c->{rpc} || ($c->{rpc} && !$c->stash->{disable_cookies}))
 		&& $remember_2fa
+		&& b64_decode($remember_2fa) eq $self->{user_id}
 		&& !$c->db->getPassword($self->{user_id})->otp_secret)
 	{
 		# If there is not a otp secret saved in the database, and there is a cookie saved to skip two factor
 		# authentication, then delete it.  The user needs to set up two factor authentication again.
 		$c->signed_cookie(
-			'WeBWorK.2FA.' . $c->ce->{courseName} => 1,
+			'WeBWorK.2FA.' . $c->ce->{courseName} => 0,
 			{
 				max_age  => 0,
 				expires  => 1,
@@ -200,7 +202,7 @@ sub verify {
 		&& $c->ce->two_factor_authentication_enabled
 		&& $c->authz->hasPermissions($self->{user_id}, 'use_two_factor_auth')
 		&& ($self->{initial_login} || $self->session->{two_factor_verification_needed})
-		&& !$remember_2fa)
+		&& (!$remember_2fa || b64_decode($remember_2fa) ne $self->{user_id}))
 	{
 		$self->{was_verified} = 0;
 		$self->session(two_factor_verification_needed => 1);
@@ -323,6 +325,7 @@ sub get_credentials {
 	}
 
 	my ($cookieUser, $cookieKey, $cookieTimeStamp) = $self->fetchCookie;
+	$c->log->info('"' . $cookieUser . '"') if $cookieUser;
 
 	if (defined $cookieUser && defined $c->param('user')) {
 		$self->maybe_kill_cookie if $cookieUser ne $c->param('user');
@@ -479,7 +482,7 @@ sub verify_normal_user {
 			# two_factor_verification_needed is deleted from the session.
 			my $otp_code = trim($c->param('otp_code'));
 			if (defined $otp_code && $otp_code ne '') {
-				my $password = $c->db->getPassword($self->{user_id});
+				my $password = $c->db->getPassword($user_id);
 				if (WeBWorK::Utils::TOTP->new(secret => $self->session->{otp_secret} // $password->otp_secret)
 					->validate_otp($otp_code))
 				{
@@ -488,7 +491,7 @@ sub verify_normal_user {
 					# Store a cookie that signifies this devices skips two factor
 					# authentication if the skip_2fa checkbox was checked.
 					$c->signed_cookie(
-						'WeBWorK.2FA.' . $c->ce->{courseName} => 1,
+						'WeBWorK.2FA.' . $c->ce->{courseName} => b64_encode($user_id) =~ s/\n//gr,
 						{
 							max_age  => 3600 * 24 * 365,            # This cookie is valid for one year.
 							expires  => time + 3600 * 24 * 365,
