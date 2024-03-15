@@ -17,10 +17,10 @@ sub new {
 		@$self{ keys %$options } = values %$options;
 	}
 
-	$self->{digits}    = 6        unless $self->{digits}            && $self->{digits}    =~ m/^[678]$/;
-	$self->{period}    = 30       unless $self->{period}            && $self->{period}    =~ m/^[36]0$/;
-	$self->{algorithm} = 'SHA512' unless $self->{algorithm}         && $self->{algorithm} =~ m/^SHA(1|256|512)$/;
-	$self->{tolerance} = 0        unless defined $self->{tolerance} && $self->{tolerance} =~ m/^\d+$/;
+	$self->{digits}    = 6      unless $self->{digits}            && $self->{digits}    =~ m/^[678]$/;
+	$self->{period}    = 30     unless $self->{period}            && $self->{period}    =~ m/^[36]0$/;
+	$self->{algorithm} = 'SHA1' unless $self->{algorithm}         && $self->{algorithm} =~ m/^SHA(1|256|512)$/;
+	$self->{tolerance} = 0      unless defined $self->{tolerance} && $self->{tolerance} =~ m/^\d+$/;
 
 	$self->{secret} = $self->gen_secret($self->{algorithm} eq 'SHA512' ? 64 : $self->{algorithm} eq 'SHA256' ? 32 : 20)
 		unless $self->{secret};
