@@ -25,8 +25,9 @@ manually grading webwork problems.
 
 use HTML::Entities;
 
-use WeBWorK::Utils qw(sortByName wwRound format_set_name_display jitar_id_to_seq getTestProblemPosition);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(renderPG);
+use WeBWorK::Utils::Sets qw(get_test_problem_position format_set_name_display);
 
 async sub initialize ($c) {
 	my $authz      = $c->authz;
@@ -101,7 +102,7 @@ async sub initialize ($c) {
 			my $userPastAnswerID =
 				$db->latestProblemPastAnswer($user->user_id, $setID . ($versionID ? ",v$versionID" : ''), $problemID);
 			$_->{past_answer} = $db->getPastAnswer($userPastAnswerID) if ($userPastAnswerID);
-			($_->{problemNumber}, $_->{pageNumber}) = getTestProblemPosition($db, $_->{problem}) if $versionID;
+			($_->{problemNumber}, $_->{pageNumber}) = get_test_problem_position($db, $_->{problem}) if $versionID;
 
 		}
 	}

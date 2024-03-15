@@ -25,9 +25,12 @@ WeBWorK::File::SetDef - utilities for dealing with set definition files.
 use Carp;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec x parseDateTime formatDateTime getDefaultSetDueDate format_set_name_display
-	seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils qw(x);
+use WeBWorK::Utils::DateTime qw(formatDateTime getDefaultSetDueDate parseDateTime timeToSec);
+use WeBWorK::Utils::Files qw(surePathToFile);
 use WeBWorK::Utils::Instructor qw(assignSetToUser assignSetToAllUsers addProblemToSet);
+use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 our @EXPORT_OK = qw(importSetsFromDef readSetDef exportSetsToDef);
 
@@ -776,7 +779,7 @@ SET: for my $set (@sets) {
 			. "\nproblemListV2\n"
 			. $problemList;
 
-		$filePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates}, $filePath);
+		$filePath = surePathToFile($ce->{courseDirs}->{templates}, $filePath);
 		if (open(my $setDefFH, '>:encoding(UTF-8)', $filePath)) {
 			print $setDefFH $fileContents;
 			close $setDefFH;

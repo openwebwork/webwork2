@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(format_set_name_display);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 % use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 %
 %= form_for current_route, name => 'hardcopy-form', id => 'hardcopy-form', method => 'POST', begin

@@ -18,7 +18,8 @@
 package WeBWorK::ContentGenerator::Instructor::LTIUpdate;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
-use WeBWorK::Utils(qw(format_set_name_display getAssetURL));
+use WeBWorK::Utils(qw(getAssetURL));
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 use WeBWorK::Authen::LTI::MassUpdate qw(mass_update);
 
 sub initialize ($c) {

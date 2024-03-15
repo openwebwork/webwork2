@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(jitar_id_to_seq);
+% use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 %
 <div class="btn-group student-nav-filter-selector mx-2">
 	<%= link_to $c->{prettyID} ? maketext('Problem [_1]', $c->{prettyID}) : maketext('All problems') => '#',

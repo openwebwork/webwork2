@@ -26,14 +26,16 @@ deal with versioning sets
 use Mojo::Promise;
 use Mojo::JSON qw(encode_json decode_json);
 
-use WeBWorK::PG::ImageGenerator;
-use WeBWorK::Utils qw(writeLog writeCourseLogGivenTime encodeAnswers decodeAnswers
-	path_is_subdir before after between wwRound is_restricted);
+use WeBWorK::Utils qw(encodeAnswers decodeAnswers wwRound);
+use WeBWorK::Utils::DateTime qw(before between after);
+use WeBWorK::Utils::Files qw(path_is_subdir);
 use WeBWorK::Utils::Instructor qw(assignSetVersionToUser);
-use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
+use WeBWorK::Utils::Logs qw(writeLog writeCourseLog);
 use WeBWorK::Utils::ProblemProcessing qw/create_ans_str_from_responses compute_reduced_score/;
-use WeBWorK::DB::Utils qw(global2user);
+use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
+use WeBWorK::Utils::Sets qw(is_restricted);
 use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
+use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Debug;
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
@@ -935,7 +937,7 @@ async sub pre_header_initialize ($c) {
 				my @fields         = sort grep {/^(?!previous).*$prefix/} (keys %{ $c->{formFields} });
 				my %answersToStore = map       { $_ => $c->{formFields}->{$_} } @fields;
 				my @answer_order   = @fields;
-				$encoded_last_answer_string = encodeAnswers(%answersToStore, @answer_order);
+				$encoded_last_answer_string = encodeAnswers(\%answersToStore, \@answer_order);
 			}
 
 			# Set the last answer
@@ -1049,13 +1051,13 @@ async sub pre_header_initialize ($c) {
 				}
 
 				# Write to courseLog, use the recorded time of when the submission was received, but as an integer
-				writeCourseLogGivenTime(
+				writeCourseLog(
 					$c->ce,
 					'answer_log',
-					$timeNowInt,
 					join('',
 						'|', $problem->user_id, '|', $setVName, '|', ($i + 1), '|', $scores,
-						"\t$timeNowInt\t", "$past_answers_string")
+						"\t$timeNowInt\t", "$past_answers_string"),
+					$timeNowInt
 				);
 
 				# Add to PastAnswer db

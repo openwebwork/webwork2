@@ -24,7 +24,6 @@ as a student.
 
 =cut
 
-use WeBWorK::PG;
 use WeBWorK::Localize;
 use WeBWorK::Utils 'wwRound';
 

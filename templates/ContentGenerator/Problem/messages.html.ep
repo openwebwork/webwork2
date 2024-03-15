@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(before after);
+% use WeBWorK::Utils::DateTime qw(before after);
 %
 % if ($c->{pg}{result}{msg}) {
 	<p><b><%= maketext('Note') %>:</b> <i><%== $c->{pg}{result}{msg} %></i></p>

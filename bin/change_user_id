@@ -30,7 +30,6 @@ use lib "$ENV{WEBWORK_ROOT}/lib";
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Utils qw(runtime_use readFile);
 use Data::Dumper;
 
 if((scalar(@ARGV) != 3)) {

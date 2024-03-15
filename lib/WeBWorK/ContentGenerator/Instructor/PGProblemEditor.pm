@@ -118,9 +118,11 @@ not exist.  The path to the actual file being edited is stored in inputFilePath.
 use File::Copy;
 use XML::LibXML;
 
-use WeBWorK::Utils qw(jitar_id_to_seq not_blank path_is_subdir seq_to_jitar_id x
-	surePathToFile readDirectory readFile max format_set_name_display);
+use WeBWorK::Utils qw(not_blank x max);
+use WeBWorK::Utils::Files qw(surePathToFile readFile readDirectory path_is_subdir);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
+use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 use constant DEFAULT_SEED => 123456;
 

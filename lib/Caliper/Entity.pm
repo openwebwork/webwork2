@@ -3,17 +3,17 @@ package Caliper::Entity;
 ##### Library Imports #####
 use strict;
 use warnings;
+
+use Digest::SHA qw(sha1_base64);
+
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Debug;
-use Data::Dumper;
 use WeBWorK::Utils::Tags;
-use Digest::SHA qw(sha1_base64);
-
+use WeBWorK::Utils::Sets qw(grade_set grade_gateway);
 use Caliper::ResourceIri;
 use Caliper::Sensor;
 use Caliper::Actor;
-use WeBWorK::Utils qw(grade_set grade_gateway);
 
 sub webwork_app {
 	my ($ce, $db) = @_;

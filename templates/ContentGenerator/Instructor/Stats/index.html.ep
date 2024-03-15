@@ -1,7 +1,7 @@
 % # Note that this template is used by both WeBWorK::ContentGenerator::Instructor::Stats and
 % # WeBWorK::ContentGenerator::Instructor::StudentProgress.
 %
-% use WeBWorK::Utils qw(format_set_name_display);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 % my $type = current_route =~ s/instructor_//r;
 %

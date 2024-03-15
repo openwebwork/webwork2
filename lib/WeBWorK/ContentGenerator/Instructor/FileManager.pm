@@ -31,9 +31,10 @@ use Archive::Tar;
 use Archive::Zip qw(:ERROR_CODES);
 use Archive::Zip::SimpleZip qw($SimpleZipError);
 
-use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive min);
-use WeBWorK::Upload;
+use WeBWorK::Utils qw(sortByName min);
 use WeBWorK::Utils::CourseManagement qw(archiveCourse);
+use WeBWorK::Utils::Files qw(readDirectory readFile);
+use WeBWorK::Upload;
 
 use constant HOME => 'templates';
 

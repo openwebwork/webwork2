@@ -23,13 +23,9 @@ WeBWorK::ContentGenerator::Instructor::SendMail - Entry point for User-specific 
 =cut
 
 use Email::Address::XS;
-use Email::Stuffer;
-use Try::Tiny;
-use Data::Dump qw/dump/;
 use Text::Wrap qw(wrap);
-use WeBWorK::Utils qw/processEmailMessage createEmailSenderTransportSMTP/;
 
-use WeBWorK::Debug;
+use WeBWorK::Utils qw(processEmailMessage);
 use WeBWorK::Utils::Instructor qw(read_dir);
 
 sub initialize ($c) {

@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(before);
+% use WeBWorK::Utils::DateTime qw(before);
 %
 % my %can            = %{ $c->{can} };
 % my %will           = %{ $c->{will} };

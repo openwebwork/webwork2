@@ -37,7 +37,7 @@ use Crypt::JWT qw(decode_jwt);
 use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Localize;
-use WeBWorK::Utils qw(formatDateTime);
+use WeBWorK::Utils::DateTime qw(formatDateTime);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
 

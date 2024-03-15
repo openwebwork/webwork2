@@ -25,8 +25,9 @@ use Data::Structure::Util qw(unbless);
 
 use WeBWorK::DB;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
-use WeBWorK::Utils qw(cryptPassword path_is_subdir surePathToFile);
+use WeBWorK::Utils qw(cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
+use WeBWorK::Utils::Files qw(surePathToFile path_is_subdir);
 use WeBWorK::Debug;
 
 sub createCourse {

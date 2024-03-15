@@ -28,8 +28,9 @@ use Data::Structure::Util qw(unbless);
 use Digest::MD5 qw(md5_hex);
 use Encode qw(encode_utf8);
 
-use WeBWorK::Utils qw(formatDateTime);
+use WeBWorK::Utils::DateTime qw(formatDateTime);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
+use WeBWorK::PG;
 
 our @EXPORT_OK = qw(constructPGOptions getTranslatorDebuggingOptions renderPG);
 

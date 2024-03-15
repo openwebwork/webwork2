@@ -1,5 +1,5 @@
 % use WeBWorK::HTML::ScrollingRecordList qw(scrollingRecordList);
-% use WeBWorK::Utils qw(format_set_name_display);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 <%= form_for current_route, target => 'WW_Info', id => 'past-answer-form', method => 'POST', begin =%>
 	<%= $c->hidden_authen_fields =%>

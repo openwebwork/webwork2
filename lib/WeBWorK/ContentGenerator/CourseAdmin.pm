@@ -30,10 +30,11 @@ use Time::localtime;
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(cryptPassword writeLog trim_spaces);
+use WeBWorK::Utils qw(cryptPassword trim_spaces);
+use WeBWorK::Utils::CourseIntegrityCheck;
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse retitleCourse deleteCourse listCourses archiveCourse
 	unarchiveCourse initNonNativeTables);
-use WeBWorK::Utils::CourseIntegrityCheck;
+use WeBWorK::Utils::Logs qw(writeLog);
 use WeBWorK::DB;
 
 sub pre_header_initialize ($c) {

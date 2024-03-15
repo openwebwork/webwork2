@@ -1,6 +1,7 @@
-% use WeBWorK::Utils
-	% qw(sortByName listFilesRecursive jitar_id_to_seq seq_to_jitar_id format_set_name_display getAssetURL),
-	% qw(getTestProblemPosition);
+% use WeBWorK::Utils qw(sortByName getAssetURL);
+% use WeBWorK::Utils::Files qw(listFilesRecursive);
+% use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
+% use WeBWorK::Utils::Sets qw(get_test_problem_position format_set_name_display);
 %
 % content_for css => begin
 	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') =%>
@@ -504,7 +505,7 @@
 										% # Otherwise, the best that can be done is to use an undefined set.
 										% if ($editingSetVersion) {
 											% my ($problemNumber, $pageNumber) =
-												% getTestProblemPosition($db, $problemToShow);
+												% get_test_problem_position($db, $problemToShow);
 											% $problemLink = $c->systemLink(url_for('gateway_quiz',
 													% setID => $problemToShow->set_id
 														% . ',v' . $problemToShow->version_id,

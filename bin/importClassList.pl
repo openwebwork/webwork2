@@ -28,8 +28,6 @@ use WeBWorK::CourseEnvironment;
 
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::File::Classlist;
-
-#use WeBWorK::Utils qw(readFile readDirectory cryptPassword x);
 use WeBWorK::Utils qw(cryptPassword);
 
 use strict;

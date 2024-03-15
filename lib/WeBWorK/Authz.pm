@@ -59,8 +59,9 @@ activity, regardless of their permission level.
 use strict;
 use warnings;
 use Carp qw/croak/;
-# FIXME SET: set-level auth add
-use WeBWorK::Utils qw(before after between is_restricted);
+
+use WeBWorK::Utils::DateTime qw(before);
+use WeBWorK::Utils::Sets qw(is_restricted);
 use WeBWorK::Authen::Proctor;
 use Net::IP;
 use Scalar::Util qw(weaken);

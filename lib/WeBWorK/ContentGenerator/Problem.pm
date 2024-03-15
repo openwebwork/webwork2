@@ -24,18 +24,20 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 use WeBWorK::HTML::SingleProblemGrader;
 use WeBWorK::Debug;
-use WeBWorK::PG::ImageGenerator;
-use WeBWorK::Utils qw(decodeAnswers is_restricted path_is_subdir before after between
-	wwRound is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status
-	jitar_id_to_seq seq_to_jitar_id jitar_problem_finished format_set_name_display);
-use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
+use WeBWorK::Utils qw(decodeAnswers wwRound);
+use WeBWorK::Utils::DateTime qw(before between after);
+use WeBWorK::Utils::Files qw(path_is_subdir);
+use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq is_jitar_problem_hidden is_jitar_problem_closed
+	jitar_problem_finished jitar_problem_adjusted_status);
+use WeBWorK::Utils::LanguageAndDirection qw(get_problem_lang_and_dir);
 use WeBWorK::Utils::ProblemProcessing qw(process_and_log_answer jitar_send_warning_email compute_reduced_score
 	compute_unreduced_score);
+use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
+use WeBWorK::Utils::Sets qw(is_restricted format_set_name_display);
+use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::AchievementEvaluator qw(checkForAchievements);
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Localize;
-use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
-use WeBWorK::Utils::LanguageAndDirection qw(get_problem_lang_and_dir);
 use WeBWorK::AchievementEvaluator;
 
 # GET/POST Parameters for this module

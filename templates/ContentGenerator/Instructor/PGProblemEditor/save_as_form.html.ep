@@ -1,6 +1,8 @@
 % use File::Basename qw(dirname);
 %
-% use WeBWorK::Utils qw(jitar_id_to_seq not_blank format_set_name_display);
+% use WeBWorK::Utils qw(not_blank);
+% use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 % # Don't show the save as form when editing an existing course info file.
 % last if $c->{file_type} eq 'course_info' && -e $c->{editFilePath};

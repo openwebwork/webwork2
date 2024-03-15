@@ -48,6 +48,7 @@ use Mojo::File;
 use Text::CSV;
 
 use WeBWorK::Utils qw(sortAchievements x);
+use WeBWorK::Utils::Files qw(surePathToFile);
 use WeBWorK::Utils::Instructor qw(read_dir);
 
 # Forms
@@ -263,7 +264,7 @@ sub score_handler ($c) {
 	}
 
 	# Check path and open the file
-	$scoreFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}{scoring}, $scoreFilePath);
+	$scoreFilePath = surePathToFile($ce->{courseDirs}{scoring}, $scoreFilePath);
 
 	my $SCORE = Mojo::File->new($scoreFilePath)->open('>:encoding(UTF-8)')
 		or return (0, $c->maketext("Failed to open [_1]", $scoreFilePath));
@@ -523,7 +524,7 @@ sub save_export_handler ($c) {
 			or warn "Existing file $FilePath could not be backed up and was lost.";
 	}
 
-	$FilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}{achievements}, $FilePath);
+	$FilePath = surePathToFile($ce->{courseDirs}{achievements}, $FilePath);
 
 	my $fh = Mojo::File->new($FilePath)->open('>:encoding(UTF-8)')
 		or return (0, $c->maketext('Failed to open [_1].', $FilePath));

@@ -25,8 +25,12 @@ specific user/set information as well as problem information
 
 use Exporter qw(import);
 
-use WeBWorK::Utils qw(cryptPassword jitar_id_to_seq seq_to_jitar_id x format_set_name_internal format_set_name_display);
+use WeBWorK::Utils qw(cryptPassword x);
+use WeBWorK::Utils::Files qw(surePathToFile readFile);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
+use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils::Sets qw(format_set_name_internal format_set_name_display);
+require WeBWorK::PG;
 
 our @EXPORT_OK = qw(FIELD_PROPERTIES);
 
@@ -1935,9 +1939,9 @@ sub initialize ($c) {
 					$targetProblemNumber++;
 					# Make local copy of the blankProblem
 					my $blank_file_path = $ce->{webworkFiles}{screenSnippets}{blankProblem};
-					my $problemContents = WeBWorK::Utils::readFile($blank_file_path);
+					my $problemContents = readFile($blank_file_path);
 					my $new_file_path   = "set$setID/" . BLANKPROBLEM();
-					my $fullPath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}{templates}, '/' . $new_file_path);
+					my $fullPath        = surePathToFile($ce->{courseDirs}{templates}, $new_file_path);
 
 					open(my $TEMPFILE, '>', $fullPath) or warn $c->maketext(q{Can't write to file [_1]}, $fullPath);
 					print $TEMPFILE $problemContents;

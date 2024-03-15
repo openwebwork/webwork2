@@ -49,12 +49,14 @@ use HTML::Entities;
 use Encode;
 
 use WeBWorK::File::Scoring qw(parse_scoring_file);
-use WeBWorK::PG;
 use WeBWorK::Localize;
-use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients generateURLs getAssetURL format_set_name_display);
-use WeBWorK::Authen::LTI::MassUpdate qw(mass_update);
+use WeBWorK::Utils qw(fetchEmailRecipients generateURLs getAssetURL);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 use WeBWorK::Utils::LanguageAndDirection qw(get_lang_and_dir);
+use WeBWorK::Utils::Logs qw(writeCourseLog);
 use WeBWorK::Utils::Routes qw(route_title route_navigation_is_restricted);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
+use WeBWorK::Authen::LTI::MassUpdate qw(mass_update);
 
 =head1 INVOCATION
 
@@ -117,7 +119,7 @@ async sub go ($c) {
 
 	# We only write to the activity log if it has been defined and if we are in a specific course.  The latter check is
 	# to prevent attempts to write to a course log file when viewing the top-level list of courses page.
-	WeBWorK::Utils::writeCourseLog($ce, 'activity_log', $c->prepare_activity_entry)
+	writeCourseLog($ce, 'activity_log', $c->prepare_activity_entry)
 		if ($c->stash('courseID') && $c->ce->{courseFiles}{logs}{activity_log});
 
 	my $tx = $c->render_later->tx;
@@ -1251,7 +1253,7 @@ sub formatDateTime ($c, $date_time, $format_string = undef, $timezone = undef, $
 	my $ce = $c->ce;
 	$timezone ||= $ce->{siteDefaults}{timezone};
 	$locale   ||= $ce->{language};
-	return WeBWorK::Utils::formatDateTime($date_time, $format_string, $timezone, $locale);
+	return WeBWorK::Utils::DateTime::formatDateTime($date_time, $format_string, $timezone, $locale);
 }
 
 =item read_scoring_file($fileName)

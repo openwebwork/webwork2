@@ -30,9 +30,12 @@ use Archive::Zip qw(:ERROR_CODES);
 use XML::LibXML;
 
 use WeBWorK::DB::Utils qw/user2global/;
-use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after x/;
+use WeBWorK::Utils qw(decodeAnswers x);
+use WeBWorK::Utils::DateTime qw(after);
+use WeBWorK::Utils::Files qw(readFile);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(renderPG);
+use WeBWorK::Utils::Sets qw(is_restricted);
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES

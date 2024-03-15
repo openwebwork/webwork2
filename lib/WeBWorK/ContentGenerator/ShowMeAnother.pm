@@ -23,8 +23,10 @@ WeBWorK::ContentGenerator::ShowMeAnother - Show students alternate versions of c
 =cut
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(wwRound before after jitar_id_to_seq format_set_name_display);
+use WeBWorK::Utils qw(wwRound);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 async sub pre_header_initialize ($c) {
 	my $ce    = $c->ce;

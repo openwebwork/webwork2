@@ -24,9 +24,10 @@ use JSON;
 use File::stat;
 use File::Find;
 
-use WeBWorK::Utils::ListingDB;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readDirectory sortByName);
+use WeBWorK::Utils qw(sortByName);
+use WeBWorK::Utils::Files qw(readDirectory);
+use WeBWorK::Utils::ListingDB;
 use WeBWorK::CourseEnvironment;
 
 use constant MY_PROBLEMS   => '  My Problems  ';

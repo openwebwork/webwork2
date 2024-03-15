@@ -38,7 +38,8 @@ use Archive::Tar;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(runtime_use readDirectory surePathToFile);
+use WeBWorK::Utils qw(runtime_use);
+use WeBWorK::Utils::Files qw(surePathToFile readDirectory);
 use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
 our @EXPORT_OK = qw(

@@ -29,11 +29,12 @@ use Try::Tiny;
 use Mojo::JSON qw(encode_json decode_json);
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(writeLog writeCourseLogGivenTime encodeAnswers before after jitar_problem_adjusted_status
-	jitar_id_to_seq createEmailSenderTransportSMTP);
+use WeBWorK::Utils qw(encodeAnswers createEmailSenderTransportSMTP);
+use WeBWorK::Utils::DateTime qw(before after);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq jitar_problem_adjusted_status);
+use WeBWorK::Utils::Logs qw(writeLog writeCourseLog);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
-
 use Caliper::Sensor;
 use Caliper::Entity;
 
@@ -104,14 +105,14 @@ async sub process_and_log_answer ($c) {
 			my $timestamp = int($c->submitTime);
 
 			# store in answer_log
-			writeCourseLogGivenTime(
+			writeCourseLog(
 				$ce,
 				'answer_log',
-				$timestamp,
 				join('',
 					'|', $problem->user_id, '|',  $problem->set_id, '|',  $problem->problem_id,
 					'|', $scores2,          "\t", $timestamp,       "\t", $past_answers_string,
 				),
+				$timestamp
 			);
 
 			# add to PastAnswer db
@@ -382,7 +383,7 @@ sub create_ans_str_from_responses ($formFields, $pg, $needed_grading = 0) {
 		} @past_answers_order
 	);
 
-	my $encoded_last_answer_string = encodeAnswers(%answers_to_store, @last_answer_order);
+	my $encoded_last_answer_string = encodeAnswers(\%answers_to_store, \@last_answer_order);
 	# past_answers_string is stored in past_answer table.
 	# encoded_last_answer_string is used in `last_answer` entry of the problem_user table.
 	return ($past_answers_string, $encoded_last_answer_string, $scores_string, join(',', @answerTypes) . $needsGrading);

@@ -56,7 +56,7 @@ use Carp;
 use Opcode qw(empty_opset);
 
 use WeBWorK::WWSafe;
-use WeBWorK::Utils qw(readFile);
+use WeBWorK::Utils::Files qw(readFile);
 use WeBWorK::Debug;
 
 =head1 CONSTRUCTION
