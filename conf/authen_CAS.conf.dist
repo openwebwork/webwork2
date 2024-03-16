@@ -12,6 +12,15 @@ $authen{user_module} = {
   "*" => "WeBWorK::Authen::CAS",
 };
 
+# List of authentication modules that may be used to enter the admin course.
+# This should be a non-empty sublist of whatever is in $authen{user_module}.
+# Since the admin course provides overall power to add/delete courses, access
+# to this course should be protected by the best possible authentication you
+# have available to you.
+$authen{admin_module} = [
+	'WeBWorK::Authen::CAS'
+];
+
 $authen{cas_options} = {
 	# Options to pass to the AuthCAS module.
 	# Note that this is (plain) AuthCAS, not Apache::AuthCAS
