@@ -483,8 +483,12 @@ sub verify_normal_user {
 			my $otp_code = trim($c->param('otp_code'));
 			if (defined $otp_code && $otp_code ne '') {
 				my $password = $c->db->getPassword($user_id);
-				if (WeBWorK::Utils::TOTP->new(secret => $self->session->{otp_secret} // $password->otp_secret)
-					->validate_otp($otp_code))
+				if (
+					WeBWorK::Utils::TOTP->new(
+						secret    => $self->session->{otp_secret} // $password->otp_secret,
+						tolerance => 1
+					)->validate_otp($otp_code)
+					)
 				{
 					delete $self->session->{two_factor_verification_needed};
 
