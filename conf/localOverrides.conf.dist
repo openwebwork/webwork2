@@ -605,7 +605,7 @@ $mail{feedbackRecipients}    = [
 # the user, or can be directly displayed in the browser on the next page that is
 # shown after password verification succeeds.
 #
-# If $twoFA{email_sender} is set, then the email approach will be used.  In this
+# If $twoFA{email_sender} is set, then the email approach will be used. In this
 # case, after a user signs in and the password is verified, the user will be
 # sent an email containing a QR code and instructions on how to set up a OTP
 # generator app. This is probably a more secure way to set up two factor
@@ -625,8 +625,18 @@ $mail{feedbackRecipients}    = [
 # better to find a valid email address to use for this.
 #$twoFA{email_sender} = 'noreply@your.school.edu';
 
+# When a user signs in and enters the two factor authentication code, the user
+# has the option to skip two factor verification on a given device for
+# subsequent logins. That will only last for the amount of time set as the
+# skip_verification_code_interval. By default this is set to one year. However,
+# good security practices most likely recommend a shorter time interval for
+# this. So change this value if you want to require a shorter and thus more
+# secure time interval before users will need to enter the two factor
+# authentication code again.
+#$twoFA{skip_verification_code_interval} = 3600 * 24 * 7;
+
 # By default all users with the role of "student" or higher are required to use
-# two factor authentication when signing in with a username and password.  If
+# two factor authentication when signing in with a username and password. If
 # you want to disable two factor authentication for students, but require it for
 # instructors then set the permission level below to "login_proctor" (or
 # higher).

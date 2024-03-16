@@ -47,9 +47,9 @@
 			<%= label_for skip_2fa => maketext('Skip two factor verification on this device.') =%>
 		</div>
 		<div class="alert alert-warning mb-2">
-			<%= maketext('If you check the box above, then two factor verification will be skipped from now on when '
-				. 'signing in with this browser. This feature is not safe for public workstations, untrusted machines, '
-				. 'and machines over which you do not have direct control.') =%>
+			<%= maketext('If you check the box above, then two factor verification will be skipped for a limited '
+				. 'time when signing in with this browser. This feature is not safe for public workstations, '
+				. 'untrusted machines, and machines over which you do not have direct control.') =%>
 		</div>
 		% if ($authen_error) {
 			<div class="alert alert-danger" tabindex="0"><%= $authen_error =%></div>

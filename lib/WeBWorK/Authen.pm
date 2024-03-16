@@ -325,7 +325,6 @@ sub get_credentials {
 	}
 
 	my ($cookieUser, $cookieKey, $cookieTimeStamp) = $self->fetchCookie;
-	$c->log->info('"' . $cookieUser . '"') if $cookieUser;
 
 	if (defined $cookieUser && defined $c->param('user')) {
 		$self->maybe_kill_cookie if $cookieUser ne $c->param('user');
@@ -497,8 +496,8 @@ sub verify_normal_user {
 					$c->signed_cookie(
 						'WeBWorK.2FA.' . $c->ce->{courseName} => b64_encode($user_id) =~ s/\n//gr,
 						{
-							max_age  => 3600 * 24 * 365,            # This cookie is valid for one year.
-							expires  => time + 3600 * 24 * 365,
+							max_age  => $c->ce->{twoFA}{skip_verification_code_interval},
+							expires  => time + $c->ce->{twoFA}{skip_verification_code_interval},
 							path     => $c->ce->{webworkURLRoot},
 							samesite => $c->ce->{CookieSameSite},
 							secure   => $c->ce->{CookieSecure},
