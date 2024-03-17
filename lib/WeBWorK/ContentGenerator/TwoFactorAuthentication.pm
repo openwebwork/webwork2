@@ -55,7 +55,11 @@ sub pre_header_initialize ($c) {
 		$c->authen->session(otp_secret => $totp->secret);
 
 		my $otp_link = $totp->generate_otp($c->authen->{user_id}, $ce->{courseName});
-		my $img_data = GD::Barcode::QRcode->new($otp_link, { ModuleSize => 4, Version => 12 })->plot->png;
+
+		my $img_data = do {
+			local $SIG{__WARN__} = sub { };
+			GD::Barcode::QRcode->new($otp_link, { Ecc => 'L', ModuleSize => 4, Version => 0 })->plot->png;
+		};
 
 		my $user = $c->db->getUser($c->authen->{user_id});
 
