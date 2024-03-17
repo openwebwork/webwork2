@@ -2,19 +2,17 @@
 %
 % if ($otp_link) {
 	<p>
-		<%= maketext('To set up one-time password generation, scan the QRCode below with an authenticator app '
+		<%= maketext('To set up one-time password generation, scan the QR code below with an authenticator app '
 			. '(such as Google Authenticator, Microsoft Authenticator, Twilio Authy, etc.) installed on a mobile '
-			. 'device.') =%>
+			. 'device. Alternatively, after installing an authenticator app on a mobile device, open this page on '
+			. 'that device, and click on the QR code below.') =%>
 	</p>
 	<div class="mb-3 d-flex align-items-center">
-		<%= image 'data:image/png;base64,' . b64_encode($otp_qrcode),
-			alt => maketext('One-time password generator setup QR Code'), class => 'mx-auto' =%>
+		<%= link_to $otp_link, class => 'mx-auto', begin =%>
+			<%= image 'data:image/png;base64,' . b64_encode($otp_qrcode),
+				alt => maketext('One-time password generator setup QR Code') =%>
+		<% end =%>
 	</div>
-	<p>
-		<%== maketext('Alternately, after installing an authenticator app on a mobile device, '
-			. 'open this page on that device, and click <a href="[_1]">here</a>.',
-			$otp_link) =%>
-	</p>
 	<p>
 		<%= maketext('Once the authenticator app is set up, enter the code it generates below.') =%>
 	</p>
