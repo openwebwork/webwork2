@@ -29,7 +29,6 @@
 			% $seconds %= 3600;
 			% my $minutes = int($seconds / 60);
 			% $seconds %= 60;
-			% my $timeText = '';
 			%
 			% # Several cases are needed to format time to work well with translation.
 			% if ($hours && $minutes) {
@@ -40,7 +39,7 @@
 						$minutes
 					) =%>
 				</div>
-			% } elsif ($hours || ($minutes && (!$seconds || $seconds > 299))) {
+			% } elsif ($hours || ($minutes && (!$seconds || $continueTimeLeft > 299))) {
 				% # Translation Note: In this case only one of hours or minutes is non-zero,
 				% # so the zero case of the "quant" will be used for the other one.
 				<div class="alert alert-warning">
@@ -94,7 +93,6 @@
 	% if ($timeLimit > 0) {
 		% my $hours    = int($timeLimit / 3600);
 		% my $minutes  = int(($timeLimit % 3600) / 60);
-		% my $timeText = '';
 		%
 		% # Two cases to format time to work well with translation.
 		% if ($hours && $minutes) {
