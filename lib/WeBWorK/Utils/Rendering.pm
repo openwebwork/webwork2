@@ -67,14 +67,15 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{problemSeed}    = $problem->problem_seed;
 
 	# Display information
-	$options{displayMode}        = $translationOptions->{displayMode};
-	$options{showHints}          = $translationOptions->{showHints};
-	$options{showSolutions}      = $translationOptions->{showSolutions};
-	$options{forceScaffoldsOpen} = $translationOptions->{forceScaffoldsOpen};
-	$options{setOpen}            = time > $set->open_date;
-	$options{pastDue}            = time > $set->due_date;
-	$options{answersAvailable}   = time > $set->answer_date;
-	$options{refreshMath2img}    = $translationOptions->{refreshMath2img};
+	$options{displayMode}          = $translationOptions->{displayMode};
+	$options{showHints}            = $translationOptions->{showHints};
+	$options{showSolutions}        = $translationOptions->{showSolutions};
+	$options{forceScaffoldsOpen}   = $translationOptions->{forceScaffoldsOpen};
+	$options{setOpen}              = time > $set->open_date;
+	$options{pastDue}              = time > $set->due_date;
+	$options{answersAvailable}     = time > $set->answer_date;
+	$options{refreshMath2img}      = $translationOptions->{refreshMath2img};
+	$options{feedback_button_name} = $ce->{feedback_button_name};
 
 	# Default values for evaluating answers
 	$options{ansEvalDefaults} = $ce->{pg}{ansEvalDefaults};
