@@ -29,17 +29,16 @@ use Carp;
 use DBI;
 use String::ShellQuote;
 use UUID::Tiny qw(create_uuid_as_string);
-
-use WeBWorK::Debug;
+use Mojo::File qw(path);
 use File::Copy::Recursive qw(dircopy);
 use File::Spec;
-use Mojo::File;
 use Archive::Tar;
+
+use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use);
-use WeBWorK::Utils::Files qw(surePathToFile readDirectory);
+use WeBWorK::Utils::Files qw(surePathToFile);
 use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
 our @EXPORT_OK = qw(
@@ -114,13 +113,14 @@ sub listCourses {
 	$dbh->disconnect();
 
 	# Collect directories which may be course directories
-	my @cdirs = grep { not(m/^\./ or m/^CVS$/) and -d "$coursesDir/$_" } readDirectory($coursesDir);
+	my @cdirs =
+		@{ path($coursesDir)->list({ dir => 1 })->grep(sub { -d $_ && $_ !~ /modelCourse$/ })->map('basename') };
 	if ($stmt_bad) {
 		# Fall back to old method listing all directories.
 		return @cdirs;
 	} else {
 		my @courses;
-		foreach my $cname (@cdirs) {
+		for my $cname (@cdirs) {
 			push(@courses, $cname) if $user_tables_seen{"${cname}_user"};
 		}
 		return @courses;
@@ -135,9 +135,9 @@ Lists the courses which have been archived (end in .tar.gz).
 
 sub listArchivedCourses {
 	my ($ce) = @_;
-	my $archivesDir = "$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives";
+	my $archivesDir = path("$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives");
 	surePathToFile($ce->{webworkDirs}{courses}, "$archivesDir/test");    # Ensure archives directory exists.
-	return grep {m/\.tar\.gz$/} readDirectory($archivesDir);
+	return @{ $archivesDir->list->grep(qr/\.tar\.gz$/)->map('basename') };
 }
 
 ################################################################################
@@ -274,7 +274,7 @@ sub addCourse {
 			or croak
 			"Can't create the course '$courseID' because the courses directory '$rootParent' is not writeable.";
 		# try to create it
-		eval { Mojo::File->new($root)->make_path };
+		eval { path($root)->make_path };
 		croak "Can't create the course '$courseID' because the root directory '$root' could not be created: $@." if $@;
 	}
 
@@ -302,7 +302,7 @@ sub addCourse {
 		}
 
 		# try to create it
-		eval { Mojo::File->new($courseDir)->make_path };
+		eval { path($courseDir)->make_path };
 		warn "Failed to create $courseDirName directory '$courseDir': $@. "
 			. "You will have to create this directory manually."
 			if $@;
@@ -480,7 +480,7 @@ sub addCourse {
 		if ($options{copySimpleConfig}) {
 			my $sourceFile = $sourceCE->{courseFiles}{simpleConfig};
 			if (-e $sourceFile) {
-				eval { Mojo::File->new($sourceFile)->copy_to($ce->{courseDirs}{root}) };
+				eval { path($sourceFile)->copy_to($ce->{courseDirs}{root}) };
 				warn "Failed to copy simple.conf from course '$sourceCourse': $@" if $@;
 			}
 		}
@@ -489,7 +489,7 @@ sub addCourse {
 		if ($options{copyConfig}) {
 			my $sourceFile = $sourceCE->{courseFiles}{environment};
 			if (-e $sourceFile) {
-				eval { Mojo::File->new($sourceFile)->copy_to($ce->{courseDirs}{root}) };
+				eval { path($sourceFile)->copy_to($ce->{courseDirs}{root}) };
 				warn "Failed to copy course.conf from course '$sourceCourse': $@" if $@;
 			}
 		}
@@ -575,7 +575,7 @@ sub renameCourse {
 
 	# move top-level course directory
 	debug("moving course dir from $oldCourseDir to $newCourseDir");
-	eval { Mojo::File->new($oldCourseDir)->move_to($newCourseDir) };
+	eval { path($oldCourseDir)->move_to($newCourseDir) };
 	die "Failed to move course directory:  $@" if ($@);
 
 	# get new course environment
@@ -631,7 +631,7 @@ sub renameCourse {
 
 			# try to move the directory
 			debug("Going to move $oldDir to $newDir...\n");
-			eval { Mojo::File->new($oldDir)->move_to($newDir) };
+			eval { path($oldDir)->move_to($newDir) };
 			warn "Failed to move directory from $oldDir to $newDir with error: $@" if $@;
 		} else {
 			debug("oldDir $oldDir was already moved.\n");
@@ -790,7 +790,7 @@ sub deleteCourse {
 
 			# try to delete the directory
 			debug("Going to delete $courseDir...\n");
-			eval { Mojo::File->new($courseDir)->remove_tree };
+			eval { path($courseDir)->remove_tree };
 			warn "An error occurred when deleting $courseDir" if $@;
 		} else {
 			debug("courseDir $courseDir was already deleted.\n");
@@ -875,7 +875,7 @@ sub archiveCourse {
 	#### step 1: dump tables #####
 
 	unless (-e $dump_dir) {
-		eval { Mojo::File->new($dump_dir)->make_path };
+		eval { path($dump_dir)->make_path };
 		croak "Failed to create course database dump directory '$dump_dir': $@" if $@;
 	}
 
@@ -889,7 +889,7 @@ sub archiveCourse {
 	##### step 2: tar and gzip course directory (including dumped database) #####
 
 	my $parent_dir = $ce->{webworkDirs}{courses};
-	my $files      = Mojo::File->new($course_dir)->list_tree({ dir => 1, hidden => 1 })->map('to_abs');
+	my $files      = path($course_dir)->list_tree({ dir => 1, hidden => 1 })->map('to_abs');
 	my $tar        = Archive::Tar->new;
 	$tar->add_files(@$files);
 	for ($tar->get_files) {
@@ -905,13 +905,13 @@ sub archiveCourse {
 	##### step 3: cleanup -- remove database dump files from course directory #####
 
 	unless (-e $archive_path) {
-		eval { Mojo::File->new($tmp_archive_path)->move_to($archive_path) };
+		eval { path($tmp_archive_path)->move_to($archive_path) };
 		if ($@) {
-			eval { Mojo::File->new($tmp_archive_path)->remove };
+			eval { path($tmp_archive_path)->remove };
 			croak "Failed to rename archived file to '$archive_path': $@";
 		}
 	} else {
-		eval { Mojo::File->new($tmp_archive_path)->remove };
+		eval { path($tmp_archive_path)->remove };
 		croak "Failed to create archived file at '$archive_path'. File already exists.";
 	}
 	_archiveCourse_remove_dump_dir($ce, $dump_dir);
@@ -921,7 +921,7 @@ sub archiveCourse {
 
 sub _archiveCourse_remove_dump_dir {
 	my ($ce, $dump_dir) = @_;
-	Mojo::File->new($dump_dir)->remove_tree({ error => \my $err });
+	path($dump_dir)->remove_tree({ error => \my $err });
 
 	if ($err && @$err) {
 		for my $diag (@$err) {
@@ -1045,7 +1045,7 @@ sub unarchiveCourse {
 		_archiveCourse_remove_dump_dir($ce, $dump_dir);
 	}
 	if (-e $old_dump_file) {
-		eval { Mojo::File->new($old_dump_file)->remove };
+		eval { path($old_dump_file)->remove };
 		warn "Failed to unlink course database dump file '$old_dump_file: $@" if $@;
 	}
 
@@ -1053,7 +1053,7 @@ sub unarchiveCourse {
 	# tarball
 	my $tmpDir = $ce2->{courseDirs}->{html_temp};
 	if (!-e $tmpDir) {
-		eval { Mojo::File->new($tmpDir)->make_path };
+		eval { path($tmpDir)->make_path };
 		warn "Failed to create html_temp directory '$tmpDir': $@. You will have to create this directory manually."
 			if $@;
 	}

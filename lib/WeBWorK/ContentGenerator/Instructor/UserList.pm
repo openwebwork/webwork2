@@ -63,9 +63,10 @@ Export users:
 
 =cut
 
+use Mojo::File;
+
 use WeBWorK::File::Classlist qw(parse_classlist write_classlist);
 use WeBWorK::Utils qw(cryptPassword x);
-use WeBWorK::Utils::Instructor qw(getCSVList);
 
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS            => [qw(save_edit cancel_edit)];
@@ -257,7 +258,10 @@ sub initialize ($c) {
 	$c->stash->{formPerms}       = FORM_PERMS();
 	$c->stash->{fields}          = FIELDS();
 	$c->stash->{fieldProperties} = FIELD_PROPERTIES();
-	$c->stash->{CSVList}         = $c->{editMode} || $c->{passwordMode} ? [] : [ getCSVList($c->ce) ];
+	$c->stash->{CSVList} =
+		$c->{editMode} || $c->{passwordMode}
+		? []
+		: Mojo::File->new($c->ce->{courseDirs}{templates})->list->grep(sub { -f && m/\.lst$/ })->map('basename');
 
 	return;
 }

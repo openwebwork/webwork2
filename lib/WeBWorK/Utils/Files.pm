@@ -23,7 +23,6 @@ use Mojo::File qw(path);
 our @EXPORT_OK = qw(
 	surePathToFile
 	readFile
-	readDirectory
 	listFilesRecursive
 	path_is_subdir
 );
@@ -53,13 +52,6 @@ sub readFile ($fileName) {
 	# Convert Windows and Mac (classic) line endings to UNIX line endings in a string.
 	# Windows uses CRLF, Mac uses CR, UNIX uses LF. (CR is ASCII 15, LF if ASCII 12)
 	return ($result // '') =~ s/\015\012?/\012/gr;
-}
-
-sub readDirectory ($dirName) {
-	opendir my $dh, $dirName or die "Failed to read directory $dirName: $!";
-	my @result = readdir $dh;
-	close $dh;
-	return @result;
 }
 
 sub listFilesRecursive ($dir, $match_qr, $prune_qr = '', $match_full = 0, $prune_full = 0) {
@@ -137,13 +129,6 @@ Usage: C<readFile($fileName)>
 
 Read the entire contents of C<$fileName> into memory. The file contents are
 returned after transforming line endings into UNIX line feeds.
-
-=head2 readDirectory
-
-Usage: C<readDirectory($dirName)>
-
-Returns the contents of the directory C<$dirName>. This is not a recursive
-directory listing.
 
 =head2 listFilesRecursive
 

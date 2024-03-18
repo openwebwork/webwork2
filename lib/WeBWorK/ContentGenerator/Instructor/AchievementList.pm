@@ -49,7 +49,6 @@ use Text::CSV;
 
 use WeBWorK::Utils qw(sortAchievements x);
 use WeBWorK::Utils::Files qw(surePathToFile);
-use WeBWorK::Utils::Instructor qw(read_dir);
 
 # Forms
 use constant EDIT_FORMS   => [qw(save_edit cancel_edit)];
@@ -594,7 +593,7 @@ sub save_edit_handler ($c) {
 
 # Get list of files that can be imported.
 sub getAxpList ($c) {
-	return read_dir($c->ce->{courseDirs}{achievements}, qr/.*\.axp/);
+	return @{ Mojo::File->new($c->ce->{courseDirs}{achievements})->list->grep(qr/.*\.axp/)->map('basename') };
 }
 
 1;

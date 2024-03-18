@@ -29,7 +29,6 @@ use File::Find;
 
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Debug;
-use WeBWorK::Utils::Files qw(readDirectory);
 use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
 
 our @EXPORT_OK = qw(
@@ -47,8 +46,6 @@ our @EXPORT_OK = qw(
 	assignProblemToAllSetUsers
 	assignMultipleProblemsToGivenUsers
 	addProblemToSet
-	read_dir
-	getCSVList
 	getDefList
 );
 
@@ -637,27 +634,6 @@ sub addProblemToSet {
 =cut
 
 ################################################################################
-# Utility methods
-################################################################################
-
-=head2 Utility methods
-
-=over
-
-=cut
-
-sub read_dir {    # read a directory
-	my $directory = shift;
-	my $pattern   = shift;
-	my @files     = sort grep {/$pattern/} readDirectory($directory);
-	return @files;
-}
-
-=back
-
-=cut
-
-################################################################################
 # Methods for listing various types of files
 ################################################################################
 
@@ -666,13 +642,6 @@ sub read_dir {    # read a directory
 =over
 
 =cut
-
-# list classlist files
-sub getCSVList {
-	my ($ce) = @_;
-	my $dir = $ce->{courseDirs}{templates};
-	return grep { not m/^\./ and m/\.lst$/ and -f "$dir/$_" } readDirectory($dir);
-}
 
 sub loadSetDefListFile {
 	my $file = shift;
