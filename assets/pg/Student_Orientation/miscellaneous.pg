@@ -30,7 +30,9 @@ correct while [`\pi R^2`] is not.
 you begin the problems set. It may give you important hints.
 *  Repeated guessing is not helpful.  If you have gotten a problem incorrect several times, you should ask for help.
 That's what your instructor, TAs, and tutors are here for.
-* Make sure you read the feedback messages that WeBWorK gives you.
+* Make sure you read the feedback messages that WeBWorK gives you. The feedback messages might sometimes be "technical"
+(either mathematically or with respect to WeBWorK syntax) but they often give you what you need to make some progress.
+If you don't understand a feedback message, ask your instructor about it.
 * For decimal answers, get in the habit of using four significant digits.
 * If you want to enter [`\pi`], you could type [|pi|]*, use the palette tool, or directly enter the [`\pi`] character if
 you have a way to do that.

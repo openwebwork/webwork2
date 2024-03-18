@@ -28,8 +28,8 @@ back with good help/hints.
 
 This answer blank is expecting a certain mystery answer: [_]{Real(112358)->cmp(tolType=>'absolute',tolerance=>0.1)}{4}.
 The only way to get the answer is to use the "[$button_name]" button and ask for the answer to this Orientation Problem
-[$envir{probNum}]. The instructor will reply to your email as soon as they are able to. (Instructors: you can
-Check/Submit an answer, then view the feedback to reveal the expected correct answer.)
+[$envir{probNum}]. The instructor will reply to your email as soon as they are able to. [@ if ($isInstructor)
+{'(Instructors: you can Check/Submit an answer, then view the feedback to reveal the expected correct answer.)'} @]
 
 A reply will come in the form of an email. You must check your official email account to receive the reply. Then return
 to this problem to submit your answer.
