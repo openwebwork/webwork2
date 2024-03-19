@@ -1,3 +1,5 @@
+% use Mojo::JSON qw(encode_json);
+%
 % use WeBWorK::Utils qw(getAssetURL);
 % use WeBWorK::HTML::ScrollingRecordList qw(scrollingRecordList);
 %
@@ -20,6 +22,11 @@
 %
 <%= form_for current_route, method => 'POST', id => 'instructor-tools-form', begin =%>
 	<%= $c->hidden_authen_fields =%>
+	%
+	% # Add problem ids in hidden fields for each set (for the "View answer log ..." action.
+	% for (keys %$setProblemIDs) {
+		<%= hidden_field "${_}_problem_ids" => encode_json($setProblemIDs->{$_}) =%>
+	% }
 	%
 	<div class="row">
 		<div class="col-xl-5 col-md-6 mb-2">
@@ -197,12 +204,10 @@
 					</div>
 					<div class="input-group input-group-sm mb-2">
 						<%= submit_button maketext('Edit'),
-							name  => 'edit_set_for_users',
-							class => 'btn btn-sm btn-secondary',
-							data  => {
-								sets_needed  => 'exactly one',
-								error_sets   => maketext($E_ONE_SET)
-							} =%>
+							name       => 'edit_set_for_users',
+							class      => 'btn btn-sm btn-secondary',
+							formaction => $c->systemLink(url_for 'instructor_set_detail'),
+							data       => { sets_needed => 'exactly one', error_sets => maketext($E_ONE_SET) } =%>
 						<span class="input-group-text flex-grow-1"><%==
 							maketext(q{<strong>one</strong> set's details for <strong>some or all</strong> users})
 						=%></span>
@@ -210,7 +215,9 @@
 					<div class="input-group input-group-sm mb-2">
 						<%= submit_button maketext('View'),
 							name       => 'show_answers',
-							class      => 'btn btn-sm btn-secondary' =%>
+							class      => 'btn btn-sm btn-secondary',
+							formaction => $c->systemLink(url_for 'answer_log'),
+							formtarget => 'WW_Info' =%>
 						<span class="input-group-text flex-grow-1"><%==
 							maketext('answer log for <strong>selected</strong> users, '
 								. 'for <strong>selected</strong> sets')
