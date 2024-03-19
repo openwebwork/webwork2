@@ -2,6 +2,7 @@
 % # WeBWorK::ContentGenerator::Instructor::StudentProgress.
 %
 % use WeBWorK::ContentGenerator::Grades;
+% use WeBWorK::ContentGenerator::Activity;
 %
 % my $studentRecord = $db->getUser($c->{studentID});
 % unless ($studentRecord) {
@@ -28,3 +29,8 @@
 		$c->systemLink(url_for('set_list'), params => { effectiveUser => $c->{studentID} }) =%>
 % }
 <%= WeBWorK::ContentGenerator::Grades::displayStudentStats($c, $c->{studentID}) =%>
+% if ($ce->{pg}{specialPGEnvironmentVars}{Rserve}{host}) {
+	<div class="activity-svg">
+		<%== WeBWorK::ContentGenerator::Activity::displayStudentActivity($c, $c->{studentID}) %>
+	</div>
+% }

@@ -412,6 +412,11 @@ $mail{feedbackRecipients}    = [
 # following line.  The R server needs to be installed and running in order for
 # this to work.  See http://webwork.maa.org/wiki/R_in_WeBWorK for more info.
 
+# For student activity graphs to work, you must also install the following R
+# packages: ggplot2, svglite, fasttime. If the R server is local, run R as root
+# and execute:
+# install.packages(c('ggplot2', 'svglite', 'fasttime'))
+
 #$pg{specialPGEnvironmentVars}{Rserve} = {host => "localhost"};
 
 # use this setting when running Rserve in a docker container.
