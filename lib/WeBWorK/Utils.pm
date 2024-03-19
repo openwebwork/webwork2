@@ -144,12 +144,6 @@ sub wwRound ($places, $float) {
 	return int($float * $factor + 0.5) / $factor;
 }
 
-# If you modify the code of cryptPassword, please also make the change
-# in bin/crypt_passwords_in_classlist.pl, which has a copy of this
-# routine so it can easily be used without needed access to a WW webwork2
-# directory.
-# FIXME: Instead of the above, fix that script so it works like all of the rest
-# and DOES have access to the webwork2 directory.
 sub cryptPassword ($clearPassword) {
 	# Use an SHA512 salt with 16 digits
 	my $salt = '$6$';
