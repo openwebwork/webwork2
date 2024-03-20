@@ -46,7 +46,8 @@
 						id => "set.$setID.$field.class_value", readonly => undef, dir => 'ltr',
 						class => 'form-control-plaintext form-control-sm w-auto',
 						size => 16,
-						defined $userRecord ? ('aria-labelledby' => "set.$setID.${field}_id") : () =%>
+						defined $userRecord ? ('aria-labelledby' => "set.$setID.${field}_id") : (),
+						data => { class_value => $globalRecord->$field } =%>
 				</td>
 			% }
 			% if (defined $userRecord) {
