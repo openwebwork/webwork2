@@ -1,0 +1,19 @@
+warn "Pass users as additional arguments on the command line.\n"
+	. "Usage: wwsh $ce->{courseName} /opt/webwork/webwork2/bin/reset2fa [users]\n"
+	unless @ARGV;
+
+for (@ARGV) {
+	my $password = eval { $db->getPassword($_) };
+	if ($@) {
+		warn "Unable to retrieve password record for $_ from the database: $@\n";
+		next;
+	}
+
+	$password->otp_secret('');
+	eval { $db->putPassword($password) };
+	if ($@) {
+		warn "Unable to reset two factor authentication secret for $_: $@\n";
+	} else {
+		print "Successfully reset two factor authentication for $_.\n";
+	}
+}

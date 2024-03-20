@@ -99,6 +99,7 @@ RUN apt-get update \
 	libfile-find-rule-perl-perl \
 	libfile-sharedir-install-perl \
 	libfuture-asyncawait-perl \
+	libgd-barcode-perl \
 	libgd-perl \
 	libhtml-scrubber-perl \
 	libhtml-template-perl \
@@ -113,6 +114,7 @@ RUN apt-get update \
 	libmail-sender-perl \
 	libmariadb-dev \
 	libmath-random-secure-perl \
+	libmime-base32-perl \
 	libmime-tools-perl \
 	libminion-backend-sqlite-perl \
 	libminion-perl \

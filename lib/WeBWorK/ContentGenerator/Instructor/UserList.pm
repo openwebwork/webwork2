@@ -70,7 +70,7 @@ use WeBWorK::Utils::Instructor qw(getCSVList);
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS            => [qw(save_edit cancel_edit)];
 use constant PASSWORD_FORMS        => [qw(save_password cancel_password)];
-use constant VIEW_FORMS            => [qw(filter sort edit password import export add delete)];
+use constant VIEW_FORMS            => [qw(filter sort edit password import export add delete reset_2fa)];
 
 # Prepare the tab titles for translation by maketext
 use constant FORM_TITLES => {
@@ -84,6 +84,7 @@ use constant FORM_TITLES => {
 	export          => x('Export'),
 	add             => x('Add'),
 	delete          => x('Delete'),
+	reset_2fa       => x('Reset Two Factor Authentication'),
 	save_password   => x('Save Password'),
 	cancel_password => x('Cancel Password')
 };
@@ -94,6 +95,7 @@ use constant FORM_PERMS => {
 	edit          => 'modify_student_data',
 	save_password => 'change_password',
 	password      => 'change_password',
+	reset2_2fa    => 'change_password',
 	import        => 'modify_student_data',
 	export        => 'modify_classlist_files',
 	add           => 'modify_student_data',
@@ -477,6 +479,39 @@ sub export_handler ($c) {
 	$c->exportUsersToCSV($fileName, @userIDsToExport);
 
 	return $c->maketext('[_1] users exported to file [_2]', scalar @userIDsToExport, "$dir/$fileName");
+}
+
+sub reset_2fa_handler ($c) {
+	my $db   = $c->db;
+	my $user = $c->param('user');
+
+	my $confirm = $c->param('action.reset_2fa.confirm');
+	my $num     = 0;
+
+	return $c->maketext('Reset two factor authentication for [_1] users.', $num) unless $confirm eq 'yes';
+
+	# grep on userIsEditable would still enforce permissions, but no UI feedback
+	my @userIDsForReset = keys %{ $c->{selectedUserIDs} };
+
+	my @resultText;
+	for my $userID (@userIDsForReset) {
+		if ($userID eq $user) {
+			push @resultText, $c->maketext('You cannot reset two factor authentication for yourself!');
+			next;
+		}
+
+		unless ($c->{userIsEditable}{$userID}) {
+			push @resultText, $c->maketext('You are not allowed to reset two factor authenticatio for [_1].', $userID);
+			next;
+		}
+		my $password = $db->getPassword($userID);
+		$password->otp_secret('');
+		$db->putPassword($password);
+		$num++;
+	}
+
+	unshift @resultText, $c->maketext('Reset two factor authentication for [quant,_1,user].', $num);
+	return join(' ', @resultText);
 }
 
 sub cancel_edit_handler ($c) {

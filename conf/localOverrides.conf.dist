@@ -220,7 +220,7 @@ $mail{feedbackRecipients}    = [
 # $permissionLevels{login} = "guest";
 
 # The above code would give the permission to login to any user with permission
-# level guest or higher.
+# level guest or higher (which is the default).
 
 # By default answers for all users are logged to the past_answers table in the database
 # and the myCourse/logs/answer_log file.  If you only want answers logged for users below
@@ -573,6 +573,75 @@ $mail{feedbackRecipients}    = [
 # when the browser session ends. The default value is 7 days.
 #$CookieLifeTime = 604800;
 #$CookieLifeTime = "session";
+
+################################################################################
+# Two Factor Authentication
+################################################################################
+
+# The following variables enable two factor authentication and control how it
+# works. Two factor authentication only applies to courses that use password
+# authentication, i.e., the Basic_TheLastOption user authentication module
+# without an external authentication approach (like LTI, CAS, Shibboleth, etc.).
+# It is recommended that two factor authentication be enabled for all courses
+# that use password authentication. It is extremely highly recommended that this
+# be enabled for the admin course. Two factor authentication works with an
+# authenticator app on a mobile device (such as Google Authenticator,
+# Microsoft authenticator, Twilio Authy, etc.).
+
+# $twoFA{enabled} determines if two factor authentication is enabled for a
+# course. If this is set to 0, then two factor authentication is disabled for
+# all courses. If this is 1 (the default), then two factor authentication is
+# enabled for all courses that use password authentication. If this is a string
+# course name like 'admin', then two factor authentication is enabled only for
+# that course. If this is an array of string course names, then two factor
+# authentication is enabled only for those courses listed. This can also be set
+# in a course's course.conf file. Note that only the values of 0 and 1 make
+# sense there.
+#$twoFA{enabled} = $admin_course_id; # Use this at the very least.
+#$twoFA{enabled} = [$admin_course_id, 'another_courseID', 'another_courseID_3'];
+
+# There are two methods that can be used to setup two factor authentication when
+# a user signs in for the first time. The setup information can be emailed to
+# the user, or can be directly displayed in the browser on the next page that is
+# shown after password verification succeeds.
+#
+# If $twoFA{email_sender} is set, then the email approach will be used. In this
+# case, after a user signs in and the password is verified, the user will be
+# sent an email containing a QR code and instructions on how to set up a OTP
+# generator app. This is probably a more secure way to set up two factor
+# authentication, as it ensures the user setting it up is the correct user. Note
+# that if a user does not have an email address, then the browser method below
+# will be used as a fallback.
+#
+# If $twoFA{email_sender} is not set, then after a user signs in and the
+# password is verified, the QR code, OTP link, and instructions will be
+# displayed directly on the page in the browser. This is potentially less secure
+# because a hacker could guess a username and password before a user has setup
+# two factor authentication (particularly if the username and password are
+# initially the same), and then the hacker would gain access to that user's
+# account, and the actual user would be locked out. Note that you will need to
+# use this option if your server can not send emails. Also note that no-reply
+# addresses may be blocked by the email server or marked as spam. So it may be
+# better to find a valid email address to use for this.
+#$twoFA{email_sender} = 'noreply@your.school.edu';
+
+# When a user signs in and enters the two factor authentication code, the user
+# has the option to skip two factor verification on a given device for
+# subsequent logins. That will only last for the amount of time set as the
+# skip_verification_code_interval. By default this is set to one year. However,
+# good security practices most likely recommend a shorter time interval for
+# this. So change this value if you want to require a shorter and thus more
+# secure time interval before users will need to enter the two factor
+# authentication code again.
+#$twoFA{skip_verification_code_interval} = 3600 * 24 * 7;
+
+# By default all users with the role of "student" or higher are required to use
+# two factor authentication when signing in with a username and password. If
+# you want to disable two factor authentication for students, but require it for
+# instructors then set the permission level below to "login_proctor" (or
+# higher).
+
+#$permissionLevels{use_two_factor_auth} = "login_proctor";
 
 ################################################################################
 # Searching for set.def files to import

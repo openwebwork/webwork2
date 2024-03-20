@@ -48,6 +48,7 @@ use WeBWorK::Debug;
 use WeBWorK::Upload;
 use WeBWorK::Utils qw(runtime_use);
 use WeBWorK::ContentGenerator::Login;
+use WeBWorK::ContentGenerator::TwoFactorAuthentication;
 use WeBWorK::ContentGenerator::LoginProctor;
 
 our %SeedCE;
@@ -90,12 +91,13 @@ async sub dispatch ($c) {
 	if ($c->current_route =~ /^(render_rpc|instructor_rpc|html2xml)$/) {
 		$c->{rpc} = 1;
 
-		$c->stash(disable_cookies => 1) if $c->current_route eq 'render_rpc' && $c->param('disableCookies');
+		$c->stash(disable_cookies => 1)
+			if $c->current_route eq 'render_rpc' && $c->param('disableCookies') && $c->config('allow_unsecured_rpc');
 
 		# This provides compatibility for legacy html2xml parameters.
 		# This should be deleted when the html2xml endpoint is removed.
 		if ($c->current_route eq 'html2xml') {
-			$c->stash(disable_cookies => 1);
+			$c->stash(disable_cookies => 1) if $c->config('allow_unsecured_rpc');
 			for ([ 'userID', 'user' ], [ 'course_password', 'passwd' ], [ 'session_key', 'key' ]) {
 				$c->param($_->[1], $c->param($_->[0])) if defined $c->param($_->[0]) && !defined $c->param($_->[1]);
 			}
@@ -268,9 +270,15 @@ async sub dispatch ($c) {
 			# If the user is logging out and authentication failed, still logout.
 			return 1 if $displayModule eq 'WeBWorK::ContentGenerator::Logout';
 
-			debug("Bad news: authentication failed!\n");
-			debug("Rendering WeBWorK::ContentGenerator::Login\n");
-			await WeBWorK::ContentGenerator::Login->new($c)->go();
+			if ($c->authen->session->{two_factor_verification_needed}) {
+				debug("Login succeeded but two factor authentication is needed.\n");
+				debug("Rendering WeBWorK::ContentGenerator::TwoFactorAuthentication\n");
+				await WeBWorK::ContentGenerator::TwoFactorAuthentication->new($c)->go();
+			} else {
+				debug("Bad news: authentication failed!\n");
+				debug("Rendering WeBWorK::ContentGenerator::Login\n");
+				await WeBWorK::ContentGenerator::Login->new($c)->go();
+			}
 			return 0;
 		}
 	}

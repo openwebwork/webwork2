@@ -102,6 +102,7 @@ my @modulesList = qw(
 	File::Temp
 	Future::AsyncAwait
 	GD
+	GD::Barcode::QRcode
 	Getopt::Long
 	Getopt::Std
 	HTML::Entities
@@ -117,6 +118,7 @@ my @modulesList = qw(
 	Locale::Maketext::Lexicon
 	Locale::Maketext::Simple
 	LWP::Protocol::https
+	MIME::Base32
 	MIME::Base64
 	Math::Random::Secure
 	Minion

@@ -109,6 +109,14 @@
 			. 'assignment data has been permanently deleted.') =%>
 	</dd>
 
+	<dt><%= maketext('Reset two factor authentication for a student in the course') %></dt>
+	<dd>
+		<%= maketext('This resets two factor authentication for a student, thus making the student need to set up two '
+			. 'factor authentication again. This should only be done if a student has accidentally deleted their '
+			. 'account or for some other reason lost their key in the authenticator app, and so can no longer access '
+			. 'the course. Note that this will only appear if two factor authentication is enabled for the course.') =%>
+	</dd>
+
 	<dt><%= maketext('Assign sets to one student') %></dt>
 	<dd>
 		<%= maketext('To assign one or more sets to an individual student click in the column "Assigned Sets" in the '
