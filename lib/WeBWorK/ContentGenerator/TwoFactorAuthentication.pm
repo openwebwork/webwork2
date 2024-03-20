@@ -54,7 +54,7 @@ sub pre_header_initialize ($c) {
 				$c->authen->session->{otp_secret} ? (secret => $c->authen->session->{otp_secret}) : ());
 		$c->authen->session(otp_secret => $totp->secret);
 
-		my $otp_link = $totp->generate_otp($c->authen->{user_id}, $ce->{courseName});
+		my $otp_link = $totp->generate_otp($c->authen->{user_id}, $c->url_for('set_list')->to_abs =~ s|https?://||r);
 
 		my $img_data = do {
 			local $SIG{__WARN__} = sub { };
