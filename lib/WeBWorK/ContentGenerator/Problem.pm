@@ -34,9 +34,8 @@ use WeBWorK::Utils::ProblemProcessing qw(process_and_log_answer jitar_send_warni
 	compute_unreduced_score);
 use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
 use WeBWorK::Utils::Sets qw(is_restricted format_set_name_display);
-use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::AchievementEvaluator qw(checkForAchievements);
-use WeBWorK::DB::Utils qw(global2user);
+use WeBWorK::DB::Utils qw(global2user fake_set fake_problem);
 use WeBWorK::Localize;
 use WeBWorK::AchievementEvaluator;
 

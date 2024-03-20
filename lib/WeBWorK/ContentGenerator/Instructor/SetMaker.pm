@@ -101,7 +101,7 @@ sub get_course_pg_dirs ($c, $top, $dir) {
 
 	return ($pgcount, @pgdirs)
 		if $top
-		|| ($pgcount == 1
+		|| ($pgfiles->size == 1
 			&& ($dir->basename . '.pg') eq $pgfiles->first->basename
 			&& $lis->grep(sub { -f && (!m/\.pg$/ || m/(Header|-text)\.pg$/) && !m/(\.(tmp|bak)|~)$/ })->size
 			&& !$lis->grep(sub { $_->basename eq '=library-no-combine' })->size)
