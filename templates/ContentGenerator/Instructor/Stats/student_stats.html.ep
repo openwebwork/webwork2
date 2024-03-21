@@ -2,6 +2,7 @@
 % # WeBWorK::ContentGenerator::Instructor::StudentProgress.
 %
 % use WeBWorK::ContentGenerator::Grades;
+% use WeBWorK::HTML::Activity;
 %
 % my $studentRecord = $db->getUser($c->{studentID});
 % unless ($studentRecord) {
@@ -28,3 +29,47 @@
 		$c->systemLink(url_for('set_list'), params => { effectiveUser => $c->{studentID} }) =%>
 % }
 <%= WeBWorK::ContentGenerator::Grades::displayStudentStats($c, $c->{studentID}) =%>
+
+<h2><%= maketext('User Activity') %></h2>
+<div class="row">
+	<div id="user-activity-nav" class="col-xl-10 col-md-12">
+		<ul id="pills-tab" class="nav nav-pills nav-justified mb-3" role="tablist">
+			<li class="nav-item mx-1" role="presentation">
+				<button
+					id="pills-user-activity-table-tab"
+					class="nav-link active border rounded-pill"
+					data-bs-toggle="pill"
+					data-bs-target="#user-activity-table"
+					type="button"
+					role="tab"
+					aria-controls="user-activity-table"
+					aria-selected="true">\
+					<%= maketext('Table') %>\
+				</button>
+			</li>
+			<li class="nav-item mx-1" role="presentation">
+				<button
+					id="pills-user-activity-graph-tab"
+					class="nav-link border rounded-pill"
+					data-bs-toggle="pill"
+					data-bs-target="#user-activity-graph"
+					type="button"
+					role="tab"
+					aria-controls="user-activity-graph"
+					aria-selected="false">\
+					<%= maketext('Graph') %>\
+				</button>
+			</li>
+		</ul>
+		<div class="tab-content" id="pills-tabContent">
+			<div class="tab-pane fade show active" id="user-activity-table" role="tabpanel"
+				aria-labelledby="pills-user-activity-table-tab">
+				<%== WeBWorK::HTML::Activity::studentActivityTable($c, $c->{studentID}) %>
+			</div>
+			<div class="tab-pane fade show" id="user-activity-graph" role="tabpanel"
+				aria-labelledby="pills-user-activity-graph-tab">
+				<%== WeBWorK::HTML::Activity::studentActivityGraph($c, $c->{studentID}) %>
+			</div>
+        	</div>
+	</div>
+</div>
