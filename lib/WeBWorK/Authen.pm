@@ -207,6 +207,7 @@ sub verify {
 	{
 		$self->{was_verified} = 0;
 		$self->session(two_factor_verification_needed => 1);
+		$self->write_log_entry("LOGIN OK") if $self->{initial_login};
 		$self->maybe_send_cookie;
 		$self->set_params;
 	} elsif ($self->{was_verified}) {
