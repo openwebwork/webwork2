@@ -70,7 +70,7 @@
 						data-bs-target="#user-actions"
 						type="button"
 						role="tab"
-						aria-controls="pills-user-actions"
+						aria-controls="user-actions"
 						aria-selected="true">\
 						<%== maketext('User Actions') =%>\
 					</button>
@@ -83,7 +83,7 @@
 						data-bs-target="#user-set-actions"
 						type="button"
 						role="tab"
-						aria-controls="pills-user-set-actions"
+						aria-controls="user-set-actions"
 						aria-selected="false">\
 						<%== maketext('User-Set Actions') =%>\
 					</button>
@@ -96,7 +96,7 @@
 						data-bs-target="#set-actions"
 						type="button"
 						role="tab"
-						aria-controls="pills-set-actions"
+						aria-controls="set-actions"
 						aria-selected="false">\
 						<%== maketext('Set Actions') =%>\
 					</button>
