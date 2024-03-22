@@ -56,9 +56,12 @@ say 'Downloaded release archive, now extracting.';
 
 my $arch = Archive::Tar->new($releaseFile);
 die "An error occurred while creating the tar file: $releaseFile" unless $arch;
-$arch->setcwd($path);
-$arch->extract();
+$arch->setcwd($ce->{webworkDirs}{tmp});
+$arch->extract;
 die "There was an error extracting the metadata release: $arch->error" if $arch->error;
+
+die "The downloaded archive did not contain the expected files."
+	unless -e "$ce->{webworkDirs}{tmp}/webwork-open-problem-library";
 
 # Copy the json files into htdocs.
 for (glob("$ce->{webworkDirs}{tmp}/webwork-open-problem-library/JSON-SAVED/*.json")) {
