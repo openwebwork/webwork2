@@ -421,7 +421,6 @@ sub set_server_settings {
 	return;
 }
 
-=back
 =head2 two_factor_authentication_enabled
 
 Usage: C<< $ce->two_factor_authentication_enabled >>

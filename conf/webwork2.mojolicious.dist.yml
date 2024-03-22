@@ -240,6 +240,13 @@ hardcopy:
   # If 1, don't delete temporary files created when a hardcopy is generated.
   preserve_temp_files: 0
 
+# Set this to 1 to allow the html2xml and render_rpc endpoints to disable
+# cookies and thus skip two factor authentication. This should never be enabled
+# for a typical webwork server.  This should only be enabled if you want to
+# allow serving content via these endpoints to links in external websites with
+# usernames and passwords embedded in them such as for PreTeXt textbooks.
+allow_unsecured_rpc: 0
+
 # External Programs
 
 # These applications are often found in /bin, but sometimes in /usr/bin or even in /opt/local/bin.
@@ -327,10 +334,3 @@ database:
 
   # Reference:  https://dev.mysql.com/doc/refman/8.0/en/identifier-length.html
   maxCourseIdLength: 40
-
-# Set this to 1 to allow the html2xml and render_rpc endpoints to disable
-# cookies and thus skip two factor authentication. This should never be enabled
-# for a typical webwork server.  This should only be enabled if you want to
-# allow serving content via these endpoints to links in external websites with
-# usernames and passwords embedded in them such as for PreTeXt textbooks.
-allow_unsecured_rpc: 0
