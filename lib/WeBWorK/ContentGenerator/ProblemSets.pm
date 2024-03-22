@@ -59,7 +59,7 @@ sub initialize ($c) {
 	my $user = $c->param('user');
 
 	if ($authz->hasPermissions($user, 'access_instructor_tools')) {
-		my $status_message = $c->param('status_message');
+		my $status_message = $c->authen->flash('status_message');
 		$c->addmessage($c->tag('p', $c->b($status_message))) if $status_message;
 	}
 

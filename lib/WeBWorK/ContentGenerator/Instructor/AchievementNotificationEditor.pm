@@ -76,7 +76,7 @@ sub initialize ($c) {
 
 	return unless ($authz->hasPermissions($user, 'edit_achievements'));
 
-	$c->addmessage($c->param('status_message') || '');    # Record status messages carried over from a redirect
+	$c->addmessage($c->authen->flash('status_message') || '');    # Record status messages carried over from a redirect
 
 	# Check source file path
 	if (!-e $sourceFilePath) {
@@ -233,10 +233,9 @@ sub save_as_handler ($c) {
 
 	# A redirect is needed to ensure that all data and parameters for page display are updated correctly.
 	# FIXME: This could be done without a redirect if the data and parameters were updated here instead.
+	$c->authen->flash(status_message => $c->{status_message}->join(''));
 	$c->reply_with_redirect($c->systemLink(
-		$c->url_for('instructor_achievement_notification', achievementID => $achievementName),
-		params => { status_message => $c->{status_message}->join('') }
-	));
+		$c->url_for('instructor_achievement_notification', achievementID => $achievementName)));
 	return;
 }
 
@@ -263,10 +262,9 @@ sub existing_handler ($c) {
 
 	# A redirect is needed to ensure that all data and parameters for page display are updated correctly.
 	# FIXME: This could be done without a redirect if the data and parameters were updated here instead.
+	$c->authen->flash(status_message => $c->{status_message}->join(''));
 	$c->reply_with_redirect($c->systemLink(
-		$c->url_for('instructor_achievement_notification', achievementID => $achievementID),
-		params => { status_message => $c->{status_message}->join('') }
-	));
+		$c->url_for('instructor_achievement_notification', achievementID => $achievementID)));
 	return;
 }
 
@@ -280,10 +278,8 @@ sub disable_handler ($c) {
 		));
 
 		# Redirect to the instructor_achievement_list.
-		$c->reply_with_redirect($c->systemLink(
-			$c->url_for('instructor_achievement_list'),
-			params => { status_message => $c->{status_message}->join('') }
-		));
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
+		$c->reply_with_redirect($c->systemLink($c->url_for('instructor_achievement_list')));
 	} else {
 		$c->addbadmessage($c->maketext(
 			'Unable to disable the achievement notification template for achievement [_1]. Unknown error.',

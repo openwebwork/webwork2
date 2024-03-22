@@ -81,7 +81,7 @@ sub initialize ($c) {
 
 	return unless ($authz->hasPermissions($user, 'edit_achievements'));
 
-	$c->addmessage($c->param('status_message') || '');    # Record status messages carried over from a redirect
+	$c->addmessage($c->authen->flash('status_message') || '');    # Record status messages carried over from a redirect
 
 	# Check source file path
 	if (not(-e $sourceFilePath)) {
@@ -304,15 +304,13 @@ sub save_as_handler ($c) {
 
 	# Set up redirect
 	# The redirect gives the server time to detect that the new file exists.
+	$c->authen->flash(status_message => $c->{status_message}->join(''));
 	$c->reply_with_redirect($c->systemLink(
 		$c->url_for(
 			'instructor_achievement_editor',
 			achievementID => $saveMode eq 'use_in_new' ? $targetAchievementID : $achievementName
 		),
-		params => {
-			sourceFilePath => $c->getRelativeSourceFilePath($outputFilePath),
-			status_message => $c->{status_message}->join('')
-		}
+		params => { sourceFilePath => $c->getRelativeSourceFilePath($outputFilePath) }
 
 	));
 	return;

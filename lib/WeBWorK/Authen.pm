@@ -799,6 +799,39 @@ sub session {
 	return $c->session(@params);
 }
 
+=head2 flash
+
+This sets data in the session that only persists for the next request.
+
+=cut
+
+sub flash {
+	my ($self, @params) = @_;
+	my $c = $self->{c};
+
+	# If session_management_via is not "session_cookie" (so should be "key"), then use the database session.
+	if ($c->ce->{session_management_via} ne 'session_cookie' || $c->stash('disable_cookies')) {
+		# Note that the return values are the same as those returned by the
+		# Mojolicious::Plugin::DefaultHelpers flash method in the following cases.
+
+		# Note that this will be the database session in this case since
+		# the conditions are the same as in the session method above.
+		my $session = $self->session;
+
+		# Get old values.
+		return $session->{flash} ? $session->{flash}{ $params[0] } : undef if @params == 1 && !ref $params[0];
+
+		# Initialize new flash and merge values
+		my $values = ref $params[0] ? $params[0] : {@params};
+		@{ $session->{new_flash} //= {} }{ keys %$values } = values %$values;
+
+		return $c;
+	}
+
+	# If session_management_via is "session_cookie", then use the Mojolicious cookie session.
+	return $c->flash(@params);
+}
+
 =head2 store_session
 
 Store the database session. This is called after the current request has been
@@ -813,6 +846,9 @@ sub store_session {
 
 	if (my $session = $self->{c}->stash->{'webwork2.database_session'}) {
 		debug("Saving database session.  The database session contains\n", $self->{c}->dumper($session));
+
+		delete $session->{session}{flash};
+		delete $session->{session}{new_flash} unless keys %{ $session->{session}{new_flash} };
 
 		my $key = $db->newKey($session);
 		# DBFIXME:  This should be a REPLACE (but SQL::Abstract does not have REPLACE -- SQL::Abstract::mysql does!).
@@ -877,6 +913,9 @@ sub check_session {
 	if ($keyMatches && $timestampValid && $updateTimestamp) {
 		$Key->timestamp($currentTime);
 		$self->{c}->stash->{'webwork2.database_session'} = { $Key->toHash };
+		$self->{c}->stash->{'webwork2.database_session'}{session}{flash} =
+			delete $self->{c}->stash->{'webwork2.database_session'}{session}{new_flash}
+			if $self->{c}->stash->{'webwork2.database_session'}{session}{new_flash};
 	}
 
 	return (1, $keyMatches, $timestampValid);

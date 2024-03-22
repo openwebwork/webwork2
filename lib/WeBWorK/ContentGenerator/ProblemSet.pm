@@ -51,7 +51,7 @@ async sub initialize ($c) {
 	$c->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
 
 	# Display status messages.
-	$c->addmessage($c->tag('p', $c->b($c->param('status_message')))) if $c->param('status_message');
+	$c->addmessage($c->tag('p', $c->b($c->authen->flash('status_message')))) if $c->authen->flash('status_message');
 
 	if ($authz->hasPermissions($userID, 'view_hidden_sets')) {
 		if ($c->{set}->visible) {
