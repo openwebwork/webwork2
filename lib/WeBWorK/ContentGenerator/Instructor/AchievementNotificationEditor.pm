@@ -22,7 +22,8 @@ WeBWorK::ContentGenerator::Instructor::AchievementNotificationEditor - edit the 
 
 =cut
 
-use WeBWorK::Utils qw(fix_newlines not_blank path_is_subdir x);
+use WeBWorK::Utils qw(fix_newlines not_blank x);
+use WeBWorK::Utils::Files qw(surePathToFile readFile path_is_subdir);
 
 use constant ACTION_FORMS => [qw(save save_as existing disable)];
 use constant ACTION_FORM_TITLES => {
@@ -91,7 +92,7 @@ sub initialize ($c) {
 			return;
 		}
 
-		eval { $c->stash->{achievementNotification} = WeBWorK::Utils::readFile($sourceFilePath); };
+		eval { $c->stash->{achievementNotification} = readFile($sourceFilePath); };
 		$c->stash->{achievementNotification} = $@ if $@;
 	}
 
@@ -121,7 +122,7 @@ sub saveFileChanges ($c, $outputFilePath) {
 	}
 
 	# make sure any missing directories are created
-	WeBWorK::Utils::surePathToFile($ce->{courseDirs}{achievement_notifications}, $outputFilePath);
+	surePathToFile($ce->{courseDirs}{achievement_notifications}, $outputFilePath);
 	die 'outputFilePath is unsafe!'
 		unless path_is_subdir($outputFilePath, $ce->{courseDirs}{achievement_notifications}, 1);
 	eval {

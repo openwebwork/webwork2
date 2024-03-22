@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(readFile);
+% use WeBWorK::Utils::Files qw(readFile);
 %
 % my $fileManagerURL = $c->systemLink(url_for, params => { download => $filename, pwd => $c->{pwd} } );
 %

@@ -1,5 +1,5 @@
-% use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses);
 % use WeBWorK::Utils qw(getAssetURL);
+% use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses);
 %
 % content_for js => begin
 	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>

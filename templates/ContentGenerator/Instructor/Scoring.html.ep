@@ -1,4 +1,5 @@
-% use WeBWorK::Utils qw(readFile format_set_name_display);
+% use WeBWorK::Utils::Files qw(readFile);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
 	<div class="alert alert-danger p-1 mb-0">
@@ -103,6 +104,6 @@
 		$c->systemLink(url_for('instructor_scoring_download'), params => { getFile => $c->{scoringFileName} }),
 		class => 'font-monospace' =%>
 	<pre class="mt-2 bg-light border" style="font-size:smaller; width:fit-content; max-width:100%;">
-		<%== WeBWorK::Utils::readFile("$scoringDir/$c->{scoringFileName}") =%>\
+		<%== readFile("$scoringDir/$c->{scoringFileName}") =%>\
 	</pre>
 % }

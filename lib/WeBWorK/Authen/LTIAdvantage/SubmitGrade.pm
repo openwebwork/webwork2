@@ -38,7 +38,8 @@ use Digest::SHA qw(sha256_hex);
 use Time::HiRes;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets wwRound);
+use WeBWorK::Utils qw(wwRound);
+use WeBWorK::Utils::Sets qw(grade_set grade_gateway grade_all_sets);
 
 # This package contains utilities for submitting grades to the LMS via LTI 1.3.
 sub new ($invocant, $c, $post_processing_mode = 0) {

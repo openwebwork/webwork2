@@ -16,11 +16,12 @@
 package WeBWorK::Utils::ListingDB;
 
 use strict;
+
 use DBI;
+use File::Basename;
+
 use WeBWorK::Utils qw(sortByName);
 use WeBWorK::Utils::Tags;
-use File::Basename;
-use WeBWorK::Debug;
 
 use constant LIBRARY_STRUCTURE => {
 	textbook => {

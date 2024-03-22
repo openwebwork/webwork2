@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(jitar_id_to_seq);
+% use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 %
 % unless ($set
 	% && $authz->hasPermissions(param('user'), 'access_instructor_tools')

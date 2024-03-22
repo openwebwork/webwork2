@@ -254,14 +254,10 @@ sub command_permission {
 		saveFile           => 'modify_problem_sets',
 
 		# WebworkWebservice::LibraryActions
-		listLibraries         => 'access_instructor_tools',
-		readFile              => 'access_instructor_tools',
-		listLib               => 'access_instructor_tools',
-		searchLib             => 'access_instructor_tools',
-		getProblemDirectories => 'access_instructor_tools',
-		buildBrowseTree       => 'access_instructor_tools',
-		getProblemTags        => 'access_instructor_tools',
-		setProblemTags        => 'modify_tags',
+		listLib        => 'access_instructor_tools',
+		searchLib      => 'access_instructor_tools',
+		getProblemTags => 'access_instructor_tools',
+		setProblemTags => 'modify_tags',
 
 		# WebworkWebservice::ProblemActions
 		getUserProblem    => 'access_instructor_tools',

@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(format_set_name_display);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 % my $visibleClass   = $set->visible ? 'font-visible' : 'font-hidden';
 % my $set_id         = $set->set_id;

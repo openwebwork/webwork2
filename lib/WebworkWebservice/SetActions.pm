@@ -23,8 +23,9 @@ use Carp;
 use JSON;
 use Data::Structure::Util qw(unbless);
 
-use WeBWorK::Utils qw(max jitar_id_to_seq seq_to_jitar_id);
+use WeBWorK::Utils qw(max);
 use WeBWorK::Utils::Instructor qw(assignSetToGivenUsers assignMultipleProblemsToGivenUsers);
+use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Debug;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 

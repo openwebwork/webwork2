@@ -24,8 +24,8 @@ users to which sets are assigned.
 =cut
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(format_set_name_display);
 use WeBWorK::Utils::Instructor qw(assignSetToAllUsers assignSetToGivenUsers);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 sub initialize ($c) {
 	my $authz = $c->authz;

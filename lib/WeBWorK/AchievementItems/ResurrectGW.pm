@@ -18,7 +18,9 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to extend the due date on a gateway
 
-use WeBWorK::Utils qw(after x nfreeze_base64 thaw_base64 format_set_name_display);
+use WeBWorK::Utils qw(x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils::DateTime qw(after);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 sub new ($class) {
 	return bless {

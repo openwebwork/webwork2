@@ -25,7 +25,8 @@ WeBWorK::ContentGenerator::Instructor::AchievementEditor - edit an achevement ev
 use HTML::Entities;
 use File::Copy;
 
-use WeBWorK::Utils qw(fix_newlines not_blank path_is_subdir x);
+use WeBWorK::Utils qw(fix_newlines not_blank x);
+use WeBWorK::Utils::Files qw(surePathToFile readFile path_is_subdir);
 
 use constant ACTION_FORMS => [qw(save save_as)];
 use constant ACTION_FORM_TITLES => {
@@ -96,7 +97,7 @@ sub initialize ($c) {
 			return;
 		}
 
-		eval { $c->stash->{achievementContents} = WeBWorK::Utils::readFile($sourceFilePath) };
+		eval { $c->stash->{achievementContents} = readFile($sourceFilePath) };
 		$c->stash->{achievementContents} = $@ if $@;
 	}
 
@@ -143,7 +144,7 @@ sub saveFileChanges ($c, $outputFilePath, $achievementContents = undef) {
 	if (not_blank($outputFilePath)) {    # save file
 
 		# make sure any missing directories are created
-		WeBWorK::Utils::surePathToFile($ce->{courseDirs}{achievements}, $outputFilePath);
+		surePathToFile($ce->{courseDirs}{achievements}, $outputFilePath);
 		die 'outputFilePath is unsafe!'
 			unless path_is_subdir($outputFilePath, $ce->{courseDirs}{achievements}, 1);
 

@@ -24,12 +24,11 @@ use Mojo::Util qw(url_unescape);
 
 use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::PG;
+use WeBWorK::PG::IO;
 use WeBWorK::DB;
+use WeBWorK::DB::Utils qw(global2user fake_set fake_problem);
 use WeBWorK::Utils qw(decode_utf8_base64);
 use WeBWorK::Utils::Rendering qw(renderPG);
-use WeBWorK::DB::Utils qw(global2user);
-use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
 our $UNIT_TESTS_ON = 0;
 

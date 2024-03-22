@@ -29,7 +29,7 @@ use File::Find;
 
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(jitar_id_to_seq seq_to_jitar_id);
+use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
 
 our @EXPORT_OK = qw(
 	assignSetToUser
@@ -46,8 +46,6 @@ our @EXPORT_OK = qw(
 	assignProblemToAllSetUsers
 	assignMultipleProblemsToGivenUsers
 	addProblemToSet
-	read_dir
-	getCSVList
 	getDefList
 );
 
@@ -636,27 +634,6 @@ sub addProblemToSet {
 =cut
 
 ################################################################################
-# Utility methods
-################################################################################
-
-=head2 Utility methods
-
-=over
-
-=cut
-
-sub read_dir {    # read a directory
-	my $directory = shift;
-	my $pattern   = shift;
-	my @files     = sort grep {/$pattern/} WeBWorK::Utils::readDirectory($directory);
-	return @files;
-}
-
-=back
-
-=cut
-
-################################################################################
 # Methods for listing various types of files
 ################################################################################
 
@@ -665,13 +642,6 @@ sub read_dir {    # read a directory
 =over
 
 =cut
-
-# list classlist files
-sub getCSVList {
-	my ($ce) = @_;
-	my $dir = $ce->{courseDirs}{templates};
-	return grep { not m/^\./ and m/\.lst$/ and -f "$dir/$_" } WeBWorK::Utils::readDirectory($dir);
-}
 
 sub loadSetDefListFile {
 	my $file = shift;
@@ -711,7 +681,7 @@ sub getDefList {
 		push @found_set_defs, $_ =~ s|^$topdir/?||r if m|/set[^/]*\.def$|;
 	};
 
-	find({ wanted => $get_set_defs_wanted, follow_fast => 1, no_chdir => 1 }, $topdir);
+	find({ wanted => $get_set_defs_wanted, follow_fast => 1, no_chdir => 1, follow_skip => 2 }, $topdir);
 
 	# Load the OPL set definition files from the list file.
 	push(@found_set_defs, loadSetDefListFile("$ce->{webworkDirs}{htdocs}/DATA/library-set-defs.json"))

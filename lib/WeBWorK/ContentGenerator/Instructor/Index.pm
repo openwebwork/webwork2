@@ -23,7 +23,9 @@ pages
 
 =cut
 
-use WeBWorK::Utils qw(x format_set_name_internal jitar_id_to_seq prob_id_sort);
+use WeBWorK::Utils qw(x);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq prob_id_sort);
+use WeBWorK::Utils::Sets qw(format_set_name_internal);
 
 use constant E_MAX_ONE_SET  => x('Please select at most one set.');
 use constant E_ONE_USER     => x('Please select exactly one user.');

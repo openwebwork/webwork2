@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(format_set_name_display);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
 	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to access instructor tools.') %></div>

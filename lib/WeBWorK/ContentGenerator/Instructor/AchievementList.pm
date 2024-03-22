@@ -48,7 +48,7 @@ use Mojo::File;
 use Text::CSV;
 
 use WeBWorK::Utils qw(sortAchievements x);
-use WeBWorK::Utils::Instructor qw(read_dir);
+use WeBWorK::Utils::Files qw(surePathToFile);
 
 # Forms
 use constant EDIT_FORMS   => [qw(save_edit cancel_edit)];
@@ -263,7 +263,7 @@ sub score_handler ($c) {
 	}
 
 	# Check path and open the file
-	$scoreFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}{scoring}, $scoreFilePath);
+	$scoreFilePath = surePathToFile($ce->{courseDirs}{scoring}, $scoreFilePath);
 
 	my $SCORE = Mojo::File->new($scoreFilePath)->open('>:encoding(UTF-8)')
 		or return (0, $c->maketext("Failed to open [_1]", $scoreFilePath));
@@ -523,7 +523,7 @@ sub save_export_handler ($c) {
 			or warn "Existing file $FilePath could not be backed up and was lost.";
 	}
 
-	$FilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}{achievements}, $FilePath);
+	$FilePath = surePathToFile($ce->{courseDirs}{achievements}, $FilePath);
 
 	my $fh = Mojo::File->new($FilePath)->open('>:encoding(UTF-8)')
 		or return (0, $c->maketext('Failed to open [_1].', $FilePath));
@@ -593,7 +593,7 @@ sub save_edit_handler ($c) {
 
 # Get list of files that can be imported.
 sub getAxpList ($c) {
-	return read_dir($c->ce->{courseDirs}{achievements}, qr/.*\.axp/);
+	return @{ Mojo::File->new($c->ce->{courseDirs}{achievements})->list->grep(qr/.*\.axp/)->map('basename') };
 }
 
 1;

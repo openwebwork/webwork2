@@ -1,5 +1,5 @@
-% use WeBWorK::Utils qw(sortByName wwRound getAssetURL);
-% use WeBWorK::PG;
+% use WeBWorK::Utils qw(wwRound getAssetURL);
+% require WeBWorK::PG;
 %
 % content_for js => begin
 	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>

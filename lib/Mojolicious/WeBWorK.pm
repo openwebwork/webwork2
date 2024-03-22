@@ -26,7 +26,7 @@ use Env qw(WEBWORK_SERVER_ADMIN);
 
 use WeBWorK;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Utils qw(writeTimingLogEntry);
+use WeBWorK::Utils::Logs qw(writeTimingLogEntry);
 use WeBWorK::Utils::Routes qw(setup_content_generator_routes);
 
 sub startup ($app) {
@@ -174,8 +174,7 @@ sub startup ($app) {
 					$c->ce,
 					'[' . $c->url_for . ']',
 					sprintf('runTime = %.3f sec', $c->timing->elapsed('content_generator_rendering')) . ' '
-						. $c->ce->{dbLayoutName},
-					''
+						. $c->ce->{dbLayoutName}
 				);
 			}
 		}

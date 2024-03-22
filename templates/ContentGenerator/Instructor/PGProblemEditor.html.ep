@@ -1,6 +1,7 @@
 % use Mojo::URL;
 %
-% use WeBWorK::Utils qw(not_blank x format_set_name_display getAssetURL);
+% use WeBWorK::Utils qw(not_blank x getAssetURL);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 % use WeBWorK::HTML::CodeMirrorEditor
 	% qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
 %

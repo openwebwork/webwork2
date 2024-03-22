@@ -22,9 +22,9 @@ WeBWorK::ContentGenerator::Instructor::UserDetail - Detailed User specific infor
 
 =cut
 
+use WeBWorK::DB::Utils qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Utils qw(x);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
-use WeBWorK::DB::Utils qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Debug;
 
 # We use the x function to mark strings for localizaton

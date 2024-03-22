@@ -1,4 +1,5 @@
-% use WeBWorK::Utils(qw(format_set_name_display getAssetURL));
+% use WeBWorK::Utils(qw(getAssetURL));
+% use WeBWorK::Utils::Sets(qw(format_set_name_display));
 %
 % # Only use javascript to update menus if using homework grade mode.
 % if ($ce->{LTIGradeMode} eq 'homework') {

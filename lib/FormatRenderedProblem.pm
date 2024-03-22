@@ -30,7 +30,7 @@ use Mojo::Util qw(xml_escape);
 use Mojo::DOM;
 
 use WeBWorK::Utils qw(getAssetURL);
-use WeBWorK::Utils::LanguageAndDirection;
+use WeBWorK::Utils::LanguageAndDirection qw(get_lang_and_dir get_problem_lang_and_dir);
 
 sub formatRenderedProblem {
 	my $ws = shift;     # $ws is a WebworkWebservice object.

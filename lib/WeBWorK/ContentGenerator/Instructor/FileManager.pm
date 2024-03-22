@@ -31,9 +31,10 @@ use Archive::Tar;
 use Archive::Zip qw(:ERROR_CODES);
 use Archive::Zip::SimpleZip qw($SimpleZipError);
 
-use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive min);
-use WeBWorK::Upload;
+use WeBWorK::Utils qw(sortByName min);
 use WeBWorK::Utils::CourseManagement qw(archiveCourse);
+use WeBWorK::Utils::Files qw(readFile);
+use WeBWorK::Upload;
 
 use constant HOME => 'templates';
 
@@ -778,7 +779,7 @@ sub directoryListing ($c, $pwd) {
 	my (@values, $size, $data);
 
 	my $len   = 24;
-	my @names = sortByName(undef, grep {/^[^.]/} readDirectory($dir));
+	my @names = sortByName(undef, @{ Mojo::File->new($dir)->list({ dir => 1 })->map('basename') });
 	for my $name (@names) {
 		unless ($name eq 'DATA') {    #FIXME don't view the DATA directory
 			my $file = "$dir/$name";

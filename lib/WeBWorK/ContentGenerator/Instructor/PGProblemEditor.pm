@@ -115,12 +115,14 @@ not exist.  The path to the actual file being edited is stored in inputFilePath.
 
 =cut
 
-use File::Copy;
+use Mojo::File;
 use XML::LibXML;
 
-use WeBWorK::Utils qw(jitar_id_to_seq not_blank path_is_subdir seq_to_jitar_id x
-	surePathToFile readDirectory readFile max format_set_name_display);
+use WeBWorK::Utils qw(not_blank x max);
+use WeBWorK::Utils::Files qw(surePathToFile readFile path_is_subdir);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
+use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 use constant DEFAULT_SEED => 123456;
 
@@ -609,7 +611,7 @@ sub backupFile ($c, $outputFilePath) {
 
 	# Make sure any missing directories are created.
 	surePathToFile($ce->{courseDirs}{templates}, $backupFilePath);
-	copy($outputFilePath, $backupFilePath);
+	Mojo::File->new($outputFilePath)->copy_to($backupFilePath);
 	$c->addgoodmessage($c->maketext(
 		'Backup created on [_1]', $c->formatDateTime($backupTime, $ce->{studentDateDisplayFormat})));
 
@@ -701,23 +703,19 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 	# transfer them as well.  If the file is a pg file, then assume there are auxiliary files.  Copy all files not
 	# ending in .pg from the original directory to the new one.
 	if ($c->{action} eq 'save_as' && $outputFilePath =~ /\.pg/) {
-		my $sourceDirectory = $c->{sourceFilePath} || '';
-		my $outputDirectory = $outputFilePath;
-		$sourceDirectory =~ s|/[^/]+\.pg$||;
-		$outputDirectory =~ s|/[^/]+\.pg$||;
+		my $sourceDirectory = Mojo::File->new(($c->{sourceFilePath} || '') =~ s|/[^/]+\.pg$||r);
+		my $outputDirectory = Mojo::File->new($outputFilePath              =~ s|/[^/]+\.pg$||r);
 
 		# Only perform the copy if the output directory is an actual new location.
-		if ($sourceDirectory ne $outputDirectory) {
-			for my $file (-d $sourceDirectory ? readDirectory($sourceDirectory) : ()) {
+		if ($sourceDirectory ne $outputDirectory && -d $sourceDirectory) {
+			for my $file (@{ $sourceDirectory->list }) {
 				# The .pg file being edited has already been transferred. Ignore any others in the directory.
 				next if $file =~ /\.pg$/;
-				my $fromPath = "$sourceDirectory/$file";
-				my $toPath   = "$outputDirectory/$file";
-				# Don't copy directories and don't copy files that have already been copied.
-				if (-f $fromPath && -r $fromPath && !-e $toPath) {
-					# Need to use binary transfer for image files.  File::Copy does this.
-					$c->addbadmessage($c->maketext('Error copying [_1] to [_2].', $fromPath, $toPath))
-						unless copy($fromPath, $toPath);
+				my $toPath = $outputDirectory->child($file->basename);
+				# Only copy regular files that are readable and that have not already been copied.
+				if (-f $file && -r $file && !-e $toPath) {
+					eval { $file->copy_to($toPath) };
+					$c->addbadmessage($c->maketext('Error copying [_1] to [_2].', $file, $toPath)) if $@;
 				}
 			}
 			$c->addgoodmessage($c->maketext(
@@ -1313,7 +1311,7 @@ sub revert_handler ($c) {
 		$c->{inputFilePath} = $c->{tempFilePath};
 
 		if (-r $backupFilePath) {
-			copy($backupFilePath, $c->{tempFilePath});
+			Mojo::File->new($backupFilePath)->copy_to($c->{tempFilePath});
 			$c->addgoodmessage($c->maketext(
 				'Restored backup from [_1].',
 				$c->formatDateTime($backupTime, $ce->{studentDateDisplayFormat})

@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(is_restricted);
+% use WeBWorK::Utils::Sets qw(is_restricted);
 %
 % my $courseID    = stash('courseID');
 % my $set         = $c->{set};

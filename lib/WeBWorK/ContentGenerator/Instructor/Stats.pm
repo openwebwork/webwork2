@@ -25,8 +25,9 @@ homework set (including sv graphs).
 
 use SVG;
 
-use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status format_set_name_display grade_set);
 use WeBWorK::Utils::FilterRecords qw(getFiltersForClass filterRecords);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq jitar_problem_adjusted_status);
+use WeBWorK::Utils::Sets qw(grade_set format_set_name_display);
 
 sub initialize ($c) {
 	my $db   = $c->db;

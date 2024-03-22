@@ -1,4 +1,5 @@
-% use WeBWorK::Utils qw(before after wwRound getAssetURL);
+% use WeBWorK::Utils qw(wwRound getAssetURL);
+% use WeBWorK::Utils::DateTime qw(before after);
 % use WeBWorK::Utils::LanguageAndDirection qw(get_problem_lang_and_dir);
 % use WeBWorK::HTML::SingleProblemGrader;
 % use WeBWorK::AchievementEvaluator qw(checkForAchievements);

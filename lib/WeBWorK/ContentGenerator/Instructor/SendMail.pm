@@ -23,14 +23,10 @@ WeBWorK::ContentGenerator::Instructor::SendMail - Entry point for User-specific 
 =cut
 
 use Email::Address::XS;
-use Email::Stuffer;
-use Try::Tiny;
-use Data::Dump qw/dump/;
+use Mojo::File;
 use Text::Wrap qw(wrap);
-use WeBWorK::Utils qw/processEmailMessage createEmailSenderTransportSMTP/;
 
-use WeBWorK::Debug;
-use WeBWorK::Utils::Instructor qw(read_dir);
+use WeBWorK::Utils qw(processEmailMessage);
 
 sub initialize ($c) {
 	my $db    = $c->db;
@@ -463,12 +459,11 @@ sub read_input_file ($c, $filePath) {
 }
 
 sub get_message_file_names ($c) {
-	return read_dir($c->{ce}{courseDirs}{email}, '\\.msg$');
+	return @{ Mojo::File->new($c->ce->{courseDirs}{email})->list->grep(qr/\.msg$/)->map('basename') };
 }
 
 sub get_merge_file_names ($c) {
-	# FIXME: Check that only readable files are listed.
-	return read_dir($c->{ce}{courseDirs}{scoring}, '\\.csv$');
+	return @{ Mojo::File->new($c->ce->{courseDirs}{scoring})->list->grep(qr/\.csv$/)->map('basename') };
 }
 
 sub getRecord ($c, $line, $delimiter = ',') {

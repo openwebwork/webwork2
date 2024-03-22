@@ -19,91 +19,10 @@ package WebworkWebservice::LibraryActions;
 use strict;
 use warnings;
 
-use Carp;
-use JSON;
-use File::stat;
 use File::Find;
 
 use WeBWorK::Utils::ListingDB;
-use WeBWorK::Debug;
-use WeBWorK::Utils qw(readDirectory sortByName);
 use WeBWorK::CourseEnvironment;
-
-use constant MY_PROBLEMS   => '  My Problems  ';
-use constant MAIN_PROBLEMS => '  Unclassified Problems  ';
-
-my %problib;    # This is configured in defaults.config -- no, it's really not.
-
-# List of directories to ignore while search through the libraries.
-my %ignoredir = (
-	'.'        => 1,
-	'..'       => 1,
-	'Library'  => 1,
-	'CVS'      => 1,
-	'tmpEdit'  => 1,
-	'headers'  => 1,
-	'macros'   => 1,
-	'email'    => 1,
-	'graphics' => 1,
-	'.svn'     => 1,
-);
-
-# List the problem libraries that are available.
-sub listLibraries {
-	my ($invocant, $self, $rh) = @_;
-
-	my %libraries = %{ $self->ce->{courseFiles}{problibs} };
-
-	my $templateDirectory = $self->ce->{courseDirs}{templates};
-
-	foreach my $key (keys %libraries) {
-		$libraries{$key} = "$templateDirectory/$key";
-	}
-
-	my @outListLib = sort keys %libraries;
-	return { ra_out => \@outListLib, text => 'success' };
-}
-
-sub readFile {
-	my ($invocant, $self, $rh) = @_;
-
-	local $| = 1;
-	my $out      = {};
-	my $filePath = $rh->{filePath};
-
-	my %libraries = %{ $self->ce->{courseFiles}->{problibs} };
-
-	my $templateDirectory = $self->ce->{courseDirs}{templates};
-
-	for my $key (keys %libraries) {
-		$libraries{$key} = "$templateDirectory/$key";
-	}
-
-	if (defined $libraries{ $rh->{library_name} }) {
-		$filePath = $libraries{ $rh->{library_name} } . '/' . $filePath;
-	} else {
-		$out->{text} = "Could not find library: $rh->{library_name}.";
-		return $out;
-	}
-	if (-r $filePath) {
-		open my $in, '<', $filePath;
-		local $/ = undef;
-		my $text = <$in>;
-		close $in;
-		my $sb = stat($filePath);
-		$out->{text}   = 'success';
-		$out->{ra_out} = {
-			text        => $text,
-			size        => $sb->size,
-			path        => $filePath,
-			permissions => $sb->mode & 777,
-			modTime     => scalar localtime $sb->mtime
-		};
-	} else {
-		$out->{text} = "Could not read file at |$filePath|";
-	}
-	return $out;
-}
 
 # Idea from http://www.perlmonks.org/index.pl?node=How%20to%20map%20a%20directory%20tree%20to%20a%20perl%20hash%20tree
 sub build_tree {
@@ -259,7 +178,6 @@ sub searchLib {
 		$self->{library_textbook}    = $rh->{library_textbook};
 		$self->{library_textchapter} = $rh->{library_textchapter};
 		$self->{library_textsection} = $rh->{library_textsection};
-		debug(to_json($rh));
 		my @listings = WeBWorK::Utils::ListingDB::getDBListings($self);
 		my @output =
 			map { "$templateDir/" . $_->{libraryroot} . '/' . $_->{path} . '/' . $_->{filename} } @listings;
@@ -295,91 +213,6 @@ sub searchLib {
 	};
 
 	$out->{error} = "Unrecognized command $subcommand";
-	return $out;
-}
-
-sub get_library_sets {
-	my ($top, $dir) = @_;
-	# ignore directories that give us an error
-	my @lis = eval { readDirectory($dir) };
-	if ($@) {
-		return (0);
-	}
-	return 0 if grep {/^=library-ignore$/} @lis;
-
-	my @pgfiles = grep { m/\.pg$/ && !m/(Header|-text)\.pg$/ && -f "$dir/$_" } @lis;
-	my $pgcount = scalar(@pgfiles);
-	my $pgname  = $dir;
-	$pgname =~ s!.*/!!;
-	$pgname .= '.pg';
-	my $combineUp = ($pgcount == 1 && $pgname eq $pgfiles[0] && !(grep {/^=library-no-combine$/} @lis));
-
-	my @pgdirs;
-	my @dirs = grep { !$ignoredir{$_} && -d "$dir/$_" } @lis;
-	if ($top == 1) {
-		@dirs = grep { !$problib{$_} } @dirs;
-	}
-	foreach my $subdir (@dirs) {
-		my @results = get_library_sets(0, "$dir/$subdir");
-		$pgcount += shift @results;
-		push(@pgdirs, @results);
-	}
-
-	return ($pgcount, @pgdirs) if $top || $combineUp || grep {/^=library-combine-up$/} @lis;
-	return (0, @pgdirs, $dir);
-}
-
-sub getProblemDirectories {
-	my ($invocant, $self, $rh) = @_;
-	my $out = {};
-	my $ce  = $self->ce;
-
-	my %libraries = %{ $self->ce->{courseFiles}{problibs} };
-
-	my $lib    = "Library";
-	my $source = $ce->{courseDirs}{templates};
-	my $main   = MY_PROBLEMS;
-	my $isTop  = 1;
-	if ($lib) { $source .= "/$lib"; $main = MAIN_PROBLEMS; $isTop = 2 }
-
-	my @all_problem_directories = get_library_sets($isTop, $source);
-	my $includetop              = shift @all_problem_directories;
-	my $j;
-	for ($j = 0; $j < scalar(@all_problem_directories); $j++) {
-		$all_problem_directories[$j] =~ s|^$ce->{courseDirs}->{templates}/?||;
-	}
-	@all_problem_directories = sortByName(undef, @all_problem_directories);
-	unshift @all_problem_directories, $main if ($includetop);
-
-	$out->{ra_out} = \@all_problem_directories;
-	$out->{text}   = 'Problem Directories loaded.';
-
-	return $out;
-}
-
-#  This subroutines outputs the entire library based on Subjects, chapters and sections.
-#  The output is an array in the form "Subject/Chapter/Section"
-sub buildBrowseTree {
-	my ($invocant, $self, $rh) = @_;
-	my $out      = {};
-	my $ce       = $self->ce;
-	my @tree     = ();
-	my @subjects = WeBWorK::Utils::ListingDB::getAllDBsubjects($self);
-	foreach my $sub (@subjects) {
-		$self->{library_subjects} = $sub;
-		push(@tree, "Subjects/" . $sub);
-		my @chapters = WeBWorK::Utils::ListingDB::getAllDBchapters($self);
-		foreach my $chap (@chapters) {
-			$self->{library_chapters} = $chap;
-			push(@tree, "Subjects/" . $sub . "/" . $chap);
-			my @sections = WeBWorK::Utils::ListingDB::getAllDBsections($self);
-			foreach my $sect (@sections) {
-				push(@tree, "Subjects/" . $sub . "/" . $chap . "/" . $sect);
-			}
-		}
-	}
-	$out->{ra_out} = \@tree;
-	$out->{text}   = 'Subjects, Chapters and Sections loaded.';
 	return $out;
 }
 
