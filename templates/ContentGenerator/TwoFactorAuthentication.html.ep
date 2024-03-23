@@ -42,7 +42,7 @@
 		</div>
 		<div class="form-check mb-2">
 			<%= check_box(skip_2fa => 1, id => 'skip_2fa', class => 'form-check-input') =%>
-			<%= label_for skip_2fa => maketext('Skip two factor verification on this device.') =%>
+			<%= label_for skip_2fa => maketext('Skip two factor verification on this device for future logins.') =%>
 		</div>
 		<div class="alert alert-warning mb-2">
 			<%= maketext('If you check the box above, then two factor verification will be skipped for a limited '
