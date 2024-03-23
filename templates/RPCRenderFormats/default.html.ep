@@ -48,16 +48,18 @@
 						% }
 					</div>
 					% if ($showScoreSummary) {
-						<p><%= $lh->maketext('You received a score of [_1] for this attempt.',
-							wwRound(0, $rh_result->{problem_result}{score} * 100) . '%') %></p>
-						% if ($rh_result->{problem_result}{msg}) {
-							<p><%= $rh_result->{problem_result}{msg} %></p>
-						% }
-						% unless ($ce->{hideWasNotRecordedMessage}) {
-							<p><%= $lh->maketext('Your score was not recorded.') %></p>
-						% }
-						<%= hidden_field 'problem-result-score' => $rh_result->{problem_result}{score},
-							id => 'problem-result-score' %>
+						<div id="score_summary" class="scoreSummary">
+							<p><%= $lh->maketext('You received a score of [_1] for this attempt.',
+								wwRound(0, $rh_result->{problem_result}{score} * 100) . '%') %></p>
+							% if ($rh_result->{problem_result}{msg}) {
+								<p><%= $rh_result->{problem_result}{msg} %></p>
+							% }
+							% unless ($ce->{hideWasNotRecordedMessage}) {
+								<p><%= $lh->maketext('Your score was not recorded.') %></p>
+							% }
+							<%= hidden_field 'problem-result-score' => $rh_result->{problem_result}{score},
+								id => 'problem-result-score' %>
+						</div>
 					% }
 					% if ($formatName eq 'sticky') {
 						<div id="local-storage-messages">
