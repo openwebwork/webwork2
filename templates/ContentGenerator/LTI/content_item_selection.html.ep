@@ -1,4 +1,5 @@
-% use WeBWorK::Utils qw(format_set_name_display getAssetURL);
+% use WeBWorK::Utils qw(getAssetURL);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 <!DOCTYPE html>
 <html <%== $c->output_course_lang_and_dir %>>

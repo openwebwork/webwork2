@@ -20,7 +20,7 @@ use Net::OAuth;
 use UUID::Tiny ':std';
 use Mojo::JSON qw(encode_json);
 
-use WeBWorK::Utils qw(format_set_name_display);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 use WeBWorK::Utils::CourseManagement qw(listCourses);
 use WeBWorK::DB;
 

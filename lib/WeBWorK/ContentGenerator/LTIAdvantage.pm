@@ -24,8 +24,8 @@ use Digest::SHA qw(sha256_hex);
 
 use WeBWorK::Debug qw(debug);
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
-use WeBWorK::Utils qw(format_set_name_display);
 use WeBWorK::Utils::CourseManagement qw(listCourses);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 sub initializeRoute ($c, $routeCaptures) {
 	# If this is the login phase of an LTI 1.3 login, then extract the courseID from the target_link_uri.  If this is a
