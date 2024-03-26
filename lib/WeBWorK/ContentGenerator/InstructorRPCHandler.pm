@@ -43,7 +43,7 @@ sub initializeRoute ($c, $routeCaptures) {
 	$c->{rpc} = 1;
 
 	# Get the courseID from the parameters.
-	$routeCaptures->{courseID} = $c->param('courseID') if $c->param('courseID');
+	$routeCaptures->{courseID} = $c->stash->{courseID} = $c->param('courseID') if $c->param('courseID');
 
 	return;
 }
