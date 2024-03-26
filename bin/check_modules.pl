@@ -57,11 +57,6 @@ my @applicationsList = qw(
 	pdf2svg
 	pdflatex
 	dvipng
-	giftopnm
-	ppmtopgm
-	pnmtops
-	pnmtopng
-	pngtopnm
 );
 
 my @modulesList = qw(
