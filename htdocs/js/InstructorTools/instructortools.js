@@ -57,6 +57,17 @@
 			return;
 		}
 
+		// Any additional form parameters added below should be placed in this div.  Each time the form is submitted it
+		// is emptied so that form parameters don't build up in the DOM. This can happen if the form is submitted, and
+		// then the user uses the browser back button.
+		const additionalParams = document.querySelector('.additional-params') || document.createElement('div');
+		if (additionalParams.classList.contains('additional-params')) {
+			while (additionalParams.firstChild) additionalParams.firstChild.remove();
+		} else {
+			additionalParams.classList.add('d-none', 'additional-params');
+			form.append(additionalParams);
+		}
+
 		// The UserList.pm and Scoring.pm modules have different form parameters than the form in the instructor tools
 		// Index.pm module.  This sets the correct parameters for those modules from the parameters in the form in
 		// Index.pm.
@@ -82,7 +93,7 @@
 					editMode.name = 'editMode';
 					editMode.value = 1;
 
-					form.append(visibleUsers, editMode);
+					additionalParams.append(visibleUsers, editMode);
 				}
 				break;
 			case 'score_sets':
@@ -106,7 +117,60 @@
 					scoreSelected.name = 'scoreSelected';
 					scoreSelected.value = 1;
 
-					form.append(selectedSet, scoreSelected);
+					additionalParams.append(selectedSet, scoreSelected);
+				}
+				break;
+			case 'edit_set_for_users':
+				{
+					if (
+						!new RegExp(`\\/instructor\\/sets\\/?${selectedSets[0].value}(\\?.*)?$`).test(
+							e.submitter.formAction
+						)
+					) {
+						e.submitter.formAction = e.submitter.formAction.replace(
+							/\/instructor\/sets\/?.*?(\?.*)?$/,
+							`/instructor/sets/${selectedSets[0].value}$1`
+						);
+					}
+
+					for (const user of selectedUsers) {
+						const editForUser = document.createElement('input');
+						editForUser.name = 'editForUser';
+						editForUser.type = 'hidden';
+						editForUser.style.display = 'none';
+						editForUser.value = user.value;
+						additionalParams.append(editForUser);
+					}
+				}
+				break;
+			case 'show_answers':
+				{
+					if (!selectedSets.length) return;
+
+					const selectedProblems = document.createElement('select');
+					selectedProblems.name = 'selected_problems';
+					selectedProblems.type = 'select';
+					selectedProblems.multiple = true;
+					selectedProblems.style.display = 'none';
+
+					const allProblemIds = {};
+
+					for (const set of selectedSets) {
+						for (const id of JSON.parse(
+							document.getElementsByName(`${set.value}_problem_ids`)[0]?.value || '[]'
+						)) {
+							allProblemIds[id] = 1;
+						}
+					}
+
+					for (const id of Object.keys(allProblemIds)) {
+						const selectedProblemsOption = document.createElement('option');
+						selectedProblemsOption.value = id;
+						selectedProblemsOption.selected = true;
+						selectedProblems.append(selectedProblemsOption);
+					}
+
+					additionalParams.append(selectedProblems);
 				}
 				break;
 		}
