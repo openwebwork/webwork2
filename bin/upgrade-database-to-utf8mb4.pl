@@ -212,7 +212,7 @@ my $dbh = DBI->connect(
 	},
 );
 
-my $db          = new WeBWorK::DB($ce->{dbLayouts}{ $ce->{dbLayoutName} });
+my $db          = new WeBWorK::DB($ce->{dbLayout});
 my @table_types = sort(grep { !$db->{$_}{params}{non_native} } keys %$db);
 
 sub checkAndUpdateTableColumnTypes {

@@ -16,7 +16,7 @@
 
 =head1 NAME
 
-wwaddindexing - add indices to an existing sql_single course.
+wwaddindexing - add indices to an existing course.
 
 =head1 SYNOPSIS
 
@@ -24,8 +24,7 @@ wwaddindexing - add indices to an existing sql_single course.
 
 =head1 DESCRIPTION
 
-Adds indices to the course named COURSEID. The course must use the sql_single
-database layout.
+Adds indices to the course named COURSEID.
 
 =cut
 
@@ -73,10 +72,6 @@ my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
 	courseName => $courseID,
 });
-
-# make sure the course actually uses the 'sql_single' layout
-usage_error("$courseID: does not use 'sql_single' database layout.")
-	unless $ce->{dbLayoutName} eq "sql_single";
 
 # get database layout source data
 my %sources = dbLayoutSQLSources($ce->{dbLayout});
