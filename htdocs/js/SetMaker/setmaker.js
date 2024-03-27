@@ -51,7 +51,7 @@
 		const authenParams = {};
 		const user = document.getElementsByName('user')[0];
 		if (user) authenParams.user = user.value;
-		const sessionKey = document.getElementsByName('key')[0]?.value;
+		const sessionKey = document.getElementsByName('key')[0];
 		if (sessionKey) authenParams.key = sessionKey.value;
 
 		return {
