@@ -28,7 +28,7 @@
 				send_pg_flags: 1,
 				extra_header_text:
 					'<style>' +
-					'html{overflow-y:auto;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
+					'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
 					'</style>',
 				...renderOptions
 			};
@@ -76,7 +76,15 @@
 							container.innerHTML = data.pg_flags.comment;
 							iframe.after(container);
 						}
-						iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe);
+						iFrameResize(
+							{
+								checkOrigin: false,
+								warningTimeout: 20000,
+								scrolling: 'omit',
+								heightCalculationMethod: 'taggedElement'
+							},
+							iframe
+						);
 						iframe.addEventListener('load', () => resolve());
 					}
 					iframe.srcdoc = data.html;
