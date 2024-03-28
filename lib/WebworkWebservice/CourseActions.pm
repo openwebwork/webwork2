@@ -28,6 +28,7 @@ use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Utils qw(cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Utils::Files qw(surePathToFile path_is_subdir);
+use WeBWorK::ConfigValues qw(getConfigValues);
 use WeBWorK::Debug;
 
 sub createCourse {
@@ -405,53 +406,35 @@ sub assignVisibleSets {
 	return 0;
 }
 
-sub getConfigValues {
-	my $ce           = shift;
-	my $ConfigValues = $ce->{ConfigValues};
-
-	for my $oneConfig (@$ConfigValues) {
-		for my $hash (@$oneConfig) {
-			if (ref($hash) eq 'HASH') {
-				if (defined $hash->{hashVar}) {
-					my $var = $hash->{hashVar};
-					$hash->{value} = eval { $ce->$var };
-				} else {
-					$hash->{value} = undef;
-				}
-			} else {
-				debug($hash);
-			}
-		}
-	}
-
-	# Get the list of theme folders in the theme directory and remove . and ..
-	my $themeDir = $ce->{webworkDirs}{themes};
-	opendir(my $dh, $themeDir) or die "Can't open directory $themeDir: $!\n";
-	my $themes = [ grep { !/^\.{1,2}$/ } sort readdir($dh) ];
-
-	# Insert the anonymous array of theme folder names into ConfigValues.
-	my $modifyThemes = sub {
-		my $item = shift;
-		if (ref($item) =~ /HASH/ and $item->{var} eq 'defaultTheme') { $item->{values} = $themes }
-	};
-
-	for my $oneConfig (@$ConfigValues) {
-		for my $hash (@$oneConfig) {
-			&$modifyThemes($hash);
-		}
-	}
-
-	return $ConfigValues;
-}
-
 sub getCourseSettings {
 	my ($invocant, $self, $params) = @_;
 	my $ce           = $self->ce;
-	my $db           = $self->db;
 	my $ConfigValues = getConfigValues($ce);
 
-	my $tz = DateTime::TimeZone->new(name => $ce->{siteDefaults}->{timezone});
-	push(@$ConfigValues, [ 'tz_abbr', $tz->short_name_for_datetime(DateTime->now) ]);
+	for my $oneConfig (@$ConfigValues) {
+		for my $hash (@$oneConfig) {
+			next unless ref $hash eq 'HASH';
+			my $value;
+			if (defined $hash->{var}) {
+				my @keys = $hash->{var} =~ m/([^{}]+)/g;
+				next unless @keys;
+
+				$value = $ce;
+				for (@keys) { $value = $value->{$_}; }
+			} else {
+				$value = $self->db->getSettingValue($self->{setting});
+			}
+			$hash->{value} = $value if defined $value;
+		}
+	}
+
+	push(
+		@$ConfigValues,
+		[
+			'tz_abbr',
+			DateTime::TimeZone->new(name => $ce->{siteDefaults}->{timezone})->short_name_for_datetime(DateTime->now)
+		]
+	);
 
 	return {
 		ra_out => $ConfigValues,
