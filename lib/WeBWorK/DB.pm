@@ -1080,6 +1080,86 @@ sub deleteLocationAddress {
 }
 
 ################################################################################
+# lti_launch_data functions
+################################################################################
+# This database table contains LTI launch data for LTI 1.3 authentication.
+
+BEGIN {
+	*LTILaunchData            = gen_schema_accessor("lti_launch_data");
+	*existsLTILaunchDataWhere = gen_exists_where("lti_launch_data");
+	*listLTILaunchDataWhere   = gen_list_where("lti_launch_data");
+	*getLTILaunchDataWhere    = gen_get_records_where("lti_launch_data");
+	*deleteLTILaunchDataWhere = gen_delete_where("lti_launch_data");
+}
+
+sub newLTILaunchData {
+	my ($self, @data) = @_;
+	my $ltiLaunchData = $self->{lti_launch_data}{record}->new(@data);
+	$ltiLaunchData->data({}) unless ref($ltiLaunchData->data) eq 'HASH';
+	return $ltiLaunchData;
+}
+
+sub getLTILaunchData {
+	my ($self, $state) = shift->checkArgs(\@_, qw/state/);
+	my ($ltiLaunchData) = $self->{lti_launch_data}->gets([$state]);
+	$ltiLaunchData->data(decode_json($ltiLaunchData->data)) if $ltiLaunchData;
+	return $ltiLaunchData;
+}
+
+sub addLTILaunchData {
+	my ($self, $LTILaunchData) = shift->checkArgs(\@_, qw/REC:lti_launch_data/);
+	my $launchDataCopy = $self->newLTILaunchData($LTILaunchData);
+	$launchDataCopy->data(encode_json($LTILaunchData->data)) if ref($LTILaunchData->data) eq 'HASH';
+	my $result = eval { $self->{lti_launch_data}->add($launchDataCopy) };
+	if (my $ex = WeBWorK::DB::Ex::RecordExists->caught) {
+		croak "addLTILaunchData: lti launch data exists (perhaps you meant to use putLTILaunchData?)";
+	} elsif ($@) {
+		die $@;
+	}
+	return $result;
+}
+
+sub putLTILaunchData {
+	my ($self, $LTILaunchData) = shift->checkArgs(\@_, qw/REC:lti_launch_data/);
+	my $launchDataCopy = $self->newLTILaunchData($LTILaunchData);
+	$launchDataCopy->data(encode_json($LTILaunchData->data)) if ref($LTILaunchData->data) eq 'HASH';
+	my $rows = $self->{lti_launch_data}->put($launchDataCopy);
+	if ($rows == 0) {
+		croak "putLTILaunchData: lti launch data not found (perhaps you meant to use addLTILaunchData?)";
+	} else {
+		return $rows;
+	}
+}
+
+sub deleteLTILaunchData {
+	my ($self, $state) = shift->checkArgs(\@_, qw/state/);
+	return $self->{lti_launch_data}->delete_where({ state => $state });
+}
+
+################################################################################
+# lti_course_map functions
+################################################################################
+# This database table contains LTI launch data for LTI 1.3 authentication.
+
+BEGIN {
+	*LTICourseMap            = gen_schema_accessor("lti_course_map");
+	*existsLTICourseMapWhere = gen_exists_where("lti_course_map");
+	*getLTICourseMapsWhere   = gen_get_records_where("lti_course_map");
+	*deleteLTICourseMapWhere = gen_delete_where("lti_course_map");
+}
+
+sub setLTICourseMap {
+	my ($self, $course_id, $lms_context_id) = shift->checkArgs(\@_, qw/course_id lms_context_id/);
+	if ($self->existsLTICourseMapWhere({ course_id => $course_id })) {
+		return $self->{lti_course_map}
+			->update_where({ lms_context_id => $lms_context_id }, { course_id => $course_id });
+	} else {
+		return $self->{lti_course_map}
+			->insert_fields([ 'course_id', 'lms_context_id' ], [ [ $course_id, $lms_context_id ] ]);
+	}
+}
+
+################################################################################
 # past_answers functions
 ################################################################################
 

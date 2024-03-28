@@ -45,6 +45,11 @@
 	<dd><%= maketext('Configure which course links appear on the site landing page.') =%></dd>
 	<dt><%= maketext('Manage Locations') %></dt>
 	<dd><%= maketext('Configure ip ranges (locations) that can be used to restrict set access.') =%></dd>
+	<dt><%= maketext('Manage LTI Course Map') %></dt>
+	<dd>
+		<%= maketext('Set LMS context ids for courses to map LMS courses to WeBWorK '
+			. 'courses for content item selection.') =%>
+	</dd>
 	<dt><%= maketext('Accounts Manager') %></dt>
 	<dd>
 		<%= maketext('Manage instructors.  When instructors are added to a newly created course, they are also '

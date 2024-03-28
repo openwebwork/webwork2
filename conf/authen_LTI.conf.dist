@@ -4,32 +4,32 @@
 # Configuration for using LTI authentication.
 # To enable this file, uncomment the appropriate lines in localOverrides.conf
 # The settings in this file apply to both LTI 1.1 and LTI 1.3 authentication.
-# The settings specific to the LTI 1.1 authenticatio are in authen_LTI_1_1.conf.
-# The settings specific to the LTI 1.3 authenticatio are in authen_LTI_1_3.conf.
+# The settings specific to the LTI 1.1 authentication are in authen_LTI_1_1.conf.
+# The settings specific to the LTI 1.3 authentication are in authen_LTI_1_3.conf.
 ################################################################################################
 
-# Set debug_lti_parameters to 1 to have LTI calling parameters printed to HTML page for
-# debugging.  This is useful when setting things up for the first time because different LMS
-# systems have different parameters
+# Set debug_lti_parameters to 1 to enable LTI debugging.  This is useful when setting things up
+# for the first time because different LMS systems have different parameters.  Note that for LTI
+# 1.1 these debug messages will be displayed in the HTML page.  However, for LTI 1.3 none of the
+# debug messages will be displayed in the HTML page due to the nature of how LTI 1.3
+# authentication works with automatic form submissions and redirects. These messages can be
+# found in the webwork2 app log in that case.
 $debug_lti_parameters = 0;
 
-# To get more information on passing grades back to the LMS enmass set debug_lti_grade_passback
+# To get more information on passing grades back to the LMS en mass set debug_lti_grade_passback
 # to one.  And set the LTIMassUpdateInterval to 60 (seconds).
 $debug_lti_grade_passback = 0;
 
 # This will print into the webwork2 app log the success or failure of updating each user/set.
 
-# Setting both debug_lti_parameters and debug_lti_grade_passback will cause the full request and
-# response between the LMS and WW to be printed into webwork2 app log file for each user/set
-# update of the grade.
+# Setting both debug_lti_parameters and debug_lti_grade_passback will cause the full requests
+# and responses between the LMS and WW to be printed into webwork2 app log file for each
+# user/set update of the grade.
 
 # The switches above can be set in course.conf to enable debugging for just one course.
 
 # If you want even more information enable the debug facility in the webwork2.mojolicious.yml
 # file.  This will print extensive debugging messages for all courses.
-
-# Note that for LTI 1.3 not all debug message will make it back to the HTML page due to the
-# nature of how LTI 1.3 authentication works with automatic form submissions and redirects.
 
 ################################################################################################
 # Authentication settings
@@ -124,7 +124,7 @@ $external_auth = 0;
 # address should be the address of that set in the Course.  Students will receive a grade for
 # each Link/Assignment which is determined by their percentage homework grade on the Set which
 # the Link/Assignment points to.  Students need to use the Link/Assignment in the LMS at least
-# once to enable grade passback.  In particular when working in this mode it is recommended that
+# once to enable grade pass back.  In particular when working in this mode it is recommended that
 # you only allow students to log in via the LMS.
 
 # Note: For both of these modes only the grades are passed back.  In particular nothing else
@@ -135,7 +135,7 @@ $external_auth = 0;
 # Site Administrator Note for LTI 1.3:  This uses OAuth2 RSA private/public keys.  These keys
 # are automatically generated the first time that they are needed.  It is recommended that new
 # keys are generated on a regular basis.  At this point, key rotation is not automatic for
-# webwork2.  Howevever, it is simple.  Delete the files $webwork2_dir/DATA/lti_private_key.json
+# webwork2.  However, it is simple.  Delete the files $webwork2_dir/DATA/lti_private_key.json
 # and $webwork2_dir/DATA/lti_public_key.json.  New keys will then be automatically generated the
 # next time they are needed.  Probably a good rule of thumb (for now) is to do this at the
 # beginning of every term.
@@ -148,7 +148,7 @@ $LTIGradeMode = '';
 # keeps students grades up to date but can be a drain on the server.
 $LTIGradeOnSubmit = 1;
 
-# If CheckPrior is set to 1 then the current LMS grade will be checked first, and if the grade
+# If $LTICheckPrior is set to 1 then the current LMS grade will be checked first, and if the grade
 # has not changed then the grade will not be updated.  This is intended to reduce changes to LMS
 # records when no real grade change occurred.  It requires a 2 round process, first querying the
 # current grade from the LMS and then when needed making the grade submission.

@@ -27,15 +27,7 @@ use strict;
 use warnings;
 use experimental 'signatures';
 
-use URI::Escape;
-use Mojo::UserAgent;
-use Mojo::JSON qw(decode_json);
-use Math::Random::Secure qw(irand);
-use Digest::SHA qw(sha256_hex);
-use Crypt::JWT qw(decode_jwt);
-
 use WeBWorK::Debug;
-use WeBWorK::CourseEnvironment;
 use WeBWorK::Localize;
 use WeBWorK::Utils::DateTime qw(formatDateTime);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
@@ -67,7 +59,7 @@ sub request_has_data_for_this_verification_module ($self) {
 		return 0;
 	}
 
-	# LTI 1.3 requests are exactly those that go through these routes.
+	# LTI 1.3 authentication requests are exactly those that go through these routes.
 	if ($c->current_route eq 'ltiadvantage_login' || $c->current_route eq 'ltiadvantage_launch') {
 		debug('LTIAdvantage returning that it has sufficient data');
 		return 1;
@@ -101,44 +93,6 @@ sub verify ($self) {
 			if $ce->{debug_lti_parameters};
 		debug('The LTI Advantage login route was accessed with the appropriate parameters.');
 
-		# Create a state and nonce and save them.  These are generated so that they are cryptographically secure values.
-		#
-		# The courseID is included in the state so that it can be retrieved in the launch request before a course
-		# environment and database are available (in fact so that those things can be accessed for this course).  The
-		# launch request does not contain any unencrypted information other than the state, and the LMS is required to
-		# send the state back unmodified.  This kind of breaks the rule that the state be opaque though.
-		#
-		# To make this work when session_management_via is set to 'key', the hacks are abundant and ugly!  This would be
-		# much simpler if that setting did not need to be supported.  Then the state, nonce, and courseID could just be
-		# stored in a cookie.  It is not even possible to do that when session_management_via is set to 'session_cookie'
-		# because this information is needed before it is known what that setting is.  So the ugly hack described below
-		# needs to always be used.
-		#
-		# To save this to the database a user_id value is needed that is unique for this request, satisfies the database
-		# constrains on user_id's, and won't collide with webwork user_id's.  So the login_hint (the LMS user id) and
-		# courseID are joined with ',set_id:'.  That means the LMS user id will also be needed to get the information
-		# back from the database, and so this is included in the state as well.
-		#
-		# To make matters worse, courseID's can contain hyphens, but user_id's can not.  Fortunately courseID's can not
-		# contain ampersats, while user_id's can.  So the hyphens in the courseID are replaced with ampersats.
-		#
-		# Finally, hack into the existing "nonce" key hack. Since the key value is "nonce", the database will not check
-		# to see that the user_id exists in the user table.
-
-		my $key_id = join(',set_id:', $c->param('login_hint'), $c->stash->{courseID} =~ s/-/@/gr);
-		$c->stash->{LTIState} =
-			join(',set_id:', $key_id, sha256_hex(join('', map { [ 0 .. 9, 'a' .. 'z' ]->[ irand(36) ] } 1 .. 20)));
-		$c->stash->{LTINonce} = sha256_hex(join('', map { [ 0 .. 9, 'a' .. 'z' ]->[ irand(36) ] } 1 .. 20));
-
-		$c->db->deleteKey($key_id);    # Delete a key with this user_id if one happens to exist.
-		my $key = $c->db->newKey(
-			user_id   => $key_id,
-			key       => 'nonce',
-			timestamp => time,
-			session   => { lti_state => $c->stash->{LTIState}, lti_nonce => $c->stash->{LTINonce} }
-		);
-		$c->db->addKey($key);
-
 		return 1;
 	}
 
@@ -155,51 +109,16 @@ sub get_credentials ($self) {
 	# Disable password login
 	$self->{external_auth} = 1;
 
-	# Retrieve the state and nonce from the key table and delete the key.
-	# See the comments about the hacks involved here in the WeBWorK::Authen::LTIAdvantage::verify method above.
-	my $key_id = join(',set_id:', $c->stash->{lti_lms_user_id}, $c->stash->{courseID} =~ s/-/@/gr);
-	my $key    = $c->db->getKey($key_id);
-	($c->stash->{LTIState}, $c->stash->{LTINonce}) = ($key->session->{lti_state}, $key->session->{lti_nonce});
-	$c->db->deleteKey($key_id);
-
-	$self->purge_old_state_keys;
-
-	# Verify the state.
-	unless ($c->param('state') && $c->stash->{LTIState} && $c->stash->{LTIState} eq $c->param('state')) {
+	# If there was an error during the extraction of the JWT, then authentication fails here.
+	if ($c->stash->{LTIAuthenError}) {
 		$self->{error} = $c->maketext(
 			'There was an error during the login process.  Please speak to your instructor or system administrator.');
-		warn "Invalid state in response from LMS.  Possible CSFR.\n" if $ce->{debug_lti_parameters};
-		debug('Invalid state in response from LMS.  Possible CSFR.');
+		warn $c->stash->{LTIAuthenError} . "\n" if $ce->{debug_lti_parameters};
+		debug($c->stash->{LTIAuthenError});
 		return 0;
 	}
 
-	return 0 unless (my $claims = $self->extract_jwt_claims);
-
-	if ($ce->{debug_lti_parameters}) {
-		warn "====== JWT PARAMETERS RECEIVED ======\n";
-		warn $c->dumper($claims);
-		warn "\n";
-	}
-
-	# Verify the nonce.
-	if (!defined $claims->{nonce} || $claims->{nonce} ne $c->stash->{LTINonce}) {
-		$self->{error} = $c->maketext(
-			'There was an error during the login process.  Please speak to your instructor or system administrator.');
-		warn "Incorrect nonce received in response.\n" if $ce->{debug_lti_parameters};
-		debug('Incorrect nonce received in response so LTIAdvantage::get_credentials is returning 0.');
-		return 0;
-	}
-
-	# Verify the deployment id.
-	if (!defined $claims->{'https://purl.imsglobal.org/spec/lti/claim/deployment_id'}
-		|| $claims->{'https://purl.imsglobal.org/spec/lti/claim/deployment_id'} ne $ce->{LTI}{v1p3}{DeploymentID})
-	{
-		$self->{error} = $c->maketext(
-			'There was an error during the login process.  Please speak to your instructor or system administrator.');
-		warn "Incorrect deployment id received in response.\n" if $ce->{debug_lti_parameters};
-		debug('Incorrect deployment id received in response so LTIAdvantage::get_credentials is returning 0.');
-		return 0;
-	}
+	my $claims = $c->stash->{lti_jwt_claims};
 
 	# Get the target_link_uri from the claims.
 	$c->stash->{LTILaunchRedirect} = $claims->{'https://purl.imsglobal.org/spec/lti/claim/target_link_uri'};
@@ -210,20 +129,6 @@ sub get_credentials ($self) {
 		warn 'LTI is not properly configured (failed to obtain target_link_uri). '
 			. "Please contact your instructor or system administrator.\n";
 		debug('Failed to obtain target_link_uri so LTIAdvantage::get_credentials is returning 0.');
-		return 0;
-	}
-
-	# Get the courseID from the target_link_uri and verify that it is the same as the one that was in the state.
-	my $location = $c->location;
-	my $target   = $c->url_for($c->stash->{LTILaunchRedirect})->path;
-	my $courseID;
-	$courseID = $1 if $target =~ m|$location/([^/]*)|;
-
-	unless ($courseID && $courseID eq $c->stash->{courseID}) {
-		$self->{error} = $c->maketext(
-			'There was an error during the login process.  Please speak to your instructor or system administrator.');
-		debug('The courseID in the login request does not match the courseID in the launch request JWT.  '
-				. 'So LTIAdvantage::get_credentials is returning 0.');
 		return 0;
 	}
 
@@ -240,7 +145,7 @@ sub get_credentials ($self) {
 	my $user_id_source = '';
 	my $type_of_source = '';
 
-	$self->{email} = defined $claims->{email} ? uri_unescape($claims->{email} // '') : '';
+	$self->{email} = $claims->{email} // '';
 
 	my $extract_claim = sub ($key) {
 		my $value = $claims;
@@ -316,7 +221,9 @@ sub get_credentials ($self) {
 
 		# Extract a possible setID from the target_link_uri.  This may not be an actual setID.
 		# That will be verified later in WeBWorK::Authen::LTIAdvantage::SubmitGrade::update_sourcedid.
-		$c->stash->{setID} = $1 if $target =~ m|$location/$courseID/([^/]*)|;
+		my $location = $c->location;
+		my $target   = $c->url_for($c->stash->{LTILaunchRedirect})->path;
+		$c->stash->{setID} = $1 if $target =~ m|$location/$ce->{courseName}/([^/]*)|;
 
 		$self->{login_type}        = 'normal';
 		$self->{credential_source} = 'LTIAdvantage';
@@ -330,101 +237,6 @@ sub get_credentials ($self) {
 		. "Please contact your instructor or system administrator.\n";
 	debug('LTIAdvantange::get_credentials is returning 0.');
 	return 0;
-}
-
-# Get the public keyset from the LMS and cache it in the database or just return what is already cached in the database.
-sub get_lms_public_keyset ($self, $renew = 0) {
-	my $c  = $self->{c};
-	my $ce = $c->ce;
-	my $db = $c->db;
-
-	my $keyset_str;
-
-	if (!$renew) {
-		$keyset_str = $db->getSettingValue('LTIAdvantageLMSPublicKey');
-		return decode_json($keyset_str) if $keyset_str;
-	}
-
-	# Get public keyset from the LMS.
-	my $response = Mojo::UserAgent->new->get($ce->{LTI}{v1p3}{PublicKeysetURL})->result;
-	unless ($response->is_success) {
-		$self->{error} = $c->maketext(
-			'There was an error during the login process.  Please speak to your instructor or system administrator.');
-		warn 'Failed to obtain public key from LMS: ' . $response->message . "\n" if $ce->{debug_lti_parameters};
-		debug('Failed to obtain public key from LMS: ' . $response->message);
-		return;
-	}
-
-	$keyset_str = $response->body;
-	my $keyset = eval { decode_json($keyset_str) };
-	if ($@ || ref($keyset) ne 'HASH' || !defined $keyset->{keys}) {
-		$self->{error} = $c->maketext(
-			'There was an error during the login process.  Please speak to your instructor or system administrator.');
-		warn "Received an invalid response from the LMS public keyset URL.\n" if $ce->{debug_lti_parameters};
-		debug('Received an invalid response from the LMS public keyset URL.');
-		return;
-	}
-	$db->setSettingValue('LTIAdvantageLMSPublicKey', $keyset_str);
-
-	return $keyset;
-}
-
-sub extract_jwt_claims ($self) {
-	my $c  = $self->{c};
-	my $ce = $c->ce;
-
-	my %jwt_params = (
-		token      => $c->param('id_token'),
-		verify_iss => $ce->{LTI}{v1p3}{PlatformID},
-		verify_aud => $ce->{LTI}{v1p3}{ClientID},
-		verify_iat => 1,
-		verify_exp => 1,
-		# This just checks that this claim is present.
-		verify_sub => sub ($value) { return $value =~ /\S/ }
-	);
-
-	$jwt_params{kid_keys} = $self->get_lms_public_keyset;
-	return unless $jwt_params{kid_keys};
-
-	my $claims = eval { decode_jwt(%jwt_params); };
-
-	# If decoding of the JWT failed, then try to get a new LMS public keyset and try again.  It could be that the
-	# keyset that was previously saved in the database has expired.
-	unless ($claims) {
-		$jwt_params{kid_keys} = $self->get_lms_public_keyset(1);
-		$claims = eval { $claims = decode_jwt(%jwt_params) };
-	}
-	if ($@) {
-		$self->{error} = $c->maketext(
-			'There was an error during the login process.  Please speak to your instructor or system administrator.');
-		warn "Failed to decode token received from LMS: $@\n" if $ce->{debug_lti_parameters};
-		debug("Failed to decode token received from LMS: $@");
-		return;
-	}
-
-	return $claims;
-}
-
-sub purge_old_state_keys ($self) {
-	my $c    = $self->{c};
-	my $ce   = $c->ce;
-	my $db   = $c->db;
-	my $time = time;
-
-	my @userIDs = $db->listKeys;
-	my @keys    = $db->getKeys(@userIDs);
-
-	my $modCourseID = $ce->{courseName} =~ s/-/@/gr;
-
-	# Delete any "nonce state" keys for this course that are older than $ce->{LTI}{v1p3}{StateKeyLifetime}.
-	for my $key (@keys) {
-		$db->deleteKey($key->user_id)
-			if $key->key eq "nonce"
-			&& ($time - $key->timestamp > $ce->{LTI}{v1p3}{StateKeyLifetime})
-			&& $key->user_id =~ /,set_id:$modCourseID$/;
-	}
-
-	return;
 }
 
 # Minor modification of method in superclass.

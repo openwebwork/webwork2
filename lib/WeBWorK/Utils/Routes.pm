@@ -32,9 +32,12 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  instructor_rpc                      /instructor_rpc
  html2xml                            /html2xml
 
+ ltiadvanced_content_selection       /ltiadvanced/content_selection
+
  ltiadvantage_login                  /ltiadvantage/login
  ltiadvantage_launch                 /ltiadvantage/launch
  ltiadvantage_keys                   /ltiadvantage/keys
+ ltiadvantage_content_selection      /ltiadvantage/content_selection
 
  pod_index                           /pod
  pod_viewer                          /pod/$filePath
@@ -147,9 +150,11 @@ my %routeParameters = (
 			render_rpc
 			html2xml
 			instructor_rpc
+			ltiadvanced_content_selection
 			ltiadvantage_login
 			ltiadvantage_launch
 			ltiadvantage_keys
+			ltiadvantage_content_selection
 			pod_index
 			sample_problem_index
 			set_list
@@ -183,6 +188,13 @@ my %routeParameters = (
 		path   => '/html2xml'
 	},
 
+	ltiadvanced_content_selection => {
+		title  => x('Content Selection'),
+		module => 'LTIAdvanced',
+		path   => '/ltiadvanced/content_selection',
+		action => 'content_selection'
+	},
+
 	# Both of these routes end up at the login screen on failure, and the title is not used anywhere else.
 	# Hence the title 'Login'.
 	ltiadvantage_login => {
@@ -202,6 +214,12 @@ my %routeParameters = (
 		module => 'LTIAdvantage',
 		path   => '/ltiadvantage/keys',
 		action => 'keys'
+	},
+	ltiadvantage_content_selection => {
+		title  => x('Content Selection'),
+		module => 'LTIAdvantage',
+		path   => '/ltiadvantage/content_selection',
+		action => 'content_selection'
 	},
 
 	pod_index => {

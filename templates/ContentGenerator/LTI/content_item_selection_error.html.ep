@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html <%== $c->output_course_lang_and_dir %>>
+%
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= maketext('Available Content') %></title>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
+</head>
+%
+<body class="m-3">
+	<div class="container-fluid">
+		<div class="alert alert-danger" role="alert"><%= $errorMessage =%></div>
+		% if (stash->{contextData}) {
+			<div class="mb-3">
+				<%= maketext('An LTI content item request was received with no associated LMS course. '
+					. 'The following parameters were received which can be used to make this association:') =%>
+			</div>
+			<table class="table table-bordered m-auto w-auto">
+				% for (@{ stash->{contextData} }) {
+					<tr><th><%= $_->[0] %></th><td><%= $_->[1] %></td></tr>
+				% }
+			</table>
+		% }
+	</div>
+</body>
+%
+</html>
