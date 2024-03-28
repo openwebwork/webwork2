@@ -1149,13 +1149,13 @@ BEGIN {
 }
 
 sub setLTICourseMap {
-	my ($self, $course_id, $lti_context_id) = shift->checkArgs(\@_, qw/course_id lti_context_id/);
+	my ($self, $course_id, $lms_context_id) = shift->checkArgs(\@_, qw/course_id lms_context_id/);
 	if ($self->existsLTICourseMapWhere({ course_id => $course_id })) {
 		return $self->{lti_course_map}
-			->update_where({ lms_context_id => $lti_context_id }, { course_id => $course_id });
+			->update_where({ lms_context_id => $lms_context_id }, { course_id => $course_id });
 	} else {
 		return $self->{lti_course_map}
-			->insert_fields([ 'course_id', 'lms_context_id' ], [ [ $course_id, $lti_context_id ] ]);
+			->insert_fields([ 'course_id', 'lms_context_id' ], [ [ $course_id, $lms_context_id ] ]);
 	}
 }
 
