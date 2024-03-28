@@ -34,19 +34,14 @@
 			</tr>
 			% for my $con (@configSectionArray) {
 				% my $conobject = $c->objectify($con);
-				% next unless (
-					% defined $conobject->{var}
-					% || $authz->hasPermissions(param('user'), "setting_table_$conobject->{setting}")
+				% next if (
+					% defined $ce->{permissionLevels}{"change_config_$conobject->{var}"}
+					% && !$authz->hasPermissions(param('user'), "change_config_$conobject->{var}")
 				% );
-				% my $name      = defined $conobject->{var}
-						% ? ($conobject->{var} =~ s/[{]/-/gr) =~ s/[}]//gr
-						% : $conobject->{setting};
 				<tr>
 					<td><%= $conobject->what_string %></td>
 					<td class="text-center">
-						% if (defined $conobject->{var}) {
-							<%= $conobject->display_value($conobject->get_value($default_ce)) %>
-						% }
+						<%= $conobject->display_value($conobject->get_value($default_ce)) %>
 					</td>
 					<td><%= $conobject->entry_widget($conobject->get_value($ce4)) =%></td>
 				</tr>

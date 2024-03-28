@@ -35,6 +35,8 @@ use WeBWorK::ConfigObject::permission_checkboxlist;
 use WeBWorK::ConfigObject::list;
 use WeBWorK::ConfigObject::checkboxlist;
 use WeBWorK::ConfigObject::popuplist;
+use WeBWorK::ConfigObject::setting;
+use WeBWorK::ConfigObject::lms_context_id;
 use WeBWorK::ConfigValues qw(getConfigValues);
 
 # Write contents to outputFilePath and return error messages if any.
@@ -110,17 +112,18 @@ sub pre_header_initialize ($c) {
 			shift @configSectionArray;
 			for my $con (@configSectionArray) {
 				my $conobject = $c->objectify($con);
-				if ($tab) {
-					# This tab is hidden so use the current course environment value.
+				if (
+					$tab
+					|| (defined $ce->{permissionLevels}{"change_config_$con->{var}"}
+						&& !$c->authz->hasPermissions($c->param('user'), "change_config_$con->{var}"))
+					)
+				{
+					# This configuration value is on a hidden tab or the user does not have permission to change this
+					# configuration value.  So use the current course environment value.
 					$fileoutput .= $conobject->save_string($conobject->get_value($ce3), 1);
 				} else {
-					# We reached the tab with entry objects.
-					if (defined $conobject->{var}) {
-						$fileoutput .= $conobject->save_string($conobject->get_value($ce3));
-					} else {
-						# This is something to set in the course's setting table.
-						$c->db->setSettingValue($conobject->{setting}, scalar $c->param($conobject->{setting}));
-					}
+					# The visible tab contains this configuration value and the user has permission to change it.
+					$fileoutput .= $conobject->save_string($conobject->get_value($ce3));
 				}
 			}
 			$tab--;
@@ -130,7 +133,7 @@ sub pre_header_initialize ($c) {
 		if (@write_result) {
 			$c->addbadmessage($c->c(@write_result)->join($c->tag('br')));
 		} else {
-			$c->addgoodmessage($c->maketext('Changes saved'));
+			$c->addgoodmessage($c->maketext('Changes saved.'));
 		}
 	}
 

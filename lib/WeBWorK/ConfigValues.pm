@@ -64,14 +64,15 @@ checkboxes.
 
 Variables that hold a list of values to be selected from.
 
-=back
+=item setting
 
-Each configuration value must have either a C<var> or a C<setting> key. A var
-key indicates that the configuration value is a course environment variable, and
-a setting key indicates it is a setting from the course's setting table in the
-database. In the latter case, only text type is presently supported since there
-are not presently other types of data in the setting table that could
-conceivably be up for manual reassignment.
+Values in the course setting database table.
+
+=item lms_context_id
+
+This is specifically for The LMS context id used for content selection.
+
+=back
 
 =cut
 
@@ -86,9 +87,9 @@ sub getConfigValues ($ce) {
 		[
 			x('General'),
 			{
-				setting => 'courseTitle',
-				doc     => x('Title for course displayed on the Assignments page'),
-				type    => 'text'
+				var  => 'courseTitle',
+				doc  => x('Title for course displayed on the Assignments page'),
+				type => 'setting'
 			},
 			{
 				var  => 'courseFiles{course_info}',
@@ -910,6 +911,17 @@ sub getConfigValues ($ce) {
 			),
 			type => 'boolean'
 		},
+		lms_context_id => {
+			var  => 'lms_context_id',
+			doc  => x('LMS Context ID'),
+			doc2 => x(
+				'This must be set in order to utilize LTI content selection. This must be configured in the LMS '
+					. 'first. If content selection from the LMS is attempted once the LMS is configured to use it, '
+					. 'then you will be shown the LMS context ID. Enter the context ID shown here, and then you '
+					. 'will be able to select assignments from this course, and import them into the LMS.'
+			),
+			type => 'lms_context_id'
+		}
 	};
 
 	# Get the list of theme folders in the theme directory.
@@ -958,7 +970,7 @@ sub getConfigValues ($ce) {
 
 	for my $oneConfig (@$configValues) {
 		for my $item (@$oneConfig) {
-			next unless ref($item) eq 'HASH' && $item->{var};
+			next unless ref($item) eq 'HASH';
 
 			$item->{values} = $themes if $item->{var} eq 'defaultTheme';
 			$item->{values} = $hardcopyThemesAvailable
