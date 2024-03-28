@@ -280,7 +280,7 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 					keys %{ $pg->{pgcore}{PG_ANSWERS_HASH} }
 			};
 			$ret->{resource_list} = {
-				map { $_ => $pg->{pgcore}{PG_alias}{resource_list}{$_}{uri}{content} }
+				map { $_ => $pg->{pgcore}{PG_alias}{resource_list}{$_}{uri} }
 					keys %{ $pg->{pgcore}{PG_alias}{resource_list} }
 			};
 			$ret->{PERSISTENCE_HASH_UPDATED} = $pg->{pgcore}{PERSISTENCE_HASH_UPDATED};
