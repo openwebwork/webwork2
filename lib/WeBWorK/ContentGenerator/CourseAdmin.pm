@@ -226,7 +226,7 @@ sub pre_header_initialize ($c) {
 				$method_to_call = 'do_registration';
 			}
 		} else {
-			@errors = "Unrecognized sub-display @{[ $c->tag('b', $subDisplay) ]}.";
+			@errors = "Unrecognized sub-display $subDisplay.";
 		}
 	}
 
