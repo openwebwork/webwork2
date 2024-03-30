@@ -114,7 +114,8 @@ sub listCourses {
 
 	# Collect directories which may be course directories
 	my @cdirs =
-		@{ path($coursesDir)->list({ dir => 1 })->grep(sub { -d $_ && $_ !~ /modelCourse$/ })->map('basename') };
+		@{ path($coursesDir)->list({ dir => 1 })->grep(sub { -d $_ && $_->basename ne 'modelCourse' })->map('basename')
+		};
 	if ($stmt_bad) {
 		# Fall back to old method listing all directories.
 		return @cdirs;
