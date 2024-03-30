@@ -110,11 +110,7 @@
 
 	// Send a request to the server to perltidy the current PG code in the CodeMirror editor.
 	const tidyPGCode = () => {
-		const request_object = {
-			user: document.getElementById('hidden_user')?.value,
-			courseID: document.getElementsByName('courseID')[0]?.value,
-			key: document.getElementById('hidden_key')?.value
-		};
+		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
 
 		const user = document.getElementsByName('user')[0];
 		if (user) request_object.user = user.value;
@@ -154,17 +150,18 @@
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
 	};
 
-	// Send a request to the server to convert_to_PGML the current PG code in the CodeMirror editor.
+	// Send a request to the server to convert the current PG code in the CodeMirror editor.
 	const convertCodeToPGML = () => {
-		const request_object = {
-			user: document.getElementById('hidden_user')?.value,
-			courseID: document.getElementsByName('courseID')[0]?.value,
-			key: document.getElementById('hidden_key')?.value
-		};
+		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
+
+		const user = document.getElementsByName('user')[0];
+		if (user) request_object.user = user.value;
+		const sessionKey = document.getElementsByName('key')[0];
+		if (sessionKey) request_object.key = sessionKey.value;
 
 		request_object.rpc_command = 'convertCodeToPGML';
-		request_object.pgCode = webworkConfig?.pgCodeMirror?.getValue()
-			?? document.getElementById('problemContents')?.value ?? '';
+		request_object.pgCode =
+			webworkConfig?.pgCodeMirror?.getValue() ?? document.getElementById('problemContents')?.value ?? '';
 
 		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
 			.then((response) => response.json())
@@ -184,9 +181,11 @@
 	document.getElementById('take_action')?.addEventListener('click', async (e) => {
 		if (document.getElementById('current_action')?.value === 'format_code') {
 			e.preventDefault();
-			if (document.querySelector('input[name="action.format_code"]:checked').value == "tidyPGCode") {
+			if (document.querySelector('input[name="action.format_code"]:checked').value == 'tidyPGCode') {
 				tidyPGCode();
-			} else if (document.querySelector('input[name="action.format_code"]:checked').value == "convertCodeToPGML") {
+			} else if (
+				document.querySelector('input[name="action.format_code"]:checked').value == 'convertCodeToPGML'
+			) {
 				convertCodeToPGML();
 			}
 			return;

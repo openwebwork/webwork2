@@ -24,7 +24,7 @@
 			. 'in the problem code to PGML and updates the loadMacros to include PGML and drop others. '
 			. 'This can be used as a first pass of the conversion, however the author will still need '
 			. 'to ensure the problem functions.  One area of attention should be the answer blanks, '
-			. 'which are not automatically converted with the proper variable.') =%>"
+			. 'which may not be converted correctly.') =%>"
 		data-bs-placement="top" data-bs-toggle="popover" role="button">
 			<i aria-hidden="true" class="icon fas fa-question-circle" data-alt="Help Icon"></i>
 			<span class="sr-only-glyphicon">Help Icon</span>
