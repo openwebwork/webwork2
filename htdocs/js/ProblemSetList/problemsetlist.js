@@ -235,7 +235,7 @@
 					}
 				})
 			],
-			onReady(selectedDates) {
+			onReady() {
 				// Flatpickr hides the original input and adds the alternate input after it.  That messes up the
 				// bootstrap input group styling.  So move the now hidden original input after the created alternate
 				// input to fix that.
@@ -276,5 +276,29 @@
 				fp.open();
 			}
 		});
+	}
+
+	const importSourceSelect = document.getElementById('import_source_select');
+	const listOPLSetsCheck = document.getElementById('list_opl_sets');
+	const listContribSetsCheck = document.getElementById('list_contrib_sets');
+
+	if (importSourceSelect && (listOPLSetsCheck || listContribSetsCheck)) {
+		const allOptions = Array.from(importSourceSelect.options);
+
+		const updateAvailableOptions = () => {
+			for (const option of Array.from(importSourceSelect.options)) option.value && option.remove();
+			for (const option of allOptions) {
+				if (option.value.startsWith('Library/')) {
+					if (listOPLSetsCheck.checked) importSourceSelect.add(option);
+				} else if (option.value.startsWith('Contrib/')) {
+					if (listContribSetsCheck.checked) importSourceSelect.add(option);
+				} else importSourceSelect.add(option);
+			}
+		};
+
+		listOPLSetsCheck?.addEventListener('change', updateAvailableOptions);
+		listContribSetsCheck?.addEventListener('change', updateAvailableOptions);
+
+		updateAvailableOptions();
 	}
 })();

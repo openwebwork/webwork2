@@ -25,6 +25,25 @@
 				: () =%>
 		</div>
 	</div>
+	%
+	% my $listLibrarySets = -d "$ce->{courseDirs}{templates}/Library" && -r "$ce->{courseDirs}{templates}/Library";
+	% my $listContribSets = -d "$ce->{courseDirs}{templates}/Contrib" && -r "$ce->{courseDirs}{templates}/Contrib";
+	% if ($listLibrarySets || $listContribSets) {
+		<div class="mb-2">
+			% if ($listLibrarySets) {
+				<div class="form-check form-check-inline">
+					<%= check_box list_opl_sets => 0, id => 'list_opl_sets', class => 'form-check-input' =%>
+					<%= label_for list_opl_sets => maketext('List OPL Sets'), class => "form-check-label" =%>
+				</div>
+			% }
+			% if ($listContribSets) {
+				<div class="form-check form-check-inline">
+					<%= check_box list_contrib_sets => 0, id => 'list_contrib_sets', class => 'form-check-input' =%>
+					<%= label_for list_contrib_sets => maketext('List Contrib Sets'), class => "form-check-label" =%>
+				</div>
+			% }
+		</div>
+	% }
 	<div class="row mb-2">
 		<%= label_for import_text => maketext('Import sets with names') . ':',
 			class => 'col-form-label col-form-label-sm col-md-auto' =%>

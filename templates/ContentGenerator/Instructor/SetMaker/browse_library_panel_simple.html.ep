@@ -40,7 +40,8 @@
 		</div>
 		<div class="col-md-3 col-sm-4 mb-1 d-flex flex-sm-column justify-content-sm-start justify-content-center">
 			<%= submit_button maketext('Advanced Search'), name => 'library_advanced',
-				class => 'btn btn-secondary btn-sm library-panel-btn' =%>
+				class => 'btn btn-secondary btn-sm library-panel-btn mb-2' =%>
+			<%= include 'ContentGenerator/Instructor/SetMaker/library-include-checks' =%>
 		</div>
 	</div>
 	<%= include 'ContentGenerator/Instructor/SetMaker/view_problems_line', internal_name => 'lib_view' =%>

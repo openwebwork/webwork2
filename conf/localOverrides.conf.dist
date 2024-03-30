@@ -646,12 +646,11 @@ $mail{feedbackRecipients}    = [
 ################################################################################
 # Searching for set.def files to import
 ################################################################################
-## Uncomment below so that when the Library Browser searches for set def
-## files, it searches beyond templates; it can search deeper subfolders of
-## templates, and optionally also descend into Library
+# In the set manager and the library browser, the directory depth to search
+# within templates for .def files.  Note that this does not apply to the Library
+# and Contrib directories.  Those directories are not searched in any case.
 
-#$options{setDefSearchDepth}=4; #search down 4 levels
-#$options{useOPLdefFiles}=1;
+#$options{setDefSearchDepth} = 4;
 
 ################################################################################
 # Permission overrides (e.g. "admin", "professor", "ta", "student", "guest"

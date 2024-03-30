@@ -471,7 +471,7 @@ sub pre_header_initialize ($c) {
 	$count++ if ($j > 0);
 
 	# Default of which problem selector to display
-	my $browse_which = $c->param('browse_which') || 'browse_npl_library';
+	my $browse_which = $c->param('browse_which') || 'browse_opl';
 
 	# Check for problem lib buttons
 	my $browse_lib = '';
@@ -484,7 +484,7 @@ sub pre_header_initialize ($c) {
 
 	# Start the logic through if elsif elsif ...
 	debug("browse_lib",         $c->param("$browse_lib"));
-	debug("browse_npl_library", $c->param("browse_npl_library"));
+	debug("browse_opl",         $c->param("browse_opl"));
 	debug("browse_course_sets", $c->param("browse_course_sets"));
 	debug("browse_setdefs",     $c->param("browse_setdefs"));
 	# Asked to browse certain problems
@@ -493,8 +493,8 @@ sub pre_header_initialize ($c) {
 		$c->{current_library_set} = "";
 		$use_previous_problems    = 0;
 		@pg_files                 = ();
-	} elsif ($c->param('browse_npl_library')) {
-		$browse_which             = 'browse_npl_library';
+	} elsif ($c->param('browse_opl')) {
+		$browse_which             = 'browse_opl';
 		$c->{current_library_set} = "";
 		$use_previous_problems    = 0;
 		@pg_files                 = ();
