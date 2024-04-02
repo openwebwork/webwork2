@@ -309,9 +309,9 @@
 				mode: 'same-origin',
 				body: new URLSearchParams(
 					createWebServiceObject('setProblemTags', {
-						library_subjects: this.subjectSelect.value,
-						library_chapters: this.chapterSelect.value,
-						library_sections: this.sectionSelect.value,
+						library_subject: this.subjectSelect.value,
+						library_chapter: this.chapterSelect.value,
+						library_section: this.sectionSelect.value,
 						library_levels: this.levelSelect.value,
 						library_status: this.statusSelect?.value ?? '0',
 						command: this.filePath

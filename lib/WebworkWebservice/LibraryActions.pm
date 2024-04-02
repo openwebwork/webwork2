@@ -146,50 +146,31 @@ sub searchLib {
 		$self->{level} = [ split(//, $rh->{library_levels}) ];
 	}
 	'getDBTextbooks' eq $subcommand && do {
-		$self->{library_subjects}    = $rh->{library_subjects};
-		$self->{library_chapters}    = $rh->{library_chapters};
-		$self->{library_sections}    = $rh->{library_sections};
-		$self->{library_textchapter} = $rh->{library_textchapter};
-		my @textbooks = WeBWorK::Utils::ListingDB::getDBTextbooks($self);
+		my @textbooks = WeBWorK::Utils::ListingDB::getDBTextbooks($self->c);
 		$out->{ra_out} = \@textbooks;
 		return $out;
 	};
 	'getAllDBsubjects' eq $subcommand && do {
-		my @subjects = WeBWorK::Utils::ListingDB::getAllDBsubjects($self);
+		my @subjects = WeBWorK::Utils::ListingDB::getAllDBsubjects($self->c);
 		$out->{ra_out} = \@subjects;
 		$out->{text}   = 'Subjects loaded.';
 		return $out;
 	};
 	'getAllDBchapters' eq $subcommand && do {
-		$self->{library_subjects} = $rh->{library_subjects};
-		my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($self);
+		my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($self->c);
 		$out->{ra_out} = \@chaps;
 		$out->{text}   = 'Chapters loaded.';
 
 		return $out;
 	};
 	'getDBListings' eq $subcommand && do {
-
-		my $templateDir = $self->ce->{courseDirs}->{templates};
-		$self->{library_subjects}    = $rh->{library_subjects};
-		$self->{library_chapters}    = $rh->{library_chapters};
-		$self->{library_sections}    = $rh->{library_sections};
-		$self->{library_keywords}    = $rh->{library_keywords};
-		$self->{library_textbook}    = $rh->{library_textbook};
-		$self->{library_textchapter} = $rh->{library_textchapter};
-		$self->{library_textsection} = $rh->{library_textsection};
-		my @listings = WeBWorK::Utils::ListingDB::getDBListings($self);
-		my @output =
-			map { "$templateDir/" . $_->{libraryroot} . '/' . $_->{path} . '/' . $_->{filename} } @listings;
+		my @listings = WeBWorK::Utils::ListingDB::getDBListings($self->c);
+		my @output   = map {"$self->ce->{courseDirs}{templates}/$_->{filepath}"} @listings;
 		$out->{ra_out} = \@output;
 		return $out;
 	};
 	'getSectionListings' eq $subcommand && do {
-		$self->{library_subjects} = $rh->{library_subjects};
-		$self->{library_chapters} = $rh->{library_chapters};
-		$self->{library_sections} = $rh->{library_sections};
-
-		my @section_listings = WeBWorK::Utils::ListingDB::getAllDBsections($self);
+		my @section_listings = WeBWorK::Utils::ListingDB::getAllDBsections($self->c);
 		$out->{ra_out} = \@section_listings;
 		$out->{text}   = 'Sections loaded.';
 
@@ -197,16 +178,7 @@ sub searchLib {
 	};
 
 	'countDBListings' eq $subcommand && do {
-		$self->{library_subjects}    = $rh->{library_subjects};
-		$self->{library_chapters}    = $rh->{library_chapters};
-		$self->{library_sections}    = $rh->{library_sections};
-		$self->{library_keywords}    = $rh->{library_keywords};
-		$self->{library_textbook}    = $rh->{library_textbook};
-		$self->{library_textchapter} = $rh->{library_textchapter};
-		$self->{library_textsection} = $rh->{library_textsection};
-		$self->{includeOPL}          = $rh->{includeOPL};
-		$self->{includeContrib}      = $rh->{includeContrib};
-		my $count = WeBWorK::Utils::ListingDB::countDBListings($self);
+		my $count = WeBWorK::Utils::ListingDB::countDBListings($self->c);
 		$out->{text}   = 'Count done.';
 		$out->{ra_out} = [$count];
 		return $out;
@@ -221,26 +193,21 @@ sub getProblemTags {
 	my $out  = {};
 	my $path = $rh->{command};
 	# Get a pointer to a hash of DBchapter, ..., DBsection
-	my $tags = WeBWorK::Utils::ListingDB::getProblemTags($path);
+	my $tags = WeBWorK::Utils::ListingDB::getProblemTags($path->c);
 	$out->{ra_out} = $tags;
 	$out->{text}   = 'Tags loaded.';
 
 	return $out;
 }
 
-# FIXME: Why are library_subjects, library_chapters, library_sections plural?  Each has a value that is a single
-# subject, chapter, or section.  This is also done in many places above.
 sub setProblemTags {
 	my ($invocant, $self, $rh) = @_;
-	my $path   = $rh->{command};
-	my $dbsubj = $rh->{library_subjects};
-	my $dbchap = $rh->{library_chapters};
-	my $dbsect = $rh->{library_sections};
-	my $level  = $rh->{library_levels};
-	my $stat   = $rh->{library_status};
 	# result is [success, message] with success = 0 or 1
-	my $result = WeBWorK::Utils::ListingDB::setProblemTags($path, $dbsubj, $dbchap, $dbsect, $level, $stat);
-	my $out    = {};
+	my $result = WeBWorK::Utils::ListingDB::setProblemTags(
+		$rh->{command},         $rh->{library_subject}, $rh->{library_chapter},
+		$rh->{library_section}, $rh->{library_levels},  $rh->{library_status}
+	);
+	my $out = {};
 	$out->{text} = $result->[1];
 	return $out;
 }

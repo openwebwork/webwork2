@@ -14,14 +14,23 @@
 ################################################################################
 
 package WeBWorK::Utils::ListingDB;
-
-use strict;
+use Mojo::Base 'Exporter', -signatures;
 
 use DBI;
 use File::Basename;
 
 use WeBWorK::Utils qw(sortByName);
 use WeBWorK::Utils::Tags;
+
+our @EXPORT_OK = qw(
+	getDBextras
+	getDBTextbooks
+	getAllDBsubjects
+	getAllDBchapters
+	getAllDBsections
+	getDBListings
+	countDBListings
+);
 
 use constant LIBRARY_STRUCTURE => {
 	textbook => {
@@ -30,32 +39,17 @@ use constant LIBRARY_STRUCTURE => {
 		where  => 'tbk.textbook_id'
 	},
 	textchapter => {
-		select => 'tc.number,tc.name',
+		select => 'tc.chapter_id,tc.number,tc.name',
 		name   => 'library_textchapter',
-		where  => 'tc.name'
+		where  => 'tc.chapter_id'
 	},
 	textsection => {
-		select => 'ts.number,ts.name',
+		select => 'ts.section_id,ts.number,ts.name',
 		name   => 'library_textsection',
-		where  => 'ts.name'
+		where  => 'ts.section_id'
 	},
 	problem => { select => 'prob.name' },
 };
-
-BEGIN {
-	require Exporter;
-	use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-
-	$VERSION = 1.0;
-	@ISA     = qw(Exporter);
-	@EXPORT  = qw(
-		&deleteListing &getSectionListings &getAllDBsubjects &getAllDBchapters &getAllDBsections &getDBTextbooks
-		&getDBListings &countDBListings &getTables &getDBextras
-	);
-	%EXPORT_TAGS = ();
-	@EXPORT_OK   = qw();
-}
-use vars @EXPORT_OK;
 
 my %OPLtables = (
 	dbsubject      => 'OPL_DBsubject',
@@ -74,38 +68,7 @@ my %OPLtables = (
 	pgfile_problem => 'OPL_pgfile_problem',
 );
 
-my %NPLtables = (
-	dbsubject      => 'NPL-DBsubject',
-	dbchapter      => 'NPL-DBchapter',
-	dbsection      => 'NPL-DBsection',
-	author         => 'NPL-author',
-	path           => 'NPL-path',
-	pgfile         => 'NPL-pgfile',
-	keyword        => 'NPL-keyword',
-	pgfile_keyword => 'NPL-pgfile-keyword',
-	textbook       => 'NPL-textbook',
-	chapter        => 'NPL-chapter',
-	section        => 'NPL-section',
-	problem        => 'NPL-problem',
-	morelt         => 'NPL-morelt',
-	pgfile_problem => 'NPL-pgfile-problem',
-);
-
-sub getTables {
-	my $ce          = shift;
-	my $libraryRoot = $ce->{problemLibrary}->{root};
-	my %tables;
-
-	if ($ce->{problemLibrary}->{version} == 2.5) {
-		%tables = %OPLtables;
-	} else {
-		%tables = %NPLtables;
-	}
-	return %tables;
-}
-
-sub getDB {
-	my $ce  = shift;
+sub getDB ($ce) {
 	my $dbh = DBI->connect_cached(
 		$ce->{problemLibrary_db}{dbsource},
 		$ce->{problemLibrary_db}{user},
@@ -115,107 +78,61 @@ sub getDB {
 			RaiseError => 1,
 		},
 	);
-	die "Cannot connect to problem library database" unless $dbh;
-	return ($dbh);
+	die 'Cannot connect to problem library database' unless $dbh;
+	$dbh->do(qq{SET NAMES 'utf8mb4';}) if $ce->{ENABLE_UTF8MB4};
+	return $dbh;
 }
 
-=over
-
-=item getProblemTags($path) and setProblemTags($path, $subj, $chap, $sect)
-Get and set tags using full path and Tagging module
-
-=cut
-
-sub getProblemTags {
-	my $path  = shift;
-	my $tags  = WeBWorK::Utils::Tags->new($path);
-	my %thash = ();
+sub getProblemTags ($path) {
+	my $tags = WeBWorK::Utils::Tags->new($path);
+	my %thash;
 	for my $j ('DBchapter', 'DBsection', 'DBsubject', 'Level', 'Status') {
 		$thash{$j} = $tags->{$j};
 	}
 	return \%thash;
 }
 
-sub setProblemTags {
-	my $path = shift;
+sub setProblemTags ($path, $subj, $chap, $sect, $level, $status = 0) {
+	$status ||= 0;
+
 	if (-w $path) {
-		my $subj   = shift;
-		my $chap   = shift;
-		my $sect   = shift;
-		my $level  = shift;
-		my $status = shift || 0;
-		my $tags   = WeBWorK::Utils::Tags->new($path);
+		my $tags = WeBWorK::Utils::Tags->new($path);
 		$tags->settag('DBsubject', $subj,   1);
 		$tags->settag('DBchapter', $chap,   1);
 		$tags->settag('DBsection', $sect,   1);
 		$tags->settag('Level',     $level,  1);
 		$tags->settag('Status',    $status, 1);
-		eval {
-			$tags->write();
-			1;
-		} or do {
-			return [ 0, "Problem writing file" ];
-		};
-		return [ 1, "Tags written" ];
+		eval { $tags->write; 1; } or do { return [ 0, 'Problem writing file' ]; };
+		return [ 1, 'Tags written' ];
 	} else {
-		return [ 0, "Do not have permission to write to the problem file" ];
+		return [ 0, 'Do not have permission to write to the problem file' ];
 	}
 }
 
-=item kwtidy($s) and keywordcleaner($s)
-Both take a string and perform utility functions related to keywords.
-keywordcleaner splits a string, and uses kwtidy to regularize punctuation
-and case for an individual entry.
-
-=cut
-
-sub kwtidy {
-	my $s = shift;
-	$s =~ s/\W//g;
-	$s =~ s/_//g;
-	$s = lc($s);
-	return ($s);
+sub keywordTidy ($s) {
+	return lc($s =~ s/[\W_]//gr);
 }
 
-sub keywordCleaner {
-	my $string = shift;
-	my @spl1   = split /\s*,\s*/, $string;
-	my @spl2   = map(kwtidy($_), @spl1);
-	return (@spl2);
+sub keywordCleaner ($string) {
+	return map { keywordTidy($_) } split /\s*,\s*/, $string;
 }
 
-sub makeKeywordWhere {
-	my $kwstring = shift;
-	my @kwlist   = keywordCleaner($kwstring);
-	#	@kwlist = map { "kw.keyword = \"$_\"" } @kwlist;
-	my @kwlistqm = map {"kw.keyword = ? "} @kwlist;
-	my $where    = join(" OR ", @kwlistqm);
+sub makeKeywordWhere ($kwstring) {
+	my @kwlist = keywordCleaner($kwstring);
+	my $where  = join(' OR ', map {'kw.keyword = ? '} @kwlist);
 	return "AND ( $where )", @kwlist;
 }
 
-=item getDBextras($path)
-Get flags for whether a pg file uses Math Objects, and if it is static
-
-$c is a WeBWorK::Controller object so we can get the right table names
-
-$path is the path to the file
-
-Output is an array reference: [MO, static]
-
-=cut
-
-sub getDBextras {
-	my $c      = shift;
-	my $path   = shift;
-	my %tables = getTables($c->ce);
-	my $dbh    = getDB($c->ce);
+sub getDBextras ($c, $path) {
+	my $dbh = getDB($c->ce);
 	my ($mo, $static) = (0, 0);
 
 	$path =~ s|^Library/||;
 	my $filename = basename $path;
 	$path = dirname $path;
 	my $query =
-		"SELECT pgfile.MO, pgfile.static FROM `$tables{pgfile}` pgfile, `$tables{path}` p WHERE p.path=\"$path\" AND pgfile.path_id=p.path_id AND pgfile.filename=\"$filename\"";
+		"SELECT pgfile.MO, pgfile.static FROM `$OPLtables{pgfile}` pgfile, `$OPLtables{path}` p "
+		. "WHERE p.path=\"$path\" AND pgfile.path_id=p.path_id AND pgfile.filename=\"$filename\"";
 	my @res = $dbh->selectrow_array($query);
 	if (@res) {
 		$mo     = $res[0];
@@ -225,422 +142,240 @@ sub getDBextras {
 	return [ $mo, $static ];
 }
 
-=item getDBTextbooks($c)
-Returns textbook dependent entries.
+sub getDBTextbooks ($c, $thing = 'textbook') {
+	my $dbh = getDB($c->ce);
 
-$c is a WeBWorK::Controller object so we can extract whatever parameters we want
-
-$thing is a string of either 'textbook', 'textchapter', or 'textsection' to
-specify what to return.
-
-If we are to return textbooks, then return an array of textbook names
-consistent with the DB subject, chapter, section selected.
-
-=cut
-
-sub getDBTextbooks {
-	my $c          = shift;
-	my $thing      = shift || 'textbook';
-	my $dbh        = getDB($c->ce);
-	my %tables     = getTables($c->ce);
 	my $extrawhere = '';
-	# Handle DB* restrictions
-	my @search_params = ();
-	my $subj          = $c->param('library_subjects') || "";
-	my $chap          = $c->param('library_chapters') || "";
-	my $sec           = $c->param('library_sections') || "";
-	if ($subj) {
-		$subj =~ s/'/\\'/g;
-		$extrawhere .= " AND t.name = ?\n";
-		push @search_params, $subj;
+	my @search_params;
+
+	if ($c->param('library_subject')) {
+		$extrawhere .= " AND t.DBsubject_id = ?\n";
+		push @search_params, $c->param('library_subject');
 	}
-	if ($chap) {
-		$chap =~ s/'/\\'/g;
-		$extrawhere .= " AND c.name = ? AND c.DBsubject_id=t.DBsubject_id\n";
-		push @search_params, $chap;
+	if ($c->param('library_chapter')) {
+		$extrawhere .= " AND c.DBchapter_id = ? AND c.DBsubject_id = t.DBsubject_id\n";
+		push @search_params, $c->param('library_chapter');
 	}
-	if ($sec) {
-		$sec =~ s/'/\\'/g;
-		$extrawhere .= " AND s.name = ? AND s.DBchapter_id = c.DBchapter_id AND s.DBsection_id=pgf.DBsection_id";
-		push @search_params, $sec;
-	}
-	my $textextrawhere = '';
-	my $textid         = $c->param('library_textbook') || '';
-	if ($textid and $thing ne 'textbook') {
-		$textextrawhere .= " AND tbk.textbook_id= ? ";
-		push @search_params, $textid;
-	} else {
-		return ([]) if ($thing ne 'textbook');
+	if ($c->param('library_section')) {
+		$extrawhere .=
+			' AND s.DBsection_id = ? AND s.DBchapter_id = c.DBchapter_id AND s.DBsection_id = pgf.DBsection_id';
+		push @search_params, $c->param('library_section');
 	}
 
-	my $textchap = $c->param('library_textchapter') || '';
-	$textchap =~ s/^\s*\d+\.\s*//;
-	if ($textchap and $thing eq 'textsection') {
-		$textextrawhere .= " AND tc.name= ? ";
-		push @search_params, $textchap;
-	} else {
-		return ([]) if ($thing eq 'textsection');
+	my $textextrawhere = '';
+
+	if ($thing ne 'textbook') {
+		return [] unless $c->param('library_textbook');
+		$textextrawhere .= ' AND tbk.textbook_id = ? ';
+		push @search_params, $c->param('library_textbook');
+	}
+
+	if ($thing eq 'textsection') {
+		return [] unless $c->param('library_textchapter');
+		$textextrawhere .= ' AND tc.chapter_id = ? ';
+		push @search_params, $c->param('library_textchapter');
 	}
 
 	my $selectwhat = LIBRARY_STRUCTURE->{$thing}{select};
 
-	# 	my $query = "SELECT DISTINCT $selectwhat
-	#           FROM `$tables{textbook}` tbk, `$tables{problem}` prob,
-	# 			`$tables{pgfile_problem}` pg, `$tables{pgfile}` pgf,
-	#             `$tables{dbsection}` s, `$tables{dbchapter}` c, `$tables{dbsubject}` t,
-	# 			`$tables{chapter}` tc, `$tables{section}` ts
-	#           WHERE ts.section_id=prob.section_id AND
-	#             prob.problem_id=pg.problem_id AND
-	#             s.DBchapter_id=c.DBchapter_id AND
-	#             c.DBsubject_id=t.DBsubject_id AND
-	#             pgf.DBsection_id=s.DBsection_id AND
-	#             pgf.pgfile_id=pg.pgfile_id AND
-	#             ts.chapter_id=tc.chapter_id AND
-	#             tc.textbook_id=tbk.textbook_id
-	#             $extrawhere $textextrawhere ";
 	my $query = "SELECT DISTINCT $selectwhat
-          FROM `$tables{textbook}` tbk, `$tables{problem}` prob,
-			`$tables{pgfile_problem}` pg, `$tables{pgfile}` pgf,
-            `$tables{dbsection}` s, `$tables{dbchapter}` c, `$tables{dbsubject}` t,
-			`$tables{chapter}` tc, `$tables{section}` ts
-          WHERE ts.section_id=prob.section_id AND
-            prob.problem_id=pg.problem_id AND
-            s.DBchapter_id=c.DBchapter_id AND
-            c.DBsubject_id=t.DBsubject_id AND
-            pgf.DBsection_id=s.DBsection_id AND
-            pgf.pgfile_id=pg.pgfile_id AND
-            ts.chapter_id=tc.chapter_id AND
-            tc.textbook_id=tbk.textbook_id
-            $extrawhere $textextrawhere  ";
+		FROM `$OPLtables{textbook}` tbk,
+			`$OPLtables{problem}` prob,
+			`$OPLtables{pgfile_problem}` pg,
+			`$OPLtables{pgfile}` pgf,
+			`$OPLtables{dbsection}` s,
+			`$OPLtables{dbchapter}` c,
+			`$OPLtables{dbsubject}` t,
+			`$OPLtables{chapter}` tc,
+			`$OPLtables{section}` ts
+		WHERE ts.section_id = prob.section_id AND
+			prob.problem_id = pg.problem_id AND
+			s.DBchapter_id = c.DBchapter_id AND
+			c.DBsubject_id = t.DBsubject_id AND
+			pgf.DBsection_id = s.DBsection_id AND
+			pgf.pgfile_id = pg.pgfile_id AND
+			ts.chapter_id = tc.chapter_id AND
+			tc.textbook_id = tbk.textbook_id
+			$extrawhere $textextrawhere";
 
-	#$query =~ s/\n/ /g;
-	#warn "query:", $query;
-	#warn "params:", join(" | ", @search_params);
-	#	my $text_ref = $dbh->selectall_arrayref($query);
-	my $text_ref = $dbh->selectall_arrayref($query, {}, @search_params);    #FIXME
+	my $text_ref = $dbh->selectall_arrayref($query, {}, @search_params);
 
 	my @texts = @{$text_ref};
+	my @sortarray;
 	if ($thing eq 'textbook') {
-		@texts = grep { $_->[1] =~ /\S/ } @texts;
-		my @sortarray = map { $_->[1] . $_->[2] . $_->[3] } @texts;
-		@texts = indirectSortByName(\@sortarray, @texts);
-		return (\@texts);
+		@texts     = grep { $_->[1] =~ /\S/ } @texts;
+		@sortarray = map  { $_->[1] . $_->[2] . $_->[3] } @texts;
 	} else {
-		@texts = grep { $_->[1] =~ /\S/ } @texts;
-		my @sortarray = map { $_->[0] . ". " . $_->[1] } @texts;
-		@texts = map { [$_] } @sortarray;
-		@texts = indirectSortByName(\@sortarray, @texts);
-		return (\@texts);
+		@texts     = grep { $_->[2] =~ /\S/ } @texts;
+		@sortarray = map  { $_->[1] . '. ' . $_->[2] } @texts;
 	}
+
+	@texts = indirectSortByName(\@sortarray, @texts);
+	return \@texts;
 }
 
-=item getAllDBsubjects($c)
-Returns an array of DBsubject names
+sub getAllDBsubjects ($c) {
+	my $dbh = getDB($c->ce);
+	return @{
+		$dbh->selectall_arrayref(
+			"SELECT DISTINCT name, DBsubject_id FROM `$OPLtables{dbsubject}` ORDER BY DBsubject_id")
+	};
+}
 
-$c is the WeBWorK::Controller object
+sub getAllDBchapters ($c) {
+	return unless $c->param('library_subject');
+	my $dbh = getDB($c->ce);
+	return @{
+		$dbh->selectall_arrayref(
+			"SELECT DISTINCT c.name, c.DBchapter_id FROM `$OPLtables{dbchapter}` c, `$OPLtables{dbsubject}` t "
+				. 'WHERE c.DBsubject_id = t.DBsubject_id AND t.DBsubject_id = ? ORDER BY c.DBchapter_id',
+			{}, $c->param('library_subject')
+		)
+	};
+}
 
-=cut
+sub getAllDBsections ($c) {
+	return unless $c->param('library_subject') && $c->param('library_chapter');
+	my $dbh = getDB($c->ce);
+	return @{
+		$dbh->selectall_arrayref(
+			"SELECT DISTINCT s.name, s.DBsection_id "
+				. "FROM `$OPLtables{dbsection}` s, `$OPLtables{dbchapter}` c, `$OPLtables{dbsubject}` t "
+				. "WHERE s.DBchapter_id = c.DBchapter_id AND c.DBsubject_id = t.DBsubject_id "
+				. "AND t.DBsubject_id = ? AND c.DBchapter_id = ? "
+				. "ORDER BY s.DBsection_id",
+			{}, $c->param('library_subject'), $c->param('library_chapter')
+		)
+	};
+}
 
-sub getAllDBsubjects {
-	my $c       = shift;
-	my %tables  = getTables($c->ce);
-	my @results = ();
-	my @row;
-	my $query = "SELECT DISTINCT name, DBsubject_id FROM `$tables{dbsubject}` ORDER BY DBsubject_id";
-	my $dbh   = getDB($c->ce);
-	my $sth   = $dbh->prepare($query);
-	$sth->execute();
+sub getDBListings ($c, $amcounter = 0) {
+	my $ce = $c->ce;
 
-	while (@row = $sth->fetchrow_array()) {
-		push @results, $row[0];
+	my $extrawhere = '';
+	my @select_parameters;
+	if ($c->param('library_subject')) {
+		$extrawhere .= ' AND dbsj.DBsubject_id = ? ';
+		push @select_parameters, $c->param('library_subject');
 	}
-	# @results = sortByName(undef, @results);
-	return @results;
-}
+	if ($c->param('library_chapter')) {
+		$extrawhere .= ' AND dbc.DBchapter_id = ? ';
+		push @select_parameters, $c->param('library_chapter');
+	}
+	if ($c->param('library_section')) {
+		$extrawhere .= ' AND dbsc.DBsection_id = ? ';
+		push @select_parameters, $c->param('library_section');
+	}
 
-=item getAllDBchapters($c)
-Returns an array of DBchapter names
-
-$c is the WeBWorK::Controller object
-
-=cut
-
-sub getAllDBchapters {
-	my $c       = shift;
-	my %tables  = getTables($c->ce);
-	my $subject = $c->param('library_subjects');
-	return () unless ($subject);
-	my $dbh = getDB($c->ce);
-
-	my $query = "SELECT DISTINCT c.name, c.DBchapter_id
-				FROM `$tables{dbchapter}` c,
-				`$tables{dbsubject}` t
-                 WHERE c.DBsubject_id = t.DBsubject_id AND
-                 t.name = ? ORDER BY c.DBchapter_id";
-	my $all_chaps_ref = $dbh->selectall_arrayref($query, {}, $subject);
-	my @results       = map { $_->[0] } @{$all_chaps_ref};
-	return @results;
-}
-
-=item getAllDBsections($c)
-Returns an array of DBsection names
-
-$c is the WeBWorK::Controller object
-
-=cut
-
-sub getAllDBsections {
-	my $c       = shift;
-	my %tables  = getTables($c->ce);
-	my $subject = $c->param('library_subjects');
-	return () unless ($subject);
-	my $chapter = $c->param('library_chapters');
-	return () unless ($chapter);
-	my $dbh = getDB($c->ce);
-
-	my $query = "SELECT DISTINCT s.name, s.DBsection_id
-                 FROM `$tables{dbsection}` s,
-                 `$tables{dbchapter}` c, `$tables{dbsubject}` t
-                 WHERE s.DBchapter_id = c.DBchapter_id AND
-                 c.DBsubject_id = t.DBsubject_id AND
-                 t.name = ? AND c.name = ? ORDER BY s.DBsection_id";
-	my $all_sections_ref = $dbh->selectall_arrayref($query, {}, $subject, $chapter);
-	my @results          = map { $_->[0] } @{$all_sections_ref};
-	return @results;
-}
-
-=item getDBListings($c)
-Returns an array of hash references with the keys: path, filename.
-
-$c is a WeBWorK::Controller object that has all needed data inside of it
-
-Here, we search on all known fields out of r
-
-=cut
-
-sub getDBListings {
-	my $c               = shift;
-	my $amcounter       = shift;            # 0-1 if I am a counter.
-	my $ce              = $c->ce;
-	my %tables          = getTables($ce);
-	my $subj            = $c->param('library_subjects') || "";
-	my $chap            = $c->param('library_chapters') || "";
-	my $sec             = $c->param('library_sections') || "";
-	my $include_opl     = $c->param('includeOPL')     // 1;
-	my $include_contrib = $c->param('includeContrib') // 0;
-
-	# Make sure these strings are internally encoded in UTF-8
-	utf8::upgrade($subj);
-	utf8::upgrade($chap);
-	utf8::upgrade($sec);
-
-	my $keywords = $c->param('library_keywords') || "";
-	# Next could be an array, an array reference, or nothing
 	my @levels = $c->param('level');
-	if (scalar(@levels) == 1 and ref($levels[0]) eq 'ARRAY') {
-		@levels = @{ $levels[0] };
-	}
-	@levels = grep { defined($_) && m/\S/ } @levels;
-	my ($kw1, $kw2) = ('', '');
-	my $keywordstring;
-	my @keyword_params;
-	if ($keywords) {
-		($keywordstring, @keyword_params) = makeKeywordWhere($keywords);
-		$kw1 = ", `$tables{keyword}` kw, `$tables{pgfile_keyword}` pgkey";
-		$kw2 = " AND kw.keyword_id=pgkey.keyword_id AND
-			 pgkey.pgfile_id=pgf.pgfile_id $keywordstring";
+	@levels = @{ $levels[0] }              if @levels == 1 && ref($levels[0]) eq 'ARRAY';
+	@levels = split(/\s*,\s*/, $levels[0]) if @levels == 1;
+	@levels = grep { defined && m/\S/ } @levels;
+	if (@levels) {
+		$extrawhere .= ' AND pgf.level IN (' . join(',', ('?') x @levels) . ') ';
+		push(@select_parameters, @levels);
 	}
 
-	my $dbh = getDB($ce);
+	$extrawhere .= " AND pgf.libraryroot = 'Library' " unless $c->param('includeContrib');
+	$extrawhere .= " AND pgf.libraryroot = 'Contrib' " unless $c->param('includeOPL') // 1;
 
-	my $extrawhere        = '';
-	my @select_parameters = ();
-	if ($subj) {
-		$extrawhere .= " AND dbsj.name= ? ";
-		push @select_parameters, $subj;
+	my ($kw_tables, $kw_where) = ('', '');
+	my @keyword_parameters;
+	if ($c->param('library_keywords')) {
+		(my $keywordstring, @keyword_parameters) = makeKeywordWhere($c->param('library_keywords'));
+		$kw_tables = ", `$OPLtables{keyword}` kw, `$OPLtables{pgfile_keyword}` pgkey";
+		$kw_where  = " AND kw.keyword_id = pgkey.keyword_id AND pgkey.pgfile_id = pgf.pgfile_id $keywordstring";
 	}
-	if ($chap) {
-		$extrawhere .= " AND dbc.name= ? ";
-		push @select_parameters, $chap;
-	}
-	if ($sec) {
-		$extrawhere .= " AND dbsc.name= ? ";
-		push @select_parameters, $sec;
-	}
-	if (scalar(@levels)) {
-		$extrawhere .= " AND pgf.level IN ( ? ) ";
-		push @select_parameters, join(',', @levels);
-	}
-	$extrawhere .= " AND pgf.libraryroot = 'Library' " unless $include_contrib;
-	$extrawhere .= " AND pgf.libraryroot = 'Contrib' " unless $include_opl;
-	my $textextrawhere      = '';
-	my $haveTextInfo        = 0;
-	my @textInfo_parameters = ();
-	for my $j (qw( textbook textchapter textsection )) {
-		my $foo = $c->param(LIBRARY_STRUCTURE->{$j}{name}) || '';
-		$foo =~ s/^\s*\d+\.\s*//;
-		if ($foo) {
-			$haveTextInfo = 1;
-			$foo =~ s/'/\\'/g;
-			$textextrawhere .= " AND " . LIBRARY_STRUCTURE->{$j}{where} . "= ? ";
-			push @textInfo_parameters, $foo;
+
+	my $textextrawhere = '';
+	my @textInfo_parameters;
+	for (qw(textbook textchapter textsection)) {
+		if ($c->param(LIBRARY_STRUCTURE->{$_}{name})) {
+			$textextrawhere .= ' AND ' . LIBRARY_STRUCTURE->{$_}{where} . ' = ? ';
+			push @textInfo_parameters, $c->param(LIBRARY_STRUCTURE->{$_}{name});
 		}
 	}
 
-	my $selectwhat = 'DISTINCT pgf.pgfile_id';
-	$selectwhat = "COUNT($selectwhat)" if ($amcounter);
-
-	my $pg_id_ref;
-
-	$dbh->do(qq{SET NAMES 'utf8mb4';}) if $ce->{ENABLE_UTF8MB4};
-	if ($haveTextInfo) {
-		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf,
-			`$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj,
-			`$tables{pgfile_problem}` pgp, `$tables{problem}` prob, `$tables{textbook}` tbk ,
-			`$tables{chapter}` tc, `$tables{section}` ts $kw1
-			WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
-				  dbc.DBchapter_id = dbsc.DBchapter_id AND
-				  dbsc.DBsection_id = pgf.DBsection_id AND
-				  pgf.pgfile_id = pgp.pgfile_id AND
-				  pgp.problem_id = prob.problem_id AND
-				  tc.textbook_id = tbk.textbook_id AND
-				  ts.chapter_id = tc.chapter_id AND
-				  prob.section_id = ts.section_id
-				  $extrawhere $textextrawhere $kw2";
-
-		$pg_id_ref = $dbh->selectall_arrayref($query, {}, @select_parameters, @textInfo_parameters, @keyword_params);
+	my $group_by   = '';
+	my $selectwhat = 'CONCAT(pgf.libraryroot, "/", p.path, "/", pgf.filename)';
+	if ($amcounter) {
+		$selectwhat = "COUNT(DISTINCT $selectwhat)";
 	} else {
-		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf,
-			 `$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj $kw1
-			WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
-				  dbc.DBchapter_id = dbsc.DBchapter_id AND
-				  dbsc.DBsection_id = pgf.DBsection_id
-				  $extrawhere $kw2";
-
-		$pg_id_ref = $dbh->selectall_arrayref($query, {}, @select_parameters, @keyword_params);
+		$selectwhat .= 'as filepath, pgf.morelt_id, pgf.pgfile_id, pgf.static, pgf.MO';
+		$group_by = 'GROUP BY filepath';
 	}
 
-	my @pg_ids = map { $_->[0] } @{$pg_id_ref};
-	return (@pg_ids[0]) if ($amcounter);
+	my $pg_file_ref;
 
-	my @results = ();
-	for my $pgid (@pg_ids) {
-		my $query =
-			"SELECT libraryroot, path, filename, morelt_id, pgfile_id, static, MO FROM `$tables{pgfile}` pgf, `$tables{path}` p
-          WHERE p.path_id = pgf.path_id AND pgf.pgfile_id= ? ";
-		my $row = $dbh->selectrow_arrayref($query, {}, $pgid);
+	my $dbh = getDB($ce);
 
+	if ($textextrawhere) {
+		my $query = "SELECT $selectwhat from `$OPLtables{pgfile}` pgf, `$OPLtables{path}` p,
+			`$OPLtables{dbsection}` dbsc, `$OPLtables{dbchapter}` dbc, `$OPLtables{dbsubject}` dbsj,
+			`$OPLtables{pgfile_problem}` pgp, `$OPLtables{problem}` prob, `$OPLtables{textbook}` tbk,
+			`$OPLtables{chapter}` tc, `$OPLtables{section}` ts $kw_tables
+			WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
+				dbc.DBchapter_id = dbsc.DBchapter_id AND
+				dbsc.DBsection_id = pgf.DBsection_id AND
+				pgf.pgfile_id = pgp.pgfile_id AND
+				pgp.problem_id = prob.problem_id AND
+				tc.textbook_id = tbk.textbook_id AND
+				ts.chapter_id = tc.chapter_id AND
+				prob.section_id = ts.section_id AND
+				p.path_id = pgf.path_id
+				$extrawhere $textextrawhere $kw_where $group_by";
+
+		$pg_file_ref =
+			$dbh->selectall_arrayref($query, {}, @select_parameters, @textInfo_parameters, @keyword_parameters);
+	} else {
+		my $query = "SELECT $selectwhat from `$OPLtables{pgfile}` pgf, `$OPLtables{path}` p,
+			`$OPLtables{dbsection}` dbsc, `$OPLtables{dbchapter}` dbc, `$OPLtables{dbsubject}` dbsj $kw_tables
+			WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
+				dbc.DBchapter_id = dbsc.DBchapter_id AND
+				dbsc.DBsection_id = pgf.DBsection_id AND
+				p.path_id = pgf.path_id
+				$extrawhere $kw_where $group_by";
+
+		$pg_file_ref = $dbh->selectall_arrayref($query, {}, @select_parameters, @keyword_parameters);
+	}
+
+	return $pg_file_ref->[0][0] if $amcounter;
+
+	my @results;
+	for my $pgfile (@$pg_file_ref) {
 		push @results,
 			{
-				'libraryroot' => $row->[0],
-				'path'        => $row->[1],
-				'filename'    => $row->[2],
-				'morelt'      => $row->[3],
-				'pgid'        => $row->[4],
-				'static'      => $row->[5],
-				'MO'          => $row->[6],
+				'filepath' => $pgfile->[0],
+				'morelt'   => $pgfile->[1],
+				'pgid'     => $pgfile->[2],
+				'static'   => $pgfile->[3],
+				'MO'       => $pgfile->[4],
 			};
-
 	}
+
 	return @results;
 }
 
-sub countDBListings {
-	my $c = shift;
-	return (getDBListings($c, 1));
+sub countDBListings ($c) {
+	return getDBListings($c, 1);
 }
 
-sub getMLTleader {
-	my $c      = shift;
-	my $mltid  = shift;
-	my %tables = getTables($c->ce);
-	my $dbh    = getDB($c->ce);
-	my $query  = "SELECT leader FROM `$tables{morelt}` WHERE morelt_id=\"$mltid\"";
-	my $row    = $dbh->selectrow_arrayref($query);
+sub getMLTleader ($c, $mltid) {
+	my $dbh = getDB($c->ce);
+	my $row = $dbh->selectrow_arrayref(qq{SELECT leader FROM `$OPLtables{morelt}` WHERE morelt_id="$mltid"});
 	return $row->[0];
 }
 
-##############################################################################
-# input chapter, section
-# returns an array of hash references.
-# if section is omitted, get all from the chapter
-sub getSectionListings {
-	# TODO: eliminate this subroutine after deprecating OPLv1
-	my $c       = shift;
-	my $ce      = $c->ce;
-	my $version = $ce->{problemLibrary}->{version} || 1;
-	if ($version => 2) { return (getDBListings($c, 0)) }
-	my $subj = $c->param('library_subjects') || "";
-	my $chap = $c->param('library_chapters') || "";
-	my $sec  = $c->param('library_sections') || "";
-
-	my $chapstring = '';
-	if ($chap) {
-		$chap =~ s/'/\\'/g;
-		$chapstring = " c.chapter = \'$chap\' AND ";
-	}
-	my $secstring = '';
-	if ($sec) {
-		$sec =~ s/'/\\'/g;
-		$secstring = " c.section = \'$sec\' AND ";
-	}
-
-	my @results;    #returned
-	my $query = "SELECT c.*, p.path
-	FROM classify c, pgfiles p
-	WHERE ? ? c.pgfiles_id = p.pgfiles_id";
-	my $dbh    = getDB($ce);
-	my %tables = getTables($ce);
-	my $sth    = $dbh->prepare($query);
-
-	$sth->execute($chapstring, $secstring);
-
-	while (my $row = $sth->fetchrow_hashref) {
-		push @results, $row;
-	}
-	return @results;
-}
-
-###############################################################################
-# INPUT:
-#  listing id number
-# RETURN:
-#  1 = all ok
-#
-# not implemented yet
-sub deleteListing {
-	my $ce         = shift;
-	my $listing_id = shift;
-	#print STDERR "ListingDB::deleteListing(): listing == '$listing_id'\n";
-
-	my $dbh    = getDB($ce);
-	my %tables = getTables($ce);
-
-	return undef;
-}
-
-# Use sortByName($aref, @b) to sort list @b using parallel list @a.
-# Here, $aref is a reference to the array @a
-
-sub indirectSortByName {
-	my $aref = shift;
-	my @a    = @$aref;
-	my @b    = @_;
+# Use sortByName($aref, @b) to sort list @b using the parallel list referenced by $aref.
+sub indirectSortByName ($aref, @b) {
 	my %pairs;
-	for my $j (1 .. scalar(@a)) {
-		$pairs{ $a[ $j - 1 ] } = $b[ $j - 1 ];
+	for my $j (0 .. $#$aref) {
+		$pairs{ $aref->[$j] } = $b[$j];
 	}
-	my @list = sortByName(undef, @a);
-	@list = map { $pairs{$_} } @list;
-	return (@list);
+	return map { $pairs{$_} } sortByName(undef, @$aref);
 }
 
-##############################################################################
 1;
-
-__END__
-
-=back
 
 =head1 DESCRIPTION
 
@@ -648,9 +383,121 @@ This module provides access to the database of classify in the
 system. This includes the filenames, along with the table of
 search terms.
 
-=head1 AUTHOR
+=head2 getProblemTags
 
-Written by Bill Ziemer.
-Modified by John Jones.
+Usage: C<getProblemTags($path)>
+
+Get tags using full path and tagging module.
+
+=head2 setProblemTags
+
+Usage: C<setProblemTags($path, $subj, $chap, $sect)>
+
+Set tags using full path and tagging module.
+
+=head2 keywordTidy
+
+Usage: C<keywordTidy($s)>
+
+Regularize punctuation and case for a keyword.
+
+=head2 keywordCleaner
+
+Usage: C<keywordCleaner($s)>
+
+Split a string on commas, and apply keywordTidy to the entries.
+
+=head2 getDBextras
+
+Usage: C<getDBextras($c, $path)>
+
+Get flags for whether a pg file uses Math Objects, and if it is static.
+
+The parameter C<$c> must be a WeBWorK::Controller object.
+
+C<$path> is the path to the file.
+
+Output is an array reference: C<[MO, static]>
+
+=head2 getDBTextbooks
+
+Usage: C<getDBTextbooks($c, $thing)>
+
+The parameter C<$c> must be a WeBWorK::Controller object.
+
+The parameter C<$thing> must be one of "textbook", "textchapter", or
+"textsection".
+
+This returns a reference to an array of arrays. If C<$thing> is "textboot", then
+each entry of the return array is an array containing the database id of the
+textbook, the textbook title, the textbook author, and textbook edition. If
+C<$thing> is "textchapter", then each entry of the return array is an array
+containing the database id of the texbook chapter, the chapter number, and the
+chapter name. If C<$thing> is "textsection", then each entry of the return array
+is an array containing the database id of the texbook section, the section
+number, and the section name.
+
+=head2 getAllDBsubjects
+
+Usage: C<getAllDBsubjects($c)>
+
+Returns an array of arrays, each of which contains a database subject name and
+its database id.
+
+The parameter C<$c> must be a WeBWorK::Controller object.
+
+=head2 getAllDBchapters
+
+Usage: C<getAllDBchapters($c)>
+
+Returns an array of arrays, each of which contains a database chapter name and
+its database id.
+
+The parameter C<$c> must be a WeBWorK::Controller object.
+
+=head2 getAllDBsections
+
+Usage: C<getAllDBsections($c)>
+
+Returns an array of arrays, each of which contains a database section name and
+its database id.
+
+The parameter C<$c> must be a WeBWorK::Controller object.
+
+=head2 getDBListings
+
+Usage: C<getDBListings($c)>
+
+The parameter C<$c> must be a WeBWorK::Controller object.
+
+Returns an array of hash references with the keys "filepath" which is the
+relative file path in the OPL, "morelt" which is true if there are more problems
+like this one, "pgid" which is the internal datbase index of the problem,
+"static" which is true if the problem is declared static (which it should be if
+it has no random parameters), and "MO" if the problem is declared to use
+MathObjects.
+
+The search may be constrained by the parameters "library_subject",
+"library_chapter", "library_section", "level", "library_keywords", "includeOPL",
+"includeContrib", "library_textbook", "library_textchapter", and
+"library_textsection" which are retrieved with the C<< $c->param >> method.
+
+=head2 countDBListings
+
+Usage: C<countDBListings($c)>
+
+The parameter C<$c> must be a WeBWorK::Controller object.
+
+Returns the number of OPL problems that satisfy the given constraints. The
+constraints are the same as those for C<getDBListings>.
+
+=head2 getMLTleader
+
+Usage: C<getMLTleader($c, $mltid)>
+
+The parameter C<$c> must be a WeBWorK::Controller object. The parameter
+C<$multid> should be the more like this index of an OPL problem.
+
+Returns the "leader" for the more like this group.
 
 =cut
