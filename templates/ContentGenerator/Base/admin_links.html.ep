@@ -21,13 +21,14 @@
 					% add_dbLayout     => 'sql_single'
 				% }
 			% ],
-			% [ 'rename_course',        maketext('Rename Courses') ],
-			% [ 'delete_course',        maketext('Delete Courses') ],
-			% [ 'archive_course',       maketext('Archive Courses') ],
-			% [ 'unarchive_course',     maketext('Unarchive Courses') ],
-			% [ 'upgrade_course',       maketext('Upgrade Courses') ],
-			% [ 'hide_inactive_course', maketext('Hide Courses') ],
-			% [ 'manage_locations',     maketext('Manage Locations') ],
+			% [ 'rename_course',         maketext('Rename Courses') ],
+			% [ 'delete_course',         maketext('Delete Courses') ],
+			% [ 'archive_course',        maketext('Archive Courses') ],
+			% [ 'unarchive_course',      maketext('Unarchive Courses') ],
+			% [ 'upgrade_course',        maketext('Upgrade Courses') ],
+			% [ 'hide_inactive_course',  maketext('Hide Courses') ],
+			% [ 'manage_locations',      maketext('Manage Locations') ],
+			% [ 'manage_lti_course_map', maketext('Manage LTI Course Map') ],
 		% ) {
 			<li class="list-group-item nav-item">
 				<%= $makelink->(
