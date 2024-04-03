@@ -22,6 +22,7 @@ use warnings;
 use Data::Structure::Util qw(unbless);
 
 use WeBWorK::PG::Tidy qw(pgtidy);
+use WeBWorK::PG::ConvertToPGML qw(convertToPGML);
 
 sub getUserProblem {
 	my ($invocant, $self, $params) = @_;
@@ -150,6 +151,17 @@ sub tidyPGCode {
 		ra_out => { tidiedPGCode => $tidiedPGCode, status => $result, errors => $errors },
 		text   => 'Tidied code'
 	};
+}
+
+sub convertCodeToPGML {
+	my ($invocant, $self, $params) = @_;
+	my $code = $params->{pgCode};
+
+	return {
+		ra_out => { pgmlCode => convertToPGML($code) },
+		text   => 'Converted to PGML'
+	};
+
 }
 
 1;
