@@ -42,7 +42,6 @@
 					</div>
 				% }
 				<%= link_to $courseID => 'set_list' => { courseID => $courseID } =%>
-				<code><%= $tempCE->{dbLayoutName} %></code>
 				% if (!$directories_ok) {
 					<span class="alert alert-danger p-1 mb-0">
 						<%= maketext('Directory structure or permissions need to be repaired.') =%>

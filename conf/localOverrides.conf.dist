@@ -404,6 +404,31 @@ $mail{feedbackRecipients}    = [
 
 #push (@{${pg}{modules}}, [qw(LaTeXImage)]);
 
+
+##############################
+# Additional Database options
+###############################
+
+# If dbsource is set to a nonempty value, then this database connection information will be used to store dvipng
+# depths.  It is assumed that the 'depths' table exists in the database.
+
+# $pg{displayModeOptions}{images}{dvipng_depth_db} => {
+# 	dbsource => 'dsn_database_string',
+# 	user     => 'dsn_database_username',
+# 	passwd   => 'dsn_database_password',
+# },
+
+# Problem Library SQL database connection information
+
+# $problemLibrary_db = {
+# 	dbsource => 'database_dsn',
+# 	user     => 'database_username',
+# 	passwd   => 'database_password',
+# 	storage_engine => 'myisam',
+# };
+
+
+
 ################################################################################
 # Using R with WeBWorK
 ################################################################################

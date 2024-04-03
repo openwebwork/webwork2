@@ -63,7 +63,7 @@ sub createCourse {
 		addCourse(
 			courseID      => $params->{name},
 			ce            => $ce,
-			courseOptions => { dbLayoutName => $ce->{dbLayoutName} },
+			courseOptions => {},
 			users         => \@users
 		);
 		addLog($ce, "New course created: $params->{name}");
