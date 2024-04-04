@@ -365,12 +365,11 @@ sub verify_normal_user {
 
 	debug("auth_result=|${auth_result}|");
 
-	# Parameters CANNOT be modified until after LTIAdvanced authentication
-	# has been done, because the parameters passed with the request
-	# are used in computing the OAuth_signature.  If there
-	# are any changes in $c->{paramcache} (see Controller.pm)
-	# before authentication occurs, then authentication will FAIL
-	# even if the consumer_secret is correct.
+	# Parameters CANNOT be modified until after LTIAdvanced authentication has
+	# been done, because the parameters passed with the request are used in
+	# computing the OAuth_signature.  If there are any changes to the parameters
+	# before authentication occurs, then authentication will FAIL even if the
+	# consumer_secret is correct.
 
 	$c->param("user" => $user_id);
 
@@ -391,7 +390,6 @@ sub authenticate {
 
 	debug("LTIAdvanced::authenticate called for user |$user|");
 	debug "ref(c) = |" . ref($c) . "|";
-	debug "ref of c->{paramcache} = |" . ref($c->{paramcache}) . "|";
 
 	my $ce         = $c->ce;
 	my $db         = $c->db;
@@ -410,7 +408,7 @@ sub authenticate {
 
 	debug("c->param(oauth_signature) = |" . $c->param("oauth_signature") . "|");
 	my %request_hash;
-	my @keys = keys %{ $c->{paramcache} };
+	my @keys = $c->param;
 	foreach my $key (@keys) {
 		$request_hash{$key} = $c->param($key);
 		debug("$key->|" . $request_hash{$key} . "|");

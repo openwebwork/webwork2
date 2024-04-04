@@ -3,11 +3,12 @@ use Mojo::Base -signatures;
 
 # Base object class for all config objects
 
-sub new ($class, $self, $c) {
-	# The current content generator controller object.
-	$self->{c}    = $c;
-	$self->{name} = defined $self->{var} ? ($self->{var} =~ s/[{]/_/gr) =~ s/[}]//gr : $self->{setting};
-	return bless $self, $class;
+sub new ($class, $data, $c) {
+	return bless {
+		%$data,        # Make a copy of the data.
+		c    => $c,    # The current content generator controller object.
+		name => defined $data->{var} ? ($data->{var} =~ s/[{]/_/gr) =~ s/[}]//gr : $data->{setting}
+	}, $class;
 }
 
 # Only input is a value to display, and should produce an html string.
