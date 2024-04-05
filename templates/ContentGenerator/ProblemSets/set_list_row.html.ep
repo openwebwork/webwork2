@@ -1,0 +1,62 @@
+% use WeBWorK::Utils::DateTime qw(after);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
+%
+% my $display_name = format_set_name_display($set->set_id);
+%
+<li class="list-group-item d-flex align-items-center justify-content-between" data-set-status="<%= $status %>"
+	data-set-type="<%= $set->assignment_type =~ /gateway/ ? 'test' : 'default' %>"
+	data-urgency-sort-order="<%= $set->{urgency_sort_order} %>" data-name-sort-order="<%= $set->{name_sort_order} %>">
+	<div>
+		% my $icon_title = $set->assignment_type =~ /gateway/ ? maketext('Test/Quiz') : maketext('Regular Assignment');
+		<i class="set-id-tooltip fa-solid <%= $set->assignment_type =~ /gateway/ ? 'fa-list-check' : 'fa-book-open' %>"
+			data-bs-title="<%= $icon_title %>" data-bs-toggle="tooltip" data-bs-placement="right"
+			aria-hidden="true" tabindex="-1">
+		</i>
+		<span class="visually-hidden"><%= $icon_title %></span>
+	</div>
+	<div class="ms-3 me-auto">
+		<div dir="ltr">
+			% if ($link_is_active) {
+				<%= link_to $display_name => $c->systemLink(url_for('problem_list', setID => $set->set_id)),
+					class => 'fw-bold set-id-tooltip',
+					data  => { bs_toggle => 'tooltip', bs_placement => 'right', bs_title => $set->description }
+				=%>
+			% } else {
+				<span class="set-id-tooltip" data-bs-toggle="tooltip" data-bs-placement="right"
+					data-bs-title="<%= $set->description %>">
+					<%= $display_name =%>
+				</span>
+				<span class="visually-hidden"><%= $set->description %></span>
+			% }
+		</div>
+		<div class="font-sm"><%= $status_msg %></div>
+		% if (!$set->visible && $authz->hasPermissions(param('user'), 'view_unopened_sets')) {
+			<div class="font-sm"><em><%= maketext('(This set is hidden from students.)') %></em></div>
+		% }
+		<div class="font-sm">
+			% for (@$other_messages) {
+				<div><%== $_ %></div>
+			% }
+		</div>
+	</div>
+	% if (
+		% $set->assignment_type !~ /gateway/
+		% && ($authz->hasPermissions(param('user'), 'view_multiple_sets')
+		% || (after($set->open_date) && (!$is_restricted || after($set->due_date))))
+	% )
+	% {
+		% my $hardcopyTitle = maketext('Download [_1]', tag('span', dir => 'ltr', $display_name));
+		<div class="hardcopy">
+			<%= link_to $c->systemLink(
+				url_for('hardcopy', setID => $set->set_id),
+				params => { selected_sets => $set->set_id }
+			),
+			class => 'hardcopy-link', begin =%>
+				<i class="hardcopy-tooltip far fa-arrow-alt-circle-down fa-lg" aria-hidden="true"
+					title="<%= $hardcopyTitle =%>" data-bs-toggle="tooltip"
+					data-bs-placement="left"></i>
+				<span class="visually-hidden"><%== $hardcopyTitle %></span>
+			<% end =%>
+		</div>
+	% }
+</li>

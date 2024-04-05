@@ -112,8 +112,8 @@
 							bs_toggle    => 'popover'
 						},
 						begin =%>
-						<i class="icon fas fa-question-circle" aria-hidden="true" data-alt="Help Icon"></i>
-						<span class="sr-only-glyphicon">Help Icon</span>
+						<i class="fas fa-question-circle" aria-hidden="true"></i>
+						<span class="visually-hidden"><%= maketext('Help Icon') %></span>
 					<% end =%>
 				<% end =%>
 				<div class="col-sm">
@@ -158,8 +158,8 @@
 							bs_toggle    => 'popover'
 						},
 						begin =%>
-						<i class="icon fas fa-question-circle" aria-hidden="true" data-alt="Help Icon"></i>
-						<span class="sr-only-glyphicon">Help Icon</span>
+						<i class="fas fa-question-circle" aria-hidden="true"></i>
+						<span class="visually-hidden"><%= maketext('Help Icon') %></span>
 					<% end =%>
 				<% end =%>
 				<div class="col-sm">

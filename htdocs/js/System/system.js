@@ -120,11 +120,11 @@
 	// Accessibility
 	// Present the contents of the data-alt attribute as alternative content for screen reader users.
 	// The icon should be formatted as <i class="icon fas fa-close" data-alt="close"></i>
-	// FIXME:  Don't add these by javascript.  Make a content generator method that adds these instead.
+	// FIXME:  Don't add these by javascript.  Just add these in place instead.
 	document.querySelectorAll('i.icon').forEach((icon) => {
 		if (typeof icon.dataset.alt !== 'undefined') {
 			const glyph = document.createElement('span');
-			glyph.classList.add('sr-only-glyphicon');
+			glyph.classList.add('visually-hidden');
 			glyph.style.fontSize = icon.style.fontSize;
 			glyph.textContent = icon.dataset.alt;
 			icon.after(glyph);
