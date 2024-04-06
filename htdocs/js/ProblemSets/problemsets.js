@@ -69,12 +69,17 @@
 			['not-open', 'Future Assignments'],
 			['past-due', 'Past Due Assignments']
 		]) {
+			const reverseSort = type === 'past-due';
 			const section = addSection(
 				type,
 				showByDateBtn?.dataset[`${type}Title`] ?? fallbackTitle,
 				setList
 					.filter((set) => set.dataset.setStatus === type)
-					.sort((a, b) => parseInt(a.dataset.urgencySortOrder) - parseInt(b.dataset.urgencySortOrder))
+					.sort(
+						(a, b) =>
+							(reverseSort ? -1 : 1) *
+							(parseInt(a.dataset.urgencySortOrder) - parseInt(b.dataset.urgencySortOrder))
+					)
 			);
 		}
 

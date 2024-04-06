@@ -29,9 +29,6 @@ use WeBWorK::Utils::Files qw(readFile path_is_subdir);
 use WeBWorK::Utils::Sets qw(is_restricted format_set_name_display);
 use WeBWorK::Localize;
 
-# What do we consider a "recent" problem set?
-use constant RECENT => 2 * 7 * 24 * 60 * 60;    # Two-Weeks in seconds
-
 # The "default" data in the course_info.txt file.
 use constant DEFAULT_COURSE_INFO_TXT =>
 	"Put information about your course here.  Click the edit button above to add your own message.\n";
@@ -46,7 +43,7 @@ sub can ($c, $arg) {
 		my $course_info_path = "$ce->{courseDirs}{templates}/$ce->{courseFiles}{course_info}";
 
 		my $text = DEFAULT_COURSE_INFO_TXT;
-		eval { $text = readFile($course_info_path) } if (-f $course_info_path);
+		eval { $text = readFile($course_info_path) } if -f $course_info_path;
 
 		return $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools')
 			|| $text ne DEFAULT_COURSE_INFO_TXT;
@@ -212,8 +209,6 @@ sub getSetStatus ($c, $set) {
 	} elsif ($c->submitTime < $set->answer_date) {
 		$status_msg = $c->maketext('Answers available for review on [_1].',
 			$c->formatDateTime($set->answer_date, $ce->{studentDateDisplayFormat}));
-	} elsif ($c->submitTime < $set->answer_date + RECENT) {
-		$status_msg = $c->maketext('Answers recently available for review.');
 	} else {
 		$status_msg = $c->maketext('Answers available for review.');
 	}
@@ -230,17 +225,15 @@ sub getSetStatus ($c, $set) {
 sub byUrgency {
 	my $mytime = time;
 	my @a_parts =
-		$a->answer_date + RECENT <= $mytime ? (4, $a->open_date,   $a->due_date)
-		: $a->answer_date <= $mytime        ? (3, $a->answer_date, $a->due_date)
-		: $a->due_date <= $mytime           ? (2, $a->answer_date, $a->due_date)
-		: $mytime < $a->open_date           ? (1, $a->open_date,   $a->due_date)
-		:                                     (0, $a->due_date, $a->open_date);
+		$mytime >= $a->answer_date ? (3, $a->answer_date, $a->due_date)
+		: $mytime >= $a->due_date  ? (2, $a->answer_date, $a->due_date)
+		: $mytime < $a->open_date  ? (1, $a->open_date, $a->due_date)
+		:                            (0, $a->due_date, $a->open_date);
 	my @b_parts =
-		$b->answer_date + RECENT <= $mytime ? (4, $b->open_date,   $b->due_date)
-		: $b->answer_date <= $mytime        ? (3, $b->answer_date, $b->due_date)
-		: $b->due_date <= $mytime           ? (2, $b->answer_date, $b->due_date)
-		: $mytime < $b->open_date           ? (1, $b->open_date,   $b->due_date)
-		:                                     (0, $b->due_date, $b->open_date);
+		$mytime >= $b->answer_date ? (3, $b->answer_date, $b->due_date)
+		: $mytime >= $b->due_date  ? (2, $b->answer_date, $b->due_date)
+		: $mytime < $b->open_date  ? (1, $b->open_date, $b->due_date)
+		:                            (0, $b->due_date, $b->open_date);
 	while (@a_parts) {
 		if (my $returnIt = (shift @a_parts) <=> (shift @b_parts)) { return $returnIt; }
 	}
