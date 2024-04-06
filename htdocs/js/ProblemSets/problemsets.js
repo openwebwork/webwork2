@@ -65,7 +65,8 @@
 
 		for (const [type, fallbackTitle] of [
 			['open', 'Open Assignments'],
-			['not-open', 'Unopen Assignments'],
+			['reduced', 'Reduced Scoring Assignments'],
+			['not-open', 'Future Assignments'],
 			['past-due', 'Past Due Assignments']
 		]) {
 			const section = addSection(

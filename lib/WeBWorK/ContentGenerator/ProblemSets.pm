@@ -153,8 +153,38 @@ sub getSetStatus ($c, $set) {
 			|| ($set->assignment_type =~ /gateway/ && $db->countSetVersions($effectiveUser, $set->set_id));
 	} elsif ($c->submitTime < $set->due_date) {
 		$status = 'open';
-		($status_msg, my $reduced_scoring_msg) = $c->set_due_msg($set);
-		push(@$other_messages, $reduced_scoring_msg) if $reduced_scoring_msg;
+
+		my $enable_reduced_scoring =
+			$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+			&& $set->enable_reduced_scoring
+			&& $set->reduced_scoring_date
+			&& $set->reduced_scoring_date < $set->due_date;
+
+		my $beginReducedScoringPeriod = $c->formatDateTime($set->reduced_scoring_date, $ce->{studentDateDisplayFormat});
+
+		if ($enable_reduced_scoring && $c->submitTime < $set->reduced_scoring_date) {
+			$status_msg = $c->maketext('Open. Due [_1].', $beginReducedScoringPeriod);
+			push(
+				@$other_messages,
+				$c->maketext(
+					'Afterward reduced credit can be earned until [_1].',
+					$c->formatDateTime($set->due_date, $ce->{studentDateDisplayFormat})
+				)
+			);
+		} elsif ($enable_reduced_scoring && $set->reduced_scoring_date && $c->submitTime > $set->reduced_scoring_date) {
+			$status     = 'reduced';
+			$status_msg = $c->maketext('Due date [_1] has passed.', $beginReducedScoringPeriod);
+			push(
+				@$other_messages,
+				$c->maketext(
+					'Reduced credit can still be earned until [_1].',
+					$c->formatDateTime($set->due_date, $ce->{studentDateDisplayFormat})
+				)
+			);
+		} else {
+			$status_msg =
+				$c->maketext('Open. Due [_1].', $c->formatDateTime($set->due_date, $ce->{studentDateDisplayFormat}));
+		}
 
 		if (@restricted) {
 			$link_is_active = 0 unless $canViewUnopened;
@@ -180,12 +210,12 @@ sub getSetStatus ($c, $set) {
 			$link_is_active = 0;
 		}
 	} elsif ($c->submitTime < $set->answer_date) {
-		$status_msg = $c->maketext('Available for review. Answers available on [_1].',
+		$status_msg = $c->maketext('Answers available for review on [_1].',
 			$c->formatDateTime($set->answer_date, $ce->{studentDateDisplayFormat}));
-	} elsif ($set->answer_date <= $c->submitTime && $c->submitTime < $set->answer_date + RECENT) {
-		$status_msg = $c->maketext('Available for review. Answers recently available.');
+	} elsif ($c->submitTime < $set->answer_date + RECENT) {
+		$status_msg = $c->maketext('Answers recently available for review.');
 	} else {
-		$status_msg = $c->maketext('Available for review. Answers available.');
+		$status_msg = $c->maketext('Answers available for review.');
 	}
 
 	return (
@@ -215,37 +245,6 @@ sub byUrgency {
 		if (my $returnIt = (shift @a_parts) <=> (shift @b_parts)) { return $returnIt; }
 	}
 	return $a->set_id cmp $b->set_id;
-}
-
-sub set_due_msg ($c, $set) {
-	my $ce = $c->ce;
-
-	my $enable_reduced_scoring =
-		$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
-		&& $set->enable_reduced_scoring
-		&& $set->reduced_scoring_date
-		&& $set->reduced_scoring_date < $set->due_date;
-	my $beginReducedScoringPeriod = $c->formatDateTime($set->reduced_scoring_date, $ce->{studentDateDisplayFormat});
-
-	my $t = time;
-
-	return (
-		$c->maketext('Open. Due [_1].', $beginReducedScoringPeriod),
-		$c->maketext(
-			'Afterward reduced credit can be earned until [_1].',
-			$c->formatDateTime($set->due_date, $ce->{studentDateDisplayFormat})
-		)
-	) if $enable_reduced_scoring && $t < $set->reduced_scoring_date;
-
-	return (
-		$c->maketext('Due date [_1] has passed.', $beginReducedScoringPeriod),
-		$c->maketext(
-			'Reduced credit can still be earned until [_1].',
-			$c->formatDateTime($set->due_date, $ce->{studentDateDisplayFormat})
-		)
-	) if $enable_reduced_scoring && $set->reduced_scoring_date && $t > $set->reduced_scoring_date;
-
-	return $c->maketext('Open. Due [_1].', $c->formatDateTime($set->due_date, $ce->{studentDateDisplayFormat}));
 }
 
 sub restricted_progression_msg ($c, $open, $restriction, @restricted) {

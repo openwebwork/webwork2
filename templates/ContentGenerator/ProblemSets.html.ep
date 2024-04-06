@@ -28,7 +28,8 @@
 	<div class="btn-group" role="group" aria-label="<%= maketext('Display choice') %>">
 		<button id="show-by-date-btn" type="button" class="btn btn-primary"
 			data-open-title="<%= maketext('Open Assignments') %>"
-			data-not-open-title="<%= maketext('Unopen Assignments') %>"
+			data-reduced-title="<%= maketext('Reduced Scoring Assignments') %>"
+			data-not-open-title="<%= maketext('Future Assignments') %>"
 			data-past-due-title="<%= maketext('Past Due Assignments') %>"
 		   	>
 			<%= maketext('Show By Date') =%>
