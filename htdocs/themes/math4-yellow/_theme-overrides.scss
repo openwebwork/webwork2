@@ -29,6 +29,11 @@
 	);
 }
 
+.btn-outline-primary {
+	--#{$prefix}btn-color: #{shade_color($primary, 60%)};
+	--#{$prefix}btn-border-color: #{shade_color($primary, 20%)};
+}
+
 .text-primary {
 	color: $link-color !important;
 }

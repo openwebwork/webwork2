@@ -26,7 +26,7 @@
 	<%= hidden_field courseID => $ce->{courseName} =%>
 	<%= hidden_field userName => param('user') =%>
 	<div class="btn-group" role="group" aria-label="<%= maketext('Display choice') %>">
-		<button id="show-by-date-btn" type="button" class="btn btn-primary"
+		<button id="show-by-date-btn" type="button" class="btn btn-outline-primary"
 			data-open-title="<%= maketext('Open Assignments') %>"
 			data-reduced-title="<%= maketext('Reduced Scoring Assignments') %>"
 			data-not-open-title="<%= maketext('Future Assignments') %>"
@@ -34,7 +34,7 @@
 		   	>
 			<%= maketext('Show By Date') =%>
 		</button>
-		<button id="show-by-type-btn" type="button" class="btn btn-primary"
+		<button id="show-by-type-btn" type="button" class="btn btn-outline-primary"
 			data-default-title="<%= maketext('Regular Assignments') %>"
 			data-test-title="<%= maketext('Tests/Quizzes') %>"
 			>
