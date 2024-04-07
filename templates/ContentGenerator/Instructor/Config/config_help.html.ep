@@ -1,6 +1,8 @@
 <div class="d-flex justify-content-between align-items-center">
 	<div>
-		% if (ref $configObject eq 'WeBWorK::ConfigObject::checkboxlist') {
+		% if (ref $configObject eq 'WeBWorK::ConfigObject::checkboxlist'
+			% || ref $configObject eq 'WeBWorK::ConfigObject::permission_checkboxlist')
+		% {
 			<%== maketext($configObject->{doc}) =%>
 		% } else {
 			<%= label_for $configObject->{name}, begin =%><%== maketext($configObject->{doc}) =%><% end =%>
