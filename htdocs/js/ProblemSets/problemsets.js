@@ -4,6 +4,8 @@
 	if (!setListContainer) return;
 
 	const addSection = (type, title, contents) => {
+		if (!contents.length) return;
+
 		const isCollapsed = localStorage.getItem(`${settingStoreID}.collapsed.${type}`) === 'true';
 
 		const accordion = document.createElement('div');
