@@ -1,3 +1,5 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
 % # If navigation is restricted, then don't show the body and instead display a
 % # message informing the user to access assignments via an LMS.
 % unless ($authz->hasPermissions(param('user'), 'navigation_allowed')) {
@@ -12,71 +14,42 @@
 	% last;
 % }
 %
-% content_for set_table => begin
-	% # Create the set table.
-	<div class="table-responsive">
-		<table class="problem_set_table table table-sm caption-top font-sm">
-			<caption><%= maketext('Assignments') %></caption>
-			%
-			% # Setlist table headers
-			% my $sort = param('sort') || 'status';
-			<thead class="table-group-divider">
-				<tr>
-					<th scope="col">
-						% if ($sort eq 'name') {
-							<span><%= maketext('Name') %></span>
-						% } else {
-							<%= link_to maketext('Name') => $c->systemLink(url_for, params => { sort => 'name' }) =%>
-						% }
-					</th>
-					<th scope="col">
-						% if ($sort eq 'status') {
-							<span><%= maketext('Status') %></span>
-						% } else {
-							<%= link_to maketext('Status') =>
-								$c->systemLink(url_for, params => { sort => 'status' }) =%>
-						% }
-					</th>
-					<th scope="col" class="hardcopy">
-						<i class ="icon far fa-arrow-alt-circle-down fa-lg" aria-hidden="true"
-						   title="<%= maketext('Generate Hardcopy') %>"
-						   data-alt="<%= maketext('Generate Hardcopy') %>">
-						</i>
-					</th>
-				</tr>
-			</thead>
-			%
-			<tbody class="table-group-divider">
-				% my $sets = stash('sets') // [];
-				%
-				% # Regular sets and gateway template sets are merged, but sorted either by name or urgency.
-				% # Versions are not shown here. Instead they are on the ProblemSet page for the gateway quiz.
-				% for my $set (@$sets) {
-					% if ($set->visible || $authz->hasPermissions(param('user'), 'view_hidden_sets')) {
-						<%= $c->setListRow($set) =%>
-					% }
-				% }
-			</tbody>
-		</table>
-	</div>
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/ProblemSets/problemsets.js'), defer => undef =%>
 % end
 %
-% if ($authz->hasPermissions(param('user'), 'view_multiple_sets')) {
-	<%= form_for 'hardcopy', name => 'problem-sets-form', id => 'problem-sets-form', method => 'POST', begin =%>
-		<%= $c->hidden_authen_fields =%>
-		<%= content 'set_table' =%>
-		<div class="mb-3">
-			<%= input_tag reset => maketext('Deselect All Sets'),
-				id => 'clear', type => 'reset', class => 'btn btn-info' =%>
-		</div>
-		<div class="mb-3">
-			<%= submit_button maketext('Generate Hardcopy for Selected Sets'),
-				id => 'hardcopy', name => 'hardcopy', class => 'btn btn-info' =%>
-		</div>
-	<% end =%>
-% } else {
-	<%= content 'set_table' =%>
-% }
+% # Create the set list.
+% # Regular sets and gateway template sets are merged, but sorted either by name or urgency.
+% # Versions are not shown here. Instead they are on the ProblemSet page for the gateway quiz.
+%
+<div class="d-flex justify-content-end gap-2 mb-3">
+	<%= hidden_field courseID => $ce->{courseName} =%>
+	<%= hidden_field userName => param('user') =%>
+	<div class="btn-group" role="group" aria-label="<%= maketext('Display choice') %>">
+		<button id="show-by-date-btn" type="button" class="btn btn-outline-primary"
+			data-open-title="<%= maketext('Open Assignments') %>"
+			data-reduced-title="<%= maketext('Reduced Scoring Assignments') %>"
+			data-not-open-title="<%= maketext('Future Assignments') %>"
+			data-past-due-title="<%= maketext('Past Due Assignments') %>"
+		   	>
+			<%= maketext('Show By Date') =%>
+		</button>
+		<button id="show-by-type-btn" type="button" class="btn btn-outline-primary"
+			data-default-title="<%= maketext('Regular Assignments') %>"
+			data-test-title="<%= maketext('Tests/Quizzes') %>"
+			>
+			<%= maketext('Show By Type') =%>
+		</button>
+	</div>
+</div>
+%
+<div id="set-list-container">
+	<ol class="list-group mb-3 invisible">
+		% for (@{ stash('sets') // [] }) {
+			<%= include('ContentGenerator/ProblemSets/set_list_row', set => $_, $c->getSetStatus($_)) =%>
+		% }
+	</ol>
+</div>
 %
 <%= $c->feedbackMacro(
 	route              => current_route,
