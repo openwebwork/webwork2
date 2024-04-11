@@ -312,7 +312,7 @@
 		if (!problemForm) return;
 
 		for (const button of problemForm.querySelectorAll('input[type="submit"]')) {
-			button.addEventListener('click', (e) => {
+			button.addEventListener('click', async (e) => {
 				e.preventDefault();
 
 				// FormData does not support the characters in raw problem source.  URLSearchParams does.
@@ -327,7 +327,7 @@
 				requestData.set(button.name, button.value);
 				requestData.set('set_id', document.getElementsByName('hidden_set_id')[0]?.value ?? 'Unknown Set');
 
-				renderProblem(requestData);
+				await renderProblem(requestData);
 
 				saveTempFile();
 			});

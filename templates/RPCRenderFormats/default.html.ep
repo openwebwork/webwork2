@@ -68,6 +68,14 @@
 					% }
 					%== $LTIGradeMessage
 					%
+					% if (stash->{disable_cookies}) {
+						%= hidden_field disableCookies => $disableCookies
+						%= hidden_field passwd         => $passwd
+					% }
+					% if (stash->{disable_cookies} || $ce->{session_management_via} ne 'session_cookie') {
+						%= hidden_field key => $key
+					% }
+					%= hidden_field user                     => $user
 					%= hidden_field sourceFilePath           => $sourceFilePath
 					%= hidden_field problemSource            => $problemSource
 					%= hidden_field rawProblemSource         => $rawProblemSource
@@ -77,11 +85,7 @@
 					%= hidden_field psvn                     => $psvn
 					%= hidden_field fileName                 => $fileName
 					%= hidden_field courseID                 => $courseID
-					%= hidden_field user                     => $user
-					%= hidden_field passwd                   => $passwd
-					%= hidden_field disableCookies           => $disableCookies
 					%= hidden_field displayMode              => $displayMode
-					%= hidden_field key                      => $key
 					%= hidden_field outputformat             => $formatName
 					%= hidden_field theme                    => $theme
 					%= hidden_field language                 => $formLanguage
