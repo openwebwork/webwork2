@@ -93,8 +93,9 @@
 				</div>
 				<%= $c->output_message =%>
 			</div>
-			<div class="checkboxes-container col-12 my-2"><%= $c->output_checkboxes %></div>
+			<%= $c->output_checkboxes %>
 			<div class="submit-buttons-container col-12 my-2"><%= $c->output_submit_buttons %></div>
+			<%= include 'ContentGenerator/Problem/instructor_buttons' %>
 			<div id="score_summary" class="scoreSummary"><%= $c->output_score_summary %></div>
 			<%= $c->output_misc =%>
 		<% end =%>
