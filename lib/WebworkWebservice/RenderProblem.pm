@@ -24,10 +24,10 @@ use Mojo::Util qw(url_unescape);
 
 use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::PG::IO;
 use WeBWorK::DB;
 use WeBWorK::DB::Utils qw(global2user fake_set fake_problem);
 use WeBWorK::Utils qw(decode_utf8_base64);
+use WeBWorK::Utils::Files qw(readFile);
 use WeBWorK::Utils::Rendering qw(renderPG);
 
 our $UNIT_TESTS_ON = 0;
@@ -190,7 +190,7 @@ async sub renderProblem {
 	if ($rh->{problemSource}) {
 		$r_problem_source = \(decode_utf8_base64($rh->{problemSource}) =~ tr/\r/\n/r);
 		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
-	} elsif (defined $rh->{rawProblemSource}) {
+	} elsif ($rh->{rawProblemSource}) {
 		$r_problem_source = \$rh->{rawProblemSource};
 		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
 	} elsif ($rh->{uriEncodedProblemSource}) {
@@ -198,9 +198,7 @@ async sub renderProblem {
 		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
 	} elsif (defined $rh->{sourceFilePath} && $rh->{sourceFilePath} =~ /\S/) {
 		$problemRecord->source_file($rh->{sourceFilePath});
-		$r_problem_source =
-			\(WeBWorK::PG::IO::read_whole_file($ce->{courseDirs}{templates} . '/' . $rh->{sourceFilePath}));
-		$problemRecord->source_file('RenderProblemFooBar') unless defined($problemRecord->source_file);
+		$r_problem_source = \(readFile($ce->{courseDirs}{templates} . '/' . $rh->{sourceFilePath}));
 	}
 
 	if ($UNIT_TESTS_ON) {

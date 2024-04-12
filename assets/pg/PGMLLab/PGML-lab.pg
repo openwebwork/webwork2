@@ -2,12 +2,6 @@ DOCUMENT();
 
 loadMacros('PGstandard.pl', 'PGML.pl', 'PGcourse.pl');
 
-# Hide things that are appropriate for regular problem use
-HEADER_TEXT(tag(
-	'style',
-	'#page-title, #message, #message_bottom, #custom_edit_message, #breadcrumb-navigation, #score_summary, #problemFooter {display: none}'
-));
-
 sub EscapeHTML {
 	my $s = shift;
 	$s =~ s/&/~~&amp;/g;

@@ -536,7 +536,6 @@
 				/text\/html/.test(response.headers.get('content-type'))
 			) {
 				throw await response.text();
-				return;
 			}
 
 			const data = await response.blob();
@@ -564,4 +563,37 @@
 			rendering = false;
 		}
 	};
+
+	const pgmlLabButton = document.getElementById('pgml-lab');
+	pgmlLabButton?.addEventListener('click', () => {
+		const form = document.createElement('form');
+		form.style.display = 'none';
+		form.target = 'PGML';
+		form.action = renderURL;
+		form.method = 'post';
+
+		const inputs = [
+			['courseID', document.getElementsByName('courseID')[0]?.value],
+			['displayMode', document.getElementById('action_view_displayMode_id')?.value ?? 'MathJax'],
+			['fileName', 'PGMLLab/PGML-lab.pg'],
+			['uriEncodedProblemSource', pgmlLabButton.dataset.source]
+		];
+
+		const user = document.getElementsByName('user')[0];
+		if (user) inputs.push(['user', user.value]);
+		const sessionKey = document.getElementsByName('key')[0];
+		if (sessionKey) inputs.push(['key', sessionKey.value]);
+
+		for (const [name, value] of inputs) {
+			const input = document.createElement('input');
+			input.name = name;
+			input.value = value;
+			input.type = 'hidden';
+			form.append(input);
+		}
+
+		document.body.append(form);
+		form.submit();
+		form.remove();
+	});
 })();

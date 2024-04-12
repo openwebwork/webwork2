@@ -66,7 +66,8 @@ async sub pre_header_initialize ($c) {
 		return;
 	}
 
-	$c->param('displayMode', 'tex') if ($c->param('outputformat') eq 'pdf' || $c->param('outputformat') eq 'tex');
+	$c->param('displayMode', 'tex')
+		if $c->param('outputformat') && ($c->param('outputformat') eq 'pdf' || $c->param('outputformat') eq 'tex');
 
 	# Call the WebworkWebservice to render the problem and store the result in $c->return_object.
 	my $rpc_service = WebworkWebservice->new($c);

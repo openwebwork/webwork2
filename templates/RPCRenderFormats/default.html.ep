@@ -70,11 +70,12 @@
 					%
 					%= hidden_field sourceFilePath           => $sourceFilePath
 					%= hidden_field problemSource            => $problemSource
+					%= hidden_field rawProblemSource         => $rawProblemSource
 					%= hidden_field uriEncodedProblemSource  => $uriEncodedProblemSource
 					%= hidden_field problemSeed              => $problemSeed
 					%= hidden_field problemUUID              => $problemUUID
 					%= hidden_field psvn                     => $psvn
-					%= hidden_field pathToProblemFile        => $fileName
+					%= hidden_field fileName                 => $fileName
 					%= hidden_field courseID                 => $courseID
 					%= hidden_field user                     => $user
 					%= hidden_field passwd                   => $passwd
