@@ -15,7 +15,7 @@
 			class => 'col-form-label col-form-label-sm col-md-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.import.source' => [
-					[ maketext('Enter filenames below') => '', selected => undef ],
+					[ maketext('Select filenames below') => '', selected => undef, disabled => undef ],
 					@$setDefList
 				],
 				id => 'import_source_select', class => 'form-select form-select-sm', dir => 'ltr',
