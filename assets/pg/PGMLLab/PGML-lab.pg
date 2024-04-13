@@ -2,12 +2,6 @@ DOCUMENT();
 
 loadMacros('PGstandard.pl', 'PGML.pl', 'PGcourse.pl');
 
-# Hide things that are appropriate for regular problem use
-HEADER_TEXT(tag(
-	'style',
-	'#page-title, #message, #message_bottom, #custom_edit_message, #breadcrumb-navigation, #score_summary, #problemFooter {display: none}'
-));
-
 sub EscapeHTML {
 	my $s = shift;
 	$s =~ s/&/~~&amp;/g;
@@ -464,6 +458,64 @@ TEXT(tag(
 								
 								Two stars will further cause any PGML to be processed:  
 								[$x]**
+								ENDPGML
+						]
+					],
+					[
+						'Tags' => [
+							<<~ 'END_PG',
+							loadMacros('parserMultiAnswer.pl', 'parserPopUp.pl');
+							$ma = MultiAnswer(DropDown([ [ 'minimum', 'maximum' ] ], 1), 4)->with(
+								singleResult => 1,
+								checker      => sub {
+									my ($cor, $stu) = @_;
+									return $cor->[0] == $stu->[0] && $cor->[1] == $stu->[1]
+										? 1
+										: 0;
+								}
+							);
+							END_PG
+							<<~'ENDPGML'
+								A tag is a "div" by default. HTML attributes can be set via an array in the
+								first option.  The only other allowed tag type is a span. To switch to a
+								span add 'span' to the beginning of the attribute array.  The second tex
+								option and the third ptx option are used to set the output for the TeX and
+								PTX display modes. The format of the tex option is an array containing two
+								strings.  The first string is the TeX code to insert before the content,
+								and the second the TeX code to insert after the content.  The format of the
+								ptx option is similar to the format for the first html. It is an array with
+								the tag name (required), optionally followed by an array of attributes, and
+								optionally a separator.
+
+								[<Dangerous content.>]{
+									[ 'span', class => 'p-1 alert alert-danger', role => 'alert' ]
+								}{
+									[ '{\color{red}', '}' ]
+								}{
+									['alert']
+								}
+
+								Tags may contain other PGML content and answers. Note that a span tag may
+								not contain new lines, tables, or anything else that would be invalid in a
+								span.  Basically only text elements are valid. However, div tags may
+								contain pretty much anything.
+
+								[<
+								    This is an equation [`x + 3 = 5`].
+
+									The solution to the above equation is [_]{2}.
+								>]{ [ style => 'border: 1px solid black; padding: 1rem;' ] }
+
+								One useful application is when using the parserMultiAnswer.pl macro with
+								singleResult answers. Wrap the answers in in a div tag with the
+								"ww-feedback-container" class to tell PG where to place the feedback
+								button. The feedback button will be placed at the end of the containing div
+								tag.
+
+								[<
+									The [_]{$ma} value of [`f(x)`] is [_]{$ma} for the function
+									[`f(x) = 4 - x^2`].
+								>]{ [ class => 'ww-feedback-container' ] }
 								ENDPGML
 						]
 					],
@@ -981,7 +1033,8 @@ TEXT(tag(
 						'[@ perl-command @]* (no escaping)',
 						'[@ perl-command @]** (parse results)',
 						'[% comment %]',
-						'[&lt;url&gt;] (not implemented)',
+						'[&lt;tag&gt;]{html}{tex}{ptx}',
+						'[[url]] (not implemented)',
 						'[!image!]{source}{width}{height}',
 					),
 					Menu(

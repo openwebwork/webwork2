@@ -174,7 +174,8 @@ otherwise.
 sub formatRenderedProblem {
 	my $self = shift;
 	return HardcopyRenderedProblem::hardcopyRenderedProblem($self)
-		if $self->{inputs_ref}{outputformat} eq 'tex' || $self->{inputs_ref}{outputformat} eq 'pdf';
+		if $self->{inputs_ref}{outputformat}
+		&& ($self->{inputs_ref}{outputformat} eq 'tex' || $self->{inputs_ref}{outputformat} eq 'pdf');
 	return FormatRenderedProblem::formatRenderedProblem($self);
 }
 

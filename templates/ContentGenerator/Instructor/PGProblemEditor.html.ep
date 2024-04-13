@@ -1,6 +1,8 @@
 % use Mojo::URL;
+% use Mojo::Util qw(url_escape);
 %
 % use WeBWorK::Utils qw(not_blank x getAssetURL);
+% use WeBWorK::Utils::Files qw(readFile);
 % use WeBWorK::Utils::Sets qw(format_set_name_display);
 % use WeBWorK::HTML::CodeMirrorEditor
 	% qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
@@ -114,24 +116,16 @@
 				class  => 'reference-link btn btn-sm btn-info',
 				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% # PGML lab problem rendered as an unattached problem in a new window.
-			% if (-e "$ce->{courseDirs}{templates}/PGMLLab/PGML-lab.pg") {
-				<%= link_to maketext('PGML') => $c->systemLink(
-						url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
-						params => {
-							displayMode    => $ce->{pg}{options}{displayMode},
-							problemSeed    => 1234,
-							editMode       => 'temporaryFile',
-							sourceFilePath => 'PGMLLab/PGML-lab.pg'
-						}
-					),
-					target => 'PGML',
-					title  => maketext(
-						'PG markdown syntax used to format WeBWorK questions. '
-						. 'This interactive lab can help you to learn the techniques.'
-					),
-					class  => 'reference-link btn btn-sm btn-info',
-					data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
-			% }
+			% my $pgml_lab_source = readFile("$ce->{webworkDirs}{assets}/pg/PGMLLab/PGML-lab.pg");
+			<%= tag 'button', type => 'button',
+				title  => maketext(
+					'PG markdown syntax used to format WeBWorK questions. '
+					. 'This interactive lab can help you to learn the techniques.'
+				),
+				id => 'pgml-lab',
+				class  => 'reference-link btn btn-sm btn-info',
+				data   => { source => url_escape($pgml_lab_source), bs_toggle => 'tooltip', bs_placement => 'top' },
+				'PGML' =%>
 			% # http://webwork.maa.org/wiki/Category:Authors
 			<%= link_to maketext('Author Info') => $ce->{webworkURLs}{AuthorHelpURL},
 				target => 'author_info',

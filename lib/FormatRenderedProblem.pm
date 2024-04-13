@@ -266,6 +266,7 @@ sub formatRenderedProblem {
 		LTIGradeMessage          => $LTIGradeMessage,
 		sourceFilePath           => $ws->{inputs_ref}{sourceFilePath}          // '',
 		problemSource            => $ws->{inputs_ref}{problemSource}           // '',
+		rawProblemSource         => $ws->{inputs_ref}{rawProblemSource}        // '',
 		uriEncodedProblemSource  => $ws->{inputs_ref}{uriEncodedProblemSource} // '',
 		fileName                 => $ws->{inputs_ref}{fileName}                // '',
 		formLanguage             => $formLanguage,
