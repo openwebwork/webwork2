@@ -519,14 +519,24 @@
 		const allOptions = Array.from(setDefSelect.options);
 
 		const updateAvailableOptions = () => {
+			// Save the currently selected option.
+			let selectedDef = setDefSelect.selectedOptions[0];
+
 			for (const option of Array.from(setDefSelect.options)) option.value && option.remove();
 			for (const option of allOptions) {
 				if (option.value.startsWith('Library/')) {
 					if (listOPLSetsCheck.checked) setDefSelect.add(option);
+					else if (selectedDef === option) selectedDef = null;
 				} else if (option.value.startsWith('Contrib/')) {
 					if (listContribSetsCheck.checked) setDefSelect.add(option);
+					else if (selectedDef === option) selectedDef = null;
 				} else setDefSelect.add(option);
 			}
+
+			// Reselect the option that was selected before if it is still available. Otherwise
+			// select the first option which should be the "Select a Set Defintion File" option.
+			if (selectedDef) selectedDef.selected = true;
+			else allOptions[0].selected = true;
 		};
 
 		listOPLSetsCheck?.addEventListener('change', updateAvailableOptions);

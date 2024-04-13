@@ -15,9 +15,11 @@
 	<div class="mb-2">
 		<label class="col-form-label-sm"><%= maketext('Browse from:') %></label>
 		<%= select_field library_sets => [
-				$selected_library eq '' ?
-					[ maketext('Select a Set Definition File') => '', selected => undef, disabled => 'disabled' ]
-					: (),
+				[
+					maketext('Select a Set Definition File') => '',
+					$selected_library ? () : (selected => undef),
+					disabled => undef
+				],
 				@list_of_set_defs
 			],
 			class => 'form-select form-select-sm d-inline w-auto' =%>
