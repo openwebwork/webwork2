@@ -193,7 +193,7 @@ sub getProblemTags {
 	my $out  = {};
 	my $path = $rh->{command};
 	# Get a pointer to a hash of DBchapter, ..., DBsection
-	my $tags = WeBWorK::Utils::ListingDB::getProblemTags($path->c);
+	my $tags = WeBWorK::Utils::ListingDB::getProblemTags($path);
 	$out->{ra_out} = $tags;
 	$out->{text}   = 'Tags loaded.';
 
