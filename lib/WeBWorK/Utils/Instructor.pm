@@ -671,33 +671,45 @@ sub getDefList {
 
 	my @found_set_defs;
 
-	# get_set_defs_wanted is a closure over @found_set_defs
-	my $get_set_defs_wanted = sub {
-		if ($File::Find::dir =~ /^$topdir\/Library/ || $File::Find::dir =~ /^$topdir\/Contrib/) {
-			$File::Find::prune = 1;
-			return;
-		}
-		if (@{ [ $File::Find::dir =~ /\//g ] } > $max_depth) { $File::Find::prune = 1; return; }
-		push @found_set_defs, $_ =~ s|^$topdir/?||r if m|/set[^/]*\.def$|;
-	};
-
-	find({ wanted => $get_set_defs_wanted, follow_fast => 1, no_chdir => 1, follow_skip => 2 }, $topdir);
+	find(
+		{
+			wanted => sub {
+				if ($File::Find::dir =~ /^$topdir\/Library/
+					|| $File::Find::dir =~ /^$topdir\/Contrib/
+					|| $File::Find::dir =~ /^$topdir\/capaLibrary/)
+				{
+					$File::Find::prune = 1;
+					return;
+				}
+				if (@{ [ $File::Find::dir =~ /\//g ] } > $max_depth) { $File::Find::prune = 1; return; }
+				push @found_set_defs, $_ =~ s|^$topdir/?||r if m|/set[^/]*\.def$|;
+			},
+			follow_fast => 1,
+			no_chdir    => 1,
+			follow_skip => 2
+		},
+		$topdir
+	);
 
 	# Load the OPL set definition files from the list file.
 	push(@found_set_defs, loadSetDefListFile("$ce->{webworkDirs}{htdocs}/DATA/library-set-defs.json"))
-		if ($ce->{options}{useOPLdefFiles});
+		if -d "$ce->{courseDirs}{templates}/Library" && -r "$ce->{courseDirs}{templates}/Library";
 
 	# Load the Contrib set definition files from the list file.
 	push(@found_set_defs, loadSetDefListFile("$ce->{webworkDirs}{htdocs}/DATA/contrib-set-defs.json"))
-		if ($ce->{options}{useContribDefFiles});
+		if -d "$ce->{courseDirs}{templates}/Contrib" && -r "$ce->{courseDirs}{templates}/Contrib";
 
+	my @lib_order;
 	my @depths;
 	my @caps;
 	for (@found_set_defs) {
+		push(@lib_order, $_ =~ m|^Library/| ? 2 : $_ =~ m|^Contrib/| ? 3 : 1);
 		push @depths, scalar(@{ [ $_ =~ /\//g ] });
 		push @caps,   uc($_);
 	}
-	return @found_set_defs[ sort { $depths[$a] <=> $depths[$b] || $caps[$a] cmp $caps[$b] } 0 .. $#found_set_defs ];
+	return @found_set_defs[
+		sort { $lib_order[$a] <=> $lib_order[$b] || $depths[$a] <=> $depths[$b] || $caps[$a] cmp $caps[$b] }
+		0 .. $#found_set_defs ];
 }
 
 =back

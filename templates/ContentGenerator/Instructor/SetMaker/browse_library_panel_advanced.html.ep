@@ -104,7 +104,8 @@
 			<%= submit_button maketext('Reset'), name => 'library_reset',
 				class => 'btn btn-secondary btn-sm mb-1 ms-sm-0 ms-2 library-panel-btn' =%>
 			<%= submit_button maketext('Basic Search'), name => 'library_basic',
-				class => 'btn btn-secondary btn-sm mb-1 ms-sm-0 ms-2 library-panel-btn' =%>
+				class => 'btn btn-secondary btn-sm mb-2 ms-sm-0 ms-2 library-panel-btn' =%>
+			<%= include 'ContentGenerator/Instructor/SetMaker/library-include-checks' =%>
 		</div>
 	</div>
 	<%= include 'ContentGenerator/Instructor/SetMaker/view_problems_line', internal_name => 'lib_view' =%>
