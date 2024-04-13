@@ -17,16 +17,8 @@
 	% $c->addbadmessage($msg->());
 % }
 %
-% # Now check which version to use.
-% my $libraryVersion = $ce->{problemLibrary}{version} || 2;
-% if ($libraryVersion == 1) {
-	<div class="alert alert-danger p-1 mb-2 text-center">Problem library version 1 is no longer supported.</div>
-% } elsif ($libraryVersion >= 2) {
-	% if ($c->{library_basic} == 1) {
-		<%= include 'ContentGenerator/Instructor/SetMaker/browse_library_panel_simple' =%>
-	% } else {
-		<%= include 'ContentGenerator/Instructor/SetMaker/browse_library_panel_advanced' =%>
-	% }
+% if ($c->{library_basic} == 1) {
+	<%= include 'ContentGenerator/Instructor/SetMaker/browse_library_panel_simple' =%>
 % } else {
-	<div class="alert alert-danger p-1 mb-2 text-center">The problem library version is set to an illegal value.</div>
+	<%= include 'ContentGenerator/Instructor/SetMaker/browse_library_panel_advanced' =%>
 % }

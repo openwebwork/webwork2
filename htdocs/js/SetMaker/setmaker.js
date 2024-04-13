@@ -66,33 +66,37 @@
 
 	// Content request handling
 
-	const libSubjects = document.querySelector('select[name="library_subjects"]');
-	const libChapters = document.querySelector('select[name="library_chapters"]');
-	const libSections = document.querySelector('select[name="library_sections"]');
+	const librarySubject = document.querySelector('select[name="library_subject"]');
+	const libraryChapter = document.querySelector('select[name="library_chapter"]');
+	const librarySection = document.querySelector('select[name="library_section"]');
 	const libraryTextbook = document.querySelector('select[name="library_textbook"]');
-	const libraryChapter = document.querySelector('select[name="library_textchapter"]');
-	const librarySection = document.querySelector('select[name="library_textsection"]');
+	const libraryTextChapter = document.querySelector('select[name="library_textchapter"]');
+	const libraryTextSection = document.querySelector('select[name="library_textsection"]');
 	const includeOPL = document.querySelector('[name="includeOPL"]');
 	const includeContrib = document.querySelector('[name="includeContrib"]');
+	const levels = Array.from(document.getElementsByName('level'));
+	const libraryKeywords = document.getElementsByName('library_keywords')[0];
 
 	const countLine = document.getElementById('library_count_line');
 
 	const lib_update = async (who, what) => {
-		const child = { subjects: 'chapters', chapters: 'sections', sections: 'count' };
+		const child = { subject: 'chapter', chapter: 'section', section: 'count' };
 
 		const requestObject = init_webservice('searchLib');
-		requestObject.library_subjects = libSubjects?.value ?? '';
-		requestObject.library_chapters = libChapters?.value ?? '';
-		requestObject.library_sections = libSections?.value ?? '';
+		requestObject.library_subject = librarySubject?.value ?? '';
+		requestObject.library_chapter = libraryChapter?.value ?? '';
+		requestObject.library_section = librarySection?.value ?? '';
 		requestObject.library_textbook = libraryTextbook?.value ?? '';
-		requestObject.library_textchapter = libraryChapter?.value ?? '';
-		requestObject.library_textsection = librarySection?.value ?? '';
+		requestObject.library_textchapter = libraryTextChapter?.value ?? '';
+		requestObject.library_textsection = libraryTextSection?.value ?? '';
 		requestObject.includeOPL =
 			(includeOPL.type === 'checkbox' && includeOPL?.checked) ||
 			(includeOPL.type === 'hidden' && includeOPL.value)
 				? 1
 				: 0;
 		requestObject.includeContrib = includeContrib?.checked ? 1 : 0;
+		requestObject.level = levels.filter((level) => level.checked).map((level) => level.value);
+		requestObject.library_keywords = libraryKeywords?.value ?? '';
 
 		if (who == 'count') {
 			// Don't perform a count if there is no count line to update.
@@ -139,16 +143,16 @@
 			return;
 		}
 
-		if (who == 'chapters' && requestObject.library_subjects == '') {
+		if (who == 'chapter' && requestObject.library_subject == '') {
 			lib_update(who, 'clear');
 			return;
 		}
-		if (who == 'sections' && requestObject.library_chapters == '') {
+		if (who == 'section' && requestObject.library_chapter == '') {
 			lib_update(who, 'clear');
 			return;
 		}
 
-		requestObject.command = who == 'sections' ? 'getSectionListings' : 'getAllDBchapters';
+		requestObject.command = who == 'section' ? 'getSectionListings' : 'getAllDBchapters';
 
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -185,29 +189,28 @@
 		const select_all_option = sel.firstChild;
 		while (sel.firstChild) sel.lastChild.remove();
 		sel.append(select_all_option);
-		newarray.forEach((val) => {
+		newarray.forEach(([name, id]) => {
 			const option = document.createElement('option');
-			option.value = val;
-			option.textContent = val;
+			option.value = id;
+			option.textContent = name;
 			sel.append(option);
 		});
 	};
 
-	libChapters?.addEventListener('change', () => lib_update('sections', 'get'));
-	libSubjects?.addEventListener('change', () => lib_update('chapters', 'get'));
-	libSections?.addEventListener('change', () => lib_update('count', 'clear'));
+	libraryChapter?.addEventListener('change', () => lib_update('section', 'get'));
+	librarySubject?.addEventListener('change', () => lib_update('chapter', 'get'));
+	librarySection?.addEventListener('change', () => lib_update('count', 'clear'));
 	includeOPL?.addEventListener('change', () => lib_update('count', 'clear'));
 	includeContrib?.addEventListener('change', () => lib_update('count', 'clear'));
-	document
-		.querySelectorAll('input[name="level"]')
-		.forEach((level) => level.addEventListener('change', () => lib_update('count', 'clear')));
+	levels.forEach((level) => level.addEventListener('change', () => lib_update('count', 'clear')));
+	libraryKeywords?.addEventListener('change', () => lib_update('count', 'clear'));
 
 	// Set up the advanced view selects to submit the form when changed.
 	const libraryBrowserForm = document.forms['library_browser_form'];
 	if (libraryBrowserForm) {
 		libraryTextbook?.addEventListener('change', () => libraryBrowserForm.submit());
-		libraryChapter?.addEventListener('change', () => libraryBrowserForm.submit());
-		librarySection?.addEventListener('change', () => libraryBrowserForm.submit());
+		libraryTextChapter?.addEventListener('change', () => libraryBrowserForm.submit());
+		libraryTextSection?.addEventListener('change', () => libraryBrowserForm.submit());
 	}
 
 	// Add problems to target set

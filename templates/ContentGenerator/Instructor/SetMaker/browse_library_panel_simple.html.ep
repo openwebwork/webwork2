@@ -5,36 +5,36 @@
 	<div class="row mb-2">
 		<div class="col-md-6 col-sm-8 offset-md-3">
 			<div class="row mb-1">
-				<%= label_for library_subjects => maketext('Subject:'),
+				<%= label_for library_subject => maketext('Subject:'),
 					class => 'col-2 col-form-label col-form-label-sm' =%>
 				<div class="col-10">
-					<%= select_field library_subjects => [
+					<%= select_field library_subject => [
 							[ maketext('All Subjects') => '', selected => undef ],
 							getAllDBsubjects($c)
 						],
-						id => 'library_subjects', class => 'form-select form-select-sm' =%>
+						id => 'library_subject', class => 'form-select form-select-sm' =%>
 				</div>
 			</div>
 			<div class="row mb-1">
-				<%= label_for library_chapters => maketext('Chapter:'),
+				<%= label_for library_chapter => maketext('Chapter:'),
 					class => 'col-2 col-form-label col-form-label-sm' =%>
 				<div class="col-10">
-					<%= select_field library_chapters => [
+					<%= select_field library_chapter => [
 							[ maketext('All Chapters') => '', selected => undef ],
 							getAllDBchapters($c)
 						],
-						id => 'library_chapters', class => 'form-select form-select-sm' =%>
+						id => 'library_chapter', class => 'form-select form-select-sm' =%>
 				</div>
 			</div>
 			<div class="row mb-1">
-				<%= label_for library_sections => maketext('Section:'),
+				<%= label_for library_section => maketext('Section:'),
 					class => 'col-2 col-form-label col-form-label-sm' =%>
 				<div class="col-10">
-					<%= select_field library_sections => [
+					<%= select_field library_section => [
 							[ maketext('All Sections') => '', selected => undef ],
 							getAllDBsections($c)
 						],
-						id => 'library_sections', class => 'form-select form-select-sm' =%>
+						id => 'library_section', class => 'form-select form-select-sm' =%>
 				</div>
 			</div>
 		</div>

@@ -29,7 +29,7 @@ use WeBWorK::Utils qw(sortByName x);
 use WeBWorK::Utils::DateTime qw(getDefaultSetDueDate);
 use WeBWorK::Utils::Instructor qw(assignSetToUser assignProblemToAllSetUsers addProblemToSet);
 use WeBWorK::Utils::LibraryStats;
-use WeBWorK::Utils::ListingDB qw(getSectionListings);
+use WeBWorK::Utils::ListingDB qw(getDBListings);
 use WeBWorK::Utils::Sets qw(format_set_name_internal);
 use WeBWorK::Utils::Tags;
 
@@ -320,11 +320,8 @@ sub process_search ($c, @dbsearch) {
 	my %mlt = ();
 	my $mltind;
 	for my $indx (0 .. $#dbsearch) {
-		$dbsearch[$indx]->{filepath} =
-			$dbsearch[$indx]->{libraryroot} . "/" . $dbsearch[$indx]->{path} . "/" . $dbsearch[$indx]->{filename};
-		# For debugging
-		$dbsearch[$indx]->{oindex} = $indx;
-		if ($mltind = $dbsearch[$indx]->{morelt}) {
+		$dbsearch[$indx]{oindex} = $indx;
+		if ($mltind = $dbsearch[$indx]{morelt}) {
 			if (defined($mlt{$mltind})) {
 				push @{ $mlt{$mltind} }, $indx;
 			} else {
@@ -332,7 +329,7 @@ sub process_search ($c, @dbsearch) {
 			}
 		}
 	}
-	# Now filepath is set and we have a hash of mlt entries
+	# Now we have a hash of mlt entries.
 
 	# Find MLT leaders, mark entries for no show,
 	# set up children array for leaders
@@ -548,10 +545,7 @@ sub pre_header_initialize ($c) {
 		}
 	} elsif ($c->param('lib_view')) {
 		# View from the library database
-		@pg_files = ();
-		# TODO: deprecate OPLv1 -- replace getSectionListings with getDBListings($c,0)
-		my @dbsearch = getSectionListings($c);
-		@pg_files              = process_search($c, @dbsearch);
+		@pg_files              = process_search($c, getDBListings($c, 0));
 		$use_previous_problems = 0;
 	} elsif ($c->param('view_setdef_set')) {
 		# View a set from a set*.def
@@ -638,7 +632,7 @@ sub pre_header_initialize ($c) {
 	} elsif ($c->param('library_advanced')) {
 		$library_basic = 2;
 	} elsif ($c->param('library_reset')) {
-		for my $jj (qw(chapters sections subjects textbook textchapter textsection keywords)) {
+		for my $jj (qw(chapter section subject textbook textchapter textsection keywords)) {
 			$c->param('library_' . $jj, undef);
 		}
 		$c->param('level', undef);
