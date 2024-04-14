@@ -55,7 +55,7 @@
 		});
 
 		// If on the confirmation page (and not the edit page), then focus the "name" input.
-		if (!form.getElementsByName('data')[0]) form.getElementsByName('name')[0]?.focus();
+		if (!document.getElementsByName('data')[0]) document.getElementsByName('name')[0]?.focus();
 	}
 
 	// The bits for types from least to most significant digit are set in the directoryListing method of
