@@ -1,4 +1,9 @@
 % use WeBWorK::CourseEnvironment;
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/Config/config.js'), defer => undef =%>
+% end
 %
 % unless ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
 	<div class="alert alert-danger p-1 mb-0">
