@@ -102,7 +102,7 @@ sub getConfigValues ($ce) {
 			},
 			{
 				var  => 'defaultTheme',
-				doc  => x('Theme (refresh page after saving changes to reveal new theme.)'),
+				doc  => x('Theme'),
 				doc2 => x(
 					'There is one main theme to choose from: math4. It has three variants: math4-green, '
 						. 'math4-red, and math4-yellow. The theme specifies a unified look and feel for the '
@@ -114,7 +114,7 @@ sub getConfigValues ($ce) {
 			},
 			{
 				var  => 'language',
-				doc  => x('Language (refresh page after saving changes to reveal new language.)'),
+				doc  => x('Language'),
 				doc2 =>
 					x('WeBWorK currently has translations for the languages listed in the course configuration.'),
 				values => [qw(en tr es fr zh-HK he)],
