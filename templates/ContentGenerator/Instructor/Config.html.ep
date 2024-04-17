@@ -1,4 +1,9 @@
 % use WeBWorK::CourseEnvironment;
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/Config/config.js'), defer => undef =%>
+% end
 %
 % unless ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
 	<div class="alert alert-danger p-1 mb-0">
@@ -11,47 +16,59 @@
 % my $default_ce = WeBWorK::CourseEnvironment->new;
 %
 % # Get the current course environment again in case changes were just saved.
-% my $ce4 = WeBWorK::CourseEnvironment->new({ courseName => $ce->{courseName}, });
-%
-% my $current_tab = param('section_tab') || 'tab0';
-<%= $c->generate_navigation_tabs($current_tab, map { $_->[0] } @$configValues) =%>
+% my $ce3 = WeBWorK::CourseEnvironment->new({ courseName => $ce->{courseName} });
 %
 <%= form_for current_route, method => 'POST', id => 'config-form', name => 'config-form', begin =%>
 	<%= $c->hidden_authen_fields =%>
-	<%= hidden_field section_tab => $current_tab =%>
 	%
-	% my $tabnumber = $current_tab =~ s/tab//r;
-	% my @configSectionArray = @{ $configValues->[$tabnumber] };
-	%
-	<h2><b><%= maketext(shift @configSectionArray) %></b></h2>
-	%
-	<div class="table-responsive">
-		<table class="table table-bordered align-middle">
-			<tr>
-				<th><%= maketext('Setting') %></th>
-				<th class="text-center"><%= maketext('Default') %></th>
-				<th class="text-center"><%= maketext('Current') %></th>
-			</tr>
-			% for my $con (@configSectionArray) {
-				% my $conobject = $c->objectify($con);
-				% next unless (
-					% defined $conobject->{var}
-					% || $authz->hasPermissions(param('user'), "setting_table_$conobject->{setting}")
-				% );
-				% my $name      = defined $conobject->{var}
-						% ? ($conobject->{var} =~ s/[{]/-/gr) =~ s/[}]//gr
-						% : $conobject->{setting};
-				<tr>
-					<td><%= $conobject->what_string %></td>
-					<td class="text-center">
-						% if (defined $conobject->{var}) {
-							<%= $conobject->display_value($conobject->get_value($default_ce)) %>
+	% for my $configSection (@$configValues) {
+		% my $sectionName = shift @$configSection;
+		% my $id          = lc($sectionName =~ s|[/ ]|-|gr);
+		%
+		% content_for config_tabs => begin
+			<button type="button" class="nav-link<%= $sectionName eq 'General' ? ' active' : '' %>" id="<%= $id %>-tab"
+				data-bs-toggle="tab" data-bs-target="#<%= $id %>" role="tab" aria-controls="<%= $id %>"
+				aria-selected="<%= $sectionName eq 'General' ? 'true' : 'false' %>">
+				<%= maketext($sectionName) =%>
+			</button>
+		% end
+		%
+		% content_for config_tabs_content => begin
+			<div class="tab-pane fade show<%= $sectionName eq 'General' ? ' active' : '' %>" id="<%= $id %>"
+				role="tabpanel" aria-labelledby="<%= $id %>-tab" tabindex="0">
+				<h2><b><%= maketext($sectionName) %></b></h2>
+				<div class="table-responsive">
+					<table class="table table-bordered align-middle">
+						<tr>
+							<th><%= maketext('Setting') %></th>
+							<th class="text-center"><%= maketext('Default') %></th>
+							<th class="text-center"><%= maketext('Current') %></th>
+						</tr>
+						% for my $con (@$configSection) {
+							% my $conobject = $c->objectify($con);
+							% next if (
+								% defined $ce->{permissionLevels}{"change_config_$conobject->{var}"}
+								% && !$authz->hasPermissions(param('user'), "change_config_$conobject->{var}")
+							% );
+							<tr>
+								<td><%= $conobject->what_string %></td>
+								<td class="text-center">
+									<%= $conobject->display_value($conobject->get_value($default_ce)) %>
+								</td>
+								<td><%= $conobject->entry_widget($conobject->get_value($ce3)) =%></td>
+							</tr>
 						% }
-					</td>
-					<td><%= $conobject->entry_widget($conobject->get_value($ce4)) =%></td>
-				</tr>
-			% }
-		</table>
-	</div>
+					</table>
+				</div>
+			</div>
+		% end
+	% }
+	<nav>
+		<div class="config-tabs nav nav-pills justify-content-center my-4" role="tablist">
+			<%= content 'config_tabs' =%>
+		</div>
+	</nav>
+	<div class="tab-content"><%= content 'config_tabs_content' =%></div>
+	%
 	<p><%= submit_button maketext('Save Changes'), name => 'make_changes',  class => 'btn btn-primary' =%></p>
 <% end =%>

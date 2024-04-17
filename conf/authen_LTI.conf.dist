@@ -178,7 +178,12 @@ $LTIMassUpdateInterval = 86400;    #in seconds
 	#'external_auth',
 	#'LTIGradeMode',
 	#'LMSManageUserData',
-	#'debug_lti_parameters'
+	#'debug_lti_parameters',
+	#'lms_context_id'
 );
+
+# Note that the lms_context_id is actually a database setting. It must be set for a course in
+# order for the instructor to utilize LTI content selection. This can also be set in the admin
+# course.
 
 1;    # final line of the file to reassure perl that it was read properly.

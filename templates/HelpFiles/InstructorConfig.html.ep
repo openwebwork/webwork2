@@ -25,6 +25,6 @@
 		. 'to information about the behavior of the configuration settings.') =%>
 </p>
 <p class="mb-0">
-	<%= maketext('Note that some settings require an additional page load after "Save Changes" is clicked in order '
-		. 'to take effect.  This is true for a theme change for example.') =%>
+	<%= maketext('The settings for all tabs are saved when "Save Changes" is clicked, including settings that '
+		. 'are not in the currently active tab.') =%>
 </p>

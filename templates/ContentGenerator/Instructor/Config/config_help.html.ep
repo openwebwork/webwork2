@@ -1,6 +1,8 @@
 <div class="d-flex justify-content-between align-items-center">
 	<div>
-		% if (ref $configObject eq 'WeBWorK::ConfigObject::checkboxlist') {
+		% if (ref $configObject eq 'WeBWorK::ConfigObject::checkboxlist'
+			% || ref $configObject eq 'WeBWorK::ConfigObject::permission_checkboxlist')
+		% {
 			<%== maketext($configObject->{doc}) =%>
 		% } else {
 			<%= label_for $configObject->{name}, begin =%><%== maketext($configObject->{doc}) =%><% end =%>
@@ -17,22 +19,12 @@
 					<div class="modal-content">
 						<div class="modal-header">
 							<h1 class="modal-title fs-4" id="<%= "$configObject->{name}_help_title" %>">
-								% if (defined $configObject->{var}) {
-									<%= maketext('Variable Documentation') %>
-								% } else {
-									<%= maketext('Setting Documentation') %>
-								% }
+								<%= $configObject->help_title %>
 							</h1>
 							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 						</div>
 						<div class="modal-body">
-							<h2 class="fs-4"><code>
-								% if (defined $configObject->{var}) {
-									$<%= $configObject->{var} %>
-								% } else {
-									<%= $configObject->{setting} %> setting
-								% }
-							</code></h2>
+							<h2 class="fs-4"><code><%= $configObject->help_name =%></code></h2>
 							<div><%== $configObject->{doc2} || $configObject->{doc} %></div>
 						</div>
 					</div>

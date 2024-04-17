@@ -962,8 +962,7 @@ input.changed[type='text'] {
 
 /* Course Configuration */
 .config-tabs {
-	a,
-	span {
+	button {
 		&.nav-link {
 			font-weight: bold;
 			color: inherit;

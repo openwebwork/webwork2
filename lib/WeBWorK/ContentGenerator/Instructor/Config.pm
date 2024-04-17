@@ -35,6 +35,8 @@ use WeBWorK::ConfigObject::permission_checkboxlist;
 use WeBWorK::ConfigObject::list;
 use WeBWorK::ConfigObject::checkboxlist;
 use WeBWorK::ConfigObject::popuplist;
+use WeBWorK::ConfigObject::setting;
+use WeBWorK::ConfigObject::lms_context_id;
 use WeBWorK::ConfigValues qw(getConfigValues);
 
 # Write contents to outputFilePath and return error messages if any.
@@ -42,15 +44,9 @@ sub writeFile ($outputFilePath, $contents) {
 	if (open my $OUTPUTFILE, '>:encoding(UTF-8)', $outputFilePath) {
 		print $OUTPUTFILE $contents;
 		close $OUTPUTFILE;
-	} else {
-		return (
-			"I could not open $outputFilePath",
-			'We will not be able to make configuration changes unless the permissions '
-				. 'are set so that the web server can write to this file.'
-		);
+		return 1;
 	}
-
-	return;
+	return 0;
 }
 
 # Make a new config object from data
@@ -58,36 +54,20 @@ sub objectify ($c, $data) {
 	return "WeBWorK::ConfigObject::$data->{type}"->new($data, $c);
 }
 
-sub generate_navigation_tabs ($c, $current_tab, @tab_names) {
-	my $tabs = $c->c;
-	for my $tab (0 .. (scalar(@tab_names) - 1)) {
-		if ($current_tab eq "tab$tab") {
-			push(@$tabs, $c->tag('span', class => 'nav-link active', $c->maketext($tab_names[$tab])));
-		} else {
-			push(
-				@$tabs,
-				$c->link_to(
-					$c->maketext($tab_names[$tab]) =>
-						$c->systemLink($c->url_for, params => { section_tab => "tab$tab" }),
-					class => 'nav-link'
-				)
-			);
-		}
-	}
-	return $c->tag('nav', class => 'config-tabs nav nav-pills justify-content-center my-4', $tabs->join(''));
-}
-
 sub pre_header_initialize ($c) {
 	$c->stash->{configValues} = [];
 
 	return unless $c->authz->hasPermissions($c->param('user'), 'modify_problem_sets');
+
+	# Record status messages carried over if this is a redirect
+	$c->addmessage($c->authen->flash('status_message') || '');
 
 	my $ce = $c->ce;
 	$c->stash->{configValues} = getConfigValues($ce);
 
 	if ($c->param('make_changes')) {
 		# Get a copy of the course environment which does not have simple.conf loaded
-		my $ce3 = WeBWorK::CourseEnvironment->new({
+		my $ce2 = WeBWorK::CourseEnvironment->new({
 			courseName          => $ce->{courseName},
 			web_config_filename => 'noSuchFilePlease'
 		});
@@ -101,36 +81,44 @@ sub pre_header_initialize ($c) {
 
 			END_SIMPLE_CONF_HEADER
 
-		# Get the number of the current tab
-		my $tab = ($c->param('section_tab') || 'tab0') =~ s/tab//r;
-
-		# We completely rewrite the simple configuration file, so we need to go through all sections.
+		# Write all settings that are different from the default to the simple configuration file.
 		for my $configSection (@{ $c->stash->{configValues} }) {
 			my @configSectionArray = @$configSection;
 			shift @configSectionArray;
 			for my $con (@configSectionArray) {
 				my $conobject = $c->objectify($con);
-				if ($tab) {
-					# This tab is hidden so use the current course environment value.
-					$fileoutput .= $conobject->save_string($conobject->get_value($ce3), 1);
+				if (defined $ce->{permissionLevels}{"change_config_$con->{var}"}
+					&& !$c->authz->hasPermissions($c->param('user'), "change_config_$con->{var}"))
+				{
+					# The user does not have permission to change this configuration value.
+					# So use the current course environment value.
+					$fileoutput .= $conobject->save_string($conobject->get_value($ce2), 1);
 				} else {
-					# We reached the tab with entry objects.
-					if (defined $conobject->{var}) {
-						$fileoutput .= $conobject->save_string($conobject->get_value($ce3));
-					} else {
-						# This is something to set in the course's setting table.
-						$c->db->setSettingValue($conobject->{setting}, scalar $c->param($conobject->{setting}));
-					}
+					$fileoutput .= $conobject->save_string($conobject->get_value($ce2));
 				}
 			}
-			$tab--;
 		}
 
-		my @write_result = writeFile("$ce->{courseDirs}{root}/simple.conf", $fileoutput);
-		if (@write_result) {
-			$c->addbadmessage($c->c(@write_result)->join($c->tag('br')));
+		if (writeFile("$ce->{courseDirs}{root}/simple.conf", $fileoutput)) {
+			$c->addgoodmessage($c->maketext('Changes saved.'));
+
+			# Redirect back to the instructor config page after saving settings.  After the redirect the now saved
+			# changes will take effect.  This gives the appearance that settings take effect immediately after saving.
+			$c->authen->flash(status_message => $c->{status_message}->join(''));
+			$c->reply_with_redirect($c->systemLink($c->url_for('instructor_config')));
 		} else {
-			$c->addgoodmessage($c->maketext('Changes saved'));
+			$c->addbadmessage(
+				$c->c(
+					$c->tag('div', $c->maketext('Unable to open the "~[COURSEROOT~]/simple.conf" file.')),
+					$c->tag(
+						'div',
+						$c->maketext(
+							'Contact the site administrator to ensure that the permissions '
+								. 'are set so that the web server can write to this file.'
+						)
+					)
+				)->join('')
+			);
 		}
 	}
 

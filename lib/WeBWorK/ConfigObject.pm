@@ -5,9 +5,9 @@ use Mojo::Base -signatures;
 
 sub new ($class, $data, $c) {
 	return bless {
-		%$data,        # Make a copy of the data.
-		c    => $c,    # The current content generator controller object.
-		name => defined $data->{var} ? ($data->{var} =~ s/[{]/_/gr) =~ s/[}]//gr : $data->{setting}
+		%$data,                                             # Make a copy of the data.
+		c    => $c,                                         # The current content generator controller object.
+		name => ($data->{var} =~ s/[{]/_/gr) =~ s/[}]//gr
 	}, $class;
 }
 
@@ -21,19 +21,14 @@ sub comparison_value ($self, $val) {
 	return $val;
 }
 
-# Get the value of the corresponding variable in the provided course environment or setting table value.
+# Get the value of the corresponding variable in the provided course environment.
 sub get_value ($self, $ce) {
-	my $value;
-	if (defined $self->{var}) {
-		my @keys = $self->{var} =~ m/([^{}]+)/g;
-		return '' unless @keys;
+	my @keys = $self->{var} =~ m/([^{}]+)/g;
+	return '' unless @keys;
 
-		$value = $ce;
-		for (@keys) {
-			$value = $value->{$_};
-		}
-	} else {
-		$value = $self->{c}->db->getSettingValue($self->{setting});
+	my $value = $ce;
+	for (@keys) {
+		$value = $value->{$_};
 	}
 	return $value;
 }
@@ -51,7 +46,6 @@ sub convert_newval_source ($self, $use_current) {
 # Bit of text to put in the configuration file.  The result should be an assignment which is executable by perl.  oldval
 # will be the value of the perl variable, and newval will be whatever an entry widget produces.
 sub save_string ($self, $oldval, $use_current = 0) {
-	return '' unless defined $self->{var};
 	my $newval = $self->convert_newval_source($use_current);
 	return '' if $self->comparison_value($oldval) eq $newval;
 
@@ -68,6 +62,9 @@ sub entry_widget ($self, $default) {
 		class         => 'form-control form-control-sm'
 	);
 }
+
+sub help_title ($self) { return $self->{c}->maketext('Variable Documentation') }
+sub help_name  ($self) { return '$' . $self->{var} }
 
 # This produces the documentation string and modal containing detailed documentation.
 # It is the same for all config types.
