@@ -915,10 +915,10 @@ sub getConfigValues ($ce) {
 			var  => 'lms_context_id',
 			doc  => x('LMS Context ID'),
 			doc2 => x(
-				'This must be set in order to utilize LTI content selection. This must be configured in the LMS '
-					. 'first. If content selection from the LMS is attempted once the LMS is configured to use it, '
-					. 'then you will be shown the LMS context ID. Enter the context ID shown here, and then you '
-					. 'will be able to select assignments from this course, and import them into the LMS.'
+				'This must be set in order to utilize LTI content selection. The WeBWorK content item URL must be '
+					. 'set for the external tool in the LMS first. Then if content selection from the LMS is '
+					. 'attempted, you will be shown the LMS context ID. Enter the context ID shown here, and then '
+					. 'you will be able to select assignments from this course, and import them into the LMS.'
 			),
 			type => 'lms_context_id'
 		}
