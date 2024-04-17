@@ -169,6 +169,8 @@ sub getDBextras ($c, $sourceFileName) {
 	}
 
 	my $filePath = $c->ce->{courseDirs}{templates} . "/$sourceFileName";
+	return (0, 0) unless -r $filePath;
+
 	my $tag_obj  = WeBWorK::Utils::Tags->new($filePath);
 	my $isMO     = $tag_obj->{MO}     || 0;
 	my $isstatic = $tag_obj->{Static} || 0;
