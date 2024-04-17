@@ -75,6 +75,7 @@
 
 	// Turn help boxes into popovers
 	document.querySelectorAll('.help-popup').forEach((popover) => {
+		popover.addEventListener('click', (e) => e.preventDefault());
 		new bootstrap.Popover(popover, { trigger: 'hover focus' });
 	});
 
