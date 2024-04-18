@@ -1443,6 +1443,8 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 		&& $c->{can}{showProblemScores}
 		&& $mergedProblem->num_correct + $mergedProblem->num_incorrect > 0;
 
+	my $showOnlyCorrectAnswers = $c->param('showCorrectAnswers') && $c->{will}{showCorrectAnswers};
+
 	my $pg = await renderPG(
 		$c,
 		$effectiveUser,
@@ -1465,14 +1467,15 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 				|| $c->{previewAnswers}
 				|| $c->{will}{checkAnswers}
 				|| $showReturningFeedback,
-			showAttemptAnswers      => $c->ce->{pg}{options}{showEvaluatedAnswers},
-			showAttemptPreviews     => 1,
-			showAttemptResults      => !$c->{previewAnswers} && $c->{can}{showProblemScores},
-			forceShowAttemptResults => $c->{will}{showProblemGrader}
+			showAttemptAnswers  => $showOnlyCorrectAnswers ? 0 : $c->ce->{pg}{options}{showEvaluatedAnswers},
+			showAttemptPreviews => !$showOnlyCorrectAnswers,
+			showAttemptResults  => !$showOnlyCorrectAnswers && !$c->{previewAnswers} && $c->{can}{showProblemScores},
+			forceShowAttemptResults => $showOnlyCorrectAnswers
+				|| $c->{will}{showProblemGrader}
 				|| ($c->ce->{pg}{options}{automaticAnswerFeedback}
 					&& !$c->{previewAnswers}
 					&& $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet})),
-			showMessages       => 1,
+			showMessages       => !$showOnlyCorrectAnswers,
 			showCorrectAnswers => (
 				$c->{will}{showProblemGrader} ? 2
 				: !$c->{previewAnswers} && $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet})

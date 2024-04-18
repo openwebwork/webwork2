@@ -61,7 +61,8 @@ async sub pre_header_initialize ($c) {
 	#                  checked or previewed.
 
 	my $initializeSMA = !$c->authen->session->{showMeAnother}
-		|| ($c->authen->session->{showMeAnother} && !($c->{checkAnswers} || $c->{previewAnswers}));
+		|| ($c->authen->session->{showMeAnother}
+			&& !($c->{checkAnswers} || $c->{previewAnswers} || $c->param('showCorrectAnswers')));
 
 	# This will be set to true if changing the seed changes the problem (assume this is NOT the case by default).
 	$c->stash->{isPossible} = 0;
@@ -161,7 +162,7 @@ async sub pre_header_initialize ($c) {
 				delete $c->authen->session->{showMeAnother};
 			}
 		}
-	} elsif ($c->{checkAnswers} || $c->{previewAnswers}) {
+	} elsif ($c->{checkAnswers} || $c->{previewAnswers} || $c->param('showCorrectAnswers')) {
 		$c->stash->{isPossible} = 1;
 		$c->{problem}->problem_seed($c->authen->session->{showMeAnother}{problemSeed});
 	} else {
@@ -189,6 +190,8 @@ async sub pre_header_initialize ($c) {
 
 	return unless $c->stash->{isPossible};
 
+	my $showOnlyCorrectAnswers = $c->param('showCorrectAnswers') && $c->{will}{showCorrectAnswers};
+
 	# Final PG problem translation.
 	debug('begin pg processing');
 	my $pg = await renderPG(
@@ -208,15 +211,17 @@ async sub pre_header_initialize ($c) {
 			effectivePermissionLevel => $db->getPermissionLevel($c->{effectiveUserID})->permission,
 			useMathQuill             => $c->{will}{useMathQuill},
 			useMathView              => $c->{will}{useMathView},
-			forceScaffoldsOpen       => 0,
+			forceScaffoldsOpen       => $showOnlyCorrectAnswers,
 			isInstructor             => $c->authz->hasPermissions($c->{userID}, 'view_answers'),
 			showFeedback             => $c->{checkAnswers} || $c->{previewAnswers},
-			showAttemptAnswers       => $ce->{pg}{options}{showEvaluatedAnswers},
-			showAttemptPreviews      => 1,
+			showAttemptAnswers       => $showOnlyCorrectAnswers ? 0 : $ce->{pg}{options}{showEvaluatedAnswers},
+			showAttemptPreviews      => !$showOnlyCorrectAnswers,
 			showAttemptResults       => $c->{checkAnswers},
-			showMessages             => 1,
-			showCorrectAnswers       => $c->{will}{checkAnswers} && $c->{will}{showCorrectAnswers} ? 1 : 0,
-			debuggingOptions         => getTranslatorDebuggingOptions($c->authz, $c->{userID})
+			forceShowAttemptResults  => $showOnlyCorrectAnswers,
+			showMessages             => !$showOnlyCorrectAnswers,
+			showCorrectAnswers       => $showOnlyCorrectAnswers
+				|| ($c->{will}{checkAnswers} && $c->{will}{showCorrectAnswers}) ? 1 : 0,
+			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID})
 		}
 	);
 
