@@ -23,7 +23,6 @@ WeBWorK::ContentGenerator::ShowMeAnother - Show students alternate versions of c
 =cut
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(wwRound);
 use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
 use WeBWorK::Utils::Sets qw(format_set_name_display);
@@ -131,6 +130,7 @@ async sub pre_header_initialize ($c) {
 			displayMode              => 'plainText',
 			showHints                => 0,
 			showSolutions            => 0,
+			forceScaffoldsOpen       => 1,
 			refreshMath2img          => 0,
 			processAnswers           => 1,
 			permissionLevel          => $db->getPermissionLevel($userName)->permission,
@@ -167,6 +167,7 @@ async sub pre_header_initialize ($c) {
 					displayMode              => 'plainText',
 					showHints                => 0,
 					showSolutions            => 0,
+					forceScaffoldsOpen       => 1,
 					refreshMath2img          => 0,
 					processAnswers           => 1,
 					permissionLevel          => $db->getPermissionLevel($userName)->permission,
@@ -228,6 +229,7 @@ async sub pre_header_initialize ($c) {
 				displayMode              => 'plainText',
 				showHints                => 0,
 				showSolutions            => 0,
+				forceScaffoldsOpen       => 1,
 				refreshMath2img          => 0,
 				processAnswers           => 1,
 				permissionLevel          => $db->getPermissionLevel($userName)->permission,
@@ -237,7 +239,15 @@ async sub pre_header_initialize ($c) {
 			},
 		);
 
-		if ($showMeAnotherNewPG->{body_text} eq $showMeAnotherOriginalPG->{body_text}) {
+		my $new_body_text = $showMeAnotherNewPG->{body_text};
+		for (keys %{ $showMeAnotherNewPG->{resource_list} }) {
+			$new_body_text =~ s/$showMeAnotherNewPG->{resource_list}{$_}//g
+				if defined $showMeAnotherNewPG->{resource_list}{$_};
+		}
+
+		if ($new_body_text eq $orig_body_text
+			&& !have_different_answers($showMeAnotherNewPG, $showMeAnotherOriginalPG))
+		{
 			$showMeAnother{IsPossible}   = 0;
 			$showMeAnother{CheckAnswers} = 0;
 			$showMeAnother{Preview}      = 0;
