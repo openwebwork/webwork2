@@ -222,19 +222,31 @@ async sub renderProblem {
 		effectivePermissionLevel => $rh->{effectivePermissionLevel} || $rh->{permissionLevel} || 0,
 		useMathQuill             => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill',
 		useMathView              => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView',
-		isInstructor             => $rh->{isInstructor}       // 0,
-		forceScaffoldsOpen       => $rh->{forceScaffoldsOpen} // 0,
+		isInstructor             => $rh->{isInstructor} // 0,
+		forceScaffoldsOpen       => $rh->{WWcorrectAnsOnly} ? 1 : ($rh->{forceScaffoldsOpen} // 0),
 		QUIZ_PREFIX              => $rh->{answerPrefix},
 		showFeedback             => $rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns},
-		showAttemptAnswers       => $rh->{showAttemptAnswers} // 1,
-		showAttemptPreviews      => $rh->{showAttemptPreviews}
-			// ($rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}),
+		showAttemptAnswers       => $rh->{WWcorrectAnsOnly} ? 0 : ($rh->{showAttemptAnswers} // 1),
+		showAttemptPreviews      => (
+			$rh->{WWcorrectAnsOnly} ? 0
+			: ($rh->{showAttemptPreviews} // ($rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}))
+		),
 		showAttemptResults      => $rh->{showAttemptResults} // ($rh->{WWsubmit} || $rh->{WWcorrectAns}),
-		forceShowAttemptResults => $rh->{forceShowAttemptResults} || ($rh->{isInstructor}
-			&& ($rh->{showAttemptResults} // ($rh->{WWsubmit} || $rh->{WWcorrectAns}))),
-		showMessages       => $rh->{showMessages} // ($rh->{previewAsnwers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}),
-		showCorrectAnswers => $rh->{showCorrectAnswers} // ($rh->{WWcorrectAns} ? 2 : 0),
-		debuggingOptions   => {
+		forceShowAttemptResults => (
+			$rh->{WWcorrectAnsOnly} ? 1
+			: (
+				$rh->{forceShowAttemptResults}
+					|| ($rh->{isInstructor}
+						&& ($rh->{showAttemptResults} // ($rh->{WWsubmit} || $rh->{WWcorrectAns})))
+			)
+		),
+		showMessages => (
+			$rh->{WWcorrectAnsOnly} ? 0
+			: ($rh->{showMessages} // ($rh->{previewAsnwers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}))
+		),
+		showCorrectAnswers =>
+			($rh->{WWcorrectAnsOnly} ? 1 : ($rh->{showCorrectAnswers} // ($rh->{WWcorrectAns} ? 2 : 0))),
+		debuggingOptions => {
 			show_resource_info          => $rh->{show_resource_info}          // 0,
 			view_problem_debugging_info => $rh->{view_problem_debugging_info} // 0,
 			show_pg_info                => $rh->{show_pg_info}                // 0,

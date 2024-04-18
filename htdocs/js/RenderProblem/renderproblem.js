@@ -20,6 +20,7 @@
 				showAnswerNumbers: 0,
 				showHints: 1,
 				showSolutions: 1,
+				showCorrectAnswersOnlyButton: 1,
 				isInstructor: 1,
 				forceScaffoldsOpen: 1,
 				noprepostambles: 1,

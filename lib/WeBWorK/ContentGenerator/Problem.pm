@@ -560,6 +560,8 @@ async sub pre_header_initialize ($c) {
 		}
 	}
 
+	my $showOnlyCorrectAnswers = $c->param('showCorrectAnswers') && $will{showCorrectAnswers};
+
 	# Translation
 	debug('begin pg processing');
 	my $pg = await renderPG(
@@ -580,18 +582,19 @@ async sub pre_header_initialize ($c) {
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserID)->permission,
 			useMathQuill             => $will{useMathQuill},
 			useMathView              => $will{useMathView},
-			forceScaffoldsOpen       => 0,
+			forceScaffoldsOpen       => $showOnlyCorrectAnswers,
 			isInstructor             => $authz->hasPermissions($userID, 'view_answers'),
 			showFeedback             => $c->{submitAnswers} || $c->{previewAnswers} || $showReturningFeedback,
-			showAttemptAnswers       => $ce->{pg}{options}{showEvaluatedAnswers},
-			showAttemptPreviews      => 1,
+			showAttemptAnswers       => $showOnlyCorrectAnswers ? 0 : $ce->{pg}{options}{showEvaluatedAnswers},
+			showAttemptPreviews      => !$showOnlyCorrectAnswers,
 			showAttemptResults       => $c->{submitAnswers} || $showReturningFeedback,
-			forceShowAttemptResults  => $will{checkAnswers}
+			forceShowAttemptResults  => $showOnlyCorrectAnswers
+				|| $will{checkAnswers}
 				|| $will{showProblemGrader}
 				|| ($ce->{pg}{options}{automaticAnswerFeedback}
 					&& !$c->{previewAnswers}
 					&& after($c->{set}->answer_date, $c->submitTime)),
-			showMessages       => 1,
+			showMessages       => !$showOnlyCorrectAnswers,
 			showCorrectAnswers => (
 				$will{showProblemGrader} || ($c->{submitAnswers} && $c->{showCorrectOnRandomize}) ? 2
 				: !$c->{previewAnswers} && after($c->{set}->answer_date, $c->submitTime)
@@ -1460,6 +1463,15 @@ sub output_summary ($c) {
 				$c->maketext('ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED')
 			),
 			$c->attemptResults($pg)
+		);
+	} elsif ($c->param('showCorrectAnswers') && $will{showCorrectAnswers}) {
+		push(
+			@$output,
+			$c->tag(
+				'div',
+				class => 'alert alert-danger d-inline-block mb-2 p-1',
+				$c->maketext('CORRECT ANSWERS SHOWN ONLY -- ANSWERS NOT RECORDED')
+			),
 		);
 	} elsif ($c->{previewAnswers}) {
 		push(

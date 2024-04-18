@@ -497,11 +497,15 @@
 				%
 				% if ($c->{submitAnswers}) {
 					% if ($c->{scoreRecordedMessage}[ $probOrder->[$i] ] ne 'recorded') {
-						% $recordMessage = tag('div', class => 'alert alert-dangeer d-inline-block mb-2 p-1',
+						% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
 							% maketext('ANSWERS NOT RECORDED -- [_1]', $c->{scoreRecordedMessage}[ $probOrder->[$i] ])
 						% );
 					% }
 					% $resultsTable = $c->attemptResults($pg);
+				% } elsif (param('showCorrectAnswers') && $c->{will}{showCorrectAnswers}) {
+					% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
+						% maketext('CORRECT ANSWERS SHOWN ONLY -- ANSWERS NOT RECORDED')
+					% );
 				% } elsif ($c->{will}{checkAnswers} || $c->{will}{showProblemGrader}) {
 					% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
 						% maketext('ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED')
@@ -677,7 +681,11 @@
 		% }
 		%
 		% if ($c->{can}{showProblemGrader}) {
-			<div class="col-12 my-2">
+			<div class="submit-buttons-container col-12 my-2">
+				% if ($c->{can}{showCorrectAnswers}) {
+					<%= submit_button maketext('Show Correct Answers'), name => 'showCorrectAnswers',
+						class => 'btn btn-primary mb-1' =%>
+				% }
 				% if ($c->{will}{showProblemGrader}) {
 					<%= submit_button maketext('Hide Problem Graders'), name => 'hideProblemGrader',
 						class => 'btn btn-primary mb-1' =%>
