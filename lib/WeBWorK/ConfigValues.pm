@@ -448,15 +448,16 @@ sub getConfigValues ($ce) {
 				var  => 'pg{options}{showMeAnother}',
 				doc  => x('List of options for Show Me Another button'),
 				doc2 => x(
-					'<ul><li><b>SMAcheckAnswers</b>: enables the Check Answers button <i>for the new problem</i> when '
-						. 'Show Me Another is clicked</li><li><b>SMAshowSolutions</b>: shows walk-through solution '
-						. '<i>for the new problem</i> when Show Me Another is clicked; a check is done first to make '
-						. 'sure that a solution exists </li><li><b>SMAshowCorrect</b>: correct answers <i>for the new '
-						. 'problem</i> can be viewed when Show Me Another is clicked; note that <b>SMAcheckAnswers</b>'
-						. 'needs to be enabled at the same time</li><li><b>SMAshowHints</b>: show hints <i>for the new '
-						. 'problem</i> (assuming they exist)</li></ul>Note: there is very little point enabling the '
-						. 'button unless you check at least one of these options - the students would simply see a new '
-						. 'version that they can not attempt or learn from.'
+					'<ul><li><b>SMAcheckAnswers</b>: Enables the "Check Answers" button <i>for the new problem</i> '
+						. 'when the "Show Me Another" button is clicked.</li><li><b>SMAshowSolutions</b>: Shows the '
+						. 'solution <i>for the new problem</i> when the "Show Me Another" button is clicked (assuming '
+						. 'that a solution exists).</li><li><b>SMAshowCorrect</b>: Correct answers <i>for the new '
+						. 'problem</i> can be viewed when the "Show Me Another" button is clicked. Note that '
+						. 'SMACheckAnswers must also be enabled or the student will have no way to view correct '
+						. 'answers.</li><li><b>SMAshowHints</b>: Show hints <i>for the new problem</i> (assuming '
+						. 'hints exist).</li></ul>Note: There is very little point enabling the Show Me Another '
+						. 'feature unless you check at least one of these options. Otherwise the students would '
+						. 'simply see a new version that can not be attempted or learned from.'
 				),
 				min    => 0,
 				values => [ 'SMAcheckAnswers', 'SMAshowSolutions', 'SMAshowCorrect', 'SMAshowHints' ],
