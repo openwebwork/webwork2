@@ -273,8 +273,7 @@ sub fetchEmailRecipients ($c, $permissionType, $sender = undef) {
 			user_id       => $user_ids,
 			email_address => { '!=', undef },
 			$ce->{feedback_by_section}
-				&& defined $sender
-				&& defined $sender->section ? (section => $sender->section) : (),
+				&& defined $sender ? (section => ($sender->section eq '' ? undef : $sender->section)) : ()
 		})
 	);
 
