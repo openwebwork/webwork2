@@ -24,6 +24,8 @@ Mojolicious::WeBWorK - Mojolicious app for WeBWorK 2.
 
 use Env qw(WEBWORK_SERVER_ADMIN);
 
+use Mojo::JSON qw(encode_json);
+
 use WeBWorK;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Utils::Logs qw(writeTimingLogEntry);
@@ -40,6 +42,8 @@ sub startup ($app) {
 
 	# Configure the application
 	$app->secrets($config->{secrets});
+
+	$app->sessions->serialize(sub { return encode_json($_[0]) });
 
 	# Set constants from the configuration.
 	$WeBWorK::Debug::Enabled                                = $config->{debug}{enabled} // 0;
