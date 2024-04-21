@@ -634,18 +634,6 @@
 		<%= $jumpLinks->() =%>
 		<div class="gwDivider"></div>
 		%
-		<div class="checkboxes-container col-12 my-2">
-			% if ($c->{can}{showProblemGrader}) {
-				<div class="form-check">
-					<label class="form-check-label">
-						<input name="showProblemGrader" type="checkbox" class="form-check-input"
-							<%= $c->{want}{showProblemGrader} ? 'checked' : '' %>>
-						<%= maketext('Show problem graders') %>
-					</label>
-				</div>
-			% }
-		</div>
-		%
 		<div class="submit-buttons-container col-12 mb-2">
 			<%= submit_button maketext('Preview Test'), name => 'previewAnswers', class => 'btn btn-primary mb-1' =%>
 			% if ($c->{can}{recordAnswersNextTime}) {
@@ -689,6 +677,20 @@
 		% if ($numProbPerPage && $numPages > 1 && $c->{can}{recordAnswersNextTime}) {
 			<p><em><%= maketext('Note: grading the test grades all problems, not just those on this page.') %></em></p>
 		% }
+		%
+		% if ($c->{can}{showProblemGrader}) {
+			<div class="col-12 my-2">
+				% if ($c->{will}{showProblemGrader}) {
+					<%= submit_button maketext('Hide Problem Graders'), name => 'hideProblemGrader',
+						class => 'btn btn-primary mb-1' =%>
+					<%= hidden_field showProblemGrader => 1 =%>
+				% } else {
+					<%= submit_button maketext('Show Problem Graders'), name => 'showProblemGrader',
+						class => 'btn btn-primary mb-1' =%>
+				% }
+			</div>
+		% }
+		%
 		% if (defined param('sourceFilePath')) {
 			<%= hidden_field sourceFilePath => param('sourceFilePath') =%>
 		% }

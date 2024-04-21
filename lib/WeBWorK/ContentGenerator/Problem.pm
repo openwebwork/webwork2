@@ -454,6 +454,9 @@ async sub pre_header_initialize ($c) {
 	# (this hash is updated and re-stored after the can and will hashes)
 	$c->{showMeAnother} = \%showMeAnother;
 
+	# Unset the showProblemGrader parameter if the "Hide Problem Grader" button was clicked.
+	$c->param(showProblemGrader => undef) if $c->param('hideProblemGrader');
+
 	# Permissions
 
 	# What does the user want to do?
@@ -986,8 +989,8 @@ sub nav ($c, $args) {
 
 	my %tail;
 	$tail{displayMode}       = $c->{displayMode}             if defined $c->{displayMode};
-	$tail{showOldAnswers}    = $c->{will}{showOldAnswers}    if defined $c->{will}{showOldAnswers};
-	$tail{showProblemGrader} = $c->{will}{showProblemGrader} if defined $c->{will}{showProblemGrader};
+	$tail{showOldAnswers}    = 1                             if $c->{will}{showOldAnswers};
+	$tail{showProblemGrader} = 1                             if $c->{will}{showProblemGrader};
 	$tail{studentNavFilter}  = $c->param('studentNavFilter') if $c->param('studentNavFilter');
 
 	return $c->tag(

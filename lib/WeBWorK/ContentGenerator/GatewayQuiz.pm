@@ -704,6 +704,9 @@ async sub pre_header_initialize ($c) {
 		return;
 	}
 
+	# Unset the showProblemGrader parameter if the "Hide Problem Grader" button was clicked.
+	$c->param(showProblemGrader => undef) if $c->param('hideProblemGrader');
+
 	# What does the user want to do?
 	my %want = (
 		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
