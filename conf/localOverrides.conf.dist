@@ -523,12 +523,13 @@ $mail{feedbackRecipients}    = [
 
 # Setting $session_management_via="key" uses the key database for session
 # management. If password authentication is used, then a user can opt to use a
-# session cookie with a duration determined by the $CookieLifeTime setting below
-# by checking the "Remember Me" checkbox on the login page.
+# session cookie with a duration determined by the $sessionKeyTimeout setting
+# below by checking the "Remember Me" checkbox on the login page.
 
 # Setting $session_management_via="session_cookies" uses a session cookie to
 # manage the session. Note that even in this case a key is stored in the
-# database which is compared to the key stored in the session cookie.
+# database which is compared to the key stored in the session cookie. The
+# lifetime of the cookie is determined by the $sessionKeyTimeout setting below.
 
 # Note that the key database method is less secure as the key must be embeded in
 # the page and added as a url parameter in order to maintain the session. These
@@ -551,12 +552,12 @@ $mail{feedbackRecipients}    = [
 # Set the value of the samesite attribute of the session cookie:
 # See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 # Notes about the $CookieSameSite options:
-# The CookieLifeTime setting determines how long the browser should retain the
-# cookie. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie.
-# The CookieLifeTime value should be numeric and in seconds, or should be set to
-# "session", in which case the cookie will expire when the browser session ends
-# (a "session cookie"). Note that a value of 0 also means the cookie will expire
-# when the browser session ends. The default value is 7 days.
+# The "None" setting should only be used with HTTPS and when $CookieSecure is
+# set to 1 below. The "None" setting is also less secure and can allow certain
+# types of cross-site attacks.  The "Strict" setting can break the links in the
+# system generated feedback emails when read in a web mail client.  Due to those
+# factors, the "Lax" setting is probably the optimal choice for typical webwork2
+# servers.
 #$CookieSameSite = "None";
 #$CookieSameSite = "Strict";
 #$CookieSameSite = "Lax";
@@ -564,15 +565,6 @@ $mail{feedbackRecipients}    = [
 # Set the value of the secure cookie attribute.
 # The default is 0, as 1 will not work without https.
 #$CookieSecure = 1;
-
-# The CookieLifeTime setting determines how long the browser should retain the
-# cookie. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie.
-# The CookieLifeTime value should be numeric and in seconds, or should be set to
-# "session", in which case the cookie will expire when the browser session ends
-# (a "session cookie"). Note that a value of 0 also means the cookie will expire
-# when the browser session ends. The default value is 7 days.
-#$CookieLifeTime = 604800;
-#$CookieLifeTime = "session";
 
 ################################################################################
 # Two Factor Authentication
