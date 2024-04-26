@@ -1313,15 +1313,15 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $themeTree, $prob
 			if (defined $pg->{answers}{$ansName}{preview_latex_string}
 				&& $pg->{answers}{$ansName}{preview_latex_string} ne '')
 			{
-				$stuAns = $pg->{answers}{$ansName}{preview_latex_string};
+				$stuAns = "\$\\displaystyle $pg->{answers}{$ansName}{preview_latex_string}\$";
 			} elsif (defined $pg->{answers}{$ansName}{original_student_ans}
 				&& $pg->{answers}{$ansName}{original_student_ans} ne '')
 			{
-				$stuAns = "\\text{" . $pg->{answers}{$ansName}{original_student_ans} . "}";
+				$stuAns = "\\begin{verbatim}$pg->{answers}{$ansName}{original_student_ans}\\end{verbatim}";
 			} else {
-				$stuAns = "\\text{no response}";
+				$stuAns = "no response";
 			}
-			$stuAnswers .= "\\item\n\$\\displaystyle $stuAns\$\n";
+			$stuAnswers .= "\\item\n$stuAns\n";
 		}
 		$stuAnswers .= "\\end{itemize}}$corrMsg\\par\n";
 		print $FH $stuAnswers;
