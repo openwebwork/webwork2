@@ -13,27 +13,27 @@
         "url": "https://github.com/openwebwork/webwork2"
     },
     "dependencies": {
-        "@fortawesome/fontawesome-free": "^6.4.2",
-        "bootstrap": "~5.3.2",
+        "@fortawesome/fontawesome-free": "^6.5.2",
+        "bootstrap": "~5.3.3",
         "codemirror": "^5.65.15",
         "flatpickr": "^4.6.13",
-        "iframe-resizer": "^4.3.7",
+        "iframe-resizer": "^4.3.11",
         "jquery": "^3.7.1",
         "jquery-ui-dist": "^1.13.2",
-        "luxon": "^3.4.3",
+        "luxon": "^3.4.4",
         "mathjax": "^3.2.2",
         "shortcut-buttons-flatpickr": "^0.4.0",
-        "sortablejs": "^1.15.0"
+        "sortablejs": "^1.15.2"
     },
     "devDependencies": {
-        "autoprefixer": "^10.4.16",
-        "chokidar": "^3.5.3",
-        "cssnano": "^6.0.1",
-        "postcss": "^8.4.31",
-        "prettier": "^3.1.1",
+        "autoprefixer": "^10.4.19",
+        "chokidar": "^3.6.0",
+        "cssnano": "^6.1.2",
+        "postcss": "^8.4.38",
+        "prettier": "^3.2.5",
         "rtlcss": "^4.1.1",
-        "sass": "^1.69.5",
-        "terser": "^5.24.0",
+        "sass": "^1.75.0",
+        "terser": "^5.30.4",
         "yargs": "^17.7.2"
     },
     "browserslist": [
