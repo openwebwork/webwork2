@@ -1317,7 +1317,10 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $themeTree, $prob
 			} elsif (defined $pg->{answers}{$ansName}{original_student_ans}
 				&& $pg->{answers}{$ansName}{original_student_ans} ne '')
 			{
-				$stuAns = "\\begin{verbatim}$pg->{answers}{$ansName}{original_student_ans}\\end{verbatim}";
+				$stuAns =
+					"\\begin{verbatim}"
+					. ($pg->{answers}{$ansName}{original_student_ans} =~ s/\\end\{verbatim\}//gr)
+					. "\\end{verbatim}";
 			} else {
 				$stuAns = "no response";
 			}
