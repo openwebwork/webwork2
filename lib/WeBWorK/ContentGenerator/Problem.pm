@@ -211,35 +211,35 @@ sub can_useMathQuill ($c) {
 sub can_showMeAnother ($c, $user, $effectiveUser, $set, $problem, $submitAnswers = 0) {
 	my $ce = $c->ce;
 
-	# If the showMeAnother button isn't enabled in the course configuration,
-	# don't show it under any circumstances (not even for the instructor).
+	# If the showMeAnother button isn't enabled for the course, then it can't be used.
 	return 0 unless $ce->{pg}{options}{enableShowMeAnother};
-
-	# Get the hash of information about showMeAnother
-	my %showMeAnother = %{ $c->{showMeAnother} };
 
 	if (after($set->open_date, $c->submitTime)
 		|| $c->authz->hasPermissions($c->param('user'), 'can_use_show_me_another_early'))
 	{
-		# If $showMeAnother{TriesNeeded} is somehow not an integer or if it is -2, use the default value.
-		$showMeAnother{TriesNeeded} = $ce->{pg}{options}{showMeAnotherDefault}
-			if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
+		$c->{showMeAnother}{TriesNeeded} = $ce->{pg}{options}{showMeAnotherDefault}
+			if $c->{showMeAnother}{TriesNeeded} == -2;
 
-		# If SMA is not permitted for the problem, don't show it.
-		return 0 unless $showMeAnother{TriesNeeded} > -1;
+		# If showMeAnother is not permitted for the problem, then it can't be used for this problem.
+		return 0 unless $c->{showMeAnother}{TriesNeeded} > -1;
 
-		# If the student is previewing or checking an answer to SMA then clearly the user can use show me another.
-		return 1 if $showMeAnother{CheckAnswers} || $showMeAnother{Preview};
+		# If the user is previewing or checking a showMeAnother problem corresponding to this set and problem then
+		# clearly the user can use show me another.
+		return 1
+			if $c->authen->session->{showMeAnother}
+			&& defined $c->authen->session->{showMeAnother}{setID}
+			&& $c->authen->session->{showMeAnother}{setID} eq $set->set_id
+			&& defined $c->authen->session->{showMeAnother}{problemID}
+			&& $c->authen->session->{showMeAnother}{problemID} eq $problem->problem_id
+			&& ($c->{checkAnswers} || $c->{previewAnswers});
 
-		# If $showMeAnother{Count} is somehow not an integer, it probably means that the value in the database was not
-		# initialized correctly.  So set it to 0.
-		$showMeAnother{Count} = 0 unless $showMeAnother{Count} =~ /^[+-]?\d+$/;
-
-		# If the button is enabled globally and for the problem, then check if the student has either
-		# not submitted enough answers yet or has used the SMA button too many times.
+		# If the student has not attempted the original problem enough times yet, then showMeAnother can not be used.
 		return 0
-			if $problem->num_correct + $problem->num_incorrect + ($submitAnswers ? 1 : 0) < $showMeAnother{TriesNeeded}
-			|| ($showMeAnother{Count} >= $showMeAnother{MaxReps} && $showMeAnother{MaxReps} > -1);
+			if $problem->num_correct + $problem->num_incorrect + ($submitAnswers ? 1 : 0) <
+			$c->{showMeAnother}{TriesNeeded};
+
+		# If the number of showMeAnother uses has been exceeded, then the user can not use it again.
+		return 0 if $c->{showMeAnother}{Count} >= $c->{showMeAnother}{MaxReps} && $c->{showMeAnother}{MaxReps} > -1;
 
 		return 1;
 	}
@@ -437,22 +437,14 @@ async sub pre_header_initialize ($c) {
 	return if $c->{invalidSet} || $c->{invalidProblem};
 
 	# Construct a hash containing information for showMeAnother.
-	#   TriesNeeded:   the number of times the student needs to attempt the problem before the button is available
-	#   MaxReps:       the Maximum Number of times that showMeAnother can be clicked (specified in course configuration
-	#   Count:         the number of times the student has clicked SMA (or clicked refresh on the page)
-	my %SMAoptions    = map { $_ => 1 } @{ $ce->{pg}{options}{showMeAnother} };
-	my %showMeAnother = (
+	#   TriesNeeded:   The number of times the student needs to attempt this problem before the button is available.
+	#   MaxReps:       The maximum number of times that showMeAnother can be used for this problem.
+	#   Count:         The number of times the student has used showMeAnother for this problem.
+	$c->{showMeAnother} = {
 		TriesNeeded => $problem->{showMeAnother},
 		MaxReps     => $ce->{pg}{options}{showMeAnotherMaxReps},
 		Count       => $problem->{showMeAnotherCount},
-	);
-
-	# If $showMeAnother{Count} is somehow not an integer, make it one.
-	$showMeAnother{Count} = 0 unless $showMeAnother{Count} =~ /^[+-]?\d+$/;
-
-	# Store the showMeAnother hash for the check to see if the button can be used
-	# (this hash is updated and re-stored after the can and will hashes)
-	$c->{showMeAnother} = \%showMeAnother;
+	};
 
 	# Unset the showProblemGrader parameter if the "Hide Problem Grader" button was clicked.
 	$c->param(showProblemGrader => undef) if $c->param('hideProblemGrader');
@@ -536,7 +528,6 @@ async sub pre_header_initialize ($c) {
 	my %will = map { $_ => $can{$_} && $want{$_} } keys %can;
 
 	if ($prEnabled && $problem->{prCount} >= $rerandomizePeriod && !after($c->{set}->due_date, $c->submitTime)) {
-		$showMeAnother{active}       = 0;
 		$can{requestNewSeed}         = 1;
 		$want{requestNewSeed}        = 1;
 		$will{requestNewSeed}        = 1;
