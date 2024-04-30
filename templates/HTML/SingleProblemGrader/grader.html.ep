@@ -107,29 +107,37 @@
 					<%= link_to '#',
 						class => 'help-popup',
 						data => {
-							bs_content => maketext(
-								'The initial value is the currently saved score as a point value computed '
-								. 'using the percent score.  This point value is used to compute the percent '
-								. 'score (rounded to a whole percent) that can be saved.'
-							)
-							. (
-								@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1
-								? '<br>'
-								. maketext(
-									'This can computed from the answer sub scores above using the weights shown '
-									. 'if they are modified.  Alternatively, enter the point score you want '
-									. 'saved here (the above sub scores will be ignored).'
+							bs_content => tag(
+								'p',
+								class => 'mb-0',
+								maketext(
+									'The initial value is the currently saved score as a point value computed '
+										. 'using the percent score.  This point value is used to compute the percent '
+										. 'score (rounded to a whole percent) that can be saved.'
 								)
-								: ''
-							) . (
-								$currentPoints != $recordedPoints
-								? '<br>'
-								. maketext(
-									'Click the "Use points from last check" button to set the point value to the '
-									. 'points from the answers that were entered when answers were last checked.'
 								)
-								: ''
-							),
+								. (
+									@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1 ? tag(
+										'p',
+										class => 'mt-2 mb-0',
+										maketext(
+											'This can computed from the answer sub scores above using the weights '
+											. 'shown if they are modified.  Alternatively, enter the point score you '
+											. 'want saved here (the above sub scores will be ignored).'
+										)
+									) : ''
+								)
+								. (
+									$currentPoints != $recordedPoints ? tag(
+										'p',
+										class => 'mt-2 mb-0',
+										maketext(
+											'Click the "Use points from last check" button to set the point value '
+											. 'to the points from the answers that were entered when answers were '
+											. 'last checked.'
+										)
+									) : ''
+								),
 							bs_placement => 'top',
 							bs_toggle    => 'popover',
 							bs_html      => 'true'
@@ -172,27 +180,34 @@
 					<%= link_to '#',
 						class => 'help-popup',
 						data => {
-							bs_content =>
-							maketext('The initial value is the currently saved score for this student.')
-							. (
-								@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1
-								? '<br>'
-								. maketext(
-									'This is the only part of the score that is actually saved. '
-									. 'This is computed from the answer sub scores above using the weights shown if '
-									. 'they are modified.  Alternatively, enter the score you want saved here '
-									. '(the above sub scores will be ignored).'
+							bs_content => tag(
+								'p',
+								class => 'mb-0',
+								maketext('The initial value is the currently saved score for this student.')
 								)
-								: ''
-							) . (
-								$currentScore != $recordedScore
-								? '<br>'
-								. maketext(
-									'Click the "Use score from last check" button to set the problem score to the '
-									. 'score from the answers that were entered when answers were last checked.'
+								. (
+									@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1 ? tag(
+										'p',
+										class => 'mt-2 mb-0',
+										maketext(
+											'This is the only part of the score that is actually saved. '
+											. 'This is computed from the answer sub scores above using the weights '
+											. 'shown if they are modified.  Alternatively, enter the score you want '
+											. 'saved here (the above sub scores will be ignored).'
+										)
+									) : ''
 								)
-								: ''
-							),
+								. (
+									$currentScore != $recordedScore ? tag(
+										'p',
+										class => 'mt-2 mb-0',
+										maketext(
+											'Click the "Use score from last check" button to set the problem score '
+											. 'to the score from the answers that were entered when answers were '
+											. 'last checked.'
+										)
+									) : ''
+								),
 							bs_placement => 'top',
 							bs_toggle    => 'popover',
 							bs_html      => 'true'
