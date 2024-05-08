@@ -52,10 +52,9 @@
 		% && $c->{showMeAnother}{MaxReps} > -1
 		% && $c->{showMeAnother}{Count} >= $c->{showMeAnother}{MaxReps};
 	% if ($can{showMeAnother} && !$exhausted) {
-		<%= submit_button maketext('Show Me Another'),
-			formaction => url_for('show_me_another'),
-			formtarget => 'WW_Show_Me_Another',
+	<%= link_to maketext('Show Me Another') => $c->systemLink(url_for('show_me_another')),
 			class      => 'set-id-tooltip btn btn-primary mb-1',
+			target     => 'WW_Show_Me_Another',
 			data       => {
 				bs_toggle    => 'tooltip',
 				bs_placement => 'right',
