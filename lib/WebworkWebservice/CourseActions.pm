@@ -535,4 +535,13 @@ sub saveFile {
 	};
 }
 
+sub getCurrentServerTime {
+	my ($invocant, $self, $params) = @_;
+
+	return {
+		ra_out => { currentServerTime => $self->c->submitTime },
+		text   => 'Current server time'
+	};
+}
+
 1;

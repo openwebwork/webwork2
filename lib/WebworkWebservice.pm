@@ -243,16 +243,17 @@ sub command_permission {
 	my ($command) = @_;
 	return {
 		# WebworkWebservice::CourseActions
-		createCourse       => 'create_and_delete_courses',
-		listUsers          => 'access_instructor_tools',
-		addUser            => 'modify_student_data',
-		dropUser           => 'modify_student_data',
-		deleteUser         => 'modify_student_data',
-		editUser           => 'modify_student_data',
-		changeUserPassword => 'modify_student_data',
-		getCourseSettings  => 'access_instructor_tools',
-		updateSetting      => 'manage_course_files',
-		saveFile           => 'modify_problem_sets',
+		createCourse         => 'create_and_delete_courses',
+		listUsers            => 'access_instructor_tools',
+		addUser              => 'modify_student_data',
+		dropUser             => 'modify_student_data',
+		deleteUser           => 'modify_student_data',
+		editUser             => 'modify_student_data',
+		changeUserPassword   => 'modify_student_data',
+		getCourseSettings    => 'access_instructor_tools',
+		updateSetting        => 'manage_course_files',
+		saveFile             => 'modify_problem_sets',
+		getCurrentServerTime => 'record_answers_after_open_date_with_attempts',
 
 		# WebworkWebservice::LibraryActions
 		listLib        => 'access_instructor_tools',

@@ -112,6 +112,39 @@
 		}
 	};
 
+	const basicWebserviceURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/instructor_rpc`;
+
+	const updateTimeDelta = async () => {
+		const authenParams = {};
+		const user = document.getElementsByName('user')[0];
+		if (user) authenParams.user = user.value;
+		const sessionKey = document.getElementsByName('key')[0];
+		if (sessionKey) authenParams.key = sessionKey.value;
+
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+		const response = await fetch(basicWebserviceURL, {
+			method: 'post',
+			mode: 'same-origin',
+			body: new URLSearchParams({
+				...authenParams,
+				rpc_command: 'getCurrentServerTime',
+				courseID: timerDiv.dataset.courseId
+			}),
+			signal: controller.signal
+		}).catch(() => {
+			/* Errors are ignored */
+		});
+
+		clearTimeout(timeoutId);
+
+		if (response && response.ok) {
+			const data = await response.json();
+			timeDelta = Math.round(new Date().getTime() / 1000) - data.result_data.currentServerTime;
+		}
+	};
+
 	if (timerDiv) {
 		// Initialize the time variables and start the timer.
 		const dateNow = new Date();
@@ -119,6 +152,9 @@
 		serverDueTime = parseInt(timerDiv.dataset.serverDueTime);
 		timeDelta = browserTime - parseInt(timerDiv.dataset.serverTime);
 		gracePeriod = parseInt(timerDiv.dataset.gracePeriod);
+
+		updateTimeDelta();
+		setInterval(updateTimeDelta, (parseInt(timerDiv.dataset.sessionTimeout) - 60) * 1000);
 
 		const remainingTime = serverDueTime - browserTime + timeDelta;
 
