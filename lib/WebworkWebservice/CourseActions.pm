@@ -89,7 +89,7 @@ sub listUsers {
 		$user->{num_user_sets} = $db->countUserSets($user->{user_id}) . '/' . $numGlobalSets;
 
 		my $Key = $db->getKey($user->{user_id});
-		$user->{login_status} = $Key && time <= $Key->timestamp + $ce->{sessionKeyTimeout} ? 'active' : 'inactive';
+		$user->{login_status} = $Key && time <= $Key->timestamp + $ce->{sessionTimeout} ? 'active' : 'inactive';
 	}
 
 	return {

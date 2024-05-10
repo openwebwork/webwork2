@@ -34,7 +34,7 @@ and course.conf files.
  	courseName          => "name_of_course",
  });
 
- my $timeout = $courseEnv->{sessionKeyTimeout};
+ my $timeout = $courseEnv->{sessionTimeout};
  my $mode    = $courseEnv->{pg}->{options}->{displayMode};
  # etc...
 

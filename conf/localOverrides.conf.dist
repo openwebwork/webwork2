@@ -523,13 +523,13 @@ $mail{feedbackRecipients}    = [
 
 # Setting $session_management_via="key" uses the key database for session
 # management. If password authentication is used, then a user can opt to use a
-# session cookie with a duration determined by the $sessionKeyTimeout setting
+# session cookie with a duration determined by the $sessionTimeout setting
 # below by checking the "Remember Me" checkbox on the login page.
 
 # Setting $session_management_via="session_cookies" uses a session cookie to
 # manage the session. Note that even in this case a key is stored in the
 # database which is compared to the key stored in the session cookie. The
-# lifetime of the cookie is determined by the $sessionKeyTimeout setting below.
+# lifetime of the cookie is determined by the $sessionTimeout setting below.
 
 # Note that the key database method is less secure as the key must be embeded in
 # the page and added as a url parameter in order to maintain the session. These
@@ -543,7 +543,7 @@ $mail{feedbackRecipients}    = [
 # This is the length of time (in seconds) after which a user's session becomes
 # invalid if they have no activity. The default is 30 minutes (60*30 seconds).
 
-#$sessionKeyTimeout = 60*60*2;
+#$sessionTimeout = 60*60*2;
 
 ################################################################################
 # Cookie control settings

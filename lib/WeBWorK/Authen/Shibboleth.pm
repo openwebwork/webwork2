@@ -153,7 +153,7 @@ sub check_session {
 		return 0 unless defined $Key;
 
 		my $keyMatches     = (defined $possibleKey and $possibleKey eq $Key->key);
-		my $timestampValid = (time <= $Key->timestamp() + $ce->{sessionKeyTimeout});
+		my $timestampValid = (time <= $Key->timestamp() + $ce->{sessionTimeout});
 		if ($ce->{shibboleth}{manage_session_timeout}) {
 			# always valid to allow shib to take control of timeout
 			$timestampValid = 1;

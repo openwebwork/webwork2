@@ -25,7 +25,7 @@
 						% $previousTime = $record{time} if $previousTime < 0;
 						% my $upper_limit = $#scores > $#answers ? $#scores : $#answers;
 						%
-						<tr <%== $record{time} - $previousTime > $ce->{sessionKeyTimeout}
+						<tr <%== $record{time} - $previousTime > $ce->{sessionTimeout}
 							? 'class="table-rule"' : '' %>>
 							% # Show the problem seed for instructors.
 							% if ($isInstructor) {
