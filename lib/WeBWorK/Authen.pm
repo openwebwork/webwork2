@@ -986,7 +986,7 @@ sub sendCookie {
 		key       => $key,
 		timestamp => time,
 		# Set how long the browser should retain the cookie.
-		expiration => $c->ce->{sessionTimeout}
+		expiration => $c->ce->{useSessionCookie} ? 0 : $c->ce->{sessionTimeout}
 	);
 
 	return;

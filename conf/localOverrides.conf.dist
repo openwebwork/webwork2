@@ -566,6 +566,15 @@ $mail{feedbackRecipients}    = [
 # The default is 0, as 1 will not work without https.
 #$CookieSecure = 1;
 
+# If $useSessionCookie is set to 1, then a "session" cookie will be used. This
+# means that the cookie will be deleted when the browser session ends.
+# Typically, this is when the browser is closed. Note that the browser defines
+# when this is, and some browser's also allow sessions to be restored when the
+# browser is reopened. In any case, a user's session will end when the session
+# is idle for more than the number of seconds the $sessionTimeout value is set
+# to.
+#$useSessionCookie = 1;
+
 ################################################################################
 # Two Factor Authentication
 ################################################################################
