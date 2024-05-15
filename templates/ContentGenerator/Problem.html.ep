@@ -38,11 +38,6 @@
 			data => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
 	% }
 	%
-	% # This is for the problem grader
-	% if ($c->{will}{showProblemGrader}) {
-		<%= javascript getAssetURL($ce, 'js/ProblemGrader/problemgrader.js'), defer => undef =%>
-	%}
-	%
 	% # This is for any page specific js.  Right now its just used for achievement popups
 	<%= javascript getAssetURL($ce, 'js/Problem/problem.js'), defer => undef =%>
 	%

@@ -1,8 +1,14 @@
 % use WeBWorK::Utils 'wwRound';
 %
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/ProblemGrader/singleproblemgrader.js'), defer => undef =%>
+% end
+%
 <div class="problem-grader">
 	<hr>
 	<div class="problem-grader-table">
+		% my $currentScore = 0;
+		%
 		% # Subscores for each answer in the problem.
 		% if (@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1) {
 			% # Determine the scores and weights for each part of the problem.
@@ -18,6 +24,7 @@
 			% @weights = map { $_ / $total } @weights;
 			%
 			% for my $part (0 .. $#scores) {
+				% $currentScore += $scores[$part] * $weights[$part];
 				<div class="row align-items-center mb-2">
 					<%= label_for "score_problem$grader->{problem_id}_$grader->{pg}{flags}{ANSWER_ENTRY_ORDER}[$part]",
 						class => 'col-fixed col-form-label',
@@ -59,8 +66,14 @@
 					</div>
 				</div>
 			% }
+			% $currentScore = wwRound(0, $currentScore);
+		% } elsif (@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} }) {
+			% $currentScore =
+				% wwRound(0, $grader->{pg}{answers}{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER}[0] }{score} * 100);
+			<%= hidden_field 'answer-part-score' => $currentScore, class => 'answer-part-score',
+				data => { problem_id => $grader->{problem_id}, weight => 1 } =%>
 		% }
-
+		%
 		% # Total point value. Show only if configured to.
 		% unless ($ce->{problemGraderScore} eq 'Percent') {
 			% # Compute a reasonable step size based on point value.
@@ -81,10 +94,11 @@
 				% $stepSize = int(($grader->{problem_value} - 1) / 100) + 1;
 			% }
 			% # Round point score to the nearest $stepSize.
-			% param(
-				% 'grader-problem-points',
-				% wwRound(2, wwRound(0, $grader->{recorded_score} * $grader->{problem_value} / $stepSize) * $stepSize)
-			% );
+			% my $recordedPoints =
+				% wwRound(2, wwRound(0, $grader->{recorded_score} * $grader->{problem_value} / $stepSize) * $stepSize);
+			% my $currentPoints =
+				% wwRound(2, wwRound(0, $currentScore / 100 * $grader->{problem_value} / $stepSize) * $stepSize);
+			% param('grader-problem-points', $recordedPoints);
 			<div class="row align-items-center mb-2">
 				<%= label_for "score_problem$grader->{problem_id}_points",
 					class => 'col-fixed col-form-label',
@@ -93,23 +107,40 @@
 					<%= link_to '#',
 						class => 'help-popup',
 						data => {
-							bs_content => maketext(
-								'The initial value is the currently saved score as a point value computed '
-								. 'using the percent score.  This point value is used to compute the percent '
-								. 'score (rounded to a whole percent) that can be saved.'
-							)
-							. (
-								@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1
-								? ' '
-								. maketext(
-									'This can computed from the answer sub scores above using the weights shown '
-									. 'if they are modified.  Alternatively, enter the point score you want '
-									. 'saved here (the above sub scores will be ignored).'
+							bs_content => tag(
+								'p',
+								class => 'mb-0',
+								maketext(
+									'The initial value is the currently saved score as a point value computed '
+										. 'using the percent score.  This point value is used to compute the percent '
+										. 'score (rounded to a whole percent) that can be saved.'
 								)
-								: ''
-							),
+								)
+								. (
+									@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1 ? tag(
+										'p',
+										class => 'mt-2 mb-0',
+										maketext(
+											'This can computed from the answer sub scores above using the weights '
+											. 'shown if they are modified.  Alternatively, enter the point score you '
+											. 'want saved here (the above sub scores will be ignored).'
+										)
+									) : ''
+								)
+								. (
+									$currentPoints != $recordedPoints ? tag(
+										'p',
+										class => 'mt-2 mb-0',
+										maketext(
+											'Click the "Use points from last check" button to set the point value '
+											. 'to the points from the answers that were entered when answers were '
+											. 'last checked.'
+										)
+									) : ''
+								),
 							bs_placement => 'top',
-							bs_toggle    => 'popover'
+							bs_toggle    => 'popover',
+							bs_html      => 'true'
 						},
 						begin =%>
 						<i class="fas fa-question-circle" aria-hidden="true"></i>
@@ -125,10 +156,17 @@
 						id           => "score_problem$grader->{problem_id}_points",
 						class        => "problem-points form-control form-control-sm d-inline",
 						data         => { problem_id => $grader->{problem_id} } =%>
+					&nbsp;
+					% if ($recordedPoints != $currentPoints) {
+						<button class="recompute-grade btn btn-sm btn-secondary" type="button"
+							data-problem-id="<%= $grader->{problem_id} %>">
+							<%= maketext('Use points from last check: [_1]', $currentPoints) =%>
+						</button>
+					% }
 				</div>
 			</div>
 		% }
-
+		%
 		% # Total problem score. (Hidden if configured to only show point values.)
 		% if ($ce->{problemGraderScore} eq 'Point') {
 			<%= hidden_field 'grader-problem-score' => wwRound(0, $grader->{recorded_score} * 100),
@@ -136,26 +174,43 @@
 				data => { problem_id => $grader->{problem_id} } =%>
 		% } else {
 			<div class="row align-items-center mb-2">
+				% my $recordedScore = wwRound(0, $grader->{recorded_score} * 100);
 				<%= label_for "score_problem$grader->{problem_id}", class => 'col-fixed col-form-label', begin =%>
 					<%= maketext('Problem Score (%):') %>
 					<%= link_to '#',
 						class => 'help-popup',
 						data => {
-							bs_content =>
-							maketext('The initial value is the currently saved score for this student.')
-							. (
-								@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1
-								? ' '
-								. maketext(
-									'This is the only part of the score that is actually saved. '
-									. 'This is computed from the answer sub scores above using the weights shown if '
-									. 'they are modified.  Alternatively, enter the score you want saved here '
-									. '(the above sub scores will be ignored).'
+							bs_content => tag(
+								'p',
+								class => 'mb-0',
+								maketext('The initial value is the currently saved score for this student.')
 								)
-								: ''
-							),
+								. (
+									@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1 ? tag(
+										'p',
+										class => 'mt-2 mb-0',
+										maketext(
+											'This is the only part of the score that is actually saved. '
+											. 'This is computed from the answer sub scores above using the weights '
+											. 'shown if they are modified.  Alternatively, enter the score you want '
+											. 'saved here (the above sub scores will be ignored).'
+										)
+									) : ''
+								)
+								. (
+									$currentScore != $recordedScore ? tag(
+										'p',
+										class => 'mt-2 mb-0',
+										maketext(
+											'Click the "Use score from last check" button to set the problem score '
+											. 'to the score from the answers that were entered when answers were '
+											. 'last checked.'
+										)
+									) : ''
+								),
 							bs_placement => 'top',
-							bs_toggle    => 'popover'
+							bs_toggle    => 'popover',
+							bs_html      => 'true'
 						},
 						begin =%>
 						<i class="fas fa-question-circle" aria-hidden="true"></i>
@@ -163,7 +218,7 @@
 					<% end =%>
 				<% end =%>
 				<div class="col-sm">
-					% param('grader-problem-score', wwRound(0, $grader->{recorded_score} * 100));
+					% param('grader-problem-score', $recordedScore);
 					<%= number_field 'grader-problem-score' => '',
 						min          => 0,
 						max          => 100,
@@ -171,10 +226,17 @@
 						id           => "score_problem$grader->{problem_id}",
 						class        => "problem-score form-control form-control-sm d-inline",
 						data         => { problem_id => $grader->{problem_id} } =%>
+					&nbsp;
+					% if ($recordedScore != $currentScore) {
+						<button class="recompute-grade btn btn-sm btn-secondary" type="button"
+							data-problem-id="<%= $grader->{problem_id} %>">
+							<%= maketext('Use score from last check: [_1]%', $currentScore) =%>
+						</button>
+					% }
 				</div>
 			</div>
 		% }
-
+		%
 		% # Instructor comment
 		% if ($grader->{past_answer_id}) {
 			<div class="row">
@@ -192,7 +254,7 @@
 				</div>
 			</div>
 		% }
-
+		%
 		% # Save button
 		<div class="row align-items-center">
 			<div class="col-fixed mt-2">
