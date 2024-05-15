@@ -11,7 +11,7 @@ s{([#%/*]*) WeBWorK Online Homework Delivery System\s*
 [ #%/*]* the terms of either: \(a\) the GNU General Public License as published by the\s*
 [ #%/*]* Free Software Foundation; either version 2, or \(at your option\) any later\s*
 [ #%/*]* version, or \(b\) the "Artistic License" which comes with this package.\s*
-[#%/*]*\s*
+[ #%/*]*\s*
 [ #%/*]* This program is distributed in the hope that it will be useful, but WITHOUT\s*
 [ #%/*]* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS\s*
 [ #%/*]* FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the\s*
