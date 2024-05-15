@@ -38,7 +38,7 @@
 			% if (
 				% $db->existsKeyWhere({
 					% user_id => $user->user_id,
-					% timestamp => { '>=' => time - $ce->{sessionKeyTimeout} }
+					% timestamp => { '>=' => time - $ce->{sessionTimeout} }
 				% })
 			% )
 			% {

@@ -35,6 +35,10 @@ error occurs, then the response will contain an "error" key.
 
 =cut
 
+# FIXME: This is no longer "instructor" only.  Even students can use the getCurrentServerTime command.  Really, it never
+# was "instructor" only.  Usage of all commands is based on permissions, and there have always been non-instructor users
+# that have some of these permissions. So this module and the corresponding route should really be renamed.
+
 use JSON;
 
 use WebworkWebservice;

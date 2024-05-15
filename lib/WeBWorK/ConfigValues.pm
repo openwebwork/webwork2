@@ -182,7 +182,7 @@ sub getConfigValues ($ce) {
 				type => 'popuplist'
 			},
 			{
-				var  => 'sessionKeyTimeout',
+				var  => 'sessionTimeout',
 				doc  => x('Inactivity time before a user is required to login again'),
 				doc2 => x(
 					'Length of time, in seconds, a user has to be inactive before he is required to login again. '

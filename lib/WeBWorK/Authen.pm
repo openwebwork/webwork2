@@ -714,7 +714,7 @@ sub checkPassword {
 sub unexpired_session_exists {
 	my ($self, $userID) = @_;
 	my $Key = $self->{c}->db->getKey($userID);
-	return defined $Key && time <= $Key->timestamp + $self->{c}->ce->{sessionKeyTimeout};
+	return defined $Key && time <= $Key->timestamp + $self->{c}->ce->{sessionTimeout};
 }
 
 # Uses an existing session and session key if a key was found previously with a valid timestamp. Otherwise a random key
@@ -908,8 +908,8 @@ sub check_session {
 
 	my $timestampValid =
 		$ce->{session_management_via} eq 'session_cookie' && defined $self->{cookie_timestamp}
-		? $currentTime <= $self->{cookie_timestamp} + $ce->{sessionKeyTimeout}
-		: $currentTime <= $Key->timestamp + $ce->{sessionKeyTimeout};
+		? $currentTime <= $self->{cookie_timestamp} + $ce->{sessionTimeout}
+		: $currentTime <= $Key->timestamp + $ce->{sessionTimeout};
 
 	if ($keyMatches && $timestampValid && $updateTimestamp) {
 		$Key->timestamp($currentTime);
@@ -975,8 +975,7 @@ sub fetchCookie {
 # The session cookie is actually sent by Mojolicious when the response is rendered.
 sub sendCookie {
 	my ($self, $userID, $key) = @_;
-	my $c  = $self->{c};
-	my $ce = $c->ce;
+	my $c = $self->{c};
 
 	return if $c->stash('disable_cookies');
 
@@ -987,7 +986,7 @@ sub sendCookie {
 		key       => $key,
 		timestamp => time,
 		# Set how long the browser should retain the cookie.
-		expiration => $ce->{CookieLifeTime} eq 'session' ? 0 : $ce->{CookieLifeTime}
+		expiration => $c->ce->{useSessionCookie} ? 0 : $c->ce->{sessionTimeout}
 	);
 
 	return;

@@ -231,6 +231,8 @@
 			data  => {
 				server_time     => int($submitTime),
 				server_due_time => $c->{set}->due_date,
+				session_timeout => $ce->{sessionTimeout},
+				course_id       => $ce->{courseName},
 				grace_period    => $ce->{gatewayGracePeriod},
 				alert_title     => maketext('Test Time Notification'),
 				alert_three     => maketext(
