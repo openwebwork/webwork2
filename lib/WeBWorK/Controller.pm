@@ -34,7 +34,8 @@ use WeBWorK::Localize;
 # FIXME: This override should be dropped and the Mojolicious::Controller param and every_param methods used directly.
 # Mojolicious already keeps a cache of parameter values and also allows setting of parameters.  So everything done here
 # is redundant.
-sub param ($c, $name = undef, $val = undef) {
+sub param ($c, @opts) {
+	my ($name, $val) = @opts;
 	if (!defined $c->{paramcache}) {
 		for my $name (@{ $c->req->params->names }) {
 			$c->{paramcache}{$name} = $c->req->every_param($name);
@@ -43,7 +44,7 @@ sub param ($c, $name = undef, $val = undef) {
 
 	return keys %{ $c->{paramcache} } unless $name;
 
-	if (@_ == 3) {
+	if (@opts == 2) {
 		if (!defined $val) {
 			$c->{paramcache}{$name} = [];
 		} elsif (ref $val eq 'ARRAY') {
