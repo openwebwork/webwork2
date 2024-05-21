@@ -17,9 +17,6 @@
 						params => { editForUser => $userID }
 					) =%>
 			</span>
-			% if ($version) {
-				<%= hidden_field "set.$setID,v$version.assignment" => 'delete' =%>
-			% }
 		% } else {
 			<span dir="ltr">
 				% if ($isGateway) {
@@ -34,6 +31,9 @@
 		<label class="form-check-label">
 			<%= check_box $version ? "set.$setID,v$version.assignment" : "set.$setID.assignment" => 'assigned',
 				class => 'form-check-input', defined $mergedSet ? (checked => undef) : () =%>
+			% if (defined $mergedSet && $version) {
+				<%= hidden_field "set.$setID,v$version.assignment" => 'delete' =%>
+			% }
 		</label>
 	</td>
 	<td class="text-center">
