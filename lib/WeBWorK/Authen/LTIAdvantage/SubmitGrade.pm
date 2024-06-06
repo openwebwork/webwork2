@@ -192,7 +192,7 @@ async sub get_access_token ($self) {
 }
 
 # Computes and submits the course grade for userID to the LMS.
-# The course grade is the average of all sets assigned to the user.
+# The course grade is the sum of all (weighted) problems assigned to the user.
 async sub submit_course_grade ($self, $userID) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
@@ -207,7 +207,7 @@ async sub submit_course_grade ($self, $userID) {
 	$self->warning('LMS user id is not available for this user.')   unless $user->lis_source_did;
 	$self->warning('LMS lineitem is not available for the course.') unless $lineitem;
 
-	return await $self->submit_grade($user->lis_source_did, $lineitem, scalar(grade_all_sets($db, $userID)));
+	return await $self->submit_grade($user->lis_source_did, $lineitem, grade_all_sets($db, $userID));
 }
 
 # Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.
@@ -225,19 +225,14 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	$self->warning('LMS user id is not available for this user.') unless $user->lis_source_did;
 	$self->warning('LMS lineitem is not available for this set.') unless $userSet->lis_source_did;
 
-	return await $self->submit_grade(
-		$user->lis_source_did,
-		$userSet->lis_source_did,
-		scalar(
-			$userSet->assignment_type =~ /gateway/
-			? grade_gateway($db, $userSet, $userSet->set_id, $userID)
-			: grade_set($db, $userSet, $userID, 0)
-		)
-	);
+	return await $self->submit_grade($user->lis_source_did, $userSet->lis_source_did,
+		$userSet->assignment_type =~ /gateway/
+		? grade_gateway($db, $userSet, $userSet->set_id, $userID)
+		: (grade_set($db, $userSet, $userID, 0))[ 0, 1 ]);
 }
 
-# Submits a score of $score to the lms with $sourcedid as the identifier.
-async sub submit_grade ($self, $LMSuserID, $lineitem, $score) {
+# Submits scoreGiven and scoreMaximum to the lms with $sourcedid as the identifier.
+async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreiGiven, $scoreMaximum) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 
@@ -248,8 +243,6 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $score) {
 	# In post processing mode $c is not a real Mojolicious::Controller.  The app is passed in though.
 	# So change $c to be the app instead to get access to the url_for helper.
 	$c = $c->{app} if $self->{post_processing_mode};
-
-	$score = wwRound(2, $score);
 
 	my $ua = Mojo::UserAgent->new;
 
@@ -281,6 +274,7 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $score) {
 		my $priorScore = @$priorData
 			&& $priorData->[0]{resultMaximum} ? $priorData->[0]{resultScore} / $priorData->[0]{resultMaximum} : 0;
 
+		my $score = $scoreGiven / $scoreMaximum;
 		if (abs($score - $priorScore) < 0.001) {
 			$self->warning(
 				"LMS grade will NOT be updated as the grade is unchanged. Old score: $priorScore, New score: $score.");
@@ -302,8 +296,8 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $score) {
 		json => {
 			# This must be in ISO 8601 format with sub-second precision.  That is why the Time::HiRes::time is used.
 			timestamp        => Mojo::Date->new(Time::HiRes::time())->to_datetime,
-			scoreGiven       => $score,
-			scoreMaximum     => 1,
+			scoreGiven       => $scoreGiven,
+			scoreMaximum     => $scoreMaximum,
 			activityProgress => 'Submitted',
 			gradingProgress  => 'FullyGraded',
 			userId           => $LMSuserID
