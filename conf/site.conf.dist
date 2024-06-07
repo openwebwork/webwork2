@@ -320,8 +320,8 @@ $job_queue{backend} = 'SQLite';
 # Database dsn for the Minion job queue. Some examples of settings for the
 # respective backends follow. The postgres and mysql examples will need to be
 # modified to work. The default sqlite setting will work as is.
-#$job_queue{database_dsn} = "postgresql://dbuser@/webwork2_job_queue";
-#$job_queue{database_dsn} = "mysql://dbuser:dbpasswd@localhost/webwork2_job_queue";
+#$job_queue{database_dsn} = 'postgresql://dbuser@/webwork2_job_queue';
+#$job_queue{database_dsn} = 'mysql://dbuser:dbpasswd@localhost/webwork2_job_queue';
 $job_queue{database_dsn} = "sqlite:$webwork_dir/DATA/webwork2_job_queue.db";
 
 ################################################################################
