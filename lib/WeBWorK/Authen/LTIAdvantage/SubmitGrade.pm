@@ -232,7 +232,7 @@ async sub submit_set_grade ($self, $userID, $setID) {
 }
 
 # Submits scoreGiven and scoreMaximum to the lms with $sourcedid as the identifier.
-async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreiGiven, $scoreMaximum) {
+async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 
