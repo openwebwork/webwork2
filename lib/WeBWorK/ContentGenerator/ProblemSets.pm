@@ -72,6 +72,10 @@ sub initialize ($c) {
 		@sets = grep { $_->assignment_type !~ /proctored/ } @sets
 			unless $authz->hasPermissions($user, 'view_proctored_tests');
 
+		# Remove hidden sets unless the user has permission to view hidden sets.
+		@sets = grep { $_->visible } @sets
+			unless $authz->hasPermissions($user, 'view_hidden_sets');
+
 		debug('Begin sorting merged sets');
 
 		# Cache sort orders.  Javascript uses these to display sets in the correct order.
