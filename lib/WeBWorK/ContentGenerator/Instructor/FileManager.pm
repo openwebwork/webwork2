@@ -198,7 +198,7 @@ sub Edit ($c) {
 
 	# If its a restricted file, dont allow the web editor to edit it unless that option has been set for the course.
 	for my $restrictedFile (@{ $c->ce->{uneditableCourseFiles} }) {
-		if (File::Spec->canonpath($file) eq File::Spec->canonpath("$c->{courseRoot}/$restrictedFile")
+		if (Mojo::File->new($file)->realpath eq Mojo::File->new("$c->{courseRoot}/$restrictedFile")->realpath
 			&& !$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files'))
 		{
 			$c->addbadmessage($c->maketext('You do not have permission to edit this file.'));
@@ -306,6 +306,18 @@ sub Rename ($c) {
 	return '' unless $original;
 	my $oldfile = "$dir/$original";
 
+	my $realpath = Mojo::File->new($oldfile)->realpath;
+	if (grep { $realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath } @{ $c->ce->{uneditableCourseFiles} }) {
+		$c->addbadmessage($c->maketext('The file "[_1]" is protected and can not be renamed.', $original));
+		return $c->Refresh();
+	}
+
+	if (grep { $realpath eq $_ } values %{ $c->ce->{courseDirs} }) {
+		$c->addbadmessage($c->maketext(
+			'The directory "[_1]" is a required course directory and cannot be renamed.', $original));
+		return $c->Refresh();
+	}
+
 	if ($c->param('confirmed')) {
 		my $newfile = $c->param('name');
 		if ($newfile = $c->verifyPath($newfile, $original)) {
@@ -332,9 +344,44 @@ sub Delete ($c) {
 	}
 
 	my $dir = "$c->{courseRoot}/$c->{pwd}";
+
+	my @course_dirs = values %{ $c->ce->{courseDirs} };
+
+	# If only one file is selected and it is one of the uneditable course files,
+	# then don't show the deletion confirmation page. Just warn about it now.
+	if (@files == 1) {
+		my $realpath = Mojo::File->new("$dir/$files[0]")->realpath;
+		if (grep { $realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath } @{ $c->ce->{uneditableCourseFiles} })
+		{
+			$c->addbadmessage($c->maketext('The file "[_1]" is protected and cannot be deleted.', $files[0]));
+			return $c->Refresh();
+		}
+		if (grep { $realpath eq $_ } @course_dirs) {
+			$c->addbadmessage($c->maketext(
+				'The directory "[_1]" is a required course directory and cannot be deleted.',
+				$files[0]
+			));
+			return $c->Refresh();
+		}
+	}
+
 	if ($c->param('confirmed')) {
 		# If confirmed, go ahead and delete the files
 		for my $file (@files) {
+			my $realpath = Mojo::File->new("$dir/$file")->realpath;
+			if (grep { $realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
+				@{ $c->ce->{uneditableCourseFiles} })
+			{
+				$c->addbadmessage($c->maketext('The file "[_1]" is protected and cannot be deleted.', $file));
+				next;
+			}
+			if (grep { $realpath eq $_ } @course_dirs) {
+				$c->addbadmessage($c->maketext(
+					'The directory "[_1]" is a required course directory and cannot be deleted.', $file
+				));
+				next;
+			}
+
 			if (defined $c->checkPWD("$c->{pwd}/$file", 1)) {
 				if (-d "$dir/$file" && !-l "$dir/$file") {
 					my $removed = eval { rmtree("$dir/$file", 0, 1) };
@@ -463,7 +510,7 @@ sub UnpackArchive ($c) {
 sub unpack_archive ($c, $archive) {
 	my $dir = Mojo::File->new($c->{courseRoot}, $c->{pwd});
 
-	my (@members, @existing_files, @outside_files);
+	my (@members, @existing_files, @outside_files, @forbidden_files);
 	my $num_extracted = 0;
 
 	if ($archive =~ m/\.zip$/) {
@@ -483,6 +530,14 @@ sub unpack_archive ($c, $archive) {
 			my $out_file = $dir->child($_->fileName)->realpath;
 			if ($out_file !~ /^$dir/) {
 				push(@outside_files, $_->fileName);
+				next;
+			}
+
+			if (!$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files')
+				&& grep { $out_file eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
+				@{ $c->ce->{uneditableCourseFiles} })
+			{
+				push(@forbidden_files, $_->fileName);
 				next;
 			}
 
@@ -510,6 +565,14 @@ sub unpack_archive ($c, $archive) {
 			my $out_file = $dir->child($_)->realpath;
 			if ($out_file !~ /^$dir/) {
 				push(@outside_files, $_);
+				next;
+			}
+
+			if (!$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files')
+				&& grep { $out_file eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
+				@{ $c->ce->{uneditableCourseFiles} })
+			{
+				push(@forbidden_files, $_);
 				next;
 			}
 
@@ -554,6 +617,21 @@ sub unpack_archive ($c, $archive) {
 					)->join('')
 					)
 				)
+		);
+	}
+
+	# There aren't many of these, so all of them can be reported.
+	if (@forbidden_files) {
+		$c->addbadmessage(
+			$c->tag(
+				'p',
+				$c->maketext(
+					'The following [plural,_1,file] found in the archive [plural,_1,is,are]'
+						. ' protected and were not extracted.',
+					scalar(@forbidden_files),
+				)
+				)
+				. $c->tag('div', $c->tag('ul', $c->c((map { $c->tag('li', $_) } @forbidden_files))->join('')))
 		);
 	}
 
@@ -653,21 +731,33 @@ sub Upload ($c) {
 	}
 
 	if (-e "$dir/$name") {
+		my $isProtected = !$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files')
+			&& grep { Mojo::File->new("$dir/$name")->realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
+			@{ $c->ce->{uneditableCourseFiles} };
+
 		unless ($c->param('overwrite') || $action eq 'Overwrite' || $action eq $c->maketext('Overwrite')) {
 			return $c->c(
 				$c->Confirm(
 					$c->tag(
 						'p',
-						$c->b($c->maketext(
-							'File <b>[_1]</b> already exists. Overwrite it, or rename it as:', $name))
+						$c->b(
+							$isProtected
+							? $c->maketext('File <b>[_1]</b> is protected and cannot be overwritten. Rename it as:',
+								$name)
+							: $c->maketext('File <b>[_1]</b> already exists. Overwrite it, or rename it as:', $name)
+						)
 					),
 					uniqueName($dir, $name),
 					$c->maketext('Rename'),
-					$c->maketext('Overwrite')
+					$isProtected ? '' : $c->maketext('Overwrite')
 				),
 				$c->hidden_field(action => 'Upload'),
 				$c->hidden_field(file   => $fileIDhash)
 			)->join('');
+		} elsif ($isProtected) {
+			$c->addbadmessage($c->maketext('The file "[_1]" is protected and cannot be overwritten.', $name));
+			$upload->dispose;
+			return $c->Refresh;
 		}
 	}
 	$c->checkFileLocation($name, $c->{pwd});
