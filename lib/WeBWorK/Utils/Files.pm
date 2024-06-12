@@ -19,6 +19,7 @@ use Mojo::Base 'Exporter', -signatures;
 use File::Spec::Functions qw(canonpath);
 use File::Find;
 use Mojo::File qw(path);
+use Mojo::Util qw(decode);
 
 our @EXPORT_OK = qw(
 	surePathToFile
@@ -45,7 +46,7 @@ sub readFile ($fileName) {
 	my $result = '';
 
 	if (-r $fileName) {
-		eval { $result = path($fileName)->slurp('UTF-8') };
+		eval { $result = path($fileName)->slurp; $result = decode('UTF-8', $result); };
 		warn "$@\n" if $@;
 	}
 
