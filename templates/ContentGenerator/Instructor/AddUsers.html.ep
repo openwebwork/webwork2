@@ -12,7 +12,6 @@
 	% last;
 % }
 %
-<hr>
 <p><%= defined $c->{studentEntryReport} ? $c->{studentEntryReport}->join('') : '' %></p>
 <p>
 	<%= maketext(
@@ -25,70 +24,91 @@
 %
 <%= form_for current_route, method => 'POST', begin =%>
 	<%= $c->hidden_authen_fields('create_') =%>
-	<div class="input-group d-inline-flex w-auto">
+	<div class="input-group d-inline-flex w-auto mb-3">
 		<%= submit_button maketext('Create'), class => 'btn btn-primary' =%>
-		<%= number_field number_of_students => $numberOfStudents, size => 5, min => 1, class => 'form-control' =%>
+		<%= number_field number_of_students => $numberOfStudents, min => 1,
+			class => 'form-control', style => 'width: 6em' =%>
 		<span class="input-group-text"><%= maketext('entry rows.') %></span>
 	</div>
 <% end =%>
-<hr>
 <%= form_for current_route, method => 'POST', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	<%= hidden_field number_of_students => $numberOfStudents =%>
 	<div class="table-responsive">
 		<table class="table table-sm table-bordered">
-			<tr>
-				<th><%= maketext('Last Name') %></th>
-				<th><%= maketext('First Name') %></th>
-				<th><%= maketext('Student ID') %></th>
-				<th><%= maketext('Login Name') %><span class="required-field">*</span></th>
-				<th><%= maketext('Email Address') %></th>
-				<th><%= maketext('Section') %></th>
-				<th><%= maketext('Recitation') %></th>
-				<th><%= maketext('Comment') %></th>
-			</tr>
-			% for (1 .. $numberOfStudents) {
+			<thead class="table-group-divider">
 				<tr>
-					<td>
-						% param("last_name_$_", undef);
-						<%= text_field "last_name_$_" => '', size => '10',
-							class => 'form-control form-control-sm w-auto' =%>
-					</td>
-					<td>
-						% param("first_name_$_", undef);
-						<%= text_field "first_name_$_" => '', size => '10',
-							class => 'form-control form-control-sm w-auto' =%>
-					</td>
-					<td>
-						% param("student_id_$_", undef);
-						<%= text_field "student_id_$_" => '', size => '16',
-							class => 'form-control form-control-sm w-auto' =%>
-					</td>
-					<td>
-						% param("new_user_id_$_", undef);
-						<%= text_field "new_user_id_$_" => '', size => '10',
-							class => 'form-control form-control-sm w-auto' =%>
-					</td>
-					<td>
-						% param("email_address_$_", undef);
-						<%= text_field "email_address_$_" => '', class => 'form-control form-control-sm w-auto' =%>
-					</td>
-					<td>
-						% param("section_$_", undef);
-						<%= text_field "section_$_" => '', size => '4',
-							class => 'form-control form-control-sm w-auto' =%>
-					</td>
-					<td>
-						% param("recitation_$_", undef);
-						<%= text_field "recitation_$_" => '', size => '4',
-							class => 'form-control form-control-sm w-auto' =%>
-					</td>
-					<td>
-						% param("comment_$_", undef);
-						<%= text_field "comment_$_" => '', class => 'form-control form-control-sm w-auto' =%>
-					</td>
+					<th id="user_id_header"><%= maketext('Login Name') %><span class="required-field">*</span></th>
+					<th id="first_name_header"><%= maketext('First Name') %></th>
+					<th id="last_name_header"><%= maketext('Last Name') %></th>
+					<th id="email_address_header"><%= maketext('Email Address') %></th>
+					<th id="student_id_header"><%= maketext('Student ID') %></th>
+					<th id="status_header"><%= maketext('Enrollment Status') %></th>
+					<th id="section_header"><%= maketext('Section') %></th>
+					<th id="recitation_header"><%= maketext('Recitation') %></th>
+					<th id="comment_header"><%= maketext('Comment') %></th>
+					<th id="permission_header"><%= maketext('Permission Level') %></th>
 				</tr>
-			% }
+			</thead>
+			<tbody class="table-group-divider">
+				% for (1 .. $numberOfStudents) {
+					<tr>
+						<td>
+							% param("new_user_id_$_", undef);
+							<%= text_field "new_user_id_$_" => '', size => '10', 'aria-labelledby' => 'user_id_header',
+								class => 'form-control form-control-sm w-auto' =%>
+						</td>
+						<td>
+							% param("first_name_$_", undef);
+							<%= text_field "first_name_$_" => '', size => '10',
+								'aria-labelledby' => 'first_name_header',
+								class => 'form-control form-control-sm w-auto' =%>
+						</td>
+						<td>
+							% param("last_name_$_", undef);
+							<%= text_field "last_name_$_" => '', size => '10', 'aria-labelledby' => 'last_name_header',
+								class => 'form-control form-control-sm w-auto' =%>
+						</td>
+						<td>
+							% param("email_address_$_", undef);
+							<%= text_field "email_address_$_" => '', 'aria-labelledby' => 'email_address_header',
+								class => 'form-control form-control-sm w-auto' =%>
+						</td>
+						<td>
+							% param("student_id_$_", undef);
+							<%= text_field "student_id_$_" => '', size => '16',
+								'aria-labelledby' => 'student_id_header',
+								class => 'form-control form-control-sm w-auto' =%>
+						</td>
+						<td>
+							% param("status_$_", undef);
+							<%= select_field "status_$_" => $statusValues, 'aria-labelledby' => 'status_header',
+							class => 'form-select form-select-sm w-auto flex-grow-0' =%>
+						</td>
+						<td>
+							% param("section_$_", undef);
+							<%= text_field "section_$_" => '', size => '4', 'aria-labelledby' => 'section_header',
+								class => 'form-control form-control-sm w-auto' =%>
+						</td>
+						<td>
+							% param("recitation_$_", undef);
+							<%= text_field "recitation_$_" => '', size => '4', 'aria-labelledby' => 'recitation_header',
+								class => 'form-control form-control-sm w-auto' =%>
+						</td>
+						<td>
+							% param("comment_$_", undef);
+							<%= text_field "comment_$_" => '', 'aria-labelledby' => 'comment_header',
+								class => 'form-control form-control-sm w-auto' =%>
+						</td>
+						<td>
+							% param("permission_$_", undef);
+							<%= select_field "permission_$_" => $permissionValues,
+							'aria-labelledby' => 'permission_header',
+							class => 'form-select form-select-sm w-auto flex-grow-0' =%>
+						</td>
+					</tr>
+				% }
+			</tbody>
 		</table>
 	</div>
 	<p class="my-2"><%= maketext('Select sets below to assign them to the newly-created users.') %></p>
