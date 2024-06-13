@@ -1,5 +1,9 @@
 % use WeBWorK::Utils qw(getAssetURL);
 %
+% content_for css => begin
+	<%= stylesheet getAssetURL($ce, 'js/UserList/userlist.css') =%>
+% end
+%
 % content_for js => begin
 	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/UserList/userlist.js'),     defer => undef =%>
@@ -10,7 +14,7 @@
 	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to access instructor tools.') =%></div>
 	% last;
 % }
-% if (($c->{passwordMode} || $c->{editMode}) && !$authz->hasPermissions(param('user'), 'modify_student_data')) {
+% if ($c->{editMode} && !$authz->hasPermissions(param('user'), 'modify_student_data')) {
 	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to modify student data') =%></div>
 	% last;
 % }
@@ -32,7 +36,6 @@
 		<%= hidden_field no_prev_visible_users => '1' =%>
 	% }
 	<%= hidden_field editMode => $c->{editMode} =%>
-	<%= hidden_field passwordMode => $c->{passwordMode} =%>
 	<%= hidden_field primarySortField => $c->{primarySortField} =%>
 	<%= hidden_field primarySortOrder => $c->{primarySortOrder} =%>
 	<%= hidden_field secondarySortField => $c->{secondarySortField} =%>
@@ -83,11 +86,6 @@
 	<p class="mb-0"><%= maketext('Showing [_1] out of [_2] users',
 		scalar(keys %{ $c->{visibleUserIDs} }), scalar(@{ $c->{allUserIDs} })) =%></p>
 	%
-	% if ($c->{passwordMode}) {
-		<p>
-			<%= maketext(q{If a password field is left blank, the student's current password will be maintained.}) =%>
-		</p>
-	% }
 	% if ($c->{editMode}) {
 		<p>
 			<%= maketext(

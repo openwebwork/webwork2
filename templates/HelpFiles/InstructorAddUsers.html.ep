@@ -19,8 +19,8 @@
 <p>
 	<%= maketext('Add users to the course.  Select the number of students/users to add and '
 		. 'then add any desired information.  The only mandatory information is the "Login Name". '
-		. 'Any other fields may be left blank.  The "Student ID" will be the initial password for '
-		. 'the user if provided.') =%>
+		. 'Any other fields may be left blank.  If the password field is left blank, then the user '
+		. 'will not have a password and will not be able to sign in directly to the course.') =%>
 </p>
 <p class="mb-0">
 	<%= maketext('Multiple sets may be assigned to the users by holding down the shift key or the ctrl key while '

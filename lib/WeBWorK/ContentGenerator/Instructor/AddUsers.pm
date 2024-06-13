@@ -81,10 +81,12 @@ sub initialize ($c) {
 				$newPermissionLevel->permission($c->param("permission_$i"));
 				$db->addPermissionLevel($newPermissionLevel);
 
-				my $newPassword = $db->newPassword;
-				$newPassword->user_id($new_user_id);
-				$newPassword->password(cryptPassword($c->param("student_id_$i")));
-				$db->addPassword($newPassword);
+				if ($c->param("password_$i") =~ /\S/) {
+					my $newPassword = $db->newPassword;
+					$newPassword->user_id($new_user_id);
+					$newPassword->password(cryptPassword($c->param("password_$i")));
+					$db->addPassword($newPassword);
+				}
 
 				push(
 					@{ $c->{studentEntryReport} },

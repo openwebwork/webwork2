@@ -113,9 +113,9 @@ sub nav ($c, $args) {
 	);
 	return $c->tag(
 		'div',
-		class      => 'row sticky-nav',
-		role       => 'navigation',
-		aria_label => 'problem navigation',
+		class        => 'row sticky-nav',
+		role         => 'navigation',
+		'aria-label' => 'problem navigation',
 		$c->tag('div', $c->navMacro($args, {}, @links))
 	);
 }

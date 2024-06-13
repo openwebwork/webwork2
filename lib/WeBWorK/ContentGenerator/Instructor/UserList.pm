@@ -35,11 +35,8 @@ Switch from view mode to edit mode:
 	- showing selected users
 Switch from edit mode to view and save changes
 Switch from edit mode to view and abandon changes
-Switch from view mode to password mode:
 	- showing visible users
 	- showing selected users
-Switch from password mode to view and save changes
-Switch from password mode to view and abandon changes
 Delete users:
 	- visible
 	- selected
@@ -70,37 +67,31 @@ use WeBWorK::Utils qw(cryptPassword x);
 
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS            => [qw(save_edit cancel_edit)];
-use constant PASSWORD_FORMS        => [qw(save_password cancel_password)];
-use constant VIEW_FORMS            => [qw(filter sort edit password import export add delete reset_2fa)];
+use constant VIEW_FORMS            => [qw(filter sort edit import export add delete reset_2fa)];
 
 # Prepare the tab titles for translation by maketext
 use constant FORM_TITLES => {
-	save_edit       => x('Save Edit'),
-	cancel_edit     => x('Cancel Edit'),
-	filter          => x('Filter'),
-	sort            => x('Sort'),
-	edit            => x('Edit'),
-	password        => x('Password'),
-	import          => x('Import'),
-	export          => x('Export'),
-	add             => x('Add'),
-	delete          => x('Delete'),
-	reset_2fa       => x('Reset Two Factor Authentication'),
-	save_password   => x('Save Password'),
-	cancel_password => x('Cancel Password')
+	save_edit   => x('Save Edit'),
+	cancel_edit => x('Cancel Edit'),
+	filter      => x('Filter'),
+	sort        => x('Sort'),
+	edit        => x('Edit'),
+	import      => x('Import'),
+	export      => x('Export'),
+	add         => x('Add'),
+	delete      => x('Delete'),
+	reset_2fa   => x('Reset Two Factor Authentication')
 };
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
-	save_edit     => 'modify_student_data',
-	edit          => 'modify_student_data',
-	save_password => 'change_password',
-	password      => 'change_password',
-	reset2_2fa    => 'change_password',
-	import        => 'modify_student_data',
-	export        => 'modify_classlist_files',
-	add           => 'modify_student_data',
-	delete        => 'modify_student_data',
+	save_edit  => 'modify_student_data',
+	edit       => 'modify_student_data',
+	reset2_2fa => 'change_password',
+	import     => 'modify_student_data',
+	export     => 'modify_classlist_files',
+	add        => 'modify_student_data',
+	delete     => 'modify_student_data',
 };
 
 use constant SORT_SUBS => {
@@ -118,7 +109,7 @@ use constant SORT_SUBS => {
 
 use constant FIELDS => [
 	'user_id', 'first_name', 'last_name', 'email_address', 'student_id', 'status',
-	'section', 'recitation', 'comment',   'permission'
+	'section', 'recitation', 'comment',   'permission',    'password'
 ];
 
 # Note that only the editable fields need a type (i.e. all but user_id),
@@ -134,6 +125,7 @@ use constant FIELD_PROPERTIES => {
 	recitation    => { name => x('Recitation'),        type => 'text', size => 3 },
 	comment       => { name => x('Comment'),           type => 'text', size => 20 },
 	permission    => { name => x('Permission Level'),  type => 'permission' },
+	password      => { name => x('Password'),          type => 'password' },
 };
 
 sub pre_header_initialize ($c) {
@@ -144,10 +136,9 @@ sub pre_header_initialize ($c) {
 
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 
-	$c->{editMode}     = $c->param('editMode')     || 0;
-	$c->{passwordMode} = $c->param('passwordMode') || 0;
+	$c->{editMode} = $c->param('editMode') || 0;
 
-	return if ($c->{passwordMode} || $c->{editMode}) && !$authz->hasPermissions($user, 'modify_student_data');
+	return if $c->{editMode} && !$authz->hasPermissions($user, 'modify_student_data');
 
 	if (defined $c->param('action') && $c->param('action') eq 'add') {
 		# Redirect to the addUser page
@@ -164,7 +155,10 @@ sub pre_header_initialize ($c) {
 	my %permissionLevels =
 		map { $_->user_id => $_->permission } $db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
 
-	# Add permission level to the user record hash.
+	my %passwordExists =
+		map { $_->user_id => defined $_->password } $db->getPasswordsWhere({ user_id => { not_like => 'set_id:%' } });
+
+	# Add permission level and a password exists field to the user record hash.
 	for my $user (@allUsersDB) {
 		unless (defined $permissionLevels{ $user->user_id }) {
 			# Uh oh! No permission level record found!
@@ -181,7 +175,8 @@ sub pre_header_initialize ($c) {
 			$permissionLevels{ $user->user_id } = 0;
 		}
 
-		$user->{permission} = $permissionLevels{ $user->user_id };
+		$user->{permission}     = $permissionLevels{ $user->user_id };
+		$user->{passwordExists} = $passwordExists{ $user->user_id };
 	}
 
 	my %allUsers = map { $_->user_id => $_ } @allUsersDB;
@@ -220,7 +215,7 @@ sub pre_header_initialize ($c) {
 
 	my $actionID = $c->param('action');
 	if ($actionID) {
-		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }, @{ PASSWORD_FORMS() }) {
+		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }) {
 			die $c->maketext('Action [_1] not found', $actionID);
 		}
 		if (!FORM_PERMS()->{$actionID} || $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
@@ -252,14 +247,13 @@ sub pre_header_initialize ($c) {
 sub initialize ($c) {
 	# Make sure these are defined for the template.
 	# This is done here as it needs to occur after the action handler has been executed.
-	$c->stash->{formsToShow} =
-		$c->{editMode} ? EDIT_FORMS() : $c->{passwordMode} ? PASSWORD_FORMS() : VIEW_FORMS();
+	$c->stash->{formsToShow}     = $c->{editMode} ? EDIT_FORMS() : VIEW_FORMS();
 	$c->stash->{formTitles}      = FORM_TITLES();
 	$c->stash->{formPerms}       = FORM_PERMS();
 	$c->stash->{fields}          = FIELDS();
 	$c->stash->{fieldProperties} = FIELD_PROPERTIES();
 	$c->stash->{CSVList} =
-		$c->{editMode} || $c->{passwordMode}
+		$c->{editMode}
 		? []
 		: Mojo::File->new($c->ce->{courseDirs}{templates})->list->grep(sub { -f && m/\.lst$/ })->map('basename');
 
@@ -360,18 +354,6 @@ sub edit_handler ($c) {
 	$c->{editMode}       = 1;
 
 	return $scope eq 'all' ? $c->maketext('Editing all users.') : $c->maketext('Editing selected users.');
-}
-
-sub password_handler ($c) {
-	my $scope = $c->param('action.password.scope');
-	my @usersToEdit =
-		grep { $c->{userIsEditable}{$_} } ($scope eq 'all' ? @{ $c->{allUserIDs} } : (keys %{ $c->{selectedUserIDs} }));
-	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
-	$c->{passwordMode}   = 1;
-
-	return $scope eq 'all'
-		? $c->maketext('Giving new passwords to all users.')
-		: $c->maketext('Giving new passwords to selected users.');
 }
 
 sub delete_handler ($c) {
@@ -538,24 +520,45 @@ sub save_edit_handler ($c) {
 		die $c->maketext('record for visible user [_1] not found', $userID) unless $User;
 		my $PermissionLevel = $db->getPermissionLevel($userID);
 		die $c->maketext('permissions for [_1] not defined', $userID) unless defined $PermissionLevel;
+
 		# delete requests for elevated users should never make it this far
 		die $c->maketext('insufficient permission to edit [_1]', $userID) unless ($c->{userIsEditable}{$userID});
-		foreach my $field ($User->NONKEYFIELDS()) {
-			my $param = "user.$userID.$field";
-			if (defined $c->param($param)) {
-				$User->$field($c->param($param));
+
+		for my $field ($User->NONKEYFIELDS()) {
+			my $newValue = $c->param("user.$userID.$field");
+			$User->$field($newValue) if defined $newValue;
+		}
+		$db->putUser($User);
+
+		my $newPermissionLevel = $c->param("user.$userID.permission");
+		$PermissionLevel->permission($newPermissionLevel)
+			if defined $newPermissionLevel && $newPermissionLevel <= $c->{userPermission};
+		$db->putPermissionLevel($PermissionLevel);
+		$User->{permission} = $PermissionLevel->permission;
+
+		my $newPassword = $c->param("user.${userID}.password");
+		if ($c->param("user.${userID}.password_confirm_change") && $newPassword !~ /^\s*\*+\s*$/) {
+			if (!$newPassword || $newPassword !~ /\S/) {
+				# Note that if the user has setup two factor authentication, then this also will delete the otp_secret.
+				# Thus if the password is set again later, the user will need to setup two factor authentication again.
+				$db->deletePassword($User->user_id) if $db->existsPassword($User->user_id);
+			} else {
+				my $Password      = eval { $db->getPassword($User->user_id) };
+				my $cryptPassword = cryptPassword($newPassword);
+				if ($Password) {
+					# Note that in this case the otp_secret will be preserved. So the user will still be able to use the
+					# configured two factor authentication with the new password.
+					$Password->password(cryptPassword($newPassword));
+					eval { $db->putPassword($Password) };
+				} else {
+					$Password = $db->newPassword();
+					$Password->user_id($userID);
+					$Password->password(cryptPassword($newPassword));
+					eval { $db->addPassword($Password) };
+				}
 			}
 		}
 
-		my $param = "user.$userID.permission";
-		if (defined $c->param($param) && $c->param($param) <= $c->{userPermission}) {
-			$PermissionLevel->permission($c->param($param));
-		}
-
-		$db->putUser($User);
-		$db->putPermissionLevel($PermissionLevel);
-
-		$User->{permission} = $PermissionLevel->permission;
 		$c->{allUsers}{$userID} = $User;
 	}
 
@@ -568,54 +571,6 @@ sub save_edit_handler ($c) {
 	$c->{editMode} = 0;
 
 	return $c->maketext('Changes saved.');
-}
-
-sub cancel_password_handler ($c) {
-	if (defined $c->param('prev_visible_users')) {
-		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->every_param('prev_visible_users') } };
-	} elsif (defined $c->param('no_prev_visible_users')) {
-		$c->{visibleUserIDs} = {};
-	}
-	$c->{passwordMode} = 0;
-
-	return $c->maketext('Changes abandoned.');
-}
-
-sub save_password_handler ($c) {
-	my $db = $c->db;
-
-	my @visibleUserIDs = keys %{ $c->{visibleUserIDs} };
-	foreach my $userID (@visibleUserIDs) {
-		my $User = $db->getUser($userID);
-		die $c->maketext('record for visible user [_1] not found', $userID) unless $User;
-		# password requests for elevated users should never make it this far
-		die $c->maketext('insufficient permission to edit [_1]', $userID) unless ($c->{userIsEditable}{$userID});
-		my $param = "user.${userID}.new_password";
-		if ($c->param($param)) {
-			my $newP          = $c->param($param);
-			my $Password      = eval { $db->getPassword($User->user_id) };
-			my $cryptPassword = cryptPassword($newP);
-			if (!defined($Password)) {
-				$Password = $db->newPassword();
-				$Password->user_id($userID);
-				$Password->password(cryptPassword($newP));
-				eval { $db->addPassword($Password) };
-			} else {
-				$Password->password(cryptPassword($newP));
-				eval { $db->putPassword($Password) };
-			}
-		}
-	}
-
-	if (defined $c->param('prev_visible_users')) {
-		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->every_param('prev_visible_users') } };
-	} elsif (defined $c->param('no_prev_visible_users')) {
-		$c->{visibleUserIDs} = {};
-	}
-
-	$c->{passwordMode} = 0;
-
-	return $c->maketext('New passwords saved.');
 }
 
 # Sort methods (ascending)
@@ -669,15 +624,16 @@ sub menuLabels ($c, $hashRef) {
 sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceList) {
 	my $ce   = $c->ce;
 	my $db   = $c->db;
-	my $dir  = $ce->{courseDirs}->{templates};
+	my $dir  = $ce->{courseDirs}{templates};
 	my $user = $c->param('user');
 	my $perm = $c->{userPermission};
 
-	die $c->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
-	die $c->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
+	die $c->maketext("Illegal '/' character in input.") if $fileName =~ m|/|;
+	die $c->maketext("File [_1]/[_2] either does not exist or is not readable.", $dir, $fileName)
 		unless -r "$dir/$fileName";
 
 	my %allUserIDs = map { $_ => 1 } @{ $c->{allUserIDs} };
+
 	my %replaceOK;
 	if ($replaceExisting eq 'none') {
 		%replaceOK = ();
@@ -695,7 +651,7 @@ sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceLis
 	my @classlist = parse_classlist("$dir/$fileName");
 
 	# Default status is enrolled -- fetch abbreviation for enrolled
-	my $default_status_abbrev = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
+	my $default_status_abbrev = $ce->{statuses}{Enrolled}{abbrevs}[0];
 
 	foreach my $record (@classlist) {
 		my %record  = %$record;
@@ -714,12 +670,12 @@ sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceLis
 			next;
 		}
 
-		if (exists $allUserIDs{$user_id} and not exists $replaceOK{$user_id}) {
+		if (exists $allUserIDs{$user_id} && !exists $replaceOK{$user_id}) {
 			push @skipped, $user_id;
 			next;
 		}
 
-		if (not exists $allUserIDs{$user_id} and not $createNew) {
+		if (!exists $allUserIDs{$user_id} && !$createNew) {
 			push @skipped, $user_id;
 			next;
 		}
@@ -728,38 +684,29 @@ sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceLis
 		$record{status} = $default_status_abbrev
 			unless defined $record{status} and $record{status} ne "";
 
-		# set password from student ID if password field is "empty"
-		if (not defined $record{password} or $record{password} eq "") {
-			if (defined $record{student_id} and $record{student_id} ne "") {
-				# crypt the student ID and use that
-				$record{password} = cryptPassword($record{student_id});
-			} else {
-				# an empty password field in the database disables password login
-				$record{password} = "";
-			}
-		}
-
 		# set default permission level if permission level is "empty"
 		$record{permission} = $default_permission_level
 			unless defined $record{permission} and $record{permission} ne "";
 
 		my $User            = $db->newUser(%record);
 		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => $record{permission});
-		my $Password        = $db->newPassword(user_id => $user_id, password => $record{password});
+		my $Password = $record{password} ? $db->newPassword(user_id => $user_id, password => $record{password}) : undef;
 
 		# DBFIXME use REPLACE
 		if (exists $allUserIDs{$user_id}) {
 			$db->putUser($User);
 			$db->putPermissionLevel($PermissionLevel);
-			$db->putPassword($Password);
-			$User->{permission} = $PermissionLevel->permission;
+			$db->putPassword($Password) if $Password;
+			$User->{permission}     = $PermissionLevel->permission;
+			$User->{passwordExists} = 1 if $Password;
 			push @replaced, $User;
 		} else {
 			$allUserIDs{$user_id} = 1;
 			$db->addUser($User);
 			$db->addPermissionLevel($PermissionLevel);
-			$db->addPassword($Password);
-			$User->{permission} = $PermissionLevel->permission;
+			$db->addPassword($Password) if $Password;
+			$User->{permission}     = $PermissionLevel->permission;
+			$User->{passwordExists} = 1 if $Password;
 			push @added, $User;
 		}
 	}
