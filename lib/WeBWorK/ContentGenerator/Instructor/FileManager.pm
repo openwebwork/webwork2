@@ -100,9 +100,12 @@ sub pre_header_initialize ($c) {
 }
 
 # Download a given file
-sub downloadFile ($c, $filename, $directory = '') {
-	my $file = checkName($filename);
-	my $pwd  = $c->checkPWD($directory || $c->param('pwd') || HOME);
+sub downloadFile ($c, $file, $directory = '') {
+	if (my $invalidFilenameMessage = $c->checkName($file)) {
+		$c->addbadmessage($invalidFilenameMessage);
+		return;
+	}
+	my $pwd = $c->checkPWD($directory || $c->param('pwd') || HOME);
 	return unless $pwd;
 	$pwd = $c->{ce}{courseDirs}{root} . '/' . $pwd;
 	unless (-e "$pwd/$file") {
@@ -720,28 +723,51 @@ sub Upload ($c) {
 	my ($id, $hash) = split(/\s+/, $fileIDhash);
 	my $upload = WeBWorK::Upload->retrieve($id, $hash, dir => $c->{ce}{webworkDirs}{uploadCache});
 
-	my $name   = checkName($upload->filename);
+	my $name                     = $upload->filename;
+	my $invalidUploadFilenameMsg = $c->checkName($name);
+
 	my $action = $c->param('formAction') || 'Cancel';
 	if ($c->param('confirmed')) {
 		if ($action eq 'Cancel' || $action eq $c->maketext('Cancel')) {
 			$upload->dispose;
 			return $c->Refresh;
 		}
-		$name = checkName($c->param('name')) if ($action eq 'Rename' || $action eq $c->maketext('Rename'));
+		if ($action eq 'Rename' || $action eq $c->maketext('Rename')) {
+			if (!$c->param('name') || $c->param('name') eq $name) {
+				$c->addbadmessage($c->maketext('You must specify a new file name.'));
+			} elsif (my $invalidFileNameMsg = $c->checkName($c->param('name'))) {
+				$c->addbadmessage($invalidFileNameMsg);
+			} else {
+				$name = $c->param('name');
+
+				# In this case the upload file name is still invalid, but it isn't going to be used anyway. So setting
+				# this to 0 lets the new name go through (if it doesn't already exist).
+				$invalidUploadFilenameMsg = 0;
+			}
+		}
 	}
 
-	if (-e "$dir/$name") {
+	$c->addbadmessage($invalidUploadFilenameMsg) if $invalidUploadFilenameMsg;
+
+	if (-e "$dir/$name" || $invalidUploadFilenameMsg) {
 		my $isProtected = !$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files')
 			&& grep { Mojo::File->new("$dir/$name")->realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
 			@{ $c->ce->{uneditableCourseFiles} };
 
-		unless ($c->param('overwrite') || $action eq 'Overwrite' || $action eq $c->maketext('Overwrite')) {
+		if (($invalidUploadFilenameMsg || $isProtected)
+			|| !$c->param('overwrite')
+			|| $action ne 'Overwrite'
+			|| $action ne $c->maketext('Overwrite'))
+		{
 			return $c->c(
 				$c->Confirm(
 					$c->tag(
 						'p',
 						$c->b(
-							$isProtected
+							$invalidUploadFilenameMsg
+							? $c->maketext('<b>[_1]</b> is an invalid file name and must be renamed. Rename it as:',
+								$name)
+							: $isProtected
 							? $c->maketext('File <b>[_1]</b> is protected and cannot be overwritten. Rename it as:',
 								$name)
 							: $c->maketext('File <b>[_1]</b> already exists. Overwrite it, or rename it as:', $name)
@@ -749,15 +775,11 @@ sub Upload ($c) {
 					),
 					uniqueName($dir, $name),
 					$c->maketext('Rename'),
-					$isProtected ? '' : $c->maketext('Overwrite')
+					$isProtected || $invalidUploadFilenameMsg ? '' : $c->maketext('Overwrite')
 				),
 				$c->hidden_field(action => 'Upload'),
 				$c->hidden_field(file   => $fileIDhash)
 			)->join('');
-		} elsif ($isProtected) {
-			$c->addbadmessage($c->maketext('The file "[_1]" is protected and cannot be overwritten.', $name));
-			$upload->dispose;
-			return $c->Refresh;
 		}
 	}
 	$c->checkFileLocation($name, $c->{pwd});
@@ -991,13 +1013,14 @@ sub checkFileLocation ($c, $extension, $dir) {
 	return;
 }
 
-# Check a name for bad characters, etc.
-sub checkName ($file) {
-	$file =~ s!.*[/\\]!!;                  # remove directory
-	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;       # no illegal characters
-	$file =~ s/^\./_/;                     # no initial dot
-	$file = 'newfile.txt' unless $file;    # no blank names
-	return $file;
+# Check a file name for bad characters, etc. This returns a message explaining what is wrong with the file name if
+# something is wrong, and undefined if all is good.
+sub checkName ($c, $file) {
+	return $c->maketext('No filename specified.') unless $file;
+	return $c->maketext('"[_1]" contains a path component which is not allowed.', $file) if $file =~ /\//;
+	return $c->maketext('"[_1]" contains invalid characters.',               $file) if $file =~ m![^-_.a-zA-Z0-9 /]!;
+	return $c->maketext('"[_1]" begins with a period which is not allowed.', $file) if $file =~ m/^\./;
+	return;
 }
 
 # Get a unique name (in case it already exists)
