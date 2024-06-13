@@ -13,12 +13,7 @@
 % }
 %
 <p><%= defined $c->{studentEntryReport} ? $c->{studentEntryReport}->join('') : '' %></p>
-<p>
-	<%= maketext(
-		'Enter information below for students you wish to add. '
-			. q{Each student's password will initially be set to their student ID.}
-	) =%>
-</p>
+<p><%= maketext('Enter information below for students you wish to add.') =%></p>
 %
 % my $numberOfStudents = param('number_of_students') // 5;
 %
@@ -35,7 +30,7 @@
 	<%= $c->hidden_authen_fields =%>
 	<%= hidden_field number_of_students => $numberOfStudents =%>
 	<div class="table-responsive">
-		<table class="table table-sm table-bordered">
+		<table class="table table-sm table-bordered font-sm">
 			<thead class="table-group-divider">
 				<tr>
 					<th id="user_id_header"><%= maketext('Login Name') %><span class="required-field">*</span></th>
@@ -48,6 +43,7 @@
 					<th id="recitation_header"><%= maketext('Recitation') %></th>
 					<th id="comment_header"><%= maketext('Comment') %></th>
 					<th id="permission_header"><%= maketext('Permission Level') %></th>
+					<th id="password_header"><%= maketext('Password') %></th>
 				</tr>
 			</thead>
 			<tbody class="table-group-divider">
@@ -105,6 +101,11 @@
 							<%= select_field "permission_$_" => $permissionValues,
 							'aria-labelledby' => 'permission_header',
 							class => 'form-select form-select-sm w-auto flex-grow-0' =%>
+						</td>
+						<td>
+							% param("password_$_", undef);
+							<%= text_field "password_$_" => '', size => '16', 'aria-labelledby' => 'password_header',
+							class => 'form-control form-control-sm w-auto' =%>
 						</td>
 					</tr>
 				% }

@@ -8,7 +8,7 @@
 			class => 'form-control form-control-sm d-inline w-auto',
 			'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header' =%>
 	% } else {
-		% if (!$c->{passwordMode} && $field eq 'email_address') {
+		% if ($field eq 'email_address') {
 			% if ($value =~ /\S/) {
 				<%= link_to maketext('Email') => "mailto:$value" =%>
 			% }
@@ -30,7 +30,7 @@
 				] } sort(keys %{ $ce->{statuses} })
 			],
 			id => $fieldName . '_id', class => 'form-select form-select-sm w-auto flex-grow-0',
-			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header' =%>
+			'aria-labelledby' => 'status_header' =%>
 	% } else {
 		<%= $status_name ? maketext($status_name) : $value =%>
 	% }
@@ -49,8 +49,34 @@
 		%
 		<%= select_field $fieldName => \@values,
 			id => $fieldName . '_id', class => 'form-select form-select-sm w-auto flex-grow-0',
-			aria_labelledby => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header' =%>
+			'aria-labelledby' => 'permission_header' =%>
 	% } else {
 		<%= maketext((grep { $ce->{userRoles}{$_} eq $value } keys %{ $ce->{userRoles} })[0]) %>
 	% }
+% } elsif ($properties->{type} eq 'password') {
+	% # Note that this is only called if in editMode.
+	% if ($user->user_id eq param('user')) {
+		% # Don't allow a user to change their own password from this form.
+		<div class="alert alert-danger px-1 py-0 m-0">
+			<%= maketext('You may not change your own password here!') =%>
+		</div>
+	% } elsif (!$editable) {
+		% # Prevent modification of users with elevated permissions.
+		<div class="alert alert-danger px-1 py-0 m-0">
+			<%= maketext("You may not change this user's password!") =%>
+		</div>
+	% } else {
+		<div class="row flex-nowrap">
+			<div class="col-auto">
+				<%= text_field $fieldName => $user->{passwordExists} ? '********' : '', id => "${fieldName}_id",
+					class => 'form-control form-control-sm d-inline w-auto', size => 14,
+					'aria-labelledby' => 'password_header' =%>
+			</div>
+			<div class="col-auto form-check d-flex align-items-center">
+				<%= check_box "${fieldName}_confirm_change" => 1, class => 'form-check-input',
+				data => { bs_toggle => 'tooltip', bs_title => 'Check to confirm password change' } =%>
+			</div>
+		</div>
+	% }
+
 % }

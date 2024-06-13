@@ -371,9 +371,9 @@ sub addCourse {
 		foreach my $userTriple (@users) {
 			my ($User, $Password, $PermissionLevel) = @$userTriple;
 			eval { $db->addUser($User) };
-			warn $@ if $@;
-			eval { $db->addPassword($Password) };
-			warn $@ if $@;
+			warn $@                              if $@;
+			eval { $db->addPassword($Password) } if $Password;
+			warn $@                              if $@;
 			eval { $db->addPermissionLevel($PermissionLevel) };
 			warn $@ if $@;
 		}

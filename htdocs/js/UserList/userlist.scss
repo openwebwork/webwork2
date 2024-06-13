@@ -1,0 +1,36 @@
+.edit-classlist-table-container {
+	margin-top: 38px;
+
+	table.table {
+		border-collapse: separate;
+		border-spacing: 0;
+
+		.table-group-divider {
+			tr:first-child {
+				th,
+				td {
+					border-top: calc(var(--bs-border-width) * 2) solid;
+				}
+			}
+		}
+
+		th,
+		td {
+			border-right: var(--bs-border-width) solid var(--bs-table-border-color);
+		}
+
+		caption {
+			position: absolute;
+			z-index: 1;
+			margin-top: -84px;
+		}
+
+		th:first-child,
+		td:first-child {
+			position: sticky;
+			z-index: 1;
+			left: 0;
+			border-left: var(--bs-border-width) solid var(--bs-table-border-color);
+		}
+	}
+}

@@ -144,17 +144,6 @@ if ($users) {
 		# Set the default status if the status field is not set.
 		$record{status} = $ce->{statuses}{Enrolled}{abbrevs}[0] unless $record{status};
 
-		# Set the password if the password field is empty.
-		if (!defined $record{password} || $record{password} !~ /\S/) {
-			if (defined $record{student_id} && $record{student_id} =~ /\S/) {
-				# Use the student ID if it is non-empty.
-				$record{password} = cryptPassword($record{student_id});
-			} else {
-				# An empty password field in the database disables password login.
-				$record{password} = '';
-			}
-		}
-
 		# Set permission
 		if (!$record{status} && defined $professors{$user_id}) {
 			$record{permission} = $ce->{userRoles}{professor};
@@ -165,7 +154,7 @@ if ($users) {
 		push @users,
 			[
 				$userClass->new(%record),
-				$passwordClass->new(user_id => $user_id, password => $record{password}),
+				$record{password} ? $passwordClass->new(user_id => $user_id, password => $record{password}) : undef,
 				$permissionClass->new(
 					user_id    => $user_id,
 					permission => defined $professors{$user_id}

@@ -141,4 +141,8 @@
 				)();
 		});
 	}
+
+	for (const confirmCheck of document.querySelectorAll('input[name$="password_confirm_change"]')) {
+		new bootstrap.Tooltip(confirmCheck, { placement: 'top', fallbackPlacements: [] });
+	}
 })();
