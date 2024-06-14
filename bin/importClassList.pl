@@ -14,6 +14,9 @@
 # Artistic License for more details.
 ################################################################################
 
+use strict;
+use warnings;
+
 BEGIN {
 	use Mojo::File qw(curfile);
 	use Env qw(WEBWORK_ROOT);
@@ -29,9 +32,7 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::File::Classlist;
 use WeBWorK::Utils qw(cryptPassword);
-
-use strict;
-use warnings;
+use WeBWorK::File::Classlist qw(parse_classlist);
 
 if ((scalar(@ARGV) != 2)) {
 	print "\nSyntax is: importClassList.pl course_id path_to_classlist_file.lst\n\n";
@@ -48,16 +49,14 @@ my $ce = WeBWorK::CourseEnvironment->new({
 	courseName  => $courseID
 });
 
-my $db = new WeBWorK::DB($ce->{dbLayout});
+my $db = WeBWorK::DB($ce->{dbLayout})->new;
 
 my $createNew       = 1;         # Always set to true, so add new users
 my $replaceExisting = "none";    # Always set to "none" so no existing accounts are changed
 my @replaceList     = ();        # Empty list
 my (@replaced, @added, @skipped);
 
-# This was copied with MINOR changes from lib/WeBWorK/ContentGenerator/Instructor/UserList.pm
-# FIXME REFACTOR this belongs in a utility class so that addcourse can use it!
-# (we need a whole suite of higher-level import/export functions somewhere)
+# This was copied with MINOR changes from lib/WeBWorK/ContentGenerator/Instructor/UserList.pm.
 sub importUsersFromCSV {
 	my ($fileName, $createNew, $replaceExisting, @replaceList) = @_;
 
@@ -108,6 +107,20 @@ sub importUsersFromCSV {
 		$record{status} = $default_status_abbrev
 			unless defined $record{status} and $record{status} ne "";
 
+		# Determine what to use for the password (if anything).
+		if (!$record{password}) {
+			if (defined $record{unencrypted_password} && $record{unencrypted_password} =~ /\S/) {
+				$record{password} = cryptPassword($record{unencrypted_password});
+			} elsif ($ce->{fallback_password_source}
+				&& { user_id => 1, first_name => 1, last_name => 1, student_id => 1 }
+				->{ $ce->{fallback_password_source} }
+				&& $record{ $ce->{fallback_password_source} }
+				&& $record{ $ce->{fallback_password_source} } =~ /\S/)
+			{
+				$record{password} = cryptPassword($record{ $ce->{fallback_password_source} });
+			}
+		}
+
 		# set default permission level if permission level is "empty"
 		$record{permission} = $default_permission_level
 			unless defined $record{permission} and $record{permission} ne "";
@@ -134,6 +147,7 @@ sub importUsersFromCSV {
 	print("Skipped:\n\t",  join("\n\t", @skipped),  "\n\n");
 	print("Replaced:\n\t", join("\n\t", @replaced), "\n\n");
 
+	return;
 }
 
 importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
