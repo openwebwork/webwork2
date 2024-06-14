@@ -536,13 +536,13 @@ sub save_edit_handler ($c) {
 		$db->putPermissionLevel($PermissionLevel);
 		$User->{permission} = $PermissionLevel->permission;
 
-		my $newPassword = $c->param("user.${userID}.password");
-		if ($c->param("user.${userID}.password_confirm_change") && $newPassword !~ /^\s*\*+\s*$/) {
-			if (!$newPassword || $newPassword !~ /\S/) {
-				# Note that if the user has setup two factor authentication, then this also will delete the otp_secret.
-				# Thus if the password is set again later, the user will need to setup two factor authentication again.
-				$db->deletePassword($User->user_id) if $db->existsPassword($User->user_id);
-			} else {
+		if ($c->param("user.${userID}.password_delete")) {
+			# Note that if the user has setup two factor authentication, then this also will delete the otp_secret.
+			# Thus if the password is set again later, the user will need to setup two factor authentication again.
+			$db->deletePassword($User->user_id) if $db->existsPassword($User->user_id);
+		} else {
+			my $newPassword = $c->param("user.${userID}.password");
+			if ($newPassword && $newPassword =~ /\S/) {
 				my $Password      = eval { $db->getPassword($User->user_id) };
 				my $cryptPassword = cryptPassword($newPassword);
 				if ($Password) {

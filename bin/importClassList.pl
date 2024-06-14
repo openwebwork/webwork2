@@ -108,35 +108,24 @@ sub importUsersFromCSV {
 		$record{status} = $default_status_abbrev
 			unless defined $record{status} and $record{status} ne "";
 
-		# set password from student ID if password field is "empty"
-		if (not defined $record{password} or $record{password} eq "") {
-			if (defined $record{student_id} and $record{student_id} =~ /\S/) {
-				# crypt the student ID and use that
-				$record{password} = cryptPassword($record{student_id});
-			} else {
-				# an empty password field in the database disables password login
-				$record{password} = "";
-			}
-		}
-
 		# set default permission level if permission level is "empty"
 		$record{permission} = $default_permission_level
 			unless defined $record{permission} and $record{permission} ne "";
 
 		my $User            = $db->newUser(%record);
 		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => $record{permission});
-		my $Password        = $db->newPassword(user_id => $user_id, password => $record{password});
+		my $Password = $record{password} ? $db->newPassword(user_id => $user_id, password => $record{password}) : undef;
 
 		# DBFIXME use REPLACE
 		if (exists $allUserIDs{$user_id}) {
 			$db->putUser($User);
 			$db->putPermissionLevel($PermissionLevel);
-			$db->putPassword($Password);
+			$db->putPassword($Password) if $Password;
 			push @replaced, $user_id;
 		} else {
 			$db->addUser($User);
 			$db->addPermissionLevel($PermissionLevel);
-			$db->addPassword($Password);
+			$db->addPassword($Password) if $Password;
 			push @added, $user_id;
 		}
 	}

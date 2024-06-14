@@ -68,14 +68,17 @@
 	% } else {
 		<div class="row flex-nowrap">
 			<div class="col-auto">
-				<%= text_field $fieldName => $user->{passwordExists} ? '********' : '', id => "${fieldName}_id",
+				<%= text_field $fieldName => '', id => "${fieldName}_id",
+					placeholder => $user->{passwordExists} ? 'password set' : 'no password set',
 					class => 'form-control form-control-sm d-inline w-auto', size => 14,
 					'aria-labelledby' => 'password_header' =%>
 			</div>
-			<div class="col-auto form-check d-flex align-items-center">
-				<%= check_box "${fieldName}_confirm_change" => 1, class => 'form-check-input',
-				data => { bs_toggle => 'tooltip', bs_title => 'Check to confirm password change' } =%>
-			</div>
+			% if ($user->{passwordExists}) {
+				<div class="col-auto form-check d-flex align-items-center">
+					<%= check_box "${fieldName}_delete" => 1, class => 'form-check-input',
+					data => { bs_toggle => 'tooltip', bs_title => 'Check to delete password' } =%>
+				</div>
+			% }
 		</div>
 	% }
 
