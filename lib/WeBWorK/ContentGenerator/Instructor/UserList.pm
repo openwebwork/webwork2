@@ -397,14 +397,12 @@ sub add_handler ($c) {
 
 sub import_handler ($c) {
 	my $fileName = $c->param('action.import.source');
-	my $add      = $c->param('action.import.add');
 	my $replace  = $c->param('action.import.replace');
 
 	unless (defined($fileName) and $fileName =~ /\.lst$/) {
 		$c->addbadmessage($c->maketext('No class list file provided.'));
 		return $c->maketext('No users added.');
 	}
-	my $createNew = $add eq 'any';
 	my $replaceExisting;
 	my @replaceList;
 	if ($replace eq 'any') {
@@ -421,7 +419,8 @@ sub import_handler ($c) {
 		@replaceList     = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
 	}
 
-	my ($replaced, $added, $skipped) = $c->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
+	my ($replaced, $added, $skipped) =
+		$c->importUsersFromCSV($fileName, $replaceExisting, $c->param('fallback_password_source'), @replaceList);
 
 	# make new users visible and update records of replaced users
 	for (@$added) {
@@ -619,9 +618,7 @@ sub menuLabels ($c, $hashRef) {
 	return %result;
 }
 
-# FIXME REFACTOR this belongs in a utility class so that addcourse can use it!
-# (we need a whole suite of higher-level import/export functions somewhere)
-sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceList) {
+sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource, @replaceList) {
 	my $ce   = $c->ce;
 	my $db   = $c->db;
 	my $dir  = $ce->{courseDirs}{templates};
@@ -675,14 +672,21 @@ sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceLis
 			next;
 		}
 
-		if (!exists $allUserIDs{$user_id} && !$createNew) {
-			push @skipped, $user_id;
-			next;
-		}
-
 		# set default status is status field is "empty"
 		$record{status} = $default_status_abbrev
 			unless defined $record{status} and $record{status} ne "";
+
+		# Determine what to use for the password (if anything).
+		if (!$record{password}) {
+			if (defined $record{unencrypted_password} && $record{unencrypted_password} =~ /\S/) {
+				$record{password} = cryptPassword($record{unencrypted_password});
+			} elsif ($fallbackPasswordSource
+				&& $record{$fallbackPasswordSource}
+				&& $record{$fallbackPasswordSource} =~ /\S/)
+			{
+				$record{password} = cryptPassword($record{$fallbackPasswordSource});
+			}
+		}
 
 		# set default permission level if permission level is "empty"
 		$record{permission} = $default_permission_level

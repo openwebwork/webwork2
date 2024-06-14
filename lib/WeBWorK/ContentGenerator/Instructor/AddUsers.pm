@@ -49,7 +49,7 @@ sub initialize ($c) {
 		# FIXME: Handle errors if user already exists as well as all other errors that could occur (including errors
 		# when adding the permission, adding the password, and assigning sets to the users).
 		for my $i (1 .. $numberOfStudents) {
-			my $new_user_id = trim_spaces($c->param("new_user_id_$i"));
+			my $new_user_id = trim_spaces($c->param("user_id_$i"));
 			next unless $new_user_id;
 
 			my $newUser = $db->newUser;
@@ -81,10 +81,18 @@ sub initialize ($c) {
 				$newPermissionLevel->permission($c->param("permission_$i"));
 				$db->addPermissionLevel($newPermissionLevel);
 
-				if ($c->param("password_$i") =~ /\S/) {
+				my $password =
+					$c->param("password_$i") =~ /\S/ ? $c->param("password_$i")
+					: ($c->param('fallback_password_source')
+						&& $c->param($c->param('fallback_password_source') . "_$i")
+						&& $c->param($c->param('fallback_password_source') . "_$i") =~ /\S/)
+					? $c->param($c->param('fallback_password_source') . "_$i")
+					: undef;
+
+				if (defined $password) {
 					my $newPassword = $db->newPassword;
 					$newPassword->user_id($new_user_id);
-					$newPassword->password(cryptPassword($c->param("password_$i")));
+					$newPassword->password(cryptPassword($password));
 					$db->addPassword($newPassword);
 				}
 
