@@ -58,12 +58,10 @@
 
 	<dd>
 		<%= maketext('When editing users a column for editing passwords will be shown.  The text input in this '
-			. 'column will show ******** for users that have a password, and will be empty for users that do not '
-			. 'have a password. To set or change the password for a user enter the new password in the column '
-			. 'for that user, and click the checkbox to the right to confirm that you want the password to be '
-			. 'changed. If the checkbox is checked, and the text input is left empty, then the password for '
-			. 'the user will be deleted. This means that the user will not be able to sign into the course '
-			. 'using a password.') =%>
+			. 'column will show "password set" for users that have a password, and "no password set" for users '
+			. 'that do not have a password. To set or change the password for a user enter the new password '
+			. 'in the column for that user.  To delete the password for a user check the checkbox to the right. '
+			. 'This means that the user will not be able to sign into the course using a password.') =%>
 	</dd>
 
 	<dt><%= maketext('Add a few students to the course.') %></dt>

@@ -142,7 +142,7 @@
 		});
 	}
 
-	for (const confirmCheck of document.querySelectorAll('input[name$="password_confirm_change"]')) {
-		new bootstrap.Tooltip(confirmCheck, { placement: 'top', fallbackPlacements: [] });
+	for (const deleteCheck of document.querySelectorAll('input[name$="password_delete"]')) {
+		new bootstrap.Tooltip(deleteCheck, { placement: 'top', fallbackPlacements: [] });
 	}
 })();
