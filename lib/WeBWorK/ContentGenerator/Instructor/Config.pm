@@ -105,7 +105,7 @@ sub pre_header_initialize ($c) {
 			# Redirect back to the instructor config page after saving settings.  After the redirect the now saved
 			# changes will take effect.  This gives the appearance that settings take effect immediately after saving.
 			$c->authen->flash(status_message => $c->{status_message}->join(''));
-			$c->reply_with_redirect($c->systemLink($c->url_for('instructor_config')));
+			$c->reply_with_redirect($c->systemLink($c->url_for('instructor_config'), params => ['current_tab']));
 		} else {
 			$c->addbadmessage(
 				$c->c(
