@@ -30,7 +30,7 @@ RUN echo Cloning branch $PG_BRANCH branch from $PG_GIT_URL \
 
 # We need to change FROM before setting the ENV variables.
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ENV WEBWORK_URL=/webwork2 \
 	WEBWORK_ROOT_URL=http://localhost::8080 \
@@ -110,8 +110,6 @@ RUN apt-get update \
 	libjson-perl \
 	libjson-xs-perl \
 	liblocale-maketext-lexicon-perl \
-	libmail-sender-perl \
-	libmail-sender-perl \
 	libmariadb-dev \
 	libmath-random-secure-perl \
 	libmime-base32-perl \
@@ -120,6 +118,7 @@ RUN apt-get update \
 	libminion-perl \
 	libmodule-build-perl \
 	libmodule-pluggable-perl \
+	libmojolicious-perl \
 	libmojolicious-plugin-renderfile-perl \
 	libnet-https-nb-perl \
 	libnet-ip-perl \
@@ -189,8 +188,6 @@ RUN apt-get update \
 RUN cpanm install -n \
 	Statistics::R::IO \
 	DBD::MariaDB \
-	Mojolicious \
-	Mojo::SQLite@3.002 \
 	Perl::Tidy@20220613 \
 	Archive::Zip::SimpleZip \
 	&& rm -fr ./cpanm /root/.cpanm /tmp/*
@@ -219,7 +216,6 @@ COPY --from=base /opt/base/pg $APP_ROOT/pg
 # 7. Apply patches
 
 # Patch files that are applied below
-COPY docker-config/imagemagick-allow-pdf-read.patch /tmp
 COPY docker-config/pgfsys-dvisvmg-bbox-fix.patch /tmp
 
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
@@ -237,8 +233,6 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 		&& npm install \
 	&& cd $PG_ROOT/htdocs \
 		&& npm install \
-	&& patch -p1 -d / < /tmp/imagemagick-allow-pdf-read.patch \
-	&& rm /tmp/imagemagick-allow-pdf-read.patch \
 	&& patch -p1 -d / < /tmp/pgfsys-dvisvmg-bbox-fix.patch \
 	&& rm /tmp/pgfsys-dvisvmg-bbox-fix.patch
 
