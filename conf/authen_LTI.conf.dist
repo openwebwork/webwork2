@@ -177,7 +177,10 @@ $LTIMassUpdateInterval = 86400;    #in seconds
 	#'LTI{v1p3}{LMS_url}',
 	#'external_auth',
 	#'LTIGradeMode',
+	#'LTIGradeOnSubmit',
+	#'LTIMassUpdateInterval',
 	#'LMSManageUserData',
+	#'LTI{v1p1}{BasicConsumerSecret}',
 	#'debug_lti_parameters',
 	#'lms_context_id'
 );

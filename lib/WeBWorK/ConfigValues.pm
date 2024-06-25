@@ -890,6 +890,25 @@ sub getConfigValues ($ce) {
 			labels => { '' => 'None', 'course' => 'Course', 'homework' => 'Homework' },
 			type   => 'popuplist'
 		},
+		LTIGradeOnSubmit => {
+			var  => 'LTIGradeOnSubmit',
+			doc  => x('Update LMS Grade Each Submit'),
+			doc2 => x(
+				'Sets if webwork sends grades back to the LMS every time a user submits an answer. '
+					. 'This keeps students grades up to date, but can cause additional server load.'
+			),
+			type => 'boolean'
+		},
+		LTIMassUpdateInterval => {
+			var  => 'LTIMassUpdateInterval',
+			doc  => x('Time in seconds to periodically update LMS grades (-1 to disable)'),
+			doc2 => x(
+				'Sets the time in seconds to periodically update the LMS grades. WeBWorK will update all grades on '
+					. 'the LMS if it has been longer than this time since the completion of the last update. This is '
+					. 'only an approximate time. 86400 seconds is one day. -1 disables periodic updates.'
+			),
+			type => 'number'
+		},
 		LMSManageUserData => {
 			var  => 'LMSManageUserData',
 			doc  => x('Allow the LMS to update user account data'),
@@ -901,6 +920,15 @@ sub getConfigValues ($ce) {
 					. 'WeBWorK will be overwritten the next time the user logs in.'
 			),
 			type => 'boolean'
+		},
+		'LTI{v1p1}{BasicConsumerSecret}' => {
+			var  => 'LTI{v1p1}{BasicConsumerSecret}',
+			doc  => x('Set the shared secret used for the LMS'),
+			doc2 => x(
+				'This is a secret word that is used to validate information between WeBWorK and the LMS.'
+					. 'This secret word must match the word you configure in the LMS.'
+			),
+			type => 'text'
 		},
 		debug_lti_parameters => {
 			var  => 'debug_lti_parameters',
@@ -988,6 +1016,7 @@ sub getConfigValues ($ce) {
 				{ %{ delete $LTIConfigValues->{'LTI{v1p1}{LMS_name}'} }, var => 'LTI{v1p3}{LMS_name}' };
 			$LTIConfigValues->{'LTI{v1p3}{LMS_url}'} =
 				{ %{ delete $LTIConfigValues->{'LTI{v1p1}{LMS_url}'} }, var => 'LTI{v1p3}{LMS_url}' };
+			delete $LTIConfigValues->{'LTI{v1p1}{BasicConsumerSecret}'};
 		}
 
 		push(
