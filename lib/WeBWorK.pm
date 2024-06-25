@@ -219,9 +219,12 @@ async sub dispatch ($c) {
 					await WeBWorK::ContentGenerator::LoginProctor->new($c)->go;
 					return 0;
 				}
-			} else {
+			} elsif ($c->current_route ne 'instructor_rpc') {
 				# If any other page is opened, then revoke proctor authorization if it has been granted.
 				# Otherwise the student will be able to re-enter the test without again obtaining proctor authorization.
+				# Do NOT do this for the instructor_rpc route.  The only student usage of this route is to get the
+				# current server time during a gateway quiz, and that definitely should not revoke proctor
+				# authorization.
 				delete $c->authen->session->{proctor_authorization_granted};
 			}
 			return 1;
