@@ -354,11 +354,9 @@ $mail{feedbackRecipients}    = [
 # $pg{specialPGEnvironmentVars}{convertFullWidthCharacters} = 1;
 
 # Application that the PGtikz.pl and PGlateximage.pl macros will use to create svg images.
-# This should be either 'pdf2svg' or 'dvisvgm'.  The default is 'pdf2svg'.
-# If the system version of latex is 3.14159265-2.6-1.40.20 (TeX Live 2019) or newer
-# and the system version of dvisvgm is 2.8.1 or newer, then change this to 'dvisvgm'
-# by uncommenting the line below.  'dvisvgm' will generally create better 'svg'
-# images.
+# This should be either 'pdf2svg' or 'dvisvgm'.  The default is 'dvisvgm' as
+# 'dvisvgm' will generally create a better 'svg'. However, if you see issues
+# with that, then you may want to switch this to 'pdf2svg'.
 #$pg{specialPGEnvironmentVars}{latexImageSVGMethod} = "dvisvgm";
 
 # When ImageMagick is used for image conversions, this sets the default options.
