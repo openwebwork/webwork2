@@ -240,6 +240,15 @@ sub content_selection ($c) {
 	my @selectedSets =
 		$c->db->getGlobalSetsWhere({ set_id => [ $c->param('selected_sets') ] }, [qw(due_date set_id)]);
 
+	my @problems =
+		$c->db->getGlobalProblemsWhere({ set_id => [ $c->param('selected_sets') ] }, [qw(set_id problem_id)]);
+	my %setMaxScores = map {
+		my $setId = $_->set_id;
+		my $max   = 0;
+		$max += $_->value for (grep { $_->set_id eq $setId } @problems);
+		$setId => $max;
+	} @selectedSets;
+
 	my $jwt = eval {
 		encode_jwt(
 			payload => {
@@ -268,7 +277,7 @@ sub content_selection ($c) {
 							url =>
 								$c->url_for('problem_list', courseID => $c->stash->{courseID}, setID => $_->set_id)
 								->to_abs->to_string,
-							lineItem => { scoreMaximum => 100 }
+							lineItem => { scoreMaximum => $setMaxScores{ $_->set_id } }
 						} } @selectedSets
 					]
 					)
