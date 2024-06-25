@@ -21,13 +21,11 @@
 			% for (keys %$forwardParams) {
 				<%= hidden_field $_ => $forwardParams->{$_} =%>
 			% }
-			% if ($c->ce->{LTIGradeMode} ne 'homework') {
-				<div class="form-check mb-3">
-					<%= check_box course_home_link => 1, id => 'course_home_link', class => 'form-check-input' =%>
-					<%= label_for course_home_link => maketext('Assignments (Course Home)'),
-						class => 'form-check-label' =%>
-				</div>
-			% }
+			<div class="form-check mb-3">
+				<%= check_box course_home_link => 1, id => 'course_home_link', class => 'form-check-input' =%>
+				<%= label_for course_home_link => maketext('Assignments (Course Home)'),
+					class => 'form-check-label' =%>
+			</div>
 			<fieldset class="mb-3">
 				<legend><%= maketext('Visible Sets') %></legend>
 				% if ($acceptMultiple) {
