@@ -20,7 +20,7 @@
 						map { [
 							maketext($fieldProperties->{$_}{name}) => $_,
 							$_ eq 'user_id' ? (selected => undef) : ()
-					   	] } grep { $_ ne 'email_address' } @$fields
+					   	] } grep { $_ ne 'email_address' && $_ ne 'password' } @$fields
 					],
 					id => 'filter_type_select', class => 'form-select form-select-sm' =%>
 			</div>

@@ -13,12 +13,7 @@
 % }
 %
 <p><%= defined $c->{studentEntryReport} ? $c->{studentEntryReport}->join('') : '' %></p>
-<p>
-	<%= maketext(
-		'Enter information below for students you wish to add. '
-			. q{Each student's password will initially be set to their student ID.}
-	) =%>
-</p>
+<p><%= maketext('Enter information below for students you wish to add.') =%></p>
 %
 % my $numberOfStudents = param('number_of_students') // 5;
 %
@@ -34,8 +29,44 @@
 <%= form_for current_route, method => 'POST', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	<%= hidden_field number_of_students => $numberOfStudents =%>
+	<div class="input-group d-inline-flex w-auto mb-3">
+		% my $default = $ce->{fallback_password_source}
+			% && (grep { $_ eq $ce->{fallback_password_source} } ('user_id', 'first_name', 'last_name', 'student_id'))
+			% ? $ce->{fallback_password_source}
+			% : '';
+		<%= label_for 'fallback_password_source', class => 'input-group-text', begin =%>
+			Fallback password source:&nbsp;
+			<%= link_to '#',
+				class => 'help-popup',
+				data  => {
+					bs_content => maketext(
+						'This is the field that will be used for the password if the password field is left blank. '
+							. 'If it is set to "None", and no password is provided in the password field, or if no '
+							. 'value is provided for the field this is set to, then the user will be created without '
+							. 'a password.'
+					),
+					bs_placement => 'top',
+					bs_toggle    => 'popover'
+				},
+				role     => 'button',
+				tabindex => 0,
+				begin =%>
+					<i class="icon fas fa-question-circle" aria-hidden="true"></i><% =%>\
+					<span class="visually-hidden"><%= maketext('Fallback password source help') %></span><% =%>\
+				<% end =%>
+		<% end =%>
+		<%= select_field fallback_password_source => [
+				[ 'None'       => '',           $default eq ''           ? (selected => undef) : () ],
+				[ 'Login Name' => 'user_id',    $default eq 'user_id'    ? (selected => undef) : () ],
+				[ 'First Name' => 'first_name', $default eq 'first_name' ? (selected => undef) : () ],
+				[ 'Last Name'  => 'last_name',  $default eq 'last_name'  ? (selected => undef) : () ],
+				[ 'Student ID' => 'student_id', $default eq 'student_id' ? (selected => undef) : () ]
+			],
+			id => 'fallback_password_source', class => 'form-select w-auto flex-grow-0' =%>
+	</div>
+
 	<div class="table-responsive">
-		<table class="table table-sm table-bordered">
+		<table class="table table-sm table-bordered font-sm">
 			<thead class="table-group-divider">
 				<tr>
 					<th id="user_id_header"><%= maketext('Login Name') %><span class="required-field">*</span></th>
@@ -48,14 +79,15 @@
 					<th id="recitation_header"><%= maketext('Recitation') %></th>
 					<th id="comment_header"><%= maketext('Comment') %></th>
 					<th id="permission_header"><%= maketext('Permission Level') %></th>
+					<th id="password_header"><%= maketext('Password') %></th>
 				</tr>
 			</thead>
 			<tbody class="table-group-divider">
 				% for (1 .. $numberOfStudents) {
 					<tr>
 						<td>
-							% param("new_user_id_$_", undef);
-							<%= text_field "new_user_id_$_" => '', size => '10', 'aria-labelledby' => 'user_id_header',
+							% param("user_id_$_", undef);
+							<%= text_field "user_id_$_" => '', size => '10', 'aria-labelledby' => 'user_id_header',
 								class => 'form-control form-control-sm w-auto' =%>
 						</td>
 						<td>
@@ -105,6 +137,11 @@
 							<%= select_field "permission_$_" => $permissionValues,
 							'aria-labelledby' => 'permission_header',
 							class => 'form-select form-select-sm w-auto flex-grow-0' =%>
+						</td>
+						<td>
+							% param("password_$_", undef);
+							<%= text_field "password_$_" => '', size => '16', 'aria-labelledby' => 'password_header',
+							class => 'form-control form-control-sm w-auto' =%>
 						</td>
 					</tr>
 				% }
