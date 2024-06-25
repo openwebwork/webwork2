@@ -167,9 +167,9 @@ $LTIMassUpdateInterval = 86400;    #in seconds
 # to some of the LTI settings. You may leave some of the variables commented out if you would
 # like to omit them from the options in this tab.  If all variables are left commented out, then
 # the tab will not be shown.  Note that the default values for the variables that will be shown
-# in the LTI tab are the values that are set above.  Further note that only the variables listed
-# in LTIConfigValues.config may be added to the LTI config tab.  In addition, only the variables
-# that pertain to the active LTI version will be shown in the tab.
+# in the LTI tab are the values that are set above.  Further note that only the commented out
+# variables listed below may be added to the LTI config tab.  In addition, only the variables that
+# pertain to the active LTI version will be shown in the tab.
 @LTIConfigVariables = (
 	#'LTI{v1p1}{LMS_name}',
 	#'LTI{v1p3}{LMS_name}',
