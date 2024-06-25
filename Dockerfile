@@ -120,7 +120,6 @@ RUN apt-get update \
 	libminion-perl \
 	libmodule-build-perl \
 	libmodule-pluggable-perl \
-	libmojolicious-perl \
 	libmojolicious-plugin-renderfile-perl \
 	libnet-https-nb-perl \
 	libnet-ip-perl \
@@ -128,9 +127,9 @@ RUN apt-get update \
 	libnet-oauth-perl \
 	libossp-uuid-perl \
 	libpadwalker-perl \
+	libpandoc-wrapper-perl \
 	libpath-class-perl \
 	libpath-tiny-perl \
-	libpandoc-wrapper-perl \
 	libphp-serialization-perl \
 	libpod-wsdl-perl \
 	libsoap-lite-perl \
@@ -179,7 +178,7 @@ RUN apt-get update \
 	texlive-xetex \
 	tzdata \
 	zip $ADDITIONAL_BASE_IMAGE_PACKAGES \
-	&& curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+	&& curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
 	&& apt-get clean \
 	&& rm -fr /var/lib/apt/lists/* /tmp/*
@@ -187,7 +186,13 @@ RUN apt-get update \
 # ==================================================================
 # Phase 4 - Install additional Perl modules from CPAN that are not packaged for Ubuntu or are outdated in Ubuntu.
 
-RUN cpanm install Statistics::R::IO DBD::MariaDB Mojo::SQLite@3.002 Perl::Tidy@20220613 Archive::Zip::SimpleZip \
+RUN cpanm install -n \
+	Statistics::R::IO \
+	DBD::MariaDB \
+	Mojolicious \
+	Mojo::SQLite@3.002 \
+	Perl::Tidy@20220613 \
+	Archive::Zip::SimpleZip \
 	&& rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # ==================================================================
