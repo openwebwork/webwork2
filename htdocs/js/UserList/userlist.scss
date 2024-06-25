@@ -1,6 +1,4 @@
 .edit-classlist-table-container {
-	margin-top: 38px;
-
 	table.table {
 		border-collapse: separate;
 		border-spacing: 0;
@@ -17,12 +15,6 @@
 		th,
 		td {
 			border-right: var(--bs-border-width) solid var(--bs-table-border-color);
-		}
-
-		caption {
-			position: absolute;
-			z-index: 1;
-			margin-top: -84px;
 		}
 
 		th:first-child,

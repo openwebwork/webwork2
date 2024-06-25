@@ -83,14 +83,16 @@
 		<%= submit_button maketext($formTitles->{$default_choice}), id => 'take_action', class => 'btn btn-primary' =%>
 	</div>
 	%
-	<p class="mb-0"><%= maketext('Showing [_1] out of [_2] users',
-		scalar(keys %{ $c->{visibleUserIDs} }), scalar(@{ $c->{allUserIDs} })) =%></p>
+	<div>
+		<%= maketext('Showing [_1] out of [_2] users',
+			scalar(keys %{ $c->{visibleUserIDs} }), scalar(@{ $c->{allUserIDs} })) =%>
+	</div>
 	%
 	% if ($c->{editMode}) {
-		<p>
+		<div>
 			<%= maketext(
 				'Click on the login name to edit individual problem set data, (e.g. due dates) for these students.') =%>
-		</p>
+		</div>
 	% }
 	%
 	<%= include 'ContentGenerator/Instructor/UserList/user_list' =%>
