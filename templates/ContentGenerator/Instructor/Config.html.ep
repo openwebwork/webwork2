@@ -21,21 +21,27 @@
 <%= form_for current_route, method => 'POST', id => 'config-form', name => 'config-form', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	%
+	% param('current_tab', 'General') unless param('current_tab');
+	<%= hidden_field current_tab => param('current_tab') =%>
 	% for my $configSection (@$configValues) {
 		% my $sectionName = shift @$configSection;
 		% my $id          = lc($sectionName =~ s|[/ ]|-|gr);
 		%
 		% content_for config_tabs => begin
-			<button type="button" class="nav-link<%= $sectionName eq 'General' ? ' active' : '' %>" id="<%= $id %>-tab"
-				data-bs-toggle="tab" data-bs-target="#<%= $id %>" role="tab" aria-controls="<%= $id %>"
-				aria-selected="<%= $sectionName eq 'General' ? 'true' : 'false' %>">
-				<%= maketext($sectionName) =%>
-			</button>
+			<%= tag 'button',
+				type            => 'button',
+				id              => "$id-tab",
+				class           => 'tab-link nav-link' . ($sectionName eq param('current_tab') ? ' active' : ''),
+				role            => 'tab',
+				'aria-controls' => $id,
+				'aria-selected' => $sectionName eq param('current_tab') ? 'true' : 'false',
+				data            => { bs_toggle => 'tab', bs_target => "#$id", tab => $sectionName },
+				maketext($sectionName) =%>
 		% end
 		%
 		% content_for config_tabs_content => begin
-			<div class="tab-pane fade show<%= $sectionName eq 'General' ? ' active' : '' %>" id="<%= $id %>"
-				role="tabpanel" aria-labelledby="<%= $id %>-tab" tabindex="0">
+			<div class="tab-pane fade show<%= $sectionName eq param('current_tab') ? ' active' : '' %>"
+				id="<%= $id %>" role="tabpanel" aria-labelledby="<%= $id %>-tab" tabindex="0">
 				<h2><b><%= maketext($sectionName) %></b></h2>
 				<div class="table-responsive">
 					<table class="table table-bordered align-middle">
