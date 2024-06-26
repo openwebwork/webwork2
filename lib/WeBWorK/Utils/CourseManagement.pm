@@ -762,6 +762,9 @@ sub deleteCourse {
 	my $create_db_result = $db->delete_tables;
 	die "$courseID: course database deletion failed.\n" unless $create_db_result;
 
+	# If this course has an entry in the LTI course map, then delete it also.
+	$db->deleteLTICourseMapWhere({ course_id => $courseID });
+
 	##### step 2: delete course directory structure #####
 
 	my @courseDirNames = sort { $courseDirs{$a} cmp $courseDirs{$b} } keys %courseDirs;
