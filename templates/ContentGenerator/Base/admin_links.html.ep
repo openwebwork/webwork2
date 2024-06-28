@@ -13,7 +13,7 @@
 		% for (
 			% [
 				% 'add_course',
-				% maketext('Add Courses'),
+				% maketext('Add Course'),
 				% {
 					% add_admin_users  => 1,
 					% copy_from_course => $ce->{siteDefaults}{default_copy_from_course} || '',
@@ -21,10 +21,10 @@
 					% add_dbLayout     => 'sql_single'
 				% }
 			% ],
-			% [ 'rename_course',         maketext('Rename Courses') ],
-			% [ 'delete_course',         maketext('Delete Courses') ],
+			% [ 'rename_course',         maketext('Rename Course') ],
+			% [ 'delete_course',         maketext('Delete Course') ],
 			% [ 'archive_course',        maketext('Archive Courses') ],
-			% [ 'unarchive_course',      maketext('Unarchive Courses') ],
+			% [ 'unarchive_course',      maketext('Unarchive Course') ],
 			% [ 'upgrade_course',        maketext('Upgrade Courses') ],
 			% [ 'hide_inactive_course',  maketext('Hide Courses') ],
 			% [ 'manage_locations',      maketext('Manage Locations') ],
