@@ -256,7 +256,6 @@ $mail{set_return_path} = ''; #sets the return_path to the From: field (sender's 
 # using $mail{smtpSender} would deliver error messages to that address.
 # The default setting should be adjusted for local domain
 # Leaving the return path blank triggers the default which results in Return-Path  being set to the email of the sender.
-#
 
 # Seconds to wait before timing out when connecting to the SMTP server.
 #  the default is 120 seconds.
@@ -268,28 +267,40 @@ $mail{smtpTimeout}           = 30;
 
 # TLS is a method for providing secure connections to the smtp server.
 # https://en.wikipedia.org/wiki/Transport_Layer_Security
-# At some sites coordinating the certificates properly is tricky
-# Set this value to 0 to avoid checking certificates.
-# Set it to 0 to trouble shoot an inability to verify certificates with the smtp server
+# Allowed values: 'starttls', 'ssl', 'maybestarttls', 0
+# Values of 'maybestarttls' and 0 are insecure and are not recommended for
+# production environments, except where the smtp server is localhost.
 
 $mail{tls_allowed} = 0;
 
-#$tls_allowed=0;  #old method -- this variable no longer works.
+# Extra settings for SSL/TLS
+# You may need to use this setting if your SMTP server uses a self-signed certificate.
+# SSL_verify_mode => 0 is not recommended for production environments for security
+# reasons.  See https://metacpan.org/pod/IO::Socket::SSL#Common-Usage-Errors
 
+#$mail{smtpSSLOptions} = {SSL_verify_mode => 0};
 
 # errors of the form
-#  unable to establish SMTP connection to smtp-gw.rochester.edu port 465
-# indicate that there is a mismatch between the port number and the use of ssl
-# use port 25 when ssl is off and use port 465 when ssl is on (tls_allowed=1)
+# "unable to establish SMTP connection to smtp-gw.rochester.edu port 465"
+# indicate that there may be a mismatch between the port number and the use of ssl.
+# Many mail servers use port 25 when ssl is off, use port 465 when ssl is on (tls_allowed='ssl'),
+# and use port 587 when starttls is used (tls_allowed='starttls').
 
 
-# Set the SMTP port manually.  Typically this does not need to be done it will use
-# port 25 if no SSL is on and 465 if ssl is on
+# Set the SMTP port manually.  Typically this does not need to be done. It will use
+# port 25 if insecure, and 465 if ssl is on
 
 #$mail{smtpPort} = 25;
 
 # Debugging tutorial for sending email using ssl/tls
 # https://maulwuff.de/research/ssl-debugging.html
+
+# SMTP Authentication
+# If your SMTP server requires authentication you can provide the username and password
+# for the account on the mail server
+
+#$mail{smtpUsername} = '';
+#$mail{smtpPassword} = '';
 
 # Set maxAttachmentSize to the maximum number of megabytes to allow for the size of
 # files attached to feedback emails.  Note that this should be set to match the
