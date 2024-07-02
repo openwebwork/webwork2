@@ -18,9 +18,9 @@
 %
 <p>
 	<%== maketext('From this page you can <strong>add new students</strong>, <strong>edit</strong> user data '
-		. '(name, email address, recitation, section, permission level, and enrollment status), '
-		. '<strong>change passwords</strong>, and <strong>export</strong> (save) class lists for back-up or use in '
-		. 'another course. You can also delete students from the class roster, but this cannot be undone.') =%>
+		. '(name, email address, recitation, section, permission level, enrollment status, and password), '
+		. 'and <strong>export</strong> (save) class lists for back-up or use in another course. '
+		. 'You can also delete students from the class roster, but this cannot be undone.') =%>
 </p>
 <p>
 	<%= maketext('This page gives access to information about the student, independent of the assignments '
@@ -54,6 +54,14 @@
 			. '(See drop and delete students below.) If the login name must be changed after a user has started '
 			. 'working assignments, then contact your system administrator, who can use the webwork2 '
 			. '"bin/change_user_id" script to change the user id.') =%>
+	</dd>
+
+	<dd>
+		<%= maketext('When editing users a column for editing passwords will be shown.  The text input in this '
+			. 'column will show "password set" for users that have a password, and "no password set" for users '
+			. 'that do not have a password. To set or change the password for a user enter the new password '
+			. 'in the column for that user.  To delete the password for a user check the checkbox to the right. '
+			. 'This means that the user will not be able to sign into the course using a password.') =%>
 	</dd>
 
 	<dt><%= maketext('Add a few students to the course.') %></dt>

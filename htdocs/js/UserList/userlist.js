@@ -141,4 +141,8 @@
 				)();
 		});
 	}
+
+	for (const deleteCheck of document.querySelectorAll('input[name$="password_delete"]')) {
+		new bootstrap.Tooltip(deleteCheck, { placement: 'top', fallbackPlacements: [] });
+	}
 })();
