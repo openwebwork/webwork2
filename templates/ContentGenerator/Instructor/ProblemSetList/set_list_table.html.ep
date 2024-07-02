@@ -1,17 +1,18 @@
 % my %fieldHeaders = (
-	% set_id                 => $c->{editMode}
-								% ? maketext('Edit Set')
-								% : label_for('select-all' => maketext('Edit Set Data')),
-	% problems               => maketext('Edit Problems'),
-	% users                  => maketext('Edit Assigned Users'),
+	% set_id                 => maketext('Set Name'),
+	% problems               => maketext('Problems'),
+	% users                  => maketext('Assigned Users'),
 	% visible                => maketext('Visible'),
-	% enable_reduced_scoring => $c->{editMode} ? maketext('Enable Reduced Scoring') : maketext('Reduced Scoring'),
+	% enable_reduced_scoring => maketext('Reduced Scoring'),
 	% open_date              => maketext('Open Date'),
 	% reduced_scoring_date   => maketext('Reduced Scoring Date'),
 	% due_date               => maketext('Close Date'),
 	% answer_date            => maketext('Answer Date')
 % );
 %
+<div id="select_set_err_msg" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
+	<%= maketext('Please select at least one set.') %>
+</div>
 <div class="table-responsive">
 	<table id="set_table_id" class="set_table table table-sm table-bordered caption-top font-sm <%=
 		$c->{editMode} ? 'align-middle' : '' %>">
@@ -22,12 +23,32 @@
 			<tr>
 				% if (!$c->{editMode}) {
 					<th>
-						<%= check_box 'select-all' => '', id => 'select-all', class => 'select-all form-check-input',
-							'aria-label' => maketext('Select all sets'), data => { select_group => 'selected_sets' } =%>
+						<%= label_for 'select-all', begin =%>
+							<%= check_box 'select-all' => '', id => 'select-all',
+								class => 'select-all form-check-input set-id-tooltip',
+								'aria-label' => maketext('Select all sets'),
+								data => {
+									select_group => 'selected_sets',
+									bs_toggle => 'tooltip',
+									bs_placement => 'right',
+									bs_title => maketext('Select all sets')
+								} =%>
+								<i class="fa-solid fa-check-double" aria-hidden="true"></i>
+							<% end =%>
 					</th>
 				% }
 				% for (@$fieldNames) {
-					<th id="<%= $_ %>_header"><%= $fieldHeaders{$_} =%></th>
+					<th id="<%= $_ %>_header">
+						% if (!$c->{editMode} && $sortableFields->{$_}) {
+							<div class="d-flex justify-content-between align-items-end gap-1">
+								<%= link_to $fieldHeaders{$_} => '#', class => 'sort-header',
+									data => { sort_field => $_ } =%>
+								<%= include 'ContentGenerator/Instructor/ProblemSetList/sort_button', field => $_ =%>
+							</div>
+						% } else {
+							<%= $fieldHeaders{$_} =%>
+						% }
+					</th>
 				% }
 			</tr>
 		</thead>

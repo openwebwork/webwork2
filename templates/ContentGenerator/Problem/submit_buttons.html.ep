@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(before);
+% use WeBWorK::Utils::DateTime qw(before);
 %
 % my %can            = %{ $c->{can} };
 % my %will           = %{ $c->{will} };
@@ -47,45 +47,49 @@
 		% }
 	% }
 	%
-	% my %showMeAnother = %{ $c->{showMeAnother} };
-	% if ($can{showMeAnother}) {
-		% # only output showMeAnother button if we're not on the showMeAnother page
-		<%= link_to maketext('Show Me Another') => $c->systemLink(url_for('show_me_another')),
-				class  => 'set-id-tooltip btn btn-primary mb-1',
-				id     => 'SMA_button',
-				target => 'WW_Show_Me_Another',
-				data   => {
-					bs_toggle    => 'tooltip',
-					bs_placement => 'right',
-					bs_title     => maketext(
-						'You can use this feature [quant,_1,more time,more times,as many times as you want] '
-							. 'on this problem',
-						$showMeAnother{MaxReps} >= $showMeAnother{Count}
-						? ($showMeAnother{MaxReps} - $showMeAnother{Count})
-						: ''
-					)
-				} =%>
+	% my $exhausted =
+		% $ce->{pg}{options}{enableShowMeAnother}
+		% && $c->{showMeAnother}{MaxReps} > -1
+		% && $c->{showMeAnother}{Count} >= $c->{showMeAnother}{MaxReps};
+	% if ($can{showMeAnother} && !$exhausted) {
+	<%= link_to maketext('Show Me Another') => $c->systemLink(url_for('show_me_another')),
+			class      => 'set-id-tooltip btn btn-primary mb-1',
+			target     => 'WW_Show_Me_Another',
+			data       => {
+				bs_toggle    => 'tooltip',
+				bs_placement => 'right',
+				bs_title     => maketext(
+					'You can use this feature [quant,_1,more time,more times,as many times as you want] '
+						. 'on this problem',
+					$c->{showMeAnother}{MaxReps} >= $c->{showMeAnother}{Count}
+					? $c->{showMeAnother}{MaxReps} - $c->{showMeAnother}{Count}
+					: ''
+				)
+			} =%>
 	% } else {
-		% # If showMeAnother is available for the course, and for the current problem (but not yet
-		% # because the student hasn't tried enough times) then gray it out. Otherwise display nothing.
-		% # If $showMeAnother{TriesNeeded} is somehow not an integer or is -2, use the default value.
-		% $showMeAnother{TriesNeeded} = $ce->{pg}{options}{showMeAnotherDefault}
-			% if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
-		% if ($ce->{pg}{options}{enableShowMeAnother} && $showMeAnother{TriesNeeded} > -1) {
-			% my $exhausted =
-				% ($showMeAnother{Count} >= $showMeAnother{MaxReps} && $showMeAnother{MaxReps} > -1) ? 'exhausted' : '';
+		% # If showMeAnother is available for the course, and for the current problem and is either not yet
+		% # available because the student hasn't tried enough times or is no longer available because the user has used
+		% # show me another the maximum allowed number of times then gray it out. Otherwise display nothing.
+		% if ($ce->{pg}{options}{enableShowMeAnother} && $c->{showMeAnother}{TriesNeeded} > -1) {
 			<span class="set-id-tooltip d-inline-block" tabindex="0" data-bs-toggle="tooltip"
 				data-bs-placement="right"
 				data-bs-title="<%=
 					before($db->getGlobalSet($c->{set}->set_id)->open_date, $c->submitTime)
-					? maketext('The problem set is not yet open')
-					: $exhausted eq 'exhausted' ? maketext('Feature exhausted for this problem')
-					: maketext(
-						'You must attempt this problem [quant,_1,time] before this feature is available',
-						$showMeAnother{TriesNeeded}
-					) =%>">
+						? maketext('The problem set is not yet open')
+						: $exhausted
+						? maketext('This feature has been used the maximum allowed number of times for this problem, '
+							. 'and can not be used again.'
+						)
+						: maketext(
+							'You must attempt this problem [quant,_1,more time] before this feature is available',
+							$c->{showMeAnother}{TriesNeeded} - $c->{problem}->num_correct - $c->{problem}->num_incorrect
+						) =%>">
 				<button class="btn btn-primary mb-1" type="button" disabled>
-					<%= maketext('Show Me Another [_1]', $exhausted) =%>
+					% if ($exhausted) {
+						<%= maketext('Show Me Another Exhausted') =%>
+					% } else {
+						<%= maketext('Show Me Another') =%>
+					% }
 				</button>
 			</span>
 		% }

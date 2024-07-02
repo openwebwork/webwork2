@@ -1,0 +1,33 @@
+% last unless $c->{is_pg};
+<div>
+	<div class="form-check">
+		<%= radio_button 'action.format_code' => 'tidyPGCode',
+			id => 'action_format_code_perltidy', class => 'form-check-input', checked => undef  =%>
+		<%= label_for 'action_format_code_perltidy', class => 'form-check-label', begin =%>
+			<%== maketext('Reformat the code using perltidy.') =%>
+		<% end =%>
+		<a class="help-popup" data-bs-content="<%== maketext('Perltidy is a reformatting '
+			. 'function that attempts to format code in a standard way.  It does not change '
+			. 'the functionality of the code and in general is desired to have a common problem layout.') =%>"
+			data-bs-placement="top" data-bs-toggle="popover" role="button">
+			<i aria-hidden="true" class="fas fa-question-circle"></i>
+			<span class="visually-hidden"><%= maketext('Help Icon') %></span>
+		</a>
+	</div>
+	<div class="form-check">
+		<%= radio_button 'action.format_code' => 'convertCodeToPGML',
+			id => 'action_format_code_convert_PGML', class => 'form-check-input'=%>
+		<%= label_for 'action_format_code_convert_PGML', class => 'form-check-label', begin =%>
+			<%== maketext('Convert the code to PGML') =%>
+		<% end =%>
+		<a class="help-popup" data-bs-content="<%== maketext('This option converts the text blocks '
+			. 'in the problem code to PGML and updates the loadMacros to include PGML and drop others. '
+			. 'This can be used as a first pass of the conversion, however the author will still need '
+			. 'to ensure the problem functions.  One area of attention should be the answer blanks, '
+			. 'which may not be converted correctly.') =%>"
+		data-bs-placement="top" data-bs-toggle="popover" role="button">
+			<i aria-hidden="true" class="fas fa-question-circle"></i>
+			<span class="visually-hidden"><%= maketext('Help Icon') %></span>
+		</a>
+	</div>
+</div>

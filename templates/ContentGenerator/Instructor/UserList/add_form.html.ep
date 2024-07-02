@@ -3,7 +3,7 @@
 		<%= maketext('Add how many users?') %><span class="required-field">*</span>
 	<% end =%>
 	<div class="col-auto">
-		<%= text_field number_of_students => 1, id => 'add_entry', size => 3, 'aria-required' => 'true',
+		<%= number_field number_of_students => 1, id => 'add_entry', size => 5, min => 1, 'aria-required' => 'true',
 			class => 'form-control form-control-sm' =%>
 	</div>
 </div>

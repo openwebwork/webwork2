@@ -1,0 +1,33 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Manage LTI Course Map');
+%
+<p>
+	<%= maketext('Fill out the form below to add or remove LMS context IDs for courses. The LMS context ID is a '
+		. 'unique identifier for a course in the LMS. This is used to associate an LMS course to a WeBWorK course '
+		. 'when a content item selection request is made. You do not need to set anything on this page if you do '
+		. 'not want the instructors using this WeBWorK server to be able to use content item selection. Note that '
+		. 'the LMS context ID for a course will be displayed if an instructor attempts to select content from the '
+		. 'course via a content item request, and the LMS context id has not been set in WeBWorK.') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('Note that two courses in different LMSs might have the same context id. If that is the case, then '
+		. 'these courses must must have different LTI configurations. For LTI 1.1, this means they must have the '
+		. 'consumer key set to different values in the two LMSs and that must be set in the LTI 1.1 configuration for '
+		. 'the courses in WeBWorK. For LTI 1.3, two different LMSs will always have different configurations. Make '
+		. 'sure the two configurations are correct in WeBWorK.') =%>
+</p>

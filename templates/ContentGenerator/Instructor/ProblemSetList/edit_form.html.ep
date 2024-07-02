@@ -2,9 +2,8 @@
 	<%= label_for edit_select => maketext('Edit which sets?'), class => 'col-form-label col-form-label-sm col-auto' =%>
 	<div class="col-auto">
 		<%= select_field 'action.edit.scope' => [
-				[ maketext('all sets')      => 'all' ],
-				[ maketext('listed sets')   => 'visible' ],
-				[ maketext('selected sets') => 'selected', selected => undef ]
+				[ maketext('all course sets') => 'all' ],
+				[ maketext('selected sets')   => 'selected', selected => undef ]
 			],
 			id => 'edit_select', class => 'form-select form-select-sm' =%>
 	</div>

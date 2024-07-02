@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -99,27 +99,29 @@ sub initialize ($c) {
 
 		# Determine the sender of the email.
 		my $sender;
-		if ($user) {
-			if ($user->email_address) {
-				$sender = $user->rfc822_mailbox;
-			} else {
-				if ($user->full_name) {
-					$sender = $user->full_name . " <$from>";
-				} else {
-					$sender = $from;
-				}
-			}
-		} else {
-			$sender = $from;
+		if ($user && $user->email_address) {
+			$from   = $user->email_address;
+			$sender = $user->rfc822_mailbox;
 		}
 
-		unless ($sender) {
+		unless ($from) {
 			$c->stash->{send_error} = $c->maketext('No Sender specified.');
+			return;
+		}
+		unless ($from =~ /^[a-zA-Z0-9.!#$%&\'*+\/=?^_`~\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9.\-]+$/) {
+			$c->stash->{send_error} = $c->maketext('Sender is not a valid email address.');
 			return;
 		}
 		unless ($feedback) {
 			$c->stash->{send_error} = $c->maketext('Message was blank.');
 			return;
+		}
+		unless ($sender) {
+			if ($user && $user->full_name) {
+				$sender = $user->full_name . " <$from>";
+			} else {
+				$sender = $from;
+			}
 		}
 
 		my %subject_map = (
@@ -250,7 +252,7 @@ $emailableURL
 				$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
 			});
 		} catch {
-			$c->stash->{send_error} = $c->maketext('Failed to send message: [_1]', $_);
+			$c->stash->{send_error} = $c->maketext('Failed to send message: [_1]', ref($_) ? $_->message : $_);
 		};
 	}
 
@@ -292,10 +294,9 @@ sub format_userset ($c, $set) {
 	$result .= "Set header file:           " . $set->set_header . "\n";
 	$result .= "Hardcopy header file:      " . $set->hardcopy_header . "\n";
 
-	my $tz = $ce->{siteDefaults}{timezone};
-	$result .= "Open date:                 " . $c->formatDateTime($set->open_date,   $tz) . "\n";
-	$result .= "Due date:                  " . $c->formatDateTime($set->due_date,    $tz) . "\n";
-	$result .= "Answer date:               " . $c->formatDateTime($set->answer_date, $tz) . "\n";
+	$result .= "Open date:                 " . $c->formatDateTime($set->open_date) . "\n";
+	$result .= "Due date:                  " . $c->formatDateTime($set->due_date) . "\n";
+	$result .= "Answer date:               " . $c->formatDateTime($set->answer_date) . "\n";
 	$result .= "Visible:                   " . ($set->visible ? "yes" : "no") . "\n";
 	$result .= "Assignment type:           " . $set->assignment_type . "\n";
 	if ($set->assignment_type =~ /gateway/) {
@@ -303,7 +304,7 @@ sub format_userset ($c, $set) {
 		$result .= "Time interval:             " . $set->time_interval . "\n";
 		$result .= "Versions per interval:     " . $set->versions_per_interval . "\n";
 		$result .= "Version time limit:        " . $set->version_time_limit . "\n";
-		$result .= "Version creation time:     " . $c->formatDateTime($set->version_creation_time, $tz) . "\n";
+		$result .= "Version creation time:     " . $c->formatDateTime($set->version_creation_time) . "\n";
 		$result .= "Problem randorder:         " . $set->problem_randorder . "\n";
 		$result .= "Version last attempt time: " . $set->version_last_attempt_time . "\n";
 	}

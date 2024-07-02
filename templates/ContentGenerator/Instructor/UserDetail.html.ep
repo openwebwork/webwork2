@@ -45,16 +45,12 @@
 % # Display a message about how many sets have been assigned to this user.
 <div class="text-center my-3">
 	<h2 class="fs-6">
-		<%== maketext(
-			'Edit [_1] for [_2] ([_3]) who has been assigned [_4] sets.',
-			link_to(maketext('class list data') => $c->systemLink(
-				url_for('instructor_user_list'),
-				params => { visible_users => $userID, editMode => 1 }
-			)),
-			$userName,
-			$userID,
-			scalar(keys %{ $c->{userSetRecords} })
-		) =%>
+		% my $link = link_to(maketext('class list data') => $c->systemLink(
+			% url_for('instructor_user_list'),
+			% params => { visible_users => $userID, editMode => 1 }
+		% ));
+		<%== maketext('Edit [_1] for [_2] ([_3]) who has been assigned [_4] sets.',
+			$link, $userName, $userID, scalar(keys %{ $c->{userSetRecords} })) =%>
 	</h2>
 </div>
 %
@@ -87,16 +83,12 @@
 	</div>
 	%
 	<div class="table-responsive">
-		<table class="table table-bordered table-sm font-sm align-middle">
+		<table class="table table-bordered table-sm font-sm align-middle w-auto caption-top">
+			<caption><%= maketext("Sets assigned to [_1] ([_2])", $userName, $userID) =%></caption>
 			<tr>
-				<th class="text-center" colspan="3">
-					<%= maketext("Sets assigned to [_1] ([_2])", $userName, $userID) =%>
-				</th>
-			</tr>
-			<tr>
+				<th class="text-center"><%= maketext('Assignment') %></th>
 				<th class="text-center"><%= maketext('Assigned') %></th>
-				<th><%= maketext("Edit set for [_1]", $userID) %></th>
-				<th><%= maketext('Dates') %></th>
+				<th class="text-center"><%= maketext('Dates') %></th>
 			</tr>
 			% for my $set (@{ $c->{setRecords} }) {
 				% my $setID = $set->set_id;

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -23,8 +23,16 @@ specific user/set information as well as problem information
 
 =cut
 
-use WeBWorK::Utils qw(cryptPassword jitar_id_to_seq seq_to_jitar_id x format_set_name_internal format_set_name_display);
+use Exporter qw(import);
+
+use WeBWorK::Utils qw(cryptPassword x);
+use WeBWorK::Utils::Files qw(surePathToFile readFile);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
+use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils::Sets qw(format_set_name_internal format_set_name_display);
+require WeBWorK::PG;
+
+our @EXPORT_OK = qw(FIELD_PROPERTIES);
 
 # These constants determine which fields belong to what type of record.
 use constant SET_FIELDS => [
@@ -285,7 +293,7 @@ use constant FIELD_PROPERTIES => {
 		help_text => x(
 			'This sets a number of minutes for each version of a test, once it is started.  Use "0" to indicate no '
 				. 'time limit.  If there is a time limit, then there will be an indication that this is a timed '
-				. 'test on the main "Homework Sets" page.  Additionally the student will be sent to a confirmation '
+				. 'test on the main "Assignments" page.  Additionally the student will be sent to a confirmation '
 				. 'page beefore they can begin.'
 		)
 	},
@@ -490,7 +498,7 @@ use constant FIELD_PROPERTIES => {
 		override => 'any',
 		default  => '-1',
 		labels   => {
-			'-1' => x('unlimited'),
+			'-1' => x('Unlimited'),
 		},
 		help_text => x(
 			'You may cap the number of attempts a student can use for the problem. Use -1 to indicate unlimited attempts.'
@@ -504,7 +512,7 @@ use constant FIELD_PROPERTIES => {
 		default  => '-1',
 		labels   => {
 			'-1' => x('Never'),
-			'-2' => x('Default'),
+			'-2' => x('Course Default'),
 		},
 		help_text => x(
 			'When a student has more attempts than is specified here they will be able to view another '
@@ -519,7 +527,7 @@ use constant FIELD_PROPERTIES => {
 		override => 'any',
 		default  => '-2',
 		labels   => {
-			'-2' => x('Default'),
+			'-2' => x('Course Default'),
 			'-1' => x('Never'),
 		},
 		help_text => x(
@@ -536,7 +544,7 @@ use constant FIELD_PROPERTIES => {
 		override => 'any',
 		default  => '-1',
 		labels   => {
-			'-1' => x('Default'),
+			'-1' => x('Course Default'),
 			'0'  => x('Never'),
 		},
 		help_text => x(
@@ -703,7 +711,7 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 						'th',
 						class   => 'p-2',
 						scope   => 'colgroup',
-						colspan => 3,
+						colspan => 2,
 						$problemID ? '' : $c->maketext('General Parameters')
 					),
 					$c->tag('th', class => 'p-2', scope => 'col', $c->maketext('User Overrides')),
@@ -721,7 +729,7 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 					'th',
 					class   => 'p-2',
 					scope   => 'colgroup',
-					colspan => 4,
+					colspan => 3,
 					$c->maketext('General Parameters')
 				)
 			)
@@ -826,80 +834,60 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 		if $forOneUser && $globalRecord && !$userRecord;
 
 	my %properties = %{ FIELD_PROPERTIES()->{$field} };
-	my %labels     = %{ $properties{labels} };
-
-	for my $key (keys %labels) {
-		$labels{$key} = $c->maketext($labels{$key});
-	}
 
 	return '' if $properties{type} eq 'hidden';
 	return '' if $properties{override} eq 'one'  && !$forOneUser;
 	return '' if $properties{override} eq 'none' && !$forOneUser;
 	return '' if $properties{override} eq 'all'  && $forUsers;
 
-	my $edit   = ($properties{type} eq 'edit')   && ($properties{override} ne 'none');
-	my $choose = ($properties{type} eq 'choose') && ($properties{override} ne 'none');
+	my $edit   = $properties{type} eq 'edit'   && $properties{override} ne 'none';
+	my $choose = $properties{type} eq 'choose' && $properties{override} ne 'none';
 
-	# FIXME: allow one selector to set multiple fields
-	my ($globalValue, $userValue) = ('', '');
-	my $blankfield = '';
+	my ($globalValue, $userValue, $blankField) = (undef, undef, '');
 	if ($field =~ /:/) {
+		# This allows one "select" to set multiple database fields.
+		# (Used only by hide_score:hide_score_by_problem, i.e., "Show Scores on Finished Versions".)
+		# This is an example of a hack that shouldn't be done. This option should have been implemented with a single
+		# database field to begin with.  Too late to change that for backward compatibility.
 		my @gVals;
 		my @uVals;
 		my @bVals;
 		for my $f (split(/:/, $field)) {
-			# Hmm.  This directly references the data in the record rather than calling the access method, thereby
-			# avoiding errors if the access method is undefined.  That seems a bit suspect, but it's used below so we'll
-			# leave it here.
-			push(@gVals, $globalRecord->{$f});
-			push(@uVals, $userRecord->{$f});
+			push(@gVals, $globalRecord->can($f)              ? $globalRecord->$f : undef);
+			push(@uVals, $userRecord && $userRecord->can($f) ? $userRecord->$f   : undef);
 			push(@bVals, '');
 		}
 		# I don't like this, but combining multiple values is a bit messy
-		$globalValue = (grep {defined} @gVals) ? join(':', (map { defined ? $_ : '' } @gVals)) : undef;
-		$userValue   = (grep {defined} @uVals) ? join(':', (map { defined ? $_ : '' } @uVals)) : undef;
-		$blankfield  = join(':', @bVals);
+		$globalValue = (grep {defined} @gVals) ? join(':', map { $_ // '' } @gVals) : undef;
+		$userValue   = (grep {defined} @uVals) ? join(':', map { $_ // '' } @uVals) : undef;
+		$blankField  = join(':', @bVals);
 	} else {
-		$globalValue = $globalRecord->{$field};
-		$userValue   = $userRecord->{$field};
+		$globalValue = $globalRecord->can($field)              ? $globalRecord->$field : undef;
+		$userValue   = $userRecord && $userRecord->can($field) ? $userRecord->$field   : undef;
 	}
 
-	# Use defined instead of value in order to allow 0 to printed, e.g. for the 'value' field.
-	$globalValue = defined $globalValue ? ($labels{$globalValue} || $globalValue) : '';
-	$userValue   = defined $userValue   ? ($labels{$userValue}   || $userValue)   : $blankfield;
+	$globalValue //= '';
+	$userValue   //= $blankField;
 
-	if ($field =~ /_date/) {
-		$globalValue = $c->formatDateTime($globalValue, '', 'datetime_format_short', $c->ce->{language})
-			if $forUsers && defined $globalValue && $globalValue ne '';
-	}
-
-	if (defined $properties{convertby} && $properties{convertby}) {
+	if ($properties{convertby}) {
 		$globalValue = $globalValue / $properties{convertby} if $globalValue;
 		$userValue   = $userValue / $properties{convertby}   if $userValue;
 	}
 
-	# check to make sure that a given value can be overridden
-	my %canOverride = map { $_ => 1 } (@{ PROBLEM_FIELDS() }, @{ SET_FIELDS() });
-	my $check       = $canOverride{$field};
+	# Check to see if the given value can be overridden.
+	my $canOverride = grep { $_ eq $field } (@{ PROBLEM_FIELDS() }, @{ SET_FIELDS() });
 
-	# $recordType is a shorthand in the return statement for problem or set
-	# $recordID is a shorthand in the return statement for $problemID or $setID
-	my $recordType = '';
-	my $recordID   = '';
-	if (defined $problemID) {
-		$recordType = 'problem';
-		$recordID   = $problemID;
-	} else {
-		$recordType = 'set';
-		$recordID   = $setID;
-	}
+	# Determine if this is a set record or problem record.
+	my ($recordType, $recordID) = defined $problemID ? ('problem', $problemID) : ('set', $setID);
 
-	# $inputType contains either an input box or a popup_menu for changing a given db field
-	my $inputType = '';
+	my %labels = (map { $_ => $c->maketext($properties{labels}{$_}) } keys %{ $properties{labels} });
+
+	# This contains either a text input or a select for changing a given database field.
+	my $input = '';
 
 	if ($edit) {
 		if ($field =~ /_date/) {
-			$inputType = $c->tag(
+			$input = $c->tag(
 				'div',
 				class => 'input-group input-group-sm flatpickr',
 				$c->c(
@@ -909,17 +897,17 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 						id    => "$recordType.$recordID.${field}_id",
 						class => 'form-control form-control-sm'
 							. ($field eq 'open_date' ? ' datepicker-group' : ''),
-						placeholder => $c->maketext('None Specified'),
-						data        => {
+						placeholder => (
+							$forUsers && $canOverride ? $c->maketext('Set Default') : $c->maketext('None Specified')
+						),
+						data => {
 							input      => undef,
 							done_text  => $c->maketext('Done'),
 							today_text => $c->maketext('Today'),
 							now_text   => $c->maketext('Now'),
 							locale     => $c->ce->{language},
-							timezone   => $c->ce->{siteDefaults}{timezone},
-							override   => "$recordType.$recordID.$field.override_id"
-						},
-						$forUsers && $check ? ('aria-labelledby' => "$recordType.$recordID.$field.label") : (),
+							timezone   => $c->ce->{siteDefaults}{timezone}
+						}
 					),
 					$c->tag(
 						'a',
@@ -933,70 +921,69 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 				)->join('')
 			);
 		} else {
-			my $value = $forUsers ? $userValue : $globalValue;
+			my $value = $forUsers ? ($labels{$userValue} || $userValue) : ($labels{$globalValue} || $globalValue);
 			$value = format_set_name_display($value =~ s/\s*,\s*/,/gr) if $field eq 'restricted_release';
 
-			$inputType = $c->text_field(
+			my @field_args = (
 				"$recordType.$recordID.$field", $value,
 				id    => "$recordType.$recordID.${field}_id",
-				data  => { override => "$recordType.$recordID.$field.override_id" },
 				class => 'form-control form-control-sm',
-				$forUsers && $check ? (aria_labelledby => "$recordType.$recordID.$field.label") : (),
-				$field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr')      : ()
+				$field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr') : ()
 			);
+			if ($field eq 'problem_seed') {
+				# Insert a randomization button
+				$input = $c->tag(
+					'div',
+					class => 'input-group input-group-sm',
+					style => 'min-width: 7rem',
+					$c->c(
+						$c->number_field(@field_args, min => 0),
+						$c->tag(
+							'button',
+							type  => 'button',
+							class => 'randomize-seed-btn btn btn-sm btn-secondary',
+							title => 'randomize',
+							data  => {
+								seed_input   => "$recordType.$recordID.problem_seed_id",
+								status_input => "$recordType.$recordID.status_id"
+							},
+							$c->tag('i', class => 'fa-solid fa-shuffle')
+						)
+					)->join('')
+				);
+			} else {
+				$input = $c->text_field(@field_args,
+					$forUsers && $canOverride ? (placeholder => $c->maketext('Set Default')) : ());
+			}
 		}
 	} elsif ($choose) {
-		# If $field matches /:/, then multiple fields are used.
-		my $value = '';
-		if (!$value && $field =~ /:/) {
-			my @fields = split(/:/, $field);
-			my @part_values;
-			for (@fields) {
-				push(@part_values, $forUsers && $userRecord->$_ ne '' ? $userRecord->$_ : $globalRecord->$_);
-			}
-			$value = join(':', @part_values);
-		} elsif (!$value) {
-			$value = ($forUsers && $userRecord->$field ne '' ? $userRecord->$field : $globalRecord->$field);
-		}
+		my $value = $forUsers ? $userValue : $globalValue;
 
-		$inputType = $c->select_field(
-			"$recordType.$recordID.$field", [
+		$input = $c->select_field(
+			"$recordType.$recordID.$field",
+			[
+				$forUsers && $userRecord ? [ $c->maketext('Set Default') => '' ] : (),
 				map { [ $labels{$_} => $_, $_ eq $value ? (selected => undef) : () ] } @{ $properties{choices} }
 			],
 			id    => "$recordType.$recordID.${field}_id",
-			data  => { override => "$recordType.$recordID.$field.override_id" },
-			class => 'form-select form-select-sm',
-			$forUsers && $check ? ('aria-labelledby' => "$recordType.$recordID.$field.label") : (),
+			class => 'form-select form-select-sm'
 		);
 	}
 
-	my $gDisplVal =
-		(defined $properties{labels} && defined $properties{labels}{$globalValue})
-		? $c->maketext($properties{labels}{$globalValue})
-		: $globalValue;
-	$gDisplVal = format_set_name_display($gDisplVal) if $field eq 'restricted_release';
+	my $globalDisplayValue =
+		$labels{$globalValue}            ? $labels{$globalValue}
+		: $field =~ /_date/              ? $c->formatDateTime($globalValue, 'datetime_format_short')
+		: $field eq 'restricted_release' ? format_set_name_display($globalValue)
+		:                                  $globalValue;
 
 	my @return;
 
 	push @return,
-		(
-			$check
-			? $c->check_box(
-				"$recordType.$recordID.$field.override", $field,
-				id    => "$recordType.$recordID.$field.override_id",
-				class => 'form-check-input',
-				$userValue ne (($labels{''} // '') || $blankfield) ? (checked => undef) : (),
-			)
-			: ''
-		) if $forUsers;
-
-	push @return,
 		$c->label_for(
-			($forUsers && $check ? "$recordType.$recordID.$field.override_id" : "$recordType.$recordID.${field}_id"),
+			"$recordType.$recordID.${field}_id",
 			$c->maketext($properties{name}),
-			$forUsers && $check
-			? (class => 'form-check-label mb-0', id => "$recordType.$recordID.$field.label")
-			: (class => 'form-label mb-0'),
+			class => 'form-label mb-0',
+			$forUsers ? (id => "$recordType.$recordID.$field.label") : ()
 		);
 
 	push @return,
@@ -1020,19 +1007,20 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 		)
 		: '';
 
-	push @return, $inputType;
+	push @return, $input;
 
 	push @return,
 		(
-			$gDisplVal ne ''
+			$globalDisplayValue ne ''
 			? $c->text_field(
 				"$recordType.$recordID.$field.class_value",
-				$gDisplVal,
+				$globalDisplayValue,
 				readonly          => undef,
 				size              => $properties{size} || 5,
-				class             => 'form-control form-control-sm',
+				class             => 'form-control-plaintext form-control-sm',
 				'aria-labelledby' => "$recordType.$recordID.$field.label",
-				$field =~ /date/ || $field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr') : ()
+				$field =~ /date/ || $field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr') : (),
+				data => { class_value => $globalValue }
 			)
 			: ''
 		) if $forUsers;
@@ -1307,15 +1295,15 @@ sub initialize ($c) {
 	my $setID = $c->stash('setID');
 
 	# Make sure these are defined for the templates.
-	$c->stash->{fullSetID}        = $setID;
-	$c->stash->{headers}          = HEADER_ORDER();
-	$c->stash->{field_properties} = FIELD_PROPERTIES();
-	$c->stash->{display_modes}    = WeBWorK::PG::DISPLAY_MODES();
-	$c->stash->{unassignedUsers}  = [];
-	$c->stash->{problemIDList}    = [];
-	$c->stash->{globalProblems}   = {};
-	$c->stash->{userProblems}     = {};
-	$c->stash->{mergedProblems}   = {};
+	$c->stash->{fullSetID}           = $setID;
+	$c->stash->{headers}             = HEADER_ORDER();
+	$c->stash->{field_properties}    = FIELD_PROPERTIES();
+	$c->stash->{display_modes}       = WeBWorK::PG::DISPLAY_MODES();
+	$c->stash->{unassignedUsers}     = [];
+	$c->stash->{problemIDList}       = [];
+	$c->stash->{globalProblems}      = {};
+	$c->stash->{userProblems}        = {};
+	$c->stash->{userProblemVersions} = {};
 
 	# A set may be provided with a version number (as in setID,v#).
 	# If so obtain the template set id and version number.
@@ -1354,78 +1342,57 @@ sub initialize ($c) {
 			map { $c->maketext($properties{$key}{labels}{$_}) => $_ } keys %{ $properties{$key}{labels} };
 	}
 
-	my ($open_date, $due_date, $answer_date, $reduced_scoring_date);
 	my $error = 0;
-	if (defined $c->param('submit_changes')) {
-		my @names = ("open_date", "due_date", "answer_date", "reduced_scoring_date");
+	if ($c->param('submit_changes')) {
+		my @names = ('open_date', 'due_date', 'answer_date', 'reduced_scoring_date');
 
 		my %dates;
-		for (@names) {
-			$dates{$_} = $c->param("set.$setID.$_") || '';
-			if (defined $undoLabels{$_}{ $dates{$_} } || !$dates{$_}) {
-				$dates{$_} = $setRecord->$_;
-			}
-		}
+		$dates{$_} =
+			($c->param("set.$setID.$_") && $c->param("set.$setID.$_") ne '')
+			? $c->param("set.$setID.$_")
+			: (!$forUsers || $editingSetVersion ? 0 : $setRecord->$_)
+			for @names;
 
-		if (!$error) {
-			# Make sure dates are numeric.
-			($open_date, $due_date, $answer_date, $reduced_scoring_date) = map { $dates{$_} || 0 } @names;
+		my ($open_date, $due_date, $answer_date, $reduced_scoring_date) = map { $dates{$_} } @names;
 
-			if ($answer_date < $due_date || $answer_date < $open_date) {
-				$c->addbadmessage($c->maketext("Answers cannot be made available until on or after the close date!"));
-				$error = $c->param('submit_changes');
-			}
-
-			if ($due_date < $open_date) {
-				$c->addbadmessage($c->maketext("Answers cannot be due until on or after the open date!"));
-				$error = $c->param('submit_changes');
-			}
-
-			my $enable_reduced_scoring = $ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+		unless ($open_date && $due_date && $answer_date) {
+			$c->addbadmessage($c->maketext(
+				'There are errors in the dates. Open Date: [_1] , Close Date: [_2], Answer Date: [_3]',
+				map { $_ ? $c->formatDateTime($_, 'datetime_format_short') : $c->maketext('required') }
+					($open_date, $due_date, $answer_date)
+			));
+			$error = 1;
+		} else {
+			if (
+				$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 				&& (
 					defined($c->param("set.$setID.enable_reduced_scoring"))
 					? $c->param("set.$setID.enable_reduced_scoring")
-					: $setRecord->enable_reduced_scoring);
-
-			if (
-				$enable_reduced_scoring
+					: $setRecord->enable_reduced_scoring)
 				&& $reduced_scoring_date
-				&& ($reduced_scoring_date > $due_date
-					|| $reduced_scoring_date < $open_date)
+				&& ($reduced_scoring_date > $due_date || $reduced_scoring_date < $open_date)
 				)
 			{
 				$c->addbadmessage(
-					$c->maketext("The reduced scoring date should be between the open date and close date."));
-				$error = $c->param('submit_changes');
+					$c->maketext('The reduced scoring date should be between the open date and close date.'));
+				$error = 1;
 			}
 
-			# Make sure the dates are not more than 10 years in the future.
-			my $curr_time        = time;
-			my $seconds_per_year = 31_556_926;
-			my $cutoff           = $curr_time + $seconds_per_year * 10;
-			if ($open_date > $cutoff) {
-				$c->addbadmessage(
-					$c->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID));
-				$error = $c->param('submit_changes');
+			if ($due_date < $open_date) {
+				$c->addbadmessage($c->maketext('The close date must be on or after the open date.'));
+				$error = 1;
 			}
-			if ($due_date > $cutoff) {
-				$c->addbadmessage(
-					$c->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID));
-				$error = $c->param('submit_changes');
-			}
-			if ($answer_date > $cutoff) {
-				$c->addbadmessage(
-					$c->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID));
-				$error = $c->param('submit_changes');
+
+			if ($answer_date < $due_date) {
+				$c->addbadmessage($c->maketext('Answers cannot be made available until on or after the close date.'));
+				$error = 1;
 			}
 		}
 	}
 
-	if ($error) {
-		$c->addbadmessage($c->maketext("No changes were saved!"));
-	}
+	$c->addbadmessage($c->maketext('No changes were saved!')) if $error;
 
-	if (defined $c->param('submit_changes') && !$error) {
+	if ($c->param('submit_changes') && !$error) {
 
 		my $oldAssignmentType = $setRecord->assignment_type();
 
@@ -1445,50 +1412,34 @@ sub initialize ($c) {
 				@userRecords = ($setVersion);
 			}
 
-			foreach my $record (@userRecords) {
-				foreach my $field (@{ SET_FIELDS() }) {
+			for my $record (@userRecords) {
+				for my $field (@{ SET_FIELDS() }) {
 					next unless canChange($forUsers, $field);
-					my $override = $c->param("set.$setID.$field.override");
 
-					if (defined $override && $override eq $field) {
+					my $param = $c->param("set.$setID.$field");
+					if ($param && $param ne '') {
+						$param = $undoLabels{$field}{$param}               if defined $undoLabels{$field}{$param};
+						$param = $param * $properties{$field}->{convertby} if $properties{$field}{convertby};
 
-						my $param = $c->param("set.$setID.$field");
-						$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : ""
-							unless defined $param && $param ne "";
-
-						my $unlabel = $undoLabels{$field}->{$param};
-						$param = $unlabel if defined $unlabel;
-						if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby}) {
-							$param = $param * $properties{$field}->{convertby};
-						}
 						# Special case: Does field fill in multiple values?
 						if ($field =~ /:/) {
 							my @values = split(/:/, $param);
 							my @fields = split(/:/, $field);
-							for (my $i = 0; $i < @values; $i++) {
-								my $f = $fields[$i];
-								$record->$f($values[$i]);
+							for (0 .. $#values) {
+								my $f = $fields[$_];
+								$record->$f($values[$_]);
 							}
 						} else {
 							$record->$field($param);
 						}
 					} else {
-						if ($field =~ /:/) {
-							foreach my $f (split(/:/, $field)) {
-								$record->$f(undef);
-							}
-						} else {
-							$record->$field(undef);
-						}
+						if ($field =~ /:/) { $record->$_(undef) for split(/:/, $field) }
+						else               { $record->$field(undef) }
 					}
-
 				}
 
-				if ($editingSetVersion) {
-					$db->putSetVersion($record);
-				} else {
-					$db->putUserSet($record);
-				}
+				if   ($editingSetVersion) { $db->putSetVersion($record) }
+				else                      { $db->putUserSet($record) }
 			}
 
 			# Save IP restriction Location information
@@ -1499,37 +1450,37 @@ sub initialize ($c) {
 			# database routines to deal with the versioned setID, or fudging it at this end by manually putting in the
 			# versioned ID setID,v#.  Neither of these seems desirable, so for now it's not allowed
 			if (!$editingSetVersion) {
-				if ($c->param("set.$setID.selected_ip_locations.override")) {
-					foreach my $record (@userRecords) {
-						my $userID            = $record->user_id;
-						my @selectedLocations = $c->param("set.$setID.selected_ip_locations");
-						my @userSetLocations  = $db->listUserSetLocations($userID, $setID);
-						my @addSetLocations   = ();
-						my @delSetLocations   = ();
-						foreach my $loc (@selectedLocations) {
+				my @selectedLocations = grep { $_ ne '' } $c->param("set.$setID.selected_ip_locations");
+				if (@selectedLocations) {
+					for my $record (@userRecords) {
+						my $userID           = $record->user_id;
+						my @userSetLocations = $db->listUserSetLocations($userID, $setID);
+						my @addSetLocations;
+						my @delSetLocations;
+						for my $loc (@selectedLocations) {
 							push(@addSetLocations, $loc) if (!grep {/^$loc$/} @userSetLocations);
 						}
-						foreach my $loc (@userSetLocations) {
+						for my $loc (@userSetLocations) {
 							push(@delSetLocations, $loc) if (!grep {/^$loc$/} @selectedLocations);
 						}
 						# Update the user set_locations
-						foreach (@addSetLocations) {
+						for (@addSetLocations) {
 							my $Loc = $db->newUserSetLocation;
 							$Loc->set_id($setID);
 							$Loc->user_id($userID);
 							$Loc->location_id($_);
 							$db->addUserSetLocation($Loc);
 						}
-						foreach (@delSetLocations) {
+						for (@delSetLocations) {
 							$db->deleteUserSetLocation($userID, $setID, $_);
 						}
 					}
 				} else {
-					# If override isn't selected, then make sure that there are no set_locations_user entries.
-					foreach my $record (@userRecords) {
+					# If no sets were selected, then make sure that there are no set_locations_user entries.
+					for my $record (@userRecords) {
 						my $userID        = $record->user_id;
 						my @userLocations = $db->listUserSetLocations($userID, $setID);
-						foreach (@userLocations) {
+						for (@userLocations) {
 							$db->deleteUserSetLocation($userID, $setID, $_);
 						}
 					}
@@ -1548,7 +1499,7 @@ sub initialize ($c) {
 					$param = format_set_name_internal($param =~ s/\s*,\s*/,/gr);
 					$c->check_sets($db, $param);
 				}
-				if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby} && $param) {
+				if ($properties{$field}->{convertby} && $param) {
 					$param = $param * $properties{$field}->{convertby};
 				}
 
@@ -1692,14 +1643,10 @@ sub initialize ($c) {
 					for my $field (@{ PROBLEM_FIELDS() }) {
 						next unless canChange($forUsers, $field);
 
-						my $override = $c->param("problem.$problemID.$field.override");
-						if (defined $override && $override eq $field) {
+						my $param = $c->param("problem.$problemID.$field");
+						if (defined $param && $param ne '') {
+							$param = $undoLabels{$field}{$param} if defined $undoLabels{$field}{$param};
 
-							my $param = $c->param("problem.$problemID.$field");
-							$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : ""
-								unless defined $param && $param ne "";
-							my $unlabel = $undoLabels{$field}->{$param};
-							$param = $unlabel if defined $unlabel;
 							# Protect exploits with source_file
 							if ($field eq 'source_file') {
 								if ($param =~ /\.\./ || $param =~ /^\//) {
@@ -1992,9 +1939,9 @@ sub initialize ($c) {
 					$targetProblemNumber++;
 					# Make local copy of the blankProblem
 					my $blank_file_path = $ce->{webworkFiles}{screenSnippets}{blankProblem};
-					my $problemContents = WeBWorK::Utils::readFile($blank_file_path);
+					my $problemContents = readFile($blank_file_path);
 					my $new_file_path   = "set$setID/" . BLANKPROBLEM();
-					my $fullPath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}{templates}, '/' . $new_file_path);
+					my $fullPath        = surePathToFile($ce->{courseDirs}{templates}, $new_file_path);
 
 					open(my $TEMPFILE, '>', $fullPath) or warn $c->maketext(q{Can't write to file [_1]}, $fullPath);
 					print $TEMPFILE $problemContents;
@@ -2035,7 +1982,7 @@ sub initialize ($c) {
 	if (@editForUser) {
 		my @assignedUsers;
 		for my $ID (@editForUser) {
-			if ($db->getUserSet($ID, $setID)) {
+			if ($db->existsUserSet($ID, $setID)) {
 				unshift @assignedUsers, $ID;
 			} else {
 				unshift @unassignedUsers, $ID;
@@ -2055,20 +2002,20 @@ sub initialize ($c) {
 	$c->stash->{problemIDList}  = [ map { $_->problem_id } @globalProblems ];
 	$c->stash->{globalProblems} = { map { $_->problem_id => $_ } @globalProblems };
 
-	# If editing for one user, get user problem records for all problems also sorted by problem_id.
+	# If editing for one user, get user problem records for all problems.  Note that merged problems are not needed.  We
+	# have the global problem, the user problem, and for test versions, the problem versions.  Those have everything the
+	# merged problem has.  It does take a bit more work to find the merge value from the three.
 	if (@editForUser == 1) {
 		$c->stash->{userProblems} = { map { $_->problem_id => $_ }
-				$db->getUserProblemsWhere({ user_id => $editForUser[0], set_id => $setID }, 'problem_id') };
+				$db->getUserProblemsWhere({ user_id => $editForUser[0], set_id => $setID }) };
 
+		# If this is a test version, then also get the problem versions for that test version.
 		if ($editingSetVersion) {
-			$c->stash->{mergedProblems} = {
-				map { $_->problem_id => $_ } $db->getMergedProblemVersionsWhere(
-					{ user_id => $editForUser[0], set_id => "$setID,v$editingSetVersion" }, 'problem_id'
+			$c->stash->{userProblemVersions} = {
+				map { $_->problem_id => $_ } $db->getProblemVersionsWhere(
+					{ user_id => $editForUser[0], set_id => "$setID,v$editingSetVersion" }
 				)
 			};
-		} else {
-			$c->stash->{mergedProblems} = { map { $_->problem_id => $_ }
-					$db->getMergedProblemsWhere({ user_id => $editForUser[0], set_id => $setID }, 'problem_id') };
 		}
 	}
 

@@ -3,7 +3,7 @@
 	const basicWebserviceURL = `${webworkURL}/instructor_rpc`;
 
 	let unloading = false;
-	window.addEventListener('beforeunload', () => unloading = true);
+	window.addEventListener('beforeunload', () => (unloading = true));
 
 	// Informational alerts/errors
 	const alertToast = (title, msg, good = false) => {
@@ -11,7 +11,13 @@
 
 		const toastContainer = document.createElement('div');
 		toastContainer.classList.add(
-			'toast-container', 'position-fixed', 'top-50', 'start-50',  'translate-middle', 'p-3');
+			'toast-container',
+			'position-fixed',
+			'top-50',
+			'start-50',
+			'translate-middle',
+			'p-3'
+		);
 		toastContainer.style.zIndex = 20;
 		toastContainer.innerHTML =
 			'<div class="toast bg-white" role="alert" aria-live="assertive" aria-atomic="true">' +
@@ -23,7 +29,10 @@
 			'</div>';
 		document.body.prepend(toastContainer);
 		const bsToast = new bootstrap.Toast(toastContainer.firstElementChild);
-		toastContainer.addEventListener('hidden.bs.toast', () => { bsToast.dispose(); toastContainer.remove(); })
+		toastContainer.addEventListener('hidden.bs.toast', () => {
+			bsToast.dispose();
+			toastContainer.remove();
+		});
 		bsToast.show();
 	};
 
@@ -39,12 +48,17 @@
 	};
 
 	const init_webservice = (command) => {
+		const authenParams = {};
+		const user = document.getElementsByName('user')[0];
+		if (user) authenParams.user = user.value;
+		const sessionKey = document.getElementsByName('key')[0];
+		if (sessionKey) authenParams.key = sessionKey.value;
+
 		return {
 			rpc_command: 'listLib',
 			library_name: 'Library',
 			command: 'buildtree',
-			user: document.getElementById('hidden_user')?.value,
-			key: document.getElementById('hidden_key')?.value,
+			...authenParams,
 			courseID: document.getElementsByName('hidden_course_id')[0]?.value,
 			rpc_command: command
 		};
@@ -52,30 +66,37 @@
 
 	// Content request handling
 
-	const libSubjects = document.querySelector('select[name="library_subjects"]');
-	const libChapters = document.querySelector('select[name="library_chapters"]');
-	const libSections = document.querySelector('select[name="library_sections"]');
+	const librarySubject = document.querySelector('select[name="library_subject"]');
+	const libraryChapter = document.querySelector('select[name="library_chapter"]');
+	const librarySection = document.querySelector('select[name="library_section"]');
 	const libraryTextbook = document.querySelector('select[name="library_textbook"]');
-	const libraryChapter = document.querySelector('select[name="library_textchapter"]');
-	const librarySection = document.querySelector('select[name="library_textsection"]');
+	const libraryTextChapter = document.querySelector('select[name="library_textchapter"]');
+	const libraryTextSection = document.querySelector('select[name="library_textsection"]');
 	const includeOPL = document.querySelector('[name="includeOPL"]');
 	const includeContrib = document.querySelector('[name="includeContrib"]');
+	const levels = Array.from(document.getElementsByName('level'));
+	const libraryKeywords = document.getElementsByName('library_keywords')[0];
 
 	const countLine = document.getElementById('library_count_line');
 
 	const lib_update = async (who, what) => {
-		const child = { subjects: 'chapters', chapters: 'sections', sections: 'count' };
+		const child = { subject: 'chapter', chapter: 'section', section: 'count' };
 
 		const requestObject = init_webservice('searchLib');
-		requestObject.library_subjects = libSubjects?.value ?? '';
-		requestObject.library_chapters = libChapters?.value ?? '';
-		requestObject.library_sections = libSections?.value ?? '';
+		requestObject.library_subject = librarySubject?.value ?? '';
+		requestObject.library_chapter = libraryChapter?.value ?? '';
+		requestObject.library_section = librarySection?.value ?? '';
 		requestObject.library_textbook = libraryTextbook?.value ?? '';
-		requestObject.library_textchapter = libraryChapter?.value ?? '';
-		requestObject.library_textsection = librarySection?.value ?? '';
-		requestObject.includeOPL = (includeOPL.type === 'checkbox' && includeOPL?.checked) ||
-			(includeOPL.type === 'hidden' && includeOPL.value) ? 1 : 0;
+		requestObject.library_textchapter = libraryTextChapter?.value ?? '';
+		requestObject.library_textsection = libraryTextSection?.value ?? '';
+		requestObject.includeOPL =
+			(includeOPL.type === 'checkbox' && includeOPL?.checked) ||
+			(includeOPL.type === 'hidden' && includeOPL.value)
+				? 1
+				: 0;
 		requestObject.includeContrib = includeContrib?.checked ? 1 : 0;
+		requestObject.level = levels.filter((level) => level.checked).map((level) => level.value);
+		requestObject.library_keywords = libraryKeywords?.value ?? '';
 
 		if (who == 'count') {
 			// Don't perform a count if there is no count line to update.
@@ -104,9 +125,10 @@
 						throw data.error;
 					} else {
 						const num = data.result_data[0];
-						countLine.firstElementChild.innerHTML = num === '1'
-							? 'There is 1 matching WeBWorK problem'
-							: `There are ${num} matching WeBWorK problems.`;
+						countLine.firstElementChild.innerHTML =
+							num === '1'
+								? 'There is 1 matching WeBWorK problem'
+								: `There are ${num} matching WeBWorK problems.`;
 					}
 				}
 			} catch (e) {
@@ -121,10 +143,16 @@
 			return;
 		}
 
-		if (who == 'chapters' && requestObject.library_subjects == '') { lib_update(who, 'clear'); return; }
-		if (who == 'sections' && requestObject.library_chapters == '') { lib_update(who, 'clear'); return; }
+		if (who == 'chapter' && requestObject.library_subject == '') {
+			lib_update(who, 'clear');
+			return;
+		}
+		if (who == 'section' && requestObject.library_chapter == '') {
+			lib_update(who, 'clear');
+			return;
+		}
 
-		requestObject.command = who == 'sections' ? 'getSectionListings' : 'getAllDBchapters';
+		requestObject.command = who == 'section' ? 'getSectionListings' : 'getAllDBchapters';
 
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -161,28 +189,28 @@
 		const select_all_option = sel.firstChild;
 		while (sel.firstChild) sel.lastChild.remove();
 		sel.append(select_all_option);
-		newarray.forEach((val) => {
+		newarray.forEach(([name, id]) => {
 			const option = document.createElement('option');
-			option.value = val;
-			option.textContent = val;
+			option.value = id;
+			option.textContent = name;
 			sel.append(option);
 		});
 	};
 
-	libChapters?.addEventListener('change', () => lib_update('sections', 'get'));
-	libSubjects?.addEventListener('change', () => lib_update('chapters', 'get'));
-	libSections?.addEventListener('change', () => lib_update('count', 'clear'));
+	libraryChapter?.addEventListener('change', () => lib_update('section', 'get'));
+	librarySubject?.addEventListener('change', () => lib_update('chapter', 'get'));
+	librarySection?.addEventListener('change', () => lib_update('count', 'clear'));
 	includeOPL?.addEventListener('change', () => lib_update('count', 'clear'));
 	includeContrib?.addEventListener('change', () => lib_update('count', 'clear'));
-	document.querySelectorAll('input[name="level"]').forEach(
-		(level) => level.addEventListener('change', () => lib_update('count', 'clear')));
+	levels.forEach((level) => level.addEventListener('change', () => lib_update('count', 'clear')));
+	libraryKeywords?.addEventListener('change', () => lib_update('count', 'clear'));
 
 	// Set up the advanced view selects to submit the form when changed.
 	const libraryBrowserForm = document.forms['library_browser_form'];
 	if (libraryBrowserForm) {
 		libraryTextbook?.addEventListener('change', () => libraryBrowserForm.submit());
-		libraryChapter?.addEventListener('change', () => libraryBrowserForm.submit());
-		librarySection?.addEventListener('change', () => libraryBrowserForm.submit());
+		libraryTextChapter?.addEventListener('change', () => libraryBrowserForm.submit());
+		libraryTextSection?.addEventListener('change', () => libraryBrowserForm.submit());
 	}
 
 	// Add problems to target set
@@ -190,8 +218,10 @@
 		const localSets = document.getElementById('local_sets');
 		const target = localSets?.value;
 		if (target === '') {
-			alertToast(localSets?.dataset.noSetSelected ?? 'No Target Set Selected',
-				localSets?.dataset.pickTargetSet ?? 'Pick a target set above to add this problem to.');
+			alertToast(
+				localSets?.dataset.noSetSelected ?? 'No Target Set Selected',
+				localSets?.dataset.pickTargetSet ?? 'Pick a target set above to add this problem to.'
+			);
 			return;
 		}
 
@@ -237,16 +267,22 @@
 		}
 
 		markinset();
-		alertToast(localSets?.dataset.problemsAdded ?? 'Problems Added',
+		alertToast(
+			localSets?.dataset.problemsAdded ?? 'Problems Added',
 			(pathlist.length === 1 ? localSets?.dataset.addedToSingle : localSets?.dataset.addedToPlural)
-			.replace(/{number}/, pathlist.length).replace(/{set}/, target.replaceAll('_', ' ')) ??
-			`Added ${pathlist.length} problem${pathlist.length == 1 ? '' : 's'} to set ${
-				target.replaceAll('_', ' ')}.`,
-			true);
+				.replace(/{number}/, pathlist.length)
+				.replace(/{set}/, target.replaceAll('_', ' ')) ??
+				`Added ${pathlist.length} problem${pathlist.length == 1 ? '' : 's'} to set ${target.replaceAll(
+					'_',
+					' '
+				)}.`,
+			true
+		);
 	};
 
 	document.querySelector('.library-action-btn.add-all-btn')?.addEventListener('click', () => addme('', 'all'));
-	document.querySelectorAll('button.add_me')
+	document
+		.querySelectorAll('button.add_me')
 		.forEach((btn) => btn.addEventListener('click', () => addme(btn.dataset.sourceFile, 'one')));
 
 	// Update the messages about which problems are in the current set.
@@ -264,7 +300,7 @@
 				mode: 'same-origin',
 				body: new URLSearchParams(ro),
 				signal: controller.signal
-			})
+			});
 
 			clearTimeout(timeoutId);
 
@@ -303,10 +339,12 @@
 	const delFromPGList = (path) => {
 		let j = findAPLindex(path) + 1;
 		while (document.querySelector(`[name="all_past_list${j}"]`)) {
-			document.querySelector(`[name="all_past_list${j - 1}"]`).value =
-				document.querySelector(`[name="all_past_list${j}"]`).value;
-			document.querySelector(`[name="all_past_mlt${j - 1}"]`).value =
-				document.querySelector(`[name="all_past_mlt${j}"]`).value;
+			document.querySelector(`[name="all_past_list${j - 1}"]`).value = document.querySelector(
+				`[name="all_past_list${j}"]`
+			).value;
+			document.querySelector(`[name="all_past_mlt${j - 1}"]`).value = document.querySelector(
+				`[name="all_past_mlt${j}"]`
+			).value;
 			++j;
 		}
 		--j;
@@ -385,7 +423,7 @@
 		const n2 = totalshown.textContent;
 
 		const mltIcon = document.getElementById(`mlt${cnt}`);
-		if(mltIcon.textContent == 'M') {
+		if (mltIcon.textContent == 'M') {
 			unshownAreas.forEach((area) => area.classList.remove('d-none'));
 			// Render any problems that were hidden that have not yet been rendered.
 			for (const area of unshownAreas) {
@@ -396,44 +434,53 @@
 			mltIcon.textContent = 'L';
 			mltIcon.dataset.bsTitle = mltIcon.dataset.lessText;
 			bootstrap.Tooltip.getInstance(mltIcon)?.dispose();
-			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] })
+			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] });
 			count = -count;
 		} else {
 			unshownAreas.forEach((area) => area.classList.add('d-none'));
 			mltIcon.textContent = 'M';
 			mltIcon.dataset.bsTitle = mltIcon.dataset.moreText;
 			bootstrap.Tooltip.getInstance(mltIcon)?.dispose();
-			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] })
+			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] });
 		}
 		lastshown.textContent = n1 - count;
 		totalshown.textContent = n2 - count;
 
 		const last_shown = document.querySelector('[name="last_shown"]');
 		last_shown.value = last_shown.value - count;
-	}
+	};
 
-	document.querySelectorAll('.lb-mlt-parent').forEach((button) =>
-		attachEventListeners(button, () => togglemlt(button.dataset.mltCnt, button.dataset.mltNoshowClass)));
+	document
+		.querySelectorAll('.lb-mlt-parent')
+		.forEach((button) =>
+			attachEventListeners(button, () => togglemlt(button.dataset.mltCnt, button.dataset.mltNoshowClass))
+		);
 
 	// Problem rendering
-	const render = (id) => new Promise((resolve) => {
-		const renderArea = document.getElementById(`problem_render_area_${id}`);
-		if (!renderArea) { resolve(); return; }
+	const render = (id) =>
+		new Promise((resolve) => {
+			const renderArea = document.getElementById(`problem_render_area_${id}`);
+			if (!renderArea) {
+				resolve();
+				return;
+			}
 
-		// Abort if the display mode is not set to None
-		if (document.getElementById('problem_displaymode')?.value === 'None') {
-			while (renderArea.firstChild) renderArea.firstChild.remove();
-			resolve();
-			return;
-		}
+			// Abort if the display mode is not set to None
+			if (document.getElementById('problem_displaymode')?.value === 'None') {
+				while (renderArea.firstChild) renderArea.firstChild.remove();
+				resolve();
+				return;
+			}
 
-		webworkConfig.renderProblem(renderArea, {
-			sourceFilePath: renderArea.dataset.pgFile,
-			problemSeed: Math.floor(Math.random() * 10000),
-			showHints: document.querySelector('input[name="showHints"]')?.checked ? 1 : 0,
-			showSolutions: document.querySelector('input[name="showSolutions"]')?.checked ? 1 : 0
-		}).then(resolve);
-	});
+			webworkConfig
+				.renderProblem(renderArea, {
+					sourceFilePath: renderArea.dataset.pgFile,
+					problemSeed: Math.floor(Math.random() * 10000),
+					showHints: document.querySelector('input[name="showHints"]')?.checked ? 1 : 0,
+					showSolutions: document.querySelector('input[name="showSolutions"]')?.checked ? 1 : 0
+				})
+				.then(resolve);
+		});
 
 	// Find all render areas
 	const renderAreas = document.querySelectorAll('.rpc_render_area');
@@ -453,11 +500,48 @@
 	})();
 
 	// Set up the problem rerandomization buttons.
-	document.querySelectorAll('.rerandomize_problem_button').forEach((button) =>
-		attachEventListeners(button, () => render(button.dataset.targetProblem)));
+	document
+		.querySelectorAll('.rerandomize_problem_button')
+		.forEach((button) => attachEventListeners(button, () => render(button.dataset.targetProblem)));
 
 	// Enable bootstrap popovers and tooltips.
 	document.querySelectorAll('.info-button').forEach((popover) => new bootstrap.Popover(popover));
-	document.querySelectorAll('.lb-problem-add [data-bs-toggle], .lb-problem-icons [data-bs-toggle=tooltip]')
+	document
+		.querySelectorAll('.lb-problem-add [data-bs-toggle], .lb-problem-icons [data-bs-toggle=tooltip]')
 		.forEach((el) => new bootstrap.Tooltip(el, { fallbackPlacements: [] }));
+
+	// If this is the browse setdef panel, then set up the check boxes for including OPL or Contrib sets.
+	const setDefSelect = document.getElementsByName('library_sets')[0];
+	const listOPLSetsCheck = document.getElementById('list_opl_sets');
+	const listContribSetsCheck = document.getElementById('list_contrib_sets');
+
+	if (setDefSelect && (listOPLSetsCheck || listContribSetsCheck)) {
+		const allOptions = Array.from(setDefSelect.options);
+
+		const updateAvailableOptions = () => {
+			// Save the currently selected option.
+			let selectedDef = setDefSelect.selectedOptions[0];
+
+			for (const option of Array.from(setDefSelect.options)) option.value && option.remove();
+			for (const option of allOptions) {
+				if (option.value.startsWith('Library/')) {
+					if (listOPLSetsCheck.checked) setDefSelect.add(option);
+					else if (selectedDef === option) selectedDef = null;
+				} else if (option.value.startsWith('Contrib/')) {
+					if (listContribSetsCheck.checked) setDefSelect.add(option);
+					else if (selectedDef === option) selectedDef = null;
+				} else setDefSelect.add(option);
+			}
+
+			// Reselect the option that was selected before if it is still available. Otherwise
+			// select the first option which should be the "Select a Set Defintion File" option.
+			if (selectedDef) selectedDef.selected = true;
+			else allOptions[0].selected = true;
+		};
+
+		listOPLSetsCheck?.addEventListener('change', updateAvailableOptions);
+		listContribSetsCheck?.addEventListener('change', updateAvailableOptions);
+
+		updateAvailableOptions();
+	}
 })();

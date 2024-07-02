@@ -208,7 +208,8 @@ chmod ug+w htdocs/tmp
 
 # Even if the admin and courses directories already existed their permissions
 # might not be correct.
-# chown www-data:www-data  $APP_ROOT/courses
+chown www-data:www-data  $APP_ROOT/courses
+chown www-data:www-data  $APP_ROOT/courses/admin
 chown www-data:www-data  $APP_ROOT/courses/admin/*
 
 # Symbolic links which have no target outside the Docker container

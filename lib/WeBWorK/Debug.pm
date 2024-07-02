@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -94,9 +94,10 @@ Write @messages to the debugging log.
 
 sub debug {
 	my @message = @_;
-	@message = undefstr('###UNDEF###', @message);
 
 	if ($Enabled) {
+		@message = undefstr('###UNDEF###', @message);
+
 		my ($package, $filename, $line, $subroutine) = caller(1);
 		return if defined $AllowSubroutineOutput and not $subroutine =~ m/$AllowSubroutineOutput/;
 		return if defined $DenySubroutineOutput  and $subroutine     =~ m/$DenySubroutineOutput/;

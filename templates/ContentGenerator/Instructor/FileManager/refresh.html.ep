@@ -6,6 +6,8 @@
 	% $files = [];
 % }
 %
+% $c->stash->{footerWidthClass} = 'col-md-8';
+%
 % # Directory menu and date/size checkbox
 <div class="row">
 	<div class="col-md-8 mb-2">
@@ -31,26 +33,31 @@
 <div class="row">
 	<div class="col-md-8 mb-2">
 		<%= select_field files => $files, id => 'files', class => 'form-select font-monospace h-100',
-			dir => 'ltr', size => 17, multiple => undef =%>
+			dir => 'ltr', size => 17, multiple => undef,
+			data => {
+				link_message         => maketext('Symbolic links can not be followed.'),
+				non_viewable_message => maketext('This is not a viewable file type.'),
+				close_title          => maketext('Close')
+			} =%>
 	</div>
 	<div class="col-md-4 mb-2">
-		<div class="d-md-flex flex-column justify-content-evenly">
+		<div class="d-flex flex-md-column flex-wrap flex-md-nowrap justify-content-evenly gap-1 gap-md-0">
 			<%= submit_button maketext('View'), id => 'View', %button =%>
 			<%= submit_button maketext('Edit'), id => 'Edit', %button =%>
 			<%= submit_button maketext('Download'), id => 'Download', %button =%>
 			<%= submit_button maketext('Rename'), id => 'Rename', %button =%>
 			<%= submit_button maketext('Copy'), id => 'Copy', %button =%>
-			<%= submit_button maketext('Delete'), id => 'Delete', %button =%>\
+			<%= submit_button maketext('Delete'), id => 'Delete', %button =%>
 			<%= submit_button maketext('Make Archive'), id => 'MakeArchive',
 				data => {
 					archive_text   => maketext('Make Archive'),
 					unarchive_text => maketext('Unpack Archive')
 				},
 				%button =%>
-			% unless ($c->{courseName} eq 'admin') {
+			% unless ($c->{courseName} eq $c->ce->{admin_course_id}) {
 				<%= submit_button maketext('Archive Course'), id => 'ArchiveCourse', %button =%>
 			% }
-			<div style="height: 10px"></div>
+			<div class="d-none d-md-block" style="height: 10px"></div>
 			<%= submit_button maketext('New File'), id => 'NewFile', %button =%>
 			<%= submit_button maketext('New Folder'), id => 'NewFolder', %button =%>
 			<%= submit_button maketext('Refresh'), id => 'Refresh', %button =%>

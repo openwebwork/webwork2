@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,7 +24,6 @@ as a student.
 
 =cut
 
-use WeBWorK::PG;
 use WeBWorK::Localize;
 use WeBWorK::Utils 'wwRound';
 
@@ -44,7 +43,7 @@ sub new ($class, $c, $pg, $userProblem) {
 
 	# Retrieve the latest past answer and comment (if any).
 	my $userPastAnswerID =
-		$db->latestProblemPastAnswer($courseID, $studentID, $setID . ($versionID ? ",v$versionID" : ''), $problemID);
+		$db->latestProblemPastAnswer($studentID, $setID . ($versionID ? ",v$versionID" : ''), $problemID);
 	my $pastAnswer = $userPastAnswerID ? $db->getPastAnswer($userPastAnswerID) : 0;
 	my $comment    = $pastAnswer       ? $pastAnswer->comment_string           : '';
 

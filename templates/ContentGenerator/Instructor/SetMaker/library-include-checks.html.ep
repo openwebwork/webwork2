@@ -1,0 +1,14 @@
+% if (-d "$ce->{courseDirs}{templates}/Contrib" && -r "$ce->{courseDirs}{templates}/Contrib") {
+	<div class="form-check mb-2 font-sm">
+		% param('includeOPL', 'on') unless defined param('includeOPL');
+		<%= check_box includeOPL => 'on', id => 'includeOPL', class => 'form-check-input' =%>
+		<%= label_for includeOPL => maketext('Include OPL'), class => 'form-check-label' =%>
+		<%= hidden_field includeOPL => 0 =%>
+	</div>
+	<div class="form-check font-sm">
+		<%= check_box includeContrib => 'on', id => 'includeContrib', class => 'form-check-input' =%>
+		<%= label_for includeContrib => maketext('Include Contrib'), class => 'form-check-label' =%>
+	</div>
+% } else {
+	<%= hidden_field includeOPL => 1 =%>
+% }

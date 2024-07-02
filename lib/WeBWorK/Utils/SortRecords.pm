@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -57,7 +57,7 @@ use constant PRESET_SORTS => {
 	'WeBWorK::DB::Record::User' => [
 		[
 			'lnfn' => {
-				name   => 'last name, first name',
+				name   => 'last_name, first_name',
 				fields => [qw/last_name first_name/],
 			}
 		],
@@ -89,9 +89,9 @@ sub getSortsForClass {
 
 	my @class_presets = exists PRESET_SORTS->{$class} ? @{ PRESET_SORTS->{$class} } : ();
 
-	my @fields  = map { [ "Field: $_" => $_, $_ eq $default_sort ? (selected => undef) : () ] } $class->FIELDS;
-	my @presets = map { [ "Preset: $_->[1]{name}" => $_->[0], $_->[0] eq $default_sort ? (selected => undef) : () ] }
-		@class_presets;
+	my @fields = map { [ $_ => $_, $_ eq $default_sort ? (selected => undef) : () ] } $class->FIELDS;
+	my @presets =
+		map { [ $_->[1]{name} => $_->[0], $_->[0] eq $default_sort ? (selected => undef) : () ] } @class_presets;
 
 	return [ @fields, @presets ];
 }

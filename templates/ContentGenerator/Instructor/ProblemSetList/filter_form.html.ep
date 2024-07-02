@@ -4,8 +4,7 @@
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.filter.scope' => [
-					[ maketext('all sets')                     => 'all' ],
-					[ maketext('no sets')                      => 'none' ],
+					[ maketext('all course sets')              => 'all' ],
 					[ maketext('selected sets')                => 'selected' ],
 					[ maketext('enter matching set IDs below') => 'match_ids', selected => undef ],
 					[ maketext('sets visible to students')     => 'visible' ],
@@ -25,6 +24,6 @@
 		</div>
 	</div>
 	<div id="filter_err_msg" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">
-		<%= maketext('Please enter in a value to match in the filter field.') =%>
+		<%= maketext('Please enter a list of IDs to match.') %>
 	</div>
 </div>

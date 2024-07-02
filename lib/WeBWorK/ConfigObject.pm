@@ -3,11 +3,12 @@ use Mojo::Base -signatures;
 
 # Base object class for all config objects
 
-sub new ($class, $self, $c) {
-	# The current content generator controller object.
-	$self->{c}    = $c;
-	$self->{name} = ($self->{var} =~ s/[{]/_/gr) =~ s/[}]//gr;
-	return bless $self, $class;
+sub new ($class, $data, $c) {
+	return bless {
+		%$data,                                             # Make a copy of the data.
+		c    => $c,                                         # The current content generator controller object.
+		name => ($data->{var} =~ s/[{]/_/gr) =~ s/[}]//gr
+	}, $class;
 }
 
 # Only input is a value to display, and should produce an html string.
@@ -61,6 +62,9 @@ sub entry_widget ($self, $default) {
 		class         => 'form-control form-control-sm'
 	);
 }
+
+sub help_title ($self) { return $self->{c}->maketext('Variable Documentation') }
+sub help_name  ($self) { return '$' . $self->{var} }
 
 # This produces the documentation string and modal containing detailed documentation.
 # It is the same for all config types.

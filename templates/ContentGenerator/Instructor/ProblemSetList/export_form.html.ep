@@ -3,10 +3,8 @@
 		class => 'col-form-label col-form-label-sm col-auto' =%>
 	<div class="col-auto">
 		<%= select_field 'action.export.scope' => [
-				[ maketext('all sets')      => 'all' ],
-				[ maketext('listed sets')   => 'visible', selected => undef ],
-				[ maketext('selected sets') => 'selected' ],
-
+				[ maketext('all course sets') => 'all' ],
+				[ maketext('selected sets')   => 'selected', selected => undef ],
 			],
 			id => 'export_select', class => 'form-select form-select-sm' =%>
 	</div>

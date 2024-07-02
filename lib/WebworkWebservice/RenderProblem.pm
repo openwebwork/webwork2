@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,12 +24,11 @@ use Mojo::Util qw(url_unescape);
 
 use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::PG;
 use WeBWorK::DB;
+use WeBWorK::DB::Utils qw(global2user fake_set fake_problem);
 use WeBWorK::Utils qw(decode_utf8_base64);
+use WeBWorK::Utils::Files qw(readFile);
 use WeBWorK::Utils::Rendering qw(renderPG);
-use WeBWorK::DB::Utils qw(global2user);
-use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
 our $UNIT_TESTS_ON = 0;
 
@@ -191,7 +190,7 @@ async sub renderProblem {
 	if ($rh->{problemSource}) {
 		$r_problem_source = \(decode_utf8_base64($rh->{problemSource}) =~ tr/\r/\n/r);
 		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
-	} elsif (defined $rh->{rawProblemSource}) {
+	} elsif ($rh->{rawProblemSource}) {
 		$r_problem_source = \$rh->{rawProblemSource};
 		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
 	} elsif ($rh->{uriEncodedProblemSource}) {
@@ -199,9 +198,7 @@ async sub renderProblem {
 		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
 	} elsif (defined $rh->{sourceFilePath} && $rh->{sourceFilePath} =~ /\S/) {
 		$problemRecord->source_file($rh->{sourceFilePath});
-		$r_problem_source =
-			\(WeBWorK::PG::IO::read_whole_file($ce->{courseDirs}{templates} . '/' . $rh->{sourceFilePath}));
-		$problemRecord->source_file('RenderProblemFooBar') unless defined($problemRecord->source_file);
+		$r_problem_source = \(readFile($ce->{courseDirs}{templates} . '/' . $rh->{sourceFilePath}));
 	}
 
 	if ($UNIT_TESTS_ON) {
@@ -225,10 +222,31 @@ async sub renderProblem {
 		effectivePermissionLevel => $rh->{effectivePermissionLevel} || $rh->{permissionLevel} || 0,
 		useMathQuill             => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill',
 		useMathView              => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView',
-		isInstructor             => $rh->{isInstructor}       // 0,
-		forceScaffoldsOpen       => $rh->{forceScaffoldsOpen} // 0,
+		isInstructor             => $rh->{isInstructor} // 0,
+		forceScaffoldsOpen       => $rh->{WWcorrectAnsOnly} ? 1 : ($rh->{forceScaffoldsOpen} // 0),
 		QUIZ_PREFIX              => $rh->{answerPrefix},
-		debuggingOptions         => {
+		showFeedback             => $rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns},
+		showAttemptAnswers       => $rh->{WWcorrectAnsOnly} ? 0 : ($rh->{showAttemptAnswers} // 1),
+		showAttemptPreviews      => (
+			$rh->{WWcorrectAnsOnly} ? 0
+			: ($rh->{showAttemptPreviews} // ($rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}))
+		),
+		showAttemptResults      => $rh->{showAttemptResults} // ($rh->{WWsubmit} || $rh->{WWcorrectAns}),
+		forceShowAttemptResults => (
+			$rh->{WWcorrectAnsOnly} ? 1
+			: (
+				$rh->{forceShowAttemptResults}
+					|| ($rh->{isInstructor}
+						&& ($rh->{showAttemptResults} // ($rh->{WWsubmit} || $rh->{WWcorrectAns})))
+			)
+		),
+		showMessages => (
+			$rh->{WWcorrectAnsOnly} ? 0
+			: ($rh->{showMessages} // ($rh->{previewAsnwers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}))
+		),
+		showCorrectAnswers =>
+			($rh->{WWcorrectAnsOnly} ? 1 : ($rh->{showCorrectAnswers} // ($rh->{WWcorrectAns} ? 2 : 0))),
+		debuggingOptions => {
 			show_resource_info          => $rh->{show_resource_info}          // 0,
 			view_problem_debugging_info => $rh->{view_problem_debugging_info} // 0,
 			show_pg_info                => $rh->{show_pg_info}                // 0,

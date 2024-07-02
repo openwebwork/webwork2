@@ -1,13 +1,13 @@
 % use Text::Wrap qw(wrap);
 %
 % unless ($authz->hasPermissions(param('user'), 'submit_feedback')) {
-	<p><%= maketext('You are not allowed to send e-mail.') %></p>
+	<p><%= maketext('You are not allowed to send email.') %></p>
 	<p><%= link_to maketext('Cancel E-Mail') => $returnURL %></p>
 	% last;
 % }
 %
 % unless ($numRecipients) {
-	<p><%= maketext('No e-mail recipients are listed for this course.') %></p>
+	<p><%= maketext('No email recipients are listed for this course.') %></p>
 	<p><%= link_to maketext('Cancel E-Mail') => $returnURL %></p>
 	% last;
 % }
@@ -32,8 +32,16 @@
 		<div class="row mb-3">
 			<%= label_for 'from', class => 'col-form-label col-auto', begin =%><b><%= maketext('From:') %></b><% end =%>
 			<div class="col-auto">
-				<%= text_field from => $user_email_address, class => 'form-control', size => 40, id => 'from',
-					$user_email_address ? (disabled => undef, readonly => undef) : (required => undef) =%>
+				<%= email_field from => $user_email_address, class => 'form-control', size => 40, id => 'from',
+					$user_email_address
+						? (disabled => undef, readonly => undef)
+						: (
+							required       => undef,
+							placeholder    => 'Email address',
+							autocorrect    => 'off',
+							autocapitalize => 'off',
+							pattern        => '^[a-zA-Z0-9.!#$%&\'*+\\/=?^_`~\\-]+@[a-zA-Z0-9\\-]+\\.[a-zA-Z0-9.\\-]+$'
+						) =%>
 			</div>
 		</div>
 		% if (stash 'send_error') {

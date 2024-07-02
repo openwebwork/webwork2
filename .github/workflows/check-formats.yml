@@ -1,0 +1,44 @@
+---
+name: Check Formatting of Code Base
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  push:
+    branches-ignore: [main, develop]
+  pull_request:
+
+jobs:
+  perltidy:
+    name: Check Perl file formatting with perltidy
+    runs-on: ubuntu-22.04
+    container:
+      image: perl:5.34
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: cpanm -n Perl::Tidy@20220613
+      - name: Run perltidy
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          shopt -s extglob globstar nullglob
+          perltidy --pro=./.perltidyrc -b -bext='/' ./**/*.p[lm] ./**/*.t && git diff --exit-code
+
+  prettier:
+    name: Check JavaScript, style, and HTML file formatting with prettier
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Dependencies
+        run: cd htdocs && npm ci --ignore-scripts
+      - name: Check formatting with prettier
+        run: cd htdocs && npm run prettier-check

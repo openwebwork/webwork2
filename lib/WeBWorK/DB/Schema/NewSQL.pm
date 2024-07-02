@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -55,12 +55,6 @@ sub where_achievement_id_eq {
 sub where_answer_id_eq {
 	my ($self, $flags, $answer_id) = @_;
 	return { answer_id => $answer_id };
-}
-
-# can be used for past_answers
-sub where_course_id_eq_user_id_eq_set_id_eq_problem_id_eq {
-	my ($self, $flags, $course_id, $user_id, $set_id, $problem_id) = @_;
-	return { course_id => $course_id, user_id => $user_id, set_id => $set_id, problem_id => $problem_id };
 }
 
 sub where_user_id_eq_set_id_eq_problem_id_eq {

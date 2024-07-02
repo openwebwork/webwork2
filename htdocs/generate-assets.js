@@ -15,7 +15,10 @@ const rtlcss = require('rtlcss');
 const cssMinify = require('cssnano');
 
 const argv = yargs
-	.usage('$0 Options').version(false).alias('help', 'h').wrap(100)
+	.usage('$0 Options')
+	.version(false)
+	.alias('help', 'h')
+	.wrap(100)
 	.option('enable-sourcemaps', {
 		alias: 's',
 		description: 'Generate source maps. (Not for use in production!)',
@@ -30,8 +33,7 @@ const argv = yargs
 		alias: 'd',
 		description: 'Delete all generated files.',
 		type: 'boolean'
-	})
-	.argv;
+	}).argv;
 
 const assetFile = path.resolve(__dirname, 'static-assets.json');
 const assets = {};
@@ -48,7 +50,7 @@ const cleanDir = (dir) => {
 			}
 		}
 	}
-}
+};
 
 // The is set to true after all files are processed for the first time.
 let ready = false;
@@ -75,12 +77,13 @@ const processFile = async (file, _details) => {
 				return;
 			}
 
-			const minJS = result.code + (
-				argv.enableSourcemaps && result.map
-				? `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${
-							Buffer.from(result.map).toString('base64')}`
-				: ''
-			);
+			const minJS =
+				result.code +
+				(argv.enableSourcemaps && result.map
+					? `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${Buffer.from(
+							result.map
+						).toString('base64')}`
+					: '');
 
 			const contentHash = crypto.createHash('sha256');
 			contentHash.update(minJS);
@@ -114,18 +117,19 @@ const processFile = async (file, _details) => {
 				return;
 			}
 
-			if (result.sourceMap) result.sourceMap.sources = [ baseName ];
+			if (result.sourceMap) result.sourceMap.sources = [baseName];
 
 			// Pass the compiled css through the autoprefixer.
 			// This is really only needed for the bootstrap.css files, but doesn't hurt for the rest.
 			let prefixedResult = await postcss([autoprefixer, cssMinify]).process(result.css, { from: baseName });
 
-			const minCSS = prefixedResult.css + (
-				argv.enableSourcemaps && result.sourceMap
-				? `/*# sourceMappingURL=data:application/json;charset=utf-8;base64,${
-							Buffer.from(JSON.stringify(result.sourceMap)).toString('base64')}*/`
-				: ''
-			);
+			const minCSS =
+				prefixedResult.css +
+				(argv.enableSourcemaps && result.sourceMap
+					? `/*# sourceMappingURL=data:application/json;charset=utf-8;base64,${Buffer.from(
+							JSON.stringify(result.sourceMap)
+						).toString('base64')}*/`
+					: '');
 
 			const contentHash = crypto.createHash('sha256');
 			contentHash.update(minCSS);
@@ -149,18 +153,21 @@ const processFile = async (file, _details) => {
 			// Pass the compiled css through rtlcss and autoprefixer to generate css for right-to-left languages.
 			let rtlResult = await postcss([rtlcss, autoprefixer, cssMinify]).process(result.css, { from: baseName });
 
-			const rtlCSS = rtlResult.css + (
-				argv.enableSourcemaps && result.sourceMap
-				? `/*# sourceMappingURL=data:application/json;charset=utf-8;base64,${
-							Buffer.from(JSON.stringify(result.sourceMap)).toString('base64')}*/`
-				: ''
-			);
+			const rtlCSS =
+				rtlResult.css +
+				(argv.enableSourcemaps && result.sourceMap
+					? `/*# sourceMappingURL=data:application/json;charset=utf-8;base64,${Buffer.from(
+							JSON.stringify(result.sourceMap)
+						).toString('base64')}*/`
+					: '');
 
 			const rtlContentHash = crypto.createHash('sha256');
 			rtlContentHash.update(rtlCSS);
 
-			const newRTLVersion = file.replace(/\.s?css$/,
-				`.rtl.${rtlContentHash.digest('hex').substring(0, 8)}.min.css`);
+			const newRTLVersion = file.replace(
+				/\.s?css$/,
+				`.rtl.${rtlContentHash.digest('hex').substring(0, 8)}.min.css`
+			);
 			fs.writeFileSync(path.resolve(__dirname, newRTLVersion), rtlCSS);
 
 			const rtlAssetName = file.replace(/\.s?css$/, '.rtl.css');
@@ -180,8 +187,9 @@ const processFile = async (file, _details) => {
 		}
 	} else {
 		if (argv.watchFiles)
-			console.log('\x1b[33mWatches established, and initial build complete.\n'
-				+ 'Press Control-C to stop.\x1b[0m');
+			console.log(
+				'\x1b[33mWatches established, and initial build complete.\n' + 'Press Control-C to stop.\x1b[0m'
+			);
 		ready = true;
 	}
 
@@ -202,22 +210,25 @@ for (const file of fs.readdirSync(themesDir, { withFileTypes: true })) {
 	if (!file.isDirectory()) continue;
 	if (!fs.existsSync(path.resolve(themesDir, file.name, 'math4-overrides.js')))
 		fs.closeSync(fs.openSync(path.resolve(themesDir, file.name, 'math4-overrides.js'), 'w'));
-	if (!fs.existsSync(path.resolve(themesDir, file.name, 'math4-overrides.css'))
-		&& !fs.existsSync(path.resolve(themesDir, file.name, 'math4-overrides.scss')))
+	if (
+		!fs.existsSync(path.resolve(themesDir, file.name, 'math4-overrides.css')) &&
+		!fs.existsSync(path.resolve(themesDir, file.name, 'math4-overrides.scss'))
+	)
 		fs.closeSync(fs.openSync(path.resolve(themesDir, file.name, 'math4-overrides.css'), 'w'));
 }
 
 // Set up the watcher.
 if (argv.watchFiles) console.log('\x1b[32mEstablishing watches and performing initial build.\x1b[0m');
-chokidar.watch(['js', 'themes'], {
-	ignored: /layouts|\.min\.(js|css)$/,
-	cwd: __dirname, // Make sure all paths are given relative to the htdocs directory.
-	usePolling: true, // Needed to get changes to symlinks.
-	interval: 500,
-	awaitWriteFinish: { stabilityThreshold: 500 },
-	persistent: argv.watchFiles ? true : false
-})
-	.on('add', processFile).on('change', processFile).on('ready', processFile)
+chokidar
+	.watch(['js', 'themes'], {
+		ignored: /layouts|\.min\.(js|css)$/,
+		cwd: __dirname, // Make sure all paths are given relative to the htdocs directory.
+		awaitWriteFinish: { stabilityThreshold: 500 },
+		persistent: argv.watchFiles ? true : false
+	})
+	.on('add', processFile)
+	.on('change', processFile)
+	.on('ready', processFile)
 	.on('unlink', (file) => {
 		// If a file is deleted, then also delete the corresponding generated file.
 		if (assets[file]) {

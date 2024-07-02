@@ -1,0 +1,23 @@
+<div>
+	<div class="d-inline-block alert alert-danger p-1 mb-2">
+		<em>
+			<%= maketext('Warning: This will make users need to setup two factor authentication again! Only do this '
+				. 'for users that can no longer access the course due the account being lost in the authenticator app.')
+				=%>
+		</em>
+	</div>
+	<div class="row mb-2">
+		<%= label_for reset_2fa_select => maketext('Reset two factor authentication for selected users?'),
+			class => 'col-form-label col-form-label-sm col-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.reset_2fa.confirm' => [
+					[ maketext('No')  => 'no', selected => undef ],
+					[ maketext('Yes') => 'yes' ]
+				],
+				id => 'reset_2fa_select', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div id="reset_2fa_confirm_err_msg" class="alert alert-danger p-1 d-inline-flex d-none">
+		<%= maketext('Please confirm it is okay to reset two factor authentication for selected users.') %>
+	</div>
+</div>

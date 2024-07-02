@@ -1,0 +1,30 @@
+<h2><%= maketext('Manage LTI Course Map') %> <%= $c->helpMacro('AdminManageLTICourseMap') %></h2>
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
+	%
+	<div class="table-responsive mt-3">
+		<table class="table table-sm font-sm table-bordered caption-top font-sm align-middle w-auto">
+			<caption><%= maketext('LTI Course Map') %></caption>
+			<thead class="table-group-divider">
+				<tr>
+					<th><%= maketext('Course ID') %></th>
+					<th id="lms-context-id-header"><%= maketext('LMS Context ID') %></th>
+				</tr>
+			</thead>
+			<tbody class="table-group-divider">
+				% for (sort { lc $a cmp lc $b } keys %$courseMap) {
+					<tr>
+						<td><%= $_ =%></td>
+						<td>
+							<%= text_field "$_-context-id" => $courseMap->{$_}, size => 40,
+								class => 'form-control form-control-sm d-inline w-auto',
+								'aria-labelledby' => 'lms-context-id-header' =%>
+						</td>
+					</tr>
+				% }
+			</tbody>
+		</table>
+	</div>
+	<div><%= submit_button maketext('Save'), name => 'save_lti_course_map', class => 'btn btn-primary' =%></div>
+<% end =%>

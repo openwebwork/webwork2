@@ -1,6 +1,6 @@
 %################################################################################
 %# WeBWorK Online Homework Delivery System
-%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 %#
 %# This program is free software; you can redistribute it and/or modify it under
 %# the terms of either: (a) the GNU General Public License as published by the
@@ -19,8 +19,10 @@
 <p>
 	<%= maketext('Use this page to send emails to active (enrolled or auditing) students.  Emails can be sent to '
 		. 'all active students or selected students.  Use the "Students" form to sort, filter, or format how '
-		. 'the user name is displayed.  Click "Change Display Settings" to apply any changes.  Use control-click '
-		. 'or shift-click to select multiple students to email.') =%>
+		. 'the user name is displayed. If multiple filters are selected and the "Intersection" radio button is used, '
+		. 'the filters will  be applied in sequence, narrowing the results list.  If the "Union" button is used, the '
+		. 'updated list will be the union of all results lists from the multiple filters.  Click "Refresh List" to '
+		. 'apply any changes.  Use control-click or shift-click to select multiple students to email.')=%>
 </p>
 <p>
 	<%= maketext('Emails can contain personalized data, such as name, section, or status.  Click "List of insertable '

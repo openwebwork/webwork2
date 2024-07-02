@@ -4,7 +4,7 @@
 	% # Output css for jquery-ui for problems to use.
 	<%= stylesheet getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.css') =%>
 	%
-	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'achievements.css' }) =%>
+	<%= stylesheet getAssetURL($ce, 'js/Achievements/achievements.css') =%>
 	%
 	% # Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	% # or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
@@ -38,11 +38,6 @@
 			data => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
 	% }
 	%
-	% # This is for the problem grader
-	% if ($c->{will}{showProblemGrader}) {
-		<%= javascript getAssetURL($ce, 'js/ProblemGrader/problemgrader.js'), defer => undef =%>
-	%}
-	%
 	% # This is for any page specific js.  Right now its just used for achievement popups
 	<%= javascript getAssetURL($ce, 'js/Problem/problem.js'), defer => undef =%>
 	%
@@ -66,6 +61,8 @@
 	<div class="alert alert-danger p-1 my-3"><%= maketext('This problem is not valid.') %></div>
 	% last;
 % }
+%
+% stash->{footerWidthClass} = 'col-lg-10';
 %
 <%== $c->post_header_text =%>
 <div id="custom_edit_message" class="row"><div class="col-lg-10"><%= $c->output_custom_edit_message %></div></div>
@@ -91,8 +88,9 @@
 				</div>
 				<%= $c->output_message =%>
 			</div>
-			<div class="checkboxes-container col-12 my-2"><%= $c->output_checkboxes %></div>
+			<%= $c->output_checkboxes %>
 			<div class="submit-buttons-container col-12 my-2"><%= $c->output_submit_buttons %></div>
+			<%= include 'ContentGenerator/Problem/instructor_buttons' %>
 			<div id="score_summary" class="scoreSummary"><%= $c->output_score_summary %></div>
 			<%= $c->output_misc =%>
 		<% end =%>

@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(format_set_name_display);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 <div class="info-box bg-light">
 	<h2><%= maketext('Sets') %></h2>

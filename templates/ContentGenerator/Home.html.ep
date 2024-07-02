@@ -2,10 +2,11 @@
 %
 % my $coursesDir = $ce->{webworkDirs}{courses};
 % my @courseIDs = listCourses($ce);
+% my $admin_course_id = $ce->{admin_course_id};
 %
 <p><%= maketext('Welcome to WeBWorK!') %></p>
 %
-% if ((grep { $_ eq 'admin' } @courseIDs) && !-f "$coursesDir/admin/hide_directory") {
+% if ((grep { $_ eq $admin_course_id } @courseIDs) && !-f "$coursesDir/$admin_course_id/hide_directory") {
 	<p><%=	link_to maketext('Course Administration') => url_for('course_admin') =%></p>
 % }
 %
@@ -13,7 +14,7 @@
 %
 <ul class="courses-list">
 	% for my $courseID (sort { lc($a) cmp lc($b) } @courseIDs) {
-		% next if $courseID eq 'admin';                        # Already shown above.
+		% next if $courseID eq $admin_course_id;               # Already shown above.
 		% next if -f "$coursesDir/$courseID/hide_directory";
 		<li>
 			<%= link_to $courseID =~ s/_/ /gr => url_for('set_list', courseID => $courseID) =%>

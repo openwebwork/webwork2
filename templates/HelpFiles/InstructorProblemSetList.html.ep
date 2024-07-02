@@ -1,6 +1,6 @@
 %################################################################################
 %# WeBWorK Online Homework Delivery System
-%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 %#
 %# This program is free software; you can redistribute it and/or modify it under
 %# the terms of either: (a) the GNU General Public License as published by the
@@ -14,21 +14,21 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('Homwork Sets Editor Help');
+% title maketext('Sets Manager Help');
 %
 <p>
-	<%= maketext('This page manages all of the homework sets (including quizzes/tests). '
+	<%= maketext('This page manages all problem sets (including quizzes/tests). '
 		. 'The following allow editing directly of a single problem set.') =%>
 </p>
 <dl>
-	<dt><%= maketext('"Edit Problems" column') %></dt>
+	<dt><%= maketext('"Problems" column') %></dt>
 	<dd>
 		<%= maketext('Indicates the number of problems in the set. Clicking on the link opens the set detail page '
 			. 'which allows you to modify set parameters, edit set headers, and change parameters of problems in the '
 			. 'set such as the number of allowed attempts or the weight (credit value). You can also add, remove, '
 			. 'view, edit, and reorder the problems in the set.') =%>
 	</dd>
-	<dt><%= maketext('"Edit Assigned Users" column') %></dt>
+	<dt><%= maketext('"Assigned Users" column') %></dt>
 	<dd>
 		<%= maketext('Shows how many instructors and students have been assigned this problem set, out of the total '
 			. 'number in the class. Clicking on this link allows you to assign the set to users, unassign this '
@@ -37,7 +37,7 @@
 	</dd>
 	<dt><%= maketext('Changing dates') %></dt>
 	<dd>
-		<%= maketext('Dates for problem sets can be edited by clicking the pencil icon in the "Edit Set Data" column '
+		<%= maketext('Dates for problem sets can be edited by clicking the pencil icon in the "Set Name" column '
 			. 'next to the set name. To change dates for several sets at once, click the check box in the "Select" '
 			. 'column and choose "Edit selected" from the tasks above.') =%>
 	</dd>
@@ -48,7 +48,10 @@
 	<dd><%= maketext('Display sets matching a selected criteria. Useful if there are many sets.') %></dd>
 
 	<dt><%= maketext('Sort') %></dt>
-	<dd><%= maketext('Sorts the lists displayed by due date, name, etc.') %></dd>
+	<dd>
+		<%= maketext('Sorts the table rows by set name, due date, etc.  The table rows can also be sorted by '
+			. 'clicking on an active link at the top of the column.') %>
+	</dd>
 
 	<dt><%= maketext('Edit') %></dt>
 	<dd><%= maketext('The sets checked below will become available for editing the due dates and visibility.') %></dd>

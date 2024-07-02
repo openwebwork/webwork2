@@ -126,13 +126,12 @@
 					<div class="mb-2">
 						<%= scrollingRecordList(
 							{
-								name                => 'classList',
-								controller          => $c,
-								default_sort        => 'lnfn',
-								default_format      => 'lnfn_uid',
-								default_filters     => ['all'],
-								refresh_button_name => maketext('Change Display Settings'),
-								attrs               => { size => 5, multiple => undef }
+								name            => 'selected_users',
+								controller      => $c,
+								default_sort    => 'lnfn',
+								default_format  => 'lnfn_uid',
+								default_filters => ['all'],
+								attrs           => { size => 5, multiple => undef }
 							},
 							@{ $c->{ra_user_records} }
 						) =%>

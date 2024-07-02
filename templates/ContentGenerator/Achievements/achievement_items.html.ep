@@ -16,34 +16,37 @@
 				<h3><%= maketext($item->name) %></h3>
 			% }
 			<p><%= maketext($item->description) %></p>
+			% my $form = $item->print_form($sets, $setProblemIds, $c);
 			% # Print a modal popup for each item which contains the form necessary to get the data to use the item.
 			<%= link_to maketext('Use Reward') => '#modal_' . $item->id,
 					role  => 'button',
-					class => 'btn btn-secondary',
+					class => 'btn btn-secondary' . ($form ? '' : ' disabled'),
 					id    => 'popup_' . $item->id,
-					data  => { bs_toggle => 'modal' } =%>
-			<div id="<%= 'modal_' . $item->id %>" class="modal hide fade" tabindex="-1">
-				<div class="modal-dialog modal-dialog-centered">
-					<div class="modal-content">
-						<div class="modal-header">
-							<h4 class="modal-title"><%= maketext($item->name) %></h4>
-							<button type="button" class="btn-close" data-bs-dismiss="modal"
-								aria-label="<%= maketext('close') %>"></button>
+					$form ? (data  => { bs_toggle => 'modal' }) : () =%>
+			% if ($form) {
+				<div id="<%= 'modal_' . $item->id %>" class="modal hide fade" tabindex="-1">
+					<div class="modal-dialog modal-dialog-centered">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h4 class="modal-title"><%= maketext($item->name) %></h4>
+								<button type="button" class="btn-close" data-bs-dismiss="modal"
+									aria-label="<%= maketext('close') %>"></button>
+							</div>
+							<%= form_for current_route, method => 'POST', name => "itemform_$itemNumber",
+								class => 'achievementitemform', begin =%>
+								<div class="modal-body">
+									<%= $form =%>
+									<%= hidden_field useditem => $itemNumber =%>
+									<%= $c->hidden_authen_fields("achievement_${itemNumber}_") =%>
+								</div>
+								<div class="modal-footer">
+									<%= submit_button maketext('Submit'), class => 'btn btn-primary' =%>
+								</div>
+							<%= end =%>
 						</div>
-						<%= form_for current_route, method => 'POST', name => "itemform_$itemNumber",
-							class => 'achievementitemform', begin =%>
-							<div class="modal-body">
-								<%= $item->print_form($sets, $setProblemCount, $c) =%>
-								<%= hidden_field useditem => $itemNumber =%>
-								<%= $c->hidden_authen_fields("achievement_${itemNumber}_") =%>
-							</div>
-							<div class="modal-footer">
-								<%= submit_button maketext('Submit'), class => 'btn btn-primary' =%>
-							</div>
-						<%= end =%>
 					</div>
 				</div>
-			</div>
+			% }
 		</div>
 		% $itemNumber++;
 	% }

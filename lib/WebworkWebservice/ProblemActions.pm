@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,6 +22,7 @@ use warnings;
 use Data::Structure::Util qw(unbless);
 
 use WeBWorK::PG::Tidy qw(pgtidy);
+use WeBWorK::PG::ConvertToPGML qw(convertToPGML);
 
 sub getUserProblem {
 	my ($invocant, $self, $params) = @_;
@@ -57,6 +58,9 @@ sub putUserProblem {
 		$userProblem->{$_} = $params->{$_} if defined($params->{$_});
 	}
 
+	# Remove the needs_grading flag if the mark_graded parameter is set.
+	$userProblem->{flags} =~ s/:needs_grading$// if $params->{mark_graded};
+
 	eval { $db->putUserProblem($userProblem) };
 	if ($@) { return { text => "putUserProblem: $@" }; }
 
@@ -88,6 +92,9 @@ sub putProblemVersion {
 		$problemVersion->{$_} = $params->{$_} if defined($params->{$_});
 	}
 
+	# Remove the needs_grading flag if the mark_graded parameter is set.
+	$problemVersion->{flags} =~ s/:needs_grading$// if $params->{mark_graded};
+
 	eval { $db->putProblemVersion($problemVersion) };
 	if ($@) { return { text => "putProblemVersion: $@" }; }
 
@@ -109,7 +116,11 @@ sub putPastAnswer {
 
 	$pastAnswer->{user_id} = $params->{user_id} if $params->{user_id};
 
-	for ('set_id', 'problem_id', 'source_file', 'timestamp', 'scores', 'answer_string', 'comment_string') {
+	for (
+		'set_id', 'problem_id',    'source_file',    'timestamp',
+		'scores', 'answer_string', 'comment_string', 'problem_seed'
+		)
+	{
 		$pastAnswer->{$_} = $params->{$_} if defined($params->{$_});
 	}
 
@@ -140,6 +151,17 @@ sub tidyPGCode {
 		ra_out => { tidiedPGCode => $tidiedPGCode, status => $result, errors => $errors },
 		text   => 'Tidied code'
 	};
+}
+
+sub convertCodeToPGML {
+	my ($invocant, $self, $params) = @_;
+	my $code = $params->{pgCode};
+
+	return {
+		ra_out => { pgmlCode => convertToPGML($code) },
+		text   => 'Converted to PGML'
+	};
+
 }
 
 1;

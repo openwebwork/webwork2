@@ -1,6 +1,6 @@
 %################################################################################
 %# WeBWorK Online Homework Delivery System
-%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 %#
 %# This program is free software; you can redistribute it and/or modify it under
 %# the terms of either: (a) the GNU General Public License as published by the
@@ -14,12 +14,12 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('User Settings Help');
+% title maketext('Account Settings Help');
 %
 <p>
 	<%= maketext('This page allows users to change their password, email address, and display settings used in '
 		. 'problems. Note that you can hide this page entirely for students by setting permission levels to '
-		. 'login_proctor or higher for the permissions to change password, change e-mail address, and change display '
+		. 'login_proctor or higher for the permissions to change password, change email address, and change display '
 		. 'settings used in pg problems.') =%>
 </p>
 <h2><%= maketext('Password') %></h2>

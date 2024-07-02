@@ -33,6 +33,7 @@ RUN apt-get update \
 	imagemagick \
 	iputils-ping \
 	jq \
+	libarchive-extract-perl \
 	libarchive-zip-perl \
 	libarray-utils-perl \
 	libc6-dev \
@@ -56,9 +57,11 @@ RUN apt-get update \
 	libextutils-helpers-perl \
 	libextutils-installpaths-perl \
 	libextutils-xsbuilder-perl \
+	libfile-copy-recursive-perl \
 	libfile-find-rule-perl-perl \
 	libfile-sharedir-install-perl \
 	libfuture-asyncawait-perl \
+	libgd-barcode-perl \
 	libgd-perl \
 	libhtml-scrubber-perl \
 	libhtml-template-perl \
@@ -73,12 +76,12 @@ RUN apt-get update \
 	libmail-sender-perl \
 	libmariadb-dev \
 	libmath-random-secure-perl \
+	libmime-base32-perl \
 	libmime-tools-perl \
 	libminion-backend-sqlite-perl \
 	libminion-perl \
 	libmodule-build-perl \
 	libmodule-pluggable-perl \
-	libmojolicious-perl \
 	libmojolicious-plugin-renderfile-perl \
 	libnet-https-nb-perl \
 	libnet-ip-perl \
@@ -92,7 +95,6 @@ RUN apt-get update \
 	libphp-serialization-perl \
 	libpod-wsdl-perl \
 	libsoap-lite-perl \
-	libsql-abstract-classic-perl \
 	libsql-abstract-perl \
 	libstring-shellquote-perl \
 	libsub-uplevel-perl \
@@ -138,7 +140,7 @@ RUN apt-get update \
 	texlive-xetex \
 	tzdata \
 	zip $ADDITIONAL_BASE_IMAGE_PACKAGES \
-	&& curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+	&& curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
 	&& apt-get clean \
 	&& rm -fr /var/lib/apt/lists/* /tmp/*
@@ -146,7 +148,13 @@ RUN apt-get update \
 # ==================================================================
 # Phase 3 - Install additional Perl modules from CPAN that are not packaged for Ubuntu or are outdated in Ubuntu.
 
-RUN cpanm install -n Statistics::R::IO DBD::MariaDB Mojo::SQLite@3.002 Perl::Tidy@20220613 \
+RUN cpanm install -n \
+	Statistics::R::IO \
+	DBD::MariaDB \
+	Mojolicious \
+	Mojo::SQLite@3.002 \
+	Perl::Tidy@20220613 \
+	Archive::Zip::SimpleZip \
 	&& rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # ==================================================================

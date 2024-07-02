@@ -23,8 +23,9 @@
 		% my $message = begin
 			<i>
 				<%= maketext(
-					'Email is being sent to [quant,_1,recipient]. You will be notified by email '
-						. 'when the task is completed.  This may take several minutes if the class is large.',
+					'Email is being sent to [quant,_1,recipient]. '
+						. 'This job may take several minutes to complete if the class is large. '
+						. 'Go to the "Job Manager" to see the status of this job.',
 					scalar(@{ $c->{ra_send_to} })
 				) =%>
 			</i>

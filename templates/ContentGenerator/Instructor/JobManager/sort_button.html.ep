@@ -1,0 +1,37 @@
+% if ($primarySortField eq $field) {
+	<button type="button" data-sort-priority="primary"
+		class="sort-order btn btn-secondary rounded-pill btn-sm py-0 fw-bold text-nowrap font-xs">
+		1
+		% if ($primarySortOrder eq 'ASC') {
+			<i class="fa-solid fa-chevron-down"></i>
+			<span class="visually-hidden"><%= maketext('ascending') %></span>
+		% } else {
+			<i class="fa-solid fa-chevron-up"></i>
+			<span class="visually-hidden"><%= maketext('descending') %></span>
+		% }
+	</button>
+% } elsif ($secondarySortField eq $field) {
+	<button type="button" data-sort-priority="secondary"
+		class="sort-order btn btn-secondary rounded-pill btn-sm py-0 fw-bold text-nowrap font-xs">
+		2
+		% if ($secondarySortOrder eq 'ASC') {
+			<i class="fa-solid fa-chevron-down"></i>
+			<span class="visually-hidden"><%= maketext('ascending') %></span>
+		% } else {
+			<i class="fa-solid fa-chevron-up"></i>
+			<span class="visually-hidden"><%= maketext('descending') %></span>
+		% }
+	</button>
+% } elsif ($ternarySortField eq $field) {
+	<button type="button" data-sort-priority="ternary"
+		class="sort-order btn btn-secondary rounded-pill btn-sm py-0 fw-bold text-nowrap font-xs">
+		3
+		% if ($ternarySortOrder eq 'ASC') {
+			<i class="fa-solid fa-chevron-down"></i>
+			<span class="visually-hidden"><%= maketext('ascending') %></span>
+		% } else {
+			<i class="fa-solid fa-chevron-up"></i>
+			<span class="visually-hidden"><%= maketext('descending') %></span>
+		% }
+	</button>
+% }

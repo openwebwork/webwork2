@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -16,9 +16,11 @@
 package WeBWorK::AchievementItems::ExtendDueDateGW;
 use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
-# Item to extend the due date on a gateway
+# Item to extend the close date on a test
 
-use WeBWorK::Utils qw(between x nfreeze_base64 thaw_base64 format_set_name_display);
+use WeBWorK::Utils qw(x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils::DateTime qw(between);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 sub new ($class) {
 	return bless {
@@ -29,20 +31,20 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemCount, $c) {
+sub print_form ($self, $sets, $setProblemIds, $c) {
 	my $db = $c->db;
 
-	my $effectiveUserName = $c->param('effectiveUser') // $c->param('user');
-	my @unfilteredsets = $db->getMergedSets(map { [ $effectiveUserName, $_ ] } $db->listUserSets($effectiveUserName));
 	my @openGateways;
 
-	# Find the template sets of open gateway quizzes.
-	for my $set (@unfilteredsets) {
+	# Find the template sets for open tests.
+	for my $set (@$sets) {
 		push(@openGateways, [ format_set_name_display($set->set_id) => $set->set_id ])
 			if $set->assignment_type =~ /gateway/
 			&& $set->set_id !~ /,v\d+$/
 			&& between($set->open_date, $set->due_date);
 	}
+
+	return unless @openGateways;
 
 	return $c->c(
 		$c->tag('p', $c->maketext('Extend the close date for which test?')),

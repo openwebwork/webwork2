@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,7 +35,6 @@ add the following to localOverrides.conf to setup the Shibboleth
 
 $shibboleth{login_script} = "/Shibboleth.sso/Login"; # login handler
 $shibboleth{logout_script} = "/Shibboleth.sso/Logout?return=".$server_root_url.$webwork_url; # return URL after logout
-$shibboleth{session_header} = "Shib-Session-ID"; # the header to identify if there is an existing shibboleth session
 $shibboleth{manage_session_timeout} = 1; # allow shib to manage session time instead of webwork
 $shibboleth{hash_user_id_method} = "MD5"; # possible values none, MD5. Use it when you want to hide real user_ids from showing in url.
 $shibboleth{hash_user_id_salt} = ""; # salt for hash function
@@ -64,6 +63,8 @@ sub get_credentials {
 		return $self->SUPER::get_credentials(@_);
 	}
 
+	$c->stash(disable_cookies => 1);
+
 	debug("Shib is on!");
 
 	# set external auth parameter so that Login.pm knows
@@ -75,9 +76,28 @@ sub get_credentials {
 		return $self->SUPER::get_credentials(@_);
 	}
 
-	if (defined($ENV{ $ce->{shibboleth}{session_header} }) && defined($ENV{ $ce->{shibboleth}{mapping}{user_id} })) {
-		debug('Got shib header and user_id');
-		my $user_id = $ENV{ $ce->{shibboleth}{mapping}{user_id} };
+	# This next part is necessary because some parts of webwork (e.g.,
+	# WebworkWebservice.pm) need to replace the get_credentials() routine,
+	# but only replace the one in the parent class (out of caution,
+	# presumably).  Therefore, we end up here even when authenticating
+	# for WebworkWebservice.pm.  This would cause authentication failures
+	# when authenticating javascript web service requests (e.g., the
+	# Library Browser).
+
+	if ($c->{rpc}) {
+		debug("falling back to superclass get_credentials (rpc call)");
+		return $self->SUPER::get_credentials(@_);
+	}
+
+	my $user_id     = "";
+	my $shib_header = $ce->{shibboleth}{mapping}{user_id};
+
+	if ($shib_header ne "") {
+		$user_id = $c->req->headers->header($shib_header);
+	}
+
+	if ($user_id ne "") {
+		debug("Got shib header ($shib_header) and user_id ($user_id)");
 		if (defined($ce->{shibboleth}{hash_user_id_method})
 			&& $ce->{shibboleth}{hash_user_id_method} ne "none"
 			&& $ce->{shibboleth}{hash_user_id_method} ne "")
@@ -122,43 +142,6 @@ sub site_checkPassword {
 	}
 }
 
-# disable cookie functionality
-sub maybe_send_cookie {
-	my ($self, @args) = @_;
-	if ($self->{c}->ce->{shiboff}) {
-		return $self->SUPER::maybe_send_cookie(@_);
-	} else {
-		# nothing to do here
-	}
-}
-
-sub fetchCookie {
-	my ($self, @args) = @_;
-	if ($self->{c}->ce->{shiboff}) {
-		return $self->SUPER::fetchCookie(@_);
-	} else {
-		# nothing to do here
-	}
-}
-
-sub sendCookie {
-	my ($self, @args) = @_;
-	if ($self->{c}->ce->{shiboff}) {
-		return $self->SUPER::sendCookie(@_);
-	} else {
-		# nothing to do here
-	}
-}
-
-sub killCookie {
-	my ($self, @args) = @_;
-	if ($self->{c}->ce->{shiboff}) {
-		return $self->SUPER::killCookie(@_);
-	} else {
-		# nothing to do here
-	}
-}
-
 # this is a bit of a cheat, because it does the redirect away from the
 #   logout script or what have you, but I don't see a way around that.
 sub forget_verification {
@@ -188,7 +171,7 @@ sub check_session {
 		return 0 unless defined $Key;
 
 		my $keyMatches     = (defined $possibleKey and $possibleKey eq $Key->key);
-		my $timestampValid = (time <= $Key->timestamp() + $ce->{sessionKeyTimeout});
+		my $timestampValid = (time <= $Key->timestamp() + $ce->{sessionTimeout});
 		if ($ce->{shibboleth}{manage_session_timeout}) {
 			# always valid to allow shib to take control of timeout
 			$timestampValid = 1;

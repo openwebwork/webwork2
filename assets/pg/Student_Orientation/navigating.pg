@@ -1,0 +1,74 @@
+## DESCRIPTION
+## Navigating
+## ENDDESCRIPTION
+
+DOCUMENT();
+
+loadMacros(qw(
+    PGstandard.pl
+    PGML.pl
+    PGcourse.pl
+));
+
+$a = random(5, 10);
+
+BEGIN_PGML
+## Navigating WeBWorK ##
+By now you've had experience with the "Next Problem" button. The "Previous Problem" button takes you to the previous
+problem, and the "Problem List" button takes you to a listing of all problems in the set.
+
+At the bottom of a problem screen, you can see how many times you have attempted a problem, and how many attempts you
+have left. Sometimes you also see whether or not partial credit is possible, and if so how much do you have. This
+particular problem is lying about how many attempts you have used. How many attempts does it _say_ that you have used
+so far? [_]{$a}{4}
+
+To the left of the screen there are some panels. The top panel lets you find your way to the following, although
+depending on how your course is set up, any of these pages might not be avaliable.
+* *Assignments*: this is the "home" screen where you can see all of the assignments that have been assigned to you and
+when they are due.
+* *Account Settings*: at this page you may (or may not) be able to change things like your password, your email address,
+how math is rendered for you, whether or not your previous answers will be visible to you, and whether or not you want
+to use the math editing tool. Some of these things may not be available depending on how your instructor or institution
+has configured WeBWorK.
+* *Grades*: go here to see how you have performed in your assignments.
+* *Achievements*: if your instructor is using Achievements, then you can earn badges and level up as you complete
+homework problems. Go here to view your level and badges. Also, if you have earned any items that can be applied to
+your homework sets, you will see them here.
+
+[@ MODES(HTML => 'When you are ready, click "Next Problem".', TeX => '') @]
+END_PGML
+
+install_problem_grader(sub {
+    my ($result, $state) = std_problem_grader(@_);
+    my $time   = time();
+    my $open   = $time >= $openDate && $time <= $dueDate;
+    my $submit = $inputs_ref->{submitAnswers};
+    my $attempts =
+        $state->{num_of_correct_ans} + $state->{num_of_incorrect_ans};
+    $attempts-- if $attempts && !$submit;
+
+    my @msg = ();
+    push(@msg, "Your score was " . ($open ? "" : "not ") . "recorded.")
+        if $submit;
+    push(@msg,
+        "You have attempted this problem $a time" . ($a == 1 ? "." : "s."));
+    push(@msg, "You have unlimited attempts remaining.");
+    if ($submit) {
+        if ($result->{score} == 1) {
+            push(@msg, "You received a score of 100% for this attempt.");
+            push(@msg, "Your overall recorded score is 100%.");
+        } else {
+            push(@msg, "Your answers are not yet fully correct.");
+        }
+    }
+    unless ($open) {
+        push(@msg, "The homework set is not yet open.")
+            if $time < $openDate;
+        push(@msg, "The homework set is closed.") if $time > $dueDate;
+    }
+
+    $state->{state_summary_msg} = join('<br>', @msg);
+    return ($result, $state);
+});
+
+ENDDOCUMENT();

@@ -1,6 +1,6 @@
 %################################################################################
 %# WeBWorK Online Homework Delivery System
-%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 %#
 %# This program is free software; you can redistribute it and/or modify it under
 %# the terms of either: (a) the GNU General Public License as published by the
@@ -37,11 +37,9 @@
 	<dt><%= maketext('Save Changes') %></dt>
 	<dd>
 		<%== maketext('This button is present both at top and the bottom of the page. Any and all changes made to any '
-			. 'part of the set will be saved with one important exception: When editing the set for one or more '
-			. 'students, you can choose to override the default value (defined for the set in general) by clicking on '
-			. 'the checkbox and providing a value (or possibly leaving blank) and checking the override checkbox. If '
-			. 'you do <strong>NOT</strong> check the checkbox, the override value will be discarded and the default '
-			. 'value for the set will be used for the users currently being edited.') =%>
+			. 'part of the set will be saved. When editing the set for one or more students, you can choose to '
+			. 'override the default value (defined for the set in general) by providing a value. If a value is not '
+			. 'provided then the default value for the set will be used for the users currently being edited.') =%>
 	</dd>
 
 	<dt><%= maketext('Reset Form') %></dt>

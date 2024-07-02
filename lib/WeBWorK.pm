@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -48,6 +48,7 @@ use WeBWorK::Debug;
 use WeBWorK::Upload;
 use WeBWorK::Utils qw(runtime_use);
 use WeBWorK::ContentGenerator::Login;
+use WeBWorK::ContentGenerator::TwoFactorAuthentication;
 use WeBWorK::ContentGenerator::LoginProctor;
 
 our %SeedCE;
@@ -87,42 +88,6 @@ async sub dispatch ($c) {
 	my $displayModule = ref $c;
 	my %routeCaptures = %{ $c->stash->{'mojo.captures'} };
 
-	if ($c->current_route =~ /^(render_rpc|instructor_rpc|html2xml)$/) {
-		$c->{rpc} = 1;
-
-		# This provides compatibility for legacy html2xml parameters.
-		# This should be deleted when the html2xml endpoint is removed.
-		if ($c->current_route eq 'html2xml') {
-			for ([ 'userID', 'user' ], [ 'course_password', 'passwd' ], [ 'session_key', 'key' ]) {
-				$c->param($_->[1], $c->param($_->[0])) if defined $c->param($_->[0]) && !defined $c->param($_->[1]);
-			}
-		}
-
-		# Get the courseID from the parameters for a remote procedure call.
-		$routeCaptures{courseID} = $c->param('courseID') if $c->param('courseID');
-	}
-
-	# If this is the login phase of an LTI 1.3 login, then extract the courseID from the target_link_uri.
-	if ($c->current_route eq 'ltiadvantage_login') {
-		my $target = $c->param('target_link_uri') ? $c->url_for($c->param('target_link_uri'))->path : '';
-		$c->stash->{courseID} = $1 if $target =~ m|$location/([^/]*)|;
-		$routeCaptures{courseID} = $c->stash->{courseID} || '___';
-	}
-
-	# If this is the launch phase of an LTI 1.3 login, then get the courseID from the state.  Note that this data can
-	# not be trusted.  It will be verified once the JWT is decrypted.  Also see the comments about the hacks involved
-	# here in the WeBWorK::Authen::LTIAdvantage::verify method.
-	if ($c->current_route eq 'ltiadvantage_launch') {
-		$c->stash->{LTIState} = $c->param('state') || ',set_id:';
-		($c->stash->{lti_lms_user_id}, $c->stash->{courseID}) = split ',set_id:', $c->stash->{LTIState};
-		if ($c->stash->{courseID} && $c->stash->{lti_lms_user_id}) {
-			$c->stash->{courseID} =~ s/@/-/g;
-			$routeCaptures{courseID} = $c->stash->{courseID};
-		} else {
-			$routeCaptures{courseID} = '___';
-		}
-	}
-
 	debug("The display module for this route is $displayModule\n");
 	debug("This route has the following captures:\n");
 	for my $key (keys %routeCaptures) {
@@ -152,6 +117,9 @@ async sub dispatch ($c) {
 	}
 
 	debug(('-' x 80) . "\n");
+
+	# A controller can customize route captures, parameters, and stash values if it provides an initializeRoute method.
+	$c->initializeRoute(\%routeCaptures) if $c->can('initializeRoute');
 
 	# Create Course Environment
 	debug("We need to get a course environment (with or without a courseID!)\n");
@@ -197,7 +165,7 @@ async sub dispatch ($c) {
 
 		return (0, 'This course does not exist.')
 			unless (-e $ce->{courseDirs}{root}
-				|| -e "$ce->{webwork_courses_dir}/admin/archives/$routeCaptures{courseID}.tar.gz");
+				|| -e "$ce->{webwork_courses_dir}/$ce->{admin_course_id}/archives/$routeCaptures{courseID}.tar.gz");
 		return (0, 'This course has been archived and closed.') unless -e $ce->{courseDirs}{root};
 
 		debug("...we can create a database object...\n");
@@ -240,7 +208,7 @@ async sub dispatch ($c) {
 			# we need to also check on the proctor.  Note that in the gateway quiz
 			# module this is double checked to be sure that someone isn't taking a
 			# proctored quiz but calling the unproctored ContentGenerator.
-			if ($c->current_route =~ /^proctored_gateway_quiz|proctored_gateway_proctor_login$/) {
+			if ($c->current_route =~ /^(proctored_gateway_quiz|proctored_gateway_proctor_login)$/) {
 				my $proctor_authen_module = WeBWorK::Authen::class($ce, 'proctor_module');
 				runtime_use $proctor_authen_module;
 				my $authenProctor = $proctor_authen_module->new($c);
@@ -251,6 +219,13 @@ async sub dispatch ($c) {
 					await WeBWorK::ContentGenerator::LoginProctor->new($c)->go;
 					return 0;
 				}
+			} elsif ($c->current_route ne 'instructor_rpc') {
+				# If any other page is opened, then revoke proctor authorization if it has been granted.
+				# Otherwise the student will be able to re-enter the test without again obtaining proctor authorization.
+				# Do NOT do this for the instructor_rpc route.  The only student usage of this route is to get the
+				# current server time during a gateway quiz, and that definitely should not revoke proctor
+				# authorization.
+				delete $c->authen->session->{proctor_authorization_granted};
 			}
 			return 1;
 		} else {
@@ -261,11 +236,22 @@ async sub dispatch ($c) {
 			# If the user is logging out and authentication failed, still logout.
 			return 1 if $displayModule eq 'WeBWorK::ContentGenerator::Logout';
 
-			debug("Bad news: authentication failed!\n");
-			debug("Rendering WeBWorK::ContentGenerator::Login\n");
-			await WeBWorK::ContentGenerator::Login->new($c)->go();
+			if ($c->authen->session->{two_factor_verification_needed}) {
+				debug("Login succeeded but two factor authentication is needed.\n");
+				debug("Rendering WeBWorK::ContentGenerator::TwoFactorAuthentication\n");
+				await WeBWorK::ContentGenerator::TwoFactorAuthentication->new($c)->go();
+			} else {
+				debug("Bad news: authentication failed!\n");
+				debug("Rendering WeBWorK::ContentGenerator::Login\n");
+				await WeBWorK::ContentGenerator::Login->new($c)->go();
+			}
 			return 0;
 		}
+	} else {
+		return (0,
+			'No WeBWorK course was found associated to this LMS course. '
+				. 'If this is an error, please contact the WeBWorK system administrator.')
+			if $c->current_route eq 'ltiadvantage_login';
 	}
 
 	return 1;

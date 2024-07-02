@@ -1,22 +1,33 @@
+<div id="select_achievement_err_msg" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
+	<%= maketext('Please select at least one achievement.') %>
+</div>
 <div class="table-responsive">
 	<table class="table table-sm table-bordered font-sm caption-top" id="achievement-table">
 		<caption><%= maketext('Achievement List') %></caption>
 		<thead class="table-group-divider">
 			<tr>
-				<th>
-					<%= check_box select_all => '',
-						id           => 'select-all',
-						class        => 'select-all form-check-input',
-						'aria-label' => maketext('Select all achievements'),
-						data         => { select_group => 'selected_achievements' } =%>
+				<th class="text-nowrap">
+					<%= label_for 'select-all', begin =%>
+						<%= check_box 'select-all' => '', id => 'select-all',
+							class => 'select-all form-check-input set-id-tooltip',
+							'aria-label' => maketext('Select all achievements'),
+							data => {
+								select_group => 'selected_achievements',
+								bs_toggle => 'tooltip',
+								bs_placement => 'right',
+								bs_title => maketext('Select all achievements')
+							} =%>
+						<i class="fa-solid fa-check-double" aria-hidden="true"></i>
+					<% end =%>
 				</th>
-				<th><%= label_for 'select-all' => maketext('Achievement ID') %></th>
+				<th><%= maketext('Achievement ID') %></th>
 				<th><%= maketext('Enabled') %></th>
 				<th><%= maketext('Name') %></th>
 				<th><%= maketext('Number') %></th>
 				<th><%= maketext('Category') %></th>
-				<th class="text-nowrap"><%= maketext('Edit Users') %></th>
-				<th class="text-nowrap"><%= maketext('Edit Evaluator') %></th>
+				<th><%= maketext('Users') %></th>
+				<th><%= maketext('Notifications') %></th>
+				<th><%= maketext('Evaluator') %></th>
 			</tr>
 		</thead>
 		<tbody class="table-group-divider">
@@ -31,17 +42,15 @@
 							$selectedAchievementIDs{ $_->achievement_id } ? (checked => undef) : () =%>
 					</td>
 					<td>
-						<div class="label-with-edit-icon">
-							<%= label_for "${achievement_id}_id", begin =%>
-								<%= $_->achievement_id %>
-								<%= link_to $c->systemLink(
-										url_for('instructor_achievement_list'),
-										params => { editMode => 1, selected_achievements => $achievement_id }
-									),
-									begin %>
-									<i class="icon fas fa-pencil-alt" data-alt="edit" aria-hidden="true"></i>
-								<% end %>
-							<% end =%>
+						<div class="d-flex justify-content-between gap-1">
+							<%= label_for "${achievement_id}_id" => $_->achievement_id =%>
+							<%= link_to $c->systemLink(
+									url_for('instructor_achievement_list'),
+									params => { editMode => 1, selected_achievements => $achievement_id }
+								),
+								begin %>
+								<i class="icon fas fa-pencil-alt" data-alt="edit" aria-hidden="true"></i>
+							<% end %>
 						</div>
 					</td>
 					<td><%= $_->enabled ? maketext('Yes') : maketext('No') %></td>
@@ -53,6 +62,15 @@
 						<%= link_to "$num_users/$c->{totalUsers}" => $c->systemLink(
 							url_for('instructor_achievement_user_editor', achievementID => $achievement_id)
 						) =%>
+					</td>
+					<td class="text-nowrap">
+						<%= link_to $c->systemLink(
+							url_for('instructor_achievement_notification', achievementID => $achievement_id),
+						), begin =%>
+							<%= $_->email_template
+								? maketext('Edit Email Template')
+								: maketext('Enable Email Notification') =%>
+						<% end =%>
 					</td>
 					<td class="text-nowrap">
 						<%= link_to maketext('Edit Evaluator') => $c->systemLink(
@@ -67,5 +85,9 @@
 </div>
 %
 % unless (@$achievements) {
-	<p><i><%= maketext('No achievements shown.  Create an achievement!') %></i></p>
+	% if (@{ $c->{allAchievementIDs} }) {
+		<p><em><%= maketext('No achievements shown.  Use the filter above to list achievements.') %></em></p>
+	% } else {
+		<p><em><%= maketext('No course achievements.  Create or import achievements above.') %></em></p>
+	% }
 % }

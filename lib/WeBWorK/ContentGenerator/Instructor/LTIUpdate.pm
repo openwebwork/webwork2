@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -18,7 +18,8 @@
 package WeBWorK::ContentGenerator::Instructor::LTIUpdate;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
-use WeBWorK::Utils(qw(format_set_name_display getAssetURL));
+use WeBWorK::Utils(qw(getAssetURL));
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 use WeBWorK::Authen::LTI::MassUpdate qw(mass_update);
 
 sub initialize ($c) {

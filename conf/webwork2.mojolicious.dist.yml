@@ -1,4 +1,12 @@
 ---
+# Make sure to change this to your own secret.  Any long random string of
+# characters will work.  Note that you can add new secrets to this list, and it
+# is recommended that you do so once in a while. Only add to the beginning of
+# the list (and move the old secrets down).  The first secret is the only one
+# that will be used for signing new cookies, but the old secrets will be used
+# for validating signatures on existing cookies. Eventually the old secrets
+# should be removed (roughly after the length of time set for $sessionTimeout
+# in localOverrides.conf or defaults.config).
 secrets:
   - 607280d0b2c621220b554a1c6ed123aa1a96f2de
 
@@ -77,6 +85,32 @@ server_group: www-data
 # to the hypnotoad listen values below for this to work.  This should only be
 # used when serving the webwork2 app directly.
 redirect_http_to_https: 0
+
+# Change enable_certbot_webroot_routes to 1 to enable routes in the webwork2 app
+# used by certbot for certificate renewal with the webroot option. Note that
+# this should only be used when serving the webwork2 app directly. You will also
+# need to add "- http://*:80" as well as "- http://*:443" to the hypnotoad
+# listen values below for this to work.
+# Then execute
+# sudo certbot certonly --webroot -w /opt/webwork/webwork2/tmp \
+#   -d your.domain.edu \
+#   --post-hook "chown -R www-data:www-data /etc/letsencrypt && systemctl reload webwork2"
+# to renew certificates without needing to stop the webwork2 app. That command
+# will renew the certificate for the first time, and also set up autorenewal in
+# the future. Obviously your.domain.edu needs to be changed to your actual
+# domain name. Note that /opt/webwork/webwork2/tmp is the default value of
+# $webworkDirs{tmp}. If you customize $webworkDirs{tmp} in localOverrides.conf,
+# then you will need to use what you have that variable set to instead. Be
+# careful since the default value of $webworkDirs{tmp} depends on the value of
+# $webworkDirs{root} (which is /opt/webwork/webwork2 by default). So if you
+# customize $webworkDirs{root}, then you will need to adjust the path
+# accordingly. Also, change www-data:www-data in the command to be
+# server_user:server_group where server_user and server_group are the values of
+# those settings above. The post hook in the command will run every time that
+# certificates are automatically renewed, and will fix permissions on the new
+# certificates so that the webwork2 app can read them, and will hot reload the
+# webwork2 app to load the new certificates (with zero downtime).
+enable_certbot_webroot_routes: 0
 
 # hypnotoad server configuration
 # See https://docs.mojolicious.org/Mojo/Server/Daemon
@@ -205,3 +239,10 @@ debug:
 hardcopy:
   # If 1, don't delete temporary files created when a hardcopy is generated.
   preserve_temp_files: 0
+
+# Set this to 1 to allow the html2xml and render_rpc endpoints to disable
+# cookies and thus skip two factor authentication. This should never be enabled
+# for a typical webwork server.  This should only be enabled if you want to
+# allow serving content via these endpoints to links in external websites with
+# usernames and passwords embedded in them such as for PreTeXt textbooks.
+allow_unsecured_rpc: 0

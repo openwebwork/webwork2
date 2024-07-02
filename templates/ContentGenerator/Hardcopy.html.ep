@@ -5,7 +5,7 @@
 	% my %temp_file_map = %{ $c->{temp_file_map} // {} };
 	%
 	% if ($perm_view_errors) {
-		<p><%= maketext('Errors occured while generating hardcopy:') %></p>
+		<p><%= maketext('Errors occurred while generating hardcopy:') %></p>
 		<ul>
 			% for (@{ $c->get_errors }) {
 				<li><%= $_ %></li>

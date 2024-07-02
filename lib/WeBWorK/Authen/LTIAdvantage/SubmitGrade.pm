@@ -1,6 +1,6 @@
 ###############################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,7 +38,8 @@ use Digest::SHA qw(sha256_hex);
 use Time::HiRes;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets wwRound);
+use WeBWorK::Utils qw(wwRound);
+use WeBWorK::Utils::Sets qw(grade_set grade_gateway grade_all_sets);
 
 # This package contains utilities for submitting grades to the LMS via LTI 1.3.
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -50,7 +51,7 @@ sub new ($invocant, $c, $post_processing_mode = 0) {
 # is set, but these warnings are always sent to the debug log if debugging is enabled.
 sub warning ($self, $warning) {
 	debug($warning);
-	return unless $self->{c}{ce}{debug_lti_grade_passback};
+	return unless $self->{c}{ce}{debug_lti_grade_passback} || $self->{post_processing_mode};
 
 	if ($self->{post_processing_mode}) {
 		$self->{c}{app}->log->info($warning);
@@ -117,16 +118,17 @@ async sub get_access_token ($self) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 	my $db = $c->{db};
+	$c = $c->{app} if $self->{post_processing_mode};
 
 	my $current_token = decode_json($db->getSettingValue('LTIAdvantageAccessToken') // '{}');
 
-	# If the token is still valid (and not about to expire) then it can still be used.
+	# If the token has not expired and is not about to expire, then it can still be used.
 	if (%$current_token && $current_token->{timestamp} + $current_token->{expires_in} > time + 60) {
 		$self->warning('Using current access token from database.');
 		return $current_token;
 	}
 
-	# The token is about to expire, so get a new one.
+	# The token is expired or about to, so get a new one.
 
 	my ($private_key, $err) = get_site_key($ce, 1);
 	if (!$private_key) {
@@ -150,7 +152,7 @@ async sub get_access_token ($self) {
 		);
 	};
 	if ($@) {
-		$self->warning("Error encoding JWT: $@") if $@;
+		$self->warning("Error encoding JWT: $@");
 		return;
 	}
 

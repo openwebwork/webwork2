@@ -24,39 +24,48 @@
 		const name = open_rule.name.replace('.open_date', '');
 
 		const groupRules = [
-			open_rule,
-			document.querySelector('input[id="' + name + '.due_date_id"]'),
-			document.querySelector('input[id="' + name + '.answer_date_id"]')
+			[open_rule],
+			[document.getElementById(`${name}.due_date_id`)],
+			[document.getElementById(`${name}.answer_date_id`)]
 		];
 
-		const reduced_rule = document.querySelector('input[id="' + name + '.reduced_scoring_date_id"]');
-		if (reduced_rule) groupRules.splice(1, 0, reduced_rule);
+		const reduced_rule = document.getElementById(`${name}.reduced_scoring_date_id`);
+		if (reduced_rule) groupRules.splice(1, 0, [reduced_rule]);
+
+		// Compute the time difference between the current browser timezone and the course timezone.
+		// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
+		// Note that this is in seconds.
+		const timezoneAdjustment =
+			new Date(new Date().toLocaleString('en-US')).getTime() -
+			new Date(
+				new Date().toLocaleString('en-US', { timeZone: open_rule.dataset.timezone ?? 'America/New_York' })
+			).getTime();
+
+		for (const rule of groupRules) {
+			const value =
+				rule[0].value || document.getElementsByName(`${rule[0].name}.class_value`)[0]?.dataset.classValue;
+			rule.push(value ? parseInt(value) * 1000 - timezoneAdjustment : 0);
+		}
 
 		const update = () => {
 			for (let i = 1; i < groupRules.length; ++i) {
-				const prevFieldDate = groupRules[i - 1].parentNode._flatpickr.selectedDates[0];
-				const thisFieldDate = groupRules[i].parentNode._flatpickr.selectedDates[0];
+				const prevFieldDate =
+					groupRules[i - 1][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() || groupRules[i - 1][1];
+				const thisFieldDate =
+					groupRules[i][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() || groupRules[i][1];
 				if (prevFieldDate && thisFieldDate && prevFieldDate > thisFieldDate) {
-					groupRules[i].parentNode._flatpickr.setDate(prevFieldDate, true);
+					groupRules[i][0].parentNode._flatpickr.setDate(prevFieldDate, true);
 				}
 			}
 		};
 
 		for (const rule of groupRules) {
-			const orig_value = rule.value;
+			const orig_value = rule[0].value;
+			let fallbackDate = rule[1] ? new Date(rule[1]) : new Date();
 
-			luxon.Settings.defaultLocale = rule.dataset.locale ?? 'en';
+			luxon.Settings.defaultLocale = rule[0].dataset.locale ?? 'en';
 
-			// Compute the time difference between the current browser timezone and the course timezone.
-			// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
-			// Note that this is in seconds.
-			const timezoneAdjustment = (
-				(new Date((new Date).toLocaleString('en-US'))).getTime() -
-				(new Date((new Date).toLocaleString('en-US',
-					{ timeZone: rule.dataset.timezone ?? 'America/New_York' }))).getTime()
-			);
-
-			const fp = flatpickr(rule.parentNode, {
+			const fp = flatpickr(rule[0].parentNode, {
 				allowInput: true,
 				enableTime: true,
 				minuteIncrement: 1,
@@ -74,15 +83,15 @@
 				disableMobile: true,
 				wrap: true,
 				plugins: [
-					new confirmDatePlugin({ confirmText: rule.dataset.doneText ?? 'Done', showAlways: true }),
+					new confirmDatePlugin({ confirmText: rule[0].dataset.doneText ?? 'Done', showAlways: true }),
 					new ShortcutButtonsPlugin({
 						button: [
 							{
-								label: rule.dataset.todayText ?? 'Today',
+								label: rule[0].dataset.todayText ?? 'Today',
 								attributes: { class: 'btn btn-sm btn-secondary ms-auto me-1 mb-1' }
 							},
 							{
-								label: rule.dataset.nowText ?? 'Now',
+								label: rule[0].dataset.nowText ?? 'Now',
 								attributes: { class: 'btn btn-sm btn-secondary me-auto mb-1' }
 							}
 						],
@@ -101,16 +110,24 @@
 						}
 					})
 				],
-				onChange(selectedDates) {
+				onChange() {
 					if (this.input.value === orig_value) this.altInput.classList.remove('changed');
 					else this.altInput.classList.add('changed');
 				},
 				onClose: update,
-				onReady(selectedDates) {
+				onReady() {
 					// Flatpickr hides the original input and adds the alternate input after it.  That messes up the
 					// bootstrap input group styling.  So move the now hidden original input after the created alternate
 					// input to fix that.
 					this.altInput.after(this.input);
+
+					// Move the id of the now hidden input onto the added input so the labels still work.
+					this.altInput.id = this.input.id;
+
+					// Remove the placeholder from the hidden input.  Flatpickr has copied that to the added input, and
+					// that isn't valid on a hidden input.
+					this.input.removeAttribute('id');
+					this.input.removeAttribute('placeholder');
 
 					// Make the alternate input left-to-right even for right-to-left languages.
 					this.altInput.dir = 'ltr';
@@ -125,17 +142,14 @@
 					// Next attempt to parse the datestr with the current format.  This should not be adjusted.  It is
 					// for display only.
 					const date = luxon.DateTime.fromFormat(datestr.replaceAll(/\u202F/g, ' ').trim(), format);
-					if (date.isValid) return date.toJSDate();
+					if (date.isValid) fallbackDate = date.toJSDate();
 
 					// Finally, fall back to the previous value in the original input if that failed.  This is the case
 					// that the user typed a time that isn't in the valid format. So fallback to the last valid time
 					// that was displayed. This also should not be adjusted.
-					return new Date(this.lastFormattedDate.getTime());
+					return fallbackDate;
 				},
 				formatDate(date, format) {
-					// Save this date for the fallback in parseDate.
-					this.lastFormattedDate = date;
-
 					// In this case the date provided is in the browser's time zone.  So it needs to be adjusted to the
 					// timezone of the course.
 					if (format === 'U') return (date.getTime() + timezoneAdjustment) / 1000;
@@ -146,7 +160,7 @@
 				}
 			});
 
-			rule.nextElementSibling.addEventListener('keydown', (e) => {
+			rule[0].nextElementSibling.addEventListener('keydown', (e) => {
 				if (e.key === ' ' || e.key === 'Enter') {
 					e.preventDefault();
 					fp.open();

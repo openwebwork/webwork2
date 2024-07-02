@@ -1,55 +1,46 @@
 #!/usr/bin/env perl
 
-use open IO => ':encoding(UTF-8)';
+use strict;
+use warnings;
+use feature 'say';
 
-# ==================================================================
+use Mojo::File qw(curfile path);
 
-# 2 subroutines copied from lib/WeBWorK/Utils.pm from WW 2.16 version
-
-sub cryptPassword($) {
-	my ($clearPassword) = @_;
-	#Use an SHA512 salt with 16 digits
-	my $salt = '$6$';
-	for (my $i = 0; $i < 16; $i++) {
-		$salt .= ('.', '/', '0' .. '9', 'A' .. 'Z', 'a' .. 'z')[ rand 64 ];
-	}
-
-	my $cryptPassword = crypt(trim_spaces($clearPassword), $salt);
-	return $cryptPassword;
+BEGIN {
+	use Env qw(WEBWORK_ROOT);
+	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
 
-## Utility function to trim whitespace off the start and end of its input
-sub trim_spaces {
-	my $in = shift;
-	return '' unless $in;    # skip blank spaces
-	$in =~ s/^\s*|\s*$//g;
-	return ($in);
+use lib "$ENV{WEBWORK_ROOT}/lib";
+
+use WeBWorK::Utils qw(cryptPassword);
+use WeBWorK::File::Classlist qw(parse_classlist write_classlist);
+
+unless (@ARGV == 1) {
+	say 'Usage: crypt_passwords_in_classlist.pl filename';
+	exit 0;
 }
 
-# ==================================================================
-my $inputfile = shift;
-my $outfile   = "crypted_" . $inputfile;
+my $infile  = shift;
+my $outfile = "crypted_$infile";
 
-if (-e $inputfile && -r $inputfile) {
-	my $fh;
-	my $outfh;
-	open(my $fh,    "<", $inputfile) or die "cannot open $inputfile";
-	open(my $outfh, ">", $outfile)   or die "cannot open $outfile";
-	my $line;
-	my @fields;
-	while ($line = <$fh>) {
-		if ($line =~ /^#/) {
-			# Do not process comment lines
-			print $outfh $line;
-		} else {
-			@fields = split(",", $line);
-			$fields[9] = cryptPassword($fields[9]);
-			print $outfh join(",", @fields);
-		}
+if (-e $outfile) {
+	print qq{The file "$outfile" exists. Do you want to proceed and overwrite "$outfile"? (Y/n) };
+	my $input = <>;
+	chomp $input;
+	unless ($input eq 'Y') {
+		say 'Aborting.';
+		exit 0;
 	}
-	close $outfh or die "cannot close $outfile";
-	close $fh    or die "cannot close $inputfile";
-	print "Output is in the file $outfile\n";
+}
+
+if (-e $infile && -r $infile) {
+	my @classlist = parse_classlist($infile);
+	for (@classlist) {
+		$_->{password} = cryptPassword($_->{password} || $_->{user_id});
+	}
+	write_classlist($outfile, @classlist);
+	say qq{Output written to the file "$outfile".};
 } else {
-	print "Usage: crypt_passwords_in_classlist.pl filename";
+	say qq{The file "$infile" is does not exist or is not readable.};
 }

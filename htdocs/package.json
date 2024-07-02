@@ -4,34 +4,37 @@
     "license": "GPL-2.0+",
     "scripts": {
         "generate-assets": "node generate-assets",
-        "prepare": "npm run generate-assets"
+        "prepare": "npm run generate-assets",
+        "prettier-format": "prettier --ignore-path=../.gitignore --write \"**/*.{js,css,scss,html}\" \"../**/*.dist.yml\"",
+        "prettier-check": "prettier --ignore-path=../.gitignore --check \"**/*.{js,css,scss,html}\" \"../**/*.dist.yml\""
     },
     "repository": {
         "type": "git",
         "url": "https://github.com/openwebwork/webwork2"
     },
     "dependencies": {
-        "@fortawesome/fontawesome-free": "^6.2.1",
-        "bootstrap": "~5.2.3",
-        "codemirror": "^5.65.11",
+        "@fortawesome/fontawesome-free": "^6.5.2",
+        "bootstrap": "~5.3.3",
+        "codemirror": "^5.65.15",
         "flatpickr": "^4.6.13",
-        "iframe-resizer": "^4.3.2",
-        "jquery": "^3.6.3",
+        "iframe-resizer": "^4.3.11",
+        "jquery": "^3.7.1",
         "jquery-ui-dist": "^1.13.2",
-        "luxon": "^3.2.1",
+        "luxon": "^3.4.4",
         "mathjax": "^3.2.2",
         "shortcut-buttons-flatpickr": "^0.4.0",
-        "sortablejs": "^1.15.0"
+        "sortablejs": "^1.15.2"
     },
     "devDependencies": {
-        "autoprefixer": "^10.4.13",
-        "chokidar": "^3.5.3",
-        "cssnano": "^6.0.0",
-        "postcss": "^8.4.31",
-        "rtlcss": "^4.0.0",
-        "sass": "^1.57.1",
-        "terser": "^5.16.1",
-        "yargs": "^17.6.2"
+        "autoprefixer": "^10.4.19",
+        "chokidar": "^3.6.0",
+        "cssnano": "^6.1.2",
+        "postcss": "^8.4.38",
+        "prettier": "^3.2.5",
+        "rtlcss": "^4.1.1",
+        "sass": "^1.75.0",
+        "terser": "^5.30.4",
+        "yargs": "^17.7.2"
     },
     "browserslist": [
         "last 10 Chrome versions",

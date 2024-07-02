@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,12 +49,14 @@ use HTML::Entities;
 use Encode;
 
 use WeBWorK::File::Scoring qw(parse_scoring_file);
-use WeBWorK::PG;
 use WeBWorK::Localize;
-use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients generateURLs getAssetURL format_set_name_display);
-use WeBWorK::Authen::LTI::MassUpdate qw(mass_update);
+use WeBWorK::Utils qw(fetchEmailRecipients generateURLs getAssetURL);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 use WeBWorK::Utils::LanguageAndDirection qw(get_lang_and_dir);
+use WeBWorK::Utils::Logs qw(writeCourseLog);
 use WeBWorK::Utils::Routes qw(route_title route_navigation_is_restricted);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
+use WeBWorK::Authen::LTI::MassUpdate qw(mass_update);
 
 =head1 INVOCATION
 
@@ -117,10 +119,12 @@ async sub go ($c) {
 
 	# We only write to the activity log if it has been defined and if we are in a specific course.  The latter check is
 	# to prevent attempts to write to a course log file when viewing the top-level list of courses page.
-	WeBWorK::Utils::writeCourseLog($ce, 'activity_log', $c->prepare_activity_entry)
+	writeCourseLog($ce, 'activity_log', $c->prepare_activity_entry)
 		if ($c->stash('courseID') && $c->ce->{courseFiles}{logs}{activity_log});
 
 	my $tx = $c->render_later->tx;
+
+	$c->stash->{footerWidthClass} = $c->can('info') ? 'col-md-8' : 'col-12';
 
 	if ($c->can('pre_header_initialize')) {
 		my $pre_header_initialize = $c->pre_header_initialize;
@@ -265,8 +269,9 @@ message() template escape handler.
 
 sub addgoodmessage ($c, $message) {
 	$c->addmessage($c->tag(
-		'p',
+		'div',
 		class => 'alert alert-success alert-dismissible fade show ps-1 py-1',
+		role  => 'alert',
 		$c->c(
 			$message,
 			$c->tag(
@@ -290,8 +295,9 @@ message() template escape handler.
 
 sub addbadmessage ($c, $message) {
 	$c->addmessage($c->tag(
-		'p',
+		'div',
 		class => 'alert alert-danger alert-dismissible fade show ps-1 py-1',
+		role  => 'alert',
 		$c->c(
 			$message,
 			$c->tag(
@@ -395,17 +401,22 @@ Create the link to the webwork installation landing page with a logo and alt tex
 =cut
 
 sub webwork_logo ($c) {
-	my $ce     = $c->ce;
-	my $theme  = $c->param('theme') || $ce->{defaultTheme};
-	my $htdocs = $ce->{webwork_htdocs_url};
+	my $ce = $c->ce;
 
 	if ($c->authen->was_verified && !$c->authz->hasPermissions($c->param('user'), 'navigation_allowed')) {
 		# If navigation is restricted for this user, then the webwork logo is not a link to the courses page.
-		return $c->tag('span', $c->image("$htdocs/themes/$theme/images/webwork_logo.svg", alt => 'WeBWorK'));
+		return $c->tag(
+			'span',
+			$c->image(
+				"$ce->{webwork_htdocs_url}/themes/$ce->{defaultTheme}/images/webwork_logo.svg",
+				alt => 'WeBWorK'
+			)
+		);
 	} else {
 		return $c->link_to(
-			$c->image("$htdocs/themes/$theme/images/webwork_logo.svg", alt => $c->maketext('to courses page')) =>
-				$ce->{webwork_url});
+			$c->image("$ce->{webwork_htdocs_url}/themes/$ce->{defaultTheme}/images/webwork_logo.svg",
+				alt => $c->maketext('to courses page')) => $ce->{webwork_url}
+		);
 	}
 }
 
@@ -416,12 +427,10 @@ Create the link to the host institution with a logo and alt text
 =cut
 
 sub institution_logo ($c) {
-	my $ce     = $c->ce;
-	my $theme  = $c->param("theme") || $ce->{defaultTheme};
-	my $htdocs = $ce->{webwork_htdocs_url};
+	my $ce = $c->ce;
 	return $c->link_to(
 		$c->image(
-			"$htdocs/themes/$theme/images/" . $ce->{institutionLogo},
+			"$ce->{webwork_htdocs_url}/themes/$ce->{defaultTheme}/images/$ce->{institutionLogo}",
 			alt => $c->maketext("to [_1] main web site", $ce->{institutionName})
 		) => $ce->{institutionURL}
 	);
@@ -433,43 +442,13 @@ Defined in this package.
 
 Print the content of the generated page.
 
-This renders a Mojo::Template.
-
-The defaultThemeTemplate in the course environment is used for the page layout.
-If that is not defined, the default "system" template, is used. The location of
-the template is looked up in the course environment.
+This renders the Mojo::Template corresponding to the called ContentGenerator sub-package.
 
 =cut
 
 sub content ($c) {
 	my $ce = $c->ce;
-
-	my $theme = $c->param('theme') || $ce->{defaultTheme};
-	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
-
-	my $layout = $ce->{defaultThemeTemplate} // 'system';
-
-	my $layoutName = "$theme/$layout";
-
-	# Attempt to prevent disaster when the theme layout file is missing.
-	unless (-r "$ce->{webworkDirs}{themes}/$theme/$layout.html.ep") {
-		if (-r "$ce->{webworkDirs}{themes}/math4/$layout.html.ep") {
-			$layoutName = "math4/$layout";
-			$theme      = HTML::Entities::encode_entities($theme);
-			warn "Theme $theme is not one of the available themes. "
-				. 'Please check the theme configuration '
-				. 'in the files localOverrides.conf, course.conf and '
-				. "simple.conf and on the course configuration page.\n";
-		} else {
-			$theme = HTML::Entities::encode_entities($theme);
-			die "Neither the theme $theme nor the defaultTheme math4 are available.  "
-				. 'Please notify your site administrator that the structure of the '
-				. 'themes directory needs attention.';
-
-		}
-	}
-
-	return $c->render(template => ((ref($c) =~ s/^WeBWorK:://r) =~ s/::/\//gr), layout => $layoutName);
+	return $c->render(template => ((ref($c) =~ s/^WeBWorK:://r) =~ s/::/\//gr), layout => 'system');
 }
 
 =back
@@ -526,8 +505,8 @@ sub links ($c) {
 	my $restricted_navigation = $authen->was_verified && !$authz->hasPermissions($userID, 'navigation_allowed');
 
 	# If navigation is restricted and the setID was not in the route stash,
-	# then get the setID this user is restricted to view from the authen cookie.
-	$setID = $authen->get_session_set_id if (!$setID && $restricted_navigation);
+	# then get the setID this user is restricted to view from the session.
+	$setID = $authen->session('set_id') if !$setID && $restricted_navigation;
 
 	my $prettyProblemID = $problemID;
 
@@ -666,19 +645,15 @@ Print links to siblings of the current object.
 
 Defined in this package.
 
-Display the current time and date using default format "3:37pm on Jan 7, 2004".
-The display format can be adjusted by giving a style in the template.
-For example,
+Display the current time and date in the 'datetime_format_long' format.  For
+example, for the 'en' language this will give "January 4, 2023 at 8:54:33 PM EST".
+Note that the "at" is replaced with a comma for the latest version of
+DateTime::Locale::FromData.
 
-  <!--#timestamp style="%m/%d/%y at %I:%M%P"-->
-
-will give standard WeBWorK time format.  Wording and other formatting
-can be done in the template itself.
 =cut
 
 sub timestamp ($c) {
-	# Need to use the formatDateTime in this file (some subclasses access Util's version).
-	return $c->formatDateTime(time);
+	return $c->formatDateTime(time, 'datetime_format_long');
 }
 
 =item message()
@@ -1056,6 +1031,8 @@ inputs that are created.
 
 =cut
 
+# FIXME: Hidden fields have no need for an id attribute.  Fix the javascript that finds these in by using the id, and
+# remove the id here.  Then the id_prefix hack isn't needed.  The name does not need to be unique.
 sub hidden_fields ($c, @fields) {
 	my %options   = ref $fields[0] eq 'HASH' ? %{ shift @fields } : ();
 	my $id_prefix = $options{id_prefix} // '';
@@ -1081,27 +1058,19 @@ authentication.
 
 An optional $id_prefix may be passed as the first argument of this method.
 
+If session_management_via is "session_cookie" then the hidden authentication
+fields that are return are for the "user" and the "effectiveUser".  If
+session_management_via is "key" then the "key" is added.
+
 =cut
 
+# FIXME: The "user" also should not be added to forms when session_management_via is "session_cookie". However, the
+# user param is used everywhere to get the user id.  That should be changed.
 sub hidden_authen_fields ($c, $id_prefix = undef) {
-	return $c->hidden_fields({ id_prefix => $id_prefix }, 'user', 'effectiveUser', 'key', 'theme')
-		if defined $id_prefix;
-	return $c->hidden_fields('user', 'effectiveUser', 'key', 'theme');
-}
-
-=item hidden_proctor_authen_fields()
-
-Use hidden_fields to return hidden <INPUT> tags for request fields used in
-proctor authentication.
-
-=cut
-
-sub hidden_proctor_authen_fields ($c) {
-	if ($c->param('proctor_user')) {
-		return $c->hidden_fields('proctor_user', 'proctor_key');
-	} else {
-		return '';
-	}
+	my @fields = ('user', 'effectiveUser');
+	push(@fields, 'key') if $c->ce->{session_management_via} ne 'session_cookie';
+	return $c->hidden_fields({ id_prefix => $id_prefix }, @fields) if defined $id_prefix;
+	return $c->hidden_fields(@fields);
 }
 
 =item url_args(@fields)
@@ -1137,9 +1106,9 @@ sub url_authen_args ($c) {
 	# to reveal the user and key in the URL. Putting it there makes session
 	# hijacking easier, in particular should a student share such a URL.
 	if ($ce->{session_management_via} eq 'session_cookie') {
-		return $c->url_args('effectiveUser', 'theme');
+		return $c->url_args('effectiveUser');
 	} else {
-		return $c->url_args('user', 'effectiveUser', 'key', 'theme');
+		return $c->url_args('user', 'effectiveUser', 'key');
 	}
 }
 
@@ -1218,7 +1187,6 @@ sub systemLink ($c, $urlpath, %options) {
 		}
 
 		$params{effectiveUser} = undef unless exists $params{effectiveUser};
-		$params{theme}         = undef unless exists $params{theme};
 	}
 
 	my $url = $options{use_abs_url} ? $urlpath->to_abs : $urlpath;
@@ -1263,34 +1231,29 @@ sub warningMessage ($c) {
 			. 'Please inform your instructor including the warning messages below.');
 }
 
-=item $dateTime = parseDateTime($string, $display_tz)
+=item $string = formatDateTime($date_time, $format_string, $timezone, $locale)
 
-Parses $string as a datetime. If $display_tz is given, $string is assumed to be
-in that timezone. Otherwise, the timezone defined in the course environment
-variable $siteDefaults{timezone} is used. The result, $dateTime, is an integer
-UNIX datetime (epoch) in the server's timezone.
+Formats a C<$date_time> epoch into a string in the format defined by
+C<$format_string>. If C<$format_string> is not provided, the default WeBWorK
+date/time format is used.  If C<$format_string> is a method of the
+C<< $dt->locale >> instance, then C<format_cldr> is used, and otherwise
+C<strftime> is used. The available patterns for $format_string can be found at
+L<DateTime/strftime Patterns>. The available methods for the C<< $dt->locale >>
+instance are documented at L<DateTime::Locale::FromData>. If C<$timezone> is
+given, then the formatted string that is returned is in the specified timezone.
+If C<$locale> is provided, the string returned will be in the format of that
+locale. If C<$locale> is not provided, Perl defaults to using C<en-US>.
 
-=cut
-
-sub parseDateTime ($c, $string, $display_tz = undef) {
-	return WeBWorK::Utils::parseDateTime($string, $display_tz || $c->ce->{siteDefaults}{timezone});
-}
-
-=item $string = formatDateTime($dateTime, $display_tz)
-
-Formats the UNIX datetime $dateTime in the standard WeBWorK datetime format.
-$dateTime is assumed to be in the server's time zone. If $display_tz is given,
-the datetime is converted from the server's timezone to the timezone specified.
-Otherwise, the timezone defined in the course environment variable
-$siteDefaults{timezone} is used.
+Note that the defaults for C<$timezone> and C<$locale> should almost never be
+overriden when this method is used.
 
 =cut
 
-sub formatDateTime ($c, $dateTime, $display_tz = undef, $formatString = undef, $locale = undef) {
+sub formatDateTime ($c, $date_time, $format_string = undef, $timezone = undef, $locale = undef) {
 	my $ce = $c->ce;
-	$display_tz ||= $ce->{siteDefaults}{timezone};
-	$locale     ||= $ce->{siteDefaults}{locale};
-	return WeBWorK::Utils::formatDateTime($dateTime, $display_tz, $formatString, $locale);
+	$timezone ||= $ce->{siteDefaults}{timezone};
+	$locale   ||= $ce->{language};
+	return WeBWorK::Utils::DateTime::formatDateTime($date_time, $format_string, $timezone, $locale);
 }
 
 =item read_scoring_file($fileName)

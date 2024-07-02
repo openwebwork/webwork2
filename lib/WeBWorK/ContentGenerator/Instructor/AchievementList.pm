@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -48,17 +48,18 @@ use Mojo::File;
 use Text::CSV;
 
 use WeBWorK::Utils qw(sortAchievements x);
-use WeBWorK::Utils::Instructor qw(read_dir);
+use WeBWorK::Utils::Files qw(surePathToFile);
 
 # Forms
 use constant EDIT_FORMS   => [qw(save_edit cancel_edit)];
-use constant VIEW_FORMS   => [qw(edit assign import export score create delete)];
+use constant VIEW_FORMS   => [qw(filter edit assign import export score create delete)];
 use constant EXPORT_FORMS => [qw(save_export cancel_export)];
 
 # Prepare the tab titles for translation by maketext
 use constant FORM_TITLES => {
 	save_edit     => x('Save Edit'),
 	cancel_edit   => x('Cancel Edit'),
+	filter        => x('Filter'),
 	edit          => x('Edit'),
 	assign        => x('Assign'),
 	import        => x('Import'),
@@ -82,28 +83,13 @@ sub initialize ($c) {
 	$c->stash->{formsToShow}  = VIEW_FORMS();
 	$c->stash->{formTitles}   = FORM_TITLES();
 	$c->stash->{achievements} = [];
+	$c->stash->{axpList}      = [];
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, 'edit_achievements');
 
 	# Set initial values for state fields
 	my @allAchievementIDs = $db->listAchievements;
-
-	#### Temporary Transition Code ####
-	# If an achievement doesn't have either a number or an assignment_type
-	# then its probably an old achievement in which case we should
-	# update its assignment_type to include 'default'.
-	# This whole block of code can be removed once people have had time
-	# to transition over.  (I.E. around 2017)
-
-	for my $achievementID (@allAchievementIDs) {
-		my $achievement = $db->getAchievement($achievementID);
-		unless ($achievement->assignment_type || $achievement->number) {
-			$achievement->assignment_type('default');
-			$db->putAchievement($achievement);
-		}
-	}
-	### End Transition Code.  ###
 
 	my @users = $db->listUsers;
 	$c->{allAchievementIDs} = \@allAchievementIDs;
@@ -112,6 +98,14 @@ sub initialize ($c) {
 	$c->{selectedAchievementIDs} = [ $c->param('selected_achievements') ];
 
 	$c->{editMode} = $c->param('editMode') || 0;
+
+	if (defined $c->param('visible_achievements')) {
+		$c->{visibleAchievementIDs} = [ $c->param('visible_achievements') ];
+	} elsif (defined $c->param('no_visible_achievements')) {
+		$c->{visibleAchievementIDs} = [];
+	} else {
+		$c->{visibleAchievementIDs} = $c->{allAchievementIDs};
+	}
 
 	# Call action handler
 	my $actionID = $c->param('action');
@@ -124,27 +118,63 @@ sub initialize ($c) {
 		my $actionHandler = "${actionID}_handler";
 		my ($success, $action_result) = $c->$actionHandler;
 		if ($success) {
-			$c->addgoodmessage($c->b($c->maketext('Result of last action performed: [_1]', $action_result)));
+			$c->addgoodmessage($c->b($action_result));
 		} else {
-			$c->addbadmessage($c->b($c->maketext('Result of last action performed: [_1]', $action_result)));
+			$c->addbadmessage($c->b($action_result));
 		}
-	} else {
-		$c->addgoodmessage($c->maketext('Please select action to be performed.'));
 	}
 
 	$c->stash->{formsToShow} = $c->{editMode} ? EDIT_FORMS() : $c->{exportMode} ? EXPORT_FORMS() : VIEW_FORMS();
+	$c->stash->{axpList}     = [ $c->getAxpList ] unless $c->{editMode} || $c->{exportMode};
 
 	# Get and sort achievements. Achievements are sorted by in the order they are evaluated.
-	$c->stash->{achievements} = [ sortAchievements($c->db->getAchievements(@{ $c->{allAchievementIDs} })) ];
+	$c->stash->{achievements} =
+		$c->{showAllAchievements}
+		? [ sortAchievements($c->db->getAchievements(@{ $c->{allAchievementIDs} })) ]
+		: [ sortAchievements($c->db->getAchievements(@{ $c->{visibleAchievementIDs} })) ];
 
 	return;
 }
 
 # Actions handlers.
 # The forms for all of the actions are templates.
-# edit, cancel_edit, and save_edit should stay with the display module and
+# filter, edit, cancel_edit, and save_edit should stay with the display module and
 # not be real "actions". that way, all actions are shown in view mode and no
 # actions are shown in edit mode.
+
+sub filter_handler ($c) {
+	my $db    = $c->db;
+	my $scope = $c->param('action.filter.scope');
+	my $result;
+
+	if ($scope eq 'all') {
+		$result = $c->maketext('Showing all achievements.');
+		$c->{visibleAchievementIDs} = $c->{allAchievementIDs};
+	} elsif ($scope eq 'selected') {
+		$result = $c->maketext('Showing selected achievements.');
+		$c->{visibleAchievementIDs} = [ $c->param('selected_achievements') ];
+	} elsif ($scope eq 'match_ids') {
+		$result = $c->maketext('Showing matching achievements.');
+		my $terms = join('|', split(/\s*,\s*/, $c->param('action.filter.achievement_ids')));
+		$c->{visibleAchievementIDs} = [ grep {/$terms/i} @{ $c->{allAchievementIDs} } ];
+	} elsif ($scope eq 'match_category') {
+		my $category = $c->param('action.filter.category') // '';
+		$c->{visibleAchievementIDs} = [ map { $_->[0] } $db->listAchievementsWhere({ category => $category }) ];
+		if (@{ $c->{visibleAchievementIDs} }) {
+			$result = $c->maketext('Showing achievements in category [_1].', $category);
+		} else {
+			$result = $c->maketext('No achievements in category [_1].', $category);
+		}
+	} elsif ($scope eq 'enabled') {
+		$result = $c->maketext('Showing enabled achievements.');
+		$c->{visibleAchievementIDs} = [ map { $_->[0] } $db->listAchievementsWhere({ enabled => 1 }) ];
+	} elsif ($scope eq 'disabled') {
+		$result = $c->maketext('Showing disabled achievements.');
+		$c->{visibleAchievementIDs} = [ map { $_->[0] } $db->listAchievementsWhere({ enabled => 0 }) ];
+	}
+
+	return (1, $result);
+}
 
 # Handler for editing achievements.  Just changes the view mode.
 sub edit_handler ($c) {
@@ -153,9 +183,10 @@ sub edit_handler ($c) {
 	my $scope = $c->param('action.edit.scope');
 	if ($scope eq "all") {
 		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
-		$result = $c->maketext("editing all achievements");
+		$result                      = $c->maketext('Editing all achievements.');
+		$c->{showAllAchievements}    = 1;
 	} elsif ($scope eq "selected") {
-		$result = $c->maketext("editing selected achievements");
+		$result = $c->maketext('Editing selected achievements.');
 	}
 	$c->{editMode} = 1;
 
@@ -164,20 +195,11 @@ sub edit_handler ($c) {
 
 # Handler for assigning achievements to users
 sub assign_handler ($c) {
-	my $db = $c->db;
-	my $ce = $c->ce;
-
-	my $scope     = $c->param('action.assign.scope');
-	my $overwrite = $c->param('action.assign.overwrite') eq 'everything';
-
-	my @achievementIDs;
-	my @users = $db->listUsers;
-
-	if ($scope eq "all") {
-		@achievementIDs = @{ $c->{allAchievementIDs} };
-	} else {
-		@achievementIDs = @{ $c->{selectedAchievementIDs} };
-	}
+	my $db             = $c->db;
+	my @users          = $db->listUsers;
+	my $overwrite      = $c->param('action.assign.overwrite') eq 'everything';
+	my $scope          = $c->param('action.assign.scope');
+	my @achievementIDs = $scope eq 'all' ? @{ $c->{allAchievementIDs} } : @{ $c->{selectedAchievementIDs} };
 
 	# Enable all achievements
 	my @achievements = $db->getAchievements(@achievementIDs);
@@ -219,29 +241,20 @@ sub assign_handler ($c) {
 		}
 	}
 
-	return (1, $c->maketext('Assigned achievements to users'));
+	return (1, $c->maketext('Assigned achievements to users.'));
 }
 
 # Handler for scoring
 sub score_handler ($c) {
-	my $ce         = $c->ce;
-	my $db         = $c->db;
-	my $courseName = $c->stash('courseID');
-
-	my $scope = $c->param('action.score.scope');
-	my @achievementsToScore;
-
-	if ($scope eq "none") {
-		@achievementsToScore = ();
-	} elsif ($scope eq "all") {
-		@achievementsToScore = @{ $c->{allAchievementIDs} };
-	} elsif ($scope eq "selected") {
-		@achievementsToScore = $c->param('selected_achievements');
-	}
+	my $ce                  = $c->ce;
+	my $db                  = $c->db;
+	my $courseName          = $c->stash('courseID');
+	my $scope               = $c->param('action.score.scope');
+	my @achievementsToScore = $scope eq 'all' ? @{ $c->{allAchievementIDs} } : $c->param('selected_achievements');
 
 	# Define file name
 	my $scoreFileName = $courseName . "_achievement_scores.csv";
-	my $scoreFilePath = $ce->{courseDirs}->{scoring} . '/' . $scoreFileName;
+	my $scoreFilePath = $ce->{courseDirs}{scoring} . '/' . $scoreFileName;
 
 	# Back up existing file
 	if (-e $scoreFilePath) {
@@ -250,7 +263,7 @@ sub score_handler ($c) {
 	}
 
 	# Check path and open the file
-	$scoreFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{scoring}, $scoreFilePath);
+	$scoreFilePath = surePathToFile($ce->{courseDirs}{scoring}, $scoreFilePath);
 
 	my $SCORE = Mojo::File->new($scoreFilePath)->open('>:encoding(UTF-8)')
 		or return (0, $c->maketext("Failed to open [_1]", $scoreFilePath));
@@ -311,7 +324,7 @@ sub score_handler ($c) {
 	return (
 		1,
 		$c->b($c->maketext(
-			'Achievement scores saved to [_1]',
+			'Achievement scores saved to [_1].',
 			$c->link_to(
 				$scoreFileName => $c->systemLink(
 					$c->url_for('instructor_file_manager'),
@@ -325,16 +338,12 @@ sub score_handler ($c) {
 
 # Handler for delete action
 sub delete_handler ($c) {
-	my $db = $c->db;
+	my $db      = $c->db;
+	my $confirm = $c->param('action.delete.confirm');
 
-	my $scope = $c->param('action.delete.scope');
+	return (1, $c->maketext('Deleted [quant,_1,achievement].', 0)) unless ($confirm eq 'yes');
 
-	my @achievementIDsToDelete = ();
-
-	if ($scope eq "selected") {
-		@achievementIDsToDelete = @{ $c->{selectedAchievementIDs} };
-	}
-
+	my @achievementIDsToDelete = @{ $c->{selectedAchievementIDs} };
 	my %allAchievementIDs      = map { $_ => 1 } @{ $c->{allAchievementIDs} };
 	my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
 
@@ -350,8 +359,7 @@ sub delete_handler ($c) {
 	$c->{allAchievementIDs}      = [ keys %allAchievementIDs ];
 	$c->{selectedAchievementIDs} = [ keys %selectedAchievementIDs ];
 
-	my $num = @achievementIDsToDelete;
-	return (1, $c->maketext('Deleted [quant,_1,achievement]', $num));
+	return (1, $c->maketext('Deleted [quant,_1,achievement].', scalar @achievementIDsToDelete));
 }
 
 # Handler for creating an ahcievement
@@ -364,7 +372,7 @@ sub create_handler ($c) {
 	my $newAchievementID = $c->param('action.create.id');
 	return (0, $c->maketext("Failed to create new achievement: no achievement ID specified!"))
 		unless $newAchievementID =~ /\S/;
-	return (0, $c->maketext("Achievement [_1] exists.  No achievement created", $newAchievementID))
+	return (0, $c->maketext("Achievement [_1] exists.  No achievement created.", $newAchievementID))
 		if $db->existsAchievement($newAchievementID);
 	my $newAchievementRecord = $db->newAchievement;
 	my $oldAchievementID     = $c->{selectedAchievementIDs}->[0];
@@ -410,7 +418,7 @@ sub import_handler ($c) {
 	my $assign            = $c->param('action.import.assign');
 	my @users             = $db->listUsers;
 	my %allAchievementIDs = map { $_ => 1 } @{ $c->{allAchievementIDs} };
-	my $filePath          = $ce->{courseDirs}->{achievements} . '/' . $fileName;
+	my $filePath          = $ce->{courseDirs}{achievements} . '/' . $fileName;
 
 	# Open file name
 	my $fh = Mojo::File->new($filePath)->open('<:encoding(UTF-8)')
@@ -430,35 +438,16 @@ sub import_handler ($c) {
 
 		$achievement->achievement_id($achievement_id);
 
-		# Fall back for importing an old list without the number or assignment_type fields
-		if (scalar(@$data) == 9) {
-			# Old lists tend to have an extraneous space at the front.
-			for (my $i = 1; $i <= 7; $i++) {
-				$$data[$i] =~ s/^\s+//;
-			}
-
-			$$data[1] =~ s/\;/,/;
-			$achievement->name($$data[1]);
-			$achievement->category($$data[2]);
-			$$data[3] =~ s/\;/,/;
-			$achievement->description($$data[3]);
-			$achievement->points($$data[4]);
-			$achievement->max_counter($$data[5]);
-			$achievement->test($$data[6]);
-			$achievement->icon($$data[7]);
-			$achievement->assignment_type('default');
-			$achievement->number($count + 1);
-		} else {
-			$achievement->name($$data[1]);
-			$achievement->number($$data[2]);
-			$achievement->category($$data[3]);
-			$achievement->assignment_type($$data[4]);
-			$achievement->description($$data[5]);
-			$achievement->points($$data[6]);
-			$achievement->max_counter($$data[7]);
-			$achievement->test($$data[8]);
-			$achievement->icon($$data[9]);
-		}
+		$achievement->name($$data[1]);
+		$achievement->number($$data[2]);
+		$achievement->category($$data[3]);
+		$achievement->assignment_type($$data[4]);
+		$achievement->description($$data[5]);
+		$achievement->points($$data[6]);
+		$achievement->max_counter($$data[7]);
+		$achievement->test($$data[8]);
+		$achievement->icon($$data[9]);
+		$achievement->email_template($$data[10] // '');
 
 		$achievement->enabled($assign eq "all" ? 1 : 0);
 
@@ -487,7 +476,7 @@ sub import_handler ($c) {
 
 	$c->{allAchievementIDs} = [ keys %allAchievementIDs ];
 
-	return (1, $c->maketext('Imported [quant,_1,achievement]', $count));
+	return (1, $c->maketext('Imported [quant,_1,achievement].', $count));
 }
 
 # Export handler
@@ -497,10 +486,11 @@ sub export_handler ($c) {
 
 	my $scope = $c->param('action.export.scope');
 	if ($scope eq "all") {
-		$result = $c->maketext("exporting all achievements");
+		$result                      = $c->maketext('Exporting all achievements.');
 		$c->{selectedAchievementIDs} = $c->{allAchievementIDs};
-	} elsif ($scope eq "selected") {
-		$result = $c->maketext("exporting selected achievements");
+		$c->{showAllAchievements}    = 1;
+	} else {
+		$result = $c->maketext('Exporting selected achievements.');
 		$c->{selectedAchievementIDs} = [ $c->param('selected_achievements') ];
 	}
 	$c->{exportMode} = 1;
@@ -512,7 +502,7 @@ sub export_handler ($c) {
 sub cancel_export_handler ($c) {
 	$c->{exportMode} = 0;
 
-	return (0, $c->maketext('export abandoned'));
+	return (0, $c->maketext('Export abandoned.'));
 }
 
 # Handler actually exporting achievements.
@@ -533,10 +523,10 @@ sub save_export_handler ($c) {
 			or warn "Existing file $FilePath could not be backed up and was lost.";
 	}
 
-	$FilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}{achievements}, $FilePath);
+	$FilePath = surePathToFile($ce->{courseDirs}{achievements}, $FilePath);
 
 	my $fh = Mojo::File->new($FilePath)->open('>:encoding(UTF-8)')
-		or return (0, $c->maketext('Failed to open [_1]', $FilePath));
+		or return (0, $c->maketext('Failed to open [_1].', $FilePath));
 
 	my $csv = Text::CSV->new({ eol => "\n" });
 
@@ -557,13 +547,13 @@ sub save_export_handler ($c) {
 
 	$c->{exportMode} = 0;
 
-	return (1, $c->maketext('Exported achievements to [_1]', $FileName));
+	return (1, $c->maketext('Exported achievements to [_1].', $FileName));
 }
 
 # Handler for cancelling edits.
 sub cancel_edit_handler ($c) {
 	$c->{editMode} = 0;
-	return (1, $c->maketext('changes abandoned'));
+	return (1, $c->maketext('Changes abandoned.'));
 }
 
 # Handler for saving edits.
@@ -598,12 +588,12 @@ sub save_edit_handler ($c) {
 
 	$c->{editMode} = 0;
 
-	return (1, $c->maketext('changes saved'));
+	return (1, $c->maketext('Changes saved.'));
 }
 
 # Get list of files that can be imported.
 sub getAxpList ($c) {
-	return read_dir($c->ce->{courseDirs}{achievements}, qr/.*\.axp/);
+	return @{ Mojo::File->new($c->ce->{courseDirs}{achievements})->list->grep(qr/.*\.axp/)->map('basename') };
 }
 
 1;

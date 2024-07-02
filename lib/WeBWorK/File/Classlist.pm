@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -54,7 +54,7 @@ sub parse_classlist($) {
 
 		# Remove a byte order mark from the beginning of the file if present.  Excel inserts this on some systems, and
 		# the presence of this multibyte character causes a classlist import to fail.
-		s/^\xEF\xBB\xBF//;
+		s/^\x{FEFF}//;
 
 		s/^\s*//;
 		s/\s*$//;

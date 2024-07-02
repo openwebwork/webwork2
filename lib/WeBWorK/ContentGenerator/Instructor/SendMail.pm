@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -23,14 +23,10 @@ WeBWorK::ContentGenerator::Instructor::SendMail - Entry point for User-specific 
 =cut
 
 use Email::Address::XS;
-use Email::Stuffer;
-use Try::Tiny;
-use Data::Dump qw/dump/;
+use Mojo::File;
 use Text::Wrap qw(wrap);
-use WeBWorK::Utils qw/processEmailMessage createEmailSenderTransportSMTP/;
 
-use WeBWorK::Debug;
-use WeBWorK::Utils::Instructor qw(read_dir);
+use WeBWorK::Utils qw(processEmailMessage);
 
 sub initialize ($c) {
 	my $db    = $c->db;
@@ -96,7 +92,7 @@ sub initialize ($c) {
 	$c->{defaultSubject}     = $c->stash('courseID') . ' notice';
 	$c->{merge_file}         = $mergefile // '';
 
-	my @classList = $c->param('classList') // ($user);
+	my @classList = $c->param('selected_users') // ($user);
 	$c->{preview_user} = $c->db->getUser($classList[0] || $user);
 
 	# Gather database data
@@ -129,7 +125,7 @@ sub initialize ($c) {
 	if ($recipients eq 'all_students') {
 		@send_to = map { $_->user_id } @Users;
 	} elsif ($recipients eq 'studentID') {
-		@send_to = $c->param('classList');
+		@send_to = $c->param('selected_users');
 	}
 
 	$c->{ra_send_to} = \@send_to;
@@ -348,11 +344,10 @@ sub initialize ($c) {
 		# we don't set the response until we're sure that email can be sent
 		$c->{response} = 'send_email';
 
-		# Do actual mailing in the after the response is sent, since it could take a long time
-		# FIXME we need to do a better job providing status notifications for long-running email jobs
+		# The emails are actually sent in the job queue, since it could take a long time.
+		# Note that the instructor can check the job manager page to see the status of the job.
 		$c->minion->enqueue(
 			send_instructor_email => [ {
-				courseName  => $c->stash('courseID'),
 				recipients  => $c->{ra_send_to},
 				subject     => $c->{subject},
 				text        => ${ $c->{r_text} // \'' },
@@ -360,7 +355,8 @@ sub initialize ($c) {
 				from        => $c->{from},
 				defaultFrom => $c->{defaultFrom},
 				remote_host => $c->{remote_host},
-			} ]
+			} ],
+			{ notes => { courseID => $c->stash('courseID') } }
 		);
 	} else {
 		$c->addbadmessage($c->maketext(q{Didn't recognize action}));
@@ -463,12 +459,11 @@ sub read_input_file ($c, $filePath) {
 }
 
 sub get_message_file_names ($c) {
-	return read_dir($c->{ce}{courseDirs}{email}, '\\.msg$');
+	return @{ Mojo::File->new($c->ce->{courseDirs}{email})->list->grep(qr/\.msg$/)->map('basename') };
 }
 
 sub get_merge_file_names ($c) {
-	# FIXME: Check that only readable files are listed.
-	return read_dir($c->{ce}{courseDirs}{scoring}, '\\.csv$');
+	return @{ Mojo::File->new($c->ce->{courseDirs}{scoring})->list->grep(qr/\.csv$/)->map('basename') };
 }
 
 sub getRecord ($c, $line, $delimiter = ',') {

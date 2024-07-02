@@ -20,4 +20,7 @@
 				class => 'form-select form-select-sm d-inline w-auto' =%>
 		</div>
 	</div>
+	<div id="create_file_err_msg" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
+		<%= maketext('Please enter in an ID for the new achievement.') %>
+	</div>
 </div>

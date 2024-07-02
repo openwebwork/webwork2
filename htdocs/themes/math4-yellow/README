@@ -1,6 +1,8 @@
-This is an "alternative" colorization to math4.  If you want to provide 
-multiple themes to your users you should follow this as an example.  
+This is an "alternative" colorization to math4.  If you want to provide
+multiple themes to your users you should follow this as an example.
 
-Everything (except the override files) should be a link pointing back to 
-math4.  This will make it so that all your themes will automatically get 
-updates.  All of your changes should be in the override files.  
+Everything except for the math4-overrides.js, math4-overrides.css,
+_theme-colors.scss, and _theme-overrides.scss files should be links pointing
+back to the corresponding files in math4.  This will make it so that all your
+themes will automatically get updates.  All of your changes should be in the
+listed override files.

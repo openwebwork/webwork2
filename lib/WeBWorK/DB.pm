@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -99,6 +99,7 @@ use Carp;
 use Data::Dumper;
 use Scalar::Util qw/blessed/;
 use HTML::Entities qw( encode_entities );
+use Mojo::JSON qw(encode_json decode_json);
 
 use WeBWorK::DB::Schema;
 use WeBWorK::DB::Utils qw/make_vsetID grok_vsetID grok_setID_from_vsetID_sql
@@ -582,6 +583,7 @@ sub deleteUser {
 	$self->deleteGlobalUserAchievement($userID);
 	$self->deletePermissionLevel($userID);
 	$self->deleteKey($userID);
+	$self->{past_answer}->delete_where({ user_id => $userID });
 	return $self->{user}->delete($userID);
 }
 
@@ -773,11 +775,18 @@ sub deletePermissionLevel {
 
 BEGIN {
 	*Key            = gen_schema_accessor("key");
-	*newKey         = gen_new("key");
 	*countKeysWhere = gen_count_where("key");
 	*existsKeyWhere = gen_exists_where("key");
 	*listKeysWhere  = gen_list_where("key");
-	*getKeysWhere   = gen_get_records_where("key");
+	# FIXME: getKeysWhere is never used, but if it is used the "session" in the returned keys is not JSON decoded.
+	*getKeysWhere = gen_get_records_where("key");
+}
+
+sub newKey {
+	my ($self, @values) = @_;
+	my $key = $self->{key}{record}->new(@values);
+	$key->session({}) unless ref($key->session) eq 'HASH';
+	return $key;
 }
 
 sub countKeys { return scalar shift->listKeys(@_) }
@@ -798,50 +807,41 @@ sub existsKey {
 
 sub getKey {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	return ($self->getKeys($userID))[0];
+	my ($key) = $self->{key}->gets([$userID]);
+	$key->session(decode_json($key->session)) if $key;
+	return $key;
 }
 
 sub getKeys {
 	my ($self, @userIDs) = shift->checkArgs(\@_, qw/user_id*/);
-	return $self->{key}->gets(map { [$_] } @userIDs);
+	my @keys = $self->{key}->gets(map { [$_] } @userIDs);
+	$_->session(decode_json($_->session)) for @keys;
+	return @keys;
 }
 
 sub addKey {
-	# PROCTORING - allow comma in keyfields
 	my ($self, $Key) = shift->checkArgs(\@_, qw/VREC:key/);
 
-	# PROCTORING -  check for both user and proctor
-	# we allow for two entries for proctor keys, one of the form
-	#    userid,proctorid (which authorizes login), and the other
-	#    of the form userid,proctorid,g (which authorizes grading)
-	# (having two of these means that a proctored test will require
-	#    authorization for both login and grading).
-	if ($Key->user_id =~ /([^,]+)(?:,([^,]*))?(,g)?/) {
-		my ($userID, $proctorID) = ($1, $2);
-		croak "addKey: user $userID not found"
-			#			unless $self->{user}->exists($userID);
-			unless $Key->key eq "nonce" or $self->{user}->exists($userID);
-		croak "addKey: proctor $proctorID not found"
-			#			unless $self->{user}->exists($proctorID);
-			unless $Key->key eq "nonce" or $self->{user}->exists($proctorID);
-	} else {
-		croak "addKey: user ", $Key->user_id, " not found"
-			#			unless $self->{user}->exists($Key->user_id);
-			unless $Key->key eq "nonce" or $self->{user}->exists($Key->user_id);
-	}
+	croak "addKey: user ", $Key->user_id, " not found"
+		unless $Key->key eq "nonce" || $self->{user}->exists($Key->user_id);
 
-	eval { return $self->{key}->add($Key); };
+	my $keyCopy = $self->newKey($Key);
+	$keyCopy->session(encode_json($Key->session)) if ref($Key->session) eq 'HASH';
+
+	my $result = eval { $self->{key}->add($keyCopy) };
 	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
 		croak "addKey: key exists (perhaps you meant to use putKey?)";
 	} elsif ($@) {
 		die $@;
 	}
+	return $result;
 }
 
 sub putKey {
-	# PROCTORING - allow comma in keyfields
 	my ($self, $Key) = shift->checkArgs(\@_, qw/VREC:key/);
-	my $rows = $self->{key}->put($Key);    # DBI returns 0E0 for 0.
+	my $keyCopy = $self->newKey($Key);
+	$keyCopy->session(encode_json($Key->session)) if ref($Key->session) eq 'HASH';
+	my $rows = $self->{key}->put($keyCopy);    # DBI returns 0E0 for 0.
 	if ($rows == 0) {
 		croak "putKey: key not found (perhaps you meant to use addKey?)";
 	} else {
@@ -852,13 +852,6 @@ sub putKey {
 sub deleteKey {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
 	return $self->{key}->delete($userID);
-}
-
-sub deleteAllProctorKeys {
-	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	my $where = [ user_id_like => "$userID,%" ];
-
-	return $self->{key}->delete_where($where);
 }
 
 ################################################################################
@@ -1087,6 +1080,86 @@ sub deleteLocationAddress {
 }
 
 ################################################################################
+# lti_launch_data functions
+################################################################################
+# This database table contains LTI launch data for LTI 1.3 authentication.
+
+BEGIN {
+	*LTILaunchData            = gen_schema_accessor("lti_launch_data");
+	*existsLTILaunchDataWhere = gen_exists_where("lti_launch_data");
+	*listLTILaunchDataWhere   = gen_list_where("lti_launch_data");
+	*getLTILaunchDataWhere    = gen_get_records_where("lti_launch_data");
+	*deleteLTILaunchDataWhere = gen_delete_where("lti_launch_data");
+}
+
+sub newLTILaunchData {
+	my ($self, @data) = @_;
+	my $ltiLaunchData = $self->{lti_launch_data}{record}->new(@data);
+	$ltiLaunchData->data({}) unless ref($ltiLaunchData->data) eq 'HASH';
+	return $ltiLaunchData;
+}
+
+sub getLTILaunchData {
+	my ($self, $state) = shift->checkArgs(\@_, qw/state/);
+	my ($ltiLaunchData) = $self->{lti_launch_data}->gets([$state]);
+	$ltiLaunchData->data(decode_json($ltiLaunchData->data)) if $ltiLaunchData;
+	return $ltiLaunchData;
+}
+
+sub addLTILaunchData {
+	my ($self, $LTILaunchData) = shift->checkArgs(\@_, qw/REC:lti_launch_data/);
+	my $launchDataCopy = $self->newLTILaunchData($LTILaunchData);
+	$launchDataCopy->data(encode_json($LTILaunchData->data)) if ref($LTILaunchData->data) eq 'HASH';
+	my $result = eval { $self->{lti_launch_data}->add($launchDataCopy) };
+	if (my $ex = WeBWorK::DB::Ex::RecordExists->caught) {
+		croak "addLTILaunchData: lti launch data exists (perhaps you meant to use putLTILaunchData?)";
+	} elsif ($@) {
+		die $@;
+	}
+	return $result;
+}
+
+sub putLTILaunchData {
+	my ($self, $LTILaunchData) = shift->checkArgs(\@_, qw/REC:lti_launch_data/);
+	my $launchDataCopy = $self->newLTILaunchData($LTILaunchData);
+	$launchDataCopy->data(encode_json($LTILaunchData->data)) if ref($LTILaunchData->data) eq 'HASH';
+	my $rows = $self->{lti_launch_data}->put($launchDataCopy);
+	if ($rows == 0) {
+		croak "putLTILaunchData: lti launch data not found (perhaps you meant to use addLTILaunchData?)";
+	} else {
+		return $rows;
+	}
+}
+
+sub deleteLTILaunchData {
+	my ($self, $state) = shift->checkArgs(\@_, qw/state/);
+	return $self->{lti_launch_data}->delete_where({ state => $state });
+}
+
+################################################################################
+# lti_course_map functions
+################################################################################
+# This database table contains LTI launch data for LTI 1.3 authentication.
+
+BEGIN {
+	*LTICourseMap            = gen_schema_accessor("lti_course_map");
+	*existsLTICourseMapWhere = gen_exists_where("lti_course_map");
+	*getLTICourseMapsWhere   = gen_get_records_where("lti_course_map");
+	*deleteLTICourseMapWhere = gen_delete_where("lti_course_map");
+}
+
+sub setLTICourseMap {
+	my ($self, $course_id, $lms_context_id) = shift->checkArgs(\@_, qw/course_id lms_context_id/);
+	if ($self->existsLTICourseMapWhere({ course_id => $course_id })) {
+		return $self->{lti_course_map}
+			->update_where({ lms_context_id => $lms_context_id }, { course_id => $course_id });
+	} else {
+		return $self->{lti_course_map}
+			->insert_fields([ 'course_id', 'lms_context_id' ], [ [ $course_id, $lms_context_id ] ]);
+	}
+}
+
+################################################################################
 # past_answers functions
 ################################################################################
 
@@ -1102,21 +1175,12 @@ BEGIN {
 sub countProblemPastAnswers { return scalar shift->listPastAnswers(@_) }
 
 sub listProblemPastAnswers {
-	my ($self, $courseID, $userID, $setID, $problemID);
+	my ($self, $userID, $setID, $problemID);
 	$self = shift;
-	$self->checkArgs(\@_, qw/course_id? user_id set_id problem_id/);
+	$self->checkArgs(\@_, qw/user_id set_id problem_id/);
 
-	#if a courseID is not provided then just do the search without a course
-	#id.  This is ok becaus the table is course specific.
-	my $where;
-	if ($#_ == 3) {
-		($courseID, $userID, $setID, $problemID) = @_;
-		$where = [ course_id_eq_user_id_eq_set_id_eq_problem_id_eq => $courseID, $userID, $setID, $problemID ];
-
-	} else {
-		($userID, $setID, $problemID) = @_;
-		$where = [ user_id_eq_set_id_eq_problem_id_eq => $userID, $setID, $problemID ];
-	}
+	($userID, $setID, $problemID) = @_;
+	my $where = [ user_id_eq_set_id_eq_problem_id_eq => $userID, $setID, $problemID ];
 
 	my $order = ['answer_id'];
 
@@ -1128,21 +1192,12 @@ sub listProblemPastAnswers {
 }
 
 sub latestProblemPastAnswer {
-	my ($self, $courseID, $userID, $setID, $problemID);
+	my ($self, $userID, $setID, $problemID);
 	$self = shift;
-	$self->checkArgs(\@_, qw/course_id? user_id set_id problem_id/);
+	$self->checkArgs(\@_, qw/user_id set_id problem_id/);
 
-	#if a courseID is not provided then just do the search without a course
-	#id.  This is ok becaus the table is course specific.
-	my @answerIDs;
-	if ($#_ == 3) {
-		($courseID, $userID, $setID, $problemID) = @_;
-		@answerIDs = $self->listProblemPastAnswers($courseID, $userID, $setID, $problemID);
-
-	} else {
-		($userID, $setID, $problemID) = @_;
-		@answerIDs = $self->listProblemPastAnswers($userID, $setID, $problemID);
-	}
+	($userID, $setID, $problemID) = @_;
+	my @answerIDs = $self->listProblemPastAnswers($userID, $setID, $problemID);
 
 	#array should already be returned from lowest id to greatest.  Latest answer is greatest
 	return $answerIDs[$#answerIDs];
@@ -1165,11 +1220,6 @@ sub getPastAnswers {
 
 sub addPastAnswer {
 	my ($self, $pastAnswer) = shift->checkArgs(\@_, qw/REC:past_answer/);
-
-	#       we dont have a course table yet but when we do we should check this
-
-	#	croak "addPastAnswert: course ", $pastAnswer->course_id, " not found"
-	#		unless $self->{course}->exists($pastAnswer->course_id);
 
 	croak "addPastAnswert: user problem ", $pastAnswer->user_id, " ",
 		$pastAnswer->set_id, " ", $pastAnswer->problem_id, " not found"
@@ -1310,6 +1360,11 @@ sub getAchievement {
 sub getAchievements {
 	my ($self, @achievementIDs) = shift->checkArgs(\@_, qw/achievement_id*/);
 	return $self->{achievement}->gets(map { [$_] } @achievementIDs);
+}
+
+sub getAchievementCategories {
+	my ($self) = shift->checkArgs(\@_);
+	return map {@$_} $self->{achievement}->get_fields_where("DISTINCT category", undef, "category");
 }
 
 sub addAchievement {
@@ -2383,11 +2438,10 @@ sub check_user_id {    #  (valid characters are [-a-zA-Z0-9_.,@])
 		return 0;
 	}
 }
-# the (optional) second argument to checkKeyfields is to support versioned
-# (gateway) sets, which may include commas in certain fields (in particular,
-# set names (e.g., setDerivativeGateway,v1) and user names (e.g.,
-# username,proctorname)
 
+# The (optional) second argument to checkKeyfields is to support versioned
+# (gateway) sets, which may include commas in certain fields (in particular,
+# set names (e.g., setDerivativeGateway,v1)).
 sub checkKeyfields($;$) {
 	my ($Record, $versioned) = @_;
 	foreach my $keyfield ($Record->KEYFIELDS) {

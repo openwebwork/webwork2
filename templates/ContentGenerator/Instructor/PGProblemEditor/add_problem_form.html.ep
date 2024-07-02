@@ -1,3 +1,5 @@
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
+%
 % last unless $c->{is_pg};
 %
 % my $allSetNames = [ map { $_->[0] =~ s/^set|\.def$//gr } $db->listGlobalSetsWhere({}, 'set_id') ];

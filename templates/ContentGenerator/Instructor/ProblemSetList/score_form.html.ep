@@ -3,9 +3,8 @@
 		class => 'col-form-label col-form-label-sm col-auto' =%>
 	<div class="col-auto">
 		<%= select_field 'action.score.scope' => [
-				[ maketext('no sets')       => 'none', selected => undef ],
-				[ maketext('all sets')      => 'all' ],
-				[ maketext('selected sets') => 'selected' ]
+				[ maketext('all course sets') => 'all' ],
+				[ maketext('selected sets')   => 'selected', selected => undef ]
 			],
 			id => 'score_select', class => 'form-select form-select-sm' =%>
 	</div>

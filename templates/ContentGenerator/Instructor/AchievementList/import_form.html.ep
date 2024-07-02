@@ -5,7 +5,7 @@
 		<div class="col-auto">
 			<%= select_field 'action.import.source' => [
 					[ maketext('Select import file') => '', selected => undef ],
-					$c->getAxpList
+					@$axpList
 				],
 				id    => 'import_file_select',
 				class => 'form-select form-select-sm d-inline w-auto' =%>
@@ -22,5 +22,8 @@
 				id    => 'import_users_select',
 				class => 'form-select form-select-sm d-inline w-auto' =%>
 		</div>
+	</div>
+	<div id="import_file_err_msg" class="alert alert-danger p-1 d-inline-flex d-none">
+		<%= maketext('Please select a file to import from.') %>
 	</div>
 </div>

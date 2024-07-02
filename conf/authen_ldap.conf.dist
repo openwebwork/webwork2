@@ -12,6 +12,15 @@ $authen{user_module} = {
 	"*" => "WeBWorK::Authen::LDAP",
 };
 
+# List of authentication modules that may be used to enter the admin course.
+# This should be a non-empty sublist of whatever is in $authen{user_module}.
+# Since the admin course provides overall power to add/delete courses, access
+# to this course should be protected by the best possible authentication you
+# have available to you.
+$authen{admin_module} = [
+	'WeBWorK::Authen::LDAP'
+];
+
 $authen{ldap_options} = {
 	# hosts to attempt to connect to, in order. For example:
 	#   auth.myschool.edu             -- uses LDAP scheme and port 389

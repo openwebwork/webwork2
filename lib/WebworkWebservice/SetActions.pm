@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -23,8 +23,9 @@ use Carp;
 use JSON;
 use Data::Structure::Util qw(unbless);
 
-use WeBWorK::Utils qw(max formatDateTime jitar_id_to_seq seq_to_jitar_id);
+use WeBWorK::Utils qw(max);
 use WeBWorK::Utils::Instructor qw(assignSetToGivenUsers assignMultipleProblemsToGivenUsers);
+use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Debug;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 
@@ -109,11 +110,6 @@ sub getSet {
 
 	my $db  = $self->db;
 	my $set = unbless($db->getGlobalSet($params->{set_id}));
-
-	# Change the date/times to user readable strings (why?).
-	$set->{due_date}    = formatDateTime($set->{due_date},    'local');
-	$set->{open_date}   = formatDateTime($set->{open_date},   'local');
-	$set->{answer_date} = formatDateTime($set->{answer_date}, 'local');
 
 	return { ra_out => $set, text => "Loaded set $params->{set_id} in " . $self->ce->{courseName} };
 }

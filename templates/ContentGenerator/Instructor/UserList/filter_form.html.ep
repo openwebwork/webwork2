@@ -4,8 +4,7 @@
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.filter.scope' => [
-					[ maketext('all users')                         => 'all' ],
-					[ maketext('no users')                          => 'none' ],
+					[ maketext('all course users')                  => 'all' ],
 					[ maketext('selected users')                    => 'selected' ],
 					[ maketext('users who match on selected field') => 'match_regex', selected => undef ]
 				],
@@ -35,5 +34,8 @@
 					class => 'form-control form-control-sm' =%>
 			</div>
 		</div>
+	</div>
+	<div id="filter_err_msg" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">
+		<%= maketext('Please enter in a value to match in the filter field.') =%>
 	</div>
 </div>

@@ -19,4 +19,7 @@
 				id => 'create_select', class => 'form-select form-select-sm' =%>
 		</div>
 	</div>
+	<div id="create_file_err_msg" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">
+		<%= maketext('Please enter a name for the new set.') %>
+	</div>
 </div>

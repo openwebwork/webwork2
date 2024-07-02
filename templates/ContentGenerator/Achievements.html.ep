@@ -1,7 +1,7 @@
 % use WeBWorK::Utils qw(getAssetURL);
 %
 % content_for css => begin
-	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'achievements.css' }) =%>
+	<%= stylesheet getAssetURL($ce, 'js/Achievements/achievements.css') =%>
 % end
 %
 % content_for js => begin

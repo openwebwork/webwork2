@@ -1,4 +1,6 @@
-% use WeBWorK::Utils qw(readDirectory listFilesRecursive);
+% use Mojo::File qw(path);
+%
+% use WeBWorK::Utils qw(sortByName);
 %
 % # Show the confirmation dialog box
 <div class="card w-75 mx-auto">
@@ -16,20 +18,20 @@
 						% } elsif (-d "$dir/$file") {
 							% my @contents;
 							% my $dcount = 0;
-							% for my $item (readDirectory("$dir/$file")) {
-								% next if $item eq '.' || $item eq '..';
+							% for my $item (sortByName(undef, @{ path("$dir/$file")->list({ dir => 1 }) })) {
+								% my $basename = $item->basename;
 								% push @contents, begin
-									% if (-l "$dir/$file/$item") {
-										<div class="ms-3"><%= $item %>@</div>
-									% } elsif (-d "$dir/$file/$item") {
-										% my $count = scalar(listFilesRecursive("$dir/$file/$item", '.*'));
+									% if (-l $item) {
+										<div class="ms-3"><%= $basename %>@</div>
+									% } elsif (-d $item) {
+										% my $count = $item->list_tree({ dir => 1 })->size;
 										% $dcount += $count;
 										<div class="d-flex justify-content-between ms-3 me-5">
-											<%= $item %>/
+											<%= $basename %>/
 											<small><i><%= maketext('([quant,_1,item])', $count) %></i></small>
 										</div>
 									% } else {
-										<div class="ms-3"><%= $item %></div>
+										<div class="ms-3"><%= $basename %></div>
 									% }
 								% end
 								% $dcount += 1;

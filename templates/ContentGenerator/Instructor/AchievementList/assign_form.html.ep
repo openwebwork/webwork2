@@ -4,8 +4,8 @@
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.assign.scope' => [
-					[ maketext('all achievements')      => 'all' ],
-					[ maketext('selected achievements') => 'selected', selected => undef ]
+					[ maketext('all course achievements') => 'all' ],
+					[ maketext('selected achievements')   => 'selected', selected => undef ]
 				],
 				id    => 'assign_select',
 				class => 'form-select form-select-sm' =%>
