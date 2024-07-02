@@ -1,7 +1,7 @@
 # This is the Stage 1 Dockerfile, which builds a base OS image (webwork-base)
 # on top of which the WeBWorK parts will be installed by the Stage 2 Dockerfile.
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # ==================================================================
 # Phase 1 - Set base OS image install stage ENV variables
@@ -72,8 +72,6 @@ RUN apt-get update \
 	libjson-perl \
 	libjson-xs-perl \
 	liblocale-maketext-lexicon-perl \
-	libmail-sender-perl \
-	libmail-sender-perl \
 	libmariadb-dev \
 	libmath-random-secure-perl \
 	libmime-base32-perl \
@@ -82,6 +80,7 @@ RUN apt-get update \
 	libminion-perl \
 	libmodule-build-perl \
 	libmodule-pluggable-perl \
+	libmojolicious-perl \
 	libmojolicious-plugin-renderfile-perl \
 	libnet-https-nb-perl \
 	libnet-ip-perl \
@@ -151,8 +150,6 @@ RUN apt-get update \
 RUN cpanm install -n \
 	Statistics::R::IO \
 	DBD::MariaDB \
-	Mojolicious \
-	Mojo::SQLite@3.002 \
 	Perl::Tidy@20220613 \
 	Archive::Zip::SimpleZip \
 	&& rm -fr ./cpanm /root/.cpanm /tmp/*
