@@ -237,10 +237,9 @@ $webwork_courses_dir = "/opt/webwork/courses"; # a typical place to put course d
 # The following directives need to be configured in order for your webwork
 # server to be able to send mail.
 
-# Mail sent by the PG system and the mail merge and feedback modules will be
-# sent via this SMTP server.  localhost may work if your server is capable
-# of sending email, otherwise type the name of your School's outgoing email
-# server.
+# Mail sent by the mail merge and feedback modules will be sent via this SMTP
+# server.  localhost may work if your server is capable of sending email,
+# otherwise type the name of your School's outgoing email server.
 $mail{smtpServer} = '';  # e.g. 'mail.yourschool.edu' or 'localhost'
 
 # When connecting to the above server, WeBWorK will send this address in the
