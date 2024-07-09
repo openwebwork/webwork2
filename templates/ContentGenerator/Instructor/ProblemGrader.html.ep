@@ -33,7 +33,7 @@
 	% last;
 % }
 %
-% unless ($authz->hasPermissions(param('user'), 'score_sets')) {
+% unless ($authz->hasPermissions(param('user'), 'problem_grader')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to grade assignments.') %></div>
 	% last;
 % }

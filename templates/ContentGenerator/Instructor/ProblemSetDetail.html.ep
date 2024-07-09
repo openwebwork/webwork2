@@ -549,7 +549,7 @@
 										<i class="icon far fa-eye" data-alt="<%= maketext('View') %>"></i>
 									<% end =%>
 								% }
-								% if ($authz->hasPermissions(param('user'), 'score_sets')) {
+								% if ($authz->hasPermissions(param('user'), 'problem_grader')) {
 									<%= link_to $c->systemLink(url_for(
 											'instructor_problem_grader',
 										   	setID     => $setID,
