@@ -268,13 +268,17 @@ async sub process_and_log_answer ($c) {
 								$c->tag('br') . $c->maketext('Your score was successfully sent to [_1].', $LMSname);
 						}
 					} elsif ($ce->{LTIMassUpdateInterval} > 0) {
-						my $massUpdateTime = "$ce->{LTIMassUpdateInterval} seconds";
-						$massUpdateTime = int($ce->{LTIMassUpdateInterval} / 60 + 0.99) . " minutes"
-							if ($ce->{LTIMassUpdateInterval} >= 120);
-						$massUpdateTime = int($ce->{LTIMassUpdateInterval} / 36000 + 0.9999) . " hours"
-							if ($ce->{LTIMassUpdateInterval} >= 7200);
-						$scoreRecordedMessage .= $c->tag('br')
-							. $c->maketext('Scores are sent to [_1] every [_2].', $LMSname, $massUpdateTime);
+						$scoreRecordedMessage .= $c->tag('br');
+						if ($ce->{LTIMassUpdateInterval} < 120) {
+							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,second].',
+								$LMSname, $ce->{LTIMassUpdateInterval});
+						} elsif ($ce->{LTIMassUpdateInterval} < 7200) {
+							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,minute].',
+								$LMSname, int($ce->{LTIMassUpdateInterval} / 60 + 0.99));
+						} else {
+							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,hour].',
+								$LMSname, int($ce->{LTIMassUpdateInterval} / 36000 + 0.9999));
+						}
 					}
 				}
 			} else {
