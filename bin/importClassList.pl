@@ -49,7 +49,7 @@ my $ce = WeBWorK::CourseEnvironment->new({
 	courseName  => $courseID
 });
 
-my $db = WeBWorK::DB($ce->{dbLayout})->new;
+my $db = WeBWorK::DB->new($ce->{dbLayout});
 
 my $createNew       = 1;         # Always set to true, so add new users
 my $replaceExisting = "none";    # Always set to "none" so no existing accounts are changed
