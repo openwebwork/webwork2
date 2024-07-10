@@ -90,7 +90,7 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 			$ce->{studentDateDisplayFormat},
 			$ce->{siteDefaults}{timezone},
 			$ce->{language}
-		);
+		) =~ s/\x{202f}/ /gr;
 		my $uc_date = ucfirst($date);
 		for (
 			[ 'DayOfWeek',       '%A' ],
@@ -111,14 +111,15 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 			)
 		{
 			$options{"$uc_date$_->[0]"} =
-				formatDateTime($options{$date}, $_->[1], $ce->{siteDefaults}{timezone}, $ce->{language});
+				formatDateTime($options{$date}, $_->[1], $ce->{siteDefaults}{timezone}, $ce->{language}) =~
+				s/\x{202f}/ /gr;
 		}
 	}
 	$options{reducedScoringDate}          = $set->reduced_scoring_date;
 	$options{formattedReducedScoringDate} = formatDateTime(
 		$options{reducedScoringDate},  $ce->{studentDateDisplayFormat},
 		$ce->{siteDefaults}{timezone}, $ce->{language}
-	);
+	) =~ s/\x{202f}/ /gr;
 
 	# State Information
 	$options{numOfAttempts} =
