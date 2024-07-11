@@ -262,10 +262,12 @@ sub command_permission {
 		setProblemTags => 'modify_tags',
 
 		# WebworkWebservice::ProblemActions
-		getUserProblem    => 'access_instructor_tools',
-		putUserProblem    => 'modify_student_data',
-		putProblemVersion => 'modify_student_data',
-		putPastAnswer     => 'modify_student_data',
+		getUserProblem => 'access_instructor_tools',
+		# Note: The modify_student_data permission is checked in the following three methods and only the status and
+		# comment_string can actually be modified by users with the problem_grader permission only.
+		putUserProblem    => 'problem_grader',
+		putProblemVersion => 'problem_grader',
+		putPastAnswer     => 'problem_grader',
 		tidyPGCode        => 'access_instructor_tools',
 		convertCodeToPGML => 'access_instructor_tools',
 
