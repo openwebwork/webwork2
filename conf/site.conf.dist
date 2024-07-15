@@ -242,17 +242,9 @@ $webwork_courses_dir = "/opt/webwork/courses"; # a typical place to put course d
 # otherwise type the name of your School's outgoing email server.
 $mail{smtpServer} = '';  # e.g. 'mail.yourschool.edu' or 'localhost'
 
-# When connecting to the above server, WeBWorK will send this address in the
-# MAIL FROM command. This has nothing to do with the "From" address on the mail
-# message. It can really be anything, but some mail servers require it contain
-# a valid mail domain, or at least be well-formed.
-$mail{smtpSender} = '';  # e.g.  'webwork@yourserver.yourschool.edu'
-# Be sure to use single quotes for the address or the @ sign will be interpreted as an array.
-
 $mail{set_return_path} = ''; #sets the return_path to the From: field (sender's email address)
 # The return path is used to send error messages about bounced emails
 # "noreply\@$mail{smtpServer}" discards error messages,
-# using $mail{smtpSender} would deliver error messages to that address.
 # The default setting should be adjusted for local domain
 # Leaving the return path blank triggers the default which results in Return-Path  being set to the email of the sender.
 
@@ -262,7 +254,6 @@ $mail{set_return_path} = ''; #sets the return_path to the From: field (sender's 
 # set it to 5 for testing, 30 or larger for production
 
 $mail{smtpTimeout}           = 30;
-
 
 # TLS is a method for providing secure connections to the smtp server.
 # https://en.wikipedia.org/wiki/Transport_Layer_Security
