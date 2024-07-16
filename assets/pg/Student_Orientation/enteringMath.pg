@@ -25,8 +25,8 @@ enters and exits text mode. You can also use the [|"|]* character to enter text 
 key or right arrow. Try answering the following with and without using text mode. The answer is [|pirate|]*:
 [_]{Context("Numeric")->strings->add(pirate => {}), 'pirate'}{16}.
 
-The palette tool might be a distraction, especially to keyboard-only using students. You can disable it by
-right-clicking (or control-clicking) in an answer blank. To "right click" without a mouse:
+The palette tool might be a distraction, especially to keyboard-only users. You can disable it by right-clicking (or
+control-clicking) in an answer blank. To "right click" without a mouse:
 * on Windows or Linux, use [|shift F10|]*.
 * on a Mac, you must first enable Mouse Keys in System Settings, and then use [|control m|]*.
 

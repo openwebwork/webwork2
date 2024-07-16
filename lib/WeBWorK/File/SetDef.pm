@@ -718,7 +718,7 @@ SET: for my $set (@sets) {
 			$problemList .= "showHintsAfter       = $showHintsAfter\n";
 			$problemList .= "prPeriod             = $prPeriod\n";
 			$problemList .= "counts_parent_grade  = $countsParentGrade\n";
-			$problemList .= "att_to_open_children = $attToOpenChildren \n";
+			$problemList .= "att_to_open_children = $attToOpenChildren\n";
 			$problemList .= "problem_end\n";
 		}
 
