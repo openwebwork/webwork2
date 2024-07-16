@@ -20,7 +20,7 @@ showMeAnother        = -1
 showHintsAfter       = -2
 prPeriod             = -1
 counts_parent_grade  = 0
-att_to_open_children = 0 
+att_to_open_children = 0
 problem_end
 problem_start
 problem_id           = 2
@@ -31,7 +31,7 @@ showMeAnother        = -1
 showHintsAfter       = -2
 prPeriod             = -1
 counts_parent_grade  = 0
-att_to_open_children = 0 
+att_to_open_children = 0
 problem_end
 problem_start
 problem_id           = 3
@@ -42,7 +42,7 @@ showMeAnother        = -1
 showHintsAfter       = -2
 prPeriod             = -1
 counts_parent_grade  = 0
-att_to_open_children = 0 
+att_to_open_children = 0
 problem_end
 problem_start
 problem_id           = 4
@@ -53,7 +53,7 @@ showMeAnother        = -1
 showHintsAfter       = -2
 prPeriod             = -1
 counts_parent_grade  = 0
-att_to_open_children = 0 
+att_to_open_children = 0
 problem_end
 problem_start
 problem_id           = 5
@@ -64,7 +64,7 @@ showMeAnother        = -1
 showHintsAfter       = -2
 prPeriod             = -1
 counts_parent_grade  = 0
-att_to_open_children = 0 
+att_to_open_children = 0
 problem_end
 problem_start
 problem_id           = 6
@@ -75,10 +75,21 @@ showMeAnother        = -1
 showHintsAfter       = -2
 prPeriod             = -1
 counts_parent_grade  = 0
-att_to_open_children = 0 
+att_to_open_children = 0
 problem_end
 problem_start
 problem_id           = 7
+source_file          = Student_Orientation/mathInteraction.pg
+value                = 1
+max_attempts         = -1
+showMeAnother        = -1
+showHintsAfter       = -2
+prPeriod             = -1
+counts_parent_grade  = 0
+att_to_open_children = 0
+problem_end
+problem_start
+problem_id           = 8
 source_file          = Student_Orientation/hardcopy.pg
 value                = 1
 max_attempts         = -1
@@ -86,10 +97,10 @@ showMeAnother        = -1
 showHintsAfter       = -2
 prPeriod             = -1
 counts_parent_grade  = 0
-att_to_open_children = 0 
+att_to_open_children = 0
 problem_end
 problem_start
-problem_id           = 8
+problem_id           = 9
 source_file          = Student_Orientation/miscellaneous.pg
 value                = 1
 max_attempts         = -1
@@ -97,5 +108,5 @@ showMeAnother        = -1
 showHintsAfter       = -2
 prPeriod             = -1
 counts_parent_grade  = 0
-att_to_open_children = 0 
+att_to_open_children = 0
 problem_end
