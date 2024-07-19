@@ -287,7 +287,11 @@ $mail{tls_allowed} = 0;
 
 # SMTP Authentication
 # If your SMTP server requires authentication you can provide the username and password
-# for the account on the mail server
+# for the account on the mail server.
+# If you set these credentials, you may need to define the variables $feedback_sender_email,
+# $instructor_sender_email and $jitar_sender_email in localOverrides.conf, as some SMTP
+# servers require the "From:" address of outgoing emails to match this username.  Setting
+# those sender variables will then put the user's email address in the "Reply-to:" field.
 
 #$mail{smtpUsername} = '';
 #$mail{smtpPassword} = '';

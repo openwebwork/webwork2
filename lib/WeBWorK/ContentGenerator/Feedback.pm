@@ -185,10 +185,17 @@ $emailableURL
 			$msg .= "***** Data about the environment: *****\n\n" . Dumper($ce) . "\n\n";
 		}
 
-		my $email =
-			Email::Stuffer->to(join(',', @recipients))->from($sender)->subject($subject)->text_body($msg)
-			->header('X-Remote-Host' => $remote_host);
-
+		my $from_name = $user ? $user->full_name : $ce->{generic_sender_name};
+		my $email;
+		if ($ce->{feedback_sender_email}) {
+			$email =
+				Email::Stuffer->to(join(',', @recipients))->from("$from_name <$ce->{feedback_sender_email}>")
+				->reply_to($sender)->subject($subject)->text_body($msg)->header('X-Remote-Host' => $remote_host);
+		} else {
+			$email =
+				Email::Stuffer->to(join(',', @recipients))->from($sender)->subject($subject)->text_body($msg)
+				->header('X-Remote-Host' => $remote_host);
+		}
 		# Extra headers
 		$email->header('X-WeBWorK-Route',  $route)    if defined $route;
 		$email->header('X-WeBWorK-Course', $courseID) if defined $courseID;

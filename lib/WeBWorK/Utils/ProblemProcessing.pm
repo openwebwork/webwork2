@@ -464,7 +464,13 @@ Recitation: $recitation
 Comment:    $comment
 /;
 
-	my $email = Email::Stuffer->to(join(',', @recipients))->from($sender)->subject($subject)->text_body($msg);
+	my $email;
+	if ($ce->{jitar_sender_email}) {
+		$email = Email::Stuffer->to(join(',', @recipients))->from("$full_name <$ce->{jitar_sender_email}>")
+			->reply_to($sender)->subject($subject)->text_body($msg);
+	} else {
+		$email = Email::Stuffer->to(join(',', @recipients))->from($sender)->subject($subject)->text_body($msg);
+	}
 
 	# Extra headers
 	$email->header('X-WeBWorK-Course: ', $courseID) if defined $courseID;
