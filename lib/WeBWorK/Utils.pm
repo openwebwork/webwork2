@@ -177,6 +177,8 @@ sub sortByName ($field, @items) {
 	}
 
 	my @sKeys = sort {
+		return $a cmp $b if (uc($a) eq uc($b));
+
 		my @aParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, $a;
 		my @bParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, $b;
 
@@ -195,8 +197,8 @@ sub sortByName ($field, @items) {
 				next if $aPart == $bPart;    # check next pair
 				return $aPart <=> $bPart;    # compare numerically
 			} else {
-				next if $aPart eq $bPart;    # check next pair
-				return $aPart cmp $bPart;    # compare lexicographically
+				next if uc($aPart) eq uc($bPart);    # check next pair
+				return uc($aPart) cmp uc($bPart);    # compare alphabetically
 			}
 		}
 		return +1 if @aParts;    # a has more sections, should go second
