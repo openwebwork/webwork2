@@ -464,12 +464,11 @@ Recitation: $recitation
 Comment:    $comment
 /;
 
-	my $email;
+	my $email = Email::Stuffer->to(join(',', @recipients))->subject($subject)->text_body($msg);
 	if ($ce->{jitar_sender_email}) {
-		$email = Email::Stuffer->to(join(',', @recipients))->from("$full_name <$ce->{jitar_sender_email}>")
-			->reply_to($sender)->subject($subject)->text_body($msg);
+		$email->from("$full_name <$ce->{jitar_sender_email}>")->reply_to($sender);
 	} else {
-		$email = Email::Stuffer->to(join(',', @recipients))->from($sender)->subject($subject)->text_body($msg);
+		$email->from($sender);
 	}
 
 	# Extra headers
