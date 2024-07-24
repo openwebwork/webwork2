@@ -121,7 +121,7 @@
 			. 'can also change the format to "PDF" or "TeX Source". If "PDF" is selected, then a PDF file will be '
 			. 'generated for download, unless there are errors. If errors occur or "TeX Source" is selected, then a '
 			. 'zip file will be generated for download that contains the TeX source file and resources needed for '
-			. 'generating the PDF file using pdflatex.') =%>
+			. 'generating the PDF file using LaTeX.') =%>
 		</p>
 		<p>
 		<%= maketext('You can also click "Edit Selected Theme" to edit a hardcopy theme.  The new theme will be saved to '
