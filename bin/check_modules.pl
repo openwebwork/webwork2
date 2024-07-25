@@ -54,7 +54,6 @@ my @applicationsList = qw(
 	gzip
 	latex
 	pandoc
-	pdf2svg
 	pdflatex
 	dvipng
 );
