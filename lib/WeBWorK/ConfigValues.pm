@@ -923,12 +923,54 @@ sub getConfigValues ($ce) {
 		},
 		'LTI{v1p1}{BasicConsumerSecret}' => {
 			var  => 'LTI{v1p1}{BasicConsumerSecret}',
-			doc  => x('Set the shared secret used for the LMS'),
+			doc  => x('LMS shared secret for LTI 1.1 authentication'),
 			doc2 => x(
-				'This is a secret word that is used to validate information between WeBWorK and the LMS.'
-					. 'This secret word must match the word you configure in the LMS.'
+				'This secret word is used to validate logins from an LMS using LTI 1.1. '
+					. 'This secret word must match the word configured in the LMS.'
 			),
 			type => 'text'
+		},
+		'LTI{v1p3}{PlatfromID}' => {
+			var  => 'LTI{v1p3}{PlatformID}',
+			doc  => x('LMS platform ID for LTI 1.3'),
+			doc2 => x('LMS platform ID used to validate logins from an LMS using LTI 1.3.'),
+			type => 'text'
+		},
+		'LTI{v1p3}{ClientID}' => {
+			var  => 'LTI{v1p3}{ClientID}',
+			doc  => x('LMS client ID for LTI 1.3'),
+			doc2 => x('LMS client ID used to validate logins from an LMS using LTI 1.3.'),
+			type => 'text',
+		},
+		'LTI{v1p3}{DeploymentID}' => {
+			var  => 'LTI{v1p3}{DeploymentID}',
+			doc  => x('LMS deployment ID for LTI 1.3'),
+			doc2 => x('LMS deployment ID used to validate logins from an LMS using LTI 1.3.'),
+			type => 'text',
+		},
+		'LTI{v1p3}{PublicKeysetURL}' => {
+			var  => 'LTI{v1p3}{PublicKeysetURL}',
+			doc  => x('LMS public keyset URL for LTI 1.3'),
+			doc2 => x('LMS public keyset URL used to validate logins from an LMS using LTI 1.3.'),
+			type => 'text',
+		},
+		'LTI{v1p3}{AccessTokenURL}' => {
+			var  => 'LTI{v1p3}{AccessTokenURL}',
+			doc  => x('LMS access token URL for LTI 1.3'),
+			doc2 => x('LMS access token URL used to validate logins from an LMS using LTI 1.3.'),
+			type => 'text',
+		},
+		'LTI{v1p3}{AccessTokenAUD}' => {
+			var  => 'LTI{v1p3}{AccessTokenAUD}',
+			doc  => x('LMS access token AUD for LTI 1.3'),
+			doc2 => x('LMS access token AUD used to validate logins from an LMS using LTI 1.3.'),
+			type => 'text',
+		},
+		'LTI{v1p3}{AuthReqURL}' => {
+			var  => 'LTI{v1p3}{AuthReqURL}',
+			doc  => x('LMS authorization request URL for LTI 1.3'),
+			doc2 => x('LMS authorization request URL used to validate logins from an LMS using LTI 1.3.'),
+			type => 'text',
 		},
 		debug_lti_parameters => {
 			var  => 'debug_lti_parameters',
@@ -1017,6 +1059,14 @@ sub getConfigValues ($ce) {
 			$LTIConfigValues->{'LTI{v1p3}{LMS_url}'} =
 				{ %{ delete $LTIConfigValues->{'LTI{v1p1}{LMS_url}'} }, var => 'LTI{v1p3}{LMS_url}' };
 			delete $LTIConfigValues->{'LTI{v1p1}{BasicConsumerSecret}'};
+		} else {
+			for my $key (
+				'PlatformID',     'ClientID',       'DeploymentID', 'PublicKeysetURL',
+				'AccessTokenURL', 'AccessTokenAUD', 'AuthReqURL'
+				)
+			{
+				delete $LTIConfigValues->{"LTI{v1p3}{$key}"};
+			}
 		}
 
 		push(
