@@ -3,7 +3,7 @@
                                    Version 2.*
                         Branch:  github.com/openwebwork
 
-             https://webwork.maa.org/wiki/Release_notes_for_WeBWorK_2.18
+             https://webwork.maa.org/wiki/Release_notes_for_WeBWorK_2.19
                     Copyright 2000-2024, The WeBWorK Project
                              https://openwebwork.org/
                               All rights reserved.
