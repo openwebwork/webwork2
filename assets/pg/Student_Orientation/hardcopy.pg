@@ -15,7 +15,7 @@ $a = random(100, 900);
 BEGIN_PGML
 ## PDF Hardcopy ##
 
-From the *Assignments* page (which you may or may not have permission to viist), you may push a download button[@
+From the *Assignments* page (which you may or may not have permission to visit), you may push a download button[@
     MODES(
         HTML => ' <i class="hardcopy-tooltip icon far fa-arrow-alt-circle-down fa-lg"></i>',
         TeX => ''
