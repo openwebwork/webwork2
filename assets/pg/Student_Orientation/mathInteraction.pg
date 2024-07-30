@@ -11,7 +11,7 @@ loadMacros(qw(
     PGcourse.pl
 ));
 
-$continue = RadioButtons(['I am ready to continue. Sumbmit this answer.'], 0);
+$continue = RadioButtons(['I am ready to continue. Submit this answer.'], 0);
 
 $MathJax = <<END_BODY;
 Math content like the following expression is rendered using MathJax.
