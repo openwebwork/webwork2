@@ -54,8 +54,8 @@
 	<%== maketext('Once "Generate Hardcopy for selected sets and selected users" is clicked a file in the selected '
 		. 'hardcopy format will be generated and offered for download. If PDF output was selected, a single PDF file '
 		. 'is generated. If TeX output is selected, a zip file is generated that contains all files needed to '
-		. 'generated the hardcopy PDF file via [_1]. The main TeX file is called [_2].',
-		'<code>pdflatex</code>', '<code>hardcopy.tex</code>') =%>
+		. 'generated the hardcopy PDF file via LaTeX. The main TeX file is called [_2].',
+		'<code>hardcopy.tex</code>') =%>
 </p>
 <p class="mb-0">
 	<%= maketext('Note that if there are errors, they will be shown at the top of the page. '

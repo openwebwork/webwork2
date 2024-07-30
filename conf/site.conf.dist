@@ -106,11 +106,16 @@ $externalPrograms{git} = "/usr/bin/git";
 # equation rendering/hardcopy utiltiies
 $externalPrograms{latex}    = "/usr/bin/latex --no-shell-escape";
 
-$externalPrograms{pdflatex} = "/usr/bin/pdflatex --no-shell-escape";
-# Note that --no-shell-escape is important for security reasons.
-# Consider using xelatex instead of pdflatex for multilingual use, and
-# use polyglossia and fontspec packages (which require xelatex or lualatex).
-#$externalPrograms{pdflatex} = "/usr/bin/xelatex --no-shell-escape";
+# xelatex is the default external program used to generate pdf from LaTeX.  It
+# supports unicode characters (needed for multilingual use among other things).
+# Newer versions of DateTime::Locale use a narrow no-break space in US dates. So
+# xelatex is needed even for English.  Note that --no-shell-escape is important
+# for security reasons.
+$externalPrograms{latex2pdf} = "/usr/bin/xelatex --no-shell-escape";
+# You may be able to use pdflatex instead of xelatex if you have an older
+# version of DateTime::Locale on your system.  However, pdflatex does not
+# support unicode characters.
+#$externalPrograms{latex2pdf} = "/usr/bin/pdflatex --no-shell-escape";
 
 $externalPrograms{dvipng}   = "/usr/bin/dvipng";
 

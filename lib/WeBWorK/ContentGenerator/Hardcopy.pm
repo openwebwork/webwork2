@@ -761,22 +761,22 @@ sub find_log_first_error ($log) {
 }
 
 sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
-	# call pdflatex - we don't want to chdir in the mod_perl process, as
+	# call latex - we don't want to chdir in the mod_perl process, as
 	# that might step on the feet of other things (esp. in Apache 2.0)
-	my $pdflatex_cmd = "cd "
+	my $latex_cmd = "cd "
 		. shell_quote($temp_dir_path) . " && "
 		. "TEXINPUTS=.:"
 		. shell_quote($c->ce->{webworkDirs}{assetsTex}) . ':'
 		. shell_quote($c->ce->{pg}{directories}{assetsTex}) . ': '
-		. $c->ce->{externalPrograms}{pdflatex}
-		. " >pdflatex.stdout 2>pdflatex.stderr hardcopy";
-	if (my $rawexit = system $pdflatex_cmd) {
+		. $c->ce->{externalPrograms}{latex2pdf}
+		. " >latex.stdout 2>latex.stderr hardcopy";
+	if (my $rawexit = system $latex_cmd) {
 		my $exit   = $rawexit >> 8;
 		my $signal = $rawexit & 127;
 		my $core   = $rawexit & 128;
 		$c->add_error(
 			'Failed to convert TeX to PDF with command "',
-			$c->tag('code', $pdflatex_cmd),
+			$c->tag('code', $latex_cmd),
 			qq{" (exit=$exit signal=$signal core=$core).}
 		);
 
@@ -823,7 +823,7 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 		$final_file_name = $dest_name;
 	}
 
-	return $final_file_name, qw/hardcopy.tex hardcopy.log hardcopy.aux pdflatex.stdout pdflatex.stderr/;
+	return $final_file_name, qw/hardcopy.tex hardcopy.log hardcopy.aux latex.stdout latex.stderr/;
 }
 
 ################################################################################

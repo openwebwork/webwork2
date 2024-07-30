@@ -683,8 +683,14 @@ $mail{feedbackRecipients}    = [
 #	'hebrewTwoCol.xml',
 #];
 
-# The Hebrew themes need to use xelatex. Uncomment the following for xelatex
-#$externalPrograms{pdflatex} ="/usr/bin/xelatex --no-shell-escape";
+# xelatex is the default external program used to generate pdf from LaTeX.  It
+# supports unicode characters (needed for multilingual use among other things).
+# Newer versions of DateTime::Locale use a narrow no-break space in US dates.
+# So xelatex is needed even for English.  Note that --no-shell-escape is
+# important for security reasons.  You may be able to use pdflatex instead of
+# xelatex if you have an older version of DateTime::Locale on your system.
+# However, pdflatex does not support unicode characters.
+#$externalPrograms{latex2pdf} = "/usr/bin/pdflatex --no-shell-escape";
 
 # A course may have additional themes in $courseDirs{hardcopyThemes}.  All such
 # "course" hardcopy themes are effectively enabled and offered for use when
