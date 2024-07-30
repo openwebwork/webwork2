@@ -754,10 +754,12 @@ sub Upload ($c) {
 			&& grep { Mojo::File->new("$dir/$name")->realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
 			@{ $c->ce->{uneditableCourseFiles} };
 
-		if (($invalidUploadFilenameMsg || $isProtected)
-			|| !$c->param('overwrite')
-			|| $action ne 'Overwrite'
-			|| $action ne $c->maketext('Overwrite'))
+		if (
+			($invalidUploadFilenameMsg || $isProtected)
+			|| (!$c->param('overwrite')
+				&& $action ne 'Overwrite'
+				&& $action ne $c->maketext('Overwrite'))
+			)
 		{
 			return $c->c(
 				$c->Confirm(
