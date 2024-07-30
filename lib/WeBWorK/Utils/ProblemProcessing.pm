@@ -248,25 +248,38 @@ async sub process_and_log_answer ($c) {
 					$c->param('startTime', '');
 				}
 
-				my $LTIGradeResult = -1;
-
-				# Try to update the student score on the LMS if that option is enabled.
-				if ($ce->{LTIGradeMode} && $ce->{LTIGradeOnSubmit}) {
-					$LTIGradeResult = 0;
-					my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);
-					if ($ce->{LTIGradeMode} eq 'course') {
-						$LTIGradeResult = await $grader->submit_course_grade($problem->user_id);
-					} elsif ($ce->{LTIGradeMode} eq 'homework') {
-						$LTIGradeResult = await $grader->submit_set_grade($problem->user_id, $problem->set_id);
+				# Messages about passing the score back to the LMS
+				if ($ce->{LTIGradeMode}) {
+					my $LMSname        = $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
+					my $LTIGradeResult = -1;
+					if ($ce->{LTIGradeOnSubmit}) {
+						$LTIGradeResult = 0;
+						my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);
+						if ($ce->{LTIGradeMode} eq 'course') {
+							$LTIGradeResult = await $grader->submit_course_grade($problem->user_id);
+						} elsif ($ce->{LTIGradeMode} eq 'homework') {
+							$LTIGradeResult = await $grader->submit_set_grade($problem->user_id, $problem->set_id);
+						}
+						if ($LTIGradeResult == 0) {
+							$scoreRecordedMessage .=
+								$c->tag('br') . $c->maketext('Your score was not successfully sent to [_1].', $LMSname);
+						} elsif ($LTIGradeResult > 0) {
+							$scoreRecordedMessage .=
+								$c->tag('br') . $c->maketext('Your score was successfully sent to [_1].', $LMSname);
+						}
+					} elsif ($ce->{LTIMassUpdateInterval} > 0) {
+						$scoreRecordedMessage .= $c->tag('br');
+						if ($ce->{LTIMassUpdateInterval} < 120) {
+							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,second].',
+								$LMSname, $ce->{LTIMassUpdateInterval});
+						} elsif ($ce->{LTIMassUpdateInterval} < 7200) {
+							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,minute].',
+								$LMSname, int($ce->{LTIMassUpdateInterval} / 60 + 0.99));
+						} else {
+							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,hour].',
+								$LMSname, int($ce->{LTIMassUpdateInterval} / 36000 + 0.9999));
+						}
 					}
-				}
-
-				if ($LTIGradeResult == 0) {
-					$scoreRecordedMessage .=
-						$c->tag('br') . $c->maketext('Your score was not successfully sent to the LMS.');
-				} elsif ($LTIGradeResult > 0) {
-					$scoreRecordedMessage .=
-						$c->tag('br') . $c->maketext('Your score was successfully sent to the LMS.');
 				}
 			} else {
 				# The "sticky" answers get saved here when $will{recordAnswers} is false

@@ -7,8 +7,11 @@
 
 # This is a string that is used to name the LMS for end users, for example in a message telling
 # users to sign in through their LMS.
-$LTI{v1p3}{LMS_name} = 'e.g., Blackboard, Canvas, Moodle, etc.';
-#$LTI{v1p3}{LMS_name} = 'Desire2Learn';
+$LTI{v1p3}{LMS_name} = 'the LMS';
+#$LTI{v1p3}{LMS_name} = 'Blackboard';
+#$LTI{v1p3}{LMS_name} = 'Canvas';
+#$LTI{v1p3}{LMS_name} = 'D2L Brightspace';
+#$LTI{v1p3}{LMS_name} = 'Moodle';
 
 # This is a URL that should take users to a place they can log in to their LMS.  It will use the
 # text from LMS_name, but use LMS_url as the href.  If LMS_url is empty or undefined, the
