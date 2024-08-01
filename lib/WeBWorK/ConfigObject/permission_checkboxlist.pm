@@ -51,7 +51,7 @@ sub comparison_value ($self, $val) {
 	return join(',', @{ $val // [] });
 }
 
-sub entry_widget ($self, $default) {
+sub entry_widget ($self, $default, $is_secret) {
 	my $c = $self->{c};
 	$default = role_and_above($self->{c}->ce->{userRoles}, $default) unless ref($default) eq 'ARRAY';
 	return $c->c(

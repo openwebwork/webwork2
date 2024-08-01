@@ -928,49 +928,57 @@ sub getConfigValues ($ce) {
 				'This secret word is used to validate logins from an LMS using LTI 1.1. '
 					. 'This secret word must match the word configured in the LMS.'
 			),
-			type => 'text'
+			type   => 'text',
+			secret => 1
 		},
 		'LTI{v1p3}{PlatfromID}' => {
-			var  => 'LTI{v1p3}{PlatformID}',
-			doc  => x('LMS platform ID for LTI 1.3'),
-			doc2 => x('LMS platform ID used to validate logins from an LMS using LTI 1.3.'),
-			type => 'text'
+			var    => 'LTI{v1p3}{PlatformID}',
+			doc    => x('LMS platform ID for LTI 1.3'),
+			doc2   => x('LMS platform ID used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
 		},
 		'LTI{v1p3}{ClientID}' => {
-			var  => 'LTI{v1p3}{ClientID}',
-			doc  => x('LMS client ID for LTI 1.3'),
-			doc2 => x('LMS client ID used to validate logins from an LMS using LTI 1.3.'),
-			type => 'text',
+			var    => 'LTI{v1p3}{ClientID}',
+			doc    => x('LMS client ID for LTI 1.3'),
+			doc2   => x('LMS client ID used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
 		},
 		'LTI{v1p3}{DeploymentID}' => {
-			var  => 'LTI{v1p3}{DeploymentID}',
-			doc  => x('LMS deployment ID for LTI 1.3'),
-			doc2 => x('LMS deployment ID used to validate logins from an LMS using LTI 1.3.'),
-			type => 'text',
+			var    => 'LTI{v1p3}{DeploymentID}',
+			doc    => x('LMS deployment ID for LTI 1.3'),
+			doc2   => x('LMS deployment ID used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
 		},
 		'LTI{v1p3}{PublicKeysetURL}' => {
-			var  => 'LTI{v1p3}{PublicKeysetURL}',
-			doc  => x('LMS public keyset URL for LTI 1.3'),
-			doc2 => x('LMS public keyset URL used to validate logins from an LMS using LTI 1.3.'),
-			type => 'text',
+			var    => 'LTI{v1p3}{PublicKeysetURL}',
+			doc    => x('LMS public keyset URL for LTI 1.3'),
+			doc2   => x('LMS public keyset URL used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
 		},
 		'LTI{v1p3}{AccessTokenURL}' => {
-			var  => 'LTI{v1p3}{AccessTokenURL}',
-			doc  => x('LMS access token URL for LTI 1.3'),
-			doc2 => x('LMS access token URL used to validate logins from an LMS using LTI 1.3.'),
-			type => 'text',
+			var    => 'LTI{v1p3}{AccessTokenURL}',
+			doc    => x('LMS access token URL for LTI 1.3'),
+			doc2   => x('LMS access token URL used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
 		},
 		'LTI{v1p3}{AccessTokenAUD}' => {
-			var  => 'LTI{v1p3}{AccessTokenAUD}',
-			doc  => x('LMS access token AUD for LTI 1.3'),
-			doc2 => x('LMS access token AUD used to validate logins from an LMS using LTI 1.3.'),
-			type => 'text',
+			var    => 'LTI{v1p3}{AccessTokenAUD}',
+			doc    => x('LMS access token AUD for LTI 1.3'),
+			doc2   => x('LMS access token AUD used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
 		},
 		'LTI{v1p3}{AuthReqURL}' => {
-			var  => 'LTI{v1p3}{AuthReqURL}',
-			doc  => x('LMS authorization request URL for LTI 1.3'),
-			doc2 => x('LMS authorization request URL used to validate logins from an LMS using LTI 1.3.'),
-			type => 'text',
+			var    => 'LTI{v1p3}{AuthReqURL}',
+			doc    => x('LMS authorization request URL for LTI 1.3'),
+			doc2   => x('LMS authorization request URL used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
 		},
 		debug_lti_parameters => {
 			var  => 'debug_lti_parameters',

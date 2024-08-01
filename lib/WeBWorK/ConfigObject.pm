@@ -2,6 +2,7 @@ package WeBWorK::ConfigObject;
 use Mojo::Base -signatures;
 
 # Base object class for all config objects
+use constant SECRET_STRING => '*****';
 
 sub new ($class, $data, $c) {
 	return bless {
@@ -13,7 +14,7 @@ sub new ($class, $data, $c) {
 
 # Only input is a value to display, and should produce an html string.
 sub display_value ($self, $val) {
-	return $val;
+	return $self->{secret} ? SECRET_STRING : $val;
 }
 
 # This should return the value to compare to the new value.  This is *not* what is displayed.
@@ -47,16 +48,16 @@ sub convert_newval_source ($self, $use_current) {
 # will be the value of the perl variable, and newval will be whatever an entry widget produces.
 sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current);
-	return '' if $self->comparison_value($oldval) eq $newval;
+	return '' if $self->comparison_value($oldval) eq $newval || ($self->{secret} && $newval eq SECRET_STRING);
 
 	$newval =~ s/['"`]//g;
 	return "\$$self->{var} = '$newval';\n";
 }
 
 # A widget to interact with the user
-sub entry_widget ($self, $default) {
+sub entry_widget ($self, $default, $is_secret) {
 	return $self->{c}->text_field(
-		$self->{name} => $default,
+		$self->{name} => $is_secret ? SECRET_STRING : $default,
 		id            => $self->{name},
 		size          => $self->{width} || 15,
 		class         => 'form-control form-control-sm'
