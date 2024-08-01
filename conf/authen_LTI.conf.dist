@@ -194,6 +194,18 @@ $LTIMassUpdateInterval = 86400;    #in seconds
 	#'lms_context_id'
 );
 
+# By default only admin users can modify the LTI secrets and lms_context_id. The following
+# permissions need to be modified to allow other users the permission to modify the values.
+#$permissionLevels{'change_config_LTI{v1p1}{BasicConsumerSecret}'} = "admin",
+#$permissionLevels{'change_config_LTI{v1p3}{PlatformID}'}          = "admin",
+#$permissionLevels{'change_config_LTI{v1p3}{ClientID}'}            = "admin",
+#$permissionLevels{'change_config_LTI{v1p3}{DeploymentID}'}        = "admin",
+#$permissionLevels{'change_config_LTI{v1p3}{PublicKeysetURL}'}     = "admin",
+#$permissionLevels{'change_config_LTI{v1p3}{AccessTokenURL}'}      = "admin",
+#$permissionLevels{'change_config_LTI{v1p3}{AccessTokenAUD}'}      = "admin",
+#$permissionLevels{'change_config_LTI{v1p3}{AuthReqURL}'}          = "admin",
+#$permissionLevels{'change_config_lms_context_id'}                 = "admin",
+
 # Note that the lms_context_id is actually a database setting. It must be set for a course in
 # order for the instructor to utilize LTI content selection. This can also be set in the admin
 # course.
