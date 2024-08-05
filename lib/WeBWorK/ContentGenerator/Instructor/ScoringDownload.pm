@@ -36,7 +36,7 @@ sub pre_header_initialize ($c) {
 	# the parameter 'getFile" needs to be sanitized. (see bug #3793 )
 	# See checkName in FileManager.pm for a more complete sanitization.
 	if ($authz->hasPermissions($user, "score_sets")) {
-		unless ($file eq WeBWorK::ContentGenerator::Instructor::FileManager::checkName($file)) {    #
+		if ($c->WeBWorK::ContentGenerator::Instructor::FileManager::checkName($file)) {
 			$c->addbadmessage($c->maketext("Your file name is not valid! "));
 			$c->addbadmessage($c->maketext(
 				"A file name cannot begin with a dot, it cannot be empty, it cannot contain a "
