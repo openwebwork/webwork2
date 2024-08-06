@@ -55,7 +55,7 @@ sub save_string ($self, $oldval, $use_current = 0) {
 }
 
 # A widget to interact with the user
-sub entry_widget ($self, $default, $is_secret) {
+sub entry_widget ($self, $default, $is_secret = 0) {
 	return $self->{c}->text_field(
 		$self->{name} => $is_secret ? SECRET_STRING : $default,
 		id            => $self->{name},

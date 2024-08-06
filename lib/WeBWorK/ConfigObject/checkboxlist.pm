@@ -44,7 +44,7 @@ sub comparison_value ($self, $val) {
 	return join(',', @{ $val // [] });
 }
 
-sub entry_widget ($self, $default, $is_secret) {
+sub entry_widget ($self, $default, $is_secret = 0) {
 	my $c = $self->{c};
 	return $c->c(
 		map {

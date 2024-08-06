@@ -34,7 +34,7 @@ sub save_string ($self, $oldval, $use_current = 0) {
 	return "\$$self->{var} = '$newval';\n";
 }
 
-sub entry_widget ($self, $default, $is_secret) {
+sub entry_widget ($self, $default, $is_secret = 0) {
 	my $c = $self->{c};
 
 	# The value of a permission can be undefined (for nobody), a standard permission number, or some other number
