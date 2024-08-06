@@ -48,8 +48,7 @@ sub initialize ($c) {
 	my $scoringFileName = $c->param('scoringFileName') || "${courseName}_totals";
 	$scoringFileName =~ s/\.csv\s*$//;
 	$scoringFileName .= '.csv';    # must end in .csv
-	my $scoringFileNameOK =
-		($scoringFileName eq WeBWorK::ContentGenerator::Instructor::FileManager::checkName($scoringFileName));
+	my $scoringFileNameOK = !$c->WeBWorK::ContentGenerator::Instructor::FileManager::checkName($scoringFileName);
 	$c->{scoringFileName} = $scoringFileName;
 
 	$c->{padFields}             = defined($c->param('padFields'))             ? 1 : 0;
