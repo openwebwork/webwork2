@@ -38,6 +38,24 @@
 # Additional mail settings in defaults.config can be overridden here
 ################################################################################
 
+# $generic_sender_name will be used as the "From:" name on all feedback emails
+# sent without a defined user.
+
+$generic_sender_name = '';
+
+# The following variables will override the "From:" address in messages sent by
+# the named feature.
+# When one of these is set, all messages sent by that feature will use the
+# supplied email address as the "From:" address, and the address of the relevant
+# user will be set as the "Reply-to:" address for the message.
+# These may be required if you have provided an SMTP username and password in
+# site.conf.  They can also be used to improve email verification and avoid
+# messages getting filtered as spam.
+
+$feedback_sender_email = ''; # For student feedback
+$instructor_sender_email = ''; # For instructors emailing students
+$jitar_sender_email = ''; # For notifications of incomplete JiTaR sets
+
 # By default, feedback is sent to all users who have permission to
 # receive_feedback in a course. If this list is non-empty, feedback is also sent
 # to the addresses specified here.

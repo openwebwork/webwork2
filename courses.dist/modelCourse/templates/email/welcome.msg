@@ -1,6 +1,7 @@
 ##  template for a Welcome message to be emailed to class (delete this line)
+## Note that the From: address will be replaced by the email address of the account
+## from which the message is sent.
 From: teacher@somewhere.edu (Jan Teacher)
-Reply-To: teacher@somewhere.edu
 Subject: online homework for Math 123
 Message:
     Hi $FN,
