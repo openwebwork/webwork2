@@ -75,7 +75,7 @@
 		% }
 		% # Grader
 		% if ($authz->hasPermissions(param('user'), 'access_instructor_tools')
-			% && $authz->hasPermissions(param('user'), 'score_sets')) {
+			% && $authz->hasPermissions(param('user'), 'problem_grader')) {
 			<td>
 				<%= link_to(maketext('Grade Problem') =>
 					$c->systemLink(url_for('instructor_problem_grader', problemID => $problemID))) =%>

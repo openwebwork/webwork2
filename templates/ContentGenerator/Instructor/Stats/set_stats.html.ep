@@ -186,7 +186,7 @@
 			<th><%= maketext('# of Active Students') %></th>
 			<% for (@$numActive) { %><td class="text-center"><%= $_ %></td><% } =%>
 		</tr>
-		% if ($authz->hasPermissions(param('user'), 'score_sets')) {
+		% if ($authz->hasPermissions(param('user'), 'problem_grader')) {
 			<tr>
 				<th><%= maketext('Manual Grader') %></th>
 				% for (@$problems) {

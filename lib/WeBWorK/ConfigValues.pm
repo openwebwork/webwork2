@@ -517,6 +517,15 @@ sub getConfigValues ($ce) {
 				type => 'permission'
 			},
 			{
+				var  => 'permissionLevels{problem_grader}',
+				doc  => x('Can use problem grader'),
+				doc2 => x(
+					'This permission level and higher can use the problem grader (both the grader that is available '
+						. 'on a problem page and the set-wide probelem grader).'
+				),
+				type => 'permission'
+			},
+			{
 				var  => 'permissionLevels{record_answers_when_acting_as_student}',
 				doc  => x('Can submit answers for a student'),
 				doc2 => x(
