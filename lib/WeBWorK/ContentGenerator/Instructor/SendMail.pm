@@ -216,6 +216,7 @@ sub initialize ($c) {
 		# read info from the form
 		# bail if there is no message body
 
+		$c->{from} = $c->param('from') unless $c->{from};
 		$subject = $c->param('subject');
 		my $body = $c->param('body');
 		# Sanity check: body must contain non-white space when previewing message.
@@ -302,7 +303,7 @@ sub initialize ($c) {
 		# verify format of From address (one valid rfc2822/rfc5322 address)
 		my @parsed_from_addrs = Email::Address::XS->parse($c->{from});
 		unless (@parsed_from_addrs == 1) {
-			$c->addbadmessage($c->maketext("From field must contain one valid email address."));
+			$c->addbadmessage($c->maketext("From field must contain a single valid email address."));
 			return;
 		}
 
