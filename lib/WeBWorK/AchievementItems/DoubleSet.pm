@@ -19,7 +19,7 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 # Item to make a homework set worth twice as much
 
 use WeBWorK::Utils qw(x nfreeze_base64 thaw_base64);
-use WeBWorK::Utils::DateTime qw(between);
+use WeBWorK::Utils::DateTime qw(after);
 use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 sub new ($class) {
@@ -35,7 +35,7 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 
 	for my $i (0 .. $#$sets) {
 		push(@openSets, [ format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id ])
-			if (between($sets->[$i]->open_date, $sets->[$i]->due_date) && $sets->[$i]->assignment_type eq 'default');
+			if (after($sets->[$i]->open_date) && $sets->[$i]->assignment_type eq 'default');
 	}
 
 	return unless @openSets;

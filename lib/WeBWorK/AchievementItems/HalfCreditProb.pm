@@ -21,7 +21,7 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 use Mojo::JSON qw(encode_json);
 
 use WeBWorK::Utils qw(x nfreeze_base64 thaw_base64);
-use WeBWorK::Utils::DateTime qw(between);
+use WeBWorK::Utils::DateTime qw(after);
 use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 sub new ($class) {
@@ -39,7 +39,7 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 	my (@openSets, @initialProblemIDs);
 
 	for my $i (0 .. $#$sets) {
-		if (between($sets->[$i]->open_date, $sets->[$i]->due_date)
+		if (after($sets->[$i]->open_date)
 			&& $sets->[$i]->assignment_type eq 'default'
 			&& @{ $setProblemIds->{ $sets->[$i]->set_id } })
 		{
