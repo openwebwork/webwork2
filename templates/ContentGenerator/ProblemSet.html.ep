@@ -13,7 +13,7 @@
 				stash('setID'), param('effectiveUser')
 			) =%>
 		</p>
-		<p class="mb-0"><%== $c->{invalidSet} %></p>
+		<p class="mb-0"><%= $c->{invalidSet} %></p>
 	</div>
 	% last;
 % }

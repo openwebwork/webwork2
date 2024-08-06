@@ -48,7 +48,7 @@ async sub initialize ($c) {
 		unless $c->stash->{set}
 		&& $c->stash->{problem}
 		&& $authz->hasPermissions($userID, 'access_instructor_tools')
-		&& $authz->hasPermissions($userID, 'score_sets');
+		&& $authz->hasPermissions($userID, 'problem_grader');
 
 	# Get all users of the set, and restrict to the sections or recitations that are allowed for the user if such
 	# restrictions are defined.  For gateway sets only get users for which versions exist.  The users are sorted by

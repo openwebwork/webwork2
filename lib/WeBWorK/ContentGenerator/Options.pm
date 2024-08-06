@@ -62,7 +62,10 @@ sub initialize ($c) {
 						eval { $db->addPassword($effectiveUserPassword) };
 						$password = $password // $effectiveUserPassword;
 						if ($@) {
-							$c->addbadmessage($c->maketext("Couldn't change [_1]'s password: [_2]", $e_user_name, $@));
+							$c->log->error("Error changing ${e_user_name}'s password: $@");
+							$c->addbadmessage($c->maketext(
+								"[_1]'s password was not changed due to an internal error.", $e_user_name
+							));
 						} else {
 							$c->addgoodmessage($c->maketext("[_1]'s password has been changed.", $e_user_name));
 						}
@@ -71,7 +74,10 @@ sub initialize ($c) {
 						eval { $db->putPassword($effectiveUserPassword) };
 						$password = $password // $effectiveUserPassword;
 						if ($@) {
-							$c->addbadmessage($c->maketext("Couldn't change [_1]'s password: [_2]", $e_user_name, $@));
+							$c->log->error("Error changing ${e_user_name}'s password: $@");
+							$c->addbadmessage($c->maketext(
+								"[_1]'s password was not changed due to an internal error.", $e_user_name
+							));
 						} else {
 							$c->addgoodmessage($c->maketext("[_1]'s password has been changed.", $e_user_name));
 						}
@@ -106,8 +112,11 @@ sub initialize ($c) {
 		eval { $db->putUser($c->{effectiveUser}) };
 		if ($@) {
 			$c->{effectiveUser}->email_address($oldA);
-			$c->addbadmessage($c->maketext("Couldn't change your email address: [_1]", $@));
+			$c->log->error("Unable to save new email address for $userID: $@");
+			$c->addbadmessage($c->maketext('Your email address has not been changed due to an internal error.'));
 		} else {
+			$c->param('currAddress', $c->param('newAddress'));
+			$c->param('newAddress',  undef);
 			$c->addgoodmessage($c->maketext('Your email address has been changed.'));
 		}
 	}
@@ -127,7 +136,8 @@ sub initialize ($c) {
 
 			eval { $db->putUser($c->{effectiveUser}) };
 			if ($@) {
-				$c->addbadmessage($c->maketext("Couldn't save your display options: [_1]", $@));
+				$c->log->error("Unable to save display options for $userID: $@");
+				$c->addbadmessage($c->maketext('Your display options were not saved due to an internal error.'));
 			} else {
 				$c->addgoodmessage($c->maketext('Your display options have been saved.'));
 			}

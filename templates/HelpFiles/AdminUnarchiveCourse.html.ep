@@ -29,5 +29,5 @@
 <p class="mb-0">
 	<%= maketext('You may check the box to "clean" the unarchived course. This will remove student users '
 		. 'and their associated data from the database after the course is unarchived. It will also remove '
-		. 'the log files and and any files in the scoring folder.') =%>
+		. 'the log files, any files in the scoring folder, and any temporary edited files.') =%>
 </p>

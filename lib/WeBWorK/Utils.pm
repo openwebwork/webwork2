@@ -331,7 +331,10 @@ sub createEmailSenderTransportSMTP ($ce) {
 	return Email::Sender::Transport::SMTP->new({
 		host => $ce->{mail}{smtpServer},
 		ssl  => $ce->{mail}{tls_allowed} // 0,
-		defined $ce->{mail}->{smtpPort} ? (port => $ce->{mail}{smtpPort}) : (),
+		defined $ce->{mail}->{smtpPort}       ? (port          => $ce->{mail}{smtpPort})       : (),
+		defined $ce->{mail}->{smtpUsername}   ? (sasl_username => $ce->{mail}{smtpUsername})   : (),
+		defined $ce->{mail}->{smtpPassword}   ? (sasl_password => $ce->{mail}{smtpPassword})   : (),
+		defined $ce->{mail}->{smtpSSLOptions} ? (ssl_options   => $ce->{mail}{smtpSSLOptions}) : (),
 		timeout => $ce->{mail}{smtpTimeout},
 	});
 }

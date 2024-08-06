@@ -47,16 +47,21 @@ sub putUserProblem {
 	my $userProblem = $db->getUserProblem($params->{user_id}, $params->{set_id}, $params->{problem_id});
 	if (!$userProblem) { return { text => 'User problem not found.' }; }
 
-	for (
-		'source_file',        'value',                'max_attempts',        'showMeAnother',
-		'showMeAnotherCount', 'prPeriod',             'prCount',             'problem_seed',
-		'status',             'attempted',            'last_answer',         'num_correct',
-		'num_incorrect',      'att_to_open_children', 'counts_parent_grade', 'sub_status',
-		'flags'
-		)
-	{
-		$userProblem->{$_} = $params->{$_} if defined($params->{$_});
+	if ($self->c->authz->hasPermissions($self->authen->{user_id}, 'modify_student_data')) {
+		for (
+			'source_file',          'value',               'max_attempts', 'showMeAnother',
+			'showMeAnotherCount',   'prPeriod',            'prCount',      'problem_seed',
+			'attempted',            'last_answer',         'num_correct',  'num_incorrect',
+			'att_to_open_children', 'counts_parent_grade', 'sub_status',   'flags'
+			)
+		{
+			$userProblem->{$_} = $params->{$_} if defined $params->{$_};
+		}
 	}
+
+	# The status is the only thing that users with the problem_grader permission can change.
+	# This method can not be called without the problem_grader permission.
+	$userProblem->{status} = $params->{status} if defined $params->{status};
 
 	# Remove the needs_grading flag if the mark_graded parameter is set.
 	$userProblem->{flags} =~ s/:needs_grading$// if $params->{mark_graded};
@@ -81,16 +86,21 @@ sub putProblemVersion {
 		$db->getProblemVersion($params->{user_id}, $params->{set_id}, $params->{version_id}, $params->{problem_id});
 	if (!$problemVersion) { return { text => 'Problem version not found.' }; }
 
-	for (
-		'source_file',        'value',                'max_attempts',        'showMeAnother',
-		'showMeAnotherCount', 'prPeriod',             'prCount',             'problem_seed',
-		'status',             'attempted',            'last_answer',         'num_correct',
-		'num_incorrect',      'att_to_open_children', 'counts_parent_grade', 'sub_status',
-		'flags'
-		)
-	{
-		$problemVersion->{$_} = $params->{$_} if defined($params->{$_});
+	if ($self->c->authz->hasPermissions($self->authen->{user_id}, 'modify_student_data')) {
+		for (
+			'source_file',          'value',               'max_attempts', 'showMeAnother',
+			'showMeAnotherCount',   'prPeriod',            'prCount',      'problem_seed',
+			'attempted',            'last_answer',         'num_correct',  'num_incorrect',
+			'att_to_open_children', 'counts_parent_grade', 'sub_status',   'flags'
+			)
+		{
+			$problemVersion->{$_} = $params->{$_} if defined($params->{$_});
+		}
 	}
+
+	# The status is the only thing that users with the problem_grader permission can change.
+	# This method can not be called without the problem_grader permission.
+	$problemVersion->{status} = $params->{status} if defined $params->{status};
 
 	# Remove the needs_grading flag if the mark_graded parameter is set.
 	$problemVersion->{flags} =~ s/:needs_grading$// if $params->{mark_graded};
@@ -116,13 +126,19 @@ sub putPastAnswer {
 
 	$pastAnswer->{user_id} = $params->{user_id} if $params->{user_id};
 
-	for (
-		'set_id', 'problem_id',    'source_file',    'timestamp',
-		'scores', 'answer_string', 'comment_string', 'problem_seed'
-		)
-	{
-		$pastAnswer->{$_} = $params->{$_} if defined($params->{$_});
+	if ($self->c->authz->hasPermissions($self->authen->{user_id}, 'modify_student_data')) {
+		for (
+			'set_id', 'problem_id',    'source_file',    'timestamp',
+			'scores', 'answer_string', 'comment_string', 'problem_seed'
+			)
+		{
+			$pastAnswer->{$_} = $params->{$_} if defined($params->{$_});
+		}
 	}
+
+	# The comment_string is the only thing that users with the problem_grader permission can change.
+	# This method can not be called without the problem_grader permission.
+	$pastAnswer->{comment_string} = $params->{comment_string} if defined $params->{comment_string};
 
 	eval { $db->putPastAnswer($pastAnswer) };
 	if ($@) { return { text => "putPastAnswer $@" }; }

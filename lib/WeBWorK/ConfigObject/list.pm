@@ -43,7 +43,7 @@ sub save_string ($self, $oldval, $use_current = 0) {
 	return "\$$self->{var} = [" . join(',', map {"'$_'"} map { $_ =~ s/['"`]//gr } split(',', $newval)) . "];\n";
 }
 
-sub entry_widget ($self, $default) {
+sub entry_widget ($self, $default, $is_secret = 0) {
 	my $str = join(', ', @{ $default // [] });
 	return $self->{c}->text_area(
 		$self->{name} => $str =~ /\S/ ? $str : '',

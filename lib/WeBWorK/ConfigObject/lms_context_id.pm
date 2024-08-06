@@ -101,7 +101,7 @@ sub save_string ($self, $oldval, $use_current = 0) {
 
 # This ensures that the input for this setting always shows what is in the database. If the form is submitted, and the
 # requested context id is rejected above, then that rejected value should not be shown when the page reloads.
-sub entry_widget ($self, $default) {
+sub entry_widget ($self, $default, $is_secret = 0) {
 	$self->{c}->param($self->{name}, $default);
 	return $self->SUPER::entry_widget($default);
 }
