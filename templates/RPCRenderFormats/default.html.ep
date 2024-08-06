@@ -193,7 +193,7 @@
 	% # Show the footer unless it is explicity disabled.
 	% if ($showFooter ne '0') {
 		<div id="footer" data-iframe-height="1">
-			WeBWorK &copy; 2000-2023 |
+			WeBWorK &copy; <%= $ce->{WW_COPYRIGHT_YEARS} || 2000-2024 %> |
 			host: <%= $SITE_URL %> |
 			course: <%= $courseID %> |
 			format: <%= $formatName %> |

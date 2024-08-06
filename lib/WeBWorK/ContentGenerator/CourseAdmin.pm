@@ -1305,6 +1305,11 @@ sub do_unarchive_course ($c) {
 				eval { Mojo::File->new($ce_new->{courseDirs}{scoring})->remove_tree({ keep_root => 1 }) };
 				$c->addbadmessage($c->maketext('Failed to remove scoring files: [_1]', $@)) if $@;
 			}
+
+			if (-d $ce_new->{courseDirs}{tmpEditFileDir}) {
+				eval { Mojo::File->new($ce_new->{courseDirs}{tmpEditFileDir})->remove_tree({ keep_root => 1 }) };
+				$c->addbadmessage($c->maketext('Failed to remove temporary edited files: [_1]', $@)) if $@;
+			}
 		}
 
 		return $c->c(

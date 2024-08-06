@@ -118,7 +118,7 @@ sub can_showProblemGrader ($c, $user, $permissionLevel, $effectiveUser, $set, $p
 	my $authz = $c->authz;
 
 	return ($authz->hasPermissions($user->user_id, 'access_instructor_tools')
-			&& $authz->hasPermissions($user->user_id, 'score_sets')
+			&& $authz->hasPermissions($user->user_id, 'problem_grader')
 			&& $set->set_id ne 'Undefined_Set'
 			&& !$c->{invalidSet});
 }

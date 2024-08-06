@@ -87,8 +87,8 @@ sub initialize ($c) {
 
 	# Store data
 	$c->{defaultPreviewUser} = $ur;
-	$c->{defaultFrom}        = $ur->rfc822_mailbox;
-	$c->{defaultReply}       = $ur->rfc822_mailbox;
+	$c->{from}               = $ur->rfc822_mailbox;
+	$c->{from_name}          = $ur->full_name;
 	$c->{defaultSubject}     = $c->stash('courseID') . ' notice';
 	$c->{merge_file}         = $mergefile // '';
 
@@ -196,13 +196,11 @@ sub initialize ($c) {
 	}
 
 	# Get inputs
-	my ($from, $replyTo, $r_text, $subject);
+	my ($r_text, $subject);
 	if ($input_source eq 'file') {
 		if ($input_file) {
-			($from, $replyTo, $subject, $r_text) = $c->read_input_file("$emailDirectory/$input_file");
+			($subject, $r_text) = $c->read_input_file("$emailDirectory/$input_file");
 		} else {
-			$from    = $c->{defaultFrom};
-			$replyTo = $c->{defaultReply};
 			$subject = $c->{defaultSubject};
 
 			# If action is openMessage and no file was found, then 'None' was selected.
@@ -212,16 +210,12 @@ sub initialize ($c) {
 				$c->param('savefilename', 'default.msg') if $c->param('savefilename');
 			}
 		}
-		$c->param('from',    $from)    if $from;
-		$c->param('replyTo', $replyTo) if $replyTo;
 		$c->param('subject', $subject) if $subject;
 		$c->param('body',    $$r_text) if $r_text;
 	} elsif ($input_source eq 'form') {
 		# read info from the form
 		# bail if there is no message body
 
-		$from    = $c->param('from');
-		$replyTo = $c->param('replyTo');
 		$subject = $c->param('subject');
 		my $body = $c->param('body');
 		# Sanity check: body must contain non-white space when previewing message.
@@ -233,8 +227,6 @@ sub initialize ($c) {
 	my $remote_host = $c->tx->remote_address || "UNKNOWN";
 
 	# Store data
-	$c->{from}        = $from;
-	$c->{replyTo}     = $replyTo;
 	$c->{subject}     = $subject;
 	$c->{remote_host} = $remote_host;
 	$c->{r_text}      = $r_text;
@@ -280,8 +272,7 @@ sub initialize ($c) {
 		$temp_body =~ s/\r\n/\n/g;
 		$temp_body = join(
 			"\n",
-			"From: $from",
-			"Reply-To: $replyTo",
+			"From: $c->{from}",
 			"Subject: $subject",
 			"Content-Type: text/plain; charset=UTF-8",
 			"Message:",
@@ -315,15 +306,6 @@ sub initialize ($c) {
 			return;
 		}
 
-		# verify format of Reply-to address (zero or more valid rfc2822/ref5322 addresses)
-		if (defined $c->{replyTo} and $c->{replyTo} ne "") {
-			my @parsed_replyto_addrs = Email::Address::XS->parse($c->{replyTo});
-			unless (@parsed_replyto_addrs > 0) {
-				$c->addbadmessage($c->maketext("Invalid Reply-to address."));
-				return;
-			}
-		}
-
 		# Check that recipients have been selected.
 		unless (@{ $c->{ra_send_to} }) {
 			$c->addbadmessage(
@@ -353,7 +335,7 @@ sub initialize ($c) {
 				text        => ${ $c->{r_text} // \'' },
 				merge_data  => $c->{rh_merge_data},
 				from        => $c->{from},
-				defaultFrom => $c->{defaultFrom},
+				from_name   => $c->{from_name},
 				remote_host => $c->{remote_host},
 			} ],
 			{ notes => { courseID => $c->stash('courseID') } }
@@ -393,10 +375,9 @@ sub print_preview ($c) {
 	# Note that this escaping is done in the Mojolicious template automatically.
 	$msg = join(
 		"",
-		"To: ",       $c->{preview_user}->email_address, "\n",
-		"From: ",     $c->{from},                        "\n",
-		"Reply-To: ", $c->{replyTo},                     "\n",
-		"Subject: ",  $c->{subject},                     "\n",
+		"To: ",      $c->{preview_user}->email_address, "\n",
+		"From: ",    $c->{from},                        "\n",
+		"Subject: ", $c->{subject},                     "\n",
 		# In a real mails we would UTF-8 encode the message and give the Content-Type header. For the preview which is
 		# displayed as html, just add the header, but do NOT use Encode::encode("UTF-8",$msg).
 		"Content-Type: text/plain; charset=UTF-8\n\n",
@@ -435,7 +416,7 @@ sub saveMessageFile ($c, $body, $msgFileName) {
 sub read_input_file ($c, $filePath) {
 	my ($text, @text);
 	my $header = '';
-	my ($subject, $from, $replyTo);
+	my $subject;
 
 	open my $FILE, "<:encoding(UTF-8)", $filePath
 		or do { $c->addbadmessage($c->maketext(q{Can't open [_1]}, $filePath)); return };
@@ -445,17 +426,12 @@ sub read_input_file ($c, $filePath) {
 	$text = join('', <$FILE>);
 	close $FILE;
 
-	$text   =~ s/^\s*//;           # remove initial white space if any.
-	$header =~ /^From:\s(.*)$/m;
-	$from = $1 || $c->{defaultFrom};
-
-	$header =~ /^Reply-To:\s(.*)$/m;
-	$replyTo = $1 || $c->{defaultReply};
+	$text =~ s/^\s*//;    # remove initial white space if any.
 
 	$header =~ /^Subject:\s(.*)$/m;
 	$subject = $1 || $c->{defaultSubject};
 
-	return ($from, $replyTo, $subject, \$text);
+	return ($subject, \$text);
 }
 
 sub get_message_file_names ($c) {

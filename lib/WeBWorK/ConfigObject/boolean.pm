@@ -29,7 +29,7 @@ sub save_string ($self, $oldval, $use_current = 0) {
 	return "\$$self->{var} = $newval;\n";
 }
 
-sub entry_widget ($self, $default) {
+sub entry_widget ($self, $default, $is_secret = 0) {
 	return $self->{c}->select_field(
 		$self->{name} => [
 			[ $self->{c}->maketext('True')  => 1, $default == 1 ? (selected => undef) : () ],

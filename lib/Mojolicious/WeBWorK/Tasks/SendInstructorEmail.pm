@@ -79,9 +79,14 @@ sub mail_message_to_recipients ($job, $ce, $db, $mail_data) {
 			$mail_data->{merge_data}
 		);
 
-		my $email =
-			Email::Stuffer->to($user_record->email_address)->from($mail_data->{from})->subject($mail_data->{subject})
-			->text_body($msg)->header('X-Remote-Host' => $mail_data->{remote_host});
+		my $email = Email::Stuffer->to($user_record->email_address)->subject($mail_data->{subject})->text_body($msg)
+			->header('X-Remote-Host' => $mail_data->{remote_host});
+		if ($ce->{instructor_sender_email}) {
+			$email->from($mail_data->{from_name} . ' <' . $ce->{instructor_sender_email} . '>')
+				->reply_to($mail_data->{from});
+		} else {
+			$email->from($mail_data->{from});
+		}
 
 		eval {
 			$email->send_or_die({

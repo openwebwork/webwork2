@@ -1,0 +1,9 @@
+#  This achievement executes unconditionally, and awards the user a certain number
+#  of ExtendDueDate, SuperExtendDueDate, and ResurrectHW reward items. How many of
+#  each is specified below.
+
+$globalData->{ExtendDueDate}      += 10; 
+$globalData->{SuperExtendDueDate} += 5; 
+$globalData->{ResurrectHW}        += 3; 
+return 1;
+

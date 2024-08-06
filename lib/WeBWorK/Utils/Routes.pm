@@ -573,13 +573,14 @@ sub setup_content_generator_routes_recursive {
 	my $action = $routeParameters{$child}{action} // 'go';
 
 	if ($routeParameters{$child}{children}) {
-		my $child_route = $route->under($routeParameters{$child}{path})->name($child);
+		my $child_route = $route->under($routeParameters{$child}{path}, [ problemID => qr/\d+/ ])->name($child);
 		$child_route->any('/')->to("$routeParameters{$child}{module}#$action")->name($child);
 		for (@{ $routeParameters{$child}{children} }) {
 			setup_content_generator_routes_recursive($child_route, $_);
 		}
 	} else {
-		$route->any($routeParameters{$child}{path})->to("$routeParameters{$child}{module}#$action")->name($child);
+		$route->any($routeParameters{$child}{path}, [ problemID => qr/\d+/ ])
+			->to("$routeParameters{$child}{module}#$action")->name($child);
 	}
 
 	return;

@@ -74,7 +74,7 @@
 				$setID, $effectiveUserID, $c->{invalidVersionCreation} ? " (acted as by $userID)" : ''
 			) =%>
 		</div>
-		<div><%== $c->{invalidSet} %></div>
+		<div><%= $c->{invalidSet} %></div>
 		% if ($c->{invalidVersionCreation} && $c->{invalidVersionCreation} == 1) {
 			<p>
 				<%= link_to 'Create new set version.' => $c->systemLink(
