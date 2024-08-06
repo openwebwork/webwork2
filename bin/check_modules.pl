@@ -75,6 +75,7 @@ my @modulesList = qw(
 	Date::Format
 	Date::Parse
 	DateTime
+	DateTime::Format::Strptime
 	DBD::mysql
 	DBI
 	Digest::MD5
