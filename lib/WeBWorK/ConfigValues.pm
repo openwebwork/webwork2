@@ -899,6 +899,25 @@ sub getConfigValues ($ce) {
 			labels => { '' => 'None', 'course' => 'Course', 'homework' => 'Homework' },
 			type   => 'popuplist'
 		},
+		LTIGradeOnSubmit => {
+			var  => 'LTIGradeOnSubmit',
+			doc  => x('Update LMS Grade Each Submit'),
+			doc2 => x(
+				'Sets if webwork sends grades back to the LMS every time a user submits an answer. '
+					. 'This keeps students grades up to date, but can cause additional server load.'
+			),
+			type => 'boolean'
+		},
+		LTIMassUpdateInterval => {
+			var  => 'LTIMassUpdateInterval',
+			doc  => x('Time in seconds to periodically update LMS grades (-1 to disable)'),
+			doc2 => x(
+				'Sets the time in seconds to periodically update the LMS grades. WeBWorK will update all grades on '
+					. 'the LMS if it has been longer than this time since the completion of the last update. This is '
+					. 'only an approximate time. 86400 seconds is one day. -1 disables periodic updates.'
+			),
+			type => 'number'
+		},
 		LMSManageUserData => {
 			var  => 'LMSManageUserData',
 			doc  => x('Allow the LMS to update user account data'),
@@ -910,6 +929,65 @@ sub getConfigValues ($ce) {
 					. 'WeBWorK will be overwritten the next time the user logs in.'
 			),
 			type => 'boolean'
+		},
+		'LTI{v1p1}{BasicConsumerSecret}' => {
+			var  => 'LTI{v1p1}{BasicConsumerSecret}',
+			doc  => x('LMS shared secret for LTI 1.1 authentication'),
+			doc2 => x(
+				'This secret word is used to validate logins from an LMS using LTI 1.1. '
+					. 'This secret word must match the word configured in the LMS.'
+			),
+			type   => 'text',
+			secret => 1
+		},
+		'LTI{v1p3}{PlatfromID}' => {
+			var    => 'LTI{v1p3}{PlatformID}',
+			doc    => x('LMS platform ID for LTI 1.3'),
+			doc2   => x('LMS platform ID used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
+		},
+		'LTI{v1p3}{ClientID}' => {
+			var    => 'LTI{v1p3}{ClientID}',
+			doc    => x('LMS client ID for LTI 1.3'),
+			doc2   => x('LMS client ID used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
+		},
+		'LTI{v1p3}{DeploymentID}' => {
+			var    => 'LTI{v1p3}{DeploymentID}',
+			doc    => x('LMS deployment ID for LTI 1.3'),
+			doc2   => x('LMS deployment ID used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
+		},
+		'LTI{v1p3}{PublicKeysetURL}' => {
+			var    => 'LTI{v1p3}{PublicKeysetURL}',
+			doc    => x('LMS public keyset URL for LTI 1.3'),
+			doc2   => x('LMS public keyset URL used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
+		},
+		'LTI{v1p3}{AccessTokenURL}' => {
+			var    => 'LTI{v1p3}{AccessTokenURL}',
+			doc    => x('LMS access token URL for LTI 1.3'),
+			doc2   => x('LMS access token URL used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
+		},
+		'LTI{v1p3}{AccessTokenAUD}' => {
+			var    => 'LTI{v1p3}{AccessTokenAUD}',
+			doc    => x('LMS access token AUD for LTI 1.3'),
+			doc2   => x('LMS access token AUD used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
+		},
+		'LTI{v1p3}{AuthReqURL}' => {
+			var    => 'LTI{v1p3}{AuthReqURL}',
+			doc    => x('LMS authorization request URL for LTI 1.3'),
+			doc2   => x('LMS authorization request URL used to validate logins from an LMS using LTI 1.3.'),
+			type   => 'text',
+			secret => 1
 		},
 		debug_lti_parameters => {
 			var  => 'debug_lti_parameters',
@@ -997,6 +1075,15 @@ sub getConfigValues ($ce) {
 				{ %{ delete $LTIConfigValues->{'LTI{v1p1}{LMS_name}'} }, var => 'LTI{v1p3}{LMS_name}' };
 			$LTIConfigValues->{'LTI{v1p3}{LMS_url}'} =
 				{ %{ delete $LTIConfigValues->{'LTI{v1p1}{LMS_url}'} }, var => 'LTI{v1p3}{LMS_url}' };
+			delete $LTIConfigValues->{'LTI{v1p1}{BasicConsumerSecret}'};
+		} else {
+			for my $key (
+				'PlatformID',     'ClientID',       'DeploymentID', 'PublicKeysetURL',
+				'AccessTokenURL', 'AccessTokenAUD', 'AuthReqURL'
+				)
+			{
+				delete $LTIConfigValues->{"LTI{v1p3}{$key}"};
+			}
 		}
 
 		push(

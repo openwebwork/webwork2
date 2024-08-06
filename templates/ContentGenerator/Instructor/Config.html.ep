@@ -56,12 +56,16 @@
 								% defined $ce->{permissionLevels}{"change_config_$conobject->{var}"}
 								% && !$authz->hasPermissions(param('user'), "change_config_$conobject->{var}")
 							% );
+							% # Hide sensitive variables from being displayed.
+							% my $default_value = $conobject->get_value($default_ce);
+							% my $current_value = $conobject->get_value($ce3);
+							% my $is_secret = $conobject->{secret} && $default_value eq $current_value ? 1 : 0;
 							<tr>
 								<td><%= $conobject->what_string %></td>
 								<td class="text-center">
 									<%= $conobject->display_value($conobject->get_value($default_ce)) %>
 								</td>
-								<td><%= $conobject->entry_widget($conobject->get_value($ce3)) =%></td>
+								<td><%= $conobject->entry_widget($conobject->get_value($ce3), $is_secret) =%></td>
 							</tr>
 						% }
 					</table>
