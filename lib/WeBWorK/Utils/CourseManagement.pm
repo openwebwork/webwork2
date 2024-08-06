@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,15 +29,17 @@ use Carp;
 use DBI;
 use String::ShellQuote;
 use UUID::Tiny qw(create_uuid_as_string);
+use Mojo::File qw(path);
+use File::Copy::Recursive qw(dircopy);
+use File::Spec;
+use Archive::Tar;
 
 use WeBWorK::Debug;
-use File::Path qw(rmtree);
-use File::Copy qw(move);
-use File::Spec;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Debug;
-use WeBWorK::Utils qw(runtime_use readDirectory surePathToFile);
+use WeBWorK::Utils qw(runtime_use);
+use WeBWorK::Utils::Files qw(surePathToFile);
+use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
 our @EXPORT_OK = qw(
 	listCourses
@@ -111,13 +113,15 @@ sub listCourses {
 	$dbh->disconnect();
 
 	# Collect directories which may be course directories
-	my @cdirs = grep { not(m/^\./ or m/^CVS$/) and -d "$coursesDir/$_" } readDirectory($coursesDir);
+	my @cdirs =
+		@{ path($coursesDir)->list({ dir => 1 })->grep(sub { -d $_ && $_->basename ne 'modelCourse' })->map('basename')
+		};
 	if ($stmt_bad) {
 		# Fall back to old method listing all directories.
 		return @cdirs;
 	} else {
 		my @courses;
-		foreach my $cname (@cdirs) {
+		for my $cname (@cdirs) {
 			push(@courses, $cname) if $user_tables_seen{"${cname}_user"};
 		}
 		return @courses;
@@ -132,9 +136,9 @@ Lists the courses which have been archived (end in .tar.gz).
 
 sub listArchivedCourses {
 	my ($ce) = @_;
-	my $archivesDir = "$ce->{webworkDirs}{courses}/admin/archives";
+	my $archivesDir = path("$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives");
 	surePathToFile($ce->{webworkDirs}{courses}, "$archivesDir/test");    # Ensure archives directory exists.
-	return grep {m/\.tar\.gz$/} readDirectory($archivesDir);
+	return @{ $archivesDir->list->grep(qr/\.tar\.gz$/)->map('basename') };
 }
 
 ################################################################################
@@ -143,18 +147,26 @@ sub listArchivedCourses {
 
 %options must contain:
 
- courseID      => $courseID,
- ce            => $ce,
- courseOptions => $courseOptions,
- users         => $users
+ courseID      => course ID for the new course,
+ ce            => a course environment for the new course,
+ courseOptions => hash ref explained below
+ users         => array ref explained below
 
 %options may contain:
 
- templatesFrom => $templatesCourseID,
- courseTitle => $courseTitle
- courseInstitution => $courseInstitution
+ copyFrom          => some course ID to copy things from,
+ courseTitle       => a title for the new course
+ courseInstitution => institution for the new course
+ copyTemplatesHtml => boolean
+ copySimpleConfig  => boolean
+ copyConfig        => boolean
+ copyNonStudents   => boolean
+ copySets          => boolean
+ copyAchievements  => boolean
+ copyTitle         => boolean
+ copyInstitution   => boolean
 
-Create a new course named $courseID.
+Create a new course with ID $courseID.
 
 $ce is a WeBWorK::CourseEnvironment object that describes the new course's
 environment.
@@ -173,8 +185,18 @@ PermissionLevel record for a single user:
 
 These users are added to the course.
 
-$templatesCourseID indicates the ID of a course from which the contents of the
-templates directory will be copied to the new course.
+C<copyFrom> indicates the ID of a course from which various things may be
+copied into the new course. Which things are copied are controlled by the
+boolean options:
+
+ * copyTemplatesHtml (contents of Templates and HTML folders)
+ * copySimpleConfig  (simple.conf file)
+ * copyConfig        (course.conf file)
+ * copyNonStudents   (all non-student users, their permission level, and password)
+ * copySets          (all global sets, global set locations, and global problems)
+ * copyAchievements  (all achievements)
+ * copyTitle         (the course title, which will override courseTitle)
+ * copyInstitution   (the course institution, which will override courseInstitution)
 
 =cut
 
@@ -188,6 +210,7 @@ sub addCourse {
 	}
 
 	my $courseID      = $options{courseID};
+	my $sourceCourse  = $options{copyFrom} // '';
 	my $ce            = $options{ce};
 	my %courseOptions = %{ $options{courseOptions} };
 	my @users         = exists $options{users} ? @{ $options{users} } : ();
@@ -252,8 +275,8 @@ sub addCourse {
 			or croak
 			"Can't create the course '$courseID' because the courses directory '$rootParent' is not writeable.";
 		# try to create it
-		mkdir $root
-			or croak "Can't create the course '$courseID' becasue the root directory '$root' could not be created: $!.";
+		eval { path($root)->make_path };
+		croak "Can't create the course '$courseID' because the root directory '$root' could not be created: $@." if $@;
 	}
 
 	# deal with the rest of the directories
@@ -264,8 +287,8 @@ sub addCourse {
 
 		# does the directory already exist?
 		if (-e $courseDir) {
-			warn
-				"Can't create $courseDirName directory '$courseDir', since it already exists. Using existing directory.\n";
+			warn "Can't create $courseDirName directory '$courseDir', "
+				. "since it already exists. Using existing directory.\n";
 			next;
 		}
 
@@ -274,15 +297,27 @@ sub addCourse {
 		pop @courseDirElements;
 		my $courseDirParent = File::Spec->catdir(@courseDirElements);
 		unless (-w $courseDirParent) {
-			warn
-				"Can't create $courseDirName directory '$courseDir', since the parent directory is not writeable. You will have to create this directory manually.\n";
+			warn "Can't create $courseDirName directory '$courseDir', since the parent directory is not writeable. "
+				. "You will have to create this directory manually.\n";
 			next;
 		}
 
 		# try to create it
-		mkdir $courseDir
-			or warn
-			"Failed to create $courseDirName directory '$courseDir': $!. You will have to create this directory manually.\n";
+		eval { path($courseDir)->make_path };
+		warn "Failed to create $courseDirName directory '$courseDir': $@. "
+			. "You will have to create this directory manually."
+			if $@;
+	}
+
+	# hide the new course?
+
+	if (defined $ce->{new_courses_hidden_status} && $ce->{new_courses_hidden_status} eq 'hidden') {
+		my $hideDirFile = "$ce->{webworkDirs}{courses}/$courseID/hide_directory";
+		open(my $HIDEFILE, '>', $hideDirFile);
+		print $HIDEFILE 'Place a file named "hide_directory" in a course or other directory and it will not show up '
+			. 'in the courses list on the WeBWorK home page. It will still appear in the '
+			. 'Course Administration listing.';
+		close $HIDEFILE;
 	}
 
 	##### step 2: create course database #####
@@ -293,103 +328,172 @@ sub addCourse {
 
 	##### step 3: populate course database #####
 
+	# database and course environment objects for the course to copy things from.
+	my ($db0, $ce0);
+	if (
+		$sourceCourse ne ''
+		&& !(grep { $sourceCourse eq $_ } @{ $ce->{modelCoursesForCopy} })
+		&& ($options{copyNonStudents}
+			|| $options{copySets}
+			|| $options{copyAchievements}
+			|| $options{copyTitle}
+			|| $options{copyInstitution})
+		)
+	{
+		$ce0 = WeBWorK::CourseEnvironment->new({ courseName => $sourceCourse });
+		$db0 = WeBWorK::DB->new($ce0->{dbLayouts}{$dbLayoutName});
+	}
+
+	# add users (users that were directly passed to addCourse() as well as those copied from a source course)
 	if ($ce->{dbLayouts}{$dbLayoutName}{user}{params}{non_native}) {
 		debug("not adding users to the course database: 'user' table is non-native.\n");
 	} else {
-		# see above
-		#my $db = WeBWorK::DB->new($ce->{dbLayouts}->{$dbLayoutName});
+		if ($db0 && $options{copyNonStudents}) {
+			# If the course.conf file is being copied, then the student role from the source course needs to be used,
+			# as the role might be customized in that file.
+			my @non_student_ids =
+				map {@$_} ($db0->listPermissionLevelsWhere({
+					permission =>
+					{ '!=' => $options{copyConfig} ? $ce0->{userRoles}{student} : $ce->{userRoles}{student} },
+					user_id => { not_like => 'set_id:%' }
+				}));
+			my %user_args = map { $_->[0]{user_id} => 1 } @users;
+
+			for my $user_id (@non_student_ids) {
+				next if $user_args{$user_id};
+				my @User            = $db0->getUsersWhere({ user_id => $user_id });
+				my @Password        = $db0->getPasswordsWhere({ user_id => $user_id });
+				my @PermissionLevel = $db0->getPermissionLevelsWhere({ user_id => $user_id });
+				push @users, [ $User[0], $Password[0], $PermissionLevel[0] ];
+			}
+		}
 
 		foreach my $userTriple (@users) {
 			my ($User, $Password, $PermissionLevel) = @$userTriple;
-
 			eval { $db->addUser($User) };
-			warn $@ if $@;
-			eval { $db->addPassword($Password) };
-			warn $@ if $@;
+			warn $@                              if $@;
+			eval { $db->addPassword($Password) } if $Password;
+			warn $@                              if $@;
 			eval { $db->addPermissionLevel($PermissionLevel) };
 			warn $@ if $@;
 		}
 	}
 
-	if (exists $options{courseTitle}) {
-		$db->setSettingValue('courseTitle', $options{courseTitle});
-	}
-	if (exists $options{courseInstitution}) {
-		$db->setSettingValue('courseInstitution', $options{courseInstitution});
-	}
+	# add sets
+	if ($db0 && $options{copySets}) {
+		my @set_ids = $db0->listGlobalSets;
+		for my $set_id (@set_ids) {
+			eval { $db->addGlobalSet($db0->getGlobalSet($set_id)) };
+			warn $@ if $@;
 
-	##### step 4: write course.conf file #####
-
-	my $courseEnvFile = $ce->{courseFiles}->{environment};
-	open my $fh, ">:utf8", $courseEnvFile
-		or die "failed to open $courseEnvFile for writing.\n";
-	writeCourseConf($fh, $ce, %courseOptions);
-	close $fh;
-
-	##### step 5: copy templates, html, and simple.conf if desired #####
-
-	if (exists $options{templatesFrom}) {
-		my $sourceCourse = $options{templatesFrom};
-		my $sourceCE     = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $sourceCourse });
-		my $sourceDir    = $sourceCE->{courseDirs}->{templates};
-		## copy templates ##
-		if (-d $sourceDir) {
-			my $destDir = $ce->{courseDirs}{templates};
-			my $cp_cmd  = "2>&1 "
-				. $ce->{externalPrograms}{cp} . " -R "
-				. shell_quote($sourceDir) . "/* "
-				. shell_quote($destDir);
-			my $cp_out = readpipe $cp_cmd;
-			if ($?) {
-				my $exit   = $? >> 8;
-				my $signal = $? & 127;
-				my $core   = $? & 128;
-				warn
-					"Failed to copy templates from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
+			my @Problem = $db0->getGlobalProblemsWhere({ set_id => $set_id });
+			for my $problem (@Problem) {
+				eval { $db->addGlobalProblem($problem) };
+				warn $@ if $@;
 			}
-		} else {
-			warn
-				"Failed to copy templates from course '$sourceCourse': templates directory '$sourceDir' does not exist.\n";
-		}
-		## copy html ##
-		## this copies the html/tmp directory as well which is not optimal
-		$sourceDir = $sourceCE->{courseDirs}->{html};
-		if (-d $sourceDir) {
-			my $destDir = $ce->{courseDirs}{html};
-			my $cp_cmd  = "2>&1 "
-				. $ce->{externalPrograms}{cp} . " -R "
-				. shell_quote($sourceDir) . "/* "
-				. shell_quote($destDir);
-			my $cp_out = readpipe $cp_cmd;
-			if ($?) {
-				my $exit   = $? >> 8;
-				my $signal = $? & 127;
-				my $core   = $? & 128;
-				warn
-					"Failed to copy html from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
+
+			my @Location = $db0->getGlobalSetLocationsWhere({ set_id => $set_id });
+			for my $location (@Location) {
+				eval { $db->addGlobalSetLocation($location) };
+				warn $@ if $@;
 			}
-		} else {
-			warn "Failed to copy html from course '$sourceCourse': html directory '$sourceDir' does not exist.\n";
 		}
-		## copy config files ##
-		#  this copies the simple.conf file if desired
-		if (exists $options{copySimpleConfig}) {
-			my $sourceFile = $sourceCE->{courseFiles}->{simpleConfig};
-			if (-e $sourceFile) {
-				my $destFile = $ce->{courseFiles}{simpleConfig};
-				my $cp_cmd =
-					join(" ", ("2>&1", $ce->{externalPrograms}{cp}, shell_quote($sourceFile), shell_quote($destFile)));
-				my $cp_out = readpipe $cp_cmd;
-				if ($?) {
-					my $exit   = $? >> 8;
-					my $signal = $? & 127;
-					my $core   = $? & 128;
-					warn
-						"Failed to copy simple.conf from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
+		if ($options{copyNonStudents}) {
+			foreach my $userTriple (@users) {
+				my $user_id   = $userTriple->[0]{user_id};
+				my @user_sets = $db0->listUserSets($user_id);
+				assignSetsToUsers($db, $ce, \@user_sets, [$user_id]);
+			}
+		}
+	}
+
+	# add achievements
+	if ($db0 && $options{copyAchievements}) {
+		my @achievement_ids = $db0->listAchievements;
+		for my $achievement_id (@achievement_ids) {
+			eval { $db->addAchievement($db0->getAchievement($achievement_id)) };
+			warn $@ if $@;
+		}
+		if ($options{copyNonStudents}) {
+			foreach my $userTriple (@users) {
+				my $user_id           = $userTriple->[0]{user_id};
+				my @user_achievements = $db0->listUserAchievements($user_id);
+				for my $achievement_id (@user_achievements) {
+					my $userAchievement = $db->newUserAchievement();
+					$userAchievement->user_id($user_id);
+					$userAchievement->achievement_id($achievement_id);
+					$db->addUserAchievement($userAchievement);
 				}
 			}
 		}
+	}
 
+	# copy title and/or institution if requested
+	for my $setting ('Title', 'Institution') {
+		if ($db0 && $options{"copy$setting"}) {
+			$db->setSettingValue("course$setting", $db0->getSettingValue("course$setting"))
+				if ($options{"copy$setting"});
+		} else {
+			$db->setSettingValue("course$setting", $options{"course$setting"}) if (exists $options{"course$setting"});
+		}
+	}
+
+	##### step 4: write course.conf file (unless that is going to be copied from a source course) #####
+
+	unless ($sourceCourse ne '' && $options{copyConfig}) {
+		my $courseEnvFile = $ce->{courseFiles}{environment};
+		open my $fh, ">:utf8", $courseEnvFile
+			or die "failed to open $courseEnvFile for writing.\n";
+		writeCourseConf($fh, $ce, %courseOptions);
+		close $fh;
+	}
+
+	##### step 5: copy templates, html, simple.conf, course.conf if desired #####
+
+	if ($sourceCourse ne '') {
+		my $sourceCE = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $sourceCourse });
+
+		if ($options{copyTemplatesHtml}) {
+			my $sourceDir = $sourceCE->{courseDirs}{templates};
+
+			## copy templates ##
+			if (-d $sourceDir) {
+				my $destDir = $ce->{courseDirs}{templates};
+				warn "Failed to copy templates from course '$sourceCourse': $! " unless dircopy("$sourceDir", $destDir);
+			} else {
+				warn "Failed to copy templates from course '$sourceCourse': "
+					. "templates directory '$sourceDir' does not exist.\n";
+			}
+
+			## copy html ##
+			$sourceDir = $sourceCE->{courseDirs}{html};
+			if (-d $sourceDir) {
+				warn "Failed to copy html from course '$sourceCourse': $!"
+					unless dircopy($sourceDir, $ce->{courseDirs}{html});
+			} else {
+				warn "Failed to copy html from course '$sourceCourse': html directory '$sourceDir' does not exist.\n";
+			}
+		}
+
+		## copy config files ##
+
+		# this copies the simple.conf file if desired
+		if ($options{copySimpleConfig}) {
+			my $sourceFile = $sourceCE->{courseFiles}{simpleConfig};
+			if (-e $sourceFile) {
+				eval { path($sourceFile)->copy_to($ce->{courseDirs}{root}) };
+				warn "Failed to copy simple.conf from course '$sourceCourse': $@" if $@;
+			}
+		}
+
+		# this copies the course.conf file if desired
+		if ($options{copyConfig}) {
+			my $sourceFile = $sourceCE->{courseFiles}{environment};
+			if (-e $sourceFile) {
+				eval { path($sourceFile)->copy_to($ce->{courseDirs}{root}) };
+				warn "Failed to copy course.conf from course '$sourceCourse': $@" if $@;
+			}
+		}
 	}
 }
 
@@ -471,19 +575,9 @@ sub renameCourse {
 	##### step 1: move course directory #####
 
 	# move top-level course directory
-	my $mv_cmd =
-		"2>&1" . " "
-		. $oldCE->{externalPrograms}{mv} . " "
-		. shell_quote($oldCourseDir) . " "
-		. shell_quote($newCourseDir);
-	debug("moving course dir: $mv_cmd");
-	my $mv_out = readpipe $mv_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
-		die "Failed to move course directory with command '$mv_cmd' (exit=$exit signal=$signal core=$core): $mv_out\n";
-	}
+	debug("moving course dir from $oldCourseDir to $newCourseDir");
+	eval { path($oldCourseDir)->move_to($newCourseDir) };
+	die "Failed to move course directory:  $@" if ($@);
 
 	# get new course environment
 	my $newCE = $oldCE->new({ courseName => $newCourseID });
@@ -503,16 +597,16 @@ sub renameCourse {
 
 			# is the source really a directory
 			unless (-d $oldDir) {
-				warn
-					"$courseDirName: Can't move '$oldDir' to '$newDir', since the source is not a directory. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the source is not a directory. "
+					. "You will have to move this directory manually.\n";
 				next;
 			}
 
 		# does the destination already exist?
 		# (this should only happen on extra-coursedir directories, since we make sure the root dir doesn't exist above.)
 			if (-e $newDir) {
-				warn
-					"$courseDirName: Can't move '$oldDir' to '$newDir', since the target already exists. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the target already exists. "
+					. "You will have to move this directory manually.\n";
 				next;
 			}
 
@@ -521,8 +615,8 @@ sub renameCourse {
 			pop @oldDirElements;
 			my $oldDirParent = File::Spec->catdir(@oldDirElements);
 			unless (-w $oldDirParent) {
-				warn
-					"$courseDirName: Can't move '$oldDir' to '$newDir', since the source parent directory is not writeable. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the source parent directory is not "
+					. "writeable. You will have to move this directory manually.\n";
 				next;
 			}
 
@@ -531,23 +625,15 @@ sub renameCourse {
 			pop @newDirElements;
 			my $newDirParent = File::Spec->catdir(@newDirElements);
 			unless (-w $newDirParent) {
-				warn
-					"$courseDirName: Can't move '$oldDir' to '$newDir', since the destination parent directory is not writeable. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the destination parent directory is "
+					. "not writeable. You will have to move this directory manually.\n";
 				next;
 			}
 
 			# try to move the directory
 			debug("Going to move $oldDir to $newDir...\n");
-			my $mv_cmd =
-				"2>&1" . " " . $oldCE->{externalPrograms}{mv} . " " . shell_quote($oldDir) . " " . shell_quote($newDir);
-			my $mv_out = readpipe $mv_cmd;
-			if ($?) {
-				my $exit   = $? >> 8;
-				my $signal = $? & 127;
-				my $core   = $? & 128;
-				warn
-					"Failed to move directory with command '$mv_cmd' (exit=$exit signal=$signal core=$core): $mv_out\n";
-			}
+			eval { path($oldDir)->move_to($newDir) };
+			warn "Failed to move directory from $oldDir to $newDir with error: $@" if $@;
 		} else {
 			debug("oldDir $oldDir was already moved.\n");
 		}
@@ -665,8 +751,8 @@ sub deleteCourse {
 			or croak
 			"Can't delete the course '$courseID' because the courses directory '$rootParent' is not writeable.";
 	} else {
-		warn
-			"Warning: the course root directory '$root' does not exist. Attempting to delete the course database and other course directories...\n";
+		warn "Warning: the course root directory '$root' does not exist. "
+			. "Attempting to delete the course database and other course directories...\n";
 	}
 
 	##### step 1: delete course database (if necessary) #####
@@ -675,6 +761,9 @@ sub deleteCourse {
 	my $db               = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
 	my $create_db_result = $db->delete_tables;
 	die "$courseID: course database deletion failed.\n" unless $create_db_result;
+
+	# If this course has an entry in the LTI course map, then delete it also.
+	$db->deleteLTICourseMapWhere({ course_id => $courseID });
 
 	##### step 2: delete course directory structure #####
 
@@ -688,8 +777,8 @@ sub deleteCourse {
 
 			# is it really a directory
 			unless (-d $courseDir) {
-				warn
-					"Can't delete $courseDirName directory '$courseDir', since is not a directory. If it is not wanted, you will have to delete it manually.\n";
+				warn "Can't delete $courseDirName directory '$courseDir', since is not a directory. "
+					. "If it is not wanted, you will have to delete it manually.\n";
 				next;
 			}
 
@@ -698,14 +787,15 @@ sub deleteCourse {
 			pop @courseDirElements;
 			my $courseDirParent = File::Spec->catdir(@courseDirElements);
 			unless (-w $courseDirParent) {
-				warn
-					"Can't delete $courseDirName directory '$courseDir', since its parent directory is not writeable. If it is not wanted, you will have to delete it manually.\n";
+				warn "Can't delete $courseDirName directory '$courseDir', since its parent directory is not "
+					. "writeable. If it is not wanted, you will have to delete it manually.\n";
 				next;
 			}
 
 			# try to delete the directory
 			debug("Going to delete $courseDir...\n");
-			rmtree($courseDir, 0, 1);
+			eval { path($courseDir)->remove_tree };
+			warn "An error occurred when deleting $courseDir" if $@;
 		} else {
 			debug("courseDir $courseDir was already deleted.\n");
 		}
@@ -754,7 +844,7 @@ sub archiveCourse {
 
 	# tmp_archive_path is used as the target of the tar.gz operation.
 	# After this is done the final tar.gz file is moved either to the admin course archives directory
-	# course/admin/archives or the supplied archive_path option if it is present.
+	# course/$ce->{admin_course_id}/archives or the supplied archive_path option if it is present.
 	# This prevents us from tarring a directory to which we have just added a file
 	# see bug #2022 -- for error messages on some operating systems
 	my $uuidStub         = create_uuid_as_string();
@@ -765,7 +855,7 @@ sub archiveCourse {
 	if (defined $options{archive_path} && $options{archive_path} =~ /\S/) {
 		$archive_path = $options{archive_path};
 	} else {
-		$archive_path = "$ce->{webworkDirs}{courses}/admin/archives/$courseID.tar.gz";
+		$archive_path = "$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives/$courseID.tar.gz";
 		surePathToFile($ce->{webworkDirs}{courses}, $archive_path);
 	}
 
@@ -789,7 +879,8 @@ sub archiveCourse {
 	#### step 1: dump tables #####
 
 	unless (-e $dump_dir) {
-		mkdir $dump_dir or croak "Failed to create course database dump directory '$dump_dir': $!";
+		eval { path($dump_dir)->make_path };
+		croak "Failed to create course database dump directory '$dump_dir': $@" if $@;
 	}
 
 	my $db             = new WeBWorK::DB($ce->{dbLayout});
@@ -801,34 +892,30 @@ sub archiveCourse {
 
 	##### step 2: tar and gzip course directory (including dumped database) #####
 
-	# we want tar to run from the parent directory of the course directory
-	my $chdir_to = "$course_dir/..";
+	my $parent_dir = $ce->{webworkDirs}{courses};
+	my $files      = path($course_dir)->list_tree({ dir => 1, hidden => 1 })->map('to_abs');
+	my $tar        = Archive::Tar->new;
+	$tar->add_files(@$files);
+	for ($tar->get_files) {
+		$tar->rename($_->full_path, $_->full_path =~ s!^$parent_dir/!!r);
+	}
+	my $ok = $tar->write($tmp_archive_path, COMPRESS_GZIP);
 
-	my $tar_cmd = "2>&1 "
-		. $ce->{externalPrograms}{tar} . " -C "
-		. shell_quote($chdir_to)
-		. " -czf "
-		. shell_quote($tmp_archive_path) . " "
-		. shell_quote($courseID);
-	my $tar_out = readpipe $tar_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
+	unless ($ok) {
 		_archiveCourse_remove_dump_dir($ce, $dump_dir);
-		croak
-			"Failed to archive course directory '$course_dir' with command '$tar_cmd' (exit=$exit signal=$signal core=$core): $tar_out\n";
+		croak "Failed to archive course directory '$course_dir': $!";
 	}
 
 	##### step 3: cleanup -- remove database dump files from course directory #####
 
 	unless (-e $archive_path) {
-		unless (move($tmp_archive_path, $archive_path)) {
-			unlink($tmp_archive_path);    #clean up
-			croak "Failed to rename archived file to '$archive_path': $!";
+		eval { path($tmp_archive_path)->move_to($archive_path) };
+		if ($@) {
+			eval { path($tmp_archive_path)->remove };
+			croak "Failed to rename archived file to '$archive_path': $@";
 		}
 	} else {
-		unlink($tmp_archive_path);        #clean up
+		eval { path($tmp_archive_path)->remove };
 		croak "Failed to create archived file at '$archive_path'. File already exists.";
 	}
 	_archiveCourse_remove_dump_dir($ce, $dump_dir);
@@ -838,15 +925,15 @@ sub archiveCourse {
 
 sub _archiveCourse_remove_dump_dir {
 	my ($ce, $dump_dir) = @_;
-	my $rm_cmd = "2>&1 " . $ce->{externalPrograms}{rm} . " -rf " . shell_quote($dump_dir);
-	my $rm_out = readpipe $rm_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
-		carp
-			"Failed to remove course database dump directory '$dump_dir' with command '$rm_cmd' (exit=$exit signal=$signal core=$core): $rm_out\n";
+	path($dump_dir)->remove_tree({ error => \my $err });
+
+	if ($err && @$err) {
+		for my $diag (@$err) {
+			my ($file, $message) = %$diag;
+			warn "Failed to remove course database dump directory: $file with message: $message ";
+		}
 	}
+	return;
 }
 
 ################################################################################
@@ -904,19 +991,14 @@ sub unarchiveCourse {
 
 	##### step 2: crack open the tarball #####
 
-	my $tar_cmd = "2>&1 "
-		. $ce->{externalPrograms}{tar} . " -C "
-		. shell_quote($coursesDir)
-		. " -xzf "
-		. shell_quote($archivePath);
-	my $tar_out = readpipe $tar_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
+	my $arch = Archive::Tar->new($archivePath);
+	die "The tar file $archivePath is not valid." unless $arch;
+	$arch->setcwd($coursesDir);
+	$arch->extract();
+
+	if ($arch->error) {
 		_unarchiveCourse_move_back($restoreCourseData);
-		die
-			"Failed to unarchive course directory with command '$tar_cmd' (exit=$exit signal=$signal core=$core): $tar_out\n";
+		die "Failed to unarchive course directory for course $newCourseID: $arch->error";
 	}
 
 	##### step 3: read the course environment for this course #####
@@ -947,13 +1029,13 @@ sub unarchiveCourse {
 				warn "failed to unarchive course database from dump file '$old_dump_file: $@\n";
 			}
 		} else {
-			warn
-				"course '$currCourseID' uses dbLayout '$dbLayoutName', which doesn't support restoring database tables. database tables will not be restored.\n";
+			warn "course '$currCourseID' uses dbLayout '$dbLayoutName', which doesn't support "
+				. "restoring database tables. database tables will not be restored.\n";
 			$no_database = 1;
 		}
 	} else {
-		warn
-			"course '$currCourseID' has no database dump in its data directory (checked for $dump_dir and $old_dump_file). database tables will not be restored.\n";
+		warn "course '$currCourseID' has no database dump in its data directory "
+			. "(checked for $dump_dir and $old_dump_file). database tables will not be restored.\n";
 		$no_database = 1;
 	}
 
@@ -967,21 +1049,41 @@ sub unarchiveCourse {
 		_archiveCourse_remove_dump_dir($ce, $dump_dir);
 	}
 	if (-e $old_dump_file) {
-		unlink $old_dump_file or carp "Failed to unlink course database dump file '$old_dump_file: $_\n";
+		eval { path($old_dump_file)->remove };
+		warn "Failed to unlink course database dump file '$old_dump_file: $@" if $@;
 	}
 
 	# Create the html_temp folder (since it isn't included in the
 	# tarball
 	my $tmpDir = $ce2->{courseDirs}->{html_temp};
 	if (!-e $tmpDir) {
-		mkdir $tmpDir
-			or warn
-			"Failed to create html_temp directory '$tmpDir': $!. You will have to create this directory manually.\n";
+		eval { path($tmpDir)->make_path };
+		warn "Failed to create html_temp directory '$tmpDir': $@. You will have to create this directory manually."
+			if $@;
+	}
+
+	# If the course was given a new name, honor $ce->{new_courses_hidden_status}
+	if (defined $newCourseID
+		&& $newCourseID ne $currCourseID
+		&& defined $ce->{new_courses_hidden_status}
+		&& $ce->{new_courses_hidden_status} =~ /^(hidden|visible)$/)
+	{
+		my $hideDirFile = "$ce->{webworkDirs}{courses}/$currCourseID/hide_directory";
+		if ($ce->{new_courses_hidden_status} eq 'hidden' && !(-f $hideDirFile)) {
+			open(my $HIDEFILE, '>', $hideDirFile);
+			print $HIDEFILE
+				'Place a file named "hide_directory" in a course or other directory and it will not show up '
+				. 'in the courses list on the WeBWorK home page. It will still appear in the '
+				. 'Course Administration listing.';
+			close $HIDEFILE;
+		} elsif ($ce->{new_courses_hidden_status} eq 'visible' && -f $hideDirFile) {
+			unlink $hideDirFile;
+		}
 	}
 
 	##### step 6: rename course #####
 
-	if (defined $newCourseID and $newCourseID ne $currCourseID) {
+	if (defined $newCourseID && $newCourseID ne $currCourseID) {
 		renameCourse(
 			courseID     => $currCourseID,
 			ce           => $ce2,
@@ -1162,12 +1264,13 @@ sub initNonNativeTables {
 
 	# Find the names of the non-native database tables
 	foreach my $table (sort keys %$db) {
-		next unless $db->{$table}{params}{non_native}; # only look at non-native tables
-													   # hack: these two tables are virtual and don't need to be created
-													   # for the admin course or in the database in general
-													   # if they were created in earlier versions for the admin course
-													   # you can use mysql to drop the field version_id manually
-													   # this will get rid of a spurious error
+		next unless $db->{$table}{params}{non_native};    # only look at non-native tables
+
+		# hack: these two tables are virtual and don't need to be created
+		# for the admin course or in the database in general
+		# if they were created in earlier versions for the admin course
+		# you can use mysql to drop the field version_id manually
+		# this will get rid of a spurious error
 		next if $table eq 'problem_version' or $table eq 'set_version';
 
 		my $database_table_name =
@@ -1199,8 +1302,8 @@ sub initNonNativeTables {
 				if (!$database_field_exists) {
 					$fields_ok = 0;
 					$fieldStatus{$field} = [ONLY_IN_A];
-					warn
-						"$field from $database_table_name (aka |$table|) is only in schema, not in database, so adding it ... ";
+					warn "$field from $database_table_name (aka |$table|) is only in schema, "
+						. "not in database, so adding it ... ";
 					if ($db->{$table}->can("add_column_field")) {
 						if ($db->{$table}->add_column_field($field_name)) {
 							warn "added column $field_name to table $database_table_name";

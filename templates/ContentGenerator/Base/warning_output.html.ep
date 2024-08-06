@@ -3,7 +3,7 @@
 <h2><%= maketext('WeBWorK Warnings') %></h2>
 <p>
 	<%= maketext(
-		'WeBWorK has encountered warnings while processing your request. If this occured when viewing '
+		'WeBWorK has encountered warnings while processing your request. If this occurred when viewing '
 			. 'a problem, it was likely caused by an error or ambiguity in that problem. Otherwise, it may indicate '
 			. 'a problem with the WeBWorK system itself. If you are a student, report these warnings to your '
 			. 'professor to have them corrected. If you are a professor, please consult the warning output below '

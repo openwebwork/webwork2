@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,18 +28,15 @@ data editing
 What do we want to be able to do here?
 
 Filter what users are shown:
-	- none, all, selected
+	- all, selected
 	- matching user_id, matching section, matching recitation
 Switch from view mode to edit mode:
 	- showing visible users
 	- showing selected users
 Switch from edit mode to view and save changes
 Switch from edit mode to view and abandon changes
-Switch from view mode to password mode:
 	- showing visible users
 	- showing selected users
-Switch from password mode to view and save changes
-Switch from password mode to view and abandon changes
 Delete users:
 	- visible
 	- selected
@@ -63,58 +60,56 @@ Export users:
 
 =cut
 
+use Mojo::File;
+
 use WeBWorK::File::Classlist qw(parse_classlist write_classlist);
 use WeBWorK::Utils qw(cryptPassword x);
 
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS            => [qw(save_edit cancel_edit)];
-use constant PASSWORD_FORMS        => [qw(save_password cancel_password)];
-use constant VIEW_FORMS            => [qw(filter sort edit password import export add delete)];
+use constant VIEW_FORMS            => [qw(filter sort edit import export add delete reset_2fa)];
 
 # Prepare the tab titles for translation by maketext
 use constant FORM_TITLES => {
-	save_edit       => x('Save Edit'),
-	cancel_edit     => x('Cancel Edit'),
-	filter          => x('Filter'),
-	sort            => x('Sort'),
-	edit            => x('Edit'),
-	password        => x('Password'),
-	import          => x('Import'),
-	export          => x('Export'),
-	add             => x('Add'),
-	delete          => x('Delete'),
-	save_password   => x('Save Password'),
-	cancel_password => x('Cancel Password')
+	save_edit   => x('Save Edit'),
+	cancel_edit => x('Cancel Edit'),
+	filter      => x('Filter'),
+	sort        => x('Sort'),
+	edit        => x('Edit'),
+	import      => x('Import'),
+	export      => x('Export'),
+	add         => x('Add'),
+	delete      => x('Delete'),
+	reset_2fa   => x('Reset Two Factor Authentication')
 };
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
-	save_edit     => 'modify_student_data',
-	edit          => 'modify_student_data',
-	save_password => 'change_password',
-	password      => 'change_password',
-	import        => 'modify_student_data',
-	export        => 'modify_classlist_files',
-	add           => 'modify_student_data',
-	delete        => 'modify_student_data',
+	save_edit  => 'modify_student_data',
+	edit       => 'modify_student_data',
+	reset2_2fa => 'change_password',
+	import     => 'modify_student_data',
+	export     => 'modify_classlist_files',
+	add        => 'modify_student_data',
+	delete     => 'modify_student_data',
 };
 
 use constant SORT_SUBS => {
-	user_id       => \&byUserID,
-	first_name    => \&byFirstName,
-	last_name     => \&byLastName,
-	email_address => \&byEmailAddress,
-	student_id    => \&byStudentID,
-	status        => \&byStatus,
-	section       => \&bySection,
-	recitation    => \&byRecitation,
-	comment       => \&byComment,
-	permission    => \&byPermission,
+	user_id       => { ASC => \&byUserID,       DESC => \&byDescUserID },
+	first_name    => { ASC => \&byFirstName,    DESC => \&byDescFirstName },
+	last_name     => { ASC => \&byLastName,     DESC => \&byDescLastName },
+	email_address => { ASC => \&byEmailAddress, DESC => \&byDescEmailAddress },
+	student_id    => { ASC => \&byStudentID,    DESC => \&byDescStudentID },
+	status        => { ASC => \&byStatus,       DESC => \&byDescStatus },
+	section       => { ASC => \&bySection,      DESC => \&byDescSection },
+	recitation    => { ASC => \&byRecitation,   DESC => \&byDescRecitation },
+	comment       => { ASC => \&byComment,      DESC => \&byDescComment },
+	permission    => { ASC => \&byPermission,   DESC => \&byDescPermission }
 };
 
 use constant FIELDS => [
 	'user_id', 'first_name', 'last_name', 'email_address', 'student_id', 'status',
-	'section', 'recitation', 'comment',   'permission'
+	'section', 'recitation', 'comment',   'permission',    'password'
 ];
 
 # Note that only the editable fields need a type (i.e. all but user_id),
@@ -130,6 +125,7 @@ use constant FIELD_PROPERTIES => {
 	recitation    => { name => x('Recitation'),        type => 'text', size => 3 },
 	comment       => { name => x('Comment'),           type => 'text', size => 20 },
 	permission    => { name => x('Permission Level'),  type => 'permission' },
+	password      => { name => x('Password'),          type => 'password' },
 };
 
 sub pre_header_initialize ($c) {
@@ -140,10 +136,9 @@ sub pre_header_initialize ($c) {
 
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 
-	$c->{editMode}     = $c->param('editMode')     || 0;
-	$c->{passwordMode} = $c->param('passwordMode') || 0;
+	$c->{editMode} = $c->param('editMode') || 0;
 
-	return if ($c->{passwordMode} || $c->{editMode}) && !$authz->hasPermissions($user, 'modify_student_data');
+	return if $c->{editMode} && !$authz->hasPermissions($user, 'modify_student_data');
 
 	if (defined $c->param('action') && $c->param('action') eq 'add') {
 		# Redirect to the addUser page
@@ -160,7 +155,10 @@ sub pre_header_initialize ($c) {
 	my %permissionLevels =
 		map { $_->user_id => $_->permission } $db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
 
-	# Add permission level to the user record hash.
+	my %passwordExists =
+		map { $_->user_id => defined $_->password } $db->getPasswordsWhere({ user_id => { not_like => 'set_id:%' } });
+
+	# Add permission level and a password exists field to the user record hash.
 	for my $user (@allUsersDB) {
 		unless (defined $permissionLevels{ $user->user_id }) {
 			# Uh oh! No permission level record found!
@@ -177,7 +175,8 @@ sub pre_header_initialize ($c) {
 			$permissionLevels{ $user->user_id } = 0;
 		}
 
-		$user->{permission} = $permissionLevels{ $user->user_id };
+		$user->{permission}     = $permissionLevels{ $user->user_id };
+		$user->{passwordExists} = $passwordExists{ $user->user_id };
 	}
 
 	my %allUsers = map { $_->user_id => $_ } @allUsersDB;
@@ -207,36 +206,31 @@ sub pre_header_initialize ($c) {
 		{ map { $allUsers{$_}{permission} > $c->{userPermission} ? () : ($_ => 1) } (keys %allUsers) };
 
 	# Always have a definite sort order.
-	if (defined $c->param('labelSortMethod')) {
-		$c->{primarySortField}   = $c->param('labelSortMethod');
-		$c->{secondarySortField} = $c->param('primarySortField')   || 'last_name';
-		$c->{ternarySortField}   = $c->param('secondarySortField') || 'first_name';
-	} else {
-		$c->{primarySortField}   = $c->param('primarySortField')   || 'last_name';
-		$c->{secondarySortField} = $c->param('secondarySortField') || 'first_name';
-		$c->{ternarySortField}   = $c->param('ternarySortField')   || 'student_id';
-	}
+	$c->{primarySortField}   = $c->param('primarySortField')   || 'last_name';
+	$c->{primarySortOrder}   = $c->param('primarySortOrder')   || 'ASC';
+	$c->{secondarySortField} = $c->param('secondarySortField') || 'first_name';
+	$c->{secondarySortOrder} = $c->param('secondarySortOrder') || 'ASC';
+	$c->{ternarySortField}   = $c->param('ternarySortField')   || 'student_id';
+	$c->{ternarySortOrder}   = $c->param('ternarySortOrder')   || 'ASC';
 
 	my $actionID = $c->param('action');
 	if ($actionID) {
-		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }, @{ PASSWORD_FORMS() }) {
+		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }) {
 			die $c->maketext('Action [_1] not found', $actionID);
 		}
 		if (!FORM_PERMS()->{$actionID} || $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
 			# Call the action handler
 			my $actionHandler = "${actionID}_handler";
-			$c->addgoodmessage($c->maketext('Result of last action performed: [_1]', $c->tag('i', $c->$actionHandler)));
+			$c->addgoodmessage($c->$actionHandler);
 		} else {
 			$c->addbadmessage($c->maketext('You are not authorized to perform this action.'));
 		}
-	} else {
-		$c->addgoodmessage($c->maketext("Please select action to be performed."));
 	}
 
 	# Sort all users
-	my $primarySortSub   = SORT_SUBS()->{ $c->{primarySortField} };
-	my $secondarySortSub = SORT_SUBS()->{ $c->{secondarySortField} };
-	my $ternarySortSub   = SORT_SUBS()->{ $c->{ternarySortField} };
+	my $primarySortSub   = SORT_SUBS()->{ $c->{primarySortField} }{ $c->{primarySortOrder} };
+	my $secondarySortSub = SORT_SUBS()->{ $c->{secondarySortField} }{ $c->{secondarySortOrder} };
+	my $ternarySortSub   = SORT_SUBS()->{ $c->{ternarySortField} }{ $c->{ternarySortOrder} };
 
 	$c->{allUserIDs} = [ keys %allUsers ];
 
@@ -253,12 +247,15 @@ sub pre_header_initialize ($c) {
 sub initialize ($c) {
 	# Make sure these are defined for the template.
 	# This is done here as it needs to occur after the action handler has been executed.
-	$c->stash->{formsToShow} =
-		$c->{editMode} ? EDIT_FORMS() : $c->{passwordMode} ? PASSWORD_FORMS() : VIEW_FORMS();
+	$c->stash->{formsToShow}     = $c->{editMode} ? EDIT_FORMS() : VIEW_FORMS();
 	$c->stash->{formTitles}      = FORM_TITLES();
 	$c->stash->{formPerms}       = FORM_PERMS();
 	$c->stash->{fields}          = FIELDS();
 	$c->stash->{fieldProperties} = FIELD_PROPERTIES();
+	$c->stash->{CSVList} =
+		$c->{editMode}
+		? []
+		: Mojo::File->new($c->ce->{courseDirs}{templates})->list->grep(sub { -f && m/\.lst$/ })->map('basename');
 
 	return;
 }
@@ -274,16 +271,13 @@ sub filter_handler ($c) {
 
 	my $scope = $c->param('action.filter.scope');
 	if ($scope eq 'all') {
-		$result = $c->maketext('showing all users');
+		$result = $c->maketext('Showing all users.');
 		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->{allUserIDs} } };
-	} elsif ($scope eq 'none') {
-		$result = $c->maketext('showing no users');
-		$c->{visibleUserIDs} = {};
 	} elsif ($scope eq 'selected') {
-		$result = $c->maketext('showing selected users');
+		$result = $c->maketext('Showing selected users.');
 		$c->{visibleUserIDs} = $c->{selectedUserIDs};
 	} elsif ($scope eq 'match_regex') {
-		$result = $c->maketext('showing matching users');
+		$result = $c->maketext('Showing matching users.');
 		my $regex    = $c->param('action.filter.user_ids');
 		my $field    = $c->param('action.filter.field');
 		my %allUsers = %{ $c->{allUsers} };
@@ -292,10 +286,12 @@ sub filter_handler ($c) {
 		for my $userID (@{ $c->{allUserIDs} }) {
 			if ($field eq 'permission') {
 				push @matchingUserIDs, $userID
-					if ($permissionLabels{ $allUsers{$userID}{permission} } =~ /^$regex/i);
+					if $permissionLabels{ $allUsers{$userID}{permission} } =~ /^$regex/i
+					|| $c->maketext($permissionLabels{ $allUsers{$userID}{permission} }) =~ /^$regex/i;
 			} elsif ($field eq 'status') {
 				push @matchingUserIDs, $userID
-					if ($ce->status_abbrev_to_name($allUsers{$userID}{status}) =~ /^$regex/i);
+					if $ce->status_abbrev_to_name($allUsers{$userID}{status}) =~ /^$regex/i
+					|| $c->maketext($ce->status_abbrev_to_name($allUsers{$userID}{status})) =~ /^$regex/i;
 			} else {
 				push @matchingUserIDs, $userID if $allUsers{$userID}{$field} =~ /^$regex/i;
 			}
@@ -307,67 +303,66 @@ sub filter_handler ($c) {
 }
 
 sub sort_handler ($c) {
-	$c->{primarySortField}   = $c->param('action.sort.primary');
-	$c->{secondarySortField} = $c->param('action.sort.secondary');
-	$c->{ternarySortField}   = $c->param('action.sort.ternary');
+	if (defined $c->param('labelSortMethod') || defined $c->param('labelSortOrder')) {
+		if (defined $c->param('labelSortOrder')) {
+			$c->{ $c->param('labelSortOrder') . 'SortOrder' } =
+				$c->{ $c->param('labelSortOrder') . 'SortOrder' } eq 'ASC' ? 'DESC' : 'ASC';
+		} elsif ($c->param('labelSortMethod') eq $c->{primarySortField}) {
+			$c->{primarySortOrder} = $c->{primarySortOrder} eq 'ASC' ? 'DESC' : 'ASC';
+		} else {
+			$c->{ternarySortField}   = $c->{secondarySortField};
+			$c->{ternarySortOrder}   = $c->{secondarySortOrder};
+			$c->{secondarySortField} = $c->{primarySortField};
+			$c->{secondarySortOrder} = $c->{primarySortOrder};
+			$c->{primarySortField}   = $c->param('labelSortMethod');
+			$c->{primarySortOrder}   = 'ASC';
+		}
+
+		$c->param('action.sort.primary',         $c->{primarySortField});
+		$c->param('action.sort.primary.order',   $c->{primarySortOrder});
+		$c->param('action.sort.secondary',       $c->{secondarySortField});
+		$c->param('action.sort.secondary.order', $c->{secondarySortOrder});
+		$c->param('action.sort.ternary',         $c->{ternarySortField});
+		$c->param('action.sort.ternary.order',   $c->{ternarySortOrder});
+	} else {
+		$c->{primarySortField}   = $c->param('action.sort.primary');
+		$c->{primarySortOrder}   = $c->param('action.sort.primary.order');
+		$c->{secondarySortField} = $c->param('action.sort.secondary');
+		$c->{secondarySortOrder} = $c->param('action.sort.secondary.order');
+		$c->{ternarySortField}   = $c->param('action.sort.ternary');
+		$c->{ternarySortOrder}   = $c->param('action.sort.ternary.order');
+	}
 
 	return $c->maketext(
-		'Users sorted by [_1], then by [_2], then by [_3]',
+		'Sets sorted by [_1] in [plural,_2,ascending,descending] order, '
+			. 'then by [_3] in [plural,_4,ascending,descending] order,'
+			. 'and then by [_5] in [plural,_6,ascending,descending] order.',
 		$c->maketext(FIELD_PROPERTIES()->{ $c->{primarySortField} }{name}),
+		$c->{primarySortOrder} eq 'ASC' ? 1 : 2,
 		$c->maketext(FIELD_PROPERTIES()->{ $c->{secondarySortField} }{name}),
-		$c->maketext(FIELD_PROPERTIES()->{ $c->{ternarySortField} }{name})
+		$c->{secondarySortOrder} eq 'ASC' ? 1 : 2,
+		$c->maketext(FIELD_PROPERTIES()->{ $c->{ternarySortField} }{name}),
+		$c->{ternarySortOrder} eq 'ASC' ? 1 : 2
 	);
 }
 
 sub edit_handler ($c) {
-	my $result;
-	my @usersToEdit;
-
 	my $scope = $c->param('action.edit.scope');
-	if ($scope eq 'all') {
-		$result      = $c->maketext('editing all users');
-		@usersToEdit = grep { $c->{userIsEditable}{$_} } @{ $c->{allUserIDs} };
-	} elsif ($scope eq 'visible') {
-		$result      = $c->maketext('editing visible users');
-		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{visibleUserIDs} });
-	} elsif ($scope eq 'selected') {
-		$result      = $c->maketext('editing selected users');
-		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
-	}
+	my @usersToEdit =
+		grep { $c->{userIsEditable}{$_} } ($scope eq 'all' ? @{ $c->{allUserIDs} } : (keys %{ $c->{selectedUserIDs} }));
 	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
 	$c->{editMode}       = 1;
 
-	return $result;
-}
-
-sub password_handler ($c) {
-	my $result;
-	my @usersToEdit;
-
-	my $scope = $c->param('action.password.scope');
-	if ($scope eq 'all') {
-		$result      = $c->maketext('giving new passwords to all users');
-		@usersToEdit = grep { $c->{userIsEditable}{$_} } @{ $c->{allUserIDs} };
-	} elsif ($scope eq 'visible') {
-		$result      = $c->maketext('giving new passwords to visible users');
-		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{visibleUserIDs} });
-	} elsif ($scope eq 'selected') {
-		$result      = $c->maketext('giving new passwords to selected users');
-		@usersToEdit = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
-	}
-	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
-	$c->{passwordMode}   = 1;
-
-	return $result;
+	return $scope eq 'all' ? $c->maketext('Editing all users.') : $c->maketext('Editing selected users.');
 }
 
 sub delete_handler ($c) {
-	my $db    = $c->db;
-	my $user  = $c->param('user');
-	my $scope = $c->param('action.delete.scope');
-	my $num   = 0;
+	my $db      = $c->db;
+	my $user    = $c->param('user');
+	my $confirm = $c->param('action.delete.confirm');
+	my $num     = 0;
 
-	return $c->maketext('Deleted [_1] users.', $num) if ($scope eq 'none');
+	return $c->maketext('Deleted [_1] users.', $num) unless ($confirm eq 'yes');
 
 	# grep on userIsEditable would still enforce permissions, but no UI feedback
 	my @userIDsToDelete = keys %{ $c->{selectedUserIDs} };
@@ -401,12 +396,13 @@ sub add_handler ($c) {
 }
 
 sub import_handler ($c) {
-	my $source  = $c->param('action.import.source');
-	my $add     = $c->param('action.import.add');
-	my $replace = $c->param('action.import.replace');
+	my $fileName = $c->param('action.import.source');
+	my $replace  = $c->param('action.import.replace');
 
-	my $fileName  = $source;
-	my $createNew = $add eq 'any';
+	unless (defined($fileName) and $fileName =~ /\.lst$/) {
+		$c->addbadmessage($c->maketext('No class list file provided.'));
+		return $c->maketext('No users added.');
+	}
 	my $replaceExisting;
 	my @replaceList;
 	if ($replace eq 'any') {
@@ -423,7 +419,8 @@ sub import_handler ($c) {
 		@replaceList     = grep { $c->{userIsEditable}{$_} } (keys %{ $c->{selectedUserIDs} });
 	}
 
-	my ($replaced, $added, $skipped) = $c->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
+	my ($replaced, $added, $skipped) =
+		$c->importUsersFromCSV($fileName, $replaceExisting, $c->param('fallback_password_source'), @replaceList);
 
 	# make new users visible and update records of replaced users
 	for (@$added) {
@@ -463,18 +460,43 @@ sub export_handler ($c) {
 
 	$fileName .= '.lst' unless $fileName =~ m/\.lst$/;
 
-	my @userIDsToExport;
-	if ($scope eq 'all') {
-		@userIDsToExport = @{ $c->{allUserIDs} };
-	} elsif ($scope eq 'visible') {
-		@userIDsToExport = keys %{ $c->{visibleUserIDs} };
-	} elsif ($scope eq 'selected') {
-		@userIDsToExport = keys %{ $c->{selectedUserIDs} };
-	}
-
+	my @userIDsToExport = $scope eq 'all' ? @{ $c->{allUserIDs} } : keys %{ $c->{selectedUserIDs} };
 	$c->exportUsersToCSV($fileName, @userIDsToExport);
 
 	return $c->maketext('[_1] users exported to file [_2]', scalar @userIDsToExport, "$dir/$fileName");
+}
+
+sub reset_2fa_handler ($c) {
+	my $db   = $c->db;
+	my $user = $c->param('user');
+
+	my $confirm = $c->param('action.reset_2fa.confirm');
+	my $num     = 0;
+
+	return $c->maketext('Reset two factor authentication for [_1] users.', $num) unless $confirm eq 'yes';
+
+	# grep on userIsEditable would still enforce permissions, but no UI feedback
+	my @userIDsForReset = keys %{ $c->{selectedUserIDs} };
+
+	my @resultText;
+	for my $userID (@userIDsForReset) {
+		if ($userID eq $user) {
+			push @resultText, $c->maketext('You cannot reset two factor authentication for yourself!');
+			next;
+		}
+
+		unless ($c->{userIsEditable}{$userID}) {
+			push @resultText, $c->maketext('You are not allowed to reset two factor authenticatio for [_1].', $userID);
+			next;
+		}
+		my $password = $db->getPassword($userID);
+		$password->otp_secret('');
+		$db->putPassword($password);
+		$num++;
+	}
+
+	unshift @resultText, $c->maketext('Reset two factor authentication for [quant,_1,user].', $num);
+	return join(' ', @resultText);
 }
 
 sub cancel_edit_handler ($c) {
@@ -485,7 +507,7 @@ sub cancel_edit_handler ($c) {
 	}
 	$c->{editMode} = 0;
 
-	return $c->maketext('Changes abandoned');
+	return $c->maketext('Changes abandoned.');
 }
 
 sub save_edit_handler ($c) {
@@ -497,24 +519,45 @@ sub save_edit_handler ($c) {
 		die $c->maketext('record for visible user [_1] not found', $userID) unless $User;
 		my $PermissionLevel = $db->getPermissionLevel($userID);
 		die $c->maketext('permissions for [_1] not defined', $userID) unless defined $PermissionLevel;
+
 		# delete requests for elevated users should never make it this far
 		die $c->maketext('insufficient permission to edit [_1]', $userID) unless ($c->{userIsEditable}{$userID});
-		foreach my $field ($User->NONKEYFIELDS()) {
-			my $param = "user.$userID.$field";
-			if (defined $c->param($param)) {
-				$User->$field($c->param($param));
+
+		for my $field ($User->NONKEYFIELDS()) {
+			my $newValue = $c->param("user.$userID.$field");
+			$User->$field($newValue) if defined $newValue;
+		}
+		$db->putUser($User);
+
+		my $newPermissionLevel = $c->param("user.$userID.permission");
+		$PermissionLevel->permission($newPermissionLevel)
+			if defined $newPermissionLevel && $newPermissionLevel <= $c->{userPermission};
+		$db->putPermissionLevel($PermissionLevel);
+		$User->{permission} = $PermissionLevel->permission;
+
+		if ($c->param("user.${userID}.password_delete")) {
+			# Note that if the user has setup two factor authentication, then this also will delete the otp_secret.
+			# Thus if the password is set again later, the user will need to setup two factor authentication again.
+			$db->deletePassword($User->user_id) if $db->existsPassword($User->user_id);
+		} else {
+			my $newPassword = $c->param("user.${userID}.password");
+			if ($newPassword && $newPassword =~ /\S/) {
+				my $Password      = eval { $db->getPassword($User->user_id) };
+				my $cryptPassword = cryptPassword($newPassword);
+				if ($Password) {
+					# Note that in this case the otp_secret will be preserved. So the user will still be able to use the
+					# configured two factor authentication with the new password.
+					$Password->password(cryptPassword($newPassword));
+					eval { $db->putPassword($Password) };
+				} else {
+					$Password = $db->newPassword();
+					$Password->user_id($userID);
+					$Password->password(cryptPassword($newPassword));
+					eval { $db->addPassword($Password) };
+				}
 			}
 		}
 
-		my $param = "user.$userID.permission";
-		if (defined $c->param($param) && $c->param($param) <= $c->{userPermission}) {
-			$PermissionLevel->permission($c->param($param));
-		}
-
-		$db->putUser($User);
-		$db->putPermissionLevel($PermissionLevel);
-
-		$User->{permission} = $PermissionLevel->permission;
 		$c->{allUsers}{$userID} = $User;
 	}
 
@@ -526,64 +569,17 @@ sub save_edit_handler ($c) {
 
 	$c->{editMode} = 0;
 
-	return $c->maketext('Changes saved');
+	return $c->maketext('Changes saved.');
 }
 
-sub cancel_password_handler ($c) {
-	if (defined $c->param('prev_visible_users')) {
-		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->every_param('prev_visible_users') } };
-	} elsif (defined $c->param('no_prev_visible_users')) {
-		$c->{visibleUserIDs} = {};
-	}
-	$c->{passwordMode} = 0;
-
-	return $c->maketext('Changes abandoned');
-}
-
-sub save_password_handler ($c) {
-	my $db = $c->db;
-
-	my @visibleUserIDs = keys %{ $c->{visibleUserIDs} };
-	foreach my $userID (@visibleUserIDs) {
-		my $User = $db->getUser($userID);
-		die $c->maketext('record for visible user [_1] not found', $userID) unless $User;
-		# password requests for elevated users should never make it this far
-		die $c->maketext('insufficient permission to edit [_1]', $userID) unless ($c->{userIsEditable}{$userID});
-		my $param = "user.${userID}.new_password";
-		if ($c->param($param)) {
-			my $newP          = $c->param($param);
-			my $Password      = eval { $db->getPassword($User->user_id) };
-			my $cryptPassword = cryptPassword($newP);
-			if (!defined($Password)) {
-				$Password = $db->newPassword();
-				$Password->user_id($userID);
-				$Password->password(cryptPassword($newP));
-				eval { $db->addPassword($Password) };
-			} else {
-				$Password->password(cryptPassword($newP));
-				eval { $db->putPassword($Password) };
-			}
-		}
-	}
-
-	if (defined $c->param('prev_visible_users')) {
-		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->every_param('prev_visible_users') } };
-	} elsif (defined $c->param('no_prev_visible_users')) {
-		$c->{visibleUserIDs} = {};
-	}
-
-	$c->{passwordMode} = 0;
-
-	return $c->maketext('New passwords saved');
-}
-
-# Sort methods
+# Sort methods (ascending)
 
 sub byUserID { return lc $a->user_id cmp lc $b->user_id }
 
 sub byFirstName {
 	return (defined $a->first_name && defined $b->first_name) ? lc $a->first_name cmp lc $b->first_name : 0;
 }
+
 sub byLastName { return (defined $a->last_name && defined $b->last_name) ? lc $a->last_name cmp lc $b->last_name : 0; }
 sub byEmailAddress { return lc $a->email_address cmp lc $b->email_address }
 sub byStudentID    { return lc $a->student_id cmp lc $b->student_id }
@@ -594,6 +590,18 @@ sub byComment      { return lc $a->comment cmp lc $b->comment }
 
 # Permission level is added to the user record hash so we can sort by it if necessary.
 sub byPermission { return $a->{permission} <=> $b->{permission}; }
+
+# Sort methods (descending)
+sub byDescUserID       { local ($b, $a) = ($a, $b); return byUserID() }
+sub byDescFirstName    { local ($b, $a) = ($a, $b); return byFirstName() }
+sub byDescLastName     { local ($b, $a) = ($a, $b); return byLastName() }
+sub byDescEmailAddress { local ($b, $a) = ($a, $b); return byEmailAddress() }
+sub byDescStudentID    { local ($b, $a) = ($a, $b); return byStudentID() }
+sub byDescStatus       { local ($b, $a) = ($a, $b); return byStatus() }
+sub byDescSection      { local ($b, $a) = ($a, $b); return bySection() }
+sub byDescRecitation   { local ($b, $a) = ($a, $b); return byRecitation() }
+sub byDescComment      { local ($b, $a) = ($a, $b); return byC mment() }
+sub byDescPermission   { local ($b, $a) = ($a, $b); return byPermission() }
 
 # Utilities
 
@@ -610,20 +618,19 @@ sub menuLabels ($c, $hashRef) {
 	return %result;
 }
 
-# FIXME REFACTOR this belongs in a utility class so that addcourse can use it!
-# (we need a whole suite of higher-level import/export functions somewhere)
-sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceList) {
+sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource, @replaceList) {
 	my $ce   = $c->ce;
 	my $db   = $c->db;
-	my $dir  = $ce->{courseDirs}->{templates};
+	my $dir  = $ce->{courseDirs}{templates};
 	my $user = $c->param('user');
 	my $perm = $c->{userPermission};
 
-	die $c->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
-	die $c->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
+	die $c->maketext("Illegal '/' character in input.") if $fileName =~ m|/|;
+	die $c->maketext("File [_1]/[_2] either does not exist or is not readable.", $dir, $fileName)
 		unless -r "$dir/$fileName";
 
 	my %allUserIDs = map { $_ => 1 } @{ $c->{allUserIDs} };
+
 	my %replaceOK;
 	if ($replaceExisting eq 'none') {
 		%replaceOK = ();
@@ -641,7 +648,7 @@ sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceLis
 	my @classlist = parse_classlist("$dir/$fileName");
 
 	# Default status is enrolled -- fetch abbreviation for enrolled
-	my $default_status_abbrev = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
+	my $default_status_abbrev = $ce->{statuses}{Enrolled}{abbrevs}[0];
 
 	foreach my $record (@classlist) {
 		my %record  = %$record;
@@ -660,12 +667,7 @@ sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceLis
 			next;
 		}
 
-		if (exists $allUserIDs{$user_id} and not exists $replaceOK{$user_id}) {
-			push @skipped, $user_id;
-			next;
-		}
-
-		if (not exists $allUserIDs{$user_id} and not $createNew) {
+		if (exists $allUserIDs{$user_id} && !exists $replaceOK{$user_id}) {
 			push @skipped, $user_id;
 			next;
 		}
@@ -674,14 +676,15 @@ sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceLis
 		$record{status} = $default_status_abbrev
 			unless defined $record{status} and $record{status} ne "";
 
-		# set password from student ID if password field is "empty"
-		if (not defined $record{password} or $record{password} eq "") {
-			if (defined $record{student_id} and $record{student_id} ne "") {
-				# crypt the student ID and use that
-				$record{password} = cryptPassword($record{student_id});
-			} else {
-				# an empty password field in the database disables password login
-				$record{password} = "";
+		# Determine what to use for the password (if anything).
+		if (!$record{password}) {
+			if (defined $record{unencrypted_password} && $record{unencrypted_password} =~ /\S/) {
+				$record{password} = cryptPassword($record{unencrypted_password});
+			} elsif ($fallbackPasswordSource
+				&& $record{$fallbackPasswordSource}
+				&& $record{$fallbackPasswordSource} =~ /\S/)
+			{
+				$record{password} = cryptPassword($record{$fallbackPasswordSource});
 			}
 		}
 
@@ -691,21 +694,23 @@ sub importUsersFromCSV ($c, $fileName, $createNew, $replaceExisting, @replaceLis
 
 		my $User            = $db->newUser(%record);
 		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => $record{permission});
-		my $Password        = $db->newPassword(user_id => $user_id, password => $record{password});
+		my $Password = $record{password} ? $db->newPassword(user_id => $user_id, password => $record{password}) : undef;
 
 		# DBFIXME use REPLACE
 		if (exists $allUserIDs{$user_id}) {
 			$db->putUser($User);
 			$db->putPermissionLevel($PermissionLevel);
-			$db->putPassword($Password);
-			$User->{permission} = $PermissionLevel->permission;
+			$db->putPassword($Password) if $Password;
+			$User->{permission}     = $PermissionLevel->permission;
+			$User->{passwordExists} = 1 if $Password;
 			push @replaced, $User;
 		} else {
 			$allUserIDs{$user_id} = 1;
 			$db->addUser($User);
 			$db->addPermissionLevel($PermissionLevel);
-			$db->addPassword($Password);
-			$User->{permission} = $PermissionLevel->permission;
+			$db->addPassword($Password) if $Password;
+			$User->{permission}     = $PermissionLevel->permission;
+			$User->{passwordExists} = 1 if $Password;
 			push @added, $User;
 		}
 	}

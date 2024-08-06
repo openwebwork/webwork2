@@ -23,7 +23,6 @@
 	<%= javascript getAssetURL($ce, 'js/DatePicker/datepicker.js'),         defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'),         defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/ProblemSetList/problemsetlist.js'), defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/ShowHide/show_hide.js'),            defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'),           defer => undef =%>
 % end
 %
@@ -33,7 +32,7 @@
 % }
 %
 % if ($c->{editMode} && !$authz->hasPermissions(param('user'), 'modify_problem_sets')) {
-	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to modify homework sets.') %></div>
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to modify sets.') %></div>
 	% last;
 % }
 %
@@ -66,7 +65,9 @@
 	<%= hidden_field editMode => $c->{editMode} =%>
 	<%= hidden_field exportMode => $c->{exportMode} =%>
 	<%= hidden_field primarySortField => $c->{primarySortField} =%>
+	<%= hidden_field primarySortOrder => $c->{primarySortOrder} =%>
 	<%= hidden_field secondarySortField => $c->{secondarySortField} =%>
+	<%= hidden_field secondarySortOrder => $c->{secondarySortOrder} =%>
 	%
 	% if ($c->{editMode}) {
 		<p><b><%= maketext('Any changes made below will be reflected in the set for ALL students.') =%></b></p>
@@ -79,13 +80,14 @@
 		% # Check permissions
 		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
 		%
-		% my $active        = '';
+		% my $disabled = $actionID eq 'import' && !@$setDefList ? ' disabled' : '';
+		% my $active   = '';
 		% unless ($default_choice) { $active = ' active'; $default_choice = $actionID; }
 		%
 		% content_for 'tab-list' => begin
 			<li class="nav-item" role="presentation">
 				<%= link_to maketext($formTitles->{$actionID}) => "#$actionID",
-					class           => "nav-link action-link$active",
+					class           => "nav-link action-link$active$disabled",
 					id              => "$actionID-tab",
 					role            => 'tab',
 					data            => { action => $actionID, bs_toggle => 'tab', bs_target => "#$actionID" },

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +34,7 @@ and course.conf files.
  	courseName          => "name_of_course",
  });
 
- my $timeout = $courseEnv->{sessionKeyTimeout};
+ my $timeout = $courseEnv->{sessionTimeout};
  my $mode    = $courseEnv->{pg}->{options}->{displayMode};
  # etc...
 
@@ -56,7 +56,7 @@ use Carp;
 use Opcode qw(empty_opset);
 
 use WeBWorK::WWSafe;
-use WeBWorK::Utils qw(readFile);
+use WeBWorK::Utils::Files qw(readFile);
 use WeBWorK::Debug;
 
 =head1 CONSTRUCTION
@@ -254,28 +254,16 @@ sub new {
 
 =head1 ACCESS
 
-There are no formal accessor methods. However, since the course environemnt is
-a hash of hashes and arrays, is exists as the self hash of an instance
-variable:
+The course environment is a hash and variables in the course environment can be
+accessed via its hash keys.  For example:
 
-	$ce->{someKey}{someOtherKey};
+    $ce->{someKey}{someOtherKey};
 
-=head1 EXPERIMENTAL ACCESS METHODS
+=head1 METHODS
 
-This is an experiment in extending CourseEnvironment to know a little more about
-its contents, and perform useful operations for me.
+=head2 status_abbrev_to_name
 
-There is a set of operations that require certain data from the course
-environment. Most of these are un Utils.pm. I've been forced to pass $ce into
-them, so that they can get their data out. But some things are so intrinsically
-linked to the course environment that they might as well be methods in this
-class.
-
-=head2 STATUS METHODS
-
-=over
-
-=item status_abbrev_to_name($status_abbrev)
+Usage: C<< $ce->status_abbrev_to_name($status_abbrev) >>
 
 Given the abbreviation for a status, return the name. Returns undef if the
 abbreviation is not found.
@@ -292,7 +280,9 @@ sub status_abbrev_to_name {
 	return $ce->{_status_abbrev_to_name}{$status_abbrev};
 }
 
-=item status_name_to_abbrevs($status_name)
+=head2 status_name_to_abbrevs
+
+Usage: C<< $ce->status_name_to_abbrevs($status_name) >>
 
 Returns the list of abbreviations for a given status. Returns an empty list if
 the status is not found.
@@ -310,7 +300,9 @@ sub status_name_to_abbrevs {
 	return @{ $ce->{statuses}{$status_name}{abbrevs} };
 }
 
-=item status_has_behavior($status_name, $behavior)
+=head2 status_has_behavior
+
+Usage: C<< $ce->status_has_behavior($status_name, $behavior) >>
 
 Return true if $status_name lists $behavior.
 
@@ -340,7 +332,9 @@ sub status_has_behavior {
 	}
 }
 
-=item status_abbrev_has_behavior($status_abbrev, $behavior)
+=head2 status_abbrev_has_behavior
+
+Usage: C<< status_abbrev_has_behavior($status_abbrev, $behavior) >>
 
 Return true if the status abbreviated by $status_abbrev lists $behavior.
 
@@ -365,10 +359,21 @@ sub status_abbrev_has_behavior {
 	}
 }
 
-=back
+=head2 two_factor_authentication_enabled
+
+Usage: C<< $ce->two_factor_authentication_enabled >>
+
+Returns true if two factor authentication is enabled for this course.
 
 =cut
 
-1;
+sub two_factor_authentication_enabled {
+	my $ce = shift;
+	return 0                                                           if $ce->{external_auth};
+	return grep { $_ eq $ce->{courseName} } @{ $ce->{twoFA}{enabled} } if (ref($ce->{twoFA}{enabled}) eq 'ARRAY');
+	return 1 if $ce->{twoFA}{enabled} ^ $ce->{twoFA}{enabled} && $ce->{courseName} eq $ce->{twoFA}{enabled};
+	return 0 if $ce->{twoFA}{enabled} ^ $ce->{twoFA}{enabled};
+	return $ce->{twoFA}{enabled};
+}
 
-# perl doesn't look like line noise. line noise has way more alphanumerics.
+1;

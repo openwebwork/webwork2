@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -100,7 +100,7 @@ the submit button pressed (the action).
     Requested actions and aliases
         View/Reload                action = view
         Generate Hardcopy:         action = hardcopy
-        Tidy Code:                 action = pgtidy
+        Format Code:               action = format_code
         Save:                      action = save
         Save as:                   action = save_as
         Append:                    action = add_problem
@@ -115,21 +115,23 @@ not exist.  The path to the actual file being edited is stored in inputFilePath.
 
 =cut
 
-use File::Copy;
+use Mojo::File;
 use XML::LibXML;
 
-use WeBWorK::Utils qw(jitar_id_to_seq not_blank path_is_subdir seq_to_jitar_id x
-	surePathToFile readDirectory readFile max format_set_name_display);
+use WeBWorK::Utils qw(not_blank x max);
+use WeBWorK::Utils::Files qw(surePathToFile readFile path_is_subdir);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
+use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 use constant DEFAULT_SEED => 123456;
 
 # Editor tabs
-use constant ACTION_FORMS => [qw(view hardcopy pgtidy save save_as add_problem revert)];
+use constant ACTION_FORMS => [qw(view hardcopy format_code save save_as add_problem revert)];
 use constant ACTION_FORM_TITLES => {
 	view        => x('View/Reload'),
 	hardcopy    => x('Generate Hardcopy'),
-	pgtidy      => x('Tidy Code'),
+	format_code => x('Format Code'),
 	save        => x('Save'),
 	save_as     => x('Save As'),
 	add_problem => x('Append'),
@@ -249,7 +251,7 @@ sub initialize ($c) {
 		&& $authz->hasPermissions($user, 'modify_problem_sets');
 
 	# Record status messages carried over if this is a redirect
-	$c->addmessage($c->param('status_message') || '');
+	$c->addmessage($c->authen->flash('status_message') || '');
 
 	$c->addbadmessage($c->maketext('Changes in this file have not yet been permanently saved.'))
 		if $c->{inputFilePath} eq $c->{tempFilePath} && -r $c->{tempFilePath};
@@ -609,18 +611,16 @@ sub backupFile ($c, $outputFilePath) {
 
 	# Make sure any missing directories are created.
 	surePathToFile($ce->{courseDirs}{templates}, $backupFilePath);
-	copy($outputFilePath, $backupFilePath);
+	Mojo::File->new($outputFilePath)->copy_to($backupFilePath);
 	$c->addgoodmessage($c->maketext(
-		'Backup created on [_1]',
-		$c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat})
-	));
+		'Backup created on [_1]', $c->formatDateTime($backupTime, $ce->{studentDateDisplayFormat})));
 
 	# Delete oldest backup if option is present.
 	if ($c->param('deleteBackup')) {
 		my @backupTimes      = $c->getBackupTimes;
 		my $backupTime       = $backupTimes[-1];
 		my $backupFilePath   = $c->{backupBasePath} . $backupTime;
-		my $formatBackupTime = $c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat});
+		my $formatBackupTime = $c->formatDateTime($backupTime, $ce->{studentDateDisplayFormat});
 		if (-e $backupFilePath) {
 			unlink($backupFilePath);
 			$c->addgoodmessage($c->maketext('Deleted backup from [_1].', $formatBackupTime));
@@ -703,23 +703,19 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 	# transfer them as well.  If the file is a pg file, then assume there are auxiliary files.  Copy all files not
 	# ending in .pg from the original directory to the new one.
 	if ($c->{action} eq 'save_as' && $outputFilePath =~ /\.pg/) {
-		my $sourceDirectory = $c->{sourceFilePath} || '';
-		my $outputDirectory = $outputFilePath;
-		$sourceDirectory =~ s|/[^/]+\.pg$||;
-		$outputDirectory =~ s|/[^/]+\.pg$||;
+		my $sourceDirectory = Mojo::File->new(($c->{sourceFilePath} || '') =~ s|/[^/]+\.pg$||r);
+		my $outputDirectory = Mojo::File->new($outputFilePath              =~ s|/[^/]+\.pg$||r);
 
 		# Only perform the copy if the output directory is an actual new location.
-		if ($sourceDirectory ne $outputDirectory) {
-			for my $file (-d $sourceDirectory ? readDirectory($sourceDirectory) : ()) {
+		if ($sourceDirectory ne $outputDirectory && -d $sourceDirectory) {
+			for my $file (@{ $sourceDirectory->list }) {
 				# The .pg file being edited has already been transferred. Ignore any others in the directory.
 				next if $file =~ /\.pg$/;
-				my $fromPath = "$sourceDirectory/$file";
-				my $toPath   = "$outputDirectory/$file";
-				# Don't copy directories and don't copy files that have already been copied.
-				if (-f $fromPath && -r $fromPath && !-e $toPath) {
-					# Need to use binary transfer for image files.  File::Copy does this.
-					$c->addbadmessage($c->maketext('Error copying [_1] to [_2].', $fromPath, $toPath))
-						unless copy($fromPath, $toPath);
+				my $toPath = $outputDirectory->child($file->basename);
+				# Only copy regular files that are readable and that have not already been copied.
+				if (-f $file && -r $file && !-e $toPath) {
+					eval { $file->copy_to($toPath) };
+					$c->addbadmessage($c->maketext('Error copying [_1] to [_2].', $file, $toPath)) if $@;
 				}
 			}
 			$c->addgoodmessage($c->maketext(
@@ -779,6 +775,7 @@ sub view_handler ($c) {
 		# We need to know if the set is a gateway set to determine the redirect.
 		my $globalSet = $c->db->getGlobalSet($c->{setID});
 
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			defined $globalSet && $globalSet->assignment_type =~ /gateway/
 			? $c->url_for('gateway_quiz',   setID => 'Undefined_Set')
@@ -787,24 +784,24 @@ sub view_handler ($c) {
 				displayMode    => $displayMode,
 				problemSeed    => $problemSeed,
 				editMode       => 'temporaryFile',
-				sourceFilePath => $relativeTempFilePath,
-				status_message => $c->{status_message}->join('')
+				sourceFilePath => $relativeTempFilePath
 			}
 		));
 	} elsif ($c->{file_type} eq 'blank_problem') {
 		# Redirect to Problem.pm.pm.
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
 			params => {
 				displayMode    => $displayMode,
 				problemSeed    => $problemSeed,
 				editMode       => 'temporaryFile',
-				sourceFilePath => $relativeTempFilePath,
-				status_message => $c->{status_message}->join('')
+				sourceFilePath => $relativeTempFilePath
 			}
 		));
 	} elsif ($c->{file_type} eq 'set_header') {
 		# Redirect to ProblemSet
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('problem_list', setID => $c->{setID}),
 			params => {
@@ -812,12 +809,12 @@ sub view_handler ($c) {
 				displayMode    => $displayMode,
 				problemSeed    => $problemSeed,
 				editMode       => 'temporaryFile',
-				sourceFilePath => $relativeTempFilePath,
-				status_message => $c->{status_message}->join('')
+				sourceFilePath => $relativeTempFilePath
 			}
 		));
 	} elsif ($c->{file_type} eq 'hardcopy_header') {
 		# Redirect to ProblemSet?? It's difficult to view temporary changes for hardcopy headers.
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('problem_list', setID => $c->{setID}),
 			params => {
@@ -825,19 +822,18 @@ sub view_handler ($c) {
 				displayMode    => $displayMode,
 				problemSeed    => $problemSeed,
 				editMode       => 'temporaryFile',
-				sourceFilePath => $relativeTempFilePath,
-				status_message => $c->{status_message}->join('')
+				sourceFilePath => $relativeTempFilePath
 			}
 		));
 	} elsif ($c->{file_type} eq 'course_info') {
 		# Redirect to ProblemSets.pm.
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('set_list'),
 			params => {
 				course_info    => $c->{tempFilePath},
 				editMode       => 'temporaryFile',
-				sourceFilePath => $relativeTempFilePath,
-				status_message => $c->{status_message}->join('')
+				sourceFilePath => $relativeTempFilePath
 			}
 		));
 	} else {
@@ -847,10 +843,10 @@ sub view_handler ($c) {
 	return;
 }
 
-# The hardcopy and pgtidy actions are handled by javascript.  These are provided just in case
+# The hardcopy and format_code actions are handled by javascript.  These are provided just in case
 # something goes wrong and the actions are called.
-sub hardcopy_action { }
-sub pgtidy_action   { }
+sub hardcopy_action    { }
+sub format_code_action { }
 
 sub hardcopy_handler ($c) {
 	# Redirect to problem editor page.
@@ -910,6 +906,7 @@ sub add_problem_handler ($c) {
 		$c->{file_type} = 'problem';    # Change file type to problem if it is not already that.
 
 		# Redirect to problem editor page.
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for(
 				'instructor_problem_editor_withset_withproblem',
@@ -921,7 +918,6 @@ sub add_problem_handler ($c) {
 				problemSeed    => $c->{problemSeed},
 				editMode       => 'savedFile',
 				sourceFilePath => $c->getRelativeSourceFilePath($sourceFilePath),
-				status_message => $c->{status_message}->join(''),
 				file_type      => 'problem',
 			}
 		));
@@ -946,13 +942,10 @@ sub add_problem_handler ($c) {
 		$c->{file_type} = 'set_header';    # Change file type to set_header if not already so.
 
 		# Redirect
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('problem_list', setID => $targetSetName),
-			params => {
-				displayMode    => $c->{displayMode},
-				editMode       => 'savedFile',
-				status_message => $c->{status_message}->join(''),
-			}
+			params => { displayMode => $c->{displayMode}, editMode => 'savedFile' }
 		));
 	} elsif ($targetFileType eq 'hardcopy_header') {
 		# Update set record
@@ -975,13 +968,10 @@ sub add_problem_handler ($c) {
 		$c->{file_type} = 'hardcopy_header';    # Change file type to set_header if not already so.
 
 		# Redirect
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('hardcopy_preselect_set', setID => $targetSetName),
-			params => {
-				displayMode    => $c->{displayMode},
-				editMode       => 'savedFile',
-				status_message => $c->{status_message}->join(''),
-			}
+			params => { displayMode => $c->{displayMode}, editMode => 'savedFile' }
 		));
 	} else {
 		die "Unsupported target file type $targetFileType";
@@ -1014,6 +1004,7 @@ sub save_handler ($c) {
 		# We need to know if the set is a gateway set to determine the redirect.
 		my $globalSet = $c->db->getGlobalSet($c->{setID});
 
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			defined $globalSet && $globalSet->assignment_type =~ /gateway/
 			? $c->url_for('gateway_quiz',   setID => 'Undefined_Set')
@@ -1022,52 +1013,50 @@ sub save_handler ($c) {
 				displayMode    => $c->{displayMode},
 				problemSeed    => $c->{problemSeed},
 				editMode       => 'savedFile',
-				sourceFilePath => $c->getRelativeSourceFilePath($c->{editFilePath}),
-				status_message => $c->{status_message}->join('')
+				sourceFilePath => $c->getRelativeSourceFilePath($c->{editFilePath})
 			}
 		));
 	} elsif ($c->{file_type} eq 'set_header') {
 		# Redirect to ProblemSet.pm
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('problem_list', setID => $c->{setID}),
 			params => {
-				displayMode    => $c->{displayMode},
-				problemSeed    => $c->{problemSeed},
-				editMode       => 'savedFile',
-				status_message => $c->{status_message}->join('')
+				displayMode => $c->{displayMode},
+				problemSeed => $c->{problemSeed},
+				editMode    => 'savedFile'
 			}
 		));
 	} elsif ($c->{file_type} eq 'hardcopy_header') {
 		# Redirect to Hardcopy.pm
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('hardcopy_preselect_set', setID => $c->{setID}),
 			params => {
-				displayMode    => $c->{displayMode},
-				problemSeed    => $c->{problemSeed},
-				editMode       => 'savedFile',
-				status_message => $c->{status_message}->join('')
+				displayMode => $c->{displayMode},
+				problemSeed => $c->{problemSeed},
+				editMode    => 'savedFile'
 			}
 		));
 	} elsif ($c->{file_type} eq 'hardcopy_theme') {
 		# Redirect to PGProblemEditor.pm
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('instructor_problem_editor'),
 			params => {
 				editMode       => 'savedFile',
 				hardcopy_theme => $c->{hardcopy_theme},
 				file_type      => 'hardcopy_theme',
-				status_message => $c->{status_message}->join(''),
 				sourceFilePath => $c->getRelativeSourceFilePath($c->{editFilePath}),
 			}
 		));
 	} elsif ($c->{file_type} eq 'course_info') {
 		# Redirect to ProblemSets.pm
-		$c->reply_with_redirect($c->systemLink(
-			$c->url_for('set_list'),
-			params => { editMode => 'savedFile', status_message => $c->{status_message}->join('') }
-		));
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
+		$c->reply_with_redirect($c->systemLink($c->url_for('set_list'), params => { editMode => 'savedFile' }));
 	} elsif ($c->{file_type} eq 'source_path_for_problem_file') {
 		# Redirect to PGProblemEditor.pm
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for(
 				'instructor_problem_editor_withset_withproblem',
@@ -1080,8 +1069,7 @@ sub save_handler ($c) {
 				editMode    => 'savedFile',
 				# The path relative to the templates directory is required.
 				sourceFilePath => $c->{editFilePath},
-				file_type      => 'source_path_for_problem_file',
-				status_message => $c->{status_message}->join('')
+				file_type      => 'source_path_for_problem_file'
 			}
 		));
 	} else {
@@ -1129,7 +1117,7 @@ sub save_as_handler ($c) {
 			$c->shortPath($outputFilePath)
 		));
 		$c->addbadmessage(
-			$c->maketext('You can change the file path for this problem manually from the "Hmwk Sets Editor" page'))
+			$c->maketext('You can change the file path for this problem manually from the "Sets Manager" page'))
 			if defined $c->{setID};
 		$c->addgoodmessage($c->maketext(
 			'The text box now contains the source of the original problem. '
@@ -1238,8 +1226,8 @@ sub save_as_handler ($c) {
 				'A new file has been created at "[_1]" with the contents below.',
 				$c->shortPath($outputFilePath)
 			));
-			$c->addgoodmessage($c->maketext(' No changes have been made to set [_1]', $c->{setID}))
-				if ($c->{setID} ne 'Undefined_Set');
+			$c->addgoodmessage($c->maketext('No changes have been made to set [_1]', $c->{setID}))
+				if $c->{setID} && $c->{setID} ne 'Undefined_Set';
 		} else {
 			$c->addbadmessage($c->maketext('Unkown saveMode: [_1].', $saveMode));
 			return;
@@ -1283,6 +1271,7 @@ sub save_as_handler ($c) {
 		return;
 	}
 
+	$c->authen->flash(status_message => $c->{status_message}->join(''));
 	$c->reply_with_redirect($c->systemLink(
 		$problemPage,
 		params => {
@@ -1290,7 +1279,6 @@ sub save_as_handler ($c) {
 			sourceFilePath => $c->getRelativeSourceFilePath($outputFilePath),
 			problemSeed    => $c->{problemSeed},
 			file_type      => $new_file_type,
-			status_message => $c->{status_message}->join(''),
 			%extra_params
 		}
 	));
@@ -1323,10 +1311,10 @@ sub revert_handler ($c) {
 		$c->{inputFilePath} = $c->{tempFilePath};
 
 		if (-r $backupFilePath) {
-			copy($backupFilePath, $c->{tempFilePath});
+			Mojo::File->new($backupFilePath)->copy_to($c->{tempFilePath});
 			$c->addgoodmessage($c->maketext(
 				'Restored backup from [_1].',
-				$c->formatDateTime($backupTime, undef, $ce->{studentDateDisplayFormat})
+				$c->formatDateTime($backupTime, $ce->{studentDateDisplayFormat})
 			));
 		} else {
 			$c->addbadmessage($c->maketext('Unable to read backup file "[_1]".', $c->shortPath($backupFilePath)));
@@ -1339,7 +1327,7 @@ sub revert_handler ($c) {
 			unlink($delFilePath);
 			$c->addgoodmessage($c->maketext(
 				'Deleted backup from [_1].',
-				$c->formatDateTime($delTime, undef, $ce->{studentDateDisplayFormat})
+				$c->formatDateTime($delTime, $ce->{studentDateDisplayFormat})
 			));
 		} else {
 			$c->addbadmessage($c->maketext('Unable to delete backup file "[_1]".', $c->shortPath($delFilePath)));

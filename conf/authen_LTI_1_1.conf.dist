@@ -7,8 +7,11 @@
 
 # This is a string that is used to name the LMS for end users, for example in a message telling
 # users to sign in through their LMS.
-$LTI{v1p1}{LMS_name} = 'e.g., Blackboard, Canvas, Moodle, etc.';
-#$LTI{v1p1}{LMS_name} = 'Desire2Learn';
+$LTI{v1p1}{LMS_name} = 'the LMS';
+#$LTI{v1p1}{LMS_name} = 'Blackboard';
+#$LTI{v1p1}{LMS_name} = 'Canvas';
+#$LTI{v1p1}{LMS_name} = 'D2L Brightspace';
+#$LTI{v1p1}{LMS_name} = 'Moodle';
 
 # This is a URL that should take users to a place they can log in to their LMS.  It will use the
 # text from LMS_name, but use LMS_url as the href.  If LMS_url is empty or undefined, the
@@ -122,6 +125,18 @@ $LTI{v1p1}{preferred_source_of_student_id} = '';
 
 # You should choose your own secret word for security and should treat it like a password.
 $LTI{v1p1}{BasicConsumerSecret} = '';
+
+# The consumer key is entered in the LMS request form, and needs to match the entry here if this
+# is set.  This is only used for content item selection requests from an LMS, and this does not
+# even need to be set for that unless there are multiple courses from different LMS's that have
+# the same LMS course id and both use a course on this webwork2 server.  In that case each LMS
+# must use a different consumer key, and the correct consumer keys should be set in the
+# course.conf file for each course. If this server is a tool provider for multiple LMS's, then
+# it is recommended that this be set. Usually it is not useful to set this here.  However, if
+# most courses use one LMS and only a few use another, then the consumer key for the first LMS
+# could be set here, and then this would only need to be set in the course.conf files for the
+# few courses use a different LMS.
+#$LTI{v1p1}{ConsumerKey} = 'webwork';
 
 # The purpose of the LTI nonces is to prevent man-in-the-middle attacks.  The NonceLifeTime (in
 # seconds) must be short enough to prevent at least casual man-in-the-middle attacks but long

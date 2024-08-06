@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,15 +24,17 @@ WeBWorK::ContentGenerator::CourseAdmin - Add, rename, and delete courses.
 
 use Net::IP;    # needed for location management
 use File::Path 'remove_tree';
+use Mojo::File;
 use File::stat;
 use Time::localtime;
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(cryptPassword writeLog trim_spaces);
+use WeBWorK::Utils qw(cryptPassword trim_spaces);
+use WeBWorK::Utils::CourseIntegrityCheck;
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse retitleCourse deleteCourse listCourses archiveCourse
 	unarchiveCourse initNonNativeTables);
-use WeBWorK::Utils::CourseIntegrityCheck;
+use WeBWorK::Utils::Logs qw(writeLog);
 use WeBWorK::DB;
 
 sub pre_header_initialize ($c) {
@@ -42,12 +44,6 @@ sub pre_header_initialize ($c) {
 	my $user  = $c->param('user');
 
 	return unless $authz->hasPermissions($user, 'create_and_delete_courses');
-
-	# Get result and send to message
-	# FIXME: I am pretty sure this is not used anymore. All methods add their messages directly to the page except the
-	# table messages, and those are added below and not here.
-	my $status_message = $c->param('status_message');
-	$c->addmessage($c->tag('p', $c->b($status_message))) if $status_message;
 
 	# Check that the non-native tables are present in the database.
 	# These are the tables which are not course specific.
@@ -207,6 +203,17 @@ sub pre_header_initialize ($c) {
 			} else {
 				$method_to_call = 'hide_inactive_course_form';
 			}
+		} elsif ($subDisplay eq 'manage_lti_course_map') {
+			if (defined $c->param('save_lti_course_map')) {
+				@errors = $c->save_lti_course_map_validate;
+				if (@errors) {
+					$method_to_call = 'manage_lti_course_map_form';
+				} else {
+					$method_to_call = 'do_save_lti_course_map';
+				}
+			} else {
+				$method_to_call = 'manage_lti_course_map_form';
+			}
 		} elsif ($subDisplay eq 'registration') {
 			if (defined($c->param('register_site'))) {
 				$method_to_call = 'do_registration';
@@ -229,7 +236,7 @@ sub add_course_form ($c) {
 sub add_course_validate ($c) {
 	my $ce = $c->ce;
 
-	my $add_courseID                = trim_spaces($c->param('add_courseID'))                || '';
+	my $add_courseID                = trim_spaces($c->param('new_courseID'))                || '';
 	my $add_initial_userID          = trim_spaces($c->param('add_initial_userID'))          || '';
 	my $add_initial_password        = trim_spaces($c->param('add_initial_password'))        || '';
 	my $add_initial_confirmPassword = trim_spaces($c->param('add_initial_confirmPassword')) || '';
@@ -293,21 +300,18 @@ sub do_add_course ($c) {
 	my $db    = $c->db;
 	my $authz = $c->authz;
 
-	my $add_courseID          = trim_spaces($c->param('add_courseID'))          || '';
-	my $add_courseTitle       = trim_spaces($c->param('add_courseTitle'))       || '';
-	my $add_courseInstitution = trim_spaces($c->param('add_courseInstitution')) || '';
+	my $add_courseID          = trim_spaces($c->param('new_courseID'))          // '';
+	my $add_courseTitle       = trim_spaces($c->param('add_courseTitle'))       // '';
+	my $add_courseInstitution = trim_spaces($c->param('add_courseInstitution')) // '';
 
-	my $add_admin_users = trim_spaces($c->param('add_admin_users')) || '';
+	my $add_initial_userID          = trim_spaces($c->param('add_initial_userID'))          // '';
+	my $add_initial_password        = trim_spaces($c->param('add_initial_password'))        // '';
+	my $add_initial_confirmPassword = trim_spaces($c->param('add_initial_confirmPassword')) // '';
+	my $add_initial_firstName       = trim_spaces($c->param('add_initial_firstName'))       // '';
+	my $add_initial_lastName        = trim_spaces($c->param('add_initial_lastName'))        // '';
+	my $add_initial_email           = trim_spaces($c->param('add_initial_email'))           // '';
 
-	my $add_initial_userID          = trim_spaces($c->param('add_initial_userID'))          || '';
-	my $add_initial_password        = trim_spaces($c->param('add_initial_password'))        || '';
-	my $add_initial_confirmPassword = trim_spaces($c->param('add_initial_confirmPassword')) || '';
-	my $add_initial_firstName       = trim_spaces($c->param('add_initial_firstName'))       || '';
-	my $add_initial_lastName        = trim_spaces($c->param('add_initial_lastName'))        || '';
-	my $add_initial_email           = trim_spaces($c->param('add_initial_email'))           || '';
-
-	my $add_templates_course = trim_spaces($c->param('add_templates_course')) || '';
-	my $add_config_file      = trim_spaces($c->param('add_config_file'))      || '';
+	my $copy_from_course = trim_spaces($c->param('copy_from_course')) // '';
 
 	my $add_dbLayout = trim_spaces($c->param('add_dbLayout')) || '';
 
@@ -318,11 +322,12 @@ sub do_add_course ($c) {
 	my @users;
 
 	# copy users from current (admin) course if desired
-	if ($add_admin_users ne '') {
+	if ($c->param('add_admin_users')) {
 		for my $userID ($db->listUsers) {
 			if ($userID eq $add_initial_userID) {
 				$c->addbadmessage($c->maketext(
-					'User "[_1]" will not be copied from admin course as it is the initial instructor.', $userID
+					'User "[_1]" will not be copied from [_2] course as it is the initial instructor.', $userID,
+					$ce->{admin_course_id}
 				));
 				next;
 			}
@@ -363,11 +368,10 @@ sub do_add_course ($c) {
 
 	# Include any optional arguments, including a template course and the course title and course institution.
 	my %optional_arguments;
-	if ($add_templates_course ne '') {
-		$optional_arguments{templatesFrom} = $add_templates_course;
-	}
-	if ($add_config_file ne '') {
-		$optional_arguments{copySimpleConfig} = $add_config_file;
+	if ($copy_from_course ne '') {
+		%optional_arguments             = map { $_ => 1 } $c->param('copy_component');
+		$optional_arguments{copyFrom}   = $copy_from_course;
+		$optional_arguments{copyConfig} = $c->param('copy_config_file');
 	}
 	if ($add_courseTitle ne '') {
 		$optional_arguments{courseTitle} = $add_courseTitle;
@@ -394,7 +398,7 @@ sub do_add_course ($c) {
 			$c->tag(
 				'div',
 				class => 'alert alert-danger p-1 mb-2',
-				$c->c($c->tag('p', "An error occured while creating the course $add_courseID:"),
+				$c->c($c->tag('p', "An error occurred while creating the course $add_courseID:"),
 					$c->tag('div', class => 'font-monospace', $error))->join('')
 			)
 		);
@@ -655,7 +659,7 @@ sub do_retitle_course ($c) {
 				$c->tag(
 					'p',
 					$c->maketext(
-						'An error occured while changing the title of the course [_1].',
+						'An error occurred while changing the title of the course [_1].',
 						$rename_oldCourseID
 					)
 				),
@@ -748,7 +752,7 @@ sub do_rename_course ($c) {
 				$c->tag(
 					'p',
 					$c->maketext(
-						'An error occured while renaming the course [_1] to [_2]:', $rename_oldCourseID,
+						'An error occurred while renaming the course [_1] to [_2]:', $rename_oldCourseID,
 						$rename_newCourseID
 					)
 				),
@@ -877,7 +881,7 @@ sub do_delete_course ($c) {
 		return $c->tag(
 			'div',
 			class => 'alert alert-danger p-1 my-2',
-			$c->c($c->tag('p', $c->maketext('An error occured while deleting the course [_1]:', $delete_courseID)),
+			$c->c($c->tag('p', $c->maketext('An error occurred while deleting the course [_1]:', $delete_courseID)),
 				$c->tag('div', class => 'font-monospace', $error))->join('')
 		);
 	} else {
@@ -885,7 +889,8 @@ sub do_delete_course ($c) {
 		# Find the contact person for the course by searching the admin classlist.
 		my @contacts = grep {/_$delete_courseID$/} $db->listUsers;
 		if (@contacts) {
-			die 'Incorrect number of contacts for the course $delete_courseID' . join(' ', @contacts) if @contacts != 1;
+			die "Incorrect number of contacts for the course $delete_courseID: " . join(' ', @contacts)
+				if @contacts != 1;
 
 			# Mark the contact person as dropped.
 			my $User = $db->getUser($contacts[0]);
@@ -1073,7 +1078,7 @@ sub do_archive_course ($c) {
 			'div',
 			class => 'alert alert-danger p-1 mb-2',
 			$c->c(
-				$c->tag('p',   $c->maketext('An error occured while archiving the course [_1]:', $archive_courseID)),
+				$c->tag('p',   $c->maketext('An error occurred while archiving the course [_1]:', $archive_courseID)),
 				$c->tag('div', class => 'font-monospace', $error)
 			)->join('')
 		);
@@ -1103,7 +1108,9 @@ sub do_archive_course ($c) {
 						$c->c(
 							$c->tag(
 								'p',
-								$c->maketext('An error occured while deleting the course [_1]:', $archive_courseID)
+								$c->maketext(
+									'An error occurred while deleting the course [_1]:', $archive_courseID
+								)
 							),
 							$c->tag('div', class => 'font-monospace', $error)
 						)->join('')
@@ -1205,7 +1212,7 @@ sub unarchive_course_validate ($c) {
 	my $new_courseID       = $c->param('new_courseID')       || '';
 
 	# Use the archive name for the course unless a course id was provided.
-	my $courseID = ($c->param('create_newCourseID') ? $new_courseID : $unarchive_courseID) =~ s/\.tar\.gz$//r;
+	my $courseID = ($new_courseID =~ /\S/ ? $new_courseID : $unarchive_courseID) =~ s/\.tar\.gz$//r;
 
 	debug(" unarchive_courseID $unarchive_courseID new_courseID $new_courseID ");
 
@@ -1238,7 +1245,7 @@ sub unarchive_course_confirm ($c) {
 	my $unarchive_courseID = $c->param('unarchive_courseID') || '';
 	my $new_courseID       = $c->param('new_courseID')       || '';
 
-	my $courseID = ($c->param('create_newCourseID') ? $new_courseID : $unarchive_courseID) =~ s/\.tar\.gz//r;
+	my $courseID = ($new_courseID =~ /\S/ ? $new_courseID : $unarchive_courseID) =~ s/\.tar\.gz//r;
 
 	debug(" unarchive_courseID $unarchive_courseID new_courseID $new_courseID ");
 
@@ -1262,7 +1269,7 @@ sub do_unarchive_course ($c) {
 	unarchiveCourse(
 		newCourseID => $new_courseID,
 		oldCourseID => $unarchive_courseID =~ s/\.tar\.gz$//r,
-		archivePath => "$ce->{webworkDirs}{courses}/admin/archives/$unarchive_courseID",
+		archivePath => "$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives/$unarchive_courseID",
 		ce          => $ce,
 	);
 
@@ -1273,13 +1280,37 @@ sub do_unarchive_course ($c) {
 			class => 'alert alert-danger p-1 mb-2',
 			$c->c(
 				$c->tag(
-					'p', $c->maketext('An error occured while archiving the course [_1]:', $unarchive_courseID)
+					'p', $c->maketext('An error occurred while unarchiving the course [_1]:', $unarchive_courseID)
 				),
 				$c->tag('div', class => 'font-monospace', $error)
 			)->join('')
 		);
 	} else {
 		writeLog($ce, 'hosted_courses', join("\t", "\tunarchived", '', '', "$unarchive_courseID to $new_courseID",));
+
+		if ($c->param('clean_up_course')) {
+			my $ce_new = WeBWorK::CourseEnvironment->new({ courseName => $new_courseID });
+			my $db_new = WeBWorK::DB->new($ce_new->{dbLayout});
+
+			for my $student_id ($db_new->listPermissionLevelsWhere({ permission => $ce->{userRoles}{student} })) {
+				$db_new->deleteUser($student_id->[0]);
+			}
+
+			for my $file (values %{ $ce_new->{courseFiles}{logs} }) {
+				eval { Mojo::File->new($file)->remove };
+				$c->addbadmessage($c->maketext('Failed to remove file [_1]: [_2]', $file, $@)) if $@;
+			}
+
+			if (-d $ce_new->{courseDirs}{scoring}) {
+				eval { Mojo::File->new($ce_new->{courseDirs}{scoring})->remove_tree({ keep_root => 1 }) };
+				$c->addbadmessage($c->maketext('Failed to remove scoring files: [_1]', $@)) if $@;
+			}
+
+			if (-d $ce_new->{courseDirs}{tmpEditFileDir}) {
+				eval { Mojo::File->new($ce_new->{courseDirs}{tmpEditFileDir})->remove_tree({ keep_root => 1 }) };
+				$c->addbadmessage($c->maketext('Failed to remove temporary edited files: [_1]', $@)) if $@;
+			}
+		}
 
 		return $c->c(
 			$c->tag(
@@ -1289,26 +1320,40 @@ sub do_unarchive_course ($c) {
 			),
 			$c->tag(
 				'div',
-				class => 'text-center',
-				$c->link_to(
-					$c->maketext('Log into [_1]', $new_courseID) => 'set_list' => { courseID => $new_courseID }
-				),
-			),
-			$c->form_for(
-				$c->current_route,
-				method => 'POST',
+				class => 'd-flex justify-content-between',
 				$c->c(
-					$c->hidden_authen_fields,
-					$c->hidden_fields('subDisplay'),
-					$c->hidden_field(unarchive_courseID => $unarchive_courseID),
-					$c->tag(
-						'div',
-						class => 'd-flex justify-content-center mt-2',
-						$c->submit_button(
-							$c->maketext('Unarchive Next Course'),
-							name  => 'decline_unarchive_course',
-							class => 'btn btn-primary'
-						)
+					$c->form_for(
+						$c->current_route,
+						method => 'POST',
+						$c->c(
+							$c->hidden_authen_fields('upgrade_course_'),
+							$c->hidden_field(subDisplay        => 'upgrade_course'),
+							$c->hidden_field(upgrade_course    => 1),
+							$c->hidden_field(upgrade_courseIDs => $new_courseID),
+							$c->submit_button(
+								$c->maketext('Upgrade Course'),
+								name  => 'upgrade_course_confirm',
+								class => 'btn btn-primary'
+							)
+						)->join('')
+					),
+					$c->link_to(
+						$c->maketext('Log into Course') => 'set_list' => { courseID => $new_courseID },
+						class                           => 'btn btn-primary'
+					),
+					$c->form_for(
+						$c->current_route,
+						method => 'POST',
+						$c->c(
+							$c->hidden_authen_fields('unarchive_more_'),
+							$c->hidden_fields('subDisplay'),
+							$c->hidden_field(unarchive_courseID => $unarchive_courseID),
+							$c->submit_button(
+								$c->maketext('Unarchive More'),
+								name  => 'unarchive_more',
+								class => 'btn btn-primary'
+							)
+						)->join('')
 					)
 				)->join('')
 			)
@@ -1352,7 +1397,7 @@ sub upgrade_course_confirm ($c) {
 
 		# Report on database status
 		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
-		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $db_report) =
+		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
 			$c->formatReportOnDatabaseTables($dbStatus, $upgrade_courseID);
 
 		my $course_output = $c->c;
@@ -1406,6 +1451,21 @@ sub upgrade_course_confirm ($c) {
 						'There are extra database fields which are not defined in the schema for at least one table. '
 							. 'Check the checkbox by the field to delete it when upgrading the course. '
 							. 'Warning: Deletion destroys all data contained in the field and is not undoable!'
+					)
+				)
+			);
+		}
+
+		if ($rebuild_table_indexes) {
+			push(
+				@$course_output,
+				$c->tag(
+					'p',
+					class => 'text-danger fw-bold',
+					$c->maketext(
+						'There are extra database fields which are not defined in the schema and were part of the key '
+							. 'for at least one table. These fields must be deleted and the table indexes rebuilt. '
+							. 'Warning: This will destroy all data contained in the field and is not undoable!'
 					)
 				)
 			);
@@ -1494,7 +1554,7 @@ sub do_upgrade_course ($c) {
 		# Analyze database status and prepare status report
 		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
 
-		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $db_report) =
+		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
 			$c->formatReportOnDatabaseTables($dbStatus);
 
 		# Prepend course name
@@ -1561,8 +1621,8 @@ sub do_upgrade_course ($c) {
 							'li',
 							$c->tag(
 								'span',
-								class => $_->[2] ? 'text-success' : 'text-danger',
-								$_->[1]
+								class => $_->[1] ? 'text-success' : 'text-danger',
+								$_->[0]
 							)
 						)
 					} @$dir_update_messages
@@ -2124,7 +2184,7 @@ sub do_hide_inactive_course ($c) {
 					$c->tag(
 						'p',
 						$c->maketext(
-							'Errors occured while hiding the courses listed below when attempting to create the '
+							'Errors occurred while hiding the courses listed below when attempting to create the '
 								. q{file hide_directory in the course's directory. Check the ownership and permissions }
 								. q{of the course's directory, e.g "[_1]".},
 							"$ce->{webworkDirs}{courses}/$failed_courses[0]/"
@@ -2193,7 +2253,7 @@ sub do_unhide_inactive_course ($c) {
 					$c->tag(
 						'p',
 						$c->maketext(
-							'Errors occured while unhiding the courses listed below when attempting delete the file '
+							'Errors occurred while unhiding the courses listed below when attempting delete the file '
 								. q{hide_directory in the course's directory. Check the ownership and permissions of }
 								. q{the course's directory, e.g "[_1]".},
 							"$ce->{webworkDirs}{courses}/$failed_courses[0]/"
@@ -2226,6 +2286,136 @@ sub do_unhide_inactive_course ($c) {
 	}
 
 	return $output->join('');
+}
+
+# LTI Course Map Management
+
+sub manage_lti_course_map_form ($c) {
+	my $ce        = $c->ce;
+	my @courseIDs = listCourses($ce);
+	my %courseMap = map { $_->course_id => $_->lms_context_id } $c->db->getLTICourseMapsWhere;
+	for (@courseIDs) { $courseMap{$_} = '' unless defined $courseMap{$_} }
+	return $c->include('ContentGenerator/CourseAdmin/manage_lti_course_map_form', courseMap => \%courseMap);
+}
+
+sub save_lti_course_map_validate ($c) {
+	my @errors;
+
+	my @courseIDs = listCourses($c->ce);
+	my %courseMap = map { $_->course_id => $_->lms_context_id } $c->db->getLTICourseMapsWhere;
+
+	# If a mapping is going to be removed, then delete it from the mapping so it is not considered below.
+	for (@courseIDs) {
+		delete $courseMap{$_} unless defined $c->param("$_-context-id") && $c->param("$_-context-id") ne '';
+	}
+
+	# Course environments are loaded as needed. Keep a cache to avoid needing to load any multiple times.
+	my %ces;
+
+COURSE:
+	for my $courseID (@courseIDs) {
+		my $lms_context_id = $c->param("$courseID-context-id");
+		next unless defined $lms_context_id && $lms_context_id ne '';
+
+		$ces{$courseID} = WeBWorK::CourseEnvironment->new({ courseName => $courseID })
+			unless defined $ces{$courseID};
+
+		if (!defined $courseMap{$courseID} && !$ces{$courseID}{LTIVersion}) {
+			push(
+				@errors,
+				$c->maketext(
+					'An LMS context id is requested to be assigned to [_1], '
+						. 'but that course is not configured to use LTI.',
+					$courseID
+				)
+			);
+			next;
+		}
+
+		if (
+			$ces{$courseID}{LTIVersion} eq 'v1p3'
+			&& !(
+				$ces{$courseID}{LTI}{v1p3}{PlatformID}
+				&& $ces{$courseID}{LTI}{v1p3}{ClientID}
+				&& $ces{$courseID}{LTI}{v1p3}{DeploymentID}
+			)
+			)
+		{
+			push(
+				@errors,
+				$c->maketext(
+					'An LMS context id is requested to be assigned to [_1] which is set to use LTI 1.3, '
+						. 'but that course is missing LTI 1.3 authentication parameters.',
+					$courseID
+				),
+			);
+			next;
+		}
+
+		for (grep { $_ ne $courseID && $courseMap{$_} eq $lms_context_id } keys %courseMap) {
+			$ces{$_} = WeBWorK::CourseEnvironment->new({ courseName => $_ }) unless defined $ces{$_};
+			if ($ces{$courseID}{LTIVersion} eq $ces{$_}{LTIVersion}) {
+				if (
+					$ces{$courseID}{LTIVersion} eq 'v1p1'
+					&& (!$ces{$courseID}{LTI}{v1p1}{ConsumerKey}
+						|| !$ces{$_}{LTI}{v1p1}{ConsumerKey}
+						|| $ces{$courseID}{LTI}{v1p1}{ConsumerKey} eq $ces{$_}{LTI}{v1p1}{ConsumerKey})
+					)
+				{
+					push(
+						@errors,
+						$c->maketext(
+							'The context id for [_1] is requested to be set to be the same as that of '
+								. '[_2], and both courses are configured to use LTI 1.1, but the consumer keys for '
+								. 'the two courses are either not both set or are the same.',
+							$courseID,
+							$_
+						)
+					);
+					next COURSE;
+				}
+
+				if ($ces{$courseID}{LTIVersion} eq 'v1p3'
+					&& $ces{$courseID}{LTI}{v1p3}{PlatformID} eq $ces{$_}{LTI}{v1p3}{PlatformID}
+					&& $ces{$courseID}{LTI}{v1p3}{ClientID} eq $ces{$_}{LTI}{v1p3}{ClientID}
+					&& $ces{$courseID}{LTI}{v1p3}{DeploymentID} eq $ces{$_}{LTI}{v1p3}{DeploymentID})
+				{
+					push(
+						@errors,
+						$c->maketext(
+							'The context id for [_1] is requested to be set to be the same as that of '
+								. '[_2], but the two courses are configured to use LTI 1.3 with the same LTI 1.3 '
+								. 'authentication parameters.',
+							$courseID,
+							$_,
+						)
+					);
+					next COURSE;
+				}
+			}
+		}
+
+		$courseMap{$courseID} = $lms_context_id;
+	}
+
+	return @errors;
+}
+
+sub do_save_lti_course_map ($c) {
+	my $db = $c->db;
+
+	for (listCourses($c->ce)) {
+		if (defined $c->param("$_-context-id") && $c->param("$_-context-id") ne '') {
+			eval { $db->setLTICourseMap($_, $c->param("$_-context-id")) };
+			$c->addbadmessage($c->maketext('An error occurred saving mapping for [_1]: [_2]', $_, $@)) if $@;
+		} else {
+			eval { $db->deleteLTICourseMapWhere({ course_id => $_ }) };
+			$c->addbadmessage($c->maketext('An error occurred deleting mapping for [_1]: [_2]', $_, $@)) if $@;
+		}
+	}
+
+	$c->addgoodmessage($c->maketext('Saved course map.'));
+	return $c->manage_lti_course_map_form;
 }
 
 sub do_registration ($c) {
@@ -2297,6 +2487,7 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 	my $all_tables_ok         = 1;
 	my $extra_database_tables = 0;
 	my $extra_database_fields = 0;
+	my $rebuild_table_indexes = 0;
 
 	my $db_report = $c->c;
 
@@ -2332,25 +2523,35 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 				my $field_report = $c->c("$key: $field_status_message{$field_status}");
 
 				if ($field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B) {
-					$extra_database_fields = 1;
-					push(
-						@$field_report,
-						$c->tag(
-							'span',
-							class => 'form-check d-inline-block',
-							$c->tag(
-								'label',
-								class => 'form-check-label',
-								$c->c(
-									$c->check_box(
-										"$courseID.$table.delete_fieldIDs" => $key,
-										class                              => 'form-check-input'
-									),
-									$c->maketext('Delete field when upgrading')
-								)->join('')
-							)
-						)
-					) if defined $courseID;
+					if ($fieldInfo{$key}[1]) {
+						$rebuild_table_indexes = 1;
+					} else {
+						$extra_database_fields = 1;
+					}
+					if (defined $courseID) {
+						if ($fieldInfo{$key}[1]) {
+							push(@$field_report, $c->hidden_field("$courseID.$table.delete_fieldIDs" => $key));
+						} else {
+							push(
+								@$field_report,
+								$c->tag(
+									'span',
+									class => 'form-check d-inline-block',
+									$c->tag(
+										'label',
+										class => 'form-check-label',
+										$c->c(
+											$c->check_box(
+												"$courseID.$table.delete_fieldIDs" => $key,
+												class                              => 'form-check-input'
+											),
+											$c->maketext('Delete field when upgrading')
+										)->join('')
+									)
+								)
+							);
+						}
+					}
 				} elsif ($field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A) {
 					$all_tables_ok = 0;
 				}
@@ -2365,7 +2566,10 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 
 	push(@$db_report, $c->tag('p', class => 'text-success', $c->maketext('Database tables are ok'))) if $all_tables_ok;
 
-	return ($all_tables_ok, $extra_database_tables, $extra_database_fields, $db_report->join(''));
+	return (
+		$all_tables_ok,         $extra_database_tables, $extra_database_fields,
+		$rebuild_table_indexes, $db_report->join('')
+	);
 }
 
 1;

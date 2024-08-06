@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -174,7 +174,8 @@ otherwise.
 sub formatRenderedProblem {
 	my $self = shift;
 	return HardcopyRenderedProblem::hardcopyRenderedProblem($self)
-		if $self->{inputs_ref}{outputformat} eq 'tex' || $self->{inputs_ref}{outputformat} eq 'pdf';
+		if $self->{inputs_ref}{outputformat}
+		&& ($self->{inputs_ref}{outputformat} eq 'tex' || $self->{inputs_ref}{outputformat} eq 'pdf');
 	return FormatRenderedProblem::formatRenderedProblem($self);
 }
 
@@ -242,33 +243,33 @@ sub command_permission {
 	my ($command) = @_;
 	return {
 		# WebworkWebservice::CourseActions
-		createCourse       => 'create_and_delete_courses',
-		listUsers          => 'access_instructor_tools',
-		addUser            => 'modify_student_data',
-		dropUser           => 'modify_student_data',
-		deleteUser         => 'modify_student_data',
-		editUser           => 'modify_student_data',
-		changeUserPassword => 'modify_student_data',
-		getCourseSettings  => 'access_instructor_tools',
-		updateSetting      => 'manage_course_files',
-		saveFile           => 'modify_problem_sets',
+		createCourse         => 'create_and_delete_courses',
+		listUsers            => 'access_instructor_tools',
+		addUser              => 'modify_student_data',
+		dropUser             => 'modify_student_data',
+		deleteUser           => 'modify_student_data',
+		editUser             => 'modify_student_data',
+		changeUserPassword   => 'modify_student_data',
+		getCourseSettings    => 'access_instructor_tools',
+		updateSetting        => 'manage_course_files',
+		saveFile             => 'modify_problem_sets',
+		getCurrentServerTime => 'record_answers_after_open_date_with_attempts',
 
 		# WebworkWebservice::LibraryActions
-		listLibraries         => 'access_instructor_tools',
-		readFile              => 'access_instructor_tools',
-		listLib               => 'access_instructor_tools',
-		searchLib             => 'access_instructor_tools',
-		getProblemDirectories => 'access_instructor_tools',
-		buildBrowseTree       => 'access_instructor_tools',
-		getProblemTags        => 'access_instructor_tools',
-		setProblemTags        => 'modify_tags',
+		listLib        => 'access_instructor_tools',
+		searchLib      => 'access_instructor_tools',
+		getProblemTags => 'access_instructor_tools',
+		setProblemTags => 'modify_tags',
 
 		# WebworkWebservice::ProblemActions
-		getUserProblem    => 'access_instructor_tools',
-		putUserProblem    => 'modify_student_data',
-		putProblemVersion => 'modify_student_data',
-		putPastAnswer     => 'modify_student_data',
+		getUserProblem => 'access_instructor_tools',
+		# Note: The modify_student_data permission is checked in the following three methods and only the status and
+		# comment_string can actually be modified by users with the problem_grader permission only.
+		putUserProblem    => 'problem_grader',
+		putProblemVersion => 'problem_grader',
+		putPastAnswer     => 'problem_grader',
 		tidyPGCode        => 'access_instructor_tools',
+		convertCodeToPGML => 'access_instructor_tools',
 
 		# WebworkWebservice::RenderProblem
 		renderProblem => 'proctor_quiz_login',

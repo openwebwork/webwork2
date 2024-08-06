@@ -22,14 +22,19 @@ WeBWorK::ContentGenerator::Instructor::FileManager.pm -- simple directory manage
 
 =cut
 
+use Mojo::File;
 use File::Path;
 use File::Copy;
 use File::Spec;
 use String::ShellQuote;
+use Archive::Tar;
+use Archive::Zip qw(:ERROR_CODES);
+use Archive::Zip::SimpleZip qw($SimpleZipError);
 
-use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
-use WeBWorK::Upload;
+use WeBWorK::Utils qw(sortByName min);
 use WeBWorK::Utils::CourseManagement qw(archiveCourse);
+use WeBWorK::Utils::Files qw(readFile);
+use WeBWorK::Upload;
 
 use constant HOME => 'templates';
 
@@ -75,13 +80,32 @@ sub pre_header_initialize ($c) {
 	$c->{courseRoot} = $c->ce->{courseDirs}{root};
 	$c->{courseName} = $c->stash('courseID');
 
+	if ($c->{pwd} && $action && $action eq 'Edit') {
+		my @files = $c->param('files');
+		if (@files == 1 && $files[0] =~ /\.pg$/) {
+			my $file = "$c->{courseRoot}/$c->{pwd}/$files[0]";
+			if (-f $file && -T $file) {
+				return $c->reply_with_redirect($c->systemLink(
+					$c->url_for('instructor_problem_editor'),
+					params => {
+						file_type      => 'source_path_for_problem_file',
+						sourceFilePath => $file
+					}
+				));
+			}
+		}
+	}
+
 	return;
 }
 
 # Download a given file
-sub downloadFile ($c, $filename, $directory = '') {
-	my $file = checkName($filename);
-	my $pwd  = $c->checkPWD($directory || $c->param('pwd') || HOME);
+sub downloadFile ($c, $file, $directory = '') {
+	if (my $invalidFilenameMessage = $c->checkName($file)) {
+		$c->addbadmessage($invalidFilenameMessage);
+		return;
+	}
+	my $pwd = $c->checkPWD($directory || $c->param('pwd') || HOME);
 	return unless $pwd;
 	$pwd = $c->{ce}{courseDirs}{root} . '/' . $pwd;
 	unless (-e "$pwd/$file") {
@@ -172,16 +196,13 @@ sub View ($c) {
 # Edit a file
 sub Edit ($c) {
 	my $filename = $c->getFile('edit');
-	return '' unless $filename;
-	my $file   = "$c->{courseRoot}/$c->{pwd}/$filename";
-	my $userID = $c->param('user');
-	my $ce     = $c->ce;
-	my $authz  = $c->authz;
+	return $c->Refresh unless $filename;
+	my $file = "$c->{courseRoot}/$c->{pwd}/$filename";
 
 	# If its a restricted file, dont allow the web editor to edit it unless that option has been set for the course.
-	for my $restrictedFile (@{ $ce->{uneditableCourseFiles} }) {
-		if (File::Spec->canonpath($file) eq File::Spec->canonpath("$c->{courseRoot}/$restrictedFile")
-			&& !$authz->hasPermissions($userID, 'edit_restricted_files'))
+	for my $restrictedFile (@{ $c->ce->{uneditableCourseFiles} }) {
+		if (Mojo::File->new($file)->realpath eq Mojo::File->new("$c->{courseRoot}/$restrictedFile")->realpath
+			&& !$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files'))
 		{
 			$c->addbadmessage($c->maketext('You do not have permission to edit this file.'));
 			return $c->Refresh;
@@ -288,6 +309,18 @@ sub Rename ($c) {
 	return '' unless $original;
 	my $oldfile = "$dir/$original";
 
+	my $realpath = Mojo::File->new($oldfile)->realpath;
+	if (grep { $realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath } @{ $c->ce->{uneditableCourseFiles} }) {
+		$c->addbadmessage($c->maketext('The file "[_1]" is protected and can not be renamed.', $original));
+		return $c->Refresh();
+	}
+
+	if (grep { $realpath eq $_ } values %{ $c->ce->{courseDirs} }) {
+		$c->addbadmessage($c->maketext(
+			'The directory "[_1]" is a required course directory and cannot be renamed.', $original));
+		return $c->Refresh();
+	}
+
 	if ($c->param('confirmed')) {
 		my $newfile = $c->param('name');
 		if ($newfile = $c->verifyPath($newfile, $original)) {
@@ -314,9 +347,44 @@ sub Delete ($c) {
 	}
 
 	my $dir = "$c->{courseRoot}/$c->{pwd}";
+
+	my @course_dirs = values %{ $c->ce->{courseDirs} };
+
+	# If only one file is selected and it is one of the uneditable course files,
+	# then don't show the deletion confirmation page. Just warn about it now.
+	if (@files == 1) {
+		my $realpath = Mojo::File->new("$dir/$files[0]")->realpath;
+		if (grep { $realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath } @{ $c->ce->{uneditableCourseFiles} })
+		{
+			$c->addbadmessage($c->maketext('The file "[_1]" is protected and cannot be deleted.', $files[0]));
+			return $c->Refresh();
+		}
+		if (grep { $realpath eq $_ } @course_dirs) {
+			$c->addbadmessage($c->maketext(
+				'The directory "[_1]" is a required course directory and cannot be deleted.',
+				$files[0]
+			));
+			return $c->Refresh();
+		}
+	}
+
 	if ($c->param('confirmed')) {
 		# If confirmed, go ahead and delete the files
 		for my $file (@files) {
+			my $realpath = Mojo::File->new("$dir/$file")->realpath;
+			if (grep { $realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
+				@{ $c->ce->{uneditableCourseFiles} })
+			{
+				$c->addbadmessage($c->maketext('The file "[_1]" is protected and cannot be deleted.', $file));
+				next;
+			}
+			if (grep { $realpath eq $_ } @course_dirs) {
+				$c->addbadmessage($c->maketext(
+					'The directory "[_1]" is a required course directory and cannot be deleted.', $file
+				));
+				next;
+			}
+
 			if (defined $c->checkPWD("$c->{pwd}/$file", 1)) {
 				if (-d "$dir/$file" && !-l "$dir/$file") {
 					my $removed = eval { rmtree("$dir/$file", 0, 1) };
@@ -344,7 +412,7 @@ sub Delete ($c) {
 	}
 }
 
-# Make a gzipped tar archive
+# Make a gzipped tar or zip archive
 sub MakeArchive ($c) {
 	my @files = $c->param('files');
 	if (scalar(@files) == 0) {
@@ -352,26 +420,90 @@ sub MakeArchive ($c) {
 		return $c->Refresh;
 	}
 
-	my $dir     = "$c->{courseRoot}/$c->{pwd}";
-	my $archive = uniqueName($dir, (scalar(@files) == 1) ? $files[0] . '.tgz' : "$c->{courseName}.tgz");
-	my $tar = 'cd ' . shell_quote($dir) . " && $c->{ce}{externalPrograms}{tar} -cvzf " . shell_quote($archive, @files);
-	@files = readpipe $tar . ' 2>&1';
-	if ($? == 0) {
-		my $n = scalar(@files);
-		$c->addgoodmessage($c->maketext('Archive "[_1]" created successfully ([quant,_2,file])', $archive, $n));
+	my $dir = $c->{pwd} eq '.' ? $c->{courseRoot} : "$c->{courseRoot}/$c->{pwd}";
+
+	if ($c->param('confirmed')) {
+		my $action = $c->param('action')          || 'Cancel';
+		return $c->Refresh if $action eq 'Cancel' || $action eq $c->maketext('Cancel');
+
+		unless ($c->param('archive_filename')) {
+			$c->addbadmessage($c->maketext('The archive filename cannot be empty.'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		my $archive_type =
+			$c->param('archive_type') || ($c->param('archive_filename') =~ /\.(zip|tgz|tar.gz)$/ ? $1 : 'zip');
+
+		my $archive = $c->param('archive_filename');
+
+		# Add the correct extension to the archive filename unless it already has it. If the extension for
+		# the other archive type is given, then change it to the extension for this archive type.
+		if ($archive_type eq 'zip') {
+			$archive =~ s/(\.(tgz|tar.gz))?$/.zip/ unless $archive =~ /\.zip$/;
+		} else {
+			$archive =~ s/(\.zip)?$/.tgz/ unless $archive =~ /\.(tgz|tar.gz)$/;
+		}
+
+		# Check filename validity.
+		if ($archive =~ m!/!) {
+			$c->addbadmessage($c->maketext('The archive filename may not contain a path component'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+		if ($archive =~ m!^\.! || $archive =~ m![^-_.a-zA-Z0-9 ]!) {
+			$c->addbadmessage($c->maketext('The archive filename contains illegal characters'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		if (-e "$dir/$archive" && !$c->param('overwrite')) {
+			$c->addbadmessage($c->maketext(
+				'The file [_1] exists. Check "Overwrite existing archive" to force this file to be replaced.',
+				$archive
+			));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		unless (@files > 0) {
+			$c->addbadmessage($c->maketext('At least one file must be selected'));
+			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
+		}
+
+		my ($error, $ok);
+		if ($archive_type eq 'zip') {
+			if (my $zip = Archive::Zip::SimpleZip->new("$dir/$archive")) {
+				for (@files) {
+					$zip->add("$dir/$_", Name => $_, storelinks => 1);
+				}
+				$ok = $zip->close;
+			}
+			$error = $SimpleZipError unless $ok;
+		} else {
+			my $tar = Archive::Tar->new;
+			$tar->add_files(map {"$dir/$_"} @files);
+			# Make file names in the archive relative to the current working directory.
+			for ($tar->get_files) {
+				$tar->rename($_->full_path, $_->full_path =~ s!^$dir/!!r);
+			}
+			$ok    = $tar->write("$dir/$archive", COMPRESS_GZIP);
+			$error = $tar->error unless $ok;
+		}
+		if ($ok) {
+			$c->addgoodmessage(
+				$c->maketext('Archive "[_1]" created successfully ([quant,_2,file])', $archive, scalar(@files)));
+		} else {
+			$c->addbadmessage($c->maketext(q{Can't create archive "[_1]": [_2]}, $archive, $error));
+		}
+		return $c->Refresh;
 	} else {
-		$c->addbadmessage(
-			$c->maketext(q{Can't create archive "[_1]": command returned [_2]}, $archive, systemError($?)));
+		return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
 	}
-	return $c->Refresh;
 }
 
 # Unpack a gzipped tar archive
 sub UnpackArchive ($c) {
 	my $archive = $c->getFile('unpack');
 	return '' unless $archive;
-	if ($archive !~ m/\.(tar|tar\.gz|tgz)$/) {
-		$c->addbadmessage($c->maketext('You can only unpack files ending in ".tgz", ".tar" or ".tar.gz"'));
+	if ($archive !~ m/\.(tar|tar\.gz|tgz|zip)$/) {
+		$c->addbadmessage($c->maketext('You can only unpack files ending in ".zip", ".tgz", ".tar" or ".tar.gz"'));
 	} else {
 		$c->unpack_archive($archive);
 	}
@@ -379,35 +511,170 @@ sub UnpackArchive ($c) {
 }
 
 sub unpack_archive ($c, $archive) {
-	my $z     = $archive =~ m/\.tar$/ ? '' : 'z';
-	my $dir   = "$c->{courseRoot}/$c->{pwd}";
-	my $tar   = 'cd ' . shell_quote($dir) . " && $c->{ce}{externalPrograms}{tar} -vx${z}f " . shell_quote($archive);
-	my @files = readpipe "$tar 2>&1";
+	my $dir = Mojo::File->new($c->{courseRoot}, $c->{pwd});
 
-	if ($? == 0) {
-		my $n = scalar(@files);
-		$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $n));
-		return 1;
+	my (@members, @existing_files, @outside_files, @forbidden_files);
+	my $num_extracted = 0;
+
+	if ($archive =~ m/\.zip$/) {
+		my $zip = Archive::Zip->new($dir->child($archive)->to_string);
+		unless ($zip) {
+			$c->addbadmessage($c->maketext(q{Unable to read zip archive file "[_1]".}, $dir->child($archive)));
+			return 0;
+		}
+
+		Archive::Zip::setErrorHandler(sub ($error) {
+			chomp $error;
+			$c->addbadmessage($error);
+		});
+
+		@members = $zip->members;
+		for (@members) {
+			my $out_file = $dir->child($_->fileName)->realpath;
+			if ($out_file !~ /^$dir/) {
+				push(@outside_files, $_->fileName);
+				next;
+			}
+
+			if (!$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files')
+				&& grep { $out_file eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
+				@{ $c->ce->{uneditableCourseFiles} })
+			{
+				push(@forbidden_files, $_->fileName);
+				next;
+			}
+
+			if (!$c->param('overwrite') && -e $out_file) {
+				push(@existing_files, $_->fileName);
+				next;
+			}
+			++$num_extracted if $zip->extractMember($_ => $out_file->to_string) == AZ_OK;
+		}
+
+		Archive::Zip::setErrorHandler();
+	} elsif ($archive =~ m/\.(tar(\.gz)?|tgz)$/) {
+		local $Archive::Tar::WARN = 0;
+
+		my $tar = Archive::Tar->new($dir->child($archive)->to_string);
+		unless ($tar) {
+			$c->addbadmessage($c->maketext(q{Unable to read tar archive file "[_1]".}, $dir->child($archive)));
+			return 0;
+		}
+
+		$tar->setcwd($dir->to_string);
+
+		@members = $tar->list_files;
+		for (@members) {
+			my $out_file = $dir->child($_)->realpath;
+			if ($out_file !~ /^$dir/) {
+				push(@outside_files, $_);
+				next;
+			}
+
+			if (!$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files')
+				&& grep { $out_file eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
+				@{ $c->ce->{uneditableCourseFiles} })
+			{
+				push(@forbidden_files, $_);
+				next;
+			}
+
+			if (!$c->param('overwrite') && -e $dir->child($_)) {
+				push(@existing_files, $_);
+				next;
+			}
+
+			unless ($tar->extract_file($_)) {
+				$c->addbadmessage($tar->error);
+				next;
+			}
+			++$num_extracted;
+		}
 	} else {
-		$c->addbadmessage($c->maketext(q{Can't unpack "[_1]": command returned [_2]}, $archive, systemError($?)));
+		$c->addbadmessage($c->maketext('Unsupported archive type in file "[_1]"', $archive));
 		return 0;
 	}
-}
 
-# Make a new file and edit it
-sub NewFile ($c) {
-	if ($c->param('confirmed')) {
-		my $name = $c->param('name');
-		if (my $file = $c->verifyName($name, 'file')) {
-			if (open(my $NEWFILE, '>:encoding(UTF-8)', $file)) {
-				close $NEWFILE;
-				return $c->RefreshEdit('', $name);
-			} else {
-				$c->addbadmessage($c->maketext(q{Can't create file: [_1]}, $!));
-			}
-		}
+	if (@outside_files) {
+		$c->addbadmessage(
+			$c->tag(
+				'p',
+				$c->maketext(
+					'The following [plural,_1,file is,files are] outside the current working directory '
+						. 'and can not be safely unpacked.',
+					scalar(@outside_files),
+				)
+				)
+				. $c->tag(
+					'div',
+					$c->tag(
+						'ul',
+						$c->c(
+							(map { $c->tag('li', $_) } @outside_files[ 0 .. min(29, $#outside_files) ]),
+							(
+								@outside_files > 30
+								? $c->tag('li',
+									$c->maketext('[quant,_1,more file,more files] not shown', @outside_files - 30))
+								: ()
+							)
+					)->join('')
+					)
+				)
+		);
 	}
 
+	# There aren't many of these, so all of them can be reported.
+	if (@forbidden_files) {
+		$c->addbadmessage(
+			$c->tag(
+				'p',
+				$c->maketext(
+					'The following [plural,_1,file] found in the archive [plural,_1,is,are]'
+						. ' protected and were not extracted.',
+					scalar(@forbidden_files),
+				)
+				)
+				. $c->tag('div', $c->tag('ul', $c->c((map { $c->tag('li', $_) } @forbidden_files))->join('')))
+		);
+	}
+
+	if (@existing_files) {
+		$c->addbadmessage(
+			$c->tag(
+				'p',
+				$c->maketext(
+					'The following [plural,_1,file already exists,files already exist]. '
+						. 'Check "Overwrite existing files silently" to unpack [plural,_1,this file,these files].',
+					scalar(@existing_files),
+				)
+				)
+				. $c->tag(
+					'div',
+					$c->tag(
+						'ul',
+						$c->c(
+							(map { $c->tag('li', $_) } @existing_files[ 0 .. min(29, $#existing_files) ]),
+							(
+								@existing_files > 30
+								? $c->tag('li',
+									$c->maketext('[quant,_1,more file,more files] not shown', @existing_files - 30))
+								: ()
+							)
+					)->join('')
+					)
+				)
+		);
+	}
+
+	$c->addgoodmessage($c->maketext('[quant,_1,file] unpacked successfully', $num_extracted)) if $num_extracted;
+	return $num_extracted == @members;
+}
+
+# Open the edit page with no contents. This does not actually create a file.
+# That is done when the user clicks save on the edit page.
+sub NewFile ($c) {
+	return $c->RefreshEdit('', $c->param('name'))
+		if $c->param('confirmed') && $c->verifyName($c->param('name'), 'file');
 	return $c->Confirm($c->maketext('New file name:'), '', $c->maketext('New File'));
 }
 
@@ -456,29 +723,61 @@ sub Upload ($c) {
 	my ($id, $hash) = split(/\s+/, $fileIDhash);
 	my $upload = WeBWorK::Upload->retrieve($id, $hash, dir => $c->{ce}{webworkDirs}{uploadCache});
 
-	my $name   = checkName($upload->filename);
+	my $name                     = $upload->filename;
+	my $invalidUploadFilenameMsg = $c->checkName($name);
+
 	my $action = $c->param('formAction') || 'Cancel';
 	if ($c->param('confirmed')) {
 		if ($action eq 'Cancel' || $action eq $c->maketext('Cancel')) {
 			$upload->dispose;
 			return $c->Refresh;
 		}
-		$name = checkName($c->param('name')) if ($action eq 'Rename' || $action eq $c->maketext('Rename'));
+		if ($action eq 'Rename' || $action eq $c->maketext('Rename')) {
+			if (!$c->param('name') || $c->param('name') eq $name) {
+				$c->addbadmessage($c->maketext('You must specify a new file name.'));
+			} elsif (my $invalidFileNameMsg = $c->checkName($c->param('name'))) {
+				$c->addbadmessage($invalidFileNameMsg);
+			} else {
+				$name = $c->param('name');
+
+				# In this case the upload file name is still invalid, but it isn't going to be used anyway. So setting
+				# this to 0 lets the new name go through (if it doesn't already exist).
+				$invalidUploadFilenameMsg = 0;
+			}
+		}
 	}
 
-	if (-e "$dir/$name") {
-		unless ($c->param('overwrite') || $action eq 'Overwrite' || $action eq $c->maketext('Overwrite')) {
+	$c->addbadmessage($invalidUploadFilenameMsg) if $invalidUploadFilenameMsg;
+
+	if (-e "$dir/$name" || $invalidUploadFilenameMsg) {
+		my $isProtected = !$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files')
+			&& grep { Mojo::File->new("$dir/$name")->realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
+			@{ $c->ce->{uneditableCourseFiles} };
+
+		if (
+			($invalidUploadFilenameMsg || $isProtected)
+			|| (!$c->param('overwrite')
+				&& $action ne 'Overwrite'
+				&& $action ne $c->maketext('Overwrite'))
+			)
+		{
 			return $c->c(
 				$c->Confirm(
 					$c->tag(
 						'p',
 						$c->b(
-							$c->maketext('File <b>[_1]</b> already exists. Overwrite it, or rename it as:', $name)
+							$invalidUploadFilenameMsg
+							? $c->maketext('<b>[_1]</b> is an invalid file name and must be renamed. Rename it as:',
+								$name)
+							: $isProtected
+							? $c->maketext('File <b>[_1]</b> is protected and cannot be overwritten. Rename it as:',
+								$name)
+							: $c->maketext('File <b>[_1]</b> already exists. Overwrite it, or rename it as:', $name)
 						)
 					),
 					uniqueName($dir, $name),
 					$c->maketext('Rename'),
-					$c->maketext('Overwrite')
+					$isProtected || $invalidUploadFilenameMsg ? '' : $c->maketext('Overwrite')
 				),
 				$c->hidden_field(action => 'Upload'),
 				$c->hidden_field(file   => $fileIDhash)
@@ -520,7 +819,7 @@ sub Upload ($c) {
 
 	if (-e $file) {
 		$c->addgoodmessage($c->maketext('File "[_1]" uploaded successfully', $name));
-		if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $c->getFlag('unpack')) {
+		if ($name =~ m/\.(tar|tar\.gz|tgz|zip)$/ && $c->getFlag('unpack')) {
 			if ($c->unpack_archive($name) && $c->getFlag('autodelete')) {
 				if (unlink($file)) { $c->addgoodmessage($c->maketext('Archive "[_1]" deleted', $name)) }
 				else               { $c->addbadmessage($c->maketext(q{Can't delete archive "[_1]": [_2]}, $name, $!)) }
@@ -594,15 +893,25 @@ sub directoryListing ($c, $pwd) {
 	my (@values, $size, $data);
 
 	my $len   = 24;
-	my @names = sortByName(undef, grep {/^[^.]/} readDirectory($dir));
+	my @names = sortByName(undef, @{ Mojo::File->new($dir)->list({ dir => 1 })->map('basename') });
 	for my $name (@names) {
 		unless ($name eq 'DATA') {    #FIXME don't view the DATA directory
-			my $file  = "$dir/$name";
+			my $file = "$dir/$name";
+
+			my $type = 0;
+			$type |= 1  if -l $file;                         # Symbolic link
+			$type |= 2  if !-l $file && -d $file;            # Directory
+			$type |= 4  if -f $file;                         # Regular file
+			$type |= 8  if -T $file;                         # Text file
+			$type |= 16 if $file =~ m/\.(gif|jpg|png)$/i;    # Image file
+
 			my $label = $name;
-			$label .= '@' if (-l $file);
-			$label .= '/' if (-d $file && !-l $file);
+			$label .= '@' if $type & 1;
+			$label .= '/' if $type & 2;
+
 			$len = length($label) if length($label) > $len;
-			push(@values, [ $label => $name ]);
+
+			push(@values, [ $label => $name, data => { type => $type } ]);
 		}
 	}
 	if ($c->getFlag('dates')) {
@@ -610,9 +919,8 @@ sub directoryListing ($c, $pwd) {
 		for my $name (@values) {
 			my $file = "$dir/$name->[1]";
 			my ($size, $date) = (lstat($file))[ 7, 9 ];
-			$name->[0] =
-				$c->b(
-					sprintf("%-${len}s%-16s%10s", $name->[0], -d $file ? ('', '') : (getDate($date), getSize($size)))
+			$name->[0] = $c->b(
+				sprintf("%-${len}s%-16s%10s", $name->[0], -d $file ? ('', '') : (getDate($date), getSize($size)))
 					=~ s/\s/&nbsp;/gr);
 		}
 	}
@@ -707,13 +1015,14 @@ sub checkFileLocation ($c, $extension, $dir) {
 	return;
 }
 
-# Check a name for bad characters, etc.
-sub checkName ($file) {
-	$file =~ s!.*[/\\]!!;                  # remove directory
-	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;       # no illegal characters
-	$file =~ s/^\./_/;                     # no initial dot
-	$file = 'newfile.txt' unless $file;    # no blank names
-	return $file;
+# Check a file name for bad characters, etc. This returns a message explaining what is wrong with the file name if
+# something is wrong, and undefined if all is good.
+sub checkName ($c, $file) {
+	return $c->maketext('No filename specified.') unless $file;
+	return $c->maketext('"[_1]" contains a path component which is not allowed.', $file) if $file =~ /\//;
+	return $c->maketext('"[_1]" contains invalid characters.',               $file) if $file =~ m![^-_.a-zA-Z0-9 /]!;
+	return $c->maketext('"[_1]" begins with a period which is not allowed.', $file) if $file =~ m/^\./;
+	return;
 }
 
 # Get a unique name (in case it already exists)

@@ -1,17 +1,18 @@
-% use WeBWorK::Utils qw(jitar_id_to_seq);
+% use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 %
-% if ($ce->{courseName} eq 'admin') {
+% if ($ce->{courseName} eq $ce->{admin_course_id}) {
 	<%= include 'ContentGenerator/Base/admin_links' =%>
-	% next;
+	% last;
 % }
+%
 <ul class="nav flex-column">
 	% if (defined $courseID && $authen->was_verified) {
-		% # Homework Sets or Course Administration
+		% # Assignments or Course Administration
 		<li class="list-group-item nav-item">
 			% if ($restricted_navigation) {
-				<span class="nav-link disabled"><%= maketext('Homework Sets') %></span>
+				<span class="nav-link disabled"><%= maketext('Assignments') %></span>
 			% } else {
-				<%= $makelink->('set_list', text => maketext('Homework Sets')) %>
+				<%= $makelink->('set_list', text => maketext('Assignments')) %>
 			% }
 		</li>
 		%
@@ -77,7 +78,7 @@
 			<li class="list-group-item nav-item"><%= $makelink->('options') %></li>
 		% }
 		%
-		% unless ($restricted_navigation || $courseID eq 'admin') {
+		% unless ($restricted_navigation || $courseID eq $ce->{admin_course_id}) {
 			<li class="list-group-item nav-item"><%= $makelink->('grades') %></li>
 		% }
 		%
@@ -88,7 +89,7 @@
 		% if ($authz->hasPermissions($userID, 'access_instructor_tools')) {
 			<li><hr class="site-nav-separator"></li>
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_tools') %></li>
-			% # Class list editor
+			% # Accounts Manager
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_user_list') %></li>
 			% # User Assignments
 			% if (defined $eUserID && $eUserID ne $userID || defined $urlUserID) {
@@ -117,9 +118,7 @@
 					</ul>
 				</li>
 			% }
-			% # Set assigner
-			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_assigner') %></li>
-			% # Homework Set Editor
+			% # Sets Manager
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_list') %></li>
 			% # Editor link.  Only shown for non-versioned sets
 			% if (defined $setID && $setID !~ /,v\d+$/) {
@@ -136,10 +135,17 @@
 					</ul>
 				</li>
 			% }
+			% # Assigner Tool
+			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_assigner') %></li>
 			% # Problem Editor
 			<li class="list-group-item nav-item">
-				<%= $makelink->('instructor_problem_editor',
-					param('file_type') && (param('file_type') eq 'course_info' || param('file_type') eq 'hardcopy_theme') ? (active => 0) : ()) %>
+				<%= $makelink->(
+					'instructor_problem_editor',
+					param('file_type')
+						&& (param('file_type') eq 'course_info' || param('file_type') eq 'hardcopy_theme')
+					? (active => 0)
+					: ()
+				) %>
 			</li>
 			% if (defined $prettySetID && defined $problemID) {
 				<li class="nav-item">
@@ -311,7 +317,7 @@
 			% if ($ce->{LTIGradeMode} && $authz->hasPermissions($userID, 'score_sets')) {
 				<li class="list-group-item nav-item"><%= $makelink->('instructor_lti_update') %></li>
 			% }
-			% # Achievment Editor
+			% # Achievement Editor
 			% if ($ce->{achievementsEnabled} && $authz->hasPermissions($userID, 'edit_achievements')) {
 				<li class="list-group-item nav-item"><%= $makelink->('instructor_achievement_list') %></li>
 				% if (defined $achievementID) {
@@ -320,7 +326,21 @@
 							<li class="nav-item">
 								<%= $makelink->(
 									'instructor_achievement_editor',
-									text     => $achievementID =~ s/_/ /gr,
+									text     => maketext('[_1] evaluator', $achievementID =~ s/_/ /gr),
+									captures => { achievementID => $achievementID },
+								) %>
+							</li>
+							<li class="nav-item">
+								<%= $makelink->(
+									'instructor_achievement_notification',
+									text     => maketext('[_1] notifications', $achievementID =~ s/_/ /gr),
+									captures => { achievementID => $achievementID },
+								) %>
+							</li>
+							<li class="nav-item">
+								<%= $makelink->(
+									'instructor_achievement_user_editor',
+									text     => maketext('[_1] users', $achievementID =~ s/_/ /gr),
 									captures => { achievementID => $achievementID },
 								) %>
 							</li>
@@ -332,6 +352,8 @@
 			% if ($authz->hasPermissions($userID, 'send_mail')) {
 				<li class="list-group-item nav-item"><%= $makelink->('instructor_mail_merge') %></li>
 			% }
+			% # Job Manager
+			<li class="list-group-item nav-item"><%= $makelink->('instructor_job_manager') %></li>
 			% # File Manager
 			% if ($authz->hasPermissions($userID, 'manage_course_files')) {
 				<li class="list-group-item nav-item"><%= $makelink->('instructor_file_manager') %></li>
@@ -347,12 +369,10 @@
 			</li>
 		% }
 		%
-		% if (exists $ce->{webworkURLs}{bugReporter}
-			% && $ce->{webworkURLs}{bugReporter} ne ''
-			% && $authz->hasPermissions($userID, 'report_bugs'))
-		% {
+		% if ($ce->{webworkURLs}{webwork2BugReporter} && $authz->hasPermissions($userID, 'report_bugs')) {
 			<li class="list-group-item nav-item">
-				<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' =%>
+				<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{webwork2BugReporter},
+					target => 'bug_report', class => 'nav-link' =%>
 			</li>
 		% }
 	% }

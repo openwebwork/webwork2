@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,9 +31,9 @@ use WeBWorK::Utils::CourseIntegrityCheck;
 ##########################
 # update admin course
 ##########################
-my $upgrade_courseID = 'admin';
-
-my $ce = WeBWorK::CourseEnvironment->new({
+my $ce               = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
+my $upgrade_courseID = $ce->{admin_course_id};
+$ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
 	courseName  => $upgrade_courseID,
 });

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,9 @@ homework set (including sv graphs).
 
 use SVG;
 
-use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status format_set_name_display grade_set);
+use WeBWorK::Utils::FilterRecords qw(getFiltersForClass filterRecords);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq jitar_problem_adjusted_status);
+use WeBWorK::Utils::Sets qw(grade_set format_set_name_display);
 
 sub initialize ($c) {
 	my $db   = $c->db;
@@ -100,39 +102,20 @@ sub siblings ($c) {
 	return $c->include('ContentGenerator/Instructor/Stats/siblings', header => $c->maketext('Statistics'));
 }
 
-# Apply the currently selected filter to the the student records cached in initialize, and return a reference to the
-# list of students and a reference to a hash of section/recitation filters.
+# Apply the currently selected filter to the student records, and return a reference to the
+# list of students and a reference to the array of section/recitation filters.
 sub filter_students ($c) {
-	my $ce   = $c->ce;
-	my $db   = $c->db;
-	my $user = $c->param('user');
+	my $ce       = $c->ce;
+	my $filter   = $c->param('filter') || 'all';
+	my @students = grep { $ce->status_abbrev_has_behavior($_->status, 'include_in_stats') } @{ $c->{student_records} };
 
-	# Create a hash of sections and recitations, if there are any for the course.
-	# Filter out all records except for current/auditing students for stats.
-	# Filter out students not in selected section/recitation.
-	my $filter = $c->param('filter');
-	my %filters;
-	my @outStudents;
-	for my $student (@{ $c->{student_records} }) {
-		# Only include current/auditing students in stats.
-		next
-			unless ($ce->status_abbrev_has_behavior($student->status, 'include_in_stats'));
+	# Change visible name of the first 'all' filter.
+	my $filters = getFiltersForClass($c, [ 'section', 'recitation' ], @students);
+	$filters->[0][0] = $c->maketext('All students');
 
-		my $section = $student->section;
-		$filters{"section:$section"} = $c->maketext('Section [_1]', $section)
-			if $section && !$filters{"section:$section"};
-		my $recitation = $student->recitation;
-		$filters{"recitation:$recitation"} = $c->maketext('Recitation [_1]', $recitation)
-			if $recitation && !$filters{"recitation:$recitation"};
+	@students = filterRecords($c, 0, [$filter], @students) unless $filter eq 'all';
 
-		# Only add users who match the selected section/recitation.
-		push(@outStudents, $student)
-			if (!$filter
-				|| ($filter =~ /^section:(.*)$/    && $section eq $1)
-				|| ($filter =~ /^recitation:(.*)$/ && $recitation eq $1));
-	}
-
-	return (\@outStudents, \%filters);
+	return (\@students, $filters);
 }
 
 sub set_stats ($c) {

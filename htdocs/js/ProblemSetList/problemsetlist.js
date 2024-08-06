@@ -1,26 +1,137 @@
 (() => {
-	// Show the filter error message if the 'Filter' button is clicked when matching set IDs without having entered
-	// a text to filter on.
-	document.getElementById('take_action')?.addEventListener('click',
-		(e) => {
-			const filter_err_msg = document.getElementById('filter_err_msg');
+	// Action form validation.
+	// Store event listeners so they can be removed.
+	const event_listeners = {};
 
-			if (filter_err_msg &&
-				document.getElementById('current_action')?.value === 'filter' &&
-				document.getElementById('filter_select')?.selectedIndex === 3 &&
-				document.getElementById('filter_text')?.value === '') {
-				filter_err_msg.classList.remove('d-none');
+	const show_errors = (ids, elements) => {
+		for (const id of ids) elements.push(document.getElementById(id));
+		for (const element of elements) {
+			if (element?.id.endsWith('_err_msg')) {
+				element?.classList.remove('d-none');
+			} else {
+				element?.classList.add('is-invalid');
+				if (!(element.id in event_listeners)) {
+					event_listeners[element.id] = hide_errors([], elements);
+					element?.addEventListener('change', event_listeners[element.id]);
+				}
+			}
+		}
+	};
+
+	const hide_errors = (ids, elements) => {
+		return () => {
+			for (const id of ids) elements.push(document.getElementById(id));
+			for (const element of elements) {
+				if (element?.id.endsWith('_err_msg')) {
+					element?.classList.add('d-none');
+					if (element.id === 'select_set_err_msg' && 'set_table_id' in event_listeners) {
+						document
+							.getElementById('set_table_id')
+							?.removeEventListener('change', event_listeners.set_table_id);
+						delete event_listeners.set_table_id;
+					}
+				} else {
+					element?.classList.remove('is-invalid');
+					if (element.id in event_listeners) {
+						element?.removeEventListener('change', event_listeners[element.id]);
+						delete event_listeners[element.id];
+					}
+				}
+			}
+		};
+	};
+
+	const is_set_selected = () => {
+		for (const set of document.getElementsByName('selected_sets')) {
+			if (set.checked) return true;
+		}
+		const err_msg = document.getElementById('select_set_err_msg');
+		err_msg?.classList.remove('d-none');
+		if (!('set_table_id' in event_listeners)) {
+			event_listeners.set_table_id = hide_errors(
+				['filter_select', 'edit_select', 'publish_filter_select', 'export_select', 'score_select'],
+				[err_msg]
+			);
+			document.getElementById('set_table_id')?.addEventListener('change', event_listeners.set_table_id);
+		}
+		return false;
+	};
+
+	document.getElementById('problemsetlist')?.addEventListener('submit', (e) => {
+		const action = document.getElementById('current_action')?.value || '';
+		if (action === 'filter') {
+			const filter_select = document.getElementById('filter_select');
+			const filter = filter_select?.value || '';
+			const filter_text = document.getElementById('filter_text');
+			if (filter === 'selected' && !is_set_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+				show_errors(['select_set_err_msg'], [filter_select]);
+			} else if (filter === 'match_ids' && filter_text.value === '') {
+				e.preventDefault();
+				e.stopPropagation();
+				show_errors(['filter_err_msg'], [filter_select, filter_text]);
+			}
+		} else if (['edit', 'publish', 'export', 'score'].includes(action)) {
+			const action_select = document.getElementById(`${action}_select`);
+			if (action_select.value === 'selected' && !is_set_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+				show_errors(['select_set_err_msg'], [action_select]);
+			}
+		} else if (action === 'save_export') {
+			if (!is_set_selected()) {
 				e.preventDefault();
 				e.stopPropagation();
 			}
+		} else if (action === 'import') {
+			const import_select = document.getElementById('import_source_select');
+			if (!import_select.value.endsWith('.def')) {
+				e.preventDefault();
+				e.stopPropagation();
+				show_errors(['import_file_err_msg'], [import_select]);
+			}
+		} else if (action === 'create') {
+			const create_text = document.getElementById('create_text');
+			const create_select = document.getElementById('create_select');
+			if (create_text.value === '') {
+				e.preventDefault();
+				e.stopPropagation();
+				show_errors(['create_file_err_msg'], [create_text]);
+			} else if (create_select?.value == 'copy' && !is_set_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+				show_errors(['select_set_err_msg'], [create_select]);
+			}
+		} else if (action === 'delete') {
+			const delete_confirm = document.getElementById('delete_select');
+			if (!is_set_selected()) {
+				e.preventDefault();
+				e.stopPropagation();
+			} else if (delete_confirm.value != 'yes') {
+				e.preventDefault();
+				e.stopPropagation();
+				show_errors(['delete_confirm_err_msg'], [delete_confirm]);
+			}
 		}
-	);
+	});
+
+	// Remove all error messages when changing tabs.
+	for (const tab of document.querySelectorAll('a[data-bs-toggle="tab"]')) {
+		tab.addEventListener('shown.bs.tab', () => {
+			if (Object.keys(event_listeners) != 0)
+				hide_errors(
+					[],
+					document.getElementById('problemsetlist')?.querySelectorAll('div[id$=_err_msg], .is-invalid')
+				)();
+		});
+	}
 
 	// Toggle the display of the filter elements as the filter select changes.
 	const filter_select = document.getElementById('filter_select');
 	const filter_elements = document.getElementById('filter_elements');
 	const filterElementToggle = () => {
-		if (filter_select?.selectedIndex == 3) filter_elements.style.display = 'flex';
+		if (filter_select?.value == 'match_ids') filter_elements.style.display = 'flex';
 		else filter_elements.style.display = 'none';
 	};
 
@@ -65,17 +176,20 @@
 	// Initialize the date/time picker for the import form.
 	const importDateShift = document.getElementById('import_date_shift');
 	if (importDateShift) {
-
 		luxon.Settings.defaultLocale = importDateShift.dataset.locale ?? 'en';
 
 		// Compute the time difference between the current browser timezone and the course timezone.
 		// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
 		// Note that this is in seconds.
-		const timezoneAdjustment = (
-			(new Date((new Date).toLocaleString('en-US'))).getTime() -
-			(new Date((new Date).toLocaleString('en-US',
-				{ timeZone: importDateShift.dataset.timezone ?? 'America/New_York' }))).getTime()
-		);
+		const timezoneAdjustment =
+			new Date(new Date().toLocaleString('en-US')).getTime() -
+			new Date(
+				new Date().toLocaleString('en-US', { timeZone: importDateShift.dataset.timezone ?? 'America/New_York' })
+			).getTime();
+
+		let fallbackDate = importDateShift.value
+			? new Date(parseInt(importDateShift.value) * 1000 - timezoneAdjustment)
+			: new Date();
 
 		const fp = flatpickr(importDateShift.parentNode, {
 			allowInput: true,
@@ -121,7 +235,7 @@
 					}
 				})
 			],
-			onReady(selectedDates) {
+			onReady() {
 				// Flatpickr hides the original input and adds the alternate input after it.  That messes up the
 				// bootstrap input group styling.  So move the now hidden original input after the created alternate
 				// input to fix that.
@@ -138,17 +252,14 @@
 				// Next attempt to parse the datestr with the current format.  This should not be adjusted.  It is
 				// for display only.
 				const date = luxon.DateTime.fromFormat(datestr.replaceAll(/\u202F/g, ' ').trim(), format);
-				if (date.isValid) return date.toJSDate();
+				if (date.isValid) fallbackDate = date.toJSDate();
 
 				// Finally, fall back to the previous value in the original input if that failed.  This is the case
 				// that the user typed a time that isn't in the valid format. So fallback to the last valid time
 				// that was displayed. This also should not be adjusted.
-				return new Date(this.lastFormattedDate.getTime());
+				return fallbackDate;
 			},
 			formatDate(date, format) {
-				// Save this date for the fallback in parseDate.
-				this.lastFormattedDate = date;
-
 				// In this case the date provided is in the browser's time zone.  So it needs to be adjusted to the
 				// timezone of the course.
 				if (format === 'U') return (date.getTime() + timezoneAdjustment) / 1000;
@@ -165,5 +276,43 @@
 				fp.open();
 			}
 		});
+	}
+
+	const importSourceSelect = document.getElementById('import_source_select');
+	const listOPLSetsCheck = document.getElementById('list_opl_sets');
+	const listContribSetsCheck = document.getElementById('list_contrib_sets');
+
+	if (importSourceSelect && (listOPLSetsCheck || listContribSetsCheck)) {
+		const allOptions = Array.from(importSourceSelect.options);
+
+		const updateAvailableOptions = () => {
+			// Save the currently selected options.
+			const selectedDefs = Array.from(importSourceSelect.selectedOptions);
+
+			for (const option of Array.from(importSourceSelect.options)) option.value && option.remove();
+			for (const option of allOptions) {
+				if (option.value.startsWith('Library/')) {
+					if (listOPLSetsCheck.checked) importSourceSelect.add(option);
+				} else if (option.value.startsWith('Contrib/')) {
+					if (listContribSetsCheck.checked) importSourceSelect.add(option);
+				} else importSourceSelect.add(option);
+			}
+
+			// Reselect the options that were selected before if still available. Otherwise
+			// select the first option which should be the "Select filenames below" option.
+			let foundSelected = false;
+			for (const option of importSourceSelect.options) {
+				if (selectedDefs.includes(option)) {
+					foundSelected = true;
+					option.selected = true;
+				}
+			}
+			if (!foundSelected) allOptions[0].selected = true;
+		};
+
+		listOPLSetsCheck?.addEventListener('change', updateAvailableOptions);
+		listContribSetsCheck?.addEventListener('change', updateAvailableOptions);
+
+		updateAvailableOptions();
 	}
 })();

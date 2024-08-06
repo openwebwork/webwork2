@@ -1,0 +1,84 @@
+/* WeBWorK Online Homework Delivery System
+ * Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of either: (a) the GNU General Public License as published by the
+ * Free Software Foundation; either version 2, or (at your option) any later
+ * version, or (b) the "Artistic License" which comes with this package.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+ * Artistic License for more details.
+ */
+
+.levelouterbar {
+	height: 20px;
+	border-style: solid;
+	border-width: 2px;
+	max-width: 400px;
+}
+
+.levelinnerbar {
+	height: 100%;
+	background-color: var(--ww-achievement-level-color, #88d);
+}
+
+.cheevoouterbox img {
+	height: 50px;
+	width: 50px;
+}
+
+.locked {
+	opacity: 0.65;
+
+	img {
+		opacity: 0.4;
+	}
+}
+
+/* width of cheevo progress bar controlled by perl code */
+.cheevoouterbar {
+	height: 10px;
+	border-style: solid;
+	border-width: 2px;
+	width: 200px;
+}
+
+.cheevoinnerbar {
+	height: 100%;
+	background-color: var(--ww-achievement-level-color, #88d);
+}
+
+.cheevo-toast-container {
+	z-index: 21;
+}
+
+.cheevo-toast img {
+	height: 75px;
+	width: 75px;
+}
+
+.cheevopopuptext {
+	margin-left: 15px;
+
+	h1 {
+		margin-top: 0px;
+		margin-bottom: 5px;
+		font-size: 20px;
+		font-weight: bold;
+	}
+}
+
+.achievement-item {
+	margin-bottom: 15px;
+	margin-left: 15px;
+
+	h3 {
+		line-height: 15px;
+		font-size: 15px;
+		margin-bottom: 5px;
+		margin-top: 2px;
+		font-weight: bold;
+	}
+}

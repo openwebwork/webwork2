@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::File::Classlist;
-use base qw/Exporter/;
+use Mojo::Base 'Exporter', -signatures;
 
 =head1 NAME
 
@@ -22,22 +22,18 @@ WeBWorK::File::Classlist - parse and write classlist files.
 
 =cut
 
-use strict;
-use warnings;
 use IO::File;
 use Text::CSV;
 
+our @EXPORT_OK = qw(parse_classlist write_classlist);
+
 our $MIN_FIELDS = 9;
-our $MAX_FIELDS = 11;
+our $MAX_FIELDS = 12;
 
 our @FIELD_ORDER = qw/student_id last_name first_name status comment
-	section recitation email_address user_id password permission/;
+	section recitation email_address user_id password permission unencrypted_password/;
 
-our @EXPORT = qw/parse_classlist write_classlist/;
-
-sub parse_classlist($) {
-	my ($file) = @_;
-
+sub parse_classlist ($file) {
 	# assume classlist is utf8 encoded
 	my $fh = IO::File->new($file, '<:encoding(UTF-8)')
 		or die "Failed to open classlist '$file' for reading: $!\n";
@@ -47,28 +43,27 @@ sub parse_classlist($) {
 	my $csv = Text::CSV->new({ binary => 1, allow_whitespace => 1 });
 	# binary for utf8 compat, allow_whitespace to strip all whitespace from start and end of each field
 
-	while (<$fh>) {
-		chomp;
-		next if /^#/;
-		next unless /\S/;
+	while (my $line = <$fh>) {
+		chomp $line;
+		next if $line     =~ /^#/;
+		next unless $line =~ /\S/;
 
 		# Remove a byte order mark from the beginning of the file if present.  Excel inserts this on some systems, and
 		# the presence of this multibyte character causes a classlist import to fail.
-		s/^\xEF\xBB\xBF//;
+		$line =~ s/^\x{FEFF}//;
 
-		s/^\s*//;
-		s/\s*$//;
+		$line =~ s/^\s*|\s*$//g;
 
-		if (!$csv->parse($_)) {
+		if (!$csv->parse($line)) {
 			warn "Unable to parse line $. of classlist '$file' as CSV.";
 			next;
 		}
 		my @fields = $csv->fields;
 
 		my $fields = @fields;
-		if ($fields < $MIN_FIELDS) {
-			warn
-				"Skipped invalid line $. of classlist '$file': expected at least $MIN_FIELDS fields, got $fields fields.\n";
+		if (@fields < $MIN_FIELDS) {
+			warn "Skipped invalid line $. of classlist '$file': "
+				. "expected at least $MIN_FIELDS fields, got $fields fields.\n";
 			next;
 		}
 
@@ -78,11 +73,8 @@ sub parse_classlist($) {
 			$fields = $MAX_FIELDS;
 		}
 
-		my @fields_in_this_record = @FIELD_ORDER[ 0 .. $fields - 1 ];
-		my @data_in_this_record   = @fields[ 0 .. $fields - 1 ];
-
 		my %record;
-		@record{@fields_in_this_record} = @data_in_this_record;
+		@record{ @FIELD_ORDER[ 0 .. $fields - 1 ] } = @fields[ 0 .. $fields - 1 ];
 
 		push @records, \%record;
 	}
@@ -92,9 +84,7 @@ sub parse_classlist($) {
 	return @records;
 }
 
-sub write_classlist($@) {
-	my ($file, @records) = @_;
-
+sub write_classlist ($file, @records) {
 	my $fh = IO::File->new($file, '>:encoding(UTF-8)')
 		or die "Failed to open classist '$file' for writing: $!\n";
 
@@ -103,7 +93,7 @@ sub write_classlist($@) {
 
 	print $fh "# Field order: ", join(",", @FIELD_ORDER), "\n";
 
-	foreach my $i (0 .. $#records) {
+	for my $i (0 .. $#records) {
 		my $record = $records[$i];
 		unless (ref $record eq "HASH") {
 			warn "Skipping record $i: not a reference to a hash.\n";
@@ -122,6 +112,8 @@ sub write_classlist($@) {
 	}
 
 	$fh->close;
+
+	return;
 }
 
 1;

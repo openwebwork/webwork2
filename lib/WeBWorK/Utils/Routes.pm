@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,15 +26,18 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
 
  root                                /
 
- course_admin                        /admin -> logout, options, instructor_tools
+ course_admin                        /$ce->{admin_course_id} -> logout, options, instructor_tools
 
  render_rpc                          /render_rpc
  instructor_rpc                      /instructor_rpc
  html2xml                            /html2xml
 
+ ltiadvanced_content_selection       /ltiadvanced/content_selection
+
  ltiadvantage_login                  /ltiadvantage/login
  ltiadvantage_launch                 /ltiadvantage/launch
  ltiadvantage_keys                   /ltiadvantage/keys
+ ltiadvantage_content_selection      /ltiadvantage/content_selection
 
  pod_index                           /pod
  pod_viewer                          /pod/$filePath
@@ -100,8 +103,11 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  instructor_achievement_list         /$courseID/instructor/achievement_list
  instructor_achievement_editor       /$courseID/instructor/achievement_list/$achievementID/editor
  instructor_achievement_user_editor  /$courseID/instructor/achievement_list/$achievementID/users
+ instructor_achievement_notification /$courseID/instructor/achievement_list/$achievementID/email
 
  instructor_lti_update               /$courseID/instructor/lti_update
+
+ instructor_job_manager              /$courseID/instructor/job_manager
 
  problem_list                        /$courseID/$setID
  problem_detail                      /$courseID/$setID/$problemID
@@ -113,7 +119,8 @@ use strict;
 use warnings;
 
 use WeBWorK::Localize;
-use WeBWorK::Utils qw(x format_set_name_display);
+use WeBWorK::Utils qw(x);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 our @EXPORT_OK = qw(setup_content_generator_routes route_title route_navigation_is_restricted);
 
@@ -143,9 +150,11 @@ my %routeParameters = (
 			render_rpc
 			html2xml
 			instructor_rpc
+			ltiadvanced_content_selection
 			ltiadvantage_login
 			ltiadvantage_launch
 			ltiadvantage_keys
+			ltiadvantage_content_selection
 			pod_index
 			sample_problem_index
 			set_list
@@ -157,7 +166,7 @@ my %routeParameters = (
 	course_admin => {
 		title  => x('Course Administration'),
 		module => 'CourseAdmin',
-		path   => '/admin'
+		path   => '/$ce->{admin_course_id}'
 	},
 
 	render_rpc => {
@@ -179,6 +188,13 @@ my %routeParameters = (
 		path   => '/html2xml'
 	},
 
+	ltiadvanced_content_selection => {
+		title  => x('Content Selection'),
+		module => 'LTIAdvanced',
+		path   => '/ltiadvanced/content_selection',
+		action => 'content_selection'
+	},
+
 	# Both of these routes end up at the login screen on failure, and the title is not used anywhere else.
 	# Hence the title 'Login'.
 	ltiadvantage_login => {
@@ -198,6 +214,12 @@ my %routeParameters = (
 		module => 'LTIAdvantage',
 		path   => '/ltiadvantage/keys',
 		action => 'keys'
+	},
+	ltiadvantage_content_selection => {
+		title  => x('Content Selection'),
+		module => 'LTIAdvantage',
+		path   => '/ltiadvantage/content_selection',
+		action => 'content_selection'
 	},
 
 	pod_index => {
@@ -246,7 +268,7 @@ my %routeParameters = (
 		path   => '/logout'
 	},
 	options => {
-		title        => x('User Settings'),
+		title        => x('Account Settings'),
 		module       => 'Options',
 		path         => '/options',
 		unrestricted => 1
@@ -327,12 +349,13 @@ my %routeParameters = (
 			instructor_progress
 			instructor_problem_grader
 			instructor_lti_update
+			instructor_job_manager
 		) ],
 		module => 'Instructor::Index',
 		path   => '/instructor'
 	},
 	instructor_user_list => {
-		title    => x('Classlist Editor'),
+		title    => x('Accounts Manager'),
 		children => [qw(instructor_user_detail)],
 		module   => 'Instructor::UserList',
 		path     => '/users'
@@ -343,7 +366,7 @@ my %routeParameters = (
 		path   => '/#userID'
 	},
 	instructor_set_list => {
-		title    => x('Hmwk Sets Editor'),
+		title    => x('Sets Manager'),
 		children => [qw(instructor_set_detail)],
 		module   => 'Instructor::ProblemSetList',
 		path     => '/sets'
@@ -370,7 +393,7 @@ my %routeParameters = (
 		path   => '/add_users'
 	},
 	instructor_set_assigner => {
-		title  => x('Set Assigner'),
+		title  => x('Assigner Tool'),
 		module => 'Instructor::Assigner',
 		path   => '/assigner'
 	},
@@ -460,25 +483,36 @@ my %routeParameters = (
 		path   => '/student/#userID'
 	},
 	instructor_achievement_list => {
-		title    => x('Achievement Editor'),
-		children => [qw(instructor_achievement_editor instructor_achievement_user_editor)],
-		module   => 'Instructor::AchievementList',
-		path     => '/achievement_list'
+		title    => x('Achievements Manager'),
+		children =>
+			[qw(instructor_achievement_editor instructor_achievement_user_editor instructor_achievement_notification)],
+		module => 'Instructor::AchievementList',
+		path   => '/achievement_list'
 	},
 	instructor_achievement_editor => {
-		title  => '[_5]',
+		title  => 'Achievement Evaluator for achievement [_5]',
 		module => 'Instructor::AchievementEditor',
 		path   => '/#achievementID/editor'
 	},
 	instructor_achievement_user_editor => {
-		title  => x('Achievement User Editor'),
+		title  => x('Achievement Users for [_5]'),
 		module => 'Instructor::AchievementUserEditor',
 		path   => '/#achievementID/users'
+	},
+	instructor_achievement_notification => {
+		title  => x('Achievement Notification for [_5]'),
+		module => 'Instructor::AchievementNotificationEditor',
+		path   => '/#achievementID/email'
 	},
 	instructor_lti_update => {
 		title  => x('LTI Grade Update'),
 		module => 'Instructor::LTIUpdate',
 		path   => '/lti_update'
+	},
+	instructor_job_manager => {
+		title  => x('Job Manager'),
+		module => 'Instructor::JobManager',
+		path   => '/job_manager'
 	},
 
 	problem_list => {
@@ -539,13 +573,14 @@ sub setup_content_generator_routes_recursive {
 	my $action = $routeParameters{$child}{action} // 'go';
 
 	if ($routeParameters{$child}{children}) {
-		my $child_route = $route->under($routeParameters{$child}{path})->name($child);
+		my $child_route = $route->under($routeParameters{$child}{path}, [ problemID => qr/\d+/ ])->name($child);
 		$child_route->any('/')->to("$routeParameters{$child}{module}#$action")->name($child);
 		for (@{ $routeParameters{$child}{children} }) {
 			setup_content_generator_routes_recursive($child_route, $_);
 		}
 	} else {
-		$route->any($routeParameters{$child}{path})->to("$routeParameters{$child}{module}#$action")->name($child);
+		$route->any($routeParameters{$child}{path}, [ problemID => qr/\d+/ ])
+			->to("$routeParameters{$child}{module}#$action")->name($child);
 	}
 
 	return;

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,8 +25,12 @@ WeBWorK::Utils::Rendering - utilities for rendering problems.
 use Mojo::IOLoop;
 use Mojo::JSON qw(decode_json);
 use Data::Structure::Util qw(unbless);
+use Digest::MD5 qw(md5_hex);
+use Encode qw(encode_utf8);
 
-use WeBWorK::Utils qw(formatDateTime);
+use WeBWorK::Utils::DateTime qw(formatDateTime);
+use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
+use WeBWorK::PG;
 
 our @EXPORT_OK = qw(constructPGOptions getTranslatorDebuggingOptions renderPG);
 
@@ -48,7 +52,14 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	# If a problemUUID is provided in the form fields, then that is used.  Otherwise we create one that depends on
 	# the course, user, set, and problem.  Note that it is not a true UUID, but will be converted into one by PG.
 	$options{problemUUID} = $formFields->{problemUUID}
-		|| join('-', $user->user_id, $ce->{courseName}, 'set' . $set->set_id, 'prob' . $problem->problem_id);
+		|| join('-',
+			$user->user_id,
+			$ce->{courseName},
+			'set' . $set->set_id,
+			'prob' . $problem->problem_id,
+			defined $translationOptions->{r_source} && ${ $translationOptions->{r_source} }
+			? 'sourcehash' . md5_hex(encode_utf8(${ $translationOptions->{r_source} }))
+			: ());
 
 	$options{probNum}        = $problem->problem_id;
 	$options{questionNumber} = $options{probNum};
@@ -57,14 +68,15 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{problemSeed}    = $problem->problem_seed;
 
 	# Display information
-	$options{displayMode}        = $translationOptions->{displayMode};
-	$options{showHints}          = $translationOptions->{showHints};
-	$options{showSolutions}      = $translationOptions->{showSolutions};
-	$options{forceScaffoldsOpen} = $translationOptions->{forceScaffoldsOpen};
-	$options{setOpen}            = time > $set->open_date;
-	$options{pastDue}            = time > $set->due_date;
-	$options{answersAvailable}   = time > $set->answer_date;
-	$options{refreshMath2img}    = $translationOptions->{refreshMath2img};
+	$options{displayMode}          = $translationOptions->{displayMode};
+	$options{showHints}            = $translationOptions->{showHints};
+	$options{showSolutions}        = $translationOptions->{showSolutions};
+	$options{forceScaffoldsOpen}   = $translationOptions->{forceScaffoldsOpen};
+	$options{setOpen}              = time > $set->open_date;
+	$options{pastDue}              = time > $set->due_date;
+	$options{answersAvailable}     = time > $set->answer_date;
+	$options{refreshMath2img}      = $translationOptions->{refreshMath2img};
+	$options{feedback_button_name} = $ce->{feedback_button_name};
 
 	# Default values for evaluating answers
 	$options{ansEvalDefaults} = $ce->{pg}{ansEvalDefaults};
@@ -73,7 +85,12 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	for my $date (qw(openDate dueDate answerDate)) {
 		my $db_date = $date =~ s/D/_d/r;
 		$options{$date} = $set->$db_date;
-		$options{ 'formatted' . ucfirst($date) } = formatDateTime($options{$date}, $ce->{siteDefaults}{timezone});
+		$options{ 'formatted' . ucfirst($date) } = formatDateTime(
+			$options{$date},
+			$ce->{studentDateDisplayFormat},
+			$ce->{siteDefaults}{timezone},
+			$ce->{language}
+		) =~ s/\x{202f}/ /gr;
 		my $uc_date = ucfirst($date);
 		for (
 			[ 'DayOfWeek',       '%A' ],
@@ -94,36 +111,32 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 			)
 		{
 			$options{"$uc_date$_->[0]"} =
-				formatDateTime($options{$date}, $ce->{siteDefaults}{timezone}, $_->[1], $ce->{siteDefaults}{locale});
+				formatDateTime($options{$date}, $_->[1], $ce->{siteDefaults}{timezone}, $ce->{language}) =~
+				s/\x{202f}/ /gr;
 		}
 	}
 	$options{reducedScoringDate}          = $set->reduced_scoring_date;
-	$options{formattedReducedScoringDate} = formatDateTime($options{reducedScoringDate}, $ce->{siteDefaults}{timezone});
+	$options{formattedReducedScoringDate} = formatDateTime(
+		$options{reducedScoringDate},  $ce->{studentDateDisplayFormat},
+		$ce->{siteDefaults}{timezone}, $ce->{language}
+	) =~ s/\x{202f}/ /gr;
 
 	# State Information
 	$options{numOfAttempts} =
 		($problem->num_correct || 0) + ($problem->num_incorrect || 0) + ($formFields->{submitAnswers} ? 1 : 0);
-	$options{problemValue} = $problem->value;
-	# If reduced scoring is enabled for the set and the sub_status is less than the status, then the status is the
-	# reduced score.  In that case compute the unreduced score that resulted in that reduced score to submit as the
-	# currently recorded score.
-	$options{recorded_score} =
-		($set->enable_reduced_scoring
-			&& $ce->{pg}{ansEvalDefaults}{reducedScoringValue}
-			&& defined $problem->sub_status
-			&& $problem->sub_status < $problem->status)
-		? (($problem->status - $problem->sub_status) / $ce->{pg}{ansEvalDefaults}{reducedScoringValue} +
-			$problem->sub_status)
-		: $problem->status;
+	$options{problemValue}         = $problem->value;
+	$options{recorded_score}       = compute_unreduced_score($ce, $problem, $set);
 	$options{num_of_correct_ans}   = $problem->num_correct;
 	$options{num_of_incorrect_ans} = $problem->num_incorrect;
+
+	# This means that there are essay questions in the problem that have not been graded.
+	$options{needs_grading} = ($problem->flags // '') =~ /:needs_grading$/;
 
 	# Persistent problem data
 	$options{PERSISTENCE_HASH} = decode_json($problem->problem_data || '{}');
 
 	# Language
-	$options{language}            = $ce->{language};
-	$options{language_subroutine} = WeBWorK::Localize::getLoc($options{language});
+	$options{language} = $ce->{language};
 
 	# Student and course Information
 	$options{courseName}       = $ce->{courseName};
@@ -151,6 +164,15 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	# Answer Information
 	$options{inputs_ref}     = $formFields;
 	$options{processAnswers} = $translationOptions->{processAnswers};
+
+	# Attempt Results
+	$options{showFeedback}            = $translationOptions->{showFeedback};
+	$options{showAttemptAnswers}      = $translationOptions->{showAttemptAnswers};
+	$options{showAttemptPreviews}     = $translationOptions->{showAttemptPreviews};
+	$options{forceShowAttemptResults} = $translationOptions->{forceShowAttemptResults};
+	$options{showAttemptResults}      = $translationOptions->{showAttemptResults};
+	$options{showMessages}            = $translationOptions->{showMessages};
+	$options{showCorrectAnswers}      = $translationOptions->{showCorrectAnswers};
 
 	# External Data
 	$options{external_data} = decode_json($set->{external_data} || '{}');
@@ -245,7 +267,7 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 			flags            => $pg->{flags},
 		};
 
-		if (ref $pg->{pgcore}) {
+		if (ref($pg->{pgcore}) eq 'PGcore') {
 			$ret->{internal_debug_messages} = $pg->{pgcore}->get_internal_debug_messages;
 			$ret->{warning_messages}        = $pg->{pgcore}->get_warning_messages();
 			$ret->{debug_messages}          = $pg->{pgcore}->get_debug_messages();
@@ -259,7 +281,7 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 					keys %{ $pg->{pgcore}{PG_ANSWERS_HASH} }
 			};
 			$ret->{resource_list} = {
-				map { $_ => $pg->{pgcore}{PG_alias}{resource_list}{$_}{uri}{content} }
+				map { $_ => $pg->{pgcore}{PG_alias}{resource_list}{$_}{uri} }
 					keys %{ $pg->{pgcore}{PG_alias}{resource_list} }
 			};
 			$ret->{PERSISTENCE_HASH_UPDATED} = $pg->{pgcore}{PERSISTENCE_HASH_UPDATED};

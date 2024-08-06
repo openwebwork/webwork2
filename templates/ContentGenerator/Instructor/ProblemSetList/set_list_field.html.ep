@@ -24,7 +24,7 @@
 		</div>
 	% } else {
 		<span dir="ltr">
-			<%= $c->formatDateTime($value, '', 'datetime_format_short', $ce->{language}) =%>
+			<%= $c->formatDateTime($value, 'datetime_format_short') =%>
 		</span>
 	% }
 % } elsif ($type eq 'check') {

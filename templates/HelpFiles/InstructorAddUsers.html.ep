@@ -1,6 +1,6 @@
 %################################################################################
 %# WeBWorK Online Homework Delivery System
-%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 %#
 %# This program is free software; you can redistribute it and/or modify it under
 %# the terms of either: (a) the GNU General Public License as published by the
@@ -19,8 +19,14 @@
 <p>
 	<%= maketext('Add users to the course.  Select the number of students/users to add and '
 		. 'then add any desired information.  The only mandatory information is the "Login Name". '
-		. 'Any other fields may be left blank.  The "Student ID" will be the initial password for '
-		. 'the user if provided.') =%>
+		. 'Any other fields may be left blank.') =%>
+</p>
+<p>
+	<%= maketext('If a password is provided in the password field, then that will be set as the password for the '
+		. 'user.  If the password field is left blank, then the value for the selected "Fallback password source" '
+		. 'will be set as the password assuming a value for that field it is provided. If the password field is '
+		. 'left blank, and the "Fallback password source" is "None" or that field not provided, then the user '
+		. 'will not have a password and will not be able to sign in directly to the course.') =%>
 </p>
 <p class="mb-0">
 	<%= maketext('Multiple sets may be assigned to the users by holding down the shift key or the ctrl key while '

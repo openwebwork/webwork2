@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,9 +24,11 @@ Mojolicious::WeBWorK - Mojolicious app for WeBWorK 2.
 
 use Env qw(WEBWORK_SERVER_ADMIN);
 
+use Mojo::JSON qw(encode_json);
+
 use WeBWorK;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Utils qw(x writeTimingLogEntry);
+use WeBWorK::Utils::Logs qw(writeTimingLogEntry);
 use WeBWorK::Utils::Routes qw(setup_content_generator_routes);
 
 sub startup ($app) {
@@ -40,6 +42,8 @@ sub startup ($app) {
 
 	# Configure the application
 	$app->secrets($config->{secrets});
+
+	$app->sessions->serialize(sub { return encode_json($_[0]) });
 
 	# Set constants from the configuration.
 	$WeBWorK::Debug::Enabled                                = $config->{debug}{enabled} // 0;
@@ -81,13 +85,12 @@ sub startup ($app) {
 	# url_for_asset controller method.
 	unshift(@{ $app->static->paths }, $webwork_htdocs_dir);
 
-	# Add the themes directory to the template search paths.
-	push(@{ $app->renderer->paths }, $ce->{webworkDirs}{themes});
-
-	# Setup the Minion job queue.
+	# Setup the Minion job queue. Make sure that any task added here is represented in the TASK_NAMES hash in
+	# WeBWorK::ContentGenerator::Instructor::JobManager.
 	$app->plugin(Minion => { $ce->{job_queue}{backend} => $ce->{job_queue}{database_dsn} });
-	$app->minion->add_task(lti_mass_update       => 'Mojolicious::WeBWorK::Tasks::LTIMassUpdate');
-	$app->minion->add_task(send_instructor_email => 'Mojolicious::WeBWorK::Tasks::SendInstructorEmail');
+	$app->minion->add_task(lti_mass_update        => 'Mojolicious::WeBWorK::Tasks::LTIMassUpdate');
+	$app->minion->add_task(send_instructor_email  => 'Mojolicious::WeBWorK::Tasks::SendInstructorEmail');
+	$app->minion->add_task(send_achievement_email => 'Mojolicious::WeBWorK::Tasks::AchievementNotification');
 
 	# Provide the ability to serve data as a file download.
 	$app->plugin('RenderFile');
@@ -170,12 +173,12 @@ sub startup ($app) {
 			$SIG{__WARN__} = $c->stash->{orig_sig_warn} if defined $c->stash->{orig_sig_warn};
 
 			if ($c->isa('WeBWorK::ContentGenerator') && $c->ce) {
+				$c->authen->store_session if $c->authen;
 				writeTimingLogEntry(
 					$c->ce,
 					'[' . $c->url_for . ']',
 					sprintf('runTime = %.3f sec', $c->timing->elapsed('content_generator_rendering')) . ' '
-						. $c->ce->{dbLayoutName},
-					''
+						. $c->ce->{dbLayoutName}
 				);
 			}
 		}
@@ -241,13 +244,25 @@ sub startup ($app) {
 		}
 	}
 
+	# Letsencrypt renewal route.
+	if ($config->{enable_certbot_webroot_routes}) {
+		$r->any(
+			"/.well-known/*static" => sub ($c) {
+				my $file = "$ce->{webworkDirs}{tmp}/.well-known/" . $c->stash('static');
+				return $c->reply->file($file) if -r $file;
+				return $c->render(data => 'File not found', status => 404);
+			}
+		);
+	}
+
 	# Note that these routes must come last to support the case that $webwork_url is '/'.
 
 	my $cg_r = $r->under($webwork_url)->name('root');
 	$cg_r->get('/')->to('Home#go')->name('root');
 
 	# The course admin route is set up here because of its special stash value.
-	$cg_r->any('/admin')->to('CourseAdmin#go', courseID => 'admin')->name('course_admin');
+	$cg_r->any("/$ce->{admin_course_id}")->to('CourseAdmin#go', courseID => $ce->{admin_course_id})
+		->name('course_admin');
 
 	setup_content_generator_routes($cg_r);
 

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,17 +29,19 @@ use Try::Tiny;
 use Mojo::JSON qw(encode_json decode_json);
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(writeLog writeCourseLogGivenTime encodeAnswers before after jitar_problem_adjusted_status
-	jitar_id_to_seq createEmailSenderTransportSMTP);
+use WeBWorK::Utils qw(encodeAnswers createEmailSenderTransportSMTP);
+use WeBWorK::Utils::DateTime qw(before after);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq jitar_problem_adjusted_status);
+use WeBWorK::Utils::Logs qw(writeLog writeCourseLog);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
-
 use Caliper::Sensor;
 use Caliper::Entity;
 
 our @EXPORT_OK = qw(
 	process_and_log_answer
 	compute_reduced_score
+	compute_unreduced_score
 	create_ans_str_from_responses
 	jitar_send_warning_email
 );
@@ -93,7 +95,7 @@ async sub process_and_log_answer ($c) {
 	if (defined($answer_log) && defined($pureProblem) && $submitAnswers) {
 		my $past_answers_string;
 		($past_answers_string, $encoded_last_answer_string, $scores2, $answer_types_string) =
-			create_ans_str_from_responses($c, $pg);
+			create_ans_str_from_responses($c->{formFields}, $pg, $pureProblem->flags =~ /:needs_grading/);
 
 		if (!$authz->hasPermissions($effectiveUser, 'dont_log_past_answers')) {
 			# Use the time the submission processing began, but must convert the
@@ -103,19 +105,18 @@ async sub process_and_log_answer ($c) {
 			my $timestamp = int($c->submitTime);
 
 			# store in answer_log
-			writeCourseLogGivenTime(
+			writeCourseLog(
 				$ce,
 				'answer_log',
-				$timestamp,
 				join('',
 					'|', $problem->user_id, '|',  $problem->set_id, '|',  $problem->problem_id,
 					'|', $scores2,          "\t", $timestamp,       "\t", $past_answers_string,
 				),
+				$timestamp
 			);
 
 			# add to PastAnswer db
 			my $pastAnswer = $db->newPastAnswer();
-			$pastAnswer->course_id($courseID);
 			$pastAnswer->user_id($problem->user_id);
 			$pastAnswer->set_id($problem->set_id);
 			$pastAnswer->problem_id($problem->problem_id);
@@ -123,6 +124,7 @@ async sub process_and_log_answer ($c) {
 			$pastAnswer->scores($scores2);
 			$pastAnswer->answer_string($past_answers_string);
 			$pastAnswer->source_file($problem->source_file);
+			$pastAnswer->problem_seed($problem->problem_seed);
 			$db->addPastAnswer($pastAnswer);
 		}
 	}
@@ -161,10 +163,8 @@ async sub process_and_log_answer ($c) {
 				$pureProblem->num_correct($pg->{state}{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg->{state}{num_of_incorrect_ans});
 
-				# Add flags which are really a comma separated list of answer types.  If its an essay question and the
-				# user is submitting an answer then there could be potential changes. So the problem is also flagged as
-				# needing grading by appending ":needs_grading" to the answer types.
-				$pureProblem->flags($answer_types_string . ($answer_types_string =~ /essay/ ? ':needs_grading' : ''));
+				# Add flags which are really a comma separated list of answer types.
+				$pureProblem->flags($answer_types_string);
 
 				if ($db->putUserProblem($pureProblem)) {
 					$scoreRecordedMessage = $c->maketext('Your score was recorded.');
@@ -248,25 +248,38 @@ async sub process_and_log_answer ($c) {
 					$c->param('startTime', '');
 				}
 
-				my $LTIGradeResult = -1;
-
-				# Try to update the student score on the LMS if that option is enabled.
-				if ($ce->{LTIGradeMode} && $ce->{LTIGradeOnSubmit}) {
-					$LTIGradeResult = 0;
-					my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);
-					if ($ce->{LTIGradeMode} eq 'course') {
-						$LTIGradeResult = await $grader->submit_course_grade($problem->user_id);
-					} elsif ($ce->{LTIGradeMode} eq 'homework') {
-						$LTIGradeResult = await $grader->submit_set_grade($problem->user_id, $problem->set_id);
+				# Messages about passing the score back to the LMS
+				if ($ce->{LTIGradeMode}) {
+					my $LMSname        = $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
+					my $LTIGradeResult = -1;
+					if ($ce->{LTIGradeOnSubmit}) {
+						$LTIGradeResult = 0;
+						my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);
+						if ($ce->{LTIGradeMode} eq 'course') {
+							$LTIGradeResult = await $grader->submit_course_grade($problem->user_id);
+						} elsif ($ce->{LTIGradeMode} eq 'homework') {
+							$LTIGradeResult = await $grader->submit_set_grade($problem->user_id, $problem->set_id);
+						}
+						if ($LTIGradeResult == 0) {
+							$scoreRecordedMessage .=
+								$c->tag('br') . $c->maketext('Your score was not successfully sent to [_1].', $LMSname);
+						} elsif ($LTIGradeResult > 0) {
+							$scoreRecordedMessage .=
+								$c->tag('br') . $c->maketext('Your score was successfully sent to [_1].', $LMSname);
+						}
+					} elsif ($ce->{LTIMassUpdateInterval} > 0) {
+						$scoreRecordedMessage .= $c->tag('br');
+						if ($ce->{LTIMassUpdateInterval} < 120) {
+							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,second].',
+								$LMSname, $ce->{LTIMassUpdateInterval});
+						} elsif ($ce->{LTIMassUpdateInterval} < 7200) {
+							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,minute].',
+								$LMSname, int($ce->{LTIMassUpdateInterval} / 60 + 0.99));
+						} else {
+							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,hour].',
+								$LMSname, int($ce->{LTIMassUpdateInterval} / 36000 + 0.9999));
+						}
 					}
-				}
-
-				if ($LTIGradeResult == 0) {
-					$scoreRecordedMessage .=
-						$c->tag('br') . $c->maketext('Your score was not successfully sent to the LMS.');
-				} elsif ($LTIGradeResult > 0) {
-					$scoreRecordedMessage .=
-						$c->tag('br') . $c->maketext('Your score was successfully sent to the LMS.');
 				}
 			} else {
 				# The "sticky" answers get saved here when $will{recordAnswers} is false
@@ -306,41 +319,71 @@ sub compute_reduced_score ($ce, $problem, $set, $score, $submitTime) {
 	return $problem->sub_status + $ce->{pg}{ansEvalDefaults}{reducedScoringValue} * ($score - $problem->sub_status);
 }
 
+# Compute the "unreduced" score for a problem.
+# If reduced scoring is enabled for the set and the sub_status is less than the status, then the status is the
+# reduced score.  In that case compute and return the unreduced score that resulted in that reduced score.
+sub compute_unreduced_score ($ce, $problem, $set) {
+	return
+		$set->enable_reduced_scoring
+		&& $ce->{pg}{ansEvalDefaults}{reducedScoringValue}
+		&& defined $problem->sub_status && $problem->sub_status < $problem->status
+		? (($problem->status - $problem->sub_status) / $ce->{pg}{ansEvalDefaults}{reducedScoringValue} +
+			$problem->sub_status)
+		: $problem->status;
+}
+
 # create answer string from responses hash
-# ($past_answers_string, $encoded_last_answer_string, $scores, $answer_types_string)
-#     = create_ans_str_from_responses($problem, $pg)
+# ($past_answers_string, $encoded_last_answer_string, $scores_string, $answer_types_string)
+#     = create_ans_str_from_responses($formFields, $pg)
 #
-# input: $problem - a 'WeBWorK::ContentGenerator::Problem object that has $problem->{formFields} set to a hash
-#                   containing the appropriate data.
-#        $pg      - a 'WeBWorK::PG' object
-# output:  (str, str, str, bool)
+# input: $formFields     - a hash containing the form field input data for the submission.
+#        $pg             - a 'WeBWorK::PG' object.
+#        $needed_grading - a boolean value that indicates that this problem previously needed grading
+#                          (only matters for problems with essay questions).
+# output: (str, str, str, str)
 #
 # The extra persistence objects do need to be included in problem->last_answer
 # in order to keep those objects persistent -- as long as RECORD_FORM_ANSWER
 # is used to preserve objects by piggy backing on the persistence mechanism for answers.
-sub create_ans_str_from_responses ($problem, $pg) {
-	my $scores2 = '';
+sub create_ans_str_from_responses ($formFields, $pg, $needed_grading = 0) {
+	my $scores_string = '';
 	my @answerTypes;
+	my $needsGrading = '';
 	my %answers_to_store;
 	my @past_answers_order;
 	my @last_answer_order;
 
 	my %pg_answers_hash = %{ $pg->{PG_ANSWERS_HASH} };
-	foreach my $ans_id (@{ $pg->{flags}{ANSWER_ENTRY_ORDER} // [] }) {
-		$scores2 .= ($pg_answers_hash{$ans_id}{rh_ans}{score} // 0) >= 1 ? "1" : "0";
+	for my $ans_id (@{ $pg->{flags}{ANSWER_ENTRY_ORDER} // [] }) {
+		$scores_string .= ($pg_answers_hash{$ans_id}{rh_ans}{score} // 0) >= 1 ? '1' : '0';
 		push @answerTypes, $pg_answers_hash{$ans_id}{rh_ans}{type} // '';
-		foreach my $response_id (@{ $pg_answers_hash{$ans_id}{response_obj}{response_order} }) {
-			$answers_to_store{$response_id} = $problem->{formFields}{$response_id};
+		for my $response_id (@{ $pg_answers_hash{$ans_id}{response_obj}{response_order} }) {
+			$answers_to_store{$response_id} = $formFields->{$response_id};
 			push @past_answers_order, $response_id;
 			push @last_answer_order,  $response_id;
+
+			# Determine if this is an essay answer that needs to be graded.
+			if (
+				$answerTypes[-1] eq 'essay'
+				&& (defined $formFields->{$response_id} && $formFields->{$response_id} ne '')
+				&& (
+					$needed_grading
+					|| (!defined $formFields->{"previous_${response_id}"}
+						|| $formFields->{"previous_${response_id}"} ne $formFields->{$response_id})
+				)
+				)
+			{
+				$needsGrading = ':needs_grading';
+			}
 		}
 	}
+
 	# KEPT_EXTRA_ANSWERS needs to be stored in last_answer in order to preserve persistence items.
 	# The persistence items do not need to be stored in past_answers_string.
 	# Don't add _ext_data items.  Those are stored elsewhere.
-	foreach my $entry_id (@{ $pg->{flags}{KEPT_EXTRA_ANSWERS} }) {
+	for my $entry_id (@{ $pg->{flags}{KEPT_EXTRA_ANSWERS} }) {
 		next if exists($answers_to_store{$entry_id}) || $entry_id =~ /^_ext_data/;
-		$answers_to_store{$entry_id} = $problem->{formFields}{$entry_id};
+		$answers_to_store{$entry_id} = $formFields->{$entry_id};
 		push @last_answer_order, $entry_id;
 	}
 
@@ -353,10 +396,10 @@ sub create_ans_str_from_responses ($problem, $pg) {
 		} @past_answers_order
 	);
 
-	my $encoded_last_answer_string = encodeAnswers(%answers_to_store, @last_answer_order);
+	my $encoded_last_answer_string = encodeAnswers(\%answers_to_store, \@last_answer_order);
 	# past_answers_string is stored in past_answer table.
 	# encoded_last_answer_string is used in `last_answer` entry of the problem_user table.
-	return ($past_answers_string, $encoded_last_answer_string, $scores2, join(',', @answerTypes));
+	return ($past_answers_string, $encoded_last_answer_string, $scores_string, join(',', @answerTypes) . $needsGrading);
 }
 
 # If you provide this subroutine with a userProblem it will notify the instructors of the course that the student has
@@ -434,7 +477,12 @@ Recitation: $recitation
 Comment:    $comment
 /;
 
-	my $email = Email::Stuffer->to(join(',', @recipients))->from($sender)->subject($subject)->text_body($msg);
+	my $email = Email::Stuffer->to(join(',', @recipients))->subject($subject)->text_body($msg);
+	if ($ce->{jitar_sender_email}) {
+		$email->from("$full_name <$ce->{jitar_sender_email}>")->reply_to($sender);
+	} else {
+		$email->from($sender);
+	}
 
 	# Extra headers
 	$email->header('X-WeBWorK-Course: ', $courseID) if defined $courseID;
@@ -459,7 +507,7 @@ Comment:    $comment
 		});
 		debug('Successfully sent JITAR alert message');
 	} catch {
-		$c->log->error("Failed to send JITAR alert message: $_");
+		$c->log->error('Failed to send JITAR alert message: ' . (ref($_) ? $_->message : $_));
 	};
 
 	return '';

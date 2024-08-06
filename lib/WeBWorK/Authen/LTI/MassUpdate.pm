@@ -1,6 +1,6 @@
 ###############################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -63,7 +63,7 @@ sub mass_update ($c, $manual_update = 0, $userID = undef, $setID = undef) {
 		}
 	}
 
-	$c->minion->enqueue(lti_mass_update => [ $ce->{courseName}, $userID, $setID ]);
+	$c->minion->enqueue(lti_mass_update => [ $userID, $setID ], { notes => { courseID => $ce->{courseName} } });
 
 	return;
 }

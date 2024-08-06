@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -85,6 +85,7 @@ use WeBWorK::DB;
 use WeBWorK::File::Classlist;
 use WeBWorK::Utils qw(runtime_use cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
+use WeBWorK::File::Classlist qw(parse_classlist);
 
 sub usage_error {
 	warn "@_\n";
@@ -144,14 +145,17 @@ if ($users) {
 		# Set the default status if the status field is not set.
 		$record{status} = $ce->{statuses}{Enrolled}{abbrevs}[0] unless $record{status};
 
-		# Set the password if the password field is empty.
-		if (!defined $record{password} || $record{password} !~ /\S/) {
-			if (defined $record{student_id} && $record{student_id} =~ /\S/) {
-				# Use the student ID if it is non-empty.
-				$record{password} = cryptPassword($record{student_id});
-			} else {
-				# An empty password field in the database disables password login.
-				$record{password} = '';
+		# Determine what to use for the password (if anything).
+		if (!$record{password}) {
+			if (defined $record{unencrypted_password} && $record{unencrypted_password} =~ /\S/) {
+				$record{password} = cryptPassword($record{unencrypted_password});
+			} elsif ($ce->{fallback_password_source}
+				&& { user_id => 1, first_name => 1, last_name => 1, student_id => 1 }
+				->{ $ce->{fallback_password_source} }
+				&& $record{ $ce->{fallback_password_source} }
+				&& $record{ $ce->{fallback_password_source} } =~ /\S/)
+			{
+				$record{password} = cryptPassword($record{ $ce->{fallback_password_source} });
 			}
 		}
 
@@ -165,7 +169,7 @@ if ($users) {
 		push @users,
 			[
 				$userClass->new(%record),
-				$passwordClass->new(user_id => $user_id, password => $record{password}),
+				$record{password} ? $passwordClass->new(user_id => $user_id, password => $record{password}) : undef,
 				$permissionClass->new(
 					user_id    => $user_id,
 					permission => defined $professors{$user_id}
@@ -181,8 +185,9 @@ if ($users) {
 }
 
 my %optional_arguments;
-if ($templates_from ne "") {
-	$optional_arguments{templatesFrom} = $templates_from;
+if ($templates_from) {
+	$optional_arguments{copyFrom}          = $templates_from;
+	$optional_arguments{copyTemplatesHtml} = 1;
 }
 
 eval {

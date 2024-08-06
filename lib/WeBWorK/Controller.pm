@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +34,8 @@ use WeBWorK::Localize;
 # FIXME: This override should be dropped and the Mojolicious::Controller param and every_param methods used directly.
 # Mojolicious already keeps a cache of parameter values and also allows setting of parameters.  So everything done here
 # is redundant.
-sub param ($c, $name = undef, $val = undef) {
+sub param ($c, @opts) {
+	my ($name, $val) = @opts;
 	if (!defined $c->{paramcache}) {
 		for my $name (@{ $c->req->params->names }) {
 			$c->{paramcache}{$name} = $c->req->every_param($name);
@@ -43,7 +44,7 @@ sub param ($c, $name = undef, $val = undef) {
 
 	return keys %{ $c->{paramcache} } unless $name;
 
-	if (@_ == 3) {
+	if (@opts == 2) {
 		if (!defined $val) {
 			$c->{paramcache}{$name} = [];
 		} elsif (ref $val eq 'ARRAY') {
@@ -57,6 +58,33 @@ sub param ($c, $name = undef, $val = undef) {
 	}
 	return unless exists $c->{paramcache}{$name};
 	return wantarray ? @{ $c->{paramcache}{$name} } : $c->{paramcache}{$name}[0];
+}
+
+# Override the Mojolicious::Controller session method to set the cookie parameters
+# from the course environment the first time it is called.
+sub session ($c, @args) {
+	return if $c->stash('disable_cookies');
+
+	# Initialize the cookie session the first time this is called.
+	unless ($c->stash->{'webwork2.cookie_session_initialized'}) {
+		$c->stash->{'webwork2.cookie_session_initialized'} = 1;
+
+		$c->app->sessions->cookie_name(
+			$c->stash('courseID') ? 'WeBWorKCourseSession.' . $c->stash('courseID') : 'WeBWorKGeneralSession');
+
+		# If the hostname is 'localhost' or '127.0.0.1', then the cookie domain must be omitted.
+		my $hostname = $c->req->url->to_abs->host;
+		$c->app->sessions->cookie_domain($hostname) if $hostname ne 'localhost' && $hostname ne '127.0.0.1';
+
+		$c->app->sessions->cookie_path($c->ce->{webworkURLRoot});
+		$c->app->sessions->secure($c->ce->{CookieSecure});
+
+		# If this is a session for LTI content selection, then always use SameSite None. Otherwise cookies will not be
+		# sent since this is in an iframe embedded in the LMS.
+		$c->app->sessions->samesite($c->stash->{isContentSelection} ? 'None' : $c->ce->{CookieSameSite});
+	}
+
+	return $c->SUPER::session(@args);
 }
 
 =head1 METHODS

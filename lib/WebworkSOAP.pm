@@ -2,9 +2,7 @@ package WebworkSOAP;
 
 use strict;
 
-use WeBWorK::Utils qw(pretty_print_rh);
-use WeBWorK::Utils::CourseManagement
-	qw(addCourse renameCourse deleteCourse listCourses archiveCourse listArchivedCourses unarchiveCourse);
+use WeBWorK::Utils::CourseManagement qw(listCourses);
 use WeBWorK::DB;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::CourseEnvironment;

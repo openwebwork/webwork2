@@ -1,0 +1,78 @@
+## DESCRIPTION
+## Accessing Feedback
+## ENDDESCRIPTION
+
+DOCUMENT();
+
+loadMacros(qw(
+    PGstandard.pl
+    PGML.pl
+    PGcourse.pl
+));
+
+$random = random(100, 900);
+$answer = Real($random)->cmp(
+    checker => sub {
+        my ($c, $s, $a) = @_;
+        Value::Error("The correct answer is $random.")
+            unless ($s == $random);
+        return 1;
+    }
+);
+
+BEGIN_PGML
+## Feedback
+
+When you Submit an answer, a feedback button appears near the answer blank.
+
+* If you answer correctly, you see a green checkmark[@
+    MODES(
+        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-success" disabled aria-label="Correct">'
+		. '<i class="correct"></i>'
+		. '</button>',
+        TeX => ''
+    )@]*.
+* If you answer incorrectly, you see a red alert[@
+    MODES(
+        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-danger" disabled aria-label="Incorrect">'
+		. '<i class="incorrect"></i>'
+		. '</button>',
+        TeX => ''
+    )@]*.
+* If you earn partial credit, you see a yellow warning[@
+    MODES(
+        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-warning" disabled aria-label="Partially Correct">'
+		. '<i class="partially-correct"></i>'
+		. '</button>',
+        TeX => ''
+    )@]*.
+
+Each of these buttons is something you can click to see more information about the answer you tried. And if there is an
+actual feedback message, you will see a small circle in the upper right corner of the button[@
+    MODES(
+        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-danger with-message" '
+		. 'disabled aria-label="Incorrect with message">'
+		. '<i class="incorrect"></i>'
+		. '</button>',
+        TeX => ''
+    )@]*.
+
+For example, try answering the following with any answer. Almost certainly, you will be marked incorrect, but the
+feedback message will tell you the correct answer. What number am I thinking of?  [_]{$answer}{4}
+
+If you type an answer and click to "Preview my Answers", you will see an info button[@
+    MODES(
+        HTML => ': <button class="ww-feedback-btn btn btn-sm btn-info" disabled aria-label="Answer Preview"><i/>'
+		. '</button>',
+        TeX => ''
+    )
+@]* instead of the correct/incorrect buttons.
+
+In addition to automated feedback, your instructor can leave messages for you in WeBWorK. To see these messages, you
+must visit the problem for which a message has been left. The message will appear above the exercise. If your course
+uses essay questions, there is no automated feedback, and these messages from the instructor will be your only feedback.
+
+[@ MODES(HTML => 'When you are ready, click "Next Problem".', TeX => '') @]
+END_PGML
+
+ENDDOCUMENT();

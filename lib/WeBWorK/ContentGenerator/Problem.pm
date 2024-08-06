@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,19 +24,20 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 use WeBWorK::HTML::SingleProblemGrader;
 use WeBWorK::Debug;
-use WeBWorK::PG::ImageGenerator;
-use WeBWorK::Utils qw(decodeAnswers is_restricted path_is_subdir before after between
-	wwRound is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status
-	jitar_id_to_seq seq_to_jitar_id jitar_problem_finished format_set_name_display);
-use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
-use WeBWorK::Utils::ProblemProcessing qw/process_and_log_answer jitar_send_warning_email compute_reduced_score/;
-use WeBWorK::AchievementEvaluator qw(checkForAchievements);
-use WeBWorK::DB::Utils qw(global2user);
-use WeBWorK::Localize;
-use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
+use WeBWorK::Utils qw(decodeAnswers wwRound);
+use WeBWorK::Utils::DateTime qw(before between after);
+use WeBWorK::Utils::Files qw(path_is_subdir);
+use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq is_jitar_problem_hidden is_jitar_problem_closed
+	jitar_problem_finished jitar_problem_adjusted_status);
 use WeBWorK::Utils::LanguageAndDirection qw(get_problem_lang_and_dir);
+use WeBWorK::Utils::ProblemProcessing qw(process_and_log_answer jitar_send_warning_email compute_reduced_score
+	compute_unreduced_score);
+use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
+use WeBWorK::Utils::Sets qw(is_restricted format_set_name_display);
+use WeBWorK::AchievementEvaluator qw(checkForAchievements);
+use WeBWorK::DB::Utils qw(global2user fake_set fake_problem);
+use WeBWorK::Localize;
 use WeBWorK::AchievementEvaluator;
-use WeBWorK::HTML::AttemptsTable;
 
 # GET/POST Parameters for this module
 #
@@ -95,7 +96,7 @@ sub can_showProblemGrader ($c, $user, $effectiveUser, $set, $problem) {
 	my $authz = $c->authz;
 
 	return ($authz->hasPermissions($user->user_id, 'access_instructor_tools')
-			&& $authz->hasPermissions($user->user_id, 'score_sets')
+			&& $authz->hasPermissions($user->user_id, 'problem_grader')
 			&& $set->set_id ne 'Undefined_Set'
 			&& !$c->{invalidSet});
 }
@@ -210,35 +211,35 @@ sub can_useMathQuill ($c) {
 sub can_showMeAnother ($c, $user, $effectiveUser, $set, $problem, $submitAnswers = 0) {
 	my $ce = $c->ce;
 
-	# If the showMeAnother button isn't enabled in the course configuration,
-	# don't show it under any circumstances (not even for the instructor).
+	# If the showMeAnother button isn't enabled for the course, then it can't be used.
 	return 0 unless $ce->{pg}{options}{enableShowMeAnother};
-
-	# Get the hash of information about showMeAnother
-	my %showMeAnother = %{ $c->{showMeAnother} };
 
 	if (after($set->open_date, $c->submitTime)
 		|| $c->authz->hasPermissions($c->param('user'), 'can_use_show_me_another_early'))
 	{
-		# If $showMeAnother{TriesNeeded} is somehow not an integer or if it is -2, use the default value.
-		$showMeAnother{TriesNeeded} = $ce->{pg}{options}{showMeAnotherDefault}
-			if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
+		$c->{showMeAnother}{TriesNeeded} = $ce->{pg}{options}{showMeAnotherDefault}
+			if $c->{showMeAnother}{TriesNeeded} == -2;
 
-		# If SMA is not permitted for the problem, don't show it.
-		return 0 unless $showMeAnother{TriesNeeded} > -1;
+		# If showMeAnother is not permitted for the problem, then it can't be used for this problem.
+		return 0 unless $c->{showMeAnother}{TriesNeeded} > -1;
 
-		# If the student is previewing or checking an answer to SMA then clearly the user can use show me another.
-		return 1 if $showMeAnother{CheckAnswers} || $showMeAnother{Preview};
+		# If the user is previewing or checking a showMeAnother problem corresponding to this set and problem then
+		# clearly the user can use show me another.
+		return 1
+			if $c->authen->session->{showMeAnother}
+			&& defined $c->authen->session->{showMeAnother}{setID}
+			&& $c->authen->session->{showMeAnother}{setID} eq $set->set_id
+			&& defined $c->authen->session->{showMeAnother}{problemID}
+			&& $c->authen->session->{showMeAnother}{problemID} eq $problem->problem_id
+			&& ($c->{checkAnswers} || $c->{previewAnswers});
 
-		# If $showMeAnother{Count} is somehow not an integer, it probably means that the value in the database was not
-		# initialized correctly.  So set it to 0.
-		$showMeAnother{Count} = 0 unless $showMeAnother{Count} =~ /^[+-]?\d+$/;
-
-		# If the button is enabled globally and for the problem, then check if the student has either
-		# not submitted enough answers yet or has used the SMA button too many times.
+		# If the student has not attempted the original problem enough times yet, then showMeAnother can not be used.
 		return 0
-			if $problem->num_correct + $problem->num_incorrect + ($submitAnswers ? 1 : 0) < $showMeAnother{TriesNeeded}
-			|| ($showMeAnother{Count} >= $showMeAnother{MaxReps} && $showMeAnother{MaxReps} > -1);
+			if $problem->num_correct + $problem->num_incorrect + ($submitAnswers ? 1 : 0) <
+			$c->{showMeAnother}{TriesNeeded};
+
+		# If the number of showMeAnother uses has been exceeded, then the user can not use it again.
+		return 0 if $c->{showMeAnother}{Count} >= $c->{showMeAnother}{MaxReps} && $c->{showMeAnother}{MaxReps} > -1;
 
 		return 1;
 	}
@@ -246,42 +247,11 @@ sub can_showMeAnother ($c, $user, $effectiveUser, $set, $problem, $submitAnswers
 	return 0;
 }
 
-sub attemptResults ($c, $pg, $showCorrectAnswers, $showAttemptResults, $showSummary) {
-	my $ce = $c->ce;
-
-	# Create AttemptsTable object
-	my $tbl = WeBWorK::HTML::AttemptsTable->new(
-		$pg->{answers},
-		$c,
-		answersSubmitted    => 1,
-		answerOrder         => $pg->{flags}{ANSWER_ENTRY_ORDER},
-		displayMode         => $c->{displayMode},
-		showAnswerNumbers   => 0,
-		showAttemptAnswers  => $ce->{pg}{options}{showEvaluatedAnswers},
-		showAttemptPreviews => 1,
-		showAttemptResults  => $showAttemptResults,
-		showCorrectAnswers  => $showCorrectAnswers,
-		showMessages        => 1,
-		showSummary         => $showSummary,
-		imgGen              => WeBWorK::PG::ImageGenerator->new(
-			tempDir         => $ce->{webworkDirs}{tmp},
-			latex           => $ce->{externalPrograms}{latex},
-			dvipng          => $ce->{externalPrograms}{dvipng},
-			useCache        => 1,
-			cacheDir        => $ce->{webworkDirs}{equationCache},
-			cacheURL        => $ce->{webworkURLs}{equationCache},
-			cacheDB         => $ce->{webworkFiles}{equationCacheDB},
-			useMarkers      => 1,
-			dvipng_align    => $ce->{pg}{displayModeOptions}{images}{dvipng_align},
-			dvipng_depth_db => $ce->{pg}{displayModeOptions}{images}{dvipng_depth_db},
-		),
-	);
-
-	# Render equation images
-	my $answerTemplate = $tbl->answerTemplate;
-	$tbl->imgGen->render(body_text => \$answerTemplate) if $tbl->displayMode eq 'images';
-
-	return $answerTemplate;
+sub attemptResults ($c, $pg) {
+	return $pg->{result}{summary}
+		? $c->c($c->tag('h2', class => 'fs-3 mb-2', $c->maketext('Results for this submission'))
+			. $c->tag('div', role => 'alert', $c->b($pg->{result}{summary})))->join('')
+		: '';
 }
 
 async sub pre_header_initialize ($c) {
@@ -407,8 +377,8 @@ async sub pre_header_initialize ($c) {
 		}
 
 		$c->addmessage($c->{set}->visible
-			? $c->tag('p', class => 'font-visible', $c->maketext('This set is visible to students.'))
-			: $c->tag('p', class => 'font-hidden',  $c->maketext('This set is hidden from students.')));
+			? $c->tag('p', class => 'font-visible m-0', $c->maketext('This set is visible to students.'))
+			: $c->tag('p', class => 'font-hidden m-0',  $c->maketext('This set is hidden from students.')));
 
 	} else {
 		# Test for additional problem validity if it's not already invalid.
@@ -451,6 +421,7 @@ async sub pre_header_initialize ($c) {
 	{
 		$c->{submitAnswers}    = 0;
 		$c->{resubmitDetected} = 1;
+		delete $formFields->{submitAnswers};
 	}
 
 	$c->{displayMode}    = $displayMode;
@@ -460,67 +431,42 @@ async sub pre_header_initialize ($c) {
 	$c->{formFields}     = $formFields;
 
 	# Get the status message and add it to the messages.
-	$c->addmessage($c->tag('p', $c->b($c->param('status_message')))) if $c->param('status_message');
+	$c->addmessage($c->tag('p', $c->b($c->authen->flash('status_message')))) if $c->authen->flash('status_message');
 
 	# Now that the necessary variables are set, return if the set or problem is invalid.
 	return if $c->{invalidSet} || $c->{invalidProblem};
 
 	# Construct a hash containing information for showMeAnother.
-	#   TriesNeeded:   the number of times the student needs to attempt the problem before the button is available
-	#   MaxReps:       the Maximum Number of times that showMeAnother can be clicked (specified in course configuration
-	#   Count:         the number of times the student has clicked SMA (or clicked refresh on the page)
-	my %SMAoptions    = map { $_ => 1 } @{ $ce->{pg}{options}{showMeAnother} };
-	my %showMeAnother = (
+	#   TriesNeeded:   The number of times the student needs to attempt this problem before the button is available.
+	#   MaxReps:       The maximum number of times that showMeAnother can be used for this problem.
+	#   Count:         The number of times the student has used showMeAnother for this problem.
+	$c->{showMeAnother} = {
 		TriesNeeded => $problem->{showMeAnother},
 		MaxReps     => $ce->{pg}{options}{showMeAnotherMaxReps},
 		Count       => $problem->{showMeAnotherCount},
-	);
+	};
 
-	# If $showMeAnother{Count} is somehow not an integer, make it one.
-	$showMeAnother{Count} = 0 unless $showMeAnother{Count} =~ /^[+-]?\d+$/;
-
-	# Store the showMeAnother hash for the check to see if the button can be used
-	# (this hash is updated and re-stored after the can, must, will hashes)
-	$c->{showMeAnother} = \%showMeAnother;
+	# Unset the showProblemGrader parameter if the "Hide Problem Grader" button was clicked.
+	$c->param(showProblemGrader => undef) if $c->param('hideProblemGrader');
 
 	# Permissions
 
 	# What does the user want to do?
 	my %want = (
-		showOldAnswers => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
-		# showProblemGrader implies showCorrectAnswers.  This is a convenience for grading.
-		showCorrectAnswers => $c->param('showCorrectAnswers') || $c->param('showProblemGrader') || 0,
-		showProblemGrader  => $c->param('showProblemGrader')  || 0,
-		showAnsGroupInfo   => $c->param('showAnsGroupInfo')   || $ce->{pg}{options}{showAnsGroupInfo},
-		showAnsHashInfo    => $c->param('showAnsHashInfo')    || $ce->{pg}{options}{showAnsHashInfo},
-		showPGInfo         => $c->param('showPGInfo')         || $ce->{pg}{options}{showPGInfo},
-		showResourceInfo   => $c->param('showResourceInfo')   || $ce->{pg}{options}{showResourceInfo},
+		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
+		showCorrectAnswers => 1,
+		showProblemGrader  => $c->param('showProblemGrader') || 0,
+		showAnsGroupInfo   => $c->param('showAnsGroupInfo')  || $ce->{pg}{options}{showAnsGroupInfo},
+		showAnsHashInfo    => $c->param('showAnsHashInfo')   || $ce->{pg}{options}{showAnsHashInfo},
+		showPGInfo         => $c->param('showPGInfo')        || $ce->{pg}{options}{showPGInfo},
+		showResourceInfo   => $c->param('showResourceInfo')  || $ce->{pg}{options}{showResourceInfo},
 		showHints          => 1,
 		showSolutions      => 1,
 		useMathView        => $user->useMathView ne ''  ? $user->useMathView  : $ce->{pg}{options}{useMathView},
 		useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}{options}{useMathQuill},
-		recordAnswers      => $c->{submitAnswers},
+		recordAnswers      => $c->{submitAnswers} && !$authz->hasPermissions($userID, 'avoid_recording_answers'),
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
-	);
-
-	# Are certain options enforced?
-	my %must = (
-		showOldAnswers     => 0,
-		showCorrectAnswers => 0,
-		showProblemGrader  => 0,
-		showAnsGroupInfo   => 0,
-		showAnsHashInfo    => 0,
-		showPGInfo         => 0,
-		showResourceInfo   => 0,
-		showHints          => 0,
-		showSolutions      => 0,
-		recordAnswers      => !$authz->hasPermissions($userID, 'avoid_recording_answers'),
-		checkAnswers       => 0,
-		showMeAnother      => 0,
-		getSubmitButton    => 0,
-		useMathView        => 0,
-		useMathQuill       => 0,
 	);
 
 	# Does the user have permission to use certain options?
@@ -579,7 +525,26 @@ async sub pre_header_initialize ($c) {
 	}
 
 	# Final values for options
-	my %will = map { $_ => $can{$_} && ($want{$_} || $must{$_}) } keys %must;
+	my %will = map { $_ => $can{$_} && $want{$_} } keys %can;
+
+	if ($prEnabled && $problem->{prCount} >= $rerandomizePeriod && !after($c->{set}->due_date, $c->submitTime)) {
+		$can{requestNewSeed}         = 1;
+		$want{requestNewSeed}        = 1;
+		$will{requestNewSeed}        = 1;
+		$c->{showCorrectOnRandomize} = $ce->{pg}{options}{showCorrectOnRandomize};
+		# If this happens, it means that the page was refreshed.  So prevent the answers from
+		# being recorded and the number of attempts from being increased.
+		if ($problem->{prCount} > $rerandomizePeriod) {
+			$c->{resubmitDetected} = 1;
+			$can{recordAnswers}    = 0;
+			$want{recordAnswers}   = 0;
+			$will{recordAnswers}   = 0;
+		}
+	}
+
+	# If this is set to 1 below, then feedback is shown when a student returns to a previously worked problem without
+	# requiring another answer submission.
+	my $showReturningFeedback = 0;
 
 	# Sticky answers
 	if (!($c->{submitAnswers} || $previewAnswers || $checkAnswers) && $will{showOldAnswers}) {
@@ -589,9 +554,13 @@ async sub pre_header_initialize ($c) {
 			# Clear answers if this is a new problem version
 			delete $formFields->{$_} for keys %oldAnswers;
 		} else {
-			$formFields->{$_} = $oldAnswers{$_} for keys %oldAnswers;
+			$formFields->{$_} = $oldAnswers{$_} for (keys %oldAnswers);
+			$showReturningFeedback = 1
+				if $ce->{pg}{options}{automaticAnswerFeedback} && $problem->num_correct + $problem->num_incorrect > 0;
 		}
 	}
+
+	my $showOnlyCorrectAnswers = $c->param('showCorrectAnswers') && $will{showCorrectAnswers};
 
 	# Translation
 	debug('begin pg processing');
@@ -613,9 +582,27 @@ async sub pre_header_initialize ($c) {
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserID)->permission,
 			useMathQuill             => $will{useMathQuill},
 			useMathView              => $will{useMathView},
-			forceScaffoldsOpen       => 0,
+			forceScaffoldsOpen       => $showOnlyCorrectAnswers,
 			isInstructor             => $authz->hasPermissions($userID, 'view_answers'),
-			debuggingOptions         => getTranslatorDebuggingOptions($authz, $userID)
+			showFeedback             => $c->{submitAnswers} || $c->{previewAnswers} || $showReturningFeedback,
+			showAttemptAnswers       => $showOnlyCorrectAnswers ? 0 : $ce->{pg}{options}{showEvaluatedAnswers},
+			showAttemptPreviews      => !$showOnlyCorrectAnswers,
+			showAttemptResults       => $c->{submitAnswers} || $showReturningFeedback,
+			forceShowAttemptResults  => $showOnlyCorrectAnswers
+				|| $will{checkAnswers}
+				|| $will{showProblemGrader}
+				|| ($ce->{pg}{options}{automaticAnswerFeedback}
+					&& !$c->{previewAnswers}
+					&& after($c->{set}->answer_date, $c->submitTime)),
+			showMessages       => !$showOnlyCorrectAnswers,
+			showCorrectAnswers => (
+				$will{showProblemGrader} || ($c->{submitAnswers} && $c->{showCorrectOnRandomize}) ? 2
+				: !$c->{previewAnswers} && after($c->{set}->answer_date, $c->submitTime)
+				? ($ce->{pg}{options}{correctRevealBtnAlways} ? 1 : 2)
+				: !$c->{previewAnswers} && $will{showCorrectAnswers} ? 1
+				: 0
+			),
+			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID)
 		}
 	);
 
@@ -629,24 +616,6 @@ async sub pre_header_initialize ($c) {
 		num_attempts => $problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} ? 1 : 0),
 		id           => 'num_attempts'
 	);
-
-	if ($prEnabled && $problem->{prCount} >= $rerandomizePeriod && !after($c->{set}->due_date, $c->submitTime)) {
-		$showMeAnother{active}       = 0;
-		$must{requestNewSeed}        = 1;
-		$can{requestNewSeed}         = 1;
-		$want{requestNewSeed}        = 1;
-		$will{requestNewSeed}        = 1;
-		$c->{showCorrectOnRandomize} = $ce->{pg}{options}{showCorrectOnRandomize};
-		# If this happens, it means that the page was refreshed.  So prevent the answers from
-		# being recorded and the number of attempts from being increased.
-		if ($problem->{prCount} > $rerandomizePeriod) {
-			$c->{resubmitDetected} = 1;
-			$must{recordAnswers}   = 0;
-			$can{recordAnswers}    = 0;
-			$want{recordAnswers}   = 0;
-			$will{recordAnswers}   = 0;
-		}
-	}
 
 	# Update and fix hint/solution options after PG processing
 	$can{showHints}     &&= $pg->{flags}{hintExists};
@@ -668,7 +637,6 @@ async sub pre_header_initialize ($c) {
 
 	# Store fields
 	$c->{want} = \%want;
-	$c->{must} = \%must;
 	$c->{can}  = \%can;
 	$c->{will} = \%will;
 	$c->{pg}   = $pg;
@@ -760,6 +728,7 @@ sub siblings ($c) {
 	my $total_correct    = 0;
 	my $total_incorrect  = 0;
 	my $total_inprogress = 0;
+	my $is_reduced       = 0;
 	my $currentProblemID = $c->{invalidProblem} ? 0 : $c->{problem}->problem_id;
 
 	my $progressBarEnabled = $c->ce->{pg}{options}{enableProgressBar};
@@ -784,7 +753,8 @@ sub siblings ($c) {
 			$num_of_problems++;
 			my $total_attempts = $problemRecord->num_correct + $problemRecord->num_incorrect;
 
-			my $status = $problemRecord->status;
+			my $status = compute_unreduced_score($ce, $problemRecord, $c->{set});
+			$is_reduced = 1 if $status > $problemRecord->status;
 			if ($isJitarSet) {
 				$status = jitar_problem_adjusted_status($problemRecord, $db);
 			}
@@ -863,6 +833,7 @@ sub siblings ($c) {
 		total_correct    => $total_correct,
 		total_incorrect  => $total_incorrect,
 		total_inprogress => $total_inprogress,
+		is_reduced       => $is_reduced
 	);
 }
 
@@ -1012,8 +983,8 @@ sub nav ($c, $args) {
 
 	my %tail;
 	$tail{displayMode}       = $c->{displayMode}             if defined $c->{displayMode};
-	$tail{showOldAnswers}    = $c->{will}{showOldAnswers}    if defined $c->{will}{showOldAnswers};
-	$tail{showProblemGrader} = $c->{will}{showProblemGrader} if defined $c->{will}{showProblemGrader};
+	$tail{showOldAnswers}    = 1                             if $c->{will}{showOldAnswers};
+	$tail{showProblemGrader} = 1                             if $c->{will}{showProblemGrader};
 	$tail{studentNavFilter}  = $c->param('studentNavFilter') if $c->param('studentNavFilter');
 
 	return $c->tag(
@@ -1451,11 +1422,8 @@ sub output_misc ($c) {
 sub output_comments ($c) {
 	my $db = $c->db;
 
-	my $userPastAnswerID = $db->latestProblemPastAnswer(
-		$c->stash('courseID'),
-		$c->param('effectiveUser'),
-		$c->stash('setID'), $c->stash('problemID')
-	);
+	my $userPastAnswerID =
+		$db->latestProblemPastAnswer($c->param('effectiveUser'), $c->stash('setID'), $c->stash('problemID'));
 
 	# If there is a comment then display it.
 	if ($userPastAnswerID) {
@@ -1484,37 +1452,35 @@ sub output_summary ($c) {
 	my $output = $c->c;
 
 	# Attempt summary
-	if (defined $pg->{flags}{showPartialCorrectAnswers}
-		&& $pg->{flags}{showPartialCorrectAnswers} >= 0
-		&& $c->{submitAnswers})
-	{
-		push(
-			@$output,
-			$c->attemptResults(
-				$pg,
-				$c->{showCorrectOnRandomize} // $will{showCorrectAnswers},
-				$pg->{flags}{showPartialCorrectAnswers}, 1
-			)
-		);
+	if ($c->{submitAnswers}) {
+		push(@$output, $c->attemptResults($pg));
 	} elsif ($will{checkAnswers} || $c->{will}{showProblemGrader}) {
 		push(
 			@$output,
 			$c->tag(
 				'div',
-				class => 'ResultsWithError d-inline-block mb-3',
+				class => 'alert alert-danger d-inline-block mb-2 p-1',
 				$c->maketext('ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED')
 			),
-			$c->attemptResults($pg, $will{showCorrectAnswers}, 1, 1)
+			$c->attemptResults($pg)
+		);
+	} elsif ($c->param('showCorrectAnswers') && $will{showCorrectAnswers}) {
+		push(
+			@$output,
+			$c->tag(
+				'div',
+				class => 'alert alert-danger d-inline-block mb-2 p-1',
+				$c->maketext('CORRECT ANSWERS SHOWN ONLY -- ANSWERS NOT RECORDED')
+			),
 		);
 	} elsif ($c->{previewAnswers}) {
 		push(
 			@$output,
 			$c->tag(
 				'div',
-				class => 'ResultsWithError d-inline-block mb-3',
+				class => 'alert alert-danger d-inline-block mb-2 p-1',
 				$c->maketext('PREVIEW ONLY -- ANSWERS NOT RECORDED')
 			),
-			$c->attemptResults($pg, 0, 0, 0)
 		);
 	}
 
@@ -1522,7 +1488,7 @@ sub output_summary ($c) {
 		@$output,
 		$c->tag(
 			'div',
-			class => 'ResultsWithError d-inline-block mb-3',
+			class => 'alert alert-danger d-inline-block mb-2 p-1',
 			$c->maketext(
 				'ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if neccessary).')
 		)

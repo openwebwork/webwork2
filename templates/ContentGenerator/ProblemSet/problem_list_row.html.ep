@@ -1,5 +1,10 @@
-% use WeBWorK::Utils qw(is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status
-%	jitar_id_to_seq wwRound);
+% use WeBWorK::Utils qw(wwRound);
+% use WeBWorK::Utils::JITAR (
+	% 'jitar_id_to_seq',
+	% 'is_jitar_problem_hidden',
+	% 'is_jitar_problem_closed',
+	% 'jitar_problem_adjusted_status'
+% );
 %
 % my $courseID      = stash('courseID');
 % my $setID         = $c->{set}->set_id;
@@ -70,7 +75,7 @@
 		% }
 		% # Grader
 		% if ($authz->hasPermissions(param('user'), 'access_instructor_tools')
-			% && $authz->hasPermissions(param('user'), 'score_sets')) {
+			% && $authz->hasPermissions(param('user'), 'problem_grader')) {
 			<td>
 				<%= link_to(maketext('Grade Problem') =>
 					$c->systemLink(url_for('instructor_problem_grader', problemID => $problemID))) =%>

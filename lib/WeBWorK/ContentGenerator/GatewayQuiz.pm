@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,19 +26,18 @@ deal with versioning sets
 use Mojo::Promise;
 use Mojo::JSON qw(encode_json decode_json);
 
-use WeBWorK::PG::ImageGenerator;
-# Use the ContentGenerator formatDateTime, not the version in Utils.
-use WeBWorK::Utils qw(writeLog writeCourseLogGivenTime encodeAnswers decodeAnswers
-	path_is_subdir before after between wwRound is_restricted);
+use WeBWorK::Utils qw(encodeAnswers decodeAnswers wwRound);
+use WeBWorK::Utils::DateTime qw(before between after);
+use WeBWorK::Utils::Files qw(path_is_subdir);
 use WeBWorK::Utils::Instructor qw(assignSetVersionToUser);
-use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
+use WeBWorK::Utils::Logs qw(writeLog writeCourseLog);
 use WeBWorK::Utils::ProblemProcessing qw/create_ans_str_from_responses compute_reduced_score/;
-use WeBWorK::DB::Utils qw(global2user);
-use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
+use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
+use WeBWorK::Utils::Sets qw(is_restricted);
+use WeBWorK::DB::Utils qw(global2user fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
-use WeBWorK::HTML::AttemptsTable;
 use PGrandom;
 use Caliper::Sensor;
 use Caliper::Entity;
@@ -76,23 +75,41 @@ sub can_showCorrectAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $
 	my $attemptsPerVersion = $set->attempts_per_version || 0;
 	my $attemptsUsed       = $problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} ? 1 : 0);
 
-	# This is complicated by trying to address hiding scores by problem.  That is, if $set->hide_score_by_problem and
-	# $set->hide_score are both set, then we should allow scores to be shown, but not show the score on any individual
-	# problem.  To deal with this, we make can_showCorrectAnswers give the least restrictive view of hiding, and then
-	# filter scores for the problems themselves later.
 	return (
 		(
-			(
-				after($set->answer_date, $c->submitTime) || ($attemptsUsed >= $attemptsPerVersion
-					&& $attemptsPerVersion != 0
-					&& $set->due_date == $set->answer_date)
-			)
-				|| $authz->hasPermissions($user->user_id, 'show_correct_answers_before_answer_date')
+			$authz->hasPermissions($user->user_id, 'show_correct_answers_before_answer_date')
+				|| (
+					after($set->answer_date, $c->submitTime)
+					|| ($attemptsUsed >= $attemptsPerVersion
+						&& $attemptsPerVersion != 0
+						&& $set->due_date == $set->answer_date)
+				)
+		)
+			&& $c->can_showProblemScores($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet)
+	);
+}
+
+# This version is the same as the above version except that it ignores elevated permisions. So it will be true if this
+# set is in the state that anyone can show correct answers regardless of if they have the
+# show_correct_answers_before_answer_date or view_hidden_work permissions.  In this case, feedback is shown even without
+# a form submission, and correct answers are shown in the feedback, if the $pg{options}{automaticAnswerFeedback} option
+# is set in the course configuration.
+sub can_showCorrectAnswersForAll ($c, $set, $problem, $tmplSet) {
+	my $attemptsPerVersion = $set->attempts_per_version || 0;
+	my $attemptsUsed       = $problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} ? 1 : 0);
+
+	return (
+		(
+			after($set->answer_date, $c->submitTime) || ($attemptsUsed >= $attemptsPerVersion
+				&& $attemptsPerVersion != 0
+				&& $set->due_date == $set->answer_date)
 		)
 			&& (
-				$authz->hasPermissions($user->user_id, 'view_hidden_work')
-				|| $set->hide_score_by_problem eq 'N' && ($set->hide_score eq 'N'
-					|| ($set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $c->submitTime)))
+				(
+					$set->hide_score eq 'N'
+					|| ($set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $c->submitTime))
+				)
+				&& $set->hide_score_by_problem eq 'N'
 			)
 	);
 }
@@ -101,7 +118,7 @@ sub can_showProblemGrader ($c, $user, $permissionLevel, $effectiveUser, $set, $p
 	my $authz = $c->authz;
 
 	return ($authz->hasPermissions($user->user_id, 'access_instructor_tools')
-			&& $authz->hasPermissions($user->user_id, 'score_sets')
+			&& $authz->hasPermissions($user->user_id, 'problem_grader')
 			&& $set->set_id ne 'Undefined_Set'
 			&& !$c->{invalidSet});
 }
@@ -110,10 +127,7 @@ sub can_showHints ($c) { return 1; }
 
 sub can_showSolutions ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
 	my $authz = $c->authz;
-
 	return 1 if $authz->hasPermissions($user->user_id, 'always_show_solution');
-
-	# This is the same as can_showCorrectAnswers.
 	return $c->can_showCorrectAnswers($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet);
 }
 
@@ -238,53 +252,19 @@ sub can_useMathQuill ($c) {
 }
 
 # Output utility
-sub attemptResults ($c, $pg, $showCorrectAnswers, $showAttemptResults, $showSummary) {
-	my $ce = $c->ce;
-
-	# Create AttemptsTable object
-	my $tbl = WeBWorK::HTML::AttemptsTable->new(
-		$pg->{answers},
-		$c,
-		answersSubmitted    => 1,
-		answerOrder         => $pg->{flags}{ANSWER_ENTRY_ORDER},
-		displayMode         => $c->{displayMode},
-		showHeadline        => 0,
-		showAnswerNumbers   => 0,
-		showAttemptAnswers  => $ce->{pg}{options}{showEvaluatedAnswers},
-		showAttemptPreviews => 1,
-		showAttemptResults  => $showAttemptResults,
-		showCorrectAnswers  => $showCorrectAnswers,
-		showMessages        => 1,
-		showSummary         => $showSummary,
-		imgGen              => WeBWorK::PG::ImageGenerator->new(
-			tempDir         => $ce->{webworkDirs}{tmp},
-			latex           => $ce->{externalPrograms}{latex},
-			dvipng          => $ce->{externalPrograms}{dvipng},
-			useCache        => 1,
-			cacheDir        => $ce->{webworkDirs}{equationCache},
-			cacheURL        => $ce->{webworkURLs}{equationCache},
-			cacheDB         => $ce->{webworkFiles}{equationCacheDB},
-			useMarkers      => 1,
-			dvipng_align    => $ce->{pg}{displayModeOptions}{images}{dvipng_align},
-			dvipng_depth_db => $ce->{pg}{displayModeOptions}{images}{dvipng_depth_db},
-		),
-	);
-
-	my $answerTemplate = $tbl->answerTemplate;
-	$tbl->imgGen->render(body_text => $answerTemplate) if $tbl->displayMode eq 'images';
-
-	return $answerTemplate;
+sub attemptResults ($c, $pg) {
+	return ($c->{can}{showProblemScores} && $pg->{result}{summary})
+		? $c->tag('div', role => 'alert', $c->b($pg->{result}{summary}))
+		: '';
 }
 
 sub get_instructor_comment ($c, $problem) {
 	return unless ref($problem) =~ /ProblemVersion/;
 
-	my $db               = $c->db;
-	my $userPastAnswerID = $db->latestProblemPastAnswer(
-		$c->ce->{courseName},
-		$problem->user_id, $problem->set_id . ',v' . $problem->version_id,
-		$problem->problem_id
-	);
+	my $db = $c->db;
+	my $userPastAnswerID =
+		$db->latestProblemPastAnswer($problem->user_id, $problem->set_id . ',v' . $problem->version_id,
+			$problem->problem_id);
 
 	if ($userPastAnswerID) {
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
@@ -413,7 +393,7 @@ async sub pre_header_initialize ($c) {
 		$tmplSet = $db->getMergedSet($effectiveUserID, $setID);
 
 		# Now that is has been validated that this is a gateway test, save the assignment test for the processing of
-		# proctor keys for graded proctored tests.  If a set was not obtained from the database, store a fake value here
+		# graded proctored tests.  If a set was not obtained from the database, store a fake value here
 		# to be able to continue.
 		$c->{assignment_type} = $tmplSet->assignment_type || 'gateway';
 
@@ -521,7 +501,8 @@ async sub pre_header_initialize ($c) {
 		my @setVersions   = $db->getSetVersions(map { [ $effectiveUserID, $setID,, $_ ] } @setVersionIDs);
 		for (@setVersions) {
 			$totalNumVersions++;
-			$currentNumVersions++ if (!$timeInterval || $_->version_creation_time() > ($c->submitTime - $timeInterval));
+			$currentNumVersions++
+				if (!$timeInterval || $_->version_creation_time() > ($c->submitTime - $timeInterval));
 		}
 	}
 
@@ -665,14 +646,19 @@ async sub pre_header_initialize ($c) {
 		$c->{invalidSet} = 'This set is closed.  No new set versions may be taken.';
 	}
 
-	# If the set or problem is invalid, then delete any proctor keys if any and return.
+	# If the proctor session key does not have a set version id, then add it.  This occurs when a student
+	# initially enters a proctored test, since the version id is not determined until just above.
+	if ($c->authen->session('proctor_authorization_granted')
+		&& $c->authen->session('proctor_authorization_granted') !~ /,v\d+$/)
+	{
+		if ($setVersionNumber) { $c->authen->session(proctor_authorization_granted => "$setID,v$setVersionNumber"); }
+		else                   { delete $c->authen->session->{proctor_authorization_granted}; }
+	}
+
+	# If the set or problem is invalid, then delete any proctor session keys and return.
 	if ($c->{invalidSet} || $c->{invalidProblem}) {
 		if (defined $c->{assignment_type} && $c->{assignment_type} eq 'proctored_gateway') {
-			my $proctorID = $c->param('proctor_user');
-			if ($proctorID) {
-				eval { $db->deleteKey("$effectiveUserID,$proctorID"); };
-				eval { $db->deleteKey("$effectiveUserID,$proctorID,g"); };
-			}
+			delete $c->authen->session->{proctor_authorization_granted};
 		}
 		return;
 	}
@@ -718,38 +704,20 @@ async sub pre_header_initialize ($c) {
 		return;
 	}
 
+	# Unset the showProblemGrader parameter if the "Hide Problem Grader" button was clicked.
+	$c->param(showProblemGrader => undef) if $c->param('hideProblemGrader');
+
 	# What does the user want to do?
 	my %want = (
-		showOldAnswers => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
-		# showProblemGrader implies showCorrectAnswers.  This is a convenience for grading.
-		showCorrectAnswers => ($c->param('showProblemGrader') || 0)
-			|| ($c->param('showCorrectAnswers') && ($c->{submitAnswers} || $c->{checkAnswers}))
-			|| 0,
-		showProblemGrader => $c->param('showProblemGrader')
-			|| 0,
-		# Hints are not yet implemented in gateway quzzes.
-		showHints => 0,
-		# showProblemGrader implies showSolutions.  Another convenience for grading.
-		showSolutions => $c->param('showProblemGrader')
-			|| ($c->param('showSolutions') && ($c->{submitAnswers} || $c->{checkAnswers})),
-		recordAnswers => $c->{submitAnswers} && !$authz->hasPermissions($userID, 'avoid_recording_answers'),
-		# we also want to check answers if we were checking answers and are switching between pages
-		checkAnswers => $c->{checkAnswers},
-		useMathView  => $user->useMathView ne ''  ? $user->useMathView  : $ce->{pg}{options}{useMathView},
-		useMathQuill => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}{options}{useMathQuill},
-	);
-
-	# Are certain options enforced?
-	my %must = (
-		showOldAnswers     => 0,
-		showCorrectAnswers => 0,
-		showProblemGrader  => 0,
-		showHints          => 0,
-		showSolutions      => 0,
-		recordAnswers      => 0,
-		checkAnswers       => 0,
-		useMathView        => 0,
-		useMathQuill       => 0,
+		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
+		showCorrectAnswers => 1,
+		showProblemGrader  => $c->param('showProblemGrader') || 0,
+		showHints          => 0,    # Hints are not yet implemented in gateway quzzes.
+		showSolutions      => 1,
+		recordAnswers      => $c->{submitAnswers} && !$authz->hasPermissions($userID, 'avoid_recording_answers'),
+		checkAnswers       => $c->{checkAnswers},
+		useMathView        => $user->useMathView ne ''  ? $user->useMathView  : $ce->{pg}{options}{useMathView},
+		useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}{options}{useMathQuill},
 	);
 
 	# Does the user have permission to use certain options?
@@ -772,10 +740,9 @@ async sub pre_header_initialize ($c) {
 	);
 
 	# Final values for options
-	my %will = map { $_ => $can{$_} && ($must{$_} || $want{$_}) } keys %must;
+	my %will = map { $_ => $can{$_} && $want{$_} } keys %can;
 
 	$c->{want} = \%want;
-	$c->{must} = \%must;
 	$c->{can}  = \%can;
 	$c->{will} = \%will;
 
@@ -880,6 +847,11 @@ async sub pre_header_initialize ($c) {
 		push(@pg_results, $pg);
 	}
 
+	# Show the template problem ID if the problems are in random order
+	# or the template problem IDs are not in order starting at 1.
+	$c->{can}{showTemplateIds} = $c->{can}{showProblemGrader}
+		&& ($set->problem_randorder || $problems[-1]->problem_id != scalar(@problems));
+
 	# Wait for all problems to be rendered and replace the undefined entries
 	# in the pg_results array with the rendered result.
 	my @renderedPG = await Mojo::Promise->all(@renderPromises);
@@ -916,32 +888,13 @@ async sub pre_header_initialize ($c) {
 		# and answers can be recorded, then save the last answer for future reference.
 		# Also save the persistent data to the database even when the last answer is not saved.
 
-		# First, deal with answers being submitted for a proctored exam.  Delete the proctor keys that authorized the
-		# grading, so that it isn't possible to log in and take another proctored test without being reauthorized.
-		if ($c->{submitAnswers} && $c->{assignment_type} eq 'proctored_gateway') {
-			my $proctorID = $c->param('proctor_user');
-
-			# If there are no attempts left, delete all proctor keys for this user.
-			if ($set->attempts_per_version > 0
-				&& $set->attempts_per_version - 1 - $problem->num_correct - $problem->num_incorrect <= 0)
-			{
-				eval { $db->deleteAllProctorKeys($effectiveUserID); };
-			} else {
-				# Otherwise, delete only the grading key.
-				eval { $db->deleteKey("$effectiveUserID,$proctorID,g"); };
-				# In this case there may be a past login proctor key that can be kept so that another login to continue
-				# working the test is not needed.
-				if ($c->param('past_proctor_user') && $c->param('past_proctor_key')) {
-					$c->param('proctor_user', scalar $c->param('past_proctor_user'));
-					$c->param('proctor_key',  scalar $c->param('past_proctor_key'));
-				}
-			}
-			# This is unsubtle, but we'd rather not have bogus keys sitting around.
-			if ($@) {
-				die "ERROR RESETTING PROCTOR GRADING KEY(S): $@\n";
-			}
-
-		}
+		# Deal with answers being submitted for a proctored exam.  If there are no attempts left, then delete the
+		# proctor session key so that it isn't possible to start another proctored test without being reauthorized.
+		delete $c->authen->session->{proctor_authorization_granted}
+			if ($c->{submitAnswers}
+				&& $c->{assignment_type} eq 'proctored_gateway'
+				&& $set->attempts_per_version > 0
+				&& $set->attempts_per_version - 1 - $problem->num_correct - $problem->num_incorrect <= 0);
 
 		my @pureProblems = $db->getAllProblemVersions($effectiveUserID, $setID, $versionID);
 		for my $i (0 .. $#problems) {
@@ -957,7 +910,8 @@ async sub pre_header_initialize ($c) {
 			if (ref $pg_result) {
 				my ($past_answers_string, $scores);    # Not used here
 				($past_answers_string, $encoded_last_answer_string, $scores, $answer_types_string) =
-					create_ans_str_from_responses($c, $pg_result);
+					create_ans_str_from_responses($c->{formFields}, $pg_result,
+						$pureProblem->flags =~ /:needs_grading/);
 
 				# Transfer persistent problem data from the PERSISTENCE_HASH:
 				# - Get keys to update first, to avoid extra work when no updated ar
@@ -985,7 +939,7 @@ async sub pre_header_initialize ($c) {
 				my @fields         = sort grep {/^(?!previous).*$prefix/} (keys %{ $c->{formFields} });
 				my %answersToStore = map       { $_ => $c->{formFields}->{$_} } @fields;
 				my @answer_order   = @fields;
-				$encoded_last_answer_string = encodeAnswers(%answersToStore, @answer_order);
+				$encoded_last_answer_string = encodeAnswers(\%answersToStore, \@answer_order);
 			}
 
 			# Set the last answer
@@ -1013,13 +967,8 @@ async sub pre_header_initialize ($c) {
 				$pureProblem->num_correct($pg_result->{state}{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg_result->{state}{num_of_incorrect_ans});
 
-				if ($answer_types_string) {
-					# Add flags which are really a comma separated list of answer types.  If its an essay question and
-					# the user is submitting an answer then there could be potential changes. So the problem is also
-					# flagged as needing grading by appending ":needs_grading" to the answer types.
-					$pureProblem->flags(
-						$answer_types_string . ($answer_types_string =~ /essay/ ? ':needs_grading' : ''));
-				}
+				# Add flags which are really a comma separated list of answer types.
+				$pureProblem->flags($answer_types_string);
 
 				if ($db->putProblemVersion($pureProblem)) {
 					# Use a simple untranslated value here.  This message will never be shown, and will later be
@@ -1096,7 +1045,7 @@ async sub pre_header_initialize ($c) {
 				my $problem = $problems[ $probOrder[$i] ];
 
 				my ($past_answers_string, $encoded_last_answer_string, $scores, $answer_types_string) =
-					create_ans_str_from_responses($c, $pg_results[ $probOrder[$i] ]);
+					create_ans_str_from_responses($c->{formFields}, $pg_results[ $probOrder[$i] ]);
 				$past_answers_string =~ s/\t+$/\t/;
 
 				if (!$past_answers_string || $past_answers_string =~ /^\t$/) {
@@ -1104,18 +1053,17 @@ async sub pre_header_initialize ($c) {
 				}
 
 				# Write to courseLog, use the recorded time of when the submission was received, but as an integer
-				writeCourseLogGivenTime(
+				writeCourseLog(
 					$c->ce,
 					'answer_log',
-					$timeNowInt,
 					join('',
 						'|', $problem->user_id, '|', $setVName, '|', ($i + 1), '|', $scores,
-						"\t$timeNowInt\t", "$past_answers_string")
+						"\t$timeNowInt\t", "$past_answers_string"),
+					$timeNowInt
 				);
 
 				# Add to PastAnswer db
 				my $pastAnswer = $db->newPastAnswer();
-				$pastAnswer->course_id($c->stash('courseID'));
 				$pastAnswer->user_id($problem->user_id);
 				$pastAnswer->set_id($setVName);
 				$pastAnswer->problem_id($problem->problem_id);
@@ -1123,6 +1071,7 @@ async sub pre_header_initialize ($c) {
 				$pastAnswer->scores($scores);
 				$pastAnswer->answer_string($past_answers_string);
 				$pastAnswer->source_file($problem->source_file);
+				$pastAnswer->problem_seed($problem->problem_seed);
 				$db->addPastAnswer($pastAnswer);
 			}
 		}
@@ -1246,7 +1195,8 @@ async sub pre_header_initialize ($c) {
 			$c->{submitAnswers}
 			&& (
 				$will{recordAnswers}
-				|| (!$set->version_last_attempt_time && $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
+				|| (!$set->version_last_attempt_time
+					&& $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
 			)
 		)
 		|| (
@@ -1270,7 +1220,8 @@ async sub pre_header_initialize ($c) {
 				$c->{submitAnswers}
 				&& (
 					$will{recordAnswers}
-					|| (!$set->version_last_attempt_time && $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
+					|| (!$set->version_last_attempt_time
+						&& $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
 				)
 			);
 
@@ -1322,7 +1273,8 @@ async sub pre_header_initialize ($c) {
 			my $pScore = 0;
 			if (ref $pg) {
 				# If a pg object is available, then use the pg recorded score and save it in the @probStatus array.
-				$pScore = compute_reduced_score($ce, $problems[$i], $set, $pg->{state}{recorded_score}, $c->submitTime);
+				$pScore =
+					compute_reduced_score($ce, $problems[$i], $set, $pg->{state}{recorded_score}, $c->submitTime);
 				$probStatus[$i] = $pScore if $pScore > $probStatus[$i];
 			} else {
 				# If a pg object is not available, then use the saved problem status.
@@ -1484,17 +1436,14 @@ sub warningMessage ($c) {
 # hash of parameters from the input form that need to be passed to the translator, and $mergedProblem
 # is what we'd expect.
 async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem) {
-	my $setID            = $set->set_id;
-	my $setVersionNumber = $set->version_id;
+	my $showReturningFeedback =
+		!($c->{submitAnswers} || $c->{previewAnswers} || $c->{checkAnswers})
+		&& $c->{will}{showOldAnswers}
+		&& $c->ce->{pg}{options}{automaticAnswerFeedback}
+		&& $c->{can}{showProblemScores}
+		&& $mergedProblem->num_correct + $mergedProblem->num_incorrect > 0;
 
-	# Figure out solutions are allowed and call renderPG accordingly.
-	my $showCorrectAnswers = $c->{will}{showCorrectAnswers};
-	my $showHints          = $c->{will}{showHints};
-	my $showSolutions      = $c->{will}{showSolutions};
-	my $processAnswers     = $c->{will}{checkAnswers};
-
-	# FIXME: I'm not sure that problem_id is what we want here.
-	my $problemNumber = $mergedProblem->problem_id;
+	my $showOnlyCorrectAnswers = $c->param('showCorrectAnswers') && $c->{will}{showCorrectAnswers};
 
 	my $pg = await renderPG(
 		$c,
@@ -1505,16 +1454,36 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 		$formFields,
 		{
 			displayMode        => $c->{displayMode},
-			showHints          => $showHints,
-			showSolutions      => $showSolutions,
-			refreshMath2img    => $showHints || $showSolutions,
+			showHints          => $c->{will}{showHints},
+			showSolutions      => $c->{will}{showSolutions},
+			refreshMath2img    => $c->{will}{showHints} || $c->{will}{showSolutions},
 			processAnswers     => 1,
-			QUIZ_PREFIX        => 'Q' . sprintf('%04d', $problemNumber) . '_',
+			QUIZ_PREFIX        => 'Q' . sprintf('%04d', $mergedProblem->problem_id) . '_',
 			useMathQuill       => $c->{will}{useMathQuill},
 			useMathView        => $c->{will}{useMathView},
 			forceScaffoldsOpen => 1,
 			isInstructor       => $c->authz->hasPermissions($c->{userID}, 'view_answers'),
-			debuggingOptions   => getTranslatorDebuggingOptions($c->authz, $c->{userID})
+			showFeedback       => $c->{submitAnswers}
+				|| $c->{previewAnswers}
+				|| $c->{will}{checkAnswers}
+				|| $showReturningFeedback,
+			showAttemptAnswers  => $showOnlyCorrectAnswers ? 0 : $c->ce->{pg}{options}{showEvaluatedAnswers},
+			showAttemptPreviews => !$showOnlyCorrectAnswers,
+			showAttemptResults  => !$showOnlyCorrectAnswers && !$c->{previewAnswers} && $c->{can}{showProblemScores},
+			forceShowAttemptResults => $showOnlyCorrectAnswers
+				|| $c->{will}{showProblemGrader}
+				|| ($c->ce->{pg}{options}{automaticAnswerFeedback}
+					&& !$c->{previewAnswers}
+					&& $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet})),
+			showMessages       => !$showOnlyCorrectAnswers,
+			showCorrectAnswers => (
+				$c->{will}{showProblemGrader} ? 2
+				: !$c->{previewAnswers} && $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet})
+				? ($c->ce->{pg}{options}{correctRevealBtnAlways} ? 1 : 2)
+				: !$c->{previewAnswers} && $c->{will}{showCorrectAnswers} ? 1
+				: 0
+			),
+			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID})
 		},
 	);
 
@@ -1525,7 +1494,7 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 	if ($pg->{flags}{error_flag}) {
 		push @{ $c->{errors} },
 			{
-				set     => "$setID,v$setVersionNumber",
+				set     => $set->set_id . ',v' . $set->version_id,
 				problem => $mergedProblem->problem_id,
 				message => $pg->{errors},
 				context => $pg->{body_text},

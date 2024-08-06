@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,10 +38,6 @@ line like the one below to the F<localOverrides.conf> or F<course.conf> file.
  $dbLayoutName = "layoutName";
  *dbLayout = $dbLayouts{$dbLayoutName};
 
-=cut
-
-%dbLayouts = (); # layouts are added to this hash below
-
 =head2 THE SQL_SINGLE DATABASE LAYOUT
 
 The C<sql_single> layout is similar to the C<sql> layout, except that it uses a
@@ -65,13 +61,9 @@ Other parameters that can be given are as follows:
 
  tableOverride  an alternate name to use when referring to the table (used
                 when a table name is a reserved word)
- fieldOverride  a hash mapping WeBWorK field names to alternate names to use
-                when referring to those fields (used when one or more field
-				names are reserved words)
  debug          if true, SQL statements are printed before being executed
 
 =cut
-
 
 # params common to all tables
 
@@ -84,127 +76,127 @@ my %sqlParams = (
 	mysqldump_path => $externalPrograms{mysqldump},
 );
 
-if ( $ce->{database_driver} =~ /^mysql$/i ) {
+if ($ce->{database_driver} =~ /^mysql$/i) {
 	# The extra UTF8 connection setting is ONLY needed for older DBD:mysql driver
 	# and forbidden by the newer DBD::MariaDB driver
-	if ( $ENABLE_UTF8MB4 ) {
-		$sqlParams{mysql_enable_utf8mb4} = 1; # Full 4-bit UTF-8
+	if ($ENABLE_UTF8MB4) {
+		$sqlParams{mysql_enable_utf8mb4} = 1;    # Full 4-bit UTF-8
 	} else {
-		$sqlParams{mysql_enable_utf8} = 1; # Only the partial 3-bit mySQL UTF-8
+		$sqlParams{mysql_enable_utf8} = 1;       # Only the partial 3-bit mySQL UTF-8
 	}
 }
 
+%dbLayouts = ();                                 # layouts are added to this hash below
+
 $dbLayouts{sql_single} = {
-        locations => {
-                record => "WeBWorK::DB::Record::Locations",
-                schema => "WeBWorK::DB::Schema::NewSQL::Std",
-                driver => "WeBWorK::DB::Driver::SQL",
-                source => $database_dsn,
-                engine => $database_storage_engine,
-                character_set => $database_character_set,
-                params => { %sqlParams,
-                        non_native => 1,
-                },
-        },
-        location_addresses => {
-                record => "WeBWorK::DB::Record::LocationAddresses",
-                schema => "WeBWorK::DB::Schema::NewSQL::Std",
-                driver => "WeBWorK::DB::Driver::SQL",
-                source => $database_dsn,
-                engine => $database_storage_engine,
-                character_set => $database_character_set,
-                params => { %sqlParams,
-                        non_native => 1,
-                },
-        },
-        depths => {
-				record => "WeBWorK::DB::Record::Depths",
-				schema => "WeBWorK::DB::Schema::NewSQL::Std",
-				driver => "WeBWorK::DB::Driver::SQL",
-				source => $database_dsn,
-        		engine => $database_storage_engine,
-				params => { %sqlParams,
-					non_native => 1,
-		},
+	locations => {
+		record        => "WeBWorK::DB::Record::Locations",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, non_native => 1 },
+	},
+	location_addresses => {
+		record        => "WeBWorK::DB::Record::LocationAddresses",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, non_native => 1 },
+	},
+	depths => {
+		record => "WeBWorK::DB::Record::Depths",
+		schema => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => $database_dsn,
+		engine => $database_storage_engine,
+		params => { %sqlParams, non_native => 1 },
+	},
+	lti_launch_data => {
+		record        => "WeBWorK::DB::Record::LTILaunchData",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, non_native => 1 },
+	},
+	lti_course_map => {
+		record        => "WeBWorK::DB::Record::LTICourseMap",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, non_native => 1 },
 	},
 	password => {
-		record => "WeBWorK::DB::Record::Password",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-        character_set => $database_character_set,
-		params => { %sqlParams,
-			tableOverride => "${courseName}_password",
-		},
+		record        => "WeBWorK::DB::Record::Password",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_password" },
 	},
 	permission => {
-		record => "WeBWorK::DB::Record::PermissionLevel",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			tableOverride => "${courseName}_permission",
-		},
+		record        => "WeBWorK::DB::Record::PermissionLevel",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_permission" },
 	},
 	key => {
-		record => "WeBWorK::DB::Record::Key",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			tableOverride => "${courseName}_key",
-			fieldOverride => { key => "key_not_a_keyword" },
-		},
+		record        => "WeBWorK::DB::Record::Key",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_key" },
 	},
 	user => {
-		record => "WeBWorK::DB::Record::User",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			tableOverride => "${courseName}_user",
-		},
+		record        => "WeBWorK::DB::Record::User",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_user" },
 	},
 	set => {
-		record => "WeBWorK::DB::Record::Set",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			tableOverride => "${courseName}_set",
-			#fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
-		},
+		record        => "WeBWorK::DB::Record::Set",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_set" },
 	},
 	set_user => {
-		record => "WeBWorK::DB::Record::UserSet",
-		schema => "WeBWorK::DB::Schema::NewSQL::NonVersioned",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			tableOverride => "${courseName}_set_user",
-			#fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
-		},
+		record        => "WeBWorK::DB::Record::UserSet",
+		schema        => "WeBWorK::DB::Schema::NewSQL::NonVersioned",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_set_user" },
 	},
 	set_merged => {
-		record => "WeBWorK::DB::Record::UserSet",
-		schema => "WeBWorK::DB::Schema::NewSQL::Merge",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		depend => [qw/set_user set/],
-		params => { %sqlParams,
+		record        => "WeBWorK::DB::Record::UserSet",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Merge",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		depend        => [qw/set_user set/],
+		params        => {
+			%sqlParams,
 			non_native => 1,
 			merge      => [qw/set_user set/],
 		},
@@ -214,195 +206,153 @@ $dbLayouts{sql_single} = {
 		schema => "WeBWorK::DB::Schema::NewSQL::Versioned",
 		driver => "WeBWorK::DB::Driver::SQL",
 		source => $database_dsn,
-        engine => $database_storage_engine,
-		params => { %sqlParams,
-			non_native => 1,
+		engine => $database_storage_engine,
+		params => {
+			%sqlParams,
+			non_native    => 1,
 			tableOverride => "${courseName}_set_user",
-			#fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
 
 		},
 	},
 	set_version_merged => {
-		record => "WeBWorK::DB::Record::SetVersion",
-		schema => "WeBWorK::DB::Schema::NewSQL::Merge",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		depend => [qw/set_version set_user set/],
-		params => { %sqlParams,
+		record        => "WeBWorK::DB::Record::SetVersion",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Merge",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		depend        => [qw/set_version set_user set/],
+		params        => {
+			%sqlParams,
 			non_native => 1,
 			merge      => [qw/set_version set_user set/],
 		},
 	},
-        set_locations => {
-                record => "WeBWorK::DB::Record::SetLocations",
-                schema => "WeBWorK::DB::Schema::NewSQL::Std",
-                driver => "WeBWorK::DB::Driver::SQL",
-                source => $database_dsn,
-                engine => $database_storage_engine,
-                character_set => $database_character_set,
-                params => { %sqlParams,
-                        tableOverride => "${courseName}_set_locations"
-                },
-        },
-        set_locations_user => {
-                record => "WeBWorK::DB::Record::UserSetLocations",
-                schema => "WeBWorK::DB::Schema::NewSQL::Std",
-                driver => "WeBWorK::DB::Driver::SQL",
-                source => $database_dsn,
-                engine => $database_storage_engine,
-                character_set => $database_character_set,
-                params => { %sqlParams,
-                        tableOverride => "${courseName}_set_locations_user"
-                },
-        },
+	set_locations => {
+		record        => "WeBWorK::DB::Record::SetLocations",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_set_locations" },
+	},
+	set_locations_user => {
+		record        => "WeBWorK::DB::Record::UserSetLocations",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_set_locations_user" },
+	},
 	problem => {
-		record => "WeBWorK::DB::Record::Problem",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			tableOverride => "${courseName}_problem"
-		},
+		record        => "WeBWorK::DB::Record::Problem",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_problem" },
 	},
 	problem_user => {
-		record => "WeBWorK::DB::Record::UserProblem",
-		schema => "WeBWorK::DB::Schema::NewSQL::NonVersioned",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			tableOverride => "${courseName}_problem_user"
-		},
+		record        => "WeBWorK::DB::Record::UserProblem",
+		schema        => "WeBWorK::DB::Schema::NewSQL::NonVersioned",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_problem_user" },
 	},
 	problem_merged => {
-		record => "WeBWorK::DB::Record::UserProblem",
-		schema => "WeBWorK::DB::Schema::NewSQL::Merge",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		depend => [qw/problem_user problem/],
-		params => { %sqlParams,
+		record        => "WeBWorK::DB::Record::UserProblem",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Merge",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		depend        => [qw/problem_user problem/],
+		params        => {
+			%sqlParams,
 			non_native => 1,
 			merge      => [qw/problem_user problem/],
 		},
 	},
 	problem_version => {
-		record => "WeBWorK::DB::Record::ProblemVersion",
-		schema => "WeBWorK::DB::Schema::NewSQL::Versioned",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			non_native => 1,
+		record        => "WeBWorK::DB::Record::ProblemVersion",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Versioned",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => {
+			%sqlParams,
+			non_native    => 1,
 			tableOverride => "${courseName}_problem_user",
 		},
 	},
 	problem_version_merged => {
-		record => "WeBWorK::DB::Record::ProblemVersion",
-		schema => "WeBWorK::DB::Schema::NewSQL::Merge",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		depend => [qw/problem_version problem_user problem/],
-		params => { %sqlParams,
+		record        => "WeBWorK::DB::Record::ProblemVersion",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Merge",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		depend        => [qw/problem_version problem_user problem/],
+		params        => {
+			%sqlParams,
 			non_native => 1,
 			merge      => [qw/problem_version problem_user problem/],
 		},
 	},
 	setting => {
-		record => "WeBWorK::DB::Record::Setting",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			tableOverride => "${courseName}_setting"
-		},
+		record        => "WeBWorK::DB::Record::Setting",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_setting" },
 	},
-   	achievement => {
-		record => "WeBWorK::DB::Record::Achievement",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			tableOverride => "${courseName}_achievement"
-		},
+	achievement => {
+		record        => "WeBWorK::DB::Record::Achievement",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_achievement" },
 	},
 	past_answer => {
-		record => "WeBWorK::DB::Record::PastAnswer",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			    tableOverride => "${courseName}_past_answer"
-	 	},
-    },
+		record        => "WeBWorK::DB::Record::PastAnswer",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_past_answer" },
+	},
 
 	achievement_user => {
-		record => "WeBWorK::DB::Record::UserAchievement",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			tableOverride => "${courseName}_achievement_user"
-	 	},
-    },
+		record        => "WeBWorK::DB::Record::UserAchievement",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_achievement_user" },
+	},
 	global_user_achievement => {
-		record => "WeBWorK::DB::Record::GlobalUserAchievement",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $database_dsn,
-    	engine => $database_storage_engine,
-    	character_set => $database_character_set,
-		params => { %sqlParams,
-			tableOverride => "${courseName}_global_user_achievement"
-		},
+		record        => "WeBWorK::DB::Record::GlobalUserAchievement",
+		schema        => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver        => "WeBWorK::DB::Driver::SQL",
+		source        => $database_dsn,
+		engine        => $database_storage_engine,
+		character_set => $database_character_set,
+		params        => { %sqlParams, tableOverride => "${courseName}_global_user_achievement" },
 	},
 };
 
 # include ("conf/database.conf");  # uncomment to provide local overrides
 
-
-=head1 DATABASE LAYOUT METADATA
-
-=over
-
-=item @dbLayout_order
-
-Database layouts listed in this array will be displayed first, in the order
-specified, wherever database layouts are listed. (For example, in the "Add
-Course" tool.) Other layouts are listed after these.
-
-=cut
-
-@dbLayout_order = qw/sql_single sql_moodle/;
-
-=item %dbLayout_descr
-
-Hash mapping database layout names to textual descriptions.
-
-=cut
-
-%dbLayout_descr = (
-	sql_single => "Uses a single SQL database to record WeBWorK data for all courses using this layout. This is the recommended layout for new courses.",
-#	sql_moodle => "Similar to sql_single, but uses a Moodle database for user, password, and permission information. This layout should be used for courses used with wwmoodle.",
-);
-
-=back
-
-=cut
+1;

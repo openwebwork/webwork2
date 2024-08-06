@@ -34,10 +34,10 @@
 	%== $extra_header_text
 </head>
 <body>
-	<div class="container-fluid">
+	<div class="container-fluid" data-iframe-height="1">
 		<div class="row g-0">
 			<div class="col-12 problem">
-				%== $answerTemplate
+				%== $resultSummary
 				<%= form_for $FORM_ACTION_URL, id => 'problemMainForm', class => 'problem-main-form',
 					name => 'problemMainForm', method => 'POST', begin %>
 					<div id="problem_body" class="problem-content" <%== $PROBLEM_LANG_AND_DIR %>>
@@ -48,16 +48,18 @@
 						% }
 					</div>
 					% if ($showScoreSummary) {
-						<p><%= $lh->maketext('You received a score of [_1] for this attempt.',
-							wwRound(0, $rh_result->{problem_result}{score} * 100) . '%') %></p>
-						% if ($rh_result->{problem_result}{msg}) {
-							<p><%= $rh_result->{problem_result}{msg} %></p>
-						% }
-						% unless ($ce->{hideWasNotRecordedMessage}) {
-							<p><%= $lh->maketext('Your score was not recorded.') %></p>
-						% }
-						<%= hidden_field 'problem-result-score' => $rh_result->{problem_result}{score},
-							id => 'problem-result-score' %>
+						<div id="score_summary" class="scoreSummary">
+							<p><%= $lh->maketext('You received a score of [_1] for this attempt.',
+								wwRound(0, $rh_result->{problem_result}{score} * 100) . '%') %></p>
+							% if ($rh_result->{problem_result}{msg}) {
+								<p><%= $rh_result->{problem_result}{msg} %></p>
+							% }
+							% unless ($ce->{hideWasNotRecordedMessage}) {
+								<p><%= $lh->maketext('Your score was not recorded.') %></p>
+							% }
+							<%= hidden_field 'problem-result-score' => $rh_result->{problem_result}{score},
+								id => 'problem-result-score' %>
+						</div>
 					% }
 					% if ($formatName eq 'sticky') {
 						<div id="local-storage-messages">
@@ -66,51 +68,63 @@
 					% }
 					%== $LTIGradeMessage
 					%
-					%= hidden_field answersSubmitted         => 1
-					%= hidden_field sourceFilePath           => $sourceFilePath
-					%= hidden_field problemSource            => $problemSource
-					%= hidden_field uriEncodedProblemSource  => $uriEncodedProblemSource
-					%= hidden_field problemSeed              => $problemSeed
-					%= hidden_field problemUUID              => $problemUUID
-					%= hidden_field psvn                     => $psvn
-					%= hidden_field pathToProblemFile        => $fileName
-					%= hidden_field courseID                 => $courseID
-					%= hidden_field user                     => $user
-					%= hidden_field passwd                   => $passwd
-					%= hidden_field displayMode              => $displayMode
-					%= hidden_field key                      => $key
-					%= hidden_field outputformat             => $formatName
-					%= hidden_field theme                    => $theme
-					%= hidden_field language                 => $formLanguage
-					%= hidden_field isInstructor             => $isInstructor
-					%= hidden_field forceScaffoldsOpen       => $forceScaffoldsOpen
-					%= hidden_field showSummary              => $showSummary
-					%= hidden_field showHints                => $showHints
-					%= hidden_field showSolutions            => $showSolutions
-					%= hidden_field showAnswerNumbers        => $showAnswerNumbers
-					%= hidden_field showPreviewButton        => $showPreviewButton
-					%= hidden_field showCheckAnswersButton   => $showCheckAnswersButton
-					%= hidden_field showCorrectAnswersButton => $showCorrectAnswersButton
-					%= hidden_field showFooter               => $showFooter
-					%= hidden_field extra_header_text        => $extra_header_text
+					% if (stash->{disable_cookies}) {
+						%= hidden_field disableCookies => $disableCookies
+						%= hidden_field passwd         => $passwd
+					% }
+					% if (stash->{disable_cookies} || $ce->{session_management_via} ne 'session_cookie') {
+						%= hidden_field key => $key
+					% }
+					%= hidden_field user                         => $user
+					%= hidden_field sourceFilePath               => $sourceFilePath
+					%= hidden_field problemSource                => $problemSource
+					%= hidden_field rawProblemSource             => $rawProblemSource
+					%= hidden_field uriEncodedProblemSource      => $uriEncodedProblemSource
+					%= hidden_field problemSeed                  => $problemSeed
+					%= hidden_field problemUUID                  => $problemUUID
+					%= hidden_field psvn                         => $psvn
+					%= hidden_field fileName                     => $fileName
+					%= hidden_field courseID                     => $courseID
+					%= hidden_field displayMode                  => $displayMode
+					%= hidden_field outputformat                 => $formatName
+					%= hidden_field theme                        => $theme
+					%= hidden_field language                     => $formLanguage
+					%= hidden_field isInstructor                 => $isInstructor
+					%= hidden_field forceScaffoldsOpen           => $forceScaffoldsOpen
+					%= hidden_field showSummary                  => $showSummary
+					%= hidden_field showHints                    => $showHints
+					%= hidden_field showSolutions                => $showSolutions
+					%= hidden_field showPreviewButton            => $showPreviewButton
+					%= hidden_field showCheckAnswersButton       => $showCheckAnswersButton
+					%= hidden_field showCorrectAnswersButton     => $showCorrectAnswersButton
+					%= hidden_field showCorrectAnswersOnlyButton => $showCorrectAnswersOnlyButton
+					%= hidden_field showFooter                   => $showFooter
+					%= hidden_field extra_header_text            => $extra_header_text
 					% if ($formatName eq 'debug' && $ws->{inputs_ref}{clientDebug}) {
 						%= hidden_field clientDebug => $ws->{inputs_ref}{clientDebug}
 					% }
 					%
 					% if ($displayMode ne 'PTX' && $displayMode ne 'tex') {
 						<div class="submit-buttons-container col-12 mb-2">
-							% # Submit buttons (all are shown by default)
+							% # Submit buttons (all are shown by default except the correct answer only button)
 							% if ($showPreviewButton ne '0') {
 								<%= submit_button $lh->maketext('Preview My Answers'),
-									name => 'preview', id => 'previewAnswers_id', class => 'btn btn-primary mb-1' %>
+									name => 'previewAnswers', id => 'previewAnswers_id',
+									class => 'btn btn-primary mb-1' %>
 							% }
 							% if ($showCheckAnswersButton ne '0') {
 								<%= submit_button $lh->maketext('Check Answers'),
 									name => 'WWsubmit', class => 'btn btn-primary mb-1' %>
 							% }
-							% if ($showCorrectAnswersButton ne '0') {
+							% if ($showCorrectAnswersButton ne '0' && !$showCorrectAnswersOnlyButton) {
 								<%= submit_button $lh->maketext('Show Correct Answers'),
 									name => 'WWcorrectAns', class => 'btn btn-primary mb-1' %>
+							% }
+							% if ($showCorrectAnswersOnlyButton) {
+								% # This version of the show correct answers button only shows
+								% # the correct answer without any other feedback.
+								<%= submit_button $lh->maketext('Show Correct Answers'),
+									name => 'WWcorrectAnsOnly', class => 'btn btn-primary mb-1' %>
 							% }
 						</div>
 					% }
@@ -178,8 +192,8 @@
 	</div>
 	% # Show the footer unless it is explicity disabled.
 	% if ($showFooter ne '0') {
-		<div id="footer">
-			WeBWorK &copy; 2000-2023 |
+		<div id="footer" data-iframe-height="1">
+			WeBWorK &copy; <%= $ce->{WW_COPYRIGHT_YEARS} || 2000-2024 %> |
 			host: <%= $SITE_URL %> |
 			course: <%= $courseID %> |
 			format: <%= $formatName %> |

@@ -1,7 +1,7 @@
 # This is the Stage 1 Dockerfile, which builds a base OS image (webwork-base)
 # on top of which the WeBWorK parts will be installed by the Stage 2 Dockerfile.
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # ==================================================================
 # Phase 1 - Set base OS image install stage ENV variables
@@ -33,6 +33,7 @@ RUN apt-get update \
 	imagemagick \
 	iputils-ping \
 	jq \
+	libarchive-extract-perl \
 	libarchive-zip-perl \
 	libarray-utils-perl \
 	libc6-dev \
@@ -56,9 +57,11 @@ RUN apt-get update \
 	libextutils-helpers-perl \
 	libextutils-installpaths-perl \
 	libextutils-xsbuilder-perl \
+	libfile-copy-recursive-perl \
 	libfile-find-rule-perl-perl \
 	libfile-sharedir-install-perl \
 	libfuture-asyncawait-perl \
+	libgd-barcode-perl \
 	libgd-perl \
 	libhtml-scrubber-perl \
 	libhtml-template-perl \
@@ -69,10 +72,9 @@ RUN apt-get update \
 	libjson-perl \
 	libjson-xs-perl \
 	liblocale-maketext-lexicon-perl \
-	libmail-sender-perl \
-	libmail-sender-perl \
 	libmariadb-dev \
 	libmath-random-secure-perl \
+	libmime-base32-perl \
 	libmime-tools-perl \
 	libminion-backend-sqlite-perl \
 	libminion-perl \
@@ -92,7 +94,6 @@ RUN apt-get update \
 	libphp-serialization-perl \
 	libpod-wsdl-perl \
 	libsoap-lite-perl \
-	libsql-abstract-classic-perl \
 	libsql-abstract-perl \
 	libstring-shellquote-perl \
 	libsub-uplevel-perl \
@@ -138,7 +139,7 @@ RUN apt-get update \
 	texlive-xetex \
 	tzdata \
 	zip $ADDITIONAL_BASE_IMAGE_PACKAGES \
-	&& curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+	&& curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
 	&& apt-get clean \
 	&& rm -fr /var/lib/apt/lists/* /tmp/*
@@ -146,7 +147,11 @@ RUN apt-get update \
 # ==================================================================
 # Phase 3 - Install additional Perl modules from CPAN that are not packaged for Ubuntu or are outdated in Ubuntu.
 
-RUN cpanm install -n Statistics::R::IO DBD::MariaDB Mojo::SQLite@3.002 Perl::Tidy@20220613 \
+RUN cpanm install -n \
+	Statistics::R::IO \
+	DBD::MariaDB \
+	Perl::Tidy@20220613 \
+	Archive::Zip::SimpleZip \
 	&& rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # ==================================================================

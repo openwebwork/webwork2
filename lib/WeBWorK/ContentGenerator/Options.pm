@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -62,7 +62,10 @@ sub initialize ($c) {
 						eval { $db->addPassword($effectiveUserPassword) };
 						$password = $password // $effectiveUserPassword;
 						if ($@) {
-							$c->addbadmessage($c->maketext("Couldn't change [_1]'s password: [_2]", $e_user_name, $@));
+							$c->log->error("Error changing ${e_user_name}'s password: $@");
+							$c->addbadmessage($c->maketext(
+								"[_1]'s password was not changed due to an internal error.", $e_user_name
+							));
 						} else {
 							$c->addgoodmessage($c->maketext("[_1]'s password has been changed.", $e_user_name));
 						}
@@ -71,30 +74,31 @@ sub initialize ($c) {
 						eval { $db->putPassword($effectiveUserPassword) };
 						$password = $password // $effectiveUserPassword;
 						if ($@) {
-							$c->addbadmessage($c->maketext("Couldn't change [_1]'s password: [_2]", $e_user_name, $@));
+							$c->log->error("Error changing ${e_user_name}'s password: $@");
+							$c->addbadmessage($c->maketext(
+								"[_1]'s password was not changed due to an internal error.", $e_user_name
+							));
 						} else {
 							$c->addgoodmessage($c->maketext("[_1]'s password has been changed.", $e_user_name));
 						}
 					}
 				} else {
+					my $newPasswordText        = $c->maketext("[_1]'s New Password",         $e_user_name);
+					my $confirmNewPasswordText = $c->maketext("Confirm [_1]'s New Password", $e_user_name);
 					$c->addbadmessage($c->maketext(
 						"The passwords you entered in the [_1] and [_2] fields don't match. "
 							. 'Please retype your new password and try again.',
-						$c->tag('b', $c->maketext("[_1]'s New Password",         $e_user_name)),
-						$c->tag('b', $c->maketext("Confirm [_1]'s New Password", $e_user_name))
+						$c->tag('b', $newPasswordText),
+						$c->tag('b', $confirmNewPasswordText)
 					));
 				}
 			} else {
+				my $fieldText =
+					$c->maketext("[_1]'s Current Password", $c->{user}->first_name . ' ' . $c->{user}->last_name);
 				$c->addbadmessage($c->maketext(
 					'The password you entered in the [_1] field does not match your current password. '
 						. 'Please retype your current password and try again.',
-					$c->tag(
-						'b',
-						$c->maketext(
-							"[_1]'s Current Password",
-							$c->{user}->first_name . ' ' . $c->{user}->last_name
-						)
-					)
+					$c->tag('b', $fieldText)
 				));
 			}
 		}
@@ -108,8 +112,11 @@ sub initialize ($c) {
 		eval { $db->putUser($c->{effectiveUser}) };
 		if ($@) {
 			$c->{effectiveUser}->email_address($oldA);
-			$c->addbadmessage($c->maketext("Couldn't change your email address: [_1]", $@));
+			$c->log->error("Unable to save new email address for $userID: $@");
+			$c->addbadmessage($c->maketext('Your email address has not been changed due to an internal error.'));
 		} else {
+			$c->param('currAddress', $c->param('newAddress'));
+			$c->param('newAddress',  undef);
 			$c->addgoodmessage($c->maketext('Your email address has been changed.'));
 		}
 	}
@@ -129,7 +136,8 @@ sub initialize ($c) {
 
 			eval { $db->putUser($c->{effectiveUser}) };
 			if ($@) {
-				$c->addbadmessage($c->maketext("Couldn't save your display options: [_1]", $@));
+				$c->log->error("Unable to save display options for $userID: $@");
+				$c->addbadmessage($c->maketext('Your display options were not saved due to an internal error.'));
 			} else {
 				$c->addgoodmessage($c->maketext('Your display options have been saved.'));
 			}

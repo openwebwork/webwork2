@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -68,6 +68,26 @@ $server_root_url   = '';
 # Be sure to use single quotes for the address or the @ sign will be interpreted as an array.
 $webwork_server_admin_email = '';
 
+# The following is the name of the admin course where admin level users can create
+# courses, delete courses, and more. It is named 'admin' by default but for security,
+# you may want to change to something that cannot be guessed.
+$admin_course_id = 'admin';
+
+# When new courses are created using the admin course, this setting controls
+# whether or not they will be hidden.  Setting this to anything other than
+# "hidden" or "visible" (or leaving it unset) means that courses created using
+# "Add Courses" are not hidden, and all unarchived courses have whatever hidden
+# status they had when archived.
+# Setting this to "hidden" means that courses created using "Add Courses" and
+# courses created using "Unarchive Courses" with a new course ID will be hidden.
+# Unarchived courses that keep their original name will keep their hidden
+# status.
+# Setting this to "visible" means that courses created using "Add Courses" and
+# courses created using "Unarchive Courses" with a new course ID will be visible.
+# Unarchived courses that keep their original name will keep their hidden
+# status.
+#$new_courses_hidden_status = 'hidden';
+
 # password strings (or any other string allowing special characters) should be specified inside single quotes
 # otherwise a string such as "someone@nowhere" will interpolate the contents of the array @nowhere -- which is probably
 # empty, but still not what you want.  Similar things happen with % and $
@@ -79,27 +99,23 @@ $webwork_server_admin_email = '';
 # or even in /opt/local/bin.
 # You can use "which tar"  for example to find out where the "tar" program is located
 
-####################################################
 # system utilities
-####################################################
-$externalPrograms{mv}    = "/bin/mv";
-$externalPrograms{cp}    = "/bin/cp";
-$externalPrograms{rm}    = "/bin/rm";
-$externalPrograms{mkdir} = "/bin/mkdir";
-$externalPrograms{tar}   = "/bin/tar";
-$externalPrograms{gzip}  = "/bin/gzip";
+$externalPrograms{tar} = "/usr/bin/tar";
 $externalPrograms{git} = "/usr/bin/git";
 
-####################################################
 # equation rendering/hardcopy utiltiies
-####################################################
 $externalPrograms{latex}    = "/usr/bin/latex --no-shell-escape";
 
-$externalPrograms{pdflatex} = "/usr/bin/pdflatex --no-shell-escape";
-# Note that --no-shell-escape is important for security reasons.
-# Consider using xelatex instead of pdflatex for multilingual use, and
-# use polyglossia and fontspec packages (which require xelatex or lualatex).
-#$externalPrograms{pdflatex} = "/usr/bin/xelatex --no-shell-escape";
+# xelatex is the default external program used to generate pdf from LaTeX.  It
+# supports unicode characters (needed for multilingual use among other things).
+# Newer versions of DateTime::Locale use a narrow no-break space in US dates. So
+# xelatex is needed even for English.  Note that --no-shell-escape is important
+# for security reasons.
+$externalPrograms{latex2pdf} = "/usr/bin/xelatex --no-shell-escape";
+# You may be able to use pdflatex instead of xelatex if you have an older
+# version of DateTime::Locale on your system.  However, pdflatex does not
+# support unicode characters.
+#$externalPrograms{latex2pdf} = "/usr/bin/pdflatex --no-shell-escape";
 
 $externalPrograms{dvipng}   = "/usr/bin/dvipng";
 
@@ -111,42 +127,12 @@ $externalPrograms{convert}  = "/usr/bin/convert";
 $externalPrograms{dvisvgm}  = "/usr/bin/dvisvgm";
 $externalPrograms{pdf2svg}  = "/usr/bin/pdf2svg";
 
-####################################################
-# NetPBM - basic image manipulation utilities
-# Most sites only need to configure $netpbm_prefix.
-####################################################
-my $netpbm_prefix = "/usr/bin";
-$externalPrograms{giftopnm} = "$netpbm_prefix/giftopnm";
-$externalPrograms{ppmtopgm} = "$netpbm_prefix/ppmtopgm";
-$externalPrograms{pnmtops}  = "$netpbm_prefix/pnmtops";
-$externalPrograms{pnmtopng} = "$netpbm_prefix/pnmtopng";
-$externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
-
-####################################################
 # curl
-####################################################
 $externalPrograms{curl}  = "/usr/bin/curl";
 
-####################################################
-# image conversions utiltiies
-# the source file is given on stdin, and the output expected on stdout.
-####################################################
-
-$externalPrograms{gif2eps} = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
-$externalPrograms{png2eps} = "$externalPrograms{pngtopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
-$externalPrograms{gif2png} = "$externalPrograms{giftopnm} | $externalPrograms{pnmtopng}";
-
-####################################################
 # mysql clients
-####################################################
-
 $externalPrograms{mysql}     ="/usr/bin/mysql";
 $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
-
-
-####################################################
-# End paths to external utilities.
-####################################################
 
 ################################################################################
 # Database options
@@ -256,26 +242,16 @@ $webwork_courses_dir = "/opt/webwork/courses"; # a typical place to put course d
 # The following directives need to be configured in order for your webwork
 # server to be able to send mail.
 
-# Mail sent by the PG system and the mail merge and feedback modules will be
-# sent via this SMTP server.  localhost may work if your server is capable
-# of sending email, otherwise type the name of your School's outgoing email
-# server.
+# Mail sent by the mail merge and feedback modules will be sent via this SMTP
+# server.  localhost may work if your server is capable of sending email,
+# otherwise type the name of your School's outgoing email server.
 $mail{smtpServer} = '';  # e.g. 'mail.yourschool.edu' or 'localhost'
-
-# When connecting to the above server, WeBWorK will send this address in the
-# MAIL FROM command. This has nothing to do with the "From" address on the mail
-# message. It can really be anything, but some mail servers require it contain
-# a valid mail domain, or at least be well-formed.
-$mail{smtpSender} = '';  # e.g.  'webwork@yourserver.yourschool.edu'
-# Be sure to use single quotes for the address or the @ sign will be interpreted as an array.
 
 $mail{set_return_path} = ''; #sets the return_path to the From: field (sender's email address)
 # The return path is used to send error messages about bounced emails
 # "noreply\@$mail{smtpServer}" discards error messages,
-# using $mail{smtpSender} would deliver error messages to that address.
 # The default setting should be adjusted for local domain
 # Leaving the return path blank triggers the default which results in Return-Path  being set to the email of the sender.
-#
 
 # Seconds to wait before timing out when connecting to the SMTP server.
 #  the default is 120 seconds.
@@ -284,31 +260,46 @@ $mail{set_return_path} = ''; #sets the return_path to the From: field (sender's 
 
 $mail{smtpTimeout}           = 30;
 
-
 # TLS is a method for providing secure connections to the smtp server.
 # https://en.wikipedia.org/wiki/Transport_Layer_Security
-# At some sites coordinating the certificates properly is tricky
-# Set this value to 0 to avoid checking certificates.
-# Set it to 0 to trouble shoot an inability to verify certificates with the smtp server
+# Allowed values: 'starttls', 'ssl', 'maybestarttls', 0
+# Values of 'maybestarttls' and 0 are insecure and are not recommended for
+# production environments, except where the smtp server is localhost.
 
 $mail{tls_allowed} = 0;
 
-#$tls_allowed=0;  #old method -- this variable no longer works.
+# Extra settings for SSL/TLS
+# You may need to use this setting if your SMTP server uses a self-signed certificate.
+# SSL_verify_mode => 0 is not recommended for production environments for security
+# reasons.  See https://metacpan.org/pod/IO::Socket::SSL#Common-Usage-Errors
 
+#$mail{smtpSSLOptions} = {SSL_verify_mode => 0};
 
 # errors of the form
-#  unable to establish SMTP connection to smtp-gw.rochester.edu port 465
-# indicate that there is a mismatch between the port number and the use of ssl
-# use port 25 when ssl is off and use port 465 when ssl is on (tls_allowed=1)
+# "unable to establish SMTP connection to smtp-gw.rochester.edu port 465"
+# indicate that there may be a mismatch between the port number and the use of ssl.
+# Many mail servers use port 25 when ssl is off, use port 465 when ssl is on (tls_allowed='ssl'),
+# and use port 587 when starttls is used (tls_allowed='starttls').
 
 
-# Set the SMTP port manually.  Typically this does not need to be done it will use
-# port 25 if no SSL is on and 465 if ssl is on
+# Set the SMTP port manually.  Typically this does not need to be done. It will use
+# port 25 if insecure, and 465 if ssl is on
 
 #$mail{smtpPort} = 25;
 
 # Debugging tutorial for sending email using ssl/tls
 # https://maulwuff.de/research/ssl-debugging.html
+
+# SMTP Authentication
+# If your SMTP server requires authentication you can provide the username and password
+# for the account on the mail server.
+# If you set these credentials, you may need to define the variables $feedback_sender_email,
+# $instructor_sender_email and $jitar_sender_email in localOverrides.conf, as some SMTP
+# servers require the "From:" address of outgoing emails to match this username.  Setting
+# those sender variables will then put the user's email address in the "Reply-to:" field.
+
+#$mail{smtpUsername} = '';
+#$mail{smtpPassword} = '';
 
 # Set maxAttachmentSize to the maximum number of megabytes to allow for the size of
 # files attached to feedback emails.  Note that this should be set to match the
@@ -334,8 +325,8 @@ $job_queue{backend} = 'SQLite';
 # Database dsn for the Minion job queue. Some examples of settings for the
 # respective backends follow. The postgres and mysql examples will need to be
 # modified to work. The default sqlite setting will work as is.
-#$job_queue{database_dsn} = "postgresql://dbuser@/webwork2_job_queue";
-#$job_queue{database_dsn} = "mysql://dbuser:dbpasswd@localhost/webwork2_job_queue";
+#$job_queue{database_dsn} = 'postgresql://dbuser@/webwork2_job_queue';
+#$job_queue{database_dsn} = 'mysql://dbuser:dbpasswd@localhost/webwork2_job_queue';
 $job_queue{database_dsn} = "sqlite:$webwork_dir/DATA/webwork2_job_queue.db";
 
 ################################################################################
@@ -371,22 +362,8 @@ $job_queue{database_dsn} = "sqlite:$webwork_dir/DATA/webwork2_job_queue.db";
 #
 #     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::links'
 #
-# If left blank, the system timezone will be used. This is usually what you
-# want. You might want to set this if your server is NOT in the same timezone as
-# your school. If just a few courses are in a different timezone, set this in
-# course.conf for the affected courses instead.
-#
+# This can be set per course either in course.conf or via the course configuration.
 $siteDefaults{timezone} = "America/New_York";
-
-# Locale for time format localization
-# Set the following variable to localize the format of things like days
-# of the week and month names (i.e. translate them)
-# This variable must match one of the locales available on your system
-# To show the current locale in use on the system, type 'locale' at the
-# command prompt.  For a list of installed locales, type 'locale -a' and
-# enter one of the listed values here.
-# If you do not fill this in, the system will default to "en_US"
-$siteDefaults{locale}="";
 
 ################################################################################
 # Search Engine Indexing Enable/Disable

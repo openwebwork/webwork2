@@ -1,72 +1,40 @@
-% my %can  = %{ $c->{can} };
-% my %will = %{ $c->{will} };
+% last unless $c->{can}{showAnsGroupInfo}
+	% || $c->{can}{showAnsHashInfo}
+	% || $c->{can}{showPGInfo}
+	% || $c->{can}{showResourceInfo};
 %
-% if ($can{showCorrectAnswers}
-	% || $can{showProblemGrader}
-	% || $can{showAnsGroupInfo}
-	% || $can{showAnsHashInfo}
-	% || $can{showPGInfo}
-	% || $can{showResourceInfo})
-% {
+<div class="col-12 my-2">
 	<span class="me-2"><%= maketext('Show:') %></span>
-% }
-%
-% if ($can{showCorrectAnswers}) {
-	<div class="form-check form-check-inline">
-		<label class="form-check-label">
-			<%= check_box showCorrectAnswers => 1, id => 'showCorrectAnswers_id', class => 'form-check-input',
-				$will{showCorrectAnswers} ? (checked => undef) : () =%>
-			<%= maketext('Correct Answers') =%>
-		</label>
-	</div>
-% }
-%
-% if ($can{showProblemGrader} && !$will{showMeAnother}) {
-	<div class="form-check form-check-inline">
-		<label class="form-check-label">
-			<%= check_box showProblemGrader => 1, id => 'showProblemGrader_id', class => 'form-check-input',
-				$will{showProblemGrader} ? (checked => undef) : () =%>
-			<%= maketext('Problem Grader') =%>
-		</label>
-	</div>
-% }
-%
-% if ($can{showAnsGroupInfo}) {
-	<div class="form-check form-check-inline">
-		<label class="form-check-label">
-			<%= check_box showAnsGroupInfo => 1, id => 'showAnsGroupInfo_id', class => 'form-check-input',
-				$will{showAnsGroupInfo} ? (checked => undef) : () =%>
-			<%= maketext('Answer Group Info') =%>
-		</label>
-	</div>
-% }
-%
-% if ($can{showResourceInfo}) {
-	<div class="form-check form-check-inline">
-		<label class="form-check-label">
-			<%= check_box showResourceInfo => 1, id => 'showResourceInfo_id', class => 'form-check-input',
-				$will{showResourceInfo} ? (checked => undef) : () =%>
-			<%= maketext('Auxiliary Resources') =%>
-		</label>
-	</div>
-% }
-%
-% if ($can{showAnsHashInfo}) {
-	<div class="form-check form-check-inline">
-		<label class="form-check-label">
-			<%= check_box showAnsHashInfo => 1, id => 'showAnsHashInfo_id', class => 'form-check-input',
-				$will{showAnsHashInfo} ? (checked => undef) : () =%>
-			<%= maketext('Answer Hash Info') =%>
-		</label>
-	</div>
-% }
-%
-% if ($can{showPGInfo}) {
-	<div class="form-check form-check-inline">
-		<label class="form-check-label">
-			<%= check_box showPGInfo => 1, id => 'showPGInfo_id', class => 'form-check-input',
-				$will{showPGInfo} ? (checked => undef) : () =%>
-			<%= maketext('PG Info') =%>
-		</label>
-	</div>
-% }
+	%
+	% if ($c->{can}{showAnsGroupInfo}) {
+		<div class="form-check form-check-inline">
+			<%= check_box showAnsGroupInfo => 1, id => 'showAnsGroupInfo', class => 'form-check-input',
+				$c->{will}{showAnsGroupInfo} ? (checked => undef) : () =%>
+			<%= label_for showAnsGroupInfo => maketext('Answer Group Info'), class => "form-check-label" =%>
+		</div>
+	% }
+	%
+	% if ($c->{can}{showResourceInfo}) {
+		<div class="form-check form-check-inline">
+			<%= check_box showResourceInfo => 1, id => 'showResourceInfo', class => 'form-check-input',
+				$c->{will}{showResourceInfo} ? (checked => undef) : () =%>
+			<%= label_for showResourceInfo => maketext('Auxiliary Resources'), class => 'form-check-label' =%>
+		</div>
+	% }
+	%
+	% if ($c->{can}{showAnsHashInfo}) {
+		<div class="form-check form-check-inline">
+			<%= check_box showAnsHashInfo => 1, id => 'showAnsHashInfo', class => 'form-check-input',
+				$c->{will}{showAnsHashInfo} ? (checked => undef) : () =%>
+			<%= label_for showAnsHashInfo => maketext('Answer Hash Info'), class => 'form-check-label' =%>
+		</div>
+	% }
+	%
+	% if ($c->{can}{showPGInfo}) {
+		<div class="form-check form-check-inline">
+			<%= check_box showPGInfo => 1, id => 'showPGInfo', class => 'form-check-input',
+				$c->{will}{showPGInfo} ? (checked => undef) : () =%>
+			<%= label_for showPGInfo => maketext('PG Info'), class =>  'form-check-label' =%>
+		</div>
+	% }
+</div>

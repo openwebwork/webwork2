@@ -1,6 +1,6 @@
 ###############################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,9 +33,9 @@ use URI::Escape;
 use Net::OAuth;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(formatDateTime);
-use WeBWorK::Localize;
+use WeBWorK::Utils::DateTime qw(formatDateTime);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
+use WeBWorK::Localize;
 use WeBWorK::Authen::LTIAdvanced::Nonce;
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
@@ -92,10 +92,9 @@ sub request_has_data_for_this_verification_module {
 	my $self = shift;
 	my $c    = $self->{c};
 
-	# See comment in get_credentials()
 	if ($c->{rpc}) {
-		debug("LTIAdvanced returning 1 because it is an rpc call");
-		return 1;
+		debug("LTIAdvanced returning 0 because it is an rpc call");
+		return 0;
 	}
 
 	# This module insists that the course is configured for LTI 1.3.
@@ -124,19 +123,6 @@ sub get_credentials {
 	my $ce   = $c->{ce};
 
 	debug("LTIAdvanced::get_credentials has been called\n");
-
-	# This next part is necessary because some parts of webwork (e.g.,
-	# WebworkWebservice.pm) need to replace the get_credentials() routine,
-	# but only replace the one in the parent class (out of caution,
-	# presumably).	Therefore, we end up here even when authenticating
-	# for WebworkWebservice.pm.  This would cause authentication failures
-	# when authenticating javascript web service requests (e.g., the
-	# Library Browser).
-	# Similar changes are needed in check_user() and verify_normal_user().
-	if ($c->{rpc}) {
-		debug("falling back to superclass get_credentials (rpc call)");
-		return $self->SUPER::get_credentials(@_);
-	}
 
 	## Printing parameters to main page can help people set things up
 	## so we dont use the debug channel here
@@ -307,12 +293,6 @@ sub check_user {
 
 	debug("LTIAdvanced::check_user has been called for user_id = |$user_id|");
 
-	# See comment in get_credentials()
-	if ($c->{rpc}) {
-		#debug("falling back to superclass check_user (rpc call)");
-		return $self->SUPER::check_user(@_);
-	}
-
 	if (!defined($user_id) || (defined $user_id && $user_id eq "")) {
 		$self->{log_error} .= "no user id specified";
 		$self->{error} = $c->maketext(
@@ -381,27 +361,15 @@ sub verify_normal_user {
 
 	debug("LTIAdvanced::verify_normal_user called for user |$user_id|");
 
-	# See comment in get_credentials()
-	if ($c->{rpc}) {
-		#debug("falling back to superclass verify_normal_user (rpc call)");
-		return $self->SUPER::verify_normal_user(@_);
-	}
-
-	# Call check_session in order to destroy any existing session cookies and Key table sessions
-	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 0);
-
-	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
-
 	my $auth_result = $self->authenticate;
 
 	debug("auth_result=|${auth_result}|");
 
-	# Parameters CANNOT be modified until after LTIAdvanced authentication
-	# has been done, because the parameters passed with the request
-	# are used in computing the OAuth_signature.  If there
-	# are any changes in $c->{paramcache} (see Controller.pm)
-	# before authentication occurs, then authentication will FAIL
-	# even if the consumer_secret is correct.
+	# Parameters CANNOT be modified until after LTIAdvanced authentication has
+	# been done, because the parameters passed with the request are used in
+	# computing the OAuth_signature.  If there are any changes to the parameters
+	# before authentication occurs, then authentication will FAIL even if the
+	# consumer_secret is correct.
 
 	$c->param("user" => $user_id);
 
@@ -420,15 +388,8 @@ sub authenticate {
 	my $self = shift;
 	my ($c, $user) = map { $self->{$_}; } ('c', 'user_id');
 
-	# See comment in get_credentials()
-	if ($c->{rpc}) {
-		#debug("falling back to superclass authenticate (rpc call)");
-		return $self->SUPER::authenticate(@_);
-	}
-
 	debug("LTIAdvanced::authenticate called for user |$user|");
 	debug "ref(c) = |" . ref($c) . "|";
-	debug "ref of c->{paramcache} = |" . ref($c->{paramcache}) . "|";
 
 	my $ce         = $c->ce;
 	my $db         = $c->db;
@@ -447,7 +408,7 @@ sub authenticate {
 
 	debug("c->param(oauth_signature) = |" . $c->param("oauth_signature") . "|");
 	my %request_hash;
-	my @keys = keys %{ $c->{paramcache} };
+	my @keys = $c->param;
 	foreach my $key (@keys) {
 		$request_hash{$key} = $c->param($key);
 		debug("$key->|" . $request_hash{$key} . "|");
@@ -652,7 +613,7 @@ sub create_user {
 	$newUser->status("C");
 	$newUser->section($self->{section}       // "");
 	$newUser->recitation($self->{recitation} // "");
-	$newUser->comment(formatDateTime(time, "local"));
+	$newUser->comment(formatDateTime(time, 0, $ce->{siteDefaults}{timezone}, $ce->{language}));
 	$newUser->student_id($self->{student_id} // "");
 
 	# Allow sites to customize the user
@@ -772,7 +733,7 @@ sub maybe_update_user {
 		}
 
 		if ($change_made) {
-			$tempUser->comment(formatDateTime(time, "local"));
+			$tempUser->comment(formatDateTime(time, 0, $ce->{siteDefaults}{timezone}, $ce->{language}));
 			eval { $db->putUser($tempUser) };
 			if ($@) {
 				$self->write_log_entry("Failed to update user $userID in LTIAdvanced login: $@");

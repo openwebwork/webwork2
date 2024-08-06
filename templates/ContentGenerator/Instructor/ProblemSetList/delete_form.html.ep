@@ -3,14 +3,17 @@
 		<em><%= maketext('Warning: Deletion destroys all set-related data and is not undoable!') =%></em>
 	</div>
 	<div class="row mb-2">
-		<%= label_for delete_select => maketext('Delete which sets?'),
+		<%= label_for delete_select => maketext('Delete selected sets?'),
 			class => 'col-form-label col-form-label-sm col-auto' =%>
 		<div class="col-auto">
-			<%= select_field 'action.delete.scope' => [
-					[ maketext('no sets')       => 'none', selected => undef ],
-					[ maketext('selected sets') => 'selected' ]
+			<%= select_field 'action.delete.confirm' => [
+					[ maketext('No')  => 'no', selected => undef ],
+					[ maketext('Yes') => 'yes' ]
 				],
 				id => 'delete_select', class => 'form-select form-select-sm' =%>
 		</div>
+	</div>
+	<div id="delete_confirm_err_msg" class="alert alert-danger p-1 d-inline-flex d-none">
+		<%= maketext('Please confirm it is okay to delete selected sets permanently.') %>
 	</div>
 </div>

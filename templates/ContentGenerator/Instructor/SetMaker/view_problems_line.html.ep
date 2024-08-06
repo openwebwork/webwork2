@@ -1,12 +1,11 @@
 % use WeBWorK::PG;
 %
-% my $contrib_exists = -r $ce->{courseDirs}{templates} . '/Contrib';
-%
 <div class="d-flex flex-wrap justify-content-center">
 	<%= submit_button maketext('View Problems'), name => $internal_name, class => 'btn btn-secondary btn-sm mb-2' =%>
 	%
 	<div class="d-inline-block ms-2 mb-2">
-		<%= label_for 'problem_displaymode' => maketext('Display Mode:'), class => 'col-form-label col-form-label-sm' =%>
+		<%= label_for 'problem_displaymode' => maketext('Display Mode:'),
+			class => 'col-form-label col-form-label-sm' =%>
 		<%= select_field 'problem_displaymode' => [
 				(
 					map { [ $_ => $_, $_ eq $ce->{pg}{options}{displayMode} ? (selected => undef) : () ] }
@@ -25,26 +24,8 @@
 		<%= select_field max_shown => [ 5, 10, 15, [ 20 => 20, selected => undef ], 25, 30, 50, 'All' ],
 			id => 'max_shown', class => 'form-select form-select-sm d-inline w-auto' =%>
 	</div>
-	% # Option of whether to show hints and solutions
+	% # Options for whether to show hints and solutions.
 	<div class="d-inline-block ms-2 mb-2">
-		% if ($contrib_exists) {
-			<div class="form-check form-check-inline ms-2">
-				<label class="form-check-label col-form-label-sm">
-					% param('includeOPL', 'on') unless defined param('includeOPL');
-					<%= check_box includeOPL => 'on', class => 'form-check-input me-1' =%>
-					<%= maketext('Include OPL') =%>
-					<%= hidden_field includeOPL => 0 =%>
-				</label>
-			</div>
-			<div class="form-check form-check-inline ms-2">
-				<label class="form-check-label col-form-label-sm">
-					<%= check_box includeContrib => 'on', class => 'form-check-input me-1' =%>
-					<%= maketext('Include Contrib') =%>
-				</label>
-			</div>
-		% } else {
-			<%= hidden_field includeOPL => 1 =%>
-		% }
 		<div class="form-check form-check-inline ms-2">
 			<label class="form-check-label col-form-label-sm">
 				<%= check_box showHints => 'on', class => 'form-check-input me-1' =%>

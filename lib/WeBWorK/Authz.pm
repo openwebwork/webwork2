@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -59,8 +59,9 @@ activity, regardless of their permission level.
 use strict;
 use warnings;
 use Carp qw/croak/;
-# FIXME SET: set-level auth add
-use WeBWorK::Utils qw(before after between is_restricted);
+
+use WeBWorK::Utils::DateTime qw(before);
+use WeBWorK::Utils::Sets qw(is_restricted);
 use WeBWorK::Authen::Proctor;
 use Net::IP;
 use Scalar::Util qw(weaken);
@@ -263,7 +264,7 @@ sub hasPermissions {
 				# Elevate all permissions greater than a student in the admin course to the
 				# create_and_delete_courses level.  This way a user either has access to all
 				# or only student level permissions tools in the admin course.
-				if (defined($ce->{courseName}) && $ce->{courseName} eq 'admin') {
+				if (defined($ce->{courseName}) && $ce->{courseName} eq $ce->{admin_course_id}) {
 					my $admin_permlevel = $userRoles->{ $permissionLevels->{create_and_delete_courses} };
 					$role_permlevel = $admin_permlevel
 						if $role_permlevel > $userRoles->{student} && $role_permlevel < $admin_permlevel;

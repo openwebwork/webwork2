@@ -1,3 +1,10 @@
+% use WeBWorK::CourseEnvironment;
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/Config/config.js'), defer => undef =%>
+% end
+%
 % unless ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
 	<div class="alert alert-danger p-1 mb-0">
 		<em><%= maketext('You are not authorized to modify the course configuration.') %></em>
@@ -5,51 +12,73 @@
 	% last;
 % }
 %
-% my $configValues = $c->getConfigValues($ce);
+% # Get a course environment without course.conf for site default values.
+% my $default_ce = WeBWorK::CourseEnvironment->new;
 %
 % # Get the current course environment again in case changes were just saved.
-% my $ce4 = WeBWorK::CourseEnvironment->new({ courseName => $ce->{courseName}, });
+% my $ce3 = WeBWorK::CourseEnvironment->new({ courseName => $ce->{courseName} });
 %
-% if (@$configValues == 0) {
-	<p>
-		<%= maketext(
-			'The configuration module did not find the data it needs to function.  '
-				. 'Have your site administrator check that site configuration files are up to date.'
-		) =%>
-	</p>
-% } else {
-	% my $current_tab = param('section_tab') || 'tab0';
-	<%= $c->generate_navigation_tabs($current_tab, map { $_->[0] } @$configValues) =%>
+<%= form_for current_route, method => 'POST', id => 'config-form', name => 'config-form', begin =%>
+	<%= $c->hidden_authen_fields =%>
 	%
-	<%= form_for current_route, method => 'POST', id => 'config-form', name => 'config-form', begin =%>
-		<%= $c->hidden_authen_fields =%>
-		<%= hidden_field section_tab => $current_tab =%>
+	% param('current_tab', 'General') unless param('current_tab');
+	<%= hidden_field current_tab => param('current_tab') =%>
+	% for my $configSection (@$configValues) {
+		% my $sectionName = shift @$configSection;
+		% my $id          = lc($sectionName =~ s|[/ ]|-|gr);
 		%
-		% my $tabnumber = $current_tab =~ s/tab//r;
-		% my @configSectionArray = @{ $configValues->[$tabnumber] };
+		% content_for config_tabs => begin
+			<%= tag 'button',
+				type            => 'button',
+				id              => "$id-tab",
+				class           => 'tab-link nav-link' . ($sectionName eq param('current_tab') ? ' active' : ''),
+				role            => 'tab',
+				'aria-controls' => $id,
+				'aria-selected' => $sectionName eq param('current_tab') ? 'true' : 'false',
+				data            => { bs_toggle => 'tab', bs_target => "#$id", tab => $sectionName },
+				maketext($sectionName) =%>
+		% end
 		%
-		<h2><b><%= maketext(shift @configSectionArray) %></b></h2>
-		%
-		<div class="table-responsive">
-			<table class="table table-bordered align-middle">
-				<tr>
-					<th><%= maketext('Setting') %></th>
-					<th class="text-center"><%= maketext('Default') %></th>
-					<th class="text-center"><%= maketext('Current') %></th>
-				</tr>
-				% for my $con (@configSectionArray) {
-					% my $conobject = $c->objectify($con);
-					% my $name      = ($conobject->{var} =~ s/[{]/-/gr) =~ s/[}]//gr;
-					<tr>
-						<td><%= $conobject->what_string %></td>
-						<td class="text-center">
-							<%= $conobject->display_value($con->get_value($c->{default_ce})) %>
-						</td>
-						<td><%= $conobject->entry_widget($con->get_value($ce4)) =%></td>
-					</tr>
-				% }
-			</table>
+		% content_for config_tabs_content => begin
+			<div class="tab-pane fade show<%= $sectionName eq param('current_tab') ? ' active' : '' %>"
+				id="<%= $id %>" role="tabpanel" aria-labelledby="<%= $id %>-tab" tabindex="0">
+				<h2><b><%= maketext($sectionName) %></b></h2>
+				<div class="table-responsive">
+					<table class="table table-bordered align-middle">
+						<tr>
+							<th><%= maketext('Setting') %></th>
+							<th class="text-center"><%= maketext('Default') %></th>
+							<th class="text-center"><%= maketext('Current') %></th>
+						</tr>
+						% for my $con (@$configSection) {
+							% my $conobject = $c->objectify($con);
+							% next if (
+								% defined $ce->{permissionLevels}{"change_config_$conobject->{var}"}
+								% && !$authz->hasPermissions(param('user'), "change_config_$conobject->{var}")
+							% );
+							% # Hide sensitive variables from being displayed.
+							% my $default_value = $conobject->get_value($default_ce);
+							% my $current_value = $conobject->get_value($ce3);
+							% my $is_secret = $conobject->{secret} && $default_value eq $current_value ? 1 : 0;
+							<tr>
+								<td><%= $conobject->what_string %></td>
+								<td class="text-center">
+									<%= $conobject->display_value($conobject->get_value($default_ce)) %>
+								</td>
+								<td><%= $conobject->entry_widget($conobject->get_value($ce3), $is_secret) =%></td>
+							</tr>
+						% }
+					</table>
+				</div>
+			</div>
+		% end
+	% }
+	<nav>
+		<div class="config-tabs nav nav-pills justify-content-center my-4" role="tablist">
+			<%= content 'config_tabs' =%>
 		</div>
-		<p><%= submit_button maketext('Save Changes'), name => 'make_changes',  class => 'btn btn-primary' =%></p>
-	<% end =%>
-% }
+	</nav>
+	<div class="tab-content"><%= content 'config_tabs_content' =%></div>
+	%
+	<p><%= submit_button maketext('Save Changes'), name => 'make_changes',  class => 'btn btn-primary' =%></p>
+<% end =%>

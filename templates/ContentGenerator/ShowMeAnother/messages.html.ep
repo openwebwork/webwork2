@@ -1,12 +1,12 @@
-% use WeBWorK::Utils qw(before after);
+% use WeBWorK::Utils::DateTime qw(before after);
 %
 % if ($c->{pg}{result}{msg}) {
 	<p><b><%= maketext('Note') %>:</b> <i><%== $c->{pg}{result}{msg} %></i></p>
 % }
 %
 % if ($c->{pg}{flags}{hintExists}
-	% && $authz->hasPermissions($c->{userName}, 'always_show_hint')
-	% && !$c->{options}{showHints}) {
+	% && $authz->hasPermissions($c->{userID}, 'always_show_hint')
+	% && !$c->{showMeAnother}{options}{showHints}) {
 	% my $showHintsAfter =
 		% $c->{set}->hide_hint                 ? -1
 		% : $c->{problem}->showHintsAfter > -2 ? $c->{problem}->showHintsAfter
@@ -25,14 +25,25 @@
 % }
 %
 % if ($c->{pg}{flags}{solutionExists}
-	% && $authz->hasPermissions($c->{userName}, 'always_show_solution')
-	% && !$c->{options}{showSolutions}) {
+	% && $authz->hasPermissions($c->{userID}, 'always_show_solution')
+	% && !$c->{showMeAnother}{options}{showSolutions}) {
 	<p>
 		<b><%= maketext('Note') %>:</b>
 		<i>
 			<%= maketext('The solution shown is an instructor preview and '
-				. 'will only be shown to students after the due date.'
+				. 'will only be shown to students after the answer date.'
 			) =%>
+		</i>
+	</p>
+% }
+%
+% if ($authz->hasPermissions($c->{userID}, 'show_correct_answers_before_answer_date')
+	% && !$c->{showMeAnother}{options}{showCorrect}) {
+	<p>
+		<b><%= maketext('Note') %>:</b>
+		<i>
+			<%= maketext('The correct answers shown in feedback are instructor previews and '
+				. 'will only be shown to students after the answer date.') =%>
 		</i>
 	</p>
 % }

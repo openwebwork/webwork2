@@ -2,7 +2,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -111,7 +111,7 @@ foreach my $courseID (@courses) {
 		print "\n";
 	}
 
-	next if $courseID eq 'admin' || $courseID eq 'modelCourse';
+	next if $courseID eq $ce->{admin_course_id} || $courseID eq 'modelCourse';
 
 	# we extract the identifying information of the problem,
 	# the status, attempted flag, number of attempts.

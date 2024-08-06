@@ -3,7 +3,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -54,18 +54,14 @@ my @applicationsList = qw(
 	gzip
 	latex
 	pandoc
-	pdf2svg
-	pdflatex
+	xelatex
 	dvipng
-	giftopnm
-	ppmtopgm
-	pnmtops
-	pnmtopng
-	pngtopnm
 );
 
 my @modulesList = qw(
+	Archive::Tar
 	Archive::Zip
+	Archive::Zip::SimpleZip
 	Array::Utils
 	Benchmark
 	Carp
@@ -90,6 +86,7 @@ my @modulesList = qw(
 	Errno
 	Exception::Class
 	File::Copy
+	File::Copy::Recursive
 	File::Fetch
 	File::Find
 	File::Find::Rule
@@ -99,6 +96,7 @@ my @modulesList = qw(
 	File::Temp
 	Future::AsyncAwait
 	GD
+	GD::Barcode::QRcode
 	Getopt::Long
 	Getopt::Std
 	HTML::Entities
@@ -114,6 +112,7 @@ my @modulesList = qw(
 	Locale::Maketext::Lexicon
 	Locale::Maketext::Simple
 	LWP::Protocol::https
+	MIME::Base32
 	MIME::Base64
 	Math::Random::Secure
 	Minion
@@ -140,6 +139,7 @@ my @modulesList = qw(
 	Scalar::Util
 	SOAP::Lite
 	Socket
+	SQL::Abstract
 	Statistics::R::IO
 	String::ShellQuote
 	SVG
@@ -163,9 +163,10 @@ my %moduleVersion = (
 	'Future::AsyncAwait'   => 0.52,
 	'IO::Socket::SSL'      => 2.007,
 	'LWP::Protocol::https' => 6.06,
-	'Mojolicious'          => 9.22,
+	'Mojolicious'          => 9.34,
 	'Net::SSLeay'          => 1.46,
-	'Perl::Tidy'           => 20220613
+	'Perl::Tidy'           => 20220613,
+	'SQL::Abstract'        => 2.000000
 );
 
 my ($test_programs, $test_modules, $show_help);
@@ -208,9 +209,8 @@ sub check_apps {
 	my $node_version_str = qx/node -v/;
 	my ($node_version) = $node_version_str =~ m/v(\d+)\./;
 
-	if ($node_version != 16) {
-		print "\n\n**The version of node should be 16.  You have version $node_version";
-	}
+	print "\n\n**The version of node should be at least 16.  You have version $node_version"
+		if ($node_version < 16);
 }
 
 sub which {
@@ -248,29 +248,6 @@ sub check_modules {
 		} else {
 			print "   $module found and loaded\n";
 		}
-	}
-	checkSQLabstract();
-}
-
-## this is specialized code to check for either SQL::Abstract or SQL::Abstract::Classic
-
-sub checkSQLabstract {
-	print "\n checking for SQL::Abstract\n\n";
-	eval "use SQL::Abstract";
-	my $sql_abstract         = not($@);
-	my $sql_abstract_version = $SQL::Abstract::VERSION if $sql_abstract;
-
-	eval "use SQL::Abstract::Classic";
-	my $sql_abstract_classic = not($@);
-
-	if ($sql_abstract_classic) {
-		print qq/ You have SQL::Abstract::Classic installed. This package will be used if either
- the installed version of SQL::Abstract is version > 1.87 or if that package is not installed.\n/;
-	} elsif ($sql_abstract && $sql_abstract_version <= 1.87) {
-		print "You have version $sql_abstract_version of SQL::Abstract installed.  This will be used\n";
-	} else {
-		print qq/You need either SQL::Abstract version <= 1.87 or need to install SQL::Abstract::Classic.
- If you are using cpan or cpanm, it is recommended to install SQL::Abstract::Classic.\n/;
 	}
 }
 

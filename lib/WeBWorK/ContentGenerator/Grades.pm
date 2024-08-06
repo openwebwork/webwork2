@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,7 +22,10 @@ WeBWorK::ContentGenerator::Grades - Display statistics by user.
 
 =cut
 
-use WeBWorK::Utils qw(jitar_id_to_seq wwRound after grade_set format_set_name_display);
+use WeBWorK::Utils qw(wwRound);
+use WeBWorK::Utils::DateTime qw(after);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
+use WeBWorK::Utils::Sets qw(grade_set format_set_name_display);
 use WeBWorK::Localize;
 
 sub initialize ($c) {
@@ -263,7 +266,7 @@ sub displayStudentStats ($c, $studentID) {
 								after($set->open_date) ? $c->maketext('No versions of this test have been taken.')
 								: $c->maketext(
 									'Will open on [_1].',
-									$c->formatDateTime($set->open_date, undef, $ce->{studentDateDisplayFormat})
+									$c->formatDateTime($set->open_date, $ce->{studentDateDisplayFormat})
 								)
 							)
 						)
@@ -441,7 +444,7 @@ sub displayStudentStats ($c, $studentID) {
 								'em',
 								$c->maketext(
 									'Will open on [_1].',
-									$c->formatDateTime($set->open_date, undef, $ce->{studentDateDisplayFormat})
+									$c->formatDateTime($set->open_date, $ce->{studentDateDisplayFormat})
 								)
 							)
 						)

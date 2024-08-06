@@ -1,0 +1,38 @@
+## DESCRIPTION
+## Hardcopies
+## ENDDESCRIPTION
+
+DOCUMENT();
+
+loadMacros(qw(
+    PGstandard.pl
+    PGML.pl
+    PGcourse.pl
+));
+
+$a = random(100, 900);
+
+BEGIN_PGML
+## PDF Hardcopy ##
+
+From the *Assignments* page (which you may or may not have permission to visit), you may push a download button[@
+    MODES(
+        HTML => ' <i class="hardcopy-tooltip icon far fa-arrow-alt-circle-down fa-lg"></i>',
+        TeX => ''
+    )
+@]* to download a PDF version. Alternatively, when you are at the page listing all of one set's exercises, there is a
+"Download Hardcopy for Current Set" button.
+
+This file is something that you can read onscreen while you are offline. You can even print it off and take it to a
+tutoring center or somewhere comfortable to work on. If you would like a Braille file for the assignment, that may be
+possible with some assistance from your institutional staff.
+
+To check that you understand how this works, download the PDF version of this Orientation assignment. At the end of
+this problem in the PDF, you will find the answer that is expected here: [_]{Compute("$a")}{4}
+
+[@ if ($displayMode eq 'TeX') {"The answer is $a."} @]
+
+[@ MODES(HTML => 'When you are ready, click "Next Problem".', TeX => '') @]
+END_PGML
+
+ENDDOCUMENT();

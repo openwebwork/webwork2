@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(format_set_name_display);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 % my $selected_set = param('local_sets') // '';
 %
@@ -39,10 +39,10 @@
 <div class="d-flex justify-content-center">
 	<label class="col-form-label-sm mb-2 me-1"><%= maketext('Browse') %></label>
 	<div class="d-flex flex-wrap justify-content-center">
-		<%= submit_button maketext('Open Problem Library'), name => 'browse_npl_library',
+		<%= submit_button maketext('Open Problem Library'), name => 'browse_opl',
 			class => 'browse-lib-btn btn btn-secondary btn-sm mb-2 mx-1',
-			$browse_which eq 'browse_npl_library' ? (disabled => undef) : () =%>
-		<%= submit_button maketext('File Manager'), name => 'browse_local',
+			$browse_which eq 'browse_opl' ? (disabled => undef) : () =%>
+		<%= submit_button maketext('Course Files'), name => 'browse_local',
 			class => 'browse-lib-btn btn btn-secondary btn-sm mb-2 mx-1',
 			$browse_which eq 'browse_local' ? (disabled => undef) : () =%>
 		<%= submit_button maketext('Course Sets'), name => 'browse_course_sets',
@@ -73,7 +73,7 @@
 % } elsif ($browse_which eq 'browse_course_sets') {
 	<%= include 'ContentGenerator/Instructor/SetMaker/browse_course_sets_panel',
 		selected_library => $c->{current_library_set} =%>
-% } elsif ($browse_which eq 'browse_npl_library') {
+% } elsif ($browse_which eq 'browse_opl') {
 	<%= include 'ContentGenerator/Instructor/SetMaker/browse_library_panel' =%>
 % } elsif ($browse_which eq 'browse_setdefs') {
 	<%= include 'ContentGenerator/Instructor/SetMaker/browse_setdef_panel',

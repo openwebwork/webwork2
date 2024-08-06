@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,7 +29,7 @@ use File::Find;
 
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(jitar_id_to_seq seq_to_jitar_id);
+use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
 
 our @EXPORT_OK = qw(
 	assignSetToUser
@@ -46,8 +46,6 @@ our @EXPORT_OK = qw(
 	assignProblemToAllSetUsers
 	assignMultipleProblemsToGivenUsers
 	addProblemToSet
-	read_dir
-	getCSVList
 	getDefList
 );
 
@@ -636,27 +634,6 @@ sub addProblemToSet {
 =cut
 
 ################################################################################
-# Utility methods
-################################################################################
-
-=head2 Utility methods
-
-=over
-
-=cut
-
-sub read_dir {    # read a directory
-	my $directory = shift;
-	my $pattern   = shift;
-	my @files     = sort grep {/$pattern/} WeBWorK::Utils::readDirectory($directory);
-	return @files;
-}
-
-=back
-
-=cut
-
-################################################################################
 # Methods for listing various types of files
 ################################################################################
 
@@ -665,13 +642,6 @@ sub read_dir {    # read a directory
 =over
 
 =cut
-
-# list classlist files
-sub getCSVList {
-	my ($ce) = @_;
-	my $dir = $ce->{courseDirs}{templates};
-	return grep { not m/^\./ and m/\.lst$/ and -f "$dir/$_" } WeBWorK::Utils::readDirectory($dir);
-}
 
 sub loadSetDefListFile {
 	my $file = shift;
@@ -701,33 +671,45 @@ sub getDefList {
 
 	my @found_set_defs;
 
-	# get_set_defs_wanted is a closure over @found_set_defs
-	my $get_set_defs_wanted = sub {
-		if ($File::Find::dir =~ /^$topdir\/Library/ || $File::Find::dir =~ /^$topdir\/Contrib/) {
-			$File::Find::prune = 1;
-			return;
-		}
-		if (@{ [ $File::Find::dir =~ /\//g ] } > $max_depth) { $File::Find::prune = 1; return; }
-		push @found_set_defs, $_ =~ s|^$topdir/?||r if m|/set[^/]*\.def$|;
-	};
-
-	find({ wanted => $get_set_defs_wanted, follow_fast => 1, no_chdir => 1 }, $topdir);
+	find(
+		{
+			wanted => sub {
+				if ($File::Find::dir =~ /^$topdir\/Library/
+					|| $File::Find::dir =~ /^$topdir\/Contrib/
+					|| $File::Find::dir =~ /^$topdir\/capaLibrary/)
+				{
+					$File::Find::prune = 1;
+					return;
+				}
+				if (@{ [ $File::Find::dir =~ /\//g ] } > $max_depth) { $File::Find::prune = 1; return; }
+				push @found_set_defs, $_ =~ s|^$topdir/?||r if m|/set[^/]*\.def$|;
+			},
+			follow_fast => 1,
+			no_chdir    => 1,
+			follow_skip => 2
+		},
+		$topdir
+	);
 
 	# Load the OPL set definition files from the list file.
 	push(@found_set_defs, loadSetDefListFile("$ce->{webworkDirs}{htdocs}/DATA/library-set-defs.json"))
-		if ($ce->{options}{useOPLdefFiles});
+		if -d "$ce->{courseDirs}{templates}/Library" && -r "$ce->{courseDirs}{templates}/Library";
 
 	# Load the Contrib set definition files from the list file.
 	push(@found_set_defs, loadSetDefListFile("$ce->{webworkDirs}{htdocs}/DATA/contrib-set-defs.json"))
-		if ($ce->{options}{useContribDefFiles});
+		if -d "$ce->{courseDirs}{templates}/Contrib" && -r "$ce->{courseDirs}{templates}/Contrib";
 
+	my @lib_order;
 	my @depths;
 	my @caps;
 	for (@found_set_defs) {
+		push(@lib_order, $_ =~ m|^Library/| ? 2 : $_ =~ m|^Contrib/| ? 3 : 1);
 		push @depths, scalar(@{ [ $_ =~ /\//g ] });
 		push @caps,   uc($_);
 	}
-	return @found_set_defs[ sort { $depths[$a] <=> $depths[$b] || $caps[$a] cmp $caps[$b] } 0 .. $#found_set_defs ];
+	return @found_set_defs[
+		sort { $lib_order[$a] <=> $lib_order[$b] || $depths[$a] <=> $depths[$b] || $caps[$a] cmp $caps[$b] }
+		0 .. $#found_set_defs ];
 }
 
 =back

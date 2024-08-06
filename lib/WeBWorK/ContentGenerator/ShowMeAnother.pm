@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -23,123 +23,74 @@ WeBWorK::ContentGenerator::ShowMeAnother - Show students alternate versions of c
 =cut
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(wwRound before after jitar_id_to_seq format_set_name_display);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 async sub pre_header_initialize ($c) {
-	my $ce    = $c->ce;
-	my $db    = $c->db;
-	my $authz = $c->authz;
+	my $ce = $c->ce;
+	my $db = $c->db;
 
-	my $setName           = $c->stash('setID');
-	my $problemNumber     = $c->stash('problemID');
-	my $userName          = $c->param('user');
-	my $effectiveUserName = $c->param('effectiveUser');
-	my $key               = $c->param('key');
-	my $editMode          = $c->param('editMode');
+	# Remove the showMeAnother session key if it used for another set or problem.
+	delete $c->authen->session->{showMeAnother}
+		if $c->authen->session->{showMeAnother}
+		&& (
+			(
+				defined $c->authen->session->{showMeAnother}{setID}
+				&& $c->authen->session->{showMeAnother}{setID} ne $c->stash('setID')
+			)
+			|| (defined $c->authen->session->{showMeAnother}{problemID}
+				&& $c->authen->session->{showMeAnother}{problemID} ne $c->stash('problemID'))
+		);
 
-	# We want to run the existing pre_header_initialize with
-	# the database seed to get a pure copy of the original problem
-	# to test against.
+	# Run the parent package pre_header_initialize to initialize data used by this package.
+	# FIXME: This is highly inefficient. At the very least it results in yet another renderPG call (generally a very
+	# expensive call) that is not used. There are also many things done by the parent package in initialization that
+	# shouldn't be done for this package (like processing for problem randomization).
+	await $c->SUPER::pre_header_initialize;
 
-	my $problemSeed = $c->param('problemSeed');
-	$c->param('problemSeed', '');
-
-	# Run existsing initialization
-	await $c->SUPER::pre_header_initialize();
-
-	# This has to be set back because of sticky params.
-	$c->param('problemSeed', $problemSeed);
-
-	my $user           = $c->{user};
-	my $effectiveUser  = $c->{effectiveUser};
-	my $set            = $c->{set};
-	my $problem        = $c->{problem};
-	my $displayMode    = $c->{displayMode};
-	my $redisplay      = $c->{redisplay};
-	my $submitAnswers  = $c->{submitAnswers};
-	my $checkAnswers   = $c->{checkAnswers};
-	my $previewAnswers = $c->{previewAnswers};
-	my $formFields     = $c->{formFields};
-
-	# a hash containing information for showMeAnother
-	#   active:        has the button been pushed?
-	#   CheckAnswers:  has the user clicked Check Answers while SMA is active
-	#   IsPossible:    checks to see if generating a new seed changes the problem (assume it is possible by default)
-	#   TriesNeeded:   the number of times the student needs to attempt the problem before the button is available
-	#   MaxReps:       the Maximum Number of times that showMeAnother can be clicked (specified in course configuration)
-	#   options:       the options available when showMeAnother has been pushed (check answers, see solution (when
-	#                  available), see correct answer) these are set via check boxes from the configuration screen
-	#   Count:         the number of times the student has clicked SMA (or clicked refresh on the page)
-	#   Preview:       has the preview button been clicked while SMA is active?
-
-	my %SMAoptions    = map { $_ => 1 } @{ $ce->{pg}{options}{showMeAnother} };
-	my %showMeAnother = (
-		active => !($checkAnswers or $previewAnswers)
-			&& $ce->{pg}{options}{enableShowMeAnother}
-			&& ($problem->{showMeAnother} > -1 || $problem->{showMeAnother} == -2),
-		CheckAnswers => $checkAnswers
-			&& $c->param('showMeAnotherCheckAnswers')
-			&& $ce->{pg}{options}{enableShowMeAnother},
-		IsPossible  => 1,
-		TriesNeeded => $problem->{showMeAnother},
-		MaxReps     => $ce->{pg}{options}{showMeAnotherMaxReps},
-		options     => {
-			checkAnswers  => exists($SMAoptions{'SMAcheckAnswers'}),
-			showSolutions => exists($SMAoptions{'SMAshowSolutions'}),
-			showCorrect   => exists($SMAoptions{'SMAshowCorrect'}),
-			showHints     => exists($SMAoptions{'SMAshowHints'}),
-		},
-		Count   => $problem->{showMeAnotherCount},
-		Preview => $previewAnswers
-			&& $c->param('showMeAnotherCheckAnswers')
-			&& $ce->{pg}{options}{enableShowMeAnother}
-	);
-
-	# if $showMeAnother{Count} is somehow not an integer, make it one
-	$showMeAnother{Count} = 0 unless $showMeAnother{Count} =~ /^[+-]?\d+$/;
-
-	# if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
-	$showMeAnother{TriesNeeded} = $ce->{pg}{options}{showMeAnotherDefault}
-		if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
-
-	# store the showMeAnother hash for the check to see if the button can be used
-	# (this hash is updated and re-stored after the can, must, will hashes)
-	$c->{showMeAnother} = \%showMeAnother;
-
-	# Show a message if we aren't allowed to show me another here.
-	unless ($c->can_showMeAnother($user, $effectiveUser, $set, $problem, 0)) {
-		$c->addbadmessage('You are not allowed to use Show Me Another for this problem.');
+	unless ($c->{can}{showMeAnother}) {
+		delete $c->authen->session->{showMeAnother};
 		return;
 	}
 
-	my $want = $c->{want};
-	$want->{showMeAnother} = 1;
+	# Note that a hash containing the following information for showMeAnother is set by the parent package.
+	#   TriesNeeded:   The number of times the student needs to attempt this problem before the button is available.
+	#   MaxReps:       The maximum number of times that showMeAnother can be used for this problem.
+	#   Count:         The number of times the student has used showMeAnother for this problem..
+	#                  checked or previewed.
 
-	my $must = $c->{must};
-	$must->{showMeAnother} = 0;
+	my $initializeSMA = !$c->authen->session->{showMeAnother}
+		|| ($c->authen->session->{showMeAnother}
+			&& !($c->{checkAnswers} || $c->{previewAnswers} || $c->param('showCorrectAnswers')));
 
-	# does the user have permission to use certain options?
-	my @args = ($user, $effectiveUser, $set, $problem);
+	# This will be set to true if changing the seed changes the problem (assume this is NOT the case by default).
+	$c->stash->{isPossible} = 0;
 
-	my $can = $c->{can};
-	$can->{showMeAnother} = $c->can_showMeAnother(@args, $submitAnswers);
+	# The options available when showMeAnother is active. These are set via course configuration options.
+	my %SMAOptions = map { $_ => 1 } @{ $ce->{pg}{options}{showMeAnother} };
+	$c->stash->{options} =
+		{ map { $_ => exists($SMAOptions{"SMA$_"}) } qw(checkAnswers showSolutions showCorrect showHints) };
 
-	# store text of original problem for later comparison with text from problem with new seed
+	$c->{want}{showMeAnother} = 1;
+
+	# Store text of original problem for later comparison with text from problem with new seed.
 	my $showMeAnotherOriginalPG = await renderPG(
 		$c,
-		$effectiveUser,
-		$set, $problem,
-		$set->psvn,
-		$formFields,
-		{    # translation options
+		$c->{effectiveUser},
+		$c->{set},
+		$c->{problem},
+		$c->{set}->psvn,
+		$c->{formFields},
+		{
 			displayMode              => 'plainText',
 			showHints                => 0,
 			showSolutions            => 0,
+			forceScaffoldsOpen       => 1,
 			refreshMath2img          => 0,
-			processAnswers           => 0,
-			permissionLevel          => $db->getPermissionLevel($userName)->permission,
-			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+			processAnswers           => 1,
+			permissionLevel          => $db->getPermissionLevel($c->{userID})->permission,
+			effectivePermissionLevel => $db->getPermissionLevel($c->{effectiveUserID})->permission,
 			useMathQuill             => $c->{will}{useMathQuill},
 			useMathView              => $c->{will}{useMathView},
 		},
@@ -151,31 +102,33 @@ async sub pre_header_initialize ($c) {
 			if defined $showMeAnotherOriginalPG->{resource_list}{$_};
 	}
 
-	# if showMeAnother is active, then output a new problem in a new tab with a new seed
-	if ($showMeAnother{active} and $can->{showMeAnother}) {
-
-		# change the problem seed
-		my $oldProblemSeed = $problem->{problem_seed};
+	# If showMeAnother is being initialized and the user can use showMeAnother,
+	# then output a new problem in a new tab with a new seed.
+	if ($initializeSMA) {
+		# Change the problem seed.
+		my $oldProblemSeed = $c->{problem}{problem_seed};
 		my $newProblemSeed;
 
-		# check to see if changing the problem seed will change the problem
+		# Check to see if changing the problem seed will change the problem.
 		for my $i (0 .. $ce->{pg}{options}{showMeAnotherGeneratesDifferentProblem}) {
 			do { $newProblemSeed = int(rand(10000)) } until ($newProblemSeed != $oldProblemSeed);
-			$problem->{problem_seed} = $newProblemSeed;
+			$c->{problem}->problem_seed($newProblemSeed);
 			my $showMeAnotherNewPG = await renderPG(
 				$c,
-				$effectiveUser,
-				$set, $problem,
-				$set->psvn,
-				$formFields,
-				{    # translation options
+				$c->{effectiveUser},
+				$c->{set},
+				$c->{problem},
+				$c->{set}->psvn,
+				$c->{formFields},
+				{
 					displayMode              => 'plainText',
 					showHints                => 0,
 					showSolutions            => 0,
+					forceScaffoldsOpen       => 1,
 					refreshMath2img          => 0,
-					processAnswers           => 0,
-					permissionLevel          => $db->getPermissionLevel($userName)->permission,
-					effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+					processAnswers           => 1,
+					permissionLevel          => $db->getPermissionLevel($c->{userID})->permission,
+					effectivePermissionLevel => $db->getPermissionLevel($c->{effectiveUserID})->permission,
 					useMathQuill             => $c->{will}{useMathQuill},
 					useMathView              => $c->{will}{useMathView},
 				},
@@ -187,122 +140,89 @@ async sub pre_header_initialize ($c) {
 					if defined $showMeAnotherNewPG->{resource_list}{$_};
 			}
 
-			# check to see if we've found a new version
-			if ($new_body_text ne $orig_body_text) {
-				# if we've found a new version, then
-				# increment the counter detailing the number of times showMeAnother has been used
-				# unless we're trying to check answers from the showMeAnother screen
-				unless ($showMeAnother{CheckAnswers}) {
+			# Check to see a new version has been found.
+			if ($new_body_text ne $orig_body_text
+				|| have_different_answers($showMeAnotherNewPG, $showMeAnotherOriginalPG))
+			{
+				# Increment the counter detailing the number of times showMeAnother has been used,
+				# and update the database.
+				my $userProblem =
+					$db->getUserProblem($c->{effectiveUserID}, $c->stash('setID'), $c->stash('problemID'));
+				$userProblem->{showMeAnotherCount} = ++$c->{showMeAnother}{Count};
+				$db->putUserProblem($userProblem);
 
-					$showMeAnother{Count}++ unless ($showMeAnother{CheckAnswers});
-					# update the database (make sure to put the old problem seed back in)
-					my $userProblem = $db->getUserProblem($effectiveUserName, $setName, $problemNumber);
-					$userProblem->{showMeAnotherCount} = $showMeAnother{Count};
-					$db->putUserProblem($userProblem);
-				}
+				# Save the problem seed from ShowMeAnother so that it can be used when the page reloads.
+				$c->authen->session->{showMeAnother}{problemSeed} = $newProblemSeed;
+				$c->authen->session->{showMeAnother}{problemID}   = $c->stash('problemID');
+				$c->authen->session->{showMeAnother}{setID}       = $c->stash('setID');
 
-				# make sure to switch on the possibility
-				$showMeAnother{IsPossible} = 1;
-
-				# exit the loop
+				$c->stash->{isPossible} = 1;
 				last;
 			} else {
-				# otherwise a new version was *not* found, and
-				# showMeAnother is not possible
-				$showMeAnother{IsPossible} = 0;
+				delete $c->authen->session->{showMeAnother};
 			}
 		}
-
-	} elsif (($showMeAnother{CheckAnswers} or $showMeAnother{Preview})
-		&& defined($problemSeed)
-		&& $problemSeed != $problem->problem_seed)
-	{
-		$showMeAnother{IsPossible} = 1;
-		$problem->problem_seed($problemSeed);
-		#### One last check to see if students  have hard coded in a key
-		#### which matches the original problem
-		my $showMeAnotherNewPG = await renderPG(
-			$c,
-			$effectiveUser,
-			$set, $problem,
-			$set->psvn,
-			$formFields,
-			{    # translation options
-				displayMode              => 'plainText',
-				showHints                => 0,
-				showSolutions            => 0,
-				refreshMath2img          => 0,
-				processAnswers           => 0,
-				permissionLevel          => $db->getPermissionLevel($userName)->permission,
-				effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
-				useMathQuill             => $c->{will}{useMathQuill},
-				useMathView              => $c->{will}{useMathView},
-			},
-		);
-
-		if ($showMeAnotherNewPG->{body_text} eq $showMeAnotherOriginalPG->{body_text}) {
-			$showMeAnother{IsPossible}   = 0;
-			$showMeAnother{CheckAnswers} = 0;
-			$showMeAnother{Preview}      = 0;
-		}
-
+	} elsif ($c->{checkAnswers} || $c->{previewAnswers} || $c->param('showCorrectAnswers')) {
+		$c->stash->{isPossible} = 1;
+		$c->{problem}->problem_seed($c->authen->session->{showMeAnother}{problemSeed});
 	} else {
-		$showMeAnother{IsPossible}   = 0;
-		$showMeAnother{CheckAnswers} = 0;
-		$showMeAnother{Preview}      = 0;
+		delete $c->authen->session->{showMeAnother};
 	}
 
-	# if showMeAnother is active, then disable all other options
-	if (($showMeAnother{active} || $showMeAnother{CheckAnswers} || $showMeAnother{Preview}) && $can->{showMeAnother}) {
-		$can->{recordAnswers}   = 0;
-		$can->{checkAnswers}    = 0;    # turned on if showMeAnother conditions met below
-		$can->{getSubmitButton} = 0;
+	# Disable options that are not applicable for showMeAnother.
+	$c->{can}{recordAnswers}     = 0;
+	$c->{can}{checkAnswers}      = 0;    # This is turned on if the showMeAnother conditions are met below.
+	$c->{can}{getSubmitButton}   = 0;
+	$c->{can}{showProblemGrader} = 0;
 
-		# only show solution if showMeAnother has been clicked (or refreshed)
-		# less than the maximum amount allowed specified in Course Configuration,
-		# and also make sure that showMeAnother is possible
-		if (($showMeAnother{Count} <= $showMeAnother{MaxReps} || $showMeAnother{MaxReps} == -1)
-			&& $showMeAnother{IsPossible})
-		{
-			$can->{showCorrectAnswers} = $showMeAnother{options}{showCorrect} && $showMeAnother{options}{checkAnswers};
-			$can->{checkAnswers}       = $showMeAnother{options}{checkAnswers};
-			# If the user can see hints or solutions in the original problem, then the user is allowed to see them here
-			# as well regardless of the SMA setting.
-			$can->{showHints}     = $showMeAnother{options}{showHints}     || $c->{can}{showHints};
-			$can->{showSolutions} = $showMeAnother{options}{showSolutions} || $c->{can}{showSolutions};
-		}
+	if ($c->stash->{isPossible}) {
+		$c->{can}{showCorrectAnswers} =
+			$c->stash->{options}{showCorrect} && $c->stash->{options}{checkAnswers};
+		$c->{can}{checkAnswers} = $c->stash->{options}{checkAnswers};
+		# If the user can see hints or solutions in the original problem, then the user is allowed to see them here
+		# as well regardless of the SMA setting.
+		$c->{can}{showHints}     = $c->stash->{options}{showHints}     || $c->{can}{showHints};
+		$c->{can}{showSolutions} = $c->stash->{options}{showSolutions} || $c->{can}{showSolutions};
 	}
 
-	# final values for options
-	my $will = $c->{will};
-	foreach (keys %$must) {
-		$will->{$_} = $can->{$_} && ($want->{$_} || $must->{$_});
-	}
+	# Final values for will.
+	$c->{will}{$_} = $c->{can}{$_} && $c->{want}{$_} for keys %{ $c->{can} };
 
-	# PG problem translation
-	# Unfortunately we have to do this over because we potentially picked a new problem seed.
+	return unless $c->stash->{isPossible};
 
+	my $showOnlyCorrectAnswers = $c->param('showCorrectAnswers') && $c->{will}{showCorrectAnswers};
+
+	# Final PG problem translation.
 	debug('begin pg processing');
 	my $pg = await renderPG(
 		$c,
-		$effectiveUser,
-		$set, $problem,
-		$set->psvn,
-		$formFields,
-		{    # translation options
-			displayMode              => $displayMode,
-			showHints                => $will->{showHints},
-			showSolutions            => $will->{showSolutions},
-			refreshMath2img          => $will->{showHints} || $will->{showSolutions},
+		$c->{effectiveUser},
+		$c->{set},
+		$c->{problem},
+		$c->{set}->psvn,
+		$c->{formFields},
+		{
+			displayMode              => $c->{displayMode},
+			showHints                => $c->{will}{showHints},
+			showSolutions            => $c->{will}{showSolutions},
+			refreshMath2img          => $c->{will}{showHints} || $c->{will}{showSolutions},
 			processAnswers           => 1,
-			permissionLevel          => $db->getPermissionLevel($userName)->permission,
-			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+			permissionLevel          => $db->getPermissionLevel($c->{userID})->permission,
+			effectivePermissionLevel => $db->getPermissionLevel($c->{effectiveUserID})->permission,
 			useMathQuill             => $c->{will}{useMathQuill},
 			useMathView              => $c->{will}{useMathView},
-			forceScaffoldsOpen       => 0,
-			isInstructor             => $authz->hasPermissions($userName, 'view_answers'),
-			debuggingOptions         => getTranslatorDebuggingOptions($authz, $userName)
-		},
+			forceScaffoldsOpen       => $showOnlyCorrectAnswers,
+			isInstructor             => $c->authz->hasPermissions($c->{userID}, 'view_answers'),
+			showFeedback             => $c->{checkAnswers} || $c->{previewAnswers},
+			showAttemptAnswers       => $showOnlyCorrectAnswers ? 0 : $ce->{pg}{options}{showEvaluatedAnswers},
+			showAttemptPreviews      => !$showOnlyCorrectAnswers,
+			showAttemptResults       => $c->{checkAnswers},
+			forceShowAttemptResults  => $showOnlyCorrectAnswers,
+			showMessages             => !$showOnlyCorrectAnswers,
+			showCorrectAnswers       => $showOnlyCorrectAnswers
+				|| ($c->{will}{checkAnswers} && $c->{will}{showCorrectAnswers}) ? 1 : 0,
+			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID})
+		}
 	);
 
 	# Warnings in the renderPG subprocess will not be caught by the global warning handler of this process.
@@ -312,8 +232,8 @@ async sub pre_header_initialize ($c) {
 	debug('end pg processing');
 
 	# Update and fix hint/solution options after PG processing
-	$can->{showHints}     &&= $pg->{flags}{hintExists};
-	$can->{showSolutions} &&= $pg->{flags}{solutionExists};
+	$c->{can}{showHints}     &&= $pg->{flags}{hintExists};
+	$c->{can}{showSolutions} &&= $pg->{flags}{solutionExists};
 
 	# Record errors
 	$c->{pgdebug}          = $pg->{debug_messages}          if ref $pg->{debug_messages} eq 'ARRAY';
@@ -329,35 +249,25 @@ async sub pre_header_initialize ($c) {
 		. 'The translator died prematurely and no PG warning messages were transmitted.'
 		unless defined $c->{pgerrors};
 
-	$c->{showMeAnother} = \%showMeAnother;
-	$c->{pg}            = $pg;
+	$c->{pg} = $pg;
 
 	return;
 }
 
-# We disable showOldAnswers because old answers are answers to the original
-# question and not to this question.
-
-sub can_showOldAnswers ($c, $user, $effectiveUser, $set, $problem) {
-	return 0;
-}
+# Disable showOldAnswers because old answers are answers to the original question and not to this question.
+sub can_showOldAnswers ($c, $user, $effectiveUser, $set, $problem) { return 0 }
 
 sub page_title ($c) {
-	my $db = $c->db;
+	my $set = $c->db->getGlobalSet($c->stash('setID'));
 
-	# Using the url arguments won't break if the set/problem are invalid
-	my $setID     = $c->stash('setID');
 	my $problemID = $c->stash('problemID');
+	$problemID = join('.', jitar_id_to_seq($problemID)) if $set && $set->assignment_type eq 'jitar';
 
-	my $set = $db->getGlobalSet($setID);
-	if ($set && $set->assignment_type eq 'jitar') {
-		$problemID = join('.', jitar_id_to_seq($problemID));
-	}
 	my $header = $c->maketext('[_1]: Problem [_2] Show Me Another',
-		$c->tag('span', dir => 'ltr', format_set_name_display($setID)), $problemID);
+		$c->tag('span', dir => 'ltr', format_set_name_display($c->stash('setID'))), $problemID);
 
-	# Return here if we don't have the requisite information.
-	return $header if ($c->{invalidSet} || $c->{invalidProblem});
+	# Return here if requisite information is missing.
+	return $header if $c->{invalidSet} || $c->{invalidProblem};
 
 	my $ce      = $c->ce;
 	my $problem = $c->{problem};
@@ -373,7 +283,7 @@ sub page_title ($c) {
 
 	# This uses the permission level and user id of the user assigned to the problem.
 	my $problemUser = $problem->user_id;
-	if ($db->getPermissionLevel($problemUser)->permission >=
+	if ($c->db->getPermissionLevel($problemUser)->permission >=
 		$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
 		|| grep { $_ eq $problemUser } @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} })
 	{
@@ -383,16 +293,10 @@ sub page_title ($c) {
 	return $c->c($header, $c->tag('span', class => 'problem-sub-header d-block', $subheader))->join('');
 }
 
-# If showMeAnother or check answers from showMeAnother is active, then don't show the navigation bar.
-sub nav {
-	return '';
-}
-
 # Output the body of the current problem
 sub output_problem_body ($c) {
 	# Ignore body if SMA was pushed and no new problem will be shown.
-	return $c->SUPER::output_problem_body if $c->{will}{showMeAnother} && $c->{showMeAnother}{IsPossible};
-
+	return $c->SUPER::output_problem_body if $c->stash->{isPossible};
 	return '';
 }
 
@@ -404,98 +308,121 @@ sub output_message ($c) {
 # Prints out the checkbox input elements that are available for the current problem
 sub output_checkboxes ($c) {
 	# Skip check boxes if SMA was pushed and no new problem will be shown
-	return $c->SUPER::output_checkboxes if $c->{showMeAnother}{IsPossible} && $c->{will}{showMeAnother};
-
+	return $c->SUPER::output_checkboxes if $c->stash->{isPossible};
 	return '';
 }
 
 # Prints out the submit button input elements that are available for the current problem
 sub output_submit_buttons ($c) {
 	# Skip buttons if SMA button has been pushed but there is no new problem shown
-	return $c->SUPER::output_submit_buttons if $c->{showMeAnother}{IsPossible} && $c->{will}{showMeAnother};
-
+	return $c->SUPER::output_submit_buttons if $c->stash->{isPossible};
 	return '';
 }
 
-# Outputs a summary of the student's current progress and status on the current problem
-sub output_score_summary ($c) {
-	# skip score summary
-	return '';
-}
+# Skip the score summary, instructor comments, instructor problem grader, and navigation bar.
+sub output_score_summary ($c)        { return '' }
+sub output_comments      ($c)        { return '' }
+sub output_grader        ($c)        { return '' }
+sub nav                  ($c, $args) { return '' }
 
-# Outputs the summary of the questions that the student has answered
-# for the current problem, along with available information about correctness
+# Outputs the summary of the questions that the student has answered for the
+# current problem, along with available information about correctness.
 sub output_summary ($c) {
-	my $pg                        = $c->{pg};
-	my %will                      = %{ $c->{will} };
-	my %can                       = %{ $c->{can} };
-	my %showMeAnother             = %{ $c->{showMeAnother} };
-	my $checkAnswers              = $c->{checkAnswers};
-	my $previewAnswers            = $c->{previewAnswers};
-	my $showPartialCorrectAnswers = $c->{pg}{flags}{showPartialCorrectAnswers};
-
 	my $ce = $c->ce;
 	my $db = $c->db;
 
-	# if $showMeAnother{Count} is somehow not an integer, make it one
-	$showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
-
 	my $output = $c->c;
 
-	if ($will{checkAnswers}) {
-		if ($showMeAnother{CheckAnswers} && $can{showMeAnother}) {
-			# if the student is checking answers to a new problem, give them a reminder that they are doing so
+	if (!$c->{can}{showMeAnother}) {
+		# Nothing more needs to be said in the case that showMeAnother is not enabled for the course or problem.
+		if (!$ce->{pg}{options}{enableShowMeAnother} || $c->{showMeAnother}{TriesNeeded} < 0) {
 			push(
 				@$output,
 				$c->tag(
 					'div',
-					class => 'showMeAnotherBox',
-					$c->maketext(
-						'You are currently checking answers to a different version of your problem - these '
-							. 'will not be recorded, and you should remember to return to your original problem '
-							. 'once you are done here.'
-					)
+					class => 'alert alert-danger mb-2 p-1',
+					$c->maketext('You are not allowed to use Show Me Another for this problem.')
 				)
 			);
-		}
-	} elsif ($previewAnswers) {
-		# if the student is previewing answers to a new problem, give them a reminder that they are doing so
-		if ($showMeAnother{Preview} && $can{showMeAnother}) {
+		} elsif ($c->{showMeAnother}{Count} >= $c->{showMeAnother}{MaxReps}) {
 			push(
 				@$output,
 				$c->tag(
 					'div',
-					class => 'showMeAnotherBox',
+					class => 'alert alert-warning mb-2 p-1',
 					$c->maketext(
-						'You are currently previewing answers to a different version of your problem - these '
-							. 'will not be recorded, and you should remember to return to your original problem '
-							. 'once you are done here.'
+						'You are only allowed to click on Show Me Another [quant,_1,time,times] per problem. '
+							. 'Close this tab, and return to the original problem.',
+						$c->{showMeAnother}{MaxReps},
+					)
+				)
+			);
+		} elsif ($c->{showMeAnother}{Count} < $c->{showMeAnother}{TriesNeeded}) {
+			push(
+				@$output,
+				$c->tag(
+					'div',
+					class => 'alert alert-warning mb-2 p-1',
+					$c->maketext(
+						'You must attempt this problem [quant,_1,time,times] before Show Me Another is available.',
+						$c->{showMeAnother}{TriesNeeded}
 					)
 				)
 			);
 		}
-	} elsif ($showMeAnother{IsPossible} && $will{showMeAnother}) {
-		# the feedback varies a little bit if Check Answers is available or not
-		my $checkAnswersAvailable =
-			($showMeAnother{options}->{checkAnswers})
-			? $c->maketext('You may check your answers to this problem without affecting '
-				. 'the maximum number of tries to your original problem.')
-			: '';
+	} elsif (!$c->stash->{isPossible}) {
+		# It was not possible to find a new version of the problem.
+		push(
+			@$output,
+			$c->tag(
+				'div',
+				class => 'alert alert-warning mb-2 p-1',
+				$c->maketext(
+					'WeBWorK was unable to generate a different version of this problem. '
+						. 'Close this tab, and return to the original problem.'
+				)
+			)
+		);
+	} elsif ($c->{checkAnswers}) {
+		push(
+			@$output,
+			$c->tag(
+				'div',
+				class => 'showMeAnotherBox',
+				$c->maketext(
+					'You are currently checking answers to a different version of your problem.  These answers '
+						. 'will not be recorded, and you should remember to return to your original problem '
+						. 'once you are done here.'
+				)
+			)
+		);
+	} elsif ($c->{previewAnswers}) {
+		push(
+			@$output,
+			$c->tag(
+				'div',
+				class => 'showMeAnotherBox',
+				$c->maketext(
+					'You are currently previewing answers to a different version of your problem - these '
+						. 'will not be recorded, and you should remember to return to your original problem '
+						. 'once you are done here.'
+				)
+			)
+		);
+	} else {
 		my $solutionShown = '';
-		# if showMeAnother has been clicked and a new version has been found,
-		# give some details of what the student is seeing
-		if ($showMeAnother{Count} <= $showMeAnother{MaxReps} || ($showMeAnother{MaxReps} == -1)) {
+		if ($c->{showMeAnother}{Count} <= $c->{showMeAnother}{MaxReps} || ($c->{showMeAnother}{MaxReps} == -1)) {
 			# check to see if a solution exists for this problem, and vary the feedback accordingly
-			if ($pg->{flags}{solutionExists} && $showMeAnother{options}->{showSolutions}) {
-				$solutionShown = $c->maketext('There is a written solution available.');
-			} elsif ($showMeAnother{options}->{showSolutions}
-				and $showMeAnother{options}->{showCorrect}
-				and $showMeAnother{options}->{checkAnswers})
+			if ($c->{pg}{flags}{solutionExists} && $c->stash->{options}{showSolutions}) {
+				$solutionShown = $c->maketext('There is a solution available.');
+			} elsif ($c->stash->{options}{showSolutions}
+				&& $c->stash->{options}{showCorrect}
+				&& $c->stash->{options}{checkAnswers})
 			{
 				$solutionShown = $c->maketext('There is no written solution available for this problem, '
 						. 'but you can still view the correct answers.');
-			} elsif ($showMeAnother{options}->{showSolutions}) {
-				$solutionShown = $c->maketext('There is no written solution available for this problem.');
+			} elsif ($c->stash->{options}{showSolutions}) {
+				$solutionShown = $c->maketext('There is no solution available for this problem.');
 			}
 		}
 		push(
@@ -504,94 +431,35 @@ sub output_summary ($c) {
 				'div',
 				class => 'showMeAnotherBox',
 				$c->c(
-					$c->maketext('Here is a new version of your problem.'), $solutionShown,
-					$checkAnswersAvailable
+					$c->maketext('Here is a new version of your problem.'),
+					$solutionShown,
+					$c->stash->{options}{checkAnswers}
+					? $c->maketext(
+						'You may check your answers to this problem without affecting '
+							. 'the maximum number of tries to your original problem.'
+						)
+					: ''
 				)->join(' ')
 			),
 			$c->tag(
 				'div',
-				class => 'ResultsAlert',
+				class => 'alert alert-warning mb-2 p-1',
 				$c->maketext(q{Remember to return to your original problem when you're finished here!})
-			)
-		);
-	} elsif ($showMeAnother{active} && $showMeAnother{IsPossible} && !$can{showMeAnother}) {
-		if ($showMeAnother{Count} >= $showMeAnother{MaxReps}) {
-			my $solutionShown =
-				($showMeAnother{options}->{showSolutions} && $pg->{flags}{solutionExists})
-				? $c->maketext('The solution has been removed.')
-				: '';
-			push(
-				@$output,
-				$c->tag(
-					'div',
-					class => 'ResultsAlert',
-					$c->maketext(
-						'You are only allowed to click on Show Me Another [quant,_1,time,times] per problem. '
-							. '[_2] Close this tab, and return to the original problem.',
-						$showMeAnother{MaxReps},
-						$solutionShown
-					)
-				)
-			);
-		} elsif ($showMeAnother{Count} < $showMeAnother{TriesNeeded}) {
-			push(
-				@$output,
-				$c->tag(
-					'div',
-					class => 'ResultsAlert',
-					$c->maketext(
-						'You must attempt this problem [quant,_1,time,times] before Show Me Another is available.',
-						$showMeAnother{TriesNeeded}
-					)
-				)
-			);
-		}
-	} elsif ($can{showMeAnother} && !$showMeAnother{IsPossible}) {
-		# print this if showMeAnother has been clicked, but it is not possible to
-		# find a new version of the problem
-		push(
-			@$output,
-			$c->tag(
-				'div',
-				class => 'ResultsAlert',
-				$c->maketext(
-					'WeBWorK was unable to generate a different version of this problem.  '
-						. 'Close this tab, and return to the original problem.'
-				)
 			)
 		);
 	}
 
-	if ($showMeAnother{IsPossible} && $will{showMeAnother}) {
-		push(@$output, $c->SUPER::output_summary);
-	}
+	push(@$output, $c->SUPER::output_summary) if $c->stash->{isPossible} && $c->{can}{showMeAnother};
 
 	return $output->join('');
 }
 
-sub output_comments ($c) {
-	# skip instructor comments.
-	return '';
-}
-
-sub output_grader ($c) {
-	# skip instructor grader.
-	return '';
-}
-
-# Outputs the hidden fields required for the form
-sub output_hidden_info ($c) {
-	# Hidden field for clicking Preview Answers and Check Answers from a Show Me Another screen.
-	# It needs to send the seed from showMeAnother back to the screen.
-	if ($c->{showMeAnother}{active} || $c->{showMeAnother}{CheckAnswers} || $c->{showMeAnother}{Preview}) {
-		return $c->c(
-			$c->hidden_field(showMeAnotherCheckAnswers => 1, id => 'showMeAnotherCheckAnswers_id'),
-			# Output the problem seed from ShowMeAnother so that it can be used in Check Answers.
-			$c->hidden_field(problemSeed => $c->{problem}->problem_seed)
-		)->join('');
+# Checks the PG object for two different seeds of the same pg file
+sub have_different_answers ($pg1, $pg2) {
+	for (keys %{ $pg1->{answers} }) {
+		return 1 if $pg1->{answers}{$_}{correct_ans} ne $pg2->{answers}{$_}{correct_ans};
 	}
-
-	return '';
+	return 0;
 }
 
 1;

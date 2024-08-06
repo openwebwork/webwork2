@@ -1,42 +1,93 @@
-% my @sortFields = grep { $_ ne 'email_address' } @$fields;
+% my @sortFields = grep { $_ ne 'email_address' && $_ ne 'password' } @$fields;
 <div>
-	<div class="row mb-2">
-		<%= label_for sort_select_1 => maketext('Sort by') . ':', class => 'col-form-label col-form-label-sm',
-			style => 'width:4.5rem' =%>
-		<div class="col-auto">
-			<%= select_field 'action.sort.primary' => [
-					map { [
-						maketext($fieldProperties->{$_}{name}) => $_,
-						$_ eq 'last_name' ? (selected => undef) : ()
-					] } @sortFields
-				],
-				id => 'sort_select_1', class => 'form-select form-select-sm' =%>
+	<div class="row">
+		<div class="col-md-auto col-sm-12">
+			<div class="row mb-2">
+				<%= label_for sort_select_1 => maketext('Sort by') . ':',
+					class => 'col-form-label col-form-label-sm', style => 'width:4.5rem' =%>
+				<div class="col-auto">
+					<%= select_field 'action.sort.primary' => [
+							map { [
+								maketext($fieldProperties->{$_}{name}) => $_,
+								$_ eq 'last_name' ? (selected => undef) : ()
+							] } @sortFields
+						],
+						id => 'sort_select_1', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-auto col-sm-12">
+			<div class="row mb-2">
+				<%= label_for sort_order_select_1 => maketext('Ordered') . ':',
+					class => 'col-form-label col-form-label-sm', style => 'width:4.5rem' =%>
+				<div class="col-auto">
+					<%= select_field 'action.sort.primary.order' => [
+							[ maketext('Ascending')  => 'ASC' ],
+							[ maketext('Descending') => 'DESC' ],
+						],
+						id => 'sort_order_select_1', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
 		</div>
 	</div>
-	<div class="row mb-2">
-		<%= label_for sort_select_2 => maketext('Then by') . ':', class => 'col-form-label col-form-label-sm',
-			style => 'width:4.5rem' =%>
-		<div class="col-auto">
-			<%= select_field 'action.sort.secondary' => [
-					map { [
-						maketext($fieldProperties->{$_}{name}) => $_,
-						$_ eq 'first_name' ? (selected => undef) : ()
-					] } @sortFields
-				],
-				id => 'sort_select_2', class => 'form-select form-select-sm' =%>
+	<div class="row">
+		<div class="col-md-auto col-sm-12">
+			<div class="row mb-2">
+				<%= label_for sort_select_2 => maketext('Then by') . ':',
+					class => 'col-form-label col-form-label-sm', style => 'width:4.5rem' =%>
+				<div class="col-auto">
+					<%= select_field 'action.sort.secondary' => [
+							map { [
+								maketext($fieldProperties->{$_}{name}) => $_,
+								$_ eq 'first_name' ? (selected => undef) : ()
+							] } @sortFields
+						],
+						id => 'sort_select_2', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-auto col-sm-12">
+			<div class="row mb-2">
+				<%= label_for sort_order_select_2 => maketext('Ordered'). ':',
+					class => 'col-form-label col-form-label-sm', style => 'width:4.5rem' =%>
+				<div class="col-auto">
+					<%= select_field 'action.sort.secondary.order' => [
+							[ maketext('Ascending')  => 'ASC' ],
+							[ maketext('Descending') => 'DESC' ],
+						],
+						id => 'sort_order_select_2', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
 		</div>
 	</div>
-	<div class="row mb-2">
-		<%= label_for sort_select_3 => maketext('Then by') . ':', class => 'col-form-label col-form-label-sm',
-			style => 'width:4.5rem' =%>
-		<div class="col-auto">
-			<%= select_field 'action.sort.ternary' => [
-					map { [
-						maketext($fieldProperties->{$_}{name}) => $_,
-						$_ eq 'user_id' ? (selected => undef) : ()
-					] } @sortFields
-				],
-				id => 'sort_select_3', class => 'form-select form-select-sm' =%>
+	<div class="row">
+		<div class="col-md-auto col-sm-12">
+			<div class="row mb-2">
+				<%= label_for sort_select_3 => maketext('Then by') . ':', class => 'col-form-label col-form-label-sm',
+					style => 'width:4.5rem' =%>
+				<div class="col-auto">
+					<%= select_field 'action.sort.ternary' => [
+							map { [
+								maketext($fieldProperties->{$_}{name}) => $_,
+								$_ eq 'user_id' ? (selected => undef) : ()
+							] } @sortFields
+						],
+						id => 'sort_select_3', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-auto col-sm-12">
+			<div class="row mb-2">
+				<%= label_for sort_order_select_3 => maketext('Ordered'). ':',
+					class => 'col-form-label col-form-label-sm', style => 'width:4.5rem' =%>
+				<div class="col-auto">
+					<%= select_field 'action.sort.ternary.order' => [
+							[ maketext('Ascending')  => 'ASC' ],
+							[ maketext('Descending') => 'DESC' ],
+						],
+						id => 'sort_order_select_3', class => 'form-select form-select-sm' =%>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

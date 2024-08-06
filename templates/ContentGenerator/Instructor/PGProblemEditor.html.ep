@@ -1,4 +1,9 @@
-% use WeBWorK::Utils qw(not_blank x format_set_name_display getAssetURL);
+% use Mojo::URL;
+% use Mojo::Util qw(url_escape);
+%
+% use WeBWorK::Utils qw(not_blank x getAssetURL);
+% use WeBWorK::Utils::Files qw(readFile);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 % use WeBWorK::HTML::CodeMirrorEditor
 	% qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
 %
@@ -18,7 +23,7 @@
 	% last;
 % }
 %
-% unless ($authz->hasPermissions(param('user'), 'modify_student_data')) {
+% unless ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to modify problems.') %></div>
 	% last;
 % }
@@ -68,7 +73,7 @@
 <%= $fileInfo->() %>
 %
 <%= form_for current_route, method => 'POST', id => 'editor', name => 'editor',
-   	enctype => 'application/x-www-form-urlencoded', class => 'col-12', begin =%>
+	enctype => 'application/x-www-form-urlencoded', class => 'col-12', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	<%= hidden_field file_type => $c->{file_type} =%>
 	<%= hidden_field courseID => $c->{courseID} =%>
@@ -111,24 +116,16 @@
 				class  => 'reference-link btn btn-sm btn-info',
 				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% # PGML lab problem rendered as an unattached problem in a new window.
-			% if (-e "$ce->{courseDirs}{templates}/PGMLLab/PGML-lab.pg") {
-				<%= link_to maketext('PGML') => $c->systemLink(
-						url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
-						params => {
-							displayMode    => $ce->{pg}{options}{displayMode},
-							problemSeed    => 1234,
-							editMode       => 'temporaryFile',
-							sourceFilePath => 'PGMLLab/PGML-lab.pg'
-						}
-					),
-					target => 'PGML',
-					title  => maketext(
-						'PG markdown syntax used to format WeBWorK questions. '
-						. 'This interactive lab can help you to learn the techniques.'
-					),
-					class  => 'reference-link btn btn-sm btn-info',
-					data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
-			% }
+			% my $pgml_lab_source = readFile("$ce->{webworkDirs}{assets}/pg/PGMLLab/PGML-lab.pg");
+			<%= tag 'button', type => 'button',
+				title  => maketext(
+					'PG markdown syntax used to format WeBWorK questions. '
+					. 'This interactive lab can help you to learn the techniques.'
+				),
+				id => 'pgml-lab',
+				class  => 'reference-link btn btn-sm btn-info',
+				data   => { source => url_escape($pgml_lab_source), bs_toggle => 'tooltip', bs_placement => 'top' },
+				'PGML' =%>
 			% # http://webwork.maa.org/wiki/Category:Authors
 			<%= link_to maketext('Author Info') => $ce->{webworkURLs}{AuthorHelpURL},
 				target => 'author_info',
@@ -136,11 +133,16 @@
 				class  => 'reference-link btn btn-sm btn-info',
 				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% # Only show the report bugs in problem button if editing an OPL or Contrib problem.
-			% if ($c->{editFilePath} =~ m|^$ce->{courseDirs}{templates}/([^/]*)/|
-				% && ($1 eq 'Library' || $1 eq 'Contrib')) {
+			% if ($ce->{webworkURLs}{OPLBugReporter}
+				% && $c->{editFilePath} =~ m|^$ce->{courseDirs}{templates}/([^/]*)/|
+				% && ($1 eq 'Library' || $1 eq 'Contrib'))
+			% {
 				<%= link_to maketext('Report Bugs in this Problem') =>
-						"$ce->{webworkURLs}{bugReporter}?product=Problem%20libraries"
-						. "&component=$1&bug_file_loc=$c->{editFilePath}_with_problemSeed=$c->{problemSeed}",
+						Mojo::URL->new($ce->{webworkURLs}{OPLBugReporter})
+							->query(
+								title => $c->getRelativeSourceFilePath($c->{editFilePath}),
+								body  => "Problem Seed: " . (param('action.view.seed') // $c->{problemSeed})
+							),
 					target => 'bug_report',
 					title  => maketext(
 						'Report bugs in a WeBWorK question/problem using this link. '

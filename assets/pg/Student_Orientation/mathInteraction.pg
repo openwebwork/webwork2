@@ -1,0 +1,97 @@
+## DESCRIPTION
+## Features of MathJax/images displaymode
+## ENDDESCRIPTION
+
+DOCUMENT();
+
+loadMacros(qw(
+    PGstandard.pl
+    PGML.pl
+    parserRadioButtons.pl
+    PGcourse.pl
+));
+
+$continue = RadioButtons(['I am ready to continue. Submit this answer.'], 0);
+
+$MathJax = <<END_BODY;
+Math content like the following expression is rendered using MathJax.
+
+[```\frac{-b\pm\sqrt{b^2-4ac}}{2a}```]
+
+Each piece of math content is tab-indexed, meaning that by using the tab key, you can bring the web browser's focus to
+that piece of content. Try clicking your mouse on the title of this page ("Interacting with Math") and then use the tab
+key. Under default conditions, you should see an indication that the web browser is now focused on the math expression.
+
+Once focus is on a math expression, using the spacebar will activate the "MathJax menu". You can also activate this menu
+by right-clicking (Windows/Linux) or [|control|]*-clicking (MacOS) a piece of math. Try activating the MathJax menu now.
+It should look like the following.
+
+>> [!MathJax contextual menu!]{'mathjaxmenu.png'} <<
+
+There are many features that help you to engage with math content. Explore the menu options to survey what is available.
+
+We will now point out a few important features. In the main menu, there is a "Math Settings" submenu. The "Zoom Trigger"
+and "Zoom Factor" items allow you to control if/how math content is magnified. Magnification may help users with some
+vision disabilities see the content better. And it may help all users to see some details of math notation better. Take
+a moment to explore these settings and select options that you would be comfortable with. (Of course you can change
+these settings at any time.)
+
+Also in the main menu, there is an "Accessibility" submenu. In that menu, if accessibility is not already activated,
+select "Activate". After activating this, you may need to refresh the web page to see the math expression again. Now you
+have the option to see math content verbalized. To do this, place focus onto a math expression and hit [|enter|]*.
+* At first, the entire expression is highlighted and there will be a verbal rendering of the expression.  
+[!Speech string for the quadratic formula!]{'explorerfull.png'}{600}
+* Use the down arrow to navigate "down" into a smaller piece of the math expression.
+* Use the left/right arrows to navigate to similar pieces of the math expression.
+* At any time you can navigate back "up" to a larger part of the expression, or "down" into smaller pieces. For example,
+you can see a verbalization for just this part of the expression above:  
+[!Speech string for the radicand of the quadratic formula!]{'explorerpiece.png'}{600} 
+* Return to the MathJax menu, Accessibility submenu, to explore options for how this explorer tool works.
+* Under "Speech" you will find options to use MathSpeak, ClearSpeak, or ChromeVox rules. The default is to use
+"MathSpeak verbose" rules, which try try to read math "literally" without context. For example, it reads [`(1,3)`] as
+"left parenthesis 1 comma 3 right parenthesis". Other speech rules can produce more meaningful verbal renderings. For
+example with the right ClearSpeak settings, the same math expression produces "the point with coordinates 1 comma 3"
+or "the interval from 1 to 3 not including 1 or 3". 
+
+Some keyboard-navigating users might find it undesirable for each piece of math content to be tab-indexed. If this is
+the case, then in the "Accessibility" sub menu you can uncheck "Include in Tab Order". Just note that in order to undo
+this and make math content tabbable again, you will need to access the menu, and so you will need some way other than
+tabbing to bring focus back to a piece of math content.
+END_BODY
+
+$images = <<END_BODY;
+Math content like the following expression is rendered using images.
+
+[```\frac{-b\pm\sqrt{b^2-4ac}}{2a}```]
+
+Each piece of math content is a small PNG image file. There is not much that you can do to interact with these images.
+In Account Settings, you might be able to change "View equations as:" to "MathJax". Then reloading this problem will
+show you way to engage with math content. If you do not find "MathJax" as an option, then it may be disabled for this
+course.
+END_BODY
+
+$plainText = <<END_BODY;
+Math content like the following expression is rendered as plain text.
+
+[```\frac{-b\pm\sqrt{b^2-4ac}}{2a}```]
+
+Each piece of math content is LaTeX code that could be used to render a math expression. There is not much that you can
+do to interact with this code. In Account Settings, you might be able to change "View equations as:" to "MathJax". Then
+reloading this problem will show you way to engage with math content. If you do not find "MathJax" as an option, then it
+may be disabled for this course.
+END_BODY
+
+BEGIN_PGML
+
+## Interactiong with Math
+
+This page will primarily be of interest to users with accessibility needs. However, all users might learn math more
+easily by learning about the tools that are described here.
+
+[@ if ($displayMode =~ 'MathJax') {$MathJax} elsif ($displayMode =~ 'png') {$images.$displayMode} else {$plainText} @]**
+
+[_]{$continue}
+END_PGML
+
+ENDDOCUMENT();
+

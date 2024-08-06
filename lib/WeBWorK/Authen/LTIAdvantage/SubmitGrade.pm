@@ -1,6 +1,6 @@
 ###############################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,7 +38,8 @@ use Digest::SHA qw(sha256_hex);
 use Time::HiRes;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets wwRound);
+use WeBWorK::Utils qw(wwRound);
+use WeBWorK::Utils::Sets qw(grade_set grade_gateway grade_all_sets);
 
 # This package contains utilities for submitting grades to the LMS via LTI 1.3.
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -50,7 +51,7 @@ sub new ($invocant, $c, $post_processing_mode = 0) {
 # is set, but these warnings are always sent to the debug log if debugging is enabled.
 sub warning ($self, $warning) {
 	debug($warning);
-	return unless $self->{c}{ce}{debug_lti_grade_passback};
+	return unless $self->{c}{ce}{debug_lti_grade_passback} || $self->{post_processing_mode};
 
 	if ($self->{post_processing_mode}) {
 		$self->{c}{app}->log->info($warning);
@@ -117,16 +118,17 @@ async sub get_access_token ($self) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 	my $db = $c->{db};
+	$c = $c->{app} if $self->{post_processing_mode};
 
 	my $current_token = decode_json($db->getSettingValue('LTIAdvantageAccessToken') // '{}');
 
-	# If the token is still valid (and not about to expire) then it can still be used.
+	# If the token has not expired and is not about to expire, then it can still be used.
 	if (%$current_token && $current_token->{timestamp} + $current_token->{expires_in} > time + 60) {
 		$self->warning('Using current access token from database.');
 		return $current_token;
 	}
 
-	# The token is about to expire, so get a new one.
+	# The token is expired or about to, so get a new one.
 
 	my ($private_key, $err) = get_site_key($ce, 1);
 	if (!$private_key) {
@@ -150,7 +152,7 @@ async sub get_access_token ($self) {
 		);
 	};
 	if ($@) {
-		$self->warning("Error encoding JWT: $@") if $@;
+		$self->warning("Error encoding JWT: $@");
 		return;
 	}
 
@@ -190,7 +192,7 @@ async sub get_access_token ($self) {
 }
 
 # Computes and submits the course grade for userID to the LMS.
-# The course grade is the average of all sets assigned to the user.
+# The course grade is the sum of all (weighted) problems assigned to the user.
 async sub submit_course_grade ($self, $userID) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
@@ -205,7 +207,7 @@ async sub submit_course_grade ($self, $userID) {
 	$self->warning('LMS user id is not available for this user.')   unless $user->lis_source_did;
 	$self->warning('LMS lineitem is not available for the course.') unless $lineitem;
 
-	return await $self->submit_grade($user->lis_source_did, $lineitem, scalar(grade_all_sets($db, $userID)));
+	return await $self->submit_grade($user->lis_source_did, $lineitem, grade_all_sets($db, $userID));
 }
 
 # Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.
@@ -223,19 +225,14 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	$self->warning('LMS user id is not available for this user.') unless $user->lis_source_did;
 	$self->warning('LMS lineitem is not available for this set.') unless $userSet->lis_source_did;
 
-	return await $self->submit_grade(
-		$user->lis_source_did,
-		$userSet->lis_source_did,
-		scalar(
-			$userSet->assignment_type =~ /gateway/
-			? grade_gateway($db, $userSet, $userSet->set_id, $userID)
-			: grade_set($db, $userSet, $userID, 0)
-		)
-	);
+	return await $self->submit_grade($user->lis_source_did, $userSet->lis_source_did,
+		$userSet->assignment_type =~ /gateway/
+		? grade_gateway($db, $userSet, $userSet->set_id, $userID)
+		: (grade_set($db, $userSet, $userID, 0))[ 0, 1 ]);
 }
 
-# Submits a score of $score to the lms with $sourcedid as the identifier.
-async sub submit_grade ($self, $LMSuserID, $lineitem, $score) {
+# Submits scoreGiven and scoreMaximum to the lms with $sourcedid as the identifier.
+async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 
@@ -246,8 +243,6 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $score) {
 	# In post processing mode $c is not a real Mojolicious::Controller.  The app is passed in though.
 	# So change $c to be the app instead to get access to the url_for helper.
 	$c = $c->{app} if $self->{post_processing_mode};
-
-	$score = wwRound(2, $score);
 
 	my $ua = Mojo::UserAgent->new;
 
@@ -279,6 +274,7 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $score) {
 		my $priorScore = @$priorData
 			&& $priorData->[0]{resultMaximum} ? $priorData->[0]{resultScore} / $priorData->[0]{resultMaximum} : 0;
 
+		my $score = $scoreGiven / $scoreMaximum;
 		if (abs($score - $priorScore) < 0.001) {
 			$self->warning(
 				"LMS grade will NOT be updated as the grade is unchanged. Old score: $priorScore, New score: $score.");
@@ -300,8 +296,8 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $score) {
 		json => {
 			# This must be in ISO 8601 format with sub-second precision.  That is why the Time::HiRes::time is used.
 			timestamp        => Mojo::Date->new(Time::HiRes::time())->to_datetime,
-			scoreGiven       => $score,
-			scoreMaximum     => 1,
+			scoreGiven       => $scoreGiven,
+			scoreMaximum     => $scoreMaximum,
 			activityProgress => 'Submitted',
 			gradingProgress  => 'FullyGraded',
 			userId           => $LMSuserID

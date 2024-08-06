@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::Authen::Proctor;
-use base qw/WeBWorK::Authen/;
+use base 'WeBWorK::Authen';
 
 =head1 NAME
 
@@ -24,10 +24,15 @@ WeBWorK::Authen::Proctor - Authenticate gateway test proctors.
 
 use strict;
 use warnings;
-use WeBWorK::Debug;
+
+use WeBWorK::Utils qw(x);
 use WeBWorK::DB::Utils qw(grok_vsetID);
 
-use constant GENERIC_ERROR_MESSAGE => 'Invalid user ID or password.';
+use constant GENERIC_ERROR_MESSAGE => x('Invalid user ID or password.');
+
+# Note that throughout this module only parameters in the request body_params are accepted (other than the
+# effectiveUser).  This means that only parameters for a POST request are allowed.  GET request parameters are ignored.
+# This is a security measure as it is more difficult to engineer a fake POST request than a GET request.
 
 sub verify {
 	my $self = shift;
@@ -36,7 +41,7 @@ sub verify {
 	# At this point the usual authentication has already occurred and the user has been verified.  If the
 	# use_grade_auth_proctor option is set to 'No', then proctor authorization is not not needed.  So return
 	# 1 here to skip proctor authorization and proceed on to the GatewayQuiz module which will grade the test.
-	if ($c->param('submitAnswers')) {
+	if ($c->req->body_params->param('submitAnswers')) {
 		my ($setName, $versionNum) = grok_vsetID($c->stash('setID'));
 		my $userSet = $c->db->getMergedSetVersion($c->param('effectiveUser'), $setName, $versionNum);
 		return 1 if $userSet && $userSet->use_grade_auth_proctor eq 'No';
@@ -45,162 +50,159 @@ sub verify {
 	return $self->SUPER::verify(@_);
 }
 
-# this is similar to the method in the base class, with these differences:
+# This is similar to the method in the base class, with these differences:
 #  1. no guest logins
 #  2. no cookie
-#  3. user_id/session_key/password come from params proctor_user/proctor_key/proctor_passwd
+#  3. no session key
+#  4. user_id/password come from POST request params proctor_user/proctor_passwd
 sub get_credentials {
 	my ($self) = @_;
-	my $c      = $self->{c};
-	my $ce     = $c->ce;
-	my $db     = $c->db;
+	my $c = $self->{c};
 
 	my ($set_id, $version_id) = grok_vsetID($c->stash('setID'));
 
-	# at least the user ID is available in request parameters
-	if (defined $c->param('proctor_user')) {
-		my $student_user_id = $c->param('effectiveUser');
-		$self->{user_id} = $c->param('proctor_user');
-		if ($self->{user_id} eq $set_id) {
-			$self->{user_id} = "set_id:$set_id";
-		}
-		$self->{session_key} = $c->param('proctor_key');
-		$self->{password}    = $c->param('proctor_passwd');
-		$self->{login_type} =
-			$c->param('submitAnswers') ? "proctor_grading:$student_user_id" : "proctor_login:$student_user_id";
+	if (defined $c->req->body_params->param('proctor_user')) {
+		$self->{user_id}           = $c->req->body_params->param('proctor_user');
+		$self->{user_id}           = "set_id:$set_id" if $self->{user_id} eq $set_id;
+		$self->{password}          = $c->req->body_params->param('proctor_passwd');
+		$self->{login_type}        = $c->req->body_params->param('submitAnswers') ? 'proctor_grading' : 'proctor_login';
 		$self->{credential_source} = 'params';
 		return 1;
+	} elsif ($c->authen->session('proctor_authorization_granted') && !$c->req->body_params->param('submitAnswers')) {
+		$self->{login_type}        = 'proctor_login';
+		$self->{credential_source} = 'session';
+		return 1;
 	}
+
+	return 0;
 }
 
-# duplicates method in superclass, adding additional check for permission
-#    to proctor quizzes
+# If proctor authorization is granted a proctor user is not needed.  So skip checking the user.
 sub check_user {
-	my $self  = shift;
-	my $c     = $self->{c};
-	my $ce    = $c->ce;
-	my $db    = $c->db;
-	my $authz = $c->authz;
+	my $self = shift;
+	return 1 if $self->{credential_source} eq 'session';
+	return $self->SUPER::check_user;
+}
 
-	my $submitAnswers   = $c->param('submitAnswers');
-	my $user_id         = $self->{user_id};
-	my $past_proctor_id = $c->param('past_proctor_user') || $user_id;
+# This is similar to the method in the base class except that instead of creating a session, this just sets the
+# "proctor_authorization_granted" value in the session.  Note that the session used is the session of the original
+# authentication module for this request.  Furthermore it checks the proctor user permissions instead of the usual user
+# login permissions.
+sub verify_normal_user {
+	my $self = shift;
+	my $c    = $self->{c};
 
-	# for set-level authentication we prepended "set_id:"
-	my $show_user_id = $user_id;
-	$show_user_id =~ s/^set_id://;
+	# If the test is being submitted, then proctor credentials are always required.  Note that if use_grade_auth_proctor
+	# is 'No', then the verify method will have returned 1, and this never happens.  For an ongoing login session, only
+	# a key with versioned set information is accepted, and that version must match the requested set version.  The set
+	# id will not have a version when opening a new version. For that new proctor credentials are required.
+	if ($self->{login_type} eq 'proctor_login'
+		&& $c->stash('setID') =~ /,v\d+$/
+		&& $c->authen->session('proctor_authorization_granted')
+		&& $c->authen->session('proctor_authorization_granted') eq $c->stash('setID'))
+	{
+		return 1;
+	} else {
+		my $auth_result = $self->authenticate;
 
-	if (defined $user_id and ($user_id eq '' || $show_user_id eq '')) {
-		$self->{log_error} = 'no user id specified';
-		$self->{error}     = 'You must specify a user ID.';
-		return 0;
-	}
+		if ($auth_result > 0) {
+			my $db    = $c->db;
+			my $authz = $c->authz;
 
-	my $User = $db->getUser($user_id);
+			my $user_id = $self->{user_id};
 
-	unless ($User) {
-		$self->{log_error} = 'user unknown';
-		$self->{error}     = GENERIC_ERROR_MESSAGE;
-		return 0;
-	}
+			# Prepended "set_id:" for set-level authentication.
+			my $show_user_id = $user_id;
+			$show_user_id =~ s/^set_id://;
 
-	# proctors may be tas, instructors, or proctors; if the last, they
-	#    do not have the behavior course_access, so we don't bother to
-	#    check that here.  they must, however, be able to login, which
-	#    it seems to me is an overlap between course permissions and
-	#    course status behaviors.
-
-	unless ($authz->hasPermissions($user_id, 'login')) {
-		$self->{log_error} = 'user not permitted to login';
-		$self->{error}     = GENERIC_ERROR_MESSAGE;
-		return 0;
-	}
-
-	if ($submitAnswers) {
-		unless ($authz->hasPermissions($user_id, 'proctor_quiz_grade')) {
-			# only set the error if this proctor is different
-			#    than the past proctor, implying that we have
-			#    tried to grade with a new proctor id
-			if ($past_proctor_id ne $user_id) {
-				$self->{log_error} = 'user not permitted to proctor quiz grading.';
-				$self->{error} =
-					"User $show_user_id is not authorized to proctor test grade submissions in this course.";
+			# A proctor user may have the Proctor status which does not have the course_access behavior.
+			# So don't check that here.  However, the user must be able to login.
+			unless ($authz->hasPermissions($user_id, 'login')) {
+				$self->{log_error} = 'user not permitted to login';
+				$self->{error}     = $c->maketext(GENERIC_ERROR_MESSAGE);
+				return 0;
 			}
 
-			return 0;
-		}
-	} else {
-		# Need a UserSet to determine if it is configured to skip grade proctor
-		# authorization to grade the quiz. Require a grade proctor permission level
-		# to start a quiz that skips authorization to grade it. This ensures that
-		# a grade proctor level of authorization is always required.
-		my ($setName, $versionNum) = grok_vsetID($c->stash('setID'));
-		my $userSet = $db->getMergedSet($c->param('effectiveUser'), $setName);
-		unless (
-			$authz->hasPermissions($user_id, 'proctor_quiz_grade')
-			|| (($userSet->use_grade_auth_proctor eq 'Yes' || $userSet->restricted_login_proctor eq 'Yes')
-				&& $authz->hasPermissions($user_id, 'proctor_quiz_login'))
-			)
-		{
-			# Set the error based on if a single set password was required, a grade
-			# grade proctor was required to start, or a login proctor was required.
-			if ($userSet->restricted_login_proctor eq 'Yes') {
-				$self->{log_error} = 'invalid set password to start quiz.';
-				$self->{error}     = 'This quiz requires a set password to start, and the password was invalid.';
-			} elsif ($userSet->use_grade_auth_proctor ne 'Yes') {
-				$self->{log_error} =
-					'grade proctor required to login and user is not permitted to proctor quiz grading.';
-				$self->{error} = "This quiz requires a grade proctor to start, and user $show_user_id is not "
-					. 'authorized to proctor test grade submissions in this course.';
+			# As mentioned above the setID will not have the set version number if a new version is being opened.  That
+			# will be added to the proctor session key by the GatewayQuiz module later.
+			if ($self->{login_type} eq 'proctor_grading') {
+				unless ($authz->hasPermissions($user_id, 'proctor_quiz_grade')) {
+					$self->{log_error} = 'user not permitted to proctor test grade submissions';
+					$self->{error} =
+						$c->maketext('User [_1] is not authorized to proctor test grade submissions in this course.',
+							$show_user_id);
+					return 0;
+				}
+				$c->authen->session('proctor_authorization_granted' => $c->stash('setID'));
 			} else {
-				$self->{log_error} = 'user not permitted to proctor quiz logins.';
-				$self->{error}     = "User $show_user_id is not authorized to proctor test logins in this course.";
+				# A UserSet is needed to determine if it is configured to skip grade proctor authorization.  Require a
+				# grade_proctor permission level to start a quiz that skips authorization to grade it. This ensures that
+				# a grade proctor level of authorization is always required.
+				my ($setName, $versionNum) = grok_vsetID($c->stash('setID'));
+				my $userSet = $db->getMergedSet($c->param('effectiveUser'), $setName);
+				unless (
+					$authz->hasPermissions($user_id, 'proctor_quiz_grade')
+					|| (($userSet->use_grade_auth_proctor eq 'Yes' || $userSet->restricted_login_proctor eq 'Yes')
+						&& $authz->hasPermissions($user_id, 'proctor_quiz_login'))
+					)
+				{
+					# Set the error based on if a single set password was required, a grade
+					# proctor was required to start, or a login proctor was required.
+					if ($userSet->restricted_login_proctor eq 'Yes') {
+						$self->{log_error} = 'invalid set password to start quiz.';
+						$self->{error} =
+							$c->maketext('This quiz requires a set password to start, and the password was invalid.');
+					} elsif ($userSet->use_grade_auth_proctor ne 'Yes') {
+						$self->{log_error} =
+							'grade proctor required to login and user is not permitted to proctor quiz grading.';
+						$self->{error} = $c->maketext(
+							'This quiz requires a grade proctor to start, and user [_1] is '
+								. 'not authorized to proctor test grade submissions in this course.',
+							$show_user_id
+						);
+					} else {
+						$self->{log_error} = 'user not permitted to proctor quiz logins.';
+						$self->{error} =
+							$c->maketext("User [_1] is not authorized to proctor test logins in this course.",
+								$show_user_id);
+					}
+					return 0;
+				}
+				$c->authen->session('proctor_authorization_granted' => $c->stash('setID'));
+			}
+			return 1;
+		} else {
+			delete $c->authen->session->{'proctor_authorization_granted'};
+			if ($auth_result == 0) {
+				$self->{log_error} = "authentication failed";
+				$self->{error}     = $c->maketext(GENERIC_ERROR_MESSAGE);
 			}
 			return 0;
 		}
 	}
 }
 
-# this is similar to the method in the base class, excpet that the parameters
-# proctor_user, proctor_key, and proctor_passwd are used
+# This is similar to the method in the base class, except that the parameters
+# proctor_user and proctor_passwd are used and there is no session_key.
 sub set_params {
 	my $self = shift;
 	my $c    = $self->{c};
 
 	$c->param('proctor_user',   $self->{user_id});
-	$c->param('proctor_key',    $self->{session_key});
 	$c->param('proctor_passwd', '');
+
+	return;
 }
 
-# rewrite the userID to include both the proctor's and the student's user ID
-# and then call the default create_session method.
-sub create_session {
-	my ($self, $userID, $newKey) = @_;
+# Disable the session for proctors (instead use the session of the user authentication module).
+sub create_session { }
+sub check_session  { }
 
-	return $self->SUPER::create_session($self->proctor_key_id($userID), $newKey, $userID);
-}
-
-# rewrite the userID to include both the proctor's and the student's user ID
-# and then call the default check_session method.
-sub check_session {
-	my ($self, $userID, $possibleKey, $updateTimestamp) = @_;
-
-	return $self->SUPER::check_session($self->proctor_key_id($userID), $possibleKey, $updateTimestamp);
-}
-
-# proctor key ID rewriting helper
-sub proctor_key_id {
-	my ($self, $userID, $newKey) = @_;
-	my $c = $self->{c};
-
-	my $proctor_key_id = $c->param('effectiveUser') . ',' . $userID;
-	$proctor_key_id .= ',g' if $self->{login_type} =~ /^proctor_grading/;
-
-	return $proctor_key_id;
-}
-
-# disable cookie functionality for proctors
+# Prevent this module from setting or using cookie authentication parameters. This does not disable cookies.
+# Don't set the disable_cookies stash value for this because cookie session values still need to be set and used,
+# just not the authentication parameters user_id, key, and timestamp.
 sub maybe_send_cookie { }
+sub maybe_kill_cookie { }
 sub fetchCookie       { }
 sub sendCookie        { }
 sub killCookie        { }

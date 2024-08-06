@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,16 +22,16 @@ WeBWorK::ContentGenerator::Instructor::UserDetail - Detailed User specific infor
 
 =cut
 
+use WeBWorK::DB::Utils qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Utils qw(x);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
-use WeBWorK::DB::Utils qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Debug;
 
 # We use the x function to mark strings for localizaton
 use constant DATE_FIELDS => {
 	open_date            => x('Open:'),
 	reduced_scoring_date => x('Reduced:'),
-	due_date             => x('Closes:'),
+	due_date             => x('Close:'),
 	answer_date          => x('Answer:')
 };
 use constant DATE_FIELDS_ORDER => [qw(open_date reduced_scoring_date due_date answer_date )];
@@ -90,10 +90,11 @@ sub initialize ($c) {
 				unless ($rh_dates->{error}) {
 					# If no error update database
 					for my $field (@{ DATE_FIELDS_ORDER() }) {
-						if (defined $c->param("set.$setID.$field.override")) {
+						if ($c->param("set.$setID.$field") && $c->param("set.$setID.$field") ne '') {
 							$userSetRecord->$field($rh_dates->{$field});
 						} else {
-							$userSetRecord->$field(undef);    #stop override
+							# Stop override
+							$userSetRecord->$field(undef);
 						}
 					}
 					$db->putUserSet($userSetRecord);
@@ -110,17 +111,21 @@ sub initialize ($c) {
 						if (defined $action) {
 							if ($action eq 'assigned') {
 								# This version is not to be deleted.
-								# Check to see if we're resetting the dates for this version.
+								# Check to see if the dates have been changed for this version.
+								# Note that dates are never reset (set to NULL) for a set version.
 								my $rh_dates = $c->checkDates($setVersionRecord, "$setID,v$ver");
 								unless ($rh_dates->{error}) {
 									for my $field (@{ DATE_FIELDS_ORDER() }) {
-										if (defined($c->param("set.$setID,v$ver.$field.override"))) {
-											$setVersionRecord->$field($rh_dates->{$field});
-										} else {
-											$setVersionRecord->$field(undef);
-										}
+										$setVersionRecord->$field($rh_dates->{$field})
+											if ($c->param("set.$setID,v$ver.$field")
+												&& $c->param("set.$setID,v$ver.$field") ne '');
 									}
 									$db->putSetVersion($setVersionRecord);
+								}
+								# Reset the date inputs to the date in the database if they were empty.
+								for my $field (@{ DATE_FIELDS_ORDER() }) {
+									$c->param("set.$setID,v$ver.$field", $setVersionRecord->$field)
+										unless $c->param("set.$setID,v$ver.$field");
 								}
 							} elsif ($action eq 'delete') {
 								# Delete this version.
@@ -168,59 +173,54 @@ sub initialize ($c) {
 }
 
 sub checkDates ($c, $setRecord, $setID) {
-	my $error = 0;
-
 	# For each of the dates, use the override date if set.  Otherwise use the value from the global set.
+	# Except in the case that this is a set version. In that case use 0 which will result in an error below.
+	# This will prevent the dates for the set version from being changed to invalid values in that case.
 	my %dates;
 	for my $field (@{ DATE_FIELDS_ORDER() }) {
 		$dates{$field} =
-			(defined $c->param("set.$setID.$field.override") && $c->param("set.$setID.$field") ne '')
+			($c->param("set.$setID.$field") && $c->param("set.$setID.$field") ne '')
 			? $c->param("set.$setID.$field")
-			: $setRecord->$field;
+			: ($setID =~ /,v\d+$/ ? 0 : $setRecord->$field);
 	}
 
 	my ($open_date, $reduced_scoring_date, $due_date, $answer_date) = map { $dates{$_} } @{ DATE_FIELDS_ORDER() };
 
 	unless ($answer_date && $due_date && $open_date) {
-		$c->addbadmessage("set $setID has errors in its dates: answer_date |$answer_date|, "
-				. "due date |$due_date|, open_date |$open_date|");
-		$error = 1;
+		$c->addbadmessage($c->maketext(
+			'Set [_1] has errors in its dates. Open Date: [_2] , Close Date: [_3], Answer Date: [_4]',
+			$setID,
+			map { $_ ? $c->formatDateTime($_, 'datetime_format_short') : $c->maketext('required') }
+				($open_date, $due_date, $answer_date)
+		));
+		return { %dates, error => 1 };
 	}
 
-	if ($answer_date < $due_date || $answer_date < $open_date) {
-		$c->addbadmessage("Answers cannot be made available until on or after the due date in set $setID!");
-		$error = 1;
-	}
-
-	if ($due_date < $open_date) {
-		$c->addbadmessage("Answers cannot be due until on or after the open date in set $setID!");
-		$error = 1;
-	}
+	my $error = 0;
 
 	if ($c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 		&& $setRecord->enable_reduced_scoring
 		&& ($reduced_scoring_date < $open_date || $reduced_scoring_date > $due_date))
 	{
-		$c->addbadmessage("The reduced scoring date should be between the open date and the due date in set $setID!");
+		$c->addbadmessage($c->maketext(
+			'The reduced scoring date must be between the open date and the close date for set [_1].', $setID
+		));
 		$error = 1;
 	}
 
-	# Make sure the dates are not more than 10 years in the future.
-	my $cutoff = time + 31_556_926 * 10;
-	if ($open_date > $cutoff) {
-		$c->addbadmessage("Error: open date cannot be more than 10 years from now in set $setID");
-		$error = 1;
-	}
-	if ($due_date > $cutoff) {
-		$c->addbadmessage("Error: due date cannot be more than 10 years from now in set $setID");
-		$error = 1;
-	}
-	if ($answer_date > $cutoff) {
-		$c->addbadmessage("Error: answer date cannot be more than 10 years from now in set $setID");
+	if ($due_date < $open_date) {
+		$c->addbadmessage($c->maketext('The close date must be on or after the open date for set [_1].', $setID));
 		$error = 1;
 	}
 
-	$c->addbadmessage('No date changes were saved!') if ($error);
+	if ($answer_date < $due_date) {
+		$c->addbadmessage(
+			$c->maketext('Answers cannot be made available until on or after the close date for set [_1].', $setID)
+		);
+		$error = 1;
+	}
+
+	$c->addbadmessage($c->maketext('Not saving dates for [_1]!', $setID)) if $error;
 
 	return { %dates, error => $error };
 }

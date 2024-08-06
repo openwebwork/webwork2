@@ -5,7 +5,7 @@
 % # Filter and problem selectors.
 <div class="d-flex align-items-center mt-1 mb-3">
 	<%= maketext('Showing statistics for:') =%>
-	<%= include 'ContentGenerator/Instructor/Stats/student_filter_menu', filters => $filters =%>
+	<%= include 'ContentGenerator/Instructor/Stats/student_filter_menu', filters => $filters, params => {} =%>
 	<%= include 'ContentGenerator/Instructor/Stats/problem_menu', problems => $problems =%>
 </div>
 % # Set information
@@ -46,7 +46,7 @@
 						data-bs-toggle="popover"
 						data-bs-content="<%= maketext(
 							'Answer availability for tests depends on multiple settings.  This only indicates the '
-								. 'template answer date has passed.  See set editor for actual availability.'
+								. 'template answer date has passed.  See Set Detail page for actual availability.'
 						) =%>">
 						<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') =%>"
 							aria-hidden="true">
@@ -60,24 +60,23 @@
 			<td><%= scalar(@$score_list) %></td></tr>
 		<tr>
 			<th><%= maketext('Open Date') %></th>
-			<td><%= $c->formatDateTime($c->{setRecord}->open_date, undef, $ce->{studentDateDisplayFormat}) %></td>
+			<td><%= $c->formatDateTime($c->{setRecord}->open_date, $ce->{studentDateDisplayFormat}) %></td>
 		</tr>
 		% if ($c->{setRecord}->enable_reduced_scoring) {
 			<tr>
 				<th><%= maketext('Reduced Scoring Date') %></th>
 				<td>
-					<%= $c->formatDateTime($c->{setRecord}->reduced_scoring_date,
-						undef, $ce->{studentDateDisplayFormat}) %>
+					<%= $c->formatDateTime($c->{setRecord}->reduced_scoring_date, $ce->{studentDateDisplayFormat}) %>
 				</td>
 			</tr>
 		% }
 		<tr>
 			<th><%= maketext('Close Date') %></th>
-			<td><%= $c->formatDateTime($c->{setRecord}->due_date, undef, $ce->{studentDateDisplayFormat}) %></td>
+			<td><%= $c->formatDateTime($c->{setRecord}->due_date, $ce->{studentDateDisplayFormat}) %></td>
 		</tr>
 		<tr>
 			<th><%= maketext('Answer Date') %></th>
-			<td><%= $c->formatDateTime($c->{setRecord}->answer_date, undef, $ce->{studentDateDisplayFormat}) %></td>
+			<td><%= $c->formatDateTime($c->{setRecord}->answer_date, $ce->{studentDateDisplayFormat}) %></td>
 		</tr>
 	</table>
 </div>
@@ -187,7 +186,7 @@
 			<th><%= maketext('# of Active Students') %></th>
 			<% for (@$numActive) { %><td class="text-center"><%= $_ %></td><% } =%>
 		</tr>
-		% if ($authz->hasPermissions(param('user'), 'score_sets')) {
+		% if ($authz->hasPermissions(param('user'), 'problem_grader')) {
 			<tr>
 				<th><%= maketext('Manual Grader') %></th>
 				% for (@$problems) {
@@ -209,5 +208,5 @@
 	[ 95, 75, 50, 25, 5, 1 ],
 	$attemptsList,
 	[ map { link_to maketext('Problem [_1]', $_->{prettyID}) => $_->{statsLink} } @$problems ],
-   	reverse => 1
+	reverse => 1
 ) =%>

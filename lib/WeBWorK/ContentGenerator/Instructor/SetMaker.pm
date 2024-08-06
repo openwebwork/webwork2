@@ -22,15 +22,16 @@ WeBWorK::ContentGenerator::Instructor::SetMaker - Make homework sets.
 
 =cut
 
-use File::Find;
 use Mojo::File;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readDirectory sortByName x format_set_name_internal);
-use WeBWorK::Utils::Tags;
-use WeBWorK::Utils::LibraryStats;
-use WeBWorK::Utils::ListingDB qw(getSectionListings);
+use WeBWorK::Utils qw(sortByName x);
+use WeBWorK::Utils::DateTime qw(getDefaultSetDueDate);
 use WeBWorK::Utils::Instructor qw(assignSetToUser assignProblemToAllSetUsers addProblemToSet);
+use WeBWorK::Utils::LibraryStats;
+use WeBWorK::Utils::ListingDB qw(getDBListings);
+use WeBWorK::Utils::Sets qw(format_set_name_internal);
+use WeBWorK::Utils::Tags;
 
 # Use x to mark strings for maketext
 use constant MY_PROBLEMS   => x('My Problems');
@@ -42,8 +43,6 @@ use constant HIDDEN  => (1 << 1);
 use constant SUCCESS => (1 << 2);
 
 my %ignoredir = (
-	'.'            => 1,
-	'..'           => 1,
 	'tmpEdit'      => 1,
 	'headers'      => 1,
 	'macros'       => 1,
@@ -57,82 +56,89 @@ sub prepare_activity_entry ($c) {
 	return ("In SetMaker as user $user");
 }
 
-## This is for searching the disk for directories containing pg files.
-## to make the recursion work, this returns an array where the first
-## item is the number of pg files in the directory.  The second is a
-## list of directories which contain pg files.
-##
-## If a directory contains only one pg file and the directory name
-## is the same as the file name, then the directory is considered
-## to be part of the parent directory (it is probably in a separate
-## directory only because it has auxiliary files that want to be
-## kept together with the pg file).
-##
-## If a directory has a file named "=library-ignore", it is never
-## included in the directory menu.  If a directory contains a file
-## called "=library-combine-up", then its pg are included with those
-## in the parent directory (and the directory does not appear in the
-## menu).  If it has a file called "=library-no-combine" then it is
-## always listed as a separate directory even if it contains only one
-## pg file.
+# This searches the disk for directories containing pg files.  To make the
+# recursion work, this returns an array where the first item is the number of pg
+# files in the directory followed by a list of directories which contain pg
+# files.
+#
+# If a directory contains only one pg file, the directory name is the same as
+# the file name, and there are other files in the directory (that are not set
+# header files, tmp files or bak files) then the directory is considered to be
+# part of the parent directory (it is probably in a separate directory only
+# because it has auxiliary files that want to be kept together with the pg
+# file).
+#
+# If a directory has a file named "=library-ignore", it is never included in the
+# directory menu.  If a directory contains a file called "=library-combine-up",
+# then its pg are included with those in the parent directory (and the directory
+# does not appear in the menu).  If it has a file called "=library-no-combine"
+# then it is always listed as a separate directory even if it contains only one
+# pg file.
+sub get_course_pg_dirs ($c, $top, $dir) {
+	# Note that this does not include hidden files or directories.
+	my $lis = eval { $dir->list({ dir => 1 }) };
 
-sub get_library_sets ($c, $top, $dir) {
-	# ignore directories that give us an error
-	my @lis = eval { readDirectory($dir) };
-	if ($@) {
-		warn $@;
-		return (0);
-	}
-	return (0) if grep {/^=library-ignore$/} @lis;
+	# Ignore directories that give an error.
+	return 0 if $@;
 
-	my @pgfiles = grep { m/\.pg$/ && (!m/(Header|-text)(File)?\.pg$/) && -f "$dir/$_" } @lis;
-	my $pgcount = scalar(@pgfiles);
-	my $pgname  = $dir;
-	$pgname =~ s!.*/!!;
-	$pgname .= '.pg';
-	my $combineUp = ($pgcount == 1 && $pgname eq $pgfiles[0] && !(grep {/^=library-no-combine$/} @lis));
+	return 0 if $lis->grep(sub { $_->basename eq '=library-ignore' })->size;
+
+	my $pgfiles = $lis->grep(sub { -f && m/\.pg$/ && !m/(Header|-text)(File)?\.pg$/ });
+	my $pgcount = $pgfiles->size;
+
+	my $dirs = $lis->grep(sub { !$ignoredir{ $_->basename } && -d });
+	$dirs = $dirs->grep(sub { !$c->{problibs}{ $_->basename } }) if $top == 1;
+
+	# Never include Library or Contrib at the top level
+	$dirs = $dirs->grep(sub { $_->basename ne 'Library' && $_->basename ne 'Contrib' }) if $top == 1;
 
 	my @pgdirs;
-	my @dirs = grep { !$ignoredir{$_} && -d "$dir/$_" } @lis;
-	if ($top == 1) {
-		@dirs = grep { !$c->{problibs}{$_} } @dirs;
-	}
-	# Never include Library or Contrib at the top level
-	if ($top == 1) {
-		@dirs = grep { $_ ne 'Library' && $_ ne 'Contrib' } @dirs;
-	}
-	foreach my $subdir (@dirs) {
-		my @results = $c->get_library_sets(0, "$dir/$subdir");
+	for my $subdir (@$dirs) {
+		my @results = $c->get_course_pg_dirs(0, $subdir);
 		$pgcount += shift @results;
 		push(@pgdirs, @results);
 	}
 
-	return ($pgcount, @pgdirs) if $top || $combineUp || (grep {/^=library-combine-up$/} @lis);
-	return (0, @pgdirs, $dir);
+	return ($pgcount, @pgdirs)
+		if $top
+		|| ($pgfiles->size == 1
+			&& ($dir->basename . '.pg') eq $pgfiles->first->basename
+			&& $lis->grep(sub { -f && (!m/\.pg$/ || m/(Header|-text)\.pg$/) && !m/(\.(tmp|bak)|~)$/ })->size
+			&& !$lis->grep(sub { $_->basename eq '=library-no-combine' })->size)
+		|| $lis->grep(sub { $_->basename eq '=library-combine-up' })->size
+		|| !$pgcount;
+	return (0, @pgdirs, $dir->to_string);
 }
 
-sub get_library_pgs ($c, $top, $base, $dir) {
-	my @lis = readDirectory("$base/$dir");
-	return () if (grep {/^=library-ignore$/} @lis);
-	return () if !$top && (grep {/^=library-no-combine$/} @lis);
+# Important: Make sure that the list of pg files that this returns is kept in sync with the directories that are
+# returned by the above method.  Most importantly, if a directory is not listed by the above method and it does not
+# contain a file named =library-ignore, then the pg files in that directory should be listed with the pg files of the
+# parent directory, and if a directory is listed by the above method, then the pg files in that directory should not be
+# listed for the parent directory.
+sub get_pg_files_in_dir ($c, $top, $base, $dir) {
+	my $lis = $base->child($dir)->list({ dir => 1 });
+	return if $lis->grep(sub { $_->basename eq '=library-ignore' })->size;
+	return if !$top && $lis->grep(sub { $_->basename eq '=library-no-combine' })->size;
 
-	my @pgs = grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$base/$dir/$_" } @lis;
-	my $others =
-		scalar(grep { (!m/\.pg$/ || m/(Header|-text)\.pg$/) && !m/(\.(tmp|bak)|~)$/ && -f "$base/$dir/$_" } @lis);
+	my $pgs = $lis->grep(sub { m/\.pg$/ && !m/(Header|-text)\.pg$/ && -f })->map('basename');
 
-	my @dirs = grep { !$ignoredir{$_} && -d "$base/$dir/$_" } @lis;
-	if ($top == 1) {
-		@dirs = grep { !$c->{problibs}{$_} } @dirs;
-	}
-	foreach my $subdir (@dirs) { push(@pgs, $c->get_library_pgs(0, "$base/$dir", $subdir)) }
+	my $dirs = $lis->grep(sub { !$ignoredir{ $_->basename } && -d });
+	$dirs = $dirs->grep(sub { !$c->{problibs}{ $_->basename } }) if $top == 1;
 
-	return unless $top || (scalar(@pgs) == 1 && $others) || (grep {/^=library-combine-up$/} @lis);
-	return (map {"$dir/$_"} @pgs);
+	for my $subdir (@$dirs) { push(@$pgs, $c->get_pg_files_in_dir(0, $base->child($dir), $subdir->basename)) }
+
+	return
+		unless $top
+		|| ($pgs->size == 1
+			&& $pgs->first eq "$dir.pg"
+			&& $lis->grep(sub { -f && (!m/\.pg$/ || m/(Header|-text)\.pg$/) && !m/(\.(tmp|bak)|~)$/ })->size)
+		|| $lis->grep(sub { $_->basename eq '=library-combine-up' })->size;
+	return @{ $pgs->map(sub {"$dir/$_"}) };
 }
 
 sub list_pg_files ($c, $templates, $dir) {
 	my $top = ($dir eq '.') ? 1 : 2;
-	my @pgs = $c->get_library_pgs($top, $templates, $dir);
+	my @pgs = $c->get_pg_files_in_dir($top, Mojo::File->new($templates), $dir);
 	return sortByName(undef, @pgs);
 }
 
@@ -163,6 +169,8 @@ sub getDBextras ($c, $sourceFileName) {
 	}
 
 	my $filePath = $c->ce->{courseDirs}{templates} . "/$sourceFileName";
+	return (0, 0) unless -r $filePath;
+
 	my $tag_obj  = WeBWorK::Utils::Tags->new($filePath);
 	my $isMO     = $tag_obj->{MO}     || 0;
 	my $isstatic = $tag_obj->{Static} || 0;
@@ -296,7 +304,7 @@ sub get_problem_directories ($c, $lib) {
 	my $main_problems = $c->maketext(MY_PROBLEMS);
 	my $isTop         = 1;
 	if ($lib) { $source .= "/$lib"; $main_problems = $c->maketext(MAIN_PROBLEMS); $isTop = 2 }
-	my @all_problem_directories = $c->get_library_sets($isTop, $source);
+	my @all_problem_directories = $c->get_course_pg_dirs($isTop, Mojo::File->new($source));
 	my $includetop              = shift @all_problem_directories;
 
 	for (my $j = 0; $j < scalar(@all_problem_directories); $j++) {
@@ -314,11 +322,8 @@ sub process_search ($c, @dbsearch) {
 	my %mlt = ();
 	my $mltind;
 	for my $indx (0 .. $#dbsearch) {
-		$dbsearch[$indx]->{filepath} =
-			$dbsearch[$indx]->{libraryroot} . "/" . $dbsearch[$indx]->{path} . "/" . $dbsearch[$indx]->{filename};
-		# For debugging
-		$dbsearch[$indx]->{oindex} = $indx;
-		if ($mltind = $dbsearch[$indx]->{morelt}) {
+		$dbsearch[$indx]{oindex} = $indx;
+		if ($mltind = $dbsearch[$indx]{morelt}) {
 			if (defined($mlt{$mltind})) {
 				push @{ $mlt{$mltind} }, $indx;
 			} else {
@@ -326,7 +331,7 @@ sub process_search ($c, @dbsearch) {
 			}
 		}
 	}
-	# Now filepath is set and we have a hash of mlt entries
+	# Now we have a hash of mlt entries.
 
 	# Find MLT leaders, mark entries for no show,
 	# set up children array for leaders
@@ -468,7 +473,7 @@ sub pre_header_initialize ($c) {
 	$count++ if ($j > 0);
 
 	# Default of which problem selector to display
-	my $browse_which = $c->param('browse_which') || 'browse_npl_library';
+	my $browse_which = $c->param('browse_which') || 'browse_opl';
 
 	# Check for problem lib buttons
 	my $browse_lib = '';
@@ -481,7 +486,7 @@ sub pre_header_initialize ($c) {
 
 	# Start the logic through if elsif elsif ...
 	debug("browse_lib",         $c->param("$browse_lib"));
-	debug("browse_npl_library", $c->param("browse_npl_library"));
+	debug("browse_opl",         $c->param("browse_opl"));
 	debug("browse_course_sets", $c->param("browse_course_sets"));
 	debug("browse_setdefs",     $c->param("browse_setdefs"));
 	# Asked to browse certain problems
@@ -490,8 +495,8 @@ sub pre_header_initialize ($c) {
 		$c->{current_library_set} = "";
 		$use_previous_problems    = 0;
 		@pg_files                 = ();
-	} elsif ($c->param('browse_npl_library')) {
-		$browse_which             = 'browse_npl_library';
+	} elsif ($c->param('browse_opl')) {
+		$browse_which             = 'browse_opl';
 		$c->{current_library_set} = "";
 		$use_previous_problems    = 0;
 		@pg_files                 = ();
@@ -525,15 +530,15 @@ sub pre_header_initialize ($c) {
 		} else {
 			$set_to_display        = '.'                      if $set_to_display eq $c->maketext(MY_PROBLEMS);
 			$set_to_display        = substr($browse_which, 7) if $set_to_display eq $c->maketext(MAIN_PROBLEMS);
-			@pg_files              = $c->list_pg_files($ce->{courseDirs}{templates}, "$set_to_display");
+			@pg_files              = $c->list_pg_files($ce->{courseDirs}{templates}, $set_to_display);
 			@pg_files              = map { { 'filepath' => $_, 'morelt' => 0 } } @pg_files;
 			$use_previous_problems = 0;
 		}
 	} elsif ($c->param('view_course_set')) {
 		# View problems selected from the a set in this course
-		my $set_to_display = $c->{current_library_set};
+		my $set_to_display = $c->{current_library_set} // '';
 		debug("set_to_display is $set_to_display");
-		if (!defined $set_to_display || $set_to_display eq '') {
+		if ($set_to_display eq '') {
 			$c->addbadmessage($c->maketext("You need to select a set from this course to view."));
 		} else {
 			@pg_files = map { { 'filepath' => $_->source_file, 'morelt' => 0 } }
@@ -542,16 +547,13 @@ sub pre_header_initialize ($c) {
 		}
 	} elsif ($c->param('lib_view')) {
 		# View from the library database
-		@pg_files = ();
-		# TODO: deprecate OPLv1 -- replace getSectionListings with getDBListings($c,0)
-		my @dbsearch = getSectionListings($c);
-		@pg_files              = process_search($c, @dbsearch);
+		@pg_files              = process_search($c, getDBListings($c, 0));
 		$use_previous_problems = 0;
 	} elsif ($c->param('view_setdef_set')) {
 		# View a set from a set*.def
-		my $set_to_display = $c->{current_library_set};
+		my $set_to_display = $c->{current_library_set} // '';
 		debug("set_to_display is $set_to_display");
-		if (!defined $set_to_display || $set_to_display eq '') {
+		if ($set_to_display eq '') {
 			$c->addbadmessage($c->maketext("You need to select a set definition file to view."));
 		} else {
 			@pg_files = $c->read_set_def($set_to_display);
@@ -570,46 +572,33 @@ sub pre_header_initialize ($c) {
 				$c->param('new_set_name')
 			));
 		} else {
-			# If we want to munge the input set name, do it here.
 			my $newSetName = format_set_name_internal($c->param('new_set_name'));
 			debug("local_sets was ", $c->param('local_sets'));
-			$c->param('local_sets', $newSetName);    ## use of two parameter param
+			$c->param('local_sets', $newSetName);
 			debug("new value of local_sets is ", $c->param('local_sets'));
+
 			if (!$newSetName) {
-				$c->addbadmessage($c->maketext("You did not specify a new set name."));
+				$c->addbadmessage($c->maketext('Please specify a new set name.'));
 			} elsif (defined $db->getGlobalSet($newSetName)) {
-				$c->addbadmessage($c->maketext(
-					"The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",
-					$newSetName
-				));
-			} else {                                 # Do it!
+				$c->addbadmessage($c->maketext('The set "[_1]" already exists.', $newSetName));
+			} else {
+				my $dueDate = getDefaultSetDueDate($ce);
+
 				my $newSetRecord = $db->newGlobalSet();
 				$newSetRecord->set_id($newSetName);
-				$newSetRecord->set_header("defaultHeader");
-				$newSetRecord->hardcopy_header("defaultHeader");
-				# It's convenient to set the due date two weeks from now so that it is
-				# not accidentally available to students.
-
-				my $dueDate    = time + 2 * 60 * 60 * 24 * 7;
-				my $display_tz = $ce->{siteDefaults}{timezone};
-				my $fDueDate   = $c->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
-				my $dueTime    = $ce->{pg}{timeAssignDue};
-
-				# We replace the due time by the one from the config variable
-				# and try to bring it back to unix time if possible
-				$fDueDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
-
-				$dueDate = $c->parseDateTime($fDueDate, $display_tz);
+				$newSetRecord->set_header('defaultHeader');
+				$newSetRecord->hardcopy_header('defaultHeader');
 				$newSetRecord->open_date($dueDate - 60 * $ce->{pg}{assignOpenPriorToDue});
+				$newSetRecord->reduced_scoring_date($dueDate - 60 * $ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
 				$newSetRecord->due_date($dueDate);
 				$newSetRecord->answer_date($dueDate + 60 * $ce->{pg}{answersOpenAfterDueDate});
-
 				$newSetRecord->visible(1);
 				$newSetRecord->enable_reduced_scoring(0);
 				$newSetRecord->assignment_type('default');
+
 				eval { $db->addGlobalSet($newSetRecord) };
 				if ($@) {
-					$c->addbadmessage("Problem creating set $newSetName<br> $@");
+					$c->addbadmessage($c->maketext('Problem creating set "[_1]": [_2]', $newSetName, $@));
 				} else {
 					$c->addgoodmessage($c->maketext("Set [_1] has been created.", $newSetName));
 					assignSetToUser($db, $userName, $newSetRecord);
@@ -645,7 +634,7 @@ sub pre_header_initialize ($c) {
 	} elsif ($c->param('library_advanced')) {
 		$library_basic = 2;
 	} elsif ($c->param('library_reset')) {
-		for my $jj (qw(chapters sections subjects textbook textchapter textsection keywords)) {
+		for my $jj (qw(chapter section subject textbook textchapter textsection keywords)) {
 			$c->param('library_' . $jj, undef);
 		}
 		$c->param('level', undef);

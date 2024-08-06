@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,9 +35,22 @@ error occurs, then the response will contain an "error" key.
 
 =cut
 
+# FIXME: This is no longer "instructor" only.  Even students can use the getCurrentServerTime command.  Really, it never
+# was "instructor" only.  Usage of all commands is based on permissions, and there have always been non-instructor users
+# that have some of these permissions. So this module and the corresponding route should really be renamed.
+
 use JSON;
 
 use WebworkWebservice;
+
+sub initializeRoute ($c, $routeCaptures) {
+	$c->{rpc} = 1;
+
+	# Get the courseID from the parameters.
+	$routeCaptures->{courseID} = $c->stash->{courseID} = $c->param('courseID') if $c->param('courseID');
+
+	return;
+}
 
 async sub pre_header_initialize ($c) {
 	unless ($c->authen->was_verified) {

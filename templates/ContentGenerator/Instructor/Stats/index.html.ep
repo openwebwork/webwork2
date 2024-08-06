@@ -1,9 +1,11 @@
 % # Note that this template is used by both WeBWorK::ContentGenerator::Instructor::Stats and
 % # WeBWorK::ContentGenerator::Instructor::StudentProgress.
 %
-% use WeBWorK::Utils qw(format_set_name_display);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 % my $type = current_route =~ s/instructor_//r;
+%
+% stash->{footerWidthClass} = 'col-lg-10 col-sm-12';
 %
 <div class="row">
 	<div class="col-lg-5 col-sm-6 mb-2">

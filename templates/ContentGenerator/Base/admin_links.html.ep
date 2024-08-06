@@ -2,33 +2,34 @@
 	<li class="list-group-item nav-item"><%= $makelink->('options') %></li>
 	<li><hr class="site-nav-separator"></li>
 	% if ($authz->hasPermissions($userID, 'create_and_delete_courses')) {
+		% my $admin_pattern = qr/$ce->{admin_course_id}$/;
 		<li class="list-group-item nav-item">
 			<%= $makelink->(
 				'set_list',
 				text   => maketext('Course Listings'),
-				active => !param('subDisplay') && $c->url_for =~ /admin$/ ? 1 : 0
+				active => !param('subDisplay') && $c->url_for =~ $admin_pattern ? 1 : 0
 			) %>
 		</li>
 		% for (
 			% [
-			% 	'add_course',
-			% 	maketext('Add Courses'),
-			% 	{
-			% 		add_admin_users      => 1,
-			% 		add_config_file      => 1,
-			% 		add_dbLayout         => 'sql_single',
-			% 		add_templates_course => $ce->{siteDefaults}{default_templates_course} || ''
-			% 	}
+				% 'add_course',
+				% maketext('Add Course'),
+				% {
+					% add_admin_users  => 1,
+					% copy_from_course => $ce->{siteDefaults}{default_copy_from_course} || '',
+					% copy_component   => 'copyTemplatesHtml',
+					% add_dbLayout     => 'sql_single'
+				% }
 			% ],
-			% [ 'rename_course',        maketext('Rename Courses') ],
-			% [ 'delete_course',        maketext('Delete Courses') ],
-			% [ 'archive_course',       maketext('Archive Courses') ],
-			% [ 'unarchive_course',     maketext('Unarchive Courses') ],
-			% [ 'upgrade_course',       maketext('Upgrade Courses') ],
-			% [ 'hide_inactive_course', maketext('Hide Courses') ],
-			% [ 'manage_locations',     maketext('Manage Locations') ],
-		% )
-		% {
+			% [ 'rename_course',         maketext('Rename Course') ],
+			% [ 'delete_course',         maketext('Delete Course') ],
+			% [ 'archive_course',        maketext('Archive Courses') ],
+			% [ 'unarchive_course',      maketext('Unarchive Course') ],
+			% [ 'upgrade_course',        maketext('Upgrade Courses') ],
+			% [ 'hide_inactive_course',  maketext('Hide Courses') ],
+			% [ 'manage_locations',      maketext('Manage Locations') ],
+			% [ 'manage_lti_course_map', maketext('Manage LTI Course Map') ],
+		% ) {
 			<li class="list-group-item nav-item">
 				<%= $makelink->(
 					'set_list',
@@ -39,7 +40,10 @@
 			</li>
 		% }
 		<li class="list-group-item nav-item"><%= $makelink->('instructor_user_list') %></li>
-		<li class="list-group-item nav-item"><%= $makelink->('instructor_mail_merge') %></li>
+		% if ($authz->hasPermissions($userID, 'send_mail')) {
+			<li class="list-group-item nav-item"><%= $makelink->('instructor_mail_merge') %></li>
+		% }
+		<li class="list-group-item nav-item"><%= $makelink->('instructor_job_manager') %></li>
 		<li class="list-group-item nav-item">
 			<%= $makelink->(
 				'instructor_file_manager',
@@ -49,8 +53,11 @@
 		<li class="list-group-item nav-item">
 			<%= $c->helpMacro('admin_links', { label => maketext('Help'), class => 'nav-link' }) =%>
 		</li>
-		<li class="list-group-item nav-item">
-			<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' =%>
-		</li>
+		% if ($ce->{webworkURLs}{webwork2BugReporter} && $authz->hasPermissions($userID, 'report_bugs')) {
+			<li class="list-group-item nav-item">
+				<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{webwork2BugReporter},
+					target => 'bug_report', class => 'nav-link' =%>
+			</li>
+		% }
 	% }
 </ul>

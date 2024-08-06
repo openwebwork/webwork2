@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -37,6 +37,24 @@
 ################################################################################
 # Additional mail settings in defaults.config can be overridden here
 ################################################################################
+
+# $generic_sender_name will be used as the "From:" name on all feedback emails
+# sent without a defined user.
+
+$generic_sender_name = '';
+
+# The following variables will override the "From:" address in messages sent by
+# the named feature.
+# When one of these is set, all messages sent by that feature will use the
+# supplied email address as the "From:" address, and the address of the relevant
+# user will be set as the "Reply-to:" address for the message.
+# These may be required if you have provided an SMTP username and password in
+# site.conf.  They can also be used to improve email verification and avoid
+# messages getting filtered as spam.
+
+$feedback_sender_email = ''; # For student feedback
+$instructor_sender_email = ''; # For instructors emailing students
+$jitar_sender_email = ''; # For notifications of incomplete JiTaR sets
 
 # By default, feedback is sent to all users who have permission to
 # receive_feedback in a course. If this list is non-empty, feedback is also sent
@@ -75,7 +93,6 @@ $mail{feedbackRecipients}    = [
 ################################################################################
 
 #$defaultTheme = "math4";
-#$defaultThemeTemplate = "system";
 
 # The institution logo should be an image file in the theme's images folder
 #$institutionLogo = 'my_school_logo.png';
@@ -86,9 +103,27 @@ $mail{feedbackRecipients}    = [
 # Language
 ################################################################################
 
+# This must be a language code for a language that is supported by webwork.
+# Note that this is also used for the locale for date/time formats.
+# Check the directory lib/WeBWorK/Localize to see which languages are
+# currently supported (e.g. en, es, fr, he-IL, tr, zh-HK).
+# This can be set per course in course.conf or via the course configuration.
 #$language = "en";
-# Check the directory .../webwork2/lib/WeBWorK/Localize to what languages are
-# currently supported (e.g. en, es,. fr, heb, tr, zk_hk).
+
+################################################################################
+# Student Date Format
+################################################################################
+
+# This is the format of the dates displayed for students.  This can be created
+# from the strftime patterns documented at https://metacpan.org/pod/DateTime#strftime-Patterns,
+# or can be one of the localizable DateTime::Locale::FromData formats
+# 'datetime_format_short', 'datetime_format_medium', 'datetime_format_long', or
+# 'datetime_format_full'.  See https://metacpan.org/pod/DateTime::Locale::FromData.
+# The default is 'datetime_format_long' which will display (for the English
+# language): June 27, 2023 at 10:39:00 AM EST
+# The commented out line that is demonstrated below will display (for the English
+# language): Wed Jun 27 at 10:30am
+#$studentDateDisplayFormat = "%a %b %d at %l:%M%P";
 
 ################################################################################
 # Default screen header files
@@ -203,7 +238,7 @@ $mail{feedbackRecipients}    = [
 # $permissionLevels{login} = "guest";
 
 # The above code would give the permission to login to any user with permission
-# level guest or higher.
+# level guest or higher (which is the default).
 
 # By default answers for all users are logged to the past_answers table in the database
 # and the myCourse/logs/answer_log file.  If you only want answers logged for users below
@@ -235,7 +270,7 @@ $mail{feedbackRecipients}    = [
 # List of enabled display modes. Comment out any modes you don't wish to make
 # available for use.
 # The first uncommented option is the default for instructors rendering problems
-# in the homework sets editor.
+# in the Library Browser and Set Detail page.
 #$pg{displayModes} = [
 	#"MathJax",     # render TeX math expressions on the client side using MathJax
 	                # we strongly recommend people install and use MathJax, and it is required if you want to use mathview
@@ -269,20 +304,20 @@ $mail{feedbackRecipients}    = [
 ################################################################################
 
 # The default weight (also called value) of a problem to use when using the
-# Library Browser, Problem Editor or Hmwk Sets Editor to add problems to a set
+# Library Browser, Problem Editor, or Sets Manager to add problems to a set
 # or when this value is left blank in an imported set definition file.
 
 #$problemDefaults{value} = 1;
 
 # The default max_attempts for a problem to use when using the
-# Library Browser, Problem Editor or Hmwk Sets Editor to add problems to a set
+# Library Browser, Problem Editor, or Sets Manager to add problems to a set
 # or when this value is left blank in an imported set definition file.  Note that
 # setting this to -1 gives students unlimited attempts.
 
 #$problemDefaults{max_attempts} = -1;
 
 # The default showMeAnother for a problem to use when using the
-# Library Browser, Problem Editor or Hmwk Sets Editor to add problems to a set
+# Library Browser, Problem Editor, or Sets Manager to add problems to a set
 # or when this value is left blank in an imported set definition file.  Note that
 # setting this to -1 disables the showMeAnother button
 #$problemDefaults{showMeAnother} = -1;
@@ -337,11 +372,9 @@ $mail{feedbackRecipients}    = [
 # $pg{specialPGEnvironmentVars}{convertFullWidthCharacters} = 1;
 
 # Application that the PGtikz.pl and PGlateximage.pl macros will use to create svg images.
-# This should be either 'pdf2svg' or 'dvisvgm'.  The default is 'pdf2svg'.
-# If the system version of latex is 3.14159265-2.6-1.40.20 (TeX Live 2019) or newer
-# and the system version of dvisvgm is 2.8.1 or newer, then change this to 'dvisvgm'
-# by uncommenting the line below.  'dvisvgm' will generally create better 'svg'
-# images.
+# This should be either 'pdf2svg' or 'dvisvgm'.  The default is 'dvisvgm' as
+# 'dvisvgm' will generally create a better 'svg'. However, if you see issues
+# with that, then you may want to switch this to 'pdf2svg'.
 #$pg{specialPGEnvironmentVars}{latexImageSVGMethod} = "dvisvgm";
 
 # When ImageMagick is used for image conversions, this sets the default options.
@@ -386,16 +419,6 @@ $mail{feedbackRecipients}    = [
 #####################
 
 #push (@{${pg}{modules}}, [qw(LaTeXImage)]);
-################################################################################
-# Student Date Format
-################################################################################
-
-# Uncomment the following line to customize the format of the dates displayed to
-# students.  As it is written, the line below will display open, due and answer
-# dates in the following format: Wed Jun 27 at 10:30am
-# For all available options, consult the documentation for perl DateTime under
-# "strftime patterns".
-#$studentDateDisplayFormat="%a %b %d at %l:%M%P";
 
 ################################################################################
 # Using R with WeBWorK
@@ -430,11 +453,60 @@ $mail{feedbackRecipients}    = [
 # END_PREAMBLE
 
 ################################################################################
-# Authentication Methods
+# Authentication
 ################################################################################
 
 # Extra modules have been created to allow WeBWorK to use certain external
 # methods of authentication.
+
+# Select the authentication module to use for normal logins.
+#
+# If this value is a string, the given authentication module will be used
+# regardless of the database layout.
+#
+# If it is a hash, the database layout name will be looked up in the hash and
+# the resulting value will be used as the authentication module.  The special
+# hash key "*" is used if no entry for the current database layout is found.
+#
+# If this value is a sequence of strings or hashes, then each string or hash in
+# the sequence will be successively tested to see if it provides a module that
+# can handle the authentication request by calling the module's sub
+# request_has_data_for_this_verification_module().  The first module that
+# responds affirmatively will be used.
+
+#$authen{user_module} = {
+#	sql_moodle => "WeBWorK::Authen::Moodle",
+#	sql_ldap   => "WeBWorK::Authen::LDAP"
+#	"*"        => "WeBWorK::Authen::Basic_TheLastOption"
+#};
+
+# Select the authentication module to use for proctor logins.
+# A string or a hash is accepted, as above.
+#$authen{proctor_module} = "WeBWorK::Authen::Proctor";
+
+# List of authentication modules that may be used to enter the admin course.
+# This should be a non-empty sublist of whatever is in $authen{user_module}.
+# Since the admin course provides overall power to add/delete courses, access
+# to this course should be protected by the best possible authentication you
+# have available to you.  The current default is
+# WeBWorK::Authen::Basic_TheLastOption which is simple password based
+# authentication for a password locally stored in your WeBWorK server's
+# database.  On one hand, this is necessary as the initial setting, as it is the
+# only option available when a new server is being installed.  However, since
+# this option does not make use of multi-factor authentication or provide any
+# capabilities to prevent dictionary attacks, etc.  At the very least you should
+# use a very strong password.  If you have the option to use a more secure
+# authentication approach to the admin course (one which you are confident
+# cannot be spoofed) that is preferable.
+#
+# Note that if you include authentication module config files further down,
+# those may override the setting of $authen{admin_module} here.
+
+#$authen{admin_module} = [
+#	'WeBWorK::Authen::Moodle',
+#	'WeBWorK::Authen::LDAP',
+#	'WeBWorK::Authen::Basic_TheLastOption'
+#];
 
 ################################################################################
 # IMS LTI Authentication
@@ -462,63 +534,140 @@ $mail{feedbackRecipients}    = [
 # Session Management
 ################################################################################
 
-## For a discussion of session_management_via session_cookies or the
-## Key database, see the   Session Management section
-## of defaults.config.dist
+# Session management can be handled either using the key database, the
+# traditional method, or by using signed session cookies.
 
-## For session management using the key database table, uncomment the following line,
-## which will override the setting  $session_management_via = "session_cookie"
-## set in defaults.config.
+# Setting $session_management_via="key" uses the key database for session
+# management. If password authentication is used, then a user can opt to use a
+# session cookie with a duration determined by the $sessionTimeout setting
+# below by checking the "Remember Me" checkbox on the login page.
+
+# Setting $session_management_via="session_cookies" uses a session cookie to
+# manage the session. Note that even in this case a key is stored in the
+# database which is compared to the key stored in the session cookie. The
+# lifetime of the cookie is determined by the $sessionTimeout setting below.
+
+# Note that the key database method is less secure as the key must be embeded in
+# the page and added as a url parameter in order to maintain the session. These
+# things can be accessed by malicious javascript. The session cookies are http
+# only cookies which can not be accessed via javascript.
+
+# The default value for $session_management_via is "session_cookie".
 
 #$session_management_via = "key";
 
-## This is the length of time (in seconds) after which a user's session becomes
-## invalid if they have no activity. The default is 30 minutes (60*30 seconds).
+# This is the length of time (in seconds) after which a user's session becomes
+# invalid if they have no activity. The default is 30 minutes (60*30 seconds).
 
-#$sessionKeyTimeout = 60*60*2;
+#$sessionTimeout = 60*60*2;
 
 ################################################################################
 # Cookie control settings
 ################################################################################
 
-# The following variables can be set to control cookie behavior.
-
-# Set the value of the samesite attribute of the WeBWorK cookie:
-# See: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
-#      https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
-#      https://tools.ietf.org/html/draft-west-cookie-incrementalism-00
-
+# Set the value of the samesite attribute of the session cookie:
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 # Notes about the $CookieSameSite options:
-# The "None" setting should only be used with HTTPS and when $CookieSecure = 1; is set below. The "None" setting is
-# also less secure and can allow certain types of cross-site attacks.
-# The "Strict" setting can break the links in the system generated feedback emails when read in a web mail client.
-# Due to those factors, the "Lax" setting is probably the optimal choice for typical WeBWorK servers.
-
+# The "None" setting should only be used with HTTPS and when $CookieSecure is
+# set to 1 below. The "None" setting is also less secure and can allow certain
+# types of cross-site attacks.  The "Strict" setting can break the links in the
+# system generated feedback emails when read in a web mail client.  Due to those
+# factors, the "Lax" setting is probably the optimal choice for typical webwork2
+# servers.
 #$CookieSameSite = "None";
 #$CookieSameSite = "Strict";
 #$CookieSameSite = "Lax";
 
-# Set the value of the secure cookie attribute:
-# Default is 0 here, as 1 will not work without https
+# Set the value of the secure cookie attribute.
+# The default is 0, as 1 will not work without https.
 #$CookieSecure = 1;
 
-# The CookieLifeTime setting determines how long the browser should retain the cookie.
-# See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
-# The CookieLifeTime value should be numeric and in seconds, or should be set to "session", in which case
-# the Cookie will expire when the browser session ends (a "session cookie").
-# The default value is 7 days.
-#$CookieLifeTime = 604800;
-#$CookieLifeTime = "session";
+# If $useSessionCookie is set to 1, then a "session" cookie will be used. This
+# means that the cookie will be deleted when the browser session ends.
+# Typically, this is when the browser is closed. Note that the browser defines
+# when this is, and some browser's also allow sessions to be restored when the
+# browser is reopened. In any case, a user's session will end when the session
+# is idle for more than the number of seconds the $sessionTimeout value is set
+# to.
+#$useSessionCookie = 1;
+
+################################################################################
+# Two Factor Authentication
+################################################################################
+
+# The following variables enable two factor authentication and control how it
+# works. Two factor authentication only applies to courses that use password
+# authentication, i.e., the Basic_TheLastOption user authentication module
+# without an external authentication approach (like LTI, CAS, Shibboleth, etc.).
+# It is recommended that two factor authentication be enabled for all courses
+# that use password authentication. It is extremely highly recommended that this
+# be enabled for the admin course. Two factor authentication works with an
+# authenticator app on a mobile device (such as Google Authenticator,
+# Microsoft authenticator, Twilio Authy, etc.).
+
+# $twoFA{enabled} determines if two factor authentication is enabled for a
+# course. If this is set to 0, then two factor authentication is disabled for
+# all courses. If this is 1 (the default), then two factor authentication is
+# enabled for all courses that use password authentication. If this is a string
+# course name like 'admin', then two factor authentication is enabled only for
+# that course. If this is an array of string course names, then two factor
+# authentication is enabled only for those courses listed. This can also be set
+# in a course's course.conf file. Note that only the values of 0 and 1 make
+# sense there.
+#$twoFA{enabled} = $admin_course_id; # Use this at the very least.
+#$twoFA{enabled} = [$admin_course_id, 'another_courseID', 'another_courseID_3'];
+
+# There are two methods that can be used to setup two factor authentication when
+# a user signs in for the first time. The setup information can be emailed to
+# the user, or can be directly displayed in the browser on the next page that is
+# shown after password verification succeeds.
+#
+# If $twoFA{email_sender} is set, then the email approach will be used. In this
+# case, after a user signs in and the password is verified, the user will be
+# sent an email containing a QR code and instructions on how to set up a OTP
+# generator app. This is probably a more secure way to set up two factor
+# authentication, as it ensures the user setting it up is the correct user. Note
+# that if a user does not have an email address, then the browser method below
+# will be used as a fallback.
+#
+# If $twoFA{email_sender} is not set, then after a user signs in and the
+# password is verified, the QR code, OTP link, and instructions will be
+# displayed directly on the page in the browser. This is potentially less secure
+# because a hacker could guess a username and password before a user has setup
+# two factor authentication (particularly if the username and password are
+# initially the same), and then the hacker would gain access to that user's
+# account, and the actual user would be locked out. Note that you will need to
+# use this option if your server can not send emails. Also note that no-reply
+# addresses may be blocked by the email server or marked as spam. So it may be
+# better to find a valid email address to use for this.
+#$twoFA{email_sender} = 'noreply@your.school.edu';
+
+# When a user signs in and enters the two factor authentication code, the user
+# has the option to skip two factor verification on a given device for
+# subsequent logins. That will only last for the amount of time set as the
+# skip_verification_code_interval. By default this is set to one year. However,
+# good security practices most likely recommend a shorter time interval for
+# this. So change this value if you want to require a shorter and thus more
+# secure time interval before users will need to enter the two factor
+# authentication code again.
+#$twoFA{skip_verification_code_interval} = 3600 * 24 * 7;
+
+# By default all users with the role of "student" or higher are required to use
+# two factor authentication when signing in with a username and password. If
+# you want to disable two factor authentication for students, but require it for
+# instructors then set the permission level below to "login_proctor" (or
+# higher).
+
+#$permissionLevels{use_two_factor_auth} = "login_proctor";
 
 ################################################################################
 # Searching for set.def files to import
 ################################################################################
-## Uncomment below so that when the homework sets editor searches for set def
-## files, it searches beyond templates; it can search deeper subfolders of
-## templates, and optionally also descend into Library
+# In the set manager and the library browser, the directory depth to search
+# within templates for .def files.  Note that this does not apply to the Library
+# and Contrib directories.  Those directories are not searched in any case.
 
-#$options{setDefSearchDepth}=4; #search down 4 levels
-#$options{useOPLdefFiles}=1;
+#$options{setDefSearchDepth} = 4;
 
 ################################################################################
 # Permission overrides (e.g. "admin", "professor", "ta", "student", "guest"
@@ -552,8 +701,14 @@ $mail{feedbackRecipients}    = [
 #	'hebrewTwoCol.xml',
 #];
 
-# The Hebrew themes need to use xelatex. Uncomment the following for xelatex
-#$externalPrograms{pdflatex} ="/usr/bin/xelatex --no-shell-escape";
+# xelatex is the default external program used to generate pdf from LaTeX.  It
+# supports unicode characters (needed for multilingual use among other things).
+# Newer versions of DateTime::Locale use a narrow no-break space in US dates.
+# So xelatex is needed even for English.  Note that --no-shell-escape is
+# important for security reasons.  You may be able to use pdflatex instead of
+# xelatex if you have an older version of DateTime::Locale on your system.
+# However, pdflatex does not support unicode characters.
+#$externalPrograms{latex2pdf} = "/usr/bin/pdflatex --no-shell-escape";
 
 # A course may have additional themes in $courseDirs{hardcopyThemes}.  All such
 # "course" hardcopy themes are effectively enabled and offered for use when

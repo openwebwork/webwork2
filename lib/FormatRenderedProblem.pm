@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,9 +29,8 @@ use Digest::SHA qw(sha1_base64);
 use Mojo::Util qw(xml_escape);
 use Mojo::DOM;
 
-use WeBWorK::HTML::AttemptsTable;
 use WeBWorK::Utils qw(getAssetURL);
-use WeBWorK::Utils::LanguageAndDirection;
+use WeBWorK::Utils::LanguageAndDirection qw(get_lang_and_dir get_problem_lang_and_dir);
 
 sub formatRenderedProblem {
 	my $ws = shift;     # $ws is a WebworkWebservice object.
@@ -72,7 +71,7 @@ sub formatRenderedProblem {
 		[ 'bootstrap.css',                                              1 ],
 		[ 'node_modules/jquery-ui-dist/jquery-ui.min.css',              0 ],
 		[ 'node_modules/@fortawesome/fontawesome-free/css/all.min.css', 0 ],
-		[ 'math4.css',                                                  1 ],
+		[ 'js/System/system.css',                                       0 ],
 		[ 'math4-overrides.css',                                        1 ],
 	);
 
@@ -109,7 +108,7 @@ sub formatRenderedProblem {
 		[ 'node_modules/mathjax/es5/tex-svg.js',                    0, { defer => undef, id => 'MathJax-script' } ],
 		[ 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js', 0, { defer => undef } ],
 		[ 'js/Problem/problem.js',                                  0, { defer => undef } ],
-		[ 'math4.js',                                               1, { defer => undef } ],
+		[ 'js/System/system.js',                                    0, { defer => undef } ],
 		[ 'math4-overrides.js',                                     1, { defer => undef } ]
 	);
 
@@ -140,38 +139,35 @@ sub formatRenderedProblem {
 		get_problem_lang_and_dir($rh_result->{flags}, $ce->{perProblemLangAndDirSettingMode}, $formLanguage);
 	my $PROBLEM_LANG_AND_DIR = join(' ', map {qq{$_="$PROBLEM_LANG_AND_DIR{$_}"}} keys %PROBLEM_LANG_AND_DIR);
 
-	my $previewMode     = defined($ws->{inputs_ref}{preview})      || 0;
-	my $submitMode      = defined($ws->{inputs_ref}{WWsubmit})     || 0;
-	my $showCorrectMode = defined($ws->{inputs_ref}{WWcorrectAns}) || 0;
+	my $previewMode     = defined($ws->{inputs_ref}{previewAnswers}) || 0;
+	my $submitMode      = defined($ws->{inputs_ref}{WWsubmit})       || 0;
+	my $showCorrectMode = defined($ws->{inputs_ref}{WWcorrectAns})   || 0;
 	# A problemUUID should be added to the request as a parameter.  It is used by PG to create a proper UUID for use in
 	# aliases for resources.  It should be unique for a course, user, set, problem, and version.
-	my $problemUUID       = $ws->{inputs_ref}{problemUUID}       // '';
-	my $problemResult     = $rh_result->{problem_result}         // {};
-	my $showSummary       = $ws->{inputs_ref}{showSummary}       // 1;
-	my $showAnswerNumbers = $ws->{inputs_ref}{showAnswerNumbers} // 1;
+	my $problemUUID   = $ws->{inputs_ref}{problemUUID} // '';
+	my $problemResult = $rh_result->{problem_result}   // {};
+	my $showSummary   = $ws->{inputs_ref}{showSummary} // 1;
 
-	# Attempts table
-	my $answerTemplate = '';
+	# Result summary
+	my $resultSummary = '';
 
-	# Do not produce an AttemptsTable when we had a rendering error.
-	if (!$renderErrorOccurred) {
-		my $tbl = WeBWorK::HTML::AttemptsTable->new(
-			$rh_result->{answers} // {}, $ws->c,
-			answersSubmitted    => $ws->{inputs_ref}{answersSubmitted}     // 0,
-			answerOrder         => $rh_result->{flags}{ANSWER_ENTRY_ORDER} // [],
-			displayMode         => $displayMode,
-			showAnswerNumbers   => $showAnswerNumbers,
-			ce                  => $ce,
-			showAttemptPreviews => $previewMode || $submitMode || $showCorrectMode,
-			showAttemptResults  => $submitMode  || $showCorrectMode,
-			showCorrectAnswers  => $showCorrectMode,
-			showMessages        => $previewMode || $submitMode || $showCorrectMode,
-			showSummary         => (($showSummary && ($submitMode || $showCorrectMode)) // 0) ? 1 : 0,
-			maketext            => WeBWorK::Localize::getLoc($formLanguage),
-			summary             => $problemResult->{summary} // '',    # can be set by problem grader
-		);
-		$answerTemplate = $tbl->answerTemplate;
-		$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+	my $lh = WeBWorK::Localize::getLangHandle($formLanguage);
+
+	# Do not produce a result summary when we had a rendering error.
+	if (!$renderErrorOccurred
+		&& $showSummary
+		&& !$previewMode
+		&& ($submitMode || $showCorrectMode)
+		&& $problemResult->{summary})
+	{
+		$resultSummary = $ws->c->c(
+			$ws->c->tag(
+				'h2',
+				class => 'fs-3 mb-2',
+				$ws->c->maketext('Results for this submission')
+				)
+				. $ws->c->tag('div', role => 'alert', $ws->c->b($problemResult->{summary}))
+		)->join('');
 	}
 
 	# Answer hash in XML format used by the PTX format.
@@ -214,7 +210,7 @@ sub formatRenderedProblem {
 		$output->{input}      = $ws->{input};
 
 		# The following could be constructed from the above, but this is a convenience
-		$output->{answerTemplate}  = $answerTemplate->to_string if $answerTemplate;
+		$output->{resultSummary}   = $resultSummary->to_string if $resultSummary;
 		$output->{lang}            = $PROBLEM_LANG_AND_DIR{lang};
 		$output->{dir}             = $PROBLEM_LANG_AND_DIR{dir};
 		$output->{extra_css_files} = \@extra_css_files;
@@ -239,50 +235,52 @@ sub formatRenderedProblem {
 	my %template_params = (
 		template => $formatName eq 'ptx' ? 'RPCRenderFormats/ptx' : 'RPCRenderFormats/default',
 		$formatName eq 'json' ? (format => 'json') : (),
-		formatName               => $formatName,
-		ws                       => $ws,
-		ce                       => $ce,
-		lh                       => WeBWorK::Localize::getLangHandle($ws->{inputs_ref}{language} // 'en'),
-		rh_result                => $rh_result,
-		SITE_URL                 => $SITE_URL,
-		FORM_ACTION_URL          => $SITE_URL . $ws->c->webwork_url . '/render_rpc',
-		COURSE_LANG_AND_DIR      => get_lang_and_dir($formLanguage),
-		theme                    => $ws->{inputs_ref}{theme} || $ce->{defaultTheme},
-		courseID                 => $ws->{inputs_ref}{courseID} // '',
-		user                     => $ws->{inputs_ref}{user}     // '',
-		passwd                   => $ws->{inputs_ref}{passwd}   // '',
-		key                      => $ws->authen->{session_key},
-		PROBLEM_LANG_AND_DIR     => $PROBLEM_LANG_AND_DIR,
-		problemSeed              => $rh_result->{problem_seed} // $ws->{inputs_ref}{problemSeed} // 6666,
-		psvn                     => $rh_result->{psvn}         // $ws->{inputs_ref}{psvn}        // 54321,
-		problemUUID              => $problemUUID,
-		displayMode              => $displayMode,
-		third_party_css          => \@third_party_css,
-		extra_css_files          => \@extra_css_files,
-		third_party_js           => \@third_party_js,
-		extra_js_files           => \@extra_js_files,
-		problemText              => $problemText,
-		extra_header_text        => $ws->{inputs_ref}{extra_header_text} // '',
-		answerTemplate           => $answerTemplate,
-		showScoreSummary         => $submitMode && !$renderErrorOccurred && $problemResult,
-		answerhashXML            => $answerhashXML,
-		LTIGradeMessage          => $LTIGradeMessage,
-		sourceFilePath           => $ws->{inputs_ref}{sourceFilePath}          // '',
-		problemSource            => $ws->{inputs_ref}{problemSource}           // '',
-		uriEncodedProblemSource  => $ws->{inputs_ref}{uriEncodedProblemSource} // '',
-		fileName                 => $ws->{inputs_ref}{fileName}                // '',
-		formLanguage             => $formLanguage,
-		isInstructor             => $ws->{inputs_ref}{isInstructor}       // '',
-		forceScaffoldsOpen       => $ws->{inputs_ref}{forceScaffoldsOpen} // '',
-		showSummary              => $showSummary,
-		showHints                => $ws->{inputs_ref}{showHints}     // '',
-		showSolutions            => $ws->{inputs_ref}{showSolutions} // '',
-		showAnswerNumbers        => $showAnswerNumbers,
-		showPreviewButton        => $ws->{inputs_ref}{showPreviewButton}        // '',
-		showCheckAnswersButton   => $ws->{inputs_ref}{showCheckAnswersButton}   // '',
-		showCorrectAnswersButton => $ws->{inputs_ref}{showCorrectAnswersButton} // '',
-		showFooter               => $ws->{inputs_ref}{showFooter}               // '',
-		pretty_print             => \&pretty_print
+		formatName                   => $formatName,
+		ws                           => $ws,
+		ce                           => $ce,
+		lh                           => $lh,
+		rh_result                    => $rh_result,
+		SITE_URL                     => $SITE_URL,
+		FORM_ACTION_URL              => $SITE_URL . $ws->c->webwork_url . '/' . $ws->c->current_route,
+		COURSE_LANG_AND_DIR          => get_lang_and_dir($formLanguage),
+		theme                        => $ws->{inputs_ref}{theme} || $ce->{defaultTheme},
+		courseID                     => $ws->{inputs_ref}{courseID}       // '',
+		user                         => $ws->{inputs_ref}{user}           // '',
+		passwd                       => $ws->{inputs_ref}{passwd}         // '',
+		disableCookies               => $ws->{inputs_ref}{disableCookies} // '',
+		key                          => $ws->authen->{session_key},
+		PROBLEM_LANG_AND_DIR         => $PROBLEM_LANG_AND_DIR,
+		problemSeed                  => $rh_result->{problem_seed} // $ws->{inputs_ref}{problemSeed} // 6666,
+		psvn                         => $rh_result->{psvn}         // $ws->{inputs_ref}{psvn}        // 54321,
+		problemUUID                  => $problemUUID,
+		displayMode                  => $displayMode,
+		third_party_css              => \@third_party_css,
+		extra_css_files              => \@extra_css_files,
+		third_party_js               => \@third_party_js,
+		extra_js_files               => \@extra_js_files,
+		problemText                  => $problemText,
+		extra_header_text            => $ws->{inputs_ref}{extra_header_text} // '',
+		resultSummary                => $resultSummary,
+		showScoreSummary             => $submitMode && !$renderErrorOccurred && $problemResult,
+		answerhashXML                => $answerhashXML,
+		LTIGradeMessage              => $LTIGradeMessage,
+		sourceFilePath               => $ws->{inputs_ref}{sourceFilePath}          // '',
+		problemSource                => $ws->{inputs_ref}{problemSource}           // '',
+		rawProblemSource             => $ws->{inputs_ref}{rawProblemSource}        // '',
+		uriEncodedProblemSource      => $ws->{inputs_ref}{uriEncodedProblemSource} // '',
+		fileName                     => $ws->{inputs_ref}{fileName}                // '',
+		formLanguage                 => $formLanguage,
+		isInstructor                 => $ws->{inputs_ref}{isInstructor}       // '',
+		forceScaffoldsOpen           => $ws->{inputs_ref}{forceScaffoldsOpen} // '',
+		showSummary                  => $showSummary,
+		showHints                    => $ws->{inputs_ref}{showHints}                    // '',
+		showSolutions                => $ws->{inputs_ref}{showSolutions}                // '',
+		showPreviewButton            => $ws->{inputs_ref}{showPreviewButton}            // '',
+		showCheckAnswersButton       => $ws->{inputs_ref}{showCheckAnswersButton}       // '',
+		showCorrectAnswersButton     => $ws->{inputs_ref}{showCorrectAnswersButton}     // '',
+		showCorrectAnswersOnlyButton => $ws->{inputs_ref}{showCorrectAnswersOnlyButton} // 0,
+		showFooter                   => $ws->{inputs_ref}{showFooter}                   // '',
+		pretty_print                 => \&pretty_print
 	);
 
 	return $ws->c->render(%template_params) if $formatName eq 'json' || !$ws->{inputs_ref}{send_pg_flags};
@@ -403,20 +401,28 @@ EOS
 # Nice output for debugging
 sub pretty_print {
 	my ($r_input, $level) = @_;
+	return 'undef' unless defined $r_input;
+
 	$level //= 4;
 	$level--;
-	return '' unless $level > 0;    # Only print three levels of hashes (safety feature)
-	my $out = '';
-	if (!ref $r_input) {
-		$out = $r_input if defined $r_input;
-		$out =~ s/</&lt;/g;         # protect for HTML output
-	} elsif (eval { %$r_input && 1 }) {
-		# eval { %$r_input && 1 } will pick up all objectes that can be accessed like a hash and so works better than
-		# "ref $r_input".  Do not use "$r_input" =~ /hash/i" because that will pick up strings containing the word hash,
-		# and that will cause an error below.
-		local $^W = 0;
-		$out .= qq{$r_input <table border="2" cellpadding="3" bgcolor="#FFFFFF">};
+	return 'too deep' unless $level > 0;
 
+	my $ref = ref($r_input);
+
+	if (!$ref) {
+		return xml_escape($r_input);
+	} elsif (eval { %$r_input || 1 }) {
+		# `eval { %$r_input || 1 }` will pick up all objectes that can be accessed like a hash and so works better than
+		# `ref $r_input`.  Do not use `"$r_input" =~ /hash/i` because that will pick up strings containing the word
+		# hash, and that will cause an error below.
+		my $out =
+			'<div style="display:table;border:1px solid black;background-color:#fff;">'
+			. ($ref eq 'HASH'
+				? ''
+				: '<div style="'
+				. 'display:table-caption;padding:3px;border:1px solid black;background-color:#fff;text-align:center;">'
+				. "$ref</div>")
+			. '<div style="display:table-row-group">';
 		for my $key (sort keys %$r_input) {
 			# Safety feature - we do not want to display the contents of %seed_ce which
 			# contains the database password and lots of other things, and explicitly hide
@@ -429,24 +435,24 @@ sub pretty_print {
 					|| ($key eq "externalPrograms")
 					|| ($key eq "permissionLevels")
 					|| ($key eq "seed_ce"));
-			$out .= "<tr><td>$key</td><td>=&gt;</td><td>&nbsp;" . pretty_print($r_input->{$key}, $level) . "</td></tr>";
+			$out .=
+				'<div style="display:table-row"><div style="display:table-cell;vertical-align:middle;padding:3px">'
+				. xml_escape($key)
+				. '</div>'
+				. qq{<div style="display:table-cell;vertical-align:middle;padding:3px">=&gt;</div>}
+				. qq{<div style="display:table-cell;vertical-align:middle;padding:3px">}
+				. pretty_print($r_input->{$key}, $level)
+				. '</div></div>';
 		}
-		$out .= '</table>';
-	} elsif (ref $r_input eq 'ARRAY') {
-		my @array = @$r_input;
-		$out .= '( ';
-		while (@array) {
-			$out .= pretty_print(shift @array, $level) . ' , ';
-		}
-		$out .= ' )';
-	} elsif (ref $r_input eq 'CODE') {
-		$out = "$r_input";
+		$out .= '</div></div>';
+		return $out;
+	} elsif ($ref eq 'ARRAY') {
+		return '[ ' . join(', ', map { pretty_print($_, $level) } @$r_input) . ' ]';
+	} elsif ($ref eq 'CODE') {
+		return 'CODE';
 	} else {
-		$out = $r_input;
-		$out =~ s/</&lt;/g;    # Protect for HTML output
+		return xml_escape($r_input);
 	}
-
-	return $out . ' ';
 }
 
 1;

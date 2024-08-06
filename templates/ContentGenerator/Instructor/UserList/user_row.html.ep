@@ -1,7 +1,7 @@
 % my $statusClass = $ce->status_abbrev_to_name($user->status);
 %
 <tr>
-	% unless ($c->{editMode} || $c->{passwordMode}) {
+	% unless ($c->{editMode}) {
 		% # Select checkboxes
 		<td>
 			% if ($editable) {
@@ -11,7 +11,7 @@
 		</td>
 		% # User id
 		<td>
-			<div class="label-with-edit-icon">
+			<div class="d-flex justify-content-between gap-1">
 				% # Make the user id the label for the select user checkbox.
 				<%= label_for $user->user_id . '_checkbox', begin =%>
 					% if (!$authz->hasPermissions(param('user'), 'become_student')) {
@@ -38,7 +38,7 @@
 			% if (
 				% $db->existsKeyWhere({
 					% user_id => $user->user_id,
-					% timestamp => { '>=' => time - $ce->{sessionKeyTimeout} }
+					% timestamp => { '>=' => time - $ce->{sessionTimeout} }
 				% })
 			% )
 			% {
@@ -49,29 +49,7 @@
 		</td>
 	% }
 	%
-	% if ($c->{passwordMode}) {
-		% # New password field
-		<td>
-			% if ($user->user_id eq param('user')) {
-				% # Don't allow a user to change their own password from this form.
-				<div class="alert alert-danger px-1 py-0 m-0">
-					<%= maketext('You may not change your own password here!') =%>
-				</div>
-			% } elsif (!$editable) {
-				% # Prevent modification of users with elevated permissions.
-				<div class="alert alert-danger px-1 py-0 m-0">
-					<%= maketext('You may not change this user\'s password!') =%>
-				</div>
-			% } else {
-				% my $fieldName = 'user.' . $user->user_id . '.new_password';
-				% param($fieldName, undef);
-				<%= text_field $fieldName => '', id => "${fieldName}_id", 'aria-labelledby' => 'new_password_header',
-					size => 14, class => 'form-control form-control-sm d-inline w-auto' =%>
-			% }
-		</td>
-		% # User ID
-		<td><div class="<%= $statusClass %>"><%= $user->user_id %></div></td>
-	% } elsif ($c->{editMode}) {
+	% if ($c->{editMode}) {
 		% # User ID ("edit sets assigned to user" link)
 		<td>
 			<%= link_to $user->user_id =>
@@ -90,8 +68,9 @@
 		</td>
 	% }
 	% # User Fields
-	% for my $field ($user->NONKEYFIELDS, 'permission') {
+	% for my $field ($user->NONKEYFIELDS, 'permission', 'password') {
 		% next unless defined $fieldProperties->{$field};
+		% next if $field eq 'password' && !$c->{editMode};
 		<td>
 			<div class="<%= $statusClass %>">
 			   	<%= include 'ContentGenerator/Instructor/UserList/user_list_field', user => $user, field => $field =%>

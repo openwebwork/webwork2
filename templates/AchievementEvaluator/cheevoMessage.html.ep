@@ -16,7 +16,12 @@
 				</div>
 			% } else {
 				<h2><%= $achievement->{name} %></h2>
-				<div><i><%= $achievement->{points} %> Points</i>: <%= $achievement->{description} %></div>
+				<div>
+					% if ($achievement->{points}) {
+						<i><%= $achievement->{points} %> Points</i>:
+					% }
+					<%= $achievement->{description} %>
+				</div>
 			% }
 		</div>
 		<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>

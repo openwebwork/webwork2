@@ -34,15 +34,7 @@
 						<%= label_for from => maketext('From:'),
 							class => 'col-sm-3 col-form-label col-form-label-sm' =%>
 						<div class="col-sm-9">
-							<%= text_field from => $c->{from}, id => 'from',
-								class => 'form-control form-control-sm' =%>
-						</div>
-					</div>
-					<div class="row mb-1">
-						<%= label_for replyTo => maketext('Reply-To:'),
-							class => 'col-sm-3 col-form-label col-form-label-sm' =%>
-						<div class="col-sm-9">
-							<%= text_field replyTo => $c->{replyTo}, id => 'replyTo',
+							<%= text_field from => $c->{from}, id => 'from', readonly => undef, disabled => undef,
 								class => 'form-control form-control-sm' =%>
 						</div>
 					</div>
@@ -126,13 +118,12 @@
 					<div class="mb-2">
 						<%= scrollingRecordList(
 							{
-								name                => 'classList',
-								controller          => $c,
-								default_sort        => 'lnfn',
-								default_format      => 'lnfn_uid',
-								default_filters     => ['all'],
-								refresh_button_name => maketext('Change Display Settings'),
-								attrs               => { size => 5, multiple => undef }
+								name            => 'selected_users',
+								controller      => $c,
+								default_sort    => 'lnfn',
+								default_format  => 'lnfn_uid',
+								default_filters => ['all'],
+								attrs           => { size => 5, multiple => undef }
 							},
 							@{ $c->{ra_user_records} }
 						) =%>

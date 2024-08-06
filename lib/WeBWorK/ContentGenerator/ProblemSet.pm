@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,8 +24,11 @@ problem set.
 =cut
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(path_is_subdir is_restricted wwRound before between after grade_set format_set_name_display);
+use WeBWorK::Utils qw(wwRound);
+use WeBWorK::Utils::DateTime qw(after);
+use WeBWorK::Utils::Files qw(path_is_subdir);
 use WeBWorK::Utils::Rendering qw(renderPG);
+use WeBWorK::Utils::Sets qw(is_restricted grade_set format_set_name_display);
 use WeBWorK::DB::Utils qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Localize;
 
@@ -51,7 +54,7 @@ async sub initialize ($c) {
 	$c->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
 
 	# Display status messages.
-	$c->addmessage($c->tag('p', $c->b($c->param('status_message')))) if $c->param('status_message');
+	$c->addmessage($c->tag('p', $c->b($c->authen->flash('status_message')))) if $c->authen->flash('status_message');
 
 	if ($authz->hasPermissions($userID, 'view_hidden_sets')) {
 		if ($c->{set}->visible) {
@@ -104,15 +107,15 @@ sub nav ($c, $args) {
 	return '' unless $c->authz->hasPermissions($c->param('user'), 'navigation_allowed');
 
 	my @links = (
-		$c->maketext('Homework Sets'),
+		$c->maketext('Assignments'),
 		$c->url_for($c->app->routes->lookup($c->current_route)->parent->name),
-		$c->maketext('Homework Sets')
+		$c->maketext('Assignments')
 	);
 	return $c->tag(
 		'div',
-		class      => 'row sticky-nav',
-		role       => 'navigation',
-		aria_label => 'problem navigation',
+		class        => 'row sticky-nav',
+		role         => 'navigation',
+		'aria-label' => 'problem navigation',
 		$c->tag('div', $c->navMacro($args, {}, @links))
 	);
 }
@@ -219,14 +222,14 @@ sub gateway_body ($c) {
 		my $data = {};
 		$data->{id}        = $set->set_id . ',v' . $verSet->version_id;
 		$data->{version}   = $verSet->version_id;
-		$data->{start}     = $c->formatDateTime($verSet->version_creation_time, undef, $ce->{studentDateDisplayFormat});
+		$data->{start}     = $c->formatDateTime($verSet->version_creation_time, $ce->{studentDateDisplayFormat});
 		$data->{proctored} = $verSet->assignment_type =~ /proctored/;
 
 		# Display close date if this is not a timed test.
 		my $closeText = '';
 		if (!$timeLimit) {
-			$closeText = $c->maketext('Closes on [_1]',
-				$c->formatDateTime($verSet->due_date, undef, $ce->{studentDateDisplayFormat}));
+			$closeText =
+				$c->maketext('Closes on [_1]', $c->formatDateTime($verSet->due_date, $ce->{studentDateDisplayFormat}));
 		}
 
 		if (defined $verSet->version_last_attempt_time && $verSet->version_last_attempt_time > 0) {
@@ -240,7 +243,7 @@ sub gateway_body ($c) {
 				}
 			} else {
 				$data->{end} =
-					$c->formatDateTime($verSet->version_last_attempt_time, undef, $ce->{studentDateDisplayFormat});
+					$c->formatDateTime($verSet->version_last_attempt_time, $ce->{studentDateDisplayFormat});
 			}
 		} elsif ($timeNow < $verSet->due_date) {
 			$data->{end} = $c->maketext('Test not yet submitted.') . " $closeText";

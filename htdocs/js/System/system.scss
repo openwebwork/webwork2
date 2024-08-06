@@ -1,0 +1,1070 @@
+/* WeBWorK Online Homework Delivery System
+ * Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of either: (a) the GNU General Public License as published by the
+ * Free Software Foundation; either version 2, or (at your option) any later
+ * version, or (b) the "Artistic License" which comes with this package.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+ * Artistic License for more details.
+ */
+
+/* General styles */
+
+table caption {
+	font-weight: bold;
+	font-size: larger;
+	color: black;
+}
+
+.help-popup {
+	cursor: pointer;
+}
+
+.font-sm {
+	font-size: calc(var(--bs-body-font-size, 0.85rem) * 0.875);
+}
+
+.font-xs {
+	font-size: calc(var(--bs-body-font-size, 0.85rem) * 0.8);
+}
+
+.required-field {
+	color: #dc3545;
+}
+
+.visually-hidden-focusable:active,
+.visually-hidden-focusable:focus {
+	z-index: 21;
+}
+
+$masthead-height: 70px !default;
+$layout-divider-color: #aaa !default;
+$site-nav-width: 250px !default;
+
+/* Banner */
+.masthead {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	display: flex;
+	height: $masthead-height;
+	background-color: var(--bs-primary, #038);
+	border-bottom: 1px solid $layout-divider-color;
+	margin: 0;
+	padding: 0;
+	z-index: 20;
+
+	@media only screen and (max-width: 768px) {
+		position: static;
+		flex-direction: column;
+		height: unset;
+	}
+
+	a {
+		color: var(--ww-primary-foreground-color, white);
+
+		&:hover {
+			text-decoration: none;
+		}
+	}
+
+	.webwork-logo {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 5px 0;
+		background-color: var(--ww-logo-background-color, #104aad);
+		z-index: 20;
+		width: $site-nav-width;
+
+		img {
+			max-height: $masthead-height - 15px;
+			max-width: 100%;
+		}
+
+		@media only screen and (max-width: 768px) {
+			height: 0.75 * $masthead-height;
+			position: fixed;
+			width: 100%;
+
+			img {
+				max-height: 0.75 * $masthead-height - 11px;
+			}
+		}
+
+		a,
+		span {
+			display: inline-block;
+			margin-right: 0.5rem;
+		}
+	}
+
+	.institution-logo {
+		display: flex;
+		flex-grow: 1;
+		align-items: center;
+		padding: 8px 0;
+		max-height: $masthead-height - 1px;
+
+		@media only screen and (max-width: 768px) {
+			margin-top: 0.75 * $masthead-height;
+		}
+
+		img {
+			max-height: $masthead-height - 15px;
+			max-width: 100%;
+		}
+
+		a {
+			display: block;
+			margin-left: 0.5rem;
+			margin-right: 0.5rem;
+		}
+	}
+
+	.login-status {
+		flex-shrink: 1;
+		height: $masthead-height - 1px;
+		padding: 4px 10px 4px 0;
+		color: var(--ww-primary-foreground-color, white);
+		text-align: right;
+		font-size: 0.85em;
+		font-weight: normal;
+
+		a {
+			color: black;
+
+			&:first-child {
+				margin-bottom: 5px;
+			}
+		}
+	}
+}
+
+/* Site Navigation */
+#site-navigation {
+	position: fixed;
+	line-height: 1.2rem;
+	width: $site-nav-width;
+	left: 0;
+	margin-top: $masthead-height;
+	height: calc(100% - $masthead-height);
+	overflow-x: hidden;
+	overflow-y: auto;
+	transition-property: left, border-right-width;
+	transition-duration: 0.3s;
+	border-right: 1px solid $layout-divider-color;
+	padding: 2px;
+
+	&.toggle-width {
+		left: -20%;
+		border-right-width: 0px;
+	}
+
+	@media only screen and (max-width: 768px) {
+		top: 0;
+		width: 40%;
+		left: -40%;
+		height: 100%;
+		z-index: 100;
+		background-color: white;
+		margin-top: 0;
+		margin-bottom: 0;
+		margin-right: 0;
+
+		&.toggle-width {
+			left: 0;
+			box-shadow: 4px 0 4px 2px rgba(0, 0, 0, 0.2);
+		}
+	}
+
+	a:not(.btn):focus {
+		outline-width: 2px;
+	}
+
+	.info-box {
+		border-radius: 0;
+		border: none;
+		border-top: 1px solid $layout-divider-color;
+	}
+
+	.nav {
+		li {
+			font-size: small;
+		}
+
+		.nav-item {
+			max-width: 100%;
+
+			.nav-link {
+				padding-top: 0.2rem;
+				padding-bottom: 0.2rem;
+
+				&.active {
+					background-color: var(--ww-site-nav-link-active-background-color, #038);
+					color: var(--ww-primary-foreground-color, white);
+				}
+			}
+
+			.nav-link:focus {
+				position: relative;
+				z-index: 2;
+			}
+		}
+	}
+
+	ul.nav {
+		padding-right: 0;
+
+		li a:hover {
+			background: #e1e1e1;
+		}
+
+		ul.nav {
+			padding-left: 0.5rem;
+			padding-right: 0.5rem;
+		}
+	}
+
+	hr.site-nav-separator {
+		margin: 3pt 7pt;
+		border: 1pt solid;
+	}
+}
+
+#content {
+	margin-left: $site-nav-width;
+	transition-property: margin;
+	transition-duration: 0.3s;
+	margin-top: $masthead-height;
+	width: calc(100% - $site-nav-width);
+
+	*[id] {
+		scroll-margin-top: $masthead-height;
+	}
+
+	&.toggle-width {
+		width: 100%;
+		margin-left: 0;
+	}
+
+	@media only screen and (max-width: 768px) {
+		width: 100%;
+		margin-top: 0;
+		margin-left: auto;
+
+		*[id] {
+			scroll-margin-top: 0.75 * $masthead-height;
+		}
+	}
+}
+
+.no-scroll {
+	height: 100%;
+	overflow-y: hidden;
+}
+
+.sidebar-backdrop {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: 0;
+	z-index: 99;
+	max-width: 100vw;
+	max-height: 100vh;
+	background-color: rgba(0, 0, 0, 0.4);
+}
+
+#toggle-sidebar {
+	#toggle-sidebar-icon i {
+		padding: 0.25rem;
+		border-radius: 5px;
+		color: rgba(255, 255, 255, 0.85);
+		transition:
+			color 0.15s ease-in-out,
+			background-color 0.15s ease-in-out,
+			border-color 0.15s ease-in-out;
+
+		&:hover {
+			color: #fff;
+		}
+	}
+
+	&:focus #toggle-sidebar-icon i {
+		outline: 1px solid var(--bs-link-hover-color);
+	}
+}
+
+/* Progress Bar */
+.progress.set-progress {
+	height: 25px;
+	max-width: 100%;
+	box-shadow: inset 0 0 3px 2px #000;
+	background-color: #ddd;
+	border-radius: 5px;
+	margin-bottom: 10px;
+	align-items: center;
+
+	.progress-bar {
+		box-shadow: inset 0 0 3px 2px #000;
+		height: 100%;
+		color: black;
+
+		&.correct-progress {
+			background-color: #8f8; /* same color used as 'correct' */
+		}
+
+		&.incorrect-progress {
+			background-color: #ff9494; /* same color used as 'incorrect' */
+		}
+
+		&.inprogress-progress {
+			background-color: #ff0; /* yellow */
+		}
+
+		&.unattempted-progress {
+			background-color: transparent;
+		}
+
+		&:focus {
+			outline: 0;
+			box-shadow: inset 0 0 3px 2px #333;
+			border: 3px solid black;
+			z-index: 2;
+		}
+	}
+}
+
+/* Show me another */
+div.showMeAnotherBox {
+	background-color: #ede275;
+	border-radius: 5px;
+	border: 2px solid #fdd017;
+	padding: 3px;
+	margin-bottom: 0.5rem;
+}
+
+/* Breadcrumb */
+#breadcrumb-navigation {
+	.breadcrumb {
+		display: flex;
+		margin-bottom: 0;
+		padding-left: 0.5rem;
+		min-height: 38px;
+		align-items: center;
+		border: 1px solid #e6e6e6;
+		border-radius: 4px;
+	}
+}
+
+/* Main Content */
+h1.page-title {
+	font-size: 31.5px;
+	line-height: 35px;
+	display: inline-block;
+
+	& + a {
+		font-size: 31.5px;
+		line-height: 35px;
+		margin-left: 0.5rem;
+	}
+}
+
+h2.page-title {
+	border-bottom: 1px solid #ccc;
+}
+
+.problem-sub-header {
+	margin-top: 0.25rem;
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+.Warnings {
+	code {
+		white-space: normal;
+		color: inherit;
+	}
+}
+
+.error-output {
+	word-wrap: break-word;
+	color: #d63384;
+	font-size: 0.875rem;
+	direction: ltr;
+	font-family: monospace;
+	font-size: 9pt;
+}
+
+/* Question nav section */
+.sticky-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-content: space-between;
+	justify-content: space-between;
+	z-index: 20;
+	position: sticky;
+	top: $masthead-height;
+	background-color: white;
+	margin-bottom: 1rem;
+	padding: 0.25rem;
+	margin-left: 0;
+	width: 100%;
+	border-radius: 0 0 4px 4px;
+	box-shadow: 0 0.1rem 0.2rem 1px gray;
+	box-sizing: border-box;
+
+	@media only screen and (max-width: 768px) {
+		top: 0.75 * $masthead-height;
+	}
+
+	& > div {
+		flex-shrink: 1;
+		width: auto;
+		margin: 0;
+		padding: 0.25rem;
+	}
+}
+
+.user-nav .student-nav-selector .dropdown-menu {
+	max-height: 60vh;
+	overflow-y: auto;
+}
+
+/* Message section */
+.message:not(:empty) {
+	display: inline-flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin: 0 0 0.5rem;
+
+	div {
+		margin: 0;
+	}
+}
+
+.font-visible {
+	font-weight: bold;
+}
+.font-hidden {
+	font-style: italic;
+}
+
+.admin-messagebox {
+	background-color: #ffffcc;
+	width: 60%;
+	padding: 10px;
+	text-align: left;
+}
+
+/* Home Page */
+ul.courses-list {
+	list-style-type: none;
+	margin: 0;
+
+	a {
+		border: 1px solid #e6e6e6;
+		display: block;
+		padding: 0.5em;
+		margin-bottom: 0.5em;
+		background: #f6f6f6;
+		width: 95%;
+		font-weight: bold;
+
+		&:hover {
+			text-decoration: none;
+			background: var(--bs-primary, #038);
+			color: var(--ww-primary-foreground-color, white);
+		}
+	}
+}
+
+/* Instructor Tools page */
+#instructor-tools-nav {
+	input[name='number_of_students'] {
+		max-width: 7em;
+	}
+
+	#pills-tabContent input.btn {
+		min-width: 7em;
+	}
+
+	span.input-group-text {
+		white-space: pre;
+	}
+}
+
+/* past answers page */
+.past-answer-table {
+	td {
+		white-space: nowrap;
+		min-width: 20px;
+	}
+
+	.table-rule {
+		border-top: 3px solid #d5d5d5;
+		padding-top: 5px;
+	}
+
+	.essay,
+	.comment {
+		min-width: 400px;
+		white-space: normal;
+	}
+}
+
+/* Problem list and version list pages */
+.problem_set_table {
+	td a {
+		font-weight: bold;
+	}
+
+	tr.gw-version td.gw-version {
+		padding-left: 40px;
+	}
+
+	a.gw-parenthetical {
+		font-weight: normal;
+	}
+
+	.hardcopy,
+	.hardcopy-link {
+		text-align: center;
+	}
+
+	/* These are for indenting problems on jitar sets */
+	.nested-problem-1 {
+		margin-left: 10px;
+	}
+
+	.nested-problem-2 {
+		margin-left: 20px;
+	}
+
+	.nested-problem-3 {
+		margin-left: 30px;
+	}
+
+	.nested-problem-4 {
+		margin-left: 40px;
+	}
+
+	.nested-problem-5 {
+		margin-left: 50px;
+	}
+
+	.nested-problem-6 {
+		margin-left: 60px;
+	}
+}
+
+/* These are for indenting problems on jitar sets */
+.problem-list {
+	.nested-problem-1 {
+		padding-left: 20px;
+	}
+
+	.nested-problem-2 {
+		padding-left: 23px;
+	}
+
+	.nested-problem-3 {
+		padding-left: 26px;
+	}
+
+	.nested-problem-4 {
+		padding-left: 29px;
+	}
+
+	.nested-problem-5 {
+		padding-left: 32px;
+	}
+
+	.nested-problem-6 {
+		padding-left: 35px;
+	}
+}
+
+/* Info Box */
+.info-box {
+	padding: 0.5em;
+	border-radius: 8px;
+	border: 1px solid #e6e6e6;
+
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		background: var(--bs-primary, #038);
+		border-radius: 8px;
+		color: var(--ww-primary-foreground-color, white);
+		margin: 0 0 0.5em 0;
+		padding: 0;
+		line-height: 30px;
+		font-size: 1.1em;
+		text-align: center;
+	}
+
+	dl {
+		margin: 1ex 0.5em 1ex 1ex;
+		padding: 0;
+		font-size: 80%;
+	}
+
+	li,
+	dt {
+		line-height: 1.2rem;
+	}
+
+	dt {
+		font-weight: bold;
+	}
+
+	dd {
+		line-height: 1.2rem;
+	}
+
+	dd p {
+		margin-top: 0;
+	}
+
+	a.more {
+		float: left;
+		font-size: 80%;
+		font-style: italic;
+		margin-bottom: 1ex;
+		margin-right: 0.5em;
+	}
+
+	form {
+		margin-bottom: 0;
+	}
+}
+
+/* Library Browser */
+.library-browser-table {
+	.InfoPanel {
+		text-align: center;
+	}
+
+	#library_sets {
+		max-width: 50%;
+	}
+
+	.browse-lib-btn,
+	.library-action-btn {
+		width: 9.3rem;
+	}
+
+	.library-panel-btn {
+		max-width: 9rem;
+	}
+}
+
+.lb-problem-row div.card {
+	background-color: #f5f5f5;
+	margin-top: 10px;
+	margin-bottom: 0;
+}
+
+.lb-mlt-group {
+	border: 2px solid black;
+	width: 100%;
+	margin-top: 10px;
+
+	div:first-child.lb-problem-row > div.card {
+		margin-top: 0;
+	}
+}
+
+.lb-problem-icons {
+	.btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		width: 27.85px;
+		height: 27.85px;
+
+		img {
+			max-height: 15px;
+			max-width: 15px;
+		}
+	}
+}
+
+// Do not delete this.  Although it is a duplicate of the rule in PG's problem.scss file, webwork2 adds these author
+// comments to the page (in the PG problem editor and the library browser) when the PG problems are in iframes and the
+// comments are outside of the iframes.  Thus the styles in the problem.scss file do not apply.
+div.AuthorComment {
+	background-color: #00e0e0;
+	color: black;
+	padding: 0.25rem;
+	border: 1px solid transparent;
+	border-radius: 0.25rem;
+}
+
+/* Footer */
+#footer {
+	font-size: 0.8em;
+	color: #767676;
+	text-align: center;
+	padding: 1em;
+	margin-top: 1em;
+
+	a {
+		color: #555;
+	}
+}
+
+input.changed[type='text'] {
+	/* orange */
+	border-color: #ca5000;
+	outline: 0;
+	outline: thin dotted \9;
+	box-shadow:
+		inset 0 1px 1px rgba(0, 0, 0, 0.075),
+		0 0 8px rgba(202, 80, 0, 0.6);
+	color: inherit;
+}
+
+.results-popover {
+	cursor: pointer;
+}
+
+/* Styles for the instructor comment box */
+.answerComments {
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 1em;
+	padding: 2px 5px 2px 5px;
+	max-width: 80%;
+	background-color: #e8e8e8;
+	border-style: outset;
+	border-width: 1px;
+	border-spacing: 2px;
+	border-color: gray;
+	border-radius: 0.25rem;
+}
+
+.submit-buttons-container {
+	display: flex;
+	flex-wrap: wrap;
+	column-gap: 0.25rem;
+	row-gap: 0.25rem;
+}
+
+.visually-hidden-unfocusable {
+	visibility: hidden;
+	position: absolute;
+	left: -9999px;
+}
+
+/* Styles used when editing a temporary file */
+.temporaryFile {
+	font-style: italic;
+	color: #ca5000;
+	background-color: inherit;
+}
+
+/* Text colors for Auditing, Current, and Dropped students */
+.Audit {
+	font-style: normal;
+	color: purple;
+	background-color: inherit;
+}
+.Enrolled {
+	font-weight: normal;
+	color: black;
+	background-color: inherit;
+}
+.Drop {
+	font-style: italic;
+	color: #555;
+	background-color: inherit;
+}
+.Observer {
+	font-style: normal;
+	color: green;
+	background-color: inherit;
+}
+
+/* Styles for the PGProblemEditor Page */
+
+#editor {
+	.tab-content {
+		min-height: 140px;
+	}
+}
+
+#pgedit-render-area {
+	border: 1px solid #ddd;
+	min-height: 400px;
+	height: 550px;
+	resize: vertical;
+	display: flex;
+	flex-direction: column;
+
+	@media only screen and (max-width: 992px) {
+		min-height: 200px;
+		height: 300px;
+	}
+
+	#pgedit-render-iframe {
+		flex-grow: 1;
+		border: none;
+		width: 100%;
+	}
+}
+
+// Fix the style of the save file path input group.
+// It is forced to be ltr, but the bootstrap rtl style makes that look wrong.
+/* rtl:raw:
+.editor-save-path.input-group > :first-child:not(.dropdown-toggle):not(.dropdown-menu) {
+	border-bottom-left-radius: 0.2rem;
+	border-top-left-radius: 0.2rem;
+	border-bottom-right-radius: 0;
+	border-top-right-radius: 0;
+}
+
+.editor-save-path.input-group >
+:last-child:not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) {
+	border-bottom-left-radius: 0;
+	border-top-left-radius: 0;
+	border-bottom-right-radius: 0.2rem;
+	border-top-right-radius: 0.2rem;
+}
+*/
+
+/* Problem Set Detail */
+#problem_set_form {
+	input[name='add_n_problems'] {
+		flex-basis: 50px;
+	}
+}
+
+.problem_detail_row {
+	background-color: #f5f5f5;
+
+	.pdr_block_1 {
+		row-gap: 0.25rem;
+
+		.accordion-button {
+			box-shadow: none;
+			background-color: unset;
+			padding: 0 0 0 0.5rem;
+		}
+	}
+
+	.table {
+		--bs-table-bg: #f5f5f5;
+	}
+}
+
+.pdr_placeholder {
+	height: 50px;
+	width: 100%;
+	background-color: #e0e0e0;
+	border: 1px solid rgba(0, 0, 0, 0.125);
+	border-radius: 0.25rem;
+	margin-bottom: 1rem;
+}
+
+.pdr_handle {
+	font-size: large;
+}
+
+.pdr_collapse {
+	cursor: pointer;
+	font-size: large;
+
+	& > i {
+		transition: 0.2s;
+	}
+
+	&:not(.collapsed) > i {
+		transform: rotate(90deg);
+	}
+}
+
+.sortable-ghost {
+	opacity: 0.5;
+}
+
+#psd_list {
+	padding-left: 0;
+	padding-bottom: 0.25rem;
+	margin-bottom: 0;
+
+	.psd_list_item {
+		list-style-type: none;
+	}
+
+	&:not(.disable_renumber) .pdr_handle {
+		cursor: move;
+		touch-action: none;
+	}
+
+	ol.sortable-branch {
+		padding-left: 0;
+		margin-left: 2rem;
+	}
+}
+
+.rpc_render_area_container {
+	background-color: #f5f5f5;
+}
+
+.rpc_render_area iframe {
+	width: 100%;
+	border-radius: 5px;
+}
+
+/* Grades */
+.grade-table {
+	.grades-course-total,
+	.grades-course-total th {
+		font-weight: bold;
+		font-size: 105%;
+	}
+
+	.problem-data {
+		min-width: 2.5em;
+		text-align: center;
+	}
+
+	span {
+		&.correct {
+			color: inherit;
+			background-color: #8f8;
+		}
+
+		&.incorrect {
+			color: #bf5454; /* red */
+			background-color: inherit;
+		}
+
+		&.unattempted {
+			color: inherit;
+			background-color: #88ecff;
+		}
+	}
+}
+
+/* Course Configuration */
+.config-tabs {
+	button {
+		&.nav-link {
+			font-weight: bold;
+			color: inherit;
+			border-radius: 0;
+		}
+
+		&:not(.active) {
+			background-color: #f6f6f6;
+		}
+
+		&:not(.active):hover {
+			background-color: #e1e1e1;
+			color: inherit;
+		}
+
+		&:focus {
+			z-index: 2;
+		}
+	}
+}
+
+/* File manager */
+.file-manager-btn {
+	margin-bottom: 0.25rem;
+	margin-top: 0.25rem;
+}
+
+.file-manager-editor {
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
+}
+
+/* Problem set list */
+.set_table .input-group .form-control {
+	max-width: 10rem;
+}
+
+/* Problem graders */
+
+span.needs-grading,
+td.needs-grading {
+	background-color: #fff3cd;
+
+	div {
+		font-weight: bold;
+	}
+}
+
+span.alt-source,
+td.alt-source {
+	background-color: #e6e7e9;
+}
+
+#problem-grader-form {
+	.past-answer:not(:last-child) {
+		border-bottom: 1px solid #d5d5d5;
+		margin-bottom: 2px;
+		padding-bottom: 5px;
+	}
+
+	.restricted-width-col {
+		width: 0.1%;
+	}
+
+	.grader-comment-col {
+		min-width: 300px;
+	}
+}
+
+.problem-grader-table {
+	.col-fixed {
+		width: 11rem;
+		min-width: 11rem;
+		white-space: nowrap;
+	}
+
+	.problem-grader-message {
+		font-weight: bold;
+		transition: 3s ease-in all;
+		padding-left: 0.5rem;
+		padding-right: 0.5rem;
+
+		&.alert-success,
+		&.alert-danger {
+			transition: none;
+			border-radius: 3px;
+			color: var(--bs-alert-color);
+			background-color: var(--bs-alert-bg);
+		}
+	}
+
+	.problem-score,
+	.problem-points,
+	.answer-part-score {
+		width: 5.5rem;
+	}
+}
+
+#problem-grader-form,
+.problem-grader-table {
+	.mv-container .mv-inner-container,
+	.mq-latex-editor-container .mq-latex-editor-inner-container {
+		width: 100%;
+	}
+}

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,11 +42,6 @@ This schema pays attention to the following items in the C<params> entry.
 
 Alternate name for this table, to satisfy SQL naming requirements.
 
-=item fieldOverride
-
-A reference to a hash mapping field names to alternate names, to satisfy SQL
-naming requirements.
-
 =back
 
 =cut
@@ -70,36 +65,24 @@ sub new {
 sub sql_init {
 	my $self = shift;
 
-	# transformation functions for table and field names: these allow us to pass
-	# the WeBWorK table/field names to SQL::Abstract::Classic, and have it translate them
-	# to the SQL table/field names from tableOverride and fieldOverride.
-	# (Without this, it would be hard to translate field names in WHERE
-	# structures, since they're so convoluted.)
-	my ($transform_table, $transform_field);
+	# Transformation function for table names.  This allows us to pass the WeBWorK table names to
+	# SQL::Abstract, and have it translate them to the SQL table names from tableOverride.
+	my $transform_table;
 	if (defined $self->{params}{tableOverride}) {
 		$transform_table = sub {
 			my $label = shift;
 			if ($label eq $self->{table}) {
 				return $self->{params}{tableOverride};
 			} else {
-				#warn "can't transform unrecognized table name '$label'";
 				return $label;
 			}
 		};
 	}
-	if (defined $self->{params}{fieldOverride}) {
-		$transform_field = sub {
-			my $label = shift;
-			return defined $self->{params}{fieldOverride}{$label} ? $self->{params}{fieldOverride}{$label} : $label;
-		};
-	}
 
-	# add SQL statement generation object
 	$self->{sql} = new WeBWorK::DB::Utils::SQLAbstractIdentTrans(
 		quote_char      => "`",
 		name_sep        => ".",
-		transform_table => $transform_table,
-		transform_field => $transform_field,
+		transform_table => $transform_table
 	);
 }
 
@@ -384,6 +367,71 @@ sub _drop_column_field_stmt {
 	my $sql_field_name = $self->sql_field_name($field_name);
 	return "Alter table `$sql_table_name` drop column `$sql_field_name` ";
 }
+
+####################################################
+# rebuild indexes for the table
+####################################################
+
+sub rebuild_indexes {
+	my ($self) = @_;
+
+	my $sql_table_name  = $self->sql_table_name;
+	my $field_data      = $self->field_data;
+	my %override_fields = reverse %{ $self->{params}{fieldOverride} };
+
+	# A key field column is going to be removed.  The schema will not have the information for this column.  So the
+	# indexes need to be obtained from the database.  Note that each element of the returned array is an array reference
+	# of the form [ Table, Non_unique, Key_name, Seq_in_index, Column_name, ... ] (the information indicated by the
+	# ellipsis is not needed here).  Only the first column in each sequence is needed.
+	my @indexes = grep { $_->[3] == 1 } @{ $self->dbh->selectall_arrayref("SHOW INDEXES FROM `$sql_table_name`") };
+
+	# The columns need to be obtained from the database to determine the types of the columns.  The information from the
+	# schema can not be trusted because it doesn't have information about the field being dropped.  Note that each
+	# element of the returned array is an array reference of the form [ Field, Type, Null, Key, Default, Extra ] and
+	# Extra contains AUTO_INCREMENT for those fields that have that attribute.
+	my $columns = $self->dbh->selectall_arrayref("SHOW COLUMNS FROM `$sql_table_name`");
+
+	# First drop all indexes for the table.
+	my @auto_increment_fields;
+	for my $index (@indexes) {
+		# If a field has the AUTO_INCREMENT attribute, then that needs to be removed before the index can be dropped.
+		my $column = (grep { $index->[4] eq $_->[0] } @$columns)[0];
+		if (defined $column && $column->[5] =~ m/AUTO_INCREMENT/i) {
+			$self->dbh->do("ALTER TABLE `$sql_table_name` MODIFY `$column->[0]` $column->[1]");
+			push @auto_increment_fields, $override_fields{ $column->[0] } // $column->[0];
+		}
+
+		$self->dbh->do("ALTER TABLE `$sql_table_name` DROP INDEX `$index->[2]`");
+	}
+
+	# Add the indices for the table according to the schema.
+	my @keyfields = $self->keyfields;
+	for my $start (0 .. $#keyfields) {
+		my @index_components;
+		my $sql_field_name = $self->sql_field_name($keyfields[$start]);
+
+		for my $component (@keyfields[ $start .. $#keyfields ]) {
+			my $sql_field_name   = $self->sql_field_name($component);
+			my $sql_field_type   = $field_data->{$component}{type};
+			my $length_specifier = $sql_field_type =~ /(text|blob)/i ? '(100)' : '';
+			push @index_components, "`$sql_field_name`$length_specifier";
+		}
+
+		my $index_string = join(', ', @index_components);
+		my $index_type   = $start == 0 ? 'UNIQUE KEY' : 'KEY';
+
+		$self->dbh->do("ALTER TABLE `$sql_table_name` ADD $index_type ($index_string)");
+	}
+
+	# Finally add the AUTO_INCREMENT attribute back to those columns that is was removed from.
+	for my $field (@auto_increment_fields) {
+		my $sql_field_name = $self->sql_field_name($field);
+		$self->dbh->do("ALTER TABLE `$sql_table_name` MODIFY `$sql_field_name` $field_data->{$field}{type}");
+	}
+
+	return 1;
+}
+
 ####################################################
 # checking Tables
 ####################################################
@@ -837,10 +885,11 @@ sub character_set {
 	my $self = shift;
 	return (defined $self->{character_set} and $self->{character_set}) ? $self->{character_set} : 'latin1';
 }
+
 # returns non-quoted SQL name of given field
 sub sql_field_name {
 	my ($self, $field) = @_;
-	return defined $self->{params}{fieldOverride}{$field} ? $self->{params}{fieldOverride}{$field} : $field;
+	return $field;
 }
 
 # returns fully quoted expression refering to the specified field
@@ -885,4 +934,3 @@ sub handle_error {
 sub DESTROY {
 }
 1;
-

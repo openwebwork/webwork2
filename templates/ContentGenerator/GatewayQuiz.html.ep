@@ -1,11 +1,12 @@
-% use WeBWorK::Utils qw(before after wwRound getAssetURL);
+% use WeBWorK::Utils qw(wwRound getAssetURL);
+% use WeBWorK::Utils::DateTime qw(before after);
 % use WeBWorK::Utils::LanguageAndDirection qw(get_problem_lang_and_dir);
 % use WeBWorK::HTML::SingleProblemGrader;
 % use WeBWorK::AchievementEvaluator qw(checkForAchievements);
 %
 % content_for css => begin
-	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'achievements.css' }) =%>
-	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'gateway.css' }) =%>
+	<%= stylesheet getAssetURL($ce, 'js/Achievements/achievements.css') =%>
+	<%= stylesheet getAssetURL($ce, 'js/GatewayQuiz/gateway.css') =%>
 	% # Output css for jquery-ui for problems to use.
 	<%= stylesheet getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.css') =%>
 	%
@@ -35,10 +36,6 @@
 % end
 %
 % content_for js => begin
-	% if ($c->{will}{showProblemGrader}) {
-		<%= javascript getAssetURL($ce, 'js/ProblemGrader/problemgrader.js'), defer => undef =%>
-	% }
-	%
 	% # Page specfific javascript
 	<%= javascript getAssetURL($ce, 'js/GatewayQuiz/gateway.js'), defer => undef =%>
 	%
@@ -77,7 +74,7 @@
 				$setID, $effectiveUserID, $c->{invalidVersionCreation} ? " (acted as by $userID)" : ''
 			) =%>
 		</div>
-		<div><%== $c->{invalidSet} %></div>
+		<div><%= $c->{invalidSet} %></div>
 		% if ($c->{invalidVersionCreation} && $c->{invalidVersionCreation} == 1) {
 			<p>
 				<%= link_to 'Create new set version.' => $c->systemLink(
@@ -115,17 +112,17 @@
 % my $numProbPerPage = $c->{set}->problems_per_page;
 %
 % if ($c->{will}{recordAnswers}) {
-	% my $divClass = 'ResultsWithoutError';
+	% my $divClass = 'alert-success';
 	% my $recdMsg  = '';
 	% for (@{ $c->{scoreRecordedMessage} }) {
 		% if ($_ ne 'recorded') {
 			% $recdMsg  = $_;
-			% $divClass = 'ResultsWithError';
+			% $divClass = 'alert-danger';
 			% last;
 		% }
 	% }
 	%
-	<div class="<%= $divClass . ' mb-3' %>">
+	<div class="<%= "alert $divClass mb-3 p-1" %>">
 		% # A handy noun for when referring to a test.
 		% my $testNoun = ($c->{set}->attempts_per_version || 0) > 1 ? maketext('submission') : maketext('test');
 		% my $testNounNum =
@@ -150,7 +147,7 @@
 			% } else {
 				% if ($c->{set}->hide_score eq 'BeforeAnswerDate') {
 					<%= maketext('(Your score on this [_1] is not available until [_2].)',
-						$testNoun, $c->formatDateTime($c->{set}->answer_date)) =%>
+						$testNoun, $c->formatDateTime($c->{set}->answer_date, $ce->{studentDateDisplayFormat})) =%>
 				% } else {
 					<%= maketext('(Your score on this [_1] is not available.)', $testNoun) =%>
 				% }
@@ -213,9 +210,9 @@
 % {
 	<div class="gwMessage">
 		<strong>
-			<%== maketext('Note: [_1]',
-				tag('i', maketext('You are in the Reduced Scoring Period.  All work counts for [_1]% of the original.',
-					$ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100))) =%>
+			% my $text = maketext('You are in the Reduced Scoring Period.  All work counts for [_1]% of the original.',
+				% $ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100);
+			<%== maketext('Note: [_1]', tag('i', $text)) =%>
 		</strong>
 	</div>
 % }
@@ -234,6 +231,8 @@
 			data  => {
 				server_time     => int($submitTime),
 				server_due_time => $c->{set}->due_date,
+				session_timeout => $ce->{sessionTimeout},
+				course_id       => $ce->{courseName},
 				grace_period    => $ce->{gatewayGracePeriod},
 				alert_title     => maketext('Test Time Notification'),
 				alert_three     => maketext(
@@ -256,11 +255,11 @@
 	% }
 	%
 	% if ($timeLeft < 60 && $timeLeft > 0 && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
-		<div class="ResultsWithError d-inline-block mb-2">
+		<div class="alert alert-danger d-inline-block mb-2 p-1">
 			<strong><%= maketext('You have less than 1 minute to complete this test.') %></strong>
 		</div>
 	% } elsif ($timeLeft <= 0 && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
-		<div class="ResultsWithError d-inline-block mb-2">
+		<div class="alert alert-danger d-inline-block mb-2 p-1">
 			<strong>
 				<%= maketext('You are out of time!')
 					. (
@@ -345,7 +344,7 @@
 		<div class="row">
 			<div class="col-md-10 mb-1">
 				<div class="alert alert-info p-1 mb-0">
-					<%= maketext('The test (which is version [_1]) may  no longer be submitted for a grade.',
+					<%= maketext('The test (which is version [_1]) may no longer be submitted for a grade.',
 							$setVersionID)
 						. ($c->{can}{showScore} ? (' ' . maketext('You may still check your answers.')) : '') %>
 				</div>
@@ -376,7 +375,7 @@
 		% if ($c->{set}->hide_work eq 'BeforeAnswerDate') {
 			<strong>
 				<%= maketext('Completed results for this assignment are not available until [_1].',
-					$c->formatDateTime($c->{set}->answer_date)) %>
+					$c->formatDateTime($c->{set}->answer_date, $ce->{studentDateDisplayFormat})) %>
 			</strong>
 		% } else {
 			<strong><%= maketext('Completed results for this assignment are not available.') %></strong>
@@ -388,7 +387,6 @@
 	%
 	<%= form_for $action, name => 'gwquiz', method => 'POST', class => 'problem-main-form', begin =%>
 		<%= $c->hidden_authen_fields =%>
-		<%= $c->hidden_proctor_authen_fields =%>
 		%
 		% # Hacks to use a javascript link to trigger previews and jump to subsequent pages of a multipage test.
 		<%= hidden_field pageChangeHack => '' =%>
@@ -490,7 +488,6 @@
 		<%= $jumpLinks->() =%>
 		%
 		% # Print out problems and attempt results, as appropriate.
-		% # Note: Usage is $c->attemptResults($pg, $showCorrectAnswers, $showAttemptResults, $showSummary)
 		% for my $i (0 .. $#$pg_results) {
 			% my $pg = $pg_results->[ $probOrder->[$i] ];
 			%
@@ -498,34 +495,27 @@
 				% my $recordMessage = '';
 				% my $resultsTable  = '';
 				%
-				% if ($pg->{flags}{showPartialCorrectAnswers} >= 0 && $c->{submitAnswers}) {
+				% if ($c->{submitAnswers}) {
 					% if ($c->{scoreRecordedMessage}[ $probOrder->[$i] ] ne 'recorded') {
-						% $recordMessage = tag('div', class => 'ResultsWithError d-inline-block mb-2',
+						% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
 							% maketext('ANSWERS NOT RECORDED -- [_1]', $c->{scoreRecordedMessage}[ $probOrder->[$i] ])
 						% );
 					% }
-					% $resultsTable = $c->attemptResults(
-						% $pg,
-						% $c->{will}{showCorrectAnswers},
-						% $pg->{flags}{showPartialCorrectAnswers} && $c->{can}{showProblemScores},
-						% $c->{can}{showProblemScores}
+					% $resultsTable = $c->attemptResults($pg);
+				% } elsif (param('showCorrectAnswers') && $c->{will}{showCorrectAnswers}) {
+					% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
+						% maketext('CORRECT ANSWERS SHOWN ONLY -- ANSWERS NOT RECORDED')
 					% );
 				% } elsif ($c->{will}{checkAnswers} || $c->{will}{showProblemGrader}) {
-					% $recordMessage = tag('div', class => 'ResultsWithError d-inline-block mb-2',
+					% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
 						% maketext('ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED')
 					% );
 					%
-					% $resultsTable = $c->attemptResults(
-						% $pg,
-						% $c->{will}{showCorrectAnswers},
-						% $pg->{flags}{showPartialCorrectAnswers} && $c->{can}{showProblemScores},
-						% $c->{can}{showProblemScores}
-					% );
+					% $resultsTable = $c->attemptResults($pg);
 				% } elsif ($c->{previewAnswers}) {
-					% $recordMessage = tag('div', class => 'ResultsWithError d-inline-block mb-2',
+					% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
 						% maketext('PREVIEW ONLY -- ANSWERS NOT RECORDED')
 					% );
-					% $resultsTable = $c->attemptResults($pg, 0, 0, 0);
 				% }
 				%
 				<div class="gwProblem">
@@ -534,6 +524,10 @@
 					% # Output the problem header.
 					<h2><%= maketext('Problem [_1].', $i + 1) %></h2>
 					<span class="problem-sub-header">
+						% if ($c->{can}{showTemplateIds}) {
+							<%= '('
+								. maketext('Template ID: [_1]', $problems->[ $probOrder->[$i] ]->problem_id) . ')' %>
+						% }
 						% my $problemValue = $problems->[ $probOrder->[$i] ]->value;
 						% if (defined $problemValue) {
 							% my $points = $problemValue == 1 ? maketext('point') : maketext('points');
@@ -570,6 +564,34 @@
 					</div>
 					% if ($pg->{result}{msg}) {
 						<div class="mb-2"><b><%== maketext('Note: [_1]', tag('i', $pg->{result}{msg})) %></b></div>
+					% }
+					%
+					% if ($pg->{flags}{solutionExists} && $authz->hasPermissions($userID, 'always_show_solution')) {
+						<p>
+							<b><%= maketext('Note') %>:</b>
+							<i>
+								<%= maketext('The solution shown is an instructor preview and '
+									. 'will only be shown to students when answers are available.'
+								) =%>
+							</i>
+						</p>
+					% }
+					%
+					% if (
+						% (
+							% $authz->hasPermissions($userID, 'show_correct_answers_before_answer_date')
+							% || $authz->hasPermissions($userID, 'view_hidden_work')
+						% )
+						% && !$c->can_showCorrectAnswersForAll($c->{set}, $c->{problem}, $c->{tmplSet})
+						% )
+					% {
+						<p>
+							<b><%= maketext('Note') %>:</b>
+							<i>
+								<%= maketext('The correct answers shown in feedback are instructor previews and '
+									. 'will only be shown to students when answers are available.') =%>
+							</i>
+						</p>
 					% }
 					%
 					<div class="text-end mb-2">
@@ -614,36 +636,6 @@
 		<%= $jumpLinks->() =%>
 		<div class="gwDivider"></div>
 		%
-		<div class="checkboxes-container col-12 my-2">
-			% if ($c->{can}{showCorrectAnswers}) {
-				<div class="form-check">
-					<label class="form-check-label">
-						<input name="showCorrectAnswers" type="checkbox" class="form-check-input"
-							<%= $c->{want}{showCorrectAnswers} || $c->{want}{showProblemGrader} ? 'checked' : '' %>>
-						<%= maketext('Show correct answers') %>
-					</label>
-				</div>
-			% }
-			% if ($c->{can}{showSolutions}) {
-				<div class="form-check">
-					<label class="form-check-label">
-						<input name="showSolutions" type="checkbox" class="form-check-input"
-							<%= $c->{will}{showSolutions} || $c->{want}{showProblemGrader} ? 'checked' : '' %>>
-						<%= maketext('Show Solutions') %>
-					</label>
-				</div>
-			% }
-			% if ($c->{can}{showProblemGrader}) {
-				<div class="form-check">
-					<label class="form-check-label">
-						<input name="showProblemGrader" type="checkbox" class="form-check-input"
-							<%= $c->{want}{showProblemGrader} ? 'checked' : '' %>>
-						<%= maketext('Show problem graders') %>
-					</label>
-				</div>
-			% }
-		</div>
-		%
 		<div class="submit-buttons-container col-12 mb-2">
 			<%= submit_button maketext('Preview Test'), name => 'previewAnswers', class => 'btn btn-primary mb-1' =%>
 			% if ($c->{can}{recordAnswersNextTime}) {
@@ -687,6 +679,24 @@
 		% if ($numProbPerPage && $numPages > 1 && $c->{can}{recordAnswersNextTime}) {
 			<p><em><%= maketext('Note: grading the test grades all problems, not just those on this page.') %></em></p>
 		% }
+		%
+		% if ($c->{can}{showProblemGrader}) {
+			<div class="submit-buttons-container col-12 my-2">
+				% if ($c->{can}{showCorrectAnswers}) {
+					<%= submit_button maketext('Show Correct Answers'), name => 'showCorrectAnswers',
+						class => 'btn btn-primary mb-1' =%>
+				% }
+				% if ($c->{will}{showProblemGrader}) {
+					<%= submit_button maketext('Hide Problem Graders'), name => 'hideProblemGrader',
+						class => 'btn btn-primary mb-1' =%>
+					<%= hidden_field showProblemGrader => 1 =%>
+				% } else {
+					<%= submit_button maketext('Show Problem Graders'), name => 'showProblemGrader',
+						class => 'btn btn-primary mb-1' =%>
+				% }
+			</div>
+		% }
+		%
 		% if (defined param('sourceFilePath')) {
 			<%= hidden_field sourceFilePath => param('sourceFilePath') =%>
 		% }

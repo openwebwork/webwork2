@@ -1,0 +1,64 @@
+% use Mojo::File qw(path);
+%
+<div class="card mb-2" style="max-width:700px">
+	<div class="card-body">
+		<div class="mb-3" id="files-label">
+			<%= maketext('The following files have been selected for archiving.  Select the type '
+				. 'of archive and any subset of the requested files.') =%>
+		</div>
+		<div class="row">
+			<div class="col-12">
+				<div class="input-group input-group-sm mb-2">
+					<label class="input-group-text" for="archive-filename"><%= maketext('Archive Filename') %>:</label>
+					<%= text_field archive_filename =>
+							@$files == 1 ? $files->[0] =~ s/(\..*)?$/.zip/r : 'webwork_files.zip',
+						id => 'archive-filename', placeholder => maketext('Archive Filename'),
+						class => 'form-control', size => 30, dir => 'ltr' =%>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-12 col-lg-6">
+				<div class="input-group input-group-sm mb-2">
+					<label class="input-group-text" for="archive-type"><%= maketext('Archive Type') %>:</label>
+					<%= select_field archive_type => [
+							[ maketext('By extension') => '', selected => undef ],
+							[ 'zip'                    => 'zip' ],
+							[ 'tar'                    => 'tgz' ]
+						],
+						class => 'form-select', id => 'archive-type' =%>
+				</div>
+			</div>
+			<div class="col-12 col-lg-6">
+				<div class="input-group input-group-sm mb-2">
+					<div class="input-group-text flex-grow-1">
+						<label class="form-check-label">
+							<%= check_box overwrite => 1, class => 'form-check-input me-2' =%>
+							<%= maketext('Overwrite existing archive') =%>
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+		%
+		% my @files_to_compress;
+		% for my $file (@$files) {
+			% push(@files_to_compress, $file);
+			% my $path = path("$dir/$file");
+			% push(@files_to_compress, @{ $path->list_tree({ dir => 1, hidden => 1 })->map('to_rel', $dir) })
+				% if (-d $path && !-l $path);
+		% }
+		%
+		% # Select all files initially. Even those that are in previously selected directories or subdirectories.
+		% param('files', \@files_to_compress) unless param('confirmed');
+		<%= select_field files => \@files_to_compress, id => 'archive-files', class => 'form-select mb-2',
+			'aria-labelledby' => 'files-label', size => 20, multiple => undef, dir => 'ltr' =%>
+		%
+		<div class="d-flex justify-content-evenly">
+			<%= submit_button maketext('Cancel'), name => 'action', class => 'btn btn-sm btn-secondary' =%>
+			<%= submit_button maketext('Make Archive'), name => 'action', class => 'btn btn-sm btn-primary' =%>
+		</div>
+	</div>
+</div>
+<%= hidden_field confirmed => 'MakeArchive' =%>
+<%= $c->HiddenFlags =%>

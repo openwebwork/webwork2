@@ -1,5 +1,5 @@
-% use WeBWorK::Utils::CourseManagement qw(listCourses);
 % use WeBWorK::Utils::CourseIntegrityCheck;
+% use WeBWorK::Utils::CourseManagement qw(listCourses);
 % use WeBWorK::CourseEnvironment;
 %
 % my @courseIDs = sort { lc($a) cmp lc($b) } listCourses($ce);

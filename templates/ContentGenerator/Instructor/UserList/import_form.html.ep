@@ -1,11 +1,9 @@
-% use WeBWorK::Utils::Instructor qw(getCSVList);
-%
 <div>
 	<div class="row mb-2">
 		<%= label_for import_select_source => maketext('Import users from what file?'),
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
-			<%= select_field 'action.import.source' => [ getCSVList($ce) ],
+			<%= select_field 'action.import.source' => $CSVList,
 				id => 'import_select_source', class => 'form-select form-select-sm', dir => 'ltr' =%>
 		</div>
 	</div>
@@ -22,15 +20,43 @@
 				id => 'import_select_replace', class   => 'form-select form-select-sm' =%>
 		</div>
 	</div>
+	%
+	% my $default = $ce->{fallback_password_source}
+		% && (grep { $_ eq $ce->{fallback_password_source} } ('user_id', 'first_name', 'last_name', 'student_id'))
+		% ? $ce->{fallback_password_source}
+		% : '';
 	<div class="row mb-2">
-		<%= label_for import_select_add => maketext('Add which new users?'),
-			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<%= label_for 'fallback_password_source', class => 'col-form-label col-form-label-sm col-sm-auto', begin =%>
+			Fallback password source:&nbsp;
+			<%= link_to '#',
+				class => 'help-popup',
+				data  => {
+					bs_content => maketext(
+						'This is the field in the class list file that will be used for the password if the '
+							. 'password and unencrypted password fields are both empty. If it is set to "None", '
+							. 'and no password is provided either in the password field or the unencrypted '
+							. 'password field, or if no value is provided for the field this is set to in the '
+							. 'class list file, then the user will be created without a password.'
+					),
+					bs_placement => 'top',
+					bs_toggle    => 'popover'
+				},
+				role     => 'button',
+				tabindex => 0,
+				begin =%>
+					<i class="icon fas fa-question-circle" aria-hidden="true"></i><% =%>\
+					<span class="visually-hidden"><%= maketext('Fallback password source help') %></span><% =%>\
+				<% end =%>
+		<% end =%>
 		<div class="col-auto">
-			<%= select_field 'action.import.add' => [
-					[ maketext('any users') => 'any', selected => undef ],
-					[ maketext('no users')  => 'none' ]
+			<%= select_field fallback_password_source => [
+					[ 'None'       => '',           $default eq ''           ? (selected => undef) : () ],
+					[ 'Login Name' => 'user_id',    $default eq 'user_id'    ? (selected => undef) : () ],
+					[ 'First Name' => 'first_name', $default eq 'first_name' ? (selected => undef) : () ],
+					[ 'Last Name'  => 'last_name',  $default eq 'last_name'  ? (selected => undef) : () ],
+					[ 'Student ID' => 'student_id', $default eq 'student_id' ? (selected => undef) : () ]
 				],
-				id => 'import_select_add', class => 'form-select form-select-sm' =%>
+				id => 'fallback_password_source', class => 'form-select form-select-sm' =%>
 		</div>
 	</div>
 </div>

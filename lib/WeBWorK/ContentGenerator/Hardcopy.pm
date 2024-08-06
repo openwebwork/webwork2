@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -23,16 +23,19 @@ problem sets.
 
 =cut
 
-use File::Path;
 use File::Temp qw/tempdir/;
+use Mojo::File;
 use String::ShellQuote;
 use Archive::Zip qw(:ERROR_CODES);
 use XML::LibXML;
 
 use WeBWorK::DB::Utils qw/user2global/;
-use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after x/;
+use WeBWorK::Utils qw(decodeAnswers x);
+use WeBWorK::Utils::DateTime qw(after);
+use WeBWorK::Utils::Files qw(readFile);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(renderPG);
+use WeBWorK::Utils::Sets qw(is_restricted);
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -408,7 +411,7 @@ sub display_form ($c) {
 			my $the_set_version = $2;
 			$mergedSet = $db->getMergedSetVersion($user_id, $the_set_id, $the_set_version);
 			my $mergedProblem = $db->getMergedProblemVersion($user_id, $the_set_id, $the_set_version,
-				($db->listUserProblems($user_id, $the_set_id))[0]);
+				($db->listProblemVersions($user_id, $the_set_id, $the_set_version))[0]);
 
 			# Get the parameters needed to determine if correct answers may be shown.
 			my $maxAttempts  = $mergedSet->attempts_per_version()                          || 0;
@@ -485,10 +488,7 @@ sub display_form ($c) {
 	);
 }
 
-################################################################################
-# harddcopy generating subroutines
-################################################################################
-
+# Generate a hardcopy for a given user(s) and set(s).
 async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 	my $ce    = $c->ce;
 	my $db    = $c->db;
@@ -497,9 +497,9 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 	my $courseID = $c->stash('courseID');
 	my $userID   = $c->param('user');
 
-	# Create the temporary directory.  Use mkpath to ensure it exists (mkpath is pretty much `mkdir -p`).
-	my $temp_dir_parent_path = "$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID";
-	eval { mkpath($temp_dir_parent_path) };
+	# Create the temporary directory.
+	my $temp_dir_parent_path = Mojo::File->new("$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID");
+	eval { $temp_dir_parent_path->make_path };
 	if ($@) {
 		$c->add_error("Couldn't create hardcopy directory $temp_dir_parent_path: ", $c->tag('code', $@));
 		return;
@@ -539,7 +539,6 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 		$c->add_error('Failed to open file "', $c->tag('code', $tex_file_path), '" for writing: ', $c->tag('code', $!));
 		$c->delete_temp_dir($temp_dir_path);
 		return;
-
 	}
 
 	# If no problems were successfully rendered, we can't continue.
@@ -596,19 +595,14 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 
 	# Try to move the hardcopy file out of the temp directory.
 	my $final_file_final_path = "$temp_dir_parent_path/$final_file_name";
-	my $mv_cmd = '2>&1 ' . $ce->{externalPrograms}{mv} . ' ' . shell_quote($final_file_path, $final_file_final_path);
-	my $mv_out = readpipe $mv_cmd;
-	if ($?) {
+	eval { Mojo::File->new($final_file_path)->move_to($final_file_final_path) };
+	if ($@) {
 		$c->add_error(
 			'Failed to move hardcopy file "',
 			$c->tag('code', $final_file_name),
-			'" from "',
-			$c->tag('code', $temp_dir_path),
-			'" to "',
-			$c->tag('code', $temp_dir_parent_path),
-			'":',
-			$c->tag('br'),
-			$c->tag('pre', $mv_out)
+			'" from "', $c->tag('code', $temp_dir_path),
+			'" to "',   $c->tag('code', $temp_dir_parent_path),
+			'":',       $c->tag('br'), $c->tag('pre', $@)
 		);
 		$final_file_final_path = "$temp_dir_rel_path/$final_file_name";
 	}
@@ -633,16 +627,11 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 
 # helper function to remove temp dirs
 sub delete_temp_dir ($c, $temp_dir_path) {
-	my $rm_cmd = '2>&1 ' . $c->ce->{externalPrograms}{rm} . ' -rf ' . shell_quote($temp_dir_path);
-	my $rm_out = readpipe $rm_cmd;
-	if ($?) {
-		$c->add_error(
-			'Failed to remove temporary directory "',
-			$c->tag('code', $temp_dir_path),
-			'":', $c->tag('br'), $c->tag('pre', $rm_out)
-		);
+	eval { Mojo::File->new($temp_dir_path)->remove_tree };
+	if ($@) {
+		$c->add_error('Failed to remove temporary directory "',
+			$c->tag('code', $temp_dir_path, '":', $c->tag('br'), $c->tag('pre', $@)));
 	}
-
 	return;
 }
 
@@ -652,34 +641,32 @@ sub delete_temp_dir ($c, $temp_dir_path) {
 # subroutines return a list whose first entry is the generated file name in $temp_dir_path, and
 # whose remaining elements are names of temporary files that may be of interest in the case of an
 # error (also located in $temp_dir_path).  These are returned whether or not an error actually
-# occured.
+# occurred.
 
 sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	my $src_name    = "hardcopy.tex";
-	my $bundle_path = "$temp_dir_path/$final_file_basename";
+	my $bundle_path = Mojo::File->new("$temp_dir_path/$final_file_basename");
 
 	# Create directory for the tex bundle
-	if (!mkdir $bundle_path) {
+	eval { $bundle_path->make_path };
+	if ($@) {
 		$c->add_error(
 			'Failed to create directory "',
 			$c->tag('code', $bundle_path),
-			'": ', $c->tag('br'), $c->tag('pre', $!)
+			'": ', $c->tag('br'), $c->tag('pre', $@)
 		);
 		return $src_name;
 	}
 
 	# Move the tex file into the bundle directory
-	my $mv_cmd =
-		"2>&1 " . $c->ce->{externalPrograms}{mv} . " " . shell_quote("$temp_dir_path/$src_name", $bundle_path);
-	my $mv_out = readpipe $mv_cmd;
-
-	if ($?) {
+	eval { Mojo::File->new("$temp_dir_path/$src_name")->move_to($bundle_path) };
+	if ($@) {
 		$c->add_error(
 			'Failed to move "',
 			$c->tag('code', $src_name),
 			'" into directory "',
 			$c->tag('code', $bundle_path),
-			'":', $c->tag('br'), $c->tag('pre', $mv_out)
+			'":', $c->tag('br'), $c->tag('pre', $@)
 		);
 		return $src_name;
 	}
@@ -687,30 +674,26 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 	# Copy the common tex files into the bundle directory
 	my $ce = $c->ce;
 	for (qw{webwork2.sty webwork_logo.png}) {
-		my $cp_cmd =
-			"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{webworkDirs}{assetsTex}/$_", $bundle_path);
-		my $cp_out = readpipe $cp_cmd;
-		if ($?) {
+		eval { Mojo::File->new("$ce->{webworkDirs}{assetsTex}/$_")->copy_to($bundle_path) };
+		if ($@) {
 			$c->add_error(
 				'Failed to copy "',
 				$c->tag('code', "$ce->{webworkDirs}{assetsTex}/$_"),
 				'" into directory "',
 				$c->tag('code', $bundle_path),
-				'":', $c->tag('br'), $c->tag('pre', $cp_out)
+				'":', $c->tag('br'), $c->tag('pre', $@)
 			);
 		}
 	}
 	for (qw{pg.sty PGML.tex CAPA.tex}) {
-		my $cp_cmd =
-			"2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{pg}{directories}{assetsTex}/$_", $bundle_path);
-		my $cp_out = readpipe $cp_cmd;
-		if ($?) {
+		eval { Mojo::File->new("$ce->{pg}{directories}{assetsTex}/$_")->copy_to($bundle_path) };
+		if ($@) {
 			$c->add_error(
 				'Failed to copy "',
 				$c->tag('code', "$ce->{pg}{directories}{assetsTex}/$_"),
 				'" into directory "',
 				$c->tag('code', $bundle_path),
-				'":', $c->tag('br'), $c->tag('pre', $cp_out)
+				'":', $c->tag('br'), $c->tag('pre', $@)
 			);
 		}
 	}
@@ -728,22 +711,21 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 				$data =~ s{$resource}{$basename}g;
 
 				# Copy the image file into the bundle directory.
-				my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote($resource, $bundle_path);
-				my $cp_out = readpipe $cp_cmd;
-				if ($?) {
+				eval { Mojo::File->new($resource)->copy_to($bundle_path) };
+
+				if ($@) {
 					$c->add_error(
 						'Failed to copy image "',
 						$c->tag('code', $resource),
 						'" into directory "',
 						$c->tag('code', $bundle_path),
-						'":', $c->tag('br'), $c->tag('pre', $cp_out)
+						'":', $c->tag('br'), $c->tag('pre', $@)
 					);
 				}
 			}
 
 			# Rewrite the tex file with the image paths stripped.
-			open(my $out_fh, ">", "$bundle_path/$src_name")
-				or warn "Can't open $bundle_path/$src_name for writing.";
+			open(my $out_fh, ">", "$bundle_path/$src_name") or warn "Can't open $bundle_path/$src_name for writing.";
 			print $out_fh $data;
 			close $out_fh;
 		} else {
@@ -779,22 +761,22 @@ sub find_log_first_error ($log) {
 }
 
 sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
-	# call pdflatex - we don't want to chdir in the mod_perl process, as
+	# call latex - we don't want to chdir in the mod_perl process, as
 	# that might step on the feet of other things (esp. in Apache 2.0)
-	my $pdflatex_cmd = "cd "
+	my $latex_cmd = "cd "
 		. shell_quote($temp_dir_path) . " && "
 		. "TEXINPUTS=.:"
 		. shell_quote($c->ce->{webworkDirs}{assetsTex}) . ':'
 		. shell_quote($c->ce->{pg}{directories}{assetsTex}) . ': '
-		. $c->ce->{externalPrograms}{pdflatex}
-		. " >pdflatex.stdout 2>pdflatex.stderr hardcopy";
-	if (my $rawexit = system $pdflatex_cmd) {
+		. $c->ce->{externalPrograms}{latex2pdf}
+		. " >latex.stdout 2>latex.stderr hardcopy";
+	if (my $rawexit = system $latex_cmd) {
 		my $exit   = $rawexit >> 8;
 		my $signal = $rawexit & 127;
 		my $core   = $rawexit & 128;
 		$c->add_error(
 			'Failed to convert TeX to PDF with command "',
-			$c->tag('code', $pdflatex_cmd),
+			$c->tag('code', $latex_cmd),
 			qq{" (exit=$exit signal=$signal core=$core).}
 		);
 
@@ -822,11 +804,9 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 	# try rename the pdf file
 	my $src_name  = "hardcopy.pdf";
 	my $dest_name = "$final_file_basename.pdf";
-	my $mv_cmd    = "2>&1 "
-		. $c->ce->{externalPrograms}{mv} . " "
-		. shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
-	my $mv_out = readpipe $mv_cmd;
-	if ($?) {
+
+	eval { Mojo::File->new("$temp_dir_path/$src_name")->move_to("$temp_dir_path/$dest_name") };
+	if ($@) {
 		$c->add_error(
 			'Failed to rename "',
 			$c->tag('code', $src_name),
@@ -836,14 +816,14 @@ sub generate_hardcopy_pdf ($c, $temp_dir_path, $final_file_basename) {
 			$c->tag('code', $temp_dir_path),
 			'":',
 			$c->tag('br'),
-			$c->tag('pre', $mv_out)
+			$c->tag('pre', $@)
 		);
 		$final_file_name = $src_name;
 	} else {
 		$final_file_name = $dest_name;
 	}
 
-	return $final_file_name, qw/hardcopy.tex hardcopy.log hardcopy.aux pdflatex.stdout pdflatex.stderr/;
+	return $final_file_name, qw/hardcopy.tex hardcopy.log hardcopy.aux latex.stdout latex.stderr/;
 }
 
 ################################################################################
@@ -1016,7 +996,7 @@ async sub write_set_tex ($c, $FH, $TargetUser, $themeTree, $setID) {
 		if ($MergedSet->{$_}) {
 			print $FH '\\def\\webwork'
 				. underscore_to_camel($_) . '{'
-				. $c->formatDateTime($MergedSet->{$_}, $ce->{siteDefaults}{timezone}) . "}%\n";
+				. ($c->formatDateTime($MergedSet->{$_}, $ce->{studentDateDisplayFormat}) =~ s/\x{202f}/ /gr) . "}%\n";
 		}
 	}
 	# Leave reduced scoring date blank if it is disabled, or enabled but on (or somehow later) than the close date
@@ -1026,7 +1006,9 @@ async sub write_set_tex ($c, $FH, $TargetUser, $themeTree, $setID) {
 		&& $MergedSet->{reduced_scoring_date} < $MergedSet->{due_date})
 	{
 		print $FH '\\def\\webworkReducedScoringDate{'
-			. $c->formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{siteDefaults}{timezone}) . "}%\n";
+			. ($c->formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{studentDateDisplayFormat}) =~
+				s/\x{202f}/ /gr)
+			. "}%\n";
 	}
 
 	# write set header (theme presetheader, then PG header, then theme postsetheader)
@@ -1333,23 +1315,26 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $themeTree, $prob
 			if (defined $pg->{answers}{$ansName}{preview_latex_string}
 				&& $pg->{answers}{$ansName}{preview_latex_string} ne '')
 			{
-				$stuAns = $pg->{answers}{$ansName}{preview_latex_string};
+				$stuAns = "\$\\displaystyle $pg->{answers}{$ansName}{preview_latex_string}\$";
 			} elsif (defined $pg->{answers}{$ansName}{original_student_ans}
 				&& $pg->{answers}{$ansName}{original_student_ans} ne '')
 			{
-				$stuAns = "\\text{" . $pg->{answers}{$ansName}{original_student_ans} . "}";
+				$stuAns =
+					"\\begin{verbatim}"
+					. ($pg->{answers}{$ansName}{original_student_ans} =~ s/\\end\{verbatim\}//gr)
+					. "\\end{verbatim}";
 			} else {
-				$stuAns = "\\text{no response}";
+				$stuAns = "no response";
 			}
-			$stuAnswers .= "\\item\n\$\\displaystyle $stuAns\$\n";
+			$stuAnswers .= "\\item\n$stuAns\n";
 		}
 		$stuAnswers .= "\\end{itemize}}$corrMsg\\par\n";
 		print $FH $stuAnswers;
 	}
 
 	if ($showComments) {
-		my $userPastAnswerID = $db->latestProblemPastAnswer($c->stash('courseID'),
-			$MergedProblem->user_id, $versionName, $MergedProblem->problem_id);
+		my $userPastAnswerID =
+			$db->latestProblemPastAnswer($MergedProblem->user_id, $versionName, $MergedProblem->problem_id);
 
 		my $pastAnswer = $userPastAnswerID                          ? $db->getPastAnswer($userPastAnswerID) : 0;
 		my $comment    = $pastAnswer && $pastAnswer->comment_string ? $pastAnswer->comment_string           : "";

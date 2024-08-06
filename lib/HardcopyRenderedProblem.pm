@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -123,7 +123,6 @@ sub hardcopyRenderedProblem {
 # This subroutine assumes that the TeX source file is located at $working_dir/hardcopy.tex.
 sub generate_hardcopy_tex {
 	my ($ws, $working_dir, $errors) = @_;
-
 	my $src_file = $working_dir->child('hardcopy.tex');
 
 	# Copy the common tex files into the working directory
@@ -155,8 +154,7 @@ sub generate_hardcopy_tex {
 				$data =~ s{$file_path}{$file_path->basename}ge;
 
 				eval { $file_path->copy_to($working_dir) };
-				push(@$errors, qq{Failed to copy image "$file_path" into directory "$working_dir": $@})
-					if $@;
+				push(@$errors, qq{Failed to copy image "$file_path" into directory "$working_dir": $@}) if $@;
 			}
 
 			# Rewrite the tex file with the image paths stripped.
@@ -189,20 +187,20 @@ sub generate_hardcopy_pdf {
 	my $cwd = path->to_abs;
 	chdir($working_dir);
 
-	# Call pdflatex
-	my $pdflatex_cmd =
+	# Generate the pdf file with the configured LaTeX external command.
+	my $latex_cmd =
 		'TEXINPUTS=.:'
 		. shell_quote($ws->c->ce->{webworkDirs}{assetsTex}) . ':'
 		. shell_quote($ws->c->ce->{pg}{directories}{assetsTex}) . ': '
-		. $ws->c->ce->{externalPrograms}{pdflatex}
-		. ' > pdflatex.stdout 2> pdflatex.stderr hardcopy';
+		. $ws->c->ce->{externalPrograms}{latex2pdf}
+		. ' > latex.stdout 2> latex.stderr hardcopy';
 
-	if (my $rawexit = system $pdflatex_cmd) {
+	if (my $rawexit = system $latex_cmd) {
 		my $exit   = $rawexit >> 8;
 		my $signal = $rawexit & 127;
 		my $core   = $rawexit & 128;
 		push(@$errors,
-			qq{Failed to convert TeX to PDF with command "$pdflatex_cmd" (exit=$exit signal=$signal core=$core).},
+			qq{Failed to convert TeX to PDF with command "$latex_cmd" (exit=$exit signal=$signal core=$core).},
 			q{See the "hardcopy.log" file for details.});
 	}
 

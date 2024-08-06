@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,6 +32,10 @@ sub initialize ($c) {
 
 	my $user = $c->param('user');
 
+	# Make sure these are defined for the template.
+	$c->stash->{statusValues}     = [];
+	$c->stash->{permissionValues} = [];
+
 	# Check permissions
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 	return unless $authz->hasPermissions($user, 'modify_student_data');
@@ -45,8 +49,7 @@ sub initialize ($c) {
 		# FIXME: Handle errors if user already exists as well as all other errors that could occur (including errors
 		# when adding the permission, adding the password, and assigning sets to the users).
 		for my $i (1 .. $numberOfStudents) {
-			my $new_user_id  = trim_spaces($c->param("new_user_id_$i"));
-			my $new_password = cryptPassword($c->param("student_id_$i"));
+			my $new_user_id = trim_spaces($c->param("user_id_$i"));
 			next unless $new_user_id;
 
 			my $newUser = $db->newUser;
@@ -58,7 +61,7 @@ sub initialize ($c) {
 			$newUser->section(trim_spaces($c->param("section_$i")));
 			$newUser->recitation(trim_spaces($c->param("recitation_$i")));
 			$newUser->comment(trim_spaces($c->param("comment_$i")));
-			$newUser->status($ce->status_name_to_abbrevs($ce->{default_status}));
+			$newUser->status($c->param("status_$i"));
 
 			eval { $db->addUser($newUser) };
 			if ($@) {
@@ -75,13 +78,23 @@ sub initialize ($c) {
 
 				my $newPermissionLevel = $db->newPermissionLevel;
 				$newPermissionLevel->user_id($new_user_id);
-				$newPermissionLevel->permission(0);
+				$newPermissionLevel->permission($c->param("permission_$i"));
 				$db->addPermissionLevel($newPermissionLevel);
 
-				my $newPassword = $db->newPassword;
-				$newPassword->user_id($new_user_id);
-				$newPassword->password($new_password);
-				$db->addPassword($newPassword);
+				my $password =
+					$c->param("password_$i") =~ /\S/ ? $c->param("password_$i")
+					: ($c->param('fallback_password_source')
+						&& $c->param($c->param('fallback_password_source') . "_$i")
+						&& $c->param($c->param('fallback_password_source') . "_$i") =~ /\S/)
+					? $c->param($c->param('fallback_password_source') . "_$i")
+					: undef;
+
+				if (defined $password) {
+					my $newPassword = $db->newPassword;
+					$newPassword->user_id($new_user_id);
+					$newPassword->password(cryptPassword($password));
+					$db->addPassword($newPassword);
+				}
 
 				push(
 					@{ $c->{studentEntryReport} },
@@ -97,6 +110,29 @@ sub initialize ($c) {
 			my @setIDs = $c->param('assignSets');
 			assignSetsToUsers($db, $ce, \@setIDs, \@userIDs);
 		}
+	}
+
+	# Create the array of statuses for the status selects.
+	$c->stash->{statusValues} = [
+		map { [
+			$c->maketext($_) => $ce->{statuses}{$_}{abbrevs}[0],
+			$ce->{statuses}{$_}{abbrevs}[0] eq ($ce->status_name_to_abbrevs($ce->{default_status}))[0]
+			? (selected => undef)
+			: ()
+		] } sort(keys %{ $ce->{statuses} })
+	];
+
+	# Create the array of permission values for the permission selects.
+	for my $role (sort { $ce->{userRoles}{$a} <=> $ce->{userRoles}{$b} } keys %{ $ce->{userRoles} }) {
+		next
+			unless $ce->{userRoles}{$role} <= $db->getPermissionLevel($c->param('user'))->permission;
+		push(
+			@{ $c->stash->{permissionValues} },
+			[
+				$c->maketext($role) => $ce->{userRoles}{$role},
+				$ce->{userRoles}{$role} eq $ce->{default_permission_level} ? (selected => undef) : ()
+			]
+		);
 	}
 
 	return;

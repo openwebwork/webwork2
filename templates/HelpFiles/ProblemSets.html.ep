@@ -1,6 +1,6 @@
 %################################################################################
 %# WeBWorK Online Homework Delivery System
-%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 %#
 %# This program is free software; you can redistribute it and/or modify it under
 %# the terms of either: (a) the GNU General Public License as published by the
@@ -17,15 +17,16 @@
 % title maketext('Course Home Help');
 %
 <p><%= maketext('This is the standard entry point for the course.') %></p>
-<p><%= maketext('It lists the homework problem sets available for the students.') %></p>
+<p><%= maketext('It lists the assignments available for the students.') %></p>
 <p>
 	<%= maketext('The information box on the right displays information about the course. This is useful for leaving '
 		. 'course wide messages for students. It contains text from the file templates/course_info.txt. Instructors '
 		. 'can edit this file from the web (click on the "Edit" link).') =%>
 </p>
 <p class="mb-0">
-	<%= maketext('You can check the boxes to the right of the sets and click "Generate Hardcopy for Selected Sets" to '
-		. 'generate a PDF hardcopy of the selected sets. You can generate hardcopies for multiple users including '
-		. 'their answers as well. Note that students will only be able to generate hardcopies of a single set at a '
-		. 'time. Students will only be able to include answers in the hardcopy after the answer date.') =%>
+	<%= maketext('You can click the download icon to the right of each set to generate a PDF hardcopy of the set. '
+		. 'You can generate hardcopies for multiple sets and students including their answers as well by selecting '
+		. 'sets and students on the page that opens when that icon is clicked. Note that students will only be able '
+		. 'to generate hardcopies of a single set at a time. Students will only be able to include answers in '
+		. 'the hardcopy after the answer date.') =%>
 </p>

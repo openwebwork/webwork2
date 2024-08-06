@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(before between);
+% use WeBWorK::Utils::DateTime qw(before between);
 %
 % if (
 	% $c->{invalidSet}
@@ -13,13 +13,13 @@
 				stash('setID'), param('effectiveUser')
 			) =%>
 		</p>
-		<p class="mb-0"><%== $c->{invalidSet} %></p>
+		<p class="mb-0"><%= $c->{invalidSet} %></p>
 	</div>
 	% last;
 % }
 %
 % my $set = $c->{set};
-% 
+%
 % # Stats message displays the current status of the set and states the next important date.
 <%= include 'ContentGenerator/Base/set_status', set => $set =%>
 %

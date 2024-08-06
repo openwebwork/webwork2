@@ -1,0 +1,58 @@
+%################################################################################
+%# WeBWorK Online Homework Delivery System
+%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
+%#
+%# This program is free software; you can redistribute it and/or modify it under
+%# the terms of either: (a) the GNU General Public License as published by the
+%# Free Software Foundation; either version 2, or (at your option) any later
+%# version, or (b) the "Artistic License" which comes with this package.
+%#
+%# This program is distributed in the hope that it will be useful, but WITHOUT
+%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+%# Artistic License for more details.
+%################################################################################
+%
+% layout 'help_macro';
+% title maketext('Achievement Notification Editor Help');
+%
+<p>
+	<%= maketext('This page allows one to edit and set the achievement email notification template for an achievement. '
+		. ' In addition to setting an email notification template for an achievement here, you must also set the '
+		. '"email address to use when sending Achievement notifications" in the optional modules of the course '
+		. 'configuration in order for email notifications to be sent.') =%>
+</p>
+<h2><%= maketext('Actions:') %></h2>
+<p class="mb-2"><i><%= maketext('(If an action cannot be executed it will not appear.)') %></i></p>
+<dl>
+	<dt><%= maketext('Save') %></dt>
+	<dd><%= maketext('Save the contents of the editor window to the file on disk.') %></dd>
+
+	<dt><%= maketext('Save As') %></dt>
+	<dd>
+		<%= maketext(q{Makes a new copy of the file you are editing at the location relative to the course's }
+			. 'achievement notifications (~[ACHEVNOTIFYDIR~]) directory, and sets the new file to be the email '
+			. 'notification template for this achievement.') =%>
+	</dd>
+
+	<dt><%= maketext('Use Existing Template') %></dt>
+	<dd><%= maketext('Set an existing template file as the email notification template for this achievement') %></dd>
+
+	<dt><%= maketext('Disable Notifications') %></dt>
+	<dd><%= maketext('Disable email notifications for this achievement.') %></dd>
+</dl>
+<h2><%= maketext('Template Substitutions') %></h2>
+<p>
+	<%== maketext('The following variables are available for use in the template.  These variables can be used inside '
+		. '[_1] tags.  For example, [_2] will insert the description of the achievement into the email body.',
+	   	'<code>&lt;%= ... %&gt;</code>', '<code>&lt;%= $achievement->description %&gt;</code>') =%>
+</p>
+<ul class="mb-0">
+	<li><code>$ce</code>: This gives access to the entire course environment.</li>
+	<li><code>$achievement</code>: The database record for the achievement.</li>
+	<li><code>$setID</code>: The name of the set the student was working when the achievement was earned.</li>
+	<li><code>$nextLevelPoints</code>: The number of points that the student must attain to reach the next level.</li>
+	<li><code>$pointsEarned</code>: The number of achievement points earned for this achievement.</li>
+	<li><code>$user</code>: The database record for the student user.</li>
+	<li><code>$user_status</code>: The enrollment status of the user.</li>
+</ul>

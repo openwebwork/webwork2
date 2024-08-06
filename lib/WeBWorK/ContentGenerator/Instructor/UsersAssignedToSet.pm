@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,8 +24,8 @@ users to which sets are assigned.
 =cut
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(format_set_name_display);
 use WeBWorK::Utils::Instructor qw(assignSetToAllUsers assignSetToGivenUsers);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 sub initialize ($c) {
 	my $authz = $c->authz;

@@ -6,7 +6,7 @@
 		<p class="<%= $_->[1] ? 'text-success' : 'text-danger' %> fw-bold my-0"><%= $_->[0] %></p>
 	% }
 % }
-% my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $db_report) =
+% my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
 	% $c->formatReportOnDatabaseTables($dbStatus);
 <%= $db_report %>
 % if ($extra_database_tables) {
@@ -25,6 +25,15 @@
 		) =%>
 	</p>
 % }
+% if ($rebuild_table_indexes) {
+	<p class="text-danger fw-bold">
+		<%= maketext(
+			'There are extra database fields which are not defined in the schema and were part of the key '
+				. 'for at least one table. These fields need to be deleted and the table indexes need to be rebuilt. '
+				. 'This will be done when upgrading the course.'
+		) =%>
+	</p>
+% }
 % if (!$all_tables_ok) {
 	<p class="text-danger fw-bold">
 		<%= maketext('The course database must be upgraded before archiving this course.') =%>
@@ -39,7 +48,7 @@
 </ul>
 <ul>
 	% for (@$dir_update_messages) {
-		<li><span class="<%= $_->[2] ? 'text-success' : 'text-danger' %>"><%= $_->[1] %></span></li>
+		<li><span class="<%= $_->[1] ? 'text-success' : 'text-danger' %>"><%= $_->[0] %></span></li>
 	% }
 </ul>
 % if ($directories_ok) {
@@ -70,7 +79,7 @@
 	% if ($all_tables_ok && $directories_ok) {
 		% # No missing tables, missing fields, or directories
 		% # Warn about overwriting an existing archive
-		% my $archive_path = "$ce2->{webworkDirs}{courses}/admin/archives/$archive_courseID.tar.gz";
+		% my $archive_path = "$ce2->{webworkDirs}{courses}/$ce2->{admin_course_id}/archives/$archive_courseID.tar.gz";
 		% if (-e $archive_path && -w $archive_path) {
 			<p class="text-danger fw-bold">
 				<%= maketext(

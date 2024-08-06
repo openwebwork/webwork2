@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -18,7 +18,9 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to give half credit on all problems in a homework set.
 
-use WeBWorK::Utils qw(between x nfreeze_base64 thaw_base64 format_set_name_display);
+use WeBWorK::Utils qw(x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils::DateTime qw(after);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 sub new ($class) {
 	return bless {
@@ -28,13 +30,15 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemCount, $c) {
+sub print_form ($self, $sets, $setProblemIds, $c) {
 	my @openSets;
 
 	for my $i (0 .. $#$sets) {
 		push(@openSets, [ format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id ])
-			if (between($sets->[$i]->open_date, $sets->[$i]->due_date) && $sets->[$i]->assignment_type eq 'default');
+			if (after($sets->[$i]->open_date) && $sets->[$i]->assignment_type eq 'default');
 	}
+
+	return unless @openSets;
 
 	return $c->c(
 		$c->tag('p', $c->maketext('Please choose the set for which all problems should be given full credit.')),

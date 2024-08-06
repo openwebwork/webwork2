@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,7 +22,9 @@ WeBWorK::ContentGenerator::Login - display a login form.
 
 =cut
 
-use WeBWorK::Utils qw(readFile jitar_id_to_seq format_set_name_display);
+use WeBWorK::Utils::Files qw(readFile);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 sub page_title ($c) {
 	# If the url is for a problem page, then the title is the set and problem id.

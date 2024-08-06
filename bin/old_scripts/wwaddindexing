@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -122,7 +122,7 @@ foreach my $source (keys %sources) {
 		my $stmt = "ALTER TABLE `$tableName` $fieldString;";
 
 		unless ($dbh->do($stmt)) {
-			die "An error occured while trying to modify the course database.\n",
+			die "An error occurred while trying to modify the course database.\n",
 				"It is possible that the course database is in an inconsistent state.\n",
 				"The DBI error message was:\n\n",
 				$dbh->errstr, "\n";

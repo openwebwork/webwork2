@@ -1,6 +1,6 @@
-###############################################################################
+################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -9,7 +9,7 @@
 #
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.	 See either the GNU General Public License or the
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
 # Artistic License for more details.
 ################################################################################
 
@@ -23,7 +23,9 @@ pages
 
 =cut
 
-use WeBWorK::Utils qw(x format_set_name_internal);
+use WeBWorK::Utils qw(x);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
+use WeBWorK::Utils::Sets qw(format_set_name_internal);
 
 use constant E_MAX_ONE_SET  => x('Please select at most one set.');
 use constant E_ONE_USER     => x('Please select exactly one user.');
@@ -41,6 +43,7 @@ sub pre_header_initialize ($c) {
 	# Make sure these are defined for the template.
 	$c->stash->{users}          = [];
 	$c->stash->{globalSets}     = [];
+	$c->stash->{setProblemIDs}  = {};
 	$c->stash->{E_MAX_ONE_SET}  = E_MAX_ONE_SET;
 	$c->stash->{E_ONE_USER}     = E_ONE_USER;
 	$c->stash->{E_ONE_SET}      = E_ONE_SET;
@@ -79,13 +82,6 @@ sub pre_header_initialize ($c) {
 	} elsif (defined $c->param('users_assigned_to_set')) {
 		if ($nsets == 1) {
 			$route = 'instructor_users_assigned_to_set';
-			$args{setID} = $firstSetID;
-		} else {
-			push @error, E_ONE_SET;
-		}
-	} elsif (defined $c->param('edit_sets')) {
-		if ($nsets == 1) {
-			$route = 'instructor_set_detail';
 			$args{setID} = $firstSetID;
 		} else {
 			push @error, E_ONE_SET;
@@ -148,16 +144,6 @@ sub pre_header_initialize ($c) {
 			push @error, E_ONE_USER    unless $nusers == 1;
 			push @error, E_MAX_ONE_SET unless $nsets <= 1;
 		}
-	} elsif (defined $c->param('edit_set_for_users')) {
-		if ($nusers >= 1 and $nsets == 1) {
-			$route               = 'instructor_set_detail';
-			$args{setID}         = $firstSetID;
-			$params{editForUser} = \@selectedUserIDs;
-		} else {
-			push @error, E_MIN_ONE_USER unless $nusers >= 1;
-			push @error, E_ONE_SET      unless $nsets == 1;
-
-		}
 	} elsif (defined $c->param('create_set')) {
 		my $setname = format_set_name_internal($c->param('new_set_name') // '');
 		if ($setname) {
@@ -174,16 +160,13 @@ sub pre_header_initialize ($c) {
 		}
 	} elsif (defined $c->param('add_users')) {
 		$route = 'instructor_add_users';
-	} elsif (defined $c->param('email_users')) {
-		$route = 'instructor_mail_merge';
-	} elsif (defined $c->param('transfer_files')) {
-		$route = 'instructor_file_manager';
+		$params{number_of_students} = $c->param('number_of_students') // 1;
 	}
 
 	push @error, x('You are not allowed to act as a student.')
 		if (defined $c->param('act_as_user') && !$authz->hasPermissions($userID, 'become_student'));
 	push @error, x('You are not allowed to modify homework sets.')
-		if ((defined $c->param('edit_sets') || defined $c->param('edit_set_for_users'))
+		if (defined $c->param('edit_set_for_users')
 			&& !$authz->hasPermissions($userID, 'modify_problem_sets'));
 	push @error, x('You are not allowed to assign homework sets.')
 		if ((defined $c->param('sets_assigned_to_user') || defined $c->param('users_assigned_to_set'))
@@ -223,6 +206,14 @@ sub pre_header_initialize ($c) {
 	];
 
 	$c->stash->{globalSets} = [ $db->getGlobalSetsWhere ];
+
+	# Problem IDs for each set are needed for the "View answer log ..." action.
+	for my $globalSet (@{ $c->stash->{globalSets} }) {
+		my @problems = $db->listGlobalProblems($globalSet->set_id);
+		@problems = map { join('.', jitar_id_to_seq($_)) } @problems
+			if $globalSet->assignment_type && $globalSet->assignment_type eq 'jitar';
+		$c->stash->{setProblemIDs}{ $globalSet->set_id } = \@problems;
+	}
 
 	return;
 }

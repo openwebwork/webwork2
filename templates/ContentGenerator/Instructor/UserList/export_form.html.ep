@@ -1,14 +1,11 @@
-% use WeBWorK::Utils::Instructor qw(getCSVList);
-%
 <div>
-   	<div class="row mb-2">
+	<div class="row mb-2">
 		<%= label_for export_select_scope => maketext('Export which users?'),
 			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.export.scope' => [
-					[ maketext('all users')      => 'all' ],
-					[ maketext('visible users')  => 'visible', selected => undef ],
-					[ maketext('selected users') => 'selected' ],
+					[ maketext('all course users') => 'all' ],
+					[ maketext('selected users')   => 'selected', selected => undef ],
 				],
 				id => 'export_select_scope', class => 'form-select form-select-sm' =%>
 		</div>
@@ -19,7 +16,7 @@
 		<div class="col-auto">
 			<%= select_field 'action.export.target' => [
 					[ maketext('Enter filename below') => 'new' ],
-					getCSVList($ce)
+					@$CSVList
 				],
 				id => 'export_select_target', class => 'form-select form-select-sm' =%>
 		</div>
@@ -35,5 +32,8 @@
 				<span class="input-group-text font-monospace">.lst</span>
 			</div>
 		</div>
+	</div>
+	<div id="export_file_err_msg" class="alert alert-danger p-1 d-inline-flex d-none">
+		<%= maketext('Please input file name to export to.') %>
 	</div>
 </div>

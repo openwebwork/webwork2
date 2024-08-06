@@ -73,13 +73,18 @@
 	};
 
 	const createWebServiceObject = (command, values = {}) => {
+		const authenParams = {};
+		const user = document.getElementsByName('user')[0];
+		if (user) authenParams.user = user.value;
+		const sessionKey = document.getElementsByName('key')[0]?.value;
+		if (sessionKey) authenParams.key = sessionKey.value;
+
 		return {
 			rpc_command: command,
 			library_name: 'Library',
 			command: 'searchLib',
-			user: document.getElementById('hidden_user')?.value,
 			courseID: document.getElementsByName('hidden_course_id')[0]?.value,
-			key: document.getElementById('hidden_key')?.value,
+			...authenParams,
 			...values
 		};
 	};
@@ -304,9 +309,9 @@
 				mode: 'same-origin',
 				body: new URLSearchParams(
 					createWebServiceObject('setProblemTags', {
-						library_subjects: this.subjectSelect.value,
-						library_chapters: this.chapterSelect.value,
-						library_sections: this.sectionSelect.value,
+						library_subject: this.subjectSelect.value,
+						library_chapter: this.chapterSelect.value,
+						library_section: this.sectionSelect.value,
 						library_levels: this.levelSelect.value,
 						library_status: this.statusSelect?.value ?? '0',
 						command: this.filePath
@@ -317,7 +322,7 @@
 			if (!response.ok) return showMessage('Unable to save problem tags.');
 			const data = await response.json();
 			if (data.error) return showMessage(data.error);
-			showMessage(data.server_response);
+			showMessage(data.server_response, true);
 		}
 	}
 

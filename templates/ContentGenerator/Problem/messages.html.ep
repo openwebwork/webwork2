@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(before after);
+% use WeBWorK::Utils::DateTime qw(before after);
 %
 % if ($c->{pg}{result}{msg}) {
 	<p><b><%= maketext('Note') %>:</b> <i><%== $c->{pg}{result}{msg} %></i></p>
@@ -43,8 +43,18 @@
 		<b><%= maketext('Note') %>:</b>
 		<i>
 			<%= maketext('The solution shown is an instructor preview and '
-				. 'will only be shown to students after the due date.'
+				. 'will only be shown to students after the answer date.'
 			) =%>
+		</i>
+	</p>
+% }
+%
+% if ($authz->hasPermissions($c->{userID}, 'show_correct_answers_before_answer_date')) {
+	<p>
+		<b><%= maketext('Note') %>:</b>
+		<i>
+			<%= maketext('The correct answers shown in feedback are instructor previews and '
+				. 'will only be shown to students after the answer date.') =%>
 		</i>
 	</p>
 % }

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -23,7 +23,9 @@ WeBWorK::ContentGenerator::Instructor::Scoring - Generate scoring data files
 =cut
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readFile jitar_id_to_seq jitar_problem_adjusted_status wwRound x);
+use WeBWorK::Utils qw(wwRound x);
+use WeBWorK::Utils::Files qw(readFile);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq jitar_problem_adjusted_status);
 use WeBWorK::ContentGenerator::Instructor::FileManager;
 
 our @userInfoColumnHeadings =
@@ -46,8 +48,7 @@ sub initialize ($c) {
 	my $scoringFileName = $c->param('scoringFileName') || "${courseName}_totals";
 	$scoringFileName =~ s/\.csv\s*$//;
 	$scoringFileName .= '.csv';    # must end in .csv
-	my $scoringFileNameOK =
-		($scoringFileName eq WeBWorK::ContentGenerator::Instructor::FileManager::checkName($scoringFileName));
+	my $scoringFileNameOK = !$c->WeBWorK::ContentGenerator::Instructor::FileManager::checkName($scoringFileName);
 	$c->{scoringFileName} = $scoringFileName;
 
 	$c->{padFields}             = defined($c->param('padFields'))             ? 1 : 0;
@@ -291,8 +292,8 @@ sub scoreSet ($c, $setID, $format, $showIndex, $UsersRef, $sortedUserIDsRef) {
 	debug("done pre-fetching user problems for set $setID");
 
 	# Write the problem data
-	my $dueDateString = $c->formatDateTime($setRecord->due_date);
-	my ($dueDate, $dueTime) = $dueDateString =~ /^(.*) at (.*)$/;
+	my $dueDate          = $c->formatDateTime($setRecord->due_date, 'date_format_short');
+	my $dueTime          = $c->formatDateTime($setRecord->due_date, 'time_format_short');
 	my $valueTotal       = 0;
 	my %userStatusTotals = ();
 	my %userSuccessIndex = ();

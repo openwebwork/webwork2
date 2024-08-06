@@ -1,6 +1,6 @@
 %################################################################################
 %# WeBWorK Online Homework Delivery System
-%# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 %#
 %# This program is free software; you can redistribute it and/or modify it under
 %# the terms of either: (a) the GNU General Public License as published by the
@@ -121,7 +121,7 @@
 			. 'can also change the format to "PDF" or "TeX Source". If "PDF" is selected, then a PDF file will be '
 			. 'generated for download, unless there are errors. If errors occur or "TeX Source" is selected, then a '
 			. 'zip file will be generated for download that contains the TeX source file and resources needed for '
-			. 'generating the PDF file using pdflatex.') =%>
+			. 'generating the PDF file using LaTeX.') =%>
 		</p>
 		<p>
 		<%= maketext('You can also click "Edit Selected Theme" to edit a hardcopy theme.  The new theme will be saved to '
@@ -129,12 +129,14 @@
 		</p>
 	</dd>
 
-	<dt><%= maketext('Tidy Code') %></dt>
+	<dt><%= maketext('Format Code') %></dt>
 	<dd>
-		<%= maketext('Reformat the code using perltidy. This will change the code in the editor window, and save '
-			. 'changes to the temporary file. In some cases (if the code contains backslashes or double tildes) this '
-			. 'can result in odd spacing in the code. So make sure to inspect the formatted code, and edit further or '
-			. 'revert if needed.') =%>
+		<%= maketext('Reformat the code using perltidy or a conversion to PGML. Using perltidy will change the code '
+			. 'in the editor window, and save changes to the temporary file. In some cases (if the code contains '
+			. 'backslashes or double tildes) this can result in odd spacing in the code. The convert to PGML '
+			. 'feature changes the code in text blocks in the code to use PGML features. Generally the conversion of '
+			. 'many of the formatting and LaTeX is performed correctly, however answer blanks need attention. In '
+			. 'either case, make sure to inspect the formatted code, and edit further or revert if needed.') =%>
 	</dd>
 
 	<dt><%= maketext('Save') %></dt>
@@ -159,7 +161,7 @@
 		<p>
 			<%= maketext('You may want to create an unattached problem if you are using the current problem as a model '
 				. 'for a new problem. You can add the new file to a homework set from the Library Browser or via the '
-				. 'set detail page of the Hmwk Sets Editor.') =%>
+				. 'set detail page of the "Sets Manager".') =%>
 		</p>
 		<p>
 			<%= maketext('If the original problem can not be edited than the path name must be changed in order to be '
@@ -177,7 +179,7 @@
 	<dd>
 		<%= maketext('Add this problem as the last problem of an existing set, either as a problem or as the set '
 			. 'header (the text that appears on the home page of a homework set). You can rearrange the order of the '
-			. 'problems later using the "Hmwk Sets Editor".') =%>
+			. 'problems later using the "Sets Manager".') =%>
 	</dd>
 
 	<dt><%= maketext('Revert') %></dt>

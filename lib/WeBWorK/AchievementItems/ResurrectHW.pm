@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2023 The WeBWorK Project, https://github.com/openwebwork
+# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -18,17 +18,19 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to resurrect a homework for 24 hours
 
-use WeBWorK::Utils qw(after x nfreeze_base64 thaw_base64 format_set_name_display);
+use WeBWorK::Utils qw(x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils::DateTime qw(after);
+use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 sub new ($class) {
 	return bless {
 		id          => 'ResurrectHW',
 		name        => x('Scroll of Resurrection'),
-		description => x('Opens any homework set for 24 hours.')
+		description => x("Reopens one closed homework set for 24 hours and rerandomizes all problems."),
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemCount, $c) {
+sub print_form ($self, $sets, $setProblemIds, $c) {
 	# List all of the sets that are closed or past their reduced scoring date.
 
 	my @closedSets;
@@ -37,8 +39,10 @@ sub print_form ($self, $sets, $setProblemCount, $c) {
 		push(@closedSets, [ format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id ])
 			if $sets->[$i]->assignment_type eq 'default'
 			&& (after($sets->[$i]->due_date)
-				|| ($sets->[$i]->reduced_scoring_date && after($$sets[$i]->reduced_scoring_date)));
+				|| ($sets->[$i]->reduced_scoring_date && after($sets->[$i]->reduced_scoring_date)));
 	}
+
+	return unless @closedSets;
 
 	return $c->c(
 		$c->tag('p', $c->maketext('Choose the set which you would like to resurrect.')),

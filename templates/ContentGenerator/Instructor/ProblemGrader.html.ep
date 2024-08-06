@@ -1,5 +1,5 @@
-% use WeBWorK::Utils qw(sortByName wwRound getAssetURL);
-% use WeBWorK::PG;
+% use WeBWorK::Utils qw(wwRound getAssetURL);
+% require WeBWorK::PG;
 %
 % content_for js => begin
 	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
@@ -33,8 +33,8 @@
 	% last;
 % }
 %
-% unless ($authz->hasPermissions(param('user'), 'score_sets')) {
-	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to grade homework sets.') %></div>
+% unless ($authz->hasPermissions(param('user'), 'problem_grader')) {
+	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to grade assignments.') %></div>
 	% last;
 % }
 %
