@@ -475,9 +475,8 @@ $mail{feedbackRecipients}    = [
 # responds affirmatively will be used.
 
 #$authen{user_module} = {
-#	sql_moodle => "WeBWorK::Authen::Moodle",
-#	sql_ldap   => "WeBWorK::Authen::LDAP"
-#	"*"        => "WeBWorK::Authen::Basic_TheLastOption"
+#	"*" => "WeBWorK::Authen::LDAP"
+#	"*" => "WeBWorK::Authen::Basic_TheLastOption"
 #};
 
 # Select the authentication module to use for proctor logins.
@@ -485,25 +484,23 @@ $mail{feedbackRecipients}    = [
 #$authen{proctor_module} = "WeBWorK::Authen::Proctor";
 
 # List of authentication modules that may be used to enter the admin course.
-# This should be a non-empty sublist of whatever is in $authen{user_module}.
+# This is used instead of $authen{user_module} when logging into the admin course.
 # Since the admin course provides overall power to add/delete courses, access
 # to this course should be protected by the best possible authentication you
 # have available to you.  The current default is
 # WeBWorK::Authen::Basic_TheLastOption which is simple password based
 # authentication for a password locally stored in your WeBWorK server's
 # database.  On one hand, this is necessary as the initial setting, as it is the
-# only option available when a new server is being installed.  However, since
-# this option does not make use of multi-factor authentication or provide any
-# capabilities to prevent dictionary attacks, etc.  At the very least you should
-# use a very strong password.  If you have the option to use a more secure
-# authentication approach to the admin course (one which you are confident
-# cannot be spoofed) that is preferable.
+# only option available when a new server is being installed, on the other hand,
+# this option does not provide any capabilities to prevent dictionary attacks, etc.
+# At the very least you should use a very strong password with two factor authentication.
+# If you have the option to use a more secure authentication approach to the admin course
+# (one which you are confident cannot be spoofed) that is preferable.
 #
 # Note that if you include authentication module config files further down,
 # those may override the setting of $authen{admin_module} here.
 
 #$authen{admin_module} = [
-#	'WeBWorK::Authen::Moodle',
 #	'WeBWorK::Authen::LDAP',
 #	'WeBWorK::Authen::Basic_TheLastOption'
 #];
