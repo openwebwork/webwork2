@@ -153,11 +153,12 @@ async sub dispatch ($c) {
 	my $authz = WeBWorK::Authz->new($c);
 	$c->authz($authz);
 
-	my $user_authen_module = WeBWorK::Authen::class($ce, 'user_module');
+	my $user_authen_module =
+		WeBWorK::Authen::class($ce, $ce->{courseName} eq $ce->{admin_course_id} ? 'admin_module' : 'user_module');
 
 	runtime_use $user_authen_module;
 	my $authen = $user_authen_module->new($c);
-	debug("Using user_authen_module $user_authen_module: $authen\n");
+	debug("Using authentication module $user_authen_module: $authen\n");
 	$c->authen($authen);
 
 	if ($routeCaptures{courseID}) {

@@ -131,9 +131,8 @@ sub call_next_authen_method {
 	my $ce   = $c->{ce};
 
 	my $user_authen_module =
-		$ce->{courseName} eq $ce->{admin_course_id}
-		? WeBWorK::Authen::class($ce, "admin_module")
-		: WeBWorK::Authen::class($ce, "user_module");
+		WeBWorK::Authen::class($ce, $ce->{courseName} eq $ce->{admin_course_id} ? 'admin_module' : 'user_module');
+
 	if (!defined $user_authen_module || $user_authen_module eq '') {
 		$self->{error} = $c->maketext(
 			"No authentication method found for your request.  If this recurs, please speak with your instructor.");
