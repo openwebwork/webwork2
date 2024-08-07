@@ -475,9 +475,8 @@ $mail{feedbackRecipients}    = [
 # responds affirmatively will be used.
 
 #$authen{user_module} = {
-#	sql_moodle => "WeBWorK::Authen::Moodle",
-#	sql_ldap   => "WeBWorK::Authen::LDAP"
-#	"*"        => "WeBWorK::Authen::Basic_TheLastOption"
+#	"*" => "WeBWorK::Authen::LDAP"
+#	"*" => "WeBWorK::Authen::Basic_TheLastOption"
 #};
 
 # Select the authentication module to use for proctor logins.
@@ -502,7 +501,6 @@ $mail{feedbackRecipients}    = [
 # those may override the setting of $authen{admin_module} here.
 
 #$authen{admin_module} = [
-#	'WeBWorK::Authen::Moodle',
 #	'WeBWorK::Authen::LDAP',
 #	'WeBWorK::Authen::Basic_TheLastOption'
 #];
