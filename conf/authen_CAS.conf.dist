@@ -13,7 +13,7 @@ $authen{user_module} = {
 };
 
 # List of authentication modules that may be used to enter the admin course.
-# This should be a non-empty sublist of whatever is in $authen{user_module}.
+# This is used instead of $authen{user_module} when logging into the admin course.
 # Since the admin course provides overall power to add/delete courses, access
 # to this course should be protected by the best possible authentication you
 # have available to you.

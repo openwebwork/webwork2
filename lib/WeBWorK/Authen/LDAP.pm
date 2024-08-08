@@ -18,8 +18,9 @@ use base qw/WeBWorK::Authen/;
 
 use strict;
 use warnings;
-use WeBWorK::Debug;
-use Net::LDAP qw/LDAP_INVALID_CREDENTIALS/;
+
+use WeBWorK::Debug qw(debug);
+use Net::LDAP qw(LDAP_INVALID_CREDENTIALS);
 
 sub checkPassword {
 	my ($self, $userID, $possibleClearPassword) = @_;
@@ -32,10 +33,8 @@ sub checkPassword {
 	my $ret = $self->ldap_authen_uid($userID, $possibleClearPassword);
 	return 1 if ($ret == 1);
 
-	#return 0 if ($userID !~ /admin/);
-
 	# optional: fail over to superclass checkPassword
-	if (($failover eq "all" or $failover eq "1") || ($failover eq "local" and $ret < 0)) {
+	if ($failover eq "all" || $failover eq "1" || ($failover eq "local" && $ret < 0)) {
 		$self->write_log_entry("AUTH LDAP: authentication failed, deferring to superclass");
 		return $self->SUPER::checkPassword($userID, $possibleClearPassword);
 	}
@@ -48,20 +47,17 @@ sub ldap_authen_uid {
 	my ($self, $uid, $password) = @_;
 	my $ce           = $self->{c}->ce;
 	my $hosts        = $ce->{authen}{ldap_options}{net_ldap_hosts};
-	my $opts         = $ce->{authen}{ldap_options}{net_ldap_opts};
+	my $opts         = $ce->{authen}{ldap_options}{net_ldap_options} // {};
 	my $base         = $ce->{authen}{ldap_options}{net_ldap_base};
 	my $searchdn     = $ce->{authen}{ldap_options}{searchDN};
 	my $bindAccount  = $ce->{authen}{ldap_options}{bindAccount};
 	my $bindpassword = $ce->{authen}{ldap_options}{bindPassword};
 	# Be backwards-compatible with releases that hardcode this value.
-	my $rdn = "sAMAccountName";
-	if (defined $ce->{authen}{ldap_options}{net_ldap_rdn}) {
-		$rdn = $ce->{authen}{ldap_options}{net_ldap_rdn};
-	}
+	my $rdn = $ce->{authen}{ldap_options}{net_ldap_rdn} // 'sAMAccountName';
 
 	# connect to LDAP server
-	my $ldap = new Net::LDAP($hosts, @$opts);
-	if (not defined $ldap) {
+	my $ldap = Net::LDAP->new($hosts, ref($opts) eq 'HASH' ? %$opts : ());
+	if (!defined $ldap) {
 		warn "AUTH LDAP: couldn't connect to any of ", join(", ", @$hosts), ".\n";
 		return 0;
 	}
@@ -100,7 +96,7 @@ sub ldap_authen_uid {
 		return -1;
 	}
 	my $dn = $msg->shift_entry->dn;
-	if (not defined $dn) {
+	if (!defined $dn) {
 		warn "AUTH LDAP: got null DN when looking up UID '$uid'.\n";
 		return 0;
 	}
