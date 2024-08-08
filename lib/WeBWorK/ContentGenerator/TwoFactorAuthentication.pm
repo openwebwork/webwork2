@@ -44,11 +44,9 @@ sub pre_header_initialize ($c) {
 	$c->stash->{otp_qrcode} = '';
 	$c->stash->{authen_error} //= '';
 
-	# Note that this user has already authenticated with username and password,
-	# so this and the $user below should exist.
 	my $password = $c->db->getPassword($c->authen->{user_id});
 
-	if (!$password->otp_secret) {
+	if (!$password || !$password->otp_secret) {
 		my $totp =
 			WeBWorK::Utils::TOTP->new(
 				$c->authen->session->{otp_secret} ? (secret => $c->authen->session->{otp_secret}) : ());
@@ -61,6 +59,7 @@ sub pre_header_initialize ($c) {
 			GD::Barcode::QRcode->new($otp_link, { Ecc => 'L', ModuleSize => 4, Version => 0 })->plot->png;
 		};
 
+		# Note that this user has already authenticated so the user record should exist.
 		my $user = $c->db->getUser($c->authen->{user_id});
 
 		if ($ce->{twoFA}{email_sender} && (my $recipient = $user->email_address)) {
