@@ -29,6 +29,9 @@ sub checkPassword {
 
 	debug("LDAP module is doing the password checking.\n");
 
+	# Don't attempt to check a password if one wasn't entered.
+	return 0 unless $possibleClearPassword =~ /\S/;
+
 	# check against LDAP server
 	my $ret = $self->ldap_authen_uid($userID, $possibleClearPassword);
 	return 1 if ($ret == 1);
