@@ -472,7 +472,8 @@ sub verify_normal_user {
 			# two_factor_verification_needed is deleted from the session.
 			my $otp_code = trim($c->param('otp_code'));
 			if (defined $otp_code && $otp_code ne '') {
-				my $password = $c->db->getPassword($user_id);
+				# The password record may not be defined (e.g. for LDAP authentication). So create one if it isn't.
+				my $password = $c->db->getPassword($user_id) // $c->db->newPassword(user_id => $user_id);
 				if (
 					WeBWorK::Utils::TOTP->new(
 						secret    => $self->session->{otp_secret} // $password->otp_secret,
