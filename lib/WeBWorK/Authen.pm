@@ -130,7 +130,9 @@ sub call_next_authen_method {
 	my $c    = $self->{c};
 	my $ce   = $c->{ce};
 
-	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
+	my $user_authen_module =
+		WeBWorK::Authen::class($ce, $ce->{courseName} eq $ce->{admin_course_id} ? 'admin_module' : 'user_module');
+
 	if (!defined $user_authen_module || $user_authen_module eq '') {
 		$self->{error} = $c->maketext(
 			"No authentication method found for your request.  If this recurs, please speak with your instructor.");
@@ -155,18 +157,6 @@ sub verify {
 	debug('BEGIN VERIFY');
 
 	return $self->call_next_authen_method if !$self->request_has_data_for_this_verification_module;
-	my $authen_ref = ref($self);
-	if ($c->ce->{courseName} eq $c->ce->{admin_course_id}
-		&& !(grep {/^$authen_ref$/} @{ $c->ce->{authen}{admin_module} }))
-	{
-		$self->write_log_entry("Cannot authenticate into admin course using $authen_ref.");
-		$c->stash(
-			authen_error => $c->maketext(
-				'There was an error during the login process.  Please speak to your instructor or system administrator.'
-			)
-		);
-		return $self->call_next_authen_method();
-	}
 
 	$self->{was_verified} = $self->do_verify;
 

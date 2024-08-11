@@ -8,12 +8,10 @@
 ########################################################################################
 
 # Set LDAP as the authentication module to use.
-$authen{user_module} = {
-	"*" => "WeBWorK::Authen::LDAP",
-};
+$authen{user_module} = { "*" => "WeBWorK::Authen::LDAP" };
 
 # List of authentication modules that may be used to enter the admin course.
-# This should be a non-empty sublist of whatever is in $authen{user_module}.
+# This is used instead of $authen{user_module} when logging into the admin course.
 # Since the admin course provides overall power to add/delete courses, access
 # to this course should be protected by the best possible authentication you
 # have available to you.
@@ -41,23 +39,23 @@ $authen{ldap_options} = {
 	# Edit the data below:
 	net_ldap_base => "ou=people,dc=myschool,dc=edu",
 
-        # Use a Bind account if set to 1
-        bindAccount => 0,
+	# Use a Bind account if set to 1
+	bindAccount => 0,
 
-        searchDN => "cn=search,DC=youredu,DC=edu",
-        bindPassword =>  "password",
+	searchDN     => "cn=search,DC=youredu,DC=edu",
+	bindPassword => "password",
 
 	# The LDAP module searches for a DN whose RDN matches the username
 	# entered by the user. The net_ldap_rdn setting tells the LDAP
 	# backend what part of your LDAP schema you want to use as the RDN.
 	# The correct value for net_ldap_rdn will depend on your LDAP setup.
-	#
+
 	# Uncomment this line if you use Active Directory.
 	#net_ldap_rdn => "sAMAccountName",
-	#
+
 	# Uncomment this line if your schema uses uid as an RDN.
 	#net_ldap_rdn => "uid",
-	#
+
 	# By default, net_ldap_rdn is set to "sAMAccountName".
 
 	# If failover = "all", then all LDAP failures will be checked
@@ -69,4 +67,4 @@ $authen{ldap_options} = {
 	failover => "all",
 };
 
-1; #final line of the file to reassure perl that it was read properly.
+1;    #final line of the file to reassure perl that it was read properly.
