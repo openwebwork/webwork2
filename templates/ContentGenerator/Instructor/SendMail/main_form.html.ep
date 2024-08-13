@@ -34,7 +34,10 @@
 						<%= label_for from => maketext('From:'),
 							class => 'col-sm-3 col-form-label col-form-label-sm' =%>
 						<div class="col-sm-9">
-							<%= text_field from => $c->{from}, id => 'from', readonly => undef, disabled => undef,
+							<%= text_field from => $c->{from}, id => 'from',
+								$c->{from} && $c->{from} eq $c->{defaultPreviewUser}->rfc822_mailbox
+									? (readonly => undef, disabled => undef)
+									: (),
 								class => 'form-control form-control-sm' =%>
 						</div>
 					</div>
