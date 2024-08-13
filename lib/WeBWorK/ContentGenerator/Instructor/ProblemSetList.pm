@@ -267,11 +267,21 @@ sub initialize ($c) {
 
 	$c->stash->{formsToShow} = $c->{editMode} ? EDIT_FORMS() : $c->{exportMode} ? EXPORT_FORMS() : VIEW_FORMS();
 	$c->stash->{setDefList}  = [ getDefList($ce) ] unless $c->{editMode} || $c->{exportMode};
+
 	# Get requested sets in the requested order.
 	$c->stash->{sets} = [
 		@{ $c->{visibleSetIDs} }
-		? $db->getGlobalSetsWhere({ set_id => $c->{visibleSetIDs} },
-			\("$c->{primarySortField} $c->{primarySortOrder}, $c->{secondarySortField} $c->{secondarySortOrder}"))
+		? $db->getGlobalSetsWhere(
+			{ set_id => $c->{visibleSetIDs} },
+			\(
+				"$c->{primarySortField} $c->{primarySortOrder}, "
+					. "$c->{secondarySortField} $c->{secondarySortOrder}"
+					. (
+						$c->{primarySortField} ne 'set_id'
+						&& $c->{secondarySortField} ne 'set_id' ? ', set_id ASC' : ''
+					)
+			)
+			)
 		: ()
 	];
 
