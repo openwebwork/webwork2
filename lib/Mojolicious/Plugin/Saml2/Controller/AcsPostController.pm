@@ -1,16 +1,15 @@
 package Mojolicious::Plugin::Saml2::Controller::AcsPostController;
 
-use Mojo::Base 'WeBWorK::Controller', -strict, -signatures, -async_await;
+use Mojo::Base 'WeBWorK::Controller', -signatures, -async_await;
 
-use JSON;
-use Data::Dumper;
+use Mojo::JSON qw(decode_json);
 use Net::SAML2::Binding::POST;
 use Net::SAML2::Protocol::Assertion;
 
 use WeBWorK::Authen::Saml2;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Debug;
+use WeBWorK::Debug qw(debug);
 
 async sub post ($c) {
 	debug('SAML2 is on!');

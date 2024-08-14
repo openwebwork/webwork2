@@ -1,9 +1,8 @@
 package Mojolicious::Plugin::Saml2::Saml2Plugin;
-use Mojo::Base 'Mojolicious::Plugin', -strict, -signatures;
+use Mojo::Base 'Mojolicious::Plugin', -signatures;
 # external libs
-use Data::Dumper;
 use File::Temp qw/ tempfile /;
-use JSON;
+use Mojo::JSON qw(encode_json);
 use Mojolicious;
 use Mojolicious::Plugin::NotYAMLConfig;
 use Net::SAML2::IdP;
@@ -13,7 +12,7 @@ use URN::OASIS::SAML2 qw(BINDING_HTTP_POST BINDING_HTTP_REDIRECT);
 use CPAN::Meta::YAML;
 use Mojo::Util qw(decode encode);
 # webwork modules
-use WeBWorK::Debug;
+use WeBWorK::Debug qw(debug);
 # plugin's own modules
 use Mojolicious::Plugin::Saml2::Exception;
 use Mojolicious::Plugin::Saml2::Router;
