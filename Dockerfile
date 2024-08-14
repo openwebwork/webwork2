@@ -190,6 +190,7 @@ RUN cpanm install -n \
 	DBD::MariaDB \
 	Perl::Tidy@20220613 \
 	Archive::Zip::SimpleZip \
+	Net::SAML2 \
 	&& rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # ==================================================================
