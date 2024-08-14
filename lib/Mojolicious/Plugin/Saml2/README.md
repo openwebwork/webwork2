@@ -7,17 +7,24 @@ be compatible with a wide array of SAML2 based Single Sign On systems such as
 Shibboleth. This plugin is intended to replace the previous Shibboleth
 authentication module that depended on Apache mod_shib.
 
-There are two components to SAML2 support, the Mojolicious plugin here and a a regular Webwork Authen module at `lib/WeBWorK/Authen/Saml2.pm`.
+There are two components to SAML2 support, the Mojolicious plugin here and a a
+regular Webwork Authen module at `lib/WeBWorK/Authen/Saml2.pm`.
 
 ## Configuration
 
-To enable the Saml2 plugin, copy `conf/authen_saml2.dist.yml` to `conf/authen_saml2.yml`.
+To enable the Saml2 plugin, copy `conf/authen_saml2.dist.yml` to
+`conf/authen_saml2.yml`.
 
 Important settings:
-* *idp.metadata_url* - must be set to the IdP's metadata endpoint
-* *sp.entity_id* - the ID for the Webwork SP, this is usually the application root URL plus the base path to the SP
-* *sp.attributes* - list of attribute OIDs that the SP will look at and try to match to a Webwork username
-* *sp.cert*, *sp.signing_key* - a unique key and cert pair must be generated for your own prod deployments. The example key and cert is only meant for dev use as described below in [Docker Compose](#docker-compose-dev).
+
+- *idp.metadata_url* - must be set to the IdP's metadata endpoint
+- *sp.entity_id* - the ID for the Webwork SP, this is usually the application
+  root URL plus the base path to the SP
+- *sp.attributes* - list of attribute OIDs that the SP will look at and try to
+  match to a Webwork username
+- *sp.cert*, *sp.signing_key* - a unique key and cert pair must be generated
+  for your own prod deployments. The example key and cert is only meant for dev
+  use as described below in [Docker Compose](#docker-compose-dev).
 
 The Saml2 plugin will generate its own xml metadata that can be used by the IdP
 for configuration. This is available at the `/saml2/metadata` URL with the
@@ -28,7 +35,9 @@ default config. Endpoint locations, such as metadata, can be configured under
 
 OpenSSL can be used to generate the key and cert, like the following command:
 
-    openssl req -newkey rsa:4096 -new -x509 -days 3652 -nodes -out saml.crt -keyout saml.pem
+```bash
+openssl req -newkey rsa:4096 -new -x509 -days 3652 -nodes -out saml.crt -keyout saml.pem
+```
 
 The cert is placed in `saml.crt`. The key is in `saml.pem`.
 
@@ -38,10 +47,12 @@ Webwork's authentication system will need to be configured to use the Saml2
 module in `conf/localOverrides.conf`. The example below allows bypassing the
 Saml2 module to use the internal username/password login as a fallback:
 
-    $authen{user_module} = [
-    	'WeBWorK::Authen::Saml2',
-        'WeBWorK::Authen::Basic_TheLastOption'
-    ];
+```perl
+$authen{user_module} = [
+ 'WeBWorK::Authen::Saml2',
+    'WeBWorK::Authen::Basic_TheLastOption'
+];
+```
 
 If you add the bypass query to a course url, the Saml2 module will be skipped
 and the next one in the list used, e.g.:
@@ -50,36 +61,42 @@ and the next one in the list used, e.g.:
 Admin login also needs its own config, the example below assumes the bypass
 option is disabled:
 
-    $authen{admin_module} = [
-    	'WeBWorK::Authen::Saml2'
-    ];
+```perl
+$authen{admin_module} = [
+ 'WeBWorK::Authen::Saml2'
+];
+```
 
 To disable the bypass, `conf/authen_saml2.yml` must also be edited, commenting
 out the `bypass_query` line.
 
 ## Docker Compose Dev
 
-A dev use SAML2 IDP was added to docker-compose.yml.dist, to start this IDP
+A dev use SAML2 IdP was added to docker-compose.yml.dist, to start this IdP
 along with the rest of the Webwork, add the '--profile saml2dev' arg to docker
 compose:
 
-    docker compose --profile saml2dev up
+```bash
+docker compose --profile saml2dev up
+```
 
-Without the profile arg, the IDP services do not start. The dev IDP is a
+Without the profile arg, the IdP services do not start. The dev IdP is a
 SimpleSAMLphp instance.
 
-### Configuration
+### Setup
 
-The default `conf/authen_saml2.dist.yml` is configured to use this dev IDP.
+The default `conf/authen_saml2.dist.yml` is configured to use this dev IdP.
 Just copy it to `conf/authen_saml2.yml` and it should work.
 
 ### Admin
 
-The dev IDP has an admin interface, you can login with the password 'admin' at:
+The dev IdP has an admin interface, you can login with the password 'admin' at:
 
-    http://localhost:8180/simplesaml/module.php/admin/federation
+```text
+http://localhost:8180/simplesaml/module.php/admin/federation
+```
 
-The admin interface lets you check if the IDP has properly registered the
+The admin interface lets you check if the IdP has properly registered the
 Webwork SP under the 'Federation' tab, it should be listed under the "Trusted
 entities" section.
 
@@ -90,48 +107,57 @@ under the "example-userpass" authentication source.
 
 There are some single sign-on accounts preconfigured:
 
-* Username: student01 
-  * Password: student01
-* Username: instructor01
-  * Password: instructor01
-* Username: staff01
-  * Password: staff01
+- Username: student01
+  - Password: student01
+- Username: instructor01
+  - Password: instructor01
+- Username: staff01
+  - Password: staff01
 
 You can add more accounts at `docker-config/idp/config/authsources.php` in the
-`example-userpass` section. The IDP image will need to be rebuilt for the
+`example-userpass` section. The IdP image will need to be rebuilt for the
 change to take effect.
 
 ## Troubleshooting
 
-#### Webwork doesn't start, "Error retrieving metadata"
+### Webwork doesn't start, "Error retrieving metadata"
 
 This error message indicates that the Saml2 plugin wasn't able to grab metadata
-from the IDP metadata url. Make sure the IDP is accessible by the container.
+from the IdP metadata url. Make sure the IdP is accessible by the container.
 Example error message:
 
-    app-1  | Can't load application from file "/opt/webwork/webwork2/bin/webwork2": Error retrieving metadata: Can't connect to idp.docker:8180 (Connection refused) (500)
+```text
+app-1  | Can't load application from file "/opt/webwork/webwork2/bin/webwork2":
+Error retrieving metadata: Can't connect to idp.docker:8180 (Connection
+refused) (500)
+```
 
-#### User not found in course
+### User not found in course
 
-The user was verified by the IDP but did not have a corresponding user account
+The user was verified by the IdP but did not have a corresponding user account
 in the Webwork course. The Webwork user account needs to be created separately
 as the Saml2 plugin does not do user provisioning.
 
-#### Logout shows uninitialized value warnings with message "The course TEST100 uses an external authentication system ()."
+### Logout shows uninitialized value warnings
+
+The message on the page reads "The course TEST100 uses an external
+authentication system ()."
 
 The external auth message takes values from LTI config. If you're not using
 LTI, you can define the missing values separately in `localOverrides.conf`:
 
-    $LTIVersion = 'v1p3';
-    $LTI{v1p3}{LMS_name} = 'Webwork';
-    $LTI{v1p3}{LMS_url} = 'http://localhost:8080/';
+```perl
+$LTIVersion = 'v1p3';
+$LTI{v1p3}{LMS_name} = 'Webwork';
+$LTI{v1p3}{LMS_url} = 'http://localhost:8080/';
+```
 
 It's not an ideal solution but the Saml2 plugin needs to declare itself as an
 external auth system in order to avoid the internal 2FA. And the external auth
 message assumes LTI is on.
 
-#### Dev IDP does not show the Webwork SP in Federation tab
+### Dev IdP does not show the Webwork SP in Federation tab
 
-Webwork's first startup might be slow enough that the IDP wasn't able to
+Webwork's first startup might be slow enough that the IdP wasn't able to
 successfully grab metadata from the Webwork Saml2 plugin. Restarting everything
 should fix this.

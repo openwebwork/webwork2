@@ -1,8 +1,6 @@
 package Mojolicious::Plugin::Saml2::Router;
 
-use Mojo::Base -strict, -signatures;
-
-use WeBWorK::Debug;
+use Mojo::Base -signatures;
 
 sub setup ($app, $conf) {
 	my $subRouter =
