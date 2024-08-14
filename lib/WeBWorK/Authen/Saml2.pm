@@ -14,9 +14,9 @@
 ################################################################################
 
 package WeBWorK::Authen::Saml2;
-use Mojo::Base 'WeBWorK::Authen', -strict, -signatures;
+use Mojo::Base 'WeBWorK::Authen', -signatures;
 
-use WeBWorK::Debug;
+use WeBWorK::Debug qw(debug);
 
 =head1 NAME
 

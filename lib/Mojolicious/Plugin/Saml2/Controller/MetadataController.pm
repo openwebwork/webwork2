@@ -1,8 +1,6 @@
 package Mojolicious::Plugin::Saml2::Controller::MetadataController;
 
-use Mojo::Base 'Mojolicious::Controller', -strict, -signatures, -async_await;
-
-use WeBWorK::Debug;
+use Mojo::Base 'Mojolicious::Controller', -signatures, -async_await;
 
 async sub get ($c) {
 	my $sp = $c->saml2->getSp();
