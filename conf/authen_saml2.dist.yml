@@ -1,0 +1,120 @@
+---
+################################################################################
+# Configuration for the Saml2 plugin
+#
+# To enable the Saml2 plugin, copy authen_saml2.dist.yml to authen_saml2.yml
+#
+# The Saml2 plugin uses the Net::SAML2 library, the library claims to be
+# compatible with a wide range of SAML2 implementations, including Shibboleth.
+################################################################################
+
+# add this query to the end of a course url to skip the saml2 authen module
+# and go to the next one, comment out to disable this feature
+bypass_query: bypassSaml2
+idp: # this is the central SAML2 server
+  # url where we can get the SAML2 metadata xml for the IdP
+  metadata_url: http://idp.docker:8180/simplesaml/module.php/saml/idp/metadata
+sp: # this is the Webwork side
+  # also known as iss (issuer)
+  entity_id: http://localhost:8080/saml2
+  # endoints created by the plugin, relative to the webwork root url
+  route:
+    base: '/saml2' # prefix path for all URLs handled by the plugin
+    metadata: '/metadata' # actual path would be /saml2/metadata
+    # 'Assertion Consumer Service', basically handles the SAML response, plugin
+    # only supports a POST response (HTTP POST Binding)
+    acs:
+      post: '/acs/post'
+  # Ideally, there would be a way to have separate app info and org info but
+  # Net::SAML2's metadata generation doesn't seem to have that separation. So
+  # I've filled out the org info with app info instead.
+  org:
+    contact: 'webwork@example.edu'
+    name: 'webwork'
+    url: 'https://localhost:8080/'
+    display_name: 'WeBWorK'
+  # list of attributes that can be used as the username, each of them will be
+  # tried in turn to see if there's a matching user in the classlist. If no
+  # attributes are given, then we'll default to the NameID. Please use the
+  # attribute's OID
+  attributes:
+    - 'urn:oid:0.9.2342.19200300.100.1.1'
+  ##############################################################################
+  # SECURITY WARNING
+  # For production, you MUST generate your own unique 'cert' and 'signing_key'.
+  # The examples below are publicly exposed and thus provides NO SECURITY.
+  ##############################################################################
+  # Cert and key pairs can be generated using an openssl command such as:
+  #   openssl req -newkey rsa:3072 -new -x509 -days 3652 -nodes -out webwork.crt -keyout webwork.pem
+  # Where webwork.crt contains the cert and webwork.pem contains the signing_key
+  cert: |
+    -----BEGIN CERTIFICATE-----
+    MIIE7zCCA1egAwIBAgIUIteyNYLSAiB0FcNl0GLJNYRppk8wDQYJKoZIhvcNAQEL
+    BQAwgYYxCzAJBgNVBAYTAkFBMQswCQYDVQQIDAJBQTEQMA4GA1UEBwwHRXhhbXBs
+    ZTEQMA4GA1UECgwHRXhhbXBsZTEQMA4GA1UECwwHRXhhbXBsZTEQMA4GA1UEAwwH
+    RXhhbXBsZTEiMCAGCSqGSIb3DQEJARYTZXhhbXBsZUBleGFtcGxlLmVkdTAeFw0y
+    NDA1MDMwMTA2MzNaFw0zNDA1MDMwMTA2MzNaMIGGMQswCQYDVQQGEwJBQTELMAkG
+    A1UECAwCQUExEDAOBgNVBAcMB0V4YW1wbGUxEDAOBgNVBAoMB0V4YW1wbGUxEDAO
+    BgNVBAsMB0V4YW1wbGUxEDAOBgNVBAMMB0V4YW1wbGUxIjAgBgkqhkiG9w0BCQEW
+    E2V4YW1wbGVAZXhhbXBsZS5lZHUwggGiMA0GCSqGSIb3DQEBAQUAA4IBjwAwggGK
+    AoIBgQC45DCHUejzAeq+eVwEX5zSQWC+kqydEmoxpydT4YiSXnNeoNAkilKfHGOY
+    Uc4djwx148N14A+S0GCys2j3Ey2wuL7DSep5y1Z9Uxj6Ayg23XGIFFFJJLMy1Qfe
+    pjCcr1djPH9PpwglG1nTsiWqvHGGc3WWn1u6RfyrCf+jxbhygNRTA+LVPpqNvko6
+    MWKsbVLKrYMV2kPcQ0PQByNHJnjBy3KH2k99lS20h32sgHbgbVpJWdAWjeyJrOh9
+    aDt4/AfK90BvhkjF4BuQ+Jw5oIwMhbx7YmzIfiJmBLLaGjVRppuoAQtLX9uLst9l
+    aLZzaeutg+G3RUYcvDMlnP7cU8Sq4BD7uK0ChKxxCMFcihAhQ8wqCKncaaE9WqPs
+    CM16SB/6xptOxoLcg/5q3PJyUi2g4VDKXuQc6AURKIJxSM9nlrcv/R7fCFgk3Nj/
+    piWykDk6/BDWFpEHaj+NnFE9ZIxKr9CjTxdmqiDTyqSv50rNCjleyL/iASBTSCCF
+    OPVOYQECAwEAAaNTMFEwHQYDVR0OBBYEFGs8F3VIGSEk+DE2MBqqNKX6UuZTMB8G
+    A1UdIwQYMBaAFGs8F3VIGSEk+DE2MBqqNKX6UuZTMA8GA1UdEwEB/wQFMAMBAf8w
+    DQYJKoZIhvcNAQELBQADggGBAIpDktpfGH7ZqgdWvxbJrjekb1IyCGrWsHOYSjwM
+    +MxnhAA6oY63wC04a2i31zIMNOkY9F0tAdd4uDchxA9IWHqpb7t7zBlZdDabPPC3
+    WoDYnKhtZBULVVo7AvWO0UJGfZNJE393aKer3ePvfoG0OpCyrw4eFI/GCd4UjJBF
+    DnD7hvUxE7RRwOhbuYrtDRuB3Z7CeeP8o81eDVexyuBpM/9UQjYPqBBAfoeYKQzu
+    ZIhpGRWXw0ntH+EEOWagRXA5pRru61hteParZe4LBjPqisqN4Ek6ZR7MD9gB5xnt
+    Pn1BKRY08quFOZyaogzwfkYk5SCF8F8jBA8ZNAYwJWe1gtO3iw5vpUaQc2iCabvI
+    Y+Pc6qsSNwbkl7+sFrVHzI9QZVyz1cARUXxvrgGNLBkYtprkG91k6mCjX90cQspb
+    ZwHixcQyCNv+4H738e99h/Wf0YzjxFjDKrbGoosYBzWAsYYtzrtsBvw3SJMTXIh7
+    OvFMA+rbIL8XWs8oNmZDDh8g0A==
+    -----END CERTIFICATE-----
+  signing_key: |
+    -----BEGIN PRIVATE KEY-----
+    MIIG/QIBADANBgkqhkiG9w0BAQEFAASCBucwggbjAgEAAoIBgQC45DCHUejzAeq+
+    eVwEX5zSQWC+kqydEmoxpydT4YiSXnNeoNAkilKfHGOYUc4djwx148N14A+S0GCy
+    s2j3Ey2wuL7DSep5y1Z9Uxj6Ayg23XGIFFFJJLMy1QfepjCcr1djPH9PpwglG1nT
+    siWqvHGGc3WWn1u6RfyrCf+jxbhygNRTA+LVPpqNvko6MWKsbVLKrYMV2kPcQ0PQ
+    ByNHJnjBy3KH2k99lS20h32sgHbgbVpJWdAWjeyJrOh9aDt4/AfK90BvhkjF4BuQ
+    +Jw5oIwMhbx7YmzIfiJmBLLaGjVRppuoAQtLX9uLst9laLZzaeutg+G3RUYcvDMl
+    nP7cU8Sq4BD7uK0ChKxxCMFcihAhQ8wqCKncaaE9WqPsCM16SB/6xptOxoLcg/5q
+    3PJyUi2g4VDKXuQc6AURKIJxSM9nlrcv/R7fCFgk3Nj/piWykDk6/BDWFpEHaj+N
+    nFE9ZIxKr9CjTxdmqiDTyqSv50rNCjleyL/iASBTSCCFOPVOYQECAwEAAQKCAYAR
+    p6iCo22tFrfFrGz+9epRoXCNgg/9h66gQyfcOKMD5wT5Oj3l31d4XgucleMqq2gz
+    MaaOcPDLwh4ZskwJm8k3IM0GdN5w9tuxZ+fwp7CFXKvkpJwGcfyyk+kGd7QYoh2k
+    GjjF8Fs0v+HZ9x7lqMzmW8wUr+7gYKJ56qCAkPbF6EteCfb1Cd9UPaF04RZdBKtt
+    MxhbU9Y7CClHigbyWlgZmUW8dzoz8bTFklKL0FCJqad/bZYTMUYu91XT88oKCXbD
+    AUxpF2Ikbkfj820XOqq8iV3xGpYszt1aMRpsdXbDAhCqfKoNet2X7jnRWlNXZutC
+    RIUGm4VUNDNeD4nXW8aLgDa8bNQnvsSmM9DUVuPjbejUs0VN7uwxo8rYqvkAKiBQ
+    1ZqxoBK4ShZVcqgWE6CUj9FRZ3CVzSzydxZSQzex/ZRYPuYLUhQJFHLVIdJSYhf3
+    XTEki0+ndwAB7yP/tBNlcxLftCzAaS7mPLLn1tf0A27QPCSjwOsTLxuJ4WYVkmkC
+    gcEAuuh8EImBfE9WOg3ITmJpr95WlVi8WE6BHWowV8dQwODQLj+38itDDL1xLn9+
+    Vuz4o9AaIBiH5fCr6otun28lVp/sNVdWnBVeioSpu3tGV18OiDNaXtXOo7qkUnBI
+    Z+V7cD69gJLS6byD3OXlGi42h3XxK4mVlhwQtkQ69qI/zhl6rc0O2/iXXUAFa5T5
+    MJ84Cw1B9kHFB/NC27sraee+cwAK0Pogj5WnqaBOIPeIO/f+br65xMUvEYvDD1m4
+    TwIzAoHBAP082l0IQ5KHBY4WuFIDOoevO5SxHN5EUp2sPRDZwZxwOrjHxFRXPc/h
+    pDrVEHEn/4HQ706AHYpED0diumr4gee7gusNIDcGpXwjGVdFmFvxKoDbhz1C5vL3
+    xC7qgyS/ZtAopxpCPH3+7IrQyBk8e6He+8F97bA0e9sYSBQSuPLcdKQXGNbLYb6s
+    yLbP02cB2CNeI1GJMQIOXe9bi9Cz5w+hCGMvEKt5oAz5SLWlPBvv1YATpG5Ux8Wy
+    RbGPD4zj+wKBwBGVDx6rIMAl4nGhnEcrYM/HdZOk/kq8T88JjzSirkkGnO7M1av1
+    P+Bx7bS3D5Zzwkv+poaAaEBMLI/qv+RFm1iTwK+f4KjcJcGYCzN0vEA50+8iDY1A
+    RakHRK/wmg8T+lGrxT3UEf0k266q/atBz6VchexXi/fL+hJ7RqSuzJvBr9WrpYsx
+    zmNaQ2hEYlCdmbMIcz0MINHHo3FyIPpcb4D37wyLiwaWyGffiZn2Tx19DbUzQdxt
+    xCi9YgMOqJTeGwKBwQD4rJ0x5j+U0ApgcWcnAgyj2SwE47eZfDY0p0KAHZXGbV78
+    vQ7KU7FbRhTjwP6YX9LEQ8v7pktbz2HBk+3DxayrRrNU5lrQLjKrKDxmOu1WvAgk
+    6W5wdhYcWbnI6HlHyLzJhGIzov+MKp1V45fbUE2Hs1Q9uc+CzMcja0C8lXYQ5vOT
+    fyrhIm8lsr6W5paN/H2mnXbJRpNdlYYg2iD+HOu1qUh3PWx9Nr44f0MrPMs+E9Hw
+    J1m9DnvuYxWVOwrmK6kCgcADfcatftIJWMqeYJsDnB9jJaANmjln2G3bppo9WcIC
+    lvfXFE+Rf3FleaijVrUFbgxDU2MHh/2VPjJgIQT3QtfqS5+OnF1Z5+uOTGwbDNmT
+    3Th0IcSt6TjvLJwkanNeSkvc+2lMnuNtH6TQLXB0qEs3D7xND0kFWHfyies+RYNC
+    eualoZJ/6UL9X2gkPG5jmzXjInEBguAL0ll5yETXgx6v0hXR058TcvPl58j73cCQ
+    dzDq+xUD8nHpKM33A2EaUFY=
+    -----END PRIVATE KEY-----
