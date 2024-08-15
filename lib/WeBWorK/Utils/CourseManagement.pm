@@ -405,6 +405,10 @@ sub addCourse {
 				assignSetsToUsers($db, $ce, \@user_sets, [$user_id]);
 			}
 		}
+		if (defined $options{initial_userID}) {
+			my ($initialUser) = grep { $_->[0]{user_id} eq $options{initial_userID} } @users;
+			assignSetsToUsers($db, $ce, \@set_ids, [ $initialUser->[0]{user_id} ]) if $initialUser;
+		}
 	}
 
 	# add achievements

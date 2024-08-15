@@ -384,10 +384,11 @@ sub do_add_course ($c) {
 
 	eval {
 		addCourse(
-			courseID      => $add_courseID,
-			ce            => $ce2,
-			courseOptions => \%courseOptions,
-			users         => \@users,
+			courseID       => $add_courseID,
+			ce             => $ce2,
+			courseOptions  => \%courseOptions,
+			users          => \@users,
+			initial_userID => $add_initial_userID,
 			%optional_arguments,
 		);
 	};
