@@ -688,8 +688,8 @@ sub page_title ($c) {
 	my $db = $c->db;
 
 	# If the current route name is 'set_list' and the course has a course title then display that.
-	if ($c->current_route eq 'set_list' && $db->settingExists('courseTitle')) {
-		return $db->getSettingValue('courseTitle');
+	if ($c->current_route eq 'set_list' && (my $courseTitle = $db->getSettingValue('courseTitle'))) {
+		return $courseTitle;
 	} else {
 		# Display the route name
 		return route_title($c, $c->current_route, 1);
