@@ -101,12 +101,10 @@ sub use_item ($self, $userName, $c) {
 	return 'There was an error accessing that problem.' unless $problem;
 
 	# Add .5 to grade with max of 1
-
-	if ($problem->status < .5) {
-		$problem->status($problem->status + .5);
-	} else {
-		$problem->status(1);
-	}
+	my $new_status = $problem->status + 0.5;
+	$new_status = 1 if $new_status > 1;
+	$problem->status($new_status);
+	$problem->sub_status($new_status);
 
 	$db->putUserProblem($problem);
 

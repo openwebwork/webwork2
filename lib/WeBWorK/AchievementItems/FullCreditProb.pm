@@ -100,8 +100,9 @@ sub use_item ($self, $userName, $c) {
 	my $problem = $db->getUserProblem($userName, $setID, $problemID);
 	return 'There was an error accessing that problem.' unless $problem;
 
-	# Set the status of the problem to one.
+	# Set the status and sub_status of the problem to one.
 	$problem->status(1);
+	$problem->sub_status(1);
 	$db->putUserProblem($problem);
 
 	$globalData->{ $self->{id} }--;
