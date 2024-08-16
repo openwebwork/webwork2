@@ -24,7 +24,7 @@ for you to see the answers.
 certain number of times.
 * Once the due date has passed, you can still enter answers in the answer blanks and use the "Check" button, and WeBWorK
 will still give you the same feedback; just not for credit.
-* Captial letters are different than lowercase letters when it comes to variables. For exmaple, [`\pi r^2`] might be
+* Capital letters are different than lowercase letters when it comes to variables. For example, [`\pi r^2`] might be
 correct while [`\pi R^2`] is not.
 * When you click on a problem set, there is set-specific information in a panel to the right. Always read this before
 you begin the problems set. It may give you important hints.
@@ -42,7 +42,7 @@ character if you have a way to do that.
 saved. So you can do assignments in little bits at a time and work out of order if you like.
 * WeBWorK can be used on tablets and smartphones.
 * Most problems are coded with randomization. This means that while you and your classmate may have the same skeleton of
-a problem, the numbers invloved are different. This encourages you to teach each other the _process_ of answering a
+a problem, the numbers involved are different. This encourages you to teach each other the _process_ of answering a
 problem without being able to simply share the answers.
 
 The collection of all of the numbers between [`0`] and [`\pi`] including the endpoints is represented as [`[0,\pi]`] in

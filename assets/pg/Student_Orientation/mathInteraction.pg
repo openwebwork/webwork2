@@ -22,7 +22,7 @@ Each piece of math content is tab-indexed, meaning that by using the tab key, yo
 that piece of content. Try clicking your mouse on the title of this page ("Interacting with Math") and then use the tab
 key. Under default conditions, you should see an indication that the web browser is now focused on the math expression.
 
-Once focus is on a math expression, using the spacebar will activate the "MathJax menu". You can also activate this menu
+Once focus is on a math expression, using the space bar will activate the "MathJax menu". You can also activate this menu
 by right-clicking (Windows/Linux) or [|control|]*-clicking (MacOS) a piece of math. Try activating the MathJax menu now.
 It should look like the following.
 
@@ -83,7 +83,7 @@ END_BODY
 
 BEGIN_PGML
 
-## Interactiong with Math
+## Interacting with Math
 
 This page will primarily be of interest to users with accessibility needs. However, all users might learn math more
 easily by learning about the tools that are described here.
