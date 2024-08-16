@@ -27,11 +27,14 @@ use constant ITEMS => [ qw(
 	HalfCreditProb
 	FullCreditProb
 	ReducedCred
+	NoReducedCred
 	ExtendDueDate
+	ExtendReducedDate
 	DoubleSet
 	ResurrectHW
 	Surprise
 	SuperExtendDueDate
+	SuperExtendReducedDate
 	HalfCreditSet
 	FullCreditSet
 	AddNewTestGW
@@ -110,15 +113,18 @@ END {
 	use WeBWorK::AchievementItems::DuplicateProb;
 	use WeBWorK::AchievementItems::ExtendDueDateGW;
 	use WeBWorK::AchievementItems::ExtendDueDate;
+	use WeBWorK::AchievementItems::ExtendReducedDate;
 	use WeBWorK::AchievementItems::FullCreditProb;
 	use WeBWorK::AchievementItems::FullCreditSet;
 	use WeBWorK::AchievementItems::HalfCreditProb;
 	use WeBWorK::AchievementItems::HalfCreditSet;
 	use WeBWorK::AchievementItems::ReducedCred;
+	use WeBWorK::AchievementItems::NoReducedCred;
 	use WeBWorK::AchievementItems::ResetIncorrectAttempts;
 	use WeBWorK::AchievementItems::ResurrectGW;
 	use WeBWorK::AchievementItems::ResurrectHW;
 	use WeBWorK::AchievementItems::SuperExtendDueDate;
+	use WeBWorK::AchievementItems::SuperExtendReducedDate;
 	use WeBWorK::AchievementItems::Surprise;
 }
 
