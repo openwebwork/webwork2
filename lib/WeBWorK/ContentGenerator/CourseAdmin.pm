@@ -422,47 +422,6 @@ sub do_add_course ($c) {
 				$add_initial_email,
 			)
 		);
-		# Add contact to admin course as student?
-		# FIXME -- should we do this?
-		if ($add_initial_userID =~ /\S/) {
-			my $composite_id = "${add_initial_userID}_${add_courseID}";    # student id includes school name and contact
-			my $User         = $db->newUser(
-				user_id       => $composite_id,                            # student id includes school name and contact
-				first_name    => $add_initial_firstName,
-				last_name     => $add_initial_lastName,
-				student_id    => $add_initial_userID,
-				email_address => $add_initial_email,
-				status        => 'C',
-			);
-			my $Password = $db->newPassword(
-				user_id  => $composite_id,
-				password => cryptPassword($add_initial_password),
-			);
-			my $PermissionLevel = $db->newPermissionLevel(
-				user_id    => $composite_id,
-				permission => '0',
-			);
-			# add contact to admin course as student
-			# or if this contact and course already exist in a dropped status
-			# change the student's status to enrolled
-			if (my $oldUser = $db->getUser($composite_id)) {
-				push(
-					@$output,
-					$c->tag(
-						'div',
-						class => 'alert alert-danger p-1 mb-2',
-						$c->maketext('Replacing old data for [_1]: status: [_2]', $composite_id, $oldUser->status)
-					)
-				);
-				$db->deleteUser($composite_id);
-			}
-			eval { $db->addUser($User) };
-			warn $@ if $@;
-			eval { $db->addPassword($Password) };
-			warn $@ if $@;
-			eval { $db->addPermissionLevel($PermissionLevel) };
-			warn $@ if $@;
-		}
 		push(
 			@$output,
 			$c->tag(
@@ -885,19 +844,6 @@ sub do_delete_course ($c) {
 				$c->tag('div', class => 'font-monospace', $error))->join('')
 		);
 	} else {
-		# Mark the contact person in the admin course as dropped.
-		# Find the contact person for the course by searching the admin classlist.
-		my @contacts = grep {/_$delete_courseID$/} $db->listUsers;
-		if (@contacts) {
-			die "Incorrect number of contacts for the course $delete_courseID: " . join(' ', @contacts)
-				if @contacts != 1;
-
-			# Mark the contact person as dropped.
-			my $User = $db->getUser($contacts[0]);
-			$User->status(($ce->status_name_to_abbrevs('Drop'))[0]);
-			$db->putUser($User);
-		}
-
 		writeLog($ce, 'hosted_courses', join("\t", "\tDeleted", '', '', $delete_courseID));
 
 		return $c->c(
@@ -1117,21 +1063,6 @@ sub do_archive_course ($c) {
 					)
 				);
 			} else {
-				# Mark the contact person in the admin course as dropped.
-				# Find the contact person for the course by searching the admin classlist.
-				my @contacts = grep {/_$archive_courseID$/} $db->listUsers;
-				if (@contacts) {
-					die "Incorrect number of contacts for the course $archive_courseID" . join(' ', @contacts)
-						if @contacts != 1;
-					my $composite_id = $contacts[0];
-
-					my $User         = $db->getUser($composite_id);
-					my $status_name  = 'Drop';
-					my $status_value = ($ce->status_name_to_abbrevs($status_name))[0];
-					$User->status($status_value);
-					$db->putUser($User);
-				}
-
 				push(
 					@$output,
 					$c->tag(
