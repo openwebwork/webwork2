@@ -9,7 +9,7 @@
 				id => 'action_hardcopy_seed_id', class => 'form-control form-control-sm' =%>
 		</div>
 		<div class="col-auto mb-2">
-			<button id="randomize_hardcopy_seed_id" class="btn btn-info btn-sm" type="button">
+			<button id="randomize_hardcopy_seed_id" class="btn btn-ww-info btn-sm" type="button">
 				<%= maketext('Randomize Seed') =%>
 			</button>
 		</div>

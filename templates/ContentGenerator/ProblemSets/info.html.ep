@@ -5,7 +5,7 @@
 		<%= maketext('Course Info') =%>
 		<%= link_to(maketext('Edit') =>
 				$c->systemLink(url_for('instructor_problem_editor'), params => { file_type => 'course_info' }),
-			target => 'WW_Editor', class => 'btn btn-sm btn-info m-1') =%>
+			target => 'WW_Editor', class => 'btn btn-sm btn-ww-info m-1') =%>
 	</h2>
 	% if (stash('course_info_error')) {
 		<div class="alert alert-danger p-1 mb-0"><%= stash('course_info_error') %></div>

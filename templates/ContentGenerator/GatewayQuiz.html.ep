@@ -356,7 +356,7 @@
 			<div class="col-md-2 text-end mb-1">
 				<%= link_to maketext('Print Test') =>
 					$c->systemLink(url_for('hardcopy_preselect_set', setID => "$setID,v$setVersionID")),
-					class => 'btn btn-info' =%>
+					class => 'btn btn-ww-info' =%>
 			</div>
 		</div>
 	% }

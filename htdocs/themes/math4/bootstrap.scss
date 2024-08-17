@@ -77,6 +77,36 @@ $link-hover-decoration: underline;
 	--ww-course-config-tab-link-focus-outline-color: #{rgba($primary, $focus-ring-opacity)};
 }
 
+// Custom WeBWorK btn-info
+.btn-ww-info {
+	@include button-variant(
+		// background color
+		$ww-info,
+		// border color
+		$ww-info,
+		// foreground color
+		$ww-info-text,
+		// hover background color
+		tint-color($ww-info, $btn-hover-bg-tint-amount),
+		// hover border color
+		tint-color($ww-info, $btn-hover-border-tint-amount),
+		// hover foreground color
+		$ww-info-text,
+		// active background color
+		tint-color($ww-info, $btn-active-bg-tint-amount),
+		// active border color
+		tint-color($ww-info, $btn-active-border-tint-amount),
+		// active foreground color
+		$ww-info-text,
+		// disabled background color
+		$ww-info,
+		// disabled border color
+		$ww-info,
+		// disabled foreground color
+		color-contrast($ww-info)
+	);
+}
+
 // Overrides
 
 a:not(.btn):focus {

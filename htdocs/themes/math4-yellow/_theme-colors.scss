@@ -3,10 +3,10 @@
 
 // Theme colors
 $primary: #ffc700;
-$info: black;
+$ww-info: black;
+$ww-info-text: $primary;
 
 $primary-bg-subtle-dark: shade-color($primary, 90%);
-$info-text-emphasis-dark: tint-color($info, 50%);
 
 // Override the default white for the foreground color of active components.
 // White has poor color contrast with the yellow primary color.
@@ -16,7 +16,7 @@ $component-active-color: black;
 $link-color: shade-color($primary, 60%);
 
 // Webwork logo background color in the banner
-$ww-logo-background-color: $info;
+$ww-logo-background-color: $ww-info;
 
 // Achievment level bar
 $ww-achievement-level-color: darken($primary, 15%);

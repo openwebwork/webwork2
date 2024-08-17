@@ -3,13 +3,14 @@
 
 // Theme colors
 $primary: #324f36;
-$info: #618265;
+$ww-info: #618265;
+$ww-info-text: black;
 
 // Link colors
 $link-color: #283f2b;
 
 // Webwork logo background color in the banner
-$ww-logo-background-color: darken($info, 8%);
+$ww-logo-background-color: darken($ww-info, 8%);
 
 // Achievment level bar
 $ww-achievement-level-color: #708e74;
