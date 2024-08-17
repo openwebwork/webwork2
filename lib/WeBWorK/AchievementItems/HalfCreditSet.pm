@@ -26,7 +26,7 @@ sub new ($class) {
 	return bless {
 		id          => 'HalfCreditSet',
 		name        => x('Lesser Tome of Enlightenment'),
-		description => x('Gives half credit on every problem in a set.')
+		description => x('Increases the score of every problem in an assignment by 50%, to a maximum of 100%.')
 	}, $class;
 }
 
@@ -41,7 +41,9 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 	return unless @openSets;
 
 	return $c->c(
-		$c->tag('p', $c->maketext('Please choose the set for which all problems should have half credit added.')),
+		$c->tag(
+			'p', $c->maketext('Please choose the assignment for which all problems should have half credit added.')
+		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			$c,
 			id         => 'hcs_set_id',
