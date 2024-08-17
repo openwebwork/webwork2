@@ -28,7 +28,7 @@ sub new ($class) {
 	return bless {
 		id          => 'HalfCreditProb',
 		name        => x('Lesser Rod of Revelation'),
-		description => x('Gives half credit on a single homework problem.')
+		description => x('Increases the score of a single problem by 50%, to a maximum of 100%.')
 	}, $class;
 }
 
@@ -60,7 +60,7 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 		$c->tag(
 			'p',
 			$c->maketext(
-				'Please choose the set name and problem number of the question which should be given half credit.')
+				'Please choose the assignment name and problem number of the question to add half credit to.')
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			$c,
