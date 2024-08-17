@@ -15,7 +15,7 @@ When you click into an answer blank, a math tool palette should appear off to th
 the following answer blank and using buttons from the palette to help enter the expression [::pi/sqrt(x+1)::].
 [_]{Context("Numeric"), 'pi/sqrt(x+1)'}{16}
 
-Almost everyting the palette tool can do can be done with typing alone. For the next asnwer blank, enter the same answer
+Almost everything the palette tool can do can be done with typing alone. For the next answer blank, enter the same answer
 as before, but ignore the palette tool and type it all out. You can type characters [|pi/sqrtx+1|]* and watch as the
 expression automatically is converted to look like [::pi/sqrt(x+1)::]. [_]{Context("Numeric"), 'pi/sqrt(x+1)'}{16}
 
@@ -30,7 +30,7 @@ control-clicking) in an answer blank. To "right click" without a mouse:
 * on Windows or Linux, use [|shift F10|]*.
 * on a Mac, you must first enable Mouse Keys in System Settings, and then use [|control m|]*.
 
-Try to disable the palette tool now. Once the tool is diabled, your device and web browser should "remember" this
+Try to disable the palette tool now. Once the tool is disabled, your device and web browser should "remember" this
 setting when you visit a new problem or log in again. To bring the palette tool back, right-click (or control-click)
 again in an answer blank. Unless you are certain you do not want to use the palette tool, you should bring it back now.
 END_BODY
