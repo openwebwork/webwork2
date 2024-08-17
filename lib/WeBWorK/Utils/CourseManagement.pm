@@ -201,7 +201,7 @@ boolean options:
 =cut
 
 sub addCourse {
-	my (%options) = @_;
+	my (%options) = (initial_userID => '', @_);
 
 	for my $key (keys(%options)) {
 		my $value = '####UNDEF###';
@@ -216,6 +216,8 @@ sub addCourse {
 	my @users         = exists $options{users} ? @{ $options{users} } : ();
 
 	debug \@users;
+
+	my ($initialUser) = grep { $_->[0]{user_id} eq $options{initial_userID} } @users;
 
 	# get the database layout out of the options hash
 	my $dbLayoutName = $courseOptions{dbLayoutName};
@@ -405,10 +407,7 @@ sub addCourse {
 				assignSetsToUsers($db, $ce, \@user_sets, [$user_id]);
 			}
 		}
-		if (defined $options{initial_userID}) {
-			my ($initialUser) = grep { $_->[0]{user_id} eq $options{initial_userID} } @users;
-			assignSetsToUsers($db, $ce, \@set_ids, [ $initialUser->[0]{user_id} ]) if $initialUser;
-		}
+		assignSetsToUsers($db, $ce, \@set_ids, [ $initialUser->[0]{user_id} ]) if $initialUser;
 	}
 
 	# add achievements
@@ -417,6 +416,12 @@ sub addCourse {
 		for my $achievement_id (@achievement_ids) {
 			eval { $db->addAchievement($db0->getAchievement($achievement_id)) };
 			warn $@ if $@;
+			if ($initialUser) {
+				my $userAchievement = $db->newUserAchievement();
+				$userAchievement->user_id($initialUser->[0]{user_id});
+				$userAchievement->achievement_id($achievement_id);
+				$db->addUserAchievement($userAchievement);
+			}
 		}
 		if ($options{copyNonStudents}) {
 			foreach my $userTriple (@users) {
