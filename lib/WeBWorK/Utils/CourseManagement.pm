@@ -431,10 +431,11 @@ sub addCourse {
 	# copy title and/or institution if requested
 	for my $setting ('Title', 'Institution') {
 		if ($db0 && $options{"copy$setting"}) {
-			$db->setSettingValue("course$setting", $db0->getSettingValue("course$setting"))
-				if ($options{"copy$setting"});
+			my $settingValue = $db0->getSettingValue("course$setting");
+			$db->setSettingValue("course$setting", $settingValue) if defined $settingValue && $settingValue ne '';
 		} else {
-			$db->setSettingValue("course$setting", $options{"course$setting"}) if (exists $options{"course$setting"});
+			$db->setSettingValue("course$setting", $options{"course$setting"})
+				if defined $options{"course$setting"} && $options{"course$setting"} ne '';
 		}
 	}
 
@@ -649,10 +650,10 @@ sub renameCourse {
 		#update title and institution
 		my $newDB = new WeBWorK::DB($newCE->{dbLayouts}{$dbLayoutName});
 		eval {
-			if (exists($options{courseTitle}) and $options{courseTitle}) {
+			if (defined $options{courseTitle} && $options{courseTitle} ne '') {
 				$newDB->setSettingValue('courseTitle', $options{courseTitle});
 			}
-			if (exists($options{courseInstitution}) and $options{courseInstitution}) {
+			if (defined $options{courseInstitution} && $options{courseInstitution} ne '') {
 				$newDB->setSettingValue('courseInstitution', $options{courseInstitution});
 			}
 		};
@@ -692,10 +693,10 @@ sub retitleCourse {
 	my $dbLayoutName = $ce->{dbLayoutName};
 	my $db           = new WeBWorK::DB($ce->{dbLayouts}{$dbLayoutName});
 	eval {
-		if (exists($options{courseTitle}) and $options{courseTitle}) {
+		if (defined $options{courseTitle} && $options{courseTitle} ne '') {
 			$db->setSettingValue('courseTitle', $options{courseTitle});
 		}
-		if (exists($options{courseInstitution}) and $options{courseInstitution}) {
+		if (defined $options{courseInstitution} && $options{courseInstitution} ne '') {
 			$db->setSettingValue('courseInstitution', $options{courseInstitution});
 		}
 	};
