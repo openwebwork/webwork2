@@ -542,6 +542,19 @@ sub getConfigValues ($ce) {
 				type => 'permission'
 			},
 			{
+				var  => 'permissionLevels{change_name}',
+				doc  => x('Allowed to change their name'),
+				doc2 => x(
+					'Users at this level and higher are allowed to change their first and last name. '
+						. 'Note that if WeBWorK is used with an LMS, it may be configured to allow the LMS to '
+						. 'manage user data such as user names. Then if a user changes their name in WeBWorK, '
+						. 'the LMS might override that later. This course might be configured to allow you to '
+						. 'control whether or not the LMS is allowed to manage user date in the LTI tab of the '
+						. 'Course Configuration page.'
+				),
+				type => 'permission'
+			},
+			{
 				var  => 'permissionLevels{change_email_address}',
 				doc  => x('Allowed to change their email address'),
 				doc2 => x(
@@ -922,11 +935,13 @@ sub getConfigValues ($ce) {
 			var  => 'LMSManageUserData',
 			doc  => x('Allow the LMS to update user account data'),
 			doc2 => x(
-				'WeBWorK will automatically create users when logging in via the LMS for the first time. If '
-					. 'this flag is enabled then it will also keep the user account data (first name, last '
-					. 'name, section, recitation) up to date with the LMS. If a user\'s information changes '
-					. 'in the LMS then it will change in WeBWorK. However, any changes to the user data via '
-					. 'WeBWorK will be overwritten the next time the user logs in.'
+				'If this is set to true, then when a user enters WeBWorK using LTI from an LMS, their user account '
+					. 'data in WeBWorK will be updated to match the data from the LMS.  This applies to first name, '
+					. 'last name, section, recitation, and email address.  If a user\'s information changes in the LMS '
+					. 'then it will change in WeBWorK the next time the user enters WeBWorK from the LMS.  Any changes '
+					. 'to the user data that are made in WeBWorK will be overwritten.  So if this is set to true, you '
+					. 'may want to review the settings in the Permissions tab for who is allowed to change their own '
+					. 'name and email address.'
 			),
 			type => 'boolean'
 		},
