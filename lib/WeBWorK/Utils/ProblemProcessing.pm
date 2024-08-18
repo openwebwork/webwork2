@@ -323,13 +323,19 @@ sub compute_reduced_score ($ce, $problem, $set, $score, $submitTime) {
 # If reduced scoring is enabled for the set and the sub_status is less than the status, then the status is the
 # reduced score.  In that case compute and return the unreduced score that resulted in that reduced score.
 sub compute_unreduced_score ($ce, $problem, $set) {
-	return
-		$set->enable_reduced_scoring
+	if ($set->enable_reduced_scoring
 		&& $ce->{pg}{ansEvalDefaults}{reducedScoringValue}
-		&& defined $problem->sub_status && $problem->sub_status < $problem->status
-		? (($problem->status - $problem->sub_status) / $ce->{pg}{ansEvalDefaults}{reducedScoringValue} +
-			$problem->sub_status)
-		: $problem->status;
+		&& defined $problem->sub_status
+		&& $problem->sub_status < $problem->status)
+	{
+		# Note that if the status has been modified by an instructor using a problem grader or an achivement, then the
+		# computed unreduced score can be greater than one.  So make sure to cap the score.
+		my $unreducedScore =
+			($problem->status - $problem->sub_status) / $ce->{pg}{ansEvalDefaults}{reducedScoringValue} +
+			$problem->sub_status;
+		return $unreducedScore > 1 ? 1 : $unreducedScore;
+	}
+	return $problem->status;
 }
 
 # create answer string from responses hash
