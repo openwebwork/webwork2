@@ -44,7 +44,7 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 		$c->tag('p', $c->maketext('Choose the set whose close date you would like to extend.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			$c,
-			id         => 'ext_set_id',
+			id         => 'super_ext_set_id',
 			label_text => $c->maketext('Set Name'),
 			values     => \@openSets,
 			menu_attr  => { dir => 'ltr' }
@@ -64,7 +64,7 @@ sub use_item ($self, $userName, $c) {
 	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
 	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
 
-	my $setID = $c->param('ext_set_id');
+	my $setID = $c->param('super_ext_set_id');
 	return 'You need to input a Set Name' unless defined $setID;
 
 	my $set     = $db->getMergedSet($userName, $setID);

@@ -27,7 +27,7 @@
 					% my $percentage = int(100 * ($userAchievement->counter || 0) / $achievement->max_counter);
 					% $percentage = 100 if $percentage > 100;
 					<div class="cheevoouterbar mt-1" title="<%= maketext('[_1]% Complete', $percentage) %>"
-						aria-label="<%= maketext('[_1]% Complete', $percentage) %>" role="figure" =%>
+						aria-label="<%= maketext('[_1]% Complete', $percentage) %>" role="figure">
 						<div class="cheevoinnerbar" style="width:<%= $percentage %>%;"></div>
 					</div>
 				% }
