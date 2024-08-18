@@ -24,11 +24,6 @@
 	background-color: var(--ww-achievement-level-color, #88d);
 }
 
-.cheevoouterbox img {
-	height: 50px;
-	width: 50px;
-}
-
 .locked {
 	opacity: 0.65;
 
@@ -66,19 +61,6 @@
 		margin-top: 0px;
 		margin-bottom: 5px;
 		font-size: 20px;
-		font-weight: bold;
-	}
-}
-
-.achievement-item {
-	margin-bottom: 15px;
-	margin-left: 15px;
-
-	h3 {
-		line-height: 15px;
-		font-size: 15px;
-		margin-bottom: 5px;
-		margin-top: 2px;
 		font-weight: bold;
 	}
 }

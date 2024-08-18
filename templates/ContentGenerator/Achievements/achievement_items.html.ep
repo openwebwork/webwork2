@@ -3,22 +3,26 @@
 % # Show any items the user may have.
 <h2 class="my-3"><%= maketext('Rewards') %></h2>
 % if (@$items) {
+	<dl class="mx-4">
 	% my $itemNumber = 0;
 	% for my $item (@$items) {
-		<div class="achievement-item">
-			% # Show each item's name, count, and description
-			% if ($itemCounts->{ $item->id } > 1) {
-				<h3><%= maketext($item->name)
-					. ' (' . maketext('[_1] remaining', $itemCounts->{ $item->id }) . ')' %></h3>
-			% } elsif ($itemCounts->{ $item->id } < 0) {
-				<h3><%= maketext($item->name) . ' (' . maketext('unlimited reusability') . ')' %></h3>
-			% } else {
-				<h3><%= maketext($item->name) %></h3>
-			% }
-			<p><%= maketext($item->description) %></p>
+		% # Show each item's name, description, and reusability
+		<dt class="fs-4">
+			<%= maketext($item->name) %>
+		</dt>
+		<dd class="mb-4">
+			<p class="mb-1"><%= maketext($item->description) %></p>
 			% my $form = $item->print_form($sets, $setProblemIds, $c);
 			% # Print a modal popup for each item which contains the form necessary to get the data to use the item.
-			<%= link_to maketext('Use Reward') => '#modal_' . $item->id,
+			% my $button_text;
+			% if ($itemCounts->{ $item->id } > 1) {
+				% $button_text = maketext('[_1] ([_2] remaining)', maketext($item->name), $itemCounts->{ $item->id });
+			% } elsif ($itemCounts->{ $item->id } < 0) {
+				% $button_text = maketext('[_1] (unlimited reusability)', maketext($item->name));
+			% } else {
+				% $button_text = maketext($item->name);
+			% }
+			<%= link_to maketext('Use [_1]', $button_text) => '#modal_' . $item->id,
 					role  => 'button',
 					class => 'btn btn-secondary' . ($form ? '' : ' disabled'),
 					id    => 'popup_' . $item->id,
@@ -47,9 +51,10 @@
 					</div>
 				</div>
 			% }
-		</div>
+		</dd>
 		% $itemNumber++;
 	% }
+	</dl>
 % } else {
 	<p><%= maketext(q{You don't have any rewards!}) %></p>
 % }
