@@ -573,8 +573,8 @@ sub export_handler ($c) {
 	$c->{exportMode}     = 1;
 
 	return $scope eq 'all'
-		? (1, $c->maketext('All sets were exported.'))
-		: (1, $c->maketext('Selected sets were exported.'));
+		? (1, $c->maketext('All sets have been marked for export.'))
+		: (1, $c->maketext('Selected sets were marked for export.'));
 }
 
 sub cancel_export_handler ($c) {
