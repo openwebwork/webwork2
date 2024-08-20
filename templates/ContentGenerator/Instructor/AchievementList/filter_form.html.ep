@@ -7,7 +7,7 @@
 					[ maketext('all course achievements')              => 'all' ],
 					[ maketext('selected achievements')                => 'selected' ],
 					[ maketext('enter matching achievement IDs below') => 'match_ids', selected => undef ],
-					[ maketext('enter matching category below')        => 'match_category' ],
+					[ maketext('select matching category below')       => 'match_category' ],
 					[ maketext('enabled achievements')                 => 'enabled' ],
 					[ maketext('disabled achievements')                => 'disabled' ]
 				],
@@ -27,10 +27,7 @@
 	<div id="filter_text_err_msg" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">
 		<%= maketext('Please enter a list of IDs to match.') %>
 	</div>
-	% my @categories = $c->db->getAchievementCategories;
-	% for (@categories) {
-		% $_ = [$_ => $_];
-	% }
+	% my @categories = grep { defined && $_ ne '' } $c->db->getAchievementCategories;
 	<div id="filter_category_elements" class="row mb-2">
 		<%= label_for 'filter_category', class => 'col-form-label col-form-label-sm col-sm-auto', begin =%>
 			<%= maketext('Match on which category?') =%>
