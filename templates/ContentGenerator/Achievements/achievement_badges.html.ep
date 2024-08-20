@@ -10,12 +10,13 @@
 		% $previousCategory = $achievement->category;
 		%
 		% my $userAchievement = $userAchievements->{$achievement->achievement_id};
-		<div class="cheevoouterbox d-flex justify-content-start align-items-center mb-3 <%=
+		<div class="d-flex justify-content-start align-items-center mb-3 mx-4 <%=
 			$userAchievement->earned ? 'unlocked' : 'locked' %>">
 			<div>
 				<%= image $achievement->{icon}
 					? "$ce->{courseURLs}{achievements}/$achievement->{icon}"
 					: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png",
+					width => 50,
 					alt => $userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned' =%>
 			</div>
 			<div class="ms-3">
