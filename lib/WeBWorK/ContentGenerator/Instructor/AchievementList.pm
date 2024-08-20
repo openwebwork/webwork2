@@ -402,7 +402,8 @@ sub create_handler ($c) {
 	$db->addUserAchievement($userAchievement);
 
 	# Add to local list of achievements
-	push @{ $c->{allAchievementIDs} }, $newAchievementID;
+	push @{ $c->{allAchievementIDs} },     $newAchievementID;
+	push @{ $c->{visibleAchievementIDs} }, $newAchievementID;
 
 	return (0, $c->maketext("Failed to create new achievement: [_1]", $@)) if $@;
 
@@ -414,11 +415,12 @@ sub import_handler ($c) {
 	my $ce = $c->ce;
 	my $db = $c->db;
 
-	my $fileName          = $c->param('action.import.source');
-	my $assign            = $c->param('action.import.assign');
-	my @users             = $db->listUsers;
-	my %allAchievementIDs = map { $_ => 1 } @{ $c->{allAchievementIDs} };
-	my $filePath          = $ce->{courseDirs}{achievements} . '/' . $fileName;
+	my $fileName              = $c->param('action.import.source');
+	my $assign                = $c->param('action.import.assign');
+	my @users                 = $db->listUsers;
+	my %allAchievementIDs     = map { $_ => 1 } @{ $c->{allAchievementIDs} };
+	my %visibleAchievementIDs = map { $_ => 1 } @{ $c->{visibleAchievementIDs} };
+	my $filePath              = $ce->{courseDirs}{achievements} . '/' . $fileName;
 
 	# Open file name
 	my $fh = Mojo::File->new($filePath)->open('<:encoding(UTF-8)')
@@ -430,6 +432,10 @@ sub import_handler ($c) {
 	while (my $data = $csv->getline($fh)) {
 
 		my $achievement_id = $$data[0];
+
+		# Add imported achievement to visible list even if it already exists.
+		$visibleAchievementIDs{$achievement_id} = 1;
+
 		# Skip achievements that already exist
 		next if $db->existsAchievement($achievement_id);
 
@@ -474,8 +480,8 @@ sub import_handler ($c) {
 
 	$fh->close;
 
-	$c->{allAchievementIDs} = [ keys %allAchievementIDs ];
-
+	$c->{allAchievementIDs}     = [ keys %allAchievementIDs ];
+	$c->{visibleAchievementIDs} = [ keys %visibleAchievementIDs ];
 	return (1, $c->maketext('Imported [quant,_1,achievement].', $count));
 }
 
