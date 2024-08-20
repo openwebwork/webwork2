@@ -62,28 +62,19 @@ async sub dispatch ($c) {
 	# Note that this is Time::HiRes's time, which gives floating point values.
 	$c->submitTime(time);
 
-	my $method   = $c->req->method;
-	my $location = $c->location;
-	my $uri      = $c->url_for;
-	my $args     = $c->req->params->to_string || '';
+	my $method = $c->req->method;
+	my $uri    = $c->url_for;
+	my $args   = $c->req->params->to_string || '';
 
 	debug("\n\n===> Begin " . __PACKAGE__ . "::dispatch() <===\n\n");
-	debug("Hi, I'm the new dispatcher!\n");
 	debug(("-" x 80) . "\n");
 
-	debug("Okay, I got some basic information:\n");
-	debug("The site location is $location\n");
 	debug("The request method is $method\n");
 	debug("The URI is $uri\n");
 	debug("The argument string is $args\n");
 	debug(('-' x 80) . "\n");
 
-	my ($path) = $uri =~ m/$location(.*)/;
-	$path .= '/' if $path !~ m(/$);
-	debug("The path is $path\n");
-
 	debug("The current route is " . $c->current_route . "\n");
-	debug("Here is some information about this route:\n");
 
 	my $displayModule = ref $c;
 	my %routeCaptures = %{ $c->stash->{'mojo.captures'} };
@@ -95,8 +86,6 @@ async sub dispatch ($c) {
 	}
 
 	debug(('-' x 80) . "\n");
-
-	debug("Now we want to look at the parameters we got.\n");
 
 	debug("The raw params:\n");
 	for my $key ($c->param) {
@@ -122,7 +111,6 @@ async sub dispatch ($c) {
 	$c->initializeRoute(\%routeCaptures) if $c->can('initializeRoute');
 
 	# Create Course Environment
-	debug("We need to get a course environment (with or without a courseID!)\n");
 	my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $routeCaptures{courseID} }) };
 	$@ and die "Failed to initialize course environment: $@\n";
 	debug("Here's the course environment: $ce\n");
@@ -164,12 +152,14 @@ async sub dispatch ($c) {
 	if ($routeCaptures{courseID}) {
 		debug("We got a courseID from the route, now we can do some stuff:\n");
 
+		# This route could have the courseID set, but does not need authentication.
+		return 1 if $c->current_route eq 'saml2_metadata';
+
 		return (0, 'This course does not exist.')
 			unless (-e $ce->{courseDirs}{root}
 				|| -e "$ce->{webwork_courses_dir}/$ce->{admin_course_id}/archives/$routeCaptures{courseID}.tar.gz");
 		return (0, 'This course has been archived and closed.') unless -e $ce->{courseDirs}{root};
 
-		debug("...we can create a database object...\n");
 		my $db = WeBWorK::DB->new($ce->{dbLayout});
 		debug("(here's the DB handle: $db)\n");
 		$c->db($db);

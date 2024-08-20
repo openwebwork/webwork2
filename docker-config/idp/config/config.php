@@ -31,7 +31,7 @@ $config = [
 	 * external url, no matter where you come from (direct access or via the
 	 * reverse proxy).
 	 */
-	'baseurlpath' => 'simplesaml/',
+	'baseurlpath' => 'http://localhost:8180/simplesaml/',
 
 	/*
 	 * The 'application' configuration array groups a set configuration options
@@ -173,9 +173,7 @@ $config = [
 	 *
 	 * See this page for a list of valid timezones: http://php.net/manual/en/timezones.php
 	 */
-	'timezone' => 'America/Vancouver',
-
-
+	'timezone' => 'America/New_York',
 
 	/**********************************
 	 | SECURITY CONFIGURATION OPTIONS |
@@ -281,7 +279,7 @@ $config = [
 		 'X-Frame-Options' => 'SAMEORIGIN',
 		 'X-Content-Type-Options' => 'nosniff',
 		 'Referrer-Policy' => 'origin-when-cross-origin',
-],
+	 ],
 	 */
 
 
