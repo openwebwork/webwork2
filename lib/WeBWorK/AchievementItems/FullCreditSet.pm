@@ -72,8 +72,9 @@ sub use_item ($self, $userName, $c) {
 	for my $probID (@probIDs) {
 		my $problem = $db->getUserProblem($userName, $setID, $probID);
 
-		# Set status to 1.
+		# Set status and sub_status to 1.
 		$problem->status(1);
+		$problem->sub_status(1);
 		$db->putUserProblem($problem);
 	}
 
