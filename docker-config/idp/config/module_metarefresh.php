@@ -1,17 +1,19 @@
 <?php
 
-if (!isset($_ENV['SP_METADATA_URL'])) {
-	exit("Set env var SP_METADATA_URL to the Webwork SP's metadata url");
+$metadataURL = getenv('SP_METADATA_URL');
+
+if ($metadataURL === False) {
+	exit("Set the environment varable SP_METADATA_URL to the webwork2 service provider's metadata url.");
 }
 
 $config = [
 	'sets' => [
-		'webwork' => [
-			'cron' => ['docker'],
+		'webwork2' => [
+			'cron' => ['metarefresh'],
 			'sources' => [
-				['src' => $_ENV['SP_METADATA_URL']]
+				['src' => $metadataURL]
 			],
-			'expiresAfter' => 60*60*24*365*10, // 10 years, basically never
+			'expiresAfter' => 60 * 60 * 24 * 365 * 10, // 10 years, basically never
 			'outputDir' => 'metadata/metarefresh-webwork/',
 			'outputFormat' => 'flatfile',
 		]
