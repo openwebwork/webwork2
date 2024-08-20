@@ -1,8 +1,8 @@
 <?php
 
 $config = [
-	'key' => 'healthcheck',
-	'allowed_tags' => ['docker'],
+	'key' => 'webwork2',
+	'allowed_tags' => ['metarefresh'],
 	'debug_message' => true,
 	'sendemail' => false,
 ];

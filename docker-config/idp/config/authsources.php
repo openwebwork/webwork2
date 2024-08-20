@@ -67,7 +67,6 @@ $config = [
 	//    */
 	//],
 
-
 	/*
 	'example-sql' => [
 		'sqlauth:SQL',

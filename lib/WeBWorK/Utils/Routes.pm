@@ -39,6 +39,11 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  ltiadvantage_keys                   /ltiadvantage/keys
  ltiadvantage_content_selection      /ltiadvantage/content_selection
 
+ saml2_acs                           /saml2/acs
+ saml2_metadata                      /saml2/metadata
+ saml2_error                         /saml2/error
+ saml2_logout                        /saml2/logout
+
  pod_index                           /pod
  pod_viewer                          /pod/$filePath
 
@@ -155,6 +160,10 @@ my %routeParameters = (
 			ltiadvantage_launch
 			ltiadvantage_keys
 			ltiadvantage_content_selection
+			saml2_acs
+			saml2_metadata
+			saml2_error
+			saml2_logout
 			pod_index
 			sample_problem_index
 			set_list
@@ -220,6 +229,32 @@ my %routeParameters = (
 		module => 'LTIAdvantage',
 		path   => '/ltiadvantage/content_selection',
 		action => 'content_selection'
+	},
+
+	# This route also ends up at the login screen on failure, and the title is not used anywhere else.
+	saml2_acs => {
+		title  => x('Login'),
+		module => 'Saml2',
+		path   => '/saml2/acs',
+		action => 'assertionConsumerService'
+	},
+	saml2_metadata => {
+		title  => 'metadata',
+		module => 'Saml2',
+		path   => '/saml2/metadata',
+		action => 'metadata'
+	},
+	saml2_error => {
+		title  => 'error',
+		module => 'Saml2',
+		path   => '/saml2/error',
+		action => 'errorResponse'
+	},
+	saml2_logout => {
+		title  => 'logout',
+		module => 'Saml2',
+		path   => '/saml2/logout',
+		action => 'logout'
 	},
 
 	pod_index => {
