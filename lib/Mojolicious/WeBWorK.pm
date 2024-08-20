@@ -94,10 +94,6 @@ sub startup ($app) {
 
 	# Provide the ability to serve data as a file download.
 	$app->plugin('RenderFile');
-	# Load the SAML2 plugin if configuration found
-	if (-e "$ENV{WEBWORK_ROOT}/conf/authen_saml2.yml") {
-		$app->plugin('Mojolicious::Plugin::Saml2::Saml2Plugin');
-	}
 
 	# Helpers
 

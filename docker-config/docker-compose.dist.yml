@@ -251,47 +251,27 @@ services:
     #ports:
     #  - "6311:6311"
 
-  # saml2 dev use only, separate profile from the other services so it doesn't
-  # start in normal usage. Use "docker compose --profile saml2dev up" to start.
+  # SimpleSAMLphp Saml2 identity provider for development use only. This is a separate profile from the other services
+  # so it doesn't start in normal usage. Use "docker compose --profile saml2dev up" to start, and "docker compose
+  # --profile saml2dev down" to stop.
   idp:
     build:
-      context: ./docker-config/idp/ # SimpleSAMLphp based IDP
+      context: ./docker-config/idp/
     profiles:
       - saml2dev
     ports:
       - '8180:80'
     environment:
-      SP_METADATA_URL: 'http://app.docker:8080/saml2/metadata'
-    # the healthcheck url is simplesamlphp's url for triggering cron jobs, the
-    # cron job it'll trigger is to automatically grab webwork sp's metadata
+      SP_METADATA_URL: 'http://app:8080/webwork2/saml2/metadata'
+    # The healthcheck url is SimpleSAMLphp's url for triggering cron jobs. The cron job it triggers will
+    # automatically fetch the webwork2 service provider's metadata.
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost/simplesaml/module.php/cron/run/docker/healthcheck']
+      test: ['CMD', 'curl', '-f', 'http://localhost/simplesaml/module.php/cron/run/metarefresh/webwork2']
       start_period: 1m
       start_interval: 15s
       interval: 1h
       retries: 1
       timeout: 10s
-  # Send internal docker traffic for the idp external port to the idp internal
-  # port. Needed so the webwork saml2 plugin can request the idp metadata.
-  socat-idp:
-    image: alpine/socat:1.8.0.0
-    profiles:
-      - saml2dev
-    command: 'TCP-LISTEN:8180,fork,reuseaddr TCP:idp:80'
-    networks:
-      default:
-        aliases:
-          - idp.docker
-  # same port redirect so the idp can get the webwork saml2 plugin metadata
-  socat-app:
-    image: alpine/socat:1.8.0.0
-    profiles:
-      - saml2dev
-    command: 'TCP-LISTEN:8080,fork,reuseaddr TCP:app:8080'
-    networks:
-      default:
-        aliases:
-          - app.docker
 
 volumes:
   oplVolume:
