@@ -30,7 +30,7 @@ BEGIN {
 		state     => { type => "VARCHAR(200) NOT NULL", key => 1 },
 		nonce     => { type => "TEXT NOT NULL" },
 		timestamp => { type => "BIGINT" },
-		data      => { type => "TEXT NOT NULL DEFAULT '{}'" }
+		data      => { type => "TEXT NOT NULL DEFAULT ('{}')" }
 	);
 }
 
