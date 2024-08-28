@@ -27,9 +27,17 @@ use feature 'say';
 
 BEGIN {
 	use Mojo::File qw(curfile);
-	use Env qw(WEBWORK_ROOT);
+	use YAML::XS qw(LoadFile);
+	use Env qw(WEBWORK_ROOT PG_ROOT);
 
-	$WEBWORK_ROOT = curfile->dirname->dirname;
+	$WEBWORK_ROOT = curfile->dirname->dirname->to_string;
+
+	# Load the configuration file to obtain the PG root directory.
+	my $config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.yml";
+	$config_file = "$WEBWORK_ROOT/conf/webwork2.mojolicious.dist.yml" unless -e $config_file;
+	my $config = LoadFile($config_file);
+
+	$PG_ROOT = $config->{pg_dir};
 }
 
 use File::Temp qw(tempdir);
@@ -50,12 +58,12 @@ my $latex_cmd =
 	"cd $temp_dir && "
 	. "TEXINPUTS=$ENV{WEBWORK_ROOT}/bin:"
 	. shell_quote($ce->{webworkDirs}{assetsTex}) . ':'
-	. shell_quote("$ce->{pg}{directories}{assetsTex}") . ': '
+	. shell_quote($ce->{pg}{directories}{assetsTex}) . ': '
 	. $ce->{externalPrograms}{latex2pdf}
 	. ' -interaction nonstopmode check_latex_article.tex > check_latex.nfo 2>&1 &&'
 	. "TEXINPUTS=$ENV{WEBWORK_ROOT}/bin:"
 	. shell_quote($ce->{webworkDirs}{assetsTex}) . ':'
-	. shell_quote("$ce->{pg}{directories}{assetsTex}") . ': '
+	. shell_quote($ce->{pg}{directories}{assetsTex}) . ': '
 	. $ce->{externalPrograms}{latex2pdf}
 	. ' -interaction nonstopmode check_latex_exam.tex >> check_latex.nfo 2>&1';
 
