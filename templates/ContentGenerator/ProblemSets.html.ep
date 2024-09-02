@@ -22,34 +22,40 @@
 % # Regular sets and gateway template sets are merged, but sorted either by name or urgency.
 % # Versions are not shown here. Instead they are on the ProblemSet page for the gateway quiz.
 %
-<div class="d-flex justify-content-end gap-2 mb-3">
-	<%= hidden_field courseID => $ce->{courseName} =%>
-	<%= hidden_field userName => param('user') =%>
-	<div class="btn-group" role="group" aria-label="<%= maketext('Display choice') %>">
-		<button id="show-by-date-btn" type="button" class="btn btn-outline-primary"
-			data-open-title="<%= maketext('Open Assignments') %>"
-			data-reduced-title="<%= maketext('Reduced Scoring Assignments') %>"
-			data-not-open-title="<%= maketext('Future Assignments') %>"
-			data-past-due-title="<%= maketext('Past Due Assignments') %>"
-		   	>
-			<%= maketext('Show By Date') =%>
-		</button>
-		<button id="show-by-type-btn" type="button" class="btn btn-outline-primary"
-			data-default-title="<%= maketext('Regular Assignments') %>"
-			data-test-title="<%= maketext('Tests/Quizzes') %>"
-			>
-			<%= maketext('Show By Type') =%>
-		</button>
+% if (@{ stash('sets') }) {
+	<div class="d-flex justify-content-end gap-2 mb-3">
+		<%= hidden_field courseID => $ce->{courseName} =%>
+		<%= hidden_field userName => param('user') =%>
+		<div class="btn-group" role="group" aria-label="<%= maketext('Display choice') %>">
+			<button id="show-by-date-btn" type="button" class="btn btn-outline-primary"
+				data-open-title="<%= maketext('Open Assignments') %>"
+				data-reduced-title="<%= maketext('Reduced Scoring Assignments') %>"
+				data-not-open-title="<%= maketext('Future Assignments') %>"
+				data-past-due-title="<%= maketext('Past Due Assignments') %>"
+				>
+				<%= maketext('Show By Date') =%>
+			</button>
+			<button id="show-by-type-btn" type="button" class="btn btn-outline-primary"
+				data-default-title="<%= maketext('Regular Assignments') %>"
+				data-test-title="<%= maketext('Tests/Quizzes') %>"
+				>
+				<%= maketext('Show By Type') =%>
+			</button>
+		</div>
 	</div>
-</div>
-%
-<div id="set-list-container">
-	<ol class="list-group mb-3 invisible">
-		% for (@{ stash('sets') // [] }) {
-			<%= include('ContentGenerator/ProblemSets/set_list_row', set => $_, $c->getSetStatus($_)) =%>
-		% }
-	</ol>
-</div>
+	%
+	<div id="set-list-container">
+		<ol class="list-group mb-3 invisible">
+			% for (@{ stash('sets') }) {
+				<%= include('ContentGenerator/ProblemSets/set_list_row', set => $_, $c->getSetStatus($_)) =%>
+			% }
+		</ol>
+	</div>
+% } else {
+	<div class="alert alert-info">
+		<%= maketext('There are no assignments available to you at this time.') %>
+	</div>
+% }
 %
 <%= $c->feedbackMacro(
 	route              => current_route,
