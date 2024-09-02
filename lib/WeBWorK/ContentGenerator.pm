@@ -377,7 +377,7 @@ sub header {
 Not defined in this package.
 
 May be defined by a subclass to perform any early processing that is needed.
-This method can not be used if responding with a file or redirect.
+This method cannot be used if responding with a file or redirect.
 
 This method may be asynchronous.
 

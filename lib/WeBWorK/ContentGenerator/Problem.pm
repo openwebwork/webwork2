@@ -233,12 +233,12 @@ sub can_showMeAnother ($c, $user, $effectiveUser, $set, $problem, $submitAnswers
 			&& $c->authen->session->{showMeAnother}{problemID} eq $problem->problem_id
 			&& ($c->{checkAnswers} || $c->{previewAnswers});
 
-		# If the student has not attempted the original problem enough times yet, then showMeAnother can not be used.
+		# If the student has not attempted the original problem enough times yet, then showMeAnother cannot be used.
 		return 0
 			if $problem->num_correct + $problem->num_incorrect + ($submitAnswers ? 1 : 0) <
 			$c->{showMeAnother}{TriesNeeded};
 
-		# If the number of showMeAnother uses has been exceeded, then the user can not use it again.
+		# If the number of showMeAnother uses has been exceeded, then the user cannot use it again.
 		return 0 if $c->{showMeAnother}{Count} >= $c->{showMeAnother}{MaxReps} && $c->{showMeAnother}{MaxReps} > -1;
 
 		return 1;

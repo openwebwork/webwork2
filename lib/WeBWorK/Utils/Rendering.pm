@@ -239,7 +239,7 @@ This method requires a course environment, user, set, problem, psvn, form
 fields, and translation options.  These are passed to the WeBWorK::PG
 constructor inside of a subprocess.  The created object is then parsed into a
 hash that containing all of the data webwork2 needs for rendering and processing
-the problem.  Note that this hash can not contain any blessed references.  Those
+the problem.  Note that this hash cannot contain any blessed references.  Those
 will all be lost in the return value from the process.
 
 The return value of the method is a Mojo::Promise that will resolve to the above

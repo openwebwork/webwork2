@@ -60,7 +60,7 @@ sub putUserProblem {
 	}
 
 	# The status is the only thing that users with the problem_grader permission can change.
-	# This method can not be called without the problem_grader permission.
+	# This method cannot be called without the problem_grader permission.
 	$userProblem->{status} = $params->{status} if defined $params->{status};
 
 	# Remove the needs_grading flag if the mark_graded parameter is set.
@@ -99,7 +99,7 @@ sub putProblemVersion {
 	}
 
 	# The status is the only thing that users with the problem_grader permission can change.
-	# This method can not be called without the problem_grader permission.
+	# This method cannot be called without the problem_grader permission.
 	$problemVersion->{status} = $params->{status} if defined $params->{status};
 
 	# Remove the needs_grading flag if the mark_graded parameter is set.
@@ -137,7 +137,7 @@ sub putPastAnswer {
 	}
 
 	# The comment_string is the only thing that users with the problem_grader permission can change.
-	# This method can not be called without the problem_grader permission.
+	# This method cannot be called without the problem_grader permission.
 	$pastAnswer->{comment_string} = $params->{comment_string} if defined $params->{comment_string};
 
 	eval { $db->putPastAnswer($pastAnswer) };

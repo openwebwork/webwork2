@@ -78,7 +78,7 @@
 						? maketext('The problem set is not yet open')
 						: $exhausted
 						? maketext('This feature has been used the maximum allowed number of times for this problem, '
-							. 'and can not be used again.'
+							. 'and cannot be used again.'
 						)
 						: maketext(
 							'You must attempt this problem [quant,_1,more time] before this feature is available',

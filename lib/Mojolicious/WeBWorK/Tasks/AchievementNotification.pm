@@ -71,7 +71,7 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 	$compartment->share_from('main',
 		[qw(%Encode:: %Mojo::Base:: %Mojo::Exception:: %Mojo::Template:: %WeBWorK::SafeTemplate::)]);
 
-	# Since the WeBWorK::SafeTemplate module can not add "no warnings 'ambiguous'", those warnings must be prevented
+	# Since the WeBWorK::SafeTemplate module cannot add "no warnings 'ambiguous'", those warnings must be prevented
 	# with the following $SIG{__WARN__} handler.
 	local $SIG{__WARN__} = sub {
 		my $warning = shift;

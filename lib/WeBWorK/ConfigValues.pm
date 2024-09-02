@@ -457,7 +457,7 @@ sub getConfigValues ($ce) {
 						. 'answers.</li><li><b>SMAshowHints</b>: Show hints <i>for the new problem</i> (assuming '
 						. 'hints exist).</li></ul>Note: There is very little point enabling the Show Me Another '
 						. 'feature unless you check at least one of these options. Otherwise the students would '
-						. 'simply see a new version that can not be attempted or learned from.'
+						. 'simply see a new version that cannot be attempted or learned from.'
 				),
 				min    => 0,
 				values => [ 'SMAcheckAnswers', 'SMAshowSolutions', 'SMAshowCorrect', 'SMAshowHints' ],

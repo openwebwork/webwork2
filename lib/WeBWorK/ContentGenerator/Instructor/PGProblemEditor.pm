@@ -421,7 +421,7 @@ sub determineTempEditFilePath ($c, $path) {
 		unless $path =~ m|^/|;
 
 	if ($path =~ /^$tmpEditFileDirectory/) {
-		$c->addbadmessage($c->maketext('The path can not be the temporary edit directory.'));
+		$c->addbadmessage($c->maketext('The path cannot be the temporary edit directory.'));
 	} else {
 		if ($path =~ /^$templatesDirectory/) {
 			$path = $c->getRelativeSourceFilePath($path);
@@ -646,7 +646,7 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 
 	unless (path_is_subdir($outputFilePath, $ce->{courseDirs}{templates}, 1)) {
 		$c->addbadmessage($c->maketext(
-			'The file [_1] is not contained in the course templates directory and can not be modified.',
+			'The file [_1] is not contained in the course templates directory and cannot be modified.',
 			$outputFilePath
 		));
 		return;
@@ -737,7 +737,7 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 			$c->{inputFilePath} = $c->{editFilePath};
 		} else {
 			$c->addbadmessage($c->maketext(
-				'The temporary file [_1] is not in the course templates directory and can not be deleted!',
+				'The temporary file [_1] is not in the course templates directory and cannot be deleted!',
 				$c->{tempFilePath}
 			));
 		}
@@ -1291,7 +1291,7 @@ sub revert_handler ($c) {
 
 	unless (path_is_subdir($c->{tempFilePath}, $ce->{courseDirs}{templates}, 1)) {
 		$c->addbadmessage($c->maketext(
-			'The temporary file [_1] is not contained in the course templates directory and can not be deleted.',
+			'The temporary file [_1] is not contained in the course templates directory and cannot be deleted.',
 			$c->{tempFilePath}
 		));
 		return;

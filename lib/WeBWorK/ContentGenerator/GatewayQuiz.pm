@@ -994,7 +994,7 @@ async sub pre_header_initialize ($c) {
 						. $problem->num_correct . "\t"
 						. $problem->num_incorrect);
 			} elsif ($c->{submitAnswers}) {
-				# This is the case answers were submitted but can not be saved. Report an error message.
+				# This is the case answers were submitted but cannot be saved. Report an error message.
 				if ($c->{isClosed}) {
 					$scoreRecordedMessage[ $probOrder[$i] ] =
 						$c->maketext('Your score was not recorded because this problem set version is not open.');
@@ -1148,7 +1148,7 @@ async sub pre_header_initialize ($c) {
 		# is false.
 
 		# Save persistent data to database even in this case, when answers
-		# would not or can not be recorded.
+		# would not or cannot be recorded.
 		my @pureProblems = $db->getAllProblemVersions($effectiveUserID, $setID, $versionID);
 		for my $i (0 .. $#problems) {
 			# Process each problem.

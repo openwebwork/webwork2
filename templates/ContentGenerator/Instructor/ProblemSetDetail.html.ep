@@ -326,7 +326,7 @@
 		<p>
 			<b>
 				<%= maketext(
-					'Screen and Hardcopy set header information can not be overridden for individual students.') =%>
+					'Screen and Hardcopy set header information cannot be overridden for individual students.') =%>
 			</b>
 		</p>
 	% }
