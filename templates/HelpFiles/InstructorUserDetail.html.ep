@@ -36,5 +36,5 @@
 		. '(The grade of each problem is called the "status".) You can also change the number of allowed attempts and '
 		. q{further modify the individual student's homework set.) You will also be able to change a student's seed }
 		. q{which determines the individual values used in the individual version of the student's problem and the }
-		. 'weight (how much a problem counts towards the grade.)') =%>
+		. 'weight (how much a problem counts toward the grade.)') =%>
 </p>

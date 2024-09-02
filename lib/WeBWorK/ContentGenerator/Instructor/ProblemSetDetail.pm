@@ -644,7 +644,7 @@ use constant FIELD_PROPERTIES => {
 			'0' => x('No'),
 		},
 		help_text => x(
-			'If this flag is set then this problem will count towards the grade of its parent problem.  In '
+			'If this flag is set then this problem will count toward the grade of its parent problem.  In '
 				. 'general the adjusted status on a problem is the larger of the problem\'s status and the weighted '
 				. 'average of the status of its child problems which have this flag enabled.'
 		),

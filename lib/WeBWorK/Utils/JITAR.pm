@@ -241,7 +241,7 @@ ID: for my $id (@problemIDs) {
 			next ID unless $seq[$_] == $problemSeq[$_];
 		}
 
-		# Check to see if this counts towards the parent grade.
+		# Check to see if this counts toward the parent grade.
 		my $problem = $db->getMergedProblem($userProblem->user_id, $userProblem->set_id, $id);
 
 		die "Couldn't get problem $id for user "
@@ -285,7 +285,7 @@ ID: for my $id (@problemIDs) {
 			next ID unless $seq[$_] == $problemSeq[$_];
 		}
 
-		# Check to see if this counts towards the parent grade
+		# Check to see if this counts toward the parent grade
 		my $problem = $db->getMergedProblem($userProblem->user_id, $userProblem->set_id, $id);
 
 		die "Couldn't get problem $id for user "
@@ -303,7 +303,7 @@ ID: for my $id (@problemIDs) {
 		push @scores,  jitar_problem_adjusted_status($problem, $db);
 	}
 
-	# If no children count towards the problem grade return status.
+	# If no children count toward the problem grade return status.
 	return $userProblem->status unless (@weights && @scores);
 
 	# If children do count then return the larger of the two.

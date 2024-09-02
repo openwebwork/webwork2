@@ -549,7 +549,7 @@ async sub pre_header_initialize ($c) {
 
 				$problem = $db->getMergedProblemVersion($effectiveUserID, $setID, $setVersionNumber, $setPNum[0]);
 
-				# Convert the floating point value from Time::HiRes to an integer for use below. Truncate towards 0.
+				# Convert the floating point value from Time::HiRes to an integer for use below. Truncate toward 0.
 				my $timeNowInt = int($c->submitTime);
 
 				# Set up creation time, and open and due dates.
@@ -872,7 +872,7 @@ async sub pre_header_initialize ($c) {
 	my $setVName  = "$setID,v$versionID";
 
 	# Report everything with the request submit time. Convert the floating point
-	# value from Time::HiRes to an integer for use below. Truncate towards 0.
+	# value from Time::HiRes to an integer for use below. Truncate toward 0.
 	my $timeNowInt = int($c->submitTime);
 
 	# Answer processing
