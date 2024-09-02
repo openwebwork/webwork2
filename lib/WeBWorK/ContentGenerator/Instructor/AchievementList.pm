@@ -362,7 +362,7 @@ sub delete_handler ($c) {
 	return (1, $c->maketext('Deleted [quant,_1,achievement].', scalar @achievementIDsToDelete));
 }
 
-# Handler for creating an ahcievement
+# Handler for creating an achievement
 sub create_handler ($c) {
 	my $db   = $c->db;
 	my $ce   = $c->ce;

@@ -1033,7 +1033,7 @@ async sub pre_header_initialize ($c) {
 			}
 		}
 
-		# Finally, log student answers answers are being submitted, provided that answers can be recorded.  Note that
+		# Finally, log student answers that are being submitted, provided that answers can be recorded.  Note that
 		# this will log an overtime submission (or any case where someone submits the test, or spoofs a request to
 		# submit a test).
 		my $answer_log = $ce->{courseFiles}{logs}{answer_log};

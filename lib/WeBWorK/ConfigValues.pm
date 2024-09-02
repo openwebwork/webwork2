@@ -358,7 +358,7 @@ sub getConfigValues ($ce) {
 						. 'to set the default length of the reduced scoring period and the value of work done in '
 						. 'the reduced scoring period below.</p><p>To use this, you also have to enable Reduced '
 						. 'Scoring for individual assignments and set their Reduced Scoring Dates by editing the '
-						. 'set data.</p><p>This works with the avg_problem_grader (which is the the default grader) '
+						. 'set data.</p><p>This works with the avg_problem_grader (which is the default grader) '
 						. 'and the std_problem_grader (the all or nothing grader). It will work with custom graders '
 						. 'if they are written appropriately.</p>'
 				),
@@ -374,7 +374,7 @@ sub getConfigValues ($ce) {
 						. 'will see the message "You are in the Reduced Scoring Period: All additional work done '
 						. 'counts 50% of the original." </p><p>To use this, you also have to enable Reduced Scoring '
 						. 'and set the Reduced Scoring Date for individual assignments by editing the set data '
-						. 'using the Sets Manager.</p><p>This works with the avg_problem_grader (which is the the '
+						. 'using the Sets Manager.</p><p>This works with the avg_problem_grader (which is the '
 						. 'default grader) and the std_problem_grader (the all or nothing grader). It will work '
 						. 'with custom graders if they are written appropriately.</p>'
 				),
@@ -838,7 +838,7 @@ sub getConfigValues ($ce) {
 				var  => 'feedback_by_section',
 				doc  => x('Feedback by Section.'),
 				doc2 => x(
-					'By default, feedback is always sent to all users specified to recieve feedback. This '
+					'By default, feedback is always sent to all users specified to receive feedback. This '
 						. 'variable sets the system to only email feedback to users who have the same section as '
 						. 'the user initiating the feedback. I.e., feedback will only be sent to section leaders.'
 				),

@@ -1977,7 +1977,7 @@ sub initialize ($c) {
 		}
 	}
 
-	# Check that every user that that is being editing for has a valid UserSet.
+	# Check that every user that is being edited has a valid UserSet.
 	my @unassignedUsers;
 	if (@editForUser) {
 		my @assignedUsers;

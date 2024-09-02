@@ -52,7 +52,7 @@ The suffix for a temporary file is "user_name.tmp" by default.
 
 This is the most common type. This editor can be called by an instructor when
 viewing any problem.  The information for retrieving the source file is found
-using the problemID in order to look look up the source file path.
+using the problemID in order to look up the source file path.
 
 =item source_path_for_problem_file
 

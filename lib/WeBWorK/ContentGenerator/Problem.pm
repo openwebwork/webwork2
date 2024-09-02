@@ -1353,12 +1353,9 @@ sub output_score_summary ($c) {
 		# If it doesn't (and its not a top level problem) then its grade doesnt matter.
 		if ($problem->counts_parent_grade() && scalar(@seq) != 1) {
 			pop @seq;
-			push(
-				@$output,
+			push(@$output,
 				$c->tag('br'),
-				$c->maketext(
-					'The score for this problem can count toward score of problem [_1].', join('.', @seq)
-				)
+				$c->maketext('The score for this problem can count toward score of problem [_1].', join('.', @seq))
 			);
 		} elsif (scalar(@seq) != 1) {
 			pop @seq;

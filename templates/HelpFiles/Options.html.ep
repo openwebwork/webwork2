@@ -31,7 +31,7 @@
 </p>
 <h2><%= maketext('Email Address') %></h2>
 <p>
-	<%= maketext('It is important that students enter an email address or they will not recieve any of the important '
+	<%= maketext('It is important that students enter an email address or they will not receive any of the important '
 		. 'emails sent by the instructor. The email address will only be present on the page if the user has '
 		. 'permission to change the email address.') =%>
 </p>

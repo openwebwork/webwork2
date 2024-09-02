@@ -39,7 +39,7 @@ sub verify {
 	my $c    = $self->{c};
 
 	# At this point the usual authentication has already occurred and the user has been verified.  If the
-	# use_grade_auth_proctor option is set to 'No', then proctor authorization is not not needed.  So return
+	# use_grade_auth_proctor option is set to 'No', then proctor authorization is not needed.  So return
 	# 1 here to skip proctor authorization and proceed on to the GatewayQuiz module which will grade the test.
 	if ($c->req->body_params->param('submitAnswers')) {
 		my ($setName, $versionNum) = grok_vsetID($c->stash('setID'));

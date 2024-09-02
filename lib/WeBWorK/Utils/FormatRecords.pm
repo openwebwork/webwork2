@@ -152,7 +152,7 @@ Given the name of a record class, returns the preset formats available for that
 class.
 
 The return value is a reference to a list of two element lists. The first
-element in each list is a a string description of a format name and the second
+element in each list is a string description of a format name and the second
 element is the format name.  The return value is suitable for passing as the
 second value argument to the Mojolicious select_field tag helper method.
 
