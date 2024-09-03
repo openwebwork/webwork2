@@ -24,6 +24,12 @@ $authen{admin_module} = [
 	'WeBWorK::Authen::Saml2'
 ];
 
+# This URL query parameter can be added to the end of a course url to skip the
+# saml2 authentication module and go to the next one, for example,
+# http://your.school.edu/webwork2/courseID?bypassSaml2=1. Comment out the next
+# line to disable this feature.
+$saml2{bypass_query} = 'bypassSaml2';
+
 # Note that Saml2 authentication can be used in conjunction with webwork's two
 # factor authentication. If the identity provider does not provide two factor
 # authentication, then it is recommended that you DO use webwork's two factor
@@ -33,11 +39,15 @@ $authen{admin_module} = [
 # authentication. The two factor authentication settings are set in
 # localOverrides.conf.
 
-# This URL query parameter can be added to the end of a course url to skip the
-# saml2 authentication module and go to the next one, for example,
-# http://your.school.edu/webwork2/courseID?bypassSaml2=1. Comment out the next
-# line to disable this feature.
-$saml2{bypass_query} = 'bypassSaml2';
+# As noted above, if the identity provider offers two factor authentication,
+# then you would not want webwork2's two factor authentication to be used at the
+# same time.  However, if the bypass parameter is allowed, you should still
+# enable two factor authentication in that case.  If this is the case, then set
+# $saml2{twoFAOnlyWithBypass} to 1. This will skip webwork2's two factor
+# authentication for users signing in via the identity provider, but still
+# require it for users signing in with a username/password. If this is set to 0,
+# then webwork2's two factor authentication will always be required.
+$saml2{twoFAOnlyWithBypass} = 0;
 
 # If $external_auth is 1, and the authentication sequence reaches
 # Basic_TheLastOption, then the webwork login screen will show a message
@@ -104,9 +114,9 @@ $saml2{sp}{attributes} = [
 # The files saml.crt and saml.pem that are generated contain the public
 # "certificate" and the "private_key", respectively.
 # Note that if the files are placed within the root webwork2 app directory, then
-# the paths may be given relative to the the root webwork2 app directory.
-# Otherwise the absolute path must be given. Make sure that the webwork2 app has
-# read permissions for those files.
+# the paths may be given relative to the root webwork2 app directory.  Otherwise
+# the absolute path must be given. Make sure that the webwork2 app has read
+# permissions for those files.
 $saml2{sp}{certificate_file} = 'docker-config/idp/certs/saml.crt';
 $saml2{sp}{private_key_file} = 'docker-config/idp/certs/saml.pem';
 

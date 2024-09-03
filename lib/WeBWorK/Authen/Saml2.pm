@@ -71,6 +71,8 @@ sub do_verify ($self) {
 	my $c  = $self->{c};
 	my $ce = $c->ce;
 
+	$self->{external_auth} = 1 if $ce->two_factor_authentication_enabled && $ce->{saml2}{twoFAOnlyWithBypass};
+
 	if ($c->current_route eq 'saml2_acs') {
 		debug('Verifying Saml2 assertion');
 
