@@ -252,8 +252,9 @@ services:
     #  - "6311:6311"
 
   # SimpleSAMLphp Saml2 identity provider for development use only. This is a separate profile from the other services
-  # so it doesn't start in normal usage. Use "docker compose --profile saml2dev up" to start, and "docker compose
-  # --profile saml2dev down" to stop.
+  # so it doesn't start in normal usage. Use "docker compose --profile saml2dev up" to start, "docker compose --profile
+  # saml2dev stop" to stop services, and "docker compose --profile saml2dev down" to stop services and remove
+  # containers.
   idp:
     build:
       context: ./docker-config/idp/
