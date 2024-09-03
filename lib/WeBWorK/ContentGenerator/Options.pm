@@ -25,6 +25,10 @@ WeBWorK::ContentGenerator::Options - Change user options.
 use WeBWorK::Utils qw(cryptPassword);
 use WeBWorK::Localize;
 
+sub page_title ($c) {
+	return $c->maketext("Account settings for [_1]", $c->param('effectiveUser'));
+}
+
 sub initialize ($c) {
 	my $db    = $c->db;
 	my $authz = $c->authz;
@@ -103,6 +107,38 @@ sub initialize ($c) {
 			}
 		}
 		$c->{has_password} = defined $password;
+	}
+
+	my $newFN = $c->param('newFirstName');
+	if ($changeOptions && $authz->hasPermissions($userID, 'change_name') && $newFN) {
+		my $oldFN = $c->{effectiveUser}->first_name;
+		$c->{effectiveUser}->first_name($newFN);
+		eval { $db->putUser($c->{effectiveUser}) };
+		if ($@) {
+			$c->{effectiveUser}->first_name($oldFN);
+			$c->log->error("Unable to save new first name for $userID: $@");
+			$c->addbadmessage($c->maketext('Your first name has not been changed due to an internal error.'));
+		} else {
+			$c->param('currFirstName', $c->param('newFirstName'));
+			$c->param('newFirstName',  undef);
+			$c->addgoodmessage($c->maketext('Your first name has been changed.'));
+		}
+	}
+
+	my $newLN = $c->param('newLastName');
+	if ($changeOptions && $authz->hasPermissions($userID, 'change_name') && $newLN) {
+		my $oldLN = $c->{effectiveUser}->last_name;
+		$c->{effectiveUser}->last_name($newLN);
+		eval { $db->putUser($c->{effectiveUser}) };
+		if ($@) {
+			$c->{effectiveUser}->last_name($oldLN);
+			$c->log->error("Unable to save new last name for $userID: $@");
+			$c->addbadmessage($c->maketext('Your last name has not been changed due to an internal error.'));
+		} else {
+			$c->param('currLastName', $c->param('newLastName'));
+			$c->param('newLastName',  undef);
+			$c->addgoodmessage($c->maketext('Your last name has been changed.'));
+		}
 	}
 
 	my $newA = $c->param('newAddress');
