@@ -233,10 +233,11 @@ my %routeParameters = (
 
 	# This route also ends up at the login screen on failure, and the title is not used anywhere else.
 	saml2_acs => {
-		title  => x('Login'),
-		module => 'Saml2',
-		path   => '/saml2/acs',
-		action => 'assertionConsumerService'
+		title   => x('Login'),
+		module  => 'Saml2',
+		path    => '/saml2/acs',
+		action  => 'assertionConsumerService',
+		methods => ['POST']
 	},
 	saml2_metadata => {
 		title  => 'metadata',
@@ -609,12 +610,13 @@ sub setup_content_generator_routes_recursive {
 
 	if ($routeParameters{$child}{children}) {
 		my $child_route = $route->under($routeParameters{$child}{path}, [ problemID => qr/\d+/ ])->name($child);
-		$child_route->any('/')->to("$routeParameters{$child}{module}#$action")->name($child);
+		$child_route->any($routeParameters{$child}{methods} // (), '/')->to("$routeParameters{$child}{module}#$action")
+			->name($child);
 		for (@{ $routeParameters{$child}{children} }) {
 			setup_content_generator_routes_recursive($child_route, $_);
 		}
 	} else {
-		$route->any($routeParameters{$child}{path}, [ problemID => qr/\d+/ ])
+		$route->any($routeParameters{$child}{methods} // (), $routeParameters{$child}{path}, [ problemID => qr/\d+/ ])
 			->to("$routeParameters{$child}{module}#$action")->name($child);
 	}
 
