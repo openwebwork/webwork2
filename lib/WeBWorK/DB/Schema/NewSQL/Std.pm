@@ -386,7 +386,7 @@ sub rebuild_indexes {
 	my @indexes = grep { $_->[3] == 1 } @{ $self->dbh->selectall_arrayref("SHOW INDEXES FROM `$sql_table_name`") };
 
 	# The columns need to be obtained from the database to determine the types of the columns.  The information from the
-	# schema can not be trusted because it doesn't have information about the field being dropped.  Note that each
+	# schema cannot be trusted because it doesn't have information about the field being dropped.  Note that each
 	# element of the returned array is an array reference of the form [ Field, Type, Null, Key, Default, Extra ] and
 	# Extra contains AUTO_INCREMENT for those fields that have that attribute.
 	my $columns = $self->dbh->selectall_arrayref("SHOW COLUMNS FROM `$sql_table_name`");

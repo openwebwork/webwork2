@@ -21,7 +21,7 @@
 #
 # When you've finished, I recommend you do some cleanup. These modules are much
 # easier to maintain if they doesn't contain "vestigal" garbage code. Remove the
-# "SKEL" comments and anything else that that you're not using in your module.
+# "SKEL" comments and anything else that you're not using in your module.
 
 # SKEL: Declare the name and superclass of your module here:
 package WeBWorK::ContentGenerator::Skeleton;

@@ -145,7 +145,7 @@
 				% for my $jobID (@$sortedJobs) {
 					<tr>
 						% if ($jobs->{$jobID}{state} eq 'active') {
-							% # Active jobs can not be deleted, and so a checkbox is not provided to select them.
+							% # Active jobs cannot be deleted, and so a checkbox is not provided to select them.
 							<td></td>
 							<td><%= $jobID =%></td>
 						% } else {

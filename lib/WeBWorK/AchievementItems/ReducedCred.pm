@@ -63,7 +63,7 @@ sub use_item ($self, $userName, $c) {
 	# Validate data
 
 	return q{This item won't work unless your instructor enables the reduced scoring feature.  }
-		. 'Let your instructor know that you recieved this message.'
+		. 'Let your instructor know that you received this message.'
 		unless $ce->{pg}{ansEvalDefaults}{reducedScoringPeriod};
 
 	my $globalUserAchievement = $db->getGlobalUserAchievement($userName);

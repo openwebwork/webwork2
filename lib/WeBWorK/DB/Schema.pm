@@ -41,7 +41,7 @@ corresponding field is not used in the match. Some methods require all elements
 of C<@keyparts> to be defined. This is noted below.
 
 A "record key", as in the C<list> method, is a reference to a list containing
-values which correspond to the the fields returned by the C<KEYFIELDS> method
+values which correspond to the fields returned by the C<KEYFIELDS> method
 of the table's record class.
 
 =cut

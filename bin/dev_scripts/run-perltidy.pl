@@ -28,7 +28,7 @@ Run perltidy on webwork2 source files.
 
 =head1 OPTIONS
 
-For this script to work the the .perltidyrc file in the webwork2 root directory
+For this script to work the .perltidyrc file in the webwork2 root directory
 must be readable.  Note that the webwork2 root directory is automatically
 detected.
 

@@ -73,7 +73,7 @@
 	</dd>
 	<dt><%= maketext('Delete') %></dt>
 	<dd>
-		<%= maketext('Delete selected jobs.  Note that jobs that are in the "active" state can not be deleted. '
+		<%= maketext('Delete selected jobs.  Note that jobs that are in the "active" state cannot be deleted. '
 			. 'Jobs that are in the "inactive" state can be deleted, but it is possible that by the time the request '
 			. 'to delete the job occurs the job may have transitioned into the "active" state.  In that case the job '
 			. 'will not be deleted. Jobs that are in the "finished" or "failed" states can always be deleted.') =%>

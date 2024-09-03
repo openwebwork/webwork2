@@ -213,7 +213,7 @@ sub get_credentials ($self) {
 		}
 
 		# Save these for later if they are available in the JWT.  It is important that the lti_lms_user_id be updated
-		# with the 'sub' value from the claim.  The value from the state can not entirely be trusted.  In addition, this
+		# with the 'sub' value from the claim.  The value from the state cannot entirely be trusted.  In addition, this
 		# may not be the same as the original login_hint (it is different for Canvas, but the same for Moodle).
 		$c->stash->{lti_lms_user_id} = $claims->{sub};
 		$c->stash->{lti_lms_lineitem} =

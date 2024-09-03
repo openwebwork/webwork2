@@ -132,7 +132,7 @@ sub siblings ($c) {
 	return '' unless $authz->hasPermissions($user, 'navigation_allowed');
 
 	# Note that listUserSets does not list versioned sets, but listUserSetsWhere does.  On the other hand, listUserSets
-	# can not sort in the database, while listUserSetsWhere can.
+	# cannot sort in the database, while listUserSetsWhere can.
 	my @setIDs =
 		map { $_->[1] } $db->listUserSetsWhere({ user_id => $eUserID, set_id => { not_like => '%,v%' } }, 'set_id');
 

@@ -377,7 +377,7 @@ sub header {
 Not defined in this package.
 
 May be defined by a subclass to perform any early processing that is needed.
-This method can not be used if responding with a file or redirect.
+This method cannot be used if responding with a file or redirect.
 
 This method may be asynchronous.
 
@@ -1149,7 +1149,7 @@ C<effectiveUser>, and C<key>) are included with their default values.
 =item authen
 
 If set to a false value, the authentication parameters (C<user>,
-C<effectiveUser>, and C<key>) are included in the the generated link unless
+C<effectiveUser>, and C<key>) are included in the generated link unless
 explicitly listed in C<params>.
 
 =item use_abs_url

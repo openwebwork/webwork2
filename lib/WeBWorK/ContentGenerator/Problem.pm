@@ -233,12 +233,12 @@ sub can_showMeAnother ($c, $user, $effectiveUser, $set, $problem, $submitAnswers
 			&& $c->authen->session->{showMeAnother}{problemID} eq $problem->problem_id
 			&& ($c->{checkAnswers} || $c->{previewAnswers});
 
-		# If the student has not attempted the original problem enough times yet, then showMeAnother can not be used.
+		# If the student has not attempted the original problem enough times yet, then showMeAnother cannot be used.
 		return 0
 			if $problem->num_correct + $problem->num_incorrect + ($submitAnswers ? 1 : 0) <
 			$c->{showMeAnother}{TriesNeeded};
 
-		# If the number of showMeAnother uses has been exceeded, then the user can not use it again.
+		# If the number of showMeAnother uses has been exceeded, then the user cannot use it again.
 		return 0 if $c->{showMeAnother}{Count} >= $c->{showMeAnother}{MaxReps} && $c->{showMeAnother}{MaxReps} > -1;
 
 		return 1;
@@ -385,7 +385,7 @@ async sub pre_header_initialize ($c) {
 		$c->{invalidProblem} =
 			!(defined $problem && ($c->{set}->visible || $authz->hasPermissions($userID, 'view_hidden_sets')));
 
-		$c->addbadmessage($c->maketext('This problem will not count towards your grade.'))
+		$c->addbadmessage($c->maketext('This problem will not count toward your grade.'))
 			if $problem && !$problem->value && !$c->{invalidProblem};
 	}
 
@@ -1230,7 +1230,7 @@ sub output_score_summary ($c) {
 				$c->maketext(
 					'Your overall recorded score is [_1].  [_2]',
 					wwRound(0, $problem->status * 100) . '%',
-					$problem->value ? '' : $c->maketext('(This problem will not count towards your grade.)')
+					$problem->value ? '' : $c->maketext('(This problem will not count toward your grade.)')
 				),
 				$c->tag('br')
 				)
@@ -1349,16 +1349,13 @@ sub output_score_summary ($c) {
 				);
 			}
 		}
-		# Show information if this problem counts towards the grade of its parent.
+		# Show information if this problem counts toward the grade of its parent.
 		# If it doesn't (and its not a top level problem) then its grade doesnt matter.
 		if ($problem->counts_parent_grade() && scalar(@seq) != 1) {
 			pop @seq;
-			push(
-				@$output,
+			push(@$output,
 				$c->tag('br'),
-				$c->maketext(
-					'The score for this problem can count towards score of problem [_1].', join('.', @seq)
-				)
+				$c->maketext('The score for this problem can count toward score of problem [_1].', join('.', @seq))
 			);
 		} elsif (scalar(@seq) != 1) {
 			pop @seq;

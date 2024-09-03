@@ -86,7 +86,7 @@
 %
 % if ($c->{problemRecord}->source_file =~ /^group:/) {
 	<div class="alert alert-info">
-		<%= maketext('Problem source is drawn from a grouping set and can not be directly rendered or edited.') %>
+		<%= maketext('Problem source is drawn from a grouping set and cannot be directly rendered or edited.') %>
 	</div>
 	% last;
 % }

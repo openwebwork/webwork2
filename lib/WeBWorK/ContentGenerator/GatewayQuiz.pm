@@ -549,7 +549,7 @@ async sub pre_header_initialize ($c) {
 
 				$problem = $db->getMergedProblemVersion($effectiveUserID, $setID, $setVersionNumber, $setPNum[0]);
 
-				# Convert the floating point value from Time::HiRes to an integer for use below. Truncate towards 0.
+				# Convert the floating point value from Time::HiRes to an integer for use below. Truncate toward 0.
 				my $timeNowInt = int($c->submitTime);
 
 				# Set up creation time, and open and due dates.
@@ -872,7 +872,7 @@ async sub pre_header_initialize ($c) {
 	my $setVName  = "$setID,v$versionID";
 
 	# Report everything with the request submit time. Convert the floating point
-	# value from Time::HiRes to an integer for use below. Truncate towards 0.
+	# value from Time::HiRes to an integer for use below. Truncate toward 0.
 	my $timeNowInt = int($c->submitTime);
 
 	# Answer processing
@@ -994,7 +994,7 @@ async sub pre_header_initialize ($c) {
 						. $problem->num_correct . "\t"
 						. $problem->num_incorrect);
 			} elsif ($c->{submitAnswers}) {
-				# This is the case answers were submitted but can not be saved. Report an error message.
+				# This is the case answers were submitted but cannot be saved. Report an error message.
 				if ($c->{isClosed}) {
 					$scoreRecordedMessage[ $probOrder[$i] ] =
 						$c->maketext('Your score was not recorded because this problem set version is not open.');
@@ -1033,7 +1033,7 @@ async sub pre_header_initialize ($c) {
 			}
 		}
 
-		# Finally, log student answers answers are being submitted, provided that answers can be recorded.  Note that
+		# Finally, log student answers that are being submitted, provided that answers can be recorded.  Note that
 		# this will log an overtime submission (or any case where someone submits the test, or spoofs a request to
 		# submit a test).
 		my $answer_log = $ce->{courseFiles}{logs}{answer_log};
@@ -1148,7 +1148,7 @@ async sub pre_header_initialize ($c) {
 		# is false.
 
 		# Save persistent data to database even in this case, when answers
-		# would not or can not be recorded.
+		# would not or cannot be recorded.
 		my @pureProblems = $db->getAllProblemVersions($effectiveUserID, $setID, $versionID);
 		for my $i (0 .. $#problems) {
 			# Process each problem.

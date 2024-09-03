@@ -311,7 +311,7 @@ sub Rename ($c) {
 
 	my $realpath = Mojo::File->new($oldfile)->realpath;
 	if (grep { $realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath } @{ $c->ce->{uneditableCourseFiles} }) {
-		$c->addbadmessage($c->maketext('The file "[_1]" is protected and can not be renamed.', $original));
+		$c->addbadmessage($c->maketext('The file "[_1]" is protected and cannot be renamed.', $original));
 		return $c->Refresh();
 	}
 
@@ -601,7 +601,7 @@ sub unpack_archive ($c, $archive) {
 				'p',
 				$c->maketext(
 					'The following [plural,_1,file is,files are] outside the current working directory '
-						. 'and can not be safely unpacked.',
+						. 'and cannot be safely unpacked.',
 					scalar(@outside_files),
 				)
 				)
@@ -1075,7 +1075,7 @@ sub verifyPath ($c, $path, $name) {
 					$c->addbadmessage($c->maketext('You have specified an illegal path'));
 				}
 			} else {
-				$c->addbadmessage($c->maketext('You can not specify an absolute path'));
+				$c->addbadmessage($c->maketext('You cannot specify an absolute path'));
 			}
 		} else {
 			$c->addbadmessage($c->maketext('Your file name contains illegal characters'));

@@ -35,7 +35,7 @@
 		<%= select_field files => $files, id => 'files', class => 'form-select font-monospace h-100',
 			dir => 'ltr', size => 17, multiple => undef,
 			data => {
-				link_message         => maketext('Symbolic links can not be followed.'),
+				link_message         => maketext('Symbolic links cannot be followed.'),
 				non_viewable_message => maketext('This is not a viewable file type.'),
 				close_title          => maketext('Close')
 			} =%>

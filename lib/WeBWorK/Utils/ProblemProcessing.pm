@@ -100,7 +100,7 @@ async sub process_and_log_answer ($c) {
 		if (!$authz->hasPermissions($effectiveUser, 'dont_log_past_answers')) {
 			# Use the time the submission processing began, but must convert the
 			# floating point value from Time::HiRes to an integer for use below.
-			# Truncate towards 0 intentionally, so the integer value set is never
+			# Truncate toward 0 intentionally, so the integer value set is never
 			# larger than the original floating point value.
 			my $timestamp = int($c->submitTime);
 

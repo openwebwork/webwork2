@@ -323,7 +323,7 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum
 # already exist.  If $private is true then the JSON decoded private key is returned, otherwise the JSON decoded public
 # key is returned as a keyset. If an error occurs in this process then the returned key will be undefined, and the error
 # that was thrown will also be returned. Note that this is not a class method and the only required parameter is $ce
-# which should be a a minimal course environment.  The course environment is only needed to determine the site DATA
+# which should be a minimal course environment.  The course environment is only needed to determine the site DATA
 # directory.
 sub get_site_key ($ce, $private = 0) {
 	my $key;

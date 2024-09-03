@@ -404,7 +404,7 @@ sub checkSet {
 		}
 		# Don't allow versioned sets to be viewed from the problem-list page.
 		if ($node_name eq 'problem_list') {
-			return $c->maketext("Requested version ([_1]) of set '[_2]' can not be directly accessed.", $verNum,
+			return $c->maketext("Requested version ([_1]) of set '[_2]' cannot be directly accessed.", $verNum,
 				$setName);
 		}
 	} else {

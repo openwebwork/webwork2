@@ -27,7 +27,7 @@ use WeBWorK::DB;
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
 sub initializeRoute ($c, $routeCaptures) {
-	# If this is an LTI 1.1 content item request from an LMS course, then find the courseID of the course that that has
+	# If this is an LTI 1.1 content item request from an LMS course, then find the courseID of the course that has
 	# this LMS course name set in its course environment.  If this is a submission of the content selection form, then
 	# get it from the form parameter.
 	if ($c->current_route eq 'ltiadvanced_content_selection') {

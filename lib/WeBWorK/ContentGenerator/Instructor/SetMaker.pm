@@ -535,7 +535,7 @@ sub pre_header_initialize ($c) {
 			$use_previous_problems = 0;
 		}
 	} elsif ($c->param('view_course_set')) {
-		# View problems selected from the a set in this course
+		# View problems selected from a set in this course
 		my $set_to_display = $c->{current_library_set} // '';
 		debug("set_to_display is $set_to_display");
 		if ($set_to_display eq '') {

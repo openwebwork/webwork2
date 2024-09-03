@@ -87,7 +87,7 @@ In C<%dblayout>, each table is assigned a record class, used for passing
 complete records to and from the database. The default record classes are
 subclasses of the WeBWorK::DB::Record class, and are named as follows: User,
 Password, PermissionLevel, Key, Set, UserSet, Problem, UserProblem. In the
-following documentation, a reference the the record class for a table means the
+following documentation, a reference the record class for a table means the
 record class currently defined for that table in C<%dbLayout>.
 
 =cut

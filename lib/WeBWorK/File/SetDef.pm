@@ -662,7 +662,7 @@ SET: for my $set (@sets) {
 				};
 		}
 
-		# These dates can not be created in locale of the course language and need to be in the specified format.  The
+		# These dates cannot be created in locale of the course language and need to be in the specified format.  The
 		# set import method uses the WeBWorK::Utils::parseDateTime method which does not know how to parse dates in
 		# other locales than the hard coded old format.  Furthermore, even modern libraries that parse date/time strings
 		# claim not to be able to do so reliably when they are localized.

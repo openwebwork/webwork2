@@ -628,7 +628,7 @@ If C<$field> is a string naming a single field, then this returns the elements
 in C<@items> sorted by that field.
 
 If C<$field> is a reference to an array of strings each naming a field, then
-this returns a the entries of C<@items> sorted first by the first name field,
+this returns the entries of C<@items> sorted first by the first name field,
 then by second, etc.
 
 A natural sort algorithm is used for sorting, i.e., numeric parts are sorted

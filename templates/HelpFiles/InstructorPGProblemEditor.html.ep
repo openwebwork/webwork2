@@ -164,7 +164,7 @@
 				. 'set detail page of the "Sets Manager".') =%>
 		</p>
 		<p>
-			<%= maketext('If the original problem can not be edited than the path name must be changed in order to be '
+			<%= maketext('If the original problem cannot be edited than the path name must be changed in order to be '
 				. 'allowed to save the problem. Adding "local/" to the beginning of the original path is the default '
 				. 'solution. All locally created and edited files will then appear in a subdirectory named '
 				. '"local".') =%>

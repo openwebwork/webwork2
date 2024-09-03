@@ -25,7 +25,7 @@
 									bs_content   => maketext(
 										q{The adjusted status of a problem is the larger of the problem's status and}
 											. 'the weighted average of the status of those problems which count '
-											. 'towards the parent grade.'
+											. 'toward the parent grade.'
 									)
 								},
 								begin =%>

@@ -370,7 +370,7 @@
 % $action =~ s/(test_mode\/$setID)\/?$/$1,v$setVersionID\//;
 %
 % if (!$c->{can}{recordAnswersNextTime} && !$c->{can}{showWork}) {
-	% # Problems can not be shown.
+	% # Problems cannot be shown.
 	<div class="gwProblem">
 		% if ($c->{set}->hide_work eq 'BeforeAnswerDate') {
 			<strong>

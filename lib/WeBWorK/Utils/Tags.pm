@@ -211,7 +211,7 @@ sub new {
 	my $textno;
 	my $textinfo = [];
 
-	open(IN, '<:encoding(UTF-8)', "$name") or die "can not open $name: $!";
+	open(IN, '<:encoding(UTF-8)', "$name") or die "cannot open $name: $!";
 	if ($name !~ /pg$/ && $name !~ /\.pg\.[-a-zA-Z0-9_.@]*\.tmp$/) {
 		warn "Not a pg file";    #print caused trouble with XMLRPC
 		$self->{file} = undef;
@@ -421,10 +421,10 @@ sub dumptags {
 sub write {
 	my $self = shift;
 	# First read it into an array
-	open(IN, $self->{file}) or die "can not open $self->{file}: $!";
+	open(IN, $self->{file}) or die "cannot open $self->{file}: $!";
 	my @lines = <IN>;
 	close(IN);
-	my $fh = IO::File->new(">" . $self->{file}) or die "can not open $self->{file}: $!";
+	my $fh = IO::File->new(">" . $self->{file}) or die "cannot open $self->{file}: $!";
 	my ($line, $lineno) = ('', 0);
 	while ($line = shift @lines) {
 		$lineno++;
