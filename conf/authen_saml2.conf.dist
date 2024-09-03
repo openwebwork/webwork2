@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # Configuration for using Saml2 authentication.
-# To enable this Saml2 authentication, copy this file to conf/authen_saml2.conf
+# To enable Saml2 authentication, copy this file to conf/authen_saml2.conf
 # and uncomment the appropriate lines in localOverrides.conf. The Saml2
 # authentication module uses the Net::SAML2 library. The library claims to be
 # compatible with a wide range of SAML2 implementations, including Shibboleth.

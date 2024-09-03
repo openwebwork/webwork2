@@ -122,7 +122,7 @@ sub do_verify ($self) {
 				$c->param('key',  $self->{session_key});
 				$c->stash->{saml2_redirect} = $c->systemLink($c->url_for($c->stash->{saml2}{relayState}{url}));
 
-				# Save these in the stash for now.  They will be transfered to the session after it has been created.
+				# Save these in the stash for now.  They will be transferred to the session after it has been created.
 				$c->stash->{saml2_nameid}  = $assertion->nameid;
 				$c->stash->{saml2_session} = $assertion->{session};
 
@@ -205,7 +205,7 @@ sub sp ($self) {
 }
 
 # The first time this method is executed for a given identity provider, the metadata file is retrieved from the metadata
-# URL.  It is then saved in the the $ce->{saml2}{active_idp} subdirectory of $ce->{webworkDirs}{DATA}/Saml2IDPs together
+# URL.  It is then saved in the $ce->{saml2}{active_idp} subdirectory of $ce->{webworkDirs}{DATA}/Saml2IDPs together
 # with the identity provider's signing key which is extracted from the retrieved metadata.  On later requests the
 # metadata and certificate are used from the saved files.  This prevents the need to retrieve the metadata on every
 # login request.
