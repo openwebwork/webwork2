@@ -266,8 +266,9 @@ sub content_selection ($c) {
 						$c->param('course_home_link')
 						? {
 							type  => 'ltiResourceLink',
-							title => $c->maketext('Assignments'),
-							url   => $c->url_for('set_list', courseID => $c->stash->{courseID})->to_abs->to_string
+							title => $c->maketext('WeBWorK Assignments'),
+							url   => $c->url_for('set_list', courseID => $c->stash->{courseID})->to_abs->to_string,
+							$c->ce->{LTIGradeMode} eq 'course' ? (lineItem => { scoreMaximum => 100 }) : ()
 							}
 						: (),
 						map { {
@@ -277,7 +278,9 @@ sub content_selection ($c) {
 							url =>
 								$c->url_for('problem_list', courseID => $c->stash->{courseID}, setID => $_->set_id)
 								->to_abs->to_string,
-							lineItem => { scoreMaximum => $setMaxScores{ $_->set_id } }
+							$c->ce->{LTIGradeMode} eq 'homework'
+							? (lineItem => { scoreMaximum => $setMaxScores{ $_->set_id } })
+							: ()
 						} } @selectedSets
 					]
 					)
