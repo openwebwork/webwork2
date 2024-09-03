@@ -129,8 +129,19 @@ sub content_selection ($c) {
 						? {
 							'@type'   => 'LtiLinkItem',
 							mediaType => 'application/vnd.ims.lti.v1.ltilink',
-							title     => $c->maketext('Assignments'),
-							url       => $c->url_for('set_list', courseID => $c->stash->{courseID})->to_abs->to_string
+							title     => $c->maketext('WeBWorK Assignments'),
+							url       => $c->url_for('set_list', courseID => $c->stash->{courseID})->to_abs->to_string,
+							$c->ce->{LTIGradeMode} eq 'course'
+							? (
+								lineItem => {
+									'@type'          => 'LineItem',
+									scoreConstraints => {
+										'@type'       => 'NumericLimits',
+										normalMaximum => 100
+									}
+								}
+								)
+							: ()
 							}
 						: (),
 						map { {
@@ -141,13 +152,17 @@ sub content_selection ($c) {
 							url =>
 								$c->url_for('problem_list', courseID => $c->stash->{courseID}, setID => $_->set_id)
 								->to_abs->to_string,
-							lineItem => {
-								'@type'          => 'LineItem',
-								scoreConstraints => {
-									'@type'       => 'NumericLimits',
-									normalMaximum => $setMaxScores{ $_->set_id }
+							$c->ce->{LTIGradeMode} eq 'homework'
+							? (
+								lineItem => {
+									'@type'          => 'LineItem',
+									scoreConstraints => {
+										'@type'       => 'NumericLimits',
+										normalMaximum => $setMaxScores{ $_->set_id }
+									}
 								}
-							}
+								)
+							: ()
 						} } @selectedSets
 					]
 				})
