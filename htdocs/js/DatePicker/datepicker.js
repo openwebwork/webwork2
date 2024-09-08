@@ -5,6 +5,7 @@
 	const datetimeFormats = {
 		en: 'L/d/yy, h:mm a',
 		'en-US': 'L/d/yy, h:mm a',
+		'en-GB': 'dd/LL/yyyy, HH:mm',
 		'cs-CZ': 'dd.LL.yy H:mm',
 		de: 'dd.LL.yy, HH:mm',
 		el: 'd/L/yy, h:mm a',
