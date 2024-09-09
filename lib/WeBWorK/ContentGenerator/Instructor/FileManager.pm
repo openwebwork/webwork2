@@ -135,11 +135,11 @@ sub Init ($c) {
 
 sub HiddenFlags ($c) {
 	return $c->c(
-		$c->hidden_field(dates      => ''),
-		$c->hidden_field(overwrite  => ''),
-		$c->hidden_field(unpack     => ''),
-		$c->hidden_field(autodelete => ''),
-		$c->hidden_field(autodelete => 'Automatic'),
+		$c->hidden_field(dates      => $c->getFlag('dates')),
+		$c->hidden_field(format     => $c->getFlag('format', 'Automatic')),
+		$c->hidden_field(overwrite  => $c->getFlag('overwrite')),
+		$c->hidden_field(unpack     => $c->getFlag('unpack')),
+		$c->hidden_field(autodelete => $c->getFlag('autodelete')),
 	)->join('');
 }
 
