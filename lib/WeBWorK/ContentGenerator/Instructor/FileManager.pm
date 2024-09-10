@@ -899,11 +899,11 @@ sub directoryListing ($c, $pwd) {
 			my $file = "$dir/$name";
 
 			my $type = 0;
-			$type |= 1  if -l $file;                         # Symbolic link
-			$type |= 2  if !-l $file && -d $file;            # Directory
-			$type |= 4  if -f $file;                         # Regular file
-			$type |= 8  if -T $file;                         # Text file
-			$type |= 16 if $file =~ m/\.(gif|jpg|png)$/i;    # Image file
+			$type |= 1  if $c->isSymLink($file);                 # Symbolic link
+			$type |= 2  if !$c->isSymLink($file) && -d $file;    # Directory
+			$type |= 4  if -f $file;                             # Regular file
+			$type |= 8  if -T $file;                             # Text file
+			$type |= 16 if $file =~ m/\.(gif|jpg|png)$/i;        # Image file
 
 			my $label = $name;
 			$label .= '@' if $type & 1;
