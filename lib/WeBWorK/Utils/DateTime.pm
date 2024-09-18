@@ -59,7 +59,8 @@ sub getDefaultSetDueDate ($ce) {
 	my ($hour, $minute, $ampm) = $ce->{pg}{timeAssignDue} =~ m/\s*(\d+)\s*:\s*(\d+)\s*(am|pm|AM|PM)?\s*/;
 	$hour   //= 0;
 	$minute //= 0;
-	$hour += 12 if $ampm && $ampm =~ m/pm|PM/;
+	$hour += 12 if $ampm && $ampm =~ m/pm|PM/ && $hour != 12;
+	$hour = 0   if $ampm && $ampm =~ m/am|AM/ && $hour == 12;
 
 	my $dt = DateTime->from_epoch(epoch => time + 2 * 60 * 60 * 24 * 7);
 
