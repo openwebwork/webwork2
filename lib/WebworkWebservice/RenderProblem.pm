@@ -189,13 +189,13 @@ async sub renderProblem {
 	my $r_problem_source;
 	if ($rh->{problemSource}) {
 		$r_problem_source = \(decode_utf8_base64($rh->{problemSource}) =~ tr/\r/\n/r);
-		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
+		$problemRecord->source_file($rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
 	} elsif ($rh->{rawProblemSource}) {
 		$r_problem_source = \$rh->{rawProblemSource};
-		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
+		$problemRecord->source_file($rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
 	} elsif ($rh->{uriEncodedProblemSource}) {
 		$r_problem_source = \(url_unescape($rh->{uriEncodedProblemSource}));
-		$problemRecord->source_file(defined $rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
+		$problemRecord->source_file($rh->{fileName} ? $rh->{fileName} : $rh->{sourceFilePath});
 	} elsif (defined $rh->{sourceFilePath} && $rh->{sourceFilePath} =~ /\S/) {
 		$problemRecord->source_file($rh->{sourceFilePath});
 		$r_problem_source = \(readFile($ce->{courseDirs}{templates} . '/' . $rh->{sourceFilePath}));
