@@ -1,0 +1,66 @@
+% unless ($c->{leaderBoardRows}) {
+	<div class="alert alert-danger p-1 mb-0">
+		<%= maketext('Leaderboard is unavailable.') %>
+	</div>
+	% last;
+% }
+%
+% if ($c->{currentRank}) {
+	<p><%= maketext('You are currently rank [_1] out of [_2].', $c->{currentRank}, $c->{maxRank}) %></p>
+% }
+%
+<table class="table table-bordered table-sm">
+	<thead>
+		<tr>
+			<th><%= maketext('Rank') %></th>
+			<th><%= maketext('Points') %></th>
+			% if ($c->{showLevels}) {
+				<th><%= maketext('Level') %></th>
+			% }
+			% if ($c->{showUserNames}) {
+				<th><%= maketext('Name') %></th>
+			% }
+			<th><%= maketext('Badges') %></th>
+		</tr>
+	</thead>
+	<tbody>
+		% for (@{ $c->{leaderBoardRows} }) {
+			<tr>
+				% my ($rank, $points, $level, $user, $badges) = @$_;
+				<td><%= $rank %></td>
+				<td><%= $points %></td>
+				% if ($c->{showLevels}) {
+					<td class="text-center" style="white-space: nowrap;">
+						% if ($level) {
+							<%= $level->{name} %>
+							<br>
+							<%= image $level->{icon}
+								? "$ce->{courseURLs}{achievements}/$level->{icon}"
+								: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png",
+								alt    => maketext('[_1] Icon', $level->{name}),
+								height => 75 %>
+						% }
+					</td>
+				% }
+				% if ($c->{showUserNames}) {
+					<td style="white-space: nowrap;">
+						<%= $user->first_name %><br><%= $user->last_name %>
+					</td>
+				% }
+				<td>
+					% for my $badge (@$badges) {
+						<a class="help-popup" role="button" tabindex="0"
+							data-bs-placement="top" data-bs-toggle="popover" data-bs-html="true"
+							data-bs-content="<strong><%= $badge->{name} %></strong><br><%= $badge->{description} %>">
+							<%= image $badge->{icon}
+								? "$ce->{courseURLs}{achievements}/$badge->{icon}"
+								: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png",
+								alt   => $c->maketext('[_1] Icon', $badge->{name}),
+								width => 50 %>
+						</a>
+					% }
+				</td>
+			</tr>
+		% }
+	</tbody>
+</table>
