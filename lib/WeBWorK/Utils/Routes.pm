@@ -56,6 +56,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  options                             /$courseID/options
  grades                              /$courseID/grades
  achievements                        /$courseID/achievements
+ achievements_leaderboard            /$courseID/achievements/leaderboard
  equation_display                    /$courseID/equation
  feedback                            /$courseID/feedback
  gateway_quiz                        /$courseID/test_mode/$setID
@@ -316,8 +317,15 @@ my %routeParameters = (
 	},
 	achievements => {
 		title        => x('Achievements'),
+		children     => [qw(achievements_leaderboard)],
 		module       => 'Achievements',
 		path         => '/achievements',
+		unrestricted => 1
+	},
+	achievements_leaderboard => {
+		title        => x('Leaderboard'),
+		module       => 'Leaderboard',
+		path         => '/leaderboard',
 		unrestricted => 1
 	},
 	equation_display => {
