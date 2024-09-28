@@ -114,7 +114,8 @@ sub grade_set ($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails
 	}
 
 	if (wantarray) {
-		return ($totalRight, $total, $problem_scores, $problem_incorrect_attempts);
+		return ($totalRight, $total, $wantProblemDetails ? ($problem_scores, $problem_incorrect_attempts) : (),
+			\@problemRecords);
 	} else {
 		return $total ? $totalRight / $total : 0;
 	}
@@ -306,10 +307,11 @@ The arguments C<$db>, C<$set>, and C<$studentName> are required. If
 C<$setIsVersioned> is true, then the given set is assumed to be a set version.
 
 In list context this returns a list containing the total number of correct
-problems, and the total number of problems in the set.  If
-C<$wantProblemDetails> is true, then a reference to an array of the scores for
-each problem, and a reference to the array of the number of incorrect attempts
-for each problem are also included in the returned list.
+problems, the total number of problems in the set, and a reference to an array
+of merged user problem records from the set.  If C<$wantProblemDetails> is true,
+then a reference to an array of the scores for each problem, and a reference to
+the array of the number of incorrect attempts for each problem are also included
+in the returned list before the reference to the array of problem records.
 
 In scalar context this returns the percentage correct.
 
