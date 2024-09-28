@@ -55,7 +55,7 @@
 				groupRules[activeIndex][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() ||
 				groupRules[activeIndex][1];
 
-			for (let i = 1; i < groupRules.length; ++i) {
+			for (let i = 0; i < groupRules.length; ++i) {
 				if (i == activeFieldDate) continue;
 				const thisFieldDate =
 					groupRules[i][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() || groupRules[i][1];
