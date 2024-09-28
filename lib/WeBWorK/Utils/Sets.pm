@@ -114,7 +114,7 @@ sub grade_set ($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails
 	}
 
 	if (wantarray) {
-		return ($totalRight, $total, $problem_scores, $problem_incorrect_attempts);
+		return ($totalRight, $total, $problem_scores, $problem_incorrect_attempts, \@problemRecords);
 	} else {
 		return $total ? $totalRight / $total : 0;
 	}
@@ -309,7 +309,8 @@ In list context this returns a list containing the total number of correct
 problems, and the total number of problems in the set.  If
 C<$wantProblemDetails> is true, then a reference to an array of the scores for
 each problem, and a reference to the array of the number of incorrect attempts
-for each problem are also included in the returned list.
+for each problem are also included in the returned list. An array reference
+to the array of problem records is last in the returned list.
 
 In scalar context this returns the percentage correct.
 
