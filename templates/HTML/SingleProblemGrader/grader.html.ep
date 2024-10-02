@@ -1,8 +1,11 @@
 % use WeBWorK::Utils 'wwRound';
 %
-% content_for js => begin
-	<%= javascript getAssetURL($ce, 'js/ProblemGrader/singleproblemgrader.js'), defer => undef =%>
-% end
+% if (!stash->{jsInserted}) {
+	% stash->{jsInserted} = 1;
+	% content_for js => begin
+		<%= javascript getAssetURL($ce, 'js/ProblemGrader/singleproblemgrader.js'), defer => undef =%>
+	% end
+% }
 %
 <div class="problem-grader">
 	<hr>
