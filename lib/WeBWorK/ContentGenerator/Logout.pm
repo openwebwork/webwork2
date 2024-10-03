@@ -30,7 +30,9 @@ sub pre_header_initialize ($c) {
 	my $db     = $c->db;
 	my $authen = $c->authen;
 
-	my $userID = $c->param('user_id');
+	# Do any special processing needed by external authentication. This is done before
+	# the session is killed in case the authentication module needs access to it.
+	$authen->logout_user if $authen->can('logout_user');
 
 	$authen->killSession;
 	$authen->WeBWorK::Authen::write_log_entry('LOGGED OUT');
@@ -39,6 +41,8 @@ sub pre_header_initialize ($c) {
 	# a proctored test.  So try and delete the key.
 	my $proctorID = $c->param('proctor_user');
 	if ($proctorID) {
+		my $userID = $c->param('user_id');
+
 		eval { $db->deleteKey("$userID,$proctorID"); };
 		if ($@) {
 			$c->addbadmessage("Error when clearing proctor key: $@");
@@ -49,9 +53,6 @@ sub pre_header_initialize ($c) {
 			$c->addbadmessage("Error when clearing proctor grading key: $@");
 		}
 	}
-
-	# Do any special processing needed by external authentication.
-	$authen->logout_user if $authen->can('logout_user');
 
 	$c->reply_with_redirect($authen->{redirect}) if $authen->{redirect};
 
