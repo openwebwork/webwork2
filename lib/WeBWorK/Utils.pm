@@ -401,13 +401,13 @@ sub readJSON ($fileName) {
 sub getThirdPartyAssetURL ($file, $dependencies, $baseURL, $useCDN = 0) {
 	for (keys %$dependencies) {
 		if ($file =~ /^node_modules\/$_\/(.*)$/) {
-			if ($useCDN && $1 !~ /mathquill/) {
+			if ($useCDN) {
 				return
 					"https://cdn.jsdelivr.net/npm/$_\@"
 					. substr($dependencies->{$_}, 1) . '/'
 					. ($1 =~ s/(?:\.min)?\.(js|css)$/.min.$1/gr);
 			} else {
-				return "$baseURL/$file?version=" . ($dependencies->{$_} =~ s/#/@/gr);
+				return "$baseURL/$file?version=$dependencies->{$_}";
 			}
 		}
 	}
