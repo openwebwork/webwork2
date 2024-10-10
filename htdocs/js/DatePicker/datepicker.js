@@ -110,9 +110,9 @@
 								selectedDate.setFullYear(today.getFullYear());
 								selectedDate.setMonth(today.getMonth());
 								selectedDate.setDate(today.getDate());
-								fp.setDate(selectedDate);
+								fp.setDate(selectedDate, true);
 							} else if (index === 1) {
-								fp.setDate(new Date());
+								fp.setDate(new Date(), true);
 							}
 						}
 					})
