@@ -23,8 +23,7 @@
 	% }
 	%
 	<div class="mb-2">
-	% # FIXME: This should not be using perl. Mojolicious templates have embedded perl, but are not perl.
-    <%= generate_codemirror_html($c, 'achievementNotification', $achievementNotification, 'perl') =%></div>
+    <%= generate_codemirror_html($c, 'achievementNotification', $achievementNotification, 'mt-text') =%></div>
 	%
 	% # Output action forms
 	% my $default_choice;
