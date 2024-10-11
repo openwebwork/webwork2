@@ -277,7 +277,7 @@ async sub process_and_log_answer ($c) {
 								$LMSname, int($ce->{LTIMassUpdateInterval} / 60 + 0.99));
 						} else {
 							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,hour].',
-								$LMSname, int($ce->{LTIMassUpdateInterval} / 36000 + 0.9999));
+								$LMSname, int($ce->{LTIMassUpdateInterval} / 3600 + 0.9999));
 						}
 					}
 				}
