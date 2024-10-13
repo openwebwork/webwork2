@@ -189,6 +189,20 @@ $LTI{v1p3}{LMSrolesToWeBWorKroles} = {
 #  $userSet->answer_date($niceAnswerTime);
 #};
 
+################################################################################################
+# Miscellaneous
+################################################################################################
+
+# When grade passback mode is 'homework', someone must use a set-specific link from the LMS in
+# order for grade passback to begin happening for that set. Use of the set-specific link lets
+# WeBWorK store the set's "sourced_ID". So if there is no sourced_ID, the default behavior is
+# that a user in WeBWorK sees the sets as disabled and there is a message about needing to
+# access the set from the LMS. The following option can be set to allow users to work on the set
+# anyway. There will be no grade passback until some later time when an LMS user clicks the
+# set-specific link. In some LMSs, it is possible for the instructor to activate the link.
+
+$LTI{v1p3}{ignoreMissingSourcedID} = 0;
+
 # Do not change this.
 $LTI{v1p3}{grader} = 'WeBWorK::Authen::LTIAdvantage::SubmitGrade';
 
