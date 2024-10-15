@@ -52,8 +52,9 @@ sub comparison_value ($self, $val) {
 }
 
 sub entry_widget ($self, $default, $is_secret = 0) {
-	my $c = $self->{c};
-	$default = role_and_above($self->{c}->ce->{userRoles}, $default) unless ref($default) eq 'ARRAY';
+	my $c         = $self->{c};
+	my $userRoles = $self->{c}->ce->{userRoles};
+	$default = role_and_above($userRoles, $default) unless ref($default) eq 'ARRAY';
 	return $c->c(
 		map {
 			$c->tag(
@@ -72,7 +73,7 @@ sub entry_widget ($self, $default, $is_secret = 0) {
 					)->join('')
 				)
 			)
-		} ('guest', 'student', 'login_proctor', 'grade_proctor', 'ta', 'professor', 'admin')
+		} grep { $_ ne 'nobody' } sort { $userRoles->{$a} <=> $userRoles->{$b} } keys(%$userRoles)
 	)->join('');
 }
 
