@@ -144,6 +144,12 @@ $LTI{v1p3}{LMSrolesToWeBWorKroles} = {
 	'Grader'                  => 'ta',
 };
 
+# The LMS reports roles context (or membership), instititution, and system
+# roles.  WeBWorK always ignores system roles, and also ignores institution
+# roles by default.  In some cases you may also want to consider institution
+# roles.  In that case set the following to 1.
+$LTI{v1p3}{AllowInstitutionRoles} = 0;
+
 ################################################################################################
 # Local routine to modify users
 ################################################################################################
