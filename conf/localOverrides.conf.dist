@@ -528,6 +528,16 @@ $mail{feedbackRecipients}    = [
 #include("conf/authen_ldap.conf");
 
 ################################################################################
+# Saml2 Authentication
+################################################################################
+# Uncomment the following line to enable authentication via a Saml2 identity
+# provider.  You will also need to copy the file authen_saml2.conf.dist to
+# authen_saml2.conf, and then edit that file to fill in the settings for your
+# installation.
+
+#include("conf/authen_saml2.conf");
+
+################################################################################
 # Session Management
 ################################################################################
 
