@@ -498,7 +498,7 @@ async sub pre_header_initialize ($c) {
 
 	if ($setVersionNumber && !$c->{invalidSet} && $setID ne 'Undefined_Set') {
 		my @setVersionIDs = $db->listSetVersions($effectiveUserID, $setID);
-		my @setVersions   = $db->getSetVersions(map { [ $effectiveUserID, $setID,, $_ ] } @setVersionIDs);
+		my @setVersions   = $db->getSetVersions(map { [ $effectiveUserID, $setID, $_ ] } @setVersionIDs);
 		for (@setVersions) {
 			$totalNumVersions++;
 			$currentNumVersions++

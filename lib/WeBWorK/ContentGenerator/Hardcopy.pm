@@ -1007,8 +1007,7 @@ async sub write_set_tex ($c, $FH, $TargetUser, $themeTree, $setID) {
 	{
 		print $FH '\\def\\webworkReducedScoringDate{'
 			. ($c->formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{studentDateDisplayFormat}) =~
-				s/\x{202f}/ /gr)
-			. "}%\n";
+				s/\x{202f}/ /gr) . "}%\n";
 	}
 
 	# write set header (theme presetheader, then PG header, then theme postsetheader)
@@ -1181,10 +1180,10 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $themeTree, $prob
 				problemID => $MergedProblem->problem_id,
 			),
 			$MergedProblem->problem_id == 0
-				# link for a fake problem (like a header file)
+			# link for a fake problem (like a header file)
 			? (params =>
 					{ sourceFilePath => $MergedProblem->source_file, problemSeed => $MergedProblem->problem_seed })
-				# link for a real problem
+			# link for a real problem
 			: (),
 		);
 
