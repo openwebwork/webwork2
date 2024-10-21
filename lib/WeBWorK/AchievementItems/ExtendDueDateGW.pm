@@ -18,9 +18,9 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to extend the close date on a test
 
-use WeBWorK::Utils qw(x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils           qw(x nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::DateTime qw(between);
-use WeBWorK::Utils::Sets qw(format_set_name_display);
+use WeBWorK::Utils::Sets     qw(format_set_name_display);
 
 sub new ($class) {
 	return bless {

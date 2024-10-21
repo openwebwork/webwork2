@@ -17,15 +17,15 @@ package WeBWorK::ContentGenerator::LTIAdvantage;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 use Mojo::UserAgent;
-use Mojo::JSON qw(decode_json);
-use Crypt::JWT qw(decode_jwt encode_jwt);
+use Mojo::JSON           qw(decode_json);
+use Crypt::JWT           qw(decode_jwt encode_jwt);
 use Math::Random::Secure qw(irand);
-use Digest::SHA qw(sha256_hex);
+use Digest::SHA          qw(sha256_hex);
 
 use WeBWorK::Debug qw(debug);
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
 use WeBWorK::Utils::CourseManagement qw(listCourses);
-use WeBWorK::Utils::Sets qw(format_set_name_display);
+use WeBWorK::Utils::Sets             qw(format_set_name_display);
 
 sub initializeRoute ($c, $routeCaptures) {
 	# If this is the login phase of an LTI 1.3 login, then extract the courseID from the target_link_uri.  If this is a

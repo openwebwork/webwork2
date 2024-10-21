@@ -50,13 +50,13 @@ use Encode;
 
 use WeBWorK::File::Scoring qw(parse_scoring_file);
 use WeBWorK::Localize;
-use WeBWorK::Utils qw(fetchEmailRecipients generateURLs getAssetURL);
-use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
+use WeBWorK::Utils                       qw(fetchEmailRecipients generateURLs getAssetURL);
+use WeBWorK::Utils::JITAR                qw(jitar_id_to_seq);
 use WeBWorK::Utils::LanguageAndDirection qw(get_lang_and_dir);
-use WeBWorK::Utils::Logs qw(writeCourseLog);
-use WeBWorK::Utils::Routes qw(route_title route_navigation_is_restricted);
-use WeBWorK::Utils::Sets qw(format_set_name_display);
-use WeBWorK::Authen::LTI::GradePassback qw(massUpdate);
+use WeBWorK::Utils::Logs                 qw(writeCourseLog);
+use WeBWorK::Utils::Routes               qw(route_title route_navigation_is_restricted);
+use WeBWorK::Utils::Sets                 qw(format_set_name_display);
+use WeBWorK::Authen::LTI::GradePassback  qw(massUpdate);
 
 =head1 INVOCATION
 

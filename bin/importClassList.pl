@@ -19,7 +19,7 @@ use warnings;
 
 BEGIN {
 	use Mojo::File qw(curfile);
-	use Env qw(WEBWORK_ROOT);
+	use Env        qw(WEBWORK_ROOT);
 
 	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
@@ -31,7 +31,7 @@ use WeBWorK::CourseEnvironment;
 
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::File::Classlist;
-use WeBWorK::Utils qw(cryptPassword);
+use WeBWorK::Utils           qw(cryptPassword);
 use WeBWorK::File::Classlist qw(parse_classlist);
 
 if ((scalar(@ARGV) != 2)) {

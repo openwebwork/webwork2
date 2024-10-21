@@ -19,7 +19,7 @@ use Mojo::Base 'Exporter', -signatures;
 use Email::Sender::Transport::SMTP;
 use Mojo::JSON qw(from_json to_json);
 use Mojo::Util qw(b64_encode b64_decode encode decode);
-use Storable qw(nfreeze thaw);
+use Storable   qw(nfreeze thaw);
 
 our @EXPORT_OK = qw(
 	runtime_use

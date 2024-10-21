@@ -22,10 +22,10 @@ WeBWorK::ContentGenerator::Grades - Display statistics by user.
 
 =cut
 
-use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::DateTime qw(after);
-use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
-use WeBWorK::Utils::Sets qw(grade_set format_set_name_display);
+use WeBWorK::Utils                    qw(wwRound);
+use WeBWorK::Utils::DateTime          qw(after);
+use WeBWorK::Utils::JITAR             qw(jitar_id_to_seq);
+use WeBWorK::Utils::Sets              qw(grade_set format_set_name_display);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 use WeBWorK::Localize;
 

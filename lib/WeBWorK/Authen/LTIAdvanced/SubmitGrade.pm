@@ -29,8 +29,8 @@ use UUID::Tiny ':std';
 use Digest::SHA qw(sha1_base64);
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::Sets qw(grade_all_sets);
+use WeBWorK::Utils                      qw(wwRound);
+use WeBWorK::Utils::Sets                qw(grade_all_sets);
 use WeBWorK::Authen::LTI::GradePassback qw(getSetPassbackScore);
 
 # This package contains utilities for submitting grades to the LMS

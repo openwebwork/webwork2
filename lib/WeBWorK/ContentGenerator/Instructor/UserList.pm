@@ -63,7 +63,7 @@ Export users:
 use Mojo::File;
 
 use WeBWorK::File::Classlist qw(parse_classlist write_classlist);
-use WeBWorK::Utils qw(cryptPassword x);
+use WeBWorK::Utils           qw(cryptPassword x);
 
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS            => [qw(save_edit cancel_edit)];
@@ -237,15 +237,15 @@ sub pre_header_initialize ($c) {
 	# Always have a definite sort order in case the first three sorts don't determine things.
 	$c->{sortedUserIDs} = [
 		map { $_->user_id }
-			sort {
-				$primarySortSub->()
+		sort {
+			$primarySortSub->()
 				|| $secondarySortSub->()
 				|| $ternarySortSub->()
 				|| byLastName()
 				|| byFirstName()
 				|| byUserID()
 		}
-			grep { $c->{visibleUserIDs}{ $_->user_id } } (values %allUsers)
+		grep { $c->{visibleUserIDs}{ $_->user_id } } (values %allUsers)
 	];
 
 	return;
