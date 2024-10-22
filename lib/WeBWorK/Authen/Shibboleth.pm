@@ -167,20 +167,24 @@ sub check_session {
 	if ($ce->{shiboff}) {
 		return $self->SUPER::check_session(@_);
 	} else {
-		my $Key = $db->getKey($userID);    # checked
+		my $Key = $db->getKey($userID);
 		return 0 unless defined $Key;
 
-		my $keyMatches     = (defined $possibleKey and $possibleKey eq $Key->key);
-		my $timestampValid = (time <= $Key->timestamp() + $ce->{sessionTimeout});
-		if ($ce->{shibboleth}{manage_session_timeout}) {
-			# always valid to allow shib to take control of timeout
-			$timestampValid = 1;
+		my $currentTime = time;
+
+		my $keyMatches     = defined $possibleKey && $possibleKey eq $Key->key;
+		my $timestampValid = $currentTime <= $Key->timestamp() + $ce->{sessionTimeout};
+		# Allow shib to take control of timeout.
+		$timestampValid = 1 if $ce->{shibboleth}{manage_session_timeout};
+
+		if ($keyMatches && $timestampValid && $updateTimestamp) {
+			$Key->timestamp($currentTime);
+			$self->{c}->stash->{'webwork2.database_session'} = { $Key->toHash };
+			$self->{c}->stash->{'webwork2.database_session'}{session}{flash} =
+				delete $self->{c}->stash->{'webwork2.database_session'}{session}{new_flash}
+				if $self->{c}->stash->{'webwork2.database_session'}{session}{new_flash};
 		}
 
-		if ($keyMatches and $timestampValid and $updateTimestamp) {
-			$Key->timestamp(time);
-			$db->putKey($Key);
-		}
 		return (1, $keyMatches, $timestampValid);
 	}
 }
