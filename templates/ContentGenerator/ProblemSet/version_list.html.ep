@@ -126,10 +126,13 @@
 		<div class="alert alert-warning"><%= maketext('This test requires a proctor password to start.') %></div>
 	% }
 	%
-	<div class="mb-3">
-		<%= link_to maketext('Start New Test') => $c->systemLink(url_for($routeName, setID => $set->set_id)),
-			class => 'btn btn-primary' =%>
-	</div>
+	% # Hide "Start New Test" button when acting as another use who doesn't have permissions to start test.
+	% unless ($c->{hide_start_new_test}) {
+		<div class="mb-3">
+			<%= link_to maketext('Start New Test') => $c->systemLink(url_for($routeName, setID => $set->set_id)),
+				class => 'btn btn-primary' =%>
+		</div>
+	% }
 % } else {
 	% # Message about if/when next version will be available.
 	% my $msg = maketext('No more tests available.');
