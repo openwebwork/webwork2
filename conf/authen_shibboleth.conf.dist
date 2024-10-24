@@ -1,0 +1,143 @@
+#!perl
+################################################################################
+# Configuration for using Shibboleth authentication.
+#
+# To enable Shibboleth authentication, copy this file to
+# conf/authen_shibboleth.conf and uncomment the appropriate lines in
+# localOverrides.conf.
+#
+################################################################################
+
+# Note that Shibboleth authentication will only work if webwork2 is proxied via
+# apache2 and a Shibboleth service provider (mod_shib) is installed and
+# configured.  Instructions on how to configure the Shibboleth service provider
+# are below.  These instructions are specifically for Ubuntu, and setup will be
+# slightly different on other systems.
+#
+# Install the Shibboleth service provider for apache2 by installing the Ubuntu
+# apache2-mod-shib package.
+#
+# Modify the /etc/shibboleth/shibboleth2.xml file as follows.
+#
+# Change the "entityID" attribute of the "ApplicationDefaults" tag to
+# https://your.server.edu`. Note that the Shibboleth identity provider that you
+# will use will also need to be configured to allow this "entityID" to work with
+# it.
+#
+# Change the "SSO" tag in the "Sessions" section to
+# <SSO entityID="https://your.idp.server/url/for/metadata">SAML2</SSO>
+#
+# Near the end of the file where  example "MetadataProvider" sections are
+# located add the following "MetadataProvider" tag.
+#   <MetadataProvider
+#     type="XML"
+#     url="https://your.idp.server/url/for/metadata"
+#     backingFilePath="idp-metadata.xml"
+#     maxRefreshDelay="7200"
+#     />
+#
+# Note that further adjustments to that file may be needed depending on how your
+# Shibboleth identity provider is set up.
+#
+# Next modify the /etc/shibboleth/attribute-map.xml file by adding the attribute
+# that will be used for $shibboleth{mapping}{user_id} below.  For example, if
+# you are using the "uid" as in the default value of that variable, then add
+# <Attribute name="urn:oid:0.9.2342.19200300.100.1.1" id="uid"/>
+# to the Attributes section of the file.
+# Note the file already has some attributes configured, and so you may not need
+# to modify that file at all.  For example, if you use "eppn" for
+# $shibboleth{mapping}{user_id}, then you don't need to change that file, since
+# "eppn" is already listed.
+#
+# Finally, configure apache2 to protect route webwork2 course URLs to the
+# Shibboleth service provider by adding one of the following to your apache2
+# site configuration file.
+#
+# <LocationMatch ^/webwork2/.+>
+#   AuthType shibboleth
+#   ShibRequestSetting requireSession 1
+#   Require valid-user
+#   RequestHeader unset uid
+#   RequestHeader set uid %{uid}e env=uid
+# </LocationMatch>
+#
+# or
+#
+# <LocationMatch ^/webwork2/.+>
+#   AuthType shibboleth
+#   ShibRequestSetting requireSession 0
+#   Require shibboleth
+#   RequestHeader unset uid
+#   RequestHeader set uid %{uid}e env=uid
+# </LocationMatch>
+#
+# Use the first if you want strict Shibboleth authentication.  With this set up
+# the webwork2 app will never see course URL requests if the user is not first
+# authenticated with the Shibboleth identity provider. The apache2 Shibboleth
+# service provider module will redirect the user first.
+#
+# Use the second if you want lazy Shibboleth authentication. With this set up
+# the course URL requests will continue to the webwork2 app even if the user has
+# not authenticated with the Shibboleth identity provider. The webwork2 app will
+# redirect the user if authentication is needed.  This allows for the usage of
+# the $shibboleth{bypass_query} parameter or the $shiboff option described
+# below.
+#
+# In both cases change all instances of "uid" to whatever you are using for the
+# value of $shibboleth{mapping}{user_id} below.
+#
+# Execute "sudo shibd -t" to test the Shibboleth service provider configuration.
+# Make sure to execute "sudo systemctl restart apache2" and
+# "sudo systemctl restart shibd" so that settings take effect.
+
+################################################################################
+
+# Set Shibboleth as the authentication module to use.
+# Comment out 'WeBWorK::Authen::Basic_TheLastOption' if bypassing Saml2
+# authentication via the bypass query option (see $shibboleth{bypass_query}
+# below) or the $shiboff option are both not allowed .
+$authen{user_module} = [
+	'WeBWorK::Authen::Shibboleth',
+	'WeBWorK::Authen::Basic_TheLastOption'
+];
+
+# List of authentication modules that may be used to enter the admin course.
+# This is used instead of $authen{user_module} when logging into the admin
+# course. Since the admin course provides overall power to add/delete courses,
+# access to this course should be protected by the best possible authentication
+# you have available to you.
+$authen{admin_module} = [
+	'WeBWorK::Authen::Shibboleth'
+];
+
+# Set $shiboff to 1 to disable Shibboleth authentication. Usually this is not
+# set here, but in the course.conf file for a course for which Shibboleth
+# authentication is to be disabled.
+#$shiboff = 0;
+
+# This URL query parameter can be added to the end of a course URL to skip the
+# Shibboleth authentication module and go to the next one, for example,
+# http://your.school.edu/webwork2/courseID?bypassShib=1. Comment out the next
+# line to disable this feature.
+$shibboleth{bypass_query} = 'bypassShib';
+
+# The Shibboleth service provider login path.
+$shibboleth{login_script} = '/Shibboleth.sso/Login';
+
+# The Shibboleth service provider logout path.  The default setting below
+# demonstrates how to have the user redirected back to the course login page
+# after the logout is complete.
+$shibboleth{logout_script} = '/Shibboleth.sso/Logout?return=' . $server_root_url . $webwork_url;
+
+# Set to 1 to allow Shibboleth to manage session time instead of webwork.
+$shibboleth{manage_session_timeout} = 1;
+
+# The user id hash method. The possible values are 'none' or 'MD5'. Use it when
+# you want to hide real user_ids from showing in the URL.
+$shibboleth{hash_user_id_method} = 'none';
+
+# The salt to use for the hash method.
+$shibboleth{hash_user_id_salt} = '';
+
+# Set to the Shibboleth attribute that will be used for the webwork user id.
+$shibboleth{mapping}{user_id} = 'uid';
