@@ -32,9 +32,6 @@ C<conf/authen_shibboleth.conf.dist> file.
 
 =cut
 
-use strict;
-use warnings;
-
 use Digest;
 
 use WeBWorK::Debug qw(debug);
