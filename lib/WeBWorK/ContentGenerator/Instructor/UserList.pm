@@ -236,9 +236,16 @@ sub pre_header_initialize ($c) {
 
 	# Always have a definite sort order in case the first three sorts don't determine things.
 	$c->{sortedUserIDs} = [
-		map  { $_->user_id }
-		sort { &$primarySortSub || &$secondarySortSub || &$ternarySortSub || byLastName || byFirstName || byUserID }
-		grep { $c->{visibleUserIDs}{ $_->user_id } } (values %allUsers)
+		map { $_->user_id }
+			sort {
+				$primarySortSub->()
+				|| $secondarySortSub->()
+				|| $ternarySortSub->()
+				|| byLastName()
+				|| byFirstName()
+				|| byUserID()
+		}
+			grep { $c->{visibleUserIDs}{ $_->user_id } } (values %allUsers)
 	];
 
 	return;
