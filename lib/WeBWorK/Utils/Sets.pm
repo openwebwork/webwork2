@@ -20,7 +20,7 @@ use Carp;
 
 use PGrandom;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::DateTime qw(after);
+use WeBWorK::Utils::DateTime qw(after before);
 use WeBWorK::Utils::JITAR qw(jitar_id_to_seq jitar_problem_adjusted_status);
 
 our @EXPORT_OK = qw(
@@ -146,7 +146,7 @@ sub grade_gateway ($db, $set, $setName, $studentName) {
 	}
 }
 
-sub grade_all_sets ($db, $studentName) {
+sub grade_all_sets ($db, $studentName, $LTISendZeroScores) {
 	my @setIDs     = $db->listUserSets($studentName);
 	my @userSetIDs = map { [ $studentName, $_ ] } @setIDs;
 	my @userSets   = $db->getMergedSets(@userSetIDs);
@@ -156,17 +156,24 @@ sub grade_all_sets ($db, $studentName) {
 
 	for my $userSet (@userSets) {
 		next unless (after($userSet->open_date()));
+		my $totalRight;
+		my $total;
+		my %dates = (
+			open    => $userSet->open_date(),
+			reduced => $userSet->reduced_scoring_date(),
+			close   => $userSet->close_date(),
+			answer  => $userSet->answer_date()
+		);
 		if ($userSet->assignment_type() =~ /gateway/) {
-
-			my ($totalRight, $total) = grade_gateway($db, $userSet, $userSet->set_id, $studentName);
-			$courseTotalRight += $totalRight;
-			$courseTotal      += $total;
+			($totalRight, $total) = grade_gateway($db, $userSet, $userSet->set_id, $studentName);
 		} else {
-			my ($totalRight, $total) = grade_set($db, $userSet, $studentName, 0);
-
-			$courseTotalRight += $totalRight;
-			$courseTotal      += $total;
+			($totalRight, $total) = grade_set($db, $userSet, $studentName, 0);
 		}
+		if ($totalRight == 0) {
+			next if ($LTISendZeroScores eq 'never' || before($dates{$LTISendZeroScores}));
+		}
+		$courseTotalRight += $totalRight;
+		$courseTotal      += $total;
 	}
 
 	if (wantarray) {

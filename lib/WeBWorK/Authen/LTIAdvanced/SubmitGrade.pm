@@ -128,7 +128,8 @@ async sub submit_course_grade ($self, $userID) {
 	$self->warning("lis_source_did is not available for user: $userID")
 		if !$user->lis_source_did && ($ce->{debug_lti_grade_passback} || $self->{post_processing_mode});
 
-	return await $self->submit_grade($user->lis_source_did, scalar(grade_all_sets($db, $userID)));
+	return await $self->submit_grade($user->lis_source_did,
+		scalar(grade_all_sets($db, $userID, $ce->{LTISendZeroScores})));
 }
 
 # Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.
@@ -147,14 +148,23 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	$self->warning('lis_source_did is not available for this set.')
 		if !$userSet->lis_source_did && ($ce->{debug_lti_grade_passback} || $self->{post_processing_mode});
 
-	return await $self->submit_grade(
-		$userSet->lis_source_did,
-		scalar(
-			$userSet->assignment_type =~ /gateway/
+	my $score =
+		scalar($userSet->assignment_type =~ /gateway/
 			? grade_gateway($db, $userSet, $userSet->set_id, $userID)
-			: grade_set($db, $userSet, $userID, 0)
-		)
+			: grade_set($db, $userSet, $userID, 0));
+
+	my %dates = (
+		open    => $userSet->open_date(),
+		reduced => $userSet->reduced_scoring_date(),
+		close   => $userSet->close_date(),
+		answer  => $userSet->answer_date()
 	);
+
+	if ($score == 0) {
+		return if ($ce->{LTISendZeroScores} eq 'never' || before($dates{ $ce->{LTISendZeroScores} }));
+	}
+
+	return await $self->submit_grade($userSet->lis_source_did, $score);
 }
 
 # Submits a score of $score to the lms with $sourcedid as the identifier.

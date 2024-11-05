@@ -912,6 +912,25 @@ sub getConfigValues ($ce) {
 			labels => { '' => 'None', 'course' => 'Course', 'homework' => 'Homework' },
 			type   => 'popuplist'
 		},
+		LTISendZeroScores => {
+			var  => 'LTISendZeroScores',
+			doc  => x('When to send zero scores to the LMS'),
+			doc2 => x(
+				'If the grade passback mode is "homework", this controls when a set with score 0 will have '
+					. 'that score sent to the LMS, as opposed to leaving the score null in the LMS. If the grade '
+					. 'passback mode is "course", this controls when a set with score 0 will be included in the '
+					. 'overall grade calculation that is sent to the LMS.'
+			),
+			values => [qw(open reduced close answer never)],
+			labels => {
+				open    => 'After Open Date',
+				reduced => 'After Reduced Scoring Date',
+				close   => 'After Close Date',
+				answer  => 'After Answer Date',
+				never   => 'Never'
+			},
+			type => 'popuplist'
+		},
 		LTIGradeOnSubmit => {
 			var  => 'LTIGradeOnSubmit',
 			doc  => x('Update LMS Grade Each Submit'),

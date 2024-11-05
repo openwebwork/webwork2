@@ -135,6 +135,12 @@ $LTIGradeMode = '';
 #$LTIGradeMode = 'course';
 #$LTIGradeMode = 'homework';
 
+# This can be set to 'open', 'reduced', 'close', 'answer', or 'never'. It controls when a set
+# with score 0 will be included in grades that are passed back to the LMS. For example, setting
+# this to 'close' means that a set with score 0 is only included in grades sent to the LMS once
+# it is past the set's close date.
+$LTISendZeroScores = 'open';
+
 # When set this variable sends grades back to the LMS every time a user submits an answer.  This
 # keeps students grades up to date but can be a drain on the server.
 $LTIGradeOnSubmit = 1;
@@ -170,6 +176,7 @@ $LTIMassUpdateInterval = 86400;    #in seconds
 	#'LTI{v1p3}{LMS_url}',
 	#'external_auth',
 	#'LTIGradeMode',
+	#'LTISendZeroScores',
 	#'LTIGradeOnSubmit',
 	#'LTIMassUpdateInterval',
 	#'LMSManageUserData',
