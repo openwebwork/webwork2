@@ -6,26 +6,62 @@
 	% lib    => maketext('Libraries'),
 	% macros => maketext('Macros')
 % );
+% my %macro_names = (
+	% answers    => maketext('Answers'),
+	% contexts   => maketext('Contexts'),
+	% core       => maketext('Core'),
+	% deprecated => maketext('Deprecated'),
+	% graph      => maketext('Graph'),
+	% math       => maketext('Math'),
+	% misc       => maketext('Miscellaneous'),
+	% parsers    => maketext('Parsers'),
+	% ui         => maketext('User Interface')
+% );
 %
-% for my $section (sort keys %$sections) {
-	% content_for toc => begin
-		<%= link_to $section_names{$section} => "#$section", class => 'nav-link' %>
+% content_for pod_links => begin
+	<h2><a href="#_podtop_" id="doc"><%= $section_names{doc} %></a></h2>
+	<div class="list-group mb-2">
+		% for (@$docs) {
+			% my $link_name = $_ =~ s!^(doc|macros)/!!r;
+			<%= link_to $link_name, 'pod_viewer', { filePath => "$_" },
+				class => 'list-group-item list-group-item-action' =%>
+		% }
+	</div>
+	<h2><a href="#_podtop_" id="macros"><%= $section_names{macros} %></a></h2>
+% end
+% for my $macro (qw(core contexts parsers answers graph math ui misc deprecated)) {
+	% content_for macros_toc => begin
+		<%= link_to $macro_names{$macro} => "#macro-$macro", class => 'nav-link' %>
 	% end
-	% content_for subjects => begin
-		<h2><a href="#_podtop_" id="<%= $section %>"><%= $section_names{$section} %></a></h2>
+	% content_for pod_links => begin
+		<h3><a href="#_podtop_" id="macro-<%= $macro %>"><%= $macro_names{$macro} %></a></h3>
 		<div class="list-group mb-2">
-			% for (@{ $sections->{$section} }) {
-				% my $link_name = $_;
-				% $link_name = $1 =~ s!/!::!gr if $link_name =~ m/^(.*)\.pm$/;
-				<%= link_to $link_name, 'pod_viewer', { filePath => "$section/$_" },
+			% for (@{ $macros->{$macro} }) {
+				<%= link_to $_, 'pod_viewer', { filePath => "macros/$macro/$_" },
 					class => 'list-group-item list-group-item-action' =%>
 			% }
 		</div>
 	% end
 % }
+% content_for pod_links => begin
+	<h2><a href="#_podtop_" id="lib"><%= $section_names{lib} %></a></h2>
+	<div class="list-group mb-2">
+		% for (@$libs) {
+			% my $link_name = $_;
+			% $link_name = $1 =~ s!/!::!gr if $link_name =~ m/^(.*)\.pm$/;
+			<%= link_to $link_name, 'pod_viewer', { filePath => "lib/$_" },
+				class => 'list-group-item list-group-item-action' =%>
+		% }
+	</div>
+% end
 % content_for sidebar => begin
 	<nav class="nav flex-column w-100">
-		<%= content 'toc' %>
+		<%= link_to $section_names{doc} => '#doc', class => 'nav-link' %>
+		<%= link_to $section_names{macros} => '#macros', class => 'nav-link' %>
+		<div class="nav flex-column ms-3">
+			<%= content 'macros_toc' %>
+		</div>
+		<%= link_to $section_names{lib} => '#lib', class => 'nav-link' %>
 	</nav>
 % end
-<%= content 'subjects' %>
+<%= content 'pod_links' %>

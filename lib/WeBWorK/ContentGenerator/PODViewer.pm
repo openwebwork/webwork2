@@ -30,15 +30,37 @@ use WeBWorK::Utils::PODParser;
 sub PODindex ($c) {
 	my $pgRoot = $c->ce->{pg_dir};
 
-	my $podFiles = Pod::Simple::Search->new->inc(0)->limit_re(qr/^doc|^lib|^macros/)->survey($pgRoot);
+	my $docFiles   = Pod::Simple::Search->new->inc(0)->survey("$pgRoot/doc");
+	my $macroFiles = Pod::Simple::Search->new->inc(0)->survey("$pgRoot/macros");
+	my $libFiles   = Pod::Simple::Search->new->inc(0)->survey("$pgRoot/lib");
 
-	my $sections = {};
-	for (sort keys %$podFiles) {
-		my $section = $_ =~ s/::.*$//r;
-		push(@{ $sections->{$section} }, $podFiles->{$_} =~ s!^$pgRoot/$section/!!r);
+	my $docs = [];
+	for (sort keys %$docFiles) {
+		push(@$docs, $docFiles->{$_} =~ s!^$pgRoot/!!r);
 	}
 
-	return $c->render('ContentGenerator/PODViewer', sections => $sections, sidebar_title => $c->maketext('Categories'));
+	my $macros = {};
+	for (sort keys %$macroFiles) {
+		my $macro = $macroFiles->{$_} =~ s!^$pgRoot/macros/(.+)/.+$!$1!r;
+		if ($macro =~ /^$pgRoot/) {
+			push(@$docs, $macroFiles->{$_} =~ s!^$pgRoot/!!r);
+		} else {
+			push(@{ $macros->{$macro} }, $macroFiles->{$_} =~ s!^$pgRoot/macros/$macro/!!r);
+		}
+	}
+
+	my $libs = [];
+	for (sort keys %$libFiles) {
+		push(@$libs, $libFiles->{$_} =~ s!^$pgRoot/lib/!!r);
+	}
+
+	return $c->render(
+		'ContentGenerator/PODViewer',
+		docs          => $docs,
+		macros        => $macros,
+		libs          => $libs,
+		sidebar_title => $c->maketext('Categories')
+	);
 }
 
 sub renderPOD ($c) {
