@@ -23,18 +23,45 @@
 		</div>
 	</div>
 	%
-	% my ($index, $content) = ('', '');
+	% my ($index, $macro_index, $content, $macro_content) = ('', '', '', '');
+	% for my $macro (@$macros_order) {
+		% next unless defined $pod_index->{$macro};
+		% my $new_index = begin
+			<a href="#macro-<%= $macro %>" class="nav-link"><%= $macros->{$macro} %></a>
+		% end
+		% $macro_index .= $new_index->();
+		% my $new_content = begin
+			<h3><a href="#_podtop_" id="macro-<%= $macro %>"><%= $macros->{$macro} %></a></h3>
+			<div class="list-group mb-2">
+				% for my $file (sort { $a->[1] cmp $b->[1] } @{ $pod_index->{$macro} }) {
+					<a href="<%= $file->[0] %>" class="list-group-item list-group-item-action"><%= $file->[1] %></a>
+				% }
+			</div>
+		% end
+		% $macro_content .= $new_content->();
+	% }
 	% for my $section (@$section_order) {
 		% next unless defined $pod_index->{$section};
 		% my $new_index = begin
 			<a href="#<%= $section %>" class="nav-link"><%= $sections->{$section} %></a>
+			% if ($section eq 'macros') {
+				<div class="nav flex-column ms-3">
+					<%= $macro_index %>
+				</div>
+			% }
 		% end
 		% $index .= $new_index->();
 		% my $new_content = begin
 			<h2><a href="#_podtop_" id="<%= $section %>"><%= $sections->{$section} %></a></h2>
 			<div class="list-group mb-2">
-				% for my $file (sort { $a->[1] cmp $b->[1] } @{ $pod_index->{$section} }) {
-					<a href="<%= $file->[0] %>" class="list-group-item list-group-item-action"><%= $file->[1] %></a>
+				% if ($section eq 'macros') {
+					<%= $macro_content =%>
+				% } else {
+					% for my $file (sort { $a->[1] cmp $b->[1] } @{ $pod_index->{$section} }) {
+						<a href="<%= $file->[0] %>" class="list-group-item list-group-item-action">
+							<%= $file->[1] %>
+						</a>
+					% }
 				% }
 			</div>
 		% end

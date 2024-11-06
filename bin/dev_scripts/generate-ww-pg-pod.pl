@@ -96,18 +96,39 @@ sub process_dir {
 	my $source_dir = shift;
 	return unless $source_dir =~ /\/webwork2$/ || $source_dir =~ /\/pg$/;
 
+	my $is_pg    = $source_dir =~ /\/pg$/;
 	my $dest_dir = $source_dir;
-	$dest_dir =~ s/^$webwork_root/$output_dir\/webwork2/ if ($source_dir =~ /\/webwork2$/);
-	$dest_dir =~ s/^$pg_root/$output_dir\/pg/            if ($source_dir =~ /\/pg$/);
+	$dest_dir =~ s/^$webwork_root/$output_dir\/webwork2/ unless $is_pg;
+	$dest_dir =~ s/^$pg_root/$output_dir\/pg/ if $is_pg;
 
 	remove_tree($dest_dir);
 	make_path($dest_dir);
+
+	my $sections =
+		$is_pg
+		? [ doc => 'Documentation', macros => 'Macros',        lib => 'Libraries' ]
+		: [ bin => 'Scripts',       doc    => 'Documentation', lib => 'Libraries' ];
+	my $macros = $is_pg
+		? [
+			core       => 'Core',
+			contexts   => 'Contexts',
+			parsers    => 'Parsers',
+			answers    => 'Answers',
+			graph      => 'Graph',
+			math       => 'Math',
+			ui         => 'User Interface',
+			misc       => 'Miscellaneous',
+			deprecated => 'Deprecated'
+		]
+		: [];
 
 	my $htmldocs = PODtoHTML->new(
 		source_root  => $source_dir,
 		dest_root    => $dest_dir,
 		template_dir => "$webwork_root/bin/dev_scripts/pod-templates",
 		dest_url     => $base_url,
+		sections     => $sections,
+		macros       => $macros,
 		verbose      => $verbose
 	);
 	$htmldocs->convert_pods;
