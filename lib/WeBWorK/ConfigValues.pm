@@ -874,7 +874,7 @@ sub getConfigValues ($ce) {
 		},
 		'LTI{v1p1}{LMS_url}' => {
 			var  => 'LTI{v1p1}{LMS_url}',
-			doc  => x('A URL for the LMS'),
+			doc  => x('URL for the LMS'),
 			doc2 => x(
 				'An address that can be used to log in to the LMS. This is used in messages to users '
 					. 'that direct them to go back to the LMS to access something in the WeBWorK course.'
@@ -911,6 +911,59 @@ sub getConfigValues ($ce) {
 			values => [ '', qw(course homework) ],
 			labels => { '' => 'None', 'course' => 'Course', 'homework' => 'Homework' },
 			type   => 'popuplist'
+		},
+		LTISendScoresAfterDate => {
+			var  => 'LTISendScoresAfterDate',
+			doc  => x('When to send scores to the LMS regardless of status'),
+			doc2 => x(
+				'After this type of date has passed, WeBWorK will send grades to the LMS, subject to the other '
+					. 'controls for grade passback. Prior to this date, WeBWorK will only send grades to the LMS if '
+					. "the set has met the condition set by \$LTISendGradesEarlyThreshold. In 'course' grade mode, "
+					. 'this is controlling whether or not the set is included in the overall course grade computation. '
+					. "In 'homework' grade mode, it is only about that set's score. For a test, the date that matters "
+					. 'is the earliest date among the versions or the set template.'
+			),
+			values => [qw(open_date reduced_scoring_date close_date answer_date never)],
+			labels => {
+				open_date            => 'After the open date',
+				reduced_scoring_date => 'After the reduced scoring date',
+				close_date           => 'After the close date',
+				answer_date          => 'After the answer date',
+				never_date           => 'Never'
+			},
+			type => 'popuplist'
+		},
+		LTISendGradesEarlyThreshold => {
+			var  => 'LTISendGradesEarlyThreshold',
+			doc  => x('Condition under which scores can be sent to an LMS early'),
+			doc2 => x(
+				"This can be set to a number from 0 to 1 inclusive, or set to the string 'attempted'. When something "
+					. 'triggers a potential grade passback, if it is earlier than $LTISendScoresAfterDate, the '
+					. "condition described by this variable must be met or else no grade will be sent. (In 'course' "
+					. 'grade mode, the set will not be included in the overall grade calculation.) If this variable is '
+					. 'a number, then the set will need to have a score that reaches or exceeds this number for its '
+					. "score to be sent to the LMS (or included in the 'course' grade calcuation). If this variable is "
+					. "set to 'attempted', then the set needs to have been attempted for its score to be sent to the "
+					. "LMS (or included in the 'course' grade calcuation). For a regular or jitar set, 'attempted' "
+					. "means that at least one exercise was attempted. For a test, 'attempted' means that either "
+					. 'multiple versions exist or there is one version with a graded submission.'
+			),
+			type => 'text',
+		},
+		LTICheckPrior => {
+			var  => 'LTICheckPrior',
+			doc  => x('Check a score in the LMS before sending a score to the LMS'),
+			doc2 => x(
+				'When this is set, then each time WeBWorK would send a grade to the LMS, it first requests the current '
+					. 'score from the LMS. If there is not a significant difference between the current score in the '
+					. 'LMS and the score that WeBWorK is possibly going to send, then WeBWorK will not send a score to '
+					. "the LMS. This is intended to avoid frequent insignificant updates to the student's grades in "
+					. 'the LMS. With some LMSs, some students receive notifications each time there is a grade update, '
+					. 'and setting this variable will prevent too many notifications for them. This does create a '
+					. 'two-step process, first querying the current grade from the LMS and then when needed making '
+					. 'the grade submission.'
+			),
+			type => 'boolean'
 		},
 		LTIGradeOnSubmit => {
 			var  => 'LTIGradeOnSubmit',

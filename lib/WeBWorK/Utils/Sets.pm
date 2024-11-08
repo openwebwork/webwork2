@@ -20,7 +20,7 @@ use Carp;
 
 use PGrandom;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::DateTime qw(after);
+use WeBWorK::Utils::DateTime qw(after before);
 use WeBWorK::Utils::JITAR qw(jitar_id_to_seq jitar_problem_adjusted_status);
 
 our @EXPORT_OK = qw(
@@ -28,6 +28,9 @@ our @EXPORT_OK = qw(
 	format_set_name_display
 	grade_set
 	grade_gateway
+	gateway_attempted
+	get_date
+	earliest_gateway_date
 	grade_all_sets
 	is_restricted
 	get_test_problem_position
@@ -146,7 +149,45 @@ sub grade_gateway ($db, $set, $setName, $studentName) {
 	}
 }
 
-sub grade_all_sets ($db, $studentName) {
+sub gateway_attempted ($db, $setName, $studentName) {
+	my @versionNums = $db->listSetVersions($studentName, $setName);
+
+	# it counts as "attempted" if there is more than one version
+	return 1 if (1 < @versionNums);
+
+	# if there is one version, check for an attempted problem
+	if (@versionNums) {
+		my $versionedSet = $db->getSetVersion($studentName, $setName, $versionNums[0]);
+
+		my @problemRecords =
+			$db->getAllMergedProblemVersions($studentName, $versionedSet->set_id, $versionedSet->version_id);
+		for my $problemRecord (@problemRecords) {
+			return 1 if $problemRecord->attempted;
+		}
+	}
+
+	return 0;
+}
+
+sub earliest_gateway_date ($db, $setName, $studentName, $dateType) {
+	return 'never' if ($dateType eq 'never');
+	my @versionNums = $db->listSetVersions($studentName, $setName);
+
+	# if there are no versions, use the template's date
+	unless (@versionNums) {
+		return get_date($db->getMergedSet($studentName, $setName), $dateType);
+	}
+
+	# otherwise, use the earliest date among versions
+	my $date = get_date($db->getSetVersion($studentName, $setName, $versionNums[0]), $dateType);
+	for my $i (@versionNums) {
+		my $versionedSetDate = get_date($db->getSetVersion($studentName, $setName, $i), $dateType);
+		$date = $versionedSetDate if ($versionedSetDate < $date);
+	}
+	return $date;
+}
+
+sub grade_all_sets ($db, $studentName, $sendScoresAfterDate = 'open_date', $sendGradesEarlyThreshold = 0) {
 	my @setIDs     = $db->listUserSets($studentName);
 	my @userSetIDs = map { [ $studentName, $_ ] } @setIDs;
 	my @userSets   = $db->getMergedSets(@userSetIDs);
@@ -156,17 +197,29 @@ sub grade_all_sets ($db, $studentName) {
 
 	for my $userSet (@userSets) {
 		next unless (after($userSet->open_date()));
+		my $totalRight;
+		my $total;
+		my $incorrect_attempts = [];
+		my $attempted;
+		my $date;
+
 		if ($userSet->assignment_type() =~ /gateway/) {
-
-			my ($totalRight, $total) = grade_gateway($db, $userSet, $userSet->set_id, $studentName);
-			$courseTotalRight += $totalRight;
-			$courseTotal      += $total;
+			($totalRight, $total) = grade_gateway($db, $userSet, $userSet->set_id, $studentName);
+			$attempted = gateway_attempted($db, $userSet->set_id, $studentName);
+			$date      = earliest_gateway_date($db, $userSet->set_id, $studentName, $sendScoresAfterDate);
 		} else {
-			my ($totalRight, $total) = grade_set($db, $userSet, $studentName, 0);
-
-			$courseTotalRight += $totalRight;
-			$courseTotal      += $total;
+			($totalRight, $total, $incorrect_attempts) = (grade_set($db, $userSet, $studentName, 0, 1))[ 0, 1, 3 ];
+			$attempted = 1 if ($totalRight || grep $_ > 0, @$incorrect_attempts);
+			$date      = get_date($userSet, $sendScoresAfterDate);
 		}
+
+		if ($sendScoresAfterDate eq 'never' || before($date)) {
+			next if ($sendGradesEarlyThreshold eq 'attempted' && !$attempted);
+			next if ($total > 0                               && $totalRight / $total < $sendGradesEarlyThreshold);
+		}
+
+		$courseTotalRight += $totalRight;
+		$courseTotal      += $total;
 	}
 
 	if (wantarray) {
@@ -176,6 +229,16 @@ sub grade_all_sets ($db, $studentName) {
 		return $courseTotalRight / $courseTotal;
 	}
 
+}
+
+sub get_date ($set, $type) {
+	return {
+		open_date            => $set->open_date(),
+		reduced_scoring_date => $set->reduced_scoring_date() // $set->close_date(),
+		close_date           => $set->close_date(),
+		answer_date          => $set->answer_date(),
+		never                => 'never'
+	}->{$type};
 }
 
 sub is_restricted ($db, $set, $studentName) {

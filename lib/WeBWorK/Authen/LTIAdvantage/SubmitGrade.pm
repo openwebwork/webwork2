@@ -39,7 +39,7 @@ use Time::HiRes;
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::Sets qw(grade_set grade_gateway grade_all_sets);
+use WeBWorK::Utils::Sets qw(grade_set grade_gateway gateway_attempted earliest_gateway_date grade_all_sets get_date);
 
 # This package contains utilities for submitting grades to the LMS via LTI 1.3.
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -207,7 +207,8 @@ async sub submit_course_grade ($self, $userID) {
 	$self->warning('LMS user id is not available for this user.')   unless $user->lis_source_did;
 	$self->warning('LMS lineitem is not available for the course.') unless $lineitem;
 
-	return await $self->submit_grade($user->lis_source_did, $lineitem, grade_all_sets($db, $userID));
+	return await $self->submit_grade($user->lis_source_did, $lineitem,
+		grade_all_sets($db, $userID, $ce->{LTISendScoresAfterDate}, $ce->{LTISendGradesEarlyThreshold}));
 }
 
 # Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.
@@ -225,14 +226,36 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	$self->warning('LMS user id is not available for this user.') unless $user->lis_source_did;
 	$self->warning('LMS lineitem is not available for this set.') unless $userSet->lis_source_did;
 
-	return await $self->submit_grade($user->lis_source_did, $userSet->lis_source_did,
-		$userSet->assignment_type =~ /gateway/
-		? grade_gateway($db, $userSet, $userSet->set_id, $userID)
-		: (grade_set($db, $userSet, $userID, 0))[ 0, 1 ]);
+	my $totalRight;
+	my $total;
+	my $incorrect_attempts = [];
+	my $attempted;
+	my $date;
+
+	if ($userSet->assignment_type =~ /gateway/) {
+		($totalRight, $total) = grade_gateway($db, $userSet, $userSet->set_id, $userID);
+		$attempted = gateway_attempted($db, $userSet, $userSet->set_id, $userID);
+		$date      = earliest_gateway_date($db, $userSet->set_id, $userID, $ce->{LTISendScoresAfterDate});
+	} else {
+		($totalRight, $total, $incorrect_attempts) = (grade_set($db, $userSet, $userID, 0, 1))[ 0, 1, 3 ];
+		$attempted = 1 if ($totalRight || grep $_ > 0, @$incorrect_attempts);
+		$date      = get_date($userSet, $ce->{LTISendScoresAfterDate});
+	}
+
+	my $beforeSendScoresAfterDate = $ce->{LTISendScoresAfterDate} eq 'never' || before($date);
+	if ($beforeSendScoresAfterDate) {
+		return if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted' && !$attempted);
+		return if ($total > 0 && $totalRight / $total < $ce->{LTISendGradesEarlyThreshold});
+	}
+
+# $beforeSendScoresAfterDate needs to be passed so that if LTICheckPrior is set, submit_grade() can decide between calling
+# an empty grade equivalent to 0 before the SendScoresAfterDate versus not equivalent after the SendScoresAfterDate
+	return await $self->submit_grade($user->lis_source_did, $userSet->lis_source_did, $totalRight, $total,
+		$beforeSendScoresAfterDate);
 }
 
 # Submits scoreGiven and scoreMaximum to the lms with $sourcedid as the identifier.
-async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum) {
+async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum, $beforeSendScoresAfterDate = 1) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 
@@ -275,9 +298,16 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum
 			&& $priorData->[0]{resultMaximum} ? $priorData->[0]{resultScore} / $priorData->[0]{resultMaximum} : 0;
 
 		my $score = $scoreGiven / $scoreMaximum;
-		if (abs($score - $priorScore) < 0.001) {
+		# we want to update the LMS score if the difference is significant,
+		# or if the new score is 1 but the LMS score was not 1 (but possibly insignificantly different)
+		# or if the new score is 0 and the LMS score was empty and it is past the SendScoresAfterDate
+		if (abs($score - $priorScore) < 0.001
+			&& ($score != 1 || $priorScore == 1)
+			&& ($score != 0 || @$priorData && $priorData->[0]{resultScore} ne '' || $beforeSendScoresAfterDate))
+		{
 			$self->warning(
-				"LMS grade will NOT be updated as the grade is unchanged. Old score: $priorScore, New score: $score.");
+				"LMS grade will NOT be updated as the grade has not significantly changed. Old score: $priorScore, New score: $score."
+			);
 			return 1;
 		}
 

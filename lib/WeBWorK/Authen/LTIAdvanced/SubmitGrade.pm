@@ -30,7 +30,7 @@ use Digest::SHA qw(sha1_base64);
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::Sets qw(grade_set grade_gateway grade_all_sets);
+use WeBWorK::Utils::Sets qw(grade_set grade_gateway gateway_attempted earliest_gateway_date grade_all_sets get_date);
 
 # This package contains utilities for submitting grades to the LMS
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -128,7 +128,8 @@ async sub submit_course_grade ($self, $userID) {
 	$self->warning("lis_source_did is not available for user: $userID")
 		if !$user->lis_source_did && ($ce->{debug_lti_grade_passback} || $self->{post_processing_mode});
 
-	return await $self->submit_grade($user->lis_source_did, scalar(grade_all_sets($db, $userID)));
+	return await $self->submit_grade($user->lis_source_did,
+		scalar(grade_all_sets($db, $userID, $ce->{LTISendScoresAfterDate}, $ce->{LTISendGradesEarlyThreshold})));
 }
 
 # Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.
@@ -147,18 +148,37 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	$self->warning('lis_source_did is not available for this set.')
 		if !$userSet->lis_source_did && ($ce->{debug_lti_grade_passback} || $self->{post_processing_mode});
 
-	return await $self->submit_grade(
-		$userSet->lis_source_did,
-		scalar(
-			$userSet->assignment_type =~ /gateway/
-			? grade_gateway($db, $userSet, $userSet->set_id, $userID)
-			: grade_set($db, $userSet, $userID, 0)
-		)
-	);
+	my $score;
+	my $incorrect_attempts = [];
+	my $attempted;
+	my $date;
+
+	if ($userSet->assignment_type =~ /gateway/) {
+		$score     = scalar(grade_gateway($db, $userSet, $userSet->set_id, $userID));
+		$attempted = gateway_attempted($db, $userSet, $userSet->set_id, $userID);
+		$date      = earliest_gateway_date($db, $userSet->set_id, $userID, $ce->{LTISendScoresAfterDate});
+	} else {
+		my $totalRight;
+		my $total;
+		($totalRight, $total, $incorrect_attempts) = (grade_set($db, $userSet, $userID, 0, 1))[ 0, 1, 3 ];
+		$score     = ($total == 0) ? 0 : $totalRight / $total;
+		$attempted = 1 if ($totalRight || grep $_ > 0, @$incorrect_attempts);
+		$date      = get_date($userSet, $ce->{LTISendScoresAfterDate});
+	}
+
+	my $beforeSendScoresAfterDate = $ce->{LTISendScoresAfterDate} eq 'never' || before($date);
+	if ($beforeSendScoresAfterDate) {
+		return if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted' && !$attempted);
+		return if ($score < $ce->{LTISendGradesEarlyThreshold});
+	}
+
+# $beforeSendScoresAfterDate needs to be passed so that if LTICheckPrior is set, submit_grade() can decide between calling
+# an empty grade equivalent to 0 before the SendScoresAfterDate versus not equivalent after the SendScoresAfterDate
+	return await $self->submit_grade($userSet->lis_source_did, $score, $beforeSendScoresAfterDate);
 }
 
 # Submits a score of $score to the lms with $sourcedid as the identifier.
-async sub submit_grade ($self, $sourcedid, $score) {
+async sub submit_grade ($self, $sourcedid, $score, $beforeSendScoresAfterDate = 1) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 	my $db = $c->{db};
@@ -301,11 +321,15 @@ EOS
 					# See: https://webwork.maa.org/moodle/mod/forum/discuss.php?d=5002
 					debug("LMS grade will be updated. sourcedid: $sourcedid; Old score: $oldScore; New score: $score")
 						if $ce->{debug_lti_grade_passback};
-				} elsif ($oldScore ne '' && abs($score - $oldScore) < 0.001) {
+				} elsif (abs($score - $oldScore) < 0.001
+					&& ($score != 1 || $oldScore == 1)
+					&& ($score != 0 || $oldScore ne '' || $beforeSendScoresAfterDate))
+				{
 					# LMS has essentially the same score, no reason to update it
-					debug("LMS grade will NOT be updated - grade unchanges. Old score: $oldScore; New score: $score")
-						if $ce->{debug_lti_grade_passback};
-					$self->warning('LMS grade will NOT be updated - grade unchanged. '
+					debug(
+						"LMS grade will NOT be updated - grade has not significantly changed. Old score: $oldScore; New score: $score"
+					) if $ce->{debug_lti_grade_passback};
+					$self->warning('LMS grade will NOT be updated - grade has not significantly changed. '
 							. "Old score: $oldScore; New score: $score")
 						if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
 					return 1;

@@ -135,18 +135,58 @@ $LTIGradeMode = '';
 #$LTIGradeMode = 'course';
 #$LTIGradeMode = 'homework';
 
-# When set this variable sends grades back to the LMS every time a user submits an answer.  This
-# keeps students grades up to date but can be a drain on the server.
-$LTIGradeOnSubmit = 1;
+# Controls for when to report grades to the LMS.
 
-# If $LTICheckPrior is set to 1 then the current LMS grade will be checked first, and if the grade
-# has not changed then the grade will not be updated.  This is intended to reduce changes to LMS
-# records when no real grade change occurred.  It requires a 2 round process, first querying the
-# current grade from the LMS and then when needed making the grade submission.
+# This variable can be set to 'open_date', 'reduced_scoring_date', 'close_date', 'answer_date',
+# or 'never', corresponding to the open, reduced scoring, close, and answer dates for a set, or
+# never. After this type of date has passed, WeBWorK will send grades to the LMS, subject to the
+# other controls described below. Prior to this date, WeBWorK will only send grades to the LMS if
+# the set has met the condition set with $LTISendGradesEarlyThreshold. For example, if it is set
+# to 'close', then once the close date is reached for a set and something triggers a potential
+# grade passback, scores will be sent to the LMS regardless of whether or not the set has been
+# attempted or has reached a threshold score. Prior to the close date, if something triggers a
+# potential grade passback, whether or not the set's scores are passed depends on the value of
+# $LTISendGradesEarlyThreshold. In 'course' grade mode, this is controlling whether or not the
+# set is included in the overall course grade computation. In 'homework' grade mode, it is only
+# about that set's score. For a test, the date that matters is the earliest date among the versions
+# or the set template.
+$LTISendScoresAfterDate = 'open_date';
+
+# This variable can be set to a number from 0 to 1 inclusive, or set to the string 'attempted'.
+# When something triggers a potential grade passback, if it is earlier than $LTISendScoresAfterDate,
+# the condition described by this variable must be met or else no grade will be sent. (In 'course'
+# grade mode, the set will not be included in the overall grade calculation.) If this variable is
+# a number, then the set will need to have a score that reaches or exceeds this number for its
+# score to be sent to the LMS (or included in the 'course' grade calcuation). If this variable is
+# set to 'attempted', then the set needs to have been attempted for its score to be sent to the LMS
+# (or included in the 'course' grade calcuation). For a regular or jitar set, 'attempted' means that
+# at least one exercise was attempted. For a test, 'attempted' means that either multiple versions
+# exist or there is one version with a graded submission.
+$LTISendGradesEarlyThreshold = 0;
+
+# When this variable is set, then each time WeBWorK would send a grade to the LMS, it first
+# requests the current score from the LMS. If there is not a significant difference between the
+# current score in the LMS and the score that WeBWorK is possibly going to send, then WeBWorK will
+# not send a score to the LMS. This is intended to avoid frequent insignificant updates to the
+# student's grades in the LMS. With some LMSs, some students receive notifications each time there
+# is a grade update, and setting this variable will prevent too many notifications for them. This
+# does create a two-phase process, first querying the current grade from the LMS and then when
+# needed making the grade submission.
 $LTICheckPrior = 0;
 
-# The system periodically updates student grades on the LMS.  This variable controls how often
-# that happens.  Set to -1 to disable.
+# When this variable is set then every time a user submits an answer, WeBWorK may send grades back
+# to the LMS. This is subject to the above settings. If using 'course' grade mode, WeBWorK will
+# possibly send a new overall score for this user. If using 'homework' grade mode, WeBWorK will
+# only send a new score for this user for this set. Since this may put a strain on the server, it
+# can be turned off and grades will only be sent to the LMS according to the $LTIMassUpdateInterval
+# or when an instructor initiates a mass grade passback using LTI Grade Update.
+$LTIGradeOnSubmit = 1;
+
+# The system periodically updates student grades on the LMS. This variable controls how often
+# that happens. Set this to -1 to disable mass passback. These mass passback events must be triggered
+# by someone in the course doing something after enough time has passed, even as simple as loading a
+# page. So for example this cannot be set in such a way as to make sure the passback events happen
+# at a particular time each day.
 $LTIMassUpdateInterval = 86400;    #in seconds
 
 ################################################################################################
@@ -170,6 +210,9 @@ $LTIMassUpdateInterval = 86400;    #in seconds
 	#'LTI{v1p3}{LMS_url}',
 	#'external_auth',
 	#'LTIGradeMode',
+	#'LTISendScoresAfterDate',
+	#'LTISendGradesEarlyThreshold',
+	#'LTICheckPrior',
 	#'LTIGradeOnSubmit',
 	#'LTIMassUpdateInterval',
 	#'LMSManageUserData',
