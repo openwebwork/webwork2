@@ -52,8 +52,7 @@
 	</dd>
 	<dt><%= maketext('Accounts Manager') %></dt>
 	<dd>
-		<%= maketext('Manage instructors.  When instructors are added to a newly created course, they are also '
-			. 'added to the admin course with username "userID_courseID".') =%>
+		<%= maketext('Manage users. Note, only admin users have access to the course administration tools.') =%>
 	</dd>
 	<dt><%= maketext('Email') %></dt>
 	<dd><%= maketext('Send emails to selected instructors.') %></dd>
