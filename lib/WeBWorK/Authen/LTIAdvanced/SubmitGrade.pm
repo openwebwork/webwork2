@@ -154,7 +154,7 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	my $date;
 
 	if ($userSet->assignment_type =~ /gateway/) {
-		$score     = scalar(grade_gateway($db, $userSet, $userSet->set_id, $userID));
+		$score     = scalar(grade_gateway($db, $userSet->set_id, $userID));
 		$attempted = gateway_attempted($db, $userSet, $userSet->set_id, $userID);
 		$date      = earliest_gateway_date($db, $userSet->set_id, $userID, $ce->{LTISendScoresAfterDate});
 	} else {

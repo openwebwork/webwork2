@@ -123,7 +123,7 @@ sub grade_set ($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails
 	}
 }
 
-sub grade_gateway ($db, $set, $setName, $studentName) {
+sub grade_gateway ($db, $setName, $studentName) {
 	my @versionNums = $db->listSetVersions($studentName, $setName);
 
 	my $bestTotalRight = 0;
@@ -204,7 +204,7 @@ sub grade_all_sets ($db, $studentName, $sendScoresAfterDate = 'open_date', $send
 		my $date;
 
 		if ($userSet->assignment_type() =~ /gateway/) {
-			($totalRight, $total) = grade_gateway($db, $userSet, $userSet->set_id, $studentName);
+			($totalRight, $total) = grade_gateway($db, $userSet->set_id, $studentName);
 			$attempted = gateway_attempted($db, $userSet->set_id, $studentName);
 			$date      = earliest_gateway_date($db, $userSet->set_id, $studentName, $sendScoresAfterDate);
 		} else {
@@ -378,7 +378,7 @@ In scalar context this returns the percentage correct.
 
 =head2 grade_gateway
 
-Usage: C<grade_gateway($db, $set, $setName, $studentName)>
+Usage: C<grade_gateway($db, $setName, $studentName)>
 
 All arguments are required.
 
