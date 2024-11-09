@@ -297,7 +297,7 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum
 		my $priorScore = @$priorData
 			&& $priorData->[0]{resultMaximum} ? $priorData->[0]{resultScore} / $priorData->[0]{resultMaximum} : 0;
 
-		my $score = $scoreGiven / $scoreMaximum;
+		my $score = $scoreMaximum ? $scoreGiven / $scoreMaximum : 0;
 		# we want to update the LMS score if the difference is significant,
 		# or if the new score is 1 but the LMS score was not 1 (but possibly insignificantly different)
 		# or if the new score is 0 and the LMS score was empty and it is past the SendScoresAfterDate
