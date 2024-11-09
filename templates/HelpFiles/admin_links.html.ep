@@ -50,6 +50,8 @@
 		<%= maketext('Set LMS context ids for courses to map LMS courses to WeBWorK '
 			. 'courses for content item selection.') =%>
 	</dd>
+	<dt><%= maketext('Manage OTP Secrets') %></dt>
+	<dd><%= maketext('Copy OTP secrets from one course/user to another, or reset OTP secrets.') =%></dd>
 	<dt><%= maketext('Accounts Manager') %></dt>
 	<dd>
 		<%= maketext('Manage users. Note, only admin users have access to the course administration tools.') =%>
