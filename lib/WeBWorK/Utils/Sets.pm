@@ -157,13 +157,9 @@ sub gateway_attempted ($db, $setName, $studentName) {
 
 	# if there is one version, check for an attempted problem
 	if (@versionNums) {
-		my $versionedSet = $db->getSetVersion($studentName, $setName, $versionNums[0]);
-
-		my @problemRecords =
-			$db->getAllMergedProblemVersions($studentName, $versionedSet->set_id, $versionedSet->version_id);
-		for my $problemRecord (@problemRecords) {
-			return 1 if $problemRecord->attempted;
-		}
+		my @problemNums = $db->listUserProblems($studentName, $setName);
+		my $problem     = $db->getMergedProblemVersion($studentName, $setName, $versionNums[0], $problemNums[0]);
+		return defined $problem ? $problem->attempted : 0;
 	}
 
 	return 0;
