@@ -41,12 +41,18 @@
 			<%= maketext(
 				'Select admin course users to add to the new course (as the stated permission) below.') =%>
 		</div>
-		<div class="col-lg-4 col-md-5 col-sm-6">
-			<%= select_field 'add-admin-users' => [ map {
-				my $val   = $db->getPermissionLevel($_)->permission;
-				my $level = maketext((grep { $ce->{userRoles}{$_} eq $val } keys %{ $ce->{userRoles} })[0]);
-				[ "$_ ($level)" => $_, $val == 20 ? (selected => undef) : () ] } $db->listUsers ],
-				size => 5, multiple => undef, class =>'form-select mb-1' =%>
+		<div class="col-lg-4 col-md-5 col-sm-6 overflow-scroll border rounded px-2" style="height: 100px;">
+			% for my $user ($db->listUsers) {
+				% my $val   = $db->getPermissionLevel($user)->permission;
+				% my $role = maketext((grep { $ce->{userRoles}{$_} eq $val } keys %{ $ce->{userRoles} })[0]);
+				<div class="form-check">
+					<label class="form-check-label">
+						<%= check_box 'add-admin-users' => $user, class => 'form-check-input',
+							$val == 20 ? (checked => undef) : () =%>
+						<%= "$user ($role)" %>
+					</label>
+				</div>
+			% }
 		</div>
 	</div>
 	<div class="mb-2">
