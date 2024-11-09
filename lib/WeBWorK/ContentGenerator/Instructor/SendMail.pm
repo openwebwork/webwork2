@@ -113,8 +113,9 @@ sub initialize ($c) {
 		'user_id'
 	);
 
-	# Filter out users who don't get included in email
-	@Users = grep { $ce->status_abbrev_has_behavior($_->status, "include_in_email") } @Users;
+	# Filter out users who don't get included in email unless in the admin course.
+	@Users = grep { $ce->status_abbrev_has_behavior($_->status, "include_in_email") } @Users
+		unless $ce->{courseName} eq $ce->{admin_course_id};
 
 	# Cache the user records for later use.
 	$c->{ra_user_records} = \@Users;

@@ -39,13 +39,14 @@
 	<div class="mb-3">
 		<div class="mb-1">
 			<%= maketext(
-				'To add the WeBWorK administrators to the new course (as administrators) check the box below.') =%>
+				'Select admin course users to add to the new course (as the stated permission) below.') =%>
 		</div>
-		<div class="form-check">
-			<label class="form-check-label">
-				<%= check_box 'add_admin_users' => 1, class => 'form-check-input' =%>
-				<%= maketext('Add WeBWorK administrators to new course') =%>
-			</label>
+		<div class="col-lg-4 col-md-5 col-sm-6">
+			<%= select_field 'add-admin-users' => [ map {
+				my $val   = $db->getPermissionLevel($_)->permission;
+				my $level = maketext((grep { $ce->{userRoles}{$_} eq $val } keys %{ $ce->{userRoles} })[0]);
+				[ "$_ ($level)" => $_, $val == 20 ? (selected => undef) : () ] } $db->listUsers ],
+				size => 5, multiple => undef, class =>'form-select mb-1' =%>
 		</div>
 	</div>
 	<div class="mb-2">
@@ -54,7 +55,7 @@
 				. 'The user ID may contain only numbers, letters, hyphens, periods (dots), commas,and underscores.'
 		) =%>
 	</div>
-	<div class="row mb-3">
+	<div class="row">
 		<div class="col-lg-4 col-md-5 col-sm-6">
 			<div class="form-floating mb-1">
 				<%= text_field add_initial_userID => '',
@@ -65,9 +66,10 @@
 			</div>
 			<div class="form-floating mb-1">
 				<%= password_field 'add_initial_password',
-					id          => 'add_initial_password',
-					placeholder => '',
-					class       => 'form-control' =%>
+					id           => 'add_initial_password',
+					placeholder  => '',
+					class        => 'form-control',
+					autocomplete => 'new-password' =%>
 				<%= label_for add_initial_password => maketext('Password') =%>
 			</div>
 			<div class="form-floating mb-1">
@@ -100,7 +102,20 @@
 					class       => 'form-control' =%>
 				<%= label_for add_initial_email => maketext('Email Address') =%>
 			</div>
+			<div class="form-floating mb-1">
+				<%= text_field add_initial_studentID => '',
+					id          => 'add_initial_studentID',
+					placeholder => '',
+					class       => 'form-control' =%>
+				<%= label_for add_initial_studentID => maketext('Student ID') =%>
+			</div>
 		</div>
+	</div>
+	<div class="form-check mb-3">
+		<label class="form-check-label">
+			<%= check_box 'add_initial_user' => 1, class => 'form-check-input' =%>
+			<%= maketext('Add new user to admin course.') =%>
+		</label>
 	</div>
 	<div class="mb-1">
 		<%= maketext('To copy components from an existing course, '

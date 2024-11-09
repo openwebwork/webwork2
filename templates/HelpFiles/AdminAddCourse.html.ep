@@ -22,13 +22,15 @@
 		. 'on the course home page.') =%>
 </p>
 <p>
-	<%= maketext('The WeBWorK administrators need to be added to the course in order for them to access the course.  '
-		. 'Unchecking this option will make it so WeBWorK administrators cannot directly login to the course.') =%>
+	<%= maketext('Select which users in the admin course to copy over to the newly created course. The WeBWorK '
+		. 'administrators need to be added to the course in order for them to access the course. Unselecting '
+		. 'them will make it so WeBWorK administrators cannot directly login to the course.') =%>
 </p>
 <p>
-	<%= maketext('Enter the details of the course instructor to be added when the course is created.  This user '
-		. 'will also be added to the admin course with the username "userID_courseID" so you can manage and '
-		. 'email the instructors of the courses on the server.') =%>
+	<%= maketext('Enter the details of a new course instructor to be added when the course is created.  The only '
+		. 'required field is the user ID of the this user.  Optionally, you can add this user to the administration '
+		. 'course, so you can copy this user when creating future courses, or manage and email course instructors.  '
+		. 'The instructor will be added as a "Dropped" user so they cannot login to the administration course.') =%>
 </p>
 <p class="mb-0">
 	<%= maketext('You may choose a course to copy components from. Select the course and which components to copy.  '
