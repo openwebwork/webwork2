@@ -821,9 +821,9 @@ sub getConfigValues ($ce) {
 						. '<li> Debug: as in Standard, plus the problem environment (debugging data)</li></ol>'
 				),
 				labels => {
-					'0' => 'Simple',
-					'1' => 'Standard',
-					'2' => 'Debug'
+					'0' => x('Simple'),
+					'1' => x('Standard'),
+					'2' => x('Debug')
 				},
 				values => [qw(0 1 2)],
 				type   => 'popuplist'
@@ -909,7 +909,7 @@ sub getConfigValues ($ce) {
 					. 'of the LMS course.</dd></dl>'
 			),
 			values => [ '', qw(course homework) ],
-			labels => { '' => 'None', 'course' => 'Course', 'homework' => 'Homework' },
+			labels => { '' => x('None'), 'course' => x('Course'), 'homework' => x('Homework') },
 			type   => 'popuplist'
 		},
 		LTICheckPrior => {
@@ -952,9 +952,9 @@ sub getConfigValues ($ce) {
 			),
 			values => [qw(0 1 homework_always)],
 			labels => {
-				0               => 'Never',
-				1               => 'Conditionally',
-				homework_always => 'Always'
+				0               => x('Never'),
+				1               => x('Conditionally'),
+				homework_always => x('Always')
 			},
 			type => 'popuplist'
 		},
@@ -973,11 +973,11 @@ sub getConfigValues ($ce) {
 			),
 			values => [qw(open_date reduced_scoring_date due_date answer_date never)],
 			labels => {
-				open_date            => 'After the open date',
-				reduced_scoring_date => 'After the reduced scoring date',
-				due_date             => 'After the close date',
-				answer_date          => 'After the answer date',
-				never_date           => 'Never'
+				open_date            => x('After the open date'),
+				reduced_scoring_date => x('After the reduced scoring date'),
+				due_date             => x('After the close date'),
+				answer_date          => x('After the answer date'),
+				never_date           => x('Never')
 			},
 			type => 'popuplist'
 		},
@@ -999,7 +999,7 @@ sub getConfigValues ($ce) {
 			),
 			values => [qw(attempted 0 0.5 0.7 0.75 0.8 0.85 0.9 0.95 1)],
 			labels => {
-				attempted => 'Attempted',
+				attempted => x('Attempted'),
 				0         => '0%',
 				0.5       => '50%',
 				0.7       => '70%',
