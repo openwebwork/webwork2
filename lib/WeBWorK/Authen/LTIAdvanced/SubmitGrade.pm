@@ -30,7 +30,8 @@ use Digest::SHA qw(sha1_base64);
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::Sets qw(grade_set grade_gateway gateway_attempted earliest_gateway_date grade_all_sets get_date);
+use WeBWorK::Utils::DateTime qw(after before);
+use WeBWorK::Utils::Sets qw(grade_set grade_gateway set_attempted earliest_gateway_date grade_all_sets get_set_date);
 
 # This package contains utilities for submitting grades to the LMS
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -113,6 +114,31 @@ sub update_sourcedid ($self, $userID) {
 	return;
 }
 
+# Checks if the set is past the LTISendScoresAfterDate or has met the LTISendGradesEarlyThreshold
+sub can_submit_LMS_score ($db, $ce, $userID, $setID) {
+	my $userSet = $db->getMergedSet($userID, $setID);
+
+	if ($ce->{LTISendScoresAfterDate} != 'never') {
+		my $critical_date;
+		if ($userSet->assignment_type() =~ /gateway/) {
+			$critical_date = earliest_gateway_date($db, $userSet, $ce->{LTISendScoresAfterDate});
+		} else {
+			$critical_date = get_set_date($userSet, $ce->{LTISendScoresAfterDate});
+		}
+		return 1 if after($critical_date);
+	}
+
+	return set_attempted($db, $userID, $setID) if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted');
+
+	my $score;
+	if ($userSet->assignment_type() =~ /gateway/) {
+		$score = grade_gateway($db, $setID, $userID);
+	} else {
+		$score = grade_set($db, $setID, $userID);
+	}
+	return ($score >= $ce->{LTISendGradesEarlyThreshold});
+}
+
 # Computes and submits the course grade for userID to the LMS.
 # The course grade is the average of all sets assigned to the user.
 async sub submit_course_grade ($self, $userID) {
@@ -149,36 +175,30 @@ async sub submit_set_grade ($self, $userID, $setID) {
 		if !$userSet->lis_source_did && ($ce->{debug_lti_grade_passback} || $self->{post_processing_mode});
 
 	my $score;
-	my $incorrect_attempts = [];
-	my $attempted;
-	my $date;
+	my $criticalDate;
 
 	if ($userSet->assignment_type =~ /gateway/) {
-		$score     = scalar(grade_gateway($db, $userSet->set_id, $userID));
-		$attempted = gateway_attempted($db, $userSet, $userSet->set_id, $userID);
-		$date      = earliest_gateway_date($db, $userSet->set_id, $userID, $ce->{LTISendScoresAfterDate});
+		$score        = scalar(grade_gateway($db, $setID, $userID));
+		$criticalDate = earliest_gateway_date($db, $userSet, $ce->{LTISendScoresAfterDate})
+			unless ($ce->{LTISendScoresAfterDate} eq 'never');
 	} else {
-		my $totalRight;
-		my $total;
-		($totalRight, $total, $incorrect_attempts) = (grade_set($db, $userSet, $userID, 0, 1))[ 0, 1, 3 ];
-		$score     = ($total == 0) ? 0 : $totalRight / $total;
-		$attempted = 1 if ($totalRight || grep $_ > 0, @$incorrect_attempts);
-		$date      = get_date($userSet, $ce->{LTISendScoresAfterDate});
+		$score        = grade_set($db, $userSet, $userID);
+		$criticalDate = get_set_date($userSet, $ce->{LTISendScoresAfterDate})
+			unless ($ce->{LTISendScoresAfterDate} eq 'never');
 	}
 
-	my $beforeSendScoresAfterDate = $ce->{LTISendScoresAfterDate} eq 'never' || before($date);
-	if ($beforeSendScoresAfterDate) {
-		return if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted' && !$attempted);
-		return if ($score < $ce->{LTISendGradesEarlyThreshold});
+	if ($ce->{LTISendScoresAfterDate} eq 'never' || $criticalDate && before($criticalDate)) {
+		return if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted' && !set_attempted($db, $userID, $setID));
+		return if ($ce->{LTISendGradesEarlyThreshold} ne 'attempted' && $score < $ce->{LTISendGradesEarlyThreshold});
 	}
 
-# $beforeSendScoresAfterDate needs to be passed so that if LTICheckPrior is set, submit_grade() can decide between calling
-# an empty grade equivalent to 0 before the SendScoresAfterDate versus not equivalent after the SendScoresAfterDate
-	return await $self->submit_grade($userSet->lis_source_did, $score, $beforeSendScoresAfterDate);
+	return await $self->submit_grade($userSet->lis_source_did, $score,
+		($ce->{LTISendScoresAfterDate} eq 'never' || before($criticalDate))
+			&& ($self->{post_processing_mode} || $ce->{LTIGradeOnSubmit} ne 'homework_always'));
 }
 
 # Submits a score of $score to the lms with $sourcedid as the identifier.
-async sub submit_grade ($self, $sourcedid, $score, $beforeSendScoresAfterDate = 1) {
+async sub submit_grade ($self, $sourcedid, $score, $nullEqualsZero = 1) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 	my $db = $c->{db};
@@ -323,7 +343,7 @@ EOS
 						if $ce->{debug_lti_grade_passback};
 				} elsif (abs($score - $oldScore) < 0.001
 					&& ($score != 1 || $oldScore == 1)
-					&& ($score != 0 || $oldScore ne '' || $beforeSendScoresAfterDate))
+					&& ($score != 0 || $oldScore ne '' || $nullEqualsZero))
 				{
 					# LMS has essentially the same score, no reason to update it
 					debug(

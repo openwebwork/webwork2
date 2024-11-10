@@ -28,8 +28,8 @@ our @EXPORT_OK = qw(
 	format_set_name_display
 	grade_set
 	grade_gateway
-	gateway_attempted
-	get_date
+	set_attempted
+	get_set_date
 	earliest_gateway_date
 	grade_all_sets
 	is_restricted
@@ -149,41 +149,51 @@ sub grade_gateway ($db, $setName, $studentName) {
 	}
 }
 
-sub gateway_attempted ($db, $setName, $studentName) {
-	my @versionNums = $db->listSetVersions($studentName, $setName);
+sub set_attempted ($db, $userID, $setID) {
+	my $userSet = $db->getMergedSet($userID, $setID);
 
-	# it counts as "attempted" if there is more than one version
-	return 1 if (1 < @versionNums);
+	if ($userSet->assignment_type() =~ /gateway/) {
+		my @versionNums = $db->listSetVersions($userID, $setID);
 
-	# if there is one version, check for an attempted problem
-	if (@versionNums) {
-		my @problemNums = $db->listUserProblems($studentName, $setName);
-		my $problem     = $db->getMergedProblemVersion($studentName, $setName, $versionNums[0], $problemNums[0]);
-		return defined $problem ? $problem->attempted : 0;
+		# it counts as "attempted" if there is more than one version
+		return 1 if (1 < @versionNums);
+
+		# if there is one version, check for an attempted problem
+		if (@versionNums) {
+			my @problemNums = $db->listUserProblems($userID, $setID);
+			my $problem     = $db->getMergedProblemVersion($userID, $setID, $versionNums[0], $problemNums[0]);
+			return defined $problem ? $problem->attempted : 0;
+		}
+
+		# if there are no versions
+		return 0;
+	} else {
+		my @problemNums = $db->listUserProblems($userID, $setID);
+		for (@problemNums) {
+			my $problem = $db->getMergedProblem($userID, $setID, $_);
+			return 1 if $problem->attempted;
+		}
+		return 0;
 	}
-
-	return 0;
 }
 
-sub earliest_gateway_date ($db, $setName, $studentName, $dateType) {
-	return 'never' if ($dateType eq 'never');
-	my @versionNums = $db->listSetVersions($studentName, $setName);
+sub earliest_gateway_date ($db, $userSet, $dateType) {
+	my @versionNums = $db->listSetVersions($userSet->user_id, $userSet->set_id);
 
 	# if there are no versions, use the template's date
-	unless (@versionNums) {
-		return get_date($db->getMergedSet($studentName, $setName), $dateType);
-	}
+	return get_set_date($userSet, $dateType) unless (@versionNums);
 
 	# otherwise, use the earliest date among versions
-	my $date = get_date($db->getSetVersion($studentName, $setName, $versionNums[0]), $dateType);
+	my $earliest_date =
+		get_set_date($db->getSetVersion($userSet->user_id, $userSet->set_id, $versionNums[0]), $dateType);
 	for my $i (@versionNums) {
-		my $versionedSetDate = get_date($db->getSetVersion($studentName, $setName, $i), $dateType);
-		$date = $versionedSetDate if ($versionedSetDate < $date);
+		my $versionedSetDate = get_set_date($db->getSetVersion($userSet->user_id, $userSet->set_id, $i), $dateType);
+		$earliest_date = $versionedSetDate if ($versionedSetDate < $earliest_date);
 	}
-	return $date;
+	return $earliest_date;
 }
 
-sub grade_all_sets ($db, $studentName, $sendScoresAfterDate = 'open_date', $sendGradesEarlyThreshold = 0) {
+sub grade_all_sets ($db, $studentName, $dateType = 'reduced_scoring_date', $threshold = 'attempted') {
 	my @setIDs     = $db->listUserSets($studentName);
 	my @userSetIDs = map { [ $studentName, $_ ] } @setIDs;
 	my @userSets   = $db->getMergedSets(@userSetIDs);
@@ -195,23 +205,19 @@ sub grade_all_sets ($db, $studentName, $sendScoresAfterDate = 'open_date', $send
 		next unless (after($userSet->open_date()));
 		my $totalRight;
 		my $total;
-		my $incorrect_attempts = [];
-		my $attempted;
-		my $date;
+		my $criticalDate;
 
 		if ($userSet->assignment_type() =~ /gateway/) {
 			($totalRight, $total) = grade_gateway($db, $userSet->set_id, $studentName);
-			$attempted = gateway_attempted($db, $userSet->set_id, $studentName);
-			$date      = earliest_gateway_date($db, $userSet->set_id, $studentName, $sendScoresAfterDate);
+			$criticalDate = earliest_gateway_date($db, $userSet, $dateType) unless ($dateType eq 'never');
 		} else {
-			($totalRight, $total, $incorrect_attempts) = (grade_set($db, $userSet, $studentName, 0, 1))[ 0, 1, 3 ];
-			$attempted = 1 if ($totalRight || grep $_ > 0, @$incorrect_attempts);
-			$date      = get_date($userSet, $sendScoresAfterDate);
+			($totalRight, $total) = grade_set($db, $userSet, $studentName);
+			$criticalDate = get_set_date($userSet, $dateType) unless ($dateType eq 'never');
 		}
 
-		if ($sendScoresAfterDate eq 'never' || before($date)) {
-			next if ($sendGradesEarlyThreshold eq 'attempted' && !$attempted);
-			next if ($total > 0                               && $totalRight / $total < $sendGradesEarlyThreshold);
+		if ($dateType eq 'never' || $criticalDate && before($criticalDate)) {
+			next if ($threshold eq 'attempted' && !set_attempted($db, $studentName, $userSet->set_id));
+			next if ($threshold ne 'attempted' && $total > 0 && $totalRight / $total < $threshold);
 		}
 
 		$courseTotalRight += $totalRight;
@@ -227,14 +233,13 @@ sub grade_all_sets ($db, $studentName, $sendScoresAfterDate = 'open_date', $send
 
 }
 
-sub get_date ($set, $type) {
+sub get_set_date ($set, $dateType) {
 	return {
 		open_date            => $set->open_date(),
 		reduced_scoring_date => $set->reduced_scoring_date() // $set->close_date(),
 		close_date           => $set->close_date(),
 		answer_date          => $set->answer_date(),
-		never                => 'never'
-	}->{$type};
+	}->{$dateType};
 }
 
 sub is_restricted ($db, $set, $studentName) {

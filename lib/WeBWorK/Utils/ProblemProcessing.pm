@@ -255,7 +255,9 @@ async sub process_and_log_answer ($c) {
 					if ($ce->{LTIGradeOnSubmit}) {
 						$LTIGradeResult = 0;
 						my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);
-						if ($ce->{LTIGradeMode} eq 'course') {
+						if ($ce->{LTIGradeMode} eq 'course'
+							&& can_submit_LMS_score($db, $ce, $problem->user_id, $problem->set_id))
+						{
 							$LTIGradeResult = await $grader->submit_course_grade($problem->user_id);
 						} elsif ($ce->{LTIGradeMode} eq 'homework') {
 							$LTIGradeResult = await $grader->submit_set_grade($problem->user_id, $problem->set_id);
