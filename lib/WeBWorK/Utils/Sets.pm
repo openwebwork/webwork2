@@ -159,10 +159,17 @@ sub set_attempted ($db, $userID, $setID) {
 		return 1 if (1 < @versionNums);
 
 		# if there is one version, check for an attempted problem
+		# there could also be no actual attempted problems, but something like an
+		# achievement item has awarded credit for one exercise somewhere in the test
 		if (@versionNums) {
 			my @problemNums = $db->listUserProblems($userID, $setID);
 			my $problem     = $db->getMergedProblemVersion($userID, $setID, $versionNums[0], $problemNums[0]);
-			return defined $problem ? $problem->attempted : 0;
+			return 1 if defined $problem && $problem->attempted;
+			for (@problemNums) {
+				$problem = $db->getMergedProblemVersion($userID, $setID, $versionNums[0], $_);
+				return 1 if defined $problem && $problem->status > 0;
+			}
+			return 0;
 		}
 
 		# if there are no versions
@@ -171,7 +178,7 @@ sub set_attempted ($db, $userID, $setID) {
 		my @problemNums = $db->listUserProblems($userID, $setID);
 		for (@problemNums) {
 			my $problem = $db->getMergedProblem($userID, $setID, $_);
-			return 1 if $problem->attempted;
+			return 1 if ($problem->attempted || $problem->status > 0);
 		}
 		return 0;
 	}
@@ -234,12 +241,18 @@ sub grade_all_sets ($db, $studentName, $dateType = 'reduced_scoring_date', $thre
 }
 
 sub get_set_date ($set, $dateType) {
-	return {
-		open_date            => $set->open_date(),
-		reduced_scoring_date => $set->reduced_scoring_date() // $set->close_date(),
-		close_date           => $set->close_date(),
-		answer_date          => $set->answer_date(),
-	}->{$dateType};
+	my $date;
+	if ($dateType eq 'open_date') {
+		$date = $set->open_date;
+	} elsif ($dateType eq 'reduced_scoring_date') {
+		$date =
+			($set->enable_reduced_scoring && $set->reduced_scoring_date) ? $set->reduced_scoring_date : $set->due_date;
+	} elsif ($dateType eq 'due_date') {
+		$date = $set->due_date;
+	} elsif ($dateType eq 'answer_date') {
+		$date = $set->answer_date;
+	}
+	return $date;
 }
 
 sub is_restricted ($db, $set, $studentName) {
@@ -271,7 +284,7 @@ sub is_restricted ($db, $set, $studentName) {
 					$r_score = $v_score if ($v_score > $r_score);
 				}
 			} else {
-				$r_score = grade_set($db, $restrictor_set, $studentName, 0);
+				$r_score = grade_set($db, $restrictor_set, $studentName);
 			}
 
 			# round to evade machine rounding error

@@ -971,11 +971,11 @@ sub getConfigValues ($ce) {
 					. 'the close date.</p><p>For a given assignment, if it is before the $LTISendScoresAfterDate, '
 					. 'WeBWorK will still send a score to the LMS if the $LTISendGradesEarlyThreshold has been met.</p>'
 			),
-			values => [qw(open_date reduced_scoring_date close_date answer_date never)],
+			values => [qw(open_date reduced_scoring_date due_date answer_date never)],
 			labels => {
 				open_date            => 'After the open date',
 				reduced_scoring_date => 'After the reduced scoring date',
-				close_date           => 'After the close date',
+				due_date             => 'After the close date',
 				answer_date          => 'After the answer date',
 				never_date           => 'Never'
 			},

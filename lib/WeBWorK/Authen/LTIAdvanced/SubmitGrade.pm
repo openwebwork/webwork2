@@ -115,10 +115,10 @@ sub update_sourcedid ($self, $userID) {
 }
 
 # Checks if the set is past the LTISendScoresAfterDate or has met the LTISendGradesEarlyThreshold
-sub can_submit_LMS_score ($db, $ce, $userID, $setID) {
+sub can_submit_LMS_score ($self, $db, $ce, $userID, $setID) {
 	my $userSet = $db->getMergedSet($userID, $setID);
 
-	if ($ce->{LTISendScoresAfterDate} != 'never') {
+	if ($ce->{LTISendScoresAfterDate} ne 'never') {
 		my $critical_date;
 		if ($userSet->assignment_type() =~ /gateway/) {
 			$critical_date = earliest_gateway_date($db, $userSet, $ce->{LTISendScoresAfterDate});
@@ -134,7 +134,7 @@ sub can_submit_LMS_score ($db, $ce, $userID, $setID) {
 	if ($userSet->assignment_type() =~ /gateway/) {
 		$score = grade_gateway($db, $setID, $userID);
 	} else {
-		$score = grade_set($db, $setID, $userID);
+		$score = grade_set($db, $userSet, $userID);
 	}
 	return ($score >= $ce->{LTISendGradesEarlyThreshold});
 }
