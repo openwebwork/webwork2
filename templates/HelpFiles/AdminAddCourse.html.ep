@@ -22,15 +22,18 @@
 		. 'on the course home page.') =%>
 </p>
 <p>
-	<%= maketext('Select which users in the admin course to copy over to the newly created course. The WeBWorK '
+	<%= maketext('Select which users in the [_1] course to copy over to the newly created course. The WeBWorK '
 		. 'administrators need to be added to the course in order for them to access the course. Unselecting '
-		. 'them will make it so WeBWorK administrators cannot directly login to the course.') =%>
+		. 'them will make it so WeBWorK administrators cannot directly login to the course.',
+		$ce->{admin_course_id}) =%>
 </p>
 <p>
 	<%= maketext('Enter the details of a new course instructor to be added when the course is created.  The only '
-		. 'required field is the user ID of the this user.  Optionally, you can add this user to the administration '
-		. 'course, so you can copy this user when creating future courses, or manage and email course instructors.  '
-		. 'The instructor will be added as a "Dropped" user so they cannot login to the administration course.') =%>
+		. 'required field is the user ID of the this user.  Optionally, you can add this user to the [_1] course, '
+		. 'so you can copy this user when creating future courses, or manage and email course instructors.  Note, '
+		. 'by default these new users will be "Dropped" and unable to login to the [_1] course.  You can change '
+		. 'this on the "Accounts Manager" page. Additionally you can control access to the [_1] course by setting '
+		. q/$permissionLevels{login}='admin' in course.conf./, $ce->{admin_course_id}) =%>
 </p>
 <p class="mb-0">
 	<%= maketext('You may choose a course to copy components from. Select the course and which components to copy.  '

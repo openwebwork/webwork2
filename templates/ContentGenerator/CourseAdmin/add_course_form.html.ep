@@ -39,9 +39,10 @@
 	<div class="mb-3">
 		<div class="mb-1">
 			<%= maketext(
-				'Select admin course users to add to the new course (as the stated permission) below.') =%>
+				'Select [_1] course users to add to the new course (as the stated permission) below.',
+				$ce->{admin_course_id}) =%>
 		</div>
-		<div class="col-lg-4 col-md-5 col-sm-6 overflow-scroll border rounded px-2" style="height: 100px;">
+		<div class="col-lg-4 col-md-5 col-sm-6 overflow-auto border rounded px-2" style="max-height: 100px;">
 			% for my $user ($db->listUsers) {
 				% my $val   = $db->getPermissionLevel($user)->permission;
 				% my $role = maketext((grep { $ce->{userRoles}{$_} eq $val } keys %{ $ce->{userRoles} })[0]);
@@ -120,7 +121,7 @@
 	<div class="form-check mb-3">
 		<label class="form-check-label">
 			<%= check_box 'add_initial_user' => 1, class => 'form-check-input' =%>
-			<%= maketext('Add new user to admin course.') =%>
+			<%= maketext('Also add this user to the [_1] course.', $ce->{admin_course_id}) =%>
 		</label>
 	</div>
 	<div class="mb-1">

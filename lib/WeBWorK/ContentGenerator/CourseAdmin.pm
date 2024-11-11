@@ -310,14 +310,14 @@ sub do_add_course ($c) {
 	for my $userID ($c->param('add-admin-users')) {
 		unless ($db->existsUser($userID)) {
 			$c->addbadmessage($c->maketext(
-				'User "[_1]" will not be copied from [_2] course as it does not exist.', $userID,
+				'User "[_1]" will not be copied from the [_2] course as it does not exist.', $userID,
 				$ce->{admin_course_id}
 			));
 			next;
 		}
 		if ($userID eq $add_initial_userID) {
 			$c->addbadmessage($c->maketext(
-				'User "[_1]" will not be copied from [_2] course as it is the initial instructor.', $userID,
+				'User "[_1]" will not be copied from the [_2] course as it is the initial instructor.', $userID,
 				$ce->{admin_course_id}
 			));
 			next;
@@ -355,7 +355,7 @@ sub do_add_course ($c) {
 		if ($add_initial_user) {
 			if ($db->existsUser($add_initial_userID)) {
 				$c->addbadmessage($c->maketext(
-					'User "[_1]" will not be added to [_2] course as it already exists.', $add_initial_userID,
+					'User "[_1]" will not be added to the [_2] course as it already exists.', $add_initial_userID,
 					$ce->{admin_course_id}
 				));
 			} else {
