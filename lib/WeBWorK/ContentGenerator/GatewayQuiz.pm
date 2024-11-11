@@ -1024,9 +1024,18 @@ async sub pre_header_initialize ($c) {
 		}
 
 		# Try to update the student score on the LMS if that option is enabled.
-		if ($c->{submitAnswers} && $will{recordAnswers} && $ce->{LTIGradeMode} && $ce->{LTIGradeOnSubmit}) {
+		if (
+			$c->{submitAnswers}
+			&& $will{recordAnswers}
+			&& $ce->{LTIGradeMode}
+			&& ($ce->{LTIGradeOnSubmit} eq 'homework_always' && $ce->{LTIGradeMode} eq 'homework'
+				|| $ce->{LTIGradeOnSubmit}
+				&& $ce->{LTI}{ $ce->{LTIVersion} }{grader}->can_submit_LMS_score($db, $ce, $effectiveUserID, $setID)
+			)
+			)
+		{
 			my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);
-			if ($ce->{LTIGradeMode} eq 'course' && $grader->can_submit_LMS_score($db, $ce, $effectiveUserID, $setID)) {
+			if ($ce->{LTIGradeMode} eq 'course') {
 				$LTIGradeResult = await $grader->submit_course_grade($effectiveUserID);
 			} elsif ($ce->{LTIGradeMode} eq 'homework') {
 				$LTIGradeResult = await $grader->submit_set_grade($effectiveUserID, $setID);

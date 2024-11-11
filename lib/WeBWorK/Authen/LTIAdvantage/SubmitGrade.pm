@@ -193,7 +193,7 @@ async sub get_access_token ($self) {
 }
 
 # Checks if the set is past the LTISendScoresAfterDate or has met the LTISendGradesEarlyThreshold
-sub can_submit_LMS_score ($self, $db, $ce, $userID, $setID) {
+sub can_submit_LMS_score ($invocant, $db, $ce, $userID, $setID) {
 	my $userSet = $db->getMergedSet($userID, $setID);
 
 	if ($ce->{LTISendScoresAfterDate} ne 'never') {
@@ -243,6 +243,8 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	my $ce = $c->{ce};
 	my $db = $c->{db};
 
+	return unless $self->can_submit_LMS_score($db, $ce, $userID, $setID);
+
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
@@ -252,31 +254,16 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	$self->warning('LMS user id is not available for this user.') unless $user->lis_source_did;
 	$self->warning('LMS lineitem is not available for this set.') unless $userSet->lis_source_did;
 
-	my $totalRight;
-	my $total;
-	my $criticalDate;
-
-	if ($userSet->assignment_type =~ /gateway/) {
-		($totalRight, $total) = grade_gateway($db, $setID, $userID);
-		$criticalDate = earliest_gateway_date($db, $userSet, $userID, $ce->{LTISendScoresAfterDate})
-			unless ($ce->{LTISendScoresAfterDate} eq 'never');
-	} else {
-		($totalRight, $total) = (grade_set($db, $userSet, $userID))[ 0, 1 ];
-		$criticalDate = get_set_date($userSet, $ce->{LTISendScoresAfterDate})
-			unless ($ce->{LTISendScoresAfterDate} eq 'never');
-	}
-
-	if ($ce->{LTISendScoresAfterDate} eq 'never' || $criticalDate && before($criticalDate)) {
-		return if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted' && !set_attempted($db, $userID, $setID));
-		return
-			if ($ce->{LTISendGradesEarlyThreshold} ne 'attempted'
-				&& $total
-				&& $totalRight / $total < $ce->{LTISendGradesEarlyThreshold});
-	}
-
-	return await $self->submit_grade($user->lis_source_did, $userSet->lis_source_did, $totalRight, $total,
-		($ce->{LTISendScoresAfterDate} eq 'never' || before($criticalDate))
-			&& ($self->{post_processing_mode} || $ce->{LTIGradeOnSubmit} ne 'homework_always'));
+	return await $self->submit_grade(
+		$user->lis_source_did,
+		$userSet->lis_source_did,
+		(
+			$userSet->assignment_type =~ /gateway/
+			? grade_gateway($db, $setID, $userID)
+			: (grade_set($db, $userSet, $userID))[ 0, 1 ]
+		),
+		$self->{post_processing_mode} || $ce->{LTIGradeOnSubmit} ne 'homework_always'
+	);
 }
 
 # Submits scoreGiven and scoreMaximum to the lms with $sourcedid as the identifier.
