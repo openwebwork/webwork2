@@ -293,7 +293,6 @@ sub do_add_course ($c) {
 	my $add_initial_firstName       = trim_spaces($c->param('add_initial_firstName'))       // '';
 	my $add_initial_lastName        = trim_spaces($c->param('add_initial_lastName'))        // '';
 	my $add_initial_email           = trim_spaces($c->param('add_initial_email'))           // '';
-	my $add_initial_studentID       = trim_spaces($c->param('add_initial_studentID'))       // '';
 	my $add_initial_user            = $c->param('add_initial_user')                         // 0;
 
 	my $copy_from_course = trim_spaces($c->param('copy_from_course')) // '';
@@ -337,7 +336,6 @@ sub do_add_course ($c) {
 			user_id       => $add_initial_userID,
 			first_name    => $add_initial_firstName,
 			last_name     => $add_initial_lastName,
-			student_id    => $add_initial_studentID,
 			email_address => $add_initial_email,
 			status        => 'O',
 		);

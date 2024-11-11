@@ -109,13 +109,6 @@
 					class       => 'form-control' =%>
 				<%= label_for add_initial_email => maketext('Email Address') =%>
 			</div>
-			<div class="form-floating mb-1">
-				<%= text_field add_initial_studentID => '',
-					id          => 'add_initial_studentID',
-					placeholder => '',
-					class       => 'form-control' =%>
-				<%= label_for add_initial_studentID => maketext('Student ID') =%>
-			</div>
 		</div>
 	</div>
 	<div class="form-check mb-3">
