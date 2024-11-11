@@ -36,24 +36,26 @@
 			</div>
 		</div>
 	</div>
-	<div class="mb-3">
+	<div class="row mb-3">
 		<div class="mb-1">
 			<%= maketext(
 				'Select [_1] course users to add to the new course (as the stated permission) below.',
 				$ce->{admin_course_id}) =%>
 		</div>
-		<div class="col-lg-4 col-md-5 col-sm-6 overflow-auto border rounded px-2" style="max-height: 100px;">
-			% for my $user ($db->listUsers) {
-				% my $val   = $db->getPermissionLevel($user)->permission;
-				% my $role = maketext((grep { $ce->{userRoles}{$_} eq $val } keys %{ $ce->{userRoles} })[0]);
-				<div class="form-check">
-					<label class="form-check-label">
-						<%= check_box 'add-admin-users' => $user, class => 'form-check-input',
-							$val == 20 && !param('last_page_was_add_course') ? (checked => undef) : () =%>
-						<%= "$user ($role)" %>
-					</label>
-				</div>
-			% }
+		<div class="col-lg-4 col-md-5 col-sm-6">
+			<div class="overflow-auto border rounded px-2" style="max-height: 100px;">
+				% for my $user ($db->listUsers) {
+					% my $val   = $db->getPermissionLevel($user)->permission;
+					% my $role = maketext((grep { $ce->{userRoles}{$_} eq $val } keys %{ $ce->{userRoles} })[0]);
+					<div class="form-check">
+						<label class="form-check-label">
+							<%= check_box 'add-admin-users' => $user, class => 'form-check-input',
+								$val == 20 && !param('last_page_was_add_course') ? (checked => undef) : () =%>
+							<%= "$user ($role)" %>
+						</label>
+					</div>
+				% }
+			</div>
 		</div>
 	</div>
 	<div class="mb-2">
@@ -62,7 +64,7 @@
 				. 'The user ID may contain only numbers, letters, hyphens, periods (dots), commas,and underscores.'
 		) =%>
 	</div>
-	<div class="row">
+	<div class="row mb-1">
 		<div class="col-lg-4 col-md-5 col-sm-6">
 			<div class="form-floating mb-1">
 				<%= text_field add_initial_userID => '',
