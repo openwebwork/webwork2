@@ -78,12 +78,10 @@
 		lineWrapping: true,
 		extraKeys: {
 			Tab: (cm) => cm.execCommand('insertSoftTab'),
-			'Shift-Ctrl-F': (cm) => cm.foldCode(cm.getCursor(), { scanUp: true }),
-			'Shift-Cmd-F': (cm) => cm.foldCode(cm.getCursor(), { scanUp: true }),
-			'Shift-Ctrl-A': (cm) => CodeMirror.commands.foldAll(cm),
-			'Shift-Cmd-A': (cm) => CodeMirror.commands.foldAll(cm),
-			'Shift-Ctrl-G': (cm) => CodeMirror.commands.unfoldAll(cm),
-			'Shift-Cmd-G': (cm) => CodeMirror.commands.unfoldAll(cm)
+			'Shift-Ctrl-[': (cm) => cm.foldCode(cm.getCursor(), { scanUp: true }),
+			'Cmd-Alt-[': (cm) => cm.foldCode(cm.getCursor(), { scanUp: true }),
+			'Ctrl-Alt-[': (cm) => CodeMirror.commands.foldAll(cm),
+			'Ctrl-Alt-]': (cm) => CodeMirror.commands.unfoldAll(cm)
 		},
 		highlightSelectionMatches: { annotateScrollbar: true },
 		matchBrackets: true,
