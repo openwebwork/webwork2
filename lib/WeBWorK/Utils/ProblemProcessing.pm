@@ -33,6 +33,7 @@ use WeBWorK::Utils qw(encodeAnswers createEmailSenderTransportSMTP);
 use WeBWorK::Utils::DateTime qw(before after);
 use WeBWorK::Utils::JITAR qw(jitar_id_to_seq jitar_problem_adjusted_status);
 use WeBWorK::Utils::Logs qw(writeLog writeCourseLog);
+use WeBWorK::Utils::Sets qw(can_submit_LMS_score);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
 use Caliper::Sensor;
@@ -254,8 +255,7 @@ async sub process_and_log_answer ($c) {
 					my $LTIGradeResult = -1;
 					if ($ce->{LTIGradeOnSubmit} eq 'homework_always' && $ce->{LTIGradeMode} eq 'homework'
 						|| $ce->{LTIGradeOnSubmit}
-						&& $ce->{LTI}{ $ce->{LTIVersion} }{grader}
-						->can_submit_LMS_score($db, $ce, $problem->user_id, $problem->set_id))
+						&& can_submit_LMS_score($db, $ce, $problem->user_id, $problem->set_id))
 					{
 						$LTIGradeResult = 0;
 						my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);

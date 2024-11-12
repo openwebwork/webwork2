@@ -35,6 +35,7 @@ our @EXPORT_OK = qw(
 	is_restricted
 	get_test_problem_position
 	list_set_versions
+	can_submit_LMS_score
 );
 
 sub format_set_name_internal ($set_name) {
@@ -253,6 +254,31 @@ sub get_set_date ($set, $dateType) {
 		$date = $set->answer_date;
 	}
 	return $date;
+}
+
+# Checks if the set is past the LTISendScoresAfterDate or has met the LTISendGradesEarlyThreshold
+sub can_submit_LMS_score ($db, $ce, $userID, $setID) {
+	my $userSet = $db->getMergedSet($userID, $setID);
+
+	if ($ce->{LTISendScoresAfterDate} ne 'never') {
+		my $critical_date;
+		if ($userSet->assignment_type() =~ /gateway/) {
+			$critical_date = earliest_gateway_date($db, $userSet, $ce->{LTISendScoresAfterDate});
+		} else {
+			$critical_date = get_set_date($userSet, $ce->{LTISendScoresAfterDate});
+		}
+		return 1 if after($critical_date);
+	}
+
+	return set_attempted($db, $userID, $setID) if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted');
+
+	my $score;
+	if ($userSet->assignment_type() =~ /gateway/) {
+		$score = grade_gateway($db, $setID, $userID);
+	} else {
+		$score = grade_set($db, $userSet, $userID);
+	}
+	return ($score >= $ce->{LTISendGradesEarlyThreshold});
 }
 
 sub is_restricted ($db, $set, $studentName) {

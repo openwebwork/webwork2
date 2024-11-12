@@ -33,7 +33,7 @@ use WeBWorK::Utils::Instructor qw(assignSetVersionToUser);
 use WeBWorK::Utils::Logs qw(writeLog writeCourseLog);
 use WeBWorK::Utils::ProblemProcessing qw/create_ans_str_from_responses compute_reduced_score/;
 use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
-use WeBWorK::Utils::Sets qw(is_restricted);
+use WeBWorK::Utils::Sets qw(is_restricted can_submit_LMS_score);
 use WeBWorK::DB::Utils qw(global2user fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
@@ -1029,9 +1029,7 @@ async sub pre_header_initialize ($c) {
 			&& $will{recordAnswers}
 			&& $ce->{LTIGradeMode}
 			&& ($ce->{LTIGradeOnSubmit} eq 'homework_always' && $ce->{LTIGradeMode} eq 'homework'
-				|| $ce->{LTIGradeOnSubmit}
-				&& $ce->{LTI}{ $ce->{LTIVersion} }{grader}->can_submit_LMS_score($db, $ce, $effectiveUserID, $setID)
-			)
+				|| $ce->{LTIGradeOnSubmit} && can_submit_LMS_score($db, $ce, $effectiveUserID, $setID))
 			)
 		{
 			my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);

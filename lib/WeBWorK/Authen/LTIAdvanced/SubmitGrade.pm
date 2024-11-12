@@ -31,7 +31,8 @@ use Digest::SHA qw(sha1_base64);
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
 use WeBWorK::Utils::DateTime qw(after before);
-use WeBWorK::Utils::Sets qw(grade_set grade_gateway set_attempted earliest_gateway_date grade_all_sets get_set_date);
+use WeBWorK::Utils::Sets
+	qw(grade_set grade_gateway set_attempted earliest_gateway_date grade_all_sets can_submit_LMS_score);
 
 # This package contains utilities for submitting grades to the LMS
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -114,31 +115,6 @@ sub update_sourcedid ($self, $userID) {
 	return;
 }
 
-# Checks if the set is past the LTISendScoresAfterDate or has met the LTISendGradesEarlyThreshold
-sub can_submit_LMS_score ($invocant, $db, $ce, $userID, $setID) {
-	my $userSet = $db->getMergedSet($userID, $setID);
-
-	if ($ce->{LTISendScoresAfterDate} ne 'never') {
-		my $critical_date;
-		if ($userSet->assignment_type() =~ /gateway/) {
-			$critical_date = earliest_gateway_date($db, $userSet, $ce->{LTISendScoresAfterDate});
-		} else {
-			$critical_date = get_set_date($userSet, $ce->{LTISendScoresAfterDate});
-		}
-		return 1 if after($critical_date);
-	}
-
-	return set_attempted($db, $userID, $setID) if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted');
-
-	my $score;
-	if ($userSet->assignment_type() =~ /gateway/) {
-		$score = grade_gateway($db, $setID, $userID);
-	} else {
-		$score = grade_set($db, $userSet, $userID);
-	}
-	return ($score >= $ce->{LTISendGradesEarlyThreshold});
-}
-
 # Computes and submits the course grade for userID to the LMS.
 # The course grade is the average of all sets assigned to the user.
 async sub submit_course_grade ($self, $userID) {
@@ -164,7 +140,7 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	my $ce = $c->{ce};
 	my $db = $c->{db};
 
-	return unless $self->can_submit_LMS_score($db, $ce, $userID, $setID);
+	return unless can_submit_LMS_score($db, $ce, $userID, $setID);
 
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
