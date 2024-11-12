@@ -29,8 +29,6 @@ our @EXPORT_OK = qw(
 	grade_set
 	grade_gateway
 	set_attempted
-	get_set_date
-	earliest_gateway_date
 	grade_all_sets
 	is_restricted
 	get_test_problem_position
@@ -185,23 +183,24 @@ sub set_attempted ($db, $userID, $setID) {
 	}
 }
 
-sub earliest_gateway_date ($db, $userSet, $dateType) {
+sub earliest_gateway_date ($db, $ce, $userSet) {
 	my @versionNums = $db->listSetVersions($userSet->user_id, $userSet->set_id);
 
 	# if there are no versions, use the template's date
-	return get_set_date($userSet, $dateType) unless (@versionNums);
+	return get_LTISendScoresAfterDate($userSet, $ce) unless (@versionNums);
 
 	# otherwise, use the earliest date among versions
 	my $earliest_date =
-		get_set_date($db->getSetVersion($userSet->user_id, $userSet->set_id, $versionNums[0]), $dateType);
+		get_LTISendScoresAfterDate($db->getSetVersion($userSet->user_id, $userSet->set_id, $versionNums[0]), $ce);
 	for my $i (@versionNums) {
-		my $versionedSetDate = get_set_date($db->getSetVersion($userSet->user_id, $userSet->set_id, $i), $dateType);
+		my $versionedSetDate =
+			get_LTISendScoresAfterDate($db->getSetVersion($userSet->user_id, $userSet->set_id, $i), $ce);
 		$earliest_date = $versionedSetDate if ($versionedSetDate < $earliest_date);
 	}
 	return $earliest_date;
 }
 
-sub grade_all_sets ($db, $studentName, $dateType = 'reduced_scoring_date', $threshold = 'attempted') {
+sub grade_all_sets ($db, $ce, $studentName) {
 	my @setIDs     = $db->listUserSets($studentName);
 	my @userSetIDs = map { [ $studentName, $_ ] } @setIDs;
 	my @userSets   = $db->getMergedSets(@userSetIDs);
@@ -217,15 +216,20 @@ sub grade_all_sets ($db, $studentName, $dateType = 'reduced_scoring_date', $thre
 
 		if ($userSet->assignment_type() =~ /gateway/) {
 			($totalRight, $total) = grade_gateway($db, $userSet->set_id, $studentName);
-			$criticalDate = earliest_gateway_date($db, $userSet, $dateType) unless ($dateType eq 'never');
+			$criticalDate = earliest_gateway_date($db, $ce, $userSet) unless ($ce->{LTISendScoresAfterDate} eq 'never');
 		} else {
 			($totalRight, $total) = grade_set($db, $userSet, $studentName);
-			$criticalDate = get_set_date($userSet, $dateType) unless ($dateType eq 'never');
+			$criticalDate = get_LTISendScoresAfterDate($userSet, $ce) unless ($ce->{LTISendScoresAfterDate} eq 'never');
 		}
 
-		if ($dateType eq 'never' || $criticalDate && before($criticalDate)) {
-			next if ($threshold eq 'attempted' && !set_attempted($db, $studentName, $userSet->set_id));
-			next if ($threshold ne 'attempted' && $total > 0 && $totalRight / $total < $threshold);
+		if ($ce->{LTISendScoresAfterDate} eq 'never' || $criticalDate && before($criticalDate)) {
+			next
+				if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted'
+					&& !set_attempted($db, $studentName, $userSet->set_id));
+			next
+				if ($ce->{LTISendGradesEarlyThreshold} ne 'attempted'
+					&& $total > 0
+					&& $totalRight / $total < $ce->{LTISendGradesEarlyThreshold});
 		}
 
 		$courseTotalRight += $totalRight;
@@ -241,13 +245,16 @@ sub grade_all_sets ($db, $studentName, $dateType = 'reduced_scoring_date', $thre
 
 }
 
-sub get_set_date ($set, $dateType) {
+sub get_LTISendScoresAfterDate ($set, $ce) {
+	my $dateType = $ce->{LTISendScoresAfterDate};
 	my $date;
 	if ($dateType eq 'open_date') {
 		$date = $set->open_date;
 	} elsif ($dateType eq 'reduced_scoring_date') {
 		$date =
-			($set->enable_reduced_scoring && $set->reduced_scoring_date) ? $set->reduced_scoring_date : $set->due_date;
+			($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+				&& $set->enable_reduced_scoring
+				&& $set->reduced_scoring_date) ? $set->reduced_scoring_date : $set->due_date;
 	} elsif ($dateType eq 'due_date') {
 		$date = $set->due_date;
 	} elsif ($dateType eq 'answer_date') {
@@ -263,9 +270,9 @@ sub can_submit_LMS_score ($db, $ce, $userID, $setID) {
 	if ($ce->{LTISendScoresAfterDate} ne 'never') {
 		my $critical_date;
 		if ($userSet->assignment_type() =~ /gateway/) {
-			$critical_date = earliest_gateway_date($db, $userSet, $ce->{LTISendScoresAfterDate});
+			$critical_date = earliest_gateway_date($db, $ce, $userSet);
 		} else {
-			$critical_date = get_set_date($userSet, $ce->{LTISendScoresAfterDate});
+			$critical_date = get_LTISendScoresAfterDate($userSet, $ce);
 		}
 		return 1 if after($critical_date);
 	}
@@ -431,7 +438,7 @@ version of this test.
 
 =head2 grade_all_sets
 
-Usage: C<grade_all_sets($db, $studentName)>
+Usage: C<grade_all_sets($db, $ce, $studentName)>
 
 All arguments listed are required.
 

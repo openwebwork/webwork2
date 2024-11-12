@@ -31,8 +31,7 @@ use Digest::SHA qw(sha1_base64);
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
 use WeBWorK::Utils::DateTime qw(after before);
-use WeBWorK::Utils::Sets
-	qw(grade_set grade_gateway set_attempted earliest_gateway_date grade_all_sets can_submit_LMS_score);
+use WeBWorK::Utils::Sets qw(grade_set grade_gateway grade_all_sets can_submit_LMS_score);
 
 # This package contains utilities for submitting grades to the LMS
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -130,8 +129,7 @@ async sub submit_course_grade ($self, $userID) {
 	$self->warning("lis_source_did is not available for user: $userID")
 		if !$user->lis_source_did && ($ce->{debug_lti_grade_passback} || $self->{post_processing_mode});
 
-	return await $self->submit_grade($user->lis_source_did,
-		scalar(grade_all_sets($db, $userID, $ce->{LTISendScoresAfterDate}, $ce->{LTISendGradesEarlyThreshold})));
+	return await $self->submit_grade($user->lis_source_did, scalar(grade_all_sets($db, $ce, $userID)));
 }
 
 # Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.

@@ -40,8 +40,7 @@ use Time::HiRes;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
 use WeBWorK::Utils::DateTime qw(after before);
-use WeBWorK::Utils::Sets
-	qw(grade_set grade_gateway set_attempted earliest_gateway_date grade_all_sets can_submit_LMS_score);
+use WeBWorK::Utils::Sets qw(grade_set grade_gateway grade_all_sets can_submit_LMS_score);
 
 # This package contains utilities for submitting grades to the LMS via LTI 1.3.
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -209,8 +208,7 @@ async sub submit_course_grade ($self, $userID) {
 	$self->warning('LMS user id is not available for this user.')   unless $user->lis_source_did;
 	$self->warning('LMS lineitem is not available for the course.') unless $lineitem;
 
-	return await $self->submit_grade($user->lis_source_did, $lineitem,
-		grade_all_sets($db, $userID, $ce->{LTISendScoresAfterDate}, $ce->{LTISendGradesEarlyThreshold}));
+	return await $self->submit_grade($user->lis_source_did, $lineitem, grade_all_sets($db, $ce, $userID));
 }
 
 # Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.
