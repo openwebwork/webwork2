@@ -138,7 +138,9 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	my $ce = $c->{ce};
 	my $db = $c->{db};
 
-	return unless can_submit_LMS_score($db, $ce, $userID, $setID);
+	return
+		unless (can_submit_LMS_score($db, $ce, $userID, $setID)
+			|| !$self->{post_processing_mode} && $ce->{LTIGradeOnSubmit} eq 'homework_always');
 
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
