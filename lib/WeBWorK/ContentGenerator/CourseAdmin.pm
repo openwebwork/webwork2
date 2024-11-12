@@ -214,7 +214,7 @@ sub pre_header_initialize ($c) {
 				$method_to_call = 'manage_lti_course_map_form';
 			}
 		} elsif ($subDisplay eq 'manage_otp_secrets') {
-			if (defined $c->param('action')) {
+			if (defined $c->param('take_action')) {
 				if ($c->param('action') eq 'reset') {
 					$method_to_call = 'reset_otp_secrets_confirm';
 				} else {
@@ -2388,14 +2388,23 @@ sub do_save_lti_course_map ($c) {
 
 # Form to copy or reset OTP secrets.
 sub manage_otp_secrets_form ($c) {
-	my $courses = {};
-	my $dbs     = {};
+	my $courses          = {};
+	my $dbs              = {};
+	my $skipped_courses  = [];
+	my $show_all_courses = $c->param('show_all_courses') || 0;
 
 	# Create course data first, since it is used in all cases and initializes course db references.
 	for my $courseID (listCourses($c->ce)) {
 		my $ce = WeBWorK::CourseEnvironment->new({ courseName => $courseID });
-		$dbs->{$courseID}     = WeBWorK::DB->new($ce->{dbLayouts}{ $ce->{dbLayoutName} });
-		$courses->{$courseID} = [ $dbs->{$courseID}->listUsers ];
+		$dbs->{$courseID} = WeBWorK::DB->new($ce->{dbLayouts}{ $ce->{dbLayoutName} });
+
+		# By default ignore courses larger than 200 users, as this can cause a large load building menus.
+		my @users = $dbs->{$courseID}->listUsers;
+		if ($show_all_courses || scalar @users < 200) {
+			$courses->{$courseID} = \@users;
+		} else {
+			push(@$skipped_courses, $courseID);
+		}
 	}
 
 	# Process the confirmed rest or copy actions here.
@@ -2437,7 +2446,11 @@ sub manage_otp_secrets_form ($c) {
 		}
 	}
 
-	return $c->include('ContentGenerator/CourseAdmin/manage_otp_secrets_form', courses => $courses);
+	return $c->include(
+		'ContentGenerator/CourseAdmin/manage_otp_secrets_form',
+		courses         => $courses,
+		skipped_courses => $skipped_courses
+	);
 }
 
 # Deals with both single and multiple copy confirmation.
