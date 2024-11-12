@@ -43,9 +43,10 @@
 			).getTime();
 
 		for (const rule of groupRules) {
-			const value =
-				rule[0].value || document.getElementsByName(`${rule[0].name}.class_value`)[0]?.dataset.classValue;
+			const classValue = document.getElementsByName(`${rule[0].name}.class_value`)[0]?.dataset.classValue;
+			const value = rule[0].value || classValue;
 			rule.push(value ? parseInt(value) * 1000 - timezoneAdjustment : 0);
+			if (classValue) rule.push(parseInt(classValue) * 1000 - timezoneAdjustment);
 		}
 
 		const update = (input) => {
@@ -53,16 +54,25 @@
 			if (activeIndex == -1) return;
 			const activeFieldDate =
 				groupRules[activeIndex][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() ||
+				groupRules[activeIndex][2] ||
 				groupRules[activeIndex][1];
 
 			for (let i = 0; i < groupRules.length; ++i) {
 				if (i == activeIndex) continue;
 				const thisFieldDate =
-					groupRules[i][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() || groupRules[i][1];
+					groupRules[i][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() ||
+					groupRules[i][2] ||
+					groupRules[i][1];
 				if (i < activeIndex && thisFieldDate > activeFieldDate)
-					groupRules[i][0].parentNode._flatpickr.setDate(activeFieldDate, true);
+					groupRules[i][0].parentNode._flatpickr.setDate(
+						activeFieldDate === groupRules[i][2] ? undefined : activeFieldDate,
+						true
+					);
 				else if (i > activeIndex && thisFieldDate < activeFieldDate)
-					groupRules[i][0].parentNode._flatpickr.setDate(activeFieldDate, true);
+					groupRules[i][0].parentNode._flatpickr.setDate(
+						activeFieldDate === groupRules[i][2] ? undefined : activeFieldDate,
+						true
+					);
 			}
 		};
 
