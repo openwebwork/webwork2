@@ -48,7 +48,7 @@ async sub initialize ($c) {
 	my $eUserID = $c->param('effectiveUser');
 
 	# Don't show "Start New Test" button when acting as another user, unless user has permissions to do so.
-	$c->{hide_start_new_test} = $userID ne $eUserID
+	$c->{disable_start_new_test} = $userID ne $eUserID
 		&& !($authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
 			|| $authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student'));
 
