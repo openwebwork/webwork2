@@ -53,7 +53,7 @@
 	<div class="row mb-3">
 		<div class="mb-1">
 			<%= maketext(
-				'Select [_1] course users to add to the new course (as the stated permission) below.',
+				'Select users from the [_1] course to add to the new course with indicated permission.',
 				$ce->{admin_course_id}) =%>
 		</div>
 		<div class="col-lg-4 col-md-5 col-sm-6">
