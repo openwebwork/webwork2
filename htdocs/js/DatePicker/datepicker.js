@@ -43,20 +43,36 @@
 			).getTime();
 
 		for (const rule of groupRules) {
-			const value =
-				rule[0].value || document.getElementsByName(`${rule[0].name}.class_value`)[0]?.dataset.classValue;
+			const classValue = document.getElementsByName(`${rule[0].name}.class_value`)[0]?.dataset.classValue;
+			const value = rule[0].value || classValue;
 			rule.push(value ? parseInt(value) * 1000 - timezoneAdjustment : 0);
+			if (classValue) rule.push(parseInt(classValue) * 1000 - timezoneAdjustment);
 		}
 
-		const update = () => {
-			for (let i = 1; i < groupRules.length; ++i) {
-				const prevFieldDate =
-					groupRules[i - 1][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() || groupRules[i - 1][1];
+		const update = (input) => {
+			const activeIndex = groupRules.findIndex((r) => r[0] === input);
+			if (activeIndex == -1) return;
+			const activeFieldDate =
+				groupRules[activeIndex][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() ||
+				groupRules[activeIndex][2] ||
+				groupRules[activeIndex][1];
+
+			for (let i = 0; i < groupRules.length; ++i) {
+				if (i == activeIndex) continue;
 				const thisFieldDate =
-					groupRules[i][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() || groupRules[i][1];
-				if (prevFieldDate && thisFieldDate && prevFieldDate > thisFieldDate) {
-					groupRules[i][0].parentNode._flatpickr.setDate(prevFieldDate, true);
-				}
+					groupRules[i][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() ||
+					groupRules[i][2] ||
+					groupRules[i][1];
+				if (i < activeIndex && thisFieldDate > activeFieldDate)
+					groupRules[i][0].parentNode._flatpickr.setDate(
+						activeFieldDate === groupRules[i][2] ? undefined : activeFieldDate,
+						true
+					);
+				else if (i > activeIndex && thisFieldDate < activeFieldDate)
+					groupRules[i][0].parentNode._flatpickr.setDate(
+						activeFieldDate === groupRules[i][2] ? undefined : activeFieldDate,
+						true
+					);
 			}
 		};
 
@@ -104,9 +120,9 @@
 								selectedDate.setFullYear(today.getFullYear());
 								selectedDate.setMonth(today.getMonth());
 								selectedDate.setDate(today.getDate());
-								fp.setDate(selectedDate);
+								fp.setDate(selectedDate, true);
 							} else if (index === 1) {
-								fp.setDate(new Date());
+								fp.setDate(new Date(), true);
 							}
 						}
 					})
@@ -115,7 +131,9 @@
 					if (this.input.value === orig_value) this.altInput.classList.remove('changed');
 					else this.altInput.classList.add('changed');
 				},
-				onClose: update,
+				onClose() {
+					return update(this.input);
+				},
 				onReady() {
 					// Flatpickr hides the original input and adds the alternate input after it.  That messes up the
 					// bootstrap input group styling.  So move the now hidden original input after the created alternate
@@ -133,7 +151,7 @@
 					// Make the alternate input left-to-right even for right-to-left languages.
 					this.altInput.dir = 'ltr';
 
-					this.altInput.addEventListener('blur', update);
+					this.altInput.addEventListener('blur', () => update(this.input));
 				},
 				parseDate(datestr, format) {
 					// Deal with the case of a unix timestamp.  The timezone needs to be adjusted back as this is for
