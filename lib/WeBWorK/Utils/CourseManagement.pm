@@ -201,7 +201,7 @@ boolean options:
 =cut
 
 sub addCourse {
-	my (%options) = (initial_userID => '', @_);
+	my (%options) = @_;
 
 	for my $key (keys(%options)) {
 		my $value = '####UNDEF###';
@@ -217,7 +217,7 @@ sub addCourse {
 
 	debug \@users;
 
-	my ($initialUser) = grep { $_->[0]{user_id} eq $options{initial_userID} } @users;
+	my @initialUsers = grep { $_->[2]->permission < $ce->{userRoles}{admin} } @users;
 
 	# get the database layout out of the options hash
 	my $dbLayoutName = $courseOptions{dbLayoutName};
@@ -407,7 +407,7 @@ sub addCourse {
 				assignSetsToUsers($db, $ce, \@user_sets, [$user_id]);
 			}
 		}
-		assignSetsToUsers($db, $ce, \@set_ids, [ $initialUser->[0]{user_id} ]) if $initialUser;
+		assignSetsToUsers($db, $ce, \@set_ids, [ map { $_->[0]{user_id} } @initialUsers ]) if @initialUsers;
 	}
 
 	# add achievements
@@ -416,9 +416,9 @@ sub addCourse {
 		for my $achievement_id (@achievement_ids) {
 			eval { $db->addAchievement($db0->getAchievement($achievement_id)) };
 			warn $@ if $@;
-			if ($initialUser) {
+			for (@initialUsers) {
 				my $userAchievement = $db->newUserAchievement();
-				$userAchievement->user_id($initialUser->[0]{user_id});
+				$userAchievement->user_id($_->[0]{user_id});
 				$userAchievement->achievement_id($achievement_id);
 				$db->addUserAchievement($userAchievement);
 			}

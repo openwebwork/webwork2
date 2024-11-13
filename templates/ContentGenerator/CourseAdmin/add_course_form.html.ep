@@ -1,5 +1,19 @@
 % use WeBWorK::Utils::CourseManagement qw(listCourses);
 %
+% # Create an array of permission values for the permission selects.
+% my $permissionLevels = [];
+% for my $role (sort { $ce->{userRoles}{$a} <=> $ce->{userRoles}{$b} } keys %{ $ce->{userRoles} }) {
+	% next if $role eq 'nobody';
+	% push(
+		% @$permissionLevels,
+		% [
+			% $c->maketext($role) => $ce->{userRoles}{$role},
+			% $role eq 'professor' ? (selected => undef) : ()
+		% ]
+	% );
+% }
+% my $number_of_additional_users = $c->param('number_of_additional_users') || 0;
+%
 <h2><%= maketext('Add Course') %> <%= $c->helpMacro('AdminAddCourse') %></h2>
 %
 <%= form_for current_route, method => 'POST', begin =%>
@@ -60,64 +74,85 @@
 	</div>
 	<div class="mb-2">
 		<%= maketext(
-			'To add an additional instructor to the new course, specify user information below. '
-				. 'The user ID may contain only numbers, letters, hyphens, periods (dots), commas,and underscores.'
+			'To add additional instructor(s) to the new course, specify user information below. '
+				. 'The user ID may contain only numbers, letters, hyphens, periods (dots), commas, and underscores.'
 		) =%>
 	</div>
-	<div class="row mb-1">
-		<div class="col-lg-4 col-md-5 col-sm-6">
-			<div class="form-floating mb-1">
-				<%= text_field add_initial_userID => '',
-					id          => 'add_initial_userID',
-					placeholder => '',
-					class       => 'form-control' =%>
-				<%= label_for add_initial_userID => maketext('User ID') =%>
+	<div class="mb-1">
+	% for (1 .. $number_of_additional_users) {
+		<div class="row mb-1">
+			<div class="col-lg-4 col-md-5 col-sm-6">
+				<div class="form-floating mb-1">
+					<%= text_field "add_initial_userID_$_" => '',
+						id          => "add_initial_userID_$_",
+						placeholder => '',
+						class       => 'form-control' =%>
+					<%= label_for "add_initial_userID_$_" => maketext('User ID') =%>
+				</div>
+				<div class="form-floating mb-1">
+					<%= password_field "add_initial_password_$_",
+						id           => "add_initial_password_$_",
+						placeholder  => '',
+						class        => 'form-control',
+						autocomplete => 'new-password' =%>
+					<%= label_for "add_initial_password_$_" => maketext('Password') =%>
+				</div>
+				<div class="form-floating mb-1">
+					<%= password_field "add_initial_confirmPassword_$_",
+						id          => "add_initial_confirmPassword_$_",
+						placeholder => '',
+						class       => 'form-control' =%>
+					<%= label_for "add_initial_confirmPassword_$_" => maketext('Confirm Password') =%>
+				</div>
+				<div class="form-floating mb-1">
+					<%= select_field "add_initial_permission_$_" => $permissionLevels,
+						id      => "add_initial_role_$_",
+						class   => 'form-select' =%>
+					<%= label_for "add_initial_permission_$_" => maketext('Permission Level') =%>
+				</div>
 			</div>
-			<div class="form-floating mb-1">
-				<%= password_field 'add_initial_password',
-					id           => 'add_initial_password',
-					placeholder  => '',
-					class        => 'form-control',
-					autocomplete => 'new-password' =%>
-				<%= label_for add_initial_password => maketext('Password') =%>
-			</div>
-			<div class="form-floating mb-1">
-				<%= password_field 'add_initial_confirmPassword',
-					id          => 'add_initial_confirmPassword',
-					placeholder => '',
-					class       => 'form-control' =%>
-				<%= label_for add_initial_confirmPassword => maketext('Confirm Password') =%>
+			<div class="col-lg-4 col-md-5 col-sm-6">
+				<div class="form-floating mb-1">
+					<%= text_field "add_initial_firstName_$_" => '',
+						id          => "add_initial_firstName_$_",
+						placeholder => '',
+						class       => 'form-control' =%>
+					<%= label_for "add_initial_firstName_$_" => maketext('First Name') =%>
+				</div>
+				<div class="form-floating mb-1">
+					<%= text_field "add_initial_lastName_$_" => '',
+						id          => "add_initial_lastName_$_",
+						placeholder => '',
+						class       => 'form-control' =%>
+					<%= label_for "add_initial_lastName_$_" => maketext('Last Name') %>
+				</div>
+				<div class="form-floating mb-1">
+					<%= text_field "add_initial_email_$_" => '',
+						id          => "add_initial_email_$_",
+						placeholder => '',
+						class       => 'form-control' =%>
+					<%= label_for "add_initial_email_$_" => maketext('Email Address') =%>
+				</div>
+				<div class="form-floating mb-1">
+					<%= text_field "add_initial_studentID_$_" => '',
+						id          => "add_initial_studentID_$_",
+						placeholder => '',
+						class       => 'form-control' =%>
+					<%= label_for "add_initial_studentID_$_" => maketext('Student ID') =%>
+				</div>
 			</div>
 		</div>
-		<div class="col-lg-4 col-md-5 col-sm-6">
-			<div class="form-floating mb-1">
-				<%= text_field add_initial_firstName => '',
-					id          => 'add_initial_firstName',
-					placeholder => '',
-					class       => 'form-control' =%>
-				<%= label_for add_initial_firstName => maketext('First Name') =%>
-			</div>
-			<div class="form-floating mb-1">
-				<%= text_field add_initial_lastName => '',
-					id          => 'add_initial_lastName',
-					placeholder => '',
-					class       => 'form-control' =%>
-				<%= label_for add_initial_lastName => maketext('Last Name') %>
-			</div>
-			<div class="form-floating mb-1">
-				<%= text_field add_initial_email => '',
-					id          => 'add_initial_email',
-					placeholder => '',
-					class       => 'form-control' =%>
-				<%= label_for add_initial_email => maketext('Email Address') =%>
-			</div>
+		<div class="form-check mb-3">
+			<label class="form-check-label">
+				<%= check_box "add_initial_user_$_" => 1, class => 'form-check-input' =%>
+				<%= maketext('Also add this user to the [_1] course.', $ce->{admin_course_id}) =%>
+			</label>
 		</div>
+	% }
 	</div>
-	<div class="form-check mb-3">
-		<label class="form-check-label">
-			<%= check_box 'add_initial_user' => 1, class => 'form-check-input' =%>
-			<%= maketext('Also add this user to the [_1] course.', $ce->{admin_course_id}) =%>
-		</label>
+	<div class="mb-3">
+		<%= submit_button maketext('Add Another Instructor'), name => 'add_another_instructor',
+			class => 'btn btn-primary' =%>
 	</div>
 	<div class="mb-1">
 		<%= maketext('To copy components from an existing course, '
@@ -208,5 +243,6 @@
 	</fieldset>
 	<%= hidden_field add_dbLayout             => 'sql_single' =%>
 	<%= hidden_field last_page_was_add_course => 1 =%>
+	<%= $c->hidden_fields('number_of_additional_users') =%>
 	<%= submit_button maketext('Add Course'), name => 'add_course', class => 'btn btn-primary' =%>
 <% end =%>
