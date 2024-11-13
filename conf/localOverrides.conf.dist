@@ -528,6 +528,16 @@ $mail{feedbackRecipients}    = [
 #include("conf/authen_ldap.conf");
 
 ################################################################################
+# Shibboleth Authentication
+################################################################################
+
+# Uncomment the following line to enable Shibboleth authentication.  You will
+# also need to copy the file authen_shibboleth.conf.dist to authen_shibboleth.conf,
+# and then edit that file to fill in the settings for your installation.
+
+#include("conf/authen_shibboleth.conf");
+
+################################################################################
 # Session Management
 ################################################################################
 
