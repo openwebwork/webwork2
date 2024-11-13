@@ -191,6 +191,7 @@ sub getSetStatus ($c, $set) {
 			$link_is_active = 0 unless $canViewUnopened;
 			push(@$other_messages, $c->restricted_progression_msg(0, $set->restricted_status * 100, @restricted));
 		} elsif (!$canViewUnopened
+			&& $ce->{LTIVersion}
 			&& ($ce->{LTIVersion} ne 'v1p3' || !$ce->{LTI}{v1p3}{ignoreMissingSourcedID})
 			&& defined $ce->{LTIGradeMode}
 			&& $ce->{LTIGradeMode} eq 'homework'
