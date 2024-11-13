@@ -1070,6 +1070,10 @@ session_management_via is "key" then the "key" is added.
 sub hidden_authen_fields ($c, $id_prefix = undef) {
 	my @fields = ('user', 'effectiveUser');
 	push(@fields, 'key') if $c->ce->{session_management_via} ne 'session_cookie';
+
+	# Make the Shibboleth bypass_query parameter persistent if it is configured.
+	push(@fields, $c->ce->{shibboleth}{bypass_query}) if $c->ce->{shibboleth}{bypass_query};
+
 	return $c->hidden_fields({ id_prefix => $id_prefix }, @fields) if defined $id_prefix;
 	return $c->hidden_fields(@fields);
 }
@@ -1106,10 +1110,11 @@ sub url_authen_args ($c) {
 	# When cookie based session management is in use, there should be no need
 	# to reveal the user and key in the URL. Putting it there makes session
 	# hijacking easier, in particular should a student share such a URL.
+	# If the Shibboleth authentication module is in use, then make the bypass_query parameter persistent.
 	if ($ce->{session_management_via} eq 'session_cookie') {
-		return $c->url_args('effectiveUser');
+		return $c->url_args('effectiveUser', $c->ce->{shibboleth}{bypass_query} // ());
 	} else {
-		return $c->url_args('user', 'effectiveUser', 'key');
+		return $c->url_args('user', 'effectiveUser', 'key', $c->ce->{shibboleth}{bypass_query} // ());
 	}
 }
 
@@ -1188,6 +1193,9 @@ sub systemLink ($c, $urlpath, %options) {
 		}
 
 		$params{effectiveUser} = undef unless exists $params{effectiveUser};
+
+		# Make the Shibboleth bypass_query parameter persistent if it is configured.
+		$params{ $c->ce->{shibboleth}{bypass_query} } = undef if $c->ce->{shibboleth}{bypass_query};
 	}
 
 	my $url = $options{use_abs_url} ? $urlpath->to_abs : $urlpath;
