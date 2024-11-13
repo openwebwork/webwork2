@@ -217,7 +217,8 @@ sub addCourse {
 
 	debug \@users;
 
-	my @initialUsers = grep { $_->[2]->permission < $ce->{userRoles}{admin} } @users;
+	my @initialUsers = @users;
+	my %user_args    = map { $_->[0]{user_id} => 1 } @users;
 
 	# get the database layout out of the options hash
 	my $dbLayoutName = $courseOptions{dbLayoutName};
@@ -359,7 +360,6 @@ sub addCourse {
 					{ '!=' => $options{copyConfig} ? $ce0->{userRoles}{student} : $ce->{userRoles}{student} },
 					user_id => { not_like => 'set_id:%' }
 				}));
-			my %user_args = map { $_->[0]{user_id} => 1 } @users;
 
 			for my $user_id (@non_student_ids) {
 				next if $user_args{$user_id};
@@ -402,7 +402,8 @@ sub addCourse {
 		}
 		if ($options{copyNonStudents}) {
 			foreach my $userTriple (@users) {
-				my $user_id   = $userTriple->[0]{user_id};
+				my $user_id = $userTriple->[0]{user_id};
+				next if $user_args{$user_id};    # Initial users will be assigned to everything below.
 				my @user_sets = $db0->listUserSets($user_id);
 				assignSetsToUsers($db, $ce, \@user_sets, [$user_id]);
 			}
@@ -425,7 +426,8 @@ sub addCourse {
 		}
 		if ($options{copyNonStudents}) {
 			foreach my $userTriple (@users) {
-				my $user_id           = $userTriple->[0]{user_id};
+				my $user_id = $userTriple->[0]{user_id};
+				next if $user_args{$user_id};    # Initial users were assigned to all achievements above.
 				my @user_achievements = $db0->listUserAchievements($user_id);
 				for my $achievement_id (@user_achievements) {
 					my $userAchievement = $db->newUserAchievement();
