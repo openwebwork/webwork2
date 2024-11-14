@@ -402,7 +402,8 @@ sub addCourse {
 		}
 		if ($options{copyNonStudents}) {
 			foreach my $userTriple (@users) {
-				my $user_id   = $userTriple->[0]{user_id};
+				my $user_id = $userTriple->[0]{user_id};
+				next if $user_id eq $initialUser->[0]{user_id};    # Skip, will be assigned to all sets below.
 				my @user_sets = $db0->listUserSets($user_id);
 				assignSetsToUsers($db, $ce, \@user_sets, [$user_id]);
 			}
@@ -425,7 +426,8 @@ sub addCourse {
 		}
 		if ($options{copyNonStudents}) {
 			foreach my $userTriple (@users) {
-				my $user_id           = $userTriple->[0]{user_id};
+				my $user_id = $userTriple->[0]{user_id};
+				next if $user_id eq $initialUser->[0]{user_id};    # Skip, was assigned to all achievements above.
 				my @user_achievements = $db0->listUserAchievements($user_id);
 				for my $achievement_id (@user_achievements) {
 					my $userAchievement = $db->newUserAchievement();
