@@ -14,7 +14,7 @@
 %################################################################################
 %
 % layout 'help_macro';
-% title maketext('Leaderboard Help');
+% title maketext('Achievements Leaderboard Help');
 %
 <p>
 	<%= maketext('The leaderboard orders the achievement points earned from the greatest to the least. '
