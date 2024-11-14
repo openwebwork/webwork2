@@ -287,8 +287,8 @@ my %routeParameters = (
 		unrestricted => 1
 	},
 	achievements_leaderboard => {
-		title        => x('Leaderboard'),
-		module       => 'Leaderboard',
+		title        => x('Achievements Leaderboard'),
+		module       => 'AchievementsLeaderboard',
 		path         => '/leaderboard',
 		unrestricted => 1
 	},
