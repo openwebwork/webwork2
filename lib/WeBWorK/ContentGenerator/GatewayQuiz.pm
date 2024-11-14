@@ -1028,8 +1028,10 @@ async sub pre_header_initialize ($c) {
 			$c->{submitAnswers}
 			&& $will{recordAnswers}
 			&& $ce->{LTIGradeMode}
-			&& ($ce->{LTIGradeOnSubmit} eq 'homework_always' && $ce->{LTIGradeMode} eq 'homework'
-				|| $ce->{LTIGradeOnSubmit} && can_submit_LMS_score($db, $ce, $effectiveUserID, $setID))
+			&& ($ce->{LTIGradeOnSubmit} && $ce->{LTIGradeMode} eq 'homework'
+				|| $ce->{LTIGradeOnSubmit}
+				&& $ce->{LTIGradeMode} eq 'course'
+				&& can_submit_LMS_score($db, $ce, $effectiveUserID, $setID))
 			)
 		{
 			my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);

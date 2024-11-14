@@ -30,7 +30,6 @@ use Digest::SHA qw(sha1_base64);
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::DateTime qw(after before);
 use WeBWorK::Utils::Sets qw(grade_set grade_gateway grade_all_sets can_submit_LMS_score);
 
 # This package contains utilities for submitting grades to the LMS
@@ -307,8 +306,9 @@ EOS
 					# See: https://webwork.maa.org/moodle/mod/forum/discuss.php?d=5002
 					debug("LMS grade will be updated. sourcedid: $sourcedid; Old score: $oldScore; New score: $score")
 						if $ce->{debug_lti_grade_passback};
-				} elsif (abs($score - $oldScore) < 0.001
-					&& ($score != 1 || $oldScore == 1)
+				} elsif ($oldScore ne ''
+					|| abs($score - $oldScore) < 0.001
+					&& ($score != 1 || $oldScore ne '' && $oldScore == 1)
 					&& ($score != 0 || $oldScore ne '' || $nullEqualsZero))
 				{
 					# LMS has essentially the same score, no reason to update it

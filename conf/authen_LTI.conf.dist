@@ -185,14 +185,14 @@ $LTIGradeOnSubmit = 1;
 # periodically update student grades on the LMS on its own. For all three possible triggers for
 # grades to be passed to the LMS, $LTISendScoresAfterDate and $LTISendGradesEarlyThreshold can
 # affect what is sent. $LTISendScoresAfterDate can be set to 'open_date', 'reduced_scoring_date',
-# 'close_date', 'answer_date', or 'never'. For a given assignment, if it is *after* the
+# 'due_date', 'answer_date', or 'never'. For a given assignment, if it is *after* the
 # $LTISendScoresAfterDate, then WeBWorK will send grades.
 # - For 'course' grade passback mode, the assignment will be included in the overall course
 #   grade calculation.
 # - For 'homework' grade passback mode, the assignemnt's score will be sent.
 
 # If $LTISendScoresAfterDate = 'reduced_scoring_date' and an assignent has no reduced_scoring_date
-# or reduced scoring is disabled for that assignment, the fallback is to use the close_date.
+# or reduced scoring is disabled for that assignment, the fallback is to use the due_date.
 
 # For a given assignment, if it is *before* the $LTISendScoresAfterDate, WeBWorK *may* send a
 # score to the LMS depending on $LTISendGradesEarlyThreshold. This variable can either be the
@@ -208,7 +208,7 @@ $LTIGradeOnSubmit = 1;
 
 #$LTISendScoresAfterDate = 'open_date';
 $LTISendScoresAfterDate = 'reduced_scoring_date';
-#$LTISendScoresAfterDate = 'close_date';
+#$LTISendScoresAfterDate = 'due_date';
 #$LTISendScoresAfterDate = 'answer_date';
 #$LTISendScoresAfterDate = 'never';
 

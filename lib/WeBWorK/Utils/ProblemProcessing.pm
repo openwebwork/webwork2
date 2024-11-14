@@ -253,8 +253,9 @@ async sub process_and_log_answer ($c) {
 				if ($ce->{LTIGradeMode}) {
 					my $LMSname        = $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
 					my $LTIGradeResult = -1;
-					if ($ce->{LTIGradeOnSubmit} eq 'homework_always' && $ce->{LTIGradeMode} eq 'homework'
+					if ($ce->{LTIGradeOnSubmit} && $ce->{LTIGradeMode} eq 'homework'
 						|| $ce->{LTIGradeOnSubmit}
+						&& $ce->{LTIGradeMode} eq 'course'
 						&& can_submit_LMS_score($db, $ce, $problem->user_id, $problem->set_id))
 					{
 						$LTIGradeResult = 0;

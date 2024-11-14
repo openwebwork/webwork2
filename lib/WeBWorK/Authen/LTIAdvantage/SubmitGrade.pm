@@ -39,7 +39,6 @@ use Time::HiRes;
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::DateTime qw(after before);
 use WeBWorK::Utils::Sets qw(grade_set grade_gateway grade_all_sets can_submit_LMS_score);
 
 # This package contains utilities for submitting grades to the LMS via LTI 1.3.

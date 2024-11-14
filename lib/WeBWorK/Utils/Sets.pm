@@ -246,21 +246,17 @@ sub grade_all_sets ($db, $ce, $studentName) {
 }
 
 sub get_LTISendScoresAfterDate ($set, $ce) {
-	my $dateType = $ce->{LTISendScoresAfterDate};
-	my $date;
-	if ($dateType eq 'open_date') {
-		$date = $set->open_date;
-	} elsif ($dateType eq 'reduced_scoring_date') {
-		$date =
-			($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+	if ($ce->{LTISendScoresAfterDate} eq 'open_date') {
+		return $set->open_date;
+	} elsif ($ce->{LTISendScoresAfterDate} eq 'reduced_scoring_date') {
+		return ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 				&& $set->enable_reduced_scoring
 				&& $set->reduced_scoring_date) ? $set->reduced_scoring_date : $set->due_date;
-	} elsif ($dateType eq 'due_date') {
-		$date = $set->due_date;
-	} elsif ($dateType eq 'answer_date') {
-		$date = $set->answer_date;
+	} elsif ($ce->{LTISendScoresAfterDate} eq 'due_date') {
+		return $set->due_date;
+	} elsif ($ce->{LTISendScoresAfterDate} eq 'answer_date') {
+		return $set->answer_date;
 	}
-	return $date;
 }
 
 # Checks if the set is past the LTISendScoresAfterDate or has met the LTISendGradesEarlyThreshold
