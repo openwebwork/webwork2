@@ -14,12 +14,12 @@
 ################################################################################
 
 # Leader board for achievements.
-package WeBWorK::ContentGenerator::Leaderboard;
+package WeBWorK::ContentGenerator::AchievementsLeaderboard;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Leaderboard - Leaderboard for achievements,
+WeBWorK::ContentGenerator::AchievementsLeaderboard - Leaderboard for achievements,
 which lists the total number of achievement points, level, and badges
 earned for each user with the 'include_in_stats' status.
 
@@ -41,7 +41,11 @@ sub initialize ($c) {
 	return unless $c->authz->hasPermissions($c->{userName}, 'view_leaderboard');
 
 	# Get list of all users (except set-level proctors) and achievements.
-	my @allUsers    = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
+	my @achievements     = sortAchievements($db->getAchievementsWhere);
+	my %achievementsById = map { $_->achievement_id => $_ } @achievements;
+	my %globalUserAchievements =
+		map { $_->user_id => $_ } $db->getGlobalUserAchievementsWhere({ user_id => { not_like => 'set_id:%' } });
+
 	my @allBadgeIDs = $db->listAchievements;
 	my @allBadges   = @allBadgeIDs ? sortAchievements($db->getAchievements(@allBadgeIDs)) : ();
 
@@ -49,27 +53,26 @@ sub initialize ($c) {
 	$c->{showLevels}    = 0;    # Hide level column unless at least one user has a level achievement.
 
 	my @rows;
-	for my $user (@allUsers) {
+	for my $user ($db->getUsersWhere({ user_id => { not_like => 'set_id:%' } })) {
 		# Only include users who can be shown in stats.
 		next unless $ce->status_abbrev_has_behavior($user->status, 'include_in_stats');
 
 		# Skip unless user has achievement data.
-		my $globalData = $db->getGlobalUserAchievement($user->user_id);
+		my $globalData = $globalUserAchievements{ $user->user_id };
 		next unless $globalData;
 
-		my $level = $globalData->level_achievement_id ? $db->getAchievement($globalData->level_achievement_id) : '';
+		my $level = $globalData->level_achievement_id ? $achievementsById{ $globalData->level_achievement_id } : '';
 
 		my @badges;
-		for my $badge (@allBadges) {
+		for my $achievement (@achievements) {
 			# Skip level achievements and only show earned achievements.
-			last if $badge->category eq 'level';
-			next unless $db->existsUserAchievement($user->user_id, $badge->achievement_id);
+			last if $achievement->category eq 'level';
 
-			my $userBadge = $db->getUserAchievement($user->user_id, $badge->achievement_id);
-			push(@badges, $badge) if $badge->enabled && $userBadge->earned;
+			my $userBadge = $db->getUserAchievement($user->user_id, $achievement->achievement_id);
+			push(@badges, $achievement) if $userBadge && $achievement->enabled && $userBadge->earned;
 		}
 
-		push(@rows, [ $globalData->achievement_points, $level, $user, \@badges ]);
+		push(@rows, [ $globalData->achievement_points || 0, $level, $user, \@badges ]);
 	}
 
 	# Sort rows descending by achievement points (or number of badges if achievement points are equal)
