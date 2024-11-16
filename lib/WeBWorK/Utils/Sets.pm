@@ -28,7 +28,6 @@ our @EXPORT_OK = qw(
 	format_set_name_display
 	grade_set
 	grade_gateway
-	set_attempted
 	grade_all_sets
 	is_restricted
 	get_test_problem_position
@@ -201,31 +200,20 @@ sub earliest_gateway_date ($db, $ce, $userSet) {
 }
 
 sub grade_all_sets ($db, $ce, $studentName) {
-	my @setIDs     = $db->listUserSets($studentName);
-	my @userSetIDs = map { [ $studentName, $_ ] } @setIDs;
-	my @userSets   = $db->getMergedSets(@userSetIDs);
-
-	my $courseTotal      = 0;
+	my @setIDs           = $db->listUserSets($studentName);
 	my $courseTotalRight = 0;
+	my $courseTotal      = 0;
 
-	for my $userSet (@userSets) {
-		next unless (after($userSet->open_date()));
-		my $totalRight;
-		my $total;
-		my $criticalDate;
-
-		if ($userSet->assignment_type() =~ /gateway/) {
-			($totalRight, $total) = grade_gateway($db, $userSet->set_id, $studentName);
-			$criticalDate = earliest_gateway_date($db, $ce, $userSet) unless ($ce->{LTISendScoresAfterDate} eq 'never');
-		} else {
-			($totalRight, $total) = grade_set($db, $userSet, $studentName);
-			$criticalDate = get_LTISendScoresAfterDate($userSet, $ce) unless ($ce->{LTISendScoresAfterDate} eq 'never');
-		}
+	for my $setID (@setIDs) {
+		my $score        = can_submit_LMS_score($db, $ce, $studentName, $setID);
+		my $totalRight   = $score->{totalRight};
+		my $total        = $score->{total};
+		my $criticalDate = $score->{criticalDate} // '';
 
 		if ($ce->{LTISendScoresAfterDate} eq 'never' || $criticalDate && before($criticalDate)) {
 			next
 				if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted'
-					&& !set_attempted($db, $studentName, $userSet->set_id));
+					&& !set_attempted($db, $studentName, $setID));
 			next
 				if ($ce->{LTISendGradesEarlyThreshold} ne 'attempted'
 					&& $total > 0
@@ -260,8 +248,20 @@ sub get_LTISendScoresAfterDate ($set, $ce) {
 }
 
 # Checks if the set is past the LTISendScoresAfterDate or has met the LTISendGradesEarlyThreshold
+# Returns a reference to hash with keys totalRight, total, score, criticalDate if the set has met
+# either condition and undef if not.
 sub can_submit_LMS_score ($db, $ce, $userID, $setID) {
 	my $userSet = $db->getMergedSet($userID, $setID);
+
+	my $totalRight;
+	my $total;
+	if ($userSet->assignment_type() =~ /gateway/) {
+		($totalRight, $total) = grade_gateway($db, $setID, $userID);
+	} else {
+		($totalRight, $total) = (grade_set($db, $userSet, $userID))[ 0, 1 ];
+	}
+	my $score  = $total > 1 ? $totalRight / $total : 1;
+	my $return = { totalRight => $totalRight, total => $total, score => $score };
 
 	if ($ce->{LTISendScoresAfterDate} ne 'never') {
 		my $critical_date;
@@ -270,18 +270,13 @@ sub can_submit_LMS_score ($db, $ce, $userID, $setID) {
 		} else {
 			$critical_date = get_LTISendScoresAfterDate($userSet, $ce);
 		}
-		return 1 if after($critical_date);
+		$return->{critical_date} = $critical_date;
+		return $return if after($critical_date);
 	}
 
-	return set_attempted($db, $userID, $setID) if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted');
-
-	my $score;
-	if ($userSet->assignment_type() =~ /gateway/) {
-		$score = grade_gateway($db, $setID, $userID);
-	} else {
-		$score = grade_set($db, $userSet, $userID);
-	}
-	return ($score >= $ce->{LTISendGradesEarlyThreshold});
+	return $return
+		if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted' && set_attempted($db, $userID, $setID)
+			|| $score >= $ce->{LTISendGradesEarlyThreshold});
 }
 
 sub is_restricted ($db, $set, $studentName) {

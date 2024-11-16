@@ -39,7 +39,7 @@ use Time::HiRes;
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::Sets qw(grade_set grade_gateway grade_all_sets can_submit_LMS_score);
+use WeBWorK::Utils::Sets qw(grade_all_sets can_submit_LMS_score);
 
 # This package contains utilities for submitting grades to the LMS via LTI 1.3.
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -216,12 +216,11 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	my $ce = $c->{ce};
 	my $db = $c->{db};
 
-	return
-		unless (can_submit_LMS_score($db, $ce, $userID, $setID)
-			|| !$self->{post_processing_mode} && $ce->{LTIGradeOnSubmit} eq 'homework_always');
-
 	my $user = $db->getUser($userID);
-	return 0 unless $user;
+	return unless $user;
+
+	my $score = can_submit_LMS_score($db, $ce, $userID, $setID);
+	return unless ($score || !$self->{post_processing_mode} && $ce->{LTIGradeOnSubmit} eq 'homework_always');
 
 	my $userSet = $db->getMergedSet($userID, $setID);
 
@@ -229,16 +228,8 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	$self->warning('LMS user id is not available for this user.') unless $user->lis_source_did;
 	$self->warning('LMS lineitem is not available for this set.') unless $userSet->lis_source_did;
 
-	return await $self->submit_grade(
-		$user->lis_source_did,
-		$userSet->lis_source_did,
-		(
-			$userSet->assignment_type =~ /gateway/
-			? grade_gateway($db, $setID, $userID)
-			: (grade_set($db, $userSet, $userID))[ 0, 1 ]
-		),
-		$self->{post_processing_mode} || $ce->{LTIGradeOnSubmit} ne 'homework_always'
-	);
+	return await $self->submit_grade($user->lis_source_did, $userSet->lis_source_did, $score->{totalRight},
+		$score->{total}, $self->{post_processing_mode} || $ce->{LTIGradeOnSubmit} ne 'homework_always');
 }
 
 # Submits scoreGiven and scoreMaximum to the lms with $sourcedid as the identifier.

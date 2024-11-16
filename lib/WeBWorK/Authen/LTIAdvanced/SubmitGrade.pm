@@ -30,7 +30,7 @@ use Digest::SHA qw(sha1_base64);
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::Sets qw(grade_set grade_gateway grade_all_sets can_submit_LMS_score);
+use WeBWorK::Utils::Sets qw(grade_all_sets can_submit_LMS_score);
 
 # This package contains utilities for submitting grades to the LMS
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -137,12 +137,11 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	my $ce = $c->{ce};
 	my $db = $c->{db};
 
-	return
-		unless (can_submit_LMS_score($db, $ce, $userID, $setID)
-			|| !$self->{post_processing_mode} && $ce->{LTIGradeOnSubmit} eq 'homework_always');
-
 	my $user = $db->getUser($userID);
-	return 0 unless $user;
+	return unless $user;
+
+	my $score = can_submit_LMS_score($db, $ce, $userID, $setID);
+	return unless ($score || !$self->{post_processing_mode} && $ce->{LTIGradeOnSubmit} eq 'homework_always');
 
 	my $userSet = $db->getMergedSet($userID, $setID);
 
@@ -151,15 +150,8 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	$self->warning('lis_source_did is not available for this set.')
 		if !$userSet->lis_source_did && ($ce->{debug_lti_grade_passback} || $self->{post_processing_mode});
 
-	return await $self->submit_grade(
-		$userSet->lis_source_did,
-		scalar(
-			$userSet->assignment_type =~ /gateway/
-			? grade_gateway($db, $setID, $userID)
-			: grade_set($db, $userSet, $userID)
-		),
-		$self->{post_processing_mode} || $ce->{LTIGradeOnSubmit} ne 'homework_always'
-	);
+	return await $self->submit_grade($userSet->lis_source_did, $score->{score},
+		$self->{post_processing_mode} || $ce->{LTIGradeOnSubmit} ne 'homework_always');
 }
 
 # Submits a score of $score to the lms with $sourcedid as the identifier.
