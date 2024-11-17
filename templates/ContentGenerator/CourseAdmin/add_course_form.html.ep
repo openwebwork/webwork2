@@ -78,8 +78,11 @@
 				. 'The user ID may contain only numbers, letters, hyphens, periods (dots), commas, and underscores.'
 		) =%>
 	</div>
-	<div class="mb-1">
+	<div class="mb-2">
 	% for (1 .. $number_of_additional_users) {
+		<div class="mb-2">
+			<%= maketext('Enter information for additional instructor number [_1].', $_) %>
+		</div>
 		<div class="row mb-1">
 			<div class="col-lg-4 col-md-5 col-sm-6">
 				<div class="form-floating mb-1">
