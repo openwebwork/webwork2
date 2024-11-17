@@ -23,7 +23,7 @@
 									bs_placement => 'top',
 									bs_toggle    => 'popover',
 									bs_content   => maketext(
-										q{The adjusted status of a problem is the larger of the problem's status and}
+										q{The adjusted status of a problem is the larger of the problem's status and }
 											. 'the weighted average of the status of those problems which count '
 											. 'toward the parent grade.'
 									)
