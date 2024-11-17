@@ -84,14 +84,19 @@
 <h2><%= maketext('Overall Results') %></h2>
 %
 % # Histogram of total scores.
+% my $bucketLabels = [ '90-100', '80-89', '70-79', '60-69', '50-59', '40-49', '30-39', '20-29', '10-19', '0-9' ];
 <%= $c->build_bar_chart(
 	$buckets,
-	xAxisLabels => [ '90-100', '80-89', '70-79', '60-69', '50-59', '40-49', '30-39', '20-29', '10-19', '0-9' ],
+	xAxisLabels => $bucketLabels,
 	yMax        => 5 * $maxCount,
 	yAxisLabels => [ map { $_ * $maxCount } 0 .. 5 ],
 	mainTitle   => maketext('Overall Set Grades'),
 	xTitle      => maketext('Percent Ranges'),
 	yTitle      => maketext('Number of Students'),
+	descText    => maketext(
+		'Histogram showing the overall set grades, where the number of students in each percent range is: [_1].',
+		join(', ', map { "$bucketLabels->[$_]:$buckets->[$_]" } 0 .. scalar(@$buckets) - 1)
+	),
 	barWidth    => 35,
 	barSep      => 5,
 	isPercent   => 0,
@@ -146,6 +151,23 @@
 	xAxisLabels => $svgProblemLabels,
 	mainTitle   => maketext('Grade of Active Students'),
 	xTitle      => maketext('Problem Number'),
+	descText    => $isJitarSet
+		? maketext(
+			'Bar chart showing the average percent grade of active students for each problem and the adjusted '
+				. 'percent grade on top level problems with review. The average percent grade (as a decimal) for '
+				. 'each problem is: [_1]. The adjusted percent grade for top level problems with review is: [_2].',
+			join(', ', map { "$svgProblemLabels->[$_]:$svgProblemData->[$_]" } 0 .. scalar(@$svgProblemData) - 1),
+			join(
+				', ',
+				 map { $jitarBars->[$_] < 0 ? () : "$svgProblemLabels->[$_]:$jitarBars->[$_]" }
+					0 .. scalar(@$svgProblemData) - 1
+			)
+		)
+		: maketext(
+			'Bar chart showing the average percent grade of active students for each problem, '
+				. 'where the average percent grade (as a decimal) for each problem is: [_1].',
+			join(', ', map { "$svgProblemLabels->[$_]:$svgProblemData->[$_]" } 0 .. scalar(@$svgProblemData) - 1)
+		),
 	isJitarSet  => $isJitarSet,
 	jitarBars   => $isJitarSet ? $jitarBars : [],
 	barLinks    => [ map { $_->{statsLink} } @$problems ],
