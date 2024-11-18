@@ -217,12 +217,12 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	my $db = $c->{db};
 
 	my $user = $db->getUser($userID);
-	return unless $user;
-
-	my $score = can_submit_LMS_score($db, $ce, $userID, $setID);
-	return unless ($score || !$self->{post_processing_mode} && $ce->{LTIGradeOnSubmit} eq 'homework_always');
+	return 0 unless $user;
 
 	my $userSet = $db->getMergedSet($userID, $setID);
+
+	my $score = can_submit_LMS_score($db, $ce, $userID, $userSet);
+	return 0 unless ($score || !$self->{post_processing_mode} && $ce->{LTIGradeOnSubmit} eq 'homework_always');
 
 	$self->warning("Submitting grade for user $userID and set $setID.");
 	$self->warning('LMS user id is not available for this user.') unless $user->lis_source_did;
@@ -271,17 +271,19 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum
 			return 0;
 		}
 
-		my $priorData  = decode_json($response->body);
-		my $priorScore = @$priorData
-			&& $priorData->[0]{resultMaximum} ? $priorData->[0]{resultScore} / $priorData->[0]{resultMaximum} : 0;
+		my $priorData = decode_json($response->body);
+		my $priorScore =
+			(@$priorData && $priorData->[0]{resultMaximum} && defined $priorData->[0]{resultScore})
+			? $priorData->[0]{resultScore} / $priorData->[0]{resultMaximum}
+			: 0;
 
 		my $score = $scoreMaximum ? $scoreGiven / $scoreMaximum : 0;
-		# we want to update the LMS score if the difference is significant,
-		# or if the new score is 1 but the LMS score was not 1 (but possibly insignificantly different)
-		# or if the new score is 0 and the LMS score was empty and it is past the SendScoresAfterDate
+		# We want to update the LMS score if the difference is significant,
+		# or if the new score is 1 but the LMS score was not 1 but possibly insignificantly different,
+		# or if the new score is 0 and the LMS score was empty and it is past the SendScoresAfterDate.
 		if (abs($score - $priorScore) < 0.001
 			&& ($score != 1 || $priorScore == 1)
-			&& ($score != 0 || @$priorData && $priorData->[0]{resultScore} ne '' || $nullEqualsZero))
+			&& ($score != 0 || @$priorData && defined $priorData->[0]{resultScore} || $nullEqualsZero))
 		{
 			$self->warning(
 				"LMS grade will NOT be updated as the grade has not significantly changed. Old score: $priorScore, New score: $score."

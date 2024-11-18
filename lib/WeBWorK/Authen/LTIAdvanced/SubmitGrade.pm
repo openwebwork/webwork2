@@ -138,12 +138,12 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	my $db = $c->{db};
 
 	my $user = $db->getUser($userID);
-	return unless $user;
-
-	my $score = can_submit_LMS_score($db, $ce, $userID, $setID);
-	return unless ($score || !$self->{post_processing_mode} && $ce->{LTIGradeOnSubmit} eq 'homework_always');
+	return 0 unless $user;
 
 	my $userSet = $db->getMergedSet($userID, $setID);
+
+	my $score = can_submit_LMS_score($db, $ce, $userID, $userSet);
+	return 0 unless ($score || !$self->{post_processing_mode} && $ce->{LTIGradeOnSubmit} eq 'homework_always');
 
 	$self->warning("Submitting grade for user $userID and set $setID.")
 		if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};

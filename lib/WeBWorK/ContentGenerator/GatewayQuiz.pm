@@ -1031,7 +1031,7 @@ async sub pre_header_initialize ($c) {
 			&& ($ce->{LTIGradeOnSubmit} && $ce->{LTIGradeMode} eq 'homework'
 				|| $ce->{LTIGradeOnSubmit}
 				&& $ce->{LTIGradeMode} eq 'course'
-				&& can_submit_LMS_score($db, $ce, $effectiveUserID, $setID))
+				&& can_submit_LMS_score($db, $ce, $effectiveUserID, $db->getMergedSet($effectiveUserID, $setID)))
 			)
 		{
 			my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);

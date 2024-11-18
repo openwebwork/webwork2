@@ -147,18 +147,17 @@ sub grade_gateway ($db, $setName, $studentName) {
 	}
 }
 
-sub set_attempted ($db, $userID, $setID) {
-	my $userSet = $db->getMergedSet($userID, $setID);
+sub set_attempted ($db, $userID, $userSet) {
+	my $setID = $userSet->set_id;
 
 	if ($userSet->assignment_type() =~ /gateway/) {
 		my @versionNums = $db->listSetVersions($userID, $setID);
 
-		# it counts as "attempted" if there is more than one version
+		# It counts as "attempted" if there is more than one version.
 		return 1 if (1 < @versionNums);
 
-		# if there is one version, check for an attempted problem
-		# there could also be no actual attempted problems, but something like an
-		# achievement item has awarded credit for one exercise somewhere in the test
+		# If there is one version, check for an attempted problem. There could also
+		# be no actual attempted problems, but a score was manually overridden.
 		if (@versionNums) {
 			my @problemNums = $db->listUserProblems($userID, $setID);
 			my $problem     = $db->getMergedProblemVersion($userID, $setID, $versionNums[0], $problemNums[0]);
@@ -170,7 +169,7 @@ sub set_attempted ($db, $userID, $setID) {
 			return 0;
 		}
 
-		# if there are no versions
+		# If there are no versions, the test was not attempted.
 		return 0;
 	} else {
 		my @problemNums = $db->listUserProblems($userID, $setID);
@@ -185,27 +184,29 @@ sub set_attempted ($db, $userID, $setID) {
 sub earliest_gateway_date ($db, $ce, $userSet) {
 	my @versionNums = $db->listSetVersions($userSet->user_id, $userSet->set_id);
 
-	# if there are no versions, use the template's date
+	# If there are no versions, use the template's date.
 	return get_LTISendScoresAfterDate($userSet, $ce) unless (@versionNums);
 
-	# otherwise, use the earliest date among versions
-	my $earliest_date =
-		get_LTISendScoresAfterDate($db->getSetVersion($userSet->user_id, $userSet->set_id, $versionNums[0]), $ce);
+	# Otherwise, use the earliest date among versions.
+	my $earliest_date = -1;
 	for my $i (@versionNums) {
 		my $versionedSetDate =
 			get_LTISendScoresAfterDate($db->getSetVersion($userSet->user_id, $userSet->set_id, $i), $ce);
-		$earliest_date = $versionedSetDate if ($versionedSetDate < $earliest_date);
+		$earliest_date = $versionedSetDate if $earliest_date == -1 || $versionedSetDate < $earliest_date;
 	}
 	return $earliest_date;
 }
 
 sub grade_all_sets ($db, $ce, $studentName) {
-	my @setIDs           = $db->listUserSets($studentName);
+	my @setIDs     = $db->listUserSets($studentName);
+	my @userSetIDs = map { [ $studentName, $_ ] } @setIDs;
+	my @userSets   = $db->getMergedSets(@userSetIDs);
+
 	my $courseTotalRight = 0;
 	my $courseTotal      = 0;
 
-	for my $setID (@setIDs) {
-		my $score        = can_submit_LMS_score($db, $ce, $studentName, $setID);
+	for my $userSet (@userSets) {
+		my $score        = can_submit_LMS_score($db, $ce, $studentName, $userSet);
 		my $totalRight   = $score->{totalRight};
 		my $total        = $score->{total};
 		my $criticalDate = $score->{criticalDate} // '';
@@ -213,7 +214,7 @@ sub grade_all_sets ($db, $ce, $studentName) {
 		if ($ce->{LTISendScoresAfterDate} eq 'never' || $criticalDate && before($criticalDate)) {
 			next
 				if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted'
-					&& !set_attempted($db, $studentName, $setID));
+					&& !set_attempted($db, $studentName, $userSet));
 			next
 				if ($ce->{LTISendGradesEarlyThreshold} ne 'attempted'
 					&& $total > 0
@@ -247,16 +248,14 @@ sub get_LTISendScoresAfterDate ($set, $ce) {
 	}
 }
 
-# Checks if the set is past the LTISendScoresAfterDate or has met the LTISendGradesEarlyThreshold
+# Checks if the set is past the LTISendScoresAfterDate or has met the LTISendGradesEarlyThreshold.
 # Returns a reference to hash with keys totalRight, total, score, criticalDate if the set has met
 # either condition and undef if not.
-sub can_submit_LMS_score ($db, $ce, $userID, $setID) {
-	my $userSet = $db->getMergedSet($userID, $setID);
-
+sub can_submit_LMS_score ($db, $ce, $userID, $userSet) {
 	my $totalRight;
 	my $total;
 	if ($userSet->assignment_type() =~ /gateway/) {
-		($totalRight, $total) = grade_gateway($db, $setID, $userID);
+		($totalRight, $total) = grade_gateway($db, $userSet->set_id, $userID);
 	} else {
 		($totalRight, $total) = (grade_set($db, $userSet, $userID))[ 0, 1 ];
 	}
@@ -275,7 +274,7 @@ sub can_submit_LMS_score ($db, $ce, $userID, $setID) {
 	}
 
 	return $return
-		if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted' && set_attempted($db, $userID, $setID)
+		if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted' && set_attempted($db, $userID, $userSet)
 			|| $score >= $ce->{LTISendGradesEarlyThreshold});
 }
 
