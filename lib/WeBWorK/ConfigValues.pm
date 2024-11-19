@@ -960,7 +960,7 @@ sub getConfigValues ($ce) {
 		},
 		LTISendScoresAfterDate => {
 			var  => 'LTISendScoresAfterDate',
-			doc  => x('When to send scores to the LMS regardless of status'),
+			doc  => x('Date after which scores will be sent to the LMS'),
 			doc2 => x(
 				'<p>This can be set to one of the dates assciated with assignments. For a given assignment, if it is after '
 					. "the \$LTISendScoresAfterDate, then WeBWorK will send grades.</p><ul><li>For 'course' grade "
@@ -983,7 +983,7 @@ sub getConfigValues ($ce) {
 		},
 		LTISendGradesEarlyThreshold => {
 			var  => 'LTISendGradesEarlyThreshold',
-			doc  => x('Condition under which scores can be sent to an LMS early'),
+			doc  => x('Condition under which scores will be sent early to an LMS'),
 			doc2 => x(
 				"<p>This can either be set to a score or set to Attempted. When something triggers a potential grade "
 					. 'passback, if it is earlier than $LTISendScoresAfterDate, the condition described by this '

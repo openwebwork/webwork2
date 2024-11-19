@@ -156,17 +156,11 @@ sub set_attempted ($db, $userID, $userSet) {
 		# It counts as "attempted" if there is more than one version.
 		return 1 if (1 < @versionNums);
 
-		# If there is one version, check for an attempted problem. There could also
-		# be no actual attempted problems, but a score was manually overridden.
+		# If there is one version, check for an attempted problem.
 		if (@versionNums) {
-			my @problemNums = $db->listUserProblems($userID, $setID);
+			my @problemNums = $db->listProblemVersions($userID, $setID, $versionNums[0]);
 			my $problem     = $db->getMergedProblemVersion($userID, $setID, $versionNums[0], $problemNums[0]);
-			return 1 if defined $problem && $problem->attempted;
-			for (@problemNums) {
-				$problem = $db->getMergedProblemVersion($userID, $setID, $versionNums[0], $_);
-				return 1 if defined $problem && $problem->status > 0;
-			}
-			return 0;
+			return defined $problem && $problem->attempted ? 1 : 0;
 		}
 
 		# If there are no versions, the test was not attempted.
@@ -259,7 +253,7 @@ sub can_submit_LMS_score ($db, $ce, $userID, $userSet) {
 	} else {
 		($totalRight, $total) = (grade_set($db, $userSet, $userID))[ 0, 1 ];
 	}
-	my $score  = $total > 1 ? $totalRight / $total : 1;
+	my $score  = $total ? $totalRight / $total : 0;
 	my $return = { totalRight => $totalRight, total => $total, score => $score };
 
 	if ($ce->{LTISendScoresAfterDate} ne 'never') {
@@ -269,7 +263,7 @@ sub can_submit_LMS_score ($db, $ce, $userID, $userSet) {
 		} else {
 			$critical_date = get_LTISendScoresAfterDate($userSet, $ce);
 		}
-		$return->{critical_date} = $critical_date;
+		$return->{criticalDate} = $critical_date;
 		return $return if after($critical_date);
 	}
 

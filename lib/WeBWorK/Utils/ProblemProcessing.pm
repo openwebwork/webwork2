@@ -253,12 +253,10 @@ async sub process_and_log_answer ($c) {
 				if ($ce->{LTIGradeMode}) {
 					my $LMSname        = $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
 					my $LTIGradeResult = -1;
-					if (
-						$ce->{LTIGradeOnSubmit} && $ce->{LTIGradeMode} eq 'homework'
-						|| $ce->{LTIGradeOnSubmit} && $ce->{LTIGradeMode} eq 'course' && can_submit_LMS_score(
-							$db, $ce, $problem->user_id, $db->getMergedSet($problem->user_id, $problem->set_id)
-						)
-						)
+					if ($ce->{LTIGradeOnSubmit} && $ce->{LTIGradeMode} eq 'homework'
+						|| $ce->{LTIGradeOnSubmit}
+						&& $ce->{LTIGradeMode} eq 'course'
+						&& can_submit_LMS_score($db, $ce, $problem->user_id, $c->{set}))
 					{
 						$LTIGradeResult = 0;
 						my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);
