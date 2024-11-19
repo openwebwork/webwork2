@@ -150,7 +150,7 @@ sub grade_gateway ($db, $setName, $studentName) {
 sub set_attempted ($db, $userID, $userSet) {
 	my $setID = $userSet->set_id;
 
-	if ($userSet->assignment_type() =~ /gateway/) {
+	if ($userSet->assignment_type =~ /gateway/) {
 		my @versionNums = $db->listSetVersions($userID, $setID);
 
 		# It counts as "attempted" if there is more than one version.
@@ -211,8 +211,7 @@ sub grade_all_sets ($db, $ce, $studentName) {
 					&& !set_attempted($db, $studentName, $userSet));
 			next
 				if ($ce->{LTISendGradesEarlyThreshold} ne 'attempted'
-					&& $total > 0
-					&& $totalRight / $total < $ce->{LTISendGradesEarlyThreshold});
+					&& $score->{score} < $ce->{LTISendGradesEarlyThreshold});
 		}
 
 		$courseTotalRight += $totalRight;
@@ -245,25 +244,35 @@ sub get_LTISendScoresAfterDate ($set, $ce) {
 # Checks if the set is past the LTISendScoresAfterDate or has met the LTISendGradesEarlyThreshold.
 # Returns a reference to hash with keys totalRight, total, score, criticalDate if the set has met
 # either condition and undef if not.
+# If the set is a test, the score "0/0" is treated as 0.
+# If the set is not a test, the score "0/0" is treated as 0 if we have not yet reached the
+# LTISendScoresAfterDate and have not attempted the set. Otherwise, "0/0" is treated as 1.
 sub can_submit_LMS_score ($db, $ce, $userID, $userSet) {
 	my $totalRight;
 	my $total;
-	if ($userSet->assignment_type() =~ /gateway/) {
+	if ($userSet->assignment_type =~ /gateway/) {
 		($totalRight, $total) = grade_gateway($db, $userSet->set_id, $userID);
 	} else {
 		($totalRight, $total) = (grade_set($db, $userSet, $userID))[ 0, 1 ];
 	}
+
 	my $score  = $total ? $totalRight / $total : 0;
 	my $return = { totalRight => $totalRight, total => $total, score => $score };
 
 	if ($ce->{LTISendScoresAfterDate} ne 'never') {
 		my $critical_date;
-		if ($userSet->assignment_type() =~ /gateway/) {
+		if ($userSet->assignment_type =~ /gateway/) {
 			$critical_date = earliest_gateway_date($db, $ce, $userSet);
 		} else {
 			$critical_date = get_LTISendScoresAfterDate($userSet, $ce);
 		}
 		$return->{criticalDate} = $critical_date;
+		if ($total == 0) {
+			$return->{score} = (
+				$userSet->assignment_type =~ /gateway/ || ($ce->{LTISendScoresAfterDate} eq 'never'
+					|| before($critical_date) && !set_attempted($db, $userID, $userSet))
+			) ? 0 : 1;
+		}
 		return $return if after($critical_date);
 	}
 
