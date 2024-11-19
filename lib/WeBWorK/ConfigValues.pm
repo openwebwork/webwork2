@@ -985,13 +985,27 @@ sub getConfigValues ($ce) {
 					. 'then the set needs to have been attempted for its score to be sent to the LMS (or included in '
 					. "the 'course' score calculation).</p><p>For a regular or jitar set, 'attempted' means that at "
 					. "least one exercise was attempted. For a test, 'attempted' means that either multiple versions "
-					. 'exercise or there is one version with a graded submission.</p>'
+					. 'exist or there is one version with a graded submission.</p>'
 			),
-			values => [qw(attempted 0 0.5 0.7 0.75 0.8 0.85 0.9 0.95 1)],
+			values => [ qw(
+				attempted 0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1
+			) ],
 			labels => {
 				attempted => x('Attempted'),
 				0         => '0%',
+				0.05      => '5%',
+				0.1       => '10%',
+				0.15      => '15%',
+				0.2       => '20%',
+				0.25      => '25%',
+				0.3       => '30%',
+				0.35      => '35%',
+				0.4       => '40%',
+				0.45      => '45%',
 				0.5       => '50%',
+				0.55      => '55%',
+				0.6       => '60%',
+				0.65      => '65%',
 				0.7       => '70%',
 				0.75      => '75%',
 				0.8       => '80%',

@@ -56,7 +56,7 @@ use WeBWorK::Utils::LanguageAndDirection qw(get_lang_and_dir);
 use WeBWorK::Utils::Logs qw(writeCourseLog);
 use WeBWorK::Utils::Routes qw(route_title route_navigation_is_restricted);
 use WeBWorK::Utils::Sets qw(format_set_name_display);
-use WeBWorK::Authen::LTI::MassUpdate qw(mass_update);
+use WeBWorK::Authen::LTI::GradePassback qw(massUpdate);
 
 =head1 INVOCATION
 
@@ -111,7 +111,7 @@ async sub go ($c) {
 
 	# If grades are being passed back to the lti, then peroidically update all of the
 	# grades because things can get out of sync if instructors add or modify sets.
-	mass_update($c) if $c->stash('courseID') && ref($c->db) && $ce->{LTIGradeMode};
+	massUpdate($c) if $c->stash('courseID') && ref($c->db) && $ce->{LTIGradeMode};
 
 	# Check to determine if this is a problem set response.  Individual content generators must check
 	# $c->{invalidSet} and react appropriately.

@@ -153,11 +153,9 @@
 				% }
 			% }
 			% # Print a message when submitting the score to an LMS.
-			% if ($c->{LTIGradeResult} != -1) {
+			% if ($c->{ltiGradePassbackMessage}) {
 				<br>
-				<%= $c->{LTIGradeResult}
-					? maketext('Your score was successfully sent to the LMS.')
-					: maketext('Your score was not successfully sent to the LMS.') =%>
+				<%= $c->{ltiGradePassbackMessage} =%>
 			% }
 		% }
 	</div>
