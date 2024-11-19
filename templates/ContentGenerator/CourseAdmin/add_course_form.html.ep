@@ -20,18 +20,22 @@
 	<%= $c->hidden_authen_fields =%>
 	<%= $c->hidden_fields('subDisplay') =%>
 	%
-	<div class="mb-2"><%= maketext(
-		'Specify an ID, title, and institution for the new course. The course ID may contain only letters, '
-			. 'numbers, hyphens, and underscores, and may have at most [_1] characters.',
-		$ce->{maxCourseIdLength}) %>
-	</div>
-	<div class="row mb-3">
+	<div class="row my-3">
 		<div class="col-lg-8 col-md-10">
 			<div class="form-floating mb-1">
 				<%= text_field new_courseID => '',
 					id          => 'new_courseID',
 					placeholder => '',
-					class       => 'form-control' =%>
+					class       => 'form-control set-id-tooltip',
+					maxlength   => $ce->{maxCourseIdLength},
+					data        => {
+						'bs-placement' => 'top',
+						'bs-title'     => maketext(
+							'Course ID may contain only letters, numbers, hyphens, and underscores, '
+								. 'and may have at most [_1] characters.',
+							$ce->{maxCourseIdLength}
+						)
+					} =%>
 				<%= label_for new_courseID => maketext('Course ID') =%>
 			</div>
 			<div class="form-floating mb-1">
@@ -73,15 +77,9 @@
 		</div>
 	</div>
 	<div class="mb-2">
-		<%= maketext(
-			'To add additional instructor(s) to the new course, specify user information below. '
-				. 'The user ID may contain only numbers, letters, hyphens, periods (dots), commas, and underscores.'
-		) =%>
-	</div>
-	<div class="mb-2">
 	% for (1 .. $number_of_additional_users) {
 		<div class="mb-2">
-			<%= maketext('Enter information for additional instructor number [_1].', $_) %>
+			<%= maketext('Enter information for additional user number [_1].', $_) %>
 		</div>
 		<div class="row mb-1">
 			<div class="col-lg-4 col-md-5 col-sm-6">
@@ -89,7 +87,13 @@
 					<%= text_field "add_initial_userID_$_" => '',
 						id          => "add_initial_userID_$_",
 						placeholder => '',
-						class       => 'form-control' =%>
+						class       => 'form-control set-id-tooltip',
+						data        => {
+							'bs-placement' => 'top',
+							'bs-title'     => maketext(
+								'User ID may contain only numbers, letters, hyphens, periods, and underscores.'
+							)
+						} =%>
 					<%= label_for "add_initial_userID_$_" => maketext('User ID') =%>
 				</div>
 				<div class="form-floating mb-1">
@@ -154,8 +158,8 @@
 	% }
 	</div>
 	<div class="mb-3">
-		<%= submit_button maketext('Add Another Instructor'), name => 'add_another_instructor',
-			class => 'btn btn-primary' =%>
+		<%= submit_button maketext('Add Additional User'), name => 'add_another_instructor',
+			class => 'btn btn-secondary' =%>
 	</div>
 	<div class="mb-1">
 		<%= maketext('To copy components from an existing course, '

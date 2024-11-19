@@ -28,14 +28,10 @@
 		$ce->{admin_course_id}) =%>
 </p>
 <p>
-	<%= maketext('Optionally, to add additional instructors click the "Add Another Instructor" button, then enter '
-		. 'the details of a new course instructor to be added when the course is created.  The only required field '
-		. 'is the user ID of the this user.  Optionally, you can add this user to the [_1] course, so you can copy '
-		. 'this user when creating future courses, or manage and email course instructors.  Click the "Add Another '
-		. 'Instructor" button again to add multiple additional users.  Note, by default these new users will be '
-		. '"Dropped" and unable to login to the [_1] course.  You can change this on the "Accounts Manager" page. '
-		. q/Additionally you can control access to the [_1] course by setting $permissionLevels{login}='admin' in /
-		. 'course.conf.', $ce->{admin_course_id}) =%>
+	<%= maketext('Click the "Add Additional User" button to add additional users to the course. The only required '
+		. 'field is the user ID.  You can also add this user to the [_1] course, so you can copy this user when '
+		. 'creating future courses, or manage and email course users.  Note, by default these new users will be '
+		. '"Dropped" and unable to login to the [_1] course.', $ce->{admin_course_id}) =%>
 </p>
 <p class="mb-0">
 	<%= maketext('You may choose a course to copy components from. Select the course and which components to copy.  '
