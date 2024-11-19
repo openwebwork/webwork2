@@ -967,18 +967,13 @@ if defined.
 sub helpMacro ($c, $name, $args = {}) {
 	my $ce = $c->ce;
 	return '' unless -e "$ce->{webworkDirs}{root}/templates/HelpFiles/$name.html.ep";
-
-	my $label = $args->{label} // $c->tag(
-		'i',
-		class         => 'icon fa-solid fa-circle-question ' . ($args->{label_size} // ''),
-		'aria-hidden' => 'true',
-		data          => { alt => ' ? ' },
-		''
+	return $c->include(
+		"HelpFiles/$name",
+		name      => $name,
+		label     => delete $args->{label}      // '',
+		labelSize => delete $args->{label_size} // '',
+		args      => $args
 	);
-	delete $args->{label};
-	delete $args->{label_size};
-
-	return $c->include("HelpFiles/$name", name => $name, label => $label, args => $args);
 }
 
 =item feedbackMacro(%params)
