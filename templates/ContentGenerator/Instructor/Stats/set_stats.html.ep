@@ -19,8 +19,8 @@
 						'This gives the status and dates of the main set. '
 							. 'Indvidual students may have different settings.'
 					) %>">
-					<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') %>" aria-hidden="true">
-					</i>
+					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+					<span class="visually-hidden"><%= maketext('Help') =%></span>
 				</a>
 			</th>
 			<td>
@@ -48,9 +48,8 @@
 							'Answer availability for tests depends on multiple settings.  This only indicates the '
 								. 'template answer date has passed.  See Set Detail page for actual availability.'
 						) =%>">
-						<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') =%>"
-							aria-hidden="true">
-						</i>
+						<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+						<span class="visually-hidden"><%= maketext('Help') =%></span>
 					</a>
 				% }
 			</td>
@@ -108,7 +107,8 @@
 	<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
 		data-bs-content="<%= maketext(
 			'Success index is the square of the average score divided by the average number of attempts.') %>">
-		<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') %>" aria-hidden="true"></i>
+		<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+		<span class="visually-hidden"><%= maketext('Help') =%></span>
 	</a>
 % end
 %

@@ -57,8 +57,8 @@
 					data-bs-content="<%= maketext(
 						'Success index is the square of the average score divided by the average number of attempts.'
 					) %>">
-					<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') %>" aria-hidden="true">
-					</i>
+					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+					<span class="visually-hidden"><%= maketext('Help') =%></span>
 				</a>
 			</th>
 			<td><%= sprintf('%0.1f', 100 * $successIndex) %></td>
@@ -87,7 +87,8 @@
 	<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
 		data-bs-content="<%=
 			maketext('Success index is the square of the score divided by the number of attempts.') =%>">
-		<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') %>" aria-hidden="true"></i>
+		<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+		<span class="visually-hidden"><%= maketext('Help') =%></span>
 	</a>
 % end
 % push @tableHeaders, $successIndexHeader->();

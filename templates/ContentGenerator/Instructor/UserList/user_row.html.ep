@@ -26,9 +26,8 @@
 				% if ($editable) {
 					<%= link_to $c->systemLink(url_for, params => { editMode => 1, visible_users => $user->user_id }),
 						begin =%>
-						<i class="icon fas fa-pencil-alt" aria-hidden="true"
-							data-alt="<%= maketext('Link to Edit Page for [_1]', $user->user_id) %>">
-						</i>
+						<i class="icon fas fa-pencil-alt" aria-hidden="true"></i>
+						<span class="visually-hidden"><%= maketext('Edit [_1]', $user->user_id) %></span>
 					% end
 				% }
 			</div>

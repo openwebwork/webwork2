@@ -1,5 +1,10 @@
 <%= link_to '#', data => { bs_toggle => 'modal', bs_target => "#${name}_help_modal" }, %$args, begin =%>
-	<%== $label =%>
+	% if ($label) {
+		<%== $label =%>
+	% } else {
+		<i class="icon fa-solid fa-circle-question <%= $labelSize %>" aria-hidden="true"></i>
+		<span class="visually-hidden"><%= stash->{ariaLabel} // maketext('Help') %></span>
+	% }
 <% end =%>
 <% content_for 'modal-dialog-area' => begin =%>
 	<div class="modal fade" id="<%= "${name}_help_modal" %>" tabindex="-1"
