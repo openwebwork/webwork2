@@ -259,22 +259,15 @@ sub add_course_validate ($c) {
 	}
 
 	for (1 .. $number_of_additional_users) {
-		my $userID          = trim_spaces($c->param("add_initial_userID_$_"))          || '';
-		my $password        = trim_spaces($c->param("add_initial_password_$_"))        || '';
-		my $confirmPassword = trim_spaces($c->param("add_initial_confirmPassword_$_")) || '';
+		my $userID = trim_spaces($c->param("add_initial_userID_$_")) || '';
 
-		if ($userID ne '') {
-			unless ($userID =~ /^[\w-.,]*$/) {
-				push @errors,
-					$c->maketext(
-						'User ID number [_1] may only contain letters, numbers, hyphens, periods, commas, '
-						. 'and underscores.',
-						$_
-					);
-			}
-			if ($password ne '' && $password ne $confirmPassword) {
-				push @errors, $c->maketext('Pasword number [_1] and its password confirmation must match.', $_);
-			}
+		unless ($userID =~ /^[\w-.,]*$/) {
+			push @errors,
+				$c->maketext(
+					'User ID number [_1] may only contain letters, numbers, hyphens, periods, commas, '
+					. 'and underscores.',
+					$_
+				);
 		}
 	}
 
@@ -337,21 +330,21 @@ sub do_add_course ($c) {
 		my $PermissionLevel = $db->getPermissionLevel($userID);
 		my $User            = $db->getUser($userID);
 		my $Password        = $db->getPassword($userID);
-		$User->status('O');    # Add admin course user as an observer.
+
+		# Enroll student users, and make all other users observers.
+		$User->status($PermissionLevel->permission == $ce->{userRoles}{student} ? 'C' : 'O');
 
 		push @users, [ $User, $Password, $PermissionLevel ];
 	}
 
 	# add additional instructors if desired
 	for (1 .. $number_of_additional_users) {
-		my $userID          = trim_spaces($c->param("add_initial_userID_$_"))          // '';
-		my $password        = trim_spaces($c->param("add_initial_password_$_"))        // '';
-		my $confirmPassword = trim_spaces($c->param("add_initial_confirmPassword_$_")) // '';
-		my $firstName       = trim_spaces($c->param("add_initial_firstName_$_"))       // '';
-		my $lastName        = trim_spaces($c->param("add_initial_lastName_$_"))        // '';
-		my $email           = trim_spaces($c->param("add_initial_email_$_"))           // '';
-		my $studentID       = trim_spaces($c->param("add_initial_studentID_$_"))       // '';
-		my $permissionLevel = trim_spaces($c->param("add_initial_permission_$_"));
+		my $userID          = trim_spaces($c->param("add_initial_userID_$_"))    // '';
+		my $password        = trim_spaces($c->param("add_initial_password_$_"))  // '';
+		my $firstName       = trim_spaces($c->param("add_initial_firstName_$_")) // '';
+		my $lastName        = trim_spaces($c->param("add_initial_lastName_$_"))  // '';
+		my $email           = trim_spaces($c->param("add_initial_email_$_"))     // '';
+		my $permissionLevel = $c->param("add_initial_permission_$_");
 		my $add_user        = $c->param("add_initial_user_$_") // 0;
 
 		if ($userID =~ /\S/) {
@@ -360,8 +353,7 @@ sub do_add_course ($c) {
 				first_name    => $firstName,
 				last_name     => $lastName,
 				email_address => $email,
-				student_id    => $studentID,
-				status        => 'O',
+				status        => $permissionLevel == $ce->{userRoles}{student} ? 'C' : 'O',
 			);
 			my $Password = $db->newPassword(
 				user_id  => $userID,
@@ -385,7 +377,7 @@ sub do_add_course ($c) {
 					$db->addUser($User);
 					$db->addPassword($Password);
 					$db->addPermissionLevel($PermissionLevel);
-					$User->status('O');
+					$User->status($permissionLevel == $ce->{userRoles}{student} ? 'C' : 'O');
 				}
 			}
 		}

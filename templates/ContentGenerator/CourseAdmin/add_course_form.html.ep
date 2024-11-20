@@ -97,19 +97,11 @@
 					<%= label_for "add_initial_userID_$_" => maketext('User ID') =%>
 				</div>
 				<div class="form-floating mb-1">
-					<%= password_field "add_initial_password_$_",
+					<%= text_field "add_initial_password_$_" => '',
 						id           => "add_initial_password_$_",
 						placeholder  => '',
-						class        => 'form-control',
-						autocomplete => 'new-password' =%>
+						class        => 'form-control' =%>
 					<%= label_for "add_initial_password_$_" => maketext('Password') =%>
-				</div>
-				<div class="form-floating mb-1">
-					<%= password_field "add_initial_confirmPassword_$_",
-						id          => "add_initial_confirmPassword_$_",
-						placeholder => '',
-						class       => 'form-control' =%>
-					<%= label_for "add_initial_confirmPassword_$_" => maketext('Confirm Password') =%>
 				</div>
 				<div class="form-floating mb-1">
 					<%= select_field "add_initial_permission_$_" => $permissionLevels,
@@ -139,13 +131,6 @@
 						placeholder => '',
 						class       => 'form-control' =%>
 					<%= label_for "add_initial_email_$_" => maketext('Email Address') =%>
-				</div>
-				<div class="form-floating mb-1">
-					<%= text_field "add_initial_studentID_$_" => '',
-						id          => "add_initial_studentID_$_",
-						placeholder => '',
-						class       => 'form-control' =%>
-					<%= label_for "add_initial_studentID_$_" => maketext('Student ID') =%>
 				</div>
 			</div>
 		</div>
