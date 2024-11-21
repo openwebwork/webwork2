@@ -562,7 +562,6 @@ sub readSetDef ($ce, $fileName) {
 					$problemData->{$item} = $value if defined $value;
 				} elsif ($item eq 'problem_end') {
 					# Clean up and validate values
-					$problemData->{source_file} =~ s/\s*//g;
 					push(@errors, [ 'No source_file for problem in "[_1]"', $fileName ])
 						unless $problemData->{source_file};
 

@@ -10,7 +10,8 @@
 <div class="problem-grader">
 	<hr>
 	<div class="problem-grader-table">
-		% my $currentScore = 0;
+		% my $currentScore    = 0;
+		% my $rawCurrentScore = 0;
 		%
 		% # Subscores for each answer in the problem.
 		% if (@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1) {
@@ -18,7 +19,7 @@
 			% my $total = 0;
 			% my (@scores, @weights);
 			% for my $ans_id (@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} }) {
-				% push(@scores,  wwRound(0, $grader->{pg}{answers}{$ans_id}{score} * 100));
+				% push(@scores,  $grader->{pg}{answers}{$ans_id}{score} * 100);
 				% push(@weights, $grader->{pg}{answers}{$ans_id}{weight} // 1);
 				% $total += $weights[-1];
 			% }
@@ -27,7 +28,8 @@
 			% @weights = map { $_ / $total } @weights;
 			%
 			% for my $part (0 .. $#scores) {
-				% $currentScore += $scores[$part] * $weights[$part];
+				% $rawCurrentScore += $scores[$part] * $weights[$part];
+				% $scores[$part] = wwRound(0, $scores[$part]);
 				<div class="row align-items-center mb-2">
 					<%= label_for "score_problem$grader->{problem_id}_$grader->{pg}{flags}{ANSWER_ENTRY_ORDER}[$part]",
 						class => 'col-fixed col-form-label',
@@ -69,10 +71,10 @@
 					</div>
 				</div>
 			% }
-			% $currentScore = wwRound(0, $currentScore);
+			% $currentScore = wwRound(0, $rawCurrentScore);
 		% } elsif (@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} }) {
-			% $currentScore =
-				% wwRound(0, $grader->{pg}{answers}{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER}[0] }{score} * 100);
+			% $rawCurrentScore = $grader->{pg}{answers}{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER}[0] }{score} * 100;
+			% $currentScore = wwRound(0, $rawCurrentScore);
 			<%= hidden_field 'answer-part-score' => $currentScore, class => 'answer-part-score',
 				data => { problem_id => $grader->{problem_id}, weight => 1 } =%>
 		% }
@@ -100,7 +102,7 @@
 			% my $recordedPoints =
 				% wwRound(2, wwRound(0, $grader->{recorded_score} * $grader->{problem_value} / $stepSize) * $stepSize);
 			% my $currentPoints =
-				% wwRound(2, wwRound(0, $currentScore / 100 * $grader->{problem_value} / $stepSize) * $stepSize);
+				% wwRound(2, wwRound(0, $rawCurrentScore / 100 * $grader->{problem_value} / $stepSize) * $stepSize);
 			% param('grader-problem-points', $recordedPoints);
 			<div class="row align-items-center mb-2">
 				<%= label_for "score_problem$grader->{problem_id}_points",

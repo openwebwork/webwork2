@@ -369,10 +369,15 @@ sub create_user ($self) {
 	# Determine the roles defined for this user defined in the LTI request and assign a permission level on that basis.
 	my @LTIroles = @{ $self->{roles} };
 
-	# Restrict to institution and context roles and remove the purl link portion (ignore system roles).
+	# Restrict to context roles and remove the purl link portion.  System roles are always ignored, but institution
+	# roles are also included if $LTI{v1p3}{AllowInstitutionRoles} = 1.
 	@LTIroles =
 		map {s|^[^#]*#||r}
-		grep {m!^http://purl.imsglobal.org/vocab/lis/v2/(membership|institution\/person)#!} @LTIroles;
+		grep {
+			m!^http://purl.imsglobal.org/vocab/lis/v2/membership#!
+			|| ($ce->{LTI}{v1p3}{AllowInstitutionRoles}
+				&& m!^http://purl.imsglobal.org/vocab/lis/v2/institution/person#!)
+		} @LTIroles;
 
 	if ($ce->{debug_lti_parameters}) {
 		warn "The adjusted LTI roles defined for this user are: \n-- " . join("\n-- ", @LTIroles),

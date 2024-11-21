@@ -76,8 +76,8 @@
 	<dd class="list-group-item">
 		<%= maketext('This is where you edit the text of the problem template. Type Ctrl-Enter while this '
 			. 'window has focus to re-render the problem. Code folding is enabled either by clicking on '
-			. 'the triangles in the gutter next to line numbers or using the shortcut Shift-Ctrl-F.  Folding '
-			. 'all regions can be accomplished with Shift-Ctrl-A and unfold all regions with Shift-Ctrl-G. '
+			. 'the triangles in the gutter next to line numbers or using the shortcut Shift-Ctrl-~[.  Folding '
+			. 'all regions can be accomplished with Ctrl-Alt-~[ and unfold all regions with Ctrl-Alt-~]. '
 			. 'Comments can be toggled with Ctrl-/.') =%>
 	</dd>
 	<dt><%= maketext('Text Editor Options') %></dt>
