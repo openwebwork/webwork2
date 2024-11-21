@@ -633,8 +633,15 @@ sub checkPassword {
 	my $Password = $db->getPassword($userID);
 	if (defined $Password) {
 		# Check against the password in the database.
-		my $possibleCryptPassword = crypt $possibleClearPassword, $Password->password;
-		my $dbPassword            = $Password->password;
+		my $possibleCryptPassword = '';
+		# Wrap crypt in an eval to catch any "Wide character in crypt" errors.
+		# If crypt fails due to a wide character, encode to UTF-8 before calling crypt.
+		eval { $possibleCryptPassword = crypt $possibleClearPassword, $Password->password; };
+		if ($@ && $@ =~ /Wide char/) {
+			$possibleCryptPassword = crypt Encode::encode_utf8($possibleClearPassword), $Password->password;
+		}
+
+		my $dbPassword = $Password->password;
 		# This next line explicitly insures that blank or null passwords from the database can never succeed in matching
 		# an entered password.  This also rejects cases when the database has a crypted password which matches a
 		# submitted all white-space or null password by requiring that the $possibleClearPassword contain some non-space
