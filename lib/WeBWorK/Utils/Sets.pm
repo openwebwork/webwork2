@@ -103,7 +103,7 @@ sub grade_set ($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails
 		$status = 1 if $status > 1;
 
 		if ($wantProblemDetails) {
-			push(@$problem_scores,             $problemRecord->attempted ? 100 * wwRound(2, $status) : '&nbsp;.&nbsp;');
+			push(@$problem_scores, $status || $problemRecord->attempted ? 100 * wwRound(2, $status) : '&nbsp;.&nbsp;');
 			push(@$problem_incorrect_attempts, $problemRecord->num_incorrect || 0);
 		}
 
