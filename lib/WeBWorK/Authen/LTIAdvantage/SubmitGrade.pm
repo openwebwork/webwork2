@@ -198,6 +198,12 @@ async sub submit_course_grade ($self, $userID) {
 	my $ce = $c->{ce};
 	my $db = $c->{db};
 
+	# Before the costly act of calculating the course grade, if this LMS submission was intitated because
+	# of $LTIGradeOnSubmit, then check if the set from which a problem was submitted meets the criteria to
+	# be included in a course grade calculation. If not, we can skip the rest because the course grade will
+	# not differ from what it previously was.
+	return 0 unless ($self->{post_processing_mode} || can_submit_LMS_score($db, $ce, $userID, $c->{set}, 1));
+
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
@@ -221,19 +227,19 @@ async sub submit_set_grade ($self, $userID, $setID) {
 
 	my $userSet = $db->getMergedSet($userID, $setID);
 
-	my $score = can_submit_LMS_score($db, $ce, $userID, $userSet);
-	return 0 unless ($score || !$self->{post_processing_mode} && $ce->{LTIGradeOnSubmit} eq 'homework_always');
+	my $score = can_submit_LMS_score($db, $ce, $userID, $userSet, !$self->{post_processing_mode});
+	return 0 unless $score;
 
 	$self->warning("Submitting grade for user $userID and set $setID.");
 	$self->warning('LMS user id is not available for this user.') unless $user->lis_source_did;
 	$self->warning('LMS lineitem is not available for this set.') unless $userSet->lis_source_did;
 
 	return await $self->submit_grade($user->lis_source_did, $userSet->lis_source_did, $score->{totalRight},
-		$score->{total}, $self->{post_processing_mode} || $ce->{LTIGradeOnSubmit} ne 'homework_always');
+		$score->{total});
 }
 
 # Submits scoreGiven and scoreMaximum to the lms with $sourcedid as the identifier.
-async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum, $nullEqualsZero = 1) {
+async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 
@@ -283,7 +289,7 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum
 		# or if the new score is 0 and the LMS score was empty and it is past the SendScoresAfterDate.
 		if (abs($score - $priorScore) < 0.001
 			&& ($score != 1 || $priorScore == 1)
-			&& ($score != 0 || @$priorData && defined $priorData->[0]{resultScore} || $nullEqualsZero))
+			&& ($score != 0 || (@$priorData && defined $priorData->[0]{resultScore})))
 		{
 			$self->warning(
 				"LMS grade will NOT be updated as the grade has not significantly changed. Old score: $priorScore, New score: $score."

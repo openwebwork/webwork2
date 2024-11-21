@@ -120,6 +120,12 @@ async sub submit_course_grade ($self, $userID) {
 	my $ce = $c->{ce};
 	my $db = $c->{db};
 
+	# Before the costly act of calculating the course grade, if this LMS submission was intitated because
+	# of $LTIGradeOnSubmit, then check if the set from which a problem was submitted meets the criteria to
+	# be included in a course grade calculation. If not, we can skip the rest because the course grade will
+	# not differ from what it previously was.
+	return 0 unless ($self->{post_processing_mode} || can_submit_LMS_score($db, $ce, $userID, $c->{set}, 1));
+
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
@@ -142,20 +148,19 @@ async sub submit_set_grade ($self, $userID, $setID) {
 
 	my $userSet = $db->getMergedSet($userID, $setID);
 
-	my $score = can_submit_LMS_score($db, $ce, $userID, $userSet);
-	return 0 unless ($score || !$self->{post_processing_mode} && $ce->{LTIGradeOnSubmit} eq 'homework_always');
+	my $score = can_submit_LMS_score($db, $ce, $userID, $userSet, !$self->{post_processing_mode});
+	return 0 unless $score;
 
 	$self->warning("Submitting grade for user $userID and set $setID.")
 		if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
 	$self->warning('lis_source_did is not available for this set.')
 		if !$userSet->lis_source_did && ($ce->{debug_lti_grade_passback} || $self->{post_processing_mode});
 
-	return await $self->submit_grade($userSet->lis_source_did, $score->{score},
-		$self->{post_processing_mode} || $ce->{LTIGradeOnSubmit} ne 'homework_always');
+	return await $self->submit_grade($userSet->lis_source_did, $score->{score});
 }
 
 # Submits a score of $score to the lms with $sourcedid as the identifier.
-async sub submit_grade ($self, $sourcedid, $score, $nullEqualsZero = 1) {
+async sub submit_grade ($self, $sourcedid, $score) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 	my $db = $c->{db};
@@ -284,35 +289,35 @@ EOS
 						. $message);
 				return 0;
 			} else {
-				my $oldScore;
+				my $priorScore;
 				# Possibly no score yet.
 				if ($content =~ /<textString\/>/) {
-					$oldScore = '';
+					$priorScore = '';
 				} else {
 					$content =~ /<textString>\s*(\S+)\s*<\/textString>/;
-					$oldScore = $1;
+					$priorScore = $1;
 				}
-				# Do not update the score if no change.
-				if ($oldScore eq 'success') {
-					# Blackboard seems to return this when there is no prior grade.
-					# See: https://webwork.maa.org/moodle/mod/forum/discuss.php?d=5002
-					debug("LMS grade will be updated. sourcedid: $sourcedid; Old score: $oldScore; New score: $score")
-						if $ce->{debug_lti_grade_passback};
-				} elsif ($oldScore ne ''
-					|| abs($score - $oldScore) < 0.001
-					&& ($score != 1 || $oldScore ne '' && $oldScore == 1)
-					&& ($score != 0 || $oldScore ne '' || $nullEqualsZero))
+				# Blackboard seems to return this when there is no prior grade.
+				# See: https://webwork.maa.org/moodle/mod/forum/discuss.php?d=5002
+				$priorScore = '' if $priorScore eq 'success';
+
+				# Do not update the score if there is no significant change. Note that the cases where the webwork score
+				# is exactly 1 and the LMS score is not exactly 1, and the case where the webwork score is 0 and the LMS
+				# score is not set are considered significant changes.
+				if (abs($score - ($priorScore || 0)) < 0.001
+					&& ($score != 1 || $priorScore == 1)
+					&& ($score != 0 || $priorScore ne ''))
 				{
 					# LMS has essentially the same score, no reason to update it
 					debug(
-						"LMS grade will NOT be updated - grade has not significantly changed. Old score: $oldScore; New score: $score"
+						"LMS grade will NOT be updated - grade has not significantly changed. Old score: $priorScore; New score: $score"
 					) if $ce->{debug_lti_grade_passback};
 					$self->warning('LMS grade will NOT be updated - grade has not significantly changed. '
-							. "Old score: $oldScore; New score: $score")
+							. "Old score: $priorScore; New score: $score")
 						if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
 					return 1;
 				} else {
-					debug("LMS grade will be updated. sourcedid: $sourcedid; Old score: $oldScore; New score: $score")
+					debug("LMS grade will be updated. sourcedid: $sourcedid; Old score: $priorScore; New score: $score")
 						if $ce->{debug_lti_grade_passback};
 				}
 			}

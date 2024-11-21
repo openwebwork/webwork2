@@ -916,20 +916,20 @@ sub getConfigValues ($ce) {
 			var  => 'LTICheckPrior',
 			doc  => x('Check a score in the LMS actually needs updating before updating it'),
 			doc2 => x(
-				'<p>When this is true, any time WeBWorK is about to send a grade to the LMS, it will first request '
-					. 'from the LMS what that grade currently is. Then if there is no significant difference between '
-					. 'the LMS grade and the WeBWorK grade, WeBWorK will not follow through with updating the LMS '
-					. 'grade. This is to avoid frequent insignificant updates to a student grade in the LMS. With some '
-					. 'LMSs, students may receive notifications each time a grade is updated, and setting this '
+				'<p>When this is true, any time WeBWorK is about to send a score to the LMS, it will first request '
+					. 'from the LMS what that score currently is. Then if there is no significant difference between '
+					. 'the LMS score and the WeBWorK score, WeBWorK will not follow through with updating the LMS '
+					. 'score. This is to avoid frequent insignificant updates to a student score in the LMS. With some '
+					. 'LMSs, students may receive notifications each time a score is updated, and setting this '
 					. 'variable will prevent too many notifications for them. This does create a two-step process, '
-					. 'first querying the current grade from the LMS and then actually updating the grade (if there is '
+					. 'first querying the current score from the LMS and then actually updating the score (if there is '
 					. 'a significant difference). Additional details:</p><ul><li>If the LMS score is not 100%, but the '
 					. 'WeBWorK score is, then even if the LMS score is only insignificantly less than 100%, it will be '
 					. 'updated anyway.</li><li>If the LMS score is null and the WeBWorK score is 0, this is considered '
 					. 'an insignificant difference and the LMS score will not be updated to 0. However if it is after '
 					. 'the $LTISendScoresAfterDate (described below), then the null score will be updated to 0 anyway.'
 					. '</li><li>"Significant" means an absolute difference of 0.001, or 0.1%. At this time this is not '
-					. 'configrable.</li></ul>'
+					. 'configurable.</li></ul>'
 			),
 			type => 'boolean'
 		},
@@ -937,39 +937,31 @@ sub getConfigValues ($ce) {
 			var  => 'LTIGradeOnSubmit',
 			doc  => x('Update LMS Grade Each Submit'),
 			doc2 => x(
-				'<p>If this is set to Conditionally, then  each time a user submits an answer or grades a test, that '
-					. 'will trigger WeBWorK possibly reporting a score to the LMS. See $LTICheckPrior for one reason '
-					. 'that WeBWorK might not ultimately send a grade. But there are other reasons too. WeBWorK will '
-					. "send the grade (the assignment's score if \$LTIGradeMode is 'homework' or the overall course "
-					. "grade if \$LTIGradeMode is 'course') to the LMS only if either the assignment's "
+				'If this is set to true, then  each time a user submits an answer or grades a test, that will trigger '
+					. 'WeBWorK possibly reporting a score to the LMS. See $LTICheckPrior for one reason that WeBWorK '
+					. 'might not ultimately send a score. But there are other reasons too. WeBWorK will send the score '
+					. "(the assignment's score if \$LTIGradeMode is 'homework' or the overall course score if "
+					. "\$LTIGradeMode is 'course') to the LMS only if either the assignment's "
 					. "\$LTISendGradesEarlyThreshold has been met or if it is past that assignment's "
-					. '$LTISendScoresAfterDate.</p><p>If $LTIGradeOnSubmit is set to Always, then:</p><ul><li>If '
-					. "\$LTIGradeMode is 'homework', then WeBWorK will send that assignment's score to the LMS "
-					. 'regardless of having met the $LTISendGradesEarlyThreshold or being past the '
-					. "\$LTISendScoresAfterDate.</li><li>If \$LTIGradeMode is 'course', the behavior will be no "
-					. 'different as if $LTIGradeOnSubmit were set to Conditionally.</li></ul><p>If sending grades upon '
-					. 'each submission is not desired, you can set $LTIGradeOnSubmit to 0.</p>'
+					. '$LTISendScoresAfterDate.'
 			),
-			values => [qw(0 1 homework_always)],
-			labels => {
-				0               => x('Never'),
-				1               => x('Conditionally'),
-				homework_always => x('Always')
-			},
-			type => 'popuplist'
+			type => 'boolean'
 		},
 		LTISendScoresAfterDate => {
 			var  => 'LTISendScoresAfterDate',
 			doc  => x('Date after which scores will be sent to the LMS'),
 			doc2 => x(
-				'<p>This can be set to one of the dates assciated with assignments. For a given assignment, if it is after '
-					. "the \$LTISendScoresAfterDate, then WeBWorK will send grades.</p><ul><li>For 'course' grade "
-					. 'passback mode, the assignment will be included in the overall course grade calculation.</li><li>'
-					. "For 'homework' grade passback mode, the assignment's score will be sent.</li></ul><p>If "
-					. '$LTISendScoresAfterDate is set to "After the reduced scoring date" and an assignent has no '
-					. 'reduced scoring date or reduced scoring is disabled for that assignment, the fallback is to use '
-					. 'the close date.</p><p>For a given assignment, if it is before the $LTISendScoresAfterDate, '
-					. 'WeBWorK will still send a score to the LMS if the $LTISendGradesEarlyThreshold has been met.</p>'
+				'<p>This can be set to one of the dates associated with assignments, or "Never". For each assignment, '
+					. 'if this setting is "After the ... " then if it is after the indicated date, WeBWorK will send '
+					. 'scores. If this setting is "Never" then there is no date that will force WeBWorK to send scores '
+					. 'and only the $LTISendGradesEarlyThreshold can cause scores to be sent. If scores are sent:</p> '
+					. "<ul><li>For 'course' grade passback mode, the assignment will be included in the overall course "
+					. "score calculation.</li><li>For 'homework' grade passback mode, the assignment's score itself "
+					. 'will be sent.</li></ul><p>If $LTISendScoresAfterDate is set to "After the reduced scoring date" '
+					. 'and an assignment has no reduced scoring date or reduced scoring is disabled, the fallback is '
+					. 'to use the close date.</p><p>For a given assignment, WeBWorK will still send a score to the LMS '
+					. 'if the $LTISendGradesEarlyThreshold has been met, regardless of how $LTISendScoresAfterDate is '
+					. 'set.</p>'
 			),
 			values => [qw(open_date reduced_scoring_date due_date answer_date never)],
 			labels => {
@@ -987,15 +979,13 @@ sub getConfigValues ($ce) {
 			doc2 => x(
 				"<p>This can either be set to a score or set to Attempted. When something triggers a potential grade "
 					. 'passback, if it is earlier than $LTISendScoresAfterDate, the condition described by this '
-					. 'variable must be met or else no grade will be sent. Although if $LTIGradeOnSubmit is set to '
-					. "'homework_always', then users submitting an answer or grading a test will still cause there to "
-					. 'be a grade passback regardless of this setting.</p><p>If this variable is a score, then the set '
-					. 'will need to have a score that reaches or exceeds this score for its score to be sent to the '
-					. "LMS (or included in the 'course' grade calcuation). If this variable is set to Attempted, then "
-					. 'the set needs to have been attempted for its score to be sent to the LMS (or included in the '
-					. "'course' grade calcuation).</p><p>For a regular or jitar set, 'attempted' means that at least one "
-					. "exercise was attempted. For a test, 'attempted' means that either multiple versions exist or "
-					. 'there is one version with a graded submission.</p>'
+					. 'variable must be met or else no score will be sent.</p><p>If this variable is a score, then the '
+					. 'set will need to have a score that reaches or exceeds this score for its score to be sent to '
+					. "the LMS (or included in the 'course' score calculation). If this variable is set to Attempted, "
+					. 'then the set needs to have been attempted for its score to be sent to the LMS (or included in '
+					. "the 'course' score calculation).</p><p>For a regular or jitar set, 'attempted' means that at "
+					. "least one exercise was attempted. For a test, 'attempted' means that either multiple versions "
+					. 'exercise or there is one version with a graded submission.</p>'
 			),
 			values => [qw(attempted 0 0.5 0.7 0.75 0.8 0.85 0.9 0.95 1)],
 			labels => {
@@ -1016,7 +1006,7 @@ sub getConfigValues ($ce) {
 			var  => 'LTIMassUpdateInterval',
 			doc  => x('Time in seconds to periodically update LMS grades (-1 to disable)'),
 			doc2 => x(
-				'Sets the time in seconds to periodically update the LMS grades. WeBWorK will update all grades on '
+				'Sets the time in seconds to periodically update the LMS scores. WeBWorK will update all scores on '
 					. 'the LMS if it has been longer than this time since the completion of the last update. This is '
 					. 'only an approximate time. Mass updates of this nature may put significant strain on the server, '
 					. 'and should not be set to happen too frequently. -1 disables these periodic updates.'

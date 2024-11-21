@@ -135,19 +135,19 @@ $LTIGradeMode = '';
 #$LTIGradeMode = 'course';
 #$LTIGradeMode = 'homework';
 
-# There are several controls for when to report grades to the LMS. Sometimes these controls
-# interplay with each other, and the details of how they work may depend on whether
-# $LTIGradeMode is set to 'course' or 'homework'. So it is recommended to understand all of
-# them and then decide how to set them.
+# There are several controls for when to report scores to the LMS. Sometimes these controls
+# interact with each other, and the details of how they work may depend on whether $LTIGradeMode
+# is set to 'course' or 'homework'. So it is recommended to understand all of them and then
+# decide how to set them.
 
-# If $LTICheckPrior is 1, then any time WeBWorK is about to send a grade to the LMS, it will
-# first request from the LMS what that grade currently is. Then if there is no significant
-# difference between the LMS grade and the WeBWorK grade, WeBWorK will not follow through with
-# updating the LMS grade. This is to avoid frequent insignificant updates to a student's grades
-# in the LMS. With some LMSs, students may receive notifications each time a grade is updated,
+# If $LTICheckPrior is 1, then any time WeBWorK is about to send a score to the LMS, it will
+# first request from the LMS what that score currently is. Then if there is no significant
+# difference between the LMS score and the WeBWorK score, WeBWorK will not follow through with
+# updating the LMS score. This is to avoid frequent insignificant updates to a student's scores
+# in the LMS. With some LMSs, students may receive notifications each time a score is updated,
 # and setting this variable will prevent too many notifications for them. This does create a
-# two-phase process, first querying the current grade from the LMS and then actually updating
-# the grade (if there is a significant difference).
+# two-phase process, first querying the current score from the LMS and then actually updating
+# the score (if there is a significant difference).
 
 # Additional details:
 # - If the LMS score is not 100%, but the WeBWorK score is, then even if the LMS score is only
@@ -156,51 +156,42 @@ $LTIGradeMode = '';
 #   difference and the LMS score will not be updated to 0. However if it is after the
 #   $LTISendScoresAfterDate (described below), then the null score will be updated to 0 anyway.
 # - "Significant" means an absolute difference of 0.001, or 0.1%. At this time this is not
-#   configrable.
+#   configurable.
 $LTICheckPrior = 0;
 
-# If $LTIGradeOnSubmit is set to 1, then  each time a user submits an answer or grades a test,
+# If $LTIGradeOnSubmit is set to 1, then each time a user submits an answer or scores a test,
 # that will trigger WeBWorK possibly reporting a score to the LMS. See $LTICheckPrior for one
-# reason that WeBWorK might not ultimately send a grade. But there are other reasons too.
-# WeBWorK will send the grade (the assignment's score if $LTIGradeMode is 'homework' or the
-# overall course grade if $LTIGradeMode is 'course') to the LMS only if either the assignment's
+# reason that WeBWorK might not ultimately send a score. But there are other reasons too.
+# WeBWorK will send the score (the assignment's score if $LTIGradeMode is 'homework' or the
+# overall course score if $LTIGradeMode is 'course') to the LMS only if either the assignment's
 # $LTISendGradesEarlyThreshold (described below) has been met or if it is past that assignment's
 # $LTISendScoresAfterDate (also described below).
-
-# If $LTIGradeOnSubmit is set to 'homework_always', then
-# - If $LTIGradeMode is 'homework', then WeBWorK will send that assignment's score to the LMS
-#   regardless of having met the $LTISendGradesEarlyThreshold or being past the
-#   $LTISendScoresAfterDate
-# - If $LTIGradeMode is 'course', the behavior will be no different as if $LTIGradeOnSubmit were
-#   set to 1.
-
-# If sending grades upon each submission is not desired, you can set $LTIGradeOnSubmit to 0.
-
 $LTIGradeOnSubmit = 1;
-#$LTIGradeOnSubmit = 'homework_always';
-#$LTIGradeOnSubmit = 0;
 
 # In addition to scores possibly being sent to the LMS upon submission, they can be sent by an
 # instructor or admin user using the LTI Grades Update Tool. And thirdly, the system can
-# periodically update student grades on the LMS on its own. For all three possible triggers for
-# grades to be passed to the LMS, $LTISendScoresAfterDate and $LTISendGradesEarlyThreshold can
-# affect what is sent. $LTISendScoresAfterDate can be set to 'open_date', 'reduced_scoring_date',
-# 'due_date', 'answer_date', or 'never'. For a given assignment, if it is *after* the
-# $LTISendScoresAfterDate, then WeBWorK will send grades.
+# periodically update student scores on the LMS on its own. For all three possible triggers for
+# scores to be passed to the LMS, $LTISendScoresAfterDate and $LTISendGradesEarlyThreshold can
+# affect what is sent. $LTISendScoresAfterDate can be 'open_date', 'reduced_scoring_date',
+# 'due_date', 'answer_date', or 'never'. For a given assignment, if it is after the
+# $LTISendScoresAfterDate, then WeBWorK will send scores. If $LTISendScoresAfterDate is 'never',
+# then there is no date after which WeBWorK is guaranteed to send scores. In that case, scores
+# are only sent when a set's $LTISendGradesEarlyThreshold is met (see below).
 # - For 'course' grade passback mode, the assignment will be included in the overall course
 #   grade calculation.
-# - For 'homework' grade passback mode, the assignemnt's score will be sent.
+# - For 'homework' grade passback mode, the assignment's score will be sent.
 
-# If $LTISendScoresAfterDate = 'reduced_scoring_date' and an assignent has no reduced_scoring_date
-# or reduced scoring is disabled for that assignment, the fallback is to use the due_date.
+# If $LTISendScoresAfterDate is 'reduced_scoring_date' and an assignment has no reduced scoring
+# date or reduced scoring is disabled for that assignment, the fallback is to use the due date.
 
-# For a given assignment, if it is *before* the $LTISendScoresAfterDate, WeBWorK *may* send a
-# score to the LMS depending on $LTISendGradesEarlyThreshold. This variable can either be the
-# string 'attempted' or a number from 0 to 1. If this variable is 'attempted', a given set must
-# have been attempted for the threshold to have been met, and then the score can be used even if
-# it is before the $LTISendScoresAfterDate. For a regular or jitar set, 'attempted' just  means
-# that some exercise in the set was attempted. For a test, 'attempted means that either there
-# is one version with a graded submission, or there are at least two versions.
+# For a given assignment, if $LTISendScoresAfterDate is 'never' or if it is before the date
+# specified by $LTISendScoresAfterDate, WeBWorK may send a score to the LMS depending on the
+# value of $LTISendGradesEarlyThreshold. This variable can either be the string 'attempted' or a
+# number from 0 to 1. If this variable is 'attempted', a given set must have been attempted for
+# the threshold to have been met, and then the score can be used even if it is before the
+# $LTISendScoresAfterDate. For a non-test set, 'attempted' just means that some exercise in the
+# set was attempted using the Submit button. For a test, 'attempted' means that either there is
+# one version with a graded submission, or there are at least two versions.
 
 # If $LTISendGradesEarlyThreshold is a number from 0 to 1, the score for an assignment needs to
 # have reached that number for the threshold to be met, and then the score can be used even if
@@ -217,7 +208,7 @@ $LTISendGradesEarlyThreshold = 'attempted';
 #$LTISendGradesEarlyThreshold = 0.7;
 #$LTISendGradesEarlyThreshold = 1;
 
-# The system periodically updates student grades on the LMS. If it has been at least this many
+# The system periodically updates student scores on the LMS. If it has been at least this many
 # seconds since the last mass passback event and someone in the course does anything to load a
 # page, then a new mass passback job will begin. Set this to -1 to disable mass passback.
 $LTIMassUpdateInterval = 86400;
