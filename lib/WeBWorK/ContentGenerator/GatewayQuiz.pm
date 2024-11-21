@@ -36,9 +36,8 @@ use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
 use WeBWorK::Utils::Sets qw(is_restricted);
 use WeBWorK::DB::Utils qw(global2user fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
-use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
-use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
 use PGrandom;
+use WeBWorK::Authen::LTI::GradePassback qw(passbackGradeOnSubmit);
 use Caliper::Sensor;
 use Caliper::Entity;
 
@@ -880,7 +879,7 @@ async sub pre_header_initialize ($c) {
 	debug('begin answer processing');
 
 	my @scoreRecordedMessage = ('') x scalar(@problems);
-	my $LTIGradeResult       = -1;
+	my $ltiGradePassbackMessage;
 
 	# Save results to database as appropriate
 	if ($c->{submitAnswers} || (($c->{previewAnswers} || $c->param('newPage')) && $can{recordAnswers})) {
@@ -1023,15 +1022,9 @@ async sub pre_header_initialize ($c) {
 			}
 		}
 
-		# Try to update the student score on the LMS if that option is enabled.
-		if ($c->{submitAnswers} && $will{recordAnswers} && $ce->{LTIGradeMode} && $ce->{LTIGradeOnSubmit}) {
-			my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);
-			if ($ce->{LTIGradeMode} eq 'course') {
-				$LTIGradeResult = await $grader->submit_course_grade($effectiveUserID);
-			} elsif ($ce->{LTIGradeMode} eq 'homework') {
-				$LTIGradeResult = await $grader->submit_set_grade($effectiveUserID, $setID);
-			}
-		}
+		# Send the score for this set to the LMS if enabled.
+		$ltiGradePassbackMessage = await passbackGradeOnSubmit($c, $effectiveUserID, $c->{set})
+			if $c->{submitAnswers} && $will{recordAnswers} && $ce->{LTIGradeMode};
 
 		# Finally, log student answers that are being submitted, provided that answers can be recorded.  Note that
 		# this will log an overtime submission (or any case where someone submits the test, or spoofs a request to
@@ -1184,8 +1177,8 @@ async sub pre_header_initialize ($c) {
 	}
 	debug('end answer processing');
 
-	$c->{scoreRecordedMessage} = \@scoreRecordedMessage;
-	$c->{LTIGradeResult}       = $LTIGradeResult;
+	$c->{scoreRecordedMessage}    = \@scoreRecordedMessage;
+	$c->{ltiGradePassbackMessage} = $ltiGradePassbackMessage;
 
 	# Additional set-level database manipulation: We want to save the time that a set was submitted, and for proctored
 	# tests we want to reset the assignment type after a set is submitted for the last time so that it's possible to

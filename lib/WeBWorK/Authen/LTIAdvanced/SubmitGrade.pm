@@ -30,7 +30,8 @@ use Digest::SHA qw(sha1_base64);
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::Sets qw(grade_all_sets can_submit_LMS_score);
+use WeBWorK::Utils::Sets qw(grade_all_sets);
+use WeBWorK::Authen::LTI::GradePassback qw(getSetPassbackScore);
 
 # This package contains utilities for submitting grades to the LMS
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -115,30 +116,30 @@ sub update_sourcedid ($self, $userID) {
 
 # Computes and submits the course grade for userID to the LMS.
 # The course grade is the average of all sets assigned to the user.
-async sub submit_course_grade ($self, $userID) {
+async sub submit_course_grade ($self, $userID, $submittedSet = undef) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 	my $db = $c->{db};
 
-	# Before the costly act of calculating the course grade, if this LMS submission was intitated because
-	# of $LTIGradeOnSubmit, then check if the set from which a problem was submitted meets the criteria to
-	# be included in a course grade calculation. If not, we can skip the rest because the course grade will
-	# not differ from what it previously was.
-	return 0 unless ($self->{post_processing_mode} || can_submit_LMS_score($db, $ce, $userID, $c->{set}, 1));
-
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
-	$self->warning("submitting all grades for user: $userID")
+	$self->warning("submitting course grade for user: $userID")
 		if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
-	$self->warning("lis_source_did is not available for user: $userID")
-		if !$user->lis_source_did && ($ce->{debug_lti_grade_passback} || $self->{post_processing_mode});
+	unless ($user->lis_source_did) {
+		$self->warning("lis_source_did is not available for user: $userID")
+			if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
+		return 0;
+	}
 
-	return await $self->submit_grade($user->lis_source_did, scalar(grade_all_sets($db, $ce, $userID)));
+	return -1 if $submittedSet && !getSetPassbackScore($db, $ce, $userID, $submittedSet, 1);
+
+	return await $self->submit_grade($user->lis_source_did,
+		scalar(grade_all_sets($db, $ce, $userID, \&getSetPassbackScore)));
 }
 
 # Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.
-async sub submit_set_grade ($self, $userID, $setID) {
+async sub submit_set_grade ($self, $userID, $setID, $submittedSet = undef) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 	my $db = $c->{db};
@@ -146,15 +147,18 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
-	my $userSet = $db->getMergedSet($userID, $setID);
-
-	my $score = can_submit_LMS_score($db, $ce, $userID, $userSet, !$self->{post_processing_mode});
-	return 0 unless $score;
-
 	$self->warning("Submitting grade for user $userID and set $setID.")
 		if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
-	$self->warning('lis_source_did is not available for this set.')
-		if !$userSet->lis_source_did && ($ce->{debug_lti_grade_passback} || $self->{post_processing_mode});
+
+	my $userSet = $submittedSet // $db->getMergedSet($userID, $setID);
+	unless ($userSet->lis_source_did) {
+		$self->warning('lis_source_did is not available for this set.')
+			if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
+		return 0;
+	}
+
+	my $score = getSetPassbackScore($db, $ce, $userID, $userSet, !$self->{post_processing_mode});
+	return -1 unless $score;
 
 	return await $self->submit_grade($userSet->lis_source_did, $score->{score});
 }
@@ -166,9 +170,6 @@ async sub submit_grade ($self, $sourcedid, $score) {
 	my $db = $c->{db};
 
 	$score = wwRound(2, $score);
-
-	# Fail gracefully.  Some users, like instructors, may not actually have a sourcedid.
-	return 0 if !$sourcedid;
 
 	my $request_url = $db->getSettingValue('lis_outcome_service_url');
 	if (!$request_url) {
@@ -280,13 +281,8 @@ EOS
 			$content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
 			my $message = $1;
 			if ($message ne 'success') {
-				$self->warning(
-					'Unable to retrieve prior grade from LMS. Note that if your server time is not correct, '
-						. 'this may fail for reasons which are less than obvious from the error messages. Error: '
-						. $message);
-				debug('Unable to retrieve prior grade from LMS. Note that if your server time is not correct, '
-						. 'this may fail for reasons which are less than obvious from the error messages. Error: '
-						. $message);
+				$self->warning('Unable to retrieve prior grade from LMS. Error: ' . $message);
+				debug('Unable to retrieve prior grade from LMS. Error: ' . $message);
 				return 0;
 			} else {
 				my $priorScore;
@@ -297,6 +293,7 @@ EOS
 					$content =~ /<textString>\s*(\S+)\s*<\/textString>/;
 					$priorScore = $1;
 				}
+
 				# Blackboard seems to return this when there is no prior grade.
 				# See: https://webwork.maa.org/moodle/mod/forum/discuss.php?d=5002
 				$priorScore = '' if $priorScore eq 'success';
@@ -309,9 +306,9 @@ EOS
 					&& ($score != 0 || $priorScore ne ''))
 				{
 					# LMS has essentially the same score, no reason to update it
-					debug(
-						"LMS grade will NOT be updated - grade has not significantly changed. Old score: $priorScore; New score: $score"
-					) if $ce->{debug_lti_grade_passback};
+					debug('LMS grade will NOT be updated - grade has not significantly changed. '
+							. "Old score: $priorScore; New score: $score")
+						if $ce->{debug_lti_grade_passback};
 					$self->warning('LMS grade will NOT be updated - grade has not significantly changed. '
 							. "Old score: $priorScore; New score: $score")
 						if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
@@ -322,13 +319,9 @@ EOS
 				}
 			}
 		} else {
-			$self->warning('Unable to retrieve prior grade from LMS. Note that if your server time is not correct, '
-					. 'this may fail for reasons which are less than obvious from the error messages. Error: '
-					. $response->message)
+			$self->warning('Unable to retrieve prior grade from LMS. Error: ' . $response->message)
 				if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
-			debug('Unable to retrieve prior grade from LMS. Note that if your server time is not correct, '
-					. 'this may fail for reasons which are less than obvious from the error messages. Error: '
-					. $response->message);
+			debug('Unable to retrieve prior grade from LMS. Error: ' . $response->message);
 			debug($response->body);
 			return 0;
 		}

@@ -20,7 +20,7 @@ use Carp;
 
 use PGrandom;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::DateTime qw(after before);
+use WeBWorK::Utils::DateTime qw(after);
 use WeBWorK::Utils::JITAR qw(jitar_id_to_seq jitar_problem_adjusted_status);
 
 our @EXPORT_OK = qw(
@@ -32,7 +32,6 @@ our @EXPORT_OK = qw(
 	is_restricted
 	get_test_problem_position
 	list_set_versions
-	can_submit_LMS_score
 );
 
 sub format_set_name_internal ($set_name) {
@@ -115,197 +114,54 @@ sub grade_set ($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails
 	}
 
 	if (wantarray) {
-		return ($totalRight, $total, $problem_scores, $problem_incorrect_attempts);
+		return ($totalRight, $total, $wantProblemDetails ? ($problem_scores, $problem_incorrect_attempts) : (),
+			\@problemRecords);
 	} else {
 		return $total ? $totalRight / $total : 0;
 	}
 }
 
 sub grade_gateway ($db, $setName, $studentName) {
-	my @versionNums = $db->listSetVersions($studentName, $setName);
+	my $bestSetData = [ 0, 0 ];
 
-	my $bestTotalRight = 0;
-	my $bestTotal      = 0;
+	my @setVersions = $db->getSetVersionsWhere({ user_id => $studentName, set_id => { like => "$setName,v\%" } });
+	for (@setVersions) {
+		my @setData = grade_set($db, $_, $studentName, 1);
+		$bestSetData = \@setData if $setData[0] > $bestSetData->[0];
+	}
 
-	if (@versionNums) {
-		for my $i (@versionNums) {
-			my $versionedSet = $db->getSetVersion($studentName, $setName, $i);
+	return wantarray ? (@$bestSetData, \@setVersions) : ($bestSetData->[1] ? $bestSetData->[0] / $bestSetData->[1] : 0);
+}
 
-			my ($totalRight, $total) = grade_set($db, $versionedSet, $studentName, 1);
-			if ($totalRight > $bestTotalRight) {
-				$bestTotalRight = $totalRight;
-				$bestTotal      = $total;
-			}
+sub grade_all_sets (
+	$db, $ce,
+	$studentName,
+	$getSetGradeConditionally = sub ($db, $ce, $studentName, $userSet) {
+		return unless after($userSet->open_date);
+		if ($userSet->assignment_type =~ /gateway/) {
+			my ($totalRight, $total) = grade_gateway($db, $userSet->set_id, $studentName);
+			return { totalRight => $totalRight, total => $total };
+		} else {
+			my ($totalRight, $total) = grade_set($db, $userSet, $studentName, 0);
+			return { totalRight => $totalRight, total => $total };
 		}
 	}
-
-	if (wantarray) {
-		return ($bestTotalRight, $bestTotal);
-	} else {
-		return 0 unless $bestTotal;
-		return $bestTotalRight / $bestTotal;
-	}
-}
-
-sub grade_set_or_gateway ($db, $userSet, $userID) {
-	return ($userSet->assignment_type =~ /gateway/)
-		? grade_gateway($db, $userSet->set_id, $userID)
-		: (grade_set($db, $userSet, $userID))[ 0, 1 ];
-}
-
-sub set_attempted ($db, $userID, $userSet) {
-	my $setID = $userSet->set_id;
-
-	if ($userSet->assignment_type =~ /gateway/) {
-		my @versionNums = $db->listSetVersions($userID, $setID);
-
-		# It counts as "attempted" if there is more than one version.
-		return 1 if (1 < @versionNums);
-
-		# If there is one version, check for an attempted problem.
-		if (@versionNums) {
-			my @problemNums = $db->listProblemVersions($userID, $setID, $versionNums[0]);
-			my $problem     = $db->getMergedProblemVersion($userID, $setID, $versionNums[0], $problemNums[0]);
-			return defined $problem && $problem->attempted ? 1 : 0;
-		}
-
-		# If there are no versions, the test was not attempted.
-		return 0;
-	} else {
-		my @problemNums = $db->listUserProblems($userID, $setID);
-		for (@problemNums) {
-			my $problem = $db->getMergedProblem($userID, $setID, $_);
-			return 1 if ($problem->attempted || $problem->status > 0);
-		}
-		return 0;
-	}
-}
-
-sub earliest_gateway_date ($db, $ce, $userSet) {
-	my @versionNums = $db->listSetVersions($userSet->user_id, $userSet->set_id);
-
-	# If there are no versions, use the template's date.
-	return get_LTISendScoresAfterDate($userSet, $ce) unless (@versionNums);
-
-	# Otherwise, use the earliest date among versions.
-	my $earliest_date = -1;
-	for my $i (@versionNums) {
-		my $versionedSetDate =
-			get_LTISendScoresAfterDate($db->getSetVersion($userSet->user_id, $userSet->set_id, $i), $ce);
-		$earliest_date = $versionedSetDate if $earliest_date == -1 || $versionedSetDate < $earliest_date;
-	}
-	return $earliest_date;
-}
-
-sub grade_all_sets ($db, $ce, $studentName) {
-	my @setIDs     = $db->listUserSets($studentName);
-	my @userSetIDs = map { [ $studentName, $_ ] } @setIDs;
-	my @userSets   = $db->getMergedSets(@userSetIDs);
+	)
+{
+	croak 'grade_all_sets requires a code reference for its last argument'
+		unless ref($getSetGradeConditionally) eq 'CODE';
 
 	my $courseTotalRight = 0;
 	my $courseTotal      = 0;
 
-	for my $userSet (@userSets) {
-		my $score = can_submit_LMS_score($db, $ce, $studentName, $userSet);
+	for my $userSet ($db->getMergedSetsWhere({ user_id => $studentName })) {
+		my $score = $getSetGradeConditionally->($db, $ce, $studentName, $userSet);
 		next unless $score;
 		$courseTotalRight += $score->{totalRight};
 		$courseTotal      += $score->{total};
 	}
 
-	if (wantarray) {
-		return ($courseTotalRight, $courseTotal);
-	} else {
-		return 0 unless $courseTotal;
-		return $courseTotalRight / $courseTotal;
-	}
-
-}
-
-sub get_LTISendScoresAfterDate ($set, $ce) {
-	if ($ce->{LTISendScoresAfterDate} eq 'open_date') {
-		return $set->open_date;
-	} elsif ($ce->{LTISendScoresAfterDate} eq 'reduced_scoring_date') {
-		return ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}
-				&& $set->enable_reduced_scoring
-				&& $set->reduced_scoring_date) ? $set->reduced_scoring_date : $set->due_date;
-	} elsif ($ce->{LTISendScoresAfterDate} eq 'due_date') {
-		return $set->due_date;
-	} elsif ($ce->{LTISendScoresAfterDate} eq 'answer_date') {
-		return $set->answer_date;
-	}
-}
-
-# Checks if the set is past the LTISendScoresAfterDate or has met the LTISendGradesEarlyThreshold.
-# Returns a reference to hash with keys totalRight, total, score, if the set has met either condition
-# and undef if not. If the score is "0/0", that is treated as 0 if we have not yet reached the
-# LTISendScoresAfterDate and have not attempted the set. Or if the set is a test with no completed
-# version, that is also treated as 0. Otherwise, "0/0" is treated as 1.
-sub can_submit_LMS_score ($db, $ce, $userID, $userSet, $set_attempted = 0) {
-	my $totalRight;
-	my $total;
-	my $score;
-	my $critical_date;
-
-	# Complicated logic below is intended to exit this subroutine with minimal computational cost.
-	if ($ce->{LTISendScoresAfterDate} eq 'never') {
-		if ($ce->{LTISendGradesEarlyThreshold} eq 'attempted') {
-			$set_attempted = $set_attempted || set_attempted($db, $userID, $userSet);
-			return unless $set_attempted;
-			($totalRight, $total) = grade_set_or_gateway($db, $userSet, $userID);
-			$score = $total ? $totalRight / $total : 0;
-			$score = 1 if (!$total && $set_attempted);
-			return { totalRight => $totalRight, total => $total, score => $score };
-		} else {
-			($totalRight, $total) = grade_set_or_gateway($db, $userSet, $userID);
-			$score = $total ? $totalRight / $total : 0;
-			$score = 1 if (!$total && $set_attempted);
-			return { totalRight => $totalRight, total => $total, score => $score }
-				if ($score >= $ce->{LTISendGradesEarlyThreshold});
-		}
-	} elsif ($ce->{LTISendGradesEarlyThreshold} eq 'attempted') {
-		# We may have been sent $set_attempted = 1, and immediately know we can assess score and send it.
-		if ($set_attempted) {
-			($totalRight, $total) = grade_set_or_gateway($db, $userSet, $userID);
-			$score = $total ? $totalRight / $total : 0;
-			$score = 1 unless $total;
-			return { totalRight => $totalRight, total => $total, score => $score };
-		} else {
-			# Next cheapest assessment is assessing whether or not we have passed the critical date
-			# But if we are not, we must actually assess if set was attempted
-			$critical_date =
-				($userSet->assignment_type =~ /gateway/)
-				? earliest_gateway_date($db, $ce, $userSet)
-				: get_LTISendScoresAfterDate($userSet, $ce);
-			if (after($critical_date) || ($set_attempted = set_attempted($db, $userID, $userSet))) {
-				($totalRight, $total) = grade_set_or_gateway($db, $userSet, $userID);
-				$score = $total ? $totalRight / $total : 0;
-				$score = 1
-					if (!$total && ($userSet->assignment_type !~ /gateway/ && after($critical_date) || $set_attempted));
-				return { totalRight => $totalRight, total => $total, score => $score };
-			}
-		}
-	} else {
-		# No matter what, we need to know score now
-		($totalRight, $total) = grade_set_or_gateway($db, $userSet, $userID);
-		$score = $total ? $totalRight / $total : 0;
-		if (!$total) {
-			$critical_date =
-				($userSet->assignment_type =~ /gateway/)
-				? earliest_gateway_date($db, $ce, $userSet)
-				: get_LTISendScoresAfterDate($userSet, $ce);
-			$set_attempted = $set_attempted || set_attempted($db, $userID, $userSet);
-			$score         = 1 if ($userSet->assignment_type !~ /gateway/ && after($critical_date) || $set_attempted);
-		}
-		return { totalRight => $totalRight, total => $total, score => $score }
-			if ($score >= $ce->{LTISendGradesEarlyThreshold});
-		$critical_date =
-			($userSet->assignment_type =~ /gateway/)
-			? earliest_gateway_date($db, $ce, $userSet)
-			: get_LTISendScoresAfterDate($userSet, $ce)
-			unless $critical_date;
-		return { totalRight => $totalRight, total => $total, score => $score }
-			if after($critical_date);
-	}
+	return wantarray ? ($courseTotalRight, $courseTotal) : $courseTotal ? $courseTotalRight / $courseTotal : 0;
 }
 
 sub is_restricted ($db, $set, $studentName) {
@@ -430,16 +286,17 @@ This formats set names for display, converting underscores back into spaces.
 
 =head2 grade_set
 
-Usage: C<grade_set($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails)>
+Usage: C<grade_set($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails = 0)>
 
 The arguments C<$db>, C<$set>, and C<$studentName> are required. If
 C<$setIsVersioned> is true, then the given set is assumed to be a set version.
 
 In list context this returns a list containing the total number of correct
-problems, and the total number of problems in the set.  If
-C<$wantProblemDetails> is true, then a reference to an array of the scores for
-each problem, and a reference to the array of the number of incorrect attempts
-for each problem are also included in the returned list.
+problems, the total number of problems in the set, and a reference to an array
+of merged user problem records from the set.  If C<$wantProblemDetails> is true,
+then a reference to an array of the scores for each problem, and a reference to
+the array of the number of incorrect attempts for each problem are also included
+in the returned list before the reference to the array of problem records.
 
 In scalar context this returns the percentage correct.
 
@@ -449,18 +306,31 @@ Usage: C<grade_gateway($db, $setName, $studentName)>
 
 All arguments are required.
 
-In list context this returns a list fo the total number of correct problems for
-the highest scoring version of this test, and the total number of problems in
-that version.
+In list context this returns a list of the total number of correct problems for
+the highest scoring version of this test, the total number of problems in that
+version, a reference to an array of merged user problem records from that
+version, and a reference to an array of merged user set versions for this user
+and set.
 
 In scalar context this returns the percentage correct for the highest scoring
 version of this test.
 
 =head2 grade_all_sets
 
-Usage: C<grade_all_sets($db, $ce, $studentName)>
+Usage: C<grade_all_sets($db, $ce, $studentName, $getSetGradeConditionally)>
 
-All arguments listed are required.
+The arguments C<$db>, C<$ce>, and C<$studentName> are rrequired.
+
+The C<$getSetGradeConditionally> is an optional argument that if provided should
+be a reference to a subroutine that will be passed the arguments $db, $ce,
+$studentName listed above, and $userSet which is a merged user set record from
+the database, and must either return a reference to a hash containing the keys
+totalRight and total with the grade for the set, or C<undef>. If it returns
+C<undef> then the set will not be included in the grade computation.  Otherwise
+the values for totalRight and total that are returned will be added into the
+grade.  If the optional last arugment is not provided, then a default method
+will be used that returns the set grade if after the open date, and C<undef>
+otherwise.
 
 In list context this returns the total course score for all sets and the maximum
 possible course score.

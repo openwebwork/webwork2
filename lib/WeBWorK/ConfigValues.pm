@@ -925,10 +925,11 @@ sub getConfigValues ($ce) {
 					. 'first querying the current score from the LMS and then actually updating the score (if there is '
 					. 'a significant difference). Additional details:</p><ul><li>If the LMS score is not 100%, but the '
 					. 'WeBWorK score is, then even if the LMS score is only insignificantly less than 100%, it will be '
-					. 'updated anyway.</li><li>If the LMS score is null and the WeBWorK score is 0, this is considered '
-					. 'an insignificant difference and the LMS score will not be updated to 0. However if it is after '
-					. 'the $LTISendScoresAfterDate (described below), then the null score will be updated to 0 anyway.'
-					. '</li><li>"Significant" means an absolute difference of 0.001, or 0.1%. At this time this is not '
+					. 'updated anyway.</li><li>If the LMS score is not set and the WeBWorK score is 0, this is '
+					. 'considered a significant difference and the LMS score will updated to 0. However, the '
+					. 'constraints of the $LTISendScoresAfterDate and the $LTISendGradesEarlyThreshold variables '
+					. '(described below) might apply, and the score may still not be updated in this case.</li>'
+					. '<li>"Significant" means an absolute difference of 0.001, or 0.1%. At this time this is not '
 					. 'configurable.</li></ul>'
 			),
 			type => 'boolean'
@@ -985,13 +986,27 @@ sub getConfigValues ($ce) {
 					. 'then the set needs to have been attempted for its score to be sent to the LMS (or included in '
 					. "the 'course' score calculation).</p><p>For a regular or jitar set, 'attempted' means that at "
 					. "least one exercise was attempted. For a test, 'attempted' means that either multiple versions "
-					. 'exercise or there is one version with a graded submission.</p>'
+					. 'exist or there is one version with a graded submission.</p>'
 			),
-			values => [qw(attempted 0 0.5 0.7 0.75 0.8 0.85 0.9 0.95 1)],
+			values => [ qw(
+				attempted 0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1
+			) ],
 			labels => {
 				attempted => x('Attempted'),
 				0         => '0%',
+				0.05      => '5%',
+				0.1       => '10%',
+				0.15      => '15%',
+				0.2       => '20%',
+				0.25      => '25%',
+				0.3       => '30%',
+				0.35      => '35%',
+				0.4       => '40%',
+				0.45      => '45%',
 				0.5       => '50%',
+				0.55      => '55%',
+				0.6       => '60%',
+				0.65      => '65%',
 				0.7       => '70%',
 				0.75      => '75%',
 				0.8       => '80%',

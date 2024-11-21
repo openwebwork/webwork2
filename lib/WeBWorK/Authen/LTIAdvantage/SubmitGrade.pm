@@ -39,7 +39,8 @@ use Time::HiRes;
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::Sets qw(grade_all_sets can_submit_LMS_score);
+use WeBWorK::Utils::Sets qw(grade_all_sets);
+use WeBWorK::Authen::LTI::GradePassback qw(getSetPassbackScore);
 
 # This package contains utilities for submitting grades to the LMS via LTI 1.3.
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -193,31 +194,35 @@ async sub get_access_token ($self) {
 
 # Computes and submits the course grade for userID to the LMS.
 # The course grade is the sum of all (weighted) problems assigned to the user.
-async sub submit_course_grade ($self, $userID) {
+async sub submit_course_grade ($self, $userID, $submittedSet = undef) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 	my $db = $c->{db};
 
-	# Before the costly act of calculating the course grade, if this LMS submission was intitated because
-	# of $LTIGradeOnSubmit, then check if the set from which a problem was submitted meets the criteria to
-	# be included in a course grade calculation. If not, we can skip the rest because the course grade will
-	# not differ from what it previously was.
-	return 0 unless ($self->{post_processing_mode} || can_submit_LMS_score($db, $ce, $userID, $c->{set}, 1));
-
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
-	my $lineitem = $db->getSettingValue('LTIAdvantageCourseLineitem');
-
 	$self->warning("Submitting all grades for user $userID");
-	$self->warning('LMS user id is not available for this user.')   unless $user->lis_source_did;
-	$self->warning('LMS lineitem is not available for the course.') unless $lineitem;
 
-	return await $self->submit_grade($user->lis_source_did, $lineitem, grade_all_sets($db, $ce, $userID));
+	my $lineitem = $db->getSettingValue('LTIAdvantageCourseLineitem');
+	unless ($lineitem) {
+		$self->warning('LMS lineitem is not available for the course.');
+		return 0;
+	}
+
+	unless ($user->lis_source_did) {
+		$self->warning('LMS user id is not available for this user.');
+		return 0;
+	}
+
+	return -1 if $submittedSet && !getSetPassbackScore($db, $ce, $userID, $submittedSet, 1);
+
+	return await $self->submit_grade($user->lis_source_did, $lineitem,
+		grade_all_sets($db, $ce, $userID, \&getSetPassbackScore));
 }
 
 # Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.
-async sub submit_set_grade ($self, $userID, $setID) {
+async sub submit_set_grade ($self, $userID, $setID, $submittedSet = undef) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 	my $db = $c->{db};
@@ -225,14 +230,20 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
-	my $userSet = $db->getMergedSet($userID, $setID);
-
-	my $score = can_submit_LMS_score($db, $ce, $userID, $userSet, !$self->{post_processing_mode});
-	return 0 unless $score;
-
 	$self->warning("Submitting grade for user $userID and set $setID.");
-	$self->warning('LMS user id is not available for this user.') unless $user->lis_source_did;
-	$self->warning('LMS lineitem is not available for this set.') unless $userSet->lis_source_did;
+	unless ($user->lis_source_did) {
+		$self->warning('LMS user id is not available for this user.');
+		return 0;
+	}
+
+	my $userSet = $submittedSet // $db->getMergedSet($userID, $setID);
+	unless ($userSet->lis_source_did) {
+		$self->warning('LMS lineitem is not available for this set.');
+		return 0;
+	}
+
+	my $score = getSetPassbackScore($db, $ce, $userID, $userSet, !$self->{post_processing_mode});
+	return -1 unless $score;
 
 	return await $self->submit_grade($user->lis_source_did, $userSet->lis_source_did, $score->{totalRight},
 		$score->{total});
@@ -243,7 +254,7 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 
-	return 0 unless $LMSuserID && $lineitem && (my $access_token = await $self->get_access_token);
+	return 0 unless (my $access_token = await $self->get_access_token);
 
 	$self->warning('Found data required for submitting grades to LMS.');
 
@@ -284,16 +295,16 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum
 			: 0;
 
 		my $score = $scoreMaximum ? $scoreGiven / $scoreMaximum : 0;
-		# We want to update the LMS score if the difference is significant,
-		# or if the new score is 1 but the LMS score was not 1 but possibly insignificantly different,
-		# or if the new score is 0 and the LMS score was empty and it is past the SendScoresAfterDate.
+
+		# Do not update the score if there is no significant change. Note that the cases where the webwork score
+		# is exactly 1 and the LMS score is not exactly 1, and the case where the webwork score is 0 and the LMS
+		# score is not set are considered significant changes.
 		if (abs($score - $priorScore) < 0.001
 			&& ($score != 1 || $priorScore == 1)
 			&& ($score != 0 || (@$priorData && defined $priorData->[0]{resultScore})))
 		{
-			$self->warning(
-				"LMS grade will NOT be updated as the grade has not significantly changed. Old score: $priorScore, New score: $score."
-			);
+			$self->warning('LMS grade will NOT be updated as the grade has not significantly changed. '
+					. "Old score: $priorScore, New score: $score.");
 			return 1;
 		}
 
