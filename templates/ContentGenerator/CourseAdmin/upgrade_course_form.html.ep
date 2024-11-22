@@ -4,7 +4,10 @@
 %
 % my @courseIDs = sort { lc($a) cmp lc($b) } listCourses($ce);
 %
-<h2><%= maketext('Upgrade Courses') %> <%= $c->helpMacro('AdminUpgradeCourses') %></h2>
+<h2>
+	<%= maketext('Upgrade Courses') %>
+	<%= $c->helpMacro('AdminUpgradeCourses', { help_label => maketext('Upgrade Courses') }) %>
+</h2>
 <div class="mb-2"><%= maketext('Update the checked directories?') %></div>
 <%= form_for current_route, method => 'POST', id => 'courselist', name => 'courselist', begin =%>
 	<div class="mb-2">

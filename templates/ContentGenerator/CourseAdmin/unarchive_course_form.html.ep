@@ -1,6 +1,9 @@
 % use WeBWorK::Utils::CourseManagement qw(listArchivedCourses);
 %
-<h2><%= maketext('Unarchive Course') %> <%= $c->helpMacro('AdminUnarchiveCourse') %></h2>
+<h2>
+	<%= maketext('Unarchive Course') %>
+	<%= $c->helpMacro('AdminUnarchiveCourse', { help_label => maketext('Unarchive Course') }) %>
+</h2>
 %
 % # Find courses which have been archived.
 % my @courseIDs = sort { lc($a) cmp lc($b) } listArchivedCourses($ce);
