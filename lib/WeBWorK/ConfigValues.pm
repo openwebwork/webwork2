@@ -135,7 +135,7 @@ sub getConfigValues ($ce) {
 			},
 			{
 				var  => 'perProblemLangAndDirSettingMode',
-				doc  => x('Mode in which the LANG and DIR settings for a single problem are determined.'),
+				doc  => x('Mode in which the LANG and DIR settings for a single problem are determined'),
 				doc2 => x(
 					'<p>Mode in which the LANG and DIR settings for a single problem are determined.</p><p>The '
 						. 'system will set the LANGuage attribute to either a value determined from the problem, a '
@@ -331,7 +331,7 @@ sub getConfigValues ($ce) {
 			},
 			{
 				var  => 'mail{achievementEmailFrom}',
-				doc  => x('Email address to use when sending Achievement notifications.'),
+				doc  => x('Email address to use when sending Achievement notifications'),
 				doc2 => x(
 					'This email address will be used as the sender for achievement notifications. '
 						. 'Achievement notifications will not be sent unless this is set.'
@@ -481,7 +481,7 @@ sub getConfigValues ($ce) {
 			},
 			{
 				var  => 'pg{options}{showCorrectOnRandomize}',
-				doc  => x('Show the correct answer to the current problem before re-randomization.'),
+				doc  => x('Show the correct answer to the current problem before re-randomization'),
 				doc2 => x(
 					'Show the correct answer to the current problem on the last attempt before a new version is '
 						. 'requested.'
@@ -648,7 +648,7 @@ sub getConfigValues ($ce) {
 			},
 			{
 				var  => 'pg{specialPGEnvironmentVars}{entryAssist}',
-				doc  => x('Assist with the student answer entry process.'),
+				doc  => x('Assist with the student answer entry process'),
 				doc2 => x(
 					'<p>MathQuill renders students answers in real-time as they type on the keyboard.</p><p>MathView '
 						. 'allows students to choose from a variety of common math structures (such as fractions and '
@@ -849,7 +849,7 @@ sub getConfigValues ($ce) {
 			},
 			{
 				var  => 'feedback_by_section',
-				doc  => x('Feedback by Section.'),
+				doc  => x('Feedback by Section'),
 				doc2 => x(
 					'By default, feedback is always sent to all users specified to receive feedback. This '
 						. 'variable sets the system to only email feedback to users who have the same section as '

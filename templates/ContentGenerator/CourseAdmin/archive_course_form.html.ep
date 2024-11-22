@@ -1,4 +1,7 @@
-<h2><%= maketext('Archive Course') %> <%= $c->helpMacro('AdminArchiveCourse') %></h2>
+<h2>
+	<%= maketext('Archive Course') %>
+	<%= $c->helpMacro('AdminArchiveCourse', { help_label => maketext('Archive Course') }) %>
+</h2>
 %
 % if (@$courseIDs) {
 	<p>

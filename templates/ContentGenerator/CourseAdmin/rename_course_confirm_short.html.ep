@@ -1,4 +1,7 @@
-<h2><%= maketext('Rename Course') %> <%= $c->helpMacro('AdminRenameCourse') %></h2>
+<h2>
+	<%= maketext('Rename Course') %>
+	<%= $c->helpMacro('AdminRenameCourse', { help_label => maketext('Rename Course') }) %>
+</h2>
 <%= form_for current_route, method => 'POST', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	<%= $c->hidden_fields('subDisplay') =%>

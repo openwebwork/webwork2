@@ -1,6 +1,9 @@
 % use WeBWorK::Utils::CourseManagement qw(listCourses);
 %
-<h2><%= maketext('Rename Course') %> <%= $c->helpMacro('AdminRenameCourse') %></h2>
+<h2>
+	<%= maketext('Rename Course') %>
+	<%= $c->helpMacro('AdminRenameCourse', { help_label => maketext('Rename Course') }) %>
+</h2>
 %
 % my @courseIDs = sort { lc($a) cmp lc($b) } grep { $_ ne stash('courseID') } listCourses($ce);
 %

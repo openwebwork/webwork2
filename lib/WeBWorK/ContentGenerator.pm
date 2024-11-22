@@ -957,10 +957,11 @@ This method outputs a link that opens a modal dialog containing the results of r
 HelpFiles template.  The template file that is rendered is $name.html.  If that file does not
 exist, then nothing is output.
 
-The optional argument $args is a hash that may contain the keys label, label_size, or class.
-$args->{label} is the displayed label, $args->{label_size} is a font awesome size class and is
-only used if $args->{label} is not set, and $args->{class} is added to the html class attribute
-if defined.
+The optional argument $args is a hash that may contain the keys label, label_size, help_label,
+or class. $args->{label} is the displayed label. $args->{label_size} is a font awesome size class
+and is only used if $args->{label} is not set. $args->{help_label} is the hidden description of
+the help button, "help_label help.", which defaults to the page title, and is only used if
+$args->{label} is not set. $args->{class} is added to the html class attribute if defined.
 
 =cut
 
@@ -972,11 +973,16 @@ sub helpMacro ($c, $name, $args = {}) {
 		'i',
 		class         => 'icon fa-solid fa-circle-question ' . ($args->{label_size} // ''),
 		'aria-hidden' => 'true',
-		data          => { alt => ' ? ' },
 		''
-	);
+		)
+		. $c->tag(
+			'span',
+			class => 'visually-hidden',
+			$c->maketext('[_1] help.', $args->{help_label} // $c->page_title)
+		);
 	delete $args->{label};
 	delete $args->{label_size};
+	delete $args->{help_label};
 
 	return $c->include("HelpFiles/$name", name => $name, label => $label, args => $args);
 }

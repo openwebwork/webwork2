@@ -1,4 +1,7 @@
-<h2><%= maketext('Manage Locations') %> <%= $c->helpMacro('AdminManageLocations') %></h2>
+<h2>
+	<%= maketext('Manage Locations') %>
+	<%= $c->helpMacro('AdminManageLocations', { help_label => maketext('Manage Locations') }) %>
+</h2>
 <p><strong><%= maketext('Currently defined locations are listed below.') %></strong></p>
 <%= form_for current_route, method => 'POST', begin =%>
 	% my @locationIDs = map  { $_->location_id } @$locations;
