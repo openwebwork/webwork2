@@ -55,7 +55,7 @@ use Scalar::Util qw(weaken);
 use Mojo::Util   qw(b64_encode b64_decode);
 
 use WeBWorK::Debug;
-use WeBWorK::Utils       qw(x runtime_use);
+use WeBWorK::Utils       qw(x runtime_use utf8Crypt);
 use WeBWorK::Utils::Logs qw(writeCourseLog);
 use WeBWorK::Utils::TOTP;
 use WeBWorK::Localize;
@@ -633,15 +633,8 @@ sub checkPassword {
 	my $Password = $db->getPassword($userID);
 	if (defined $Password) {
 		# Check against the password in the database.
-		my $possibleCryptPassword = '';
-		# Wrap crypt in an eval to catch any "Wide character in crypt" errors.
-		# If crypt fails due to a wide character, encode to UTF-8 before calling crypt.
-		eval { $possibleCryptPassword = crypt $possibleClearPassword, $Password->password; };
-		if ($@ && $@ =~ /Wide char/) {
-			$possibleCryptPassword = crypt Encode::encode_utf8($possibleClearPassword), $Password->password;
-		}
-
-		my $dbPassword = $Password->password;
+		my $possibleCryptPassword = utf8Crypt($possibleClearPassword, $Password->password);
+		my $dbPassword            = $Password->password;
 		# This next line explicitly insures that blank or null passwords from the database can never succeed in matching
 		# an entered password.  This also rejects cases when the database has a crypted password which matches a
 		# submitted all white-space or null password by requiring that the $possibleClearPassword contain some non-space
