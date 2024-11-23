@@ -1,34 +1,17 @@
 % use WeBWorK::Utils qw(getAssetURL);
 %
-% if ($ce->{options}{PGCodeMirror}) {
-	% content_for css => begin
-		<%= stylesheet getAssetURL($ce, 'node_modules/codemirror/lib/codemirror.css') =%>
-		%
-		% for my $addon (@$codemirrorAddonsCSS) {
-			<%= stylesheet getAssetURL($ce, "node_modules/codemirror/addon/$addon") =%>
-		% }
-		<%= stylesheet getAssetURL($ce, 'js/PGCodeMirror/pgeditor.css') =%>
-	% end
-	%
-	% content_for js => begin
-		<%= javascript getAssetURL($ce, 'node_modules/codemirror/lib/codemirror.js'), defer => undef =%>
-		%
-		% for my $addon (@$codemirrorAddonsJS) {
-			<%= javascript getAssetURL($ce, "node_modules/codemirror/addon/$addon"), defer => undef =%>
-		% }
-		% for my $mode (@$codemirrorModesJS) {
-			<%= javascript getAssetURL(
-					$ce,
-					$mode eq 'PG' ? 'js/PGCodeMirror/PG.js' : "node_modules/codemirror/mode/$mode/$mode.js"
-				), defer => undef =%>
-		% }
-		%
-		<%= javascript getAssetURL($ce, 'js/PGCodeMirror/pgeditor.js'), defer => undef =%>
-		<%= javascript getAssetURL($ce, 'js/PGCodeMirror/comment.js'), defer => undef =%>
-	% end
-% }
-%
 % # The textarea styles in this file are still needed if CodeMirror is disabled.
 % content_for css => begin
 	<%= stylesheet getAssetURL($ce, 'js/PGCodeMirror/pgeditor.css') =%>
 % end
+
+% if ($ce->{options}{PGCodeMirror}) {
+	% content_for js => begin
+		<%= javascript getAssetURL(
+				$ce,
+				'node_modules/@openwebwork/pg-codemirror-editor/dist/pg-codemirror-editor.js'
+			),
+			defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/PGCodeMirror/pgeditor.js'), defer => undef =%>
+	% end
+% }
