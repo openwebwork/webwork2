@@ -41,7 +41,7 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 
 	for my $i (0 .. $#$sets) {
 		push(@openSets, [ format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id ])
-			if (between($sets->[$i]->open_date, $sets->[$i]->due_date + ONE_DAY())
+			if (between($sets->[$i]->open_date, $sets->[$i]->due_date + ONE_DAY)
 				&& $sets->[$i]->assignment_type eq 'default');
 	}
 
@@ -97,7 +97,7 @@ sub use_item ($self, $userName, $c) {
 		unless ($set->reduced_scoring_date && ($set->reduced_scoring_date < $set->due_date));
 	$userSet->enable_reduced_scoring(1);
 	# Add time to the close date
-	$userSet->due_date($set->due_date + ONE_DAY());
+	$userSet->due_date($set->due_date + ONE_DAY);
 	# This may require also extending the answer date.
 	$userSet->answer_date($userSet->due_date) if ($userSet->due_date > $set->answer_date);
 	$db->putUserSet($userSet);
