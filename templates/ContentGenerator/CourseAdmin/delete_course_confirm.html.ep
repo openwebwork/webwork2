@@ -1,4 +1,7 @@
-<h2><%= maketext('Delete Course') %> <%= $c->helpMacro('AdminDeleteCourse') %></h2>
+<h2>
+	<%= maketext('Delete Course') %>
+	<%= $c->helpMacro('AdminDeleteCourse', { help_label => maketext('Delete Course') }) %>
+</h2>
 <p>
 	<%== maketext(
 		'Are you sure you want to delete the course [_1]? All course files and data will be destroyed. '

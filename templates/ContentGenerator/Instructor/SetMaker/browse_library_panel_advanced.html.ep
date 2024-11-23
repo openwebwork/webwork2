@@ -85,7 +85,7 @@
 								</label>
 							</div>
 						% }
-						<%= $c->helpMacro('Levels') =%>
+						<%= $c->helpMacro('Levels', { help_label => 'Levels' }) =%>
 					</div>
 				</div>
 			</div>

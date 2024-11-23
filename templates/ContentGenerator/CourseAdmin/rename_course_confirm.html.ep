@@ -1,4 +1,7 @@
-<h2><%= maketext('Rename Course') %> <%= $c->helpMacro('AdminRenameCourse') %></h2>
+<h2>
+	<%= maketext('Rename Course') %>
+	<%= $c->helpMacro('AdminRenameCourse', { help_label => maketext('Rename Course') }) %>
+</h2>
 % # Report on databases
 <h3 class="my-3"><%= maketext('Report on database structure for course [_1]:', $rename_oldCourseID) %></h3>
 % if (@$upgrade_report) {

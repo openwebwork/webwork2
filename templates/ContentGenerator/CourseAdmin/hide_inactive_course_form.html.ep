@@ -1,4 +1,7 @@
-<h2><%= maketext('Hide Courses') %> <%= $c->helpMacro('AdminHideCourses') %></h2>
+<h2>
+	<%= maketext('Hide Courses') %>
+	<%= $c->helpMacro('AdminHideCourses', { help_label => maketext('Hide Courses') }) %>
+</h2>
 <p>
 	<%= maketext(
 		'Select the course(s) you want to hide (or unhide) and then click "Hide Courses" (or "Unhide Courses"). '
