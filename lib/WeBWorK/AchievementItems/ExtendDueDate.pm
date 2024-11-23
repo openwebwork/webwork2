@@ -79,7 +79,7 @@ sub use_item ($self, $userName, $c) {
 		my @probIDs = $db->listUserProblems($userName, $setID);
 		for my $probID (@probIDs) {
 			my $problem = $db->getUserProblem($userName, $setID, $probID);
-			$problem->problem_seed($problem->problem_seed + 100);
+			$problem->problem_seed($problem->problem_seed % 2**31 + 1);
 			$db->putUserProblem($problem);
 		}
 	}
