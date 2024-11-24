@@ -600,20 +600,19 @@ async sub pre_header_initialize ($c) {
 			{
 
 				$c->{invalidSet} = $c->maketext(
-					'User [_1] is being acted as.  If you continue, you will create a new version of '
-						. 'this set for that user, which will count against their allowed maximum '
-						. 'number of versions for the current time interval.  IN GENERAL, THIS IS NOT '
-						. 'WHAT YOU WANT TO DO.  Please be sure that you want to do this before clicking '
-						. 'the "Create New Test Version" button below.  Alternately, PRESS THE "BACK" BUTTON '
-						. 'and continue.',
+					'You are acting as user [_1].  If you continue, you will create a new version of '
+						. 'this test for that user, which will count against their allowed maximum '
+						. 'number of versions for the current time interval.  In general, this is not '
+						. 'what you want to do.  Please be sure that you want to do this before clicking '
+						. 'the "Create New Test Version" button below.  Alternatively, click "Cancel".',
 					$effectiveUserID
 				);
 				$c->{invalidVersionCreation} = 1;
 
 			} elsif ($effectiveUserID ne $userID) {
 				$c->{invalidSet} = $c->maketext(
-					'User [_1] is being acted as. When acting as another user, '
-						. 'new versions of the test cannot be created.',
+					'You are acting as user [_1], and do not have the permission to create a new test version '
+						. 'when acting as another user.',
 					$effectiveUserID
 				);
 				$c->{invalidVersionCreation} = 2;

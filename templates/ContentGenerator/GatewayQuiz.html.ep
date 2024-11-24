@@ -90,6 +90,12 @@
 					),
 					class => 'btn btn-primary'
 				=%>
+				<%= link_to maketext('Cancel') => $c->systemLink(
+						url_for('problem_list', setID => $setID),
+						params => { effectiveUser => $effectiveUserID, user => $userID }
+					),
+					class => 'btn btn-primary'
+				=%>
 			</div>
 		% }
 	</div>
