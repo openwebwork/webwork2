@@ -201,7 +201,7 @@ boolean options:
 =cut
 
 sub addCourse {
-	my (%options) = (initial_userID => '', @_);
+	my (%options) = @_;
 
 	for my $key (keys(%options)) {
 		my $value = '####UNDEF###';
@@ -217,7 +217,8 @@ sub addCourse {
 
 	debug \@users;
 
-	my ($initialUser) = grep { $_->[0]{user_id} eq $options{initial_userID} } @users;
+	my @initialUsers = @users;
+	my %user_args    = map { $_->[0]{user_id} => 1 } @users;
 
 	# get the database layout out of the options hash
 	my $dbLayoutName = $courseOptions{dbLayoutName};
@@ -359,7 +360,6 @@ sub addCourse {
 					{ '!=' => $options{copyConfig} ? $ce0->{userRoles}{student} : $ce->{userRoles}{student} },
 					user_id => { not_like => 'set_id:%' }
 				}));
-			my %user_args = map { $_->[0]{user_id} => 1 } @users;
 
 			for my $user_id (@non_student_ids) {
 				next if $user_args{$user_id};
@@ -402,12 +402,13 @@ sub addCourse {
 		}
 		if ($options{copyNonStudents}) {
 			foreach my $userTriple (@users) {
-				my $user_id   = $userTriple->[0]{user_id};
+				my $user_id = $userTriple->[0]{user_id};
+				next if $user_args{$user_id};    # Initial users will be assigned to everything below.
 				my @user_sets = $db0->listUserSets($user_id);
 				assignSetsToUsers($db, $ce, \@user_sets, [$user_id]);
 			}
 		}
-		assignSetsToUsers($db, $ce, \@set_ids, [ $initialUser->[0]{user_id} ]) if $initialUser;
+		assignSetsToUsers($db, $ce, \@set_ids, [ map { $_->[0]{user_id} } @initialUsers ]) if @initialUsers;
 	}
 
 	# add achievements
@@ -416,16 +417,17 @@ sub addCourse {
 		for my $achievement_id (@achievement_ids) {
 			eval { $db->addAchievement($db0->getAchievement($achievement_id)) };
 			warn $@ if $@;
-			if ($initialUser) {
+			for (@initialUsers) {
 				my $userAchievement = $db->newUserAchievement();
-				$userAchievement->user_id($initialUser->[0]{user_id});
+				$userAchievement->user_id($_->[0]{user_id});
 				$userAchievement->achievement_id($achievement_id);
 				$db->addUserAchievement($userAchievement);
 			}
 		}
 		if ($options{copyNonStudents}) {
 			foreach my $userTriple (@users) {
-				my $user_id           = $userTriple->[0]{user_id};
+				my $user_id = $userTriple->[0]{user_id};
+				next if $user_args{$user_id};    # Initial users were assigned to all achievements above.
 				my @user_achievements = $db0->listUserAchievements($user_id);
 				for my $achievement_id (@user_achievements) {
 					my $userAchievement = $db->newUserAchievement();

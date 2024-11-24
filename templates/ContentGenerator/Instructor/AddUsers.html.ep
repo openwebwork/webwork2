@@ -148,9 +148,11 @@
 			</tbody>
 		</table>
 	</div>
-	<p class="my-2"><%= maketext('Select sets below to assign them to the newly-created users.') %></p>
-	% param('assignSets', undef);
-	<%= select_field assignSets => [ map { [ format_set_name_display($_) => $_ ] } $db->listGlobalSets ],
-		size => 10, multiple => undef, class => 'form-select w-auto mb-2' =%>
+	% unless ($ce->{courseName} eq $ce->{admin_course_id}) {
+		<p class="my-2"><%= maketext('Select sets below to assign them to the newly-created users.') %></p>
+		% param('assignSets', undef);
+		<%= select_field assignSets => [ map { [ format_set_name_display($_) => $_ ] } $db->listGlobalSets ],
+			size => 10, multiple => undef, class => 'form-select w-auto mb-2' =%>
+	% }
 	<p><%= submit_button maketext('Add Users'), name => 'addStudents', class => 'btn btn-primary' =%></p>
 <% end =%>

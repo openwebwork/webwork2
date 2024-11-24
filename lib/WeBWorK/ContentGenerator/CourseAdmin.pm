@@ -239,20 +239,18 @@ sub pre_header_initialize ($c) {
 }
 
 sub add_course_form ($c) {
+	$c->param('number_of_additional_users', ($c->param('number_of_additional_users') // 0) + 1)
+		if $c->param('add_another_instructor');
+
 	return $c->include('ContentGenerator/CourseAdmin/add_course_form');
 }
 
 sub add_course_validate ($c) {
 	my $ce = $c->ce;
 
-	my $add_courseID                = trim_spaces($c->param('new_courseID'))                || '';
-	my $add_initial_userID          = trim_spaces($c->param('add_initial_userID'))          || '';
-	my $add_initial_password        = trim_spaces($c->param('add_initial_password'))        || '';
-	my $add_initial_confirmPassword = trim_spaces($c->param('add_initial_confirmPassword')) || '';
-	my $add_initial_firstName       = trim_spaces($c->param('add_initial_firstName'))       || '';
-	my $add_initial_lastName        = trim_spaces($c->param('add_initial_lastName'))        || '';
-	my $add_initial_email           = trim_spaces($c->param('add_initial_email'))           || '';
-	my $add_dbLayout                = trim_spaces($c->param('add_dbLayout'))                || '';
+	my $add_courseID               = trim_spaces($c->param('new_courseID'))  || '';
+	my $number_of_additional_users = $c->param('number_of_additional_users') || 0;
+	my $add_dbLayout               = trim_spaces($c->param('add_dbLayout'))  || '';
 
 	my @errors;
 
@@ -269,24 +267,16 @@ sub add_course_validate ($c) {
 		push @errors, $c->maketext('Course ID cannot exceed [_1] characters.', $ce->{maxCourseIdLength});
 	}
 
-	if ($add_initial_userID ne '') {
-		if ($add_initial_password eq '') {
-			push @errors, $c->maketext('You must specify a password for the initial instructor.');
-		}
-		if ($add_initial_confirmPassword eq '') {
-			push @errors, $c->maketext('You must confirm the password for the initial instructor.');
-		}
-		if ($add_initial_password ne $add_initial_confirmPassword) {
-			push @errors, $c->maketext('The password and password confirmation for the instructor must match.');
-		}
-		if ($add_initial_firstName eq '') {
-			push @errors, $c->maketext('You must specify a first name for the initial instructor.');
-		}
-		if ($add_initial_lastName eq '') {
-			push @errors, $c->maketext('You must specify a last name for the initial instructor.');
-		}
-		if ($add_initial_email eq '') {
-			push @errors, $c->maketext('You must specify an email address for the initial instructor.');
+	for (1 .. $number_of_additional_users) {
+		my $userID = trim_spaces($c->param("add_initial_userID_$_")) || '';
+
+		unless ($userID =~ /^[\w-.,]*$/) {
+			push @errors,
+				$c->maketext(
+					'User ID number [_1] may only contain letters, numbers, hyphens, periods, commas, '
+					. 'and underscores.',
+					$_
+				);
 		}
 	}
 
@@ -309,16 +299,10 @@ sub do_add_course ($c) {
 	my $db    = $c->db;
 	my $authz = $c->authz;
 
-	my $add_courseID          = trim_spaces($c->param('new_courseID')) // '';
-	my $add_courseTitle       = ($c->param('add_courseTitle')       // '') =~ s/^\s*|\s*$//gr;
-	my $add_courseInstitution = ($c->param('add_courseInstitution') // '') =~ s/^\s*|\s\*$//gr;
-
-	my $add_initial_userID          = trim_spaces($c->param('add_initial_userID'))          // '';
-	my $add_initial_password        = trim_spaces($c->param('add_initial_password'))        // '';
-	my $add_initial_confirmPassword = trim_spaces($c->param('add_initial_confirmPassword')) // '';
-	my $add_initial_firstName       = trim_spaces($c->param('add_initial_firstName'))       // '';
-	my $add_initial_lastName        = trim_spaces($c->param('add_initial_lastName'))        // '';
-	my $add_initial_email           = trim_spaces($c->param('add_initial_email'))           // '';
+	my $add_courseID               = trim_spaces($c->param('new_courseID')) // '';
+	my $add_courseTitle            = ($c->param('add_courseTitle')       // '') =~ s/^\s*|\s*$//gr;
+	my $add_courseInstitution      = ($c->param('add_courseInstitution') // '') =~ s/^\s*|\s\*$//gr;
+	my $number_of_additional_users = $c->param('number_of_additional_users') || 0;
 
 	my $copy_from_course = trim_spaces($c->param('copy_from_course')) // '';
 
@@ -331,49 +315,85 @@ sub do_add_course ($c) {
 	my @users;
 
 	# copy users from current (admin) course if desired
-	if ($c->param('add_admin_users')) {
-		for my $userID ($db->listUsers) {
+	for my $userID ($c->param('add-admin-users')) {
+		unless ($db->existsUser($userID)) {
+			$c->addbadmessage($c->maketext(
+				'User "[_1]" will not be copied from the [_2] course as it does not exist.', $userID,
+				$ce->{admin_course_id}
+			));
+			next;
+		}
+		for (1 .. $number_of_additional_users) {
+			my $add_initial_userID = trim_spaces($c->param("add_initial_userID_$_")) // '';
+
 			if ($userID eq $add_initial_userID) {
 				$c->addbadmessage($c->maketext(
-					'User "[_1]" will not be copied from [_2] course as it is the initial instructor.', $userID,
-					$ce->{admin_course_id}
+					'User "[_1]" will not be copied from the [_2] course as it is the same as additional user '
+						. 'number [_3].',
+					$userID, $ce->{admin_course_id}, $_
 				));
 				next;
 			}
-			my $PermissionLevel = $db->newPermissionLevel();
-			$PermissionLevel->user_id($userID);
-			$PermissionLevel->permission($ce->{userRoles}{admin});
-			my $User     = $db->getUser($userID);
-			my $Password = $db->getPassword($userID);
-			$User->status('O');    # Add admin user as an observer.
-
-			push @users, [ $User, $Password, $PermissionLevel ]
-				if $authz->hasPermissions($userID, 'create_and_delete_courses');
 		}
-	}
 
-	# add initial instructor if desired
-	if ($add_initial_userID =~ /\S/) {
-		my $User = $db->newUser(
-			user_id       => $add_initial_userID,
-			first_name    => $add_initial_firstName,
-			last_name     => $add_initial_lastName,
-			student_id    => $add_initial_userID,
-			email_address => $add_initial_email,
-			status        => 'O',
-		);
-		my $Password = $db->newPassword(
-			user_id  => $add_initial_userID,
-			password => cryptPassword($add_initial_password),
-		);
-		my $PermissionLevel = $db->newPermissionLevel(
-			user_id    => $add_initial_userID,
-			permission => '10',
-		);
+		my $PermissionLevel = $db->getPermissionLevel($userID);
+		my $User            = $db->getUser($userID);
+		my $Password        = $db->getPassword($userID);
+
+		# Enroll student users, and make all other users observers.
+		$User->status($PermissionLevel->permission == $ce->{userRoles}{student} ? 'C' : 'O');
+
 		push @users, [ $User, $Password, $PermissionLevel ];
 	}
 
-	push @{ $courseOptions{PRINT_FILE_NAMES_FOR} }, map { $_->[0]->user_id } @users;
+	# add additional instructors if desired
+	for (1 .. $number_of_additional_users) {
+		my $userID          = trim_spaces($c->param("add_initial_userID_$_"))    // '';
+		my $password        = trim_spaces($c->param("add_initial_password_$_"))  // '';
+		my $firstName       = trim_spaces($c->param("add_initial_firstName_$_")) // '';
+		my $lastName        = trim_spaces($c->param("add_initial_lastName_$_"))  // '';
+		my $email           = trim_spaces($c->param("add_initial_email_$_"))     // '';
+		my $permissionLevel = $c->param("add_initial_permission_$_");
+		my $add_user        = $c->param("add_initial_user_$_") // 0;
+
+		if ($userID =~ /\S/) {
+			my $User = $db->newUser(
+				user_id       => $userID,
+				first_name    => $firstName,
+				last_name     => $lastName,
+				email_address => $email,
+				status        => $permissionLevel == $ce->{userRoles}{student} ? 'C' : 'O',
+			);
+			my $Password = $db->newPassword(
+				user_id  => $userID,
+				password => $password ? cryptPassword($password) : '',
+			);
+			my $PermissionLevel = $db->newPermissionLevel(
+				user_id    => $userID,
+				permission => $permissionLevel,
+			);
+			push @users, [ $User, $Password, $PermissionLevel ];
+
+			# Add initial user to admin course if asked.
+			if ($add_user) {
+				if ($db->existsUser($userID)) {
+					$c->addbadmessage($c->maketext(
+						'User "[_1]" will not be added to the [_2] course as it already exists.', $userID,
+						$ce->{admin_course_id}
+					));
+				} else {
+					$User->status('D');    # By default don't allow user to login.
+					$db->addUser($User);
+					$db->addPassword($Password);
+					$db->addPermissionLevel($PermissionLevel);
+					$User->status($permissionLevel == $ce->{userRoles}{student} ? 'C' : 'O');
+				}
+			}
+		}
+	}
+
+	push @{ $courseOptions{PRINT_FILE_NAMES_FOR} },
+		map { $_->[0]->user_id } grep { $_->[2]->permission >= $ce->{userRoles}{professor} } @users;
 
 	# Include any optional arguments, including a template course and the course title and course institution.
 	my %optional_arguments;
@@ -393,11 +413,10 @@ sub do_add_course ($c) {
 
 	eval {
 		addCourse(
-			courseID       => $add_courseID,
-			ce             => $ce2,
-			courseOptions  => \%courseOptions,
-			users          => \@users,
-			initial_userID => $add_initial_userID,
+			courseID      => $add_courseID,
+			ce            => $ce2,
+			courseOptions => \%courseOptions,
+			users         => \@users,
 			%optional_arguments,
 		);
 	};
@@ -426,11 +445,7 @@ sub do_add_course ($c) {
 				"\tAdded",
 				(defined $add_courseInstitution ? $add_courseInstitution : '(no institution specified)'),
 				(defined $add_courseTitle       ? $add_courseTitle       : '(no title specified)'),
-				$add_courseID,
-				$add_initial_firstName,
-				$add_initial_lastName,
-				$add_initial_email,
-			)
+				$add_courseID)
 		);
 		push(
 			@$output,
