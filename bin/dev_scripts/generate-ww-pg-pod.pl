@@ -106,8 +106,8 @@ sub process_dir {
 
 	my $sections =
 		$is_pg
-		? [ doc => 'Documentation', macros => 'Macros',        lib => 'Libraries' ]
-		: [ bin => 'Scripts',       doc    => 'Documentation', lib => 'Libraries' ];
+		? [ doc => 'Documentation', bin => 'Scripts', macros => 'Macros', lib => 'Libraries' ]
+		: [ bin => 'Scripts', doc => 'Documentation', lib => 'Libraries' ];
 	my $macros = $is_pg
 		? [
 			core       => 'Core',
