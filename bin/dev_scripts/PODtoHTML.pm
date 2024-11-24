@@ -31,11 +31,21 @@ use POSIX qw(strftime);
 use WeBWorK::Utils::PODParser;
 
 our @sections = (
-	bin    => 'Scripts',
-	conf   => 'Config Files',
 	doc    => 'Documentation',
+	bin    => 'Scripts',
+	macros => 'Macros',
 	lib    => 'Libraries',
-	macros => 'Macros'
+);
+our %macro_names = (
+	answers    => 'Answers',
+	contexts   => 'Contexts',
+	core       => 'Core',
+	deprecated => 'Deprecated',
+	graph      => 'Graph',
+	math       => 'Math',
+	misc       => 'Miscellaneous',
+	parsers    => 'Parsers',
+	ui         => 'User Interface'
 );
 
 sub new {
@@ -43,21 +53,16 @@ sub new {
 	my $class = ref $invocant || $invocant;
 
 	my @section_list  = ref($o{sections}) eq 'ARRAY' ? @{ $o{sections} } : @sections;
-	my @macros_list   = ref($o{macros}) eq 'ARRAY'   ? @{ $o{macros} }   : ();
 	my $section_hash  = {@section_list};
-	my $macros_hash   = {@macros_list};
 	my $section_order = [ map { $section_list[ 2 * $_ ] } 0 .. $#section_list / 2 ];
-	my $macros_order  = @macros_list ? [ map { $macros_list[ 2 * $_ ] } 0 .. $#macros_list / 2 ] : [];
 	delete $o{sections};
-	delete $o{macros};
 
 	my $self = {
 		%o,
 		idx           => {},
 		section_hash  => $section_hash,
 		section_order => $section_order,
-		macros_hash   => $macros_hash,
-		macros_order  => $macros_order,
+		macros_hash   => {},
 	};
 	return bless $self, $class;
 }
@@ -140,12 +145,7 @@ sub update_index {
 	if ($subdir eq 'macros') {
 		$idx->{macros} = [];
 		if ($pod_name =~ m!^(.+)/(.+)$!) {
-			my $macros = $self->{macros_hash};
-			if ($macros->{$1}) {
-				push @{ $idx->{$1} }, [ $html_rel_path, $2 ];
-			} else {
-				warn "no macro for '$pod_name'\n";
-			}
+			push @{ $self->{macros_hash}{$1} }, [ $html_rel_path, $2 ];
 		} else {
 			push @{ $idx->{doc} }, [ $html_rel_path, $pod_name ];
 		}
@@ -171,7 +171,8 @@ sub write_index {
 			sections      => $self->{section_hash},
 			section_order => $self->{section_order},
 			macros        => $self->{macros_hash},
-			macros_order  => $self->{macros_order},
+			macros_order  => [ sort keys %{ $self->{macros_hash} } ],
+			macro_names   => \%macro_names,
 			date          => strftime('%a %b %e %H:%M:%S %Z %Y', localtime)
 		}
 	);

@@ -29,9 +29,9 @@
 	</div>
 	<h2><a href="#_podtop_" id="macros"><%= $section_names{macros} %></a></h2>
 % end
-% for my $macro (qw(core contexts parsers answers graph math ui misc deprecated)) {
+% for my $macro (sort keys %$macros) {
 	% content_for macros_toc => begin
-		<%= link_to $macro_names{$macro} => "#macro-$macro", class => 'nav-link' %>
+		<%= link_to $macro_names{$macro} // $macro => "#macro-$macro", class => 'nav-link' %>
 	% end
 	% content_for pod_links => begin
 		<h3><a href="#_podtop_" id="macro-<%= $macro %>"><%= $macro_names{$macro} %></a></h3>
