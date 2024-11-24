@@ -331,7 +331,8 @@ async sub pre_header_initialize ($c) {
 		$c->{assignment_type} = 'gateway';
 
 		if (!$authz->hasPermissions($userID, 'modify_problem_sets')) {
-			$c->{invalidSet} = 'You do not have the authorization level required to view/edit undefined sets.';
+			$c->{invalidSet} =
+				$c->maketext('You do not have the authorization level required to view/edit undefined sets.');
 
 			# Define these so that we can drop through to report the error in body.
 			$tmplSet = fake_set($db);
@@ -340,8 +341,8 @@ async sub pre_header_initialize ($c) {
 		} else {
 			# In this case we're creating a fake set from the input, so the input must include a source file.
 			if (!$c->param('sourceFilePath')) {
-				$c->{invalidSet} =
-					'An Undefined_Set was requested, but no source file for the contained problem was provided.';
+				$c->{invalidSet} = $c->maketext(
+					'An Undefined_Set was requested, but no source file for the contained problem was provided.');
 
 				# Define these so that we can drop through to report the error in body.
 				$tmplSet = fake_set($db);
@@ -529,9 +530,11 @@ async sub pre_header_initialize ($c) {
 				&& (
 					$effectiveUserID eq $userID
 					|| (
-						$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
-						|| ($authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student')
-							&& $c->param('createnew_ok'))
+						(
+							$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
+							|| $authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student')
+						)
+						&& $c->param('createnew_ok')
 					)
 				)
 				)
@@ -586,26 +589,32 @@ async sub pre_header_initialize ($c) {
 				$currentNumAttempts = 0;
 
 			} elsif ($maxAttempts != -1 && $totalNumVersions > $maxAttempts) {
-				$c->{invalidSet} = 'No new versions of this assignment are available, '
-					. 'because you have already taken the maximum number allowed.';
+				$c->{invalidSet} = $c->maketext('No new versions of this test are available, '
+						. 'because you have already taken the maximum number allowed.');
 
-			} elsif ($effectiveUserID ne $userID
-				&& $authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student'))
+			} elsif (
+				$effectiveUserID ne $userID
+				&& ($authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
+					|| $authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student'))
+				)
 			{
 
-				$c->{invalidSet} =
-					"User $effectiveUserID is being acted "
-					. 'as.  If you continue, you will create a new version of this set '
-					. 'for that user, which will count against their allowed maximum '
-					. 'number of versions for the current time interval.  IN GENERAL, THIS '
-					. 'IS NOT WHAT YOU WANT TO DO.  Please be sure that you want to '
-					. 'do this before clicking the "Create new set version" link '
-					. 'below.  Alternately, PRESS THE "BACK" BUTTON and continue.';
+				$c->{invalidSet} = $c->maketext(
+					'You are acting as user [_1].  If you continue, you will create a new version of '
+						. 'this test for that user, which will count against their allowed maximum '
+						. 'number of versions for the current time interval.  In general, this is not '
+						. 'what you want to do.  Please be sure that you want to do this before clicking '
+						. 'the "Create New Test Version" button below.  Alternatively, click "Cancel".',
+					$effectiveUserID
+				);
 				$c->{invalidVersionCreation} = 1;
 
 			} elsif ($effectiveUserID ne $userID) {
-				$c->{invalidSet} = "User $effectiveUserID is being acted as.  "
-					. 'When acting as another user, new versions of the set cannot be created.';
+				$c->{invalidSet} = $c->maketext(
+					'You are acting as user [_1], and do not have the permission to create a new test version '
+						. 'when acting as another user.',
+					$effectiveUserID
+				);
 				$c->{invalidVersionCreation} = 2;
 
 			} elsif (($maxAttemptsPerVersion == 0 || $currentNumAttempts < $maxAttemptsPerVersion)
@@ -615,16 +624,16 @@ async sub pre_header_initialize ($c) {
 					$versionIsOpen = 1;
 				} else {
 					$c->{invalidSet} =
-						'No new  versions of this assignment are available, because the set is not open or its time'
-						. ' limit has expired.';
+						$c->maketext('No new versions of this test are available, because the test is '
+							. 'not open or its time limit has expired.');
 				}
 
 			} elsif ($versionsPerInterval
 				&& ($currentNumVersions >= $versionsPerInterval))
 			{
 				$c->{invalidSet} =
-					'You have already taken all available versions of this test in the current time interval.  '
-					. 'You may take the test again after the time interval has expired.';
+					$c->maketext('You have already taken all available versions of this test in the current '
+						. 'time interval. You may take the test again after the time interval has expired.');
 
 			}
 
@@ -643,7 +652,7 @@ async sub pre_header_initialize ($c) {
 		}
 
 	} elsif (!$c->{invalidSet} && !$requestedVersion) {
-		$c->{invalidSet} = 'This set is closed.  No new set versions may be taken.';
+		$c->{invalidSet} = $c->maketext('This test is closed.  No new test versions may be taken.');
 	}
 
 	# If the proctor session key does not have a set version id, then add it.  This occurs when a student
@@ -656,7 +665,7 @@ async sub pre_header_initialize ($c) {
 	}
 
 	# If the set or problem is invalid, then delete any proctor session keys and return.
-	if ($c->{invalidSet} || $c->{invalidProblem}) {
+	if ($c->{invalidSet}) {
 		if (defined $c->{assignment_type} && $c->{assignment_type} eq 'proctored_gateway') {
 			delete $c->authen->session->{proctor_authorization_granted};
 		}
@@ -700,7 +709,7 @@ async sub pre_header_initialize ($c) {
 
 	# Bail without doing anything if the set isn't yet open for this user.
 	if (!($c->{isOpen} || $authz->hasPermissions($userID, 'view_unopened_sets'))) {
-		$c->{invalidSet} = 'This set is not yet open.';
+		$c->{invalidSet} = $c->maketext('This test is not yet open.');
 		return;
 	}
 
@@ -821,7 +830,7 @@ async sub pre_header_initialize ($c) {
 		my $problemN = $mergedProblems[$pIndex];
 
 		if (!defined $problemN) {
-			$c->{invalidSet} = 'One or more of the problems in this set have not been assigned to you.';
+			$c->{invalidSet} = $c->maketext('One or more of the problems in this test have not been assigned to you.');
 			return;
 		}
 

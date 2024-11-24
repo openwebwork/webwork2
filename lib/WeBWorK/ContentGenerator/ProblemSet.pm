@@ -47,6 +47,11 @@ async sub initialize ($c) {
 	my $userID  = $c->param('user');
 	my $eUserID = $c->param('effectiveUser');
 
+	# Don't show "Start New Test" button when acting as another user, unless user has permissions to do so.
+	$c->stash->{disable_start_new_test} = $userID ne $eUserID
+		&& !($authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
+			|| $authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student'));
+
 	my $user          = $db->getUser($userID);
 	my $effectiveUser = $db->getUser($eUserID);
 	$c->{set} = $authz->{merged_set};

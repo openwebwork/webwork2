@@ -127,8 +127,18 @@
 	% }
 	%
 	<div class="mb-3">
-		<%= link_to maketext('Start New Test') => $c->systemLink(url_for($routeName, setID => $set->set_id)),
-			class => 'btn btn-primary' =%>
+		% # Disable "Start New Test" button when acting as another user who doesn't have permissions to start tests.
+		% if ($disable_start_new_test) {
+			<span class="d-inline-block set-id-tooltip" tabindex="0" data-bs-toggle="tooltip" data-bs-placement="top"
+				data-bs-title="<%=maketext(
+					'You are acting as another user and do not have permission to start a new test for other users.'
+				) %>">
+				<button class="btn btn-primary" type="button" disabled><%= maketext('Start New Test') %></button>
+			</span>
+		% } else {
+			<%= link_to maketext('Start New Test') => $c->systemLink(url_for($routeName, setID => $set->set_id)),
+				class => 'btn btn-primary' =%>
+		% }
 	</div>
 % } else {
 	% # Message about if/when next version will be available.
