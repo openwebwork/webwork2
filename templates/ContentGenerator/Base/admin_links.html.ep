@@ -29,6 +29,7 @@
 			% [ 'hide_inactive_course',  maketext('Hide Courses') ],
 			% [ 'manage_locations',      maketext('Manage Locations') ],
 			% [ 'manage_lti_course_map', maketext('Manage LTI Course Map') ],
+			% [ 'manage_otp_secrets',    maketext('Manage OTP Secrets') ],
 		% ) {
 			<li class="list-group-item nav-item">
 				<%= $makelink->(

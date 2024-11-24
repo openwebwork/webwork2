@@ -83,7 +83,6 @@ sub pre_header_initialize ($c) {
 				}
 			} elsif (defined $c->param('confirm_retitle_course')) {
 				$method_to_call = 'do_retitle_course';
-
 			} elsif (defined $c->param('upgrade_course_tables')) {
 				@errors = $c->rename_course_validate;
 				if (@errors) {
@@ -213,6 +212,16 @@ sub pre_header_initialize ($c) {
 				}
 			} else {
 				$method_to_call = 'manage_lti_course_map_form';
+			}
+		} elsif ($subDisplay eq 'manage_otp_secrets') {
+			if (defined $c->param('take_action')) {
+				if ($c->param('action') eq 'reset') {
+					$method_to_call = 'reset_otp_secrets_confirm';
+				} else {
+					$method_to_call = 'copy_otp_secrets_confirm';
+				}
+			} else {
+				$method_to_call = 'manage_otp_secrets_form';
 			}
 		} elsif ($subDisplay eq 'registration') {
 			if (defined($c->param('register_site'))) {
@@ -2375,6 +2384,221 @@ sub do_save_lti_course_map ($c) {
 
 	$c->addgoodmessage($c->maketext('Saved course map.'));
 	return $c->manage_lti_course_map_form;
+}
+
+# Form to copy or reset OTP secrets.
+sub manage_otp_secrets_form ($c) {
+	my $courses          = {};
+	my $dbs              = {};
+	my $skipped_courses  = [];
+	my $show_all_courses = $c->param('show_all_courses') || 0;
+
+	# Create course data first, since it is used in all cases and initializes course db references.
+	for my $courseID (listCourses($c->ce)) {
+		my $ce = WeBWorK::CourseEnvironment->new({ courseName => $courseID });
+		$dbs->{$courseID} = WeBWorK::DB->new($ce->{dbLayouts}{ $ce->{dbLayoutName} });
+
+		# By default ignore courses larger than 200 users, as this can cause a large load building menus.
+		my @users = $dbs->{$courseID}->listUsers;
+		if ($show_all_courses || scalar @users < 200) {
+			$courses->{$courseID} = \@users;
+		} else {
+			push(@$skipped_courses, $courseID);
+		}
+	}
+
+	# Process the confirmed rest or copy actions here.
+	if ($c->param('otp_confirm_reset')) {
+		my $total    = 0;
+		my $courseID = $c->param('sourceResetCourseID');
+		for my $user ($c->param('otp_reset_row')) {
+			my $password = $dbs->{$courseID}->getPassword($user);
+			if ($password && $password->otp_secret) {
+				$password->otp_secret('');
+				$dbs->{$courseID}->putPassword($password);
+				$total++;
+			}
+		}
+		if ($total) {
+			$c->addgoodmessage($c->maketext('[_1] OTP secrets reset.', $total));
+		} else {
+			$c->addbadmessage($c->maketext('No OTP secrets reset.'));
+		}
+	} elsif ($c->param('otp_confirm_copy')) {
+		my $total = 0;
+		for my $row ($c->param('otp_copy_row')) {
+			my ($s_course, $s_user, $d_course, $d_user) = split(':', $row);
+			my $s_password = $dbs->{$s_course}->getPassword($s_user);
+			if ($s_password && $s_password->otp_secret) {
+				# Password may not be defined if using external auth, so create new password record if not.
+				# Should we check $d_user is actually valid again (was checked on previous page)?
+				my $d_password = $dbs->{$d_course}->getPassword($d_user)
+					// $dbs->{$d_course}->newPassword(user_id => $d_user);
+				$d_password->otp_secret($s_password->otp_secret);
+				$dbs->{$d_course}->putPassword($d_password);
+				$total++;
+			}
+		}
+		if ($total) {
+			$c->addgoodmessage($c->maketext('[_1] OTP secrets copied.', $total));
+		} else {
+			$c->addbadmessage($c->maketext('No OTP secrets copied.'));
+		}
+	}
+
+	return $c->include(
+		'ContentGenerator/CourseAdmin/manage_otp_secrets_form',
+		courses         => $courses,
+		skipped_courses => $skipped_courses
+	);
+}
+
+# Deals with both single and multiple copy confirmation.
+sub copy_otp_secrets_confirm ($c) {
+	my $action = $c->param('action');
+	my $source_course;
+	my @source_users;
+	my @dest_courses;
+	my $dest_user;
+
+	if ($action eq 'single') {
+		$source_course = $c->param('sourceSingleCourseID');
+		@source_users  = ($c->param('sourceSingleUserID'));
+		@dest_courses  = ($c->param('destSingleCourseID'));
+		$dest_user     = $c->param('destSingleUserID');
+	} elsif ($action eq 'multiple') {
+		$source_course = $c->param('sourceMultipleCourseID');
+		@source_users  = ($c->param('sourceMultipleUserID'));
+		@dest_courses  = ($c->param('destMultipleCourseID'));
+	} else {
+		$c->addbadmessage($c->maketext('Invalid action [_1].', $action));
+		return $c->manage_otp_secrets_form;
+	}
+
+	my @errors;
+	push(@errors, $c->maketext('Source course ID missing.')) unless (defined $source_course && $source_course ne '');
+	push(@errors, $c->maketext('Source user ID missing.'))   unless (@source_users          && $source_users[0] ne '');
+	push(@errors, $c->maketext('Destination course ID missing.')) unless (@dest_courses && $dest_courses[0] ne '');
+	push(@errors, $c->maketext('Destination user ID missing.'))
+		unless (
+			$action eq 'multiple'
+			|| (defined $dest_user
+				&& $dest_user ne '')
+		);
+	if (@errors) {
+		for (@errors) {
+			$c->addbadmessage($_);
+		}
+		return $c->manage_otp_secrets_form;
+	}
+	if ($action eq 'single' && $source_course eq $dest_courses[0] && $source_users[0] eq $dest_user) {
+		$c->addbadmessage(
+			$c->maketext('Destination user must be different than source user when copying from same course'));
+		return $c->manage_otp_secrets_form;
+	}
+	if ($action eq 'multiple' && @dest_courses == 1 && $source_course eq $dest_courses[0]) {
+		$c->addbadmessage($c->maketext('Destination course must be different than source course.'));
+		return $c->manage_otp_secrets_form;
+	}
+
+	my @rows;
+	my %dbs;
+	my $source_ce = WeBWorK::CourseEnvironment->new({ courseName => $source_course });
+	$dbs{$source_course} = WeBWorK::DB->new($source_ce->{dbLayouts}{ $source_ce->{dbLayoutName} });
+
+	for my $s_user (@source_users) {
+		my $s_user_password = $dbs{$source_course}->getPassword($s_user);
+		unless ($s_user_password && $s_user_password->otp_secret) {
+			push(
+				@rows,
+				{
+					source_course  => $source_course,
+					source_user    => $s_user,
+					source_message => $c->maketext('OTP secret is empty - Skipping'),
+					error          => 'warning',
+					skip           => 1,
+				}
+			);
+			next;
+		}
+
+		for my $d_course (@dest_courses) {
+			next if $action eq 'multiple' && $d_course eq $source_course;
+
+			my $d_user = $action eq 'single' ? $dest_user : $s_user;
+			my $skip   = 0;
+			my $error_message;
+			my $dest_error;
+
+			unless ($dbs{$d_course}) {
+				my $dest_ce = WeBWorK::CourseEnvironment->new({ courseName => $d_course });
+				$dbs{$d_course} = WeBWorK::DB->new($dest_ce->{dbLayouts}{ $dest_ce->{dbLayoutName} });
+			}
+
+			my $d_user_password = $dbs{$d_course}->getPassword($d_user);
+			if (!defined $d_user_password) {
+				# Just because there is no password record, the user could still exist when using external auth.
+				unless ($dbs{$d_course}->existsUser($d_user)) {
+					$dest_error    = 'warning';
+					$error_message = $c->maketext('User does not exist - Skipping');
+					$skip          = 1;
+				}
+			} elsif ($d_user_password->otp_secret) {
+				$dest_error    = 'danger';
+				$error_message = $c->maketext('OTP Secret is not empty - Overwritting');
+			}
+
+			push(
+				@rows,
+				{
+					source_course => $source_course,
+					source_user   => $s_user,
+					dest_course   => $d_course,
+					dest_user     => $d_user,
+					dest_message  => $error_message,
+					error         => $dest_error,
+					skip          => $skip
+				}
+			);
+		}
+	}
+
+	return $c->include('ContentGenerator/CourseAdmin/copy_otp_secrets_confirm', action_rows => \@rows);
+}
+
+sub reset_otp_secrets_confirm ($c) {
+	my $source_course = $c->param('sourceResetCourseID');
+	my @dest_users    = ($c->param('destResetUserID'));
+
+	my @errors;
+	push(@errors, $c->maketext('Source course ID missing.'))    unless (defined $source_course && $source_course ne '');
+	push(@errors, $c->maketext('Destination user ID missing.')) unless (@dest_users            && $dest_users[0] ne '');
+	if (@errors) {
+		for (@errors) {
+			$c->addbadmessage($_);
+		}
+		return $c->manage_otp_secrets_form;
+	}
+
+	my $ce = WeBWorK::CourseEnvironment->new({ courseName => $source_course });
+	my $db = WeBWorK::DB->new($ce->{dbLayouts}{ $ce->{dbLayoutName} });
+	my @rows;
+	for my $user (@dest_users) {
+		my $password = $db->getPassword($user);
+		my $error    = $password && $password->otp_secret ? '' : $c->maketext('OTP Secret is empty - Skipping');
+
+		push(
+			@rows,
+			{
+				user    => $user,
+				message => $error,
+				error   => $error ? 'warning' : '',
+				skip    => $error ? 1         : 0,
+			}
+		);
+	}
+
+	return $c->include('ContentGenerator/CourseAdmin/reset_otp_secrets_confirm', action_rows => \@rows);
 }
 
 sub do_registration ($c) {
