@@ -25,15 +25,14 @@
 	%
 	% my ($index, $macro_index, $content, $macro_content) = ('', '', '', '');
 	% for my $macro (@$macros_order) {
-		% next unless defined $pod_index->{$macro};
 		% my $new_index = begin
-			<a href="#macro-<%= $macro %>" class="nav-link"><%= $macros->{$macro} %></a>
+			<a href="#macro-<%= $macro %>" class="nav-link"><%= $macro_names->{$macro} // $macro %></a>
 		% end
 		% $macro_index .= $new_index->();
 		% my $new_content = begin
-			<h3><a href="#_podtop_" id="macro-<%= $macro %>"><%= $macros->{$macro} %></a></h3>
+			<h3><a href="#_podtop_" id="macro-<%= $macro %>"><%= $macro_names->{$macro} // $macro %></a></h3>
 			<div class="list-group mb-2">
-				% for my $file (sort { $a->[1] cmp $b->[1] } @{ $pod_index->{$macro} }) {
+				% for my $file (sort { $a->[1] cmp $b->[1] } @{ $macros->{$macro} }) {
 					<a href="<%= $file->[0] %>" class="list-group-item list-group-item-action"><%= $file->[1] %></a>
 				% }
 			</div>
