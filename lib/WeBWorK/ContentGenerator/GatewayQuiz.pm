@@ -141,9 +141,12 @@ sub can_recordAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $probl
 
 	if ($user->user_id ne $effectiveUser->user_id) {
 		# If the user is not allowed to record answers as another user, return that permission.  If the user is allowed
-		# to record only set version answers, then allow that between the open and close dates, and so drop out of this
-		# conditional to the usual one.
-		return 1 if $authz->hasPermissions($user->user_id,  'record_answers_when_acting_as_student');
+		# to record an unsubmitted test, allow that.  If the user is allowed to record only set version answers, then
+		# allow that between the open and close dates, and so drop out of this conditional to the usual one.
+		return 1
+			if $authz->hasPermissions($user->user_id, 'record_answers_when_acting_as_student')
+			|| $c->can_gradeUnsubmittedTest($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet,
+				$submitAnswers);
 		return 0 if !$authz->hasPermissions($user->user_id, 'record_set_version_answers_when_acting_as_student');
 	}
 
@@ -222,6 +225,15 @@ sub can_checkAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $proble
 		if after($set->answer_date, $submitTime);
 
 	return 0;
+}
+
+# If user can use the problem grader, and the test is past due and has not been submitted, allow them to submit.
+sub can_gradeUnsubmittedTest ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers = 0)
+{
+	return
+		!$submitAnswers
+		&& $c->can_showProblemGrader($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet)
+		&& (after($set->due_date + $c->ce->{gatewayGracePeriod}) && !$set->version_last_attempt_time);
 }
 
 sub can_showScore ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
@@ -641,7 +653,8 @@ async sub pre_header_initialize ($c) {
 			if (
 				($currentNumAttempts < $maxAttemptsPerVersion)
 				&& ($effectiveUserID eq $userID
-					|| $authz->hasPermissions($userID, 'record_set_version_answers_when_acting_as_student'))
+					|| $authz->hasPermissions($userID, 'record_set_version_answers_when_acting_as_student')
+					|| $authz->hasPermissions($userID, 'record_answers_when_acting_as_student'))
 				)
 			{
 				if (between($set->open_date(), $set->due_date() + $ce->{gatewayGracePeriod}, $c->submitTime)) {
@@ -740,6 +753,7 @@ async sub pre_header_initialize ($c) {
 		checkAnswers          => $c->can_checkAnswers(@args),
 		recordAnswersNextTime => $c->can_recordAnswers(@args, $c->{submitAnswers}),
 		checkAnswersNextTime  => $c->can_checkAnswers(@args, $c->{submitAnswers}),
+		gradeUnsubmittedTest  => $c->can_gradeUnsubmittedTest(@args, $c->{submitAnswers}),
 		showScore             => $c->can_showScore(@args),
 		showProblemScores     => $c->can_showProblemScores(@args),
 		showWork              => $c->can_showWork(@args),
@@ -753,6 +767,12 @@ async sub pre_header_initialize ($c) {
 	$c->{want} = \%want;
 	$c->{can}  = \%can;
 	$c->{will} = \%will;
+
+	# Issue a warning if a test has not been submitted, but can still be graded by the instructor.
+	$c->addbadmessage(
+		$c->maketext(
+			'This test version is past due, but has not been graded. You can still grade the test for this user.')
+	) if $can{gradeUnsubmittedTest} && $userID ne $effectiveUserID;
 
 	# Set up problem numbering and multipage variables.
 
