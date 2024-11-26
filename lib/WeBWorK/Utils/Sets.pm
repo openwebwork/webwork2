@@ -163,7 +163,11 @@ sub grade_all_sets (
 		push @$includedSets, $userSet;
 	}
 
-	return ($courseTotalRight, $courseTotal, $includedSets);
+	return
+		wantarray
+		? ($courseTotalRight, $courseTotal, $includedSets)
+		: ($courseTotal ? $courseTotalRight / $courseTotal : 0);
+
 }
 
 sub is_restricted ($db, $set, $studentName) {
