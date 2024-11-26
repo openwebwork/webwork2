@@ -970,7 +970,7 @@ sub getConfigValues ($ce) {
 				reduced_scoring_date => x('After the reduced scoring date'),
 				due_date             => x('After the close date'),
 				answer_date          => x('After the answer date'),
-				never_date           => x('Never')
+				never                => x('Never')
 			},
 			type => 'popuplist'
 		},
