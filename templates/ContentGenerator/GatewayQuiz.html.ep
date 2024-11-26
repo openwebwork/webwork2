@@ -233,7 +233,7 @@
 % # Remaining output of test headers.
 % # Display timer or information about elapsed time, output link, and information about any recorded score if not
 % # submitAnswers or checkAnswers.
-% if ($c->{can}{recordAnswersNextTime}) {
+% if ($c->{can}{recordAnswersNextTime} || $c->{can}{gradeUnsubmittedTest}) {
 	% my $timeLeft = $c->{set}->due_date - int($submitTime);    # This is in seconds
 	%
 	% # Print the timer if there is less than 24 hours left.
@@ -267,11 +267,13 @@
 		) =%>
 	% }
 	%
-	% if ($timeLeft < 60 && $timeLeft > 0 && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
+	% if ($timeLeft < 60 && $timeLeft > 0 && !$c->{can}{gradeUnsubmittedTest}
+			% && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
 		<div class="alert alert-danger d-inline-block mb-2 p-1">
 			<strong><%= maketext('You have less than 1 minute to complete this test.') %></strong>
 		</div>
-	% } elsif ($timeLeft <= 0 && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
+	% } elsif ($timeLeft <= 0 && !$c->{can}{gradeUnsubmittedTest} &&
+			% !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
 		<div class="alert alert-danger d-inline-block mb-2 p-1">
 			<strong>
 				<%= maketext('You are out of time!')
@@ -651,11 +653,16 @@
 		%
 		<div class="submit-buttons-container col-12 mb-2">
 			<%= submit_button maketext('Preview Test'), name => 'previewAnswers', class => 'btn btn-primary mb-1' =%>
-			% if ($c->{can}{recordAnswersNextTime}) {
+			% if ($c->{can}{checkAnswersNextTime}
+					% && (!$c->{can}{recordAnswersNextTime} || $c->{can}{showProblemGrader})) {
+				<%= submit_button maketext('Check Test'), name => 'checkAnswers', class => 'btn btn-primary mb-1' =%>
+			% }
+			% if ($c->{can}{recordAnswersNextTime} || $c->{can}{gradeUnsubmittedTest}) {
 				<%= tag('input',
 					type  => 'submit',
 					name  => 'submitAnswers',
-					value => maketext('Grade Test'),
+					value => $effectiveUserID ne $userID
+						? maketext('Grade Test for [_1]', $effectiveUserID) : maketext('Grade Test'),
 					class => 'btn btn-primary mb-1',
 					$c->{set}->attempts_per_version
 					? (
@@ -684,9 +691,6 @@
 						)
 					: ()
 				) =%>
-			% }
-			% if ($c->{can}{checkAnswersNextTime} && !$c->{can}{recordAnswersNextTime}) {
-				<%= submit_button maketext('Check Test'), name => 'checkAnswers', class => 'btn btn-primary mb-1' =%>
 			% }
 		</div>
 		% if ($numProbPerPage && $numPages > 1 && $c->{can}{recordAnswersNextTime}) {
