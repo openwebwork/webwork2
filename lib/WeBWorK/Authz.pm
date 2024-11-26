@@ -500,11 +500,12 @@ sub checkSet {
 			$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
 			? $c->link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
 			: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
-		return $c->maketext(
+		return $c->b($c->maketext(
 			'You must use your Learning Management System ([_1]) to access this set.  '
 				. 'Try logging in to the Learning Management System and visiting the set from there.',
 			$LMS
-		) unless $set->lis_source_did;
+		))
+			unless $set->lis_source_did;
 	}
 
 	return 0;
