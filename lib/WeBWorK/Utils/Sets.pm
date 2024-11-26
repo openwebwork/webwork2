@@ -153,15 +153,17 @@ sub grade_all_sets (
 
 	my $courseTotalRight = 0;
 	my $courseTotal      = 0;
+	my $includedSets     = [];
 
 	for my $userSet ($db->getMergedSetsWhere({ user_id => $studentName })) {
 		my $score = $getSetGradeConditionally->($db, $ce, $studentName, $userSet);
 		next unless $score;
 		$courseTotalRight += $score->{totalRight};
 		$courseTotal      += $score->{total};
+		push @$includedSets, $userSet;
 	}
 
-	return wantarray ? ($courseTotalRight, $courseTotal) : $courseTotal ? $courseTotalRight / $courseTotal : 0;
+	return ($courseTotalRight, $courseTotal, $includedSets);
 }
 
 sub is_restricted ($db, $set, $studentName) {
@@ -332,10 +334,9 @@ grade.  If the optional last arugment is not provided, then a default method
 will be used that returns the set grade if after the open date, and C<undef>
 otherwise.
 
-In list context this returns the total course score for all sets and the maximum
-possible course score.
-
-In scalar context this returns the percentage score for all sets in the course.
+This returns the total course score for all sets, the maximum possible course score,
+and an array reference containing references to the user sets that were included in
+those two tallies.
 
 =head2 is_restricted
 

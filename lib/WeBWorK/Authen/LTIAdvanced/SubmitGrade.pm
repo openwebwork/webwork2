@@ -124,8 +124,6 @@ async sub submit_course_grade ($self, $userID, $submittedSet = undef) {
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
-	$self->warning("submitting course grade for user: $userID")
-		if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
 	unless ($user->lis_source_did) {
 		$self->warning("lis_source_did is not available for user: $userID")
 			if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
@@ -134,8 +132,17 @@ async sub submit_course_grade ($self, $userID, $submittedSet = undef) {
 
 	return -1 if $submittedSet && !getSetPassbackScore($db, $ce, $userID, $submittedSet, 1);
 
-	return await $self->submit_grade($user->lis_source_did,
-		scalar(grade_all_sets($db, $ce, $userID, \&getSetPassbackScore)));
+	my ($courseTotalRight, $courseTotal, $includedSets) = grade_all_sets($db, $ce, $userID, \&getSetPassbackScore);
+	if (@$includedSets) {
+		$self->warning(
+			"Submitting overall score for user $userID for sets: " . join(', ', map { $_->set_id } @$includedSets))
+			if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
+		my $score = $courseTotal ? $courseTotalRight / $courseTotal : 0;
+		return await $self->submit_grade($user->lis_source_did, $score);
+	} else {
+		$self->warning("No sets for user $userID meet criteria to be included in course grade calculation.");
+		return 0;
+	}
 }
 
 # Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.
