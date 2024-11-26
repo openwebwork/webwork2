@@ -124,8 +124,11 @@ async sub submit_course_grade ($self, $userID, $submittedSet = undef) {
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
+	$self->warning("Preparing to submit overall course grade to LMS for user $userID.")
+		if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
+
 	unless ($user->lis_source_did) {
-		$self->warning("lis_source_did is not available for user: $userID")
+		$self->warning("lis_source_did is not available for this user")
 			if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
 		return 0;
 	}
@@ -154,7 +157,7 @@ async sub submit_set_grade ($self, $userID, $setID, $submittedSet = undef) {
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
-	$self->warning("Submitting grade for user $userID and set $setID.")
+	$self->warning("Preparing to submit grade to LMS for user $userID and set $setID.")
 		if $ce->{debug_lti_grade_passback} || $self->{post_processing_mode};
 
 	my $userSet = $submittedSet // $db->getMergedSet($userID, $setID);
@@ -165,7 +168,11 @@ async sub submit_set_grade ($self, $userID, $setID, $submittedSet = undef) {
 	}
 
 	my $score = getSetPassbackScore($db, $ce, $userID, $userSet, !$self->{post_processing_mode});
-	return -1 unless $score;
+	unless ($score) {
+		$self->warning("Set's critical date has not yet passed, and user has not yet met the threshold to send set's "
+				. 'score early. Not submitting grade.');
+		return -1;
+	}
 
 	return await $self->submit_grade($userSet->lis_source_did, $score->{score});
 }

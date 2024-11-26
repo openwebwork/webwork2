@@ -202,6 +202,8 @@ async sub submit_course_grade ($self, $userID, $submittedSet = undef) {
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
+	$self->warning("Preparing to submit overall course grade to LMS for user $userID.");
+
 	my $lineitem = $db->getSettingValue('LTIAdvantageCourseLineitem');
 	unless ($lineitem) {
 		$self->warning('LMS lineitem is not available for the course.');
@@ -235,7 +237,8 @@ async sub submit_set_grade ($self, $userID, $setID, $submittedSet = undef) {
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
-	$self->warning("Submitting grade for user $userID and set $setID.");
+	$self->warning("Preparing to submit grade to LMS for user $userID and set $setID.");
+
 	unless ($user->lis_source_did) {
 		$self->warning('LMS user id is not available for this user.');
 		return 0;
@@ -248,7 +251,11 @@ async sub submit_set_grade ($self, $userID, $setID, $submittedSet = undef) {
 	}
 
 	my $score = getSetPassbackScore($db, $ce, $userID, $userSet, !$self->{post_processing_mode});
-	return -1 unless $score;
+	unless ($score) {
+		$self->warning("Set's critical date has not yet passed, and user has not yet met the threshold to send set's "
+				. 'score early. Not submitting grade.');
+		return -1;
+	}
 
 	return await $self->submit_grade($user->lis_source_did, $userSet->lis_source_did, $score->{totalRight},
 		$score->{total});
