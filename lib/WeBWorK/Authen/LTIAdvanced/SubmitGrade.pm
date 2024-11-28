@@ -133,7 +133,11 @@ async sub submit_course_grade ($self, $userID, $submittedSet = undef) {
 		return 0;
 	}
 
-	return -1 if $submittedSet && !getSetPassbackScore($db, $ce, $userID, $submittedSet, 1);
+	if ($submittedSet && !getSetPassbackScore($db, $ce, $userID, $submittedSet, 1)) {
+		$self->warning("Set's critical date has not yet passed, and user has not yet met the threshold to send set's "
+				. 'score early. Not submitting grade.');
+		return -1;
+	}
 
 	my ($courseTotalRight, $courseTotal, $includedSets) = grade_all_sets($db, $ce, $userID, \&getSetPassbackScore);
 	if (@$includedSets) {
