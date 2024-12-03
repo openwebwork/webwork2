@@ -33,8 +33,7 @@ use WeBWorK::Utils qw(encodeAnswers createEmailSenderTransportSMTP);
 use WeBWorK::Utils::DateTime qw(before after);
 use WeBWorK::Utils::JITAR qw(jitar_id_to_seq jitar_problem_adjusted_status);
 use WeBWorK::Utils::Logs qw(writeLog writeCourseLog);
-use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
-use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
+use WeBWorK::Authen::LTI::GradePassback qw(passbackGradeOnSubmit);
 use Caliper::Sensor;
 use Caliper::Entity;
 
@@ -248,38 +247,10 @@ async sub process_and_log_answer ($c) {
 					$c->param('startTime', '');
 				}
 
-				# Messages about passing the score back to the LMS
+				# Send the score for this set to the LMS if enabled.
 				if ($ce->{LTIGradeMode}) {
-					my $LMSname        = $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
-					my $LTIGradeResult = -1;
-					if ($ce->{LTIGradeOnSubmit}) {
-						$LTIGradeResult = 0;
-						my $grader = $ce->{LTI}{ $ce->{LTIVersion} }{grader}->new($c);
-						if ($ce->{LTIGradeMode} eq 'course') {
-							$LTIGradeResult = await $grader->submit_course_grade($problem->user_id);
-						} elsif ($ce->{LTIGradeMode} eq 'homework') {
-							$LTIGradeResult = await $grader->submit_set_grade($problem->user_id, $problem->set_id);
-						}
-						if ($LTIGradeResult == 0) {
-							$scoreRecordedMessage .=
-								$c->tag('br') . $c->maketext('Your score was not successfully sent to [_1].', $LMSname);
-						} elsif ($LTIGradeResult > 0) {
-							$scoreRecordedMessage .=
-								$c->tag('br') . $c->maketext('Your score was successfully sent to [_1].', $LMSname);
-						}
-					} elsif ($ce->{LTIMassUpdateInterval} > 0) {
-						$scoreRecordedMessage .= $c->tag('br');
-						if ($ce->{LTIMassUpdateInterval} < 120) {
-							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,second].',
-								$LMSname, $ce->{LTIMassUpdateInterval});
-						} elsif ($ce->{LTIMassUpdateInterval} < 7200) {
-							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,minute].',
-								$LMSname, int($ce->{LTIMassUpdateInterval} / 60 + 0.99));
-						} else {
-							$scoreRecordedMessage .= $c->maketext('Scores are sent to [_1] every [quant,_2,hour].',
-								$LMSname, int($ce->{LTIMassUpdateInterval} / 3600 + 0.9999));
-						}
-					}
+					my $message = await passbackGradeOnSubmit($c, $problem->user_id, $c->{set});
+					$scoreRecordedMessage .= $c->tag('br') . $message if $message;
 				}
 			} else {
 				# The "sticky" answers get saved here when $will{recordAnswers} is false

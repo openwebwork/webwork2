@@ -227,7 +227,4 @@ $LTI{v1p1}{LMSrolesToWeBWorKroles} = {
 #  $userSet->answer_date($niceAnswerTime);
 #};
 
-# Do not change this.
-$LTI{v1p1}{grader} = 'WeBWorK::Authen::LTIAdvanced::SubmitGrade';
-
 1;    # final line of the file to reassure perl that it was read properly.

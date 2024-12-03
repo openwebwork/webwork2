@@ -121,61 +121,52 @@ sub grade_set ($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails
 	}
 }
 
-sub grade_gateway ($db, $set, $setName, $studentName) {
-	my @versionNums = $db->listSetVersions($studentName, $setName);
+sub grade_gateway ($db, $setName, $studentName) {
+	my $bestSetData = [ 0, 0 ];
 
-	my $bestTotalRight = 0;
-	my $bestTotal      = 0;
-
-	if (@versionNums) {
-		for my $i (@versionNums) {
-			my $versionedSet = $db->getSetVersion($studentName, $setName, $i);
-
-			my ($totalRight, $total) = grade_set($db, $versionedSet, $studentName, 1);
-			if ($totalRight > $bestTotalRight) {
-				$bestTotalRight = $totalRight;
-				$bestTotal      = $total;
-			}
-		}
+	my @setVersions = $db->getSetVersionsWhere({ user_id => $studentName, set_id => { like => "$setName,v\%" } });
+	for (@setVersions) {
+		my @setData = grade_set($db, $_, $studentName, 1);
+		$bestSetData = \@setData if $setData[0] > $bestSetData->[0];
 	}
 
-	if (wantarray) {
-		return ($bestTotalRight, $bestTotal);
-	} else {
-		return 0 unless $bestTotal;
-		return $bestTotalRight / $bestTotal;
-	}
+	return wantarray ? (@$bestSetData, \@setVersions) : ($bestSetData->[1] ? $bestSetData->[0] / $bestSetData->[1] : 0);
 }
 
-sub grade_all_sets ($db, $studentName) {
-	my @setIDs     = $db->listUserSets($studentName);
-	my @userSetIDs = map { [ $studentName, $_ ] } @setIDs;
-	my @userSets   = $db->getMergedSets(@userSetIDs);
-
-	my $courseTotal      = 0;
-	my $courseTotalRight = 0;
-
-	for my $userSet (@userSets) {
-		next unless (after($userSet->open_date()));
-		if ($userSet->assignment_type() =~ /gateway/) {
-
-			my ($totalRight, $total) = grade_gateway($db, $userSet, $userSet->set_id, $studentName);
-			$courseTotalRight += $totalRight;
-			$courseTotal      += $total;
+sub grade_all_sets (
+	$db, $ce,
+	$studentName,
+	$getSetGradeConditionally = sub ($db, $ce, $studentName, $userSet) {
+		return unless after($userSet->open_date);
+		if ($userSet->assignment_type =~ /gateway/) {
+			my ($totalRight, $total) = grade_gateway($db, $userSet->set_id, $studentName);
+			return { totalRight => $totalRight, total => $total };
 		} else {
 			my ($totalRight, $total) = grade_set($db, $userSet, $studentName, 0);
-
-			$courseTotalRight += $totalRight;
-			$courseTotal      += $total;
+			return { totalRight => $totalRight, total => $total };
 		}
 	}
+	)
+{
+	croak 'grade_all_sets requires a code reference for its last argument'
+		unless ref($getSetGradeConditionally) eq 'CODE';
 
-	if (wantarray) {
-		return ($courseTotalRight, $courseTotal);
-	} else {
-		return 0 unless $courseTotal;
-		return $courseTotalRight / $courseTotal;
+	my $courseTotalRight = 0;
+	my $courseTotal      = 0;
+	my $includedSets     = [];
+
+	for my $userSet ($db->getMergedSetsWhere({ user_id => $studentName })) {
+		my $score = $getSetGradeConditionally->($db, $ce, $studentName, $userSet);
+		next unless $score;
+		$courseTotalRight += $score->{totalRight};
+		$courseTotal      += $score->{total};
+		push @$includedSets, $userSet;
 	}
+
+	return
+		wantarray
+		? ($courseTotalRight, $courseTotal, $includedSets)
+		: ($courseTotal ? $courseTotalRight / $courseTotal : 0);
 
 }
 
@@ -208,7 +199,7 @@ sub is_restricted ($db, $set, $studentName) {
 					$r_score = $v_score if ($v_score > $r_score);
 				}
 			} else {
-				$r_score = grade_set($db, $restrictor_set, $studentName, 0);
+				$r_score = grade_set($db, $restrictor_set, $studentName);
 			}
 
 			# round to evade machine rounding error
@@ -301,7 +292,7 @@ This formats set names for display, converting underscores back into spaces.
 
 =head2 grade_set
 
-Usage: C<grade_set($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails)>
+Usage: C<grade_set($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails = 0)>
 
 The arguments C<$db>, C<$set>, and C<$studentName> are required. If
 C<$setIsVersioned> is true, then the given set is assumed to be a set version.
@@ -317,27 +308,39 @@ In scalar context this returns the percentage correct.
 
 =head2 grade_gateway
 
-Usage: C<grade_gateway($db, $set, $setName, $studentName)>
+Usage: C<grade_gateway($db, $setName, $studentName)>
 
 All arguments are required.
 
-In list context this returns a list fo the total number of correct problems for
-the highest scoring version of this test, and the total number of problems in
-that version.
+In list context this returns a list of the total number of correct problems for
+the highest scoring version of this test, the total number of problems in that
+version, a reference to an array of merged user problem records from that
+version, and a reference to an array of merged user set versions for this user
+and set.
 
 In scalar context this returns the percentage correct for the highest scoring
 version of this test.
 
 =head2 grade_all_sets
 
-Usage: C<grade_all_sets($db, $studentName)>
+Usage: C<grade_all_sets($db, $ce, $studentName, $getSetGradeConditionally)>
 
-All arguments listed are required.
+The arguments C<$db>, C<$ce>, and C<$studentName> are rrequired.
 
-In list context this returns the total course score for all sets and the maximum
-possible course score.
+The C<$getSetGradeConditionally> is an optional argument that if provided should
+be a reference to a subroutine that will be passed the arguments $db, $ce,
+$studentName listed above, and $userSet which is a merged user set record from
+the database, and must either return a reference to a hash containing the keys
+totalRight and total with the grade for the set, or C<undef>. If it returns
+C<undef> then the set will not be included in the grade computation.  Otherwise
+the values for totalRight and total that are returned will be added into the
+grade.  If the optional last arugment is not provided, then a default method
+will be used that returns the set grade if after the open date, and C<undef>
+otherwise.
 
-In scalar context this returns the percentage score for all sets in the course.
+This returns the total course score for all sets, the maximum possible course score,
+and an array reference containing references to the user sets that were included in
+those two tallies.
 
 =head2 is_restricted
 

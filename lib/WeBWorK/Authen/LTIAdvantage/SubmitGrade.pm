@@ -39,7 +39,8 @@ use Time::HiRes;
 
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::Sets qw(grade_set grade_gateway grade_all_sets);
+use WeBWorK::Utils::Sets qw(grade_all_sets);
+use WeBWorK::Authen::LTI::GradePassback qw(getSetPassbackScore);
 
 # This package contains utilities for submitting grades to the LMS via LTI 1.3.
 sub new ($invocant, $c, $post_processing_mode = 0) {
@@ -193,7 +194,7 @@ async sub get_access_token ($self) {
 
 # Computes and submits the course grade for userID to the LMS.
 # The course grade is the sum of all (weighted) problems assigned to the user.
-async sub submit_course_grade ($self, $userID) {
+async sub submit_course_grade ($self, $userID, $submittedSet = undef) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 	my $db = $c->{db};
@@ -201,17 +202,38 @@ async sub submit_course_grade ($self, $userID) {
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
+	$self->warning("Preparing to submit overall course grade to LMS for user $userID.");
+
 	my $lineitem = $db->getSettingValue('LTIAdvantageCourseLineitem');
+	unless ($lineitem) {
+		$self->warning('LMS lineitem is not available for the course.');
+		return 0;
+	}
 
-	$self->warning("Submitting all grades for user $userID");
-	$self->warning('LMS user id is not available for this user.')   unless $user->lis_source_did;
-	$self->warning('LMS lineitem is not available for the course.') unless $lineitem;
+	unless ($user->lis_source_did) {
+		$self->warning('LMS user id is not available for this user.');
+		return 0;
+	}
 
-	return await $self->submit_grade($user->lis_source_did, $lineitem, grade_all_sets($db, $userID));
+	if ($submittedSet && !getSetPassbackScore($db, $ce, $userID, $submittedSet, 1)) {
+		$self->warning("Set's critical date has not yet passed, and user has not yet met the threshold to send set's "
+				. 'score early. Not submitting grade.');
+		return -1;
+	}
+
+	my ($courseTotalRight, $courseTotal, $includedSets) = grade_all_sets($db, $ce, $userID, \&getSetPassbackScore);
+	if (@$includedSets) {
+		$self->warning("Submitting overall score for user $userID for sets: "
+				. join(', ', map { $_->set_id } (@$includedSets)));
+		return await $self->submit_grade($user->lis_source_did, $lineitem, $courseTotalRight, $courseTotal);
+	} else {
+		$self->warning("No sets for user $userID meet criteria to be included in course grade calculation.");
+		return -1;
+	}
 }
 
 # Computes and submits the set grade for $userID and $setID to the LMS.  For gateways the best score is used.
-async sub submit_set_grade ($self, $userID, $setID) {
+async sub submit_set_grade ($self, $userID, $setID, $submittedSet = undef) {
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 	my $db = $c->{db};
@@ -219,16 +241,28 @@ async sub submit_set_grade ($self, $userID, $setID) {
 	my $user = $db->getUser($userID);
 	return 0 unless $user;
 
-	my $userSet = $db->getMergedSet($userID, $setID);
+	$self->warning("Preparing to submit grade to LMS for user $userID and set $setID.");
 
-	$self->warning("Submitting grade for user $userID and set $setID.");
-	$self->warning('LMS user id is not available for this user.') unless $user->lis_source_did;
-	$self->warning('LMS lineitem is not available for this set.') unless $userSet->lis_source_did;
+	unless ($user->lis_source_did) {
+		$self->warning('LMS user id is not available for this user.');
+		return 0;
+	}
 
-	return await $self->submit_grade($user->lis_source_did, $userSet->lis_source_did,
-		$userSet->assignment_type =~ /gateway/
-		? grade_gateway($db, $userSet, $userSet->set_id, $userID)
-		: (grade_set($db, $userSet, $userID, 0))[ 0, 1 ]);
+	my $userSet = $submittedSet // $db->getMergedSet($userID, $setID);
+	unless ($userSet->lis_source_did) {
+		$self->warning('LMS lineitem is not available for this set.');
+		return 0;
+	}
+
+	my $score = getSetPassbackScore($db, $ce, $userID, $userSet, !$self->{post_processing_mode});
+	unless ($score) {
+		$self->warning("Set's critical date has not yet passed, and user has not yet met the threshold to send set's "
+				. 'score early. Not submitting grade.');
+		return -1;
+	}
+
+	return await $self->submit_grade($user->lis_source_did, $userSet->lis_source_did, $score->{totalRight},
+		$score->{total});
 }
 
 # Submits scoreGiven and scoreMaximum to the lms with $sourcedid as the identifier.
@@ -236,7 +270,7 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum
 	my $c  = $self->{c};
 	my $ce = $c->{ce};
 
-	return 0 unless $LMSuserID && $lineitem && (my $access_token = await $self->get_access_token);
+	return 0 unless (my $access_token = await $self->get_access_token);
 
 	$self->warning('Found data required for submitting grades to LMS.');
 
@@ -270,14 +304,23 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum
 			return 0;
 		}
 
-		my $priorData  = decode_json($response->body);
-		my $priorScore = @$priorData
-			&& $priorData->[0]{resultMaximum} ? $priorData->[0]{resultScore} / $priorData->[0]{resultMaximum} : 0;
+		my $priorData = decode_json($response->body);
+		my $priorScore =
+			(@$priorData && $priorData->[0]{resultMaximum} && defined $priorData->[0]{resultScore})
+			? $priorData->[0]{resultScore} / $priorData->[0]{resultMaximum}
+			: 0;
 
-		my $score = $scoreGiven / $scoreMaximum;
-		if (abs($score - $priorScore) < 0.001) {
-			$self->warning(
-				"LMS grade will NOT be updated as the grade is unchanged. Old score: $priorScore, New score: $score.");
+		my $score = $scoreMaximum ? $scoreGiven / $scoreMaximum : 0;
+
+		# Do not update the score if there is no significant change. Note that the cases where the webwork score
+		# is exactly 1 and the LMS score is not exactly 1, and the case where the webwork score is 0 and the LMS
+		# score is not set are considered significant changes.
+		if (abs($score - $priorScore) < 0.001
+			&& ($score != 1 || $priorScore == 1)
+			&& ($score != 0 || (@$priorData && defined $priorData->[0]{resultScore})))
+		{
+			$self->warning('LMS grade will NOT be updated as the grade has not significantly changed. '
+					. "Old score: $priorScore, New score: $score.");
 			return 1;
 		}
 
