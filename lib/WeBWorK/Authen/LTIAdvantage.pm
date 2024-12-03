@@ -323,8 +323,7 @@ sub authenticate ($self) {
 				"Account creation blocked by block_lti_create_user setting. Did not create user $self->{user_id}.";
 			if ($ce->{debug_lti_parameters}) {
 				warn $c->maketext('Account creation is currently disabled in this course.  '
-						. 'Please speak to your instructor or system administrator.')
-					. "\n";
+						. 'Please speak to your instructor or system administrator.') . "\n";
 			}
 			return 0;
 		} else {

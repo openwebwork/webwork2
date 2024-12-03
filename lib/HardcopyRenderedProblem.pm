@@ -265,8 +265,7 @@ sub write_problem_tex {
 				$correctTeX .=
 					"\\item\n\$\\displaystyle "
 					. ($rh_result->{answers}{$_}{correct_ans_latex_string}
-						|| "\\text{$rh_result->{answers}{$_}{correct_ans}}")
-					. "\$\n";
+						|| "\\text{$rh_result->{answers}{$_}{correct_ans}}") . "\$\n";
 			}
 
 			$correctTeX .= "\\end{itemize}}\\par\n";
