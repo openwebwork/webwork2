@@ -148,7 +148,7 @@ async sub submit_course_grade ($self, $userID, $submittedSet = undef) {
 		return await $self->submit_grade($user->lis_source_did, $score);
 	} else {
 		$self->warning("No sets for user $userID meet criteria to be included in course grade calculation.");
-		return 0;
+		return -1;
 	}
 }
 
