@@ -151,7 +151,15 @@ sub cryptPassword ($clearPassword) {
 		$salt .= ('.', '/', '0' .. '9', 'A' .. 'Z', 'a' .. 'z')[ rand 64 ];
 	}
 
-	return crypt(trim_spaces($clearPassword), $salt);
+	# Wrap crypt in an eval to catch any "Wide character in crypt" errors.
+	# If crypt fails due to a wide character, encode to UTF-8 before calling crypt.
+	my $cryptedPassword = '';
+	eval { $cryptedPassword = crypt(trim_spaces($clearPassword), $salt); };
+	if ($@ && $@ =~ /Wide char/) {
+		$cryptedPassword = crypt(Encode::encode_utf8(trim_spaces($clearPassword)), $salt);
+	}
+
+	return $cryptedPassword;
 }
 
 sub undefstr ($default, @values) {
