@@ -618,6 +618,26 @@ sub getConfigValues ($ce) {
 				),
 				type => 'permission'
 			},
+			{
+				var  => 'permissionLevels{view_leaderboard}',
+				doc  => x('Allowed to view achievements leaderboard'),
+				doc2 => x(
+					'The permission level to view the achievements leaderboard, if achievements are enabled. '
+						. 'Consider that achievement points can be closely tied to student grades before '
+						. 'showing the leaderboard to students.'
+				),
+				type => 'permission'
+			},
+			{
+				var  => 'permissionLevels{view_leaderboard_usernames}',
+				doc  => x('Allowed to view usernames on the achievements leaderboard'),
+				doc2 => x(
+					'The permission level to view usernames on the achievements leaderboard. '
+						. 'Consider that achievement points can be closely tied to student grades before '
+						. 'showing user names to students.'
+				),
+				type => 'permission'
+			},
 		],
 		[
 			x('Problem Display/Answer Checking'),
