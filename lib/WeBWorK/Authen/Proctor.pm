@@ -25,7 +25,7 @@ WeBWorK::Authen::Proctor - Authenticate gateway test proctors.
 use strict;
 use warnings;
 
-use WeBWorK::Utils qw(x);
+use WeBWorK::Utils     qw(x);
 use WeBWorK::DB::Utils qw(grok_vsetID);
 
 use constant GENERIC_ERROR_MESSAGE => x('Invalid user ID or password.');

@@ -28,12 +28,12 @@ use File::Copy;
 use File::Spec;
 use String::ShellQuote;
 use Archive::Tar;
-use Archive::Zip qw(:ERROR_CODES);
+use Archive::Zip            qw(:ERROR_CODES);
 use Archive::Zip::SimpleZip qw($SimpleZipError);
 
-use WeBWorK::Utils qw(sortByName min);
+use WeBWorK::Utils                   qw(sortByName min);
 use WeBWorK::Utils::CourseManagement qw(archiveCourse);
-use WeBWorK::Utils::Files qw(readFile);
+use WeBWorK::Utils::Files            qw(readFile);
 use WeBWorK::Upload;
 
 use constant HOME => 'templates';

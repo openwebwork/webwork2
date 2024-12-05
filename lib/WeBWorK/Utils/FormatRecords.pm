@@ -55,7 +55,7 @@ use warnings;
 
 use Carp;
 
-use WeBWorK::Utils::Sets qw/format_set_name_display/;
+use WeBWorK::Utils::Sets                                    qw/format_set_name_display/;
 use WeBWorK::ContentGenerator::Instructor::ProblemSetDetail qw/FIELD_PROPERTIES/;
 
 our @EXPORT_OK = qw(

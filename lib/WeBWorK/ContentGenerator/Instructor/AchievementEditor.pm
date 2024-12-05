@@ -25,7 +25,7 @@ WeBWorK::ContentGenerator::Instructor::AchievementEditor - edit an achevement ev
 use HTML::Entities;
 use File::Copy;
 
-use WeBWorK::Utils qw(fix_newlines not_blank x);
+use WeBWorK::Utils        qw(fix_newlines not_blank x);
 use WeBWorK::Utils::Files qw(surePathToFile readFile path_is_subdir);
 
 use constant ACTION_FORMS => [qw(save save_as)];

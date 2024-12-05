@@ -26,7 +26,7 @@ records.
 use Carp;
 
 use WeBWorK::Utils::FormatRecords qw(getFormatsForClass formatRecords);
-use WeBWorK::Utils::SortRecords qw(getSortsForClass sortRecords);
+use WeBWorK::Utils::SortRecords   qw(getSortsForClass sortRecords);
 use WeBWorK::Utils::FilterRecords qw(getFiltersForClass filterRecords);
 
 our @EXPORT_OK = qw(scrollingRecordList);

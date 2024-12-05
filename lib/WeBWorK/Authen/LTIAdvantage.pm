@@ -29,7 +29,7 @@ use experimental 'signatures';
 
 use WeBWorK::Debug;
 use WeBWorK::Localize;
-use WeBWorK::Utils::DateTime qw(formatDateTime);
+use WeBWorK::Utils::DateTime   qw(formatDateTime);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
 
@@ -323,8 +323,7 @@ sub authenticate ($self) {
 				"Account creation blocked by block_lti_create_user setting. Did not create user $self->{user_id}.";
 			if ($ce->{debug_lti_parameters}) {
 				warn $c->maketext('Account creation is currently disabled in this course.  '
-						. 'Please speak to your instructor or system administrator.')
-					. "\n";
+						. 'Please speak to your instructor or system administrator.') . "\n";
 			}
 			return 0;
 		} else {

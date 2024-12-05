@@ -25,7 +25,7 @@ WeBWorK::ContentGenerator::Instructor::ShowAnswers.pm  -- display past answers o
 use Text::CSV;
 use Mojo::File;
 
-use WeBWorK::Utils::JITAR qw(jitar_id_to_seq prob_id_sort);
+use WeBWorK::Utils::JITAR     qw(jitar_id_to_seq prob_id_sort);
 use WeBWorK::Utils::Rendering qw(renderPG);
 
 use constant PAST_ANSWERS_FILENAME => 'past_answers';

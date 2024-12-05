@@ -22,7 +22,7 @@ WeBWorK::ContentGenerator::Instructor::AddUsers - Menu interface for adding user
 
 =cut
 
-use WeBWorK::Utils qw/cryptPassword trim_spaces/;
+use WeBWorK::Utils             qw/cryptPassword trim_spaces/;
 use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
 sub initialize ($c) {

@@ -24,7 +24,7 @@ GatewayQuiz proctored tests.
 =cut
 
 use WeBWorK::Utils::Rendering qw(renderPG);
-use WeBWorK::DB::Utils qw(grok_vsetID);
+use WeBWorK::DB::Utils        qw(grok_vsetID);
 
 async sub initialize ($c) {
 	my $ce = $c->ce;

@@ -18,7 +18,7 @@
 package WeBWorK::ContentGenerator::Instructor::LTIUpdate;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
-use WeBWorK::Utils::Sets qw(format_set_name_display);
+use WeBWorK::Utils::Sets                qw(format_set_name_display);
 use WeBWorK::Authen::LTI::GradePassback qw(massUpdate);
 
 sub initialize ($c) {

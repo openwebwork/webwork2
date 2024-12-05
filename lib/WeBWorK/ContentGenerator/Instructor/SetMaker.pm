@@ -25,12 +25,12 @@ WeBWorK::ContentGenerator::Instructor::SetMaker - Make homework sets.
 use Mojo::File;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName x);
-use WeBWorK::Utils::DateTime qw(getDefaultSetDueDate);
+use WeBWorK::Utils             qw(sortByName x);
+use WeBWorK::Utils::DateTime   qw(getDefaultSetDueDate);
 use WeBWorK::Utils::Instructor qw(assignSetToUser assignProblemToAllSetUsers addProblemToSet);
 use WeBWorK::Utils::LibraryStats;
 use WeBWorK::Utils::ListingDB qw(getDBListings);
-use WeBWorK::Utils::Sets qw(format_set_name_internal);
+use WeBWorK::Utils::Sets      qw(format_set_name_internal);
 use WeBWorK::Utils::Tags;
 
 # Use x to mark strings for maketext

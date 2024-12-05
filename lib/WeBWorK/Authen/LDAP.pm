@@ -20,7 +20,7 @@ use strict;
 use warnings;
 
 use WeBWorK::Debug qw(debug);
-use Net::LDAP qw(LDAP_INVALID_CREDENTIALS);
+use Net::LDAP      qw(LDAP_INVALID_CREDENTIALS);
 
 sub checkPassword {
 	my ($self, $userID, $possibleClearPassword) = @_;

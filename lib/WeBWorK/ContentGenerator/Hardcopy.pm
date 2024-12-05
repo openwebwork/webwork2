@@ -29,13 +29,13 @@ use String::ShellQuote;
 use Archive::Zip qw(:ERROR_CODES);
 use XML::LibXML;
 
-use WeBWorK::DB::Utils qw/user2global/;
-use WeBWorK::Utils qw(decodeAnswers x);
-use WeBWorK::Utils::DateTime qw(after);
-use WeBWorK::Utils::Files qw(readFile);
-use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
+use WeBWorK::DB::Utils        qw/user2global/;
+use WeBWorK::Utils            qw(decodeAnswers x);
+use WeBWorK::Utils::DateTime  qw(after);
+use WeBWorK::Utils::Files     qw(readFile);
+use WeBWorK::Utils::JITAR     qw(jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(renderPG);
-use WeBWorK::Utils::Sets qw(is_restricted);
+use WeBWorK::Utils::Sets      qw(is_restricted);
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -1007,8 +1007,7 @@ async sub write_set_tex ($c, $FH, $TargetUser, $themeTree, $setID) {
 	{
 		print $FH '\\def\\webworkReducedScoringDate{'
 			. ($c->formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{studentDateDisplayFormat}) =~
-				s/\x{202f}/ /gr)
-			. "}%\n";
+				s/\x{202f}/ /gr) . "}%\n";
 	}
 
 	# write set header (theme presetheader, then PG header, then theme postsetheader)
@@ -1181,10 +1180,10 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $themeTree, $prob
 				problemID => $MergedProblem->problem_id,
 			),
 			$MergedProblem->problem_id == 0
-				# link for a fake problem (like a header file)
+			# link for a fake problem (like a header file)
 			? (params =>
 					{ sourceFilePath => $MergedProblem->source_file, problemSeed => $MergedProblem->problem_seed })
-				# link for a real problem
+			# link for a real problem
 			: (),
 		);
 

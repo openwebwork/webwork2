@@ -47,7 +47,7 @@ use warnings;
 
 use Carp;
 
-use WeBWorK::Utils qw(sortByName);
+use WeBWorK::Utils                                          qw(sortByName);
 use WeBWorK::ContentGenerator::Instructor::ProblemSetDetail qw(FIELD_PROPERTIES);
 
 our @EXPORT_OK = qw(

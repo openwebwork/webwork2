@@ -23,8 +23,8 @@ use Pod::Simple::Search;
 use Mojo::Template;
 use Mojo::DOM;
 use Mojo::Collection qw(c);
-use File::Path qw(make_path);
-use File::Basename qw(dirname);
+use File::Path       qw(make_path);
+use File::Basename   qw(dirname);
 use IO::File;
 use POSIX qw(strftime);
 

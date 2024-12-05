@@ -24,7 +24,7 @@ use Mojo::Base 'Exporter', -signatures;
 
 use DateTime;
 
-use WeBWorK::Utils qw(sortAchievements nfreeze_base64 thaw_base64);
+use WeBWorK::Utils                    qw(sortAchievements nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 use WeBWorK::Utils::Tags;
 use WeBWorK::WWSafe;

@@ -79,11 +79,11 @@ Delete sets:
 use Mojo::File;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(x);
-use WeBWorK::Utils::DateTime qw(getDefaultSetDueDate);
+use WeBWorK::Utils             qw(x);
+use WeBWorK::Utils::DateTime   qw(getDefaultSetDueDate);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
-use WeBWorK::Utils::Sets qw(format_set_name_internal format_set_name_display);
-use WeBWorK::File::SetDef qw(importSetsFromDef exportSetsToDef);
+use WeBWorK::Utils::Sets       qw(format_set_name_internal format_set_name_display);
+use WeBWorK::File::SetDef      qw(importSetsFromDef exportSetsToDef);
 
 use constant HIDE_SETS_THRESHOLD => 500;
 

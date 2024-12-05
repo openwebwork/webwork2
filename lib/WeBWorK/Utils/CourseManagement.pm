@@ -28,8 +28,8 @@ use warnings;
 use Carp;
 use DBI;
 use String::ShellQuote;
-use UUID::Tiny qw(create_uuid_as_string);
-use Mojo::File qw(path);
+use UUID::Tiny            qw(create_uuid_as_string);
+use Mojo::File            qw(path);
 use File::Copy::Recursive qw(dircopy);
 use File::Spec;
 use Archive::Tar;
@@ -37,8 +37,8 @@ use Archive::Tar;
 use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Utils qw(runtime_use);
-use WeBWorK::Utils::Files qw(surePathToFile);
+use WeBWorK::Utils             qw(runtime_use);
+use WeBWorK::Utils::Files      qw(surePathToFile);
 use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
 our @EXPORT_OK = qw(
