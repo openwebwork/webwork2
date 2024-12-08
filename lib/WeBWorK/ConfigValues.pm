@@ -532,10 +532,10 @@ sub getConfigValues ($ce) {
 					'When acting as a student, this permission level and higher can submit answers for that student, '
 						. 'which includes starting and grading test versions.  This permission should only be turned '
 						. 'on temporarily and set back to "nobody" after you are done submitting answers for a '
-						. 'student, as it can interfere with tests.  If you have this permission and are viewing a '
-						. 'test version for a student that is also working on that version, your answers will be '
-						. 'saved for that student when moving between pages, which could reset or change the answers '
-						. 'entered in by the student.'
+						. 'student.  Leaving this permission on is dangerous, as you could unintentionally submit '
+						. 'answers for a student, which can use up their total number of attempts.  Further, if you '
+						. 'are viewing an open test version, your answers on each page will be saved when you move '
+						. q/between pages, which will overwrite the student's saved answers./
 				),
 				type => 'permission'
 			},
