@@ -11,20 +11,36 @@
 </div>
 %
 % # Histogram of total scores.
+% my $bucketLabels = [ '90-100', '80-89', '70-79', '60-69', '50-59', '40-49', '30-39', '20-29', '10-19', '0-9' ];
 <%= $c->build_bar_chart(
-	[ @$buckets ],
-	xAxisLabels => [ '90-100', '80-89', '70-79', '60-69', '50-59', '40-49', '30-39', '20-29', '10-19', '0-9' ],
+	$buckets,
+	xAxisLabels => $bucketLabels,
 	yMax        => 5 * $maxCount,
 	yAxisLabels => [ map { $_ * $maxCount } 0 .. 5 ],
 	mainTitle   => maketext('Active Students Problem [_1] Grades', $c->{prettyID}),
 	xTitle      => maketext('Percent Ranges'),
 	yTitle      => maketext('Number of Students'),
+	descText    => $isJitarSet && $topLevelJitar
+		? maketext(
+			'Histogram showing the percent grade of active students for problem [_1] and the adjusted '
+				. 'percent grade with review. The number of students in each percent range is: [_2]. '
+				. 'The number of students in each percent range after review is: [_3].',
+			$c->{prettyID},
+			join(', ', map { "$bucketLabels->[$_]:$buckets->[$_]" } 0 .. scalar(@$buckets) - 1),
+			join(', ', map { "$bucketLabels->[$_]:$jitarBars->[$_]" } 0 .. scalar(@$buckets) - 1)
+		)
+		: maketext(
+			'Histogram showing the grades of active students for problem [_1], where the number of '
+				. 'students in each percent range is: [_2]',
+			$c->{prettyID},
+			join(', ', map { "$bucketLabels->[$_]:$buckets->[$_]" } 0 .. scalar(@$buckets) - 1),
+		),
 	barWidth    => 35,
 	barSep      => 5,
 	isPercent   => 0,
 	leftMargin  => 40 + 5 * length(5 * $maxCount),
 	isJitarSet  => ($isJitarSet && $topLevelJitar),
-	jitarBars   => [ reverse(@$jitarBars) ],
+	jitarBars   => $jitarBars,
 ) =%>
 %
 % # Display overall statistics
@@ -64,7 +80,7 @@
 % my @tableData    = ($problemScores);
 % if ($isJitarSet && $topLevelJitar) {
 	% push(@tableHeaders, maketext('% Score with Review'));
-	% push(@tableData,    [ map { sprintf('%0.0f', 100 * $_) } @$adjustedScores ]);
+	% push(@tableData,    [ map { sprintf('%0.0f', $_) } @$adjustedScores ]);
 % }
 % my $successIndexHeader = begin
 	<%= maketext('Success Index') =%>
