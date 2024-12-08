@@ -233,7 +233,7 @@
 % # Remaining output of test headers.
 % # Display timer or information about elapsed time, output link, and information about any recorded score if not
 % # submitAnswers or checkAnswers.
-% if ($c->{can}{recordAnswersNextTime} || $c->{can}{gradeUnsubmittedTest}) {
+% if ($c->{can}{recordAnswersNextTime} && before($c->{set}->due_date + $ce->{gatewayGracePeriod}, $submitTime)) {
 	% my $timeLeft = $c->{set}->due_date - int($submitTime);    # This is in seconds
 	%
 	% # Print the timer if there is less than 24 hours left.
@@ -657,7 +657,7 @@
 					% && (!$c->{can}{recordAnswersNextTime} || $c->{can}{showProblemGrader})) {
 				<%= submit_button maketext('Check Test'), name => 'checkAnswers', class => 'btn btn-primary mb-1' =%>
 			% }
-			% if ($c->{can}{recordAnswersNextTime} || $c->{can}{gradeUnsubmittedTest}) {
+			% if ($c->{can}{recordAnswersNextTime}) {
 				<%= tag('input',
 					type  => 'submit',
 					name  => 'submitAnswers',
