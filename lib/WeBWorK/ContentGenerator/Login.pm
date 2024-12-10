@@ -24,7 +24,7 @@ WeBWorK::ContentGenerator::Login - display a login form.
 
 use WeBWorK::Utils::Files qw(readFile);
 use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
-use WeBWorK::Utils::Sets qw(format_set_name_display);
+use WeBWorK::Utils::Sets  qw(format_set_name_display);
 
 sub page_title ($c) {
 	# If the url is for a problem page, then the title is the set and problem id.

@@ -25,9 +25,9 @@ manually grading webwork problems.
 
 use HTML::Entities;
 
-use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
+use WeBWorK::Utils::JITAR     qw(jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(renderPG);
-use WeBWorK::Utils::Sets qw(get_test_problem_position format_set_name_display);
+use WeBWorK::Utils::Sets      qw(get_test_problem_position format_set_name_display);
 
 async sub initialize ($c) {
 	my $authz      = $c->authz;

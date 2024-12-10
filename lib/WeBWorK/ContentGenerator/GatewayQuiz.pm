@@ -26,15 +26,15 @@ deal with versioning sets
 use Mojo::Promise;
 use Mojo::JSON qw(encode_json decode_json);
 
-use WeBWorK::Utils qw(encodeAnswers decodeAnswers wwRound);
-use WeBWorK::Utils::DateTime qw(before between after);
-use WeBWorK::Utils::Files qw(path_is_subdir);
-use WeBWorK::Utils::Instructor qw(assignSetVersionToUser);
-use WeBWorK::Utils::Logs qw(writeLog writeCourseLog);
+use WeBWorK::Utils                    qw(encodeAnswers decodeAnswers wwRound);
+use WeBWorK::Utils::DateTime          qw(before between after);
+use WeBWorK::Utils::Files             qw(path_is_subdir);
+use WeBWorK::Utils::Instructor        qw(assignSetVersionToUser);
+use WeBWorK::Utils::Logs              qw(writeLog writeCourseLog);
 use WeBWorK::Utils::ProblemProcessing qw/create_ans_str_from_responses compute_reduced_score/;
-use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
-use WeBWorK::Utils::Sets qw(is_restricted);
-use WeBWorK::DB::Utils qw(global2user fake_set fake_set_version fake_problem);
+use WeBWorK::Utils::Rendering         qw(getTranslatorDebuggingOptions renderPG);
+use WeBWorK::Utils::Sets              qw(is_restricted);
+use WeBWorK::DB::Utils                qw(global2user fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
 use PGrandom;
 use WeBWorK::Authen::LTI::GradePassback qw(passbackGradeOnSubmit);
@@ -498,7 +498,7 @@ async sub pre_header_initialize ($c) {
 
 	if ($setVersionNumber && !$c->{invalidSet} && $setID ne 'Undefined_Set') {
 		my @setVersionIDs = $db->listSetVersions($effectiveUserID, $setID);
-		my @setVersions   = $db->getSetVersions(map { [ $effectiveUserID, $setID,, $_ ] } @setVersionIDs);
+		my @setVersions   = $db->getSetVersions(map { [ $effectiveUserID, $setID, $_ ] } @setVersionIDs);
 		for (@setVersions) {
 			$totalNumVersions++;
 			$currentNumVersions++

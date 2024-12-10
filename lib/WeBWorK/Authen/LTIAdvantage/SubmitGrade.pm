@@ -34,12 +34,12 @@ use Mojo::IOLoop;
 use Crypt::JWT qw(encode_jwt);
 use Crypt::PK::RSA;
 use Math::Random::Secure qw(irand);
-use Digest::SHA qw(sha256_hex);
+use Digest::SHA          qw(sha256_hex);
 use Time::HiRes;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::Sets qw(grade_all_sets);
+use WeBWorK::Utils                      qw(wwRound);
+use WeBWorK::Utils::Sets                qw(grade_all_sets);
 use WeBWorK::Authen::LTI::GradePassback qw(getSetPassbackScore);
 
 # This package contains utilities for submitting grades to the LMS via LTI 1.3.

@@ -24,7 +24,7 @@ WeBWorK::DB::Schema::NewSQL - base class for SQL access.
 
 use strict;
 use warnings;
-use Carp qw(croak);
+use Carp           qw(croak);
 use WeBWorK::Utils qw/undefstr/;
 
 use constant TABLES => qw(*);

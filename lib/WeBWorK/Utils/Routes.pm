@@ -124,7 +124,7 @@ use strict;
 use warnings;
 
 use WeBWorK::Localize;
-use WeBWorK::Utils qw(x);
+use WeBWorK::Utils       qw(x);
 use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 our @EXPORT_OK = qw(setup_content_generator_routes route_title route_navigation_is_restricted);

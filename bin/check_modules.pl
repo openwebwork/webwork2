@@ -165,7 +165,6 @@ my %moduleVersion = (
 	'LWP::Protocol::https' => 6.06,
 	'Mojolicious'          => 9.34,
 	'Net::SSLeay'          => 1.46,
-	'Perl::Tidy'           => 20220613,
 	'SQL::Abstract'        => 2.000000
 );
 

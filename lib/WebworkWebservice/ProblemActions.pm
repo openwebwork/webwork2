@@ -21,7 +21,7 @@ use warnings;
 
 use Data::Structure::Util qw(unbless);
 
-use WeBWorK::PG::Tidy qw(pgtidy);
+use WeBWorK::PG::Tidy          qw(pgtidy);
 use WeBWorK::PG::ConvertToPGML qw(convertToPGML);
 
 sub getUserProblem {

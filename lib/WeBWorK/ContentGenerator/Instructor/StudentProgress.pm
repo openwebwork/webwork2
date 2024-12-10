@@ -22,10 +22,10 @@ WeBWorK::ContentGenerator::Instructor::StudentProgress - Display Student Progres
 
 =cut
 
-use WeBWorK::Utils qw(wwRound);
+use WeBWorK::Utils                qw(wwRound);
 use WeBWorK::Utils::FilterRecords qw(getFiltersForClass filterRecords);
-use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
-use WeBWorK::Utils::Sets qw(grade_set list_set_versions format_set_name_display);
+use WeBWorK::Utils::JITAR         qw(jitar_id_to_seq);
+use WeBWorK::Utils::Sets          qw(grade_set list_set_versions format_set_name_display);
 
 sub initialize ($c) {
 	my $db   = $c->db;
@@ -219,7 +219,7 @@ sub displaySets ($c) {
 				@user_set_list,
 				{
 					record             => $studentRecord,
-					score              => 0,
+					score              =>  0,
 					total              => -1,
 					date               => '',
 					testtime           => '',

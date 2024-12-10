@@ -20,7 +20,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Install dependencies
-        run: cpanm -n Perl::Tidy@20220613
+        run: cpanm -n Perl::Tidy@20240903
       - name: Run perltidy
         shell: bash
         run: |

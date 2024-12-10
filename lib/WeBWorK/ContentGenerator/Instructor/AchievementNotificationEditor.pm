@@ -22,7 +22,7 @@ WeBWorK::ContentGenerator::Instructor::AchievementNotificationEditor - edit the 
 
 =cut
 
-use WeBWorK::Utils qw(fix_newlines not_blank x);
+use WeBWorK::Utils        qw(fix_newlines not_blank x);
 use WeBWorK::Utils::Files qw(surePathToFile readFile path_is_subdir);
 
 use constant ACTION_FORMS => [qw(save save_as existing disable)];

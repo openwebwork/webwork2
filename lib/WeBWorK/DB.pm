@@ -97,9 +97,9 @@ use warnings;
 
 use Carp;
 use Data::Dumper;
-use Scalar::Util qw/blessed/;
+use Scalar::Util   qw/blessed/;
 use HTML::Entities qw( encode_entities );
-use Mojo::JSON qw(encode_json decode_json);
+use Mojo::JSON     qw(encode_json decode_json);
 
 use WeBWorK::DB::Schema;
 use WeBWorK::DB::Utils qw/make_vsetID grok_vsetID grok_setID_from_vsetID_sql

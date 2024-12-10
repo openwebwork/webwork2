@@ -25,11 +25,11 @@ specific user/set information as well as problem information
 
 use Exporter qw(import);
 
-use WeBWorK::Utils qw(cryptPassword x);
-use WeBWorK::Utils::Files qw(surePathToFile readFile);
+use WeBWorK::Utils             qw(cryptPassword x);
+use WeBWorK::Utils::Files      qw(surePathToFile readFile);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
-use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
-use WeBWorK::Utils::Sets qw(format_set_name_internal format_set_name_display);
+use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils::Sets       qw(format_set_name_internal format_set_name_display);
 require WeBWorK::PG;
 
 our @EXPORT_OK = qw(FIELD_PROPERTIES);

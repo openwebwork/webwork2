@@ -28,7 +28,7 @@ use Mojo::JSON qw(encode_json);
 
 use WeBWorK;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Utils::Logs qw(writeTimingLogEntry);
+use WeBWorK::Utils::Logs   qw(writeTimingLogEntry);
 use WeBWorK::Utils::Routes qw(setup_content_generator_routes);
 
 sub startup ($app) {
