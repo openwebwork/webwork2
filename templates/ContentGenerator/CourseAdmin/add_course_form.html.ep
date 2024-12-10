@@ -14,7 +14,10 @@
 % }
 % my $number_of_additional_users = $c->param('number_of_additional_users') || 0;
 %
-<h2><%= maketext('Add Course') %> <%= $c->helpMacro('AdminAddCourse') %></h2>
+<h2>
+	<%= maketext('Add Course') %>
+	<%= $c->helpMacro('AdminAddCourse', { help_label => maketext('Add Course') }) %>
+</h2>
 %
 <%= form_for current_route, method => 'POST', begin =%>
 	<%= $c->hidden_authen_fields =%>

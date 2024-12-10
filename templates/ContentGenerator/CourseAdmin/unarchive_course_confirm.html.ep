@@ -1,4 +1,7 @@
-<h2><%= maketext('Unarchive Course') %> <%= $c->helpMacro('AdminUnarchiveCourse') %></h2>
+<h2>
+	<%= maketext('Unarchive Course') %>
+	<%= $c->helpMacro('AdminUnarchiveCourse', { help_label => maketext('Unarchive Course') }) %>
+</h2>
 <%= form_for current_route, method => 'POST', begin =%>
 	<div class="row mb-2">
 		<%= label_for new_courseID => maketext('Unarchive [_1] to course:', $unarchive_courseID),

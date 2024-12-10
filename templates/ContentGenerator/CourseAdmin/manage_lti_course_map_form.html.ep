@@ -1,4 +1,7 @@
-<h2><%= maketext('Manage LTI Course Map') %> <%= $c->helpMacro('AdminManageLTICourseMap') %></h2>
+<h2>
+	<%= maketext('Manage LTI Course Map') %>
+	<%= $c->helpMacro('AdminManageLTICourseMap', { help_label => maketext('Manage LTI Course Map') }) %>
+</h2>
 <%= form_for current_route, method => 'POST', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	<%= $c->hidden_fields('subDisplay') =%>

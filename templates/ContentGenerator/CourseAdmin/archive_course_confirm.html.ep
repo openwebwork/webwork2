@@ -1,4 +1,7 @@
-<h2><%= maketext('Archive Course') %> <%= $c->helpMacro('AdminArchiveCourse') %></h2>
+<h2>
+	<%= maketext('Archive Course') %>
+	<%= $c->helpMacro('AdminArchiveCourse', { help_label => maketext('Archive Course') }) %>
+</h2>
 % # Report on databases
 <h3 class="my-3"><%= maketext('Report on database structure for course [_1]:', $archive_courseID) %></h3>
 % if (@$upgrade_report) {
