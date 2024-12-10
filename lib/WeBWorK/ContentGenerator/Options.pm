@@ -56,7 +56,16 @@ sub initialize ($c) {
 				$userID ne $effectiveUserID ? eval { $db->getPassword($c->{effectiveUser}->user_id) } : $password;
 
 			# Check that either password is not defined or if it is defined then we have the right one.
-			if (!defined $password || crypt($currP // '', $password->password) eq $password->password) {
+			my $cryptedCurrP;
+			if (defined $password) {
+				# Wrap crypt in an eval to catch any "Wide character in crypt" errors.
+				# If crypt fails due to a wide character, encode to UTF-8 before calling crypt.
+				eval { $cryptedCurrP = crypt($currP // '', $password->password); };
+				if ($@ && $@ =~ /Wide char/) {
+					$cryptedCurrP = crypt(Encode::encode_utf8($currP), $password->password);
+				}
+			}
+			if (!defined $password || $cryptedCurrP eq $password->password) {
 				my $e_user_name = $c->{effectiveUser}->first_name . ' ' . $c->{effectiveUser}->last_name;
 				if ($newP eq $confirmP) {
 					if (!defined $effectiveUserPassword) {
