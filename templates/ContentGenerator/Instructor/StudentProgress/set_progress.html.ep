@@ -196,9 +196,8 @@
 								'The top number is the percent score on the problem.  A period (.) indicates a problem '
 								. 'has not been attempted. The bottom number is the number of incorrect attempts.'
 							) =%>">
-							<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') =%>"
-								aria-hidden="true">
-							</i>
+							<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+							<span class="visually-hidden"><%= maketext('Help') =%></span>
 						</a>
 					</th>
 				% }
