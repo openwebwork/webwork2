@@ -545,7 +545,7 @@ async sub pre_header_initialize ($c) {
 							$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
 							|| $authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student')
 						)
-						&& $c->param('createnew_ok')
+						&& $c->param('submit_for_student_ok')
 					)
 				)
 				)
@@ -618,7 +618,8 @@ async sub pre_header_initialize ($c) {
 						. 'the "Create New Test Version" button below.  Alternatively, click "Cancel".',
 					$effectiveUserID
 				);
-				$c->{invalidVersionCreation} = 1;
+				$c->{invalidVersionCreation}  = 1;
+				$c->{confirmSubmitForStudent} = 1;
 
 			} elsif ($effectiveUserID ne $userID) {
 				$c->{invalidSet} = $c->maketext(
@@ -626,7 +627,7 @@ async sub pre_header_initialize ($c) {
 						. 'when acting as another user.',
 					$effectiveUserID
 				);
-				$c->{invalidVersionCreation} = 2;
+				$c->{invalidVersionCreation} = 1;
 
 			} elsif (($maxAttemptsPerVersion == 0 || $currentNumAttempts < $maxAttemptsPerVersion)
 				&& $c->submitTime < $set->due_date() + $ce->{gatewayGracePeriod})
@@ -659,6 +660,23 @@ async sub pre_header_initialize ($c) {
 			{
 				if (between($set->open_date(), $set->due_date() + $ce->{gatewayGracePeriod}, $c->submitTime)) {
 					$versionIsOpen = 1;
+
+					# If acting as another user, then the user has permissions to record answers for the
+					# student which is dangerous for open test versions. Give a warning unless the user
+					# has already confirmed they understand the risk.
+					if ($effectiveUserID ne $userID && !$c->param('submit_for_student_ok')) {
+						$c->{invalidSet} = $c->maketext(
+							'You are trying to view an open test version for [_1] and have the permission to submit '
+								. 'answers for that user.  This is dangerous, as your answers can overwrite the '
+								. q/student's answers as you move between test pages, preview, or check answers.  /
+								. 'If you are planing to submit answers for this student, click "View Test Version" '
+								. 'below to continue.  If you only want to view the test version, click "Cancel" '
+								. 'below, then disable the permission to record answers when acting as a student '
+								. 'before viewing open test versions.',
+							$effectiveUserID
+						);
+						$c->{confirmSubmitForStudent} = 1;
+					}
 				}
 			}
 		}
