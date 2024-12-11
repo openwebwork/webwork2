@@ -58,7 +58,7 @@
 						'Success index is the square of the average score divided by the average number of attempts.'
 					) %>">
 					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
-					<span class="visually-hidden"><%= maketext('Help') =%></span>
+					<span class="visually-hidden"><%= maketext('Success Index Help') =%></span>
 				</a>
 			</th>
 			<td><%= sprintf('%0.1f', 100 * $successIndex) %></td>
@@ -88,7 +88,7 @@
 		data-bs-content="<%=
 			maketext('Success index is the square of the score divided by the number of attempts.') =%>">
 		<i class="icon fas fa-question-circle" aria-hidden="true"></i>
-		<span class="visually-hidden"><%= maketext('Help') =%></span>
+		<span class="visually-hidden"><%= maketext('Success Index Help') =%></span>
 	</a>
 % end
 % push @tableHeaders, $successIndexHeader->();

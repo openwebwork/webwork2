@@ -33,7 +33,7 @@
 				tabindex => 0,
 				begin =%>
 				<i class="icon fas fa-question-circle" aria-hidden="true"></i>
-				<span class="visually-hidden"><%= maketext('Help') =%></span>
+				<span class="visually-hidden"><%= maketext('Hardcopy Format Help') =%></span>
 			<% end =%>
 		<% end =%>
 		<div class="col-auto">

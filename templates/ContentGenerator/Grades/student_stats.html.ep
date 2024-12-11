@@ -17,7 +17,7 @@
 						. 'has not been attempted. The bottom number is the number of incorrect attempts.'
 					) =%>">
 					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
-					<span class="visually-hidden"><%= maketext('Help') %></span>
+					<span class="visually-hidden"><%= maketext('Problem Score Help') %></span>
 				</a>
 			</th>
 		</tr>

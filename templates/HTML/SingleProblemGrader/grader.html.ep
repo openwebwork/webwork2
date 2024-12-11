@@ -49,7 +49,7 @@
 							},
 							begin =%>
 							<i class="icon fas fa-question-circle" aria-hidden="true"></i>
-							<span class="visually-hidden"><%= maketext('Help') =%></span>
+							<span class="visually-hidden"><%= maketext('Answer Score Help') =%></span>
 						<% end =%>
 					<% end =%>
 					<div class="col-sm">
@@ -150,7 +150,7 @@
 						},
 						begin =%>
 						<i class="fas fa-question-circle" aria-hidden="true"></i>
-						<span class="visually-hidden"><%= maketext('Help Icon') %></span>
+						<span class="visually-hidden"><%= maketext('Point Value Help') %></span>
 					<% end =%>
 				<% end =%>
 				<div class="col-sm">
@@ -220,7 +220,7 @@
 						},
 						begin =%>
 						<i class="fas fa-question-circle" aria-hidden="true"></i>
-						<span class="visually-hidden"><%= maketext('Help Icon') %></span>
+						<span class="visually-hidden"><%= maketext('Problem Score Help') %></span>
 					<% end =%>
 				<% end =%>
 				<div class="col-sm">

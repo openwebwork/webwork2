@@ -230,7 +230,9 @@
 						. 'inspect the new course configuration file and make adjustments for the new instructor.') =%>"
 					>
 					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
-					<span class="visually-hidden"><%= maketext('Help') =%></span>
+					<span class="visually-hidden">
+						<%= maketext('Notes regarding copying the course configuration file') =%>
+					</span>
 				</a>
 			</label>
 		</div>

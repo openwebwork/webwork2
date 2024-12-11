@@ -20,7 +20,7 @@
 							. 'Indvidual students may have different settings.'
 					) %>">
 					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
-					<span class="visually-hidden"><%= maketext('Help') =%></span>
+					<span class="visually-hidden"><%= maketext('Set Status Help') =%></span>
 				</a>
 			</th>
 			<td>
@@ -49,7 +49,7 @@
 								. 'template answer date has passed.  See Set Detail page for actual availability.'
 						) =%>">
 						<i class="icon fas fa-question-circle" aria-hidden="true"></i>
-						<span class="visually-hidden"><%= maketext('Help') =%></span>
+						<span class="visually-hidden"><%= maketext('Answer Availability Help') =%></span>
 					</a>
 				% }
 			</td>
@@ -108,7 +108,7 @@
 		data-bs-content="<%= maketext(
 			'Success index is the square of the average score divided by the average number of attempts.') %>">
 		<i class="icon fas fa-question-circle" aria-hidden="true"></i>
-		<span class="visually-hidden"><%= maketext('Help') =%></span>
+		<span class="visually-hidden"><%= maketext('Success Index Help') =%></span>
 	</a>
 % end
 %
