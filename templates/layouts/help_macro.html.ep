@@ -3,7 +3,7 @@
 		<%== $label =%>
 	% } else {
 		<i class="icon fa-solid fa-circle-question <%= $labelSize %>" aria-hidden="true"></i>
-		<span class="visually-hidden"><%= stash->{ariaLabel} // maketext('Help') %></span>
+		<span class="visually-hidden"><%= stash->{title} // maketext('Help') %></span>
 	% }
 <% end =%>
 <% content_for 'modal-dialog-area' => begin =%>

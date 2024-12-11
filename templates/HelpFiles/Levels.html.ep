@@ -15,7 +15,6 @@
 %
 % layout 'help_macro';
 % title maketext('OPL Problem Levels Help');
-% stash->{ariaLabel} = title;
 %
 <p>
 	<%= maketext('Some OPL problems have been rated for difficulty/educational objective. The levels are loosely '

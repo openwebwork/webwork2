@@ -15,7 +15,6 @@
 %
 % layout 'help_macro';
 % title maketext('Assignments Help');
-% stash->{ariaLabel} = title;
 %
 <p><%= maketext('This is the standard entry point for the course.') %></p>
 <p><%= maketext('It lists the assignments available for the students.') %></p>
