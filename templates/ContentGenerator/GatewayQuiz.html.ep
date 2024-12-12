@@ -65,42 +65,46 @@
 % my $userID          = param('user');
 % my $effectiveUserID = param('effectiveUser');
 %
-% # If the set or problem is invalid, then show that information and exit.
+% # If the set is invalid, then show that information and exit.
 % if ($c->{invalidSet}) {
 	<div class="alert alert-danger mb-2">
-		% if (!$c->{confirmSubmitForStudent} || $c->{invalidVersionCreation}) {
-			<div class="mb-2">
-				% if ($c->{invalidVersionCreation}) {
-					<%= maketext(
-						'The selected test ([_1]) is not a valid test for [_2] (acted as by [_3]).',
-						$setID, $effectiveUserID, $userID
-					) =%>
-				% } else {
-					<%= maketext(
-						'The selected test ([_1]) is not a valid test for [_2].',
-						$setID, $effectiveUserID
-					) =%>
-				% }
-			</div>
-		% }
+		<div class="mb-2">
+			<%= maketext('The selected test ([_1]) is not a valid test for [_2].', $setID, $effectiveUserID) =%>
+		</div>
 		<div><%= $c->{invalidSet} %></div>
-		% if ($c->{confirmSubmitForStudent}) {
-			<div class="mt-3">
-				<%= link_to $c->{invalidVersionCreation}
-					? maketext('Create New Test Version') : maketext('View Test Version') => $c->systemLink(
-						url_for,
-						params => { effectiveUser => $effectiveUserID, user => $userID, submit_for_student_ok => 1 }
-					),
-					class => 'btn btn-primary'
-				=%>
-				<%= link_to maketext('Cancel') => $c->systemLink(
-						url_for('problem_list', setID => $setID =~ s/,v\d+$//r),
-						params => { effectiveUser => $effectiveUserID, user => $userID }
-					),
-					class => 'btn btn-primary'
-				=%>
-			</div>
-		% }
+	</div>
+	% last;
+% }
+% # If user tried to create a test version for another user without correct permissions, show message and exit.
+% if ($c->{actingCreationError}) {
+	<div class="alert alert-danger mb-2">
+		<%= maketext(
+			'You are acting as user [_1] and do not have the permission to create a new test version when acting '
+				. 'as another user.',
+			$effectiveUserID
+		) =%>
+	</div>
+	% last;
+% }
+% # Get confirmation before creating new test version or working on an open test for another user.
+% if ($c->{actingConformation}) {
+	<div class="alert alert-danger mb-2">
+		<div class="mb-2"><%= $c->{actingConformation} =%></div>
+		<div>
+			<%= link_to $c->{actingConformationCreate}
+				? maketext('Create New Test Version') : maketext('View Test Version') => $c->systemLink(
+					url_for,
+					params => { effectiveUser => $effectiveUserID, user => $userID, submit_for_student_ok => 1 }
+				),
+				class => 'btn btn-primary'
+			=%>
+			<%= link_to maketext('Cancel') => $c->systemLink(
+					url_for('problem_list', setID => $setID =~ s/,v\d+$//r),
+					params => { effectiveUser => $effectiveUserID, user => $userID }
+				),
+				class => 'btn btn-primary'
+			=%>
+		</div>
 	</div>
 	%
 	% last;

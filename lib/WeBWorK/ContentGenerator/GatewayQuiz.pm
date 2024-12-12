@@ -609,8 +609,7 @@ async sub pre_header_initialize ($c) {
 					|| $authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student'))
 				)
 			{
-
-				$c->{invalidSet} = $c->maketext(
+				$c->{actingConformation} = $c->maketext(
 					'You are acting as user [_1].  If you continue, you will create a new version of '
 						. 'this test for that user, which will count against their allowed maximum '
 						. 'number of versions for the current time interval.  In general, this is not '
@@ -618,16 +617,11 @@ async sub pre_header_initialize ($c) {
 						. 'the "Create New Test Version" button below.  Alternatively, click "Cancel".',
 					$effectiveUserID
 				);
-				$c->{invalidVersionCreation}  = 1;
-				$c->{confirmSubmitForStudent} = 1;
+				$c->{actingConformationCreate} = 1;
+				return;
 
 			} elsif ($effectiveUserID ne $userID) {
-				$c->{invalidSet} = $c->maketext(
-					'You are acting as user [_1], and do not have the permission to create a new test version '
-						. 'when acting as another user.',
-					$effectiveUserID
-				);
-				$c->{invalidVersionCreation} = 1;
+				$c->{actingCreationError} = 1;
 
 			} elsif (($maxAttemptsPerVersion == 0 || $currentNumAttempts < $maxAttemptsPerVersion)
 				&& $c->submitTime < $set->due_date() + $ce->{gatewayGracePeriod})
@@ -665,7 +659,7 @@ async sub pre_header_initialize ($c) {
 					# student which is dangerous for open test versions. Give a warning unless the user
 					# has already confirmed they understand the risk.
 					if ($effectiveUserID ne $userID && !$c->param('submit_for_student_ok')) {
-						$c->{invalidSet} = $c->maketext(
+						$c->{actingConformation} = $c->maketext(
 							'You are trying to view an open test version for [_1] and have the permission to submit '
 								. 'answers for that user.  This is dangerous, as your answers can overwrite the '
 								. q/student's answers as you move between test pages, preview, or check answers.  /
@@ -675,7 +669,7 @@ async sub pre_header_initialize ($c) {
 								. 'before viewing open test versions.',
 							$effectiveUserID
 						);
-						$c->{confirmSubmitForStudent} = 1;
+						return;
 					}
 				}
 			}
@@ -694,8 +688,8 @@ async sub pre_header_initialize ($c) {
 		else                   { delete $c->authen->session->{proctor_authorization_granted}; }
 	}
 
-	# If the set or problem is invalid, then delete any proctor session keys and return.
-	if ($c->{invalidSet}) {
+	# If the set is invalid, then delete any proctor session keys and return.
+	if ($c->{invalidSet} || $c->{actingCreationError}) {
 		if (defined $c->{assignment_type} && $c->{assignment_type} eq 'proctored_gateway') {
 			delete $c->authen->session->{proctor_authorization_granted};
 		}
@@ -1368,7 +1362,7 @@ sub path ($c, $args) {
 		$args,
 		'WeBWorK'   => $navigation_allowed ? $c->url_for('root')     : '',
 		$courseName => $navigation_allowed ? $c->url_for('set_list') : '',
-		$setID eq 'Undefined_Set' || $c->{invalidSet}
+		$setID eq 'Undefined_Set' || $c->{invalidSet} || $c->{actingCreationError} || $c->{actingConformation}
 		? ($setID => '')
 		: (
 			$c->{set}->set_id           => $c->url_for('problem_list', setID => $c->{set}->set_id),
@@ -1382,7 +1376,7 @@ sub nav ($c, $args) {
 	my $userID          = $c->param('user');
 	my $effectiveUserID = $c->param('effectiveUser');
 
-	return '' if $c->{invalidSet};
+	return '' if $c->{invalidSet} || $c->{actingCreationError} || $c->{actingConformation};
 
 	# Set up and display a student navigation for those that have permission to act as a student.
 	if ($c->authz->hasPermissions($userID, 'become_student') && $effectiveUserID ne $userID) {
