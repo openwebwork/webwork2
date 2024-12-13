@@ -678,6 +678,13 @@ async sub pre_header_initialize ($c) {
 		$c->{invalidSet} = $c->maketext('This test is closed.  No new test versions may be taken.');
 	}
 
+	if ($c->stash->{actingConfirmation}) {
+		# Store session while waiting for confirmation for proctored tests.
+		$c->authen->session(acting_proctor => 1) if $c->{assignment_type} eq 'proctored_gateway';
+		return;
+	}
+	delete $c->authen->session->{acting_proctor};
+
 	# If the proctor session key does not have a set version id, then add it.  This occurs when a student
 	# initially enters a proctored test, since the version id is not determined until just above.
 	if ($c->authen->session('proctor_authorization_granted')
@@ -686,13 +693,6 @@ async sub pre_header_initialize ($c) {
 		if ($setVersionNumber) { $c->authen->session(proctor_authorization_granted => "$setID,v$setVersionNumber"); }
 		else                   { delete $c->authen->session->{proctor_authorization_granted}; }
 	}
-
-	if ($c->stash->{actingConfirmation}) {
-		# Store session while waiting for confirmation for proctored tests.
-		$c->authen->session(acting_proctor => 1) if $c->{assignment_type} eq 'proctored_gateway';
-		return;
-	}
-	delete $c->authen->session->{acting_proctor};
 
 	# If the set is invalid, then delete any proctor session keys and return.
 	if ($c->{invalidSet} || $c->{actingCreationError}) {
