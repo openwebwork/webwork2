@@ -87,11 +87,11 @@
 	% last;
 % }
 % # Get confirmation before creating new test version or working on an open test for another user.
-% if ($actingConfirmation) {
+% if (stash->{actingConfirmation}) {
 	<div class="alert alert-danger mb-2">
-		<div class="mb-2"><%= $actingConfirmation =%></div>
+		<div class="mb-2"><%= stash->{actingConfirmation} =%></div>
 		<div>
-			<%= link_to $actingConfirmationButton => $c->systemLink(
+			<%= link_to stash->{actingConfirmationButton} => $c->systemLink(
 					url_for,
 					params => { effectiveUser => $effectiveUserID, user => $userID, submit_for_student_ok => 1 }
 				),
