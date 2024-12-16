@@ -225,15 +225,21 @@ sub sortAchievements (@achievements) {
 	# Next sort by number.
 	@achievements = sort { ($a->number || 0) <=> ($b->number || 0) } @achievements;
 
-	# Finally sort by category.
+	# Finally sort by category. Always place level achievements last.
 	@achievements = sort {
-		if ($a->number && $b->number) {
+		if ($a->{category} eq 'level' && $b->{category} eq 'level') {
+			return 0;
+		} elsif ($a->{category} eq 'level') {
+			return 1;
+		} elsif ($b->{category} eq 'level') {
+			return -1;
+		} elsif ($a->number && $b->number) {
 			return $a->number <=> $b->number;
 		} elsif ($a->{category} eq $b->{category}) {
 			return 0;
-		} elsif ($a->{category} eq 'secret' or $b->{category} eq 'level') {
+		} elsif ($a->{category} eq 'secret') {
 			return -1;
-		} elsif ($a->{category} eq 'level' or $b->{category} eq 'secret') {
+		} elsif ($b->{category} eq 'secret') {
 			return 1;
 		} else {
 			return $a->{category} cmp $b->{category};
