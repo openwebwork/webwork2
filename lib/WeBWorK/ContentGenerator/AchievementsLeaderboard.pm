@@ -63,13 +63,20 @@ sub initialize ($c) {
 
 		my $level = $globalData->level_achievement_id ? $achievementsById{ $globalData->level_achievement_id } : '';
 
+		my %userAchievements = map { $_->achievement_id => $_ } $db->getUserAchievementsWhere({
+			user_id        => $user->user_id,
+			achievement_id => [ map { $_->achievement_id } grep { $_->category ne 'level' } @achievements ],
+		});
+
 		my @badges;
 		for my $achievement (@achievements) {
 			# Skip level achievements and only show earned achievements.
 			last if $achievement->category eq 'level';
 
-			my $userBadge = $db->getUserAchievement($user->user_id, $achievement->achievement_id);
-			push(@badges, $achievement) if $userBadge && $achievement->enabled && $userBadge->earned;
+			push(@badges, $achievement)
+				if $userAchievements{ $achievement->achievement_id }
+				&& $achievement->enabled
+				&& $userAchievements{ $achievement->achievement_id }->earned;
 		}
 
 		push(@rows, [ $globalData->achievement_points || 0, $level, $user, \@badges ]);
