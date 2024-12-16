@@ -31,11 +31,21 @@ use POSIX qw(strftime);
 use WeBWorK::Utils::PODParser;
 
 our @sections = (
-	bin    => 'Scripts',
-	conf   => 'Config Files',
 	doc    => 'Documentation',
+	bin    => 'Scripts',
+	macros => 'Macros',
 	lib    => 'Libraries',
-	macros => 'Macros'
+);
+our %macro_names = (
+	answers    => 'Answers',
+	contexts   => 'Contexts',
+	core       => 'Core',
+	deprecated => 'Deprecated',
+	graph      => 'Graph',
+	math       => 'Math',
+	misc       => 'Miscellaneous',
+	parsers    => 'Parsers',
+	ui         => 'User Interface'
 );
 
 sub new {
@@ -52,6 +62,7 @@ sub new {
 		idx           => {},
 		section_hash  => $section_hash,
 		section_order => $section_order,
+		macros_hash   => {},
 	};
 	return bless $self, $class;
 }
@@ -131,7 +142,14 @@ sub update_index {
 	$subdir =~ s|/.*$||;
 	my $idx      = $self->{idx};
 	my $sections = $self->{section_hash};
-	if (exists $sections->{$subdir}) {
+	if ($subdir eq 'macros') {
+		$idx->{macros} = [];
+		if ($pod_name =~ m!^(.+)/(.+)$!) {
+			push @{ $self->{macros_hash}{$1} }, [ $html_rel_path, $2 ];
+		} else {
+			push @{ $idx->{doc} }, [ $html_rel_path, $pod_name ];
+		}
+	} elsif (exists $sections->{$subdir}) {
 		push @{ $idx->{$subdir} }, [ $html_rel_path, $pod_name ];
 	} else {
 		warn "no section for subdir '$subdir'\n";
@@ -152,6 +170,9 @@ sub write_index {
 			pod_index     => $self->{idx},
 			sections      => $self->{section_hash},
 			section_order => $self->{section_order},
+			macros        => $self->{macros_hash},
+			macros_order  => [ sort keys %{ $self->{macros_hash} } ],
+			macro_names   => \%macro_names,
 			date          => strftime('%a %b %e %H:%M:%S %Z %Y', localtime)
 		}
 	);
