@@ -9,8 +9,8 @@
 	<p><%= maketext('You are currently rank [_1] out of [_2].', $c->{currentRank}, $c->{maxRank}) %></p>
 % }
 %
-<table class="table table-bordered table-sm">
-	<thead>
+<table class="table table-bordered table-hover table-sm">
+	<thead class="table-primary">
 		<tr>
 			<th><%= maketext('Rank') %></th>
 			<th><%= maketext('Points') %></th>
