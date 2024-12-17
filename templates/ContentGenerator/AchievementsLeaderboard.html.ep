@@ -49,7 +49,7 @@
 				% }
 				<td>
 					% for my $badge (@$badges) {
-						<a class="help-popup" role="button" tabindex="0"
+						<button class="btn btn-sm btn-link help-popup p-0" type="button" tabindex="0"
 							data-bs-placement="top" data-bs-toggle="popover" data-bs-html="true"
 							data-bs-content="<strong><%= $badge->{name} %></strong><br><%= $badge->{description} %>">
 							<%= image $badge->{icon}
@@ -57,7 +57,7 @@
 								: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png",
 								alt   => $c->maketext('[_1] Icon', $badge->{name}),
 								width => 50 %>
-						</a>
+						</button>
 					% }
 				</td>
 			</tr>
