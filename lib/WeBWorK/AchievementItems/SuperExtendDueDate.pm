@@ -19,7 +19,7 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 # Item to extend a close date by 48 hours.
 
 use WeBWorK::Utils           qw(x nfreeze_base64 thaw_base64);
-use WeBWorK::Utils::DateTime qw(between);
+use WeBWorK::Utils::DateTime qw(after between);
 use WeBWorK::Utils::Sets     qw(format_set_name_display);
 
 use constant TWO_DAYS => 172800;

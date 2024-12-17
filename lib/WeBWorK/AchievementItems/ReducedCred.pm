@@ -20,7 +20,7 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 # Reduced scoring needs to be enabled for this item to work.
 
 use WeBWorK::Utils           qw(x nfreeze_base64 thaw_base64);
-use WeBWorK::Utils::DateTime qw(between);
+use WeBWorK::Utils::DateTime qw(after between);
 use WeBWorK::Utils::Sets     qw(format_set_name_display);
 
 use constant ONE_DAY => 86400;
