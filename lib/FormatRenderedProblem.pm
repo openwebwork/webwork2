@@ -27,6 +27,7 @@ use warnings;
 use JSON;
 use Digest::SHA qw(sha1_base64);
 use Mojo::Util  qw(xml_escape);
+use Mojo::JSON  qw(encode_json);
 use Mojo::DOM;
 
 use WeBWorK::Utils                       qw(getAssetURL);
@@ -280,6 +281,7 @@ sub formatRenderedProblem {
 		showCorrectAnswersButton     => $ws->{inputs_ref}{showCorrectAnswersButton}     // '',
 		showCorrectAnswersOnlyButton => $ws->{inputs_ref}{showCorrectAnswersOnlyButton} // 0,
 		showFooter                   => $ws->{inputs_ref}{showFooter}                   // '',
+		problem_data                 => encode_json($rh_result->{PERSISTENCE_HASH}),
 		pretty_print                 => \&pretty_print
 	);
 
