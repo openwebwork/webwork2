@@ -1,5 +1,5 @@
-for (const pre of document.body.querySelectorAll('pre.CodeMirror')) {
-	CodeMirror.runMode(pre.textContent, 'PG', pre);
+for (const pre of document.body.querySelectorAll('pre.PGCodeMirror')) {
+	PGCodeMirrorEditor.runMode(pre.textContent, pre);
 }
 
 for (const btn of document.querySelectorAll('.clipboard-btn')) {
