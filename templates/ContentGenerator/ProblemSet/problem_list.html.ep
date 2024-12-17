@@ -29,7 +29,8 @@
 									)
 								},
 								begin =%>
-								<i class="icon fas fa-question-circle" aria-hidden="true" data-alt="Help Icon"></i>
+								<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+								<span class="visually-hidden"><%= maketext('Adjusted Status Help') =%></span>
 							<% end =%>
 						</th>
 						<th><%= maketext('Counts for Parent') %></th>

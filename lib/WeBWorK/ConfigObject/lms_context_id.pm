@@ -106,7 +106,8 @@ sub entry_widget ($self, $default, $is_secret = 0) {
 	return $self->SUPER::entry_widget($default);
 }
 
-sub help_title ($self) { return $self->{c}->maketext('Setting Documentation') }
-sub help_name  ($self) { return $self->{c}->maketext('[_1] setting', $self->{var}) }
+sub help_title           ($self) { return $self->{c}->maketext('Setting Documentation') }
+sub help_name            ($self) { return $self->{c}->maketext('[_1] setting',                   $self->{var}) }
+sub help_link_aria_label ($self) { return $self->{c}->maketext('Setting documentation for [_1]', $self->{var}) }
 
 1;

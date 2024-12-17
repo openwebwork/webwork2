@@ -998,12 +998,10 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 				bs_placement => 'top',
 				bs_toggle    => 'popover'
 			},
-			$c->tag(
-				'i',
-				class         => 'icon fas fa-question-circle',
-				data          => { alt => $c->maketext('Help Icon') },
-				'aria-hidden' => 'true'
-			)
+			$c->c(
+				$c->tag('i',    class => 'icon fas fa-question-circle', 'aria-hidden' => 'true'),
+				$c->tag('span', class => 'visually-hidden',             $c->maketext('[_1] Help', $properties{name}))
+		)->join('')
 		)
 		: '';
 

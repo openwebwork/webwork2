@@ -221,7 +221,8 @@
 						bs_placement => 'top'
 					},
 					begin =%>
-					<i class="icon fas fa-pencil-alt" data-alt="edit" aria-hidden="true"></i>
+					<i class="icon fas fa-pencil-alt" aria-hidden="true"></i>
+					<span class="visually-hidden"><%= maketext('Edit') =%></span>
 				<% end =%>
 				<%= link_to $c->systemLink(
 						url_for($isGatewaySet ? 'gateway_quiz' : 'problem_detail',

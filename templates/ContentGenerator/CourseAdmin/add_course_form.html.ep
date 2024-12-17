@@ -227,8 +227,12 @@
 						. 'the course configuration file. Then if there is something in the course configuration '
 						. 'file that should be carried into the new course, the administrator can copy that manually. '
 						. 'Alternatively, do copy the course configuration file, but then the administrator should '
-						. 'inspect the new course configuration file and make adjustments for the new instructor.') =%>">
-					<i class="icon fas fa-question-circle" data="<%= maketext('Help Icon') =%>" aria-hidden="true"></i>
+						. 'inspect the new course configuration file and make adjustments for the new instructor.') =%>"
+					>
+					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+					<span class="visually-hidden">
+						<%= maketext('Notes regarding copying the course configuration file') =%>
+					</span>
 				</a>
 			</label>
 		</div>
