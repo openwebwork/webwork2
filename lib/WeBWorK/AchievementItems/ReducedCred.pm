@@ -85,9 +85,7 @@ sub use_item ($self, $userName, $c) {
 
 	# Change the seed for all of the problems if the set is currently closed.
 	if (after($set->due_date)) {
-		my @probIDs = $db->listUserProblems($userName, $setID);
-		for my $probID (@probIDs) {
-			my $problem = $db->getUserProblem($userName, $setID, $probID);
+		for my $problem ($db->getUserProblemsWhere({ user_id => $userName, set_id => $setID })) {
 			$problem->problem_seed($problem->problem_seed % 2**31 + 1);
 			$db->putUserProblem($problem);
 		}
