@@ -28,7 +28,10 @@ sub new ($class) {
 	return bless {
 		id          => 'SuperExtendDueDate',
 		name        => x('Robe of Longevity'),
-		description => x('Adds 48 hours to the close date of a homework.')
+		description => x(
+			'Adds 48 hours to the close date of a homework. '
+				. 'This will randomize problem details if used after the original close date.'
+		)
 	}, $class;
 }
 

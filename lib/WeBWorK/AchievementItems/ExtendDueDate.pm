@@ -28,7 +28,10 @@ sub new ($class) {
 	return bless {
 		id          => 'ExtendDueDate',
 		name        => x('Tunic of Extension'),
-		description => x('Adds 24 hours to the close date of a homework.')
+		description => x(
+			'Adds 24 hours to the close date of a homework. '
+				. 'This will randomize problem details if used after the original close date.'
+		)
 	}, $class;
 }
 

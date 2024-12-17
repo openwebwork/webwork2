@@ -31,7 +31,8 @@ sub new ($class) {
 		name        => x('Ring of Reduction'),
 		description => x(
 			'Enable reduced scoring for a homework set.  This will allow you to submit answers '
-				. 'for partial credit for 24 hours after the close date.'
+				. 'for partial credit for 24 hours after the close date. '
+				. 'This will randomize problem details if used after the original close date.'
 		)
 	}, $class;
 }
