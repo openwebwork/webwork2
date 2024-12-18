@@ -132,13 +132,20 @@ sub get_credentials ($self) {
 		return 0;
 	}
 
-	# First check if we already have a user with the current lis_source_did
-	my $user = ($c->db->getUsersWhere({ lis_source_did => $c->stash->{lti_lms_user_id} }))[0] // ''
-		if $c->stash->{lti_lms_user_id};
+	# Determine the user_id to use, if possible.
+	if (!$ce->{LTI}{v1p3}{preferred_source_of_username}) {
+		warn 'LTI is not properly configured (no preferred_source_of_username). '
+			. "Please contact your instructor or system administrator.\n";
+		$self->{error} = $c->maketext(
+			'There was an error during the login process.  Please speak to your instructor or system administrator.');
+		debug("No preferred_source_of_username in $ce->{courseName} so LTIAdvantage::get_credentials is returning 0.");
+		return 0;
+	}
 
-	my $user_id;
 	my $user_id_source = '';
 	my $type_of_source = '';
+
+	$self->{email} = $claims->{email} // '';
 
 	my $extract_claim = sub ($key) {
 		my $value = $claims;
@@ -152,27 +159,15 @@ sub get_credentials ($self) {
 		return $value;
 	};
 
-	if ($user) {
-		$user_id_source  = $c->stash->{lti_lms_user_id};
-		$type_of_source  = 'lis_source_did';
+	# First check if there is a user with the current LMS user id saved in the lis_source_did column.
+	if ($claims->{sub} && (my $user = ($c->db->getUsersWhere({ lis_source_did => $claims->{sub} }))[0])) {
+		$user_id_source  = 'database';
+		$type_of_source  = 'existing database user';
 		$self->{user_id} = $user->user_id;
 	} else {
-		# Determine the user_id to use, if possible.
-		if (!$ce->{LTI}{v1p3}{preferred_source_of_username}) {
-			warn 'LTI is not properly configured (no preferred_source_of_username). '
-				. "Please contact your instructor or system administrator.\n";
-			$self->{error} = $c->maketext(
-				'There was an error during the login process.  Please speak to your instructor or system administrator.'
-			);
-			debug(
-				"No preferred_source_of_username in $ce->{courseName} so LTIAdvantage::get_credentials is returning 0."
-			);
-			return 0;
-		}
-
-		if ($user_id = $extract_claim->($ce->{LTI}{v1p3}{preferred_source_of_username})) {
+		if (my $user_id = $extract_claim->($ce->{LTI}{v1p3}{preferred_source_of_username})) {
 			$user_id_source  = $ce->{LTI}{v1p3}{preferred_source_of_username};
-			$type_of_source  = 'preferred_source_of_username';
+			$type_of_source  = "$user_id_source which was preferred_source_of_username";
 			$self->{user_id} = $user_id;
 		}
 
@@ -181,12 +176,10 @@ sub get_credentials ($self) {
 			&& (my $user_id = $extract_claim->($ce->{LTI}{v1p3}{fallback_source_of_username})))
 		{
 			$user_id_source  = $ce->{LTI}{v1p3}{fallback_source_of_username};
-			$type_of_source  = 'fallback_source_of_username';
+			$type_of_source  = "$user_id_source which was fallback_source_of_username";
 			$self->{user_id} = $user_id;
 		}
 	}
-
-	$self->{email} = $claims->{email} // '';
 
 	if ($self->{user_id}) {
 		# Strip off the part of the address after @ if the email address was used and it was requested to do so.
@@ -204,8 +197,6 @@ sub get_credentials ($self) {
 				[ recitation => 'https://purl.imsglobal.org/spec/lti/claim/custom#recitation' ],
 			);
 
-		$self->{lis_source_did} = $c->stash->{lti_lms_user_id} if $c->stash->{lti_lms_user_id};
-
 		$self->{student_id} =
 			$ce->{LTI}{v1p3}{preferred_source_of_student_id}
 			? ($extract_claim->($ce->{LTI}{v1p3}{preferred_source_of_student_id}) // '')
@@ -214,7 +205,7 @@ sub get_credentials ($self) {
 		# For setting up it is helpful to print out what is believed to be the user id and address is at this point.
 		if ($ce->{debug_lti_parameters}) {
 			warn "=========== SUMMARY ============\n";
-			warn "User id is |$self->{user_id}| (obtained from $user_id_source which was $type_of_source)\n";
+			warn "User id is |$self->{user_id}| (obtained from $type_of_source)\n";
 			warn "User email address is |$self->{email}|\n";
 			warn "strip_domain_from_email is |", $ce->{LTI}{v1p3}{strip_domain_from_email} // 0, "|\n";
 			warn "Student id is |$self->{student_id}|\n";
@@ -437,6 +428,7 @@ sub create_user ($self) {
 	$newUser->recitation($self->{recitation} // '');
 	$newUser->comment(formatDateTime(time, 0, $ce->{siteDefaults}{timezone}, $ce->{language}));
 	$newUser->student_id($self->{student_id} // '');
+	$newUser->lis_source_did($c->stash->{lti_lms_user_id}) if $c->stash->{lti_lms_user_id};
 
 	# Allow sites to customize the user.
 	$ce->{LTI}{v1p3}{modify_user}($self, $newUser) if ref($ce->{LTI}{v1p3}{modify_user}) eq 'CODE';
@@ -526,6 +518,7 @@ sub maybe_update_user ($self) {
 		$tempUser->section($self->{section}       // '');
 		$tempUser->recitation($self->{recitation} // '');
 		$tempUser->student_id($self->{student_id} // '');
+		$tempUser->lis_source_did($c->stash->{lti_lms_user_id}) if $c->stash->{lti_lms_user_id};
 
 		# Allow sites to customize the temp user
 		$ce->{LTI}{v1p3}{modify_user}($self, $tempUser) if ref($ce->{LTI}{v1p3}{modify_user}) eq 'CODE';
