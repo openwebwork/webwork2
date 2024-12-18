@@ -22,6 +22,8 @@ use WeBWorK::Utils           qw(x nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::DateTime qw(between);
 use WeBWorK::Utils::Sets     qw(format_set_name_display);
 
+use constant ONE_DAY => 86400;
+
 sub new ($class) {
 	return bless {
 		id          => 'ExtendDueDateGW',
@@ -78,10 +80,10 @@ sub use_item ($self, $userName, $c) {
 	return q{Couldn't find that set!} unless $set && $userSet;
 
 	# Add time to the reduced scoring date, due date, and answer date.
-	$userSet->reduced_scoring_date($set->reduced_scoring_date() + 86400)
+	$userSet->reduced_scoring_date($set->reduced_scoring_date() + ONE_DAY)
 		if defined($set->reduced_scoring_date()) && $set->reduced_scoring_date();
-	$userSet->due_date($set->due_date() + 86400);
-	$userSet->answer_date($set->answer_date() + 86400);
+	$userSet->due_date($set->due_date() + ONE_DAY);
+	$userSet->answer_date($set->answer_date() + ONE_DAY);
 	$db->putUserSet($userSet);
 
 	# Add time to the reduced scoring date, due date, and answer date for all versions.
@@ -89,10 +91,10 @@ sub use_item ($self, $userName, $c) {
 
 	for my $version (@versions) {
 		$set = $db->getSetVersion($userName, $setID, $version);
-		$set->reduced_scoring_date($set->reduced_scoring_date() + 86400)
+		$set->reduced_scoring_date($set->reduced_scoring_date() + ONE_DAY)
 			if defined($set->reduced_scoring_date()) && $set->reduced_scoring_date();
-		$set->due_date($set->due_date() + 86400);
-		$set->answer_date($set->answer_date() + 86400);
+		$set->due_date($set->due_date() + ONE_DAY);
+		$set->answer_date($set->answer_date() + ONE_DAY);
 		$db->putSetVersion($set);
 	}
 
