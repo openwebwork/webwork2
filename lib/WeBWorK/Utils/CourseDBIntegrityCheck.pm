@@ -211,11 +211,9 @@ sub checkTableFields {
 		exists $db->{$table}{params}{tableOverride} ? $db->{$table}{params}{tableOverride} : $table;
 	warn "$table_name is a non native table" if $db->{$table}{params}{non_native};
 	my @schema_field_names = $db->{$table}{record}->FIELDS;
-	my %schema_override_field_names;
+	my %schema_field_names = map { $_ => 1 } @schema_field_names;
 	for my $field (@schema_field_names) {
-		my $field_name = $db->{$table}{params}{fieldOverride}{$field} || $field;
-		$schema_override_field_names{$field_name} = $field;
-		if ($db->{$table}->tableFieldExists($field_name)) {
+		if ($db->{$table}->tableFieldExists($field)) {
 			$fieldStatus{$field} = [SAME_IN_A_AND_B];
 		} else {
 			$fieldStatus{$field} = [ONLY_IN_A];
@@ -229,10 +227,19 @@ sub checkTableFields {
 	my %database_fields = map { ${$_}[0] => $_ } @$result;    # Construct a hash of field names to field data.
 
 	for my $field_name (keys %database_fields) {
-		unless (exists($schema_override_field_names{$field_name})) {
+		unless (exists($schema_field_names{$field_name})) {
 			$fields_ok = 0;
 			$fieldStatus{$field_name} = [ONLY_IN_B];
 			push(@{ $fieldStatus{$field_name} }, 1) if $database_fields{$field_name}[3];
+		} else {
+			my $data_type = $database_fields{$field_name}[1];
+			$data_type =~ s/\(\d*\)$// if $data_type =~ /^(big|small)?int\(\d*\)$/;
+			$data_type = lc($data_type);
+			my $schema_data_type = lc($db->{$table}{record}->FIELD_DATA->{$field_name}{type} =~ s/ .*$//r);
+			if ($data_type ne $schema_data_type) {
+				$fieldStatus{$field_name} = [DIFFER_IN_A_AND_B];
+				$fields_ok = 0;
+			}
 		}
 	}
 
@@ -249,7 +256,7 @@ the same as the ones specified by the databaseLayout
 =cut
 
 sub updateTableFields {
-	my ($self, $courseName, $table, $delete_field_names) = @_;
+	my ($self, $courseName, $table, $delete_field_names, $fix_type_field_names) = @_;
 	my @messages;
 
 	# Fetch schema from course environment and search database for corresponding tables.
@@ -286,6 +293,24 @@ sub updateTableFields {
 		if ($fieldStatus->{$field_name} && $fieldStatus->{$field_name}[0] == ONLY_IN_B) {
 			if ($schema_obj->can('drop_column_field') && $schema_obj->drop_column_field($field_name)) {
 				push(@messages, [ "Dropped column '$field_name' from table '$table'", 1 ]);
+			}
+		}
+	}
+
+	# Change types of fields list in $fix_type_field_names to the type defined in the schema.
+	for my $field_name (@$fix_type_field_names) {
+		if ($fieldStatus->{$field_name} && $fieldStatus->{$field_name}[0] == DIFFER_IN_A_AND_B) {
+			if ($schema_obj->can('change_column_field_type') && $schema_obj->change_column_field_type($field_name)) {
+				push(@messages, [ "Changed type of column '$field_name' from table '$table'", 1 ]);
+			} else {
+				push(
+					@messages,
+					[
+						"Failed to changed type of column '$field_name' from table '$table'. "
+							. 'It is recommended that you delete this course and restore it from an archive.',
+						0
+					]
+				);
 			}
 		}
 	}

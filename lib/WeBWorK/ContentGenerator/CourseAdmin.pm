@@ -1339,7 +1339,7 @@ sub upgrade_course_confirm ($c) {
 
 	my @upgrade_courseIDs = $c->param('upgrade_courseIDs');
 
-	my ($extra_database_tables_exist, $extra_database_fields_exist) = (0, 0);
+	my ($extra_database_tables_exist, $extra_database_fields_exist, $incorrect_type_database_fields_exist) = (0, 0, 0);
 
 	my $status_output = $c->c;
 
@@ -1354,8 +1354,9 @@ sub upgrade_course_confirm ($c) {
 
 		# Report on database status
 		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
-		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
-			$c->formatReportOnDatabaseTables($dbStatus, $upgrade_courseID);
+		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
+			$incorrect_type_database_fields, $db_report)
+			= $c->formatReportOnDatabaseTables($dbStatus, $upgrade_courseID);
 
 		my $course_output = $c->c;
 
@@ -1428,6 +1429,24 @@ sub upgrade_course_confirm ($c) {
 			);
 		}
 
+		if ($incorrect_type_database_fields) {
+			$incorrect_type_database_fields_exist = 1;
+			push(
+				@$course_output,
+				$c->tag(
+					'p',
+					class => 'text-danger fw-bold',
+					$c->maketext(
+						'There are database fields that do not have the same type as the field defined in the schema '
+							. 'for at least one table. Check the checkbox by the field to change its type when '
+							. 'upgrading the course. Warning: This can fail which may corrupt the table. If you have '
+							. 'not archived this course, then do that now before upgrading if you want to change the '
+							. 'type of any of these fields.'
+					)
+				)
+			);
+		}
+
 		# Report on directory status
 		my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
 		push(@$course_output, $c->tag('div', class => 'mb-2', $c->maketext('Directory structure:')));
@@ -1464,10 +1483,11 @@ sub upgrade_course_confirm ($c) {
 
 	return $c->include(
 		'ContentGenerator/CourseAdmin/upgrade_course_confirm',
-		upgrade_courseIDs           => \@upgrade_courseIDs,
-		extra_database_tables_exist => $extra_database_tables_exist,
-		extra_database_fields_exist => $extra_database_fields_exist,
-		status_output               => $status_output->join('')
+		upgrade_courseIDs                    => \@upgrade_courseIDs,
+		extra_database_tables_exist          => $extra_database_tables_exist,
+		extra_database_fields_exist          => $extra_database_fields_exist,
+		incorrect_type_database_fields_exist => $incorrect_type_database_fields_exist,
+		status_output                        => $status_output->join('')
 	);
 }
 
@@ -1503,8 +1523,10 @@ sub do_upgrade_course ($c) {
 			push(
 				@upgrade_report,
 				$CIchecker->updateTableFields(
-					$upgrade_courseID, $table_name,
-					[ ($c->param("$upgrade_courseID.$table_name.delete_fieldIDs")) ]
+					$upgrade_courseID,
+					$table_name,
+					[ ($c->param("$upgrade_courseID.$table_name.delete_fieldIDs")) ],
+					[ ($c->param("$upgrade_courseID.$table_name.fix_type_fieldIDs")) ],
 				)
 			);
 		}
@@ -1512,8 +1534,9 @@ sub do_upgrade_course ($c) {
 		# Analyze database status and prepare status report
 		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
 
-		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
-			$c->formatReportOnDatabaseTables($dbStatus);
+		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
+			$incorrect_type_database_fields, $db_report)
+			= $c->formatReportOnDatabaseTables($dbStatus);
 
 		# Prepend course name
 		$db_report = $c->c($c->tag('div', class => 'mb-2', $c->maketext('Database:')), $db_report);
@@ -1537,6 +1560,20 @@ sub do_upgrade_course ($c) {
 					class => 'text-danger fw-bold',
 					$c->maketext(
 						'There are extra database fields which are not defined in the schema for at least one table.')
+				)
+			);
+		}
+
+		if ($incorrect_type_database_fields) {
+			push(
+				@$db_report,
+				$c->tag(
+					'p',
+					class => 'text-danger fw-bold',
+					$c->maketext(
+						'There are database fields that do not have the same type as the '
+							. 'field defined in the schema for at least one table.'
+					)
 				)
 			);
 		}
@@ -2684,10 +2721,11 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 		)
 	);
 
-	my $all_tables_ok         = 1;
-	my $extra_database_tables = 0;
-	my $extra_database_fields = 0;
-	my $rebuild_table_indexes = 0;
+	my $all_tables_ok                  = 1;
+	my $extra_database_tables          = 0;
+	my $extra_database_fields          = 0;
+	my $rebuild_table_indexes          = 0;
+	my $incorrect_type_database_fields = 0;
 
 	my $db_report = $c->c;
 
@@ -2728,9 +2766,35 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 					} else {
 						$extra_database_fields = 1;
 					}
-					if ($fieldInfo{$key}[1]) {
-						push(@$field_report, $c->hidden_field("$courseID.$table.delete_fieldIDs" => $key));
-					} else {
+					if (defined $courseID) {
+						if ($fieldInfo{$key}[1]) {
+							push(@$field_report, $c->hidden_field("$courseID.$table.delete_fieldIDs" => $key));
+						} else {
+							push(
+								@$field_report,
+								$c->tag(
+									'span',
+									class => 'form-check d-inline-block',
+									$c->tag(
+										'label',
+										class => 'form-check-label',
+										$c->c(
+											$c->check_box(
+												"$courseID.$table.delete_fieldIDs" => $key,
+												class                              => 'form-check-input'
+											),
+											$c->maketext('Delete field when upgrading')
+										)->join('')
+									)
+								)
+							);
+						}
+					}
+				} elsif ($field_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A) {
+					$all_tables_ok = 0;
+				} elsif ($field_status == WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B) {
+					$incorrect_type_database_fields = 1;
+					if (defined $courseID) {
 						push(
 							@$field_report,
 							$c->tag(
@@ -2741,17 +2805,15 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 									class => 'form-check-label',
 									$c->c(
 										$c->check_box(
-											"$courseID.$table.delete_fieldIDs" => $key,
-											class                              => 'form-check-input'
+											"$courseID.$table.fix_type_fieldIDs" => $key,
+											class                                => 'form-check-input'
 										),
-										$c->maketext('Delete field when upgrading')
+										$c->maketext('Change type of field when upgrading')
 									)->join('')
 								)
 							)
 						);
 					}
-				} elsif ($field_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A) {
-					$all_tables_ok = 0;
 				}
 				push(@$fields_report, $c->tag('li', $field_report->join('')));
 			}
@@ -2765,8 +2827,9 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 	push(@$db_report, $c->tag('p', class => 'text-success', $c->maketext('Database tables are ok'))) if $all_tables_ok;
 
 	return (
-		$all_tables_ok,         $extra_database_tables, $extra_database_fields,
-		$rebuild_table_indexes, $db_report->join('')
+		$all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
+		$incorrect_type_database_fields,
+		$db_report->join('')
 	);
 }
 
