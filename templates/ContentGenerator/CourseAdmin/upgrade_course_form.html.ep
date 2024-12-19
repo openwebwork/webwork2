@@ -1,4 +1,5 @@
-% use WeBWorK::Utils::CourseIntegrityCheck;
+% use WeBWorK::Utils::CourseDBIntegrityCheck;
+% use WeBWorK::Utils::CourseDirectoryIntegrityCheck qw(checkCourseDirectories);
 % use WeBWorK::Utils::CourseManagement qw(listCourses);
 % use WeBWorK::CourseEnvironment;
 %
@@ -27,9 +28,9 @@
 			% if ($@) {
 				<%= maketext(q{Can't create course environment for [_1] because [_2]}, $courseID, $@) =%>
 			% }
-			% my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $tempCE);
-			% my ($tables_ok)      = $CIchecker->checkCourseTables($courseID);
-			% my ($directories_ok) = $CIchecker->checkCourseDirectories();
+			% my $CDBIchecker      = WeBWorK::Utils::CourseDBIntegrityCheck->new($tempCE);
+			% my ($tables_ok)      = $CDBIchecker->checkCourseTables($courseID);
+			% my ($directories_ok) = checkCourseDirectories($tempCE);
 			%
 			<li class="align-items-center">
 				% if (!$tables_ok || !$directories_ok) {

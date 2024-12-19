@@ -369,15 +369,32 @@ sub _drop_column_field_stmt {
 }
 
 ####################################################
+# Change the type of a column to the type defined in the schema
+####################################################
+
+sub change_column_field_type {
+	my ($self, $field_name) = @_;
+	return 0 unless defined $self->{record}->FIELD_DATA->{$field_name};
+	eval {
+		$self->dbh->do('ALTER TABLE `'
+				. $self->sql_table_name
+				. '` MODIFY '
+				. $self->sql_field_name($field_name) . ' '
+				. $self->{record}->FIELD_DATA->{$field_name}{type}
+				. ';');
+	};
+	return $@ ? 0 : 1;
+}
+
+####################################################
 # rebuild indexes for the table
 ####################################################
 
 sub rebuild_indexes {
 	my ($self) = @_;
 
-	my $sql_table_name  = $self->sql_table_name;
-	my $field_data      = $self->field_data;
-	my %override_fields = reverse %{ $self->{params}{fieldOverride} };
+	my $sql_table_name = $self->sql_table_name;
+	my $field_data     = $self->field_data;
 
 	# A key field column is going to be removed.  The schema will not have the information for this column.  So the
 	# indexes need to be obtained from the database.  Note that each element of the returned array is an array reference
@@ -398,7 +415,7 @@ sub rebuild_indexes {
 		my $column = (grep { $index->[4] eq $_->[0] } @$columns)[0];
 		if (defined $column && $column->[5] =~ m/AUTO_INCREMENT/i) {
 			$self->dbh->do("ALTER TABLE `$sql_table_name` MODIFY `$column->[0]` $column->[1]");
-			push @auto_increment_fields, $override_fields{ $column->[0] } // $column->[0];
+			push @auto_increment_fields, $column->[0];
 		}
 
 		$self->dbh->do("ALTER TABLE `$sql_table_name` DROP INDEX `$index->[2]`");

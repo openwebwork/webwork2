@@ -30,7 +30,6 @@ use WeBWorK::CourseEnvironment;
 use String::ShellQuote;
 
 use DBI;
-use WeBWorK::Utils::CourseIntegrityCheck;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
 
 my $time = time();

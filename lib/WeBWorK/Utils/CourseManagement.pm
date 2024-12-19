@@ -1303,18 +1303,15 @@ sub initNonNativeTables {
 			#fields in the schema.  Its not a huge issue if the database table has extra columns.
 		} else {
 			my %fieldStatus;
-			my $fields_ok                   = 1;
-			my @schema_field_names          = $db->{$table}->{record}->FIELDS;
-			my %schema_override_field_names = ();
-			foreach my $field (sort @schema_field_names) {
-				my $field_name = $db->{$table}->{params}->{fieldOverride}->{$field} || $field;
-				$schema_override_field_names{$field_name} = $field;
+			my $fields_ok          = 1;
+			my @schema_field_names = $db->{$table}->{record}->FIELDS;
+			foreach my $field_name (sort @schema_field_names) {
 				my $database_field_exists = $db->{$table}->tableFieldExists($field_name);
 				#if the field doesn't exist then try to add it...
 				if (!$database_field_exists) {
 					$fields_ok = 0;
-					$fieldStatus{$field} = [ONLY_IN_A];
-					warn "$field from $database_table_name (aka |$table|) is only in schema, "
+					$fieldStatus{$field_name} = [ONLY_IN_A];
+					warn "$field_name from $database_table_name (aka |$table|) is only in schema, "
 						. "not in database, so adding it ... ";
 					if ($db->{$table}->can("add_column_field")) {
 						if ($db->{$table}->add_column_field($field_name)) {
