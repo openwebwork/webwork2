@@ -252,7 +252,8 @@ async sub renderProblem {
 			show_pg_info                => $rh->{show_pg_info}                // 0,
 			show_answer_hash_info       => $rh->{show_answer_hash_info}       // 0,
 			show_answer_group_info      => $rh->{show_answer_group_info}      // 0
-		}
+		},
+		defined $rh->{problem_data} && $rh->{problem_data} ne '' ? (problemData => $rh->{problem_data}) : ()
 	};
 
 	$ce->{pg}{specialPGEnvironmentVars}{problemPreamble}  = { TeX => '', HTML => '' } if $rh->{noprepostambles};
@@ -270,6 +271,7 @@ async sub renderProblem {
 		errors                  => $pg->{errors},
 		pg_warnings             => $pg->{warnings},
 		PG_ANSWERS_HASH         => $pg->{PG_ANSWERS_HASH},
+		PERSISTENCE_HASH        => $pg->{PERSISTENCE_HASH},
 		problem_result          => $pg->{result},
 		problem_state           => $pg->{state},
 		flags                   => $pg->{flags},
