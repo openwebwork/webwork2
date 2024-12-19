@@ -97,8 +97,6 @@ sub where_user_id_eq_set_id_eq_problem_id_eq {
 
 # FIXME the rest of the places in this class that generate field lists (basically
 # anywhere that calls grok_*_from_vsetID_sql), should call this method instead.
-# this method can handle if the set_id field has a fieldOverride set for it, and
-# the other methods can't.
 sub sql_field_expression {
 	my ($self, $field, $table) = @_;
 
