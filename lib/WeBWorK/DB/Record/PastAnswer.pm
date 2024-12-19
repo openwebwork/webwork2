@@ -32,7 +32,7 @@ BEGIN {
 		set_id         => { type => "VARCHAR(100) NOT NULL", key => 1 },
 		problem_id     => { type => "INT NOT NULL",          key => 1 },
 		source_file    => { type => "TEXT" },
-		timestamp      => { type => "INT" },
+		timestamp      => { type => "BIGINT" },
 		scores         => { type => "TINYTEXT" },
 		answer_string  => { type => "VARCHAR(5012)" },
 		comment_string => { type => "VARCHAR(5012)" },
