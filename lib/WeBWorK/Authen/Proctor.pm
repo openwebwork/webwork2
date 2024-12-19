@@ -96,10 +96,17 @@ sub verify_normal_user {
 	# is 'No', then the verify method will have returned 1, and this never happens.  For an ongoing login session, only
 	# a key with versioned set information is accepted, and that version must match the requested set version.  The set
 	# id will not have a version when opening a new version. For that new proctor credentials are required.
-	if ($self->{login_type} eq 'proctor_login'
-		&& $c->stash('setID') =~ /,v\d+$/
+	if (
+		$self->{login_type} eq 'proctor_login'
 		&& $c->authen->session('proctor_authorization_granted')
-		&& $c->authen->session('proctor_authorization_granted') eq $c->stash('setID'))
+		&& (
+			(
+				$c->stash('setID') =~ /,v\d+$/
+				&& $c->authen->session('proctor_authorization_granted') eq $c->stash('setID')
+			)
+			|| $c->authen->session('acting_proctor')
+		)
+		)
 	{
 		return 1;
 	} else {
