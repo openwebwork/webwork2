@@ -24,7 +24,7 @@
 </p>
 <p>
 	<%= maketext('Achievements are evaluated in the order shown below, with the exception of "level" achievements.  '
-		. 'Achievements in the "level" category are evaluated first and control the XP thresholds and rewards '
+		. 'Achievements in the "level" category are evaluated last and control the XP thresholds and rewards '
 		. '(achievement items) for reaching each level. Achievements in the "secret" category are not shown to '
 		. 'students until they earn the achievement, and is used for fun/surprise achievements.') =%>
 </p>
