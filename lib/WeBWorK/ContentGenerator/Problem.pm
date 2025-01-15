@@ -797,9 +797,10 @@ sub siblings ($c) {
 			{
 				push(
 					@items,
-					$c->link_to(
-						$c->maketext('Problem [_1]', join('.', @seq)) => '#',
-						class                                         => $class . ' disabled-problem',
+					$c->tag(
+						'a',
+						class => $class . ' disabled',
+						$c->maketext('Problem [_1]', join('.', @seq))
 					)
 				);
 			} else {
