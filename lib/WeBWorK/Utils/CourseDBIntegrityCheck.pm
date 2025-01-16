@@ -234,10 +234,10 @@ sub checkTableFields {
 		} else {
 			my $data_type = $database_fields{$field_name}[1];
 			$data_type =~ s/\(\d*\)$// if $data_type =~ /^(big|small)?int\(\d*\)$/;
-			$data_type = lc($data_type);
-			my $schema_data_type = lc($db->{$table}{record}->FIELD_DATA->{$field_name}{type} =~ s/ .*$//r);
+			$data_type = uc($data_type);
+			my $schema_data_type = uc($db->{$table}{record}->FIELD_DATA->{$field_name}{type} =~ s/ .*$//r);
 			if ($data_type ne $schema_data_type) {
-				$fieldStatus{$field_name} = [DIFFER_IN_A_AND_B];
+				$fieldStatus{$field_name} = [ DIFFER_IN_A_AND_B, $data_type, $schema_data_type ];
 				$fields_ok = 0;
 			}
 		}

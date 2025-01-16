@@ -2808,7 +2808,11 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 											"$courseID.$table.fix_type_fieldIDs" => $key,
 											class                                => 'form-check-input'
 										),
-										$c->maketext('Change type of field when upgrading')
+										$c->maketext(
+											'Change type of field from [_1] to [_2] when upgrading',
+											$fieldInfo{$key}[1],
+											$fieldInfo{$key}[2]
+										)
 									)->join('')
 								)
 							)
