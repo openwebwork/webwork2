@@ -19,14 +19,19 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 # Item to extend a close date by 48 hours.
 
 use WeBWorK::Utils           qw(x nfreeze_base64 thaw_base64);
-use WeBWorK::Utils::DateTime qw(between);
+use WeBWorK::Utils::DateTime qw(after between);
 use WeBWorK::Utils::Sets     qw(format_set_name_display);
+
+use constant TWO_DAYS => 172800;
 
 sub new ($class) {
 	return bless {
 		id          => 'SuperExtendDueDate',
 		name        => x('Robe of Longevity'),
-		description => x('Adds 48 hours to the close date of a homework.')
+		description => x(
+			'Adds 48 hours to the close date of a homework. '
+				. 'This will randomize problem details if used after the original close date.'
+		)
 	}, $class;
 }
 
@@ -35,7 +40,8 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 
 	for my $i (0 .. $#$sets) {
 		push(@openSets, [ format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id ])
-			if (between($sets->[$i]->open_date, $sets->[$i]->due_date) && $sets->[$i]->assignment_type eq 'default');
+			if (between($sets->[$i]->open_date, $sets->[$i]->due_date + TWO_DAYS)
+				&& $sets->[$i]->assignment_type eq 'default');
 	}
 
 	return unless @openSets;
@@ -71,10 +77,20 @@ sub use_item ($self, $userName, $c) {
 	my $userSet = $db->getUserSet($userName, $setID);
 	return q{Couldn't find that set!} unless $set && $userSet;
 
-	# Add time to the reduced scoring date, due date, and answer date.
-	$userSet->reduced_scoring_date($set->reduced_scoring_date() + 172800) if $set->reduced_scoring_date;
-	$userSet->due_date($set->due_date() + 172800);
-	$userSet->answer_date($set->answer_date() + 172800);
+	# Change the seed for all of the problems if the set is currently closed.
+	if (after($set->due_date)) {
+		for my $problem ($db->getUserProblemsWhere({ user_id => $userName, set_id => $setID })) {
+			$problem->problem_seed($problem->problem_seed % 2**31 + 1);
+			$db->putUserProblem($problem);
+		}
+	}
+
+	# Add time to the reduced scoring date if it was defined in the first place
+	$userSet->reduced_scoring_date($set->reduced_scoring_date + TWO_DAYS) if $set->reduced_scoring_date;
+	# Add time to the close date
+	$userSet->due_date($set->due_date + TWO_DAYS);
+	# This may require also extending the answer date.
+	$userSet->answer_date($userSet->due_date) if ($userSet->due_date > $set->answer_date);
 	$db->putUserSet($userSet);
 
 	$globalData->{ $self->{id} }--;
