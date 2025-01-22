@@ -595,8 +595,8 @@ $mail{feedbackRecipients}    = [
 #$CookieSameSite = "Lax";
 
 # Set the value of the secure cookie attribute.
-# The default is 0, as 1 will not work without https.
-#$CookieSecure = 1;
+# The default is 1, so if you are serving without https then set this to 0.
+#$CookieSecure = 0;
 
 # If $useSessionCookie is set to 1, then a "session" cookie will be used. This
 # means that the cookie will be deleted when the browser session ends.
