@@ -18,9 +18,8 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to allow students to take an additional version of a test within its test version interval
 
-use WeBWorK::Utils           qw(x nfreeze_base64 thaw_base64);
-use WeBWorK::Utils::DateTime qw(before between);
-use WeBWorK::Utils::Sets     qw(format_set_name_display);
+use WeBWorK::Utils           qw(x);
+use WeBWorK::Utils::DateTime qw(between);
 
 sub new ($class) {
 	return bless {
@@ -33,60 +32,34 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemIds, $c) {
-	my $db = $c->db;
-
-	my @openGateways;
-
-	# Find the template sets of open gateway quizzes.
-	for my $set (@$sets) {
-		push(@openGateways, [ format_set_name_display($set->set_id) => $set->set_id ])
-			if $set->assignment_type =~ /gateway/
-			&& $set->set_id !~ /,v\d+$/
-			&& between($set->open_date, $set->due_date);
-	}
-
-	return unless @openGateways;
-
-	return $c->c(
-		$c->tag('p', $c->maketext('Add a new version for which test?')),
-		WeBWorK::AchievementItems::form_popup_menu_row(
-			$c,
-			id         => 'adtgw_gw_id',
-			label_text => $c->maketext('Test Name'),
-			values     => \@openGateways,
-			menu_attr  => { dir => 'ltr' }
-		)
-	)->join('');
+sub can_use ($self, $set, $records) {
+	return
+		$set->assignment_type =~ /gateway/
+		&& $set->set_id !~ /,v\d+$/
+		&& between($set->open_date, $set->due_date)
+		&& $set->versions_per_interval > 0;
 }
 
-sub use_item ($self, $userName, $c) {
-	my $db = $c->db;
-	my $ce = $c->ce;
+sub print_form ($self, $set, $records, $c) {
+	return $c->tag(
+		'p',
+		$c->maketext(
+			'Increase the number of versions from [_1] to [_2] for this test.',
+			$set->versions_per_interval,
+			$set->versions_per_interval + 1
+		)
+	);
+}
 
-	# Validate data
-	my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
-	return 'No achievement data?!?!?!' unless $globalUserAchievement->frozen_hash;
-
-	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
-	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
-
-	my $setID = $c->param('adtgw_gw_id');
-	return 'You need to input a Test Name' unless defined $setID;
-
-	my $set     = $db->getMergedSet($userName, $setID);
-	my $userSet = $db->getUserSet($userName, $setID);
-	return q{Couldn't find that set!} unless $set && $userSet;
-
-	# Add an additional version per interval to the set.
-	$userSet->versions_per_interval($set->versions_per_interval + 1) unless $set->versions_per_interval == 0;
+sub use_item ($self, $set, $records, $c) {
+	# Increase the number of versions per interval by 1.
+	my $db      = $c->db;
+	my $userSet = $db->getUserSet($set->user_id, $set->set_id);
+	$set->versions_per_interval($set->versions_per_interval + 1);
+	$userSet->versions_per_interval($set->versions_per_interval);
 	$db->putUserSet($userSet);
 
-	$globalData->{ $self->{id} }--;
-	$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
-	$db->putGlobalUserAchievement($globalUserAchievement);
-
-	return;
+	return $c->maketext('One additional test version added to this test.');
 }
 
 1;

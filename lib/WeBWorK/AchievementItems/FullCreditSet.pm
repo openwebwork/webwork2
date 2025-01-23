@@ -18,9 +18,8 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to give half credit on all problems in a homework set.
 
-use WeBWorK::Utils           qw(x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils           qw(x wwRound);
 use WeBWorK::Utils::DateTime qw(after);
-use WeBWorK::Utils::Sets     qw(format_set_name_display);
 
 sub new ($class) {
 	return bless {
@@ -30,59 +29,38 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemIds, $c) {
-	my @openSets;
+sub can_use ($self, $set, $records) {
+	return 0
+		unless $set->assignment_type eq 'default'
+		&& after($set->open_date);
 
-	for my $i (0 .. $#$sets) {
-		push(@openSets, [ format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id ])
-			if (after($sets->[$i]->open_date) && $sets->[$i]->assignment_type eq 'default');
+	my $total = 0;
+	my $grade = 0;
+	for my $problem (@$records) {
+		$grade += $problem->status * $problem->value;
+		$total += $problem->value;
 	}
-
-	return unless @openSets;
-
-	return $c->c(
-		$c->tag('p', $c->maketext('Please choose the set for which all problems should be given full credit.')),
-		WeBWorK::AchievementItems::form_popup_menu_row(
-			$c,
-			id         => 'fcs_set_id',
-			label_text => $c->maketext('Set Name'),
-			values     => \@openSets,
-			menu_attr  => { dir => 'ltr' }
-		)
-	)->join('');
+	$self->{old_grade} = 100 * wwRound(2, $grade / $total);
+	return $self->{old_grade} == 100 ? 0 : 1;
 }
 
-sub use_item ($self, $userName, $c) {
+sub print_form ($self, $set, $records, $c) {
+	return $c->tag('p', $c->maketext(q(Increase this assignment's grade from [_1]% to 100%.), $self->{old_grade}));
+}
+
+sub use_item ($self, $set, $records, $c) {
 	my $db = $c->db;
-	my $ce = $c->ce;
 
-	# Validate data
-
-	my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
-	return 'No achievement data?!?!?!' unless $globalUserAchievement->frozen_hash;
-
-	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
-	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
-
-	my $setID = $c->param('fcs_set_id');
-	return 'You need to input a Set Name' unless defined $setID;
-
-	my @probIDs = $db->listUserProblems($userName, $setID);
-
-	for my $probID (@probIDs) {
-		my $problem = $db->getUserProblem($userName, $setID, $probID);
-
-		# Set status and sub_status to 1.
-		$problem->status(1);
-		$problem->sub_status(1);
-		$db->putUserProblem($problem);
+	my @userProblems = $db->getUserProblemsWhere({ user_id => $set->user_id, set_id => $set->set_id }, 'problem_id');
+	for my $n (0 .. $#userProblems) {
+		$records->[$n]->status(1);
+		$records->[$n]->sub_status(1);
+		$userProblems[$n]->status(1);
+		$userProblems[$n]->sub_status(1);
+		$db->putUserProblem($userProblems[$n]);
 	}
 
-	$globalData->{ $self->{id} }--;
-	$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
-	$db->putGlobalUserAchievement($globalUserAchievement);
-
-	return;
+	return $c->maketext(q(Assignment's grade increased from [_1]% to 100%.), $self->{old_grade});
 }
 
 1;

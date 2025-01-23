@@ -1,0 +1,53 @@
+% last unless $c->ce->{achievementsEnabled};
+%
+% my $achievementItems = $c->{achievementItems};
+% if ($achievementItems && @$achievementItems) {
+	<div class="mb-3">
+		<%= link_to maketext('Use Achievement Reward')  => '#modal_rewards',
+			role  => 'button',
+			class => 'btn btn-primary',
+			id    => 'popup_rewards',
+			data  => { bs_toggle => 'modal' }
+		=%>
+		<div id="modal_rewards" class="modal hide fade" tabindex="-1">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h4 class="modal-title"><%= maketext('Achievement Rewards') %></h4>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"
+							aria-label="<%= maketext('close') %>"></button>
+					</div>
+					<dl class="mx-3">
+						% for (@$achievementItems) {
+							% my ($item, $form) = @$_;
+							<dt class="fs-4"><%= $item->name %></dt>
+							<dd class="mx-3 mb-4">
+								<%= form_for current_route, method => 'POST', name => 'use_reward', begin =%>
+									<%= hidden_field 'use_achievement_item_id' => $item->id %>
+									<%= $form %>
+									<input class="btn btn-primary" name="use_achievement_item_<%= $item->id %>"
+										type="submit" value="<%= maketext('Use [_1]', $item->remaining_title($c)) %>">
+								<%= end =%>
+							</dd>
+						% }
+					</dl>
+				</div>
+			</div>
+		</div>
+	</div>
+% } elsif (param('user') ne param('effectiveUser')) {
+	<div class="mb-3">
+		<span class="d-inline-block set-id-tooltip" tabindex="0" data-bs-toggle="tooltip" data-bs-placement="top"
+			data-bs-title="<%=maketext('You cannot use achievement rewards when acting as another user.') %>">
+			<button class="btn btn-primary" type="button" disabled><%= maketext('Use Achievement Reward') %></button>
+		</span>
+	</div>
+% } else {
+	<div class="mb-3">
+		<span class="d-inline-block set-id-tooltip" tabindex="0" data-bs-toggle="tooltip" data-bs-placement="top"
+			data-bs-title="<%=maketext('No achievement rewards are available for this assignment.') %>">
+			<button class="btn btn-primary" type="button" disabled><%= maketext('Use Achievement Reward') %></button>
+		</span>
+	</div>
+% }
+

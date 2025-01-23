@@ -19,9 +19,8 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 # Item to remove reduce credit scoring period from a set.
 # Reduced scoring needs to be enabled for this item to be useful.
 
-use WeBWorK::Utils           qw(x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils           qw(x);
 use WeBWorK::Utils::DateTime qw(between);
-use WeBWorK::Utils::Sets     qw(format_set_name_display);
 
 sub new ($class) {
 	return bless {
@@ -34,67 +33,48 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemIds, $c) {
-	my @openSets;
-
-	# Nothing to do if reduced scoring is not enabled.
-	return unless $c->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring};
-
-	# Only show open sets that have reduced scoring enabled.
-	for my $i (0 .. $#$sets) {
-		push(@openSets, [ format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id ])
-			if (between($sets->[$i]->open_date, $sets->[$i]->due_date)
-				&& $sets->[$i]->assignment_type eq 'default'
-				&& $sets->[$i]->enable_reduced_scoring);
-	}
-
-	return unless @openSets;
-
-	return $c->c(
-		$c->tag('p', $c->maketext('Choose the assignment to remove the reduced scoring pentaly from.')),
-		WeBWorK::AchievementItems::form_popup_menu_row(
-			$c,
-			id         => 'no_reduce_set_id',
-			label_text => $c->maketext('Assignment Name'),
-			values     => \@openSets,
-			menu_attr  => { dir => 'ltr' }
-		)
-	)->join('');
+sub can_use ($self, $set, $records) {
+	return 0
+		unless $set->assignment_type eq 'default'
+		&& $set->enable_reduced_scoring
+		&& $set->reduced_scoring_date
+		&& $set->reduced_scoring_date < $set->due_date
+		&& between($set->open_date, $set->due_date);
 }
 
-sub use_item ($self, $userName, $c) {
-	my $db = $c->db;
-	my $ce = $c->ce;
+sub print_form ($self, $set, $records, $c) {
+	return $c->tag(
+		'p',
+		$c->maketext(
+			q{This item won't work unless your instructor enables the reduced scoring feature.  }
+				. 'Let your instructor know that you recieved this message.'
+		)
+	) unless $c->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring};
 
-	# Validate data
+	return $c->tag(
+		'p',
+		$c->maketext(
+			'Remove the reduced scoring pentaly from this assignment. Problems submitted before '
+				. 'the close date on [_1] will earn full credit. Any problems that have already been '
+				. 'penalized will have to be resubmitted for full credit.',
+			$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
+		)
+	);
+}
 
-	return q{This item won't work unless your instructor enables the reduced scoring feature.  }
-		. 'Let your instructor know that you received this message.'
-		unless $ce->{pg}{ansEvalDefaults}{enableReducedScoring};
+sub use_item ($self, $set, $records, $c) {
+	return '' unless $c->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring};
 
-	my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
-	return "No achievement data?!?!?!" unless $globalUserAchievement->frozen_hash;
+	my $db      = $c->db;
+	my $userSet = $db->getUserSet($set->user_id, $set->set_id);
 
-	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
-	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
-
-	my $setID = $c->param('no_reduce_set_id');
-	return "You need to input a Set Name" unless defined $setID;
-
-	my $set     = $db->getMergedSet($userName, $setID);
-	my $userSet = $db->getUserSet($userName, $setID);
-	return "Couldn't find that set!" unless $set && $userSet;
-
-	# Remove reduced scoring from the set and set the reduced scoring date to be the due date.
+	$set->enable_reduced_scoring(0);
+	$set->reduced_scoring_date($set->due_date);
 	$userSet->enable_reduced_scoring(0);
-	$userSet->reduced_scoring_date($set->due_date());
+	$userSet->reduced_scoring_date($set->due_date);
 	$db->putUserSet($userSet);
 
-	$globalData->{ $self->{id} }--;
-	$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
-	$db->putGlobalUserAchievement($globalUserAchievement);
-
-	return;
+	return $c->maketext('Reduced scoring pentaly removed.');
 }
 
 1;

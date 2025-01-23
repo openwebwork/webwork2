@@ -37,25 +37,8 @@ sub initialize ($c) {
 	$c->{globalData}  = $db->getGlobalUserAchievement($c->{studentName});
 
 	# Check to see if user items are enabled and if the user has achievement data.
-	if ($ce->{achievementItemsEnabled} && defined $c->{globalData}) {
-		my $itemsWithCounts = WeBWorK::AchievementItems::UserItems($c->{studentName}, $db, $ce);
-		$c->{achievementItems} = $itemsWithCounts;
-
-		my $usedItem = $c->param('useditem');
-
-		# If the useditem parameter is defined then the student wanted to use an item, so lets do that by calling the
-		# appropriate item's use method and printing results.
-		if (defined $usedItem) {
-			my $error = $itemsWithCounts->[$usedItem][0]->use_item($c->{studentName}, $c);
-			if ($error) {
-				$c->addbadmessage($error);
-			} else {
-				if   ($itemsWithCounts->[$usedItem][1] != 1) { --$itemsWithCounts->[$usedItem][1]; }
-				else                                         { splice(@$itemsWithCounts, $usedItem, 1); }
-				$c->addgoodmessage($c->maketext('Reward used successfully!'));
-			}
-		}
-	}
+	$c->{achievementItems} = WeBWorK::AchievementItems::UserItems($c, $c->{studentName}, undef, undef)
+		if $ce->{achievementItemsEnabled} && defined $c->{globalData};
 
 	return;
 }
@@ -85,35 +68,6 @@ sub getAchievementLevelData ($c) {
 		level_progress   => $level_progress,
 		level_goal       => $level_goal,
 		level_percentage => $level_percentage
-	);
-}
-
-sub getAchievementItemsData ($c) {
-	my $db = $c->db;
-
-	my $userID = $c->{studentName};
-
-	my (@items, %itemCounts, @sets, %setProblemIds);
-
-	if ($c->ce->{achievementItemsEnabled} && $c->{achievementItems}) {
-		# Remove count data so @items is structured as originally designed.
-		for my $item (@{ $c->{achievementItems} }) {
-			push(@items, $item->[0]);
-			$itemCounts{ $item->[0]->id } = $item->[1];
-		}
-
-		for my $set ($db->getMergedSets(map { [ $userID, $_ ] } $db->listUserSets($userID))) {
-			push(@sets, $set);
-			$setProblemIds{ $set->set_id } = [ map { $_->[2] }
-					$db->listUserProblemsWhere({ user_id => $userID, set_id => $set->set_id }, 'problem_id') ];
-		}
-	}
-
-	return (
-		items         => \@items,
-		itemCounts    => \%itemCounts,
-		sets          => \@sets,
-		setProblemIds => \%setProblemIds
 	);
 }
 
