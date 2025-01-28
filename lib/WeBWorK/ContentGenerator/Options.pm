@@ -22,7 +22,7 @@ WeBWorK::ContentGenerator::Options - Change user options.
 
 =cut
 
-use WeBWorK::Utils qw(cryptPassword);
+use WeBWorK::Utils qw(cryptPassword utf8Crypt);
 use WeBWorK::Localize;
 
 sub page_title ($c) {
@@ -56,7 +56,7 @@ sub initialize ($c) {
 				$userID ne $effectiveUserID ? eval { $db->getPassword($c->{effectiveUser}->user_id) } : $password;
 
 			# Check that either password is not defined or if it is defined then we have the right one.
-			if (!defined $password || crypt($currP // '', $password->password) eq $password->password) {
+			if (!defined $password || utf8Crypt($currP // '', $password->password) eq $password->password) {
 				my $e_user_name = $c->{effectiveUser}->first_name . ' ' . $c->{effectiveUser}->last_name;
 				if ($newP eq $confirmP) {
 					if (!defined $effectiveUserPassword) {

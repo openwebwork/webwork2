@@ -55,7 +55,7 @@ use Scalar::Util qw(weaken);
 use Mojo::Util   qw(b64_encode b64_decode);
 
 use WeBWorK::Debug;
-use WeBWorK::Utils       qw(x runtime_use);
+use WeBWorK::Utils       qw(x runtime_use utf8Crypt);
 use WeBWorK::Utils::Logs qw(writeCourseLog);
 use WeBWorK::Utils::TOTP;
 use WeBWorK::Localize;
@@ -633,7 +633,7 @@ sub checkPassword {
 	my $Password = $db->getPassword($userID);
 	if (defined $Password) {
 		# Check against the password in the database.
-		my $possibleCryptPassword = crypt $possibleClearPassword, $Password->password;
+		my $possibleCryptPassword = utf8Crypt($possibleClearPassword, $Password->password);
 		my $dbPassword            = $Password->password;
 		# This next line explicitly insures that blank or null passwords from the database can never succeed in matching
 		# an entered password.  This also rejects cases when the database has a crypted password which matches a
