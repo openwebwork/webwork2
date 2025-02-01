@@ -50,8 +50,10 @@
 		<%= select_field $fieldName => \@values,
 			id => $fieldName . '_id', class => 'form-select form-select-sm w-auto flex-grow-0',
 			'aria-labelledby' => 'permission_header' =%>
+	% } elsif (my $roleName = (grep { $ce->{userRoles}{$_} eq $value } keys %{ $ce->{userRoles} })[0]) {
+		<%= maketext($roleName) %>
 	% } else {
-		<%= maketext((grep { $ce->{userRoles}{$_} eq $value } keys %{ $ce->{userRoles} })[0]) %>
+		<%= maketext('Unknown: [_1]', $value) %>
 	% }
 % } elsif ($properties->{type} eq 'password') {
 	% # Note that this is only called if in editMode.
