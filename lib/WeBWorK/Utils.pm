@@ -358,11 +358,18 @@ sub generateURLs ($c, %params) {
 
 	if ($userName) {
 		my $routePath;
-		my @args;
+		my $args = {};
 		if (defined $params{set_id} && $params{set_id} ne '') {
 			if ($params{problem_id}) {
 				$routePath = $c->url_for('problem_detail', setID => $params{set_id}, problemID => $params{problem_id});
-				@args      = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
+				$args      = {
+					displayMode        => undef,
+					showOldAnswers     => undef,
+					showCorrectAnswers => undef,
+					showHints          => undef,
+					showSolutions      => undef,
+					showProblemGrader  => 1
+				};
 			} else {
 				$routePath = $c->url_for('problem_list', setID => $params{set_id});
 			}
@@ -372,10 +379,10 @@ sub generateURLs ($c, %params) {
 		$emailableURL = $c->systemLink(
 			$routePath,
 			authen      => 0,
-			params      => [ 'effectiveUser', @args ],
+			params      => { effectiveUser => undef, %{$args} },
 			use_abs_url => 1,
 		);
-		$returnURL = $c->systemLink($routePath, params => [@args]);
+		$returnURL = $c->systemLink($routePath);
 	} else {
 		$emailableURL = '(not available)';
 		$returnURL    = '';
