@@ -85,6 +85,9 @@
 		%
 		% if ($ce->{achievementsEnabled}) {
 			<li class="list-group-item nav-item"><%= $makelink->('achievements') %></li>
+			% if ($authz->hasPermissions($userID, 'view_leaderboard')) {
+				<li class="list-group-item nav-item"><%= $makelink->('achievements_leaderboard') %></li>
+			% }
 		% }
 		%
 		% if ($authz->hasPermissions($userID, 'access_instructor_tools')) {
