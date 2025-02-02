@@ -60,13 +60,15 @@ sub print_form ($self, $set, $records, $c) {
 sub use_item ($self, $set, $records, $c) {
 	my $db = $c->db;
 
-	my @userProblems = $db->getUserProblemsWhere({ user_id => $set->user_id, set_id => $set->set_id }, 'problem_id');
-	for my $n (0 .. $#userProblems) {
-		$records->[$n]->status($records->[$n]->status > 0.5 ? 1 : $records->[$n]->status + 0.5);
-		$records->[$n]->sub_status($records->[$n]->status);
-		$userProblems[$n]->status($records->[$n]->status);
-		$userProblems[$n]->sub_status($records->[$n]->status);
-		$db->putUserProblem($userProblems[$n]);
+	my %userProblems =
+		map { $_->problem_id => $_ } $db->getUserProblemsWhere({ user_id => $set->user_id, set_id => $set->set_id });
+	for my $problem (@$records) {
+		my $userProblem = $userProblems{ $problem->problem_id };
+		$problem->status($problem->status > 0.5 ? 1 : $problem->status + 0.5);
+		$problem->sub_status($problem->status);
+		$userProblem->status($problem->status);
+		$userProblem->sub_status($problem->status);
+		$db->putUserProblem($userProblem);
 	}
 
 	return $c->maketext(q(Assignment's grade increased from [_1] to [_2].), $self->{old_grade}, $self->{new_grade});

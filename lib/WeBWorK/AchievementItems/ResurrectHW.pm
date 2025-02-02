@@ -44,15 +44,14 @@ sub use_item ($self, $set, $records, $c) {
 	my $db      = $c->db;
 	my $userSet = $db->getUserSet($set->user_id, $set->set_id);
 
-	# Change the seed for all of the problems if the set is currently closed.
-	if (after($set->due_date)) {
-		my @userProblems =
-			$db->getUserProblemsWhere({ user_id => $set->user_id, set_id => $set->set_id }, 'problem_id');
-		for my $n (0 .. $#userProblems) {
-			$userProblems[$n]->problem_seed($userProblems[$n]->problem_seed % 2**31 + 1);
-			$records->[$n]->problem_seed($userProblems[$n]->problem_seed);
-			$db->putUserProblem($userProblems[$n]);
-		}
+	# Change the seed for all of the problems since the set is currently closed.
+	my %userProblems =
+		map { $_->problem_id => $_ } $db->getUserProblemsWhere({ user_id => $set->user_id, set_id => $set->set_id });
+	for my $problem (@$records) {
+		my $userProblem = $userProblems{ $problem->problem_id };
+		$userProblem->problem_seed($userProblem->problem_seed % 2**31 + 1);
+		$problem->problem_seed($userProblem->problem_seed);
+		$db->putUserProblem($userProblem);
 	}
 
 	# Add time to the reduced scoring date if it was defined in the first place

@@ -47,13 +47,15 @@ sub use_item ($self, $set, $records, $c) {
 	my $old_value = 0;
 	my $new_value = 0;
 
-	my @userProblems = $db->getUserProblemsWhere({ user_id => $set->user_id, set_id => $set->set_id }, 'problem_id');
-	for my $n (0 .. $#userProblems) {
-		$old_value += $records->[$n]->value;
-		$records->[$n]->value($records->[$n]->value * 2);
-		$userProblems[$n]->value($records->[$n]->value);
-		$new_value += $userProblems[$n]->value;
-		$db->putUserProblem($userProblems[$n]);
+	my %userProblems =
+		map { $_->problem_id => $_ } $db->getUserProblemsWhere({ user_id => $set->user_id, set_id => $set->set_id });
+	for my $problem (@$records) {
+		my $userProblem = $userProblems{ $problem->problem_id };
+		$old_value += $problem->value;
+		$problem->value(2 * $problem->value);
+		$userProblem->value($problem->value);
+		$new_value += $userProblem->value;
+		$db->putUserProblem($userProblem);
 	}
 
 	return $c->maketext(q(Assignment's total point value increased from [_1] points to [_2] points),
