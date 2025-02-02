@@ -25,7 +25,7 @@ sub new ($class) {
 	return bless {
 		id          => 'HalfCreditProb',
 		name        => x('Lesser Rod of Revelation'),
-		description => x('Increases the score of a single problem by 50%, to a maximum of 100%.')
+		description => x('Increases the grade of a single problem by 50%, to a maximum of 100%.')
 	}, $class;
 }
 
@@ -42,8 +42,8 @@ sub print_form ($self, $set, $records, $c) {
 	return WeBWorK::AchievementItems::form_popup_menu_row(
 		$c,
 		id         => 'half_cred_problem_id',
-		label_text => $c->maketext('Problem Number'),
-		first_item => $c->maketext('Choose problem to increase 50%.'),
+		label_text => $c->maketext('Problem number to give half credit'),
+		first_item => $c->maketext('Choose problem to increase grade by 50%.'),
 		values     => [
 			map { [
 				$c->maketext(
@@ -60,7 +60,7 @@ sub print_form ($self, $set, $records, $c) {
 sub use_item ($self, $set, $records, $c) {
 	my $problemID = $c->param('half_cred_problem_id');
 	unless ($problemID) {
-		$c->addbadmessage($c->maketext('Select problem to add 50% with the [_1].', $self->name));
+		$c->addbadmessage($c->maketext('Select problem to increase its grade by 50% with the [_1].', $self->name));
 		return '';
 	}
 
@@ -82,7 +82,8 @@ sub use_item ($self, $set, $records, $c) {
 	$userProblem->sub_status($problem->status);
 	$db->putUserProblem($userProblem);
 
-	return $c->maketext('Problem number [_1] increased to [_2]%.', $problemID, 100 * wwRound(2, $problem->status));
+	return $c->maketext('Problem number [_1] grade increased to [_2]%.', $problemID,
+		100 * wwRound(2, $problem->status));
 }
 
 1;

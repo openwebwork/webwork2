@@ -42,7 +42,7 @@ sub print_form ($self, $set, $records, $c) {
 	return WeBWorK::AchievementItems::form_popup_menu_row(
 		$c,
 		id         => 'reset_attempts_problem_id',
-		label_text => $c->maketext('Problem Number'),
+		label_text => $c->maketext('Problem number to reset incorrect attempts'),
 		first_item => $c->maketext('Choose problem to reset incorrect attempts.'),
 		values     => [
 			map { [

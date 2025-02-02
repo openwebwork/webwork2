@@ -124,13 +124,12 @@ sub UserItems ($c, $userName, $set, $records) {
 }
 
 # Method that returns a string with the achievement name and number of remaining items.
+# This should only be called if count != 0.
 sub remaining_title ($self, $c) {
-	if ($self->count > 1) {
+	if ($self->count > 0) {
 		return $c->maketext('[_1] ([_2] remaining)', $c->maketext($self->name), $self->count);
-	} elsif ($self->count < 0) {
-		return $c->maketext('[_1] (unlimited reusability)', $c->maketext($self->name));
 	} else {
-		return $c->maketext('[_1] (1 remains)', $c->maketext($self->name));
+		return $c->maketext('[_1] (unlimited reusability)', $c->maketext($self->name));
 	}
 }
 

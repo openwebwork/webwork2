@@ -45,7 +45,7 @@ sub print_form ($self, $set, $records, $c) {
 	return WeBWorK::AchievementItems::form_popup_menu_row(
 		$c,
 		id         => 'full_cred_problem_id',
-		label_text => $c->maketext('Problem Number'),
+		label_text => $c->maketext('Problem number to give full credit'),
 		first_item => $c->maketext('Choose problem to give full credit.'),
 		values     => [
 			map { [ $c->maketext('Problem [_1] ([_2]% to 100%)', $_->problem_id, 100 * wwRound(2, $_->status)) =>
@@ -57,7 +57,7 @@ sub print_form ($self, $set, $records, $c) {
 sub use_item ($self, $set, $records, $c) {
 	my $problemID = $c->param('full_cred_problem_id');
 	unless ($problemID) {
-		$c->addbadmessage($c->maketext('Select problem to give 100% to the [_1].', $self->name));
+		$c->addbadmessage($c->maketext('Select problem to give full credit with the [_1].', $self->name));
 		return '';
 	}
 
@@ -79,7 +79,7 @@ sub use_item ($self, $set, $records, $c) {
 	$userProblem->sub_status(1);
 	$db->putUserProblem($userProblem);
 
-	return $c->maketext('Problem number [_1] increased to 100%.', $problemID);
+	return $c->maketext('Problem number [_1] given full credit.', $problemID);
 }
 
 1;

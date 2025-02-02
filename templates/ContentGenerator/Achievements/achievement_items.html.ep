@@ -12,7 +12,7 @@
 	</p>
 	<dl class="mx-4">
 	% for my $item (@{ $c->{achievementItems} }) {
-		<dt class="fs-3">
+		<dt>
 			<%= $item->remaining_title($c) %>
 		</dt>
 		<dd class="ms-3 mb-2"><%= maketext($item->description) %></dd>

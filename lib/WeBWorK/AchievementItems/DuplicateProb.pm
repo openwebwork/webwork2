@@ -39,14 +39,14 @@ sub print_form ($self, $set, $records, $c) {
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			$c,
 			id         => 'clone_source_problem_id',
-			label_text => $c->maketext('Problem Number'),
+			label_text => $c->maketext('Problem number to copy'),
 			first_item => $c->maketext('Choose problem to copy from.'),
 			values     => [ map { [ $c->maketext('Problem [_1]', $_->problem_id) => $_->problem_id ] } @$records ],
 		),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			$c,
 			id         => 'clone_dest_problem_id',
-			label_text => $c->maketext('Problem Number'),
+			label_text => $c->maketext('Problem number to replace'),
 			first_item => $c->maketext('Choose problem to replace.'),
 			values     => [ map { [ $c->maketext('Problem [_1]', $_->problem_id) => $_->problem_id ] } @$records ],
 		),

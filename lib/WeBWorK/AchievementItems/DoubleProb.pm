@@ -37,8 +37,8 @@ sub print_form ($self, $set, $records, $c) {
 	return WeBWorK::AchievementItems::form_popup_menu_row(
 		$c,
 		id         => 'dbp_problem_id',
-		label_text => $c->maketext('Problem Number'),
-		first_item => $c->maketext('Choose problem to double.'),
+		label_text => $c->maketext('Problem number to double weight'),
+		first_item => $c->maketext('Choose problem to double its weight.'),
 		values     => [
 			map { [ $c->maketext('Problem [_1] ([_2] to [_3])', $_->problem_id, $_->value, 2 * $_->value) =>
 					$_->problem_id ] } @$records
@@ -49,7 +49,7 @@ sub print_form ($self, $set, $records, $c) {
 sub use_item ($self, $set, $records, $c) {
 	my $problemID = $c->param('dbp_problem_id');
 	unless ($problemID) {
-		$c->addbadmessage($c->maketext('Select problem to double with the [_1].', $self->name));
+		$c->addbadmessage($c->maketext('Select problem to double its weight with the [_1].', $self->name));
 		return '';
 	}
 
@@ -70,8 +70,7 @@ sub use_item ($self, $set, $records, $c) {
 	$userProblem->value($problem->value);
 	$db->putUserProblem($userProblem);
 
-	return $c->maketext('Problem [_1] increased from [_2] points to [_3] points.',
-		$problemID, $orig_value, $problem->value);
+	return $c->maketext('Problem [_1] weight increased from [_2] to [_3].', $problemID, $orig_value, $problem->value);
 }
 
 1;
