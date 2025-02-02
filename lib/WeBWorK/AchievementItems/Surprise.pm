@@ -31,6 +31,8 @@ sub new ($class) {
 sub can_use ($self, $set, $records) { return 1; }
 
 sub print_form ($self, $set, $records, $c) {
+	$self->{hideUseButton} = 1;
+
 	# The form opens the file "surprise_message.txt" in the achievements
 	# folder and prints the contents of the file.
 	open my $MESSAGE, '<', "$c->{ce}{courseDirs}{achievements}/surprise_message.txt"

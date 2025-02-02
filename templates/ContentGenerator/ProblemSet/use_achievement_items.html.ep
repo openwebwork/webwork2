@@ -25,8 +25,11 @@
 								<%= form_for current_route, method => 'POST', name => 'use_reward', begin =%>
 									<%= hidden_field 'use_achievement_item_id' => $item->id %>
 									<%= $form %>
-									<input class="btn btn-primary" name="use_achievement_item_<%= $item->id %>"
-										type="submit" value="<%= maketext('Use [_1]', $item->remaining_title($c)) %>">
+									% unless ($item->{hideUseButton}) {
+										<input class="btn btn-primary" type="submit"
+											name="use_achievement_item_<%= $item->id %>"
+											value="<%= maketext('Use [_1]', $item->remaining_title($c)) %>">
+									% }
 								<%= end =%>
 							</dd>
 						% }
