@@ -1200,7 +1200,7 @@ sub systemLink ($c, $urlpath, %options) {
 			if (!defined $params{$name} && defined $c->param($name) && $c->param($name) ne '');
 	}
 
-	return %params ? $url->query([ map { $_, $params{$_} } sort { $a cmp $b } keys %params ]) : $url;
+	return %params ? $url->query(%params) : $url;
 }
 
 =item nbsp($string)
