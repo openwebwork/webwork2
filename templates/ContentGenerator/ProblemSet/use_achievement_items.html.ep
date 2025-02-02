@@ -1,4 +1,4 @@
-% last unless $c->ce->{achievementsEnabled};
+% last unless $ce->{achievementsEnabled} && $ce->{achievementItemsEnabled};
 %
 % my $achievementItems = $c->{achievementItems};
 % if ($achievementItems && @$achievementItems) {

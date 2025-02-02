@@ -69,6 +69,10 @@ sub description ($self) { return $self->{description}; }
 # is paired with its input form to use the item.
 sub UserItems ($c, $userName, $set, $records) {
 	my $db = $c->db;
+	my $ce = $c->ce;
+
+	# Return unless achievement items are enabled.
+	return unless $ce->{achievementsEnabled} && $ce->{achievementItemsEnabled};
 
 	# When acting as another user, achievement items can be listed but not used.
 	return if $set && $userName ne $c->param('user');
