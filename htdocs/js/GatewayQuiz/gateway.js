@@ -158,22 +158,20 @@
 
 		const remainingTime = serverDueTime - browserTime + timeDelta;
 
-		if (!timerDiv.dataset.acting) {
-			if (remainingTime <= 10 - gracePeriod) {
-				if (sessionStorage.getItem('gatewayAlertStatus')) {
-					sessionStorage.removeItem('gatewayAlertStatus');
+		if (!timerDiv.dataset.acting && remainingTime <= 10 - gracePeriod) {
+			if (sessionStorage.getItem('gatewayAlertStatus')) {
+				sessionStorage.removeItem('gatewayAlertStatus');
 
-					// Submit the test if time is expired and near the end of grace period.
-					actuallySubmit = true;
-					submitAnswers.click();
-				}
-			} else {
-				// Set the timer text and check alerts at page load.
-				updateTimer();
-
-				// Start the timer.
-				setInterval(updateTimer, 1000);
+				// Submit the test if time is expired and near the end of grace period.
+				actuallySubmit = true;
+				submitAnswers.click();
 			}
+		} else {
+			// Set the timer text and check alerts at page load.
+			updateTimer();
+
+			// Start the timer.
+			setInterval(updateTimer, 1000);
 		}
 	}
 

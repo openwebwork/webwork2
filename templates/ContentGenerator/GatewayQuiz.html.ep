@@ -65,39 +65,45 @@
 % my $userID          = param('user');
 % my $effectiveUserID = param('effectiveUser');
 %
-% # If the set or problem is invalid, then show that information and exit.
+% # If the set is invalid, then show that information and exit.
 % if ($c->{invalidSet}) {
 	<div class="alert alert-danger mb-2">
 		<div class="mb-2">
-			% if ($c->{invalidVersionCreation}) {
-				<%= maketext(
-					'The selected test ([_1]) is not a valid test for [_2] (acted as by [_3]).',
-					$setID, $effectiveUserID, $userID
-				) =%>
-			% } else {
-				<%= maketext(
-					'The selected test ([_1]) is not a valid test for [_2].',
-					$setID, $effectiveUserID
-				) =%>
-			% }
+			<%= maketext('The selected test ([_1]) is not a valid test for [_2].', $setID, $effectiveUserID) =%>
 		</div>
 		<div><%= $c->{invalidSet} %></div>
-		% if ($c->{invalidVersionCreation} && $c->{invalidVersionCreation} == 1) {
-			<div class="mt-3">
-				<%= link_to maketext('Create New Test Version') => $c->systemLink(
-						url_for,
-						params => { effectiveUser => $effectiveUserID, user => $userID, createnew_ok => 1 }
-					),
-					class => 'btn btn-primary'
-				=%>
-				<%= link_to maketext('Cancel') => $c->systemLink(
-						url_for('problem_list', setID => $setID),
-						params => { effectiveUser => $effectiveUserID, user => $userID }
-					),
-					class => 'btn btn-primary'
-				=%>
-			</div>
-		% }
+	</div>
+	% last;
+% }
+% # If user tried to create a test version for another user without correct permissions, show message and exit.
+% if ($c->{actingCreationError}) {
+	<div class="alert alert-danger mb-2">
+		<%= maketext(
+			'You are acting as user [_1] and do not have the permission to create a new test version when acting '
+				. 'as another user.',
+			$effectiveUserID
+		) =%>
+	</div>
+	% last;
+% }
+% # Get confirmation before creating new test version or working on an open test for another user.
+% if (stash->{actingConfirmation}) {
+	<div class="alert alert-danger mb-2">
+		<div class="mb-2"><%= stash->{actingConfirmation} =%></div>
+		<div>
+			<%= link_to stash->{actingConfirmationButton} => $c->systemLink(
+					url_for,
+					params => { effectiveUser => $effectiveUserID, user => $userID, submit_for_student_ok => 1 }
+				),
+				class => 'btn btn-primary'
+			=%>
+			<%= link_to maketext('Cancel') => $c->systemLink(
+					url_for('problem_list', setID => $setID =~ s/,v\d+$//r),
+					params => { effectiveUser => $effectiveUserID, user => $userID }
+				),
+				class => 'btn btn-primary'
+			=%>
+		</div>
 	</div>
 	%
 	% last;
@@ -233,7 +239,7 @@
 % # Remaining output of test headers.
 % # Display timer or information about elapsed time, output link, and information about any recorded score if not
 % # submitAnswers or checkAnswers.
-% if ($c->{can}{recordAnswersNextTime}) {
+% if ($c->{can}{recordAnswersNextTime} && before($c->{set}->due_date + $ce->{gatewayGracePeriod}, $submitTime)) {
 	% my $timeLeft = $c->{set}->due_date - int($submitTime);    # This is in seconds
 	%
 	% # Print the timer if there is less than 24 hours left.
@@ -267,11 +273,13 @@
 		) =%>
 	% }
 	%
-	% if ($timeLeft < 60 && $timeLeft > 0 && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
+	% if ($timeLeft < 60 && $timeLeft > 0 && !$c->{can}{gradeUnsubmittedTest}
+			% && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
 		<div class="alert alert-danger d-inline-block mb-2 p-1">
 			<strong><%= maketext('You have less than 1 minute to complete this test.') %></strong>
 		</div>
-	% } elsif ($timeLeft <= 0 && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
+	% } elsif ($timeLeft <= 0 && !$c->{can}{gradeUnsubmittedTest} &&
+			% !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
 		<div class="alert alert-danger d-inline-block mb-2 p-1">
 			<strong>
 				<%= maketext('You are out of time!')
@@ -407,6 +415,10 @@
 		% if ($numProbPerPage && $numPages > 1) {
 			<%= hidden_field newPage => '' =%>
 			<%= hidden_field currentPage => $pageNumber =%>
+		% }
+		% # Keep track that a user has confirmed it is okay to submit for a student.
+		% if (param('submit_for_student_ok')) {
+			<%= hidden_field submit_for_student_ok => 1 =%>
 		% }
 		%
 		% # Set up links between problems and, for multi-page tests, pages.
@@ -651,11 +663,16 @@
 		%
 		<div class="submit-buttons-container col-12 mb-2">
 			<%= submit_button maketext('Preview Test'), name => 'previewAnswers', class => 'btn btn-primary mb-1' =%>
+			% if ($c->{can}{checkAnswersNextTime}
+					% && (!$c->{can}{recordAnswersNextTime} || $c->{can}{showProblemGrader})) {
+				<%= submit_button maketext('Check Test'), name => 'checkAnswers', class => 'btn btn-primary mb-1' =%>
+			% }
 			% if ($c->{can}{recordAnswersNextTime}) {
 				<%= tag('input',
 					type  => 'submit',
 					name  => 'submitAnswers',
-					value => maketext('Grade Test'),
+					value => $effectiveUserID ne $userID
+						? maketext('Grade Test for [_1]', $effectiveUserID) : maketext('Grade Test'),
 					class => 'btn btn-primary mb-1',
 					$c->{set}->attempts_per_version
 					? (
@@ -684,9 +701,6 @@
 						)
 					: ()
 				) =%>
-			% }
-			% if ($c->{can}{checkAnswersNextTime} && !$c->{can}{recordAnswersNextTime}) {
-				<%= submit_button maketext('Check Test'), name => 'checkAnswers', class => 'btn btn-primary mb-1' =%>
 			% }
 		</div>
 		% if ($numProbPerPage && $numPages > 1 && $c->{can}{recordAnswersNextTime}) {

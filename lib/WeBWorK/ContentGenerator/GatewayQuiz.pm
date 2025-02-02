@@ -141,9 +141,12 @@ sub can_recordAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $probl
 
 	if ($user->user_id ne $effectiveUser->user_id) {
 		# If the user is not allowed to record answers as another user, return that permission.  If the user is allowed
-		# to record only set version answers, then allow that between the open and close dates, and so drop out of this
-		# conditional to the usual one.
-		return 1 if $authz->hasPermissions($user->user_id,  'record_answers_when_acting_as_student');
+		# to record an unsubmitted test, allow that.  If the user is allowed to record only set version answers, then
+		# allow that between the open and close dates, and so drop out of this conditional to the usual one.
+		return 1
+			if $authz->hasPermissions($user->user_id, 'record_answers_when_acting_as_student')
+			|| $c->can_gradeUnsubmittedTest($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet,
+				$submitAnswers);
 		return 0 if !$authz->hasPermissions($user->user_id, 'record_set_version_answers_when_acting_as_student');
 	}
 
@@ -222,6 +225,15 @@ sub can_checkAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $proble
 		if after($set->answer_date, $submitTime);
 
 	return 0;
+}
+
+# If user can use the problem grader, and the test is past due and has not been submitted, allow them to submit.
+sub can_gradeUnsubmittedTest ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers = 0)
+{
+	return
+		!$submitAnswers
+		&& $c->can_showProblemGrader($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet)
+		&& (after($set->due_date + $c->ce->{gatewayGracePeriod}) && !$set->version_last_attempt_time);
 }
 
 sub can_showScore ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
@@ -533,7 +545,7 @@ async sub pre_header_initialize ($c) {
 							$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
 							|| $authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student')
 						)
-						&& $c->param('createnew_ok')
+						&& $c->param('submit_for_student_ok')
 					)
 				)
 				)
@@ -597,8 +609,7 @@ async sub pre_header_initialize ($c) {
 					|| $authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student'))
 				)
 			{
-
-				$c->{invalidSet} = $c->maketext(
+				$c->stash->{actingConfirmation} = $c->maketext(
 					'You are acting as user [_1].  If you continue, you will create a new version of '
 						. 'this test for that user, which will count against their allowed maximum '
 						. 'number of versions for the current time interval.  In general, this is not '
@@ -606,15 +617,10 @@ async sub pre_header_initialize ($c) {
 						. 'the "Create New Test Version" button below.  Alternatively, click "Cancel".',
 					$effectiveUserID
 				);
-				$c->{invalidVersionCreation} = 1;
+				$c->stash->{actingConfirmationButton} = $c->maketext('Create New Test Version');
 
 			} elsif ($effectiveUserID ne $userID) {
-				$c->{invalidSet} = $c->maketext(
-					'You are acting as user [_1], and do not have the permission to create a new test version '
-						. 'when acting as another user.',
-					$effectiveUserID
-				);
-				$c->{invalidVersionCreation} = 2;
+				$c->{actingCreationError} = 1;
 
 			} elsif (($maxAttemptsPerVersion == 0 || $currentNumAttempts < $maxAttemptsPerVersion)
 				&& $c->submitTime < $set->due_date() + $ce->{gatewayGracePeriod})
@@ -641,11 +647,29 @@ async sub pre_header_initialize ($c) {
 			if (
 				($currentNumAttempts < $maxAttemptsPerVersion)
 				&& ($effectiveUserID eq $userID
-					|| $authz->hasPermissions($userID, 'record_set_version_answers_when_acting_as_student'))
+					|| $authz->hasPermissions($userID, 'record_set_version_answers_when_acting_as_student')
+					|| $authz->hasPermissions($userID, 'record_answers_when_acting_as_student'))
 				)
 			{
 				if (between($set->open_date(), $set->due_date() + $ce->{gatewayGracePeriod}, $c->submitTime)) {
 					$versionIsOpen = 1;
+
+					# If acting as another user, then the user has permissions to record answers for the
+					# student which is dangerous for open test versions. Give a warning unless the user
+					# has already confirmed they understand the risk.
+					if ($effectiveUserID ne $userID && !$c->param('submit_for_student_ok')) {
+						$c->stash->{actingConfirmation} = $c->maketext(
+							'You are trying to view an open test version for [_1] and have the permission to submit '
+								. 'answers for that user.  This is dangerous, as your answers can overwrite the '
+								. q/student's answers as you move between test pages, preview, or check answers.  /
+								. 'If you are planing to submit answers for this student, click "View Test Version" '
+								. 'below to continue.  If you only want to view the test version, click "Cancel" '
+								. 'below, then disable the permission to record answers when acting as a student '
+								. 'before viewing open test versions.',
+							$effectiveUserID
+						);
+						$c->stash->{actingConfirmationButton} = $c->maketext('View Test Version');
+					}
 				}
 			}
 		}
@@ -653,6 +677,13 @@ async sub pre_header_initialize ($c) {
 	} elsif (!$c->{invalidSet} && !$requestedVersion) {
 		$c->{invalidSet} = $c->maketext('This test is closed.  No new test versions may be taken.');
 	}
+
+	if ($c->stash->{actingConfirmation}) {
+		# Store session while waiting for confirmation for proctored tests.
+		$c->authen->session(acting_proctor => 1) if $c->{assignment_type} eq 'proctored_gateway';
+		return;
+	}
+	delete $c->authen->session->{acting_proctor};
 
 	# If the proctor session key does not have a set version id, then add it.  This occurs when a student
 	# initially enters a proctored test, since the version id is not determined until just above.
@@ -663,8 +694,8 @@ async sub pre_header_initialize ($c) {
 		else                   { delete $c->authen->session->{proctor_authorization_granted}; }
 	}
 
-	# If the set or problem is invalid, then delete any proctor session keys and return.
-	if ($c->{invalidSet}) {
+	# If the set is invalid, then delete any proctor session keys and return.
+	if ($c->{invalidSet} || $c->{actingCreationError}) {
 		if (defined $c->{assignment_type} && $c->{assignment_type} eq 'proctored_gateway') {
 			delete $c->authen->session->{proctor_authorization_granted};
 		}
@@ -740,6 +771,7 @@ async sub pre_header_initialize ($c) {
 		checkAnswers          => $c->can_checkAnswers(@args),
 		recordAnswersNextTime => $c->can_recordAnswers(@args, $c->{submitAnswers}),
 		checkAnswersNextTime  => $c->can_checkAnswers(@args, $c->{submitAnswers}),
+		gradeUnsubmittedTest  => $c->can_gradeUnsubmittedTest(@args, $c->{submitAnswers}),
 		showScore             => $c->can_showScore(@args),
 		showProblemScores     => $c->can_showProblemScores(@args),
 		showWork              => $c->can_showWork(@args),
@@ -753,6 +785,12 @@ async sub pre_header_initialize ($c) {
 	$c->{want} = \%want;
 	$c->{can}  = \%can;
 	$c->{will} = \%will;
+
+	# Issue a warning if a test has not been submitted, but can still be graded by the instructor.
+	$c->addbadmessage(
+		$c->maketext(
+			'This test version is past due, but has not been graded. You can still grade the test for this user.')
+	) if $can{gradeUnsubmittedTest} && $userID ne $effectiveUserID;
 
 	# Set up problem numbering and multipage variables.
 
@@ -1330,7 +1368,8 @@ sub path ($c, $args) {
 		$args,
 		'WeBWorK'   => $navigation_allowed ? $c->url_for('root')     : '',
 		$courseName => $navigation_allowed ? $c->url_for('set_list') : '',
-		$setID eq 'Undefined_Set' || $c->{invalidSet}
+		$setID eq 'Undefined_Set'
+			|| $c->{invalidSet} || $c->{actingCreationError} || $c->stash->{actingConfirmation}
 		? ($setID => '')
 		: (
 			$c->{set}->set_id           => $c->url_for('problem_list', setID => $c->{set}->set_id),
@@ -1344,7 +1383,7 @@ sub nav ($c, $args) {
 	my $userID          = $c->param('user');
 	my $effectiveUserID = $c->param('effectiveUser');
 
-	return '' if $c->{invalidSet};
+	return '' if $c->{invalidSet} || $c->{actingCreationError} || $c->stash->{actingConfirmation};
 
 	# Set up and display a student navigation for those that have permission to act as a student.
 	if ($c->authz->hasPermissions($userID, 'become_student') && $effectiveUserID ne $userID) {

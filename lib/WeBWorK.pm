@@ -217,6 +217,7 @@ async sub dispatch ($c) {
 				# current server time during a gateway quiz, and that definitely should not revoke proctor
 				# authorization.
 				delete $c->authen->session->{proctor_authorization_granted};
+				delete $c->authen->session->{acting_proctor};
 			}
 			return 1;
 		} else {

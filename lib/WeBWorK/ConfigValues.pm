@@ -529,7 +529,14 @@ sub getConfigValues ($ce) {
 				var  => 'permissionLevels{record_answers_when_acting_as_student}',
 				doc  => x('Can submit answers for a student'),
 				doc2 => x(
-					'When acting as a student, this permission level and higher can submit answers for that student.'),
+					'When acting as a student, this permission level and higher can submit answers for that student, '
+						. 'which includes starting and grading test versions.  This permission should only be turned '
+						. 'on temporarily and set back to "nobody" after you are done submitting answers for a '
+						. 'student.  Leaving this permission on is dangerous, as you could unintentionally submit '
+						. 'answers for a student, which can use up their total number of attempts.  Further, if you '
+						. 'are viewing an open test version, your answers on each page will be saved when you move '
+						. q/between pages, which will overwrite the student's saved answers./
+				),
 				type => 'permission'
 			},
 			{
