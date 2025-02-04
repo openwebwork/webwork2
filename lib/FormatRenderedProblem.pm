@@ -187,8 +187,8 @@ sub formatRenderedProblem {
 			if $ws->c->current_route eq 'render_rpc' && ($ws->c->param('displayMode') // '') eq 'PTX';
 	}
 
-	# Make sure this is defined and is an array reference as saveGradeToLTI might add to it.
-	$rh_result->{debug_messages} = [] unless defined $rh_result && ref $rh_result eq 'ARRAY';
+	# Make sure $rh_result->{debug_messages} an array reference as saveGradeToLTI might add to it.
+	$rh_result->{debug_messages} = [] unless ref $rh_result->{debug_messages} eq 'ARRAY';
 
 	$forbidGradePassback = 1 if !$forbidGradePassback && !$submitMode;
 
