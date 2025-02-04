@@ -396,7 +396,7 @@
 					sourceFilePath: document.getElementsByName('edit_file_path')[0]?.value,
 					rawProblemSource:
 						webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '',
-					outputformat: 'simple',
+					outputformat: 'debug',
 					showAnswerNumbers: 0,
 					// The set id is really only needed by set headers to get the correct dates for the set.
 					set_id: document.getElementsByName('hidden_set_id')[0]?.value ?? 'Unknown Set',
