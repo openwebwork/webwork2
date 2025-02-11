@@ -133,7 +133,8 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{needs_grading} = ($problem->flags // '') =~ /:needs_grading$/;
 
 	# Persistent problem data
-	$options{PERSISTENCE_HASH} = decode_json($problem->problem_data || '{}');
+	$options{PERSISTENCE_HASH} = decode_json($translationOptions->{problemData}
+			// (defined $problem->problem_data && $problem->problem_data ne '' ? $problem->problem_data : '{}'));
 
 	# Language
 	$options{language} = $ce->{language};
@@ -284,8 +285,7 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 				map { $_ => $pg->{pgcore}{PG_alias}{resource_list}{$_}{uri} }
 					keys %{ $pg->{pgcore}{PG_alias}{resource_list} }
 			};
-			$ret->{PERSISTENCE_HASH_UPDATED} = $pg->{pgcore}{PERSISTENCE_HASH_UPDATED};
-			$ret->{PERSISTENCE_HASH}         = $pg->{pgcore}{PERSISTENCE_HASH};
+			$ret->{PERSISTENCE_HASH} = $pg->{pgcore}{PERSISTENCE_HASH};
 		}
 
 		# Save the problem source. This is used by Caliper::Entity. Why?

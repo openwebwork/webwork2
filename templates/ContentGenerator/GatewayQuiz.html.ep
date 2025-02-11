@@ -656,6 +656,16 @@
 				<%= hidden_field 'probstatus' . $problems->[ $probOrder->[$i] ]{problem_id}
 					=> $c->{probStatus}[ $probOrder->[$i] ] %>
 			% }
+			%
+			% # If the user can check answers and a problem_data form parameter for
+			% # this problem has been set then add a hidden input with that data.
+			% if (
+				% $c->{can}{checkAnswers}
+				% && defined $c->param('problem_data_' . $problems->[ $probOrder->[$i] ]{problem_id})
+			% ) {
+				<%= hidden_field 'problem_data_' . $problems->[ $probOrder->[$i] ]{problem_id}
+					=> param('problem_data_' . $problems->[ $probOrder->[$i] ]{problem_id}) =%>
+			% }
 		% }
 		%
 		<%= $jumpLinks->() =%>
