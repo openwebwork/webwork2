@@ -33,20 +33,25 @@
 		const reduced_rule = document.getElementById(`${name}.reduced_scoring_date_id`);
 		if (reduced_rule) groupRules.splice(1, 0, [reduced_rule]);
 
-		// Compute the time difference between the current browser timezone and the course timezone.
+		// Compute the time difference between a time in the browser timezone and the same time in the course timezone.
 		// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
-		// Note that this is in seconds.
-		const timezoneAdjustment =
-			new Date(new Date().toLocaleString('en-US')).getTime() -
-			new Date(
-				new Date().toLocaleString('en-US', { timeZone: open_rule.dataset.timezone ?? 'America/New_York' })
-			).getTime();
+		// Note that the input time is in seconds and output times is in milliseconds.
+		const timezoneAdjustment = (time) => {
+			const dateTime = new Date(0);
+			dateTime.setUTCSeconds(time);
+			return (
+				new Date(dateTime.toLocaleString('en-US')).getTime() -
+				new Date(
+					dateTime.toLocaleString('en-US', { timeZone: open_rule.dataset.timezone ?? 'America/New_York' })
+				).getTime()
+			);
+		};
 
 		for (const rule of groupRules) {
 			const classValue = document.getElementsByName(`${rule[0].name}.class_value`)[0]?.dataset.classValue;
 			const value = rule[0].value || classValue;
-			rule.push(value ? parseInt(value) * 1000 - timezoneAdjustment : 0);
-			if (classValue) rule.push(parseInt(classValue) * 1000 - timezoneAdjustment);
+			rule.push(value ? parseInt(value) * 1000 - timezoneAdjustment(parseInt(value)) : 0);
+			if (classValue) rule.push(parseInt(classValue) * 1000 - timezoneAdjustment(parseInt(classValue)));
 		}
 
 		const update = (input) => {
@@ -156,7 +161,8 @@
 				parseDate(datestr, format) {
 					// Deal with the case of a unix timestamp.  The timezone needs to be adjusted back as this is for
 					// the unix timestamp stored in the hidden input whose value will be sent to the server.
-					if (format === 'U') return new Date(parseInt(datestr) * 1000 - timezoneAdjustment);
+					if (format === 'U')
+						return new Date(parseInt(datestr) * 1000 - timezoneAdjustment(parseInt(datestr)));
 
 					// Next attempt to parse the datestr with the current format.  This should not be adjusted.  It is
 					// for display only.
@@ -171,7 +177,7 @@
 				formatDate(date, format) {
 					// In this case the date provided is in the browser's time zone.  So it needs to be adjusted to the
 					// timezone of the course.
-					if (format === 'U') return (date.getTime() + timezoneAdjustment) / 1000;
+					if (format === 'U') return (date.getTime() + timezoneAdjustment(date.getTime() / 1000)) / 1000;
 
 					return luxon.DateTime.fromMillis(date.getTime()).toFormat(
 						datetimeFormats[luxon.Settings.defaultLocale]
