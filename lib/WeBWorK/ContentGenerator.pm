@@ -1196,7 +1196,8 @@ sub systemLink ($c, $urlpath, %options) {
 	my $url = $options{use_abs_url} ? $urlpath->to_abs : $urlpath;
 
 	for my $name (keys %params) {
-		$params{$name} = [ $c->param($name) ] if (!defined $params{$name} && defined $c->param($name));
+		$params{$name} = [ $c->param($name) ]
+			if (!defined $params{$name} && defined $c->param($name) && $c->param($name) ne '');
 	}
 
 	return %params ? $url->query(%params) : $url;
