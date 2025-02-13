@@ -419,7 +419,7 @@
 					% $prettyID   = join('.', jitar_id_to_seq($prettyID)) if $isJitarSet;
 					% $repeatFile = maketext('This problem uses the same source file as number [_1].', $prettyID);
 				% } else {
-					% $shownYet{$problemFile} = $problemID;
+					% $shownYet{$problemFile} = $problemID unless $problemFile =~ /^group:/;
 					% $repeatFile = '';
 				% }
 				%
