@@ -550,55 +550,68 @@ async sub pre_header_initialize ($c) {
 				)
 				)
 			{
-				# Assign the set, get the right name, version number, etc., and redefine the $set and $problem for the
-				# remainder of this method.
+				# Attempt to assign the set.
 				my $setTmpl = $db->getUserSet($effectiveUserID, $setID);
-				assignSetVersionToUser($db, $effectiveUserID, $setTmpl);
-				$setVersionNumber++;
+				eval { assignSetVersionToUser($db, $effectiveUserID, $setTmpl) };
 
-				# Get a clean version of the set and merged version to use in the rest of the routine.
-				my $cleanSet = $db->getSetVersion($effectiveUserID, $setID, $setVersionNumber);
-				$set = $db->getMergedSetVersion($effectiveUserID, $setID, $setVersionNumber);
-				$set->visible(1);
+				if ($@) {
+					$c->log->error("Error creating test version of $setID for $effectiveUserID: $@");
+					$c->{invalidSet} =
+						$c->maketext('Unable to generate a valid test version. This is usually caused by invalid '
+							. 'usage of grouping sets or a database error. Please speak to your instructor to fix the '
+							. 'error. A system administrator can obtain more details on this error from the logs.');
+					# Attempt to delete the set version if it was created. Failure from this attempt is ignored.
+					eval { $db->deleteSetVersion($userID, $setID, $setVersionNumber + 1) }
+						if $db->existsSetVersion($userID, $setID, $setVersionNumber + 1);
+				} else {
+					# Get the right name, version number, etc., and redefine the
+					# $set and $problem for the remainder of this method.
 
-				$problem = $db->getMergedProblemVersion($effectiveUserID, $setID, $setVersionNumber, $setPNum[0]);
+					++$setVersionNumber;
 
-				# Convert the floating point value from Time::HiRes to an integer for use below. Truncate toward 0.
-				my $timeNowInt = int($c->submitTime);
+					# Get a clean version of the set and merged version to use in the rest of the routine.
+					my $cleanSet = $db->getSetVersion($effectiveUserID, $setID, $setVersionNumber);
+					$set = $db->getMergedSetVersion($effectiveUserID, $setID, $setVersionNumber);
+					$set->visible(1);
 
-				# Set up creation time, and open and due dates.
-				my $ansOffset = $set->answer_date - $set->due_date;
-				$set->version_creation_time($timeNowInt);
-				$set->open_date($timeNowInt);
-				# Figure out the due date, taking into account the time limit cap.
-				my $dueTime =
-					$timeLimit == 0 || ($set->time_limit_cap && $c->submitTime + $timeLimit > $set->due_date)
-					? $set->due_date
-					: $timeNowInt + $timeLimit;
+					$problem = $db->getMergedProblemVersion($effectiveUserID, $setID, $setVersionNumber, $setPNum[0]);
 
-				$set->due_date($dueTime);
-				$set->answer_date($set->due_date + $ansOffset);
-				$set->version_last_attempt_time(0);
+					# Convert the floating point value from Time::HiRes to an integer for use below. Truncate toward 0.
+					my $timeNowInt = int($c->submitTime);
 
-				# Put this new info into the database.  Put back the data needed for the version, and leave blank any
-				# information that should be inherited from the user set or global set.  Set the data which determines
-				# if a set is open, because a set version should not reopen after it's complete.
-				$cleanSet->version_creation_time($set->version_creation_time);
-				$cleanSet->open_date($set->open_date);
-				$cleanSet->due_date($set->due_date);
-				$cleanSet->answer_date($set->answer_date);
-				$cleanSet->version_last_attempt_time($set->version_last_attempt_time);
-				$cleanSet->version_time_limit($set->version_time_limit);
-				$cleanSet->attempts_per_version($set->attempts_per_version);
-				$cleanSet->assignment_type($set->assignment_type);
-				$db->putSetVersion($cleanSet);
+					# Set up creation time, and open and due dates.
+					my $ansOffset = $set->answer_date - $set->due_date;
+					$set->version_creation_time($timeNowInt);
+					$set->open_date($timeNowInt);
+					# Figure out the due date, taking into account the time limit cap.
+					my $dueTime =
+						$timeLimit == 0 || ($set->time_limit_cap && $c->submitTime + $timeLimit > $set->due_date)
+						? $set->due_date
+						: $timeNowInt + $timeLimit;
 
-				# This is a new set version, so it's open.
-				$versionIsOpen = 1;
+					$set->due_date($dueTime);
+					$set->answer_date($set->due_date + $ansOffset);
+					$set->version_last_attempt_time(0);
 
-				# Set the number of attempts for this set to zero.
-				$currentNumAttempts = 0;
+					# Put this new info into the database.  Put back the data needed for the version, and leave blank
+					# any information that should be inherited from the user set or global set.  Set the data which
+					# determines if a set is open, because a set version should not reopen after it's complete.
+					$cleanSet->version_creation_time($set->version_creation_time);
+					$cleanSet->open_date($set->open_date);
+					$cleanSet->due_date($set->due_date);
+					$cleanSet->answer_date($set->answer_date);
+					$cleanSet->version_last_attempt_time($set->version_last_attempt_time);
+					$cleanSet->version_time_limit($set->version_time_limit);
+					$cleanSet->attempts_per_version($set->attempts_per_version);
+					$cleanSet->assignment_type($set->assignment_type);
+					$db->putSetVersion($cleanSet);
 
+					# This is a new set version, so it's open.
+					$versionIsOpen = 1;
+
+					# Set the number of attempts for this set to zero.
+					$currentNumAttempts = 0;
+				}
 			} elsif ($maxAttempts != -1 && $totalNumVersions > $maxAttempts) {
 				$c->{invalidSet} = $c->maketext('No new versions of this test are available, '
 						. 'because you have already taken the maximum number allowed.');
