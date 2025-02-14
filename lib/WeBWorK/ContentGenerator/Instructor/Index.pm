@@ -162,12 +162,11 @@ sub initialize ($c) {
 		return;
 	}
 
-	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
-	# user if such restrictions are defined.  This list is sorted by last_name, then first_name, then user_id.
+	# Get all users, and restrict to the sections or recitations that are allowed for the user if such restrictions are
+	# defined.  This list is sorted by last_name, then first_name, then user_id.
 	$c->stash->{users} = [
 		$db->getUsersWhere(
 			{
-				user_id => { not_like => 'set_id:%' },
 				$ce->{viewable_sections}{$userID} || $ce->{viewable_recitations}{$userID}
 				? (
 					-or => [

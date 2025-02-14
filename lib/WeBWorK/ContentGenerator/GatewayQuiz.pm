@@ -1334,10 +1334,8 @@ sub nav ($c, $args) {
 
 		my %users = map { $_->[0] => 1 } @userVersions;
 		my %allUserRecords =
-			map  { $_->user_id => $_ }
-			grep { $users{ $_->user_id } }
-			$c->db->getUsersWhere(
-				{ -and => { user_id => { not_like => 'set_id:%' } }, user_id => { '!=' => $userID } });
+			map { $_->user_id => $_ }
+			grep { $users{ $_->user_id } } $c->db->getUsersWhere({ user_id => { '!=' => $userID } });
 
 		my $filter = $c->param('studentNavFilter');
 

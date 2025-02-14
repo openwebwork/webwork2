@@ -236,7 +236,7 @@ sub score_handler ($c) {
 
 	# First get everything that is needed from the database.
 	my @achievements = sortAchievements($db->getAchievements(@achievementsToScore));
-	my @users        = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } }, [qw(section last_name)]);
+	my @users        = $db->getUsersWhere({}, [qw(section last_name)]);
 
 	my %globalUserAchievements = map { $_->user_id => $_ } $db->getGlobalUserAchievementsWhere;
 

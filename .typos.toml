@@ -30,6 +30,7 @@ crypted = "crypted"
 crypted_ = "crypted_"
 cryptedPassword = "cryptedPassword"
 crypted_password = "crypted_password"
+isCryptedPassword = "isCryptedPassword"
 # Variable name for the paired select-all checkboxes.
 pairedSelectAlls = "pairedSelectAlls"
 # Function name (write JSON to file).
