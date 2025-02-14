@@ -131,7 +131,7 @@ sub problem_set ($c, $set_id) {
 			time_limit_cap            => $problem_set->time_limit_cap,
 			restrict_ip               => $problem_set->restrict_ip,
 			relax_restrict_ip         => $problem_set->relax_restrict_ip,
-			restricted_login_proctor  => $problem_set->restricted_login_proctor,
+			restricted_login_password => $problem_set->restricted_login_password,
 			hide_hint                 => $problem_set->hide_hint,
 			restrict_prob_progression => $problem_set->restrict_prob_progression
 		}

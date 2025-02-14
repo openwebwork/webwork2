@@ -23,11 +23,10 @@ sub initialize ($c) {
 		unless $authz->hasPermissions($user, 'access_instructor_tools')
 		&& $authz->hasPermissions($user, 'assign_problem_sets');
 
-	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
+	# Get all users, and restrict to the sections or recitations that are allowed for the
 	# user if such restrictions are defined.
 	$c->stash->{users} = [
 		$db->getUsersWhere({
-			user_id => { not_like => 'set_id:%' },
 			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
 			? (
 				-or => [

@@ -74,7 +74,7 @@ sub importUsersFromCSV {
 
 		print "Saw user_id = $user_id\n";
 
-		unless (WeBWorK::DB::check_user_id($user_id)) {    # try to catch lines with bad characters
+		unless (eval { WeBWorK::DB::check_user_id($user_id) }) {    # try to catch lines with bad characters
 			push @skipped, $user_id;
 			next;
 		}

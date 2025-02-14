@@ -86,7 +86,7 @@ async sub synchronizeRoster ($job) {
 	my (@messages, @addedUsers, @userAchievementRecordsToAdd, @globalAchievementRecordsToAdd, %usersInLMSCourse);
 	my $updatedUsers = 0;
 
-	my %users = map { $_->user_id => $_ } $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
+	my %users = map { $_->user_id => $_ } $db->getUsersWhere;
 
 	my @achievements = $db->getAchievementsWhere({ enabled => 1 }, ['achievement_id']);
 
@@ -263,7 +263,7 @@ async sub synchronizeRoster ($job) {
 		if @globalAchievementRecordsToAdd;
 
 	my %permissionLevels =
-		map { $_->user_id => $_->permission } $db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
+		map { $_->user_id => $_->permission } $db->getPermissionLevelsWhere;
 
 	# Mark all users not in the LMS roster and at or below the LTIAccountCreationCutoff as dropped.
 	my @droppedUsers;

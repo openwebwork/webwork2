@@ -233,10 +233,9 @@ sub getInstructorData ($c) {
 	my $ce   = $c->ce;
 	my $user = $c->authen->{user_id};
 
-	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for
+	# Get all users, and restrict to the sections or recitations that are allowed for
 	# the user if such restrictions are defined.
 	my @users = $db->getUsersWhere({
-		user_id => { not_like => 'set_id:%' },
 		$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
 		? (
 			-or => [

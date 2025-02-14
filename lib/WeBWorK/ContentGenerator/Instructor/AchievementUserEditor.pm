@@ -22,7 +22,7 @@ sub initialize ($c) {
 	return unless $authz->hasPermissions($user, 'edit_achievements');
 
 	$c->stash->{userRecords} =
-		[ $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } }, [qw/section last_name first_name/]) ];
+		[ $db->getUsersWhere({}, [qw/section last_name first_name/]) ];
 	$c->stash->{userAchievementRecords} =
 		{ map { $_->user_id => $_ } $db->getUserAchievementsWhere({ achievement_id => $achievementID }) };
 
