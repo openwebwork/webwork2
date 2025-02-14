@@ -258,12 +258,13 @@ sub updateTableFields {
 
 	my $schema_obj = $db->{$table};
 
-	my %newKeyFields;
+	my (%newFields, %newKeyFields);
 
 	# Add fields
 	for my $field_name (keys %$fieldStatus) {
 		if ($fieldStatus->{$field_name}[0] == ONLY_IN_A) {
 			if ($schema_obj->can('add_column_field') && $schema_obj->add_column_field($field_name)) {
+				$newFields{$field_name} = 1;
 				if ($fieldStatus->{$field_name}[1]) {
 					push(@messages, [ "Added primary key column '$field_name' to table '$table'", 1 ]);
 					$newKeyFields{$field_name} = 1;
@@ -285,6 +286,13 @@ sub updateTableFields {
 			push(@messages, [ "Rebuilt indexes for table '$table'", 1 ]);
 		}
 	}
+
+	# This must be done before fields are dropped since it uses the old restricted_login_proctor field.
+	push(@messages, $self->migrateSetLevelProctorPasswords)
+		if $table eq 'set'
+		&& $newFields{restricted_login_password}
+		&& $fieldStatus->{restricted_login_proctor}
+		&& $fieldStatus->{restricted_login_proctor}[0] == ONLY_IN_B;
 
 	# Drop fields if listed in $delete_field_names.
 	for my $field_name (@$delete_field_names) {
@@ -355,6 +363,60 @@ sub migrateSetIdToSetIdVersionId {
 	$sth->finish;
 
 	return @results;
+}
+
+# Set level proctor passwords used to be the password of a "set_id:<set_id>" user, and were used for sets with the
+# restricted_login_proctor field set to 'Yes'.  Copy the password of that user into the restricted_login_password field
+# of the set.  Then delete all of these users.
+sub migrateSetLevelProctorPasswords {
+	my $self   = shift;
+	my $db     = $self->db;
+	my $record = $db->{set};
+
+	my @messages;
+
+	my %passwords = map { substr($_->[0], 7) => $_->[1] }
+		$db->{password}->get_fields_where([qw(user_id password)], { user_id => { like => 'set_id:%' } });
+
+	my @fields = $record->fields;
+	my %values;
+	@values{@fields} = (0 .. $#fields);
+
+	my @keyfields = $record->keyfields;
+	my %where;
+	@where{@keyfields} = map { $values{$_} } @keyfields;
+
+	my ($stmt, @val_order) = $record->sql->update($record->table, \%values);
+	(substr($stmt, length($stmt), 0), my @where_order) = $record->sql->where(\%where);
+
+	my $rows_i = $record->get_fields_where_i([@fields], { restricted_login_proctor => 'Yes' });
+	my $sth    = $record->dbh->prepare_cached($stmt, undef, 3);
+
+	until ($rows_i->is_exhausted) {
+		my $fieldValues = $rows_i->value;
+
+		my $setID    = $fieldValues->[ $values{set_id} ];
+		my $password = $passwords{$setID};
+		next unless defined $password && $password =~ /\S/;
+
+		my @bind_vals = @$fieldValues[@where_order];
+		$fieldValues->[ $values{restricted_login_password} ] = $password;
+		unshift(@bind_vals, @$fieldValues[@val_order]);
+
+		$record->dbh->debug_stmt($sth, @bind_vals);
+		$sth->execute(@bind_vals);
+		push(@messages, [ "Migrated the set level proctor password for set '$setID'", 1 ]);
+	}
+	$sth->finish;
+
+	my $deleted = 0;
+	for my $table (qw(user password permission)) {
+		my $result = $db->{$table}->delete_where({ user_id => { like => 'set_id:%' } });
+		$deleted = $result if $table eq 'user';
+	}
+	push(@messages, [ 'Deleted ' . ($deleted + 0) . ' obsolete set level proctor users', 1 ]) if $deleted > 0;
+
+	return @messages;
 }
 
 # Database locking utilities

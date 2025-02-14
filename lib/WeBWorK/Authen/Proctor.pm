@@ -10,8 +10,9 @@ WeBWorK::Authen::Proctor - Authenticate gateway test proctors.
 use strict;
 use warnings;
 
-use WeBWorK::Utils       qw(x);
+use WeBWorK::Utils       qw(x utf8Crypt isCryptedPassword);
 use WeBWorK::Utils::Sets qw(test_version_is_complete);
+use WeBWorK::Debug       qw(debug);
 
 use constant GENERIC_ERROR_MESSAGE => x('Invalid user ID or password.');
 
@@ -68,37 +69,34 @@ sub verify {
 	return $self->SUPER::verify(@_);
 }
 
-# This is similar to the method in the base class, with these differences:
-#  1. no guest logins
-#  2. no cookie
-#  3. no session key
-#  4. user_id/password come from POST request params proctor_user/proctor_passwd
 sub get_credentials {
 	my ($self) = @_;
 	my $c = $self->{c};
 
-	my $set_id = $c->stash('setID');
-
-	if (defined $c->req->body_params->param('proctor_user')) {
-		$self->{user_id}           = $c->req->body_params->param('proctor_user');
-		$self->{user_id}           = "set_id:$set_id" if $self->{user_id} eq $set_id;
+	if (defined $c->req->body_params->param('proctor_user') || $c->req->body_params->param('set_level_proctor')) {
+		$self->{user_id}           = $c->req->body_params->param('proctor_user') // '';
+		$self->{set_level_proctor} = 1 if $c->req->body_params->param('set_level_proctor');
 		$self->{password}          = $c->req->body_params->param('proctor_passwd');
 		$self->{login_type}        = $c->req->body_params->param('submitAnswers') ? 'proctor_grading' : 'proctor_login';
 		$self->{credential_source} = 'params';
+		debug('proctor credential source: "params", ',
+			$self->{set_level_proctor} ? 'using set level proctor' : qq{user: "$self->{user_id}"});
 		return 1;
 	} elsif ($c->authen->session('proctor_authorization_granted') && !$c->req->body_params->param('submitAnswers')) {
 		$self->{login_type}        = 'proctor_login';
 		$self->{credential_source} = 'session';
+		debug('proctor credential source: "session"');
 		return 1;
 	}
 
 	return 0;
 }
 
-# If proctor authorization is granted a proctor user is not needed.  So skip checking the user.
+# If proctor authorization is granted or if a set level proctor password is used then a proctor user is not needed.
+# So skip checking the user.
 sub check_user {
 	my $self = shift;
-	return 1 if $self->{credential_source} eq 'session';
+	return 1 if $self->{credential_source} eq 'session' || $self->{set_level_proctor};
 	return $self->SUPER::check_user;
 }
 
@@ -136,15 +134,9 @@ sub verify_normal_user {
 			my $db    = $c->db;
 			my $authz = $c->authz;
 
-			my $user_id = $self->{user_id};
-
-			# Prepended "set_id:" for set-level authentication.
-			my $show_user_id = $user_id;
-			$show_user_id =~ s/^set_id://;
-
 			# A proctor user may have the Proctor status which does not have the course_access behavior.
 			# So don't check that here.  However, the user must be able to login.
-			unless ($authz->hasPermissions($user_id, 'login')) {
+			unless ($self->{set_level_proctor} || $authz->hasPermissions($self->{user_id}, 'login')) {
 				$self->{log_error} = 'user not permitted to login';
 				$self->{error}     = $c->maketext(GENERIC_ERROR_MESSAGE);
 				return 0;
@@ -153,11 +145,11 @@ sub verify_normal_user {
 			# As mentioned above the setID will not have the set version number if a new version is being opened.  That
 			# will be added to the proctor session key by the GatewayQuiz module later.
 			if ($self->{login_type} eq 'proctor_grading') {
-				unless ($authz->hasPermissions($user_id, 'proctor_quiz_grade')) {
+				unless ($authz->hasPermissions($self->{user_id}, 'proctor_quiz_grade')) {
 					$self->{log_error} = 'user not permitted to proctor test grade submissions';
 					$self->{error} =
 						$c->maketext('User [_1] is not authorized to proctor test grade submissions in this course.',
-							$show_user_id);
+							$self->{user_id});
 					return 0;
 				}
 				$c->authen->session('proctor_authorization_granted' => $c->stash('setID'));
@@ -166,32 +158,37 @@ sub verify_normal_user {
 				# A UserSet is needed to determine if it is configured to skip grade proctor authorization.  Require a
 				# grade_proctor permission level to start a quiz that skips authorization to grade it. This ensures that
 				# a grade proctor level of authorization is always required.
-				my $userSet = $db->getMergedSet($c->param('effectiveUser'), $c->stash('setID'));
-				unless (
-					$authz->hasPermissions($user_id, 'proctor_quiz_grade')
-					|| (($userSet->use_grade_auth_proctor eq 'Yes' || $userSet->restricted_login_proctor eq 'Yes')
-						&& $authz->hasPermissions($user_id, 'proctor_quiz_login'))
+				my $userSet = $self->{userSet} // $db->getMergedSet($c->param('effectiveUser'), $c->stash('setID'));
+
+				# Only accept the set level proctor password if set, and reject any other credentials.
+				if ($userSet->restricted_login_password ne '' && !$self->{set_level_proctor}) {
+					$self->{log_error} = 'invalid set password to start quiz.';
+					$self->{error}     = $c->maketext(GENERIC_ERROR_MESSAGE);
+					return 0;
+				}
+
+				if (
+					$userSet->restricted_login_password eq ''
+					&& !$authz->hasPermissions($self->{user_id}, 'proctor_quiz_grade')
+					&& ($userSet->use_grade_auth_proctor eq 'No'
+						|| !$authz->hasPermissions($self->{user_id}, 'proctor_quiz_login'))
+
 					)
 				{
-					# Set the error based on if a single set password was required, a grade
-					# proctor was required to start, or a login proctor was required.
-					if ($userSet->restricted_login_proctor eq 'Yes') {
-						$self->{log_error} = 'invalid set password to start quiz.';
-						$self->{error} =
-							$c->maketext('This quiz requires a set password to start, and the password was invalid.');
-					} elsif ($userSet->use_grade_auth_proctor ne 'Yes') {
+					# Set the error based on if a grade proctor was required to start, or a login proctor was required.
+					if ($userSet->use_grade_auth_proctor eq 'No') {
 						$self->{log_error} =
 							'grade proctor required to login and user is not permitted to proctor quiz grading.';
 						$self->{error} = $c->maketext(
 							'This quiz requires a grade proctor to start, and user [_1] is '
 								. 'not authorized to proctor test grade submissions in this course.',
-							$show_user_id
+							$self->{user_id}
 						);
 					} else {
 						$self->{log_error} = 'user not permitted to proctor quiz logins.';
 						$self->{error} =
-							$c->maketext("User [_1] is not authorized to proctor test logins in this course.",
-								$show_user_id);
+							$c->maketext('User [_1] is not authorized to proctor test logins in this course.',
+								$self->{user_id});
 					}
 					return 0;
 				}
@@ -203,12 +200,51 @@ sub verify_normal_user {
 			delete $c->authen->session->{'proctor_authorization_granted'};
 			delete $c->authen->session->{'proctor_authorization_version'};
 			if ($auth_result == 0) {
-				$self->{log_error} = "authentication failed";
+				$self->{log_error} = 'authentication failed';
 				$self->{error}     = $c->maketext(GENERIC_ERROR_MESSAGE);
 			}
 			return 0;
 		}
 	}
+}
+
+# This checks the password for the set level proctor if the set is configured for that.
+# Otherwise it checks the password using the base class.
+sub authenticate {
+	my $self = shift;
+
+	return -1 unless defined $self->{password};
+
+	if ($self->{set_level_proctor}) {
+		my $c = $self->{c};
+
+		# First verify that this set is configured to use a set level proctor.
+		my $userSet = $c->db->getMergedSet($c->param('effectiveUser'), $c->stash('setID'));
+		if (!$userSet || $userSet->restricted_login_password eq '') {
+			$self->write_log_entry('SET LEVEL PROCTOR: set does not have a set level proctor password');
+			return 0;
+		}
+
+		debug('Checking set level proctor password.');
+		my $setPassword = $userSet->restricted_login_password;
+		my $password    = $self->{password} =~ s/^\s*|\s*$//gr;
+
+		# Set level proctor passwords migrated from courses created before these passwords were stored in the set are
+		# crypt hashes.
+		if ($setPassword eq $password
+			|| (isCryptedPassword($setPassword) && utf8Crypt($password, $setPassword) eq $setPassword))
+		{
+			$self->write_log_entry('SET LEVEL PROCTOR: password accepted');
+			$self->{userSet} = $userSet;
+			return 1;
+		} else {
+			$self->write_log_entry('SET LEVEL PROCTOR: password rejected');
+			return 0;
+		}
+	}
+
+	debug('Checking proctor password.');
+	return $self->SUPER::authenticate;
 }
 
 # This is similar to the method in the base class, except that the parameters

@@ -177,14 +177,12 @@ async sub initialize ($c) {
 		return;
 	}
 
-	# Get a list of all users except set-level proctors from the database.
-	my @allUsersDB = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
+	# Get a list of all users from the database.
+	my @allUsersDB = $db->getUsersWhere;
 
-	my %permissionLevels =
-		map { $_->user_id => $_->permission } $db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
+	my %permissionLevels = map { $_->user_id => $_->permission } $db->getPermissionLevelsWhere;
 
-	my %passwordRecords =
-		map { $_->user_id => $_ } $db->getPasswordsWhere({ user_id => { not_like => 'set_id:%' } });
+	my %passwordRecords = map { $_->user_id => $_ } $db->getPasswordsWhere;
 
 	# Add permission level, a password exists field, and a must reset password field to the user record hash.
 	for my $user (@allUsersDB) {
@@ -733,11 +731,11 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 		my %record  = %$record;
 		my $user_id = $record{user_id};
 
-		unless (WeBWorK::DB::check_user_id($user_id)) {    # try to catch lines with bad characters
+		unless (eval { WeBWorK::DB::check_user_id($user_id) }) {    # try to catch lines with bad characters
 			push @skipped, $user_id;
 			next;
 		}
-		if ($user_id eq $c->authen->{user_id}) {           # don't replace yourself!!
+		if ($user_id eq $c->authen->{user_id}) {                    # don't replace yourself!!
 			push @skipped, $user_id;
 			next;
 		}

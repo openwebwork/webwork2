@@ -25,18 +25,17 @@ sub initialize ($c) {
 
 	return unless $c->authz->hasPermissions($c->{userName}, 'view_leaderboard');
 
-	# Get list of all users (except set-level proctors) and achievements.
+	# Get list of all users and achievements.
 	my @achievements     = sortAchievements($db->getAchievementsWhere);
 	my %achievementsById = map { $_->achievement_id => $_ } @achievements;
 	my %globalUserAchievements =
-		map { $_->user_id => $_ } $db->getGlobalUserAchievementsWhere({ user_id => { not_like => 'set_id:%' } });
+		map { $_->user_id => $_ } $db->getGlobalUserAchievementsWhere;
 
 	$c->{showUserNames} = $c->authz->hasPermissions($c->{userName}, 'view_leaderboard_usernames');
 	$c->{showLevels}    = 0;    # Hide level column unless at least one user has a level achievement.
 
 	my %allUserAchievements;
 	for ($db->getUserAchievementsWhere({
-		user_id        => { not_like => 'set_id:%' },
 		achievement_id => [ map { $_->achievement_id } grep { $_->category ne 'level' } @achievements ],
 	}))
 	{
@@ -44,7 +43,7 @@ sub initialize ($c) {
 	}
 
 	my @rows;
-	for my $user ($db->getUsersWhere({ user_id => { not_like => 'set_id:%' } })) {
+	for my $user ($db->getUsersWhere) {
 		# Only include users who can be shown in stats.
 		next unless $ce->status_abbrev_has_behavior($user->status, 'include_in_stats');
 

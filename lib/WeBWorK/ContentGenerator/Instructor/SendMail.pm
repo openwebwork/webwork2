@@ -81,11 +81,11 @@ sub initialize ($c) {
 	$c->{preview_user} = $classList[0] && $classList[0] ne $userID ? $db->getUser($classList[0]) : $user;
 
 	# Gather database data
-	# Get all users except set level proctors and practice users.  If the current user has restrictions on viewable
-	# sections or recitations, those are filtered out as well.  The users are sorted by user_id.
+	# Get all users except practice users.  If the current user has restrictions on viewable sections or recitations,
+	# those are filtered out as well.  The users are sorted by user_id.
 	my @Users = $db->getUsersWhere(
 		{
-			user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
+			user_id => { not_like => "$ce->{practiceUserPrefix}\%" },
 			$ce->{viewable_sections}{$userID} || $ce->{viewable_recitations}{$userID}
 			? (
 				-or => [
