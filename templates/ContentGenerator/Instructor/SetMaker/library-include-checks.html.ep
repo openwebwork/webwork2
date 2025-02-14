@@ -6,8 +6,10 @@
 		<%= hidden_field includeOPL => 0 =%>
 	</div>
 	<div class="form-check font-sm">
+		% param('includeContrib', 'on') unless defined param('includeContrib');
 		<%= check_box includeContrib => 'on', id => 'includeContrib', class => 'form-check-input' =%>
 		<%= label_for includeContrib => maketext('Include Contrib'), class => 'form-check-label' =%>
+		<%= hidden_field includeContrib => 0 =%>
 	</div>
 % } else {
 	<%= hidden_field includeOPL => 1 =%>
