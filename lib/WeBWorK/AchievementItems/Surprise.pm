@@ -28,6 +28,11 @@ sub new ($class) {
 	}, $class;
 }
 
+# Override to not print number of items that remain.
+sub remaining_title ($self, $c) {
+	return $c->maketext($self->name);
+}
+
 sub can_use ($self, $set, $records) { return 1; }
 
 sub print_form ($self, $set, $records, $c) {
