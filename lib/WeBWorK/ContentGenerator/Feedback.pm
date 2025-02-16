@@ -25,10 +25,9 @@ WeBWorK::ContentGenerator::Feedback - Send mail to professors.
 use Data::Dumper;
 use Email::Stuffer;
 use Try::Tiny;
-use Text::Wrap qw(wrap);
 
 use WeBWorK::Upload;
-use WeBWorK::Utils qw(decodeAnswers createEmailSenderTransportSMTP fetchEmailRecipients);
+use WeBWorK::Utils qw(createEmailSenderTransportSMTP fetchEmailRecipients);
 
 # request paramaters used
 #
@@ -137,52 +136,18 @@ sub initialize ($c) {
 		my $subject = $ce->{mail}{feedbackSubjectFormat} || 'WeBWorK question from %c: %u set %s/prob %p';
 		$subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ''/eg;
 
-		# Get info about remote user.
 		my $remote_host = $c->tx->remote_address || 'UNKNOWN';
-		my $remote_port = $c->tx->remote_port    || 'UNKNOWN';
 
-		my $systemURL = $c->url_for('root')->to_abs;
-
-		my $msg = sprintf("Message from %s (%s) via WeBWorK at\n%s\n\n", $user->full_name, $user->user_id, $systemURL);
-		$msg .= "To visit the page from which the user sent feedback, go to:\n$emailableURL\n\n";
-
-		if ($feedback) {
-			$msg .= sprintf("%s (%s) wrote:\n\n\n%s\n\n\n", $user->full_name, $user->user_id, $feedback);
-		}
-		if ($problem and $verbosity >= 1) {
-			$msg .=
-				qq/***** Data about the problem processor: ***** \n\n/
-				. 'Display Mode:         '
-				. $c->param('displayMode') . "\n"
-				. 'Show Old Answers:     '
-				. ($c->param('showOldAnswers') ? 'yes' : 'no') . "\n"
-				. 'Show Correct Answers: '
-				. ($c->param('showCorrectAnswers') ? 'yes' : 'no') . "\n"
-				. 'Show Hints:           '
-				. ($c->param('showHints') ? 'yes' : 'no') . "\n"
-				. 'Show Solutions:       '
-				. ($c->param('showSolutions') ? 'yes' : 'no') . "\n\n";
-		}
-
-		if ($user && $verbosity >= 1) {
-			$msg .= "***** Data about the user: *****\n\n";
-			$msg .= $c->format_user($user) . "\n";
-			$msg .= "$remote_host:$remote_port\n";
-		}
-
-		if ($problem && $verbosity >= 1) {
-			$msg .= "***** Data about the problem: *****\n\n";
-			$msg .= $c->format_userproblem($problem) . "\n";
-		}
-		if ($set && $verbosity >= 1) {
-			$msg .= "***** Data about the homework set: *****\n\n" . $c->format_userset($set) . "\n";
-		}
-		if ($ce && $verbosity >= 2) {
-			$msg .= "***** Data about the environment: *****\n\n" . Dumper($ce) . "\n\n";
-		}
-
-		my $email = Email::Stuffer->to(join(',', @recipients))->subject($subject)->text_body($msg)
-			->header('X-Remote-Host' => $remote_host);
+		my $email = Email::Stuffer->to(join(',', @recipients))->subject($subject)->html_body($c->render_to_string(
+			'ContentGenerator/Feedback/feedback_email',
+			user         => $user,
+			emailableURL => $emailableURL,
+			feedback     => $feedback,
+			problem      => $problem,
+			set          => $set,
+			verbosity    => $verbosity,
+			remote_host  => $remote_host,
+		))->header('X-Remote-Host' => $remote_host);
 		if ($ce->{feedback_sender_email}) {
 			my $from_name = $user ? $user->full_name : $ce->{generic_sender_name};
 			$email->from("$from_name <$ce->{feedback_sender_email}>")->reply_to($sender);
@@ -261,83 +226,6 @@ sub initialize ($c) {
 
 sub page_title ($c) {
 	return $c->ce->{feedback_button_name} || $c->maketext('E-mail Instructor');
-}
-
-sub format_user ($c, $user) {
-	my $ce = $c->ce;
-
-	my $result = "User ID:    " . $user->user_id . "\n";
-	$result .= "Name:       " . $user->full_name . "\n";
-	$result .= "Email:      " . $user->email_address . "\n";
-	unless ($ce->{blockStudentIDinFeedback}) {
-		$result .= "Student ID: " . $user->student_id . "\n";
-	}
-
-	my $status_name = $ce->status_abbrev_to_name($user->status);
-	my $status_string =
-		defined $status_name
-		? "$status_name ('" . $user->status . "')"
-		: $user->status . " (unknown status abbreviation)";
-	$result .= "Status:     $status_string\n";
-
-	$result .= "Section:    " . $user->section . "\n";
-	$result .= "Recitation: " . $user->recitation . "\n";
-	$result .= "Comment:    " . $user->comment . "\n";
-
-	return $result;
-}
-
-sub format_userset ($c, $set) {
-	my $ce = $c->ce;
-
-	my $result = "Set ID:                    " . $set->set_id . "\n";
-	$result .= "Set header file:           " . $set->set_header . "\n";
-	$result .= "Hardcopy header file:      " . $set->hardcopy_header . "\n";
-
-	$result .= "Open date:                 " . $c->formatDateTime($set->open_date) . "\n";
-	$result .= "Due date:                  " . $c->formatDateTime($set->due_date) . "\n";
-	$result .= "Answer date:               " . $c->formatDateTime($set->answer_date) . "\n";
-	$result .= "Visible:                   " . ($set->visible ? "yes" : "no") . "\n";
-	$result .= "Assignment type:           " . $set->assignment_type . "\n";
-	if ($set->assignment_type =~ /gateway/) {
-		$result .= "Attempts per version:      " . $set->assignment_type . "\n";
-		$result .= "Time interval:             " . $set->time_interval . "\n";
-		$result .= "Versions per interval:     " . $set->versions_per_interval . "\n";
-		$result .= "Version time limit:        " . $set->version_time_limit . "\n";
-		$result .= "Version creation time:     " . $c->formatDateTime($set->version_creation_time) . "\n";
-		$result .= "Problem randorder:         " . $set->problem_randorder . "\n";
-		$result .= "Version last attempt time: " . $set->version_last_attempt_time . "\n";
-	}
-
-	return $result;
-}
-
-sub format_userproblem ($c, $problem) {
-	my $ce = $c->ce;
-
-	my $result = "Problem ID:                   " . $problem->problem_id . "\n";
-	$result .= "Source file:                  " . $problem->source_file . "\n";
-	$result .= "Value:                        " . $problem->value . "\n";
-	$result .=
-		"Max attempts                  " . ($problem->max_attempts == -1 ? "unlimited" : $problem->max_attempts) . "\n";
-	$result .= "Random seed:                  " . $problem->problem_seed . "\n";
-	$result .= "Status:                       " . $problem->status . "\n";
-	$result .= "Attempted:                    " . ($problem->attempted ? "yes" : "no") . "\n";
-
-	my %last_answer = decodeAnswers($problem->last_answer);
-	if (%last_answer) {
-		$result .= "Last answer:\n";
-		foreach my $key (sort keys %last_answer) {
-			$result .= "\t$key: $last_answer{$key}\n" if $last_answer{$key};
-		}
-	} else {
-		$result .= "Last answer:                  none\n";
-	}
-
-	$result .= "Number of correct attempts:   " . $problem->num_correct . "\n";
-	$result .= "Number of incorrect attempts: " . $problem->num_incorrect . "\n";
-
-	return $result;
 }
 
 1;
