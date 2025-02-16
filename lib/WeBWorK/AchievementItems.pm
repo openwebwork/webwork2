@@ -105,7 +105,7 @@ sub UserItems ($c, $userName, $set, $records) {
 				$achievementItem->{count}--;
 				$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
 				$db->putGlobalUserAchievement($globalUserAchievement);
-				$c->addgoodmessage($c->maketext('[_1] succesffuly used. [_2]', $achievementItem->name, $message));
+				$c->addgoodmessage($c->maketext('[_1] successfuly used. [_2]', $achievementItem->name, $message));
 			}
 		}
 
@@ -154,13 +154,19 @@ sub form_popup_menu_row ($c, %options) {
 	$params{label_attr}{class} //= 'col-form-label';
 	$params{menu_attr}{class}  //= 'form-select';
 
-	unshift(@{ $params{values} }, [ $params{first_item} => '' ]) if $params{first_item};
+	unshift(@{ $params{values} }, [ $params{first_item} => '', disabled => undef, selected => undef ])
+		if $params{first_item};
 
 	my $row_contents = $c->tag(
 		'div',
 		class => 'form-floating',
 		$c->c(
-			$c->select_field($params{id} => $params{values}, %{ $params{menu_attr} }),
+			$c->select_field(
+				$params{id} => $params{values},
+				id          => $params{id},
+				required    => undef,
+				%{ $params{menu_attr} }
+			),
 			$c->label_for($params{id} => $params{label_text}, %{ $params{label_attr} })
 		)->join('')
 	);

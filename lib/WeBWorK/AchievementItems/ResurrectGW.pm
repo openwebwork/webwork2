@@ -64,7 +64,7 @@ sub use_item ($self, $set, $records, $c) {
 	$userSet->answer_date($set->answer_date);
 	$db->putUserSet($userSet);
 
-	return $c->maketext('Close date of this test extended 24 hours to [_1].',
+	return $c->maketext('Close date of this test extended by 24 hours to [_1].',
 		$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat}));
 }
 

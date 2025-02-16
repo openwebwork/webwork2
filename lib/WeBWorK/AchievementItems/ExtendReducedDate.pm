@@ -76,7 +76,7 @@ sub use_item ($self, $set, $records, $c) {
 	$db->putUserSet($userSet);
 
 	return $c->maketext(
-		'Reduced scoring date of this assignment exted by 24 hours to [_1].',
+		'Reduced scoring date of this assignment extended by 24 hours to [_1].',
 		$c->formatDateTime($self->{new_date}, $c->ce->{studentDateDisplayFormat})
 	);
 }

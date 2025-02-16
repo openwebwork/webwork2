@@ -56,7 +56,7 @@ sub print_form ($self, $set, $records, $c) {
 		'p',
 		$c->maketext(
 			'Extend the close date of this assignment to [_1] (an additional 24 hours).  Any submissions during '
-				. 'this additional time will be reducend and are worth [_2]% of their full value. [_3]',
+				. 'this additional time will be reduced and are worth [_2]% of their full value. [_3]',
 			$c->formatDateTime($set->due_date + ONE_DAY, $ce->{studentDateDisplayFormat}),
 			100 * $ce->{pg}{ansEvalDefaults}{reducedScoringValue},
 			$randomization_statement
@@ -103,8 +103,10 @@ sub use_item ($self, $set, $records, $c) {
 	}
 	$db->putUserSet($userSet);
 
-	return $c->maketext('Close date changed by 24 hours to [_1].',
-		$c->formatDateTime($set->due_date, $ce->{studentDateDisplayFormat}));
+	return $c->maketext(
+		'Close date of this assignment extended by 24 hours to [_1].',
+		$c->formatDateTime($set->due_date, $ce->{studentDateDisplayFormat})
+	);
 }
 
 1;

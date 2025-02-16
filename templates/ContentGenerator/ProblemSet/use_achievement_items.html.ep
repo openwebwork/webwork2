@@ -3,7 +3,7 @@
 % my $achievementItems = $c->{achievementItems};
 % if ($achievementItems && @$achievementItems) {
 	<div class="mb-3">
-		<%= link_to maketext('Use Achievement Reward')  => '#modal_rewards',
+		<%= link_to maketext('Use Achievement Reward') => '#modal_rewards',
 			role  => 'button',
 			class => 'btn btn-primary',
 			id    => 'popup_rewards',
@@ -17,23 +17,28 @@
 						<button type="button" class="btn-close" data-bs-dismiss="modal"
 							aria-label="<%= maketext('close') %>"></button>
 					</div>
-					<dl class="mx-3">
-						% for (@$achievementItems) {
-							% my ($item, $form) = @$_;
-							<dt class="fs-4"><%= $item->name %></dt>
-							<dd class="mx-3 mb-4">
-								<%= form_for current_route, method => 'POST', name => 'use_reward', begin =%>
-									<%= hidden_field 'use_achievement_item_id' => $item->id %>
-									<%= $form %>
-									% unless ($item->{hideUseButton}) {
-										<input class="btn btn-primary" type="submit"
-											name="use_achievement_item_<%= $item->id %>"
-											value="<%= maketext('Use [_1]', $item->remaining_title($c)) %>">
-									% }
-								<%= end =%>
-							</dd>
-						% }
-					</dl>
+					<div class="modal-body">
+						<dl>
+							% for (@$achievementItems) {
+								% my ($item, $form) = @$_;
+								<dt class="fs-4"><%= $item->name %></dt>
+								<dd class="mx-3 mb-4">
+									<%= form_for current_route, method => 'POST', name => 'use_reward', begin =%>
+										<%= hidden_field 'use_achievement_item_id' => $item->id %>
+										<%= $form %>
+										% unless ($item->{hideUseButton}) {
+											<input class="btn btn-primary" type="submit"
+												name="use_achievement_item_<%= $item->id %>"
+												value="<%= maketext('Use [_1]', $item->remaining_title($c)) %>">
+										% }
+									<%= end =%>
+								</dd>
+							% }
+						</dl>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+					</div>
 				</div>
 			</div>
 		</div>

@@ -77,7 +77,7 @@ sub use_item ($self, $set, $records, $c) {
 	#	$db->putSetVersion($set);
 	#}
 
-	return $c->maketext('Close date of this test change to [_1].',
+	return $c->maketext('Close date of this test extended by 24 hours to [_1].',
 		$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat}));
 }
 

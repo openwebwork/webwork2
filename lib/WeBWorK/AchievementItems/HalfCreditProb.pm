@@ -42,7 +42,7 @@ sub print_form ($self, $set, $records, $c) {
 	return WeBWorK::AchievementItems::form_popup_menu_row(
 		$c,
 		id         => 'half_cred_problem_id',
-		label_text => $c->maketext('Problem number to give half credit'),
+		label_text => $c->maketext('Problem number to increase grade by 50%'),
 		first_item => $c->maketext('Choose problem to increase grade by 50%.'),
 		values     => [
 			map { [

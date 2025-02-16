@@ -54,7 +54,7 @@ sub print_form ($self, $set, $records, $c) {
 	return $c->tag(
 		'p',
 		$c->maketext(
-			'Remove the reduced scoring pentaly from this assignment. Problems submitted before '
+			'Remove the reduced scoring penalty from this assignment. Problems submitted before '
 				. 'the close date on [_1] will earn full credit. Any problems that have already been '
 				. 'penalized will have to be resubmitted for full credit.',
 			$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
@@ -74,7 +74,7 @@ sub use_item ($self, $set, $records, $c) {
 	$userSet->reduced_scoring_date($set->due_date);
 	$db->putUserSet($userSet);
 
-	return $c->maketext('Reduced scoring pentaly removed.');
+	return $c->maketext('Reduced scoring penalty removed.');
 }
 
 1;

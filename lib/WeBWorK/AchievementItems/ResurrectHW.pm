@@ -70,7 +70,7 @@ sub use_item ($self, $set, $records, $c) {
 	$db->putUserSet($userSet);
 
 	return $c->maketext(
-		'Closing date of this assignment extended by 24 hours to [_1].',
+		'Close date of this assignment extended by 24 hours to [_1].',
 		$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
 	);
 }
