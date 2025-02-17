@@ -136,24 +136,29 @@ sub initialize ($c) {
 		my $subject = $ce->{mail}{feedbackSubjectFormat} || 'WeBWorK question from %c: %u set %s/prob %p';
 		$subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ''/eg;
 
-		my $remote_host = $c->tx->remote_address || 'UNKNOWN';
-
-		my $email = Email::Stuffer->to(join(',', @recipients))->subject($subject)->html_body($c->render_to_string(
-			'ContentGenerator/Feedback/feedback_email',
+		my %data = (
 			user         => $user,
 			emailableURL => $emailableURL,
 			feedback     => $feedback,
 			problem      => $problem,
 			set          => $set,
 			verbosity    => $verbosity,
-			remote_host  => $remote_host,
-		))->header('X-Remote-Host' => $remote_host);
+			remote_host  => $c->tx->remote_address || 'UNKNOWN',
+			remote_port  => $c->tx->remote_port    || 'UNKNOWN'
+		);
+
+		my $email =
+			Email::Stuffer->to(join(',', @recipients))->subject($subject)
+			->text_body($c->render_to_string('ContentGenerator/Feedback/feedback_email', format => 'txt', %data))
+			->html_body($c->render_to_string('ContentGenerator/Feedback/feedback_email', %data))
+			->header('X-Remote-Host' => $data{remote_host});
 		if ($ce->{feedback_sender_email}) {
 			my $from_name = $user ? $user->full_name : $ce->{generic_sender_name};
 			$email->from("$from_name <$ce->{feedback_sender_email}>")->reply_to($sender);
 		} else {
 			$email->from($sender);
 		}
+
 		# Extra headers
 		$email->header('X-WeBWorK-Route',  $route)    if defined $route;
 		$email->header('X-WeBWorK-Course', $courseID) if defined $courseID;

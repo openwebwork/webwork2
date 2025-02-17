@@ -101,7 +101,7 @@
 					<tr><th>Section:</th><td><%= $user->section %></td></tr>
 					<tr><th>Recitation:</th><td><%= $user->recitation %></td></tr>
 					<tr><th>Comment:</th><td><%= $user->comment %></td></tr>
-					<tr><th>IP Address:</th><td><%= $remote_host %>:<%= $c->tx->remote_port || 'UNKNOWN' %></td></tr>
+					<tr><th>IP Address:</th><td><%= $remote_host %>:<%= $remote_port %></td></tr>
 				</tbody>
 			</table>
 		% }
