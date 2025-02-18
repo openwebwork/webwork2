@@ -35,8 +35,7 @@
 			Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at <%= url_for('root')->to_abs %>
 		</p>
 		<p>
-			To visit the page from which <%= $user->first_name %> sent feedback,
-		   	<%= link_to 'click here' => $emailableURL %>.
+			<%= $user->first_name %> sent feedback from <%= link_to 'this page' => $emailableURL %>.
 		</p>
 		% if ($feedback) {
 			<p><%= $user->full_name %> (<%= $user->user_id %>) wrote:</p>
