@@ -20,7 +20,7 @@
 	<%= maketext('Manage achievements for the course.  The actions allow one to edit, assign, import, export, score, '
 		. 'create, or delete achievements.  The action form is at the top to select the desired action and options to '
 		. 'perform when the submit button is pressed.  Below the action form is the list of all the '
-		. 'achievements, ordered by their achievement "Number".') =%>
+		. 'achievements, ordered by their achievement "Number", with "level" achievements listed last.') =%>
 </p>
 <p>
 	<%= maketext('Achievements are evaluated in the order shown below, with the exception of "level" achievements.  '
@@ -52,7 +52,8 @@
 	</li>
 	<li>
 		<strong><%= maketext('Number:') %></strong>
-		<%= maketext('Sets the order in which achievements are listed and evaluated.') =%>
+		<%= maketext('Sets the order in which achievements are listed and evaluated. Achievements in the "level" '
+			. 'category are always listed and evaluated after all other achievements.') =%>
 	</li>
 	<li>
 		<strong><%= maketext('Enabled:') %></strong>
