@@ -323,7 +323,11 @@ sub get_lms_public_keyset ($c, $ce, $db, $renew = 0) {
 	}
 
 	# Get public keyset from the LMS.
-	my $response = Mojo::UserAgent->new->get($ce->{LTI}{v1p3}{PublicKeysetURL})->result;
+	my $response = eval { Mojo::UserAgent->new->get($ce->{LTI}{v1p3}{PublicKeysetURL})->result };
+	if ($@) {
+		$c->stash->{LTIAuthenError} = "Failed to obtain public key from LMS due to a network error: $@";
+		return;
+	}
 	unless ($response->is_success) {
 		$c->stash->{LTIAuthenError} = 'Failed to obtain public key from LMS: ' . $response->message;
 		return;
