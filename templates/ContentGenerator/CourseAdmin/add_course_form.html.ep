@@ -166,7 +166,7 @@
 		</div>
 	</div>
 	<fieldset class="mb-3">
-		<legend class="fw-bold fs-6">Copy These Components:</legend>
+		<legend class="fw-bold fs-6"><%= maketext('Copy These Components:') %></legend>
 		<div class="form-check">
 			<label class="form-check-label">
 				<%= check_box select_all => 1, class => 'select-all form-check-input',

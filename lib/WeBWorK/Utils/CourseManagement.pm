@@ -383,21 +383,35 @@ sub addCourse {
 
 	# add sets
 	if ($db0 && $options{copySets}) {
-		my @set_ids = $db0->listGlobalSets;
-		for my $set_id (@set_ids) {
-			eval { $db->addGlobalSet($db0->getGlobalSet($set_id)) };
+		my @sets = $db0->getGlobalSetsWhere;
+		for my $set (@sets) {
+			eval { $db->addGlobalSet($set) };
 			warn $@ if $@;
 
-			my @Problem = $db0->getGlobalProblemsWhere({ set_id => $set_id });
+			my @Problem = $db0->getGlobalProblemsWhere({ set_id => $set->set_id });
 			for my $problem (@Problem) {
 				eval { $db->addGlobalProblem($problem) };
 				warn $@ if $@;
 			}
 
-			my @Location = $db0->getGlobalSetLocationsWhere({ set_id => $set_id });
+			my @Location = $db0->getGlobalSetLocationsWhere({ set_id => $set->set_id });
 			for my $location (@Location) {
 				eval { $db->addGlobalSetLocation($location) };
 				warn $@ if $@;
+			}
+
+			# Copy the set level proctor user for this set if there is one (despite the for loop there can only be one).
+			for my $setProctor ($db0->getUsersWhere({ user_id => 'set_id:' . $set->set_id })) {
+				eval { $db->addUser($setProctor) };
+				warn $@ if $@;
+
+				my $password = $db0->getPassword($setProctor->user_id);
+				eval { $db->addPassword($password) } if $password;
+				warn $@                              if $@;
+
+				my $permission = $db0->getPermissionLevel($setProctor->user_id);
+				eval { $db->addPermissionLevel($permission) } if $permission;
+				warn $@                                       if $@;
 			}
 		}
 		if ($options{copyNonStudents}) {
@@ -408,19 +422,20 @@ sub addCourse {
 				assignSetsToUsers($db, $ce, \@user_sets, [$user_id]);
 			}
 		}
-		assignSetsToUsers($db, $ce, \@set_ids, [ map { $_->[0]{user_id} } @initialUsers ]) if @initialUsers;
+		assignSetsToUsers($db, $ce, [ map { $_->set_id } @sets ], [ map { $_->[0]{user_id} } @initialUsers ])
+			if @initialUsers;
 	}
 
 	# add achievements
 	if ($db0 && $options{copyAchievements}) {
-		my @achievement_ids = $db0->listAchievements;
-		for my $achievement_id (@achievement_ids) {
-			eval { $db->addAchievement($db0->getAchievement($achievement_id)) };
+		my @achievement = $db0->getAchievementsWhere;
+		for my $achievement (@achievement) {
+			eval { $db->addAchievement($achievement) };
 			warn $@ if $@;
 			for (@initialUsers) {
 				my $userAchievement = $db->newUserAchievement();
 				$userAchievement->user_id($_->[0]{user_id});
-				$userAchievement->achievement_id($achievement_id);
+				$userAchievement->achievement_id($achievement->achievement_id);
 				$db->addUserAchievement($userAchievement);
 			}
 		}
