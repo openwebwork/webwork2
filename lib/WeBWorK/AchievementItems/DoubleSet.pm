@@ -18,9 +18,8 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to make a homework set worth twice as much
 
-use WeBWorK::Utils           qw(x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils           qw(x);
 use WeBWorK::Utils::DateTime qw(after);
-use WeBWorK::Utils::Sets     qw(format_set_name_display);
 
 sub new ($class) {
 	return bless {
@@ -30,62 +29,37 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemIds, $c) {
-	my @openSets;
-
-	for my $i (0 .. $#$sets) {
-		push(@openSets, [ format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id ])
-			if (after($sets->[$i]->open_date) && $sets->[$i]->assignment_type eq 'default');
-	}
-
-	return unless @openSets;
-
-	return $c->c(
-		$c->tag('p', $c->maketext('Choose the set which you would like to be worth twice as much.')),
-		WeBWorK::AchievementItems::form_popup_menu_row(
-			$c,
-			id         => 'dub_set_id',
-			label_text => $c->maketext('Set Name'),
-			values     => \@openSets,
-			menu_attr  => { dir => 'ltr' }
-		)
-	)->join('');
+sub can_use ($self, $set, $records) {
+	return $set->assignment_type eq 'default' && after($set->open_date);
 }
 
-sub use_item ($self, $userName, $c) {
-	my $db = $c->db;
-	my $ce = $c->ce;
+sub print_form ($self, $set, $records, $c) {
+	my $total = 0;
+	for my $problem (@$records) {
+		$total += $problem->value;
+	}
+	return $c->tag('p',
+		$c->maketext(q(Increase this assignment's total number of points from [_1] to [_2].), $total, 2 * $total));
+}
 
-	# Validate data
+sub use_item ($self, $set, $records, $c) {
+	my $db        = $c->db;
+	my $old_value = 0;
+	my $new_value = 0;
 
-	my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
-	return 'No achievement data?!?!?!' unless $globalUserAchievement->frozen_hash;
-
-	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
-	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
-
-	my $setID = $c->param('dub_set_id');
-	return 'You need to input a Set Name' unless defined $setID;
-
-	my $set = $db->getMergedSet($userName, $setID);
-	return q{Couldn't find that set!} unless $set;
-
-	my @probIDs = $db->listUserProblems($userName, $setID);
-
-	for my $probID (@probIDs) {
-		my $globalproblem = $db->getMergedProblem($userName, $setID, $probID);
-		my $problem       = $db->getUserProblem($userName, $setID, $probID);
-
-		# Double the problem value.
-		$problem->value($globalproblem->value * 2);
-		$db->putUserProblem($problem);
+	my %userProblems =
+		map { $_->problem_id => $_ } $db->getUserProblemsWhere({ user_id => $set->user_id, set_id => $set->set_id });
+	for my $problem (@$records) {
+		my $userProblem = $userProblems{ $problem->problem_id };
+		$old_value += $problem->value;
+		$problem->value(2 * $problem->value);
+		$userProblem->value($problem->value);
+		$new_value += $userProblem->value;
+		$db->putUserProblem($userProblem);
 	}
 
-	$globalData->{ $self->{id} }--;
-	$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
-	$db->putGlobalUserAchievement($globalUserAchievement);
-
-	return;
+	return $c->maketext(q(Assignment's total point value increased from [_1] points to [_2] points),
+		$old_value, $new_value);
 }
 
 1;

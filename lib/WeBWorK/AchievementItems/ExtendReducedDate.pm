@@ -18,9 +18,8 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to extend a close date by 24 hours.
 
-use WeBWorK::Utils           qw(x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils           qw(x);
 use WeBWorK::Utils::DateTime qw(between);
-use WeBWorK::Utils::Sets     qw(format_set_name_display);
 
 use constant ONE_DAY => 86400;
 
@@ -36,75 +35,50 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemIds, $c) {
-	my @openSets;
+sub can_use ($self, $set, $records) {
+	return 0
+		unless $set->assignment_type eq 'default'
+		&& $set->enable_reduced_scoring
+		&& $set->reduced_scoring_date
+		&& $set->reduced_scoring_date < $set->due_date;
 
-	# Nothing to do if reduced scoring is not enabled.
-	return unless $c->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring};
-
-	for my $i (0 .. $#$sets) {
-		my $new_date = 0;
-		if ($sets->[$i]->reduced_scoring_date() && $sets->[$i]->reduced_scoring_date() < $sets->[$i]->due_date()) {
-			$new_date = $sets->[$i]->reduced_scoring_date() + ONE_DAY;
-			$new_date = $sets->[$i]->due_date() if $sets->[$i]->due_date() < $new_date;
-		}
-		push(@openSets, [ format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id ])
-			if ($new_date
-				&& between($sets->[$i]->open_date, $new_date)
-				&& $sets->[$i]->assignment_type eq 'default'
-				&& $sets->[$i]->enable_reduced_scoring);
-	}
-
-	return unless @openSets;
-
-	return $c->c(
-		$c->tag(
-			'p',
-			$c->maketext('Choose the assignment whose reduced scoring date you would like to extend by 24 hours.')
-		),
-		WeBWorK::AchievementItems::form_popup_menu_row(
-			$c,
-			id         => 'ext_reduced_set_id',
-			label_text => $c->maketext('Assignment Name'),
-			values     => \@openSets,
-			menu_attr  => { dir => 'ltr' }
-		)
-	)->join('');
+	$self->{new_date} = $set->reduced_scoring_date + ONE_DAY;
+	$self->{new_date} = $set->due_date if $set->due_date < $self->{new_date};
+	return between($set->open_date, $self->{new_date});
 }
 
-sub use_item ($self, $userName, $c) {
-	my $db = $c->db;
-	my $ce = $c->ce;
+sub print_form ($self, $set, $records, $c) {
+	return $c->tag(
+		'p',
+		$c->maketext(
+			q{This item won't work unless your instructor enables the reduced scoring feature.  }
+				. 'Let your instructor know that you recieved this message.'
+		)
+	) unless $c->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring};
 
-	# Validate data
+	return $c->tag(
+		'p',
+		$c->maketext(
+			'Extend the reduced scoring date to [_1] (an additional 24 hours).',
+			$c->formatDateTime($self->{new_date}, $c->ce->{studentDateDisplayFormat})
+		)
+	);
+}
 
-	# Nothing to do if reduced scoring is not enabled.
-	return 'Reduced scoring disabled.' unless $c->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring};
+sub use_item ($self, $set, $records, $c) {
+	return '' unless $c->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring};
 
-	my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
-	return 'No achievement data?!?!?!' unless $globalUserAchievement->frozen_hash;
+	my $db      = $c->db;
+	my $userSet = $db->getUserSet($set->user_id, $set->set_id);
 
-	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
-	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
-
-	my $setID = $c->param('ext_reduced_set_id');
-	return 'You need to input a Set Name' unless defined $setID;
-
-	my $set     = $db->getMergedSet($userName, $setID);
-	my $userSet = $db->getUserSet($userName, $setID);
-	return q{Couldn't find that set!} unless $set && $userSet;
-
-	# Add time to the reduced scoring date, keeping in mind this cannot extend past the due date.
-	my $new_date = $set->reduced_scoring_date() + ONE_DAY;
-	$new_date = $set->due_date() if $set->due_date() < $new_date;
-	$userSet->reduced_scoring_date($new_date);
+	$set->reduced_scoring_date($self->{new_date});
+	$userSet->reduced_scoring_date($set->reduced_scoring_date);
 	$db->putUserSet($userSet);
 
-	$globalData->{ $self->{id} }--;
-	$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
-	$db->putGlobalUserAchievement($globalUserAchievement);
-
-	return;
+	return $c->maketext(
+		'Reduced scoring date of this assignment extended by 24 hours to [_1].',
+		$c->formatDateTime($self->{new_date}, $c->ce->{studentDateDisplayFormat})
+	);
 }
 
 1;

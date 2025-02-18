@@ -28,10 +28,18 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemIds, $c) {
-	# The form opens the file "suprise_message.txt" in the achievements
-	# folder and prints the contents of the file.
+# Override to not print number of items that remain.
+sub remaining_title ($self, $c) {
+	return $c->maketext($self->name);
+}
 
+sub can_use ($self, $set, $records) { return 1; }
+
+sub print_form ($self, $set, $records, $c) {
+	$self->{hideUseButton} = 1;
+
+	# The form opens the file "surprise_message.txt" in the achievements
+	# folder and prints the contents of the file.
 	open my $MESSAGE, '<', "$c->{ce}{courseDirs}{achievements}/surprise_message.txt"
 		or return $c->tag('p', $c->maketext(q{I couldn't find the file [ACHIEVEMENT_DIR]/surprise_message.txt!}));
 	local $/ = undef;
@@ -41,7 +49,7 @@ sub print_form ($self, $sets, $setProblemIds, $c) {
 	return $c->tag('div', $c->b($message));
 }
 
-sub use_item ($self, $userName, $c) {
+sub use_item ($self, $set, $records, $c) {
 	# This doesn't do anything.
 }
 

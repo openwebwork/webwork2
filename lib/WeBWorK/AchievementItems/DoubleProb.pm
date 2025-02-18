@@ -18,11 +18,8 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to make a problem worth double.
 
-use Mojo::JSON qw(encode_json);
-
-use WeBWorK::Utils           qw(x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils           qw(x);
 use WeBWorK::Utils::DateTime qw(after);
-use WeBWorK::Utils::Sets     qw(format_set_name_display);
 
 sub new ($class) {
 	return bless {
@@ -32,84 +29,48 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemIds, $c) {
-	# Construct a dropdown with open sets and another with problems.
-	# Javascript ensures the appropriate problems are shown for the selected set.
-
-	my (@openSets, @initialProblemIDs);
-
-	for my $i (0 .. $#$sets) {
-		if (after($sets->[$i]->open_date)
-			&& $sets->[$i]->assignment_type eq 'default'
-			&& @{ $setProblemIds->{ $sets->[$i]->set_id } })
-		{
-			push(
-				@openSets,
-				[
-					format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id,
-					data => { problem_ids => encode_json($setProblemIds->{ $sets->[$i]->set_id }) }
-				]
-			);
-			@initialProblemIDs = @{ $setProblemIds->{ $sets->[$i]->set_id } } unless @initialProblemIDs;
-		}
-	}
-
-	return unless @openSets;
-
-	return $c->c(
-		$c->tag(
-			'p',
-			$c->maketext(
-				'Please choose the set name and problem number of the question which should have its weight doubled.')
-		),
-		WeBWorK::AchievementItems::form_popup_menu_row(
-			$c,
-			id         => 'dbp_set_id',
-			label_text => $c->maketext('Set Name'),
-			values     => \@openSets,
-			menu_attr  => { dir => 'ltr', data => { problems => 'dbp_problem_id' } }
-		),
-		WeBWorK::AchievementItems::form_popup_menu_row(
-			$c,
-			id                  => 'dbp_problem_id',
-			label_text          => $c->maketext('Problem Number'),
-			values              => \@initialProblemIDs,
-			menu_container_attr => { class => 'col-3' }
-		)
-	)->join('');
+sub can_use ($self, $set, $records) {
+	return $set->assignment_type eq 'default' && after($set->open_date);
 }
 
-sub use_item ($self, $userName, $c) {
-	my $db = $c->db;
-	my $ce = $c->ce;
+sub print_form ($self, $set, $records, $c) {
+	return WeBWorK::AchievementItems::form_popup_menu_row(
+		$c,
+		id         => 'dbp_problem_id',
+		label_text => $c->maketext('Problem number to double weight'),
+		first_item => $c->maketext('Choose problem to double its weight.'),
+		values     => [
+			map { [ $c->maketext('Problem [_1] ([_2] to [_3])', $_->problem_id, $_->value, 2 * $_->value) =>
+					$_->problem_id ] } @$records
+		],
+	);
+}
 
-	# Validate data
-
-	my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
-	return 'No achievement data?!?!?!' unless $globalUserAchievement->frozen_hash;
-
-	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
-	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
-
-	my $setID = $c->param('dbp_set_id');
-	return 'You need to input a Set Name' unless defined $setID;
-
+sub use_item ($self, $set, $records, $c) {
 	my $problemID = $c->param('dbp_problem_id');
-	return 'You need to input a Problem Number' unless $problemID;
+	unless ($problemID) {
+		$c->addbadmessage($c->maketext('Select problem to double its weight with the [_1].', $self->name));
+		return '';
+	}
 
-	my $globalproblem = $db->getMergedProblem($userName, $setID, $problemID);
-	my $problem       = $db->getUserProblem($userName, $setID, $problemID);
-	return 'There was an error accessing that problem.' unless $globalproblem && $problem;
+	my $problem;
+	for (@$records) {
+		if ($_->problem_id == $problemID) {
+			$problem = $_;
+			last;
+		}
+	}
+	return '' unless $problem;
 
 	# Double the value of the problem.
-	$problem->value($globalproblem->value * 2);
-	$db->putUserProblem($problem);
+	my $db          = $c->db;
+	my $userProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id);
+	my $orig_value  = $problem->value;
+	$problem->value($orig_value * 2);
+	$userProblem->value($problem->value);
+	$db->putUserProblem($userProblem);
 
-	$globalData->{ $self->{id} }--;
-	$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
-	$db->putGlobalUserAchievement($globalUserAchievement);
-
-	return;
+	return $c->maketext('Problem [_1] weight increased from [_2] to [_3].', $problemID, $orig_value, $problem->value);
 }
 
 1;

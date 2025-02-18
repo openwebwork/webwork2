@@ -25,6 +25,7 @@
 %
 <%= $set->assignment_type =~ /gateway/ ? $c->gateway_body : $c->problem_list =%>
 %
+<%= include 'ContentGenerator/ProblemSet/use_achievement_items' =%>
 <div class="mb-3">
 	<%= $c->feedbackMacro(
 		route              => current_route,

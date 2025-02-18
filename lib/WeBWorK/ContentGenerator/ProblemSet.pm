@@ -31,6 +31,7 @@ use WeBWorK::Utils::Rendering qw(renderPG);
 use WeBWorK::Utils::Sets      qw(is_restricted grade_set format_set_name_display);
 use WeBWorK::DB::Utils        qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Localize;
+use WeBWorK::AchievementItems;
 
 async sub initialize ($c) {
 	my $db    = $c->db;
@@ -57,6 +58,22 @@ async sub initialize ($c) {
 	$c->{set} = $authz->{merged_set};
 
 	$c->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
+
+	# Import problem records for assignments or test version records for tests now. Then initialize all
+	# achievement item data to have access to the updated records if an achievement item was used.
+	if ($c->{set}->assignment_type =~ /gateway/) {
+		$c->{setVersions} = [
+			$db->getMergedSetVersionsWhere(
+				{ user_id => $eUserID, set_id => { like => $c->{set}->set_id . ',v%' } },
+				\grok_versionID_from_vsetID_sql($db->{set_version_merged}->sql->_quote('set_id'))
+			)
+		];
+		$c->{achievementItems} = WeBWorK::AchievementItems::UserItems($c, $eUserID, $c->{set}, $c->{setVersions});
+	} else {
+		$c->{setProblems} =
+			[ $db->getMergedProblemsWhere({ user_id => $eUserID, set_id => $c->{set}->set_id }, 'problem_id') ];
+		$c->{achievementItems} = WeBWorK::AchievementItems::UserItems($c, $eUserID, $c->{set}, $c->{setProblems});
+	}
 
 	# Display status messages.
 	$c->addmessage($c->tag('p', $c->b($c->authen->flash('status_message')))) if $c->authen->flash('status_message');
@@ -168,16 +185,7 @@ sub info {
 # This is called by the ContentGenerator/ProblemSet/body template for a regular homework set.
 # It lists the problems in the set.
 sub problem_list ($c) {
-	my $authz = $c->authz;
-	my $db    = $c->db;
-
-	my $setID = $c->stash('setID');
-	my $user  = $c->param('user');
-
-	my @problems =
-		$db->getMergedProblemsWhere({ user_id => $c->param('effectiveUser'), set_id => $setID }, 'problem_id');
-
-	return $c->include('ContentGenerator/ProblemSet/problem_list', problems => \@problems);
+	return $c->include('ContentGenerator/ProblemSet/problem_list', problems => $c->{setProblems});
 }
 
 # This is called by the ContentGenerator/ProblemSet/body template for a test.
@@ -204,12 +212,7 @@ sub gateway_body ($c) {
 	my $timeInterval     = $set->time_interval || 0;
 	my @versionData;
 
-	my @setVersions = $db->getMergedSetVersionsWhere(
-		{ user_id => $effectiveUser, set_id => { like => $set->set_id . ',v%' } },
-		\grok_versionID_from_vsetID_sql($db->{set_version_merged}->sql->_quote('set_id'))
-	);
-
-	for my $verSet (@setVersions) {
+	for my $verSet (@{ $c->{setVersions} }) {
 		# Count number of versions in current timeInterval
 		if (!$timeInterval || $verSet->version_creation_time > ($timeNow - $timeInterval)) {
 			++$currentVersions;
@@ -323,7 +326,7 @@ sub gateway_body ($c) {
 		timeInterval     => $timeInterval,
 		timeNow          => $timeNow,
 		lastTime         => $lastTime,
-		setVersions      => \@setVersions,
+		setVersions      => $c->{setVersions},
 		versionData      => \@versionData,
 		currentVersions  => $currentVersions
 	);

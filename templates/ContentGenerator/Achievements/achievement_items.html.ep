@@ -1,58 +1,21 @@
-% last unless $ce->{achievementItemsEnabled} && $c->{achievementItems};
+% last unless $ce->{achievementItemsEnabled};
 %
 % # Show any items the user may have.
 <h2 class="my-3"><%= maketext('Rewards') %></h2>
-% if (@$items) {
+% if ($c->{achievementItems} && @{ $c->{achievementItems} }) {
+	<p class="mx-4">
+		<%= maketext(
+			'Achievement rewards can be used to modify assignments. To use a reward, go to the assignment you '
+				. 'wish to apply the reward to, then click the "Use Achievement Reward" button. You currently have '
+				. 'access to the following rewards:'
+		) %>
+	</p>
 	<dl class="mx-4">
-	% my $itemNumber = 0;
-	% for my $item (@$items) {
-		% # Show each item's name, description, and reusability
-		<dt class="fs-4">
-			<%= maketext($item->name) %>
+	% for my $item (@{ $c->{achievementItems} }) {
+		<dt>
+			<%= $item->remaining_title($c) %>
 		</dt>
-		<dd class="mb-4">
-			<p class="mb-1"><%= maketext($item->description) %></p>
-			% my $form = $item->print_form($sets, $setProblemIds, $c);
-			% # Print a modal popup for each item which contains the form necessary to get the data to use the item.
-			% my $button_text;
-			% if ($itemCounts->{ $item->id } > 1) {
-				% $button_text = maketext('[_1] ([_2] remaining)', maketext($item->name), $itemCounts->{ $item->id });
-			% } elsif ($itemCounts->{ $item->id } < 0) {
-				% $button_text = maketext('[_1] (unlimited reusability)', maketext($item->name));
-			% } else {
-				% $button_text = maketext($item->name);
-			% }
-			<%= link_to maketext('Use [_1]', $button_text) => '#modal_' . $item->id,
-					role  => 'button',
-					class => 'btn btn-secondary' . ($form ? '' : ' disabled'),
-					id    => 'popup_' . $item->id,
-					$form ? (data  => { bs_toggle => 'modal' }) : () =%>
-			% if ($form) {
-				<div id="<%= 'modal_' . $item->id %>" class="modal hide fade" tabindex="-1">
-					<div class="modal-dialog modal-dialog-centered">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h4 class="modal-title"><%= maketext($item->name) %></h4>
-								<button type="button" class="btn-close" data-bs-dismiss="modal"
-									aria-label="<%= maketext('close') %>"></button>
-							</div>
-							<%= form_for current_route, method => 'POST', name => "itemform_$itemNumber",
-								class => 'achievementitemform', begin =%>
-								<div class="modal-body">
-									<%= $form =%>
-									<%= hidden_field useditem => $itemNumber =%>
-									<%= $c->hidden_authen_fields("achievement_${itemNumber}_") =%>
-								</div>
-								<div class="modal-footer">
-									<%= submit_button maketext('Submit'), class => 'btn btn-primary' =%>
-								</div>
-							<%= end =%>
-						</div>
-					</div>
-				</div>
-			% }
-		</dd>
-		% $itemNumber++;
+		<dd class="ms-3 mb-2"><%= maketext($item->description) %></dd>
 	% }
 	</dl>
 % } else {
