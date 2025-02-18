@@ -30,11 +30,12 @@ use Time::localtime;
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(cryptPassword trim_spaces);
-use WeBWorK::Utils::CourseIntegrityCheck;
+use WeBWorK::Utils                   qw(cryptPassword trim_spaces);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse retitleCourse deleteCourse listCourses archiveCourse
 	unarchiveCourse initNonNativeTables);
 use WeBWorK::Utils::Logs qw(writeLog);
+use WeBWorK::Utils::CourseDBIntegrityCheck;
+use WeBWorK::Utils::CourseDirectoryIntegrityCheck qw(checkCourseDirectories updateCourseDirectories);
 use WeBWorK::DB;
 
 sub pre_header_initialize ($c) {
@@ -513,7 +514,7 @@ sub rename_course_confirm ($c) {
 	) unless $c->param('rename_newCourseID_checkbox');
 
 	if ($ce2->{dbLayoutName}) {
-		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
+		my $CIchecker = WeBWorK::Utils::CourseDBIntegrityCheck->new($ce2);
 
 		# Check database
 		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
@@ -523,9 +524,9 @@ sub rename_course_confirm ($c) {
 		if ($c->param('upgrade_course_tables')) {
 			my @schema_table_names = keys %$dbStatus;
 			my @tables_to_create =
-				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A } @schema_table_names;
+				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A } @schema_table_names;
 			my @tables_to_alter =
-				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B }
+				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B }
 				@schema_table_names;
 			push(@upgrade_report, $CIchecker->updateCourseTables($rename_oldCourseID, [@tables_to_create]));
 			for my $table_name (@tables_to_alter) {
@@ -536,7 +537,7 @@ sub rename_course_confirm ($c) {
 		}
 
 		# Check directories
-		my ($directories_ok, $directory_report) = $CIchecker->checkCourseDirectories($ce2);
+		my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
 
 		return $c->include(
 			'ContentGenerator/CourseAdmin/rename_course_confirm',
@@ -980,7 +981,7 @@ sub archive_course_confirm ($c) {
 	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $archive_courseID });
 
 	if ($ce2->{dbLayoutName}) {
-		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
+		my $CIchecker = WeBWorK::Utils::CourseDBIntegrityCheck->new($ce2);
 
 		# Check database
 		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
@@ -990,9 +991,9 @@ sub archive_course_confirm ($c) {
 		if ($c->param('upgrade_course_tables')) {
 			my @schema_table_names = keys %$dbStatus;
 			my @tables_to_create =
-				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A } @schema_table_names;
+				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A } @schema_table_names;
 			my @tables_to_alter =
-				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B }
+				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B }
 				@schema_table_names;
 			push(@upgrade_report, $CIchecker->updateCourseTables($archive_courseID, [@tables_to_create]));
 			for my $table_name (@tables_to_alter) {
@@ -1003,8 +1004,8 @@ sub archive_course_confirm ($c) {
 		}
 
 		# Update and check directories.
-		my $dir_update_messages = $c->param('upgrade_course_tables') ? $CIchecker->updateCourseDirectories : [];
-		my ($directories_ok, $directory_report) = $CIchecker->checkCourseDirectories($ce2);
+		my $dir_update_messages = $c->param('upgrade_course_tables') ? updateCourseDirectories($ce2) : [];
+		my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
 
 		return $c->include(
 			'ContentGenerator/CourseAdmin/archive_course_confirm',
@@ -1338,7 +1339,7 @@ sub upgrade_course_confirm ($c) {
 
 	my @upgrade_courseIDs = $c->param('upgrade_courseIDs');
 
-	my ($extra_database_tables_exist, $extra_database_fields_exist) = (0, 0);
+	my ($extra_database_tables_exist, $extra_database_fields_exist, $incorrect_type_database_fields_exist) = (0, 0, 0);
 
 	my $status_output = $c->c;
 
@@ -1349,12 +1350,13 @@ sub upgrade_course_confirm ($c) {
 		my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $upgrade_courseID });
 
 		# Create integrity checker
-		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
+		my $CIchecker = WeBWorK::Utils::CourseDBIntegrityCheck->new($ce2);
 
 		# Report on database status
 		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
-		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
-			$c->formatReportOnDatabaseTables($dbStatus, $upgrade_courseID);
+		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
+			$incorrect_type_database_fields, $db_report)
+			= $c->formatReportOnDatabaseTables($dbStatus, $upgrade_courseID);
 
 		my $course_output = $c->c;
 
@@ -1427,8 +1429,26 @@ sub upgrade_course_confirm ($c) {
 			);
 		}
 
+		if ($incorrect_type_database_fields) {
+			$incorrect_type_database_fields_exist = 1;
+			push(
+				@$course_output,
+				$c->tag(
+					'p',
+					class => 'text-danger fw-bold',
+					$c->maketext(
+						'There are database fields that do not have the same type as the field defined in the schema '
+							. 'for at least one table. Check the checkbox by the field to change its type when '
+							. 'upgrading the course. Warning: This can fail which may corrupt the table. If you have '
+							. 'not archived this course, then do that now before upgrading if you want to change the '
+							. 'type of any of these fields.'
+					)
+				)
+			);
+		}
+
 		# Report on directory status
-		my ($directories_ok, $directory_report) = $CIchecker->checkCourseDirectories;
+		my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
 		push(@$course_output, $c->tag('div', class => 'mb-2', $c->maketext('Directory structure:')));
 		push(
 			@$course_output,
@@ -1463,10 +1483,11 @@ sub upgrade_course_confirm ($c) {
 
 	return $c->include(
 		'ContentGenerator/CourseAdmin/upgrade_course_confirm',
-		upgrade_courseIDs           => \@upgrade_courseIDs,
-		extra_database_tables_exist => $extra_database_tables_exist,
-		extra_database_fields_exist => $extra_database_fields_exist,
-		status_output               => $status_output->join('')
+		upgrade_courseIDs                    => \@upgrade_courseIDs,
+		extra_database_tables_exist          => $extra_database_tables_exist,
+		extra_database_fields_exist          => $extra_database_fields_exist,
+		incorrect_type_database_fields_exist => $incorrect_type_database_fields_exist,
+		status_output                        => $status_output->join('')
 	);
 }
 
@@ -1480,15 +1501,16 @@ sub do_upgrade_course ($c) {
 		my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $upgrade_courseID });
 
 		# Create integrity checker
-		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
+		my $CIchecker = WeBWorK::Utils::CourseDBIntegrityCheck->new($ce2);
 
 		# Add missing tables and missing fields to existing tables
 		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
 		my @schema_table_names = keys %$dbStatus;
 		my @tables_to_create =
-			grep { $dbStatus->{$_}[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A } @schema_table_names;
+			grep { $dbStatus->{$_}[0] == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A } @schema_table_names;
 		my @tables_to_alter =
-			grep { $dbStatus->{$_}[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B } @schema_table_names;
+			grep { $dbStatus->{$_}[0] == WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B }
+			@schema_table_names;
 
 		my @upgrade_report;
 		push(
@@ -1501,8 +1523,10 @@ sub do_upgrade_course ($c) {
 			push(
 				@upgrade_report,
 				$CIchecker->updateTableFields(
-					$upgrade_courseID, $table_name,
-					[ ($c->param("$upgrade_courseID.$table_name.delete_fieldIDs")) ]
+					$upgrade_courseID,
+					$table_name,
+					[ ($c->param("$upgrade_courseID.$table_name.delete_fieldIDs")) ],
+					[ ($c->param("$upgrade_courseID.$table_name.fix_type_fieldIDs")) ],
 				)
 			);
 		}
@@ -1510,8 +1534,9 @@ sub do_upgrade_course ($c) {
 		# Analyze database status and prepare status report
 		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
 
-		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
-			$c->formatReportOnDatabaseTables($dbStatus);
+		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
+			$incorrect_type_database_fields, $db_report)
+			= $c->formatReportOnDatabaseTables($dbStatus);
 
 		# Prepend course name
 		$db_report = $c->c($c->tag('div', class => 'mb-2', $c->maketext('Database:')), $db_report);
@@ -1539,9 +1564,23 @@ sub do_upgrade_course ($c) {
 			);
 		}
 
+		if ($incorrect_type_database_fields) {
+			push(
+				@$db_report,
+				$c->tag(
+					'p',
+					class => 'text-danger fw-bold',
+					$c->maketext(
+						'There are database fields that do not have the same type as the '
+							. 'field defined in the schema for at least one table.'
+					)
+				)
+			);
+		}
+
 		# Add missing directories and prepare report on directory status
-		my $dir_update_messages = $CIchecker->updateCourseDirectories;    # Needs more error messages
-		my ($directories_ok, $directory_report) = $CIchecker->checkCourseDirectories;
+		my $dir_update_messages = updateCourseDirectories($ce2);    # Needs more error messages
+		my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
 
 		# Show status
 		my $course_report = $c->c;
@@ -2650,42 +2689,43 @@ sub do_registration ($c) {
 # Format a list of tables and fields in the database, and the status of each.
 sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 	my %table_status_message = (
-		WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B =>
+		WeBWorK::Utils::CourseDBIntegrityCheck::SAME_IN_A_AND_B =>
 			$c->tag('span', class => 'text-success me-2', $c->maketext('Table is ok')),
-		WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A => $c->tag(
+		WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A => $c->tag(
 			'span',
 			class => 'text-danger me-2',
 			$c->maketext('Table defined in schema but missing in database')
 		),
-		WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B => $c->tag(
+		WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_B => $c->tag(
 			'span',
 			class => 'text-danger me-2',
 			$c->maketext('Table defined in database but missing in schema')
 		),
-		WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => $c->tag(
+		WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B => $c->tag(
 			'span',
 			class => 'text-danger me-2',
 			$c->maketext('Schema and database table definitions do not agree')
 		)
 	);
 	my %field_status_message = (
-		WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B =>
+		WeBWorK::Utils::CourseDBIntegrityCheck::SAME_IN_A_AND_B =>
 			$c->tag('span', class => 'text-success me-2', $c->maketext('Field is ok')),
-		WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A =>
+		WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A =>
 			$c->tag('span', class => 'text-danger me-2', $c->maketext('Field missing in database')),
-		WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B =>
+		WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_B =>
 			$c->tag('span', class => 'text-danger me-2', $c->maketext('Field missing in schema')),
-		WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => $c->tag(
+		WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B => $c->tag(
 			'span',
 			class => 'text-danger me-2',
 			$c->maketext('Schema and database field definitions do not agree')
 		)
 	);
 
-	my $all_tables_ok         = 1;
-	my $extra_database_tables = 0;
-	my $extra_database_fields = 0;
-	my $rebuild_table_indexes = 0;
+	my $all_tables_ok                  = 1;
+	my $extra_database_tables          = 0;
+	my $extra_database_fields          = 0;
+	my $rebuild_table_indexes          = 0;
+	my $incorrect_type_database_fields = 0;
 
 	my $db_report = $c->c;
 
@@ -2695,9 +2735,9 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 		my $table_status = $dbStatus->{$table}[0];
 		push(@$table_report, $table . ': ', $table_status_message{$table_status});
 
-		if ($table_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A) {
+		if ($table_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A) {
 			$all_tables_ok = 0;
-		} elsif ($table_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B) {
+		} elsif ($table_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_B) {
 			$extra_database_tables = 1;
 			push(
 				@$table_report,
@@ -2712,7 +2752,7 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 					)
 				)
 			) if defined $courseID;
-		} elsif ($table_status == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B) {
+		} elsif ($table_status == WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B) {
 			my %fieldInfo     = %{ $dbStatus->{$table}[1] };
 			my $fields_report = $c->c;
 
@@ -2720,7 +2760,7 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 				my $field_status = $fieldInfo{$key}[0];
 				my $field_report = $c->c("$key: $field_status_message{$field_status}");
 
-				if ($field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B) {
+				if ($field_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_B) {
 					if ($fieldInfo{$key}[1]) {
 						$rebuild_table_indexes = 1;
 					} else {
@@ -2750,8 +2790,34 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 							);
 						}
 					}
-				} elsif ($field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A) {
+				} elsif ($field_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A) {
 					$all_tables_ok = 0;
+				} elsif ($field_status == WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B) {
+					$incorrect_type_database_fields = 1;
+					if (defined $courseID) {
+						push(
+							@$field_report,
+							$c->tag(
+								'span',
+								class => 'form-check d-inline-block',
+								$c->tag(
+									'label',
+									class => 'form-check-label',
+									$c->c(
+										$c->check_box(
+											"$courseID.$table.fix_type_fieldIDs" => $key,
+											class                                => 'form-check-input'
+										),
+										$c->maketext(
+											'Change type of field from [_1] to [_2] when upgrading',
+											$fieldInfo{$key}[1],
+											$fieldInfo{$key}[2]
+										)
+									)->join('')
+								)
+							)
+						);
+					}
 				}
 				push(@$fields_report, $c->tag('li', $field_report->join('')));
 			}
@@ -2765,8 +2831,9 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 	push(@$db_report, $c->tag('p', class => 'text-success', $c->maketext('Database tables are ok'))) if $all_tables_ok;
 
 	return (
-		$all_tables_ok,         $extra_database_tables, $extra_database_fields,
-		$rebuild_table_indexes, $db_report->join('')
+		$all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
+		$incorrect_type_database_fields,
+		$db_report->join('')
 	);
 }
 

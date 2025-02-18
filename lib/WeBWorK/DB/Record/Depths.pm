@@ -25,15 +25,11 @@ WeBWorK::DB::Record::Depths - represent a record from the depths table.
 use strict;
 use warnings;
 
-#use WeBWorK::Utils::DBUpgrade;
-
 BEGIN {
 	__PACKAGE__->_fields(
 		md5   => { type => "CHAR(33) NOT NULL", key => 1 },
 		depth => { type => "SMALLINT" },
 	);
-
 }
 
 1;
-

@@ -6,8 +6,14 @@
 		<p class="<%= $_->[1] ? 'text-success' : 'text-danger' %> fw-bold my-0"><%= $_->[0] %></p>
 	% }
 % }
-% my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
-	% $c->formatReportOnDatabaseTables($dbStatus);
+% my (
+	% $all_tables_ok,
+	% $extra_database_tables,
+	% $extra_database_fields,
+	% $rebuild_table_indexes,
+	% $incorrect_type_database_fields,
+	% $db_report
+% ) = $c->formatReportOnDatabaseTables($dbStatus);
 <%= $db_report =%>
 % if ($extra_database_tables) {
 	<p class="text-danger fw-bold">
@@ -31,6 +37,16 @@
 			'There are extra database fields which are not defined in the schema and were part of the key '
 				. 'for at least one table. These fields need to be deleted and the table indexes need to be rebuilt. '
 				. 'This will be done when upgrading the course.'
+		) =%>
+	</p>
+% }
+% if ($incorrect_type_database_fields) {
+	<p class="text-danger fw-bold">
+		<%= maketext(
+			'There are database fields that do not have the same type as the field defined in the schema for '
+				. 'at least one table. The types of these fields can be changed when upgrading the course. '
+				. 'Make sure that you archive the course before doing that, since changing the type of a '
+				. 'field can corrupt the table.'
 		) =%>
 	</p>
 % }
