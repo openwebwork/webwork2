@@ -1,0 +1,54 @@
+<h2 class="my-3">Choose File to Edit</h2>
+%
+<%= form_for current_route, method => 'POST', name => 'pg-editor-file-chooser',
+	class => 'needs-validation', novalidate => undef, begin =%>
+	<div class="row align-items-center mb-3">
+		<div class="col-auto">
+			<div class="form-check">
+				<%= radio_button file_type => 'blank_problem',
+					id => 'new_problem', checked => undef, class => 'form-check-input' %>
+				<%= label_for new_problem => maketext('New problem template'), class => 'form-check-label' =%>
+			</div>
+		</div>
+	</div>
+	<div class="row align-items-center mb-3">
+		<div class="col-auto">
+			<div class="form-check">
+				<%= radio_button file_type => 'source_path_for_problem_file',
+					id => 'file_path', class => 'form-check-input' %>
+				<%= label_for file_path => maketext('File:'), class => 'form-check-label' =%>
+			</div>
+		</div>
+		<div class="col-auto" dir="ltr">
+			<div class="editor-save-path input-group input-group-sm">
+				<%= label_for source_file_path => '[TMPL]/', class => 'input-group-text' =%>
+				<%= text_field sourceFilePath => '',
+					id => 'source_file_path', class => 'form-control form-control-sm', size => 60, dir  => 'ltr' =%>
+				<div class="invalid-feedback">
+					<%= maketext('Plese enter a file with path relative to the course templates directory.') %>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row align-items-center mb-3">
+		<div class="col-auto">
+			<div class="form-check">
+				<%= radio_button file_type => 'sample_problem',
+					id => 'sample_problem', class => 'form-check-input' %>
+				<%= label_for sample_problem => maketext('Sample problem:'), class => 'form-check-label' =%>
+			</div>
+		</div>
+		<div class="col-auto">
+			<div class="col-auto">
+				<%= select_field sampleProblemFile => [
+						[maketext('Choose Sample Problem') => '', selected => undef, disabled => undef],
+						map { [ $sampleProblemMetadata->{$_}{name} => "$sampleProblemMetadata->{$_}{dir}/$_" ] }
+							sort { $sampleProblemMetadata->{$a}{name} cmp $sampleProblemMetadata->{$b}{name} }
+							keys %$sampleProblemMetadata
+					], id => 'sample_problem_file', class => 'form-select', 'aria-labelledby' => 'sample_problem' =%>
+				<div class="invalid-feedback"><%= maketext('Please select a problem.') %></div>
+			</div>
+		</div>
+	</div>
+	<div><%= submit_button maketext('Open'), class => 'btn btn-primary' =%></div>
+<%= end =%>
