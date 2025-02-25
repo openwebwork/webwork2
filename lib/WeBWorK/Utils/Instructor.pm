@@ -243,45 +243,31 @@ sub assignProblemToUser {
 sub assignProblemToUserSetVersion {
 	my ($db, $userID, $userSet, $GlobalProblem, $groupProbRef, $seed) = @_;
 
-	# conditional to allow selection of problems from a group of problems,
-	# defined in a set.
-
-	# problem groups are indicated by source files "group:problemGroupName"
-	if ($GlobalProblem->source_file() =~ /^group:(.+)$/) {
+	# Conditional to allow selection of problems from a group of problems defined in a set.
+	# Problem groups are indicated by source files "group:problemGroupName".
+	if ($GlobalProblem->source_file =~ /^group:(.+)$/) {
 		my $problemGroupName = $1;
 
-		# get list of problems in group
+		# Get the list of problems in the group.
 		my @problemList = $db->listGlobalProblems($problemGroupName);
-		# sanity check: if the group set hasn't been defined or doesn't
-		# actually contain problems (oops), then we can't very well assign
-		# this problem to the user.  we could go on and assign all other
-		# problems, but that results in a partial set.  so we die here if
-		# this happens.  philosophically we're requiring that the instructor
-		# set up the sets correctly or have to deal with the carnage after-
-		# wards.  I'm not sure that this is the best long-term solution.
-		# FIXME: this means that we may have created a set version that
-		# doesn't have any problems.  this is bad.  but it's hard to see
-		# where else to deal with it---fixing the problem requires checking
-		# at the set version-creation level that all the problems in the
-		# set are well defined.  FIXME
-		die("Error in set version creation: no problems are available "
-				. "in problem group $problemGroupName.  Set "
-				. $userSet->set_id
-				. " has been created for $userID, but "
-				. "does not contain the right problems.\n")
-			if (!@problemList);
+
+		# If the group set is not defined or doesn't actually contain problems, then this problem can not be assigned to
+		# the user.  Continuing to assign the other problems would result in a partial set.  So die here if this
+		# happens.  This exception and any others in the set version creation process are handled in the GatewayQuiz.pm
+		# module, and this set is immediately deleted and a message displayed instructing the user to speak to their
+		# instructor.  It is the instructor's responsibility to fix the issue from there.
+		die "No problems are available in problem group $problemGroupName.\n" if !@problemList;
 
 		my $nProb        = @problemList;
 		my $whichProblem = int(rand($nProb));
 
-		# we allow selection of multiple problems from a group, but want them to
-		#   be different.  there's probably a better way to do this
+		# Allow selection of multiple problems from a group, but ensure they are different.
+		# There's probably a better way to do this.
 		if (defined($groupProbRef->{$problemGroupName})
 			&& $groupProbRef->{$problemGroupName} =~ /\b$whichProblem\b/)
 		{
-			my $nAvail = $nProb - ($groupProbRef->{$problemGroupName} =~ tr/,//) - 1;
-
-			die("Too many problems selected from group.") if (!$nAvail);
+			die "Too many problems selected from group $problemGroupName.\n"
+				if !($nProb - ($groupProbRef->{$problemGroupName} =~ tr/,//) - 1);
 
 			$whichProblem = int(rand($nProb));
 			while ($groupProbRef->{$problemGroupName} =~ /\b$whichProblem\b/) {
@@ -298,7 +284,7 @@ sub assignProblemToUserSetVersion {
 		$GlobalProblem->source_file($prob->source_file());
 	}
 
-	# all set; do problem assignment
+	# Assign the problem.
 	my $UserProblem = $db->newProblemVersion;
 	$UserProblem->user_id($userID);
 	$UserProblem->set_id($userSet->set_id);
@@ -321,7 +307,7 @@ sub assignProblemToUserSetVersion {
 		}
 	}
 
-	return ();
+	return;
 }
 
 =back
