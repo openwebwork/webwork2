@@ -1,5 +1,8 @@
 % # Can't save blank problems without changing names, and can't save if lacking write permissions.
-% last unless $c->{file_type} ne 'blank_problem' && $c->{editFilePath} !~ /newProblem\.pg$/ && -w $c->{editFilePath};
+% last if $c->{file_type} eq 'blank_problem'
+	% || $c->{file_type} eq 'sample_problem'
+	% || $c->{editFilePath} =~ /newProblem\.pg$/
+	% || !-w $c->{editFilePath};
 %
 <div>
 	<div class="mb-2">

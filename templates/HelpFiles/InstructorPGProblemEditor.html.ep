@@ -37,7 +37,7 @@
 				</a>
 			</dt>
 			<dd><%= maketext('This links to a page describing Math Object usage.') %></dd>
-			<dt><a href="https://webwork.maa.org/pod/" target="pod_docs"><%= maketext('POD') %></a></dt>
+			<dt><%= link_to maketext('POD') => url_for('pod_index'), target => 'pod_docs' =%></dt>
 			<dd>
 				<%= maketext('This link gives details for many macros. It links to documentation embedded in the '
 					. 'macro files themselves.') =%>

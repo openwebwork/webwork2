@@ -1,4 +1,57 @@
 (() => {
+	const fileChooserForm = document.forms['pg-editor-file-chooser'];
+	if (fileChooserForm) {
+		const newProblemRadio = document.getElementById('new_problem');
+
+		const sourceFilePathInput = fileChooserForm.elements['sourceFilePath'];
+		const filePathRadio = document.getElementById('file_path');
+
+		const sampleProblemFileSelect = fileChooserForm.elements['sampleProblemFile'];
+		const sampleProblemRadio = document.getElementById('sample_problem');
+
+		newProblemRadio?.addEventListener('change', () => {
+			if (newProblemRadio.checked) {
+				sampleProblemFileSelect.required = false;
+				sourceFilePathInput.required = false;
+			}
+		});
+
+		if (filePathRadio && sourceFilePathInput) {
+			const filePathSelected = () => {
+				sampleProblemFileSelect.required = false;
+				sourceFilePathInput.required = true;
+				filePathRadio.checked = true;
+			};
+			filePathRadio.addEventListener('change', () => {
+				if (filePathRadio.checked) filePathSelected();
+			});
+			sourceFilePathInput.addEventListener('focusin', filePathSelected);
+		}
+		if (sampleProblemRadio && sampleProblemFileSelect) {
+			const sampleProblemSelected = () => {
+				sampleProblemFileSelect.required = true;
+				sourceFilePathInput.required = false;
+				sampleProblemRadio.checked = true;
+			};
+			sampleProblemRadio.addEventListener('change', () => {
+				if (sampleProblemRadio.checked) sampleProblemSelected();
+			});
+			sampleProblemFileSelect.addEventListener('change', sampleProblemSelected);
+			sampleProblemFileSelect.addEventListener('focusin', sampleProblemSelected);
+		}
+
+		fileChooserForm.addEventListener('submit', (e) => {
+			if (!fileChooserForm.checkValidity()) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+
+			fileChooserForm.classList.add('was-validated');
+		});
+
+		return;
+	}
+
 	// Add a container for message toasts.
 	const toastContainer = document.createElement('div');
 	toastContainer.classList.add('toast-container', 'position-fixed', 'bottom-0', 'end-0', 'p-3');

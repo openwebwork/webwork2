@@ -90,6 +90,11 @@ The "stationary" source for this problem is stored in the assets/pg directory
 and defined in defaults.config as
 $webworkFiles{screenSnippets}{blankProblem}
 
+=item sample_problem
+
+This is a special case which allows one to edit a sample PG problem.  These
+are problems located in the pg/tutorial/sample_problems directory.
+
 =back
 
 =head2 Action
@@ -123,6 +128,7 @@ use WeBWorK::Utils::Files      qw(surePathToFile readFile path_is_subdir);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
 use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Utils::Sets       qw(format_set_name_display);
+use SampleProblemParser        qw(getSampleProblemCode generateMetadata);
 
 use constant DEFAULT_SEED => 123456;
 
@@ -191,10 +197,10 @@ sub pre_header_initialize ($c) {
 			} else {
 				$c->{file_type} = 'problem';
 			}
-		} else {
-			$c->{file_type} = 'blank_problem';
 		}
 	}
+
+	return unless $c->{file_type};
 
 	# Clean up sourceFilePath and check that sourceFilePath is relative to the templates folder
 	if ($c->{file_type} eq 'source_path_for_problem_file') {
@@ -242,6 +248,11 @@ sub initialize ($c) {
 	$c->stash->{actionFormTitles} = ACTION_FORM_TITLES();
 	$c->stash->{hardcopyLabels}   = [];
 
+	unless ($c->{file_type}) {
+		$c->stash->{sampleProblemMetadata} = generateMetadata("$ce->{pg_dir}/tutorial/sample-problems");
+		return;
+	}
+
 	# Tell the templates if we are working on a PG file
 	$c->{is_pg} = !$c->{file_type} || ($c->{file_type} ne 'course_info' && $c->{file_type} ne 'hardcopy_theme');
 
@@ -265,7 +276,7 @@ sub initialize ($c) {
 		));
 	}
 
-	if ($c->{file_type} eq 'blank_problem') {
+	if ($c->{file_type} eq 'blank_problem' || $c->{file_type} eq 'sample_problem') {
 		$c->addbadmessage($c->maketext('This file is a template. You may use "Save As" to create a new file.'));
 	} elsif ($c->{inputFilePath} =~ /$BLANKPROBLEM$/) {
 		$c->addbadmessage($c->maketext(
@@ -298,7 +309,8 @@ sub initialize ($c) {
 				eval { $problemContents = readFile($c->{editFilePath}) };
 				$problemContents = $@ if $@;
 				$c->{inputFilePath} = $c->{editFilePath};
-
+			} elsif (path_is_subdir($c->{editFilePath}, "$ce->{pg_dir}/tutorial/sample-problems")) {
+				$problemContents = getSampleProblemCode($c->{editFilePath});
 			} else {
 				$c->stash->{file_error} = $c->maketext('The given file path is not a valid location.');
 			}
@@ -387,12 +399,14 @@ sub page_title ($c) {
 
 #  Convert initial path component to [TMPL], [COURSE], or [WW].
 sub shortPath ($c, $file) {
-	my $tmpl = $c->ce->{courseDirs}{templates};
-	my $root = $c->ce->{courseDirs}{root};
-	my $ww   = $c->ce->{webworkDirs}{root};
+	my $tmpl   = $c->ce->{courseDirs}{templates};
+	my $root   = $c->ce->{courseDirs}{root};
+	my $ww     = $c->ce->{webworkDirs}{root};
+	my $sample = $c->ce->{pg_dir} . '/tutorial/sample-problems';
 	$file =~ s|^$tmpl|[TMPL]|;
 	$file =~ s|^$root|[COURSE]|;
 	$file =~ s|^$ww|[WW]|;
+	$file =~ s|^$sample|[SAMPLE]|;
 
 	return $file;
 }
@@ -416,6 +430,7 @@ sub determineTempEditFilePath ($c, $path) {
 	my $templatesDirectory   = $c->ce->{courseDirs}{templates};
 	my $tmpEditFileDirectory = $c->getTempEditFileDirectory();
 	my $hardcopyThemesDir    = $c->ce->{webworkDirs}{hardcopyThemes};
+	my $pgRoot               = $c->ce->{pg_dir};
 
 	$c->addbadmessage($c->maketext('The path to the original file should be absolute.'))
 		unless $path =~ m|^/|;
@@ -429,6 +444,9 @@ sub determineTempEditFilePath ($c, $path) {
 		} elsif ($path eq $c->ce->{webworkFiles}{screenSnippets}{blankProblem}) {
 			# Handle the case of the blank problem in snippets.
 			$path = "$tmpEditFileDirectory/blank.$setID.$user.tmp";
+		} elsif ($path =~ m|^$pgRoot/tutorial/sample-problems/(.*\.pg)$|) {
+			# Handle the case of a sample problem.
+			$path = "$tmpEditFileDirectory/$1.$user.tmp";
 		} elsif ($path eq $c->ce->{webworkFiles}{hardcopySnippets}{setHeader}) {
 			# Handle the case of the screen header in snippets.
 			$path = "$tmpEditFileDirectory/screenHeader.$setID.$user.tmp";
@@ -450,7 +468,6 @@ sub determineTempEditFilePath ($c, $path) {
 }
 
 # Determine the original path to a file corresponding to a temporary edit file.
-# Returns a path that is relative to the template directory.
 sub determineOriginalEditFilePath ($c, $path) {
 	my $ce = $c->ce;
 
@@ -511,6 +528,8 @@ sub getFilePaths ($c) {
 		$editFilePath = "$ce->{courseDirs}{templates}/$ce->{courseFiles}{course_info}";
 	} elsif ($c->{file_type} eq 'blank_problem') {
 		$editFilePath = $ce->{webworkFiles}{screenSnippets}{blankProblem};
+	} elsif ($c->{file_type} eq 'sample_problem') {
+		$editFilePath = "$ce->{pg_dir}/tutorial/sample-problems/" . $c->param('sampleProblemFile');
 	} elsif ($c->{file_type} eq 'hardcopy_theme') {
 		$editFilePath = "$ce->{courseDirs}{hardcopyThemes}/" . $c->param('hardcopy_theme');
 		if (!-e $editFilePath) {
@@ -787,8 +806,8 @@ sub view_handler ($c) {
 				sourceFilePath => $relativeTempFilePath
 			}
 		));
-	} elsif ($c->{file_type} eq 'blank_problem') {
-		# Redirect to Problem.pm.pm.
+	} elsif ($c->{file_type} eq 'blank_problem' || $c->{file_type} eq 'sample_problem') {
+		# Redirect to Problem.pm.
 		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			$c->url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
@@ -843,10 +862,9 @@ sub view_handler ($c) {
 	return;
 }
 
-# The hardcopy and format_code actions are handled by javascript.  These are provided just in case
-# something goes wrong and the actions are called.
-sub hardcopy_action    { }
-sub format_code_action { }
+# The format_code action is handled by javascript.  This is provided just in case
+# something goes wrong and the handler is called.
+sub format_code_handler { }
 
 sub hardcopy_handler ($c) {
 	# Redirect to problem editor page.
