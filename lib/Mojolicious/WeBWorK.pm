@@ -30,6 +30,7 @@ use WeBWorK;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Utils::Logs   qw(writeTimingLogEntry);
 use WeBWorK::Utils::Routes qw(setup_content_generator_routes);
+use WeBWorK::Utils::Files  qw(path_is_subdir);
 
 sub startup ($app) {
 	# Set up logging.
@@ -193,9 +194,11 @@ sub startup ($app) {
 	$r->any(
 		"$webwork_htdocs_url/*static" => sub ($c) {
 			my $webwork_htdocs_file = "$webwork_htdocs_dir/" . $c->stash('static');
-			return $c->reply->file($webwork_htdocs_file) if -r $webwork_htdocs_file;
+			return $c->reply->file($webwork_htdocs_file)
+				if -r $webwork_htdocs_file && path_is_subdir($webwork_htdocs_file, $webwork_htdocs_dir);
 			my $pg_htdocs_file = "$ENV{PG_ROOT}/htdocs/" . $c->stash('static');
-			return $c->reply->file($pg_htdocs_file) if -r $pg_htdocs_file;
+			return $c->reply->file($pg_htdocs_file)
+				if -r $pg_htdocs_file && path_is_subdir($pg_htdocs_file, "$ENV{PG_ROOT}/htdocs/");
 			return $c->render(data => 'File not found', status => 404);
 		}
 	);
@@ -204,7 +207,8 @@ sub startup ($app) {
 	$r->any(
 		"$pg_htdocs_url/*static" => sub ($c) {
 			my $pg_htdocs_file = "$ENV{PG_ROOT}/htdocs/" . $c->stash('static');
-			return $c->reply->file($pg_htdocs_file) if -r $pg_htdocs_file;
+			return $c->reply->file($pg_htdocs_file)
+				if -r $pg_htdocs_file && path_is_subdir($pg_htdocs_file, "$ENV{PG_ROOT}/htdocs/");
 			return $c->render(data => 'File not found', status => 404);
 		}
 	);
@@ -212,8 +216,9 @@ sub startup ($app) {
 	# Provide access to course-specific resources.
 	$r->any(
 		"$webwork_courses_url/#course/*static" => sub ($c) {
-			my $file = "$webwork_courses_dir/" . $c->stash('course') . '/html/' . $c->stash('static');
-			return $c->reply->file($file) if -r $file;
+			my $course_html_dir = "$webwork_courses_dir/" . $c->stash('course') . '/html/';
+			my $file            = $course_html_dir . $c->stash('static');
+			return $c->reply->file($file) if -r $file && path_is_subdir($file, $course_html_dir);
 			return $c->render(data => 'File not found', status => 404);
 		}
 	);
@@ -222,7 +227,7 @@ sub startup ($app) {
 	$r->any(
 		"$ce->{webworkURLs}{htdocs_temp}/*static" => sub ($c) {
 			my $file = "$ce->{webworkDirs}{htdocs_temp}/" . $c->stash('static');
-			return $c->reply->file($file) if -r $file;
+			return $c->reply->file($file) if -r $file && path_is_subdir($file, "$ce->{webworkDirs}{htdocs_temp}/");
 			return $c->render(data => 'File not found', status => 404);
 		}
 	);
@@ -249,7 +254,8 @@ sub startup ($app) {
 		$r->any(
 			"/.well-known/*static" => sub ($c) {
 				my $file = "$ce->{webworkDirs}{tmp}/.well-known/" . $c->stash('static');
-				return $c->reply->file($file) if -r $file;
+				return $c->reply->file($file)
+					if -r $file && path_is_subdir($file, "$ce->{webworkDirs}{tmp}/.well-known/");
 				return $c->render(data => 'File not found', status => 404);
 			}
 		);
