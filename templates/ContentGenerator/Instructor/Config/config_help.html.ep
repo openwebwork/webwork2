@@ -26,7 +26,7 @@
 						</div>
 						<div class="modal-body">
 							<h2 class="fs-4"><code><%= $configObject->help_name =%></code></h2>
-							<div><%== $configObject->{doc2} || $configObject->{doc} %></div>
+							<div><%== maketext($configObject->{doc2} || $configObject->{doc}) %></div>
 						</div>
 					</div>
 				</div>
