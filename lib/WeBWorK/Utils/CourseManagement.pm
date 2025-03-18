@@ -385,6 +385,7 @@ sub addCourse {
 	if ($db0 && $options{copySets}) {
 		my @sets = $db0->getGlobalSetsWhere;
 		for my $set (@sets) {
+			$set->lis_source_did(undef);
 			eval { $db->addGlobalSet($set) };
 			warn $@ if $@;
 
