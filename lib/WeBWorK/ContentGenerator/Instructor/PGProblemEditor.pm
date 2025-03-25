@@ -620,7 +620,7 @@ sub getBackupTimes ($c) {
 	my $backupBasePath = $c->{backupBasePath};
 	my @files          = glob(qq("$backupBasePath*"));
 	return unless @files;
-	return reverse(map { $_ =~ s/$backupBasePath//r } @files);
+	return reverse(map { $_ =~ s/\Q$backupBasePath\E//r } @files);
 }
 
 sub backupFile ($c, $outputFilePath) {

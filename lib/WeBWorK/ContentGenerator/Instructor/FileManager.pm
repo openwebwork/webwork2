@@ -988,7 +988,7 @@ sub checkPWD ($c, $pwd, $renameError = 0) {
 	my $original = $pwd;
 	$pwd =~ s!(^|/)\.!$1_!g;                  # don't enter hidden directories
 	$pwd =~ s!^/!!;                           # remove leading /
-	$pwd =~ s![^-_./A-Z0-9~, ]!_!gi;          # no illegal characters
+	$pwd =~ s![^-_./A-Z0-9~,() ]!_!gi;        # no illegal characters
 	return if $renameError && $original ne $pwd;
 
 	$pwd = '.' if $pwd eq '';
