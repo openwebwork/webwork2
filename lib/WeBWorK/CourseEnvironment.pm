@@ -96,6 +96,7 @@ sub new {
 	$seedVars->{pg_dir}      //= $WeBWorK::SeedCE{pg_dir}      // $ENV{PG_ROOT};
 
 	$seedVars->{courseName} ||= '___';    # prevents extraneous error messages
+	$seedVars->{courseName} =~ s/'.*$//;
 
 	# The following line is a work around for a bug that occurs on some systems.  See
 	# https://rt.cpan.org/Public/Bug/Display.html?id=77916 and

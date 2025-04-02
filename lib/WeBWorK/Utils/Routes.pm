@@ -296,7 +296,7 @@ my %routeParameters = (
 				logout options instructor_tools problem_list)
 		],
 		module => 'ProblemSets',
-		path   => '/#courseID'
+		path   => { '/#courseID' => [ courseID => qr/[\w-]*/ ] }
 	},
 
 	logout => {
@@ -429,7 +429,7 @@ my %routeParameters = (
 	instructor_problem_grader => {
 		title  => x('Manual Grader'),
 		module => 'Instructor::ProblemGrader',
-		path   => '/grader/#setID/#problemID'
+		path   => '/grader/#setID/<problemID:num>'
 	},
 	instructor_add_users => {
 		title  => x('Add Users'),
@@ -471,7 +471,7 @@ my %routeParameters = (
 	instructor_problem_editor_withset_withproblem => {
 		title  => '[_3]',
 		module => 'Instructor::PGProblemEditor',
-		path   => '/#problemID'
+		path   => '/<problemID:num>'
 	},
 	instructor_scoring => {
 		title  => x('Scoring Tools'),
@@ -503,7 +503,7 @@ my %routeParameters = (
 	instructor_problem_statistics => {
 		title  => '[_3]',
 		module => 'Instructor::Stats',
-		path   => '/#problemID'
+		path   => '/<problemID:num>'
 	},
 	instructor_user_statistics => {
 		title  => '[_1]',
@@ -570,7 +570,7 @@ my %routeParameters = (
 		title        => '[_3]',
 		children     => [qw(show_me_another)],
 		module       => 'Problem',
-		path         => '/#problemID',
+		path         => '/<problemID:num>',
 		unrestricted => 1
 	},
 	show_me_another => {
@@ -617,15 +617,22 @@ sub setup_content_generator_routes_recursive {
 	my $action = $routeParameters{$child}{action} // 'go';
 
 	if ($routeParameters{$child}{children}) {
-		my $child_route = $route->under($routeParameters{$child}{path}, [ problemID => qr/\d+/ ])->name($child);
+		my $child_route = $route->under(
+			ref($routeParameters{$child}{path}) eq 'HASH'
+			? %{ $routeParameters{$child}{path} }
+			: $routeParameters{$child}{path})->name($child);
 		$child_route->any($routeParameters{$child}{methods} // (), '/')->to("$routeParameters{$child}{module}#$action")
 			->name($child);
 		for (@{ $routeParameters{$child}{children} }) {
 			setup_content_generator_routes_recursive($child_route, $_);
 		}
 	} else {
-		$route->any($routeParameters{$child}{methods} // (), $routeParameters{$child}{path}, [ problemID => qr/\d+/ ])
-			->to("$routeParameters{$child}{module}#$action")->name($child);
+		$route->any(
+			$routeParameters{$child}{methods} // (),
+			ref($routeParameters{$child}{path}) eq 'HASH'
+			? %{ $routeParameters{$child}{path} }
+			: $routeParameters{$child}{path}
+		)->to("$routeParameters{$child}{module}#$action")->name($child);
 	}
 
 	return;
