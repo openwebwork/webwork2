@@ -720,8 +720,7 @@ sub Upload ($c) {
 		return $c->Refresh;
 	}
 
-	my ($id, $hash) = split(/\s+/, $fileIDhash);
-	my $upload = WeBWorK::Upload->retrieve($id, $hash, dir => $c->{ce}{webworkDirs}{uploadCache});
+	my $upload = WeBWorK::Upload->retrieve(split(/\s+/, $fileIDhash), $c->{ce}{webworkDirs}{uploadCache});
 
 	my $name                     = $upload->filename;
 	my $invalidUploadFilenameMsg = $c->checkName($name);
@@ -794,21 +793,24 @@ sub Upload ($c) {
 	if ($type ne 'Binary') {
 		my $fh    = $upload->fileHandle;
 		my @lines = <$fh>;
+		$fh->close;
 		$data = join('', @lines);
 		if ($type eq 'Automatic') { $type = isText($data) ? 'Text' : 'Binary' }
 	}
 	if ($type eq 'Text') {
 		$upload->dispose;
 		$data =~ s/\r\n?/\n/g;
+
+		my $backup_data = $data;
+		my $success     = utf8::decode($data);    # try to decode as utf8
+		unless ($success) {
+			warn "Trying to convert file $file from latin1? to UTF-8";
+			utf8::upgrade($backup_data);          # try to convert data from latin1 to utf8.
+			$data = $backup_data;
+		}
+
 		if (open(my $UPLOAD, '>:encoding(UTF-8)', $file)) {
-			my $backup_data = $data;
-			my $success     = utf8::decode($data);    # try to decode as utf8
-			unless ($success) {
-				warn "Trying to convert file $file from latin1? to UTF-8";
-				utf8::upgrade($backup_data);          # try to convert data from latin1 to utf8.
-				$data = $backup_data;
-			}
-			print $UPLOAD $data;                      # print massaged data to file.
+			print $UPLOAD $data;
 			close $UPLOAD;
 		} else {
 			$c->addbadmessage($c->maketext(q{Can't create file "[_1]": [_2]}, $name, $!));

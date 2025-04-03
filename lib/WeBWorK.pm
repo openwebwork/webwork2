@@ -122,17 +122,14 @@ async sub dispatch ($c) {
 
 	my @uploads = @{ $c->req->uploads };
 
-	foreach my $u (@uploads) {
-		# Make sure it's a "real" upload.
-		next unless $u->filename;
-
+	for my $u (@uploads) {
 		# Store the upload.
-		my $upload = WeBWorK::Upload->store($u, dir => $ce->{webworkDirs}{uploadCache});
+		my $upload = WeBWorK::Upload->store($u, $ce->{webworkDirs}{uploadCache});
 
-		# Store the upload ID and hash in the file upload field.
-		my $id   = $upload->id;
-		my $hash = $upload->hash;
-		$c->param($u->name => "$id $hash");
+		# Store the upload temporary file location and hash in the file upload field.
+		my $tmpFile = $upload->tmpFile;
+		my $hash    = $upload->hash;
+		$c->param($u->name => "$tmpFile $hash");
 	}
 
 	# Create these out here. They should fail if they don't have the right information.

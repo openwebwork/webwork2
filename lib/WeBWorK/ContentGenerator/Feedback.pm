@@ -174,7 +174,7 @@ sub initialize ($c) {
 		my $fileIDhash = $c->param('attachment');
 		if ($fileIDhash) {
 			my $attachment =
-				WeBWorK::Upload->retrieve(split(/\s+/, $fileIDhash), dir => $ce->{webworkDirs}{uploadCache});
+				WeBWorK::Upload->retrieve(split(/\s+/, $fileIDhash), $ce->{webworkDirs}{uploadCache});
 
 			# Get the filename and read its contents.
 			my $filename = $attachment->filename;
@@ -184,7 +184,7 @@ sub initialize ($c) {
 				local $/;
 				$contents = <$fh>;
 			};
-			close $fh;
+			$fh->close;
 			$attachment->dispose;
 
 			# Check to see that this is an allowed filetype.
