@@ -51,7 +51,6 @@ safe compartment into a hash. This hash becomes the course environment.
 
 use strict;
 use warnings;
-use feature 'state';
 
 use Carp;
 use Opcode qw(empty_opset);
@@ -82,6 +81,8 @@ C<$courseFiles{environment}> variable, if present, to locate the course
 environment file. If found, the file is read and added to the environment.
 
 =cut
+
+our @errors;
 
 sub new {
 	my ($invocant, $seedVars) = @_;
@@ -114,27 +115,32 @@ sub new {
 		$safe->reval("\$$var = '$val';");
 	}
 
+	local @errors = ();
+	$safe->share('@errors');
+
 	# Compile the "include" function with all opcodes available.
 	my $include = q[ sub include {
 		my ($file) = @_;
-		state @dieMessages;
 		my $fullPath = "] . $seedVars->{webwork_dir} . q[/$file";
 		# This regex matches any string that begins with "../",
 		# ends with "/..", contains "/../", or is "..".
 		if ($fullPath =~ m!(?:^|/)\.\.(?:/|$)!) {
-			die "Included file $file has potentially insecure path: contains \"..\"";
+			push(@errors, qq{Included file $file has potentially insecure path: contains ".."});
+			die;
 		} else {
 			local @INC = ();
-			local $SIG{__DIE__} = sub { push(@dieMessages, $_[0]) };
 			my $result = do $fullPath;
-			if (@dieMessages) {
-				die pop @dieMessages;
-			} elsif ($@) {
-				die "Failed to compile include file $fullPath: $@";
+			if ($@) {
+				push(@errors, "Failed to compile include file $fullPath: $@");
+				die;
 			} elsif ($!) {
-				die "Failed to read include file $fullPath (has it been created from the corresponding .dist file?): $!";
+				push(@errors,
+					"Failed to read include file $fullPath "
+						. "(has it been created from the corresponding .dist file?): $!");
+				die;
 			} elsif (!$result) {
-				die "Include file $fullPath did not return a true value.";
+				push(@errors, "Include file $fullPath did not return a true value.");
+				die;
 			}
 		}
 	} ];
@@ -160,10 +166,11 @@ sub new {
 
 	# if that evaluation failed, we can't really go on...
 	# we need a global environment!
-	if ($@) {
+	if ($@ || @errors) {
 		# Make sure any warnings that occurred are passed back to the global warning handler.
 		local $SIG{__WARN__} = ref($outer_sig_warn) eq 'CODE' ? $outer_sig_warn : 'DEFAULT';
 		warn $_ for @warnings;
+		croak "Could not evaluate global environment file $globalEnvironmentFile: $errors[0]" if @errors;
 		croak "Could not evaluate global environment file $globalEnvironmentFile: $@";
 	}
 
