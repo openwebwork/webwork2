@@ -17,7 +17,7 @@ use warnings;
 use File::Find::Rule;
 use File::Basename;
 use open qw/:std :utf8/;
-use JSON;
+use Mojo::JSON qw(encode_json);
 
 our @EXPORT = ();
 our @EXPORT_OK =
@@ -373,7 +373,7 @@ sub build_library_textbook_tree {
 sub writeJSONtoFile {
 	my ($data, $filename) = @_;
 
-	my $json = JSON->new->utf8->encode($data);
+	my $json = encode_json($data);
 	open my $fh, ">", $filename or die "Cannot open $filename";
 	print $fh $json;
 	close $fh;
