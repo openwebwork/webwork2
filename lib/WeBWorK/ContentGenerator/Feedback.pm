@@ -203,6 +203,19 @@ sub initialize ($c) {
 				return;
 			}
 
+			# Email::Stuffer incorrectly adds the attachment together with the text and html body parts at the same
+			# level.  As a result, when an email has a text body, an html body, and an attachment, both the text and
+			# html are shown in most email clients.  The text and html body should be parts of a separate part that has
+			# content type 'multipart/alternative'.  So the email has two parts, and the first part has two parts which
+			# are the text and html body.  The second part is the attachment. So before attaching the file move the text
+			# and html body into their own part.
+			$email->{parts} = [
+				Email::MIME->create(
+					attributes => { content_type => 'multipart/alternative' },
+					parts      => $email->{parts}
+				)
+			];
+
 			# Attach the file.
 			$email->attach($contents, filename => $filename);
 		}
