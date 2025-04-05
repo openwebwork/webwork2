@@ -1252,7 +1252,7 @@ sub output_comments ($c) {
 	my $db = $c->db;
 
 	my $userPastAnswerID =
-		$db->latestProblemPastAnswer($c->param('effectiveUser'), $c->stash('setID'), $c->stash('problemID'));
+		$db->latestProblemPastAnswer($c->param('effectiveUser'), $c->stash('setID'), 0, $c->stash('problemID'));
 
 	# If there is a comment then display it.
 	if ($userPastAnswerID) {

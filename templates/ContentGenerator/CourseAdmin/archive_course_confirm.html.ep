@@ -6,30 +6,28 @@
 		<p class="<%= $_->[1] ? 'text-success' : 'text-danger' %> fw-bold my-0"><%= $_->[0] %></p>
 	% }
 % }
-% my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
-	% $incorrect_type_database_fields, $db_report)
-	% = $c->formatReportOnDatabaseTables($dbStatus);
-<%= $db_report %>
-% if ($extra_database_tables) {
+% my $dbReport = $c->formatReportOnDatabaseTables($dbStatus);
+<%= $dbReport->{summary} %>
+% if ($dbReport->{extra_database_tables}) {
 	<p class="text-danger fw-bold">
 		<%= maketext('There are extra database tables which are not defined in the schema.  '
 				. 'These can be deleted when upgrading the course.') =%>
 	</p>
 % }
-% if ($extra_database_fields) {
+% if ($dbReport->{extra_database_fields}) {
 	<p class="text-danger fw-bold">
 		<%= maketext('There are extra database fields which are not defined in the schema for at least one table.  '
 				. 'They can be removed when upgrading the course.') =%>
 	</p>
 % }
-% if ($rebuild_table_indexes) {
+% if ($dbReport->{rebuild_table_indexes}) {
 	<p class="text-danger fw-bold">
 		<%= maketext('There are extra database fields which are not defined in the schema and were part of the key '
 				. 'for at least one table. These fields need to be deleted and the table indexes need to be rebuilt. '
 				. 'This will be done when upgrading the course.') =%>
 	</p>
 % }
-% if ($incorrect_type_database_fields) {
+% if ($dbReport->{incorrect_type_database_fields}) {
 	<p class="text-danger fw-bold">
 		<%= maketext(
 			'There are database fields that do not have the same type as the field defined in the schema for '
@@ -38,7 +36,7 @@
 				. 'field can corrupt the table.') =%>
 	</p>
 % }
-% if (!$all_tables_ok) {
+% if (!$dbReport->{all_tables_ok}) {
 	<p class="text-danger fw-bold">
 		<%= maketext('The course database must be upgraded before archiving this course.') =%>
 	</p>
@@ -82,7 +80,7 @@
 	</p>
 % }
 <hr>
-% if ($all_tables_ok && param('delete_course')) {
+% if ($dbReport->{all_tables_ok} && param('delete_course')) {
 	<p class="text-danger fw-bold">
 		<%== maketext('Are you sure that you want to delete the course [_1] after archiving? This cannot be undone!',
 			tag('b', $archive_courseID)) =%>
@@ -97,7 +95,7 @@
 		<%= hidden_field archive_courseIDs => $_ =%>
 	% }
 	%
-	% if ($all_tables_ok && $directories_ok && $links_ok) {
+	% if ($dbReport->{all_tables_ok} && $directories_ok && $links_ok) {
 		% # No missing tables, missing fields, missing directories, or missing/bad links
 		% # Warn about overwriting an existing archive
 		% my $archive_path = "$ce2->{webworkDirs}{courses}/$ce2->{admin_course_id}/archives/$archive_courseID.tar.gz";
@@ -131,7 +129,7 @@
 			<%= submit_button maketext(q{Don't Archive}),
 				name  => 'decline_archive_course',
 				class => 'btn btn-primary' =%>
-			<%= submit_button $all_tables_ok
+			<%= submit_button $dbReport->{all_tables_ok}
 				? maketext('Attempt to upgrade directories and links')
 				: maketext('Upgrade Course Tables'),
 				name  => 'upgrade_course_tables',

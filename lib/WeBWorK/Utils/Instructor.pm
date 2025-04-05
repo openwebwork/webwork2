@@ -52,6 +52,7 @@ sub assignSetToUser {
 	my $UserSet = $db->newUserSet;
 	$UserSet->user_id($userID);
 	$UserSet->set_id($setID);
+	$UserSet->version_id(0);
 
 	eval { $db->addUserSet($UserSet) };
 	die $@ if $@ && !WeBWorK::DB::Ex::RecordExists->caught;
@@ -229,12 +230,12 @@ sub assignProblemToUserSetVersion {
 
 	# Assign the problem.
 	my $UserProblem = $db->newProblemVersion;
+	initializeUserProblem($UserProblem, $seed);
 	$UserProblem->user_id($userID);
 	$UserProblem->set_id($userSet->set_id);
 	$UserProblem->version_id($userSet->version_id);
 	$UserProblem->problem_id($GlobalProblem->problem_id);
 	$UserProblem->source_file($GlobalProblem->source_file);
-	initializeUserProblem($UserProblem, $seed);
 
 	eval { $db->addProblemVersion($UserProblem) };
 	die $@ if $@ && !WeBWorK::DB::Ex::RecordExists->caught;
@@ -288,6 +289,7 @@ sub assignSetToGivenUsers {
 		my $userSet = $db->newUserSet;
 		$userSet->user_id($userID);
 		$userSet->set_id($setID);
+		$userSet->version_id(0);
 
 		push(@userSetsToAdd, $userSet);
 		debug("Scheduled $setID: adding UserSet for $userID");

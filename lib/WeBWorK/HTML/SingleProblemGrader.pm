@@ -28,10 +28,9 @@ sub new ($class, $c, $pg, $userProblem, $mergedSet) {
 	my $recordedScore = $userProblem->status;
 
 	# Retrieve the latest past answer and comment (if any).
-	my $userPastAnswerID =
-		$db->latestProblemPastAnswer($studentID, $setID . ($versionID ? ",v$versionID" : ''), $problemID);
-	my $pastAnswer = $userPastAnswerID ? $db->getPastAnswer($userPastAnswerID) : 0;
-	my $comment    = $pastAnswer       ? $pastAnswer->comment_string           : '';
+	my $userPastAnswerID = $db->latestProblemPastAnswer($studentID, $setID, $versionID, $problemID);
+	my $pastAnswer       = $userPastAnswerID ? $db->getPastAnswer($userPastAnswerID) : 0;
+	my $comment          = $pastAnswer       ? $pastAnswer->comment_string           : '';
 
 	my $self = {
 		pg             => $pg,

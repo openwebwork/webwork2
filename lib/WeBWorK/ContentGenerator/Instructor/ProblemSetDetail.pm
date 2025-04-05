@@ -627,7 +627,7 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 	my $extraFields = '';
 
 	# Are we editing a set version?
-	my $setVersion = defined($userRecord) && $userRecord->can('version_id') ? 1 : 0;
+	my $setVersion = defined($userRecord) && $userRecord->version_id;
 
 	# Needed for ip restrictions
 	my $ipFields     = '';
@@ -1064,7 +1064,7 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 			# Don't show template gateway fields when editing set versions.
 			next
 				if (($gwfield eq "time_interval" || $gwfield eq "versions_per_interval")
-					&& ($forUsers && $userRecord->can('version_id')));
+					&& ($forUsers && $userRecord->version_id));
 
 			my @fieldData = $c->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, $gwfield);
 			if (@fieldData && defined($fieldData[0]) && $fieldData[0] ne '') {
@@ -1157,7 +1157,7 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 	my $ipFields = '';
 
 	if (
-		(!defined $userRecord || (defined $userRecord && !$userRecord->can('version_id')))
+		(!defined $userRecord || (defined $userRecord && !$userRecord->version_id))
 		&& ((!$forUsers && $globalRecord->restrict_ip && $globalRecord->restrict_ip ne 'No')
 			|| ($forUsers && $userRecord->restrict_ip ne 'No'))
 		)
@@ -1313,7 +1313,6 @@ sub initialize ($c) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 	my $user  = $c->param('user');
-	my $setID = $c->stash('setID');
 
 	# Make sure these are defined for the templates.
 	$c->stash->{headers}             = HEADER_ORDER();
@@ -1325,13 +1324,11 @@ sub initialize ($c) {
 	$c->stash->{userProblems}        = {};
 	$c->stash->{userProblemVersions} = {};
 
-	# A set may be provided with a version number (as in setID,v#).
-	# If so obtain the template set id and version number.
-	my $editingSetVersion = 0;
-	if ($setID =~ /,v(\d+)$/) {
-		$editingSetVersion = $1;
-		$setID =~ s/,v(\d+)$//;
-	}
+	return unless ($authz->hasPermissions($user, 'access_instructor_tools'));
+	return unless ($authz->hasPermissions($user, 'modify_problem_sets'));
+
+	my $setID             = $c->stash('setID');
+	my $editingSetVersion = $c->stash('versionID') // 0;
 
 	$c->stash->{setID}             = $setID;
 	$c->stash->{editingSetVersion} = $editingSetVersion;
@@ -1339,9 +1336,6 @@ sub initialize ($c) {
 	my $setRecord = $db->getGlobalSet($setID);
 	$c->stash->{setRecord} = $setRecord;
 	return unless $setRecord;
-
-	return unless ($authz->hasPermissions($user, 'access_instructor_tools'));
-	return unless ($authz->hasPermissions($user, 'modify_problem_sets'));
 
 	my @editForUser = $c->param('editForUser');
 
@@ -2038,7 +2032,7 @@ sub initialize ($c) {
 		if ($editingSetVersion) {
 			$c->stash->{userProblemVersions} = {
 				map { $_->problem_id => $_ } $db->getProblemVersionsWhere(
-					{ user_id => $editForUser[0], set_id => "$setID,v$editingSetVersion" }
+					{ user_id => $editForUser[0], set_id => $setID, version_id => $editingSetVersion }
 				)
 			};
 		}

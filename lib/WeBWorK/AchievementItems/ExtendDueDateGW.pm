@@ -21,7 +21,7 @@ sub new ($class, $c) {
 sub can_use ($self, $set, $records, $c) {
 	return
 		$set->assignment_type =~ /gateway/
-		&& $set->set_id !~ /,v\d+$/
+		&& !$set->version_id
 		&& between($set->open_date, $set->due_date + $self->{time});
 }
 

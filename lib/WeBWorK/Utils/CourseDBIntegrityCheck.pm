@@ -10,6 +10,8 @@ with database schema.
 use strict;
 use warnings;
 
+use Iterator::Util;
+
 use WeBWorK::Utils::CourseManagement qw(listCourses);
 
 # Developer note:  This file should not format messages in html.  Instead return an array of tuples.  Each tuple should
@@ -195,13 +197,17 @@ sub checkTableFields {
 	my $table_name =
 		exists $db->{$table}{params}{tableOverride} ? $db->{$table}{params}{tableOverride} : $table;
 	warn "$table_name is a non native table" if $db->{$table}{params}{non_native};
+
+	my @schema_key_fields  = $db->{$table}{record}->KEYFIELDS;
+	my %schema_key_fields  = map { $_ => 1 } @schema_key_fields;
 	my @schema_field_names = $db->{$table}{record}->FIELDS;
 	my %schema_field_names = map { $_ => 1 } @schema_field_names;
+
 	for my $field (@schema_field_names) {
 		if ($db->{$table}->tableFieldExists($field)) {
 			$fieldStatus{$field} = [SAME_IN_A_AND_B];
 		} else {
-			$fieldStatus{$field} = [ONLY_IN_A];
+			$fieldStatus{$field} = [ ONLY_IN_A, $schema_key_fields{$field} // () ];
 			$fields_ok = 0;
 		}
 	}
@@ -252,18 +258,25 @@ sub updateTableFields {
 
 	my $schema_obj = $db->{$table};
 
+	my %newKeyFields;
+
 	# Add fields
 	for my $field_name (keys %$fieldStatus) {
 		if ($fieldStatus->{$field_name}[0] == ONLY_IN_A) {
 			if ($schema_obj->can('add_column_field') && $schema_obj->add_column_field($field_name)) {
-				push(@messages, [ "Added column '$field_name' to table '$table'", 1 ]);
+				if ($fieldStatus->{$field_name}[1]) {
+					push(@messages, [ "Added primary key column '$field_name' to table '$table'", 1 ]);
+					$newKeyFields{$field_name} = 1;
+				} else {
+					push(@messages, [ "Added column '$field_name' to table '$table'", 1 ]);
+				}
 			}
 		}
 	}
 
 	# Rebuild indexes for the table if a previous key field column is going to be dropped.
 	if ($schema_obj->can('rebuild_indexes')
-		&& (grep { $fieldStatus->{$_} && $fieldStatus->{$_}[1] } @$delete_field_names))
+		&& ((grep { $fieldStatus->{$_} && $fieldStatus->{$_}[1] } @$delete_field_names) || %newKeyFields))
 	{
 		my $result = eval { $schema_obj->rebuild_indexes };
 		if ($@ || !$result) {
@@ -300,7 +313,48 @@ sub updateTableFields {
 		}
 	}
 
+	$self->migrateSetIdToSetIdVersionId($table)
+		if $newKeyFields{version_id} && $table =~ /^((set|problem)_user|past_answer)$/;
+
 	return @messages;
+}
+
+sub migrateSetIdToSetIdVersionId {
+	my ($self, $table) = @_;
+	my $record = $self->db->{$table};
+
+	my @fields = $record->fields;
+	my %values;
+	@values{@fields} = (0 .. $#fields);
+
+	my @keyfields = $record->keyfields;
+	my %where;
+	@where{@keyfields} = map { $values{$_} } @keyfields;
+
+	my ($stmt, @val_order) = $record->sql->update($record->table, \%values);
+	(substr($stmt, length($stmt), 0), my @where_order) = $record->sql->where(\%where);
+
+	my $rows_i = $record->get_fields_where_i([ $record->fields ], { set_id => { like => '%,v%' } });
+	my $sth    = $record->dbh->prepare_cached($stmt, undef, 3);
+
+	my @results;
+
+	until ($rows_i->is_exhausted) {
+		my $fieldValues = $rows_i->value;
+
+		my @bind_vals = @$fieldValues[@where_order];
+
+		($fieldValues->[ $values{set_id} ], $fieldValues->[ $values{version_id} ]) =
+			$fieldValues->[ $values{set_id} ] =~ /([^,]+)(?:,v(.*))?/;
+
+		unshift(@bind_vals, @$fieldValues[@val_order]);
+
+		$record->dbh->debug_stmt($sth, @bind_vals);
+		push @results, $sth->execute(@bind_vals);
+	}
+	$sth->finish;
+
+	return @results;
 }
 
 # Database locking utilities

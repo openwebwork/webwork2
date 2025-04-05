@@ -484,7 +484,11 @@ sub links ($c) {
 	my $setID         = $c->stash('setID');
 	my $problemID     = $c->stash('problemID');
 	my $achievementID = $c->stash('achievementID');
-	my $globalSetID   = defined $setID ? $setID =~ s/,v\d+$//r : undef;
+
+	# If the set id is versioned then strip the version from the set id, and extract the version.
+	# The only route that still does this is the hardcopy route.
+	($setID, my $versionID) = defined $setID && $setID =~ /([^,]*),v(\d+)$/ ? ($1, $2) : ($setID, 0);
+	my $globalSetID = $setID;
 
 	# Determine if navigation is restricted for this user.
 	my $restricted_navigation = $authen->was_verified && !$authz->hasPermissions($userID, 'navigation_allowed');
@@ -543,6 +547,7 @@ sub links ($c) {
 		eUserID               => $eUserID,
 		urlUserID             => $c->stash('userID'),
 		setID                 => $setID,
+		versionID             => $versionID,
 		globalSetID           => $globalSetID,
 		prettySetID           => format_set_name_display($setID // $globalSetID // ''),
 		problemID             => $problemID,
