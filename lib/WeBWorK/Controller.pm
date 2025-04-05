@@ -25,7 +25,6 @@ fields.
 =cut
 
 use Encode;
-use JSON::MaybeXS;
 
 use WeBWorK::Localize;
 

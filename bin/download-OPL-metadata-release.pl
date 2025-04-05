@@ -11,7 +11,7 @@ use File::Copy;
 use File::Path;
 use Archive::Tar;
 use Mojo::File;
-use JSON;
+use Mojo::JSON qw(decode_json);
 
 BEGIN {
 	use Mojo::File qw(curfile);
@@ -36,7 +36,7 @@ my $releaseDataFF =
 	File::Fetch->new(uri => 'https://api.github.com/repos/openwebwork/webwork-open-problem-library/releases/latest');
 my $file        = $releaseDataFF->fetch(to => $ce->{webworkDirs}{tmp}) or die $releaseDataFF->error;
 my $path        = Mojo::File->new($file);
-my $releaseData = JSON->new->utf8->decode($path->slurp);
+my $releaseData = decode_json($path->slurp);
 $path->remove;
 
 my $releaseTag = $releaseData->{tag_name};

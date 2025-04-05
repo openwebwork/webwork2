@@ -20,7 +20,6 @@ use strict;
 use warnings;
 
 use Carp;
-use JSON;
 use Data::Structure::Util qw(unbless);
 
 use WeBWorK::Utils             qw(max);

@@ -26,6 +26,7 @@ use strict;
 use warnings;
 
 use File::Find;
+use Mojo::JSON qw(decode_json);
 
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Debug;
@@ -642,7 +643,7 @@ sub loadSetDefListFile {
 			$contents;
 		};
 
-		return @{ JSON->new->decode($data) };
+		return @{ decode_json($data) };
 	}
 
 	return;

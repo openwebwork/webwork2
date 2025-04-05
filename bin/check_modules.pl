@@ -107,8 +107,6 @@ my @modulesList = qw(
 	IO::Socket::SSL
 	Iterator
 	Iterator::Util
-	JSON
-	JSON::MaybeXS
 	Locale::Maketext::Lexicon
 	Locale::Maketext::Simple
 	LWP::Protocol::https

@@ -24,7 +24,6 @@ package FormatRenderedProblem;
 use strict;
 use warnings;
 
-use JSON;
 use Digest::SHA qw(sha1_base64);
 use Mojo::Util  qw(xml_escape);
 use Mojo::JSON  qw(encode_json);
@@ -228,7 +227,7 @@ sub formatRenderedProblem {
 		$output->{pg_version} = $ce->{PG_VERSION};
 
 		# Convert to JSON and render.
-		return $ws->c->render(data => JSON->new->utf8(1)->encode($output));
+		return $ws->c->render(data => encode_json($output));
 	}
 
 	# Setup arnd render the appropriate template in the templates/RPCRenderFormats folder depending on the outputformat.

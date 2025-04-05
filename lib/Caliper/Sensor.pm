@@ -7,7 +7,7 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Debug;
 use Data::Dumper;
-use JSON;
+use Mojo::JSON  qw(encode_json);
 use Time::HiRes qw/gettimeofday/;
 use Date::Format;
 
@@ -67,7 +67,7 @@ sub sendEvents {
 			'data'        => $event_chunk,
 		};
 
-		my $json_payload = JSON->new->canonical->encode($envelope);
+		my $json_payload = encode_json($envelope);
 		# debug("Caliper event json_payload: " . $json_payload);
 
 		my $HTTPRequest = HTTP::Request->new(
