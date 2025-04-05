@@ -11,7 +11,7 @@ use WeBWorK::Utils                    qw(wwRound);
 use WeBWorK::Utils::DateTime          qw(after);
 use WeBWorK::Utils::FilterRecords     qw(getFiltersForClass filterRecords);
 use WeBWorK::Utils::JITAR             qw(jitar_id_to_seq);
-use WeBWorK::Utils::Sets              qw(grade_set list_set_versions format_set_name_display);
+use WeBWorK::Utils::Sets              qw(grade_set format_set_name_display);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 
 sub initialize ($c) {
@@ -117,18 +117,18 @@ sub displaySets ($c) {
 	my @score_list;
 	my @user_set_list;
 
+	my $setName = $c->stash('setID');
+
 	for my $studentRecord (@student_records) {
 		my $studentName = $studentRecord->user_id;
-		my ($allSetVersionNames, $notAssignedSet) =
-			list_set_versions($db, $studentName, $c->stash('setID'), $setIsVersioned);
+		next unless $db->existsUserSet($studentName, $setName);
 
-		next if $notAssignedSet;
+		my @versionIDs = $setIsVersioned ? $db->listSetVersions($studentName, $setName) : (0);
 
 		my $max_version_data = {};
 
-		for my $setName (@$allSetVersionNames) {
+		for my $vNum (@versionIDs) {
 			my $set;
-			my $vNum = 0;
 
 			# For versioned tests we might be displaying the test date and test time,
 			# and we need to know if the test is proctored or not.
@@ -138,7 +138,6 @@ sub displaySets ($c) {
 			my $proctored  = 0;
 
 			if ($setIsVersioned) {
-				($setName, $vNum) = ($setName =~ /(.+),v(\d+)$/);
 				# Information from the set is needed to set up the display below. So get the merged user set as well.
 				$set        = $db->getMergedSetVersion($studentRecord->user_id, $setName, $vNum);
 				$dateOfTest = localtime($set->version_creation_time());
@@ -198,7 +197,7 @@ sub displaySets ($c) {
 			}
 		}
 
-		if ($showBestOnly || !@$allSetVersionNames) {
+		if ($showBestOnly || !@versionIDs) {
 			# If only the best score is to be shown or there were no set versions and the set was assigned to the user,
 			# then add the score to the list of scores and add the data to the set data list.
 			push(@score_list,
@@ -296,8 +295,6 @@ sub displayStudentStats ($c) {
 		return '';
 	}
 
-	my $courseName = $ce->{courseName};
-
 	# First get all merged sets for this user ordered by set_id.
 	my @sets = $db->getMergedSetsWhere({ user_id => $studentID }, 'set_id');
 	# To be able to find the set objects later, make a handy hash of set ids to set objects.
@@ -318,8 +315,7 @@ sub displayStudentStats ($c) {
 		if (defined $set->assignment_type && $set->assignment_type =~ /gateway/) {
 			# We have to have the merged set versions to know what each of their assignment types are
 			# (because proctoring can change this).
-			my @setVersions =
-				$db->getMergedSetVersionsWhere({ user_id => $studentID, set_id => { like => "$setID,v\%" } });
+			my @setVersions = $db->getMergedSetVersionsWhere({ user_id => $studentID, set_id => $setID });
 
 			# Add the set versions to our list of sets.
 			$setsByID{ $_->set_id . ',v' . $_->version_id } = $_ for (@setVersions);
@@ -367,29 +363,28 @@ sub displayStudentStats ($c) {
 
 	my $rows = $c->c;
 	for my $setID (@allSetIDs) {
-		my $act_as_student_set_url =
-			$c->systemLink($c->url_for('problem_list', setID => $setID), params => { effectiveUser => $effectiveUser });
 		my $set = $setsByID{$setID};
+
+		my $act_as_student_set_url = $c->systemLink($c->url_for('problem_list', setID => $set->set_id),
+			params => { effectiveUser => $effectiveUser });
 
 		# Determine if set is a test and create the test url.
 		my $setIsVersioned          = 0;
 		my $act_as_student_test_url = '';
 		if (defined $set->assignment_type && $set->assignment_type =~ /gateway/) {
 			$setIsVersioned = 1;
-			if ($set->assignment_type eq 'proctored_gateway') {
-				$act_as_student_test_url = $act_as_student_set_url =~ s/($courseName)\//$1\/proctored_test_mode\//r;
-			} else {
-				$act_as_student_test_url = $act_as_student_set_url =~ s/($courseName)\//$1\/test_mode\//r;
-			}
-			# Remove version from set url
-			$act_as_student_set_url =~ s/,v\d+//;
+			# This is an instructor-only link, so use the plain (non-proctored) route regardless of the test's
+			# assignment type. GatewayQuiz.pm is responsible for checking permissions.
+			$act_as_student_test_url = $c->systemLink(
+				$c->url_for('gateway_quiz_version', setID => $set->set_id, versionID => $set->version_id),
+				params => { effectiveUser => $effectiveUser });
 		}
 
 		# Format set name based on set visibility.
 		my $setName = $c->tag(
 			'span',
 			class => $set->visible ? 'font-visible' : 'font-hidden',
-			format_set_name_display($setID =~ s/,v\d+$//r)
+			format_set_name_display($set->set_id)
 		);
 
 		# If the set is a template gateway set and there are no versions, we acknowledge that the set exists and the
@@ -518,9 +513,8 @@ sub displayStudentStats ($c) {
 		# If its a gateway set, then in order to mimic the scoring done in Scoring Tools we need to use the best score a
 		# student had.  Otherwise we just add the set to the running course total.
 		if ($setIsVersioned) {
-			$setID =~ /(.+),v(\d+)$/;
-			my $gatewayName    = $1;
-			my $currentVersion = $2;
+			my $gatewayName    = $set->set_id;
+			my $currentVersion = $set->version_id;
 
 			# If we are just starting a new gateway then set variables to look for the max.
 			if ($currentVersion == 1) {

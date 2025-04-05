@@ -10,8 +10,7 @@ WeBWorK::Authen::Proctor - Authenticate gateway test proctors.
 use strict;
 use warnings;
 
-use WeBWorK::Utils     qw(x);
-use WeBWorK::DB::Utils qw(grok_vsetID);
+use WeBWorK::Utils qw(x);
 
 use constant GENERIC_ERROR_MESSAGE => x('Invalid user ID or password.');
 
@@ -23,13 +22,23 @@ sub verify {
 	my $self = shift;
 	my $c    = $self->{c};
 
-	# At this point the usual authentication has already occurred and the user has been verified.  If the
-	# use_grade_auth_proctor option is set to 'No', then proctor authorization is not needed.  So return
-	# 1 here to skip proctor authorization and proceed on to the GatewayQuiz module which will grade the test.
+	# At this point the usual authentication has already occurred and the user has been verified.  Note that this
+	# checks the permissions of the real user, not the effective user, since it is the real user who is attempting
+	# to access the proctored test (e.g., an instructor acting as a student, or a student grading their own test).
 	if ($c->req->body_params->param('submitAnswers')) {
-		my ($setName, $versionNum) = grok_vsetID($c->stash('setID'));
-		my $userSet = $c->db->getMergedSetVersion($c->param('effectiveUser'), $setName, $versionNum);
+		# If the use_grade_auth_proctor option is set to 'No', then proctor authorization is not needed.  So return
+		# 1 here to skip proctor authorization and proceed on to the GatewayQuiz module which will grade the test.
+		my $userSet =
+			$c->db->getMergedSetVersion($c->param('effectiveUser'), $c->stash->{setID}, $c->stash->{versionID});
 		return 1 if $userSet && $userSet->use_grade_auth_proctor eq 'No';
+
+		# A user with the proctor_quiz_grade permission does not need
+		# separate proctor authorization to grade a proctored test.
+		return 1 if $c->authz->hasPermissions($c->param('user'), 'proctor_quiz_grade');
+	} else {
+		# A user with the proctor_quiz_login permission does not need separate proctor authorization to enter
+		# (or view) a proctored test. They can simply use their own login.
+		return 1 if $c->authz->hasPermissions($c->param('user'), 'proctor_quiz_login');
 	}
 
 	return $self->SUPER::verify(@_);
@@ -44,7 +53,7 @@ sub get_credentials {
 	my ($self) = @_;
 	my $c = $self->{c};
 
-	my ($set_id, $version_id) = grok_vsetID($c->stash('setID'));
+	my $set_id = $c->stash('setID');
 
 	if (defined $c->req->body_params->param('proctor_user')) {
 		$self->{user_id}           = $c->req->body_params->param('proctor_user');
@@ -84,10 +93,12 @@ sub verify_normal_user {
 	if (
 		$self->{login_type} eq 'proctor_login'
 		&& $c->authen->session('proctor_authorization_granted')
+		&& $c->authen->session('proctor_authorization_granted') eq $c->stash('setID')
 		&& (
 			(
-				$c->stash('setID') =~ /,v\d+$/
-				&& $c->authen->session('proctor_authorization_granted') eq $c->stash('setID')
+				defined $c->stash('versionID')
+				&& defined $c->authen->session('proctor_authorization_version')
+				&& $c->authen->session('proctor_authorization_version') == $c->stash('versionID')
 			)
 			|| $c->authen->session('acting_proctor')
 		)
@@ -126,12 +137,12 @@ sub verify_normal_user {
 					return 0;
 				}
 				$c->authen->session('proctor_authorization_granted' => $c->stash('setID'));
+				$c->authen->session('proctor_authorization_version' => $c->stash('versionID'));
 			} else {
 				# A UserSet is needed to determine if it is configured to skip grade proctor authorization.  Require a
 				# grade_proctor permission level to start a quiz that skips authorization to grade it. This ensures that
 				# a grade proctor level of authorization is always required.
-				my ($setName, $versionNum) = grok_vsetID($c->stash('setID'));
-				my $userSet = $db->getMergedSet($c->param('effectiveUser'), $setName);
+				my $userSet = $db->getMergedSet($c->param('effectiveUser'), $c->stash('setID'));
 				unless (
 					$authz->hasPermissions($user_id, 'proctor_quiz_grade')
 					|| (($userSet->use_grade_auth_proctor eq 'Yes' || $userSet->restricted_login_proctor eq 'Yes')
@@ -161,10 +172,12 @@ sub verify_normal_user {
 					return 0;
 				}
 				$c->authen->session('proctor_authorization_granted' => $c->stash('setID'));
+				$c->authen->session('proctor_authorization_version' => $c->stash('versionID'));
 			}
 			return 1;
 		} else {
 			delete $c->authen->session->{'proctor_authorization_granted'};
+			delete $c->authen->session->{'proctor_authorization_version'};
 			if ($auth_result == 0) {
 				$self->{log_error} = "authentication failed";
 				$self->{error}     = $c->maketext(GENERIC_ERROR_MESSAGE);

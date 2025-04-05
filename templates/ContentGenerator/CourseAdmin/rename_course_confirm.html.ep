@@ -6,30 +6,28 @@
 		<p class="<%= $_->[1] ? 'text-success' : 'text-danger' %> fw-bold my-0"><%= $_->[0] %></p>
 	% }
 % }
-% my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
-	% $incorrect_type_database_fields, $db_report)
-	% = $c->formatReportOnDatabaseTables($dbStatus);
-<%= $db_report =%>
-% if ($extra_database_tables) {
+% my $dbReport = $c->formatReportOnDatabaseTables($dbStatus);
+<%= $dbReport->{summary} =%>
+% if ($dbReport->{extra_database_tables}) {
 	<p class="text-danger fw-bold">
 		<%= maketext('There are extra database tables which are not defined in the schema.  '
 				. 'These can be deleted when upgrading the course.') =%>
 	</p>
 % }
-% if ($extra_database_fields) {
+% if ($dbReport->{extra_database_fields}) {
 	<p class="text-danger fw-bold">
 		<%= maketext('There are extra database fields which are not defined in the schema for at least one table.  '
 				. 'They can be removed when upgrading the course.') =%>
 	</p>
 % }
-% if ($rebuild_table_indexes) {
+% if ($dbReport->{rebuild_table_indexes}) {
 	<p class="text-danger fw-bold">
 		<%= maketext('There are extra database fields which are not defined in the schema and were part of the key '
 				. 'for at least one table. These fields need to be deleted and the table indexes need to be rebuilt. '
 				. 'This will be done when upgrading the course.') =%>
 	</p>
 % }
-% if ($incorrect_type_database_fields) {
+% if ($dbReport->{incorrect_type_database_fields}) {
 	<p class="text-danger fw-bold">
 		<%= maketext(
 			'There are database fields that do not have the same type as the field defined in the schema for '
@@ -38,7 +36,7 @@
 				. 'field can corrupt the table.') =%>
 	</p>
 % }
-% if (!$all_tables_ok) {
+% if (!$dbReport->{all_tables_ok}) {
 	<p class="text-danger fw-bold">
 		<%= maketext('The course database must be upgraded before renaming this course.') =%>
 	</p>
@@ -94,7 +92,7 @@
 		rename_oldCourseInstitution => $rename_oldCourseInstitution,
 		id                          => 'hidden_rename_oldCourseInstitution' =%>
 	%
-	% if ($all_tables_ok && $directories_ok && $links_ok) {
+	% if ($dbReport->{all_tables_ok} && $directories_ok && $links_ok) {
 		% # No missing tables, missing fields, missing directories, or missing/bad links
 		<div class="text-start">
 			<h3><%= maketext('Rename [_1] to [_2]', $rename_oldCourseID, $rename_newCourseID) %></h3>
@@ -123,7 +121,7 @@
 			<%= submit_button maketext(q{Don't Rename}),
 				name  => 'decline_rename_course',
 				class => 'btn btn-primary' =%>
-			<%= submit_button $all_tables_ok
+			<%= submit_button $dbReport->{all_tables_ok}
 				? maketext('Attempt to upgrade directories and links')
 				: maketext('Upgrade Course Tables'),
 				name  => 'upgrade_course_tables',

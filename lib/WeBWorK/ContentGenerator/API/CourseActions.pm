@@ -376,6 +376,7 @@ sub assignVisibleSets {
 		my $UserSet = $db->newUserSet;
 		$UserSet->user_id($userID);
 		$UserSet->set_id($setID);
+		$UserSet->version_id(0);
 		my @results;
 		my $set_assigned = 0;
 		eval { $db->addUserSet($UserSet) };

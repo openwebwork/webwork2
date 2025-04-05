@@ -36,6 +36,7 @@ use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::ForcePasswordChange;
 use WeBWorK::ContentGenerator::TwoFactorAuthentication;
 use WeBWorK::ContentGenerator::LoginProctor;
+use WeBWorK::Authen::Proctor;
 
 our %SeedCE;
 
@@ -190,14 +191,8 @@ async sub dispatch ($c) {
 			# we need to also check on the proctor.  Note that in the gateway quiz
 			# module this is double checked to be sure that someone isn't taking a
 			# proctored quiz but calling the unproctored ContentGenerator.
-			if ($c->current_route =~ /^(proctored_gateway_quiz|proctored_gateway_proctor_login)$/) {
-				my $proctor_authen_module = WeBWorK::Authen::class($ce, 'proctor_module');
-				runtime_use $proctor_authen_module;
-				my $authenProctor = $proctor_authen_module->new($c);
-				debug("Using proctor_authen_module $proctor_authen_module: $authenProctor\n");
-				my $procAuthOK = $authenProctor->verify();
-
-				if (!$procAuthOK) {
+			if ($c->current_route =~ /^(proctored_gateway_quiz|proctored_gateway_quiz_version)$/) {
+				if (!WeBWorK::Authen::Proctor->new($c)->verify()) {
 					await WeBWorK::ContentGenerator::LoginProctor->new($c)->go;
 					return 0;
 				}
@@ -208,6 +203,7 @@ async sub dispatch ($c) {
 				# current server time during a gateway quiz, and that definitely should not revoke proctor
 				# authorization.
 				delete $c->authen->session->{proctor_authorization_granted};
+				delete $c->authen->session->{proctor_authorization_version};
 				delete $c->authen->session->{acting_proctor};
 			}
 			return 1;
