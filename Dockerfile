@@ -106,9 +106,6 @@ RUN apt-get update \
 	libhttp-async-perl \
 	libiterator-perl \
 	libiterator-util-perl \
-	libjson-maybexs-perl \
-	libjson-perl \
-	libjson-xs-perl \
 	liblocale-maketext-lexicon-perl \
 	libmariadb-dev \
 	libmath-random-secure-perl \
