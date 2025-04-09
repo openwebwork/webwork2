@@ -21,7 +21,7 @@ sub run ($job, $userID = '', $setID = '') {
 
 	$job->{language_handle} = WeBWorK::Localize::getLoc($ce->{language} || 'en');
 
-	my $db = WeBWorK::DB->new($ce->{dbLayout});
+	my $db = WeBWorK::DB->new($ce);
 	return $job->fail($job->maketext('Could not obtain database connection.')) unless $db;
 
 	my @messages;

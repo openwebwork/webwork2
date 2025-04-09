@@ -1,5 +1,5 @@
 package WeBWorK::DB::Schema::NewSQL::Std;
-use base qw(WeBWorK::DB::Schema::NewSQL);
+use Mojo::Base 'WeBWorK::DB::Schema::NewSQL';
 
 =head1 NAME
 
@@ -7,8 +7,6 @@ WeBWorK::DB::Schema::NewSQL - support SQL access to single tables.
 
 =cut
 
-use strict;
-use warnings;
 use Carp qw(croak);
 use Iterator;
 use Iterator::Util;
@@ -16,6 +14,7 @@ use File::Temp;
 use String::ShellQuote;
 use Scalar::Util qw(weaken);
 
+use WeBWorK::DB::Utils qw(parse_dsn);
 use WeBWorK::DB::Utils::SQLAbstractIdentTrans;
 use WeBWorK::Debug;
 
@@ -42,9 +41,6 @@ sub new {
 	# effectively calls WeBWorK::DB::Schema::new
 
 	$self->sql_init;
-
-	# provide a custom error handler
-	$self->dbh->{HandleError} = \&handle_error;
 
 	return $self;
 }
@@ -188,14 +184,17 @@ sub dump_table {
 	my ($self, $dumpfile_path) = @_;
 
 	my ($my_cnf, $database) = $self->_get_db_info;
-	my $mysqldump = $self->{params}{mysqldump_path};
+	my $mysqldump = $self->dbh->{params}{mysqldump_path};
 
 	# 2>&1 is specified first, which apparently makes stderr go to stdout
 	# and stdout (not including stderr) go to the dumpfile. see bash(1).
-	my $dump_cmd = "2>&1 " . shell_quote($mysqldump)
-		# 		. " --defaults-extra-file=" . shell_quote($my_cnf->filename)
-		. " --defaults-file=" . shell_quote($my_cnf->filename)    # work around for mysqldump bug
-		. " " . shell_quote($database) . " " . shell_quote($self->sql_table_name) . " > " . shell_quote($dumpfile_path);
+	my $dump_cmd = '2>&1 '
+		. shell_quote($mysqldump)
+		. ' --defaults-file='
+		. shell_quote($my_cnf->filename) . ' '
+		. shell_quote($database) . ' '
+		. shell_quote($self->sql_table_name) . ' > '
+		. shell_quote($dumpfile_path);
 	my $dump_out = readpipe $dump_cmd;
 	if ($?) {
 		my $exit   = $? >> 8;
@@ -214,12 +213,14 @@ sub restore_table {
 	my ($self, $dumpfile_path) = @_;
 
 	my ($my_cnf, $database) = $self->_get_db_info;
-	my $mysql = $self->{params}{mysql_path};
+	my $mysql = $self->dbh->{params}{mysql_path};
 
-	my $restore_cmd = "2>&1 " . shell_quote($mysql)
-		# 		. " --defaults-extra-file=" . shell_quote($my_cnf->filename)
-		. " --defaults-file=" . shell_quote($my_cnf->filename)    # work around for mysqldump bug
-		. " " . shell_quote($database) . " < " . shell_quote($dumpfile_path);
+	my $restore_cmd = '2>&1 '
+		. shell_quote($mysql)
+		. ' --defaults-file='
+		. shell_quote($my_cnf->filename) . ' '
+		. shell_quote($database) . ' < '
+		. shell_quote($dumpfile_path);
 	my $restore_out = readpipe $restore_cmd;
 	if ($?) {
 		my $exit   = $? >> 8;
@@ -235,58 +236,32 @@ sub restore_table {
 
 sub _get_db_info {
 	my ($self)   = @_;
-	my $dsn      = $self->{driver}{source};
-	my $username = $self->{params}{username};
-	my $password = $self->{params}{password};
+	my $dsn      = $self->dbh->{source};
+	my $username = $self->dbh->{params}{username};
+	my $password = $self->dbh->{params}{password};
 
-	my %dsn;
-	if ($dsn =~ m/^dbi:mariadb:/i || $dsn =~ m/^dbi:mysql:/i) {
-		# Expect DBI:MariaDB:database=webwork;host=db;port=3306
-		# or DBI:mysql:database=webwork;host=db;port=3306
-		# The host and port are optional.
-		my ($dbi, $dbtype, $dsn_opts) = split(':', $dsn);
-		while (length($dsn_opts)) {
-			if ($dsn_opts =~ /^([^=]*)=([^;]*);(.*)$/) {
-				$dsn{$1} = $2;
-				$dsn_opts = $3;
-			} else {
-				my ($var, $val) = $dsn_opts =~ /^([^=]*)=([^;]*)$/;
-				$dsn{$var} = $val;
-				$dsn_opts = '';
-			}
-		}
-	} else {
-		die "Can't call dump_table or restore_table on a table with a non-MySQL/MariaDB source";
-	}
+	my %dsn = parse_dsn($self->dbh->{source});
+	die "No database specified in DSN!" unless defined $dsn{database};
 
-	die "no database specified in DSN!" unless defined $dsn{database};
+	my $mysqldump = $self->dbh->{params}{mysqldump_path};
 
-	my $mysqldump = $self->{params}{mysqldump_path};
-# Conditionally add column-statistics=0 as MariaDB databases do not support it
-# see: https://serverfault.com/questions/912162/mysqldump-throws-unknown-table-column-statistics-in-information-schema-1109
-#      https://github.com/drush-ops/drush/issues/4410
+	# Conditionally add column-statistics=0 as MariaDB databases do not support it
+	# see: https://serverfault.com/questions/912162/
+	#   mysqldump-throws-unknown-table-column-statistics-in-information-schema-1109
+	#   https://github.com/drush-ops/drush/issues/4410
+	my $column_statistics_off =
+		`$mysqldump --help | grep 'column-statistics'` ? "[mysqldump]\ncolumn-statistics=0\n" : '';
 
-	my $column_statistics_off      = "";
-	my $test_for_column_statistics = `$mysqldump --help | grep 'column-statistics'`;
-	if ($test_for_column_statistics) {
-		$column_statistics_off = "[mysqldump]\ncolumn-statistics=0\n";
-		#warn "Setting in the temporary mysql config file for table dump/restore:\n$column_statistics_off\n\n";
-	}
-
-	# doing this securely is kind of a hassle...
-
-	my $my_cnf = new File::Temp;
+	# Doing this securely is kind of a hassle...
+	my $my_cnf = File::Temp->new;
 	$my_cnf->unlink_on_destroy(1);
-	chmod 0600, $my_cnf or die "failed to chmod 0600 $my_cnf: $!";    # File::Temp objects stringify with ->filename
+	chmod 0600, $my_cnf or die "failed to chmod 0600 $my_cnf: $!";
 	print $my_cnf "[client]\n";
-
-   # note: the quotes below are needed for special characters (and others) so they are passed to the database correctly.
-
-	print $my_cnf "user=\"$username\"\n"     if defined $username  and length($username) > 0;
-	print $my_cnf "password=\"$password\"\n" if defined $password  and length($password) > 0;
-	print $my_cnf "host=\"$dsn{host}\"\n"    if defined $dsn{host} and length($dsn{host}) > 0;
-	print $my_cnf "port=\"$dsn{port}\"\n"    if defined $dsn{port} and length($dsn{port}) > 0;
-	print $my_cnf "$column_statistics_off"   if $test_for_column_statistics;
+	print $my_cnf qq{user="$username"\n}     if defined $username  && length($username) > 0;
+	print $my_cnf qq{password="$password"\n} if defined $password  && length($password) > 0;
+	print $my_cnf qq{host="$dsn{host}"\n}    if defined $dsn{host} && length($dsn{host}) > 0;
+	print $my_cnf qq{port="$dsn{port}"\n}    if defined $dsn{port} && length($dsn{port}) > 0;
+	print $my_cnf $column_statistics_off     if $column_statistics_off;
 
 	return ($my_cnf, $dsn{database});
 }
@@ -464,7 +439,7 @@ sub count_where {
 
 	my ($stmt, @bind_vals) = $self->sql->select($self->table, "COUNT(*)", $where);
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3);    # 3 -- see DBI docs
-	$self->debug_stmt($sth, @bind_vals);
+	$self->dbh->debug_stmt($sth, @bind_vals);
 	$sth->execute(@bind_vals);
 	my ($result) = $sth->fetchrow_array;
 	$sth->finish;
@@ -518,7 +493,7 @@ sub _get_fields_where_prepex {
 
 	my ($stmt, @bind_vals) = $self->sql->select($self->table, $fields, $where, $order);
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3);    # 3: see DBI docs
-	$self->debug_stmt($sth, @bind_vals);
+	$self->dbh->debug_stmt($sth, @bind_vals);
 	$sth->execute(@bind_vals);
 	return $sth;
 }
@@ -570,7 +545,7 @@ sub insert_fields {
 	my @results;
 	foreach my $row (@$rows) {
 		my @bind_vals = @$row[@order];
-		$self->debug_stmt($sth, @bind_vals);
+		$self->dbh->debug_stmt($sth, @bind_vals);
 		push @results, $sth->execute(@bind_vals);
 	}
 	$sth->finish;
@@ -585,7 +560,7 @@ sub insert_fields_i {
 	my @results;
 	until ($rows_i->is_exhausted) {
 		my @bind_vals = @{ $rows_i->value }[@order];
-		$self->debug_stmt($sth, @bind_vals);
+		$self->dbh->debug_stmt($sth, @bind_vals);
 		push @results, $sth->execute(@bind_vals);
 	}
 	$sth->finish;
@@ -635,7 +610,7 @@ sub update_where {
 
 	my ($stmt, @bind_vals) = $self->sql->update($self->table, $fieldvals, $where);
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3);    # 3 -- see DBI docs
-	$self->debug_stmt($sth, @bind_vals);
+	$self->dbh->debug_stmt($sth, @bind_vals);
 	my $result = $sth->execute(@bind_vals);
 	$sth->finish;
 
@@ -659,7 +634,7 @@ sub update_fields {
 	my @results;
 	foreach my $row (@$rows) {
 		my @bind_vals = @$row[ @$val_order, @$where_order ];
-		$self->debug_stmt($sth, @bind_vals);
+		$self->dbh->debug_stmt($sth, @bind_vals);
 		push @results, $sth->execute(@bind_vals);
 	}
 	$sth->finish;
@@ -674,7 +649,7 @@ sub update_fields_i {
 	my @results;
 	until ($rows_i->is_exhausted) {
 		my @bind_vals = @{ $rows_i->value }[ @$val_order, @$where_order ];
-		$self->debug_stmt($sth, @bind_vals);
+		$self->dbh->debug_stmt($sth, @bind_vals);
 		push @results, $sth->execute(@bind_vals);
 	}
 	$sth->finish;
@@ -726,7 +701,7 @@ sub delete_where {
 
 	my ($stmt, @bind_vals) = $self->sql->delete($self->table, $where);
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3);    # 3 -- see DBI docs
-	$self->debug_stmt($sth, @bind_vals);
+	$self->dbh->debug_stmt($sth, @bind_vals);
 	my $result = $sth->execute(@bind_vals);
 	$sth->finish;
 
@@ -757,7 +732,7 @@ sub delete_fields {
 	my @results;
 	foreach my $row (@$rows) {
 		my @bind_vals = @$row[@order];
-		$self->debug_stmt($sth, @bind_vals);
+		$self->dbh->debug_stmt($sth, @bind_vals);
 		push @results, $sth->execute(@bind_vals);
 	}
 	$sth->finish;
@@ -773,7 +748,7 @@ sub delete_fields_i {
 	my @results;
 	until ($rows_i->is_exhausted) {
 		my @bind_vals = @{ $rows_i->value }[@order];
-		$self->debug_stmt($sth, @bind_vals);
+		$self->dbh->debug_stmt($sth, @bind_vals);
 		push @results, $sth->execute(@bind_vals);
 	}
 	$sth->finish;
@@ -883,12 +858,12 @@ sub sql_table_name {
 
 sub engine {
 	my ($self) = @_;
-	return defined $self->{engine} ? $self->{engine} : 'MYISAM';
+	return $self->dbh->engine;
 }
 
 sub character_set {
 	my $self = shift;
-	return (defined $self->{character_set} and $self->{character_set}) ? $self->{character_set} : 'latin1';
+	return $self->dbh->character_set;
 }
 
 # returns non-quoted SQL name of given field
@@ -910,32 +885,6 @@ sub sql_field_expression {
 	}
 }
 
-# maps error numbers to exception classes for MySQL
-our %MYSQL_ERROR_CODES = (
-	1062 => 'WeBWorK::DB::Ex::RecordExists',
-	1146 => 'WeBWorK::DB::Ex::TableMissing',
-);
+sub DESTROY { }
 
-# turns MySQL error codes into exceptions -- WeBWorK::DB::Schema::Ex objects
-# for known error types, and normal die STRING exceptions for unknown errors.
-# This is one method you'd want to override if you were writing a subclass for
-# another RDBMS.
-sub handle_error {
-	my ($errmsg, $handle, $returned) = @_;
-	if (exists $MYSQL_ERROR_CODES{ $handle->err }) {
-		$MYSQL_ERROR_CODES{ $handle->err }->throw;
-	} else {
-
-		if ($errmsg =~ /Unknown column/) {
-			warn(
-				"It looks like the database is missing a column.  You may need to upgrade your course tables.  If this is the admin course then you will need to upgrade the admin tables using the upgrade_admin_db.pl script."
-			);
-		}
-
-		die $errmsg;
-	}
-}
-
-sub DESTROY {
-}
 1;

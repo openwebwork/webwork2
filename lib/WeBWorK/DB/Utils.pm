@@ -10,7 +10,6 @@ WeBWorK::DB::Utils - useful utilities for the database modules.
 use strict;
 use warnings;
 
-our @EXPORT    = ();
 our @EXPORT_OK = qw(
 	global2user
 	user2global
@@ -23,6 +22,7 @@ our @EXPORT_OK = qw(
 	grok_vsetID
 	grok_setID_from_vsetID_sql
 	grok_versionID_from_vsetID_sql
+	parse_dsn
 );
 
 use constant fakeSetName => 'Undefined_Set';
@@ -164,6 +164,32 @@ sub grok_versionID_from_vsetID_sql($) {
 	my ($field) = @_;
 	# the "+0" casts the resulting value as a number
 	return "(SUBSTRING($field,INSTR($field,',v')+2)+0)";
+}
+
+sub parse_dsn {
+	my $dsn = shift;
+
+	my %dsn;
+	if ($dsn =~ m/^dbi:mariadb:/i || $dsn =~ m/^dbi:mysql:/i) {
+		# Expect DBI:MariaDB:database=webwork;host=db;port=3306
+		# or DBI:mysql:database=webwork;host=db;port=3306
+		# The host and port are optional.
+		my ($dbi, $dbtype, $dsn_opts) = split(':', $dsn);
+		while (length($dsn_opts)) {
+			if ($dsn_opts =~ /^([^=]*)=([^;]*);(.*)$/) {
+				$dsn{$1} = $2;
+				$dsn_opts = $3;
+			} else {
+				my ($var, $val) = $dsn_opts =~ /^([^=]*)=([^;]*)$/;
+				$dsn{$var} = $val;
+				$dsn_opts = '';
+			}
+		}
+	} else {
+		die 'Unable to parse database dsn into parts. Unsupported database controller driver.';
+	}
+
+	return %dsn;
 }
 
 1;

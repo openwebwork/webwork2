@@ -22,7 +22,7 @@ sub initializeRoute ($c, $routeCaptures) {
 		if (!$courseID && $c->param('context_id')) {
 			# The database object used here is not associated to any course,
 			# and so the only has access to non-native tables.
-			my @matchingCourses = WeBWorK::DB->new(WeBWorK::CourseEnvironment->new->{dbLayout})
+			my @matchingCourses = WeBWorK::DB->new(WeBWorK::CourseEnvironment->new)
 				->getLTICourseMapsWhere({ lms_context_id => $c->param('context_id') });
 
 			if (@matchingCourses == 1) {
