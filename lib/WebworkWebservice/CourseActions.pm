@@ -62,10 +62,9 @@ sub createCourse {
 	# Try to actually create the course.
 	eval {
 		addCourse(
-			courseID      => $params->{name},
-			ce            => $ce,
-			courseOptions => { dbLayoutName => $ce->{dbLayoutName} },
-			users         => \@users
+			courseID => $params->{name},
+			ce       => $ce,
+			users    => \@users
 		);
 		addLog($ce, "New course created: $params->{name}");
 		return 1;

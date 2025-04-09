@@ -157,7 +157,7 @@ async sub dispatch ($c) {
 				|| -e "$ce->{webwork_courses_dir}/$ce->{admin_course_id}/archives/$routeCaptures{courseID}.tar.gz");
 		return (0, 'This course has been archived and closed.') unless -e $ce->{courseDirs}{root};
 
-		my $db = WeBWorK::DB->new($ce->{dbLayout});
+		my $db = WeBWorK::DB->new($ce);
 		debug("(here's the DB handle: $db)\n");
 		$c->db($db);
 

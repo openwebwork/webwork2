@@ -18,7 +18,6 @@
 					% add_admin_users  => 1,
 					% copy_from_course => $ce->{siteDefaults}{default_copy_from_course} || '',
 					% copy_component   => 'copyTemplatesHtml',
-					% add_dbLayout     => 'sql_single'
 				% }
 			% ],
 			% [ 'rename_course',         maketext('Rename Course') ],

@@ -137,7 +137,7 @@ sub write_past_answers_csv {
 		next if $courseID eq ($minimal_ce->{admin_course_id} // 'admin') || $courseID eq 'modelCourse';
 
 		my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT}, courseName => $courseID });
-		my $db = WeBWorK::DB->new($ce->{dbLayout});
+		my $db = WeBWorK::DB->new($ce);
 
 		my %permissionLabels = reverse %{ $ce->{userRoles} };
 

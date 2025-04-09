@@ -72,7 +72,7 @@ my $ce = WeBWorK::CourseEnvironment->new({
 	courseName  => $course,
 });
 
-my $db = WeBWorK::DB->new($ce->{dbLayout});
+my $db = WeBWorK::DB->new($ce);
 
 my @errors;
 

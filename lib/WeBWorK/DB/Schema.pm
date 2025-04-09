@@ -69,13 +69,12 @@ use warnings;
 
 =over
 
-=item new($db, $driver, $table, $record, $params, $engine)
+=item new($db, $dbh, $table, $record, $params, $engine)
 
-Creates a schema interface for C<$table>, using the driver interface provided
-by C<$driver> and using the record class named in C<$record>. If the C<$driver>
-does not support the driver style needed by the schema, an exception is thrown.
-C<$params> contains extra information needed by the schema and is schema
-dependent. C<$db> is provided so that schemas can query other schemas.
+Creates a schema interface for C<$table>, using the database handle provided by
+C<$dbh> and using the record class named in C<$record>.  C<$params> contains
+extra information needed by the schema and is schema dependent. C<$db> is
+provided so that schemas can query other schemas.
 
 =back
 
@@ -84,20 +83,16 @@ dependent. C<$db> is provided so that schemas can query other schemas.
 use Scalar::Util qw(weaken);
 
 sub new {
-	my ($proto, $db, $driver, $table, $record, $params, $engine, $character_set) = @_;
+	my ($proto, $db, $dbh, $table, $record, $params, $engine, $character_set) = @_;
 	my $class = ref($proto) || $proto;
 
 	my @supportedTables = $proto->TABLES();
 	die "unsupported table (schema supports: @supportedTables)"
 		unless grep { $_ eq "*" or $_ eq $table } @supportedTables;
 
-	my ($driverStyle, $schemaStyle) = ($driver->STYLE(), $proto->STYLE());
-	die "schema/driver style mismatch (driver provides $driverStyle, schema requires $schemaStyle)"
-		unless $driverStyle eq $schemaStyle;
-
 	my $self = {
 		db            => $db,
-		driver        => $driver,
+		dbh           => $dbh,
 		table         => $table,
 		record        => $record,
 		params        => $params,

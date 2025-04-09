@@ -52,7 +52,7 @@ sub new {
 			}
 		),
 		ce => $ce,
-		db => WeBWorK::DB->new($ce->{dbLayouts}{ $ce->{dbLayoutName} })
+		db => WeBWorK::DB->new($ce)
 		},
 		ref $invocant || $invocant;
 }

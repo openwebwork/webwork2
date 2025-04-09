@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::DB::Schema::NewSQL::Merge;
-use base qw(WeBWorK::DB::Schema::NewSQL);
+use Mojo::Base 'WeBWorK::DB::Schema::NewSQL';
 
 =head1 NAME
 
@@ -23,8 +23,6 @@ an SQL database.
 
 =cut
 
-use strict;
-use warnings;
 use Carp qw(croak);
 use Iterator;
 use Iterator::Util;
@@ -191,7 +189,7 @@ sub _get_fields_where_prepex {
 	my $stmt = $self->sql->select(\($self->{sql_tableexpr}), $sql_fields) . " $where_clause $order_by_clause";
 
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3);    # 3: see DBI docs
-	$self->debug_stmt($sth, @bind_vals);
+	$self->dbh->debug_stmt($sth, @bind_vals);
 	$sth->execute(@bind_vals);
 	return $sth;
 }
@@ -239,6 +237,6 @@ sub keyparts_to_where {
 *sql_table_name = *WeBWorK::DB::Schema::NewSQL::Std::sql_table_name;
 *sql_field_name = *WeBWorK::DB::Schema::NewSQL::Std::sql_field_name;
 
-sub DESTROY {
-}
+sub DESTROY { }
+
 1;

@@ -28,7 +28,6 @@ use Carp           qw(croak);
 use WeBWorK::Utils qw/undefstr/;
 
 use constant TABLES => qw(*);
-use constant STYLE  => "dbi";
 
 ################################################################################
 # where clauses (not sure if this is where these belong...)
@@ -179,7 +178,7 @@ sub table {
 }
 
 sub dbh {
-	return shift->{driver}->dbi;
+	return shift->{dbh};
 }
 
 sub keyfields {
@@ -283,26 +282,6 @@ sub gen_update_hashes {
 	delete @values{@keyfields};
 
 	return \%values, \%where;
-}
-
-our $__PACKAGE__ = __PACKAGE__;
-
-sub debug_stmt {
-	my ($self, $sth, @bind_vals) = @_;
-	return unless $self->{params}{debug};
-	my ($subroutine) = (caller(1))[3];
-	$subroutine =~ s/^${__PACKAGE__}:://;
-	my $stmt = $sth->{Statement};
-	@bind_vals = undefstr("#UNDEF#", @bind_vals);
-	#print STDERR "$subroutine: |$stmt| => |@bind_vals|\n";
-	print STDERR "$subroutine: ", $self->bind($stmt, @bind_vals), "\n";
-}
-
-sub bind {
-	my ($self, $stmt, @bind_vals) = @_;
-	$stmt =~ s/\?/@bind_vals ? "?[".$self->dbh->quote(shift @bind_vals)."]" : "###NO BIND VALS###"/eg;
-	$stmt .= " ###EXTRA BIND VALS |@bind_vals|###" if @bind_vals;
-	return $stmt;
 }
 
 ####################################################

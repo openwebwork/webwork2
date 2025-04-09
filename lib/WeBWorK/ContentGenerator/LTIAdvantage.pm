@@ -76,11 +76,10 @@ sub initializeRoute ($c, $routeCaptures) {
 
 				# The database object used here is not associated to any course,
 				# and so the only has access to non-native tables.
-				my @matchingCourses =
-					WeBWorK::DB->new(WeBWorK::CourseEnvironment->new->{dbLayout})->getLTICourseMapsWhere({
-						lms_context_id =>
+				my @matchingCourses = WeBWorK::DB->new(WeBWorK::CourseEnvironment->new)->getLTICourseMapsWhere({
+					lms_context_id =>
 						$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{id}
-					});
+				});
 
 				if (@matchingCourses == 1) {
 					$c->stash->{courseID} = $matchingCourses[0]->course_id;
@@ -348,7 +347,7 @@ sub extract_jwt_claims ($c) {
 	return unless $c->param('state');
 
 	# The following database object is not associated to any course, and so the only has access to non-native tables.
-	my $db = WeBWorK::DB->new(WeBWorK::CourseEnvironment->new->{dbLayout});
+	my $db = WeBWorK::DB->new(WeBWorK::CourseEnvironment->new);
 
 	# Retrieve the launch data saved in the login phase, and then delete it from the database.  Note that this verifies
 	# the state in the request.  If there is no launch data saved in the database for the state in the request, then the
@@ -371,7 +370,7 @@ sub extract_jwt_claims ($c) {
 			'Failed to initialize course environment for ' . $c->stash->{LTILaunchData}->data->{courseID} . ": $@\n";
 		return;
 	}
-	$db = WeBWorK::DB->new($ce->{dbLayout});
+	$db = WeBWorK::DB->new($ce);
 
 	$c->purge_expired_lti_data($ce, $db);
 

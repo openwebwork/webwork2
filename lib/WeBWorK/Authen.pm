@@ -94,29 +94,21 @@ sub class {
 	my ($ce, $type) = @_;
 
 	if (exists $ce->{authen}{$type}) {
-		if (ref $ce->{authen}{$type} eq "ARRAY") {
+		if (ref $ce->{authen}{$type} eq 'ARRAY') {
 			my $authen_type = shift @{ $ce->{authen}{$type} };
-			if (ref($authen_type) eq "HASH") {
-				if (exists $authen_type->{ $ce->{dbLayoutName} }) {
-					return $authen_type->{ $ce->{dbLayoutName} };
-				} elsif (exists $authen_type->{"*"}) {
-					return $authen_type->{"*"};
-				} else {
-					die "authentication type '$type' in the course environment has no entry for db layout '",
-						$ce->{dbLayoutName}, "' and no default entry (*)";
-				}
+			if (ref($authen_type) eq 'HASH') {
+				# Basic backwards compatibility.
+				return $authen_type->{'*'}        if exists $authen_type->{'*'};
+				return $authen_type->{sql_single} if exists $authen_type->{sql_single};
+				die 'Unsupported authentication module format in the course environment.';
 			} else {
 				return $authen_type;
 			}
-		} elsif (ref $ce->{authen}{$type} eq "HASH") {
-			if (exists $ce->{authen}{$type}{ $ce->{dbLayoutName} }) {
-				return $ce->{authen}{$type}{ $ce->{dbLayoutName} };
-			} elsif (exists $ce->{authen}{$type}{"*"}) {
-				return $ce->{authen}{$type}{"*"};
-			} else {
-				die "authentication type '$type' in the course environment has no entry for db layout '",
-					$ce->{dbLayoutName}, "' and no default entry (*)";
-			}
+		} elsif (ref $ce->{authen}{$type} eq 'HASH') {
+			# Basic backwards compatibility.
+			return $ce->{authen}{$type}{'*'}        if exists $ce->{authen}{$type}{'*'};
+			return $ce->{authen}{$type}{sql_single} if exists $ce->{authen}{$type}{sql_single};
+			die 'Unsupported authentication module format in the course environment.';
 		} else {
 			return $ce->{authen}{$type};
 		}
@@ -130,9 +122,7 @@ sub call_next_authen_method {
 	my $c    = $self->{c};
 	my $ce   = $c->{ce};
 
-	my $user_authen_module =
-		WeBWorK::Authen::class($ce, $ce->{courseName} eq $ce->{admin_course_id} ? 'admin_module' : 'user_module');
-
+	my $user_authen_module = class($ce, $ce->{courseName} eq $ce->{admin_course_id} ? 'admin_module' : 'user_module');
 	if (!defined $user_authen_module || $user_authen_module eq '') {
 		$self->{error} = $c->maketext(
 			"No authentication method found for your request.  If this recurs, please speak with your instructor.");

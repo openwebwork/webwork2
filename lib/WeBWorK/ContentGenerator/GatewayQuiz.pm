@@ -439,7 +439,7 @@ async sub pre_header_initialize ($c) {
 		} else {
 			# If there is not a requested version or a latest version, then create dummy set to proceed.
 			# FIXME RETURN TO: should this be global2version?
-			$set = global2user($ce->{dbLayout}{set_version}{record}, $db->getGlobalSet($setID));
+			$set = global2user($db->{set_version}{record}, $db->getGlobalSet($setID));
 			$set->user_id($effectiveUserID);
 			$set->psvn('000');
 			$set->set_id($setID);    # redundant?

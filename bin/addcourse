@@ -32,11 +32,6 @@ be granted professor privileges.
 
 =over
 
-=item B<--db-layout>=I<LAYOUT>
-
-The specified database layout will be used in place of the default specified in
-F<defaults.config>.
-
 =item B<--users>=I<FILE>
 
 The users listed in the comma-separated text file I<FILE> will be added to the
@@ -77,30 +72,26 @@ BEGIN {
 use lib "$ENV{WEBWORK_ROOT}/lib";
 
 use WeBWorK::CourseEnvironment;
-
-# Grab course environment (by reading webwork2/conf/defaults.config)
-my $ce = WeBWorK::CourseEnvironment->new;
-
-use WeBWorK::DB;
 use WeBWorK::File::Classlist;
 use WeBWorK::Utils qw(runtime_use cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::File::Classlist qw(parse_classlist);
+use WeBWorK::DB::Record::User;
+use WeBWorK::DB::Record::Password;
+use WeBWorK::DB::Record::PermissionLevel;
 
 sub usage_error {
 	warn "@_\n";
 	warn "usage: $0 [options] COURSEID\n";
 	warn "Options:\n";
-	warn "  [--db-layout=LAYOUT]\n";
 	warn "  [--users=FILE [--professors=USERID[,USERID]...] ]\n";
 	exit;
 }
 
-my ($dbLayout, $users, $templates_from) = ('', '', '');
+my ($users, $templates_from) = ('', '');
 my @professors;
 
 GetOptions(
-	"db-layout=s"      => \$dbLayout,
 	"users=s"          => \$users,
 	"professors=s"     => \@professors,
 	"templates-from=s" => \$templates_from,
@@ -110,33 +101,16 @@ my $courseID   = shift;
 
 usage_error('The COURSEID must be provided.') unless $courseID;
 
-$ce = WeBWorK::CourseEnvironment->new({ courseName => $courseID });
+my $ce = WeBWorK::CourseEnvironment->new({ courseName => $courseID });
 
 die "Aborting addcourse: Course ID cannot exceed $ce->{maxCourseIdLength} characters."
 	if length($courseID) > $ce->{maxCourseIdLength};
-
-if ($dbLayout) {
-	die "Database layout $dbLayout does not exist in the course environment.",
-		" (It must be defined in defaults.config.)\n"
-		unless exists $ce->{dbLayouts}{$dbLayout};
-} else {
-	$dbLayout = $ce->{dbLayoutName};
-}
 
 usage_error("Can't specify --professors without also specifying --users.")
 	if @professors && !$users;
 
 my @users;
 if ($users) {
-	# This is a hack to create records without bringing up a DB object
-	my $userClass       = $ce->{dbLayouts}{$dbLayout}{user}{record};
-	my $passwordClass   = $ce->{dbLayouts}{$dbLayout}{password}{record};
-	my $permissionClass = $ce->{dbLayouts}{$dbLayout}{permission}{record};
-
-	runtime_use($userClass);
-	runtime_use($passwordClass);
-	runtime_use($permissionClass);
-
 	my @classlist = parse_classlist($users);
 	for my $record (@classlist) {
 		my %record  = %$record;
@@ -168,9 +142,9 @@ if ($users) {
 
 		push @users,
 			[
-				$userClass->new(%record),
-				$record{password} ? $passwordClass->new(user_id => $user_id, password => $record{password}) : undef,
-				$permissionClass->new(
+				WeBWorK::DB::Record::User->new(%record),
+				WeBWorK::DB::Record::Password->new(user_id => $user_id, password => $record{password}),
+				WeBWorK::DB::Record::PermissionLevel->new(
 					user_id    => $user_id,
 					permission => defined $professors{$user_id}
 					? $ce->{userRoles}{professor}
@@ -190,15 +164,7 @@ if ($templates_from) {
 	$optional_arguments{copyTemplatesHtml} = 1;
 }
 
-eval {
-	addCourse(
-		courseID      => $courseID,
-		ce            => $ce,
-		courseOptions => { dbLayoutName => $dbLayout },
-		users         => \@users,
-		%optional_arguments,
-	);
-};
+eval { addCourse(courseID => $courseID, ce => $ce, users => \@users, %optional_arguments,); };
 
 die "$@\n" if $@;
 

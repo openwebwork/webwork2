@@ -47,7 +47,7 @@ my $ce = WeBWorK::CourseEnvironment->new({
 	courseName  => $courseID
 });
 
-my $db = new WeBWorK::DB($ce->{dbLayout});
+my $db = WeBWorK::DB->new($ce);
 die "Error: $old_user_id does not exist!" unless $db->existsUser($old_user_id);
 
 unless($db->existsUser($new_user_id)) {

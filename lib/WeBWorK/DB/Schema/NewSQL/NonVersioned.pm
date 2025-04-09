@@ -14,7 +14,7 @@
 ################################################################################
 
 package WeBWorK::DB::Schema::NewSQL::NonVersioned;
-use base qw(WeBWorK::DB::Schema::NewSQL::Std);
+use Mojo::Base 'WeBWorK::DB::Schema::NewSQL::Std';
 
 =head1 NAME
 
@@ -22,11 +22,9 @@ WeBWorK::DB::Schema::NewSQL::NonVersioned - provide access to non-versioned sets
 
 =cut
 
-use strict;
-use warnings;
-use WeBWorK::DB::Utils qw/make_vsetID/;
+use WeBWorK::DB::Utils qw(make_vsetID);
 
-use constant TABLES => qw/set_user problem_user/;
+use constant TABLES => qw(set_user problem_user);
 
 ################################################################################
 # where clause
