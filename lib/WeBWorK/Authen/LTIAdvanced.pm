@@ -40,29 +40,6 @@ use WeBWorK::Authen::LTIAdvanced::Nonce;
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
-=head1 CONSTRUCTOR
-
-=over
-
-=item new($c)
-
-Instantiates a new WeBWorK::Authen object for the given WeBWorK::Controller ($c).
-
-=cut
-
-sub new {
-	my ($invocant, $c) = @_;
-	my $class = ref($invocant) || $invocant;
-	my $self  = { c => $c, };
-	#initialize
-	bless $self, $class;
-	return $self;
-}
-
-=back
-
-=cut
-
 ## this is only overridden for debug logging
 #sub verify {
 #	debug("BEGIN LTIAdvanced VERIFY");

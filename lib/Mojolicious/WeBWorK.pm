@@ -24,7 +24,8 @@ Mojolicious::WeBWorK - Mojolicious app for WeBWorK 2.
 
 use Env qw(WEBWORK_SERVER_ADMIN);
 
-use Mojo::JSON qw(encode_json);
+use Mojo::JSON   qw(encode_json);
+use Scalar::Util qw(weaken);
 
 use WeBWorK;
 use WeBWorK::CourseEnvironment;
@@ -145,6 +146,8 @@ sub startup ($app) {
 	$app->hook(
 		around_action => async sub ($next, $c, $action, $last) {
 			return $next->() unless $c->isa('WeBWorK::ContentGenerator');
+
+			weaken $c;
 
 			my $uri = $c->req->url->path->to_string;
 			$c->stash->{warnings} //= '';

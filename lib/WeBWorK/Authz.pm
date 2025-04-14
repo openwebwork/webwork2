@@ -84,7 +84,7 @@ sub new {
 	my ($invocant, $c) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self  = { c => $c, };
-	#weaken $self->{c};
+	weaken $self->{c};
 
 	$c->{permission_retrieval_error} = 0;
 	bless $self, $class;
