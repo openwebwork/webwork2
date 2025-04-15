@@ -971,7 +971,7 @@ async sub pre_header_initialize ($c) {
 					create_ans_str_from_responses($c->{formFields}, $pg_result,
 						$pureProblem->flags =~ /:needs_grading/);
 			} else {
-				my $prefix         = sprintf('Q%04d_', $problemNumbers[$i]);
+				my $prefix         = sprintf('Q%04d_', $problemNumbers[ $probOrder[$i] ]);
 				my @fields         = sort grep {/^(?!previous).*$prefix/} (keys %{ $c->{formFields} });
 				my %answersToStore = map       { $_ => $c->{formFields}->{$_} } @fields;
 				my @answer_order   = @fields;
