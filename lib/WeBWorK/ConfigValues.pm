@@ -290,15 +290,24 @@ sub getConfigValues ($ce) {
 				var  => 'achievementsEnabled',
 				doc  => x('Enable Course Achievements'),
 				doc2 => x(
-					'Activiating this will enable Mathchievements for webwork. Mathchievements can be managed '
-						. 'by using the Achievements Manager link.'
+					"Achievements are a way to gamify WeBWorK. In parallel to a student's regular scores on "
+						. 'assignments, they earn "achievement points" for (a) answering an exercise correctly, and '
+						. '(b) earning badges. Badges can be for tasks like earning 100% on three assignments, '
+						. 'answering five questions correclty on the first attempt, etc. As students earn achivement '
+						. 'points, they can "level up" as well. An instructor can manage Achievents using the '
+						. 'Achievements Manager tool.'
 				),
 				type => 'boolean'
 			},
 			{
 				var  => 'achievementPointsPerProblem',
 				doc  => x('Achievement Points Per Problem'),
-				doc2 => x('This is the number of achievement points given to each user for completing a problem.'),
+				doc2 => x(
+					'This is the number of achievement points given to each user for completing a problem. The default '
+						. 'collection of achievements is designed for a course where a student who completes all the '
+						. 'exercises would earn 1000 points, not counting points from badges. It is recommended that '
+						. 'if you use the default collection and your course has N problems, set this value to 1000/N.'
+				),
 				type => 'number'
 			},
 			{
@@ -314,8 +323,16 @@ sub getConfigValues ($ce) {
 				var  => 'achievementItemsEnabled',
 				doc  => x('Enable Achievement Rewards'),
 				doc2 => x(
-					'Activating this will enable achievement rewards. This feature allows students to earn rewards by '
-						. 'completing achievements that allow them to affect their homework in a limited way.'
+					'Activating this will enable achievement reward items. This feature allows students to earn reward '
+						. 'items as they level up (if level achievements are being used). The default reward items:<ol>'
+						. '<li>award 50% score to one problem</li><li>reset the number of attempts allowed for one '
+						. 'problem</li><li>extend a close date (and the reduced credit date) by 24 hours on one set'
+						. '</li><li>double the weight of one problem within its set</li><li>replaces one problem in a '
+						. 'set with a copy of a different problem in that set</li><li>award 100% score to one problem'
+						. '</li><li>extend a close date (and the reduced credit date) by 48 hours on one set</li><li>'
+						. 'double the weight of all problems within a set</li><li>reopen a set that has past its close '
+						. 'date for 24 hours, with problems rerandomized</li><li>award 100% score to all problems in '
+						. 'one set.</li></ol>'
 				),
 				type => 'boolean'
 			},
@@ -963,15 +980,13 @@ sub getConfigValues ($ce) {
 		},
 		LTIGradeOnSubmit => {
 			var  => 'LTIGradeOnSubmit',
-			doc  => x('Update LMS Grade Each Submit'),
+			doc  => x('Update LMS grade with each submission'),
 			doc2 => x(
 				'If this is set to true, then  each time a user submits an answer or grades a test, that will trigger '
-					. 'WeBWorK possibly reporting a score to the LMS. See $LTICheckPrior for one reason that WeBWorK '
-					. 'might not ultimately send a score. But there are other reasons too. WeBWorK will send the score '
-					. "(the assignment's score if \$LTIGradeMode is 'homework' or the overall course score if "
-					. "\$LTIGradeMode is 'course') to the LMS only if either the assignment's "
-					. "\$LTISendGradesEarlyThreshold has been met or if it is past that assignment's "
-					. '$LTISendScoresAfterDate.'
+					. 'WeBWorK possibly reporting a score to the LMS. However, several other configuration settings '
+					. 'might still prevent WeBWorK from actually submitting a score to the LMS. If this is set to '
+					. 'false, then grades will only be sent to the LMS with mass updates (either triggered by the '
+					. 'instructor using the LTI Grade Update tool, or at mass update intervals).'
 			),
 			type => 'boolean'
 		},
