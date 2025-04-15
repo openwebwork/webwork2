@@ -92,39 +92,24 @@ use WeBWorK::DB::Utils qw/make_vsetID grok_vsetID grok_setID_from_vsetID_sql
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use);
 
-=for comment
-
-These exceptions will replace the ones in WeBWorK::DB::Schema and will be
-allowed to propagate out to calling code. The following callers will have to be
-changed to catch these exceptions instead of doing string matching:
-
-lib/WebworkSOAP.pm:     if ($@ =~ m/user set exists/) {
-lib/WeBWorK/ContentGenerator/Instructor.pm:             if ($@ =~ m/user set exists/) {
-lib/WeBWorK/ContentGenerator/Instructor.pm:     if ( $@ =~ m/user set exists/ ) {
-lib/WeBWorK/ContentGenerator/Instructor.pm:             if ($@ =~ m/user problem exists/) {
-lib/WeBWorK/ContentGenerator/Instructor.pm:             if ($@ =~ m/user problem exists/) {
-lib/WeBWorK/ContentGenerator/Instructor.pm:                     next if $@ =~ m/user set exists/;
-lib/WeBWorK/Utils/DBImportExport.pm:                            if ($@ =~ m/exists/) {
-lib/WeBWorK/DB.pm:                              if ($@ and $@ !~ m/password exists/) {
-lib/WeBWorK/DB.pm:                              if ($@ and $@ !~ m/permission level exists/) {
-
-How these exceptions should be used:
-
-* RecordExists is thrown by the DBI error handler (handle_error in
-Schema::NewSQL::Std) when in INSERT fails because a record exists. Thus it can
-be thrown via addUser, addPassword, etc.
-
-* RecordNotFound should be thrown when we try to UPDATE and zero rows were
-affected. Problem: Frank Wolfs (UofR PAS) may have a MySQL server that returns 0
-when updating even when a record was modified. What's up with that? There's some
-question as to where we should throw this: in this file's put* methods? In
-Std.pm's put method? Or in update_fields and update_fields_i?
-
-* DependencyNotFound should be throws when we check for a record that is needed
-to insert another record (e.g. password depends on user). These checks are done
-in this file, so we'll throw this exception from there.
-
-=cut
+# How these exceptions should be used:
+#
+# * RecordExists is thrown when an INSERT fails because the record being
+# inserted already exists. This exception is thrown by the database error
+# handler and should not be thrown here or anywhere else.
+#
+# * RecordNotFound should be thrown if an UPDATE is attempted and there was no
+# existing record to update. These exceptions should only be thrown by this
+# file.
+#
+# * DependencyNotFound should be thrown when a record in another table does not
+# exist that should exist for a record in the current table to be inserted (e.g.
+# password depends on user). These exceptions should only be thrown by this
+# file.
+#
+# * TableMissing is thrown if a table in the database layout is missing. This
+# exception is thrown by the database error handler and should not be thrown
+# here or anywhere else.
 
 use Exception::Class (
 	'WeBWorK::DB::Ex' => {
@@ -132,12 +117,10 @@ use Exception::Class (
 	},
 	'WeBWorK::DB::Ex::RecordExists' => {
 		isa         => 'WeBWorK::DB::Ex',
-		fields      => [ 'type', 'key' ],
 		description => "record exists"
 	},
 	'WeBWorK::DB::Ex::RecordNotFound' => {
 		isa         => 'WeBWorK::DB::Ex',
-		fields      => [ 'type', 'key' ],
 		description => "record not found"
 	},
 	'WeBWorK::DB::Ex::DependencyNotFound' => {
@@ -534,31 +517,15 @@ sub getUsers {
 
 sub addUser {
 	my ($self, $User) = shift->checkArgs(\@_, qw/REC:user/);
-	eval { return $self->{user}->add($User); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addUser: user exists (perhaps you meant to use putUser?)";
-	} elsif ($@) {
-		die $@;
-	}
-	# FIXME about these exceptions: eventually the exceptions should be part of
-	# WeBWorK::DB rather than WeBWorK::DB::Schema, and we should just let them
-	# through to the calling code. however, right now we have code that checks
-	# for the string "... exists" in the error message, so we need to convert
-	# here.
-	#
-	# WeBWorK::DB::Ex::RecordExists
-	# WeBWorK::DB::Ex::DependencyNotFound - i.e. inserting a password for a nonexistent user
-	# ?
+	return $self->{user}->add($User);
 }
 
 sub putUser {
 	my ($self, $User) = shift->checkArgs(\@_, qw/REC:user/);
 	my $rows = $self->{user}->put($User);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putUser: user not found (perhaps you meant to use addUser?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(error => 'putUser: user not found (perhaps you meant to use addUser?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteUser {
@@ -598,8 +565,6 @@ sub listPasswords {
 
 sub existsPassword {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	# FIXME should we claim that a password exists if the user exists, since
-	# password records are auto-created?
 	return $self->{password}->exists($userID);
 }
 
@@ -610,52 +575,24 @@ sub getPassword {
 
 sub getPasswords {
 	my ($self, @userIDs) = shift->checkArgs(\@_, qw/user_id*/);
-
-	my @Passwords = $self->{password}->gets(map { [$_] } @userIDs);
-
-	# AUTO-CREATE missing password records
-	# (this code is duplicated in getPermissionLevels, below)
-	for (my $i = 0; $i < @Passwords; $i++) {
-		my $Password = $Passwords[$i];
-		my $userID   = $userIDs[$i];
-		if (not defined $Password) {
-			if ($self->{user}->exists($userID)) {
-				$Password = $self->newPassword(user_id => $userID);
-				eval { $self->addPassword($Password) };
-				if ($@ and $@ !~ m/password exists/) {
-					die "error while auto-creating password record for user $userID: $@";
-				}
-				$Passwords[$i] = $Password;
-			}
-		}
-	}
-
-	return @Passwords;
+	return $self->{password}->gets(map { [$_] } @userIDs);
 }
 
 sub addPassword {
 	my ($self, $Password) = shift->checkArgs(\@_, qw/REC:password/);
-
-	croak "addPassword: user ", $Password->user_id, " not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addPassword: user ' . $Password->user_id . ' not found')
 		unless $self->{user}->exists($Password->user_id);
-
-	eval { return $self->{password}->add($Password); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addPassword: password exists (perhaps you meant to use putPassword?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{password}->add($Password);
 }
 
 sub putPassword {
 	my ($self, $Password) = shift->checkArgs(\@_, qw/REC:password/);
 	my $rows = $self->{password}->put($Password);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		# AUTO-CREATE permission level records
-		return $self->addPassword($Password);
-	} else {
-		return $rows;
-	}
+
+	# AUTO-CREATE password records
+	return $self->addPassword($Password) if $rows == 0;
+
+	return $rows;
 }
 
 sub deletePassword {
@@ -689,8 +626,6 @@ sub listPermissionLevels {
 
 sub existsPermissionLevel {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	# FIXME should we claim that a permission level exists if the user exists,
-	# since password records are auto-created?
 	return $self->{permission}->exists($userID);
 }
 
@@ -701,41 +636,15 @@ sub getPermissionLevel {
 
 sub getPermissionLevels {
 	my ($self, @userIDs) = shift->checkArgs(\@_, qw/user_id*/);
-
-	my @PermissionLevels = $self->{permission}->gets(map { [$_] } @userIDs);
-
-	# AUTO-CREATE missing permission level records
-	# (this code is duplicated in getPasswords, above)
-	for (my $i = 0; $i < @PermissionLevels; $i++) {
-		my $PermissionLevel = $PermissionLevels[$i];
-		my $userID          = $userIDs[$i];
-		if (not defined $PermissionLevel) {
-			if ($self->{user}->exists($userID)) {
-				$PermissionLevel = $self->newPermissionLevel(user_id => $userID);
-				eval { $self->addPermissionLevel($PermissionLevel) };
-				if ($@ and $@ !~ m/permission level exists/) {
-					die "error while auto-creating permission level record for user $userID: $@";
-				}
-				$PermissionLevels[$i] = $PermissionLevel;
-			}
-		}
-	}
-
-	return @PermissionLevels;
+	return $self->{permission}->gets(map { [$_] } @userIDs);
 }
 
 sub addPermissionLevel {
 	my ($self, $PermissionLevel) = shift->checkArgs(\@_, qw/REC:permission/);
-
-	croak "addPermissionLevel: user ", $PermissionLevel->user_id, " not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(
+		error => 'addPermissionLevel: user ' . $PermissionLevel->user_id . ' not found')
 		unless $self->{user}->exists($PermissionLevel->user_id);
-
-	eval { return $self->{permission}->add($PermissionLevel); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addPermissionLevel: permission level exists (perhaps you meant to use putPermissionLevel?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{permission}->add($PermissionLevel);
 }
 
 sub putPermissionLevel {
@@ -807,19 +716,13 @@ sub getKeys {
 sub addKey {
 	my ($self, $Key) = shift->checkArgs(\@_, qw/VREC:key/);
 
-	croak "addKey: user ", $Key->user_id, " not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addKey: user ' . $Key->user_id . ' not found')
 		unless $Key->key eq "nonce" || $self->{user}->exists($Key->user_id);
 
 	my $keyCopy = $self->newKey($Key);
 	$keyCopy->session(encode_json($Key->session)) if ref($Key->session) eq 'HASH';
 
-	my $result = eval { $self->{key}->add($keyCopy) };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addKey: key exists (perhaps you meant to use putKey?)";
-	} elsif ($@) {
-		die $@;
-	}
-	return $result;
+	return $self->{key}->add($keyCopy);
 }
 
 sub putKey {
@@ -827,11 +730,9 @@ sub putKey {
 	my $keyCopy = $self->newKey($Key);
 	$keyCopy->session(encode_json($Key->session)) if ref($Key->session) eq 'HASH';
 	my $rows = $self->{key}->put($keyCopy);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putKey: key not found (perhaps you meant to use addKey?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(error => 'putKey: key not found (perhaps you meant to use addKey?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteKey {
@@ -939,23 +840,16 @@ sub getAllLocations {
 
 sub addLocation {
 	my ($self, $Location) = shift->checkArgs(\@_, qw/REC:locations/);
-
-	eval { return $self->{locations}->add($Location); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addLocation: location exists (perhaps you meant to use putLocation?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{locations}->add($Location);
 }
 
 sub putLocation {
 	my ($self, $Location) = shift->checkArgs(\@_, qw/REC:locations/);
 	my $rows = $self->{locations}->put($Location);
-	if ($rows == 0) {
-		croak "putLocation: location not found (perhaps you meant to use addLocation?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putLocation: location not found (perhaps you meant to use addLocation?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteLocation {
@@ -1037,24 +931,19 @@ sub getAllLocationAddresses {
 
 sub addLocationAddress {
 	my ($self, $LocationAddress) = shift->checkArgs(\@_, qw/REC:location_addresses/);
-	croak "addLocationAddress: location ", $LocationAddress->location_id, " not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(
+		error => 'addLocationAddress: location ' . $LocationAddress->location_id . ' not found')
 		unless $self->{locations}->exists($LocationAddress->location_id);
-	eval { return $self->{location_addresses}->add($LocationAddress); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addLocationAddress: location address exists (perhaps you meant to use putLocationAddress?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{location_addresses}->add($LocationAddress);
 }
 
 sub putLocationAddress {
 	my ($self, $LocationAddress) = shift->checkArgs(\@_, qw/REC:location_addresses/);
 	my $rows = $self->{location_addresses}->put($LocationAddress);
-	if ($rows == 0) {
-		croak "putLocationAddress: location address not found (perhaps you meant to use addLocationAddress?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putLocationAddress: location address not found (perhaps you meant to use addLocationAddress?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteLocationAddress {
@@ -1095,13 +984,7 @@ sub addLTILaunchData {
 	my ($self, $LTILaunchData) = shift->checkArgs(\@_, qw/REC:lti_launch_data/);
 	my $launchDataCopy = $self->newLTILaunchData($LTILaunchData);
 	$launchDataCopy->data(encode_json($LTILaunchData->data)) if ref($LTILaunchData->data) eq 'HASH';
-	my $result = eval { $self->{lti_launch_data}->add($launchDataCopy) };
-	if (my $ex = WeBWorK::DB::Ex::RecordExists->caught) {
-		croak "addLTILaunchData: lti launch data exists (perhaps you meant to use putLTILaunchData?)";
-	} elsif ($@) {
-		die $@;
-	}
-	return $result;
+	return $self->{lti_launch_data}->add($launchDataCopy);
 }
 
 sub putLTILaunchData {
@@ -1109,11 +992,10 @@ sub putLTILaunchData {
 	my $launchDataCopy = $self->newLTILaunchData($LTILaunchData);
 	$launchDataCopy->data(encode_json($LTILaunchData->data)) if ref($LTILaunchData->data) eq 'HASH';
 	my $rows = $self->{lti_launch_data}->put($launchDataCopy);
-	if ($rows == 0) {
-		croak "putLTILaunchData: lti launch data not found (perhaps you meant to use addLTILaunchData?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putLTILaunchData: lti launch data not found (perhaps you meant to use addLTILaunchData?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteLTILaunchData {
@@ -1206,26 +1088,23 @@ sub getPastAnswers {
 sub addPastAnswer {
 	my ($self, $pastAnswer) = shift->checkArgs(\@_, qw/REC:past_answer/);
 
-	croak "addPastAnswert: user problem ", $pastAnswer->user_id, " ",
-		$pastAnswer->set_id, " ", $pastAnswer->problem_id, " not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addPastAnswer: user problem '
+			. $pastAnswer->user_id . ' '
+			. $pastAnswer->set_id . ' '
+			. $pastAnswer->problem_id
+			. ' not found')
 		unless $self->{problem_user}->exists($pastAnswer->user_id, $pastAnswer->set_id, $pastAnswer->problem_id);
 
-	eval { return $self->{past_answer}->add($pastAnswer); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addPastAnswer: past answer exists (perhaps you meant to use putPastAnswer?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{past_answer}->add($pastAnswer);
 }
 
 sub putPastAnswer {
 	my ($self, $pastAnswer) = shift->checkArgs(\@_, qw/REC:past_answer/);
 	my $rows = $self->{past_answer}->put($pastAnswer);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putPastAnswer: past answer not found (perhaps you meant to use addPastAnswer?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putPastAnswer: past answer not found (perhaps you meant to use addPastAnswer?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deletePastAnswer {
@@ -1276,26 +1155,16 @@ sub getGlobalSets {
 
 sub addGlobalSet {
 	my ($self, $GlobalSet) = shift->checkArgs(\@_, qw/REC:set/);
-
-	eval {
-
-		return $self->{set}->add($GlobalSet);
-	};
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addGlobalSet: global set exists (perhaps you meant to use putGlobalSet?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{set}->add($GlobalSet);
 }
 
 sub putGlobalSet {
 	my ($self, $GlobalSet) = shift->checkArgs(\@_, qw/REC:set/);
 	my $rows = $self->{set}->put($GlobalSet);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putGlobalSet: global set not found (perhaps you meant to use addGlobalSet?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putGlobalSet: global set not found (perhaps you meant to use addGlobalSet?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteGlobalSet {
@@ -1354,26 +1223,16 @@ sub getAchievementCategories {
 
 sub addAchievement {
 	my ($self, $Achievement) = shift->checkArgs(\@_, qw/REC:achievement/);
-
-	eval {
-
-		return $self->{achievement}->add($Achievement);
-	};
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addAchievement: achievement exists (perhaps you meant to use putAchievement?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{achievement}->add($Achievement);
 }
 
 sub putAchievement {
 	my ($self, $Achievement) = shift->checkArgs(\@_, qw/REC:achievement/);
 	my $rows = $self->{achievement}->put($Achievement);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putAchievement: achievement not found (perhaps you meant to use addAchievement?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putAchievement: achievement not found (perhaps you meant to use addAchievement?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteAchievement {
@@ -1425,27 +1284,16 @@ sub getGlobalUserAchievements {
 
 sub addGlobalUserAchievement {
 	my ($self, $globalUserAchievement) = shift->checkArgs(\@_, qw/REC:global_user_achievement/);
-
-	eval {
-
-		return $self->{global_user_achievement}->add($globalUserAchievement);
-	};
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addGlobalUserAchievement: user achievement exists (perhaps you meant to use putGlobalUserAchievement?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{global_user_achievement}->add($globalUserAchievement);
 }
 
 sub putGlobalUserAchievement {
 	my ($self, $globalUserAchievement) = shift->checkArgs(\@_, qw/REC:global_user_achievement/);
 	my $rows = $self->{global_user_achievement}->put($globalUserAchievement);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak
-			"putGlobalUserAchievement: user achievement not found (perhaps you meant to use addGlobalUserAchievement?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(error =>
+			'putGlobalUserAchievement: user achievement not found (perhaps you meant to use addGlobalUserAchievement?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteGlobalUserAchievement {
@@ -1511,27 +1359,23 @@ sub getUserAchievements {
 sub addUserAchievement {
 	my ($self, $UserAchievement) = shift->checkArgs(\@_, qw/REC:achievement_user/);
 
-	croak "addUserAchievement: user ", $UserAchievement->user_id, " not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(
+		error => 'addUserAchievement: user ' . $UserAchievement->user_id . ' not found')
 		unless $self->{user}->exists($UserAchievement->user_id);
-	croak "addUserAchievement: achievement ", $UserAchievement->achievement_id, " not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(
+		error => 'addUserAchievement: achievement ' . $UserAchievement->achievement_id . ' not found')
 		unless $self->{achievement}->exists($UserAchievement->achievement_id);
 
-	eval { return $self->{achievement_user}->add($UserAchievement); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addUserAchievement: user achievement exists (perhaps you meant to use putUserAchievement?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{achievement_user}->add($UserAchievement);
 }
 
 sub putUserAchievement {
 	my ($self, $UserAchievement) = shift->checkArgs(\@_, qw/REC:achievement_user/);
 	my $rows = $self->{achievement_user}->put($UserAchievement);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putUserAchievement: user achievement not found (perhaps you meant to use addUserAchievement?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putUserAchievement: user achievement not found (perhaps you meant to use addUserAchievement?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteUserAchievement {
@@ -1597,52 +1441,11 @@ sub getUserSets {
 # addVersionedUserSet; changes here should accordingly be propagated down there
 sub addUserSet {
 	my ($self, $UserSet) = shift->checkArgs(\@_, qw/REC:set_user/);
-
-	croak "addUserSet: user ", $UserSet->user_id, " not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addUserSet: user ' . $UserSet->user_id . ' not found')
 		unless $self->{user}->exists($UserSet->user_id);
-	croak "addUserSet: set ", $UserSet->set_id, " not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addUserSet: set ' . $UserSet->set_id . ' not found')
 		unless $self->{set}->exists($UserSet->set_id);
-	eval { return $self->{set_user}->add($UserSet); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addUserSet: user set exists (perhaps you meant to use putUserSet?)";
-	} elsif ($@) {
-		die $@;
-	}
-}
-
-# Used to add a list of UserSet records to the DB in less DB calls.
-sub addMultipleUserSets {
-	my ($self, @userSetList) = @_;
-
-	# Do a single checkArgs call, all records in the list were made in the same manner
-	$self->checkArgs([ $userSetList[0] ], qw/REC:set_user/);
-
-	my @badUserIDs;
-	my %badSetIDs;
-	my @toInsert;
-	for my $userSet (@userSetList) {
-		if ($self->{user}->exists($userSet->user_id)) {
-			if ($self->{set}->exists($userSet->set_id)) {
-				# This record is OK
-				push(@toInsert, $userSet);
-			} else {
-				$badSetIDs{ $userSet->set_id } = 1;
-			}
-		} else {
-			push(@badUserIDs, join("", 'user ', $userSet->user_id, " not found, cannot add set ", $userSet->set_id));
-		}
-	}
-	my $badSetIDerrorMsg =
-		keys(%badSetIDs) ? join(" ", 'bad set IDs seen:', keys(%badSetIDs)) : "";
-
-	eval { return $self->{set_user}->insert_records([@toInsert]); };
-	if ($@) {
-		croak join("\n", "addMultipleUserSets errors:\nDB call error: $@", $badSetIDerrorMsg, @badUserIDs);
-	}
-
-	if (@badUserIDs || keys(@badUserIDs)) {
-		croak join("\n", "addMultipleUserSets errors:\n", $badSetIDerrorMsg, @badUserIDs);
-	}
+	return $self->{set_user}->add($UserSet);
 }
 
 # the code from putUserSet() is duplicated in large part in the following
@@ -1650,11 +1453,10 @@ sub addMultipleUserSets {
 sub putUserSet {
 	my ($self, $UserSet) = shift->checkArgs(\@_, qw/REC:set_user/);
 	my $rows = $self->{set_user}->put($UserSet);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putUserSet: user set not found (perhaps you meant to use addUserSet?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putUserSet: user set not found (perhaps you meant to use addUserSet?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteUserSet {
@@ -1743,27 +1545,20 @@ sub getSetVersions {
 # versioned analog of addUserSet
 sub addSetVersion {
 	my ($self, $SetVersion) = shift->checkArgs(\@_, qw/REC:set_version/);
-
-	croak "addSetVersion: set ", $SetVersion->set_id, " not found for user ", $SetVersion->user_id
+	WeBWorK::DB::Ex::DependencyNotFound->throw(
+		error => 'addSetVersion: set ' . $SetVersion->set_id . ' not found for user ' . $SetVersion->user_id)
 		unless $self->{set_user}->exists($SetVersion->user_id, $SetVersion->set_id);
-
-	eval { return $self->{set_version}->add($SetVersion); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addSetVersion: set version exists (perhaps you meant to use putSetVersion?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{set_version}->add($SetVersion);
 }
 
 # versioned analog of putUserSet
 sub putSetVersion {
 	my ($self, $SetVersion) = shift->checkArgs(\@_, qw/REC:set_version/);
 	my $rows = $self->{set_version}->put($SetVersion);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putSetVersion: set version not found (perhaps you meant to use addSetVersion?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putSetVersion: set version not found (perhaps you meant to use addSetVersion?)')
+		if $rows == 0;
+	return $rows;
 }
 
 # versioned analog of deleteUserSet
@@ -1856,25 +1651,19 @@ sub getAllGlobalSetLocations {
 
 sub addGlobalSetLocation {
 	my ($self, $GlobalSetLocation) = shift->checkArgs(\@_, qw/REC:set_locations/);
-	croak "addGlobalSetLocation: set ", $GlobalSetLocation->set_id, " not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(
+		error => 'addGlobalSetLocation: set ' . $GlobalSetLocation->set_id . ' not found')
 		unless $self->{set}->exists($GlobalSetLocation->set_id);
-
-	eval { return $self->{set_locations}->add($GlobalSetLocation); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addGlobalSetLocation: global set_location exists (perhaps you meant to use putGlobalSetLocation?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{set_locations}->add($GlobalSetLocation);
 }
 
 sub putGlobalSetLocation {
 	my ($self, $GlobalSetLocation) = shift->checkArgs(\@_, qw/REC:set_locations/);
 	my $rows = $self->{set_locations}->put($GlobalSetLocation);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putGlobalSetLocation: global problem not found (perhaps you meant to use addGlobalSetLocation?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putGlobalSetLocation: global problem not found (perhaps you meant to use addGlobalSetLocation?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteGlobalSetLocation {
@@ -1952,17 +1741,13 @@ sub getAllUserSetLocations {
 sub addUserSetLocation {
 	# VERSIONING - accept versioned ID fields
 	my ($self, $UserSetLocation) = shift->checkArgs(\@_, qw/VREC:set_locations_user/);
-
-	croak "addUserSetLocation: user set ", $UserSetLocation->set_id, " for user ", $UserSetLocation->user_id,
-		" not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addUserSetLocation: user set '
+			. $UserSetLocation->set_id
+			. ' for user '
+			. $UserSetLocation->user_id
+			. ' not found')
 		unless $self->{set_user}->exists($UserSetLocation->user_id, $UserSetLocation->set_id);
-
-	eval { return $self->{set_locations_user}->add($UserSetLocation); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addUserSetLocation: user set_location exists (perhaps you meant to use putUserSetLocation?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{set_locations_user}->add($UserSetLocation);
 }
 
 # FIXME: we won't ever use this because all fields are key fields
@@ -1972,11 +1757,10 @@ sub putUserSetLocation {
 	my ($self, $UserSetLocation, undef) = shift->checkArgs(\@_, "${V}REC:set_locations_user", "versioned_ok!?");
 
 	my $rows = $self->{set_locations_user}->put($UserSetLocation);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putUserSetLocation: user set location not found (perhaps you meant to use addUserSetLocation?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putUserSetLocation: user set location not found (perhaps you meant to use addUserSetLocation?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteUserSetLocation {
@@ -2053,26 +1837,19 @@ sub getAllGlobalProblems {
 
 sub addGlobalProblem {
 	my ($self, $GlobalProblem) = shift->checkArgs(\@_, qw/REC:problem/);
-
-	croak "addGlobalProblem: set ", $GlobalProblem->set_id, " not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(
+		error => 'addGlobalProblem: set ' . $GlobalProblem->set_id . ' not found')
 		unless $self->{set}->exists($GlobalProblem->set_id);
-
-	eval { return $self->{problem}->add($GlobalProblem); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addGlobalProblem: global problem exists (perhaps you meant to use putGlobalProblem?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{problem}->add($GlobalProblem);
 }
 
 sub putGlobalProblem {
 	my ($self, $GlobalProblem) = shift->checkArgs(\@_, qw/REC:problem/);
 	my $rows = $self->{problem}->put($GlobalProblem);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putGlobalProblem: global problem not found (perhaps you meant to use addGlobalProblem?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putGlobalProblem: global problem not found (perhaps you meant to use addGlobalProblem?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteGlobalProblem {
@@ -2145,60 +1922,20 @@ sub addUserProblem {
 	# VERSIONING - accept versioned ID fields
 	my ($self, $UserProblem) = shift->checkArgs(\@_, qw/VREC:problem_user/);
 
-	croak "addUserProblem: user set ", $UserProblem->set_id, " for user ", $UserProblem->user_id, " not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addUserProblem: user set '
+			. $UserProblem->set_id
+			. ' for user '
+			. $UserProblem->user_id
+			. ' not found')
 		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id);
 
 	my ($nv_set_id, $versionNum) = grok_vsetID($UserProblem->set_id);
 
-	croak "addUserProblem: problem ", $UserProblem->problem_id, " in set $nv_set_id not found"
+	WeBWorK::DB::Ex::DependencyNotFound->throw(
+		error => 'addUserProblem: problem ' . $UserProblem->problem_id . ' in set $nv_set_id not found')
 		unless $self->{problem}->exists($nv_set_id, $UserProblem->problem_id);
 
-	eval { return $self->{problem_user}->add($UserProblem); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addUserProblem: user problem exists (perhaps you meant to use putUserProblem?)";
-	} elsif ($@) {
-		die $@;
-	}
-}
-
-# Used to add multiple problems to a SINGLE set with less DB calls.
-# Not for use by versioned sets
-# This expects @problemLists to be a 2 dimensional array, each
-# entry being the problemList array for one user.
-sub addUserMultipleProblems {
-	my ($self, @problemLists) = @_;
-
-	croak "Error in request to addUserMultipleProblems" if ref($problemLists[0]) ne 'ARRAY';
-
-	# Do a single checkArgs call, all records in the list were made in the same manner
-	$self->checkArgs([ $problemLists[0][0] ], qw/REC:problem_user/);
-
-	my $set_id = $problemLists[0][0]->set_id;
-
-	# Array in which all records to add are collected
-	my @collectedProblemList;
-
-	for my $problemListRef (@problemLists) {
-		my $user_id    = $problemListRef->[0]->user_id;
-		my $problem_id = $problemListRef->[0]->problem_id;
-		croak "addMultipleUserProblems: user set $set_id for user $user_id not found"
-			unless $self->{set_user}->exists($user_id, $set_id);
-
-		# Test whether there are already problem records for this user in this set, as in that case
-		# inserting multiple records at once would trigger an error.
-		my $where = [ user_id_eq_set_id_eq_problem_id_eq => $user_id, $set_id, $problem_id ];
-
-		croak
-			"addMultipleUserProblems cannot be run as set $set_id already contains one of the requested problems for user $user_id"
-			if $self->{problem_user}->count_where($where);
-		# If we got here, we can add this list of problems to those to insert into the database
-		push(@collectedProblemList, @{$problemListRef});
-	}
-
-	eval { $self->{problem_user}->insert_records([@collectedProblemList]); };
-	if ($@) {
-		croak "addUserMultipleProblems: $@";
-	}
+	return $self->{problem_user}->add($UserProblem);
 }
 
 # versioned_ok is an optional argument which lets us slip versioned setIDs through checkArgs.
@@ -2207,11 +1944,10 @@ sub putUserProblem {
 	my ($self, $UserProblem, undef) = shift->checkArgs(\@_, "${V}REC:problem_user", "versioned_ok!?");
 
 	my $rows = $self->{problem_user}->put($UserProblem);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putUserProblem: user problem not found (perhaps you meant to use addUserProblem?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putUserProblem: user problem not found (perhaps you meant to use addUserProblem?)')
+		if $rows == 0;
+	return $rows;
 }
 
 sub deleteUserProblem {
@@ -2327,32 +2063,33 @@ sub getAllProblemVersions {
 sub addProblemVersion {
 	my ($self, $ProblemVersion) = shift->checkArgs(\@_, qw/REC:problem_version/);
 
-	croak "addProblemVersion: set version ", $ProblemVersion->version_id, " of set ", $ProblemVersion->set_id,
-		" not found for user ", $ProblemVersion->user_id
+	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addProblemVersion: set version '
+			. $ProblemVersion->version_id
+			. ' of set '
+			. $ProblemVersion->set_id
+			. ' not found for user '
+			. $ProblemVersion->user_id)
 		unless $self->{set_version}
 		->exists($ProblemVersion->user_id, $ProblemVersion->set_id, $ProblemVersion->version_id);
-	croak "addProblemVersion: problem ", $ProblemVersion->problem_id, " of set ", $ProblemVersion->set_id,
-		" not found for user ", $ProblemVersion->user_id
+	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addProblemVersion: problem '
+			. $ProblemVersion->problem_id
+			. ' of set '
+			. $ProblemVersion->set_id
+			. ' not found for user ')
 		unless $self->{problem_user}
 		->exists($ProblemVersion->user_id, $ProblemVersion->set_id, $ProblemVersion->problem_id);
 
-	eval { return $self->{problem_version}->add($ProblemVersion); };
-	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
-		croak "addProblemVersion: problem version exists (perhaps you meant to use putProblemVersion?)";
-	} elsif ($@) {
-		die $@;
-	}
+	return $self->{problem_version}->add($ProblemVersion);
 }
 
 # versioned analog of putUserProblem
 sub putProblemVersion {
 	my ($self, $ProblemVersion) = shift->checkArgs(\@_, qw/REC:problem_version/);
 	my $rows = $self->{problem_version}->put($ProblemVersion);    # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putProblemVersion: problem version not found (perhaps you meant to use addProblemVersion?)";
-	} else {
-		return $rows;
-	}
+	WeBWorK::DB::Ex::RecordNotFound->throw(
+		error => 'putProblemVersion: problem version not found (perhaps you meant to use addProblemVersion?)')
+		if $rows == 0;
+	return $rows;
 }
 
 # versioned analog of deleteUserProblem

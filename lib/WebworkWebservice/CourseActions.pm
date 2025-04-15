@@ -368,9 +368,7 @@ sub assignVisibleSets {
 		my $set_assigned = 0;
 		eval { $db->addUserSet($UserSet) };
 
-		if ($@ && !($@ =~ m/user set exists/)) {
-			return 0;
-		}
+		return 0 if $@ && !WeBWorK::DB::Ex::RecordExists->caught;
 
 		# assign problem
 		my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
@@ -382,9 +380,7 @@ sub assignVisibleSets {
 			$UserProblem->problem_id($GlobalProblem->problem_id);
 			initializeUserProblem($UserProblem, $seed);
 			eval { $db->addUserProblem($UserProblem) };
-			if ($@ && !($@ =~ m/user problem exists/)) {
-				return 0;
-			}
+			return 0 if $@ && !WeBWorK::DB::Ex::RecordExists->caught;
 		}
 	}
 

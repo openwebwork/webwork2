@@ -165,7 +165,7 @@ sub assign_set_to_user {
 	eval { $db->addUserSet($UserSet) };
 
 	if ($@) {
-		if ($@ =~ m/user set exists/) {
+		if (WeBWorK::DB::Ex::RecordExists->caught) {
 			push @results, "set $setID is already assigned to user $userID.";
 			$set_assigned = 1;
 		} else {

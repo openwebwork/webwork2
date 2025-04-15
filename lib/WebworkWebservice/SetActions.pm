@@ -9,7 +9,7 @@ use Mojo::JSON            qw(from_json to_json);
 use Data::Structure::Util qw(unbless);
 
 use WeBWorK::Utils             qw(max);
-use WeBWorK::Utils::Instructor qw(assignSetToGivenUsers assignMultipleProblemsToGivenUsers);
+use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers assignSetToGivenUsers);
 use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Debug;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
@@ -272,7 +272,7 @@ sub assignSetToUsers {
 			push @usersToAdd, $user;
 		}
 	}
-	push @results, assignSetToGivenUsers($db, $self->ce, $setID, 1, $db->getUsers(@usersToAdd));
+	assignSetToGivenUsers($db, $self->ce, $setID, 1, $db->getUsers(@usersToAdd));
 
 	return { ra_out => \@results, text => "Successfully assigned users to set $params->{set_id}" };
 }
@@ -495,10 +495,7 @@ sub addProblem {
 	$problemRecord->prCount(0);
 	$db->addGlobalProblem($problemRecord);
 
-	my @results;
-	my @userIDs = $db->listSetUsers($setName);
-	my $result  = assignMultipleProblemsToGivenUsers($db, \@userIDs, $setName, ($problemID));
-	push @results, $result if $result;
+	assignProblemToAllSetUsers($db, $problemRecord);
 
 	return { text => "Problem added to $setName" };
 }
