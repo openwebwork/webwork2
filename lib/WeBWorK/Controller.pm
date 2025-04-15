@@ -25,6 +25,7 @@ fields.
 =cut
 
 use Encode;
+use Mojo::JSON qw(encode_json);
 
 use WeBWorK::Localize;
 

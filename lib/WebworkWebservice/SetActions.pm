@@ -20,6 +20,7 @@ use strict;
 use warnings;
 
 use Carp;
+use Mojo::JSON            qw(from_json to_json);
 use Data::Structure::Util qw(unbless);
 
 use WeBWorK::Utils             qw(max);
