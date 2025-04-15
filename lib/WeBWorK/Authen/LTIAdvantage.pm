@@ -177,7 +177,7 @@ sub get_credentials ($self) {
 				[ roles      => 'https://purl.imsglobal.org/spec/lti/claim/roles' ],
 				[ last_name  => 'family_name' ],
 				[ first_name => 'given_name' ],
-				[ section    => 'https://purl.imsglobal.org/spec/lti/claim/custom#section' ],
+				[ section    => 'https://purl.imsglobal.org/spec/lti/claim/lis#course_section_sourcedid' ],
 				[ recitation => 'https://purl.imsglobal.org/spec/lti/claim/custom#recitation' ],
 			);
 
