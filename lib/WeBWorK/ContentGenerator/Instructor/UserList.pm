@@ -728,31 +728,29 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 }
 
 sub exportUsersToCSV ($c, $fileName, @userIDsToExport) {
-	my $ce  = $c->ce;
-	my $db  = $c->db;
-	my $dir = $ce->{courseDirs}->{templates};
+	my $ce = $c->ce;
+	my $db = $c->db;
 
-	die $c->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
+	die $c->maketext(q{illegal character in input: '/'}) if $fileName =~ m|/|;
 
 	my @records;
 
-	my @Users            = $db->getUsers(@userIDsToExport);
-	my @Passwords        = $db->getPasswords(@userIDsToExport);
-	my @PermissionLevels = $db->getPermissionLevels(@userIDsToExport);
-	foreach my $i (0 .. $#userIDsToExport) {
-		my $User            = $Users[$i];
-		my $Password        = $Passwords[$i];
-		my $PermissionLevel = $PermissionLevels[$i];
-		next unless defined $User;
-		my %record = (
-			defined $PermissionLevel ? $PermissionLevel->toHash : (),
-			defined $Password        ? $Password->toHash        : (),
-			$User->toHash,
+	my @users            = $db->getUsers(@userIDsToExport);
+	my %passwords        = map { $_->user_id => $_ } $db->getPasswords(@userIDsToExport);
+	my %permissionLevels = map { $_->user_id => $_ } $db->getPermissionLevels(@userIDsToExport);
+
+	for my $user (@users) {
+		my $password        = $passwords{ $user->user_id };
+		my $permissionLevel = $permissionLevels{ $user->user_id };
+		my %record          = (
+			defined $permissionLevel ? $permissionLevel->toHash : (),
+			defined $password        ? $password->toHash        : (),
+			$user->toHash,
 		);
 		push @records, \%record;
 	}
 
-	write_classlist("$dir/$fileName", @records);
+	write_classlist("$ce->{courseDirs}{templates}/$fileName", @records);
 
 	return;
 }
