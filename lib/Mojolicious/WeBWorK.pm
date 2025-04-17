@@ -24,8 +24,7 @@ Mojolicious::WeBWorK - Mojolicious app for WeBWorK 2.
 
 use Env qw(WEBWORK_SERVER_ADMIN);
 
-use Mojo::JSON   qw(encode_json);
-use Scalar::Util qw(weaken);
+use Mojo::JSON qw(encode_json);
 
 use WeBWorK;
 use WeBWorK::CourseEnvironment;
@@ -147,8 +146,6 @@ sub startup ($app) {
 		around_action => async sub ($next, $c, $action, $last) {
 			return $next->() unless $c->isa('WeBWorK::ContentGenerator');
 
-			weaken $c;
-
 			my $uri = $c->req->url->path->to_string;
 			$c->stash->{warnings} //= '';
 
@@ -174,7 +171,7 @@ sub startup ($app) {
 
 	$app->hook(
 		after_dispatch => sub ($c) {
-			$SIG{__WARN__} = $c->stash->{orig_sig_warn} if defined $c->stash->{orig_sig_warn};
+			$SIG{__WARN__} = ref($c->stash->{orig_sig_warn}) eq 'CODE' ? $c->stash->{orig_sig_warn} : 'DEFAULT';
 
 			if ($c->isa('WeBWorK::ContentGenerator') && $c->ce) {
 				$c->authen->store_session if $c->authen;
