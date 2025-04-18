@@ -859,6 +859,10 @@ sub store_session {
 		}
 	}
 
+	# The session parameters need to be set again, because another request may have occured during this
+	# request in which case the session parameters for the app will now be set for that request.
+	$self->{c}->setSessionParams;
+
 	return;
 }
 
