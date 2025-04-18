@@ -71,9 +71,8 @@ sub use_item ($self, $set, $records, $c) {
 	$db->putUserSet($userSet);
 
 	return $c->maketext(
-		'Close date of this assignment extended by 24 hours to [_1].',
-		$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
-	);
+		'This assignment has been reopened and will now close on [_1]. Problems have been rerandomized.',
+		$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat}));
 }
 
 1;
