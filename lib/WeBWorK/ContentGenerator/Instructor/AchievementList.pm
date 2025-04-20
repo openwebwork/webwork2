@@ -196,50 +196,47 @@ sub edit_handler ($c) {
 # Handler for assigning achievements to users
 sub assign_handler ($c) {
 	my $db             = $c->db;
-	my @users          = $db->listUsers;
 	my $overwrite      = $c->param('action.assign.overwrite') eq 'everything';
 	my $scope          = $c->param('action.assign.scope');
 	my @achievementIDs = $scope eq 'all' ? @{ $c->{allAchievementIDs} } : @{ $c->{selectedAchievementIDs} };
 
-	# Enable all achievements
+	my @users        = $db->listUsers;
 	my @achievements = $db->getAchievements(@achievementIDs);
 
-	for my $achievement (@achievements) {
-		$achievement->enabled(1);
-		$db->putAchievement($achievement);
-	}
+	# Enable all achievements.
+	for my $achievement (@achievements) { $achievement->enabled(1); }
+	$db->Achievement->update_records(\@achievements) if @achievements;
 
-	# Assign globalUserAchievement data, overwriting if necc
-
+	# Assign globalUserAchievement data, overwriting if necessary.
+	my (@globalAchievementRecordsToAdd, @globalAchievementRecordsToPut);
+	my %existingGlobalUserAchievements = map { $_ => 1 } $db->listGlobalUserAchievements;
 	for my $user (@users) {
-		if (not $db->existsGlobalUserAchievement($user)) {
-			my $globalUserAchievement = $db->newGlobalUserAchievement();
-			$globalUserAchievement->user_id($user);
-			$db->addGlobalUserAchievement($globalUserAchievement);
+		my $globalUserAchievement = $db->newGlobalUserAchievement(user_id => $user);
+		if (!$existingGlobalUserAchievements{$user}) {
+			push(@globalAchievementRecordsToAdd, $globalUserAchievement);
 		} elsif ($overwrite) {
-			my $globalUserAchievement = $db->newGlobalUserAchievement();
-			$globalUserAchievement->user_id($user);
-			$db->putGlobalUserAchievement($globalUserAchievement);
+			push(@globalAchievementRecordsToPut, $globalUserAchievement);
 		}
 	}
+	$db->GlobalUserAchievement->insert_records(\@globalAchievementRecordsToAdd) if @globalAchievementRecordsToAdd;
+	$db->GlobalUserAchievement->update_records(\@globalAchievementRecordsToPut) if @globalAchievementRecordsToPut;
 
-	# Assign userAchievement data, overwriting if necc
-
+	# Assign userAchievement data, overwriting if necessary.
+	my (@userAchievementRecordsToAdd, @userAchievementRecordsToPut);
 	for my $achievementID (@achievementIDs) {
+		my %existingUserAchievements =
+			map { $_->[0] => 1 } $db->listUserAchievementsWhere({ achievement_id => $achievementID });
 		for my $user (@users) {
-			if (not $db->existsUserAchievement($user, $achievementID)) {
-				my $userAchievement = $db->newUserAchievement();
-				$userAchievement->user_id($user);
-				$userAchievement->achievement_id($achievementID);
-				$db->addUserAchievement($userAchievement);
+			my $userAchievement = $db->newUserAchievement(user_id => $user, achievement_id => $achievementID);
+			if (!$existingUserAchievements{$user}) {
+				push(@userAchievementRecordsToAdd, $userAchievement);
 			} elsif ($overwrite) {
-				my $userAchievement = $db->newUserAchievement();
-				$userAchievement->user_id($user);
-				$userAchievement->achievement_id($achievementID);
-				$db->putUserAchievement($userAchievement);
+				push(@userAchievementRecordsToPut, $userAchievement);
 			}
 		}
 	}
+	$db->UserAchievement->insert_records(\@userAchievementRecordsToAdd) if @userAchievementRecordsToAdd;
+	$db->UserAchievement->update_records(\@userAchievementRecordsToPut) if @userAchievementRecordsToPut;
 
 	return (1, $c->maketext('Assigned achievements to users.'));
 }
@@ -462,7 +459,7 @@ sub import_handler ($c) {
 		$count++;
 		$allAchievementIDs{$achievement_id} = 1;
 
-		# Assign to usesrs if neccessary
+		# Assign to users if necessary.
 		if ($assign eq "all") {
 			for my $user (@users) {
 				if (not $db->existsGlobalUserAchievement($user)) {
