@@ -1,48 +1,29 @@
 % use WeBWorK::Utils qw(decodeAnswers);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 <html>
-	<head>
-		<%= stylesheet begin =%>
-			.data-table td, .data-table th {
-				text-align: left;
-				padding: 0.25rem;
-			}
-			.data-table.bordered {
-				border-collapse: collapse;
-			}
-			.data-table.bordered > * > tr > td, .data-table.bordered > * > tr > th {
-				border: 1px solid black;
-			}
-			.data-table.bordered thead tr:first-child th {
-				border-bottom-width: 2px;
-			}
-			.mb-1 {
-				margin-bottom: 1rem
-			}
-			.user-message {
-				border: 1px solid black;
-				border-radius: 0.375rem;
-				padding: 1rem;
-			}
-			.user-message-line {
-				margin: 0;
-				white-space: pre-wrap;
-			}
-		<% end =%>
-	</head>
 	<body>
-		<p>
-			Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at <%= url_for('root')->to_abs %>
-		</p>
-		<p>
-			<%= $user->first_name %> sent feedback from <%= link_to 'this page' => $emailableURL %>.
-		</p>
+		% if ($problem) {
+			<p>
+				Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at
+				<%= $ce->{institutionName} %> (sent from
+				<%= link_to format_set_name_display($set->set_id) . ', #' . $problem->problem_id => $emailableURL %>).
+			</p>
+		% } elsif ($set) {
+				Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at
+				<%= $ce->{institutionName} %> (sent from <%= link_to format_set_name_display($set->set_id) %>)
+
+		% } else {
+			<p>
+				Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at
+				<%= $ce->{institutionName} %> (sent from <%= link_to 'this page' => $emailableURL %>).
+			</p>
+		% }
 		% if ($feedback) {
-			<p><%= $user->full_name %> (<%= $user->user_id %>) wrote:</p>
-			<div class="user-message mb-1">
+			<div style="border: 1px solid black; padding: 1rem; margin-bottom: 1rem">
 				% for (split /\n\r?/, $feedback) {
 					% if ($_) {
-						<p class="user-message-line"><%= $_ %></p>
+						<p style="margin: 0; white-space: pre-wrap"><%= $_ %></p>
 					% } else {
 						<div style="margin-top: 1em"></div>
 					% }
@@ -50,134 +31,153 @@
 			</div>
 		% }
 		% if ($problem && $verbosity >= 1) {
-			<table class="data-table bordered mb-1">
+			<table style="border-collapse: collapse; margin-bottom: 1rem">
 				<thead>
-					<tr><th colspan="2">Data about the problem processor</th></tr>
+					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray" colspan="2">Data about the problem</th></tr>
 				</thead>
 				<tbody>
+					% my @rows = (
+						% ['Problem ID', $problem->problem_id],
+						% ['Source file', $problem->source_file],
+						% ['Value', $problem->value],
+						% ['Max attempts', $problem->max_attempts == -1 ? 'unlimited' : $problem->max_attempts],
+						% ['Random seed', $problem->problem_seed],
+						% ['Status', $problem->status],
+						% ['Attempted', $problem->attempted ? 'yes' : 'no'],
+						% ['Correct attempts', $problem->num_correct],
+						% ['Incorrect attempts', $problem->num_incorrect]
+					% );
+					% for (@rows) {
+						<tr>
+							<th style="text-align: left; padding: 0.25rem"><%= $_->[0] %>:</th>
+							<td style="text-align: left; padding: 0.25rem"><%= $_->[1] %></td>
+						</tr>
+					% }
+					% my %last_answer = decodeAnswers($problem->last_answer);
 					<tr>
-						<th>Display Mode:</th>
-						<td><%= param('displayMode') %></td>
+						<th style="text-align: left; padding: 0.25rem">Last answer:</th>
+						% if (%last_answer) {
+							<td style="text-align: left; padding: 0.25rem"><table style="border-collapse: collapse">
+							% for my $key (sort keys %last_answer) {
+								% if ($last_answer{$key}) {
+									<tr>
+										<td style="text-align: left; padding: 0.25rem"><%= $key %>:</td>
+										<td style="text-align: left; padding: 0.25rem"><%= $last_answer{$key} %></td>
+									</tr>
+								% }
+							% }
+							</table></td>
+						% } else {
+							<td style="text-align: left; padding: 0.25rem">none</td>
+						% }
 					</tr>
-					<tr>
-						<th>Show Old Answers:</th>
-						<td><%= param('showOldAnswers') ? 'yes' : 'no' %></td>
-					</tr>
-					<tr>
-						<th>Show Correct Answers:</th>
-						<td><%= param('showCorrectAnswers') ? 'yes' : 'no' %></td>
-					</tr>
-					<tr>
-						<th>Show Hints:</th>
-						<td><%= param('showHints') ? 'yes' : 'no' %></td>
-					</tr>
-					<tr>
-						<th>Show Solutions:</th>
-						<td><%= param('showSolutions') ? 'yes' : 'no' %></td>
-					</tr>
+				</tbody>
+			</table>
+		% }
+		% if ($set && $verbosity >= 1) {
+			<table style="border-collapse: collapse; margin-bottom: 1rem">
+				<thead>
+					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray" colspan="2">Data about the assignment</th></tr>
+				</thead>
+				<tbody>
+					% my @rows = (
+						% ['Set ID', $set->set_id],
+						% ['Set header file', $set->set_header],
+						% ['Hardcopy header file', $set->hardcopy_header],
+						% ['Open date', $c->formatDateTime($set->open_date)],
+						% ['Close date', $c->formatDateTime($set->due_date)],
+						% ['Answer date', $c->formatDateTime($set->answer_date)],
+						% ['Visible', $set->visible ? 'yes' : 'no'],
+						% ['Assignment type', $set->assignment_type]
+					% );
+					% if ($set->assignment_type =~ /gateway/) {
+						% push @rows, (
+							% ['Attempts per version', $set->attempts_per_version],
+							% ['Time interval', $set->time_interval],
+							% ['Versions per interval', $set->versions_per_interval],
+							% ['Version time limit', $set->version_time_limit],
+							% ['Version creation time', $c->formatDateTime($set->version_creation_time)],
+							% ['Problem randorder', $set->problem_randorder],
+							% ['Version last attempt time', $set->version_last_attempt_time]
+						% );
+					% }
+					% for (@rows) {
+						<tr>
+							<th style="text-align: left; padding: 0.25rem"><%= $_->[0] %>:</th>
+							<td style="text-align: left; padding: 0.25rem"><%= $_->[1] %></td>
+						</tr>
+					% }
+				</tbody>
+			</table>
+		% }
+		% if ($problem && $verbosity >= 1) {
+			<table style="border-collapse: collapse; margin-bottom: 1rem">
+				<thead>
+					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray" colspan="2">Data about the problem processor</th></tr>
+				</thead>
+				<tbody>
+					% my @rows = (
+						% ['Display Mode', param('displayMode')],
+						% ['Show Old Answers', param('showOldAnswers') ? 'yes' : 'no'],
+						% ['Show Correct Answers', param('showCorrectAnswers') ? 'yes' : 'no'],
+						% ['Show Hints', param('showHints') ? 'yes' : 'no'],
+						% ['Show Solutions', param('showSolutions') ? 'yes' : 'no']
+					% );
+					% for (@rows) {
+						<tr>
+							<th style="text-align: left; padding: 0.25rem"><%= $_->[0] %>:</th>
+							<td style="text-align: left; padding: 0.25rem"><%= $_->[1] %></td>
+						</tr>
+					% }
 				</tbody>
 			</table>
 		% }
 		%
 		% if ($user && $verbosity >= 1) {
-			<table class="data-table bordered mb-1">
+			<table style="border-collapse: collapse; margin-bottom: 1rem">
 				<thead>
-					<tr><th colspan="2">Data about the user</th></tr>
+					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray" colspan="2">Data about the user</th></tr>
 				</thead>
 				<tbody>
-					<tr><th>User ID:</th><td><%= $user->user_id %></td></tr>
-					<tr><th>Name:</th><td><%= $user->full_name %></td></tr>
-					<tr><th>Email:</th><td><%= $user->email_address %></td></tr>
-					% unless ($ce->{blockStudentIDinFeedback}) {
-						<tr><th>Student ID:</th><td><%= $user->student_id %></td></tr>
-					% }
+					% my @rows = (
+						% ['User ID', $user->user_id],
+						% ['Name', $user->full_name],
+						% ['Email', $user->email_address]
+					% );
+					% unless ($ce->{blockStudentIDinFeedback}) {push @rows, ['Student ID', $user->student_id];}
 					% my $status_name = $ce->status_abbrev_to_name($user->status);
-					%my $status_string =
+					% my $status_string =
 						% defined $status_name
 						% ? "$status_name ('" . $user->status . q{')}
 						% : $user->status . ' (unknown status abbreviation)';
-					<tr><th>Status:</th><td><%= $status_string %></td></tr>
-					<tr><th>Section:</th><td><%= $user->section %></td></tr>
-					<tr><th>Recitation:</th><td><%= $user->recitation %></td></tr>
-					<tr><th>Comment:</th><td><%= $user->comment %></td></tr>
-					<tr><th>IP Address:</th><td><%= $remote_host %>:<%= $remote_port %></td></tr>
-				</tbody>
-			</table>
-		% }
-		% if ($problem && $verbosity >= 1) {
-			<table class="data-table bordered mb-1">
-				<thead>
-					<tr><th colspan="2">Data about the problem</th></tr>
-				</thead>
-				<tbody>
-					<tr><th>Problem ID:</th><td><%= $problem->problem_id %></td></tr>
-					<tr><th>Source file:</th><td><%= $problem->source_file %></td></tr>
-					<tr><th>Value:</th><td><%= $problem->value %></td></tr>
-					<tr>
-						<th>Max attempts</th>
-						<td><%= $problem->max_attempts == -1 ? 'unlimited' : $problem->max_attempts %></td>
-					</tr>
-					<tr><th>Random seed:</th><td><%= $problem->problem_seed %></td></tr>
-					<tr><th>Status:</th><td><%= $problem->status %></td></tr>
-					<tr><th>Attempted:</th><td><%= $problem->attempted ? 'yes' : 'no' %></td></tr>
-					% my %last_answer = decodeAnswers($problem->last_answer);
-					<tr>
-						<th>Last answer:</th>
-						% if (%last_answer) {
-							<td>
-								<table class="data-table">
-									% for my $key (sort keys %last_answer) {
-										% if ($last_answer{$key}) {
-											<tr><td><%= $key %>:</td><td><%= $last_answer{$key} %></td></tr>
-										% }
-									% }
-								</table>
-							</td>
-						% } else {
-							<td>none</td>
-						% }
-					</tr>
-					<tr><th>Number of correct attempts:</th><td><%= $problem->num_correct %></td></tr>
-					<tr><th>Number of incorrect attempts:</th><td><%= $problem->num_incorrect %></td></tr>
-				</tbody>
-			</table>
-		% }
-		% if ($set && $verbosity >= 1) {
-			<table class="data-table bordered mb-1">
-				<thead>
-					<tr><th colspan="2">Data about the homework set</th></tr>
-				</thead>
-				<tbody>
-					<tr><th>Set ID:</th><td><%= $set->set_id %></td></tr>
-					<tr><th>Set header file:</th><td><%= $set->set_header %></td></tr>
-					<tr><th>Hardcopy header file:</th><td><%= $set->hardcopy_header %></td></tr>
-					<tr><th>Open date:</th><td><%= $c->formatDateTime($set->open_date) %></td></tr>
-					<tr><th>Due date:</th><td><%= $c->formatDateTime($set->due_date) %></td></tr>
-					<tr><th>Answer date:</th><td><%= $c->formatDateTime($set->answer_date) %></td></tr>
-					<tr><th>Visible:</th><td><%= $set->visible ? 'yes' : 'no' %></td></tr>
-					<tr><th>Assignment type:</th><td><%= $set->assignment_type %></td></tr>
-					% if ($set->assignment_type =~ /gateway/) {
-						<tr><th>Attempts per version:</th><td><%= $set->assignment_type %></td></tr>
-						<tr><th>Time interval:</th><td><%= $set->time_interval %></td></tr>
-						<tr><th>Versions per interval:</th><td><%= $set->versions_per_interval %></td></tr>
-						<tr><th>Version time limit:</th><td><%= $set->version_time_limit %></td></tr>
+					% push @rows, (
+						% ['Status', $status_string],
+						% ['Section', $user->section],
+						% ['Recitation', $user->recitation],
+						% ['Comment', $user->comment],
+						% ['IP Address', $remote_host]
+					%);
+					% for (@rows) {
 						<tr>
-							<th>Version creation time:</th>
-							<td><%= $c->formatDateTime($set->version_creation_time) %></td>
+							<th style="text-align: left; padding: 0.25rem"><%= $_->[0] %>:</th>
+							<td style="text-align: left; padding: 0.25rem"><%= $_->[1] %></td>
 						</tr>
-						<tr><th>Problem randorder:</th><td><%= $set->problem_randorder %></td></tr>
-						<tr><th>Version last attempt time:</th><td><%= $set->version_last_attempt_time %></td></tr>
 					% }
 				</tbody>
 			</table>
 		% }
 		% if ($verbosity >= 2) {
-			<table class="data-table bordered">
+			<table style="border-collapse: collapse">
 				<thead>
-					<tr><th colspan="2">Data about the environment</th></tr>
+					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray" colspan="2">Data about the environment</th></tr>
 				</thead>
 				<tbody>
-					<tr><td><pre><%= dumper($ce) %></pre></td></tr>
+					<tr><td style="text-align: left; padding: 0.25rem"><pre><%= dumper($ce) %></pre></td></tr>
 				</tbody>
 			</table>
 		% }
