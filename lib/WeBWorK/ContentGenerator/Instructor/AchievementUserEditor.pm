@@ -29,105 +29,112 @@ sub initialize ($c) {
 	my $achievementID = $c->stash('achievementID');
 	my $user          = $c->param('user');
 
-	# Make sure this is defined for the template.
-	$c->stash->{userRecords} = [];
+	# Make sure these are defined for the template.
+	$c->stash->{userRecords}            = [];
+	$c->stash->{userAchievementRecords} = [];
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, 'edit_achievements');
 
-	my @all_users     = $db->listUsers;
+	$c->stash->{userRecords} =
+		[ $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } }, [qw/section last_name first_name/]) ];
+	$c->stash->{userAchievementRecords} =
+		{ map { $_->user_id => $_ } $db->getUserAchievementsWhere({ achievement_id => $achievementID }) };
+
 	my %selectedUsers = map { $_ => 1 } $c->param('selected');
 
 	my $doAssignToSelected = 0;
 
-	#Check and see if we need to assign or unassign things
+	# Check and see if we need to assign or unassign achievements.
 	if (defined $c->param('assignToAll')) {
 		$c->addgoodmessage($c->maketext('Achievement has been assigned to all users.'));
-		%selectedUsers      = map { $_ => 1 } @all_users;
+		%selectedUsers      = map { $_->user_id => 1 } @{ $c->stash->{userRecords} };
 		$doAssignToSelected = 1;
 	} elsif (defined $c->param('unassignFromAll')
 		&& defined($c->param('unassignFromAllSafety'))
 		&& $c->param('unassignFromAllSafety') == 1)
 	{
 		%selectedUsers = ();
-		$c->addbadmessage($c->maketext('Achievement has been unassigned to all students.'));
+		$c->addgoodmessage($c->maketext('Achievement has been unassigned from all users.'));
 		$doAssignToSelected = 1;
 	} elsif (defined $c->param('assignToSelected')) {
 		$c->addgoodmessage($c->maketext('Achievement has been assigned to selected users.'));
 		$doAssignToSelected = 1;
 	} elsif (defined $c->param('unassignFromAll')) {
-		# no action taken
 		$c->addbadmessage($c->maketext('No action taken'));
 	}
 
-	#do actual assignment and unassignment
+	# Do the actual assignment and unassignment.
 	if ($doAssignToSelected) {
+		my $achievement = $db->getAchievement($achievementID);
 
-		my %achievementUsers = map { $_ => 1 } $db->listAchievementUsers($achievementID);
-		foreach my $selectedUser (@all_users) {
-			if (exists $selectedUsers{$selectedUser} && $achievementUsers{$selectedUser}) {
-				# update existing user data (in case fields were changed)
-				my $userAchievement = $db->getUserAchievement($selectedUser, $achievementID);
+		my %globalUserAchievements = map { $_->user_id => $_ } $db->getGlobalUserAchievementsWhere;
 
-				my $updatedEarned = $c->param("$selectedUser.earned") ? 1 : 0;
-				my $earned        = $userAchievement->earned          ? 1 : 0;
+		my (
+			@userAchievementsToInsert,       @userAchievementsToUpdate, @userAchievementsToDelete,
+			@globalUserAchievementsToInsert, @globalUserAchievementsToUpdate,
+		);
+
+		for my $user (@{ $c->stash->{userRecords} }) {
+			my $userID = $user->user_id;
+			if ($selectedUsers{$userID} && $c->stash->{userAchievementRecords}{$userID}) {
+				# Update existing user data (in case fields were changed).
+				my $updatedEarned = $c->param("$userID.earned")                          ? 1 : 0;
+				my $earned        = $c->stash->{userAchievementRecords}{$userID}->earned ? 1 : 0;
+
 				if ($updatedEarned != $earned) {
+					$c->stash->{userAchievementRecords}{$userID}->earned($updatedEarned);
 
-					$userAchievement->earned($updatedEarned);
-					my $globalUserAchievement = $db->getGlobalUserAchievement($selectedUser);
-					my $achievement           = $db->getAchievement($achievementID);
+					my $points        = $achievement->points                                 || 0;
+					my $initialpoints = $globalUserAchievements{$userID}->achievement_points || 0;
 
-					my $points        = $achievement->points                       || 0;
-					my $initialpoints = $globalUserAchievement->achievement_points || 0;
-					#add the correct number of points if we
-					# are saying that the user now earned the
-					# achievement, or remove them otherwise
+					# Add the correct number of points if we are saying that the
+					# user now earned the achievement, or remove them otherwise.
 					if ($updatedEarned) {
-
-						$globalUserAchievement->achievement_points($initialpoints + $points);
+						$globalUserAchievements{$userID}->achievement_points($initialpoints + $points);
 					} else {
-						$globalUserAchievement->achievement_points($initialpoints - $points);
+						$globalUserAchievements{$userID}->achievement_points($initialpoints - $points);
 					}
 
-					$db->putGlobalUserAchievement($globalUserAchievement);
+					push(@globalUserAchievementsToUpdate, $globalUserAchievements{$userID});
 				}
 
-				$userAchievement->counter($c->param("$selectedUser.counter"));
-				$db->putUserAchievement($userAchievement);
+				my $updatedCounter = $c->param("$userID.counter")                          // '';
+				my $counter        = $c->stash->{userAchievementRecords}{$userID}->counter // '';
+				$c->stash->{userAchievementRecords}{$userID}->counter($updatedCounter)
+					if $updatedCounter ne $counter;
 
-			} elsif (exists $selectedUsers{$selectedUser}) {
-				# add users that dont exist
-				my $userAchievement = $db->newUserAchievement();
-				$userAchievement->user_id($selectedUser);
-				$userAchievement->achievement_id($achievementID);
-				$db->addUserAchievement($userAchievement);
+				push(@userAchievementsToUpdate, $c->stash->{userAchievementRecords}{$userID})
+					if $updatedEarned != $earned || $updatedCounter ne $counter;
+			} elsif ($selectedUsers{$userID}) {
+				# Add user achievements that don't exist.
+				$c->stash->{userAchievementRecords}{$userID} = $db->newUserAchievement;
+				$c->stash->{userAchievementRecords}{$userID}->user_id($userID);
+				$c->stash->{userAchievementRecords}{$userID}->achievement_id($achievementID);
+				push(@userAchievementsToInsert, $c->stash->{userAchievementRecords}{$userID});
 
-				#If they dont have global achievement data, then add that too
-				if (not $db->existsGlobalUserAchievement($selectedUser)) {
-					my $globalUserAchievement = $db->newGlobalUserAchievement();
-					$globalUserAchievement->user_id($selectedUser);
-					$db->addGlobalUserAchievement($globalUserAchievement);
+				# If the user does not have global achievement data, then add that too.
+				if (!$globalUserAchievements{$userID}) {
+					$globalUserAchievements{$userID} = $db->newGlobalUserAchievement(user_id => $userID);
+					push(@globalUserAchievementsToInsert, $globalUserAchievements{$userID});
 				}
-
 			} else {
-				# delete users who are not selected
-				# but dont delete users who dont exist
-				next unless $achievementUsers{$selectedUser};
-				$db->deleteUserAchievement($selectedUser, $achievementID);
+				# Delete achievements for users that are not selected, but don't delete achievements that don't exist.
+				next unless $c->stash->{userAchievementRecords}{$userID};
+				push(@userAchievementsToDelete, $c->stash->{userAchievementRecords}{$userID});
+				delete $c->stash->{userAchievementRecords}{$userID};
 			}
 		}
-	}
 
-	my @userRecords;
-	for my $currentUser (@all_users) {
-		my $userObj = $c->db->getUser($currentUser);
-		die "Unable to find user object for $currentUser. " unless $userObj;
-		push(@userRecords, $userObj);
-	}
-	@userRecords =
-		sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @userRecords;
+		$db->GlobalUserAchievement->insert_records(\@globalUserAchievementsToInsert) if @globalUserAchievementsToInsert;
+		$db->GlobalUserAchievement->update_records(\@globalUserAchievementsToUpdate) if @globalUserAchievementsToUpdate;
+		$db->UserAchievement->insert_records(\@userAchievementsToInsert)             if @userAchievementsToInsert;
+		$db->UserAchievement->update_records(\@userAchievementsToUpdate)             if @userAchievementsToUpdate;
 
-	$c->stash->{userRecords} = \@userRecords;
+		# This is one of the rare places this can be done since user achievements don't
+		# have any dependent rows in other tables that also need to be deleted.
+		$db->UserAchievement->delete_records(\@userAchievementsToDelete) if @userAchievementsToDelete;
+	}
 
 	return;
 }
