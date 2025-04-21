@@ -33,6 +33,10 @@ sub initialize ($c) {
 	my $setID = $c->stash('setID');
 	my $user  = $c->param('user');
 
+	# Make sure these are defined for the template.
+	$c->stash->{user_records} = [];
+	$c->stash->{set_records}  = {};
+
 	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	return unless $authz->hasPermissions($user, "assign_problem_sets");
@@ -62,7 +66,7 @@ sub initialize ($c) {
 	}
 
 	# Get all user records and cache them for later use.
-	$c->{user_records} =
+	$c->stash->{user_records} =
 		[ $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } }, [qw/section last_name first_name/]) ];
 
 	if ($doAssignToSelected) {
@@ -71,7 +75,7 @@ sub initialize ($c) {
 
 		my %setUsers = map { $_ => 1 } $db->listSetUsers($setID);
 		my @usersToAdd;
-		for my $selectedUser (map { $_->user_id } @{ $c->{user_records} }) {
+		for my $selectedUser (map { $_->user_id } @{ $c->stash->{user_records} }) {
 			if (exists $selectedUsers{$selectedUser}) {
 				unless ($setUsers{$selectedUser}) {    # skip users already in the set
 					debug("saving $selectedUser to be added to set later");
@@ -88,6 +92,8 @@ sub initialize ($c) {
 			debug("done assignSetToGivenUsers(...)");
 		}
 	}
+
+	$c->stash->{set_records} = { map { $_->user_id => $_ } $db->getUserSetsWhere({ set_id => $setID }) };
 
 	return;
 }
