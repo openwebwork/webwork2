@@ -249,8 +249,20 @@ sub score_handler ($c) {
 	my $scope               = $c->param('action.score.scope');
 	my @achievementsToScore = $scope eq 'all' ? @{ $c->{allAchievementIDs} } : $c->param('selected_achievements');
 
+	# First get everything that is needed from the database.
+	my @achievements = sortAchievements($db->getAchievements(@achievementsToScore));
+	my @users        = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } }, [qw(section last_name)]);
+
+	my %globalUserAchievements = map { $_->user_id => $_ } $db->getGlobalUserAchievementsWhere;
+
+	my %userAchievements;
+	for (@achievements) {
+		$userAchievements{ $_->user_id }{ $_->achievement_id } = $_
+			for $db->getUserAchievementsWhere({ achievement_id => $_->achievement_id });
+	}
+
 	# Define file name
-	my $scoreFileName = $courseName . "_achievement_scores.csv";
+	my $scoreFileName = $courseName . '_achievement_scores.csv';
 	my $scoreFilePath = $ce->{courseDirs}{scoring} . '/' . $scoreFileName;
 
 	# Back up existing file
@@ -262,60 +274,41 @@ sub score_handler ($c) {
 	# Check path and open the file
 	$scoreFilePath = surePathToFile($ce->{courseDirs}{scoring}, $scoreFilePath);
 
-	my $SCORE = Mojo::File->new($scoreFilePath)->open('>:encoding(UTF-8)')
-		or return (0, $c->maketext("Failed to open [_1]", $scoreFilePath));
+	my $scoreFile = Mojo::File->new($scoreFilePath)->open('>:encoding(UTF-8)')
+		or return (0, $c->maketext('Failed to open [_1]', $scoreFilePath));
 
 	# Print out header info
-	print $SCORE $c->maketext("username, last name, first name, section, achievement level, achievement score,");
-
-	my @achievements = $db->getAchievements(@achievementsToScore);
-	@achievements = sortAchievements(@achievements);
+	print $scoreFile $c->maketext('username, last name, first name, section, achievement level, achievement score,');
 
 	for my $achievement (@achievements) {
-		print $SCORE $achievement->achievement_id . ", ";
+		print $scoreFile $achievement->achievement_id . ', ';
 	}
-	print $SCORE "\n";
-
-	my @users = $db->listUsers;
-
-	# Get user records
-	my @userRecords = ();
-	for my $currentUser (@users) {
-		my $userObj = $db->getUser($currentUser);
-		die "Unable to find user object for $currentUser. " unless $userObj;
-		push(@userRecords, $userObj);
-	}
-
-	@userRecords =
-		sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @userRecords;
+	print $scoreFile "\n";
 
 	# Print out achievement information for each user
-	for my $userRecord (@userRecords) {
+	for my $userRecord (@users) {
 		my $user_id = $userRecord->user_id;
-		next unless $db->existsGlobalUserAchievement($user_id);
-		next if ($userRecord->{status} eq 'D' || $userRecord->{status} eq 'A');
-		print $SCORE "$user_id, $userRecord->{last_name}, $userRecord->{first_name}, $userRecord->{section}, ";
-		my $globalUserAchievement = $db->getGlobalUserAchievement($user_id);
-		my $level_id              = $globalUserAchievement->level_achievement_id;
-		$level_id = ' ' unless $level_id;
-		my $points = $globalUserAchievement->achievement_points;
-		$points = 0 unless $points;
-		print $SCORE "$level_id, $points, ";
+		next if !$globalUserAchievements{$user_id} || $userRecord->{status} eq 'D' || $userRecord->{status} eq 'A';
+
+		print $scoreFile "$user_id, $userRecord->{last_name}, $userRecord->{first_name}, $userRecord->{section}, ";
+
+		my $level_id = $globalUserAchievements{$user_id}->level_achievement_id || ' ';
+		my $points   = $globalUserAchievements{$user_id}->achievement_points   || 0;
+		print $scoreFile "$level_id, $points, ";
 
 		for my $achievement (@achievements) {
 			my $achievement_id = $achievement->achievement_id;
-			if ($db->existsUserAchievement($user_id, $achievement_id)) {
-				my $userAchievement = $db->getUserAchievement($user_id, $achievement_id);
-				print $SCORE $userAchievement->earned ? "1, " : "0, ";
+			if ($userAchievements{$user_id}{$achievement_id}) {
+				print $scoreFile $userAchievements{$user_id}{$achievement_id}->earned ? '1, ' : '0, ';
 			} else {
-				print $SCORE ", ";
+				print $scoreFile ', ';
 			}
 		}
 
-		print $SCORE "\n";
+		print $scoreFile "\n";
 	}
 
-	$SCORE->close;
+	$scoreFile->close;
 
 	# Include a download link
 	return (
