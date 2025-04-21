@@ -19,7 +19,7 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 # Item to resurrect a homework for 24 hours
 
 use WeBWorK::Utils           qw(x);
-use WeBWorK::Utils::DateTime qw(between);
+use WeBWorK::Utils::DateTime qw(after);
 
 use constant ONE_DAY => 86400;
 
@@ -32,7 +32,8 @@ sub new ($class) {
 }
 
 sub can_use($self, $set, $records) {
-	return $set->assignment_type eq 'default' && between($set->due_date, $set->due_date + ONE_DAY);
+	return $set->assignment_type eq 'default'
+		&& (after($set->due_date) || ($set->reduced_scoring_date && after($set->reduced_scoring_date)));
 }
 
 sub print_form ($self, $set, $records, $c) {
@@ -56,11 +57,11 @@ sub use_item ($self, $set, $records, $c) {
 
 	# Add time to the reduced scoring date if it was defined in the first place
 	if ($set->reduced_scoring_date) {
-		$set->reduced_scoring_date($set->reduced_scoring_date + ONE_DAY);
+		$set->reduced_scoring_date(time + ONE_DAY);
 		$userSet->reduced_scoring_date($set->reduced_scoring_date);
 	}
 	# Add time to the close date
-	$set->due_date($set->due_date + ONE_DAY);
+	$set->due_date(time + ONE_DAY);
 	$userSet->due_date($set->due_date);
 	# This may require also extending the answer date.
 	if ($set->due_date > $set->answer_date) {
@@ -70,9 +71,8 @@ sub use_item ($self, $set, $records, $c) {
 	$db->putUserSet($userSet);
 
 	return $c->maketext(
-		'Close date of this assignment extended by 24 hours to [_1].',
-		$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
-	);
+		'This assignment has been reopened and will now close on [_1]. Problems have been rerandomized.',
+		$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat}));
 }
 
 1;
