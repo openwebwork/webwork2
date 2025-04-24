@@ -36,15 +36,15 @@
 				</thead>
 				<tbody>
 					% my @rows = (
-						% ['Problem ID', $problem->problem_id],
-						% ['Source file', $problem->source_file],
-						% ['Value', $problem->value],
-						% ['Max attempts', $problem->max_attempts == -1 ? 'unlimited' : $problem->max_attempts],
-						% ['Random seed', $problem->problem_seed],
-						% ['Status', $problem->status],
-						% ['Attempted', $problem->attempted ? 'yes' : 'no'],
-						% ['Correct attempts', $problem->num_correct],
-						% ['Incorrect attempts', $problem->num_incorrect]
+						% [ 'Problem ID',         $problem->problem_id ],
+						% [ 'Source file',        $problem->source_file ],
+						% [ 'Value',              $problem->value ],
+						% [ 'Max attempts',       $problem->max_attempts == -1 ? 'unlimited' : $problem->max_attempts ],
+						% [ 'Random seed',        $problem->problem_seed ],
+						% [ 'Status',             $problem->status ],
+						% [ 'Attempted',          $problem->attempted ? 'yes' : 'no' ],
+						% [ 'Correct attempts',   $problem->num_correct ],
+						% [ 'Incorrect attempts', $problem->num_incorrect ]
 					% );
 					% for (@rows) {
 						<tr>
@@ -81,24 +81,24 @@
 				</thead>
 				<tbody>
 					% my @rows = (
-						% ['Set ID', $set->set_id],
-						% ['Set header file', $set->set_header],
-						% ['Hardcopy header file', $set->hardcopy_header],
-						% ['Open date', $c->formatDateTime($set->open_date)],
-						% ['Close date', $c->formatDateTime($set->due_date)],
-						% ['Answer date', $c->formatDateTime($set->answer_date)],
-						% ['Visible', $set->visible ? 'yes' : 'no'],
-						% ['Assignment type', $set->assignment_type]
+						% [ 'Set ID',               $set->set_id ],
+						% [ 'Set header file',      $set->set_header ],
+						% [ 'Hardcopy header file', $set->hardcopy_header ],
+						% [ 'Open date',            $c->formatDateTime($set->open_date) ],
+						% [ 'Close date',           $c->formatDateTime($set->due_date) ],
+						% [ 'Answer date',          $c->formatDateTime($set->answer_date) ],
+						% [ 'Visible',              $set->visible ? 'yes' : 'no' ],
+						% [ 'Assignment type',      $set->assignment_type ]
 					% );
 					% if ($set->assignment_type =~ /gateway/) {
 						% push @rows, (
-							% ['Attempts per version', $set->attempts_per_version],
-							% ['Time interval', $set->time_interval],
-							% ['Versions per interval', $set->versions_per_interval],
-							% ['Version time limit', $set->version_time_limit],
-							% ['Version creation time', $c->formatDateTime($set->version_creation_time)],
-							% ['Problem randorder', $set->problem_randorder],
-							% ['Version last attempt time', $set->version_last_attempt_time]
+							% [ 'Attempts per version',      $set->attempts_per_version ],
+							% [ 'Time interval',             $set->time_interval ],
+							% [ 'Versions per interval',     $set->versions_per_interval ],
+							% [ 'Version time limit',        $set->version_time_limit ],
+							% [ 'Version creation time',     $c->formatDateTime($set->version_creation_time) ],
+							% [ 'Problem randorder',         $set->problem_randorder ],
+							% [ 'Version last attempt time', $set->version_last_attempt_time ]
 						% );
 					% }
 					% for (@rows) {
@@ -118,11 +118,11 @@
 				</thead>
 				<tbody>
 					% my @rows = (
-						% ['Display Mode', param('displayMode')],
-						% ['Show Old Answers', param('showOldAnswers') ? 'yes' : 'no'],
-						% ['Show Correct Answers', param('showCorrectAnswers') ? 'yes' : 'no'],
-						% ['Show Hints', param('showHints') ? 'yes' : 'no'],
-						% ['Show Solutions', param('showSolutions') ? 'yes' : 'no']
+						% [ 'Display Mode',         param('displayMode') ],
+						% [ 'Show Old Answers',     param('showOldAnswers') ? 'yes' : 'no' ],
+						% [ 'Show Correct Answers', param('showCorrectAnswers') ? 'yes' : 'no' ],
+						% [ 'Show Hints',           param('showHints') ? 'yes' : 'no' ],
+						% [ 'Show Solutions',       param('showSolutions') ? 'yes' : 'no' ]
 					% );
 					% for (@rows) {
 						<tr>
@@ -142,22 +142,22 @@
 				</thead>
 				<tbody>
 					% my @rows = (
-						% ['User ID', $user->user_id],
-						% ['Name', $user->full_name],
-						% ['Email', $user->email_address]
+						% [ 'User ID', $user->user_id ],
+						% [ 'Name',    $user->full_name ],
+						% [ 'Email',   $user->email_address ]
 					% );
-					% unless ($ce->{blockStudentIDinFeedback}) {push @rows, ['Student ID', $user->student_id];}
+					% unless ($ce->{blockStudentIDinFeedback}) { push @rows, ['Student ID', $user->student_id]; }
 					% my $status_name = $ce->status_abbrev_to_name($user->status);
 					% my $status_string =
 						% defined $status_name
 						% ? "$status_name ('" . $user->status . q{')}
 						% : $user->status . ' (unknown status abbreviation)';
 					% push @rows, (
-						% ['Status', $status_string],
-						% ['Section', $user->section],
-						% ['Recitation', $user->recitation],
-						% ['Comment', $user->comment],
-						% ['IP Address', $remote_host]
+						% [ 'Status',     $status_string ],
+						% [ 'Section',    $user->section ],
+						% [ 'Recitation', $user->recitation ],
+						% [ 'Comment',    $user->comment ],
+						% [ 'IP Address', $remote_host ]
 					%);
 					% for (@rows) {
 						<tr>

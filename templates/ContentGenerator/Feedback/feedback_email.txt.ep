@@ -15,7 +15,6 @@ Feedback sent from:
 % if ($feedback) {
 <%== $user->full_name %> (<%== $user->user_id %>) wrote:
 
-
 <%== $feedback %>
 
 % }
@@ -96,7 +95,6 @@ Section:    <%== $user->section %>
 Recitation: <%== $user->recitation %>
 Comment:    <%== $user->comment %>
 IP Address: <%== $remote_host %>:<%== $c->tx->remote_port || 'UNKNOWN' %>
-
 % }
 % if ($verbosity >= 2) {
 
