@@ -53,10 +53,10 @@
 						</tr>
 					% }
 					% my %last_answer = decodeAnswers($problem->last_answer);
-					<tr>
-						<th style="text-align: left; padding: 0.25rem">Last answer:</th>
+					<tr style="border-top: solid 1pt">
+						<th style="text-align: left; padding: 0.25rem; vertical-align: baseline">Last submission:</th>
 						% if (%last_answer) {
-							<td style="text-align: left; padding: 0.25rem"><table style="border-collapse: collapse">
+							<td style="text-align: left; padding: 0.25rem; padding-top: 0"><table style="border-collapse: collapse">
 							% for my $key (sort keys %last_answer) {
 								% if ($last_answer{$key}) {
 									<tr>
