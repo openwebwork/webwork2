@@ -1,7 +1,15 @@
 % use WeBWorK::Utils qw(decodeAnswers);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
-Message from <%== $user->full_name %> (<%== $user->user_id %>) via WeBWorK at
-<%== $ce->{institutionName} %> (sent from
+Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at <%= $ce->{institutionName} %>.
+
+% if ($problem) {
+Feedback sent from <%= format_set_name_display($set->set_id) . ', #' . $problem->problem_id %>:
+% } elsif ($set) {
+Feedback sent from <%= format_set_name_display($set->set_id) %>:
+% } else {
+Feedback sent from:
+% }
 <%== $emailableURL %>
 
 % if ($feedback) {
