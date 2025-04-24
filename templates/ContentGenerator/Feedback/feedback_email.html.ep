@@ -18,7 +18,7 @@
 			% }
 		</p>
 		% if ($feedback) {
-			<div style="border: 1px solid black; padding: 1rem; margin-bottom: 1rem">
+			<div style="border: 1px solid lightgray; padding: 1rem; margin-bottom: 1rem; border-radius: 0.375rem">
 				% for (split /\n\r?/, $feedback) {
 					% if ($_) {
 						<p style="margin: 0; white-space: pre-wrap"><%= $_ %></p>
