@@ -2418,23 +2418,14 @@ sub do_save_lti_course_map ($c) {
 
 # Form to copy or reset OTP secrets.
 sub manage_otp_secrets_form ($c) {
-	my $courses          = {};
-	my $dbs              = {};
-	my $skipped_courses  = [];
-	my $show_all_courses = $c->param('show_all_courses') || 0;
+	my $courses = {};
+	my $dbs     = {};
 
 	# Create course data first, since it is used in all cases and initializes course db references.
 	for my $courseID (listCourses($c->ce)) {
 		my $ce = WeBWorK::CourseEnvironment->new({ courseName => $courseID });
-		$dbs->{$courseID} = WeBWorK::DB->new($ce);
-
-		# By default ignore courses larger than 200 users, as this can cause a large load building menus.
-		my @users = $dbs->{$courseID}->listUsers;
-		if ($show_all_courses || scalar @users < 200) {
-			$courses->{$courseID} = \@users;
-		} else {
-			push(@$skipped_courses, $courseID);
-		}
+		$dbs->{$courseID}     = WeBWorK::DB->new($ce);
+		$courses->{$courseID} = [ $dbs->{$courseID}->listUsers ];
 	}
 
 	# Process the confirmed rest or copy actions here.
@@ -2476,11 +2467,7 @@ sub manage_otp_secrets_form ($c) {
 		}
 	}
 
-	return $c->include(
-		'ContentGenerator/CourseAdmin/manage_otp_secrets_form',
-		courses         => $courses,
-		skipped_courses => $skipped_courses
-	);
+	return $c->include('ContentGenerator/CourseAdmin/manage_otp_secrets_form', courses => $courses);
 }
 
 # Deals with both single and multiple copy confirmation.
