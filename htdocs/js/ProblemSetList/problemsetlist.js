@@ -188,7 +188,9 @@
 			return (
 				new Date(dateTime.toLocaleString('en-US')).getTime() -
 				new Date(
-					dateTime.toLocaleString('en-US', { timeZone: open_rule.dataset.timezone ?? 'America/New_York' })
+					dateTime.toLocaleString('en-US', {
+						timeZone: importDateShift.dataset.timezone ?? 'America/New_York'
+					})
 				).getTime()
 			);
 		};
