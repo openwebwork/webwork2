@@ -29,6 +29,8 @@ use Iterator;
 use Iterator::Util;
 use File::Temp;
 use String::ShellQuote;
+use Scalar::Util qw(weaken);
+
 use WeBWorK::DB::Utils::SQLAbstractIdentTrans;
 use WeBWorK::Debug;
 
@@ -64,6 +66,7 @@ sub new {
 
 sub sql_init {
 	my $self = shift;
+	weaken $self;
 
 	# Transformation function for table names.  This allows us to pass the WeBWorK table names to
 	# SQL::Abstract, and have it translate them to the SQL table names from tableOverride.

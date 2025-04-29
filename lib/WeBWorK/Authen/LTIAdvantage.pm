@@ -33,22 +33,6 @@ use WeBWorK::Utils::DateTime   qw(formatDateTime);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
 
-=head1 CONSTRUCTOR
-
-=over
-
-=item new($c)
-
-Instantiates a new WeBWorK::Authen object for the given WeBWorK::Controller ($c).
-
-=back
-
-=cut
-
-sub new ($invocant, $c) {
-	return bless { c => $c }, ref($invocant) || $invocant;
-}
-
 sub request_has_data_for_this_verification_module ($self) {
 	debug('LTIAdvantage has been called for data verification');
 	my $c = $self->{c};

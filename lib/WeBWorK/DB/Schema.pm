@@ -81,6 +81,8 @@ dependent. C<$db> is provided so that schemas can query other schemas.
 
 =cut
 
+use Scalar::Util qw(weaken);
+
 sub new {
 	my ($proto, $db, $driver, $table, $record, $params, $engine, $character_set) = @_;
 	my $class = ref($proto) || $proto;
@@ -103,6 +105,8 @@ sub new {
 		character_set => $character_set,
 	};
 	bless $self, $class;
+	weaken $self->{db};
+
 	return $self;
 }
 

@@ -23,7 +23,6 @@ WeBWorK::ContentGenerator::Home - display a list of courses.
 =cut
 
 use WeBWorK::Utils::Files qw(readFile);
-use WeBWorK::Localize;
 
 sub info ($c) {
 	my $result;

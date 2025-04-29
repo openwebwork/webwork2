@@ -171,7 +171,7 @@ sub startup ($app) {
 
 	$app->hook(
 		after_dispatch => sub ($c) {
-			$SIG{__WARN__} = $c->stash->{orig_sig_warn} if defined $c->stash->{orig_sig_warn};
+			$SIG{__WARN__} = ref($c->stash->{orig_sig_warn}) eq 'CODE' ? $c->stash->{orig_sig_warn} : 'DEFAULT';
 
 			if ($c->isa('WeBWorK::ContentGenerator') && $c->ce) {
 				$c->authen->store_session if $c->authen;
