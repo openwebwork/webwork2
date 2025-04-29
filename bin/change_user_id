@@ -69,7 +69,6 @@ unless($db->existsPermissionLevel($new_user_id)) {
     $db->addPermissionLevel($permission);
 }
 
-
 my @old_user_sets = $db->listUserSets($old_user_id);
 foreach(@old_user_sets) {
     my $set_id = $_;
