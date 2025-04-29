@@ -46,27 +46,30 @@ sub initialize ($c) {
 	my %globalUserAchievements =
 		map { $_->user_id => $_ } $db->getGlobalUserAchievementsWhere({ user_id => { not_like => 'set_id:%' } });
 
-	my @allBadgeIDs = $db->listAchievements;
-	my @allBadges   = @allBadgeIDs ? sortAchievements($db->getAchievements(@allBadgeIDs)) : ();
-
 	$c->{showUserNames} = $c->authz->hasPermissions($c->{userName}, 'view_leaderboard_usernames');
 	$c->{showLevels}    = 0;    # Hide level column unless at least one user has a level achievement.
+
+	my %allUserAchievements;
+	for ($db->getUserAchievementsWhere({
+		user_id        => { not_like => 'set_id:%' },
+		achievement_id => [ map { $_->achievement_id } grep { $_->category ne 'level' } @achievements ],
+	}))
+	{
+		$allUserAchievements{ $_->user_id }{ $_->achievement_id } = $_;
+	}
 
 	my @rows;
 	for my $user ($db->getUsersWhere({ user_id => { not_like => 'set_id:%' } })) {
 		# Only include users who can be shown in stats.
 		next unless $ce->status_abbrev_has_behavior($user->status, 'include_in_stats');
 
+		my $globalData       = $globalUserAchievements{ $user->user_id };
+		my $userAchievements = $allUserAchievements{ $user->user_id };
+
 		# Skip unless user has achievement data.
-		my $globalData = $globalUserAchievements{ $user->user_id };
-		next unless $globalData;
+		next unless $globalData && $userAchievements;
 
 		my $level = $globalData->level_achievement_id ? $achievementsById{ $globalData->level_achievement_id } : '';
-
-		my %userAchievements = map { $_->achievement_id => $_ } $db->getUserAchievementsWhere({
-			user_id        => $user->user_id,
-			achievement_id => [ map { $_->achievement_id } grep { $_->category ne 'level' } @achievements ],
-		});
 
 		my @badges;
 		for my $achievement (@achievements) {
@@ -74,9 +77,9 @@ sub initialize ($c) {
 			last if $achievement->category eq 'level';
 
 			push(@badges, $achievement)
-				if $userAchievements{ $achievement->achievement_id }
+				if $userAchievements->{ $achievement->achievement_id }
 				&& $achievement->enabled
-				&& $userAchievements{ $achievement->achievement_id }->earned;
+				&& $userAchievements->{ $achievement->achievement_id }->earned;
 		}
 
 		push(@rows, [ $globalData->achievement_points || 0, $level, $user, \@badges ]);
