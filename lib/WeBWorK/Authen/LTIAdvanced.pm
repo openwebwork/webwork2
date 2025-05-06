@@ -215,7 +215,7 @@ sub get_credentials {
 			[ 'oauth_signature',    'oauth_signature' ],
 			[ 'oauth_nonce',        'oauth_nonce' ],
 			[ 'oauth_timestamp',    'oauth_timestamp' ],
-			[ 'section',            'custom_section' ],
+			[ 'section',            'context_label' ],
 			[ 'recitation',         'custom_recitation' ],
 		);
 
