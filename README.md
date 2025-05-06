@@ -26,8 +26,6 @@ New users interested in getting started with their own WeBWorK server, or instru
 
 ## Information for Downloading
 
-* The current version is WeBWorK-2.18 and its companion PG-2.18
-
 * Installation manuals can be found at https://webwork.maa.org/wiki/Category:Installation_Manuals
 
 ## Information For Developers
