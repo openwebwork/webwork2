@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::Utils::CourseManagement::sql_single;
 
 =head1 NAME
@@ -39,9 +24,9 @@ use WeBWorK::Utils qw/runtime_use/;
 sub archiveCourseHelper {
 	my ($courseID, $ce,  $dbLayoutName, %options) = @_;
 	debug("courseID=$courseID, ce=$ce dbLayoutName=$dbLayoutName\n");
-	
+
 	##### get list of tables to archive #####
-	
+
 	my $dbLayout    = $ce->{dbLayouts}->{$dbLayoutName};
 	debug("dbLayout=$dbLayout\n");
 	my %sources     = dbLayoutSQLSources($dbLayout);
@@ -53,19 +38,19 @@ sub archiveCourseHelper {
 	my $username = $source{username};
 	my $password = $source{password};
 	my $archiveDatabasePath = $options{archiveDatabasePath};
-	
+
 	##### construct SQL statements to copy the data in each table #####
-	
+
 	my @stmts;
 	my @dataTables = ();
 	foreach my $table (@tables) {
 		debug("Table: $table\n");
-		
+
 		if ($dbLayout->{$table}{params}{non_native}) {
 			debug("$table: marked non-native, skipping\n");
 			next;
 		}
-		
+
 		my $table = do {
 			my $paramsRef = $dbLayout->{$table}->{params};
 			if ($paramsRef) {
@@ -79,8 +64,8 @@ sub archiveCourseHelper {
 			}
 		} || $table;
 		debug("sql \"real\" table name: $table\n");
-		
-       
+
+
         # this method would be mysql specific but it's a start
 		# mysqldump  --user=$username   --password=$password database   tables
 #		my $stmt = "DUMP SELECT * FROM `$fromTable`";
@@ -102,21 +87,21 @@ sub archiveCourseHelper {
 	\n\n Check server error log for more information.";
 
 	##### issue SQL statements #####
-	
+
 # 	my $dbh = DBI->connect($source, $username, $password);
 # 	unless (defined $dbh) {
 # 		die "sql_single: failed to connect to DBI source '$source': $DBI::errstr\n";
 # 	}
-# 	
+#
 # 	foreach my $stmt (@stmts) {
 # 		my $rows = $dbh->do($stmt);
 # 		unless (defined $rows) {
 # 			die "sql_single: failed to execute SQL statement '$stmt': $DBI::errstr\n";
 # 		}
 # 	}
-# 	
+#
 # 	$dbh->disconnect;
-	
+
 	return 1;
 }
 
@@ -129,9 +114,9 @@ sub archiveCourseHelper {
 sub unarchiveCourseHelper {
 	my ($courseID, $ce,  $dbLayoutName, %options) = @_;
 	debug("courseID=$courseID, ce=$ce dbLayoutName=$dbLayoutName\n");
-	
+
 	##### get list of tables to archive #####
-	
+
 	my $dbLayout    = $ce->{dbLayouts}->{$dbLayoutName};
 	debug("dbLayout=$dbLayout\n");
 	my %sources     = dbLayoutSQLSources($dbLayout);
@@ -145,7 +130,7 @@ sub unarchiveCourseHelper {
 	my $unarchiveDatabasePath = $options{unarchiveDatabasePath};
 	debug( "unarchive database Path is $unarchiveDatabasePath");
 	##### construct SQL statements to copy the data in each table #####
-	
+
 
 	# this method would be mysql specific but it's a start
 	my $mysqlCommand = $ce->{externalPrograms}{mysql};
@@ -251,7 +236,7 @@ sub _get_db_info {
 # returns the name of the source with the most tables
 sub mostPopularSource {
 	my (%sources) = @_;
-	
+
 	my $source;
 	if (keys %sources > 1) {
 		# more than one -- warn and select the most popular source
@@ -265,7 +250,7 @@ sub mostPopularSource {
 		# there's only one
 		($source) = keys %sources;
 	}
-	
+
 	return $source;
 }
 
