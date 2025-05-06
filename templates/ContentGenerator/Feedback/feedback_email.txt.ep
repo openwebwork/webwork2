@@ -1,17 +1,69 @@
 % use WeBWorK::Utils qw(decodeAnswers);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
-Message from <%== $user->full_name %> (<%== $user->user_id %>) via WeBWorK at
-<%== url_for('root')->to_abs %>
+Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at <%= $ce->{institutionName} %>.
 
-To visit the page from which <%== $user->first_name %> sent feedback, go to:
+% if ($problem) {
+Feedback sent from <%= format_set_name_display($set->set_id) . ', #' . $problem->problem_id %>:
+% } elsif ($set) {
+Feedback sent from <%= format_set_name_display($set->set_id) %>:
+% } else {
+Feedback sent from:
+% }
 <%== $emailableURL %>
 
 % if ($feedback) {
 <%== $user->full_name %> (<%== $user->user_id %>) wrote:
 
-
 <%== $feedback %>
 
+% }
+% if ($problem && $verbosity >= 1) {
+
+***** Data about the problem: *****
+
+Problem ID:                   <%== $problem->problem_id %>
+Source file:                  <%== $problem->source_file %>
+Value:                        <%== $problem->value %>
+Max attempts                  <%== $problem->max_attempts == -1 ? 'unlimited' : $problem->max_attempts %>
+Random seed:                  <%== $problem->problem_seed %>
+Status:                       <%== $problem->status %>
+Attempted:                    <%== $problem->attempted ? 'yes' : 'no' %>
+Number of correct attempts:   <%== $problem->num_correct %>
+Number of incorrect attempts: <%== $problem->num_incorrect %>
+	% my %last_answer = decodeAnswers($problem->last_answer);
+	% if (%last_answer) {
+Last submission:
+	% for my $key (sort keys %last_answer) {
+		% if ($last_answer{$key}) {
+	<%== $key %>: <%== $last_answer{$key} %>
+		% }
+	% }
+	% } else {
+Last submission:              none
+	% }
+% }
+% if ($set && $verbosity >= 1) {
+
+***** Data about the assignment: *****
+
+Set ID:                    <%== $set->set_id %>
+Set header file:           <%== $set->set_header %>
+Hardcopy header file:      <%== $set->hardcopy_header %>
+Open date:                 <%== $c->formatDateTime($set->open_date) %>
+Due date:                  <%== $c->formatDateTime($set->due_date) %>
+Answer date:               <%== $c->formatDateTime($set->answer_date) %>
+Visible:                   <%== $set->visible ? 'yes' : 'no' %>
+Assignment type:           <%== $set->assignment_type %>
+	% if ($set->assignment_type =~ /gateway/) {
+Attempts per version:      <%== $set->attempts_per_version %>
+Time interval:             <%== $set->time_interval %>
+Versions per interval:     <%== $set->versions_per_interval %>
+Version time limit:        <%== $set->version_time_limit %>
+Version creation time:     <%== $c->formatDateTime($set->version_creation_time) %>
+Problem randorder:         <%== $set->problem_randorder %>
+Version last attempt time: <%== $set->version_last_attempt_time %>
+	% }
 % }
 % if ($problem && $verbosity >= 1) {
 
@@ -43,53 +95,6 @@ Section:    <%== $user->section %>
 Recitation: <%== $user->recitation %>
 Comment:    <%== $user->comment %>
 IP Address: <%== $remote_host %>:<%== $c->tx->remote_port || 'UNKNOWN' %>
-% }
-% if ($problem && $verbosity >= 1) {
-
-***** Data about the problem: *****
-
-Problem ID:                   <%== $problem->problem_id %>
-Source file:                  <%== $problem->source_file %>
-Value:                        <%== $problem->value %>
-Max attempts                  <%== $problem->max_attempts == -1 ? 'unlimited' : $problem->max_attempts %>
-Random seed:                  <%== $problem->problem_seed %>
-Status:                       <%== $problem->status %>
-Attempted:                    <%== $problem->attempted ? 'yes' : 'no' %>
-	% my %last_answer = decodeAnswers($problem->last_answer);
-	% if (%last_answer) {
-Last answer:
-	% for my $key (sort keys %last_answer) {
-		% if ($last_answer{$key}) {
-	<%== $key %>: <%== $last_answer{$key} %>
-		% }
-	% }
-	% } else {
-Last answer:                  none
-	% }
-Number of correct attempts:   <%== $problem->num_correct %>
-Number of incorrect attempts: <%== $problem->num_incorrect %>
-% }
-% if ($set && $verbosity >= 1) {
-
-***** Data about the homework set: *****
-
-Set ID:                    <%== $set->set_id %>
-Set header file:           <%== $set->set_header %>
-Hardcopy header file:      <%== $set->hardcopy_header %>
-Open date:                 <%== $c->formatDateTime($set->open_date) %>
-Due date:                  <%== $c->formatDateTime($set->due_date) %>
-Answer date:               <%== $c->formatDateTime($set->answer_date) %>
-Visible:                   <%== $set->visible ? 'yes' : 'no' %>
-Assignment type:           <%== $set->assignment_type %>
-	% if ($set->assignment_type =~ /gateway/) {
-Attempts per version:      <%== $set->assignment_type %>
-Time interval:             <%== $set->time_interval %>
-Versions per interval:     <%== $set->versions_per_interval %>
-Version time limit:        <%== $set->version_time_limit %>
-Version creation time:     <%== $c->formatDateTime($set->version_creation_time) %>
-Problem randorder:         <%== $set->problem_randorder %>
-Version last attempt time: <%== $set->version_last_attempt_time %>
-	% }
 % }
 % if ($verbosity >= 2) {
 
