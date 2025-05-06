@@ -226,8 +226,9 @@ async sub renderProblem {
 		forceScaffoldsOpen       => $rh->{WWcorrectAnsOnly} ? 1 : ($rh->{forceScaffoldsOpen} // 0),
 		QUIZ_PREFIX              => $rh->{answerPrefix},
 		showFeedback             => $rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns},
-		showAttemptAnswers       => $rh->{WWcorrectAnsOnly} ? 0 : ($rh->{showAttemptAnswers} // 1),
-		showAttemptPreviews      => (
+		showAttemptAnswers       => $rh->{WWcorrectAnsOnly} ? 0
+		: ($rh->{showAttemptAnswers} // $ce->{pg}{options}{showEvaluatedAnswers}),
+		showAttemptPreviews => (
 			$rh->{WWcorrectAnsOnly} ? 0
 			: ($rh->{showAttemptPreviews} // ($rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}))
 		),
