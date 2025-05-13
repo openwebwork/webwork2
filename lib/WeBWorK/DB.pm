@@ -1,4 +1,5 @@
 package WeBWorK::DB;
+use Mojo::Base -strict;
 
 =head1 NAME
 
@@ -6,7 +7,7 @@ WeBWorK::DB - interface with the WeBWorK databases.
 
 =head1 SYNOPSIS
 
- my $db = WeBWorK::DB->new($dbLayout);
+ my $db = WeBWorK::DB->new($ce);
 
  my @userIDs = $db->listUsers();
  my $Sam = $db->{user}->{record}->new();
@@ -25,11 +26,10 @@ WeBWorK::DB - interface with the WeBWorK databases.
 
 =head1 DESCRIPTION
 
-WeBWorK::DB provides a consistent interface to a number of database backends.
-Access and modification functions are provided for each logical table used by
-the webwork system. The particular backend ("schema" and "driver"), record
-class, data source, and additional parameters are specified by the hash
-referenced by C<$dbLayout>, usually taken from the course environment.
+WeBWorK::DB provides a database interface.  Access and modification functions
+are provided for each logical table used by the webwork system. The particular
+schema, record class, and additional parameters are specified by the hash return
+by the C<DBLayout::databaseLayout> method.
 
 =head1 ARCHITECTURE
 
@@ -54,41 +54,34 @@ They are called "schema" modules because they control the structure of the data
 for a table.
 
 The schema modules provide an API that matches the requirements of the DB
-layer, on a per-table basis. Each schema module has a style that determines
-which drivers it can interface with. For example, SQL is an "dbi" style
-schema.
+layer, on a per-table basis.
 
-=head2 Bottom Layer: Drivers
+=head2 Bottom Layer: Database
 
-Driver modules implement a style for a schema. They provide physical access to
-a data source containing the data for a table. The style of a driver determines
-what methods it provides. All drivers provide C<connect(MODE)> and
-C<disconnect()> methods. A dbi style driver provides a C<handle()> method which
-returns the DBI handle.
+The C<Database> module implements a DBI connection handle. It provides physical
+access to the database.
 
 =head2 Record Types
 
-In C<%dblayout>, each table is assigned a record class, used for passing
+In the database layout, each table is assigned a record class, used for passing
 complete records to and from the database. The default record classes are
 subclasses of the WeBWorK::DB::Record class, and are named as follows: User,
 Password, PermissionLevel, Key, Set, UserSet, Problem, UserProblem. In the
-following documentation, a reference the record class for a table means the
-record class currently defined for that table in C<%dbLayout>.
+following documentation, a reference to the record class for a table means the
+record class currently defined for that table in the database layout.
 
 =cut
 
-use strict;
-use warnings;
-
 use Carp;
 use Data::Dumper;
-use Scalar::Util   qw/blessed/;
-use HTML::Entities qw( encode_entities );
+use Scalar::Util   qw(blessed);
+use HTML::Entities qw(encode_entities);
 use Mojo::JSON     qw(encode_json decode_json);
 
+use WeBWorK::DB::Database;
 use WeBWorK::DB::Schema;
-use WeBWorK::DB::Utils qw/make_vsetID grok_vsetID grok_setID_from_vsetID_sql
-	grok_versionID_from_vsetID_sql/;
+use WeBWorK::DB::Layout qw(databaseLayout);
+use WeBWorK::DB::Utils  qw(make_vsetID grok_vsetID grok_setID_from_vsetID_sql grok_versionID_from_vsetID_sql);
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use);
 
@@ -149,77 +142,51 @@ use Exception::Class (
 	},
 );
 
-################################################################################
-# constructor
-################################################################################
-
 =head1 CONSTRUCTOR
 
-=over
+    my $db = WeBWorK::DB->new($ce)
 
-=item new($dbLayout)
+The C<new> method creates a DB object, connects to the database via the
+C<Database> module, and brings up the underlying schema structure according to
+the hash referenced in the L<database layout|WeBWorK::DB::Layout>.  A course
+environment object is the only required argument (as it is used to construct the
+database layout).
 
-The C<new> method creates a DB object and brings up the underlying schema/driver
-structure according to the hash referenced by C<$dbLayout>.
-
-=back
-
-=head2 C<$dbLayout> Format
-
-C<$dbLayout> is a hash reference consisting of items keyed by table names. The
-value of each item is a reference to a hash containing the following items:
-
-=over
-
-=item record
-
-The name of a perl module to use for representing the data in a record.
-
-=item schema
-
-The name of a perl module to use for access to the table.
-
-=item driver
-
-The name of a perl module to use for access to the data source.
-
-=item source
-
-The location of the data source that should be used by the driver module.
-Depending on the driver, this may be a path, a url, or a DBI spec.
-
-=item params
-
-A reference to a hash containing extra information needed by the schema. Some
-schemas require parameters, some do not. Consult the documentation for the
-schema in question.
-
-=back
-
-For each table defined in C<$dbLayout>, C<new> loads the record, schema, and
-driver modules. It the schema module's C<tables> method lists the current table
-(or contains the string "*") and the output of the schema and driver modules'
-C<style> methods match, the table is installed. Otherwise, an exception is
-thrown.
+For each table defined in the database layout, C<new> loads the record and
+schema modules.
 
 =cut
 
 sub new {
-	my ($invocant, $dbLayout) = @_;
-	my $class = ref($invocant) || $invocant;
-	my $self  = {};
-	bless $self, $class;    # bless this here so we can pass it to the schema
+	my ($invocant, $ce) = @_;
+	my $self = bless {}, ref($invocant) || $invocant;
 
-	# load the modules required to handle each table, and create driver
-	foreach my $table (keys %$dbLayout) {
-		$self->init_table($dbLayout, $table);
+	my $dbh = eval {
+		WeBWorK::DB::Database->new(
+			$ce->{database_dsn},
+			$ce->{database_username},
+			$ce->{database_password},
+			engine         => $ce->{database_storage_engine},
+			character_set  => $ce->{database_character_set},
+			debug          => $ce->{database_debug},
+			mysql_path     => $ce->{externalPrograms}{mysql},
+			mysqldump_path => $ce->{externalPrograms}{mysqldump}
+		);
+	};
+	croak "Unable to establish a connection to the database: $@" if $@;
+
+	my $dbLayout = databaseLayout($ce->{courseName});
+
+	# Load the modules required to handle each table.
+	for my $table (keys %$dbLayout) {
+		$self->init_table($dbLayout, $table, $dbh);
 	}
 
 	return $self;
 }
 
 sub init_table {
-	my ($self, $dbLayout, $table) = @_;
+	my ($self, $dbLayout, $table, $dbh) = @_;
 
 	if (exists $self->{$table}) {
 		if (defined $self->{$table}) {
@@ -232,8 +199,6 @@ sub init_table {
 	my $layout        = $dbLayout->{$table};
 	my $record        = $layout->{record};
 	my $schema        = $layout->{schema};
-	my $driver        = $layout->{driver};
-	my $source        = $layout->{source};
 	my $depend        = $layout->{depend};
 	my $params        = $layout->{params};
 	my $engine        = $layout->{engine};
@@ -245,23 +210,19 @@ sub init_table {
 
 	if ($depend) {
 		foreach my $dep (@$depend) {
-			$self->init_table($dbLayout, $dep);
+			$self->init_table($dbLayout, $dep, $dbh);
 		}
 	}
 
 	runtime_use($record);
 
-	runtime_use($driver);
-	my $driverObject = eval { $driver->new($source, $params) };
-	croak "error instantiating DB driver $driver for table $table: $@"
-		if $@;
-
 	runtime_use($schema);
-	my $schemaObject = eval { $schema->new($self, $driverObject, $table, $record, $params, $engine, $character_set) };
-	croak "error instantiating DB schema $schema for table $table: $@"
-		if $@;
+	my $schemaObject = eval { $schema->new($self, $dbh, $table, $record, $params, $engine, $character_set) };
+	croak "error instantiating DB schema $schema for table $table: $@" if $@;
 
 	$self->{$table} = $schemaObject;
+
+	return;
 }
 
 ################################################################################
@@ -372,7 +333,9 @@ sub create_tables {
 }
 
 sub rename_tables {
-	my ($self, $new_dblayout) = @_;
+	my ($self, $new_ce) = @_;
+
+	my $new_dblayout = databaseLayout($new_ce->{courseName});
 
 	foreach my $table (keys %$self) {
 		next if $table =~ /^_/;                         # skip non-table self fields (none yet)
@@ -380,12 +343,8 @@ sub rename_tables {
 		my $schema_obj = $self->{$table};
 		if (exists $new_dblayout->{$table}) {
 			if ($schema_obj->can("rename_table")) {
-				# we look into the new dblayout to determine the new table names
-				my $new_sql_table_name =
-					defined $new_dblayout->{$table}{params}{tableOverride}
-					? $new_dblayout->{$table}{params}{tableOverride}
-					: $table;
-				$schema_obj->rename_table($new_sql_table_name);
+				# Get the new table names from the new dblayout.
+				$schema_obj->rename_table($new_dblayout->{$table}{params}{tableOverride} // $table);
 			} else {
 				warn "skipping renaming of '$table' table: no rename_table method\n";
 			}
@@ -454,8 +413,7 @@ sub restore_tables {
 # transaction support
 ################################################################################
 
-# Any course will have the user table, so that allows getting the database
-# handle.
+# Any course will have the user table, so that allows getting the database handle.
 
 sub start_transaction {
 	my $self = shift;
@@ -482,10 +440,7 @@ sub end_transaction {
 
 sub abort_transaction {
 	my $self = shift;
-	eval {
-		$self->{user}->dbh->{AutoCommit} = 0;
-		$self->{user}->dbh->rollback;
-	};
+	eval { $self->{user}->dbh->rollback; };
 	if ($@) {
 		my $msg = "Error in abort_transaction: $@";
 		croak $msg;

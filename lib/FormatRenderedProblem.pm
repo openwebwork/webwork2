@@ -416,7 +416,6 @@ sub pretty_print {
 			# certain internals of the CourseEnvironment in case one slips in.
 			next
 				if (($key =~ /database/)
-					|| ($key =~ /dbLayout/)
 					|| ($key eq "ConfigValues")
 					|| ($key eq "ENV")
 					|| ($key eq "externalPrograms")

@@ -40,7 +40,7 @@ $ce = WeBWorK::CourseEnvironment->new({
 });
 
 
-$db = WeBWorK::DB->new($ce->{dbLayout});
+$db = WeBWorK::DB->new($ce);
 
 print <<'EOF';
 wwsh - The WeBWorK Shell

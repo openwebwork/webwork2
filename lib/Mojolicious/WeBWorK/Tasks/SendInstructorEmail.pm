@@ -21,7 +21,7 @@ sub run ($job, $mail_data) {
 
 	$job->{language_handle} = WeBWorK::Localize::getLoc($ce->{language} || 'en');
 
-	my $db = WeBWorK::DB->new($ce->{dbLayout});
+	my $db = WeBWorK::DB->new($ce);
 	return $job->fail($job->maketext('Could not obtain database connection.')) unless $db;
 
 	my @result_messages = eval { $job->mail_message_to_recipients($ce, $db, $mail_data) };

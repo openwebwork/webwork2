@@ -15,7 +15,7 @@ use lib "$ENV{WEBWORK_ROOT}/lib";
 
 use WeBWorK::CourseEnvironment;
 
-use WeBWorK::DB qw(check_user_id);
+use WeBWorK::DB;
 use WeBWorK::File::Classlist;
 use WeBWorK::Utils           qw(cryptPassword);
 use WeBWorK::File::Classlist qw(parse_classlist);
@@ -35,7 +35,7 @@ my $ce = WeBWorK::CourseEnvironment->new({
 	courseName  => $courseID
 });
 
-my $db = WeBWorK::DB->new($ce->{dbLayout});
+my $db = WeBWorK::DB->new($ce);
 
 my $createNew       = 1;         # Always set to true, so add new users
 my $replaceExisting = "none";    # Always set to "none" so no existing accounts are changed

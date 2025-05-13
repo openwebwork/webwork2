@@ -1,5 +1,5 @@
 package WeBWorK::DB::Schema::NewSQL::Versioned;
-use base qw(WeBWorK::DB::Schema::NewSQL::Std);
+use Mojo::Base 'WeBWorK::DB::Schema::NewSQL::Std';
 
 =head1 NAME
 
@@ -7,12 +7,9 @@ WeBWorK::DB::Schema::NewSQL::Versioned - provide access to versioned sets.
 
 =cut
 
-use strict;
-use warnings;
-use WeBWorK::DB::Utils qw/make_vsetID make_vsetID_sql
-	grok_setID_from_vsetID_sql grok_versionID_from_vsetID_sql/;
+use WeBWorK::DB::Utils qw(make_vsetID make_vsetID_sql grok_setID_from_vsetID_sql grok_versionID_from_vsetID_sql);
 
-use constant TABLES => qw/set_version problem_version/;
+use constant TABLES => qw(set_version problem_version);
 
 ################################################################################
 # where clause

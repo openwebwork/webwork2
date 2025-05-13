@@ -237,7 +237,6 @@
 			</label>
 		</div>
 	</fieldset>
-	<%= hidden_field add_dbLayout             => 'sql_single' =%>
 	<%= hidden_field last_page_was_add_course => 1 =%>
 	<%= $c->hidden_fields('number_of_additional_users') =%>
 	<%= submit_button maketext('Add Course'), name => 'add_course', class => 'btn btn-primary' =%>

@@ -40,9 +40,9 @@ $debug_lti_grade_passback = 0;
 # the LTIAdvantage will be used.  If you know a site will not use one or the other, it can be
 # commented out. Failover to Basic_TheLastOption is necessary to authenticate with cookie keys.
 $authen{user_module} = [
-	{ '*' => 'WeBWorK::Authen::LTIAdvantage' },          # first try LTI 1.3
-	{ '*' => 'WeBWorK::Authen::LTIAdvanced' },           # next try LTI 1.1
-	{ '*' => 'WeBWorK::Authen::Basic_TheLastOption' }    # fallback authorization method
+	'WeBWorK::Authen::LTIAdvantage',          # first try LTI 1.3
+	'WeBWorK::Authen::LTIAdvanced',           # next try LTI 1.1
+	'WeBWorK::Authen::Basic_TheLastOption'    # fallback authorization method
 ];
 
 # List of authentication modules that may be used to enter the admin course.
