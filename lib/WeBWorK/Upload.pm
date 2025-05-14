@@ -61,10 +61,8 @@ sub store {
 
 	croak "no upload specified" unless $upload;
 
-	local $ENV{MOJO_TMPDIR} = $dir;
-	my $asset = $upload->asset->to_file;
-	$asset->cleanup(0);
-	my $tmpFile = path($asset->path)->basename;
+	my $tmpFile = path($upload->asset->to_file->path)->basename;
+	$upload->move_to("$dir/$tmpFile");
 
 	# Generate a one-time secret.
 	my $secret = sprintf('%X' x 4, map { int rand 2**32 } 1 .. 4);
