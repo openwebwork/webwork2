@@ -80,8 +80,12 @@ my $libraryDirectory = $ce->{problemLibrary}{root} =~ s/OpenProblemLibrary$//r;
 die "The directory $libraryDirectory does not exist or is not writable."
 	if (!-d $libraryDirectory || !-w $libraryDirectory);
 
+warn $ENV{OPL_GIT_REPOSITORY};
+
+my $git_repo = $ENV{OPL_GIT_REPOSITORY} // 'origin';
+
 # Checkout the release tag in the library clone if it hasn't already been done.
-`$ce->{externalPrograms}{git} -C $libraryDirectory fetch --tags origin`;
+`$ce->{externalPrograms}{git} -C $libraryDirectory fetch --tags $git_repo`;
 `$ce->{externalPrograms}{git} -C $libraryDirectory show-ref refs/heads/$releaseTag -q`;
 if ($?) {
 	say "Switching OPL clone in $libraryDirectory to new branch of release tag $releaseTag.";

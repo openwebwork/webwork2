@@ -8,13 +8,56 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><%= title %></title>
 	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
+	<%= javascript $c->url({
+		type => 'webwork', name => 'htdocs',
+		file => 'node_modules/minisearch/dist/umd/index.js'
+	}), defer => undef =%>
+	<%= javascript $c->url({
+			type => 'webwork',
+			name => 'htdocs',
+			file => 'js/SampleProblemViewer/search.js'
+		}), defer => undef =%>
 	<link rel="icon" type="x-image/icon"
 		href="<%= $c->url({ type => 'webwork', name => 'htdocs', file => 'images/favicon.ico' }) %>">
 </head>
 
 <body>
+<div class="container-fluid p-3">
+		<div class="row">
+			<div class="col-4">
+				<h1><%= title %></h1>
+			</div>
+			<div class="col-5 offset-md-1">
+				<div class="input-group mb-3">
+  					<span class="input-group-text" id="basic-addon1">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+							<path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+						</svg>
+					</span>
+					<input type="text" class="form-control" id="searchDocs" placeholder="Search the Documentation">
+					<button class="btn btn-outline-secondary" type="button" id="clearSearchButton">Clear</button>
+				</div>
+			</div>
+			<div class="col-2">
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" value="" id="includeMacros" checked>
+				<label class="form-check-label" for="includeMacros">
+					Include Macros
+				</label>
+				</div>
+				<div class="form-check">
+				<input class="form-check-input" type="checkbox" value="" id="includeSP" checked>
+				<label class="form-check-label" for="includeSP">
+					Include Sample Problems
+				</label>
+				</div>
+			</div>
+		</div>
+
+
 	<div class="container">
-		<h1 class="my-3"><%= title %></h1>
+		<div class="row">
+		<div class="col-5 mt-3">
 		<div class="list-group">
 			<%= link_to 'sample_problem_viewer', { filePath => 'categories' },
 				class => 'list-group-item list-group-item-action', begin =%>
@@ -36,6 +79,12 @@
 				<span class="h4"><%= maketext('Sample Problems by Macro') %></span>
 				<div><%= maketext('For many macros, this lists all sample problems used by the macro.') %></div>
 			% end
+		</div>
+		</div>
+
+		<div class="col-5 offset-md-1" id="searchResults">
+			<ul id="resultList">
+			</ul>
 		</div>
 	</div>
 </body>
