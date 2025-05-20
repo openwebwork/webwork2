@@ -412,6 +412,8 @@ sub import_handler ($c) {
 	my %visibleAchievementIDs = map { $_ => 1 } @{ $c->{visibleAchievementIDs} };
 	my $filePath              = $ce->{courseDirs}{achievements} . '/' . $fileName;
 
+	my @userAchievementRecordsToAdd;
+
 	# Open file name
 	my $fh = Mojo::File->new($filePath)->open('<:encoding(UTF-8)')
 		or return (0, $c->maketext("Failed to open [_1]", $filePath));
@@ -420,7 +422,6 @@ sub import_handler ($c) {
 	my $count = 0;
 	my $csv   = Text::CSV->new();
 	while (my $data = $csv->getline($fh)) {
-
 		my $achievement_id = $$data[0];
 
 		# Add imported achievement to visible list even if it already exists.
@@ -455,20 +456,31 @@ sub import_handler ($c) {
 		# Assign to users if necessary.
 		if ($assign eq "all") {
 			for my $user (@users) {
-				if (not $db->existsGlobalUserAchievement($user)) {
-					my $globalUserAchievement = $db->newGlobalUserAchievement();
-					$globalUserAchievement->user_id($user);
-					$db->addGlobalUserAchievement($globalUserAchievement);
-				}
 				my $userAchievement = $db->newUserAchievement();
 				$userAchievement->user_id($user);
 				$userAchievement->achievement_id($achievement_id);
-				$db->addUserAchievement($userAchievement);
+				push(@userAchievementRecordsToAdd, $userAchievement);
 			}
 		}
 	}
 
 	$fh->close;
+
+	# If achievements are going to be assigned, then add global user achievements
+	# for users for which they do not already exist.
+	if (@userAchievementRecordsToAdd) {
+		my @globalAchievementRecordsToAdd;
+		my %existingGlobalUserAchievements = map { $_ => 1 } $db->listGlobalUserAchievements;
+		for my $user (@users) {
+			next if $existingGlobalUserAchievements{$user};
+			my $globalUserAchievement = $db->newGlobalUserAchievement(user_id => $user);
+			push(@globalAchievementRecordsToAdd, $globalUserAchievement);
+		}
+		$db->GlobalUserAchievement->insert_records(\@globalAchievementRecordsToAdd) if @globalAchievementRecordsToAdd;
+	}
+
+	# Actually perform the assignments of the added achievements if there are any to assign.
+	$db->UserAchievement->insert_records(\@userAchievementRecordsToAdd) if @userAchievementRecordsToAdd;
 
 	$c->{allAchievementIDs}     = [ keys %allAchievementIDs ];
 	$c->{visibleAchievementIDs} = [ keys %visibleAchievementIDs ];
