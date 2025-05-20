@@ -871,7 +871,7 @@ sub archiveCourse {
 	my $parent_dir = $ce->{webworkDirs}{courses};
 	my $files      = path($course_dir)->list_tree({ dir => 1, hidden => 1 })->map('to_abs');
 	my $tar        = Archive::Tar->new;
-	$tar->add_files(@$files);
+	$tar->add_files($course_dir, @$files);
 	for ($tar->get_files) {
 		$tar->rename($_->full_path, $_->full_path =~ s!^$parent_dir/!!r);
 	}

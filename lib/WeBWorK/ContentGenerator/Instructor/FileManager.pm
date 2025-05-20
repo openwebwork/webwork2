@@ -18,7 +18,7 @@ use Archive::Zip::SimpleZip qw($SimpleZipError);
 
 use WeBWorK::Utils                   qw(sortByName min);
 use WeBWorK::Utils::CourseManagement qw(archiveCourse);
-use WeBWorK::Utils::Files            qw(readFile);
+use WeBWorK::Utils::Files            qw(readFile path_is_subdir);
 use WeBWorK::Upload;
 
 use constant HOME => 'templates';
@@ -515,8 +515,8 @@ sub unpack_archive ($c, $archive) {
 
 		@members = $zip->members;
 		for (@members) {
-			my $out_file = $dir->child($_->fileName)->realpath;
-			if ($out_file !~ /^$dir/) {
+			my $out_file = $dir->child($_->fileName);
+			if (!path_is_subdir($out_file, $dir)) {
 				push(@outside_files, $_->fileName);
 				next;
 			}
@@ -550,8 +550,8 @@ sub unpack_archive ($c, $archive) {
 
 		@members = $tar->list_files;
 		for (@members) {
-			my $out_file = $dir->child($_)->realpath;
-			if ($out_file !~ /^$dir/) {
+			my $out_file = $dir->child($_);
+			if (!path_is_subdir($out_file->to_string, $dir->to_string)) {
 				push(@outside_files, $_);
 				next;
 			}
