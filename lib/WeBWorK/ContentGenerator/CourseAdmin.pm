@@ -2403,30 +2403,25 @@ sub do_save_lti_course_map ($c) {
 
 # Form to copy or reset OTP secrets.
 sub manage_otp_secrets_form ($c) {
-	my $courses          = {};
-	my $dbs              = {};
-	my $skipped_courses  = [];
-	my $show_all_courses = $c->param('show_all_courses') || 0;
+	my $courses = {};
+	my $dbs     = {};
 
 	# Create course data first, since it is used in all cases and initializes course db references.
 	for my $courseID (listCourses($c->ce)) {
 		my $ce = WeBWorK::CourseEnvironment->new({ courseName => $courseID });
-		$dbs->{$courseID} = WeBWorK::DB->new($ce);
-
-		# By default ignore courses larger than 200 users, as this can cause a large load building menus.
-		my @users = $dbs->{$courseID}->listUsers;
-		if ($show_all_courses || scalar @users < 200) {
-			$courses->{$courseID} = \@users;
-		} else {
-			push(@$skipped_courses, $courseID);
-		}
+		$dbs->{$courseID}     = WeBWorK::DB->new($ce);
+		$courses->{$courseID} = [ $dbs->{$courseID}->listUsers ];
 	}
 
-	# Process the confirmed rest or copy actions here.
+	# Process the confirmed reset or copy actions here.
 	if ($c->param('otp_confirm_reset')) {
 		my $total    = 0;
 		my $courseID = $c->param('sourceResetCourseID');
 		for my $user ($c->param('otp_reset_row')) {
+			if ($courseID eq $c->ce->{courseName} && $user eq $c->param('user')) {
+				$c->addbadmessage($c->maketext('You may not reset your own OTP secret!'));
+				next;
+			}
 			my $password = $dbs->{$courseID}->getPassword($user);
 			if ($password && $password->otp_secret) {
 				$password->otp_secret('');
@@ -2443,6 +2438,11 @@ sub manage_otp_secrets_form ($c) {
 		my $total = 0;
 		for my $row ($c->param('otp_copy_row')) {
 			my ($s_course, $s_user, $d_course, $d_user) = split(':', $row);
+			if ($d_course eq $c->ce->{courseName} && $d_user eq $c->param('user')) {
+				$c->addbadmessage(
+					$c->maketext('You cannot overwrite your OTP secret with one from another course or user!'));
+				next;
+			}
 			my $s_password = $dbs->{$s_course}->getPassword($s_user);
 			if ($s_password && $s_password->otp_secret) {
 				# Password may not be defined if using external auth, so create new password record if not.
@@ -2461,11 +2461,7 @@ sub manage_otp_secrets_form ($c) {
 		}
 	}
 
-	return $c->include(
-		'ContentGenerator/CourseAdmin/manage_otp_secrets_form',
-		courses         => $courses,
-		skipped_courses => $skipped_courses
-	);
+	return $c->include('ContentGenerator/CourseAdmin/manage_otp_secrets_form', courses => $courses);
 }
 
 # Deals with both single and multiple copy confirmation.
@@ -2550,17 +2546,24 @@ sub copy_otp_secrets_confirm ($c) {
 				$dbs{$d_course} = WeBWorK::DB->new($dest_ce);
 			}
 
-			my $d_user_password = $dbs{$d_course}->getPassword($d_user);
-			if (!defined $d_user_password) {
-				# Just because there is no password record, the user could still exist when using external auth.
-				unless ($dbs{$d_course}->existsUser($d_user)) {
-					$dest_error    = 'warning';
-					$error_message = $c->maketext('User does not exist - Skipping');
-					$skip          = 1;
+			if ($d_course eq $c->ce->{courseName} && $d_user eq $c->param('user')) {
+				$dest_error = 'danger';
+				$error_message =
+					$c->maketext('You cannot overwrite your OTP secret with one from another course or user!');
+				$skip = 1;
+			} else {
+				my $d_user_password = $dbs{$d_course}->getPassword($d_user);
+				if (!defined $d_user_password) {
+					# Just because there is no password record, the user could still exist when using external auth.
+					unless ($dbs{$d_course}->existsUser($d_user)) {
+						$dest_error    = 'warning';
+						$error_message = $c->maketext('User does not exist - Skipping');
+						$skip          = 1;
+					}
+				} elsif ($d_user_password->otp_secret) {
+					$dest_error    = 'danger';
+					$error_message = $c->maketext('OTP Secret is not empty - Overwritting');
 				}
-			} elsif ($d_user_password->otp_secret) {
-				$dest_error    = 'danger';
-				$error_message = $c->maketext('OTP Secret is not empty - Overwritting');
 			}
 
 			push(
@@ -2599,8 +2602,14 @@ sub reset_otp_secrets_confirm ($c) {
 	my $db = WeBWorK::DB->new($ce);
 	my @rows;
 	for my $user (@dest_users) {
-		my $password = $db->getPassword($user);
-		my $error    = $password && $password->otp_secret ? '' : $c->maketext('OTP Secret is empty - Skipping');
+		my $error = '';
+
+		if ($source_course eq $c->ce->{courseName} && $user eq $c->param('user')) {
+			$error = $c->maketext('You may not reset your own OTP secret!');
+		} else {
+			my $password = $db->getPassword($user);
+			$error = $c->maketext('OTP Secret is empty - Skipping') unless $password && $password->otp_secret;
+		}
 
 		push(
 			@rows,
