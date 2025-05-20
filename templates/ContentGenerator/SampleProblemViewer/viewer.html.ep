@@ -16,6 +16,10 @@
 			file => 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'
 		}), defer => undef =%>
 	<%= javascript $c->url({
+			type => 'webwork', name => 'htdocs',
+			file => 'node_modules/minisearch/dist/umd/index.js'
+		}), defer => undef =%>
+	<%= javascript $c->url({
 			type => 'webwork',
 			name => 'htdocs',
 			file => 'js/SampleProblemViewer/viewer.js'
