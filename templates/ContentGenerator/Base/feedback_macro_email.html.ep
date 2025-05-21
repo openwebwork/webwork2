@@ -6,8 +6,6 @@
 		% next if $key eq 'pg_object';    # Not used in internal feedback mechanism
 		<%= hidden_field $key => $value =%>
 	% }
-	<p>
-		<%= submit_button maketext($ce->{feedback_button_name}) || maketext('Email instructor'),
-			name => 'feedbackForm', class => 'btn btn-primary' =%>
-	</p>
+	<%= submit_button maketext($ce->{feedback_button_name}) || maketext('Email instructor'),
+		name => 'feedbackForm', class => 'btn btn-primary' =%>
 % end

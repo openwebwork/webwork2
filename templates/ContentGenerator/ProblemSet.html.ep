@@ -23,18 +23,6 @@
 % # Stats message displays the current status of the set and states the next important date.
 <%= include 'ContentGenerator/Base/set_status', set => $set =%>
 %
-<%= $set->assignment_type =~ /gateway/ ? $c->gateway_body : $c->problem_list =%>
+<%= include 'ContentGenerator/ProblemSet/auxiliary_tools' =%>
 %
-<%= include 'ContentGenerator/ProblemSet/use_achievement_items' =%>
-<div class="mb-3">
-	<%= $c->feedbackMacro(
-		route              => current_route,
-		set                => $set->set_id,
-		problem            => '',
-		displayMode        => $c->{displayMode},
-		showOldAnswers     => '',
-		showCorrectAnswers => '',
-		showHints          => '',
-		showSolutions      => '',
-	) =%>
-</div>
+<%= $set->assignment_type =~ /gateway/ ? $c->gateway_body : $c->problem_list =%>
