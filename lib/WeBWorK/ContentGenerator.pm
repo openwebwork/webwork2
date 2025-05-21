@@ -973,8 +973,11 @@ sub feedbackMacro ($c, %params) {
 	return '' unless $c->authz->hasPermissions($c->param('user'), 'submit_feedback');
 
 	if ($c->ce->{courseURLs}{feedbackURL}) {
-		return $c->link_to(($c->maketext($c->ce->{feedback_button_name}) || $c->maketext('Email instructor')) =>
-				$c->ce->{courseURLs}{feedbackURL});
+		return $c->link_to(
+			($c->maketext($c->ce->{feedback_button_name}) || $c->maketext('Email instructor')) =>
+				$c->ce->{courseURLs}{feedbackURL},
+			class => 'btn btn-primary'
+		);
 	} elsif ($c->ce->{courseURLs}{feedbackFormURL}) {
 		$params{notifyAddresses} =
 			join(';', $c->fetchEmailRecipients('receive_feedback', $c->db->getUser($c->param('user'))));

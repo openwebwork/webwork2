@@ -53,8 +53,3 @@
 	<p><%= maketext('This homework set contains no problems.') %></p>
 % }
 %
-<div class="mb-3">
-	<%= link_to
-		maketext('Download Hardcopy for Current Set') => $c->systemLink(url_for 'hardcopy_preselect_set'),
-		class => 'btn btn-primary' =%>
-</div>
