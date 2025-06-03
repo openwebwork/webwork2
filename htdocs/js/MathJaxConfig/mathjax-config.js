@@ -98,6 +98,24 @@ if (!window.MathJax) {
 					AM.symbols.splice(i, 0, { input: trigger, ...newTriggers[trigger].symbols });
 				}
 
+				// The following is a workaround for a bug in MathJax when the math renderer is changed.
+				// Note that this should be removed when we have upgraded to MathJax 4.
+				const { STATE } = MathJax._.core.MathItem;
+				const { Menu } = MathJax._.ui.menu.Menu;
+				const { mathjax } = MathJax._.mathjax;
+				Menu.prototype.rerender = function (start = STATE.TYPESET) {
+					this.rerenderStart = Math.min(start, this.rerenderStart);
+					if (!Menu.loading) {
+						if (this.rerenderStart <= STATE.COMPILED) this.document.reset({ inputJax: [] });
+						MathJax.startup.promise.then(() => {
+							mathjax.handleRetriesFor(() => {
+								this.document.rerender(this.rerenderStart);
+								this.rerenderStart = STATE.LAST;
+							});
+						});
+					}
+				};
+
 				return MathJax.startup.defaultReady();
 			}
 		},
