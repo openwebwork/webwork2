@@ -742,4 +742,12 @@ $mail{feedbackRecipients}    = [
 # 	};
 # };
 
+###############################################################################
+# Test settings
+###############################################################################
+
+# Cap for the number of problems that can be used on a page.
+# If 0, there is no cap. Otherwise, should be a positive integer.
+#$test{maxProblemsPerPage} = 1;
+
 1; #final line of the file to reassure perl that it was read properly.

@@ -385,6 +385,21 @@ async sub pre_header_initialize ($c) {
 			}
 		}
 	} else {
+		# If there is a cap on problems per page, make sure that is respected in the global set in
+		# case something higher snuck in.
+		if ($ce->{test}{maxProblemsPerPage}) {
+			my $globalSet = $db->getGlobalSet($setID);
+			if (
+				$ce->{test}{maxProblemsPerPage}
+				&& ($globalSet->problems_per_page == 0
+					|| $globalSet->problems_per_page > $ce->{test}{maxProblemsPerPage})
+				)
+			{
+				$globalSet->problems_per_page($ce->{test}{maxProblemsPerPage});
+				$db->putGlobalSet($globalSet);
+			}
+		}
+
 		# Get the template set, i.e., the non-versioned set that's assigned to the user.
 		# If this failed in authz->checkSet, then $c->{invalidSet} is set.
 		$tmplSet = $db->getMergedSet($effectiveUserID, $setID);
@@ -393,6 +408,13 @@ async sub pre_header_initialize ($c) {
 		# graded proctored tests.  If a set was not obtained from the database, store a fake value here
 		# to be able to continue.
 		$c->{assignment_type} = $tmplSet->assignment_type || 'gateway';
+
+		# If there is a cap on problems per page, make sure that is respected in case something higher snuck in.
+		if ($ce->{test}{maxProblemsPerPage}
+			&& ($tmplSet->problems_per_page == 0 || $tmplSet->problems_per_page > $ce->{test}{maxProblemsPerPage}))
+		{
+			$tmplSet->problems_per_page($ce->{test}{maxProblemsPerPage});
+		}
 
 		# next, get the latest (current) version of the set if we don't have a
 		#     requested version number
@@ -429,6 +451,13 @@ async sub pre_header_initialize ($c) {
 			$set->psvn('000');
 			$set->set_id($setID);    # redundant?
 			$set->version_id(0);
+		}
+
+		# If there is a cap on problems per page, make sure that is respected in case something higher snuck in.
+		if ($ce->{test}{maxProblemsPerPage}
+			&& ($set->problems_per_page == 0 || $set->problems_per_page > $ce->{test}{maxProblemsPerPage}))
+		{
+			$set->problems_per_page($ce->{test}{maxProblemsPerPage});
 		}
 	}
 	my $setVersionNumber = $set ? $set->version_id : 0;
@@ -558,6 +587,16 @@ async sub pre_header_initialize ($c) {
 					my $cleanSet = $db->getSetVersion($effectiveUserID, $setID, $setVersionNumber);
 					$set = $db->getMergedSetVersion($effectiveUserID, $setID, $setVersionNumber);
 					$set->visible(1);
+
+				# If there is a cap on problems per page, make sure that is respected in case something higher snuck in.
+					if (
+						$ce->{test}{maxProblemsPerPage}
+						&& ($tmplSet->problems_per_page == 0
+							|| $tmplSet->problems_per_page > $ce->{test}{maxProblemsPerPage})
+						)
+					{
+						$tmplSet->problems_per_page($ce->{test}{maxProblemsPerPage});
+					}
 
 					$problem = $db->getMergedProblemVersion($effectiveUserID, $setID, $setVersionNumber, $setPNum[0]);
 
