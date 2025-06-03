@@ -81,7 +81,9 @@ use constant JITAR_SET_FIELD_ORDER => [qw(restrict_prob_progression email_instru
 # All but name are optional
 #   some_field => {
 #     name      => "Some Field",
-#     type      => "edit",          # edit, choose, hidden, view - defines how the data is displayed
+#     type      => "edit",          # edit, choose, hidden, view, [min, max, step] - defines how the data is displayed
+#                                     [min, max, step] will introduce validation, so should not be used on just any
+#                                     input where we expect numbers
 #     size      => "50",            # size of the edit box (if any)
 #     override  => "none",          # none, one, any, all - defines for whom this data can/must be overidden
 #     module    => "problem_list",  # WeBWorK module
@@ -313,7 +315,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	attempts_per_version => {
 		name      => x("Graded Submissions per Version"),
-		type      => 'edit',
+		type      => [ 0, undef, 1 ],
 		size      => '3',
 		override  => 'any',
 		default   => '0',
@@ -342,7 +344,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	versions_per_interval => {
 		name      => x('Versions per Interval'),
-		type      => 'edit',
+		type      => [ 0, undef, 1 ],
 		size      => '3',
 		override  => 'any',
 		default   => '0',
@@ -365,7 +367,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	problems_per_page => {
 		name      => x('Problems per Page'),
-		type      => 'edit',
+		type      => [ 0, undef, 1 ],
 		size      => '3',
 		override  => 'any',
 		default   => '1',
@@ -467,7 +469,7 @@ use constant FIELD_PROPERTIES => {
 	},
 
 	# In addition to the set fields above, there are a number of things
-	# that are set but aren"t in this table:
+	# that are set but aren't in this table:
 	#    any set proctor information (which is in the user tables), and
 	#    any set location restriction information (which is in the
 	#    location tables)
@@ -493,7 +495,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	max_attempts => {
 		name     => x('Max Attempts'),
-		type     => 'edit',
+		type     => [ -1, undef, 1 ],
 		size     => 6,
 		override => 'any',
 		default  => '-1',
@@ -506,7 +508,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	showMeAnother => {
 		name     => x('Show Me Another'),
-		type     => 'edit',
+		type     => [ -2, undef, 1 ],
 		size     => '6',
 		override => 'any',
 		default  => '-1',
@@ -522,7 +524,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	showHintsAfter => {
 		name     => x('Show Hints After'),
-		type     => 'edit',
+		type     => [ -2, undef, 1 ],
 		size     => '6',
 		override => 'any',
 		default  => '-2',
@@ -539,7 +541,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	prPeriod => {
 		name     => x('Rerandomize After'),
-		type     => 'edit',
+		type     => [ -1, undef, 1 ],
 		size     => '6',
 		override => 'any',
 		default  => '-1',
@@ -555,7 +557,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	problem_seed => {
 		name      => x('Seed'),
-		type      => 'edit',
+		type      => [ 0, undef, 1 ],
 		size      => 6,
 		override  => 'one',
 		help_text => x(
@@ -619,7 +621,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	att_to_open_children => {
 		name     => x('Attempt Threshold for Children'),
-		type     => 'edit',
+		type     => [ -1, undef, 1 ],
 		size     => 6,
 		override => 'any',
 		default  => '0',
@@ -834,14 +836,29 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 		if $forOneUser && $globalRecord && !$userRecord;
 
 	my %properties = %{ FIELD_PROPERTIES()->{$field} };
+	if ($field eq 'problems_per_page') {
+		if ($c->ce->{test}{maxProblemsPerPage} == 1) {
+			$properties{override} = 'none';
+		} elsif ($c->ce->{test}{maxProblemsPerPage} > 1) {
+			my $max = $c->ce->{test}{maxProblemsPerPage};
+			$properties{type} = [ 1, $max, 1 ];
+			$properties{help_text} =
+				'A test is broken up into pages with this many problems on each page.  Students can '
+				. 'move from page to page without clicking to grade the test, and their temporary answers will be '
+				. "saved. The site administator has capped this setting at $max. If only using 1 problem per page, "
+				. 'the student has many pages and may be frustrated trying to reach a particular problem. However, '
+				. 'their answers will be saved more frequently as they move from page to page.';
+		}
+	}
 
 	return '' if $properties{type} eq 'hidden';
 	return '' if $properties{override} eq 'one'  && !$forOneUser;
 	return '' if $properties{override} eq 'none' && !$forOneUser;
 	return '' if $properties{override} eq 'all'  && $forUsers;
 
-	my $edit   = $properties{type} eq 'edit'   && $properties{override} ne 'none';
-	my $choose = $properties{type} eq 'choose' && $properties{override} ne 'none';
+	my $edit   = $properties{type} eq 'edit'       && $properties{override} ne 'none';
+	my $number = ref($properties{type}) eq 'ARRAY' && $properties{override} ne 'none';
+	my $choose = $properties{type} eq 'choose'     && $properties{override} ne 'none';
 
 	my ($globalValue, $userValue, $blankField) = (undef, undef, '');
 	if ($field =~ /:/) {
@@ -885,7 +902,7 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 	# This contains either a text input or a select for changing a given database field.
 	my $input = '';
 
-	if ($edit) {
+	if ($edit || $number) {
 		if ($field =~ /_date/) {
 			$input = $c->tag(
 				'div',
@@ -922,6 +939,10 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 			);
 		} else {
 			my $value = $forUsers ? ($labels{$userValue} || $userValue) : ($labels{$globalValue} || $globalValue);
+			$value = $c->ce->{test}{maxProblemsPerPage}
+				if ($field eq 'problems_per_page'
+					&& $c->ce->{test}{maxProblemsPerPage}
+					&& ($value == 0 || $value > $c->ce->{test}{maxProblemsPerPage}));
 			$value = format_set_name_display($value =~ s/\s*,\s*/,/gr) if $field eq 'restricted_release';
 
 			my @field_args = (
@@ -950,6 +971,15 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 							$c->tag('i', class => 'fa-solid fa-shuffle')
 						)
 					)->join('')
+				);
+			} elsif ($number) {
+				$input = $c->number_field(
+					@field_args,
+					min         => ($properties{type}[0] || 0),
+					max         => ($properties{type}[1] || undef),
+					step        => ($properties{type}[2] || 1),
+					placeholder => $value,
+					$forUsers && $canOverride ? (placeholder => $c->maketext('Set Default')) : ()
 				);
 			} else {
 				$input = $c->text_field(@field_args,
