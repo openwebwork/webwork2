@@ -1,3 +1,7 @@
+# This file contains stop words from https://github.com/Alir3z4/stop-words
+# These words will be ignored in the processing of macros and sample problems used by the script
+# bin/dev_scripts/build-search-db.pl
+
 'll
 'tis
 'twas

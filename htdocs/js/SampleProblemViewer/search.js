@@ -33,7 +33,7 @@
 		};
 	}
 
-	const miniSearch = new MiniSearch({ fields: ['terms', 'filename', 'name', 'description'] });
+	const miniSearch = new MiniSearch({ fields: ['terms', 'filename', 'name', 'description', 'methods'] });
 	let pages;
 	// This is the data from sample-problems/macros POD.
 	fetch('../../DATA/search.json')
@@ -68,6 +68,7 @@
   				<div class="card-body">
     				<h5 class="card-title">
 						<a href=\"/webwork2/${path}/${p.dir}/${file}\">${p.name}</a>
+						(${p.type})
 					</h5>
 					<p class="card-text">${p.description}</p>
 				</div>

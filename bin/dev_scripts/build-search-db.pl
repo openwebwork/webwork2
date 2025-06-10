@@ -25,9 +25,10 @@ if the POD for pg is desired.
 
 =head1 DESCRIPTION
 
-Read through all of the files in $PG_ROOT/tutorial/samples-problems and the POD in the macro files.
+This script parses all of the files in $PG_ROOT/tutorial/samples-problems and the POD in the macro files.
 The result is a JSON file containing information about every file to be searched for in the sample-problems
-space.
+space.  The purpose of creating this file is to be used on the Sample Problems page (linked from
+the PG Editor) to search through macros and samples problems.
 
 =cut
 
@@ -39,34 +40,35 @@ use feature "say";
 use Getopt::Long qw(:config bundling);
 use File::Find;
 use Mojo::JSON qw(encode_json);
-use Mojo::File qw(path curfile);
+use Mojo::File qw(curfile);
 use Pod::Simple::SimpleTree;
 
 my $build   = "all";
 my $pg_root = $ENV{PG_ROOT};
+
 # These are the default sample problem directory and JSON file.
-my $dir       = "tutorial/sample-problems";
-my $json_file = "htdocs/DATA/search.json";
-my $verbose   = 0;
+my $sample_prob_dir = "tutorial/sample-problems";
+my $json_file       = "htdocs/DATA/search.json";
+my $verbose         = 0;
 
 GetOptions(
 	'p|pg-root=s'         => \$pg_root,
 	'f|json-file=s'       => \$json_file,
-	's|sample-prob-dir=s' => \$dir,
+	's|sample-prob-dir=s' => \$sample_prob_dir,
 	'b|build=s'           => \$build,
 	'v|verbose+'          => \$verbose
 );
 
 die "The build options must be one of (all, macros, samples). The value $build is not valid."
-	if ((grep { $_ eq $build } qw/all macros samples/) == 0);
+	if ((grep { $_ eq $build } qw/all macros samples/) != 1);
 
 my $ww_root = $ENV{WW_ROOT};
 $ww_root = Mojo::File->new(curfile->dirname, "..", "..")->realpath unless defined($ww_root);
 
 die "ww_root: $ww_root is not a directory" unless -d $ww_root;
 
-$dir       = "$pg_root/$dir";
-$json_file = path("$ww_root/$json_file");
+$sample_prob_dir = "$pg_root/$sample_prob_dir";
+$json_file       = Mojo::File->new("$ww_root/$json_file");
 
 my $json_dir = $json_file->dirname;
 $json_dir->make_path unless -d $json_dir;
@@ -76,29 +78,30 @@ if ($verbose) {
 	say "    pg-root: $pg_root";
 	say "    ww-root: $ww_root";
 	say "    build: $build";
-	say "    dir: $dir";
+	say "    dir: $sample_prob_dir";
 	say "    json_file: $json_file";
 }
-
-#
-my $stop_words = {};
 
 # Load the Stop Words File
 open(my $FH, '<:encoding(UTF-8)', "$ww_root/bin/dev_scripts/stop-words-en.txt") or do {
 	warn qq{Could not open file "$ww_root/bin/dev_scripts/stop-words-en.txt": $!};
 };
-my @stop_words = <$FH>;
-chomp for (@stop_words);
+my @stop_words;
+for my $line (<$FH>) {
+	chomp $line;
+	next if $line =~ /^#/;    # skip all lines starting with a #
+	next if $line eq '';
+	push(@stop_words, $line);
+}
+close $FH;
 
 # Store all of search info for each file and store as an array of hashrefs.
-my @search_terms;
-
+my @files;
 my $index = 1;    # set an index for each file.
 
 sub processFile {
 	return unless $_ =~ /\.pg$/;
 	say "Processing $_" if $verbose;
-
 	my $filename = $_;
 
 	open(my $FH, '<:encoding(UTF-8)', $File::Find::name) or do {
@@ -150,7 +153,7 @@ sub processFile {
 		}
 	}
 	push(
-		@search_terms,
+		@files,
 		{
 			filename    => $filename,
 			type        => 'sample problem',
@@ -171,35 +174,32 @@ sub processLine {
 
 	my @words = ();
 	for my $word (@split_line) {
-
-		# The following lines pull out some formating.
-		$word =~ s/(PODLINK|PROBLINK)\('([\w.]+)'\)/$2/;
-		$word =~ s/`(.*)`/$1/;
-		$word =~ s/[.!,]$//;
-		$word =~ s/[()\*\\\+\{\}]//g;
+		$word =~ s/(PODLINK|PROBLINK)\('([\w.]+)'\)/$2/;    # pull related macros and problems
+		$word =~ s/`(.*)`/$1/;                              # remove ``
+		$word =~ s/[.!,]$//;                                # remove punctuation
+		$word =~ s/[()\*\\\+\{\}]//g;                       # remove other characters.
 		$word = lc($word);
 		next if $word =~ /\[|\]|\d|=/;
 
 		my @result = grep {/^${word}$/} @stop_words;
 		push(@words, $word) unless @result;
-
 	}
 	return @words;
 }
 
 # Extract the text for a section from the given POD (preparsed) with a section header title
 sub extractPODNode {
-	my ($root, $title) = @_;
+	my ($filename, $root, $title) = @_;
 	my @index = grep { ref($root->[$_]) eq 'ARRAY' && $root->[$_][2] =~ /$title/ } 0 .. scalar(@$root) - 1;
 	if (@index == 0) {
-		warn "The section named $title is not found in the POD.";
+		warn "In $filename: The section named $title is not found in the POD.";
 		return;
 	}
 	if (@index > 1) {
-		warn "There were more than one section named $title in the POD.";
+		warn "In $filename: There are more than one section named $title in the POD.";
 		return;
 	}
-	# start at the index 2 and extract all text
+	# start at index 2 and extract all text
 	my $node = $root->[ $index[0] + 1 ];
 	my $i    = 2;
 	my $str  = "";
@@ -208,41 +208,49 @@ sub extractPODNode {
 		$i++;
 	} while ($i < scalar(@$node));
 
-	return $str;
+	my @line = split(/\s*-+\s*/, $str);
+	return (
+		name        => $line[0],
+		description => $line[1],
+	);
 }
 
-sub processPODFile {
-	my ($filename) = @_;
-	my $parser     = Pod::Simple::SimpleTree->new();
-	my $root       = $parser->parse_file("$filename")->root;
+# Parse the =head2 POD to extract names of methods.
+sub parseHead2 {
+	my ($root) = @_;
+	my @head2terms = grep { ref($_) eq 'ARRAY' && $_->[0] =~ /head2/ } @$root;
+	return [ map { $_->[2] } @head2terms ];
+}
 
-	return {
-		type        => "macro",
-		name        => extractPODNode($root, "NAME") // '',
-		description => [ processLine(extractPODNode($root, "DESCRIPTION") // '') ]
+# process a macro file's POD
+sub processMacro {
+	return unless $_ =~ /\.pl$/;
+	say "Processing $_" if $verbose;
+	my $file = Mojo::File->new($File::Find::name);
+	return if $file->dirname =~ /deprecated/;
+
+	my $parser      = Pod::Simple::SimpleTree->new();
+	my $root        = $parser->parse_file("$file")->root;
+	my %description = extractPODNode($file->basename, $root, "NAME");
+
+	my $macro_file = {
+		type     => 'macro',
+		methods  => parseHead2($root),
+		filename => $file->basename,
+		id       => $index++,
+		dir      => $file->dirname->to_rel("$pg_root")->to_string,
+		%description
 	};
+	push(@files, $macro_file);
 }
 
-# Process the sample problems in $dir.
-
-find({ wanted => \&processFile }, "$dir") if (grep { $build eq $_ } qw/all samples/);
+# Process the sample problems in $sample_prob_dir.
+find({ wanted => \&processFile }, "$sample_prob_dir") if (grep { $build eq $_ } qw/all samples/);
 
 # Process the POD within the macros dir.
+find({ wanted => \&processMacro }, "$pg_root/macros") if (grep { $build eq $_ } qw/all macros/);
 
-if (grep { $build eq $_ } qw/all macros/) {
-	my $macro_dir = Mojo::File->new("$pg_root/macros/math");
-	my $macros    = $macro_dir->list->each(sub {
-		say "processing " . $_->basename if $verbose;
-		my $pod_file = processPODFile($_);
-		$pod_file->{filename} = $_->basename;
-		$pod_file->{id}       = $index++;
-		$pod_file->{dir}      = $_->dirname->to_rel("$pg_root")->to_string;
-		push(@search_terms, $pod_file);
-	});
-}
-
-my $json = encode_json \@search_terms;
+my $json = encode_json \@files;
 
 say "Writing document info to $json_file" if $verbose;
 $json_file->spew($json);
-
