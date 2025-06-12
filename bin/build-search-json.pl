@@ -49,13 +49,14 @@ my $pg_root = $ENV{PG_ROOT};
 # These are the default sample problem directory and JSON file.
 my $sample_prob_dir = "tutorial/sample-problems";
 my $json_file       = "htdocs/DATA/search.json";
-my $verbose         = 0;
+my ($verbose, $show_warnings) = (1, 0);
 
 GetOptions(
 	'p|pg-root=s'         => \$pg_root,
 	'f|json-file=s'       => \$json_file,
 	's|sample-prob-dir=s' => \$sample_prob_dir,
 	'b|build=s'           => \$build,
+	'w|show-warnings'     => \$show_warnings,
 	'v|verbose+'          => \$verbose
 );
 
@@ -63,7 +64,9 @@ die "The build options must be one of (all, macros, samples). The value $build i
 	if ((grep { $_ eq $build } qw/all macros samples/) != 1);
 
 my $ww_root = $ENV{WW_ROOT};
-$ww_root = Mojo::File->new(curfile->dirname, "..", "..")->realpath unless defined($ww_root);
+$ww_root = Mojo::File->curfile->dirname->dirname->realpath unless defined($ww_root);
+
+say $ww_root;
 
 die "ww_root: $ww_root is not a directory" unless -d $ww_root;
 
@@ -99,7 +102,7 @@ close $FH;
 my @files;
 my $index = 1;    # set an index for each file.
 
-sub processFile {
+sub processPGfile {
 	return unless $_ =~ /\.pg$/;
 	say "Processing $_" if $verbose;
 	my $filename = $_;
@@ -192,11 +195,11 @@ sub extractPODNode {
 	my ($filename, $root, $title) = @_;
 	my @index = grep { ref($root->[$_]) eq 'ARRAY' && $root->[$_][2] =~ /$title/ } 0 .. scalar(@$root) - 1;
 	if (@index == 0) {
-		warn "In $filename: The section named $title is not found in the POD.";
+		warn "In $filename: The section named $title is not found in the POD." if $show_warnings;
 		return;
 	}
 	if (@index > 1) {
-		warn "In $filename: There are more than one section named $title in the POD.";
+		warn "In $filename: There are more than one section named $title in the POD." if $show_warnings;
 		return;
 	}
 	# start at index 2 and extract all text
@@ -225,9 +228,12 @@ sub parseHead2 {
 # process a macro file's POD
 sub processMacro {
 	return unless $_ =~ /\.pl$/;
-	say "Processing $_" if $verbose;
 	my $file = Mojo::File->new($File::Find::name);
-	return if $file->dirname =~ /deprecated/;
+	if ($file->dirname =~ /deprecated/) {
+		say "Skipping $_.  This is deprecated." if $verbose;
+		return;
+	}
+	say "Processing $_" if $verbose;
 
 	my $parser      = Pod::Simple::SimpleTree->new();
 	my $root        = $parser->parse_file("$file")->root;
@@ -245,7 +251,7 @@ sub processMacro {
 }
 
 # Process the sample problems in $sample_prob_dir.
-find({ wanted => \&processFile }, "$sample_prob_dir") if (grep { $build eq $_ } qw/all samples/);
+find({ wanted => \&processPGfile }, "$sample_prob_dir") if (grep { $build eq $_ } qw/all samples/);
 
 # Process the POD within the macros dir.
 find({ wanted => \&processMacro }, "$pg_root/macros") if (grep { $build eq $_ } qw/all macros/);

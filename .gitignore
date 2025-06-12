@@ -36,7 +36,6 @@ htdocs/themes/*
 DATA/*
 !DATA/uploads
 DATA/uploads/*
-!htdocs/DATA/search.json
 !*README*
 
 docker-compose.yml

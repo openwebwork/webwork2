@@ -3,36 +3,6 @@
 	about every page to be searched (macro POD and sample problems).
 */
 (() => {
-	// ChatGPT generated throttle function similar to Lodash.
-	function throttle(func, wait) {
-		let lastCallTime = 0;
-		let timeout = null;
-		let lastArgs, lastContext;
-
-		return function throttled(...args) {
-			const now = Date.now();
-			const remaining = wait - (now - lastCallTime);
-
-			lastArgs = args;
-			lastContext = this;
-
-			if (remaining <= 0 || remaining > wait) {
-				if (timeout) {
-					clearTimeout(timeout);
-					timeout = null;
-				}
-				lastCallTime = now;
-				func.apply(lastContext, lastArgs);
-			} else if (!timeout) {
-				timeout = setTimeout(() => {
-					lastCallTime = Date.now();
-					timeout = null;
-					func.apply(lastContext, lastArgs);
-				}, remaining);
-			}
-		};
-	}
-
 	const miniSearch = new MiniSearch({ fields: ['terms', 'filename', 'name', 'description', 'methods'] });
 	let pages;
 	// This is the data from sample-problems/macros POD.
@@ -51,32 +21,47 @@
 		resultList.innerHTML = '';
 	});
 
-	const search = throttle(() => {
-		const results = miniSearch.search(searchBox.value);
+	const search = () => {
+		const results = miniSearch.search(searchBox.value, { prefix: true });
 		const ids = results.map((p) => p.id);
 
+		const includeMacros = document.getElementById('includeMacros').checked;
+		const includeSP = document.getElementById('includeSP').checked;
+
 		resultList.innerHTML = '';
+
 		ids.forEach((id) => {
-			const item = document.createElement('div');
-			item.classList.add('card');
 			const p = pages[id - 1];
-			const file = p.filename.replace('.pg', '');
-			const path = p.type == 'sample problem' ? 'sampleproblems' : p.type == 'macro' ? 'pod' : '';
+			if ((p.type == 'sample problem' && includeSP) || (p.type == 'macro' && includeMacros)) {
+				const item = document.createElement('div');
+				item.classList.add('card');
 
-			// This is the search results for each page.
-			item.innerHTML = `
-  				<div class="card-body">
-    				<h5 class="card-title">
-						<a href=\"/webwork2/${path}/${p.dir}/${file}\">${p.name}</a>
-						(${p.type})
-					</h5>
-					<p class="card-text">${p.description}</p>
-				</div>
-				`;
+				const file = p.filename.replace('.pg', '');
+				const path = p.type == 'sample problem' ? 'sampleproblems' : p.type == 'macro' ? 'pod' : '';
 
-			resultList.appendChild(item);
+				// This is the search results for each page.
+
+				item.innerHTML = `
+					<div class="card-body">
+						<h5 class="card-title">
+							<a href=\"/webwork2/${path}/${p.dir}/${file}\">${p.name}</a>
+							(${p.type})
+						</h5>
+						<p class="card-text">${p.description}</p>
+					</div>
+					`;
+
+				resultList.appendChild(item);
+			}
 		});
-	}, 250);
+		// If there are no results, say so
+		if (resultList.children.length == 0) {
+			const item = document.createElement('div');
+			item.classList.add('alert', 'alert-info');
+			item.innerHTML = 'No results found';
+			resultList.append(item);
+		}
+	};
 
 	searchBox.addEventListener('keypress', search);
 })();
