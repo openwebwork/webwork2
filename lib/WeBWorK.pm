@@ -108,6 +108,9 @@ async sub dispatch ($c) {
 	my @uploads = @{ $c->req->uploads };
 
 	for my $u (@uploads) {
+		# Make sure it's a "real" upload.
+		next unless $u->filename;
+
 		# Store the upload.
 		my $upload = WeBWorK::Upload->store($u, $ce->{webworkDirs}{uploadCache});
 
