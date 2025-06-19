@@ -242,7 +242,7 @@
 					id => 'clear', type => 'reset', class => 'btn btn-primary' =%>
 			</div>
 			<div class="mb-3">
-				<%= submit_button maketext('Download PDF or TeX Hardcopy for Selected Tests'),
+				<%= submit_button maketext('Download Hardcopy for Selected Tests'),
 					id => 'hardcopy', name => 'hardcopy', class => 'btn btn-primary' =%>
 			</div>
 		<% end =%>
