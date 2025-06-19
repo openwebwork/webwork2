@@ -320,11 +320,13 @@ sub delete_handler ($c) {
 
 	my @achievementIDsToDelete = @{ $c->{selectedAchievementIDs} };
 	my %allAchievementIDs      = map { $_ => 1 } @{ $c->{allAchievementIDs} };
+	my %visibleAchievementIDs  = map { $_ => 1 } @{ $c->{visibleAchievementIDs} };
 	my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
 
 	# Iterate over selected achievements and delete.
 	for my $achievementID (@achievementIDsToDelete) {
 		delete $allAchievementIDs{$achievementID};
+		delete $visibleAchievementIDs{$achievementID};
 		delete $selectedAchievementIDs{$achievementID};
 
 		$db->deleteAchievement($achievementID);
@@ -332,6 +334,7 @@ sub delete_handler ($c) {
 
 	# Update local fields
 	$c->{allAchievementIDs}      = [ keys %allAchievementIDs ];
+	$c->{visibleAchievementIDs}  = [ keys %visibleAchievementIDs ];
 	$c->{selectedAchievementIDs} = [ keys %selectedAchievementIDs ];
 
 	return (1, $c->maketext('Deleted [quant,_1,achievement].', scalar @achievementIDsToDelete));
@@ -345,42 +348,48 @@ sub create_handler ($c) {
 
 	# Create achievement
 	my $newAchievementID = $c->param('action.create.id');
-	return (0, $c->maketext("Failed to create new achievement: no achievement ID specified!"))
+	return (0, $c->maketext('Failed to create new achievement: no achievement ID specified!'))
 		unless $newAchievementID =~ /\S/;
-	return (0, $c->maketext("Achievement [_1] exists.  No achievement created.", $newAchievementID))
+	return (0, $c->maketext('Achievement [_1] exists.  No achievement created.', $newAchievementID))
 		if $db->existsAchievement($newAchievementID);
-	my $newAchievementRecord = $db->newAchievement;
-	my $oldAchievementID     = $c->{selectedAchievementIDs}->[0];
 
 	my $type = $c->param('action.create.type');
 
 	# Either assign empty data or copy over existing data
-	if ($type eq "empty") {
-		$newAchievementRecord->achievement_id($newAchievementID);
-		$newAchievementRecord->enabled(0);
-		$newAchievementRecord->assignment_type('default');
-		$newAchievementRecord->test('blankachievement.at');
-		$db->addAchievement($newAchievementRecord);
-	} elsif ($type eq "copy") {
-		return (0, $c->maketext("Failed to duplicate achievement: no achievement selected for duplication!"))
+	if ($type eq 'empty') {
+		eval {
+			$db->addAchievement($db->newAchievement(
+				achievement_id  => $newAchievementID,
+				enabled         => 0,
+				assignment_type => 'default',
+				test            => 'blankachievement.at'
+			));
+		};
+		return (0, $c->maketext('Failed to create new achievement: [_1]', $@)) if $@;
+	} elsif ($type eq 'copy') {
+		my $oldAchievementID = $c->{selectedAchievementIDs}[0];
+		return (0, $c->maketext('Failed to duplicate achievement: no achievement selected for duplication!'))
 			unless $oldAchievementID =~ /\S/;
-		$newAchievementRecord = $db->getAchievement($oldAchievementID);
+		my $newAchievementRecord = $db->getAchievement($oldAchievementID);
+		return (0, $c->maketext('Failed to duplicate achievement: selected achievement does not exist!'))
+			unless $newAchievementRecord;
 		$newAchievementRecord->achievement_id($newAchievementID);
-		$db->addAchievement($newAchievementRecord);
-
+		eval { $db->addAchievement($newAchievementRecord) };
+		return (0, $c->maketext('Failed to create new achievement: [_1]', $@)) if $@;
 	}
-
-	# Assign achievement to current user
-	my $userAchievement = $db->newUserAchievement();
-	$userAchievement->user_id($user);
-	$userAchievement->achievement_id($newAchievementID);
-	$db->addUserAchievement($userAchievement);
 
 	# Add to local list of achievements
 	push @{ $c->{allAchievementIDs} },     $newAchievementID;
 	push @{ $c->{visibleAchievementIDs} }, $newAchievementID;
 
-	return (0, $c->maketext("Failed to create new achievement: [_1]", $@)) if $@;
+	# Assign achievement to current user
+	eval { $db->addUserAchievement($db->newUserAchievement(user_id => $user, achievement_id => $newAchievementID)) };
+	return (
+		0,
+		$c->maketext(
+			"Successfully created achievement, but failed to assign achievement to current user: [_1]", $@
+		)
+	) if $@;
 
 	return (1, $c->maketext('Successfully created new achievement [_1]', $newAchievementID));
 }
