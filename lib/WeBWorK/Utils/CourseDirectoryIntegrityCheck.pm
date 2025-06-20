@@ -13,7 +13,7 @@ use warnings;
 
 use Mojo::File qw(path);
 
-our @EXPORT_OK = qw(checkCourseDirectories updateCourseDirectories);
+our @EXPORT_OK = qw(checkCourseDirectories checkCourseLinks updateCourseDirectories);
 
 # Developer note:  This file should not format messages in html.  Instead return an array of tuples.  Each tuple should
 # contain the message components, and the last element of the tuple should be 0 or 1 to indicate failure or success
@@ -46,6 +46,29 @@ sub checkCourseDirectories {
 	}
 
 	return ($directories_ok, \@results);
+}
+
+sub checkCourseLinks {
+	my $ce = shift;
+
+	my @results;
+	my $links_ok = 1;
+
+	for my $link (sort keys %{ $ce->{courseLinks} }) {
+		my ($path, $label) = @{ $ce->{courseLinks}{$link} };
+
+		my $isLink   = (-l $label ? 1 : 0);
+		my $status   = -e $label ? (-r $label ? 'r' : '-') . (-w _ ? 'w' : '-') . (-x _ ? 'x' : '-') : 'missing';
+		my $goodPath = path($label)->realpath eq $path;
+
+		# All links should be readable and executable, not writeable.
+		my $good = $isLink && ($status eq 'r-x') && $goodPath;
+		$links_ok = 0 if !$good;
+
+		push @results, [ $link, $path, $label, $good ];
+	}
+
+	return ($links_ok, \@results);
 }
 
 =head2 updateCourseDirectories
