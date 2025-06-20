@@ -235,6 +235,24 @@ $mail{feedbackRecipients}    = [
 #$permissionLevels{record_answers_when_acting_as_student} = "professor";
 
 ################################################################################
+# Initial password fallback
+################################################################################
+
+# This sets the default fallback source to use for a user's password when a user
+# account is created in a course. That is the source that will be shown by
+# default in a select menu in the user interface, and the source that will be
+# used by the importClassList.pl and addcourse scripts.  It can be one of
+# 'user_id', 'first_name', 'last_name', or 'student_id', or can be set to '' (or
+# anything not listed before).  If a user is created and no password is
+# explicitly provided, then this source will used for the password (assuming
+# that source value is also set).  If this is not one of the allowed sources,
+# and if a password is not explicitly provided, then the user will be created
+# without a password and will not be able to sign in with username and password.
+# Note that this is only used at the time that a user is initially created in a
+# course, and not when editing passwords at a later time.
+#$fallback_password_source = 'student_id';
+
+################################################################################
 # Default settings for the problem editor pages
 ################################################################################
 
@@ -513,6 +531,7 @@ $mail{feedbackRecipients}    = [
 
 #include("conf/authen_shibboleth.conf");
 
+################################################################################
 # Saml2 Authentication
 ################################################################################
 # Uncomment the following line to enable authentication via a Saml2 identity

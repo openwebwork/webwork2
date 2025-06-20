@@ -1,4 +1,5 @@
 % use WeBWorK::Utils::Sets qw(format_set_name_display);
+% use WeBWorK::Utils qw(getAssetURL);
 %
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
 	<div class="alert alert-danger p-1 mb-0">
@@ -12,6 +13,9 @@
 	% last;
 % }
 %
+% content_for js => begin
+    <%= javascript getAssetURL($ce, 'js/AddUsers/add-users.js'), defer => undef =%>
+% end
 <p><%= defined $c->{studentEntryReport} ? $c->{studentEntryReport}->join('') : '' %></p>
 <p><%= maketext('Enter information below for students you wish to add.') =%></p>
 %
@@ -56,12 +60,19 @@
 				<% end =%>
 		<% end =%>
 		<%= select_field fallback_password_source => [
-				[ 'None'       => '',           $default eq ''           ? (selected => undef) : () ],
-				[ 'Login Name' => 'user_id',    $default eq 'user_id'    ? (selected => undef) : () ],
-				[ 'First Name' => 'first_name', $default eq 'first_name' ? (selected => undef) : () ],
-				[ 'Last Name'  => 'last_name',  $default eq 'last_name'  ? (selected => undef) : () ],
-				[ 'Student ID' => 'student_id', $default eq 'student_id' ? (selected => undef) : () ]
+				[ maketext('None')       => '',           $default eq ''           ? (selected => undef) : () ],
+				[ maketext('Login Name') => 'user_id',    $default eq 'user_id'    ? (selected => undef) : () ],
+				[ maketext('First Name') => 'first_name', $default eq 'first_name' ? (selected => undef) : () ],
+				[ maketext('Last Name')  => 'last_name',  $default eq 'last_name'  ? (selected => undef) : () ],
+				[ maketext('Student ID') => 'student_id', $default eq 'student_id' ? (selected => undef) : () ]
 			],
+			data => {
+				placeholder            => maketext('No password'),
+				placeholder_user_id    => maketext('Use login name'),
+				placeholder_first_name => maketext('Use first name'),
+				placeholder_last_name  => maketext('Use last name'),
+				placeholder_student_id => maketext('Use student ID')
+			},
 			id => 'fallback_password_source', class => 'form-select w-auto flex-grow-0' =%>
 	</div>
 
@@ -141,7 +152,7 @@
 						<td>
 							% param("password_$_", undef);
 							<%= text_field "password_$_" => '', size => '16', 'aria-labelledby' => 'password_header',
-							class => 'form-control form-control-sm w-auto' =%>
+							class => 'form-control form-control-sm w-auto new_password' =%>
 						</td>
 					</tr>
 				% }
