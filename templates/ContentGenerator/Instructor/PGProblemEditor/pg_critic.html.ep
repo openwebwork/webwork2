@@ -54,13 +54,10 @@
 	these macros. </p>
 % }
 
-
 %  my $has_bad_features = 0;
 %  $has_bad_features += $results->{bad}{$_} for (keys %{$results->{bad}});
 
-% #  <%== dumper $results->{bad} %>
-
-% if ($has_bad_features) {
+% if ($has_bad_features || !$results->{good}{solution}) {
 <h3>You can improve on the following:</h3>
 <p> There are features in this problem that contain old or deprecated features.  The following
 list gives feedback of how the problem can be improved. </p>
