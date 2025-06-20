@@ -1,12 +1,12 @@
 % use WeBWorK::Utils::CourseDBIntegrityCheck;
-% use WeBWorK::Utils::CourseDirectoryIntegrityCheck qw(checkCourseDirectories);
+% use WeBWorK::Utils::CourseDirectoryIntegrityCheck qw(checkCourseDirectories checkCourseLinks);
 % use WeBWorK::Utils::CourseManagement qw(listCourses);
 % use WeBWorK::CourseEnvironment;
 %
 % my @courseIDs = sort { lc($a) cmp lc($b) } listCourses($ce);
 %
 <h2><%= maketext('Upgrade Courses') %> <%= $c->helpMacro('AdminUpgradeCourses') %></h2>
-<div class="mb-2"><%= maketext('Update the checked directories?') %></div>
+<div class="mb-2"><%= maketext('Update the checked courses?') %></div>
 <%= form_for current_route, method => 'POST', id => 'courselist', name => 'courselist', begin =%>
 	<div class="mb-2">
 		<button type="button" class="select-all btn btn-sm btn-secondary" data-select-group="upgrade_courseIDs">
@@ -31,9 +31,10 @@
 			% my $CDBIchecker      = WeBWorK::Utils::CourseDBIntegrityCheck->new($tempCE);
 			% my ($tables_ok)      = $CDBIchecker->checkCourseTables($courseID);
 			% my ($directories_ok) = checkCourseDirectories($tempCE);
+			% my ($links_ok)       = checkCourseLinks($tempCE);
 			%
 			<li class="align-items-center">
-				% if (!$tables_ok || !$directories_ok) {
+				% if (!$tables_ok || !$directories_ok || !$links_ok) {
 					<div class="form-check form-check-inline me-0">
 						<%= check_box upgrade_courseIDs => $courseID, name => 'upgrade_courseIDs',
 							id => "upgrade_courseIDs_$courseID", checked => undef, class => 'form-check-input' %>
@@ -45,6 +46,11 @@
 				% if (!$directories_ok) {
 					<span class="alert alert-danger p-1 mb-0">
 						<%= maketext('Directory structure or permissions need to be repaired.') =%>
+					</span>
+				% }
+				% if (!$links_ok) {
+					<span class="alert alert-danger p-1 mb-0">
+						<%= maketext('Link structure or permissions need to be repaired.') =%>
 					</span>
 				% }
 				% if ($tables_ok) {

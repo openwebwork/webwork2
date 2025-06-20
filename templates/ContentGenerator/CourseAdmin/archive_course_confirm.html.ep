@@ -74,6 +74,27 @@
 		<%= maketext('Directory structure is missing directories or the webserver lacks sufficient privileges.') =%>
 	</p>
 % }
+% # Report on links
+<h3>Link structure</h3>
+<ul>
+	% for (@$link_report) {
+		<li><%= $_->[0] %>: <span class="<%= $_->[3] ? 'text-success' : 'text-danger' %>"><%= $_->[2] %></span></li>
+	% }
+</ul>
+<ul>
+	% for (@$dir_update_messages) {
+		<li><span class="<%= $_->[1] ? 'text-success' : 'text-danger' %>"><%= $_->[0] %></span></li>
+	% }
+</ul>
+% if ($links_ok) {
+	<p class="text-success"><%= maketext('Link structure is ok') %></p>
+% } else {
+	<p class="text-danger fw-bold">
+		<%= maketext(
+			'Link structure is missing links, or the webserver lacks sufficient privileges, '
+				. 'or links point to the wrong place.') =%>
+	</p>
+% }
 <hr>
 % if ($all_tables_ok && param('delete_course')) {
 	<p class="text-danger fw-bold">
@@ -92,8 +113,8 @@
 		<%= hidden_field archive_courseIDs => $_ =%>
 	% }
 	%
-	% if ($all_tables_ok && $directories_ok) {
-		% # No missing tables, missing fields, or directories
+	% if ($all_tables_ok && $directories_ok && $links_ok) {
+		% # No missing tables, missing fields, missing directories, or missing/bad links
 		% # Warn about overwriting an existing archive
 		% my $archive_path = "$ce2->{webworkDirs}{courses}/$ce2->{admin_course_id}/archives/$archive_courseID.tar.gz";
 		% if (-e $archive_path && -w $archive_path) {
@@ -115,7 +136,7 @@
 			% }
 			<%= submit_button maketext('Archive'), name => 'confirm_archive_course', class => 'btn btn-primary' =%>
 		</div>
-	% } elsif ($directories_ok) {
+	% } elsif ($directories_ok && $links_ok) {
 		<div class="d-flex justify-content-center gap-2">
 			<%= submit_button maketext(q{Don't Archive}),
 				name => 'decline_archive_course', class => 'btn btn-primary' =%>
@@ -124,12 +145,12 @@
 		</div>
 	% } else {
 		<div class="text-center alert alert-danger p-1 mb-2">
-			<%= maketext('Directory structure needs to be repaired manually before archiving.') =%>
+			<%= maketext('Directory and/or link structure needs to be repaired manually before archiving.') =%>
 		</div>
 		<div class="d-flex justify-content-center gap-2">
 			<%= submit_button maketext(q{Don't Archive}),
 				name => 'decline_archive_course', class => 'btn btn-primary' =%>
-			<%= submit_button maketext('Attempt to upgrade directories'),
+			<%= submit_button maketext('Attempt to upgrade directories and links'),
 				name => 'upgrade_course_tables', class => 'btn btn-primary' =%>
 		</div>
 	% }
