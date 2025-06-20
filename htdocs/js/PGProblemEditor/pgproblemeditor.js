@@ -235,6 +235,30 @@
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
 	};
 
+	// Send a request to the server to run the PG critic in the CodeMirror editor.
+	const runPGCritic = () => {
+		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
+
+		const user = document.getElementsByName('user')[0];
+		if (user) request_object.user = user.value;
+		const sessionKey = document.getElementsByName('key')[0];
+		if (sessionKey) request_object.key = sessionKey.value;
+
+		request_object.rpc_command = 'runPGCritic';
+		request_object.pgCode =
+			webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '';
+
+		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
+			.then((response) => response.json())
+			.then((data) => {
+				renderArea.innerHTML = data.result_data.html;
+			})
+			.catch((err) => {
+				console.log(err);
+				showMessage(`Error: ${err?.message ?? err}`);
+			});
+	};
+
 	document.getElementById('take_action')?.addEventListener('click', async (e) => {
 		if (document.getElementById('current_action')?.value === 'format_code') {
 			e.preventDefault();
@@ -244,6 +268,8 @@
 				document.querySelector('input[name="action.format_code"]:checked').value == 'convertCodeToPGML'
 			) {
 				convertCodeToPGML();
+			} else if (document.querySelector('input[name="action.format_code"]:checked').value == 'runPGCritic') {
+				runPGCritic();
 			}
 			return;
 		}
