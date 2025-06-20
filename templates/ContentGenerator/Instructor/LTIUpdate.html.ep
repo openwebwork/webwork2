@@ -57,28 +57,31 @@
 						$ce->{LTIGradeMode} eq 'homework' ? (data => { sets => join(':', @$sets) }) : (),
 					],
 					$ce->{LTIGradeMode} eq 'homework'
-					? (map { [ $_ => $_, data => { sets => join(':', sort $db->listUserSets($_)) } ] } @$users)
+					? (map { [ $_ => $_, data => { sets => join(':', sort @{ $userSets->{$_} }) } ] } @$users)
 					: (@$users)
 				],
 				id => 'updateUserID', class => 'form-select' =%>
 		</div>
 	</div>
 	% if ($ce->{LTIGradeMode} eq 'homework') {
-		<div class="row mb-3">
-			<%= label_for updateSetID => maketext('Update set:'), class => 'col-auto col-form-label fw-bold' =%>
+		<div class="row">
 			<div class="col-auto">
-				<%= select_field updateSetID => [
-						[
-							maketext('All Sets') => '',
-							selected             => undef,
-							data                 => { users => join(':', @$users) }
-						],
-						map { [
-							format_set_name_display($_) => $_,
-							data => { users => join(':', sort $db->listSetUsers($_)) }
-						] } @$sets
-					],
-					id => 'updateSetID', class => 'form-select' =%>
+				<%= label_for updateSetID => maketext('Update selected sets:'), class => 'col-form-label fw-bold' =%>
+				<%= select_field updateSetID => [ map { [ format_set_name_display($_) => $_ ] } @$sets ],
+					id       => 'updateSetID',
+					class    => 'form-select',
+					multiple => undef,
+					size     => 10 =%>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<div class="col-auto">
+				<div class="form-check">
+					<label class="col-form-label">
+						<%= check_box selectAllSets => 1, id => 'selectAllSets', class => 'form-check-input' %>
+						<%= maketext('Select All Sets') %>
+					</label>
+				</div>
 			</div>
 		</div>
 	% }
