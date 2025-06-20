@@ -21,8 +21,9 @@ use warnings;
 
 use Data::Structure::Util qw(unbless);
 
-use WeBWorK::PG::Tidy          qw(pgtidy);
-use WeBWorK::PG::ConvertToPGML qw(convertToPGML);
+use WeBWorK::PG::Tidy            qw(pgtidy);
+use WeBWorK::PG::ConvertToPGML   qw(convertToPGML);
+use WeBWorK::PG::PGProblemCritic qw(analyzePGcode);
 
 sub getUserProblem {
 	my ($invocant, $self, $params) = @_;
@@ -178,6 +179,23 @@ sub convertCodeToPGML {
 		text   => 'Converted to PGML'
 	};
 
+}
+
+sub runPGCritic {
+	my ($invocant, $self, $params) = @_;
+	my $pg_critic_results = analyzePGcode($params->{pgCode});
+
+	my $html_output = $self->c->render_to_string(
+		template => 'ContentGenerator/Instructor/PGProblemEditor/pg_critic',
+		results  => $pg_critic_results
+	);
+
+	return {
+		ra_out => {
+			html => $html_output
+		},
+		text => 'The script pg-critic has been run successfully.'
+	};
 }
 
 1;

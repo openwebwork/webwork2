@@ -1,0 +1,121 @@
+<div class="m-3" style="overflow: scroll">
+<h2>PG Critic Results</h2>
+
+<h3>Metadata</h3>
+
+<p>The following lists required metadata. If any is missing, the given tag must be filled in.
+	However, make sure that the categories are correct, especially if the problem has been
+	copied.</p>
+
+% sub showIcon { my $show = shift;
+%  return $show ? q!<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-square text-success" viewBox="0 0 16 16">
+%  <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+%  <path d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
+% </svg>! : q!<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-square text-danger" viewBox="0 0 16 16">
+%  <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+%  <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+% </svg>!;
+%}
+
+<table class="table table-bordered">
+<tbody>
+<tr><th>DBsubject</th><td> <%== showIcon($results->{metadata}{DBsection}) %> </td></tr>
+<tr><th>DBchapter</th><td> <%== showIcon($results->{metadata}{DBchapter}) %> </td></tr>
+<tr><th>DBsection</th><td> <%== showIcon($results->{metadata}{DBsection})  %> </td></tr>
+<tr><th>Keywords</th><td> <%== showIcon($results->{metadata}{KEYWORDS})  %> </td></tr>
+</table>
+
+<h3>You done good with the following</h3>
+
+<table class="table table-bordered">
+<tbody>
+% if ($results->{good}{PGML}) {
+	<tr><th>PGML</th><td>This problem uses PGML, the current preferred way to write problem (text), solution and hint
+	blocks.</td></tr>
+%}
+% if ($results->{good}{solution}) {
+	<tr><th>Solutions</th><td>This problem has a solution block.  Every problem should have solutions that the
+	student can view after the answer data. </td></tr>
+%}
+% if ($results->{good}{hint}) {
+	<tr><th>Hints</th><td>This problem has a hint.  This can be helpful for students after attempting the problem
+	a few times (this can be set by the instructor).
+%}
+</tbody>
+</table>
+
+
+% if( scalar(@{$results->{deprecated_macros}}) > 0) {
+	<h3>Deprecated Macros</h3>
+	<p>This problem has the following deprecated macros: <%= join(', ',@{$results->{deprecated_macros}} ) %> </p>
+
+	<p>These should be removed from the problem in that these macros will be deleted from PG in a future
+	version.  The functions from these macros may be listed below to help aid in transitioning away from
+	these macros. </p>
+% }
+
+
+%  my $has_bad_features = 0;
+%  $has_bad_features += $results->{bad}{$_} for (keys %{$results->{bad}});
+
+% #  <%== dumper $results->{bad} %>
+
+% if ($has_bad_features) {
+<h3>You can improve on the following:</h3>
+<p> There are features in this problem that contain old or deprecated features.  The following
+list gives feedback of how the problem can be improved. </p>
+%}
+
+<ul>
+% if ($results->{bad}{BEGIN_TEXT}) {
+	<li>This problem contains older formatting blocks like BEGIN_TEXT.  Consider use PGML.
+	In the <em>Format Code</em> section of the PG Editor, the "Convert to PGML" should be used
+	as a start to get the problem switched.
+	 </li>
+%}
+% if ($results->{bad}{beginproblem}) {
+	<li>This problem contains the line <tt>TEXT(beginproblem())</tt>.  This is no longer necessary and should be removed. </li>
+%}
+% if ($results->{bad}{context_texstrings}) {
+	<li>This problem contains  the line <tt>Context()->texStrings;</tt>.  This is no longer necessary and should be removed.  </li>
+%}
+% if ($results->{bad}{oldtable}) {
+	<li>This problem contains the deprecated <tt>begintable</tt> command.  This is not assessible and often cannot be
+	converted to hardcopy.  This table should be written using <tt>nicetables</tt> or a PGML table.   </li>
+%}
+% if ($results->{bad}{showPartialCorrect}) {
+	<li>This problem contains the line <tt>$showPartialCorrectAnswers = 1</tt>. This is enabled by default and needed only
+	if set to 0.</li>
+% }
+% if (!$results->{good}{solution}) {
+	<li>This problem does not have a solution.  Consider adding one.</li>
+% }
+% if ($results->{bad}{fun_cmp} || $results->{bad}{str_cmp} || $results->{bad}{num_cmp}) {
+	<li>This problem contains the functioins <tt>num_cmp</tt>, <tt>str_cmp</tt> or <tt>fun_cmp</tt>.
+	These are old ways of checking answers.  These should be converted to MathObjects.
+% }
+% if ($results->{bad}{multiple_loadmacros}) {
+	<li>This problem contains two <tt>loadMacros</tt> function call. Combine the function
+	calls and make sure that all macros are needed for your problem. </li>
+% }
+% if ($results->{bad}{old_multiple_choice}) {
+	<li>This problem contains old versions of multiple choice.  The sample problems
+	<a href="https://openwebwork.github.io/pg-docs/sample-problems/Misc/MultipleChoiceCheckbox.html">
+	Multiple Choice with Checkbox</a>, <a href="https://openwebwork.github.io/pg-docs/sample-problems/Misc/MultipleChoicePopup.html">
+	Multiple Choice with Popup</a> and <a href="https://openwebwork.github.io/pg-docs/sample-problems/Misc/MultipleChoiceRadio.html">
+	Multiple Choice with Radio Buttons</a> should be examined as well the macros:
+	<a href="https://openwebwork.github.io/pg-docs/pod/pg/macros/parsers/parserPopUp.html">parserPopUp.pl</a>,
+	<a href="https://openwebwork.github.io/pg-docs/pod/pg/macros/parsers/parserCheckboxList.html">parserCheckboxList.pl</a> and
+	<a href="https://openwebwork.github.io/pg-docs/pod/pg/macros/parsers/parserRadioButtons.html">parserRadioButtons.pl</a>.
+
+	 </li>
+% }
+% if ($results->{bad}{lines_below_enddocument}) {
+	<li>There is content (code or other text), below the  <tt>ENDDOCUMENT()</tt> line.  Although this
+	is ignored, there shouldn't be content in this area.</li>
+% }
+
+</ul>
+
+
+</div>

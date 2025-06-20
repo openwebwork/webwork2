@@ -270,6 +270,7 @@ sub command_permission {
 		putPastAnswer     => 'problem_grader',
 		tidyPGCode        => 'access_instructor_tools',
 		convertCodeToPGML => 'access_instructor_tools',
+		runPGCritic       => 'access_instructor_tools',
 
 		# WebworkWebservice::RenderProblem
 		renderProblem => 'proctor_quiz_login',
