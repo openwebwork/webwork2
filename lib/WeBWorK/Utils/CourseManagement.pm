@@ -47,10 +47,6 @@ use constant {    # constants describing the comparison of two hashes.
 };
 ################################################################################
 
-# 	checkCourseTables
-# 	updateCourseTables
-# 	checkCourseDirectories
-
 =head1 FUNCTIONS
 
 =over
