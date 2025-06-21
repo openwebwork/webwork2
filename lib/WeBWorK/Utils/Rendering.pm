@@ -272,6 +272,7 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 			$ret->{internal_debug_messages} = $pg->{pgcore}->get_internal_debug_messages;
 			$ret->{warning_messages}        = $pg->{pgcore}->get_warning_messages();
 			$ret->{debug_messages}          = $pg->{pgcore}->get_debug_messages();
+			$ret->{deprecated_macros}       = $pg->{pgcore}{PG_loadMacros}{deprecated_macros};
 			$ret->{PG_ANSWERS_HASH}         = {
 				map {
 					$_ => {
