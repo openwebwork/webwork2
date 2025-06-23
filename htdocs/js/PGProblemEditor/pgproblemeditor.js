@@ -516,11 +516,11 @@
 						const container = document.createElement('div');
 						container.classList.add('alert', 'alert-danger', 'mx-2');
 						container.innerHTML =
-							'Warning!! This problem uses the following deprecated macros:' +
+							'<p>Warning!! This problem uses the following deprecated macros:</p>' +
 							'<ul class="mb-0">' +
 							data.deprecated_macros.reduce((acc, item) => `${acc}<li>${item}</li>`, '') +
-							'</ul>If this is an OPL problem, please report this issue to the OPL. ' +
-							'If this is a custom problem, please update the problem to use modern macros.';
+							'</ul><p>If this is an OPL problem, please report this issue to the OPL. ' +
+							'If this is a custom problem, please update the problem to use modern macros.</p>';
 						iframe.after(container);
 					}
 
