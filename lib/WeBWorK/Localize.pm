@@ -15,7 +15,6 @@ Locale::Maketext::Lexicon->import({
 	_decode     => 1,
 	_encoding   => undef,
 });
-*tense = sub { \$_[1] . ((\$_[2] eq 'present') ? 'ing' : 'ed') };
 
 # This subroutine is used to pass a language handle to job queue tasks
 # so that tasks can use maketext.
