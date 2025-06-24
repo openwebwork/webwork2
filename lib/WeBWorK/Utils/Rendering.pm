@@ -268,11 +268,18 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 			flags            => $pg->{flags},
 		};
 
+		# get a list of the deprecated macros
+		my @deprecated_macros;
+		for (keys %{ $pg->{pgcore}{PG_loadMacros}{macroFileList} }) {
+			my @dirs = split('/', $_);
+			push(@deprecated_macros, $dirs[$#dirs]) if $dirs[ $#dirs - 1 ] eq 'deprecated';
+		}
+
 		if (ref($pg->{pgcore}) eq 'PGcore') {
 			$ret->{internal_debug_messages} = $pg->{pgcore}->get_internal_debug_messages;
 			$ret->{warning_messages}        = $pg->{pgcore}->get_warning_messages();
 			$ret->{debug_messages}          = $pg->{pgcore}->get_debug_messages();
-			$ret->{deprecated_macros}       = $pg->{pgcore}{PG_loadMacros}{deprecated_macros};
+			$ret->{deprecated_macros}       = \@deprecated_macros;
 			$ret->{PG_ANSWERS_HASH}         = {
 				map {
 					$_ => {
