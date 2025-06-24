@@ -1100,6 +1100,12 @@ sub save_as_handler ($c) {
 		$c->addbadmessage($c->maketext('Please specify a file to save to.'));
 	}
 
+	# Make sure the file name contains only valid characters.
+	if ($new_file_name && $new_file_name =~ m![^-_.a-zA-Z0-9 /]!) {
+		$do_not_save = 1;
+		$c->addbadmessage($c->maketext('The specified file name "[_1]" contains illegal characters.', $new_file_name));
+	}
+
 	# Rescue the user in case they forgot to end the file name with the right extension.
 	if ($c->{is_pg} && $new_file_name !~ /\.pg$/) {
 		$new_file_name .= '.pg';
@@ -1113,7 +1119,7 @@ sub save_as_handler ($c) {
 
 	# Construct the output file path
 	my $outputFilePath = $c->ce->{courseDirs}{templates} . "/$new_file_name";
-	if (defined $outputFilePath && -e $outputFilePath) {
+	if (!$do_not_save && (defined $outputFilePath && -e $outputFilePath)) {
 		$do_not_save = 1;
 		$c->addbadmessage($c->maketext(
 			'File "[_1]" exists. File not saved. No changes have been made.',
@@ -1122,16 +1128,19 @@ sub save_as_handler ($c) {
 		$c->addbadmessage(
 			$c->maketext('You can change the file path for this problem manually from the "Sets Manager" page'))
 			if defined $c->{setID};
+	}
+
+	if ($do_not_save) {
 		$c->addgoodmessage($c->maketext(
 			'The text box now contains the source of the original problem. '
 				. 'You can recover lost edits by using the Back button on your browser.'
 		));
-	} else {
-		$c->{editFilePath} = $outputFilePath;
-		# saveFileChanges will update the tempFilePath and inputFilePath as needed.  Don't do that here.
 	}
 
 	unless ($do_not_save) {
+		$c->{editFilePath} = $outputFilePath;
+		# saveFileChanges will update the tempFilePath and inputFilePath as needed.  Don't do that here.
+
 		$c->saveFileChanges($outputFilePath);
 		my $targetProblemNumber;
 
