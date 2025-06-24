@@ -14,7 +14,7 @@
 	},
 	"dependencies": {
 		"@fortawesome/fontawesome-free": "^6.5.2",
-		"@openwebwork/pg-codemirror-editor": "^0.0.4",
+		"@openwebwork/pg-codemirror-editor": "^0.0.5",
 		"bootstrap": "~5.3.3",
 		"flatpickr": "^4.6.13",
 		"iframe-resizer": "^4.3.11",
