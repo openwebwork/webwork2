@@ -272,7 +272,7 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 		my @deprecated_macros;
 		for (keys %{ $pg->{pgcore}{PG_loadMacros}{macroFileList} }) {
 			my @dirs = split('/', $_);
-			push(@deprecated_macros, $dirs[$#dirs]) if $dirs[ $#dirs - 1 ] eq 'deprecated';
+			push(@deprecated_macros, $dirs[-1]) if $dirs[-2] eq 'deprecated';
 		}
 
 		if (ref($pg->{pgcore}) eq 'PGcore') {
