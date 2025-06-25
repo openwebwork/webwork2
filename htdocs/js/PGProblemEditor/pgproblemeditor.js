@@ -514,13 +514,13 @@
 					}
 					if (data.deprecated_macros?.length) {
 						const container = document.createElement('div');
-						container.classList.add('alert', 'alert-danger', 'mx-2');
+						container.classList.add('alert', 'alert-danger', 'mx-2', 'p-2');
 						container.innerHTML =
-							'<p>Warning!! This problem uses the following deprecated macros:</p>' +
-							'<ul class="mb-0">' +
+							'Warning!! This problem uses the following deprecated macros:' +
+							'<ul class="my-1">' +
 							data.deprecated_macros.reduce((acc, item) => `${acc}<li>${item}</li>`, '') +
-							'</ul><p>If this is an OPL problem, please report this issue to the OPL. ' +
-							'If this is a custom problem, please update the problem to use modern macros.</p>';
+							'</ul>If this is an OPL problem, please report this issue to the OPL. ' +
+							'If this is a custom problem, please update the problem to use modern macros.';
 						iframe.after(container);
 					}
 
