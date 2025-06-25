@@ -82,7 +82,7 @@
 	% }
 </ul>
 <ul>
-	% for (@$dir_update_messages) {
+	% for (@$link_update_messages) {
 		<li><span class="<%= $_->[1] ? 'text-success' : 'text-danger' %>"><%= $_->[0] %></span></li>
 	% }
 </ul>
@@ -90,9 +90,7 @@
 	<p class="text-success"><%= maketext('Link structure is ok') %></p>
 % } else {
 	<p class="text-danger fw-bold">
-		<%= maketext(
-			'Link structure is missing links, or the webserver lacks sufficient privileges, '
-				. 'or links point to the wrong place.') =%>
+		<%= maketext('Link structure is missing links, or links point to the wrong place.') =%>
 	</p>
 % }
 <hr>
