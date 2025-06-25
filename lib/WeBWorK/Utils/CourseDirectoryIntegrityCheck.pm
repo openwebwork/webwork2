@@ -13,11 +13,11 @@ use warnings;
 
 use Mojo::File qw(path);
 
-our @EXPORT_OK = qw(checkCourseDirectories checkCourseLinks updateCourseDirectories);
+our @EXPORT_OK = qw(checkCourseDirectories checkCourseLinks updateCourseDirectories updateCourseLinks);
 
 # Developer note:  This file should not format messages in html.  Instead return an array of tuples.  Each tuple should
 # contain the message components, and the last element of the tuple should be 0 or 1 to indicate failure or success
-# respectively.  See the the updateCourseDirectories method.
+# respectively.  See the updateCourseDirectories method.
 
 =head2 checkCourseDirectories
 
@@ -48,6 +48,20 @@ sub checkCourseDirectories {
 	return ($directories_ok, \@results);
 }
 
+=head2 checkCourseLinks
+
+Usage: C<< checkCourseLinks($ce) >>
+
+Checks the course links to make sure they exist, and point to the correct path.
+Note that there are no checks for permissions.  Permissions of symbolic links
+themselves don't matter and can't actually be changed, and the link targets are
+system directories that do not belong to the course. It is the responsibility of
+the system administrator to ensure that the system directories the links point
+to have the correct permissions. That should be done when webwork2 is installed,
+and not when upgrading a course.
+
+=cut
+
 sub checkCourseLinks {
 	my $ce = shift;
 
@@ -55,17 +69,15 @@ sub checkCourseLinks {
 	my $links_ok = 1;
 
 	for my $link (sort keys %{ $ce->{courseLinks} }) {
-		my ($path, $label) = @{ $ce->{courseLinks}{$link} };
+		my ($target, $path) = @{ $ce->{courseLinks}{$link} };
 
-		my $isLink   = (-l $label ? 1 : 0);
-		my $status   = -e $label ? (-r $label ? 'r' : '-') . (-w _ ? 'w' : '-') . (-x _ ? 'x' : '-') : 'missing';
-		my $goodPath = path($label)->realpath eq $path;
+		# All links should actually be links, and should have the correct target.  Note that the link target may also be
+		# a link, and so the realpath of the configured link target and realpath of the course link path must be
+		# compared to check that the link target is correct.
+		my $good = -l $path && path($path)->realpath eq path($target)->realpath;
 
-		# All links should be readable and executable, not writeable.
-		my $good = $isLink && ($status eq 'r-x') && $goodPath;
 		$links_ok = 0 if !$good;
-
-		push @results, [ $link, $path, $label, $good ];
+		push @results, [ $link, $target, $path, $good ];
 	}
 
 	return ($links_ok, \@results);
@@ -169,6 +181,57 @@ sub updateCourseDirectories {
 			push(@messages, [ "Failed to copy model course directory $modelCoursePath to $path: $@.", 0 ]) if $@;
 		}
 
+	}
+
+	return \@messages;
+}
+
+=head2 updateCourseLinks
+
+Usage: C<< updateCourseLinks($ce) >>
+
+Check to see if all course links exist and have the correct permissions.
+
+If a link does not exist, then it is created according to the link
+specifications defined in the course environment.
+
+Note that no attempt to fix permissions is made. Even the linux command line
+C<chmod> utility cannot change symbolic link permissions.
+
+=cut
+
+sub updateCourseLinks {
+	my $ce = shift;
+
+	my @messages;
+
+	my $permissions = path($ce->{courseDirs}{root})->stat->mode & oct(777);
+
+	for my $link (sort keys %{ $ce->{courseLinks} }) {
+		my ($target, $path) = @{ $ce->{courseLinks}{$link} };
+
+		my $targetIsCorrect = 0;
+
+		if (-l $path) {
+			$targetIsCorrect = path($path)->realpath eq path($target)->realpath;
+			next if $targetIsCorrect;
+		}
+
+		# If the link exists and the target is not correct, then attempt to delete it. It will be recreated,
+		# hopefully with the correct target in the following step.
+		unlink $path if -l $path && !$targetIsCorrect;
+
+		# Create the link if it doesn't exist.
+		if (!-e $path) {
+			eval {
+				symlink($target, $path);
+				push(@messages, [ "Created link from $path to $target.", 1 ]);
+			};
+			if ($@) {
+				push(@messages, [ "Failed to create link from $path to $target.", 0 ]);
+				next;
+			}
+		}
 	}
 
 	return \@messages;
