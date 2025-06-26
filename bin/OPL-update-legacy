@@ -921,7 +921,4 @@ if ($ce->{problemLibrary}{showLibraryLocalStats} ||
   do $ENV{WEBWORK_ROOT}.'/bin/load-OPL-global-statistics.pl';
 }
 
-# Generate set definition list files.
-do $ENV{WEBWORK_ROOT} . '/bin/generate-OPL-set-def-lists.pl';
-
 print "\nDone.\n";
