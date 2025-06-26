@@ -134,21 +134,18 @@
 			% }
 			<%= submit_button maketext('Archive'), name => 'confirm_archive_course', class => 'btn btn-primary' =%>
 		</div>
-	% } elsif ($directories_ok && $links_ok) {
-		<div class="d-flex justify-content-center gap-2">
-			<%= submit_button maketext(q{Don't Archive}),
-				name => 'decline_archive_course', class => 'btn btn-primary' =%>
-			<%= submit_button maketext('Upgrade Course Tables'),
-				name => 'upgrade_course_tables', class => 'btn btn-primary' =%>
-		</div>
 	% } else {
-		<div class="text-center alert alert-danger p-1 mb-2">
-			<%= maketext('Directory and/or link structure needs to be repaired manually before archiving.') =%>
-		</div>
+		% if (!$directories_ok || !$links_ok) {
+			<div class="text-center alert alert-danger p-1 mb-2">
+				<%= maketext('Directory and/or link structure needs to be repaired manually before archiving.') =%>
+			</div>
+		% }
 		<div class="d-flex justify-content-center gap-2">
 			<%= submit_button maketext(q{Don't Archive}),
 				name => 'decline_archive_course', class => 'btn btn-primary' =%>
-			<%= submit_button maketext('Attempt to upgrade directories and links'),
+			<%= submit_button $all_tables_ok
+					? maketext('Attempt to upgrade directories and links')
+					: maketext('Upgrade Course Tables'),
 				name => 'upgrade_course_tables', class => 'btn btn-primary' =%>
 		</div>
 	% }
