@@ -517,7 +517,9 @@ sub rename_course_confirm ($c) {
 		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
 	}
 
-	# Check directories and links
+	# Update and check directories and links.
+	my $dir_update_messages  = $c->param('upgrade_course_tables') ? updateCourseDirectories($ce2) : [];
+	my $link_update_messages = $c->param('upgrade_course_tables') ? updateCourseLinks($ce2)       : [];
 	my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
 	my ($links_ok,       $link_report)      = checkCourseLinks($ce2);
 
@@ -528,8 +530,10 @@ sub rename_course_confirm ($c) {
 		dbStatus                      => $dbStatus,
 		directory_report              => $directory_report,
 		directories_ok                => $directories_ok,
+		dir_update_messages           => $dir_update_messages,
 		link_report                   => $link_report,
 		links_ok                      => $links_ok,
+		link_update_messages          => $link_update_messages,
 		rename_oldCourseTitle         => $rename_oldCourseTitle,
 		change_course_title_str       => $change_course_title_str,
 		rename_oldCourseInstitution   => $rename_oldCourseInstitution,
