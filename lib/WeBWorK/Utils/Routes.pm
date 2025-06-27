@@ -48,6 +48,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  pod_viewer                          /pod/$filePath
 
  sample_problem_index                /sampleproblems
+ sample_problem_search_data          /sampleproblems/search_data
  sample_problem_viewer               /sampleproblems/$filePath
 
  set_list                            /$courseID
@@ -276,10 +277,17 @@ my %routeParameters = (
 
 	sample_problem_index => {
 		title    => x('Sample Problem Index'),
-		children => [qw(sample_problem_viewer)],
+		children => [qw(sample_problem_search_data sample_problem_viewer)],
 		module   => 'SampleProblemViewer',
 		path     => '/sampleproblems',
 		action   => 'sampleProblemIndex'
+	},
+
+	sample_problem_search_data => {
+		title  => 'sample problem search data',
+		module => 'SampleProblemViewer',
+		path   => '/search_data',
+		action => 'searchData'
 	},
 
 	sample_problem_viewer => {

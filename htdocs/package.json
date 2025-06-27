@@ -22,6 +22,7 @@
 		"jquery-ui-dist": "^1.13.2",
 		"luxon": "^3.4.4",
 		"mathjax": "^3.2.2",
+		"minisearch": "^7.1.2",
 		"shortcut-buttons-flatpickr": "^0.4.0",
 		"sortablejs": "^1.15.2"
 	},

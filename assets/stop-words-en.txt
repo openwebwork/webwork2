@@ -1,13 +1,9 @@
-# This file contains stop words from https://github.com/Alir3z4/stop-words
-# These words will be ignored in the processing of macros and sample problems used by the script
-# bin/dev_scripts/build-search-db.pl
+# Stop words from https://github.com/Alir3z4/stop-words.
 
 'll
 'tis
 'twas
 've
-10
-39
 a
 a's
 able
@@ -1300,3 +1296,25 @@ za
 zero
 zm
 zr
+
+# Additional specific stop words specific to POD and sample problem documentation.
+constructor
+description
+error
+errors
+macro
+macros
+pod
+podlink
+problink
+synopsis
+usage
+funciton
+functions
+method
+methods
+option
+options
+todo
+fixme
+_
