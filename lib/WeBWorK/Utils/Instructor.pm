@@ -571,25 +571,13 @@ sub getDefList {
 		$topdir
 	);
 
-	# Load the OPL set definition files from the list file.
-	push(@found_set_defs, loadSetDefListFile("$ce->{webworkDirs}{htdocs}/DATA/library-set-defs.json"))
-		if -d "$ce->{courseDirs}{templates}/Library" && -r "$ce->{courseDirs}{templates}/Library";
-
-	# Load the Contrib set definition files from the list file.
-	push(@found_set_defs, loadSetDefListFile("$ce->{webworkDirs}{htdocs}/DATA/contrib-set-defs.json"))
-		if -d "$ce->{courseDirs}{templates}/Contrib" && -r "$ce->{courseDirs}{templates}/Contrib";
-
-	my @lib_order;
 	my @depths;
 	my @caps;
 	for (@found_set_defs) {
-		push(@lib_order, $_ =~ m|^Library/| ? 2 : $_ =~ m|^Contrib/| ? 3 : 1);
 		push @depths, scalar(@{ [ $_ =~ /\//g ] });
 		push @caps,   uc($_);
 	}
-	return @found_set_defs[
-		sort { $lib_order[$a] <=> $lib_order[$b] || $depths[$a] <=> $depths[$b] || $caps[$a] cmp $caps[$b] }
-		0 .. $#found_set_defs ];
+	return @found_set_defs[ sort { $depths[$a] <=> $depths[$b] || $caps[$a] cmp $caps[$b] } 0 .. $#found_set_defs ];
 }
 
 1;

@@ -285,42 +285,4 @@
 			}
 		});
 	}
-
-	const importSourceSelect = document.getElementById('import_source_select');
-	const listOPLSetsCheck = document.getElementById('list_opl_sets');
-	const listContribSetsCheck = document.getElementById('list_contrib_sets');
-
-	if (importSourceSelect && (listOPLSetsCheck || listContribSetsCheck)) {
-		const allOptions = Array.from(importSourceSelect.options);
-
-		const updateAvailableOptions = () => {
-			// Save the currently selected options.
-			const selectedDefs = Array.from(importSourceSelect.selectedOptions);
-
-			for (const option of Array.from(importSourceSelect.options)) option.value && option.remove();
-			for (const option of allOptions) {
-				if (option.value.startsWith('Library/')) {
-					if (listOPLSetsCheck.checked) importSourceSelect.add(option);
-				} else if (option.value.startsWith('Contrib/')) {
-					if (listContribSetsCheck.checked) importSourceSelect.add(option);
-				} else importSourceSelect.add(option);
-			}
-
-			// Reselect the options that were selected before if still available. Otherwise
-			// select the first option which should be the "Select filenames below" option.
-			let foundSelected = false;
-			for (const option of importSourceSelect.options) {
-				if (selectedDefs.includes(option)) {
-					foundSelected = true;
-					option.selected = true;
-				}
-			}
-			if (!foundSelected) allOptions[0].selected = true;
-		};
-
-		listOPLSetsCheck?.addEventListener('change', updateAvailableOptions);
-		listContribSetsCheck?.addEventListener('change', updateAvailableOptions);
-
-		updateAvailableOptions();
-	}
 })();
