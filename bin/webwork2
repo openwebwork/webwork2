@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use feature 'say';
 
 BEGIN {
 	use Mojo::File qw(curfile);
@@ -25,6 +26,17 @@ use Mojolicious::Commands;
 
 use lib "$WEBWORK_ROOT/lib";
 use lib "$PG_ROOT/lib";
+
+# Build the search database if it doesn't exist (or is XXX days old)
+
+unless (-f "$WEBWORK_ROOT/htdocs/DATA/search.json") {
+	say "Building the search json file.";
+	`$WEBWORK_ROOT/bin/build-search-json.pl`;
+	say "There was an error running the build-search-json.pl script.  Try running it manually with "
+		. "the verbose flag." if $?;
+	say "Successfully built the search json file at $WEBWORK_ROOT/htdocs/DATA/search.json"
+		if -f "$WEBWORK_ROOT/htdocs/DATA/search.json";
+}
 
 # Start command line interface for application
 Mojolicious::Commands->start_app('Mojolicious::WeBWorK');

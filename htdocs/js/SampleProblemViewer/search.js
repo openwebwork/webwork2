@@ -5,6 +5,7 @@
 (() => {
 	const miniSearch = new MiniSearch({ fields: ['terms', 'filename', 'name', 'description', 'methods'] });
 	let pages;
+	const resultList = document.getElementById('searchResults');
 	// This is the data from sample-problems/macros POD.
 	fetch('../../DATA/search.json')
 		.then((res) => res.json())
@@ -12,9 +13,17 @@
 			pages = p;
 			miniSearch.addAll(pages);
 		})
-		.catch((e) => console.error(e));
+		.catch((e) => {
+			if (e) {
+				console.error(e);
+				const error_box = document.createElement('div');
+				error_box.classList.add('alert', 'alert-danger');
+				error_box.innerText =
+					'There was a error loading the search box. Please contact the webwork administrator';
+				resultList.append(error_box);
+			}
+		});
 
-	const resultList = document.getElementById('searchResults');
 	const searchBox = document.getElementById('searchDocs');
 	document.getElementById('clearSearchButton').addEventListener('click', () => {
 		searchBox.value = '';

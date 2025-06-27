@@ -9,23 +9,18 @@ build-search-db.pl - Build a search file for the samples problems and POD files.
 build-search-db.pl [options]
 
  Options:
-   -p|--pg-root          Directory containing  a git clone of pg.
-                         If this option is not set, then the environment
-                         variable $PG_ROOT will be used if it is set.
    -f|--json-file        Location (relative to WW_ROOT) to store the resulting JSON file.
                          Default value is htdocs/DATA/search.json
-   -s|--sample-prob-dir  Location (relative to $PG_ROOT) where the sample problems are located.
+   -s|--sample-prob-dir  Location (relative to $pg_root) where the sample problems are located.
                          Default value is tutorial/samples-problems
    -b|--build            One of (all, macros, samples) to determine if the macros, sample
                          problems or both should be scraped for data.
    -v|--verbose          Setting this flag provides details as the script runs.
-
-Note that --pg-root must be provided or the PG_ROOT environment variable set
-if the POD for pg is desired.
+   -h|--help             Show this help message.
 
 =head1 DESCRIPTION
 
-This script parses all of the files in $PG_ROOT/tutorial/samples-problems and the POD in the macro files.
+This script parses all of the files in $pg_root/tutorial/samples-problems and the POD in the macro files.
 The result is a JSON file containing information about every file to be searched for in the sample-problems
 space.  The purpose of creating this file is to be used on the Sample Problems page (linked from
 the PG Editor) to search through macros and samples problems.
@@ -42,33 +37,36 @@ use File::Find;
 use Mojo::JSON qw(encode_json);
 use Mojo::File qw(curfile);
 use Pod::Simple::SimpleTree;
+use Pod::Usage;
+use YAML::XS qw(LoadFile);
 
+my $ww_root = Mojo::File->curfile->dirname->dirname;
+
+# Load the configuration file to obtain the PG root directory.
+my $config_file = "$ww_root/conf/webwork2.mojolicious.yml";
+$config_file = "$ww_root/conf/webwork2.mojolicious.dist.yml" unless -e $config_file;
+my $config = LoadFile($config_file);
+
+my $pg_root = $config->{pg_dir};
 my $build   = "all";
-my $pg_root = $ENV{PG_ROOT};
 
 # These are the default sample problem directory and JSON file.
 my $sample_prob_dir = "tutorial/sample-problems";
 my $json_file       = "htdocs/DATA/search.json";
-my ($verbose, $show_warnings) = (1, 0);
+my ($verbose, $show_warnings, $show_help) = (0, 0, 0);
 
 GetOptions(
-	'p|pg-root=s'         => \$pg_root,
 	'f|json-file=s'       => \$json_file,
 	's|sample-prob-dir=s' => \$sample_prob_dir,
 	'b|build=s'           => \$build,
 	'w|show-warnings'     => \$show_warnings,
-	'v|verbose+'          => \$verbose
+	'v|verbose+'          => \$verbose,
+	'h|help'              => \$show_help
 );
+pod2usage(2) if $show_help;
 
 die "The build options must be one of (all, macros, samples). The value $build is not valid."
 	if ((grep { $_ eq $build } qw/all macros samples/) != 1);
-
-my $ww_root = $ENV{WW_ROOT};
-$ww_root = Mojo::File->curfile->dirname->dirname->realpath unless defined($ww_root);
-
-say $ww_root;
-
-die "ww_root: $ww_root is not a directory" unless -d $ww_root;
 
 $sample_prob_dir = "$pg_root/$sample_prob_dir";
 $json_file       = Mojo::File->new("$ww_root/$json_file");
