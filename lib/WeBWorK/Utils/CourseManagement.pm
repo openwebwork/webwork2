@@ -45,11 +45,6 @@ use constant {    # constants describing the comparison of two hashes.
 	DIFFER_IN_A_AND_B => 2,
 	SAME_IN_A_AND_B   => 3
 };
-################################################################################
-
-# 	checkCourseTables
-# 	updateCourseTables
-# 	checkCourseDirectories
 
 =head1 FUNCTIONS
 

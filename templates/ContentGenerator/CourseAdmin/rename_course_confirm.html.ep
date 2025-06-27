@@ -62,11 +62,35 @@
 		<li><%= $_->[0] %>: <span class="<%= $_->[2] ? 'text-success' : 'text-danger' %>"><%= $_->[1] %></span></li>
 	% }
 </ul>
+<ul>
+	% for (@$dir_update_messages) {
+		<li><span class="<%= $_->[1] ? 'text-success' : 'text-danger' %>"><%= $_->[0] %></span></li>
+	% }
+</ul>
 % if ($directories_ok) {
 	<p class="text-success"><%= maketext('Directory structure is ok') %></p>
 % } else {
 	<p class="text-danger fw-bold">
 		<%= maketext('Directory structure is missing directories or the webserver lacks sufficient privileges.') =%>
+	</p>
+% }
+% # Report on links
+<h3>Link structure</h3>
+<ul>
+	% for (@$link_report) {
+		<li><%= $_->[0] %>: <span class="<%= $_->[3] ? 'text-success' : 'text-danger' %>"><%= $_->[2] %></span></li>
+	% }
+</ul>
+<ul>
+	% for (@$link_update_messages) {
+		<li><span class="<%= $_->[1] ? 'text-success' : 'text-danger' %>"><%= $_->[0] %></span></li>
+	% }
+</ul>
+% if ($links_ok) {
+	<p class="text-success"><%= maketext('Link structure is ok') %></p>
+% } else {
+	<p class="text-danger fw-bold">
+		<%= maketext('Link structure is missing links, or links point to the wrong place.') =%>
 	</p>
 % }
 <hr>
@@ -81,8 +105,8 @@
 	<%= hidden_field rename_oldCourseInstitution => $rename_oldCourseInstitution,
 		id => 'hidden_rename_oldCourseInstitution' =%>
 	%
-	% if ($all_tables_ok && $directories_ok) {
-		% # No missing tables, missing fields, or directories
+	% if ($all_tables_ok && $directories_ok && $links_ok) {
+		% # No missing tables, missing fields, missing directories, or missing/bad links
 		<div class="text-start">
 			<h3><%= maketext('Rename [_1] to [_2]', $rename_oldCourseID, $rename_newCourseID) %></h3>
 			% if ($change_course_title_str) {
@@ -92,24 +116,25 @@
 				<div class="mb-3"><%= $change_course_institution_str %></div>
 			% }
 			<div class="d-flex justify-content-center gap-2">
-				<%= submit_button maketext(q{Don't rename}),
+				<%= submit_button maketext(q{Don't Rename}),
 					name => 'decline_rename_course', class => 'btn btn-primary' =%>
 				<%= submit_button maketext('Rename'),
 					name => 'confirm_rename_course', class => 'btn btn-primary' =%>
 			</div>
 		</div>
-	% } elsif ($directories_ok) {
-		<div class="d-flex justify-content-center gap-2">
-			<%= submit_button maketext(q{Don't rename}), name => 'decline_rename_course', class => 'btn btn-primary' =%>
-			<%= submit_button maketext('Upgrade Course Tables'),
-				name => 'upgrade_course_tables', class => 'btn btn-primary' =%>
-		</div>
 	% } else {
-		<div class="text-center alert alert-danger p-1 mb-2">
-			<%= maketext('Directory structure needs to be repaired manually before renaming.') =%>
-		</div>
-		<div class="text-center">
-			<%= submit_button maketext(q{Don't rename}), name => 'decline_rename_course', class => 'btn btn-primary' =%>
+		% if (!$directories_ok || !$links_ok) {
+			<div class="text-center alert alert-danger p-1 mb-2">
+				<%= maketext('Directory and/or link structure needs to be repaired manually before archiving.') =%>
+			</div>
+		% }
+		<div class="d-flex justify-content-center gap-2">
+			<%= submit_button maketext(q{Don't Rename}),
+				name => 'decline_rename_course', class => 'btn btn-primary' =%>
+			<%= submit_button $all_tables_ok
+					? maketext('Attempt to upgrade directories and links')
+					: maketext('Upgrade Course Tables'),
+				name => 'upgrade_course_tables', class => 'btn btn-primary' =%>
 		</div>
 	% }
 <% end =%>

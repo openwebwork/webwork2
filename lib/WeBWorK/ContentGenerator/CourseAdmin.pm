@@ -16,11 +16,24 @@ use Time::localtime;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
 use WeBWorK::Utils                   qw(cryptPassword trim_spaces);
-use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse retitleCourse deleteCourse listCourses archiveCourse
-	unarchiveCourse initNonNativeTables);
+use WeBWorK::Utils::CourseManagement qw(
+	addCourse
+	renameCourse
+	retitleCourse
+	deleteCourse
+	listCourses
+	archiveCourse
+	unarchiveCourse
+	initNonNativeTables
+);
 use WeBWorK::Utils::Logs qw(writeLog);
 use WeBWorK::Utils::CourseDBIntegrityCheck;
-use WeBWorK::Utils::CourseDirectoryIntegrityCheck qw(checkCourseDirectories updateCourseDirectories);
+use WeBWorK::Utils::CourseDirectoryIntegrityCheck qw(
+	checkCourseDirectories
+	checkCourseLinks
+	updateCourseDirectories
+	updateCourseLinks
+);
 use WeBWorK::DB;
 
 sub pre_header_initialize ($c) {
@@ -504,8 +517,11 @@ sub rename_course_confirm ($c) {
 		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
 	}
 
-	# Check directories
+	# Update and check directories and links.
+	my $dir_update_messages  = $c->param('upgrade_course_tables') ? updateCourseDirectories($ce2) : [];
+	my $link_update_messages = $c->param('upgrade_course_tables') ? updateCourseLinks($ce2)       : [];
 	my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
+	my ($links_ok,       $link_report)      = checkCourseLinks($ce2);
 
 	return $c->include(
 		'ContentGenerator/CourseAdmin/rename_course_confirm',
@@ -514,6 +530,10 @@ sub rename_course_confirm ($c) {
 		dbStatus                      => $dbStatus,
 		directory_report              => $directory_report,
 		directories_ok                => $directories_ok,
+		dir_update_messages           => $dir_update_messages,
+		link_report                   => $link_report,
+		links_ok                      => $links_ok,
+		link_update_messages          => $link_update_messages,
 		rename_oldCourseTitle         => $rename_oldCourseTitle,
 		change_course_title_str       => $change_course_title_str,
 		rename_oldCourseInstitution   => $rename_oldCourseInstitution,
@@ -967,21 +987,26 @@ sub archive_course_confirm ($c) {
 		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
 	}
 
-	# Update and check directories.
-	my $dir_update_messages = $c->param('upgrade_course_tables') ? updateCourseDirectories($ce2) : [];
+	# Update and check directories and links.
+	my $dir_update_messages  = $c->param('upgrade_course_tables') ? updateCourseDirectories($ce2) : [];
+	my $link_update_messages = $c->param('upgrade_course_tables') ? updateCourseLinks($ce2)       : [];
 	my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
+	my ($links_ok,       $link_report)      = checkCourseLinks($ce2);
 
 	return $c->include(
 		'ContentGenerator/CourseAdmin/archive_course_confirm',
-		ce2                 => $ce2,
-		upgrade_report      => \@upgrade_report,
-		tables_ok           => $tables_ok,
-		dbStatus            => $dbStatus,
-		dir_update_messages => $dir_update_messages,
-		directory_report    => $directory_report,
-		directories_ok      => $directories_ok,
-		archive_courseID    => $archive_courseID,
-		archive_courseIDs   => \@archive_courseIDs
+		ce2                  => $ce2,
+		upgrade_report       => \@upgrade_report,
+		tables_ok            => $tables_ok,
+		dbStatus             => $dbStatus,
+		dir_update_messages  => $dir_update_messages,
+		directory_report     => $directory_report,
+		directories_ok       => $directories_ok,
+		link_report          => $link_report,
+		links_ok             => $links_ok,
+		link_update_messages => $link_update_messages,
+		archive_courseID     => $archive_courseID,
+		archive_courseIDs    => \@archive_courseIDs
 	);
 }
 
@@ -1408,7 +1433,7 @@ sub upgrade_course_confirm ($c) {
 			);
 		}
 
-		# Report on directory status
+		# Report on directory and link status
 		my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
 		push(@$course_output, $c->tag('div', class => 'mb-2', $c->maketext('Directory structure:')));
 		push(
@@ -1430,12 +1455,39 @@ sub upgrade_course_confirm ($c) {
 		push(
 			@$course_output,
 			$directories_ok
-			? $c->tag('p', class => 'text-success mb-0', $c->maketext('Directory structure is ok'))
+			? $c->tag('p', class => 'text-success', $c->maketext('Directory structure is ok'))
 			: $c->tag(
 				'p',
-				class => 'text-danger mb-0',
+				class => 'text-danger',
 				$c->maketext(
 					'Directory structure is missing directories or the webserver lacks sufficient privileges.')
+			)
+		);
+
+		my ($links_ok, $link_report) = checkCourseLinks($ce2);
+		push(@$course_output, $c->tag('div', class => 'mb-2', $c->maketext('Link structure:')));
+		push(
+			@$course_output,
+			$c->tag(
+				'ul',
+				$c->c(
+					map {
+						$c->tag(
+							'li',
+							$c->c("$_->[0]: ",
+								$c->tag('span', class => $_->[3] ? 'text-success' : 'text-danger', $_->[2]))
+								->join('')
+						)
+					} @$link_report
+				)->join('')
+			)
+		);
+		push(
+			@$course_output,
+			$links_ok ? $c->tag('p', class => 'text-success mb-0', $c->maketext('Link structure is ok')) : $c->tag(
+				'p',
+				class => 'text-danger mb-0',
+				$c->maketext('Link structure is missing links, or links point to the wrong place.')
 			)
 		);
 
@@ -1539,9 +1591,11 @@ sub do_upgrade_course ($c) {
 			);
 		}
 
-		# Add missing directories and prepare report on directory status
-		my $dir_update_messages = updateCourseDirectories($ce2);    # Needs more error messages
+		# Add missing directories/links and prepare report on directory/link status
+		my $dir_update_messages  = updateCourseDirectories($ce2);    # Needs more error messages
+		my $link_update_messages = updateCourseLinks($ce2);
 		my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
+		my ($links_ok, $link_report)            = checkCourseLinks($ce2);
 
 		# Show status
 		my $course_report = $c->c;
@@ -1552,7 +1606,7 @@ sub do_upgrade_course ($c) {
 
 		push(@$course_report, @$db_report);
 
-		# Show report on directory status
+		# Show report on directory and link status
 		push(
 			@$course_report,
 			$c->tag('div', class => 'mb-2', $c->maketext('Directory structure:')),
@@ -1585,12 +1639,52 @@ sub do_upgrade_course ($c) {
 				)->join('')
 			),
 			$directories_ok
-			? $c->tag('p', class => 'text-success mb-0', $c->maketext('Directory structure is ok'))
+			? $c->tag('p', class => 'text-success', $c->maketext('Directory structure is ok'))
 			: $c->tag(
+				'p',
+				class => 'text-danger',
+				$c->maketext(
+					'Directory structure is missing directories or the webserver lacks sufficient privileges.')
+			)
+		);
+		push(
+			@$course_report,
+			$c->tag('div', class => 'mb-2', $c->maketext('Link structure:')),
+			$c->tag(
+				'ul',
+				$c->c(
+					map {
+						$c->tag(
+							'li',
+							$c->c("$_->[0]: ",
+								$c->tag('span', class => $_->[3] ? 'text-success' : 'text-danger', $_->[2]))
+								->join('')
+						)
+					} @$link_report
+				)->join('')
+			),
+			$c->tag(
+				'ul',
+				$c->c(
+					map {
+						$c->tag(
+							'li',
+							$c->tag(
+								'span',
+								class => $_->[1] ? 'text-success' : 'text-danger',
+								$_->[0]
+							)
+						)
+					} @$link_update_messages
+				)->join('')
+			),
+			$links_ok ? $c->tag('p', class => 'text-success mb-0', $c->maketext('Link structure is ok')) : $c->tag(
 				'p',
 				class => 'text-danger mb-0',
 				$c->maketext(
-					'Directory structure is missing directories or the webserver lacks sufficient privileges.')
+					'Link structure is missing links, or the webserver lacks sufficient privileges, '
+						. 'or links point to the wrong place.'
+				)
 			)
 		);
 		push(@$output, $c->tag('div', class => 'border border-dark rounded p-2 mb-2', $course_report->join('')));
