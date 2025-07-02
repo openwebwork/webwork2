@@ -36,7 +36,6 @@
 % end
 %
 % content_for js => begin
-	% # Page specfific javascript
 	<%= javascript getAssetURL($ce, 'js/GatewayQuiz/gateway.js'), defer => undef =%>
 	%
 	% # Output javascript for jquery-ui for problems to use.
