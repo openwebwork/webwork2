@@ -2,9 +2,9 @@
 
 # This script downloads the latest OPL metadata release, and restores the database dump file in that release.
 
-use feature say;
 use strict;
 use warnings;
+use feature 'say';
 
 use File::Fetch;
 use File::Copy;
