@@ -33,31 +33,35 @@
 <tbody>
 % if ($pos->{PGML}) {
 	<tr><th>PGML</th><td>This problem uses PGML, the current preferred way to write problem (text), solution and hint
-	blocks.</td></tr>
+		blocks.</td></tr>
 % }
 % if ($pos->{solution}) {
 	<tr><th>Solutions</th><td>This problem has a solution block.  Every problem should have solutions that the
-	student can view after the answer data. </td></tr>
+		student can view after the answer data. </td></tr>
 % }
 % if ($pos->{hint}) {
 	<tr><th>Hints</th><td>This problem has a hint.  This can be helpful for students after attempting the problem
-	a few times (this can be set by the instructor).
+		a few times (this can be set by the instructor).
+% }
+% if ($pos->{randomness}) {
+	<tr><th>Randomness</th><td>This problem uses randomness.  This is desired to give to a class of students, each
+		of whom may have a different problem. </td>
 % }
 % # list of the positive contexts:
 % my @good_contexts =  grep { $pos->{contexts}{$_} } keys %{$pos->{parsers}};
 % if (@good_contexts) {
 	<tr><th>Modern Contexts</th><td>This problem uses the following modern contexts:
-	<%= join(', ', @good_contexts) %> </td>
+		<%= join(', ', @good_contexts) %> </td>
 % }
 % my @good_parsers = grep { $pos->{parsers}->{$_} } keys %{$pos->{parsers}};
 % if (@good_parsers) {
 	<tr><th>Modern Parsers</th><td>This problem uses features of the following modern parsers:
-	<%= join(', ', @good_parsers) %> </td>
+		<%= join(', ', @good_parsers) %> </td>
 % }
 % my @good_macros = grep { $pos->{macros}->{$_} } keys %{$pos->{macros}};
 % if (@good_macros) {
 	<tr><th>Modern Macros</th><td>This problem uses functionality from the following modern macros:
-	<%= join(', ', @good_macros) %> </td>
+		<%= join(', ', @good_macros) %> </td>
 % }
 </tbody>
 </table>
@@ -68,25 +72,24 @@
 	<p>This problem has the following deprecated macros: <%= join(', ',@{$results->{deprecated_macros}} ) %> </p>
 
 	<p>These should be removed from the problem in that these macros will be deleted from PG in a future
-	version.  The functions from these macros may be listed below to help aid in transitioning away from
-	these macros. </p>
+		version.  The functions from these macros may be listed below to help aid in transitioning away from
+		these macros. </p>
 % }
 
 %  my $has_bad_features = 0;
 %  $has_bad_features += $results->{negative}{$_} for (keys %{$results->{negative}});
 
 % if ($has_bad_features || !$pos->{solution}) {
-<h3>You can improve on the following:</h3>
-<p> There are features in this problem that contain old or deprecated features.  The following
-list gives feedback of how the problem can be improved. </p>
+	<h3>You can improve on the following:</h3>
+	<p> There are features in this problem that contain old or deprecated features.  The following
+		list gives feedback of how the problem can be improved. </p>
 %}
 
 <ul>
 % if ($results->{negative}{BEGIN_TEXT}) {
 	<li>This problem contains older formatting blocks like BEGIN_TEXT.  Consider use PGML.
-	In the <em>Format Code</em> section of the PG Editor, the "Convert to PGML" should be used
-	as a start to get the problem switched.
-	 </li>
+		In the <em>Format Code</em> section of the PG Editor, the "Convert to PGML" should be used
+		as a start to get the problem switched.</li>
 %}
 % if ($results->{negative}{beginproblem}) {
 	<li>This problem contains the line <tt>TEXT(beginproblem())</tt>.  This is no longer necessary and should be removed. </li>
@@ -96,43 +99,46 @@ list gives feedback of how the problem can be improved. </p>
 %}
 % if ($results->{negative}{oldtable}) {
 	<li>This problem contains the deprecated <tt>begintable</tt> command.  This is not assessible and often cannot be
-	converted to hardcopy.  This table should be written using <tt>nicetables</tt> or a PGML table.   </li>
+		converted to hardcopy.  This table should be written using <tt>nicetables</tt> or a PGML table.   </li>
 %}
 % if ($results->{negative}{showPartialCorrect}) {
 	<li>This problem contains the line <tt>$showPartialCorrectAnswers = 1</tt>. This is enabled by default and needed only
-	if set to 0.</li>
+		if set to 0.</li>
 % }
 % if (!$pos->{solution}) {
 	<li>This problem does not have a solution.  Consider adding one.</li>
 % }
+% if (!$pos->{randomness}) {
+	<li>This problem does not have randomness.  Consider adding variables that take on random values.</li>
+% }
 % if ($results->{negative}{fun_cmp} || $results->{negative}{str_cmp} || $results->{negative}{num_cmp}) {
 	<li>This problem contains the functioins <tt>num_cmp</tt>, <tt>str_cmp</tt> or <tt>fun_cmp</tt>.
-	These are old ways of checking answers.  These should be converted to MathObjects.
+		These are old ways of checking answers.  These should be converted to MathObjects.
 % }
 % if ($results->{negative}{multiple_loadmacros}) {
 	<li>This problem contains two <tt>loadMacros</tt> function call. Combine the function
-	calls and make sure that all macros are needed for your problem. </li>
+		calls and make sure that all macros are needed for your problem. </li>
 % }
 % if ($results->{negative}{macros}{PGchoicemacros}) {
 	<li>This problem contains old versions of multiple choice.  The sample problems
-	<a target="_blank" href="https://openwebwork.github.io/pg-docs/sample-problems/Misc/MultipleChoiceCheckbox.html">
-	Multiple Choice with Checkbox</a>, <a target="_blank" href="https://openwebwork.github.io/pg-docs/sample-problems/Misc/MultipleChoicePopup.html">
-	Multiple Choice with Popup</a> and <a target="_blank" href="https://openwebwork.github.io/pg-docs/sample-problems/Misc/MultipleChoiceRadio.html">
-	Multiple Choice with Radio Buttons</a> should be examined as well the macros:
-	<a target="_blank" href="https://openwebwork.github.io/pg-docs/pod/pg/macros/parsers/parserPopUp.html">parserPopUp.pl</a>,
-	<a target="_blank" href="https://openwebwork.github.io/pg-docs/pod/pg/macros/parsers/parserCheckboxList.html">parserCheckboxList.pl</a> and
-	<a target="_blank" href="https://openwebwork.github.io/pg-docs/pod/pg/macros/parsers/parserRadioButtons.html">parserRadioButtons.pl</a>.
+		<a target="_blank" href="https://openwebwork.github.io/pg-docs/sample-problems/Misc/MultipleChoiceCheckbox.html">
+		Multiple Choice with Checkbox</a>, <a target="_blank" href="https://openwebwork.github.io/pg-docs/sample-problems/Misc/MultipleChoicePopup.html">
+		Multiple Choice with Popup</a> and <a target="_blank" href="https://openwebwork.github.io/pg-docs/sample-problems/Misc/MultipleChoiceRadio.html">
+		Multiple Choice with Radio Buttons</a> should be examined as well the macros:
+		<a target="_blank" href="https://openwebwork.github.io/pg-docs/pod/pg/macros/parsers/parserPopUp.html">parserPopUp.pl</a>,
+		<a target="_blank" href="https://openwebwork.github.io/pg-docs/pod/pg/macros/parsers/parserCheckboxList.html">parserCheckboxList.pl</a> and
+		<a target="_blank" href="https://openwebwork.github.io/pg-docs/pod/pg/macros/parsers/parserRadioButtons.html">parserRadioButtons.pl</a>.
 
 	 </li>
 % }
 % if ($results->{negative}{macros}{PGgraphmacros}) {
 	<li>This problem uses <tt>PGgraphmacros</tt> a old plotting library. Consider using
-	<a target="_blank" href="https://openwebwork.github.io/pg-docs/pod/pg/macros/graph/plots.html"><tt>Plots.pl</tt></a>
-	or <a target="_blank" href="https://openwebwork.github.io/pg-docs/pod/pg/macros/graph/PGtikz.html"><tt>PGtikz.pl</tt></a>
+		<a target="_blank" href="https://openwebwork.github.io/pg-docs/pod/pg/macros/graph/plots.html"><tt>Plots.pl</tt></a>
+		or <a target="_blank" href="https://openwebwork.github.io/pg-docs/pod/pg/macros/graph/PGtikz.html"><tt>PGtikz.pl</tt></a></li>
 %}
 % if ($results->{negative}{lines_below_enddocument}) {
 	<li>There is content (code or other text), below the  <tt>ENDDOCUMENT()</tt> line.  Although this
-	is ignored, there shouldn't be content in this area.</li>
+		is ignored, there shouldn't be content in this area.</li>
 % }
 
 </ul>
