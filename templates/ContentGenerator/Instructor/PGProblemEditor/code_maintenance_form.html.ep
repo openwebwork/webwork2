@@ -1,9 +1,9 @@
 % last unless $c->{is_pg};
 <div>
 	<div class="form-check">
-		<%= radio_button 'action.format_code' => 'tidyPGCode',
-			id => 'action_format_code_perltidy', class => 'form-check-input', checked => undef  =%>
-		<%= label_for 'action_format_code_perltidy', class => 'form-check-label', begin =%>
+		<%= radio_button 'action.code_maintenance' => 'tidyPGCode',
+			id => 'action_code_maintenance_perltidy', class => 'form-check-input', checked => undef  =%>
+		<%= label_for 'action_code_maintenance_perltidy', class => 'form-check-label', begin =%>
 			<%== maketext('Reformat the code using perltidy.') =%>
 		<% end =%>
 		<a class="help-popup" data-bs-content="<%== maketext('Perltidy is a reformatting '
@@ -15,9 +15,9 @@
 		</a>
 	</div>
 	<div class="form-check">
-		<%= radio_button 'action.format_code' => 'convertCodeToPGML',
-			id => 'action_format_code_convert_PGML', class => 'form-check-input'=%>
-		<%= label_for 'action_format_code_convert_PGML', class => 'form-check-label', begin =%>
+		<%= radio_button 'action.code_maintenance' => 'convertCodeToPGML',
+			id => 'action_code_maintenance_convert_PGML', class => 'form-check-input'=%>
+		<%= label_for 'action_code_maintenance_convert_PGML', class => 'form-check-label', begin =%>
 			<%== maketext('Convert the code to PGML') =%>
 		<% end =%>
 		<a class="help-popup" data-bs-content="<%== maketext('This option converts the text blocks '
@@ -25,21 +25,21 @@
 			. 'This can be used as a first pass of the conversion, however the author will still need '
 			. 'to ensure the problem functions.  One area of attention should be the answer blanks, '
 			. 'which may not be converted correctly.') =%>"
-		data-bs-placement="top" data-bs-toggle="popover" role="button">
+			data-bs-placement="top" data-bs-toggle="popover" role="button">
 			<i aria-hidden="true" class="fas fa-question-circle"></i>
 			<span class="visually-hidden"><%= maketext('PGML Conversion Help') %></span>
 		</a>
 	</div>
 	<div class="form-check">
-		<%= radio_button 'action.format_code' => 'runPGCritic',
-			id => 'action_format_code_run_pgcritic', class => 'form-check-input'=%>
-		<%= label_for 'action_format_code_run_pgcritic', class => 'form-check-label', begin =%>
+		<%= radio_button 'action.code_maintenance' => 'runPGCritic',
+			id => 'action_code_maintenance_run_pgcritic', class => 'form-check-input'=%>
+		<%= label_for 'action_code_maintenance_run_pgcritic', class => 'form-check-label', begin =%>
 			<%== maketext('Run the PG Critic Analyzer') =%>
 		<% end =%>
 		<a class="help-popup" data-bs-content="<%== maketext('This option runs the PG Critic '
-			. 'code analyzer, which gives suggestions on using more modern PG constructs and  '
-			. 'ensure that you include important features. ') =%>"
-		data-bs-placement="top" data-bs-toggle="popover" role="button">
+			. 'code analyzer which gives suggestions on using modern PG constructs and  '
+			. 'ensures that you include important features.') =%>"
+			data-bs-placement="top" data-bs-toggle="popover" role="button">
 			<i aria-hidden="true" class="fas fa-question-circle"></i>
 			<span class="visually-hidden"><%= maketext('PG Critic Help') %></span>
 		</a>
