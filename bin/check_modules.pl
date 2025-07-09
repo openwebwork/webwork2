@@ -88,6 +88,7 @@ my @modulesList = qw(
 	Net::OAuth
 	Opcode
 	Pandoc
+	Perl::Critic
 	Perl::Tidy
 	PHP::Serialization
 	Pod::Simple::Search
