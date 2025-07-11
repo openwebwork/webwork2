@@ -17,42 +17,61 @@ sub initialize ($c) {
 
 	return unless ($c->authz->hasPermissions($c->param('user'), 'score_sets') && $ce->{LTIGradeMode});
 
+	my $allUserSets = {};
+	for ($db->listUserSetsWhere) { push(@{ $allUserSets->{ $_->[0] } }, $_->[1]) }
+
 	$c->stash->{sets}       = [ sort $db->listGlobalSets ] if $ce->{LTIGradeMode} eq 'homework';
-	$c->stash->{users}      = [ sort $db->listUsers ];
+	$c->stash->{users}      = [ sort keys %$allUserSets ];
+	$c->stash->{userSets}   = $allUserSets;
 	$c->stash->{lastUpdate} = $db->getSettingValue('LTILastUpdate') || 0;
 
 	return unless ($c->param('updateLTI'));
 
-	my $setID       = $c->param('updateSetID');
-	my $userID      = $c->param('updateUserID');
-	my $prettySetID = format_set_name_display($setID // '');
+	my @setIDs = ($c->param('updateSetID'));
+	my $userID = $c->param('updateUserID');
 
 	# Test if setID and userID are valid.
-	if ($userID && !$db->getUser($userID)) {
+	if ($userID && !$allUserSets->{$userID}) {
 		$c->addbadmessage($c->maketext('Update aborted. Invalid user [_1].', $userID));
 		return;
 	}
-	if ($ce->{LTIGradeMode} eq 'homework' && $setID && !$db->getGlobalSet($setID)) {
-		$c->addbadmessage($c->maketext('Update aborted. Invalid set [_1].', $prettySetID));
+	if ($ce->{LTIGradeMode} eq 'homework' && !@setIDs) {
+		$c->addbadmessage($c->maketext('Update aborted. No sets selected.'));
 		return;
 	}
 
-	if ($setID && $userID && $ce->{LTIGradeMode} eq 'homework') {
-		$c->addgoodmessage($c->maketext('LTI update of user [_1] and set [_2] queued.', $userID, $prettySetID));
-	} elsif ($setID && $ce->{LTIGradeMode} eq 'homework') {
-		$c->addgoodmessage($c->maketext('LTI update of set [_1] queued.', $prettySetID));
-	} elsif ($userID) {
-		$c->addgoodmessage($c->maketext('LTI update of user [_1] queued.', $userID));
+	if ($ce->{LTIGradeMode} eq 'homework') {
+		my $nSets = scalar(@setIDs);
+		# If all sets are selected, set @setIDs to be empty, and inform the user all sets are being updated.
+		if (($userID && $nSets == @{ $allUserSets->{$userID} }) || (!$userID && $nSets == @{ $c->stash->{sets} })) {
+			$nSets  = 0;
+			@setIDs = ();
+		}
+
+		if ($userID) {
+			if ($nSets) {
+				$c->addgoodmessage(
+					$c->maketext('LTI update of [_1] [plural,_1,set] for user [_2] queued.', $nSets, $userID));
+			} else {
+				$c->addgoodmessage($c->maketext('LTI update of all sets for user [_1] queued.', $userID));
+			}
+		} elsif ($nSets) {
+			$c->addgoodmessage($c->maketext('LTI update of [_1] [plural,_1,set] for all users queued.', $nSets));
+		} else {
+			$c->addgoodmessage($c->maketext('LTI update of all sets for all users queued.'));
+		}
 	} else {
-		$c->addgoodmessage($ce->{LTIGradeMode} eq 'homework'
-			? $c->maketext('LTI update of all users and sets queued.')
-			: $c->maketext('LTI update of all users queued.'));
+		if ($userID) {
+			$c->addgoodmessage($c->maketext('LTI update of course grade for user [_1] queued.', $userID));
+		} else {
+			$c->addgoodmessage($c->maketext('LTI update of course grade for all users queued.'));
+		}
 	}
 
-	# Note that if somehow this point is reached with a setID and grade mode is "course",
-	# then the setID will be ignored by the job.
+	# Note that if somehow this point is reached with setIDs and grade mode is "course",
+	# then the setIDs will be ignored by the job.
 
-	massUpdate($c, 1, $userID, $setID);
+	massUpdate($c, 1, $userID, @setIDs ? \@setIDs : '');
 
 	return;
 }
