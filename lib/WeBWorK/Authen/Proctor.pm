@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::Authen::Proctor;
 use base 'WeBWorK::Authen';
 
@@ -25,7 +10,7 @@ WeBWorK::Authen::Proctor - Authenticate gateway test proctors.
 use strict;
 use warnings;
 
-use WeBWorK::Utils qw(x);
+use WeBWorK::Utils     qw(x);
 use WeBWorK::DB::Utils qw(grok_vsetID);
 
 use constant GENERIC_ERROR_MESSAGE => x('Invalid user ID or password.');
@@ -39,7 +24,7 @@ sub verify {
 	my $c    = $self->{c};
 
 	# At this point the usual authentication has already occurred and the user has been verified.  If the
-	# use_grade_auth_proctor option is set to 'No', then proctor authorization is not not needed.  So return
+	# use_grade_auth_proctor option is set to 'No', then proctor authorization is not needed.  So return
 	# 1 here to skip proctor authorization and proceed on to the GatewayQuiz module which will grade the test.
 	if ($c->req->body_params->param('submitAnswers')) {
 		my ($setName, $versionNum) = grok_vsetID($c->stash('setID'));
@@ -96,10 +81,17 @@ sub verify_normal_user {
 	# is 'No', then the verify method will have returned 1, and this never happens.  For an ongoing login session, only
 	# a key with versioned set information is accepted, and that version must match the requested set version.  The set
 	# id will not have a version when opening a new version. For that new proctor credentials are required.
-	if ($self->{login_type} eq 'proctor_login'
-		&& $c->stash('setID') =~ /,v\d+$/
+	if (
+		$self->{login_type} eq 'proctor_login'
 		&& $c->authen->session('proctor_authorization_granted')
-		&& $c->authen->session('proctor_authorization_granted') eq $c->stash('setID'))
+		&& (
+			(
+				$c->stash('setID') =~ /,v\d+$/
+				&& $c->authen->session('proctor_authorization_granted') eq $c->stash('setID')
+			)
+			|| $c->authen->session('acting_proctor')
+		)
+		)
 	{
 		return 1;
 	} else {

@@ -1,0 +1,183 @@
+% use WeBWorK::Utils qw(decodeAnswers);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
+%
+<html>
+	<body>
+		<p>
+			% if ($problem) {
+				Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at
+				<%= $ce->{institutionName} %> (sent from
+				<%= link_to format_set_name_display($set->set_id) . ', #' . $problem->problem_id => $emailableURL %>).
+			% } elsif ($set) {
+				Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at
+				<%= $ce->{institutionName} %>
+			   	(sent from <%= link_to format_set_name_display($set->set_id) => $emailableURL %>)
+			% } else {
+				Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at
+				<%= $ce->{institutionName} %> (sent from <%= link_to 'this page' => $emailableURL %>).
+			% }
+		</p>
+		% if ($feedback) {
+			<div style="border: 1px solid lightgray; padding: 1rem; margin-bottom: 1rem; border-radius: 0.375rem">
+				% for (split /\n\r?/, $feedback) {
+					% if ($_) {
+						<p style="margin: 0; white-space: pre-wrap"><%= $_ %></p>
+					% } else {
+						<div style="margin-top: 1em"></div>
+					% }
+				% }
+			</div>
+		% }
+		% if ($problem && $verbosity >= 1) {
+			<table style="border-collapse: collapse; margin-bottom: 1rem">
+				<thead>
+					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray" colspan="2">Data about the problem</th></tr>
+				</thead>
+				<tbody>
+					% my @rows = (
+						% [ 'Problem ID',         $problem->problem_id ],
+						% [ 'Source file',        $problem->source_file ],
+						% [ 'Value',              $problem->value ],
+						% [ 'Max attempts',       $problem->max_attempts == -1 ? 'unlimited' : $problem->max_attempts ],
+						% [ 'Random seed',        $problem->problem_seed ],
+						% [ 'Status',             $problem->status ],
+						% [ 'Attempted',          $problem->attempted ? 'yes' : 'no' ],
+						% [ 'Correct attempts',   $problem->num_correct ],
+						% [ 'Incorrect attempts', $problem->num_incorrect ]
+					% );
+					% for (@rows) {
+						<tr>
+							<th style="text-align: left; padding: 0.25rem"><%= $_->[0] %>:</th>
+							<td style="text-align: left; padding: 0.25rem"><%= $_->[1] %></td>
+						</tr>
+					% }
+					% my %last_answer = decodeAnswers($problem->last_answer);
+					<tr style="border-top: solid 1pt">
+						<th style="text-align: left; padding: 0.25rem; vertical-align: baseline">Last submission:</th>
+						% if (%last_answer) {
+							<td style="text-align: left; padding: 0.25rem; padding-top: 0"><table style="border-collapse: collapse">
+							% for my $key (sort keys %last_answer) {
+								% if ($last_answer{$key}) {
+									<tr>
+										<td style="text-align: left; padding: 0.25rem"><%= $key %>:</td>
+										<td style="text-align: left; padding: 0.25rem"><%= $last_answer{$key} %></td>
+									</tr>
+								% }
+							% }
+							</table></td>
+						% } else {
+							<td style="text-align: left; padding: 0.25rem">none</td>
+						% }
+					</tr>
+				</tbody>
+			</table>
+		% }
+		% if ($set && $verbosity >= 1) {
+			<table style="border-collapse: collapse; margin-bottom: 1rem">
+				<thead>
+					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray" colspan="2">Data about the assignment</th></tr>
+				</thead>
+				<tbody>
+					% my @rows = (
+						% [ 'Set ID',               $set->set_id ],
+						% [ 'Set header file',      $set->set_header ],
+						% [ 'Hardcopy header file', $set->hardcopy_header ],
+						% [ 'Open date',            $c->formatDateTime($set->open_date) ],
+						% [ 'Close date',           $c->formatDateTime($set->due_date) ],
+						% [ 'Answer date',          $c->formatDateTime($set->answer_date) ],
+						% [ 'Visible',              $set->visible ? 'yes' : 'no' ],
+						% [ 'Assignment type',      $set->assignment_type ]
+					% );
+					% if ($set->assignment_type =~ /gateway/) {
+						% push @rows, (
+							% [ 'Attempts per version',      $set->attempts_per_version ],
+							% [ 'Time interval',             $set->time_interval ],
+							% [ 'Versions per interval',     $set->versions_per_interval ],
+							% [ 'Version time limit',        $set->version_time_limit ],
+							% [ 'Version creation time',     $c->formatDateTime($set->version_creation_time) ],
+							% [ 'Problem randorder',         $set->problem_randorder ],
+							% [ 'Version last attempt time', $set->version_last_attempt_time ]
+						% );
+					% }
+					% for (@rows) {
+						<tr>
+							<th style="text-align: left; padding: 0.25rem"><%= $_->[0] %>:</th>
+							<td style="text-align: left; padding: 0.25rem"><%= $_->[1] %></td>
+						</tr>
+					% }
+				</tbody>
+			</table>
+		% }
+		% if ($problem && $verbosity >= 1) {
+			<table style="border-collapse: collapse; margin-bottom: 1rem">
+				<thead>
+					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray" colspan="2">Data about the problem processor</th></tr>
+				</thead>
+				<tbody>
+					% my @rows = (
+						% [ 'Display Mode',         param('displayMode') ],
+						% [ 'Show Old Answers',     param('showOldAnswers') ? 'yes' : 'no' ],
+						% [ 'Show Correct Answers', param('showCorrectAnswers') ? 'yes' : 'no' ],
+						% [ 'Show Hints',           param('showHints') ? 'yes' : 'no' ],
+						% [ 'Show Solutions',       param('showSolutions') ? 'yes' : 'no' ]
+					% );
+					% for (@rows) {
+						<tr>
+							<th style="text-align: left; padding: 0.25rem"><%= $_->[0] %>:</th>
+							<td style="text-align: left; padding: 0.25rem"><%= $_->[1] %></td>
+						</tr>
+					% }
+				</tbody>
+			</table>
+		% }
+		%
+		% if ($user && $verbosity >= 1) {
+			<table style="border-collapse: collapse; margin-bottom: 1rem">
+				<thead>
+					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray" colspan="2">Data about the user</th></tr>
+				</thead>
+				<tbody>
+					% my @rows = (
+						% [ 'User ID', $user->user_id ],
+						% [ 'Name',    $user->full_name ],
+						% [ 'Email',   $user->email_address ]
+					% );
+					% unless ($ce->{blockStudentIDinFeedback}) { push @rows, ['Student ID', $user->student_id]; }
+					% my $status_name = $ce->status_abbrev_to_name($user->status);
+					% my $status_string =
+						% defined $status_name
+						% ? "$status_name ('" . $user->status . q{')}
+						% : $user->status . ' (unknown status abbreviation)';
+					% push @rows, (
+						% [ 'Status',     $status_string ],
+						% [ 'Section',    $user->section ],
+						% [ 'Recitation', $user->recitation ],
+						% [ 'Comment',    $user->comment ],
+						% [ 'IP Address', $remote_host ]
+					%);
+					% for (@rows) {
+						<tr>
+							<th style="text-align: left; padding: 0.25rem"><%= $_->[0] %>:</th>
+							<td style="text-align: left; padding: 0.25rem"><%= $_->[1] %></td>
+						</tr>
+					% }
+				</tbody>
+			</table>
+		% }
+		% if ($verbosity >= 2) {
+			<table style="border-collapse: collapse">
+				<thead>
+					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray" colspan="2">Data about the environment</th></tr>
+				</thead>
+				<tbody>
+					<tr><td style="text-align: left; padding: 0.25rem"><pre><%= dumper($ce) %></pre></td></tr>
+				</tbody>
+			</table>
+		% }
+	</body>
+</html>

@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 # Web service which fetches, adds, removes and moves WeBWorK problems when working with a Set.
 package WebworkWebservice::SetActions;
 
@@ -20,12 +5,12 @@ use strict;
 use warnings;
 
 use Carp;
-use JSON;
+use Mojo::JSON            qw(from_json to_json);
 use Data::Structure::Util qw(unbless);
 
-use WeBWorK::Utils qw(max);
-use WeBWorK::Utils::Instructor qw(assignSetToGivenUsers assignMultipleProblemsToGivenUsers);
-use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils             qw(max);
+use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers assignSetToGivenUsers);
+use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Debug;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 
@@ -287,7 +272,7 @@ sub assignSetToUsers {
 			push @usersToAdd, $user;
 		}
 	}
-	push @results, assignSetToGivenUsers($db, $self->ce, $setID, 1, $db->getUsers(@usersToAdd));
+	assignSetToGivenUsers($db, $self->ce, $setID, 1, $db->getUsers(@usersToAdd));
 
 	return { ra_out => \@results, text => "Successfully assigned users to set $params->{set_id}" };
 }
@@ -510,10 +495,7 @@ sub addProblem {
 	$problemRecord->prCount(0);
 	$db->addGlobalProblem($problemRecord);
 
-	my @results;
-	my @userIDs = $db->listSetUsers($setName);
-	my $result  = assignMultipleProblemsToGivenUsers($db, \@userIDs, $setName, ($problemID));
-	push @results, $result if $result;
+	assignProblemToAllSetUsers($db, $problemRecord);
 
 	return { text => "Problem added to $setName" };
 }

@@ -8,7 +8,7 @@
 	%
 	<%= maketext('Logged in as [_1].', $userName) %>
 	<%= link_to $c->systemLink(url_for 'logout'), class => 'btn btn-light btn-sm ms-2', begin %>
-	<%= maketext('Log Out') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true" data-alt="signout"></i>
+	<%= maketext('Log Out') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true"></i>
 	<% end %>
 	%
 	% if ($effectiveUserID ne $userID) {
@@ -26,7 +26,7 @@
 		<%= maketext('Acting as [_1].', $effectiveUserName) %>
 		<%= link_to $c->systemLink(url_for, params => { effectiveUser => $userID }),
 			class => 'btn btn-light btn-sm ms-2', begin %>
-		<%= maketext('Stop Acting') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true" data-alt="signout"></i>
+		<%= maketext('Stop Acting') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true"></i>
 		<% end %>
 	% }
 % } else {

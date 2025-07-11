@@ -1,18 +1,4 @@
 #!/usr/bin/env perl
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
 
 =head1 NAME
 
@@ -28,7 +14,7 @@ Run perltidy on webwork2 source files.
 
 =head1 OPTIONS
 
-For this script to work the the .perltidyrc file in the webwork2 root directory
+For this script to work the .perltidyrc file in the webwork2 root directory
 must be readable.  Note that the webwork2 root directory is automatically
 detected.
 
@@ -63,9 +49,8 @@ use Mojo::File qw(curfile);
 
 my $webwork_root = curfile->dirname->dirname->dirname;
 
-die "Version 20220613 or newer of perltidy is required for this script.\n"
-	. "The installed version is $Perl::Tidy::VERSION.\n"
-	unless $Perl::Tidy::VERSION >= 20220613;
+die "Version 20240903 of perltidy is required for this script.\nThe installed version is $Perl::Tidy::VERSION.\n"
+	unless $Perl::Tidy::VERSION == 20240903;
 die "The .perltidyrc file in the webwork root directory is not readable.\n"
 	unless -r "$webwork_root/.perltidyrc";
 

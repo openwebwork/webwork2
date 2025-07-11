@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::ProblemSet;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
@@ -24,13 +9,14 @@ problem set.
 =cut
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::DateTime qw(after);
-use WeBWorK::Utils::Files qw(path_is_subdir);
+use WeBWorK::Utils            qw(wwRound);
+use WeBWorK::Utils::DateTime  qw(after);
+use WeBWorK::Utils::Files     qw(path_is_subdir);
 use WeBWorK::Utils::Rendering qw(renderPG);
-use WeBWorK::Utils::Sets qw(is_restricted grade_set format_set_name_display);
-use WeBWorK::DB::Utils qw(grok_versionID_from_vsetID_sql);
+use WeBWorK::Utils::Sets      qw(is_restricted grade_set format_set_name_display);
+use WeBWorK::DB::Utils        qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Localize;
+use WeBWorK::AchievementItems;
 
 async sub initialize ($c) {
 	my $db    = $c->db;
@@ -47,11 +33,32 @@ async sub initialize ($c) {
 	my $userID  = $c->param('user');
 	my $eUserID = $c->param('effectiveUser');
 
+	# Don't show "Start New Test" button when acting as another user, unless user has permissions to do so.
+	$c->stash->{disable_start_new_test} = $userID ne $eUserID
+		&& !($authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
+			|| $authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student'));
+
 	my $user          = $db->getUser($userID);
 	my $effectiveUser = $db->getUser($eUserID);
 	$c->{set} = $authz->{merged_set};
 
 	$c->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
+
+	# Import problem records for assignments or test version records for tests now. Then initialize all
+	# achievement item data to have access to the updated records if an achievement item was used.
+	if ($c->{set}->assignment_type =~ /gateway/) {
+		$c->{setVersions} = [
+			$db->getMergedSetVersionsWhere(
+				{ user_id => $eUserID, set_id => { like => $c->{set}->set_id . ',v%' } },
+				\grok_versionID_from_vsetID_sql($db->{set_version_merged}->sql->_quote('set_id'))
+			)
+		];
+		$c->{achievementItems} = WeBWorK::AchievementItems::UserItems($c, $eUserID, $c->{set}, $c->{setVersions});
+	} else {
+		$c->{setProblems} =
+			[ $db->getMergedProblemsWhere({ user_id => $eUserID, set_id => $c->{set}->set_id }, 'problem_id') ];
+		$c->{achievementItems} = WeBWorK::AchievementItems::UserItems($c, $eUserID, $c->{set}, $c->{setProblems});
+	}
 
 	# Display status messages.
 	$c->addmessage($c->tag('p', $c->b($c->authen->flash('status_message')))) if $c->authen->flash('status_message');
@@ -132,7 +139,7 @@ sub siblings ($c) {
 	return '' unless $authz->hasPermissions($user, 'navigation_allowed');
 
 	# Note that listUserSets does not list versioned sets, but listUserSetsWhere does.  On the other hand, listUserSets
-	# can not sort in the database, while listUserSetsWhere can.
+	# cannot sort in the database, while listUserSetsWhere can.
 	my @setIDs =
 		map { $_->[1] } $db->listUserSetsWhere({ user_id => $eUserID, set_id => { not_like => '%,v%' } }, 'set_id');
 
@@ -163,16 +170,7 @@ sub info {
 # This is called by the ContentGenerator/ProblemSet/body template for a regular homework set.
 # It lists the problems in the set.
 sub problem_list ($c) {
-	my $authz = $c->authz;
-	my $db    = $c->db;
-
-	my $setID = $c->stash('setID');
-	my $user  = $c->param('user');
-
-	my @problems =
-		$db->getMergedProblemsWhere({ user_id => $c->param('effectiveUser'), set_id => $setID }, 'problem_id');
-
-	return $c->include('ContentGenerator/ProblemSet/problem_list', problems => \@problems);
+	return $c->include('ContentGenerator/ProblemSet/problem_list', problems => $c->{setProblems});
 }
 
 # This is called by the ContentGenerator/ProblemSet/body template for a test.
@@ -199,12 +197,7 @@ sub gateway_body ($c) {
 	my $timeInterval     = $set->time_interval || 0;
 	my @versionData;
 
-	my @setVersions = $db->getMergedSetVersionsWhere(
-		{ user_id => $effectiveUser, set_id => { like => $set->set_id . ',v%' } },
-		\grok_versionID_from_vsetID_sql($db->{set_version_merged}->sql->_quote('set_id'))
-	);
-
-	for my $verSet (@setVersions) {
+	for my $verSet (@{ $c->{setVersions} }) {
 		# Count number of versions in current timeInterval
 		if (!$timeInterval || $verSet->version_creation_time > ($timeNow - $timeInterval)) {
 			++$currentVersions;
@@ -318,7 +311,7 @@ sub gateway_body ($c) {
 		timeInterval     => $timeInterval,
 		timeNow          => $timeNow,
 		lastTime         => $lastTime,
-		setVersions      => \@setVersions,
+		setVersions      => $c->{setVersions},
 		versionData      => \@versionData,
 		currentVersions  => $currentVersions
 	);

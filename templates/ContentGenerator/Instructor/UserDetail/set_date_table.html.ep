@@ -20,7 +20,7 @@
 							'If the test was timed, granting the user an additional version '
 							. 'may be preferred to changing its dates.' )%>">
 						<i class="icon fa-solid fa-question-circle fa-lg" aria-hidden="true"></i><% =%>\
-						<span class="visually-hidden"><%= maketext('Help Icon') %></span><% =%>\
+						<span class="visually-hidden"><%= maketext('Advice on changing test dates') %></span><% =%>\
 					</a>
 				% }
 				<%= $isVersioned ? maketext(q{User's Test Version Dates}) : maketext('User Overrides') =%>

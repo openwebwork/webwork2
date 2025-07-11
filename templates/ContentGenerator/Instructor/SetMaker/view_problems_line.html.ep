@@ -28,14 +28,18 @@
 	<div class="d-inline-block ms-2 mb-2">
 		<div class="form-check form-check-inline ms-2">
 			<label class="form-check-label col-form-label-sm">
+				% param('showHints', 'on') unless defined param('showHints');
 				<%= check_box showHints => 'on', class => 'form-check-input me-1' =%>
 				<%= maketext('Hints') =%>
+				<%= hidden_field showHints => 0 =%>
 			</label>
 		</div>
 		<div class="form-check form-check-inline ms-2">
 			<label class="form-check-label col-form-label-sm">
+				% param('showSolutions', 'on') unless defined param('showSolutions');
 				<%= check_box showSolutions => 'on', class => 'form-check-input me-1' =%>
 				<%= maketext('Solutions') =%>
+				<%= hidden_field showSolutions => 0 =%>
 			</label>
 		</div>
 	</div>

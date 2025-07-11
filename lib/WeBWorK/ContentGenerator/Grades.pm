@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Grades;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -22,10 +7,11 @@ WeBWorK::ContentGenerator::Grades - Display statistics by user.
 
 =cut
 
-use WeBWorK::Utils qw(wwRound);
-use WeBWorK::Utils::DateTime qw(after);
-use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
-use WeBWorK::Utils::Sets qw(grade_set format_set_name_display);
+use WeBWorK::Utils                    qw(wwRound);
+use WeBWorK::Utils::DateTime          qw(after);
+use WeBWorK::Utils::JITAR             qw(jitar_id_to_seq);
+use WeBWorK::Utils::Sets              qw(grade_set format_set_name_display);
+use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 use WeBWorK::Localize;
 
 sub initialize ($c) {
@@ -319,7 +305,7 @@ sub displayStudentStats ($c, $studentID) {
 			next;
 		}
 
-		my ($totalRight, $total, $problem_scores, $problem_incorrect_attempts) =
+		my ($totalRight, $total, $problem_scores, $problem_incorrect_attempts, $problem_records) =
 			grade_set($db, $set, $studentID, $setIsVersioned, 1);
 		$totalRight = wwRound(2, $totalRight);
 
@@ -334,8 +320,9 @@ sub displayStudentStats ($c, $studentID) {
 			$show_problem_scores = 0;
 		}
 
-		for (my $i = 0; $i < $max_problems; ++$i) {
-			my $score = defined $problem_scores->[$i] && $show_problem_scores ? $problem_scores->[$i] : '';
+		for my $i (0 .. $max_problems - 1) {
+			my $score      = defined $problem_scores->[$i] && $show_problem_scores ? $problem_scores->[$i] : '';
+			my $is_correct = $score =~ /^\d+$/ && compute_unreduced_score($ce, $problem_records->[$i], $set) == 1;
 			push(
 				@html_prob_scores,
 				$c->tag(
@@ -344,7 +331,7 @@ sub displayStudentStats ($c, $studentID) {
 					$c->c(
 						$c->tag(
 							'span',
-							class => $score eq '100' ? 'correct' : $score eq '&nbsp;.&nbsp;' ? 'unattempted' : '',
+							class => $is_correct ? 'correct' : $score eq '&nbsp;.&nbsp;' ? 'unattempted' : '',
 							$c->b($score)
 						),
 						$c->tag('br'),

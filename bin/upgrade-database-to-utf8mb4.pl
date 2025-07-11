@@ -1,18 +1,4 @@
 #!/usr/bin/env perl
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
 
 =head1 NAME
 
@@ -126,7 +112,7 @@ use warnings;
 
 BEGIN {
 	use Mojo::File qw(curfile);
-	use Env qw(WEBWORK_ROOT);
+	use Env        qw(WEBWORK_ROOT);
 
 	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
@@ -165,7 +151,7 @@ my $port   = $ce->{database_port};
 my $dbuser = shell_quote($ce->{database_username});
 my $dbpass = $ce->{database_password};
 
-$ENV{'MYSQL_PWD'} = $dbpass;
+local $ENV{MYSQL_PWD} = $dbpass;
 
 if (!$no_backup) {
 	# Backup the database
@@ -212,7 +198,7 @@ my $dbh = DBI->connect(
 	},
 );
 
-my $db          = new WeBWorK::DB($ce->{dbLayouts}{ $ce->{dbLayoutName} });
+my $db          = WeBWorK::DB->new($ce);
 my @table_types = sort(grep { !$db->{$_}{params}{non_native} } keys %$db);
 
 sub checkAndUpdateTableColumnTypes {
@@ -222,29 +208,30 @@ sub checkAndUpdateTableColumnTypes {
 
 	print "\tChecking '$table' (pass $pass)\n" if $verbose;
 	my $schema_field_data = $db->{$table_type}{record}->FIELD_DATA;
-	for my $field (keys %$schema_field_data) {
-		my $field_name = $db->{$table_type}{params}{fieldOverride}{$field} || $field;
-		my @name_type  = @{
+	for my $field_name (keys %$schema_field_data) {
+		my @name_type = @{
 			$dbh->selectall_arrayref(
 				"SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS "
 					. "WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$table' AND COLUMN_NAME='$field_name';"
 			)
 		};
 
-		print("\t\tThe '$field_name' column is missing from '$table'.\n"
-				. "\t\tYou should upgrade the course via course administration to fix this.\n"
-				. "\t\tYou may need to run this script again after doing that.\n"), next
-			if !exists($name_type[0][0]);
+		if (!exists($name_type[0][0])) {
+			print("\t\tThe '$field_name' column is missing from '$table'.\n"
+					. "\t\tYou should upgrade the course via course administration to fix this.\n"
+					. "\t\tYou may need to run this script again after doing that.\n");
+			next;
+		}
 
 		my $data_type = $name_type[0][0];
 		next                       if !$data_type;
 		$data_type =~ s/\(\d*\)$// if $data_type =~ /^(big|small)?int\(\d*\)$/;
 		$data_type = lc($data_type);
-		my $schema_data_type = lc($schema_field_data->{$field}{type} =~ s/ .*$//r);
+		my $schema_data_type = lc($schema_field_data->{$field_name}{type} =~ s/ .*$//r);
 		if ($data_type ne $schema_data_type) {
 			print "\t\tUpdating data type for column '$field_name' in table '$table'\n" if $verbose;
 			print "\t\t\t$data_type -> $schema_data_type\n"                             if $verbose;
-			eval { $dbh->do("ALTER TABLE `$table` MODIFY $field_name $schema_field_data->{$field}{type};"); };
+			eval { $dbh->do("ALTER TABLE `$table` MODIFY $field_name $schema_field_data->{$field_name}{type};"); };
 			my $indent = $verbose ? "\t\t" : "";
 			die("${indent}Failed to modify '$field_name' in '$table' from '$data_type' to '$schema_data_type.\n"
 					. "${indent}It is recommended that you restore a database backup.  Make note of the\n"
@@ -286,8 +273,10 @@ sub checkAndChangeTableCharacterSet {
 my $error = 0;
 
 for my $course (@courses) {
-	print("The course '$course' does not exist on the server\n"), next
-		if !grep($course eq $_, @server_courses);
+	if (!grep { $course eq $_ } @server_courses) {
+		print("The course '$course' does not exist on the server\n");
+		next;
+	}
 
 	print "Checking tables for '$course'\n" if $verbose;
 	for my $table_type (@table_types) {

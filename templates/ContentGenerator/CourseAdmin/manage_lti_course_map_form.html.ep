@@ -8,8 +8,10 @@
 			<caption><%= maketext('LTI Course Map') %></caption>
 			<thead class="table-group-divider">
 				<tr>
-					<th><%= maketext('Course ID') %></th>
-					<th id="lms-context-id-header"><%= maketext('LMS Context ID') %></th>
+					<th class="text-nowrap"><%= maketext('Course ID') %></th>
+					<th class="text-nowrap" id="lms-context-id-header"><%= maketext('LMS Context ID') %></th>
+					<th class="text-nowrap"><%= maketext('LTI Version') %></th>
+					<th class="text-nowrap"><%= maketext('LTI Configuration') %></th>
 				</tr>
 			</thead>
 			<tbody class="table-group-divider">
@@ -20,6 +22,83 @@
 							<%= text_field "$_-context-id" => $courseMap->{$_}, size => 40,
 								class => 'form-control form-control-sm d-inline w-auto',
 								'aria-labelledby' => 'lms-context-id-header' =%>
+						</td>
+						<td class="text-center">
+							<%= $ltiConfigs->{$_}{LTIVersion} && $ltiConfigs->{$_}{LTIVersion} eq 'v1p1' ? '1.1'
+								: $ltiConfigs->{$_}{LTIVersion} && $ltiConfigs->{$_}{LTIVersion} eq 'v1p3' ? '1.3'
+								: maketext('Disabled') %>
+						</td>
+						<td class="text-center">
+							% if ($ltiConfigs->{$_}{LTIVersion} && $ltiConfigs->{$_}{LTIVersion} =~ /^v1p[13]$/) {
+								<a href="#" role="button" data-bs-toggle="modal"
+									data-bs-target="#<%= $_ %>-config-modal">
+									<i class="fa-solid fa-circle-question fa-xl"></i>
+									<span class="visually-hidden"><%= maketext('LTI Configuration') %></span>
+								</a>
+								<div class="modal fade" id="<%= $_ %>-config-modal" tabindex="-1"
+									aria-labelledby="<%= $_ %>-lti-config" aria-hidden="true">
+									<div class="modal-dialog modal-dialog-centered">
+										<div class="modal-content">
+											<div class="modal-header">
+												<h1 class="modal-title fs-6" id="<%= $_ %>-lti-config">
+													<%= maketext('LTI Configuration for [_1]', $_) %>
+												</h1>
+												<button type="button" class="btn-close" data-bs-dismiss="modal"
+													aria-label="<%= maketext('close') %>">
+												</button>
+											</div>
+											<div class="modal-body">
+												<table class="table table-sm table-light table-bordered
+													table-striped-columns mb-0">
+													<tbody>
+														% if ($ltiConfigs->{$_}{LTIVersion} eq 'v1p1') {
+															<tr>
+																<th class="text-nowrap">
+																	<%= maketext('Consumer Key') %>
+																</th>
+																<td class="text-nowrap">
+																	<%= $ltiConfigs->{$_}{ConsumerKey}
+																		|| maketext('Unset') %>
+																</td>
+															</tr>
+														% } elsif ($ltiConfigs->{$_}{LTIVersion} eq 'v1p3') {
+															<tr>
+																<th class="text-nowrap">
+																	<%= maketext('Platform ID') %>
+																</th>
+																<td class="text-nowrap">
+																	<%= $ltiConfigs->{$_}{PlatformID}
+																		|| maketext('Unset') %>
+																</td>
+															</tr>
+															<tr>
+																<th class="text-nowrap">
+																	<%= maketext('Client ID') %>
+																</th>
+																<td class="text-nowrap">
+																	<%= $ltiConfigs->{$_}{ClientID}
+																		|| maketext('Unset') %>
+																</td>
+															</tr>
+															<tr>
+																<th class="text-nowrap">
+																	<%= maketext('Deployment ID') %>
+																</th>
+																<td class="text-nowrap">
+																	<%= $ltiConfigs->{$_}{DeploymentID}
+																		|| maketext('Unset') %>
+																</td>
+															</tr>
+														% }
+													</tbody>
+												</table>
+											</div>
+										</div>
+									</div>
+								</div>
+							% } else {
+								<%= maketext('Not Configured') =%>
+							% }
 						</td>
 					</tr>
 				% }

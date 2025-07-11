@@ -117,7 +117,7 @@
 				% }
 			% } else {
 				% my %topics = (
-					% categories => maketext('Catetory'),
+					% categories => maketext('Category'),
 					% subjects   => maketext('Subject'),
 					% macros     => maketext('Macro')
 				% );

@@ -37,7 +37,7 @@
 			% )
 			% {
 				% # If the problem is jitar restricted, then show it greyed out.
-				<span class="<%= $linkClasses %> disabled-problem text-nowrap">
+				<span class="<%= $linkClasses %> text-nowrap">
 					<%= maketext('Problem [_1]', $problemNumber) %>
 				</span>
 			% } else {

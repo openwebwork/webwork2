@@ -256,8 +256,8 @@
 													bs_placement => 'top'
 												},
 												begin =%>
-												<i class="icon fas fa-pencil-alt" data-alt="<%= maketext('Edit') =%>">
-												</i>
+												<i class="icon fas fa-pencil-alt" aria-hidden="true"></i>
+												<span class="visually-hidden"><%= maketext('Edit') =%></span>
 											<% end =%>
 											<%= link_to $c->systemLink(url_for(
 													{
@@ -274,7 +274,8 @@
 													bs_title     => maketext('Open in New Window')
 												},
 												begin =%>
-												<i class="icon far fa-eye" data-alt="<%= maketext('View') %>"></i>
+												<i class="icon far fa-eye" aria-hidden="true"></i>
+												<span class="visually-hidden"><%= maketext('View') =%></span>
 											<% end =%>
 										</td>
 									</tr>
@@ -326,7 +327,7 @@
 		<p>
 			<b>
 				<%= maketext(
-					'Screen and Hardcopy set header information can not be overridden for individual students.') =%>
+					'Screen and Hardcopy set header information cannot be overridden for individual students.') =%>
 			</b>
 		</p>
 	% }
@@ -418,7 +419,7 @@
 					% $prettyID   = join('.', jitar_id_to_seq($prettyID)) if $isJitarSet;
 					% $repeatFile = maketext('This problem uses the same source file as number [_1].', $prettyID);
 				% } else {
-					% $shownYet{$problemFile} = $problemID;
+					% $shownYet{$problemFile} = $problemID unless $problemFile =~ /^group:/;
 					% $repeatFile = '';
 				% }
 				%
@@ -481,9 +482,8 @@
 										data-bs-toggle="tooltip" data-bs-placement="top"
 										data-bs-title="<%= maketext('Render Problem') %>"
 										type="button">
-										<i class="icon far fa-image" data-alt="<%= maketext('Render') %>"
-											aria-hidden="true">
-										</i>
+										<i class="icon far fa-image" aria-hidden="true"></i>
+										<span class="visually-hidden"><%= maketext('Render') %></span>
 									</button>
 									<%= link_to $c->systemLink(url_for(
 											'instructor_problem_editor_withset_withproblem',
@@ -497,7 +497,8 @@
 										   	bs_title     => maketext('Edit Problem')
 										},
 										begin =%>
-										<i class="icon fas fa-pencil-alt" data-alt="<%= maketext('Edit') %>"></i>
+										<i class="icon fas fa-pencil-alt" aria-hidden="true"></i>
+										<span class="visually-hidden"><%= maketext('Edit') =%></span>
 									<% end =%>
 									% my $problemLink;
 									% if ($isGatewaySet) {
@@ -546,7 +547,8 @@
 											bs_title     => maketext('Open in New Window')
 										},
 										begin =%>
-										<i class="icon far fa-eye" data-alt="<%= maketext('View') %>"></i>
+										<i class="icon far fa-eye" aria-hidden="true"></i>
+										<span class="visually-hidden"><%= maketext('View') =%></span>
 									<% end =%>
 								% }
 								% if ($authz->hasPermissions(param('user'), 'problem_grader')) {
@@ -562,7 +564,8 @@
 											bs_title     => maketext("Grade Problem")
 										},
 										begin =%>
-										<i class="icon fas fa-edit" data-alt="<%= maketext("Grade") %>"></i>
+										<i class="icon fas fa-edit" aria-hidden="true"></i>
+										<span class="visually-hidden"><%= maketext('Grade') =%></span>
 									<% end =%>
 								% }
 							</div>

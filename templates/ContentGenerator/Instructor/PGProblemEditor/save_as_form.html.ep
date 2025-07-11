@@ -7,11 +7,13 @@
 % # Don't show the save as form when editing an existing course info file.
 % last if $c->{file_type} eq 'course_info' && -e $c->{editFilePath};
 %
-% my $isBlank         = $c->{file_type} eq 'blank_problem';
+% my $isBlank         = $c->{file_type} eq 'blank_problem' || $c->{file_type} eq 'sample_problem';
 % my $isHardcopyTheme = $c->{file_type} eq 'hardcopy_theme';
 % my $templatesDir    = $ce->{courseDirs}{templates};
-% my $shortFilePath   = $isBlank         ? 'newProblem.pg' : $c->{editFilePath} =~ s|^$templatesDir/||r;
-% $shortFilePath      = $isHardcopyTheme ? 'hardcopyThemes/' . ($c->{editFilePath} =~ s|^.*\/||r) : $shortFilePath;
+% my $shortFilePath   =
+	% $isBlank           ? 'newProblem.pg'
+	% : $isHardcopyTheme ? 'hardcopyThemes/' . ($c->{editFilePath} =~ s|^.*\/||r)
+	                   % : $c->{editFilePath} =~ s|^$templatesDir/||r;
 %
 % # Suggest that modifications be saved to the "local" subdirectory if its not in a writeable directory
 % $shortFilePath = "local/$shortFilePath" unless $isBlank || $isHardcopyTheme || -w dirname($c->{editFilePath});
@@ -21,9 +23,9 @@
 %
 % my $probNum = $c->{file_type} eq 'problem' ? $c->{problemID} : 'header';
 %
-% # Don't add or replace problems to sets if the set is the Undefined_Set or if the problem is the blank_problem.
-% my $can_add_problem_to_set =
-	% not_blank($c->{setID}) && $c->{setID} ne 'Undefined_Set' && $c->{file_type} ne 'blank_problem';
+% # Don't add or replace problems to sets if the set is the Undefined_Set or
+% # if the problem is the blank_problem or a sample problem.
+% my $can_add_problem_to_set = not_blank($c->{setID}) && $c->{setID} ne 'Undefined_Set' && !$isBlank;
 %
 % my $prettyProbNum = $probNum;
 % if ($c->{setID}) {

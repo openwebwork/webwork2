@@ -23,18 +23,20 @@
 									bs_placement => 'top',
 									bs_toggle    => 'popover',
 									bs_content   => maketext(
-										q{The adjusted status of a problem is the larger of the problem's status and}
+										q{The adjusted status of a problem is the larger of the problem's status and }
 											. 'the weighted average of the status of those problems which count '
-											. 'towards the parent grade.'
+											. 'toward the parent grade.'
 									)
 								},
 								begin =%>
-								<i class="icon fas fa-question-circle" aria-hidden="true" data-alt="Help Icon"></i>
+								<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+								<span class="visually-hidden"><%= maketext('Adjusted Status Help') =%></span>
 							<% end =%>
 						</th>
 						<th><%= maketext('Counts for Parent') %></th>
 					% }
-					% if ($c->{canScoreProblems}) {
+					% if ($authz->hasPermissions(param('user'), 'access_instructor_tools')
+						% && $authz->hasPermissions(param('user'), 'problem_grader')) {
 						<th><%= maketext('Grader') %></th>
 					% }
 				</tr>
@@ -51,8 +53,3 @@
 	<p><%= maketext('This homework set contains no problems.') %></p>
 % }
 %
-<div class="mb-3">
-	<%= link_to
-		maketext('Download Hardcopy for Current Set') => $c->systemLink(url_for 'hardcopy_preselect_set'),
-		class => 'btn btn-primary' =%>
-</div>

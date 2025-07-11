@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Instructor::UserList;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -63,7 +48,7 @@ Export users:
 use Mojo::File;
 
 use WeBWorK::File::Classlist qw(parse_classlist write_classlist);
-use WeBWorK::Utils qw(cryptPassword x);
+use WeBWorK::Utils           qw(cryptPassword x);
 
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS            => [qw(save_edit cancel_edit)];
@@ -236,8 +221,15 @@ sub pre_header_initialize ($c) {
 
 	# Always have a definite sort order in case the first three sorts don't determine things.
 	$c->{sortedUserIDs} = [
-		map  { $_->user_id }
-		sort { &$primarySortSub || &$secondarySortSub || &$ternarySortSub || byLastName || byFirstName || byUserID }
+		map { $_->user_id }
+		sort {
+			$primarySortSub->()
+				|| $secondarySortSub->()
+				|| $ternarySortSub->()
+				|| byLastName()
+				|| byFirstName()
+				|| byUserID()
+		}
 		grep { $c->{visibleUserIDs}{ $_->user_id } } (values %allUsers)
 	];
 
@@ -619,22 +611,18 @@ sub menuLabels ($c, $hashRef) {
 }
 
 sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource, @replaceList) {
-	my $ce   = $c->ce;
-	my $db   = $c->db;
-	my $dir  = $ce->{courseDirs}{templates};
-	my $user = $c->param('user');
-	my $perm = $c->{userPermission};
+	my $ce = $c->ce;
+	my $db = $c->db;
 
-	die $c->maketext("Illegal '/' character in input.") if $fileName =~ m|/|;
-	die $c->maketext("File [_1]/[_2] either does not exist or is not readable.", $dir, $fileName)
-		unless -r "$dir/$fileName";
+	die $c->maketext(q{Illegal '/' character in input.}) if $fileName =~ m|/|;
+	die $c->maketext('File [_1]/[_2] either does not exist or is not readable.',
+		$ce->{courseDirs}{templates}, $fileName)
+		unless -r "$ce->{courseDirs}{templates}/$fileName";
 
 	my %allUserIDs = map { $_ => 1 } @{ $c->{allUserIDs} };
 
 	my %replaceOK;
-	if ($replaceExisting eq 'none') {
-		%replaceOK = ();
-	} elsif ($replaceExisting eq 'listed') {
+	if ($replaceExisting eq 'listed') {
 		%replaceOK = map { $_ => 1 } @replaceList;
 	} elsif ($replaceExisting eq 'any') {
 		%replaceOK = %allUserIDs;
@@ -642,15 +630,16 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 
 	my $default_permission_level = $ce->{default_permission_level};
 
-	my (@replaced, @added, @skipped);
+	my (@usersToInsert, @passwordsToInsert, @permissionsToInsert,
+		@usersToUpdate, @passwordsToUpdate, @permissionsToUpdate, @skipped);
 
 	# get list of hashrefs representing lines in classlist file
-	my @classlist = parse_classlist("$dir/$fileName");
+	my @classlist = parse_classlist("$ce->{courseDirs}{templates}/$fileName");
 
 	# Default status is enrolled -- fetch abbreviation for enrolled
 	my $default_status_abbrev = $ce->{statuses}{Enrolled}{abbrevs}[0];
 
-	foreach my $record (@classlist) {
+	for my $record (@classlist) {
 		my %record  = %$record;
 		my $user_id = $record{user_id};
 
@@ -658,11 +647,11 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 			push @skipped, $user_id;
 			next;
 		}
-		if ($user_id eq $user) {                           # don't replace yourself!!
+		if ($user_id eq $c->param('user')) {               # don't replace yourself!!
 			push @skipped, $user_id;
 			next;
 		}
-		if ($record{permission} && $perm < $record{permission}) {
+		if ($record{permission} && $c->{userPermission} < $record{permission}) {
 			push @skipped, $user_id;
 			next;
 		}
@@ -674,7 +663,7 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 
 		# set default status is status field is "empty"
 		$record{status} = $default_status_abbrev
-			unless defined $record{status} and $record{status} ne "";
+			unless defined $record{status} && $record{status} ne '';
 
 		# Determine what to use for the password (if anything).
 		if (!$record{password}) {
@@ -690,7 +679,7 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 
 		# set default permission level if permission level is "empty"
 		$record{permission} = $default_permission_level
-			unless defined $record{permission} and $record{permission} ne "";
+			unless defined $record{permission} && $record{permission} ne '';
 
 		my $User            = $db->newUser(%record);
 		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => $record{permission});
@@ -698,52 +687,55 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 
 		# DBFIXME use REPLACE
 		if (exists $allUserIDs{$user_id}) {
-			$db->putUser($User);
-			$db->putPermissionLevel($PermissionLevel);
-			$db->putPassword($Password) if $Password;
+			push(@usersToUpdate,       $User);
+			push(@permissionsToUpdate, $PermissionLevel);
+			push(@passwordsToUpdate,   $Password) if $Password;
 			$User->{permission}     = $PermissionLevel->permission;
 			$User->{passwordExists} = 1 if $Password;
-			push @replaced, $User;
 		} else {
 			$allUserIDs{$user_id} = 1;
-			$db->addUser($User);
-			$db->addPermissionLevel($PermissionLevel);
-			$db->addPassword($Password) if $Password;
+			push(@usersToInsert,       $User);
+			push(@permissionsToInsert, $PermissionLevel);
+			push(@passwordsToInsert,   $Password) if $Password;
 			$User->{permission}     = $PermissionLevel->permission;
 			$User->{passwordExists} = 1 if $Password;
-			push @added, $User;
 		}
 	}
 
-	return \@replaced, \@added, \@skipped;
+	$db->User->insert_records(\@usersToInsert)                  if @usersToInsert;
+	$db->User->update_records(\@usersToUpdate)                  if @usersToUpdate;
+	$db->Password->insert_records(\@passwordsToInsert)          if @passwordsToInsert;
+	$db->Password->update_records(\@passwordsToUpdate)          if @passwordsToUpdate;
+	$db->PermissionLevel->insert_records(\@permissionsToInsert) if @permissionsToInsert;
+	$db->PermissionLevel->update_records(\@permissionsToUpdate) if @permissionsToUpdate;
+
+	return \@usersToUpdate, \@usersToInsert, \@skipped;
 }
 
 sub exportUsersToCSV ($c, $fileName, @userIDsToExport) {
-	my $ce  = $c->ce;
-	my $db  = $c->db;
-	my $dir = $ce->{courseDirs}->{templates};
+	my $ce = $c->ce;
+	my $db = $c->db;
 
-	die $c->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
+	die $c->maketext(q{illegal character in input: '/'}) if $fileName =~ m|/|;
 
 	my @records;
 
-	my @Users            = $db->getUsers(@userIDsToExport);
-	my @Passwords        = $db->getPasswords(@userIDsToExport);
-	my @PermissionLevels = $db->getPermissionLevels(@userIDsToExport);
-	foreach my $i (0 .. $#userIDsToExport) {
-		my $User            = $Users[$i];
-		my $Password        = $Passwords[$i];
-		my $PermissionLevel = $PermissionLevels[$i];
-		next unless defined $User;
-		my %record = (
-			defined $PermissionLevel ? $PermissionLevel->toHash : (),
-			defined $Password        ? $Password->toHash        : (),
-			$User->toHash,
+	my @users            = $db->getUsers(@userIDsToExport);
+	my %passwords        = map { $_->user_id => $_ } $db->getPasswords(@userIDsToExport);
+	my %permissionLevels = map { $_->user_id => $_ } $db->getPermissionLevels(@userIDsToExport);
+
+	for my $user (@users) {
+		my $password        = $passwords{ $user->user_id };
+		my $permissionLevel = $permissionLevels{ $user->user_id };
+		my %record          = (
+			defined $permissionLevel ? $permissionLevel->toHash : (),
+			defined $password        ? $password->toHash        : (),
+			$user->toHash,
 		);
 		push @records, \%record;
 	}
 
-	write_classlist("$dir/$fileName", @records);
+	write_classlist("$ce->{courseDirs}{templates}/$fileName", @records);
 
 	return;
 }

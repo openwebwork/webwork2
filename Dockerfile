@@ -33,7 +33,7 @@ RUN echo Cloning branch $PG_BRANCH branch from $PG_GIT_URL \
 FROM ubuntu:24.04
 
 ENV WEBWORK_URL=/webwork2 \
-	WEBWORK_ROOT_URL=http://localhost::8080 \
+	WEBWORK_ROOT_URL=http://localhost:8080 \
 	WEBWORK_SMTP_SERVER=localhost \
 	WEBWORK_SMTP_SENDER=webwork@example.com \
 	WEBWORK_TIMEZONE=America/New_York \
@@ -106,9 +106,6 @@ RUN apt-get update \
 	libhttp-async-perl \
 	libiterator-perl \
 	libiterator-util-perl \
-	libjson-maybexs-perl \
-	libjson-perl \
-	libjson-xs-perl \
 	liblocale-maketext-lexicon-perl \
 	libmariadb-dev \
 	libmath-random-secure-perl \
@@ -190,6 +187,7 @@ RUN cpanm install -n \
 	DBD::MariaDB \
 	Perl::Tidy@20220613 \
 	Archive::Zip::SimpleZip \
+	Net::SAML2 \
 	&& rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # ==================================================================

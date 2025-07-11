@@ -11,7 +11,7 @@
 			. 'the functionality of the code and in general is desired to have a common problem layout.') =%>"
 			data-bs-placement="top" data-bs-toggle="popover" role="button">
 			<i aria-hidden="true" class="fas fa-question-circle"></i>
-			<span class="visually-hidden"><%= maketext('Help Icon') %></span>
+			<span class="visually-hidden"><%= maketext('Perltidy Help') %></span>
 		</a>
 	</div>
 	<div class="form-check">
@@ -27,7 +27,7 @@
 			. 'which may not be converted correctly.') =%>"
 		data-bs-placement="top" data-bs-toggle="popover" role="button">
 			<i aria-hidden="true" class="fas fa-question-circle"></i>
-			<span class="visually-hidden"><%= maketext('Help Icon') %></span>
+			<span class="visually-hidden"><%= maketext('PGML Conversion Help') %></span>
 		</a>
 	</div>
 </div>

@@ -5,6 +5,7 @@
 	const datetimeFormats = {
 		en: 'L/d/yy, h:mm a',
 		'en-US': 'L/d/yy, h:mm a',
+		'en-GB': 'dd/LL/yyyy, HH:mm',
 		'cs-CZ': 'dd.LL.yy H:mm',
 		de: 'dd.LL.yy, HH:mm',
 		el: 'd/L/yy, h:mm a',
@@ -32,30 +33,51 @@
 		const reduced_rule = document.getElementById(`${name}.reduced_scoring_date_id`);
 		if (reduced_rule) groupRules.splice(1, 0, [reduced_rule]);
 
-		// Compute the time difference between the current browser timezone and the course timezone.
+		// Compute the time difference between a time in the browser timezone and the same time in the course timezone.
 		// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
-		// Note that this is in seconds.
-		const timezoneAdjustment =
-			new Date(new Date().toLocaleString('en-US')).getTime() -
-			new Date(
-				new Date().toLocaleString('en-US', { timeZone: open_rule.dataset.timezone ?? 'America/New_York' })
-			).getTime();
+		// Note that the input time is in seconds and output times is in milliseconds.
+		const timezoneAdjustment = (time) => {
+			const dateTime = new Date(0);
+			dateTime.setUTCSeconds(time);
+			return (
+				new Date(dateTime.toLocaleString('en-US')).getTime() -
+				new Date(
+					dateTime.toLocaleString('en-US', { timeZone: open_rule.dataset.timezone ?? 'America/New_York' })
+				).getTime()
+			);
+		};
 
 		for (const rule of groupRules) {
-			const value =
-				rule[0].value || document.getElementsByName(`${rule[0].name}.class_value`)[0]?.dataset.classValue;
-			rule.push(value ? parseInt(value) * 1000 - timezoneAdjustment : 0);
+			const classValue = document.getElementsByName(`${rule[0].name}.class_value`)[0]?.dataset.classValue;
+			const value = rule[0].value || classValue;
+			rule.push(value ? parseInt(value) * 1000 - timezoneAdjustment(parseInt(value)) : 0);
+			if (classValue) rule.push(parseInt(classValue) * 1000 - timezoneAdjustment(parseInt(classValue)));
 		}
 
-		const update = () => {
-			for (let i = 1; i < groupRules.length; ++i) {
-				const prevFieldDate =
-					groupRules[i - 1][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() || groupRules[i - 1][1];
+		const update = (input) => {
+			const activeIndex = groupRules.findIndex((r) => r[0] === input);
+			if (activeIndex == -1) return;
+			const activeFieldDate =
+				groupRules[activeIndex][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() ||
+				groupRules[activeIndex][2] ||
+				groupRules[activeIndex][1];
+
+			for (let i = 0; i < groupRules.length; ++i) {
+				if (i == activeIndex) continue;
 				const thisFieldDate =
-					groupRules[i][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() || groupRules[i][1];
-				if (prevFieldDate && thisFieldDate && prevFieldDate > thisFieldDate) {
-					groupRules[i][0].parentNode._flatpickr.setDate(prevFieldDate, true);
-				}
+					groupRules[i][0]?.parentNode._flatpickr.selectedDates[0]?.getTime() ||
+					groupRules[i][2] ||
+					groupRules[i][1];
+				if (i < activeIndex && thisFieldDate > activeFieldDate)
+					groupRules[i][0].parentNode._flatpickr.setDate(
+						activeFieldDate === groupRules[i][2] ? undefined : activeFieldDate,
+						true
+					);
+				else if (i > activeIndex && thisFieldDate < activeFieldDate)
+					groupRules[i][0].parentNode._flatpickr.setDate(
+						activeFieldDate === groupRules[i][2] ? undefined : activeFieldDate,
+						true
+					);
 			}
 		};
 
@@ -103,9 +125,9 @@
 								selectedDate.setFullYear(today.getFullYear());
 								selectedDate.setMonth(today.getMonth());
 								selectedDate.setDate(today.getDate());
-								fp.setDate(selectedDate);
+								fp.setDate(selectedDate, true);
 							} else if (index === 1) {
-								fp.setDate(new Date());
+								fp.setDate(new Date(), true);
 							}
 						}
 					})
@@ -114,7 +136,9 @@
 					if (this.input.value === orig_value) this.altInput.classList.remove('changed');
 					else this.altInput.classList.add('changed');
 				},
-				onClose: update,
+				onClose() {
+					return update(this.input);
+				},
 				onReady() {
 					// Flatpickr hides the original input and adds the alternate input after it.  That messes up the
 					// bootstrap input group styling.  So move the now hidden original input after the created alternate
@@ -132,12 +156,13 @@
 					// Make the alternate input left-to-right even for right-to-left languages.
 					this.altInput.dir = 'ltr';
 
-					this.altInput.addEventListener('blur', update);
+					this.altInput.addEventListener('blur', () => update(this.input));
 				},
 				parseDate(datestr, format) {
 					// Deal with the case of a unix timestamp.  The timezone needs to be adjusted back as this is for
 					// the unix timestamp stored in the hidden input whose value will be sent to the server.
-					if (format === 'U') return new Date(parseInt(datestr) * 1000 - timezoneAdjustment);
+					if (format === 'U')
+						return new Date(parseInt(datestr) * 1000 - timezoneAdjustment(parseInt(datestr)));
 
 					// Next attempt to parse the datestr with the current format.  This should not be adjusted.  It is
 					// for display only.
@@ -152,7 +177,7 @@
 				formatDate(date, format) {
 					// In this case the date provided is in the browser's time zone.  So it needs to be adjusted to the
 					// timezone of the course.
-					if (format === 'U') return (date.getTime() + timezoneAdjustment) / 1000;
+					if (format === 'U') return (date.getTime() + timezoneAdjustment(date.getTime() / 1000)) / 1000;
 
 					return luxon.DateTime.fromMillis(date.getTime()).toFormat(
 						datetimeFormats[luxon.Settings.defaultLocale]

@@ -3,8 +3,8 @@ crack_o_dawn,"Crack O' Dawn",102,secret,default,"Finish a homework set between 5
 on_the_hour,"Watching the Clock",103,secret,"default,jitar","Finish a problem at the top of the hour.",10,,on_the_hour.at,on_the_hour.png
 last_minute,"Last Minute Math",104,secret,default,"Complete a homework within 30 minutes of the due date.",10,,last_minute.at,last_minute.png
 still_not_right,"It's Still Not Right",105,secret,"default,jitar","Input the exact same (incorrect) answer 10 times in a row.",5,,still_not_right.at,still_not_right.png
-persistance,"Persistence is not Futile",106,secret,"default,jitar","Solve a problem after 20 incorrect submissions.",10,,persistance.at,persistance.png
-super_persistance,"Green Never Looked So Good",107,secret,"default,jitar","Solve a problem after 100 incorrect submissions.",10,,super_persistance.at,super_persistance.png
+persistence,"Persistence is not Futile",106,secret,"default,jitar","Solve a problem after 20 incorrect submissions.",10,,persistence.at,persistence.png
+super_persistence,"Green Never Looked So Good",107,secret,"default,jitar","Solve a problem after 100 incorrect submissions.",10,,super_persistence.at,super_persistence.png
 super_speed_math,"Careful Planning and Quick Fingers",108,secret,default,"Spend less than 10 minutes entering answers to a homework set.",20,,super_speed_math.at,super_speed_math.png
 hows_your_finger,"Hows Your Finger?",109,secret,"default,jitar","Have more than 250 submissions on a homework problem.  ",10,,hows_your_finger.at,hows_your_finger.png
 third_time,"Third Times the Charm",110,secret,"default,jitar","Solve a problem on the third submission",10,,third_time.at,third_time.png

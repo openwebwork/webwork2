@@ -72,6 +72,7 @@
 		% }
 		%
 		% if ($authz->hasPermissions($userID, 'change_password')
+			% || $authz->hasPermissions($userID, 'change_name')
 			% || $authz->hasPermissions($userID, 'change_email_address')
 			% || $authz->hasPermissions($userID, 'change_pg_display_settings'))
 		% {
@@ -84,6 +85,9 @@
 		%
 		% if ($ce->{achievementsEnabled}) {
 			<li class="list-group-item nav-item"><%= $makelink->('achievements') %></li>
+			% if ($authz->hasPermissions($userID, 'view_leaderboard')) {
+				<li class="list-group-item nav-item"><%= $makelink->('achievements_leaderboard') %></li>
+			% }
 		% }
 		%
 		% if ($authz->hasPermissions($userID, 'access_instructor_tools')) {

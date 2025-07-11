@@ -1,18 +1,3 @@
-%################################################################################
-%# WeBWorK Online Homework Delivery System
-%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-%#
-%# This program is free software; you can redistribute it and/or modify it under
-%# the terms of either: (a) the GNU General Public License as published by the
-%# Free Software Foundation; either version 2, or (at your option) any later
-%# version, or (b) the "Artistic License" which comes with this package.
-%#
-%# This program is distributed in the hope that it will be useful, but WITHOUT
-%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-%# Artistic License for more details.
-%################################################################################
-%
 % layout 'help_macro';
 % title maketext('Course Administration Help');
 %
@@ -50,10 +35,11 @@
 		<%= maketext('Set LMS context ids for courses to map LMS courses to WeBWorK '
 			. 'courses for content item selection.') =%>
 	</dd>
+	<dt><%= maketext('Manage OTP Secrets') %></dt>
+	<dd><%= maketext('Copy OTP secrets from one course/user to another, or reset OTP secrets.') =%></dd>
 	<dt><%= maketext('Accounts Manager') %></dt>
 	<dd>
-		<%= maketext('Manage instructors.  When instructors are added to a newly created course, they are also '
-			. 'added to the admin course with username "userID_courseID".') =%>
+		<%= maketext('Manage users. Note, only admin users have access to the course administration tools.') =%>
 	</dd>
 	<dt><%= maketext('Email') %></dt>
 	<dd><%= maketext('Send emails to selected instructors.') %></dd>

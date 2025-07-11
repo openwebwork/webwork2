@@ -4,16 +4,10 @@
 % use WeBWorK::Utils qw(not_blank x getAssetURL);
 % use WeBWorK::Utils::Files qw(readFile);
 % use WeBWorK::Utils::Sets qw(format_set_name_display);
-% use WeBWorK::HTML::CodeMirrorEditor
-	% qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
+% use WeBWorK::HTML::CodeMirrorEditor qw(generate_codemirror_html output_codemirror_static_files);
 %
-% my $codemirrorMode = 'PG';
-% if ($c->{file_type}) {
-%	$codemirrorMode = 'htmlmixed' if ($c->{file_type} eq 'course_info');
-%	$codemirrorMode = 'xml'       if ($c->{file_type} eq 'hardcopy_theme');
-% }
 % content_for js => begin
-	<%= output_codemirror_static_files($c, $codemirrorMode) =%>
+	<%= output_codemirror_static_files($c) =%>
 	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'),           defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/PGProblemEditor/pgproblemeditor.js'), defer => undef =%>
 % end
@@ -28,6 +22,11 @@
 	% last;
 % }
 %
+% if (!$c->{file_type}) {
+	%= include("ContentGenerator/Instructor/PGProblemEditor/file_chooser");
+	% last;
+% }
+%
 % if (stash('file_error')) {
 	<div class="alert alert-danger p-1 mb-0"><%= stash('file_error') %></div>
 	% last;
@@ -35,6 +34,7 @@
 %
 % my %titles = (
 	% blank_problem                => x('Editing <strong>new problem</strong> template "[_1]".'),
+	% sample_problem               => x('Editing <strong>sample problem</strong> file "[_1]".'),
 	% set_header                   => x('Editing <strong>set header</strong> file "[_1]".'),
 	% hardcopy_header              => x('Editing <strong>hardcopy header</strong> file "[_1]".'),
 	% hardcopy_theme               => x('Editing <strong>hardcopy theme</strong> file "[_1]".'),
@@ -90,6 +90,9 @@
 	% }
 	% if (not_blank($c->{tempFilePath})) {
 		<%= hidden_field temp_file_path => $c->{tempFilePath} =%>
+	% }
+	% if ($c->{file_type} eq 'sample_problem' && param('sampleProblemFile')) {
+		<%= hidden_field sampleProblemFile => param('sampleProblemFile') =%>
 	% }
 	% if ($c->{file_type} eq 'hardcopy_theme') {
 		<%= hidden_field hardcopy_theme => param('hardcopy_theme') =%>
@@ -156,7 +159,12 @@
 	% }
 	<div class="row mb-2">
 		<div class="col-lg-6 col-md-12 order-last order-lg-first">
-			<%= generate_codemirror_html($c, 'problemContents', $problemContents, $codemirrorMode) =%>
+			<%= generate_codemirror_html(
+				$c,
+				'problemContents',
+				$problemContents,
+				{ course_info => 'html', hardcopy_theme => 'xml' }->{ $c->{file_type} } // 'pg'
+			) =%>
 		</div>
 		<div class="col-lg-6 col-md-12 mb-lg-0 mb-2 order-first order-lg-last">
 			<div class="p-0" id="pgedit-render-area">
@@ -168,7 +176,6 @@
 			</div>
 		</div>
 	</div>
-	<%= generate_codemirror_controls_html($c) =%>
 	<%= $fileInfo->() %>
 	%
 	% # Output action forms

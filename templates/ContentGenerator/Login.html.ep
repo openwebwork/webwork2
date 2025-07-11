@@ -6,7 +6,7 @@
 %
 % my $course = (stash('courseID') // '') =~ s/_/ /gr;
 %
-% if ($externalAuth) {
+% if ($ce->{LTI} && $externalAuth) {
 	% my $LMS = $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
 		% ? link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
 		% : $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
@@ -22,6 +22,13 @@
 			<%== maketext('The course [_1] uses an external authentication system ([_2]). You\'ve authenticated '
 				. 'through that system, but aren\'t allowed to log in to this course.',
 				tag('strong', $course), $LMS) =%>
+		</p>
+	% }
+% } elsif ($externalAuth) {
+	% if (stash('authen_error')) {
+		<p>
+			<%== maketext(q{This course uses an external authentication system. You've authenticated }
+				. q{through that system, but aren't allowed to log in to this course.}) =%>
 		</p>
 	% }
 % } else {

@@ -1,0 +1,137 @@
+#!perl
+################################################################################
+# Configuration for using Saml2 authentication.
+# To enable Saml2 authentication, copy this file to conf/authen_saml2.conf
+# and uncomment the appropriate lines in localOverrides.conf. The Saml2
+# authentication module uses the Net::SAML2 library. The library claims to be
+# compatible with a wide range of SAML2 implementations, including Shibboleth.
+################################################################################
+
+# Set Saml2 as the authentication module to use.
+# Comment out 'WeBWorK::Authen::Basic_TheLastOption' if bypassing Saml2
+# authentication is not allowed (see $saml2{bypass_query} below).
+$authen{user_module} = [
+	'WeBWorK::Authen::Saml2',
+	'WeBWorK::Authen::Basic_TheLastOption'
+];
+
+# List of authentication modules that may be used to enter the admin course.
+# This is used instead of $authen{user_module} when logging into the admin
+# course. Since the admin course provides overall power to add/delete courses,
+# access to this course should be protected by the best possible authentication
+# you have available to you.
+$authen{admin_module} = [
+	'WeBWorK::Authen::Saml2'
+];
+
+# This URL query parameter can be added to the end of a course url to skip the
+# saml2 authentication module and go to the next one, for example,
+# http://your.school.edu/webwork2/courseID?bypassSaml2=1. Comment out the next
+# line to disable this feature.
+$saml2{bypass_query} = 'bypassSaml2';
+
+# Note that Saml2 authentication can be used in conjunction with webwork's two
+# factor authentication. If the identity provider does not provide two factor
+# authentication, then it is recommended that you DO use webwork's two factor
+# authentication. If the identity provider does provide two factor
+# authentication, then you would not want your users need to perform two factor
+# authentication twice, so you should disable webwork's two factor
+# authentication. The two factor authentication settings are set in
+# localOverrides.conf.
+
+# As noted above, if the identity provider offers two factor authentication,
+# then you would not want webwork2's two factor authentication to be used at the
+# same time.  However, if the bypass parameter is allowed, you should still
+# enable two factor authentication in that case.  If this is the case, then set
+# $saml2{twoFAOnlyWithBypass} to 1. This will skip webwork2's two factor
+# authentication for users signing in via the identity provider, but still
+# require it for users signing in with a username/password. If this is set to 0,
+# then webwork2's two factor authentication will always be required.
+$saml2{twoFAOnlyWithBypass} = 0;
+
+# If $external_auth is 1, and the authentication sequence reaches
+# Basic_TheLastOption, then the webwork login screen will show a message
+# directing the user to use the external authentication system to login. This
+# prevents users from attempting to login in to WeBWorK directly.
+$external_auth = 0;
+
+# The $saml2{idps} hash contains names of identity proviers and their SAML2
+# metadata URLs that are used by this server.  Webwork will request the identity
+# provider's metadata from the URL of the $saml2{active_idp} during the
+# authentication process. Additional identity providers can also be added for a
+# particular course by adding, for example, $saml2{idps}{other_idp} = '...' to
+# the course.conf file of the course. Note that the names of the identity
+# providers in this hash are used for a directory name in which the metadata and
+# certificate for the identity provider are saved. So the names should only
+# contain alpha numeric characters and underscores.
+$saml2{idps} = {
+	default => 'http://idp/simplesaml/module.php/saml/idp/metadata',
+	# Add additional identity providers used by this server below.
+	#other_idp => 'http://other.idp.server/metadata',
+};
+
+# The $saml2{active_idp} is the identity provider in the $saml2{idps} hash that
+# will be used. If different identity providers are used for different courses,
+# then set $saml2{active_idp} = 'other_idp' in the course.conf file of each
+# course.
+$saml2{active_idp} = 'default';
+
+# This the id for the webwork2 service provider. This is usually the application
+# root URL plus the base path to the service provider.
+$saml2{sp}{entity_id} = 'http://localhost:8080/webwork2/saml2';
+
+# This is the organization metadata information for the webwork2 service
+# provider. The Saml2 authentication module will generate xml metadata that can
+# be obtained by the identity provider for configuration from the URL
+# https://webwork.yourschool.edu/webwork2/saml2/metadata if Saml2 authentication
+# is enabled site wide. The URL needs to have the courseID URL parameter added
+# if Saml2 authentication is not enabled site wide, but is enabled for some
+# courses in those course's course.conf files. So for example if one course is
+# myTestCourse, then the metadata URL would be
+# https://webwork.yourschool.edu/webwork2/saml2/metadata?courseID=myTestCourse
+# Further note that if multiple courses use that same identity provider then
+# just pick any one of the courses to use in the metadata URL. All of the other
+# courses share the same metedata.
+$saml2{sp}{org} = {
+	contact      => 'webwork@example.edu',
+	name         => 'webwork',
+	url          => 'https://localhost:8080/',
+	display_name => 'WeBWorK'
+};
+
+# The following list of attributes will be checked in the given order for a
+# matching user in the webwork2 course. If no attributes are given, then
+# webwork2 will default to the NameID. It is recommended that you use the
+# attribute's OID.
+$saml2{sp}{attributes} = [
+	'urn:oid:0.9.2342.19200300.100.1.1'
+];
+
+# The following settings are the locations of the files that contain the
+# certificate and private key for the webwork2 service provider. A certificate
+# and private key can be generated using openssl. For example,
+#   openssl req -newkey rsa:3072 -new -x509 -days 3652 -nodes -out saml.crt -keyout saml.pem
+# The files saml.crt and saml.pem that are generated contain the public
+# "certificate" and the "private_key", respectively.
+# Note that if the files are placed within the root webwork2 app directory, then
+# the paths may be given relative to the root webwork2 app directory.  Otherwise
+# the absolute path must be given. Make sure that the webwork2 app has read
+# permissions for those files.
+$saml2{sp}{certificate_file} = 'docker-config/idp/certs/saml.crt';
+$saml2{sp}{private_key_file} = 'docker-config/idp/certs/saml.pem';
+
+##############################################################################
+# SECURITY WARNING
+# For production, you MUST provide your own unique 'certificate' and
+# 'private_key' files. The files referred to in the default settings above are
+# only intended to be used in development, and are publicly exposed. Hence, they
+# provide NO SECURITY.
+##############################################################################
+
+# If this is set to 1, then service provider initiated logout from the identity
+# provider is enabled. This means that when the user clicks the webwork2 "Log
+# Out" button, a request is sent to the identity provider that also ends the
+# session for the user with the identity provider.
+$saml2{sp}{enable_sp_initiated_logout} = 0;
+
+1;

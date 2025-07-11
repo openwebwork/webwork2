@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.	 See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Instructor::SetMaker;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -25,12 +10,12 @@ WeBWorK::ContentGenerator::Instructor::SetMaker - Make homework sets.
 use Mojo::File;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName x);
-use WeBWorK::Utils::DateTime qw(getDefaultSetDueDate);
+use WeBWorK::Utils             qw(sortByName x);
+use WeBWorK::Utils::DateTime   qw(getDefaultSetDueDate);
 use WeBWorK::Utils::Instructor qw(assignSetToUser assignProblemToAllSetUsers addProblemToSet);
 use WeBWorK::Utils::LibraryStats;
 use WeBWorK::Utils::ListingDB qw(getDBListings);
-use WeBWorK::Utils::Sets qw(format_set_name_internal);
+use WeBWorK::Utils::Sets      qw(format_set_name_internal);
 use WeBWorK::Utils::Tags;
 
 # Use x to mark strings for maketext
@@ -535,7 +520,7 @@ sub pre_header_initialize ($c) {
 			$use_previous_problems = 0;
 		}
 	} elsif ($c->param('view_course_set')) {
-		# View problems selected from the a set in this course
+		# View problems selected from a set in this course
 		my $set_to_display = $c->{current_library_set} // '';
 		debug("set_to_display is $set_to_display");
 		if ($set_to_display eq '') {
