@@ -326,11 +326,9 @@ sub authenticate ($self) {
 		$self->{initial_login} = 1;
 	}
 
-	# If we are using grade passback then make sure the data we need to submit the grade is kept up to date.
-	my $LTIGradeMode = $ce->{LTIGradeMode} // '';
-	if ($LTIGradeMode eq 'course' || $LTIGradeMode eq 'homework') {
-		WeBWorK::Authen::LTIAdvantage::SubmitGrade->new($c)->update_passback_data($self->{user_id});
-	}
+	# In case we will use grade passback at some point,
+	# make sure the data we need to submit the grade is kept up to date.
+	WeBWorK::Authen::LTIAdvantage::SubmitGrade->new($c)->update_passback_data($self->{user_id});
 
 	return 1;
 }
