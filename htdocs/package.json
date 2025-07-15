@@ -13,29 +13,29 @@
 		"url": "https://github.com/openwebwork/webwork2"
 	},
 	"dependencies": {
-		"@fortawesome/fontawesome-free": "^6.5.2",
+		"@fortawesome/fontawesome-free": "^7.0.0",
 		"@openwebwork/pg-codemirror-editor": "^0.0.5",
-		"bootstrap": "~5.3.3",
+		"bootstrap": "~5.3.7",
 		"flatpickr": "^4.6.13",
-		"iframe-resizer": "^4.3.11",
+		"iframe-resizer": "^4.4.2",
 		"jquery": "^3.7.1",
-		"jquery-ui-dist": "^1.13.2",
-		"luxon": "^3.4.4",
+		"jquery-ui-dist": "^1.13.3",
+		"luxon": "^3.7.1",
 		"mathjax": "^3.2.2",
 		"minisearch": "^7.1.2",
 		"shortcut-buttons-flatpickr": "^0.4.0",
-		"sortablejs": "^1.15.2"
+		"sortablejs": "^1.15.6"
 	},
 	"devDependencies": {
-		"autoprefixer": "^10.4.19",
-		"chokidar": "^3.6.0",
-		"cssnano": "^6.1.2",
-		"postcss": "^8.4.38",
-		"prettier": "^3.2.5",
-		"rtlcss": "^4.1.1",
-		"sass": "^1.75.0",
-		"terser": "^5.30.4",
-		"yargs": "^17.7.2"
+		"autoprefixer": "^10.4.21",
+		"chokidar": "^4.0.3",
+		"cssnano": "^7.1.0",
+		"postcss": "^8.5.6",
+		"prettier": "^3.6.2",
+		"rtlcss": "^4.3.0",
+		"sass": "^1.90.0",
+		"terser": "^5.43.1",
+		"yargs": "^18.0.0"
 	},
 	"browserslist": [
 		"last 10 Chrome versions",
