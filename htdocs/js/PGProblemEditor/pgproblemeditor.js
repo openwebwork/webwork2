@@ -177,6 +177,8 @@
 		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
 			.then((response) => response.json())
 			.then((data) => {
+				if (data.error) throw new Error(data.error);
+				if (!data.result_data) throw new Error('An invalid response was received.');
 				if (data.result_data.status) {
 					if (data.result_data.errors) {
 						renderArea.innerHTML =
@@ -219,6 +221,8 @@
 		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
 			.then((response) => response.json())
 			.then((data) => {
+				if (data.error) throw new Error(data.error);
+				if (!data.result_data) throw new Error('An invalid response was received.');
 				if (request_object.pgCode === data.result_data.pgmlCode) {
 					showMessage('There were no changes to the code.', true);
 				} else {
