@@ -169,9 +169,9 @@
 		. 'Second the code can be converted to PGML. This changes the code in text blocks to use PGML features. '
 		. 'Generally the conversion of much of the formatting and LaTeX is performed correctly. However, answer '
 		. 'blanks need attention. In any case, make sure to inspect the formatted code, and edit further or revert '
-		. 'if needed. Third, the code can be analyzed by the "PG Critic Analyzer." This checks that the code uses '
-		. 'modern features of PG, that it does not use old or deprecated features of PG, and offers advice on how '
-		. 'to fix issues that are found.') =%>
+		. 'if needed. Third, the code can be analyzed by the "PG Critic." This checks that the code does not use '
+		. 'old or deprecated features of PG and conforms to current best-practices in problem authoring, and offers '
+		. 'suggestions on how to fix issues that are found.') =%>
 	</dd>
 
 	<dt><%= maketext('Save') %></dt>

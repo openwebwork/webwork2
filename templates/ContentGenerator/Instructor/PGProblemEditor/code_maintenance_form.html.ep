@@ -34,11 +34,11 @@
 		<%= radio_button 'action.code_maintenance' => 'runPGCritic',
 			id => 'action_code_maintenance_run_pgcritic', class => 'form-check-input'=%>
 		<%= label_for 'action_code_maintenance_run_pgcritic', class => 'form-check-label', begin =%>
-			<%== maketext('Run the PG Critic Analyzer') =%>
+			<%== maketext('Analyze code with PG Critic') =%>
 		<% end =%>
-		<a class="help-popup" data-bs-content="<%== maketext('This option runs the PG Critic '
-			. 'code analyzer which gives suggestions on using modern PG constructs and  '
-			. 'ensures that you include important features.') =%>"
+		<a class="help-popup" data-bs-content="<%== maketext('This option analyzes the code with PG Critic '
+			. 'which gives suggestions on using modern PG constructs and ensures that the code conforms '
+			. 'to current best-practices.') =%>"
 			data-bs-placement="top" data-bs-toggle="popover" role="button">
 			<i aria-hidden="true" class="fas fa-question-circle"></i>
 			<span class="visually-hidden"><%= maketext('PG Critic Help') %></span>

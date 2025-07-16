@@ -172,8 +172,8 @@ sub runPGCritic {
 	return {
 		ra_out => {
 			html => $self->c->render_to_string(
-				template => 'ContentGenerator/Instructor/PGProblemEditor/pg_critic',
-				results  => [ critiquePGCode($params->{pgCode}) ]
+				template   => 'ContentGenerator/Instructor/PGProblemEditor/pg_critic',
+				violations => [ critiquePGCode($params->{pgCode}) ]
 			)
 		},
 		text => 'The script pg-critic has been run successfully.'

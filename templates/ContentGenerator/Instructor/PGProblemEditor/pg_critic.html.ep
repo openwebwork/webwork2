@@ -1,31 +1,12 @@
 % Perl::Critic::Violation::set_format('%m at line %l, column %c.');
 %
 <div class="m-3 overflow-auto">
-	<h2><%= maketext('PG Critic Results') %></h2>
-	% my @goodResults = grep { ref($_->explanation) eq 'HASH' && ($_->explanation->{score} // 0) > 0 } @$results;
-	% if (@goodResults) {
-		<h3 class="mt-2"><%= maketext('The following are good aspects of this problem:') %></h3>
+	<h2><%= maketext('PG Critic Violations') %></h2>
+	% my @pgCriticViolations = grep { $_->policy =~ /^Perl::Critic::Policy::PG::/ } @$violations;
+	% if (@pgCriticViolations) {
+		<h3 class="mt-2"><%= maketext('The following PG issues should be fixed:') %></h3>
 		<ul class="list-group">
-			% for (@goodResults) {
-				<li class="list-group-item">
-					<div><%= $_->to_string %></div>
-					<div>
-						<%= $_->explanation->{explanation} %>
-						See <%= link_to(
-							($_->policy =~ s/^Perl::Critic::Policy:://r)
-								=> pod_viewer => { filePath => 'lib/' . ($_->policy =~ s/::/\//gr) . '.pm' },
-							target => '_blank'
-						) %>.
-					</div>
-				</li>
-			% }
-		</ul>
-	%}
-	% my @badResults = grep { ref($_->explanation) eq 'HASH' && ($_->explanation->{score} // 0) < 0 } @$results;
-	% if (@badResults) {
-		<h3 class="mt-2"><%= maketext('The following are things that can be improved:') %></h3>
-		<ul class="list-group">
-			% for (@badResults) {
+			% for (@pgCriticViolations) {
 				<li class="list-group-item">
 					<div><%= $_->to_string %></div>
 					<div>
@@ -55,11 +36,11 @@
 			% }
 		</ul>
 	%}
-	% my @badPerlResults = grep { !ref($_->explanation) } @$results;
-	% if (@badPerlResults) {
-		<h3 class="mt-2"><%= maketext('The following are general Perl issues that can be improved:') %></h3>
+	% my @perlCriticViolations = grep { $_->policy !~ /^Perl::Critic::Policy::PG::/ } @$violations;
+	% if (@perlCriticViolations) {
+		<h3 class="mt-2"><%= maketext('The following general Perl issues should be fixed:') %></h3>
 		<ul class="list-group">
-			% for (@badPerlResults) {
+			% for (@perlCriticViolations) {
 				<li class="list-group-item">
 					<div><%= $_->to_string %></div>
 					<div>
