@@ -70,6 +70,8 @@ sub update_passback_data ($self, $userID) {
 		$self->warning('Missing LMS user id (sub) in JWT.');
 	}
 
+	return unless $ce->{LTIGradeMode};
+
 	# The lti_lms_lineitem is the url to post grades to.  It was the 'lineitem' key of the
 	# 'https://purl.imsglobal.org/spec/lti-ags/claim/endpoint' object in the JWT received from the LMS.
 	if ($ce->{LTIGradeMode} eq 'course') {
